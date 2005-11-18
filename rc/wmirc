@@ -1,0 +1,218 @@
+#!9PREFIX/bin/rc
+# configure wmii
+
+TAB_HEIGHT=16
+BAR_HEIGHT=16
+BORDER_WIDTH=3
+
+SELECTED_BG_COLOR='#307080'
+SELECTED_FG_COLOR='#fefefe'
+SELECTED_BORDER_COLOR='#5090a0'
+NORMAL_BG_COLOR='#004050'
+NORMAL_FG_COLOR='#cccccc'
+NORMAL_BORDER_COLOR='#206070'
+TEXT_FONT='fixed'
+
+MODKEY=M
+NORTHKEY=k
+SOUTHKEY=j
+WESTKEY=h
+EASTKEY=l
+
+nl='
+'
+
+fn kbind {
+    wmir create /keys/mode/$1/$2 $3
+}
+
+fn selstyle {
+    wmir write $1/text-font $TEXT_FONT
+    wmir write $1/text-color $SELECTED_FG_COLOR
+    wmir write $1/bg-color $SELECTED_BG_COLOR
+    wmir write $1/border-color $SELECTED_BORDER_COLOR
+}
+
+fn normstyle {
+    wmir write $1/text-font $TEXT_FONT
+    wmir write $1/text-color $NORMAL_FG_COLOR
+    wmir write $1/bg-color $NORMAL_BG_COLOR
+    wmir write $1/border-color $NORMAL_BORDER_COLOR
+}
+
+fn items {
+    ifs=:$nl { dirs=`{echo $2} }
+    {
+        for(dir in $dirs) {
+            for(file in $dir/*) {
+                if(! ~ $file $dir^'/*' && ! test -d $file && test -x $file) {
+                    file=`{basename $file}
+                    echo create /menu/items/$1/$"file $"file
+                }
+            }
+        }
+    } | sort | wmir -f &
+}
+
+fn frameconf {
+    wmir write $1/event/b3press 'wmir write /wm/page/sel/ctl toggle'
+    wmir write $1/event/b2press 'wmir write /wm/ctl close'
+    normstyle $1/norm-style
+    selstyle $1/sel-style
+    wmir write $1/tab-height $TAB_HEIGHT
+    if(~ $2 refresh)
+        wmir write $1/size +0,+0,+0,+0  # causes refresh
+}
+
+fn framesconf {
+    for(frame in `{wmir read $1 | grep '^[0-9]'})
+        frameconf $1/$frame $2
+}
+
+
+# WMIBAR CONFIGURATION
+
+fn barsucks {
+    wmir write /bar/$1/b1press 'wmir write /wm/ctl ''select prev'''
+    wmir write /bar/$1/b3press 'wmir write /wm/ctl ''select next'''
+    wmir write /bar/$1/b4press 'wmir write /wm/ctl ''select prev'''
+    wmir write /bar/$1/b5press 'wmir write /wm/ctl ''select next'''
+}
+
+wmir write /bar/ctl reset
+wmir write /bar/font $TEXT_FONT
+wmir write /bar/fgcolor $NORMAL_FG_COLOR
+wmir write /bar/bgcolor $NORMAL_BG_COLOR
+wmir write /bar/bordercolor $NORMAL_BORDER_COLOR
+
+plab=`{wmir read /bar/new}
+wmir write /bar/$plab/b1press 'wmir write /wm/ctl pager'
+
+clab=`{wmir read /bar/new}
+wmir write /bar/$clab/fgcolor $SELECTED_FG_COLOR
+wmir write /bar/$clab/bgcolor $SELECTED_BG_COLOR
+wmir write /bar/$clab/bordercolor $SELECTED_BG_COLOR
+barsucks $clab
+
+wmir write /bar/expandable 2
+wmir write /bar/geometry 0,south,east,$BAR_HEIGHT
+wmir write /bar/ctl 'display 1'
+
+
+# WMIIWM CONFIGURATION
+
+# default layout (tiled, max, grid or vsplit):
+wmir write /wm/default/page/layout tiled
+
+# width of the left frame in tiled layout in percent:
+wmir write /wm/default/page/tile-width 60
+
+wmir write /wm/default/core/trans-color $SELECTED_BG_COLOR
+wmir write /wm/default/frame/handle-inc 1
+
+# some broken WIMP apps:
+wmir create /wm/default/client/'xmms:*'/manage 0
+wmir create /wm/default/client/'Gimp:*'/manage 0
+
+wmir write /wm/default/frame/border-width $BORDER_WIDTH
+wmir write /wm/default/page/size '0,0,east,south-'^$BAR_HEIGHT
+wmir write /wm/event/client-update \
+'text=`{wmir read /wm/page/sel/mode/sel/client/sel/name} \
+wmir write /bar/'^$clab^'/data $"text'
+wmir write /wm/event/page-update \
+'text=`{wmir read /wm/page/sel/name} ^ \
+`{wmir read /wm/page/sel/mode/name|awk ''{print substr($0,0,1)}''} ^ \
+`{wmir read /keys/lookup|awk ''{print substr($0,7,1)}''} \
+wmir write /bar/'^$plab^'/data $"text'
+
+for(page in `{wmir read /wm/page | grep '^[0-9]'}) {
+    framesconf /wm/page/$page/floating refresh
+    framesconf /wm/page/$page/managed refresh
+}
+frameconf /wm/default/frame norefresh
+for(i in norm-style norm-style/client)
+    normstyle /wm/default/core/pager/$i
+for(i in sel-style sel-style/client)
+    selstyle /wm/default/core/pager/$i
+wmir write /wm/page/sel/managed/size 0,0,east,south-$BAR_HEIGHT >[2]/dev/null
+
+
+# WMIKEYS CONFIGURATION
+
+kbind bare $MODKEY-Escape 'kmode normal'
+
+kbind move Escape 'kmode normal'
+kbind move $MODKEY-C-r 'kmode resize'
+kbind move $NORTHKEY 'wmir write /wm/page/sel/mode/sel/size -0,-30,-0,-0'
+kbind move $SOUTHKEY 'wmir write /wm/page/sel/mode/sel/size +0,+30,+0,+0'
+kbind move $WESTKEY 'wmir write /wm/page/sel/mode/sel/size -40,-0,-0,-0'
+kbind move $EASTKEY 'wmir write /wm/page/sel/mode/sel/size +40,+0,+0,+0'
+kbind move S-$NORTHKEY 'wmir write /wm/page/sel/mode/sel/size -0,north,-0,-0'
+kbind move S-$SOUTHKEY 'wmir write /wm/page/sel/mode/sel/size +0,south-'^$BAR_HEIGHT^',+0,+0'
+kbind move S-$WESTKEY 'wmir write /wm/page/sel/mode/sel/size west,-0,-0,-0'
+kbind move S-$EASTKEY 'wmir write /wm/page/sel/mode/sel/size east,+0,+0,+0'
+
+kbind resize Escape 'kmode normal'
+kbind resize $MODKEY-C-m 'kmode move'
+kbind resize $NORTHKEY 'wmir write /wm/page/sel/mode/sel/size +0,+0,+0,-30'
+kbind resize $SOUTHKEY 'wmir write /wm/page/sel/mode/sel/size +0,+0,+0,+30'
+kbind resize $WESTKEY 'wmir write /wm/page/sel/mode/sel/size +0,+0,-40,+0'
+kbind resize $EASTKEY 'wmir write /wm/page/sel/mode/sel/size +0,+0,+40,+0'
+
+kbind normal $MODKEY-C-b 'kmode bare'
+kbind normal $MODKEY-C-m 'kmode move'
+kbind normal $MODKEY-C-r 'kmode resize'
+kbind normal $MODKEY-C-a 'wmir write /menu/precmd ''''; wmir write /menu/lookup /items/actions; wmir write /menu/ctl ''display 1'''
+kbind normal $MODKEY-C-p 'wmir write /menu/precmd extern; wmir write /menu/lookup /items/programs; wmir write /menu/ctl ''display 1'''
+kbind normal $MODKEY-C-c 'wmir write /wm/ctl close'
+kbind normal $MODKEY-C-q,y quit
+kbind normal $MODKEY-C-w,y wmirc
+kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#003040'' -fg ''#dddddd'' -cr ''#408090'' -sl 4000'
+kbind normal $MODKEY-d 'wmir write /wm/ctl detach'
+kbind normal $MODKEY-a 'wmir write /wm/ctl attach'
+kbind normal $MODKEY-S-a 'wmir write /wm/ctl icons'
+kbind normal $MODKEY-S-space 'wmir write /wm/page/sel/ctl toggle'
+kbind normal $MODKEY-Return 'wmir write /wm/page/sel/ctl ''select zoomed'''
+kbind normal $MODKEY-C-y 'wmir write /wm/ctl new'
+kbind normal $MODKEY-u 'wmir write /wm/page/sel/mode/sel/locked 0'
+kbind normal $MODKEY-S-u 'wmir write /wm/page/sel/mode/sel/locked 1'
+kbind normal $MODKEY-m 'wmir write /wm/ctl togglemax'
+kbind normal $MODKEY-S-t 'wmir write /wm/page/sel/managed/name tiled'
+kbind normal $MODKEY-S-g 'wmir write /wm/page/sel/managed/name grid'
+kbind normal $MODKEY-S-v 'wmir write /wm/page/sel/managed/name vsplit'
+kbind normal $MODKEY-S-f 'wmir write /wm/page/sel/managed/name float'
+kbind normal $MODKEY-S-m 'wmir write /wm/page/sel/managed/name max'
+kbind normal $MODKEY-$WESTKEY 'wmir write /wm/ctl ''select prev'''
+kbind normal $MODKEY-$EASTKEY 'wmir write /wm/ctl ''select next'''
+kbind normal $MODKEY-Tab 'wmir write /wm/page/sel/ctl ''select next'''
+kbind normal $MODKEY-$SOUTHKEY 'wmir write /wm/page/sel/ctl ''select next'''
+kbind normal $MODKEY-$NORTHKEY 'wmir write /wm/page/sel/ctl ''select prev'''
+kbind normal $MODKEY-S-Tab 'wmir write /wm/page/sel/mode/sel/ctl ''select next'''
+kbind normal $MODKEY-S-$SOUTHKEY 'wmir write /wm/page/sel/mode/sel/ctl ''select next'''
+kbind normal $MODKEY-S-$NORTHKEY 'wmir write /wm/page/sel/mode/sel/ctl ''select prev'''
+kbind normal $MODKEY-space 'wmir write /wm/page/sel/ctl ''select toggled'''
+kbind normal $MODKEY-S-p 'wmir write /wm/ctl pager'
+kbind normal $MODKEY-S-0 'wmir write /wm/ctl ''select 10'''
+for(i in 1 2 3 4 5 6 7 8 9) {
+    kbind normal $MODKEY-S-$i 'wmir write /wm/ctl ''select '^$i^''''
+}
+
+wmir write /keys/size center,center,100,$BAR_HEIGHT
+selstyle /keys/box/style
+kmode normal
+
+
+# WMIMENU CONFIGURATION
+
+items actions $WMII_CONFDIR:$HOME/.wmii-3
+wmir create /menu/items/actions/rmpage 'wmir write /wm/ctl destroy'
+items programs $OLD_PATH
+wmir write /menu/size 0,south,east,$BAR_HEIGHT
+normstyle /menu/style >[2]/dev/null
+normstyle /menu/norm-style >[2]/dev/null
+selstyle /menu/sel-style >[2]/dev/null
+
+
+# MISC
+xsetroot -mod 2 2 -fg '#003040' -bg '#004050'
+status &

@@ -1,0 +1,86 @@
+Abstract
+--------
+window manager improved 2 (wmii) [1] is an improved, modularized and
+lightweight X11 window manager which supports tabbed, tiled and
+conventional window management through layouts.
+wmii consists of components that are independent processes and
+communicate via a socket-based virtual filesystem which is oriented
+on the "everything is file" paradigm of the Plan 9 [2] operating system.
+The core distribution of wmii contains the window manager itself,
+a master file system routing utility (wmifs), a generic bar (wmibar),
+a shortcut handler (wmikeys), and a generic interaction menu (wmimenu)
+beside several tiny utilities like wmir, wmiplumb, and wmiwarp.
+
+
+Requirements
+------------
+In order to build wmii you need the Xlib header files.
+Furthermore, the wmii configuration scripts rely on the 9rc package [3]
+which contains ports of various Plan 9 standard tools, in particular the
+rc shell.
+
+
+Installation
+------------
+Edit config.mk to match your local setup. wmii is installed into
+the /usr/local hierarchy by default.
+
+Afterwards enter the following command to build and install wmii (if
+necessary as root):
+
+    $ make clean install
+
+
+Running wmii
+------------
+Add the following line to your .xinitrc to start wmii using startx:
+
+    exec wmii
+
+In order to connect wmii or wmir to a specific display, make sure that
+DISPLAY environment variable is set correctly, e.g.:
+
+    $ setenv DISPLAY foo.bar:1
+    $ wmii
+
+This will start wmii on display :1 of the host foo.bar if it is present
+in your .xinitrc.
+
+
+Configuration
+-------------
+The configuration of wmii is done by customizing the existing actions.
+Customizing an action means copying the appropriate file from the directory
+$WMII_CONFDIR (usually /usr/local/etc/wmii-3) to
+$HOME/.wmii-3 and editing it to fit your needs. The action of main
+interest is called 'wmirc': it is executed on startup.
+
+
+Credits
+-------
+Beside all thanks to the wmi contributors, the following people have
+contributed especially to wmii in various ways:
+
+- Christoph Wegscheider <christoph (dot) wegscheider (at) wegi (dot) net>
+- Georg Neis <gn (at) oglaroon (dot) de>
+- Uwe Zeisberger <zeisberg (at) informatik (dot) uni-freiburg (dot) de>
+- Uriel <uriell (at) binarydream (dot) org>
+- Scot Doyle <scot (at) scotdoyle (dot) com>
+- Sebastian Hartmann <seb (dot) wmi (at) gmx (dot) de>
+- Bernhard Leiner <bleiner (at) gmail (dot) com>
+- Jonas Domeij <jonas (dot) domeij (at) gmail (dot) com>
+- Vincent <10 (dot) 50 (at) free (dot) fr>
+- Oliver Kopp <olly (at) flupp (dot) de>
+- Sebastian Roth <sebastian (dot) roth (at) gmail (dot) com>
+- Steve Hoffman <steveh (at) g2switchworks (dot) com>
+- Christof Musik <christof (at) senfdax (dot) de>
+- Steffen Liebergeld <perl (at) gmx (dot) org>
+
+
+References
+----------
+[1] http://wmii.de
+[2] http://www.cs.bell-labs.com/plan9dist/
+[3] http://wmii.de/repos/9base/
+
+--Anselm R. Garbe

@@ -1,0 +1,171 @@
+.de FN
+\fI\|\\$1\|\fP\\$2
+..
+.TH wmii 1
+.SH NAME
+wmii \- window manager improved 2 for X11
+
+.SH DESCRIPTION
+.B wmii
+is a dynamic window manager for the X Window System.
+It provides a synthesis of conventional, tiled and tabbed window
+management based on dynamic layouts.
+Several roots of these window management capabilities have been
+introduced by the Ion and LarsWM window managers.
+Apart from this, it implements a socket-based fileserver,
+which is accessed to configure and interoperate with wmii. The idea
+behind this file-based approach is derived from the plan9
+operating system and can be found in the Acme programming environment.
+.B wmii
+consists of the core window manager itself and several utilities, such
+as
+.BR wmibar (1),
+.BR wmifs (1),
+.BR wmimenu (1),
+.BR wmikeys (1),
+.BR wmiplumb (1),
+.BR wmir (1)
+and
+.BR wmiwarp (1).
+
+.SH SYNOPSIS
+.B wmii
+.RB [ \-s
+.IR socketfile ]
+.br
+.B wmii
+.RB \-v
+
+.SH OPTIONS
+.TP
+.BI \-s " socketfile"
+lets you override the default socketfile which
+.B wmii
+should use for connecting fileserver clients.
+.TP
+.B \-v
+prints version information to stderr, then exits.
+
+.SH FILES
+.TP
+.FN /tmp/.ixp-$USER/wmii\-$WMII_IDENT
+this file is the default socket file used by
+.B wmii.
+.TP
+.FN $HOME/.wmii/rc [start|stop]
+this file is executed when
+.B wmii
+starts up or shuts down. If it is not present,
+.B wmii
+executes
+.FN $WMII_CONFDIR/rc [start|stop]
+as fallback.
+The rc script is used to customize and setup
+.B wmii
+beside its components to match the users needs.
+It can be a simple shell script, a native binary or whatever executable.
+The only condition is, that it understands the command line arguments
+.IR start
+, which is provided while startup and
+.IR stop
+, which is provided on shutdown.
+For details about the shipped default rc configuration system, see
+.BR wmii.rc (5).
+
+.SH STRUCTURE
+The structure of
+.B wmii
+consists of following objects which are described in more detail.
+.TP
+.B Display
+The display is a running X server which consists of at least one
+.B Screen (Monitor),
+.B Keyboard,
+and the
+.B Mouse.
+Applications with X11 support can connect to such X server display in
+order to be used.
+.TP
+.B Screen (Monitor)
+A screen is the physical device which displays a part or the whole
+display driven by the X server. Each screen consists of a root window
+which matches the physical conditions the X server is configured to
+drive the graphics adaptor and the connected screen, such as color
+depth and resolution.
+.TP
+.B (Root) Window
+A window is a rectangular area which is drawn by the X server. A root
+window is the complete drawable area of a screen. Root windows are
+top-level windows which are always at the most-background position. If
+you have set a wallpaper, the root window displays the wallpaper. 
+All other windows are children of the root window. Thus, windows of X
+clients, frames surrounding them and bars are all windows.
+.TP
+.B Client
+A client is the window provided by X applications (clients) without the
+surrounding frame. There're X clients supported, such as xmms, which
+request not to be surrounded by a frame, those are called borderless.
+.TP
+.B Frame
+A frame is a parent window of a client or of nested frames in a layout.
+Mostly a frame consists of a border and a titlebar. The titlebar
+provides tabs, if the frame contains nested frames, otherwise it shows the title
+of the surrounded client.
+.TP
+.B Layout
+A layout defines how to arrange nested frames of a frame. See
+CUSTOMIZATION section for further details about how such definitions look
+like.
+.TP
+.B Page
+A page is a container of the size of the root window which contains
+nested frames. It can be compared to workspaces in other window
+managers, but with the exception, that a page behaves very similiar to a
+frame, except that it reuses the root window as frame window.
+.TP
+.B Action
+An action is an internal interface command or an external process call
+in order to reach a specific window management result, ie resizing a
+frame or launching a terminal.
+
+.SH CUSTOMIZATION
+.B wmii
+is customized through the rc script, which manipulates the namespace its
+fileserver provides to other processes. This namespace can be accessed
+using the
+.BR wmir (1)
+utility. The default rc script uses this utility to setup wmii and its
+components.
+.P
+A namespace is a filesystem structure consisting of files
+and directories, which is specified by its underlying fileserver
+process, like 
+.B wmii.
+Such
+namespaces can be bound (mounted) to userdefined namespaces using the
+.BR wmifs (1)
+utility. In the default rc script the namespace provided by wmii, is
+bound to
+.FN /wmii
+.P
+There are four actions provided by the
+.BR wmir (1)
+utility to manipulate your namespace:
+.BR create ,
+.BR remove ,
+.BR write ,
+and
+.BR read .
+.P
+
+.SH AUTHOR
+Copyright \(co 2003 - 2005 by Anselm R. Garbe <garbeam (at) gmail (dot) com>
+.SH SEE ALSO
+.BR wmibar (1),
+.BR wmifs (1),
+.BR wmimenu (1),
+.BR wmikeys (1),
+.BR wmiplumb (1),
+.BR wmir (1),
+.BR wmiwarp (1),
+.BR wmii.rc (5).

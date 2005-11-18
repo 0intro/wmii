@@ -1,0 +1,332 @@
+/*
+ * (C)opyright MMIV-MMV Anselm R. Garbe <garbeam at gmail dot com>
+ * See LICENSE file for license details.
+ */
+
+#include <stdio.h>
+#include <X11/Xutil.h>
+
+#include "cext.h"
+#include "wmii.h"
+
+/* array indexes of page file pointers */
+typedef enum {
+	P_PREFIX,
+	P_FLOATING_PREFIX,
+	P_FLOATING_SELECTED,
+	P_FLOATING_LAYOUT,
+	P_MANAGED_PREFIX,
+	P_MANAGED_SELECTED,
+	P_MANAGED_LAYOUT,
+	P_MANAGED_SIZE,
+	P_CTL,
+	P_NAME,
+	P_MODE,
+	P_AUTO_DESTROY,
+	P_LAST
+}               PageIndexes;
+
+/* array indexes of frame file pointers */
+typedef enum {
+	F_PREFIX,
+	F_NAME,
+	F_CLIENT_PREFIX,
+	F_CLIENT_SELECTED,
+	F_CTL,
+	F_SIZE,
+	F_BORDER_W,
+	F_TAB_H,
+	F_HANDLE_INC,
+	F_LOCKED,
+	F_SELECTED_BG_COLOR,
+	F_SELECTED_TEXT_FONT,
+	F_SELECTED_FG_COLOR,
+	F_SELECTED_BORDER_COLOR,
+	F_NORMAL_BG_COLOR,
+	F_NORMAL_TEXT_FONT,
+	F_NORMAL_FG_COLOR,
+	F_NORMAL_BORDER_COLOR,
+	F_EVENT_B2PRESS,
+	F_EVENT_B3PRESS,
+	F_EVENT_B4PRESS,
+	F_EVENT_B5PRESS,
+	F_LAST
+}               FrameIndexes;
+
+/* array indexes of client file pointers */
+typedef enum {
+	C_PREFIX,
+	C_ID,
+	C_NAME,
+	C_CLASS,
+	C_INSTANCE,
+	C_LAST
+}               ClientIndexes;
+
+/* array indexes of core file pointers */
+typedef enum {
+	CORE_CTL,
+	CORE_DETACHED_FRAME,
+	CORE_DETACHED_CLIENT,
+	CORE_TRANS_COLOR,
+	CORE_PAGER_SEL_BG_COLOR,
+	CORE_PAGER_NORM_BG_COLOR,
+	CORE_PAGER_SEL_BORDER_COLOR,
+	CORE_PAGER_NORM_BORDER_COLOR,
+	CORE_PAGER_SEL_TEXT_COLOR,
+	CORE_PAGER_SEL_TEXT_FONT,
+	CORE_PAGER_NORM_TEXT_COLOR,
+	CORE_PAGER_NORM_TEXT_FONT,
+	CORE_PAGER_SEL_CLIENT_COLOR,
+	CORE_PAGER_NORM_CLIENT_COLOR,
+	CORE_PAGER_SEL_CTEXT_COLOR,
+	CORE_PAGER_SEL_CTEXT_FONT,
+	CORE_PAGER_NORM_CTEXT_COLOR,
+	CORE_PAGER_NORM_CTEXT_FONT,
+	CORE_PAGER_SEL_CBORDER_COLOR,
+	CORE_PAGER_NORM_CBORDER_COLOR,
+	CORE_PAGE_MANAGED_SIZE,
+	CORE_SNAP_VALUE,
+	CORE_PAGE_SELECTED,
+	CORE_PAGE_LAYOUT,
+	CORE_PAGE_TILE_WIDTH,
+	CORE_EVENT_PAGE_UPDATE,
+	CORE_EVENT_CLIENT_UPDATE,
+	CORE_LAST
+}               CoreIndexes;
+
+#define PROTO_DEL              1
+#define DEFAULT_BORDER_W       "3"
+#define DEFAULT_TAB_H          "16"
+#define DEFAULT_LAYOUT         "tiled"
+#define GAP 5
+
+#define ROOT_MASK              (SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask)
+#define CLIENT_MASK          (SubstructureNotifyMask | PropertyChangeMask | EnterWindowMask)
+
+typedef struct Layout Layout;
+typedef struct LayoutImpl LayoutImpl;
+typedef struct Frame Frame;
+typedef struct Client Client;
+typedef struct Page Page;
+
+/* new layout interface:
+ * /page/[1..n]/0/ floating space
+ * /page/[1..n]/[1..n]/ layout space
+ *
+ * CORE:
+ * 	Page **pages;
+ * 	Client **clients; -- for event lookup
+ * 	Frames **frames; -- for event lookup
+ *
+ * PAGE:
+ * 	int sel_layout;
+ * 	Layout **layout; -- layout[0] == floating
+ *
+ * LAYOUT:
+ * 	Frame **stack;
+ * 	Frame **frames;
+ *
+ * FRAME:
+ * 	Client **stack;
+ * 	Client **clients;
+ *
+ * CLIENT:
+ * 	Frame *frame;
+ *
+ */
+
+struct LayoutImpl {
+	char           *name;
+	void            (*init) (Page *, int argc, char **argv);	/* called on new layout */
+	void            (*deinit) (Page *);	/* called when layout gets
+						 * released */
+	void            (*arrange) (Page *);	/* called when area is
+						 * resized */
+	void            (*attach) (Page *, Client *);	/* called on attach */
+	void            (*detach) (Page *, Client *, int, int);	/* called on detach */
+	void            (*resize) (Frame *, XRectangle *, XPoint * pt);	/* called after resize */
+	void            (*aux) (Frame *, char *);	/* auxillary extension
+							 * for layout specific
+							 * stuff */
+};
+
+struct Layout {
+	char           *name;
+	void            (*init) (Page *);	/* called on new layout */
+	void            (*deinit) (Page *);	/* called when layout gets
+						 * released */
+	void            (*arrange) (Page *);	/* called when area is
+						 * resized */
+	void            (*manage) (Frame *);	/* called on attach */
+	void            (*unmanage) (Frame *);	/* called on detach */
+	void            (*resize) (Frame *, XRectangle *, XPoint * pt);
+	/* called after resize/move */
+	Frame          *(*select) (Frame *, char *);	/* called to select a
+							 * frame */
+};
+
+struct Page {
+	Client        **clients;
+	Frame         **floating;
+	Frame         **managed;
+	Frame         **floating_stack;
+	Frame         **managed_stack;
+	XRectangle      managed_rect;
+	File           *files[P_LAST];
+	Layout         *layout;
+	void           *aux;	/* free pointer for layout backends */
+};
+
+struct Frame {
+	int             id;
+	int             floating;
+	Window          win;
+	GC              gc;
+	XRectangle      managed_rect;
+	XRectangle      floating_rect;
+	XRectangle      rect;
+	Cursor          cursor;
+	Client        **clients;
+	int             sel;
+	File           *files[F_LAST];
+	Page           *page;
+	Page           *before_max;
+	void           *aux;	/* free pointer for layout backends */
+};
+
+struct Client {
+	int             id;
+	int             proto;
+	unsigned int    border;
+	Window          win;
+	Window          trans;
+	XRectangle      rect;
+	XSizeHints      size;
+	Frame          *frame;
+	File           *files[C_LAST];
+};
+
+/* global variables */
+Display        *dpy;
+IXPServer      *ixps;
+int             screen_num;
+Window          root;
+Window          transient;
+XRectangle      rect;
+Client        **detached;
+Page          **pages;
+int             sel_page;
+Frame         **frames;
+Client        **clients;
+XColor          xorcolor;
+GC              xorgc;
+GC              transient_gc;
+Client         *sel;
+Layout        **layouts;
+
+Atom            wm_state;
+Atom            wm_change_state;
+Atom            wm_protocols;
+Atom            wm_delete;
+Atom            motif_wm_hints;
+Atom            net_wm_desktop;
+
+Cursor          normal_cursor;
+Cursor          resize_cursor;
+Cursor          move_cursor;
+Cursor          drag_cursor;
+Cursor          w_cursor;
+Cursor          e_cursor;
+Cursor          n_cursor;
+Cursor          s_cursor;
+Cursor          nw_cursor;
+Cursor          ne_cursor;
+Cursor          sw_cursor;
+Cursor          se_cursor;
+
+/* default file pointers */
+File           *defaults[F_LAST];
+File           *core_files[CORE_LAST];
+
+unsigned int    valid_mask, num_lock_mask;
+
+/* client.c */
+Client         *alloc_client(Window w);
+void            _init_client(Client * c, XWindowAttributes * wa);
+void            free_client(Client * c);
+void            configure_client(Client * c);
+void            handle_client_property(Client * c, XPropertyEvent * e);
+void            close_client(Client * c);
+void            draw_client(Client * c);
+void            draw_clients(Frame * f);
+void            gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert);
+int             manage_class_instance(Client * c);
+void            grab_client(Client * c, unsigned long mod, unsigned int button);
+void            ungrab_client(Client * c, unsigned long mod, unsigned int button);
+void            hide_client(Client * c);
+void            show_client(Client * c);
+void            reparent_client(Client * c, Window w, int x, int y);
+
+/* core.c */
+void            invoke_core_event(File * f);
+void            run_action(File * f, void *obj, Action * acttbl);
+void            scan_wins();
+Client         *win_to_client(Window w);
+Frame          *win_to_frame(Window w);
+int             win_proto(Window w);
+int             win_state(Window w);
+void            handle_after_write(IXPServer * s, File * f);
+void            focus_page(Page * p, int raise, int down);
+void            detach(Frame * f, int client_destroyed);
+int             comp_obj(void *f1, void *f2);
+void            destroy_page(Page * p);
+void            set_client_state(Client * c, int state);
+
+/* frame.c */
+Frame          *alloc_frame(XRectangle * r, int add_frame_border, int floating);
+void            free_frame(Frame * f);
+void 
+resize_frame(Frame * f, XRectangle * r, XPoint * pt,
+	     int ignore_layout);
+void            draw_frame(Frame * f);
+void            handle_frame_buttonpress(XButtonEvent * e, Frame * f);
+void            attach_client(Client * c);
+void            attach_Cliento_frame(Frame * f, Client * c);
+void            detach_client_from_frame(Client * c, int unmapped, int destroyed);
+void            draw_tab(Frame * f, char *text, int x, int y, int w, int h, int sel);
+void            focus_client(Client * c, int raise, int up);
+int             is_managed_frame(Frame * f);
+XRectangle     *rect_of_frame(Frame * f);
+
+/* event.c */
+void            init_event_hander();
+void            check_event(Connection * c);
+
+/* mouse.c */
+void            mouse_resize(Frame * f, Align align);
+void            mouse_move(Frame * f);
+Cursor          cursor_for_motion(Frame * f, int x, int y);
+Align           cursor_to_align(Cursor cursor);
+Align           xy_to_align(XRectangle * rect, int x, int y);
+void            drop_move(Frame * f, XRectangle * new, XPoint * pt);
+
+/* page.c */
+Page           *alloc_page(char *autodestroy);
+void            free_page(Page * p);
+Frame          *get_selected(Page * p);
+int             is_selected(Frame * f);
+XRectangle     *rectangles(unsigned int *num);
+void            hide_page(Page * p);
+void            show_page(Page * p);
+void            attach_Frameo_page(Page * p, Frame * f, int managed);
+void            detach_frame_from_page(Frame * f, int ignore_focus_and_destroy);
+void            draw_page(Page * p);
+void            focus_frame(Frame * f, int raise, int up, int down);
+Layout         *get_layout(char *name);
+int             is_managed_mode(Page * p);
+void            toggle_frame(Frame * f);
+Frame          *select_floating(Page * p, Frame * f, char *what);
+
+/* layout.c */
+void            init_layouts();

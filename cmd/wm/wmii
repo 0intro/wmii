@@ -1,0 +1,43 @@
+#!9PREFIX/bin/rc
+# window manager improved 2 wrapper
+
+if(! ~ $#* 0) {
+    exec wmiiwm $*
+}
+
+if(! wmiiwm -c) {
+    exit 1  # wmiiwm is already running or $DISPLAY is unset
+}
+
+WMII_CONFDIR=CONFPREFIX/wmii-3
+OLD_PATH=$PATH
+PATH=$HOME/.wmii-3:$WMII_CONFDIR:9PREFIX/bin:$PATH
+WMII_IDENT=`{date -n}^'-'^$pid
+WMIR_SOCKET=/tmp/.ixp-$USER/wmifs-$WMII_IDENT
+
+# start window manager and utilities:
+mkdir -p /tmp/.ixp-$USER
+wmiiwm -s /tmp/.ixp-$USER/wmiiwm-$WMII_IDENT &
+wmiiwmpid=$apid
+wmifs -s /tmp/.ixp-$USER/wmifs-$WMII_IDENT &
+wmikeys -s /tmp/.ixp-$USER/wmikeys-$WMII_IDENT &
+wmibar -s /tmp/.ixp-$USER/wmibar-$WMII_IDENT &
+wmimenu -s /tmp/.ixp-$USER/wmimenu-$WMII_IDENT &
+sleep 1
+
+# mount ixp file systems:
+wmir write /ctl 'bind /wm /tmp/.ixp-'^$USER/wmiiwm-$WMII_IDENT
+wmir write /ctl 'bind /bar /tmp/.ixp-'^$USER/wmibar-$WMII_IDENT
+wmir write /ctl 'bind /menu /tmp/.ixp-'^$USER/wmimenu-$WMII_IDENT
+wmir write /ctl 'bind /keys /tmp/.ixp-'^$USER/wmikeys-$WMII_IDENT
+
+# display the wmii introduction if necessary:
+if(mkdir $HOME/.wmii-3 >[2]/dev/null) {
+    welcome &
+}
+
+# run configuration:
+wmirc &
+
+# wait for wmiiwm's termination:
+wait $wmiiwmpid

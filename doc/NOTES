@@ -1,0 +1,198 @@
+Development notes of wmii
+===============================================
+Last change: 2005-06-29, garbeam
+
+
+Audience
+--------
+This document is intended to describe the architectural decisions and
+concepts of the wmii development. It is primary written for developers.
+
+
+Motivation
+----------
+There're several reasons for rewriting wmi:
+
+1. Monolithic object-oriented design
+wmi consisted of a single binary which included all components we know,
+the window manager itself, three different bars, a shortcut box and the
+slot. Monolithic designs provide some advantages (no shared memory
+needed between the different components, special optimizations possible),
+but they lead to high coupling (code overhead) and reduce maintainability.
+
+2. The XTextProperty based remote interface.
+Originally the idea of wmiremote was derived from larswm and is based on
+XTextProperties, which suffer from reliability and correct order under
+high system load (maybe due to bugs in X itself). But for the context of
+wmi they just work and do their job fine. However, a guy called Uriel
+came up one day in #wmi IRC channel and asked to generalize the
+interface and change its property-based character to a file input/output
+interface similar to the 9p protocol of plan9.
+In long discussions we agreed and tried a prototypical implementation in
+wmi, which can be found between revisions 640-735 of the wmi Subversion
+repository.
+
+3. The wmi configuration interface lacked on-the-fly changes
+If a user wanted to change a setting, he had to restart wmi. As
+workaround, which produced much complexity, some convenience actions like
+create-workspace or bind-shortcut have been implemented, that the user
+was able to change a subset of often needed things on-the-fly. Anyway, this
+sucked a lot and made wmi less attractive. Within the above revisions we
+also implemented prototypical support for on-the-fly changes in wmi.
+
+4. Software law
+However the prototypical implementation was very time-consuming without
+stable and usable results (in wmi Subversion repository they can be
+found in trunk/current/wmi). Thus we realized, that wmi itself was
+a prototype only around end of September 2004. Originally the
+prototypical changes between revisions 640-735 were intended to be used
+in wmi-10, but they changed things to deep. Thus wmii was born.
+
+
+Architecture
+------------
+To solve the above issues found in wmi are the requirements for wmii:
+
+1. Modularized design
+wmii separates all different components into different binaries. We
+evaluated the dlopen() mechanism to load modules dynamically (like ion
+does), but skipped that for stability reasons (one single invalid memory
+access would crash the whole application in dlopen() world).
+To share code between components we separated also two libraries,
+which are initially written for wmii, and most wmii components link
+statically against them.
+The components and libraries of wmii look as follows:
+
+    * libixp        (remote interface library)
+    * liblitz       (non-wimp GUI-toolkit library)
+    * wmii          (core WM)
+    * wmibar        (a generic bar)
+    * wmiinput      (input bar)
+    * wmir          (remote interface client)
+    * wmikeys       (shortcut handler)
+
+The modularization has been chosen by two different point of views:
+a) The separation of independent tasks, which means that a pager or
+input bar should be independent from a window manager itself.
+b) The separation of technically independent stuff, e.g. managing windows
+is completely independent from shortcut handling - in X world at least.
+
+The libixp is described below.
+
+The liblitz contains primary all drawing code, which is used by
+all separated components, and provides some util functions.
+If you implement a function within a wmii component, first ask yourself,
+if that function would make sense also in other components, if so,
+export it to liblitz, the non-wimp GUI toolkit.
+
+2. Remote interface
+The remote interface is implemented with the new libixp library, which
+is independent from all other parts of wmii and provides a client/server
+API for a userland memory filesystem with a similar approach as 9p
+server- and clients of the plan9 operating system. 
+An IXP server provides and manages a memory file system which is accessed
+concurrently by several clients over a UNIX socket file. All above wmii
+components, except wmir, are IXP servers. Since the IXP server
+dispatches its connections with a select() based loop, it also
+represents the X event loop for above components, because the
+ConnectionNumber(X11) is the file descriptor of a connection to the X
+server. If requested, the IXP server also selects() for file descriptors
+provided by the server implementing developer and runs appropriate read()
+and write() callbacks. In above components we need only a read()
+callback for the ConnectionNumber, because the event handling of X is
+single-directional and awakes if X writes data to that file descriptor.
+The file system what the server manages, is capable to manage arbitrary
+length paths, infinite files (as long as memory is available), and byte
+content of files through following functions:
+
+    * create        (creates file/path)
+    * remove        (removes file/path)
+    * open          (opens file)
+    * read          (reads opened file)
+    * write         (writes opened file)
+    * close         (closes opened file)
+
+Processes which implement such a file server can access the memory file
+system explicitly, which is done by all above components for
+performance reasons. Because the server handles all accesses
+sequentially there is no race condition.
+
+An IXP client, like wmir, accesses an IXP server remotely to perform
+above functions. The wmir of wmii is not allowed to create or to remove
+files/paths, because all components of wmii handle file creation and
+destruction internally, because they are IXP servers and can do so.
+But that is only a special case. In general each client is capable to
+request the server to create or remove files.
+Not allowing all IXP functions to wmir is easy to understand, because 
+the problematic of accidentally removals of important files,
+which guarantees the functionality of wmii components, is prevented.
+If for example an IXP client would request to remove / in wmii, wmii
+would crash immediately, because it won't be able to read its needed
+files.
+
+As you might notice, libixp provides accessing shared memory through a
+decent file input/output based interface between an IXP server and IXP
+clients, which is used for configuration and scripting. To get further
+details about IXP, start with libixp/libixp.h.
+
+3. Configuration
+The above described remote interface is used for configuration. The idea
+is very similar to the procfs of Linux and other Unices which is
+accessed to configure the kernel. The above IXP servers provide following 
+special file systems which are used for configuration and can be
+explored with:
+
+wmir -s $HOME/.wmii/ixp/<socket file> read <path>
+
+e.g.
+
+wmir -s $HOME/.wmii/ixp/wmii-:0 read /
+
+Reading a path which is no file, returns the contents of a directory. In
+IXP there's no differentiation between files and directories. Whether a
+file contains content (byte data) or it contains files (you can compare
+the term 'file' in IXP to inodes in UNIX world).
+
+Note: By default all wmi components use a socket file in
+$HOME/.wmii/ixp/<component>-$DISPLAY. That arose some issues with the
+$DISPLAY variable, because it is on X startup mostly set to ':0'
+(':<display number>'), but if wmii runs and you invoke terms it is set
+to the screen which is focused (important for multihead configurations),
+that means that a ':0.<screen number>' is appended. Thus reading simply
+using $HOME/.wmii/ixp/<component>-$DISPLAY might fail, because of the
+appended '.<screen number>' - keep that in mind!
+
+Each server developer decides by itself how its file system should look
+like to configure it. A very basic configuration interface filesystem
+can be found in wmipager, the most complex one can be found in wmii.
+
+4. Software law
+Yes, wmi was implemented with C++, but wmii is implemented with C. Most
+people are surprised about that fact. But there're several reasons for
+this. Most are rarely rational, but there're arguable ones:
+
+    * C code compiles faster
+    * all dependencies (Xlib, libc, ...) are implemented with C and
+      don't provide an object oriented API
+    * C code produces smaller binaries
+
+One design goal of wmii is to win the challenge of simplicity, which
+means that our upper boundary of code size is 10.000 SLOC (including
+above components, libwmii and libixp).
+
+
+Style guide
+-----------
+We use the traditional Unix-style from Bell Labs in the source code.
+We only comment things which are hard to understand or not obvious.
+
+Technical Details
+-----------------
+The window management of wmii conforms to the ICCCM specification,
+although client supplied icons and iconified window states are not
+handled for simplicity reasons and because they don't fit well with the
+tiled window management.
+Apart from this, wmii conforms partly to the EWMH specification to fit
+well with the requirements of more recent applications in the area of
+the KDE and Gnome desktop, although to fulfill these hints are no primary
+target of wmii's window management capabilities.

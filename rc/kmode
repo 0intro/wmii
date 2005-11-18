@@ -1,0 +1,11 @@
+#!9PREFIX/bin/rc
+# activate shortcuts of the given mode
+
+wmir write /keys/grab-keyb 0
+wmir write /keys/lookup /mode/$1
+
+plab_cmd=`{wmir read /wm/event/page-update | sed -e 's/\\//'}
+if (! ~ $#plab_cmd 0) eval $"plab_cmd
+
+#wmir write /bar/$plab/data \
+#`{wmir read /bar/$plab/data | sed -e 's/.$/'^`{echo $2 | cut -b1}^'/'}

@@ -1,0 +1,92 @@
+3 - (20051101): Tini
+
+2 - (20050701): Boyd
+  * new sloppy focus
+  * new ahwm-alike moving and resizing of frames
+  * new tabbing through un-/locking frames
+  * new builtin pager layer
+  * new builtin icon layer
+  * new layers per page:
+    - floating layercontains floating frames
+    - managed layer contains tiled frames
+  * new native layout mechanism: C interface implements functions:
+    init, deinit, manage, unmanage, resize, select
+  * new default layouts: tiled, float, grid, vsplit
+  * renamed wmiinput into wmimenu, several cleanups and added
+    double-buffered rendering
+  * changed wmikeys to allow grabbing the keyboard for special modes
+    like resize mode, move mode
+  * changed wmibar to calculate label sizes dynamically and added
+    double-buffered rendering
+  * removed limited generic layout mechanism
+  * removed nesting from layout mechanism
+  * fixed following issues:
+    - http://wmi.modprobe.de/index.php/PITS/00001
+    - http://wmi.modprobe.de/index.php/PITS/00002
+    - http://wmi.modprobe.de/index.php/PITS/00003
+    - http://wmi.modprobe.de/index.php/PITS/00004
+    - http://wmi.modprobe.de/index.php/PITS/00005
+    - http://wmi.modprobe.de/index.php/PITS/00006
+    - http://wmi.modprobe.de/index.php/PITS/00007
+    - http://wmi.modprobe.de/index.php/PITS/00008
+    - http://wmi.modprobe.de/index.php/PITS/00009
+    - http://wmi.modprobe.de/index.php/PITS/00010
+    - http://wmi.modprobe.de/index.php/PITS/00011
+    - http://wmi.modprobe.de/index.php/PITS/00012
+    - http://wmi.modprobe.de/index.php/PITS/00013
+    - http://wmi.modprobe.de/index.php/PITS/00014
+    - http://wmi.modprobe.de/index.php/PITS/00015
+    - http://wmi.modprobe.de/index.php/PITS/00016
+    - http://wmi.modprobe.de/index.php/PITS/00017
+    - http://wmi.modprobe.de/index.php/PITS/00018
+    - http://wmi.modprobe.de/index.php/PITS/00019
+    - http://wmi.modprobe.de/index.php/PITS/00020
+    - http://wmi.modprobe.de/index.php/PITS/00021
+    - http://wmi.modprobe.de/index.php/PITS/00022
+    - http://wmi.modprobe.de/index.php/PITS/00023
+    - http://wmi.modprobe.de/index.php/PITS/00024
+    - http://wmi.modprobe.de/index.php/PITS/00025
+    - http://wmi.modprobe.de/index.php/PITS/00026
+    - http://wmi.modprobe.de/index.php/PITS/00027
+    - http://wmi.modprobe.de/index.php/PITS/00028
+    - http://wmi.modprobe.de/index.php/PITS/00029
+    - http://wmi.modprobe.de/index.php/PITS/00030
+    - http://wmi.modprobe.de/index.php/PITS/00031
+    - http://wmi.modprobe.de/index.php/PITS/00032
+    - http://wmi.modprobe.de/index.php/PITS/00033
+    - http://wmi.modprobe.de/index.php/PITS/00034
+    - http://wmi.modprobe.de/index.php/PITS/00035
+    - http://wmi.modprobe.de/index.php/PITS/00036
+    - http://wmi.modprobe.de/index.php/PITS/00037
+    - http://wmi.modprobe.de/index.php/PITS/00038
+    - http://wmi.modprobe.de/index.php/PITS/00039
+    - http://wmi.modprobe.de/index.php/PITS/00040
+    - http://wmi.modprobe.de/index.php/PITS/00041
+    - http://wmi.modprobe.de/index.php/PITS/00042
+    - http://wmi.modprobe.de/index.php/PITS/00043
+    - http://wmi.modprobe.de/index.php/PITS/00044
+    - http://wmi.modprobe.de/index.php/PITS/00045
+    - http://wmi.modprobe.de/index.php/PITS/00046
+    - http://wmi.modprobe.de/index.php/PITS/00047
+    - http://wmi.modprobe.de/index.php/PITS/00048
+    - http://wmi.modprobe.de/index.php/PITS/00049
+    - http://wmi.modprobe.de/index.php/PITS/00050
+    - http://wmi.modprobe.de/index.php/PITS/00051
+    - http://wmi.modprobe.de/index.php/PITS/00052
+    - http://wmi.modprobe.de/index.php/PITS/00053
+
+1.1 - (20050613): Zadkiel
+  * fixed following issues:
+    - http://wmi.modprobe.de/index.php/PITS/00001
+    - http://wmi.modprobe.de/index.php/PITS/00004
+    - http://wmi.modprobe.de/index.php/PITS/00007
+    - http://wmi.modprobe.de/index.php/PITS/00033
+    - http://wmi.modprobe.de/index.php/PITS/00019
+    - http://wmi.modprobe.de/index.php/PITS/00028
+    - http://wmi.modprobe.de/index.php/PITS/00034
+    - http://wmi.modprobe.de/index.php/PITS/00039
+    - http://wmi.modprobe.de/index.php/PITS/00027
+    - http://wmi.modprobe.de/index.php/PITS/00032
+
+1 - (20050601): Uriel
+  initial release

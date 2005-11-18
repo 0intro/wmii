@@ -1,0 +1,95 @@
+.TH WMII 1 wmii-3
+.SH NAME
+wmii \- window manager improved 2
+.SH DESCRIPTION
+.SS Overview
+.BR wmii (1)
+is a script that launches the
+.B wmii
+window manager and its various utilities and takes care that they are
+configured for use.
+.SS Actions
+An action is a script written for the rc shell, but it can actually be
+any executable file.  It is executed usually by selecting it from the
+actions menu.
+You can customize an action by copying it from the global action
+directory CONFPREFIX/wmii-3 to $HOME/.wmii-3 and then editing the copy to
+fit your needs.  Of course you can also create your own actions there; make
+sure that they are executable.
+.P
+Here is a list of the default actions:
+.TP 2
+extern <cmd>
+clean the environment and execute the given command
+.TP 2
+kmode <mode>
+activate shortcuts of the given mode
+.TP 2
+quit
+quit wmii
+.TP 2
+status
+periodically print date and load average to the bar
+.TP 2
+welcome
+display a welcome message that contains the wmii tutorial
+.TP 2
+wmirc
+configure wmii
+.SS Configuration
+If you feel the need to change the default configuration, then customize (as
+described above) the
+.B wmirc
+action.  This action is executed at the end of the
+.BR wmii (1)
+script and does all the work of setting up the window manager, the key
+bindings, the bar labels, etc.
+.SH FILES
+.TP
+/tmp/.ixp-$USER
+Directory where the socket files are stored.
+.TP
+CONFPREFIX/wmii-3
+Global action directory.
+.TP
+$HOME/.wmii-3
+User-specific action directory.  Actions are first searched here.
+.SH ENVIRONMENT
+.TP
+HOME, USER
+See the section
+.B FILES
+above.
+.P
+The following variables are set and exported within
+.BR wmii (1)
+and thus can be used in actions.
+.TP
+OLD_PATH
+PATH as it was before
+.BR wmii (1)
+added the local and global action directory and the location where the 9base
+tools reside.  The
+.B wmire
+action resets PATH and removes OLD_PATH before executing a command.
+.TP
+WMII_CONFDIR
+Global action directory.
+.TP
+WMII_IDENT
+Unique identifier for the
+.BR wmii (1)
+session.  Part of the socket file names.
+.TP
+WMIR_SOCKET
+Socket file of
+.BR wmifs (1).
+Used by
+.BR wmir (1).
+.SH SEE ALSO
+.BR wmibar (1),
+.BR wmifs (1),
+.BR wmiiwm (1),
+.BR wmikeys (1),
+.BR wmimenu (1),
+.BR wmir (1)

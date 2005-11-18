@@ -1,0 +1,38 @@
+.TH WMIFS 1 wmii-3
+.SH NAME
+wmifs \- window manager improved 2 filesystem
+.SH SYNOPSIS
+.B wmifs
+.B \-s
+.I socketfile
+.SH DESCRIPTION
+.SS Overview
+.B wmifs
+is a socket-based fileserver which is used for binding other fileserver
+filesystems to a specific namespace. It routes filesystem accesses to
+the specific fileserver and behaves to the outside as one master
+filesystem.
+.SS Options
+.TP
+.BI \-s " socketfile"
+specifies the socketfile that
+.B wmifs
+should create.
+.TP
+.B \-v
+prints version information to stderr, then exits.
+.SS Customization
+.B wmifs
+is customized through manipulating its filesystem namespace.
+In the default setup of
+.BR wmii (1)
+the namespace of
+.B wmifs
+can be found in /.
+.SH SEE ALSO
+.BR wmibar (1),
+.BR wmii (1),
+.BR wmiiwm (1),
+.BR wmikeys (1),
+.BR wmimenu (1),
+.BR wmir (1)

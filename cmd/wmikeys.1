@@ -1,0 +1,45 @@
+.TH WMIKEYS 1 wmii-3
+.SH NAME
+wmikeys \- window manager improved 2 keys
+.SH SYNOPSIS
+.B wmikeys
+.B \-s
+.I socketfile
+.SH DESCRIPTION
+.SS Overview
+.B wmikeys
+is a generic, highly customizable, and efficient key grabbing utility for the
+X Window System, originally designed for
+.BR wmii (1).
+It is similar to xbindkeys, but provides more flexibility and comes
+with equivalent features like the ratpoison keyboard control allows.
+It supports arbitrary, user defined shortcuts which are bound to
+arbitrary actions.
+Like wmii,
+.B wmikeys
+also implements a socket-based fileserver, which is accessed to configure and
+interact with other components.
+.SS Options
+.TP
+.BI \-s " socketfile"
+specifies the socketfile that
+.B wmikeys
+should create.
+.TP
+.B \-v
+prints version information to stderr, then exits.
+.SS Customization
+.B wmikeys
+is customized through manipulating its filesystem namespace.
+In the default setup of
+.BR wmii (1)
+the namespace of
+.B wmikeys
+can be found in /keys.
+.SH SEE ALSO
+.BR wmibar (1),
+.BR wmifs (1),
+.BR wmii (1),
+.BR wmiiwm (1),
+.BR wmimenu (1),
+.BR wmir (1)

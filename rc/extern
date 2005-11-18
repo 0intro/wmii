@@ -1,0 +1,15 @@
+#!9PREFIX/bin/rc
+# clean the environment and execute the given command
+
+PATH=$OLD_PATH
+OLD_PATH=()
+wmiiwmpid=()
+apid=()
+home=()
+ifs=()
+pid=()
+prompt=()
+rcname=()
+status=()
+
+exec $*
