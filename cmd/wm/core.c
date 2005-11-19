@@ -36,12 +36,6 @@ Action          core_acttbl[] = {
 	{0, 0}
 };
 
-int 
-comp_obj(void *c1, void *c2)
-{
-	return c1 == c2;
-}
-
 void 
 run_action(File * f, void *obj, Action * acttbl)
 {

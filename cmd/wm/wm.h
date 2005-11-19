@@ -243,7 +243,6 @@ int             win_state(Window w);
 void            handle_after_write(IXPServer * s, File * f);
 void            focus_page(Page * p, int raise, int down);
 void            detach(Frame * f, int client_destroyed);
-int             comp_obj(void *f1, void *f2);
 void            destroy_page(Page * p);
 void            set_client_state(Client * c, int state);
 
