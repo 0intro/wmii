@@ -207,7 +207,6 @@ run()
 	pages = 0;
 	layouts = 0;
 	sel = 0;
-	sel_client = 0;
 
 	init_atoms();
 	init_cursors();

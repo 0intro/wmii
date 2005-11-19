@@ -396,8 +396,9 @@ icons(void *obj, char *cmd)
 static void 
 _close_client(void *obj, char *cmd)
 {
-	if (clients && clients[sel_client])
-		close_client(clients[sel_client]);
+	Frame *f = pages ? SELFRAME(pages[sel]) : 0;
+    if (f->clients[f->sel])
+		close_client(f->clients[f->sel]);
 }
 
 static void 

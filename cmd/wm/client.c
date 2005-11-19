@@ -250,7 +250,7 @@ draw_client(Client * c)
 			 && f->clients[f->sel] == c);
 	} else
 		draw_tab(f, c->files[C_NAME]->content, i * tw, 0, tw, tabh,
-			 is_selected(f) && f->clients[f->sel] == c);
+			 ISSELFRAME(f) && f->clients[f->sel] == c);
 }
 
 void 
@@ -269,12 +269,12 @@ draw_clients(Frame * f)
 		if (!f->clients[i + 1]) {
 			int             xoff = i * tw;
 			draw_tab(f, f->clients[i]->files[C_NAME]->content,
-			  xoff, 0, frect->width - xoff, tabh, is_selected(f)
+			  xoff, 0, frect->width - xoff, tabh, ISSELFRAME(f)
 				 && f->clients[f->sel] == f->clients[i]);
 			break;
 		} else
 			draw_tab(f, f->clients[i]->files[C_NAME]->content,
-				 i * tw, 0, tw, tabh, is_selected(f)
+				 i * tw, 0, tw, tabh, ISSELFRAME(f)
 				 && f->clients[f->sel] == f->clients[i]);
 	}
 	XSync(dpy, False);
