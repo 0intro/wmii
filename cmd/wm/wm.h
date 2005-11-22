@@ -15,7 +15,6 @@ enum {
 	P_AREA_PREFIX,
 	P_SEL_AREA,
 	P_CTL,
-	P_MODE,
 	P_AUTO_DESTROY,
 	P_LAST
 };
@@ -212,7 +211,9 @@ unsigned int    valid_mask, num_lock_mask;
 void            focus_frame(Frame * f, int raise, int up, int down);
 void            destroy_area(Area *a);
 void            free_area(Area *a);
-
+void            attach_frame_to_area(Area *a, Frame * f);
+void            detach_frame_from_area(Frame * f, int ignore_focus_and_destroy);
+void            draw_area(Area *a);
 
 /* client.c */
 Client         *alloc_client(Window w);
@@ -254,12 +255,10 @@ void            resize_frame(Frame * f, XRectangle * r, XPoint * pt, int ignore_
 void            draw_frame(Frame * f);
 void            handle_frame_buttonpress(XButtonEvent * e, Frame * f);
 void            attach_client(Client * c);
-void            attach_Cliento_frame(Frame * f, Client * c);
+void            attach_client_to_frame(Frame * f, Client * c);
 void            detach_client_from_frame(Client * c, int unmapped, int destroyed);
 void            draw_tab(Frame * f, char *text, int x, int y, int w, int h, int sel);
 void            focus_client(Client * c, int raise, int up);
-int             is_managed_frame(Frame * f);
-XRectangle     *rect_of_frame(Frame * f);
 
 /* event.c */
 void            init_event_hander();
@@ -280,8 +279,6 @@ void            focus_area(Area *a, int raise, int up, int down);
 XRectangle     *rectangles(unsigned int *num);
 void            hide_page(Page * p);
 void            show_page(Page * p);
-void            attach_Frameo_page(Page * p, Frame * f, int managed);
-void            detach_frame_from_page(Frame * f, int ignore_focus_and_destroy);
 void            draw_page(Page * p);
 Layout         *get_layout(char *name);
 Frame          *select_floating(Page * p, Frame * f, char *what);

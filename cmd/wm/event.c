@@ -80,7 +80,7 @@ handle_buttonpress(XEvent * e)
 		if (c->frame) {
 			ev->state &= valid_mask;
 			if (ev->state & Mod1Mask) {
-				if (!is_managed_frame(c->frame))
+				if (!c->frame->area->page->sel)
 					XRaiseWindow(dpy, c->frame->win);
 				switch (ev->button) {
 				case Button1:

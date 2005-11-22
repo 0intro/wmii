@@ -128,9 +128,8 @@ configure_client(Client * c)
 	e.x = c->rect.x;
 	e.y = c->rect.y;
 	if (c->frame) {
-		XRectangle     *frect = rect_of_frame(c->frame);
-		e.x += frect->x;
-		e.y += frect->y;
+		e.x += c->frame->rect.x;
+		e.y += c->frame->rect.y;
 	}
 	e.width = c->rect.width;
 	e.height = c->rect.height;
@@ -231,26 +230,22 @@ draw_client(Client * c)
 	Frame          *f = c->frame;
 	unsigned int    tabh = tab_height(f);
 	int             i, size;
-	XRectangle     *frect;
 	int             tw;
 
 	if (!tabh)
 		return;
 	size = count_items((void **) f->clients);
-	frect = rect_of_frame(f);
-	tw = frect->width;
+	tw = f->rect.width;
 	if (size)
 		tw /= size;
 	for (i = 0; f->clients[i] && f->clients[i] != c; i++);
 
-	if (!f->clients[i + 1]) {
-		int             xoff = i * tw;
-		draw_tab(f, c->files[C_NAME]->content, xoff, 0,
-			 frect->width - xoff, tabh, ISSELFRAME(f)
-			 && f->clients[f->sel] == c);
-	} else
+	if (!f->clients[i + 1])
+		draw_tab(f, c->files[C_NAME]->content, i * tw, 0, f->rect.width - (i * tw), tabh,
+				ISSELFRAME(f) && f->clients[f->sel] == c);
+	else
 		draw_tab(f, c->files[C_NAME]->content, i * tw, 0, tw, tabh,
-			 ISSELFRAME(f) && f->clients[f->sel] == c);
+				ISSELFRAME(f) && f->clients[f->sel] == c);
 }
 
 void 
@@ -258,8 +253,7 @@ draw_clients(Frame * f)
 {
 	unsigned int    tabh = tab_height(f);
 	int             i, size = count_items((void **) f->clients);
-	XRectangle     *frect = rect_of_frame(f);
-	int             tw = frect->width;
+	int             tw = f->rect.width;
 
 	if (!tabh || !size)
 		return;
@@ -269,7 +263,7 @@ draw_clients(Frame * f)
 		if (!f->clients[i + 1]) {
 			int             xoff = i * tw;
 			draw_tab(f, f->clients[i]->files[C_NAME]->content,
-			  xoff, 0, frect->width - xoff, tabh, ISSELFRAME(f)
+			  xoff, 0, f->rect.width - xoff, tabh, ISSELFRAME(f)
 				 && f->clients[f->sel] == f->clients[i]);
 			break;
 		} else

@@ -14,14 +14,12 @@
 static Page     zero_page = {0};
 
 static void     select_frame(void *obj, char *cmd);
-static void     _toggle_frame(void *obj, char *cmd);
 static void     handle_after_write_page(IXPServer * s, File * f);
 static void     handle_before_read_page(IXPServer * s, File * f);
 
 /* action table for /page/?/ namespace */
 Action          page_acttbl[] = {
 	{"select", select_frame},
-	{"toggle", _toggle_frame},
 	{0, 0}
 };
 
@@ -29,59 +27,26 @@ Page           *
 alloc_page(char *autodestroy)
 {
 	Page           *p = emalloc(sizeof(Page));
-	char            buf[MAX_BUF], buf2[MAX_BUF];
+	char            buf[MAX_BUF];
 	int             id = count_items((void **) pages) + 1;
 
 	*p = zero_page;
-	p->managed_rect = rect;
-	if (core_files[CORE_PAGE_MANAGED_SIZE]->content)
-		blitz_strtorect(dpy, &rect, &p->managed_rect,
-				core_files[CORE_PAGE_MANAGED_SIZE]->content);
-
 	snprintf(buf, sizeof(buf), "/page/%d", id);
 	p->files[P_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, sizeof(buf), "/page/%d/floating", id);
-	p->files[P_FLOATING_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, sizeof(buf), "/page/%d/floating/sel", id);
-	p->files[P_FLOATING_SELECTED] = ixp_create(ixps, buf);
-	p->files[P_FLOATING_SELECTED]->bind = 1;	/* mount point */
-	snprintf(buf, sizeof(buf), "/page/%d/floating/name", id);
-	p->files[P_FLOATING_LAYOUT] = wmii_create_ixpfile(ixps, buf, "float");
-	snprintf(buf, sizeof(buf), "/page/%d/managed", id);
-	p->files[P_MANAGED_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, sizeof(buf), "/page/%d/managed/sel", id);
-	p->files[P_MANAGED_SELECTED] = ixp_create(ixps, buf);
-	p->files[P_MANAGED_SELECTED]->bind = 1;	/* mount point */
+	snprintf(buf, sizeof(buf), "/page/%d/area", id);
+	p->files[P_AREA_PREFIX] = ixp_create(ixps, buf);
+	snprintf(buf, sizeof(buf), "/page/%d/area/sel", id);
+	p->files[P_SEL_AREA] = ixp_create(ixps, buf);
+	p->files[P_SEL_AREA]->bind = 1;	/* mount point */
 	snprintf(buf, sizeof(buf), "/page/%d/ctl", id);
 	p->files[P_CTL] = ixp_create(ixps, buf);
 	p->files[P_CTL]->after_write = handle_after_write_page;
-	snprintf(buf, sizeof(buf), "/page/%d/name", id);
-	snprintf(buf2, sizeof(buf2), "%d", id);
-	p->files[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
-	snprintf(buf, sizeof(buf), "/page/%d/managed/name", id);
-	p->files[P_MANAGED_LAYOUT] =
-		wmii_create_ixpfile(ixps, buf,
-				    core_files[CORE_PAGE_LAYOUT]->content);
-	p->files[P_MANAGED_LAYOUT]->after_write = handle_after_write_page;
-	snprintf(buf, sizeof(buf), "/page/%d/mode", id);
-	p->files[P_MODE] = ixp_create(ixps, buf);
-	p->files[P_MODE]->bind = 1;
-	snprintf(buf, sizeof(buf), "/page/%d/managed/size", id);
-	p->files[P_MANAGED_SIZE] = wmii_create_ixpfile(ixps, buf, core_files[CORE_PAGE_MANAGED_SIZE]->content);
-	p->files[P_MANAGED_SIZE]->after_write = handle_after_write_page;
-	p->files[P_MANAGED_SIZE]->before_read = handle_before_read_page;
 	snprintf(buf, sizeof(buf), "/page/%d/auto-destroy", id);
 	p->files[P_AUTO_DESTROY] = wmii_create_ixpfile(ixps, buf, autodestroy);
-	p->layout = get_layout(p->files[P_MANAGED_LAYOUT]->content);
-	if (p->layout) {
-		p->layout->init(p);
-		p->files[P_MODE]->content = p->files[P_MANAGED_PREFIX]->content;
-	} else
-		p->files[P_MODE]->content = p->files[P_FLOATING_PREFIX]->content;
 	pages = (Page **) attach_item_end((void **) pages, p, sizeof(Page *));
-	sel_page = index_item((void **) pages, p);
-	core_files[CORE_PAGE_SELECTED]->content = p->files[P_PREFIX]->content;
-	invoke_core_event(core_files[CORE_EVENT_PAGE_UPDATE]);
+	sel = index_item((void **) pages, p);
+	defaults[WM_SEL_PAGE]->content = p->files[P_PREFIX]->content;
+	invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
 	return p;
 }
 
@@ -90,24 +55,12 @@ free_page(Page * p)
 {
 	pages = (Page **) detach_item((void **) pages, p, sizeof(Page *));
 	if (pages) {
-		int             i;
-		char            buf[8];
-		if (sel_page - 1 >= 0)
-			sel_page--;
+		if (sel - 1 >= 0)
+			sel--;
 		else
-			sel_page = 0;
-		for (i = 0; pages[i]; i++) {
-			snprintf(buf, sizeof(buf), "%d", i + 1);
-			free(pages[i]->files[P_PREFIX]->name);
-			pages[i]->files[P_PREFIX]->name = estrdup(buf);
-			free(pages[i]->files[P_NAME]->content);
-			pages[i]->files[P_NAME]->content = estrdup(buf);
-			pages[i]->files[P_NAME]->size = strlen(buf);
-		}
+			sel = 0;
 	}
-	if (p->layout)
-		p->layout->deinit(p);
-	core_files[CORE_PAGE_SELECTED]->content = 0;
+	defaults[WM_SEL_PAGE]->content = 0;
 	ixp_remove_file(ixps, p->files[P_PREFIX]);
 	if (ixps->errstr)
 		fprintf(stderr, "wmiiwm: free_page(): %s\n", ixps->errstr);
@@ -120,10 +73,8 @@ draw_page(Page * p)
 	int             i;
 	if (!p)
 		return;
-	for (i = 0; p->floating && p->floating[i]; i++)
-		draw_frame(p->floating[i]);
-	for (i = 0; p->managed && p->managed[i]; i++)
-		draw_frame(p->managed[i]);
+	for (i = 0; p->areas && p->areas[i]; i++)
+		draw_area(p->areas[i]);
 }
 
 XRectangle     *
@@ -155,29 +106,6 @@ rectangles(unsigned int *num)
 	}
 	*num = j;
 	return result;
-}
-
-static void 
-_toggle_frame(void *obj, char *cmd)
-{
-	Page           *p = obj;
-	Frame          *f;
-	if (!p || !p->layout)
-		return;
-	f = get_selected(p);
-	if (!f)
-		return;
-	toggle_frame(f);
-}
-
-static Frame   *
-select_toggled(Page * p, Frame * f)
-{
-	if (is_managed_frame(f))
-		return p->floating_stack ? p->floating_stack[0] : 0;
-	else
-		return f = p->managed_stack ? p->managed_stack[0] : 0;
-	return 0;
 }
 
 Frame          *
@@ -233,8 +161,6 @@ select_frame(void *obj, char *cmd)
 		return;
 	if (is_managed_frame(f))
 		old2 = p->managed[0];
-	if (!strncmp(cmd, "toggled", 8))
-		f = select_toggled(p, f);
 	else if (is_managed_frame(f))
 		f = p->layout->select(f, cmd);
 	else

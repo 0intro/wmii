@@ -137,17 +137,6 @@ win_to_frame(Window w)
 }
 
 void 
-toggle_frame(Frame * f)
-{
-	Page           *p = f->page;
-	int             was_managed = is_managed_frame(f);
-	detach_frame_from_page(f, 1);
-	attach_Frameo_page(p, f, !was_managed);
-	resize_frame(f, rect_of_frame(f), 0, 0);
-	draw_page(p);
-}
-
-void 
 free_frame(Frame * f)
 {
 	frames = (Frame **) detach_item((void **) frames, f, sizeof(Frame *));
@@ -159,30 +148,21 @@ free_frame(Frame * f)
 	free(f);
 }
 
-XRectangle     *
-rect_of_frame(Frame * f)
-{
-	return is_managed_frame(f) ? &f->managed_rect : &f->floating_rect;
-}
-
 void 
 focus_client(Client * c, int raise, int up)
 {
 	Frame          *f = 0;
-
-	sel = c;
-
 	/* focus client */
 	if (c) {
 		f = c->frame;
 		for (f->sel = 0; f->clients && f->clients[f->sel] != c; f->sel++);
-		f->files[F_CLIENT_SELECTED]->content = c->files[C_PREFIX]->content;
+		f->files[F_SEL_CLIENT]->content = c->files[C_PREFIX]->content;
 		if (raise)
 			XRaiseWindow(dpy, c->win);
 		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	} else
 		XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
-	invoke_core_event(core_files[CORE_EVENT_CLIENT_UPDATE]);
+	invoke_core_event(defaults[WM_EVENT_CLIENT_UPDATE]);
 	if (up && f)
 		focus_frame(f, raise, up, 0);
 }
@@ -191,55 +171,39 @@ static void
 resize_clients(Frame * f, int tabh, int bw)
 {
 	int             i;
-	XRectangle     *frect = rect_of_frame(f);
 	for (i = 0; f->clients && f->clients[i]; i++) {
 		Client         *c = f->clients[i];
 		c->rect.x = bw;
 		c->rect.y = tabh ? tabh : bw;
-		c->rect.width = frect->width - 2 * bw;
-		c->rect.height = frect->height - bw - (tabh ? tabh : bw);
+		c->rect.width = f->rect.width - 2 * bw;
+		c->rect.height = f->rect.height - bw - (tabh ? tabh : bw);
 		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y,
 				  c->rect.width, c->rect.height);
 		configure_client(c);
 	}
 }
 
-int 
-is_managed_frame(Frame * f)
-{
-	Page           *p = f->page;
-	if (p->managed) {
-		int             i;
-		for (i = 0; p->managed[i] && p->managed[i] != f; i++);
-		if (p->managed[i])
-			return 1;
-	}
-	return 0;
-}
-
 static void 
 check_dimensions(Frame * f, unsigned int tabh, unsigned int bw)
 {
-	XRectangle     *frect = rect_of_frame(f);
 	Client         *c = f->clients ? f->clients[f->sel] : 0;
-
 	if (!c)
 		return;
 
 	if (c->size.flags & PMinSize) {
-		if (frect->width - 2 * bw < c->size.min_width) {
-			frect->width = c->size.min_width + 2 * bw;
+		if (f->rect.width - 2 * bw < c->size.min_width) {
+			f->rect.width = c->size.min_width + 2 * bw;
 		}
-		if (frect->height - bw - (tabh ? tabh : bw) < c->size.min_height) {
-			frect->height = c->size.min_height + bw + (tabh ? tabh : bw);
+		if (f->rect.height - bw - (tabh ? tabh : bw) < c->size.min_height) {
+			f->rect.height = c->size.min_height + bw + (tabh ? tabh : bw);
 		}
 	}
 	if (c->size.flags & PMaxSize) {
-		if (frect->width - 2 * bw > c->size.max_width) {
-			frect->width = c->size.max_width + 2 * bw;
+		if (f->rect.width - 2 * bw > c->size.max_width) {
+			f->rect.width = c->size.max_width + 2 * bw;
 		}
-		if (frect->height - bw - (tabh ? tabh : bw) > c->size.max_height) {
-			frect->height = c->size.max_height + bw + (tabh ? tabh : bw);
+		if (f->rect.height - bw - (tabh ? tabh : bw) > c->size.max_height) {
+			f->rect.height = c->size.max_height + bw + (tabh ? tabh : bw);
 		}
 	}
 }
@@ -247,16 +211,10 @@ check_dimensions(Frame * f, unsigned int tabh, unsigned int bw)
 static void
 resize_incremental(Frame * f, unsigned int tabh, unsigned int bw)
 {
-	XRectangle     *frect = rect_of_frame(f);
 	Client         *c = f->clients ? f->clients[f->sel] : 0;
-
 	if (!c)
 		return;
-
-	/*
-	 * increment stuff, see chapter 4.1.2.3 of the Inter-Client
-	 * Communication Conventions Manual
-	 */
+	/* increment stuff, see chapter 4.1.2.3 of the ICCCM Manual */
 	if (c->size.flags & PResizeInc) {
 		int             base_width = 0, base_height = 0;
 
@@ -268,34 +226,26 @@ resize_incremental(Frame * f, unsigned int tabh, unsigned int bw)
 			base_width = c->size.min_width;
 			base_height = c->size.min_height;
 		}
-		/*
-		 * client_width = base_width + i * c->size.width_inc for an
-		 * integer i
-		 */
-		frect->width -=
-			(frect->width - 2 * bw - base_width) % c->size.width_inc;
-		frect->height -=
-			(frect->height - bw - (tabh ? tabh : bw) -
-			 base_height) % c->size.height_inc;
+		/* client_width = base_width + i * c->size.width_inc for an integer i */
+		f->rect.width -= (f->rect.width - 2 * bw - base_width) % c->size.width_inc;
+		f->rect.height -= (f->rect.height - bw - (tabh ? tabh : bw) - base_height) % c->size.height_inc;
 	}
 }
 
 void
 resize_frame(Frame * f, XRectangle * r, XPoint * pt, int ignore_layout)
 {
-	unsigned int    tabh = _strtonum(f->files[F_TAB_H]->content, 0, 30);
-	unsigned int    bw = _strtonum(f->files[F_BORDER_W]->content, 0, 10);
-	XRectangle     *frect = rect_of_frame(f);
-
+	unsigned int    tabh = tab_height(f);
+	unsigned int    bw = border_width(f);
 	/* do layout stuff if necessary */
-	if (!ignore_layout && is_managed_frame(f)) {
-		Page           *p = f->page;
-		if (p && p->layout) {
-			p->layout->resize(f, r, pt);
+	if (!ignore_layout) {
+		Area        *a = f->area;
+		if (a && a->layout) {
+			a->layout->resize(f, r, pt);
 		} else
-			*frect = *r;
+			f->rect = *r;
 	} else
-		*frect = *r;
+		f->rect = *r;
 
 	/* resize if client requests special size */
 	check_dimensions(f, tabh, bw);
@@ -304,8 +254,7 @@ resize_frame(Frame * f, XRectangle * r, XPoint * pt, int ignore_layout)
 	    && ((char *) f->files[F_HANDLE_INC]->content)[0] == '1')
 		resize_incremental(f, tabh, bw);
 
-	XMoveResizeWindow(dpy, f->win, frect->x, frect->y, frect->width,
-			  frect->height);
+	XMoveResizeWindow(dpy, f->win, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
 	resize_clients(f, (tabh ? tabh : bw), bw);
 }
 
@@ -314,8 +263,6 @@ void
 draw_tab(Frame * f, char *text, int x, int y, int w, int h, int sel)
 {
 	Draw            d = {0};
-	XFontStruct    *font = blitz_getfont(dpy, f->files[F_SELECTED_TEXT_FONT]->content);
-
 	d.drawable = f->win;
 	d.gc = f->gc;
 	d.rect.x = x;
@@ -324,26 +271,14 @@ draw_tab(Frame * f, char *text, int x, int y, int w, int h, int sel)
 	d.rect.height = h;
 	d.data = text;
 	if (sel) {
-		d.bg =
-			blitz_loadcolor(dpy, screen_num,
-				    f->files[F_SELECTED_BG_COLOR]->content);
-		d.fg =
-			blitz_loadcolor(dpy, screen_num,
-				    f->files[F_SELECTED_FG_COLOR]->content);
-		d.border =
-			blitz_loadcolor(dpy, screen_num,
-				f->files[F_SELECTED_BORDER_COLOR]->content);
+		d.bg = blitz_loadcolor(dpy, screen_num, f->files[F_SEL_BG_COLOR]->content);
+		d.fg = blitz_loadcolor(dpy, screen_num, f->files[F_SEL_FG_COLOR]->content);
+		d.border = blitz_loadcolor(dpy, screen_num, f->files[F_SEL_BORDER_COLOR]->content);
 		d.font = font;
 	} else {
-		d.bg =
-			blitz_loadcolor(dpy, screen_num,
-				      f->files[F_NORMAL_BG_COLOR]->content);
-		d.fg =
-			blitz_loadcolor(dpy, screen_num,
-				      f->files[F_NORMAL_FG_COLOR]->content);
-		d.border =
-			blitz_loadcolor(dpy, screen_num,
-				  f->files[F_NORMAL_BORDER_COLOR]->content);
+		d.bg = blitz_loadcolor(dpy, screen_num, f->files[F_NORM_BG_COLOR]->content);
+		d.fg = blitz_loadcolor(dpy, screen_num, f->files[F_NORM_FG_COLOR]->content);
+		d.border = blitz_loadcolor(dpy, screen_num, f->files[F_NORM_BORDER_COLOR]->content);
 		d.font = font;
 	}
 	blitz_drawlabel(dpy, &d);
@@ -370,42 +305,27 @@ void
 draw_frame(Frame * f)
 {
 	Draw            d = {0};
-	int             bw = _strtonum(f->files[F_BORDER_W]->content, 0, 10);
+	int             bw = border_width(f);
 	XRectangle      notch;
-	XRectangle     *frect = rect_of_frame(f);
-
 	if (bw) {
 		notch.x = bw;
 		notch.y = bw;
-		notch.width = frect->width - 2 * bw;
-		notch.height = frect->height - 2 * bw;
+		notch.width = f->rect.width - 2 * bw;
+		notch.height = f->rect.height - 2 * bw;
 		d.drawable = f->win;
 		d.gc = f->gc;
 
 		/* define ground plate (i = 0) */
-		if (is_selected(f)) {
-			d.bg =
-				blitz_loadcolor(dpy, screen_num,
-				    f->files[F_SELECTED_BG_COLOR]->content);
-			d.fg =
-				blitz_loadcolor(dpy, screen_num,
-				    f->files[F_SELECTED_FG_COLOR]->content);
-			d.border =
-				blitz_loadcolor(dpy, screen_num,
-					 f->files[F_SELECTED_BORDER_COLOR]->
-						content);
+		if (ISSELFRAME(f)) {
+			d.bg = blitz_loadcolor(dpy, screen_num, f->files[F_SEL_BG_COLOR]->content);
+			d.fg = blitz_loadcolor(dpy, screen_num, f->files[F_SEL_FG_COLOR]->content);
+			d.border = blitz_loadcolor(dpy, screen_num, f->files[F_SEL_BORDER_COLOR]->content);
 		} else {
-			d.bg =
-				blitz_loadcolor(dpy, screen_num,
-				      f->files[F_NORMAL_BG_COLOR]->content);
-			d.fg =
-				blitz_loadcolor(dpy, screen_num,
-				      f->files[F_NORMAL_FG_COLOR]->content);
-			d.border =
-				blitz_loadcolor(dpy, screen_num,
-				  f->files[F_NORMAL_BORDER_COLOR]->content);
+			d.bg = blitz_loadcolor(dpy, screen_num, f->files[F_NORM_BG_COLOR]->content);
+			d.fg = blitz_loadcolor(dpy, screen_num, f->files[F_NORM_FG_COLOR]->content);
+			d.border = blitz_loadcolor(dpy, screen_num, f->files[F_NORM_BORDER_COLOR]->content);
 		}
-		d.rect = *frect;
+		d.rect = f->rect;
 		d.rect.x = d.rect.y = 0;
 		d.notch = &notch;
 
@@ -420,8 +340,8 @@ handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 {
 	int             bindex;
 	int             size = count_items((void **) f->clients);
-	int             cindex = e->x / (rect_of_frame(f)->width / size);
-	if (!is_managed_frame(f))
+	int             cindex = e->x / f->rect.width / size;
+	if (!f->area->page->sel)
 		XRaiseWindow(dpy, f->win);
 	if (cindex != f->sel) {
 		focus_client(f->clients[cindex], 1, 0);
@@ -444,40 +364,14 @@ attach_Cliento_frame(Frame * f, Client * c)
 {
 	int             size = count_items((void **) f->clients);
 	wmii_move_ixpfile(c->files[C_PREFIX], f->files[F_CLIENT_PREFIX]);
-	f->files[F_CLIENT_SELECTED]->content = c->files[C_PREFIX]->content;
-	f->clients =
-		(Client **) attach_item_end((void **) f->clients, c,
-					    sizeof(Client *));
+	f->files[F_SEL_CLIENT]->content = c->files[C_PREFIX]->content;
+	f->clients = (Client **) attach_item_end((void **) f->clients, c, sizeof(Client *));
 	f->sel = size;
 	c->frame = f;
-	reparent_client(c, f->win,
-			_strtonum(f->files[F_BORDER_W]->content, 0, 10),
-			_strtonum(f->files[F_TAB_H]->content, 0, 30));
-	resize_frame(f, rect_of_frame(f), 0, 1);
+	reparent_client(c, f->win, border_width(f), tab_height(f));
+	resize_frame(f, &f->rect, 0, 1);
 	show_client(c);
 	focus_client(c, 1, 1);
-}
-
-static void 
-attach_client_fullscreen(Client * c)
-{
-	Page           *p;
-	Frame          *f;
-	int             bw, th;
-
-	if (pages)
-		hide_page(pages[sel_page]);
-	p = alloc_page("1");
-	c->rect = rect;
-	f = alloc_frame(&c->rect, 1, 1);
-	bw = _strtonum(f->files[F_BORDER_W]->content, 0, 10);
-	th = _strtonum(f->files[F_TAB_H]->content, 0, 30);
-	f->floating_rect.x -= bw;
-	f->floating_rect.y -= (th ? th : bw);
-	attach_Frameo_page(p, f, 0);
-	attach_Cliento_frame(f, c);
-	draw_frame(f);
-	invoke_core_event(core_files[CORE_EVENT_PAGE_UPDATE]);
 }
 
 void 
@@ -485,17 +379,8 @@ attach_client(Client * c)
 {
 	Page           *p = 0;
 	Frame          *f = 0;
-
-	/* fullscreen app support */
-	if ((c->rect.x == rect.x) && (c->rect.y == rect.y)
-	    && (c->rect.width == rect.width)
-	    && (c->rect.height == rect.height)) {
-		attach_client_fullscreen(c);
-		return;
-	}
 	if (!pages)
 		alloc_page("0");
-
 	/* transient stuff */
 	if (c && c->trans && !f) {
 		Client         *t = win_to_client(c->trans);
@@ -504,7 +389,7 @@ attach_client(Client * c)
 			f = alloc_frame(&c->rect, 1, 1);
 		}
 	}
-	p = pages[sel_page];
+	p = pages[sel];
 
 	if (!f) {
 		/* check if we shall manage it */
@@ -513,27 +398,25 @@ attach_client(Client * c)
 	}
 	if (!f) {
 		/* check for tabbing? */
-		f = get_selected(p);
-		if (f && (f->floating
-		     || (((char *) f->files[F_LOCKED]->content)[0] == '1')))
+		f = SELFRAME(p);
+		if (f && (((char *) f->files[F_LOCKED]->content)[0] == '1'))
 			f = 0;
 	}
 	if (!f)
 		f = alloc_frame(&c->rect, 1, 0);
 
-	if (!f->page)
-		attach_Frameo_page(p, f, !f->floating);
-	attach_Cliento_frame(f, c);
+	if (!f->area)
+		attach_frame_to_area(p->areas[p->sel], f);
+	attach_client_to_frame(f, c);
 	draw_frame(f);
-	invoke_core_event(core_files[CORE_EVENT_PAGE_UPDATE]);
+	invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
 }
 
 void 
 detach_client_from_frame(Client * c, int unmapped, int destroyed)
 {
 	Frame          *f = c->frame;
-	wmii_move_ixpfile(c->files[C_PREFIX],
-			  core_files[CORE_DETACHED_CLIENT]);
+	wmii_move_ixpfile(c->files[C_PREFIX], defaults[WM_DETACHED_CLIENT]);
 	c->frame = 0;
 	f->clients =
 		(Client **) detach_item((void **) f->clients, c, sizeof(Client *));
@@ -548,20 +431,18 @@ detach_client_from_frame(Client * c, int unmapped, int destroyed)
 				(Client **) attach_item_begin((void **) detached, c,
 							  sizeof(Client *));
 		}
-		reparent_client(c, root,
-			    _strtonum(f->files[F_BORDER_W]->content, 0, 10),
-			      _strtonum(f->files[F_TAB_H]->content, 0, 30));
+		reparent_client(c, root, border_width(f), tab_height(f));
 	}
 	if (f->clients) {
 		focus_client(f->clients[f->sel], 1, 1);
 		draw_frame(f);
 	} else {
-		detach_frame_from_page(f, 0);
+		detach_frame_from_area(f, 0);
 		free_frame(f);
 		if (pages)
-			focus_page(pages[sel_page], 0, 1);
+			focus_page(pages[sel], 0, 1);
 	}
-	invoke_core_event(core_files[CORE_EVENT_PAGE_UPDATE]);
+	invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
 }
 
 static void 
@@ -610,10 +491,9 @@ handle_before_read_frame(IXPServer * s, File * f)
 
 	for (i = 0; frames && frames[i]; i++) {
 		if (f == frames[i]->files[F_SIZE]) {
-			XRectangle     *frect = rect_of_frame(frames[i]);
 			char            buf[64];
-			snprintf(buf, 64, "%d,%d,%d,%d", frect->x, frect->y,
-				 frect->width, frect->height);
+			snprintf(buf, 64, "%d,%d,%d,%d", frames[i]->rect.x, frames[i]->rect.y,
+					frames[i]->rect.width, frames[i]->rect.height);
 			if (f->content)
 				free(f->content);
 			f->content = estrdup(buf);
@@ -633,25 +513,21 @@ handle_after_write_frame(IXPServer * s, File * f)
 			run_action(f, frames[i], frame_acttbl);
 			return;
 		}
-		if (f == frames[i]->files[F_TAB_H]
-		    || f == frames[i]->files[F_BORDER_W]
+		if (f == frames[i]->files[F_TAB]
+		    || f == frames[i]->files[F_BORDER]
 		    || f == frames[i]->files[F_HANDLE_INC]) {
-			if (frames[i]->page && frames[i]->page->layout) {
-				frames[i]->page->layout->arrange(frames[i]->page);
-				draw_page(frames[i]->page);
-			} else {
-				resize_frame(frames[i], rect_of_frame(frames[i]), 0, 0);
-				draw_frame(frames[i]);
+			if (frames[i]->area) {
+				frames[i]->area->layout->arrange(frames[i]->area);
+				draw_page(frames[i]->area->page);
 			}
 			return;
 		} else if (f == frames[i]->files[F_SIZE]) {
 			char           *size = frames[i]->files[F_SIZE]->content;
 			if (size && strrchr(size, ',')) {
 				XRectangle      frect;
-				frect = *rect_of_frame(frames[i]);
 				blitz_strtorect(dpy, &rect, &frect, size);
 				resize_frame(frames[i], &frect, 0, 0);
-				draw_page(frames[i]->page);
+				draw_page(frames[i]->area->page);
 			}
 			return;
 		}

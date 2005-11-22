@@ -21,14 +21,14 @@ cursor_for_motion(Frame * f, int x, int y)
 
 	/* rectangle attributes of client are used */
 	w = x < bw;
-	e = x >= rect_of_frame(f)->width - bw;
+	e = x >= f->rect.width - bw;
 	n = y < bw;
-	s = y >= rect_of_frame(f)->height - bw;
+	s = y >= f->rect.height - bw;
 
 	tw = x < (tabh ? tabh : 2 * bw);
-	te = x > rect_of_frame(f)->width - (tabh ? tabh : 2 * bw);
+	te = x > f->rect.width - (tabh ? tabh : 2 * bw);
 	tn = y < (tabh ? tabh : 2 * bw);
-	ts = s > rect_of_frame(f)->height - (tabh ? tabh : 2 * bw);
+	ts = s > f->rect.height - (tabh ? tabh : 2 * bw);
 
 	if ((w && n) || (w && tn) || (n && tw))
 		return nw_cursor;
@@ -307,7 +307,7 @@ mouse_move(Frame * f)
 	unsigned int    num;
 	unsigned int    dmask;
 	XRectangle     *rects = rectangles(&num);
-	XRectangle      frect = *rect_of_frame(f);
+	XRectangle      frect = f->rect;
 	XPoint          pt;
 
 	XQueryPointer(dpy, f->win, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
@@ -550,7 +550,7 @@ mouse_resize(Frame * f, Align align)
 	unsigned int    dmask;
 	unsigned int    num;
 	XRectangle     *rects = rectangles(&num);
-	XRectangle      frect = *rect_of_frame(f);
+	XRectangle      frect = f->rect;
 	XRectangle      origin = frect;
 
 	XQueryPointer(dpy, f->win, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);

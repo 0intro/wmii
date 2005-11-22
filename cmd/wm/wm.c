@@ -179,9 +179,7 @@ cleanup()
 		Frame          *f = c->frame;
 		if (f) {
 			gravitate(c, tab_height(f), border_width(f), 1);
-			XReparentWindow(dpy, c->win, root,
-					rect_of_frame(f)->x + c->rect.x,
-					rect_of_frame(f)->y + c->rect.y);
+			XReparentWindow(dpy, c->win, root, f->rect.x + c->rect.x, f->rect.y + c->rect.y);
 			wc.border_width = c->border;
 			XConfigureWindow(dpy, c->win, CWBorderWidth, &wc);
 		}
