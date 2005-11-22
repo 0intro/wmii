@@ -15,7 +15,6 @@ static Page     zero_page = {0};
 
 static void     select_frame(void *obj, char *cmd);
 static void     handle_after_write_page(IXPServer * s, File * f);
-static void     handle_before_read_page(IXPServer * s, File * f);
 
 /* action table for /page/?/ namespace */
 Action          page_acttbl[] = {
@@ -108,22 +107,6 @@ rectangles(unsigned int *num)
 	return result;
 }
 
-Frame          *
-select_floating(Page * p, Frame * f, char *what)
-{
-	int             idx;
-	if (!strncmp(what, "prev", 5)) {
-		idx = index_prev_item((void **) p->floating, f);
-		if (idx >= 0)
-			return p->floating[idx];
-	} else if (!strncmp(what, "next", 5)) {
-		idx = index_next_item((void **) p->floating, f);
-		if (idx >= 0)
-			return p->floating[idx];
-	}
-	return 0;
-}
-
 static void 
 center_pointer(Frame * f)
 {
@@ -131,19 +114,15 @@ center_pointer(Frame * f)
 	Window          dummy;
 	int             wex, wey, ex, ey, i;
 	unsigned int    dmask;
-	XRectangle     *r;
-
 	if (!f)
 		return;
-	r = rect_of_frame(f);
 	XQueryPointer(dpy, f->win, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
 	XTranslateCoordinates(dpy, f->win, root, wex, wey, &ex, &ey, &dummy);
-	if (blitz_ispointinrect(ex, ey, r))
+	if (blitz_ispointinrect(ex, ey, &f->rect))
 		return;
 	/* suppress EnterNotify's while mouse warping */
 	XSelectInput(dpy, root, ROOT_MASK & ~StructureNotifyMask);
-	XWarpPointer(dpy, None, f->win, 0, 0, 0, 0,
-		     r->width / 2, r->height / 2);
+	XWarpPointer(dpy, None, f->win, 0, 0, 0, 0, f->rect.width / 2, f->rect.height / 2);
 	XSync(dpy, False);
 	XSelectInput(dpy, root, ROOT_MASK);
 
@@ -152,28 +131,24 @@ center_pointer(Frame * f)
 static void 
 select_frame(void *obj, char *cmd)
 {
-	Page           *p = (Page *) obj;
-	Frame          *f, *old, *old2;
-	if (!p || !cmd)
+	int i;
+	Frame *f, *old;
+	f = old = pages ? SELFRAME(pages[sel]) : 0;
+	if(!f || !cmd)
 		return;
-	old2 = old = f = get_selected(p);
-	if (!f)
-		return;
-	if (is_managed_frame(f))
-		old2 = p->managed[0];
-	else if (is_managed_frame(f))
-		f = p->layout->select(f, cmd);
-	else
-		f = select_floating(p, f, cmd);
-	if (!f)
-		return;
-	focus_frame(f, 1, 1, 1);
-	center_pointer(f);
-	if (old)
+	if (!strncmp(cmd, "prev", 5)) {
+		i = index_prev_item((void **) f->area->frames, f);
+		f = f->area->frames[i];
+	} else if (!strncmp(cmd, "next", 5)) {
+		i = index_next_item((void **) f->area->frames, f);
+		f = f->area->frames[i];
+	}
+	if (old != f) {
+		focus_frame(f, 1, 1, 1);
+		center_pointer(f);
 		draw_frame(old);
-	if (old2 != old)
-		draw_frame(old2);	/* on zoom */
-	draw_frame(f);
+		draw_frame(f);
+	}
 }
 
 void 
@@ -181,45 +156,16 @@ hide_page(Page * p)
 {
 
 	int             i;
-	for (i = 0; p->floating && p->floating[i]; i++)
-		XUnmapWindow(dpy, p->floating[i]->win);
-	for (i = 0; p->managed && p->managed[i]; i++)
-		XUnmapWindow(dpy, p->managed[i]->win);
-	XSync(dpy, False);
+	for (i = 0; p->areas && p->areas[i]; i++)
+		hide_area(p->areas[i]);
 }
 
 void 
 show_page(Page * p)
 {
 	int             i;
-	for (i = 0; p->floating && p->floating[i]; i++)
-		XMapWindow(dpy, p->floating[i]->win);
-	for (i = 0; p->managed && p->managed[i]; i++)
-		XMapWindow(dpy, p->managed[i]->win);
-	XSync(dpy, False);
-}
-
-static void 
-handle_before_read_page(IXPServer * s, File * f)
-{
-	int             i;
-	XRectangle     *rct = 0;
-	for (i = 0; pages && pages[i]; i++) {
-		if (pages[i]->files[P_MANAGED_SIZE] == f) {
-			rct = &pages[i]->managed_rect;
-			break;
-		}
-	}
-
-	if (rct) {
-		char            buf[64];
-		snprintf(buf, 64, "%d,%d,%d,%d", rct->x, rct->y,
-			 rct->width, rct->height);
-		if (f->content)
-			free(f->content);
-		f->content = estrdup(buf);
-		f->size = strlen(buf);
-	}
+	for (i = 0; p->areas && p->areas[i]; i++)
+		show_area(p->areas[i]);
 }
 
 Layout         *
@@ -247,8 +193,10 @@ handle_after_write_page(IXPServer * s, File * f)
 		if (p->files[P_CTL] == f) {
 			run_action(f, p, page_acttbl);
 			return;
-		} else if (p->files[P_MANAGED_SIZE] == f) {
-			/* resize stuff */
+		}
+		/*
+		else if (p->files[P_MANAGED_SIZE] == f) {
+			/ resize stuff /
 			blitz_strtorect(dpy, &rect, &p->managed_rect,
 					p->files[P_MANAGED_SIZE]->content);
 			if (!p->managed_rect.width)
@@ -285,7 +233,7 @@ handle_after_write_page(IXPServer * s, File * f)
 				}
 			}
 			if (!p->layout) {
-				/* make all managed clients floating */
+				/ make all managed clients floating /
 				int             j;
 				Frame         **tmp = 0;
 				while (p->managed) {
@@ -304,11 +252,13 @@ handle_after_write_page(IXPServer * s, File * f)
 			invoke_core_event(core_files[CORE_EVENT_PAGE_UPDATE]);
 			return;
 		}
+*/
 	}
 }
 
+/*
 void 
-attach_Frameo_page(Page * p, Frame * f, int managed)
+attach_frame_to_page(Page * p, Frame * f, int managed)
 {
 	Frame          *old = get_selected(p);
 	XSelectInput(dpy, root, ROOT_MASK & ~StructureNotifyMask);
@@ -386,4 +336,4 @@ detach_frame_from_page(Frame * f, int ignore_focus_and_destroy)
 		}
 	}
 }
-
+*/

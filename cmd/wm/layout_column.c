@@ -27,17 +27,14 @@ struct Column {
 	XRectangle      rect;
 };
 
-static void     init_col(Page * p, int argc, char **argv);
-static void     deinit_col(Page * p);
-static void     arrange_col(Page * p);
-static void     attach_col(Page * p, Client * c);
-static void     detach_col(Page *, Client * c, int unmapped, int destroyed);
-static void     resize_col(Frame * f, XRectangle * new, XPoint * pt);
-static void     aux_col(Frame * f, char *what);
+static void     init_col(Area *a);
+static void     deinit_col(Area *a);
+static void     arrange_col(Area *a);
+static void     attach_col(Area *a, Client *c);
+static void     detach_col(Area *a, Client *c, int unmapped, int destroyed);
+static void     resize_col(Frame *f, XRectangle *new, XPoint * pt);
 
-static LayoutImpl lcol = {"col", init_col, deinit_col, arrange_col, attach_col,
-	detach_col, resize_col, aux_col
-};
+static Layout lcol = {"col", init_col, deinit_col, arrange_col, attach_col, detach_col, resize_col};
 
 static Column   zero_column = {0};
 static Acme     zero_acme = {0};
@@ -52,11 +49,11 @@ init_layout_col()
 
 
 static void 
-arrange_column(Page * p, Column * col)
+arrange_column(Area *a, Column *col)
 {
 	int             i;
 	int             n = count_items((void **) col->frames);
-	unsigned int    height = p->managed_rect.height / n;
+	unsigned int    height = a->rect.height / n;
 	for (i = 0; col->frames && col->frames[i]; i++) {
 		if (col->refresh) {
 			col->frames[i]->rect = col->rect;
@@ -68,9 +65,9 @@ arrange_column(Page * p, Column * col)
 }
 
 static void 
-arrange_col(Page * p)
+arrange_col(Area *a)
 {
-	Acme           *acme = p->aux;
+	Acme           *acme = a->aux;
 	int             i;
 
 	if (!acme) {
@@ -78,11 +75,11 @@ arrange_col(Page * p)
 		exit(1);
 	}
 	for (i = 0; acme->column && acme->column[i]; i++)
-		arrange_column(p, acme->column[i]);
+		arrange_column(a, acme->column[i]);
 }
 
 static void 
-init_col(Page * p, int argc, char **argv)
+init_col(Area *a)
 {
 	Acme           *acme = emalloc(sizeof(Acme));
 	int             i, j, n, cols = 1;
@@ -90,9 +87,10 @@ init_col(Page * p, int argc, char **argv)
 	Column         *col;
 
 	*acme = zero_acme;
-	p->aux = acme;
+	a->aux = acme;
 
 	/* processing argv */
+	/*
 	for (i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
 		switch (argv[i][1]) {
 		case 'c':
@@ -102,13 +100,14 @@ init_col(Page * p, int argc, char **argv)
 			break;
 		}
 	}
+	*/
 
-	width = p->managed_rect.width / cols;
+	width = a->rect.width / cols;
 	acme->column = emalloc((cols + 1) * sizeof(Column *));
 	for (i = 0; i < cols; i++) {
 		acme->column[i] = emalloc(sizeof(Column));
 		*acme->column[i] = zero_column;
-		acme->column[i]->rect = p->managed_rect;
+		acme->column[i]->rect = a->rect;
 		acme->column[i]->rect.x = i * width;
 		acme->column[i]->rect.width = width;
 		acme->column[i]->refresh = 1;
@@ -131,7 +130,7 @@ init_col(Page * p, int argc, char **argv)
 			col->frames = (Frame **) attach_item_end((void **) col->frames,
 								 alloc_frame(&clients[i]->rect, 1, 1), sizeof(Frame *));
 			col->frames[0]->aux = col;
-			attach_Frameo_page(p, col->frames[0], 1);
+			attach_frame_to_area(a, col->frames[0], 1);
 			attach_Cliento_frame(col->frames[0], clients[j]);
 			j++;
 		}

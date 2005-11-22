@@ -208,12 +208,13 @@ File           *defaults[WM_LAST];
 unsigned int    valid_mask, num_lock_mask;
 
 /* area.c */
-void            focus_frame(Frame * f, int raise, int up, int down);
 void            destroy_area(Area *a);
 void            free_area(Area *a);
 void            attach_frame_to_area(Area *a, Frame * f);
 void            detach_frame_from_area(Frame * f, int ignore_focus_and_destroy);
 void            draw_area(Area *a);
+void            hide_area(Area *a);
+void            show_area(Area *a);
 
 /* client.c */
 Client         *alloc_client(Window w);
@@ -248,6 +249,7 @@ void            destroy_page(Page * p);
 void            set_client_state(Client * c, int state);
 
 /* frame.c */
+void            focus_frame(Frame * f, int raise, int up, int down);
 Frame          *win_to_frame(Window w);
 Frame          *alloc_frame(XRectangle * r, int add_frame_border, int floating);
 void            free_frame(Frame * f);
