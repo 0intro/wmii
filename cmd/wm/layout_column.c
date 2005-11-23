@@ -127,11 +127,10 @@ init_col(Area *a)
 		j = 0;
 		for (i = 0; i < (cols - 1); i++) {
 			col = acme->column[i];
-			col->frames = (Frame **) attach_item_end((void **) col->frames,
-								 alloc_frame(&clients[i]->rect, 1, 1), sizeof(Frame *));
+			col->frames = (Frame **) attach_item_end((void **) col->frames, alloc_frame(&clients[i]->rect, 1, 1), sizeof(Frame *));
 			col->frames[0]->aux = col;
-			attach_frame_to_area(a, col->frames[0], 1);
-			attach_Cliento_frame(col->frames[0], clients[j]);
+			attach_frame_to_area(a, col->frames[0]);
+			attach_client_to_frame(col->frames[0], clients[j]);
 			j++;
 		}
 		col = acme->column[cols - 1];
@@ -139,8 +138,8 @@ init_col(Area *a)
 		for (i = 0; i + j < n; i++) {
 			col->frames[i] = alloc_frame(&clients[j + i]->rect, 1, 1);
 			col->frames[i]->aux = col;
-			attach_Frameo_page(p, col->frames[i], 1);
-			attach_Cliento_frame(col->frames[i], clients[j + i]);
+			attach_frame_to_area(a, col->frames[i]);
+			attach_client_to_frame(col->frames[i], clients[j + i]);
 		}
 		col->frames[i] = 0;
 	} else {
@@ -148,21 +147,20 @@ init_col(Area *a)
 		j = 0;
 		for (i = cols - 1; j < n; i--) {
 			col = acme->column[i];
-			col->frames = (Frame **) attach_item_end((void **) col->frames,
-								 alloc_frame(&clients[i]->rect, 1, 1), sizeof(Frame *));
+			col->frames = (Frame **) attach_item_end((void **) col->frames, alloc_frame(&clients[i]->rect, 1, 1), sizeof(Frame *));
 			col->frames[0]->aux = col;
-			attach_Frameo_page(p, col->frames[0], 1);
-			attach_Cliento_frame(col->frames[0], clients[j]);
+			attach_frame_to_area(a, col->frames[0]);
+			attach_client_to_frame(col->frames[0], clients[j]);
 			j++;
 		}
 	}
-	arrange_col(p);
+	arrange_col(a);
 }
 
 static void 
-deinit_col(Page * p)
+deinit_col(Area *a)
 {
-	Acme           *acme = p->aux;
+	Acme           *acme = a->aux;
 	int             i;
 
 	for (i = 0; acme->column && acme->column[i]; i++) {
@@ -172,20 +170,20 @@ deinit_col(Page * p)
 			Frame          *f = col->frames[j];
 			while (f->clients && f->clients[0])
 				detach_client_from_frame(f->clients[0], 0, 0);
-			detach_frame_from_page(f, 1);
+			detach_frame_from_area(f, 1);
 			free_frame(f);
 		}
 		free(col->frames);
 	}
 	free(acme->column);
 	free(acme);
-	p->aux = 0;
+	a->aux = 0;
 }
 
 static void 
-attach_col(Page * p, Client * c)
+attach_col(Area *a, Client *c)
 {
-	Acme           *acme = p->aux;
+	Acme           *acme = a->aux;
 	Column         *col;
 	Frame          *f;
 
@@ -195,14 +193,14 @@ attach_col(Page * p, Client * c)
 						 sizeof(Frame *));
 	f->aux = col;
 	col->refresh = 1;
-	attach_Frameo_page(p, f, 1);
-	attach_Cliento_frame(f, c);
+	attach_frame_to_area(a, f);
+	attach_client_to_frame(f, c);
 
-	arrange_col(p);
+	arrange_col(a);
 }
 
 static void 
-detach_col(Page * p, Client * c, int unmapped, int destroyed)
+detach_col(Area *a, Client *c, int unmapped, int destroyed)
 {
 	Frame          *f = c->frame;
 	Column         *col = f->aux;
@@ -214,17 +212,17 @@ detach_col(Page * p, Client * c, int unmapped, int destroyed)
 					     sizeof(Frame *));
 	col->refresh = 1;
 	detach_client_from_frame(c, unmapped, destroyed);
-	detach_frame_from_page(f, 1);
+	detach_frame_from_area(f, 1);
 	free_frame(f);
 
-	arrange_col(p);
+	arrange_col(a);
 }
 
 static void 
 drop_resize(Frame * f, XRectangle * new)
 {
 	Column         *col = f->aux;
-	Acme           *acme = f->page->aux;
+	Acme           *acme = f->area->aux;
 	int             i, idx, n = 0;
 
 	if (!col) {
@@ -321,7 +319,7 @@ static void
 _drop_move(Frame * f, XRectangle * new, XPoint * pt)
 {
 	Column         *tgt = 0, *src = f->aux;
-	Acme           *acme = f->page->aux;
+	Acme           *acme = f->area->aux;
 	int             i;
 
 	if (!src) {
@@ -369,7 +367,7 @@ _drop_move(Frame * f, XRectangle * new, XPoint * pt)
 			(Frame **) attach_item_end((void **) tgt->frames, f,
 						   sizeof(Frame *));
 		tgt->refresh = 1;
-		arrange_column(f->page, tgt);
+		arrange_column(f->area, tgt);
 
 		/* TODO: implement a better target placing strategy */
 	}
@@ -383,10 +381,4 @@ resize_col(Frame * f, XRectangle * new, XPoint * pt)
 		_drop_move(f, new, pt);
 	else
 		drop_resize(f, new);
-}
-
-
-static void 
-aux_col(Frame * f, char *what)
-{
 }
