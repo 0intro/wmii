@@ -17,7 +17,7 @@ void
 free_area(Area* a)
 {
 	ixp_remove_file(ixps, a->files[A_PREFIX]);
-	free(f);
+	free(a);
 }
 
 void
@@ -26,41 +26,22 @@ destroy_area(Area *a)
 	unsigned int i;
 	a->layout->deinit(a);
 	for(i = 0; a->frames && a->frames[i]; i++);
-		destroy_frame(i);
+		destroy_frame(a->frames[i]);
+	free(a->frames);
 	free_area(a);
 }
 
 void 
 focus_area(Area *a, int raise, int up, int down)
 {
-	Page           *p = f->page;
-	Frame          *old;
+	Page           *p = a->page;
 	if (!p)
 		return;
 
-	old = get_selected(p);
-	if (down && f->clients)
-		focus_client(f->clients[f->sel], raise, 0);
-
-	if (is_managed_frame(f)) {
-		p->managed_stack = (Frame **)
-			attach_item_begin(detach_item
-					  ((void **) p->managed_stack, f,
-				      sizeof(Frame *)), f, sizeof(Frame *));
-		p->files[P_MANAGED_SELECTED]->content =
-			f->files[F_PREFIX]->content;
-		p->files[P_MODE]->content = p->files[P_MANAGED_PREFIX]->content;
-	} else {
-		p->floating_stack = (Frame **)
-			attach_item_begin(detach_item
-					  ((void **) p->floating_stack, f,
-				      sizeof(Frame *)), f, sizeof(Frame *));
-		p->files[P_FLOATING_SELECTED]->content =
-			f->files[F_PREFIX]->content;
-		p->files[P_MODE]->content = p->files[P_FLOATING_PREFIX]->content;
-		if (raise)
-			XRaiseWindow(dpy, f->win);
-	}
+	if (down && a->frames)
+		focus_frame(a->frames[a->sel], raise, 0, down);
+	p->sel = index_item((void **)p->areas, a);
+	p->files[P_SEL_AREA]->content = a->files[A_PREFIX]->content;
 	if (up)
 		focus_page(p, raise, 0);
 }

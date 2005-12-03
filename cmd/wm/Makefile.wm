@@ -8,7 +8,7 @@ CFLAGS   += -I../../liblitz -I../../libixp -I../../libwmii \
 LDFLAGS  += -L../../liblitz -llitz -L../../libixp -lixp \
             -L../../libwmii -lwmii -L../../libcext -lcext
 
-SRC      = wm.c core.c client.c event.c mouse.c frame.c page.c layout.c
+SRC      = wm.c core.c client.c event.c mouse.c frame.c area.c page.c layout.c
 
 include layout.mk
 

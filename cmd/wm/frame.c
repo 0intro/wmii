@@ -137,14 +137,14 @@ win_to_frame(Window w)
 }
 
 void 
-free_frame(Frame * f)
+destroy_frame(Frame * f)
 {
 	frames = (Frame **) detach_item((void **) frames, f, sizeof(Frame *));
 	XFreeGC(dpy, f->gc);
 	XDestroyWindow(dpy, f->win);
 	ixp_remove_file(ixps, f->files[F_PREFIX]);
 	if (ixps->errstr)
-		fprintf(stderr, "wmiiwm: free_frame(): %s\n", ixps->errstr);
+		fprintf(stderr, "wmiiwm: destroy_frame(): %s\n", ixps->errstr);
 	free(f);
 }
 
@@ -438,7 +438,7 @@ detach_client_from_frame(Client * c, int unmapped, int destroyed)
 		draw_frame(f);
 	} else {
 		detach_frame_from_area(f, 0);
-		free_frame(f);
+		destroy_frame(f);
 		if (pages)
 			focus_page(pages[sel], 0, 1);
 	}

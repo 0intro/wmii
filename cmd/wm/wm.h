@@ -252,7 +252,7 @@ void            set_client_state(Client * c, int state);
 void            focus_frame(Frame * f, int raise, int up, int down);
 Frame          *win_to_frame(Window w);
 Frame          *alloc_frame(XRectangle * r, int add_frame_border, int floating);
-void            free_frame(Frame * f);
+void            destroy_frame(Frame * f);
 void            resize_frame(Frame * f, XRectangle * r, XPoint * pt, int ignore_layout);
 void            draw_frame(Frame * f);
 void            handle_frame_buttonpress(XButtonEvent * e, Frame * f);
