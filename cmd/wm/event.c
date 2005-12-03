@@ -147,12 +147,10 @@ handle_configurerequest(XEvent * e)
 		gravitate(c, tabh ? tabh : bw, bw, 0);
 
 		if (f) {
-			XRectangle     *frect = rect_of_frame(f);
-			frect->x = wc.x = c->rect.x - bw;
-			frect->y = wc.y = c->rect.y - (tabh ? tabh : bw);
-			frect->width = wc.width = c->rect.width + 2 * bw;
-			frect->height = wc.height =
-				c->rect.height + bw + (tabh ? tabh : bw);
+			f->rect.x = wc.x = c->rect.x - bw;
+			f->rect.y = wc.y = c->rect.y - (tabh ? tabh : bw);
+			f->rect.width = wc.width = c->rect.width + 2 * bw;
+			f->rect.height = wc.height = c->rect.height + bw + (tabh ? tabh : bw);
 			wc.border_width = 1;
 			wc.sibling = None;
 			wc.stack_mode = ev->detail;

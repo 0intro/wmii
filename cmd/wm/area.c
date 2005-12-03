@@ -11,7 +11,7 @@
 
 #include <cext.h>
 
-static Area     zero_area = {0};
+/*static Area     zero_area = {0};*/
 
 void 
 free_area(Area* a)
@@ -46,3 +46,29 @@ focus_area(Area *a, int raise, int up, int down)
 		focus_page(p, raise, 0);
 }
 
+void 
+attach_frame_to_area(Area *a, Frame * f)
+{	
+
+}
+
+void
+detach_frame_from_area(Frame * f, int ignore_focus_and_destroy)
+{
+
+}
+
+void
+draw_area(Area *a)
+{
+}
+
+void
+hide_area(Area *a)
+{
+}
+
+void
+show_area(Area *a)
+{
+}

@@ -360,7 +360,7 @@ handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 }
 
 void 
-attach_Cliento_frame(Frame * f, Client * c)
+attach_client_to_frame(Frame * f, Client * c)
 {
 	int             size = count_items((void **) f->clients);
 	wmii_move_ixpfile(c->files[C_PREFIX], f->files[F_CLIENT_PREFIX]);

@@ -40,7 +40,7 @@ static Column   zero_column = {0};
 static Acme     zero_acme = {0};
 
 void 
-init_layout_col()
+init_layout_column()
 {
 	layouts =
 	(Layout **) attach_item_end((void **) layouts, &lcol,
@@ -171,7 +171,7 @@ deinit_col(Area *a)
 			while (f->clients && f->clients[0])
 				detach_client_from_frame(f->clients[0], 0, 0);
 			detach_frame_from_area(f, 1);
-			free_frame(f);
+			destroy_frame(f);
 		}
 		free(col->frames);
 	}
@@ -213,7 +213,7 @@ detach_col(Area *a, Client *c, int unmapped, int destroyed)
 	col->refresh = 1;
 	detach_client_from_frame(c, unmapped, destroyed);
 	detach_frame_from_area(f, 1);
-	free_frame(f);
+	destroy_frame(f);
 
 	arrange_col(a);
 }
