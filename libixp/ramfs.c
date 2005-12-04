@@ -11,20 +11,18 @@
 
 #include <cext.h>
 
-static File     zero_file = {0};
+static File zero_file = { 0 };
 
-int 
-is_directory(File * f)
+int is_directory(File * f)
 {
 	return !f->size && f->content;
 }
 
-File           *
-ixp_create(IXPServer * s, char *path)
+File *ixp_create(IXPServer * s, char *path)
 {
-	File           *f, *p;
-	char           *buf = strdup(path);
-	char           *tok, *tok_ptr;
+	File *f, *p;
+	char *buf = strdup(path);
+	char *tok, *tok_ptr;
 
 	if (!path)
 		return 0;
@@ -50,8 +48,8 @@ ixp_create(IXPServer * s, char *path)
 	}
 	if (p->size && tok) {
 		free(buf);
-		return 0;	/* cannot create subdirectory, if file has
-				 * content */
+		return 0;				/* cannot create subdirectory, if file has
+								 * content */
 	}
 	/* only create missing parts, if file is directory */
 	while (tok) {
@@ -75,22 +73,20 @@ ixp_create(IXPServer * s, char *path)
 	return f;
 }
 
-static int 
-comp_file_name(const void *f1, const void *f2)
+static int comp_file_name(const void *f1, const void *f2)
 {
-	File           *f = (File *) f1;
-	File           *p = (File *) f2;
+	File *f = (File *) f1;
+	File *p = (File *) f2;
 	return strcmp(*(char **) f->name, *(char **) p->name);
 }
 
-static char    *
-_ls(File * f)
+static char *_ls(File * f)
 {
-	File           *p;
-	char           *result = 0;
-	size_t          size = 1;	/* for \n */
-	int             num = 0, i;
-	File          **tmp;
+	File *p;
+	char *result = 0;
+	size_t size = 1;			/* for \n */
+	int num = 0, i;
+	File **tmp;
 
 	for (p = f; p; p = p->next)
 		num++;
@@ -116,10 +112,9 @@ _ls(File * f)
 	return result;
 }
 
-File           *
-ixp_open(IXPServer * s, char *path)
+File *ixp_open(IXPServer * s, char *path)
 {
-	File           *f;
+	File *f;
 
 	f = ixp_walk(s, path);
 	if (!f) {
@@ -130,10 +125,9 @@ ixp_open(IXPServer * s, char *path)
 	return f;
 }
 
-void 
-ixp_close(IXPServer * s, int fd)
+void ixp_close(IXPServer * s, int fd)
 {
-	File           *f = fd_to_file(s, fd);
+	File *f = fd_to_file(s, fd);
 	if (!f)
 		set_error(s, "invalid file descriptor");
 	else if (f->lock > 0)
@@ -142,11 +136,11 @@ ixp_close(IXPServer * s, int fd)
 
 size_t
 ixp_read(IXPServer * s, int fd, size_t offset, void *out_buf,
-	 size_t out_buf_len)
+		 size_t out_buf_len)
 {
-	File           *f = fd_to_file(s, fd);
-	void           *result = 0;
-	size_t          len = 0, res_len = 0;
+	File *f = fd_to_file(s, fd);
+	void *result = 0;
+	size_t len = 0, res_len = 0;
 
 	if (!f) {
 		set_error(s, "invalid file descriptor");
@@ -181,9 +175,9 @@ ixp_read(IXPServer * s, int fd, size_t offset, void *out_buf,
 
 void
 ixp_write(IXPServer * s, int fd, size_t offset, void *content,
-	  size_t in_len)
+		  size_t in_len)
 {
-	File           *f = fd_to_file(s, fd);
+	File *f = fd_to_file(s, fd);
 
 	if (!f) {
 		set_error(s, "invalid file descriptor");
@@ -215,8 +209,7 @@ ixp_write(IXPServer * s, int fd, size_t offset, void *content,
 		f->after_write(s, f);
 }
 
-static void 
-_ixp_remove(IXPServer * s, File * f)
+static void _ixp_remove(IXPServer * s, File * f)
 {
 	if (!f)
 		return;
@@ -227,7 +220,7 @@ _ixp_remove(IXPServer * s, File * f)
 	}
 	if (f->lock) {
 		set_error(s, "cannot remove opened file");
-		return;		/* a file is opened, so stop removing tree */
+		return;					/* a file is opened, so stop removing tree */
 	}
 	if (!f->bind && is_directory(f)) {
 		_ixp_remove(s, f->content);
@@ -245,10 +238,9 @@ _ixp_remove(IXPServer * s, File * f)
 	}
 }
 
-void 
-ixp_remove_file(IXPServer * s, File * f)
+void ixp_remove_file(IXPServer * s, File * f)
 {
-	File           *p, *n;
+	File *p, *n;
 	set_error(s, 0);
 	if (!f) {
 		set_error(s, "file does not exist");
@@ -278,19 +270,17 @@ ixp_remove_file(IXPServer * s, File * f)
 }
 
 
-void 
-ixp_remove(IXPServer * s, char *path)
+void ixp_remove(IXPServer * s, char *path)
 {
 	ixp_remove_file(s, ixp_walk(s, path));
 }
 
-File           *
-ixp_walk(IXPServer * s, char *path)
+File *ixp_walk(IXPServer * s, char *path)
 {
-	File           *f = 0;
-	File           *n;
-	char           *buf;
-	char           *tok, *tok_ptr;
+	File *f = 0;
+	File *n;
+	char *buf;
+	char *tok, *tok_ptr;
 
 	if (!path) {
 		return 0;

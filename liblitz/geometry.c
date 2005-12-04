@@ -10,8 +10,7 @@
 #include "blitz.h"
 #include <cext.h>
 
-static int 
-strtoalign(Align * result, char *val)
+static int strtoalign(Align * result, char *val)
 {
 	/*
 	 * note, resize allows syntax like "east-20", this we cannot do
@@ -47,14 +46,14 @@ strtoalign(Align * result, char *val)
  * Each component can be of following format:
  * <...> = [+|-]0..n|<alignment>[[+|-]0..n]
  */
-int 
+int
 blitz_strtorect(Display * dpy, XRectangle * root, XRectangle * r,
-		char *val)
+				char *val)
 {
-	char            buf[64];
-	char           *x, *y, *w, *h;
-	char           *p;
-	int             sx, sy, sw, sh;
+	char buf[64];
+	char *x, *y, *w, *h;
+	char *p;
+	int sx, sy, sw, sh;
 
 	if (!val)
 		return FALSE;
@@ -82,8 +81,8 @@ blitz_strtorect(Display * dpy, XRectangle * root, XRectangle * r,
 		r->height = _strtonum(h, 0, 65535);
 
 	if (!sx && !sw && x && w
-	    && x[0] != '-' && x[0] != '+' && w[0] != '-' && w[0] != '+') {
-		Align           ax, aw;
+		&& x[0] != '-' && x[0] != '+' && w[0] != '-' && w[0] != '+') {
+		Align ax, aw;
 		strtoalign(&ax, x);
 		strtoalign(&aw, w);
 		if ((ax == CENTER) && (aw == EAST)) {
@@ -98,7 +97,7 @@ blitz_strtorect(Display * dpy, XRectangle * root, XRectangle * r,
 			}
 		}
 	} else if (!sx && x && x[0] != '-' && x[0] != '+') {
-		Align           ax;
+		Align ax;
 		strtoalign(&ax, x);
 		if (ax == CENTER) {
 			r->x = root->x + (root->width / 2) - (r->width / 2);
@@ -108,7 +107,7 @@ blitz_strtorect(Display * dpy, XRectangle * root, XRectangle * r,
 			r->x = root->x;
 		}
 	} else if (!sw && w && w[0] != '-' && w[0] != '+') {
-		Align           aw;
+		Align aw;
 		strtoalign(&aw, w);
 		if (aw == CENTER) {
 			r->width = (root->width / 2) - r->x;
@@ -117,8 +116,8 @@ blitz_strtorect(Display * dpy, XRectangle * root, XRectangle * r,
 		}
 	}
 	if (!sy && !sh && y && h
-	    && y[0] != '-' && y[0] != '+' && h[0] != '-' && h[0] != '+') {
-		Align           ay, ah;
+		&& y[0] != '-' && y[0] != '+' && h[0] != '-' && h[0] != '+') {
+		Align ay, ah;
 		strtoalign(&ay, y);
 		strtoalign(&ah, h);
 		if ((ay == CENTER) && (ah == SOUTH)) {
@@ -133,7 +132,7 @@ blitz_strtorect(Display * dpy, XRectangle * root, XRectangle * r,
 			}
 		}
 	} else if (!sy && y && y[0] != '-' && y[0] != '+') {
-		Align           ay;
+		Align ay;
 		strtoalign(&ay, y);
 		if (ay == CENTER) {
 			r->y = root->y + (root->height / 2) - (r->height / 2);
@@ -143,7 +142,7 @@ blitz_strtorect(Display * dpy, XRectangle * root, XRectangle * r,
 			r->y = root->y;
 		}
 	} else if (!sh && h && h[0] != '-' && h[0] != '+') {
-		Align           ah;
+		Align ah;
 		strtoalign(&ah, h);
 		if (ah == CENTER) {
 			r->height = (root->height / 2) - r->y;
@@ -187,30 +186,28 @@ blitz_strtorect(Display * dpy, XRectangle * root, XRectangle * r,
 	return TRUE;
 }
 
-int 
-blitz_ispointinrect(int x, int y, XRectangle * r)
+int blitz_ispointinrect(int x, int y, XRectangle * r)
 {
 	return (x >= r->x) && (x <= r->x + r->width)
-	&& (y >= r->y) && (y <= r->y + r->height);
+		&& (y >= r->y) && (y <= r->y + r->height);
 }
 
-int 
-blitz_distance(XRectangle * origin, XRectangle * target)
+int blitz_distance(XRectangle * origin, XRectangle * target)
 {
-	int             ox = origin->x + origin->width / 2;
-	int             oy = origin->y + origin->height / 2;
-	int             tx = target->x + target->width / 2;
-	int             ty = target->y + target->height / 2;
+	int ox = origin->x + origin->width / 2;
+	int oy = origin->y + origin->height / 2;
+	int tx = target->x + target->width / 2;
+	int ty = target->y + target->height / 2;
 
 	return (int) sqrt((double) (((ox - tx) * (ox - tx)) +
-				    ((oy - ty) * (oy - ty))));
+								((oy - ty) * (oy - ty))));
 }
 
-void 
+void
 blitz_getbasegeometry(void **items, unsigned int *size,
-		      unsigned int *cols, unsigned int *rows)
+					  unsigned int *cols, unsigned int *rows)
 {
-	float           sq, dummy;
+	float sq, dummy;
 
 	*size = count_items((void **) items);
 	sq = sqrt(*size);

@@ -9,10 +9,9 @@
 
 #include "cext.h"
 
-char           *
-estrdup(const char *s)
+char *estrdup(const char *s)
 {
-	char           *tmp;
+	char *tmp;
 
 	tmp = (char *) emalloc(strlen(s) + 1);
 	strcpy(tmp, (char *) s);

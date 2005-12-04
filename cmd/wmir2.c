@@ -12,49 +12,47 @@
 #include <cext.h>
 
 typedef struct {
-	char           *name;
-	int             (*cmd) (char **argv);
-	int             min_argc;
-}               Command;
+	char *name;
+	int (*cmd) (char **argv);
+	int min_argc;
+} Command;
 
-static int      xcreate(char **argv);
-static int      xread(char **argv);
-static int      xwrite(char **argv);
-static int      xremove(char **argv);
-static Command  cmds[] = {
+static int xcreate(char **argv);
+static int xread(char **argv);
+static int xwrite(char **argv);
+static int xremove(char **argv);
+static Command cmds[] = {
 	{"create", xcreate, 2},
 	{"read", xread, 1},
 	{"write", xwrite, 2},
 	{"remove", xremove, 1},
 	{0, 0}
 };
-static IXPClient c = {0};
+static IXPClient c = { 0 };
 
-static char    *version[] = {
+static char *version[] = {
 	"wmir - window manager improved remote - " VERSION "\n"
-	" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
+		" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
-static void
-usage()
+static void usage()
 {
 	fprintf(stderr, "%s",
-	      "usage: wmir [-s <socket file>] [-v] <command> <args> [...]\n"
-		"      -s    socket file (default: $WMIR_SOCKET)\n"
-		"      -f    read commands from stdin\n"
-		"      -v    version info\n"
-		"commands:\n"
-		"      create <file> <content>   -- creates file\n"
-	"      read   <file/directory>   -- reads file/directory contents\n"
-	     "      write  <file> <content>   -- writes content to a file\n"
-		"      remove <file/directory>   -- removes file\n");
+			"usage: wmir [-s <socket file>] [-v] <command> <args> [...]\n"
+			"      -s    socket file (default: $WMIR_SOCKET)\n"
+			"      -f    read commands from stdin\n"
+			"      -v    version info\n"
+			"commands:\n"
+			"      create <file> <content>   -- creates file\n"
+			"      read   <file/directory>   -- reads file/directory contents\n"
+			"      write  <file> <content>   -- writes content to a file\n"
+			"      remove <file/directory>   -- removes file\n");
 	exit(1);
 }
 
-static          u32
-write_data(u32 fid, u8 * data, u32 count)
+static u32 write_data(u32 fid, u8 * data, u32 count)
 {
-	u32             len, i, runs = count / c.fcall.iounit;
+	u32 len, i, runs = count / c.fcall.iounit;
 
 	for (i = 0; i <= runs; i++) {
 		/* write */
@@ -62,8 +60,8 @@ write_data(u32 fid, u8 * data, u32 count)
 		if (len > c.fcall.iounit)
 			len = c.fcall.iounit;
 		if (ixp_client_write
-		    (&c, fid, i * c.fcall.iounit, len,
-		     &data[i * c.fcall.iounit]) != count) {
+			(&c, fid, i * c.fcall.iounit, len,
+			 &data[i * c.fcall.iounit]) != count) {
 			fprintf(stderr, "wmir: cannot write file: %s\n", c.errstr);
 			return 0;
 		}
@@ -71,18 +69,17 @@ write_data(u32 fid, u8 * data, u32 count)
 	return count;
 }
 
-static int
-xcreate(char **argv)
+static int xcreate(char **argv)
 {
-	u32             fid;
-	char           *p = strrchr(argv[0], '/');
+	u32 fid;
+	char *p = strrchr(argv[0], '/');
 
 	fid = c.root_fid << 2;
 	/* walk to bottom-most directory */
 	*p = 0;
 	if (!ixp_client_walk(&c, fid, argv[0])) {
 		fprintf(stderr, "wmir: cannot walk to %s: %s\n", argv[0],
-			c.errstr);
+				c.errstr);
 		return 1;
 	}
 	/* create */
@@ -95,11 +92,10 @@ xcreate(char **argv)
 	return !ixp_client_close(&c, fid);
 }
 
-static int
-xwrite(char **argv)
+static int xwrite(char **argv)
 {
 	/* open */
-	u32             fid = c.root_fid << 2;
+	u32 fid = c.root_fid << 2;
 	if (!ixp_client_open(&c, fid, argv[0], IXP_OWRITE)) {
 		fprintf(stderr, "wmir: cannot open file: %s\n", c.errstr);
 		return 1;
@@ -108,12 +104,11 @@ xwrite(char **argv)
 	return !ixp_client_close(&c, fid);
 }
 
-static void
-print_directory(void *result, u32 msize)
+static void print_directory(void *result, u32 msize)
 {
-	void           *p = result;
-	static Stat     stat, zerostat = {0};
-	u32             len = 0;
+	void *p = result;
+	static Stat stat, zerostat = { 0 };
+	u32 len = 0;
 	do {
 		p = ixp_dec_stat(p, &stat);
 		len += stat.size + sizeof(u16);
@@ -126,12 +121,11 @@ print_directory(void *result, u32 msize)
 	while (len < msize);
 }
 
-static int
-xread(char **argv)
+static int xread(char **argv)
 {
-	u32             count, fid = c.root_fid << 2;
-	int             is_directory = FALSE;
-	static u8       result[IXP_MAX_MSG];
+	u32 count, fid = c.root_fid << 2;
+	int is_directory = FALSE;
+	static u8 result[IXP_MAX_MSG];
 
 	/* open */
 	if (!ixp_client_open(&c, fid, argv[0], IXP_OREAD)) {
@@ -141,7 +135,7 @@ xread(char **argv)
 	is_directory = !c.fcall.nwqid || (c.fcall.qid.type == IXP_QTDIR);
 	/* read */
 	if (!(count = ixp_client_read(&c, fid, 0, result, IXP_MAX_MSG))
-	    && c.errstr) {
+		&& c.errstr) {
 		fprintf(stderr, "wmir: cannot read file: %s\n", c.errstr);
 		return 1;
 	}
@@ -149,7 +143,7 @@ xread(char **argv)
 		if (is_directory)
 			print_directory(result, count);
 		else {
-			u32             i;
+			u32 i;
 			for (i = 0; i < count; i++)
 				putchar(result[i]);
 		}
@@ -157,10 +151,9 @@ xread(char **argv)
 	return !ixp_client_close(&c, fid);
 }
 
-static int
-xremove(char **argv)
+static int xremove(char **argv)
 {
-	u32             fid;
+	u32 fid;
 
 	/* remove */
 	fid = c.root_fid << 2;
@@ -171,10 +164,9 @@ xremove(char **argv)
 	return 0;
 }
 
-static int
-perform_cmd(int argc, char **argv)
+static int perform_cmd(int argc, char **argv)
 {
-	int             i;
+	int i;
 	for (i = 0; cmds[i].name; i++)
 		if (!strncmp(cmds[i].name, argv[0], strlen(cmds[i].name))) {
 			if (cmds[i].min_argc <= argc)
@@ -186,12 +178,11 @@ perform_cmd(int argc, char **argv)
 	return 1;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-	int             i = 0, ret, read_stdin = 0;
-	char            line[4096];
-	char           *sockfile = getenv("WMIR_SOCKET");
+	int i = 0, ret, read_stdin = 0;
+	char line[4096];
+	char *sockfile = getenv("WMIR_SOCKET");
 
 	/* command line args */
 	if (argc > 1) {
@@ -225,7 +216,7 @@ main(int argc, char *argv[])
 	}
 	if (!sockfile) {
 		fprintf(stderr, "%s",
-			"wmir: error: WMIR_SOCKET environment not set\n");
+				"wmir: error: WMIR_SOCKET environment not set\n");
 		usage();
 	}
 	/* open socket */
@@ -235,8 +226,8 @@ main(int argc, char *argv[])
 	}
 	/* wether perform directly or read from stdin */
 	if (read_stdin) {
-		char           *_argv[3];
-		int             _argc;
+		char *_argv[3];
+		int _argc;
 		while (fgets(line, 4096, stdin))
 			if ((_argc = tokenize(_argv, 3, line, ' '))) {
 				if ((ret = perform_cmd(_argc, _argv)))

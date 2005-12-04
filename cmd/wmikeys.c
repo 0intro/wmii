@@ -29,78 +29,75 @@ typedef enum {
 	K_BG_COLOR,
 	K_BORDER_COLOR,
 	K_LAST
-}               KeyIndexes;
+} KeyIndexes;
 
 typedef struct Shortcut Shortcut;
 
 struct Shortcut {
-	char            name[MAX_BUF];
-	unsigned long   mod;
-	KeyCode         key;
-	Shortcut       *next;
-	File           *cmdfile;
+	char name[MAX_BUF];
+	unsigned long mod;
+	KeyCode key;
+	Shortcut *next;
+	File *cmdfile;
 };
 
 static IXPServer *ixps = 0;
 static Display *dpy;
-static GC       gc;
-static Window   win;
-static Window   root;
+static GC gc;
+static Window win;
+static Window root;
 static XRectangle krect;
 static XRectangle rect;
-static int      screen_num;
-static char    *sockfile = 0;
+static int screen_num;
+static char *sockfile = 0;
 static Shortcut **shortcuts = 0;
-static File    *files[K_LAST];
-static int      grabkb = 0;
+static File *files[K_LAST];
+static int grabkb = 0;
 static unsigned int num_lock_mask, valid_mask;
-static char     buf[MAX_BUF];
+static char buf[MAX_BUF];
 
-static Shortcut zero_shortcut = {"", 0, 0, 0, 0};
+static Shortcut zero_shortcut = { "", 0, 0, 0, 0 };
 
-static void     grab_shortcut(Shortcut * s);
-static void     ungrab_shortcut(Shortcut * s);
-static void     draw_shortcut_box(char *text);
-static void     quit(void *obj, char *arg);
+static void grab_shortcut(Shortcut * s);
+static void ungrab_shortcut(Shortcut * s);
+static void draw_shortcut_box(char *text);
+static void quit(void *obj, char *arg);
 
-static Action   acttbl[] = {
+static Action acttbl[] = {
 	{"quit", quit},
 	{0, 0}
 };
 
-static char    *version[] = {
+static char *version[] = {
 	"wmikeys - window manager improved keys - " VERSION "\n"
-	"  (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
+		"  (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
-static void
-center()
+static void center()
 {
 	krect.x = rect.width / 2 - krect.width / 2;
 	krect.y = rect.height / 2 - krect.height / 2;
 }
 
-static void
-usage()
+static void usage()
 {
 	fprintf(stderr, "%s",
-	"usage: wmikeys [-s <socket file>] [-v] [<x>,<y>,<width>,<height>]\n"
-		"      -s     socket file (default: /tmp/.ixp-$USER/wmikeys-$WMII_IDENT)\n"
-		"      -v     version info\n");
+			"usage: wmikeys [-s <socket file>] [-v] [<x>,<y>,<width>,<height>]\n"
+			"      -s     socket file (default: /tmp/.ixp-$USER/wmikeys-$WMII_IDENT)\n"
+			"      -v     version info\n");
 	exit(1);
 }
 
 /* grabs shortcut on all screens */
-static void
-grab_shortcut(Shortcut * s)
+static void grab_shortcut(Shortcut * s)
 {
 	XGrabKey(dpy, s->key, s->mod, root,
-		 True, GrabModeAsync, GrabModeAsync);
+			 True, GrabModeAsync, GrabModeAsync);
 	if (num_lock_mask) {
 		XGrabKey(dpy, s->key, s->mod | num_lock_mask, root,
-			 True, GrabModeAsync, GrabModeAsync);
+				 True, GrabModeAsync, GrabModeAsync);
 		XGrabKey(dpy, s->key, s->mod | num_lock_mask | LockMask, root,
-			 True, GrabModeAsync, GrabModeAsync);
+				 True, GrabModeAsync, GrabModeAsync);
 	}
 	XSync(dpy, False);
 }
@@ -109,25 +106,22 @@ grab_shortcut(Shortcut * s)
  * don't handle evil keys anymore, just define more shortcuts if you cannot
  * live without evil key handling
  */
-static void
-ungrab_shortcut(Shortcut * s)
+static void ungrab_shortcut(Shortcut * s)
 {
 	XUngrabKey(dpy, s->key, s->mod, root);
 	if (num_lock_mask) {
 		XUngrabKey(dpy, s->key, s->mod | num_lock_mask, root);
-		XUngrabKey(dpy, s->key, s->mod | num_lock_mask |
-			   LockMask, root);
+		XUngrabKey(dpy, s->key, s->mod | num_lock_mask | LockMask, root);
 	}
 	XSync(dpy, False);
 }
 
-static void
-create_shortcut(File * f)
+static void create_shortcut(File * f)
 {
-	static char    *chain[8];
-	char           *k;
-	size_t          i, toks;
-	Shortcut       *s = 0, *r = 0;
+	static char *chain[8];
+	char *k;
+	size_t i, toks;
+	Shortcut *s = 0, *r = 0;
 
 	_strlcpy(buf, f->name, sizeof(buf));
 	toks = tokenize(chain, 8, buf, ',');
@@ -151,13 +145,14 @@ create_shortcut(File * f)
 	}
 	if (r) {
 		s->cmdfile = f;
-		shortcuts = (Shortcut **) attach_item_end((void **) shortcuts, r, sizeof(Shortcut *));
+		shortcuts =
+			(Shortcut **) attach_item_end((void **) shortcuts, r,
+										  sizeof(Shortcut *));
 		grab_shortcut(r);
 	}
 }
 
-static void
-destroy_shortcut(Shortcut * s, int ungrab)
+static void destroy_shortcut(Shortcut * s, int ungrab)
 {
 	if (s->next)
 		destroy_shortcut(s->next, 0);
@@ -166,11 +161,10 @@ destroy_shortcut(Shortcut * s, int ungrab)
 	free(s);
 }
 
-static void
-next_keystroke(unsigned long *mod, KeyCode * key)
+static void next_keystroke(unsigned long *mod, KeyCode * key)
 {
-	XEvent          e;
-	KeySym          sym;
+	XEvent e;
+	KeySym sym;
 	*mod = 0;
 	do {
 		XMaskEvent(dpy, KeyPressMask, &e);
@@ -180,12 +174,11 @@ next_keystroke(unsigned long *mod, KeyCode * key)
 	} while (IsModifierKey(sym));
 }
 
-static void
-emulate_key_press(unsigned long mod, KeyCode key)
+static void emulate_key_press(unsigned long mod, KeyCode key)
 {
-	XEvent          e;
-	Window          client_win;
-	int             revert;
+	XEvent e;
+	Window client_win;
+	int revert;
 
 	XGetInputFocus(dpy, &client_win, &revert);
 
@@ -202,15 +195,16 @@ emulate_key_press(unsigned long mod, KeyCode key)
 }
 
 static void
-handle_shortcut_chain(Window w, Shortcut * processed, char *prefix, int grab)
+handle_shortcut_chain(Window w, Shortcut * processed, char *prefix,
+					  int grab)
 {
-	unsigned long   mod;
-	KeyCode         key;
-	Shortcut       *s = processed->next;
+	unsigned long mod;
+	KeyCode key;
+	Shortcut *s = processed->next;
 
 	if (grab) {
 		XGrabKeyboard(dpy, w, True, GrabModeAsync,
-			      GrabModeAsync, CurrentTime);
+					  GrabModeAsync, CurrentTime);
 		XMapRaised(dpy, win);
 	}
 	draw_shortcut_box(prefix);
@@ -234,11 +228,10 @@ handle_shortcut_chain(Window w, Shortcut * processed, char *prefix, int grab)
 	}
 }
 
-static void
-handle_shortcut_gkb(Window w, unsigned long mod, KeyCode key)
+static void handle_shortcut_gkb(Window w, unsigned long mod, KeyCode key)
 {
-	int             i;
-	Shortcut       *s;
+	int i;
+	Shortcut *s;
 	if (!files[K_LOOKUP]->content)
 		return;
 	for (i = 0; shortcuts && shortcuts[i]; i++) {
@@ -252,11 +245,10 @@ handle_shortcut_gkb(Window w, unsigned long mod, KeyCode key)
 	XBell(dpy, 0);
 }
 
-static void
-handle_shortcut(Window w, unsigned long mod, KeyCode key)
+static void handle_shortcut(Window w, unsigned long mod, KeyCode key)
 {
-	int             i;
-	Shortcut       *s;
+	int i;
+	Shortcut *s;
 	if (!files[K_LOOKUP]->content)
 		return;
 	for (i = 0; shortcuts && shortcuts[i]; i++) {
@@ -273,24 +265,22 @@ handle_shortcut(Window w, unsigned long mod, KeyCode key)
 		handle_shortcut_chain(w, s, s->name, 1);
 }
 
-static void
-quit(void *obj, char *arg)
+static void quit(void *obj, char *arg)
 {
 	ixps->runlevel = SHUTDOWN;
 }
 
-static void
-update()
+static void update()
 {
-	int             i;
-	File           *f, *p;
+	int i;
+	File *f, *p;
 	if (!files[K_LOOKUP]->content)
 		return;
 
 	f = ixp_walk(ixps, files[K_LOOKUP]->content);
 
 	if (!f || !is_directory(f))
-		return;		/* cannot update */
+		return;					/* cannot update */
 
 	/* destroy existing shortcuts if any */
 	for (i = 0; shortcuts && shortcuts[i]; i++)
@@ -300,7 +290,7 @@ update()
 
 	if (grabkb) {
 		XGrabKeyboard(dpy, root, True, GrabModeAsync,
-			      GrabModeAsync, CurrentTime);
+					  GrabModeAsync, CurrentTime);
 		return;
 	}
 	/* create new shortcuts */
@@ -316,16 +306,15 @@ update()
  * /box/style/text-color     "#RRGGBBAA"
  * /box/style/bg-color     "#RRGGBBAA"
  */
-static void
-draw_shortcut_box(char *text)
+static void draw_shortcut_box(char *text)
 {
-	Draw            d = {0};
+	Draw d = { 0 };
 
 	d.font = blitz_getfont(dpy, files[K_TEXT_FONT]->content);
 	krect.width = XTextWidth(d.font, text, strlen(text)) + krect.height;
 	center();
 	XMoveResizeWindow(dpy, win, krect.x, krect.y, krect.width,
-			  krect.height);
+					  krect.height);
 
 	/* default stuff */
 	d.gc = gc;
@@ -341,10 +330,9 @@ draw_shortcut_box(char *text)
 	blitz_drawlabel(dpy, &d);
 }
 
-static void
-check_event(Connection * c)
+static void check_event(Connection * c)
 {
-	XEvent          ev;
+	XEvent ev;
 
 	while (XPending(dpy)) {
 		XNextEvent(dpy, &ev);
@@ -353,10 +341,10 @@ check_event(Connection * c)
 			ev.xkey.state &= valid_mask;
 			if (grabkb)
 				handle_shortcut_gkb(root, ev.xkey.state,
-						 (KeyCode) ev.xkey.keycode);
+									(KeyCode) ev.xkey.keycode);
 			else
 				handle_shortcut(root, ev.xkey.state,
-						(KeyCode) ev.xkey.keycode);
+								(KeyCode) ev.xkey.keycode);
 			break;
 		case KeymapNotify:
 			update();
@@ -367,11 +355,10 @@ check_event(Connection * c)
 	}
 }
 
-static void
-handle_after_write(IXPServer * s, File * f)
+static void handle_after_write(IXPServer * s, File * f)
 {
-	int             i;
-	size_t          len;
+	int i;
+	size_t len;
 
 	if (f == files[K_CTL]) {
 		for (i = 0; acttbl[i].name; i++) {
@@ -386,7 +373,7 @@ handle_after_write(IXPServer * s, File * f)
 			}
 		}
 	} else if (files[K_SIZE] == f) {
-		char           *size = files[K_SIZE]->content;
+		char *size = files[K_SIZE]->content;
 		if (size && strrchr(size, ','))
 			blitz_strtorect(dpy, &rect, &krect, size);
 	} else if (f == files[K_GRAB_KB]) {
@@ -403,24 +390,22 @@ handle_after_write(IXPServer * s, File * f)
 	check_event(0);
 }
 
-static void
-handle_before_read(IXPServer * s, File * f)
+static void handle_before_read(IXPServer * s, File * f)
 {
 	if (f != files[K_SIZE])
 		return;
 	snprintf(buf, sizeof(buf), "%d,%d,%d,%d", krect.x, krect.y,
-		 krect.width, krect.height);
+			 krect.width, krect.height);
 	if (f->content)
 		free(f->content);
 	f->content = strdup(buf);
 	f->size = strlen(buf);
 }
 
-static void
-run(char *size)
+static void run(char *size)
 {
 	XSetWindowAttributes wa;
-	XGCValues       gcv;
+	XGCValues gcv;
 
 	/* init */
 	if (!(files[K_CTL] = ixp_create(ixps, "/ctl"))) {
@@ -435,10 +420,17 @@ run(char *size)
 	files[K_SIZE]->after_write = handle_after_write;
 	files[K_GRAB_KB] = wmii_create_ixpfile(ixps, "/grab-keyb", "0");
 	files[K_GRAB_KB]->after_write = handle_after_write;
-	files[K_TEXT_FONT] = wmii_create_ixpfile(ixps, "/box/style/text-font", BLITZ_FONT);
-	files[K_TEXT_COLOR] = wmii_create_ixpfile(ixps, "/box/style/text-color", BLITZ_SEL_FG_COLOR);
-	files[K_BG_COLOR] = wmii_create_ixpfile(ixps, "/box/style/bg-color", BLITZ_SEL_BG_COLOR);
-	files[K_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/box/style/border-color", BLITZ_SEL_BORDER_COLOR);
+	files[K_TEXT_FONT] =
+		wmii_create_ixpfile(ixps, "/box/style/text-font", BLITZ_FONT);
+	files[K_TEXT_COLOR] =
+		wmii_create_ixpfile(ixps, "/box/style/text-color",
+							BLITZ_SEL_FG_COLOR);
+	files[K_BG_COLOR] =
+		wmii_create_ixpfile(ixps, "/box/style/bg-color",
+							BLITZ_SEL_BG_COLOR);
+	files[K_BORDER_COLOR] =
+		wmii_create_ixpfile(ixps, "/box/style/border-color",
+							BLITZ_SEL_BORDER_COLOR);
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
@@ -464,11 +456,11 @@ run(char *size)
 	init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
 
 	win = XCreateWindow(dpy, RootWindow(dpy, screen_num), krect.x, krect.y,
-			    krect.width, krect.height, 0, DefaultDepth(dpy,
-								screen_num),
-			    CopyFromParent, DefaultVisual(dpy, screen_num),
-			    CWOverrideRedirect | CWBackPixmap | CWEventMask,
-			    &wa);
+						krect.width, krect.height, 0, DefaultDepth(dpy,
+																   screen_num),
+						CopyFromParent, DefaultVisual(dpy, screen_num),
+						CWOverrideRedirect | CWBackPixmap | CWEventMask,
+						&wa);
 	XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
 	XSync(dpy, False);
 
@@ -479,23 +471,21 @@ run(char *size)
 
 	/* main event loop */
 	run_server_with_fd_support(ixps, ConnectionNumber(dpy),
-				   check_event, 0);
+							   check_event, 0);
 	deinit_server(ixps);
 	XFreeGC(dpy, gc);
 	XCloseDisplay(dpy);
 }
 
-static int
-dummy_error_handler(Display * dpy, XErrorEvent * err)
+static int dummy_error_handler(Display * dpy, XErrorEvent * err)
 {
 	return 0;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-	char            size[64];
-	int             i;
+	char size[64];
+	int i;
 
 	/* command line args */
 	for (i = 1; (i < argc) && (argv[i][0] == '-'); i++) {

@@ -7,11 +7,10 @@
 
 #include "wm.h"
 
-Cursor 
-cursor_for_motion(Frame * f, int x, int y)
+Cursor cursor_for_motion(Frame * f, int x, int y)
 {
-	int             n, e, w, s, tn, te, tw, ts;
-	int             tabh, bw;
+	int n, e, w, s, tn, te, tw, ts;
+	int tabh, bw;
 
 	bw = border_width(f);
 	tabh = tab_height(f);
@@ -50,18 +49,17 @@ cursor_for_motion(Frame * f, int x, int y)
 	return normal_cursor;
 }
 
-Align 
-xy_to_align(XRectangle * rect, int x, int y)
+Align xy_to_align(XRectangle * rect, int x, int y)
 {
 
-	int             w = x <= rect->x + rect->width / 2;
-	int             n = y <= rect->y + rect->height / 2;
-	int             e = x > rect->x + rect->width / 2;
-	int             s = y > rect->y + rect->height / 2;
-	int             nw = w && n;
-	int             ne = e && n;
-	int             sw = w && s;
-	int             se = e && s;
+	int w = x <= rect->x + rect->width / 2;
+	int n = y <= rect->y + rect->height / 2;
+	int e = x > rect->x + rect->width / 2;
+	int s = y > rect->y + rect->height / 2;
+	int nw = w && n;
+	int ne = e && n;
+	int sw = w && s;
+	int se = e && s;
 
 	if (nw)
 		return NWEST;
@@ -82,8 +80,7 @@ xy_to_align(XRectangle * rect, int x, int y)
 	return CENTER;
 }
 
-Align 
-cursor_to_align(Cursor cursor)
+Align cursor_to_align(Cursor cursor)
 {
 	if (cursor == w_cursor)
 		return WEST;
@@ -101,35 +98,33 @@ cursor_to_align(Cursor cursor)
 		return SOUTH;
 	else if (cursor == sw_cursor)
 		return SWEST;
-	return CENTER;		/* should not happen */
+	return CENTER;				/* should not happen */
 }
 
-static int 
-check_vert_match(XRectangle * r, XRectangle * neighbor)
+static int check_vert_match(XRectangle * r, XRectangle * neighbor)
 {
 	/* check if neighbor matches edge */
 	return (((neighbor->y <= r->y)
-		 && (neighbor->y + neighbor->height >= r->y))
-		|| ((neighbor->y >= r->y)
-		    && (r->y + r->height >= neighbor->y)));
+			 && (neighbor->y + neighbor->height >= r->y))
+			|| ((neighbor->y >= r->y)
+				&& (r->y + r->height >= neighbor->y)));
 }
 
-static int 
-check_horiz_match(XRectangle * r, XRectangle * neighbor)
+static int check_horiz_match(XRectangle * r, XRectangle * neighbor)
 {
 	/* check if neighbor matches edge */
 	return (((neighbor->x <= r->x)
-		 && (neighbor->x + neighbor->width >= r->x))
-		|| ((neighbor->x >= r->x)
-		    && (r->x + r->width >= neighbor->x)));
+			 && (neighbor->x + neighbor->width >= r->x))
+			|| ((neighbor->x >= r->x)
+				&& (r->x + r->width >= neighbor->x)));
 }
 
 static void
 snap_move(XRectangle * r, XRectangle * rects,
-	  unsigned int num, int snapw, int snaph)
+		  unsigned int num, int snapw, int snaph)
 {
 
-	int             i, j, w = 0, n = 0, e = 0, s = 0;
+	int i, j, w = 0, n = 0, e = 0, s = 0;
 
 	/* snap to other windows */
 	for (i = 0; i <= snapw && !(w && e); i++) {
@@ -281,10 +276,9 @@ snap_move(XRectangle * r, XRectangle * rects,
 	}
 }
 
-static void 
-draw_pseudo_border(XRectangle * r)
+static void draw_pseudo_border(XRectangle * r)
 {
-	XRectangle      pseudo = *r;
+	XRectangle pseudo = *r;
 
 	pseudo.x += 2;
 	pseudo.y += 2;
@@ -295,20 +289,23 @@ draw_pseudo_border(XRectangle * r)
 }
 
 
-void 
-mouse_move(Frame * f)
+void mouse_move(Frame * f)
 {
-	int             px = 0, py = 0, wex, wey, ex, ey, first = 1, i;
-	Window          dummy;
-	XEvent          ev;
+	int px = 0, py = 0, wex, wey, ex, ey, first = 1, i;
+	Window dummy;
+	XEvent ev;
 	/* borders */
-	int             snapw = rect.width * _strtonum(defaults[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
-	int             snaph = rect.height * _strtonum(defaults[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
-	unsigned int    num;
-	unsigned int    dmask;
-	XRectangle     *rects = rectangles(&num);
-	XRectangle      frect = f->rect;
-	XPoint          pt;
+	int snapw =
+		rect.width * _strtonum(defaults[WM_SNAP_VALUE]->content, 0,
+							   1000) / 1000;
+	int snaph =
+		rect.height * _strtonum(defaults[WM_SNAP_VALUE]->content, 0,
+								1000) / 1000;
+	unsigned int num;
+	unsigned int dmask;
+	XRectangle *rects = rectangles(&num);
+	XRectangle frect = f->rect;
+	XPoint pt;
 
 	XQueryPointer(dpy, f->win, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
 	XTranslateCoordinates(dpy, f->win, root, wex, wey, &ex, &ey, &dummy);
@@ -317,11 +314,12 @@ mouse_move(Frame * f)
 	XSync(dpy, False);
 	XGrabServer(dpy);
 	XGrabPointer(dpy, root, False, ButtonMotionMask | ButtonReleaseMask,
-		     GrabModeAsync, GrabModeAsync, None, move_cursor,
-		     CurrentTime);
+				 GrabModeAsync, GrabModeAsync, None, move_cursor,
+				 CurrentTime);
 	for (;;) {
 		while (!XCheckMaskEvent(dpy,
-			       ButtonReleaseMask | ButtonMotionMask, &ev)) {
+								ButtonReleaseMask | ButtonMotionMask,
+								&ev)) {
 			usleep(20000);
 			continue;
 		}
@@ -343,7 +341,7 @@ mouse_move(Frame * f)
 			pt.x = ev.xmotion.x;
 			pt.y = ev.xmotion.y;
 			XTranslateCoordinates(dpy, f->win, root, ev.xmotion.x,
-					    ev.xmotion.y, &px, &py, &dummy);
+								  ev.xmotion.y, &px, &py, &dummy);
 			if (first)
 				first = 0;
 			else
@@ -359,11 +357,11 @@ mouse_move(Frame * f)
 
 static void
 snap_resize(XRectangle * r, XRectangle * o, Align align,
-	    XRectangle * rects, unsigned int num, int px, int ox, int py,
-	    int oy, int snapw, int snaph)
+			XRectangle * rects, unsigned int num, int px, int ox, int py,
+			int oy, int snapw, int snaph)
 {
-	int             i, j, pend = 0;
-	int             w, h;
+	int i, j, pend = 0;
+	int w, h;
 
 	/* x */
 	switch (align) {
@@ -538,30 +536,34 @@ snap_resize(XRectangle * r, XRectangle * o, Align align,
 }
 
 
-void 
-mouse_resize(Frame * f, Align align)
+void mouse_resize(Frame * f, Align align)
 {
-	int             px = 0, py = 0, i, ox, oy, first = 1;
-	Window          dummy;
-	XEvent          ev;
+	int px = 0, py = 0, i, ox, oy, first = 1;
+	Window dummy;
+	XEvent ev;
 	/* borders */
-	int             snapw = rect.width * _strtonum(defaults[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
-	int             snaph = rect.height * _strtonum(defaults[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
-	unsigned int    dmask;
-	unsigned int    num;
-	XRectangle     *rects = rectangles(&num);
-	XRectangle      frect = f->rect;
-	XRectangle      origin = frect;
+	int snapw =
+		rect.width * _strtonum(defaults[WM_SNAP_VALUE]->content, 0,
+							   1000) / 1000;
+	int snaph =
+		rect.height * _strtonum(defaults[WM_SNAP_VALUE]->content, 0,
+								1000) / 1000;
+	unsigned int dmask;
+	unsigned int num;
+	XRectangle *rects = rectangles(&num);
+	XRectangle frect = f->rect;
+	XRectangle origin = frect;
 
 	XQueryPointer(dpy, f->win, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
 	XSync(dpy, False);
 	XGrabServer(dpy);
 	XGrabPointer(dpy, f->win, False, ButtonMotionMask | ButtonReleaseMask,
-		     GrabModeAsync, GrabModeAsync, None, resize_cursor,
-		     CurrentTime);
+				 GrabModeAsync, GrabModeAsync, None, resize_cursor,
+				 CurrentTime);
 	for (;;) {
 		while (!XCheckMaskEvent(dpy,
-			       ButtonReleaseMask | ButtonMotionMask, &ev)) {
+								ButtonReleaseMask | ButtonMotionMask,
+								&ev)) {
 			usleep(20000);
 			continue;
 		}
@@ -569,7 +571,7 @@ mouse_resize(Frame * f, Align align)
 		switch (ev.type) {
 		case ButtonRelease:
 			if (!first) {
-				XPoint          pt;
+				XPoint pt;
 				draw_pseudo_border(&frect);
 				pt.x = px;
 				pt.y = py;
@@ -582,7 +584,7 @@ mouse_resize(Frame * f, Align align)
 			break;
 		case MotionNotify:
 			XTranslateCoordinates(dpy, f->win, root, ev.xmotion.x,
-					    ev.xmotion.y, &px, &py, &dummy);
+								  ev.xmotion.y, &px, &py, &dummy);
 
 			if (first)
 				first = 0;
@@ -590,7 +592,7 @@ mouse_resize(Frame * f, Align align)
 				draw_pseudo_border(&frect);
 
 			snap_resize(&frect, &origin, align, rects, num, px,
-				    ox, py, oy, snapw, snaph);
+						ox, py, oy, snapw, snaph);
 			draw_pseudo_border(&frect);
 			break;
 		}
@@ -598,19 +600,19 @@ mouse_resize(Frame * f, Align align)
 }
 
 
-void 
-drop_move(Frame * f, XRectangle * new, XPoint * pt)
+void drop_move(Frame * f, XRectangle * new, XPoint * pt)
 {
-	Area           *a = f->area;
-	int             cx, cy;
-	unsigned int    i, idx = index_item((void **) a->frames, f);
+	Area *a = f->area;
+	int cx, cy;
+	unsigned int i, idx = index_item((void **) a->frames, f);
 
 	if ((f->rect.x == new->x) && (f->rect.y == new->y))
 		return;
 	cx = (pt ? pt->x : new->x + new->width / 2);
 	cy = (pt ? pt->y : new->y + new->height / 2);
 	for (i = 0; a->frames[i]; i++) {
-		if ((a->frames[i] != f) && blitz_ispointinrect(cx, cy, &a->frames[i]->rect)) {
+		if ((a->frames[i] != f)
+			&& blitz_ispointinrect(cx, cy, &a->frames[i]->rect)) {
 			swap((void **) &a->frames[i], (void **) &a->frames[idx]);
 			a->sel = i;
 			a->layout->arrange(a);

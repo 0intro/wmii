@@ -37,7 +37,7 @@ typedef enum {
 	M_NORMAL_BORDER_COLOR,
 	M_RETARDED,
 	M_LAST
-}               InputIndexes;
+} InputIndexes;
 
 enum {
 	OFF_NEXT, OFF_PREV, OFF_CURR, OFF_LAST
@@ -45,66 +45,63 @@ enum {
 
 static IXPServer *ixps = 0;
 static Display *dpy;
-static GC       gc;
-static Window   win;
+static GC gc;
+static Window win;
 static XRectangle rect;
 static XRectangle mrect;
-static int      screen_num;
-static char    *sockfile = 0;
-static File    *files[M_LAST];
-static File   **items = 0;
-static size_t   item_size = 0;
-static int      item = 0;
-static int      offset[OFF_LAST];
+static int screen_num;
+static char *sockfile = 0;
+static File *files[M_LAST];
+static File **items = 0;
+static size_t item_size = 0;
+static int item = 0;
+static int offset[OFF_LAST];
 static unsigned int cmdw = 0;
-static File   **history = 0;
-static int      sel_history = 0;
-static Pixmap   pmap;
-static const int seek = 30;	/* 30px */
+static File **history = 0;
+static int sel_history = 0;
+static Pixmap pmap;
+static const int seek = 30;		/* 30px */
 
-static void     check_event(Connection * c);
-static void     draw_menu(void);
-static void     handle_kpress(XKeyEvent * e);
-static void     set_text(char *text);
-static void     quit(void *obj, char *arg);
-static void     display(void *obj, char *arg);
-static int      update_items(char *prefix);
+static void check_event(Connection * c);
+static void draw_menu(void);
+static void handle_kpress(XKeyEvent * e);
+static void set_text(char *text);
+static void quit(void *obj, char *arg);
+static void display(void *obj, char *arg);
+static int update_items(char *prefix);
 
-static Action   acttbl[2] = {
+static Action acttbl[2] = {
 	{"quit", quit},
 	{"display", display}
 };
 
-static char    *version[] = {
+static char *version[] = {
 	"wmimenu - window manager improved menu - " VERSION "\n"
-	" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
+		" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
-static void
-usage()
+static void usage()
 {
 	fprintf(stderr, "%s",
-		"usage: wmimenu [-s <socket file>] [-r] [-v] [<x>,<y>,<width>,<height>]\n"
-		"      -s      socket file (default: /tmp/.ixp-$USER/wmimenu-%s-%s)\n"
-		"      -v      version info\n");
+			"usage: wmimenu [-s <socket file>] [-r] [-v] [<x>,<y>,<width>,<height>]\n"
+			"      -s      socket file (default: /tmp/.ixp-$USER/wmimenu-%s-%s)\n"
+			"      -v      version info\n");
 	exit(1);
 }
 
-static void
-add_history(char *cmd)
+static void add_history(char *cmd)
 {
-	char            buf[MAX_BUF];
+	char buf[MAX_BUF];
 	snprintf(buf, MAX_BUF, "/history/%ld", (long) time(0));
 	history = (File **) attach_item_begin((void **) history,
-					      wmii_create_ixpfile(ixps, buf,
-								  cmd),
-					      sizeof(File *));
+										  wmii_create_ixpfile(ixps, buf,
+															  cmd),
+										  sizeof(File *));
 }
 
-static void
-_exec(char *cmd)
+static void _exec(char *cmd)
 {
-	char           *rc = cmd;
+	char *rc = cmd;
 
 	if (!cmd || cmd[0] == '\0')
 		return;
@@ -117,10 +114,10 @@ _exec(char *cmd)
 	}
 	add_history(cmd);
 	if (files[M_PRE_COMMAND]->content) {
-		size_t          len = strlen(cmd) + files[M_PRE_COMMAND]->size + 2;
+		size_t len = strlen(cmd) + files[M_PRE_COMMAND]->size + 2;
 		rc = emalloc(len);
 		snprintf(rc, len, "%s %s", (char *) files[M_PRE_COMMAND]->content,
-			 cmd);
+				 cmd);
 	}
 	/* fallback */
 	spawn(dpy, rc);
@@ -129,14 +126,12 @@ _exec(char *cmd)
 		free(rc);
 }
 
-static void
-quit(void *obj, char *arg)
+static void quit(void *obj, char *arg)
 {
 	ixps->runlevel = SHUTDOWN;
 }
 
-static void
-show()
+static void show()
 {
 	set_text(0);
 	XMapRaised(dpy, win);
@@ -144,21 +139,19 @@ show()
 	update_items(files[M_COMMAND]->content);
 	draw_menu();
 	while (XGrabKeyboard
-	       (dpy, RootWindow(dpy, screen_num), True, GrabModeAsync,
-		GrabModeAsync, CurrentTime) != GrabSuccess)
+		   (dpy, RootWindow(dpy, screen_num), True, GrabModeAsync,
+			GrabModeAsync, CurrentTime) != GrabSuccess)
 		usleep(1000);
 }
 
-static void
-hide()
+static void hide()
 {
 	XUngrabKeyboard(dpy, CurrentTime);
 	XUnmapWindow(dpy, win);
 	XSync(dpy, False);
 }
 
-static void
-display(void *obj, char *arg)
+static void display(void *obj, char *arg)
 {
 	if (!arg)
 		return;
@@ -169,8 +162,7 @@ display(void *obj, char *arg)
 	check_event(0);
 }
 
-void
-set_text(char *text)
+void set_text(char *text)
 {
 	if (files[M_COMMAND]->content) {
 		free(files[M_COMMAND]->content);
@@ -183,12 +175,11 @@ set_text(char *text)
 	}
 }
 
-static void
-update_offsets()
+static void update_offsets()
 {
-	int             i;
-	XFontStruct    *font;
-	unsigned int    w = cmdw + 2 * seek;
+	int i;
+	XFontStruct *font;
+	unsigned int w = cmdw + 2 * seek;
 
 	if (!items)
 		return;
@@ -197,7 +188,8 @@ update_offsets()
 
 	/* calc next offset */
 	for (i = offset[OFF_CURR]; items[i]; i++) {
-		w += XTextWidth(font, items[i]->content, strlen(items[i]->content)) + mrect.height;
+		w += XTextWidth(font, items[i]->content,
+						strlen(items[i]->content)) + mrect.height;
 		if (w > mrect.width)
 			break;
 	}
@@ -206,7 +198,8 @@ update_offsets()
 
 	w = cmdw + 2 * seek;
 	for (i = offset[OFF_CURR] - 1; i >= 0; i--) {
-		w += XTextWidth(font, items[i]->content, strlen(items[i]->content)) + mrect.height;
+		w += XTextWidth(font, items[i]->content,
+						strlen(items[i]->content)) + mrect.height;
 		if (w > mrect.width)
 			break;
 	}
@@ -214,14 +207,12 @@ update_offsets()
 	XFreeFont(dpy, font);
 }
 
-static int
-update_items(char *pattern)
+static int update_items(char *pattern)
 {
-	size_t          plen = pattern ? strlen(pattern) : 0, size = 0, max = 0,
-	                len;
-	int             matched = pattern ? plen == 0 : 1;
-	XFontStruct    *font;
-	File           *f, *p, *maxitem = 0;
+	size_t plen = pattern ? strlen(pattern) : 0, size = 0, max = 0, len;
+	int matched = pattern ? plen == 0 : 1;
+	XFontStruct *font;
+	File *f, *p, *maxitem = 0;
 
 	cmdw = 0;
 	item = -1;
@@ -265,20 +256,20 @@ update_items(char *pattern)
 
 	for (p = f->content; p; p = p->next) {
 		if (!p->content)
-			continue;	/* ignore bogus files */
+			continue;			/* ignore bogus files */
 		if (matched || !strncmp(pattern, p->name, plen)) {
 			items[size++] = p;
-			p->parent = 0;	/* HACK to prevent doubled items */
+			p->parent = 0;		/* HACK to prevent doubled items */
 		}
 	}
 
 	for (p = f->content; p; p = p->next) {
 		if (!p->content)
-			continue;	/* ignore bogus files */
+			continue;			/* ignore bogus files */
 		if (p->parent && strstr(p->name, pattern))
 			items[size++] = p;
 		else
-			p->parent = f;	/* restore HACK */
+			p->parent = f;		/* restore HACK */
 	}
 	items[size] = 0;
 	update_offsets();
@@ -287,27 +278,32 @@ update_items(char *pattern)
 }
 
 /* creates draw structs for menu mode drawing */
-static void
-draw_menu()
+static void draw_menu()
 {
-	Draw            d = {0};
-	unsigned int    offx = 0;
-	int             i = 0;
-	XFontStruct    *font = blitz_getfont(dpy, files[M_TEXT_FONT]->content);
+	Draw d = { 0 };
+	unsigned int offx = 0;
+	int i = 0;
+	XFontStruct *font = blitz_getfont(dpy, files[M_TEXT_FONT]->content);
 
 	d.gc = gc;
 	d.drawable = pmap;
 	d.rect = mrect;
 	d.rect.x = 0;
 	d.rect.y = 0;
-	d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORMAL_BG_COLOR]->content);
-	d.border = blitz_loadcolor(dpy, screen_num, files[M_NORMAL_BORDER_COLOR]->content);
+	d.bg =
+		blitz_loadcolor(dpy, screen_num,
+						files[M_NORMAL_BG_COLOR]->content);
+	d.border =
+		blitz_loadcolor(dpy, screen_num,
+						files[M_NORMAL_BORDER_COLOR]->content);
 	blitz_drawlabelnoborder(dpy, &d);
 
 	/* print command */
 	d.align = WEST;
 	d.font = font;
-	d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORMAL_TEXT_COLOR]->content);
+	d.fg =
+		blitz_loadcolor(dpy, screen_num,
+						files[M_NORMAL_TEXT_COLOR]->content);
 	d.data = files[M_COMMAND]->content;
 	if (cmdw && items && items[0])
 		d.rect.width = cmdw;
@@ -316,8 +312,12 @@ draw_menu()
 
 	d.align = CENTER;
 	if (items && items[0]) {
-		d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORMAL_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORMAL_TEXT_COLOR]->content);
+		d.bg =
+			blitz_loadcolor(dpy, screen_num,
+							files[M_NORMAL_BG_COLOR]->content);
+		d.fg =
+			blitz_loadcolor(dpy, screen_num,
+							files[M_NORMAL_TEXT_COLOR]->content);
 		d.data = offset[OFF_CURR] ? "<" : 0;
 		d.rect.x = offx;
 		d.rect.width = seek;
@@ -328,29 +328,54 @@ draw_menu()
 		for (i = offset[OFF_CURR]; items[i] && (i < offset[OFF_NEXT]); i++) {
 			d.data = items[i]->name;
 			d.rect.x = offx;
-			d.rect.width = XTextWidth(d.font, d.data, strlen(d.data)) + mrect.height;
+			d.rect.width =
+				XTextWidth(d.font, d.data, strlen(d.data)) + mrect.height;
 			offx += d.rect.width;
 			if (i == item) {
-				d.bg = blitz_loadcolor(dpy, screen_num, files[M_SELECTED_BG_COLOR]->content);
-				d.fg = blitz_loadcolor(dpy, screen_num, files[M_SELECTED_TEXT_COLOR]->content);
-				d.border = blitz_loadcolor(dpy, screen_num, files[M_SELECTED_BORDER_COLOR]->content);
+				d.bg =
+					blitz_loadcolor(dpy, screen_num,
+									files[M_SELECTED_BG_COLOR]->content);
+				d.fg =
+					blitz_loadcolor(dpy, screen_num,
+									files[M_SELECTED_TEXT_COLOR]->content);
+				d.border =
+					blitz_loadcolor(dpy, screen_num,
+									files[M_SELECTED_BORDER_COLOR]->
+									content);
 				blitz_drawlabel(dpy, &d);
 			} else if (!i && item == -1) {
 				/* fg and bg are inverted */
-				d.fg = blitz_loadcolor(dpy, screen_num, files[M_SELECTED_BG_COLOR]->content);
-				d.bg = blitz_loadcolor(dpy, screen_num, files[M_SELECTED_TEXT_COLOR]->content);
-				d.border = blitz_loadcolor(dpy, screen_num, files[M_SELECTED_BORDER_COLOR]->content);
+				d.fg =
+					blitz_loadcolor(dpy, screen_num,
+									files[M_SELECTED_BG_COLOR]->content);
+				d.bg =
+					blitz_loadcolor(dpy, screen_num,
+									files[M_SELECTED_TEXT_COLOR]->content);
+				d.border =
+					blitz_loadcolor(dpy, screen_num,
+									files[M_SELECTED_BORDER_COLOR]->
+									content);
 				blitz_drawlabel(dpy, &d);
 			} else {
-				d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORMAL_BG_COLOR]->content);
-				d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORMAL_TEXT_COLOR]->content);
-				d.border = blitz_loadcolor(dpy, screen_num, files[M_NORMAL_BORDER_COLOR]->content);
+				d.bg =
+					blitz_loadcolor(dpy, screen_num,
+									files[M_NORMAL_BG_COLOR]->content);
+				d.fg =
+					blitz_loadcolor(dpy, screen_num,
+									files[M_NORMAL_TEXT_COLOR]->content);
+				d.border =
+					blitz_loadcolor(dpy, screen_num,
+									files[M_NORMAL_BORDER_COLOR]->content);
 				blitz_drawlabelnoborder(dpy, &d);
 			}
 		}
 
-		d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORMAL_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORMAL_TEXT_COLOR]->content);
+		d.bg =
+			blitz_loadcolor(dpy, screen_num,
+							files[M_NORMAL_BG_COLOR]->content);
+		d.fg =
+			blitz_loadcolor(dpy, screen_num,
+							files[M_NORMAL_TEXT_COLOR]->content);
 		d.data = items[i] ? ">" : 0;
 		d.rect.x = mrect.width - seek;
 		d.rect.width = seek;
@@ -361,14 +386,13 @@ draw_menu()
 	XFreeFont(dpy, font);
 }
 
-static void
-handle_kpress(XKeyEvent * e)
+static void handle_kpress(XKeyEvent * e)
 {
-	KeySym          ksym;
-	char            buf[32];
-	int             idx, num;
-	static char     text[4096];
-	size_t          len = 0;
+	KeySym ksym;
+	char buf[32];
+	int idx, num;
+	static char text[4096];
+	size_t len = 0;
 
 	text[0] = '\0';
 	if (files[M_COMMAND]->content) {
@@ -379,8 +403,8 @@ handle_kpress(XKeyEvent * e)
 	num = XLookupString(e, buf, sizeof(buf), &ksym, 0);
 
 	if (IsFunctionKey(ksym) || IsKeypadKey(ksym)
-	    || IsMiscFunctionKey(ksym) || IsPFKey(ksym)
-	    || IsPrivateKeypadKey(ksym))
+		|| IsMiscFunctionKey(ksym) || IsPFKey(ksym)
+		|| IsPrivateKeypadKey(ksym))
 		return;
 
 	/* first check if a control mask is omitted */
@@ -408,7 +432,7 @@ handle_kpress(XKeyEvent * e)
 			draw_menu();
 			return;
 			break;
-		default:	/* ignore other control sequences */
+		default:				/* ignore other control sequences */
 			return;
 			break;
 		}
@@ -464,8 +488,8 @@ handle_kpress(XKeyEvent * e)
 		break;
 	case XK_BackSpace:
 		if (len) {
-			int             size = 0;
-			size_t          i = len;
+			int size = 0;
+			size_t i = len;
 			for (size = 0; items && items[size]; size++);
 			if (i) {
 				do
@@ -499,10 +523,9 @@ handle_kpress(XKeyEvent * e)
 	draw_menu();
 }
 
-static void
-check_event(Connection * c)
+static void check_event(Connection * c)
 {
-	XEvent          ev;
+	XEvent ev;
 
 	while (XPending(dpy)) {
 		XNextEvent(dpy, &ev);
@@ -521,11 +544,10 @@ check_event(Connection * c)
 	}
 }
 
-static void
-handle_after_write(IXPServer * s, File * f)
+static void handle_after_write(IXPServer * s, File * f)
 {
-	int             i;
-	size_t          len;
+	int i;
+	size_t len;
 
 	if (files[M_CTL] == f) {
 		for (i = 0; i < 2; i++) {
@@ -540,15 +562,15 @@ handle_after_write(IXPServer * s, File * f)
 			}
 		}
 	} else if (files[M_SIZE] == f) {
-		char           *size = files[M_SIZE]->content;
+		char *size = files[M_SIZE]->content;
 		if (size && strrchr(size, ',')) {
 			blitz_strtorect(dpy, &rect, &mrect, size);
 			XFreePixmap(dpy, pmap);
 			XMoveResizeWindow(dpy, win, mrect.x, mrect.y,
-					  mrect.width, mrect.height);
+							  mrect.width, mrect.height);
 			XSync(dpy, False);
 			pmap = XCreatePixmap(dpy, win, mrect.width, mrect.height,
-					     DefaultDepth(dpy, screen_num));
+								 DefaultDepth(dpy, screen_num));
 			XSync(dpy, False);
 			draw_menu();
 		}
@@ -559,25 +581,23 @@ handle_after_write(IXPServer * s, File * f)
 	check_event(0);
 }
 
-static void
-handle_before_read(IXPServer * s, File * f)
+static void handle_before_read(IXPServer * s, File * f)
 {
-	char            buf[64];
+	char buf[64];
 	if (f != files[M_SIZE])
 		return;
 	snprintf(buf, sizeof(buf), "%d,%d,%d,%d", mrect.x, mrect.y,
-		 mrect.width, mrect.height);
+			 mrect.width, mrect.height);
 	if (f->content)
 		free(f->content);
 	f->content = strdup(buf);
 	f->size = strlen(buf);
 }
 
-static void
-run(char *size)
+static void run(char *size)
 {
 	XSetWindowAttributes wa;
-	XGCValues       gcv;
+	XGCValues gcv;
 
 	/* init */
 	if (!(files[M_CTL] = ixp_create(ixps, "/ctl"))) {
@@ -594,13 +614,26 @@ run(char *size)
 	files[M_HISTORY] = ixp_create(ixps, "/history");
 	add_history("");
 	files[M_LOOKUP] = ixp_create(ixps, "/lookup");
-	files[M_TEXT_FONT] = wmii_create_ixpfile(ixps, "/style/text-font", BLITZ_FONT);
-	files[M_SELECTED_BG_COLOR] = wmii_create_ixpfile(ixps, "/sel-style/bg-color", BLITZ_SEL_BG_COLOR);
-	files[M_SELECTED_TEXT_COLOR] = wmii_create_ixpfile(ixps, "/sel-style/text-color", BLITZ_SEL_FG_COLOR);
-	files[M_SELECTED_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/sel-style/border-color", BLITZ_SEL_BORDER_COLOR);
-	files[M_NORMAL_BG_COLOR] = wmii_create_ixpfile(ixps, "/norm-style/bg-color", BLITZ_NORM_BG_COLOR);
-	files[M_NORMAL_TEXT_COLOR] = wmii_create_ixpfile(ixps, "/norm-style/text-color", BLITZ_NORM_FG_COLOR);
-	files[M_NORMAL_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/norm-style/border-color", BLITZ_NORM_BORDER_COLOR);
+	files[M_TEXT_FONT] =
+		wmii_create_ixpfile(ixps, "/style/text-font", BLITZ_FONT);
+	files[M_SELECTED_BG_COLOR] =
+		wmii_create_ixpfile(ixps, "/sel-style/bg-color",
+							BLITZ_SEL_BG_COLOR);
+	files[M_SELECTED_TEXT_COLOR] =
+		wmii_create_ixpfile(ixps, "/sel-style/text-color",
+							BLITZ_SEL_FG_COLOR);
+	files[M_SELECTED_BORDER_COLOR] =
+		wmii_create_ixpfile(ixps, "/sel-style/border-color",
+							BLITZ_SEL_BORDER_COLOR);
+	files[M_NORMAL_BG_COLOR] =
+		wmii_create_ixpfile(ixps, "/norm-style/bg-color",
+							BLITZ_NORM_BG_COLOR);
+	files[M_NORMAL_TEXT_COLOR] =
+		wmii_create_ixpfile(ixps, "/norm-style/text-color",
+							BLITZ_NORM_FG_COLOR);
+	files[M_NORMAL_BORDER_COLOR] =
+		wmii_create_ixpfile(ixps, "/norm-style/border-color",
+							BLITZ_NORM_BORDER_COLOR);
 	files[M_RETARDED] = ixp_create(ixps, "/retarded");
 
 	wa.override_redirect = 1;
@@ -618,11 +651,11 @@ run(char *size)
 		mrect.height = 40;
 
 	win = XCreateWindow(dpy, RootWindow(dpy, screen_num), mrect.x, mrect.y,
-			    mrect.width, mrect.height, 0, DefaultDepth(dpy,
-								screen_num),
-			    CopyFromParent, DefaultVisual(dpy, screen_num),
-			    CWOverrideRedirect | CWBackPixmap | CWEventMask,
-			    &wa);
+						mrect.width, mrect.height, 0, DefaultDepth(dpy,
+																   screen_num),
+						CopyFromParent, DefaultVisual(dpy, screen_num),
+						CWOverrideRedirect | CWBackPixmap | CWEventMask,
+						&wa);
 	XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_xterm));
 	XSync(dpy, False);
 
@@ -633,22 +666,21 @@ run(char *size)
 	gc = XCreateGC(dpy, win, 0, 0);
 	pmap =
 		XCreatePixmap(dpy, win, mrect.width, mrect.height,
-			      DefaultDepth(dpy, screen_num));
+					  DefaultDepth(dpy, screen_num));
 
 	/* main event loop */
 	run_server_with_fd_support(ixps, ConnectionNumber(dpy),
-				   check_event, 0);
+							   check_event, 0);
 	deinit_server(ixps);
 	XFreePixmap(dpy, pmap);
 	XFreeGC(dpy, gc);
 	XCloseDisplay(dpy);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-	char            size[64];
-	int             i;
+	char size[64];
+	int i;
 
 	/* command line args */
 	for (i = 1; (i < argc) && (argv[i][0] == '-'); i++) {

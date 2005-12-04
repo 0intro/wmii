@@ -17,11 +17,10 @@
 
 #include <cext.h>
 
-u32 
-ixp_send_message(int fd, void *msg, u32 msize, char **errstr)
+u32 ixp_send_message(int fd, void *msg, u32 msize, char **errstr)
 {
-	u32             num = 0;
-	int             r;
+	u32 num = 0;
+	int r;
 
 	/* send message */
 	while (num < msize) {
@@ -37,11 +36,10 @@ ixp_send_message(int fd, void *msg, u32 msize, char **errstr)
 	return num;
 }
 
-static u32 
-ixp_recv_data(int fd, void *msg, u32 msize, char **errstr)
+static u32 ixp_recv_data(int fd, void *msg, u32 msize, char **errstr)
 {
-	u32             num = 0;
-	int             r = 0;
+	u32 num = 0;
+	int r = 0;
 
 	/* receive data */
 	while (num < msize) {
@@ -57,10 +55,9 @@ ixp_recv_data(int fd, void *msg, u32 msize, char **errstr)
 	return num;
 }
 
-u32 
-ixp_recv_message(int fd, void *msg, u32 msglen, char **errstr)
+u32 ixp_recv_message(int fd, void *msg, u32 msglen, char **errstr)
 {
-	u32             msize;
+	u32 msize;
 
 	/* receive header */
 	if (ixp_recv_data(fd, msg, sizeof(u32), errstr) != sizeof(u32))
@@ -72,7 +69,7 @@ ixp_recv_message(int fd, void *msg, u32 msglen, char **errstr)
 	}
 	/* receive message */
 	if (ixp_recv_data(fd, msg + sizeof(u32), msize - sizeof(u32), errstr)
-	    != msize - sizeof(u32))
+		!= msize - sizeof(u32))
 		return 0;
 	return msize;
 }

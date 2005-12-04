@@ -10,10 +10,9 @@
 #include <cext.h>
 
 /* free the result manually! */
-char           *
-blitz_modtostr(unsigned long mod)
+char *blitz_modtostr(unsigned long mod)
 {
-	char            result[60];
+	char result[60];
 	result[0] = '\0';
 
 	if (mod & ShiftMask)
@@ -33,10 +32,9 @@ blitz_modtostr(unsigned long mod)
 	return estrdup(result);
 }
 
-unsigned long 
-blitz_strtomod(char *val)
+unsigned long blitz_strtomod(char *val)
 {
-	unsigned long   mod = 0;
+	unsigned long mod = 0;
 	if (strstr(val, "S-"))
 		mod |= ShiftMask;
 	if (strstr(val, "C-"))

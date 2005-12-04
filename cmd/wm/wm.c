@@ -13,27 +13,25 @@
 
 #include "wm.h"
 
-static int      other_wm_running;
-static int      (*x_error_handler) (Display *, XErrorEvent *);
+static int other_wm_running;
+static int (*x_error_handler) (Display *, XErrorEvent *);
 
-char           *version[] = {
+char *version[] = {
 	"wmiiwm - window manager improved 2 - " VERSION "\n"
-	" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
+		" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
-static void 
-usage()
+static void usage()
 {
 	fprintf(stderr, "%s",
-		"usage: wmiiwm -s <socket file> [-c] [-v]\n"
-		"      -s    socket file\n"
-		"      -c    checks if another WM is already running\n"
-		"      -v    version info\n");
+			"usage: wmiiwm -s <socket file> [-c] [-v]\n"
+			"      -s    socket file\n"
+			"      -c    checks if another WM is already running\n"
+			"      -v    version info\n");
 	exit(1);
 }
 
-static void 
-init_atoms()
+static void init_atoms()
 {
 	wm_state = XInternAtom(dpy, "WM_STATE", False);
 	wm_change_state = XInternAtom(dpy, "WM_CHANGE_STATE", False);
@@ -43,8 +41,7 @@ init_atoms()
 	net_wm_desktop = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
 }
 
-static void 
-init_cursors()
+static void init_cursors()
 {
 	normal_cursor = XCreateFontCursor(dpy, XC_left_ptr);
 	resize_cursor = XCreateFontCursor(dpy, XC_sizing);
@@ -60,47 +57,73 @@ init_cursors()
 	se_cursor = XCreateFontCursor(dpy, XC_bottom_right_corner);
 }
 
-static void 
-init_defaults()
+static void init_defaults()
 {
 	defaults[WM_DETACHED_FRAME] = ixp_create(ixps, "/detached/frame");
 	defaults[WM_DETACHED_CLIENT] = ixp_create(ixps, "/detached/client");
-	defaults[WM_TRANS_COLOR] = wmii_create_ixpfile(ixps, "/default/transcolor", BLITZ_SEL_FG_COLOR);
+	defaults[WM_TRANS_COLOR] =
+		wmii_create_ixpfile(ixps, "/default/transcolor",
+							BLITZ_SEL_FG_COLOR);
 	defaults[WM_TRANS_COLOR]->after_write = handle_after_write;
-	defaults[WM_SEL_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/bgcolor", BLITZ_SEL_BG_COLOR);
-	defaults[WM_SEL_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor", BLITZ_SEL_FG_COLOR);
-	defaults[WM_SEL_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor", BLITZ_SEL_BORDER_COLOR);
-	defaults[WM_NORM_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/bgcolor", BLITZ_NORM_BG_COLOR);
-	defaults[WM_NORM_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor", BLITZ_NORM_FG_COLOR);
-	defaults[WM_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor", BLITZ_NORM_BORDER_COLOR);
-	defaults[WM_FONT] = wmii_create_ixpfile(ixps, "/default/font", BLITZ_FONT);
+	defaults[WM_SEL_BG_COLOR] =
+		wmii_create_ixpfile(ixps, "/default/selstyle/bgcolor",
+							BLITZ_SEL_BG_COLOR);
+	defaults[WM_SEL_FG_COLOR] =
+		wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor",
+							BLITZ_SEL_FG_COLOR);
+	defaults[WM_SEL_BORDER_COLOR] =
+		wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor",
+							BLITZ_SEL_BORDER_COLOR);
+	defaults[WM_NORM_BG_COLOR] =
+		wmii_create_ixpfile(ixps, "/default/normstyle/bgcolor",
+							BLITZ_NORM_BG_COLOR);
+	defaults[WM_NORM_FG_COLOR] =
+		wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor",
+							BLITZ_NORM_FG_COLOR);
+	defaults[WM_NORM_BORDER_COLOR] =
+		wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor",
+							BLITZ_NORM_BORDER_COLOR);
+	defaults[WM_FONT] =
+		wmii_create_ixpfile(ixps, "/default/font", BLITZ_FONT);
 	defaults[WM_FONT]->after_write = handle_after_write;
-	defaults[WM_PAGE_SIZE] = wmii_create_ixpfile(ixps, "/default/pagesize", "0,0,east,south-16");
+	defaults[WM_PAGE_SIZE] =
+		wmii_create_ixpfile(ixps, "/default/pagesize",
+							"0,0,east,south-16");
 	defaults[WM_SNAP_VALUE] = wmii_create_ixpfile(ixps, "/default/snapvalue", "20");	/* 0..1000 */
-	defaults[WM_BORDER] = wmii_create_ixpfile(ixps, "/default/border", "1");
+	defaults[WM_BORDER] =
+		wmii_create_ixpfile(ixps, "/default/border", "1");
 	defaults[WM_TAB] = wmii_create_ixpfile(ixps, "/default/tab", "1");
-	defaults[WM_HANDLE_INC] = wmii_create_ixpfile(ixps, "/default/handleinc", "1");
-	defaults[WM_LOCKED] = wmii_create_ixpfile(ixps, "/default/locked", "1");
-	defaults[WM_LAYOUT] = wmii_create_ixpfile(ixps, "/default/layout", LAYOUT);
+	defaults[WM_HANDLE_INC] =
+		wmii_create_ixpfile(ixps, "/default/handleinc", "1");
+	defaults[WM_LOCKED] =
+		wmii_create_ixpfile(ixps, "/default/locked", "1");
+	defaults[WM_LAYOUT] =
+		wmii_create_ixpfile(ixps, "/default/layout", LAYOUT);
 	defaults[WM_SEL_PAGE] = ixp_create(ixps, "/page/sel");
-	defaults[WM_EVENT_PAGE_UPDATE] = ixp_create(ixps, "/default/event/pageupdate");
-	defaults[WM_EVENT_CLIENT_UPDATE] = ixp_create(ixps, "/default/event/clientupdate");
-	defaults[WM_EVENT_B1PRESS] = ixp_create(ixps, "/defaults/event/b1press");
-	defaults[WM_EVENT_B2PRESS] = ixp_create(ixps, "/defaults/event/b2press");
-	defaults[WM_EVENT_B3PRESS] = ixp_create(ixps, "/defaults/event/b3press");
-	defaults[WM_EVENT_B4PRESS] = ixp_create(ixps, "/defaults/event/b4press");
-	defaults[WM_EVENT_B5PRESS] = ixp_create(ixps, "/defaults/event/b5press");
+	defaults[WM_EVENT_PAGE_UPDATE] =
+		ixp_create(ixps, "/default/event/pageupdate");
+	defaults[WM_EVENT_CLIENT_UPDATE] =
+		ixp_create(ixps, "/default/event/clientupdate");
+	defaults[WM_EVENT_B1PRESS] =
+		ixp_create(ixps, "/defaults/event/b1press");
+	defaults[WM_EVENT_B2PRESS] =
+		ixp_create(ixps, "/defaults/event/b2press");
+	defaults[WM_EVENT_B3PRESS] =
+		ixp_create(ixps, "/defaults/event/b3press");
+	defaults[WM_EVENT_B4PRESS] =
+		ixp_create(ixps, "/defaults/event/b4press");
+	defaults[WM_EVENT_B5PRESS] =
+		ixp_create(ixps, "/defaults/event/b5press");
 }
 
-static void 
-init_screen()
+static void init_screen()
 {
-	XGCValues       gcv;
+	XGCValues gcv;
 	XSetWindowAttributes wa;
 
 	XAllocNamedColor(dpy, DefaultColormap(dpy, screen_num),
-			 defaults[WM_TRANS_COLOR]->content,
-			 &xorcolor, &xorcolor);
+					 defaults[WM_TRANS_COLOR]->content,
+					 &xorcolor, &xorcolor);
 	gcv.subwindow_mode = IncludeInferiors;
 	gcv.function = GXxor;
 	gcv.foreground = xorcolor.pixel;
@@ -108,8 +131,8 @@ init_screen()
 	gcv.plane_mask = AllPlanes;
 	gcv.graphics_exposures = False;
 	xorgc = XCreateGC(dpy, root, GCForeground | GCGraphicsExposures
-			  | GCFunction | GCSubwindowMode | GCLineWidth
-			  | GCPlaneMask, &gcv);
+					  | GCFunction | GCSubwindowMode | GCLineWidth
+					  | GCPlaneMask, &gcv);
 	rect.x = rect.y = 0;
 	rect.width = DisplayWidth(dpy, screen_num);
 	rect.height = DisplayHeight(dpy, screen_num);
@@ -119,11 +142,11 @@ init_screen()
 	wa.event_mask = ExposureMask | ButtonPressMask | PointerMotionMask
 		| SubstructureRedirectMask | SubstructureNotifyMask;
 	transient = XCreateWindow(dpy, root, 0, 0, rect.width, rect.height,
-				  0, DefaultDepth(dpy, screen_num),
-				  CopyFromParent, DefaultVisual(dpy,
-								screen_num),
-				  CWOverrideRedirect | CWBackPixmap |
-				  CWEventMask, &wa);
+							  0, DefaultDepth(dpy, screen_num),
+							  CopyFromParent, DefaultVisual(dpy,
+															screen_num),
+							  CWOverrideRedirect | CWBackPixmap |
+							  CWEventMask, &wa);
 
 	XSync(dpy, False);
 	transient_gc = XCreateGC(dpy, transient, 0, 0);
@@ -138,20 +161,19 @@ init_screen()
  * Other types of errors call Xlib's default error handler, which
  * calls exit().
  */
-static int 
-wmii_error_handler(Display * dpy, XErrorEvent * error)
+static int wmii_error_handler(Display * dpy, XErrorEvent * error)
 {
 	if (error->error_code == BadWindow
-	    || (error->request_code == X_SetInputFocus
-		&& error->error_code == BadMatch)
-	    || (error->request_code == X_PolyText8
-		&& error->error_code == BadDrawable)
-	    || (error->request_code == X_PolyFillRectangle
-		&& error->error_code == BadDrawable)
-	    || (error->request_code == X_PolySegment
-		&& error->error_code == BadDrawable)
-	    || (error->request_code == X_ConfigureWindow
-		&& error->error_code == BadMatch))
+		|| (error->request_code == X_SetInputFocus
+			&& error->error_code == BadMatch)
+		|| (error->request_code == X_PolyText8
+			&& error->error_code == BadDrawable)
+		|| (error->request_code == X_PolyFillRectangle
+			&& error->error_code == BadDrawable)
+		|| (error->request_code == X_PolySegment
+			&& error->error_code == BadDrawable)
+		|| (error->request_code == X_ConfigureWindow
+			&& error->error_code == BadMatch))
 		return 0;
 	fprintf(stderr, "%s", "wmiiwm: fatal error");
 	return x_error_handler(dpy, error);	/* calls exit() */
@@ -161,25 +183,24 @@ wmii_error_handler(Display * dpy, XErrorEvent * error)
  * Startup Error handler to check if another window manager
  * is already running.
  */
-static int 
-startup_error_handler(Display * dpy, XErrorEvent * error)
+static int startup_error_handler(Display * dpy, XErrorEvent * error)
 {
 	other_wm_running = 1;
 	return -1;
 }
 
-static void 
-cleanup()
+static void cleanup()
 {
-	int             i;
-	XWindowChanges  wc;
+	int i;
+	XWindowChanges wc;
 
 	for (i = 0; clients && clients[i]; i++) {
-		Client         *c = clients[i];
-		Frame          *f = c->frame;
+		Client *c = clients[i];
+		Frame *f = c->frame;
 		if (f) {
 			gravitate(c, tab_height(f), border_width(f), 1);
-			XReparentWindow(dpy, c->win, root, f->rect.x + c->rect.x, f->rect.y + c->rect.y);
+			XReparentWindow(dpy, c->win, root, f->rect.x + c->rect.x,
+							f->rect.y + c->rect.y);
 			wc.border_width = c->border;
 			XConfigureWindow(dpy, c->win, CWBorderWidth, &wc);
 		}
@@ -187,8 +208,7 @@ cleanup()
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 }
 
-static void 
-run()
+static void run()
 {
 	/* init */
 	init_event_hander();
@@ -217,18 +237,17 @@ run()
 
 	/* main event loop */
 	run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event,
-				   0);
+							   0);
 	cleanup();
 	deinit_server(ixps);
 	XCloseDisplay(dpy);
 }
 
-int 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-	int             i;
-	int             checkwm = 0;
-	char           *sockfile = 0;
+	int i;
+	int checkwm = 0;
+	char *sockfile = 0;
 
 	/* command line args */
 	if (argc > 1) {
@@ -269,7 +288,7 @@ main(int argc, char *argv[])
 	XSync(dpy, False);
 	if (other_wm_running) {
 		fprintf(stderr,
-		     "wmiiwm: another window manager is already running\n");
+				"wmiiwm: another window manager is already running\n");
 		exit(1);
 	}
 	if (checkwm) {

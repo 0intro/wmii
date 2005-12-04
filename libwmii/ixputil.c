@@ -14,17 +14,16 @@
 
 #include <cext.h>
 
-static pid_t    mypid;
-static char    *mysockfile;
+static pid_t mypid;
+static char *mysockfile;
 
 /* convenience stuff ----------------------------------------------- */
 
-File           *
-wmii_create_ixpfile(IXPServer * s, char *key, char *val)
+File *wmii_create_ixpfile(IXPServer * s, char *key, char *val)
 {
-	File           *f = ixp_create(s, key);
+	File *f = ixp_create(s, key);
 	if (f && !is_directory(f)) {
-		size_t          l = val ? strlen(val) : 0;
+		size_t l = val ? strlen(val) : 0;
 		f->content = l ? strdup(val) : 0;
 		f->size = l;
 		return f;
@@ -33,10 +32,9 @@ wmii_create_ixpfile(IXPServer * s, char *key, char *val)
 	return 0;
 }
 
-void 
-wmii_get_ixppath(File * f, char *path, size_t size)
+void wmii_get_ixppath(File * f, char *path, size_t size)
 {
-	char            buf[512];
+	char buf[512];
 
 	buf[0] = '\0';
 	if (path)
@@ -48,11 +46,10 @@ wmii_get_ixppath(File * f, char *path, size_t size)
 		wmii_get_ixppath(f->parent, path, size);
 }
 
-void 
-wmii_move_ixpfile(File * f, File * to_parent)
+void wmii_move_ixpfile(File * f, File * to_parent)
 {
-	File           *p = f->parent;
-	File           *fil = p->content;
+	File *p = f->parent;
+	File *fil = p->content;
 
 	/* detach */
 	if (p->content == f)
@@ -75,17 +72,15 @@ wmii_move_ixpfile(File * f, File * to_parent)
 	f->parent = to_parent;
 }
 
-static void 
-exit_cleanup()
+static void exit_cleanup()
 {
 	if (mypid == getpid())
 		unlink(mysockfile);
 }
 
-IXPServer      *
-wmii_setup_server(char *sockfile)
+IXPServer *wmii_setup_server(char *sockfile)
 {
-	IXPServer      *s;
+	IXPServer *s;
 
 	if (!sockfile) {
 		fprintf(stderr, "%s\n", "libwmii: no socket file provided");

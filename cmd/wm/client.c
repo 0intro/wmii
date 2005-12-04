@@ -12,16 +12,15 @@
 
 #include <cext.h>
 
-static Client   zero_client = {0};
+static Client zero_client = { 0 };
 
-Client         *
-alloc_client(Window w)
+Client *alloc_client(Window w)
 {
-	static int      id = 0;
-	char            buf[MAX_BUF];
-	char            buf2[MAX_BUF];
-	XClassHint      ch;
-	Client         *c = (Client *) emalloc(sizeof(Client));
+	static int id = 0;
+	char buf[MAX_BUF];
+	char buf2[MAX_BUF];
+	XClassHint ch;
+	Client *c = (Client *) emalloc(sizeof(Client));
 
 	*c = zero_client;
 	c->win = w;
@@ -42,24 +41,24 @@ alloc_client(Window w)
 		c->files[C_INSTANCE] = ixp_create(ixps, buf);
 	}
 	id++;
-	clients = (Client **) attach_item_end((void **) clients, c, sizeof(Client *));
+	clients =
+		(Client **) attach_item_end((void **) clients, c,
+									sizeof(Client *));
 	XSelectInput(dpy, c->win, CLIENT_MASK);
 	return c;
 }
 
-void 
-set_client_state(Client * c, int state)
+void set_client_state(Client * c, int state)
 {
-	long            data[2];
+	long data[2];
 
 	data[0] = (long) state;
 	data[1] = (long) None;
 	XChangeProperty(dpy, c->win, wm_state, wm_state, 32,
-			PropModeReplace, (unsigned char *) data, 2);
+					PropModeReplace, (unsigned char *) data, 2);
 }
 
-void 
-show_client(Client * c)
+void show_client(Client * c)
 {
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XMapWindow(dpy, c->win);
@@ -69,8 +68,7 @@ show_client(Client * c)
 	grab_client(c, Mod1Mask, Button3);
 }
 
-void 
-hide_client(Client * c)
+void hide_client(Client * c)
 {
 	ungrab_client(c, AnyModifier, AnyButton);
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
@@ -79,34 +77,31 @@ hide_client(Client * c)
 	set_client_state(c, WithdrawnState);
 }
 
-void 
-reparent_client(Client * c, Window w, int x, int y)
+void reparent_client(Client * c, Window w, int x, int y)
 {
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XReparentWindow(dpy, c->win, w, x, y);
 	XSelectInput(dpy, c->win, CLIENT_MASK);
 }
 
-void 
-grab_client(Client * c, unsigned long mod, unsigned int button)
+void grab_client(Client * c, unsigned long mod, unsigned int button)
 {
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XGrabButton(dpy, button, mod, c->win, False,
-		 ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
+				ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
 	if ((mod != AnyModifier) && num_lock_mask) {
 		XGrabButton(dpy, button, mod | num_lock_mask, c->win,
-		       False, ButtonPressMask, GrabModeAsync, GrabModeAsync,
-			    None, None);
+					False, ButtonPressMask, GrabModeAsync, GrabModeAsync,
+					None, None);
 		XGrabButton(dpy, button, mod | num_lock_mask | LockMask,
-			    c->win, False, ButtonPressMask, GrabModeAsync,
-			    GrabModeAsync, None, None);
+					c->win, False, ButtonPressMask, GrabModeAsync,
+					GrabModeAsync, None, None);
 	}
 	XSelectInput(dpy, c->win, CLIENT_MASK);
 	XSync(dpy, False);
 }
 
-void 
-ungrab_client(Client * c, unsigned long mod, unsigned int button)
+void ungrab_client(Client * c, unsigned long mod, unsigned int button)
 {
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XUngrabButton(dpy, button, mod, c->win);
@@ -118,8 +113,7 @@ ungrab_client(Client * c, unsigned long mod, unsigned int button)
 	XSync(dpy, False);
 }
 
-void 
-configure_client(Client * c)
+void configure_client(Client * c)
 {
 	XConfigureEvent e;
 	e.type = ConfigureNotify;
@@ -143,8 +137,7 @@ configure_client(Client * c)
 	XSync(dpy, False);
 }
 
-void 
-close_client(Client * c)
+void close_client(Client * c)
 {
 	if (c->proto & PROTO_DEL)
 		send_message(dpy, c->win, wm_protocols, wm_delete);
@@ -152,10 +145,9 @@ close_client(Client * c)
 		XKillClient(dpy, c->win);
 }
 
-void 
-_init_client(Client * c, XWindowAttributes * wa)
+void _init_client(Client * c, XWindowAttributes * wa)
 {
-	long            msize;
+	long msize;
 	c->rect.x = wa->x;
 	c->rect.y = wa->y;
 	c->border = wa->border_width;
@@ -167,20 +159,19 @@ _init_client(Client * c, XWindowAttributes * wa)
 	XGetTransientForHint(dpy, c->win, &c->trans);
 	/* size hints */
 	if (!XGetWMNormalHints(dpy, c->win, &c->size, &msize)
-	    || !c->size.flags)
+		|| !c->size.flags)
 		c->size.flags = PSize;
 	XAddToSaveSet(dpy, c->win);
 }
 
-void 
-handle_client_property(Client * c, XPropertyEvent * e)
+void handle_client_property(Client * c, XPropertyEvent * e)
 {
-	char            buf[1024];
-	long            msize;
+	char buf[1024];
+	long msize;
 
 	buf[0] = '\0';
 	if (e->state == PropertyDelete)
-		return;		/* ignore */
+		return;					/* ignore */
 
 	if (e->atom == wm_protocols) {
 		/* update */
@@ -205,18 +196,17 @@ handle_client_property(Client * c, XPropertyEvent * e)
 		break;
 	case XA_WM_NORMAL_HINTS:
 		if (!XGetWMNormalHints(dpy, c->win, &c->size, &msize)
-		    || !c->size.flags) {
+			|| !c->size.flags) {
 			c->size.flags = PSize;
 		}
 		break;
 	}
 }
 
-void 
-free_client(Client * c)
+void free_client(Client * c)
 {
 	clients =
-	(Client **) detach_item((void **) clients, c, sizeof(Client *));
+		(Client **) detach_item((void **) clients, c, sizeof(Client *));
 	ixp_remove_file(ixps, c->files[C_PREFIX]);
 	if (ixps->errstr)
 		fprintf(stderr, "wmiiwm: free_client(): %s\n", ixps->errstr);
@@ -224,13 +214,12 @@ free_client(Client * c)
 }
 
 /* speed reasoned function for client property change */
-void 
-draw_client(Client * c)
+void draw_client(Client * c)
 {
-	Frame          *f = c->frame;
-	unsigned int    tabh = tab_height(f);
-	int             i, size;
-	int             tw;
+	Frame *f = c->frame;
+	unsigned int tabh = tab_height(f);
+	int i, size;
+	int tw;
 
 	if (!tabh)
 		return;
@@ -241,19 +230,19 @@ draw_client(Client * c)
 	for (i = 0; f->clients[i] && f->clients[i] != c; i++);
 
 	if (!f->clients[i + 1])
-		draw_tab(f, c->files[C_NAME]->content, i * tw, 0, f->rect.width - (i * tw), tabh,
-				ISSELFRAME(f) && f->clients[f->sel] == c);
+		draw_tab(f, c->files[C_NAME]->content, i * tw, 0,
+				 f->rect.width - (i * tw), tabh, ISSELFRAME(f)
+				 && f->clients[f->sel] == c);
 	else
 		draw_tab(f, c->files[C_NAME]->content, i * tw, 0, tw, tabh,
-				ISSELFRAME(f) && f->clients[f->sel] == c);
+				 ISSELFRAME(f) && f->clients[f->sel] == c);
 }
 
-void 
-draw_clients(Frame * f)
+void draw_clients(Frame * f)
 {
-	unsigned int    tabh = tab_height(f);
-	int             i, size = count_items((void **) f->clients);
-	int             tw = f->rect.width;
+	unsigned int tabh = tab_height(f);
+	int i, size = count_items((void **) f->clients);
+	int tw = f->rect.width;
 
 	if (!tabh || !size)
 		return;
@@ -261,36 +250,35 @@ draw_clients(Frame * f)
 		tw /= size;
 	for (i = 0; f->clients[i]; i++) {
 		if (!f->clients[i + 1]) {
-			int             xoff = i * tw;
+			int xoff = i * tw;
 			draw_tab(f, f->clients[i]->files[C_NAME]->content,
-			  xoff, 0, f->rect.width - xoff, tabh, ISSELFRAME(f)
-				 && f->clients[f->sel] == f->clients[i]);
+					 xoff, 0, f->rect.width - xoff, tabh, ISSELFRAME(f)
+					 && f->clients[f->sel] == f->clients[i]);
 			break;
 		} else
 			draw_tab(f, f->clients[i]->files[C_NAME]->content,
-				 i * tw, 0, tw, tabh, ISSELFRAME(f)
-				 && f->clients[f->sel] == f->clients[i]);
+					 i * tw, 0, tw, tabh, ISSELFRAME(f)
+					 && f->clients[f->sel] == f->clients[i]);
 	}
 	XSync(dpy, False);
 }
 
-int 
-manage_class_instance(Client * c)
+int manage_class_instance(Client * c)
 {
-	char            buf[MAX_BUF];
-	File           *f;
-	char           *class = (char *) c->files[C_CLASS]->content;
-	char           *inst = (char *) c->files[C_INSTANCE]->content;
+	char buf[MAX_BUF];
+	File *f;
+	char *class = (char *) c->files[C_CLASS]->content;
+	char *inst = (char *) c->files[C_INSTANCE]->content;
 
 	if (!c->files[C_CLASS]->content || !c->files[C_INSTANCE]->content)
 		return 1;
 
 	snprintf(buf, sizeof(buf), "/default/client/%s:%s/manage",
-		 class ? class : "", inst ? inst : "");
+			 class ? class : "", inst ? inst : "");
 	f = ixp_walk(ixps, buf);
 	if (!f) {
 		snprintf(buf, sizeof(buf), "/default/client/%s:%s/manage",
-			 class ? class : "", "*");
+				 class ? class : "", "*");
 		f = ixp_walk(ixps, buf);
 	}
 	if (f && f->content)
@@ -298,11 +286,10 @@ manage_class_instance(Client * c)
 	return 1;
 }
 
-void 
-gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
+void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 {
-	int             dx = 0, dy = 0;
-	int             gravity = NorthWestGravity;
+	int dx = 0, dy = 0;
+	int gravity = NorthWestGravity;
 
 	if (c->size.flags & PWinGravity) {
 		gravity = c->size.win_gravity;
@@ -325,7 +312,7 @@ gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 	case SouthWestGravity:
 		dy = -c->rect.height;
 		break;
-	default:		/* don't care */
+	default:					/* don't care */
 		break;
 	}
 
@@ -347,7 +334,7 @@ gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 	case SouthEastGravity:
 		dx = -(c->rect.width + bw);
 		break;
-	default:		/* don't care */
+	default:					/* don't care */
 		break;
 	}
 

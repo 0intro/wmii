@@ -16,13 +16,12 @@
 
 #include <cext.h>
 
-static IXPClient zero_client = {0};
-static size_t   offsets[MAX_CONN * MAX_OPEN_FILES][2];	/* set of possible fd's */
+static IXPClient zero_client = { 0 };
+static size_t offsets[MAX_CONN * MAX_OPEN_FILES][2];	/* set of possible fd's */
 
-static void 
-check_error(IXPClient * c, void *msg)
+static void check_error(IXPClient * c, void *msg)
 {
-	ResHeader       h;
+	ResHeader h;
 
 	if (c->errstr)
 		free(c->errstr);
@@ -33,8 +32,7 @@ check_error(IXPClient * c, void *msg)
 		c->errstr = strdup((char *) msg + sizeof(ResHeader));
 }
 
-static void 
-handle_dead_server(IXPClient * c)
+static void handle_dead_server(IXPClient * c)
 {
 	if (c->errstr)
 		free(c->errstr);
@@ -46,13 +44,12 @@ handle_dead_server(IXPClient * c)
 	c->fd = -1;
 }
 
-static void    *
-poll_server(IXPClient * c, void *request, size_t req_len,
-	    size_t * out_len)
+static void *poll_server(IXPClient * c, void *request, size_t req_len,
+						 size_t * out_len)
 {
-	size_t          num = 0;
-	void           *result = 0;
-	int             r, header = 0;
+	size_t num = 0;
+	void *result = 0;
+	int r, header = 0;
 
 	if (c->errstr)
 		free(c->errstr);
@@ -94,7 +91,7 @@ poll_server(IXPClient * c, void *request, size_t req_len,
 			num += r;
 		}
 	}
-	free(request);		/* cleanup */
+	free(request);				/* cleanup */
 
 	num = 0;
 	header = 0;
@@ -146,13 +143,12 @@ poll_server(IXPClient * c, void *request, size_t req_len,
 	return result;
 }
 
-static void 
-cixp_create(IXPClient * c, char *path)
+static void cixp_create(IXPClient * c, char *path)
 {
-	ResHeader       h;
-	size_t          req_len, res_len;
-	void           *req = tcreate_message(path, &req_len);
-	void           *result = poll_server(c, req, req_len, &res_len);
+	ResHeader h;
+	size_t req_len, res_len;
+	void *req = tcreate_message(path, &req_len);
+	void *result = poll_server(c, req, req_len, &res_len);
 
 	if (!result)
 		return;
@@ -160,13 +156,12 @@ cixp_create(IXPClient * c, char *path)
 	free(result);
 }
 
-static int 
-cixp_open(IXPClient * c, char *path)
+static int cixp_open(IXPClient * c, char *path)
 {
-	ResHeader       h;
-	size_t          req_len, res_len;
-	void           *req = topen_message(path, &req_len);
-	void           *result = poll_server(c, req, req_len, &res_len);
+	ResHeader h;
+	size_t req_len, res_len;
+	void *req = topen_message(path, &req_len);
+	void *result = poll_server(c, req, req_len, &res_len);
 
 	if (!result)
 		return -1;
@@ -176,10 +171,10 @@ cixp_open(IXPClient * c, char *path)
 	return h.fd;
 }
 
-static          size_t
+static size_t
 cixp_read(IXPClient * c, int fd, void *out_buf, size_t out_buf_len)
 {
-	size_t          len;
+	size_t len;
 
 	len = seek_read(c, fd, offsets[fd][0], out_buf, out_buf_len);
 	if (c->errstr)
@@ -191,12 +186,12 @@ cixp_read(IXPClient * c, int fd, void *out_buf, size_t out_buf_len)
 
 size_t
 seek_read(IXPClient * c, int fd, size_t offset,
-	  void *out_buf, size_t out_buf_len)
+		  void *out_buf, size_t out_buf_len)
 {
-	ResHeader       h;
-	size_t          req_len, res_len;
-	void           *req = tread_message(fd, offset, out_buf_len, &req_len);
-	void           *result = poll_server(c, req, req_len, &res_len);
+	ResHeader h;
+	size_t req_len, res_len;
+	void *req = tread_message(fd, offset, out_buf_len, &req_len);
+	void *result = poll_server(c, req, req_len, &res_len);
 
 	if (!result)
 		return -1;
@@ -206,8 +201,7 @@ seek_read(IXPClient * c, int fd, size_t offset,
 	return h.buf_len;
 }
 
-static void 
-cixp_write(IXPClient * c, int fd, void *content, size_t in_len)
+static void cixp_write(IXPClient * c, int fd, void *content, size_t in_len)
 {
 	seek_write(c, fd, offsets[fd][1], content, in_len);
 	if (!c->errstr)
@@ -216,12 +210,12 @@ cixp_write(IXPClient * c, int fd, void *content, size_t in_len)
 
 void
 seek_write(IXPClient * c, int fd, size_t offset, void *content,
-	   size_t in_len)
+		   size_t in_len)
 {
-	ResHeader       h;
-	size_t          req_len, res_len;
-	void           *req = twrite_message(fd, offset, content, in_len, &req_len);
-	void           *result = poll_server(c, req, req_len, &res_len);
+	ResHeader h;
+	size_t req_len, res_len;
+	void *req = twrite_message(fd, offset, content, in_len, &req_len);
+	void *result = poll_server(c, req, req_len, &res_len);
 
 	if (!result)
 		return;
@@ -229,13 +223,12 @@ seek_write(IXPClient * c, int fd, size_t offset, void *content,
 	free(result);
 }
 
-static void 
-cixp_close(IXPClient * c, int fd)
+static void cixp_close(IXPClient * c, int fd)
 {
-	ResHeader       h;
-	size_t          req_len, res_len;
-	void           *req = tclose_message(fd, &req_len);
-	void           *result = poll_server(c, req, req_len, &res_len);
+	ResHeader h;
+	size_t req_len, res_len;
+	void *req = tclose_message(fd, &req_len);
+	void *result = poll_server(c, req, req_len, &res_len);
 
 	if (!result)
 		return;
@@ -244,13 +237,12 @@ cixp_close(IXPClient * c, int fd)
 	offsets[fd][0] = offsets[fd][1] = 0;
 }
 
-static void 
-cixp_remove(IXPClient * c, char *path)
+static void cixp_remove(IXPClient * c, char *path)
 {
-	ResHeader       h;
-	size_t          req_len, res_len;
-	void           *req = tremove_message(path, &req_len);
-	void           *result = poll_server(c, req, req_len, &res_len);
+	ResHeader h;
+	size_t req_len, res_len;
+	void *req = tremove_message(path, &req_len);
+	void *result = poll_server(c, req, req_len, &res_len);
 
 	if (!result)
 		return;
@@ -258,14 +250,13 @@ cixp_remove(IXPClient * c, char *path)
 	free(result);
 }
 
-IXPClient      *
-init_client(char *sockfile)
+IXPClient *init_client(char *sockfile)
 {
-	struct sockaddr_un addr = {0};
-	socklen_t       su_len;
+	struct sockaddr_un addr = { 0 };
+	socklen_t su_len;
 
 	/* init */
-	IXPClient      *c = (IXPClient *) emalloc(sizeof(IXPClient));
+	IXPClient *c = (IXPClient *) emalloc(sizeof(IXPClient));
 	*c = zero_client;
 	c->create = cixp_create;
 	c->open = cixp_open;
@@ -282,7 +273,7 @@ init_client(char *sockfile)
 		free(c);
 		return 0;
 	}
-	if (connect(c->fd, (struct sockaddr *) & addr, su_len)) {
+	if (connect(c->fd, (struct sockaddr *) &addr, su_len)) {
 		close(c->fd);
 		free(c);
 		return 0;
@@ -290,8 +281,7 @@ init_client(char *sockfile)
 	return c;
 }
 
-void 
-deinit_client(IXPClient * c)
+void deinit_client(IXPClient * c)
 {
 	if (c->fd) {
 		shutdown(c->fd, SHUT_RDWR);

@@ -17,15 +17,15 @@
 
 int
 property(Display * dpy, Window w, Atom a, Atom t, long l,
-	 unsigned char **prop)
+		 unsigned char **prop)
 {
-	Atom            real;
-	int             format;
-	unsigned long   res, extra;
-	int             status;
+	Atom real;
+	int format;
+	unsigned long res, extra;
+	int status;
 
 	status = XGetWindowProperty(dpy, w, a, 0L, l, False, t, &real, &format,
-				    &res, &extra, prop);
+								&res, &extra, prop);
 
 	if (status != Success || *prop == 0) {
 		return 0;
@@ -36,10 +36,9 @@ property(Display * dpy, Window w, Atom a, Atom t, long l,
 	return res;
 }
 
-void 
-win_prop(Display * dpy, Window w, Atom a, char *res, int len)
+void win_prop(Display * dpy, Window w, Atom a, char *res, int len)
 {
-	unsigned char  *prop;
+	unsigned char *prop;
 
 	if (property(dpy, w, a, XA_STRING, 100L, &prop)) {
 		_strlcpy(res, (char *) prop, len);
@@ -49,10 +48,9 @@ win_prop(Display * dpy, Window w, Atom a, char *res, int len)
 	XSync(dpy, False);
 }
 
-void 
-send_message(Display * dpy, Window w, Atom a, long value)
+void send_message(Display * dpy, Window w, Atom a, long value)
 {
-	XEvent          e;
+	XEvent e;
 	e.type = ClientMessage;
 	e.xclient.window = w;
 	e.xclient.message_type = a;
@@ -67,22 +65,22 @@ send_message(Display * dpy, Window w, Atom a, long value)
 #define NUM_MASKS      8
 void
 init_lock_modifiers(Display * dpy, unsigned int *valid_mask,
-		    unsigned int *num_lock_mask)
+					unsigned int *num_lock_mask)
 {
 	XModifierKeymap *modmap;
-	KeyCode         num_lock;
-	static int      masks[NUM_MASKS] = {
+	KeyCode num_lock;
+	static int masks[NUM_MASKS] = {
 		ShiftMask, LockMask, ControlMask, Mod1Mask,
 		Mod2Mask, Mod3Mask, Mod4Mask, Mod5Mask
 	};
-	int             i;
+	int i;
 
 	*num_lock_mask = 0;
 	modmap = XGetModifierMapping(dpy);
 	num_lock = XKeysymToKeycode(dpy, XStringToKeysym("Num_Lock"));
 
 	if (modmap && modmap->max_keypermod > 0) {
-		int             max = NUM_MASKS * modmap->max_keypermod;
+		int max = NUM_MASKS * modmap->max_keypermod;
 		for (i = 0; i < max; i++) {
 			if (num_lock && (modmap->modifiermap[i] == num_lock)) {
 				*num_lock_mask = masks[i / modmap->max_keypermod];

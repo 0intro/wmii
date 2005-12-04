@@ -12,11 +12,10 @@
 
 /* request messages ------------------------------------------------ */
 
-void           *
-tcreate_message(char *path, size_t * msg_len)
+void *tcreate_message(char *path, size_t * msg_len)
 {
-	char           *msg;
-	ReqHeader       h;
+	char *msg;
+	ReqHeader h;
 	*msg_len = sizeof(ReqHeader) + strlen(path) + 1;
 	msg = emalloc(*msg_len);
 	h.req = TCREATE;
@@ -25,11 +24,10 @@ tcreate_message(char *path, size_t * msg_len)
 	return msg;
 }
 
-void           *
-topen_message(char *path, size_t * msg_len)
+void *topen_message(char *path, size_t * msg_len)
 {
-	char           *msg;
-	ReqHeader       h;
+	char *msg;
+	ReqHeader h;
 	*msg_len = sizeof(ReqHeader) + strlen(path) + 1;
 	msg = emalloc(*msg_len);
 	h.req = TOPEN;
@@ -38,12 +36,11 @@ topen_message(char *path, size_t * msg_len)
 	return msg;
 }
 
-void           *
-tread_message(int fd, size_t offset, size_t buf_len,
-	      size_t * msg_len)
+void *tread_message(int fd, size_t offset, size_t buf_len,
+					size_t * msg_len)
 {
-	char           *msg;
-	ReqHeader       h;
+	char *msg;
+	ReqHeader h;
 	*msg_len = sizeof(ReqHeader);
 	msg = emalloc(*msg_len);
 	h.req = TREAD;
@@ -54,12 +51,11 @@ tread_message(int fd, size_t offset, size_t buf_len,
 	return msg;
 }
 
-void           *
-twrite_message(int fd, size_t offset, void *content,
-	       size_t content_len, size_t * msg_len)
+void *twrite_message(int fd, size_t offset, void *content,
+					 size_t content_len, size_t * msg_len)
 {
-	char           *msg;
-	ReqHeader       h;
+	char *msg;
+	ReqHeader h;
 	*msg_len = sizeof(ReqHeader) + content_len;
 	msg = emalloc(*msg_len);
 	h.req = TWRITE;
@@ -71,11 +67,10 @@ twrite_message(int fd, size_t offset, void *content,
 	return msg;
 }
 
-void           *
-tclose_message(int fd, size_t * msg_len)
+void *tclose_message(int fd, size_t * msg_len)
 {
-	char           *msg;
-	ReqHeader       h;
+	char *msg;
+	ReqHeader h;
 	*msg_len = sizeof(ReqHeader);
 	msg = emalloc(*msg_len);
 	h.req = TCLUNK;
@@ -84,11 +79,10 @@ tclose_message(int fd, size_t * msg_len)
 	return msg;
 }
 
-void           *
-tremove_message(char *path, size_t * msg_len)
+void *tremove_message(char *path, size_t * msg_len)
 {
-	char           *msg;
-	ReqHeader       h;
+	char *msg;
+	ReqHeader h;
 	*msg_len = sizeof(ReqHeader) + strlen(path) + 1;
 	msg = emalloc(*msg_len);
 	h.req = TREMOVE;
@@ -99,11 +93,10 @@ tremove_message(char *path, size_t * msg_len)
 
 /* response messages ----------------------------------------------- */
 
-void           *
-rcreate_message(size_t * msg_len)
+void *rcreate_message(size_t * msg_len)
 {
-	char           *msg;
-	ResHeader       h;
+	char *msg;
+	ResHeader h;
 	*msg_len = sizeof(ResHeader);
 	msg = emalloc(*msg_len);
 	h.res = RCREATE;
@@ -111,11 +104,10 @@ rcreate_message(size_t * msg_len)
 	return msg;
 }
 
-void           *
-ropen_message(int fd, size_t * msg_len)
+void *ropen_message(int fd, size_t * msg_len)
 {
-	char           *msg;
-	ResHeader       h;
+	char *msg;
+	ResHeader h;
 	*msg_len = sizeof(ResHeader);
 	msg = emalloc(*msg_len);
 	h.res = ROPEN;
@@ -124,11 +116,10 @@ ropen_message(int fd, size_t * msg_len)
 	return msg;
 }
 
-void           *
-rread_message(void *content, size_t content_len, size_t * msg_len)
+void *rread_message(void *content, size_t content_len, size_t * msg_len)
 {
-	char           *msg;
-	ResHeader       h;
+	char *msg;
+	ResHeader h;
 	*msg_len = sizeof(ResHeader) + content_len;
 	msg = emalloc(*msg_len);
 	h.res = RREAD;
@@ -138,11 +129,10 @@ rread_message(void *content, size_t content_len, size_t * msg_len)
 	return msg;
 }
 
-void           *
-rwrite_message(size_t * msg_len)
+void *rwrite_message(size_t * msg_len)
 {
-	char           *msg;
-	ResHeader       h;
+	char *msg;
+	ResHeader h;
 	*msg_len = sizeof(ResHeader);
 	msg = emalloc(*msg_len);
 	h.res = RWRITE;
@@ -150,11 +140,10 @@ rwrite_message(size_t * msg_len)
 	return msg;
 }
 
-void           *
-rclose_message(size_t * msg_len)
+void *rclose_message(size_t * msg_len)
 {
-	char           *msg;
-	ResHeader       h;
+	char *msg;
+	ResHeader h;
 	*msg_len = sizeof(ResHeader);
 	msg = emalloc(*msg_len);
 	h.res = RCLUNK;
@@ -162,11 +151,10 @@ rclose_message(size_t * msg_len)
 	return msg;
 }
 
-void           *
-rremove_message(size_t * msg_len)
+void *rremove_message(size_t * msg_len)
 {
-	char           *msg;
-	ResHeader       h;
+	char *msg;
+	ResHeader h;
 	*msg_len = sizeof(ResHeader);
 	msg = emalloc(*msg_len);
 	h.res = RREMOVE;
@@ -174,12 +162,11 @@ rremove_message(size_t * msg_len)
 	return msg;
 }
 
-void           *
-rerror_message(char *errstr, size_t * msg_len)
+void *rerror_message(char *errstr, size_t * msg_len)
 {
-	char           *msg;
-	size_t          len = strlen(errstr) + 1;
-	ResHeader       h;
+	char *msg;
+	size_t len = strlen(errstr) + 1;
+	ResHeader h;
 	*msg_len = sizeof(ResHeader) + len;
 	msg = emalloc(*msg_len);
 	h.res = RERROR;

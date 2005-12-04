@@ -17,13 +17,12 @@
 
 #include <cext.h>
 
-static File     zero_file = {0};
-static IXPServer zero_server = {0};
-static Connection zero_conn = {0};
-static int      user_fd = -1;
+static File zero_file = { 0 };
+static IXPServer zero_server = { 0 };
+static Connection zero_conn = { 0 };
+static int user_fd = -1;
 
-void 
-set_error(IXPServer * s, char *errstr)
+void set_error(IXPServer * s, char *errstr)
 {
 	if (s->errstr)
 		free(s->errstr);
@@ -33,17 +32,15 @@ set_error(IXPServer * s, char *errstr)
 		s->errstr = 0;
 }
 
-File           *
-fd_to_file(IXPServer * s, int fd)
+File *fd_to_file(IXPServer * s, int fd)
 {
-	int             cidx = fd / MAX_CONN;
-	int             fidx = fd - (cidx * MAX_CONN);
+	int cidx = fd / MAX_CONN;
+	int fidx = fd - (cidx * MAX_CONN);
 
 	return s->conn[cidx].files[fidx];
 }
 
-static void 
-handle_ixp_create(Connection * c)
+static void handle_ixp_create(Connection * c)
 {
 	c->s->create(c->s, ((char *) c->data) + sizeof(ReqHeader));
 	free(c->data);
@@ -52,20 +49,19 @@ handle_ixp_create(Connection * c)
 	c->remain = c->len;
 }
 
-static void 
-handle_ixp_open(Connection * c)
+static void handle_ixp_open(Connection * c)
 {
-	int             i;
+	int i;
 
 	/* seek next free slot */
 	for (i = 0; (i < MAX_OPEN_FILES) && c->files[i]; i++);
 	if (i == MAX_OPEN_FILES) {
 		fprintf(stderr, "%s",
-		  "ixp: server: maximum of open files, try again later.\n");
+				"ixp: server: maximum of open files, try again later.\n");
 		free(c->data);
 		c->data =
 			rerror_message("maximum open files reached, close files first",
-				       &c->len);
+						   &c->len);
 		c->remain = c->len;
 		return;
 	}
@@ -74,17 +70,16 @@ handle_ixp_open(Connection * c)
 	free(c->data);
 	c->data = c->s->errstr ?
 		rerror_message(c->s->errstr,
-			   &c->len) : ropen_message(i + MAX_CONN * c->index,
-						    &c->len);
+					   &c->len) : ropen_message(i + MAX_CONN * c->index,
+												&c->len);
 	c->remain = c->len;
 }
 
-static void 
-handle_ixp_read(Connection * c, ReqHeader * h)
+static void handle_ixp_read(Connection * c, ReqHeader * h)
 {
-	int             fidx = h->fd - (c->index * MAX_CONN);
-	void           *data = 0;
-	size_t          out_len;
+	int fidx = h->fd - (c->index * MAX_CONN);
+	void *data = 0;
+	size_t out_len;
 
 	data = emalloc(h->buf_len);
 	out_len = c->s->read(c->s, h->fd, h->offset, data, h->buf_len);
@@ -100,12 +95,11 @@ handle_ixp_read(Connection * c, ReqHeader * h)
 	free(data);
 }
 
-static void 
-handle_ixp_write(Connection * c, ReqHeader * h)
+static void handle_ixp_write(Connection * c, ReqHeader * h)
 {
-	int             fidx = h->fd - (c->index * MAX_CONN);
+	int fidx = h->fd - (c->index * MAX_CONN);
 	c->s->write(c->s, h->fd, h->offset,
-		    ((char *) c->data) + sizeof(ReqHeader), h->buf_len);
+				((char *) c->data) + sizeof(ReqHeader), h->buf_len);
 	free(c->data);
 	if (c->s->errstr) {
 		c->data = rerror_message(c->s->errstr, &c->len);
@@ -117,10 +111,9 @@ handle_ixp_write(Connection * c, ReqHeader * h)
 	c->remain = c->len;
 }
 
-static void 
-handle_ixp_close(Connection * c, ReqHeader * h)
+static void handle_ixp_close(Connection * c, ReqHeader * h)
 {
-	int             fidx = h->fd - (c->index * MAX_CONN);
+	int fidx = h->fd - (c->index * MAX_CONN);
 
 	c->s->close(c->s, h->fd);
 	c->files[fidx] = 0;
@@ -135,8 +128,7 @@ handle_ixp_close(Connection * c, ReqHeader * h)
 	c->remain = c->len;
 }
 
-static void 
-handle_ixp_remove(Connection * c)
+static void handle_ixp_remove(Connection * c)
 {
 	c->s->remove(c->s, ((char *) c->data) + sizeof(ReqHeader));
 	free(c->data);
@@ -145,10 +137,9 @@ handle_ixp_remove(Connection * c)
 	c->remain = c->len;
 }
 
-static void 
-check_ixp_request(Connection * c)
+static void check_ixp_request(Connection * c)
 {
-	ReqHeader       h;
+	ReqHeader h;
 	/* check pending request */
 	if (c->s->errstr)
 		set_error(c->s, 0);
@@ -180,10 +171,9 @@ check_ixp_request(Connection * c)
 	}
 }
 
-static void 
-update_conns(IXPServer * s)
+static void update_conns(IXPServer * s)
 {
-	int             i;
+	int i;
 
 	FD_ZERO(&s->rd);
 	FD_ZERO(&s->wr);
@@ -191,7 +181,7 @@ update_conns(IXPServer * s)
 		if (s->conn[i].fd >= 0) {
 			s->nfds = _MAX(s->nfds, s->conn[i].fd);
 			if (s->conn[i].read && !s->conn[i].mode
-			    && (!s->conn[i].len || s->conn[i].remain)) {
+				&& (!s->conn[i].len || s->conn[i].remain)) {
 				FD_SET(s->conn[i].fd, &s->rd);
 			}
 			if (s->conn[i].write && s->conn[i].mode && s->conn[i].remain) {
@@ -201,10 +191,9 @@ update_conns(IXPServer * s)
 	}
 }
 
-static void 
-close_conn(Connection * c)
+static void close_conn(Connection * c)
 {
-	int             i;
+	int i;
 	/* shutdown connection and cleanup open files */
 	shutdown(c->fd, SHUT_RDWR);
 	close(c->fd);
@@ -219,10 +208,9 @@ close_conn(Connection * c)
 	}
 }
 
-static void 
-read_conn(Connection * c)
+static void read_conn(Connection * c)
 {
-	size_t          r;
+	size_t r;
 
 	if (!c->header) {
 		r = read(c->fd, &c->len, sizeof(size_t));
@@ -243,16 +231,15 @@ read_conn(Connection * c)
 
 	if (c->remain == 0) {
 		/* check IXP request */
-		c->mode = 1;	/* next mode is response */
+		c->mode = 1;			/* next mode is response */
 		check_ixp_request(c);
 		c->header = 0;
 	}
 }
 
-static void 
-write_conn(Connection * c)
+static void write_conn(Connection * c)
 {
-	size_t          r;
+	size_t r;
 
 	if (!c->header) {
 		r = write(c->fd, &c->len, sizeof(size_t));
@@ -275,21 +262,20 @@ write_conn(Connection * c)
 	}
 }
 
-static void 
-new_conn(Connection * c)
+static void new_conn(Connection * c)
 {
-	int             r, i;
-	socklen_t       l;
-	struct sockaddr_un name = {0};
+	int r, i;
+	socklen_t l;
+	struct sockaddr_un name = { 0 };
 
 	l = sizeof(name);
-	if ((r = accept(c->fd, (struct sockaddr *) & name, &l)) < 0) {
+	if ((r = accept(c->fd, (struct sockaddr *) &name, &l)) < 0) {
 		perror("ixp: server: cannot accept connection");
 		return;
 	}
 	if (c->s->runlevel == SHUTDOWN) {
 		fprintf(stderr, "%s",
-			"ixp: server: connection refused, server is shutting down.\n");
+				"ixp: server: connection refused, server is shutting down.\n");
 		close(r);
 		return;
 	}
@@ -307,16 +293,15 @@ new_conn(Connection * c)
 
 	if (i == MAX_CONN) {
 		fprintf(stderr, "%s",
-		     "ixp: server: connection refused, try again later.\n");
+				"ixp: server: connection refused, try again later.\n");
 		close(r);
 	}
 }
 
 
-static int 
-check_open_files(Connection * c)
+static int check_open_files(Connection * c)
 {
-	int             i;
+	int i;
 	for (i = 0; i < MAX_OPEN_FILES; i++) {
 		if (c->files[i] && c->seen[i]) {
 			c->seen[i]--;
@@ -326,10 +311,9 @@ check_open_files(Connection * c)
 	return 0;
 }
 
-static void 
-handle_socks(IXPServer * s)
+static void handle_socks(IXPServer * s)
 {
-	int             i, now = 1;
+	int i, now = 1;
 	for (i = 0; i < MAX_CONN; i++) {
 		if (s->conn[i].fd >= 0) {
 			if (FD_ISSET(s->conn[i].fd, &s->rd) && s->conn[i].read) {
@@ -344,31 +328,30 @@ handle_socks(IXPServer * s)
 			 * still responses are sent or still opened files
 			 */
 			if ((s->runlevel == SHUTDOWN)
-			    && (check_open_files(&s->conn[i])
-				|| (s->conn[i].remain > 0)
-				|| s->conn[i].mode))
+				&& (check_open_files(&s->conn[i])
+					|| (s->conn[i].remain > 0)
+					|| s->conn[i].mode))
 				now = 0;
 		}
 	}
 	if ((s->runlevel == SHUTDOWN) && now)
-		s->runlevel = HALT;	/* real stop */
+		s->runlevel = HALT;		/* real stop */
 }
 
-IXPServer      *
-init_server(char *sockfile, void (*cleanup) (void))
+IXPServer *init_server(char *sockfile, void (*cleanup) (void))
 {
-	int             i;
-	struct sockaddr_un addr = {0};
-	int             yes = 1;
-	socklen_t       su_len;
-	IXPServer      *s;
+	int i;
+	struct sockaddr_un addr = { 0 };
+	int yes = 1;
+	socklen_t su_len;
+	IXPServer *s;
 
 	/* init */
 	s = (IXPServer *) emalloc(sizeof(IXPServer));
 	*s = zero_server;
 	s->sockfile = sockfile;
 	s->root = (File *) emalloc(sizeof(File));
-	s->runlevel = HALT;	/* initially server is not running */
+	s->runlevel = HALT;			/* initially server is not running */
 	s->create = ixp_create;
 	s->remove = ixp_remove;
 	s->open = ixp_open;
@@ -390,7 +373,7 @@ init_server(char *sockfile, void (*cleanup) (void))
 		return 0;
 	}
 	if (setsockopt(s->conn[0].fd, SOL_SOCKET, SO_REUSEADDR,
-		       (char *) &yes, sizeof(yes)) < 0) {
+				   (char *) &yes, sizeof(yes)) < 0) {
 		perror("ixp: server: setsockopt");
 		close(s->conn[0].fd);
 		free(s);
@@ -400,7 +383,7 @@ init_server(char *sockfile, void (*cleanup) (void))
 	strncpy(addr.sun_path, sockfile, sizeof(addr.sun_path));
 	su_len = sizeof(struct sockaddr) + strlen(addr.sun_path);
 
-	if (bind(s->conn[0].fd, (struct sockaddr *) & addr, su_len) < 0) {
+	if (bind(s->conn[0].fd, (struct sockaddr *) &addr, su_len) < 0) {
 		perror("ixp: server: cannot bind socket");
 		close(s->conn[0].fd);
 		free(s);
@@ -425,8 +408,8 @@ init_server(char *sockfile, void (*cleanup) (void))
 
 void
 run_server_with_fd_support(IXPServer * s, int fd,
-			   void (*fd_read) (Connection *),
-			   void (*fd_write) (Connection *))
+						   void (*fd_read) (Connection *),
+						   void (*fd_write) (Connection *))
 {
 	s->conn[1] = zero_conn;
 	s->conn[1].index = 1;
@@ -437,10 +420,9 @@ run_server_with_fd_support(IXPServer * s, int fd,
 	run_server(s);
 }
 
-void 
-run_server(IXPServer * s)
+void run_server(IXPServer * s)
 {
-	int             r, i;
+	int r, i;
 	s->runlevel = RUNNING;
 
 	/* main loop */
@@ -453,7 +435,7 @@ run_server(IXPServer * s)
 			continue;
 		if (r < 0) {
 			perror("ixp: server: select");
-			break;	/* allow cleanups in IXP using app */
+			break;				/* allow cleanups in IXP using app */
 		} else if (r > 0) {
 			handle_socks(s);
 		}
@@ -466,8 +448,7 @@ run_server(IXPServer * s)
 	}
 }
 
-void 
-deinit_server(IXPServer * s)
+void deinit_server(IXPServer * s)
 {
 	unlink(s->sockfile);
 	ixp_remove(s, "/");

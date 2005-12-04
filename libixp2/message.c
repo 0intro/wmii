@@ -7,30 +7,27 @@
 #include <string.h>
 #include "ixp.h"
 
-static u16 
-sizeof_string(const char *s)
+static u16 sizeof_string(const char *s)
 {
 	return sizeof(u16) + strlen(s);
 }
 
-u16 
-ixp_sizeof_stat(Stat * stat)
+u16 ixp_sizeof_stat(Stat * stat)
 {
 	return sizeof(Qid)
-	+ 2 * sizeof(u16)
-	+ 4 * sizeof(u32)
-	+ sizeof(u64)
-	+ sizeof_string(stat->name)
-	+ sizeof_string(stat->uid)
-	+ sizeof_string(stat->gid)
-	+ sizeof_string(stat->muid);
+		+ 2 * sizeof(u16)
+		+ 4 * sizeof(u32)
+		+ sizeof(u64)
+		+ sizeof_string(stat->name)
+		+ sizeof_string(stat->uid)
+		+ sizeof_string(stat->gid)
+		+ sizeof_string(stat->muid);
 }
 
-u32 
-ixp_fcall_to_msg(Fcall * fcall, void *msg, u32 msglen)
+u32 ixp_fcall_to_msg(Fcall * fcall, void *msg, u32 msglen)
 {
-	u32             i, msize = sizeof(u8) + sizeof(u16) + sizeof(u32);
-	void           *p = msg;
+	u32 i, msize = sizeof(u8) + sizeof(u16) + sizeof(u32);
+	void *p = msg;
 
 	switch (fcall->id) {
 	case TVERSION:
@@ -192,14 +189,13 @@ ixp_fcall_to_msg(Fcall * fcall, void *msg, u32 msglen)
 	return msize;
 }
 
-u32 
-ixp_msg_to_fcall(void *msg, u32 msglen, Fcall * fcall)
+u32 ixp_msg_to_fcall(void *msg, u32 msglen, Fcall * fcall)
 {
-	u32             i, msize;
-	u16             len;
-	void           *p = ixp_dec_prefix(msg, &msize, &fcall->id, &fcall->tag);
+	u32 i, msize;
+	u16 len;
+	void *p = ixp_dec_prefix(msg, &msize, &fcall->id, &fcall->tag);
 
-	if (msize > msglen)	/* bad message */
+	if (msize > msglen)			/* bad message */
 		return 0;
 
 	switch (fcall->id) {
@@ -207,7 +203,7 @@ ixp_msg_to_fcall(void *msg, u32 msglen, Fcall * fcall)
 	case RVERSION:
 		p = ixp_dec_u32(p, &fcall->maxmsg);
 		p = ixp_dec_string(p, fcall->version, sizeof(fcall->version),
-				   &len);
+						   &len);
 		break;
 	case TAUTH:
 		p = ixp_dec_u32(p, &fcall->afid);

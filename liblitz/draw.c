@@ -9,10 +9,9 @@
 
 #include <cext.h>
 
-XFontStruct    *
-blitz_getfont(Display * dpy, char *fontstr)
+XFontStruct *blitz_getfont(Display * dpy, char *fontstr)
 {
-	XFontStruct    *font;
+	XFontStruct *font;
 	font = XLoadQueryFont(dpy, fontstr);
 	if (!font) {
 		font = XLoadQueryFont(dpy, "fixed");
@@ -24,11 +23,10 @@ blitz_getfont(Display * dpy, char *fontstr)
 	return font;
 }
 
-unsigned long 
-blitz_loadcolor(Display * dpy, int mon, char *colstr)
+unsigned long blitz_loadcolor(Display * dpy, int mon, char *colstr)
 {
-	XColor          color;
-	char            col[8];
+	XColor color;
+	char col[8];
 
 	_strlcpy(col, colstr, sizeof(col));
 	col[7] = '\0';
@@ -36,10 +34,9 @@ blitz_loadcolor(Display * dpy, int mon, char *colstr)
 	return color.pixel;
 }
 
-static void 
-draw_bg(Display * dpy, Draw * d)
+static void draw_bg(Display * dpy, Draw * d)
 {
-	XRectangle      rect[4];
+	XRectangle rect[4];
 	XSetForeground(dpy, d->gc, d->bg);
 	if (!d->notch) {
 		XFillRectangles(dpy, d->drawable, d->gc, &d->rect, 1);
@@ -61,10 +58,9 @@ draw_bg(Display * dpy, Draw * d)
 	XFillRectangles(dpy, d->drawable, d->gc, rect, 4);
 }
 
-static void 
-_draw_border(Display * dpy, Draw * d)
+static void _draw_border(Display * dpy, Draw * d)
 {
-	XPoint          points[5];
+	XPoint points[5];
 
 	XSetLineAttributes(dpy, d->gc, 1, LineSolid, CapButt, JoinMiter);
 	XSetForeground(dpy, d->gc, d->border);
@@ -81,12 +77,11 @@ _draw_border(Display * dpy, Draw * d)
 	XDrawLines(dpy, d->drawable, d->gc, points, 5, CoordModePrevious);
 }
 
-static void 
-draw_text(Display * dpy, Draw * d)
+static void draw_text(Display * dpy, Draw * d)
 {
-	unsigned int    x, y, w, h, shortened = FALSE;
-	size_t          len = 0;
-	static char     text[2048];
+	unsigned int x, y, w, h, shortened = FALSE;
+	size_t len = 0;
+	static char text[2048];
 
 	if (!d->data)
 		return;
@@ -123,7 +118,7 @@ draw_text(Display * dpy, Draw * d)
 	case EAST:
 		x = d->rect.x + d->rect.width - (h / 2 + w);
 		break;
-	default:		/* CENTER */
+	default:					/* CENTER */
 		x = d->rect.x + (d->rect.width - w) / 2;
 		break;
 	}
@@ -139,10 +134,9 @@ draw_text(Display * dpy, Draw * d)
 }
 
 /* draws meter */
-void 
-blitz_drawmeter(Display * dpy, Draw * d)
+void blitz_drawmeter(Display * dpy, Draw * d)
 {
-	unsigned int    offy, mh, val, w = d->rect.width - 4;
+	unsigned int offy, mh, val, w = d->rect.width - 4;
 
 	if (!d->data || strncmp(d->data, "%m:", 3))
 		return;
@@ -158,8 +152,7 @@ blitz_drawmeter(Display * dpy, Draw * d)
 	XFillRectangle(dpy, d->drawable, d->gc, d->rect.x + 2, offy, w, mh);
 }
 
-static void 
-_draw_label(Display * dpy, Draw * d)
+static void _draw_label(Display * dpy, Draw * d)
 {
 	draw_bg(dpy, d);
 	if (d->data)
@@ -167,15 +160,13 @@ _draw_label(Display * dpy, Draw * d)
 }
 
 /* draws label */
-void 
-blitz_drawlabel(Display * dpy, Draw * d)
+void blitz_drawlabel(Display * dpy, Draw * d)
 {
 	_draw_label(dpy, d);
 	_draw_border(dpy, d);
 }
 
-void 
-blitz_drawlabelnoborder(Display * dpy, Draw * d)
+void blitz_drawlabelnoborder(Display * dpy, Draw * d)
 {
 	_draw_label(dpy, d);
 }

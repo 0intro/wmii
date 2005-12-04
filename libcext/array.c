@@ -7,11 +7,10 @@
 
 #include "cext.h"
 
-void          **
-attach_item_begin(void **old, void *item, size_t size_item)
+void **attach_item_begin(void **old, void *item, size_t size_item)
 {
-	int             i, size_old;
-	void          **result = 0;
+	int i, size_old;
+	void **result = 0;
 	for (size_old = 0; old && old[size_old]; size_old++);
 	result = emalloc(size_item * (size_old + 2));
 	result[0] = item;
@@ -23,11 +22,10 @@ attach_item_begin(void **old, void *item, size_t size_item)
 	return result;
 }
 
-void          **
-attach_item_end(void **old, void *item, size_t size_item)
+void **attach_item_end(void **old, void *item, size_t size_item)
 {
-	int             i, size_old;
-	void          **result = 0;
+	int i, size_old;
+	void **result = 0;
 	for (size_old = 0; old && old[size_old]; size_old++);
 	result = emalloc(size_item * (size_old + 2));
 	for (i = 0; old && old[i]; i++)
@@ -39,11 +37,10 @@ attach_item_end(void **old, void *item, size_t size_item)
 	return result;
 }
 
-void          **
-detach_item(void **old, void *item, size_t size_item)
+void **detach_item(void **old, void *item, size_t size_item)
 {
-	int             size_old, i, j = 0;
-	void          **result = 0;
+	int size_old, i, j = 0;
+	void **result = 0;
 	for (size_old = 0; old && old[size_old]; size_old++);
 	if (size_old != 1) {
 		result = emalloc(size_item * size_old);
@@ -57,26 +54,23 @@ detach_item(void **old, void *item, size_t size_item)
 	return result;
 }
 
-int
-index_item(void **items, void *item)
+int index_item(void **items, void *item)
 {
-	int             i = 0;
+	int i = 0;
 	for (i = 0; items && items[i] && (items[i] != item); i++);
 	return items[i] ? i : -1;
 }
 
-int
-count_items(void **items)
+int count_items(void **items)
 {
-	int             i;
+	int i;
 	for (i = 0; items && items[i]; i++);
 	return i;
 }
 
-int
-index_next_item(void **items, void *item)
+int index_next_item(void **items, void *item)
 {
-	int             idx = index_item(items, item);
+	int idx = index_item(items, item);
 	if (idx == -1)
 		return idx;
 	if (idx == count_items(items) - 1)
@@ -85,10 +79,9 @@ index_next_item(void **items, void *item)
 		return idx + 1;
 }
 
-int
-index_prev_item(void **items, void *item)
+int index_prev_item(void **items, void *item)
 {
-	int             idx = index_item(items, item);
+	int idx = index_item(items, item);
 	if (idx == -1)
 		return idx;
 	if (idx == 0)

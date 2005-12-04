@@ -17,23 +17,21 @@
 #include "ixp.h"
 #include "cext.h"
 
-static IXPConn  zero_conn = {-1, 0, 0, 0};
-static u8       msg[IXP_MAX_MSG];
+static IXPConn zero_conn = { -1, 0, 0, 0 };
+static u8 msg[IXP_MAX_MSG];
 
-static IXPConn *
-next_free_conn(IXPServer * s)
+static IXPConn *next_free_conn(IXPServer * s)
 {
-	int             i;
+	int i;
 	for (i = 0; i < IXP_MAX_CONN; i++)
 		if (s->conn[i].fd < 0)
 			return &s->conn[i];
 	return nil;
 }
 
-static void 
-prepare_select(IXPServer * s)
+static void prepare_select(IXPServer * s)
 {
-	int             i;
+	int i;
 	FD_ZERO(&s->rd);
 	for (i = 0; i < IXP_MAX_CONN; i++) {
 		if (s->conn[i].fd >= 0) {
@@ -45,8 +43,7 @@ prepare_select(IXPServer * s)
 	}
 }
 
-void 
-ixp_server_rm_conn(IXPServer * s, IXPConn * c)
+void ixp_server_rm_conn(IXPServer * s, IXPConn * c)
 {
 	if (!c->dont_close) {
 		shutdown(c->fd, SHUT_RDWR);
@@ -57,9 +54,8 @@ ixp_server_rm_conn(IXPServer * s, IXPConn * c)
 	*c = zero_conn;
 }
 
-static IXPConn *
-init_conn(IXPConn * c, int fd, int dont_close,
-	  void (*read) (IXPServer *, IXPConn *))
+static IXPConn *init_conn(IXPConn * c, int fd, int dont_close,
+						  void (*read) (IXPServer *, IXPConn *))
 {
 	*c = zero_conn;
 	c->fd = fd;
@@ -68,20 +64,18 @@ init_conn(IXPConn * c, int fd, int dont_close,
 	return c;
 }
 
-IXPConn        *
-ixp_server_add_conn(IXPServer * s, int fd, int dont_close,
-		    void (*read) (IXPServer *, IXPConn *))
+IXPConn *ixp_server_add_conn(IXPServer * s, int fd, int dont_close,
+							 void (*read) (IXPServer *, IXPConn *))
 {
-	IXPConn        *c = next_free_conn(s);
+	IXPConn *c = next_free_conn(s);
 	if (!c)
 		return nil;
 	return init_conn(c, fd, dont_close, read);
 }
 
-static void 
-handle_conns(IXPServer * s)
+static void handle_conns(IXPServer * s)
 {
-	int             i;
+	int i;
 	for (i = 0; i < IXP_MAX_CONN; i++) {
 		if (s->conn[i].fd >= 0) {
 			if (FD_ISSET(s->conn[i].fd, &s->rd) && s->conn[i].read)
@@ -91,10 +85,9 @@ handle_conns(IXPServer * s)
 	}
 }
 
-static void 
-server_client_read(IXPServer * s, IXPConn * c)
+static void server_client_read(IXPServer * s, IXPConn * c)
 {
-	u32             i, msize;
+	u32 i, msize;
 	s->errstr = 0;
 	if (!(msize = ixp_recv_message(c->fd, msg, IXP_MAX_MSG, &s->errstr))) {
 		ixp_server_rm_conn(s, c);
@@ -108,7 +101,8 @@ server_client_read(IXPServer * s, IXPConn * c)
 					break;
 				msize = ixp_fcall_to_msg(&s->fcall, msg, s->fcall.maxmsg);
 				fprintf(stderr, "msize=%d\n", msize);
-				if (ixp_send_message(c->fd, msg, msize, &s->errstr) != msize)
+				if (ixp_send_message(c->fd, msg, msize, &s->errstr) !=
+					msize)
 					break;
 				return;
 			}
@@ -123,19 +117,17 @@ server_client_read(IXPServer * s, IXPConn * c)
 		ixp_server_rm_conn(s, c);
 }
 
-static void 
-server_read(IXPServer * s, IXPConn * c)
+static void server_read(IXPServer * s, IXPConn * c)
 {
-	int             fd;
-	IXPConn        *new = next_free_conn(s);
+	int fd;
+	IXPConn *new = next_free_conn(s);
 	if (new && ((fd = ixp_accept_sock(c->fd)) >= 0))
 		init_conn(new, fd, 0, server_client_read);
 }
 
-void 
-ixp_server_loop(IXPServer * s)
+void ixp_server_loop(IXPServer * s)
 {
-	int             r;
+	int r;
 	s->running = TRUE;
 	s->errstr = 0;
 
@@ -149,32 +141,30 @@ ixp_server_loop(IXPServer * s)
 			continue;
 		if (r < 0) {
 			s->errstr = "fatal select error";
-			break;	/* allow cleanups in IXP using app */
+			break;				/* allow cleanups in IXP using app */
 		} else if (r > 0)
 			handle_conns(s);
 	}
 }
 
-int 
-ixp_server_tversion(IXPServer * s, IXPConn * c)
+int ixp_server_tversion(IXPServer * s, IXPConn * c)
 {
-	fprintf(stderr, "got version %s (%s) %d (%d)\n", s->fcall.version, IXP_VERSION,
-		s->fcall.maxmsg, IXP_MAX_MSG);
+	fprintf(stderr, "got version %s (%s) %d (%d)\n", s->fcall.version,
+			IXP_VERSION, s->fcall.maxmsg, IXP_MAX_MSG);
 	if (strncmp(s->fcall.version, IXP_VERSION, strlen(IXP_VERSION))) {
 		s->errstr = "9P versions differ";
 		return FALSE;
-	}
-	else if (s->fcall.maxmsg > IXP_MAX_MSG)
+	} else if (s->fcall.maxmsg > IXP_MAX_MSG)
 		s->fcall.maxmsg = IXP_MAX_MSG;
 	s->fcall.id = RVERSION;
 	return TRUE;
 }
 
-int 
+int
 ixp_server_init(IXPServer * s, char *sockfile, IXPTFunc * funcs,
-		void (*freeconn) (IXPServer *, IXPConn *))
+				void (*freeconn) (IXPServer *, IXPConn *))
 {
-	int             fd, i;
+	int fd, i;
 	s->funcs = funcs;
 	s->freeconn = freeconn;
 	s->errstr = 0;
@@ -190,10 +180,9 @@ ixp_server_init(IXPServer * s, char *sockfile, IXPTFunc * funcs,
 	return TRUE;
 }
 
-void 
-ixp_server_deinit(IXPServer * s)
+void ixp_server_deinit(IXPServer * s)
 {
-	int             i;
+	int i;
 	/* shut down server */
 	for (i = 0; i < IXP_MAX_CONN; i++)
 		if (s->conn[i].fd >= 0)

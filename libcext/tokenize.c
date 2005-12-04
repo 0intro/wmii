@@ -7,11 +7,10 @@
 
 #include "cext.h"
 
-size_t
-tokenize(char **result, size_t reslen, char *str, char delim)
+size_t tokenize(char **result, size_t reslen, char *str, char delim)
 {
-	char           *p, *n;
-	size_t          i = 0;
+	char *p, *n;
+	size_t i = 0;
 
 	if (!str)
 		return 0;
@@ -30,5 +29,5 @@ tokenize(char **result, size_t reslen, char *str, char delim)
 	}
 	if (strlen(p))
 		result[i++] = p;
-	return i;		/* number of tokens */
+	return i;					/* number of tokens */
 }

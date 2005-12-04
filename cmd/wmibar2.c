@@ -39,12 +39,12 @@
  * /1/fgcolor			Fcolor		<#RRGGBB, #RGB>
  * /1/bordercolor		Fcolor		<#RRGGBB, #RGB> ...
  */
-enum {				/* 8-bit qid.path.type */
+enum {							/* 8-bit qid.path.type */
 	Droot,
 	Ditem,
 	Fdisplay,
 	Fnew,
-	Fdata,			/* data to display */
+	Fdata,						/* data to display */
 	Fevent,
 	Fcolor,
 	Ffont
@@ -53,11 +53,11 @@ enum {				/* 8-bit qid.path.type */
 #define NONE (u16)0xffff
 
 typedef struct {
-	char           *name;
-	u8              type;
-}               QFile;
+	char *name;
+	u8 type;
+} QFile;
 
-static QFile    qfilelist[] = {
+static QFile qfilelist[] = {
 	{"display", Fdisplay},
 	{"font", Ffont},
 	{"new", Fnew},
@@ -74,30 +74,30 @@ static QFile    qfilelist[] = {
 };
 
 typedef struct {
-	u32             fid;
-	Qid             qid;
-}               Map;
+	u32 fid;
+	Qid qid;
+} Map;
 
 typedef struct {
-	int             id;
-	char            text[256];
-	int             value;
-	unsigned long   bg;
-	unsigned long   fg;
-	unsigned long   border[4];
-	XFontStruct    *font;
-	char            event[5][256];
-}               Item;
+	int id;
+	char text[256];
+	int value;
+	unsigned long bg;
+	unsigned long fg;
+	unsigned long border[4];
+	XFontStruct *font;
+	char event[5][256];
+} Item;
 
-static Item   **items = 0;
-static char    *sockfile = 0;
-static pid_t    mypid = 0;
-static IXPServer srv = {0};
-static Qid      root_qid;
+static Item **items = 0;
+static char *sockfile = 0;
+static pid_t mypid = 0;
+static IXPServer srv = { 0 };
+static Qid root_qid;
 static Display *dpy;
-static int      screen_num;
-static char    *align = 0;
-static char    *font = 0;
+static int screen_num;
+static char *align = 0;
+static char *font = 0;
 /*
 static GC gc;
 static Window win;
@@ -108,48 +108,42 @@ static Pixmap pmap;
 static Draw zero_draw = { 0 };
 */
 
-static char    *version[] = {
+static char *version[] = {
 	"wmibar - window manager improved bar - " VERSION "\n"
-	"  (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
+		"  (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
-static void
-usage()
+static void usage()
 {
 	fprintf(stderr, "%s %d",
-		"usage: wmibar -s <socket file> [-v]\n"
-		"      -s    socket file\n" "      -v    version info\n",
-		NONE);
+			"usage: wmibar -s <socket file> [-v]\n"
+			"      -s    socket file\n" "      -v    version info\n",
+			NONE);
 	exit(1);
 }
 
-static int
-dummy_error_handler(Display * dpy, XErrorEvent * err)
+static int dummy_error_handler(Display * dpy, XErrorEvent * err)
 {
 	return 0;
 }
 
-static void
-exit_cleanup()
+static void exit_cleanup()
 {
 	if (mypid == getpid())
 		unlink(sockfile);
 }
 
-static          u64
-make_qpath(u8 type, u16 item, u16 file)
+static u64 make_qpath(u8 type, u16 item, u16 file)
 {
 	return ((u64) file << 24) | ((u64) item << 8) | (u64) type;
 }
 
-static          u8
-qpath_type(u64 path)
+static u8 qpath_type(u64 path)
 {
 	return path & 0xff;
 }
 
-static          u16
-qpath_item(u64 path)
+static u16 qpath_item(u64 path)
 {
 	return (path >> 8) & 0xffff;
 }
@@ -162,20 +156,18 @@ qpath_file(u64 path)
 }
 */
 
-static Map     *
-fid_to_map(Map ** maps, u32 fid)
+static Map *fid_to_map(Map ** maps, u32 fid)
 {
-	u32             i;
+	u32 i;
 	for (i = 0; maps && maps[i]; i++)
 		if (maps[i]->fid == fid)
 			return maps[i];
 	return nil;
 }
 
-static int
-qfile_index(char *name, u16 * index)
+static int qfile_index(char *name, u16 * index)
 {
-	int             i;
+	int i;
 	for (i = 0; qfilelist[i].name; i++)
 		if (!strncmp(name, qfilelist[i].name, strlen(qfilelist[i].name))) {
 			*index = i;
@@ -184,11 +176,10 @@ qfile_index(char *name, u16 * index)
 	return FALSE;
 }
 
-static int
-make_qid(Qid * dir, char *wname, Qid * new)
+static int make_qid(Qid * dir, char *wname, Qid * new)
 {
-	u16             idx;
-	const char     *errstr;
+	u16 idx;
+	const char *errstr;
 	if (dir->type != IXP_QTDIR)
 		return FALSE;
 	new->version = 0;
@@ -215,25 +206,25 @@ make_qid(Qid * dir, char *wname, Qid * new)
 	return TRUE;
 }
 
-static int
-attach(IXPServer * s, IXPConn * c)
+static int attach(IXPServer * s, IXPConn * c)
 {
-	Map            *map = emalloc(sizeof(Map));
-	fprintf(stderr, "attaching %d %s %s\n", s->fcall.afid, s->fcall.uname, s->fcall.aname);
+	Map *map = emalloc(sizeof(Map));
+	fprintf(stderr, "attaching %d %s %s\n", s->fcall.afid, s->fcall.uname,
+			s->fcall.aname);
 	map->qid = root_qid;
 	map->fid = s->fcall.fid;
-	c->aux = (Map **) attach_item_begin((void **) c->aux, map, sizeof(Map *));
+	c->aux =
+		(Map **) attach_item_begin((void **) c->aux, map, sizeof(Map *));
 	s->fcall.id = RATTACH;
 	s->fcall.qid = root_qid;
 	return TRUE;
 }
 
-static int
-walk(IXPServer * s, IXPConn * c)
+static int walk(IXPServer * s, IXPConn * c)
 {
-	u16             nwqid = 0;
-	Qid             qid;
-	Map            *map;
+	u16 nwqid = 0;
+	Qid qid;
+	Map *map;
 
 	fprintf(stderr, "%s", "walking\n");
 	if (!(map = fid_to_map(c->aux, s->fcall.fid))) {
@@ -241,15 +232,15 @@ walk(IXPServer * s, IXPConn * c)
 		return FALSE;
 	}
 	if (s->fcall.fid != s->fcall.newfid
-	    && (fid_to_map(c->aux, s->fcall.newfid))) {
+		&& (fid_to_map(c->aux, s->fcall.newfid))) {
 		s->errstr = "fid alreay in use";
 		return FALSE;
 	}
 	if (s->fcall.nwname) {
 		qid = map->qid;
 		for (nwqid = 0; (nwqid < s->fcall.nwname)
-		     && make_qid(&qid, s->fcall.wname[nwqid],
-				 &s->fcall.wqid[nwqid]); nwqid++)
+			 && make_qid(&qid, s->fcall.wname[nwqid],
+						 &s->fcall.wqid[nwqid]); nwqid++)
 			qid = s->fcall.wqid[nwqid];
 		if (!nwqid) {
 			s->errstr = "file not found";
@@ -271,17 +262,16 @@ walk(IXPServer * s, IXPConn * c)
 		map->fid = s->fcall.newfid;
 		c->aux =
 			(Map **) attach_item_begin((void **) c->aux, map,
-						   sizeof(Map *));
+									   sizeof(Map *));
 	}
 	s->fcall.id = RWALK;
 	s->fcall.nwqid = nwqid;
 	return TRUE;
 }
 
-static int
-_open(IXPServer * s, IXPConn * c)
+static int _open(IXPServer * s, IXPConn * c)
 {
-	Map            *map = fid_to_map(c->aux, s->fcall.fid);
+	Map *map = fid_to_map(c->aux, s->fcall.fid);
 
 	fprintf(stderr, "%s", "opening\n");
 	if (!map) {
@@ -299,12 +289,11 @@ _open(IXPServer * s, IXPConn * c)
 	return TRUE;
 }
 
-static int
-_read(IXPServer * s, IXPConn * c)
+static int _read(IXPServer * s, IXPConn * c)
 {
-	Map            *map = fid_to_map(c->aux, s->fcall.fid);
-	Stat            stat = {0};
-	u8             *p;
+	Map *map = fid_to_map(c->aux, s->fcall.fid);
+	Stat stat = { 0 };
+	u8 *p;
 
 	fprintf(stderr, "%s", "reading\n");
 	if (!map) {
@@ -362,18 +351,16 @@ _read(IXPServer * s, IXPConn * c)
 	return TRUE;
 }
 
-static int
-_write(IXPServer * s, IXPConn * c)
+static int _write(IXPServer * s, IXPConn * c)
 {
 
 
 	return FALSE;
 }
 
-static int
-clunk(IXPServer * s, IXPConn * c)
+static int clunk(IXPServer * s, IXPConn * c)
 {
-	Map            *map = fid_to_map(c->aux, s->fcall.fid);
+	Map *map = fid_to_map(c->aux, s->fcall.fid);
 
 	if (!map) {
 		s->errstr = "invalid fid";
@@ -385,12 +372,11 @@ clunk(IXPServer * s, IXPConn * c)
 	return TRUE;
 }
 
-static void
-freeconn(IXPServer * s, IXPConn * c)
+static void freeconn(IXPServer * s, IXPConn * c)
 {
-	Map           **maps = c->aux;
+	Map **maps = c->aux;
 	if (maps) {
-		int             i;
+		int i;
 		for (i = 0; maps[i]; i++)
 			free(maps[i]);
 		free(maps);
@@ -408,11 +394,10 @@ static IXPTFunc funcs[] = {
 	{0, 0}
 };
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-	int             i;
-	Item           *item;
+	int i;
+	Item *item;
 
 	/* command line args */
 	for (i = 1; (i < argc) && (argv[i][0] == '-'); i++) {

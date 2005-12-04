@@ -11,25 +11,24 @@
 #include "wm.h"
 
 /* local functions */
-static void     handle_buttonpress(XEvent * e);
-static void     handle_configurerequest(XEvent * e);
-static void     handle_destroynotify(XEvent * e);
-static void     handle_expose(XEvent * e);
-static void     handle_maprequest(XEvent * e);
-static void     handle_motionnotify(XEvent * e);
-static void     handle_propertynotify(XEvent * e);
-static void     handle_unmapnotify(XEvent * e);
-static void     handle_enternotify(XEvent * e);
-static void     update_ignore_enternotify_hack(XEvent * e);
+static void handle_buttonpress(XEvent * e);
+static void handle_configurerequest(XEvent * e);
+static void handle_destroynotify(XEvent * e);
+static void handle_expose(XEvent * e);
+static void handle_maprequest(XEvent * e);
+static void handle_motionnotify(XEvent * e);
+static void handle_propertynotify(XEvent * e);
+static void handle_unmapnotify(XEvent * e);
+static void handle_enternotify(XEvent * e);
+static void update_ignore_enternotify_hack(XEvent * e);
 
 static unsigned int ignore_enternotify_hack = 0;
 
-void            (*handler[LASTEvent]) (XEvent *);
+void (*handler[LASTEvent]) (XEvent *);
 
-void 
-init_event_hander()
+void init_event_hander()
 {
-	int             i;
+	int i;
 	/* init event handler */
 	for (i = 0; i < LASTEvent; i++) {
 		handler[i] = 0;
@@ -48,10 +47,9 @@ init_event_hander()
 	handler[UnmapNotify] = handle_unmapnotify;
 }
 
-void 
-check_event(Connection * c)
+void check_event(Connection * c)
 {
-	XEvent          ev;
+	XEvent ev;
 	while (XPending(dpy)) {
 		XNextEvent(dpy, &ev);
 		/* main evet loop */
@@ -62,12 +60,11 @@ check_event(Connection * c)
 	}
 }
 
-static void 
-handle_buttonpress(XEvent * e)
+static void handle_buttonpress(XEvent * e)
 {
-	Client         *c;
+	Client *c;
 	XButtonPressedEvent *ev = &e->xbutton;
-	Frame          *f = win_to_frame(ev->window);
+	Frame *f = win_to_frame(ev->window);
 	if (f) {
 		handle_frame_buttonpress(ev, f);
 		return;
@@ -88,7 +85,7 @@ handle_buttonpress(XEvent * e)
 					break;
 				case Button3:
 					{
-						Align           align = xy_to_align(&c->rect, ev->x, ev->y);
+						Align align = xy_to_align(&c->rect, ev->x, ev->y);
 						if (align == CENTER)
 							mouse_move(c->frame);
 						else
@@ -103,14 +100,13 @@ handle_buttonpress(XEvent * e)
 	}
 }
 
-static void 
-handle_configurerequest(XEvent * e)
+static void handle_configurerequest(XEvent * e)
 {
 	XConfigureRequestEvent *ev = &e->xconfigurerequest;
-	XWindowChanges  wc;
-	Client         *c;
-	unsigned int    bw = 0, tabh = 0;
-	Frame          *f = 0;
+	XWindowChanges wc;
+	Client *c;
+	unsigned int bw = 0, tabh = 0;
+	Frame *f = 0;
 
 	update_ignore_enternotify_hack(e);
 	/* fprintf(stderr, "%s",  "configure request\n"); */
@@ -150,7 +146,8 @@ handle_configurerequest(XEvent * e)
 			f->rect.x = wc.x = c->rect.x - bw;
 			f->rect.y = wc.y = c->rect.y - (tabh ? tabh : bw);
 			f->rect.width = wc.width = c->rect.width + 2 * bw;
-			f->rect.height = wc.height = c->rect.height + bw + (tabh ? tabh : bw);
+			f->rect.height = wc.height =
+				c->rect.height + bw + (tabh ? tabh : bw);
 			wc.border_width = 1;
 			wc.sibling = None;
 			wc.stack_mode = ev->detail;
@@ -174,7 +171,7 @@ handle_configurerequest(XEvent * e)
 	ev->value_mask &= ~CWStackMode;
 	ev->value_mask |= CWBorderWidth;
 	XConfigureWindow(dpy, e->xconfigurerequest.window, ev->value_mask,
-			 &wc);
+					 &wc);
 	XSync(dpy, False);
 
 	/*
@@ -182,11 +179,10 @@ handle_configurerequest(XEvent * e)
 	 */
 }
 
-static void 
-handle_destroynotify(XEvent * e)
+static void handle_destroynotify(XEvent * e)
 {
 	XDestroyWindowEvent *ev = &e->xdestroywindow;
-	Client         *c = win_to_client(ev->window);
+	Client *c = win_to_client(ev->window);
 	/* fprintf(stderr, "destroy: client 0x%x\n", (int)ev->window); */
 	if (!c)
 		return;
@@ -194,14 +190,13 @@ handle_destroynotify(XEvent * e)
 		detach_client_from_frame(c, 0, 1);
 	else if (detached && (index_item((void **) detached, c) >= 0))
 		detached = (Client **) detach_item((void **) detached, c,
-						   sizeof(Client *));
+										   sizeof(Client *));
 	free_client(c);
 }
 
-static void 
-handle_expose(XEvent * e)
+static void handle_expose(XEvent * e)
 {
-	static Frame   *f;
+	static Frame *f;
 	if (e->xexpose.count == 0) {
 		f = win_to_frame(e->xbutton.window);
 		if (f)
@@ -209,12 +204,11 @@ handle_expose(XEvent * e)
 	}
 }
 
-static void 
-handle_maprequest(XEvent * e)
+static void handle_maprequest(XEvent * e)
 {
 	XMapRequestEvent *ev = &e->xmaprequest;
 	static XWindowAttributes wa;
-	static Client  *c;
+	static Client *c;
 
 	/* fprintf(stderr, "map: window 0x%x\n", (int)ev->window); */
 	if (!XGetWindowAttributes(dpy, ev->window, &wa))
@@ -231,13 +225,12 @@ handle_maprequest(XEvent * e)
 	}
 }
 
-static void 
-handle_motionnotify(XEvent * e)
+static void handle_motionnotify(XEvent * e)
 {
-	Frame          *f = win_to_frame(e->xmotion.window);
-	Cursor          cursor;
+	Frame *f = win_to_frame(e->xmotion.window);
+	Cursor cursor;
 	if (f) {
-		Frame          *old = SELFRAME(pages[sel]);
+		Frame *old = SELFRAME(pages[sel]);
 		if (old != f) {
 			focus_frame(f, 0, 0, 1);
 			draw_frame(old);
@@ -245,7 +238,7 @@ handle_motionnotify(XEvent * e)
 		} else if (f->clients) {
 			/* multihead assumption */
 			XSetInputFocus(dpy, f->clients[f->sel]->win,
-				       RevertToPointerRoot, CurrentTime);
+						   RevertToPointerRoot, CurrentTime);
 			XSync(dpy, False);
 		}
 		cursor = cursor_for_motion(f, e->xmotion.x, e->xmotion.y);
@@ -256,11 +249,10 @@ handle_motionnotify(XEvent * e)
 	}
 }
 
-static void 
-handle_propertynotify(XEvent * e)
+static void handle_propertynotify(XEvent * e)
 {
 	XPropertyEvent *ev = &e->xproperty;
-	Client         *c = win_to_client(ev->window);
+	Client *c = win_to_client(ev->window);
 
 	if (c) {
 		handle_client_property(c, ev);
@@ -268,11 +260,10 @@ handle_propertynotify(XEvent * e)
 	}
 }
 
-static void 
-handle_unmapnotify(XEvent * e)
+static void handle_unmapnotify(XEvent * e)
 {
-	XUnmapEvent    *ev = &e->xunmap;
-	Client         *c;
+	XUnmapEvent *ev = &e->xunmap;
+	Client *c;
 
 	update_ignore_enternotify_hack(e);
 	if (ev->event == root)
@@ -290,11 +281,10 @@ handle_unmapnotify(XEvent * e)
 	}
 }
 
-static void 
-handle_enternotify(XEvent * e)
+static void handle_enternotify(XEvent * e)
 {
 	XCrossingEvent *ev = &e->xcrossing;
-	Client         *c;
+	Client *c;
 
 	if (ev->mode != NotifyNormal)
 		return;
@@ -305,7 +295,7 @@ handle_enternotify(XEvent * e)
 
 	c = win_to_client(ev->window);
 	if (c && c->frame && (ev->serial != ignore_enternotify_hack)) {
-		Frame          *old = SELFRAME(pages[sel]);
+		Frame *old = SELFRAME(pages[sel]);
 		XUndefineCursor(dpy, c->frame->win);
 		if (old != c->frame) {
 			focus_frame(c->frame, 0, 0, 1);
@@ -319,8 +309,7 @@ handle_enternotify(XEvent * e)
 	}
 }
 
-static void 
-update_ignore_enternotify_hack(XEvent * e)
+static void update_ignore_enternotify_hack(XEvent * e)
 {
 	ignore_enternotify_hack = e->xany.serial;
 	XSync(dpy, False);

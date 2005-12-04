@@ -5,10 +5,9 @@
 
 #include "wmii.h"
 
-void 
-swap(void **p1, void **p2)
+void swap(void **p1, void **p2)
 {
-	void           *tmp = *p1;
+	void *tmp = *p1;
 	*p1 = *p2;
 	*p2 = tmp;
 }

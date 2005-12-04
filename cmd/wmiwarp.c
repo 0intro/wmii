@@ -10,24 +10,22 @@
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 
-static char    *version[] = {
+static char *version[] = {
 	"wmiwarp - window manager improved warp - " VERSION "\n"
-	" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
+		" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
-static void
-usage()
+static void usage()
 {
 	fprintf(stderr,
-	     "usage: wmiwarp [-v] <x>,<y>\n" "      -v     version info\n");
+			"usage: wmiwarp [-v] <x>,<y>\n" "      -v     version info\n");
 	exit(1);
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-	Display        *dpy;
-	int             x, y;
+	Display *dpy;
+	int x, y;
 
 	/* command line args */
 	if (argc != 2)
@@ -49,7 +47,7 @@ main(int argc, char **argv)
 		usage();
 	}
 	XWarpPointer(dpy, None, RootWindow(dpy, DefaultScreen(dpy)),
-		     0, 0, 0, 0, x, y);
+				 0, 0, 0, 0, x, y);
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 	XCloseDisplay(dpy);
 	return 0;

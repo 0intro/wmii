@@ -13,8 +13,7 @@
 
 #include <cext.h>
 
-void 
-spawn(void *dpy, char *cmd)
+void spawn(void *dpy, char *cmd)
 {
 	/* the questionable double-fork is done to catch all zombies */
 	if (fork() == 0) {

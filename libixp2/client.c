@@ -13,12 +13,11 @@
 #include "cext.h"
 #include "ixp.h"
 
-static u8       msg[IXP_MAX_MSG];
+static u8 msg[IXP_MAX_MSG];
 
-static int 
-do_fcall(IXPClient * c)
+static int do_fcall(IXPClient * c)
 {
-	u32             msize = ixp_fcall_to_msg(&c->fcall, msg, IXP_MAX_MSG);
+	u32 msize = ixp_fcall_to_msg(&c->fcall, msg, IXP_MAX_MSG);
 	c->errstr = 0;
 	if (ixp_send_message(c->fd, msg, msize, &c->errstr) != msize)
 		return FALSE;
@@ -35,8 +34,7 @@ do_fcall(IXPClient * c)
 	return TRUE;
 }
 
-int 
-ixp_client_init(IXPClient * c, char *sockfile)
+int ixp_client_init(IXPClient * c, char *sockfile)
 {
 	if ((c->fd = ixp_connect_sock(sockfile)) < 0) {
 		c->errstr = "cannot connect server";
@@ -54,7 +52,7 @@ ixp_client_init(IXPClient * c, char *sockfile)
 	if (strncmp(c->fcall.version, IXP_VERSION, strlen(IXP_VERSION))) {
 		c->errstr = "9P versions differ";
 		ixp_client_deinit(c);
-		return FALSE;	/* we cannot handle this version */
+		return FALSE;			/* we cannot handle this version */
 	}
 	c->root_fid = getpid();
 
@@ -73,8 +71,7 @@ ixp_client_init(IXPClient * c, char *sockfile)
 	return TRUE;
 }
 
-int 
-ixp_client_remove(IXPClient * c, u32 newfid, char *filepath)
+int ixp_client_remove(IXPClient * c, u32 newfid, char *filepath)
 {
 	if (!ixp_client_walk(c, newfid, filepath))
 		return FALSE;
@@ -85,9 +82,8 @@ ixp_client_remove(IXPClient * c, u32 newfid, char *filepath)
 	return do_fcall(c);
 }
 
-int 
-ixp_client_create(IXPClient * c, u32 dirfid, char *name, u32 perm,
-		  u8 mode)
+int
+ixp_client_create(IXPClient * c, u32 dirfid, char *name, u32 perm, u8 mode)
 {
 	/* create */
 	c->fcall.id = TCREATE;
@@ -99,8 +95,7 @@ ixp_client_create(IXPClient * c, u32 dirfid, char *name, u32 perm,
 	return do_fcall(c);
 }
 
-int 
-ixp_client_walk(IXPClient * c, u32 newfid, char *filepath)
+int ixp_client_walk(IXPClient * c, u32 newfid, char *filepath)
 {
 	/* walk */
 	c->fcall.id = TWALK;
@@ -110,13 +105,12 @@ ixp_client_walk(IXPClient * c, u32 newfid, char *filepath)
 		_strlcpy(c->fcall.name, filepath, sizeof(c->fcall.name));
 		c->fcall.nwname =
 			tokenize((char **) c->fcall.wname, IXP_MAX_WELEM,
-				 c->fcall.name, '/');
+					 c->fcall.name, '/');
 	}
 	return do_fcall(c);
 }
 
-int 
-ixp_client_open(IXPClient * c, u32 newfid, char *filepath, u8 mode)
+int ixp_client_open(IXPClient * c, u32 newfid, char *filepath, u8 mode)
 {
 	if (!ixp_client_walk(c, newfid, filepath))
 		return FALSE;
@@ -129,13 +123,13 @@ ixp_client_open(IXPClient * c, u32 newfid, char *filepath, u8 mode)
 	return do_fcall(c);
 }
 
-u32 
+u32
 ixp_client_read(IXPClient * c, u32 fid, u64 offset, void *result,
-		u32 res_len)
+				u32 res_len)
 {
-	u32             bytes =
-	c->fcall.maxmsg - (sizeof(u8) + sizeof(u16) + 2 * sizeof(u32) +
-			   sizeof(u64));
+	u32 bytes =
+		c->fcall.maxmsg - (sizeof(u8) + sizeof(u16) + 2 * sizeof(u32) +
+						   sizeof(u64));
 	/* read */
 	c->fcall.id = TREAD;
 	c->fcall.tag = IXP_NOTAG;
@@ -148,13 +142,12 @@ ixp_client_read(IXPClient * c, u32 fid, u64 offset, void *result,
 	return c->fcall.count;
 }
 
-u32 
-ixp_client_write(IXPClient * c, u32 fid, u64 offset, u32 count,
-		 u8 * data)
+u32
+ixp_client_write(IXPClient * c, u32 fid, u64 offset, u32 count, u8 * data)
 {
 	if (count >
-	    c->fcall.maxmsg - (sizeof(u8) + sizeof(u16) + 2 * sizeof(u32) +
-			       sizeof(u64))) {
+		c->fcall.maxmsg - (sizeof(u8) + sizeof(u16) + 2 * sizeof(u32) +
+						   sizeof(u64))) {
 		c->errstr = "message size exceeds buffer size";
 		return 0;
 	}
@@ -170,8 +163,7 @@ ixp_client_write(IXPClient * c, u32 fid, u64 offset, u32 count,
 	return c->fcall.count;
 }
 
-int 
-ixp_client_close(IXPClient * c, u32 fid)
+int ixp_client_close(IXPClient * c, u32 fid)
 {
 	/* clunk */
 	c->fcall.id = TCLUNK;
@@ -180,8 +172,7 @@ ixp_client_close(IXPClient * c, u32 fid)
 	return do_fcall(c);
 }
 
-void 
-ixp_client_deinit(IXPClient * c)
+void ixp_client_deinit(IXPClient * c)
 {
 	/* session finished, now shutdown */
 	if (c->fd) {

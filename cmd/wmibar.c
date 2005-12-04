@@ -29,37 +29,37 @@ typedef enum {
 	B_BORDER_COLOR,
 	B_BG_COLOR,
 	B_LAST
-}               BarIndexes;
+} BarIndexes;
 
 typedef struct {
-	File           *root;
-	Draw            d;
-}               Item;
+	File *root;
+	Draw d;
+} Item;
 
 static IXPServer *ixps = 0;
 static Display *dpy;
-static GC       gc;
-static Window   win;
+static GC gc;
+static Window win;
 static XRectangle rect;
 static XRectangle brect;
-static int      screen_num;
-static int      displayed = 0;
-static char    *sockfile = 0;
-static File    *files[B_LAST];
-static Item   **items = 0;
+static int screen_num;
+static int displayed = 0;
+static char *sockfile = 0;
+static File *files[B_LAST];
+static Item **items = 0;
 static unsigned int id = 0;
-static Pixmap   pmap;
+static Pixmap pmap;
 
-static Draw     zero_draw = {0};
+static Draw zero_draw = { 0 };
 
-static void     draw_bar(void *obj, char *arg);
-static void     quit(void *obj, char *arg);
-static void     display(void *obj, char *arg);
-static void     reset(void *obj, char *arg);
-static void     _destroy(void *obj, char *arg);
-static void     handle_after_write(IXPServer * s, File * f);
+static void draw_bar(void *obj, char *arg);
+static void quit(void *obj, char *arg);
+static void display(void *obj, char *arg);
+static void reset(void *obj, char *arg);
+static void _destroy(void *obj, char *arg);
+static void handle_after_write(IXPServer * s, File * f);
 
-static Action   acttbl[] = {
+static Action acttbl[] = {
 	{"quit", quit},
 	{"display", display},
 	{"update", draw_bar},
@@ -68,17 +68,16 @@ static Action   acttbl[] = {
 	{0, 0}
 };
 
-static char    *version[] = {
+static char *version[] = {
 	"wmibar - window manager improved bar - " VERSION "\n"
-	"  (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
+		"  (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
-static void
-usage()
+static void usage()
 {
 	fprintf(stderr, "%s",
-	  "usage: wmibar -s <socket file> [-v] [<x>,<y>,<width>,<height>]\n"
-		"      -s    socket file\n" "      -v    version info\n");
+			"usage: wmibar -s <socket file> [-v] [<x>,<y>,<width>,<height>]\n"
+			"      -s    socket file\n" "      -v    version info\n");
 	exit(1);
 }
 
@@ -93,12 +92,11 @@ usage()
  * <path>/b4press       "<command>"
  * <path>/b5press       "<command>"
  */
-static void
-create_label(char *path)
+static void create_label(char *path)
 {
-	File           *f;
-	char            file[MAX_BUF];
-	int             i;
+	File *f;
+	char file[MAX_BUF];
+	int i;
 
 	snprintf(file, MAX_BUF, "%s/data", path);
 	f = ixp_create(ixps, file);
@@ -115,10 +113,9 @@ create_label(char *path)
 	}
 }
 
-static void
-_destroy(void *obj, char *arg)
+static void _destroy(void *obj, char *arg)
 {
-	char            buf[512];
+	char buf[512];
 	if (!arg)
 		return;
 	snprintf(buf, sizeof(buf), "/%s", arg);
@@ -126,11 +123,10 @@ _destroy(void *obj, char *arg)
 	draw_bar(0, 0);
 }
 
-static void
-reset(void *obj, char *arg)
+static void reset(void *obj, char *arg)
 {
-	int             i;
-	char            buf[512];
+	int i;
+	char buf[512];
 	for (i = 0; i < id; i++) {
 		snprintf(buf, sizeof(buf), "/%d", i + 1);
 		ixps->remove(ixps, buf);
@@ -139,14 +135,12 @@ reset(void *obj, char *arg)
 	draw_bar(0, 0);
 }
 
-static void
-quit(void *obj, char *arg)
+static void quit(void *obj, char *arg)
 {
 	ixps->runlevel = SHUTDOWN;
 }
 
-static void
-display(void *obj, char *arg)
+static void display(void *obj, char *arg)
 {
 	if (!arg)
 		return;
@@ -160,11 +154,10 @@ display(void *obj, char *arg)
 	}
 }
 
-static void
-init_draw_label(char *path, Draw * d)
+static void init_draw_label(char *path, Draw * d)
 {
-	char            buf[MAX_BUF];
-	File           *f;
+	char buf[MAX_BUF];
+	File *f;
 
 	/* text stuff */
 	snprintf(buf, MAX_BUF, "%s/data", path);
@@ -182,8 +175,7 @@ init_draw_label(char *path, Draw * d)
 	d->border = blitz_loadcolor(dpy, screen_num, f->content);
 }
 
-static void
-init_item(char *path, Item * i)
+static void init_item(char *path, Item * i)
 {
 	i->d = zero_draw;
 	i->root = ixp_walk(ixps, path);
@@ -194,19 +186,17 @@ init_item(char *path, Item * i)
 	init_draw_label(path, &i->d);
 }
 
-static int
-comp_str(const void *s1, const void *s2)
+static int comp_str(const void *s1, const void *s2)
 {
 	return strcmp(*(char **) s1, *(char **) s2);
 }
 
-static void
-draw()
+static void draw()
 {
-	unsigned int    n = 0, i, w, xoff = 0;
-	XFontStruct    *font;
-	unsigned        expandable = 0;
-	char            buf[32];
+	unsigned int n = 0, i, w, xoff = 0;
+	XFontStruct *font;
+	unsigned expandable = 0;
+	char buf[32];
 
 	if (!items)
 		return;
@@ -229,7 +219,8 @@ draw()
 					items[i]->d.rect.width = brect.height / 2;
 				else
 					items[i]->d.rect.width +=
-						XTextWidth(font, items[i]->d.data, strlen(items[i]->d.data));
+						XTextWidth(font, items[i]->d.data,
+								   strlen(items[i]->d.data));
 			}
 			w += items[i]->d.rect.width;
 		}
@@ -256,13 +247,12 @@ draw()
 	XFreeFont(dpy, font);
 }
 
-static void
-draw_bar(void *obj, char *arg)
+static void draw_bar(void *obj, char *arg)
 {
-	File           *label = 0;
-	unsigned int    i = 0, n = 0;
-	Item           *item;
-	char            buf[512];
+	File *label = 0;
+	unsigned int i = 0, n = 0;
+	Item *item;
+	char buf[512];
 
 	if (!displayed)
 		return;
@@ -276,19 +266,23 @@ draw_bar(void *obj, char *arg)
 	snprintf(buf, sizeof(buf), "%s", "/1");
 	label = ixp_walk(ixps, buf);
 	if (!label) {
-		Draw            d = {0};
+		Draw d = { 0 };
 		/* default stuff */
 		d.gc = gc;
 		d.drawable = pmap;
 		d.rect.width = brect.width;
 		d.rect.height = brect.height;
-		d.bg = blitz_loadcolor(dpy, screen_num, files[B_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen_num, files[B_FG_COLOR]->content);
-		d.border = blitz_loadcolor(dpy, screen_num, files[B_BORDER_COLOR]->content);
+		d.bg =
+			blitz_loadcolor(dpy, screen_num, files[B_BG_COLOR]->content);
+		d.fg =
+			blitz_loadcolor(dpy, screen_num, files[B_FG_COLOR]->content);
+		d.border =
+			blitz_loadcolor(dpy, screen_num,
+							files[B_BORDER_COLOR]->content);
 		blitz_drawlabelnoborder(dpy, &d);
 	} else {
-		File           *f;
-		char          **paths = 0;
+		File *f;
+		char **paths = 0;
 		/*
 		 * take order into account, directory names are used in
 		 * alphabetical order
@@ -304,7 +298,9 @@ draw_bar(void *obj, char *arg)
 		for (i = 0; i < n; i++) {
 			snprintf(buf, sizeof(buf), "/%s", paths[i]);
 			item = emalloc(sizeof(Item));
-			items = (Item **) attach_item_end((void **) items, item, sizeof(Item *));
+			items =
+				(Item **) attach_item_end((void **) items, item,
+										  sizeof(Item *));
 			init_item(buf, item);
 		}
 		draw();
@@ -312,23 +308,21 @@ draw_bar(void *obj, char *arg)
 	}
 }
 
-static Item    *
-get_item_for_file(File * f)
+static Item *get_item_for_file(File * f)
 {
-	int             i;
+	int i;
 	for (i = 0; items && items[i]; i++)
 		if (items[i]->root == f)
 			return items[i];
 	return 0;
 }
 
-static void
-handle_buttonpress(XButtonPressedEvent * e)
+static void handle_buttonpress(XButtonPressedEvent * e)
 {
-	File           *p;
-	char            buf[MAX_BUF];
-	char            path[512];
-	int             i;
+	File *p;
+	char buf[MAX_BUF];
+	char path[512];
+	int i;
 
 	for (i = 0; items && items[i]; i++) {
 		if (blitz_ispointinrect(e->x, e->y, &items[i]->d.rect)) {
@@ -343,10 +337,9 @@ handle_buttonpress(XButtonPressedEvent * e)
 	}
 }
 
-static void
-check_event(Connection * e)
+static void check_event(Connection * e)
 {
-	XEvent          ev;
+	XEvent ev;
 
 	while (XPending(dpy)) {
 		XNextEvent(dpy, &ev);
@@ -366,8 +359,7 @@ check_event(Connection * e)
 	}
 }
 
-static void
-update_geometry(char *size)
+static void update_geometry(char *size)
 {
 	blitz_strtorect(dpy, &rect, &brect, size);
 	if (!brect.width)
@@ -376,13 +368,12 @@ update_geometry(char *size)
 		brect.height = 20;
 }
 
-static void
-handle_after_write(IXPServer * s, File * f)
+static void handle_after_write(IXPServer * s, File * f)
 {
-	int             i;
-	size_t          len;
-	Item           *item;
-	char            buf[512];
+	int i;
+	size_t len;
+	Item *item;
+	char buf[512];
 
 	buf[0] = '\0';
 	if (!strncmp(f->name, "data", 5)) {
@@ -392,14 +383,14 @@ handle_after_write(IXPServer * s, File * f)
 			draw();
 		}
 	} else if (files[B_GEOMETRY] == f) {
-		char           *geom = files[B_GEOMETRY]->content;
+		char *geom = files[B_GEOMETRY]->content;
 		if (geom && strrchr(geom, ',')) {
 			update_geometry(geom);
 			XMoveResizeWindow(dpy, win, brect.x, brect.y,
-					  brect.width, brect.height);
+							  brect.width, brect.height);
 			XSync(dpy, False);
 			pmap = XCreatePixmap(dpy, win, brect.width, brect.height,
-					     DefaultDepth(dpy, screen_num));
+								 DefaultDepth(dpy, screen_num));
 			XSync(dpy, False);
 			draw_bar(0, 0);
 		}
@@ -419,13 +410,12 @@ handle_after_write(IXPServer * s, File * f)
 	check_event(0);
 }
 
-static void
-handle_before_read(IXPServer * s, File * f)
+static void handle_before_read(IXPServer * s, File * f)
 {
-	char            buf[64];
+	char buf[64];
 	if (f == files[B_GEOMETRY]) {
 		snprintf(buf, sizeof(buf), "%d,%d,%d,%d", brect.x, brect.y,
-			 brect.width, brect.height);
+				 brect.width, brect.height);
 		if (f->content)
 			free(f->content);
 		f->content = strdup(buf);
@@ -441,11 +431,10 @@ handle_before_read(IXPServer * s, File * f)
 	}
 }
 
-static void
-run(char *geom)
+static void run(char *geom)
 {
 	XSetWindowAttributes wa;
-	XGCValues       gcv;
+	XGCValues gcv;
 
 	/* init */
 	if (!(files[B_CTL] = ixp_create(ixps, "/ctl"))) {
@@ -456,9 +445,12 @@ run(char *geom)
 	files[B_NEW] = ixp_create(ixps, "/new");
 	files[B_NEW]->before_read = handle_before_read;
 	files[B_FONT] = wmii_create_ixpfile(ixps, "/font", BLITZ_FONT);
-	files[B_BG_COLOR] = wmii_create_ixpfile(ixps, "/bgcolor", BLITZ_NORM_BG_COLOR);
-	files[B_FG_COLOR] = wmii_create_ixpfile(ixps, "/fgcolor", BLITZ_NORM_FG_COLOR);
-	files[B_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/bordercolor", BLITZ_NORM_BORDER_COLOR);
+	files[B_BG_COLOR] =
+		wmii_create_ixpfile(ixps, "/bgcolor", BLITZ_NORM_BG_COLOR);
+	files[B_FG_COLOR] =
+		wmii_create_ixpfile(ixps, "/fgcolor", BLITZ_NORM_FG_COLOR);
+	files[B_BORDER_COLOR] =
+		wmii_create_ixpfile(ixps, "/bordercolor", BLITZ_NORM_BORDER_COLOR);
 	files[B_GEOMETRY] = ixp_create(ixps, "/geometry");
 	files[B_GEOMETRY]->before_read = handle_before_read;
 	files[B_GEOMETRY]->after_write = handle_after_write;
@@ -466,7 +458,9 @@ run(char *geom)
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
-	wa.event_mask = ExposureMask | ButtonPressMask | SubstructureRedirectMask | SubstructureNotifyMask;
+	wa.event_mask =
+		ExposureMask | ButtonPressMask | SubstructureRedirectMask |
+		SubstructureNotifyMask;
 
 	brect.x = brect.y = brect.width = brect.height = 0;
 	rect.x = rect.y = 0;
@@ -475,11 +469,11 @@ run(char *geom)
 	update_geometry(geom);
 
 	win = XCreateWindow(dpy, RootWindow(dpy, screen_num), brect.x, brect.y,
-			    brect.width, brect.height, 0, DefaultDepth(dpy,
-								screen_num),
-			    CopyFromParent, DefaultVisual(dpy, screen_num),
-			    CWOverrideRedirect | CWBackPixmap | CWEventMask,
-			    &wa);
+						brect.width, brect.height, 0, DefaultDepth(dpy,
+																   screen_num),
+						CopyFromParent, DefaultVisual(dpy, screen_num),
+						CWOverrideRedirect | CWBackPixmap | CWEventMask,
+						&wa);
 	XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
 	XSync(dpy, False);
 
@@ -489,28 +483,26 @@ run(char *geom)
 
 	pmap =
 		XCreatePixmap(dpy, win, brect.width, brect.height,
-			      DefaultDepth(dpy, screen_num));
+					  DefaultDepth(dpy, screen_num));
 
 	/* main event loop */
 	run_server_with_fd_support(ixps, ConnectionNumber(dpy),
-				   check_event, 0);
+							   check_event, 0);
 	deinit_server(ixps);
 	XFreePixmap(dpy, pmap);
 	XFreeGC(dpy, gc);
 	XCloseDisplay(dpy);
 }
 
-static int
-dummy_error_handler(Display * dpy, XErrorEvent * err)
+static int dummy_error_handler(Display * dpy, XErrorEvent * err)
 {
 	return 0;
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-	char            geom[64];
-	int             i;
+	char geom[64];
+	int i;
 
 	/* command line args */
 	for (i = 1; (i < argc) && (argv[i][0] == '-'); i++) {

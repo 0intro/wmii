@@ -9,37 +9,32 @@
 
 /* encode/decode stuff */
 
-void           *
-ixp_enc_u8(u8 * msg, u8 val)
+void *ixp_enc_u8(u8 * msg, u8 val)
 {
 	msg[0] = val;
 	return &msg[1];
 }
 
-void           *
-ixp_dec_u8(u8 * msg, u8 * val)
+void *ixp_dec_u8(u8 * msg, u8 * val)
 {
 	*val = msg[0];
 	return &msg[1];
 }
 
-void           *
-ixp_enc_u16(u8 * msg, u16 val)
+void *ixp_enc_u16(u8 * msg, u16 val)
 {
 	msg[0] = val;
 	msg[1] = val >> 8;
 	return &msg[2];
 }
 
-void           *
-ixp_dec_u16(u8 * msg, u16 * val)
+void *ixp_dec_u16(u8 * msg, u16 * val)
 {
 	*val = msg[0] | (msg[1] << 8);
 	return &msg[2];
 }
 
-void           *
-ixp_enc_u32(u8 * msg, u32 val)
+void *ixp_enc_u32(u8 * msg, u32 val)
 {
 	msg[0] = val;
 	msg[1] = val >> 8;
@@ -48,15 +43,13 @@ ixp_enc_u32(u8 * msg, u32 val)
 	return &msg[4];
 }
 
-void           *
-ixp_dec_u32(u8 * msg, u32 * val)
+void *ixp_dec_u32(u8 * msg, u32 * val)
 {
 	*val = msg[0] | (msg[1] << 8) | (msg[2] << 16) | (msg[3] << 24);
 	return &msg[4];
 }
 
-void           *
-ixp_enc_u64(u8 * msg, u64 val)
+void *ixp_enc_u64(u8 * msg, u64 val)
 {
 	msg[0] = val;
 	msg[1] = val >> 8;
@@ -69,28 +62,25 @@ ixp_enc_u64(u8 * msg, u64 val)
 	return &msg[8];
 }
 
-void           *
-ixp_dec_u64(u8 * msg, u64 * val)
+void *ixp_dec_u64(u8 * msg, u64 * val)
 {
 	*val = (u64) msg[0] | ((u64) msg[1] << 8) |
-	((u64) msg[2] << 16) | ((u64) msg[3] << 24) |
-	((u64) msg[4] << 32) | ((u64) msg[5] << 40) |
-	((u64) msg[6] << 48) | ((u64) msg[7] << 56);
+		((u64) msg[2] << 16) | ((u64) msg[3] << 24) |
+		((u64) msg[4] << 32) | ((u64) msg[5] << 40) |
+		((u64) msg[6] << 48) | ((u64) msg[7] << 56);
 	return &msg[8];
 }
 
-void           *
-ixp_enc_string(u8 * msg, const char *s)
+void *ixp_enc_string(u8 * msg, const char *s)
 {
-	u16             len = s ? strlen(s) : 0;
+	u16 len = s ? strlen(s) : 0;
 	msg = ixp_enc_u16(msg, len);
 	if (s)
 		memcpy(msg, s, len);
 	return &msg[len];
 }
 
-void           *
-ixp_dec_string(u8 * msg, char *string, u16 stringlen, u16 * len)
+void *ixp_dec_string(u8 * msg, char *string, u16 stringlen, u16 * len)
 {
 	msg = ixp_dec_u16(msg, len);
 	if (!(*len))
@@ -105,54 +95,47 @@ ixp_dec_string(u8 * msg, char *string, u16 stringlen, u16 * len)
 	return &msg[*len];
 }
 
-void           *
-ixp_enc_data(u8 * msg, u8 * data, u32 datalen)
+void *ixp_enc_data(u8 * msg, u8 * data, u32 datalen)
 {
 	memcpy(msg, data, datalen);
 	return &msg[datalen];
 }
 
-void           *
-ixp_dec_data(u8 * msg, u8 * data, u32 datalen)
+void *ixp_dec_data(u8 * msg, u8 * data, u32 datalen)
 {
 	memcpy(data, msg, datalen);
 	return &msg[datalen];
 }
 
-void           *
-ixp_enc_prefix(u8 * msg, u32 size, u8 id, u16 tag)
+void *ixp_enc_prefix(u8 * msg, u32 size, u8 id, u16 tag)
 {
 	msg = ixp_enc_u32(msg, size);
 	msg = ixp_enc_u8(msg, id);
 	return ixp_enc_u16(msg, tag);
 }
 
-void           *
-ixp_dec_prefix(u8 * msg, u32 * size, u8 * id, u16 * tag)
+void *ixp_dec_prefix(u8 * msg, u32 * size, u8 * id, u16 * tag)
 {
 	msg = ixp_dec_u32(msg, size);
 	msg = ixp_dec_u8(msg, id);
 	return ixp_dec_u16(msg, tag);
 }
 
-void           *
-ixp_enc_qid(u8 * msg, Qid * qid)
+void *ixp_enc_qid(u8 * msg, Qid * qid)
 {
 	msg = ixp_enc_u8(msg, qid->type);
 	msg = ixp_enc_u32(msg, qid->version);
 	return ixp_enc_u64(msg, qid->path);
 }
 
-void           *
-ixp_dec_qid(u8 * msg, Qid * qid)
+void *ixp_dec_qid(u8 * msg, Qid * qid)
 {
 	msg = ixp_dec_u8(msg, &qid->type);
 	msg = ixp_dec_u32(msg, &qid->version);
 	return ixp_dec_u64(msg, &qid->path);
 }
 
-void           *
-ixp_enc_stat(u8 * msg, Stat * stat)
+void *ixp_enc_stat(u8 * msg, Stat * stat)
 {
 	msg = ixp_enc_u16(msg, stat->size);
 	msg = ixp_enc_u16(msg, stat->type);
@@ -168,10 +151,9 @@ ixp_enc_stat(u8 * msg, Stat * stat)
 	return ixp_enc_string(msg, stat->muid);
 }
 
-void           *
-ixp_dec_stat(u8 * msg, Stat * stat)
+void *ixp_dec_stat(u8 * msg, Stat * stat)
 {
-	u16             len;
+	u16 len;
 	msg = ixp_dec_u16(msg, &stat->size);
 	msg = ixp_dec_u16(msg, &stat->type);
 	msg = ixp_dec_u32(msg, &stat->dev);

@@ -11,23 +11,22 @@
 
 #include <cext.h>
 
-static Page     zero_page = {0};
+static Page zero_page = { 0 };
 
-static void     select_frame(void *obj, char *cmd);
-static void     handle_after_write_page(IXPServer * s, File * f);
+static void select_frame(void *obj, char *cmd);
+static void handle_after_write_page(IXPServer * s, File * f);
 
 /* action table for /page/?/ namespace */
-Action          page_acttbl[] = {
+Action page_acttbl[] = {
 	{"select", select_frame},
 	{0, 0}
 };
 
-Page           *
-alloc_page(char *autodestroy)
+Page *alloc_page(char *autodestroy)
 {
-	Page           *p = emalloc(sizeof(Page));
-	char            buf[MAX_BUF];
-	int             id = count_items((void **) pages) + 1;
+	Page *p = emalloc(sizeof(Page));
+	char buf[MAX_BUF];
+	int id = count_items((void **) pages) + 1;
 
 	*p = zero_page;
 	snprintf(buf, sizeof(buf), "/page/%d", id);
@@ -49,8 +48,7 @@ alloc_page(char *autodestroy)
 	return p;
 }
 
-void 
-free_page(Page * p)
+void free_page(Page * p)
 {
 	pages = (Page **) detach_item((void **) pages, p, sizeof(Page *));
 	if (pages) {
@@ -66,25 +64,23 @@ free_page(Page * p)
 	free(p);
 }
 
-void 
-draw_page(Page * p)
+void draw_page(Page * p)
 {
-	int             i;
+	int i;
 	if (!p)
 		return;
 	for (i = 0; p->areas && p->areas[i]; i++)
 		draw_area(p->areas[i]);
 }
 
-XRectangle     *
-rectangles(unsigned int *num)
+XRectangle *rectangles(unsigned int *num)
 {
-	XRectangle     *result = 0;
-	int             i, j = 0;
-	Window          d1, d2;
-	Window         *wins;
+	XRectangle *result = 0;
+	int i, j = 0;
+	Window d1, d2;
+	Window *wins;
 	XWindowAttributes wa;
-	XRectangle      r;
+	XRectangle r;
 
 	if (XQueryTree(dpy, root, &d1, &d2, &wins, num)) {
 		result = emalloc(*num * sizeof(XRectangle));
@@ -107,13 +103,12 @@ rectangles(unsigned int *num)
 	return result;
 }
 
-static void 
-center_pointer(Frame * f)
+static void center_pointer(Frame * f)
 {
 
-	Window          dummy;
-	int             wex, wey, ex, ey, i;
-	unsigned int    dmask;
+	Window dummy;
+	int wex, wey, ex, ey, i;
+	unsigned int dmask;
 	if (!f)
 		return;
 	XQueryPointer(dpy, f->win, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
@@ -122,19 +117,19 @@ center_pointer(Frame * f)
 		return;
 	/* suppress EnterNotify's while mouse warping */
 	XSelectInput(dpy, root, ROOT_MASK & ~StructureNotifyMask);
-	XWarpPointer(dpy, None, f->win, 0, 0, 0, 0, f->rect.width / 2, f->rect.height / 2);
+	XWarpPointer(dpy, None, f->win, 0, 0, 0, 0, f->rect.width / 2,
+				 f->rect.height / 2);
 	XSync(dpy, False);
 	XSelectInput(dpy, root, ROOT_MASK);
 
 }
 
-static void 
-select_frame(void *obj, char *cmd)
+static void select_frame(void *obj, char *cmd)
 {
 	int i;
 	Frame *f, *old;
 	f = old = pages ? SELFRAME(pages[sel]) : 0;
-	if(!f || !cmd)
+	if (!f || !cmd)
 		return;
 	if (!strncmp(cmd, "prev", 5)) {
 		i = index_prev_item((void **) f->area->frames, f);
@@ -151,28 +146,25 @@ select_frame(void *obj, char *cmd)
 	}
 }
 
-void 
-hide_page(Page * p)
+void hide_page(Page * p)
 {
 
-	int             i;
+	int i;
 	for (i = 0; p->areas && p->areas[i]; i++)
 		hide_area(p->areas[i]);
 }
 
-void 
-show_page(Page * p)
+void show_page(Page * p)
 {
-	int             i;
+	int i;
 	for (i = 0; p->areas && p->areas[i]; i++)
 		show_area(p->areas[i]);
 }
 
-Layout         *
-get_layout(char *name)
+Layout *get_layout(char *name)
 {
-	int             i = 0;
-	size_t          len;
+	int i = 0;
+	size_t len;
 	if (!name)
 		return 0;
 	len = strlen(name);
@@ -183,76 +175,75 @@ get_layout(char *name)
 	return 0;
 }
 
-static void 
-handle_after_write_page(IXPServer * s, File * f)
+static void handle_after_write_page(IXPServer * s, File * f)
 {
-	int             i;
+	int i;
 
 	for (i = 0; pages && pages[i]; i++) {
-		Page           *p = pages[i];
+		Page *p = pages[i];
 		if (p->files[P_CTL] == f) {
 			run_action(f, p, page_acttbl);
 			return;
 		}
 		/*
-		else if (p->files[P_MANAGED_SIZE] == f) {
-			/ resize stuff /
-			blitz_strtorect(dpy, &rect, &p->managed_rect,
-					p->files[P_MANAGED_SIZE]->content);
-			if (!p->managed_rect.width)
-				p->managed_rect.width = 10;
-			if (!p->managed_rect.height)
-				p->managed_rect.height = 10;
-			if (p->layout)
-				p->layout->arrange(p);
-			draw_page(p);
-			return;
-		} else if (p->files[P_MANAGED_LAYOUT] == f) {
-			int             had_valid_layout = p->layout ? 1 : 0;
-			if (p->layout)
-				p->layout->deinit(p);
-			p->layout = get_layout(p->files[P_MANAGED_LAYOUT]->content);
-			if (p->layout) {
-				p->layout->init(p);
-				p->layout->arrange(p);
-				if (!had_valid_layout) {
-					int             j;
-					Frame         **tmp = 0;
-					for (j = 0; p->floating && p->floating[j]; j++) {
-						if (!p->floating[j]->floating)
-							tmp =
-								(Frame **) attach_item_begin((void **) tmp,
-									 p->
-								floating[j],
-								sizeof(Frame
-								       *));
-					}
-					for (j = 0; tmp && tmp[j]; j++)
-						toggle_frame(tmp[j]);
-					free(tmp);
-				}
-			}
-			if (!p->layout) {
-				/ make all managed clients floating /
-				int             j;
-				Frame         **tmp = 0;
-				while (p->managed) {
-					tmp = (Frame **) attach_item_begin((void **) tmp,
-							      p->managed[0],
-							   sizeof(Frame *));
-					detach_frame_from_page(p->managed[0], 1);
-				}
-				for (j = 0; tmp && tmp[j]; j++) {
-					attach_Frameo_page(p, tmp[j], 0);
-					resize_frame(tmp[j], rect_of_frame(tmp[j]), 0, 1);
-				}
-				free(tmp);
-			}
-			draw_page(p);
-			invoke_core_event(core_files[CORE_EVENT_PAGE_UPDATE]);
-			return;
-		}
-*/
+		   else if (p->files[P_MANAGED_SIZE] == f) {
+		   / resize stuff /
+		   blitz_strtorect(dpy, &rect, &p->managed_rect,
+		   p->files[P_MANAGED_SIZE]->content);
+		   if (!p->managed_rect.width)
+		   p->managed_rect.width = 10;
+		   if (!p->managed_rect.height)
+		   p->managed_rect.height = 10;
+		   if (p->layout)
+		   p->layout->arrange(p);
+		   draw_page(p);
+		   return;
+		   } else if (p->files[P_MANAGED_LAYOUT] == f) {
+		   int             had_valid_layout = p->layout ? 1 : 0;
+		   if (p->layout)
+		   p->layout->deinit(p);
+		   p->layout = get_layout(p->files[P_MANAGED_LAYOUT]->content);
+		   if (p->layout) {
+		   p->layout->init(p);
+		   p->layout->arrange(p);
+		   if (!had_valid_layout) {
+		   int             j;
+		   Frame         **tmp = 0;
+		   for (j = 0; p->floating && p->floating[j]; j++) {
+		   if (!p->floating[j]->floating)
+		   tmp =
+		   (Frame **) attach_item_begin((void **) tmp,
+		   p->
+		   floating[j],
+		   sizeof(Frame
+		   *));
+		   }
+		   for (j = 0; tmp && tmp[j]; j++)
+		   toggle_frame(tmp[j]);
+		   free(tmp);
+		   }
+		   }
+		   if (!p->layout) {
+		   / make all managed clients floating /
+		   int             j;
+		   Frame         **tmp = 0;
+		   while (p->managed) {
+		   tmp = (Frame **) attach_item_begin((void **) tmp,
+		   p->managed[0],
+		   sizeof(Frame *));
+		   detach_frame_from_page(p->managed[0], 1);
+		   }
+		   for (j = 0; tmp && tmp[j]; j++) {
+		   attach_Frameo_page(p, tmp[j], 0);
+		   resize_frame(tmp[j], rect_of_frame(tmp[j]), 0, 1);
+		   }
+		   free(tmp);
+		   }
+		   draw_page(p);
+		   invoke_core_event(core_files[CORE_EVENT_PAGE_UPDATE]);
+		   return;
+		   }
+		 */
 	}
 }
 

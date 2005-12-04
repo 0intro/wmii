@@ -10,35 +10,33 @@
 #include "ixp.h"
 
 static IXPClient *c;
-static int      exit_code = 0;
+static int exit_code = 0;
 
-static char    *version[] = {
+static char *version[] = {
 	"wmir - window manager improved remote - " VERSION "\n"
-	" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
+		" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
-static void
-usage()
+static void usage()
 {
 	fprintf(stderr, "%s",
-	 "usage: wmir [-s <socket file>] [-v] <action> <action_arg> [...]\n"
-		"      -s    socket file (default: $WMIR_SOCKET)\n"
-		"      -f    read actions from stdin\n"
-		"      -v    version info\n"
-		"actions:\n"
-		"      create <file> [<content>] -- creates and optionally writes content to a file\n"
-	     "      write  <file> <content>   -- writes content to a file\n"
-		"      read   <directory/file>   -- reads file or directory contents\n"
-		"      remove <directory/file>   -- removes file or directory, use with care!\n");
+			"usage: wmir [-s <socket file>] [-v] <action> <action_arg> [...]\n"
+			"      -s    socket file (default: $WMIR_SOCKET)\n"
+			"      -f    read actions from stdin\n"
+			"      -v    version info\n"
+			"actions:\n"
+			"      create <file> [<content>] -- creates and optionally writes content to a file\n"
+			"      write  <file> <content>   -- writes content to a file\n"
+			"      read   <directory/file>   -- reads file or directory contents\n"
+			"      remove <directory/file>   -- removes file or directory, use with care!\n");
 	exit(1);
 }
 
-static void
-perform(char *action, char *file, char *content)
+static void perform(char *action, char *file, char *content)
 {
-	size_t          out_len = 0;
-	char            output[2050];
-	int             crt, fd = -1;
+	size_t out_len = 0;
+	char output[2050];
+	int crt, fd = -1;
 
 	if (!action)
 		return;
@@ -52,7 +50,7 @@ perform(char *action, char *file, char *content)
 			c->create(c, file);
 			if (c->errstr) {
 				fprintf(stderr, "wmir: error: create %s: %s\n", file,
-					c->errstr);
+						c->errstr);
 				exit_code = 1;
 				return;
 			}
@@ -68,7 +66,7 @@ perform(char *action, char *file, char *content)
 		c->write(c, fd, content, strlen(content));
 		if (c->errstr) {
 			fprintf(stderr, "wmir: error: write %s: %s\n", file,
-				c->errstr);
+					c->errstr);
 			exit_code = 1;
 			if (!strncmp(c->errstr, DEAD_SERVER, strlen(DEAD_SERVER) + 1))
 				return;
@@ -86,10 +84,10 @@ perform(char *action, char *file, char *content)
 			out_len = c->read(c, fd, output, 2048);
 			if (c->errstr) {
 				fprintf(stderr, "wmir: error: read %s: %s\n", file,
-					c->errstr);
+						c->errstr);
 				exit_code = 1;
 				if (!strncmp
-				    (c->errstr, DEAD_SERVER, strlen(DEAD_SERVER) + 1))
+					(c->errstr, DEAD_SERVER, strlen(DEAD_SERVER) + 1))
 					return;
 				break;
 			}
@@ -104,7 +102,7 @@ perform(char *action, char *file, char *content)
 		c->remove(c, file);
 		if (c->errstr) {
 			fprintf(stderr, "wmir: error: remove %s: %s\n", file,
-				c->errstr);
+					c->errstr);
 			exit_code = 1;
 			return;
 		}
@@ -113,19 +111,18 @@ perform(char *action, char *file, char *content)
 		c->close(c, fd);
 		if (c->errstr) {
 			fprintf(stderr, "wmir: error: close %s: %s\n", file,
-				c->errstr);
+					c->errstr);
 			exit_code = 1;
 			return;
 		}
 	}
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-	int             i = 0, read_stdin = 0;
-	char            line[4096], *p;
-	char           *sockfile = getenv("WMIR_SOCKET");
+	int i = 0, read_stdin = 0;
+	char line[4096], *p;
+	char *sockfile = getenv("WMIR_SOCKET");
 
 	/* command line args */
 	if (argc > 1) {
@@ -160,7 +157,7 @@ main(int argc, char *argv[])
 	}
 	if (!sockfile) {
 		fprintf(stderr, "%s",
-			"wmir: error: WMIR_SOCKET environment not set\n");
+				"wmir: error: WMIR_SOCKET environment not set\n");
 		usage();
 	}
 	/* open socket */
@@ -170,29 +167,29 @@ main(int argc, char *argv[])
 	}
 	if (read_stdin) {
 		/* simple shell */
-		char           *action, *file, *content;
+		char *action, *file, *content;
 		while (fgets(line, 4096, stdin)) {
 			p = line;
 			while (*p != '\0' && (*p == ' ' || *p == '\t'))
 				p++;
 			if (*p == '\0')
-				continue;	/* empty line */
+				continue;		/* empty line */
 			if (strncmp(p, "create ", 7) &&
-			    strncmp(p, "write ", 6) &&
-			 strncmp(p, "read ", 5) && strncmp(p, "remove ", 7))
+				strncmp(p, "write ", 6) &&
+				strncmp(p, "read ", 5) && strncmp(p, "remove ", 7))
 				continue;
 
 			action = p;
 			while (*p != '\0' && *p != ' ' && *p != '\t' && *p != '\n')
 				p++;
 			if (*p == '\0' || *p == '\n')
-				continue;	/* ignore bogus command */
+				continue;		/* ignore bogus command */
 			*p = '\0';
 			p++;
 			while (*p != '\0' && (*p == ' ' || *p == '\t'))
 				p++;
 			if (*p == '\0')
-				continue;	/* ignore bogus command */
+				continue;		/* ignore bogus command */
 			file = p;
 			while (*p != '\0' && *p != ' ' && *p != '\t' && *p != '\n')
 				p++;
@@ -207,14 +204,14 @@ main(int argc, char *argv[])
 			if (file[0] == '\0')
 				continue;
 			if (content) {
-				static size_t   len;
+				static size_t len;
 				if ((len = strlen(content)))
 					content[len - 1] = '\0';
 			}
 			perform(action, file, content);
 			if (c->errstr)
 				fprintf(stderr, "wmir: error: read %s: %s\n", file,
-					c->errstr);
+						c->errstr);
 		}
 	} else {
 		perform(argv[i], argv[i + 1], (i + 2) < argc ? argv[i + 2] : 0);

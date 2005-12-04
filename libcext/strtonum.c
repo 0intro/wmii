@@ -25,25 +25,20 @@
 
 long long
 __strtonum(const char *numstr, long long minval, long long maxval,
-	   const char **errstrp)
+		   const char **errstrp)
 {
-	long long       ll = 0;
-	char           *ep;
-	int             error = 0;
+	long long ll = 0;
+	char *ep;
+	int error = 0;
 	struct errval {
-		const char     *errstr;
-		int             err;
-	}               ev[4] = {
+		const char *errstr;
+		int err;
+	} ev[4] = {
 		{
-			NULL, 0
-		}, {
-			"invalid", EINVAL
-		}, {
-			"too small", ERANGE
-		}, {
-			"too large", ERANGE
-		},
-	};
+		NULL, 0}, {
+		"invalid", EINVAL}, {
+		"too small", ERANGE}, {
+	"too large", ERANGE},};
 
 	ev[0].err = errno;
 	errno = 0;
