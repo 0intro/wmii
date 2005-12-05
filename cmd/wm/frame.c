@@ -557,7 +557,7 @@ static void handle_after_write_frame(IXPServer * s, File * f)
 			char *size = frames[i]->files[F_SIZE]->content;
 			if (size && strrchr(size, ',')) {
 				XRectangle frect;
-				blitz_strtorect(dpy, &rect, &frect, size);
+				blitz_strtorect(&rect, &frect, size);
 				resize_frame(frames[i], &frect, 0, 0);
 				draw_page(frames[i]->area->page);
 			}

@@ -361,7 +361,7 @@ static void check_event(Connection * e)
 
 static void update_geometry(char *size)
 {
-	blitz_strtorect(dpy, &rect, &brect, size);
+	blitz_strtorect(&rect, &brect, size);
 	if (!brect.width)
 		brect.width = DisplayWidth(dpy, screen_num);
 	if (!brect.height)

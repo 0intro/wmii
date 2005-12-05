@@ -41,9 +41,7 @@ void blitz_drawmeter(Display * dpy, Draw * r);
 void blitz_drawlabelnoborder(Display * dpy, Draw * r);
 
 /* geometry.c */
-int
-blitz_strtorect(Display * dpy, XRectangle * root, XRectangle * r,
-				char *val);
+int blitz_strtorect(XRectangle * root, XRectangle * r, char *val);
 int blitz_ispointinrect(int x, int y, XRectangle * r);
 int blitz_distance(XRectangle * origin, XRectangle * target);
 void

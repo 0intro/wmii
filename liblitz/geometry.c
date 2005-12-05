@@ -46,9 +46,7 @@ static int strtoalign(Align * result, char *val)
  * Each component can be of following format:
  * <...> = [+|-]0..n|<alignment>[[+|-]0..n]
  */
-int
-blitz_strtorect(Display * dpy, XRectangle * root, XRectangle * r,
-				char *val)
+int blitz_strtorect(XRectangle * root, XRectangle * r, char *val)
 {
 	char buf[64];
 	char *x, *y, *w, *h;

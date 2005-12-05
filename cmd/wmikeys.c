@@ -375,7 +375,7 @@ static void handle_after_write(IXPServer * s, File * f)
 	} else if (files[K_SIZE] == f) {
 		char *size = files[K_SIZE]->content;
 		if (size && strrchr(size, ','))
-			blitz_strtorect(dpy, &rect, &krect, size);
+			blitz_strtorect(&rect, &krect, size);
 	} else if (f == files[K_GRAB_KB]) {
 		grabkb = _strtonum(files[K_GRAB_KB]->content, 0, 1);
 		if (!grabkb) {
@@ -443,7 +443,7 @@ static void run(char *size)
 	rect.height = DisplayHeight(dpy, screen_num);
 	krect.x = krect.y = -1;
 	krect.width = krect.height = 0;
-	blitz_strtorect(dpy, &rect, &krect, size);
+	blitz_strtorect(&rect, &krect, size);
 	/* default is center position */
 	if (!krect.width) {
 		krect.width = 200;

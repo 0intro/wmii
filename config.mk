@@ -17,7 +17,7 @@ LIBS = -L${LIBDIR} -L/usr/lib -lc -lm -L${X11LIB} -lX11
 VERSION = 3-current
 
 # flags
-CFLAGS = -O0 -g -Wall ${INCLUDES} -DVERSION=\"${VERSION}\"
+CFLAGS = -O0 -g -Wall -W ${INCLUDES} -DVERSION=\"${VERSION}\"
 LDFLAGS = -g ${LIBS}
 
 # compiler

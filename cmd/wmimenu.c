@@ -564,7 +564,7 @@ static void handle_after_write(IXPServer * s, File * f)
 	} else if (files[M_SIZE] == f) {
 		char *size = files[M_SIZE]->content;
 		if (size && strrchr(size, ',')) {
-			blitz_strtorect(dpy, &rect, &mrect, size);
+			blitz_strtorect(&rect, &mrect, size);
 			XFreePixmap(dpy, pmap);
 			XMoveResizeWindow(dpy, win, mrect.x, mrect.y,
 							  mrect.width, mrect.height);
@@ -644,7 +644,7 @@ static void run(char *size)
 	rect.x = rect.y = 0;
 	rect.width = DisplayWidth(dpy, screen_num);
 	rect.height = DisplayHeight(dpy, screen_num);
-	blitz_strtorect(dpy, &rect, &mrect, size);
+	blitz_strtorect(&rect, &mrect, size);
 	if (!mrect.width)
 		mrect.width = DisplayWidth(dpy, screen_num);
 	if (!mrect.height)
