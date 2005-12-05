@@ -121,11 +121,7 @@ static void init_col(Area * a)
 		j = 0;
 		for (i = 0; i < (cols - 1); i++) {
 			col = acme->column[i];
-			col->frame =
-				(Frame **) attach_item_end((void **) col->frame,
-										   alloc_frame(&client[i]->rect,
-													   1, 1),
-										   sizeof(Frame *));
+			col->frame = (Frame **) attach_item_end((void **) col->frame, alloc_frame(&client[i]->rect, 1, 1), sizeof(Frame *));
 			col->frame[0]->aux = col;
 			attach_frame_to_area(a, col->frame[0]);
 			attach_client_to_frame(col->frame[0], client[j]);
@@ -145,11 +141,7 @@ static void init_col(Area * a)
 		j = 0;
 		for (i = cols - 1; j < n; i--) {
 			col = acme->column[i];
-			col->frame =
-				(Frame **) attach_item_end((void **) col->frame,
-										   alloc_frame(&client[i]->rect,
-													   1, 1),
-										   sizeof(Frame *));
+			col->frame = (Frame **) attach_item_end((void **) col->frame, alloc_frame(&client[i]->rect, 1, 1), sizeof(Frame *));
 			col->frame[0]->aux = col;
 			attach_frame_to_area(a, col->frame[0]);
 			attach_client_to_frame(col->frame[0], client[j]);
@@ -189,8 +181,7 @@ static void attach_col(Area * a, Client * c)
 
 	col = acme->column[acme->sel];
 	f = alloc_frame(&c->rect, 1, 1);
-	col->frame = (Frame **) attach_item_end((void **) col->frame, f,
-											 sizeof(Frame *));
+	col->frame = (Frame **) attach_item_end((void **) col->frame, f, sizeof(Frame *));
 	f->aux = col;
 	col->refresh = 1;
 	attach_frame_to_area(a, f);
@@ -207,8 +198,7 @@ static void detach_col(Area * a, Client * c, int unmapped, int destroyed)
 	if (!col)
 		return;					/* client was not attached, maybe exit(1) in
 								 * such case */
-	col->frame = (Frame **) detach_item((void **) col->frame, c->frame,
-										 sizeof(Frame *));
+	col->frame = (Frame **) detach_item((void **) col->frame, c->frame, sizeof(Frame *));
 	col->refresh = 1;
 	detach_client_from_frame(c, unmapped, destroyed);
 	detach_frame_from_area(f, 1);
