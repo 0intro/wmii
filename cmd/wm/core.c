@@ -70,35 +70,6 @@ void invoke_core_event(File * f)
 	spawn(dpy, f->content);
 }
 
-void focus_page(Page * p, int raise, int down)
-{
-	if (!pages)
-		return;
-	if (p != pages[sel]) {
-		hide_page(pages[sel]);
-		sel = index_item((void **) pages, p);
-		show_page(pages[sel]);
-		defaults[WM_SEL_PAGE]->content = p->files[P_PREFIX]->content;
-		invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
-	}
-	if (down)
-		focus_area(p->areas[p->sel], raise, 0, down);
-}
-
-unsigned int tab_height(Frame * f)
-{
-	if (_strtonum(f->files[F_TAB]->content, 0, 1))
-		return font->ascent + font->descent + 4;
-	return 0;
-}
-
-unsigned int border_width(Frame * f)
-{
-	if (_strtonum(f->files[F_BORDER]->content, 0, 1))
-		return BORDER_WIDTH;
-	return 0;
-}
-
 static void
 scale_rect(XRectangle * from_dim, XRectangle * to_dim,
 		   XRectangle * src, XRectangle * tgt)
@@ -449,21 +420,6 @@ static void _select_page(void *obj, char *cmd)
 	else
 		sel = _strtonum(cmd, 0, count_items((void **) pages));
 	focus_page(pages[sel], 0, 1);
-}
-
-void destroy_page(Page * p)
-{
-	unsigned int i;
-	for (i = 0; p->areas[i]; i++)
-		destroy_area(p->areas[i]);
-	free_page(p);
-	if (pages) {
-		show_page(pages[sel]);
-		defaults[WM_SEL_PAGE]->content =
-			pages[sel]->files[P_PREFIX]->content;
-		focus_page(pages[sel], 0, 1);
-		invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
-	}
 }
 
 static void _destroy_page(void *obj, char *cmd)

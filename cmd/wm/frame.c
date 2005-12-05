@@ -166,22 +166,18 @@ void destroy_frame(Frame * f)
 	free(f);
 }
 
-void focus_client(Client * c, int raise, int up)
+unsigned int tab_height(Frame * f)
 {
-	Frame *f = 0;
-	/* focus client */
-	if (c) {
-		f = c->frame;
-		for (f->sel = 0; f->clients && f->clients[f->sel] != c; f->sel++);
-		f->files[F_SEL_CLIENT]->content = c->files[C_PREFIX]->content;
-		if (raise)
-			XRaiseWindow(dpy, c->win);
-		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-	} else
-		XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
-	invoke_core_event(defaults[WM_EVENT_CLIENT_UPDATE]);
-	if (up && f)
-		focus_frame(f, raise, up, 0);
+	if (_strtonum(f->files[F_TAB]->content, 0, 1))
+		return font->ascent + font->descent + 4;
+	return 0;
+}
+
+unsigned int border_width(Frame * f)
+{
+	if (_strtonum(f->files[F_BORDER]->content, 0, 1))
+		return BORDER_WIDTH;
+	return 0;
 }
 
 static void resize_clients(Frame * f, int tabh, int bw)

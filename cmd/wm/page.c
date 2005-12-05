@@ -48,6 +48,21 @@ Page *alloc_page(char *autodestroy)
 	return p;
 }
 
+void destroy_page(Page * p)
+{
+	unsigned int i;
+	for (i = 0; p->areas[i]; i++)
+		destroy_area(p->areas[i]);
+	free_page(p);
+	if (pages) {
+		show_page(pages[sel]);
+		defaults[WM_SEL_PAGE]->content =
+			pages[sel]->files[P_PREFIX]->content;
+		focus_page(pages[sel], 0, 1);
+		invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
+	}
+}
+
 void free_page(Page * p)
 {
 	pages = (Page **) detach_item((void **) pages, p, sizeof(Page *));
@@ -62,6 +77,21 @@ void free_page(Page * p)
 	if (ixps->errstr)
 		fprintf(stderr, "wmiiwm: free_page(): %s\n", ixps->errstr);
 	free(p);
+}
+
+void focus_page(Page * p, int raise, int down)
+{
+	if (!pages)
+		return;
+	if (p != pages[sel]) {
+		hide_page(pages[sel]);
+		sel = index_item((void **) pages, p);
+		show_page(pages[sel]);
+		defaults[WM_SEL_PAGE]->content = p->files[P_PREFIX]->content;
+		invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
+	}
+	if (down)
+		focus_area(p->areas[p->sel], raise, 0, down);
 }
 
 void draw_page(Page * p)

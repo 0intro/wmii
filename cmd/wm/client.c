@@ -48,6 +48,24 @@ Client *alloc_client(Window w)
 	return c;
 }
 
+void focus_client(Client * c, int raise, int up)
+{
+	Frame *f = 0;
+	/* focus client */
+	if (c) {
+		f = c->frame;
+		for (f->sel = 0; f->clients && f->clients[f->sel] != c; f->sel++);
+		f->files[F_SEL_CLIENT]->content = c->files[C_PREFIX]->content;
+		if (raise)
+			XRaiseWindow(dpy, c->win);
+		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
+	} else
+		XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+	invoke_core_event(defaults[WM_EVENT_CLIENT_UPDATE]);
+	if (up && f)
+		focus_frame(f, raise, up, 0);
+}
+
 void set_client_state(Client * c, int state)
 {
 	long data[2];

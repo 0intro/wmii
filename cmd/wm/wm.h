@@ -211,6 +211,7 @@ unsigned int valid_mask, num_lock_mask;
 Area *alloc_area(Page *p, XRectangle * r);
 void destroy_area(Area * a);
 void free_area(Area * a);
+void focus_area(Area * a, int raise, int up, int down);
 void attach_frame_to_area(Area * a, Frame * f);
 void detach_frame_from_area(Frame * f, int ignore_focus_and_destroy);
 void draw_area(Area * a);
@@ -233,10 +234,9 @@ void ungrab_client(Client * c, unsigned long mod, unsigned int button);
 void hide_client(Client * c);
 void show_client(Client * c);
 void reparent_client(Client * c, Window w, int x, int y);
+void focus_client(Client * c, int raise, int up);
 
 /* core.c */
-unsigned int tab_height(Frame * f);
-unsigned int border_width(Frame * f);
 void invoke_core_event(File * f);
 void run_action(File * f, void *obj, Action * acttbl);
 void scan_wins();
@@ -244,9 +244,7 @@ Client *win_to_client(Window w);
 int win_proto(Window w);
 int win_state(Window w);
 void handle_after_write(IXPServer * s, File * f);
-void focus_page(Page * p, int raise, int down);
 void detach(Frame * f, int client_destroyed);
-void destroy_page(Page * p);
 void set_client_state(Client * c, int state);
 
 /* frame.c */
@@ -254,15 +252,15 @@ void focus_frame(Frame * f, int raise, int up, int down);
 Frame *win_to_frame(Window w);
 Frame *alloc_frame(XRectangle * r, int add_frame_border, int floating);
 void destroy_frame(Frame * f);
-void resize_frame(Frame * f, XRectangle * r, XPoint * pt,
-				  int ignore_layout);
+void resize_frame(Frame * f, XRectangle * r, XPoint * pt, int ignore_layout);
 void draw_frame(Frame * f);
 void handle_frame_buttonpress(XButtonEvent * e, Frame * f);
 void attach_client(Client * c);
 void attach_client_to_frame(Frame * f, Client * c);
 void detach_client_from_frame(Client * c, int unmapped, int destroyed);
 void draw_tab(Frame * f, char *text, int x, int y, int w, int h, int sel);
-void focus_client(Client * c, int raise, int up);
+unsigned int tab_height(Frame * f);
+unsigned int border_width(Frame * f);
 
 /* event.c */
 void init_event_hander();
@@ -279,13 +277,13 @@ void drop_move(Frame * f, XRectangle * new, XPoint * pt);
 /* page.c */
 Page *alloc_page(char *autodestroy);
 void free_page(Page * p);
-void focus_area(Area * a, int raise, int up, int down);
+void destroy_page(Page * p);
+void focus_page(Page * p, int raise, int down);
 XRectangle *rectangles(unsigned int *num);
 void hide_page(Page * p);
 void show_page(Page * p);
 void draw_page(Page * p);
 Layout *get_layout(char *name);
-Frame *select_floating(Page * p, Frame * f, char *what);
 
 /* layout.c */
 void init_layouts();
