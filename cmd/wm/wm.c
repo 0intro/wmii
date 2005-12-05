@@ -593,8 +593,8 @@ static void init_default()
 	def[WM_LOCKED] = wmii_create_ixpfile(ixps, "/default/locked", "1");
 	def[WM_LAYOUT] = wmii_create_ixpfile(ixps, "/default/layout", LAYOUT);
 	def[WM_SEL_PAGE] = ixp_create(ixps, "/sel");
-	def[WM_EVENT_PAGE_UPDATE] = ixp_create(ixps, "/default/event/pageupdate");
-	def[WM_EVENT_CLIENT_UPDATE] = ixp_create(ixps, "/default/event/clientupdate");
+	def[WM_EVENT_PAGE_UPDATE] = ixp_create(ixps, "/event/pageupdate");
+	def[WM_EVENT_CLIENT_UPDATE] = ixp_create(ixps, "/event/clientupdate");
 	def[WM_EVENT_B1PRESS] = ixp_create(ixps, "/default/event/b1press");
 	def[WM_EVENT_B2PRESS] = ixp_create(ixps, "/default/event/b2press");
 	def[WM_EVENT_B3PRESS] = ixp_create(ixps, "/default/event/b3press");
