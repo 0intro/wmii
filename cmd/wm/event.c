@@ -20,7 +20,6 @@ static void handle_motionnotify(XEvent * e);
 static void handle_propertynotify(XEvent * e);
 static void handle_unmapnotify(XEvent * e);
 static void handle_enternotify(XEvent * e);
-static void update_ignore_enternotify_hack(XEvent * e);
 
 static unsigned int ignore_enternotify_hack = 0;
 
@@ -34,14 +33,11 @@ void init_event_hander()
 		handler[i] = 0;
 	}
 	handler[ButtonPress] = handle_buttonpress;
-	handler[CirculateNotify] = update_ignore_enternotify_hack;
 	handler[ConfigureRequest] = handle_configurerequest;
 	handler[DestroyNotify] = handle_destroynotify;
 	handler[EnterNotify] = handle_enternotify;
 	handler[Expose] = handle_expose;
-	handler[GravityNotify] = update_ignore_enternotify_hack;
 	handler[MapRequest] = handle_maprequest;
-	handler[MapNotify] = update_ignore_enternotify_hack;
 	handler[MotionNotify] = handle_motionnotify;
 	handler[PropertyNotify] = handle_propertynotify;
 	handler[UnmapNotify] = handle_unmapnotify;
@@ -108,7 +104,6 @@ static void handle_configurerequest(XEvent * e)
 	unsigned int bw = 0, tabh = 0;
 	Frame *f = 0;
 
-	update_ignore_enternotify_hack(e);
 	/* fprintf(stderr, "%s",  "configure request\n"); */
 	c = win_to_client(ev->window);
 	ev->value_mask &= ~CWSibling;
@@ -184,14 +179,10 @@ static void handle_destroynotify(XEvent * e)
 	XDestroyWindowEvent *ev = &e->xdestroywindow;
 	Client *c = win_to_client(ev->window);
 	/* fprintf(stderr, "destroy: client 0x%x\n", (int)ev->window); */
-	if (!c)
-		return;
-	if (c->frame)
-		detach_client_from_frame(c, 0, 1);
-	else if (detached && (index_item((void **) detached, c) >= 0))
-		detached = (Client **) detach_item((void **) detached, c,
-										   sizeof(Client *));
-	destroy_client(c);
+	if (c) {
+		c->destroyed = True;
+		detach_client(c);
+	}
 }
 
 static void handle_expose(XEvent * e)
@@ -232,13 +223,12 @@ static void handle_motionnotify(XEvent * e)
 	if (f) {
 		Frame *old = SELFRAME(page[sel]);
 		if (old != f) {
-			sel_frame(f, 0, 0, 1);
+			sel_frame(f, 1);
 			draw_frame(old);
 			draw_frame(f);
 		} else if (f->client) {
 			/* multihead assumption */
-			XSetInputFocus(dpy, f->client[f->sel]->win,
-						   RevertToPointerRoot, CurrentTime);
+			XSetInputFocus(dpy, f->client[f->sel]->win, RevertToPointerRoot, CurrentTime);
 			XSync(dpy, False);
 		}
 		cursor = cursor_for_motion(f, e->xmotion.x, e->xmotion.y);
@@ -265,20 +255,10 @@ static void handle_unmapnotify(XEvent * e)
 	XUnmapEvent *ev = &e->xunmap;
 	Client *c;
 
-	update_ignore_enternotify_hack(e);
 	if (ev->event == root)
 		return;
-	if ((c = win_to_client(ev->window))) {
-		if (c->frame) {
-			detach_client_from_frame(c, 1, 0);
-			if (page)
-				draw_page(page[sel]);
-			destroy_client(c);
-		} else if (detached) {
-			if (index_item((void **) detached, c) == -1)
-				destroy_client(c);
-		}
-	}
+	if ((c = win_to_client(ev->window)))
+		detach_client(c);
 }
 
 static void handle_enternotify(XEvent * e)
@@ -298,7 +278,7 @@ static void handle_enternotify(XEvent * e)
 		Frame *old = SELFRAME(page[sel]);
 		XUndefineCursor(dpy, c->frame->win);
 		if (old != c->frame) {
-			sel_frame(c->frame, 0, 0, 1);
+			sel_frame(c->frame, 1);
 			draw_frame(old);
 			draw_frame(c->frame);
 		} else {
@@ -307,10 +287,4 @@ static void handle_enternotify(XEvent * e)
 			XSync(dpy, False);
 		}
 	}
-}
-
-static void update_ignore_enternotify_hack(XEvent * e)
-{
-	ignore_enternotify_hack = e->xany.serial;
-	XSync(dpy, False);
 }

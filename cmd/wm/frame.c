@@ -105,17 +105,14 @@ Frame *alloc_frame(XRectangle * r)
 	return f;
 }
 
-void sel_frame(Frame * f, int raise, int up, int down)
+void sel_frame(Frame * f, int raise)
 {
 	Area *a = f->area;
-	if (down && f->client)
-		sel_client(f->client[f->sel], raise, 0);
+	sel_client(f->client[f->sel]);
 	a->sel = index_item((void **) a->frame, f);
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
-	if (raise && a->page->sel == 0)	/* only floating windows are raised */
+	if (raise)
 		XRaiseWindow(dpy, f->win);
-	if (up)
-		sel_area(a, raise, up, 0);
 }
 
 Frame *win_to_frame(Window w)
@@ -328,7 +325,7 @@ void handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 	if (!f->area->page->sel)
 		XRaiseWindow(dpy, f->win);
 	if (cindex != f->sel) {
-		sel_client(f->client[cindex], 1, 0);
+		sel_client(f->client[cindex]);
 		draw_frame(f);
 		return;
 	}
@@ -353,39 +350,30 @@ void attach_client_to_frame(Frame * f, Client * c)
 	reparent_client(c, f->win, border_width(f), tab_height(f));
 	resize_frame(f, &f->rect, 0, 1);
 	show_client(c);
-	sel_client(c, 1, 1);
+	sel_client(c);
 }
 
-void detach_client_from_frame(Client * c, int unmapped, int destroyed)
+void detach_client_from_frame(Client * c)
 {
 	Frame *f = c->frame;
 	wmii_move_ixpfile(c->file[C_PREFIX], def[WM_DETACHED_CLIENT]);
 	c->frame = 0;
-	f->client =
-		(Client **) detach_item((void **) f->client, c, sizeof(Client *));
+	f->client = (Client **) detach_item((void **) f->client, c, sizeof(Client *));
 	if (f->sel)
 		f->sel--;
 	else
 		f->sel = 0;
-	if (!destroyed) {
-		if (!unmapped) {
+	if (!c->destroyed) {
+		if (f) {
 			hide_client(c);
-			detached =
-				(Client **) attach_item_begin((void **) detached, c,
-											  sizeof(Client *));
+			detached = (Client **) attach_item_begin((void **) detached, c, sizeof(Client *));
 		}
 		reparent_client(c, root, border_width(f), tab_height(f));
 	}
 	if (f->client) {
-		sel_client(f->client[f->sel], 1, 1);
+		sel_client(f->client[f->sel]);
 		draw_frame(f);
-	} else {
-		detach_frame_from_area(f, 0);
-		destroy_frame(f);
-		if (page)
-			sel_page(page[sel], 0, 1);
 	}
-	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
 static void mouse()
@@ -421,7 +409,7 @@ static void select_client(void *obj, char *cmd)
 		else
 			f->sel++;
 	}
-	sel_client(f->client[f->sel], 1, 0);
+	sel_client(f->client[f->sel]);
 	draw_frame(f);
 }
 

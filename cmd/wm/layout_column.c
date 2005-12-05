@@ -31,7 +31,7 @@ static void init_col(Area * a);
 static void deinit_col(Area * a);
 static void arrange_col(Area * a);
 static void attach_col(Area * a, Client * c);
-static void detach_col(Area * a, Client * c, int unmapped, int destroyed);
+static void detach_col(Area * a, Client * c);
 static void resize_col(Frame * f, XRectangle * new, XPoint * pt);
 
 static Layout lcol = { "col", init_col, deinit_col, arrange_col, attach_col, detach_col, resize_col };
@@ -162,7 +162,7 @@ static void deinit_col(Area * a)
 		for (j = 0; col->frame && col->frame[j]; j++) {
 			Frame *f = col->frame[j];
 			while (f->client && f->client[0])
-				detach_client_from_frame(f->client[0], 0, 0);
+				detach_client_from_frame(f->client[0]);
 			detach_frame_from_area(f, 1);
 			destroy_frame(f);
 		}
@@ -190,7 +190,7 @@ static void attach_col(Area * a, Client * c)
 	arrange_col(a);
 }
 
-static void detach_col(Area * a, Client * c, int unmapped, int destroyed)
+static void detach_col(Area * a, Client * c)
 {
 	Frame *f = c->frame;
 	Column *col = f->aux;
@@ -200,7 +200,7 @@ static void detach_col(Area * a, Client * c, int unmapped, int destroyed)
 								 * such case */
 	col->frame = (Frame **) detach_item((void **) col->frame, c->frame, sizeof(Frame *));
 	col->refresh = 1;
-	detach_client_from_frame(c, unmapped, destroyed);
+	detach_client_from_frame(c);
 	detach_frame_from_area(f, 1);
 	destroy_frame(f);
 
@@ -348,8 +348,7 @@ static void _drop_move(Frame * f, XRectangle * new, XPoint * pt)
 		}
 	} else {
 		/* detach, attach and change order in target column */
-		src->frame = (Frame **) detach_item((void **) src->frame,
-											 f, sizeof(Frame *));
+		src->frame = (Frame **) detach_item((void **) src->frame, f, sizeof(Frame *));
 		tgt->frame =
 			(Frame **) attach_item_end((void **) tgt->frame, f,
 									   sizeof(Frame *));

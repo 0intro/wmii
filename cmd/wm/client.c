@@ -34,22 +34,16 @@ Client *alloc_client(Window w)
 	return c;
 }
 
-void sel_client(Client * c, int raise, int up)
+void sel_client(Client * c)
 {
 	Frame *f = 0;
 	/* sel client */
-	if (c) {
-		f = c->frame;
-		for (f->sel = 0; f->client && f->client[f->sel] != c; f->sel++);
-		f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
-		if (raise)
-			XRaiseWindow(dpy, c->win);
-		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-	} else
-		XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+	f = c->frame;
+	for (f->sel = 0; f->client && f->client[f->sel] != c; f->sel++);
+	f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
+	XRaiseWindow(dpy, c->win);
+	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
-	if (up && f)
-		sel_frame(f, raise, up, 0);
 }
 
 void set_client_state(Client * c, int state)
@@ -342,3 +336,13 @@ void attach_client(Client * c)
 	a->layout->attach(a, c);
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
+
+void detach_client(Client *c) {
+	if (c->frame)
+		c->frame->area->layout->detach(c->frame->area, c);
+	if (c->destroyed)
+		destroy_client(c);
+	if (page)
+		sel_page(page[sel]);
+}
+

@@ -254,7 +254,7 @@ static void pager(void *obj, char *cmd)
 			XUnmapWindow(dpy, transient);
 			if ((i = handle_kpress(&ev.xkey)) != -1)
 				if (i < count_items((void **) page))
-					sel_page(page[i], 0, 1);
+					sel_page(page[i]);
 			XUngrabKeyboard(dpy, CurrentTime);
 			return;
 			break;
@@ -263,7 +263,7 @@ static void pager(void *obj, char *cmd)
 			if (ev.xbutton.button == Button1) {
 				Page *p = xy_to_pager_page(ev.xbutton.x, ev.xbutton.y);
 				if (p)
-					sel_page(p, 0, 1);
+					sel_page(p);
 			}
 			return;
 			break;
@@ -390,7 +390,7 @@ static void _detach_client(void *obj, char *cmd)
 	f = SELFRAME(page[sel]);
 	if (!f)
 		return;
-	detach_client_from_frame(f->client[f->sel], 0, 0);
+	f->area->layout->detach(f->area, f->client[f->sel]);
 }
 
 static void _select_page(void *obj, char *cmd)
@@ -403,7 +403,7 @@ static void _select_page(void *obj, char *cmd)
 		sel = index_next_item((void **) page, page[sel]);
 	else
 		sel = _strtonum(cmd, 0, count_items((void **) page));
-	sel_page(page[sel], 0, 1);
+	sel_page(page[sel]);
 }
 
 static void _destroy_page(void *obj, char *cmd)

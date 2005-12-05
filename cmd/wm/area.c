@@ -51,18 +51,19 @@ void destroy_area(Area * a)
 	free(a);
 }
 
-void sel_area(Area * a, int raise, int up, int down)
+void sel_area(Area * a, int raise)
 {
 	Page *p = a->page;
-	if (!p)
-		return;
-
-	if (down && a->frame)
-		sel_frame(a->frame[a->sel], raise, 0, down);
+	if (raise && a->frame) {
+		int i;
+		for (i = 0; a->frame[i]; i++)
+			if (i != a->sel)
+				XRaiseWindow(dpy, a->frame[i]->win);
+	}
 	p->sel = index_item((void **) p->area, a);
 	p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
-	if (up)
-		sel_page(p, raise, 0);
+	if (a->frame)
+		sel_frame(a->frame[a->sel], raise);
 }
 
 void attach_frame_to_area(Area * a, Frame * f)
@@ -76,7 +77,13 @@ void attach_frame_to_area(Area * a, Frame * f)
 
 void detach_frame_from_area(Frame * f, int ignore_sel_and_destroy)
 {
-
+	Area *a = f->area;
+	a->frame = (Frame **) detach_item((void **) a->frame, f, sizeof(Frame *));
+	f->area = 0;
+	if (a->sel)
+		a->sel--;
+	else
+		a->sel = 0;
 }
 
 void draw_area(Area * a)

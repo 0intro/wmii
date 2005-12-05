@@ -16,7 +16,7 @@ static void init_float(Area * a);
 static void deinit_float(Area * a);
 static void arrange_float(Area * a);
 static void attach_float(Area * a, Client * c);
-static void detach_float(Area * a, Client * c, int unmapped, int destroyed);
+static void detach_float(Area * a, Client * c);
 static void resize_float(Frame * f, XRectangle * new, XPoint * pt);
 
 static Layout lfloat = { "float", init_float, deinit_float, arrange_float, attach_float, detach_float, resize_float };
@@ -55,8 +55,14 @@ static void attach_float(Area * a, Client * c)
 	draw_frame(f);
 }
 
-static void detach_float(Area * a, Client * c, int unmapped, int destroyed)
+static void detach_float(Area * a, Client * c)
 {
+	Frame *f = c->frame;
+	detach_client_from_frame(f->client[0]);
+	if (!f->client) {
+		detach_frame_from_area(f, 0);
+		destroy_frame(f);
+	}
 }
 
 static void resize_float(Frame * f, XRectangle * new, XPoint * pt)

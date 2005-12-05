@@ -55,8 +55,7 @@ void destroy_page(Page * p)
 	if (page) {
 		show_page(page[sel]);
 		def[WM_SEL_PAGE]->content = page[sel]->file[P_PREFIX]->content;
-		sel_page(page[sel], 0, 1);
-		invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+		sel_page(page[sel]);
 	}
 }
 
@@ -76,7 +75,7 @@ void free_page(Page * p)
 	free(p);
 }
 
-void sel_page(Page * p, int raise, int down)
+void sel_page(Page * p)
 {
 	if (!page)
 		return;
@@ -87,8 +86,7 @@ void sel_page(Page * p, int raise, int down)
 		def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
 	}
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
-	if (down)
-		sel_area(p->area[p->sel], raise, 0, down);
+	sel_area(p->area[p->sel], !p->sel);
 }
 
 void draw_page(Page * p)
@@ -166,7 +164,7 @@ static void select_frame(void *obj, char *cmd)
 		f = f->area->frame[i];
 	}
 	if (old != f) {
-		sel_frame(f, 1, 1, 1);
+		sel_frame(f, 1);
 		center_pointer(f);
 		draw_frame(old);
 		draw_frame(f);

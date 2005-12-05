@@ -122,7 +122,7 @@ struct Layout {
 	void (*deinit) (Area *);	/* called when layout is uninitialized */
 	void (*arrange) (Area *);	/* called when area is resized */
 	void (*attach) (Area *, Client *);	/* called on attach */
-	void (*detach) (Area *, Client *, int, int);	/* called on detach */
+	void (*detach) (Area *, Client *);	/* called on detach */
 	void (*resize) (Frame *, XRectangle *, XPoint * pt);	/* called after resize */
 };
 
@@ -151,6 +151,7 @@ struct Frame {
 struct Client {
 	int proto;
 	unsigned int border;
+	Bool destroyed;
 	Window win;
 	Window trans;
 	XRectangle rect;
@@ -209,7 +210,7 @@ unsigned int valid_mask, num_lock_mask;
 /* area.c */
 Area *alloc_area(Page *p, XRectangle * r, char *layout);
 void destroy_area(Area * a);
-void sel_area(Area * a, int raise, int up, int down);
+void sel_area(Area * a, int raise);
 void attach_frame_to_area(Area * a, Frame * f);
 void detach_frame_from_area(Frame * f, int ignore_sel_and_destroy);
 void draw_area(Area * a);
@@ -231,11 +232,12 @@ void ungrab_client(Client * c, unsigned long mod, unsigned int button);
 void hide_client(Client * c);
 void show_client(Client * c);
 void reparent_client(Client * c, Window w, int x, int y);
-void sel_client(Client * c, int raise, int up);
-void attach_client(Client * c);
+void sel_client(Client *c);
+void attach_client(Client *c);
+void detach_client(Client *c);
 
 /* frame.c */
-void sel_frame(Frame * f, int raise, int up, int down);
+void sel_frame(Frame * f, int raise);
 Frame *win_to_frame(Window w);
 Frame *alloc_frame(XRectangle * r);
 void destroy_frame(Frame * f);
@@ -243,7 +245,7 @@ void resize_frame(Frame * f, XRectangle * r, XPoint * pt, int ignore_layout);
 void draw_frame(Frame * f);
 void handle_frame_buttonpress(XButtonEvent * e, Frame * f);
 void attach_client_to_frame(Frame * f, Client * c);
-void detach_client_from_frame(Client * c, int unmapped, int destroyed);
+void detach_client_from_frame(Client *c);
 void draw_tab(Frame * f, char *text, int x, int y, int w, int h, int sel);
 unsigned int tab_height(Frame * f);
 unsigned int border_width(Frame * f);
@@ -264,7 +266,7 @@ void drop_move(Frame * f, XRectangle * new, XPoint * pt);
 Page *alloc_page();
 void free_page(Page * p);
 void destroy_page(Page * p);
-void sel_page(Page * p, int raise, int down);
+void sel_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
 void hide_page(Page * p);
 void show_page(Page * p);
