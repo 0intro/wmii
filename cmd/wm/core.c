@@ -94,26 +94,14 @@ static void draw_pager_page(Page * p, Draw * d)
 	XRectangle r = d->rect;
 	char name[4];
 	if (p == pages[sel]) {
-		d->bg =
-			blitz_loadcolor(dpy, screen_num,
-							defaults[WM_SEL_BG_COLOR]->content);
-		d->fg =
-			blitz_loadcolor(dpy, screen_num,
-							defaults[WM_SEL_FG_COLOR]->content);
-		d->border =
-			blitz_loadcolor(dpy, screen_num,
-							defaults[WM_SEL_BORDER_COLOR]->content);
+		d->bg = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_BG_COLOR]->content);
+		d->fg = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_FG_COLOR]->content);
+		d->border = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_BORDER_COLOR]->content);
 		d->font = font;
 	} else {
-		d->bg =
-			blitz_loadcolor(dpy, screen_num,
-							defaults[WM_NORM_BG_COLOR]->content);
-		d->fg =
-			blitz_loadcolor(dpy, screen_num,
-							defaults[WM_NORM_FG_COLOR]->content);
-		d->border =
-			blitz_loadcolor(dpy, screen_num,
-							defaults[WM_NORM_BORDER_COLOR]->content);
+		d->bg = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_BG_COLOR]->content);
+		d->fg = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_FG_COLOR]->content);
+		d->border = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_BORDER_COLOR]->content);
 		d->font = font;
 	}
 	snprintf(name, sizeof(name), "%d", index_item((void **) pages, p));
@@ -124,34 +112,17 @@ static void draw_pager_page(Page * p, Draw * d)
 	for (i = 0; p->areas[i]; i++) {
 		for (j = 0; p->areas[i]->frames[j]; j++) {
 			if (i == p->sel && j == p->areas[i]->sel) {
-				d->bg =
-					blitz_loadcolor(dpy, screen_num,
-									defaults[WM_SEL_BG_COLOR]->content);
-				d->fg =
-					blitz_loadcolor(dpy, screen_num,
-									defaults[WM_SEL_FG_COLOR]->content);
-				d->border =
-					blitz_loadcolor(dpy, screen_num,
-									defaults[WM_SEL_BORDER_COLOR]->
-									content);
+				d->bg = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_BG_COLOR]->content);
+				d->fg = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_FG_COLOR]->content);
+				d->border = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_BORDER_COLOR]->content);
 				d->font = font;
 			} else {
-				d->bg =
-					blitz_loadcolor(dpy, screen_num,
-									defaults[WM_NORM_BG_COLOR]->content);
-				d->fg =
-					blitz_loadcolor(dpy, screen_num,
-									defaults[WM_NORM_FG_COLOR]->content);
-				d->border =
-					blitz_loadcolor(dpy, screen_num,
-									defaults[WM_NORM_BORDER_COLOR]->
-									content);
+				d->bg = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_BG_COLOR]->content);
+				d->fg = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_FG_COLOR]->content);
+				d->border = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_BORDER_COLOR]->content);
 				d->font = font;
 			}
-			d->data =
-				p->areas[i]->frames[j]->clients[p->areas[i]->frames[j]->
-												sel]->files[C_NAME]->
-				content;
+			d->data = p->areas[i]->frames[j]->clients[p->areas[i]->frames[j]->sel]->files[C_NAME]->content;
 			scale_rect(&rect, &r, &p->areas[i]->rect, &d->rect);
 			blitz_drawlabel(dpy, d);
 			XSync(dpy, False);	/* do not clear upwards */

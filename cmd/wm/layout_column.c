@@ -34,18 +34,14 @@ static void attach_col(Area * a, Client * c);
 static void detach_col(Area * a, Client * c, int unmapped, int destroyed);
 static void resize_col(Frame * f, XRectangle * new, XPoint * pt);
 
-static Layout lcol =
-	{ "col", init_col, deinit_col, arrange_col, attach_col, detach_col,
-resize_col };
+static Layout lcol = { "col", init_col, deinit_col, arrange_col, attach_col, detach_col, resize_col };
 
 static Column zero_column = { 0 };
 static Acme zero_acme = { 0 };
 
 void init_layout_column()
 {
-	layouts =
-		(Layout **) attach_item_end((void **) layouts, &lcol,
-									sizeof(Layout *));
+	layouts = (Layout **) attach_item_end((void **) layouts, &lcol, sizeof(Layout *));
 }
 
 

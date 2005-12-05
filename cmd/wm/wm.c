@@ -61,59 +61,31 @@ static void init_defaults()
 {
 	defaults[WM_DETACHED_FRAME] = ixp_create(ixps, "/detached/frame");
 	defaults[WM_DETACHED_CLIENT] = ixp_create(ixps, "/detached/client");
-	defaults[WM_TRANS_COLOR] =
-		wmii_create_ixpfile(ixps, "/default/transcolor",
-							BLITZ_SEL_FG_COLOR);
+	defaults[WM_TRANS_COLOR] = wmii_create_ixpfile(ixps, "/default/transcolor", BLITZ_SEL_FG_COLOR);
 	defaults[WM_TRANS_COLOR]->after_write = handle_after_write;
-	defaults[WM_SEL_BG_COLOR] =
-		wmii_create_ixpfile(ixps, "/default/selstyle/bgcolor",
-							BLITZ_SEL_BG_COLOR);
-	defaults[WM_SEL_FG_COLOR] =
-		wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor",
-							BLITZ_SEL_FG_COLOR);
-	defaults[WM_SEL_BORDER_COLOR] =
-		wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor",
-							BLITZ_SEL_BORDER_COLOR);
-	defaults[WM_NORM_BG_COLOR] =
-		wmii_create_ixpfile(ixps, "/default/normstyle/bgcolor",
-							BLITZ_NORM_BG_COLOR);
-	defaults[WM_NORM_FG_COLOR] =
-		wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor",
-							BLITZ_NORM_FG_COLOR);
-	defaults[WM_NORM_BORDER_COLOR] =
-		wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor",
-							BLITZ_NORM_BORDER_COLOR);
-	defaults[WM_FONT] =
-		wmii_create_ixpfile(ixps, "/default/font", BLITZ_FONT);
-	defaults[WM_FONT]->after_write = handle_after_write;
-	defaults[WM_PAGE_SIZE] =
-		wmii_create_ixpfile(ixps, "/default/pagesize",
-							"0,0,east,south-16");
+	defaults[WM_SEL_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/bgcolor", BLITZ_SEL_BG_COLOR);
+	defaults[WM_SEL_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor", BLITZ_SEL_FG_COLOR);
+	defaults[WM_SEL_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor", BLITZ_SEL_BORDER_COLOR);
+	defaults[WM_NORM_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/bgcolor", BLITZ_NORM_BG_COLOR);
+	defaults[WM_NORM_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor", BLITZ_NORM_FG_COLOR);
+	defaults[WM_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor", BLITZ_NORM_BORDER_COLOR);
+	defaults[WM_FONT] = wmii_create_ixpfile(ixps, "/default/font", BLITZ_FONT);
+   	defaults[WM_FONT]->after_write = handle_after_write;
+	defaults[WM_PAGE_SIZE] = wmii_create_ixpfile(ixps, "/default/pagesize", "0,0,east,south-16");
 	defaults[WM_SNAP_VALUE] = wmii_create_ixpfile(ixps, "/default/snapvalue", "20");	/* 0..1000 */
-	defaults[WM_BORDER] =
-		wmii_create_ixpfile(ixps, "/default/border", "1");
+	defaults[WM_BORDER] = wmii_create_ixpfile(ixps, "/default/border", "1");
 	defaults[WM_TAB] = wmii_create_ixpfile(ixps, "/default/tab", "1");
-	defaults[WM_HANDLE_INC] =
-		wmii_create_ixpfile(ixps, "/default/handleinc", "1");
-	defaults[WM_LOCKED] =
-		wmii_create_ixpfile(ixps, "/default/locked", "1");
-	defaults[WM_LAYOUT] =
-		wmii_create_ixpfile(ixps, "/default/layout", LAYOUT);
+	defaults[WM_HANDLE_INC] = wmii_create_ixpfile(ixps, "/default/handleinc", "1");
+	defaults[WM_LOCKED] = wmii_create_ixpfile(ixps, "/default/locked", "1");
+	defaults[WM_LAYOUT] = wmii_create_ixpfile(ixps, "/default/layout", LAYOUT);
 	defaults[WM_SEL_PAGE] = ixp_create(ixps, "/page/sel");
-	defaults[WM_EVENT_PAGE_UPDATE] =
-		ixp_create(ixps, "/default/event/pageupdate");
-	defaults[WM_EVENT_CLIENT_UPDATE] =
-		ixp_create(ixps, "/default/event/clientupdate");
-	defaults[WM_EVENT_B1PRESS] =
-		ixp_create(ixps, "/defaults/event/b1press");
-	defaults[WM_EVENT_B2PRESS] =
-		ixp_create(ixps, "/defaults/event/b2press");
-	defaults[WM_EVENT_B3PRESS] =
-		ixp_create(ixps, "/defaults/event/b3press");
-	defaults[WM_EVENT_B4PRESS] =
-		ixp_create(ixps, "/defaults/event/b4press");
-	defaults[WM_EVENT_B5PRESS] =
-		ixp_create(ixps, "/defaults/event/b5press");
+	defaults[WM_EVENT_PAGE_UPDATE] = ixp_create(ixps, "/default/event/pageupdate");
+	defaults[WM_EVENT_CLIENT_UPDATE] = ixp_create(ixps, "/default/event/clientupdate");
+	defaults[WM_EVENT_B1PRESS] = ixp_create(ixps, "/defaults/event/b1press");
+	defaults[WM_EVENT_B2PRESS] = ixp_create(ixps, "/defaults/event/b2press");
+	defaults[WM_EVENT_B3PRESS] = ixp_create(ixps, "/defaults/event/b3press");
+	defaults[WM_EVENT_B4PRESS] = ixp_create(ixps, "/defaults/event/b4press");
+	defaults[WM_EVENT_B5PRESS] = ixp_create(ixps, "/defaults/event/b5press");
 }
 
 static void init_screen()
@@ -164,16 +136,11 @@ static void init_screen()
 static int wmii_error_handler(Display * dpy, XErrorEvent * error)
 {
 	if (error->error_code == BadWindow
-		|| (error->request_code == X_SetInputFocus
-			&& error->error_code == BadMatch)
-		|| (error->request_code == X_PolyText8
-			&& error->error_code == BadDrawable)
-		|| (error->request_code == X_PolyFillRectangle
-			&& error->error_code == BadDrawable)
-		|| (error->request_code == X_PolySegment
-			&& error->error_code == BadDrawable)
-		|| (error->request_code == X_ConfigureWindow
-			&& error->error_code == BadMatch))
+			|| (error->request_code == X_SetInputFocus && error->error_code == BadMatch)
+			|| (error->request_code == X_PolyText8 && error->error_code == BadDrawable)
+			|| (error->request_code == X_PolyFillRectangle && error->error_code == BadDrawable)
+			|| (error->request_code == X_PolySegment && error->error_code == BadDrawable)
+			|| (error->request_code == X_ConfigureWindow && error->error_code == BadMatch))
 		return 0;
 	fprintf(stderr, "%s", "wmiiwm: fatal error");
 	return x_error_handler(dpy, error);	/* calls exit() */
@@ -236,8 +203,7 @@ static void run()
 	scan_wins();
 
 	/* main event loop */
-	run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event,
-							   0);
+	run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event, 0);
 	cleanup();
 	deinit_server(ixps);
 	XCloseDisplay(dpy);
