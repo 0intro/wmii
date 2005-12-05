@@ -130,7 +130,7 @@ static void draw_pager_page(Page * p, Draw * d)
 	XSync(dpy, False);
 
 	for (i = 0; p->area[i]; i++) {
-		for (j = 0; p->area[i]->frame[j]; j++) {
+		for (j = 0; p->area[i]->frame && p->area[i]->frame[j]; j++) {
 			if (i == p->sel && j == p->area[i]->sel) {
 				d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
 				d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
