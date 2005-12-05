@@ -115,37 +115,37 @@ static void draw_pager_page(Page * p, Draw * d)
 	unsigned int i, j;
 	XRectangle r = d->rect;
 	char name[4];
-	if (p == pages[sel]) {
-		d->bg = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_BG_COLOR]->content);
-		d->fg = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_FG_COLOR]->content);
-		d->border = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_BORDER_COLOR]->content);
+	if (p == page[sel]) {
+		d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
+		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
+		d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
 		d->font = font;
 	} else {
-		d->bg = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_BG_COLOR]->content);
-		d->fg = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_FG_COLOR]->content);
-		d->border = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_BORDER_COLOR]->content);
+		d->bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
+		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
+		d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
 		d->font = font;
 	}
-	snprintf(name, sizeof(name), "%d", index_item((void **) pages, p));
+	snprintf(name, sizeof(name), "%d", index_item((void **) page, p));
 	d->data = name;
 	blitz_drawlabel(dpy, d);
 	XSync(dpy, False);
 
-	for (i = 0; p->areas[i]; i++) {
-		for (j = 0; p->areas[i]->frames[j]; j++) {
-			if (i == p->sel && j == p->areas[i]->sel) {
-				d->bg = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_BG_COLOR]->content);
-				d->fg = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_FG_COLOR]->content);
-				d->border = blitz_loadcolor(dpy, screen_num, defaults[WM_SEL_BORDER_COLOR]->content);
+	for (i = 0; p->area[i]; i++) {
+		for (j = 0; p->area[i]->frame[j]; j++) {
+			if (i == p->sel && j == p->area[i]->sel) {
+				d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
+				d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
+				d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
 				d->font = font;
 			} else {
-				d->bg = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_BG_COLOR]->content);
-				d->fg = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_FG_COLOR]->content);
-				d->border = blitz_loadcolor(dpy, screen_num, defaults[WM_NORM_BORDER_COLOR]->content);
+				d->bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
+				d->fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
+				d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
 				d->font = font;
 			}
-			d->data = p->areas[i]->frames[j]->clients[p->areas[i]->frames[j]->sel]->files[C_NAME]->content;
-			scale_rect(&rect, &r, &p->areas[i]->rect, &d->rect);
+			d->data = p->area[i]->frame[j]->client[p->area[i]->frame[j]->sel]->files[C_NAME]->content;
+			scale_rect(&rect, &r, &p->area[i]->rect, &d->rect);
 			blitz_drawlabel(dpy, d);
 			XSync(dpy, False);	/* do not clear upwards */
 		}
@@ -159,7 +159,7 @@ static void draw_pager()
 	int dx;
 	Draw d = { 0 };
 
-	blitz_getbasegeometry((void **) pages, &size, &cols, &rows);
+	blitz_getbasegeometry((void **) page, &size, &cols, &rows);
 	dx = (cols - 1) * GAP;		/* GAPpx space */
 	tw = (rect.width - dx) / cols;
 	th = ((double) tw / rect.width) * rect.height;
@@ -174,9 +174,9 @@ static void draw_pager()
 			else
 				d.rect.y = ir * (rect.height - th) / (rows - 1);
 			d.rect.height = th;
-			if (!pages[i])
+			if (!page[i])
 				return;
-			draw_pager_page(pages[i], &d);
+			draw_pager_page(page[i], &d);
 			i++;
 		}
 	}
@@ -189,9 +189,9 @@ static Page *xy_to_pager_page(int x, int y)
 	int dx;
 	XRectangle r;
 
-	if (!pages)
+	if (!page)
 		return 0;
-	blitz_getbasegeometry((void **) pages, &size, &cols, &rows);
+	blitz_getbasegeometry((void **) page, &size, &cols, &rows);
 	dx = (cols - 1) * GAP;		/* GAPpx space */
 	tw = (rect.width - dx) / cols;
 	th = ((double) tw / rect.width) * rect.height;
@@ -205,10 +205,10 @@ static Page *xy_to_pager_page(int x, int y)
 			else
 				r.y = ir * (rect.height - th) / (rows - 1);
 			r.height = th;
-			if (!pages[i])
+			if (!page[i])
 				return 0;
 			if (blitz_ispointinrect(x, y, &r))
-				return pages[i];
+				return page[i];
 			i++;
 		}
 	}
@@ -234,7 +234,7 @@ static void pager(void *obj, char *cmd)
 	XEvent ev;
 	int i;
 
-	if (!pages)
+	if (!page)
 		return;
 
 	XClearWindow(dpy, transient);
@@ -256,8 +256,8 @@ static void pager(void *obj, char *cmd)
 		case KeyPress:
 			XUnmapWindow(dpy, transient);
 			if ((i = handle_kpress(&ev.xkey)) != -1)
-				if (i < count_items((void **) pages))
-					focus_page(pages[i], 0, 1);
+				if (i < count_items((void **) page))
+					focus_page(page[i], 0, 1);
 			XUngrabKeyboard(dpy, CurrentTime);
 			return;
 			break;
@@ -375,9 +375,9 @@ static void icons(void *obj, char *cmd)
 
 static void _close_client(void *obj, char *cmd)
 {
-	Frame *f = pages ? SELFRAME(pages[sel]) : 0;
-	if (f->clients[f->sel])
-		close_client(f->clients[f->sel]);
+	Frame *f = page ? SELFRAME(page[sel]) : 0;
+	if (f->client[f->sel])
+		close_client(f->client[f->sel]);
 }
 
 static void _attach_client(void *obj, char *cmd)
@@ -394,38 +394,38 @@ static void _attach_client(void *obj, char *cmd)
 static void _detach_client(void *obj, char *cmd)
 {
 	Frame *f;
-	if (!pages)
+	if (!page)
 		return;
-	f = SELFRAME(pages[sel]);
+	f = SELFRAME(page[sel]);
 	if (!f)
 		return;
-	detach_client_from_frame(f->clients[f->sel], 0, 0);
+	detach_client_from_frame(f->client[f->sel], 0, 0);
 }
 
 static void _select_page(void *obj, char *cmd)
 {
-	if (!pages || !cmd)
+	if (!page || !cmd)
 		return;
 	if (!strncmp(cmd, "prev", 5))
-		sel = index_prev_item((void **) pages, pages[sel]);
+		sel = index_prev_item((void **) page, page[sel]);
 	else if (!strncmp(cmd, "next", 5))
-		sel = index_next_item((void **) pages, pages[sel]);
+		sel = index_next_item((void **) page, page[sel]);
 	else
-		sel = _strtonum(cmd, 0, count_items((void **) pages));
-	focus_page(pages[sel], 0, 1);
+		sel = _strtonum(cmd, 0, count_items((void **) page));
+	focus_page(page[sel], 0, 1);
 }
 
 static void _destroy_page(void *obj, char *cmd)
 {
-	if (!pages)
+	if (!page)
 		return;
-	destroy_page(pages[sel]);
+	destroy_page(page[sel]);
 }
 
 static void new_page(void *obj, char *cmd)
 {
-	if (pages)
-		hide_page(pages[sel]);
+	if (page)
+		hide_page(page[sel]);
 	alloc_page("0");
 }
 
@@ -433,9 +433,9 @@ Client *win_to_client(Window w)
 {
 	int i;
 
-	for (i = 0; clients && clients[i]; i++)
-		if (clients[i]->win == w)
-			return clients[i];
+	for (i = 0; client && client[i]; i++)
+		if (client[i]->win == w)
+			return client[i];
 	return 0;
 }
 
@@ -521,14 +521,14 @@ int win_state(Window w)
 
 void handle_after_write(IXPServer * s, File * f)
 {
-	if (f == defaults[WM_CTL])
+	if (f == def[WM_CTL])
 		run_action(f, 0, wm_acttbl);
-	else if (f == defaults[WM_TRANS_COLOR]) {
+	else if (f == def[WM_TRANS_COLOR]) {
 		unsigned long col[1];
 		col[0] = xorcolor.pixel;
 		XFreeColors(dpy, DefaultColormap(dpy, screen_num), col, 1, 0);
 		XAllocNamedColor(dpy, DefaultColormap(dpy, screen_num),
-						 defaults[WM_TRANS_COLOR]->content,
+						 def[WM_TRANS_COLOR]->content,
 						 &xorcolor, &xorcolor);
 		XSetForeground(dpy, xorgc, xorcolor.pixel);
 	}
@@ -561,35 +561,35 @@ static void init_cursors()
 	se_cursor = XCreateFontCursor(dpy, XC_bottom_right_corner);
 }
 
-static void init_defaults()
+static void init_default()
 {
-	defaults[WM_DETACHED_FRAME] = ixp_create(ixps, "/detached/frame");
-	defaults[WM_DETACHED_CLIENT] = ixp_create(ixps, "/detached/client");
-	defaults[WM_TRANS_COLOR] = wmii_create_ixpfile(ixps, "/default/transcolor", BLITZ_SEL_FG_COLOR);
-	defaults[WM_TRANS_COLOR]->after_write = handle_after_write;
-	defaults[WM_SEL_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/bgcolor", BLITZ_SEL_BG_COLOR);
-	defaults[WM_SEL_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor", BLITZ_SEL_FG_COLOR);
-	defaults[WM_SEL_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor", BLITZ_SEL_BORDER_COLOR);
-	defaults[WM_NORM_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/bgcolor", BLITZ_NORM_BG_COLOR);
-	defaults[WM_NORM_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor", BLITZ_NORM_FG_COLOR);
-	defaults[WM_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor", BLITZ_NORM_BORDER_COLOR);
-	defaults[WM_FONT] = wmii_create_ixpfile(ixps, "/default/font", BLITZ_FONT);
-   	defaults[WM_FONT]->after_write = handle_after_write;
-	defaults[WM_PAGE_SIZE] = wmii_create_ixpfile(ixps, "/default/pagesize", "0,0,east,south-16");
-	defaults[WM_SNAP_VALUE] = wmii_create_ixpfile(ixps, "/default/snapvalue", "20");	/* 0..1000 */
-	defaults[WM_BORDER] = wmii_create_ixpfile(ixps, "/default/border", "1");
-	defaults[WM_TAB] = wmii_create_ixpfile(ixps, "/default/tab", "1");
-	defaults[WM_HANDLE_INC] = wmii_create_ixpfile(ixps, "/default/handleinc", "1");
-	defaults[WM_LOCKED] = wmii_create_ixpfile(ixps, "/default/locked", "1");
-	defaults[WM_LAYOUT] = wmii_create_ixpfile(ixps, "/default/layout", LAYOUT);
-	defaults[WM_SEL_PAGE] = ixp_create(ixps, "/page/sel");
-	defaults[WM_EVENT_PAGE_UPDATE] = ixp_create(ixps, "/default/event/pageupdate");
-	defaults[WM_EVENT_CLIENT_UPDATE] = ixp_create(ixps, "/default/event/clientupdate");
-	defaults[WM_EVENT_B1PRESS] = ixp_create(ixps, "/defaults/event/b1press");
-	defaults[WM_EVENT_B2PRESS] = ixp_create(ixps, "/defaults/event/b2press");
-	defaults[WM_EVENT_B3PRESS] = ixp_create(ixps, "/defaults/event/b3press");
-	defaults[WM_EVENT_B4PRESS] = ixp_create(ixps, "/defaults/event/b4press");
-	defaults[WM_EVENT_B5PRESS] = ixp_create(ixps, "/defaults/event/b5press");
+	def[WM_DETACHED_FRAME] = ixp_create(ixps, "/detached/frame");
+	def[WM_DETACHED_CLIENT] = ixp_create(ixps, "/detached/client");
+	def[WM_TRANS_COLOR] = wmii_create_ixpfile(ixps, "/default/transcolor", BLITZ_SEL_FG_COLOR);
+	def[WM_TRANS_COLOR]->after_write = handle_after_write;
+	def[WM_SEL_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/bgcolor", BLITZ_SEL_BG_COLOR);
+	def[WM_SEL_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor", BLITZ_SEL_FG_COLOR);
+	def[WM_SEL_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/selstyle/fgcolor", BLITZ_SEL_BORDER_COLOR);
+	def[WM_NORM_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/bgcolor", BLITZ_NORM_BG_COLOR);
+	def[WM_NORM_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor", BLITZ_NORM_FG_COLOR);
+	def[WM_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/normstyle/fgcolor", BLITZ_NORM_BORDER_COLOR);
+	def[WM_FONT] = wmii_create_ixpfile(ixps, "/default/font", BLITZ_FONT);
+   	def[WM_FONT]->after_write = handle_after_write;
+	def[WM_PAGE_SIZE] = wmii_create_ixpfile(ixps, "/default/pageize", "0,0,east,south-16");
+	def[WM_SNAP_VALUE] = wmii_create_ixpfile(ixps, "/default/snapvalue", "20");	/* 0..1000 */
+	def[WM_BORDER] = wmii_create_ixpfile(ixps, "/default/border", "1");
+	def[WM_TAB] = wmii_create_ixpfile(ixps, "/default/tab", "1");
+	def[WM_HANDLE_INC] = wmii_create_ixpfile(ixps, "/default/handleinc", "1");
+	def[WM_LOCKED] = wmii_create_ixpfile(ixps, "/default/locked", "1");
+	def[WM_LAYOUT] = wmii_create_ixpfile(ixps, "/default/layout", LAYOUT);
+	def[WM_SEL_PAGE] = ixp_create(ixps, "/page/sel");
+	def[WM_EVENT_PAGE_UPDATE] = ixp_create(ixps, "/default/event/pageupdate");
+	def[WM_EVENT_CLIENT_UPDATE] = ixp_create(ixps, "/default/event/clientupdate");
+	def[WM_EVENT_B1PRESS] = ixp_create(ixps, "/default/event/b1press");
+	def[WM_EVENT_B2PRESS] = ixp_create(ixps, "/default/event/b2press");
+	def[WM_EVENT_B3PRESS] = ixp_create(ixps, "/default/event/b3press");
+	def[WM_EVENT_B4PRESS] = ixp_create(ixps, "/default/event/b4press");
+	def[WM_EVENT_B5PRESS] = ixp_create(ixps, "/default/event/b5press");
 }
 
 static void init_screen()
@@ -598,7 +598,7 @@ static void init_screen()
 	XSetWindowAttributes wa;
 
 	XAllocNamedColor(dpy, DefaultColormap(dpy, screen_num),
-					 defaults[WM_TRANS_COLOR]->content,
+					 def[WM_TRANS_COLOR]->content,
 					 &xorcolor, &xorcolor);
 	gcv.subwindow_mode = IncludeInferiors;
 	gcv.function = GXxor;
@@ -665,8 +665,8 @@ static void cleanup()
 	int i;
 	XWindowChanges wc;
 
-	for (i = 0; clients && clients[i]; i++) {
-		Client *c = clients[i];
+	for (i = 0; client && client[i]; i++) {
+		Client *c = client[i];
 		Frame *f = c->frame;
 		if (f) {
 			gravitate(c, tab_height(f), border_width(f), 1);
@@ -684,23 +684,23 @@ static void run()
 	/* init */
 	init_event_hander();
 
-	if (!(defaults[WM_CTL] = ixp_create(ixps, "/ctl"))) {
+	if (!(def[WM_CTL] = ixp_create(ixps, "/ctl"))) {
 		perror("wmiiwm: cannot connect IXP server");
 		exit(1);
 	}
-	defaults[WM_CTL]->after_write = handle_after_write;
+	def[WM_CTL]->after_write = handle_after_write;
 
-	clients = 0;
-	frames = 0;
+	client = 0;
+	frame = 0;
 	detached = 0;
-	pages = 0;
+	page = 0;
 	layouts = 0;
 	sel = 0;
 
 	init_atoms();
 	init_cursors();
-	init_defaults();
-	font = blitz_getfont(dpy, defaults[WM_FONT]->content);
+	init_default();
+	font = blitz_getfont(dpy, def[WM_FONT]->content);
 	init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
 	init_screen();
 	init_layouts();

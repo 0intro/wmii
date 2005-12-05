@@ -23,7 +23,7 @@ struct Acme {
 struct Column {
 	int sel;
 	int refresh;
-	Frame **frames;
+	Frame **frame;
 	XRectangle rect;
 };
 
@@ -48,15 +48,15 @@ void init_layout_column()
 static void arrange_column(Area * a, Column * col)
 {
 	int i;
-	int n = count_items((void **) col->frames);
+	int n = count_items((void **) col->frame);
 	unsigned int height = a->rect.height / n;
-	for (i = 0; col->frames && col->frames[i]; i++) {
+	for (i = 0; col->frame && col->frame[i]; i++) {
 		if (col->refresh) {
-			col->frames[i]->rect = col->rect;
-			col->frames[i]->rect.height = height;
-			col->frames[i]->rect.y = i * height;
+			col->frame[i]->rect = col->rect;
+			col->frame[i]->rect.height = height;
+			col->frame[i]->rect.y = i * height;
 		}
-		resize_frame(col->frames[i], &col->frames[i]->rect, 0, 1);
+		resize_frame(col->frame[i], &col->frame[i]->rect, 0, 1);
 	}
 }
 
@@ -109,50 +109,50 @@ static void init_col(Area * a)
 	acme->column[cols] = 0;		/* null termination of array */
 
 	/*
-	 * Frame attaching strategy works as follows: 1. If more clients than
+	 * Frame attaching strategy works as follows: 1. If more client than
 	 * column exist, then each column gets one client, except eastmost
-	 * column, which gets all remaining clients. 2. If lesser clients
+	 * column, which gets all remaining client. 2. If lesser client
 	 * than column exist, than filling begins from eastmost to westmost
-	 * column until no more clients exist.
+	 * column until no more client exist.
 	 */
-	n = count_items((void **) clients);
+	n = count_items((void **) client);
 	if (n > cols) {
 		/* 1st. case */
 		j = 0;
 		for (i = 0; i < (cols - 1); i++) {
 			col = acme->column[i];
-			col->frames =
-				(Frame **) attach_item_end((void **) col->frames,
-										   alloc_frame(&clients[i]->rect,
+			col->frame =
+				(Frame **) attach_item_end((void **) col->frame,
+										   alloc_frame(&client[i]->rect,
 													   1, 1),
 										   sizeof(Frame *));
-			col->frames[0]->aux = col;
-			attach_frame_to_area(a, col->frames[0]);
-			attach_client_to_frame(col->frames[0], clients[j]);
+			col->frame[0]->aux = col;
+			attach_frame_to_area(a, col->frame[0]);
+			attach_client_to_frame(col->frame[0], client[j]);
 			j++;
 		}
 		col = acme->column[cols - 1];
-		col->frames = emalloc((n - j + 1) * sizeof(Frame *));
+		col->frame = emalloc((n - j + 1) * sizeof(Frame *));
 		for (i = 0; i + j < n; i++) {
-			col->frames[i] = alloc_frame(&clients[j + i]->rect, 1, 1);
-			col->frames[i]->aux = col;
-			attach_frame_to_area(a, col->frames[i]);
-			attach_client_to_frame(col->frames[i], clients[j + i]);
+			col->frame[i] = alloc_frame(&client[j + i]->rect, 1, 1);
+			col->frame[i]->aux = col;
+			attach_frame_to_area(a, col->frame[i]);
+			attach_client_to_frame(col->frame[i], client[j + i]);
 		}
-		col->frames[i] = 0;
+		col->frame[i] = 0;
 	} else {
 		/* 2nd case */
 		j = 0;
 		for (i = cols - 1; j < n; i--) {
 			col = acme->column[i];
-			col->frames =
-				(Frame **) attach_item_end((void **) col->frames,
-										   alloc_frame(&clients[i]->rect,
+			col->frame =
+				(Frame **) attach_item_end((void **) col->frame,
+										   alloc_frame(&client[i]->rect,
 													   1, 1),
 										   sizeof(Frame *));
-			col->frames[0]->aux = col;
-			attach_frame_to_area(a, col->frames[0]);
-			attach_client_to_frame(col->frames[0], clients[j]);
+			col->frame[0]->aux = col;
+			attach_frame_to_area(a, col->frame[0]);
+			attach_client_to_frame(col->frame[0], client[j]);
 			j++;
 		}
 	}
@@ -167,14 +167,14 @@ static void deinit_col(Area * a)
 	for (i = 0; acme->column && acme->column[i]; i++) {
 		Column *col = acme->column[i];
 		int j;
-		for (j = 0; col->frames && col->frames[j]; j++) {
-			Frame *f = col->frames[j];
-			while (f->clients && f->clients[0])
-				detach_client_from_frame(f->clients[0], 0, 0);
+		for (j = 0; col->frame && col->frame[j]; j++) {
+			Frame *f = col->frame[j];
+			while (f->client && f->client[0])
+				detach_client_from_frame(f->client[0], 0, 0);
 			detach_frame_from_area(f, 1);
 			destroy_frame(f);
 		}
-		free(col->frames);
+		free(col->frame);
 	}
 	free(acme->column);
 	free(acme);
@@ -189,7 +189,7 @@ static void attach_col(Area * a, Client * c)
 
 	col = acme->column[acme->sel];
 	f = alloc_frame(&c->rect, 1, 1);
-	col->frames = (Frame **) attach_item_end((void **) col->frames, f,
+	col->frame = (Frame **) attach_item_end((void **) col->frame, f,
 											 sizeof(Frame *));
 	f->aux = col;
 	col->refresh = 1;
@@ -207,7 +207,7 @@ static void detach_col(Area * a, Client * c, int unmapped, int destroyed)
 	if (!col)
 		return;					/* client was not attached, maybe exit(1) in
 								 * such case */
-	col->frames = (Frame **) detach_item((void **) col->frames, c->frame,
+	col->frame = (Frame **) detach_item((void **) col->frame, c->frame,
 										 sizeof(Frame *));
 	col->refresh = 1;
 	detach_client_from_frame(c, unmapped, destroyed);
@@ -242,14 +242,14 @@ static void drop_resize(Frame * f, XRectangle * new)
 			col->rect.width += f->rect.x - new->x;
 			col->rect.x = new->x;
 
-			for (i = 0; west->frames && west->frames[i]; i++) {
-				Frame *f = west->frames[i];
+			for (i = 0; west->frame && west->frame[i]; i++) {
+				Frame *f = west->frame[i];
 				f->rect.x = west->rect.x;
 				f->rect.width = west->rect.width;
 				resize_frame(f, &f->rect, 0, 1);
 			}
-			for (i = 0; col->frames && col->frames[i]; i++) {
-				Frame *f = col->frames[i];
+			for (i = 0; col->frame && col->frame[i]; i++) {
+				Frame *f = col->frame[i];
 				f->rect.x = col->rect.x;
 				f->rect.width = col->rect.width;
 				resize_frame(f, &f->rect, 0, 1);
@@ -266,14 +266,14 @@ static void drop_resize(Frame * f, XRectangle * new)
 			col->rect.x = new->x;
 			col->rect.width = new->width;
 
-			for (i = 0; col->frames && col->frames[i]; i++) {
-				Frame *f = col->frames[i];
+			for (i = 0; col->frame && col->frame[i]; i++) {
+				Frame *f = col->frame[i];
 				f->rect.x = col->rect.x;
 				f->rect.width = col->rect.width;
 				resize_frame(f, &f->rect, 0, 1);
 			}
-			for (i = 0; east->frames && east->frames[i]; i++) {
-				Frame *f = east->frames[i];
+			for (i = 0; east->frame && east->frame[i]; i++) {
+				Frame *f = east->frame[i];
 				f->rect.x = east->rect.x;
 				f->rect.width = east->rect.width;
 				resize_frame(f, &f->rect, 0, 1);
@@ -282,15 +282,15 @@ static void drop_resize(Frame * f, XRectangle * new)
 	}
 	/* vertical stuff */
 	n = 0;
-	for (i = 0; col->frames && col->frames[i]; i++) {
-		if (col->frames[i] == f)
+	for (i = 0; col->frame && col->frame[i]; i++) {
+		if (col->frame[i] == f)
 			idx = i;
 		n++;
 	}
 
 	if (new->y < f->rect.y) {
-		if (idx && new->y > col->frames[idx - 1]->rect.y) {
-			Frame *north = col->frames[idx - 1];
+		if (idx && new->y > col->frame[idx - 1]->rect.y) {
+			Frame *north = col->frame[idx - 1];
 			north->rect.height = new->y - north->rect.y;
 			f->rect.width += new->y - north->rect.y;
 			f->rect.y = new->y;
@@ -300,9 +300,9 @@ static void drop_resize(Frame * f, XRectangle * new)
 	}
 	if (new->y + new->height > f->rect.y + f->rect.height) {
 		if ((idx + 1 < n) &&
-			(new->y + new->height < col->frames[idx + 1]->rect.y
-			 + col->frames[idx + 1]->rect.height)) {
-			Frame *south = col->frames[idx + 1];
+			(new->y + new->height < col->frame[idx + 1]->rect.y
+			 + col->frame[idx + 1]->rect.height)) {
+			Frame *south = col->frame[idx + 1];
 			south->rect.width -= new->x + new->width - south->rect.x;
 			south->rect.x = new->x + new->width;
 			f->rect.x = new->x;
@@ -335,21 +335,21 @@ static void _drop_move(Frame * f, XRectangle * new, XPoint * pt)
 	/* use pointer as fixpoint */
 	if (tgt == src) {
 		/* only change order within column */
-		for (i = 0; tgt->frames && tgt->frames[i]; i++) {
-			Frame *fp = tgt->frames[i];
+		for (i = 0; tgt->frame && tgt->frame[i]; i++) {
+			Frame *fp = tgt->frame[i];
 			if (blitz_ispointinrect(pt->x, pt->y, &fp->rect)) {
 				if (fp == f)
 					return;		/* just ignore */
 				else {
-					int idxf = index_item((void **) tgt->frames, f);
-					int idxfp = index_item((void **) tgt->frames, fp);
+					int idxf = index_item((void **) tgt->frame, f);
+					int idxfp = index_item((void **) tgt->frame, fp);
 					Frame *tmpf = f;
 					XRectangle tmpr = f->rect;
 
 					f->rect = fp->rect;
 					fp->rect = tmpr;
-					tgt->frames[idxf] = tgt->frames[idxfp];
-					tgt->frames[idxfp] = tmpf;
+					tgt->frame[idxf] = tgt->frame[idxfp];
+					tgt->frame[idxfp] = tmpf;
 					resize_frame(f, &f->rect, 0, 1);
 					resize_frame(fp, &fp->rect, 0, 1);
 				}
@@ -358,10 +358,10 @@ static void _drop_move(Frame * f, XRectangle * new, XPoint * pt)
 		}
 	} else {
 		/* detach, attach and change order in target column */
-		src->frames = (Frame **) detach_item((void **) src->frames,
+		src->frame = (Frame **) detach_item((void **) src->frame,
 											 f, sizeof(Frame *));
-		tgt->frames =
-			(Frame **) attach_item_end((void **) tgt->frames, f,
+		tgt->frame =
+			(Frame **) attach_item_end((void **) tgt->frame, f,
 									   sizeof(Frame *));
 		tgt->refresh = 1;
 		arrange_column(f->area, tgt);

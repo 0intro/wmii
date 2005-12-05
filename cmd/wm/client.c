@@ -41,8 +41,8 @@ Client *alloc_client(Window w)
 		c->files[C_INSTANCE] = ixp_create(ixps, buf);
 	}
 	id++;
-	clients =
-		(Client **) attach_item_end((void **) clients, c,
+	client =
+		(Client **) attach_item_end((void **) client, c,
 									sizeof(Client *));
 	XSelectInput(dpy, c->win, CLIENT_MASK);
 	return c;
@@ -54,14 +54,14 @@ void focus_client(Client * c, int raise, int up)
 	/* focus client */
 	if (c) {
 		f = c->frame;
-		for (f->sel = 0; f->clients && f->clients[f->sel] != c; f->sel++);
+		for (f->sel = 0; f->client && f->client[f->sel] != c; f->sel++);
 		f->files[F_SEL_CLIENT]->content = c->files[C_PREFIX]->content;
 		if (raise)
 			XRaiseWindow(dpy, c->win);
 		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	} else
 		XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
-	invoke_wm_event(defaults[WM_EVENT_CLIENT_UPDATE]);
+	invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
 	if (up && f)
 		focus_frame(f, raise, up, 0);
 }
@@ -207,7 +207,7 @@ void handle_client_property(Client * c, XPropertyEvent * e)
 		}
 		if (c->frame)
 			draw_client(c);
-		invoke_wm_event(defaults[WM_EVENT_CLIENT_UPDATE]);
+		invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
 		break;
 	case XA_WM_TRANSIENT_FOR:
 		XGetTransientForHint(dpy, c->win, &c->trans);
@@ -223,8 +223,8 @@ void handle_client_property(Client * c, XPropertyEvent * e)
 
 void free_client(Client * c)
 {
-	clients =
-		(Client **) detach_item((void **) clients, c, sizeof(Client *));
+	client =
+		(Client **) detach_item((void **) client, c, sizeof(Client *));
 	ixp_remove_file(ixps, c->files[C_PREFIX]);
 	if (ixps->errstr)
 		fprintf(stderr, "wmiiwm: free_client(): %s\n", ixps->errstr);
@@ -241,42 +241,42 @@ void draw_client(Client * c)
 
 	if (!tabh)
 		return;
-	size = count_items((void **) f->clients);
+	size = count_items((void **) f->client);
 	tw = f->rect.width;
 	if (size)
 		tw /= size;
-	for (i = 0; f->clients[i] && f->clients[i] != c; i++);
+	for (i = 0; f->client[i] && f->client[i] != c; i++);
 
-	if (!f->clients[i + 1])
+	if (!f->client[i + 1])
 		draw_tab(f, c->files[C_NAME]->content, i * tw, 0,
 				 f->rect.width - (i * tw), tabh, ISSELFRAME(f)
-				 && f->clients[f->sel] == c);
+				 && f->client[f->sel] == c);
 	else
 		draw_tab(f, c->files[C_NAME]->content, i * tw, 0, tw, tabh,
-				 ISSELFRAME(f) && f->clients[f->sel] == c);
+				 ISSELFRAME(f) && f->client[f->sel] == c);
 }
 
 void draw_clients(Frame * f)
 {
 	unsigned int tabh = tab_height(f);
-	int i, size = count_items((void **) f->clients);
+	int i, size = count_items((void **) f->client);
 	int tw = f->rect.width;
 
 	if (!tabh || !size)
 		return;
 	if (size)
 		tw /= size;
-	for (i = 0; f->clients[i]; i++) {
-		if (!f->clients[i + 1]) {
+	for (i = 0; f->client[i]; i++) {
+		if (!f->client[i + 1]) {
 			int xoff = i * tw;
-			draw_tab(f, f->clients[i]->files[C_NAME]->content,
+			draw_tab(f, f->client[i]->files[C_NAME]->content,
 					 xoff, 0, f->rect.width - xoff, tabh, ISSELFRAME(f)
-					 && f->clients[f->sel] == f->clients[i]);
+					 && f->client[f->sel] == f->client[i]);
 			break;
 		} else
-			draw_tab(f, f->clients[i]->files[C_NAME]->content,
+			draw_tab(f, f->client[i]->files[C_NAME]->content,
 					 i * tw, 0, tw, tabh, ISSELFRAME(f)
-					 && f->clients[f->sel] == f->clients[i]);
+					 && f->client[f->sel] == f->client[i]);
 	}
 	XSync(dpy, False);
 }

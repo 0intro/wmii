@@ -295,12 +295,8 @@ void mouse_move(Frame * f)
 	Window dummy;
 	XEvent ev;
 	/* borders */
-	int snapw =
-		rect.width * _strtonum(defaults[WM_SNAP_VALUE]->content, 0,
-							   1000) / 1000;
-	int snaph =
-		rect.height * _strtonum(defaults[WM_SNAP_VALUE]->content, 0,
-								1000) / 1000;
+	int snapw = rect.width * _strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
+	int snaph = rect.height * _strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
 	unsigned int num;
 	unsigned int dmask;
 	XRectangle *rects = rectangles(&num);
@@ -330,7 +326,7 @@ void mouse_move(Frame * f)
 				draw_pseudo_border(&frect);
 				resize_frame(f, &frect, &pt, 0);
 			}
-			draw_page(pages[sel]);
+			draw_page(page[sel]);
 			free(rects);
 			XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
 			XUngrabServer(dpy);
@@ -542,12 +538,8 @@ void mouse_resize(Frame * f, Align align)
 	Window dummy;
 	XEvent ev;
 	/* borders */
-	int snapw =
-		rect.width * _strtonum(defaults[WM_SNAP_VALUE]->content, 0,
-							   1000) / 1000;
-	int snaph =
-		rect.height * _strtonum(defaults[WM_SNAP_VALUE]->content, 0,
-								1000) / 1000;
+	int snapw = rect.width * _strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
+	int snaph = rect.height * _strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
 	unsigned int dmask;
 	unsigned int num;
 	XRectangle *rects = rectangles(&num);
@@ -604,16 +596,16 @@ void drop_move(Frame * f, XRectangle * new, XPoint * pt)
 {
 	Area *a = f->area;
 	int cx, cy;
-	unsigned int i, idx = index_item((void **) a->frames, f);
+	unsigned int i, idx = index_item((void **) a->frame, f);
 
 	if ((f->rect.x == new->x) && (f->rect.y == new->y))
 		return;
 	cx = (pt ? pt->x : new->x + new->width / 2);
 	cy = (pt ? pt->y : new->y + new->height / 2);
-	for (i = 0; a->frames[i]; i++) {
-		if ((a->frames[i] != f)
-			&& blitz_ispointinrect(cx, cy, &a->frames[i]->rect)) {
-			swap((void **) &a->frames[i], (void **) &a->frames[idx]);
+	for (i = 0; a->frame[i]; i++) {
+		if ((a->frame[i] != f)
+			&& blitz_ispointinrect(cx, cy, &a->frame[i]->rect)) {
+			swap((void **) &a->frame[i], (void **) &a->frame[idx]);
 			a->sel = i;
 			a->layout->arrange(a);
 			return;

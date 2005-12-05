@@ -26,7 +26,7 @@ Page *alloc_page(char *autodestroy)
 {
 	Page *p = emalloc(sizeof(Page));
 	char buf[MAX_BUF];
-	int id = count_items((void **) pages) + 1;
+	int id = count_items((void **) page) + 1;
 
 	*p = zero_page;
 	snprintf(buf, sizeof(buf), "/page/%d", id);
@@ -41,38 +41,37 @@ Page *alloc_page(char *autodestroy)
 	p->files[P_CTL]->after_write = handle_after_write_page;
 	snprintf(buf, sizeof(buf), "/page/%d/auto-destroy", id);
 	p->files[P_AUTO_DESTROY] = wmii_create_ixpfile(ixps, buf, autodestroy);
-	pages = (Page **) attach_item_end((void **) pages, p, sizeof(Page *));
-	sel = index_item((void **) pages, p);
-	defaults[WM_SEL_PAGE]->content = p->files[P_PREFIX]->content;
-	invoke_wm_event(defaults[WM_EVENT_PAGE_UPDATE]);
+	page = (Page **) attach_item_end((void **) page, p, sizeof(Page *));
+	sel = index_item((void **) page, p);
+	def[WM_SEL_PAGE]->content = p->files[P_PREFIX]->content;
+	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	return p;
 }
 
 void destroy_page(Page * p)
 {
 	unsigned int i;
-	for (i = 0; p->areas[i]; i++)
-		destroy_area(p->areas[i]);
+	for (i = 0; p->area[i]; i++)
+		destroy_area(p->area[i]);
 	free_page(p);
-	if (pages) {
-		show_page(pages[sel]);
-		defaults[WM_SEL_PAGE]->content =
-			pages[sel]->files[P_PREFIX]->content;
-		focus_page(pages[sel], 0, 1);
-		invoke_wm_event(defaults[WM_EVENT_PAGE_UPDATE]);
+	if (page) {
+		show_page(page[sel]);
+		def[WM_SEL_PAGE]->content = page[sel]->files[P_PREFIX]->content;
+		focus_page(page[sel], 0, 1);
+		invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	}
 }
 
 void free_page(Page * p)
 {
-	pages = (Page **) detach_item((void **) pages, p, sizeof(Page *));
-	if (pages) {
+	page = (Page **) detach_item((void **) page, p, sizeof(Page *));
+	if (page) {
 		if (sel - 1 >= 0)
 			sel--;
 		else
 			sel = 0;
 	}
-	defaults[WM_SEL_PAGE]->content = 0;
+	def[WM_SEL_PAGE]->content = 0;
 	ixp_remove_file(ixps, p->files[P_PREFIX]);
 	if (ixps->errstr)
 		fprintf(stderr, "wmiiwm: free_page(): %s\n", ixps->errstr);
@@ -81,17 +80,17 @@ void free_page(Page * p)
 
 void focus_page(Page * p, int raise, int down)
 {
-	if (!pages)
+	if (!page)
 		return;
-	if (p != pages[sel]) {
-		hide_page(pages[sel]);
-		sel = index_item((void **) pages, p);
-		show_page(pages[sel]);
-		defaults[WM_SEL_PAGE]->content = p->files[P_PREFIX]->content;
-		invoke_wm_event(defaults[WM_EVENT_PAGE_UPDATE]);
+	if (p != page[sel]) {
+		hide_page(page[sel]);
+		sel = index_item((void **) page, p);
+		show_page(page[sel]);
+		def[WM_SEL_PAGE]->content = p->files[P_PREFIX]->content;
+		invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	}
 	if (down)
-		focus_area(p->areas[p->sel], raise, 0, down);
+		focus_area(p->area[p->sel], raise, 0, down);
 }
 
 void draw_page(Page * p)
@@ -99,8 +98,8 @@ void draw_page(Page * p)
 	int i;
 	if (!p)
 		return;
-	for (i = 0; p->areas && p->areas[i]; i++)
-		draw_area(p->areas[i]);
+	for (i = 0; p->area && p->area[i]; i++)
+		draw_area(p->area[i]);
 }
 
 XRectangle *rectangles(unsigned int *num)
@@ -158,15 +157,15 @@ static void select_frame(void *obj, char *cmd)
 {
 	int i;
 	Frame *f, *old;
-	f = old = pages ? SELFRAME(pages[sel]) : 0;
+	f = old = page ? SELFRAME(page[sel]) : 0;
 	if (!f || !cmd)
 		return;
 	if (!strncmp(cmd, "prev", 5)) {
-		i = index_prev_item((void **) f->area->frames, f);
-		f = f->area->frames[i];
+		i = index_prev_item((void **) f->area->frame, f);
+		f = f->area->frame[i];
 	} else if (!strncmp(cmd, "next", 5)) {
-		i = index_next_item((void **) f->area->frames, f);
-		f = f->area->frames[i];
+		i = index_next_item((void **) f->area->frame, f);
+		f = f->area->frame[i];
 	}
 	if (old != f) {
 		focus_frame(f, 1, 1, 1);
@@ -180,15 +179,15 @@ void hide_page(Page * p)
 {
 
 	int i;
-	for (i = 0; p->areas && p->areas[i]; i++)
-		hide_area(p->areas[i]);
+	for (i = 0; p->area && p->area[i]; i++)
+		hide_area(p->area[i]);
 }
 
 void show_page(Page * p)
 {
 	int i;
-	for (i = 0; p->areas && p->areas[i]; i++)
-		show_area(p->areas[i]);
+	for (i = 0; p->area && p->area[i]; i++)
+		show_area(p->area[i]);
 }
 
 Layout *get_layout(char *name)
@@ -209,8 +208,8 @@ static void handle_after_write_page(IXPServer * s, File * f)
 {
 	int i;
 
-	for (i = 0; pages && pages[i]; i++) {
-		Page *p = pages[i];
+	for (i = 0; page && page[i]; i++) {
+		Page *p = page[i];
 		if (p->files[P_CTL] == f) {
 			run_action(f, p, page_acttbl);
 			return;
@@ -254,7 +253,7 @@ static void handle_after_write_page(IXPServer * s, File * f)
 		   }
 		   }
 		   if (!p->layout) {
-		   / make all managed clients floating /
+		   / make all managed client floating /
 		   int             j;
 		   Frame         **tmp = 0;
 		   while (p->managed) {
@@ -294,7 +293,7 @@ attach_frame_to_page(Page * p, Frame * f, int managed)
 		wmii_move_ixpfile(f->files[F_PREFIX], p->files[P_MANAGED_PREFIX]);
 		p->files[P_MANAGED_SELECTED]->content =
 			f->files[F_PREFIX]->content;
-		if (p == pages[sel_page])
+		if (p == page[sel_page])
 			for (i = 0; p->floating && p->floating[i]; i++)
 				XRaiseWindow(dpy, p->floating[i]->win);
 	} else {

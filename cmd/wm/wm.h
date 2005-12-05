@@ -113,7 +113,7 @@ typedef struct Client Client;
  */
 
 struct Page {
-	Area **areas;
+	Area **area;
 	unsigned int sel;
 	File *files[P_LAST];
 };
@@ -131,7 +131,7 @@ struct Layout {
 struct Area {
 	Layout *layout;
 	Page *page;
-	Frame **frames;
+	Frame **frame;
 	unsigned int sel;
 	XRectangle rect;
 	void *aux;					/* free pointer */
@@ -144,7 +144,7 @@ struct Frame {
 	GC gc;
 	XRectangle rect;
 	Cursor cursor;
-	Client **clients;
+	Client **client;
 	int sel;
 	void *aux;					/* free pointer */
 	File *files[F_LAST];
@@ -161,8 +161,8 @@ struct Client {
 	File *files[C_LAST];
 };
 
-#define SELFRAME(x) (x && x->areas[x->sel]->frames ?  x->areas[x->sel]->frames[x->areas[x->sel]->sel] : 0)
-#define ISSELFRAME(x) (pages && SELFRAME(pages[sel]) == x)
+#define SELFRAME(x) (x && x->area[x->sel]->frame ?  x->area[x->sel]->frame[x->area[x->sel]->sel] : 0)
+#define ISSELFRAME(x) (page && SELFRAME(page[sel]) == x)
 
 /* global variables */
 Display *dpy;
@@ -172,10 +172,10 @@ Window root;
 Window transient;
 XRectangle rect;
 Client **detached;
-Page **pages;
+Page **page;
 unsigned int sel;
-Frame **frames;
-Client **clients;
+Frame **frame;
+Client **client;
 XFontStruct *font;
 XColor xorcolor;
 GC xorgc;
@@ -203,7 +203,7 @@ Cursor sw_cursor;
 Cursor se_cursor;
 
 /* default file pointers */
-File *defaults[WM_LAST];
+File *def[WM_LAST];
 
 unsigned int valid_mask, num_lock_mask;
 

@@ -215,7 +215,7 @@ static void handle_maprequest(XEvent * e)
 		return;
 	if (wa.override_redirect)
 		return;
-	/* there're clients which send map requests twice */
+	/* there're client which send map requests twice */
 	c = win_to_client(ev->window);
 	if (!c)
 		c = alloc_client(ev->window);
@@ -230,14 +230,14 @@ static void handle_motionnotify(XEvent * e)
 	Frame *f = win_to_frame(e->xmotion.window);
 	Cursor cursor;
 	if (f) {
-		Frame *old = SELFRAME(pages[sel]);
+		Frame *old = SELFRAME(page[sel]);
 		if (old != f) {
 			focus_frame(f, 0, 0, 1);
 			draw_frame(old);
 			draw_frame(f);
-		} else if (f->clients) {
+		} else if (f->client) {
 			/* multihead assumption */
-			XSetInputFocus(dpy, f->clients[f->sel]->win,
+			XSetInputFocus(dpy, f->client[f->sel]->win,
 						   RevertToPointerRoot, CurrentTime);
 			XSync(dpy, False);
 		}
@@ -271,8 +271,8 @@ static void handle_unmapnotify(XEvent * e)
 	if ((c = win_to_client(ev->window))) {
 		if (c->frame) {
 			detach_client_from_frame(c, 1, 0);
-			if (pages)
-				draw_page(pages[sel]);
+			if (page)
+				draw_page(page[sel]);
 			free_client(c);
 		} else if (detached) {
 			if (index_item((void **) detached, c) == -1)
@@ -295,7 +295,7 @@ static void handle_enternotify(XEvent * e)
 
 	c = win_to_client(ev->window);
 	if (c && c->frame && (ev->serial != ignore_enternotify_hack)) {
-		Frame *old = SELFRAME(pages[sel]);
+		Frame *old = SELFRAME(page[sel]);
 		XUndefineCursor(dpy, c->frame->win);
 		if (old != c->frame) {
 			focus_frame(c->frame, 0, 0, 1);
