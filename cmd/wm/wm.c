@@ -402,7 +402,7 @@ static void _select_page(void *obj, char *cmd)
 	else if (!strncmp(cmd, "next", 5))
 		sel = index_next_item((void **) page, page[sel]);
 	else
-		sel = _strtonum(cmd, 0, count_items((void **) page));
+		sel = _strtonum(cmd, 0, count_items((void **) page) - 1);
 	sel_page(page[sel]);
 }
 

@@ -173,7 +173,7 @@ for(i in 1 2 3 4 5 6 7 8 9) {
 }
 
 wmir write /keys/geometry center,center,100,$BAR_HEIGHT
-wmir write /keys/font $FONT
+wmir write /keys/box/font $FONT
 selstyle /keys/box
 kmode normal
 
