@@ -574,6 +574,7 @@ static void run(char *size)
 	add_history("");
 	files[M_LOOKUP] = ixp_create(ixps, "/lookup");
 	files[M_FONT] = wmii_create_ixpfile(ixps, "/font", BLITZ_FONT);
+	files[M_FONT]->after_write  = handle_after_write;
 	font = blitz_getfont(dpy, files[M_FONT]->content);
 	files[M_SEL_BG_COLOR] = wmii_create_ixpfile(ixps, "/sstyle/bgcolor", BLITZ_SEL_BG_COLOR);
 	files[M_SEL_TEXT_COLOR] = wmii_create_ixpfile(ixps, "/sstyle/fgcolor", BLITZ_SEL_FG_COLOR);
