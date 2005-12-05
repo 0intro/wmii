@@ -44,7 +44,7 @@ Page *alloc_page(char *autodestroy)
 	pages = (Page **) attach_item_end((void **) pages, p, sizeof(Page *));
 	sel = index_item((void **) pages, p);
 	defaults[WM_SEL_PAGE]->content = p->files[P_PREFIX]->content;
-	invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
+	invoke_wm_event(defaults[WM_EVENT_PAGE_UPDATE]);
 	return p;
 }
 
@@ -59,7 +59,7 @@ void destroy_page(Page * p)
 		defaults[WM_SEL_PAGE]->content =
 			pages[sel]->files[P_PREFIX]->content;
 		focus_page(pages[sel], 0, 1);
-		invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
+		invoke_wm_event(defaults[WM_EVENT_PAGE_UPDATE]);
 	}
 }
 
@@ -88,7 +88,7 @@ void focus_page(Page * p, int raise, int down)
 		sel = index_item((void **) pages, p);
 		show_page(pages[sel]);
 		defaults[WM_SEL_PAGE]->content = p->files[P_PREFIX]->content;
-		invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
+		invoke_wm_event(defaults[WM_EVENT_PAGE_UPDATE]);
 	}
 	if (down)
 		focus_area(p->areas[p->sel], raise, 0, down);
@@ -270,7 +270,7 @@ static void handle_after_write_page(IXPServer * s, File * f)
 		   free(tmp);
 		   }
 		   draw_page(p);
-		   invoke_core_event(core_files[CORE_EVENT_PAGE_UPDATE]);
+		   invoke_wm_event(wm_files[CORE_EVENT_PAGE_UPDATE]);
 		   return;
 		   }
 		 */
@@ -322,7 +322,7 @@ void
 detach_frame_from_page(Frame * f, int ignore_focus_and_destroy)
 {
 	Page           *p = f->page;
-	wmii_move_ixpfile(f->files[F_PREFIX], core_files[CORE_DETACHED_FRAME]);
+	wmii_move_ixpfile(f->files[F_PREFIX], wm_files[CORE_DETACHED_FRAME]);
 	if (is_managed_frame(f)) {
 		p->managed = (Frame **) detach_item((void **) p->managed, f,
 						    sizeof(Frame *));

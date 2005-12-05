@@ -236,17 +236,6 @@ void show_client(Client * c);
 void reparent_client(Client * c, Window w, int x, int y);
 void focus_client(Client * c, int raise, int up);
 
-/* core.c */
-void invoke_core_event(File * f);
-void run_action(File * f, void *obj, Action * acttbl);
-void scan_wins();
-Client *win_to_client(Window w);
-int win_proto(Window w);
-int win_state(Window w);
-void handle_after_write(IXPServer * s, File * f);
-void detach(Frame * f, int client_destroyed);
-void set_client_state(Client * c, int state);
-
 /* frame.c */
 void focus_frame(Frame * f, int raise, int up, int down);
 Frame *win_to_frame(Window w);
@@ -287,3 +276,14 @@ Layout *get_layout(char *name);
 
 /* layout.c */
 void init_layouts();
+
+/* wm.c */
+void invoke_wm_event(File * f);
+void run_action(File * f, void *obj, Action * acttbl);
+void scan_wins();
+Client *win_to_client(Window w);
+int win_proto(Window w);
+int win_state(Window w);
+void handle_after_write(IXPServer * s, File * f);
+void detach(Frame * f, int client_destroyed);
+void set_client_state(Client * c, int state);

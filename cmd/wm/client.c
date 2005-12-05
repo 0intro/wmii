@@ -61,7 +61,7 @@ void focus_client(Client * c, int raise, int up)
 		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	} else
 		XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
-	invoke_core_event(defaults[WM_EVENT_CLIENT_UPDATE]);
+	invoke_wm_event(defaults[WM_EVENT_CLIENT_UPDATE]);
 	if (up && f)
 		focus_frame(f, raise, up, 0);
 }
@@ -207,7 +207,7 @@ void handle_client_property(Client * c, XPropertyEvent * e)
 		}
 		if (c->frame)
 			draw_client(c);
-		invoke_core_event(defaults[WM_EVENT_CLIENT_UPDATE]);
+		invoke_wm_event(defaults[WM_EVENT_CLIENT_UPDATE]);
 		break;
 	case XA_WM_TRANSIENT_FOR:
 		XGetTransientForHint(dpy, c->win, &c->trans);

@@ -445,7 +445,7 @@ void attach_client(Client * c)
 		attach_frame_to_area(p->areas[p->sel], f);
 	attach_client_to_frame(f, c);
 	draw_frame(f);
-	invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
+	invoke_wm_event(defaults[WM_EVENT_PAGE_UPDATE]);
 }
 
 void detach_client_from_frame(Client * c, int unmapped, int destroyed)
@@ -477,7 +477,7 @@ void detach_client_from_frame(Client * c, int unmapped, int destroyed)
 		if (pages)
 			focus_page(pages[sel], 0, 1);
 	}
-	invoke_core_event(defaults[WM_EVENT_PAGE_UPDATE]);
+	invoke_wm_event(defaults[WM_EVENT_PAGE_UPDATE]);
 }
 
 static void mouse()
