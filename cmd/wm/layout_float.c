@@ -65,6 +65,7 @@ static void detach_float(Area * a, Client * c)
 	}
 }
 
-static void resize_float(Frame * f, XRectangle * new, XPoint * pt)
+static void resize_float(Frame *f, XRectangle *new, XPoint *pt)
 {
+	f->rect = *new;
 }

@@ -12,6 +12,7 @@
 /* array indexes of page file pointers */
 enum {
 	P_PREFIX,
+	P_NAME,
 	P_AREA_PREFIX,
 	P_SEL_AREA,
 	P_CTL,
@@ -35,7 +36,7 @@ enum {
 	F_CLIENT_PREFIX,
 	F_SEL_CLIENT,
 	F_CTL,
-	F_SIZE,
+	F_GEOMETRY,
 	F_BORDER,
 	F_TAB,
 	F_HANDLE_INC,
@@ -73,7 +74,7 @@ enum {
 	WM_NORM_BORDER_COLOR,
 	WM_NORM_FG_COLOR,
 	WM_FONT,
-	WM_PAGE_SIZE,
+	WM_PAGE_GEOMETRY,
 	WM_BORDER,
 	WM_TAB,
 	WM_HANDLE_INC,
@@ -92,7 +93,7 @@ enum {
 };
 
 #define PROTO_DEL              1
-#define BORDER_WIDTH           3
+#define BORDER_WIDTH           1
 #define LAYOUT                 "column"
 #define GAP 5
 
@@ -241,7 +242,7 @@ void sel_frame(Frame * f, int raise);
 Frame *win_to_frame(Window w);
 Frame *alloc_frame(XRectangle * r);
 void destroy_frame(Frame * f);
-void resize_frame(Frame * f, XRectangle * r, XPoint * pt, int ignore_layout);
+void resize_frame(Frame * f, XRectangle * r, XPoint * pt);
 void draw_frame(Frame * f);
 void handle_frame_buttonpress(XButtonEvent * e, Frame * f);
 void attach_client_to_frame(Frame * f, Client * c);

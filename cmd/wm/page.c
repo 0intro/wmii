@@ -16,7 +16,7 @@ static Page zero_page = { 0 };
 static void select_frame(void *obj, char *cmd);
 static void handle_after_write_page(IXPServer * s, File * f);
 
-/* action table for /page/?/ namespace */
+/* action table for /?/ namespace */
 Action page_acttbl[] = {
 	{"select", select_frame},
 	{0, 0}
@@ -25,18 +25,21 @@ Action page_acttbl[] = {
 Page *alloc_page()
 {
 	Page *p = emalloc(sizeof(Page));
-	char buf[MAX_BUF];
+	char buf[MAX_BUF], buf2[16];
 	int id = count_items((void **) page) + 1;
 
+	snprintf(buf2, sizeof(buf2), "%d", id);
 	*p = zero_page;
-	snprintf(buf, sizeof(buf), "/p/%d", id);
+	snprintf(buf, sizeof(buf), "/%d", id);
 	p->file[P_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, sizeof(buf), "/p/%d/a", id);
+	snprintf(buf, sizeof(buf), "/%d/name", id);
+	p->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
+	snprintf(buf, sizeof(buf), "/%d/a", id);
 	p->file[P_AREA_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, sizeof(buf), "/p/%d/a/sel", id);
+	snprintf(buf, sizeof(buf), "/%d/a/sel", id);
 	p->file[P_SEL_AREA] = ixp_create(ixps, buf);
 	p->file[P_SEL_AREA]->bind = 1;	/* mount point */
-	snprintf(buf, sizeof(buf), "/p/%d/ctl", id);
+	snprintf(buf, sizeof(buf), "/%d/ctl", id);
 	p->file[P_CTL] = ixp_create(ixps, buf);
 	p->file[P_CTL]->after_write = handle_after_write_page;
 	alloc_area(p, &rect, "float");

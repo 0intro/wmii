@@ -22,10 +22,9 @@
 typedef enum {
 	K_CTL,
 	K_LOOKUP,
-	K_SIZE,
 	K_GRAB_KB,
-	K_TEXT_FONT,
-	K_TEXT_COLOR,
+	K_FONT,
+	K_FG_COLOR,
 	K_BG_COLOR,
 	K_BORDER_COLOR,
 	K_LAST
@@ -55,6 +54,7 @@ static File *files[K_LAST];
 static int grabkb = 0;
 static unsigned int num_lock_mask, valid_mask;
 static char buf[MAX_BUF];
+static XFontStruct *font;
 
 static Shortcut zero_shortcut = { "", 0, 0, 0, 0 };
 
@@ -301,20 +301,19 @@ static void update()
 /*
  * Function assumes following fs-structure:
  *
- * /box/style/text-align     "<align>"
- * /box/style/text-font   "<value>"
- * /box/style/text-color     "#RRGGBBAA"
- * /box/style/bg-color     "#RRGGBBAA"
+ * /box/style/font   		"<value>"
+ * /box/style/fgcolor     	"#RRGGBBAA"
+ * /box/style/bgcolor     	"#RRGGBBAA"
+ * /box/style/bordercolor   "#RRGGBBAA"
  */
 static void draw_shortcut_box(char *text)
 {
 	Draw d = { 0 };
 
-	d.font = blitz_getfont(dpy, files[K_TEXT_FONT]->content);
+	d.font = font;
 	krect.width = XTextWidth(d.font, text, strlen(text)) + krect.height;
 	center();
-	XMoveResizeWindow(dpy, win, krect.x, krect.y, krect.width,
-					  krect.height);
+	XMoveResizeWindow(dpy, win, krect.x, krect.y, krect.width, krect.height);
 
 	/* default stuff */
 	d.gc = gc;
@@ -324,9 +323,8 @@ static void draw_shortcut_box(char *text)
 	d.rect.width = krect.width;
 	d.rect.height = krect.height;
 	d.bg = blitz_loadcolor(dpy, screen_num, files[K_BG_COLOR]->content);
-	d.fg = blitz_loadcolor(dpy, screen_num, files[K_TEXT_COLOR]->content);
-	d.border =
-		blitz_loadcolor(dpy, screen_num, files[K_BORDER_COLOR]->content);
+	d.fg = blitz_loadcolor(dpy, screen_num, files[K_FG_COLOR]->content);
+	d.border = blitz_loadcolor(dpy, screen_num, files[K_BORDER_COLOR]->content);
 	blitz_drawlabel(dpy, &d);
 }
 
@@ -372,10 +370,6 @@ static void handle_after_write(IXPServer * s, File * f)
 				break;
 			}
 		}
-	} else if (files[K_SIZE] == f) {
-		char *size = files[K_SIZE]->content;
-		if (size && strrchr(size, ','))
-			blitz_strtorect(&rect, &krect, size);
 	} else if (f == files[K_GRAB_KB]) {
 		grabkb = _strtonum(files[K_GRAB_KB]->content, 0, 1);
 		if (!grabkb) {
@@ -384,22 +378,13 @@ static void handle_after_write(IXPServer * s, File * f)
 			XSync(dpy, False);
 		} else
 			update();
+	} else if (f == files[K_FONT]) {
+		XFreeFont(dpy, font);
+		font = blitz_getfont(dpy, files[K_FONT]->content);
 	} else if (f == files[K_LOOKUP]) {
 		update();
 	}
 	check_event(0);
-}
-
-static void handle_before_read(IXPServer * s, File * f)
-{
-	if (f != files[K_SIZE])
-		return;
-	snprintf(buf, sizeof(buf), "%d,%d,%d,%d", krect.x, krect.y,
-			 krect.width, krect.height);
-	if (f->content)
-		free(f->content);
-	f->content = strdup(buf);
-	f->size = strlen(buf);
 }
 
 static void run(char *size)
@@ -415,22 +400,14 @@ static void run(char *size)
 	files[K_CTL]->after_write = handle_after_write;
 	files[K_LOOKUP] = ixp_create(ixps, "/lookup");
 	files[K_LOOKUP]->after_write = handle_after_write;
-	files[K_SIZE] = ixp_create(ixps, "/size");
-	files[K_SIZE]->before_read = handle_before_read;
-	files[K_SIZE]->after_write = handle_after_write;
-	files[K_GRAB_KB] = wmii_create_ixpfile(ixps, "/grab-keyb", "0");
+	files[K_GRAB_KB] = wmii_create_ixpfile(ixps, "/grabkeyb", "0");
 	files[K_GRAB_KB]->after_write = handle_after_write;
-	files[K_TEXT_FONT] =
-		wmii_create_ixpfile(ixps, "/box/style/text-font", BLITZ_FONT);
-	files[K_TEXT_COLOR] =
-		wmii_create_ixpfile(ixps, "/box/style/text-color",
-							BLITZ_SEL_FG_COLOR);
-	files[K_BG_COLOR] =
-		wmii_create_ixpfile(ixps, "/box/style/bg-color",
-							BLITZ_SEL_BG_COLOR);
-	files[K_BORDER_COLOR] =
-		wmii_create_ixpfile(ixps, "/box/style/border-color",
-							BLITZ_SEL_BORDER_COLOR);
+	files[K_FONT] = wmii_create_ixpfile(ixps, "/box/font", BLITZ_FONT);
+	files[K_FONT]->after_write = handle_after_write;
+	font = blitz_getfont(dpy, files[K_FONT]->content);
+	files[K_FG_COLOR] = wmii_create_ixpfile(ixps, "/box/fgcolor", BLITZ_SEL_FG_COLOR);
+	files[K_BG_COLOR] = wmii_create_ixpfile(ixps, "/box/bgcolor", BLITZ_SEL_BG_COLOR);
+	files[K_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/box/bordercolor", BLITZ_SEL_BORDER_COLOR);
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;

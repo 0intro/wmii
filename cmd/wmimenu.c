@@ -23,18 +23,18 @@
 /* array indexes for file pointers */
 typedef enum {
 	M_CTL,
-	M_SIZE,
+	M_GEOMETRY,
 	M_PRE_COMMAND,
 	M_COMMAND,
 	M_HISTORY,
 	M_LOOKUP,
-	M_TEXT_FONT,
-	M_SELECTED_BG_COLOR,
-	M_SELECTED_TEXT_COLOR,
-	M_SELECTED_BORDER_COLOR,
-	M_NORMAL_BG_COLOR,
-	M_NORMAL_TEXT_COLOR,
-	M_NORMAL_BORDER_COLOR,
+	M_FONT,
+	M_SEL_BG_COLOR,
+	M_SEL_TEXT_COLOR,
+	M_SEL_BORDER_COLOR,
+	M_NORM_BG_COLOR,
+	M_NORM_TEXT_COLOR,
+	M_NORM_BORDER_COLOR,
 	M_RETARDED,
 	M_LAST
 } InputIndexes;
@@ -61,6 +61,7 @@ static File **history = 0;
 static int sel_history = 0;
 static Pixmap pmap;
 static const int seek = 30;		/* 30px */
+static XFontStruct *font;
 
 static void check_event(Connection * c);
 static void draw_menu(void);
@@ -93,10 +94,7 @@ static void add_history(char *cmd)
 {
 	char buf[MAX_BUF];
 	snprintf(buf, MAX_BUF, "/history/%ld", (long) time(0));
-	history = (File **) attach_item_begin((void **) history,
-										  wmii_create_ixpfile(ixps, buf,
-															  cmd),
-										  sizeof(File *));
+	history = (File **) attach_item_begin((void **) history, wmii_create_ixpfile(ixps, buf, cmd), sizeof(File *));
 }
 
 static void _exec(char *cmd)
@@ -178,13 +176,11 @@ void set_text(char *text)
 static void update_offsets()
 {
 	int i;
-	XFontStruct *font;
 	unsigned int w = cmdw + 2 * seek;
 
 	if (!items)
 		return;
 
-	font = blitz_getfont(dpy, files[M_TEXT_FONT]->content);
 
 	/* calc next offset */
 	for (i = offset[OFF_CURR]; items[i]; i++) {
@@ -204,14 +200,12 @@ static void update_offsets()
 			break;
 	}
 	offset[OFF_PREV] = i + 1;
-	XFreeFont(dpy, font);
 }
 
 static int update_items(char *pattern)
 {
 	size_t plen = pattern ? strlen(pattern) : 0, size = 0, max = 0, len;
 	int matched = pattern ? plen == 0 : 1;
-	XFontStruct *font;
 	File *f, *p, *maxitem = 0;
 
 	cmdw = 0;
@@ -223,8 +217,6 @@ static int update_items(char *pattern)
 	f = ixp_walk(ixps, files[M_LOOKUP]->content);
 	if (!f || !is_directory(f))
 		return 0;
-
-	font = blitz_getfont(dpy, files[M_TEXT_FONT]->content);
 
 	/* build new items */
 	for (p = f->content; p; p = p->next) {
@@ -273,7 +265,6 @@ static int update_items(char *pattern)
 	}
 	items[size] = 0;
 	update_offsets();
-	XFreeFont(dpy, font);
 	return size;
 }
 
@@ -283,19 +274,15 @@ static void draw_menu()
 	Draw d = { 0 };
 	unsigned int offx = 0;
 	int i = 0;
-	XFontStruct *font = blitz_getfont(dpy, files[M_TEXT_FONT]->content);
 
 	d.gc = gc;
+	d.font = font;
 	d.drawable = pmap;
 	d.rect = mrect;
 	d.rect.x = 0;
 	d.rect.y = 0;
-	d.bg =
-		blitz_loadcolor(dpy, screen_num,
-						files[M_NORMAL_BG_COLOR]->content);
-	d.border =
-		blitz_loadcolor(dpy, screen_num,
-						files[M_NORMAL_BORDER_COLOR]->content);
+	d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
+	d.border = blitz_loadcolor(dpy, screen_num, files[M_NORM_BORDER_COLOR]->content);
 	blitz_drawlabelnoborder(dpy, &d);
 
 	/* print command */
@@ -303,7 +290,7 @@ static void draw_menu()
 	d.font = font;
 	d.fg =
 		blitz_loadcolor(dpy, screen_num,
-						files[M_NORMAL_TEXT_COLOR]->content);
+						files[M_NORM_TEXT_COLOR]->content);
 	d.data = files[M_COMMAND]->content;
 	if (cmdw && items && items[0])
 		d.rect.width = cmdw;
@@ -312,12 +299,8 @@ static void draw_menu()
 
 	d.align = CENTER;
 	if (items && items[0]) {
-		d.bg =
-			blitz_loadcolor(dpy, screen_num,
-							files[M_NORMAL_BG_COLOR]->content);
-		d.fg =
-			blitz_loadcolor(dpy, screen_num,
-							files[M_NORMAL_TEXT_COLOR]->content);
+		d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
+		d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORM_TEXT_COLOR]->content);
 		d.data = offset[OFF_CURR] ? "<" : 0;
 		d.rect.x = offx;
 		d.rect.width = seek;
@@ -332,50 +315,26 @@ static void draw_menu()
 				XTextWidth(d.font, d.data, strlen(d.data)) + mrect.height;
 			offx += d.rect.width;
 			if (i == item) {
-				d.bg =
-					blitz_loadcolor(dpy, screen_num,
-									files[M_SELECTED_BG_COLOR]->content);
-				d.fg =
-					blitz_loadcolor(dpy, screen_num,
-									files[M_SELECTED_TEXT_COLOR]->content);
-				d.border =
-					blitz_loadcolor(dpy, screen_num,
-									files[M_SELECTED_BORDER_COLOR]->
-									content);
+				d.bg = blitz_loadcolor(dpy, screen_num, files[M_SEL_BG_COLOR]->content);
+				d.fg = blitz_loadcolor(dpy, screen_num, files[M_SEL_TEXT_COLOR]->content);
+				d.border = blitz_loadcolor(dpy, screen_num, files[M_SEL_BORDER_COLOR]-> content);
 				blitz_drawlabel(dpy, &d);
 			} else if (!i && item == -1) {
 				/* fg and bg are inverted */
-				d.fg =
-					blitz_loadcolor(dpy, screen_num,
-									files[M_SELECTED_BG_COLOR]->content);
-				d.bg =
-					blitz_loadcolor(dpy, screen_num,
-									files[M_SELECTED_TEXT_COLOR]->content);
-				d.border =
-					blitz_loadcolor(dpy, screen_num,
-									files[M_SELECTED_BORDER_COLOR]->
-									content);
+				d.fg = blitz_loadcolor(dpy, screen_num, files[M_SEL_BG_COLOR]->content);
+				d.bg = blitz_loadcolor(dpy, screen_num, files[M_SEL_TEXT_COLOR]->content);
+				d.border = blitz_loadcolor(dpy, screen_num, files[M_SEL_BORDER_COLOR]->content);
 				blitz_drawlabel(dpy, &d);
 			} else {
-				d.bg =
-					blitz_loadcolor(dpy, screen_num,
-									files[M_NORMAL_BG_COLOR]->content);
-				d.fg =
-					blitz_loadcolor(dpy, screen_num,
-									files[M_NORMAL_TEXT_COLOR]->content);
-				d.border =
-					blitz_loadcolor(dpy, screen_num,
-									files[M_NORMAL_BORDER_COLOR]->content);
+				d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
+				d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORM_TEXT_COLOR]->content);
+				d.border = blitz_loadcolor(dpy, screen_num, files[M_NORM_BORDER_COLOR]->content);
 				blitz_drawlabelnoborder(dpy, &d);
 			}
 		}
 
-		d.bg =
-			blitz_loadcolor(dpy, screen_num,
-							files[M_NORMAL_BG_COLOR]->content);
-		d.fg =
-			blitz_loadcolor(dpy, screen_num,
-							files[M_NORMAL_TEXT_COLOR]->content);
+		d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
+		d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORM_TEXT_COLOR]->content);
 		d.data = items[i] ? ">" : 0;
 		d.rect.x = mrect.width - seek;
 		d.rect.width = seek;
@@ -383,7 +342,6 @@ static void draw_menu()
 	}
 	XCopyArea(dpy, pmap, win, gc, 0, 0, mrect.width, mrect.height, 0, 0);
 	XSync(dpy, False);
-	XFreeFont(dpy, font);
 }
 
 static void handle_kpress(XKeyEvent * e)
@@ -561,19 +519,20 @@ static void handle_after_write(IXPServer * s, File * f)
 				break;
 			}
 		}
-	} else if (files[M_SIZE] == f) {
-		char *size = files[M_SIZE]->content;
+	} else if (files[M_GEOMETRY] == f) {
+		char *size = files[M_GEOMETRY]->content;
 		if (size && strrchr(size, ',')) {
 			blitz_strtorect(&rect, &mrect, size);
 			XFreePixmap(dpy, pmap);
-			XMoveResizeWindow(dpy, win, mrect.x, mrect.y,
-							  mrect.width, mrect.height);
+			XMoveResizeWindow(dpy, win, mrect.x, mrect.y, mrect.width, mrect.height);
 			XSync(dpy, False);
-			pmap = XCreatePixmap(dpy, win, mrect.width, mrect.height,
-								 DefaultDepth(dpy, screen_num));
+			pmap = XCreatePixmap(dpy, win, mrect.width, mrect.height, DefaultDepth(dpy, screen_num));
 			XSync(dpy, False);
 			draw_menu();
 		}
+	} else if (files[M_FONT] == f) {
+		XFreeFont(dpy, font);
+		font = blitz_getfont(dpy, files[M_FONT]->content);
 	} else if (files[M_COMMAND] == f) {
 		update_items(files[M_COMMAND]->content);
 		draw_menu();
@@ -584,7 +543,7 @@ static void handle_after_write(IXPServer * s, File * f)
 static void handle_before_read(IXPServer * s, File * f)
 {
 	char buf[64];
-	if (f != files[M_SIZE])
+	if (f != files[M_GEOMETRY])
 		return;
 	snprintf(buf, sizeof(buf), "%d,%d,%d,%d", mrect.x, mrect.y,
 			 mrect.width, mrect.height);
@@ -605,35 +564,23 @@ static void run(char *size)
 		exit(1);
 	}
 	files[M_CTL]->after_write = handle_after_write;
-	files[M_SIZE] = ixp_create(ixps, "/size");
-	files[M_SIZE]->before_read = handle_before_read;
-	files[M_SIZE]->after_write = handle_after_write;
+	files[M_GEOMETRY] = ixp_create(ixps, "/geometry");
+	files[M_GEOMETRY]->before_read = handle_before_read;
+	files[M_GEOMETRY]->after_write = handle_after_write;
 	files[M_PRE_COMMAND] = ixp_create(ixps, "/precmd");
 	files[M_COMMAND] = ixp_create(ixps, "/cmd");
 	files[M_COMMAND]->after_write = handle_after_write;
 	files[M_HISTORY] = ixp_create(ixps, "/history");
 	add_history("");
 	files[M_LOOKUP] = ixp_create(ixps, "/lookup");
-	files[M_TEXT_FONT] =
-		wmii_create_ixpfile(ixps, "/style/text-font", BLITZ_FONT);
-	files[M_SELECTED_BG_COLOR] =
-		wmii_create_ixpfile(ixps, "/sel-style/bg-color",
-							BLITZ_SEL_BG_COLOR);
-	files[M_SELECTED_TEXT_COLOR] =
-		wmii_create_ixpfile(ixps, "/sel-style/text-color",
-							BLITZ_SEL_FG_COLOR);
-	files[M_SELECTED_BORDER_COLOR] =
-		wmii_create_ixpfile(ixps, "/sel-style/border-color",
-							BLITZ_SEL_BORDER_COLOR);
-	files[M_NORMAL_BG_COLOR] =
-		wmii_create_ixpfile(ixps, "/norm-style/bg-color",
-							BLITZ_NORM_BG_COLOR);
-	files[M_NORMAL_TEXT_COLOR] =
-		wmii_create_ixpfile(ixps, "/norm-style/text-color",
-							BLITZ_NORM_FG_COLOR);
-	files[M_NORMAL_BORDER_COLOR] =
-		wmii_create_ixpfile(ixps, "/norm-style/border-color",
-							BLITZ_NORM_BORDER_COLOR);
+	files[M_FONT] = wmii_create_ixpfile(ixps, "/font", BLITZ_FONT);
+	font = blitz_getfont(dpy, files[M_FONT]->content);
+	files[M_SEL_BG_COLOR] = wmii_create_ixpfile(ixps, "/sstyle/bgcolor", BLITZ_SEL_BG_COLOR);
+	files[M_SEL_TEXT_COLOR] = wmii_create_ixpfile(ixps, "/sstyle/fgcolor", BLITZ_SEL_FG_COLOR);
+	files[M_SEL_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/sstyle/bordercolor", BLITZ_SEL_BORDER_COLOR);
+	files[M_NORM_BG_COLOR] = wmii_create_ixpfile(ixps, "/nstyle/bgcolor", BLITZ_NORM_BG_COLOR);
+	files[M_NORM_TEXT_COLOR] = wmii_create_ixpfile(ixps, "/nstyle/fgcolor", BLITZ_NORM_FG_COLOR);
+	files[M_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/nstyle/bordercolor", BLITZ_NORM_BORDER_COLOR);
 	files[M_RETARDED] = ixp_create(ixps, "/retarded");
 
 	wa.override_redirect = 1;
@@ -648,14 +595,12 @@ static void run(char *size)
 	if (!mrect.width)
 		mrect.width = DisplayWidth(dpy, screen_num);
 	if (!mrect.height)
-		mrect.height = 40;
+		mrect.height = 20;
 
 	win = XCreateWindow(dpy, RootWindow(dpy, screen_num), mrect.x, mrect.y,
-						mrect.width, mrect.height, 0, DefaultDepth(dpy,
-																   screen_num),
+						mrect.width, mrect.height, 0, DefaultDepth(dpy, screen_num),
 						CopyFromParent, DefaultVisual(dpy, screen_num),
-						CWOverrideRedirect | CWBackPixmap | CWEventMask,
-						&wa);
+						CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
 	XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_xterm));
 	XSync(dpy, False);
 
@@ -664,13 +609,10 @@ static void run(char *size)
 	gcv.graphics_exposures = False;
 
 	gc = XCreateGC(dpy, win, 0, 0);
-	pmap =
-		XCreatePixmap(dpy, win, mrect.width, mrect.height,
-					  DefaultDepth(dpy, screen_num));
+	pmap = XCreatePixmap(dpy, win, mrect.width, mrect.height, DefaultDepth(dpy, screen_num));
 
 	/* main event loop */
-	run_server_with_fd_support(ixps, ConnectionNumber(dpy),
-							   check_event, 0);
+	run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event, 0);
 	deinit_server(ixps);
 	XFreePixmap(dpy, pmap);
 	XFreeGC(dpy, gc);

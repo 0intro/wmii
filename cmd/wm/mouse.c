@@ -324,7 +324,7 @@ void mouse_move(Frame * f)
 		case ButtonRelease:
 			if (!first) {
 				draw_pseudo_border(&frect);
-				resize_frame(f, &frect, &pt, 0);
+				resize_frame(f, &frect, &pt);
 			}
 			draw_page(page[sel]);
 			free(rects);
@@ -567,7 +567,7 @@ void mouse_resize(Frame * f, Align align)
 				draw_pseudo_border(&frect);
 				pt.x = px;
 				pt.y = py;
-				resize_frame(f, &frect, &pt, 0);
+				resize_frame(f, &frect, &pt);
 			}
 			XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
 			XUngrabServer(dpy);

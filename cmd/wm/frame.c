@@ -14,7 +14,6 @@
 
 static Frame zero_frame = { 0 };
 
-static void mouse();
 static void select_client(void *obj, char *cmd);
 static void handle_after_write_frame(IXPServer * s, File * f);
 static void handle_before_read_frame(IXPServer * s, File * f);
@@ -47,10 +46,10 @@ Frame *alloc_frame(XRectangle * r)
 	snprintf(buf, MAX_BUF, "/detached/f/%d/ctl", id);
 	f->file[F_CTL] = ixp_create(ixps, buf);
 	f->file[F_CTL]->after_write = handle_after_write_frame;
-	snprintf(buf, MAX_BUF, "/detached/f/%d/size", id);
-	f->file[F_SIZE] = ixp_create(ixps, buf);
-	f->file[F_SIZE]->before_read = handle_before_read_frame;
-	f->file[F_SIZE]->after_write = handle_after_write_frame;
+	snprintf(buf, MAX_BUF, "/detached/f/%d/geometry", id);
+	f->file[F_GEOMETRY] = ixp_create(ixps, buf);
+	f->file[F_GEOMETRY]->before_read = handle_before_read_frame;
+	f->file[F_GEOMETRY]->after_write = handle_after_write_frame;
 	snprintf(buf, MAX_BUF, "/detached/f/%d/border", id);
 	f->file[F_BORDER] = wmii_create_ixpfile(ixps, buf, def[WM_BORDER]->content);
 	f->file[F_BORDER]->after_write = handle_after_write_frame;
@@ -189,8 +188,7 @@ static void check_dimensions(Frame * f, unsigned int tabh, unsigned int bw)
 	}
 }
 
-static void
-resize_incremental(Frame * f, unsigned int tabh, unsigned int bw)
+static void resize_incremental(Frame * f, unsigned int tabh, unsigned int bw)
 {
 	Client *c = f->client ? f->client[f->sel] : 0;
 	if (!c)
@@ -216,20 +214,13 @@ resize_incremental(Frame * f, unsigned int tabh, unsigned int bw)
 	}
 }
 
-void
-resize_frame(Frame * f, XRectangle * r, XPoint * pt, int ignore_layout)
+void resize_frame(Frame * f, XRectangle * r, XPoint * pt)
 {
+	Area *a = f->area;
 	unsigned int tabh = tab_height(f);
 	unsigned int bw = border_width(f);
-	/* do layout stuff if necessary */
-	if (!ignore_layout) {
-		Area *a = f->area;
-		if (a && a->layout) {
-			a->layout->resize(f, r, pt);
-		} else
-			f->rect = *r;
-	} else
-		f->rect = *r;
+
+	a->layout->resize(f, r, pt);
 
 	/* resize if client requests special size */
 	check_dimensions(f, tabh, bw);
@@ -238,8 +229,7 @@ resize_frame(Frame * f, XRectangle * r, XPoint * pt, int ignore_layout)
 		&& ((char *) f->file[F_HANDLE_INC]->content)[0] == '1')
 		resize_incremental(f, tabh, bw);
 
-	XMoveResizeWindow(dpy, f->win, f->rect.x, f->rect.y, f->rect.width,
-					  f->rect.height);
+	XMoveResizeWindow(dpy, f->win, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
 	resize_client(f, (tabh ? tabh : bw), bw);
 }
 
@@ -319,6 +309,7 @@ void draw_frame(Frame * f)
 
 void handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 {
+	Align align;
 	int bindex;
 	int size = count_items((void **) f->client);
 	int cindex = e->x / f->rect.width / size;
@@ -330,7 +321,13 @@ void handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 		return;
 	}
 	if (e->button == Button1) {
-		mouse();
+		if (!(f = SELFRAME(page[sel])))
+			return;
+		align = cursor_to_align(f->cursor);
+		if (align == CENTER)
+			mouse_move(f);
+		else
+			mouse_resize(f, align);
 		return;
 	}
 	bindex = F_EVENT_B2PRESS - 2 + e->button;
@@ -348,7 +345,7 @@ void attach_client_to_frame(Frame * f, Client * c)
 	f->sel = index_item((void **) f->client, c);
 	c->frame = f;
 	reparent_client(c, f->win, border_width(f), tab_height(f));
-	resize_frame(f, &f->rect, 0, 1);
+	resize_frame(f, &f->rect, 0);
 	show_client(c);
 	sel_client(c);
 }
@@ -374,22 +371,6 @@ void detach_client_from_frame(Client * c)
 		sel_client(f->client[f->sel]);
 		draw_frame(f);
 	}
-}
-
-static void mouse()
-{
-	Frame *f;
-	Align align;
-
-	if (!page)
-		return;
-	if (!(f = SELFRAME(page[sel])))
-		return;
-	align = cursor_to_align(f->cursor);
-	if (align == CENTER)
-		mouse_move(f);
-	else
-		mouse_resize(f, align);
 }
 
 static void select_client(void *obj, char *cmd)
@@ -418,7 +399,7 @@ static void handle_before_read_frame(IXPServer * s, File * f)
 	int i = 0;
 
 	for (i = 0; frame && frame[i]; i++) {
-		if (f == frame[i]->file[F_SIZE]) {
+		if (f == frame[i]->file[F_GEOMETRY]) {
 			char buf[64];
 			snprintf(buf, 64, "%d,%d,%d,%d", frame[i]->rect.x,
 					 frame[i]->rect.y, frame[i]->rect.width,
@@ -449,12 +430,12 @@ static void handle_after_write_frame(IXPServer * s, File * f)
 				draw_page(frame[i]->area->page);
 			}
 			return;
-		} else if (f == frame[i]->file[F_SIZE]) {
-			char *size = frame[i]->file[F_SIZE]->content;
+		} else if (f == frame[i]->file[F_GEOMETRY]) {
+			char *size = frame[i]->file[F_GEOMETRY]->content;
 			if (size && strrchr(size, ',')) {
 				XRectangle frect;
 				blitz_strtorect(&rect, &frect, size);
-				resize_frame(frame[i], &frect, 0, 0);
+				resize_frame(frame[i], &frect, 0);
 				draw_page(frame[i]->area->page);
 			}
 			return;

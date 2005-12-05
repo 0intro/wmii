@@ -56,7 +56,7 @@ static void arrange_column(Area * a, Column * col)
 			col->frame[i]->rect.height = height;
 			col->frame[i]->rect.y = i * height;
 		}
-		resize_frame(col->frame[i], &col->frame[i]->rect, 0, 1);
+		resize_frame(col->frame[i], &col->frame[i]->rect, 0);
 	}
 }
 
@@ -236,13 +236,13 @@ static void drop_resize(Frame * f, XRectangle * new)
 				Frame *f = west->frame[i];
 				f->rect.x = west->rect.x;
 				f->rect.width = west->rect.width;
-				resize_frame(f, &f->rect, 0, 1);
+				resize_frame(f, &f->rect, 0);
 			}
 			for (i = 0; col->frame && col->frame[i]; i++) {
 				Frame *f = col->frame[i];
 				f->rect.x = col->rect.x;
 				f->rect.width = col->rect.width;
-				resize_frame(f, &f->rect, 0, 1);
+				resize_frame(f, &f->rect, 0);
 			}
 		}
 	}
@@ -260,13 +260,13 @@ static void drop_resize(Frame * f, XRectangle * new)
 				Frame *f = col->frame[i];
 				f->rect.x = col->rect.x;
 				f->rect.width = col->rect.width;
-				resize_frame(f, &f->rect, 0, 1);
+				resize_frame(f, &f->rect, 0);
 			}
 			for (i = 0; east->frame && east->frame[i]; i++) {
 				Frame *f = east->frame[i];
 				f->rect.x = east->rect.x;
 				f->rect.width = east->rect.width;
-				resize_frame(f, &f->rect, 0, 1);
+				resize_frame(f, &f->rect, 0);
 			}
 		}
 	}
@@ -284,8 +284,8 @@ static void drop_resize(Frame * f, XRectangle * new)
 			north->rect.height = new->y - north->rect.y;
 			f->rect.width += new->y - north->rect.y;
 			f->rect.y = new->y;
-			resize_frame(north, &north->rect, 0, 1);
-			resize_frame(f, &f->rect, 0, 1);
+			resize_frame(north, &north->rect, 0);
+			resize_frame(f, &f->rect, 0);
 		}
 	}
 	if (new->y + new->height > f->rect.y + f->rect.height) {
@@ -297,8 +297,8 @@ static void drop_resize(Frame * f, XRectangle * new)
 			south->rect.x = new->x + new->width;
 			f->rect.x = new->x;
 			f->rect.width = new->width;
-			resize_frame(f, &f->rect, 0, 1);
-			resize_frame(south, &south->rect, 0, 1);
+			resize_frame(f, &f->rect, 0);
+			resize_frame(south, &south->rect, 0);
 		}
 	}
 }
@@ -340,8 +340,8 @@ static void _drop_move(Frame * f, XRectangle * new, XPoint * pt)
 					fp->rect = tmpr;
 					tgt->frame[idxf] = tgt->frame[idxfp];
 					tgt->frame[idxfp] = tmpf;
-					resize_frame(f, &f->rect, 0, 1);
-					resize_frame(fp, &fp->rect, 0, 1);
+					resize_frame(f, &f->rect, 0);
+					resize_frame(fp, &fp->rect, 0);
 				}
 				return;
 			}
