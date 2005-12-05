@@ -41,6 +41,18 @@ static void deinit_float(Area * a)
 
 static void attach_float(Area * a, Client * c)
 {
+	Frame *f = a->frame ? a->frame[a->sel] : 0;
+	/* check for tabbing? */
+	if (f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))
+		f = 0;
+	if (!f) {
+		f = alloc_frame(&c->rect);
+		attach_frame_to_area(a, f);
+	}
+	attach_client_to_frame(f, c);
+	if (a->page == page[sel])
+		XMapRaised(dpy, f->win);
+	draw_frame(f);
 }
 
 static void detach_float(Area * a, Client * c, int unmapped, int destroyed)

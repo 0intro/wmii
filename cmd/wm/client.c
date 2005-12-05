@@ -19,43 +19,29 @@ Client *alloc_client(Window w)
 	static int id = 0;
 	char buf[MAX_BUF];
 	char buf2[MAX_BUF];
-	XClassHint ch;
 	Client *c = (Client *) emalloc(sizeof(Client));
 
 	*c = zero_client;
 	c->win = w;
-	snprintf(buf, MAX_BUF, "/detached/client/%d", id);
-	c->files[C_PREFIX] = ixp_create(ixps, buf);
+	snprintf(buf, MAX_BUF, "/detached/c/%d", id);
+	c->file[C_PREFIX] = ixp_create(ixps, buf);
 	win_prop(dpy, c->win, XA_WM_NAME, buf2, MAX_BUF);
-	snprintf(buf, MAX_BUF, "/detached/client/%d/name", id);
-	c->files[C_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
-	if (XGetClassHint(dpy, c->win, &ch)) {
-		snprintf(buf, MAX_BUF, "/detached/client/%d/class", id);
-		c->files[C_CLASS] = wmii_create_ixpfile(ixps, buf, ch.res_class);
-		snprintf(buf, MAX_BUF, "/detached/client/%d/instance", id);
-		c->files[C_INSTANCE] = wmii_create_ixpfile(ixps, buf, ch.res_name);
-	} else {
-		snprintf(buf, MAX_BUF, "/detached/client/%d/class", id);
-		c->files[C_CLASS] = ixp_create(ixps, buf);
-		snprintf(buf, MAX_BUF, "/detached/client/%d/instance", id);
-		c->files[C_INSTANCE] = ixp_create(ixps, buf);
-	}
+	snprintf(buf, MAX_BUF, "/detached/c/%d/name", id);
+	c->file[C_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
 	id++;
-	client =
-		(Client **) attach_item_end((void **) client, c,
-									sizeof(Client *));
+	client = (Client **) attach_item_end((void **) client, c, sizeof(Client *));
 	XSelectInput(dpy, c->win, CLIENT_MASK);
 	return c;
 }
 
-void focus_client(Client * c, int raise, int up)
+void sel_client(Client * c, int raise, int up)
 {
 	Frame *f = 0;
-	/* focus client */
+	/* sel client */
 	if (c) {
 		f = c->frame;
 		for (f->sel = 0; f->client && f->client[f->sel] != c; f->sel++);
-		f->files[F_SEL_CLIENT]->content = c->files[C_PREFIX]->content;
+		f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
 		if (raise)
 			XRaiseWindow(dpy, c->win);
 		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
@@ -63,7 +49,7 @@ void focus_client(Client * c, int raise, int up)
 		XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 	invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
 	if (up && f)
-		focus_frame(f, raise, up, 0);
+		sel_frame(f, raise, up, 0);
 }
 
 void set_client_state(Client * c, int state)
@@ -163,7 +149,7 @@ void close_client(Client * c)
 		XKillClient(dpy, c->win);
 }
 
-void _init_client(Client * c, XWindowAttributes * wa)
+void init_client(Client * c, XWindowAttributes * wa)
 {
 	long msize;
 	c->rect.x = wa->x;
@@ -200,10 +186,10 @@ void handle_client_property(Client * c, XPropertyEvent * e)
 	case XA_WM_NAME:
 		win_prop(dpy, c->win, XA_WM_NAME, buf, sizeof(buf));
 		if (strlen(buf)) {
-			if (c->files[C_NAME]->content)
-				free(c->files[C_NAME]->content);
-			c->files[C_NAME]->content = estrdup(buf);
-			c->files[C_NAME]->size = strlen(buf);
+			if (c->file[C_NAME]->content)
+				free(c->file[C_NAME]->content);
+			c->file[C_NAME]->content = estrdup(buf);
+			c->file[C_NAME]->size = strlen(buf);
 		}
 		if (c->frame)
 			draw_client(c);
@@ -221,13 +207,12 @@ void handle_client_property(Client * c, XPropertyEvent * e)
 	}
 }
 
-void free_client(Client * c)
+void destroy_client(Client * c)
 {
-	client =
-		(Client **) detach_item((void **) client, c, sizeof(Client *));
-	ixp_remove_file(ixps, c->files[C_PREFIX]);
+	client = (Client **) detach_item((void **) client, c, sizeof(Client *));
+	ixp_remove_file(ixps, c->file[C_PREFIX]);
 	if (ixps->errstr)
-		fprintf(stderr, "wmiiwm: free_client(): %s\n", ixps->errstr);
+		fprintf(stderr, "wmiiwm: destroy_client(): %s\n", ixps->errstr);
 	free(c);
 }
 
@@ -248,11 +233,11 @@ void draw_client(Client * c)
 	for (i = 0; f->client[i] && f->client[i] != c; i++);
 
 	if (!f->client[i + 1])
-		draw_tab(f, c->files[C_NAME]->content, i * tw, 0,
+		draw_tab(f, c->file[C_NAME]->content, i * tw, 0,
 				 f->rect.width - (i * tw), tabh, ISSELFRAME(f)
 				 && f->client[f->sel] == c);
 	else
-		draw_tab(f, c->files[C_NAME]->content, i * tw, 0, tw, tabh,
+		draw_tab(f, c->file[C_NAME]->content, i * tw, 0, tw, tabh,
 				 ISSELFRAME(f) && f->client[f->sel] == c);
 }
 
@@ -269,39 +254,16 @@ void draw_clients(Frame * f)
 	for (i = 0; f->client[i]; i++) {
 		if (!f->client[i + 1]) {
 			int xoff = i * tw;
-			draw_tab(f, f->client[i]->files[C_NAME]->content,
+			draw_tab(f, f->client[i]->file[C_NAME]->content,
 					 xoff, 0, f->rect.width - xoff, tabh, ISSELFRAME(f)
 					 && f->client[f->sel] == f->client[i]);
 			break;
 		} else
-			draw_tab(f, f->client[i]->files[C_NAME]->content,
+			draw_tab(f, f->client[i]->file[C_NAME]->content,
 					 i * tw, 0, tw, tabh, ISSELFRAME(f)
 					 && f->client[f->sel] == f->client[i]);
 	}
 	XSync(dpy, False);
-}
-
-int manage_class_instance(Client * c)
-{
-	char buf[MAX_BUF];
-	File *f;
-	char *class = (char *) c->files[C_CLASS]->content;
-	char *inst = (char *) c->files[C_INSTANCE]->content;
-
-	if (!c->files[C_CLASS]->content || !c->files[C_INSTANCE]->content)
-		return 1;
-
-	snprintf(buf, sizeof(buf), "/default/client/%s:%s/manage",
-			 class ? class : "", inst ? inst : "");
-	f = ixp_walk(ixps, buf);
-	if (!f) {
-		snprintf(buf, sizeof(buf), "/default/client/%s:%s/manage",
-				 class ? class : "", "*");
-		f = ixp_walk(ixps, buf);
-	}
-	if (f && f->content)
-		return _strtonum(f->content, 0, 1);
-	return 1;
 }
 
 void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
@@ -362,4 +324,21 @@ void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 	}
 	c->rect.x += dx;
 	c->rect.y += dy;
+}
+
+void attach_client(Client * c)
+{
+	Area *a = 0;
+	if (!page)
+		alloc_page();
+	/* transient stuff */
+	a = SELAREA;
+	if (c && c->trans) {
+		Client *t = win_to_client(c->trans);
+		if (t && t->frame)
+			a = t->frame->area;
+	}
+
+	a->layout->attach(a, c);
+	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }

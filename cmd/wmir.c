@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
 		usage();
 	}
 	/* open socket */
-	if (!(c = init_client(sockfile))) {
+	if (!(c = init_ixp_client(sockfile))) {
 		fprintf(stderr, "wmir: cannot connect to server '%s'\n", sockfile);
 		exit(1);
 	}

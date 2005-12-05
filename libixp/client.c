@@ -250,7 +250,7 @@ static void cixp_remove(IXPClient * c, char *path)
 	free(result);
 }
 
-IXPClient *init_client(char *sockfile)
+IXPClient *init_ixp_client(char *sockfile)
 {
 	struct sockaddr_un addr = { 0 };
 	socklen_t su_len;

@@ -121,7 +121,7 @@ static void init_col(Area * a)
 		j = 0;
 		for (i = 0; i < (cols - 1); i++) {
 			col = acme->column[i];
-			col->frame = (Frame **) attach_item_end((void **) col->frame, alloc_frame(&client[i]->rect, 1, 1), sizeof(Frame *));
+			col->frame = (Frame **) attach_item_end((void **) col->frame, alloc_frame(&client[i]->rect), sizeof(Frame *));
 			col->frame[0]->aux = col;
 			attach_frame_to_area(a, col->frame[0]);
 			attach_client_to_frame(col->frame[0], client[j]);
@@ -130,7 +130,7 @@ static void init_col(Area * a)
 		col = acme->column[cols - 1];
 		col->frame = emalloc((n - j + 1) * sizeof(Frame *));
 		for (i = 0; i + j < n; i++) {
-			col->frame[i] = alloc_frame(&client[j + i]->rect, 1, 1);
+			col->frame[i] = alloc_frame(&client[j + i]->rect);
 			col->frame[i]->aux = col;
 			attach_frame_to_area(a, col->frame[i]);
 			attach_client_to_frame(col->frame[i], client[j + i]);
@@ -141,7 +141,7 @@ static void init_col(Area * a)
 		j = 0;
 		for (i = cols - 1; j < n; i--) {
 			col = acme->column[i];
-			col->frame = (Frame **) attach_item_end((void **) col->frame, alloc_frame(&client[i]->rect, 1, 1), sizeof(Frame *));
+			col->frame = (Frame **) attach_item_end((void **) col->frame, alloc_frame(&client[i]->rect), sizeof(Frame *));
 			col->frame[0]->aux = col;
 			attach_frame_to_area(a, col->frame[0]);
 			attach_client_to_frame(col->frame[0], client[j]);
@@ -180,7 +180,7 @@ static void attach_col(Area * a, Client * c)
 	Frame *f;
 
 	col = acme->column[acme->sel];
-	f = alloc_frame(&c->rect, 1, 1);
+	f = alloc_frame(&c->rect);
 	col->frame = (Frame **) attach_item_end((void **) col->frame, f, sizeof(Frame *));
 	f->aux = col;
 	col->refresh = 1;

@@ -22,29 +22,27 @@ Action page_acttbl[] = {
 	{0, 0}
 };
 
-Page *alloc_page(char *autodestroy)
+Page *alloc_page()
 {
 	Page *p = emalloc(sizeof(Page));
 	char buf[MAX_BUF];
 	int id = count_items((void **) page) + 1;
 
 	*p = zero_page;
-	snprintf(buf, sizeof(buf), "/page/%d", id);
-	p->files[P_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, sizeof(buf), "/page/%d/area", id);
-	p->files[P_AREA_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, sizeof(buf), "/page/%d/area/sel", id);
-	p->files[P_SEL_AREA] = ixp_create(ixps, buf);
-	p->files[P_SEL_AREA]->bind = 1;	/* mount point */
-	snprintf(buf, sizeof(buf), "/page/%d/ctl", id);
-	p->files[P_CTL] = ixp_create(ixps, buf);
-	p->files[P_CTL]->after_write = handle_after_write_page;
-	snprintf(buf, sizeof(buf), "/page/%d/auto-destroy", id);
-	p->files[P_AUTO_DESTROY] = wmii_create_ixpfile(ixps, buf, autodestroy);
+	snprintf(buf, sizeof(buf), "/p/%d", id);
+	p->file[P_PREFIX] = ixp_create(ixps, buf);
+	snprintf(buf, sizeof(buf), "/p/%d/a", id);
+	p->file[P_AREA_PREFIX] = ixp_create(ixps, buf);
+	snprintf(buf, sizeof(buf), "/p/%d/a/sel", id);
+	p->file[P_SEL_AREA] = ixp_create(ixps, buf);
+	p->file[P_SEL_AREA]->bind = 1;	/* mount point */
+	snprintf(buf, sizeof(buf), "/p/%d/ctl", id);
+	p->file[P_CTL] = ixp_create(ixps, buf);
+	p->file[P_CTL]->after_write = handle_after_write_page;
+	alloc_area(p, &rect, "float");
 	page = (Page **) attach_item_end((void **) page, p, sizeof(Page *));
 	sel = index_item((void **) page, p);
-	def[WM_SEL_PAGE]->content = p->files[P_PREFIX]->content;
-	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+	def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
 	return p;
 }
 
@@ -56,8 +54,8 @@ void destroy_page(Page * p)
 	free_page(p);
 	if (page) {
 		show_page(page[sel]);
-		def[WM_SEL_PAGE]->content = page[sel]->files[P_PREFIX]->content;
-		focus_page(page[sel], 0, 1);
+		def[WM_SEL_PAGE]->content = page[sel]->file[P_PREFIX]->content;
+		sel_page(page[sel], 0, 1);
 		invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	}
 }
@@ -72,13 +70,13 @@ void free_page(Page * p)
 			sel = 0;
 	}
 	def[WM_SEL_PAGE]->content = 0;
-	ixp_remove_file(ixps, p->files[P_PREFIX]);
+	ixp_remove_file(ixps, p->file[P_PREFIX]);
 	if (ixps->errstr)
 		fprintf(stderr, "wmiiwm: free_page(): %s\n", ixps->errstr);
 	free(p);
 }
 
-void focus_page(Page * p, int raise, int down)
+void sel_page(Page * p, int raise, int down)
 {
 	if (!page)
 		return;
@@ -86,11 +84,11 @@ void focus_page(Page * p, int raise, int down)
 		hide_page(page[sel]);
 		sel = index_item((void **) page, p);
 		show_page(page[sel]);
-		def[WM_SEL_PAGE]->content = p->files[P_PREFIX]->content;
-		invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+		def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
 	}
+	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	if (down)
-		focus_area(p->area[p->sel], raise, 0, down);
+		sel_area(p->area[p->sel], raise, 0, down);
 }
 
 void draw_page(Page * p)
@@ -168,7 +166,7 @@ static void select_frame(void *obj, char *cmd)
 		f = f->area->frame[i];
 	}
 	if (old != f) {
-		focus_frame(f, 1, 1, 1);
+		sel_frame(f, 1, 1, 1);
 		center_pointer(f);
 		draw_frame(old);
 		draw_frame(f);
@@ -190,35 +188,21 @@ void show_page(Page * p)
 		show_area(p->area[i]);
 }
 
-Layout *get_layout(char *name)
-{
-	int i = 0;
-	size_t len;
-	if (!name)
-		return 0;
-	len = strlen(name);
-	for (i = 0; layouts[i]; i++) {
-		if (!strncmp(name, layouts[i]->name, len))
-			return layouts[i];
-	}
-	return 0;
-}
-
 static void handle_after_write_page(IXPServer * s, File * f)
 {
 	int i;
 
 	for (i = 0; page && page[i]; i++) {
 		Page *p = page[i];
-		if (p->files[P_CTL] == f) {
+		if (p->file[P_CTL] == f) {
 			run_action(f, p, page_acttbl);
 			return;
 		}
 		/*
-		   else if (p->files[P_MANAGED_SIZE] == f) {
+		   else if (p->file[P_MANAGED_SIZE] == f) {
 		   / resize stuff /
 		   blitz_strtorect(dpy, &rect, &p->managed_rect,
-		   p->files[P_MANAGED_SIZE]->content);
+		   p->file[P_MANAGED_SIZE]->content);
 		   if (!p->managed_rect.width)
 		   p->managed_rect.width = 10;
 		   if (!p->managed_rect.height)
@@ -227,11 +211,11 @@ static void handle_after_write_page(IXPServer * s, File * f)
 		   p->layout->arrange(p);
 		   draw_page(p);
 		   return;
-		   } else if (p->files[P_MANAGED_LAYOUT] == f) {
+		   } else if (p->file[P_MANAGED_LAYOUT] == f) {
 		   int             had_valid_layout = p->layout ? 1 : 0;
 		   if (p->layout)
 		   p->layout->deinit(p);
-		   p->layout = get_layout(p->files[P_MANAGED_LAYOUT]->content);
+		   p->layout = get_layout(p->file[P_MANAGED_LAYOUT]->content);
 		   if (p->layout) {
 		   p->layout->init(p);
 		   p->layout->arrange(p);
@@ -269,7 +253,7 @@ static void handle_after_write_page(IXPServer * s, File * f)
 		   free(tmp);
 		   }
 		   draw_page(p);
-		   invoke_wm_event(wm_files[CORE_EVENT_PAGE_UPDATE]);
+		   invoke_wm_event(wm_file[CORE_EVENT_PAGE_UPDATE]);
 		   return;
 		   }
 		 */
@@ -290,9 +274,9 @@ attach_frame_to_page(Page * p, Frame * f, int managed)
 		p->managed_stack =
 			(Frame **) attach_item_begin((void **) p->managed_stack, f,
 						     sizeof(Frame *));
-		wmii_move_ixpfile(f->files[F_PREFIX], p->files[P_MANAGED_PREFIX]);
-		p->files[P_MANAGED_SELECTED]->content =
-			f->files[F_PREFIX]->content;
+		wmii_move_ixpfile(f->file[F_PREFIX], p->file[P_MANAGED_PREFIX]);
+		p->file[P_MANAGED_SELECTED]->content =
+			f->file[F_PREFIX]->content;
 		if (p == page[sel_page])
 			for (i = 0; p->floating && p->floating[i]; i++)
 				XRaiseWindow(dpy, p->floating[i]->win);
@@ -302,13 +286,13 @@ attach_frame_to_page(Page * p, Frame * f, int managed)
 		p->floating_stack =
 			(Frame **) attach_item_begin((void **) p->floating_stack, f,
 						     sizeof(Frame *));
-		wmii_move_ixpfile(f->files[F_PREFIX], p->files[P_FLOATING_PREFIX]);
-		p->files[P_FLOATING_SELECTED]->content =
-			f->files[F_PREFIX]->content;
-		p->files[P_MODE]->content = p->files[P_FLOATING_PREFIX]->content;
+		wmii_move_ixpfile(f->file[F_PREFIX], p->file[P_FLOATING_PREFIX]);
+		p->file[P_FLOATING_SELECTED]->content =
+			f->file[F_PREFIX]->content;
+		p->file[P_MODE]->content = p->file[P_FLOATING_PREFIX]->content;
 	}
 	f->page = p;
-	focus_frame(f, 1, 0, 1);
+	sel_frame(f, 1, 0, 1);
 	if (is_managed_frame(f) && p->layout)
 		p->layout->manage(f);
 	center_pointer(f);
@@ -318,37 +302,37 @@ attach_frame_to_page(Page * p, Frame * f, int managed)
 }
 
 void 
-detach_frame_from_page(Frame * f, int ignore_focus_and_destroy)
+detach_frame_from_page(Frame * f, int ignore_sel_and_destroy)
 {
 	Page           *p = f->page;
-	wmii_move_ixpfile(f->files[F_PREFIX], wm_files[CORE_DETACHED_FRAME]);
+	wmii_move_ixpfile(f->file[F_PREFIX], wm_file[CORE_DETACHED_FRAME]);
 	if (is_managed_frame(f)) {
 		p->managed = (Frame **) detach_item((void **) p->managed, f,
 						    sizeof(Frame *));
 		p->managed_stack =
 			(Frame **) detach_item((void **) p->managed_stack, f,
 					       sizeof(Frame *));
-		p->files[P_MANAGED_SELECTED]->content = 0;
+		p->file[P_MANAGED_SELECTED]->content = 0;
 	} else {
 		p->floating = (Frame **) detach_item((void **) p->floating, f,
 						     sizeof(Frame *));
 		p->floating_stack =
 			(Frame **) detach_item((void **) p->floating_stack, f,
 					       sizeof(Frame *));
-		p->files[P_FLOATING_SELECTED]->content = 0;
+		p->file[P_FLOATING_SELECTED]->content = 0;
 	}
 	XUnmapWindow(dpy, f->win);
 	if (is_managed_mode(p) && p->layout)
 		p->layout->unmanage(f);
 	f->page = 0;
-	if (!ignore_focus_and_destroy) {
+	if (!ignore_sel_and_destroy) {
 		Frame          *fr;
 		if (!p->managed && !p->floating
-		    && _strtonum(p->files[P_AUTO_DESTROY]->content, 0, 1)) {
+		    && _strtonum(p->file[P_AUTO_DESTROY]->content, 0, 1)) {
 			destroy_page(p);
 			return;
 		}
-		focus_page(p, 0, 1);
+		sel_page(p, 0, 1);
 		fr = get_selected(p);
 		if (fr) {
 			center_pointer(fr);

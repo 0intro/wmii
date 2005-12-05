@@ -191,7 +191,7 @@ static void handle_destroynotify(XEvent * e)
 	else if (detached && (index_item((void **) detached, c) >= 0))
 		detached = (Client **) detach_item((void **) detached, c,
 										   sizeof(Client *));
-	free_client(c);
+	destroy_client(c);
 }
 
 static void handle_expose(XEvent * e)
@@ -220,7 +220,7 @@ static void handle_maprequest(XEvent * e)
 	if (!c)
 		c = alloc_client(ev->window);
 	if (!c->frame) {
-		_init_client(c, &wa);
+		init_client(c, &wa);
 		attach_client(c);
 	}
 }
@@ -232,7 +232,7 @@ static void handle_motionnotify(XEvent * e)
 	if (f) {
 		Frame *old = SELFRAME(page[sel]);
 		if (old != f) {
-			focus_frame(f, 0, 0, 1);
+			sel_frame(f, 0, 0, 1);
 			draw_frame(old);
 			draw_frame(f);
 		} else if (f->client) {
@@ -273,10 +273,10 @@ static void handle_unmapnotify(XEvent * e)
 			detach_client_from_frame(c, 1, 0);
 			if (page)
 				draw_page(page[sel]);
-			free_client(c);
+			destroy_client(c);
 		} else if (detached) {
 			if (index_item((void **) detached, c) == -1)
-				free_client(c);
+				destroy_client(c);
 		}
 	}
 }
@@ -289,7 +289,7 @@ static void handle_enternotify(XEvent * e)
 	if (ev->mode != NotifyNormal)
 		return;
 
-	/* mouse is not in the focus window */
+	/* mouse is not in the sel window */
 	if (ev->detail == NotifyInferior)
 		return;
 
@@ -298,7 +298,7 @@ static void handle_enternotify(XEvent * e)
 		Frame *old = SELFRAME(page[sel]);
 		XUndefineCursor(dpy, c->frame->win);
 		if (old != c->frame) {
-			focus_frame(c->frame, 0, 0, 1);
+			sel_frame(c->frame, 0, 0, 1);
 			draw_frame(old);
 			draw_frame(c->frame);
 		} else {

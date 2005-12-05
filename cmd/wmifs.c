@@ -140,7 +140,7 @@ static void bind(void *obj, char *arg)
 	b = emalloc(sizeof(Bind));
 	*b = zero_bind;
 
-	b->client = init_client(sfile);
+	b->client = init_ixp_client(sfile);
 
 	if (!b->client) {
 		fprintf(stderr,

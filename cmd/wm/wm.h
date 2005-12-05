@@ -15,13 +15,13 @@ enum {
 	P_AREA_PREFIX,
 	P_SEL_AREA,
 	P_CTL,
-	P_AUTO_DESTROY,
 	P_LAST
 };
 
 /* array indexes of area file pointers */
 enum {
 	A_PREFIX,
+	A_FRAME_PREFIX,
 	A_SEL_FRAME,
 	A_CTL,
 	A_GEOMETRY,
@@ -57,8 +57,6 @@ enum {
 enum {
 	C_PREFIX,
 	C_NAME,
-	C_CLASS,
-	C_INSTANCE,
 	C_LAST
 };
 
@@ -115,7 +113,7 @@ typedef struct Client Client;
 struct Page {
 	Area **area;
 	unsigned int sel;
-	File *files[P_LAST];
+	File *file[P_LAST];
 };
 
 struct Layout {
@@ -135,7 +133,7 @@ struct Area {
 	unsigned int sel;
 	XRectangle rect;
 	void *aux;					/* free pointer */
-	File *files[A_LAST];
+	File *file[A_LAST];
 };
 
 struct Frame {
@@ -147,7 +145,7 @@ struct Frame {
 	Client **client;
 	int sel;
 	void *aux;					/* free pointer */
-	File *files[F_LAST];
+	File *file[F_LAST];
 };
 
 struct Client {
@@ -158,9 +156,10 @@ struct Client {
 	XRectangle rect;
 	XSizeHints size;
 	Frame *frame;
-	File *files[C_LAST];
+	File *file[C_LAST];
 };
 
+#define SELAREA (page ? page[sel]->area[page[sel]->sel] : 0)
 #define SELFRAME(x) (x && x->area[x->sel]->frame ?  x->area[x->sel]->frame[x->area[x->sel]->sel] : 0)
 #define ISSELFRAME(x) (page && SELFRAME(page[sel]) == x)
 
@@ -208,43 +207,41 @@ File *def[WM_LAST];
 unsigned int valid_mask, num_lock_mask;
 
 /* area.c */
-Area *alloc_area(Page *p, XRectangle * r);
+Area *alloc_area(Page *p, XRectangle * r, char *layout);
 void destroy_area(Area * a);
-void free_area(Area * a);
-void focus_area(Area * a, int raise, int up, int down);
+void sel_area(Area * a, int raise, int up, int down);
 void attach_frame_to_area(Area * a, Frame * f);
-void detach_frame_from_area(Frame * f, int ignore_focus_and_destroy);
+void detach_frame_from_area(Frame * f, int ignore_sel_and_destroy);
 void draw_area(Area * a);
 void hide_area(Area * a);
 void show_area(Area * a);
 
 /* client.c */
 Client *alloc_client(Window w);
-void _init_client(Client * c, XWindowAttributes * wa);
-void free_client(Client * c);
+void init_client(Client * c, XWindowAttributes * wa);
+void destroy_client(Client * c);
 void configure_client(Client * c);
 void handle_client_property(Client * c, XPropertyEvent * e);
 void close_client(Client * c);
 void draw_client(Client * c);
 void draw_clients(Frame * f);
 void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert);
-int manage_class_instance(Client * c);
 void grab_client(Client * c, unsigned long mod, unsigned int button);
 void ungrab_client(Client * c, unsigned long mod, unsigned int button);
 void hide_client(Client * c);
 void show_client(Client * c);
 void reparent_client(Client * c, Window w, int x, int y);
-void focus_client(Client * c, int raise, int up);
+void sel_client(Client * c, int raise, int up);
+void attach_client(Client * c);
 
 /* frame.c */
-void focus_frame(Frame * f, int raise, int up, int down);
+void sel_frame(Frame * f, int raise, int up, int down);
 Frame *win_to_frame(Window w);
-Frame *alloc_frame(XRectangle * r, int add_frame_border, int floating);
+Frame *alloc_frame(XRectangle * r);
 void destroy_frame(Frame * f);
 void resize_frame(Frame * f, XRectangle * r, XPoint * pt, int ignore_layout);
 void draw_frame(Frame * f);
 void handle_frame_buttonpress(XButtonEvent * e, Frame * f);
-void attach_client(Client * c);
 void attach_client_to_frame(Frame * f, Client * c);
 void detach_client_from_frame(Client * c, int unmapped, int destroyed);
 void draw_tab(Frame * f, char *text, int x, int y, int w, int h, int sel);
@@ -264,15 +261,14 @@ Align xy_to_align(XRectangle * rect, int x, int y);
 void drop_move(Frame * f, XRectangle * new, XPoint * pt);
 
 /* page.c */
-Page *alloc_page(char *autodestroy);
+Page *alloc_page();
 void free_page(Page * p);
 void destroy_page(Page * p);
-void focus_page(Page * p, int raise, int down);
+void sel_page(Page * p, int raise, int down);
 XRectangle *rectangles(unsigned int *num);
 void hide_page(Page * p);
 void show_page(Page * p);
 void draw_page(Page * p);
-Layout *get_layout(char *name);
 
 /* layout.c */
 void init_layouts();
@@ -287,3 +283,4 @@ int win_state(Window w);
 void handle_after_write(IXPServer * s, File * f);
 void detach(Frame * f, int client_destroyed);
 void set_client_state(Client * c, int state);
+Layout *get_layout(char *name);

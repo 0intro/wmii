@@ -133,7 +133,7 @@ struct IXPServer {
 };
 
 /* client.c, implements client stub functions for fs access */
-IXPClient *init_client(char *sockfile);
+IXPClient *init_ixp_client(char *sockfile);
 void deinit_client(IXPClient * c);
 size_t
 seek_read(IXPClient * c, int fd, size_t offset, void *out_buf,
