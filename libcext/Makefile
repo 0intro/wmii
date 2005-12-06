@@ -3,7 +3,7 @@
 
 include ../config.mk
 
-SRC = array.c emalloc.c estrdup.c strlcat.c strlcpy.c strtonum.c tokenize.c
+SRC = container.c emalloc.c estrdup.c strlcat.c strlcpy.c strtonum.c tokenize.c
 
 OBJ = ${SRC:.c=.o}
 

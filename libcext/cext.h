@@ -15,7 +15,25 @@
 #define TRUE 1
 #endif
 
-/* array.c */
+/* container.c */
+typedef struct Container Container;
+typedef struct CItem CItem;
+
+struct CItem {
+	void *item;
+	CItem *prev;
+	CItem *next;
+};
+
+struct Container {
+	CItem *list;
+	CItem *stack;
+} Container;
+
+void attach_item
+void *item_at(
+
+
 void **attach_item_end(void **old, void *item, size_t size_item);
 void **attach_item_begin(void **old, void *item, size_t size_item);
 void **detach_item(void **old, void *item, size_t size_item);

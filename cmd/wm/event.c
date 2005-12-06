@@ -63,6 +63,7 @@ static void handle_buttonpress(XEvent * e)
 	Client *c;
 	XButtonPressedEvent *ev = &e->xbutton;
 	Frame *f = win_to_frame(ev->window);
+
 	if (f) {
 		handle_frame_buttonpress(ev, f);
 		return;
@@ -76,6 +77,7 @@ static void handle_buttonpress(XEvent * e)
 		if (c->frame) { /* client is attached */
 			ev->state &= valid_mask;
 			if (ev->state & Mod1Mask) {
+				Align align;
 				if (!c->frame->area->page->sel)
 					XRaiseWindow(dpy, c->frame->win);
 				switch (ev->button) {
@@ -83,13 +85,9 @@ static void handle_buttonpress(XEvent * e)
 					mouse_move(c->frame);
 					break;
 				case Button3:
-					{
-						Align align = xy_to_align(&c->rect, ev->x, ev->y);
-						if (align == CENTER)
-							mouse_move(c->frame);
-						else
-							mouse_resize(c->frame, align);
-					}
+					align = xy_to_align(&c->rect, ev->x, ev->y);
+					if (align == CENTER) mouse_move(c->frame);
+					else mouse_resize(c->frame, align);
 					break;
 				default:
 					break;
@@ -120,23 +118,16 @@ static void handle_configurerequest(XEvent * e)
 			tabh = tab_height(f);
 		}
 		if (ev->value_mask & CWStackMode) {
-			if (wc.stack_mode == Above)
-				XRaiseWindow(dpy, c->win);
-			else
-				ev->value_mask &= ~CWStackMode;
+			if (wc.stack_mode == Above) XRaiseWindow(dpy, c->win);
+			else ev->value_mask &= ~CWStackMode;
 		}
 		gravitate(c, tabh ? tabh : bw, bw, 1);
 
-		if (ev->value_mask & CWX)
-			c->rect.x = ev->x;
-		if (ev->value_mask & CWY)
-			c->rect.y = ev->y;
-		if (ev->value_mask & CWWidth)
-			c->rect.width = ev->width;
-		if (ev->value_mask & CWHeight)
-			c->rect.height = ev->height;
-		if (ev->value_mask & CWBorderWidth)
-			c->border = ev->border_width;
+		if (ev->value_mask & CWX) c->rect.x = ev->x;
+		if (ev->value_mask & CWY) c->rect.y = ev->y;
+		if (ev->value_mask & CWWidth) c->rect.width = ev->width;
+		if (ev->value_mask & CWHeight) c->rect.height = ev->height;
+		if (ev->value_mask & CWBorderWidth) c->border = ev->border_width;
 
 		gravitate(c, tabh ? tabh : bw, bw, 0);
 
@@ -144,8 +135,7 @@ static void handle_configurerequest(XEvent * e)
 			f->rect.x = wc.x = c->rect.x - bw;
 			f->rect.y = wc.y = c->rect.y - (tabh ? tabh : bw);
 			f->rect.width = wc.width = c->rect.width + 2 * bw;
-			f->rect.height = wc.height =
-				c->rect.height + bw + (tabh ? tabh : bw);
+			f->rect.height = wc.height = c->rect.height + bw + (tabh ? tabh : bw);
 			wc.border_width = 1;
 			wc.sibling = None;
 			wc.stack_mode = ev->detail;

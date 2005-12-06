@@ -323,8 +323,10 @@ void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 void attach_client(Client * c)
 {
 	Area *a = 0;
+	Frame *old;
 	if (!page)
 		alloc_page();
+	old = SELFRAME(page[sel]);
 	/* transient stuff */
 	a = SELAREA;
 	if (c && c->trans) {
@@ -332,8 +334,9 @@ void attach_client(Client * c)
 		if (t && t->frame)
 			a = t->frame->area;
 	}
-
 	a->layout->attach(a, c);
+	if (old)
+		draw_frame(old);
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 

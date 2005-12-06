@@ -7,6 +7,10 @@
 
 #include "cext.h"
 
+
+
+
+
 void **attach_item_begin(void **old, void *item, size_t size_item)
 {
 	int i, size_old;
