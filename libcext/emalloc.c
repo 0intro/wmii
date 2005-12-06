@@ -8,7 +8,7 @@
 
 #include "cext.h"
 
-void *emalloc(size_t size)
+void *cext_emalloc(size_t size)
 {
 	void *res = malloc(size);
 

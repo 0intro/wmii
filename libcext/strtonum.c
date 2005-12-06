@@ -23,9 +23,7 @@
 #define TOOSMALL 	2
 #define TOOLARGE 	3
 
-long long
-__strtonum(const char *numstr, long long minval, long long maxval,
-		   const char **errstrp)
+long long cext_strtonum(const char *numstr, long long minval, long long maxval, const char **errstrp)
 {
 	long long ll = 0;
 	char *ep;

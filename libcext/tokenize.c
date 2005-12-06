@@ -7,7 +7,7 @@
 
 #include "cext.h"
 
-size_t tokenize(char **result, size_t reslen, char *str, char delim)
+size_t cext_tokenize(char **result, size_t reslen, char *str, char delim)
 {
 	char *p, *n;
 	size_t i = 0;
