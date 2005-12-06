@@ -78,8 +78,7 @@ static void handle_buttonpress(XEvent * e)
 			ev->state &= valid_mask;
 			if (ev->state & Mod1Mask) {
 				Align align;
-				if (!c->frame->area->page->sel)
-					XRaiseWindow(dpy, c->frame->win);
+				XRaiseWindow(dpy, c->frame->win);
 				switch (ev->button) {
 				case Button1:
 					mouse_move(c->frame);
@@ -247,7 +246,7 @@ static void handle_enternotify(XEvent * e)
 
 	c = win_to_client(ev->window);
 	if (c && c->frame && (ev->serial != ignore_enternotify_crap)) {
-		Frame *old = SELFRAME(page[sel]);
+		Frame *old = get_sel_frame();
 		if (old != c->frame) {
 			sel_frame(c->frame, 1);
 			draw_frame(old);

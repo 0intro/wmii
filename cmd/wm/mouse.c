@@ -326,7 +326,7 @@ void mouse_move(Frame * f)
 				draw_pseudo_border(&frect);
 				resize_frame(f, &frect, &pt);
 			}
-			draw_page(page[sel]);
+			draw_page(get_sel_page());
 			free(rects);
 			XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
 			XUngrabServer(dpy);
@@ -592,19 +592,22 @@ void mouse_resize(Frame * f, Align align)
 }
 
 
-void drop_move(Frame * f, XRectangle * new, XPoint * pt)
+void drop_move(Frame *f, XRectangle *new, XPoint *pt)
 {
+	Frame *fp;
 	Area *a = f->area;
 	int cx, cy;
-	unsigned int i, idx = index_item((void **) a->frame, f);
+	unsigned int i, idx = cext_get_item_index(&a->frames, f);
+	size_t size = cext_sizeof(&a->frames);
 
 	if ((f->rect.x == new->x) && (f->rect.y == new->y))
 		return;
 	cx = (pt ? pt->x : new->x + new->width / 2);
 	cy = (pt ? pt->y : new->y + new->height / 2);
-	for (i = 0; a->frame[i]; i++) {
-		if ((a->frame[i] != f)
-			&& blitz_ispointinrect(cx, cy, &a->frame[i]->rect)) {
+	for (i = 0; i < size; i++) {
+		fp = cext_get_item(&a->frames, idx);
+		if ((i != idx) && blitz_ispointinrect(cx, cy, &fp->rect)) {
+			/* XXXX: implement swap replacement */
 			swap((void **) &a->frame[i], (void **) &a->frame[idx]);
 			a->sel = i;
 			a->layout->arrange(a);

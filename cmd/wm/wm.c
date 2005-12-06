@@ -708,8 +708,6 @@ static void run()
 	}
 	def[WM_CTL]->after_write = handle_after_write;
 
-	clients = frames = detached = pages = layouts = zero_container;
-
 	init_atoms();
 	init_cursors();
 	init_default();
