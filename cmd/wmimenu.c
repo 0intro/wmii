@@ -18,8 +18,6 @@
 
 #include "wmii.h"
 
-#include <cext.h>
-
 /* array indexes for file pointers */
 typedef enum {
 	M_CTL,
@@ -113,7 +111,7 @@ static void _exec(char *cmd)
 	add_history(cmd);
 	if (files[M_PRE_COMMAND]->content) {
 		size_t len = strlen(cmd) + files[M_PRE_COMMAND]->size + 2;
-		rc = emalloc(len);
+		rc = cext_emalloc(len);
 		snprintf(rc, len, "%s %s", (char *) files[M_PRE_COMMAND]->content,
 				 cmd);
 	}
@@ -242,7 +240,7 @@ static int update_items(char *pattern)
 		items = 0;
 		item_size = size;
 		if (item_size)
-			items = (File **) emalloc((item_size + 1) * sizeof(File *));
+			items = (File **) cext_emalloc((item_size + 1) * sizeof(File *));
 	}
 	size = 0;
 
@@ -354,7 +352,7 @@ static void handle_kpress(XKeyEvent * e)
 
 	text[0] = '\0';
 	if (files[M_COMMAND]->content) {
-		_strlcpy(text, files[M_COMMAND]->content, sizeof(text));
+		cext_strlcpy(text, files[M_COMMAND]->content, sizeof(text));
 		len = strlen(text);
 	}
 	buf[0] = '\0';
@@ -462,9 +460,9 @@ static void handle_kpress(XKeyEvent * e)
 		if ((num == 1) && !iscntrl((int) buf[0])) {
 			buf[num] = '\0';
 			if (len > 0)
-				_strlcat(text, buf, sizeof(text));
+				cext_strlcat(text, buf, sizeof(text));
 			else
-				_strlcpy(text, buf, sizeof(text));
+				cext_strlcpy(text, buf, sizeof(text));
 			set_text(text);
 			update_items(files[M_COMMAND]->content);
 		}
@@ -653,7 +651,7 @@ int main(int argc, char *argv[])
 
 	size[0] = '\0';
 	if (argc > i)
-		_strlcpy(size, argv[i], sizeof(size));
+		cext_strlcpy(size, argv[i], sizeof(size));
 
 	ixps = wmii_setup_server(sockfile);
 	items = 0;

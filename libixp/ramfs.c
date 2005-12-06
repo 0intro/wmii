@@ -53,7 +53,7 @@ File *ixp_create(IXPServer * s, char *path)
 	}
 	/* only create missing parts, if file is directory */
 	while (tok) {
-		f = (File *) emalloc(sizeof(File));
+		f = (File *) cext_emalloc(sizeof(File));
 		*f = zero_file;
 		f->name = strdup(tok);
 		f->parent = p;
@@ -90,7 +90,7 @@ static char *_ls(File * f)
 
 	for (p = f; p; p = p->next)
 		num++;
-	tmp = emalloc(sizeof(File *) * num);
+	tmp = cext_emalloc(sizeof(File *) * num);
 	i = 0;
 	for (p = f; p; p = p->next) {
 		size += strlen(p->name) + 1;
@@ -99,7 +99,7 @@ static char *_ls(File * f)
 		tmp[i++] = p;
 	}
 	qsort(tmp, num, sizeof(char *), comp_file_name);
-	result = emalloc(size);
+	result = cext_emalloc(size);
 	result[0] = '\0';
 	for (i = 0; i < num; i++) {
 		strncat(result, tmp[i]->name, size);

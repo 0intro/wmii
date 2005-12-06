@@ -9,8 +9,6 @@
 
 #include "wm.h"
 
-#include <cext.h>
-
 static Page zero_page = { 0 };
 
 static void select_frame(void *obj, char *cmd);
@@ -24,7 +22,7 @@ Action page_acttbl[] = {
 
 Page *alloc_page()
 {
-	Page *p = emalloc(sizeof(Page));
+	Page *p = cext_emalloc(sizeof(Page));
 	char buf[MAX_BUF], buf2[16];
 	int id = count_items((void **) page) + 1;
 
@@ -111,7 +109,7 @@ XRectangle *rectangles(unsigned int *num)
 	XRectangle r;
 
 	if (XQueryTree(dpy, root, &d1, &d2, &wins, num)) {
-		result = emalloc(*num * sizeof(XRectangle));
+		result = cext_emalloc(*num * sizeof(XRectangle));
 		for (i = 0; i < *num; i++) {
 			if (!XGetWindowAttributes(dpy, wins[i], &wa))
 				continue;
@@ -342,3 +340,8 @@ detach_frame_from_page(Frame * f, int ignore_sel_and_destroy)
 	}
 }
 */
+
+Page *get_sel_page()
+{
+	return cext_get_top_item(&page);
+}

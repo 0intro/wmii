@@ -10,8 +10,6 @@
 
 #include "wm.h"
 
-#include <cext.h>
-
 static Client zero_client = { 0 };
 
 Client *alloc_client(Window w)
@@ -19,7 +17,7 @@ Client *alloc_client(Window w)
 	static int id = 0;
 	char buf[MAX_BUF];
 	char buf2[MAX_BUF];
-	Client *c = (Client *) emalloc(sizeof(Client));
+	Client *c = (Client *) cext_emalloc(sizeof(Client));
 
 	*c = zero_client;
 	c->win = w;
@@ -29,7 +27,7 @@ Client *alloc_client(Window w)
 	snprintf(buf, MAX_BUF, "/detached/c/%d/name", id);
 	c->file[C_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
 	id++;
-	client = (Client **) attach_item_end((void **) client, c, sizeof(Client *));
+	cext_attach_item(&clients, c);
 	XSelectInput(dpy, c->win, CLIENT_MASK);
 	return c;
 }
@@ -39,7 +37,7 @@ void sel_client(Client * c)
 	Frame *f = 0;
 	/* sel client */
 	f = c->frame;
-	for (f->sel = 0; f->client && f->client[f->sel] != c; f->sel++);
+	cext_top_item(&f->clients, c);
 	f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
 	XRaiseWindow(dpy, c->win);
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
@@ -182,7 +180,7 @@ void handle_client_property(Client * c, XPropertyEvent * e)
 		if (strlen(buf)) {
 			if (c->file[C_NAME]->content)
 				free(c->file[C_NAME]->content);
-			c->file[C_NAME]->content = estrdup(buf);
+			c->file[C_NAME]->content = cext_estrdup(buf);
 			c->file[C_NAME]->size = strlen(buf);
 		}
 		if (c->frame)
@@ -203,7 +201,7 @@ void handle_client_property(Client * c, XPropertyEvent * e)
 
 void destroy_client(Client * c)
 {
-	client = (Client **) detach_item((void **) client, c, sizeof(Client *));
+	cext_detach_item(&clients, c);
 	ixp_remove_file(ixps, c->file[C_PREFIX]);
 	if (ixps->errstr)
 		fprintf(stderr, "wmiiwm: destroy_client(): %s\n", ixps->errstr);
@@ -211,53 +209,33 @@ void destroy_client(Client * c)
 }
 
 /* speed reasoned function for client property change */
-void draw_client(Client * c)
+void draw_client(void *item)
 {
+	Client *c = item;
 	Frame *f = c->frame;
-	unsigned int tabh = tab_height(f);
-	int i, size;
-	int tw;
+	unsigned int tw, tabh = tab_height(f);
+	size_t size;
+	int i;
 
 	if (!tabh)
 		return;
-	size = count_items((void **) f->client);
+	size = cext_sizeof(&f->clients);
 	tw = f->rect.width;
 	if (size)
 		tw /= size;
-	for (i = 0; f->client[i] && f->client[i] != c; i++);
-
-	if (!f->client[i + 1])
-		draw_tab(f, c->file[C_NAME]->content, i * tw, 0,
-				 f->rect.width - (i * tw), tabh, ISSELFRAME(f)
-				 && f->client[f->sel] == c);
+	i = cext_get_item_index(&f->clients, c);
+	if (i < size - 1)
+		draw_tab(f, c->file[C_NAME]->content, i * tw, 0, f->rect.width - (i * tw), tabh,
+				 (f == get_sel_frame()) && (c == get_sel_client()));
 	else
 		draw_tab(f, c->file[C_NAME]->content, i * tw, 0, tw, tabh,
-				 ISSELFRAME(f) && f->client[f->sel] == c);
+				 (f == get_sel_frame()) && (c == get_sel_client()));
+	XSync(dpy, False);
 }
 
 void draw_clients(Frame * f)
 {
-	unsigned int tabh = tab_height(f);
-	int i, size = count_items((void **) f->client);
-	int tw = f->rect.width;
-
-	if (!tabh || !size)
-		return;
-	if (size)
-		tw /= size;
-	for (i = 0; f->client[i]; i++) {
-		if (!f->client[i + 1]) {
-			int xoff = i * tw;
-			draw_tab(f, f->client[i]->file[C_NAME]->content,
-					 xoff, 0, f->rect.width - xoff, tabh, ISSELFRAME(f)
-					 && f->client[f->sel] == f->client[i]);
-			break;
-		} else
-			draw_tab(f, f->client[i]->file[C_NAME]->content,
-					 i * tw, 0, tw, tabh, ISSELFRAME(f)
-					 && f->client[f->sel] == f->client[i]);
-	}
-	XSync(dpy, False);
+	cext_iterate(&f->clients, draw_client);
 }
 
 void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
@@ -323,12 +301,11 @@ void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 void attach_client(Client * c)
 {
 	Area *a = 0;
-	Frame *old;
-	if (!page)
+	Frame *old = get_sel_frame();
+	if (!cext_sizeof(&pages))
 		alloc_page();
-	old = SELFRAME(page[sel]);
 	/* transient stuff */
-	a = SELAREA;
+	a = get_sel_area();
 	if (c && c->trans) {
 		Client *t = win_to_client(c->trans);
 		if (t && t->frame)
@@ -345,7 +322,11 @@ void detach_client(Client *c) {
 		c->frame->area->layout->detach(c->frame->area, c);
 	if (c->destroyed)
 		destroy_client(c);
-	if (page)
-		sel_page(page[sel]);
+	sel_page(get_sel_page());
 }
 
+Client *get_sel_client()
+{
+	Frame *f = get_sel_frame();
+	return f ? cext_get_top_item(&f->clients) : nil;
+}

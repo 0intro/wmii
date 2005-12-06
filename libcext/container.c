@@ -76,6 +76,12 @@ void *cext_find_item(Container *c, void *pattern, int (*comp)(void *pattern, voi
 	return i ? i->item : nil;
 }
 
+void cext_iterate(Container *c, void (*doit)(void *))
+{
+	CItem *i;
+	for (i = c->list; i; i = i->next)
+		doit(i->item);
+}
 
 void cext_top_item(Container *c, void *item)
 {
@@ -119,6 +125,17 @@ void *cext_get_item(Container *c, size_t index)
 		idx++;
 
 	return i ? i->item : nil;
+}
+
+int cext_get_item_index(Container *c, void *item)
+{
+	int idx = 0;
+	CItem *i;
+
+	for (i = c->list; i && i->item != item; i = i->next)
+		idx++;
+
+	return i ? idx : -1;
 }
 
 size_t cext_sizeof(Container *c)

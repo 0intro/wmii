@@ -111,7 +111,7 @@ static void server_client_read(IXPServer * s, IXPConn * c)
 	if (!s->errstr)
 		s->errstr = "function not supported";
 	s->fcall.id = RERROR;
-	_strlcpy(s->fcall.errstr, s->errstr, sizeof(s->fcall.errstr));
+	cext_strlcpy(s->fcall.errstr, s->errstr, sizeof(s->fcall.errstr));
 	msize = ixp_fcall_to_msg(&s->fcall, msg, IXP_MAX_MSG);
 	if (ixp_send_message(c->fd, msg, msize, &s->errstr) != msize)
 		ixp_server_rm_conn(s, c);

@@ -8,7 +8,6 @@
 #include <stdlib.h>
 
 #include "blitz.h"
-#include <cext.h>
 
 static int strtoalign(Align * result, char *val)
 {
@@ -57,7 +56,7 @@ int blitz_strtorect(XRectangle * root, XRectangle * r, char *val)
 		return FALSE;
 	sx = sy = sw = sh = 0;
 	x = y = w = h = 0;
-	_strlcpy(buf, val, sizeof(buf));
+	cext_strlcpy(buf, val, sizeof(buf));
 
 	x = strtok_r(buf, ",", &p);
 	if (x) {
@@ -201,13 +200,11 @@ int blitz_distance(XRectangle * origin, XRectangle * target)
 								((oy - ty) * (oy - ty))));
 }
 
-void
-blitz_getbasegeometry(void **items, unsigned int *size,
-					  unsigned int *cols, unsigned int *rows)
+void blitz_getbasegeometry(Container *c, unsigned int *size, unsigned int *cols, unsigned int *rows)
 {
 	float sq, dummy;
 
-	*size = count_items((void **) items);
+	*size = cext_sizeof(c);
 	sq = sqrt(*size);
 	if (modff(sq, &dummy) < 0.5)
 		*rows = floor(sq);

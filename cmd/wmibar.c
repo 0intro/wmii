@@ -16,8 +16,6 @@
 
 #include "wmii.h"
 
-#include <cext.h>
-
 /* array indexes for file pointers */
 typedef enum {
 	B_CTL,
@@ -290,17 +288,15 @@ static void draw_bar(void *obj, char *arg)
 		n = 0;
 		for (f = label; f; f = f->next)
 			n++;
-		paths = emalloc(sizeof(char *) * n);
+		paths = cext_emalloc(sizeof(char *) * n);
 		i = 0;
 		for (f = label; f; f = f->next)
 			paths[i++] = f->name;
 		qsort(paths, n, sizeof(char *), comp_str);
 		for (i = 0; i < n; i++) {
 			snprintf(buf, sizeof(buf), "/%s", paths[i]);
-			item = emalloc(sizeof(Item));
-			items =
-				(Item **) attach_item_end((void **) items, item,
-										  sizeof(Item *));
+			item = cext_emalloc(sizeof(Item));
+			items = (Item **) attach_item_end((void **) items, item, sizeof(Item *));
 			init_item(buf, item);
 		}
 		draw();
@@ -533,7 +529,7 @@ int main(int argc, char *argv[])
 
 	geom[0] = '\0';
 	if (argc > i)
-		_strlcpy(geom, argv[i], sizeof(geom));
+		cext_strlcpy(geom, argv[i], sizeof(geom));
 
 	ixps = wmii_setup_server(sockfile);
 	run(geom);

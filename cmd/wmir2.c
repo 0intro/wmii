@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
 		char *_argv[3];
 		int _argc;
 		while (fgets(line, 4096, stdin))
-			if ((_argc = tokenize(_argv, 3, line, ' '))) {
+			if ((_argc = cext_tokenize(_argv, 3, line, ' '))) {
 				if ((ret = perform_cmd(_argc, _argv)))
 					break;
 			}

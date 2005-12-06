@@ -7,8 +7,6 @@
 #include <string.h>
 #include "blitz.h"
 
-#include <cext.h>
-
 XFontStruct *blitz_getfont(Display * dpy, char *fontstr)
 {
 	XFontStruct *font;
@@ -28,7 +26,7 @@ unsigned long blitz_loadcolor(Display * dpy, int mon, char *colstr)
 	XColor color;
 	char col[8];
 
-	_strlcpy(col, colstr, sizeof(col));
+	cext_strlcpy(col, colstr, sizeof(col));
 	col[7] = '\0';
 	XAllocNamedColor(dpy, DefaultColormap(dpy, mon), col, &color, &color);
 	return color.pixel;
@@ -87,7 +85,7 @@ static void draw_text(Display * dpy, Draw * d)
 		return;
 
 	len = strlen(d->data);
-	_strlcpy(text, d->data, sizeof(text));
+	cext_strlcpy(text, d->data, sizeof(text));
 	XSetFont(dpy, d->gc, d->font->fid);
 	h = d->font->ascent + d->font->descent;
 	y = d->rect.y + d->rect.height / 2 - h / 2 + d->font->ascent;

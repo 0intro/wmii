@@ -35,10 +35,12 @@ void cext_attach_item(Container *c, void *item);
 void cext_detach_item(Container *c, void *item);
 void *cext_find_item(Container *c, void *pattern, int (*comp)(void *pattern, void *item));
 void cext_top_item(Container *c, void *item);
+void cext_iterate(Container *c, void (*doit)(void *));
 void *cext_get_top_item(Container *c);
 void *cext_get_down_item(Container *c, void *item);
 void *cext_get_up_item(Container *c, void *item);
 void *cext_get_item(Container *c, size_t index);
+int cext_get_item_index(Container *c, void *item);
 size_t cext_sizeof(Container *c);
 
 void **attach_item_begin(void **old, void *item, size_t size_item);

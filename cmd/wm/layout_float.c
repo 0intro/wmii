@@ -10,8 +10,6 @@
 #include "wm.h"
 #include "layout.h"
 
-#include <cext.h>
-
 static void init_float(Area * a);
 static void deinit_float(Area * a);
 static void arrange_float(Area * a);

@@ -19,7 +19,6 @@
 
 #include "../libixp2/ixp.h"
 #include "blitz.h"
-#include "cext.h"
 
 /*
  * filesystem specification
@@ -193,7 +192,7 @@ static int make_qid(Qid * dir, char *wname, Qid * new)
 			return TRUE;
 		}
 		/* check if wname is a number, otherwise file not found */
-		idx = (u16) __strtonum(wname, 1, 0xffff, &errstr);
+		idx = (u16) cext_strtonum(wname, 1, 0xffff, &errstr);
 		if (errstr || count_items((void **) items) < idx)
 			return FALSE;
 		/* found */
@@ -208,7 +207,7 @@ static int make_qid(Qid * dir, char *wname, Qid * new)
 
 static int attach(IXPServer * s, IXPConn * c)
 {
-	Map *map = emalloc(sizeof(Map));
+	Map *map = cext_emalloc(sizeof(Map));
 	fprintf(stderr, "attaching %d %s %s\n", s->fcall.afid, s->fcall.uname,
 			s->fcall.aname);
 	map->qid = root_qid;
@@ -257,7 +256,7 @@ static int walk(IXPServer * s, IXPConn * c)
 				(Map **) detach_item((void **) c->aux, map, sizeof(Map *));
 			free(map);
 		}
-		map = emalloc(sizeof(Map));
+		map = cext_emalloc(sizeof(Map));
 		map->qid = qid;
 		map->fid = s->fcall.newfid;
 		c->aux =
@@ -302,28 +301,28 @@ static int _read(IXPServer * s, IXPConn * c)
 	}
 	stat.mode = 0xff;
 	stat.atime = stat.mtime = time(0);
-	_strlcpy(stat.uid, getenv("USER"), sizeof(stat.uid));
-	_strlcpy(stat.gid, getenv("USER"), sizeof(stat.gid));
-	_strlcpy(stat.muid, getenv("USER"), sizeof(stat.muid));
+	cext_strlcpy(stat.uid, getenv("USER"), sizeof(stat.uid));
+	cext_strlcpy(stat.gid, getenv("USER"), sizeof(stat.gid));
+	cext_strlcpy(stat.muid, getenv("USER"), sizeof(stat.muid));
 
 	fprintf(stderr, "%d\n", qpath_item(map->qid.path));
 	switch (qpath_type(map->qid.path)) {
 	default:
 	case Droot:
 		p = s->fcall.data;
-		_strlcpy(stat.name, "display", sizeof(stat.name));
+		cext_strlcpy(stat.name, "display", sizeof(stat.name));
 		stat.length = strlen(align);
 		make_qid(&root_qid, "display", &stat.qid);
 		stat.size = ixp_sizeof_stat(&stat);
 		s->fcall.count = stat.size;
 		p = ixp_enc_stat(p, &stat);
-		_strlcpy(stat.name, "font", sizeof(stat.name));
+		cext_strlcpy(stat.name, "font", sizeof(stat.name));
 		stat.length = strlen(font);
 		make_qid(&root_qid, "font", &stat.qid);
 		stat.size = ixp_sizeof_stat(&stat);;
 		s->fcall.count += stat.size;
 		p = ixp_enc_stat(p, &stat);
-		_strlcpy(stat.name, "new", sizeof(stat.name));
+		cext_strlcpy(stat.name, "new", sizeof(stat.name));
 		stat.length = 0;
 		make_qid(&root_qid, "new", &stat.qid);
 		stat.size = ixp_sizeof_stat(&stat);;
@@ -438,7 +437,7 @@ int main(int argc, char *argv[])
 	atexit(exit_cleanup);
 
 	/* default item settings */
-	item = emalloc(sizeof(Item));
+	item = cext_emalloc(sizeof(Item));
 	item->id = 0;
 	item->text[0] = '\0';
 	item->value = 0;

@@ -17,8 +17,6 @@
 static pid_t mypid;
 static char *mysockfile;
 
-/* convenience stuff ----------------------------------------------- */
-
 File *wmii_create_ixpfile(IXPServer * s, char *key, char *val)
 {
 	File *f = ixp_create(s, key);
@@ -38,10 +36,10 @@ void wmii_get_ixppath(File * f, char *path, size_t size)
 
 	buf[0] = '\0';
 	if (path)
-		_strlcpy(buf, path, sizeof(buf));
+		cext_strlcpy(buf, path, sizeof(buf));
 	snprintf(path, size, "%s/", f->name);
 	if (buf[0] != '\0')
-		_strlcat(path, buf, size);
+		cext_strlcat(path, buf, size);
 	if (f->parent)
 		wmii_get_ixppath(f->parent, path, size);
 }

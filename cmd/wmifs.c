@@ -9,8 +9,6 @@
 
 #include "wmii.h"
 
-#include <cext.h>
-
 /* array indexes for file pointers */
 typedef enum {
 	F_CTL,
@@ -121,7 +119,7 @@ static void bind(void *obj, char *arg)
 
 	if (!arg)
 		return;
-	_strlcpy(cmd, arg, sizeof(cmd));
+	cext_strlcpy(cmd, arg, sizeof(cmd));
 	sfile = strchr(cmd, ' ');
 	if (!sfile) {
 		fprintf(stderr,
@@ -137,7 +135,7 @@ static void bind(void *obj, char *arg)
 				arg);
 		return;					/* shortcut with empty argument */
 	}
-	b = emalloc(sizeof(Bind));
+	b = cext_emalloc(sizeof(Bind));
 	*b = zero_bind;
 
 	b->client = init_ixp_client(sfile);

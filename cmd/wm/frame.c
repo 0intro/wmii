@@ -10,8 +10,6 @@
 
 #include "wm.h"
 
-#include <cext.h>
-
 static Frame zero_frame = { 0 };
 
 static void select_client(void *obj, char *cmd);
@@ -29,7 +27,7 @@ Frame *alloc_frame(XRectangle * r)
 	XSetWindowAttributes wa;
 	static int id = 0;
 	char buf[MAX_BUF];
-	Frame *f = (Frame *) emalloc(sizeof(Frame));
+	Frame *f = (Frame *) cext_emalloc(sizeof(Frame));
 	int bw, th;
 
 	*f = zero_frame;
@@ -406,7 +404,7 @@ static void handle_before_read_frame(IXPServer * s, File * f)
 					 frame[i]->rect.height);
 			if (f->content)
 				free(f->content);
-			f->content = estrdup(buf);
+			f->content = cext_estrdup(buf);
 			f->size = strlen(buf);
 			return;
 		}
@@ -441,4 +439,17 @@ static void handle_after_write_frame(IXPServer * s, File * f)
 			return;
 		}
 	}
+}
+
+Frame *get_sel_frame_of_area(Area *a)
+{
+	return cext_get_top_item(&a->frame);
+}
+
+Frame *get_sel_frame()
+{
+	Page *p = get_sel_page();
+	if (!p)
+		return nil;
+	return get_sel_frame_of_area(get_sel_area(p));
 }

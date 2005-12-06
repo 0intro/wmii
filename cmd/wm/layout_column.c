@@ -10,8 +10,6 @@
 #include "wm.h"
 #include "layout.h"
 
-#include <cext.h>
-
 typedef struct Acme Acme;
 typedef struct Column Column;
 
@@ -75,7 +73,7 @@ static void arrange_col(Area * a)
 
 static void init_col(Area * a)
 {
-	Acme *acme = emalloc(sizeof(Acme));
+	Acme *acme = cext_emalloc(sizeof(Acme));
 	int i, j, n, cols = 1;
 	unsigned int width = 1;
 	Column *col;
@@ -97,9 +95,9 @@ static void init_col(Area * a)
 	 */
 
 	width = a->rect.width / cols;
-	acme->column = emalloc((cols + 1) * sizeof(Column *));
+	acme->column = cext_emalloc((cols + 1) * sizeof(Column *));
 	for (i = 0; i < cols; i++) {
-		acme->column[i] = emalloc(sizeof(Column));
+		acme->column[i] = cext_emalloc(sizeof(Column));
 		*acme->column[i] = zero_column;
 		acme->column[i]->rect = a->rect;
 		acme->column[i]->rect.x = i * width;
@@ -128,7 +126,7 @@ static void init_col(Area * a)
 			j++;
 		}
 		col = acme->column[cols - 1];
-		col->frame = emalloc((n - j + 1) * sizeof(Frame *));
+		col->frame = cext_emalloc((n - j + 1) * sizeof(Frame *));
 		for (i = 0; i + j < n; i++) {
 			col->frame[i] = alloc_frame(&client[j + i]->rect);
 			col->frame[i]->aux = col;

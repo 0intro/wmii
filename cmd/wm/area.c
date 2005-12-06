@@ -9,14 +9,12 @@
 
 #include "wm.h"
 
-#include <cext.h>
-
 static Area     zero_area = {0};
 
 Area *alloc_area(Page *p, XRectangle * r, char *layout)
 {
 	char buf[MAX_BUF];
-	Area *a = (Area *) emalloc(sizeof(Area));
+	Area *a = (Area *) cext_emalloc(sizeof(Area));
 	int id = count_items((void **) p->area) + 1;
 
 	*a = zero_area;
@@ -107,4 +105,11 @@ void show_area(Area * a)
 	int i;
 	for (i = 0; a->frame && a->frame[i]; i++)
 		XMapWindow(dpy, a->frame[i]->win);
+}
+
+Area *get_sel_area()
+{
+	Page *p = cext_get_top_item(&page);
+
+	return p ? p->area[p->sel] : nil;
 }

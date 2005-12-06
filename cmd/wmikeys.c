@@ -16,8 +16,6 @@
 
 #include "wmii.h"
 
-#include <cext.h>
-
 /* array indexes for file pointers */
 typedef enum {
 	K_CTL,
@@ -123,18 +121,18 @@ static void create_shortcut(File * f)
 	size_t i, toks;
 	Shortcut *s = 0, *r = 0;
 
-	_strlcpy(buf, f->name, sizeof(buf));
-	toks = tokenize(chain, 8, buf, ',');
+	cext_strlcpy(buf, f->name, sizeof(buf));
+	toks = cext_tokenize(chain, 8, buf, ',');
 
 	for (i = 0; i < toks; i++) {
 		if (!s)
-			r = s = emalloc(sizeof(Shortcut));
+			r = s = cext_emalloc(sizeof(Shortcut));
 		else {
-			s->next = emalloc(sizeof(Shortcut));
+			s->next = cext_emalloc(sizeof(Shortcut));
 			s = s->next;
 		}
 		*s = zero_shortcut;
-		_strlcpy(s->name, chain[i], MAX_BUF);
+		cext_strlcpy(s->name, chain[i], MAX_BUF);
 		k = strrchr(chain[i], '-');
 		if (k)
 			k++;
@@ -492,7 +490,7 @@ int main(int argc, char *argv[])
 	screen_num = DefaultScreen(dpy);
 	size[0] = '\0';
 	if (argc > i)
-		_strlcpy(size, argv[i], sizeof(size));
+		cext_strlcpy(size, argv[i], sizeof(size));
 
 	ixps = wmii_setup_server(sockfile);
 

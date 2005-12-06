@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <X11/Xutil.h>
 
-#include "cext.h"
 #include "wmii.h"
 
 /* array indexes of page file pointers */
@@ -112,8 +111,7 @@ typedef struct Client Client;
  */
 
 struct Page {
-	Area **area;
-	unsigned int sel;
+	Container areas;
 	File *file[P_LAST];
 };
 
@@ -130,8 +128,7 @@ struct Layout {
 struct Area {
 	Layout *layout;
 	Page *page;
-	Frame **frame;
-	unsigned int sel;
+	Container frames;
 	XRectangle rect;
 	void *aux;					/* free pointer */
 	File *file[A_LAST];
@@ -139,12 +136,11 @@ struct Area {
 
 struct Frame {
 	Area *area;
+	Container clients;
 	Window win;
 	GC gc;
 	XRectangle rect;
 	Cursor cursor;
-	Client **client;
-	int sel;
 	void *aux;					/* free pointer */
 	File *file[F_LAST];
 };
@@ -161,9 +157,6 @@ struct Client {
 	File *file[C_LAST];
 };
 
-#define SELAREA (page ? page[sel]->area[page[sel]->sel] : 0)
-#define SELFRAME(x) (x && x->area[x->sel]->frame ?  x->area[x->sel]->frame[x->area[x->sel]->sel] : 0)
-#define ISSELFRAME(x) (page && SELFRAME(page[sel]) == x)
 
 /* global variables */
 Display *dpy;
@@ -172,16 +165,16 @@ int screen_num;
 Window root;
 Window transient;
 XRectangle rect;
-Client **detached;
-Page **page;
-unsigned int sel;
-Frame **frame;
-Client **client;
+Container detached;
+Container pages;
+Container frames;
+Container clients;
+Container layouts;
+static Container zero_container = { 0 };
 XFontStruct *font;
 XColor xorcolor;
 GC xorgc;
 GC transient_gc;
-Layout **layouts;
 
 Atom wm_state;
 Atom wm_change_state;
@@ -217,6 +210,7 @@ void detach_frame_from_area(Frame * f, int ignore_sel_and_destroy);
 void draw_area(Area * a);
 void hide_area(Area * a);
 void show_area(Area * a);
+Area *get_sel_area();
 
 /* client.c */
 Client *alloc_client(Window w);
@@ -225,7 +219,7 @@ void destroy_client(Client * c);
 void configure_client(Client * c);
 void handle_client_property(Client * c, XPropertyEvent * e);
 void close_client(Client * c);
-void draw_client(Client * c);
+void draw_client(void *item);
 void draw_clients(Frame * f);
 void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert);
 void grab_client(Client * c, unsigned long mod, unsigned int button);
@@ -236,6 +230,7 @@ void reparent_client(Client * c, Window w, int x, int y);
 void sel_client(Client *c);
 void attach_client(Client *c);
 void detach_client(Client *c);
+Client *get_sel_client();
 
 /* frame.c */
 void sel_frame(Frame * f, int raise);
@@ -250,6 +245,8 @@ void detach_client_from_frame(Client *c);
 void draw_tab(Frame * f, char *text, int x, int y, int w, int h, int sel);
 unsigned int tab_height(Frame * f);
 unsigned int border_width(Frame * f);
+Frame *get_sel_frame();
+Frame *get_sel_frame_of_area(Area *a);
 
 /* event.c */
 void init_event_hander();
@@ -264,6 +261,7 @@ Align xy_to_align(XRectangle * rect, int x, int y);
 void drop_move(Frame * f, XRectangle * new, XPoint * pt);
 
 /* page.c */
+Page *get_sel_page();
 Page *alloc_page();
 void free_page(Page * p);
 void destroy_page(Page * p);

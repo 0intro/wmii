@@ -81,7 +81,7 @@ static void handle_ixp_read(Connection * c, ReqHeader * h)
 	void *data = 0;
 	size_t out_len;
 
-	data = emalloc(h->buf_len);
+	data = cext_emalloc(h->buf_len);
 	out_len = c->s->read(c->s, h->fd, h->offset, data, h->buf_len);
 	free(c->data);
 	if (c->s->errstr) {
@@ -219,7 +219,7 @@ static void read_conn(Connection * c)
 			return;
 		}
 		c->remain = c->len;
-		c->data = emalloc(c->len);
+		c->data = cext_emalloc(c->len);
 		c->header = 1;
 	}
 	r = read(c->fd, ((char *) c->data) + c->len - c->remain, c->remain);
@@ -347,10 +347,10 @@ IXPServer *init_server(char *sockfile, void (*cleanup) (void))
 	IXPServer *s;
 
 	/* init */
-	s = (IXPServer *) emalloc(sizeof(IXPServer));
+	s = (IXPServer *) cext_emalloc(sizeof(IXPServer));
 	*s = zero_server;
 	s->sockfile = sockfile;
-	s->root = (File *) emalloc(sizeof(File));
+	s->root = (File *) cext_emalloc(sizeof(File));
 	s->runlevel = HALT;			/* initially server is not running */
 	s->create = ixp_create;
 	s->remove = ixp_remove;

@@ -117,7 +117,7 @@ static void *poll_server(IXPClient * c, void *request, size_t req_len,
 					handle_dead_server(c);
 					return 0;
 				}
-				result = emalloc(*out_len);
+				result = cext_emalloc(*out_len);
 				header = 1;
 			}
 			r = read(c->fd, ((char *) result) + num, *out_len - num);
@@ -256,7 +256,7 @@ IXPClient *init_ixp_client(char *sockfile)
 	socklen_t su_len;
 
 	/* init */
-	IXPClient *c = (IXPClient *) emalloc(sizeof(IXPClient));
+	IXPClient *c = (IXPClient *) cext_emalloc(sizeof(IXPClient));
 	*c = zero_client;
 	c->create = cixp_create;
 	c->open = cixp_open;

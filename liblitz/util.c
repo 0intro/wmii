@@ -5,16 +5,13 @@
 
 #include <stdio.h>
 
-#include "cext.h"
 #include "blitz.h"
 
 long long _strtonum(const char *numstr, long long minval, long long maxval)
 {
 	const char *errstr;
-	long long ret = __strtonum(numstr, minval, maxval, &errstr);
+	long long ret = cext_strtonum(numstr, minval, maxval, &errstr);
 	if (errstr)
-		fprintf(stderr,
-				"liblitz: cannot convert '%s' into integer: %s\n",
-				numstr, errstr);
+		fprintf(stderr, "liblitz: cannot convert '%s' into integer: %s\n", numstr, errstr);
 	return ret;
 }

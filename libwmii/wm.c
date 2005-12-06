@@ -41,7 +41,7 @@ void win_prop(Display * dpy, Window w, Atom a, char *res, int len)
 	unsigned char *prop;
 
 	if (property(dpy, w, a, XA_STRING, 100L, &prop)) {
-		_strlcpy(res, (char *) prop, len);
+		cext_strlcpy(res, (char *) prop, len);
 		XFree(prop);
 	}
 	res[len - 1] = '\0';
