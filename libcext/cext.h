@@ -42,6 +42,7 @@ void *cext_get_up_item(Container *c, void *item);
 void *cext_get_item(Container *c, size_t index);
 int cext_get_item_index(Container *c, void *item);
 size_t cext_sizeof(Container *c);
+void cext_swap_items(Container *c, void *item1, void *item2);
 
 void **attach_item_begin(void **old, void *item, size_t size_item);
 void **attach_item_end(void **old, void *item, size_t size_item);

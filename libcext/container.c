@@ -149,6 +149,16 @@ size_t cext_sizeof(Container *c)
 	return idx;
 }
 
+void cext_swap_items(Container *c, void *item1, void *item2)
+{
+	CItem *i1 = cext_find_item(c, item1, comp_ptr);
+	CItem *i2 = cext_find_item(c, item2, comp_ptr);
+	
+	i1->item = item2;
+	i2->item = item1;
+}
+
+
 /* old obsolete stuff follows */
 
 void **attach_item_begin(void **old, void *item, size_t size_item)

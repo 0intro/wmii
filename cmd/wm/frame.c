@@ -98,28 +98,31 @@ Frame *alloc_frame(XRectangle * r)
 	XDefineCursor(dpy, f->win, f->cursor);
 	f->gc = XCreateGC(dpy, f->win, 0, 0);
 	XSync(dpy, False);
-	frame = (Frame **) attach_item_end((void **) frame, f, sizeof(Frame *));
+	cext_attach_item(&frames, f);
 	return f;
 }
 
 void sel_frame(Frame * f, int raise)
 {
 	Area *a = f->area;
-	sel_client(f->client[f->sel]);
-	a->sel = index_item((void **) a->frame, f);
+	sel_client(cext_get_top_item(&f->clients));
+	cext_top_item(&a->frames, f);
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
 	if (raise)
 		XRaiseWindow(dpy, f->win);
 }
 
+static int comp_frame_win(void *pattern, void *frame)
+{
+	Window w = *(Window *)pattern;
+	Frame *f = frame;
+
+	return w == f->win;
+}
+
 Frame *win_to_frame(Window w)
 {
-	int i;
-
-	for (i = 0; frame && frame[i]; i++)
-		if (frame[i]->win == w)
-			return frame[i];
-	return 0;
+	return cext_find_item(&frames, w, comp_frame_win);
 }
 
 void destroy_frame(Frame * f)

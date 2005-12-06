@@ -594,7 +594,7 @@ void mouse_resize(Frame * f, Align align)
 
 void drop_move(Frame *f, XRectangle *new, XPoint *pt)
 {
-	Frame *fp;
+	Frame *f1, *f2;
 	Area *a = f->area;
 	int cx, cy;
 	unsigned int i, idx = cext_get_item_index(&a->frames, f);
@@ -604,12 +604,13 @@ void drop_move(Frame *f, XRectangle *new, XPoint *pt)
 		return;
 	cx = (pt ? pt->x : new->x + new->width / 2);
 	cy = (pt ? pt->y : new->y + new->height / 2);
+	f1 = cext_get_item(&a->frames, idx);
 	for (i = 0; i < size; i++) {
-		fp = cext_get_item(&a->frames, idx);
-		if ((i != idx) && blitz_ispointinrect(cx, cy, &fp->rect)) {
+		f2 = cext_get_item(&a->frames, i);
+		if ((i != idx) && blitz_ispointinrect(cx, cy, &f1->rect)) {
 			/* XXXX: implement swap replacement */
-			swap((void **) &a->frame[i], (void **) &a->frame[idx]);
-			a->sel = i;
+			cext_swap_items(&a->frames, f1, f2);
+			cext_top_item(&a->frames, f2);
 			a->layout->arrange(a);
 			return;
 		}

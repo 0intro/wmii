@@ -428,7 +428,7 @@ static void new_page(void *obj, char *cmd)
 	alloc_page();
 }
 
-static int comp_win(void *pattern, void *client)
+static int comp_client_win(void *pattern, void *client)
 {
 	Window w = *(Window *)pattern;
 	Client *c = client;
@@ -438,7 +438,7 @@ static int comp_win(void *pattern, void *client)
 
 Client *win_to_client(Window w)
 {
-	return cext_find_item(&clients, &w, comp_win);
+	return cext_find_item(&clients, &w, comp_client_win);
 }
 
 void scan_wins()
