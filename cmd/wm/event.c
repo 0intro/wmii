@@ -20,8 +20,9 @@ static void handle_motionnotify(XEvent * e);
 static void handle_propertynotify(XEvent * e);
 static void handle_unmapnotify(XEvent * e);
 static void handle_enternotify(XEvent * e);
+static void handle_ignore_enternotify_crap(XEvent *e);
 
-static unsigned int ignore_enternotify_hack = 0;
+static unsigned int ignore_enternotify_crap = 0;
 
 void (*handler[LASTEvent]) (XEvent *);
 
@@ -34,25 +35,26 @@ void init_event_hander()
 	}
 	handler[ButtonPress] = handle_buttonpress;
 	handler[ConfigureRequest] = handle_configurerequest;
+	handler[ConfigureNotify] = handle_ignore_enternotify_crap;
+	handler[CirculateNotify] = handle_ignore_enternotify_crap;
 	handler[DestroyNotify] = handle_destroynotify;
 	handler[EnterNotify] = handle_enternotify;
 	handler[Expose] = handle_expose;
+	handler[GravityNotify] = handle_ignore_enternotify_crap;
 	handler[MapRequest] = handle_maprequest;
 	handler[MotionNotify] = handle_motionnotify;
 	handler[PropertyNotify] = handle_propertynotify;
+	handler[MapNotify] = handle_ignore_enternotify_crap;
 	handler[UnmapNotify] = handle_unmapnotify;
 }
 
 void check_event(Connection * c)
 {
 	XEvent ev;
-	while (XPending(dpy)) {
+	while (XPending(dpy)) { /* main evet loop */
 		XNextEvent(dpy, &ev);
-		/* main evet loop */
-		if (handler[ev.type]) {
-			/* call handler */
-			(handler[ev.type]) (&ev);
-		}
+		if (handler[ev.type])
+			(handler[ev.type]) (&ev); /* call handler */
 	}
 }
 
@@ -68,9 +70,10 @@ static void handle_buttonpress(XEvent * e)
 	if (ev->window == root) {
 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
 		XSync(dpy, False);
+		return;
 	}
 	if ((c = win_to_client(ev->window))) {
-		if (c->frame) {
+		if (c->frame) { /* client is attached */
 			ev->state &= valid_mask;
 			if (ev->state & Mod1Mask) {
 				if (!c->frame->area->page->sel)
@@ -165,13 +168,10 @@ static void handle_configurerequest(XEvent * e)
 	wc.stack_mode = Above;
 	ev->value_mask &= ~CWStackMode;
 	ev->value_mask |= CWBorderWidth;
-	XConfigureWindow(dpy, e->xconfigurerequest.window, ev->value_mask,
-					 &wc);
+	XConfigureWindow(dpy, e->xconfigurerequest.window, ev->value_mask, &wc);
 	XSync(dpy, False);
 
-	/*
-	   fprintf(stderr, "%d,%d,%d,%d\n", wc.x, wc.y, wc.width, wc.height);
-	 */
+	/* fprintf(stderr, "%d,%d,%d,%d\n", wc.x, wc.y, wc.width, wc.height); */
 }
 
 static void handle_destroynotify(XEvent * e)
@@ -221,16 +221,6 @@ static void handle_motionnotify(XEvent * e)
 	Frame *f = win_to_frame(e->xmotion.window);
 	Cursor cursor;
 	if (f) {
-		Frame *old = SELFRAME(page[sel]);
-		if (old != f) {
-			sel_frame(f, 1);
-			draw_frame(old);
-			draw_frame(f);
-		} else if (f->client) {
-			/* multihead assumption */
-			XSetInputFocus(dpy, f->client[f->sel]->win, RevertToPointerRoot, CurrentTime);
-			XSync(dpy, False);
-		}
 		cursor = cursor_for_motion(f, e->xmotion.x, e->xmotion.y);
 		if (cursor != f->cursor) {
 			f->cursor = cursor;
@@ -244,19 +234,15 @@ static void handle_propertynotify(XEvent * e)
 	XPropertyEvent *ev = &e->xproperty;
 	Client *c = win_to_client(ev->window);
 
-	if (c) {
+	if (c)
 		handle_client_property(c, ev);
-		return;
-	}
 }
 
 static void handle_unmapnotify(XEvent * e)
 {
 	XUnmapEvent *ev = &e->xunmap;
 	Client *c;
-
-	if (ev->event == root)
-		return;
+	handle_ignore_enternotify_crap(e);
 	if ((c = win_to_client(ev->window)))
 		detach_client(c);
 }
@@ -266,25 +252,23 @@ static void handle_enternotify(XEvent * e)
 	XCrossingEvent *ev = &e->xcrossing;
 	Client *c;
 
-	if (ev->mode != NotifyNormal)
-		return;
-
-	/* mouse is not in the sel window */
-	if (ev->detail == NotifyInferior)
+	if ((ev->mode != NotifyNormal) || (ev->detail == NotifyInferior))
 		return;
 
 	c = win_to_client(ev->window);
-	if (c && c->frame && (ev->serial != ignore_enternotify_hack)) {
+	if (c && c->frame && (ev->serial != ignore_enternotify_crap)) {
 		Frame *old = SELFRAME(page[sel]);
-		XUndefineCursor(dpy, c->frame->win);
 		if (old != c->frame) {
 			sel_frame(c->frame, 1);
 			draw_frame(old);
 			draw_frame(c->frame);
-		} else {
-			/* multihead assumption */
-			XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-			XSync(dpy, False);
 		}
 	}
 }
+
+static void handle_ignore_enternotify_crap(XEvent *e)
+{
+	ignore_enternotify_crap = e->xany.serial;
+	XSync(dpy, False);
+}
+
