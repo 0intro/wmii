@@ -30,7 +30,7 @@ Page *alloc_page()
 	p->file[P_PREFIX] = ixp_create(ixps, buf);
 	snprintf(buf, sizeof(buf), "/%d/name", id);
 	p->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
-	snprintf(buf, sizeof(buf), "/%d/a", id);
+	snprintf(buf, sizeof(buf), "/%d/a/", id);
 	p->file[P_AREA_PREFIX] = ixp_create(ixps, buf);
 	snprintf(buf, sizeof(buf), "/%d/a/sel", id);
 	p->file[P_SEL_AREA] = ixp_create(ixps, buf);
@@ -148,9 +148,9 @@ static void select_frame(void *obj, char *cmd)
 		return;
 	a = f->area;
 	if (!strncmp(cmd, "prev", 5))
-		cext_top_item(&a->frames, cext_get_up_item(&a->frames, f));
+		cext_top_item(a->layout->get_frames(a), cext_get_up_item(a->layout->get_frames(a), f));
 	else if (!strncmp(cmd, "next", 5))
-		cext_top_item(&a->frames, cext_get_down_item(&a->frames, f));
+		cext_top_item(a->layout->get_frames(a), cext_get_down_item(a->layout->get_frames(a), f));
 	if (old != f) {
 		sel_frame(f, cext_get_item_index(&a->page->areas, a) == 0);
 		center_pointer(f);

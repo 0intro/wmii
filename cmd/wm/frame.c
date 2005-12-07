@@ -106,7 +106,7 @@ void sel_frame(Frame * f, Bool raise)
 {
 	Area *a = f->area;
 	sel_client(cext_get_top_item(&f->clients));
-	cext_top_item(&a->frames, f);
+	cext_top_item(a->layout->get_frames(a), f);
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
 	if (raise)
 		XRaiseWindow(dpy, f->win);
@@ -440,7 +440,7 @@ static void handle_after_write_frame(IXPServer * s, File * f)
 
 Frame *get_sel_frame_of_area(Area *a)
 {
-	return cext_get_top_item(&a->frames);
+	return cext_get_top_item(a->layout->get_frames(a));
 }
 
 Frame *get_sel_frame()

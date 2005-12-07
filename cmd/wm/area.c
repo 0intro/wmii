@@ -48,7 +48,7 @@ static void iter_destroy_area(void *item, void *aux)
 void destroy_area(Area *a)
 {
 	a->layout->deinit(a);
-	cext_iterate(&a->frames, nil, iter_destroy_area);
+	cext_iterate(a->layout->get_frames(a), nil, iter_destroy_area);
 	ixp_remove_file(ixps, a->file[A_PREFIX]);
 	free(a);
 }
@@ -64,31 +64,16 @@ void sel_area(Area *a)
 	Frame *f;
 	Bool raise = cext_get_item_index(&p->areas, a) == 0;
 	if (raise)
-		cext_iterate(&a->frames, nil, iter_raise_frame);
+		cext_iterate(a->layout->get_frames(a), nil, iter_raise_frame);
 	cext_top_item(&p->areas, a);
 	p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
 	if ((f = get_sel_frame_of_area(a)))
 		sel_frame(f, raise);
 }
 
-void attach_frame_to_area(Area * a, Frame * f)
-{
-	wmii_move_ixpfile(f->file[F_PREFIX], a->file[A_FRAME_PREFIX]);
-	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
-	cext_attach_item(&a->frames, f);
-	f->area = a;
-}
-
-void detach_frame_from_area(Frame * f, int ignore_sel_and_destroy)
-{
-	Area *a = f->area;
-	cext_detach_item(&a->frames, f);
-	f->area = 0;
-}
-
 void draw_area(Area *a)
 {
-	cext_iterate(&a->frames, nil, draw_frame);
+	cext_iterate(a->layout->get_frames(a), nil, draw_frame);
 }
 
 static void iter_hide_area(void *item, void *aux)
@@ -98,7 +83,7 @@ static void iter_hide_area(void *item, void *aux)
 
 void hide_area(Area * a)
 {
-	cext_iterate(&a->frames, nil, iter_hide_area);
+	cext_iterate(a->layout->get_frames(a), nil, iter_hide_area);
 }
 
 static void iter_show_area(void *item, void *aux)
@@ -108,7 +93,7 @@ static void iter_show_area(void *item, void *aux)
 
 void show_area(Area * a)
 {
-	cext_iterate(&a->frames, nil, iter_show_area);
+	cext_iterate(a->layout->get_frames(a), nil, iter_show_area);
 }
 
 Area *get_sel_area()
@@ -116,4 +101,16 @@ Area *get_sel_area()
 	Page *p = get_sel_page();
 
 	return p ? cext_get_top_item(&p->areas) : nil;
+}
+
+void attach_frame_to_area(Area *a, Frame *f)
+{
+	wmii_move_ixpfile(f->file[F_PREFIX], a->file[A_FRAME_PREFIX]);
+	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
+	f->area = a;
+}
+
+void detach_frame_from_area(Frame *f) {
+	f->area->file[A_SEL_FRAME]->content = 0;
+	f->area = 0;
 }

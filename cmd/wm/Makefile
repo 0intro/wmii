@@ -3,13 +3,13 @@
 
 include ../../config.mk
 
-all: layout.c
+all: layoutdef.c
 	@${MAKE} -f Makefile.wm
 	@echo built core wm
 
-layout.c:
+layoutdef.c:
 	@echo SH mklayout.sh
 	@sh mklayout.sh
 
 clean:
-	rm -f wmiiwm *.o layout.*
+	rm -f wmiiwm *.o layoutdef.*

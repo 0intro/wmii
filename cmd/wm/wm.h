@@ -120,16 +120,15 @@ struct Layout {
 	void (*init) (Area *);		/* called when layout is initialized */
 	void (*deinit) (Area *);	/* called when layout is uninitialized */
 	void (*arrange) (Area *);	/* called when area is resized */
-	void (*attach) (Area *, Client *);	/* called on attach */
+	Bool (*attach) (Area *, Client *);	/* called on attach */
 	void (*detach) (Area *, Client *);	/* called on detach */
 	void (*resize) (Frame *, XRectangle *, XPoint * pt);	/* called after resize */
+	Container *(*get_frames) (Area *);	/* called after resize */
 };
 
 struct Area {
-	Layout *layout;
 	Page *page;
-	Container frames;
-	/* XXX: remove frames container, areas shall only contain clients */
+	Layout *layout;
 	Container clients;
 	XRectangle rect;
 	void *aux;					/* free pointer */
@@ -138,8 +137,8 @@ struct Area {
 
 struct Frame {
 	Area *area;
-	Container clients;
 	Window win;
+	Container clients;
 	GC gc;
 	XRectangle rect;
 	Cursor cursor;
@@ -148,6 +147,7 @@ struct Frame {
 };
 
 struct Client {
+	Area *area;
 	int proto;
 	unsigned int border;
 	Bool destroyed;
@@ -206,12 +206,12 @@ unsigned int valid_mask, num_lock_mask;
 Area *alloc_area(Page *p, XRectangle * r, char *layout);
 void destroy_area(Area * a);
 void sel_area(Area * a);
-void attach_frame_to_area(Area * a, Frame * f);
-void detach_frame_from_area(Frame * f, int ignore_sel_and_destroy);
 void draw_area(Area * a);
 void hide_area(Area * a);
 void show_area(Area * a);
 Area *get_sel_area();
+void attach_frame_to_area(Area *a, Frame *f);
+void detach_frame_from_area(Frame *f);
 
 /* client.c */
 Client *alloc_client(Window w);
@@ -273,6 +273,9 @@ void show_page(Page * p);
 void draw_page(Page * p);
 
 /* layout.c */
+Layout *get_layout(char *name);
+
+/* layoutdef.c */
 void init_layouts();
 
 /* wm.c */
@@ -285,4 +288,3 @@ int win_state(Window w);
 void handle_after_write(IXPServer * s, File * f);
 void detach(Frame * f, int client_destroyed);
 void set_client_state(Client * c, int state);
-Layout *get_layout(char *name);

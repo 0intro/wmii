@@ -311,7 +311,6 @@ void attach_client(Client * c)
 		if (t && t->frame)
 			a = t->frame->area;
 	}
-	cext_attach_item(&a->clients, c);
 	a->layout->attach(a, c);
 	if (old)
 		draw_frame(old, nil);
@@ -319,10 +318,8 @@ void attach_client(Client * c)
 }
 
 void detach_client(Client *c) {
-	if (c->frame) {
-		cext_detach_item(&c->frame->area->clients, c);
+	if (c->frame)
 		c->frame->area->layout->detach(c->frame->area, c);
-	}
 	if (c->destroyed)
 		destroy_client(c);
 	sel_page(get_sel_page());

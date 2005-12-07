@@ -115,7 +115,7 @@ static void iter_draw_pager_frame(void *item, void *aux)
 {
 	Draw *d = aux;
 	Frame *f = (Frame *)item;
-	if (f == cext_get_top_item(&f->area->frames)) {
+	if (f == cext_get_top_item(f->area->layout->get_frames(f->area))) {
 		d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
 		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
 		d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
@@ -132,7 +132,8 @@ static void iter_draw_pager_frame(void *item, void *aux)
 
 static void draw_pager_area(void *item, void *aux)
 {
-	cext_iterate(&((Area *)item)->frames, aux, iter_draw_pager_frame);
+	Area *a = (Area *)item;
+	cext_iterate(a->layout->get_frames(a), aux, iter_draw_pager_frame);
 }
 
 static void draw_pager_page(Page *p, Draw *d)
@@ -541,19 +542,6 @@ void handle_after_write(IXPServer * s, File * f)
 	}
 
 	check_event(0);
-}
-
-static int comp_layout_name(void *name, void *layout)
-{
-	Layout *l = layout;
-	size_t len = strlen(l->name);
-
-	return !strncmp(name, l->name, len);
-}
-
-Layout *get_layout(char *name)
-{
-	return cext_find_item(&layouts, name, comp_layout_name);
 }
 
 static void init_atoms()

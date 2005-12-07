@@ -596,20 +596,21 @@ void drop_move(Frame *f, XRectangle *new, XPoint *pt)
 {
 	Frame *f1, *f2;
 	Area *a = f->area;
+	Container *frames = a->layout->get_frames(a);
 	int cx, cy;
-	unsigned int i, idx = cext_get_item_index(&a->frames, f);
-	size_t size = cext_sizeof(&a->frames);
+	unsigned int i, idx = cext_get_item_index(frames, f);
+	size_t size = cext_sizeof(frames);
 
 	if ((f->rect.x == new->x) && (f->rect.y == new->y))
 		return;
 	cx = (pt ? pt->x : new->x + new->width / 2);
 	cy = (pt ? pt->y : new->y + new->height / 2);
-	f1 = cext_get_item(&a->frames, idx);
+	f1 = cext_get_item(frames, idx);
 	for (i = 0; i < size; i++) {
-		f2 = cext_get_item(&a->frames, i);
+		f2 = cext_get_item(frames, i);
 		if ((i != idx) && blitz_ispointinrect(cx, cy, &f1->rect)) {
-			cext_swap_items(&a->frames, f1, f2);
-			cext_top_item(&a->frames, f2);
+			cext_swap_items(frames, f1, f2);
+			cext_top_item(frames, f2);
 			a->layout->arrange(a);
 			return;
 		}

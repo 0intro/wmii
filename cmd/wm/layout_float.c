@@ -8,12 +8,12 @@
 #include <math.h>
 
 #include "wm.h"
-#include "layout.h"
+#include "layoutdef.h"
 
 static void init_float(Area *a);
 static void deinit_float(Area *a);
 static void arrange_float(Area *a);
-static void attach_float(Area *a, Client *c);
+static Bool attach_float(Area *a, Client *c);
 static void detach_float(Area *a, Client *c);
 static void resize_float(Frame *f, XRectangle *new, XPoint *pt);
 
@@ -37,9 +37,10 @@ static void deinit_float(Area *a)
 {
 }
 
-static void attach_float(Area *a, Client *c)
+static Bool attach_float(Area *a, Client *c)
 {
 	Frame *f = get_sel_frame_of_area(a);
+	cext_attach_item(&a->clients, c);
 	/* check for tabbing? */
 	if (f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))
 		f = 0;
@@ -51,14 +52,16 @@ static void attach_float(Area *a, Client *c)
 	if (a->page == get_sel_page())
 		XMapRaised(dpy, f->win);
 	draw_frame(f, nil);
+	return True;
 }
 
 static void detach_float(Area *a, Client *c)
 {
 	Frame *f = c->frame;
 	detach_client_from_frame(c);
+	cext_detach_item(&a->clients, c);
 	if (!cext_sizeof(&f->clients)) {
-		detach_frame_from_area(f, 0);
+		detach_frame_from_area(f);
 		destroy_frame(f);
 	}
 }

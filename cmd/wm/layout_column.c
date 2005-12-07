@@ -8,7 +8,7 @@
 #include <math.h>
 
 #include "wm.h"
-#include "layout.h"
+#include "layoutdef.h"
 
 typedef struct Acme Acme;
 typedef struct Column Column;
@@ -28,7 +28,7 @@ struct Column {
 static void init_col(Area * a);
 static void deinit_col(Area * a);
 static void arrange_col(Area * a);
-static void attach_col(Area * a, Client * c);
+static Bool attach_col(Area * a, Client * c);
 static void detach_col(Area * a, Client * c);
 static void resize_col(Frame * f, XRectangle * new, XPoint * pt);
 
@@ -179,7 +179,7 @@ static void deinit_col(Area *a)
 	a->aux = 0;
 }
 
-static void attach_col(Area *a, Client *c)
+static Bool attach_col(Area *a, Client *c)
 {
 	Acme *acme = a->aux;
 	Column *col;
@@ -193,6 +193,7 @@ static void attach_col(Area *a, Client *c)
 	attach_frame_to_area(a, f);
 	attach_client_to_frame(f, c);
 	arrange_col(a);
+	return True;
 }
 
 static void detach_col(Area *a, Client *c)
@@ -203,7 +204,7 @@ static void detach_col(Area *a, Client *c)
 	cext_detach_item(&col->frames, f);
 	col->refresh = 1;
 	detach_client_from_frame(c);
-	detach_frame_from_area(f, 1);
+	detach_frame_from_area(f);
 	destroy_frame(f);
 
 	arrange_col(a);
