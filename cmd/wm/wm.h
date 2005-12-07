@@ -92,9 +92,9 @@ enum {
 };
 
 #define PROTO_DEL              1
-#define BORDER_WIDTH           1
-#define LAYOUT                 "column"
-#define GAP 5
+#define BORDER_WIDTH           3
+#define LAYOUT                 "float"
+#define GAP                    5
 
 #define ROOT_MASK              (SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask)
 #define CLIENT_MASK            (SubstructureNotifyMask | PropertyChangeMask | EnterWindowMask)
