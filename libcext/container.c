@@ -14,9 +14,13 @@ static int comp_ptr(void *p1, void *p2)
 	return p1 == p2;
 }
 
-static void detach_from_stack(CItem *i)
+static void detach_from_stack(Container *c, CItem *i)
 {	
 	/* remove from stack */
+	if (i == c->stack) {
+	   c->stack = i->down;	
+	   return;
+	}
 	if (i->up)
 		i->up->down = i->down;
 	if (i->down)
@@ -65,14 +69,20 @@ void cext_detach_item(Container *c, void *item)
 		i->next = i->next->next;
 	}
 
-	detach_from_stack(i);
+	detach_from_stack(c, i);
 	free(i);
+}
+
+static CItem *cext_find_citem(Container *c, void *pattern, int (*comp)(void *pattern, void *item))
+{
+	CItem *i;
+	for (i = c->list; i && !comp(pattern, i->item); i = i->next);
+	return i;
 }
 
 void *cext_find_item(Container *c, void *pattern, int (*comp)(void *pattern, void *item))
 {
-	CItem *i;
-	for (i = c->list; i && comp(pattern, i->item); i = i->next);
+	CItem *i = cext_find_citem(c, pattern, comp);
 	return i ? i->item : nil;
 }
 
@@ -85,10 +95,10 @@ void cext_iterate(Container *c, void *aux, void (*iter)(void *, void *aux))
 
 void cext_top_item(Container *c, void *item)
 {
-	CItem *i = cext_find_item(c, item, comp_ptr);
+	CItem *i = cext_find_citem(c, item, comp_ptr);
 	if (!i)
 		return;
-	detach_from_stack(i);
+	detach_from_stack(c, i);
 	attach_to_stack(c, i);	
 }
 
@@ -99,7 +109,7 @@ void *cext_get_top_item(Container *c)
 
 void *cext_get_down_item(Container *c, void *item)
 {
-	CItem *i = cext_find_item(c, item, comp_ptr);
+	CItem *i = cext_find_citem(c, item, comp_ptr);
 	if (!i)
 		return nil;
 	return i->down ? i->down->item : c->stack->item;
@@ -107,7 +117,7 @@ void *cext_get_down_item(Container *c, void *item)
 
 void *cext_get_up_item(Container *c, void *item)
 {
-	CItem *i = cext_find_item(c, item, comp_ptr);
+	CItem *i = cext_find_citem(c, item, comp_ptr);
 	CItem *bottom;
 	if (!i)
 		return nil;
@@ -150,8 +160,8 @@ size_t cext_sizeof(Container *c)
 
 void cext_swap_items(Container *c, void *item1, void *item2)
 {
-	CItem *i1 = cext_find_item(c, item1, comp_ptr);
-	CItem *i2 = cext_find_item(c, item2, comp_ptr);
+	CItem *i1 = cext_find_citem(c, item1, comp_ptr);
+	CItem *i2 = cext_find_citem(c, item2, comp_ptr);
 	
 	i1->item = item2;
 	i2->item = item1;

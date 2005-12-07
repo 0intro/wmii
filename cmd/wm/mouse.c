@@ -608,7 +608,6 @@ void drop_move(Frame *f, XRectangle *new, XPoint *pt)
 	for (i = 0; i < size; i++) {
 		f2 = cext_get_item(&a->frames, i);
 		if ((i != idx) && blitz_ispointinrect(cx, cy, &f1->rect)) {
-			/* XXXX: implement swap replacement */
 			cext_swap_items(&a->frames, f1, f2);
 			cext_top_item(&a->frames, f2);
 			a->layout->arrange(a);
