@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "cext.h"
 
@@ -17,6 +18,7 @@ static int comp_ptr(void *p1, void *p2)
 
 static void detach_from_stack(Container *c, CItem *i)
 {	
+	fprintf(stderr, "XX %s\n", "detach_from_stack()");
 	/* remove from stack */
 	if (i == c->stack) {
 		c->stack = i->down;	
@@ -35,6 +37,7 @@ static void detach_from_stack(Container *c, CItem *i)
 
 static void attach_to_stack(Container *c, CItem *i)
 {
+	fprintf(stderr, "XX %s\n", "attach_to_stack()");
 	i->up = 0;
 	i->down = 0;
 	if (!c->stack)
@@ -49,6 +52,7 @@ static void attach_to_stack(Container *c, CItem *i)
 void cext_attach_item(Container *c, void *item)
 {
 	CItem *i, *new = cext_emalloc(sizeof(CItem));
+	fprintf(stderr, "XX %s\n", "cext_attach_item()");
 	*new = zero_item;
 	new->item = item;
 	if (!c->list)
@@ -63,6 +67,7 @@ void cext_attach_item(Container *c, void *item)
 void cext_detach_item(Container *c, void *item)
 {
 	CItem *i = c->list;
+	fprintf(stderr, "XX %s\n", "cext_detach_item()");
 	if (!i)
 		return;
 
@@ -85,6 +90,7 @@ void cext_detach_item(Container *c, void *item)
 static CItem *cext_find_citem(Container *c, void *pattern, int (*comp)(void *pattern, void *item))
 {
 	CItem *i;
+	fprintf(stderr, "XX %s\n", "cext_find_citem()");
 	for (i = c->list; i && !comp(pattern, i->item); i = i->next);
 	return i;
 }
@@ -92,12 +98,14 @@ static CItem *cext_find_citem(Container *c, void *pattern, int (*comp)(void *pat
 void *cext_find_item(Container *c, void *pattern, int (*comp)(void *pattern, void *item))
 {
 	CItem *i = cext_find_citem(c, pattern, comp);
+	fprintf(stderr, "XX %s\n", "cext_find_item()");
 	return i ? i->item : nil;
 }
 
 void cext_iterate(Container *c, void *aux, void (*iter)(void *, void *aux))
 {
 	CItem *i;
+	fprintf(stderr, "XX %s\n", "cext_iterate()");
 	for (i = c->list; i; i = i->next)
 	{
 		assert(c);
@@ -109,6 +117,7 @@ void cext_iterate(Container *c, void *aux, void (*iter)(void *, void *aux))
 void cext_top_item(Container *c, void *item)
 {
 	CItem *i = cext_find_citem(c, item, comp_ptr);
+	fprintf(stderr, "XX %s\n", "cext_top_item()");
 	if (!i)
 		return;
 	detach_from_stack(c, i);
@@ -117,12 +126,14 @@ void cext_top_item(Container *c, void *item)
 
 void *cext_get_top_item(Container *c)
 {
+	fprintf(stderr, "XX %s\n", "cext_get_top_item()");
 	return c->stack ? c->stack->item : nil;
 }
 
 void *cext_get_down_item(Container *c, void *item)
 {
 	CItem *i = cext_find_citem(c, item, comp_ptr);
+	fprintf(stderr, "XX %s\n", "cext_get_down_item()");
 	if (!i)
 		return nil;
 	return i->down ? i->down->item : c->stack->item;
@@ -132,6 +143,7 @@ void *cext_get_up_item(Container *c, void *item)
 {
 	CItem *i = cext_find_citem(c, item, comp_ptr);
 	CItem *bottom;
+	fprintf(stderr, "XX %s\n", "cext_get_up_item()");
 	if (!i)
 		return nil;
 	for (bottom = c->stack; bottom && bottom->down; bottom = bottom->down);
@@ -143,6 +155,7 @@ void *cext_get_item(Container *c, size_t index)
 	size_t idx = 0;
 	CItem *i;
 
+	fprintf(stderr, "XX %s\n", "cext_get_item()");
 	for (i = c->list; i && index != idx; i = i->next)
 		idx++;
 
@@ -154,6 +167,7 @@ int cext_get_item_index(Container *c, void *item)
 	int idx = 0;
 	CItem *i;
 
+	fprintf(stderr, "XX %s\n", "cext_get_item_index()");
 	for (i = c->list; i && i->item != item; i = i->next)
 		idx++;
 
@@ -165,6 +179,7 @@ size_t cext_sizeof(Container *c)
 	size_t idx = 0;
 	CItem *i;
 
+	fprintf(stderr, "XX %s\n", "cext_sizeof()");
 	for (i = c->list; i; i = i->next)
 		idx++;
 
@@ -175,6 +190,7 @@ void cext_swap_items(Container *c, void *item1, void *item2)
 {
 	CItem *i1 = cext_find_citem(c, item1, comp_ptr);
 	CItem *i2 = cext_find_citem(c, item2, comp_ptr);
+	fprintf(stderr, "XX %s\n", "cext_swap_items()");
 	
 	i1->item = item2;
 	i2->item = item1;
