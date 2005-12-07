@@ -20,7 +20,8 @@ static void detach_from_stack(Container *c, CItem *i)
 	/* remove from stack */
 	if (i == c->stack) {
 		c->stack = i->down;	
-		c->stack->up = 0;
+		if (c->stack)
+			c->stack->up = 0;
 	}
 	else {
 		if (i->up)
@@ -64,14 +65,18 @@ void cext_detach_item(Container *c, void *item)
 	CItem *i = c->list;
 	if (!i)
 		return;
+
 	/* remove from list */
 	if (i->item == item)
-		c->list = c->list->next;
+		c->list = i->next;
 	else {
+		CItem *tmp;
 		for (; i->next && (i->next->item != item); i = i->next);
 		if (!i->next)
 			return;
-		i->next = i->next->next;
+		tmp = i;
+		i = i->next;
+		tmp->next = tmp->next->next;
 	}
 	detach_from_stack(c, i);
 	free(i);

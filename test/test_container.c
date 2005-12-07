@@ -19,13 +19,22 @@ int main(int argc, char *argv[])
 	Container c = {0};
 	int i;
 
+	printf("--------------------------------\n");
+	{
+		int *e = cext_emalloc(sizeof(int));
+		cext_attach_item(&c, e);
+		cext_iterate(&c, nil, iter_print_container);
+		cext_detach_item(&c, e);
+		cext_iterate(&c, nil, iter_print_container);
+	}
+	printf("--------------------------------\n");
+
+	printf("--------------------------------\n");
 	for (i = 0; i < 10; i++) {
 		int *e = cext_emalloc(sizeof(int));
 		*e = i;
 		cext_attach_item(&c, e);
 	}
-
-	printf("--------------------------------\n");
 	cext_iterate(&c, nil, iter_print_container);
 	printf("--------------------------------\n");
 
