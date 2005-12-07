@@ -11,8 +11,6 @@
 
 #include "wmii.h"
 
-#include <cext.h>
-
 void spawn(void *dpy, char *cmd)
 {
 	/* the questionable double-fork is done to catch all zombies */

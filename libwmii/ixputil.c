@@ -12,8 +12,6 @@
 
 #include "wmii.h"
 
-#include <cext.h>
-
 static pid_t mypid;
 static char *mysockfile;
 

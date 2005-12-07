@@ -16,7 +16,6 @@
 
 #include "wm.h"
 
-static Draw d = { 0 };
 static XRectangle initial_rect;
 static int other_wm_running;
 static int (*x_error_handler) (Display *, XErrorEvent *);
@@ -112,51 +111,53 @@ scale_rect(XRectangle * from_dim, XRectangle * to_dim,
 		tgt->height = 1;
 }
 
-static void draw_pager_frame(void *item)
+static void iter_draw_pager_frame(void *item, void *aux)
 {
+	Draw *d = aux;
 	Frame *f = (Frame *)item;
 	if (f == cext_get_top_item(&f->area->frames)) {
-		d.bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
-		d.border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
+		d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
+		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
+		d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
 	} else {
-		d.bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
-		d.border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
+		d->bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
+		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
+		d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
 	}
-	d.data = ((Client *)cext_get_top_item(&f->clients))->file[C_NAME]->content;
-	scale_rect(&rect, &initial_rect, &f->area->rect, &d.rect);
-	blitz_drawlabel(dpy, &d);
+	d->data = ((Client *)cext_get_top_item(&f->clients))->file[C_NAME]->content;
+	scale_rect(&rect, &initial_rect, &f->area->rect, &d->rect);
+	blitz_drawlabel(dpy, d);
 	XSync(dpy, False);	/* do not clear upwards */
 }
 
-static void draw_pager_area(void *item)
+static void draw_pager_area(void *item, void *aux)
 {
-	cext_iterate(&((Area *)item)->frames, draw_pager_frame);
+	cext_iterate(&((Area *)item)->frames, aux, iter_draw_pager_frame);
 }
 
-static void draw_pager_page(Page * p)
+static void draw_pager_page(Page *p, Draw *d)
 {
 	char name[4];
-	initial_rect = d.rect;
+	initial_rect = d->rect;
 	if (p == cext_get_top_item(&pages)) {
-		d.bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
-		d.border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
+		d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
+		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
+		d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
 	} else {
-		d.bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
-		d.border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
+		d->bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
+		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
+		d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
 	}
 	snprintf(name, sizeof(name), "%d", cext_get_item_index(&pages, p));
-	d.data = name;
-	blitz_drawlabel(dpy, &d);
+	d->data = name;
+	blitz_drawlabel(dpy, d);
 	XSync(dpy, False);
-	cext_iterate(&p->areas, draw_pager_area);
+	cext_iterate(&p->areas, d, draw_pager_area);
 }
 
 static void draw_pager()
 {
+	Draw d = { 0 };
 	unsigned int ic, ir, tw, th, rows, cols, size;
 	int i = 0;
 	int dx;
@@ -180,7 +181,7 @@ static void draw_pager()
 			d.rect.height = th;
 			if (!(p = cext_get_item(&pages, i)))
 				return;
-			draw_pager_page(p);
+			draw_pager_page(p, &d);
 			i++;
 		}
 	}
@@ -677,7 +678,7 @@ static int startup_error_handler(Display * dpy, XErrorEvent * error)
 	return -1;
 }
 
-static void clean_client_up(void *item)
+static void clean_client_up(void *item, void *aux)
 {
 	Client *c = item;
 	Frame *f = c->frame;
@@ -693,7 +694,7 @@ static void clean_client_up(void *item)
 
 static void cleanup()
 {
-	cext_iterate(&clients, clean_client_up);
+	cext_iterate(&clients, nil, clean_client_up);
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 }
 
@@ -707,6 +708,12 @@ static void run()
 		exit(1);
 	}
 	def[WM_CTL]->after_write = handle_after_write;
+
+	detached.list = detached.stack = 0;
+	pages.list = pages.stack = 0;
+	frames.list = frames.stack = 0;
+	clients.list = clients.stack = 0;
+	layouts.list = layouts.stack = 0;
 
 	init_atoms();
 	init_cursors();

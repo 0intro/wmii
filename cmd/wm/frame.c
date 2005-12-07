@@ -102,7 +102,7 @@ Frame *alloc_frame(XRectangle * r)
 	return f;
 }
 
-void sel_frame(Frame * f, int raise)
+void sel_frame(Frame * f, Bool raise)
 {
 	Area *a = f->area;
 	sel_client(cext_get_top_item(&f->clients));
@@ -122,12 +122,12 @@ static int comp_frame_win(void *pattern, void *frame)
 
 Frame *win_to_frame(Window w)
 {
-	return cext_find_item(&frames, w, comp_frame_win);
+	return cext_find_item(&frames, &w, comp_frame_win);
 }
 
 void destroy_frame(Frame * f)
 {
-	frame = (Frame **) detach_item((void **) frame, f, sizeof(Frame *));
+	cext_detach_item(&frames, f);
 	XFreeGC(dpy, f->gc);
 	XDestroyWindow(dpy, f->win);
 	ixp_remove_file(ixps, f->file[F_PREFIX]);
@@ -150,24 +150,32 @@ unsigned int border_width(Frame * f)
 	return 0;
 }
 
-static void resize_client(Frame * f, int tabh, int bw)
+typedef struct {
+	unsigned int tabh;
+	unsigned int bw;
+} Twouint;
+
+static void iter_resize_client(void *item, void *aux)
 {
-	int i;
-	for (i = 0; f->client && f->client[i]; i++) {
-		Client *c = f->client[i];
-		c->rect.x = bw;
-		c->rect.y = tabh ? tabh : bw;
-		c->rect.width = f->rect.width - 2 * bw;
-		c->rect.height = f->rect.height - bw - (tabh ? tabh : bw);
-		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y,
-						  c->rect.width, c->rect.height);
-		configure_client(c);
-	}
+	Client *c = item;
+	Twouint *v = aux;
+	c->rect.x = v->bw;
+	c->rect.y = v->tabh ? v->tabh : v->bw;
+	c->rect.width = c->frame->rect.width - 2 * v->bw;
+	c->rect.height = c->frame->rect.height - v->bw - (v->tabh ? v->tabh : v->bw);
+	XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
+	configure_client(c);
+}
+
+static void resize_clients(Frame * f, int tabh, int bw)
+{
+	Twouint aux = { tabh, bw };
+	cext_iterate(&f->clients, &aux, iter_resize_client);
 }
 
 static void check_dimensions(Frame * f, unsigned int tabh, unsigned int bw)
 {
-	Client *c = f->client ? f->client[f->sel] : 0;
+	Client *c = get_sel_client();
 	if (!c)
 		return;
 
@@ -191,7 +199,7 @@ static void check_dimensions(Frame * f, unsigned int tabh, unsigned int bw)
 
 static void resize_incremental(Frame * f, unsigned int tabh, unsigned int bw)
 {
-	Client *c = f->client ? f->client[f->sel] : 0;
+	Client *c = get_sel_client();
 	if (!c)
 		return;
 	/* increment stuff, see chapter 4.1.2.3 of the ICCCM Manual */
@@ -231,7 +239,7 @@ void resize_frame(Frame * f, XRectangle * r, XPoint * pt)
 		resize_incremental(f, tabh, bw);
 
 	XMoveResizeWindow(dpy, f->win, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
-	resize_client(f, (tabh ? tabh : bw), bw);
+	resize_clients(f, (tabh ? tabh : bw), bw);
 }
 
 
@@ -274,8 +282,9 @@ void draw_tab(Frame * f, char *text, int x, int y, int w, int h, int sel)
  * ./norm-style/bg-color		"#RRGGBBAA"
  * ./norm-style/border-color	"#RRGGBBAA [#RRGGBBAA [#RRGGBBAA [#RRGGBBAA]]]"
  */
-void draw_frame(Frame * f)
+void draw_frame(void *frame, void *aux)
 {
+	Frame *f = frame;
 	Draw d = { 0 };
 	int bw = border_width(f);
 	XRectangle notch;
@@ -289,7 +298,7 @@ void draw_frame(Frame * f)
 		d.gc = f->gc;
 
 		/* define ground plate (i = 0) */
-		if (ISSELFRAME(f)) {
+		if (f == get_sel_frame()) {
 			d.bg = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_BG_COLOR]->content);
 			d.fg = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_FG_COLOR]->content);
 			d.border = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_BORDER_COLOR]->content);
@@ -311,19 +320,16 @@ void draw_frame(Frame * f)
 void handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 {
 	Align align;
-	int bindex;
-	int size = count_items((void **) f->client);
-	int cindex = e->x / f->rect.width / size;
-	if (!f->area->page->sel)
-		XRaiseWindow(dpy, f->win);
-	if (cindex != f->sel) {
-		sel_client(f->client[cindex]);
-		draw_frame(f);
+	size_t size = cext_sizeof(&f->clients);
+	int bindex, cindex = e->x / f->rect.width / size;
+	Client *c = cext_get_item(&f->clients, cindex);
+	XRaiseWindow(dpy, f->win);
+	if (get_sel_client() != c) {
+		sel_client(c);
+		draw_frame(f, nil);
 		return;
 	}
 	if (e->button == Button1) {
-		if (!(f = SELFRAME(page[sel])))
-			return;
 		align = cursor_to_align(f->cursor);
 		if (align == CENTER)
 			mouse_move(f);
@@ -335,15 +341,14 @@ void handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 	/* frame mouse handling */
 	if (f->file[bindex]->content)
 		spawn(dpy, f->file[bindex]->content);
-	draw_frame(f);
+	draw_frame(f, nil);
 }
 
 void attach_client_to_frame(Frame * f, Client * c)
 {
 	wmii_move_ixpfile(c->file[C_PREFIX], f->file[F_CLIENT_PREFIX]);
 	f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
-	f->client = (Client **) attach_item_end((void **) f->client, c, sizeof(Client *));
-	f->sel = index_item((void **) f->client, c);
+	cext_attach_item(&f->clients, c);
 	c->frame = f;
 	reparent_client(c, f->win, border_width(f), tab_height(f));
 	resize_frame(f, &f->rect, 0);
@@ -353,100 +358,89 @@ void attach_client_to_frame(Frame * f, Client * c)
 
 void detach_client_from_frame(Client * c)
 {
+	Client *client;
 	Frame *f = c->frame;
 	wmii_move_ixpfile(c->file[C_PREFIX], def[WM_DETACHED_CLIENT]);
 	c->frame = 0;
-	f->client = (Client **) detach_item((void **) f->client, c, sizeof(Client *));
-	if (f->sel)
-		f->sel--;
-	else
-		f->sel = 0;
+	cext_detach_item(&f->clients, c);
 	if (!c->destroyed) {
 		if (f) {
 			hide_client(c);
-			detached = (Client **) attach_item_begin((void **) detached, c, sizeof(Client *));
+			cext_attach_item(&detached, c);
 		}
 		reparent_client(c, root, border_width(f), tab_height(f));
 	}
-	if (f->client) {
-		sel_client(f->client[f->sel]);
-		draw_frame(f);
+	if ((client = cext_get_top_item(&f->clients))) {
+		sel_client(client);
+		draw_frame(f, nil);
 	}
 }
 
 static void select_client(void *obj, char *cmd)
 {
 	Frame *f = obj;
-	int size = count_items((void **) f->client);
+	size_t size = cext_sizeof(&f->clients);
 	if (!f || !cmd || size == 1)
 		return;
-	if (!strncmp(cmd, "prev", 5)) {
-		if (f->sel > 0)
-			f->sel--;
-		else
-			f->sel = size - 1;
-	} else if (!strncmp(cmd, "next", 5)) {
-		if (f->sel + 1 == size)
-			f->sel = 0;
-		else
-			f->sel++;
-	}
-	sel_client(f->client[f->sel]);
-	draw_frame(f);
+	if (!strncmp(cmd, "prev", 5))
+		cext_top_item(&f->clients, cext_get_up_item(&f->clients, cext_get_top_item(&f->clients)));
+	else if (!strncmp(cmd, "next", 5))
+		cext_top_item(&f->clients, cext_get_down_item(&f->clients, cext_get_top_item(&f->clients)));
+	sel_client(cext_get_top_item(&f->clients));
+	draw_frame(f, nil);
 }
 
-static void handle_before_read_frame(IXPServer * s, File * f)
+static void iter_before_read_frame(void *item, void *aux)
 {
-	int i = 0;
+	Frame *f = item;
+	File *file = aux;
+	if (file == f->file[F_GEOMETRY]) {
+		char buf[64];
+		snprintf(buf, 64, "%d,%d,%d,%d", f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+		if (file->content)
+			free(file->content);
+		file->content = cext_estrdup(buf);
+		file->size = strlen(buf);
+	}
+}
 
-	for (i = 0; frame && frame[i]; i++) {
-		if (f == frame[i]->file[F_GEOMETRY]) {
-			char buf[64];
-			snprintf(buf, 64, "%d,%d,%d,%d", frame[i]->rect.x,
-					 frame[i]->rect.y, frame[i]->rect.width,
-					 frame[i]->rect.height);
-			if (f->content)
-				free(f->content);
-			f->content = cext_estrdup(buf);
-			f->size = strlen(buf);
-			return;
+static void handle_before_read_frame(IXPServer *s, File *f)
+{
+	cext_iterate(&frames, f, iter_before_read_frame);
+}
+
+static void iter_after_write_frame(void *item, void *aux)
+{
+	Frame *f = item;
+	File *file = aux;
+	if (file == f->file[F_CTL]) {
+		run_action(file, f, frame_acttbl);
+		return;
+	}
+	if (file == f->file[F_TAB] || file == f->file[F_BORDER] || file == f->file[F_HANDLE_INC]) {
+		f->area->layout->arrange(f->area);
+		draw_page(f->area->page);
+		return;
+	} else if (file == f->file[F_GEOMETRY]) {
+		char *size = f->file[F_GEOMETRY]->content;
+		if (size && strrchr(size, ',')) {
+			XRectangle frect;
+			blitz_strtorect(&rect, &frect, size);
+			resize_frame(f, &frect, 0);
+			draw_page(f->area->page);
 		}
+		return;
 	}
 }
 
 static void handle_after_write_frame(IXPServer * s, File * f)
 {
-	int i;
-
-	for (i = 0; frame && frame[i]; i++) {
-		if (f == frame[i]->file[F_CTL]) {
-			run_action(f, frame[i], frame_acttbl);
-			return;
-		}
-		if (f == frame[i]->file[F_TAB]
-			|| f == frame[i]->file[F_BORDER]
-			|| f == frame[i]->file[F_HANDLE_INC]) {
-			if (frame[i]->area) {
-				frame[i]->area->layout->arrange(frame[i]->area);
-				draw_page(frame[i]->area->page);
-			}
-			return;
-		} else if (f == frame[i]->file[F_GEOMETRY]) {
-			char *size = frame[i]->file[F_GEOMETRY]->content;
-			if (size && strrchr(size, ',')) {
-				XRectangle frect;
-				blitz_strtorect(&rect, &frect, size);
-				resize_frame(frame[i], &frect, 0);
-				draw_page(frame[i]->area->page);
-			}
-			return;
-		}
-	}
+	cext_iterate(&frames, f, iter_after_write_frame);
 }
 
 Frame *get_sel_frame_of_area(Area *a)
 {
-	return cext_get_top_item(&a->frame);
+	return cext_get_top_item(&a->frames);
 }
 
 Frame *get_sel_frame()

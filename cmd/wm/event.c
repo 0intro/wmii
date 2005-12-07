@@ -180,7 +180,7 @@ static void handle_expose(XEvent * e)
 	if (e->xexpose.count == 0) {
 		f = win_to_frame(e->xbutton.window);
 		if (f)
-			draw_frame(f);
+			draw_frame(f, nil);
 	}
 }
 
@@ -249,8 +249,8 @@ static void handle_enternotify(XEvent * e)
 		Frame *old = get_sel_frame();
 		if (old != c->frame) {
 			sel_frame(c->frame, 1);
-			draw_frame(old);
-			draw_frame(c->frame);
+			draw_frame(old, nil);
+			draw_frame(c->frame, nil);
 		}
 	}
 }

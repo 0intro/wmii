@@ -76,11 +76,11 @@ void *cext_find_item(Container *c, void *pattern, int (*comp)(void *pattern, voi
 	return i ? i->item : nil;
 }
 
-void cext_iterate(Container *c, void (*doit)(void *))
+void cext_iterate(Container *c, void *aux, void (*iter)(void *, void *aux))
 {
 	CItem *i;
 	for (i = c->list; i; i = i->next)
-		doit(i->item);
+		iter(i->item, aux);
 }
 
 void cext_top_item(Container *c, void *item)
@@ -88,7 +88,6 @@ void cext_top_item(Container *c, void *item)
 	CItem *i = cext_find_item(c, item, comp_ptr);
 	if (!i)
 		return;
-
 	detach_from_stack(i);
 	attach_to_stack(c, i);	
 }

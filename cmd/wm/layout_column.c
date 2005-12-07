@@ -15,13 +15,13 @@ typedef struct Column Column;
 
 struct Acme {
 	int sel;
-	Column **column;
+	Container columns;
 };
 
 struct Column {
 	int sel;
 	int refresh;
-	Frame **frame;
+	Container frames;
 	XRectangle rect;
 };
 
@@ -39,43 +39,47 @@ static Acme zero_acme = { 0 };
 
 void init_layout_column()
 {
-	layouts = (Layout **) attach_item_end((void **) layouts, &lcol, sizeof(Layout *));
+	cext_attach_item(&layouts, &lcol);
 }
 
-
-static void arrange_column(Area * a, Column * col)
+static Column *get_sel_column(Acme *acme)
 {
-	int i;
-	int n = count_items((void **) col->frame);
-	unsigned int height = a->rect.height / n;
-	for (i = 0; col->frame && col->frame[i]; i++) {
-		if (col->refresh) {
-			col->frame[i]->rect = col->rect;
-			col->frame[i]->rect.height = height;
-			col->frame[i]->rect.y = i * height;
-		}
-		resize_frame(col->frame[i], &col->frame[i]->rect, 0);
-	}
+	return cext_get_top_item(&acme->columns);
 }
 
-static void arrange_col(Area * a)
+static void iter_arrange_column_frame(void *frame, void *height)
+{
+	unsigned int h = *(unsigned int *)height;
+	Frame *f = frame;
+	Column *col = f->aux;
+	if (col->refresh) {
+		f->rect = col->rect;
+		f->rect.height = h;
+		f->rect.y = cext_get_item_index(&col->frames, f) * h;
+	}
+	resize_frame(f, &f->rect, 0);
+}
+
+static void iter_arrange_column(void *column, void *area)
+{
+	Column *col = column;
+	size_t size = cext_sizeof(&col->frames);
+	unsigned int height = ((Area *)area)->rect.height / size;
+	cext_iterate(&col->frames, &height, iter_arrange_column_frame);
+}
+
+static void arrange_col(Area *a)
 {
 	Acme *acme = a->aux;
-	int i;
-
-	if (!acme) {
-		fprintf(stderr, "%s", "wmiiwm: fatal, page has no layout\n");
-		exit(1);
-	}
-	for (i = 0; acme->column && acme->column[i]; i++)
-		arrange_column(a, acme->column[i]);
+	cext_iterate(&acme->columns, a, iter_arrange_column);
 }
 
-static void init_col(Area * a)
+static void init_col(Area *a)
 {
 	Acme *acme = cext_emalloc(sizeof(Acme));
-	int i, j, n, cols = 1;
-	unsigned int width = 1;
+	int i, cols = 1;
+	unsigned int width;
+	//size_t size;
 	Column *col;
 
 	*acme = zero_acme;
@@ -83,28 +87,27 @@ static void init_col(Area * a)
 
 	/* processing argv */
 	/*
-	   for (i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
-	   switch (argv[i][1]) {
-	   case 'c':
-	   cols = _strtonum(argv[++i], 0, 32);
-	   if (cols < 1)
-	   cols = 1;
-	   break;
-	   }
-	   }
-	 */
+	for (i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
+		switch (argv[i][1]) {
+			case 'c':
+				cols = _strtonum(argv[++i], 0, 32);
+				if (cols < 1)
+					cols = 1;
+				break;
+		}
+	}
+	*/
 
 	width = a->rect.width / cols;
-	acme->column = cext_emalloc((cols + 1) * sizeof(Column *));
 	for (i = 0; i < cols; i++) {
-		acme->column[i] = cext_emalloc(sizeof(Column));
-		*acme->column[i] = zero_column;
-		acme->column[i]->rect = a->rect;
-		acme->column[i]->rect.x = i * width;
-		acme->column[i]->rect.width = width;
-		acme->column[i]->refresh = 1;
+		col = cext_emalloc(sizeof(Column));
+		*col = zero_column;
+		col->rect = a->rect;
+		col->rect.x = i * width;
+		col->rect.width = width;
+		col->refresh = 1;
+		cext_attach_item(&acme->columns, col);
 	}
-	acme->column[cols] = 0;		/* null termination of array */
 
 	/*
 	 * Frame attaching strategy works as follows: 1. If more client than
@@ -113,8 +116,9 @@ static void init_col(Area * a)
 	 * than column exist, than filling begins from eastmost to westmost
 	 * column until no more client exist.
 	 */
-	n = count_items((void **) client);
-	if (n > cols) {
+#if 0
+	size = cext_sizeof(&a->clients);
+	if (size > cols) {
 		/* 1st. case */
 		j = 0;
 		for (i = 0; i < (cols - 1); i++) {
@@ -147,56 +151,56 @@ static void init_col(Area * a)
 		}
 	}
 	arrange_col(a);
+#endif
 }
 
-static void deinit_col(Area * a)
+static void iter_detach_client(void *client, void *aux)
+{
+	detach_client_from_frame((Client *)client);
+}
+
+static void iter_detach_frame(void *frame, void *aux)
+{
+	Frame *f = frame;
+	cext_iterate(&f->clients, nil, iter_detach_client);
+}
+
+static void iter_deinit_col(void *column, void *aux)
+{
+	Column *col = column;
+	cext_iterate(&col->frames, nil, iter_detach_frame);
+}
+
+static void deinit_col(Area *a)
 {
 	Acme *acme = a->aux;
-	int i;
-
-	for (i = 0; acme->column && acme->column[i]; i++) {
-		Column *col = acme->column[i];
-		int j;
-		for (j = 0; col->frame && col->frame[j]; j++) {
-			Frame *f = col->frame[j];
-			while (f->client && f->client[0])
-				detach_client_from_frame(f->client[0]);
-			detach_frame_from_area(f, 1);
-			destroy_frame(f);
-		}
-		free(col->frame);
-	}
-	free(acme->column);
+	cext_iterate(&acme->columns, nil, iter_deinit_col);
 	free(acme);
 	a->aux = 0;
 }
 
-static void attach_col(Area * a, Client * c)
+static void attach_col(Area *a, Client *c)
 {
 	Acme *acme = a->aux;
 	Column *col;
 	Frame *f;
 
-	col = acme->column[acme->sel];
+	col = get_sel_column(acme);
 	f = alloc_frame(&c->rect);
-	col->frame = (Frame **) attach_item_end((void **) col->frame, f, sizeof(Frame *));
+	cext_attach_item(&col->frames, f);
 	f->aux = col;
 	col->refresh = 1;
 	attach_frame_to_area(a, f);
 	attach_client_to_frame(f, c);
-
 	arrange_col(a);
 }
 
-static void detach_col(Area * a, Client * c)
+static void detach_col(Area *a, Client *c)
 {
 	Frame *f = c->frame;
 	Column *col = f->aux;
 
-	if (!col)
-		return;					/* client was not attached, maybe exit(1) in
-								 * such case */
-	col->frame = (Frame **) detach_item((void **) col->frame, c->frame, sizeof(Frame *));
+	cext_detach_item(&col->frames, f);
 	col->refresh = 1;
 	detach_client_from_frame(c);
 	detach_frame_from_area(f, 1);
@@ -207,6 +211,7 @@ static void detach_col(Area * a, Client * c)
 
 static void drop_resize(Frame * f, XRectangle * new)
 {
+#if 0
 	Column *col = f->aux;
 	Acme *acme = f->area->aux;
 	int i, idx, n = 0;
@@ -299,10 +304,12 @@ static void drop_resize(Frame * f, XRectangle * new)
 			resize_frame(south, &south->rect, 0);
 		}
 	}
+#endif
 }
 
 static void _drop_move(Frame * f, XRectangle * new, XPoint * pt)
 {
+#if 0
 	Column *tgt = 0, *src = f->aux;
 	Acme *acme = f->area->aux;
 	int i;
@@ -351,13 +358,14 @@ static void _drop_move(Frame * f, XRectangle * new, XPoint * pt)
 			(Frame **) attach_item_end((void **) tgt->frame, f,
 									   sizeof(Frame *));
 		tgt->refresh = 1;
-		arrange_column(f->area, tgt);
+		iter_arrange_column(tgt, f->area);
 
 		/* TODO: implement a better target placing strategy */
 	}
+#endif
 }
 
-static void resize_col(Frame * f, XRectangle * new, XPoint * pt)
+static void resize_col(Frame *f, XRectangle *new, XPoint *pt)
 {
 	if ((f->rect.width == new->width)
 		&& (f->rect.height == new->height))

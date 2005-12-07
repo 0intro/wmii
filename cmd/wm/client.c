@@ -184,7 +184,7 @@ void handle_client_property(Client * c, XPropertyEvent * e)
 			c->file[C_NAME]->size = strlen(buf);
 		}
 		if (c->frame)
-			draw_client(c);
+			draw_client(c, nil);
 		invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
 		break;
 	case XA_WM_TRANSIENT_FOR:
@@ -209,7 +209,7 @@ void destroy_client(Client * c)
 }
 
 /* speed reasoned function for client property change */
-void draw_client(void *item)
+void draw_client(void *item, void *aux)
 {
 	Client *c = item;
 	Frame *f = c->frame;
@@ -235,7 +235,7 @@ void draw_client(void *item)
 
 void draw_clients(Frame * f)
 {
-	cext_iterate(&f->clients, draw_client);
+	cext_iterate(&f->clients, 0, draw_client);
 }
 
 void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
@@ -311,15 +311,18 @@ void attach_client(Client * c)
 		if (t && t->frame)
 			a = t->frame->area;
 	}
+	cext_attach_item(&a->clients, c);
 	a->layout->attach(a, c);
 	if (old)
-		draw_frame(old);
+		draw_frame(old, nil);
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
 void detach_client(Client *c) {
-	if (c->frame)
+	if (c->frame) {
+		cext_detach_item(&c->frame->area->clients, c);
 		c->frame->area->layout->detach(c->frame->area, c);
+	}
 	if (c->destroyed)
 		destroy_client(c);
 	sel_page(get_sel_page());

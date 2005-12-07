@@ -13,11 +13,7 @@
 
 #include "blitz.h"
 
-#include <cext.h>
-
-int
-property(Display * dpy, Window w, Atom a, Atom t, long l,
-		 unsigned char **prop)
+int property(Display * dpy, Window w, Atom a, Atom t, long l, unsigned char **prop)
 {
 	Atom real;
 	int format;

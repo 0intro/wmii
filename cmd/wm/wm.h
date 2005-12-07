@@ -129,6 +129,8 @@ struct Area {
 	Layout *layout;
 	Page *page;
 	Container frames;
+	/* XXX: remove frames container, areas shall only contain clients */
+	Container clients;
 	XRectangle rect;
 	void *aux;					/* free pointer */
 	File *file[A_LAST];
@@ -165,11 +167,11 @@ int screen_num;
 Window root;
 Window transient;
 XRectangle rect;
-Container detached = {0};
-Container pages = {0};
-Container frames = {0};
-Container clients = {0};
-Container layouts = {0};
+Container detached;
+Container pages;
+Container frames;
+Container clients;
+Container layouts;
 XFontStruct *font;
 XColor xorcolor;
 GC xorgc;
@@ -203,7 +205,7 @@ unsigned int valid_mask, num_lock_mask;
 /* area.c */
 Area *alloc_area(Page *p, XRectangle * r, char *layout);
 void destroy_area(Area * a);
-void sel_area(Area * a, int raise);
+void sel_area(Area * a);
 void attach_frame_to_area(Area * a, Frame * f);
 void detach_frame_from_area(Frame * f, int ignore_sel_and_destroy);
 void draw_area(Area * a);
@@ -218,7 +220,7 @@ void destroy_client(Client * c);
 void configure_client(Client * c);
 void handle_client_property(Client * c, XPropertyEvent * e);
 void close_client(Client * c);
-void draw_client(void *item);
+void draw_client(void *item, void *aux);
 void draw_clients(Frame * f);
 void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert);
 void grab_client(Client * c, unsigned long mod, unsigned int button);
@@ -232,12 +234,12 @@ void detach_client(Client *c);
 Client *get_sel_client();
 
 /* frame.c */
-void sel_frame(Frame * f, int raise);
+void sel_frame(Frame * f, Bool raise);
 Frame *win_to_frame(Window w);
 Frame *alloc_frame(XRectangle * r);
 void destroy_frame(Frame * f);
 void resize_frame(Frame * f, XRectangle * r, XPoint * pt);
-void draw_frame(Frame * f);
+void draw_frame(void *frame, void *aux);
 void handle_frame_buttonpress(XButtonEvent * e, Frame * f);
 void attach_client_to_frame(Frame * f, Client * c);
 void detach_client_from_frame(Client *c);
