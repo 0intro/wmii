@@ -3,6 +3,7 @@
  * See LICENSE file for license details.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "cext.h"
@@ -18,17 +19,23 @@ static void detach_from_stack(Container *c, CItem *i)
 {	
 	/* remove from stack */
 	if (i == c->stack) {
-	   c->stack = i->down;	
-	   return;
+		c->stack = i->down;	
+		c->stack->up = 0;
 	}
-	if (i->up)
-		i->up->down = i->down;
-	if (i->down)
-		i->down->up = i->up;
+	else {
+		if (i->up)
+			i->up->down = i->down;
+		if (i->down)
+			i->down->up = i->up;
+	}
+	i->up = 0;
+	i->down = 0;
 }
 
 static void attach_to_stack(Container *c, CItem *i)
 {
+	i->up = 0;
+	i->down = 0;
 	if (!c->stack)
 		c->stack = i;
 	else {
@@ -43,32 +50,29 @@ void cext_attach_item(Container *c, void *item)
 	CItem *i, *new = cext_emalloc(sizeof(CItem));
 	*new = zero_item;
 	new->item = item;
-	for (i = c->list; i && i->next; i = i->next);
 	if (!c->list)
 		c->list = new;
-	else
+	else {
+		for (i = c->list; i->next; i = i->next);
 		i->next = new;
-
+	}
 	attach_to_stack(c, new);
 }
 
 void cext_detach_item(Container *c, void *item)
 {
 	CItem *i = c->list;
-
 	if (!i)
 		return;
-
 	/* remove from list */
 	if (i->item == item)
 		c->list = c->list->next;
 	else {
-		for (; i->next && i->next->item != item; i = i->next);
+		for (; i->next && (i->next->item != item); i = i->next);
 		if (!i->next)
 			return;
 		i->next = i->next->next;
 	}
-
 	detach_from_stack(c, i);
 	free(i);
 }
@@ -90,7 +94,11 @@ void cext_iterate(Container *c, void *aux, void (*iter)(void *, void *aux))
 {
 	CItem *i;
 	for (i = c->list; i; i = i->next)
+	{
+		assert(c);
+		assert(i->item);
 		iter(i->item, aux);
+	}
 }
 
 void cext_top_item(Container *c, void *item)

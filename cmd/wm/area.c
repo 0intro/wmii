@@ -34,6 +34,7 @@ Area *alloc_area(Page *p, XRectangle * r, char *layout)
 	snprintf(buf, MAX_BUF, "/%s/a/%d/layout", p->file[P_PREFIX]->name,  id);
 	a->file[A_LAYOUT] = wmii_create_ixpfile(ixps, buf, layout);
 	a->layout = get_layout(layout);
+	a->layout->init(a);
 	cext_attach_item(&p->areas, a);
 	p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
 	return a;

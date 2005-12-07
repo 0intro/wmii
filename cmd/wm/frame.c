@@ -234,8 +234,7 @@ void resize_frame(Frame * f, XRectangle * r, XPoint * pt)
 	/* resize if client requests special size */
 	check_dimensions(f, tabh, bw);
 
-	if (f->file[F_HANDLE_INC]->content
-		&& ((char *) f->file[F_HANDLE_INC]->content)[0] == '1')
+	if (f->file[F_HANDLE_INC]->content && ((char *) f->file[F_HANDLE_INC]->content)[0] == '1')
 		resize_incremental(f, tabh, bw);
 
 	XMoveResizeWindow(dpy, f->win, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
