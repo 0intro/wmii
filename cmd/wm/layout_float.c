@@ -57,7 +57,6 @@ static void deinit_float(Area *a)
 static Bool attach_float(Area *a, Client *c)
 {
 	Frame *f = get_sel_frame_of_area(a);
-	fprintf(stderr, "attach_float() frame=0x%x\n", f);
 	cext_attach_item(&a->clients, c);
 	/* check for tabbing? */
 	if (f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))

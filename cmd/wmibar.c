@@ -34,6 +34,7 @@ typedef struct {
 	Draw d;
 } Item;
 
+static unsigned int id = 0;
 static IXPServer *ixps = 0;
 static Display *dpy;
 static GC gc;
@@ -124,12 +125,12 @@ static void _destroy(void *obj, char *arg)
 static void reset(void *obj, char *arg)
 {
 	int i;
-	size_t size = cext_sizeof(&items);
 	char buf[512];
-	for (i = 0; i < size; i++) {
-		snprintf(buf, sizeof(buf), "/%d", i + 1);
+	for (i = 0; i < id; i++) {
+		snprintf(buf, sizeof(buf), "/%d", i);
 		ixps->remove(ixps, buf);
 	}
+	id = 0;
 	draw_bar(0, 0);
 }
 
@@ -294,22 +295,22 @@ static void draw_bar(void *obj, char *arg)
 			init_item(buf, item);
 			cext_attach_item(&items, item);
 		}
-		draw();
 		free(paths);
+		draw();
 	}
+}
+
+static int comp_item_root(void *file, void *item)
+{
+	File *f = file;
+	Item *i = item;
+
+	return f == i->root;
 }
 
 static Item *get_item_for_file(File *f)
 {
-	unsigned int i;
-	size_t size = cext_sizeof(&items);
-	Item *item;
-	for (i = 0; i < size; i++) {
-		item = cext_list_get_item(&items, i);
-		if (f == item->root)
-			return item;
-	}
-	return nil;
+	return cext_find_item(&items, f, comp_item_root);
 }
 
 static void iter_buttonpress(void *item, void *bpress)
@@ -422,7 +423,7 @@ static void handle_before_read(IXPServer * s, File * f)
 		f->content = strdup(buf);
 		f->size = strlen(buf);
 	} else if (f == file[B_NEW]) {
-		snprintf(buf, sizeof(buf), "%d", cext_sizeof(&items));
+		snprintf(buf, sizeof(buf), "%d", id++);
 		if (f->content)
 			free(f->content);
 		f->content = strdup(buf);
