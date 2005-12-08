@@ -259,7 +259,7 @@ static void handle_shortcut(Window w, unsigned long mod, KeyCode key)
 		spawn(dpy, s->cmdfile->content);
 		return;
 	}
-	if (s->next)
+	if (s && s->next)
 		handle_shortcut_chain(w, s, s->name, 1);
 }
 
