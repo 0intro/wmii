@@ -226,10 +226,8 @@ static int handle_kpress(XKeyEvent * e)
 {
 	KeySym ksym = XKeycodeToKeysym(dpy, e->keycode, 0);
 
-	if (ksym >= XK_1 && ksym <= XK_9)
-		return ksym - XK_1;
-	else if (ksym == XK_0)
-		return 9;
+	if (ksym >= XK_0 && ksym <= XK_9)
+		return ksym - XK_0;
 	else if (ksym >= XK_a && ksym <= XK_z)
 		return 10 + ksym - XK_a;
 
@@ -407,9 +405,9 @@ static void _select_page(void *obj, char *cmd)
 	if (!p || !cmd)
 		return;
 	if (!strncmp(cmd, "prev", 5))
-		p = cext_stack_get_up_item(&pages, p);
+		p = cext_list_get_prev_item(&pages, p);
 	else if (!strncmp(cmd, "next", 5))
-		p = cext_stack_get_down_item(&pages, p);
+		p = cext_list_get_next_item(&pages, p);
 	else
 		p = cext_list_get_item(&pages, _strtonum(cmd, 0, cext_sizeof(&pages) - 1));
 	sel_page(p);
@@ -426,7 +424,7 @@ static void new_page(void *obj, char *cmd)
 {
 	Page *p = get_sel_page();
 	if (p)
-		destroy_page(p);
+		hide_page(p);
 	alloc_page();
 }
 
