@@ -20,7 +20,7 @@ Action page_acttbl[] = {
 
 Page *alloc_page()
 {
-	Page *p = cext_emalloc(sizeof(Page));
+	Page *p = cext_emallocz(sizeof(Page));
 	char buf[MAX_BUF], buf2[16];
 	size_t id = cext_sizeof(&pages);
 
@@ -98,7 +98,7 @@ XRectangle *rectangles(unsigned int *num)
 	XRectangle r;
 
 	if (XQueryTree(dpy, root, &d1, &d2, &wins, num)) {
-		result = cext_emalloc(*num * sizeof(XRectangle));
+		result = cext_emallocz(*num * sizeof(XRectangle));
 		for (i = 0; i < *num; i++) {
 			if (!XGetWindowAttributes(dpy, wins[i], &wa))
 				continue;

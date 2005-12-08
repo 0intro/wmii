@@ -54,8 +54,6 @@ static unsigned int num_lock_mask, valid_mask;
 static char buf[MAX_BUF];
 static XFontStruct *font;
 
-static Shortcut zero_shortcut = { "", 0, 0, 0, 0 };
-
 static void grab_shortcut(Shortcut * s);
 static void ungrab_shortcut(Shortcut * s);
 static void draw_shortcut_box(char *text);
@@ -126,12 +124,11 @@ static void create_shortcut(File * f)
 
 	for (i = 0; i < toks; i++) {
 		if (!s)
-			r = s = cext_emalloc(sizeof(Shortcut));
+			r = s = cext_emallocz(sizeof(Shortcut));
 		else {
-			s->next = cext_emalloc(sizeof(Shortcut));
+			s->next = cext_emallocz(sizeof(Shortcut));
 			s = s->next;
 		}
-		*s = zero_shortcut;
 		cext_strlcpy(s->name, chain[i], MAX_BUF);
 		k = strrchr(chain[i], '-');
 		if (k)

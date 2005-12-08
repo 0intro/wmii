@@ -10,16 +10,13 @@
 
 #include "wm.h"
 
-static Client zero_client = { 0 };
-
 Client *alloc_client(Window w)
 {
 	static int id = 0;
 	char buf[MAX_BUF];
 	char buf2[MAX_BUF];
-	Client *c = (Client *) cext_emalloc(sizeof(Client));
+	Client *c = (Client *) cext_emallocz(sizeof(Client));
 
-	*c = zero_client;
 	c->win = w;
 	snprintf(buf, MAX_BUF, "/detached/c/%d", id);
 	c->file[C_PREFIX] = ixp_create(ixps, buf);

@@ -34,9 +34,6 @@ static void resize_col(Frame * f, XRectangle * new, XPoint * pt);
 
 static Layout lcol = { "col", init_col, deinit_col, arrange_col, attach_col, detach_col, resize_col };
 
-static Column zero_column = { 0 };
-static Acme zero_acme = { 0 };
-
 void init_layout_column()
 {
 	cext_attach_item(&layouts, &lcol);
@@ -76,13 +73,12 @@ static void arrange_col(Area *a)
 
 static void init_col(Area *a)
 {
-	Acme *acme = cext_emalloc(sizeof(Acme));
+	Acme *acme = cext_emallocz(sizeof(Acme));
 	int i, cols = 1;
 	unsigned int width;
 	//size_t size;
 	Column *col;
 
-	*acme = zero_acme;
 	a->aux = acme;
 
 	/* processing argv */
@@ -100,8 +96,7 @@ static void init_col(Area *a)
 
 	width = a->rect.width / cols;
 	for (i = 0; i < cols; i++) {
-		col = cext_emalloc(sizeof(Column));
-		*col = zero_column;
+		col = cext_emallocz(sizeof(Column));
 		col->rect = a->rect;
 		col->rect.x = i * width;
 		col->rect.width = width;

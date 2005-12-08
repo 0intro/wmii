@@ -13,7 +13,7 @@ char *cext_estrdup(const char *s)
 {
 	char *tmp;
 
-	tmp = (char *) cext_emalloc(strlen(s) + 1);
+	tmp = (char *) cext_emallocz(strlen(s) + 1);
 	strcpy(tmp, (char *) s);
 
 	return tmp;

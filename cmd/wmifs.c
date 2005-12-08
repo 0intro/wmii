@@ -29,7 +29,6 @@ struct Bind {
 	char *prefix;
 };
 
-static Bind zero_bind = { 0 };
 static Display *dpy;
 static IXPServer *ixps;
 static char *sockfile = 0;
@@ -135,9 +134,7 @@ static void bind(void *obj, char *arg)
 				arg);
 		return;					/* shortcut with empty argument */
 	}
-	b = cext_emalloc(sizeof(Bind));
-	*b = zero_bind;
-
+	b = cext_emallocz(sizeof(Bind));
 	b->client = init_ixp_client(sfile);
 
 	if (!b->client) {

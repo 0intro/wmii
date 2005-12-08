@@ -9,15 +9,12 @@
 
 #include "wm.h"
 
-static Area     zero_area = {0};
-
 Area *alloc_area(Page *p, XRectangle * r, char *layout)
 {
 	char buf[MAX_BUF];
-	Area *a = (Area *) cext_emalloc(sizeof(Area));
+	Area *a = (Area *) cext_emallocz(sizeof(Area));
 	size_t id = cext_sizeof(&p->areas);
 
-	*a = zero_area;
 	a->rect = *r;
 	a->page = p;
 	snprintf(buf, MAX_BUF, "/%s/a/%d", p->file[P_PREFIX]->name, id);

@@ -111,9 +111,8 @@ static void _exec(char *cmd)
 	add_history(cmd);
 	if (files[M_PRE_COMMAND]->content) {
 		size_t len = strlen(cmd) + files[M_PRE_COMMAND]->size + 2;
-		rc = cext_emalloc(len);
-		snprintf(rc, len, "%s %s", (char *) files[M_PRE_COMMAND]->content,
-				 cmd);
+		rc = cext_emallocz(len);
+		snprintf(rc, len, "%s %s", (char *) files[M_PRE_COMMAND]->content, cmd);
 	}
 	/* fallback */
 	spawn(dpy, rc);
@@ -240,7 +239,7 @@ static int update_items(char *pattern)
 		items = 0;
 		item_size = size;
 		if (item_size)
-			items = (File **) cext_emalloc((item_size + 1) * sizeof(File *));
+			items = (File **) cext_emallocz((item_size + 1) * sizeof(File *));
 	}
 	size = 0;
 

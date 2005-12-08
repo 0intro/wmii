@@ -37,8 +37,7 @@ static void iter_attach_float(void *client, void *area)
 
 static void init_float(Area *a)
 {
-	Container *c = cext_emalloc(sizeof(Container));
-	c->list = c->stack = nil;
+	Container *c = cext_emallocz(sizeof(Container));
 	a->aux = c;
 	cext_iterate(&a->clients, a, iter_attach_float);
 }

@@ -8,9 +8,9 @@
 
 #include "cext.h"
 
-void *cext_emalloc(size_t size)
+void *cext_emallocz(size_t size)
 {
-	void *res = malloc(size);
+	void *res = calloc(1, size);
 
 	if (!res) {
 		fprintf(stderr, "fatal: could not malloc() %d bytes\n",

@@ -9,8 +9,6 @@
 
 #include "cext.h"
 
-static CItem zero_item = { 0 };
-
 static int comp_ptr(void *p1, void *p2)
 {
 	return p1 == p2;
@@ -51,9 +49,8 @@ static void attach_to_stack(Container *c, CItem *i)
 
 void cext_attach_item(Container *c, void *item)
 {
-	CItem *i, *new = cext_emalloc(sizeof(CItem));
+	CItem *i, *new = cext_emallocz(sizeof(CItem));
 	fprintf(stderr, "XX %s\n", "cext_attach_item()");
-	*new = zero_item;
 	new->item = item;
 	if (!c->list)
 		c->list = new;
@@ -204,7 +201,7 @@ void **attach_item_begin(void **old, void *item, size_t size_item)
 	int i, size_old;
 	void **result = 0;
 	for (size_old = 0; old && old[size_old]; size_old++);
-	result = cext_emalloc(size_item * (size_old + 2));
+	result = cext_emallocz(size_item * (size_old + 2));
 	result[0] = item;
 	for (i = 0; old && old[i]; i++)
 		result[i + 1] = old[i];
@@ -219,7 +216,7 @@ void **attach_item_end(void **old, void *item, size_t size_item)
 	int i, size_old;
 	void **result = 0;
 	for (size_old = 0; old && old[size_old]; size_old++);
-	result = cext_emalloc(size_item * (size_old + 2));
+	result = cext_emallocz(size_item * (size_old + 2));
 	for (i = 0; old && old[i]; i++)
 		result[i] = old[i];
 	result[i++] = item;
@@ -235,7 +232,7 @@ void **detach_item(void **old, void *item, size_t size_item)
 	void **result = 0;
 	for (size_old = 0; old && old[size_old]; size_old++);
 	if (size_old != 1) {
-		result = cext_emalloc(size_item * size_old);
+		result = cext_emallocz(size_item * size_old);
 		for (i = 0; old[i]; i++)
 			if (old[i] != item)
 				result[j++] = old[i];

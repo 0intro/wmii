@@ -207,13 +207,11 @@ static int make_qid(Qid * dir, char *wname, Qid * new)
 
 static int attach(IXPServer * s, IXPConn * c)
 {
-	Map *map = cext_emalloc(sizeof(Map));
-	fprintf(stderr, "attaching %d %s %s\n", s->fcall.afid, s->fcall.uname,
-			s->fcall.aname);
+	Map *map = cext_emallocz(sizeof(Map));
+	fprintf(stderr, "attaching %d %s %s\n", s->fcall.afid, s->fcall.uname, s->fcall.aname);
 	map->qid = root_qid;
 	map->fid = s->fcall.fid;
-	c->aux =
-		(Map **) attach_item_begin((void **) c->aux, map, sizeof(Map *));
+	c->aux = (Map **) attach_item_begin((void **) c->aux, map, sizeof(Map *));
 	s->fcall.id = RATTACH;
 	s->fcall.qid = root_qid;
 	return TRUE;
@@ -252,16 +250,13 @@ static int walk(IXPServer * s, IXPConn * c)
 	 */
 	if (nwqid == s->fcall.nwname) {
 		if (s->fcall.fid == s->fcall.newfid) {
-			c->aux =
-				(Map **) detach_item((void **) c->aux, map, sizeof(Map *));
+			c->aux = (Map **) detach_item((void **) c->aux, map, sizeof(Map *));
 			free(map);
 		}
-		map = cext_emalloc(sizeof(Map));
+		map = cext_emallocz(sizeof(Map));
 		map->qid = qid;
 		map->fid = s->fcall.newfid;
-		c->aux =
-			(Map **) attach_item_begin((void **) c->aux, map,
-									   sizeof(Map *));
+		c->aux = (Map **) attach_item_begin((void **) c->aux, map, sizeof(Map *));
 	}
 	s->fcall.id = RWALK;
 	s->fcall.nwqid = nwqid;
@@ -437,7 +432,7 @@ int main(int argc, char *argv[])
 	atexit(exit_cleanup);
 
 	/* default item settings */
-	item = cext_emalloc(sizeof(Item));
+	item = cext_emallocz(sizeof(Item));
 	item->id = 0;
 	item->text[0] = '\0';
 	item->value = 0;

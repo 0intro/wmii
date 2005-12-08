@@ -10,8 +10,6 @@
 
 #include "wm.h"
 
-static Frame zero_frame = { 0 };
-
 static void select_client(void *obj, char *cmd);
 static void handle_after_write_frame(IXPServer * s, File * f);
 static void handle_before_read_frame(IXPServer * s, File * f);
@@ -27,10 +25,9 @@ Frame *alloc_frame(XRectangle * r)
 	XSetWindowAttributes wa;
 	static int id = 0;
 	char buf[MAX_BUF];
-	Frame *f = (Frame *) cext_emalloc(sizeof(Frame));
+	Frame *f = (Frame *) cext_emallocz(sizeof(Frame));
 	int bw, th;
 
-	*f = zero_frame;
 	f->rect = *r;
 	f->cursor = normal_cursor;
 

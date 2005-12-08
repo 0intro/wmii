@@ -52,8 +52,8 @@ int count_items(void **items);
 int index_next_item(void **items, void *item);
 int index_prev_item(void **items, void *item);
 
-/* emalloc.c */
-void *cext_emalloc(size_t size);
+/* emallocz.c */
+void *cext_emallocz(size_t size);
 
 /* estrdup.c */
 char *cext_estrdup(const char *s);

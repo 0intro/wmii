@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 
 	printf("--------------------------------\n");
 	{
-		int *e = cext_emalloc(sizeof(int));
+		int *e = cext_emallocz(sizeof(int));
 		cext_attach_item(&c, e);
 		cext_iterate(&c, nil, iter_print_container);
 		cext_detach_item(&c, e);
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
 	printf("--------------------------------\n");
 	for (i = 0; i < 10; i++) {
-		int *e = cext_emalloc(sizeof(int));
+		int *e = cext_emallocz(sizeof(int));
 		*e = i;
 		cext_attach_item(&c, e);
 	}

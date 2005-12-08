@@ -16,7 +16,6 @@
 
 #include <cext.h>
 
-static IXPClient zero_client = { 0 };
 static size_t offsets[MAX_CONN * MAX_OPEN_FILES][2];	/* set of possible fd's */
 
 static void check_error(IXPClient * c, void *msg)
@@ -117,7 +116,7 @@ static void *poll_server(IXPClient * c, void *request, size_t req_len,
 					handle_dead_server(c);
 					return 0;
 				}
-				result = cext_emalloc(*out_len);
+				result = cext_emallocz(*out_len);
 				header = 1;
 			}
 			r = read(c->fd, ((char *) result) + num, *out_len - num);
@@ -256,8 +255,7 @@ IXPClient *init_ixp_client(char *sockfile)
 	socklen_t su_len;
 
 	/* init */
-	IXPClient *c = (IXPClient *) cext_emalloc(sizeof(IXPClient));
-	*c = zero_client;
+	IXPClient *c = (IXPClient *) cext_emallocz(sizeof(IXPClient));
 	c->create = cixp_create;
 	c->open = cixp_open;
 	c->read = cixp_read;

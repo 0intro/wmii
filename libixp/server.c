@@ -17,8 +17,6 @@
 
 #include <cext.h>
 
-static File zero_file = { 0 };
-static IXPServer zero_server = { 0 };
 static Connection zero_conn = { 0 };
 static int user_fd = -1;
 
@@ -81,7 +79,7 @@ static void handle_ixp_read(Connection * c, ReqHeader * h)
 	void *data = 0;
 	size_t out_len;
 
-	data = cext_emalloc(h->buf_len);
+	data = cext_emallocz(h->buf_len);
 	out_len = c->s->read(c->s, h->fd, h->offset, data, h->buf_len);
 	free(c->data);
 	if (c->s->errstr) {
@@ -219,7 +217,7 @@ static void read_conn(Connection * c)
 			return;
 		}
 		c->remain = c->len;
-		c->data = cext_emalloc(c->len);
+		c->data = cext_emallocz(c->len);
 		c->header = 1;
 	}
 	r = read(c->fd, ((char *) c->data) + c->len - c->remain, c->remain);
@@ -347,10 +345,9 @@ IXPServer *init_server(char *sockfile, void (*cleanup) (void))
 	IXPServer *s;
 
 	/* init */
-	s = (IXPServer *) cext_emalloc(sizeof(IXPServer));
-	*s = zero_server;
+	s = (IXPServer *) cext_emallocz(sizeof(IXPServer));
 	s->sockfile = sockfile;
-	s->root = (File *) cext_emalloc(sizeof(File));
+	s->root = (File *) cext_emallocz(sizeof(File));
 	s->runlevel = HALT;			/* initially server is not running */
 	s->create = ixp_create;
 	s->remove = ixp_remove;
@@ -358,7 +355,6 @@ IXPServer *init_server(char *sockfile, void (*cleanup) (void))
 	s->close = ixp_close;
 	s->read = ixp_read;
 	s->write = ixp_write;
-	*s->root = zero_file;
 	s->root->name = strdup("");
 	for (i = 0; i < MAX_CONN; i++) {
 		s->conn[i].s = s;

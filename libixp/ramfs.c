@@ -11,8 +11,6 @@
 
 #include <cext.h>
 
-static File zero_file = { 0 };
-
 int is_directory(File * f)
 {
 	return !f->size && f->content;
@@ -53,8 +51,7 @@ File *ixp_create(IXPServer * s, char *path)
 	}
 	/* only create missing parts, if file is directory */
 	while (tok) {
-		f = (File *) cext_emalloc(sizeof(File));
-		*f = zero_file;
+		f = (File *) cext_emallocz(sizeof(File));
 		f->name = strdup(tok);
 		f->parent = p;
 		if (p->content) {
@@ -90,7 +87,7 @@ static char *_ls(File * f)
 
 	for (p = f; p; p = p->next)
 		num++;
-	tmp = cext_emalloc(sizeof(File *) * num);
+	tmp = cext_emallocz(sizeof(File *) * num);
 	i = 0;
 	for (p = f; p; p = p->next) {
 		size += strlen(p->name) + 1;
@@ -99,7 +96,7 @@ static char *_ls(File * f)
 		tmp[i++] = p;
 	}
 	qsort(tmp, num, sizeof(char *), comp_file_name);
-	result = cext_emalloc(size);
+	result = cext_emallocz(size);
 	result[0] = '\0';
 	for (i = 0; i < num; i++) {
 		strncat(result, tmp[i]->name, size);

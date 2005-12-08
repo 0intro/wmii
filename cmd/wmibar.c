@@ -288,14 +288,14 @@ static void draw_bar(void *obj, char *arg)
 		n = 0;
 		for (f = label; f; f = f->next)
 			n++;
-		paths = cext_emalloc(sizeof(char *) * n);
+		paths = cext_emallocz(sizeof(char *) * n);
 		i = 0;
 		for (f = label; f; f = f->next)
 			paths[i++] = f->name;
 		qsort(paths, n, sizeof(char *), comp_str);
 		for (i = 0; i < n; i++) {
 			snprintf(buf, sizeof(buf), "/%s", paths[i]);
-			item = cext_emalloc(sizeof(Item));
+			item = cext_emallocz(sizeof(Item));
 			items = (Item **) attach_item_end((void **) items, item, sizeof(Item *));
 			init_item(buf, item);
 		}
