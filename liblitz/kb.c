@@ -11,7 +11,7 @@
 char *blitz_modtostr(unsigned long mod)
 {
 	char result[60];
-	result[0] = '\0';
+	result[0] = 0;
 
 	if (mod & ShiftMask)
 		cext_strlcat(result, "S-", sizeof(result));

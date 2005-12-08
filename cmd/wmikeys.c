@@ -485,7 +485,7 @@ int main(int argc, char *argv[])
 	}
 	XSetErrorHandler(dummy_error_handler);
 	screen_num = DefaultScreen(dpy);
-	size[0] = '\0';
+	size[0] = 0;
 	if (argc > i)
 		cext_strlcpy(size, argv[i], sizeof(size));
 

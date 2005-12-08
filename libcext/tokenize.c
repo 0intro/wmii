@@ -16,11 +16,11 @@ size_t cext_tokenize(char **result, size_t reslen, char *str, char delim)
 		return 0;
 	for (n = str; *n == ' '; n++);
 	p = n;
-	for (i = 0; *n != '\0';) {
+	for (i = 0; *n != 0;) {
 		if (i == reslen)
 			return i;
 		if (*n == delim) {
-			*n = '\0';
+			*n = 0;
 			if (strlen(p))
 				result[i++] = p;
 			p = ++n;

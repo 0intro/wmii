@@ -99,7 +99,7 @@ static void _exec(char *cmd)
 {
 	char *rc = cmd;
 
-	if (!cmd || cmd[0] == '\0')
+	if (!cmd || cmd[0] == 0)
 		return;
 
 	if (items && items[0]) {
@@ -349,12 +349,12 @@ static void handle_kpress(XKeyEvent * e)
 	static char text[4096];
 	size_t len = 0;
 
-	text[0] = '\0';
+	text[0] = 0;
 	if (files[M_COMMAND]->content) {
 		cext_strlcpy(text, files[M_COMMAND]->content, sizeof(text));
 		len = strlen(text);
 	}
-	buf[0] = '\0';
+	buf[0] = 0;
 	num = XLookupString(e, buf, sizeof(buf), &ksym, 0);
 
 	if (IsFunctionKey(ksym) || IsKeypadKey(ksym)
@@ -448,7 +448,7 @@ static void handle_kpress(XKeyEvent * e)
 			for (size = 0; items && items[size]; size++);
 			if (i) {
 				do
-					text[--i] = '\0';
+					text[--i] = 0;
 				while (size && i && size == update_items(text));
 			}
 			set_text(text);
@@ -457,7 +457,7 @@ static void handle_kpress(XKeyEvent * e)
 		break;
 	default:
 		if ((num == 1) && !iscntrl((int) buf[0])) {
-			buf[num] = '\0';
+			buf[num] = 0;
 			if (len > 0)
 				cext_strlcat(text, buf, sizeof(text));
 			else
@@ -648,7 +648,7 @@ int main(int argc, char *argv[])
 	}
 	screen_num = DefaultScreen(dpy);
 
-	size[0] = '\0';
+	size[0] = 0;
 	if (argc > i)
 		cext_strlcpy(size, argv[i], sizeof(size));
 

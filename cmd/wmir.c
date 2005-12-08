@@ -91,7 +91,7 @@ static void perform(char *action, char *file, char *content)
 					return;
 				break;
 			}
-			output[out_len] = '\0';
+			output[out_len] = 0;
 			fprintf(stdout, "%s", output);
 		}
 		while (out_len == 2048);
@@ -170,9 +170,9 @@ int main(int argc, char *argv[])
 		char *action, *file, *content;
 		while (fgets(line, 4096, stdin)) {
 			p = line;
-			while (*p != '\0' && (*p == ' ' || *p == '\t'))
+			while (*p != 0 && (*p == ' ' || *p == '\t'))
 				p++;
-			if (*p == '\0')
+			if (*p == 0)
 				continue;		/* empty line */
 			if (strncmp(p, "create ", 7) &&
 				strncmp(p, "write ", 6) &&
@@ -180,33 +180,33 @@ int main(int argc, char *argv[])
 				continue;
 
 			action = p;
-			while (*p != '\0' && *p != ' ' && *p != '\t' && *p != '\n')
+			while (*p != 0 && *p != ' ' && *p != '\t' && *p != '\n')
 				p++;
-			if (*p == '\0' || *p == '\n')
+			if (*p == 0 || *p == '\n')
 				continue;		/* ignore bogus command */
-			*p = '\0';
+			*p = 0;
 			p++;
-			while (*p != '\0' && (*p == ' ' || *p == '\t'))
+			while (*p != 0 && (*p == ' ' || *p == '\t'))
 				p++;
-			if (*p == '\0')
+			if (*p == 0)
 				continue;		/* ignore bogus command */
 			file = p;
-			while (*p != '\0' && *p != ' ' && *p != '\t' && *p != '\n')
+			while (*p != 0 && *p != ' ' && *p != '\t' && *p != '\n')
 				p++;
-			if (*p == '\0' || *p == '\n') {
+			if (*p == 0 || *p == '\n') {
 				content = 0;
-				*p = '\0';
+				*p = 0;
 			} else {
-				*p = '\0';
+				*p = 0;
 				p++;
 				content = p;
 			}
-			if (file[0] == '\0')
+			if (file[0] == 0)
 				continue;
 			if (content) {
 				static size_t len;
 				if ((len = strlen(content)))
-					content[len - 1] = '\0';
+					content[len - 1] = 0;
 			}
 			perform(action, file, content);
 			if (c->errstr)

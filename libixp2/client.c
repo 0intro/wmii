@@ -62,7 +62,7 @@ int ixp_client_init(IXPClient * c, char *sockfile)
 	c->fcall.fid = c->root_fid;
 	c->fcall.afid = IXP_NOFID;
 	cext_strlcpy(c->fcall.uname, getenv("USER"), sizeof(c->fcall.uname));
-	c->fcall.aname[0] = '\0';
+	c->fcall.aname[0] = 0;
 	if (!do_fcall(c)) {
 		ixp_client_deinit(c);
 		return FALSE;

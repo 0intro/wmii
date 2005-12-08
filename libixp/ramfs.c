@@ -192,7 +192,7 @@ ixp_write(IXPServer * s, int fd, size_t offset, void *content,
 		}
 		memcpy((char *) f->content + offset, content, in_len);
 		/* internal EOF character */
-		((char *) f->content)[f->size] = '\0';
+		((char *) f->content)[f->size] = 0;
 	} else if (!offset) {
 		/* blank file */
 		if (f->content)

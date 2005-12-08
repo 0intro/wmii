@@ -87,7 +87,7 @@ void *ixp_dec_string(u8 * msg, char *string, u16 stringlen, u16 * len)
 		return msg;
 	if (*len > stringlen - 1)
 		/* might never happen if stringlen == IXP_MAX_MSG */
-		string[0] = '\0';
+		string[0] = 0;
 	else {
 		memcpy(string, msg, *len);
 		string[*len] = 0;

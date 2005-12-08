@@ -40,7 +40,7 @@ void win_prop(Display * dpy, Window w, Atom a, char *res, int len)
 		cext_strlcpy(res, (char *) prop, len);
 		XFree(prop);
 	}
-	res[len - 1] = '\0';
+	res[len - 1] = 0;
 	XSync(dpy, False);
 }
 

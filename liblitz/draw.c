@@ -27,7 +27,7 @@ unsigned long blitz_loadcolor(Display * dpy, int mon, char *colstr)
 	char col[8];
 
 	cext_strlcpy(col, colstr, sizeof(col));
-	col[7] = '\0';
+	col[7] = 0;
 	XAllocNamedColor(dpy, DefaultColormap(dpy, mon), col, &color, &color);
 	return color.pixel;
 }
@@ -92,7 +92,7 @@ static void draw_text(Display * dpy, Draw * d)
 
 	/* shorten text if necessary */
 	while (len && (w = XTextWidth(d->font, text, len)) > d->rect.width) {
-		text[len - 1] = '\0';
+		text[len - 1] = 0;
 		len--;
 		shortened = TRUE;
 	}

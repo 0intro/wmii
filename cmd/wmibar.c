@@ -322,7 +322,7 @@ static void handle_buttonpress(XButtonPressedEvent * e)
 
 	for (i = 0; items && items[i]; i++) {
 		if (blitz_ispointinrect(e->x, e->y, &items[i]->d.rect)) {
-			path[0] = '\0';
+			path[0] = 0;
 			wmii_get_ixppath(items[i]->root, path, sizeof(path));
 			snprintf(buf, MAX_BUF, "%s/b%upress", path, e->button);
 			if ((p = ixp_walk(ixps, buf)))
@@ -371,7 +371,7 @@ static void handle_after_write(IXPServer * s, File * f)
 	Item *item;
 	char buf[512];
 
-	buf[0] = '\0';
+	buf[0] = 0;
 	if (!strncmp(f->name, "data", 5)) {
 		if ((item = get_item_for_file(f->parent))) {
 			wmii_get_ixppath(f->parent, buf, sizeof(buf));
@@ -527,7 +527,7 @@ int main(int argc, char *argv[])
 	XSetErrorHandler(dummy_error_handler);
 	screen_num = DefaultScreen(dpy);
 
-	geom[0] = '\0';
+	geom[0] = 0;
 	if (argc > i)
 		cext_strlcpy(geom, argv[i], sizeof(geom));
 

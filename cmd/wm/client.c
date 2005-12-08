@@ -162,7 +162,7 @@ void handle_client_property(Client * c, XPropertyEvent * e)
 	char buf[1024];
 	long msize;
 
-	buf[0] = '\0';
+	buf[0] = 0;
 	if (e->state == PropertyDelete)
 		return;					/* ignore */
 

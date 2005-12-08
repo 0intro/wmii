@@ -126,9 +126,9 @@ static void bind(void *obj, char *arg)
 				arg);
 		return;					/* shortcut with empty argument */
 	}
-	*sfile = '\0';
+	*sfile = 0;
 	sfile++;
-	if (*sfile == '\0') {
+	if (*sfile == 0) {
 		fprintf(stderr,
 				"wmifs: bind: '%s' without socket argument, ignoring\n",
 				arg);
@@ -209,7 +209,7 @@ static File *fixp_create(IXPServer * s, char *path)
 	}
 	/* route to b */
 	len = strlen(b->prefix);
-	b->client->create(b->client, path[len] == '\0' ? "/" : &path[len]);
+	b->client->create(b->client, path[len] == 0 ? "/" : &path[len]);
 	if (b->client->errstr) {
 		if (!strcmp(b->client->errstr, DEAD_SERVER))
 			_unbind(b);
@@ -229,7 +229,7 @@ static File *fixp_open(IXPServer * s, char *path)
 	}
 	/* route to b */
 	len = strlen(b->prefix);
-	fd = b->client->open(b->client, path[len] == '\0' ? "/" : &path[len]);
+	fd = b->client->open(b->client, path[len] == 0 ? "/" : &path[len]);
 	if (b->client->errstr) {
 		set_error(s, b->client->errstr);
 		if (!strcmp(b->client->errstr, DEAD_SERVER))
@@ -311,7 +311,7 @@ static void fixp_remove(IXPServer * s, char *path)
 	}
 	/* route to b */
 	len = strlen(b->prefix);
-	b->client->remove(b->client, path[len] == '\0' ? "/" : &path[len]);
+	b->client->remove(b->client, path[len] == 0 ? "/" : &path[len]);
 	if (b->client->errstr) {
 		set_error(s, b->client->errstr);
 		if (!strcmp(b->client->errstr, DEAD_SERVER))

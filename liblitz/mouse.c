@@ -13,7 +13,7 @@
 char *blitz_buttontostr(unsigned int button)
 {
 	char result[8];
-	result[0] = '\0';
+	result[0] = 0;
 	snprintf(result, 8, "Button%ud", button - Button1);
 	return cext_estrdup(result);
 }

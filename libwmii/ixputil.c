@@ -32,11 +32,11 @@ void wmii_get_ixppath(File * f, char *path, size_t size)
 {
 	char buf[512];
 
-	buf[0] = '\0';
+	buf[0] = 0;
 	if (path)
 		cext_strlcpy(buf, path, sizeof(buf));
 	snprintf(path, size, "%s/", f->name);
-	if (buf[0] != '\0')
+	if (buf[0] != 0)
 		cext_strlcat(path, buf, size);
 	if (f->parent)
 		wmii_get_ixppath(f->parent, path, size);
