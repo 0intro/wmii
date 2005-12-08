@@ -33,7 +33,6 @@ typedef enum {
 	M_NORM_BG_COLOR,
 	M_NORM_TEXT_COLOR,
 	M_NORM_BORDER_COLOR,
-	M_RETARDED,
 	M_LAST
 } InputIndexes;
 
@@ -50,13 +49,10 @@ static XRectangle mrect;
 static int screen_num;
 static char *sockfile = 0;
 static File *files[M_LAST];
-static File **items = 0;
-static size_t item_size = 0;
-static int item = 0;
+static Container items = {0};
+static Container history = {0};
 static int offset[OFF_LAST];
 static unsigned int cmdw = 0;
-static File **history = 0;
-static int sel_history = 0;
 static Pixmap pmap;
 static const int seek = 30;		/* 30px */
 static XFontStruct *font;
@@ -92,23 +88,21 @@ static void add_history(char *cmd)
 {
 	char buf[MAX_BUF];
 	snprintf(buf, MAX_BUF, "/history/%ld", (long) time(0));
-	history = (File **) attach_item_begin((void **) history, wmii_create_ixpfile(ixps, buf, cmd), sizeof(File *));
+	cext_attach_item(&history, wmii_create_ixpfile(ixps, buf, cmd));
 }
 
-static void _exec(char *cmd)
+static void exec_item(char *cmd)
 {
+	File *item = cext_stack_get_top_item(&items);
 	char *rc = cmd;
 
 	if (!cmd || cmd[0] == 0)
 		return;
 
-	if (items && items[0]) {
-		if ((item >= 0) && items[item] && items[item]->size)
-			rc = cmd = items[item]->content;
-		else if ((item == -1) && items[0]->size)	/* autolight */
-			rc = cmd = items[0]->content;
-	}
+	if (item && item->size)
+		rc = cmd = item->content;
 	add_history(cmd);
+
 	if (files[M_PRE_COMMAND]->content) {
 		size_t len = strlen(cmd) + files[M_PRE_COMMAND]->size + 2;
 		rc = cext_emallocz(len);
@@ -172,17 +166,15 @@ void set_text(char *text)
 
 static void update_offsets()
 {
-	int i;
-	unsigned int w = cmdw + 2 * seek;
+	File *item;
+	unsigned int i, w = cmdw + 2 * seek;
 
-	if (!items)
+	if (!cext_stack_get_top_item(&items))
 		return;
 
-
 	/* calc next offset */
-	for (i = offset[OFF_CURR]; items[i]; i++) {
-		w += XTextWidth(font, items[i]->content,
-						strlen(items[i]->content)) + mrect.height;
+	for (i = offset[OFF_CURR]; (item = cext_list_get_item(&items, i)); i++) {
+		w += XTextWidth(font, item->content, strlen(item->content)) + mrect.height;
 		if (w > mrect.width)
 			break;
 	}
@@ -191,8 +183,8 @@ static void update_offsets()
 
 	w = cmdw + 2 * seek;
 	for (i = offset[OFF_CURR] - 1; i >= 0; i--) {
-		w += XTextWidth(font, items[i]->content,
-						strlen(items[i]->content)) + mrect.height;
+		item = cext_list_get_item(&items, i);
+		w += XTextWidth(font, item->content, strlen(item->content)) + mrect.height;
 		if (w > mrect.width)
 			break;
 	}
@@ -201,12 +193,11 @@ static void update_offsets()
 
 static int update_items(char *pattern)
 {
-	size_t plen = pattern ? strlen(pattern) : 0, size = 0, max = 0, len;
+	size_t plen = pattern ? strlen(pattern) : 0, len, max = 0, size;
 	int matched = pattern ? plen == 0 : 1;
-	File *f, *p, *maxitem = 0;
+	File *f, *p, *maxitem;
 
 	cmdw = 0;
-	item = -1;
 	offset[OFF_CURR] = offset[OFF_PREV] = offset[OFF_NEXT] = 0;
 
 	if (!files[M_LOOKUP]->content)
@@ -215,39 +206,26 @@ static int update_items(char *pattern)
 	if (!f || !is_directory(f))
 		return 0;
 
+	while ((p = cext_stack_get_top_item(&items)))
+		cext_detach_item(&items, p);
+
 	/* build new items */
 	for (p = f->content; p; p = p->next) {
-		size++;
 		len = strlen(p->name);
 		if (max < len) {
 			maxitem = p;
 			max = len;
 		}
 	}
-
-	if (maxitem) {
-		if (files[M_RETARDED]->content)
-			free(files[M_RETARDED]->content);
-		files[M_RETARDED]->content = strdup(maxitem->name);
-		files[M_RETARDED]->size = max;
+	
+	if (maxitem)
 		cmdw = XTextWidth(font, maxitem->name, max) + mrect.height;
-	}
-	if (size > item_size) {
-		/* stores always the biggest amount of items in memory */
-		if (items)
-			free((File **) items);
-		items = 0;
-		item_size = size;
-		if (item_size)
-			items = (File **) cext_emallocz((item_size + 1) * sizeof(File *));
-	}
-	size = 0;
 
 	for (p = f->content; p; p = p->next) {
 		if (!p->content)
 			continue;			/* ignore bogus files */
 		if (matched || !strncmp(pattern, p->name, plen)) {
-			items[size++] = p;
+			cext_attach_item(&items, p);
 			p->parent = 0;		/* HACK to prevent doubled items */
 		}
 	}
@@ -256,11 +234,11 @@ static int update_items(char *pattern)
 		if (!p->content)
 			continue;			/* ignore bogus files */
 		if (p->parent && strstr(p->name, pattern))
-			items[size++] = p;
+			cext_attach_item(&items, p);
 		else
 			p->parent = f;		/* restore HACK */
 	}
-	items[size] = 0;
+
 	update_offsets();
 	return size;
 }
@@ -271,6 +249,7 @@ static void draw_menu()
 	Draw d = { 0 };
 	unsigned int offx = 0;
 	int i = 0;
+	File *item, *top = cext_stack_get_top_item(&items);
 
 	d.gc = gc;
 	d.font = font;
@@ -285,17 +264,15 @@ static void draw_menu()
 	/* print command */
 	d.align = WEST;
 	d.font = font;
-	d.fg =
-		blitz_loadcolor(dpy, screen_num,
-						files[M_NORM_TEXT_COLOR]->content);
+	d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORM_TEXT_COLOR]->content);
 	d.data = files[M_COMMAND]->content;
-	if (cmdw && items && items[0])
+	if (cmdw && item)
 		d.rect.width = cmdw;
 	offx += d.rect.width;
 	blitz_drawlabelnoborder(dpy, &d);
 
 	d.align = CENTER;
-	if (items && items[0]) {
+	if (top) {
 		d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
 		d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORM_TEXT_COLOR]->content);
 		d.data = offset[OFF_CURR] ? "<" : 0;
@@ -305,22 +282,15 @@ static void draw_menu()
 		blitz_drawlabelnoborder(dpy, &d);
 
 		/* determine maximum items */
-		for (i = offset[OFF_CURR]; items[i] && (i < offset[OFF_NEXT]); i++) {
-			d.data = items[i]->name;
+		for (i = offset[OFF_CURR]; (i < offset[OFF_NEXT]) && (item = cext_list_get_item(&items, i)); i++) {
+			d.data = item->name;
 			d.rect.x = offx;
-			d.rect.width =
-				XTextWidth(d.font, d.data, strlen(d.data)) + mrect.height;
+			d.rect.width = XTextWidth(d.font, d.data, strlen(d.data)) + mrect.height;
 			offx += d.rect.width;
-			if (i == item) {
+			if (top == item) {
 				d.bg = blitz_loadcolor(dpy, screen_num, files[M_SEL_BG_COLOR]->content);
 				d.fg = blitz_loadcolor(dpy, screen_num, files[M_SEL_TEXT_COLOR]->content);
 				d.border = blitz_loadcolor(dpy, screen_num, files[M_SEL_BORDER_COLOR]-> content);
-				blitz_drawlabel(dpy, &d);
-			} else if (!i && item == -1) {
-				/* fg and bg are inverted */
-				d.fg = blitz_loadcolor(dpy, screen_num, files[M_SEL_BG_COLOR]->content);
-				d.bg = blitz_loadcolor(dpy, screen_num, files[M_SEL_TEXT_COLOR]->content);
-				d.border = blitz_loadcolor(dpy, screen_num, files[M_SEL_BORDER_COLOR]->content);
 				blitz_drawlabel(dpy, &d);
 			} else {
 				d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
@@ -332,7 +302,7 @@ static void draw_menu()
 
 		d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
 		d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORM_TEXT_COLOR]->content);
-		d.data = items[i] ? ">" : 0;
+		d.data = item ? ">" : 0;
 		d.rect.x = mrect.width - seek;
 		d.rect.width = seek;
 		blitz_drawlabelnoborder(dpy, &d);
@@ -345,9 +315,11 @@ static void handle_kpress(XKeyEvent * e)
 {
 	KeySym ksym;
 	char buf[32];
-	int idx, num;
+	int num;
 	static char text[4096];
-	size_t len = 0;
+	size_t len = 0, size = cext_sizeof(&items);
+	File *top = cext_stack_get_top_item(&items);
+	File *hist = cext_stack_get_top_item(&history);
 
 	text[0] = 0;
 	if (files[M_COMMAND]->content) {
@@ -394,58 +366,51 @@ static void handle_kpress(XKeyEvent * e)
 	}
 	switch (ksym) {
 	case XK_Left:
-		if (!items || !items[0])
+		if (!top)
 			return;
-		if (item > 0) {
-			item--;
-			set_text(items[item]->name);
+		if (top != cext_list_get_item(&items, 0)) {
+			top = cext_list_get_prev_item(&items, top);
+			cext_stack_top_item(&items, top);
+			set_text(top->name);
 		} else
 			return;
 		break;
 	case XK_Right:
 	case XK_Tab:
-		if (!items || !items[0])
+		if (!top)
 			return;
-		if (items[item + 1]) {
-			item++;
-			set_text(items[item]->name);
+		if (top != cext_list_get_item(&items, size - 1)) {
+			top = cext_list_get_next_item(&items, top);
+			cext_stack_top_item(&items, top);
+			set_text(top->name);
 		} else
 			return;
 		break;
 	case XK_Down:
-		if (history) {
-			set_text(history[sel_history]->content);
-			idx = index_prev_item((void **) history, history[sel_history]);
-			if (idx >= 0)
-				sel_history = idx;
+		if (hist) {
+			set_text(hist->content);
+			cext_stack_top_item(&history, cext_list_get_next_item(&items, hist));
 		}
 		update_items(files[M_COMMAND]->content);
 		break;
 	case XK_Up:
-		if (history) {
-			set_text(history[sel_history]->content);
-			idx = index_next_item((void **) history, history[sel_history]);
-			if (idx >= 0)
-				sel_history = idx;
+		if (hist) {
+			set_text(hist->content);
+			cext_stack_top_item(&history, cext_list_get_prev_item(&items, hist));
 		}
 		update_items(files[M_COMMAND]->content);
 		break;
 	case XK_Return:
-		if (items && items[0]) {
-			if (item >= 0)
-				_exec(items[item]->name);
-			else
-				_exec(items[0]->name);
+		if (top) {
+			exec_item(top->name);
 		} else if (text)
-			_exec(text);
+			exec_item(text);
 	case XK_Escape:
 		hide();
 		break;
 	case XK_BackSpace:
 		if (len) {
-			int size = 0;
 			size_t i = len;
-			for (size = 0; items && items[size]; size++);
 			if (i) {
 				do
 					text[--i] = 0;
@@ -466,11 +431,12 @@ static void handle_kpress(XKeyEvent * e)
 			update_items(files[M_COMMAND]->content);
 		}
 	}
-	if (items && item > 0) {
-		if (item < offset[OFF_CURR]) {
+	if (top) {
+		int idx = cext_list_get_item_index(&items, top);
+		if (idx < offset[OFF_CURR]) {
 			offset[OFF_CURR] = offset[OFF_PREV];
 			update_offsets();
-		} else if (item >= offset[OFF_NEXT]) {
+		} else if (idx >= offset[OFF_NEXT]) {
 			offset[OFF_CURR] = offset[OFF_NEXT];
 			update_offsets();
 		}
@@ -579,7 +545,6 @@ static void run(char *size)
 	files[M_NORM_BG_COLOR] = wmii_create_ixpfile(ixps, "/nstyle/bgcolor", BLITZ_NORM_BG_COLOR);
 	files[M_NORM_TEXT_COLOR] = wmii_create_ixpfile(ixps, "/nstyle/fgcolor", BLITZ_NORM_FG_COLOR);
 	files[M_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/nstyle/bordercolor", BLITZ_NORM_BORDER_COLOR);
-	files[M_RETARDED] = ixp_create(ixps, "/retarded");
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
@@ -653,8 +618,6 @@ int main(int argc, char *argv[])
 		cext_strlcpy(size, argv[i], sizeof(size));
 
 	ixps = wmii_setup_server(sockfile);
-	items = 0;
-
 	run(size);
 
 	return 0;

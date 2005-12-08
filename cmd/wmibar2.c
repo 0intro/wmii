@@ -88,7 +88,7 @@ typedef struct {
 	char event[5][256];
 } Item;
 
-static Item **items = 0;
+static Container items = {0};
 static char *sockfile = 0;
 static pid_t mypid = 0;
 static IXPServer srv = { 0 };
@@ -155,63 +155,67 @@ qpath_file(u64 path)
 }
 */
 
-static Map *fid_to_map(Map ** maps, u32 fid)
+static int comp_fid(void *fid, void *map)
 {
-	u32 i;
-	for (i = 0; maps && maps[i]; i++)
-		if (maps[i]->fid == fid)
-			return maps[i];
-	return nil;
+	return ((Map *)map)->fid == *(u32 *)fid;
 }
 
-static int qfile_index(char *name, u16 * index)
+static Map *fid_to_map(Container *maps, u32 fid)
+{
+	return cext_find_item(maps, &fid, comp_fid);
+}
+
+static Bool qfile_index(char *name, u16 * index)
 {
 	int i;
 	for (i = 0; qfilelist[i].name; i++)
 		if (!strncmp(name, qfilelist[i].name, strlen(qfilelist[i].name))) {
 			*index = i;
-			return TRUE;
+			return True;
 		}
-	return FALSE;
+	return False;
 }
 
-static int make_qid(Qid * dir, char *wname, Qid * new)
+static Bool make_qid(Qid * dir, char *wname, Qid * new)
 {
 	u16 idx;
 	const char *errstr;
 	if (dir->type != IXP_QTDIR)
-		return FALSE;
+		return False;
 	new->version = 0;
 	if (!qfile_index(wname, &idx)) {
 		new->type = IXP_QTDIR;
 		if (!strncmp(wname, "..", 3)) {
 			*new = root_qid;
-			return TRUE;
+			return True;
 		} else if (!strncmp(wname, "default", 8)) {
 			new->path = make_qpath(Ditem, 0, NONE);
-			return TRUE;
+			return True;
 		}
 		/* check if wname is a number, otherwise file not found */
 		idx = (u16) cext_strtonum(wname, 1, 0xffff, &errstr);
-		if (errstr || count_items((void **) items) < idx)
-			return FALSE;
+		if (errstr || cext_sizeof(&items) < idx)
+			return False;
 		/* found */
 		new->path = make_qpath(Ditem, idx, NONE);
 	} else {
 		new->type = IXP_QTFILE;
-		new->path =
-			make_qpath(qfilelist[idx].type, qpath_item(dir->path), idx);
+		new->path = make_qpath(qfilelist[idx].type, qpath_item(dir->path), idx);
 	}
-	return TRUE;
+	return True;
 }
 
-static int attach(IXPServer * s, IXPConn * c)
+static int attach(IXPServer *s, IXPConn *c)
 {
+	Container *cont = c->aux;
 	Map *map = cext_emallocz(sizeof(Map));
+
+	if (!cont)
+		cont = c->aux = cext_emallocz(sizeof(Container));
 	fprintf(stderr, "attaching %d %s %s\n", s->fcall.afid, s->fcall.uname, s->fcall.aname);
 	map->qid = root_qid;
 	map->fid = s->fcall.fid;
-	c->aux = (Map **) attach_item_begin((void **) c->aux, map, sizeof(Map *));
+	cext_attach_item(cont, map);
 	s->fcall.id = RATTACH;
 	s->fcall.qid = root_qid;
 	return TRUE;
@@ -235,9 +239,7 @@ static int walk(IXPServer * s, IXPConn * c)
 	}
 	if (s->fcall.nwname) {
 		qid = map->qid;
-		for (nwqid = 0; (nwqid < s->fcall.nwname)
-			 && make_qid(&qid, s->fcall.wname[nwqid],
-						 &s->fcall.wqid[nwqid]); nwqid++)
+		for (nwqid = 0; (nwqid < s->fcall.nwname) && make_qid(&qid, s->fcall.wname[nwqid], &s->fcall.wqid[nwqid]); nwqid++)
 			qid = s->fcall.wqid[nwqid];
 		if (!nwqid) {
 			s->errstr = "file not found";
@@ -249,14 +251,15 @@ static int walk(IXPServer * s, IXPConn * c)
 	 * the walk was complete
 	 */
 	if (nwqid == s->fcall.nwname) {
+		Container *cont = c->aux;
 		if (s->fcall.fid == s->fcall.newfid) {
-			c->aux = (Map **) detach_item((void **) c->aux, map, sizeof(Map *));
+			cext_detach_item(cont, map);
 			free(map);
 		}
 		map = cext_emallocz(sizeof(Map));
 		map->qid = qid;
 		map->fid = s->fcall.newfid;
-		c->aux = (Map **) attach_item_begin((void **) c->aux, map, sizeof(Map *));
+		cext_attach_item(cont, map);
 	}
 	s->fcall.id = RWALK;
 	s->fcall.nwqid = nwqid;
@@ -345,22 +348,22 @@ static int _read(IXPServer * s, IXPConn * c)
 	return TRUE;
 }
 
-static int _write(IXPServer * s, IXPConn * c)
+static int _write(IXPServer *s, IXPConn *c)
 {
-
 
 	return FALSE;
 }
 
-static int clunk(IXPServer * s, IXPConn * c)
+static int clunk(IXPServer *s, IXPConn *c)
 {
-	Map *map = fid_to_map(c->aux, s->fcall.fid);
+	Container *cont = c->aux;
+	Map *map = fid_to_map(cont, s->fcall.fid);
 
 	if (!map) {
 		s->errstr = "invalid fid";
 		return FALSE;
 	}
-	c->aux = (Map **) detach_item((void **) c->aux, map, sizeof(Map *));
+	cext_detach_item(cont, map);
 	free(map);
 	s->fcall.id = RCLUNK;
 	return TRUE;
@@ -368,12 +371,10 @@ static int clunk(IXPServer * s, IXPConn * c)
 
 static void freeconn(IXPServer * s, IXPConn * c)
 {
-	Map **maps = c->aux;
-	if (maps) {
-		int i;
-		for (i = 0; maps[i]; i++)
-			free(maps[i]);
-		free(maps);
+	Container *cont = c->aux;
+	if (cont) {
+		free(cont);
+		c->aux = 0;
 	}
 }
 

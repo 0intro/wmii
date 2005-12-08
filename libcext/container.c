@@ -111,66 +111,6 @@ void cext_iterate(Container *c, void *aux, void (*iter)(void *, void *aux))
 	}
 }
 
-void cext_top_item(Container *c, void *item)
-{
-	CItem *i = cext_find_citem(c, item, comp_ptr);
-	fprintf(stderr, "XX %s\n", "cext_top_item()");
-	if (!i)
-		return;
-	detach_from_stack(c, i);
-	attach_to_stack(c, i);	
-}
-
-void *cext_get_top_item(Container *c)
-{
-	fprintf(stderr, "XX %s\n", "cext_get_top_item()");
-	return c->stack ? c->stack->item : nil;
-}
-
-void *cext_get_down_item(Container *c, void *item)
-{
-	CItem *i = cext_find_citem(c, item, comp_ptr);
-	fprintf(stderr, "XX %s\n", "cext_get_down_item()");
-	if (!i)
-		return nil;
-	return i->down ? i->down->item : c->stack->item;
-}
-
-void *cext_get_up_item(Container *c, void *item)
-{
-	CItem *i = cext_find_citem(c, item, comp_ptr);
-	CItem *bottom;
-	fprintf(stderr, "XX %s\n", "cext_get_up_item()");
-	if (!i)
-		return nil;
-	for (bottom = c->stack; bottom && bottom->down; bottom = bottom->down);
-	return i->up ? i->up->item : bottom->item;
-}
-
-void *cext_get_item(Container *c, size_t index)
-{
-	size_t idx = 0;
-	CItem *i;
-
-	fprintf(stderr, "XX %s\n", "cext_get_item()");
-	for (i = c->list; i && index != idx; i = i->next)
-		idx++;
-
-	return i ? i->item : nil;
-}
-
-int cext_get_item_index(Container *c, void *item)
-{
-	int idx = 0;
-	CItem *i;
-
-	fprintf(stderr, "XX %s\n", "cext_get_item_index()");
-	for (i = c->list; i && i->item != item; i = i->next)
-		idx++;
-
-	return i ? idx : -1;
-}
-
 size_t cext_sizeof(Container *c)
 {
 	size_t idx = 0;
@@ -193,88 +133,88 @@ void cext_swap_items(Container *c, void *item1, void *item2)
 	i2->item = item1;
 }
 
-
-/* old obsolete stuff follows */
-
-void **attach_item_begin(void **old, void *item, size_t size_item)
+void cext_stack_top_item(Container *c, void *item)
 {
-	int i, size_old;
-	void **result = 0;
-	for (size_old = 0; old && old[size_old]; size_old++);
-	result = cext_emallocz(size_item * (size_old + 2));
-	result[0] = item;
-	for (i = 0; old && old[i]; i++)
-		result[i + 1] = old[i];
-	result[i + 1] = 0;
-	if (old)
-		free(old);
-	return result;
+	CItem *i = cext_find_citem(c, item, comp_ptr);
+	fprintf(stderr, "XX %s\n", "cext_top_item()");
+	if (!i)
+		return;
+	detach_from_stack(c, i);
+	attach_to_stack(c, i);	
 }
 
-void **attach_item_end(void **old, void *item, size_t size_item)
+void *cext_stack_get_top_item(Container *c)
 {
-	int i, size_old;
-	void **result = 0;
-	for (size_old = 0; old && old[size_old]; size_old++);
-	result = cext_emallocz(size_item * (size_old + 2));
-	for (i = 0; old && old[i]; i++)
-		result[i] = old[i];
-	result[i++] = item;
-	result[i] = 0;
-	if (old)
-		free(old);
-	return result;
+	fprintf(stderr, "XX %s\n", "cext_get_top_item()");
+	return c->stack ? c->stack->item : nil;
 }
 
-void **detach_item(void **old, void *item, size_t size_item)
+void *cext_stack_get_down_item(Container *c, void *item)
 {
-	int size_old, i, j = 0;
-	void **result = 0;
-	for (size_old = 0; old && old[size_old]; size_old++);
-	if (size_old != 1) {
-		result = cext_emallocz(size_item * size_old);
-		for (i = 0; old[i]; i++)
-			if (old[i] != item)
-				result[j++] = old[i];
-		result[j] = 0;
-	}
-	if (old)
-		free(old);
-	return result;
+	CItem *i = cext_find_citem(c, item, comp_ptr);
+	fprintf(stderr, "XX %s\n", "cext_get_down_item()");
+	if (!i)
+		return nil;
+	return i->down ? i->down->item : c->stack->item;
 }
 
-int index_item(void **items, void *item)
+void *cext_stack_get_up_item(Container *c, void *item)
 {
-	int i = 0;
-	for (i = 0; items && items[i] && (items[i] != item); i++);
-	return items[i] ? i : -1;
+	CItem *i = cext_find_citem(c, item, comp_ptr);
+	CItem *bottom;
+	fprintf(stderr, "XX %s\n", "cext_get_up_item()");
+	if (!i)
+		return nil;
+	for (bottom = c->stack; bottom && bottom->down; bottom = bottom->down);
+	return i->up ? i->up->item : bottom->item;
 }
 
-int count_items(void **items)
+void *cext_list_get_item(Container *c, size_t index)
 {
-	int i;
-	for (i = 0; items && items[i]; i++);
-	return i;
+	size_t idx = 0;
+	CItem *i;
+
+	fprintf(stderr, "XX %s\n", "cext_get_item()");
+	for (i = c->list; i && index != idx; i = i->next)
+		idx++;
+
+	return i ? i->item : nil;
 }
 
-int index_next_item(void **items, void *item)
+int cext_list_get_item_index(Container *c, void *item)
 {
-	int idx = index_item(items, item);
+	int idx = 0;
+	CItem *i;
+
+	fprintf(stderr, "XX %s\n", "cext_get_item_index()");
+	for (i = c->list; i && i->item != item; i = i->next)
+		idx++;
+
+	return i ? idx : -1;
+}
+
+void *cext_list_get_next_item(Container *c, void *item)
+{
+	size_t size = cext_sizeof(c);
+	int idx = cext_list_get_item_index(c, item);
 	if (idx == -1)
-		return idx;
-	if (idx == count_items(items) - 1)
-		return 0;
+		return nil;
+
+	if (idx + 1 < size)
+		return cext_list_get_item(c, idx + 1);
 	else
-		return idx + 1;
+		return cext_list_get_item(c, 0);
 }
 
-int index_prev_item(void **items, void *item)
+void *cext_list_get_prev_item(Container *c, void *item)
 {
-	int idx = index_item(items, item);
+	size_t size = cext_sizeof(c);
+	int idx = cext_list_get_item_index(c, item);
 	if (idx == -1)
-		return idx;
-	if (idx == 0)
-		return count_items(items) - 1;
+		return nil;
+
+	if (idx - 1 < 0)
+		return cext_list_get_item(c, size - 1);
 	else
-		return idx - 1;
+		return cext_list_get_item(c, idx - 1);
 }

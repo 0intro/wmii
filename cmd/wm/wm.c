@@ -115,7 +115,7 @@ static void iter_draw_pager_frame(void *item, void *aux)
 {
 	Draw *d = aux;
 	Frame *f = (Frame *)item;
-	if (f == cext_get_top_item(f->area->layout->get_frames(f->area))) {
+	if (f == cext_stack_get_top_item(f->area->layout->get_frames(f->area))) {
 		d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
 		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
 		d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
@@ -124,7 +124,7 @@ static void iter_draw_pager_frame(void *item, void *aux)
 		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
 		d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
 	}
-	d->data = ((Client *)cext_get_top_item(&f->clients))->file[C_NAME]->content;
+	d->data = ((Client *)cext_stack_get_top_item(&f->clients))->file[C_NAME]->content;
 	scale_rect(&rect, &initial_rect, &f->area->rect, &d->rect);
 	blitz_drawlabel(dpy, d);
 	XSync(dpy, False);	/* do not clear upwards */
@@ -140,7 +140,7 @@ static void draw_pager_page(Page *p, Draw *d)
 {
 	char name[4];
 	initial_rect = d->rect;
-	if (p == cext_get_top_item(&pages)) {
+	if (p == cext_stack_get_top_item(&pages)) {
 		d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
 		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
 		d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
@@ -149,7 +149,7 @@ static void draw_pager_page(Page *p, Draw *d)
 		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
 		d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
 	}
-	snprintf(name, sizeof(name), "%d", cext_get_item_index(&pages, p));
+	snprintf(name, sizeof(name), "%d", cext_list_get_item_index(&pages, p));
 	d->data = name;
 	blitz_drawlabel(dpy, d);
 	XSync(dpy, False);
@@ -180,7 +180,7 @@ static void draw_pager()
 			else
 				d.rect.y = ir * (rect.height - th) / (rows - 1);
 			d.rect.height = th;
-			if (!(p = cext_get_item(&pages, i)))
+			if (!(p = cext_list_get_item(&pages, i)))
 				return;
 			draw_pager_page(p, &d);
 			i++;
@@ -212,7 +212,7 @@ static Page *xy_to_pager_page(int x, int y)
 			else
 				r.y = ir * (rect.height - th) / (rows - 1);
 			r.height = th;
-			if (!(p = cext_get_item(&pages, i)))
+			if (!(p = cext_list_get_item(&pages, i)))
 				return nil;
 			if (blitz_ispointinrect(x, y, &r))
 				return p;
@@ -264,7 +264,7 @@ static void pager(void *obj, char *cmd)
 			XUnmapWindow(dpy, transient);
 			if ((i = handle_kpress(&ev.xkey)) != -1)
 				if (i < cext_sizeof(&pages))
-					sel_page(cext_get_item(&pages, i));
+					sel_page(cext_list_get_item(&pages, i));
 			XUngrabKeyboard(dpy, CurrentTime);
 			return;
 			break;
@@ -299,7 +299,7 @@ static void draw_icons()
 	i = 0;
 	for (ir = 0; ir < rows; ir++) {
 		for (ic = 0; ic < cols; ic++) {
-			Client *c = cext_get_item(&detached, i++);
+			Client *c = cext_list_get_item(&detached, i++);
 			XRectangle cr;
 			if (!c)
 				return;
@@ -347,15 +347,15 @@ static void icons(void *obj, char *cmd)
 			XUnmapWindow(dpy, transient);
 			if ((n = handle_kpress(&ev.xkey)) != -1) {
 				for (i = 0; i < size; i++)
-					hide_client(cext_get_item(&detached, i));
+					hide_client(cext_list_get_item(&detached, i));
 				if (n - 1 < i) {
-					c = cext_get_item(&detached, n);
+					c = cext_list_get_item(&detached, n);
 					cext_detach_item(&detached, c);
 					attach_client(c);
 				}
 			} else {
 				for (i = 0; i < size; i++)
-					hide_client(cext_get_item(&detached, i));
+					hide_client(cext_list_get_item(&detached, i));
 			}
 			XUngrabKeyboard(dpy, CurrentTime);
 			return;
@@ -364,7 +364,7 @@ static void icons(void *obj, char *cmd)
 			if (ev.xbutton.button == Button1) {
 				XUnmapWindow(dpy, transient);
 				for (i = 0; i < size; i++)
-					hide_client(cext_get_item(&detached, i));
+					hide_client(cext_list_get_item(&detached, i));
 				if ((c = win_to_client(ev.xbutton.window))) {
 					cext_detach_item(&detached, c);
 					attach_client(c);
@@ -381,13 +381,13 @@ static void _close_client(void *obj, char *cmd)
 {
 	Frame *f = get_sel_frame();
 	if (f)
-		close_client(cext_get_top_item(&f->clients));
+		close_client(cext_stack_get_top_item(&f->clients));
 }
 
 static void _attach_client(void *obj, char *cmd)
 {
 	if (cext_sizeof(&detached)) {
-		Client *c = cext_get_top_item(&detached);
+		Client *c = cext_stack_get_top_item(&detached);
 		cext_detach_item(&detached, c);
 		attach_client(c);
 	}
@@ -398,7 +398,7 @@ static void _detach_client(void *obj, char *cmd)
 	Frame *f = get_sel_frame();
 	if (!f)
 		return;
-	f->area->layout->detach(f->area, cext_get_top_item(&f->clients));
+	f->area->layout->detach(f->area, cext_stack_get_top_item(&f->clients));
 }
 
 static void _select_page(void *obj, char *cmd)
@@ -407,11 +407,11 @@ static void _select_page(void *obj, char *cmd)
 	if (!p || !cmd)
 		return;
 	if (!strncmp(cmd, "prev", 5))
-		p = cext_get_up_item(&pages, p);
+		p = cext_stack_get_up_item(&pages, p);
 	else if (!strncmp(cmd, "next", 5))
-		p = cext_get_down_item(&pages, p);
+		p = cext_stack_get_down_item(&pages, p);
 	else
-		p = cext_get_item(&pages, _strtonum(cmd, 0, cext_sizeof(&pages) - 1));
+		p = cext_list_get_item(&pages, _strtonum(cmd, 0, cext_sizeof(&pages) - 1));
 	sel_page(p);
 }
 

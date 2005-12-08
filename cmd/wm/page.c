@@ -70,7 +70,7 @@ void sel_page(Page * p)
 		return;
 	if (p != sel) {
 		hide_page(sel);
-		cext_top_item(&pages, p);
+		cext_stack_top_item(&pages, p);
 		show_page(p);
 	}
 	def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
@@ -148,11 +148,11 @@ static void select_frame(void *obj, char *cmd)
 		return;
 	a = f->area;
 	if (!strncmp(cmd, "prev", 5))
-		cext_top_item(a->layout->get_frames(a), cext_get_up_item(a->layout->get_frames(a), f));
+		cext_stack_top_item(a->layout->get_frames(a), cext_stack_get_up_item(a->layout->get_frames(a), f));
 	else if (!strncmp(cmd, "next", 5))
-		cext_top_item(a->layout->get_frames(a), cext_get_down_item(a->layout->get_frames(a), f));
+		cext_stack_top_item(a->layout->get_frames(a), cext_stack_get_down_item(a->layout->get_frames(a), f));
 	if (old != f) {
-		sel_frame(f, cext_get_item_index(&a->page->areas, a) == 0);
+		sel_frame(f, cext_list_get_item_index(&a->page->areas, a) == 0);
 		center_pointer(f);
 		draw_frame(old, nil);
 		draw_frame(f, nil);
@@ -196,5 +196,5 @@ static void handle_after_write_page(IXPServer *s, File *f)
 
 Page *get_sel_page()
 {
-	return cext_get_top_item(&pages);
+	return cext_stack_get_top_item(&pages);
 }

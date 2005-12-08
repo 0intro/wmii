@@ -34,7 +34,7 @@ void sel_client(Client * c)
 	Frame *f = 0;
 	/* sel client */
 	f = c->frame;
-	cext_top_item(&f->clients, c);
+	cext_stack_top_item(&f->clients, c);
 	f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
 	XRaiseWindow(dpy, c->win);
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
@@ -220,7 +220,7 @@ void draw_client(void *item, void *aux)
 	tw = f->rect.width;
 	if (size)
 		tw /= size;
-	i = cext_get_item_index(&f->clients, c);
+	i = cext_list_get_item_index(&f->clients, c);
 	if (i < size - 1)
 		draw_tab(f, c->file[C_NAME]->content, i * tw, 0, f->rect.width - (i * tw), tabh,
 				 (f == get_sel_frame()) && (c == get_sel_client()));
@@ -325,5 +325,5 @@ void detach_client(Client *c) {
 Client *get_sel_client()
 {
 	Frame *f = get_sel_frame();
-	return f ? cext_get_top_item(&f->clients) : nil;
+	return f ? cext_stack_get_top_item(&f->clients) : nil;
 }

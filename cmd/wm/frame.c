@@ -102,8 +102,8 @@ Frame *alloc_frame(XRectangle * r)
 void sel_frame(Frame * f, Bool raise)
 {
 	Area *a = f->area;
-	sel_client(cext_get_top_item(&f->clients));
-	cext_top_item(a->layout->get_frames(a), f);
+	sel_client(cext_stack_get_top_item(&f->clients));
+	cext_stack_top_item(a->layout->get_frames(a), f);
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
 	if (raise)
 		XRaiseWindow(dpy, f->win);
@@ -318,7 +318,7 @@ void handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 	Align align;
 	size_t size = cext_sizeof(&f->clients);
 	int bindex, cindex = e->x / f->rect.width / size;
-	Client *c = cext_get_item(&f->clients, cindex);
+	Client *c = cext_list_get_item(&f->clients, cindex);
 	XRaiseWindow(dpy, f->win);
 	if (get_sel_client() != c) {
 		sel_client(c);
@@ -366,7 +366,7 @@ void detach_client_from_frame(Client * c)
 		}
 		reparent_client(c, root, border_width(f), tab_height(f));
 	}
-	if ((client = cext_get_top_item(&f->clients))) {
+	if ((client = cext_stack_get_top_item(&f->clients))) {
 		sel_client(client);
 		draw_frame(f, nil);
 	}
@@ -379,10 +379,10 @@ static void select_client(void *obj, char *cmd)
 	if (!f || !cmd || size == 1)
 		return;
 	if (!strncmp(cmd, "prev", 5))
-		cext_top_item(&f->clients, cext_get_up_item(&f->clients, cext_get_top_item(&f->clients)));
+		cext_stack_top_item(&f->clients, cext_stack_get_up_item(&f->clients, cext_stack_get_top_item(&f->clients)));
 	else if (!strncmp(cmd, "next", 5))
-		cext_top_item(&f->clients, cext_get_down_item(&f->clients, cext_get_top_item(&f->clients)));
-	sel_client(cext_get_top_item(&f->clients));
+		cext_stack_top_item(&f->clients, cext_stack_get_down_item(&f->clients, cext_stack_get_top_item(&f->clients)));
+	sel_client(cext_stack_get_top_item(&f->clients));
 	draw_frame(f, nil);
 }
 
@@ -436,7 +436,7 @@ static void handle_after_write_frame(IXPServer * s, File * f)
 
 Frame *get_sel_frame_of_area(Area *a)
 {
-	return cext_get_top_item(a->layout->get_frames(a));
+	return cext_stack_get_top_item(a->layout->get_frames(a));
 }
 
 Frame *get_sel_frame()

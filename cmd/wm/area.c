@@ -53,10 +53,10 @@ void sel_area(Area *a)
 {
 	Page *p = a->page;
 	Frame *f;
-	Bool raise = cext_get_item_index(&p->areas, a) == 0;
+	Bool raise = cext_list_get_item_index(&p->areas, a) == 0;
 	if (raise)
 		cext_iterate(a->layout->get_frames(a), nil, iter_raise_frame);
-	cext_top_item(&p->areas, a);
+	cext_stack_top_item(&p->areas, a);
 	p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
 	if ((f = get_sel_frame_of_area(a)))
 		sel_frame(f, raise);
@@ -91,7 +91,7 @@ Area *get_sel_area()
 {
 	Page *p = get_sel_page();
 
-	return p ? cext_get_top_item(&p->areas) : nil;
+	return p ? cext_stack_get_top_item(&p->areas) : nil;
 }
 
 void attach_frame_to_area(Area *a, Frame *f)

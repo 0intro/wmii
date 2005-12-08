@@ -41,7 +41,7 @@ void init_layout_column()
 
 static Column *get_sel_column(Acme *acme)
 {
-	return cext_get_top_item(&acme->columns);
+	return cext_stack_get_top_item(&acme->columns);
 }
 
 static void iter_arrange_column_frame(void *frame, void *height)
@@ -52,7 +52,7 @@ static void iter_arrange_column_frame(void *frame, void *height)
 	if (col->refresh) {
 		f->rect = col->rect;
 		f->rect.height = h;
-		f->rect.y = cext_get_item_index(&col->frames, f) * h;
+		f->rect.y = cext_list_get_item_index(&col->frames, f) * h;
 	}
 	resize_frame(f, &f->rect, 0);
 }
