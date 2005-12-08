@@ -135,7 +135,7 @@ void destroy_frame(Frame * f)
 
 unsigned int tab_height(Frame * f)
 {
-	if (_strtonum(f->file[F_TAB]->content, 0, 1))
+	if (_strtonum(f->file[F_TAB]->content, 1, 1))
 		return font->ascent + font->descent + 4;
 	return 0;
 }
@@ -313,18 +313,14 @@ void draw_frame(void *frame, void *aux)
 	XSync(dpy, False);
 }
 
-void handle_frame_buttonpress(XButtonEvent * e, Frame * f)
+void handle_frame_buttonpress(XButtonEvent *e, Frame *f)
 {
 	Align align;
 	size_t size = cext_sizeof(&f->clients);
 	int bindex, cindex = e->x / f->rect.width / size;
 	Client *c = cext_list_get_item(&f->clients, cindex);
-	XRaiseWindow(dpy, f->win);
-	if (get_sel_client() != c) {
-		sel_client(c);
-		draw_frame(f, nil);
-		return;
-	}
+	cext_stack_top_item(&f->clients, c);
+	sel_frame(f, cext_list_get_item_index(&f->area->page->areas, f->area) == 0);
 	if (e->button == Button1) {
 		align = cursor_to_align(f->cursor);
 		if (align == CENTER)

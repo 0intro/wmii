@@ -57,6 +57,8 @@ static void deinit_float(Area *a)
 static Bool attach_float(Area *a, Client *c)
 {
 	Frame *f = get_sel_frame_of_area(a);
+	Bool center = False;
+
 	cext_attach_item(&a->clients, c);
 	/* check for tabbing? */
 	if (f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))
@@ -65,10 +67,14 @@ static Bool attach_float(Area *a, Client *c)
 		f = alloc_frame(&c->rect);
 		attach_frame_to_area(a, f);
 		cext_attach_item((Container *)a->aux, f);
+		center = True;
 	}
 	attach_client_to_frame(f, c);
 	if (a->page == get_sel_page())
-		XMapRaised(dpy, f->win);
+		XMapWindow(dpy, f->win);
+	sel_frame(f, 1);
+	if (center)
+		center_pointer(f);
 	draw_frame(f, nil);
 	return True;
 }
@@ -93,3 +99,6 @@ static void resize_float(Frame *f, XRectangle *new, XPoint *pt)
 static Container *get_frames_float(Area *a) {
 	return a->aux;
 }
+
+
+		center_pointer(f);

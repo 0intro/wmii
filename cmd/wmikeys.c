@@ -69,19 +69,19 @@ static char *version[] = {
 		"  (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
+static void usage()
+{
+	fprintf(stderr, "%s",
+			"usage: wmikeys [-s <socket file>] [-v]\n"
+			"      -s     socket file (default: /tmp/.ixp-$USER/wmikeys-$WMII_IDENT)\n"
+			"      -v     version info\n");
+	exit(1);
+}
+
 static void center()
 {
 	krect.x = rect.width / 2 - krect.width / 2;
 	krect.y = rect.height / 2 - krect.height / 2;
-}
-
-static void usage()
-{
-	fprintf(stderr, "%s",
-			"usage: wmikeys [-s <socket file>] [-v] [<x>,<y>,<width>,<height>]\n"
-			"      -s     socket file (default: /tmp/.ixp-$USER/wmikeys-$WMII_IDENT)\n"
-			"      -v     version info\n");
-	exit(1);
 }
 
 /* grabs shortcut on all screens */
@@ -307,6 +307,7 @@ static void draw_shortcut_box(char *text)
 
 	d.font = font;
 	krect.width = XTextWidth(d.font, text, strlen(text)) + krect.height;
+	krect.height = font->ascent + font->descent + 4;
 	center();
 	XMoveResizeWindow(dpy, win, krect.x, krect.y, krect.width, krect.height);
 
@@ -382,73 +383,6 @@ static void handle_after_write(IXPServer * s, File * f)
 	check_event(0);
 }
 
-static void run(char *size)
-{
-	XSetWindowAttributes wa;
-	XGCValues gcv;
-
-	/* init */
-	if (!(files[K_CTL] = ixp_create(ixps, "/ctl"))) {
-		perror("wmikeys: cannot connect IXP server");
-		exit(1);
-	}
-	files[K_CTL]->after_write = handle_after_write;
-	files[K_LOOKUP] = ixp_create(ixps, "/lookup");
-	files[K_LOOKUP]->after_write = handle_after_write;
-	files[K_GRAB_KB] = wmii_create_ixpfile(ixps, "/grabkeyb", "0");
-	files[K_GRAB_KB]->after_write = handle_after_write;
-	files[K_FONT] = wmii_create_ixpfile(ixps, "/box/font", BLITZ_FONT);
-	files[K_FONT]->after_write = handle_after_write;
-	font = blitz_getfont(dpy, files[K_FONT]->content);
-	files[K_FG_COLOR] = wmii_create_ixpfile(ixps, "/box/fgcolor", BLITZ_SEL_FG_COLOR);
-	files[K_BG_COLOR] = wmii_create_ixpfile(ixps, "/box/bgcolor", BLITZ_SEL_BG_COLOR);
-	files[K_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/box/bordercolor", BLITZ_SEL_BORDER_COLOR);
-
-	wa.override_redirect = 1;
-	wa.background_pixmap = ParentRelative;
-	wa.event_mask =
-		ExposureMask | SubstructureRedirectMask | SubstructureNotifyMask;
-
-	root = RootWindow(dpy, screen_num);
-	rect.x = rect.y = 0;
-	rect.width = DisplayWidth(dpy, screen_num);
-	rect.height = DisplayHeight(dpy, screen_num);
-	krect.x = krect.y = -1;
-	krect.width = krect.height = 0;
-	blitz_strtorect(&rect, &krect, size);
-	/* default is center position */
-	if (!krect.width) {
-		krect.width = 200;
-	}
-	if (!krect.height) {
-		krect.height = 20;
-	}
-	center();
-
-	init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
-
-	win = XCreateWindow(dpy, RootWindow(dpy, screen_num), krect.x, krect.y,
-						krect.width, krect.height, 0, DefaultDepth(dpy,
-																   screen_num),
-						CopyFromParent, DefaultVisual(dpy, screen_num),
-						CWOverrideRedirect | CWBackPixmap | CWEventMask,
-						&wa);
-	XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
-	XSync(dpy, False);
-
-	gcv.function = GXcopy;
-	gcv.graphics_exposures = False;
-
-	gc = XCreateGC(dpy, win, 0, 0);
-
-	/* main event loop */
-	run_server_with_fd_support(ixps, ConnectionNumber(dpy),
-							   check_event, 0);
-	deinit_server(ixps);
-	XFreeGC(dpy, gc);
-	XCloseDisplay(dpy);
-}
-
 static int dummy_error_handler(Display * dpy, XErrorEvent * err)
 {
 	return 0;
@@ -456,8 +390,9 @@ static int dummy_error_handler(Display * dpy, XErrorEvent * err)
 
 int main(int argc, char *argv[])
 {
-	char size[64];
 	int i;
+	XSetWindowAttributes wa;
+	XGCValues gcv;
 
 	/* command line args */
 	for (i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
@@ -485,13 +420,58 @@ int main(int argc, char *argv[])
 	}
 	XSetErrorHandler(dummy_error_handler);
 	screen_num = DefaultScreen(dpy);
-	size[0] = 0;
-	if (argc > i)
-		cext_strlcpy(size, argv[i], sizeof(size));
 
+	/* init */
 	ixps = wmii_setup_server(sockfile);
 
-	run(size);
+	if (!(files[K_CTL] = ixp_create(ixps, "/ctl"))) {
+		perror("wmikeys: cannot connect IXP server");
+		exit(1);
+	}
+	files[K_CTL]->after_write = handle_after_write;
+	files[K_LOOKUP] = ixp_create(ixps, "/lookup");
+	files[K_LOOKUP]->after_write = handle_after_write;
+	files[K_GRAB_KB] = wmii_create_ixpfile(ixps, "/grabkeyb", "0");
+	files[K_GRAB_KB]->after_write = handle_after_write;
+	files[K_FONT] = wmii_create_ixpfile(ixps, "/box/font", BLITZ_FONT);
+	files[K_FONT]->after_write = handle_after_write;
+	font = blitz_getfont(dpy, files[K_FONT]->content);
+	files[K_FG_COLOR] = wmii_create_ixpfile(ixps, "/box/fgcolor", BLITZ_SEL_FG_COLOR);
+	files[K_BG_COLOR] = wmii_create_ixpfile(ixps, "/box/bgcolor", BLITZ_SEL_BG_COLOR);
+	files[K_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/box/bordercolor", BLITZ_SEL_BORDER_COLOR);
+
+	wa.override_redirect = 1;
+	wa.background_pixmap = ParentRelative;
+	wa.event_mask =
+		ExposureMask | SubstructureRedirectMask | SubstructureNotifyMask;
+
+	root = RootWindow(dpy, screen_num);
+	rect.x = rect.y = 0;
+	rect.width = DisplayWidth(dpy, screen_num);
+	rect.height = DisplayHeight(dpy, screen_num);
+	krect.x = krect.y = 0;
+	krect.width = krect.height = 1;
+
+	init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
+
+	win = XCreateWindow(dpy, RootWindow(dpy, screen_num), krect.x, krect.y,
+						krect.width, krect.height, 0, DefaultDepth(dpy, screen_num),
+						CopyFromParent, DefaultVisual(dpy, screen_num),
+						CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
+	XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
+	XSync(dpy, False);
+
+	gcv.function = GXcopy;
+	gcv.graphics_exposures = False;
+
+	gc = XCreateGC(dpy, win, 0, 0);
+
+	/* main event loop */
+	run_server_with_fd_support(ixps, ConnectionNumber(dpy),
+							   check_event, 0);
+	deinit_server(ixps);
+	XFreeGC(dpy, gc);
+	XCloseDisplay(dpy);
 
 	return 0;
 }

@@ -48,6 +48,7 @@ static File *file[B_LAST];
 static Container items = {0};
 static Pixmap pmap;
 static XFontStruct *font;
+static Align align = SOUTH;
 
 static Draw zero_draw = { 0 };
 
@@ -75,7 +76,7 @@ static char *version[] = {
 static void usage()
 {
 	fprintf(stderr, "%s",
-			"usage: wmibar -s <socket file> [-v] [<x>,<y>,<width>,<height>]\n"
+			"usage: wmibar -s <socket file> [-v]\n"
 			"      -s    socket file\n" "      -v    version info\n");
 	exit(1);
 }
@@ -359,13 +360,17 @@ static void check_event(Connection * e)
 	}
 }
 
-static void update_geometry(char *size)
+static void update_geometry()
 {
-	blitz_strtorect(&rect, &brect, size);
-	if (!brect.width)
-		brect.width = DisplayWidth(dpy, screen_num);
-	if (!brect.height)
-		brect.height = 20;
+	brect = rect;
+	brect.height = font->ascent + font->descent + 4;
+	if (align == SOUTH)
+		brect.y = rect.height - brect.height;
+	XMoveResizeWindow(dpy, win, brect.x, brect.y, brect.width, brect.height);
+	XSync(dpy, False);
+	XFreePixmap(dpy, pmap);
+	pmap = XCreatePixmap(dpy, win, brect.width, brect.height, DefaultDepth(dpy, screen_num));
+	XSync(dpy, False);
 }
 
 static void handle_after_write(IXPServer * s, File * f)
@@ -383,15 +388,12 @@ static void handle_after_write(IXPServer * s, File * f)
 			draw();
 		}
 	} else if (file[B_GEOMETRY] == f) {
-		char *geom = file[B_GEOMETRY]->content;
-		if (geom && strrchr(geom, ',')) {
-			update_geometry(geom);
-			XMoveResizeWindow(dpy, win, brect.x, brect.y,
-							  brect.width, brect.height);
-			XSync(dpy, False);
-			pmap = XCreatePixmap(dpy, win, brect.width, brect.height,
-								 DefaultDepth(dpy, screen_num));
-			XSync(dpy, False);
+		if (f->content) {
+			if (!strncmp(f->content, "south", 6))
+				align = SOUTH;
+			else if(!strncmp(f->content, "north", 6))
+				align = NORTH;
+			update_geometry();
 			draw_bar(0, 0);
 		}
 	} else if (file[B_CTL] == f) {
@@ -409,6 +411,8 @@ static void handle_after_write(IXPServer * s, File * f)
 	} else if (file[B_FONT] == f) {
 		XFreeFont(dpy, font);
 		font = blitz_getfont(dpy, file[B_FONT]->content);
+		update_geometry();
+		draw_bar(0, 0);
 	}
 	check_event(0);
 }
@@ -417,11 +421,13 @@ static void handle_before_read(IXPServer * s, File * f)
 {
 	char buf[64];
 	if (f == file[B_GEOMETRY]) {
-		snprintf(buf, sizeof(buf), "%d,%d,%d,%d", brect.x, brect.y, brect.width, brect.height);
 		if (f->content)
 			free(f->content);
-		f->content = strdup(buf);
-		f->size = strlen(buf);
+		if (align == SOUTH)
+			f->content = strdup("south");
+		else
+			f->content = strdup("north");
+		f->size = strlen(f->content);
 	} else if (f == file[B_NEW]) {
 		snprintf(buf, sizeof(buf), "%d", id++);
 		if (f->content)
@@ -433,61 +439,6 @@ static void handle_before_read(IXPServer * s, File * f)
 	}
 }
 
-static void run(char *geom)
-{
-	XSetWindowAttributes wa;
-	XGCValues gcv;
-
-	/* init */
-	if (!(file[B_CTL] = ixp_create(ixps, "/ctl"))) {
-		perror("wmibar: cannot connect IXP server");
-		exit(1);
-	}
-	file[B_CTL]->after_write = handle_after_write;
-	file[B_NEW] = ixp_create(ixps, "/new");
-	file[B_NEW]->before_read = handle_before_read;
-	file[B_FONT] = wmii_create_ixpfile(ixps, "/font", BLITZ_FONT);
-	file[B_FONT]->after_write = handle_after_write;
-	font = blitz_getfont(dpy, file[B_FONT]->content);
-	file[B_BG_COLOR] = wmii_create_ixpfile(ixps, "/bgcolor", BLITZ_NORM_BG_COLOR);
-	file[B_FG_COLOR] = wmii_create_ixpfile(ixps, "/fgcolor", BLITZ_NORM_FG_COLOR);
-	file[B_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/bordercolor", BLITZ_NORM_BORDER_COLOR);
-	file[B_GEOMETRY] = ixp_create(ixps, "/geometry");
-	file[B_GEOMETRY]->before_read = handle_before_read;
-	file[B_GEOMETRY]->after_write = handle_after_write;
-	file[B_EXPANDABLE] = ixp_create(ixps, "/expandable");
-
-	wa.override_redirect = 1;
-	wa.background_pixmap = ParentRelative;
-	wa.event_mask = ExposureMask | ButtonPressMask | SubstructureRedirectMask | SubstructureNotifyMask;
-
-	brect.x = brect.y = brect.width = brect.height = 0;
-	rect.x = rect.y = 0;
-	rect.width = DisplayWidth(dpy, screen_num);
-	rect.height = DisplayHeight(dpy, screen_num);
-	update_geometry(geom);
-
-	win = XCreateWindow(dpy, RootWindow(dpy, screen_num), brect.x, brect.y,
-						brect.width, brect.height, 0, DefaultDepth(dpy, screen_num),
-						CopyFromParent, DefaultVisual(dpy, screen_num),
-						CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
-	XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
-	XSync(dpy, False);
-
-	gcv.function = GXcopy;
-	gcv.graphics_exposures = False;
-	gc = XCreateGC(dpy, win, 0, 0);
-
-	pmap = XCreatePixmap(dpy, win, brect.width, brect.height, DefaultDepth(dpy, screen_num));
-
-	/* main event loop */
-	run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event, 0);
-	deinit_server(ixps);
-	XFreePixmap(dpy, pmap);
-	XFreeGC(dpy, gc);
-	XCloseDisplay(dpy);
-}
-
 static int dummy_error_handler(Display * dpy, XErrorEvent * err)
 {
 	return 0;
@@ -495,8 +446,9 @@ static int dummy_error_handler(Display * dpy, XErrorEvent * err)
 
 int main(int argc, char *argv[])
 {
-	char geom[64];
 	int i;
+	XSetWindowAttributes wa;
+	XGCValues gcv;
 
 	/* command line args */
 	for (i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
@@ -525,12 +477,58 @@ int main(int argc, char *argv[])
 	XSetErrorHandler(dummy_error_handler);
 	screen_num = DefaultScreen(dpy);
 
-	geom[0] = 0;
-	if (argc > i)
-		cext_strlcpy(geom, argv[i], sizeof(geom));
-
 	ixps = wmii_setup_server(sockfile);
-	run(geom);
+
+
+	/* init */
+	if (!(file[B_CTL] = ixp_create(ixps, "/ctl"))) {
+		perror("wmibar: cannot connect IXP server");
+		exit(1);
+	}
+	file[B_CTL]->after_write = handle_after_write;
+	file[B_NEW] = ixp_create(ixps, "/new");
+	file[B_NEW]->before_read = handle_before_read;
+	file[B_FONT] = wmii_create_ixpfile(ixps, "/font", BLITZ_FONT);
+	file[B_FONT]->after_write = handle_after_write;
+	font = blitz_getfont(dpy, file[B_FONT]->content);
+	file[B_BG_COLOR] = wmii_create_ixpfile(ixps, "/bgcolor", BLITZ_NORM_BG_COLOR);
+	file[B_FG_COLOR] = wmii_create_ixpfile(ixps, "/fgcolor", BLITZ_NORM_FG_COLOR);
+	file[B_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/bordercolor", BLITZ_NORM_BORDER_COLOR);
+	file[B_GEOMETRY] = ixp_create(ixps, "/geometry");
+	file[B_GEOMETRY]->before_read = handle_before_read;
+	file[B_GEOMETRY]->after_write = handle_after_write;
+	file[B_EXPANDABLE] = ixp_create(ixps, "/expandable");
+
+	wa.override_redirect = 1;
+	wa.background_pixmap = ParentRelative;
+	wa.event_mask = ExposureMask | ButtonPressMask | SubstructureRedirectMask | SubstructureNotifyMask;
+
+	rect.x = rect.y = 0;
+	rect.width = DisplayWidth(dpy, screen_num);
+	rect.height = DisplayHeight(dpy, screen_num);
+	brect = rect;
+	brect.height = font->ascent + font->descent + 4;
+	brect.y = rect.height - brect.height;
+
+	win = XCreateWindow(dpy, RootWindow(dpy, screen_num), brect.x, brect.y,
+						brect.width, brect.height, 0, DefaultDepth(dpy, screen_num),
+						CopyFromParent, DefaultVisual(dpy, screen_num),
+						CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
+	XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
+	XSync(dpy, False);
+
+	gcv.function = GXcopy;
+	gcv.graphics_exposures = False;
+	gc = XCreateGC(dpy, win, 0, 0);
+
+	pmap = XCreatePixmap(dpy, win, brect.width, brect.height, DefaultDepth(dpy, screen_num));
+
+	/* main event loop */
+	run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event, 0);
+	deinit_server(ixps);
+	XFreePixmap(dpy, pmap);
+	XFreeGC(dpy, gc);
+	XCloseDisplay(dpy);
 
 	return 0;
 }

@@ -57,6 +57,7 @@ static Pixmap pmap;
 static const int seek = 30;		/* 30px */
 static XFontStruct *font;
 static unsigned int sel = 0;
+static Align align = SOUTH;
 
 static void check_event(Connection * c);
 static void draw_menu(void);
@@ -79,7 +80,7 @@ static char *version[] = {
 static void usage()
 {
 	fprintf(stderr, "%s",
-			"usage: wmimenu [-s <socket file>] [-r] [-v] [<x>,<y>,<width>,<height>]\n"
+			"usage: wmimenu [-s <socket file>] [-r] [-v]\n"
 			"      -s      socket file (default: /tmp/.ixp-$USER/wmimenu-%s-%s)\n"
 			"      -v      version info\n");
 	exit(1);
@@ -460,6 +461,19 @@ static void check_event(Connection * c)
 	}
 }
 
+static void update_geometry()
+{
+	mrect = rect;
+	mrect.height = font->ascent + font->descent + 4;
+	if (align == SOUTH)
+		mrect.y = rect.height - mrect.height;
+	XMoveResizeWindow(dpy, win, mrect.x, mrect.y, mrect.width, mrect.height);
+	XSync(dpy, False);
+	XFreePixmap(dpy, pmap);
+	pmap = XCreatePixmap(dpy, win, mrect.width, mrect.height, DefaultDepth(dpy, screen_num));
+	XSync(dpy, False);
+}
+
 static void handle_after_write(IXPServer * s, File * f)
 {
 	int i;
@@ -478,19 +492,19 @@ static void handle_after_write(IXPServer * s, File * f)
 			}
 		}
 	} else if (files[M_GEOMETRY] == f) {
-		char *size = files[M_GEOMETRY]->content;
-		if (size && strrchr(size, ',')) {
-			blitz_strtorect(&rect, &mrect, size);
-			XFreePixmap(dpy, pmap);
-			XMoveResizeWindow(dpy, win, mrect.x, mrect.y, mrect.width, mrect.height);
-			XSync(dpy, False);
-			pmap = XCreatePixmap(dpy, win, mrect.width, mrect.height, DefaultDepth(dpy, screen_num));
-			XSync(dpy, False);
+		if (f->content) {
+			if (!strncmp(f->content, "south", 6))
+				align = SOUTH;
+			else if(!strncmp(f->content, "north", 6))
+				align = NORTH;
+			update_geometry();
 			draw_menu();
 		}
 	} else if (files[M_FONT] == f) {
 		XFreeFont(dpy, font);
 		font = blitz_getfont(dpy, files[M_FONT]->content);
+		update_geometry();
+		draw_menu();
 	} else if (files[M_COMMAND] == f) {
 		update_items(files[M_COMMAND]->content);
 		draw_menu();
@@ -511,10 +525,39 @@ static void handle_before_read(IXPServer * s, File * f)
 	f->size = strlen(buf);
 }
 
-static void run(char *size)
+int main(int argc, char *argv[])
 {
+	int i;
 	XSetWindowAttributes wa;
 	XGCValues gcv;
+
+	/* command line args */
+	for (i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
+		switch (argv[i][1]) {
+		case 'v':
+			fprintf(stdout, "%s", version[0]);
+			exit(0);
+			break;
+		case 's':
+			if (i + 1 < argc)
+				sockfile = argv[++i];
+			else
+				usage();
+			break;
+		default:
+			usage();
+			break;
+		}
+	}
+
+	dpy = XOpenDisplay(0);
+	if (!dpy) {
+		fprintf(stderr, "%s", "wmimenu: cannot open display\n");
+		exit(1);
+	}
+	screen_num = DefaultScreen(dpy);
+
+	ixps = wmii_setup_server(sockfile);
 
 	/* init */
 	if (!(files[M_CTL] = ixp_create(ixps, "/ctl"))) {
@@ -549,11 +592,9 @@ static void run(char *size)
 	rect.x = rect.y = 0;
 	rect.width = DisplayWidth(dpy, screen_num);
 	rect.height = DisplayHeight(dpy, screen_num);
-	blitz_strtorect(&rect, &mrect, size);
-	if (!mrect.width)
-		mrect.width = DisplayWidth(dpy, screen_num);
-	if (!mrect.height)
-		mrect.height = 20;
+	mrect = rect;
+	mrect.height = font->ascent + font->descent + 4;
+	mrect.y = rect.height - mrect.height;
 
 	win = XCreateWindow(dpy, RootWindow(dpy, screen_num), mrect.x, mrect.y,
 						mrect.width, mrect.height, 0, DefaultDepth(dpy, screen_num),
@@ -575,45 +616,6 @@ static void run(char *size)
 	XFreePixmap(dpy, pmap);
 	XFreeGC(dpy, gc);
 	XCloseDisplay(dpy);
-}
-
-int main(int argc, char *argv[])
-{
-	char size[64];
-	int i;
-
-	/* command line args */
-	for (i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
-		switch (argv[i][1]) {
-		case 'v':
-			fprintf(stdout, "%s", version[0]);
-			exit(0);
-			break;
-		case 's':
-			if (i + 1 < argc)
-				sockfile = argv[++i];
-			else
-				usage();
-			break;
-		default:
-			usage();
-			break;
-		}
-	}
-
-	dpy = XOpenDisplay(0);
-	if (!dpy) {
-		fprintf(stderr, "%s", "wmimenu: cannot open display\n");
-		exit(1);
-	}
-	screen_num = DefaultScreen(dpy);
-
-	size[0] = 0;
-	if (argc > i)
-		cext_strlcpy(size, argv[i], sizeof(size));
-
-	ixps = wmii_setup_server(sockfile);
-	run(size);
 
 	return 0;
 }

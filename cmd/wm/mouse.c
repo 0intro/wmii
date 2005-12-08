@@ -592,6 +592,7 @@ void mouse_resize(Frame * f, Align align)
 }
 
 
+/* XXXX seems obsolete: */
 void drop_move(Frame *f, XRectangle *new, XPoint *pt)
 {
 	Frame *f1, *f2;
@@ -615,4 +616,25 @@ void drop_move(Frame *f, XRectangle *new, XPoint *pt)
 			return;
 		}
 	}
+}
+
+void center_pointer(Frame * f)
+{
+
+	Window dummy;
+	int wex, wey, ex, ey, i;
+	unsigned int dmask;
+	if (!f)
+		return;
+	XQueryPointer(dpy, f->win, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
+	XTranslateCoordinates(dpy, f->win, root, wex, wey, &ex, &ey, &dummy);
+	if (blitz_ispointinrect(ex, ey, &f->rect))
+		return;
+	/* suppress EnterNotify's while mouse warping */
+	XSelectInput(dpy, root, ROOT_MASK & ~StructureNotifyMask);
+	XWarpPointer(dpy, None, f->win, 0, 0, 0, 0, f->rect.width / 2,
+				 f->rect.height / 2);
+	XSync(dpy, False);
+	XSelectInput(dpy, root, ROOT_MASK);
+
 }

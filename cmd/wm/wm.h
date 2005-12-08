@@ -260,6 +260,7 @@ Cursor cursor_for_motion(Frame * f, int x, int y);
 Align cursor_to_align(Cursor cursor);
 Align xy_to_align(XRectangle * rect, int x, int y);
 void drop_move(Frame * f, XRectangle * new, XPoint * pt);
+void center_pointer(Frame * f);
 
 /* page.c */
 Page *get_sel_page();

@@ -124,33 +124,13 @@ frameconf /wm/default norefresh
 
 kbind bare $MODKEY-Escape 'kmode normal'
 
-kbind move Escape 'kmode normal'
-kbind move $MODKEY-C-r 'kmode resize'
-kbind move $NORTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry -0,-30,-0,-0'
-kbind move $SOUTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,+30,+0,+0'
-kbind move $WESTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry -40,-0,-0,-0'
-kbind move $EASTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +40,+0,+0,+0'
-kbind move S-$NORTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry -0,north,-0,-0'
-kbind move S-$SOUTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,south-'^$BAR_HEIGHT^',+0,+0'
-kbind move S-$WESTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry west,-0,-0,-0'
-kbind move S-$EASTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry east,+0,+0,+0'
-
-kbind resize Escape 'kmode normal'
-kbind resize $MODKEY-C-m 'kmode move'
-kbind resize $NORTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+0,-30'
-kbind resize $SOUTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+0,+30'
-kbind resize $WESTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,-40,+0'
-kbind resize $EASTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+40,+0'
-
 kbind normal $MODKEY-C-b 'kmode bare'
-kbind normal $MODKEY-C-m 'kmode move'
-kbind normal $MODKEY-C-r 'kmode resize'
 kbind normal $MODKEY-C-a 'wmir write /menu/precmd ''''; wmir write /menu/lookup /items/actions; wmir write /menu/ctl ''display 1'''
 kbind normal $MODKEY-C-p 'wmir write /menu/precmd extern; wmir write /menu/lookup /items/programs; wmir write /menu/ctl ''display 1'''
 kbind normal $MODKEY-C-c 'wmir write /wm/ctl close'
 kbind normal $MODKEY-C-q,y quit
 kbind normal $MODKEY-C-w,y wmirc
-kbind normal $MODKEY-t 'extern urxvt ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000 -fn -artwiz-smoothansi-*-*-*-*-*-*-*-*-*-*-*-*'
+kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000 -fn -artwiz-smoothansi-*-*-*-*-*-*-*-*-*-*-*-*'
 kbind normal $MODKEY-d 'wmir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmir write /wm/ctl attach'
 kbind normal $MODKEY-S-a 'wmir write /wm/ctl icons'
@@ -187,6 +167,5 @@ normstyle /menu/nstyle >[2]/dev/null
 selstyle /menu/sstyle >[2]/dev/null
 
 # MISC
-feh --bg-scale $HOME/wallpaper/bg.png
+xsetroot -solid black
 status &
-#mpc && status-mpd &
