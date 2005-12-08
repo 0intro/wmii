@@ -99,6 +99,3 @@ static void resize_float(Frame *f, XRectangle *new, XPoint *pt)
 static Container *get_frames_float(Area *a) {
 	return a->aux;
 }
-
-
-		center_pointer(f);
