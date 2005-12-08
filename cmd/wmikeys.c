@@ -377,6 +377,10 @@ static void handle_after_write(IXPServer * s, File * f)
 	} else if (f == files[K_FONT]) {
 		XFreeFont(dpy, font);
 		font = blitz_getfont(dpy, files[K_FONT]->content);
+		krect = rect;
+		krect.height = font->ascent + font->descent + 4;
+		center();
+		XMoveResizeWindow(dpy, win, krect.x, krect.y, krect.width, krect.height);
 	} else if (f == files[K_LOOKUP]) {
 		update();
 	}

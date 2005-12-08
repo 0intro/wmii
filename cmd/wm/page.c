@@ -41,6 +41,7 @@ Page *alloc_page()
 	alloc_area(p, &rect, "float");
 	cext_attach_item(&pages, p);
 	def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
+	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	return p;
 }
 

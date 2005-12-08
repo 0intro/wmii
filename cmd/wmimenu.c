@@ -280,7 +280,7 @@ static void draw_menu()
 		blitz_drawlabelnoborder(dpy, &d);
 
 		/* determine maximum items */
-		for (i = offset[OFF_CURR]; (i < offset[OFF_NEXT]) && (item = cext_list_get_item(&items, i)); i++) {
+		for (i = offset[OFF_CURR]; (item = cext_list_get_item(&items, i)) && (i < offset[OFF_NEXT]); i++) {
 			d.data = item->name;
 			d.rect.x = offx;
 			d.rect.width = XTextWidth(d.font, d.data, strlen(d.data)) + mrect.height;
