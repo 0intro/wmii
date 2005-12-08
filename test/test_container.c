@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
 	printf("--------------------------------\n");
 	for (i = 0; i < 10; i++) {
-		int *e = cext_get_item(&c, i);
+		int *e = cext_list_get_item(&c, i);
 		printf("%d\n", *e);
 	}
 	printf("--------------------------------\n");
@@ -55,13 +55,13 @@ int main(int argc, char *argv[])
 
 	printf("--------------------------------\n");
 	{
-		int *e = cext_get_item(&c, 5);
-		cext_top_item(&c, e);
-		e = cext_get_top_item(&c);
+		int *e = cext_list_get_item(&c, 5);
+		cext_stack_top_item(&c, e);
+		e = cext_stack_get_top_item(&c);
 		printf("%d (5)\n", *e);
-		e = cext_get_up_item(&c, cext_get_top_item(&c));
+		e = cext_stack_get_up_item(&c, cext_stack_get_top_item(&c));
 		printf("%d (0)\n", *e);
-		e = cext_get_down_item(&c, cext_get_top_item(&c));
+		e = cext_stack_get_down_item(&c, cext_stack_get_top_item(&c));
 		printf("%d (9)\n", *e);
 	}
 	printf("--------------------------------\n");
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 
 	printf("--------------------------------\n");
 	{
-		int *e = cext_get_item(&c, 5);
+		int *e = cext_list_get_item(&c, 5);
 		cext_detach_item(&c, e);	
 		cext_iterate(&c, nil, iter_print_container);
 	}
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 
 	printf("--------------------------------\n");
 	{
-		int *e = cext_get_item(&c, 4);
+		int *e = cext_list_get_item(&c, 4);
 		cext_detach_item(&c, e);	
 		cext_iterate(&c, nil, iter_print_container);
 	}

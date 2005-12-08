@@ -70,7 +70,7 @@ fn framesconf {
 
 fn barsucks {
     wmir write /bar/$1/b1press 'wmir write /wm/ctl ''select prev'''
-    wmir write /bar/$1/b3press 'wmir write /wm/ctl ''select next'''
+	wmir write /bar/$1/b3press 'wmir write /wm/ctl ''select next'''
     wmir write /bar/$1/b4press 'wmir write /wm/ctl ''select prev'''
     wmir write /bar/$1/b5press 'wmir write /wm/ctl ''select next'''
 }
@@ -84,13 +84,16 @@ wmir write /bar/bordercolor $NORM_BORDER_COLOR
 plab=`{wmir read /bar/new}
 wmir write /bar/$plab/b1press 'wmir write /wm/ctl pager'
 
+llab=`{wmir read /bar/new}
+wmir write /bar/$llab/b1press 'wmir write /wm/ctl pager'
+
 clab=`{wmir read /bar/new}
 wmir write /bar/$clab/fgcolor $SEL_FG_COLOR
 wmir write /bar/$clab/bgcolor $SEL_BG_COLOR
 wmir write /bar/$clab/bordercolor $SEL_BG_COLOR
 barsucks $clab
 
-wmir write /bar/expandable 1
+wmir write /bar/expandable $clab
 wmir write /bar/geometry 0,south,east,$BAR_HEIGHT
 wmir write /bar/ctl 'display 1'
 
@@ -109,10 +112,8 @@ wmir write /wm/event/clientupdate \
 'text=`{wmir read /wm/sel/layout/sel/frame/sel/client/sel/name} \
 wmir write /bar/'^$clab^'/data $"text'
 wmir write /wm/event/pageupdate \
-'text=`{wmir read /wm/sel/name} ^ \
-`{wmir read /wm/sel/layout/sel/layout|awk ''{print substr($0,0,1)}''} ^ \
-`{wmir read /keys/lookup|awk ''{print substr($0,7,1)}''} \
-wmir write /bar/'^$plab^'/data $"text'
+'wmir write /bar/'^$plab^'/data `{wmir read /wm/sel/name} &&' ^ \
+'wmir write /bar/'^$llab^'/data `{wmir read /wm/sel/layout/sel/name |awk ''{print substr($0,0,1)}''}'
 
 for(frame in `{wmir read /wm/sel/layout/sel | grep '^[0-9]'})
     framesconf /wm/sel/layout/sel/$frame refresh
@@ -189,4 +190,3 @@ selstyle /menu/sstyle >[2]/dev/null
 feh --bg-scale $HOME/wallpaper/bg.png
 status &
 #mpc && status-mpd &
-urxvt '+sb' -bg '#000000' -fg '#ffffff' -cr '#ffffff' -sl 4000 -fn -artwiz-smoothansi-*-*-*-*-*-*-*-*-*-*-*-*&
