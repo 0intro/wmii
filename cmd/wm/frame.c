@@ -238,32 +238,6 @@ void resize_frame(Frame * f, XRectangle * r, XPoint * pt)
 	resize_clients(f, (tabh ? tabh : bw), bw);
 }
 
-
-void draw_tab(Frame * f, char *text, int x, int y, int w, int h, int sel)
-{
-	Draw d = { 0 };
-	d.drawable = f->win;
-	d.gc = f->gc;
-	d.rect.x = x;
-	d.rect.y = y;
-	d.rect.width = w;
-	d.rect.height = h;
-	d.data = text;
-	d.font = font;
-	if (sel) {
-		d.bg = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_FG_COLOR]->content);
-		d.border = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_BORDER_COLOR]->content);
-	} else {
-		d.bg = blitz_loadcolor(dpy, screen_num, f->file[F_NORM_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen_num, f->file[F_NORM_FG_COLOR]->content);
-		d.border = blitz_loadcolor(dpy, screen_num, f->file[F_NORM_BORDER_COLOR]->content);
-	}
-	blitz_drawlabel(dpy, &d);
-	XSync(dpy, False);
-}
-
-
 /**
  * Assumes following file:
  *

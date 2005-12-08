@@ -243,7 +243,6 @@ void draw_frame(void *frame, void *aux);
 void handle_frame_buttonpress(XButtonEvent * e, Frame * f);
 void attach_client_to_frame(Frame * f, Client * c);
 void detach_client_from_frame(Client *c);
-void draw_tab(Frame * f, char *text, int x, int y, int w, int h, int sel);
 unsigned int tab_height(Frame * f);
 unsigned int border_width(Frame * f);
 Frame *get_sel_frame();

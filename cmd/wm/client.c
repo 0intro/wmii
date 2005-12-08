@@ -213,20 +213,38 @@ void draw_client(void *item, void *aux)
 	unsigned int tw, tabh = tab_height(f);
 	size_t size;
 	int i;
+	Draw d = { 0 };
 
 	if (!tabh)
 		return;
+
 	size = cext_sizeof(&f->clients);
 	tw = f->rect.width;
 	if (size)
 		tw /= size;
 	i = cext_list_get_item_index(&f->clients, c);
-	if (i < size - 1)
-		draw_tab(f, c->file[C_NAME]->content, i * tw, 0, f->rect.width - (i * tw), tabh,
-				 (f == get_sel_frame()) && (c == get_sel_client()));
-	else
-		draw_tab(f, c->file[C_NAME]->content, i * tw, 0, tw, tabh,
-				 (f == get_sel_frame()) && (c == get_sel_client()));
+
+	d.drawable = f->win;
+	d.gc = f->gc;
+	d.rect.x = i * tw;
+	d.rect.y = 0;
+	d.rect.width = tw;
+	if (i && (i == size - 1))
+		d.rect.width = f->rect.width - d.rect.x;
+	d.rect.height = tabh;
+	d.data = c->file[C_NAME]->content;
+	d.font = font;
+
+	if ((f == get_sel_frame()) && (c == get_sel_client())) {
+		d.bg = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_BG_COLOR]->content);
+		d.fg = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_FG_COLOR]->content);
+		d.border = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_BORDER_COLOR]->content);
+	} else {
+		d.bg = blitz_loadcolor(dpy, screen_num, f->file[F_NORM_BG_COLOR]->content);
+		d.fg = blitz_loadcolor(dpy, screen_num, f->file[F_NORM_FG_COLOR]->content);
+		d.border = blitz_loadcolor(dpy, screen_num, f->file[F_NORM_BORDER_COLOR]->content);
+	}
+	blitz_drawlabel(dpy, &d);
 	XSync(dpy, False);
 }
 
