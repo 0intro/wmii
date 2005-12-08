@@ -90,7 +90,7 @@ wmir write /bar/$clab/bgcolor $SEL_BG_COLOR
 wmir write /bar/$clab/bordercolor $SEL_BG_COLOR
 barsucks $clab
 
-wmir write /bar/expandable 2
+wmir write /bar/expandable 1
 wmir write /bar/geometry 0,south,east,$BAR_HEIGHT
 wmir write /bar/ctl 'display 1'
 

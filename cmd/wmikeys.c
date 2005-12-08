@@ -187,17 +187,14 @@ static void emulate_key_press(unsigned long mod, KeyCode key)
 	XSync(dpy, False);
 }
 
-static void
-handle_shortcut_chain(Window w, Shortcut * processed, char *prefix,
-					  int grab)
+static void handle_shortcut_chain(Window w, Shortcut * processed, char *prefix, int grab)
 {
 	unsigned long mod;
 	KeyCode key;
 	Shortcut *s = processed->next;
 
 	if (grab) {
-		XGrabKeyboard(dpy, w, True, GrabModeAsync,
-					  GrabModeAsync, CurrentTime);
+		XGrabKeyboard(dpy, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
 		XMapRaised(dpy, win);
 	}
 	draw_shortcut_box(prefix);
@@ -237,7 +234,7 @@ static void handle_shortcut_gkb(Window w, unsigned long mod, KeyCode key)
 	comp.mod = mod;
 	comp.key = key;
 
-	s = cext_find_item(&shortcuts, &s, comp_shortcut);
+	s = cext_find_item(&shortcuts, &comp, comp_shortcut);
 	if (s && s->cmdfile && s->cmdfile->content) {
 		spawn(dpy, s->cmdfile->content);
 		return;
@@ -254,7 +251,7 @@ static void handle_shortcut(Window w, unsigned long mod, KeyCode key)
 	comp.mod = mod;
 	comp.key = key;
 
-	s = cext_find_item(&shortcuts, &s, comp_shortcut);
+	s = cext_find_item(&shortcuts, &comp, comp_shortcut);
 	if (s && s->cmdfile && s->cmdfile->content) {
 		spawn(dpy, s->cmdfile->content);
 		return;

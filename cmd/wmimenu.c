@@ -182,8 +182,7 @@ static void update_offsets()
 
 
 	w = cmdw + 2 * seek;
-	for (i = offset[OFF_CURR] - 1; i >= 0; i--) {
-		item = cext_list_get_item(&items, i);
+	for (i = offset[OFF_CURR] - 1; (i >= 0) && (item = cext_list_get_item(&items, i)); i--) {
 		w += XTextWidth(font, item->content, strlen(item->content)) + mrect.height;
 		if (w > mrect.width)
 			break;

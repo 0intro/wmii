@@ -45,7 +45,6 @@ static int displayed = 0;
 static char *sockfile = 0;
 static File *file[B_LAST];
 static Container items = {0};
-static unsigned int id = 0;
 static Pixmap pmap;
 static XFontStruct *font;
 
@@ -125,12 +124,12 @@ static void _destroy(void *obj, char *arg)
 static void reset(void *obj, char *arg)
 {
 	int i;
+	size_t size = cext_sizeof(&items);
 	char buf[512];
-	for (i = 0; i < id; i++) {
+	for (i = 0; i < size; i++) {
 		snprintf(buf, sizeof(buf), "/%d", i + 1);
 		ixps->remove(ixps, buf);
 	}
-	id = 0;
 	draw_bar(0, 0);
 }
 
@@ -201,7 +200,7 @@ static void draw()
 	if (!size)
 		return;
 
-	expandable = _strtonum(file[B_EXPANDABLE]->content, 0, id);
+	expandable = _strtonum(file[B_EXPANDABLE]->content, 0, size);
 	snprintf(buf, sizeof(buf), "/%d", expandable);
 	if (!ixp_walk(ixps, buf))
 		expandable = 0;
@@ -417,14 +416,13 @@ static void handle_before_read(IXPServer * s, File * f)
 {
 	char buf[64];
 	if (f == file[B_GEOMETRY]) {
-		snprintf(buf, sizeof(buf), "%d,%d,%d,%d", brect.x, brect.y,
-				 brect.width, brect.height);
+		snprintf(buf, sizeof(buf), "%d,%d,%d,%d", brect.x, brect.y, brect.width, brect.height);
 		if (f->content)
 			free(f->content);
 		f->content = strdup(buf);
 		f->size = strlen(buf);
 	} else if (f == file[B_NEW]) {
-		snprintf(buf, sizeof(buf), "%d", ++id);
+		snprintf(buf, sizeof(buf), "%d", cext_sizeof(&items));
 		if (f->content)
 			free(f->content);
 		f->content = strdup(buf);
