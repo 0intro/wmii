@@ -28,7 +28,7 @@ static void _attach_client(void *obj, char *cmd);
 static void _detach_client(void *obj, char *cmd);
 static void _close_client(void *obj, char *cmd);
 static void pager(void *obj, char *cmd);
-static void icons(void *obj, char *cmd);
+static void detached_clients(void *obj, char *cmd);
 
 /* action table for /ctl namespace */
 Action wm_acttbl[] = {
@@ -40,7 +40,7 @@ Action wm_acttbl[] = {
 	{"close", _close_client},
 	{"quit", quit},
 	{"pager", pager},
-	{"icons", icons},
+	{"detached clients", detached_clients},
 	{0, 0}
 };
 
@@ -279,7 +279,7 @@ static void pager(void *obj, char *cmd)
 	}
 }
 
-static void draw_icons()
+static void draw_detached_clients()
 {
 	unsigned int i, ic, ir, tw, th, rows, cols, size;
 	int dx, dy;
@@ -317,7 +317,7 @@ static void draw_icons()
 }
 
 
-static void icons(void *obj, char *cmd)
+static void detached_clients(void *obj, char *cmd)
 {
 	XEvent ev;
 	int i, n;
@@ -329,7 +329,7 @@ static void icons(void *obj, char *cmd)
 
 	XClearWindow(dpy, transient);
 	XMapRaised(dpy, transient);
-	draw_icons();
+	draw_detached_clients();
 	while (XGrabKeyboard
 		   (dpy, transient, True, GrabModeAsync, GrabModeAsync,
 			CurrentTime) != GrabSuccess)
