@@ -37,16 +37,9 @@ Area *alloc_area(Page *p, XRectangle * r, char *layout)
 	return a;
 }
 
-static void iter_destroy_area(void *item, void *aux)
-{
-	destroy_frame((Frame *)item);
-	free((Frame *)item);
-}
-
 void destroy_area(Area *a)
 {
 	a->layout->deinit(a);
-	cext_iterate(a->layout->get_frames(a), nil, iter_destroy_area);
 	ixp_remove_file(ixps, a->file[A_PREFIX]);
 	free(a);
 }
