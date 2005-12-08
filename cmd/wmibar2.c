@@ -433,9 +433,6 @@ int main(int argc, char *argv[])
 
 	/* default item settings */
 	item = cext_emallocz(sizeof(Item));
-	item->id = 0;
-	item->text[0] = '\0';
-	item->value = 0;
 
 	align = "bottom";
 	font = "fixed";

@@ -97,7 +97,6 @@ static char *_ls(File * f)
 	}
 	qsort(tmp, num, sizeof(char *), comp_file_name);
 	result = cext_emallocz(size);
-	result[0] = '\0';
 	for (i = 0; i < num; i++) {
 		strncat(result, tmp[i]->name, size);
 		if (is_directory(tmp[i]))
