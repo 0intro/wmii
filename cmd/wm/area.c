@@ -17,18 +17,18 @@ Area *alloc_area(Page *p, XRectangle * r, char *layout)
 
 	a->rect = *r;
 	a->page = p;
-	snprintf(buf, MAX_BUF, "/%s/a/%d", p->file[P_PREFIX]->name, id);
+	snprintf(buf, MAX_BUF, "/%s/layout/%d", p->file[P_PREFIX]->name, id);
 	a->file[A_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, MAX_BUF, "/%s/a/%d/f", p->file[P_PREFIX]->name,  id);
+	snprintf(buf, MAX_BUF, "/%s/layout/%d/frame", p->file[P_PREFIX]->name,  id);
 	a->file[A_FRAME_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, MAX_BUF, "/%s/a/%d/f/sel", p->file[P_PREFIX]->name,  id);
+	snprintf(buf, MAX_BUF, "/%s/layout/%d/frame/sel", p->file[P_PREFIX]->name,  id);
 	a->file[A_SEL_FRAME] = ixp_create(ixps, buf);
 	a->file[A_SEL_FRAME]->bind = 1;
-	snprintf(buf, MAX_BUF, "/%s/a/%d/ctl", p->file[P_PREFIX]->name,  id);
+	snprintf(buf, MAX_BUF, "/%s/layout/%d/ctl", p->file[P_PREFIX]->name,  id);
 	a->file[A_CTL] = ixp_create(ixps, buf);
-	snprintf(buf, MAX_BUF, "/%s/a/%d/geometry", p->file[P_PREFIX]->name,  id);
+	snprintf(buf, MAX_BUF, "/%s/layout/%d/geometry", p->file[P_PREFIX]->name,  id);
 	a->file[A_GEOMETRY] = ixp_create(ixps, buf);
-	snprintf(buf, MAX_BUF, "/%s/a/%d/layout", p->file[P_PREFIX]->name,  id);
+	snprintf(buf, MAX_BUF, "/%s/layout/%d/name", p->file[P_PREFIX]->name,  id);
 	a->file[A_LAYOUT] = wmii_create_ixpfile(ixps, buf, layout);
 	a->layout = get_layout(layout);
 	a->layout->init(a);

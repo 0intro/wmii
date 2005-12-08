@@ -1,16 +1,16 @@
 #!9PREFIX/bin/rc
 # configure wmii
 
-TAB=1
+TAB=0
 BAR_HEIGHT=16
 
-SEL_BG_COLOR='#307080'
-SEL_FG_COLOR='#fefefe'
-SEL_BORDER_COLOR='#5090a0'
-NORM_BG_COLOR='#004050'
-NORM_FG_COLOR='#cccccc'
-NORM_BORDER_COLOR='#206070'
-FONT='fixed'
+SEL_BG_COLOR='#101010'
+SEL_FG_COLOR='#66ff00'
+SEL_BORDER_COLOR='#66ff00'
+NORM_BG_COLOR='#000000'
+NORM_FG_COLOR='#eeeeee'
+NORM_BORDER_COLOR='#111111'
+FONT='-artwiz-snap-normal-*-*-*-*-*-*-*-*-*-*-*'
 
 MODKEY=M
 NORTHKEY=k
@@ -100,22 +100,22 @@ wmir write /bar/ctl 'display 1'
 # default layout (column, float):
 wmir write /wm/default/layout column
 wmir write /wm/default/font $FONT
-wmir write /wm/default/transcolor $SEL_BG_COLOR
+wmir write /wm/default/transcolor $SEL_BORDER_COLOR
 wmir write /wm/default/handleinc 1
 
 wmir write /wm/default/border 1
 wmir write /wm/default/pagegeometry '0,0,east,south-'^$BAR_HEIGHT
 wmir write /wm/event/clientupdate \
-'text=`{wmir read /wm/sel/a/sel/f/sel/c/sel/name} \
+'text=`{wmir read /wm/sel/layout/sel/frame/sel/client/sel/name} \
 wmir write /bar/'^$clab^'/data $"text'
 wmir write /wm/event/pageupdate \
 'text=`{wmir read /wm/sel/name} ^ \
-`{wmir read /wm/sel/a/sel/layout|awk ''{print substr($0,0,1)}''} ^ \
+`{wmir read /wm/sel/layout/sel/layout|awk ''{print substr($0,0,1)}''} ^ \
 `{wmir read /keys/lookup|awk ''{print substr($0,7,1)}''} \
 wmir write /bar/'^$plab^'/data $"text'
 
-for(frame in `{wmir read /wm/sel/a/sel | grep '^[0-9]'})
-    framesconf /wm/sel/a/sel/$frame refresh
+for(frame in `{wmir read /wm/sel/layout/sel | grep '^[0-9]'})
+    framesconf /wm/sel/layout/sel/$frame refresh
 frameconf /wm/default norefresh
 
 
@@ -125,21 +125,21 @@ kbind bare $MODKEY-Escape 'kmode normal'
 
 kbind move Escape 'kmode normal'
 kbind move $MODKEY-C-r 'kmode resize'
-kbind move $NORTHKEY 'wmir write /wm/sel/a/sel/f/sel/geometry -0,-30,-0,-0'
-kbind move $SOUTHKEY 'wmir write /wm/sel/a/sel/f/sel/geometry +0,+30,+0,+0'
-kbind move $WESTKEY 'wmir write /wm/sel/a/sel/f/sel/geometry -40,-0,-0,-0'
-kbind move $EASTKEY 'wmir write /wm/sel/a/sel/f/sel/geometry +40,+0,+0,+0'
-kbind move S-$NORTHKEY 'wmir write /wm/sel/a/sel/f/sel/geometry -0,north,-0,-0'
-kbind move S-$SOUTHKEY 'wmir write /wm/sel/a/sel/f/sel/geometry +0,south-'^$BAR_HEIGHT^',+0,+0'
-kbind move S-$WESTKEY 'wmir write /wm/sel/a/sel/f/sel/geometry west,-0,-0,-0'
-kbind move S-$EASTKEY 'wmir write /wm/sel/a/sel/f/sel/geometry east,+0,+0,+0'
+kbind move $NORTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry -0,-30,-0,-0'
+kbind move $SOUTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,+30,+0,+0'
+kbind move $WESTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry -40,-0,-0,-0'
+kbind move $EASTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +40,+0,+0,+0'
+kbind move S-$NORTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry -0,north,-0,-0'
+kbind move S-$SOUTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,south-'^$BAR_HEIGHT^',+0,+0'
+kbind move S-$WESTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry west,-0,-0,-0'
+kbind move S-$EASTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry east,+0,+0,+0'
 
 kbind resize Escape 'kmode normal'
 kbind resize $MODKEY-C-m 'kmode move'
-kbind resize $NORTHKEY 'wmir write /wm/sel/a/sel/f/sel/geometry +0,+0,+0,-30'
-kbind resize $SOUTHKEY 'wmir write /wm/sel/a/sel/f/sel/geometry +0,+0,+0,+30'
-kbind resize $WESTKEY 'wmir write /wm/sel/a/sel/f/sel/geometry +0,+0,-40,+0'
-kbind resize $EASTKEY 'wmir write /wm/sel/a/sel/f/sel/geometry +0,+0,+40,+0'
+kbind resize $NORTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+0,-30'
+kbind resize $SOUTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+0,+30'
+kbind resize $WESTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,-40,+0'
+kbind resize $EASTKEY 'wmir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+40,+0'
 
 kbind normal $MODKEY-C-b 'kmode bare'
 kbind normal $MODKEY-C-m 'kmode move'
@@ -149,22 +149,22 @@ kbind normal $MODKEY-C-p 'wmir write /menu/precmd extern; wmir write /menu/looku
 kbind normal $MODKEY-C-c 'wmir write /wm/ctl close'
 kbind normal $MODKEY-C-q,y quit
 kbind normal $MODKEY-C-w,y wmirc
-kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#003040'' -fg ''#dddddd'' -cr ''#408090'' -sl 4000'
+kbind normal $MODKEY-t 'extern urxvt ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000 -fn -artwiz-smoothansi-*-*-*-*-*-*-*-*-*-*-*-*'
 kbind normal $MODKEY-d 'wmir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmir write /wm/ctl attach'
 kbind normal $MODKEY-S-a 'wmir write /wm/ctl icons'
 kbind normal $MODKEY-Return 'wmir write /wm/sel/ctl ''select zoomed'''
 kbind normal $MODKEY-C-y 'wmir write /wm/ctl new'
-kbind normal $MODKEY-u 'wmir write /wm/sel/a/sel/f/sel/locked 0'
-kbind normal $MODKEY-S-u 'wmir write /wm/sel/a/sel/f/sel/locked 1'
+kbind normal $MODKEY-u 'wmir write /wm/sel/layout/sel/frame/sel/locked 0'
+kbind normal $MODKEY-S-u 'wmir write /wm/sel/layout/sel/frame/sel/locked 1'
 kbind normal $MODKEY-$WESTKEY 'wmir write /wm/ctl ''select prev'''
 kbind normal $MODKEY-$EASTKEY 'wmir write /wm/ctl ''select next'''
 kbind normal $MODKEY-Tab 'wmir write /wm/sel/ctl ''select next'''
 kbind normal $MODKEY-$SOUTHKEY 'wmir write /wm/sel/ctl ''select next'''
 kbind normal $MODKEY-$NORTHKEY 'wmir write /wm/sel/ctl ''select prev'''
-kbind normal $MODKEY-S-Tab 'wmir write /wm/sel/a/sel/f/sel/ctl ''select next'''
-kbind normal $MODKEY-S-$SOUTHKEY 'wmir write /wm/sel/a/sel/f/sel/ctl ''select next'''
-kbind normal $MODKEY-S-$NORTHKEY 'wmir write /wm/sel/a/sel/f/sel/ctl ''select prev'''
+kbind normal $MODKEY-S-Tab 'wmir write /wm/sel/layout/sel/frame/sel/ctl ''select next'''
+kbind normal $MODKEY-S-$SOUTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/ctl ''select next'''
+kbind normal $MODKEY-S-$NORTHKEY 'wmir write /wm/sel/layout/sel/frame/sel/ctl ''select prev'''
 kbind normal $MODKEY-space 'wmir write /wm/sel/ctl ''select toggled'''
 kbind normal $MODKEY-S-p 'wmir write /wm/ctl pager'
 for(i in 0 1 2 3 4 5 6 7 8 9) {
@@ -186,5 +186,7 @@ normstyle /menu/nstyle >[2]/dev/null
 selstyle /menu/sstyle >[2]/dev/null
 
 # MISC
-xsetroot -mod 2 2 -fg '#003040' -bg '#004050'
+feh --bg-scale $HOME/wallpaper/bg.png
 status &
+#mpc && status-mpd &
+urxvt '+sb' -bg '#000000' -fg '#ffffff' -cr '#ffffff' -sl 4000 -fn -artwiz-smoothansi-*-*-*-*-*-*-*-*-*-*-*-*&

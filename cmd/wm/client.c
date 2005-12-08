@@ -18,10 +18,10 @@ Client *alloc_client(Window w)
 	Client *c = (Client *) cext_emallocz(sizeof(Client));
 
 	c->win = w;
-	snprintf(buf, MAX_BUF, "/detached/c/%d", id);
+	snprintf(buf, MAX_BUF, "/detached/client/%d", id);
 	c->file[C_PREFIX] = ixp_create(ixps, buf);
 	win_prop(dpy, c->win, XA_WM_NAME, buf2, MAX_BUF);
-	snprintf(buf, MAX_BUF, "/detached/c/%d/name", id);
+	snprintf(buf, MAX_BUF, "/detached/client/%d/name", id);
 	c->file[C_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
 	id++;
 	cext_attach_item(&clients, c);

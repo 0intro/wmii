@@ -30,9 +30,9 @@ Page *alloc_page()
 	p->file[P_PREFIX] = ixp_create(ixps, buf);
 	snprintf(buf, sizeof(buf), "/%d/name", id);
 	p->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
-	snprintf(buf, sizeof(buf), "/%d/a/", id);
+	snprintf(buf, sizeof(buf), "/%d/layout/", id);
 	p->file[P_AREA_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, sizeof(buf), "/%d/a/sel", id);
+	snprintf(buf, sizeof(buf), "/%d/layout/sel", id);
 	p->file[P_SEL_AREA] = ixp_create(ixps, buf);
 	p->file[P_SEL_AREA]->bind = 1;	/* mount point */
 	snprintf(buf, sizeof(buf), "/%d/ctl", id);

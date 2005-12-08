@@ -570,8 +570,8 @@ static void init_cursors()
 
 static void init_default()
 {
-	def[WM_DETACHED_FRAME] = ixp_create(ixps, "/detached/f");
-	def[WM_DETACHED_CLIENT] = ixp_create(ixps, "/detached/c");
+	def[WM_DETACHED_FRAME] = ixp_create(ixps, "/detached/frame");
+	def[WM_DETACHED_CLIENT] = ixp_create(ixps, "/detached/client");
 	def[WM_TRANS_COLOR] = wmii_create_ixpfile(ixps, "/default/transcolor", BLITZ_SEL_FG_COLOR);
 	def[WM_TRANS_COLOR]->after_write = handle_after_write;
 	def[WM_SEL_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/sstyle/bgcolor", BLITZ_SEL_BG_COLOR);
