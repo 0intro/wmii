@@ -147,10 +147,14 @@ static void select_frame(void *obj, char *cmd)
 	if (!f || !cmd)
 		return;
 	a = f->area;
-	if (!strncmp(cmd, "prev", 5))
-		cext_stack_top_item(a->layout->get_frames(a), cext_stack_get_up_item(a->layout->get_frames(a), f));
-	else if (!strncmp(cmd, "next", 5))
-		cext_stack_top_item(a->layout->get_frames(a), cext_stack_get_down_item(a->layout->get_frames(a), f));
+	if (!strncmp(cmd, "prev", 5)) {
+		f = cext_stack_get_up_item(a->layout->get_frames(a), f);
+		cext_stack_top_item(a->layout->get_frames(a), f);
+	}
+	else if (!strncmp(cmd, "next", 5)) {
+		f = cext_stack_get_down_item(a->layout->get_frames(a), f);
+		cext_stack_top_item(a->layout->get_frames(a), f);
+	}
 	if (old != f) {
 		sel_frame(f, cext_list_get_item_index(&a->page->areas, a) == 0);
 		center_pointer(f);
