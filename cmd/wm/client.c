@@ -333,14 +333,11 @@ void attach_client(Client * c)
 }
 
 void detach_client(Client *c) {
-	Page *p;
 	if (c->frame)
 		c->frame->area->layout->detach(c->frame->area, c);
 	if (c->destroyed)
 		destroy_client(c);
-	p = get_sel_page();
-	sel_page(p);
-	draw_page(p);
+	draw_page(get_sel_page());
 }
 
 Client *get_sel_client()

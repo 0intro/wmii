@@ -130,7 +130,7 @@ kbind normal $MODKEY-C-w,y wmirc
 kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000 -fn -artwiz-smoothansi-*-*-*-*-*-*-*-*-*-*-*-*'
 kbind normal $MODKEY-d 'wmir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmir write /wm/ctl attach'
-kbind normal $MODKEY-S-a 'wmir write /wm/ctl ''detached clients''
+kbind normal $MODKEY-S-a 'wmir write /wm/ctl ''detached clients'''
 kbind normal $MODKEY-Return 'wmir write /wm/sel/ctl ''select zoomed'''
 kbind normal $MODKEY-C-y 'wmir write /wm/ctl new'
 kbind normal $MODKEY-u 'wmir write /wm/sel/layout/sel/frame/sel/locked 0'
@@ -163,4 +163,4 @@ selstyle /menu/sstyle >[2]/dev/null
 
 # MISC
 xsetroot -solid black
-status &
+status&
