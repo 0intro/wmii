@@ -122,8 +122,9 @@ struct Layout {
 	void (*arrange) (Area *);	/* called when area is resized */
 	Bool (*attach) (Area *, Client *);	/* called on attach */
 	void (*detach) (Area *, Client *);	/* called on detach */
-	void (*resize) (Frame *, XRectangle *, XPoint * pt);	/* called after resize */
+	void (*resize) (Frame *, XRectangle *, XPoint *);	/* called after resize */
 	Container *(*get_frames) (Area *);	/* called after resize */
+	void (*aux) (Area *, char *aux);	/* aux interface */
 };
 
 struct Area {

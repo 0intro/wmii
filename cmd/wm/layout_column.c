@@ -16,6 +16,7 @@ typedef struct Column Column;
 struct Acme {
 	int sel;
 	Container columns;
+	Container frames;
 };
 
 struct Column {
@@ -31,8 +32,11 @@ static void arrange_col(Area * a);
 static Bool attach_col(Area * a, Client * c);
 static void detach_col(Area * a, Client * c);
 static void resize_col(Frame * f, XRectangle * new, XPoint * pt);
+static Container *get_frames_col(Area *a);
+static void aux_col(Area *a, char *aux);
 
-static Layout lcol = { "col", init_col, deinit_col, arrange_col, attach_col, detach_col, resize_col };
+static Layout lcol = { "col", init_col, deinit_col, arrange_col, attach_col, detach_col,
+   				       resize_col, get_frames_col, aux_col };
 
 void init_layout_column()
 {
@@ -368,4 +372,14 @@ static void resize_col(Frame *f, XRectangle *new, XPoint *pt)
 		_drop_move(f, new, pt);
 	else
 		drop_resize(f, new);
+}
+
+static Container *get_frames_col(Area *a)
+{
+	Acme *acme = a->aux;
+	return &acme->frames;
+}
+
+static void aux_col(Area *a, char *aux)
+{
 }
