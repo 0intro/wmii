@@ -45,23 +45,22 @@ Page *alloc_page()
 	return p;
 }
 
-static void iter_destroy_page(void *item, void *aux)
+static void iter_destroy_area(void *area, void *aux)
 {
-	destroy_area((Area *)item);
+	destroy_area((Area *)area);
 }
 
 void destroy_page(Page * p)
 {
-	cext_iterate(&p->areas, nil, iter_destroy_page);
+	cext_list_iterate(&p->areas, nil, iter_destroy_area);
 	def[WM_SEL_PAGE]->content = 0;
 	ixp_remove_file(ixps, p->file[P_PREFIX]);
-	if (ixps->errstr)
-		fprintf(stderr, "wmiiwm: free_page(): %s\n", ixps->errstr);
+	cext_detach_item(&pages, p);
 	free(p);
-	if ((p = get_sel_page())) {
-		show_page(p);
+	if ((p = get_sel_page()))
 		sel_page(p);
-	}
+	else
+		invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
 void sel_page(Page * p)
@@ -86,7 +85,7 @@ static void iter_draw_page(void *item, void *aux)
 
 void draw_page(Page * p)
 {
-	cext_iterate(&p->areas, nil, iter_draw_page);
+	cext_list_iterate(&p->areas, nil, iter_draw_page);
 }
 
 XRectangle *rectangles(unsigned int *num)
@@ -150,7 +149,7 @@ static void iter_hide_page(void *item, void *aux)
 
 void hide_page(Page * p)
 {
-	cext_iterate(&p->areas, nil, iter_hide_page);
+	cext_list_iterate(&p->areas, nil, iter_hide_page);
 }
 
 static void iter_show_page(void *item, void *aux)
@@ -160,7 +159,7 @@ static void iter_show_page(void *item, void *aux)
 
 void show_page(Page * p)
 {
-	cext_iterate(&p->areas, nil, iter_show_page);
+	cext_list_iterate(&p->areas, nil, iter_show_page);
 }
 
 static void iter_after_write_page(void *item, void *aux)
@@ -175,7 +174,7 @@ static void iter_after_write_page(void *item, void *aux)
 
 static void handle_after_write_page(IXPServer *s, File *f)
 {
-	cext_iterate(&pages, f, iter_after_write_page);
+	cext_list_iterate(&pages, f, iter_after_write_page);
 }
 
 Page *get_sel_page()

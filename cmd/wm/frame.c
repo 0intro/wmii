@@ -128,8 +128,6 @@ void destroy_frame(Frame * f)
 	XFreeGC(dpy, f->gc);
 	XDestroyWindow(dpy, f->win);
 	ixp_remove_file(ixps, f->file[F_PREFIX]);
-	if (ixps->errstr)
-		fprintf(stderr, "wmiiwm: destroy_frame(): %s\n", ixps->errstr);
 	free(f);
 }
 
@@ -167,7 +165,7 @@ static void iter_resize_client(void *item, void *aux)
 static void resize_clients(Frame * f, int tabh, int bw)
 {
 	Twouint aux = { tabh, bw };
-	cext_iterate(&f->clients, &aux, iter_resize_client);
+	cext_list_iterate(&f->clients, &aux, iter_resize_client);
 }
 
 static void check_dimensions(Frame * f, unsigned int tabh, unsigned int bw)
@@ -310,7 +308,7 @@ void handle_frame_buttonpress(XButtonEvent *e, Frame *f)
 	draw_frame(f, nil);
 }
 
-void attach_client_to_frame(Frame * f, Client * c)
+void attach_client_to_frame(Frame *f, Client *c)
 {
 	wmii_move_ixpfile(c->file[C_PREFIX], f->file[F_CLIENT_PREFIX]);
 	f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
@@ -322,18 +320,16 @@ void attach_client_to_frame(Frame * f, Client * c)
 	sel_client(c);
 }
 
-void detach_client_from_frame(Client * c)
+void detach_client_from_frame(Frame *f, Client *c)
 {
 	Client *client;
-	Frame *f = c->frame;
+	c->frame = nil;
+	f->file[F_SEL_CLIENT]->content = nil;
 	wmii_move_ixpfile(c->file[C_PREFIX], def[WM_DETACHED_CLIENT]);
-	c->frame = 0;
 	cext_detach_item(&f->clients, c);
 	if (!c->destroyed) {
-		if (f) {
-			hide_client(c);
-			cext_attach_item(&detached, c);
-		}
+		hide_client(c);
+		cext_attach_item(&detached, c);
 		reparent_client(c, root, border_width(f), tab_height(f));
 	}
 	if ((client = cext_stack_get_top_item(&f->clients))) {
@@ -372,7 +368,7 @@ static void iter_before_read_frame(void *item, void *aux)
 
 static void handle_before_read_frame(IXPServer *s, File *f)
 {
-	cext_iterate(&frames, f, iter_before_read_frame);
+	cext_list_iterate(&frames, f, iter_before_read_frame);
 }
 
 static void iter_after_write_frame(void *item, void *aux)
@@ -401,7 +397,7 @@ static void iter_after_write_frame(void *item, void *aux)
 
 static void handle_after_write_frame(IXPServer * s, File * f)
 {
-	cext_iterate(&frames, f, iter_after_write_frame);
+	cext_list_iterate(&frames, f, iter_after_write_frame);
 }
 
 Frame *get_sel_frame_of_area(Area *a)

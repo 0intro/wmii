@@ -92,17 +92,6 @@ void *cext_find_item(Container *c, void *pattern, int (*comp)(void *pattern, voi
 	return i ? i->item : nil;
 }
 
-void cext_iterate(Container *c, void *aux, void (*iter)(void *, void *aux))
-{
-	CItem *i;
-	for (i = c->list; i; i = i->next)
-	{
-		assert(c);
-		assert(i->item);
-		iter(i->item, aux);
-	}
-}
-
 size_t cext_sizeof(Container *c)
 {
 	size_t idx = 0;
@@ -153,6 +142,40 @@ void *cext_stack_get_up_item(Container *c, void *item)
 		return nil;
 	for (bottom = c->stack; bottom && bottom->down; bottom = bottom->down);
 	return i->up ? i->up->item : bottom->item;
+}
+
+void cext_stack_iterate_down(Container *c, void *aux, void (*iter)(void *, void *aux))
+{
+	CItem *i;
+	for (i = c->stack; i; i = i->down)
+	{
+		assert(c);
+		assert(i->item);
+		iter(i->item, aux);
+	}
+}
+
+void cext_stack_iterate_up(Container *c, void *aux, void (*iter)(void *, void *aux))
+{
+	CItem *i;
+	for (i = c->stack; i && i->down; i = i->down);
+	for (; i; i = i->up)
+	{
+		assert(c);
+		assert(i->item);
+		iter(i->item, aux);
+	}
+}
+
+void cext_list_iterate(Container *c, void *aux, void (*iter)(void *, void *aux))
+{
+	CItem *i;
+	for (i = c->list; i; i = i->next)
+	{
+		assert(c);
+		assert(i->item);
+		iter(i->item, aux);
+	}
 }
 
 void *cext_list_get_item(Container *c, size_t index)

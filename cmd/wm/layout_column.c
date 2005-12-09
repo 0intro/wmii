@@ -66,13 +66,13 @@ static void iter_arrange_column(void *column, void *area)
 	Column *col = column;
 	size_t size = cext_sizeof(&col->frames);
 	unsigned int height = ((Area *)area)->rect.height / size;
-	cext_iterate(&col->frames, &height, iter_arrange_column_frame);
+	cext_list_iterate(&col->frames, &height, iter_arrange_column_frame);
 }
 
 static void arrange_col(Area *a)
 {
 	Acme *acme = a->aux;
-	cext_iterate(&acme->columns, a, iter_arrange_column);
+	cext_list_iterate(&acme->columns, a, iter_arrange_column);
 }
 
 static void init_col(Area *a)
@@ -155,25 +155,26 @@ static void init_col(Area *a)
 
 static void iter_detach_client(void *client, void *aux)
 {
-	detach_client_from_frame((Client *)client);
+	Client *c = client;
+	detach_client_from_frame(c->frame, c);
 }
 
 static void iter_detach_frame(void *frame, void *aux)
 {
 	Frame *f = frame;
-	cext_iterate(&f->clients, nil, iter_detach_client);
+	cext_list_iterate(&f->clients, nil, iter_detach_client);
 }
 
 static void iter_deinit_col(void *column, void *aux)
 {
 	Column *col = column;
-	cext_iterate(&col->frames, nil, iter_detach_frame);
+	cext_list_iterate(&col->frames, nil, iter_detach_frame);
 }
 
 static void deinit_col(Area *a)
 {
 	Acme *acme = a->aux;
-	cext_iterate(&acme->columns, nil, iter_deinit_col);
+	cext_list_iterate(&acme->columns, nil, iter_deinit_col);
 	free(acme);
 	a->aux = 0;
 }
@@ -202,7 +203,7 @@ static void detach_col(Area *a, Client *c)
 
 	cext_detach_item(&col->frames, f);
 	col->refresh = 1;
-	detach_client_from_frame(c);
+	detach_client_from_frame(f, c);
 	detach_frame_from_area(f);
 	destroy_frame(f);
 

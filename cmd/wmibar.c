@@ -335,7 +335,7 @@ static void iter_buttonpress(void *item, void *bpress)
 
 static void handle_buttonpress(XButtonPressedEvent *e)
 {
-	cext_iterate(&items, e, iter_buttonpress);
+	cext_list_iterate(&items, e, iter_buttonpress);
 }
 
 static void check_event(Connection * e)

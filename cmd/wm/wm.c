@@ -133,7 +133,7 @@ static void iter_draw_pager_frame(void *item, void *aux)
 static void draw_pager_area(void *item, void *aux)
 {
 	Area *a = (Area *)item;
-	cext_iterate(a->layout->get_frames(a), aux, iter_draw_pager_frame);
+	cext_stack_iterate_up(a->layout->get_frames(a), aux, iter_draw_pager_frame);
 }
 
 static void draw_pager_page(Page *p, Draw *d)
@@ -153,7 +153,7 @@ static void draw_pager_page(Page *p, Draw *d)
 	d->data = name;
 	blitz_drawlabel(dpy, d);
 	XSync(dpy, False);
-	cext_iterate(&p->areas, d, draw_pager_area);
+	cext_stack_iterate_up(&p->areas, d, draw_pager_area);
 }
 
 static void draw_pager()
@@ -245,9 +245,7 @@ static void pager(void *obj, char *cmd)
 	XClearWindow(dpy, transient);
 	XMapRaised(dpy, transient);
 	draw_pager();
-	while (XGrabKeyboard
-		   (dpy, transient, True, GrabModeAsync, GrabModeAsync,
-			CurrentTime) != GrabSuccess)
+	while (XGrabKeyboard (dpy, transient, True, GrabModeAsync, GrabModeAsync, CurrentTime) != GrabSuccess)
 		usleep(1000);
 
 	for (;;) {
@@ -330,9 +328,7 @@ static void detached_clients(void *obj, char *cmd)
 	XClearWindow(dpy, transient);
 	XMapRaised(dpy, transient);
 	draw_detached_clients();
-	while (XGrabKeyboard
-		   (dpy, transient, True, GrabModeAsync, GrabModeAsync,
-			CurrentTime) != GrabSuccess)
+	while (XGrabKeyboard(dpy, transient, True, GrabModeAsync, GrabModeAsync, CurrentTime) != GrabSuccess)
 		usleep(1000);
 
 	for (;;) {
@@ -680,7 +676,7 @@ static void clean_client_up(void *item, void *aux)
 
 static void cleanup()
 {
-	cext_iterate(&clients, nil, clean_client_up);
+	cext_list_iterate(&clients, nil, clean_client_up);
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 }
 

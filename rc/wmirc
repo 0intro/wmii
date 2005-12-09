@@ -3,7 +3,7 @@
 
 TAB=1
 
-SEL_BG_COLOR='#101010'
+SEL_BG_COLOR='#002200'
 SEL_FG_COLOR='#66ff00'
 SEL_BORDER_COLOR='#66ff00'
 NORM_BG_COLOR='#000000'
@@ -110,7 +110,7 @@ wmir write /wm/event/clientupdate \
 wmir write /bar/'^$clab^'/data $"text'
 wmir write /wm/event/pageupdate \
 'wmir write /bar/'^$plab^'/data `{wmir read /wm/sel/name} &&' ^ \
-'wmir write /bar/'^$llab^'/data `{wmir read /wm/sel/layout/sel/name |awk ''{print substr($0,0,1)}''}'
+'wmir write /bar/'^$llab^'/data `{wmir read /wm/sel/layout/sel/name}'
 
 for(frame in `{wmir read /wm/sel/layout/sel | grep '^[0-9]'})
     framesconf /wm/sel/layout/sel/$frame refresh

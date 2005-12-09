@@ -72,7 +72,7 @@ static void iter_unbind(void *bind, void *aux)
 
 static void quit(void *obj, char *arg)
 {
-	cext_iterate(&bindings, nil, iter_unbind);
+	cext_list_iterate(&bindings, nil, iter_unbind);
 	ixps->runlevel = SHUTDOWN;
 }
 

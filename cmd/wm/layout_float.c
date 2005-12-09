@@ -39,7 +39,7 @@ static void init_float(Area *a)
 {
 	Container *c = cext_emallocz(sizeof(Container));
 	a->aux = c;
-	cext_iterate(&a->clients, a, iter_attach_float);
+	cext_list_iterate(&a->clients, a, iter_attach_float);
 }
 
 static void iter_detach_float(void *client, void *area)
@@ -49,7 +49,7 @@ static void iter_detach_float(void *client, void *area)
 
 static void deinit_float(Area *a)
 {
-	cext_iterate(&a->clients, a, iter_detach_float);
+	cext_list_iterate(&a->clients, a, iter_detach_float);
 	free(a->aux);
 	a->aux = nil;
 }
@@ -59,7 +59,6 @@ static Bool attach_float(Area *a, Client *c)
 	Frame *f = get_sel_frame_of_area(a);
 	Bool center = False;
 
-	cext_attach_item(&a->clients, c);
 	/* check for tabbing? */
 	if (f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))
 		f = 0;
@@ -82,8 +81,7 @@ static Bool attach_float(Area *a, Client *c)
 static void detach_float(Area *a, Client *c)
 {
 	Frame *f = c->frame;
-	detach_client_from_frame(c);
-	cext_detach_item(&a->clients, c);
+	detach_client_from_frame(f, c);
 	if (!cext_sizeof(&f->clients)) {
 		detach_frame_from_area(f);
 		cext_detach_item((Container *)a->aux, f);

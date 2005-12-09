@@ -39,7 +39,10 @@ Area *alloc_area(Page *p, XRectangle * r, char *layout)
 
 void destroy_area(Area *a)
 {
+	Client *c;
 	a->layout->deinit(a);
+	while ((c = cext_stack_get_top_item(&a->clients)))
+		cext_detach_item(&a->clients, c);
 	ixp_remove_file(ixps, a->file[A_PREFIX]);
 	free(a);
 }
@@ -55,7 +58,7 @@ void sel_area(Area *a)
 	Frame *f;
 	Bool raise = cext_list_get_item_index(&p->areas, a) == 0;
 	if (raise)
-		cext_iterate(a->layout->get_frames(a), nil, iter_raise_frame);
+		cext_stack_iterate_up(a->layout->get_frames(a), nil, iter_raise_frame);
 	cext_stack_top_item(&p->areas, a);
 	p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
 	if ((f = get_sel_frame_of_area(a)))
@@ -64,7 +67,7 @@ void sel_area(Area *a)
 
 void draw_area(Area *a)
 {
-	cext_iterate(a->layout->get_frames(a), nil, draw_frame);
+	cext_list_iterate(a->layout->get_frames(a), nil, draw_frame);
 }
 
 static void iter_hide_area(void *item, void *aux)
@@ -74,7 +77,7 @@ static void iter_hide_area(void *item, void *aux)
 
 void hide_area(Area * a)
 {
-	cext_iterate(a->layout->get_frames(a), nil, iter_hide_area);
+	cext_list_iterate(a->layout->get_frames(a), nil, iter_hide_area);
 }
 
 static void iter_show_area(void *item, void *aux)
@@ -84,7 +87,7 @@ static void iter_show_area(void *item, void *aux)
 
 void show_area(Area * a)
 {
-	cext_iterate(a->layout->get_frames(a), nil, iter_show_area);
+	cext_list_iterate(a->layout->get_frames(a), nil, iter_show_area);
 }
 
 Area *get_sel_area()

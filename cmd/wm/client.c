@@ -200,8 +200,6 @@ void destroy_client(Client * c)
 {
 	cext_detach_item(&clients, c);
 	ixp_remove_file(ixps, c->file[C_PREFIX]);
-	if (ixps->errstr)
-		fprintf(stderr, "wmiiwm: destroy_client(): %s\n", ixps->errstr);
 	free(c);
 }
 
@@ -250,7 +248,7 @@ void draw_client(void *item, void *aux)
 
 void draw_clients(Frame * f)
 {
-	cext_iterate(&f->clients, 0, draw_client);
+	cext_list_iterate(&f->clients, 0, draw_client);
 }
 
 void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
@@ -326,6 +324,7 @@ void attach_client(Client * c)
 		if (t && t->frame)
 			a = t->frame->area;
 	}
+	cext_attach_item(&a->clients, c);
 	a->layout->attach(a, c);
 	if (old)
 		draw_frame(old, nil);
@@ -333,11 +332,14 @@ void attach_client(Client * c)
 }
 
 void detach_client(Client *c) {
-	if (c->frame)
-		c->frame->area->layout->detach(c->frame->area, c);
+	Page *p;
+	Area *a = c->frame->area;
+	a->layout->detach(a, c);
+	cext_detach_item(&a->clients, c);
 	if (c->destroyed)
 		destroy_client(c);
-	draw_page(get_sel_page());
+	if ((p = get_sel_page()))
+		draw_page(p);
 }
 
 Client *get_sel_client()
