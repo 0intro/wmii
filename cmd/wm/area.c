@@ -9,6 +9,8 @@
 
 #include "wm.h"
 
+static void handle_after_write_area(IXPServer * s, File * f);
+
 Area *alloc_area(Page *p, XRectangle * r, char *layout)
 {
 	char buf[MAX_BUF];
@@ -26,13 +28,17 @@ Area *alloc_area(Page *p, XRectangle * r, char *layout)
 	a->file[A_SEL_FRAME]->bind = 1;
 	snprintf(buf, MAX_BUF, "/%s/layout/%d/ctl", p->file[P_PREFIX]->name,  id);
 	a->file[A_CTL] = ixp_create(ixps, buf);
+	a->file[A_CTL]->after_write = handle_after_write_area;
 	snprintf(buf, MAX_BUF, "/%s/layout/%d/geometry", p->file[P_PREFIX]->name,  id);
 	a->file[A_GEOMETRY] = ixp_create(ixps, buf);
+	a->file[A_GEOMETRY]->after_write = handle_after_write_area;
 	snprintf(buf, MAX_BUF, "/%s/layout/%d/name", p->file[P_PREFIX]->name,  id);
 	a->file[A_LAYOUT] = wmii_create_ixpfile(ixps, buf, layout);
+	a->file[A_LAYOUT]->after_write = handle_after_write_area; 
 	a->layout = get_layout(layout);
 	a->layout->init(a);
 	cext_attach_item(&p->areas, a);
+	cext_attach_item(&areas, a);
 	p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
 	return a;
 }
@@ -44,6 +50,7 @@ void destroy_area(Area *a)
 	while ((c = cext_stack_get_top_item(&a->clients)))
 		cext_detach_item(&a->clients, c);
 	ixp_remove_file(ixps, a->file[A_PREFIX]);
+	cext_detach_item(&areas, a);
 	free(a);
 }
 
@@ -108,3 +115,36 @@ void detach_frame_from_area(Frame *f) {
 	f->area->file[A_SEL_FRAME]->content = 0;
 	f->area = 0;
 }
+
+static void iter_after_write_area(void *item, void *aux)
+{
+	Area *a = item;
+	File *file = aux;
+	if (file == a->file[A_CTL]) {
+		/*run_action(file, f, frame_acttbl);*/
+		return;
+	}
+	if (file == a->file[A_LAYOUT]) {
+		Layout *l = get_layout(file->content);
+		if (l) {
+			a->layout->deinit(a);
+			a->layout = l;
+			a->layout->init(a);
+		}
+		draw_page(a->page);
+		return;
+	} else if (file == a->file[A_GEOMETRY]) {
+		char *geom = a->file[A_GEOMETRY]->content;
+		if (geom && strrchr(geom, ',')) {
+			blitz_strtorect(&rect, &a->rect, geom);
+			a->layout->arrange(a);
+			draw_page(a->page);
+		}
+		return;
+	}
+}
+
+static void handle_after_write_area(IXPServer *s, File *f) {
+	cext_list_iterate(&areas, f, iter_after_write_area);
+}
+

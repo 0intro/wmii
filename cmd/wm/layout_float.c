@@ -81,7 +81,7 @@ static Bool attach_float(Area *a, Client *c)
 static void detach_float(Area *a, Client *c)
 {
 	Frame *f = c->frame;
-	detach_client_from_frame(f, c);
+	detach_client_from_frame(c);
 	if (!cext_sizeof(&f->clients)) {
 		detach_frame_from_area(f);
 		cext_detach_item((Container *)a->aux, f);

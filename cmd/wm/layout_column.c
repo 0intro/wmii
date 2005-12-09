@@ -156,7 +156,7 @@ static void init_col(Area *a)
 static void iter_detach_client(void *client, void *aux)
 {
 	Client *c = client;
-	detach_client_from_frame(c->frame, c);
+	detach_client_from_frame(c);
 }
 
 static void iter_detach_frame(void *frame, void *aux)
@@ -203,7 +203,7 @@ static void detach_col(Area *a, Client *c)
 
 	cext_detach_item(&col->frames, f);
 	col->refresh = 1;
-	detach_client_from_frame(f, c);
+	detach_client_from_frame(c);
 	detach_frame_from_area(f);
 	destroy_frame(f);
 

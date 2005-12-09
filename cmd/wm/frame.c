@@ -320,8 +320,9 @@ void attach_client_to_frame(Frame *f, Client *c)
 	sel_client(c);
 }
 
-void detach_client_from_frame(Frame *f, Client *c)
+void detach_client_from_frame(Client *c)
 {
+	Frame *f = c->frame;
 	Client *client;
 	c->frame = nil;
 	f->file[F_SEL_CLIENT]->content = nil;
@@ -384,10 +385,10 @@ static void iter_after_write_frame(void *item, void *aux)
 		draw_page(f->area->page);
 		return;
 	} else if (file == f->file[F_GEOMETRY]) {
-		char *size = f->file[F_GEOMETRY]->content;
-		if (size && strrchr(size, ',')) {
+		char *geom = f->file[F_GEOMETRY]->content;
+		if (geom && strrchr(geom, ',')) {
 			XRectangle frect;
-			blitz_strtorect(&rect, &frect, size);
+			blitz_strtorect(&rect, &frect, geom);
 			resize_frame(f, &frect, 0);
 			draw_page(f->area->page);
 		}

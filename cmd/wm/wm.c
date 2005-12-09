@@ -680,39 +680,6 @@ static void cleanup()
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 }
 
-static void run()
-{
-	/* init */
-	init_event_hander();
-
-	if (!(def[WM_CTL] = ixp_create(ixps, "/ctl"))) {
-		perror("wmiiwm: cannot connect IXP server");
-		exit(1);
-	}
-	def[WM_CTL]->after_write = handle_after_write;
-
-	detached.list = detached.stack = 0;
-	pages.list = pages.stack = 0;
-	frames.list = frames.stack = 0;
-	clients.list = clients.stack = 0;
-	layouts.list = layouts.stack = 0;
-
-	init_atoms();
-	init_cursors();
-	init_default();
-	font = blitz_getfont(dpy, def[WM_FONT]->content);
-	init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
-	init_screen();
-	init_layouts();
-	scan_wins();
-
-	/* main event loop */
-	run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event, 0);
-	cleanup();
-	deinit_server(ixps);
-	XCloseDisplay(dpy);
-}
-
 int main(int argc, char *argv[])
 {
 	int i;
@@ -770,7 +737,35 @@ int main(int argc, char *argv[])
 
 	ixps = wmii_setup_server(sockfile);
 
-	run();
+	init_event_hander();
+
+	if (!(def[WM_CTL] = ixp_create(ixps, "/ctl"))) {
+		perror("wmiiwm: cannot connect IXP server");
+		exit(1);
+	}
+	def[WM_CTL]->after_write = handle_after_write;
+
+	detached.list = detached.stack = 0;
+	pages.list = pages.stack = 0;
+	areas.list = areas.stack = 0;
+	frames.list = frames.stack = 0;
+	clients.list = clients.stack = 0;
+	layouts.list = layouts.stack = 0;
+
+	init_atoms();
+	init_cursors();
+	init_default();
+	font = blitz_getfont(dpy, def[WM_FONT]->content);
+	init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
+	init_screen();
+	init_layouts();
+	scan_wins();
+
+	/* main event loop */
+	run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event, 0);
+	cleanup();
+	deinit_server(ixps);
+	XCloseDisplay(dpy);
 
 	return 0;
 }
