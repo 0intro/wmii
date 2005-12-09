@@ -125,7 +125,7 @@ static void iter_draw_pager_frame(void *item, void *aux)
 		d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
 	}
 	d->data = ((Client *)cext_stack_get_top_item(&f->clients))->file[C_NAME]->content;
-	scale_rect(&rect, &initial_rect, &f->area->rect, &d->rect);
+	scale_rect(&rect, &initial_rect, &f->rect, &d->rect);
 	blitz_drawlabel(dpy, d);
 	XSync(dpy, False);	/* do not clear upwards */
 }
