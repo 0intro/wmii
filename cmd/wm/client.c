@@ -333,9 +333,12 @@ void attach_client(Client * c)
 
 void detach_client(Client *c) {
 	Page *p;
-	Area *a = c->frame->area;
-	a->layout->detach(a, c);
-	cext_detach_item(&a->clients, c);
+	Frame *f = c->frame;
+	Area *a = f ? f->area : nil;
+	if (a) {
+		a->layout->detach(a, c);
+		cext_detach_item(&a->clients, c);
+	}
 	if (c->destroyed)
 		destroy_client(c);
 	if ((p = get_sel_page()))
