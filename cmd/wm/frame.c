@@ -99,16 +99,6 @@ Frame *alloc_frame(XRectangle * r)
 	return f;
 }
 
-void sel_frame(Frame * f, Bool raise)
-{
-	Area *a = f->area;
-	sel_client(cext_stack_get_top_item(&f->clients));
-	cext_stack_top_item(a->layout->get_frames(a), f);
-	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
-	if (raise)
-		XRaiseWindow(dpy, f->win);
-}
-
 static int comp_frame_win(void *pattern, void *frame)
 {
 	Window w = *(Window *)pattern;
@@ -293,7 +283,7 @@ void handle_frame_buttonpress(XButtonEvent *e, Frame *f)
 	/*fprintf(stderr, "%d (x) / %d (w) / %d (size) = %d (#c)\n", e->x, f->rect.width, size, cindex);*/
 	/*sel_client(cext_list_get_item(&f->clients, cindex));*/
 	cext_stack_top_item(&f->clients, cext_list_get_item(&f->clients, cindex));
-	sel_frame(f, cext_list_get_item_index(&f->area->page->areas, f->area) == 0);
+	f->area->layout->select(f, True);
 	if (e->button == Button1) {
 		align = cursor_to_align(f->cursor);
 		if (align == CENTER)

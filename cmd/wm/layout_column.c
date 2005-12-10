@@ -30,12 +30,16 @@ static void arrange_col(Area * a);
 static Bool attach_col(Area * a, Client * c);
 static void detach_col(Area * a, Client * c);
 static void resize_col(Frame *f, XRectangle * new, XPoint * pt);
-static void select_col(Area *a, char *arg);	
-static void aux_col(Area *a, char *aux);
+static void select_col(Frame *f, Bool raise);
 static Container *get_frames_col(Area *a);
+static Action *get_actions_col(Area *a);
+
+static Action lcol_acttbl[] = {
+	{0, 0}
+};
 
 static Layout lcol = { "col", init_col, deinit_col, arrange_col, attach_col, detach_col,
-   				       resize_col, select_col, aux_col, get_frames_col };
+   				       resize_col, select_col, get_frames_col, get_actions_col };
 
 void init_layout_column()
 {
@@ -268,13 +272,15 @@ static void resize_col(Frame *f, XRectangle *new, XPoint *pt)
 	draw_area(f->area);
 }
 
-static void select_col(Area *a, char *arg)
+static void select_col(Frame *f, Bool raise)
 {
-
-}
-
-static void aux_col(Area *a, char *aux)
-{
+	Area *a = f->area;
+	Acme *acme = a->aux;
+	Column *col = f->aux;
+	sel_client(cext_stack_get_top_item(&f->clients));
+	cext_stack_top_item(&col->frames, f);
+	cext_stack_top_item(&acme->frames, f);
+	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
 }
 
 static Container *get_frames_col(Area *a)
@@ -283,3 +289,7 @@ static Container *get_frames_col(Area *a)
 	return &acme->frames;
 }
 
+static Action *get_actions_col(Area *a)
+{
+	return lcol_acttbl;
+}	

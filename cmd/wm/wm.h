@@ -104,11 +104,6 @@ typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
-/* new layout interface:
- * /page/[1..n]/0/ floating space
- * /page/[1..n]/[1..n]/ layout space
- */
-
 struct Page {
 	Container areas;
 	File *file[P_LAST];
@@ -122,9 +117,9 @@ struct Layout {
 	Bool (*attach) (Area *, Client *);	/* called on attach */
 	void (*detach) (Area *, Client *);	/* called on detach */
 	void (*resize) (Frame *, XRectangle *, XPoint *);	/* called after resize */
-	void (*select) (Area *, char *arg);	/* called after resize */
-	void (*aux) (Area *, char *aux);	/* aux interface */
+	void (*select) (Frame *, Bool raise);	/* selection */
 	Container *(*get_frames) (Area *);	/* called after resize */
+	Action *(*get_actions) (Area *);
 };
 
 struct Area {
@@ -236,7 +231,6 @@ void detach_client(Client *c);
 Client *get_sel_client();
 
 /* frame.c */
-void sel_frame(Frame * f, Bool raise);
 Frame *win_to_frame(Window w);
 Frame *alloc_frame(XRectangle * r);
 void destroy_frame(Frame * f);

@@ -10,13 +10,6 @@
 #include "wm.h"
 
 static void handle_after_write_area(IXPServer * s, File * f);
-static void select_frame(void *obj, char *cmd);
-
-/* action table for /?/layout/?/ namespace */
-Action layout_acttbl[] = {
-	{"select", select_frame},
-	{0, 0}
-};
 
 Area *alloc_area(Page *p, XRectangle * r, char *layout)
 {
@@ -61,22 +54,14 @@ void destroy_area(Area *a)
 	free(a);
 }
 
-static void iter_raise_frame(void *item, void *aux)
-{
-	XRaiseWindow(dpy, ((Frame *)item)->win);
-}
-
 void sel_area(Area *a)
 {
 	Page *p = a->page;
 	Frame *f;
-	Bool raise = cext_list_get_item_index(&p->areas, a) == 0;
-	if (raise)
-		cext_stack_iterate_up(a->layout->get_frames(a), nil, iter_raise_frame);
 	cext_stack_top_item(&p->areas, a);
 	p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
 	if ((f = get_sel_frame_of_area(a)))
-		sel_frame(f, raise);
+		a->layout->select(f, True);
 }
 
 void draw_area(Area *a)
@@ -128,7 +113,7 @@ static void iter_after_write_area(void *item, void *aux)
 	Area *a = item;
 	File *file = aux;
 	if (file == a->file[A_CTL]) {
-		run_action(file, a, layout_acttbl);
+		run_action(file, a, a->layout->get_actions(a));
 		return;
 	}
 	if (file == a->file[A_LAYOUT]) {
@@ -156,9 +141,4 @@ static void handle_after_write_area(IXPServer *s, File *f) {
 }
 
 
-static void select_frame(void *obj, char *cmd)
-{
-	Area *a = obj;
-	a->layout->select(a, cmd);
-}
 
