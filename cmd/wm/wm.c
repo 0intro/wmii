@@ -578,7 +578,6 @@ static void init_default()
 	def[WM_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/nstyle/fgcolor", BLITZ_NORM_BORDER_COLOR);
 	def[WM_FONT] = wmii_create_ixpfile(ixps, "/default/font", BLITZ_FONT);
    	def[WM_FONT]->after_write = handle_after_write;
-	def[WM_PAGE_GEOMETRY] = wmii_create_ixpfile(ixps, "/default/pagegeometry ", "0,0,east,south-16");
 	def[WM_SNAP_VALUE] = wmii_create_ixpfile(ixps, "/default/snapvalue", "20");	/* 0..1000 */
 	def[WM_BORDER] = wmii_create_ixpfile(ixps, "/default/border", "1");
 	def[WM_TAB] = wmii_create_ixpfile(ixps, "/default/tab", "1");
