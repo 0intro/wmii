@@ -31,12 +31,13 @@ static void deinit_col(Area * a);
 static void arrange_col(Area * a);
 static Bool attach_col(Area * a, Client * c);
 static void detach_col(Area * a, Client * c);
-static void resize_col(Frame * f, XRectangle * new, XPoint * pt);
-static Container *get_frames_col(Area *a);
+static void resize_col(Frame *f, XRectangle * new, XPoint * pt);
+static void select_col(Area *a, char *arg);	
 static void aux_col(Area *a, char *aux);
+static Container *get_frames_col(Area *a);
 
 static Layout lcol = { "col", init_col, deinit_col, arrange_col, attach_col, detach_col,
-   				       resize_col, get_frames_col, aux_col };
+   				       resize_col, select_col, aux_col, get_frames_col };
 
 void init_layout_column()
 {
@@ -375,12 +376,18 @@ static void resize_col(Frame *f, XRectangle *new, XPoint *pt)
 		drop_resize(f, new);
 }
 
+static void select_col(Area *a, char *arg)
+{
+
+}
+
+static void aux_col(Area *a, char *aux)
+{
+}
+
 static Container *get_frames_col(Area *a)
 {
 	Acme *acme = a->aux;
 	return &acme->frames;
 }
 
-static void aux_col(Area *a, char *aux)
-{
-}

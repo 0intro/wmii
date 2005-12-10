@@ -10,7 +10,7 @@
 
 #include "wm.h"
 
-static void select_client(void *obj, char *cmd);
+static void select_client(void *obj, char *arg);
 static void handle_after_write_frame(IXPServer * s, File * f);
 static void handle_before_read_frame(IXPServer * s, File * f);
 
@@ -289,9 +289,10 @@ void handle_frame_buttonpress(XButtonEvent *e, Frame *f)
 {
 	Align align;
 	size_t size = cext_sizeof(&f->clients);
-	int bindex, cindex = e->x / f->rect.width / size;
-	Client *c = cext_list_get_item(&f->clients, cindex);
-	cext_stack_top_item(&f->clients, c);
+	int bindex, cindex = e->x / (f->rect.width / size);
+	/*fprintf(stderr, "%d (x) / %d (w) / %d (size) = %d (#c)\n", e->x, f->rect.width, size, cindex);*/
+	/*sel_client(cext_list_get_item(&f->clients, cindex));*/
+	cext_stack_top_item(&f->clients, cext_list_get_item(&f->clients, cindex));
 	sel_frame(f, cext_list_get_item_index(&f->area->page->areas, f->area) == 0);
 	if (e->button == Button1) {
 		align = cursor_to_align(f->cursor);
@@ -339,17 +340,21 @@ void detach_client_from_frame(Client *c)
 	}
 }
 
-static void select_client(void *obj, char *cmd)
+static void select_client(void *obj, char *arg)
 {
+	Client *c;
 	Frame *f = obj;
 	size_t size = cext_sizeof(&f->clients);
-	if (!f || !cmd || size == 1)
+	if (!f || !arg || size == 1)
 		return;
-	if (!strncmp(cmd, "prev", 5))
-		cext_stack_top_item(&f->clients, cext_stack_get_up_item(&f->clients, cext_stack_get_top_item(&f->clients)));
-	else if (!strncmp(cmd, "next", 5))
-		cext_stack_top_item(&f->clients, cext_stack_get_down_item(&f->clients, cext_stack_get_top_item(&f->clients)));
-	sel_client(cext_stack_get_top_item(&f->clients));
+	c = cext_stack_get_top_item(&f->clients);
+	if (!strncmp(arg, "prev", 5))
+		c = cext_list_get_prev_item(&f->clients, c);
+	else if (!strncmp(arg, "next", 5))
+		c = cext_list_get_next_item(&f->clients, c);
+	else
+		c = cext_list_get_item(&f->clients, _strtonum(arg, 0, cext_sizeof(&f->clients) - 1));
+	sel_client(c);
 	draw_frame(f, nil);
 }
 

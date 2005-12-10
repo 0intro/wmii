@@ -9,12 +9,10 @@
 
 #include "wm.h"
 
-static void select_frame(void *obj, char *cmd);
 static void handle_after_write_page(IXPServer * s, File * f);
 
 /* action table for /?/ namespace */
 Action page_acttbl[] = {
-	{"select", select_frame},
 	{0, 0}
 };
 
@@ -116,30 +114,6 @@ XRectangle *rectangles(unsigned int *num)
 	}
 	*num = j;
 	return result;
-}
-
-static void select_frame(void *obj, char *cmd)
-{
-	Area *a;
-	Frame *f, *old;
-	f = old = get_sel_frame();
-	if (!f || !cmd)
-		return;
-	a = f->area;
-	if (!strncmp(cmd, "prev", 5)) {
-		f = cext_stack_get_up_item(a->layout->get_frames(a), f);
-		cext_stack_top_item(a->layout->get_frames(a), f);
-	}
-	else if (!strncmp(cmd, "next", 5)) {
-		f = cext_stack_get_down_item(a->layout->get_frames(a), f);
-		cext_stack_top_item(a->layout->get_frames(a), f);
-	}
-	if (old != f) {
-		sel_frame(f, cext_list_get_item_index(&a->page->areas, a) == 0);
-		center_pointer(f);
-		draw_frame(old, nil);
-		draw_frame(f, nil);
-	}
 }
 
 static void iter_hide_page(void *item, void *aux)

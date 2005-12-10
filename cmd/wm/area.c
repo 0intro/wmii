@@ -10,6 +10,13 @@
 #include "wm.h"
 
 static void handle_after_write_area(IXPServer * s, File * f);
+static void select_frame(void *obj, char *cmd);
+
+/* action table for /?/layout/?/ namespace */
+Action layout_acttbl[] = {
+	{"select", select_frame},
+	{0, 0}
+};
 
 Area *alloc_area(Page *p, XRectangle * r, char *layout)
 {
@@ -121,7 +128,7 @@ static void iter_after_write_area(void *item, void *aux)
 	Area *a = item;
 	File *file = aux;
 	if (file == a->file[A_CTL]) {
-		/*run_action(file, f, frame_acttbl);*/
+		run_action(file, a, layout_acttbl);
 		return;
 	}
 	if (file == a->file[A_LAYOUT]) {
@@ -146,5 +153,12 @@ static void iter_after_write_area(void *item, void *aux)
 
 static void handle_after_write_area(IXPServer *s, File *f) {
 	cext_list_iterate(&areas, f, iter_after_write_area);
+}
+
+
+static void select_frame(void *obj, char *cmd)
+{
+	Area *a = obj;
+	a->layout->select(a, cmd);
 }
 

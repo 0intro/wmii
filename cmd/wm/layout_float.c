@@ -16,10 +16,12 @@ static void arrange_float(Area *a);
 static Bool attach_float(Area *a, Client *c);
 static void detach_float(Area *a, Client *c);
 static void resize_float(Frame *f, XRectangle *new, XPoint *pt);
+static void select_float(Area *a, char *arg);
+static void aux_float(Area *a, char *aux);
 static Container *get_frames_float(Area *a);
 
 static Layout lfloat = { "float", init_float, deinit_float, arrange_float, attach_float,
-						 detach_float, resize_float, get_frames_float };
+						 detach_float, resize_float, select_float, aux_float, get_frames_float };
 
 void init_layout_float()
 {
@@ -94,6 +96,34 @@ static void resize_float(Frame *f, XRectangle *new, XPoint *pt)
 	f->rect = *new;
 }
 
-static Container *get_frames_float(Area *a) {
+static void select_float(Area *a, char *arg)
+{
+	Container *c = a->aux;
+	Frame *f, *old;
+
+	f = old = cext_stack_get_top_item(c);
+	if (!f || !arg)
+		return;
+	if (!strncmp(arg, "prev", 5))
+		f = cext_list_get_prev_item(c, f);
+	else if (!strncmp(arg, "next", 5))
+		f = cext_list_get_next_item(c, f);
+	else 
+		f = cext_list_get_item(c, _strtonum(arg, 0, cext_sizeof(c) - 1));
+	if (old != f) {
+		sel_frame(f, cext_list_get_item_index(&a->page->areas, a) == 0);
+		center_pointer(f);
+		draw_frame(old, nil);
+		draw_frame(f, nil);
+	}
+}
+
+static void aux_float(Area *a, char *aux)
+{
+
+}
+
+static Container *get_frames_float(Area *a)
+{
 	return a->aux;
 }

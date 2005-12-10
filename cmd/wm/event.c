@@ -248,7 +248,7 @@ static void handle_enternotify(XEvent * e)
 	if (c && c->frame && (ev->serial != ignore_enternotify_crap)) {
 		Frame *old = get_sel_frame();
 		if (old != c->frame) {
-			sel_frame(c->frame, 1);
+			sel_frame(c->frame, 0);
 			draw_frame(old, nil);
 			draw_frame(c->frame, nil);
 		}
