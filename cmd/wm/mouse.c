@@ -636,5 +636,4 @@ void center_pointer(Frame * f)
 				 f->rect.height / 2);
 	XSync(dpy, False);
 	XSelectInput(dpy, root, ROOT_MASK);
-
 }

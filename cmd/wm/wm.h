@@ -240,7 +240,7 @@ void sel_frame(Frame * f, Bool raise);
 Frame *win_to_frame(Window w);
 Frame *alloc_frame(XRectangle * r);
 void destroy_frame(Frame * f);
-void resize_frame(Frame * f, XRectangle * r, XPoint * pt);
+void resize_frame(Frame *f, XRectangle *r, XPoint *pt);
 void draw_frame(void *frame, void *aux);
 void handle_frame_buttonpress(XButtonEvent *e, Frame *f);
 void attach_client_to_frame(Frame *f, Client *c);

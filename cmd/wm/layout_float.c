@@ -73,9 +73,9 @@ static Bool attach_float(Area *a, Client *c)
 	attach_client_to_frame(f, c);
 	if (a->page == get_sel_page())
 		XMapWindow(dpy, f->win);
-	sel_frame(f, 1);
 	if (center)
 		center_pointer(f);
+	sel_frame(f, 1);
 	draw_frame(f, nil);
 	return True;
 }
