@@ -34,7 +34,10 @@ static void select_col(Frame *f, Bool raise);
 static Container *get_frames_col(Area *a);
 static Action *get_actions_col(Area *a);
 
+static void select_frame(void *obj, char *arg);
+
 static Action lcol_acttbl[] = {
+	{"select", select_frame},
 	{0, 0}
 };
 
@@ -277,6 +280,7 @@ static void select_col(Frame *f, Bool raise)
 	Area *a = f->area;
 	Acme *acme = a->aux;
 	Column *col = f->aux;
+	cext_stack_top_item(&acme->columns, col);
 	sel_client(cext_stack_get_top_item(&f->clients));
 	cext_stack_top_item(&col->frames, f);
 	cext_stack_top_item(&acme->frames, f);
@@ -293,3 +297,31 @@ static Action *get_actions_col(Area *a)
 {
 	return lcol_acttbl;
 }	
+
+static void select_frame(void *obj, char *arg)
+{
+	Area *a = obj;
+	Acme *acme = a->aux;
+	Column *col = get_sel_column(acme);
+	Frame *f, *old;
+
+	f = old = cext_stack_get_top_item(&col->frames);
+	if (!f || !arg)
+		return;
+	if (!strncmp(arg, "prev", 5))
+		f = cext_list_get_prev_item(&col->frames, f);
+	else if (!strncmp(arg, "next", 5))
+		f = cext_list_get_next_item(&col->frames, f);
+	else if (!strncmp(arg, "west", 5))
+		f = cext_stack_get_top_item(&((Column *)cext_list_get_prev_item(&acme->columns, col))->frames);
+	else if (!strncmp(arg, "east", 5))
+		f = cext_stack_get_top_item(&((Column *)cext_list_get_next_item(&acme->columns, col))->frames);
+	else 
+		f = cext_list_get_item(&col->frames, _strtonum(arg, 0, cext_sizeof(&col->frames) - 1));
+	if (old != f) {
+		select_col(f, True);
+		center_pointer(f);
+		draw_frame(old, nil);
+		draw_frame(f, nil);
+	}
+}
