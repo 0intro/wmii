@@ -591,33 +591,6 @@ void mouse_resize(Frame * f, Align align)
 	}
 }
 
-
-/* XXXX seems obsolete: */
-void drop_move(Frame *f, XRectangle *new, XPoint *pt)
-{
-	Frame *f1, *f2;
-	Area *a = f->area;
-	Container *frames = a->layout->get_frames(a);
-	int cx, cy;
-	unsigned int i, idx = cext_list_get_item_index(frames, f);
-	size_t size = cext_sizeof(frames);
-
-	if ((f->rect.x == new->x) && (f->rect.y == new->y))
-		return;
-	cx = (pt ? pt->x : new->x + new->width / 2);
-	cy = (pt ? pt->y : new->y + new->height / 2);
-	f1 = cext_list_get_item(frames, idx);
-	for (i = 0; i < size; i++) {
-		f2 = cext_list_get_item(frames, i);
-		if ((i != idx) && blitz_ispointinrect(cx, cy, &f1->rect)) {
-			cext_swap_items(frames, f1, f2);
-			cext_stack_top_item(frames, f2);
-			a->layout->arrange(a);
-			return;
-		}
-	}
-}
-
 void center_pointer(Frame * f)
 {
 
