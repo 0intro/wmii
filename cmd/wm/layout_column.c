@@ -321,13 +321,19 @@ static void select_frame(void *obj, char *arg)
 		f = cext_list_get_prev_item(&col->frames, f);
 	else if (!strncmp(arg, "next", 5))
 		f = cext_list_get_next_item(&col->frames, f);
-	else if (!strncmp(arg, "west", 5))
-		f = cext_stack_get_top_item(&((Column *)cext_list_get_prev_item(&acme->columns, col))->frames);
-	else if (!strncmp(arg, "east", 5))
-		f = cext_stack_get_top_item(&((Column *)cext_list_get_next_item(&acme->columns, col))->frames);
+	else if (!strncmp(arg, "west", 5)) {
+		col = cext_list_get_prev_item(&acme->columns, col);
+		cext_stack_top_item(&acme->columns, col);
+		f = cext_stack_get_top_item(&col->frames);
+	}
+	else if (!strncmp(arg, "east", 5)) {
+		col = cext_list_get_next_item(&acme->columns, col);
+		cext_stack_top_item(&acme->columns, col);
+		f = cext_stack_get_top_item(&col->frames);
+	}
 	else 
 		f = cext_list_get_item(&col->frames, blitz_strtonum(arg, 0, cext_sizeof(&col->frames) - 1));
-	if (old != f) {
+	if (f && old != f) {
 		select_col(f, True);
 		center_pointer(f);
 		draw_frame(old, nil);
