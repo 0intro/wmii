@@ -63,7 +63,7 @@ void sel_area(Area *a)
 	cext_stack_top_item(&p->areas, a);
 	p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
 	if ((f = get_sel_frame_of_area(a)))
-		a->layout->select(f, True);
+		a->layout->select(f, False);
 }
 
 void draw_area(Area *a)
