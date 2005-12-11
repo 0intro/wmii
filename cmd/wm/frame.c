@@ -327,7 +327,6 @@ void detach_client_from_frame(Client *c, Bool unmap)
 		c->rect.x = f->rect.x;
 		c->rect.y = f->rect.y;
 		reparent_client(c, root, c->rect.x, c->rect.y);
-		XSync(dpy, False);
 	}
 	if ((client = cext_stack_get_top_item(&f->clients))) {
 		sel_client(client);

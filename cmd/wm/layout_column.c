@@ -35,9 +35,15 @@ static Container *get_frames_col(Area *a);
 static Action *get_actions_col(Area *a);
 
 static void select_frame(void *obj, char *arg);
+static void swap_frame(void *obj, char *arg);
+static void new_col(void *obj, char *arg);
+static void destroy_col(void *obj, char *arg);
 
 static Action lcol_acttbl[] = {
 	{"select", select_frame},
+	{"swap", swap_frame},
+	{"new", new_col},
+	{"destroy", destroy_col},
 	{0, 0}
 };
 
@@ -326,5 +332,61 @@ static void select_frame(void *obj, char *arg)
 		center_pointer(f);
 		draw_frame(old, nil);
 		draw_frame(f, nil);
+	}
+}
+
+static void swap_frame(void *obj, char *arg)
+{
+	Area *a = obj;
+	Acme *acme = a->aux;
+	Column *col = get_sel_column(acme);
+	Frame *f = cext_stack_get_top_item(&col->frames);
+	if (!f || !arg)
+		return;
+}
+
+static void update_column_width(Area *a)
+{
+	Acme *acme = a->aux;
+	size_t size = cext_sizeof(&acme->columns);
+	unsigned int i, width = a->rect.width / cext_sizeof(&acme->columns);
+
+	for (i = 0; i < size; i++) {
+		Column *col = cext_list_get_item(&acme->columns, i);
+		col->refresh = True;
+		col->rect.x = i * width;
+		col->rect.width = width;
+	}
+	arrange_col(a);
+}
+
+static void new_col(void *obj, char *arg)
+{
+	Area *a = obj;
+	Acme *acme = a->aux;
+	Column *col = cext_emallocz(sizeof(Column));
+	cext_attach_item(&acme->columns, col);
+	update_column_width(a);
+}
+
+static void destroy_col(void *obj, char *arg)
+{
+	Area *a = obj;
+	Acme *acme = a->aux;
+	Column *col = get_sel_column(acme);
+	size_t size;
+
+	if (cext_sizeof(&acme->columns) > 1) {
+		while (cext_sizeof(&col->frames)) {
+			Frame *f = cext_stack_get_top_item(&col->frames);
+			while ((size = cext_sizeof(&f->clients))) {
+				detach_col(a, cext_stack_get_top_item(&f->clients), a->page != get_sel_page());
+			    if (size == 1)
+				 	break;	
+			}
+		}
+		cext_detach_item(&acme->columns, col);
+		free(col);
+		update_column_width(a);
 	}
 }
