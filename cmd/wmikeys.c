@@ -367,7 +367,7 @@ static void handle_after_write(IXPServer * s, File * f)
 			}
 		}
 	} else if (f == files[K_GRAB_KB]) {
-		grabkb = _strtonum(files[K_GRAB_KB]->content, 0, 1);
+		grabkb = blitz_strtonum(files[K_GRAB_KB]->content, 0, 1);
 		if (!grabkb) {
 			XUngrabKeyboard(dpy, CurrentTime);
 			XUnmapWindow(dpy, win);

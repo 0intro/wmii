@@ -47,8 +47,7 @@ void set_client_state(Client * c, int state)
 
 	data[0] = (long) state;
 	data[1] = (long) None;
-	XChangeProperty(dpy, c->win, wm_state, wm_state, 32,
-					PropModeReplace, (unsigned char *) data, 2);
+	XChangeProperty(dpy, c->win, wm_state, wm_state, 32, PropModeReplace, (unsigned char *) data, 2);
 }
 
 void show_client(Client * c)
@@ -83,12 +82,10 @@ void grab_client(Client * c, unsigned long mod, unsigned int button)
 	XGrabButton(dpy, button, mod, c->win, False,
 				ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
 	if ((mod != AnyModifier) && num_lock_mask) {
-		XGrabButton(dpy, button, mod | num_lock_mask, c->win,
-					False, ButtonPressMask, GrabModeAsync, GrabModeAsync,
-					None, None);
-		XGrabButton(dpy, button, mod | num_lock_mask | LockMask,
-					c->win, False, ButtonPressMask, GrabModeAsync,
-					GrabModeAsync, None, None);
+		XGrabButton(dpy, button, mod | num_lock_mask, c->win, False, ButtonPressMask,
+					GrabModeAsync, GrabModeAsync, None, None);
+		XGrabButton(dpy, button, mod | num_lock_mask | LockMask, c->win, False, ButtonPressMask,
+					GrabModeAsync, GrabModeAsync, None, None);
 	}
 	XSelectInput(dpy, c->win, CLIENT_MASK);
 	XSync(dpy, False);
@@ -198,6 +195,7 @@ void handle_client_property(Client * c, XPropertyEvent * e)
 
 void destroy_client(Client * c)
 {
+	cext_detach_item(&detached, c);
 	cext_detach_item(&clients, c);
 	ixp_remove_file(ixps, c->file[C_PREFIX]);
 	free(c);
@@ -341,8 +339,10 @@ void detach_client(Client *c) {
 	}
 	if (c->destroyed)
 		destroy_client(c);
-	if ((p = get_sel_page()))
+	if ((p = get_sel_page())) {
+		sel_page(p);
 		draw_page(p);
+	}
 }
 
 Client *get_sel_client()

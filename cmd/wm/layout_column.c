@@ -285,6 +285,8 @@ static void select_col(Frame *f, Bool raise)
 	cext_stack_top_item(&col->frames, f);
 	cext_stack_top_item(&acme->frames, f);
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
+	if (raise)
+		center_pointer(f);
 }
 
 static Container *get_frames_col(Area *a)
@@ -317,7 +319,7 @@ static void select_frame(void *obj, char *arg)
 	else if (!strncmp(arg, "east", 5))
 		f = cext_stack_get_top_item(&((Column *)cext_list_get_next_item(&acme->columns, col))->frames);
 	else 
-		f = cext_list_get_item(&col->frames, _strtonum(arg, 0, cext_sizeof(&col->frames) - 1));
+		f = cext_list_get_item(&col->frames, blitz_strtonum(arg, 0, cext_sizeof(&col->frames) - 1));
 	if (old != f) {
 		select_col(f, True);
 		center_pointer(f);

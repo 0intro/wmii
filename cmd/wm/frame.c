@@ -123,14 +123,14 @@ void destroy_frame(Frame * f)
 
 unsigned int tab_height(Frame * f)
 {
-	if (_strtonum(f->file[F_TAB]->content, 1, 1))
+	if (blitz_strtonum(f->file[F_TAB]->content, 0, 1))
 		return font->ascent + font->descent + 4;
 	return 0;
 }
 
 unsigned int border_width(Frame * f)
 {
-	if (_strtonum(f->file[F_BORDER]->content, 0, 1))
+	if (blitz_strtonum(f->file[F_BORDER]->content, 0, 1))
 		return BORDER_WIDTH;
 	return 0;
 }
@@ -305,7 +305,9 @@ void attach_client_to_frame(Frame *f, Client *c)
 	f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
 	cext_attach_item(&f->clients, c);
 	c->frame = f;
-	reparent_client(c, f->win, border_width(f), tab_height(f));
+	c->rect.x = border_width(f);
+	c->rect.y = tab_height(f);
+	reparent_client(c, f->win, c->rect.x, c->rect.y);
 	resize_frame(f, &f->rect, 0);
 	show_client(c);
 	sel_client(c);
@@ -320,10 +322,12 @@ void detach_client_from_frame(Client *c)
 	wmii_move_ixpfile(c->file[C_PREFIX], def[WM_DETACHED_CLIENT]);
 	cext_detach_item(&f->clients, c);
 	if (!c->destroyed) {
+		cext_attach_item(&detached, c);
 		hide_client(c);
-		c->rect.x += f->rect.x;
-		c->rect.y += f->rect.y;
+		c->rect.x = f->rect.x;
+		c->rect.y = f->rect.y;
 		reparent_client(c, root, c->rect.x, c->rect.y);
+		XSync(dpy, False);
 	}
 	if ((client = cext_stack_get_top_item(&f->clients))) {
 		sel_client(client);
@@ -344,7 +348,7 @@ static void select_client(void *obj, char *arg)
 	else if (!strncmp(arg, "next", 5))
 		c = cext_list_get_next_item(&f->clients, c);
 	else
-		c = cext_list_get_item(&f->clients, _strtonum(arg, 0, cext_sizeof(&f->clients) - 1));
+		c = cext_list_get_item(&f->clients, blitz_strtonum(arg, 0, cext_sizeof(&f->clients) - 1));
 	sel_client(c);
 	draw_frame(f, nil);
 }

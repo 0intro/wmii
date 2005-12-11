@@ -146,7 +146,7 @@ static void display(void *obj, char *arg)
 {
 	if (!arg)
 		return;
-	if (_strtonum(arg, 0, 1))
+	if (blitz_strtonum(arg, 0, 1))
 		show();
 	else
 		hide();

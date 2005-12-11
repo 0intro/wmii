@@ -22,6 +22,6 @@ unsigned int blitz_strtobutton(char *val)
 {
 	unsigned int res = 0;
 	if (val && strlen(val) > 6 && !strncmp(val, "Button", 6))
-		res = _strtonum(&val[6], 1, 5) + Button1;
+		res = blitz_strtonum(&val[6], 1, 5) + Button1;
 	return res;
 }

@@ -69,13 +69,13 @@ int blitz_strtorect(XRectangle * root, XRectangle * r, char *val)
 		}
 	}
 	if (x && (sx = (x[0] >= '0') && (x[0] <= '9')))
-		r->x = _strtonum(x, 0, 65535);
+		r->x = blitz_strtonum(x, 0, 65535);
 	if (y && (sy = (y[0] >= '0') && (y[0] <= '9')))
-		r->y = _strtonum(y, 0, 65535);
+		r->y = blitz_strtonum(y, 0, 65535);
 	if (w && (sw = (w[0] >= '0') && (w[0] <= '9')))
-		r->width = _strtonum(w, 0, 65535);
+		r->width = blitz_strtonum(w, 0, 65535);
 	if (h && (sh = (h[0] >= '0') && (h[0] <= '9')))
-		r->height = _strtonum(h, 0, 65535);
+		r->height = blitz_strtonum(h, 0, 65535);
 
 	if (!sx && !sw && x && w
 		&& x[0] != '-' && x[0] != '+' && w[0] != '-' && w[0] != '+') {
@@ -151,34 +151,34 @@ int blitz_strtorect(XRectangle * root, XRectangle * r, char *val)
 	if (x) {
 		p = strchr(x, '-');
 		if (p)
-			r->x -= _strtonum(++p, 0, 65535);
+			r->x -= blitz_strtonum(++p, 0, 65535);
 		p = strchr(x, '+');
 		if (p)
-			r->x += _strtonum(++p, 0, 65535);
+			r->x += blitz_strtonum(++p, 0, 65535);
 	}
 	if (y) {
 		p = strchr(y, '-');
 		if (p)
-			r->y -= _strtonum(++p, 0, 65535);
+			r->y -= blitz_strtonum(++p, 0, 65535);
 		p = strchr(y, '+');
 		if (p)
-			r->y += _strtonum(++p, 0, 65535);
+			r->y += blitz_strtonum(++p, 0, 65535);
 	}
 	if (w) {
 		p = strchr(w, '-');
 		if (p)
-			r->width -= _strtonum(++p, 0, 65535);
+			r->width -= blitz_strtonum(++p, 0, 65535);
 		p = strchr(w, '+');
 		if (p)
-			r->width += _strtonum(++p, 0, 65535);
+			r->width += blitz_strtonum(++p, 0, 65535);
 	}
 	if (h) {
 		p = strchr(h, '-');
 		if (p)
-			r->height -= _strtonum(++p, 0, 65535);
+			r->height -= blitz_strtonum(++p, 0, 65535);
 		p = strchr(h, '+');
 		if (p)
-			r->height += _strtonum(++p, 0, 65535);
+			r->height += blitz_strtonum(++p, 0, 65535);
 	}
 	return TRUE;
 }

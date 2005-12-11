@@ -395,7 +395,6 @@ static void _detach_client(void *obj, char *cmd)
 		return;
 	c = cext_stack_get_top_item(&f->clients);
 	f->area->layout->detach(f->area, c);
-	cext_attach_item(&detached, c);
 }
 
 static void _select_page(void *obj, char *cmd)
@@ -408,7 +407,7 @@ static void _select_page(void *obj, char *cmd)
 	else if (!strncmp(cmd, "next", 5))
 		p = cext_list_get_next_item(&pages, p);
 	else
-		p = cext_list_get_item(&pages, _strtonum(cmd, 0, cext_sizeof(&pages) - 1));
+		p = cext_list_get_item(&pages, blitz_strtonum(cmd, 0, cext_sizeof(&pages) - 1));
 	sel_page(p);
 }
 

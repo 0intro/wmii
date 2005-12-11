@@ -7,11 +7,11 @@
 
 #include "blitz.h"
 
-long long _strtonum(const char *numstr, long long minval, long long maxval)
+long long blitz_strtonum(const char *numstr, long long minval, long long maxval)
 {
 	const char *errstr;
 	long long ret = cext_strtonum(numstr, minval, maxval, &errstr);
 	if (errstr)
-		fprintf(stderr, "liblitz: cannot convert '%s' into integer: %s\n", numstr, errstr);
+		fprintf(stderr, "liblitz: cannot convert '%s' into integer: %s [%lld..%lld]\n", numstr, errstr, minval, maxval);
 	return ret;
 }

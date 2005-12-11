@@ -47,8 +47,10 @@ void destroy_area(Area *a)
 {
 	Client *c;
 	a->layout->deinit(a);
-	while ((c = cext_stack_get_top_item(&a->clients)))
+	while ((c = cext_stack_get_top_item(&a->clients))) {
 		cext_detach_item(&a->clients, c);
+		cext_attach_item(&detached, c);
+	}
 	ixp_remove_file(ixps, a->file[A_PREFIX]);
 	cext_detach_item(&areas, a);
 	free(a);

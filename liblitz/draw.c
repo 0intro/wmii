@@ -139,7 +139,7 @@ void blitz_drawmeter(Display * dpy, Draw * d)
 	if (!d->data || strncmp(d->data, "%m:", 3))
 		return;
 
-	val = _strtonum(&d->data[3], 0, 100);
+	val = blitz_strtonum(&d->data[3], 0, 100);
 	draw_bg(dpy, d);
 	_draw_border(dpy, d);
 

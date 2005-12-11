@@ -56,5 +56,4 @@ char *blitz_modtostr(unsigned long mod);
 unsigned long blitz_strtomod(char *val);
 
 /* util.c */
-long long
-_strtonum(const char *numstr, long long minval, long long maxval);
+long long blitz_strtonum(const char *numstr, long long minval, long long maxval);

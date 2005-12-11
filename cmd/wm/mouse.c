@@ -295,8 +295,8 @@ void mouse_move(Frame * f)
 	Window dummy;
 	XEvent ev;
 	/* borders */
-	int snapw = rect.width * _strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
-	int snaph = rect.height * _strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
+	int snapw = rect.width * blitz_strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
+	int snaph = rect.height * blitz_strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
 	unsigned int num;
 	unsigned int dmask;
 	XRectangle *rects = rectangles(&num);
@@ -538,8 +538,8 @@ void mouse_resize(Frame * f, Align align)
 	Window dummy;
 	XEvent ev;
 	/* borders */
-	int snapw = rect.width * _strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
-	int snaph = rect.height * _strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
+	int snapw = rect.width * blitz_strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
+	int snaph = rect.height * blitz_strtonum(def[WM_SNAP_VALUE]->content, 0, 1000) / 1000;
 	unsigned int dmask;
 	unsigned int num;
 	XRectangle *rects = rectangles(&num);

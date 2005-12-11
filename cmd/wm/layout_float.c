@@ -66,7 +66,6 @@ static void deinit_float(Area *a)
 static Bool attach_float(Area *a, Client *c)
 {
 	Frame *f = get_sel_frame_of_area(a);
-	Bool center = False;
 
 	/* check for tabbing? */
 	if (f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))
@@ -75,13 +74,10 @@ static Bool attach_float(Area *a, Client *c)
 		f = alloc_frame(&c->rect);
 		attach_frame_to_area(a, f);
 		cext_attach_item((Container *)a->aux, f);
-		center = True;
 	}
 	attach_client_to_frame(f, c);
 	if (a->page == get_sel_page())
 		XMapWindow(dpy, f->win);
-	if (center)
-		center_pointer(f);
 	select_float(f, True);
 	draw_frame(f, nil);
 	return True;
@@ -109,8 +105,10 @@ static void select_float(Frame *f, Bool raise)
 	sel_client(cext_stack_get_top_item(&f->clients));
 	cext_stack_top_item(a->aux, f);
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
-	if (raise)
+	if (raise) {
 		XRaiseWindow(dpy, f->win);
+		center_pointer(f);
+	}
 }
 
 static Container *get_frames_float(Area *a)
@@ -132,7 +130,7 @@ static void select_frame(void *obj, char *arg)
 	else if (!strncmp(arg, "next", 5))
 		f = cext_list_get_next_item(c, f);
 	else 
-		f = cext_list_get_item(c, _strtonum(arg, 0, cext_sizeof(c) - 1));
+		f = cext_list_get_item(c, blitz_strtonum(arg, 0, cext_sizeof(c) - 1));
 	if (old != f) {
 		select_float(f, True);
 		center_pointer(f);

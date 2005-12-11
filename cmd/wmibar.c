@@ -144,7 +144,7 @@ static void display(void *obj, char *arg)
 {
 	if (!arg)
 		return;
-	displayed = _strtonum(arg, 0, 1);
+	displayed = blitz_strtonum(arg, 0, 1);
 	if (displayed) {
 		XMapRaised(dpy, win);
 		draw_bar(0, 0);
@@ -202,7 +202,7 @@ static void draw()
 	if (!size)
 		return;
 
-	expandable = _strtonum(file[B_EXPANDABLE]->content, 0, size);
+	expandable = blitz_strtonum(file[B_EXPANDABLE]->content, 0, size);
 	snprintf(buf, sizeof(buf), "/%d", expandable);
 	if (!ixp_walk(ixps, buf))
 		expandable = 0;
