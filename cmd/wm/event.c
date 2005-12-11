@@ -247,12 +247,12 @@ static void handle_enternotify(XEvent * e)
 	XCrossingEvent *ev = &e->xcrossing;
 	Client *c;
 
-	if ((ev->mode != NotifyNormal) || (ev->detail == NotifyInferior))
+	if ((ev->mode != NotifyNormal) || (ev->detail == NotifyInferior) || (ev->serial == ignore_enternotify_crap))
 		return;
 
 	fprintf(stderr, "%s\n", "handle_enternotify");
 	c = win_to_client(ev->window);
-	if (c && c->frame && (ev->serial != ignore_enternotify_crap)) {
+	if (c && c->frame) {
 		Frame *old = get_sel_frame();
 		if (old != c->frame) {
 			c->frame->area->layout->select(c->frame, False);
