@@ -265,6 +265,7 @@ static void drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 	{
 		cext_detach_item(&src->frames, f);
 		cext_attach_item(&tgt->frames, f);
+		f->aux = tgt;
 		tgt->refresh = src->refresh = True;
 		cext_stack_top_item(&acme->columns, tgt);
 		iter_arrange_column(tgt, f->area);

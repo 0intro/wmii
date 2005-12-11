@@ -98,11 +98,9 @@ wmir write /bar/ctl 'display 1'
 
 # WMIIWM CONFIGURATION
 
-# default layout (column, float):
-wmir write /wm/default/layout column
 wmir write /wm/default/font $FONT
 wmir write /wm/default/transcolor $SEL_BORDER_COLOR
-wmir write /wm/default/handleinc 1
+wmir write /wm/default/handleinc 0
 
 wmir write /wm/default/border 1
 wmir write /wm/event/clientupdate \
@@ -127,11 +125,11 @@ kbind normal $MODKEY-C-p 'wmir write /menu/precmd extern; wmir write /menu/looku
 kbind normal $MODKEY-C-c 'wmir write /wm/ctl close'
 kbind normal $MODKEY-C-q,y quit
 kbind normal $MODKEY-C-w,y wmirc
-kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000 -fn -artwiz-smoothansi-*-*-*-*-*-*-*-*-*-*-*-*'
+kbind normal $MODKEY-t 'extern urxvt ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000 -fn -artwiz-smoothansi-*-*-*-*-*-*-*-*-*-*-*-*'
 kbind normal $MODKEY-d 'wmir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmir write /wm/ctl attach'
 kbind normal $MODKEY-S-a 'wmir write /wm/ctl ''detached clients'''
-kbind normal $MODKEY-S-c 'wmir write /wm/sel/layout/sel/name column'
+kbind normal $MODKEY-S-c 'wmir write /wm/sel/layout/sel/geometry 0,0,east,south-20; wmir write /wm/sel/layout/sel/name column'
 kbind normal $MODKEY-S-n 'wmir write /wm/sel/layout/sel/ctl new'
 kbind normal $MODKEY-S-d 'wmir write /wm/sel/layout/sel/ctl destroy'
 kbind normal $MODKEY-S-f 'wmir write /wm/sel/layout/sel/name float'
