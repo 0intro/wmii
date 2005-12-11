@@ -123,7 +123,6 @@ static void iter_after_write_area(void *item, void *aux)
 		if (l) {
 			a->layout->deinit(a);
 			a->layout = l;
-			XSync(dpy, False);
 			a->layout->init(a);
 		}
 		draw_page(a->page);

@@ -95,8 +95,8 @@ enum {
 #define LAYOUT                 "float"
 #define GAP                    5
 
-#define ROOT_MASK              (SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask)
-#define CLIENT_MASK            (SubstructureNotifyMask | PropertyChangeMask | EnterWindowMask)
+#define ROOT_MASK              (SubstructureRedirectMask | ButtonPressMask | ButtonReleaseMask)
+#define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
 
 typedef struct Page Page;
 typedef struct Layout Layout;
@@ -146,6 +146,7 @@ struct Client {
 	Area *area;
 	int proto;
 	unsigned int border;
+	unsigned int ignore_unmap;
 	Bool destroyed;
 	Window win;
 	Window trans;

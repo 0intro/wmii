@@ -238,8 +238,12 @@ static void handle_unmapnotify(XEvent * e)
 	Client *c;
 	fprintf(stderr, "%s\n", "handle_unmapnotify");
 	handle_ignore_enternotify_crap(e);
-	if ((c = win_to_client(ev->window)))
-		detach_client(c, True);
+	if ((c = win_to_client(ev->window))) {
+		if (!c->ignore_unmap)
+			detach_client(c, True);
+		else
+			c->ignore_unmap--;
+	}
 }
 
 static void handle_enternotify(XEvent * e)

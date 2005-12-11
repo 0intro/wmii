@@ -25,7 +25,6 @@ Client *alloc_client(Window w)
 	c->file[C_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
 	id++;
 	cext_attach_item(&clients, c);
-	XSelectInput(dpy, c->win, CLIENT_MASK);
 	return c;
 }
 
@@ -52,9 +51,7 @@ void set_client_state(Client * c, int state)
 
 void show_client(Client * c)
 {
-	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XMapWindow(dpy, c->win);
-	XSelectInput(dpy, c->win, CLIENT_MASK);
 	set_client_state(c, NormalState);
 	grab_client(c, Mod1Mask, Button1);
 	grab_client(c, Mod1Mask, Button3);
@@ -63,22 +60,18 @@ void show_client(Client * c)
 void hide_client(Client * c)
 {
 	ungrab_client(c, AnyModifier, AnyButton);
-	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XUnmapWindow(dpy, c->win);
-	XSelectInput(dpy, c->win, CLIENT_MASK);
 	set_client_state(c, WithdrawnState);
 }
 
 void reparent_client(Client * c, Window w, int x, int y)
 {
-	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XReparentWindow(dpy, c->win, w, x, y);
-	XSelectInput(dpy, c->win, CLIENT_MASK);
+	c->ignore_unmap++;
 }
 
 void grab_client(Client * c, unsigned long mod, unsigned int button)
 {
-	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XGrabButton(dpy, button, mod, c->win, False,
 				ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
 	if ((mod != AnyModifier) && num_lock_mask) {
@@ -87,20 +80,15 @@ void grab_client(Client * c, unsigned long mod, unsigned int button)
 		XGrabButton(dpy, button, mod | num_lock_mask | LockMask, c->win, False, ButtonPressMask,
 					GrabModeAsync, GrabModeAsync, None, None);
 	}
-	XSelectInput(dpy, c->win, CLIENT_MASK);
-	XSync(dpy, False);
 }
 
 void ungrab_client(Client * c, unsigned long mod, unsigned int button)
 {
-	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XUngrabButton(dpy, button, mod, c->win);
 	if (mod != AnyModifier && num_lock_mask) {
 		XUngrabButton(dpy, button, mod | num_lock_mask, c->win);
 		XUngrabButton(dpy, button, mod | num_lock_mask | LockMask, c->win);
 	}
-	XSelectInput(dpy, c->win, CLIENT_MASK);
-	XSync(dpy, False);
 }
 
 void configure_client(Client * c)
@@ -124,7 +112,6 @@ void configure_client(Client * c)
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *) & e);
 	XSelectInput(dpy, c->win, CLIENT_MASK);
-	XSync(dpy, False);
 }
 
 void close_client(Client * c)
@@ -144,7 +131,6 @@ void init_client(Client * c, XWindowAttributes * wa)
 	c->rect.width = wa->width + 2 * c->border;
 	c->rect.height = wa->height + 2 * c->border;
 	XSetWindowBorderWidth(dpy, c->win, 0);
-	XSelectInput(dpy, c->win, PropertyChangeMask);
 	c->proto = win_proto(c->win);
 	XGetTransientForHint(dpy, c->win, &c->trans);
 	/* size hints */
