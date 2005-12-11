@@ -1,7 +1,7 @@
 #!9PREFIX/bin/rc
 # configure wmii
 
-TAB=1
+TAB=0
 
 SEL_BG_COLOR='#002200'
 SEL_FG_COLOR='#66ff00'
@@ -131,6 +131,8 @@ kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr
 kbind normal $MODKEY-d 'wmir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmir write /wm/ctl attach'
 kbind normal $MODKEY-S-a 'wmir write /wm/ctl ''detached clients'''
+kbind normal $MODKEY-S-c 'wmir write /wm/sel/layout/sel/name column'
+kbind normal $MODKEY-S-f 'wmir write /wm/sel/layout/sel/name float'
 kbind normal $MODKEY-Return 'wmir write /wm/sel/ctl ''select zoomed'''
 kbind normal $MODKEY-C-y 'wmir write /wm/ctl new'
 kbind normal $MODKEY-u 'wmir write /wm/sel/layout/sel/frame/sel/locked 0'

@@ -390,9 +390,12 @@ static void _attach_client(void *obj, char *cmd)
 static void _detach_client(void *obj, char *cmd)
 {
 	Frame *f = get_sel_frame();
+	Client *c;
 	if (!f)
 		return;
-	f->area->layout->detach(f->area, cext_stack_get_top_item(&f->clients));
+	c = cext_stack_get_top_item(&f->clients);
+	f->area->layout->detach(f->area, c);
+	cext_attach_item(&detached, c);
 }
 
 static void _select_page(void *obj, char *cmd)

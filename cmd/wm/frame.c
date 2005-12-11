@@ -321,8 +321,9 @@ void detach_client_from_frame(Client *c)
 	cext_detach_item(&f->clients, c);
 	if (!c->destroyed) {
 		hide_client(c);
-		cext_attach_item(&detached, c);
-		reparent_client(c, root, border_width(f), tab_height(f));
+		c->rect.x += f->rect.x;
+		c->rect.y += f->rect.y;
+		reparent_client(c, root, c->rect.x, c->rect.y);
 	}
 	if ((client = cext_stack_get_top_item(&f->clients))) {
 		sel_client(client);
