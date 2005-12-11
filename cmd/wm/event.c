@@ -172,7 +172,7 @@ static void handle_destroynotify(XEvent * e)
 	fprintf(stderr, "%s\n", "handle_destroynotify");
 	if (c) {
 		c->destroyed = True;
-		detach_client(c);
+		detach_client(c, False);
 	}
 }
 
@@ -239,7 +239,7 @@ static void handle_unmapnotify(XEvent * e)
 	fprintf(stderr, "%s\n", "handle_unmapnotify");
 	handle_ignore_enternotify_crap(e);
 	if ((c = win_to_client(ev->window)))
-		detach_client(c);
+		detach_client(c, True);
 }
 
 static void handle_enternotify(XEvent * e)

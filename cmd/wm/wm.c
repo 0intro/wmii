@@ -115,7 +115,7 @@ static void iter_draw_pager_frame(void *item, void *aux)
 {
 	Draw *d = aux;
 	Frame *f = (Frame *)item;
-	if (f == cext_stack_get_top_item(f->area->layout->get_frames(f->area))) {
+	if (f == get_sel_frame_of_area(f->area)) {
 		d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
 		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
 		d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
@@ -394,7 +394,7 @@ static void _detach_client(void *obj, char *cmd)
 	if (!f)
 		return;
 	c = cext_stack_get_top_item(&f->clients);
-	f->area->layout->detach(f->area, c);
+	f->area->layout->detach(f->area, c, False);
 }
 
 static void _select_page(void *obj, char *cmd)

@@ -305,15 +305,13 @@ void attach_client_to_frame(Frame *f, Client *c)
 	f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
 	cext_attach_item(&f->clients, c);
 	c->frame = f;
-	c->rect.x = border_width(f);
-	c->rect.y = tab_height(f);
-	reparent_client(c, f->win, c->rect.x, c->rect.y);
 	resize_frame(f, &f->rect, 0);
+	reparent_client(c, f->win, c->rect.x, c->rect.y);
 	show_client(c);
 	sel_client(c);
 }
 
-void detach_client_from_frame(Client *c)
+void detach_client_from_frame(Client *c, Bool unmap)
 {
 	Frame *f = c->frame;
 	Client *client;
@@ -322,8 +320,10 @@ void detach_client_from_frame(Client *c)
 	wmii_move_ixpfile(c->file[C_PREFIX], def[WM_DETACHED_CLIENT]);
 	cext_detach_item(&f->clients, c);
 	if (!c->destroyed) {
-		cext_attach_item(&detached, c);
-		hide_client(c);
+		if (!unmap) {
+			cext_attach_item(&detached, c);
+			hide_client(c);
+		}
 		c->rect.x = f->rect.x;
 		c->rect.y = f->rect.y;
 		reparent_client(c, root, c->rect.x, c->rect.y);

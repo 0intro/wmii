@@ -14,7 +14,7 @@ static void init_float(Area *a);
 static void deinit_float(Area *a);
 static void arrange_float(Area *a);
 static Bool attach_float(Area *a, Client *c);
-static void detach_float(Area *a, Client *c);
+static void detach_float(Area *a, Client *c, Bool unmap);
 static void resize_float(Frame *f, XRectangle *new, XPoint *pt);
 static void select_float(Frame *f, Bool raise);
 static Container *get_frames_float(Area *a);
@@ -53,7 +53,8 @@ static void init_float(Area *a)
 
 static void iter_detach_float(void *client, void *area)
 {
-	detach_float(area, client);
+	Area *a = area;
+	detach_float(a, client, a->page == get_sel_page());
 }
 
 static void deinit_float(Area *a)
@@ -83,10 +84,10 @@ static Bool attach_float(Area *a, Client *c)
 	return True;
 }
 
-static void detach_float(Area *a, Client *c)
+static void detach_float(Area *a, Client *c, Bool unmap)
 {
 	Frame *f = c->frame;
-	detach_client_from_frame(c);
+	detach_client_from_frame(c, unmap);
 	if (!cext_sizeof(&f->clients)) {
 		detach_frame_from_area(f);
 		cext_detach_item((Container *)a->aux, f);

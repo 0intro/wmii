@@ -329,12 +329,12 @@ void attach_client(Client * c)
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
-void detach_client(Client *c) {
+void detach_client(Client *c, Bool unmap) {
 	Page *p;
 	Frame *f = c->frame;
 	Area *a = f ? f->area : nil;
 	if (a) {
-		a->layout->detach(a, c);
+		a->layout->detach(a, c, unmap);
 		cext_detach_item(&a->clients, c);
 	}
 	if (c->destroyed)

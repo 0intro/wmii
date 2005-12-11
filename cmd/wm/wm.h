@@ -115,7 +115,7 @@ struct Layout {
 	void (*deinit) (Area *);	/* called when layout is uninitialized */
 	void (*arrange) (Area *);	/* called when area is resized */
 	Bool (*attach) (Area *, Client *);	/* called on attach */
-	void (*detach) (Area *, Client *);	/* called on detach */
+	void (*detach) (Area *, Client *, Bool unmap);	/* called on detach */
 	void (*resize) (Frame *, XRectangle *, XPoint *);	/* called after resize */
 	void (*select) (Frame *, Bool raise);	/* selection */
 	Container *(*get_frames) (Area *);	/* called after resize */
@@ -227,7 +227,7 @@ void show_client(Client * c);
 void reparent_client(Client * c, Window w, int x, int y);
 void sel_client(Client *c);
 void attach_client(Client *c);
-void detach_client(Client *c);
+void detach_client(Client *c, Bool unmap);
 Client *get_sel_client();
 
 /* frame.c */
@@ -238,7 +238,7 @@ void resize_frame(Frame *f, XRectangle *r, XPoint *pt);
 void draw_frame(void *frame, void *aux);
 void handle_frame_buttonpress(XButtonEvent *e, Frame *f);
 void attach_client_to_frame(Frame *f, Client *c);
-void detach_client_from_frame(Client *c);
+void detach_client_from_frame(Client *c, Bool unmap);
 unsigned int tab_height(Frame * f);
 unsigned int border_width(Frame * f);
 Frame *get_sel_frame();

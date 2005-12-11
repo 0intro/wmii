@@ -28,7 +28,7 @@ static void init_col(Area * a);
 static void deinit_col(Area * a);
 static void arrange_col(Area * a);
 static Bool attach_col(Area * a, Client * c);
-static void detach_col(Area * a, Client * c);
+static void detach_col(Area * a, Client * c, Bool unmap);
 static void resize_col(Frame *f, XRectangle * new, XPoint * pt);
 static void select_col(Frame *f, Bool raise);
 static Container *get_frames_col(Area *a);
@@ -103,7 +103,8 @@ static void init_col(Area *a)
 
 static void iter_detach_client(void *client, void *area)
 {
-	detach_col((Area *)area, (Client *)client);
+	Area *a = area;
+	detach_col(a, (Client *)client, a->page != get_sel_page());
 }
 
 static void deinit_col(Area *a)
@@ -148,13 +149,13 @@ static Bool attach_col(Area *a, Client *c)
 	return True;
 }
 
-static void detach_col(Area *a, Client *c)
+static void detach_col(Area *a, Client *c, Bool unmap)
 {
 	Acme *acme = a->aux;
 	Frame *f = c->frame;
 	Column *col = f->aux;
 
-	detach_client_from_frame(c);
+	detach_client_from_frame(c, unmap);
 	if (!cext_sizeof(&f->clients)) {
 		detach_frame_from_area(f);
 		cext_detach_item(&acme->frames, f);
