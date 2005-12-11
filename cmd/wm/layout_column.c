@@ -62,13 +62,19 @@ static Column *get_sel_column(Acme *acme)
 
 static void iter_arrange_column_frame(void *frame, void *height)
 {
-	unsigned int h = *(unsigned int *)height;
 	Frame *f = frame;
 	Column *col = f->aux;
+	size_t size = cext_sizeof(&col->frames);
+	unsigned int h = *(unsigned int *)height;
+	int idx = cext_list_get_item_index(&col->frames, f) ;
+
 	if (col->refresh) {
 		f->rect = col->rect;
-		f->rect.height = h;
-		f->rect.y = cext_list_get_item_index(&col->frames, f) * h;
+		f->rect.y = idx * h;
+		if (idx + 1 == size)
+			f->rect.height = f->area->rect.height - f->rect.y;
+		else
+			f->rect.height = h;
 	}
 	resize_frame(f, &f->rect, 0);
 }
@@ -132,7 +138,6 @@ static Bool attach_col(Area *a, Client *c)
 	Acme *acme = a->aux;
 	Column *col = get_sel_column(acme);
 	Frame *f = get_sel_frame_of_area(a);
-	Bool center = False;
 
 	/* check for tabbing? */
 	if (f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))
@@ -143,13 +148,11 @@ static Bool attach_col(Area *a, Client *c)
 		f->aux = col;
 		cext_attach_item(&acme->frames, f);
 		cext_attach_item(&col->frames, f);
-		center = True;
 	}
 	attach_client_to_frame(f, c);
 	if (a->page == get_sel_page())
 		XMapWindow(dpy, f->win);
-	if (center)
-		center_pointer(f);
+	select_col(f, True);
 	col->refresh = True;
 	arrange_col(a);
 	return True;
@@ -336,7 +339,6 @@ static void select_frame(void *obj, char *arg)
 		f = cext_list_get_item(&col->frames, blitz_strtonum(arg, 0, cext_sizeof(&col->frames) - 1));
 	if (f && old != f) {
 		select_col(f, True);
-		center_pointer(f);
 		draw_frame(old, nil);
 		draw_frame(f, nil);
 	}
