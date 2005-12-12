@@ -314,7 +314,6 @@ static void draw_detached_clients()
 	}
 }
 
-
 static void detached_clients(void *obj, char *cmd)
 {
 	XEvent ev;
@@ -449,8 +448,11 @@ void scan_wins()
 		for (i = 0; i < num; i++) {
 			if (!XGetWindowAttributes(dpy, wins[i], &wa))
 				continue;
-			if (wa.override_redirect
-				|| XGetTransientForHint(dpy, wins[i], &d1))
+			if (wa.override_redirect) {
+				XSelectInput(dpy, wins[i], (StructureNotifyMask | PropertyChangeMask));
+				continue;
+			}
+			if (XGetTransientForHint(dpy, wins[i], &d1))
 				continue;
 			if (wa.map_state == IsViewable) {
 				c = alloc_client(wins[i]);
@@ -472,6 +474,17 @@ void *get_func(void *acttbl[][2], int rows, char *fname)
 		}
 	}
 	return 0;
+}
+
+void update_areas_sizes(Window ignore_win)
+{
+	XWindowAttributes wa;
+
+	fprintf(stderr, "%s", "update_areas_sizes: \n");
+	if(!XGetWindowAttributes(dpy, ignore_win, &wa))
+		return;
+	fprintf(stderr, "update_areas_sizes: %d, %d, %d, %d\n",
+			wa.x, wa.y, wa.width, wa.height);
 }
 
 int win_proto(Window w)

@@ -285,3 +285,4 @@ int win_state(Window w);
 void handle_after_write(IXPServer * s, File * f);
 void detach(Frame * f, int client_destroyed);
 void set_client_state(Client * c, int state);
+void update_areas_sizes(Window ignore_win);

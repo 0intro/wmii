@@ -134,20 +134,15 @@ void init_client(Client * c, XWindowAttributes * wa)
 	XSetWindowBorderWidth(dpy, c->win, 0);
 	c->proto = win_proto(c->win);
 	XGetTransientForHint(dpy, c->win, &c->trans);
-	/* size hints */
-	if (!XGetWMNormalHints(dpy, c->win, &c->size, &msize)
-		|| !c->size.flags)
+	if (!XGetWMNormalHints(dpy, c->win, &c->size, &msize) || !c->size.flags)
 		c->size.flags = PSize;
 	XAddToSaveSet(dpy, c->win);
 }
 
-void handle_client_property(Client * c, XPropertyEvent * e)
+void handle_client_property(Client *c, XPropertyEvent *e)
 {
 	XTextProperty name;
 	long msize;
-
-	if (e->state == PropertyDelete)
-		return;					/* ignore */
 
 	if (e->atom == wm_protocols) {
 		/* update */

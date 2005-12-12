@@ -31,7 +31,7 @@ int wmii_property(Display * dpy, Window w, Atom a, Atom t, long l, unsigned char
 	return res;
 }
 
-void wmii_send_message(Display * dpy, Window w, Atom a, long value)
+void wmii_send_message(Display *dpy, Window w, Atom a, long value)
 {
 	XEvent e;
 	e.type = ClientMessage;

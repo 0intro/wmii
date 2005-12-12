@@ -196,8 +196,11 @@ static void handle_maprequest(XEvent * e)
 	fprintf(stderr, "%s\n", "handle_maprequest");
 	if (!XGetWindowAttributes(dpy, ev->window, &wa))
 		return;
-	if (wa.override_redirect)
+	if (wa.override_redirect) {
+		XSelectInput(dpy, ev->window, (StructureNotifyMask | PropertyChangeMask));
 		return;
+	}
+
 	/* there're client which send map requests twice */
 	c = win_to_client(ev->window);
 	if (!c)
@@ -225,10 +228,12 @@ static void handle_motionnotify(XEvent * e)
 static void handle_propertynotify(XEvent * e)
 {
 	XPropertyEvent *ev = &e->xproperty;
-	Client *c = win_to_client(ev->window);
+	Client *c;
 
-	fprintf(stderr, "%s\n", "handle_propertynotify");
-	if (c)
+	if (ev->state == PropertyDelete)
+		return;					/* ignore */
+
+	if ((c = win_to_client(ev->window)))
 		handle_client_property(c, ev);
 }
 
