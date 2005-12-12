@@ -22,9 +22,13 @@ fn sigint {
     exit
 }
 
-text=fnord
+fn statustext {
+    # if you need a formatted date, use awk
+    echo (`{date} `{uptime | sed 's/.*://; s/,//g'})
+}
+
+text=`{statustext}
 while(wmir write /bar/$label/data $"text >[2]/dev/null) {
-    # if you need formatted date, use /bin/date instead
-    text=(`{date} `{uptime | sed 's/.*://; s/,//g'})
-    sleep 10
+    text=`{statustext}
+    sleep 2
 }
