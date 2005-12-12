@@ -54,17 +54,14 @@ static void init_float(Area *a)
 static void iter_detach_float(void *client, void *area)
 {
 	Area *a = area;
-	fprintf(stderr, "layout_float: detach_float(0x%x)\n", client);
 	detach_float(a, client, a->page != get_sel_page());
 }
 
 static void deinit_float(Area *a)
 {
-	fprintf(stderr, "%s", "layout_float: deinit enter\n");
 	cext_list_iterate(&a->clients, a, iter_detach_float);
 	free(a->aux);
 	a->aux = nil;
-	fprintf(stderr, "%s", "layout_float: deinit exit\n");
 }
 
 static Bool attach_float(Area *a, Client *c)

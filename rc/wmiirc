@@ -125,7 +125,7 @@ kbind normal $MODKEY-C-p 'wmiir write /menu/precmd extern; wmiir write /menu/loo
 kbind normal $MODKEY-C-c 'wmiir write /wm/ctl close'
 kbind normal $MODKEY-C-q,y quit
 kbind normal $MODKEY-C-w,y wmiirc
-kbind normal $MODKEY-t 'extern urxvt ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000 -fn -artwiz-smoothansi-*-*-*-*-*-*-*-*-*-*-*-*'
+kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000 -fn -artwiz-smoothansi-*-*-*-*-*-*-*-*-*-*-*-*'
 kbind normal $MODKEY-d 'wmiir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmiir write /wm/ctl attach'
 kbind normal $MODKEY-S-a 'wmiir write /wm/ctl ''detached clients'''
