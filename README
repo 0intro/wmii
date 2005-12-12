@@ -7,9 +7,9 @@ wmii consists of components that are independent processes and
 communicate via a socket-based virtual filesystem which is oriented
 on the "everything is file" paradigm of the Plan 9 [2] operating system.
 The core distribution of wmii contains the window manager itself,
-a master file system routing utility (wmifs), a generic bar (wmibar),
-a shortcut handler (wmikeys), and a generic interaction menu (wmimenu)
-beside several tiny utilities like wmir, wmiplumb, and wmiwarp.
+a master file system routing utility (wmiifs), a generic bar (wmiibar),
+a shortcut handler (wmiikeys), and a generic interaction menu (wmiimenu)
+beside several tiny utilities like wmiir, wmiiplumb, and wmiiwarp.
 
 
 Requirements
@@ -53,7 +53,7 @@ The configuration of wmii is done by customizing the existing actions.
 Customizing an action means copying the appropriate file from the directory
 $WMII_CONFDIR (usually /usr/local/etc/wmii-3) to
 $HOME/.wmii-3 and editing it to fit your needs. The action of main
-interest is called 'wmirc': it is executed on startup.
+interest is called 'wmiirc': it is executed on startup.
 
 
 Credits
