@@ -258,11 +258,11 @@ static void handle_enternotify(XEvent * e)
 	c = win_to_client(ev->window);
 	if (c && c->frame) {
 		Frame *old = get_sel_frame();
-		if (old != c->frame) {
-			c->frame->area->layout->select(c->frame, False);
+		if (old && old != c->frame)
 			draw_frame(old, nil);
-			draw_frame(c->frame, nil);
-		}
+		sel_area(c->frame->area);
+		c->frame->area->layout->select(c->frame, False);
+		draw_frame(c->frame, nil);
 	}
 }
 

@@ -306,7 +306,7 @@ void attach_client(Client * c)
 	if (c && c->trans) {
 		Client *t = win_to_client(c->trans);
 		if (t && t->frame)
-			a = t->frame->area;
+			a = cext_list_get_item(&t->frame->area->page->areas, 0);
 	}
 	cext_attach_item(&a->clients, c);
 	a->layout->attach(a, c);

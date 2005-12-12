@@ -96,6 +96,7 @@ static void arrange_col(Area *a)
 {
 	Acme *acme = a->aux;
 	cext_list_iterate(&acme->columns, a, iter_arrange_column);
+	XSync(dpy, False);
 }
 
 static void iter_attach_col(void *client, void *area)
@@ -152,9 +153,9 @@ static Bool attach_col(Area *a, Client *c)
 	attach_client_to_frame(f, c);
 	if (a->page == get_sel_page())
 		XMapWindow(dpy, f->win);
-	select_col(f, True);
 	col->refresh = True;
 	arrange_col(a);
+	select_col(f, True);
 	return True;
 }
 
@@ -271,8 +272,7 @@ static void drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 		f->aux = tgt;
 		tgt->refresh = src->refresh = True;
 		cext_stack_top_item(&acme->columns, tgt);
-		iter_arrange_column(tgt, f->area);
-		iter_arrange_column(src, f->area);
+		arrange_col(f->area);
 	}
 }
 

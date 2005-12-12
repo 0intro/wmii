@@ -11,8 +11,11 @@
 
 static void handle_after_write_page(IXPServer * s, File * f);
 
+static void select_area(void *obj, char *arg);
+
 /* action table for /?/ namespace */
 Action page_acttbl[] = {
+	{"select", select_area},
 	{0, 0}
 };
 
@@ -37,6 +40,7 @@ Page *alloc_page()
 	p->file[P_CTL] = ixp_create(ixps, buf);
 	p->file[P_CTL]->after_write = handle_after_write_page;
 	alloc_area(p, &rect, "float");
+	alloc_area(p, &rect, def[WM_LAYOUT]->content);
 	cext_attach_item(&pages, p);
 	def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
@@ -154,4 +158,18 @@ static void handle_after_write_page(IXPServer *s, File *f)
 Page *get_sel_page()
 {
 	return cext_stack_get_top_item(&pages);
+}
+
+static void select_area(void *obj, char *arg)
+{
+	Page *p = obj;
+	Area *a = cext_stack_get_top_item(&p->areas);
+
+	if (!strncmp(arg, "prev", 5))
+		a = cext_list_get_prev_item(&p->areas, a);
+	else if (!strncmp(arg, "next", 5))
+		a = cext_list_get_next_item(&p->areas, a);
+	else 
+		a = cext_list_get_item(&p->areas, blitz_strtonum(arg, 0, cext_sizeof(&p->areas) - 1));
+	sel_area(a);
 }
