@@ -28,7 +28,7 @@ fn statustext {
 }
 
 text=`{statustext}
-while(wmir write /bar/$label/data $"text >[2]/dev/null) {
+while(wmiir write /bar/$label/data $"text >[2]/dev/null) {
     text=`{statustext}
     sleep 2
 }
