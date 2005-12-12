@@ -8,22 +8,22 @@ if(test -r $PIDFILE) {
 }
 echo $pid >$PIDFILE
 
-label=`{wmir read /bar/new}
-wmir write /bar/$label/b1press 'wmir write /wm/ctl ''select prev'''
-wmir write /bar/$label/b3press 'wmir write /wm/ctl ''select next'''
-wmir write /bar/$label/b4press 'wmir write /wm/ctl ''select prev'''
-wmir write /bar/$label/b5press 'wmir write /wm/ctl ''select next'''
+label=`{wmiir read /bar/new}
+wmiir write /bar/$label/b1press 'wmiir write /wm/ctl ''select prev'''
+wmiir write /bar/$label/b3press 'wmiir write /wm/ctl ''select next'''
+wmiir write /bar/$label/b4press 'wmiir write /wm/ctl ''select prev'''
+wmiir write /bar/$label/b5press 'wmiir write /wm/ctl ''select next'''
 
 # install signal handler for artificial sigexit:
 fn sigint {
     if(test -f $PIDFILE && ~ `{cat $PIDFILE} $pid)
         rm -f $PIDFILE
-    wmir write /bar/ctl 'destroy '^$label
+    wmiir write /bar/ctl 'destroy '^$label
     exit
 }
 
 text=fnord
-while(wmir write /bar/$label/data $"text >[2]/dev/null) {
+while(wmiir write /bar/$label/data $"text >[2]/dev/null) {
     # if you need formatted date, use /bin/date instead
     text=(`{date} `{uptime | sed 's/.*://; s/,//g'})
     sleep 10

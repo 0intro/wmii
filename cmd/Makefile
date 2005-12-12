@@ -9,78 +9,78 @@ LDFLAGS += -L../liblitz -llitz -L../libixp -lixp \
 LDFLAGS2 += ${LIBS} -L../liblitz -llitz -L../libixp2 -lixp \
 	-L../libwmii -lwmii -L../libcext -lcext
 
-SRC_bar = wmibar.c
+SRC_bar = wmiibar.c
 OBJ_bar = ${SRC_bar:.c=.o}
 
-SRC_bar2 = wmibar2.c
+SRC_bar2 = wmiibar2.c
 OBJ_bar2 = ${SRC_bar2:.c=.o}
 
-SRC_menu = wmimenu.c
+SRC_menu = wmiimenu.c
 OBJ_menu = ${SRC_menu:.c=.o}
 
-SRC_r2 = wmir2.c
+SRC_r2 = wmiir2.c
 OBJ_r2 = ${SRC_r2:.c=.o}
 
-SRC_r = wmir.c
+SRC_r = wmiir.c
 OBJ_r = ${SRC_r:.c=.o}
 
-SRC_fs = wmifs.c
+SRC_fs = wmiifs.c
 OBJ_fs = ${SRC_fs:.c=.o}
 
-SRC_keys = wmikeys.c
+SRC_keys = wmiikeys.c
 OBJ_keys = ${SRC_keys:.c=.o}
 
-SRC_plumb = wmiplumb.c
+SRC_plumb = wmiiplumb.c
 OBJ_plumb = ${SRC_plumb:.c=.o}
 
-SRC_warp = wmiwarp.c
+SRC_warp = wmiiwarp.c
 OBJ_warp = ${SRC_warp:.c=.o}
 
-all: wmibar wmibar2 wmimenu wmir wmir2 wmifs wmikeys wmiplumb wmiwarp
-	@echo built wmi commands
+all: wmiibar wmiibar2 wmiimenu wmiir wmiir2 wmiifs wmiikeys wmiiplumb wmiiwarp
+	@echo built wmii commands
 
 .c.o:
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<
 
-wmibar: ${OBJ_bar}
+wmiibar: ${OBJ_bar}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_bar} ${LDFLAGS}
 
-wmibar2: ${OBJ_bar2}
+wmiibar2: ${OBJ_bar2}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_bar2} ${LDFLAGS2}
 
-wmimenu: ${OBJ_menu}
+wmiimenu: ${OBJ_menu}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_menu} ${LDFLAGS}
 
-wmir2: ${OBJ_r2}
+wmiir2: ${OBJ_r2}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_r2} -g -static -L${LIBDIR} -L/usr/lib -lc \
 		-L../libixp2 -lixp -L../libcext -lcext
 
-wmir: ${OBJ_r}
+wmiir: ${OBJ_r}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_r} -g -static -L${LIBDIR} -L/usr/lib -lc \
 		-L../libixp -lixp -L../libcext -lcext
 
-wmifs: ${OBJ_fs}
+wmiifs: ${OBJ_fs}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_fs} ${LDFLAGS}
 
-wmikeys: ${OBJ_keys}
+wmiikeys: ${OBJ_keys}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_keys} ${LDFLAGS}
 
-wmiplumb: ${OBJ_plumb}
+wmiiplumb: ${OBJ_plumb}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_plumb} ${LDFLAGS}
 
-wmiwarp: ${OBJ_warp}
+wmiiwarp: ${OBJ_warp}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_warp} ${LDFLAGS}
 
 clean:
-	rm -f wmibar wmibar2 wmimenu wmir wmir2 wmikeys wmiplumb wmifs\
-		wmiwarp *.o
+	rm -f wmiibar wmiibar2 wmiimenu wmiir wmiir2 wmiikeys wmiiplumb wmiifs\
+		wmiiwarp *.o

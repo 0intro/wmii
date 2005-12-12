@@ -1,4 +1,4 @@
 #!9PREFIX/bin/rc
 # quit wmii
 
-wmir write /wm/ctl quit
+wmiir write /wm/ctl quit
