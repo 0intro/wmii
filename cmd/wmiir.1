@@ -1,38 +1,38 @@
 .TH WMIR 1 wmii-3
 .SH NAME
-wmir \- window manager improved 2 remote
+wmiir \- window manager improved 2 remote
 .SH SYNOPSIS
-.B wmir
+.B wmiir
 .RB [ \-s
 .IR socketfile ]
 .I action
 .I action_arg
 [...]
 .br
-.B wmir
+.B wmiir
 .RB [ \-s
 .IR socketfile ]
 .B \-f
 .br
-.B wmir
+.B wmiir
 .B \-v
 .SH DESCRIPTION
 .SS Overview
-.B wmir
+.B wmiir
 is a client to access wmi* fileservers for the command line and
 scripts. It can be used to configure wmii(1).
 .SS Options
 .TP
 .BI \-s " socketfile"
 lets you specify the socketfile to which
-.B wmir
+.B wmiir
 a connection will be established. If the environment variable
 .B WMIR_SOCKET
-is set and points to a socket file, wmir will use that file, if this
+is set and points to a socket file, wmiir will use that file, if this
 option is not supplied.
 .TP
 .B \-f
-reads from stdin, useful for interactive wmir sessions or for
+reads from stdin, useful for interactive wmiir sessions or for
 scripts that write/read a bunch of data, because this speeds things up
 due to missing process creation/destruction, ie., a hack.
 .TP
@@ -58,14 +58,14 @@ WMIR_SOCKET
 See above.
 .SH EXAMPLES
 .TP
-$ wmir read /
+$ wmiir read /
 This gives you an idea about what the wmii filesystem currently looks like.
 .TP
-$ wmir write /wm/ctl quit
+$ wmiir write /wm/ctl quit
 .SH SEE ALSO
-.BR wmibar (1),
-.BR wmifs (1),
+.BR wmiibar (1),
+.BR wmiifs (1),
 .BR wmii (1),
 .BR wmiiwm (1),
-.BR wmikeys (1),
-.BR wmimenu (1)
+.BR wmiikeys (1),
+.BR wmiimenu (1)

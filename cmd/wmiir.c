@@ -13,14 +13,14 @@ static IXPClient *c;
 static int exit_code = 0;
 
 static char *version[] = {
-	"wmir - window manager improved remote - " VERSION "\n"
+	"wmiir - window manager improved remote - " VERSION "\n"
 		" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
 static void usage()
 {
 	fprintf(stderr, "%s",
-			"usage: wmir [-s <socket file>] [-v] <action> <action_arg> [...]\n"
+			"usage: wmiir [-s <socket file>] [-v] <action> <action_arg> [...]\n"
 			"      -s    socket file (default: $WMIR_SOCKET)\n"
 			"      -f    read actions from stdin\n"
 			"      -v    version info\n"
@@ -49,7 +49,7 @@ static void perform(char *action, char *file, char *content)
 		if (crt) {
 			c->create(c, file);
 			if (c->errstr) {
-				fprintf(stderr, "wmir: error: create %s: %s\n", file,
+				fprintf(stderr, "wmiir: error: create %s: %s\n", file,
 						c->errstr);
 				exit_code = 1;
 				return;
@@ -59,13 +59,13 @@ static void perform(char *action, char *file, char *content)
 			return;
 		fd = c->open(c, file);
 		if (c->errstr) {
-			fprintf(stderr, "wmir: error: open %s: %s\n", file, c->errstr);
+			fprintf(stderr, "wmiir: error: open %s: %s\n", file, c->errstr);
 			exit_code = 1;
 			return;
 		}
 		c->write(c, fd, content, strlen(content));
 		if (c->errstr) {
-			fprintf(stderr, "wmir: error: write %s: %s\n", file,
+			fprintf(stderr, "wmiir: error: write %s: %s\n", file,
 					c->errstr);
 			exit_code = 1;
 			if (!strncmp(c->errstr, DEAD_SERVER, strlen(DEAD_SERVER) + 1))
@@ -76,14 +76,14 @@ static void perform(char *action, char *file, char *content)
 			return;
 		fd = c->open(c, file);
 		if (c->errstr) {
-			fprintf(stderr, "wmir: error: open %s: %s\n", file, c->errstr);
+			fprintf(stderr, "wmiir: error: open %s: %s\n", file, c->errstr);
 			exit_code = 1;
 			return;
 		}
 		do {
 			out_len = c->read(c, fd, output, 2048);
 			if (c->errstr) {
-				fprintf(stderr, "wmir: error: read %s: %s\n", file,
+				fprintf(stderr, "wmiir: error: read %s: %s\n", file,
 						c->errstr);
 				exit_code = 1;
 				if (!strncmp
@@ -101,7 +101,7 @@ static void perform(char *action, char *file, char *content)
 			return;
 		c->remove(c, file);
 		if (c->errstr) {
-			fprintf(stderr, "wmir: error: remove %s: %s\n", file,
+			fprintf(stderr, "wmiir: error: remove %s: %s\n", file,
 					c->errstr);
 			exit_code = 1;
 			return;
@@ -110,7 +110,7 @@ static void perform(char *action, char *file, char *content)
 	if (fd != -1) {
 		c->close(c, fd);
 		if (c->errstr) {
-			fprintf(stderr, "wmir: error: close %s: %s\n", file,
+			fprintf(stderr, "wmiir: error: close %s: %s\n", file,
 					c->errstr);
 			exit_code = 1;
 			return;
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	if ((argc <= 1) || (!read_stdin && (i + 1) >= argc)) {
-		fprintf(stderr, "%s", "wmir: arguments: ");
+		fprintf(stderr, "%s", "wmiir: arguments: ");
 		for (i = 1; i < argc; i++)
 			fprintf(stderr, "%s, ", argv[i]);
 		fprintf(stderr, "%s", "\n");
@@ -157,12 +157,12 @@ int main(int argc, char *argv[])
 	}
 	if (!sockfile) {
 		fprintf(stderr, "%s",
-				"wmir: error: WMIR_SOCKET environment not set\n");
+				"wmiir: error: WMIR_SOCKET environment not set\n");
 		usage();
 	}
 	/* open socket */
 	if (!(c = init_ixp_client(sockfile))) {
-		fprintf(stderr, "wmir: cannot connect to server '%s'\n", sockfile);
+		fprintf(stderr, "wmiir: cannot connect to server '%s'\n", sockfile);
 		exit(1);
 	}
 	if (read_stdin) {
@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
 			}
 			perform(action, file, content);
 			if (c->errstr)
-				fprintf(stderr, "wmir: error: read %s: %s\n", file,
+				fprintf(stderr, "wmiir: error: read %s: %s\n", file,
 						c->errstr);
 		}
 	} else {

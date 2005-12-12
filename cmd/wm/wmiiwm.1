@@ -19,12 +19,12 @@ operating system and can be found in the Acme programming environment.
 .B wmii
 consists of the core window manager itself and several utilities, such
 as
-.BR wmibar (1),
-.BR wmifs (1),
-.BR wmimenu (1),
-.BR wmikeys (1),
+.BR wmiibar (1),
+.BR wmiifs (1),
+.BR wmiimenu (1),
+.BR wmiikeys (1),
 .BR wmiplumb (1),
-.BR wmir (1)
+.BR wmiir (1)
 and
 .BR wmiwarp (1).
 
@@ -133,7 +133,7 @@ frame or launching a terminal.
 is customized through the rc script, which manipulates the namespace its
 fileserver provides to other processes. This namespace can be accessed
 using the
-.BR wmir (1)
+.BR wmiir (1)
 utility. The default rc script uses this utility to setup wmii and its
 components.
 .P
@@ -143,13 +143,13 @@ process, like
 .B wmii.
 Such
 namespaces can be bound (mounted) to userdefined namespaces using the
-.BR wmifs (1)
+.BR wmiifs (1)
 utility. In the default rc script the namespace provided by wmii, is
 bound to
 .FN /wmii
 .P
 There are four actions provided by the
-.BR wmir (1)
+.BR wmiir (1)
 utility to manipulate your namespace:
 .BR create ,
 .BR remove ,
@@ -161,11 +161,11 @@ and
 .SH AUTHOR
 Copyright \(co 2003 - 2005 by Anselm R. Garbe <garbeam (at) gmail (dot) com>
 .SH SEE ALSO
-.BR wmibar (1),
-.BR wmifs (1),
-.BR wmimenu (1),
-.BR wmikeys (1),
+.BR wmiibar (1),
+.BR wmiifs (1),
+.BR wmiimenu (1),
+.BR wmiikeys (1),
 .BR wmiplumb (1),
-.BR wmir (1),
+.BR wmiir (1),
 .BR wmiwarp (1),
 .BR wmii.rc (5).

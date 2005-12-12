@@ -65,15 +65,15 @@ static Action acttbl[] = {
 };
 
 static char *version[] = {
-	"wmikeys - window manager improved keys - " VERSION "\n"
+	"wmiikeys - window manager improved keys - " VERSION "\n"
 		"  (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
 static void usage()
 {
 	fprintf(stderr, "%s",
-			"usage: wmikeys [-s <socket file>] [-v]\n"
-			"      -s     socket file (default: /tmp/.ixp-$USER/wmikeys-$WMII_IDENT)\n"
+			"usage: wmiikeys [-s <socket file>] [-v]\n"
+			"      -s     socket file (default: /tmp/.ixp-$USER/wmiikeys-$WMII_IDENT)\n"
 			"      -v     version info\n");
 	exit(1);
 }
@@ -419,7 +419,7 @@ int main(int argc, char *argv[])
 
 	dpy = XOpenDisplay(0);
 	if (!dpy) {
-		fprintf(stderr, "%s", "wmikeys: cannot open display\n");
+		fprintf(stderr, "%s", "wmiikeys: cannot open display\n");
 		exit(1);
 	}
 	XSetErrorHandler(dummy_error_handler);
@@ -429,7 +429,7 @@ int main(int argc, char *argv[])
 	ixps = wmii_setup_server(sockfile);
 
 	if (!(files[K_CTL] = ixp_create(ixps, "/ctl"))) {
-		perror("wmikeys: cannot connect IXP server");
+		perror("wmiikeys: cannot connect IXP server");
 		exit(1);
 	}
 	files[K_CTL]->after_write = handle_after_write;

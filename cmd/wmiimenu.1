@@ -1,42 +1,42 @@
 .TH WMIMENU 1 wmii-3
 .SH NAME
-wmimenu \- window manager improved 2 menu
+wmiimenu \- window manager improved 2 menu
 .SH SYNOPSIS
-.B wmimenu
+.B wmiimenu
 .B \-s
 .I socketfile
 .SH DESCRIPTION
 .SS Overview
-.B wmimenu
+.B wmiimenu
 is a generic, highly customizable, and efficient menu for the X Window System,
 originally designed for
 .BR wmii (1).
 It supports arbitrary, user defined menu contents, which get executed.
 Like wmii,
-.B wmimenu
+.B wmiimenu
 also implements a socket-based fileserver, which is accessed to configure and
 interoperate with other components.
 .SS Options
 .TP
 .BI \-s " socketfile"
 specifies the socketfile that
-.B wmimenu
+.B wmiimenu
 should create.
 .TP
 .B \-v
 prints version information to stderr, then exits.
 .SS Customization
-.B wmimenu
+.B wmiimenu
 is customized through manipulating its filesystem namespace.
 In the default setup of
 .BR wmii (1)
 the namespace of
-.B wmimenu
+.B wmiimenu
 can be found in /menu.
 .SH SEE ALSO
-.BR wmibar (1),
-.BR wmifs (1),
+.BR wmiibar (1),
+.BR wmiifs (1),
 .BR wmii (1),
 .BR wmiiwm (1),
-.BR wmikeys (1),
-.BR wmir (1)
+.BR wmiikeys (1),
+.BR wmiir (1)

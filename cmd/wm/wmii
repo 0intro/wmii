@@ -13,7 +13,7 @@ WMII_CONFDIR=CONFPREFIX/wmii-3
 OLD_PATH=$PATH
 PATH=$HOME/.wmii-3:$WMII_CONFDIR:9PREFIX/bin:$PATH
 WMII_IDENT=`{date -n}^'-'^$pid
-WMIR_SOCKET=/tmp/.ixp-$USER/wmifs-$WMII_IDENT
+WMIR_SOCKET=/tmp/.ixp-$USER/wmiifs-$WMII_IDENT
 
 # start window manager and utilities:
 mkdir -p /tmp/.ixp-$USER

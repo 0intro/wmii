@@ -73,15 +73,15 @@ static Action acttbl[2] = {
 };
 
 static char *version[] = {
-	"wmimenu - window manager improved menu - " VERSION "\n"
+	"wmiimenu - window manager improved menu - " VERSION "\n"
 		" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
 static void usage()
 {
 	fprintf(stderr, "%s",
-			"usage: wmimenu [-s <socket file>] [-r] [-v]\n"
-			"      -s      socket file (default: /tmp/.ixp-$USER/wmimenu-%s-%s)\n"
+			"usage: wmiimenu [-s <socket file>] [-r] [-v]\n"
+			"      -s      socket file (default: /tmp/.ixp-$USER/wmiimenu-%s-%s)\n"
 			"      -v      version info\n");
 	exit(1);
 }
@@ -552,7 +552,7 @@ int main(int argc, char *argv[])
 
 	dpy = XOpenDisplay(0);
 	if (!dpy) {
-		fprintf(stderr, "%s", "wmimenu: cannot open display\n");
+		fprintf(stderr, "%s", "wmiimenu: cannot open display\n");
 		exit(1);
 	}
 	screen_num = DefaultScreen(dpy);
@@ -561,7 +561,7 @@ int main(int argc, char *argv[])
 
 	/* init */
 	if (!(files[M_CTL] = ixp_create(ixps, "/ctl"))) {
-		perror("wmimenu: cannot connect IXP server");
+		perror("wmiimenu: cannot connect IXP server");
 		exit(1);
 	}
 	files[M_CTL]->after_write = handle_after_write;

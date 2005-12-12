@@ -31,14 +31,14 @@ static Command cmds[] = {
 static IXPClient c = { 0 };
 
 static char *version[] = {
-	"wmir - window manager improved remote - " VERSION "\n"
+	"wmiir - window manager improved remote - " VERSION "\n"
 		" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
 static void usage()
 {
 	fprintf(stderr, "%s",
-			"usage: wmir [-s <socket file>] [-v] <command> <args> [...]\n"
+			"usage: wmiir [-s <socket file>] [-v] <command> <args> [...]\n"
 			"      -s    socket file (default: $WMIR_SOCKET)\n"
 			"      -f    read commands from stdin\n"
 			"      -v    version info\n"
@@ -62,7 +62,7 @@ static u32 write_data(u32 fid, u8 * data, u32 count)
 		if (ixp_client_write
 			(&c, fid, i * c.fcall.iounit, len,
 			 &data[i * c.fcall.iounit]) != count) {
-			fprintf(stderr, "wmir: cannot write file: %s\n", c.errstr);
+			fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr);
 			return 0;
 		}
 	}
@@ -78,14 +78,14 @@ static int xcreate(char **argv)
 	/* walk to bottom-most directory */
 	*p = 0;
 	if (!ixp_client_walk(&c, fid, argv[0])) {
-		fprintf(stderr, "wmir: cannot walk to %s: %s\n", argv[0],
+		fprintf(stderr, "wmiir: cannot walk to %s: %s\n", argv[0],
 				c.errstr);
 		return 1;
 	}
 	/* create */
 	p++;
 	if (!ixp_client_create(&c, fid, p, (u32) 0xff, IXP_OWRITE)) {
-		fprintf(stderr, "wmir: cannot create file: %s\n", c.errstr);
+		fprintf(stderr, "wmiir: cannot create file: %s\n", c.errstr);
 		return 1;
 	}
 	write_data(fid, (u8 *) argv[1], strlen(argv[1]));
@@ -97,7 +97,7 @@ static int xwrite(char **argv)
 	/* open */
 	u32 fid = c.root_fid << 2;
 	if (!ixp_client_open(&c, fid, argv[0], IXP_OWRITE)) {
-		fprintf(stderr, "wmir: cannot open file: %s\n", c.errstr);
+		fprintf(stderr, "wmiir: cannot open file: %s\n", c.errstr);
 		return 1;
 	}
 	write_data(fid, (u8 *) argv[1], strlen(argv[1]));
@@ -129,14 +129,14 @@ static int xread(char **argv)
 
 	/* open */
 	if (!ixp_client_open(&c, fid, argv[0], IXP_OREAD)) {
-		fprintf(stderr, "wmir: cannot open file: %s\n", c.errstr);
+		fprintf(stderr, "wmiir: cannot open file: %s\n", c.errstr);
 		return 1;
 	}
 	is_directory = !c.fcall.nwqid || (c.fcall.qid.type == IXP_QTDIR);
 	/* read */
 	if (!(count = ixp_client_read(&c, fid, 0, result, IXP_MAX_MSG))
 		&& c.errstr) {
-		fprintf(stderr, "wmir: cannot read file: %s\n", c.errstr);
+		fprintf(stderr, "wmiir: cannot read file: %s\n", c.errstr);
 		return 1;
 	}
 	if (count) {
@@ -158,7 +158,7 @@ static int xremove(char **argv)
 	/* remove */
 	fid = c.root_fid << 2;
 	if (!ixp_client_remove(&c, fid, argv[0])) {
-		fprintf(stderr, "wmir: cannot remove file: %s\n", c.errstr);
+		fprintf(stderr, "wmiir: cannot remove file: %s\n", c.errstr);
 		return 1;
 	}
 	return 0;
@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	if ((argc <= 1) || (!read_stdin && (i + 1) >= argc)) {
-		fprintf(stderr, "%s", "wmir: arguments: ");
+		fprintf(stderr, "%s", "wmiir: arguments: ");
 		for (i = 1; i < argc; i++)
 			fprintf(stderr, "%s, ", argv[i]);
 		fprintf(stderr, "%s", "\n");
@@ -216,12 +216,12 @@ int main(int argc, char *argv[])
 	}
 	if (!sockfile) {
 		fprintf(stderr, "%s",
-				"wmir: error: WMIR_SOCKET environment not set\n");
+				"wmiir: error: WMIR_SOCKET environment not set\n");
 		usage();
 	}
 	/* open socket */
 	if (!ixp_client_init(&c, sockfile)) {
-		fprintf(stderr, "wmir: %s\n", c.errstr);
+		fprintf(stderr, "wmiir: %s\n", c.errstr);
 		exit(1);
 	}
 	/* wether perform directly or read from stdin */

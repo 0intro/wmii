@@ -1,43 +1,43 @@
 .TH WMIBAR 1 wmii-3
 .SH NAME
-wmibar \- window manager improved 2 bar
+wmiibar \- window manager improved 2 bar
 .SH SYNOPSIS
-.B wmibar
+.B wmiibar
 .B \-s
 .I socketfile
 .SH DESCRIPTION
 .SS Overview
-.B wmibar
+.B wmiibar
 is a generic and highly customizable bar for the X Window System,
 originally designed for
 .BR wmii (1).
 It supports arbitrary sized labels with arbitrary styles on a per label
 basis and with button click events.
 Like wmii,
-.B wmibar
+.B wmiibar
 also implements a socket-based fileserver, which is accessed to configure and
 interoperate with other components.
 .SS Options
 .TP
 .BI \-s " socketfile"
 specifies the socketfile that
-.B wmibar
+.B wmiibar
 should create.
 .TP
 .B \-v
 prints version information to stderr, then exits.
 .SS Customization
-.B wmibar
+.B wmiibar
 is customized through manipulating its filesystem namespace.
 In the default setup of
 .BR wmii (1)
 the namespace of
-.B wmibar
+.B wmiibar
 can be found in /bar.
 .SH SEE ALSO
-.BR wmifs (1),
+.BR wmiifs (1),
 .BR wmii (1),
 .BR wmiiwm (1),
-.BR wmikeys (1),
-.BR wmimenu (1),
-.BR wmir (1)
+.BR wmiikeys (1),
+.BR wmiimenu (1),
+.BR wmiir (1)

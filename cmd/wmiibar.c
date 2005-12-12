@@ -69,14 +69,14 @@ static Action acttbl[] = {
 };
 
 static char *version[] = {
-	"wmibar - window manager improved bar - " VERSION "\n"
+	"wmiibar - window manager improved bar - " VERSION "\n"
 		"  (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
 static void usage()
 {
 	fprintf(stderr, "%s",
-			"usage: wmibar -s <socket file> [-v]\n"
+			"usage: wmiibar -s <socket file> [-v]\n"
 			"      -s    socket file\n" "      -v    version info\n");
 	exit(1);
 }
@@ -471,7 +471,7 @@ int main(int argc, char *argv[])
 
 	dpy = XOpenDisplay(0);
 	if (!dpy) {
-		fprintf(stderr, "%s", "wmibar: cannot open display\n");
+		fprintf(stderr, "%s", "wmiibar: cannot open display\n");
 		exit(1);
 	}
 	XSetErrorHandler(dummy_error_handler);
@@ -482,7 +482,7 @@ int main(int argc, char *argv[])
 
 	/* init */
 	if (!(file[B_CTL] = ixp_create(ixps, "/ctl"))) {
-		perror("wmibar: cannot connect IXP server");
+		perror("wmiibar: cannot connect IXP server");
 		exit(1);
 	}
 	file[B_CTL]->after_write = handle_after_write;

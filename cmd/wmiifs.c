@@ -47,14 +47,14 @@ static Action acttbl[] = {
 };
 
 static char *version[] = {
-	"wmifs - window manager improved filesystem - " VERSION "\n"
+	"wmiifs - window manager improved filesystem - " VERSION "\n"
 		" (C)opyright MMV Anselm R. Garbe\n", 0
 };
 
 static void usage()
 {
 	fprintf(stderr,
-			"usage: wmifs -s <socket file> [-v]\n"
+			"usage: wmiifs -s <socket file> [-v]\n"
 			"      -s   socket file\n" "      -v   version info\n");
 	exit(1);
 }
@@ -66,7 +66,7 @@ static void iter_unbind(void *bind, void *aux)
 		b->mount->content = 0;
 		ixp_remove(ixps, b->prefix);
 		if (ixps->errstr)
-			fprintf(stderr, "wmifs: error on unbind %s: %s\n", b->prefix, ixps->errstr);
+			fprintf(stderr, "wmiifs: error on unbind %s: %s\n", b->prefix, ixps->errstr);
 	}
 }
 
@@ -97,7 +97,7 @@ static void unbind(void *obj, char *arg)
 	Bind *b = cext_find_item(&bindings, arg, comp_bindpath);
 
 	if (!b) {
-		fprintf(stderr, "wmifs: unbind: '%s' no such path\n", arg);
+		fprintf(stderr, "wmiifs: unbind: '%s' no such path\n", arg);
 		return;
 	}
 	do_unbind(b);
@@ -114,20 +114,20 @@ static void bind(void *obj, char *arg)
 	cext_strlcpy(cmd, arg, sizeof(cmd));
 	sfile = strchr(cmd, ' ');
 	if (!sfile) {
-		fprintf(stderr, "wmifs: bind: '%s' without socket argument, ignoring\n", arg);
+		fprintf(stderr, "wmiifs: bind: '%s' without socket argument, ignoring\n", arg);
 		return;					/* shortcut with empty argument */
 	}
 	*sfile = 0;
 	sfile++;
 	if (*sfile == 0) {
-		fprintf(stderr, "wmifs: bind: '%s' without socket argument, ignoring\n", arg);
+		fprintf(stderr, "wmiifs: bind: '%s' without socket argument, ignoring\n", arg);
 		return;					/* shortcut with empty argument */
 	}
 	b = cext_emallocz(sizeof(Bind));
 	b->client = init_ixp_client(sfile);
 
 	if (!b->client) {
-		fprintf(stderr, "wmifs: bind: cannot connect to server '%s', ignoring\n", sfile);
+		fprintf(stderr, "wmiifs: bind: cannot connect to server '%s', ignoring\n", sfile);
 		free(b);
 		return;
 	}
@@ -303,18 +303,18 @@ static void check_event(Connection * e)
 	XEvent ev;
 	while (XPending(dpy)) {
 		/*
-		 * wmifs isn't interested in any X events, so just drop them
+		 * wmiifs isn't interested in any X events, so just drop them
 		 * all
 		 */
 		XNextEvent(dpy, &ev);
 	}
-	/* why check them? because X won't kill wmifs when X dies */
+	/* why check them? because X won't kill wmiifs when X dies */
 }
 
 static void run()
 {
 	if (!(files[F_CTL] = ixp_create(ixps, "/ctl"))) {
-		perror("wmifs: cannot connect IXP server");
+		perror("wmiifs: cannot connect IXP server");
 		exit(1);
 	}
 	files[F_CTL]->after_write = handle_after_write;
@@ -359,13 +359,13 @@ int main(int argc, char *argv[])
 
 	if (!getenv("HOME")) {
 		fprintf(stderr, "%s",
-				"wmifs: $HOME environment variable is not set\n");
+				"wmiifs: $HOME environment variable is not set\n");
 		usage();
 	}
 	/* just for the case X crashes/gets quit */
 	dpy = XOpenDisplay(0);
 	if (!dpy) {
-		fprintf(stderr, "%s", "wmifs: cannot open display\n");
+		fprintf(stderr, "%s", "wmiifs: cannot open display\n");
 		exit(1);
 	}
 	ixps = wmii_setup_server(sockfile);
