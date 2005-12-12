@@ -205,7 +205,7 @@ static void handle_shortcut_chain(Window w, Shortcut * processed, char *prefix, 
 		emulate_key_press(mod, key);
 	} else if ((s->mod == mod) && (s->key == key)) {
 		if (s->cmdfile && s->cmdfile->content)
-			spawn(dpy, s->cmdfile->content);
+			wmii_spawn(dpy, s->cmdfile->content);
 		else if (s->next) {
 			snprintf(buf, sizeof(buf), "%s/%s", prefix, s->name);
 			handle_shortcut_chain(w, s, buf, 0);
@@ -236,7 +236,7 @@ static void handle_shortcut_gkb(Window w, unsigned long mod, KeyCode key)
 
 	s = cext_find_item(&shortcuts, &comp, comp_shortcut);
 	if (s && s->cmdfile && s->cmdfile->content) {
-		spawn(dpy, s->cmdfile->content);
+		wmii_spawn(dpy, s->cmdfile->content);
 		return;
 	}
 	XBell(dpy, 0);
@@ -253,7 +253,7 @@ static void handle_shortcut(Window w, unsigned long mod, KeyCode key)
 
 	s = cext_find_item(&shortcuts, &comp, comp_shortcut);
 	if (s && s->cmdfile && s->cmdfile->content) {
-		spawn(dpy, s->cmdfile->content);
+		wmii_spawn(dpy, s->cmdfile->content);
 		return;
 	}
 	if (s && s->next)
@@ -456,7 +456,7 @@ int main(int argc, char *argv[])
 	krect.x = krect.y = 0;
 	krect.width = krect.height = 1;
 
-	init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
+	wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
 
 	win = XCreateWindow(dpy, RootWindow(dpy, screen_num), krect.x, krect.y,
 						krect.width, krect.height, 0, DefaultDepth(dpy, screen_num),

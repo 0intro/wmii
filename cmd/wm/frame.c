@@ -295,7 +295,7 @@ void handle_frame_buttonpress(XButtonEvent *e, Frame *f)
 	bindex = F_EVENT_B2PRESS - 2 + e->button;
 	/* frame mouse handling */
 	if (f->file[bindex]->content)
-		spawn(dpy, f->file[bindex]->content);
+		wmii_spawn(dpy, f->file[bindex]->content);
 	draw_frame(f, nil);
 }
 

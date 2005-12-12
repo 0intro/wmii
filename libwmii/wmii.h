@@ -23,17 +23,9 @@ void wmii_move_ixpfile(File * f, File * to_parent);
 IXPServer *wmii_setup_server(char *sockfile);
 
 /* spawn.c */
-void spawn(void *dpy, char *cmd);
-
-/* util.c */
-void swap(void **p1, void **p2);
+void wmii_spawn(void *dpy, char *cmd);
 
 /* wm.c */
-int
-property(Display * dpy, Window w, Atom a, Atom t, long l,
-		 unsigned char **prop);
-void win_prop(Display * dpy, Window w, Atom a, char *res, int len);
-void send_message(Display * dpy, Window w, Atom a, long value);
-void
-init_lock_modifiers(Display * dpy, unsigned int *valid_mask,
-					unsigned int *num_lock_mask);
+int wmii_property(Display *dpy, Window w, Atom a, Atom t, long l, unsigned char **prop);
+void wmii_send_message(Display *dpy, Window w, Atom a, long value);
+void wmii_init_lock_modifiers(Display *dpy, unsigned int *valid_mask, unsigned int *num_lock_mask);

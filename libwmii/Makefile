@@ -6,7 +6,7 @@ include ../config.mk
 CFLAGS += -I../liblitz -I../libixp -I../libcext
 LDFLAGS += -L../liblitz -llitz -L../libixp -lixp -L../libcext -lcext
 
-SRC = ixputil.c spawn.c util.c wm.c
+SRC = ixputil.c spawn.c wm.c
 
 OBJ = ${SRC:.c=.o}
 

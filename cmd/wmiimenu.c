@@ -111,7 +111,7 @@ static void exec_item(char *cmd)
 		snprintf(rc, len, "%s %s", (char *) files[M_PRE_COMMAND]->content, cmd);
 	}
 	/* fallback */
-	spawn(dpy, rc);
+	wmii_spawn(dpy, rc);
 	/* cleanup */
 	if (files[M_PRE_COMMAND]->content)
 		free(rc);

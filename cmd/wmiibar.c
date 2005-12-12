@@ -328,7 +328,7 @@ static void iter_buttonpress(void *item, void *bpress)
 		snprintf(buf, MAX_BUF, "%s/b%upress", path, e->button);
 		if ((p = ixp_walk(ixps, buf)))
 			if (p->content)
-				spawn(dpy, p->content);
+				wmii_spawn(dpy, p->content);
 		return;
 	}
 }

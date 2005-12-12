@@ -11,7 +11,7 @@
 
 #include "wmii.h"
 
-void spawn(void *dpy, char *cmd)
+void wmii_spawn(void *dpy, char *cmd)
 {
 	/* the questionable double-fork is done to catch all zombies */
 	if (fork() == 0) {

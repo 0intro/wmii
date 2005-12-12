@@ -90,7 +90,7 @@ void invoke_wm_event(File * f)
 {
 	if (!f->content)
 		return;
-	spawn(dpy, f->content);
+	wmii_spawn(dpy, f->content);
 }
 
 static void
@@ -481,8 +481,7 @@ int win_proto(Window w)
 	int protos = 0;
 	int i;
 
-	res = property(dpy, w, wm_protocols, XA_ATOM,
-				   20L, ((unsigned char **) &protocols));
+	res = wmii_property(dpy, w, wm_protocols, XA_ATOM, 20L, ((unsigned char **) &protocols));
 	if (res <= 0) {
 		return protos;
 	}
@@ -502,8 +501,7 @@ int win_state(Window w)
 	int res;
 
 	long *prop = 0;
-	if (property(dpy, w, wm_state, wm_state,
-				 2L, ((unsigned char **) &prop)) > 0) {
+	if (wmii_property(dpy, w, wm_state, wm_state, 2L, ((unsigned char **) &prop)) > 0) {
 		res = (int) *prop;
 		free((long *) prop);
 	} else {
@@ -754,7 +752,7 @@ int main(int argc, char *argv[])
 	init_cursors();
 	init_default();
 	font = blitz_getfont(dpy, def[WM_FONT]->content);
-	init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
+	wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
 	init_screen();
 	init_layouts();
 	scan_wins();

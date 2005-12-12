@@ -14,15 +14,16 @@ Client *alloc_client(Window w)
 {
 	static int id = 0;
 	char buf[MAX_BUF];
-	char buf2[MAX_BUF];
+	XTextProperty name;
 	Client *c = (Client *) cext_emallocz(sizeof(Client));
 
 	c->win = w;
 	snprintf(buf, MAX_BUF, "/detached/client/%d", id);
 	c->file[C_PREFIX] = ixp_create(ixps, buf);
-	win_prop(dpy, c->win, XA_WM_NAME, buf2, MAX_BUF);
+	XGetWMName(dpy, c->win, &name);
 	snprintf(buf, MAX_BUF, "/detached/client/%d/name", id);
-	c->file[C_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
+	c->file[C_NAME] = wmii_create_ixpfile(ixps, buf, (char *)name.value);
+	free(name.value);
 	id++;
 	cext_attach_item(&clients, c);
 	return c;
@@ -117,7 +118,7 @@ void configure_client(Client * c)
 void close_client(Client * c)
 {
 	if (c->proto & PROTO_DEL)
-		send_message(dpy, c->win, wm_protocols, wm_delete);
+		wmii_send_message(dpy, c->win, wm_protocols, wm_delete);
 	else
 		XKillClient(dpy, c->win);
 }
@@ -142,10 +143,9 @@ void init_client(Client * c, XWindowAttributes * wa)
 
 void handle_client_property(Client * c, XPropertyEvent * e)
 {
-	char buf[1024];
+	XTextProperty name;
 	long msize;
 
-	buf[0] = 0;
 	if (e->state == PropertyDelete)
 		return;					/* ignore */
 
@@ -156,13 +156,14 @@ void handle_client_property(Client * c, XPropertyEvent * e)
 	}
 	switch (e->atom) {
 	case XA_WM_NAME:
-		win_prop(dpy, c->win, XA_WM_NAME, buf, sizeof(buf));
-		if (strlen(buf)) {
+		XGetWMName(dpy, c->win, &name);
+		if (strlen((char *)name.value)) {
 			if (c->file[C_NAME]->content)
 				free(c->file[C_NAME]->content);
-			c->file[C_NAME]->content = cext_estrdup(buf);
-			c->file[C_NAME]->size = strlen(buf);
+			c->file[C_NAME]->content = cext_estrdup((char *)name.value);
+			c->file[C_NAME]->size = strlen((char *)name.value);
 		}
+		free(name.value);
 		if (c->frame)
 			draw_client(c, nil);
 		invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
