@@ -349,6 +349,9 @@ static void select_frame(void *obj, char *arg)
 	Column *col = get_sel_column(acme);
 	Frame *f, *old;
 
+	if (!col)
+		return;
+
 	f = old = cext_stack_get_top_item(&col->frames);
 	if (!f || !arg)
 		return;
@@ -380,10 +383,15 @@ static void swap_frame(void *obj, char *arg)
 	Area *a = obj;
 	Acme *acme = a->aux;
 	Column *west = 0, *east = 0, *col = get_sel_column(acme);
-	Frame *north = 0, *south = 0, *f = cext_stack_get_top_item(&col->frames);
+	Frame *north = 0, *south = 0, *f;
 	XRectangle r;
 	size_t ncol, nfr;
 	int colidx, fidx;
+
+	if (!col)
+		return;
+
+	f = cext_stack_get_top_item(&col->frames);
 
 	if (!f || !arg)
 		return;
@@ -458,11 +466,12 @@ static void new_col(void *obj, char *arg)
 	Area *a = obj;
 	Acme *acme = a->aux;
 	Column *col = get_sel_column(acme);
-	Frame *f = cext_stack_get_top_item(&col->frames);
+	Frame *f;
 
-	if (cext_sizeof_container(&col->frames) < 2)
+	if (!col || (cext_sizeof_container(&col->frames) < 2))
 		return;
 
+	f = cext_stack_get_top_item(&col->frames);
 	cext_detach_item(&col->frames, f);
 	f->aux = col = cext_emallocz(sizeof(Column));
 	cext_attach_item(&col->frames, f);
