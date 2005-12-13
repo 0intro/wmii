@@ -629,7 +629,7 @@ static void init_default()
 	def[WM_SEL_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/sstyle/fgcolor", BLITZ_SEL_BORDER_COLOR);
 	def[WM_NORM_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/nstyle/bgcolor", BLITZ_NORM_BG_COLOR);
 	def[WM_NORM_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/nstyle/fgcolor", BLITZ_NORM_FG_COLOR);
-	def[WM_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/nstyle/fgcolor", BLITZ_NORM_BORDER_COLOR);
+	def[WM_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/nstyle/bordercolor", BLITZ_NORM_BORDER_COLOR);
 	def[WM_FONT] = wmii_create_ixpfile(ixps, "/default/font", BLITZ_FONT);
    	def[WM_FONT]->after_write = handle_after_write;
 	def[WM_SNAP_VALUE] = wmii_create_ixpfile(ixps, "/default/snapvalue", "20");	/* 0..1000 */
