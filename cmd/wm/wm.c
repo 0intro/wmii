@@ -247,12 +247,11 @@ static void pager(void *obj, char *arg)
 	XClearWindow(dpy, transient);
 	XMapRaised(dpy, transient);
 	draw_pager();
-	while (XGrabKeyboard (dpy, transient, True, GrabModeAsync, GrabModeAsync, CurrentTime) != GrabSuccess)
+	while (XGrabKeyboard(dpy, transient, True, GrabModeAsync, GrabModeAsync, CurrentTime) != GrabSuccess)
 		usleep(1000);
 
 	for (;;) {
-		while (!XCheckWindowEvent
-			   (dpy, transient, ButtonPressMask | KeyPressMask, &ev)) {
+		while (!XCheckWindowEvent(dpy, transient, ButtonPressMask | KeyPressMask, &ev)) {
 			usleep(20000);
 			continue;
 		}

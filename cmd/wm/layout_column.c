@@ -381,6 +381,7 @@ static void swap_frame(void *obj, char *arg)
 	Acme *acme = a->aux;
 	Column *west = 0, *east = 0, *col = get_sel_column(acme);
 	Frame *north = 0, *south = 0, *f = cext_stack_get_top_item(&col->frames);
+	XRectangle r;
 	size_t ncol, nfr;
 	int colidx, fidx;
 
@@ -402,39 +403,54 @@ static void swap_frame(void *obj, char *arg)
 		south = cext_list_get_item(&col->frames, fidx + 1);
 
 	if (!strncmp(arg, "north", 6)  && north) {
+		r = north->rect;
+		north->rect = f->rect;
+		f->rect = r;
 		cext_swap_items(&col->frames, f, north);
-		iter_arrange_column(col, f->area);
+		resize_frame(f, &f->rect, nil);
+		resize_frame(north, &north->rect, nil);
 		select_col(f, True);
 	}
 	else if (!strncmp(arg, "south", 6) && south) {
+		r = south->rect;
+		south->rect = f->rect;
+		f->rect = r;
 		cext_swap_items(&col->frames, f, south);
-		iter_arrange_column(col, f->area);
+		resize_frame(f, &f->rect, nil);
+		resize_frame(south, &south->rect, nil);
 		select_col(f, True);
 	}
 	else if (!strncmp(arg, "west", 5) && west && (ncol > 1)) {
 		Frame *other = cext_stack_get_top_item(&west->frames);
+		r = other->rect;
+		other->rect = f->rect;
+		f->rect = r;
         cext_detach_item(&col->frames, f);
         cext_detach_item(&west->frames, other);
 		cext_attach_item(&west->frames, f);
 		cext_attach_item(&col->frames, other);
 		f->aux = west;
 		other->aux = col;
-		iter_arrange_column(west, f->area);
-		iter_arrange_column(col, other->area);
+		resize_frame(f, &f->rect, nil);
+		resize_frame(other, &other->rect, nil);
 		select_col(f, True);
 	}
 	else if (!strncmp(arg, "east", 5) && east && (ncol > 1)) {
 		Frame *other = cext_stack_get_top_item(&east->frames);
+		r = other->rect;
+		other->rect = f->rect;
+		f->rect = r;
         cext_detach_item(&col->frames, f);
         cext_detach_item(&east->frames, other);
 		cext_attach_item(&east->frames, f);
 		cext_attach_item(&col->frames, other);
 		f->aux = east;
 		other->aux = col;
-		iter_arrange_column(east, f->area);
-		iter_arrange_column(col, other->area);
+		resize_frame(f, &f->rect, nil);
+		resize_frame(other, &other->rect, nil);
 		select_col(f, True);
 	}
+	draw_frame(f, nil);
 }
 
 static void new_col(void *obj, char *arg)
