@@ -24,7 +24,6 @@ enum {
 	A_FRAME_PREFIX,
 	A_SEL_FRAME,
 	A_CTL,
-	A_GEOMETRY,
 	A_LAYOUT,
 	A_LAST
 };
@@ -66,6 +65,7 @@ enum {
 	WM_DETACHED_FRAME,
 	WM_DETACHED_CLIENT,
 	WM_TRANS_COLOR,
+	WM_AREA_GEOMETRY,
 	WM_SEL_BG_COLOR,
 	WM_SEL_BORDER_COLOR,
 	WM_SEL_FG_COLOR,
@@ -126,7 +126,6 @@ struct Area {
 	Page *page;
 	Layout *layout;
 	Container clients;
-	XRectangle rect;
 	void *aux;					/* free pointer */
 	File *file[A_LAST];
 };
@@ -164,6 +163,7 @@ int screen_num;
 Window root;
 Window transient;
 XRectangle rect;
+XRectangle area_rect;
 Container detached;
 Container pages;
 Container areas;
@@ -201,7 +201,7 @@ File *def[WM_LAST];
 unsigned int valid_mask, num_lock_mask;
 
 /* area.c */
-Area *alloc_area(Page *p, XRectangle * r, char *layout);
+Area *alloc_area(Page *p, char *layout);
 void destroy_area(Area * a);
 void sel_area(Area * a);
 void draw_area(Area * a);

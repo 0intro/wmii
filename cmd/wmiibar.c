@@ -26,6 +26,7 @@ typedef enum {
 	B_FG_COLOR,
 	B_BORDER_COLOR,
 	B_BG_COLOR,
+	B_EVENT_RESIZE,
 	B_LAST
 } BarIndexes;
 
@@ -371,6 +372,8 @@ static void update_geometry()
 	XFreePixmap(dpy, pmap);
 	pmap = XCreatePixmap(dpy, win, brect.width, brect.height, DefaultDepth(dpy, screen_num));
 	XSync(dpy, False);
+	if (file[B_EVENT_RESIZE]->content)
+		wmii_spawn(dpy, file[B_EVENT_RESIZE]->content);
 }
 
 static void handle_after_write(IXPServer * s, File * f)
@@ -421,13 +424,11 @@ static void handle_before_read(IXPServer * s, File * f)
 {
 	char buf[64];
 	if (f == file[B_GEOMETRY]) {
+		snprintf(buf, 64, "%d,%d,%d,%d", brect.x, brect.y, brect.width, brect.height);
 		if (f->content)
 			free(f->content);
-		if (align == SOUTH)
-			f->content = strdup("south");
-		else
-			f->content = strdup("north");
-		f->size = strlen(f->content);
+		f->content = cext_estrdup(buf);
+		f->size = strlen(buf);
 	} else if (f == file[B_NEW]) {
 		snprintf(buf, sizeof(buf), "%d", id++);
 		if (f->content)
@@ -498,6 +499,7 @@ int main(int argc, char *argv[])
 	file[B_GEOMETRY]->before_read = handle_before_read;
 	file[B_GEOMETRY]->after_write = handle_after_write;
 	file[B_EXPANDABLE] = ixp_create(ixps, "/expandable");
+	file[B_EVENT_RESIZE] = ixp_create(ixps, "/event/resize");
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;

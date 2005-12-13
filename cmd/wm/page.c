@@ -39,8 +39,8 @@ Page *alloc_page()
 	snprintf(buf, sizeof(buf), "/%d/ctl", id);
 	p->file[P_CTL] = ixp_create(ixps, buf);
 	p->file[P_CTL]->after_write = handle_after_write_page;
-	alloc_area(p, &rect, "float");
-	alloc_area(p, &rect, def[WM_LAYOUT]->content);
+	alloc_area(p, "float");
+	alloc_area(p, def[WM_LAYOUT]->content);
 	cext_attach_item(&pages, p);
 	def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);

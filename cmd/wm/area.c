@@ -11,13 +11,12 @@
 
 static void handle_after_write_area(IXPServer * s, File * f);
 
-Area *alloc_area(Page *p, XRectangle * r, char *layout)
+Area *alloc_area(Page *p, char *layout)
 {
 	char buf[MAX_BUF];
 	Area *a = (Area *) cext_emallocz(sizeof(Area));
 	size_t id = cext_sizeof(&p->areas);
 
-	a->rect = *r;
 	a->page = p;
 	snprintf(buf, MAX_BUF, "/%s/layout/%d", p->file[P_PREFIX]->name, id);
 	a->file[A_PREFIX] = ixp_create(ixps, buf);
@@ -29,9 +28,6 @@ Area *alloc_area(Page *p, XRectangle * r, char *layout)
 	snprintf(buf, MAX_BUF, "/%s/layout/%d/ctl", p->file[P_PREFIX]->name,  id);
 	a->file[A_CTL] = ixp_create(ixps, buf);
 	a->file[A_CTL]->after_write = handle_after_write_area;
-	snprintf(buf, MAX_BUF, "/%s/layout/%d/geometry", p->file[P_PREFIX]->name,  id);
-	a->file[A_GEOMETRY] = ixp_create(ixps, buf);
-	a->file[A_GEOMETRY]->after_write = handle_after_write_area;
 	snprintf(buf, MAX_BUF, "/%s/layout/%d/name", p->file[P_PREFIX]->name,  id);
 	a->file[A_LAYOUT] = wmii_create_ixpfile(ixps, buf, layout);
 	a->file[A_LAYOUT]->after_write = handle_after_write_area; 
@@ -126,14 +122,6 @@ static void iter_after_write_area(void *item, void *aux)
 			a->layout->init(a);
 		}
 		draw_page(a->page);
-		return;
-	} else if (file == a->file[A_GEOMETRY]) {
-		char *geom = a->file[A_GEOMETRY]->content;
-		if (geom && strrchr(geom, ',')) {
-			blitz_strtorect(&rect, &a->rect, geom);
-			a->layout->arrange(a);
-			draw_page(a->page);
-		}
 		return;
 	}
 }

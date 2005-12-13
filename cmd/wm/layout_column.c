@@ -19,7 +19,6 @@ struct Acme {
 };
 
 struct Column {
-	Bool refresh;
 	Container frames;
 	XRectangle rect;
 };
@@ -68,14 +67,12 @@ static void iter_arrange_column_frame(void *frame, void *height)
 	unsigned int h = *(unsigned int *)height;
 	int idx = cext_list_get_item_index(&col->frames, f) ;
 
-	if (col->refresh) {
-		f->rect = col->rect;
-		f->rect.y = idx * h;
-		if (idx + 1 == size)
-			f->rect.height = f->area->rect.height - f->rect.y;
-		else
-			f->rect.height = h;
-	}
+	f->rect = col->rect;
+	f->rect.y = area_rect.y + idx * h;
+	if (idx + 1 == size)
+		f->rect.height = area_rect.height - f->rect.y + area_rect.y;
+	else
+		f->rect.height = h;
 	resize_frame(f, &f->rect, 0);
 }
 
@@ -86,9 +83,8 @@ static void iter_arrange_column(void *column, void *area)
 	unsigned int height;
    
 	if (size) {
-		height= ((Area *)area)->rect.height / size;
+		height= area_rect.height / size;
 		cext_list_iterate(&col->frames, &height, iter_arrange_column_frame);
-		col->refresh = False;
 	}
 }
 
@@ -109,7 +105,7 @@ static void init_col(Area *a)
 	Acme *acme = cext_emallocz(sizeof(Acme));
 	Column *col = cext_emallocz(sizeof(Column));
 	a->aux = acme;
-	col->rect = a->rect;
+	col->rect = area_rect;
 	cext_attach_item(&acme->columns, col);
 	cext_list_iterate(&a->clients, a, iter_attach_col);
 }
@@ -153,8 +149,7 @@ static Bool attach_col(Area *a, Client *c)
 	attach_client_to_frame(f, c);
 	if (a->page == get_sel_page())
 		XMapWindow(dpy, f->win);
-	col->refresh = True;
-	arrange_col(a);
+	iter_arrange_column(col, a);
 	select_col(f, True);
 	return True;
 }
@@ -172,8 +167,7 @@ static void detach_col(Area *a, Client *c, Bool unmap)
 		cext_detach_item(&col->frames, f);
 		destroy_frame(f);
 	}
-	col->refresh = True;
-	arrange_col(a);
+	iter_arrange_column(col, a);
 }
 
 static void iter_match_frame_horiz(void *frame, void *rect)
@@ -270,9 +264,9 @@ static void drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 		cext_detach_item(&src->frames, f);
 		cext_attach_item(&tgt->frames, f);
 		f->aux = tgt;
-		tgt->refresh = src->refresh = True;
 		cext_stack_top_item(&acme->columns, tgt);
-		arrange_col(f->area);
+		iter_arrange_column(tgt, f->area);
+		iter_arrange_column(src, f->area);
 	}
 }
 
@@ -358,11 +352,10 @@ static void update_column_width(Area *a)
 {
 	Acme *acme = a->aux;
 	size_t size = cext_sizeof(&acme->columns);
-	unsigned int i, width = a->rect.width / cext_sizeof(&acme->columns);
+	unsigned int i, width = area_rect.width / cext_sizeof(&acme->columns);
 
 	for (i = 0; i < size; i++) {
 		Column *col = cext_list_get_item(&acme->columns, i);
-		col->refresh = True;
 		col->rect.x = i * width;
 		col->rect.width = width;
 	}

@@ -196,8 +196,7 @@ int blitz_distance(XRectangle * origin, XRectangle * target)
 	int tx = target->x + target->width / 2;
 	int ty = target->y + target->height / 2;
 
-	return (int) sqrt((double) (((ox - tx) * (ox - tx)) +
-								((oy - ty) * (oy - ty))));
+	return (int) sqrt((double) (((ox - tx) * (ox - tx)) + ((oy - ty) * (oy - ty))));
 }
 
 void blitz_getbasegeometry(Container *c, unsigned int *size, unsigned int *cols, unsigned int *rows)

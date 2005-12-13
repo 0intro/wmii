@@ -517,8 +517,7 @@ static void handle_before_read(IXPServer * s, File * f)
 	char buf[64];
 	if (f != files[M_GEOMETRY])
 		return;
-	snprintf(buf, sizeof(buf), "%d,%d,%d,%d", mrect.x, mrect.y,
-			 mrect.width, mrect.height);
+	snprintf(buf, sizeof(buf), "%d,%d,%d,%d", mrect.x, mrect.y, mrect.width, mrect.height);
 	if (f->content)
 		free(f->content);
 	f->content = strdup(buf);

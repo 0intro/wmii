@@ -20,15 +20,16 @@ static XRectangle initial_rect;
 static int other_wm_running;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 
-static void new_page(void *obj, char *cmd);
-static void _select_page(void *obj, char *cmd);
-static void _destroy_page(void *obj, char *cmd);
-static void quit(void *obj, char *cmd);
-static void _attach_client(void *obj, char *cmd);
-static void _detach_client(void *obj, char *cmd);
-static void _close_client(void *obj, char *cmd);
-static void pager(void *obj, char *cmd);
-static void detached_clients(void *obj, char *cmd);
+static void new_page(void *obj, char *arg);
+static void _select_page(void *obj, char *arg);
+static void _destroy_page(void *obj, char *arg);
+static void quit(void *obj, char *arg);
+static void _attach_client(void *obj, char *arg);
+static void _detach_client(void *obj, char *arg);
+static void _close_client(void *obj, char *arg);
+static void pager(void *obj, char *arg);
+static void detached_clients(void *obj, char *arg);
+static void reserve_area(void *obj, char *arg);
 
 /* action table for /ctl namespace */
 Action wm_acttbl[] = {
@@ -40,7 +41,8 @@ Action wm_acttbl[] = {
 	{"close", _close_client},
 	{"quit", quit},
 	{"pager", pager},
-	{"detached clients", detached_clients},
+	{"detached_clients", detached_clients},
+	{"reserve_area", reserve_area},
 	{0, 0}
 };
 
@@ -81,7 +83,7 @@ void run_action(File * f, void *obj, Action * acttbl)
 			"     or invalid ctl device\n", (char *) f->content);
 }
 
-static void quit(void *obj, char *cmd)
+static void quit(void *obj, char *arg)
 {
 	ixps->runlevel = SHUTDOWN;
 }
@@ -234,7 +236,7 @@ static int handle_kpress(XKeyEvent * e)
 	return -1;
 }
 
-static void pager(void *obj, char *cmd)
+static void pager(void *obj, char *arg)
 {
 	XEvent ev;
 	int i;
@@ -314,7 +316,15 @@ static void draw_detached_clients()
 	}
 }
 
-static void detached_clients(void *obj, char *cmd)
+static void reserve_area(void *obj, char *arg)
+{
+	if (arg && strrchr(arg, ',')) {
+		XRectangle r;
+		blitz_strtorect(&rect, &r, arg);
+	}
+}
+
+static void detached_clients(void *obj, char *arg)
 {
 	XEvent ev;
 	int i, n;
@@ -370,14 +380,14 @@ static void detached_clients(void *obj, char *cmd)
 	}
 }
 
-static void _close_client(void *obj, char *cmd)
+static void _close_client(void *obj, char *arg)
 {
 	Frame *f = get_sel_frame();
 	if (f)
 		close_client(cext_stack_get_top_item(&f->clients));
 }
 
-static void _attach_client(void *obj, char *cmd)
+static void _attach_client(void *obj, char *arg)
 {
 	if (cext_sizeof(&detached)) {
 		Client *c = cext_stack_get_top_item(&detached);
@@ -386,35 +396,35 @@ static void _attach_client(void *obj, char *cmd)
 	}
 }
 
-static void _detach_client(void *obj, char *cmd)
+static void _detach_client(void *obj, char *arg)
 {
 	Client *c = get_sel_client();
 	if (c)
 		detach_client(c, False);
 }
 
-static void _select_page(void *obj, char *cmd)
+static void _select_page(void *obj, char *arg)
 {
 	Page *p = get_sel_page();
-	if (!p || !cmd)
+	if (!p || !arg)
 		return;
-	if (!strncmp(cmd, "prev", 5))
+	if (!strncmp(arg, "prev", 5))
 		p = cext_list_get_prev_item(&pages, p);
-	else if (!strncmp(cmd, "next", 5))
+	else if (!strncmp(arg, "next", 5))
 		p = cext_list_get_next_item(&pages, p);
 	else
-		p = cext_list_get_item(&pages, blitz_strtonum(cmd, 0, cext_sizeof(&pages) - 1));
+		p = cext_list_get_item(&pages, blitz_strtonum(arg, 0, cext_sizeof(&pages) - 1));
 	sel_page(p);
 }
 
-static void _destroy_page(void *obj, char *cmd)
+static void _destroy_page(void *obj, char *arg)
 {
 	Page *p = get_sel_page();
 	if (p)
 		destroy_page(p);
 }
 
-static void new_page(void *obj, char *cmd)
+static void new_page(void *obj, char *arg)
 {
 	Page *p = get_sel_page();
 	if (p)
@@ -527,6 +537,30 @@ int win_state(Window w)
 	return res;
 }
 
+static void iter_update_area(void *area, void *aux)
+{
+	Area *a = area;
+	a->layout->arrange(a);
+}
+
+static void iter_update_page(void *page, void *aux)
+{
+	Page *p = page;
+	cext_list_iterate(&p->areas, nil, iter_update_area);
+}
+
+void handle_before_read(IXPServer *s, File *f)
+{
+	char buf[64];
+	if (f == def[WM_AREA_GEOMETRY]) {
+		snprintf(buf, 64, "%d,%d,%d,%d", area_rect.x, area_rect.y, area_rect.width, area_rect.height);
+		if (f->content)
+			free(f->content);
+		f->content = cext_estrdup(buf);
+		f->size = strlen(buf);
+	}
+}
+
 void handle_after_write(IXPServer * s, File * f)
 {
 	if (f == def[WM_CTL])
@@ -544,7 +578,14 @@ void handle_after_write(IXPServer * s, File * f)
 		XFreeFont(dpy, font);
 		font = blitz_getfont(dpy, def[WM_FONT]->content);
 	}
-
+	else if (f == def[WM_AREA_GEOMETRY]) {
+		char *geom = def[WM_AREA_GEOMETRY]->content;
+		if (geom && strrchr(geom, ',')) {
+			area_rect = rect;
+			blitz_strtorect(&rect, &area_rect, geom);
+			cext_list_iterate(&pages, nil, iter_update_page);
+		}
+	}
 	check_event(0);
 }
 
@@ -580,6 +621,9 @@ static void init_default()
 	def[WM_DETACHED_CLIENT] = ixp_create(ixps, "/detached/client");
 	def[WM_TRANS_COLOR] = wmii_create_ixpfile(ixps, "/default/transcolor", BLITZ_SEL_FG_COLOR);
 	def[WM_TRANS_COLOR]->after_write = handle_after_write;
+	def[WM_AREA_GEOMETRY] = wmii_create_ixpfile(ixps, "/default/area/geometry", BLITZ_SEL_FG_COLOR);
+	def[WM_AREA_GEOMETRY]->after_write = handle_after_write;
+	def[WM_AREA_GEOMETRY]->before_read = handle_before_read;
 	def[WM_SEL_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/sstyle/bgcolor", BLITZ_SEL_BG_COLOR);
 	def[WM_SEL_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/sstyle/fgcolor", BLITZ_SEL_FG_COLOR);
 	def[WM_SEL_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/sstyle/fgcolor", BLITZ_SEL_BORDER_COLOR);
@@ -624,6 +668,7 @@ static void init_screen()
 	rect.x = rect.y = 0;
 	rect.width = DisplayWidth(dpy, screen_num);
 	rect.height = DisplayHeight(dpy, screen_num);
+	area_rect = rect;
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
