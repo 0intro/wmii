@@ -471,8 +471,7 @@ void scan_wins()
 				c = alloc_client(wins[i]);
 				init_client(c, &wa);
 				attach_client(c);
-				if (c->ignore_unmap)
-					c->ignore_unmap--;
+				c->ignore_unmap++; /* was viewable already */
 			}
 		}
 	}
