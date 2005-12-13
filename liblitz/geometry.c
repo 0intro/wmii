@@ -183,10 +183,9 @@ int blitz_strtorect(XRectangle * root, XRectangle * r, char *val)
 	return TRUE;
 }
 
-int blitz_ispointinrect(int x, int y, XRectangle * r)
+Bool blitz_ispointinrect(int x, int y, XRectangle * r)
 {
-	return (x >= r->x) && (x <= r->x + r->width)
-		&& (y >= r->y) && (y <= r->y + r->height);
+	return (x >= r->x) && (x <= r->x + r->width) && (y >= r->y) && (y <= r->y + r->height);
 }
 
 int blitz_distance(XRectangle * origin, XRectangle * target)

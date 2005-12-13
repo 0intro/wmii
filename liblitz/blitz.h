@@ -43,7 +43,7 @@ void blitz_drawlabelnoborder(Display * dpy, Draw * r);
 
 /* geometry.c */
 int blitz_strtorect(XRectangle * root, XRectangle * r, char *val);
-int blitz_ispointinrect(int x, int y, XRectangle * r);
+Bool blitz_ispointinrect(int x, int y, XRectangle * r);
 int blitz_distance(XRectangle * origin, XRectangle * target);
 void blitz_getbasegeometry(Container *c, unsigned int *size, unsigned int *cols, unsigned int *rows);
 
