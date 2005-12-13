@@ -63,7 +63,7 @@ static void iter_arrange_column_frame(void *frame, void *height)
 {
 	Frame *f = frame;
 	Column *col = f->aux;
-	size_t size = cext_sizeof(&col->frames);
+	size_t size = cext_sizeof_container(&col->frames);
 	unsigned int h = *(unsigned int *)height;
 	int idx = cext_list_get_item_index(&col->frames, f) ;
 
@@ -79,7 +79,7 @@ static void iter_arrange_column_frame(void *frame, void *height)
 static void iter_arrange_column(void *column, void *area)
 {
 	Column *col = column;
-	size_t size = cext_sizeof(&col->frames);
+	size_t size = cext_sizeof_container(&col->frames);
 	unsigned int height;
    
 	if (size) {
@@ -103,10 +103,7 @@ static void iter_attach_col(void *client, void *area)
 static void init_col(Area *a)
 {
 	Acme *acme = cext_emallocz(sizeof(Acme));
-	Column *col = cext_emallocz(sizeof(Column));
 	a->aux = acme;
-	col->rect = area_rect;
-	cext_attach_item(&acme->columns, col);
 	cext_list_iterate(&a->clients, a, iter_attach_col);
 }
 
@@ -136,6 +133,12 @@ static Bool attach_col(Area *a, Client *c)
 	Column *col = get_sel_column(acme);
 	Frame *f = get_sel_frame_of_area(a);
 
+	if (!col) {
+		col = cext_emallocz(sizeof(Column));
+		col->rect = area_rect;
+		cext_attach_item(&acme->columns, col);
+	}
+
 	/* check for tabbing? */
 	if (f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))
 		f = 0;
@@ -154,6 +157,24 @@ static Bool attach_col(Area *a, Client *c)
 	return True;
 }
 
+static void update_column_width(Area *a)
+{
+	Acme *acme = a->aux;
+	size_t size = cext_sizeof_container(&acme->columns);
+	unsigned int i, width;
+
+	if (!size)
+		return;
+
+	width = area_rect.width / size;
+	for (i = 0; i < size; i++) {
+		Column *col = cext_list_get_item(&acme->columns, i);
+		col->rect.x = i * width;
+		col->rect.width = width;
+	}
+	arrange_col(a);
+}
+
 static void detach_col(Area *a, Client *c, Bool unmap)
 {
 	Acme *acme = a->aux;
@@ -161,13 +182,19 @@ static void detach_col(Area *a, Client *c, Bool unmap)
 	Column *col = f->aux;
 
 	detach_client_from_frame(c, unmap);
-	if (!cext_sizeof(&f->clients)) {
+	if (!cext_sizeof_container(&f->clients)) {
 		detach_frame_from_area(f);
 		cext_detach_item(&acme->frames, f);
 		cext_detach_item(&col->frames, f);
 		destroy_frame(f);
 	}
-	iter_arrange_column(col, a);
+	if (cext_sizeof_container(&col->frames))
+		iter_arrange_column(col, a);
+	else {
+		cext_detach_item(&acme->columns, col);
+		free(col);
+		update_column_width(a);
+	}
 }
 
 static void iter_match_frame_horiz(void *frame, void *rect)
@@ -184,8 +211,8 @@ static void drop_resize(Frame *f, XRectangle *new)
 	Column *west = 0, *east = 0, *col = f->aux;
 	Frame *north = 0, *south = 0;
 	Acme *acme = f->area->aux;
-	size_t ncol = cext_sizeof(&acme->columns);
-	size_t nfr = cext_sizeof(&col->frames);
+	size_t ncol = cext_sizeof_container(&acme->columns);
+	size_t nfr = cext_sizeof_container(&col->frames);
 	int colidx = cext_list_get_item_index(&acme->columns, col);
 	int fidx = cext_list_get_item_index(&col->frames, f);
 
@@ -330,7 +357,7 @@ static void select_frame(void *obj, char *arg)
 		f = cext_stack_get_top_item(&col->frames);
 	}
 	else 
-		f = cext_list_get_item(&col->frames, blitz_strtonum(arg, 0, cext_sizeof(&col->frames) - 1));
+		f = cext_list_get_item(&col->frames, blitz_strtonum(arg, 0, cext_sizeof_container(&col->frames) - 1));
 	if (f && old != f) {
 		select_col(f, True);
 		draw_frame(old, nil);
@@ -348,25 +375,19 @@ static void swap_frame(void *obj, char *arg)
 		return;
 }
 
-static void update_column_width(Area *a)
-{
-	Acme *acme = a->aux;
-	size_t size = cext_sizeof(&acme->columns);
-	unsigned int i, width = area_rect.width / cext_sizeof(&acme->columns);
-
-	for (i = 0; i < size; i++) {
-		Column *col = cext_list_get_item(&acme->columns, i);
-		col->rect.x = i * width;
-		col->rect.width = width;
-	}
-	arrange_col(a);
-}
-
 static void new_col(void *obj, char *arg)
 {
 	Area *a = obj;
 	Acme *acme = a->aux;
-	Column *col = cext_emallocz(sizeof(Column));
+	Column *col = get_sel_column(acme);
+	Frame *f = cext_stack_get_top_item(&col->frames);
+
+	if (cext_sizeof_container(&col->frames) < 2)
+		return;
+
+	cext_detach_item(&col->frames, f);
+	f->aux = col = cext_emallocz(sizeof(Column));
+	cext_attach_item(&col->frames, f);
 	cext_attach_item(&acme->columns, col);
 	update_column_width(a);
 }
@@ -378,10 +399,10 @@ static void destroy_col(void *obj, char *arg)
 	Column *col = get_sel_column(acme);
 	size_t size;
 
-	if (cext_sizeof(&acme->columns) > 1) {
-		while (cext_sizeof(&col->frames)) {
+	if (cext_sizeof_container(&acme->columns) > 1) {
+		while (cext_sizeof_container(&col->frames)) {
 			Frame *f = cext_stack_get_top_item(&col->frames);
-			while ((size = cext_sizeof(&f->clients))) {
+			while ((size = cext_sizeof_container(&f->clients))) {
 				detach_col(a, cext_stack_get_top_item(&f->clients), a->page != get_sel_page());
 			    if (size == 1)
 				 	break;	

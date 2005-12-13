@@ -278,7 +278,7 @@ void draw_frame(void *frame, void *aux)
 void handle_frame_buttonpress(XButtonEvent *e, Frame *f)
 {
 	Align align;
-	size_t size = cext_sizeof(&f->clients);
+	size_t size = cext_sizeof_container(&f->clients);
 	int bindex, cindex = e->x / (f->rect.width / size);
 	/*fprintf(stderr, "%d (x) / %d (w) / %d (size) = %d (#c)\n", e->x, f->rect.width, size, cindex);*/
 	/*sel_client(cext_list_get_item(&f->clients, cindex));*/
@@ -338,7 +338,7 @@ static void select_client(void *obj, char *arg)
 {
 	Client *c;
 	Frame *f = obj;
-	size_t size = cext_sizeof(&f->clients);
+	size_t size = cext_sizeof_container(&f->clients);
 	if (!f || !arg || size == 1)
 		return;
 	c = cext_stack_get_top_item(&f->clients);
@@ -347,7 +347,7 @@ static void select_client(void *obj, char *arg)
 	else if (!strncmp(arg, "next", 5))
 		c = cext_list_get_next_item(&f->clients, c);
 	else
-		c = cext_list_get_item(&f->clients, blitz_strtonum(arg, 0, cext_sizeof(&f->clients) - 1));
+		c = cext_list_get_item(&f->clients, blitz_strtonum(arg, 0, cext_sizeof_container(&f->clients) - 1));
 	sel_client(c);
 	draw_frame(f, nil);
 }

@@ -196,7 +196,7 @@ void draw_client(void *item, void *aux)
 	if (!tabh)
 		return;
 
-	size = cext_sizeof(&f->clients);
+	size = cext_sizeof_container(&f->clients);
 	tw = f->rect.width;
 	if (size)
 		tw /= size;
@@ -295,7 +295,7 @@ void attach_client(Client * c)
 {
 	Area *a = 0;
 	Frame *old = get_sel_frame();
-	if (!cext_sizeof(&pages))
+	if (!cext_sizeof_container(&pages))
 		alloc_page();
 	/* transient stuff */
 	a = get_sel_area();

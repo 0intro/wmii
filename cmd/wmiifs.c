@@ -161,7 +161,7 @@ static Bind *fd_to_bind(int fd, int *client_fd)
 	File *f = fd_to_file(ixps, fd);
 	unsigned int i, j;
 	Bind *b;
-	size_t size = cext_sizeof(&bindings);
+	size_t size = cext_sizeof_container(&bindings);
 
 	if (!f)
 		return nil;

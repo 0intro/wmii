@@ -203,7 +203,7 @@ void blitz_getbasegeometry(Container *c, unsigned int *size, unsigned int *cols,
 {
 	float sq, dummy;
 
-	*size = cext_sizeof(c);
+	*size = cext_sizeof_container(c);
 	sq = sqrt(*size);
 	if (modff(sq, &dummy) < 0.5)
 		*rows = floor(sq);

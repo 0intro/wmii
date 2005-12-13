@@ -198,7 +198,7 @@ static Page *xy_to_pager_page(int x, int y)
 	XRectangle r;
 	Page *p;
 
-	if (!cext_sizeof(&pages))
+	if (!cext_sizeof_container(&pages))
 		return nil;
 	blitz_getbasegeometry(&pages, &size, &cols, &rows);
 	dx = (cols - 1) * GAP;		/* GAPpx space */
@@ -241,7 +241,7 @@ static void pager(void *obj, char *arg)
 	XEvent ev;
 	int i;
 
-	if (!cext_sizeof(&pages))
+	if (!cext_sizeof_container(&pages))
 		return;
 
 	XClearWindow(dpy, transient);
@@ -261,7 +261,7 @@ static void pager(void *obj, char *arg)
 		case KeyPress:
 			XUnmapWindow(dpy, transient);
 			if ((i = handle_kpress(&ev.xkey)) != -1)
-				if (i < cext_sizeof(&pages))
+				if (i < cext_sizeof_container(&pages))
 					sel_page(cext_list_get_item(&pages, i));
 			XUngrabKeyboard(dpy, CurrentTime);
 			return;
@@ -284,7 +284,7 @@ static void draw_detached_clients()
 	unsigned int i, ic, ir, tw, th, rows, cols, size;
 	int dx, dy;
 
-	if (!cext_sizeof(&detached))
+	if (!cext_sizeof_container(&detached))
 		return;
 	blitz_getbasegeometry(&detached, &size, &cols, &rows);
 	dx = (cols - 1) * GAP;		/* GAPpx space */
@@ -328,7 +328,7 @@ static void detached_clients(void *obj, char *arg)
 {
 	XEvent ev;
 	int i, n;
-	size_t size = cext_sizeof(&detached);
+	size_t size = cext_sizeof_container(&detached);
 	Client *c;
 
 	if (!size)
@@ -389,7 +389,7 @@ static void _close_client(void *obj, char *arg)
 
 static void _attach_client(void *obj, char *arg)
 {
-	if (cext_sizeof(&detached)) {
+	if (cext_sizeof_container(&detached)) {
 		Client *c = cext_stack_get_top_item(&detached);
 		cext_detach_item(&detached, c);
 		attach_client(c);
@@ -413,7 +413,7 @@ static void _select_page(void *obj, char *arg)
 	else if (!strncmp(arg, "next", 5))
 		p = cext_list_get_next_item(&pages, p);
 	else
-		p = cext_list_get_item(&pages, blitz_strtonum(arg, 0, cext_sizeof(&pages) - 1));
+		p = cext_list_get_item(&pages, blitz_strtonum(arg, 0, cext_sizeof_container(&pages) - 1));
 	sel_page(p);
 }
 

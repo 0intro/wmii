@@ -92,7 +92,7 @@ void *cext_find_item(Container *c, void *pattern, int (*comp)(void *pattern, voi
 	return i ? i->item : nil;
 }
 
-size_t cext_sizeof(Container *c)
+size_t cext_sizeof_container(Container *c)
 {
 	size_t idx = 0;
 	CItem *i;
@@ -202,7 +202,7 @@ int cext_list_get_item_index(Container *c, void *item)
 
 void *cext_list_get_next_item(Container *c, void *item)
 {
-	size_t size = cext_sizeof(c);
+	size_t size = cext_sizeof_container(c);
 	int idx = cext_list_get_item_index(c, item);
 	if (idx == -1)
 		return nil;
@@ -215,7 +215,7 @@ void *cext_list_get_next_item(Container *c, void *item)
 
 void *cext_list_get_prev_item(Container *c, void *item)
 {
-	size_t size = cext_sizeof(c);
+	size_t size = cext_sizeof_container(c);
 	int idx = cext_list_get_item_index(c, item);
 	if (idx == -1)
 		return nil;

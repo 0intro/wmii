@@ -15,7 +15,7 @@ Area *alloc_area(Page *p, char *layout)
 {
 	char buf[MAX_BUF];
 	Area *a = (Area *) cext_emallocz(sizeof(Area));
-	size_t id = cext_sizeof(&p->areas);
+	size_t id = cext_sizeof_container(&p->areas);
 
 	a->page = p;
 	snprintf(buf, MAX_BUF, "/%s/layout/%d", p->file[P_PREFIX]->name, id);

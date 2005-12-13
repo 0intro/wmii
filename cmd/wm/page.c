@@ -23,7 +23,7 @@ Page *alloc_page()
 {
 	Page *p = cext_emallocz(sizeof(Page));
 	char buf[MAX_BUF], buf2[16];
-	size_t id = cext_sizeof(&pages);
+	size_t id = cext_sizeof_container(&pages);
 
 	snprintf(buf2, sizeof(buf2), "%d", id);
 	p->areas.list = p->areas.stack = 0;
@@ -170,6 +170,7 @@ static void select_area(void *obj, char *arg)
 	else if (!strncmp(arg, "next", 5))
 		a = cext_list_get_next_item(&p->areas, a);
 	else 
-		a = cext_list_get_item(&p->areas, blitz_strtonum(arg, 0, cext_sizeof(&p->areas) - 1));
+		a = cext_list_get_item(&p->areas, blitz_strtonum(arg, 0, cext_sizeof_container(&p->areas) - 1));
 	sel_area(a);
+	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }

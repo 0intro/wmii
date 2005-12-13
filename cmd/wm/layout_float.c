@@ -93,7 +93,7 @@ static void detach_float(Area *a, Client *c, Bool unmap)
 {
 	Frame *f = c->frame;
 	detach_client_from_frame(c, unmap);
-	if (!cext_sizeof(&f->clients)) {
+	if (!cext_sizeof_container(&f->clients)) {
 		detach_frame_from_area(f);
 		cext_detach_item((Container *)a->aux, f);
 		destroy_frame(f);
@@ -136,7 +136,7 @@ static void select_frame(void *obj, char *arg)
 	else if (!strncmp(arg, "next", 5))
 		f = cext_list_get_next_item(c, f);
 	else 
-		f = cext_list_get_item(c, blitz_strtonum(arg, 0, cext_sizeof(c) - 1));
+		f = cext_list_get_item(c, blitz_strtonum(arg, 0, cext_sizeof_container(c) - 1));
 	if (old != f) {
 		select_float(f, True);
 		center_pointer(f);

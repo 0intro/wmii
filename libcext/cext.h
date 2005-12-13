@@ -35,7 +35,7 @@ void cext_attach_item(Container *c, void *item);
 void cext_detach_item(Container *c, void *item);
 void *cext_find_item(Container *c, void *pattern, int (*comp)(void *pattern, void *item));
 void cext_swap_items(Container *c, void *item1, void *item2);
-size_t cext_sizeof(Container *c);
+size_t cext_sizeof_container(Container *c);
 void cext_stack_top_item(Container *c, void *item);
 void *cext_stack_get_top_item(Container *c);
 void *cext_stack_get_down_item(Container *c, void *item);

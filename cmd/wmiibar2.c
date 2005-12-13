@@ -194,7 +194,7 @@ static Bool make_qid(Qid * dir, char *wname, Qid * new)
 		}
 		/* check if wname is a number, otherwise file not found */
 		idx = (u16) cext_strtonum(wname, 1, 0xffff, &errstr);
-		if (errstr || cext_sizeof(&items) < idx)
+		if (errstr || cext_sizeof_container(&items) < idx)
 			return False;
 		/* found */
 		new->path = make_qpath(Ditem, idx, NONE);

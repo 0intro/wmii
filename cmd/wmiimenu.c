@@ -236,7 +236,7 @@ static int update_items(char *pattern)
 			p->parent = f;		/* restore HACK */
 	}
 
-	size = cext_sizeof(&items);
+	size = cext_sizeof_container(&items);
 	update_offsets();
 	return size;
 }
@@ -316,7 +316,7 @@ static void handle_kpress(XKeyEvent * e)
 	char buf[32];
 	int num;
 	static char text[4096];
-	size_t len = 0, size = cext_sizeof(&items);
+	size_t len = 0, size = cext_sizeof_container(&items);
 	File *selitem = cext_list_get_item(&items, sel);
 	File *hist = cext_stack_get_top_item(&history);
 

@@ -198,7 +198,7 @@ static void draw()
 	unsigned int i, w, xoff = 0;
 	unsigned expandable = 0;
 	char buf[32];
-	size_t size = cext_sizeof(&items);
+	size_t size = cext_sizeof_container(&items);
 
 	if (!size)
 		return;
