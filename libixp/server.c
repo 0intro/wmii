@@ -75,19 +75,15 @@ static void handle_ixp_open(Connection * c)
 
 static void handle_ixp_read(Connection * c, ReqHeader * h)
 {
-	int fidx = h->fd - (c->index * MAX_CONN);
 	void *data = 0;
 	size_t out_len;
 
 	data = cext_emallocz(h->buf_len);
 	out_len = c->s->read(c->s, h->fd, h->offset, data, h->buf_len);
 	free(c->data);
-	if (c->s->errstr) {
+	if (c->s->errstr)
 		c->data = rerror_message(c->s->errstr, &c->len);
-		if (c->files[fidx] && c->files[fidx]->lock > 0)
-			c->files[fidx]->lock--;
-
-	} else
+	else
 		c->data = rread_message(data, out_len, &c->len);
 	c->remain = c->len;
 	free(data);
@@ -95,16 +91,12 @@ static void handle_ixp_read(Connection * c, ReqHeader * h)
 
 static void handle_ixp_write(Connection * c, ReqHeader * h)
 {
-	int fidx = h->fd - (c->index * MAX_CONN);
 	c->s->write(c->s, h->fd, h->offset,
 				((char *) c->data) + sizeof(ReqHeader), h->buf_len);
 	free(c->data);
-	if (c->s->errstr) {
+	if (c->s->errstr)
 		c->data = rerror_message(c->s->errstr, &c->len);
-		if (c->files[fidx] && c->files[fidx]->lock > 0)
-			c->files[fidx]->lock--;
-
-	} else
+	else
 		c->data = rwrite_message(&c->len);
 	c->remain = c->len;
 }
@@ -116,12 +108,9 @@ static void handle_ixp_close(Connection * c, ReqHeader * h)
 	c->s->close(c->s, h->fd);
 	c->files[fidx] = 0;
 	free(c->data);
-	if (c->s->errstr) {
+	if (c->s->errstr)
 		c->data = rerror_message(c->s->errstr, &c->len);
-		if (c->files[fidx] && c->files[fidx]->lock > 0)
-			c->files[fidx]->lock--;
-
-	} else
+	else
 		c->data = rclose_message(&c->len);
 	c->remain = c->len;
 }
@@ -198,11 +187,8 @@ static void close_conn(Connection * c)
 	c->fd = -1;
 	c->mode = 0;
 	for (i = 0; i < MAX_OPEN_FILES; i++) {
-		if (c->files[i]) {
-			if (c->files[i]->lock > 0)
-				c->files[i]->lock--;
+		if (c->files[i])
 			c->files[i] = 0;
-		}
 	}
 }
 

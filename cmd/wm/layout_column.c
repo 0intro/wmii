@@ -71,6 +71,7 @@ static void iter_arrange_column_frame(void *frame, void *height)
 		f->rect.height = area_rect.height - f->rect.y + area_rect.y;
 	else
 		f->rect.height = h;
+
 	resize_frame(f, &f->rect, 0);
 }
 

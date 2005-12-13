@@ -2,6 +2,7 @@
 # configure wmii
 
 TAB=0
+HANDLEINC=0
 BAR_ALIGN=south
 #BAR_ALIGN=north
 
@@ -58,6 +59,7 @@ fn frameconf {
     normstyle $1/nstyle
     selstyle $1/sstyle
     wmiir write $1/tab $TAB
+    wmiir write $1/handleinc $HANDLEINC
     if(~ $2 refresh)
         wmiir write $1/geometry +0,+0,+0,+0  # causes refresh
 }
@@ -78,14 +80,10 @@ fn barsucks {
 }
 
 wmiir write /bar/geometry $BAR_ALIGN
-if (~ $BAR_ALIGN south) {
-	wmiir write /bar/event/resize \
-	'val=`{wmiir read /bar/geometry|sed ''s/,/ /g''|awk ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+0,+0,-''^$val'
-}
-if not {
-	wmiir write /bar/event/resize \
-	'val=`{wmiir read /bar/geometry|sed ''s/,/ /g''|awk ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+''^$val^'',+0,-''^$val'
-}
+if (~ $BAR_ALIGN south)
+	wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|sed ''s/,/ /g''|awk ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+0,+0,-''^$val'
+if not
+	wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|sed ''s/,/ /g''|awk ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+''^$val^'',+0,-''^$val'
 
 wmiir write /bar/ctl reset
 wmiir write /bar/font $FONT
@@ -113,7 +111,7 @@ wmiir write /bar/ctl 'display 1'
 
 wmiir write /wm/default/font $FONT
 wmiir write /wm/default/transcolor $SEL_BORDER_COLOR
-wmiir write /wm/default/handleinc 0
+wmiir write /wm/default/handleinc $HANDLEINC
 
 wmiir write /wm/default/border 1
 wmiir write /wm/event/clientupdate \
@@ -123,8 +121,8 @@ wmiir write /wm/event/pageupdate \
 'wmiir write /bar/'^$plab^'/data `{wmiir read /wm/sel/name} &&' ^ \
 'wmiir write /bar/'^$llab^'/data `{wmiir read /wm/sel/layout/sel/name}'
 
-for(frame in `{wmiir read /wm/sel/layout/sel | grep '^[0-9]'})
-    framesconf /wm/sel/layout/sel/$frame refresh
+for(layout in `{wmiir read /wm/sel/layout/ | grep '^[0-9]'})
+    framesconf /wm/sel/layout/$layout/frame refresh
 frameconf /wm/default norefresh
 
 
@@ -143,7 +141,7 @@ kbind normal $MODKEY-d 'wmiir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmiir write /wm/ctl attach'
 kbind normal $MODKEY-S-a 'wmiir write /wm/ctl detached_clients'
 kbind normal $MODKEY-S-c 'wmiir write /wm/sel/layout/1/name column'
-kbind normal $MODKEY-S-n 'wmiir write /wm/sel/layout/sel/ctl new'
+kbind normal $MODKEY-n 'wmiir write /wm/sel/layout/sel/ctl new'
 kbind normal $MODKEY-S-f 'wmiir write /wm/sel/layout/sel/name float'
 kbind normal $MODKEY-Return 'wmiir write /wm/sel/layout/sel/ctl ''swap west'''
 kbind normal $MODKEY-S-Return 'wmiir write /wm/sel/layout/sel/ctl ''swap east'''

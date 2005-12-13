@@ -115,9 +115,8 @@ File *ixp_open(IXPServer * s, char *path)
 	f = ixp_walk(s, path);
 	if (!f) {
 		set_error(s, "file does not exist");
-		return 0;
+		return nil;
 	}
-	f->lock++;
 	return f;
 }
 
@@ -126,8 +125,6 @@ void ixp_close(IXPServer * s, int fd)
 	File *f = fd_to_file(s, fd);
 	if (!f)
 		set_error(s, "invalid file descriptor");
-	else if (f->lock > 0)
-		f->lock--;
 }
 
 size_t
@@ -209,14 +206,11 @@ static void _ixp_remove(IXPServer * s, File * f)
 {
 	if (!f)
 		return;
+	fprintf(stderr, "ixp_remove: %s\n", f->name);
 	if (f->next) {
 		_ixp_remove(s, f->next);
 		if (s->errstr)
 			return;
-	}
-	if (f->lock) {
-		set_error(s, "cannot remove opened file");
-		return;					/* a file is opened, so stop removing tree */
 	}
 	if (!f->bind && is_directory(f)) {
 		_ixp_remove(s, f->content);
@@ -240,10 +234,6 @@ void ixp_remove_file(IXPServer * s, File * f)
 	set_error(s, 0);
 	if (!f) {
 		set_error(s, "file does not exist");
-		return;
-	}
-	if (f->lock) {
-		set_error(s, "cannot remove opened file");
 		return;
 	}
 	/* detach */

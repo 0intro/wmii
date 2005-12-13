@@ -707,15 +707,7 @@ static int startup_error_handler(Display * dpy, XErrorEvent * error)
 
 static void clean_client_up(void *item, void *aux)
 {
-	Client *c = item;
-	Frame *f = c->frame;
-	if (f) {
-		XWindowChanges wc;
-		gravitate(c, tab_height(f), border_width(f), 1);
-		XReparentWindow(dpy, c->win, root, f->rect.x + c->rect.x, f->rect.y + c->rect.y);
-		wc.border_width = c->border;
-		XConfigureWindow(dpy, c->win, CWBorderWidth, &wc);
-	}
+	detach_client(item, False);
 }
 
 static void cleanup()
@@ -809,7 +801,7 @@ int main(int argc, char *argv[])
 	/* main event loop */
 	run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event, 0);
 	cleanup();
-	deinit_server(ixps);
+/*	deinit_server(ixps);*/
 	XCloseDisplay(dpy);
 
 	return 0;

@@ -385,12 +385,11 @@ static void iter_after_write_frame(void *item, void *aux)
 	} else if (file == f->file[F_GEOMETRY]) {
 		char *geom = f->file[F_GEOMETRY]->content;
 		if (geom && strrchr(geom, ',')) {
-			XRectangle frect;
+			XRectangle frect = f->rect;
 			blitz_strtorect(&rect, &frect, geom);
 			resize_frame(f, &frect, 0);
 			draw_page(f->area->page);
 		}
-		return;
 	}
 }
 
