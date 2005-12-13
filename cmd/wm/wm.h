@@ -95,7 +95,7 @@ enum {
 #define LAYOUT                 "column"
 #define GAP                    5
 
-#define ROOT_MASK              (SubstructureRedirectMask | ButtonPressMask | ButtonReleaseMask)
+#define ROOT_MASK              (SubstructureRedirectMask | SubstructureNotifyMask | ButtonPressMask | ButtonReleaseMask)
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
 
 typedef struct Page Page;

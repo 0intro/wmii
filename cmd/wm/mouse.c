@@ -309,13 +309,12 @@ void mouse_move(Frame * f)
 	pt.y = ey;
 	XSync(dpy, False);
 	XGrabServer(dpy);
-	XGrabPointer(dpy, root, False, ButtonMotionMask | ButtonReleaseMask,
-				 GrabModeAsync, GrabModeAsync, None, move_cursor,
-				 CurrentTime);
+	while (XGrabPointer(dpy, f->win, False, ButtonMotionMask | ButtonReleaseMask,
+				 		GrabModeAsync, GrabModeAsync, None, move_cursor, CurrentTime) != GrabSuccess)
+		usleep(20000);
+
 	for (;;) {
-		while (!XCheckMaskEvent(dpy,
-								ButtonReleaseMask | ButtonMotionMask,
-								&ev)) {
+		while (!XCheckMaskEvent(dpy, ButtonReleaseMask | ButtonMotionMask, &ev)) {
 			usleep(20000);
 			continue;
 		}
@@ -549,13 +548,12 @@ void mouse_resize(Frame * f, Align align)
 	XQueryPointer(dpy, f->win, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
 	XSync(dpy, False);
 	XGrabServer(dpy);
-	XGrabPointer(dpy, f->win, False, ButtonMotionMask | ButtonReleaseMask,
-				 GrabModeAsync, GrabModeAsync, None, resize_cursor,
-				 CurrentTime);
+	while (XGrabPointer(dpy, f->win, False, ButtonMotionMask | ButtonReleaseMask,
+				 		GrabModeAsync, GrabModeAsync, None, resize_cursor, CurrentTime) != GrabSuccess)
+		usleep(20000);
+
 	for (;;) {
-		while (!XCheckMaskEvent(dpy,
-								ButtonReleaseMask | ButtonMotionMask,
-								&ev)) {
+		while (!XCheckMaskEvent(dpy, ButtonReleaseMask | ButtonMotionMask, &ev)) {
 			usleep(20000);
 			continue;
 		}
@@ -593,7 +591,6 @@ void mouse_resize(Frame * f, Align align)
 
 void center_pointer(Frame * f)
 {
-
 	Window dummy;
 	int wex, wey, ex, ey, i;
 	unsigned int dmask;

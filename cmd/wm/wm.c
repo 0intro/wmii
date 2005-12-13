@@ -247,8 +247,13 @@ static void pager(void *obj, char *arg)
 	XClearWindow(dpy, transient);
 	XMapRaised(dpy, transient);
 	draw_pager();
+
 	while (XGrabKeyboard(dpy, transient, True, GrabModeAsync, GrabModeAsync, CurrentTime) != GrabSuccess)
-		usleep(1000);
+		usleep(20000);
+
+	while (XGrabPointer(dpy, transient, False, ButtonPressMask, GrabModeAsync,
+						GrabModeAsync, None, normal_cursor, CurrentTime) != GrabSuccess)
+		usleep(20000);
 
 	for (;;) {
 		while (!XCheckWindowEvent(dpy, transient, ButtonPressMask | KeyPressMask, &ev)) {
@@ -263,6 +268,7 @@ static void pager(void *obj, char *arg)
 				if (i < cext_sizeof_container(&pages))
 					sel_page(cext_list_get_item(&pages, i));
 			XUngrabKeyboard(dpy, CurrentTime);
+			XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
 			return;
 			break;
 		case ButtonPress:
@@ -272,6 +278,8 @@ static void pager(void *obj, char *arg)
 				if (p)
 					sel_page(p);
 			}
+			XUngrabKeyboard(dpy, CurrentTime);
+			XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
 			return;
 			break;
 		}
@@ -337,7 +345,7 @@ static void detached_clients(void *obj, char *arg)
 	XMapRaised(dpy, transient);
 	draw_detached_clients();
 	while (XGrabKeyboard(dpy, transient, True, GrabModeAsync, GrabModeAsync, CurrentTime) != GrabSuccess)
-		usleep(1000);
+		usleep(20000);
 
 	for (;;) {
 		while (!XCheckMaskEvent(dpy, ButtonPressMask | KeyPressMask, &ev)) {
@@ -371,8 +379,8 @@ static void detached_clients(void *obj, char *arg)
 					cext_detach_item(&detached, c);
 					attach_client(c);
 				}
-				XUngrabKeyboard(dpy, CurrentTime);
 			}
+			XUngrabKeyboard(dpy, CurrentTime);
 			return;
 			break;
 		}
@@ -457,16 +465,14 @@ void scan_wins()
 		for (i = 0; i < num; i++) {
 			if (!XGetWindowAttributes(dpy, wins[i], &wa))
 				continue;
-			if (wa.override_redirect) {
-				XSelectInput(dpy, wins[i], (StructureNotifyMask | PropertyChangeMask));
-				continue;
-			}
-			if (XGetTransientForHint(dpy, wins[i], &d1))
+			if (wa.override_redirect || XGetTransientForHint(dpy, wins[i], &d1))
 				continue;
 			if (wa.map_state == IsViewable) {
 				c = alloc_client(wins[i]);
 				init_client(c, &wa);
 				attach_client(c);
+				if (c->ignore_unmap)
+					c->ignore_unmap--;
 			}
 		}
 	}
@@ -614,7 +620,7 @@ static void init_default()
 	def[WM_AREA_GEOMETRY]->before_read = handle_before_read;
 	def[WM_SEL_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/sstyle/bgcolor", BLITZ_SEL_BG_COLOR);
 	def[WM_SEL_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/sstyle/fgcolor", BLITZ_SEL_FG_COLOR);
-	def[WM_SEL_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/sstyle/fgcolor", BLITZ_SEL_BORDER_COLOR);
+	def[WM_SEL_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/sstyle/bordercolor", BLITZ_SEL_BORDER_COLOR);
 	def[WM_NORM_BG_COLOR] = wmii_create_ixpfile(ixps, "/default/nstyle/bgcolor", BLITZ_NORM_BG_COLOR);
 	def[WM_NORM_FG_COLOR] = wmii_create_ixpfile(ixps, "/default/nstyle/fgcolor", BLITZ_NORM_FG_COLOR);
 	def[WM_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/nstyle/bordercolor", BLITZ_NORM_BORDER_COLOR);
@@ -660,17 +666,15 @@ static void init_screen()
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
-	wa.event_mask = ExposureMask | ButtonPressMask | PointerMotionMask
-		| SubstructureRedirectMask | SubstructureNotifyMask;
+	wa.event_mask = ExposureMask | ButtonPressMask;
 	transient = XCreateWindow(dpy, root, 0, 0, rect.width, rect.height, 0, DefaultDepth(dpy, screen_num),
 							  CopyFromParent, DefaultVisual(dpy, screen_num),
-							  CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
+							  CWOverrideRedirect | CWBackPixmap | CWEventMask , &wa);
 
 	XSync(dpy, False);
 	transient_gc = XCreateGC(dpy, transient, 0, 0);
 	XDefineCursor(dpy, transient, normal_cursor);
 	XDefineCursor(dpy, root, normal_cursor);
-	XSelectInput(dpy, root, ROOT_MASK);
 }
 
 /*
@@ -764,6 +768,7 @@ int main(int argc, char *argv[])
 	/* this causes an error if some other WM is running */
 	XSelectInput(dpy, root, ROOT_MASK);
 	XSync(dpy, False);
+
 	if (other_wm_running) {
 		fprintf(stderr,
 				"wmiiwm: another window manager is already running\n");

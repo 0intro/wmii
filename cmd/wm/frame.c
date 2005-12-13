@@ -80,9 +80,7 @@ Frame *alloc_frame(XRectangle * r)
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
-	wa.event_mask = ExposureMask | ButtonPressMask | ButtonReleaseMask
-		| PointerMotionMask | SubstructureRedirectMask
-		| SubstructureNotifyMask;
+	wa.event_mask = ExposureMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
 
     bw 	= border_width(f);
 	th = tab_height(f);
@@ -283,15 +281,16 @@ void handle_frame_buttonpress(XButtonEvent *e, Frame *f)
 	/*fprintf(stderr, "%d (x) / %d (w) / %d (size) = %d (#c)\n", e->x, f->rect.width, size, cindex);*/
 	/*sel_client(cext_list_get_item(&f->clients, cindex));*/
 	cext_stack_top_item(&f->clients, cext_list_get_item(&f->clients, cindex));
-	f->area->layout->select(f, True);
 	if (e->button == Button1) {
 		align = cursor_to_align(f->cursor);
 		if (align == CENTER)
 			mouse_move(f);
 		else
 			mouse_resize(f, align);
+		f->area->layout->select(f, False);
 		return;
 	}
+	f->area->layout->select(f, False);
 	bindex = F_EVENT_B2PRESS - 2 + e->button;
 	/* frame mouse handling */
 	if (f->file[bindex]->content)
