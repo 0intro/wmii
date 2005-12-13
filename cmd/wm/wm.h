@@ -118,8 +118,8 @@ struct Layout {
 	void (*detach) (Area *, Client *, Bool unmap);	/* called on detach */
 	void (*resize) (Frame *, XRectangle *, XPoint *);	/* called after resize */
 	void (*select) (Frame *, Bool raise);	/* selection */
-	Container *(*get_frames) (Area *);	/* called after resize */
-	Action *(*get_actions) (Area *);
+	Container *(*get_frames) (Area *);	/* called for drawing */
+	Action *(*get_actions) (Area *); /* local action table */
 };
 
 struct Area {
@@ -285,4 +285,3 @@ int win_state(Window w);
 void handle_after_write(IXPServer * s, File * f);
 void detach(Frame * f, int client_destroyed);
 void set_client_state(Client * c, int state);
-void update_areas_sizes(Window ignore_win);

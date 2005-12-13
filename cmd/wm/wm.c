@@ -486,17 +486,6 @@ void *get_func(void *acttbl[][2], int rows, char *fname)
 	return 0;
 }
 
-void update_areas_sizes(Window ignore_win)
-{
-	XWindowAttributes wa;
-
-	fprintf(stderr, "%s", "update_areas_sizes: \n");
-	if(!XGetWindowAttributes(dpy, ignore_win, &wa))
-		return;
-	fprintf(stderr, "update_areas_sizes: %d, %d, %d, %d\n",
-			wa.x, wa.y, wa.width, wa.height);
-}
-
 int win_proto(Window w)
 {
 	Atom *protocols;
