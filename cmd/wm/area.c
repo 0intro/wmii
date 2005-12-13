@@ -120,6 +120,7 @@ static void iter_after_write_area(void *item, void *aux)
 			a->layout->deinit(a);
 			a->layout = l;
 			a->layout->init(a);
+			invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 		}
 		draw_page(a->page);
 		return;

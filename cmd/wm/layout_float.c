@@ -72,6 +72,11 @@ static Bool attach_float(Area *a, Client *c)
 	if (f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))
 		f = 0;
 	if (!f) {
+		if (c->rect.y < area_rect.y)
+			c->rect.y = area_rect.y;
+		if (c->rect.x < area_rect.x)
+			c->rect.x = area_rect.x;
+
 		f = alloc_frame(&c->rect);
 		attach_frame_to_area(a, f);
 		cext_attach_item((Container *)a->aux, f);

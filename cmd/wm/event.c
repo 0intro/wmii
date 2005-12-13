@@ -153,7 +153,11 @@ static void handle_configurerequest(XEvent * e)
 		wc.y = tabh ? tabh : bw;
 	}
 	wc.width = ev->width;
+	if (!wc.width)
+		wc.width = 1; /* borken app fix */
 	wc.height = ev->height;
+	if (!wc.height)
+		wc.height = 1; /* borken app fix */
 	wc.border_width = 0;
 	wc.sibling = None;
 	wc.stack_mode = Above;

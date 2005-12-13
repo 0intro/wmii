@@ -710,8 +710,7 @@ static void clean_client_up(void *item, void *aux)
 	if (f) {
 		XWindowChanges wc;
 		gravitate(c, tab_height(f), border_width(f), 1);
-		XReparentWindow(dpy, c->win, root, f->rect.x + c->rect.x,
-				f->rect.y + c->rect.y);
+		XReparentWindow(dpy, c->win, root, f->rect.x + c->rect.x, f->rect.y + c->rect.y);
 		wc.border_width = c->border;
 		XConfigureWindow(dpy, c->win, CWBorderWidth, &wc);
 	}
