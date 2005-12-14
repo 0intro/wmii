@@ -62,11 +62,6 @@ void sel_area(Area *a)
 		a->layout->select(f, False);
 }
 
-void draw_area(Area *a)
-{
-	cext_list_iterate(a->layout->get_frames(a), nil, draw_frame);
-}
-
 static void iter_hide_area(void *item, void *aux)
 {
 	XUnmapWindow(dpy, ((Frame *)item)->win);
@@ -122,7 +117,6 @@ static void iter_after_write_area(void *item, void *aux)
 			a->layout->init(a);
 			invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 		}
-		draw_page(a->page);
 		return;
 	}
 }

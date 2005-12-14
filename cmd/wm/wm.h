@@ -204,7 +204,6 @@ unsigned int valid_mask, num_lock_mask;
 Area *alloc_area(Page *p, char *layout);
 void destroy_area(Area * a);
 void sel_area(Area * a);
-void draw_area(Area * a);
 void hide_area(Area * a);
 void show_area(Area * a);
 Area *get_sel_area();
@@ -236,7 +235,7 @@ Frame *win_to_frame(Window w);
 Frame *alloc_frame(XRectangle * r);
 void destroy_frame(Frame * f);
 void resize_frame(Frame *f, XRectangle *r, XPoint *pt);
-void draw_frame(void *frame, void *aux);
+void draw_frame(Frame *f);
 void handle_frame_buttonpress(XButtonEvent *e, Frame *f);
 void attach_client_to_frame(Frame *f, Client *c);
 void detach_client_from_frame(Client *c, Bool unmap);
@@ -267,7 +266,6 @@ void sel_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
 void hide_page(Page * p);
 void show_page(Page * p);
-void draw_page(Page * p);
 
 /* layout.c */
 Layout *get_layout(char *name);

@@ -80,16 +80,6 @@ void sel_page(Page * p)
 	sel_area(get_sel_area());
 }
 
-static void iter_draw_page(void *item, void *aux)
-{
-	draw_area((Area *)item);
-}
-
-void draw_page(Page * p)
-{
-	cext_list_iterate(&p->areas, nil, iter_draw_page);
-}
-
 XRectangle *rectangles(unsigned int *num)
 {
 	XRectangle *result = 0;

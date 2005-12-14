@@ -85,7 +85,6 @@ static Bool attach_float(Area *a, Client *c)
 	if (a->page == get_sel_page())
 		XMapWindow(dpy, f->win);
 	select_float(f, True);
-	draw_frame(f, nil);
 	return True;
 }
 
@@ -108,6 +107,8 @@ static void resize_float(Frame *f, XRectangle *new, XPoint *pt)
 static void select_float(Frame *f, Bool raise)
 {
 	Area *a = f->area;
+	Frame *old = get_sel_frame();
+
 	sel_client(cext_stack_get_top_item(&f->clients));
 	cext_stack_top_item(a->aux, f);
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
@@ -115,6 +116,9 @@ static void select_float(Frame *f, Bool raise)
 		XRaiseWindow(dpy, f->win);
 		center_pointer(f);
 	}
+	if (old != f)
+		draw_frame(old);
+	draw_frame(f);
 }
 
 static Container *get_frames_float(Area *a)
@@ -126,9 +130,9 @@ static void select_frame(void *obj, char *arg)
 {
 	Area *a = obj;
 	Container *c = a->aux;
-	Frame *f, *old;
+	Frame *f;
 
-	f = old = cext_stack_get_top_item(c);
+	f = cext_stack_get_top_item(c);
 	if (!f || !arg)
 		return;
 	if (!strncmp(arg, "prev", 5))
@@ -137,12 +141,8 @@ static void select_frame(void *obj, char *arg)
 		f = cext_list_get_next_item(c, f);
 	else 
 		f = cext_list_get_item(c, blitz_strtonum(arg, 0, cext_sizeof_container(c) - 1));
-	if (old != f) {
-		select_float(f, True);
-		center_pointer(f);
-		draw_frame(old, nil);
-		draw_frame(f, nil);
-	}
+	select_float(f, True);
+	center_pointer(f);
 }
 
 static Action *get_actions_float(Area *a)

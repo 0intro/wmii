@@ -238,9 +238,8 @@ void resize_frame(Frame * f, XRectangle * r, XPoint * pt)
  * ./norm-style/bg-color		"#RRGGBBAA"
  * ./norm-style/border-color	"#RRGGBBAA [#RRGGBBAA [#RRGGBBAA [#RRGGBBAA]]]"
  */
-void draw_frame(void *frame, void *aux)
+void draw_frame(Frame *f)
 {
-	Frame *f = frame;
 	Draw d = { 0 };
 	int bw = border_width(f);
 	XRectangle notch;
@@ -295,7 +294,6 @@ void handle_frame_buttonpress(XButtonEvent *e, Frame *f)
 	/* frame mouse handling */
 	if (f->file[bindex]->content)
 		wmii_spawn(dpy, f->file[bindex]->content);
-	draw_frame(f, nil);
 }
 
 void attach_client_to_frame(Frame *f, Client *c)
@@ -329,7 +327,7 @@ void detach_client_from_frame(Client *c, Bool unmap)
 	}
 	if ((client = cext_stack_get_top_item(&f->clients))) {
 		sel_client(client);
-		draw_frame(f, nil);
+		f->area->layout->select(f, False);
 	}
 }
 
@@ -348,7 +346,7 @@ static void select_client(void *obj, char *arg)
 	else
 		c = cext_list_get_item(&f->clients, blitz_strtonum(arg, 0, cext_sizeof_container(&f->clients) - 1));
 	sel_client(c);
-	draw_frame(f, nil);
+	f->area->layout->select(f, False);
 }
 
 static void iter_before_read_frame(void *item, void *aux)
@@ -380,7 +378,6 @@ static void iter_after_write_frame(void *item, void *aux)
 	}
 	if (file == f->file[F_TAB] || file == f->file[F_BORDER] || file == f->file[F_HANDLE_INC]) {
 		f->area->layout->arrange(f->area);
-		draw_page(f->area->page);
 		return;
 	} else if (file == f->file[F_GEOMETRY]) {
 		char *geom = f->file[F_GEOMETRY]->content;
@@ -388,7 +385,6 @@ static void iter_after_write_frame(void *item, void *aux)
 			XRectangle frect = f->rect;
 			blitz_strtorect(&rect, &frect, geom);
 			resize_frame(f, &frect, 0);
-			draw_page(f->area->page);
 		}
 	}
 }

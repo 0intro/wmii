@@ -325,7 +325,6 @@ void mouse_move(Frame * f)
 				draw_pseudo_border(&frect);
 				resize_frame(f, &frect, &pt);
 			}
-			draw_page(get_sel_page());
 			free(rects);
 			XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
 			XUngrabServer(dpy);

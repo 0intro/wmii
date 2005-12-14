@@ -187,7 +187,7 @@ static void handle_expose(XEvent * e)
 	if (e->xexpose.count == 0) {
 		f = win_to_frame(e->xbutton.window);
 		if (f)
-			draw_frame(f, nil);
+			draw_frame(f);
 	}
 }
 
@@ -266,12 +266,8 @@ static void handle_enternotify(XEvent * e)
 	/*fprintf(stderr, "%s\n", "handle_enternotify");*/
 	c = win_to_client(ev->window);
 	if (c && c->frame) {
-		Frame *old = get_sel_frame();
 		sel_area(c->frame->area);
 		c->frame->area->layout->select(c->frame, False);
-		draw_frame(c->frame, nil);
-		if (old && old != c->frame)
-			draw_frame(old, nil);
 	}
 }
 

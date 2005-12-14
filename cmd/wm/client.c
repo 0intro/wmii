@@ -294,7 +294,6 @@ void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 void attach_client(Client * c)
 {
 	Area *a = 0;
-	Frame *old = get_sel_frame();
 	if (!cext_sizeof_container(&pages))
 		alloc_page();
 	/* transient stuff */
@@ -306,8 +305,6 @@ void attach_client(Client * c)
 	}
 	cext_attach_item(&a->clients, c);
 	a->layout->attach(a, c);
-	if (old)
-		draw_frame(old, nil);
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
@@ -321,10 +318,8 @@ void detach_client(Client *c, Bool unmap) {
 	}
 	if (c->destroyed)
 		destroy_client(c);
-	if ((p = get_sel_page())) {
+	if ((p = get_sel_page()))
 		sel_page(p);
-		draw_page(p);
-	}
 }
 
 Client *get_sel_client()

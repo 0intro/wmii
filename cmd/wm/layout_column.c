@@ -149,9 +149,9 @@ static Bool attach_col(Area *a, Client *c)
 		cext_attach_item(&col->frames, f);
 	}
 	attach_client_to_frame(f, c);
+	iter_arrange_column(col, a);
 	if (a->page == get_sel_page())
 		XMapWindow(dpy, f->win);
-	iter_arrange_column(col, a);
 	select_col(f, True);
 	return True;
 }
@@ -315,7 +315,6 @@ static void resize_col(Frame *f, XRectangle *new, XPoint *pt)
 		drop_moving(f, new, pt);
 	else
 		drop_resize(f, new);
-	draw_area(f->area);
 }
 
 static void select_col(Frame *f, Bool raise)
@@ -323,6 +322,8 @@ static void select_col(Frame *f, Bool raise)
 	Area *a = f->area;
 	Acme *acme = a->aux;
 	Column *col = f->aux;
+	Frame *old = get_sel_frame();
+
 	cext_stack_top_item(&acme->columns, col);
 	sel_client(cext_stack_get_top_item(&f->clients));
 	cext_stack_top_item(&col->frames, f);
@@ -330,6 +331,9 @@ static void select_col(Frame *f, Bool raise)
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
 	if (raise)
 		center_pointer(f);
+	if (old != f)
+		draw_frame(old);
+	draw_frame(f);
 }
 
 static Container *get_frames_col(Area *a)
@@ -348,12 +352,12 @@ static void select_frame(void *obj, char *arg)
 	Area *a = obj;
 	Acme *acme = a->aux;
 	Column *col = get_sel_column(acme);
-	Frame *f, *old;
+	Frame *f;
 
 	if (!col)
 		return;
 
-	f = old = cext_stack_get_top_item(&col->frames);
+	f = cext_stack_get_top_item(&col->frames);
 	if (!f || !arg)
 		return;
 	if (!strncmp(arg, "prev", 5))
@@ -372,11 +376,7 @@ static void select_frame(void *obj, char *arg)
 	}
 	else 
 		f = cext_list_get_item(&col->frames, blitz_strtonum(arg, 0, cext_sizeof_container(&col->frames) - 1));
-	if (f && old != f) {
-		select_col(f, True);
-		draw_frame(old, nil);
-		draw_frame(f, nil);
-	}
+	select_col(f, True);
 }
 
 static void swap_frame(void *obj, char *arg)
@@ -459,7 +459,6 @@ static void swap_frame(void *obj, char *arg)
 		resize_frame(other, &other->rect, nil);
 		select_col(f, True);
 	}
-	draw_frame(f, nil);
 }
 
 static void new_col(void *obj, char *arg)
@@ -479,5 +478,4 @@ static void new_col(void *obj, char *arg)
 	cext_attach_item(&acme->columns, col);
 	update_column_width(a);
 	select_col(f, True);
-	draw_frame(f, nil);
 }
