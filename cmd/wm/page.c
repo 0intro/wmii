@@ -26,7 +26,6 @@ Page *alloc_page()
 	size_t id = cext_sizeof_container(pages);
 
 	snprintf(buf2, sizeof(buf2), "%d", id);
-	p->areas.list = p->areas.stack = 0;
 	snprintf(buf, sizeof(buf), "/%d", id);
 	p->file[P_PREFIX] = ixp_create(ixps, buf);
 	snprintf(buf, sizeof(buf), "/%d/name", id);
