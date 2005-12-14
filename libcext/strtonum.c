@@ -32,11 +32,11 @@ long long cext_strtonum(const char *numstr, long long minval, long long maxval, 
 		const char *errstr;
 		int err;
 	} ev[4] = {
-		{
-		NULL, 0}, {
-		"invalid", EINVAL}, {
-		"too small", ERANGE}, {
-	"too large", ERANGE},};
+		{ NULL, 0},
+		{ "invalid", EINVAL},
+		{ "too small", ERANGE},
+		{ "too large", ERANGE},
+	};
 
 	ev[0].err = errno;
 	errno = 0;
