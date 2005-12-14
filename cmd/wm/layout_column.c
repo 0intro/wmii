@@ -332,7 +332,7 @@ static void select_col(Frame *f, Bool raise)
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
 	if (raise)
 		center_pointer(f);
-	if (old != f)
+	if (old && old != f)
 		draw_frame(old);
 	draw_frame(f);
 }
