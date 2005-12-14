@@ -14,7 +14,7 @@ X11LIB = /usr/X11R6/lib
 # includes and libs
 INCLUDES = -I. -I${INCDIR} -I/usr/include -I${X11INC}
 LIBS = -L${LIBDIR} -L/usr/lib -lc -lm -L${X11LIB} -lX11
-VERSION = 3-current
+VERSION = 20051214_experimental
 
 # flags
 CFLAGS = -O0 -g -Wall ${INCLUDES} -DVERSION=\"${VERSION}\"
