@@ -142,7 +142,7 @@ static void draw_pager_page(Page *p, Draw *d)
 {
 	char name[4];
 	initial_rect = d->rect;
-	if (p == cext_stack_get_top_item(&pages)) {
+	if (p == cext_stack_get_top_item(pages)) {
 		d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
 		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
 		d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
@@ -151,7 +151,7 @@ static void draw_pager_page(Page *p, Draw *d)
 		d->fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
 		d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
 	}
-	snprintf(name, sizeof(name), "%d", cext_list_get_item_index(&pages, p));
+	snprintf(name, sizeof(name), "%d", cext_list_get_item_index(pages, p));
 	d->data = name;
 	blitz_drawlabel(dpy, d);
 	XSync(dpy, False);
@@ -166,7 +166,7 @@ static void draw_pager()
 	int dx;
 	Page *p;
 
-	blitz_getbasegeometry(&pages, &size, &cols, &rows);
+	blitz_getbasegeometry(pages, &size, &cols, &rows);
 	dx = (cols - 1) * GAP;		/* GAPpx space */
 	tw = (rect.width - dx) / cols;
 	th = ((double) tw / rect.width) * rect.height;
@@ -182,7 +182,7 @@ static void draw_pager()
 			else
 				d.rect.y = ir * (rect.height - th) / (rows - 1);
 			d.rect.height = th;
-			if (!(p = cext_list_get_item(&pages, i)))
+			if (!(p = cext_list_get_item(pages, i)))
 				return;
 			draw_pager_page(p, &d);
 			i++;
@@ -198,9 +198,9 @@ static Page *xy_to_pager_page(int x, int y)
 	XRectangle r;
 	Page *p;
 
-	if (!cext_sizeof_container(&pages))
+	if (!cext_sizeof_container(pages))
 		return nil;
-	blitz_getbasegeometry(&pages, &size, &cols, &rows);
+	blitz_getbasegeometry(pages, &size, &cols, &rows);
 	dx = (cols - 1) * GAP;		/* GAPpx space */
 	tw = (rect.width - dx) / cols;
 	th = ((double) tw / rect.width) * rect.height;
@@ -214,7 +214,7 @@ static Page *xy_to_pager_page(int x, int y)
 			else
 				r.y = ir * (rect.height - th) / (rows - 1);
 			r.height = th;
-			if (!(p = cext_list_get_item(&pages, i)))
+			if (!(p = cext_list_get_item(pages, i)))
 				return nil;
 			if (blitz_ispointinrect(x, y, &r))
 				return p;
@@ -241,7 +241,7 @@ static void pager(void *obj, char *arg)
 	XEvent ev;
 	int i;
 
-	if (!cext_sizeof_container(&pages))
+	if (!cext_sizeof_container(pages))
 		return;
 
 	XClearWindow(dpy, transient);
@@ -265,8 +265,8 @@ static void pager(void *obj, char *arg)
 		case KeyPress:
 			XUnmapWindow(dpy, transient);
 			if ((i = handle_kpress(&ev.xkey)) != -1)
-				if (i < cext_sizeof_container(&pages))
-					sel_page(cext_list_get_item(&pages, i));
+				if (i < cext_sizeof_container(pages))
+					sel_page(cext_list_get_item(pages, i));
 			XUngrabKeyboard(dpy, CurrentTime);
 			XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
 			return;
@@ -291,9 +291,9 @@ static void draw_detached_clients()
 	unsigned int i, ic, ir, tw, th, rows, cols, size;
 	int dx, dy;
 
-	if (!cext_sizeof_container(&detached))
+	if (!cext_sizeof_container(detached))
 		return;
-	blitz_getbasegeometry(&detached, &size, &cols, &rows);
+	blitz_getbasegeometry(detached, &size, &cols, &rows);
 	dx = (cols - 1) * GAP;		/* GAPpx space */
 	dy = (rows - 1) * GAP;		/* GAPpx space */
 	tw = (rect.width - dx) / cols;
@@ -304,7 +304,7 @@ static void draw_detached_clients()
 	i = 0;
 	for (ir = 0; ir < rows; ir++) {
 		for (ic = 0; ic < cols; ic++) {
-			Client *c = cext_list_get_item(&detached, i++);
+			Client *c = cext_list_get_item(detached, i++);
 			XRectangle cr;
 			if (!c)
 				return;
@@ -335,7 +335,7 @@ static void detached_clients(void *obj, char *arg)
 {
 	XEvent ev;
 	int i, n;
-	size_t size = cext_sizeof_container(&detached);
+	size_t size = cext_sizeof_container(detached);
 	Client *c;
 
 	if (!size)
@@ -357,15 +357,15 @@ static void detached_clients(void *obj, char *arg)
 			XUnmapWindow(dpy, transient);
 			if ((n = handle_kpress(&ev.xkey)) != -1) {
 				for (i = 0; i < size; i++)
-					hide_client(cext_list_get_item(&detached, i));
+					hide_client(cext_list_get_item(detached, i));
 				if (n - 1 < i) {
-					c = cext_list_get_item(&detached, n);
-					cext_detach_item(&detached, c);
+					c = cext_list_get_item(detached, n);
+					cext_detach_item(detached, c);
 					attach_client(c);
 				}
 			} else {
 				for (i = 0; i < size; i++)
-					hide_client(cext_list_get_item(&detached, i));
+					hide_client(cext_list_get_item(detached, i));
 			}
 			XUngrabKeyboard(dpy, CurrentTime);
 			return;
@@ -374,9 +374,9 @@ static void detached_clients(void *obj, char *arg)
 			if (ev.xbutton.button == Button1) {
 				XUnmapWindow(dpy, transient);
 				for (i = 0; i < size; i++)
-					hide_client(cext_list_get_item(&detached, i));
+					hide_client(cext_list_get_item(detached, i));
 				if ((c = win_to_client(ev.xbutton.window))) {
-					cext_detach_item(&detached, c);
+					cext_detach_item(detached, c);
 					attach_client(c);
 				}
 			}
@@ -396,9 +396,9 @@ static void _close_client(void *obj, char *arg)
 
 static void _attach_client(void *obj, char *arg)
 {
-	if (cext_sizeof_container(&detached)) {
-		Client *c = cext_stack_get_top_item(&detached);
-		cext_detach_item(&detached, c);
+	if (cext_sizeof_container(detached)) {
+		Client *c = cext_stack_get_top_item(detached);
+		cext_detach_item(detached, c);
 		attach_client(c);
 	}
 }
@@ -416,11 +416,11 @@ static void _select_page(void *obj, char *arg)
 	if (!p || !arg)
 		return;
 	if (!strncmp(arg, "prev", 5))
-		p = cext_list_get_prev_item(&pages, p);
+		p = cext_list_get_prev_item(pages, p);
 	else if (!strncmp(arg, "next", 5))
-		p = cext_list_get_next_item(&pages, p);
+		p = cext_list_get_next_item(pages, p);
 	else
-		p = cext_list_get_item(&pages, blitz_strtonum(arg, 0, cext_sizeof_container(&pages) - 1));
+		p = cext_list_get_item(pages, blitz_strtonum(arg, 0, cext_sizeof_container(pages) - 1));
 	sel_page(p);
 }
 
@@ -449,7 +449,7 @@ static int comp_client_win(void *pattern, void *client)
 
 Client *win_to_client(Window w)
 {
-	return cext_find_item(&clients, &w, comp_client_win);
+	return cext_find_item(clients, &w, comp_client_win);
 }
 
 void scan_wins()
@@ -576,7 +576,7 @@ void handle_after_write(IXPServer * s, File * f)
 		if (geom && strrchr(geom, ',')) {
 			area_rect = rect;
 			blitz_strtorect(&rect, &area_rect, geom);
-			cext_list_iterate(&pages, nil, iter_update_page);
+			cext_list_iterate(pages, nil, iter_update_page);
 		}
 	}
 	check_event(0);
@@ -712,7 +712,7 @@ static void clean_client_up(void *item, void *aux)
 
 static void cleanup()
 {
-	cext_list_iterate(&clients, nil, clean_client_up);
+	cext_list_iterate(clients, nil, clean_client_up);
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 }
 
@@ -782,12 +782,12 @@ int main(int argc, char *argv[])
 	}
 	def[WM_CTL]->after_write = handle_after_write;
 
-	detached.list = detached.stack = 0;
-	pages.list = pages.stack = 0;
-	areas.list = areas.stack = 0;
-	frames.list = frames.stack = 0;
-	clients.list = clients.stack = 0;
-	layouts.list = layouts.stack = 0;
+	detached = cext_emallocz(sizeof(Container));
+	pages = cext_emallocz(sizeof(Container));
+	areas = cext_emallocz(sizeof(Container));
+	frames = cext_emallocz(sizeof(Container));
+	clients = cext_emallocz(sizeof(Container));
+	layouts = cext_emallocz(sizeof(Container));
 
 	init_atoms();
 	init_cursors();

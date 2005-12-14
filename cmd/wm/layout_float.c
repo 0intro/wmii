@@ -32,7 +32,7 @@ static Layout lfloat = { "float", init_float, deinit_float, arrange_float, attac
 
 void init_layout_float()
 {
-	cext_attach_item(&layouts, &lfloat);
+	cext_attach_item(layouts, &lfloat);
 }
 
 static void arrange_float(Area *a)

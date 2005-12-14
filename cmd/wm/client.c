@@ -25,7 +25,7 @@ Client *alloc_client(Window w)
 	c->file[C_NAME] = wmii_create_ixpfile(ixps, buf, (char *)name.value);
 	free(name.value);
 	id++;
-	cext_attach_item(&clients, c);
+	cext_attach_item(clients, c);
 	return c;
 }
 
@@ -177,8 +177,8 @@ void handle_client_property(Client *c, XPropertyEvent *e)
 
 void destroy_client(Client * c)
 {
-	cext_detach_item(&detached, c);
-	cext_detach_item(&clients, c);
+	cext_detach_item(detached, c);
+	cext_detach_item(clients, c);
 	ixp_remove_file(ixps, c->file[C_PREFIX]);
 	free(c);
 }
@@ -294,7 +294,7 @@ void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 void attach_client(Client * c)
 {
 	Area *a = 0;
-	if (!cext_sizeof_container(&pages))
+	if (!cext_sizeof_container(pages))
 		alloc_page();
 	/* transient stuff */
 	a = get_sel_area();

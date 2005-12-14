@@ -17,5 +17,5 @@ static int comp_layout_name(void *name, void *layout)
 
 Layout *get_layout(char *name)
 {
-	return cext_find_item(&layouts, name, comp_layout_name);
+	return cext_find_item(layouts, name, comp_layout_name);
 }

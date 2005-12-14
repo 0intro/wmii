@@ -49,7 +49,7 @@ static Layout lcol = { "col", init_col, deinit_col, arrange_col, attach_col, det
 
 void init_layout_column()
 {
-	cext_attach_item(&layouts, &lcol);
+	cext_attach_item(layouts, &lcol);
 }
 
 static Column *get_sel_column(Acme *acme)

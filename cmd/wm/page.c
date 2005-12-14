@@ -23,7 +23,7 @@ Page *alloc_page()
 {
 	Page *p = cext_emallocz(sizeof(Page));
 	char buf[MAX_BUF], buf2[16];
-	size_t id = cext_sizeof_container(&pages);
+	size_t id = cext_sizeof_container(pages);
 
 	snprintf(buf2, sizeof(buf2), "%d", id);
 	p->areas.list = p->areas.stack = 0;
@@ -41,7 +41,7 @@ Page *alloc_page()
 	p->file[P_CTL]->after_write = handle_after_write_page;
 	alloc_area(p, "float");
 	alloc_area(p, def[WM_LAYOUT]->content);
-	cext_attach_item(&pages, p);
+	cext_attach_item(pages, p);
 	def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	return p;
@@ -57,7 +57,7 @@ void destroy_page(Page * p)
 	cext_list_iterate(&p->areas, nil, iter_destroy_area);
 	def[WM_SEL_PAGE]->content = 0;
 	ixp_remove_file(ixps, p->file[P_PREFIX]);
-	cext_detach_item(&pages, p);
+	cext_detach_item(pages, p);
 	free(p);
 	if ((p = get_sel_page()))
 		sel_page(p);
@@ -72,7 +72,7 @@ void sel_page(Page * p)
 		return;
 	if (p != sel) {
 		hide_page(sel);
-		cext_stack_top_item(&pages, p);
+		cext_stack_top_item(pages, p);
 		show_page(p);
 	}
 	def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
@@ -142,12 +142,12 @@ static void iter_after_write_page(void *item, void *aux)
 
 static void handle_after_write_page(IXPServer *s, File *f)
 {
-	cext_list_iterate(&pages, f, iter_after_write_page);
+	cext_list_iterate(pages, f, iter_after_write_page);
 }
 
 Page *get_sel_page()
 {
-	return cext_stack_get_top_item(&pages);
+	return cext_stack_get_top_item(pages);
 }
 
 static void select_area(void *obj, char *arg)

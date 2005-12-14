@@ -93,7 +93,7 @@ Frame *alloc_frame(XRectangle * r)
 	XDefineCursor(dpy, f->win, f->cursor);
 	f->gc = XCreateGC(dpy, f->win, 0, 0);
 	XSync(dpy, False);
-	cext_attach_item(&frames, f);
+	cext_attach_item(frames, f);
 	return f;
 }
 
@@ -107,12 +107,12 @@ static int comp_frame_win(void *pattern, void *frame)
 
 Frame *win_to_frame(Window w)
 {
-	return cext_find_item(&frames, &w, comp_frame_win);
+	return cext_find_item(frames, &w, comp_frame_win);
 }
 
 void destroy_frame(Frame * f)
 {
-	cext_detach_item(&frames, f);
+	cext_detach_item(frames, f);
 	XFreeGC(dpy, f->gc);
 	XDestroyWindow(dpy, f->win);
 	ixp_remove_file(ixps, f->file[F_PREFIX]);
@@ -318,7 +318,7 @@ void detach_client_from_frame(Client *c, Bool unmap)
 	cext_detach_item(&f->clients, c);
 	if (!c->destroyed) {
 		if (!unmap) {
-			cext_attach_item(&detached, c);
+			cext_attach_item(detached, c);
 			hide_client(c);
 		}
 		c->rect.x = f->rect.x;
@@ -365,7 +365,7 @@ static void iter_before_read_frame(void *item, void *aux)
 
 static void handle_before_read_frame(IXPServer *s, File *f)
 {
-	cext_list_iterate(&frames, f, iter_before_read_frame);
+	cext_list_iterate(frames, f, iter_before_read_frame);
 }
 
 static void iter_after_write_frame(void *item, void *aux)
@@ -391,7 +391,7 @@ static void iter_after_write_frame(void *item, void *aux)
 
 static void handle_after_write_frame(IXPServer * s, File * f)
 {
-	cext_list_iterate(&frames, f, iter_after_write_frame);
+	cext_list_iterate(frames, f, iter_after_write_frame);
 }
 
 Frame *get_sel_frame_of_area(Area *a)

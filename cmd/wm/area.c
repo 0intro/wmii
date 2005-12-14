@@ -34,7 +34,7 @@ Area *alloc_area(Page *p, char *layout)
 	a->layout = get_layout(layout);
 	a->layout->init(a);
 	cext_attach_item(&p->areas, a);
-	cext_attach_item(&areas, a);
+	cext_attach_item(areas, a);
 	p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
 	return a;
 }
@@ -45,10 +45,10 @@ void destroy_area(Area *a)
 	a->layout->deinit(a);
 	while ((c = cext_stack_get_top_item(&a->clients))) {
 		cext_detach_item(&a->clients, c);
-		cext_attach_item(&detached, c);
+		cext_attach_item(detached, c);
 	}
 	ixp_remove_file(ixps, a->file[A_PREFIX]);
-	cext_detach_item(&areas, a);
+	cext_detach_item(areas, a);
 	free(a);
 }
 
@@ -122,7 +122,7 @@ static void iter_after_write_area(void *item, void *aux)
 }
 
 static void handle_after_write_area(IXPServer *s, File *f) {
-	cext_list_iterate(&areas, f, iter_after_write_area);
+	cext_list_iterate(areas, f, iter_after_write_area);
 }
 
 
