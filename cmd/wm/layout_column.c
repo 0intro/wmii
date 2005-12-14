@@ -251,7 +251,7 @@ static void drop_resize(Frame *f, XRectangle *new)
 		resize_frame(north, &north->rect, nil);
 		resize_frame(f, &f->rect, nil);
 	}
-	if (south && (new->y + new->height > f->rect.y + f->rect.height)) {
+	if (south && (new->y + new->height != f->rect.y + f->rect.height)) {
 		south->rect.height -= new->y + new->height - south->rect.y;
 		south->rect.y = new->y + new->height;
 		f->rect.y = new->y;
