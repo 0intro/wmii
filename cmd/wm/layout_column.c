@@ -188,6 +188,7 @@ static void detach_col(Area *a, Client *c, Bool unmap)
 		cext_detach_item(&col->frames, f);
 		destroy_frame(f);
 	}
+	else return;
 	if (cext_sizeof_container(&col->frames))
 		iter_arrange_column(col, a);
 	else {

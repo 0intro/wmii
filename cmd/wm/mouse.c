@@ -309,7 +309,7 @@ void mouse_move(Frame * f)
 	pt.y = ey;
 	XSync(dpy, False);
 	XGrabServer(dpy);
-	while (XGrabPointer(dpy, f->win, False, ButtonMotionMask | ButtonReleaseMask,
+	while (XGrabPointer(dpy, root, False, ButtonMotionMask | ButtonReleaseMask,
 				 		GrabModeAsync, GrabModeAsync, None, move_cursor, CurrentTime) != GrabSuccess)
 		usleep(20000);
 
