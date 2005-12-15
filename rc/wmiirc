@@ -2,9 +2,8 @@
 # configure wmii
 
 TAB=0
-HANDLEINC=0
+HANDLEINC=1
 BAR_ALIGN=south
-#BAR_ALIGN=north
 
 
 SEL_BG_COLOR='#002200'
@@ -74,16 +73,16 @@ fn framesconf {
 
 fn barsucks {
     wmiir write /bar/$1/b1press 'wmiir write /wm/ctl ''select prev'''
-	wmiir write /bar/$1/b3press 'wmiir write /wm/ctl ''select next'''
+    wmiir write /bar/$1/b3press 'wmiir write /wm/ctl ''select next'''
     wmiir write /bar/$1/b4press 'wmiir write /wm/ctl ''select prev'''
     wmiir write /bar/$1/b5press 'wmiir write /wm/ctl ''select next'''
 }
 
 wmiir write /bar/geometry $BAR_ALIGN
 if (~ $BAR_ALIGN south)
-	wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|sed ''s/,/ /g''|awk ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+0,+0,-''^$val'
+    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|sed ''s/,/ /g''|awk ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+0,+0,-''^$val'
 if not
-	wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|sed ''s/,/ /g''|awk ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+''^$val^'',+0,-''^$val'
+    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|sed ''s/,/ /g''|awk ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+''^$val^'',+0,-''^$val'
 
 wmiir write /bar/ctl reset
 wmiir write /bar/font $FONT
@@ -135,8 +134,7 @@ kbind normal $MODKEY-C-a 'wmiir write /menu/precmd ''''; wmiir write /menu/looku
 kbind normal $MODKEY-C-p 'wmiir write /menu/precmd extern; wmiir write /menu/lookup /items/programs; wmiir write /menu/ctl ''display 1'''
 kbind normal $MODKEY-C-c 'wmiir write /wm/ctl close'
 kbind normal $MODKEY-C-q,y quit
-kbind normal $MODKEY-C-w,y wmiirc
-kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000 -fn -artwiz-smoothansi-*-*-*-*-*-*-*-*-*-*-*-*'
+kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000'
 kbind normal $MODKEY-d 'wmiir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmiir write /wm/ctl attach'
 kbind normal $MODKEY-S-a 'wmiir write /wm/ctl detached_clients'
