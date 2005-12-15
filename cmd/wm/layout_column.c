@@ -362,8 +362,12 @@ static void select_frame(void *obj, char *arg)
 	if (!f || !arg)
 		return;
 	if (!strncmp(arg, "prev", 5))
-		f = cext_list_get_prev_item(&col->frames, f);
+		f = cext_list_get_prev_item(&acme->frames, f);
 	else if (!strncmp(arg, "next", 5))
+		f = cext_list_get_next_item(&acme->frames, f);
+	else if (!strncmp(arg, "north", 6))
+		f = cext_list_get_next_item(&col->frames, f);
+	else if (!strncmp(arg, "south", 6))
 		f = cext_list_get_next_item(&col->frames, f);
 	else if (!strncmp(arg, "west", 5)) {
 		col = cext_list_get_prev_item(&acme->columns, col);
