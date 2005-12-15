@@ -181,18 +181,12 @@ typedef struct {
 int ixp_client_init(IXPClient * c, char *sockfile);
 void ixp_client_deinit(IXPClient * c);
 int ixp_client_remove(IXPClient * c, u32 newfid, char *filepath);
-int
-ixp_client_create(IXPClient * c, u32 dirfid, char *name, u32 perm,
-				  u8 mode);
+int ixp_client_create(IXPClient * c, u32 dirfid, char *name, u32 perm, u8 mode);
 int ixp_client_walk(IXPClient * c, u32 newfid, char *filepath);
 int ixp_client_open(IXPClient * c, u32 newfid, char *filepath, u8 mode);
-u32
-ixp_client_read(IXPClient * c, u32 fid, u64 offset, void *result,
-				u32 res_len);
-u32
-ixp_client_write(IXPClient * c, u32 fid, u64 offset, u32 count, u8 * data);
+u32 ixp_client_read(IXPClient * c, u32 fid, u64 offset, void *result, u32 res_len);
+u32 ixp_client_write(IXPClient * c, u32 fid, u64 offset, u32 count, u8 * data);
 int ixp_client_close(IXPClient * c, u32 fid);
-
 
 /* convert.c */
 void *ixp_enc_u8(u8 * msg, u8 val);
@@ -220,13 +214,11 @@ u32 ixp_fcall_to_msg(Fcall * fcall, void *msg, u32 msglen);
 u32 ixp_msg_to_fcall(void *msg, u32 msglen, Fcall * fcall);
 
 /* server.c */
-IXPConn *ixp_server_add_conn(IXPServer * s, int fd, int dont_close,
-							 void (*read) (IXPServer *, IXPConn *));
+IXPConn *ixp_server_add_conn(IXPServer * s, int fd, int dont_close, void (*read) (IXPServer *, IXPConn *));
 int ixp_server_tversion(IXPServer *, IXPConn * c);
 void ixp_server_rm_conn(IXPServer * s, IXPConn * c);
 void ixp_server_loop(IXPServer * s);
-int ixp_server_init(IXPServer * s, char *sockfile, IXPTFunc * funcs,
-					void (*freeconn) (IXPServer *, IXPConn *));
+int ixp_server_init(IXPServer * s, char *sockfile, IXPTFunc * funcs, void (*freeconn) (IXPServer *, IXPConn *));
 void ixp_server_deinit(IXPServer * s);
 
 /* socket.c */

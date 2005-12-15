@@ -115,7 +115,6 @@ static void handle_configurerequest(XEvent * e)
 		f = c->frame;
 
 		if (f) {
-			/*
 			Page *p = f->area->page;
 			if (cext_list_get_item_index(&p->areas, f->area)) {
 				Area *a = cext_list_get_item(&p->areas, 0);
@@ -123,7 +122,6 @@ static void handle_configurerequest(XEvent * e)
 				a->layout->attach(a, c);
 				f = c->frame;
 			}
-			*/
 			bw = border_width(f);
 			tabh = tab_height(f);
 		}

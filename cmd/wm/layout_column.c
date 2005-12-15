@@ -300,7 +300,7 @@ static void drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 		}
 		else {
 			Frame *other = cext_find_item(&tgt->frames, pt, comp_pointer_frame);
-			if (other != f) {
+			if (other && other != f) {
 				cext_swap_items(&tgt->frames, f, other);
 				iter_arrange_column(tgt, f->area);
 				select_col(f, True);
