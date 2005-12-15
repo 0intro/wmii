@@ -175,7 +175,7 @@ static void handle_configurerequest(XEvent * e)
 	XConfigureWindow(dpy, e->xconfigurerequest.window, ev->value_mask, &wc);
 	XSync(dpy, False);
 
-	/* fprintf(stderr, "%d,%d,%d,%d\n", wc.x, wc.y, wc.width, wc.height); */
+	fprintf(stderr, "%d,%d,%d,%d\n", wc.x, wc.y, wc.width, wc.height);
 }
 
 static void handle_destroynotify(XEvent * e)

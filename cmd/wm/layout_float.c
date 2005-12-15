@@ -116,7 +116,7 @@ static void select_float(Frame *f, Bool raise)
 		XRaiseWindow(dpy, f->win);
 		center_pointer(f);
 	}
-	if (old != f)
+	if (old && old != f)
 		draw_frame(old);
 	draw_frame(f);
 }

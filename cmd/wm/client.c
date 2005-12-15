@@ -113,6 +113,7 @@ void configure_client(Client * c)
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *) & e);
 	XSelectInput(dpy, c->win, CLIENT_MASK);
+	XSync(dpy, False);
 }
 
 void close_client(Client * c)

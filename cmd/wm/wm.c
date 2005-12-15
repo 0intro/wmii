@@ -429,6 +429,9 @@ static void _destroy_page(void *obj, char *arg)
 	Page *p = get_sel_page();
 	if (p)
 		destroy_page(p);
+	p = get_sel_page();
+	if (p)
+		sel_page(p);
 }
 
 static void new_page(void *obj, char *arg)

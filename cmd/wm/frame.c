@@ -80,7 +80,7 @@ Frame *alloc_frame(XRectangle * r)
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
-	wa.event_mask = ExposureMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
+	wa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
 
     bw 	= border_width(f);
 	th = tab_height(f);
