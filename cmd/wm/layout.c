@@ -7,15 +7,11 @@
 
 #include "wm.h"
 
-static int comp_layout_name(void *name, void *layout)
+Layout *match_layout(char *name)
 {
-	Layout *l = layout;
-	size_t len = strlen(l->name);
-
-	return !strncmp(name, l->name, len);
-}
-
-Layout *get_layout(char *name)
-{
-	return cext_find_item(layouts, name, comp_layout_name);
+	Layout *l;
+	for (l = layouts; l; l = l->next)
+		if (!strncmp(name, l->name, strlen(l->name)))
+			return l;
+	return nil;
 }

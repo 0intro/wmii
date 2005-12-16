@@ -11,7 +11,7 @@ LIBDIR = ${PREFIX}/lib
 X11INC = /usr/X11R6/include
 X11LIB = /usr/X11R6/lib
 
-VERSION = 20051215
+VERSION = 3-current
 
 # includes and libs
 INCLUDES = -I. -I${INCDIR} -I/usr/include -I${X11INC}

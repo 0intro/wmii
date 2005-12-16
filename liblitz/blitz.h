@@ -45,7 +45,7 @@ void blitz_drawlabelnoborder(Display * dpy, Draw * r);
 int blitz_strtorect(XRectangle * root, XRectangle * r, char *val);
 Bool blitz_ispointinrect(int x, int y, XRectangle * r);
 int blitz_distance(XRectangle * origin, XRectangle * target);
-void blitz_getbasegeometry(Container *c, unsigned int *size, unsigned int *cols, unsigned int *rows);
+void blitz_getbasegeometry(unsigned int size, unsigned int *cols, unsigned int *rows);
 
 /* mouse.c */
 char *blitz_buttontostr(unsigned int button);

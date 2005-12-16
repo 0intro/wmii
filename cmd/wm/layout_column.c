@@ -12,26 +12,42 @@
 
 typedef struct Acme Acme;
 typedef struct Column Column;
+typedef struct ColFrame ColFrame;
 
 struct Acme {
-	Container columns;
-	Container frames;
+	Column *sel;
+	Column *columns;
+	size_t ncolumns;
+	Frame *frames;
+	size_t nframes;
+};
+
+struct ColFrame {
+	Frame *frame;
+	ColFrame *next;
+	ColFrame *prev;
+	Column *col;
 };
 
 struct Column {
-	Container frames;
+	ColFrame *sel;
+	ColFrame *frames;
+	size_t nframes;
 	XRectangle rect;
+	Column *prev;
+	Column *next;
 };
 
-static void init_col(Area * a);
-static void deinit_col(Area * a);
-static void arrange_col(Area * a);
-static Bool attach_col(Area * a, Client * c);
-static void detach_col(Area * a, Client * c, Bool unmap);
-static void resize_col(Frame *f, XRectangle * new, XPoint * pt);
-static void select_col(Frame *f, Bool raise);
-static Container *get_frames_col(Area *a);
-static Action *get_actions_col(Area *a);
+static void init_col(Area *a, Client *clients);
+static Client *deinit_col(Area *a);
+static void arrange_col(Area *a);
+static Bool attach_col(Area *a, Client *c);
+static void detach_col(Area *a, Client *c, Bool unmap);
+static void resize_col(Frame *f, XRectangle *new, XPoint *pt);
+static void focus_col(Frame *f, Bool raise);
+static Frame *frames_col(Area *a);
+static Frame *sel_col(Area *a);
+static Action *actions_col(Area *a);
 
 static void select_frame(void *obj, char *arg);
 static void swap_frame(void *obj, char *arg);
@@ -44,98 +60,176 @@ static Action lcol_acttbl[] = {
 	{0, 0}
 };
 
-static Layout lcol = { "col", init_col, deinit_col, arrange_col, attach_col, detach_col,
-   				       resize_col, select_col, get_frames_col, get_actions_col };
-
 void init_layout_column()
 {
-	cext_attach_item(layouts, &lcol);
-}
+	Layout *lp, *l = cext_emallocz(sizeof(Layout));
+	l->name = "column";
+	l->init = init_col;
+	l->deinit = deinit_col;
+	l->arrange = arrange_col;
+	l->attach = attach_col;
+	l->detach = detach_col;
+	l->resize = resize_col;
+	l->focus = focus_col;
+	l->frames = frames_col;
+	l->sel = sel_col;
+	l->actions = actions_col;
 
-static Column *get_sel_column(Acme *acme)
-{
-	return cext_stack_get_top_item(&acme->columns);
-}
-
-static void iter_arrange_column_frame(void *frame, void *height)
-{
-	Frame *f = frame;
-	Column *col = f->aux;
-	size_t size = cext_sizeof_container(&col->frames);
-	unsigned int h = *(unsigned int *)height;
-	int idx = cext_list_get_item_index(&col->frames, f) ;
-
-	f->rect = col->rect;
-	f->rect.y = area_rect.y + idx * h;
-	if (idx + 1 == size)
-		f->rect.height = area_rect.height - f->rect.y + area_rect.y;
+	for (lp = layouts; lp && lp->next; lp = lp->next);
+	if (lp)
+		lp->next = l;
 	else
-		f->rect.height = h;
-
-	resize_frame(f, &f->rect, 0);
+		layouts = l;
 }
 
-static void iter_arrange_column(void *column, void *area)
+static void arrange_column(Column *col)
 {
-	Column *col = column;
-	size_t size = cext_sizeof_container(&col->frames);
-	unsigned int height;
-   
-	if (size) {
-		height= area_rect.height / size;
-		cext_list_iterate(&col->frames, &height, iter_arrange_column_frame);
+	ColFrame *cf;
+	unsigned int i = 0, h = area_rect.height / col->nframes;
+	for (cf = col->frames; cf; cf = cf->next) {
+		Frame *f = cf->frame;
+		f->rect = col->rect;
+		f->rect.y = area_rect.y + i * h;
+		if (!cf->next)
+			f->rect.height = area_rect.height - f->rect.y + area_rect.y;
+		else
+			f->rect.height = h;
+		resize_frame(f, &f->rect, 0);
+		i++;
 	}
 }
 
 static void arrange_col(Area *a)
 {
 	Acme *acme = a->aux;
-	cext_list_iterate(&acme->columns, a, iter_arrange_column);
+	Column *col;
+	for (col = acme->columns; col; col = col->next)
+		arrange_column(col);
 	XSync(dpy, False);
 }
 
-static void iter_attach_col(void *client, void *area)
+static void init_col(Area *a, Client *clients)
 {
-	attach_col(area, client);
+	Client *n, *c = clients;
+
+	a->aux = cext_emallocz(sizeof(Acme));
+	while (c) {
+		n = c->next;
+		attach_col(a, c);
+		c = n;
+	}
 }
 
-static void init_col(Area *a)
-{
-	Acme *acme = cext_emallocz(sizeof(Acme));
-	a->aux = acme;
-	cext_list_iterate(&a->clients, a, iter_attach_col);
-}
-
-static void iter_detach_client(void *client, void *area)
-{
-	Area *a = area;
-	detach_col(a, (Client *)client, a->page != get_sel_page());
-}
-
-static void deinit_col(Area *a)
+static void attach_frame(Area *a, Column *col, Frame *f)
 {
 	Acme *acme = a->aux;
-	Column *col;
-	cext_list_iterate(&a->clients, a, iter_detach_client);
-	while ((col = get_sel_column(acme)))
-	{
-		cext_detach_item(&acme->columns, col);
+	ColFrame *c, *cf = cext_emallocz(sizeof(ColFrame));
+	Frame *fr;
+	
+	cf->frame = f;
+	cf->col = col;
+	f->aux = cf;
+	for (c = col->frames; c && c->next; c = c->next);
+	if (!c) 
+		col->frames = cf;
+	else {
+		c->next = cf;
+		cf->prev = c;
+	}
+	col->sel = cf;
+	col->nframes++;
+
+	for (fr = acme->frames; fr && fr->next; fr = fr->next);
+	if (!fr)
+		acme->frames = f;
+	else {
+		fr->next = f;
+		f->prev = fr;
+	}
+	attach_frame_to_area(a, f);
+	acme->nframes++;
+
+}
+
+static void detach_frame(Area *a, Frame *f)
+{
+	Acme *acme = a->aux;
+	ColFrame *cf = f->aux;
+	Column *col = cf->col;
+
+	if (col->sel == cf) {
+		if (cf->prev)
+			col->sel = cf->prev;
+		else
+			col->sel = nil;
+	}
+	if (cf->prev)
+		cf->prev->next = cf->next;
+	else
+		col->frames = cf->next;
+	if (cf->next)
+		cf->next->prev = cf->prev;
+	if (!col->sel)
+		col->sel = col->frames;
+	free(cf);
+	col->nframes--;
+
+	if (f->prev)
+		f->prev->next = f->next;
+	else
+		acme->frames = f->next;
+	if (f->next)
+		f->next->prev = f->prev;
+	f->aux = nil;
+	detach_frame_from_area(f);
+	acme->nframes--;
+}
+
+static Client *deinit_col(Area *a)
+{
+	Acme *acme = a->aux;
+	Frame *f;
+	Client *cl, *res = nil, *c = nil;
+	Column *col = acme->columns;
+
+	while ((f = acme->frames)) {
+		while ((cl = f->clients)) {
+			detach_client_from_frame(cl, False);
+			cl->prev = cl->next = 0;
+			if (!c)
+				res = c = cl;
+			else {
+				c->next = cl;
+				cl->prev = c;
+				c = cl;	
+			}
+		}
+		detach_frame(a, f);
+		destroy_frame(f);
+	}
+	while ((col = acme->columns)) {
+		acme->columns = col->next;
 		free(col);
 	}
 	free(acme);
 	a->aux = 0;
+	return res;
 }
 
 static Bool attach_col(Area *a, Client *c)
 {
 	Acme *acme = a->aux;
-	Column *col = get_sel_column(acme);
-	Frame *f = get_sel_frame_of_area(a);
+	Column *col = acme->sel;
+	Frame *f = nil;
+	
+	if (col && col->sel)
+		f = col->sel->frame;
 
 	if (!col) {
 		col = cext_emallocz(sizeof(Column));
 		col->rect = area_rect;
-		cext_attach_item(&acme->columns, col);
+		acme->columns = acme->sel = col;
+		acme->ncolumns++;
 	}
 
 	/* check for tabbing? */
@@ -143,34 +237,31 @@ static Bool attach_col(Area *a, Client *c)
 		f = 0;
 	if (!f) {
 		f = alloc_frame(&c->rect);
-		attach_frame_to_area(a, f);
-		f->aux = col;
-		cext_attach_item(&acme->frames, f);
-		cext_attach_item(&col->frames, f);
+		attach_frame(a, col, f);
 	}
 	attach_client_to_frame(f, c);
-	iter_arrange_column(col, a);
-	if (a->page == get_sel_page())
+	arrange_column(col);
+	if (a->page == selpage)
 		XMapWindow(dpy, f->win);
-	select_col(f, True);
+	focus_col(f, True);
 	return True;
 }
 
 static void update_column_width(Area *a)
 {
 	Acme *acme = a->aux;
-	size_t size = cext_sizeof_container(&acme->columns);
-	unsigned int i, width;
+	unsigned int i = 0, width;
+	Column *col;
 
-	if (!size)
+	if (!acme->ncolumns)
 		return;
 
-	width = area_rect.width / size;
-	for (i = 0; i < size; i++) {
-		Column *col = cext_list_get_item(&acme->columns, i);
+	width = area_rect.width / acme->ncolumns;
+	for (col = acme->columns; col; col = col->next) {
 		col->rect = area_rect;
 		col->rect.x = i * width;
 		col->rect.width = width;
+		i++;
 	}
 	arrange_col(a);
 }
@@ -182,128 +273,121 @@ static void detach_col(Area *a, Client *c, Bool unmap)
 	Column *col = f->aux;
 
 	detach_client_from_frame(c, unmap);
-	if (!cext_sizeof_container(&f->clients)) {
-		detach_frame_from_area(f);
-		cext_detach_item(&acme->frames, f);
-		cext_detach_item(&col->frames, f);
+	if (!f->clients) {
+		detach_frame(a, f);
 		destroy_frame(f);
 	}
 	else return;
-	if (cext_sizeof_container(&col->frames))
-		iter_arrange_column(col, a);
+	if (col->frames)
+		arrange_column(col);
 	else {
-		cext_detach_item(&acme->columns, col);
+		if (acme->sel == col) {
+			if (col->prev)
+				acme->sel = col->prev;
+			else
+				acme->sel = nil;
+		}
+		if (col->prev)
+			col->prev->next = col->next;
+		else
+			acme->columns = col->next;
+		if (col->next)
+			col->next->prev = col->prev;
+		if (!acme->sel)
+			acme->sel = acme->columns;
+		acme->ncolumns--;
 		free(col);
 		update_column_width(a);
 	}
 }
 
-static void iter_match_frame_horiz(void *frame, void *rect)
+static void match_frame_horiz(Column *col, XRectangle *r)
 {
-	Frame *f = frame;
-	XRectangle *r = rect;
-	f->rect.x = r->x;
-	f->rect.width = r->width;
-	resize_frame(f, &f->rect, nil);
+	ColFrame *cf;
+	for (cf = col->frames; cf; cf = cf->next) {
+		Frame *f = cf->frame;
+		f->rect.x = r->x;
+		f->rect.width = r->width;
+		resize_frame(f, &f->rect, nil);
+	}
 }
 
 static void drop_resize(Frame *f, XRectangle *new)
 {
 	Column *west = 0, *east = 0, *col = f->aux;
-	Frame *north = 0, *south = 0;
-	Acme *acme = f->area->aux;
-	size_t ncol = cext_sizeof_container(&acme->columns);
-	size_t nfr = cext_sizeof_container(&col->frames);
-	int colidx = cext_list_get_item_index(&acme->columns, col);
-	int fidx = cext_list_get_item_index(&col->frames, f);
+	ColFrame *north = 0, *south = 0;
+	ColFrame *cf = f->aux;
 
-	if (colidx > 0)
-		west = cext_list_get_item(&acme->columns, colidx - 1);
-	if (colidx + 1 < ncol)
-		east = cext_list_get_item(&acme->columns, colidx + 1);
-	if (fidx > 0)
-		north = cext_list_get_item(&col->frames, fidx - 1);
-	if (fidx + 1 < nfr)
-		south = cext_list_get_item(&col->frames, fidx + 1);
+	west = col->prev;
+	east = col->next;
+	north = cf->prev;
+	south = cf->next;
 
 	/* horizontal resize */
 	if (west && (new->x != f->rect.x)) {
 		west->rect.width = new->x - west->rect.x;
 		col->rect.width += f->rect.x - new->x;
 		col->rect.x = new->x;
-		cext_list_iterate(&west->frames, &west->rect, iter_match_frame_horiz);
-		cext_list_iterate(&col->frames, &col->rect, iter_match_frame_horiz);
+		match_frame_horiz(west, &west->rect);
+		match_frame_horiz(col, &col->rect);
 	}
 	if (east && (new->x + new->width != f->rect.x + f->rect.width)) {
 		east->rect.width -= new->x + new->width - east->rect.x;
 		east->rect.x = new->x + new->width;
 		col->rect.x = new->x;
 		col->rect.width = new->width;
-		cext_list_iterate(&col->frames, &col->rect, iter_match_frame_horiz);
-		cext_list_iterate(&east->frames, &east->rect, iter_match_frame_horiz);
+		match_frame_horiz(col, &col->rect);
+		match_frame_horiz(east, &east->rect);
 	}
 
 	/* vertical resize */
 	if (north && (new->y != f->rect.y)) {
-		north->rect.height = new->y - north->rect.y;
+		north->frame->rect.height = new->y - north->frame->rect.y;
 		f->rect.height += f->rect.y - new->y;
 		f->rect.y = new->y;
-		resize_frame(north, &north->rect, nil);
+		resize_frame(north->frame, &north->frame->rect, nil);
 		resize_frame(f, &f->rect, nil);
 	}
 	if (south && (new->y + new->height != f->rect.y + f->rect.height)) {
-		south->rect.height -= new->y + new->height - south->rect.y;
-		south->rect.y = new->y + new->height;
+		south->frame->rect.height -= new->y + new->height - south->frame->rect.y;
+		south->frame->rect.y = new->y + new->height;
 		f->rect.y = new->y;
 		f->rect.height = new->height;
 		resize_frame(f, &f->rect, nil);
-		resize_frame(south, &south->rect, nil);
+		resize_frame(south->frame, &south->frame->rect, nil);
 	}
-}
-
-static int comp_pointer_frame(void *point, void *frame)
-{
-	Frame *f = frame;
-	XPoint *pt = point;
-
-	fprintf(stderr, "frame: %d,%d in %d,%d,%d,%d ?\n", pt->x, pt->y, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
-	return blitz_ispointinrect(pt->x, pt->y, &f->rect);
-}
-
-static int comp_pointer_col(void *point, void *column)
-{
-	Column *col = column;
-	XPoint *pt = point;
-
-	fprintf(stderr, "col: %d,%d in %d,%d,%d,%d ?\n", pt->x, pt->y, col->rect.x, col->rect.y, col->rect.width, col->rect.height);
-	return blitz_ispointinrect(pt->x, pt->y, &col->rect);
 }
 
 static void drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 {
-	Acme *acme = f->area->aux;
-	Column *src = f->aux, *tgt = 0;
+	Area *a = f->area;
+	ColFrame *fcf = f->aux;
+	Column *src = fcf->col, *tgt = 0;
+	Acme *acme = a->aux;
 
 	if (!pt)
 		return;
 
-	if ((tgt = cext_find_item(&acme->columns, pt, comp_pointer_col))) {
+	for (tgt = acme->columns; tgt && !blitz_ispointinrect(pt->x, pt->y, &tgt->rect); tgt = tgt->next);
+	if (tgt) {
 		if (tgt != src) {
-		   	if (cext_sizeof_container(&src->frames) < 2)
+		   	if (src->nframes < 2)
 				return;
-			cext_detach_item(&src->frames, f);
-			cext_attach_item(&tgt->frames, f);
-			f->aux = tgt;
-			iter_arrange_column(tgt, f->area);
-			iter_arrange_column(src, f->area);
-			select_col(f, True);
+			detach_frame(a, f);
+			attach_frame(a, tgt, f);
+			arrange_column(src);
+			arrange_column(tgt);
+			focus_col(f, True);
 		}
 		else {
-			Frame *other = cext_find_item(&tgt->frames, pt, comp_pointer_frame);
-			if (other && other != f) {
-				cext_swap_items(&tgt->frames, f, other);
-				iter_arrange_column(tgt, f->area);
-				select_col(f, True);
+			ColFrame *cf;
+		    for (cf = src->frames; cf && !blitz_ispointinrect(pt->x, pt->y, &cf->frame->rect); cf = cf->next);
+			if (cf && cf != fcf) {
+				Frame *tmp = cf->frame;
+				cf->frame = f;
+				fcf->frame = tmp;
+				arrange_column(src);
+				focus_col(f, True);
 			}
 		}
 	}
@@ -318,32 +402,41 @@ static void resize_col(Frame *f, XRectangle *new, XPoint *pt)
 		drop_resize(f, new);
 }
 
-static void select_col(Frame *f, Bool raise)
+static void focus_col(Frame *f, Bool raise)
 {
 	Area *a = f->area;
 	Acme *acme = a->aux;
-	Column *col = f->aux;
-	Frame *old = get_sel_frame();
+	ColFrame *old, *fcf = f->aux;
+	Column *col = fcf->col;
 
-	cext_stack_top_item(&acme->columns, col);
-	sel_client(cext_stack_get_top_item(&f->clients));
-	cext_stack_top_item(&col->frames, f);
-	cext_stack_top_item(&acme->frames, f);
+	old = col->sel;
+	acme->sel = col;
+	col->sel = fcf;
+	sel_client(f->sel);
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
 	if (raise)
 		center_pointer(f);
-	if (old && old != f)
-		draw_frame(old);
+	if (old && old != fcf)
+		draw_frame(old->frame);
 	draw_frame(f);
 }
 
-static Container *get_frames_col(Area *a)
+static Frame *frames_col(Area *a)
 {
 	Acme *acme = a->aux;
-	return &acme->frames;
+	return acme->frames;
 }
 
-static Action *get_actions_col(Area *a)
+static Frame *sel_col(Area *a) {
+	Acme *acme = a->aux;
+	Column *col = acme->sel;
+
+	if (col && col->sel)
+		return col->sel->frame;
+	return nil;
+}
+
+static Action *actions_col(Area *a)
 {
 	return lcol_acttbl;
 }	
@@ -381,7 +474,7 @@ static void select_frame(void *obj, char *arg)
 	}
 	else 
 		f = cext_list_get_item(&col->frames, blitz_strtonum(arg, 0, cext_sizeof_container(&col->frames) - 1));
-	select_col(f, True);
+	focus_col(f, True);
 }
 
 static void swap_frame(void *obj, char *arg)
@@ -423,7 +516,7 @@ static void swap_frame(void *obj, char *arg)
 		cext_swap_items(&col->frames, f, north);
 		resize_frame(f, &f->rect, nil);
 		resize_frame(north, &north->rect, nil);
-		select_col(f, True);
+		focus_col(f, True);
 	}
 	else if (!strncmp(arg, "south", 6) && south) {
 		r = south->rect;
@@ -432,7 +525,7 @@ static void swap_frame(void *obj, char *arg)
 		cext_swap_items(&col->frames, f, south);
 		resize_frame(f, &f->rect, nil);
 		resize_frame(south, &south->rect, nil);
-		select_col(f, True);
+		focus_col(f, True);
 	}
 	else if (!strncmp(arg, "west", 5) && west && (ncol > 1)) {
 		Frame *other = cext_stack_get_top_item(&west->frames);
@@ -447,7 +540,7 @@ static void swap_frame(void *obj, char *arg)
 		other->aux = col;
 		resize_frame(f, &f->rect, nil);
 		resize_frame(other, &other->rect, nil);
-		select_col(f, True);
+		focus_col(f, True);
 	}
 	else if (!strncmp(arg, "east", 5) && east && (ncol > 1)) {
 		Frame *other = cext_stack_get_top_item(&east->frames);
@@ -462,7 +555,7 @@ static void swap_frame(void *obj, char *arg)
 		other->aux = col;
 		resize_frame(f, &f->rect, nil);
 		resize_frame(other, &other->rect, nil);
-		select_col(f, True);
+		focus_col(f, True);
 	}
 }
 
@@ -482,5 +575,6 @@ static void new_col(void *obj, char *arg)
 	cext_attach_item(&col->frames, f);
 	cext_attach_item(&acme->columns, col);
 	update_column_width(a);
-	select_col(f, True);
+	focus_col(f, True);
 }
+

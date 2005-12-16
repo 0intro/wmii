@@ -25,16 +25,15 @@ Client *alloc_client(Window w)
 	c->file[C_NAME] = wmii_create_ixpfile(ixps, buf, (char *)name.value);
 	free(name.value);
 	id++;
-	cext_attach_item(clients, c);
 	return c;
 }
 
-void sel_client(Client * c)
+void focus_client(Client * c)
 {
 	Frame *f = 0;
 	/* sel client */
 	f = c->frame;
-	cext_stack_top_item(&f->clients, c);
+	f->sel = c;
 	f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
 	XRaiseWindow(dpy, c->win);
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
@@ -161,7 +160,7 @@ void handle_client_property(Client *c, XPropertyEvent *e)
 		}
 		free(name.value);
 		if (c->frame)
-			draw_client(c, nil);
+			draw_client(c);
 		invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
 		break;
 	case XA_WM_TRANSIENT_FOR:
@@ -178,43 +177,38 @@ void handle_client_property(Client *c, XPropertyEvent *e)
 
 void destroy_client(Client * c)
 {
-	cext_detach_item(detached, c);
-	cext_detach_item(clients, c);
+	detach_detached(c);
 	ixp_remove_file(ixps, c->file[C_PREFIX]);
 	free(c);
 }
 
 /* speed reasoned function for client property change */
-void draw_client(void *item, void *aux)
+void draw_client(Client *client)
 {
-	Client *c = item;
-	Frame *f = c->frame;
-	unsigned int tw, tabh = tab_height(f);
-	size_t size;
-	int i;
+	Frame *f = client->frame;
+	unsigned int i = 0, tw, tabh = tab_height(f);
 	Draw d = { 0 };
+	Client *c;
 
 	if (!tabh)
 		return;
 
-	size = cext_sizeof_container(&f->clients);
-	tw = f->rect.width;
-	if (size)
-		tw /= size;
-	i = cext_list_get_item_index(&f->clients, c);
+	tw = f->rect.width / f->nclients;
+	for (c = f->clients; c && c != client; c = c->next)
+		i++;
 
 	d.drawable = f->win;
 	d.gc = f->gc;
 	d.rect.x = i * tw;
 	d.rect.y = 0;
 	d.rect.width = tw;
-	if (i && (i == size - 1))
+	if (i && (i == f->nclients - 1))
 		d.rect.width = f->rect.width - d.rect.x;
 	d.rect.height = tabh;
 	d.data = c->file[C_NAME]->content;
 	d.font = font;
 
-	if ((f == get_sel_frame()) && (c == get_sel_client())) {
+	if ((f == sel_frame()) && (c == f->sel)) {
 		d.bg = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_BG_COLOR]->content);
 		d.fg = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_FG_COLOR]->content);
 		d.border = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_BORDER_COLOR]->content);
@@ -229,7 +223,9 @@ void draw_client(void *item, void *aux)
 
 void draw_clients(Frame * f)
 {
-	cext_list_iterate(&f->clients, 0, draw_client);
+	Client *c;
+	for (c = f->clients; c; c = c->next)
+		draw_client(c);
 }
 
 void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
@@ -295,36 +291,66 @@ void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 void attach_client(Client * c)
 {
 	Area *a = 0;
-	if (!cext_sizeof_container(pages))
-		alloc_page();
+	Page *p = pages;
+	if (!p)
+		p = alloc_page();
 	/* transient stuff */
-	a = get_sel_area();
+	a = p->sel;
 	if (c && c->trans) {
 		Client *t = win_to_client(c->trans);
 		if (t && t->frame)
-			a = cext_list_get_item(&t->frame->area->page->areas, 0);
+			a = p->floating;
 	}
-	cext_attach_item(&a->clients, c);
 	a->layout->attach(a, c);
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
 void detach_client(Client *c, Bool unmap) {
-	Page *p;
 	Frame *f = c->frame;
 	Area *a = f ? f->area : nil;
 	if (a) {
 		a->layout->detach(a, c, unmap);
-		cext_detach_item(&a->clients, c);
 	}
 	if (c->destroyed)
 		destroy_client(c);
-	if ((p = get_sel_page()))
-		sel_page(p);
+	if (selpage)
+		focus_page(selpage);
 }
 
-Client *get_sel_client()
+Client *sel_client()
 {
-	Frame *f = get_sel_frame();
-	return f ? cext_stack_get_top_item(&f->clients) : nil;
+	Frame *f = sel_frame();
+	return f ? f->sel : nil;
+}
+
+Client *clientat(Client *clients, size_t idx)
+{
+	size_t i = 0;
+	Client *c = clients;
+	for (; c && i != idx ; c = c->next) i++;
+	return c;
+}
+
+void detach_detached(Client *c)
+{
+	if (detached == c) {
+		if (c->next)
+			c->next->prev = nil;
+		detached = c->next;
+	}
+	else {
+		if (c->next)
+			c->next->prev = c->prev;
+		c->prev->next = c->next;
+	}
+	ndetached--;
+}
+
+void attach_detached(Client *c)
+{
+	c->prev = nil;
+	c->next = detached;
+	if (detached)
+		detached->prev = c;
+	detached = c;
 }

@@ -9,74 +9,90 @@
 
 #include "wm.h"
 
-static void handle_after_write_page(IXPServer * s, File * f);
+static void handle_after_write_page(IXPServer *s, File *file);
 
-static void select_area(void *obj, char *arg);
+static void toggle_area(void *obj, char *arg);
 
 /* action table for /?/ namespace */
 Action page_acttbl[] = {
-	{"select", select_area},
+	{"toggle", toggle_area},
 	{0, 0}
 };
 
 Page *alloc_page()
 {
-	Page *p = cext_emallocz(sizeof(Page));
+	Page *p, *new = cext_emallocz(sizeof(Page));
 	char buf[MAX_BUF], buf2[16];
-	size_t id = cext_sizeof_container(pages);
 
-	snprintf(buf2, sizeof(buf2), "%d", id);
-	snprintf(buf, sizeof(buf), "/%d", id);
-	p->file[P_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, sizeof(buf), "/%d/name", id);
-	p->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
-	snprintf(buf, sizeof(buf), "/%d/layout/", id);
-	p->file[P_AREA_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, sizeof(buf), "/%d/layout/sel", id);
-	p->file[P_SEL_AREA] = ixp_create(ixps, buf);
-	p->file[P_SEL_AREA]->bind = 1;	/* mount point */
-	snprintf(buf, sizeof(buf), "/%d/ctl", id);
-	p->file[P_CTL] = ixp_create(ixps, buf);
-	p->file[P_CTL]->after_write = handle_after_write_page;
-	alloc_area(p, "float");
-	alloc_area(p, def[WM_LAYOUT]->content);
-	cext_attach_item(pages, p);
+	snprintf(buf2, sizeof(buf2), "%d", npages);
+	snprintf(buf, sizeof(buf), "/%d", npages);
+	new->file[P_PREFIX] = ixp_create(ixps, buf);
+	snprintf(buf, sizeof(buf), "/%d/name", npages);
+	new->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
+	snprintf(buf, sizeof(buf), "/%d/layout/", npages);
+	new->file[P_AREA_PREFIX] = ixp_create(ixps, buf);
+	snprintf(buf, sizeof(buf), "/%d/layout/sel", npages);
+	new->file[P_SEL_AREA] = ixp_create(ixps, buf);
+	new->file[P_SEL_AREA]->bind = 1;	/* mount point */
+	snprintf(buf, sizeof(buf), "/%d/ctl", npages);
+	new->file[P_CTL] = ixp_create(ixps, buf);
+	new->file[P_CTL]->after_write = handle_after_write_page;
+	new->floating = alloc_area(new, "float");
+	new->sel = new->managed = alloc_area(new, def[WM_LAYOUT]->content);
+	for (p = pages; p && p->next; p = p->next);
+	if (!p)
+		pages = new;
+	else {
+		new->prev = p;
+		p->next = new;
+	}
+	selpage = new;
 	def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	return p;
 }
 
-static void iter_destroy_area(void *area, void *aux)
+void destroy_page(Page *p)
 {
-	destroy_area((Area *)area);
-}
-
-void destroy_page(Page * p)
-{
-	cext_list_iterate(&p->areas, nil, iter_destroy_area);
+	destroy_area(p->floating);
+	destroy_area(p->managed);
 	def[WM_SEL_PAGE]->content = 0;
 	ixp_remove_file(ixps, p->file[P_PREFIX]);
-	cext_detach_item(pages, p);
+	if (p == selpage) {
+		if (p->prev)
+			selpage = p->prev;
+		else
+			selpage = nil;
+	}
+		
+	if (p == pages) {
+		if (p->next)
+			p->next->prev = nil;
+		pages = p->next;
+	}
+	else {
+		p->prev->next = p->next;
+		if (p->next)
+			p->next->prev = p->prev;
+	}
+
 	free(p);
-	if ((p = get_sel_page()))
-		sel_page(p);
-	else
-		invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+	if (!selpage)
+		selpage = pages;
+
+	if (selpage)
+		focus_page(selpage);
 }
 
-void sel_page(Page * p)
+void focus_page(Page *p)
 {
-	Page *sel = get_sel_page();
-	if (!sel)
-		return;
-	if (p != sel) {
-		hide_page(sel);
-		cext_stack_top_item(pages, p);
-		show_page(p);
-	}
+	if (selpage != p)
+		hide_page(selpage);
+	selpage = p;
+	show_page(p);
 	def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
-	sel_area(get_sel_area());
+	focus_area(sel_area());
 }
 
 XRectangle *rectangles(unsigned int *num)
@@ -109,57 +125,46 @@ XRectangle *rectangles(unsigned int *num)
 	return result;
 }
 
-static void iter_hide_page(void *item, void *aux)
+void hide_page(Page *p)
 {
-	hide_area((Area *)item);
+	hide_area(p->managed);
+	hide_area(p->floating);
 }
 
-void hide_page(Page * p)
+void show_page(Page *p)
 {
-	cext_list_iterate(&p->areas, nil, iter_hide_page);
+	show_area(p->managed, False);
+	show_area(p->floating, False);
 }
 
-static void iter_show_page(void *item, void *aux)
+static void handle_after_write_page(IXPServer *s, File *file)
 {
-	show_area((Area *)item);
-}
-
-void show_page(Page * p)
-{
-	cext_list_iterate(&p->areas, nil, iter_show_page);
-}
-
-static void iter_after_write_page(void *item, void *aux)
-{
-	Page *p = (Page *)item;
-	File *file = aux;
-	if (file == p->file[P_CTL]) {
-		run_action(file, p, page_acttbl);
-		return;
+	Page *p;
+	for (p = pages; p; p = p->next) {
+		if (file == p->file[P_CTL]) {
+			run_action(file, p, page_acttbl);
+			return;
+		}
 	}
 }
 
-static void handle_after_write_page(IXPServer *s, File *f)
-{
-	cext_list_iterate(pages, f, iter_after_write_page);
-}
-
-Page *get_sel_page()
-{
-	return cext_stack_get_top_item(pages);
-}
-
-static void select_area(void *obj, char *arg)
+static void toggle_area(void *obj, char *arg)
 {
 	Page *p = obj;
-	Area *a = cext_stack_get_top_item(&p->areas);
 
-	if (!strncmp(arg, "prev", 5))
-		a = cext_list_get_prev_item(&p->areas, a);
-	else if (!strncmp(arg, "next", 5))
-		a = cext_list_get_next_item(&p->areas, a);
-	else 
-		a = cext_list_get_item(&p->areas, blitz_strtonum(arg, 0, cext_sizeof_container(&p->areas) - 1));
-	sel_area(a);
+	if (p->sel == p->managed)
+		p->sel = p->floating;
+	else
+		p->sel = p->managed;
+
+	sel_area(p->sel);	
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+}
+
+Page *get_page(unsigned int idx)
+{
+	unsigned int i = 0;
+	Page *p = pages;
+	for (; p && i != idx; p = p->next);
+	return p;
 }

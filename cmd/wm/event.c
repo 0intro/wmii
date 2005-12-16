@@ -116,10 +116,9 @@ static void handle_configurerequest(XEvent * e)
 
 		if (f) {
 			Page *p = f->area->page;
-			if (cext_list_get_item_index(&p->areas, f->area)) {
-				Area *a = cext_list_get_item(&p->areas, 0);
+			if (f->area == p->managed) {
 				f->area->layout->detach(f->area, c, False);
-				a->layout->attach(a, c);
+				p->floating->layout->attach(p->floating, c);
 				f = c->frame;
 			}
 			bw = border_width(f);
@@ -274,7 +273,7 @@ static void handle_enternotify(XEvent * e)
 	c = win_to_client(ev->window);
 	if (c && c->frame) {
 		sel_area(c->frame->area);
-		c->frame->area->layout->select(c->frame, False);
+		c->frame->area->layout->focus(c->frame, False);
 	}
 }
 

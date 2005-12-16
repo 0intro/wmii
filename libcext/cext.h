@@ -15,39 +15,6 @@
 #define TRUE 1
 #endif
 
-/* container.c */
-typedef struct Container Container;
-typedef struct CItem CItem;
-
-struct CItem {
-	void *item;
-	CItem *next;
-	CItem *up;
-	CItem *down;
-};
-
-struct Container {
-	CItem *list;
-	CItem *stack;
-};
-
-void cext_attach_item(Container *c, void *item);
-void cext_detach_item(Container *c, void *item);
-void *cext_find_item(Container *c, void *pattern, int (*comp)(void *pattern, void *item));
-void cext_swap_items(Container *c, void *item1, void *item2);
-size_t cext_sizeof_container(Container *c);
-void cext_stack_top_item(Container *c, void *item);
-void *cext_stack_get_top_item(Container *c);
-void *cext_stack_get_down_item(Container *c, void *item);
-void *cext_stack_get_up_item(Container *c, void *item);
-void cext_stack_iterate_down(Container *c, void *aux, void (*iter)(void *, void *aux));
-void cext_stack_iterate_up(Container *c, void *aux, void (*iter)(void *, void *aux));
-void cext_list_iterate(Container *c, void *aux, void (*iter)(void *, void *aux));
-void *cext_list_get_item(Container *c, size_t index);
-int cext_list_get_item_index(Container *c, void *item);
-void *cext_list_get_next_item(Container *c, void *item);
-void *cext_list_get_prev_item(Container *c, void *item);
-
 /* emallocz.c */
 void *cext_emallocz(size_t size);
 

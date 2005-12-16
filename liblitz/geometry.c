@@ -198,15 +198,14 @@ int blitz_distance(XRectangle * origin, XRectangle * target)
 	return (int) sqrt((double) (((ox - tx) * (ox - tx)) + ((oy - ty) * (oy - ty))));
 }
 
-void blitz_getbasegeometry(Container *c, unsigned int *size, unsigned int *cols, unsigned int *rows)
+void blitz_getbasegeometry(unsigned int size, unsigned int *cols, unsigned int *rows)
 {
 	float sq, dummy;
 
-	*size = cext_sizeof_container(c);
-	sq = sqrt(*size);
+	sq = sqrt(size);
 	if (modff(sq, &dummy) < 0.5)
 		*rows = floor(sq);
 	else
 		*rows = ceil(sq);
-	*cols = ((*rows) * (*rows)) < (*size) ? *rows + 1 : *rows;
+	*cols = ((*rows) * (*rows)) < (size) ? *rows + 1 : *rows;
 }
