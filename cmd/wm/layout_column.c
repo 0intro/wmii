@@ -12,7 +12,7 @@
 
 typedef struct Acme Acme;
 typedef struct Column Column;
-typedef struct ColFrame ColFrame;
+typedef struct Cell Cell;
 
 struct Acme {
 	Column *sel;
@@ -22,17 +22,17 @@ struct Acme {
 	size_t nframes;
 };
 
-struct ColFrame {
+struct Cell {
 	Frame *frame;
-	ColFrame *next;
-	ColFrame *prev;
+	Cell *next;
+	Cell *prev;
 	Column *col;
 };
 
 struct Column {
-	ColFrame *sel;
-	ColFrame *frames;
-	size_t nframes;
+	Cell *sel;
+	Cell *cells;
+	size_t ncells;
 	XRectangle rect;
 	Column *prev;
 	Column *next;
@@ -84,13 +84,13 @@ void init_layout_column()
 
 static void arrange_column(Column *col)
 {
-	ColFrame *cf;
-	unsigned int i = 0, h = area_rect.height / col->nframes;
-	for (cf = col->frames; cf; cf = cf->next) {
-		Frame *f = cf->frame;
+	Cell *cell;
+	unsigned int i = 0, h = area_rect.height / col->ncells;
+	for (cell = col->cells; cell; cell = cell->next) {
+		Frame *f = cell->frame;
 		f->rect = col->rect;
 		f->rect.y = area_rect.y + i * h;
-		if (!cf->next)
+		if (!cell->next)
 			f->rect.height = area_rect.height - f->rect.y + area_rect.y;
 		else
 			f->rect.height = h;
@@ -123,21 +123,21 @@ static void init_col(Area *a, Client *clients)
 static void attach_frame(Area *a, Column *col, Frame *f)
 {
 	Acme *acme = a->aux;
-	ColFrame *c, *cf = cext_emallocz(sizeof(ColFrame));
+	Cell *c, *cell = cext_emallocz(sizeof(Cell));
 	Frame *fr;
 	
-	cf->frame = f;
-	cf->col = col;
-	f->aux = cf;
-	for (c = col->frames; c && c->next; c = c->next);
+	cell->frame = f;
+	cell->col = col;
+	f->aux = cell;
+	for (c = col->cells; c && c->next; c = c->next);
 	if (!c) 
-		col->frames = cf;
+		col->cells = cell;
 	else {
-		c->next = cf;
-		cf->prev = c;
+		c->next = cell;
+		cell->prev = c;
 	}
-	col->sel = cf;
-	col->nframes++;
+	col->sel = cell;
+	col->ncells++;
 
 	for (fr = acme->frames; fr && fr->next; fr = fr->next);
 	if (!fr)
@@ -154,25 +154,25 @@ static void attach_frame(Area *a, Column *col, Frame *f)
 static void detach_frame(Area *a, Frame *f)
 {
 	Acme *acme = a->aux;
-	ColFrame *cf = f->aux;
-	Column *col = cf->col;
+	Cell *cell = f->aux;
+	Column *col = cell->col;
 
-	if (col->sel == cf) {
-		if (cf->prev)
-			col->sel = cf->prev;
+	if (col->sel == cell) {
+		if (cell->prev)
+			col->sel = cell->prev;
 		else
 			col->sel = nil;
 	}
-	if (cf->prev)
-		cf->prev->next = cf->next;
+	if (cell->prev)
+		cell->prev->next = cell->next;
 	else
-		col->frames = cf->next;
-	if (cf->next)
-		cf->next->prev = cf->prev;
+		col->cells = cell->next;
+	if (cell->next)
+		cell->next->prev = cell->prev;
 	if (!col->sel)
-		col->sel = col->frames;
-	free(cf);
-	col->nframes--;
+		col->sel = col->cells;
+	free(cell);
+	col->ncells--;
 
 	if (f->prev)
 		f->prev->next = f->next;
@@ -278,7 +278,7 @@ static void detach_col(Area *a, Client *c, Bool unmap)
 		destroy_frame(f);
 	}
 	else return;
-	if (col->frames)
+	if (col->cells)
 		arrange_column(col);
 	else {
 		if (acme->sel == col) {
@@ -303,9 +303,9 @@ static void detach_col(Area *a, Client *c, Bool unmap)
 
 static void match_frame_horiz(Column *col, XRectangle *r)
 {
-	ColFrame *cf;
-	for (cf = col->frames; cf; cf = cf->next) {
-		Frame *f = cf->frame;
+	Cell *cell;
+	for (cell = col->cells; cell; cell = cell->next) {
+		Frame *f = cell->frame;
 		f->rect.x = r->x;
 		f->rect.width = r->width;
 		resize_frame(f, &f->rect, nil);
@@ -315,13 +315,13 @@ static void match_frame_horiz(Column *col, XRectangle *r)
 static void drop_resize(Frame *f, XRectangle *new)
 {
 	Column *west = 0, *east = 0, *col = f->aux;
-	ColFrame *north = 0, *south = 0;
-	ColFrame *cf = f->aux;
+	Cell *north = 0, *south = 0;
+	Cell *cell = f->aux;
 
 	west = col->prev;
 	east = col->next;
-	north = cf->prev;
-	south = cf->next;
+	north = cell->prev;
+	south = cell->next;
 
 	/* horizontal resize */
 	if (west && (new->x != f->rect.x)) {
@@ -361,8 +361,8 @@ static void drop_resize(Frame *f, XRectangle *new)
 static void drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 {
 	Area *a = f->area;
-	ColFrame *fcf = f->aux;
-	Column *src = fcf->col, *tgt = 0;
+	Cell *cell = f->aux;
+	Column *src = cell->col, *tgt = 0;
 	Acme *acme = a->aux;
 
 	if (!pt)
@@ -371,7 +371,7 @@ static void drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 	for (tgt = acme->columns; tgt && !blitz_ispointinrect(pt->x, pt->y, &tgt->rect); tgt = tgt->next);
 	if (tgt) {
 		if (tgt != src) {
-		   	if (src->nframes < 2)
+		   	if (src->ncells < 2)
 				return;
 			detach_frame(a, f);
 			attach_frame(a, tgt, f);
@@ -380,12 +380,12 @@ static void drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 			focus_col(f, True);
 		}
 		else {
-			ColFrame *cf;
-		    for (cf = src->frames; cf && !blitz_ispointinrect(pt->x, pt->y, &cf->frame->rect); cf = cf->next);
-			if (cf && cf != fcf) {
-				Frame *tmp = cf->frame;
-				cf->frame = f;
-				fcf->frame = tmp;
+			Cell *c;
+		    for (c = src->cells; c && !blitz_ispointinrect(pt->x, pt->y, &c->frame->rect); c = c->next);
+			if (c && c != cell) {
+				Frame *tmp = c->frame;
+				c->frame = f;
+				cell->frame = tmp;
 				arrange_column(src);
 				focus_col(f, True);
 			}
@@ -406,17 +406,17 @@ static void focus_col(Frame *f, Bool raise)
 {
 	Area *a = f->area;
 	Acme *acme = a->aux;
-	ColFrame *old, *fcf = f->aux;
-	Column *col = fcf->col;
+	Cell *old, *cell = f->aux;
+	Column *col = cell->col;
 
 	old = col->sel;
 	acme->sel = col;
-	col->sel = fcf;
+	col->sel = cell;
 	sel_client(f->sel);
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
 	if (raise)
 		center_pointer(f);
-	if (old && old != fcf)
+	if (old && old != cell)
 		draw_frame(old->frame);
 	draw_frame(f);
 }
@@ -445,117 +445,101 @@ static void select_frame(void *obj, char *arg)
 {
 	Area *a = obj;
 	Acme *acme = a->aux;
-	Column *col = get_sel_column(acme);
-	Frame *f;
+	Column *col = acme->sel;
+	Cell *cell;
 
 	if (!col)
 		return;
 
-	f = cext_stack_get_top_item(&col->frames);
-	if (!f || !arg)
+	cell = col->sel;
+	if (!cell || !arg)
 		return;
 	if (!strncmp(arg, "prev", 5))
-		f = cext_list_get_prev_item(&acme->frames, f);
+		cell = cell->prev;
 	else if (!strncmp(arg, "next", 5))
-		f = cext_list_get_next_item(&acme->frames, f);
-	else if (!strncmp(arg, "north", 6))
-		f = cext_list_get_next_item(&col->frames, f);
-	else if (!strncmp(arg, "south", 6))
-		f = cext_list_get_next_item(&col->frames, f);
-	else if (!strncmp(arg, "west", 5)) {
-		col = cext_list_get_prev_item(&acme->columns, col);
-		cext_stack_top_item(&acme->columns, col);
-		f = cext_stack_get_top_item(&col->frames);
+		cell = cell->next;
+	else if (!strncmp(arg, "west", 5))
+		cell = col->prev ? col->prev->sel : nil;
+	else if (!strncmp(arg, "east", 5))
+		cell = col->next ? col->next->sel : nil;
+	else {
+		unsigned int i = 0, idx = blitz_strtonum(arg, 0, col->ncells - 1);
+		for (cell = col->cells; cell && i != idx; cell = cell->next) i++;
 	}
-	else if (!strncmp(arg, "east", 5)) {
-		col = cext_list_get_next_item(&acme->columns, col);
-		cext_stack_top_item(&acme->columns, col);
-		f = cext_stack_get_top_item(&col->frames);
-	}
-	else 
-		f = cext_list_get_item(&col->frames, blitz_strtonum(arg, 0, cext_sizeof_container(&col->frames) - 1));
-	focus_col(f, True);
+	if (cell)
+		focus_col(cell->frame, True);
 }
 
 static void swap_frame(void *obj, char *arg)
 {
 	Area *a = obj;
 	Acme *acme = a->aux;
-	Column *west = 0, *east = 0, *col = get_sel_column(acme);
-	Frame *north = 0, *south = 0, *f;
+	Column *west = 0, *east = 0, *col = acme->sel;
+	Cell *north = 0, *south = 0, *cell = col->sel;
+	Frame *f;
 	XRectangle r;
-	size_t ncol, nfr;
-	int colidx, fidx;
 
-	if (!col)
+	if (!col || !cell || !arg)
 		return;
 
-	f = cext_stack_get_top_item(&col->frames);
-
-	if (!f || !arg)
-		return;
-
-	ncol = cext_sizeof_container(&acme->columns);
-	nfr = cext_sizeof_container(&col->frames);
-	colidx = cext_list_get_item_index(&acme->columns, col);
-	fidx = cext_list_get_item_index(&col->frames, f);
-
-	if (colidx > 0)
-		west = cext_list_get_item(&acme->columns, colidx - 1);
-	if (colidx + 1 < ncol)
-		east = cext_list_get_item(&acme->columns, colidx + 1);
-	if (fidx > 0)
-		north = cext_list_get_item(&col->frames, fidx - 1);
-	if (fidx + 1 < nfr)
-		south = cext_list_get_item(&col->frames, fidx + 1);
+	west = col->prev;
+	east = col->next;
+	north = cell->prev;
+	south = cell->next;
 
 	if (!strncmp(arg, "north", 6)  && north) {
-		r = north->rect;
-		north->rect = f->rect;
-		f->rect = r;
-		cext_swap_items(&col->frames, f, north);
-		resize_frame(f, &f->rect, nil);
-		resize_frame(north, &north->rect, nil);
-		focus_col(f, True);
+		r = north->frame->rect;
+		north->frame->rect = cell->frame->rect;
+		cell->frame->rect = r;
+		f = north->frame;
+		north->frame = cell->frame;
+		cell->frame = f;
+		cell->frame->aux = cell;
+		north->frame->aux = north;
+		resize_frame(cell->frame, &cell->frame->rect, nil);
+		resize_frame(north->frame, &north->frame->rect, nil);
+		focus_col(cell->frame, True);
 	}
 	else if (!strncmp(arg, "south", 6) && south) {
-		r = south->rect;
-		south->rect = f->rect;
-		f->rect = r;
-		cext_swap_items(&col->frames, f, south);
-		resize_frame(f, &f->rect, nil);
-		resize_frame(south, &south->rect, nil);
-		focus_col(f, True);
+		r = south->frame->rect;
+		south->frame->rect = cell->frame->rect;
+		cell->frame->rect = r;
+		f = south->frame;
+		south->frame = cell->frame;
+		cell->frame = f;
+		cell->frame->aux = cell;
+		south->frame->aux = south;
+		resize_frame(cell->frame, &cell->frame->rect, nil);
+		resize_frame(south->frame, &south->frame->rect, nil);
+		focus_col(cell->frame, True);
 	}
-	else if (!strncmp(arg, "west", 5) && west && (ncol > 1)) {
-		Frame *other = cext_stack_get_top_item(&west->frames);
-		r = other->rect;
-		other->rect = f->rect;
-		f->rect = r;
-        cext_detach_item(&col->frames, f);
-        cext_detach_item(&west->frames, other);
-		cext_attach_item(&west->frames, f);
-		cext_attach_item(&col->frames, other);
-		f->aux = west;
-		other->aux = col;
-		resize_frame(f, &f->rect, nil);
-		resize_frame(other, &other->rect, nil);
-		focus_col(f, True);
+	else if (!strncmp(arg, "west", 5) && west && (col->ncells > 1)) {
+		Cell *other = west->sel;
+		r = other->frame->rect;
+		other->frame->rect = cell->frame->rect;
+		cell->frame->rect = r;
+		f = other->frame;
+		other->frame = cell->frame;
+		cell->frame = f;
+		other->frame->aux = other;
+		cell->frame->aux = cell;
+		resize_frame(cell->frame, &cell->frame->rect, nil);
+		resize_frame(other->frame, &other->frame->rect, nil);
+		focus_col(cell->frame, True);
 	}
-	else if (!strncmp(arg, "east", 5) && east && (ncol > 1)) {
-		Frame *other = cext_stack_get_top_item(&east->frames);
-		r = other->rect;
-		other->rect = f->rect;
-		f->rect = r;
-        cext_detach_item(&col->frames, f);
-        cext_detach_item(&east->frames, other);
-		cext_attach_item(&east->frames, f);
-		cext_attach_item(&col->frames, other);
-		f->aux = east;
-		other->aux = col;
-		resize_frame(f, &f->rect, nil);
-		resize_frame(other, &other->rect, nil);
-		focus_col(f, True);
+	else if (!strncmp(arg, "east", 5) && east && (col->ncells > 1)) {
+		Cell *other = east->sel;
+		r = other->frame->rect;
+		other->frame->rect = cell->frame->rect;
+		cell->frame->rect = r;
+		f = other->frame;
+		other->frame = cell->frame;
+		cell->frame = f;
+		other->frame->aux = other;
+		cell->frame->aux = cell;
+		resize_frame(cell->frame, &cell->frame->rect, nil);
+		resize_frame(other->frame, &other->frame->rect, nil);
+		focus_col(cell->frame, True);
 	}
 }
 
@@ -563,12 +547,13 @@ static void new_col(void *obj, char *arg)
 {
 	Area *a = obj;
 	Acme *acme = a->aux;
-	Column *col = get_sel_column(acme);
-	Frame *f;
+	Column *col = acme->sel;
+	Cell *cell;
 
-	if (!col || (cext_sizeof_container(&col->frames) < 2))
+	if (!col || col->ncells < 2)
 		return;
 
+	cell = col->sel;
 	f = cext_stack_get_top_item(&col->frames);
 	cext_detach_item(&col->frames, f);
 	f->aux = col = cext_emallocz(sizeof(Column));
