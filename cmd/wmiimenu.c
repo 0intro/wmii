@@ -40,6 +40,13 @@ enum {
 	OFF_NEXT, OFF_PREV, OFF_CURR, OFF_LAST
 };
 
+typedef struct Item Item;
+struct Item {
+	File *file;
+	Item *next;
+	Item *prev;
+};
+
 static IXPServer *ixps = 0;
 static Display *dpy;
 static GC gc;
@@ -49,14 +56,16 @@ static XRectangle mrect;
 static int screen_num;
 static char *sockfile = 0;
 static File *files[M_LAST];
-static Container items = {0};
-static Container history = {0};
-static int offset[OFF_LAST];
+static size_t nitems = 0;
+static Item *sel = nil;
+static Item *items = nil;
+static Item *selhist = nil;
+static Item *history = nil;
+static Item *offset[OFF_LAST];
 static unsigned int cmdw = 0;
 static Pixmap pmap;
 static const int seek = 30;		/* 30px */
 static XFontStruct *font;
-static unsigned int sel = 0;
 static Align align = SOUTH;
 
 static void check_event(Connection * c);
@@ -65,7 +74,7 @@ static void handle_kpress(XKeyEvent * e);
 static void set_text(char *text);
 static void quit(void *obj, char *arg);
 static void display(void *obj, char *arg);
-static int update_items(char *prefix);
+static size_t update_items(char *prefix);
 
 static Action acttbl[2] = {
 	{"quit", quit},
@@ -88,21 +97,31 @@ static void usage()
 
 static void add_history(char *cmd)
 {
+	Item *h, *new;
 	char buf[MAX_BUF];
 	snprintf(buf, MAX_BUF, "/history/%ld", (long) time(0));
-	cext_attach_item(&history, wmii_create_ixpfile(ixps, buf, cmd));
+
+	new = cext_emallocz(sizeof(Item));
+	new->file = wmii_create_ixpfile(ixps, buf, cmd);
+	for (h = history; h && h->next; h = h->next);
+	if (!h)
+		history = new;
+	else {
+		h->next = new;
+		new->prev = h;
+	}
+	selhist = new;
 }
 
 static void exec_item(char *cmd)
 {
-	File *item = cext_list_get_item(&items, sel);
 	char *rc = cmd;
 
 	if (!cmd || cmd[0] == 0)
 		return;
 
-	if (item && item->size)
-		rc = cmd = item->content;
+	if (sel && sel->file->size)
+		rc = cmd = sel->file->content;
 	add_history(cmd);
 
 	if (files[M_PRE_COMMAND]->content) {
@@ -168,34 +187,35 @@ void set_text(char *text)
 
 static void update_offsets()
 {
-	File *item;
-	unsigned int i, w = cmdw + 2 * seek;
+	Item *i;
+	unsigned int w = cmdw + 2 * seek;
 
-	if (!cext_stack_get_top_item(&items))
+	if (!sel)
 		return;
 
 	/* calc next offset */
-	for (i = offset[OFF_CURR]; (item = cext_list_get_item(&items, i)); i++) {
-		w += XTextWidth(font, item->content, strlen(item->content)) + mrect.height;
+	for (i = offset[OFF_CURR]; i; i = i->next) {
+		w += XTextWidth(font, i->file->content, strlen(i->file->content)) + mrect.height;
 		if (w > mrect.width)
 			break;
 	}
 	offset[OFF_NEXT] = i;
 
 	w = cmdw + 2 * seek;
-	for (i = offset[OFF_CURR] - 1; (i >= 0) && (item = cext_list_get_item(&items, i)); i--) {
-		w += XTextWidth(font, item->content, strlen(item->content)) + mrect.height;
+	for (i = offset[OFF_CURR]->prev; i; i = i->prev) {
+		w += XTextWidth(font, i->file->content, strlen(i->file->content)) + mrect.height;
 		if (w > mrect.width)
 			break;
 	}
-	offset[OFF_PREV] = i + 1;
+	offset[OFF_PREV] = i->next;
 }
 
-static int update_items(char *pattern)
+static size_t update_items(char *pattern)
 {
-	size_t plen = pattern ? strlen(pattern) : 0, len, max = 0, size;
+	size_t plen = pattern ? strlen(pattern) : 0, len, max = 0;
 	int matched = pattern ? plen == 0 : 1;
 	File *f, *p, *maxitem;
+	Item *i, *new;
 
 	if (!files[M_LOOKUP]->content)
 		return 0;
@@ -204,11 +224,14 @@ static int update_items(char *pattern)
 		return 0;
 
 	cmdw = 0;
-	offset[OFF_CURR] = offset[OFF_PREV] = offset[OFF_NEXT] = 0;
-	sel = 0;
+	offset[OFF_CURR] = offset[OFF_PREV] = offset[OFF_NEXT] = nil;
 
-	while ((p = cext_stack_get_top_item(&items)))
-		cext_detach_item(&items, p);
+	while ((i = items)) {
+		items = items->next;
+		free(i);
+	}
+	sel = items = nil;
+	nitems = 0;
 
 	/* build new items */
 	for (p = f->content; p; p = p->next) {
@@ -224,21 +247,39 @@ static int update_items(char *pattern)
 
 	for (p = f->content; p; p = p->next) {
 		if (matched || !strncmp(pattern, p->name, plen)) {
-			cext_attach_item(&items, p);
+			new = cext_emallocz(sizeof(Item));
+			new->file = p;
+			nitems++;
+			if (!items)
+				items = i = new;
+			else {
+				i->next = new;
+				new->prev = i;
+				i = new;
+			}
 			p->parent = 0;		/* HACK to prevent doubled items */
 		}
 	}
 
 	for (p = f->content; p; p = p->next) {
-		if (p->parent && strstr(p->name, pattern))
-			cext_attach_item(&items, p);
+		if (p->parent && strstr(p->name, pattern)) {
+			new = cext_emallocz(sizeof(Item));
+			new->file = p;
+			nitems++;
+			if (!items)
+				items = i = new;
+			else {
+				i->next = new;
+				new->prev = i;
+				i = new;
+			}
+		}
 		else
 			p->parent = f;		/* restore HACK */
 	}
 
-	size = cext_sizeof_container(&items);
 	update_offsets();
-	return size;
+	return nitems;
 }
 
 /* creates draw structs for menu mode drawing */
@@ -246,8 +287,7 @@ static void draw_menu()
 {
 	Draw d = { 0 };
 	unsigned int offx = 0;
-	int i = 0;
-	File *item = 0, *selitem = cext_list_get_item(&items, sel);
+	Item *i = sel;
 
 	d.gc = gc;
 	d.font = font;
@@ -264,29 +304,29 @@ static void draw_menu()
 	d.font = font;
 	d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORM_TEXT_COLOR]->content);
 	d.data = files[M_COMMAND]->content;
-	if (cmdw && selitem)
+	if (cmdw && sel)
 		d.rect.width = cmdw;
 	offx += d.rect.width;
 	blitz_drawlabelnoborder(dpy, &d);
 
 	d.align = CENTER;
-	if (selitem) {
+	if (sel) {
 		d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
 		d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORM_TEXT_COLOR]->content);
-		d.data = offset[OFF_CURR] ? "<" : 0;
+		d.data = offset[OFF_CURR] ? "<" : nil;
 		d.rect.x = offx;
 		d.rect.width = seek;
 		offx += d.rect.width;
 		blitz_drawlabelnoborder(dpy, &d);
 
 		/* determine maximum items */
-		for (i = offset[OFF_CURR]; (item = cext_list_get_item(&items, i)) && (i < offset[OFF_NEXT]); i++) {
-			d.data = item->name;
+		for (i = offset[OFF_CURR]; i && i != offset[OFF_NEXT]; i = i->next) {
+			d.data = i->file->name;
 			d.rect.x = offx;
 			d.rect.width = XTextWidth(d.font, d.data, strlen(d.data)) + mrect.height;
 			offx += d.rect.width;
 			/*fprintf(stderr, "%s (%d, %d, %d, %d)\n", item->name, d.rect.x, d.rect.y, d.rect.width, d.rect.height);*/
-			if (selitem == item) {
+			if (sel == i) {
 				d.bg = blitz_loadcolor(dpy, screen_num, files[M_SEL_BG_COLOR]->content);
 				d.fg = blitz_loadcolor(dpy, screen_num, files[M_SEL_TEXT_COLOR]->content);
 				d.border = blitz_loadcolor(dpy, screen_num, files[M_SEL_BORDER_COLOR]-> content);
@@ -301,7 +341,7 @@ static void draw_menu()
 
 		d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
 		d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORM_TEXT_COLOR]->content);
-		d.data = item ? ">" : 0;
+		d.data = i ? ">" : nil;
 		d.rect.x = mrect.width - seek;
 		d.rect.width = seek;
 		blitz_drawlabelnoborder(dpy, &d);
@@ -316,9 +356,7 @@ static void handle_kpress(XKeyEvent * e)
 	char buf[32];
 	int num;
 	static char text[4096];
-	size_t len = 0, size = cext_sizeof_container(&items);
-	File *selitem = cext_list_get_item(&items, sel);
-	File *hist = cext_stack_get_top_item(&history);
+	size_t len = 0;
 
 	text[0] = 0;
 	if (files[M_COMMAND]->content) {
@@ -365,41 +403,43 @@ static void handle_kpress(XKeyEvent * e)
 	}
 	switch (ksym) {
 	case XK_Left:
-		if (!selitem)
+		if (!sel)
 			return;
-		if (sel > 0) {
-			selitem = cext_list_get_item(&items, --sel);
-			set_text(selitem->name);
+		if (sel->prev) {
+			sel = sel->prev;
+			set_text(sel->file->name);
 		} else
 			return;
 		break;
 	case XK_Right:
 	case XK_Tab:
-		if (!selitem)
+		if (!sel)
 			return;
-		if (sel < size - 1) {
-			selitem = cext_list_get_item(&items, ++sel);
-			set_text(selitem->name);
+		if (sel->next) {
+			sel = sel->next;
+			set_text(sel->file->name);
 		} else
 			return;
 		break;
 	case XK_Down:
-		if (hist) {
-			set_text(hist->content);
-			cext_stack_top_item(&history, cext_list_get_next_item(&items, hist));
+		if (selhist) {
+			set_text(selhist->file->content);
+			if (selhist->next)
+				selhist = selhist->next;
 		}
 		update_items(files[M_COMMAND]->content);
 		break;
 	case XK_Up:
-		if (hist) {
-			set_text(hist->content);
-			cext_stack_top_item(&history, cext_list_get_prev_item(&items, hist));
+		if (selhist) {
+			set_text(selhist->file->content);
+			if (selhist->prev)
+				selhist = selhist->prev;
 		}
 		update_items(files[M_COMMAND]->content);
 		break;
 	case XK_Return:
-		if (selitem)
-			exec_item(selitem->name);
+		if (sel)
+			exec_item(sel->file->name);
 		else if (text)
 			exec_item(text);
 	case XK_Escape:
@@ -411,7 +451,7 @@ static void handle_kpress(XKeyEvent * e)
 			if (i) {
 				do
 					text[--i] = 0;
-				while (size && i && size == update_items(text));
+				while (nitems && i && nitems == update_items(text));
 			}
 			set_text(text);
 			update_items(files[M_COMMAND]->content);
@@ -428,11 +468,11 @@ static void handle_kpress(XKeyEvent * e)
 			update_items(files[M_COMMAND]->content);
 		}
 	}
-	if (selitem) {
-		if (sel < offset[OFF_CURR]) {
+	if (sel) {
+		if (sel == offset[OFF_CURR]->prev) {
 			offset[OFF_CURR] = offset[OFF_PREV];
 			update_offsets();
-		} else if (sel >= offset[OFF_NEXT]) {
+		} else if (sel == offset[OFF_NEXT]->next) {
 			offset[OFF_CURR] = offset[OFF_NEXT];
 			update_offsets();
 		}

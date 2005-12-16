@@ -27,13 +27,14 @@ struct Bind {
 	Route route[MAX_CONN * MAX_OPEN_FILES];
 	File *mount;
 	char *prefix;
+	Bind *next;
 };
 
 static Display *dpy;
 static IXPServer *ixps;
-static char *sockfile = 0;
+static char *sockfile = nil;
 static File *files[F_LAST];
-static Container bindings = {0};
+static Bind *bindings = nil;
 
 static void quit(void *obj, char *arg);
 static void bind(void *obj, char *arg);
@@ -59,42 +60,44 @@ static void usage()
 	exit(1);
 }
 
-static void iter_unbind(void *bind, void *aux)
-{
-	Bind *b = bind;
-	if (b->mount) {
-		b->mount->content = 0;
-		ixp_remove(ixps, b->prefix);
-		if (ixps->errstr)
-			fprintf(stderr, "wmiifs: error on unbind %s: %s\n", b->prefix, ixps->errstr);
-	}
-}
-
 static void quit(void *obj, char *arg)
 {
-	cext_list_iterate(&bindings, nil, iter_unbind);
+	Bind *b;
+	while ((b = bindings)) {
+		bindings = bindings->next;
+		if (b->mount) {
+			b->mount->content = nil;
+			ixp_remove(ixps, b->prefix);
+			if (ixps->errstr)
+				fprintf(stderr, "wmiifs: error on unbind %s: %s\n", b->prefix, ixps->errstr);
+		}
+		free(b->prefix);
+		free(b);
+	}
+	bindings = nil;
 	ixps->runlevel = SHUTDOWN;
 }
 
-static void do_unbind(Bind * b)
+static void do_unbind(Bind *bind)
 {
-	cext_detach_item(&bindings, b);
-	iter_unbind(b, nil);
+	Bind *b;
+	if (bind == bindings)
+		bindings = bind->next;
+	else {
+		for (b = bindings; b && b->next != bind; b = b->next);
+		b->next = bind->next;
+	}
 	/* free stuff */
-	deinit_client(b->client);
-	free(b->prefix);
-	free(b);
-}
-
-static int comp_bindpath(void *path, void *bind)
-{
-	Bind *b = bind;
-	return !strncmp(b->prefix, path, strlen(b->prefix));
+	deinit_client(bind->client);
+	free(bind->prefix);
+	free(bind);
 }
 
 static void unbind(void *obj, char *arg)
 {
-	Bind *b = cext_find_item(&bindings, arg, comp_bindpath);
+	Bind *b;
+   
+	for (b = bindings; b && strncmp(b->prefix, arg, strlen(b->prefix)); b = b->next);
 
 	if (!b) {
 		fprintf(stderr, "wmiifs: unbind: '%s' no such path\n", arg);
@@ -105,7 +108,7 @@ static void unbind(void *obj, char *arg)
 
 static void bind(void *obj, char *arg)
 {
-	Bind *b = 0;
+	Bind *b, *new = nil;
 	char cmd[1024];
 	char *sfile;
 
@@ -123,19 +126,24 @@ static void bind(void *obj, char *arg)
 		fprintf(stderr, "wmiifs: bind: '%s' without socket argument, ignoring\n", arg);
 		return;					/* shortcut with empty argument */
 	}
-	b = cext_emallocz(sizeof(Bind));
-	b->client = init_ixp_client(sfile);
+	new = cext_emallocz(sizeof(Bind));
+	new->client = init_ixp_client(sfile);
 
-	if (!b->client) {
+	if (!new->client) {
 		fprintf(stderr, "wmiifs: bind: cannot connect to server '%s', ignoring\n", sfile);
-		free(b);
+		free(new);
 		return;
 	}
-	b->prefix = strdup(cmd);
-	b->mount = ixp_create(ixps, b->prefix);
-	b->mount->content = b->mount;	/* shall be a directory */
+	new->prefix = strdup(cmd);
+	new->mount = ixp_create(ixps, new->prefix);
+	new->mount->content = new->mount;	/* shall be a directory */
 
-	cext_attach_item(&bindings, b);
+	if (bindings)
+		bindings = b;
+	else {
+		for (b = bindings; b && b->next; b = b->next);
+		b->next = new;
+	}
 }
 
 static void handle_after_write(IXPServer * s, File * f)
@@ -159,17 +167,15 @@ static void handle_after_write(IXPServer * s, File * f)
 static Bind *fd_to_bind(int fd, int *client_fd)
 {
 	File *f = fd_to_file(ixps, fd);
-	unsigned int i, j;
+	unsigned int i;
 	Bind *b;
-	size_t size = cext_sizeof_container(&bindings);
 
 	if (!f)
 		return nil;
-	for (i = 0; i < size; i++) {
-		b = cext_list_get_item(&bindings, i);
-		for (j = 0; j < MAX_CONN * MAX_OPEN_FILES; j++) {
-			if (&b->route[j].dest == f) {
-				*client_fd = b->route[j].src;
+	for (b = bindings; b; b = b->next) {
+		for (i = 0; i < MAX_CONN * MAX_OPEN_FILES; i++) {
+			if (&b->route[i].dest == f) {
+				*client_fd = b->route[i].src;
 				return b;
 			}
 		}
@@ -179,8 +185,10 @@ static Bind *fd_to_bind(int fd, int *client_fd)
 
 static File *fixp_create(IXPServer * s, char *path)
 {
-	Bind *b = cext_find_item(&bindings, path, comp_bindpath);
+	Bind *b;
 	size_t len;
+
+	for (b = bindings; b && strncmp(b->prefix, path, strlen(b->prefix)); b = b->next);
 
 	if (!b) {
 		File *f = ixp_create(s, path);
@@ -198,9 +206,11 @@ static File *fixp_create(IXPServer * s, char *path)
 
 static File *fixp_open(IXPServer * s, char *path)
 {
-	Bind *b = cext_find_item(&bindings, path, comp_bindpath);
+	Bind *b;
 	int fd;
 	size_t len;
+
+	for (b = bindings; b && strncmp(b->prefix, path, strlen(b->prefix)); b = b->next);
 
 	if (!b) {
 		File *f = ixp_open(s, path);
@@ -219,9 +229,7 @@ static File *fixp_open(IXPServer * s, char *path)
 	return &b->route[fd].dest;
 }
 
-static size_t
-fixp_read(IXPServer * s, int fd, size_t offset, void *out_buf,
-		  size_t out_buf_len)
+static size_t fixp_read(IXPServer * s, int fd, size_t offset, void *out_buf, size_t out_buf_len)
 {
 	int cfd;
 	Bind *b = fd_to_bind(fd, &cfd);
@@ -241,9 +249,7 @@ fixp_read(IXPServer * s, int fd, size_t offset, void *out_buf,
 	return result;
 }
 
-static void
-fixp_write(IXPServer * s, int fd, size_t offset, void *content,
-		   size_t in_len)
+static void fixp_write(IXPServer * s, int fd, size_t offset, void *content, size_t in_len)
 {
 	int cfd;
 	Bind *b = fd_to_bind(fd, &cfd);
@@ -281,8 +287,10 @@ static void fixp_close(IXPServer * s, int fd)
 
 static void fixp_remove(IXPServer * s, char *path)
 {
-	Bind *b = cext_find_item(&bindings, path, comp_bindpath);
+	Bind *b;
 	size_t len;
+
+	for (b = bindings; b && strncmp(b->prefix, path, strlen(b->prefix)); b = b->next);
 
 	if (!b) {
 		ixp_remove(s, path);

@@ -34,11 +34,12 @@ struct Shortcut {
 	char name[MAX_BUF];
 	unsigned long mod;
 	KeyCode key;
-	Shortcut *next;
 	File *cmdfile;
+	Shortcut *snext;
+	Shortcut *next;
 };
 
-static IXPServer *ixps = 0;
+static IXPServer *ixps = nil;
 static Display *dpy;
 static GC gc;
 static Window win;
@@ -46,8 +47,8 @@ static Window root;
 static XRectangle krect;
 static XRectangle rect;
 static int screen_num;
-static char *sockfile = 0;
-static Container shortcuts = {0};
+static char *sockfile = nil;
+static Shortcut *shortcuts = nil;
 static File *files[K_LAST];
 static int grabkb = 0;
 static unsigned int num_lock_mask, valid_mask;
@@ -126,8 +127,8 @@ static void create_shortcut(File * f)
 		if (!s)
 			r = s = cext_emallocz(sizeof(Shortcut));
 		else {
-			s->next = cext_emallocz(sizeof(Shortcut));
-			s = s->next;
+			s->snext = cext_emallocz(sizeof(Shortcut));
+			s = s->snext;
 		}
 		cext_strlcpy(s->name, chain[i], MAX_BUF);
 		k = strrchr(chain[i], '-');
@@ -140,15 +141,20 @@ static void create_shortcut(File * f)
 	}
 	if (r) {
 		s->cmdfile = f;
-		cext_attach_item(&shortcuts, r); 
+		if (!shortcuts)
+			shortcuts = r;
+		else {
+			for (s = shortcuts; s && s->next; s = s->next);
+			s->next = r;
+		}
 		grab_shortcut(r);
 	}
 }
 
 static void destroy_shortcut(Shortcut * s, int ungrab)
 {
-	if (s->next)
-		destroy_shortcut(s->next, 0);
+	if (s->snext)
+		destroy_shortcut(s->snext, 0);
 	if (ungrab)
 		ungrab_shortcut(s);
 	free(s);
@@ -191,7 +197,7 @@ static void handle_shortcut_chain(Window w, Shortcut * processed, char *prefix, 
 {
 	unsigned long mod;
 	KeyCode key;
-	Shortcut *s = processed->next;
+	Shortcut *s = processed->snext;
 
 	if (grab) {
 		XGrabKeyboard(dpy, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
@@ -206,7 +212,7 @@ static void handle_shortcut_chain(Window w, Shortcut * processed, char *prefix, 
 	} else if ((s->mod == mod) && (s->key == key)) {
 		if (s->cmdfile && s->cmdfile->content)
 			wmii_spawn(dpy, s->cmdfile->content);
-		else if (s->next) {
+		else if (s->snext) {
 			snprintf(buf, sizeof(buf), "%s/%s", prefix, s->name);
 			handle_shortcut_chain(w, s, buf, 0);
 		}
@@ -218,23 +224,13 @@ static void handle_shortcut_chain(Window w, Shortcut * processed, char *prefix, 
 	}
 }
 
-static int comp_shortcut(void *comp_short, void *shortcut)
-{
-	Shortcut *comp = comp_short;
-	Shortcut *s = shortcut;
-	return (s->mod == comp->mod) && (s->key == comp->key);
-}
-
 static void handle_shortcut_gkb(Window w, unsigned long mod, KeyCode key)
 {
-	Shortcut comp, *s;
+	Shortcut *s;
 	if (!files[K_LOOKUP]->content)
 		return;
 
-	comp.mod = mod;
-	comp.key = key;
-
-	s = cext_find_item(&shortcuts, &comp, comp_shortcut);
+	for (s = shortcuts; s && ((s->mod != mod) && (s->key != key)); s = s->next);
 	if (s && s->cmdfile && s->cmdfile->content) {
 		wmii_spawn(dpy, s->cmdfile->content);
 		return;
@@ -244,19 +240,16 @@ static void handle_shortcut_gkb(Window w, unsigned long mod, KeyCode key)
 
 static void handle_shortcut(Window w, unsigned long mod, KeyCode key)
 {
-	Shortcut comp, *s;
+	Shortcut *s;
 	if (!files[K_LOOKUP]->content)
 		return;
 
-	comp.mod = mod;
-	comp.key = key;
-
-	s = cext_find_item(&shortcuts, &comp, comp_shortcut);
+	for (s = shortcuts; s && ((s->mod != mod) && (s->key != key)); s = s->next);
 	if (s && s->cmdfile && s->cmdfile->content) {
 		wmii_spawn(dpy, s->cmdfile->content);
 		return;
 	}
-	if (s && s->next)
+	if (s && s->snext)
 		handle_shortcut_chain(w, s, s->name, 1);
 }
 
@@ -278,10 +271,11 @@ static void update()
 		return;					/* cannot update */
 
 	/* destroy existing shortcuts if any */
-	while ((s = cext_stack_get_top_item(&shortcuts))) {
-		cext_detach_item(&shortcuts, s);
+	while ((s = shortcuts)) {
+		shortcuts = shortcuts->next;
 		destroy_shortcut(s, 1);
 	}
+	shortcuts = nil;
 
 	if (grabkb) {
 		XGrabKeyboard(dpy, root, True, GrabModeAsync,

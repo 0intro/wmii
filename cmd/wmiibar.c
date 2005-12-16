@@ -30,10 +30,12 @@ typedef enum {
 	B_LAST
 } BarIndexes;
 
-typedef struct {
+typedef struct Item Item;
+struct Item {
 	File *root;
 	Draw d;
-} Item;
+	Item *next;
+};
 
 static unsigned int id = 0;
 static IXPServer *ixps = 0;
@@ -43,10 +45,11 @@ static Window win;
 static XRectangle rect;
 static XRectangle brect;
 static int screen_num;
-static int displayed = 0;
-static char *sockfile = 0;
+static Bool displayed = False;
+static char *sockfile = nil;
 static File *file[B_LAST];
-static Container items = {0};
+static Item *items = nil;
+static size_t nitems = 0;
 static Pixmap pmap;
 static XFontStruct *font;
 static Align align = SOUTH;
@@ -194,57 +197,55 @@ static int comp_str(const void *s1, const void *s2)
 
 static void draw()
 {
-	Item *item;
-	unsigned int i, w, xoff = 0;
+	Item *i;
+	unsigned int idx = 0, w = 0, xoff = 0;
 	unsigned expandable = 0;
 	char buf[32];
-	size_t size = cext_sizeof_container(&items);
 
-	if (!size)
+	if (!nitems)
 		return;
 
-	expandable = blitz_strtonum(file[B_EXPANDABLE]->content, 0, size);
+	expandable = blitz_strtonum(file[B_EXPANDABLE]->content, 0, expandable);
 	snprintf(buf, sizeof(buf), "/%d", expandable);
 	if (!ixp_walk(ixps, buf))
 		expandable = 0;
 
-	w = 0;
 	/* precalc */
-	for (i = 0; i < size; i++)
-		if (i != expandable) {
-			item = cext_list_get_item(&items, i);
-			item->d.rect.width = brect.height;
-			if (item->d.data) {
-				if (!strncmp(item->d.data, "%m:", 3))
+	for (i = items; i; i = i->next) {
+		if (idx != expandable) {
+			i->d.rect.width = brect.height;
+			if (i->d.data) {
+				if (!strncmp(i->d.data, "%m:", 3))
 					/* meter */
-					item->d.rect.width = brect.height / 2;
+					i->d.rect.width = brect.height / 2;
 				else
-					item->d.rect.width += XTextWidth(font, item->d.data, strlen(item->d.data));
+					i->d.rect.width += XTextWidth(font, i->d.data, strlen(i->d.data));
 			}
-			w += item->d.rect.width;
+			w += i->d.rect.width;
 		}
+		idx++;
+	}
 	if (w > brect.width) {
 		/* failsafe mode, give all labels same width */
-		w = brect.width / size;
-		for (i = 0; i < size; i++) {
-			item = cext_list_get_item(&items, i);
-			item->d.rect.width = w;
-		}
-		item->d.rect.width = brect.width - item->d.rect.x;
+		w = brect.width / nitems;
+		for (i = items; i && i->next; i = i->next)
+			i->d.rect.width = w;
+		i->d.rect.width = w;
+		i->d.rect.width = brect.width - i->d.rect.x;
 	}
 	else {
-		item = cext_list_get_item(&items, expandable);
-		item->d.rect.width = brect.width - w;
+		idx = 0;
+		for (i = items; i && idx != expandable; i = i->next);
+		i->d.rect.width = brect.width - w;
 	}
-	for (i = 0; i < size; i++) {
-		item = cext_list_get_item(&items, i);
-		item->d.font = font;
-		item->d.rect.x = xoff;
-		xoff += item->d.rect.width;
-		if (item->d.data && !strncmp(item->d.data, "%m:", 3))
-			blitz_drawmeter(dpy, &item->d);
+	for (i = items; i; i = i->next) {
+		i->d.font = font;
+		i->d.rect.x = xoff;
+		xoff += i->d.rect.width;
+		if (i->d.data && !strncmp(i->d.data, "%m:", 3))
+			blitz_drawmeter(dpy, &i->d);
 		else
-			blitz_drawlabel(dpy, &item->d);
+			blitz_drawlabel(dpy, &i->d);
 	}
 	XCopyArea(dpy, pmap, win, gc, 0, 0, brect.width, brect.height, 0, 0);
 	XSync(dpy, False);
@@ -253,16 +254,17 @@ static void draw()
 static void draw_bar(void *obj, char *arg)
 {
 	File *label = 0;
-	unsigned int i = 0, n = 0;
-	Item *item;
+	unsigned int j = 0;
+	Item *i, *it;
 	char buf[512];
 
 	if (!displayed)
 		return;
-	while ((item = cext_stack_get_top_item(&items))) {
-		cext_detach_item(&items, item);
-		free(item);
+	while ((i = items)) {
+		items = items->next;
+		free(i);
 	}
+	it = items = nil;
 	snprintf(buf, sizeof(buf), "%s", "/0");
 	label = ixp_walk(ixps, buf);
 	if (!label) {
@@ -283,60 +285,56 @@ static void draw_bar(void *obj, char *arg)
 		 * take order into account, directory names are used in
 		 * alphabetical order
 		 */
-		n = 0;
+		nitems = 0;
 		for (f = label; f; f = f->next)
-			n++;
-		paths = cext_emallocz(sizeof(char *) * n);
-		i = 0;
+			nitems++;
+		paths = cext_emallocz(sizeof(char *) * nitems);
+		j = 0;
 		for (f = label; f; f = f->next)
-			paths[i++] = f->name;
-		qsort(paths, n, sizeof(char *), comp_str);
-		for (i = 0; i < n; i++) {
-			snprintf(buf, sizeof(buf), "/%s", paths[i]);
-			item = cext_emallocz(sizeof(Item));
-			init_item(buf, item);
-			cext_attach_item(&items, item);
+			paths[j++] = f->name;
+		qsort(paths, nitems, sizeof(char *), comp_str);
+		for (j = 0; j < nitems; j++) {
+			snprintf(buf, sizeof(buf), "/%s", paths[j]);
+			i = cext_emallocz(sizeof(Item));
+			init_item(buf, i);
+			if (!it)
+				it = items = i;
+			else {
+				it->next = i;
+				it = i;
+			}
 		}
 		free(paths);
 		draw();
 	}
 }
 
-static int comp_item_root(void *file, void *item)
+static Item *item_for_file(File *f)
 {
-	File *f = file;
-	Item *i = item;
-
-	return f == i->root;
-}
-
-static Item *get_item_for_file(File *f)
-{
-	return cext_find_item(&items, f, comp_item_root);
-}
-
-static void iter_buttonpress(void *item, void *bpress)
-{
-	XButtonPressedEvent *e = bpress;
-	Item *i = item;
-	File *p;
-	char buf[MAX_BUF];
-	char path[512];
-
-	if (blitz_ispointinrect(e->x, e->y, &i->d.rect)) {
-		path[0] = 0;
-		wmii_get_ixppath(i->root, path, sizeof(path));
-		snprintf(buf, MAX_BUF, "%s/b%upress", path, e->button);
-		if ((p = ixp_walk(ixps, buf)))
-			if (p->content)
-				wmii_spawn(dpy, p->content);
-		return;
+	Item *i;
+	for (i = items; i; i = i->next) {
+		if (f == i->root)
+			return i;
 	}
+	return nil;
 }
 
 static void handle_buttonpress(XButtonPressedEvent *e)
 {
-	cext_list_iterate(&items, e, iter_buttonpress);
+	Item *i;
+	File *p;
+	char buf[MAX_BUF];
+	char path[512];
+	for (i = items; i; i = i->next)
+		if (blitz_ispointinrect(e->x, e->y, &i->d.rect)) {
+			path[0] = 0;
+			wmii_get_ixppath(i->root, path, sizeof(path));
+			snprintf(buf, MAX_BUF, "%s/b%upress", path, e->button);
+			if ((p = ixp_walk(ixps, buf)))
+				if (p->content)
+					wmii_spawn(dpy, p->content);
+			return;
+		}
 }
 
 static void check_event(Connection * e)
@@ -385,7 +383,7 @@ static void handle_after_write(IXPServer * s, File * f)
 
 	buf[0] = 0;
 	if (!strncmp(f->name, "data", 5)) {
-		if ((item = get_item_for_file(f->parent))) {
+		if ((item = item_for_file(f->parent))) {
 			wmii_get_ixppath(f->parent, buf, sizeof(buf));
 			init_draw_label(buf, &item->d);
 			draw();

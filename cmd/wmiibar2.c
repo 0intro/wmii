@@ -72,10 +72,12 @@ static QFile qfilelist[] = {
 	{0, 0},
 };
 
-typedef struct {
+typedef struct Map Map;
+struct Map {
 	u32 fid;
 	Qid qid;
-} Map;
+	Map *next;
+};
 
 typedef struct {
 	int id;
@@ -88,15 +90,15 @@ typedef struct {
 	char event[5][256];
 } Item;
 
-static Container items = {0};
-static char *sockfile = 0;
+static size_t nitems = 0;
+static char *sockfile = nil;
 static pid_t mypid = 0;
 static IXPServer srv = { 0 };
 static Qid root_qid;
 static Display *dpy;
 static int screen_num;
-static char *align = 0;
-static char *font = 0;
+static char *align = nil;
+static char *font = nil;
 /*
 static GC gc;
 static Window win;
@@ -155,14 +157,13 @@ qpath_file(u64 path)
 }
 */
 
-static int comp_fid(void *fid, void *map)
+static Map *fid_to_map(Map *maps, u32 fid)
 {
-	return ((Map *)map)->fid == *(u32 *)fid;
-}
-
-static Map *fid_to_map(Container *maps, u32 fid)
-{
-	return cext_find_item(maps, &fid, comp_fid);
+	Map *m;
+	for (m = maps; m; m = m->next)
+		if (m->fid == fid)
+			return m;
+	return nil;
 }
 
 static Bool qfile_index(char *name, u16 * index)
@@ -182,7 +183,7 @@ static Bool make_qid(Qid * dir, char *wname, Qid * new)
 	const char *errstr;
 	if (dir->type != IXP_QTDIR)
 		return False;
-	new->version = 0;
+	new->version = nil;
 	if (!qfile_index(wname, &idx)) {
 		new->type = IXP_QTDIR;
 		if (!strncmp(wname, "..", 3)) {
@@ -194,7 +195,7 @@ static Bool make_qid(Qid * dir, char *wname, Qid * new)
 		}
 		/* check if wname is a number, otherwise file not found */
 		idx = (u16) cext_strtonum(wname, 1, 0xffff, &errstr);
-		if (errstr || cext_sizeof_container(&items) < idx)
+		if (errstr || nitems < idx)
 			return False;
 		/* found */
 		new->path = make_qpath(Ditem, idx, NONE);
@@ -207,15 +208,18 @@ static Bool make_qid(Qid * dir, char *wname, Qid * new)
 
 static int attach(IXPServer *s, IXPConn *c)
 {
-	Container *cont = c->aux;
-	Map *map = cext_emallocz(sizeof(Map));
+	Map *maps = c->aux;
+	Map *m, *new = cext_emallocz(sizeof(Map));
 
-	if (!cont)
-		cont = c->aux = cext_emallocz(sizeof(Container));
+	if (!maps)
+		c->aux = new;
+	else {
+		for (m = maps; m && m->next; m = m->next);
+		m->next = new; 
+	}
 	fprintf(stderr, "attaching %d %s %s\n", s->fcall.afid, s->fcall.uname, s->fcall.aname);
-	map->qid = root_qid;
-	map->fid = s->fcall.fid;
-	cext_attach_item(cont, map);
+	new->qid = root_qid;
+	new->fid = s->fcall.fid;
 	s->fcall.id = RATTACH;
 	s->fcall.qid = root_qid;
 	return TRUE;
@@ -251,15 +255,24 @@ static int walk(IXPServer * s, IXPConn * c)
 	 * the walk was complete
 	 */
 	if (nwqid == s->fcall.nwname) {
-		Container *cont = c->aux;
+		Map *m, *maps = c->aux;
 		if (s->fcall.fid == s->fcall.newfid) {
-			cext_detach_item(cont, map);
+			if (maps == map)
+				maps = maps->next;
+			else {
+				for (m = maps; m && m->next != map; m = m->next);
+				m->next = map->next;
+			}
 			free(map);
 		}
 		map = cext_emallocz(sizeof(Map));
 		map->qid = qid;
 		map->fid = s->fcall.newfid;
-		cext_attach_item(cont, map);
+		for (m = maps; m && m->next; m = m->next);
+		if (!m)
+			maps = map;
+		else
+			m->next = map;
 	}
 	s->fcall.id = RWALK;
 	s->fcall.nwqid = nwqid;
@@ -356,14 +369,19 @@ static int _write(IXPServer *s, IXPConn *c)
 
 static int clunk(IXPServer *s, IXPConn *c)
 {
-	Container *cont = c->aux;
-	Map *map = fid_to_map(cont, s->fcall.fid);
+	Map *maps = c->aux;
+	Map *m, *map = fid_to_map(maps, s->fcall.fid);
 
 	if (!map) {
 		s->errstr = "invalid fid";
 		return FALSE;
 	}
-	cext_detach_item(cont, map);
+	if (maps == map)
+		maps = maps->next;
+	else {
+		for (m = maps; m && m->next != map; m = m->next);
+		m->next = map->next;
+	}
 	free(map);
 	s->fcall.id = RCLUNK;
 	return TRUE;
@@ -371,11 +389,13 @@ static int clunk(IXPServer *s, IXPConn *c)
 
 static void freeconn(IXPServer * s, IXPConn * c)
 {
-	Container *cont = c->aux;
-	if (cont) {
-		free(cont);
-		c->aux = 0;
+	Map *m, *maps = c->aux;
+
+	while ((m = maps)) {
+		maps = maps->next;
+		free(m);
 	}
+	c->aux = nil;	
 }
 
 static IXPTFunc funcs[] = {
