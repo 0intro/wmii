@@ -272,7 +272,7 @@ static void handle_enternotify(XEvent * e)
 	/*fprintf(stderr, "%s\n", "handle_enternotify");*/
 	c = win_to_client(ev->window);
 	if (c && c->frame) {
-		sel_area(c->frame->area);
+		focus_area(c->frame->area);
 		c->frame->area->layout->focus(c->frame, False);
 	}
 }

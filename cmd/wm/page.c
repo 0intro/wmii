@@ -157,11 +157,11 @@ static void toggle_area(void *obj, char *arg)
 	else
 		p->sel = p->managed;
 
-	sel_area(p->sel);	
+	focus_area(p->sel);	
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
-Page *get_page(unsigned int idx)
+Page *pageat(unsigned int idx)
 {
 	unsigned int i = 0;
 	Page *p = pages;

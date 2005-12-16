@@ -43,6 +43,16 @@ void destroy_area(Area *a)
 	free(a);
 }
 
+void focus_area(Area *a)
+{
+	Page *p = a->page;
+	Frame *f;
+	p->sel = a;
+	p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
+	if ((f = a->layout->sel(a)))
+		a->layout->focus(f, False);
+}
+
 void hide_area(Area * a)
 {
 	Frame *f;
@@ -58,6 +68,11 @@ void show_area(Area *a, Bool raise)
 			XMapRaised(dpy, f->win);
 		else 
 			XMapWindow(dpy, f->win);
+}
+
+Area *sel_area()
+{
+	return selpage ? selpage->sel : nil;
 }
 
 void attach_frame_to_area(Area *a, Frame *f)

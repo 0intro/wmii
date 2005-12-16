@@ -10,15 +10,16 @@
 #include "wm.h"
 #include "layoutdef.h"
 
-static void init_float(Area *a);
-static void deinit_float(Area *a);
+static void init_float(Area *a, Client *clients);
+static Client *deinit_float(Area *a);
 static void arrange_float(Area *a);
 static Bool attach_float(Area *a, Client *c);
 static void detach_float(Area *a, Client *c, Bool unmap);
 static void resize_float(Frame *f, XRectangle *new, XPoint *pt);
-static void select_float(Frame *f, Bool raise);
-static Container *get_frames_float(Area *a);
-static Action *get_actions_float(Area *a);
+static void focus_float(Frame *f, Bool raise);
+static Frame *frames_float(Area *a);
+static Frame *sel_float(Area *a);
+static Action *actions_float(Area *a);
 
 static void select_frame(void *obj, char *arg);
 
@@ -27,46 +28,120 @@ Action lfloat_acttbl[] = {
 	{0, 0}
 };
 
-static Layout lfloat = { "float", init_float, deinit_float, arrange_float, attach_float,
-						 detach_float, resize_float, select_float, get_frames_float, get_actions_float };
+typedef struct {
+	Frame *frames;
+	Frame *sel;
+	size_t nframes;
+} Float;
 
 void init_layout_float()
 {
-	cext_attach_item(layouts, &lfloat);
+	Layout *lp, *l = cext_emallocz(sizeof(Layout));
+	l->name = "float";
+	l->init = init_float;
+	l->deinit = deinit_float;
+	l->arrange = arrange_float;
+	l->attach = attach_float;
+	l->detach = detach_float;
+	l->resize = resize_float;
+	l->focus = focus_float;
+	l->frames = frames_float;
+	l->sel = sel_float;
+	l->actions = actions_float;
+
+	for (lp = layouts; lp && lp->next; lp = lp->next);
+	if (lp)
+		lp->next = l;
+	else
+		layouts = l;
 }
 
 static void arrange_float(Area *a)
 {
 }
 
-static void iter_attach_float(void *client, void *area)
+static void init_float(Area *a, Client *clients)
 {
-	attach_float(area, client);
+	Client *n, *c = clients;
+	Float *fl = cext_emallocz(sizeof(Float));
+	a->aux = fl;
+
+	while (c) {
+		n = c->next;
+		attach_float(a, c);
+		c = n;
+	}
 }
 
-static void init_float(Area *a)
+static void attach_frame(Area *a, Frame *new)
 {
-	Container *c = cext_emallocz(sizeof(Container));
-	a->aux = c;
-	cext_list_iterate(&a->clients, a, iter_attach_float);
+	Float *fl = a->aux;
+	Frame *f;
+
+	for (f = fl->frames; f && f->next; f = f->next);
+	if (!f) 
+		fl->frames = new;
+	else {
+		f->next = new;
+		new->prev = f;
+	}
+	attach_frame_to_area(a, new);
+	fl->sel = new;
+	fl->nframes++;
 }
 
-static void iter_detach_float(void *client, void *area)
+static void detach_frame(Area *a, Frame *old)
 {
-	Area *a = area;
-	detach_float(a, client, a->page != get_sel_page());
+	Float *fl = a->aux;
+
+	if (fl->sel == old) {
+		if (old->prev)
+			fl->sel = old->prev;
+		else
+			fl->sel = nil;
+	}
+	if (old->prev)
+		old->prev->next = old->next;
+	else
+		fl->frames = old->next;
+	if (old->next)
+		old->next->prev = old->prev;
+	if (!fl->sel)
+		fl->sel = fl->frames;
+	detach_frame_from_area(old);
+	fl->nframes--;
 }
 
-static void deinit_float(Area *a)
+static Client *deinit_float(Area *a)
 {
-	cext_list_iterate(&a->clients, a, iter_detach_float);
-	free(a->aux);
+	Float *fl = a->aux;
+	Client *res = nil, *c = nil, *cl;
+	Frame *f;
+
+	while ((f = fl->frames)) {
+		while ((cl = f->clients)) {
+			detach_client_from_frame(cl, False);
+			cl->prev = cl->next = 0;
+			if (!res)
+				res = c = cl;
+			else {
+				c->next = cl;
+				cl->prev = c;
+				c = cl;	
+			}
+		}
+		detach_frame(a, f);
+		destroy_frame(f);
+	}
+	free(fl);
 	a->aux = nil;
+	return res;
 }
 
 static Bool attach_float(Area *a, Client *c)
 {
-	Frame *f = get_sel_frame_of_area(a);
+	Float *fl = a->aux;
+	Frame *f = fl->sel;
 
 	/* check for tabbing? */
 	if (f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))
@@ -79,12 +154,12 @@ static Bool attach_float(Area *a, Client *c)
 
 		f = alloc_frame(&c->rect);
 		attach_frame_to_area(a, f);
-		cext_attach_item((Container *)a->aux, f);
+		attach_frame(a, f);
 	}
 	attach_client_to_frame(f, c);
-	if (a->page == get_sel_page())
+	if (a->page == selpage)
 		XMapWindow(dpy, f->win);
-	select_float(f, True);
+	focus_float(f, True);
 	return True;
 }
 
@@ -92,9 +167,8 @@ static void detach_float(Area *a, Client *c, Bool unmap)
 {
 	Frame *f = c->frame;
 	detach_client_from_frame(c, unmap);
-	if (!cext_sizeof_container(&f->clients)) {
-		detach_frame_from_area(f);
-		cext_detach_item((Container *)a->aux, f);
+	if (!f->clients) {
+		detach_frame(a, f);
 		destroy_frame(f);
 	}
 }
@@ -104,13 +178,14 @@ static void resize_float(Frame *f, XRectangle *new, XPoint *pt)
 	f->rect = *new;
 }
 
-static void select_float(Frame *f, Bool raise)
+static void focus_float(Frame *f, Bool raise)
 {
 	Area *a = f->area;
-	Frame *old = get_sel_frame();
+	Float *fl = a->aux;
+	Frame *old = fl->sel;
 
-	sel_client(cext_stack_get_top_item(&f->clients));
-	cext_stack_top_item(a->aux, f);
+	sel_client(f->sel);
+	fl->sel = f;
 	a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
 	if (raise) {
 		XRaiseWindow(dpy, f->win);
@@ -121,31 +196,38 @@ static void select_float(Frame *f, Bool raise)
 	draw_frame(f);
 }
 
-static Container *get_frames_float(Area *a)
+static Frame *frames_float(Area *a)
 {
-	return a->aux;
+	Float *fl = a->aux;
+	return fl->frames;
 }
 
 static void select_frame(void *obj, char *arg)
 {
 	Area *a = obj;
-	Container *c = a->aux;
-	Frame *f;
+	Float *fl = a->aux;
+	Frame *f = fl->sel;
 
-	f = cext_stack_get_top_item(c);
 	if (!f || !arg)
 		return;
 	if (!strncmp(arg, "prev", 5))
-		f = cext_list_get_prev_item(c, f);
+		f = f->prev;
 	else if (!strncmp(arg, "next", 5))
-		f = cext_list_get_next_item(c, f);
-	else 
-		f = cext_list_get_item(c, blitz_strtonum(arg, 0, cext_sizeof_container(c) - 1));
-	select_float(f, True);
-	center_pointer(f);
+		f = f->next;
+	else {
+		unsigned int i = 0, idx = blitz_strtonum(arg, 0, fl->nframes - 1);
+		for (f = fl->frames; f && i != idx; f = f->next) i++;
+	}
+	if (f)
+		focus_float(f, True);
 }
 
-static Action *get_actions_float(Area *a)
+static Frame *sel_float(Area *a) {
+	Float *fl = a->aux;
+	return fl->sel;
+}
+
+static Action *actions_float(Area *a)
 {
 	return lfloat_acttbl;
 }

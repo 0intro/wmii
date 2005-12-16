@@ -429,10 +429,3 @@ Frame *sel_frame()
 		return nil;
 	return a->layout->sel(a);
 }
-
-Frame *get_bottom_frame(Frame *frames)
-{
-	Frame *f;
-	for (f = frames; f && f->next; f = f->next);
-	return f;
-}

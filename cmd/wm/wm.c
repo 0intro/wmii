@@ -117,7 +117,7 @@ static void draw_pager_area(Area *a, Draw *d)
 {
 	Frame *f;
 	Frame *sel = sel_frame();
-	for (f = bottom_frame(a->layout->frames(a)); f; f = f->prev) { 
+	for (f = a->layout->frames(a); f; f = f->next) { 
 		if (f == sel) {
 			d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
 			d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);

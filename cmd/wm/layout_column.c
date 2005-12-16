@@ -120,15 +120,15 @@ static void init_col(Area *a, Client *clients)
 	}
 }
 
-static void attach_frame(Area *a, Column *col, Frame *f)
+static void attach_frame(Area *a, Column *col, Frame *new)
 {
 	Acme *acme = a->aux;
 	Cell *c, *cell = cext_emallocz(sizeof(Cell));
-	Frame *fr;
+	Frame *f;
 	
-	cell->frame = f;
+	cell->frame = new;
 	cell->col = col;
-	f->aux = cell;
+	new->aux = cell;
 	for (c = col->cells; c && c->next; c = c->next);
 	if (!c) 
 		col->cells = cell;
@@ -139,22 +139,21 @@ static void attach_frame(Area *a, Column *col, Frame *f)
 	col->sel = cell;
 	col->ncells++;
 
-	for (fr = acme->frames; fr && fr->next; fr = fr->next);
-	if (!fr)
-		acme->frames = f;
+	for (f = acme->frames; f && f->next; f = f->next);
+	if (!f)
+		acme->frames = new;
 	else {
-		fr->next = f;
-		f->prev = fr;
+		f->next = new;
+		new->prev = f;
 	}
-	attach_frame_to_area(a, f);
+	attach_frame_to_area(a, new);
 	acme->nframes++;
-
 }
 
-static void detach_frame(Area *a, Frame *f)
+static void detach_frame(Area *a, Frame *old)
 {
 	Acme *acme = a->aux;
-	Cell *cell = f->aux;
+	Cell *cell = old->aux;
 	Column *col = cell->col;
 
 	if (col->sel == cell) {
@@ -174,14 +173,14 @@ static void detach_frame(Area *a, Frame *f)
 	free(cell);
 	col->ncells--;
 
-	if (f->prev)
-		f->prev->next = f->next;
+	if (old->prev)
+		old->prev->next = old->next;
 	else
-		acme->frames = f->next;
-	if (f->next)
-		f->next->prev = f->prev;
-	f->aux = nil;
-	detach_frame_from_area(f);
+		acme->frames = old->next;
+	if (old->next)
+		old->next->prev = old->prev;
+	old->aux = nil;
+	detach_frame_from_area(old);
 	acme->nframes--;
 }
 
@@ -547,18 +546,25 @@ static void new_col(void *obj, char *arg)
 {
 	Area *a = obj;
 	Acme *acme = a->aux;
-	Column *col = acme->sel;
-	Cell *cell;
+	Column *c, *new, *col = acme->sel;
+	Frame *f;
 
 	if (!col || col->ncells < 2)
 		return;
 
-	cell = col->sel;
-	f = cext_stack_get_top_item(&col->frames);
-	cext_detach_item(&col->frames, f);
-	f->aux = col = cext_emallocz(sizeof(Column));
-	cext_attach_item(&col->frames, f);
-	cext_attach_item(&acme->columns, col);
+	f = col->sel->frame;
+	for (c = acme->columns; c && c->next; c = c->next);
+
+	new = cext_emallocz(sizeof(Column));
+	new->rect = area_rect;
+	new->prev = c;
+	c->next = new;
+	acme->ncolumns++;
+	acme->sel = new;
+
+	detach_frame(a, f);
+	attach_frame(a, new, f);
+
 	update_column_width(a);
 	focus_col(f, True);
 }

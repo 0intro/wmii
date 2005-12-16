@@ -256,7 +256,6 @@ void detach_client_from_frame(Client *client, Bool unmap);
 unsigned int tab_height(Frame * f);
 unsigned int border_width(Frame * f);
 Frame *sel_frame();
-Frame *bottom_frame(Frame *frames);
 
 /* event.c */
 void init_event_hander();
