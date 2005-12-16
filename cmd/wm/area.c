@@ -13,24 +13,29 @@ static void handle_after_write_area(IXPServer *s, File *file);
 
 Area *alloc_area(Page *p, char *layout)
 {
-	char buf[MAX_BUF];
+	char buf[MAX_BUF], *name;
 	Area *a = (Area *) cext_emallocz(sizeof(Area));
 
 	a->page = p;
-	snprintf(buf, MAX_BUF, "/%s/layout/%s", p->file[P_PREFIX]->name, layout);
+	if (strncmp(layout, "float", 6))
+		name = "managed";
+	else
+		name = "float";
+	snprintf(buf, MAX_BUF, "/%s/layout/%s", p->file[P_PREFIX]->name, name);
 	a->file[A_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, MAX_BUF, "/%s/layout/%s/frame", p->file[P_PREFIX]->name, layout);
+	snprintf(buf, MAX_BUF, "/%s/layout/%s/frame", p->file[P_PREFIX]->name, name);
 	a->file[A_FRAME_PREFIX] = ixp_create(ixps, buf);
-	snprintf(buf, MAX_BUF, "/%s/layout/%s/frame/sel", p->file[P_PREFIX]->name, layout);
+	snprintf(buf, MAX_BUF, "/%s/layout/%s/frame/sel", p->file[P_PREFIX]->name, name);
 	a->file[A_SEL_FRAME] = ixp_create(ixps, buf);
 	a->file[A_SEL_FRAME]->bind = 1;
-	snprintf(buf, MAX_BUF, "/%s/layout/%s/ctl", p->file[P_PREFIX]->name, layout);
+	snprintf(buf, MAX_BUF, "/%s/layout/%s/ctl", p->file[P_PREFIX]->name, name);
 	a->file[A_CTL] = ixp_create(ixps, buf);
 	a->file[A_CTL]->after_write = handle_after_write_area;
-	snprintf(buf, MAX_BUF, "/%s/layout/%s/name", p->file[P_PREFIX]->name, layout);
+	snprintf(buf, MAX_BUF, "/%s/layout/%s/name", p->file[P_PREFIX]->name, name);
 	a->file[A_LAYOUT] = wmii_create_ixpfile(ixps, buf, layout);
 	a->file[A_LAYOUT]->after_write = handle_after_write_area; 
 	a->layout = match_layout(layout);
+	fprintf(stderr, "matched '%s' layout\n", a->layout->name);
 	a->layout->init(a, nil);
 	p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
 	return a;

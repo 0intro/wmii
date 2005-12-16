@@ -138,8 +138,8 @@ static void bind(void *obj, char *arg)
 	new->mount = ixp_create(ixps, new->prefix);
 	new->mount->content = new->mount;	/* shall be a directory */
 
-	if (bindings)
-		bindings = b;
+	if (!bindings)
+		bindings = new;
 	else {
 		for (b = bindings; b && b->next; b = b->next);
 		b->next = new;

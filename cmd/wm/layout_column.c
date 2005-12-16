@@ -313,10 +313,11 @@ static void match_frame_horiz(Column *col, XRectangle *r)
 
 static void drop_resize(Frame *f, XRectangle *new)
 {
-	Column *west = 0, *east = 0, *col = f->aux;
-	Cell *north = 0, *south = 0;
+	Column *west = nil, *east = nil, *col = nil;
+	Cell *north = nil, *south = nil;
 	Cell *cell = f->aux;
 
+	col = cell->col;
 	west = col->prev;
 	east = col->next;
 	north = cell->prev;
@@ -473,8 +474,8 @@ static void swap_frame(void *obj, char *arg)
 {
 	Area *a = obj;
 	Acme *acme = a->aux;
-	Column *west = 0, *east = 0, *col = acme->sel;
-	Cell *north = 0, *south = 0, *cell = col->sel;
+	Column *west = nil, *east = nil, *col = acme->sel;
+	Cell *north = nil, *south = nil, *cell = col->sel;
 	Frame *f;
 	XRectangle r;
 

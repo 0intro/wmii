@@ -292,8 +292,11 @@ void attach_client(Client * c)
 {
 	Area *a = 0;
 	Page *p = pages;
+
+	fprintf(stderr, "%s", "before alloc_page\n");
 	if (!p)
 		p = alloc_page();
+	fprintf(stderr, "%s", "after alloc_page\n");
 	/* transient stuff */
 	a = p->sel;
 	if (c && c->trans) {
@@ -301,6 +304,7 @@ void attach_client(Client * c)
 		if (t && t->frame)
 			a = p->floating;
 	}
+	fprintf(stderr, "%s", "before layout->attach\n");
 	a->layout->attach(a, c);
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }

@@ -51,6 +51,7 @@ void init_event_hander()
 void check_event(Connection * c)
 {
 	XEvent ev;
+	fprintf(stderr, "%s", "check event\n");
 	while (XPending(dpy)) { /* main evet loop */
 		XNextEvent(dpy, &ev);
 		if (handler[ev.type])
@@ -63,7 +64,7 @@ static void handle_buttonpress(XEvent * e)
 	Client *c;
 	XButtonPressedEvent *ev = &e->xbutton;
 	Frame *f = win_to_frame(ev->window);
-	/*fprintf(stderr, "%s\n", "handle_buttonpress");*/
+	fprintf(stderr, "%s\n", "handle_buttonpress");
 
 	if (f) {
 		handle_frame_buttonpress(ev, f);
@@ -106,12 +107,12 @@ static void handle_configurerequest(XEvent * e)
 	Frame *f = 0;
 
 
-	/*fprintf(stderr, "%s\n", "handle_configurerequest");*/
+	fprintf(stderr, "%s\n", "handle_configurerequest");
 	c = win_to_client(ev->window);
 	ev->value_mask &= ~CWSibling;
 
 	if (c) {
-		/* fprintf(stderr, "%s",  "configure request client\n"); */
+		fprintf(stderr, "%s",  "configure request client\n");
 		f = c->frame;
 
 		if (f) {
@@ -179,7 +180,7 @@ static void handle_destroynotify(XEvent * e)
 {
 	XDestroyWindowEvent *ev = &e->xdestroywindow;
 	Client *c = win_to_client(ev->window);
-	/*fprintf(stderr, "%s\n", "handle_destroynotify");*/
+	fprintf(stderr, "%s\n", "handle_destroynotify");
 	if (c) {
 		c->destroyed = True;
 		detach_client(c, False);
@@ -189,7 +190,7 @@ static void handle_destroynotify(XEvent * e)
 static void handle_expose(XEvent * e)
 {
 	static Frame *f;
-	/*fprintf(stderr, "%s\n", "handle_expose");*/
+	fprintf(stderr, "%s\n", "handle_expose");
 	if (e->xexpose.count == 0) {
 		f = win_to_frame(e->xbutton.window);
 		if (f)
@@ -203,7 +204,7 @@ static void handle_maprequest(XEvent * e)
 	static XWindowAttributes wa;
 	static Client *c;
 
-	/*fprintf(stderr, "%s\n", "handle_maprequest");*/
+    fprintf(stderr, "%s\n", "handle_maprequest");
 	if (!XGetWindowAttributes(dpy, ev->window, &wa))
 		return;
 	if (wa.override_redirect) {
@@ -225,7 +226,7 @@ static void handle_motionnotify(XEvent * e)
 {
 	Frame *f = win_to_frame(e->xmotion.window);
 	Cursor cursor;
-	/*fprintf(stderr, "%s\n", "handle_motionnotify");*/
+	fprintf(stderr, "%s\n", "handle_motionnotify");
 	if (f) {
 		cursor = cursor_for_motion(f, e->xmotion.x, e->xmotion.y);
 		if (cursor != f->cursor) {
@@ -251,7 +252,7 @@ static void handle_unmapnotify(XEvent * e)
 {
 	XUnmapEvent *ev = &e->xunmap;
 	Client *c;
-	/*fprintf(stderr, "%s\n", "handle_unmapnotify");*/
+	fprintf(stderr, "%s\n", "handle_unmapnotify");
 	handle_ignore_enternotify_crap(e);
 	if ((c = win_to_client(ev->window))) {
 		if (!c->ignore_unmap)
@@ -269,7 +270,7 @@ static void handle_enternotify(XEvent * e)
 	if ((ev->mode != NotifyNormal) || (ev->detail == NotifyInferior) || (ev->serial == ignore_enternotify_crap))
 		return;
 
-	/*fprintf(stderr, "%s\n", "handle_enternotify");*/
+	fprintf(stderr, "%s\n", "handle_enternotify");
 	c = win_to_client(ev->window);
 	if (c && c->frame) {
 		focus_area(c->frame->area);
@@ -279,7 +280,7 @@ static void handle_enternotify(XEvent * e)
 
 static void handle_ignore_enternotify_crap(XEvent *e)
 {
-	/*fprintf(stderr, "%s\n", "handle_ignore_enternotify_crap");*/
+	fprintf(stderr, "%s\n", "handle_ignore_enternotify_crap");
 	ignore_enternotify_crap = e->xany.serial;
 	XSync(dpy, False);
 }

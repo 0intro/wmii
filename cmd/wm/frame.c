@@ -282,7 +282,7 @@ void handle_frame_buttonpress(XButtonEvent *e, Frame *f)
 void attach_client_to_frame(Frame *f, Client *client)
 {
 	Client *c;
-	wmii_move_ixpfile(c->file[C_PREFIX], f->file[F_CLIENT_PREFIX]);
+	wmii_move_ixpfile(client->file[C_PREFIX], f->file[F_CLIENT_PREFIX]);
 	f->file[F_SEL_CLIENT]->content = client->file[C_PREFIX]->content;
 	for (c = f->clients; c && c->next; c = c->next);
 	if (!c) {
@@ -294,6 +294,7 @@ void attach_client_to_frame(Frame *f, Client *client)
 		client->next = nil;
 		c->next = client;
 	}
+	f->nclients++;
 	f->sel = client;
 	client->frame = f;
 	resize_frame(f, &f->rect, 0);
@@ -328,6 +329,7 @@ void detach_client_from_frame(Client *c, Bool unmap)
 			c->next->prev = c->prev;
 	}
 
+	f->nclients--;
 	if (!f->sel)
 		f->sel = f->clients;
 		
