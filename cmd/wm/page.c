@@ -51,6 +51,7 @@ Page *alloc_page()
 	fprintf(stderr, "%s", "after attaching page\n");
 	def[WM_SEL_PAGE]->content = new->file[P_PREFIX]->content;
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+	npages++;
 	return new;
 }
 
@@ -81,6 +82,7 @@ void destroy_page(Page *p)
 	free(p);
 	if (!selpage)
 		selpage = pages;
+	npages--;
 
 	if (selpage)
 		focus_page(selpage);
@@ -166,7 +168,7 @@ static void toggle_area(void *obj, char *arg)
 Page *pageat(unsigned int idx)
 {
 	unsigned int i = 0;
-	Page *p = pages;
-	for (; p && i != idx; p = p->next);
+	Page *p;
+	for (p = pages; p && i != idx; p = p->next);
 	return p;
 }

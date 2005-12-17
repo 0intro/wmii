@@ -194,7 +194,7 @@ static void update_offsets()
 		return;
 
 	/* calc next offset */
-	for (i = offset[OFF_CURR]; i && i->next; i = i->next) {
+	for (i = offset[OFF_CURR]; i; i = i->next) {
 		w += XTextWidth(font, i->file->content, strlen(i->file->content)) + mrect.height;
 		if (w > mrect.width)
 			break;
@@ -207,8 +207,7 @@ static void update_offsets()
 		if (w > mrect.width)
 			break;
 	}
-	if (i)
-		offset[OFF_PREV] = i->next;
+	offset[OFF_PREV] = i;
 }
 
 static size_t update_items(char *pattern)
@@ -314,7 +313,7 @@ static void draw_menu()
 	if (sel) {
 		d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
 		d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORM_TEXT_COLOR]->content);
-		d.data = offset[OFF_CURR] ? "<" : nil;
+		d.data = offset[OFF_PREV] ? "<" : nil;
 		d.rect.x = offx;
 		d.rect.width = seek;
 		offx += d.rect.width;
@@ -342,7 +341,7 @@ static void draw_menu()
 
 		d.bg = blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
 		d.fg = blitz_loadcolor(dpy, screen_num, files[M_NORM_TEXT_COLOR]->content);
-		d.data = i ? ">" : nil;
+		d.data = offset[OFF_NEXT] ? ">" : nil;
 		d.rect.x = mrect.width - seek;
 		d.rect.width = seek;
 		blitz_drawlabelnoborder(dpy, &d);
@@ -473,7 +472,7 @@ static void handle_kpress(XKeyEvent * e)
 		if (sel == offset[OFF_CURR]->prev) {
 			offset[OFF_CURR] = offset[OFF_PREV];
 			update_offsets();
-		} else if (sel == offset[OFF_NEXT]->next) {
+		} else if (sel == offset[OFF_NEXT]) {
 			offset[OFF_CURR] = offset[OFF_NEXT];
 			update_offsets();
 		}

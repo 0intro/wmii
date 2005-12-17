@@ -291,7 +291,7 @@ void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 void attach_client(Client * c)
 {
 	Area *a = 0;
-	Page *p = pages;
+	Page *p = selpage;
 
 	fprintf(stderr, "%s", "before alloc_page\n");
 	if (!p)

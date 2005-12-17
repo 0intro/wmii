@@ -184,9 +184,10 @@ static void draw_pager()
 			else
 				d.rect.y = ir * (rect.height - th) / (rows - 1);
 			d.rect.height = th;
+			draw_pager_page(p, &d);
 			if (!p->next)
 				return;
-			draw_pager_page(p, &d);
+			p = p->next;
 		}
 	}
 }
@@ -213,10 +214,11 @@ static Page *xy_to_pager_page(int x, int y)
 			else
 				r.y = ir * (rect.height - th) / (rows - 1);
 			r.height = th;
-			if (!p->next)
-				return nil;
 			if (blitz_ispointinrect(x, y, &r))
 				return p;
+			if (!p->next)
+				return nil;
+			p = p->next;
 		}
 	}
 	return nil;
@@ -427,7 +429,7 @@ static void new_page(void *obj, char *arg)
 	Page *p = selpage;
 	if (p)
 		hide_page(p);
-	alloc_page();
+	selpage = alloc_page();
 }
 
 Client *win_to_client(Window w)
