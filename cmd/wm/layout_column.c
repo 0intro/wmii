@@ -269,7 +269,8 @@ static void detach_col(Area *a, Client *c, Bool unmap)
 {
 	Acme *acme = a->aux;
 	Frame *f = c->frame;
-	Column *col = f->aux;
+	Cell *cell = f->aux;
+	Column *col = cell->col;
 
 	detach_client_from_frame(c, unmap);
 	if (!f->clients) {

@@ -230,7 +230,7 @@ static void handle_shortcut_gkb(Window w, unsigned long mod, KeyCode key)
 	if (!files[K_LOOKUP]->content)
 		return;
 
-	for (s = shortcuts; s && ((s->mod != mod) && (s->key != key)); s = s->next);
+	for (s = shortcuts; s && ((s->mod != mod) || (s->key != key)); s = s->next);
 	if (s && s->cmdfile && s->cmdfile->content) {
 		wmii_spawn(dpy, s->cmdfile->content);
 		return;
@@ -244,7 +244,7 @@ static void handle_shortcut(Window w, unsigned long mod, KeyCode key)
 	if (!files[K_LOOKUP]->content)
 		return;
 
-	for (s = shortcuts; s && ((s->mod != mod) && (s->key != key)); s = s->next);
+	for (s = shortcuts; s && ((s->mod != mod) || (s->key != key)); s = s->next);
 	if (s && s->cmdfile && s->cmdfile->content) {
 		wmii_spawn(dpy, s->cmdfile->content);
 		return;
@@ -278,8 +278,7 @@ static void update()
 	shortcuts = nil;
 
 	if (grabkb) {
-		XGrabKeyboard(dpy, root, True, GrabModeAsync,
-					  GrabModeAsync, CurrentTime);
+		XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime);
 		return;
 	}
 	/* create new shortcuts */

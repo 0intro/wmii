@@ -345,7 +345,8 @@ void detach_detached(Client *c)
 	else {
 		if (c->next)
 			c->next->prev = c->prev;
-		c->prev->next = c->next;
+		if (c->prev)
+			c->prev->next = c->next;
 	}
 	ndetached--;
 }
