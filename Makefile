@@ -14,26 +14,24 @@ MAN1 = cmd/wm/wmii.1 cmd/wm/wmiiwm.1 cmd/wmiibar.1 cmd/wmiifs.1 \
 all:
 	@echo wmii build options:
 	@echo "LIBS     = ${LIBS}"
-	@echo "INCLUDES = ${INCLUDES}"
 	@echo "CFLAGS   = ${CFLAGS}"
 	@echo "LDFLAGS  = ${LDFLAGS}"
 	@echo "CC       = ${CC}"
 	@for i in ${SUBDIRS} cmd/wm; do \
-		(cd $$i; ${MAKE}); \
+		(cd $$i; make;) \
 	done
 
 dist: clean
-	@mkdir -p wmii-${VERSION}
-	@cp -R Makefile README LICENSE config.mk rc ${SUBDIRS} extra doc wmii-${VERSION}
-	@tar -cf wmii-${VERSION}.tar wmii-${VERSION}
-	@gzip wmii-${VERSION}.tar
-	@rm -rf wmii-${VERSION}
-	@echo created distribution wmii-${VERSION}.tar.gz
+	mkdir -p wmii-${VERSION}
+	cp -R Makefile README LICENSE config.mk rc ${SUBDIRS} extra doc wmii-${VERSION}
+	tar -cf wmii-${VERSION}.tar wmii-${VERSION}
+	gzip wmii-${VERSION}.tar
+	rm -rf wmii-${VERSION}
 
 clean:
 	rm -f *.o
-	@for i in ${SUBDIRS} cmd/wm; do \
-		(cd $$i; ${MAKE} clean); \
+	for i in ${SUBDIRS} cmd/wm; do \
+		(cd $$i; make clean); \
 	done
 	rm -rf wmii-${VERSION}*
 
@@ -60,11 +58,10 @@ install: all
 	@echo installed manual pages to ${DESTDIR}${MANPREFIX}/man1
 
 uninstall:
-	@for i in ${BIN}; do \
+	for i in ${BIN}; do \
 		rm -f ${DESTDIR}${PREFIX}/bin/`basename $$i`; \
 	done
-	@for i in ${MAN1}; do \
+	for i in ${MAN1}; do \
 		rm -f ${DESTDIR}${MANPREFIX}/man1/`basename $$i`; \
 	done
-	@rm -rf ${DESTDIR}${CONFPREFIX}/wmii-3
-	@echo "uninstalled wmii"
+	rm -rf ${DESTDIR}${CONFPREFIX}/wmii-3

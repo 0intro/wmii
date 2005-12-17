@@ -57,12 +57,12 @@ wmiimenu: ${OBJ_menu}
 
 wmiir2: ${OBJ_r2}
 	@echo LD $@
-	@${CC} -o $@ ${OBJ_r2} -g -static -L${LIBDIR} -L/usr/lib -lc \
+	@${CC} -o $@ ${OBJ_r2} -g -static -L${PREFIX}/lib -L/usr/lib -lc \
 		-L../libixp2 -lixp -L../libcext -lcext
 
 wmiir: ${OBJ_r}
 	@echo LD $@
-	@${CC} -o $@ ${OBJ_r} -g -static -L${LIBDIR} -L/usr/lib -lc \
+	@${CC} -o $@ ${OBJ_r} -g -static -L${PREFIX}/lib -L/usr/lib -lc \
 		-L../libixp -lixp -L../libcext -lcext
 
 wmiifs: ${OBJ_fs}
