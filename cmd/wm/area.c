@@ -62,17 +62,17 @@ void hide_area(Area * a)
 {
 	Frame *f;
 	for (f = a->layout->frames(a); f; f = f->next)
-		XUnmapWindow(dpy, f->win);
+		XMoveWindow(dpy, f->win, 2 * rect.width, 2 * rect.height);
 }
 
 void show_area(Area *a, Bool raise)
 {
 	Frame *f;
-	for (f = a->layout->frames(a); f; f = f->next)
+	for (f = a->layout->frames(a); f; f = f->next) {
+		XMoveWindow(dpy, f->win, f->rect.x, f->rect.y);
 		if (raise)
-			XMapRaised(dpy, f->win);
-		else 
-			XMapWindow(dpy, f->win);
+			XRaiseWindow(dpy, f->win);
+	}
 }
 
 Area *sel_area()

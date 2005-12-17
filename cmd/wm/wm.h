@@ -273,12 +273,11 @@ void center_pointer(Frame * f);
 /* page.c */
 Page *pageat(unsigned int idx);
 Page *alloc_page();
-void free_page(Page * p);
-void destroy_page(Page * p);
+void destroy_page(Page *p);
 void focus_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
-void hide_page(Page * p);
-void show_page(Page * p);
+void hide_page(Page *p);
+void show_page(Page *p);
 
 /* layout.c */
 Layout *match_layout(char *name);
