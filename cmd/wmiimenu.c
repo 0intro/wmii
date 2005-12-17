@@ -190,11 +190,11 @@ static void update_offsets()
 	Item *i;
 	unsigned int w = cmdw + 2 * seek;
 
-	if (!sel)
+	if (!i)
 		return;
 
 	/* calc next offset */
-	for (i = offset[OFF_CURR]; i; i = i->next) {
+	for (i = offset[OFF_CURR]; i && i->next; i = i->next) {
 		w += XTextWidth(font, i->file->content, strlen(i->file->content)) + mrect.height;
 		if (w > mrect.width)
 			break;
@@ -202,12 +202,13 @@ static void update_offsets()
 	offset[OFF_NEXT] = i;
 
 	w = cmdw + 2 * seek;
-	for (i = offset[OFF_CURR]->prev; i; i = i->prev) {
+	for (i = offset[OFF_CURR]->prev; i && i->prev; i = i->prev) {
 		w += XTextWidth(font, i->file->content, strlen(i->file->content)) + mrect.height;
 		if (w > mrect.width)
 			break;
 	}
-	offset[OFF_PREV] = i->next;
+	if (i)
+		offset[OFF_PREV] = i->next;
 }
 
 static size_t update_items(char *pattern)
@@ -251,7 +252,7 @@ static size_t update_items(char *pattern)
 			new->file = p;
 			nitems++;
 			if (!items)
-				items = i = new;
+				offset[OFF_CURR] = sel = items = i = new;
 			else {
 				i->next = new;
 				new->prev = i;
@@ -267,7 +268,7 @@ static size_t update_items(char *pattern)
 			new->file = p;
 			nitems++;
 			if (!items)
-				items = i = new;
+				offset[OFF_CURR] = sel = items = i = new;
 			else {
 				i->next = new;
 				new->prev = i;

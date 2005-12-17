@@ -205,7 +205,7 @@ static void draw()
 	if (!nitems)
 		return;
 
-	expandable = blitz_strtonum(file[B_EXPANDABLE]->content, 0, expandable);
+	expandable = blitz_strtonum(file[B_EXPANDABLE]->content, 0, nitems);
 	snprintf(buf, sizeof(buf), "/%d", expandable);
 	if (!ixp_walk(ixps, buf))
 		expandable = 0;
@@ -235,7 +235,7 @@ static void draw()
 	}
 	else {
 		idx = 0;
-		for (i = items; i && idx != expandable; i = i->next);
+		for (i = items; i && idx != expandable; i = i->next) idx++;
 		i->d.rect.width = brect.width - w;
 	}
 	for (i = items; i; i = i->next) {
