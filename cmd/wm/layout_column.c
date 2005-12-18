@@ -446,7 +446,7 @@ static void select_frame(void *obj, char *arg)
 {
 	Area *a = obj;
 	Acme *acme = a->aux;
-	Column *col = acme->sel;
+	Column *c, *col = acme->sel;
 	Cell *cell;
 
 	if (!col)
@@ -455,14 +455,30 @@ static void select_frame(void *obj, char *arg)
 	cell = col->sel;
 	if (!cell || !arg)
 		return;
-	if (!strncmp(arg, "prev", 5))
-		cell = cell->prev;
-	else if (!strncmp(arg, "next", 5))
-		cell = cell->next;
-	else if (!strncmp(arg, "west", 5))
-		cell = col->prev ? col->prev->sel : nil;
-	else if (!strncmp(arg, "east", 5))
-		cell = col->next ? col->next->sel : nil;
+	if (!strncmp(arg, "prev", 5)) {
+		if (cell->prev)
+			cell = cell->prev;
+		else 
+			for (cell = col->cells; cell && cell->next; cell = cell->next);
+	}
+	else if (!strncmp(arg, "next", 5)) {
+		if (cell->next)
+			cell = cell->next;
+		else
+			cell = col->cells;
+	}
+	else if (!strncmp(arg, "west", 5)) {
+		if (col->prev)
+			cell = col->prev->sel;
+		else
+			for (c = acme->columns; c && c->next; c = c->next);
+	}
+	else if (!strncmp(arg, "east", 5)) {
+		if (col->next)
+			cell = col->next->sel;
+		else
+			cell = acme->columns->sel;
+	}
 	else {
 		unsigned int i = 0, idx = blitz_strtonum(arg, 0, col->ncells - 1);
 		for (cell = col->cells; cell && i != idx; cell = cell->next) i++;
