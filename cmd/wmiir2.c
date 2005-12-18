@@ -39,7 +39,7 @@ static void usage()
 {
 	fprintf(stderr, "%s",
 			"usage: wmiir [-s <socket file>] [-v] <command> <args> [...]\n"
-			"      -s    socket file (default: $WMIR_SOCKET)\n"
+			"      -s    socket file (default: $WMIIR_SOCKET)\n"
 			"      -f    read commands from stdin\n"
 			"      -v    version info\n"
 			"commands:\n"
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 {
 	int i = 0, ret, read_stdin = 0;
 	char line[4096];
-	char *sockfile = getenv("WMIR_SOCKET");
+	char *sockfile = getenv("WMIIR_SOCKET");
 
 	/* command line args */
 	if (argc > 1) {
@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 	}
 	if (!sockfile) {
 		fprintf(stderr, "%s",
-				"wmiir: error: WMIR_SOCKET environment not set\n");
+				"wmiir: error: WMIIR_SOCKET environment not set\n");
 		usage();
 	}
 	/* open socket */

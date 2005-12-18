@@ -11,14 +11,14 @@
 #include <X11/Xatom.h>
 
 static char *version[] = {
-	"wmiwarp - window manager improved warp - " VERSION "\n"
+	"wmiiwarp - window manager improved warp - " VERSION "\n"
 		" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
 static void usage()
 {
 	fprintf(stderr,
-			"usage: wmiwarp [-v] <x>,<y>\n" "      -v     version info\n");
+			"usage: wmiiwarp [-v] <x>,<y>\n" "      -v     version info\n");
 	exit(1);
 }
 
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 	}
 	dpy = XOpenDisplay(0);
 	if (!dpy) {
-		fprintf(stderr, "%s", "wmiwarp: cannot open display\n");
+		fprintf(stderr, "%s", "wmiiwarp: cannot open display\n");
 		exit(1);
 	}
 	if (!strncmp(argv[1], "center", 7)) {

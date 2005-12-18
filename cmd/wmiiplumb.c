@@ -11,14 +11,14 @@
 #include <X11/Xatom.h>
 
 static char *version[] = {
-	"wmiplumb - window manager improved plumb - " VERSION "\n"
+	"wmiiplumb - window manager improved plumb - " VERSION "\n"
 		" (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
 };
 
 static void usage()
 {
 	fprintf(stderr, "%s\n",
-			"usage: wmiplumb [-v]\n" "     -v      version info\n");
+			"usage: wmiiplumb [-v]\n" "     -v      version info\n");
 	exit(1);
 }
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 	}
 	dpy = XOpenDisplay(0);
 	if (!dpy) {
-		fprintf(stderr, "%s", "wmiplumb: cannot open display\n");
+		fprintf(stderr, "%s", "wmiiplumb: cannot open display\n");
 		exit(1);
 	}
 	xa_clip_string = XInternAtom(dpy, "PLUMB_STRING", False);

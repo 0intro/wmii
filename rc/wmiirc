@@ -69,7 +69,7 @@ fn framesconf {
 }
 
 
-# WMIBAR CONFIGURATION
+# WMIIBAR CONFIGURATION
 
 fn barsucks {
     wmiir write /bar/$1/b1press 'wmiir write /wm/ctl ''select prev'''
@@ -125,7 +125,7 @@ for(layout in /wm/sel/layout/float /wm/sel/layout/managed)
 frameconf /wm/default norefresh
 
 
-# WMIKEYS CONFIGURATION
+# WMIIKEYS CONFIGURATION
 
 kbind bare $MODKEY-Escape 'kmode normal'
 
@@ -166,7 +166,7 @@ wmiir write /keys/box/font $FONT
 selstyle /keys/box
 kmode normal
 
-# WMIMENU CONFIGURATION
+# WMIIMENU CONFIGURATION
 wmiir write /menu/geometry $BAR_ALIGN
 items actions $WMII_CONFDIR:$HOME/.wmii-3
 wmiir create /menu/items/actions/rmpage 'wmiir write /wm/ctl destroy'
