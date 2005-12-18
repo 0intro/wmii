@@ -405,10 +405,18 @@ static void _select_page(void *obj, char *arg)
 	Page *p = selpage;
 	if (!p || !arg)
 		return;
-	if (!strncmp(arg, "prev", 5))
-		p = p->prev;
-	else if (!strncmp(arg, "next", 5))
-		p = p->next;
+	if (!strncmp(arg, "prev", 5)) {
+		if (p->prev)
+			p = p->prev;
+		else
+			for (p = pages; p && p->next; p = p->next);
+	}
+	else if (!strncmp(arg, "next", 5)) {
+		if (p->next)
+			p = p->next;
+		else
+			p = pages;
+	}
 	else
 		p = pageat(blitz_strtonum(arg, 0, npages - 1));
 	if (p)

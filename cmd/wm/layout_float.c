@@ -210,10 +210,18 @@ static void select_frame(void *obj, char *arg)
 
 	if (!f || !arg)
 		return;
-	if (!strncmp(arg, "prev", 5))
-		f = f->prev;
-	else if (!strncmp(arg, "next", 5))
-		f = f->next;
+	if (!strncmp(arg, "prev", 5)) {
+		if (f->prev)
+			f = f->prev;
+		else
+			for (f = fl->frames; f && f->next; f = f->next);
+	}
+	else if (!strncmp(arg, "next", 5)) {
+		if (f->next)
+			f = f->next;
+		else
+			f = fl->frames;
+	}
 	else {
 		unsigned int i = 0, idx = blitz_strtonum(arg, 0, fl->nframes - 1);
 		for (f = fl->frames; f && i != idx; f = f->next) i++;
