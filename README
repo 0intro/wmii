@@ -15,7 +15,7 @@ beside several tiny utilities like wmiir, wmiiplumb, and wmiiwarp.
 Requirements
 ------------
 In order to build wmii you need the Xlib header files.
-Furthermore, the wmii configuration scripts rely on the 9rc package [3]
+Furthermore, the wmii configuration scripts rely on the 9base package [3]
 which contains ports of various Plan 9 standard tools, in particular the
 rc shell.
 
@@ -37,7 +37,7 @@ Add the following line to your .xinitrc to start wmii using startx:
 
     exec wmii
 
-In order to connect wmii or wmir to a specific display, make sure that
+In order to connect wmii or wmiir to a specific display, make sure that
 DISPLAY environment variable is set correctly, e.g.:
 
     $ setenv DISPLAY foo.bar:1
