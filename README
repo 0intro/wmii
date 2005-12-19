@@ -23,12 +23,13 @@ rc shell.
 Installation
 ------------
 Edit config.mk to match your local setup. wmii is installed into
-the /usr/local hierarchy by default.
+the /usr/local hierarchy by default. If your system is Mac OS X,
+then remove the '-static' flag in cmd/Makefile.
 
 Afterwards enter the following command to build and install wmii (if
 necessary as root):
 
-    $ make clean install
+    make clean install
 
 
 Running wmii
@@ -38,13 +39,11 @@ Add the following line to your .xinitrc to start wmii using startx:
     exec wmii
 
 In order to connect wmii or wmiir to a specific display, make sure that
-DISPLAY environment variable is set correctly, e.g.:
+the DISPLAY environment variable is set correctly, e.g.:
 
-    $ setenv DISPLAY foo.bar:1
-    $ wmii
+    DISPLAY=foo.bar:1 exec wmii
 
-This will start wmii on display :1 of the host foo.bar if it is present
-in your .xinitrc.
+This will start wmii on display :1 of the host foo.bar.
 
 
 Configuration
