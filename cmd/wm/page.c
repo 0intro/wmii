@@ -39,7 +39,6 @@ Page *alloc_page()
 	new->file[P_CTL]->after_write = handle_after_write_page;
 	new->floating = alloc_area(new, "float");
 	new->sel = new->managed = alloc_area(new, def[WM_LAYOUT]->content);
-	fprintf(stderr, "%s", "after allocating areas\n");
 	for (p = pages; p && p->next; p = p->next);
 	if (!p)
 		pages = new;
@@ -48,7 +47,6 @@ Page *alloc_page()
 		p->next = new;
 	}
 	selpage = new;
-	fprintf(stderr, "%s", "after attaching page\n");
 	def[WM_SEL_PAGE]->content = new->file[P_PREFIX]->content;
 	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	npages++;

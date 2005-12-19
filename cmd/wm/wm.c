@@ -479,11 +479,8 @@ void scan_wins()
 			if (wa.override_redirect || XGetTransientForHint(dpy, wins[i], &d1))
 				continue;
 			if (wa.map_state == IsViewable) {
-				fprintf(stderr, "%s", "before alloc_client\n");
 				c = alloc_client(wins[i]);
-				fprintf(stderr, "%s", "before init_client\n");
 				init_client(c, &wa);
-				fprintf(stderr, "%s", "before attach_client\n");
 				attach_client(c);
 				c->ignore_unmap++; /* was viewable already */
 			}
@@ -811,13 +808,9 @@ int main(int argc, char *argv[])
 	init_default();
 	font = blitz_getfont(dpy, def[WM_FONT]->content);
 	wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
-	fprintf(stderr, "%s", "default stuff\n");
 	init_screen();
-	fprintf(stderr, "%s", "screen stuff\n");
 	init_layouts();
-	fprintf(stderr, "%s", "layout stuff\n");
 	scan_wins();
-	fprintf(stderr, "%s", "scan wins\n");
 
 	/* main event loop */
 	run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event, 0);
