@@ -26,6 +26,54 @@
 #define IXP_MAX_WELEM 	16		/* MAXWELEM */
 #define IXP_MAX_TFUNCS	14
 
+
+/*
+	size[4] Tversion tag[2] msize[4] version[s]
+	size[4] Rversion tag[2] msize[4] version[s]
+	size[4] Tauth tag[2] afid[4] uname[s] aname[s]
+	size[4] Rauth tag[2] aqid[13]
+	size[4] Rerror tag[2] ename[s]
+	size[4] Tflush tag[2] oldtag[2]
+	size[4] Rflush tag[2]
+	size[4] Tattach tag[2] fid[4] afid[4] uname[s] aname[s]
+	size[4] Rattach tag[2] qid[13]
+	size[4] Twalk tag[2] fid[4] newfid[4] nwname[2] nwname*(wname[s])
+	size[4] Rwalk tag[2] nwqid[2] nwqid*(wqid[13])
+	size[4] Topen tag[2] fid[4] mode[1]
+	size[4] Ropen tag[2] qid[13] iounit[4]
+	size[4] Tcreate tag[2] fid[4] name[s] perm[4] mode[1]
+	size[4] Rcreate tag[2] qid[13] iounit[4]
+	size[4] Tread tag[2] fid[4] offset[8] count[4]
+	size[4] Rread tag[2] count[4] data[count]
+	size[4] Twrite tag[2] fid[4] offset[8] count[4] data[count]
+	size[4] Rwrite tag[2] count[4]
+	size[4] Tclunk tag[2] fid[4]
+	size[4] Rclunk tag[2]
+	size[4] Tremove tag[2] fid[4]
+	size[4] Rremove tag[2]
+	size[4] Tstat tag[2] fid[4]
+	size[4] Rstat tag[2] stat[n]
+	size[4] Twstat tag[2] fid[4] stat[n]
+	size[4] Rwstat tag[2]
+
+	stat[n]:
+	size[2]			total byte count of the following data
+	type[2]			for kernel use
+	dev[4]			for kernel use
+	qid.type[1]		the type of the file (directory, etc.),
+					represented as a bit vector corresponding to the high 8 bits of the file's mode word.
+	qid.vers[4]		version number for given path
+	qid.path[8]		the file server's unique identification for the file
+	mode[4]			permissions and flags
+	atime[4]		last access time
+	mtime[4]		last modification time
+	length[8]		length of file in bytes
+	name[ s ]		file name; must be / if the file is the root directory of the server
+	uid[ s ]		owner name
+	gid[ s ]		group name
+	muid[ s ]
+*/
+
 /* 9P message types */
 enum {
 	TVERSION = 100,
@@ -89,6 +137,7 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 typedef unsigned long long u64;
+
 #define IXP_NOTAG    (u16)~0U	/* Dummy tag */
 #define IXP_NOFID    (u32)~0	/* No auth */
 

@@ -49,7 +49,7 @@ u32 ixp_fcall_to_msg(Fcall * fcall, void *msg, u32 msglen)
 			sizeof_string(fcall->aname);
 		break;
 	case RERROR:
-		msize += sizeof_string(fcall->errstr) + sizeof(u32);
+		msize += sizeof_string(fcall->errstr);
 		break;
 	case RWRITE:
 	case TCLUNK:
@@ -113,6 +113,8 @@ u32 ixp_fcall_to_msg(Fcall * fcall, void *msg, u32 msglen)
 		p = ixp_enc_string(p, fcall->aname);
 		break;
 	case RAUTH:
+		p = ixp_enc_qid(p, &fcall->aqid);
+		break;
 	case RATTACH:
 		p = ixp_enc_qid(p, &fcall->qid);
 		break;
@@ -202,8 +204,7 @@ u32 ixp_msg_to_fcall(void *msg, u32 msglen, Fcall * fcall)
 	case TVERSION:
 	case RVERSION:
 		p = ixp_dec_u32(p, &fcall->maxmsg);
-		p = ixp_dec_string(p, fcall->version, sizeof(fcall->version),
-						   &len);
+		p = ixp_dec_string(p, fcall->version, sizeof(fcall->version), &len);
 		break;
 	case TAUTH:
 		p = ixp_dec_u32(p, &fcall->afid);
@@ -211,6 +212,8 @@ u32 ixp_msg_to_fcall(void *msg, u32 msglen, Fcall * fcall)
 		p = ixp_dec_string(p, fcall->aname, sizeof(fcall->aname), &len);
 		break;
 	case RAUTH:
+		p = ixp_dec_qid(p, &fcall->aqid);
+		break;
 	case RATTACH:
 		p = ixp_dec_qid(p, &fcall->qid);
 		break;

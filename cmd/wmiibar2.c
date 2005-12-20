@@ -217,7 +217,7 @@ static int attach(IXPServer *s, IXPConn *c)
 		for (m = maps; m && m->next; m = m->next);
 		m->next = new; 
 	}
-	fprintf(stderr, "attaching %d %s %s\n", s->fcall.afid, s->fcall.uname, s->fcall.aname);
+	fprintf(stderr, "attaching %u %u %s %s\n", s->fcall.fid, s->fcall.afid, s->fcall.uname, s->fcall.aname);
 	new->qid = root_qid;
 	new->fid = s->fcall.fid;
 	s->fcall.id = RATTACH;
