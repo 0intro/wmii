@@ -117,8 +117,9 @@ static char *version[] = {
 static void usage()
 {
 	fprintf(stderr, "%s %d",
-			"usage: wmiibar -s <socket file> [-v]\n"
-			"      -s    socket file\n" "      -v    version info\n",
+			"usage: wmiibar -a <server address> [-v]\n"
+			"      -a    server address \n"
+			"      -v    version info\n",
 			NONE);
 	exit(1);
 }
@@ -421,7 +422,7 @@ int main(int argc, char *argv[])
 			fprintf(stdout, "%s", version[0]);
 			exit(0);
 			break;
-		case 's':
+		case 'a':
 			if (i + 1 < argc)
 				sockfile = argv[++i];
 			else

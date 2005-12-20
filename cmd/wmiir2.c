@@ -38,11 +38,10 @@ static char *version[] = {
 static void usage()
 {
 	fprintf(stderr, "%s",
-			"usage: wmiir [-s <socket file>] [-v] <command> <args> [...]\n"
-			"      -s    socket file (default: $WMIIR_SOCKET)\n"
-			"      -f    read commands from stdin\n"
+			"usage: wmiir [-a <server address>] [-v]\n"
+			"      -a    server address (default: $WMIIR_SOCKET)\n"
 			"      -v    version info\n"
-			"commands:\n"
+			"commands read from stdin:\n"
 			"      create <file> <content>   -- creates file\n"
 			"      read   <file/directory>   -- reads file/directory contents\n"
 			"      write  <file> <content>   -- writes content to a file\n"
@@ -180,9 +179,11 @@ static int perform_cmd(int argc, char **argv)
 
 int main(int argc, char *argv[])
 {
-	int i = 0, ret, read_stdin = 0;
+	int i = 0, ret;
 	char line[4096];
 	char *sockfile = getenv("WMIIR_SOCKET");
+	char *stdin_argv[3];
+	int stdin_argc;
 
 	/* command line args */
 	if (argc > 1) {
@@ -192,27 +193,17 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "%s", version[0]);
 				exit(0);
 				break;
-			case 's':
+			case 'a':
 				if (i + 1 < argc)
 					sockfile = argv[++i];
 				else
 					usage();
-				break;
-			case 'f':
-				read_stdin = 1;
 				break;
 			default:
 				usage();
 				break;
 			}
 		}
-	}
-	if ((argc <= 1) || (!read_stdin && (i + 1) >= argc)) {
-		fprintf(stderr, "%s", "wmiir: arguments: ");
-		for (i = 1; i < argc; i++)
-			fprintf(stderr, "%s, ", argv[i]);
-		fprintf(stderr, "%s", "\n");
-		usage();
 	}
 	if (!sockfile) {
 		fprintf(stderr, "%s",
@@ -225,16 +216,11 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	/* wether perform directly or read from stdin */
-	if (read_stdin) {
-		char *_argv[3];
-		int _argc;
-		while (fgets(line, 4096, stdin))
-			if ((_argc = cext_tokenize(_argv, 3, line, ' '))) {
-				if ((ret = perform_cmd(_argc, _argv)))
-					break;
-			}
-	} else
-		ret = perform_cmd(argc - (i + 1), &argv[i]);
+	while (fgets(line, 4096, stdin))
+		if ((stdin_argc = cext_tokenize(stdin_argv, 3, line, ' '))) {
+			if ((ret = perform_cmd(stdin_argc, stdin_argv)))
+				break;
+		}
 
 	/* close socket */
 	ixp_client_deinit(&c);
