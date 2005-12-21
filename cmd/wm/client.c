@@ -10,349 +10,387 @@
 
 #include "wm.h"
 
-Client *alloc_client(Window w)
+Client *
+alloc_client(Window w)
 {
-	static int id = 0;
-	char buf[MAX_BUF];
-	XTextProperty name;
-	Client *c = (Client *) cext_emallocz(sizeof(Client));
+    static int id = 0;
+    char buf[MAX_BUF];
+    XTextProperty name;
+    Client *c = (Client *) cext_emallocz(sizeof(Client));
 
-	c->win = w;
-	snprintf(buf, MAX_BUF, "/detached/client/%d", id);
-	c->file[C_PREFIX] = ixp_create(ixps, buf);
-	XGetWMName(dpy, c->win, &name);
-	snprintf(buf, MAX_BUF, "/detached/client/%d/name", id);
-	c->file[C_NAME] = wmii_create_ixpfile(ixps, buf, (char *)name.value);
-	free(name.value);
-	id++;
-	return c;
+    c->win = w;
+    snprintf(buf, MAX_BUF, "/detached/client/%d", id);
+    c->file[C_PREFIX] = ixp_create(ixps, buf);
+    XGetWMName(dpy, c->win, &name);
+    snprintf(buf, MAX_BUF, "/detached/client/%d/name", id);
+    c->file[C_NAME] = wmii_create_ixpfile(ixps, buf, (char *) name.value);
+    free(name.value);
+    id++;
+    return c;
 }
 
-void focus_client(Client * c)
+void
+focus_client(Client * c)
 {
-	Frame *f = 0;
-	/* sel client */
-	f = c->frame;
-	f->sel = c;
-	f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
-	XRaiseWindow(dpy, c->win);
-	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-	invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
+    Frame *f = 0;
+    /* sel client */
+    f = c->frame;
+    f->sel = c;
+    f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
+    XRaiseWindow(dpy, c->win);
+    XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
+    invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
 }
 
-void set_client_state(Client * c, int state)
+void
+set_client_state(Client * c, int state)
 {
-	long data[2];
+    long data[2];
 
-	data[0] = (long) state;
-	data[1] = (long) None;
-	XChangeProperty(dpy, c->win, wm_state, wm_state, 32, PropModeReplace, (unsigned char *) data, 2);
+    data[0] = (long) state;
+    data[1] = (long) None;
+    XChangeProperty(dpy, c->win, wm_state, wm_state, 32, PropModeReplace,
+                    (unsigned char *) data, 2);
 }
 
-void show_client(Client * c)
+void
+show_client(Client * c)
 {
-	XMapWindow(dpy, c->win);
-	set_client_state(c, NormalState);
-	grab_client(c, Mod1Mask, Button1);
-	grab_client(c, Mod1Mask, Button3);
+    XMapWindow(dpy, c->win);
+    set_client_state(c, NormalState);
+    grab_client(c, Mod1Mask, Button1);
+    grab_client(c, Mod1Mask, Button3);
 }
 
-void hide_client(Client * c)
+void
+hide_client(Client * c)
 {
-	ungrab_client(c, AnyModifier, AnyButton);
-	XUnmapWindow(dpy, c->win);
-	set_client_state(c, WithdrawnState);
+    ungrab_client(c, AnyModifier, AnyButton);
+    XUnmapWindow(dpy, c->win);
+    set_client_state(c, WithdrawnState);
 }
 
-void reparent_client(Client * c, Window w, int x, int y)
+void
+reparent_client(Client * c, Window w, int x, int y)
 {
-	XReparentWindow(dpy, c->win, w, x, y);
-	c->ignore_unmap++;
+    XReparentWindow(dpy, c->win, w, x, y);
+    c->ignore_unmap++;
 }
 
-void grab_client(Client * c, unsigned long mod, unsigned int button)
+void
+grab_client(Client * c, unsigned long mod, unsigned int button)
 {
-	XGrabButton(dpy, button, mod, c->win, False,
-				ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
-	if ((mod != AnyModifier) && num_lock_mask) {
-		XGrabButton(dpy, button, mod | num_lock_mask, c->win, False, ButtonPressMask,
-					GrabModeAsync, GrabModeAsync, None, None);
-		XGrabButton(dpy, button, mod | num_lock_mask | LockMask, c->win, False, ButtonPressMask,
-					GrabModeAsync, GrabModeAsync, None, None);
-	}
+    XGrabButton(dpy, button, mod, c->win, False,
+                ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
+    if((mod != AnyModifier) && num_lock_mask) {
+        XGrabButton(dpy, button, mod | num_lock_mask, c->win, False,
+                    ButtonPressMask, GrabModeAsync, GrabModeAsync, None,
+                    None);
+        XGrabButton(dpy, button, mod | num_lock_mask | LockMask, c->win,
+                    False, ButtonPressMask, GrabModeAsync, GrabModeAsync,
+                    None, None);
+    }
 }
 
-void ungrab_client(Client * c, unsigned long mod, unsigned int button)
+void
+ungrab_client(Client * c, unsigned long mod, unsigned int button)
 {
-	XUngrabButton(dpy, button, mod, c->win);
-	if (mod != AnyModifier && num_lock_mask) {
-		XUngrabButton(dpy, button, mod | num_lock_mask, c->win);
-		XUngrabButton(dpy, button, mod | num_lock_mask | LockMask, c->win);
-	}
+    XUngrabButton(dpy, button, mod, c->win);
+    if(mod != AnyModifier && num_lock_mask) {
+        XUngrabButton(dpy, button, mod | num_lock_mask, c->win);
+        XUngrabButton(dpy, button, mod | num_lock_mask | LockMask, c->win);
+    }
 }
 
-void configure_client(Client * c)
+void
+configure_client(Client * c)
 {
-	XConfigureEvent e;
-	e.type = ConfigureNotify;
-	e.event = c->win;
-	e.window = c->win;
-	e.x = c->rect.x;
-	e.y = c->rect.y;
-	if (c->frame) {
-		e.x += c->frame->rect.x;
-		e.y += c->frame->rect.y;
-	}
-	e.width = c->rect.width;
-	e.height = c->rect.height;
-	e.border_width = c->border;
-	e.above = None;
-	e.override_redirect = False;
+    XConfigureEvent e;
+    e.type = ConfigureNotify;
+    e.event = c->win;
+    e.window = c->win;
+    e.x = c->rect.x;
+    e.y = c->rect.y;
+    if(c->frame) {
+        e.x += c->frame->rect.x;
+        e.y += c->frame->rect.y;
+    }
+    e.width = c->rect.width;
+    e.height = c->rect.height;
+    e.border_width = c->border;
+    e.above = None;
+    e.override_redirect = False;
 
-	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *) & e);
-	XSelectInput(dpy, c->win, CLIENT_MASK);
-	XSync(dpy, False);
+    XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+    XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *) & e);
+    XSelectInput(dpy, c->win, CLIENT_MASK);
+    XSync(dpy, False);
 }
 
-void close_client(Client * c)
+void
+close_client(Client * c)
 {
-	if (c->proto & PROTO_DEL)
-		wmii_send_message(dpy, c->win, wm_protocols, wm_delete);
-	else
-		XKillClient(dpy, c->win);
+    if(c->proto & PROTO_DEL)
+        wmii_send_message(dpy, c->win, wm_protocols, wm_delete);
+    else
+        XKillClient(dpy, c->win);
 }
 
-void init_client(Client * c, XWindowAttributes * wa)
+void
+init_client(Client * c, XWindowAttributes * wa)
 {
-	long msize;
-	c->rect.x = wa->x;
-	c->rect.y = wa->y;
-	c->border = wa->border_width;
-	c->rect.width = wa->width + 2 * c->border;
-	c->rect.height = wa->height + 2 * c->border;
-	XSetWindowBorderWidth(dpy, c->win, 0);
-	c->proto = win_proto(c->win);
-	XGetTransientForHint(dpy, c->win, &c->trans);
-	if (!XGetWMNormalHints(dpy, c->win, &c->size, &msize) || !c->size.flags)
-		c->size.flags = PSize;
-	XAddToSaveSet(dpy, c->win);
+    long msize;
+    c->rect.x = wa->x;
+    c->rect.y = wa->y;
+    c->border = wa->border_width;
+    c->rect.width = wa->width + 2 * c->border;
+    c->rect.height = wa->height + 2 * c->border;
+    XSetWindowBorderWidth(dpy, c->win, 0);
+    c->proto = win_proto(c->win);
+    XGetTransientForHint(dpy, c->win, &c->trans);
+    if(!XGetWMNormalHints(dpy, c->win, &c->size, &msize) || !c->size.flags)
+        c->size.flags = PSize;
+    XAddToSaveSet(dpy, c->win);
 }
 
-void handle_client_property(Client *c, XPropertyEvent *e)
+void
+handle_client_property(Client * c, XPropertyEvent * e)
 {
-	XTextProperty name;
-	long msize;
+    XTextProperty name;
+    long msize;
 
-	if (e->atom == wm_protocols) {
-		/* update */
-		c->proto = win_proto(c->win);
-		return;
-	}
-	switch (e->atom) {
-	case XA_WM_NAME:
-		XGetWMName(dpy, c->win, &name);
-		if (strlen((char *)name.value)) {
-			if (c->file[C_NAME]->content)
-				free(c->file[C_NAME]->content);
-			c->file[C_NAME]->content = cext_estrdup((char *)name.value);
-			c->file[C_NAME]->size = strlen((char *)name.value);
-		}
-		free(name.value);
-		if (c->frame)
-			draw_client(c);
-		invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
-		break;
-	case XA_WM_TRANSIENT_FOR:
-		XGetTransientForHint(dpy, c->win, &c->trans);
-		break;
-	case XA_WM_NORMAL_HINTS:
-		if (!XGetWMNormalHints(dpy, c->win, &c->size, &msize)
-			|| !c->size.flags) {
-			c->size.flags = PSize;
-		}
-		break;
-	}
+    if(e->atom == wm_protocols) {
+        /* update */
+        c->proto = win_proto(c->win);
+        return;
+    }
+    switch (e->atom) {
+    case XA_WM_NAME:
+        XGetWMName(dpy, c->win, &name);
+        if(strlen((char *) name.value)) {
+            if(c->file[C_NAME]->content)
+                free(c->file[C_NAME]->content);
+            c->file[C_NAME]->content = cext_estrdup((char *) name.value);
+            c->file[C_NAME]->size = strlen((char *) name.value);
+        }
+        free(name.value);
+        if(c->frame)
+            draw_client(c);
+        invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
+        break;
+    case XA_WM_TRANSIENT_FOR:
+        XGetTransientForHint(dpy, c->win, &c->trans);
+        break;
+    case XA_WM_NORMAL_HINTS:
+        if(!XGetWMNormalHints(dpy, c->win, &c->size, &msize)
+           || !c->size.flags) {
+            c->size.flags = PSize;
+        }
+        break;
+    }
 }
 
-void destroy_client(Client * c)
+void
+destroy_client(Client * c)
 {
-	detach_detached(c);
-	ixp_remove_file(ixps, c->file[C_PREFIX]);
-	free(c);
+    detach_detached(c);
+    ixp_remove_file(ixps, c->file[C_PREFIX]);
+    free(c);
 }
 
 /* speed reasoned function for client property change */
-void draw_client(Client *client)
+void
+draw_client(Client * client)
 {
-	Frame *f = client->frame;
-	unsigned int i = 0, tw, tabh = tab_height(f);
-	Draw d = { 0 };
-	Client *c;
+    Frame *f = client->frame;
+    unsigned int i = 0, tw, tabh = tab_height(f);
+    Draw d = { 0 };
+    Client *c;
 
-	if (!tabh)
-		return;
+    if(!tabh)
+        return;
 
-	tw = f->rect.width / f->nclients;
-	for (c = f->clients; c && c != client; c = c->next)
-		i++;
+    tw = f->rect.width / f->nclients;
+    for(c = f->clients; c && c != client; c = c->next)
+        i++;
 
-	d.drawable = f->win;
-	d.gc = f->gc;
-	d.rect.x = i * tw;
-	d.rect.y = 0;
-	d.rect.width = tw;
-	if (i && (i == f->nclients - 1))
-		d.rect.width = f->rect.width - d.rect.x;
-	d.rect.height = tabh;
-	d.data = c->file[C_NAME]->content;
-	d.font = font;
+    d.drawable = f->win;
+    d.gc = f->gc;
+    d.rect.x = i * tw;
+    d.rect.y = 0;
+    d.rect.width = tw;
+    if(i && (i == f->nclients - 1))
+        d.rect.width = f->rect.width - d.rect.x;
+    d.rect.height = tabh;
+    d.data = c->file[C_NAME]->content;
+    d.font = font;
 
-	if ((f == sel_frame()) && (c == f->sel)) {
-		d.bg = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_FG_COLOR]->content);
-		d.border = blitz_loadcolor(dpy, screen_num, f->file[F_SEL_BORDER_COLOR]->content);
-	} else {
-		d.bg = blitz_loadcolor(dpy, screen_num, f->file[F_NORM_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen_num, f->file[F_NORM_FG_COLOR]->content);
-		d.border = blitz_loadcolor(dpy, screen_num, f->file[F_NORM_BORDER_COLOR]->content);
-	}
-	blitz_drawlabel(dpy, &d);
-	XSync(dpy, False);
+    if((f == sel_frame()) && (c == f->sel)) {
+        d.bg =
+            blitz_loadcolor(dpy, screen_num,
+                            f->file[F_SEL_BG_COLOR]->content);
+        d.fg =
+            blitz_loadcolor(dpy, screen_num,
+                            f->file[F_SEL_FG_COLOR]->content);
+        d.border =
+            blitz_loadcolor(dpy, screen_num,
+                            f->file[F_SEL_BORDER_COLOR]->content);
+    } else {
+        d.bg =
+            blitz_loadcolor(dpy, screen_num,
+                            f->file[F_NORM_BG_COLOR]->content);
+        d.fg =
+            blitz_loadcolor(dpy, screen_num,
+                            f->file[F_NORM_FG_COLOR]->content);
+        d.border =
+            blitz_loadcolor(dpy, screen_num,
+                            f->file[F_NORM_BORDER_COLOR]->content);
+    }
+    blitz_drawlabel(dpy, &d);
+    XSync(dpy, False);
 }
 
-void draw_clients(Frame * f)
+void
+draw_clients(Frame * f)
 {
-	Client *c;
-	for (c = f->clients; c; c = c->next)
-		draw_client(c);
+    Client *c;
+    for(c = f->clients; c; c = c->next)
+        draw_client(c);
 }
 
-void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
+void
+gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 {
-	int dx = 0, dy = 0;
-	int gravity = NorthWestGravity;
+    int dx = 0, dy = 0;
+    int gravity = NorthWestGravity;
 
-	if (c->size.flags & PWinGravity) {
-		gravity = c->size.win_gravity;
-	}
-	/* y */
-	switch (gravity) {
-	case StaticGravity:
-	case NorthWestGravity:
-	case NorthGravity:
-	case NorthEastGravity:
-		dy = tabh;
-		break;
-	case EastGravity:
-	case CenterGravity:
-	case WestGravity:
-		dy = -(c->rect.height / 2) + tabh;
-		break;
-	case SouthEastGravity:
-	case SouthGravity:
-	case SouthWestGravity:
-		dy = -c->rect.height;
-		break;
-	default:					/* don't care */
-		break;
-	}
+    if(c->size.flags & PWinGravity) {
+        gravity = c->size.win_gravity;
+    }
+    /* y */
+    switch (gravity) {
+    case StaticGravity:
+    case NorthWestGravity:
+    case NorthGravity:
+    case NorthEastGravity:
+        dy = tabh;
+        break;
+    case EastGravity:
+    case CenterGravity:
+    case WestGravity:
+        dy = -(c->rect.height / 2) + tabh;
+        break;
+    case SouthEastGravity:
+    case SouthGravity:
+    case SouthWestGravity:
+        dy = -c->rect.height;
+        break;
+    default:                   /* don't care */
+        break;
+    }
 
-	/* x */
-	switch (gravity) {
-	case StaticGravity:
-	case NorthWestGravity:
-	case WestGravity:
-	case SouthWestGravity:
-		dx = bw;
-		break;
-	case NorthGravity:
-	case CenterGravity:
-	case SouthGravity:
-		dx = -(c->rect.width / 2) + bw;
-		break;
-	case NorthEastGravity:
-	case EastGravity:
-	case SouthEastGravity:
-		dx = -(c->rect.width + bw);
-		break;
-	default:					/* don't care */
-		break;
-	}
+    /* x */
+    switch (gravity) {
+    case StaticGravity:
+    case NorthWestGravity:
+    case WestGravity:
+    case SouthWestGravity:
+        dx = bw;
+        break;
+    case NorthGravity:
+    case CenterGravity:
+    case SouthGravity:
+        dx = -(c->rect.width / 2) + bw;
+        break;
+    case NorthEastGravity:
+    case EastGravity:
+    case SouthEastGravity:
+        dx = -(c->rect.width + bw);
+        break;
+    default:                   /* don't care */
+        break;
+    }
 
-	if (invert) {
-		dx = -dx;
-		dy = -dy;
-	}
-	c->rect.x += dx;
-	c->rect.y += dy;
+    if(invert) {
+        dx = -dx;
+        dy = -dy;
+    }
+    c->rect.x += dx;
+    c->rect.y += dy;
 }
 
-void attach_client(Client * c)
+void
+attach_client(Client * c)
 {
-	Area *a = 0;
-	Page *p = selpage;
+    Area *a = 0;
+    Page *p = selpage;
 
-	if (!p)
-		p = alloc_page();
-	/* transient stuff */
-	a = p->sel;
-	if (c && c->trans) {
-		Client *t = win_to_client(c->trans);
-		if (t && t->frame)
-			a = p->floating;
-	}
-	a->layout->attach(a, c);
-	invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+    if(!p)
+        p = alloc_page();
+    /* transient stuff */
+    a = p->sel;
+    if(c && c->trans) {
+        Client *t = win_to_client(c->trans);
+        if(t && t->frame)
+            a = p->floating;
+    }
+    a->layout->attach(a, c);
+    invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
-void detach_client(Client *c, Bool unmap) {
-	Frame *f = c->frame;
-	Area *a = f ? f->area : nil;
-	if (a) {
-		a->layout->detach(a, c, unmap);
-	}
-	if (c->destroyed)
-		destroy_client(c);
-	if (selpage)
-		focus_page(selpage);
+void
+detach_client(Client * c, Bool unmap)
+{
+    Frame *f = c->frame;
+    Area *a = f ? f->area : nil;
+    if(a) {
+        a->layout->detach(a, c, unmap);
+    }
+    if(c->destroyed)
+        destroy_client(c);
+    if(selpage)
+        focus_page(selpage);
 }
 
-Client *sel_client()
+Client *
+sel_client()
 {
-	Frame *f = sel_frame();
-	return f ? f->sel : nil;
+    Frame *f = sel_frame();
+    return f ? f->sel : nil;
 }
 
-Client *clientat(Client *clients, size_t idx)
+Client *
+clientat(Client * clients, size_t idx)
 {
-	size_t i = 0;
-	Client *c = clients;
-	for (; c && i != idx ; c = c->next) i++;
-	return c;
+    size_t i = 0;
+    Client *c = clients;
+    for(; c && i != idx; c = c->next)
+        i++;
+    return c;
 }
 
-void detach_detached(Client *c)
+void
+detach_detached(Client * c)
 {
-	if (detached == c) {
-		if (c->next)
-			c->next->prev = nil;
-		detached = c->next;
-	}
-	else {
-		if (c->next)
-			c->next->prev = c->prev;
-		if (c->prev)
-			c->prev->next = c->next;
-	}
-	ndetached--;
+    if(detached == c) {
+        if(c->next)
+            c->next->prev = nil;
+        detached = c->next;
+    } else {
+        if(c->next)
+            c->next->prev = c->prev;
+        if(c->prev)
+            c->prev->next = c->next;
+    }
+    ndetached--;
 }
 
-void attach_detached(Client *c)
+void
+attach_detached(Client * c)
 {
-	c->prev = nil;
-	c->next = detached;
-	if (detached)
-		detached->prev = c;
-	detached = c;
+    c->prev = nil;
+    c->next = detached;
+    if(detached)
+        detached->prev = c;
+    detached = c;
 }

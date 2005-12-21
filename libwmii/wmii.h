@@ -12,8 +12,8 @@
 typedef struct Action Action;
 
 struct Action {
-	char *name;
-	void (*func) (void *obj, char *);
+    char *name;
+    void (*func) (void *obj, char *);
 };
 
 /* ixputil.c */
@@ -26,6 +26,8 @@ IXPServer *wmii_setup_server(char *sockfile);
 void wmii_spawn(void *dpy, char *cmd);
 
 /* wm.c */
-int wmii_property(Display *dpy, Window w, Atom a, Atom t, long l, unsigned char **prop);
-void wmii_send_message(Display *dpy, Window w, Atom a, long value);
-void wmii_init_lock_modifiers(Display *dpy, unsigned int *valid_mask, unsigned int *num_lock_mask);
+int wmii_property(Display * dpy, Window w, Atom a, Atom t, long l,
+                  unsigned char **prop);
+void wmii_send_message(Display * dpy, Window w, Atom a, long value);
+void wmii_init_lock_modifiers(Display * dpy, unsigned int *valid_mask,
+                              unsigned int *num_lock_mask);

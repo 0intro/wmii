@@ -11,18 +11,19 @@
 
 #include "wmii.h"
 
-void wmii_spawn(void *dpy, char *cmd)
+void
+wmii_spawn(void *dpy, char *cmd)
 {
-	/* the questionable double-fork is done to catch all zombies */
-	if (fork() == 0) {
-		if (fork() == 0) {
-			setsid();
-			close(ConnectionNumber(dpy));
-			execlp("rc", "rc", "-c", cmd, (char *) 0);
-			perror("failed");
-			exit(1);
-		}
-		exit(0);
-	}
-	wait(0);
+    /* the questionable double-fork is done to catch all zombies */
+    if(fork() == 0) {
+        if(fork() == 0) {
+            setsid();
+            close(ConnectionNumber(dpy));
+            execlp("rc", "rc", "-c", cmd, (char *) 0);
+            perror("failed");
+            exit(1);
+        }
+        exit(0);
+    }
+    wait(0);
 }
