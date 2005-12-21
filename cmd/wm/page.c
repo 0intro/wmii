@@ -175,6 +175,7 @@ pageat(unsigned int idx)
 {
     unsigned int i = 0;
     Page *p;
-    for(p = pages; p && i != idx; p = p->next);
+    for(p = pages; p && i != idx; p = p->next)
+		i++;
     return p;
 }

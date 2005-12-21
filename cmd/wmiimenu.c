@@ -200,7 +200,7 @@ update_offsets()
     Item *i;
     unsigned int w = cmdw + 2 * seek;
 
-    if(!i)
+    if(!items)
         return;
 
     /* calc next offset */
