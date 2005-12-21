@@ -54,6 +54,10 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 
 	if (!val)
 		return FALSE;
+	rx = r->x;
+	ry = r->y;
+	rw = r->width;
+	rh = r->height;
 	sx = sy = sw = sh = 0;
 	x = y = w = h = 0;
 	cext_strlcpy(buf, val, sizeof(buf));
@@ -182,9 +186,9 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 	}
 
 	if (rw < 1)
-		rw = 1;
+		rw = 10;
 	if (rh < 1)
-		rh = 1;
+		rh = 10;
 	r->x = rx;
 	r->y = ry;
 	r->width = rw;
