@@ -134,7 +134,7 @@ xread(char **argv)
 
     /* open */
     if(!ixp_client_open(&c, fid, argv[0], IXP_OREAD)) {
-        fprintf(stderr, "wmiir: cannot open file: %s\n", c.errstr);
+        fprintf(stderr, "wmiir: cannot open file '%s': %s\n", argv[0], c.errstr);
         return 1;
     }
     is_directory = !c.fcall.nwqid || (c.fcall.qid.type == IXP_QTDIR);
@@ -225,11 +225,13 @@ main(int argc, char *argv[])
         exit(1);
     }
     /* wether perform directly or read from stdin */
-    while(fgets(line, 4096, stdin))
+    while(fgets(line, 4096, stdin)) {
+		line[strlen(line) - 2] = 0;
         if((stdin_argc = cext_tokenize(stdin_argv, 3, line, ' '))) {
             if((ret = perform_cmd(stdin_argc, stdin_argv)))
                 break;
         }
+	}
 
     /* close socket */
     ixp_client_deinit(&c);
