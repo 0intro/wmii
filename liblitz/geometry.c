@@ -45,12 +45,12 @@ static int strtoalign(Align * result, char *val)
  * Each component can be of following format:
  * <...> = [+|-]0..n|<alignment>[[+|-]0..n]
  */
-int blitz_strtorect(XRectangle * root, XRectangle * r, char *val)
+int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 {
 	char buf[64];
 	char *x, *y, *w, *h;
 	char *p;
-	int sx, sy, sw, sh;
+	int rx, ry, rw, rh, sx, sy, sw, sh;
 
 	if (!val)
 		return FALSE;
@@ -69,13 +69,13 @@ int blitz_strtorect(XRectangle * root, XRectangle * r, char *val)
 		}
 	}
 	if (x && (sx = (x[0] >= '0') && (x[0] <= '9')))
-		r->x = blitz_strtonum(x, 0, 65535);
+		rx = blitz_strtonum(x, 0, 65535);
 	if (y && (sy = (y[0] >= '0') && (y[0] <= '9')))
-		r->y = blitz_strtonum(y, 0, 65535);
+		ry = blitz_strtonum(y, 0, 65535);
 	if (w && (sw = (w[0] >= '0') && (w[0] <= '9')))
-		r->width = blitz_strtonum(w, 0, 65535);
+		rw = blitz_strtonum(w, 0, 65535);
 	if (h && (sh = (h[0] >= '0') && (h[0] <= '9')))
-		r->height = blitz_strtonum(h, 0, 65535);
+		rh = blitz_strtonum(h, 0, 65535);
 
 	if (!sx && !sw && x && w
 		&& x[0] != '-' && x[0] != '+' && w[0] != '-' && w[0] != '+') {
@@ -83,33 +83,33 @@ int blitz_strtorect(XRectangle * root, XRectangle * r, char *val)
 		strtoalign(&ax, x);
 		strtoalign(&aw, w);
 		if ((ax == CENTER) && (aw == EAST)) {
-			r->x = root->x + root->width / 2;
-			r->width = root->width / 2;
+			rx = root->x + root->width / 2;
+			rw = root->width / 2;
 		} else {
-			r->x = root->x;
+			rx = root->x;
 			if (aw == CENTER) {
-				r->width = root->width / 2;
+				rw = root->width / 2;
 			} else {
-				r->width = root->width;
+				rw = root->width;
 			}
 		}
 	} else if (!sx && x && x[0] != '-' && x[0] != '+') {
 		Align ax;
 		strtoalign(&ax, x);
 		if (ax == CENTER) {
-			r->x = root->x + (root->width / 2) - (r->width / 2);
+			rx = root->x + (root->width / 2) - (rw / 2);
 		} else if (ax == EAST) {
-			r->x = root->x + root->width - r->width;
+			rx = root->x + root->width - rw;
 		} else {
-			r->x = root->x;
+			rx = root->x;
 		}
 	} else if (!sw && w && w[0] != '-' && w[0] != '+') {
 		Align aw;
 		strtoalign(&aw, w);
 		if (aw == CENTER) {
-			r->width = (root->width / 2) - r->x;
+			rw = (root->width / 2) - rx;
 		} else {
-			r->width = root->width - r->x;
+			rw = root->width - rx;
 		}
 	}
 	if (!sy && !sh && y && h
@@ -118,68 +118,77 @@ int blitz_strtorect(XRectangle * root, XRectangle * r, char *val)
 		strtoalign(&ay, y);
 		strtoalign(&ah, h);
 		if ((ay == CENTER) && (ah == SOUTH)) {
-			r->y = root->y + root->height / 2;
-			r->height = root->height / 2;
+			ry = root->y + root->height / 2;
+			rh = root->height / 2;
 		} else {
-			r->y = root->y;
+			ry = root->y;
 			if (ah == CENTER) {
-				r->height = root->height / 2;
+				rh = root->height / 2;
 			} else {
-				r->height = root->height;
+				rh = root->height;
 			}
 		}
 	} else if (!sy && y && y[0] != '-' && y[0] != '+') {
 		Align ay;
 		strtoalign(&ay, y);
 		if (ay == CENTER) {
-			r->y = root->y + (root->height / 2) - (r->height / 2);
+			ry = root->y + (root->height / 2) - (rh / 2);
 		} else if (ay == SOUTH) {
-			r->y = root->y + root->height - r->height;
+			ry = root->y + root->height - rh;
 		} else {
-			r->y = root->y;
+			ry = root->y;
 		}
 	} else if (!sh && h && h[0] != '-' && h[0] != '+') {
 		Align ah;
 		strtoalign(&ah, h);
 		if (ah == CENTER) {
-			r->height = (root->height / 2) - r->y;
+			rh = (root->height / 2) - ry;
 		} else {
-			r->height = root->height - r->y;
+			rh = root->height - ry;
 		}
 	}
 	/* now do final calculations */
 	if (x) {
 		p = strchr(x, '-');
 		if (p)
-			r->x -= blitz_strtonum(++p, 0, 65535);
+			rx -= blitz_strtonum(++p, 0, 65535);
 		p = strchr(x, '+');
 		if (p)
-			r->x += blitz_strtonum(++p, 0, 65535);
+			rx += blitz_strtonum(++p, 0, 65535);
 	}
 	if (y) {
 		p = strchr(y, '-');
 		if (p)
-			r->y -= blitz_strtonum(++p, 0, 65535);
+			ry -= blitz_strtonum(++p, 0, 65535);
 		p = strchr(y, '+');
 		if (p)
-			r->y += blitz_strtonum(++p, 0, 65535);
+			ry += blitz_strtonum(++p, 0, 65535);
 	}
 	if (w) {
 		p = strchr(w, '-');
 		if (p)
-			r->width -= blitz_strtonum(++p, 0, 65535);
+			rw -= blitz_strtonum(++p, 0, 65535);
 		p = strchr(w, '+');
 		if (p)
-			r->width += blitz_strtonum(++p, 0, 65535);
+			rw += blitz_strtonum(++p, 0, 65535);
 	}
 	if (h) {
 		p = strchr(h, '-');
 		if (p)
-			r->height -= blitz_strtonum(++p, 0, 65535);
+			rh -= blitz_strtonum(++p, 0, 65535);
 		p = strchr(h, '+');
 		if (p)
-			r->height += blitz_strtonum(++p, 0, 65535);
+			rh += blitz_strtonum(++p, 0, 65535);
 	}
+
+	if (rw < 1)
+		rw = 1;
+	if (rh < 1)
+		rh = 1;
+	r->x = rx;
+	r->y = ry;
+	r->width = rw;
+	r->height = rh;
 	return TRUE;
 }
 
