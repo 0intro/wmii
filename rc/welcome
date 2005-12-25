@@ -5,49 +5,43 @@ xmessage -file - <<END
 Welcome to wmii, the non-wimp environment of the WMI Project.
 
 This is a small step by step tutorial, intended to make you a little bit
-familiar with the wmii window manager.
+familiar with wmii.
 
-NOTE: Some characters in the shortcuts that are mentioned in the following
-text have a special meaning.  S is the Shift key, C is the Ctrl key, M is
-the Meta key (usually Alt), and the hyphen means that you have to press the
-surrounding keys at the same time.
+NOTE: Some characters in shortcuts have a special meaning.  S is the Shift
+key, C is the Ctrl key, M is the Meta key (usually Alt), and the hyphen means
+that you have to press the surrounding keys at the same time.
 
 Let's go!
 
-- Start a terminal by pressing M-t.  This assumes that you have xterm(1)
-  installed.
-- Open the actions menu: C-M-a
-  Type 'term' and press Enter.  You've now used wmiimenu(1) to accomplish what
-  wmiikeys(1) did before when you pressed M-t: executing the term action.
-  Notice how the tiled layout arranges the windows.  
+- Start two xterms by pressing M-t twice.
 - Switch between the three windows: M-j, M-k
   You can also use M-Tab instead of M-j.  If you prefer the mouse, then
   just move the pointer above the desired window; no click is required.
-- Create a new page: C-M-y
+- Create a new page: M-C-y
   IMPORTANT: this text will then no longer be visible.  In order to continue
   reading you'll now often have to go back to the first page.  Use M-h
   or M-l for cycling through the existing pages.  The digit in the left
   corner at the bottom indicates which page you're on.  You can directly
-  select a specific page as well: M-1, etc.  Make sure that you are on the
+  select a specific page as well: M-S-1, etc.  Make sure that you are on the
   second page before performing the next steps.
-- Apply the float layout to the current page: S-M-f
+- Apply the float layout to the current page: M-S-f
   Watch the leftmost bar label: the 't', which stood for 'tiled', has now
   turned into an 'f', for 'float'.
-- Open the programs menu: C-M-p
+- Open the programs menu: M-C-p
   Type 'xclock' and press Enter.
 - Resize the xclock window: left-click on the border and, while holding the
   button down, move the cursor around.
 - Move the xclock window: left-click on the title bar and, while holding
   the button down, move the cursor around.
-- Remove the current page by opening the actions menu and selecting the premove
-  action.  The xclock window will be automatically detached and we'll land on
-  the first page.
+- Open the actions menu: M-C-a
+  Remove the current page by selecting the rmpage action.  The xclock window
+  will be automatically detached and we'll land on the first page.
 - Attach the xclock window again: M-a
-- Select one of the terminals and close it: C-M-c
+- Select one of the terminals and close it: M-C-c
   Close xclock as well.
 - Swap the remaining terminal with the left master tile by moving the terminal
   window somewhere to the left.  Afterwards, swap them once again, but this
-  time by pressing M-return.
+  time by pressing M-Enter.
 - We'll now have a look at the internal filesystem used by wmii.  Executing
   	wmiir read /
   in the shell of the terminal will list all the files in the root directory.
@@ -59,7 +53,9 @@ Let's go!
   will show you which command gets executed when you left-click on the page
   label in the bar.
 
-We hope that these steps gave you an idea of how wmii works.  Of course, there
-is much more to say.  You should now read the wmii(1) man page and the FAQ at
+We hope that these steps gave you an idea of how wmii works.  You can reread
+them at any time by pressing M-C-a and selecting 'welcome'.
+
+You should now take a look at the wmii(1) man page.  An FAQ is available on
 <http://wmii.de>.
 END
