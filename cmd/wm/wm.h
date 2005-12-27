@@ -90,6 +90,16 @@ enum {
     WM_LAST
 };
 
+/* array indexes of EWMH window properties */
+	                  /* TODO: set / react */
+enum {
+	NET_NUMBER_OF_DESKTOPS, /*  ✓      –  */
+	NET_CURRENT_DESKTOP,    /*  ✓      ✓  */
+	NET_WM_DESKTOP          /*  ✗      ✗  */
+};
+
+#define NET_ATOM_COUNT         3
+
 #define PROTO_DEL              1
 #define BORDER_WIDTH           3
 #define LAYOUT                 "column"
@@ -111,6 +121,7 @@ struct Page {
     File *file[P_LAST];
     Page *next;
     Page *prev;
+    size_t index;
 };
 
 struct Layout {
@@ -186,12 +197,12 @@ XColor xorcolor;
 GC xorgc;
 GC transient_gc;
 
-Atom wm_state;
+Atom wm_state; /* TODO: Maybe replace with wm_atoms[WM_ATOM_COUNT]? */
 Atom wm_change_state;
 Atom wm_protocols;
 Atom wm_delete;
 Atom motif_wm_hints;
-Atom net_wm_desktop;
+Atom net_atoms[NET_ATOM_COUNT];
 
 Cursor normal_cursor;
 Cursor resize_cursor;

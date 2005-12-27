@@ -660,7 +660,10 @@ init_atoms()
     wm_protocols = XInternAtom(dpy, "WM_PROTOCOLS", False);
     wm_delete = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
     motif_wm_hints = XInternAtom(dpy, "_MOTIF_WM_HINTS", False);
-    net_wm_desktop = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
+    net_atoms[NET_NUMBER_OF_DESKTOPS] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
+    net_atoms[NET_CURRENT_DESKTOP] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
+    net_atoms[NET_WM_DESKTOP] = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
+    XChangeProperty(dpy, root, XInternAtom(dpy, "_NET_SUPPORTED", False), XA_ATOM, 32, PropModeReplace, (unsigned char *) net_atoms, NET_ATOM_COUNT);
 }
 
 static void

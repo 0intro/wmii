@@ -21,6 +21,7 @@ static void handle_propertynotify(XEvent * e);
 static void handle_unmapnotify(XEvent * e);
 static void handle_enternotify(XEvent * e);
 static void handle_ignore_enternotify_crap(XEvent * e);
+static void handle_clientmessage(XEvent * e);
 
 static unsigned int ignore_enternotify_crap = 0;
 
@@ -47,6 +48,7 @@ init_event_hander()
     handler[PropertyNotify] = handle_propertynotify;
     handler[MapNotify] = handle_ignore_enternotify_crap;
     handler[UnmapNotify] = handle_unmapnotify;
+    handler[ClientMessage] = handle_clientmessage;
 }
 
 void
@@ -297,3 +299,27 @@ handle_ignore_enternotify_crap(XEvent * e)
     ignore_enternotify_crap = e->xany.serial;
     XSync(dpy, False);
 }
+
+static void handle_clientmessage(XEvent *e)
+{
+    XClientMessageEvent *ev = &e->xclient;
+
+    if (ev->message_type == net_atoms[NET_NUMBER_OF_DESKTOPS] && ev->format == 32) {
+        return; /* ignore */
+    }
+    else if (ev->message_type == net_atoms[NET_CURRENT_DESKTOP] && ev->format == 32) {
+        int i;
+        Page *p;
+        i = ev->data.l[0];
+
+        for (p = pages; p; p = p->next) {
+            if (p->index == i) {
+                focus_page(p);
+                return;
+            }
+        }
+
+        return;
+    }
+}
+

@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <X11/Xatom.h>
 
 #include "wm.h"
 
@@ -41,16 +42,21 @@ alloc_page()
     new->floating = alloc_area(new, "float");
     new->sel = new->managed = alloc_area(new, def[WM_LAYOUT]->content);
     for(p = pages; p && p->next; p = p->next);
-    if(!p)
+    if(!p) {
         pages = new;
+        new->index = 0;
+    }
     else {
         new->prev = p;
         p->next = new;
+        new->index = p->index + 1;
     }
     selpage = new;
     def[WM_SEL_PAGE]->content = new->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
     npages++;
+    XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &npages, 1);
+    focus_page(new);
     return new;
 }
 
@@ -72,16 +78,25 @@ destroy_page(Page * p)
         if(p->next)
             p->next->prev = nil;
         pages = p->next;
+        pages->index = 0;
     } else {
         p->prev->next = p->next;
         if(p->next)
             p->next->prev = p->prev;
     }
 
-    free(p);
+    free(p); 
+
+    /* update page indexes */
+    for (p = pages; p && p->next; p = p->next) {
+      if (p->prev && p->prev->index + 1 != p->index) /* if page index difference is not one */
+        --(p->index);
+    }
+ 
     if(!selpage)
         selpage = pages;
     npages--;
+    XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &npages, 1);
 
     if(selpage)
         focus_page(selpage);
@@ -97,6 +112,7 @@ focus_page(Page * p)
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
     focus_area(sel_area());
+    XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &(selpage->index), 1);
 }
 
 XRectangle *
