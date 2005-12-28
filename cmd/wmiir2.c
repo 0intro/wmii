@@ -215,8 +215,7 @@ main(int argc, char *argv[])
         }
     }
     if(!sockfile) {
-        fprintf(stderr, "%s",
-                "wmiir: error: WMIIR_SOCKET environment not set\n");
+        fprintf(stderr, "%s", "wmiir: error: WMIIR_SOCKET environment not set\n");
         usage();
     }
     /* open socket */
@@ -226,7 +225,8 @@ main(int argc, char *argv[])
     }
     /* wether perform directly or read from stdin */
     while(fgets(line, 4096, stdin)) {
-		line[strlen(line) - 2] = 0;
+		if (line[strlen(line) - 1] == '\n')
+			line[strlen(line) - 1] = 0;
         if((stdin_argc = cext_tokenize(stdin_argv, 3, line, ' '))) {
             if((ret = perform_cmd(stdin_argc, stdin_argv)))
                 break;

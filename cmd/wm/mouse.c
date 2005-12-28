@@ -621,10 +621,6 @@ center_pointer(Frame * f)
     XQueryPointer(dpy, f->win, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
     XTranslateCoordinates(dpy, f->win, root, wex, wey, &ex, &ey, &dummy);
     /* suppress EnterNotify's while mouse warping */
-    XSelectInput(dpy, root, ROOT_MASK & ~EnterWindowMask);
-    XSync(dpy, False);
-    XWarpPointer(dpy, None, f->win, 0, 0, 0, 0, f->rect.width / 2,
-                 f->rect.height / 2);
-    XSync(dpy, False);
-    XSelectInput(dpy, root, ROOT_MASK);
+    XWarpPointer(dpy, None, f->win, 0, 0, 0, 0, f->rect.width / 2, f->rect.height / 2);
+	XSync(dpy, True);
 }
