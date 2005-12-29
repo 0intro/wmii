@@ -622,5 +622,4 @@ center_pointer(Frame * f)
     XTranslateCoordinates(dpy, f->win, root, wex, wey, &ex, &ey, &dummy);
     /* suppress EnterNotify's while mouse warping */
     XWarpPointer(dpy, None, f->win, 0, 0, 0, 0, f->rect.width / 2, f->rect.height / 2);
-	XSync(dpy, True);
 }
