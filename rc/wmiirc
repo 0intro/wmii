@@ -53,21 +53,13 @@ fn items {
     } | sort | wmiir -f &
 }
 
-fn frameconf {
-    wmiir write $1/event/b2press 'wmiir write /wm/ctl close'
-    normstyle $1/nstyle
-    selstyle $1/sstyle
-    wmiir write $1/tab $TAB
-    wmiir write $1/handleinc $HANDLEINC
-    if(~ $2 refresh)
-        wmiir write $1/geometry +0,+0,+0,+0  # causes refresh
-}
-
 fn framesconf {
-    for(frame in `{wmiir read $1 | grep '^[0-9]'})
-        frameconf $1/$frame $2
+    for(frame in `{wmiir read $1 | grep '^[0-9]'}) {
+    	wmiir write $1/$frame/tab $TAB
+    	wmiir write $1/$frame/handleinc $HANDLEINC
+    	wmiir write $1/$frame/geometry +0,+0,+0,+0  # causes refresh
+	}
 }
-
 
 # WMIIBAR CONFIGURATION
 
@@ -120,10 +112,17 @@ wmiir write /wm/event/pageupdate \
 'wmiir write /bar/'^$plab^'/data `{wmiir read /wm/sel/name} &&' ^ \
 'wmiir write /bar/'^$llab^'/data `{wmiir read /wm/sel/layout/sel/name}'
 
-for(layout in /wm/sel/layout/float /wm/sel/layout/managed)
-    framesconf /wm/sel/layout/$layout/frame refresh
-frameconf /wm/default norefresh
+for(layout in /wm/sel/layout/float /wm/sel/layout/managed) {
+	framesconf $layout
+}
 
+wmiir write /wm/default/sstyle/fgcolor $SEL_FG_COLOR
+wmiir write /wm/default/sstyle/bgcolor $SEL_BG_COLOR
+wmiir write /wm/default/sstyle/bordercolor $SEL_BORDER_COLOR
+wmiir write /wm/default/nstyle/fgcolor $NORM_FG_COLOR
+wmiir write /wm/default/nstyle/bgcolor $NORM_BG_COLOR
+wmiir write /wm/default/nstyle/bordercolor $NORM_BORDER_COLOR
+wmiir write /wm/default/event/b2press 'wmiir write /wm/ctl close'
 
 # WMIIKEYS CONFIGURATION
 

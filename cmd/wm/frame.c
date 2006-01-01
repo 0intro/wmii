@@ -60,36 +60,6 @@ alloc_frame(XRectangle * r)
     snprintf(buf, MAX_BUF, "/detached/frame/%d/locked", id);
     f->file[F_LOCKED] =
         wmii_create_ixpfile(ixps, buf, def[WM_LOCKED]->content);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/sstyle/bgcolor", id);
-    f->file[F_SEL_BG_COLOR] =
-        wmii_create_ixpfile(ixps, buf, def[WM_SEL_BG_COLOR]->content);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/sstyle/fgcolor", id);
-    f->file[F_SEL_FG_COLOR] =
-        wmii_create_ixpfile(ixps, buf, def[WM_SEL_FG_COLOR]->content);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/sstyle/bordercolor", id);
-    f->file[F_SEL_BORDER_COLOR] =
-        wmii_create_ixpfile(ixps, buf, def[WM_SEL_BORDER_COLOR]->content);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/nstyle/bgcolor", id);
-    f->file[F_NORM_BG_COLOR] =
-        wmii_create_ixpfile(ixps, buf, def[WM_NORM_BG_COLOR]->content);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/nstyle/fgcolor", id);
-    f->file[F_NORM_FG_COLOR] =
-        wmii_create_ixpfile(ixps, buf, def[WM_NORM_FG_COLOR]->content);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/nstyle/bordercolor", id);
-    f->file[F_NORM_BORDER_COLOR] =
-        wmii_create_ixpfile(ixps, buf, def[WM_NORM_BORDER_COLOR]->content);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/event/b2press", id);
-    f->file[F_EVENT_B2PRESS] =
-        wmii_create_ixpfile(ixps, buf, def[WM_EVENT_B2PRESS]->content);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/event/b3press", id);
-    f->file[F_EVENT_B3PRESS] =
-        wmii_create_ixpfile(ixps, buf, def[WM_EVENT_B3PRESS]->content);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/event/b4press", id);
-    f->file[F_EVENT_B4PRESS] =
-        wmii_create_ixpfile(ixps, buf, def[WM_EVENT_B4PRESS]->content);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/event/b5press", id);
-    f->file[F_EVENT_B5PRESS] =
-        wmii_create_ixpfile(ixps, buf, def[WM_EVENT_B5PRESS]->content);
     id++;
 
     wa.override_redirect = 1;
@@ -271,23 +241,23 @@ draw_frame(Frame * f)
         if(f == sel_frame()) {
             d.bg =
                 blitz_loadcolor(dpy, screen_num,
-                                f->file[F_SEL_BG_COLOR]->content);
+                                def[WM_SEL_BG_COLOR]->content);
             d.fg =
                 blitz_loadcolor(dpy, screen_num,
-                                f->file[F_SEL_FG_COLOR]->content);
+                                def[WM_SEL_FG_COLOR]->content);
             d.border =
                 blitz_loadcolor(dpy, screen_num,
-                                f->file[F_SEL_BORDER_COLOR]->content);
+                                def[WM_SEL_BORDER_COLOR]->content);
         } else {
             d.bg =
                 blitz_loadcolor(dpy, screen_num,
-                                f->file[F_NORM_BG_COLOR]->content);
+                                def[WM_NORM_BG_COLOR]->content);
             d.fg =
                 blitz_loadcolor(dpy, screen_num,
-                                f->file[F_NORM_FG_COLOR]->content);
+                                def[WM_NORM_FG_COLOR]->content);
             d.border =
                 blitz_loadcolor(dpy, screen_num,
-                                f->file[F_NORM_BORDER_COLOR]->content);
+                                def[WM_NORM_BORDER_COLOR]->content);
         }
         d.rect = f->rect;
         d.rect.x = d.rect.y = 0;
@@ -315,7 +285,7 @@ handle_frame_buttonpress(XButtonEvent * e, Frame * f)
         return;
     }
     f->area->layout->focus(f, False);
-    bindex = F_EVENT_B2PRESS - 2 + e->button;
+    bindex = WM_EVENT_B2PRESS - 2 + e->button;
     /* frame mouse handling */
     if(f->file[bindex]->content)
         wmii_spawn(dpy, f->file[bindex]->content);
@@ -342,7 +312,7 @@ attach_client_to_frame(Frame * f, Client * client)
     resize_frame(f, &f->rect, 0);
     reparent_client(client, f->win, client->rect.x, client->rect.y);
     show_client(client);
-    sel_client(client);
+    focus_client(client);
 }
 
 void
