@@ -4,8 +4,4 @@
 wmiir write /keys/grabkeyb 0
 wmiir write /keys/lookup /mode/$1
 
-plab_cmd=`{wmiir read /wm/event/pageupdate | sed -e 's/\\//'}
-if (! ~ $#plab_cmd 0) eval $"plab_cmd
-
-#wmiir write /bar/$plab/data \
-#`{wmiir read /bar/$plab/data | sed -e 's/.$/'^`{echo $2 | cut -b1}^'/'}
+eval `{wmiir read /wm/event/pageupdate}

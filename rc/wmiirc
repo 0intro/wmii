@@ -72,9 +72,10 @@ fn barsucks {
 
 wmiir write /bar/geometry $BAR_ALIGN
 if (~ $BAR_ALIGN south)
-    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|sed ''s/,/ /g''|awk ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+0,+0,-''^$val'
+    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk -F, ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+0,+0,-''^$val'
 if not
-    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|sed ''s/,/ /g''|awk ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+''^$val^'',+0,-''^$val'
+    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk -F, ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+''^$val^'',+0,-''^$val'
+
 
 wmiir write /bar/ctl reset
 wmiir write /bar/font $FONT
@@ -87,6 +88,8 @@ wmiir write /bar/$plab/b1press 'wmiir write /wm/ctl pager'
 
 llab=`{wmiir read /bar/new}
 wmiir write /bar/$llab/b1press 'wmiir write /wm/ctl pager'
+
+klab=`{wmiir read /bar/new}
 
 clab=`{wmiir read /bar/new}
 wmiir write /bar/$clab/fgcolor $SEL_FG_COLOR
@@ -106,11 +109,13 @@ wmiir write /wm/default/handleinc $HANDLEINC
 
 wmiir write /wm/default/border 1
 wmiir write /wm/event/clientupdate \
-'text=`{wmiir read /wm/sel/layout/sel/frame/sel/name} \
-wmiir write /bar/'^$clab^'/data $"text'
+'text=`{wmiir read /wm/sel/layout/sel/frame/sel/name}' ^\
+'wmiir write /bar/'^$clab^'/data $"text'
 wmiir write /wm/event/pageupdate \
-'wmiir write /bar/'^$plab^'/data `{wmiir read /wm/sel/name} &&' ^ \
+'wmiir write /bar/'^$plab^'/data `{wmiir read /wm/sel/name} &&' ^\
+'wmiir write /bar/'^$klab^'/data `{wmiir read /keys/lookup|sed ''s|/mode/||''} && ' ^\
 'wmiir write /bar/'^$llab^'/data `{wmiir read /wm/sel/layout/sel/name}'
+
 
 for(layout in /wm/sel/layout/float /wm/sel/layout/managed) {
 	framesconf $layout
@@ -128,11 +133,32 @@ wmiir write /wm/default/event/b2press 'wmiir write /wm/ctl close'
 
 kbind bare $MODKEY-Escape 'kmode normal'
 
+kbind move Escape 'kmode normal'
+kbind move $MODKEY-C-r 'kmode resize'
+kbind move $NORTHKEY   'wmiir write /wm/sel/layout/sel/frame/sel/geometry -0,-30,-0,-0'
+kbind move $SOUTHKEY   'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,+30,+0,+0'
+kbind move $WESTKEY    'wmiir write /wm/sel/layout/sel/frame/sel/geometry -40,-0,-0,-0'
+kbind move $EASTKEY    'wmiir write /wm/sel/layout/sel/frame/sel/geometry +40,+0,+0,+0'
+kbind move S-$NORTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry -0,north,-0,-0'
+kbind move S-$SOUTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,south,+0,+0'
+kbind move S-$WESTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry west,-0,-0,-0'
+kbind move S-$EASTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry east,+0,+0,+0'
+
+kbind resize Escape 'kmode normal'
+kbind resize $MODKEY-C-m 'kmode move'
+kbind resize $NORTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+0,-30'
+kbind resize $SOUTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+0,+30'
+kbind resize $WESTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,-40,+0'
+kbind resize $EASTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+40,+0'
+
 kbind normal $MODKEY-C-b 'kmode bare'
+kbind normal $MODKEY-C-m 'kmode move'
+kbind normal $MODKEY-C-r 'kmode resize'
 kbind normal $MODKEY-C-a 'wmiir write /menu/precmd ''''; wmiir write /menu/lookup /items/actions; wmiir write /menu/ctl ''display 1'''
 kbind normal $MODKEY-C-p 'wmiir write /menu/precmd extern; wmiir write /menu/lookup /items/programs; wmiir write /menu/ctl ''display 1'''
 kbind normal $MODKEY-C-c 'wmiir write /wm/ctl close'
 kbind normal $MODKEY-C-q,y quit
+kbind normal $MODKEY-C-w,y wmiirc
 kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000'
 kbind normal $MODKEY-d 'wmiir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmiir write /wm/ctl attach'
