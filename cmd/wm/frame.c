@@ -32,34 +32,29 @@ alloc_frame(XRectangle * r)
     f->rect = *r;
     f->cursor = normal_cursor;
 
-    snprintf(buf, MAX_BUF, "/detached/frame/%d", id);
+    snprintf(buf, MAX_BUF, "/detached/%d", id);
     f->file[F_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/client", id);
-    f->file[F_CLIENT_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/client/sel", id);
-    f->file[F_SEL_CLIENT] = ixp_create(ixps, buf);
-    f->file[F_SEL_CLIENT]->bind = 1;
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/ctl", id);
+    snprintf(buf, MAX_BUF, "/detached/%d/name", id);
+    f->file[F_NAME] = ixp_create(ixps, buf);
+	f->file[F_NAME]->before_read = handle_before_read_frame;
+    snprintf(buf, MAX_BUF, "/detached/%d/ctl", id);
     f->file[F_CTL] = ixp_create(ixps, buf);
     f->file[F_CTL]->after_write = handle_after_write_frame;
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/geometry", id);
+    snprintf(buf, MAX_BUF, "/detached/%d/geometry", id);
     f->file[F_GEOMETRY] = ixp_create(ixps, buf);
     f->file[F_GEOMETRY]->before_read = handle_before_read_frame;
     f->file[F_GEOMETRY]->after_write = handle_after_write_frame;
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/border", id);
+    snprintf(buf, MAX_BUF, "/detached/%d/border", id);
     f->file[F_BORDER] =
         wmii_create_ixpfile(ixps, buf, def[WM_BORDER]->content);
     f->file[F_BORDER]->after_write = handle_after_write_frame;
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/tab", id);
+    snprintf(buf, MAX_BUF, "/detached/%d/tab", id);
     f->file[F_TAB] = wmii_create_ixpfile(ixps, buf, def[WM_TAB]->content);
     f->file[F_TAB]->after_write = handle_after_write_frame;
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/handleinc", id);
+    snprintf(buf, MAX_BUF, "/detached/%d/handleinc", id);
     f->file[F_HANDLE_INC] =
         wmii_create_ixpfile(ixps, buf, def[WM_HANDLE_INC]->content);
     f->file[F_HANDLE_INC]->after_write = handle_after_write_frame;
-    snprintf(buf, MAX_BUF, "/detached/frame/%d/locked", id);
-    f->file[F_LOCKED] =
-        wmii_create_ixpfile(ixps, buf, def[WM_LOCKED]->content);
     id++;
 
     wa.override_redirect = 1;
@@ -295,8 +290,6 @@ void
 attach_client_to_frame(Frame * f, Client * client)
 {
     Client *c;
-    wmii_move_ixpfile(client->file[C_PREFIX], f->file[F_CLIENT_PREFIX]);
-    f->file[F_SEL_CLIENT]->content = client->file[C_PREFIX]->content;
     for(c = f->clients; c && c->next; c = c->next);
     if(!c) {
         f->clients = client;
@@ -321,9 +314,6 @@ detach_client_from_frame(Client * c, Bool unmap)
     Frame *f = c->frame;
 
     c->frame = nil;
-    f->file[F_SEL_CLIENT]->content = nil;
-    wmii_move_ixpfile(c->file[C_PREFIX], def[WM_DETACHED_CLIENT]);
-
     if(f->sel == c) {
         if(c->prev)
             f->sel = c->prev;
@@ -381,10 +371,10 @@ static Frame *
 handle_before_read_frames(IXPServer * s, File * file, Area * a)
 {
     Frame *f;
-    char buf[64];
-    for(f = a->layout->frames(a); f; f = f->next)
+    char buf[32];
+    for(f = a->layout->frames(a); f; f = f->next) {
         if(file == f->file[F_GEOMETRY]) {
-            snprintf(buf, 64, "%d,%d,%d,%d", f->rect.x, f->rect.y,
+            snprintf(buf, sizeof(buf), "%d,%d,%d,%d", f->rect.x, f->rect.y,
                      f->rect.width, f->rect.height);
             if(file->content)
                 free(file->content);
@@ -392,6 +382,20 @@ handle_before_read_frames(IXPServer * s, File * file, Area * a)
             file->size = strlen(buf);
             return f;
         }
+	    else if(file == f->file[F_NAME]) {
+            if(file->content)
+                free(file->content);
+			if(f->sel && f->sel->name) {
+				file->content = cext_estrdup(f->sel->name);
+				file->size = strlen(buf);
+			}
+			else {
+				file->content = nil;
+				file->size = 0;
+			}
+            return f;
+		}
+	}
     return nil;
 }
 

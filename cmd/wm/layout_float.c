@@ -147,22 +147,17 @@ deinit_float(Area * a)
 static Bool
 attach_float(Area * a, Client * c)
 {
-    Float *fl = a->aux;
-    Frame *f = fl->sel;
+    Frame *f;
 
     /* check for tabbing? */
-    if(f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))
-        f = 0;
-    if(!f) {
-        if(c->rect.y < area_rect.y)
-            c->rect.y = area_rect.y;
-        if(c->rect.x < area_rect.x)
-            c->rect.x = area_rect.x;
+    if(c->rect.y < area_rect.y)
+		c->rect.y = area_rect.y;
+	if(c->rect.x < area_rect.x)
+		c->rect.x = area_rect.x;
 
-        f = alloc_frame(&c->rect);
-        attach_frame_to_area(a, f);
-        attach_frame(a, f);
-    }
+	f = alloc_frame(&c->rect);
+	attach_frame_to_area(a, f);
+	attach_frame(a, f);
     attach_client_to_frame(f, c);
     if(a->page == selpage)
         XMapWindow(dpy, f->win);

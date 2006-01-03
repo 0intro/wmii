@@ -144,7 +144,7 @@ draw_pager_area(Area * a, Draw * d)
                 blitz_loadcolor(dpy, screen_num,
                                 def[WM_NORM_BORDER_COLOR]->content);
         }
-        d->data = f->sel->file[C_NAME]->content;
+        d->data = f->sel->name;
         scale_rect(&rect, &initial_rect, &f->rect, &d->rect);
         blitz_drawlabel(dpy, d);
         XSync(dpy, False);      /* do not clear upwards */
@@ -722,7 +722,6 @@ init_default()
     def[WM_TAB] = wmii_create_ixpfile(ixps, "/default/tab", "1");
     def[WM_HANDLE_INC] =
         wmii_create_ixpfile(ixps, "/default/handleinc", "1");
-    def[WM_LOCKED] = wmii_create_ixpfile(ixps, "/default/locked", "1");
     def[WM_LAYOUT] = wmii_create_ixpfile(ixps, "/default/layout", LAYOUT);
     def[WM_SEL_PAGE] = ixp_create(ixps, "/sel");
     def[WM_EVENT_PAGE_UPDATE] = ixp_create(ixps, "/event/pageupdate");

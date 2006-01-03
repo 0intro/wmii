@@ -239,13 +239,8 @@ attach_col(Area * a, Client * c)
         acme->ncolumns++;
     }
 
-    /* check for tabbing? */
-    if(f && (((char *) f->file[F_LOCKED]->content)[0] == '1'))
-        f = 0;
-    if(!f) {
-        f = alloc_frame(&c->rect);
-        attach_frame(a, col, f);
-    }
+    f = alloc_frame(&c->rect);
+    attach_frame(a, col, f);
     attach_client_to_frame(f, c);
     arrange_column(col);
     if(a->page == selpage)

@@ -106,7 +106,7 @@ wmiir write /wm/default/handleinc $HANDLEINC
 
 wmiir write /wm/default/border 1
 wmiir write /wm/event/clientupdate \
-'text=`{wmiir read /wm/sel/layout/sel/frame/sel/client/sel/name} \
+'text=`{wmiir read /wm/sel/layout/sel/frame/sel/name} \
 wmiir write /bar/'^$clab^'/data $"text'
 wmiir write /wm/event/pageupdate \
 'wmiir write /bar/'^$plab^'/data `{wmiir read /wm/sel/name} &&' ^ \
@@ -143,8 +143,6 @@ kbind normal $MODKEY-S-f 'wmiir write /wm/sel/layout/sel/name float'
 kbind normal $MODKEY-Return 'wmiir write /wm/sel/layout/sel/ctl ''swap west'''
 kbind normal $MODKEY-S-Return 'wmiir write /wm/sel/layout/sel/ctl ''swap east'''
 kbind normal $MODKEY-C-y 'wmiir write /wm/ctl new'
-kbind normal $MODKEY-u 'wmiir write /wm/sel/layout/sel/frame/sel/locked 0'
-kbind normal $MODKEY-S-u 'wmiir write /wm/sel/layout/sel/frame/sel/locked 1'
 kbind normal $MODKEY-$WESTKEY 'wmiir write /wm/sel/layout/sel/ctl ''select west'''
 kbind normal $MODKEY-$EASTKEY 'wmiir write /wm/sel/layout/sel/ctl ''select east'''
 kbind normal $MODKEY-Tab 'wmiir write /wm/sel/layout/sel/ctl ''select next'''

@@ -13,19 +13,15 @@
 Client *
 alloc_client(Window w)
 {
-    static int id = 0;
-    char buf[MAX_BUF];
     XTextProperty name;
     Client *c = (Client *) cext_emallocz(sizeof(Client));
 
     c->win = w;
-    snprintf(buf, MAX_BUF, "/detached/client/%d", id);
-    c->file[C_PREFIX] = ixp_create(ixps, buf);
     XGetWMName(dpy, c->win, &name);
-    snprintf(buf, MAX_BUF, "/detached/client/%d/name", id);
-    c->file[C_NAME] = wmii_create_ixpfile(ixps, buf, (char *) name.value);
-    free(name.value);
-    id++;
+	if(name.value) {
+		strncpy(c->name, (char *)name.value, 256);
+    	free(name.value);
+	}
     return c;
 }
 
@@ -36,7 +32,6 @@ focus_client(Client * c)
     /* sel client */
     f = c->frame;
     f->sel = c;
-    f->file[F_SEL_CLIENT]->content = c->file[C_PREFIX]->content;
     XRaiseWindow(dpy, c->win);
     XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
     invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
@@ -167,13 +162,10 @@ handle_client_property(Client * c, XPropertyEvent * e)
     switch (e->atom) {
     case XA_WM_NAME:
         XGetWMName(dpy, c->win, &name);
-        if(strlen((char *) name.value)) {
-            if(c->file[C_NAME]->content)
-                free(c->file[C_NAME]->content);
-            c->file[C_NAME]->content = cext_estrdup((char *) name.value);
-            c->file[C_NAME]->size = strlen((char *) name.value);
-        }
-        free(name.value);
+        if(name.value) {
+			strncpy(c->name, (char*) name.value, 256);
+        	free(name.value);
+		}
         if(c->frame)
             draw_client(c);
         invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
@@ -194,7 +186,6 @@ void
 destroy_client(Client * c)
 {
     detach_detached(c);
-    ixp_remove_file(ixps, c->file[C_PREFIX]);
     free(c);
 }
 
@@ -222,7 +213,7 @@ draw_client(Client * client)
     if(i && (i == f->nclients - 1))
         d.rect.width = f->rect.width - d.rect.x;
     d.rect.height = tabh;
-    d.data = c->file[C_NAME]->content;
+    d.data = c->name;
     d.font = font;
 
     if((f == sel_frame()) && (c == f->sel)) {

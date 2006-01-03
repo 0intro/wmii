@@ -31,22 +31,13 @@ enum {
 /* array indexes of frame file pointers */
 enum {
     F_PREFIX,
-    F_CLIENT_PREFIX,
-    F_SEL_CLIENT,
+    F_NAME,
     F_CTL,
     F_GEOMETRY,
     F_BORDER,
     F_TAB,
     F_HANDLE_INC,
-    F_LOCKED,
     F_LAST
-};
-
-/* array indexes of client file pointers */
-enum {
-    C_PREFIX,
-    C_NAME,
-    C_LAST
 };
 
 /* array indexes of wm file pointers */
@@ -66,7 +57,6 @@ enum {
     WM_BORDER,
     WM_TAB,
     WM_HANDLE_INC,
-    WM_LOCKED,
     WM_SNAP_VALUE,
     WM_SEL_PAGE,
     WM_LAYOUT,
@@ -155,13 +145,13 @@ struct Client {
     int proto;
     unsigned int border;
     unsigned int ignore_unmap;
+	char name[256];
     Bool destroyed;
     Window win;
     Window trans;
     XRectangle rect;
     XSizeHints size;
     Frame *frame;
-    File *file[C_LAST];
     Client *next;
     Client *prev;
 };
