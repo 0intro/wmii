@@ -16,13 +16,13 @@ statically linked with those libraries.
     * libwmii       (convenience functions for wmii-tools)
     * cmd/wm/wmiiwm (core window manager)
     * cmd/wmiibar   (a generic bar)
-    * cmd/wmiimenu	(a generic keyboard-driven one-line menu)
+    * cmd/wmiimenu  (a generic keyboard-driven one-line menu)
     * cmd/wmiikeys  (shortcut handler)
     * cmd/wmiifs    (libixp fileserver multiplexer, obsolete)
     * cmd/wmiir     (remote interface client for obsolete libixp)
     * cmd/wmiir2    (remote interface client for libixp2)
 
-liblitz contains all drawing code beside some geometru code, which is used by
+liblitz contains all drawing code beside some geometry code, which is used by
 all tools. 
 
 2. Remote interface
