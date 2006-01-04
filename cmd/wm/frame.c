@@ -387,7 +387,7 @@ handle_before_read_frames(IXPServer * s, File * file, Area * a)
                 free(file->content);
 			if(f->sel && f->sel->name) {
 				file->content = cext_estrdup(f->sel->name);
-				file->size = strlen(buf);
+				file->size = strlen(f->sel->name);
 			}
 			else {
 				file->content = nil;

@@ -19,7 +19,7 @@ alloc_client(Window w)
     c->win = w;
     XGetWMName(dpy, c->win, &name);
 	if(name.value) {
-		strncpy(c->name, (char *)name.value, 256);
+		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
     	free(name.value);
 	}
     return c;
@@ -163,7 +163,7 @@ handle_client_property(Client * c, XPropertyEvent * e)
     case XA_WM_NAME:
         XGetWMName(dpy, c->win, &name);
         if(name.value) {
-			strncpy(c->name, (char*) name.value, 256);
+			cext_strlcpy(c->name, (char*) name.value, sizeof(c->name));
         	free(name.value);
 		}
         if(c->frame)
