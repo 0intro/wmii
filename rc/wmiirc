@@ -57,7 +57,7 @@ fn framesconf {
     for(frame in `{wmiir read $1 | grep '^[0-9]'}) {
     	wmiir write $1/$frame/tab $TAB
     	wmiir write $1/$frame/handleinc $HANDLEINC
-    	wmiir write $1/$frame/geometry +0,+0,+0,+0  # causes refresh
+    	wmiir write $1/$frame/geometry '+0 +0 +0 +0'  # causes refresh
 	}
 }
 
@@ -72,9 +72,9 @@ fn barsucks {
 
 wmiir write /bar/geometry $BAR_ALIGN
 if (~ $BAR_ALIGN south)
-    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk -F, ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+0,+0,-''^$val'
+    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk -F, ''{print $4}''} wmiir write /wm/default/area/geometry ''+0 +0 +0 -''^$val'
 if not
-    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk -F, ''{print $4}''} wmiir write /wm/default/area/geometry ''+0,+''^$val^'',+0,-''^$val'
+    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk -F, ''{print $4}''} wmiir write /wm/default/area/geometry ''+0 +''^$val^'' +0 -''^$val'
 
 
 wmiir write /bar/ctl reset
@@ -135,21 +135,21 @@ kbind bare $MODKEY-Escape 'kmode normal'
 
 kbind move Escape 'kmode normal'
 kbind move $MODKEY-C-r 'kmode resize'
-kbind move $NORTHKEY   'wmiir write /wm/sel/layout/sel/frame/sel/geometry -0,-30,-0,-0'
-kbind move $SOUTHKEY   'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,+30,+0,+0'
-kbind move $WESTKEY    'wmiir write /wm/sel/layout/sel/frame/sel/geometry -40,-0,-0,-0'
-kbind move $EASTKEY    'wmiir write /wm/sel/layout/sel/frame/sel/geometry +40,+0,+0,+0'
-kbind move S-$NORTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry -0,north,-0,-0'
-kbind move S-$SOUTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,south,+0,+0'
-kbind move S-$WESTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry west,-0,-0,-0'
-kbind move S-$EASTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry east,+0,+0,+0'
+kbind move $NORTHKEY   'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''-0 -30 -0 -0'''
+kbind move $SOUTHKEY   'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''+0 +30 +0 +0'''
+kbind move $WESTKEY    'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''-40 -0 -0 -0'''
+kbind move $EASTKEY    'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''+40 +0 +0 +0'''
+kbind move S-$NORTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''-0 north -0 -0'''
+kbind move S-$SOUTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''+0 south +0 +0'''
+kbind move S-$WESTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''west -0 -0 -0'''
+kbind move S-$EASTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''east +0 +0 +0'''
 
 kbind resize Escape 'kmode normal'
 kbind resize $MODKEY-C-m 'kmode move'
-kbind resize $NORTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+0,-30'
-kbind resize $SOUTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+0,+30'
-kbind resize $WESTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,-40,+0'
-kbind resize $EASTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry +0,+0,+40,+0'
+kbind resize $NORTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''+0 +0 +0 -30'''
+kbind resize $SOUTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''+0 +0 +0 +30'''
+kbind resize $WESTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''+0 +0 -40 +0'''
+kbind resize $EASTKEY  'wmiir write /wm/sel/layout/sel/frame/sel/geometry ''+0 +0 +40 +0'''
 
 kbind normal $MODKEY-C-b 'kmode bare'
 kbind normal $MODKEY-C-m 'kmode move'

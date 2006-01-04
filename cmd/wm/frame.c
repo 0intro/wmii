@@ -425,7 +425,7 @@ handle_after_write_frames(IXPServer * s, File * file, Area * a)
             return f;
         } else if(file == f->file[F_GEOMETRY]) {
             char *geom = f->file[F_GEOMETRY]->content;
-            if(geom && strrchr(geom, ',')) {
+            if(geom && strrchr(geom, ' ')) {
                 XRectangle frect = f->rect;
                 blitz_strtorect(&rect, &frect, geom);
                 resize_frame(f, &frect, 0);

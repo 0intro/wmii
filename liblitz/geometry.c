@@ -62,11 +62,11 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 	x = y = w = h = 0;
 	cext_strlcpy(buf, val, sizeof(buf));
 
-	x = strtok_r(buf, ",", &p);
+	x = strtok_r(buf, " ", &p);
 	if (x) {
-		y = strtok_r(0, ",", &p);
+		y = strtok_r(0, " ", &p);
 		if (y) {
-			w = strtok_r(0, ",", &p);
+			w = strtok_r(0, " ", &p);
 			if (w) {
 				h = strtok_r(0, "", &p);
 			}

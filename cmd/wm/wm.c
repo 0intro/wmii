@@ -366,7 +366,7 @@ draw_detached_clients()
 static void
 reserve_area(void *obj, char *arg)
 {
-    if(arg && strrchr(arg, ',')) {
+    if(arg && strrchr(arg, ' ')) {
         XRectangle r;
         blitz_strtorect(&rect, &r, arg);
     }
@@ -643,7 +643,7 @@ handle_after_write(IXPServer * s, File * f)
         font = blitz_getfont(dpy, def[WM_FONT]->content);
     } else if(f == def[WM_AREA_GEOMETRY]) {
         char *geom = def[WM_AREA_GEOMETRY]->content;
-        if(geom && strrchr(geom, ',')) {
+        if(geom && strrchr(geom, ' ')) {
             area_rect = rect;
             blitz_strtorect(&rect, &area_rect, geom);
             update_pages();
