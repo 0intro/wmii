@@ -421,18 +421,19 @@ focus_col(Frame * f, Bool raise)
 {
     Area *a = f->area;
     Acme *acme = a->aux;
-    Cell *old, *cell = f->aux;
-    Column *col = cell->col;
+	Frame *old = sel_col(a);
+	Cell *cell = f->aux;
 
-    old = col->sel;
-    acme->sel = col;
-    col->sel = cell;
+    if(old == f)
+		return;
+
+    acme->sel = cell->col;
+	cell->col->sel = cell;
     focus_client(f->sel);
     a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
     if(raise)
         center_pointer(f);
-    if(old && old != cell)
-        draw_frame(old->frame);
+    draw_frame(old);
     draw_frame(f);
 }
 
