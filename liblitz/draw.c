@@ -77,7 +77,7 @@ static void _draw_border(Display * dpy, Draw * d)
 
 static void draw_text(Display * dpy, Draw * d)
 {
-	unsigned int x, y, w, h, shortened = FALSE;
+	unsigned int x, y, w, h, shortened = 0;
 	size_t len = 0;
 	static char text[2048];
 
@@ -94,7 +94,7 @@ static void draw_text(Display * dpy, Draw * d)
 	while (len && (w = XTextWidth(d->font, text, len)) > d->rect.width) {
 		text[len - 1] = 0;
 		len--;
-		shortened = TRUE;
+		shortened = 1;
 	}
 
 	if (w > d->rect.width)

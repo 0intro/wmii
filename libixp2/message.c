@@ -3,9 +3,13 @@
  * See LICENSE file for license details.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "ixp.h"
+
+#define IXP_QIDSZ (sizeof(unsigned char) + sizeof(unsigned int)\
+                	+ sizeof(unsigned long long))
 
 static unsigned short
 sizeof_string(const char *s)
@@ -16,7 +20,7 @@ sizeof_string(const char *s)
 unsigned short
 ixp_sizeof_stat(Stat * stat)
 {
-    return sizeof(Qid)
+    return IXP_QIDSZ
         + 2 * sizeof(unsigned short)
         + 4 * sizeof(unsigned int)
         + sizeof(unsigned long long)
@@ -46,7 +50,7 @@ ixp_fcall_to_msg(Fcall * fcall, void *msg, unsigned int msglen)
         break;
     case RAUTH:
     case RATTACH:
-        msize += sizeof(Qid);
+        msize += IXP_QIDSZ;
         break;
     case TATTACH:
         msize +=
@@ -71,14 +75,14 @@ ixp_fcall_to_msg(Fcall * fcall, void *msg, unsigned int msglen)
         msize += sizeof(unsigned short);
         break;
     case RWALK:
-        msize += sizeof(unsigned short) + fcall->nwqid * sizeof(Qid);
+        msize += sizeof(unsigned short) + fcall->nwqid * IXP_QIDSZ;
         break;
     case TOPEN:
         msize += sizeof(unsigned int) + sizeof(unsigned char);
         break;
     case ROPEN:
     case RCREATE:
-        msize += sizeof(Qid) + sizeof(unsigned int);
+        msize += IXP_QIDSZ + sizeof(unsigned int);
         break;
     case TCREATE:
         msize +=
@@ -197,7 +201,10 @@ ixp_fcall_to_msg(Fcall * fcall, void *msg, unsigned int msglen)
         p = ixp_enc_stat(p, &fcall->stat);
         break;
     }
-    return msize;
+
+	if(msg + msize == p)
+    	return msize;
+	return 0;
 }
 
 unsigned int
@@ -244,8 +251,10 @@ ixp_msg_to_fcall(void *msg, unsigned int msglen, Fcall * fcall)
         p = ixp_dec_u32(p, &fcall->fid);
         p = ixp_dec_u32(p, &fcall->newfid);
         p = ixp_dec_u16(p, &fcall->nwname);
-        for(i = 0; i < fcall->nwname; i++)
+        for(i = 0; i < fcall->nwname; i++) {
+
             p = ixp_dec_string(p, fcall->wname[i], IXP_MAX_FLEN, &len);
+		}
         break;
     case RWALK:
         p = ixp_dec_u16(p, &fcall->nwqid);
@@ -299,5 +308,7 @@ ixp_msg_to_fcall(void *msg, unsigned int msglen, Fcall * fcall)
         break;
     }
 
-    return msize;
+	if(msg + msize == p)
+    	return msize;
+	return 0;
 }

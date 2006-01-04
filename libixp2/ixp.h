@@ -5,12 +5,6 @@
 
 #include <sys/types.h>
 
-#ifndef FALSE
-#define FALSE 0
-#endif
-#ifndef TRUE
-#define TRUE 1
-#endif
 #ifndef nil
 #define nil 0
 #endif
@@ -176,7 +170,7 @@ typedef struct {
     unsigned char mode;         /* Tcreate, Topen */
     unsigned int newfid;        /* Twalk */
     unsigned short nwname;      /* Twalk */
-    char *wname[IXP_MAX_WELEM]; /* Twalk */
+    char wname[IXP_MAX_WELEM][IXP_MAX_FLEN]; /* Twalk */
     unsigned short nwqid;       /* Rwalk */
     Qid wqid[IXP_MAX_WELEM];    /* Rwalk */
     unsigned long long offset;  /* Tread, Twrite */
@@ -229,12 +223,12 @@ int ixp_client_create(IXPClient * c, unsigned int dirfid, char *name,
 int ixp_client_walk(IXPClient * c, unsigned int newfid, char *filepath);
 int ixp_client_open(IXPClient * c, unsigned int newfid, char *filepath,
                     unsigned char mode);
-unsigned int ixp_client_read(IXPClient * c, unsigned int fid,
-                             unsigned long long offset, void *result,
-                             unsigned int res_len);
-unsigned int ixp_client_write(IXPClient * c, unsigned int fid,
-                              unsigned long long offset,
-                              unsigned int count, unsigned char *data);
+int ixp_client_read(IXPClient * c, unsigned int fid,
+                    unsigned long long offset, void *result,
+                    unsigned int res_len);
+int ixp_client_write(IXPClient * c, unsigned int fid,
+                     unsigned long long offset,
+                     unsigned int count, unsigned char *data);
 int ixp_client_close(IXPClient * c, unsigned int fid);
 
 /* convert.c */

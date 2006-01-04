@@ -234,7 +234,7 @@ attach(IXPServer * s, IXPConn * c)
     new->fid = s->fcall.fid;
     s->fcall.id = RATTACH;
     s->fcall.qid = root_qid;
-    return TRUE;
+    return 0;
 }
 
 static int
@@ -247,12 +247,12 @@ walk(IXPServer * s, IXPConn * c)
     fprintf(stderr, "%s", "walking\n");
     if(!(map = fid_to_map(c->aux, s->fcall.fid))) {
         s->errstr = "no directory associated with fid";
-        return FALSE;
+        return -1;
     }
     if(s->fcall.fid != s->fcall.newfid
        && (fid_to_map(c->aux, s->fcall.newfid))) {
         s->errstr = "fid alreay in use";
-        return FALSE;
+        return -1;
     }
     if(s->fcall.nwname) {
         qid = map->qid;
@@ -262,7 +262,7 @@ walk(IXPServer * s, IXPConn * c)
             qid = s->fcall.wqid[nwqid];
         if(!nwqid) {
             s->errstr = "file not found";
-            return FALSE;
+            return -1;
         }
     }
     /*
@@ -291,7 +291,7 @@ walk(IXPServer * s, IXPConn * c)
     }
     s->fcall.id = RWALK;
     s->fcall.nwqid = nwqid;
-    return TRUE;
+    return 0;
 }
 
 static int
@@ -302,17 +302,17 @@ _open(IXPServer * s, IXPConn * c)
     fprintf(stderr, "%s", "opening\n");
     if(!map) {
         s->errstr = "invalid fid";
-        return FALSE;
+        return -1;
     }
     if((s->fcall.mode != IXP_OREAD) && (s->fcall.mode != IXP_OWRITE)) {
         s->errstr = "mode not supported";
-        return FALSE;
+        return -1;
     }
     s->fcall.id = ROPEN;
     s->fcall.qid = map->qid;
     s->fcall.iounit =
         s->fcall.maxmsg - (sizeof(unsigned char) + sizeof(unsigned short) + 2 * sizeof(unsigned int));
-    return TRUE;
+    return 0;
 }
 
 static int
@@ -325,7 +325,7 @@ _read(IXPServer * s, IXPConn * c)
     fprintf(stderr, "%s", "reading\n");
     if(!map) {
         s->errstr = "invalid fid";
-        return FALSE;
+        return -1;
     }
     stat.mode = 0xff;
     stat.atime = stat.mtime = time(0);
@@ -337,6 +337,7 @@ _read(IXPServer * s, IXPConn * c)
     switch (qpath_type(map->qid.path)) {
     default:
     case Droot:
+		s->fcall.count = 0;
         p = s->fcall.data;
         cext_strlcpy(stat.name, "display", sizeof(stat.name));
         stat.length = strlen(align);
@@ -357,7 +358,8 @@ _read(IXPServer * s, IXPConn * c)
         s->fcall.count += stat.size;
         p = ixp_enc_stat(p, &stat);
         s->fcall.id = RREAD;
-        fprintf(stderr, "%d msize\n", s->fcall.count);
+		if(s->fcall.offset >= s->fcall.count)
+			s->fcall.count = 0; /* EOF */
         break;
     case Ditem:
         break;
@@ -375,14 +377,13 @@ _read(IXPServer * s, IXPConn * c)
         break;
     }
 
-    return TRUE;
+    return 0;
 }
 
 static int
 _write(IXPServer * s, IXPConn * c)
 {
-
-    return FALSE;
+    return -1;
 }
 
 static int
@@ -393,7 +394,7 @@ clunk(IXPServer * s, IXPConn * c)
 
     if(!map) {
         s->errstr = "invalid fid";
-        return FALSE;
+        return -1;
     }
     if(maps == map)
         maps = maps->next;
@@ -403,7 +404,7 @@ clunk(IXPServer * s, IXPConn * c)
     }
     free(map);
     s->fcall.id = RCLUNK;
-    return TRUE;
+    return 0;
 }
 
 static void
@@ -462,7 +463,7 @@ main(int argc, char *argv[])
     XSetErrorHandler(dummy_error_handler);
     screen_num = DefaultScreen(dpy);
 
-    if(!ixp_server_init(&srv, sockfile, funcs, freeconn)) {
+    if(ixp_server_init(&srv, sockfile, funcs, freeconn) == -1) {
         fprintf(stderr, "wmiibar: fatal: %s\n", srv.errstr);
         exit(1);
     }

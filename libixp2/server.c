@@ -104,7 +104,7 @@ server_client_read(IXPServer * s, IXPConn * c)
     if((msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, &s->fcall))) {
         for(i = 0; s->funcs && s->funcs[i].id; i++) {
             if(s->funcs[i].id == s->fcall.id) {
-                if(!s->funcs[i].tfunc(s, c))
+                if(s->funcs[i].tfunc(s, c) == -1)
                     break;
                 msize = ixp_fcall_to_msg(&s->fcall, msg, s->fcall.maxmsg);
                 fprintf(stderr, "msize=%d\n", msize);
@@ -115,6 +115,7 @@ server_client_read(IXPServer * s, IXPConn * c)
             }
         }
     }
+	fprintf(stderr, "function id=%d\n", s->fcall.id);
     if(!s->errstr)
         s->errstr = "function not supported";
     s->fcall.id = RERROR;
@@ -137,7 +138,7 @@ void
 ixp_server_loop(IXPServer * s)
 {
     int r;
-    s->running = TRUE;
+    s->running = 1;
     s->errstr = 0;
 
     /* main loop */
@@ -163,11 +164,11 @@ ixp_server_tversion(IXPServer * s, IXPConn * c)
             IXP_VERSION, s->fcall.maxmsg, IXP_MAX_MSG);
     if(strncmp(s->fcall.version, IXP_VERSION, strlen(IXP_VERSION))) {
         s->errstr = "9P versions differ";
-        return FALSE;
+        return -1;
     } else if(s->fcall.maxmsg > IXP_MAX_MSG)
         s->fcall.maxmsg = IXP_MAX_MSG;
     s->fcall.id = RVERSION;
-    return TRUE;
+    return 0;
 }
 
 int
@@ -180,14 +181,14 @@ ixp_server_init(IXPServer * s, char *sockfile, IXPTFunc * funcs,
     s->errstr = 0;
     if(!sockfile) {
         s->errstr = "no socket file provided or invalid directory";
-        return FALSE;
+        return -1;
     }
     if((fd = ixp_create_sock(sockfile, &s->errstr)) < 0)
-        return FALSE;
+        return -1;
     for(i = 0; i < IXP_MAX_CONN; i++)
         s->conn[i] = zero_conn;
     ixp_server_add_conn(s, fd, 0, server_read);
-    return TRUE;
+    return 0;
 }
 
 void

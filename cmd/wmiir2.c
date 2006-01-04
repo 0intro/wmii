@@ -50,7 +50,7 @@ usage()
     exit(1);
 }
 
-static unsigned int
+static int
 write_data(unsigned int fid, unsigned char *data, unsigned int count)
 {
     unsigned int len, i, runs = count / c.fcall.iounit;
@@ -64,7 +64,7 @@ write_data(unsigned int fid, unsigned char *data, unsigned int count)
            (&c, fid, i * c.fcall.iounit, len,
             &data[i * c.fcall.iounit]) != count) {
             fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr);
-            return 0;
+            return -1;
         }
     }
     return count;
@@ -79,19 +79,19 @@ xcreate(char **argv)
     fid = c.root_fid << 2;
     /* walk to bottom-most directory */
     *p = 0;
-    if(!ixp_client_walk(&c, fid, argv[0])) {
+    if(ixp_client_walk(&c, fid, argv[0]) == -1) {
         fprintf(stderr, "wmiir: cannot walk to %s: %s\n", argv[0],
                 c.errstr);
-        return 1;
+        return -1;
     }
     /* create */
     p++;
-    if(!ixp_client_create(&c, fid, p, (unsigned int) 0xff, IXP_OWRITE)) {
+    if(ixp_client_create(&c, fid, p, (unsigned int) 0xff, IXP_OWRITE) == -1) {
         fprintf(stderr, "wmiir: cannot create file: %s\n", c.errstr);
-        return 1;
+        return -1;
     }
     write_data(fid, (unsigned char *) argv[1], strlen(argv[1]));
-    return !ixp_client_close(&c, fid);
+    return ixp_client_close(&c, fid);
 }
 
 static int
@@ -99,12 +99,12 @@ xwrite(char **argv)
 {
     /* open */
     unsigned int fid = c.root_fid << 2;
-    if(!ixp_client_open(&c, fid, argv[0], IXP_OWRITE)) {
+    if(ixp_client_open(&c, fid, argv[0], IXP_OWRITE) == -1) {
         fprintf(stderr, "wmiir: cannot open file: %s\n", c.errstr);
-        return 1;
+        return -1;
     }
     write_data(fid, (unsigned char *) argv[1], strlen(argv[1]));
-    return !ixp_client_close(&c, fid);
+    return ixp_client_close(&c, fid);
 }
 
 static void
@@ -128,32 +128,30 @@ print_directory(void *result, unsigned int msize)
 static int
 xread(char **argv)
 {
-    unsigned int count, fid = c.root_fid << 2;
-    int is_directory = FALSE;
+    unsigned int fid = c.root_fid << 2;
+    int count, is_directory = 0;
     static unsigned char result[IXP_MAX_MSG];
 
     /* open */
-    if(!ixp_client_open(&c, fid, argv[0], IXP_OREAD)) {
+    if(ixp_client_open(&c, fid, argv[0], IXP_OREAD) == -1) {
         fprintf(stderr, "wmiir: cannot open file '%s': %s\n", argv[0], c.errstr);
-        return 1;
+        return -1;
     }
     is_directory = !c.fcall.nwqid || (c.fcall.qid.type == IXP_QTDIR);
     /* read */
-    if(!(count = ixp_client_read(&c, fid, 0, result, IXP_MAX_MSG))
-       && c.errstr) {
+	count = ixp_client_read(&c, fid, 0, result, IXP_MAX_MSG);
+    if(count == -1) {
         fprintf(stderr, "wmiir: cannot read file: %s\n", c.errstr);
-        return 1;
+        return -1;
     }
-    if(count) {
-        if(is_directory)
-            print_directory(result, count);
-        else {
-            unsigned int i;
-            for(i = 0; i < count; i++)
-                putchar(result[i]);
-        }
-    }
-    return !ixp_client_close(&c, fid);
+	if(is_directory)
+		print_directory(result, count);
+	else {
+		unsigned int i;
+		for(i = 0; i < count; i++)
+			putchar(result[i]);
+	}
+    return ixp_client_close(&c, fid);
 }
 
 static int
@@ -163,9 +161,9 @@ xremove(char **argv)
 
     /* remove */
     fid = c.root_fid << 2;
-    if(!ixp_client_remove(&c, fid, argv[0])) {
+    if(ixp_client_remove(&c, fid, argv[0]) == -1) {
         fprintf(stderr, "wmiir: cannot remove file: %s\n", c.errstr);
-        return 1;
+        return -1;
     }
     return 0;
 }
@@ -182,7 +180,7 @@ perform_cmd(int argc, char **argv)
                 usage();
         }
     /* bogus command */
-    return 1;
+    return -1;
 }
 
 int
@@ -219,7 +217,7 @@ main(int argc, char *argv[])
         usage();
     }
     /* open socket */
-    if(!ixp_client_init(&c, sockfile)) {
+    if(ixp_client_init(&c, sockfile) == -1) {
         fprintf(stderr, "wmiir: %s\n", c.errstr);
         exit(1);
     }

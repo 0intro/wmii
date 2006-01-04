@@ -36,8 +36,8 @@ static int strtoalign(Align * result, char *val)
 	else if (!strncmp(val, "center", 6))
 		*result = CENTER;
 	else
-		return FALSE;
-	return TRUE;
+		return -1;
+	return 0;
 }
 
 /**
@@ -53,7 +53,7 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 	int rx, ry, rw, rh, sx, sy, sw, sh;
 
 	if (!val)
-		return FALSE;
+		return -1;
 	rx = r->x;
 	ry = r->y;
 	rw = r->width;
@@ -193,7 +193,7 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 	r->y = ry;
 	r->width = rw;
 	r->height = rh;
-	return TRUE;
+	return 0;
 }
 
 Bool blitz_ispointinrect(int x, int y, XRectangle * r)
