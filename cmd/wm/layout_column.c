@@ -427,7 +427,7 @@ focus_col(Frame * f, Bool raise)
     old = col->sel;
     acme->sel = col;
     col->sel = cell;
-    sel_client(f->sel);
+    focus_client(f->sel);
     a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
     if(raise)
         center_pointer(f);
