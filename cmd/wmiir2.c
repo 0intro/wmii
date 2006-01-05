@@ -6,28 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "../libixp2/ixp.h"
 
 #include <cext.h>
 
-typedef struct {
-    char *name;
-    int (*cmd) (char **argv);
-    int min_argc;
-} Command;
-
-static int xcreate(char **argv);
-static int xread(char **argv);
-static int xwrite(char **argv);
-static int xremove(char **argv);
-static Command cmds[] = {
-    {"create", xcreate, 2},
-    {"read", xread, 1},
-    {"write", xwrite, 2},
-    {"remove", xremove, 1},
-    {0, 0}
-};
 static IXPClient c = { 0 };
 
 static char *version[] = {
@@ -39,76 +23,74 @@ static void
 usage()
 {
     fprintf(stderr, "%s",
-            "usage: wmiir [-a <server address>] [-v]\n"
+            "usage: wmiir [-a <server address>] [-v] <command>\n"
             "      -a    server address (default: $WMIIR_SOCKET)\n"
             "      -v    version info\n"
-            "commands read from stdin:\n"
-            "      create <file> <content>   -- creates file\n"
-            "      read   <file/directory>   -- reads file/directory contents\n"
-            "      write  <file> <content>   -- writes content to a file\n"
-            "      remove <file/directory>   -- removes file\n");
+            "valid commands:\n"
+            "      create <file>      -- creates file and writes data from stdin to file\n"
+            "      read   <file/dir>  -- prints file/directory contents\n"
+            "      write  <file>      -- writes data from stdin to file\n"
+            "      remove <file>      -- removes file\n");
     exit(1);
 }
 
-static int
-write_data(unsigned int fid, unsigned char *data, unsigned int count)
+static void
+write_data(unsigned int fid)
 {
-    unsigned int len, i, runs = count / c.fcall.iounit;
+	void *data = cext_emallocz(c.fcall.iounit);
+	unsigned long long offset = 0;
+	size_t len = 0;
 
-    for(i = 0; i <= runs; i++) {
-        /* write */
-        len = count - (i * c.fcall.iounit);
-        if(len > c.fcall.iounit)
-            len = c.fcall.iounit;
+	while((len = read(0, data, c.fcall.iounit)) > 0) {
         if(ixp_client_write
-           (&c, fid, i * c.fcall.iounit, len,
-            &data[i * c.fcall.iounit]) != count) {
+           (&c, fid, offset, len, data) != len) {
             fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr);
-            return -1;
+            break;
         }
+		offset += len;
     }
-    return count;
+	free(data);
 }
 
 static int
-xcreate(char **argv)
+xcreate(char *file)
 {
     unsigned int fid;
-    char *p = strrchr(argv[0], '/');
+    char *p = strrchr(file, '/');
 
     fid = c.root_fid << 2;
     /* walk to bottom-most directory */
     *p = 0;
-    if(ixp_client_walk(&c, fid, argv[0]) == -1) {
-        fprintf(stderr, "wmiir: cannot walk to %s: %s\n", argv[0],
-                c.errstr);
+    if(ixp_client_walk(&c, fid, file) == -1) {
+        fprintf(stderr, "wmiir: cannot walk to '%s': %s\n", file, c.errstr);
         return -1;
     }
     /* create */
     p++;
     if(ixp_client_create(&c, fid, p, (unsigned int) 0xff, IXP_OWRITE) == -1) {
-        fprintf(stderr, "wmiir: cannot create file: %s\n", c.errstr);
+        fprintf(stderr, "wmiir: cannot create file '%s': %s\n", file, c.errstr);
         return -1;
     }
-    write_data(fid, (unsigned char *) argv[1], strlen(argv[1]));
+    write_data(fid);
     return ixp_client_close(&c, fid);
 }
 
 static int
-xwrite(char **argv)
+xwrite(char *file)
 {
+	
     /* open */
     unsigned int fid = c.root_fid << 2;
-    if(ixp_client_open(&c, fid, argv[0], IXP_OWRITE) == -1) {
-        fprintf(stderr, "wmiir: cannot open file: %s\n", c.errstr);
+    if(ixp_client_open(&c, fid, file, IXP_OWRITE) == -1) {
+        fprintf(stderr, "wmiir: cannot open file '%s': %s\n", file, c.errstr);
         return -1;
     }
-    write_data(fid, (unsigned char *) argv[1], strlen(argv[1]));
+    write_data(fid);
     return ixp_client_close(&c, fid);
 }
 
 static void
-print_directory(void *result, unsigned int msize)
+print_dir(void *result, unsigned int msize)
 {
     void *p = result;
     static Stat stat, zerostat = { 0 };
@@ -126,92 +108,82 @@ print_directory(void *result, unsigned int msize)
 }
 
 static int
-xread(char **argv)
+xread(char *file)
 {
     unsigned int fid = c.root_fid << 2;
     int count, is_directory = 0;
     static unsigned char result[IXP_MAX_MSG];
+	unsigned long long offset = 0;
 
     /* open */
-    if(ixp_client_open(&c, fid, argv[0], IXP_OREAD) == -1) {
-        fprintf(stderr, "wmiir: cannot open file '%s': %s\n", argv[0], c.errstr);
+    if(ixp_client_open(&c, fid, file, IXP_OREAD) == -1) {
+        fprintf(stderr, "wmiir: cannot open file '%s': %s\n", file, c.errstr);
         return -1;
     }
     is_directory = !c.fcall.nwqid || (c.fcall.qid.type == IXP_QTDIR);
+
     /* read */
-	count = ixp_client_read(&c, fid, 0, result, IXP_MAX_MSG);
+	while((count = ixp_client_read(&c, fid, offset, result, IXP_MAX_MSG)) > 0) {
+		if(is_directory)
+			print_dir(result, count);
+		else {
+			unsigned int i;
+			for(i = 0; i < count; i++)
+				putchar(result[i]);
+		}
+		offset += count;
+	}
     if(count == -1) {
-        fprintf(stderr, "wmiir: cannot read file: %s\n", c.errstr);
+        fprintf(stderr, "wmiir: cannot read file/directory '%s': %s\n", file, c.errstr);
         return -1;
     }
-	if(is_directory)
-		print_directory(result, count);
-	else {
-		unsigned int i;
-		for(i = 0; i < count; i++)
-			putchar(result[i]);
-	}
     return ixp_client_close(&c, fid);
 }
 
 static int
-xremove(char **argv)
+xremove(char *file)
 {
     unsigned int fid;
 
     /* remove */
     fid = c.root_fid << 2;
-    if(ixp_client_remove(&c, fid, argv[0]) == -1) {
-        fprintf(stderr, "wmiir: cannot remove file: %s\n", c.errstr);
+    if(ixp_client_remove(&c, fid, file) == -1) {
+        fprintf(stderr, "wmiir: cannot remove file '%s': %s\n", file, c.errstr);
         return -1;
     }
     return 0;
 }
 
-static int
-perform_cmd(int argc, char **argv)
-{
-    int i;
-    for(i = 0; cmds[i].name; i++)
-        if(!strncmp(cmds[i].name, argv[0], strlen(cmds[i].name))) {
-            if(cmds[i].min_argc <= argc)
-                return cmds[i].cmd(&argv[1]);
-            else
-                usage();
-        }
-    /* bogus command */
-    return -1;
-}
-
 int
 main(int argc, char *argv[])
 {
-    int i = 0, ret;
-    char line[4096];
-    char *sockfile = getenv("WMIIR_SOCKET");
-    char *stdin_argv[3];
-    int stdin_argc;
+    int i = 0;
+    char *cmd, *file, *sockfile = getenv("WMIIR_SOCKET");
 
     /* command line args */
-    if(argc > 1) {
-        for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
-            switch (argv[i][1]) {
-            case 'v':
-                fprintf(stderr, "%s", version[0]);
-                exit(0);
-                break;
-            case 'a':
-                if(i + 1 < argc)
-                    sockfile = argv[++i];
-                else
-                    usage();
-                break;
-            default:
-                usage();
-                break;
-            }
-        }
-    }
+	if(argc < 2)
+		usage();
+
+	for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
+		switch (argv[i][1]) {
+			case 'v':
+				fprintf(stderr, "%s", version[0]);
+				exit(0);
+				break;
+			case 'a':
+				if(i + 1 < argc)
+					sockfile = argv[++i];
+				else
+					usage();
+				break;
+			default:
+				usage();
+				break;
+		}
+	}
+	cmd = argv[argc - 2];
+	file = argv[argc - 1];
+
     if(!sockfile) {
         fprintf(stderr, "%s", "wmiir: error: WMIIR_SOCKET environment not set\n");
         usage();
@@ -221,18 +193,20 @@ main(int argc, char *argv[])
         fprintf(stderr, "wmiir: %s\n", c.errstr);
         exit(1);
     }
-    /* wether perform directly or read from stdin */
-    while(fgets(line, 4096, stdin)) {
-		if (line[strlen(line) - 1] == '\n')
-			line[strlen(line) - 1] = 0;
-        if((stdin_argc = cext_tokenize(stdin_argv, 3, line, ' '))) {
-            if((ret = perform_cmd(stdin_argc, stdin_argv)))
-                break;
-        }
-	}
+
+	if(!strncmp(cmd, "create", 7))
+		xcreate(file);
+	else if(!strncmp(cmd, "write", 6))
+		xwrite(file);
+	else if(!strncmp(cmd, "read", 5))
+		xread(file);
+	else if(!strncmp(cmd, "remove", 7))
+		xremove(file);
+	else
+		usage();
 
     /* close socket */
     ixp_client_deinit(&c);
 
-    return ret;
+    return 0;
 }

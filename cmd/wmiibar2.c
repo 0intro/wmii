@@ -225,7 +225,7 @@ attach(IXPServer * s, IXPConn * c)
     if(!maps)
         c->aux = new;
     else {
-        for(m = maps; m && m->next; m = m->next);
+        for(m = maps; m && m->next; m = m->next); 
         m->next = new;
     }
     fprintf(stderr, "attaching %u %u %s %s\n", s->fcall.fid, s->fcall.afid,
@@ -417,6 +417,7 @@ freeconn(IXPServer * s, IXPConn * c)
         free(m);
     }
     c->aux = nil;
+	printf("freecon\n");
 }
 
 static IXPTFunc funcs[] = {

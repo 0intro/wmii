@@ -102,6 +102,8 @@ ixp_client_create(IXPClient * c, unsigned int dirfid, char *name,
 int
 ixp_client_walk(IXPClient * c, unsigned int newfid, char *filepath)
 {
+	unsigned int i;
+	char *wname[IXP_MAX_WELEM];
     /* walk */
     c->fcall.id = TWALK;
     c->fcall.fid = c->root_fid;
@@ -109,8 +111,9 @@ ixp_client_walk(IXPClient * c, unsigned int newfid, char *filepath)
     if(filepath) {
         cext_strlcpy(c->fcall.name, filepath, sizeof(c->fcall.name));
         c->fcall.nwname =
-            cext_tokenize((char **) c->fcall.wname, IXP_MAX_WELEM,
-                          c->fcall.name, '/');
+            cext_tokenize(wname, IXP_MAX_WELEM, c->fcall.name, '/');
+		for(i = 0; i < c->fcall.nwname; i++)
+			cext_strlcpy(c->fcall.wname[i], wname[i], sizeof(c->fcall.wname[i]));
     }
     return do_fcall(c);
 }
