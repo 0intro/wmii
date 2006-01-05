@@ -21,7 +21,7 @@ unsigned short
 ixp_sizeof_stat(Stat * stat)
 {
     return IXP_QIDSZ
-        + 2 * sizeof(unsigned short)
+        + sizeof(unsigned short)
         + 4 * sizeof(unsigned int)
         + sizeof(unsigned long long)
         + sizeof_string(stat->name)
@@ -101,10 +101,10 @@ ixp_fcall_to_msg(Fcall * fcall, void *msg, unsigned int msglen)
             fcall->count;
         break;
     case RSTAT:
-        msize += ixp_sizeof_stat(&fcall->stat);
+        msize += sizeof(unsigned short) + ixp_sizeof_stat(&fcall->stat);
         break;
     case TWSTAT:
-        msize += sizeof(unsigned int) + ixp_sizeof_stat(&fcall->stat);
+        msize += sizeof(unsigned int) + sizeof(unsigned short) + ixp_sizeof_stat(&fcall->stat);
         break;
     default:
         break;

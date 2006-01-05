@@ -217,7 +217,7 @@ make_qid(Qid * dir, char *wname, Qid * new)
 }
 
 static int
-attach(IXPServer * s, IXPConn * c)
+xattach(IXPServer * s, IXPConn * c)
 {
     Map *maps = c->aux;
     Map *m, *new = cext_emallocz(sizeof(Map));
@@ -238,7 +238,7 @@ attach(IXPServer * s, IXPConn * c)
 }
 
 static int
-walk(IXPServer * s, IXPConn * c)
+xwalk(IXPServer * s, IXPConn * c)
 {
     unsigned short nwqid = 0;
     Qid qid;
@@ -295,7 +295,7 @@ walk(IXPServer * s, IXPConn * c)
 }
 
 static int
-_open(IXPServer * s, IXPConn * c)
+xopen(IXPServer * s, IXPConn * c)
 {
     Map *map = fid_to_map(c->aux, s->fcall.fid);
 
@@ -316,7 +316,7 @@ _open(IXPServer * s, IXPConn * c)
 }
 
 static int
-_read(IXPServer * s, IXPConn * c)
+xread(IXPServer * s, IXPConn * c)
 {
     Map *map = fid_to_map(c->aux, s->fcall.fid);
     Stat stat = { 0 };
@@ -342,20 +342,17 @@ _read(IXPServer * s, IXPConn * c)
         cext_strlcpy(stat.name, "display", sizeof(stat.name));
         stat.length = strlen(align);
         make_qid(&root_qid, "display", &stat.qid);
-        stat.size = ixp_sizeof_stat(&stat);
-        s->fcall.count = stat.size;
+        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
         p = ixp_enc_stat(p, &stat);
         cext_strlcpy(stat.name, "font", sizeof(stat.name));
         stat.length = strlen(font);
         make_qid(&root_qid, "font", &stat.qid);
-        stat.size = ixp_sizeof_stat(&stat);;
-        s->fcall.count += stat.size;
+        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
         p = ixp_enc_stat(p, &stat);
         cext_strlcpy(stat.name, "new", sizeof(stat.name));
         stat.length = 0;
         make_qid(&root_qid, "new", &stat.qid);
-        stat.size = ixp_sizeof_stat(&stat);;
-        s->fcall.count += stat.size;
+        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
         p = ixp_enc_stat(p, &stat);
         s->fcall.id = RREAD;
 		if(s->fcall.offset >= s->fcall.count)
@@ -381,13 +378,58 @@ _read(IXPServer * s, IXPConn * c)
 }
 
 static int
-_write(IXPServer * s, IXPConn * c)
+xstat(IXPServer * s, IXPConn * c)
+{
+    Map *map = fid_to_map(c->aux, s->fcall.fid);
+
+    fprintf(stderr, "%s", "stating\n");
+    if(!map) {
+        s->errstr = "invalid fid";
+        return -1;
+    }
+    s->fcall.id = RSTAT;
+	s->fcall.stat.mode = 0xff;
+    s->fcall.stat.atime = s->fcall.stat.mtime = time(0);
+    cext_strlcpy(s->fcall.stat.uid, getenv("USER"), sizeof(s->fcall.stat.uid));
+    cext_strlcpy(s->fcall.stat.gid, getenv("USER"), sizeof(s->fcall.stat.gid));
+    cext_strlcpy(s->fcall.stat.muid, getenv("USER"), sizeof(s->fcall.stat.muid));
+
+    fprintf(stderr, "%d\n", qpath_item(map->qid.path));
+    switch (qpath_type(map->qid.path)) {
+    default:
+    case Droot:
+		s->fcall.stat.name[0] = '/';
+		s->fcall.stat.name[1] = 0;
+        s->fcall.stat.length = 0;
+		s->fcall.stat.qid = root_qid;
+        break;
+    case Ditem:
+        break;
+    case Fdisplay:
+        break;
+    case Fnew:
+        break;
+    case Fdata:
+        break;
+    case Fevent:
+        break;
+    case Fcolor:
+        break;
+    case Ffont:
+        break;
+    }
+
+    return 0;
+}
+
+static int
+xwrite(IXPServer * s, IXPConn * c)
 {
     return -1;
 }
 
 static int
-clunk(IXPServer * s, IXPConn * c)
+xclunk(IXPServer * s, IXPConn * c)
 {
     Map *maps = c->aux;
     Map *m, *map = fid_to_map(maps, s->fcall.fid);
@@ -422,12 +464,13 @@ freeconn(IXPServer * s, IXPConn * c)
 
 static IXPTFunc funcs[] = {
     {TVERSION, ixp_server_tversion},
-    {TATTACH, attach},
-    {TWALK, walk},
-    {TOPEN, _open},
-    {TREAD, _read},
-    {TWRITE, _write},
-    {TCLUNK, clunk},
+    {TATTACH, xattach},
+    {TWALK, xwalk},
+    {TOPEN, xopen},
+    {TREAD, xread},
+    {TWRITE, xwrite},
+    {TCLUNK, xclunk},
+    {TSTAT, xstat},
     {0, 0}
 };
 

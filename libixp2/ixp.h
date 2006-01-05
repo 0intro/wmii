@@ -137,7 +137,6 @@ typedef struct {
 
 /* stat structure */
 typedef struct {
-    unsigned short size;
     unsigned short type;
     unsigned int dev;
     Qid qid;
