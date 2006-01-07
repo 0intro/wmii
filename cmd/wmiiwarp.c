@@ -19,7 +19,7 @@ static void
 usage()
 {
     fprintf(stderr,
-            "usage: wmiiwarp [-v] <x>,<y>\n"
+            "usage: wmiiwarp [-v] <x> <y>\n"
             "      -v     version info\n");
     exit(1);
 }
@@ -31,7 +31,7 @@ main(int argc, char **argv)
     int x, y;
 
     /* command line args */
-    if(argc != 2)
+    if(argc < 2)
         usage();
     if(!strncmp(argv[1], "-v", 2)) {
         fprintf(stdout, "%s", version[0]);
@@ -42,12 +42,12 @@ main(int argc, char **argv)
         fprintf(stderr, "%s", "wmiiwarp: cannot open display\n");
         exit(1);
     }
-    if(!strncmp(argv[1], "center", 7)) {
+    if((argc == 2) && !strncmp(argv[1], "center", 7)) {
         x = DisplayWidth(dpy, DefaultScreen(dpy)) / 2;
         y = DisplayHeight(dpy, DefaultScreen(dpy)) / 2;
-    } else if(sscanf(argv[1], "%d,%d", &x, &y) != 2) {
-        XCloseDisplay(dpy);
-        usage();
+    } else if(argc == 3) {
+		x = cext_strtonum(argv[1], 0, DisplayWidth(dpy, DefaultScreen(dpy)));
+		y = cext_strtonum(argv[2], 0, DisplayHeight(dpy, DefaultScreen(dpy)));
     }
     XWarpPointer(dpy, None, RootWindow(dpy, DefaultScreen(dpy)),
                  0, 0, 0, 0, x, y);

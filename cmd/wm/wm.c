@@ -616,7 +616,7 @@ handle_before_read(IXPServer * s, File * f)
 {
     char buf[64];
     if(f == def[WM_AREA_GEOMETRY]) {
-        snprintf(buf, 64, "%d,%d,%d,%d", area_rect.x, area_rect.y,
+        snprintf(buf, 64, "%d %d %d %d", area_rect.x, area_rect.y,
                  area_rect.width, area_rect.height);
         if(f->content)
             free(f->content);

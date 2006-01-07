@@ -374,7 +374,7 @@ handle_before_read_frames(IXPServer * s, File * file, Area * a)
     char buf[32];
     for(f = a->layout->frames(a); f; f = f->next) {
         if(file == f->file[F_GEOMETRY]) {
-            snprintf(buf, sizeof(buf), "%d,%d,%d,%d", f->rect.x, f->rect.y,
+            snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
                      f->rect.width, f->rect.height);
             if(file->content)
                 free(file->content);

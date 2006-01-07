@@ -445,7 +445,7 @@ handle_before_read(IXPServer * s, File * f)
 {
     char buf[64];
     if(f == file[B_GEOMETRY]) {
-        snprintf(buf, 64, "%d,%d,%d,%d", brect.x, brect.y, brect.width,
+        snprintf(buf, 64, "%d %d %d %d", brect.x, brect.y, brect.width,
                  brect.height);
         if(f->content)
             free(f->content);
