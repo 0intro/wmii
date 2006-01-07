@@ -182,7 +182,7 @@ void *
 ixp_dec_stat(unsigned char *msg, Stat * stat)
 {
     unsigned short len;
-	msg += sizeof(unsigned short);
+	msg = ixp_dec_u16(msg, &len);
     msg = ixp_dec_u16(msg, &stat->type);
     msg = ixp_dec_u32(msg, &stat->dev);
     msg = ixp_dec_qid(msg, &stat->qid);
