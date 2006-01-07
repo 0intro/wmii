@@ -300,11 +300,11 @@ ixp_msg_to_fcall(void *msg, unsigned int msglen, Fcall * fcall)
         p = ixp_dec_u32(p, &fcall->fid);
         break;
     case RSTAT:
-        p = ixp_dec_stat(p, &fcall->stat);
+        p = ixp_dec_stat(p, &fcall->stat, &len);
         break;
     case TWSTAT:
         p = ixp_dec_u32(p, &fcall->fid);
-        p = ixp_dec_stat(p, &fcall->stat);
+        p = ixp_dec_stat(p, &fcall->stat, &len);
         break;
     }
 

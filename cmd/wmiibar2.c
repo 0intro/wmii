@@ -342,18 +342,18 @@ xread(IXPServer * s, IXPConn * c)
         cext_strlcpy(stat.name, "display", sizeof(stat.name));
         stat.length = strlen(align);
         make_qid(&root_qid, "display", &stat.qid);
-        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
         p = ixp_enc_stat(p, &stat);
+        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
         cext_strlcpy(stat.name, "font", sizeof(stat.name));
         stat.length = strlen(font);
         make_qid(&root_qid, "font", &stat.qid);
-        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
         p = ixp_enc_stat(p, &stat);
+        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
         cext_strlcpy(stat.name, "new", sizeof(stat.name));
         stat.length = 0;
         make_qid(&root_qid, "new", &stat.qid);
-        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
         p = ixp_enc_stat(p, &stat);
+        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
         s->fcall.id = RREAD;
 		if(s->fcall.offset >= s->fcall.count)
 			s->fcall.count = 0; /* EOF */

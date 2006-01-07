@@ -179,10 +179,10 @@ ixp_enc_stat(unsigned char *msg, Stat * stat)
 }
 
 void *
-ixp_dec_stat(unsigned char *msg, Stat * stat)
+ixp_dec_stat(unsigned char *msg, Stat * stat, unsigned short *len)
 {
-    unsigned short len;
-	msg = ixp_dec_u16(msg, &len);
+	unsigned short dummy;
+	msg = ixp_dec_u16(msg, len);
     msg = ixp_dec_u16(msg, &stat->type);
     msg = ixp_dec_u32(msg, &stat->dev);
     msg = ixp_dec_qid(msg, &stat->qid);
@@ -190,8 +190,8 @@ ixp_dec_stat(unsigned char *msg, Stat * stat)
     msg = ixp_dec_u32(msg, &stat->atime);
     msg = ixp_dec_u32(msg, &stat->mtime);
     msg = ixp_dec_u64(msg, &stat->length);
-    msg = ixp_dec_string(msg, stat->name, sizeof(stat->name), &len);
-    msg = ixp_dec_string(msg, stat->uid, sizeof(stat->uid), &len);
-    msg = ixp_dec_string(msg, stat->gid, sizeof(stat->gid), &len);
-    return ixp_dec_string(msg, stat->muid, sizeof(stat->muid), &len);
+    msg = ixp_dec_string(msg, stat->name, sizeof(stat->name), &dummy);
+    msg = ixp_dec_string(msg, stat->uid, sizeof(stat->uid), &dummy);
+    msg = ixp_dec_string(msg, stat->gid, sizeof(stat->gid), &dummy);
+    return ixp_dec_string(msg, stat->muid, sizeof(stat->muid), &dummy);
 }

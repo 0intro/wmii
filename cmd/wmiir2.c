@@ -97,9 +97,8 @@ print_dir(void *result, unsigned int msize)
     unsigned int len = 0;
 	unsigned short size;
     do {
-        p = ixp_dec_u16(p, &size);
+        p = ixp_dec_stat(p, &stat, &size);
 		len += size + sizeof(unsigned short);
-        p = ixp_dec_stat(p, &stat);
         if(stat.qid.type == IXP_QTDIR)
             fprintf(stdout, "%s/\n", stat.name);
         else
