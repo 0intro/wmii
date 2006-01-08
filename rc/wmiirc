@@ -71,10 +71,9 @@ fn barsucks {
 
 wmiir write /bar/geometry $BAR_ALIGN
 if (~ $BAR_ALIGN south)
-    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk -F, ''{print $4}''} wmiir write /wm/default/area/geometry ''+0 +0 +0 -''^$val'
+    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk ''{print "+0 +0 +0 -"$4}''} wmiir write /wm/default/area/geometry $"val'
 if not
-    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk -F, ''{print $4}''} wmiir write /wm/default/area/geometry ''+0 +''^$val^'' +0 -''^$val'
-
+    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk ''{print "+0 +"$4" +0 -"$4}''} wmiir write /wm/default/area/geometry $"val'
 
 wmiir write /bar/ctl reset
 wmiir write /bar/font $FONT
