@@ -824,6 +824,7 @@ cleanup()
         }
     }
     XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+	XSync(dpy, False);
 }
 
 int

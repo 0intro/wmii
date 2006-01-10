@@ -305,7 +305,6 @@ attach_client_to_frame(Frame * f, Client * client)
     resize_frame(f, &f->rect, 0);
     reparent_client(client, f->win, client->rect.x, client->rect.y);
     show_client(client);
-    focus_client(client);
 }
 
 void

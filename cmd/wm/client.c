@@ -34,6 +34,7 @@ focus_client(Client * c)
     f->sel = c;
     XRaiseWindow(dpy, c->win);
     XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
+	XSync(dpy, False);
     invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
 }
 
@@ -51,7 +52,7 @@ set_client_state(Client * c, int state)
 void
 show_client(Client * c)
 {
-    XMapWindow(dpy, c->win);
+    XMapRaised(dpy, c->win);
     set_client_state(c, NormalState);
     grab_client(c, Mod1Mask, Button1);
     grab_client(c, Mod1Mask, Button3);

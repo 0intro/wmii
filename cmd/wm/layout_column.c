@@ -229,9 +229,6 @@ attach_col(Area * a, Client * c)
     Column *col = acme->sel;
     Frame *f = nil;
 
-    if(col && col->sel)
-        f = col->sel->frame;
-
     if(!col) {
         col = cext_emallocz(sizeof(Column));
         col->rect = area_rect;
@@ -424,17 +421,14 @@ focus_col(Frame * f, Bool raise)
 	Frame *old = sel_col(a);
 	Cell *cell = f->aux;
 
-    if(old == f)
-		return;
-
     acme->sel = cell->col;
 	cell->col->sel = cell;
     a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
     if(raise)
         center_pointer(f);
-	XSync(dpy, False);
     focus_client(f->sel);
-    draw_frame(old);
+	if(old && old != f)
+    	draw_frame(old);
     draw_frame(f);
 }
 
