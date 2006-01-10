@@ -282,8 +282,8 @@ handle_frame_buttonpress(XButtonEvent * e, Frame * f)
     f->area->layout->focus(f, False);
     bindex = WM_EVENT_B2PRESS - 2 + e->button;
     /* frame mouse handling */
-    if(f->file[bindex]->content)
-        wmii_spawn(dpy, f->file[bindex]->content);
+    if(def[bindex]->content)
+        wmii_spawn(dpy, def[bindex]->content);
 }
 
 void
