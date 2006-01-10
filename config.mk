@@ -1,7 +1,7 @@
 # Customize to fit your system
 
 # paths
-PREFIX = /usr/local
+PREFIX = ${HOME}/local
 CONFPREFIX = ${PREFIX}/etc
 MANPREFIX = ${PREFIX}/share/man
 9PREFIX = ${PREFIX}/9

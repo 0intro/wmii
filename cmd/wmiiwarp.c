@@ -10,6 +10,8 @@
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 
+#include "cext.h"
+
 static char *version[] = {
     "wmiiwarp - window manager improved warp - " VERSION "\n"
         " (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
@@ -29,6 +31,7 @@ main(int argc, char **argv)
 {
     Display *dpy;
     int x, y;
+    const char *errstr;
 
     /* command line args */
     if(argc < 2)
@@ -46,8 +49,16 @@ main(int argc, char **argv)
         x = DisplayWidth(dpy, DefaultScreen(dpy)) / 2;
         y = DisplayHeight(dpy, DefaultScreen(dpy)) / 2;
     } else if(argc == 3) {
-		x = cext_strtonum(argv[1], 0, DisplayWidth(dpy, DefaultScreen(dpy)));
-		y = cext_strtonum(argv[2], 0, DisplayHeight(dpy, DefaultScreen(dpy)));
+	x = cext_strtonum(argv[1], 0, DisplayWidth(dpy, DefaultScreen(dpy)), &errstr);
+	if(errstr) {
+		fprintf(stderr, "wmiiwarp: invalid x value: '%s'\n", errstr);
+		usage();
+	}
+	y = cext_strtonum(argv[2], 0, DisplayHeight(dpy, DefaultScreen(dpy)), &errstr);
+	if(errstr) {
+		fprintf(stderr, "wmiiwarp: invalid y value: '%s'\n", errstr);
+		usage();
+	}
     }
     XWarpPointer(dpy, None, RootWindow(dpy, DefaultScreen(dpy)),
                  0, 0, 0, 0, x, y);
