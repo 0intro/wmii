@@ -33,6 +33,7 @@ struct Column {
     Cell *sel;
     Cell *cells;
     size_t ncells;
+	Bool exclusive;
     XRectangle rect;
     Column *prev;
     Column *next;
@@ -52,11 +53,13 @@ static Action *actions_col(Area * a);
 static void select_frame(void *obj, char *arg);
 static void swap_frame(void *obj, char *arg);
 static void new_col(void *obj, char *arg);
+static void toggle_excl_col(void *obj, char *arg);
 
 static Action lcol_acttbl[] = {
     {"select", select_frame},
     {"swap", swap_frame},
     {"new", new_col},
+    {"toggle", toggle_excl_col},
     {0, 0}
 };
 
@@ -231,10 +234,13 @@ attach_col(Area * a, Client * c)
 
     if(!col) {
         col = cext_emallocz(sizeof(Column));
+		col->exclusive = True; /* first col is exclusive */
         col->rect = area_rect;
         acme->columns = acme->sel = col;
         acme->ncolumns++;
     }
+	else if(col->exclusive && col->ncells && col->next)
+		acme->sel = col = col->next;
 
     f = alloc_frame(&c->rect);
     attach_frame(a, col, f);
@@ -243,6 +249,8 @@ attach_col(Area * a, Client * c)
     if(a->page == selpage)
         XMapWindow(dpy, f->win);
     focus_col(f, True);
+	if(col->exclusive && col->ncells > 1)
+		new_col(a, nil);
     return True;
 }
 
@@ -553,7 +561,7 @@ swap_frame(void *obj, char *arg)
         cell->frame->aux = cell;
         resize_frame(cell->frame, &cell->frame->rect, nil);
         resize_frame(other->frame, &other->frame->rect, nil);
-        focus_col(cell->frame, True);
+        focus_col(other->frame, True);
     } else if(!strncmp(arg, "east", 5) && east && (col->ncells > 1)) {
         Cell *other = east->sel;
         r = other->frame->rect;
@@ -596,4 +604,20 @@ new_col(void *obj, char *arg)
 
     update_column_width(a);
     focus_col(f, True);
+}
+
+static void
+toggle_excl_col(void *obj, char *arg)
+{
+    Area *a = obj;
+    Acme *acme = a->aux;
+    Column *col = acme->sel;
+
+    if(!col)
+        return;
+
+    if(!strncmp(arg, "0", 1))
+		col->exclusive = False;
+	else if(!strncmp(arg, "1", 1))
+		col->exclusive = True;
 }
