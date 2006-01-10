@@ -429,10 +429,11 @@ focus_col(Frame * f, Bool raise)
 
     acme->sel = cell->col;
 	cell->col->sel = cell;
-    focus_client(f->sel);
     a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
     if(raise)
         center_pointer(f);
+	XSync(dpy, False);
+    focus_client(f->sel);
     draw_frame(old);
     draw_frame(f);
 }

@@ -312,6 +312,7 @@ void
 detach_client_from_frame(Client * c, Bool unmap)
 {
     Frame *f = c->frame;
+	Client *cl;
 
     c->frame = nil;
     if(f->sel == c) {
@@ -344,10 +345,10 @@ detach_client_from_frame(Client * c, Bool unmap)
         c->rect.y = f->rect.y;
         reparent_client(c, root, c->rect.x, c->rect.y);
     }
-    if(f->sel) {
-        focus_client(f->sel);
-        f->area->layout->focus(f, False);
-    }
+	if((cl = sel_client())) {
+    	f->area->layout->focus(cl->frame, False);
+    	focus_client(cl);
+	}
 }
 
 static void
