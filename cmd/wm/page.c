@@ -26,17 +26,17 @@ alloc_page()
     Page *p, *new = cext_emallocz(sizeof(Page));
     char buf[MAX_BUF], buf2[16];
 
-    snprintf(buf2, sizeof(buf2), "%ul", npages);
-    snprintf(buf, sizeof(buf), "/%ul", npages);
+    snprintf(buf2, sizeof(buf2), "%d", (int)npages);
+    snprintf(buf, sizeof(buf), "/%d", (int)npages);
     new->file[P_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, sizeof(buf), "/%ul/name", npages);
+    snprintf(buf, sizeof(buf), "/%d/name", (int)npages);
     new->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
-    snprintf(buf, sizeof(buf), "/%ul/layout/", npages);
+    snprintf(buf, sizeof(buf), "/%d/layout/", (int)npages);
     new->file[P_AREA_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, sizeof(buf), "/%ul/layout/sel", npages);
+    snprintf(buf, sizeof(buf), "/%d/layout/sel", (int)npages);
     new->file[P_SEL_AREA] = ixp_create(ixps, buf);
     new->file[P_SEL_AREA]->bind = 1;    /* mount point */
-    snprintf(buf, sizeof(buf), "/%ul/ctl", npages);
+    snprintf(buf, sizeof(buf), "/%d/ctl", (int)npages);
     new->file[P_CTL] = ixp_create(ixps, buf);
     new->file[P_CTL]->after_write = handle_after_write_page;
     new->floating = alloc_area(new, "float");
