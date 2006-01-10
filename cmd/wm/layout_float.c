@@ -196,6 +196,7 @@ focus_float(Frame * f, Bool raise)
         XRaiseWindow(dpy, f->win);
         center_pointer(f);
     }
+    focus_client(f->sel);
     if(old && old != f)
         draw_frame(old);
     draw_frame(f);
