@@ -345,7 +345,7 @@ detach_client_from_frame(Client * c, Bool unmap)
         reparent_client(c, root, c->rect.x, c->rect.y);
     }
     if((cl = sel_client())) {
-    	sel_area()->layout->focus(cl->frame, False);
+    	sel_area()->layout->focus(sel_frame(), False);
     	focus_client(cl);
     }
 }
