@@ -104,6 +104,7 @@ wmiir write /bar/ctl 'display 1'
 wmiir write /wm/default/font $FONT
 wmiir write /wm/default/transcolor $SEL_BORDER_COLOR
 wmiir write /wm/default/handleinc $HANDLEINC
+wmiir write /wm/default/tab $TAB
 
 wmiir write /wm/default/border 1
 wmiir write /wm/event/clientupdate \
@@ -114,9 +115,9 @@ wmiir write /wm/event/pageupdate \
 'wmiir write /bar/'^$klab^'/data `{wmiir read /keys/lookup|sed ''s|/mode/||''} && ' ^\
 'wmiir write /bar/'^$llab^'/data `{wmiir read /wm/sel/layout/sel/name}'
 
-
-for(layout in /wm/sel/layout/float /wm/sel/layout/managed) {
-	framesconf $layout
+for(page in `{wmiir read /wm | grep '^[0-9]'}) {
+	framesconf /wm/$page/layout/float/frame
+	framesconf /wm/$page/layout/managed/frame
 }
 
 wmiir write /wm/default/sstyle/fgcolor $SEL_FG_COLOR
