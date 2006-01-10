@@ -13,10 +13,12 @@
 static void handle_after_write_page(IXPServer * s, File * file);
 
 static void toggle_area(void *obj, char *arg);
+static void xexec(void *obj, char *arg);
 
 /* action table for /?/ namespace */
 Action page_acttbl[] = {
     {"toggle", toggle_area},
+    {"exec", xexec},
     {0, 0}
 };
 
@@ -63,6 +65,27 @@ alloc_page()
 void
 destroy_page(Page * p)
 {
+	RunInPage *o, *n;
+
+	while(runinpage->page == p) {
+		n = runinpage->next;
+		free(runinpage);
+		runinpage = n;
+	}
+	o = runinpage;
+	n = nil;
+	if(runinpage)
+		n = runinpage->next;
+	while(n) {
+		if(n->page == p) {
+			o->next = n->next;
+			free(n);
+			n = o->next;
+		}
+		else
+			n = n->next;
+	}
+
     destroy_area(p->floating);
     destroy_area(p->managed);
     def[WM_SEL_PAGE]->content = 0;
@@ -170,6 +193,22 @@ handle_after_write_page(IXPServer * s, File * file)
             return;
         }
     }
+}
+
+static void
+xexec(void *obj, char *arg)
+{
+	RunInPage *r;
+
+	if(!runinpage)
+		r = runinpage = cext_emallocz(sizeof(RunInPage));
+	else {
+		for(r = runinpage; r && r->next; r = r->next);
+		r->next = cext_emallocz(sizeof(RunInPage));
+		r = r->next;
+	}
+	r->page = obj;
+    wmii_spawn(dpy, arg);
 }
 
 static void

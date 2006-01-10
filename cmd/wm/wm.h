@@ -89,10 +89,16 @@ enum {
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
 
 typedef struct Page Page;
+typedef struct RunInPage RunInPage;
 typedef struct Layout Layout;
 typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
+
+struct RunInPage {
+	Page *page;
+	RunInPage *next;
+};
 
 struct Page {
     Area *managed;
@@ -160,6 +166,7 @@ struct Client {
 /* global variables */
 Page *pages;
 Page *selpage;
+RunInPage *runinpage;
 size_t npages;
 Client *detached;
 size_t ndetached;

@@ -225,6 +225,14 @@ handle_maprequest(XEvent * e)
         return;
     }
 
+	/* attach heuristic support */
+	if(runinpage && (runinpage->page != selpage)) {
+		RunInPage *r = runinpage;
+		focus_page(r->page);
+		runinpage = runinpage->next;
+		free(r);
+	}
+
     /* there're client which send map requests twice */
     c = win_to_client(ev->window);
     if(!c)

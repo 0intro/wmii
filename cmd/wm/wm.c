@@ -898,6 +898,7 @@ main(int argc, char *argv[])
     ndetached = npages = 0;
     detached = nil;
     layouts = nil;
+	runinpage = nil;
 
     init_atoms();
     init_cursors();
