@@ -239,8 +239,11 @@ attach_col(Area * a, Client * c)
         acme->columns = acme->sel = col;
         acme->ncolumns++;
     }
-	else if(col->exclusive && col->ncells && col->next)
+	else if(col->exclusive && col->ncells && col->next) {
+		f = col->sel->frame;
 		acme->sel = col = col->next;
+		draw_frame(f);
+	}
 
     f = alloc_frame(&c->rect);
     attach_frame(a, col, f);
