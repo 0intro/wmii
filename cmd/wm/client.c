@@ -29,7 +29,18 @@ void
 focus_client(Client * c)
 {
     Frame *f = 0;
+	Client *old = sel_client();
+
+	if(old && (old != c)) {
+		fprintf(stderr, "%s", "grabbing everything for window\n");
+		ungrab_client(old, AnyModifier, AnyButton);
+		grab_client(old, AnyModifier, AnyButton);
+	}
+	
     /* sel client */
+	ungrab_client(c, AnyModifier, AnyButton);
+    grab_client(c, Mod1Mask, Button1);
+    grab_client(c, Mod1Mask, Button3);
     f = c->frame;
     f->sel = c;
     XRaiseWindow(dpy, c->win);
@@ -54,8 +65,7 @@ show_client(Client * c)
 {
     XMapRaised(dpy, c->win);
     set_client_state(c, NormalState);
-    grab_client(c, Mod1Mask, Button1);
-    grab_client(c, Mod1Mask, Button3);
+	grab_client(c, AnyModifier, AnyButton);
 }
 
 void
@@ -76,14 +86,14 @@ reparent_client(Client * c, Window w, int x, int y)
 void
 grab_client(Client * c, unsigned long mod, unsigned int button)
 {
-    XGrabButton(dpy, button, mod, c->win, False,
-                ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
+    XGrabButton(dpy, button, mod, c->win, True,
+                ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
     if((mod != AnyModifier) && num_lock_mask) {
-        XGrabButton(dpy, button, mod | num_lock_mask, c->win, False,
-                    ButtonPressMask, GrabModeAsync, GrabModeAsync, None,
+        XGrabButton(dpy, button, mod | num_lock_mask, c->win, True,
+                    ButtonPressMask, GrabModeSync, GrabModeAsync, None,
                     None);
         XGrabButton(dpy, button, mod | num_lock_mask | LockMask, c->win,
-                    False, ButtonPressMask, GrabModeAsync, GrabModeAsync,
+                    True, ButtonPressMask, GrabModeSync, GrabModeAsync,
                     None, None);
     }
 }

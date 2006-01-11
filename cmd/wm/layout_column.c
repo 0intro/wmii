@@ -431,13 +431,15 @@ focus_col(Frame * f, Bool raise)
     Acme *acme = a->aux;
 	Frame *old = sel_col(a);
 	Cell *cell = f->aux;
+	Client *c = f->sel ? f->sel : f->clients;
 
     acme->sel = cell->col;
 	cell->col->sel = cell;
     a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
-    if(raise)
-        center_pointer(f);
-    focus_client(f->sel);
+    if(raise && c)
+    	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0,
+					 c->rect.width / 2, c->rect.height / 2);
+    focus_client(c);
 	if(old && old != f)
     	draw_frame(old);
     draw_frame(f);

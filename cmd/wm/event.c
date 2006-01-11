@@ -19,11 +19,7 @@ static void handle_maprequest(XEvent * e);
 static void handle_motionnotify(XEvent * e);
 static void handle_propertynotify(XEvent * e);
 static void handle_unmapnotify(XEvent * e);
-static void handle_enternotify(XEvent * e);
-static void handle_ignore_enternotify_crap(XEvent * e);
 static void handle_clientmessage(XEvent * e);
-
-static unsigned int ignore_enternotify_crap = 0;
 
 void (*handler[LASTEvent]) (XEvent *);
 
@@ -37,16 +33,11 @@ init_event_hander()
     }
     handler[ButtonPress] = handle_buttonpress;
     handler[ConfigureRequest] = handle_configurerequest;
-    handler[ConfigureNotify] = handle_ignore_enternotify_crap;
-    handler[CirculateNotify] = handle_ignore_enternotify_crap;
     handler[DestroyNotify] = handle_destroynotify;
-    handler[EnterNotify] = handle_enternotify;
     handler[Expose] = handle_expose;
-    handler[GravityNotify] = handle_ignore_enternotify_crap;
     handler[MapRequest] = handle_maprequest;
     handler[MotionNotify] = handle_motionnotify;
     handler[PropertyNotify] = handle_propertynotify;
-    handler[MapNotify] = handle_ignore_enternotify_crap;
     handler[UnmapNotify] = handle_unmapnotify;
     handler[ClientMessage] = handle_clientmessage;
 }
@@ -69,17 +60,13 @@ handle_buttonpress(XEvent * e)
     XButtonPressedEvent *ev = &e->xbutton;
     Frame *f = win_to_frame(ev->window);
 
-    if(f) {
+    if(f)
         handle_frame_buttonpress(ev, f);
-        return;
-    }
-    if(ev->window == root) {
-        XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
-        XSync(dpy, False);
-        return;
-    }
-    if((c = win_to_client(ev->window))) {
+	else if((c = win_to_client(ev->window))) {
         if(c->frame) {          /* client is attached */
+			focus_area(c->frame->area);
+			c->frame->area->layout->focus(c->frame, False);
+			focus_client(c);
             ev->state &= valid_mask;
             if(ev->state & Mod1Mask) {
                 Align align;
@@ -275,37 +262,12 @@ handle_unmapnotify(XEvent * e)
 {
     XUnmapEvent *ev = &e->xunmap;
     Client *c;
-    handle_ignore_enternotify_crap(e);
     if((c = win_to_client(ev->window))) {
         if(!c->ignore_unmap)
             detach_client(c, True);
         else
             c->ignore_unmap--;
     }
-}
-
-static void
-handle_enternotify(XEvent * e)
-{
-    XCrossingEvent *ev = &e->xcrossing;
-    Client *c;
-
-    if((ev->mode != NotifyNormal) || (ev->detail == NotifyInferior)
-       || (ev->serial == ignore_enternotify_crap))
-        return;
-
-    c = win_to_client(ev->window);
-    if(c && c->frame) {
-        focus_area(c->frame->area);
-        c->frame->area->layout->focus(c->frame, False);
-    }
-}
-
-static void
-handle_ignore_enternotify_crap(XEvent * e)
-{
-    ignore_enternotify_crap = e->xany.serial;
-    XSync(dpy, False);
 }
 
 static void handle_clientmessage(XEvent *e)

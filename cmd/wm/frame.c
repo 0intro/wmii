@@ -10,15 +10,8 @@
 
 #include "wm.h"
 
-static void select_client(void *obj, char *arg);
 static void handle_after_write_frame(IXPServer * s, File * file);
 static void handle_before_read_frame(IXPServer * s, File * file);
-
-/* action table for /frame/?/ namespace */
-Action frame_acttbl[] = {
-    {"select", select_client},
-    {0, 0}
-};
 
 Frame *
 alloc_frame(XRectangle * r)
@@ -37,9 +30,6 @@ alloc_frame(XRectangle * r)
     snprintf(buf, MAX_BUF, "/detached/%d/name", id);
     f->file[F_NAME] = ixp_create(ixps, buf);
 	f->file[F_NAME]->before_read = handle_before_read_frame;
-    snprintf(buf, MAX_BUF, "/detached/%d/ctl", id);
-    f->file[F_CTL] = ixp_create(ixps, buf);
-    f->file[F_CTL]->after_write = handle_after_write_frame;
     snprintf(buf, MAX_BUF, "/detached/%d/geometry", id);
     f->file[F_GEOMETRY] = ixp_create(ixps, buf);
     f->file[F_GEOMETRY]->before_read = handle_before_read_frame;
@@ -269,17 +259,17 @@ handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 {
     Align align;
     int bindex, cindex = e->x / (f->rect.width / f->nclients);
-    f->sel = clientat(f->clients, cindex);
+    Client *new = clientat(f->clients, cindex);
+    f->area->layout->focus(f, False);
+	sel_client(new);
     if(e->button == Button1) {
         align = cursor_to_align(f->cursor);
         if(align == CENTER)
             mouse_move(f);
         else
             mouse_resize(f, align);
-        f->area->layout->focus(f, False);
         return;
     }
-    f->area->layout->focus(f, False);
     bindex = WM_EVENT_B2PRESS - 2 + e->button;
     /* frame mouse handling */
     if(def[bindex]->content)
@@ -300,7 +290,6 @@ attach_client_to_frame(Frame * f, Client * client)
         c->next = client;
     }
     f->nclients++;
-    f->sel = client;
     client->frame = f;
     resize_frame(f, &f->rect, 0);
     reparent_client(client, f->win, client->rect.x, client->rect.y);
@@ -311,15 +300,10 @@ void
 detach_client_from_frame(Client * c, Bool unmap)
 {
     Frame *f = c->frame;
-	Client *cl;
 
     c->frame = nil;
-    if(f->sel == c) {
-        if(c->prev)
-            f->sel = c->prev;
-        else
-            f->sel = nil;
-    }
+    if(f->sel == c)
+		f->sel = nil;
 
     if(f->clients == c) {
         if(c->next)
@@ -332,8 +316,6 @@ detach_client_from_frame(Client * c, Bool unmap)
     }
 
     f->nclients--;
-    if(!f->sel)
-        f->sel = f->clients;
 
     if(!c->destroyed) {
         if(!unmap) {
@@ -344,27 +326,6 @@ detach_client_from_frame(Client * c, Bool unmap)
         c->rect.y = f->rect.y;
         reparent_client(c, root, c->rect.x, c->rect.y);
     }
-    if((cl = sel_client())) {
-    	sel_area()->layout->focus(sel_frame(), False);
-    	focus_client(cl);
-    }
-}
-
-static void
-select_client(void *obj, char *arg)
-{
-    Client *c;
-    Frame *f = obj;
-    if(!f || !arg || !f->clients->next)
-        return;
-    if(!strncmp(arg, "prev", 5))
-        c = f->sel->prev;
-    else if(!strncmp(arg, "next", 5))
-        c = f->sel->next;
-    else
-        c = clientat(f->clients, blitz_strtonum(arg, 0, f->nclients - 1));
-    focus_client(c);
-    f->area->layout->focus(f, False);
 }
 
 static Frame *
@@ -415,10 +376,6 @@ handle_after_write_frames(IXPServer * s, File * file, Area * a)
 {
     Frame *f;
     for(f = a->layout->frames(a); f; f = f->next) {
-        if(file == f->file[F_CTL]) {
-            run_action(file, f, frame_acttbl);
-            return f;
-        }
         if(file == f->file[F_TAB] || file == f->file[F_BORDER]
            || file == f->file[F_HANDLE_INC]) {
             f->area->layout->arrange(f->area);

@@ -32,7 +32,6 @@ enum {
 enum {
     F_PREFIX,
     F_NAME,
-    F_CTL,
     F_GEOMETRY,
     F_BORDER,
     F_TAB,
@@ -86,7 +85,7 @@ enum {
 #define GAP                    5
 
 #define ROOT_MASK              SubstructureRedirectMask
-#define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
+#define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask | ButtonPressMask)
 
 typedef struct Page Page;
 typedef struct RunInPage RunInPage;
@@ -266,7 +265,6 @@ Cursor cursor_for_motion(Frame * f, int x, int y);
 Align cursor_to_align(Cursor cursor);
 Align xy_to_align(XRectangle * rect, int x, int y);
 void drop_move(Frame * f, XRectangle * new, XPoint * pt);
-void center_pointer(Frame * f);
 
 /* page.c */
 Page *pageat(unsigned int idx);
