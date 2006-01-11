@@ -176,9 +176,6 @@ kbind normal $MODKEY-$NORTHKEY 'wmiir write /wm/sel/layout/sel/ctl ''select prev
 kbind normal $MODKEY-S-$WESTKEY 'wmiir write /wm/ctl ''select prev'''
 kbind normal $MODKEY-S-$EASTKEY 'wmiir write /wm/ctl ''select next'''
 kbind normal $MODKEY-space 'wmiir write /wm/sel/ctl ''select next'''
-kbind normal $MODKEY-S-Tab 'wmiir write /wm/sel/layout/sel/frame/sel/ctl ''select next'''
-kbind normal $MODKEY-S-$SOUTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/ctl ''select next'''
-kbind normal $MODKEY-S-$NORTHKEY 'wmiir write /wm/sel/layout/sel/frame/sel/ctl ''select prev'''
 kbind normal $MODKEY-S-p 'wmiir write /wm/ctl pager'
 for(i in 0 1 2 3 4 5 6 7 8 9) {
     kbind normal $MODKEY-S-$i 'wmiir write /wm/ctl ''select '^$i^''''
