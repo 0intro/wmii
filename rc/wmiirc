@@ -162,7 +162,7 @@ kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr
 kbind normal $MODKEY-d 'wmiir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmiir write /wm/ctl attach'
 kbind normal $MODKEY-S-a 'wmiir write /wm/ctl detached_clients'
-kbind normal $MODKEY-S-c 'wmiir write /wm/sel/layout/manage/name column'
+kbind normal $MODKEY-S-c 'wmiir write /wm/sel/layout/managed/name column'
 kbind normal $MODKEY-n 'wmiir write /wm/sel/layout/sel/ctl new'
 kbind normal $MODKEY-S-f 'wmiir write /wm/sel/layout/sel/name float'
 kbind normal $MODKEY-Return 'wmiir write /wm/sel/layout/sel/ctl ''swap west'''
