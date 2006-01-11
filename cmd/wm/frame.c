@@ -289,10 +289,6 @@ attach_client_to_frame(Frame * f, Client * client)
         client->next = nil;
         c->next = client;
     }
-	if(f->sel) {
-		ungrab_client(f->sel, AnyModifier, AnyButton);
-		grab_client(f->sel, AnyModifier, AnyButton);
-	}
 	f->sel = client;
     f->nclients++;
     client->frame = f;

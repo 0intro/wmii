@@ -188,17 +188,15 @@ focus_float(Frame * f, Bool raise)
     Area *a = f->area;
     Float *fl = a->aux;
     Frame *old = fl->sel;
-	Client *c = f->sel ? f->sel : f->clients;
 
     fl->sel = f;
     a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
     if(raise) {
         XRaiseWindow(dpy, f->win);
-		if(c)
-    		XWarpPointer(dpy, None, c->win, 0, 0, 0, 0,
-					     c->rect.width / 2, c->rect.height / 2);
+    	XWarpPointer(dpy, None, f->sel->win, 0, 0, 0, 0,
+					 f->sel->rect.width / 2, f->sel->rect.height / 2);
     }
-    focus_client(c);
+    focus_client(f->sel);
     if(old && old != f)
         draw_frame(old);
     draw_frame(f);

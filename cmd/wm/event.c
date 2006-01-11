@@ -65,8 +65,8 @@ handle_buttonpress(XEvent * e)
 	else if((c = win_to_client(ev->window))) {
         if(c->frame) {          /* client is attached */
 			focus_area(c->frame->area);
-			c->frame->area->layout->focus(c->frame, False);
 			focus_client(c);
+			c->frame->area->layout->focus(c->frame, False);
             ev->state &= valid_mask;
             if(ev->state & Mod1Mask) {
                 Align align;

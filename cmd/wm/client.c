@@ -29,7 +29,7 @@ void
 focus_client(Client * c)
 {
     Frame *f = 0;
-	Client *old = sel_client();
+	static Client *old = nil;
 
 	if(old && (old != c)) {
 		ungrab_client(old, AnyModifier, AnyButton);
@@ -46,6 +46,7 @@ focus_client(Client * c)
     XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	XSync(dpy, False);
     invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
+	old = c;
 }
 
 void
