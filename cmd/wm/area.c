@@ -40,7 +40,6 @@ alloc_area(Page * p, char *layout)
     a->file[A_LAYOUT] = wmii_create_ixpfile(ixps, buf, layout);
     a->file[A_LAYOUT]->after_write = handle_after_write_area;
     a->layout = match_layout(layout);
-    fprintf(stderr, "matched '%s' layout\n", a->layout->name);
     a->layout->init(a, nil);
     p->file[P_SEL_AREA]->content = a->file[A_PREFIX]->content;
     return a;
