@@ -32,7 +32,6 @@ focus_client(Client * c)
 	Client *old = sel_client();
 
 	if(old && (old != c)) {
-		fprintf(stderr, "%s", "grabbing everything for window\n");
 		ungrab_client(old, AnyModifier, AnyButton);
 		grab_client(old, AnyModifier, AnyButton);
 	}

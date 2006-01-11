@@ -88,15 +88,15 @@ enum {
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask | ButtonPressMask)
 
 typedef struct Page Page;
-typedef struct RunInPage RunInPage;
+typedef struct AttachQueue AttachQueue;
 typedef struct Layout Layout;
 typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
-struct RunInPage {
+struct AttachQueue {
 	Page *page;
-	RunInPage *next;
+	AttachQueue *next;
 };
 
 struct Page {
@@ -165,7 +165,7 @@ struct Client {
 /* global variables */
 Page *pages;
 Page *selpage;
-RunInPage *runinpage;
+AttachQueue *attachqueue;
 size_t npages;
 Client *detached;
 size_t ndetached;

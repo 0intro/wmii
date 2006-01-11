@@ -65,17 +65,17 @@ alloc_page()
 void
 destroy_page(Page * p)
 {
-	RunInPage *o, *n;
+	AttachQueue *o, *n;
 
-	while(runinpage->page == p) {
-		n = runinpage->next;
-		free(runinpage);
-		runinpage = n;
+	while(attachqueue->page == p) {
+		n = attachqueue->next;
+		free(attachqueue);
+		attachqueue = n;
 	}
-	o = runinpage;
+	o = attachqueue;
 	n = nil;
-	if(runinpage)
-		n = runinpage->next;
+	if(attachqueue)
+		n = attachqueue->next;
 	while(n) {
 		if(n->page == p) {
 			o->next = n->next;
@@ -198,13 +198,13 @@ handle_after_write_page(IXPServer * s, File * file)
 static void
 xexec(void *obj, char *arg)
 {
-	RunInPage *r;
+	AttachQueue *r;
 
-	if(!runinpage)
-		r = runinpage = cext_emallocz(sizeof(RunInPage));
+	if(!attachqueue)
+		r = attachqueue = cext_emallocz(sizeof(AttachQueue));
 	else {
-		for(r = runinpage; r && r->next; r = r->next);
-		r->next = cext_emallocz(sizeof(RunInPage));
+		for(r = attachqueue; r && r->next; r = r->next);
+		r->next = cext_emallocz(sizeof(AttachQueue));
 		r = r->next;
 	}
 	r->page = obj;

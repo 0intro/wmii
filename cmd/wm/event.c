@@ -213,10 +213,10 @@ handle_maprequest(XEvent * e)
     }
 
 	/* attach heuristic support */
-	if(runinpage && (runinpage->page != selpage)) {
-		RunInPage *r = runinpage;
+	if(attachqueue && (attachqueue->page != selpage)) {
+		AttachQueue *r = attachqueue;
 		focus_page(r->page);
-		runinpage = runinpage->next;
+		attachqueue = attachqueue->next;
 		free(r);
 	}
 
