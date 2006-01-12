@@ -18,14 +18,14 @@ enum {
     P_LAST
 };
 
-/* array indexes of area file pointers */
+/* array indexes of layout file pointers */
 enum {
-    A_PREFIX,
-    A_FRAME_PREFIX,
-    A_SEL_FRAME,
-    A_CTL,
-    A_LAYOUT,
-    A_LAST
+    L_PREFIX,
+    L_FRAME_PREFIX,
+    L_SEL_FRAME,
+    L_CTL,
+    L_NAME,
+    L_LAST
 };
 
 /* array indexes of frame file pointers */
@@ -89,8 +89,8 @@ enum {
 
 typedef struct Page Page;
 typedef struct AttachQueue AttachQueue;
+typedef struct LayoutDef LayoutDef;
 typedef struct Layout Layout;
-typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
@@ -100,39 +100,39 @@ struct AttachQueue {
 };
 
 struct Page {
-    Area *managed;
-    Area *floating;
-    Area *sel;
+    Layout *managed;
+    Layout *floating;
+    Layout *sel;
     File *file[P_LAST];
     Page *next;
     Page *prev;
     size_t index;
 };
 
-struct Layout {
+struct LayoutDef {
     char *name;
-    void (*init) (Area *, Client *);    /* called when layout is initialized */
-    Client *(*deinit) (Area *); /* called when layout is uninitialized */
-    void (*arrange) (Area *);   /* called when area is resized */
-     Bool(*attach) (Area *, Client *);  /* called on attach */
-    void (*detach) (Area *, Client *, Bool unmap);      /* called on detach */
+    void (*init) (Layout *, Client *);    /* called when layout is initialized */
+    Client *(*deinit) (Layout *); /* called when layout is uninitialized */
+    void (*arrange) (Layout *);   /* called when layout is resized */
+     Bool(*attach) (Layout *, Client *);  /* called on attach */
+    void (*detach) (Layout *, Client *, Bool unmap);      /* called on detach */
     void (*resize) (Frame *, XRectangle *, XPoint *);   /* called after resize */
     void (*focus) (Frame *, Bool raise);        /* focussing a frame */
-    Frame *(*frames) (Area *);  /* called for drawing */
-    Frame *(*sel) (Area *);     /* returns selected frame */
-    Action *(*actions) (Area *);        /* local action table */
-    Layout *next;
+    Frame *(*frames) (Layout *);  /* called for drawing */
+    Frame *(*sel) (Layout *);     /* returns selected frame */
+    Action *(*actions) (Layout *);        /* local action table */
+    LayoutDef *next;
 };
 
-struct Area {
+struct Layout {
     Page *page;
-    Layout *layout;
+    LayoutDef *def;
     void *aux;                  /* free pointer */
-    File *file[A_LAST];
+    File *file[L_LAST];
 };
 
 struct Frame {
-    Area *area;
+    Layout *layout;
     Window win;
     Client *sel;
     Client *clients;
@@ -169,7 +169,7 @@ AttachQueue *attachqueue;
 size_t npages;
 Client *detached;
 size_t ndetached;
-Layout *layouts;
+LayoutDef *layouts;
 
 Display *dpy;
 IXPServer *ixps;
@@ -177,7 +177,7 @@ int screen_num;
 Window root;
 Window transient;
 XRectangle rect;
-XRectangle area_rect;
+XRectangle layout_rect;
 XFontStruct *font;
 XColor xorcolor;
 GC xorgc;
@@ -208,15 +208,6 @@ File *def[WM_LAST];
 
 unsigned int valid_mask, num_lock_mask;
 
-/* area.c */
-Area *alloc_area(Page * p, char *layout);
-void destroy_area(Area * a);
-void focus_area(Area * a);
-void hide_area(Area * a);
-void show_area(Area * a, Bool raise);
-Area *sel_area();
-void attach_frame_to_area(Area * a, Frame * f);
-void detach_frame_from_area(Frame * f);
 
 /* client.c */
 Client *alloc_client(Window w);
@@ -276,7 +267,15 @@ void hide_page(Page * p);
 void show_page(Page * p);
 
 /* layout.c */
-Layout *match_layout(char *name);
+Layout *alloc_layout(Page * p, char *layout);
+void destroy_layout(Layout *l);
+void focus_layout(Layout *l);
+void hide_layout(Layout *l);
+void show_layout(Layout *l, Bool raise);
+Layout *sel_layout();
+void attach_frame_to_layout(Layout *l, Frame * f);
+void detach_frame_from_layout(Frame * f);
+LayoutDef *match_layout_def(char *name);
 
 /* layoutdef.c */
 void init_layouts();

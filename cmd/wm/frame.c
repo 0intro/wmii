@@ -75,10 +75,10 @@ win_to_frame(Window w)
     Page *p;
     for(p = pages; p; p = p->next) {
         Frame *f;
-        for(f = p->managed->layout->frames(p->managed); f; f = f->next)
+        for(f = p->managed->def->frames(p->managed); f; f = f->next)
             if(f->win == w)
                 return f;
-        for(f = p->floating->layout->frames(p->floating); f; f = f->next)
+        for(f = p->floating->def->frames(p->floating); f; f = f->next)
             if(f->win == w)
                 return f;
     }
@@ -165,12 +165,12 @@ resize_incremental(Frame * f, unsigned int tabh, unsigned int bw)
 void
 resize_frame(Frame * f, XRectangle * r, XPoint * pt)
 {
-    Area *a = f->area;
+    Layout *l = f->layout;
     unsigned int tabh = tab_height(f);
     unsigned int bw = border_width(f);
     Client *c;
 
-    a->layout->resize(f, r, pt);
+    l->def->resize(f, r, pt);
 
     /* resize if client requests special size */
     check_dimensions(f, tabh, bw);
@@ -260,7 +260,7 @@ handle_frame_buttonpress(XButtonEvent * e, Frame * f)
     Align align;
     int bindex, cindex = e->x / (f->rect.width / f->nclients);
     Client *new = clientat(f->clients, cindex);
-    f->area->layout->focus(f, False);
+    f->layout->def->focus(f, False);
 	sel_client(new);
     if(e->button == Button1) {
         align = cursor_to_align(f->cursor);
@@ -330,11 +330,11 @@ detach_client_from_frame(Client * c, Bool unmap)
 }
 
 static Frame *
-handle_before_read_frames(IXPServer * s, File * file, Area * a)
+handle_before_read_frames(IXPServer *s, File *file, Layout *l)
 {
     Frame *f;
     char buf[32];
-    for(f = a->layout->frames(a); f; f = f->next) {
+    for(f = l->def->frames(l); f; f = f->next) {
         if(file == f->file[F_GEOMETRY]) {
             snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
                      f->rect.width, f->rect.height);
@@ -373,13 +373,13 @@ handle_before_read_frame(IXPServer * s, File * file)
 }
 
 static Frame *
-handle_after_write_frames(IXPServer * s, File * file, Area * a)
+handle_after_write_frames(IXPServer *s, File *file, Layout *l)
 {
     Frame *f;
-    for(f = a->layout->frames(a); f; f = f->next) {
+    for(f = l->def->frames(l); f; f = f->next) {
         if(file == f->file[F_TAB] || file == f->file[F_BORDER]
            || file == f->file[F_HANDLE_INC]) {
-            f->area->layout->arrange(f->area);
+            f->layout->def->arrange(f->layout);
             return f;
         } else if(file == f->file[F_GEOMETRY]) {
             char *geom = f->file[F_GEOMETRY]->content;
@@ -408,8 +408,8 @@ handle_after_write_frame(IXPServer * s, File * file)
 Frame *
 sel_frame()
 {
-    Area *a = sel_area();
-    if(!a)
+    Layout *l = sel_layout();
+    if(!l)
         return nil;
-    return a->layout->sel(a);
+    return l->def->sel(l);
 }

@@ -29,7 +29,7 @@ static void _detach_client(void *obj, char *arg);
 static void _close_client(void *obj, char *arg);
 static void pager(void *obj, char *arg);
 static void detached_clients(void *obj, char *arg);
-static void reserve_area(void *obj, char *arg);
+static void reserve_layout(void *obj, char *arg);
 
 /* action table for /ctl namespace */
 Action wm_acttbl[] = {
@@ -42,7 +42,7 @@ Action wm_acttbl[] = {
     {"quit", quit},
     {"pager", pager},
     {"detached_clients", detached_clients},
-    {"reserve_area", reserve_area},
+    {"reserve_layout", reserve_layout},
     {0, 0}
 };
 
@@ -118,31 +118,19 @@ scale_rect(XRectangle * from_dim, XRectangle * to_dim,
 }
 
 static void
-draw_pager_area(Area * a, Draw * d)
+draw_pager_layout(Layout *l, Draw * d)
 {
     Frame *f;
     Frame *sel = sel_frame();
-    for(f = a->layout->frames(a); f; f = f->next) {
+    for(f = l->def->frames(l); f; f = f->next) {
         if(f == sel) {
-            d->bg =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_SEL_BG_COLOR]->content);
-            d->fg =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_SEL_FG_COLOR]->content);
-            d->border =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_SEL_BORDER_COLOR]->content);
+            d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
+            d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
+            d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
         } else {
-            d->bg =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_NORM_BG_COLOR]->content);
-            d->fg =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_NORM_FG_COLOR]->content);
-            d->border =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_NORM_BORDER_COLOR]->content);
+            d->bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
+            d->fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
+            d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
         }
         d->data = f->sel->name;
         scale_rect(&rect, &initial_rect, &f->rect, &d->rect);
@@ -187,8 +175,8 @@ draw_pager_page(Page * p, Draw * d)
     blitz_drawlabel(dpy, d);
     XSync(dpy, False);
     if(p->managed)
-        draw_pager_area(p->managed, d);
-    draw_pager_area(p->floating, d);
+        draw_pager_layout(p->managed, d);
+    draw_pager_layout(p->floating, d);
 }
 
 static void
@@ -364,7 +352,7 @@ draw_detached_clients()
 }
 
 static void
-reserve_area(void *obj, char *arg)
+reserve_layout(void *obj, char *arg)
 {
     if(arg && strrchr(arg, ' ')) {
         XRectangle r;
@@ -500,12 +488,12 @@ win_to_client(Window w)
             return c;
     for(p = pages; p; p = p->next) {
         Frame *f;
-        for(f = p->managed->layout->frames(p->managed); f; f = f->next) {
+        for(f = p->managed->def->frames(p->managed); f; f = f->next) {
             for(c = f->clients; c; c = c->next)
                 if(c->win == w)
                     return c;
         }
-        for(f = p->floating->layout->frames(p->floating); f; f = f->next) {
+        for(f = p->floating->def->frames(p->floating); f; f = f->next) {
             for(c = f->clients; c; c = c->next)
                 if(c->win == w)
                     return c;
@@ -606,8 +594,8 @@ update_pages()
     Page *p;
 
     for(p = pages; p; p = p->next) {
-        p->floating->layout->arrange(p->floating);
-        p->managed->layout->arrange(p->managed);
+        p->floating->def->arrange(p->floating);
+        p->managed->def->arrange(p->managed);
     }
 }
 
@@ -616,8 +604,8 @@ handle_before_read(IXPServer * s, File * f)
 {
     char buf[64];
     if(f == def[WM_AREA_GEOMETRY]) {
-        snprintf(buf, 64, "%d %d %d %d", area_rect.x, area_rect.y,
-                 area_rect.width, area_rect.height);
+        snprintf(buf, 64, "%d %d %d %d", layout_rect.x, layout_rect.y,
+                 layout_rect.width, layout_rect.height);
         if(f->content)
             free(f->content);
         f->content = cext_estrdup(buf);
@@ -644,8 +632,8 @@ handle_after_write(IXPServer * s, File * f)
     } else if(f == def[WM_AREA_GEOMETRY]) {
         char *geom = def[WM_AREA_GEOMETRY]->content;
         if(geom && strrchr(geom, ' ')) {
-            area_rect = rect;
-            blitz_strtorect(&rect, &area_rect, geom);
+            layout_rect = rect;
+            blitz_strtorect(&rect, &layout_rect, geom);
             update_pages();
         }
     }
@@ -693,7 +681,7 @@ init_default()
                             BLITZ_SEL_FG_COLOR);
     def[WM_TRANS_COLOR]->after_write = handle_after_write;
     def[WM_AREA_GEOMETRY] =
-        wmii_create_ixpfile(ixps, "/default/area/geometry",
+        wmii_create_ixpfile(ixps, "/default/layout/geometry",
                             BLITZ_SEL_FG_COLOR);
     def[WM_AREA_GEOMETRY]->after_write = handle_after_write;
     def[WM_AREA_GEOMETRY]->before_read = handle_before_read;
@@ -753,7 +741,7 @@ init_screen()
     rect.x = rect.y = 0;
     rect.width = DisplayWidth(dpy, screen_num);
     rect.height = DisplayHeight(dpy, screen_num);
-    area_rect = rect;
+    layout_rect = rect;
 
     wa.override_redirect = 1;
     wa.background_pixmap = ParentRelative;
@@ -814,11 +802,11 @@ cleanup()
     Client *c;
     for(p = pages; p; p = p->next) {
         Frame *f;
-        for(f = p->managed->layout->frames(p->managed); f; f = f->next) {
+        for(f = p->managed->def->frames(p->managed); f; f = f->next) {
             while((c = f->clients))
                 detach_client_from_frame(c, False);
         }
-        for(f = p->floating->layout->frames(p->floating); f; f = f->next) {
+        for(f = p->floating->def->frames(p->floating); f; f = f->next) {
             while((c = f->clients))
                 detach_client_from_frame(c, False);
         }

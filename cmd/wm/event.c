@@ -64,9 +64,9 @@ handle_buttonpress(XEvent * e)
         handle_frame_buttonpress(ev, f);
 	else if((c = win_to_client(ev->window))) {
         if(c->frame) {          /* client is attached */
-			focus_area(c->frame->area);
+			focus_layout(c->frame->layout);
 			focus_client(c);
-			c->frame->area->layout->focus(c->frame, False);
+			c->frame->layout->def->focus(c->frame, False);
             ev->state &= valid_mask;
             if(ev->state & Mod1Mask) {
                 Align align;
@@ -107,10 +107,10 @@ handle_configurerequest(XEvent * e)
         f = c->frame;
 
         if(f) {
-            Page *p = f->area->page;
-            if(f->area == p->managed) {
-                f->area->layout->detach(f->area, c, False);
-                p->floating->layout->attach(p->floating, c);
+            Page *p = f->layout->page;
+            if(f->layout == p->managed) {
+                f->layout->def->detach(f->layout, c, False);
+                p->floating->def->attach(p->floating, c);
                 f = c->frame;
             }
             bw = border_width(f);

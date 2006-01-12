@@ -10,16 +10,16 @@
 #include "wm.h"
 #include "layoutdef.h"
 
-static void init_float(Area * a, Client * clients);
-static Client *deinit_float(Area * a);
-static void arrange_float(Area * a);
-static Bool attach_float(Area * a, Client * c);
-static void detach_float(Area * a, Client * c, Bool unmap);
+static void init_float(Layout *l, Client * clients);
+static Client *deinit_float(Layout *l);
+static void arrange_float(Layout *l);
+static Bool attach_float(Layout *l, Client * c);
+static void detach_float(Layout *l, Client * c, Bool unmap);
 static void resize_float(Frame * f, XRectangle * new, XPoint * pt);
 static void focus_float(Frame * f, Bool raise);
-static Frame *frames_float(Area * a);
-static Frame *sel_float(Area * a);
-static Action *actions_float(Area * a);
+static Frame *frames_float(Layout *l);
+static Frame *sel_float(Layout *l);
+static Action *actions_float(Layout *l);
 
 static void select_frame(void *obj, char *arg);
 
@@ -37,7 +37,7 @@ typedef struct {
 void
 init_layout_float()
 {
-    Layout *lp, *l = cext_emallocz(sizeof(Layout));
+    LayoutDef *lp, *l = cext_emallocz(sizeof(LayoutDef));
     l->name = "float";
     l->init = init_float;
     l->deinit = deinit_float;
@@ -58,28 +58,28 @@ init_layout_float()
 }
 
 static void
-arrange_float(Area * a)
+arrange_float(Layout *l)
 {
 }
 
 static void
-init_float(Area * a, Client * clients)
+init_float(Layout *l, Client * clients)
 {
     Client *n, *c = clients;
     Float *fl = cext_emallocz(sizeof(Float));
-    a->aux = fl;
+    l->aux = fl;
 
     while(c) {
         n = c->next;
-        attach_float(a, c);
+        attach_float(l, c);
         c = n;
     }
 }
 
 static void
-attach_frame(Area * a, Frame * new)
+attach_frame(Layout *l, Frame * new)
 {
-    Float *fl = a->aux;
+    Float *fl = l->aux;
     Frame *f;
 
     for(f = fl->frames; f && f->next; f = f->next);
@@ -89,15 +89,15 @@ attach_frame(Area * a, Frame * new)
         f->next = new;
         new->prev = f;
     }
-    attach_frame_to_area(a, new);
+    attach_frame_to_layout(l, new);
     fl->sel = new;
     fl->nframes++;
 }
 
 static void
-detach_frame(Area * a, Frame * old)
+detach_frame(Layout *l, Frame * old)
 {
-    Float *fl = a->aux;
+    Float *fl = l->aux;
 
     if(fl->sel == old) {
         if(old->prev)
@@ -113,14 +113,14 @@ detach_frame(Area * a, Frame * old)
         old->next->prev = old->prev;
     if(!fl->sel)
         fl->sel = fl->frames;
-    detach_frame_from_area(old);
+    detach_frame_from_layout(old);
     fl->nframes--;
 }
 
 static Client *
-deinit_float(Area * a)
+deinit_float(Layout *l)
 {
-    Float *fl = a->aux;
+    Float *fl = l->aux;
     Client *res = nil, *c = nil, *cl;
     Frame *f;
 
@@ -136,42 +136,42 @@ deinit_float(Area * a)
                 c = cl;
             }
         }
-        detach_frame(a, f);
+        detach_frame(l, f);
         destroy_frame(f);
     }
     free(fl);
-    a->aux = nil;
+    l->aux = nil;
     return res;
 }
 
 static Bool
-attach_float(Area * a, Client * c)
+attach_float(Layout *l, Client * c)
 {
     Frame *f;
 
     /* check for tabbing? */
-    if(c->rect.y < area_rect.y)
-		c->rect.y = area_rect.y;
-	if(c->rect.x < area_rect.x)
-		c->rect.x = area_rect.x;
+    if(c->rect.y < layout_rect.y)
+		c->rect.y = layout_rect.y;
+	if(c->rect.x < layout_rect.x)
+		c->rect.x = layout_rect.x;
 
 	f = alloc_frame(&c->rect);
-	attach_frame_to_area(a, f);
-	attach_frame(a, f);
+	attach_frame_to_layout(l, f);
+	attach_frame(l, f);
     attach_client_to_frame(f, c);
-    if(a->page == selpage)
+    if(l->page == selpage)
         XMapWindow(dpy, f->win);
     focus_float(f, True);
     return True;
 }
 
 static void
-detach_float(Area * a, Client * c, Bool unmap)
+detach_float(Layout *l, Client * c, Bool unmap)
 {
     Frame *f = c->frame;
     detach_client_from_frame(c, unmap);
     if(!f->clients) {
-        detach_frame(a, f);
+        detach_frame(l, f);
         destroy_frame(f);
     }
 }
@@ -185,12 +185,12 @@ resize_float(Frame * f, XRectangle * new, XPoint * pt)
 static void
 focus_float(Frame * f, Bool raise)
 {
-    Area *a = f->area;
-    Float *fl = a->aux;
+    Layout *l = f->layout;
+    Float *fl = l->aux;
     Frame *old = fl->sel;
 
     fl->sel = f;
-    a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
+    l->file[L_SEL_FRAME]->content = f->file[F_PREFIX]->content;
     if(raise) {
         XRaiseWindow(dpy, f->win);
     	XWarpPointer(dpy, None, f->sel->win, 0, 0, 0, 0,
@@ -203,17 +203,17 @@ focus_float(Frame * f, Bool raise)
 }
 
 static Frame *
-frames_float(Area * a)
+frames_float(Layout *l)
 {
-    Float *fl = a->aux;
+    Float *fl = l->aux;
     return fl->frames;
 }
 
 static void
 select_frame(void *obj, char *arg)
 {
-    Area *a = obj;
-    Float *fl = a->aux;
+    Layout *l = obj;
+    Float *fl = l->aux;
     Frame *f = fl->sel;
 
     if(!f || !arg)
@@ -238,14 +238,14 @@ select_frame(void *obj, char *arg)
 }
 
 static Frame *
-sel_float(Area * a)
+sel_float(Layout *l)
 {
-    Float *fl = a->aux;
+    Float *fl = l->aux;
     return fl->sel;
 }
 
 static Action *
-actions_float(Area * a)
+actions_float(Layout *l)
 {
     return lfloat_acttbl;
 }

@@ -39,16 +39,16 @@ struct Column {
     Column *next;
 };
 
-static void init_col(Area * a, Client * clients);
-static Client *deinit_col(Area * a);
-static void arrange_col(Area * a);
-static Bool attach_col(Area * a, Client * c);
-static void detach_col(Area * a, Client * c, Bool unmap);
+static void init_col(Layout *l, Client * clients);
+static Client *deinit_col(Layout *l);
+static void arrange_col(Layout *l);
+static Bool attach_col(Layout *l, Client * c);
+static void detach_col(Layout *l, Client * c, Bool unmap);
 static void resize_col(Frame * f, XRectangle * new, XPoint * pt);
 static void focus_col(Frame * f, Bool raise);
-static Frame *frames_col(Area * a);
-static Frame *sel_col(Area * a);
-static Action *actions_col(Area * a);
+static Frame *frames_col(Layout *l);
+static Frame *sel_col(Layout *l);
+static Action *actions_col(Layout *l);
 
 static void select_frame(void *obj, char *arg);
 static void swap_frame(void *obj, char *arg);
@@ -66,7 +66,7 @@ static Action lcol_acttbl[] = {
 void
 init_layout_column()
 {
-    Layout *lp, *l = cext_emallocz(sizeof(Layout));
+    LayoutDef *lp, *l = cext_emallocz(sizeof(LayoutDef));
     l->name = "column";
     l->init = init_col;
     l->deinit = deinit_col;
@@ -90,13 +90,13 @@ static void
 arrange_column(Column * col)
 {
     Cell *cell;
-    unsigned int i = 0, h = area_rect.height / col->ncells;
+    unsigned int i = 0, h = layout_rect.height / col->ncells;
     for(cell = col->cells; cell; cell = cell->next) {
         Frame *f = cell->frame;
         f->rect = col->rect;
-        f->rect.y = area_rect.y + i * h;
+        f->rect.y = layout_rect.y + i * h;
         if(!cell->next)
-            f->rect.height = area_rect.height - f->rect.y + area_rect.y;
+            f->rect.height = layout_rect.height - f->rect.y + layout_rect.y;
         else
             f->rect.height = h;
         resize_frame(f, &f->rect, 0);
@@ -105,9 +105,9 @@ arrange_column(Column * col)
 }
 
 static void
-arrange_col(Area * a)
+arrange_col(Layout *l)
 {
-    Acme *acme = a->aux;
+    Acme *acme = l->aux;
     Column *col;
     for(col = acme->columns; col; col = col->next)
         arrange_column(col);
@@ -115,22 +115,22 @@ arrange_col(Area * a)
 }
 
 static void
-init_col(Area * a, Client * clients)
+init_col(Layout *l, Client * clients)
 {
     Client *n, *c = clients;
 
-    a->aux = cext_emallocz(sizeof(Acme));
+    l->aux = cext_emallocz(sizeof(Acme));
     while(c) {
         n = c->next;
-        attach_col(a, c);
+        attach_col(l, c);
         c = n;
     }
 }
 
 static void
-attach_frame(Area * a, Column * col, Frame * new)
+attach_frame(Layout *l, Column * col, Frame * new)
 {
-    Acme *acme = a->aux;
+    Acme *acme = l->aux;
     Cell *c, *cell = cext_emallocz(sizeof(Cell));
     Frame *f;
 
@@ -154,14 +154,14 @@ attach_frame(Area * a, Column * col, Frame * new)
         f->next = new;
         new->prev = f;
     }
-    attach_frame_to_area(a, new);
+    attach_frame_to_layout(l, new);
     acme->nframes++;
 }
 
 static void
-detach_frame(Area * a, Frame * old)
+detach_frame(Layout *l, Frame * old)
 {
-    Acme *acme = a->aux;
+    Acme *acme = l->aux;
     Cell *cell = old->aux;
     Column *col = cell->col;
 
@@ -189,14 +189,14 @@ detach_frame(Area * a, Frame * old)
     if(old->next)
         old->next->prev = old->prev;
     old->aux = nil;
-    detach_frame_from_area(old);
+    detach_frame_from_layout(old);
     acme->nframes--;
 }
 
 static Client *
-deinit_col(Area * a)
+deinit_col(Layout *l)
 {
-    Acme *acme = a->aux;
+    Acme *acme = l->aux;
     Frame *f;
     Client *cl, *res = nil, *c = nil;
     Column *col = acme->columns;
@@ -213,7 +213,7 @@ deinit_col(Area * a)
                 c = cl;
             }
         }
-        detach_frame(a, f);
+        detach_frame(l, f);
         destroy_frame(f);
     }
     while((col = acme->columns)) {
@@ -221,21 +221,21 @@ deinit_col(Area * a)
         free(col);
     }
     free(acme);
-    a->aux = 0;
+    l->aux = 0;
     return res;
 }
 
 static Bool
-attach_col(Area * a, Client * c)
+attach_col(Layout *l, Client * c)
 {
-    Acme *acme = a->aux;
+    Acme *acme = l->aux;
     Column *col = acme->sel;
     Frame *f = nil;
 
     if(!col) {
         col = cext_emallocz(sizeof(Column));
 		col->exclusive = True; /* first col is exclusive */
-        col->rect = area_rect;
+        col->rect = layout_rect;
         acme->columns = acme->sel = col;
         acme->ncolumns++;
     }
@@ -246,48 +246,48 @@ attach_col(Area * a, Client * c)
 	}
 
     f = alloc_frame(&c->rect);
-    attach_frame(a, col, f);
+    attach_frame(l, col, f);
     attach_client_to_frame(f, c);
     arrange_column(col);
-    if(a->page == selpage)
+    if(l->page == selpage)
         XMapWindow(dpy, f->win);
     focus_col(f, True);
 	if(col->exclusive && col->ncells > 1)
-		new_col(a, nil);
+		new_col(l, nil);
     return True;
 }
 
 static void
-update_column_width(Area * a)
+update_column_width(Layout *l)
 {
-    Acme *acme = a->aux;
+    Acme *acme = l->aux;
     unsigned int i = 0, width;
     Column *col;
 
     if(!acme->ncolumns)
         return;
 
-    width = area_rect.width / acme->ncolumns;
+    width = layout_rect.width / acme->ncolumns;
     for(col = acme->columns; col; col = col->next) {
-        col->rect = area_rect;
+        col->rect = layout_rect;
         col->rect.x = i * width;
         col->rect.width = width;
         i++;
     }
-    arrange_col(a);
+    arrange_col(l);
 }
 
 static void
-detach_col(Area * a, Client * c, Bool unmap)
+detach_col(Layout *l, Client * c, Bool unmap)
 {
-    Acme *acme = a->aux;
+    Acme *acme = l->aux;
     Frame *f = c->frame;
     Cell *cell = f->aux;
     Column *col = cell->col;
 
     detach_client_from_frame(c, unmap);
     if(!f->clients) {
-        detach_frame(a, f);
+        detach_frame(l, f);
         destroy_frame(f);
     } else
         return;
@@ -310,7 +310,7 @@ detach_col(Area * a, Client * c, Bool unmap)
             acme->sel = acme->columns;
         acme->ncolumns--;
         free(col);
-        update_column_width(a);
+        update_column_width(l);
     }
 }
 
@@ -378,10 +378,10 @@ drop_resize(Frame * f, XRectangle * new)
 static void
 drop_moving(Frame * f, XRectangle * new, XPoint * pt)
 {
-    Area *a = f->area;
+    Layout *l = f->layout;
     Cell *cell = f->aux;
     Column *src = cell->col, *tgt = 0;
-    Acme *acme = a->aux;
+    Acme *acme = l->aux;
 
     if(!pt)
         return;
@@ -393,8 +393,8 @@ drop_moving(Frame * f, XRectangle * new, XPoint * pt)
         if(tgt != src) {
             if(src->ncells < 2)
                 return;
-            detach_frame(a, f);
-            attach_frame(a, tgt, f);
+            detach_frame(l, f);
+            attach_frame(l, tgt, f);
             arrange_column(src);
             arrange_column(tgt);
             focus_col(f, True);
@@ -427,14 +427,14 @@ resize_col(Frame * f, XRectangle * new, XPoint * pt)
 static void
 focus_col(Frame * f, Bool raise)
 {
-    Area *a = f->area;
-    Acme *acme = a->aux;
-	Frame *old = sel_col(a);
+    Layout *l = f->layout;
+    Acme *acme = l->aux;
+	Frame *old = sel_col(l);
 	Cell *cell = f->aux;
 
     acme->sel = cell->col;
 	cell->col->sel = cell;
-    a->file[A_SEL_FRAME]->content = f->file[F_PREFIX]->content;
+    l->file[L_SEL_FRAME]->content = f->file[F_PREFIX]->content;
     if(raise)
     	XWarpPointer(dpy, None, f->sel->win, 0, 0, 0, 0,
 					 f->sel->rect.width / 2, f->sel->rect.height / 2);
@@ -445,16 +445,16 @@ focus_col(Frame * f, Bool raise)
 }
 
 static Frame *
-frames_col(Area * a)
+frames_col(Layout *l)
 {
-    Acme *acme = a->aux;
+    Acme *acme = l->aux;
     return acme->frames;
 }
 
 static Frame *
-sel_col(Area * a)
+sel_col(Layout *l)
 {
-    Acme *acme = a->aux;
+    Acme *acme = l->aux;
     Column *col = acme->sel;
 
     if(col && col->sel)
@@ -463,7 +463,7 @@ sel_col(Area * a)
 }
 
 static Action *
-actions_col(Area * a)
+actions_col(Layout *l)
 {
     return lcol_acttbl;
 }
@@ -471,8 +471,8 @@ actions_col(Area * a)
 static void
 select_frame(void *obj, char *arg)
 {
-    Area *a = obj;
-    Acme *acme = a->aux;
+    Layout *l = obj;
+    Acme *acme = l->aux;
     Column *c, *col = acme->sel;
     Cell *cell;
 
@@ -514,8 +514,8 @@ select_frame(void *obj, char *arg)
 static void
 swap_frame(void *obj, char *arg)
 {
-    Area *a = obj;
-    Acme *acme = a->aux;
+    Layout *l = obj;
+    Acme *acme = l->aux;
     Column *west = nil, *east = nil, *col = acme->sel;
     Cell *north = nil, *south = nil, *cell = col->sel;
     Frame *f;
@@ -585,8 +585,8 @@ swap_frame(void *obj, char *arg)
 static void
 new_col(void *obj, char *arg)
 {
-    Area *a = obj;
-    Acme *acme = a->aux;
+    Layout *l = obj;
+    Acme *acme = l->aux;
     Column *c, *new, *col = acme->sel;
     Frame *f;
 
@@ -597,24 +597,24 @@ new_col(void *obj, char *arg)
     for(c = acme->columns; c && c->next; c = c->next);
 
     new = cext_emallocz(sizeof(Column));
-    new->rect = area_rect;
+    new->rect = layout_rect;
     new->prev = c;
     c->next = new;
     acme->ncolumns++;
     acme->sel = new;
 
-    detach_frame(a, f);
-    attach_frame(a, new, f);
+    detach_frame(l, f);
+    attach_frame(l, new, f);
 
-    update_column_width(a);
+    update_column_width(l);
     focus_col(f, True);
 }
 
 static void
 toggle_excl_col(void *obj, char *arg)
 {
-    Area *a = obj;
-    Acme *acme = a->aux;
+    Layout *l = obj;
+    Acme *acme = l->aux;
     Column *col = acme->sel;
 
     if(!col)

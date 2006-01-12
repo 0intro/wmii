@@ -12,12 +12,12 @@
 
 static void handle_after_write_page(IXPServer * s, File * file);
 
-static void toggle_area(void *obj, char *arg);
+static void toggle_layout(void *obj, char *arg);
 static void xexec(void *obj, char *arg);
 
 /* action table for /?/ namespace */
 Action page_acttbl[] = {
-    {"toggle", toggle_area},
+    {"toggle", toggle_layout},
     {"exec", xexec},
     {0, 0}
 };
@@ -41,8 +41,8 @@ alloc_page()
     snprintf(buf, sizeof(buf), "/%d/ctl", (int)npages);
     new->file[P_CTL] = ixp_create(ixps, buf);
     new->file[P_CTL]->after_write = handle_after_write_page;
-    new->floating = alloc_area(new, "float");
-    new->sel = new->managed = alloc_area(new, def[WM_LAYOUT]->content);
+    new->floating = alloc_layout(new, "float");
+    new->sel = new->managed = alloc_layout(new, def[WM_LAYOUT]->content);
     for(p = pages; p && p->next; p = p->next);
     if(!p) {
         pages = new;
@@ -86,8 +86,8 @@ destroy_page(Page * p)
 			n = n->next;
 	}
 
-    destroy_area(p->floating);
-    destroy_area(p->managed);
+    destroy_layout(p->floating);
+    destroy_layout(p->managed);
     def[WM_SEL_PAGE]->content = 0;
     ixp_remove_file(ixps, p->file[P_PREFIX]);
     if(p == selpage) {
@@ -134,7 +134,7 @@ focus_page(Page * p)
     show_page(p);
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
-    focus_area(sel_area());
+    focus_layout(sel_layout());
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &(selpage->index), 1);
 }
 
@@ -172,15 +172,15 @@ rectangles(unsigned int *num)
 void
 hide_page(Page * p)
 {
-    hide_area(p->managed);
-    hide_area(p->floating);
+    hide_layout(p->managed);
+    hide_layout(p->floating);
 }
 
 void
 show_page(Page * p)
 {
-    show_area(p->managed, False);
-    show_area(p->floating, False);
+    show_layout(p->managed, False);
+    show_layout(p->floating, False);
 }
 
 static void
@@ -212,7 +212,7 @@ xexec(void *obj, char *arg)
 }
 
 static void
-toggle_area(void *obj, char *arg)
+toggle_layout(void *obj, char *arg)
 {
     Page *p = obj;
 
@@ -221,7 +221,7 @@ toggle_area(void *obj, char *arg)
     else
         p->sel = p->managed;
 
-    focus_area(p->sel);
+    focus_layout(p->sel);
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
