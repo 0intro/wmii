@@ -135,7 +135,8 @@ focus_page(Page * p)
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
     focus_layout(sel_layout());
-    XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &(selpage->index), 1);
+    XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
+			        32, PropModeReplace, (unsigned char *) &(selpage->index), 1);
 }
 
 XRectangle *

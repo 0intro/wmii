@@ -84,7 +84,7 @@ enum {
 #define GAP                    5
 
 #define ROOT_MASK              SubstructureRedirectMask
-#define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask | ButtonPressMask)
+#define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
 
 typedef struct Page Page;
 typedef struct AttachQueue AttachQueue;
