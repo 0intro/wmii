@@ -34,10 +34,10 @@ alloc_page()
     snprintf(buf, sizeof(buf), "/%d/name", (int)npages);
     new->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
     snprintf(buf, sizeof(buf), "/%d/layout/", (int)npages);
-    new->file[P_AREA_PREFIX] = ixp_create(ixps, buf);
+    new->file[P_LAYOUT_PREFIX] = ixp_create(ixps, buf);
     snprintf(buf, sizeof(buf), "/%d/layout/sel", (int)npages);
-    new->file[P_SEL_AREA] = ixp_create(ixps, buf);
-    new->file[P_SEL_AREA]->bind = 1;    /* mount point */
+    new->file[P_SEL_LAYOUT] = ixp_create(ixps, buf);
+    new->file[P_SEL_LAYOUT]->bind = 1;    /* mount point */
     snprintf(buf, sizeof(buf), "/%d/ctl", (int)npages);
     new->file[P_CTL] = ixp_create(ixps, buf);
     new->file[P_CTL]->after_write = handle_after_write_page;

@@ -603,7 +603,7 @@ void
 handle_before_read(IXPServer * s, File * f)
 {
     char buf[64];
-    if(f == def[WM_AREA_GEOMETRY]) {
+    if(f == def[WM_MANAGED_GEOMETRY]) {
         snprintf(buf, 64, "%d %d %d %d", layout_rect.x, layout_rect.y,
                  layout_rect.width, layout_rect.height);
         if(f->content)
@@ -629,8 +629,8 @@ handle_after_write(IXPServer * s, File * f)
     } else if(f == def[WM_FONT]) {
         XFreeFont(dpy, font);
         font = blitz_getfont(dpy, def[WM_FONT]->content);
-    } else if(f == def[WM_AREA_GEOMETRY]) {
-        char *geom = def[WM_AREA_GEOMETRY]->content;
+    } else if(f == def[WM_MANAGED_GEOMETRY]) {
+        char *geom = def[WM_MANAGED_GEOMETRY]->content;
         if(geom && strrchr(geom, ' ')) {
             layout_rect = rect;
             blitz_strtorect(&rect, &layout_rect, geom);
@@ -674,17 +674,16 @@ init_cursors()
 static void
 init_default()
 {
-    def[WM_DETACHED_FRAME] = ixp_create(ixps, "/detached/frame");
-    def[WM_DETACHED_CLIENT] = ixp_create(ixps, "/detached/client");
+    def[WM_DETACHED_FRAME] = ixp_create(ixps, "/detached");
     def[WM_TRANS_COLOR] =
         wmii_create_ixpfile(ixps, "/default/transcolor",
                             BLITZ_SEL_FG_COLOR);
     def[WM_TRANS_COLOR]->after_write = handle_after_write;
-    def[WM_AREA_GEOMETRY] =
-        wmii_create_ixpfile(ixps, "/default/layout/geometry",
+    def[WM_MANAGED_GEOMETRY] =
+        wmii_create_ixpfile(ixps, "/default/geometry",
                             BLITZ_SEL_FG_COLOR);
-    def[WM_AREA_GEOMETRY]->after_write = handle_after_write;
-    def[WM_AREA_GEOMETRY]->before_read = handle_before_read;
+    def[WM_MANAGED_GEOMETRY]->after_write = handle_after_write;
+    def[WM_MANAGED_GEOMETRY]->before_read = handle_before_read;
     def[WM_SEL_BG_COLOR] =
         wmii_create_ixpfile(ixps, "/default/sstyle/bgcolor",
                             BLITZ_SEL_BG_COLOR);

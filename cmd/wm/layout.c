@@ -41,7 +41,7 @@ alloc_layout(Page * p, char *layout)
     l->file[L_NAME]->after_write = handle_after_write_layout;
     l->def = match_layout_def(layout);
     l->def->init(l, nil);
-    p->file[P_SEL_AREA]->content = l->file[L_PREFIX]->content;
+    p->file[P_SEL_LAYOUT]->content = l->file[L_PREFIX]->content;
     return l;
 }
 
@@ -59,7 +59,7 @@ focus_layout(Layout *l)
     Page *p = l->page;
     Frame *f;
     p->sel = l;
-    p->file[P_SEL_AREA]->content = l->file[L_PREFIX]->content;
+    p->file[P_SEL_LAYOUT]->content = l->file[L_PREFIX]->content;
     if((f = l->def->sel(l)))
         l->def->focus(f, False);
 }

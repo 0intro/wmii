@@ -12,8 +12,8 @@
 enum {
     P_PREFIX,
     P_NAME,
-    P_AREA_PREFIX,
-    P_SEL_AREA,
+    P_LAYOUT_PREFIX,
+    P_SEL_LAYOUT,
     P_CTL,
     P_LAST
 };
@@ -43,9 +43,8 @@ enum {
 enum {
     WM_CTL,
     WM_DETACHED_FRAME,
-    WM_DETACHED_CLIENT,
     WM_TRANS_COLOR,
-    WM_AREA_GEOMETRY,
+    WM_MANAGED_GEOMETRY,
     WM_SEL_BG_COLOR,
     WM_SEL_BORDER_COLOR,
     WM_SEL_FG_COLOR,
