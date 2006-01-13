@@ -110,16 +110,16 @@ struct Page {
 
 struct LayoutDef {
     char *name;
-    void (*init) (Layout *, Client *);    /* called when layout is initialized */
+    void (*init) (Layout *, Client *); /* called when layout is initialized */
     Client *(*deinit) (Layout *); /* called when layout is uninitialized */
-    void (*arrange) (Layout *);   /* called when layout is resized */
+    void (*arrange) (Layout *); /* called when layout is resized */
      Bool(*attach) (Layout *, Client *);  /* called on attach */
-    void (*detach) (Layout *, Client *, Bool unmap);      /* called on detach */
-    void (*resize) (Frame *, XRectangle *, XPoint *);   /* called after resize */
-    void (*focus) (Frame *, Bool raise);        /* focussing a frame */
-    Frame *(*frames) (Layout *);  /* called for drawing */
-    Frame *(*sel) (Layout *);     /* returns selected frame */
-    Action *(*actions) (Layout *);        /* local action table */
+    void (*detach) (Layout *, Client *, Bool unmap); /* called on detach */
+    void (*resize) (Frame *, XRectangle *, XPoint *); /* called after resize */
+    void (*focus) (Layout *, Client *, Bool raise); /* focussing a client */
+    Frame *(*frames) (Layout *); /* called for drawing */
+    Client *(*sel) (Layout *); /* returns selected client */
+    Action *(*actions) (Layout *); /* local action table */
     LayoutDef *next;
 };
 

@@ -148,25 +148,13 @@ draw_pager_page(Page * p, Draw * d)
     Page *page;
 
     if(p == selpage) {
-        d->bg =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_SEL_BG_COLOR]->content);
-        d->fg =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_SEL_FG_COLOR]->content);
-        d->border =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_SEL_BORDER_COLOR]->content);
+        d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
+        d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
+        d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
     } else {
-        d->bg =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_NORM_BG_COLOR]->content);
-        d->fg =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_NORM_FG_COLOR]->content);
-        d->border =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_NORM_BORDER_COLOR]->content);
+        d->bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
+        d->fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
+        d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
     }
     for(page = pages; page && page != p; page = page->next)
         idx++;

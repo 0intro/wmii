@@ -232,25 +232,13 @@ draw_client(Client * client)
     d.font = font;
 
     if((f == sel_frame()) && (c == f->sel)) {
-        d.bg =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_SEL_BG_COLOR]->content);
-        d.fg =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_SEL_FG_COLOR]->content);
-        d.border =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_SEL_BORDER_COLOR]->content);
+        d.bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
+        d.fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
+        d.border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
     } else {
-        d.bg =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_NORM_BG_COLOR]->content);
-        d.fg =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_NORM_FG_COLOR]->content);
-        d.border =
-            blitz_loadcolor(dpy, screen_num,
-                            def[WM_NORM_BORDER_COLOR]->content);
+        d.bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
+        d.fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
+        d.border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
     }
     blitz_drawlabel(dpy, &d);
     XSync(dpy, False);
@@ -360,8 +348,8 @@ detach_client(Client * c, Bool unmap)
 Client *
 sel_client()
 {
-    Frame *f = sel_frame();
-    return f ? f->sel : nil;
+	Layout *l = sel_layout();
+	return l ? l->def->sel(l) : nil;
 }
 
 Client *

@@ -57,11 +57,11 @@ void
 focus_layout(Layout *l)
 {
     Page *p = l->page;
-    Frame *f;
+    Client *c;
     p->sel = l;
     p->file[P_SEL_LAYOUT]->content = l->file[L_PREFIX]->content;
-    if((f = l->def->sel(l)))
-        l->def->focus(f, False);
+    if((c = l->def->sel(l)))
+        l->def->focus(l, c, False);
 }
 
 void

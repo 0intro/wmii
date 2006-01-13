@@ -16,9 +16,9 @@ static void arrange_float(Layout *l);
 static Bool attach_float(Layout *l, Client * c);
 static void detach_float(Layout *l, Client * c, Bool unmap);
 static void resize_float(Frame * f, XRectangle * new, XPoint * pt);
-static void focus_float(Frame * f, Bool raise);
+static void focus_float(Layout * l, Client * c, Bool raise);
 static Frame *frames_float(Layout *l);
-static Frame *sel_float(Layout *l);
+static Client *sel_float(Layout *l);
 static Action *actions_float(Layout *l);
 
 static void select_frame(void *obj, char *arg);
@@ -161,7 +161,7 @@ attach_float(Layout *l, Client * c)
     attach_client_to_frame(f, c);
     if(l->page == selpage)
         XMapWindow(dpy, f->win);
-    focus_float(f, True);
+    focus_float(l, c, True);
     return True;
 }
 
@@ -183,23 +183,22 @@ resize_float(Frame * f, XRectangle * new, XPoint * pt)
 }
 
 static void
-focus_float(Frame * f, Bool raise)
+focus_float(Layout *l, Client *c, Bool raise)
 {
-    Layout *l = f->layout;
     Float *fl = l->aux;
-    Frame *old = fl->sel;
+    Client *old = fl->sel->sel;
 
-    fl->sel = f;
-    l->file[L_SEL_FRAME]->content = f->file[F_PREFIX]->content;
+    fl->sel = c->frame;
+    l->file[L_SEL_FRAME]->content = c->frame->file[F_PREFIX]->content;
     if(raise) {
-        XRaiseWindow(dpy, f->win);
-    	XWarpPointer(dpy, None, f->sel->win, 0, 0, 0, 0,
-					 f->sel->rect.width / 2, f->sel->rect.height / 2);
+        XRaiseWindow(dpy, c->frame->win);
+    	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0,
+					 c->rect.width / 2, c->rect.height / 2);
     }
-    focus_client(f->sel);
-    if(old && old != f)
-        draw_frame(old);
-    draw_frame(f);
+    focus_client(c);
+    if(old && old != c)
+        draw_frame(old->frame);
+    draw_frame(c->frame);
 }
 
 static Frame *
@@ -234,14 +233,14 @@ select_frame(void *obj, char *arg)
             i++;
     }
     if(f)
-        focus_float(f, True);
+        focus_float(l, f->sel, True);
 }
 
-static Frame *
+static Client *
 sel_float(Layout *l)
 {
     Float *fl = l->aux;
-    return fl->sel;
+    return fl->sel ? fl->sel->sel : nil;
 }
 
 static Action *

@@ -224,25 +224,13 @@ draw_frame(Frame * f)
 
         /* define ground plate (i = 0) */
         if(f == sel_frame()) {
-            d.bg =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_SEL_BG_COLOR]->content);
-            d.fg =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_SEL_FG_COLOR]->content);
-            d.border =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_SEL_BORDER_COLOR]->content);
+            d.bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
+            d.fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
+            d.border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
         } else {
-            d.bg =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_NORM_BG_COLOR]->content);
-            d.fg =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_NORM_FG_COLOR]->content);
-            d.border =
-                blitz_loadcolor(dpy, screen_num,
-                                def[WM_NORM_BORDER_COLOR]->content);
+            d.bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
+            d.fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
+            d.border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
         }
         d.rect = f->rect;
         d.rect.x = d.rect.y = 0;
@@ -260,8 +248,7 @@ handle_frame_buttonpress(XButtonEvent * e, Frame * f)
     Align align;
     int bindex, cindex = e->x / (f->rect.width / f->nclients);
     Client *new = clientat(f->clients, cindex);
-    f->layout->def->focus(f, False);
-	sel_client(new);
+    f->layout->def->focus(f->layout, new, False);
     if(e->button == Button1) {
         align = cursor_to_align(f->cursor);
         if(align == CENTER)
@@ -408,8 +395,6 @@ handle_after_write_frame(IXPServer * s, File * file)
 Frame *
 sel_frame()
 {
-    Layout *l = sel_layout();
-    if(!l)
-        return nil;
-    return l->def->sel(l);
+	Client *c = sel_client();
+	return c ? c->frame : nil;
 }
