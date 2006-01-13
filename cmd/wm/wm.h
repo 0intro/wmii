@@ -113,7 +113,7 @@ struct LayoutDef {
     void (*init) (Layout *, Client *); /* called when layout is initialized */
     Client *(*deinit) (Layout *); /* called when layout is uninitialized */
     void (*arrange) (Layout *); /* called when layout is resized */
-     Bool(*attach) (Layout *, Client *);  /* called on attach */
+    Bool(*attach) (Layout *, Client *);  /* called on attach */
     void (*detach) (Layout *, Client *, Bool unmap); /* called on detach */
     void (*resize) (Frame *, XRectangle *, XPoint *); /* called after resize */
     void (*focus) (Layout *, Client *, Bool raise); /* focussing a client */
@@ -220,10 +220,11 @@ void draw_clients(Frame * f);
 void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert);
 void grab_client(Client * c, unsigned long mod, unsigned int button);
 void ungrab_client(Client * c, unsigned long mod, unsigned int button);
-void hide_client(Client * c);
-void show_client(Client * c);
+void unmap_client(Client * c);
+void map_client(Client * c);
 void reparent_client(Client * c, Window w, int x, int y);
 void focus_client(Client * c);
+void unfocus_client(Client * c);
 void attach_client(Client * c);
 void detach_client(Client * c, Bool unmap);
 Client *sel_client();
@@ -261,16 +262,15 @@ Page *pageat(unsigned int idx);
 Page *alloc_page();
 void destroy_page(Page * p);
 void focus_page(Page * p);
+void unfocus_page(Page * p);
 XRectangle *rectangles(unsigned int *num);
-void hide_page(Page * p);
-void show_page(Page * p);
 
 /* layout.c */
 Layout *alloc_layout(Page * p, char *layout);
 void destroy_layout(Layout *l);
 void focus_layout(Layout *l);
-void hide_layout(Layout *l);
-void show_layout(Layout *l, Bool raise);
+void unmap_layout(Layout *l);
+void map_layout(Layout *l, Bool raise);
 Layout *sel_layout();
 void attach_frame_to_layout(Layout *l, Frame * f);
 void detach_frame_from_layout(Frame * f);

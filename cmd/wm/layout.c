@@ -62,10 +62,11 @@ focus_layout(Layout *l)
     p->file[P_SEL_LAYOUT]->content = l->file[L_PREFIX]->content;
     if((c = l->def->sel(l)))
         l->def->focus(l, c, False);
+    invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
 void
-hide_layout(Layout *l)
+unmap_layout(Layout *l)
 {
     Frame *f;
     for(f = l->def->frames(l); f; f = f->next)
@@ -73,7 +74,7 @@ hide_layout(Layout *l)
 }
 
 void
-show_layout(Layout *l, Bool raise)
+map_layout(Layout *l, Bool raise)
 {
     Frame *f;
     for(f = l->def->frames(l); f; f = f->next) {

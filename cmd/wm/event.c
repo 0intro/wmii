@@ -62,30 +62,33 @@ handle_buttonpress(XEvent * e)
 
     if(f)
         handle_frame_buttonpress(ev, f);
-	else if((c = win_to_client(ev->window))) {
-        if(c->frame) {          /* client is attached */
+	else if((c = win_to_client(ev->window)) && c->frame) {
+		Layout *l = sel_layout();
+		Client *old = sel_client();
+		if(old != c)
+			unfocus_client(old);
+		if(l != c->frame->layout)
 			focus_layout(c->frame->layout);
-			focus_client(c);
-            ev->state &= valid_mask;
-            if(ev->state & Mod1Mask) {
-                Align align;
-                XRaiseWindow(dpy, c->frame->win);
-                switch (ev->button) {
-                case Button1:
-                    mouse_move(c->frame);
-                    break;
-                case Button3:
-                    align = xy_to_align(&c->rect, ev->x, ev->y);
-                    if(align == CENTER)
-                        mouse_move(c->frame);
-                    else
-                        mouse_resize(c->frame, align);
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
+		focus_client(c);
+		ev->state &= valid_mask;
+		if(ev->state & Mod1Mask) {
+			Align align;
+			XRaiseWindow(dpy, c->frame->win);
+			switch (ev->button) {
+				case Button1:
+					mouse_move(c->frame);
+					break;
+				case Button3:
+					align = xy_to_align(&c->rect, ev->x, ev->y);
+					if(align == CENTER)
+						mouse_move(c->frame);
+					else
+						mouse_resize(c->frame, align);
+					break;
+				default:
+					break;
+			}
+		}
     }
 }
 

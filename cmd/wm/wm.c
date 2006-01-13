@@ -330,7 +330,7 @@ draw_detached_clients()
             XMoveResizeWindow(dpy, c->win, cr.x, cr.y, cr.width,
                               cr.height);
             configure_client(c);
-            show_client(c);
+            map_client(c);
             XRaiseWindow(dpy, c->win);
             grab_client(c, AnyModifier, AnyButton);
             XSync(dpy, False);
@@ -372,7 +372,7 @@ detached_clients(void *obj, char *arg)
         case KeyPress:
             XUnmapWindow(dpy, transient);
             for(c = detached; c; c = c->next)
-                hide_client(c);
+                unmap_client(c);
             if((n = handle_kpress(&ev.xkey)) != -1) {
                 if(n - 1 < ndetached) {
                     c = clientat(detached, n);
@@ -386,7 +386,7 @@ detached_clients(void *obj, char *arg)
         case ButtonPress:
             XUnmapWindow(dpy, transient);
             for(c = detached; c; c = c->next)
-                hide_client(c);
+                unmap_client(c);
             if((ev.xbutton.button == Button1)
                && (c = win_to_client(ev.xbutton.window))) {
                 detach_detached(c);
@@ -460,10 +460,9 @@ _destroy_page(void *obj, char *arg)
 static void
 new_page(void *obj, char *arg)
 {
-    Page *p = selpage;
-    if(p)
-        hide_page(p);
-    selpage = alloc_page();
+	if(selpage)
+		unfocus_page(selpage);
+    focus_page(alloc_page());
 }
 
 Client *

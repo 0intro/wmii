@@ -188,6 +188,8 @@ focus_float(Layout *l, Client *c, Bool raise)
     Float *fl = l->aux;
     Client *old = fl->sel->sel;
 
+	if(old != c)
+		unfocus_client(old);
     fl->sel = c->frame;
     l->file[L_SEL_FRAME]->content = c->frame->file[F_PREFIX]->content;
     if(raise) {

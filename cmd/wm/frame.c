@@ -281,7 +281,7 @@ attach_client_to_frame(Frame * f, Client * client)
     client->frame = f;
     resize_frame(f, &f->rect, 0);
     reparent_client(client, f->win, client->rect.x, client->rect.y);
-    show_client(client);
+    map_client(client);
 }
 
 void
@@ -308,7 +308,7 @@ detach_client_from_frame(Client * c, Bool unmap)
     if(!c->destroyed) {
         if(!unmap) {
             attach_detached(c);
-            hide_client(c);
+            unmap_client(c);
         }
         c->rect.x = f->rect.x;
         c->rect.y = f->rect.y;

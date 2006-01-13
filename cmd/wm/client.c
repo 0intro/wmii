@@ -28,29 +28,20 @@ alloc_client(Window w)
 void
 focus_client(Client * c)
 {
-    Frame *f = 0;
-	/*
-	static Client *old = nil;
-
-	if(old && (old != c)) {
-		ungrab_client(old, AnyModifier, AnyButton);
-		grab_client(old, AnyModifier, AnyButton);
-	}
-	*/
-	
-    /* sel client */
-	ungrab_client(c, AnyModifier, AnyButton);
     grab_client(c, Mod1Mask, Button1);
     grab_client(c, Mod1Mask, Button3);
-    f = c->frame;
-    f->sel = c;
+    c->frame->sel = c;
     XRaiseWindow(dpy, c->win);
     XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	XSync(dpy, False);
     invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
-	/*
-	old = c;
-	*/
+}
+
+void
+unfocus_client(Client * c)
+{
+	ungrab_client(c, AnyModifier, AnyButton);
+	grab_client(c, AnyModifier, AnyButton);
 }
 
 void
@@ -65,7 +56,7 @@ set_client_state(Client * c, int state)
 }
 
 void
-show_client(Client * c)
+map_client(Client * c)
 {
     XMapRaised(dpy, c->win);
     set_client_state(c, NormalState);
@@ -73,7 +64,7 @@ show_client(Client * c)
 }
 
 void
-hide_client(Client * c)
+unmap_client(Client * c)
 {
     ungrab_client(c, AnyModifier, AnyButton);
     XUnmapWindow(dpy, c->win);

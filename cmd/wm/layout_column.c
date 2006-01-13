@@ -1,5 +1,5 @@
 /*
- * (C)opyright MMIV-MMV Anselm R. Garbe <garbeam at gmail dot com>
+ * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 
@@ -420,6 +420,8 @@ focus_col(Layout *l, Client *c, Bool raise)
 	Client *old = sel_col(l);
 	Cell *cell = c->frame->aux;
 
+	if(old != c)
+		unfocus_client(old);
     acme->sel = cell->col;
 	cell->col->sel = cell;
     c->frame->file[L_SEL_FRAME]->content = c->frame->file[F_PREFIX]->content;

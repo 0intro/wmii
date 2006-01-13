@@ -58,7 +58,6 @@ alloc_page()
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
     npages++;
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &npages, 1);
-    focus_page(new);
     return new;
 }
 
@@ -128,15 +127,23 @@ destroy_page(Page * p)
 void
 focus_page(Page * p)
 {
-    if(selpage != p)
-        hide_page(selpage);
     selpage = p;
-    show_page(p);
+    map_layout(p->managed, False);
+    map_layout(p->floating, False);
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
     focus_layout(sel_layout());
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &(selpage->index), 1);
+}
+
+void
+unfocus_page(Page * p)
+{
+	selpage = nil;
+    def[WM_SEL_PAGE]->content = nil;
+    unmap_layout(p->managed);
+    unmap_layout(p->floating);
 }
 
 XRectangle *
@@ -168,20 +175,6 @@ rectangles(unsigned int *num)
     }
     *num = j;
     return result;
-}
-
-void
-hide_page(Page * p)
-{
-    hide_layout(p->managed);
-    hide_layout(p->floating);
-}
-
-void
-show_page(Page * p)
-{
-    show_layout(p->managed, False);
-    show_layout(p->floating, False);
 }
 
 static void
@@ -223,7 +216,6 @@ toggle_layout(void *obj, char *arg)
         p->sel = p->managed;
 
     focus_layout(p->sel);
-    invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
 Page *
