@@ -424,7 +424,7 @@ focus_col(Layout *l, Client *c, Bool raise)
 		unfocus_client(old);
     acme->sel = cell->col;
 	cell->col->sel = cell;
-    c->frame->file[L_SEL_FRAME]->content = c->frame->file[F_PREFIX]->content;
+    l->file[L_SEL_FRAME]->content = c->frame->file[F_PREFIX]->content;
     if(raise)
     	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0,
 					 c->rect.width / 2, c->rect.height / 2);

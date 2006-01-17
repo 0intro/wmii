@@ -30,10 +30,6 @@ alloc_frame(XRectangle * r)
     snprintf(buf, MAX_BUF, "/detached/%d/name", id);
     f->file[F_NAME] = ixp_create(ixps, buf);
 	f->file[F_NAME]->before_read = handle_before_read_frame;
-    snprintf(buf, MAX_BUF, "/detached/%d/geometry", id);
-    f->file[F_GEOMETRY] = ixp_create(ixps, buf);
-    f->file[F_GEOMETRY]->before_read = handle_before_read_frame;
-    f->file[F_GEOMETRY]->after_write = handle_after_write_frame;
     snprintf(buf, MAX_BUF, "/detached/%d/border", id);
     f->file[F_BORDER] =
         wmii_create_ixpfile(ixps, buf, def[WM_BORDER]->content);
@@ -45,6 +41,10 @@ alloc_frame(XRectangle * r)
     f->file[F_HANDLE_INC] =
         wmii_create_ixpfile(ixps, buf, def[WM_HANDLE_INC]->content);
     f->file[F_HANDLE_INC]->after_write = handle_after_write_frame;
+    snprintf(buf, MAX_BUF, "/detached/%d/geometry", id);
+    f->file[F_GEOMETRY] = ixp_create(ixps, buf);
+    f->file[F_GEOMETRY]->before_read = handle_before_read_frame;
+    f->file[F_GEOMETRY]->after_write = handle_after_write_frame;
     id++;
 
     wa.override_redirect = 1;
@@ -58,8 +58,7 @@ alloc_frame(XRectangle * r)
     f->rect.width += 2 * bw;
     f->rect.height += bw + (th ? th : bw);
     f->win = XCreateWindow(dpy, root, f->rect.x, f->rect.y, f->rect.width,
-                           f->rect.height, 0, DefaultDepth(dpy,
-                                                           screen_num),
+                           f->rect.height, 0, DefaultDepth(dpy, screen_num),
                            CopyFromParent, DefaultVisual(dpy, screen_num),
                            CWOverrideRedirect | CWBackPixmap | CWEventMask,
                            &wa);

@@ -56,7 +56,7 @@ fn framesconf {
     for(frame in `{wmiir read $1 | grep '^[0-9]'}) {
     	wmiir write $1/$frame/tab $TAB
     	wmiir write $1/$frame/handleinc $HANDLEINC
-    	wmiir write $1/$frame/geometry '+0 +0 +0 +0'  # causes refresh
+		wmiir write $1/$frame/geometry '+0 +0 +0 +0'  # causes refresh
 	}
 }
 
