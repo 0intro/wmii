@@ -65,7 +65,7 @@ destroy_page(Page * p)
 {
 	AttachQueue *o, *n;
 
-	while(attachqueue->page == p) {
+	while(attachqueue && (attachqueue->page == p)) {
 		n = attachqueue->next;
 		free(attachqueue);
 		attachqueue = n;

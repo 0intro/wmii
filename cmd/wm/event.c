@@ -106,12 +106,6 @@ handle_configurerequest(XEvent * e)
         f = c->frame;
 
         if(f) {
-            Page *p = f->layout->page;
-            if(f->layout == p->managed) {
-                f->layout->def->detach(f->layout, c, False);
-                p->floating->def->attach(p->floating, c);
-                f = c->frame;
-            }
             bw = border_width(f);
             tabh = tab_height(f);
         }
