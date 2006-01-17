@@ -223,7 +223,6 @@ void unmap_client(Client * c);
 void map_client(Client * c);
 void reparent_client(Client * c, Window w, int x, int y);
 void focus_client(Client * c);
-void unfocus_client(Client * c);
 void attach_client(Client * c);
 void detach_client(Client * c, Bool unmap);
 Client *sel_client();

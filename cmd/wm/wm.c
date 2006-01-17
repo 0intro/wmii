@@ -329,7 +329,6 @@ draw_detached_clients()
             configure_client(c);
             map_client(c);
             XRaiseWindow(dpy, c->win);
-            grab_client(c, AnyModifier, AnyButton);
             XSync(dpy, False);
             c = c->next;
         }

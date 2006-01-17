@@ -420,8 +420,6 @@ focus_col(Layout *l, Client *c, Bool raise)
 	Client *old = sel_col(l);
 	Cell *cell = c->frame->aux;
 
-	if(old != c)
-		unfocus_client(old);
     acme->sel = cell->col;
 	cell->col->sel = cell;
     l->file[L_SEL_FRAME]->content = c->frame->file[F_PREFIX]->content;
