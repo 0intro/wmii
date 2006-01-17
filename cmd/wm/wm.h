@@ -261,7 +261,6 @@ Page *pageat(unsigned int idx);
 Page *alloc_page();
 void destroy_page(Page * p);
 void focus_page(Page * p);
-void unfocus_page(Page * p);
 XRectangle *rectangles(unsigned int *num);
 
 /* layout.c */

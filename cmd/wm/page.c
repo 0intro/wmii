@@ -53,7 +53,6 @@ alloc_page()
         p->next = new;
         new->index = p->index + 1;
     }
-    selpage = new;
     def[WM_SEL_PAGE]->content = new->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
     npages++;
@@ -119,31 +118,28 @@ destroy_page(Page * p)
         selpage = pages;
     npages--;
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &npages, 1);
-
-    if(selpage)
-        focus_page(selpage);
 }
 
 void
 focus_page(Page * p)
 {
+    if(p && (p != selpage)) {
+		if(selpage) {
+    		unmap_layout(selpage->managed);
+    		unmap_layout(selpage->floating);
+		}
+	}
+	else
+		return;
+
     selpage = p;
     map_layout(p->managed, False);
     map_layout(p->floating, False);
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
-    focus_layout(sel_layout());
+    focus_layout(p->sel);
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &(selpage->index), 1);
-}
-
-void
-unfocus_page(Page * p)
-{
-	selpage = nil;
-    def[WM_SEL_PAGE]->content = nil;
-    unmap_layout(p->managed);
-    unmap_layout(p->floating);
 }
 
 XRectangle *

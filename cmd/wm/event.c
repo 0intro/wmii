@@ -276,21 +276,10 @@ static void handle_clientmessage(XEvent *e)
 {
     XClientMessageEvent *ev = &e->xclient;
 
-    if (ev->message_type == net_atoms[NET_NUMBER_OF_DESKTOPS] && ev->format == 32) {
+    if (ev->message_type == net_atoms[NET_NUMBER_OF_DESKTOPS] && ev->format == 32)
         return; /* ignore */
-    }
     else if (ev->message_type == net_atoms[NET_CURRENT_DESKTOP] && ev->format == 32) {
-        int i;
-        Page *p;
-        i = ev->data.l[0];
-
-        for (p = pages; p; p = p->next) {
-            if (p->index == i) {
-                focus_page(p);
-                return;
-            }
-        }
-
+		focus_page(pageat(ev->data.l[0]));
         return;
     }
 }

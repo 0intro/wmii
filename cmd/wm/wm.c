@@ -281,18 +281,15 @@ pager(void *obj, char *arg)
             XUnmapWindow(dpy, transient);
             if((i = handle_kpress(&ev.xkey)) != -1)
                 if(i < npages)
-                    focus_page(pageat(i));
+					focus_page(pageat(i));
             XUngrabKeyboard(dpy, CurrentTime);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
             return;
             break;
         case ButtonPress:
             XUnmapWindow(dpy, transient);
-            if(ev.xbutton.button == Button1) {
-                Page *p = xy_to_pager_page(ev.xbutton.x, ev.xbutton.y);
-                if(p)
-                    focus_page(p);
-            }
+            if(ev.xbutton.button == Button1)
+                focus_page(xy_to_pager_page(ev.xbutton.x, ev.xbutton.y));
             XUngrabKeyboard(dpy, CurrentTime);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
             return;
@@ -443,16 +440,13 @@ _select_page(void *obj, char *arg)
             p = pages;
     } else
         p = pageat(blitz_strtonum(arg, 0, npages - 1));
-    if(p)
-        focus_page(p);
+    focus_page(p);
 }
 
 static void
 _destroy_page(void *obj, char *arg)
 {
-    Page *p = selpage;
-    if(p)
-        destroy_page(p);
+    destroy_page(selpage);
     if(selpage)
         focus_page(selpage);
 }
@@ -460,8 +454,6 @@ _destroy_page(void *obj, char *arg)
 static void
 new_page(void *obj, char *arg)
 {
-	if(selpage)
-		unfocus_page(selpage);
     focus_page(alloc_page());
 }
 

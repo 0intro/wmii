@@ -310,8 +310,10 @@ attach_client(Client * c)
     Layout *l = 0;
     Page *p = selpage;
 
-    if(!p)
+    if(!p) {
         p = alloc_page();
+		focus_page(p);
+	}
     /* transient stuff */
     l = p->sel;
     if(c && c->trans) {
