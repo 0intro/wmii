@@ -42,7 +42,6 @@ enum {
 /* array indexes of wm file pointers */
 enum {
     WM_CTL,
-    WM_DETACHED_FRAME,
     WM_TRANS_COLOR,
     WM_MANAGED_GEOMETRY,
     WM_SEL_BG_COLOR,

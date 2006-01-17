@@ -661,7 +661,6 @@ init_cursors()
 static void
 init_default()
 {
-    def[WM_DETACHED_FRAME] = ixp_create(ixps, "/detached");
     def[WM_TRANS_COLOR] =
         wmii_create_ixpfile(ixps, "/default/transcolor",
                             BLITZ_SEL_FG_COLOR);

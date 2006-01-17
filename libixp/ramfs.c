@@ -206,6 +206,7 @@ static void _ixp_remove(IXPServer * s, File * f)
 {
 	if (!f)
 		return;
+	fprintf(stderr, "_ixp_remove: %s\n", f->name);
 	if (f->next) {
 		_ixp_remove(s, f->next);
 		if (s->errstr)
