@@ -126,7 +126,7 @@ struct LayoutDef {
 struct Layout {
     Page *page;
     LayoutDef *def;
-    void *aux;                  /* free pointer */
+    void *aux;                  /* auxillary pointer */
     File *file[L_LAST];
 };
 
@@ -139,7 +139,7 @@ struct Frame {
     GC gc;
     XRectangle rect;
     Cursor cursor;
-    void *aux;                  /* free pointer */
+    void *aux;                  /* auxillary pointer */
     File *file[F_LAST];
     Frame *next;
     Frame *prev;
