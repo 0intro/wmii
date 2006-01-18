@@ -238,8 +238,10 @@ handle_kpress(XKeyEvent * e)
 {
     KeySym ksym = XKeycodeToKeysym(dpy, e->keycode, 0);
 
-    if(ksym >= XK_0 && ksym <= XK_9)
-        return ksym - XK_0;
+    if(ksym >= XK_1 && ksym <= XK_9)
+        return ksym - XK_1;
+	else if(ksym == XK_0)
+		return 9;
     else if(ksym >= XK_a && ksym <= XK_z)
         return 10 + ksym - XK_a;
 
@@ -437,8 +439,14 @@ _select_page(void *obj, char *arg)
             p = p->next;
         else
             p = pages;
-    } else
-        p = pageat(blitz_strtonum(arg, 0, npages - 1));
+    } else {
+		int idx = blitz_strtonum(arg, 0, pageid);
+		if(idx)
+			idx--;
+		else
+			idx = 9;
+        p = pageat(idx);
+	}
     focus_page(p);
 }
 
@@ -446,8 +454,7 @@ static void
 _destroy_page(void *obj, char *arg)
 {
     destroy_page(selpage);
-    if(selpage)
-        focus_page(selpage);
+    focus_page(selpage);
 }
 
 static void
@@ -860,6 +867,7 @@ main(int argc, char *argv[])
 
     pages = selpage = nil;
     ndetached = npages = 0;
+	pageid = 1;
     detached = nil;
     layouts = nil;
 	attachqueue = nil;

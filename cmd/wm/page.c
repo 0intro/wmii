@@ -28,17 +28,17 @@ alloc_page()
     Page *p, *new = cext_emallocz(sizeof(Page));
     char buf[MAX_BUF], buf2[16];
 
-    snprintf(buf2, sizeof(buf2), "%d", (int)npages);
-    snprintf(buf, sizeof(buf), "/%d", (int)npages);
+    snprintf(buf2, sizeof(buf2), "%d", pageid);
+    snprintf(buf, sizeof(buf), "/%d", pageid);
     new->file[P_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, sizeof(buf), "/%d/name", (int)npages);
+    snprintf(buf, sizeof(buf), "/%d/name", pageid);
     new->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
-    snprintf(buf, sizeof(buf), "/%d/layout/", (int)npages);
+    snprintf(buf, sizeof(buf), "/%d/layout/", pageid);
     new->file[P_LAYOUT_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, sizeof(buf), "/%d/layout/sel", (int)npages);
+    snprintf(buf, sizeof(buf), "/%d/layout/sel", pageid);
     new->file[P_SEL_LAYOUT] = ixp_create(ixps, buf);
     new->file[P_SEL_LAYOUT]->bind = 1;    /* mount point */
-    snprintf(buf, sizeof(buf), "/%d/ctl", (int)npages);
+    snprintf(buf, sizeof(buf), "/%d/ctl", pageid);
     new->file[P_CTL] = ixp_create(ixps, buf);
     new->file[P_CTL]->after_write = handle_after_write_page;
     new->floating = alloc_layout(new, "float");
@@ -55,6 +55,7 @@ alloc_page()
     }
     def[WM_SEL_PAGE]->content = new->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+	pageid++;
     npages++;
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &npages, 1);
     return new;
@@ -123,7 +124,10 @@ destroy_page(Page * p)
 void
 focus_page(Page * p)
 {
-    if(p && (p != selpage)) {
+	if(!p)
+		return;
+
+    if((p != selpage)) {
 		if(selpage) {
     		unmap_layout(selpage->managed);
     		unmap_layout(selpage->floating);

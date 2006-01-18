@@ -165,6 +165,7 @@ Page *pages;
 Page *selpage;
 AttachQueue *attachqueue;
 size_t npages;
+int pageid;
 Client *detached;
 size_t ndetached;
 LayoutDef *layouts;

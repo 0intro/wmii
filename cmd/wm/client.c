@@ -312,8 +312,7 @@ detach_client(Client * c, Bool unmap)
         l->def->detach(l, c, unmap);
     if(c->destroyed)
         destroy_client(c);
-    if(selpage)
-        focus_page(selpage);
+    focus_page(selpage);
 }
 
 Client *
