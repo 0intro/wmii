@@ -417,19 +417,31 @@ static void
 focus_col(Layout *l, Client *c, Bool raise)
 {
     Acme *acme = l->aux;
-	Client *old = sel_col(l);
 	Cell *cell = c->frame->aux;
+	Client *old = sel_client();
 
+	c->frame->sel = c;
     acme->sel = cell->col;
 	cell->col->sel = cell;
     l->file[L_SEL_FRAME]->content = c->frame->file[F_PREFIX]->content;
+
     if(raise)
     	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0,
 					 c->rect.width / 2, c->rect.height / 2);
-    focus_client(c);
-	if(old && old != c)
+
+	if(old && (old != c)) {
+		ungrab_client(old, AnyModifier, AnyButton);
+		grab_client(old, AnyModifier, AnyButton);
     	draw_frame(old->frame);
+	}
+	ungrab_client(c, AnyModifier, AnyButton);
+    grab_client(c, Mod1Mask, Button1);
+    grab_client(c, Mod1Mask, Button3);
+    XRaiseWindow(dpy, c->win);
+    XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
     draw_frame(c->frame);
+    invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
+	XSync(dpy, False);
 }
 
 static Frame *

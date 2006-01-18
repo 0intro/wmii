@@ -186,19 +186,30 @@ static void
 focus_float(Layout *l, Client *c, Bool raise)
 {
     Float *fl = l->aux;
-    Client *old = fl->sel->sel;
+	Client *old = sel_client();
 
+    c->frame->sel = c;
     fl->sel = c->frame;
     l->file[L_SEL_FRAME]->content = c->frame->file[F_PREFIX]->content;
+
     if(raise) {
         XRaiseWindow(dpy, c->frame->win);
     	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0,
 					 c->rect.width / 2, c->rect.height / 2);
     }
-    focus_client(c);
-    if(old && old != c)
-        draw_frame(old->frame);
+
+	if(old && (old != c)) {
+		grab_client(old, AnyModifier, AnyButton);
+    	draw_frame(old->frame);
+	}
+	ungrab_client(c, AnyModifier, AnyButton);
+    grab_client(c, Mod1Mask, Button1);
+    grab_client(c, Mod1Mask, Button3);
+    XRaiseWindow(dpy, c->win);
+    XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
     draw_frame(c->frame);
+    invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
+	XSync(dpy, False);
 }
 
 static Frame *

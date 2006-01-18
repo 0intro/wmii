@@ -275,7 +275,7 @@ attach_client_to_frame(Frame * f, Client * client)
         client->next = nil;
         c->next = client;
     }
-	f->sel = client;
+	/*f->sel = client;*/
     f->nclients++;
     client->frame = f;
     resize_frame(f, &f->rect, 0);

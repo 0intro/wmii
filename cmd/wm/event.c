@@ -66,7 +66,8 @@ handle_buttonpress(XEvent * e)
 		Layout *l = sel_layout();
 		if(l != c->frame->layout)
 			focus_layout(c->frame->layout);
-		focus_client(c);
+		l = c->frame->layout;
+		l->def->focus(l, c, False);
 		ev->state &= valid_mask;
 		if(ev->state & Mod1Mask) {
 			Align align;

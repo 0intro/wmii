@@ -26,22 +26,6 @@ alloc_client(Window w)
 }
 
 void
-focus_client(Client * c)
-{
-	Client *old = sel_client();
-
-	if(old)
-		ungrab_client(old, AnyModifier, AnyButton);
-    grab_client(c, Mod1Mask, Button1);
-    grab_client(c, Mod1Mask, Button3);
-    c->frame->sel = c;
-    XRaiseWindow(dpy, c->win);
-    XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-	XSync(dpy, False);
-    invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
-}
-
-void
 set_client_state(Client * c, int state)
 {
     long data[2];
@@ -57,13 +41,12 @@ map_client(Client * c)
 {
     XMapRaised(dpy, c->win);
     set_client_state(c, NormalState);
-	/* grab_client(c, AnyModifier, AnyButton); */
 }
 
 void
 unmap_client(Client * c)
 {
-    ungrab_client(c, AnyModifier, AnyButton);
+	ungrab_client(c, AnyModifier, AnyButton);
     XUnmapWindow(dpy, c->win);
     set_client_state(c, WithdrawnState);
 }
@@ -78,15 +61,13 @@ reparent_client(Client * c, Window w, int x, int y)
 void
 grab_client(Client * c, unsigned long mod, unsigned int button)
 {
-    XGrabButton(dpy, button, mod, c->win, True,
+    XGrabButton(dpy, button, mod, c->win, False,
                 ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
     if((mod != AnyModifier) && num_lock_mask) {
-        XGrabButton(dpy, button, mod | num_lock_mask, c->win, True,
-                    ButtonPressMask, GrabModeSync, GrabModeAsync, None,
-                    None);
+        XGrabButton(dpy, button, mod | num_lock_mask, c->win, False,
+                    ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
         XGrabButton(dpy, button, mod | num_lock_mask | LockMask, c->win,
-                    True, ButtonPressMask, GrabModeSync, GrabModeAsync,
-                    None, None);
+                    True, ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
     }
 }
 
