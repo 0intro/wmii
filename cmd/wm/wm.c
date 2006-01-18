@@ -142,7 +142,7 @@ draw_pager_layout(Layout *l, Draw * d)
 static void
 draw_pager_page(Page * p, Draw * d)
 {
-    unsigned int idx = 0;
+    unsigned int idx = 1;
     char name[4];
     initial_rect = d->rect;
     Page *page;
