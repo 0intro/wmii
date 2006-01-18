@@ -129,12 +129,12 @@ focus_page(Page * p)
     		unmap_layout(selpage->floating);
 		}
 	}
-	else
-		return;
 
+	if(p != selpage) {
+    	map_layout(p->managed, False);
+    	map_layout(p->floating, False);
+	}
     selpage = p;
-    map_layout(p->managed, False);
-    map_layout(p->floating, False);
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
     focus_layout(p->sel);

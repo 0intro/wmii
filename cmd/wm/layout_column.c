@@ -141,7 +141,6 @@ attach_frame(Layout *l, Column * col, Frame * new)
         c->next = cell;
         cell->prev = c;
     }
-    col->sel = cell;
     col->ncells++;
 
     for(f = acme->frames; f && f->next; f = f->next);
@@ -162,20 +161,16 @@ detach_frame(Layout *l, Frame * old)
     Cell *cell = old->aux;
     Column *col = cell->col;
 
-    if(col->sel == cell) {
-        if(cell->prev)
-            col->sel = cell->prev;
-        else
-            col->sel = nil;
-    }
     if(cell->prev)
         cell->prev->next = cell->next;
     else
         col->cells = cell->next;
     if(cell->next)
         cell->next->prev = cell->prev;
-    if(!col->sel)
+
+    if(col->sel == cell)
         col->sel = col->cells;
+
     free(cell);
     col->ncells--;
 

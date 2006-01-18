@@ -62,12 +62,12 @@ void
 grab_client(Client * c, unsigned long mod, unsigned int button)
 {
     XGrabButton(dpy, button, mod, c->win, False,
-                ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
+                ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
     if((mod != AnyModifier) && num_lock_mask) {
         XGrabButton(dpy, button, mod | num_lock_mask, c->win, False,
-                    ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
+                    ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
         XGrabButton(dpy, button, mod | num_lock_mask | LockMask, c->win,
-                    True, ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
+                    False, ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
     }
 }
 

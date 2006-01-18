@@ -90,7 +90,6 @@ attach_frame(Layout *l, Frame * new)
         new->prev = f;
     }
     attach_frame_to_layout(l, new);
-    fl->sel = new;
     fl->nframes++;
 }
 
@@ -99,20 +98,16 @@ detach_frame(Layout *l, Frame * old)
 {
     Float *fl = l->aux;
 
-    if(fl->sel == old) {
-        if(old->prev)
-            fl->sel = old->prev;
-        else
-            fl->sel = nil;
-    }
     if(old->prev)
         old->prev->next = old->next;
     else
         fl->frames = old->next;
     if(old->next)
         old->next->prev = old->prev;
-    if(!fl->sel)
+
+    if(fl->sel == old)
         fl->sel = fl->frames;
+
     detach_frame_from_layout(old);
     fl->nframes--;
 }
