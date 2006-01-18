@@ -490,8 +490,10 @@ select_frame(void *obj, char *arg)
     } else if(!strncmp(arg, "west", 5)) {
         if(col->prev)
             cell = col->prev->sel;
-        else
+        else {
             for(c = acme->columns; c && c->next; c = c->next);
+			cell = c->sel;
+		}
     } else if(!strncmp(arg, "east", 5)) {
         if(col->next)
             cell = col->next->sel;
