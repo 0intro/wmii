@@ -37,7 +37,7 @@ struct Item {
     Item *next;
 };
 
-static unsigned int id = 0;
+static unsigned int id = 1;
 static IXPServer *ixps = 0;
 static Display *dpy;
 static GC gc;
@@ -135,11 +135,11 @@ reset(void *obj, char *arg)
 {
     int i;
     char buf[512];
-    for(i = 0; i < id; i++) {
+    for(i = 1; i <= id; i++) {
         snprintf(buf, sizeof(buf), "/%d", i);
         ixps->remove(ixps, buf);
     }
-    id = 0;
+    id = 1;
     draw_bar(0, 0);
 }
 
@@ -215,8 +215,9 @@ draw()
     if(!nitems)
         return;
 
-    expandable = blitz_strtonum(file[B_EXPANDABLE]->content, 0, nitems);
+    expandable = blitz_strtonum(file[B_EXPANDABLE]->content, 1, nitems + 1);
     snprintf(buf, sizeof(buf), "/%d", expandable);
+	expandable--;
     if(!ixp_walk(ixps, buf))
         expandable = 0;
 
@@ -277,7 +278,7 @@ draw_bar(void *obj, char *arg)
         free(i);
     }
     it = items = nil;
-    snprintf(buf, sizeof(buf), "%s", "/0");
+    snprintf(buf, sizeof(buf), "%s", "/1");
     label = ixp_walk(ixps, buf);
     if(!label) {
         Draw d = { 0 };

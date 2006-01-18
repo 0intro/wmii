@@ -17,7 +17,7 @@ Frame *
 alloc_frame(XRectangle * r)
 {
     XSetWindowAttributes wa;
-    static int id = 0;
+    static int id = 1;
     char buf[MAX_BUF];
     Frame *f = (Frame *) cext_emallocz(sizeof(Frame));
     int bw, th;
