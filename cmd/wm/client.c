@@ -327,7 +327,7 @@ clientat(Client * clients, size_t idx)
 {
     size_t i = 0;
     Client *c = clients;
-    for(; c && i != idx; c = c->next)
+    for(; (i != idx) && c; c = c->next)
         i++;
     return c;
 }
@@ -356,4 +356,5 @@ attach_detached(Client * c)
     if(detached)
         detached->prev = c;
     detached = c;
+	ndetached++;
 }

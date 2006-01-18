@@ -29,7 +29,6 @@ static void _detach_client(void *obj, char *arg);
 static void _close_client(void *obj, char *arg);
 static void pager(void *obj, char *arg);
 static void detached_clients(void *obj, char *arg);
-static void reserve_layout(void *obj, char *arg);
 
 /* action table for /ctl namespace */
 Action wm_acttbl[] = {
@@ -41,8 +40,7 @@ Action wm_acttbl[] = {
     {"close", _close_client},
     {"quit", quit},
     {"pager", pager},
-    {"detached_clients", detached_clients},
-    {"reserve_layout", reserve_layout},
+    {"detclients", detached_clients},
     {0, 0}
 };
 
@@ -301,23 +299,19 @@ pager(void *obj, char *arg)
 }
 
 static void
-draw_detached_clients()
+map_detached_clients()
 {
     unsigned int ic, ir, tw, th, rows, cols;
     int dx, dy;
     Client *c = detached;
     XRectangle cr;
 
-    if(!c)
-        return;
     blitz_getbasegeometry(ndetached, &cols, &rows);
     dx = (cols - 1) * GAP;      /* GAPpx space */
     dy = (rows - 1) * GAP;      /* GAPpx space */
     tw = (rect.width - dx) / cols;
     th = (rect.height - dy) / rows;
 
-    XClearWindow(dpy, transient);
-    XMapRaised(dpy, transient);
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
             if(!c)
@@ -326,10 +320,10 @@ draw_detached_clients()
             cr.y = ir * th + (ir * GAP);
             cr.width = tw;
             cr.height = th;
-            XMoveResizeWindow(dpy, c->win, cr.x, cr.y, cr.width,
-                              cr.height);
+            XMoveResizeWindow(dpy, c->win, cr.x, cr.y, cr.width, cr.height);
             configure_client(c);
             map_client(c);
+			grab_client(c, AnyModifier, Button1);
             XRaiseWindow(dpy, c->win);
             XSync(dpy, False);
             c = c->next;
@@ -338,24 +332,17 @@ draw_detached_clients()
 }
 
 static void
-reserve_layout(void *obj, char *arg)
-{
-    if(arg && strrchr(arg, ' ')) {
-        XRectangle r;
-        blitz_strtorect(&rect, &r, arg);
-    }
-}
-
-static void
 detached_clients(void *obj, char *arg)
 {
     XEvent ev;
     int n;
-    Client *c;
+    Client *c = detached;
 
+    if(!c)
+        return;
     XClearWindow(dpy, transient);
     XMapRaised(dpy, transient);
-    draw_detached_clients();
+    map_detached_clients();
     while(XGrabKeyboard
           (dpy, transient, True, GrabModeAsync, GrabModeAsync,
            CurrentTime) != GrabSuccess)
@@ -372,8 +359,7 @@ detached_clients(void *obj, char *arg)
             for(c = detached; c; c = c->next)
                 unmap_client(c);
             if((n = handle_kpress(&ev.xkey)) != -1) {
-                if(n - 1 < ndetached) {
-                    c = clientat(detached, n);
+                if((c = clientat(detached, n))) {
                     detach_detached(c);
                     attach_client(c);
                 }
