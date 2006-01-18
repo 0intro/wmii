@@ -524,6 +524,11 @@ swap_frame(void *obj, char *arg)
     north = cell->prev;
     south = cell->next;
 
+	if(!west)
+		west = east;
+	if(!east)
+		east = west;
+
     if(!strncmp(arg, "north", 6) && north) {
         r = north->frame->rect;
         north->frame->rect = cell->frame->rect;
