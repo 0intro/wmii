@@ -548,7 +548,7 @@ swap_frame(void *obj, char *arg)
         resize_frame(cell->frame, &cell->frame->rect, nil);
         resize_frame(south->frame, &south->frame->rect, nil);
         focus_col(l, cell->frame->sel, True);
-    } else if(!strncmp(arg, "west", 5) && west && (col->ncells > 1)) {
+    } else if(!strncmp(arg, "west", 5) && west && col->ncells && west->ncells) {
         Cell *other = west->sel;
         r = other->frame->rect;
         other->frame->rect = cell->frame->rect;
@@ -561,7 +561,7 @@ swap_frame(void *obj, char *arg)
         resize_frame(cell->frame, &cell->frame->rect, nil);
         resize_frame(other->frame, &other->frame->rect, nil);
         focus_col(l, other->frame->sel, True);
-    } else if(!strncmp(arg, "east", 5) && east && (col->ncells > 1)) {
+    } else if(!strncmp(arg, "east", 5) && east && col->ncells && east->ncells) {
         Cell *other = east->sel;
         r = other->frame->rect;
         other->frame->rect = cell->frame->rect;
