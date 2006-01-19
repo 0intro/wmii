@@ -113,7 +113,7 @@ wmiir write /wm/event/clientupdate \
 wmiir write /wm/event/pageupdate \
 'wmiir write /bar/'^$plab^'/data `{wmiir read /wm/sel/name} &&' ^\
 'wmiir write /bar/'^$klab^'/data `{wmiir read /keys/lookup|sed ''s|/mode/||''} && ' ^\
-'wmiir write /bar/'^$llab^'/data `{wmiir read /wm/sel/layout/sel/name}'
+'wmiir write /bar/'^$llab^'/data `{wmiir read /wm/sel/layoutname}'
 
 for(page in `{wmiir read /wm | grep '^[0-9]'}) {
 	framesconf /wm/$page/layout/float/frame
@@ -162,9 +162,9 @@ kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr
 kbind normal $MODKEY-d 'wmiir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmiir write /wm/ctl attach'
 kbind normal $MODKEY-S-a 'wmiir write /wm/ctl detclients'
-kbind normal $MODKEY-S-c 'wmiir write /wm/sel/layout/managed/name column'
+kbind normal $MODKEY-S-c 'wmiir write /wm/sel/layoutname column'
 kbind normal $MODKEY-n 'wmiir write /wm/sel/layout/sel/ctl new'
-kbind normal $MODKEY-S-f 'wmiir write /wm/sel/layout/sel/name float'
+kbind normal $MODKEY-S-f 'wmiir write /wm/sel/layoutname float'
 kbind normal $MODKEY-Return 'wmiir write /wm/sel/layout/sel/ctl ''swap west'''
 kbind normal $MODKEY-S-Return 'wmiir write /wm/sel/layout/sel/ctl ''swap east'''
 kbind normal $MODKEY-C-y 'wmiir write /wm/ctl new'

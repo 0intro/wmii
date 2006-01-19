@@ -38,10 +38,13 @@ alloc_page()
     snprintf(buf, sizeof(buf), "/%d/layout/sel", pageid);
     new->file[P_SEL_LAYOUT] = ixp_create(ixps, buf);
     new->file[P_SEL_LAYOUT]->bind = 1;    /* mount point */
+    snprintf(buf, MAX_BUF, "/%d/layoutname", pageid);
+    new->file[P_LAYOUT_NAME] = wmii_create_ixpfile(ixps, buf, def[WM_LAYOUT]->content);
+    new->file[P_LAYOUT_NAME]->after_write = handle_after_write_page;
     snprintf(buf, sizeof(buf), "/%d/ctl", pageid);
     new->file[P_CTL] = ixp_create(ixps, buf);
     new->file[P_CTL]->after_write = handle_after_write_page;
-    new->floating = alloc_layout(new, "float");
+    new->floating = alloc_layout(new, LAYOUT_FLOAT);
     new->sel = new->managed = alloc_layout(new, def[WM_LAYOUT]->content);
     for(p = pages; p && p->next; p = p->next);
     if(!p) {
@@ -186,6 +189,31 @@ handle_after_write_page(IXPServer * s, File * file)
             run_action(file, p, page_acttbl);
             return;
         }
+		else if(file == p->file[P_LAYOUT_NAME]) {
+            LayoutDef *l = match_layout_def(file->content);
+            Client *clients = nil;
+
+			if(!strncmp(file->content, LAYOUT_FLOAT, strlen(LAYOUT_FLOAT)))
+				l = nil;
+			
+			if(p->managed->def)
+				clients = p->managed->def->deinit(p->managed);
+            p->managed->def = l;
+            if(l) {
+                p->managed->def->init(p->managed, clients);
+				focus_layout(p->managed);
+			}
+			else {
+				Client *n;
+				focus_layout(p->floating);
+				while(clients) {
+					n = clients->next;
+					p->floating->def->attach(p->floating, clients);
+					clients = n;
+				}
+            }   
+            invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+        }
     }
 }
 
@@ -214,6 +242,9 @@ toggle_layout(void *obj, char *arg)
         p->sel = p->floating;
     else
         p->sel = p->managed;
+
+	if(!p->sel->def)
+		p->sel = p->floating;
 
     focus_layout(p->sel);
 }

@@ -18,27 +18,21 @@ alloc_layout(Page * p, char *layout)
     Layout *l = (Layout *) cext_emallocz(sizeof(Layout));
 
     l->page = p;
-    if(strncmp(layout, "float", 6))
+    if(strncmp(layout, LAYOUT_FLOAT, strlen(LAYOUT_FLOAT) + 1))
         name = "managed";
     else
         name = "float";
     snprintf(buf, MAX_BUF, "/%s/layout/%s", p->file[P_PREFIX]->name, name);
     l->file[L_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, MAX_BUF, "/%s/layout/%s/frame", p->file[P_PREFIX]->name,
-             name);
+    snprintf(buf, MAX_BUF, "/%s/layout/%s/frame", p->file[P_PREFIX]->name, name);
     l->file[L_FRAME_PREFIX] = ixp_create(ixps, buf);
     snprintf(buf, MAX_BUF, "/%s/layout/%s/frame/sel",
              p->file[P_PREFIX]->name, name);
     l->file[L_SEL_FRAME] = ixp_create(ixps, buf);
     l->file[L_SEL_FRAME]->bind = 1;
-    snprintf(buf, MAX_BUF, "/%s/layout/%s/ctl", p->file[P_PREFIX]->name,
-             name);
+    snprintf(buf, MAX_BUF, "/%s/layout/%s/ctl", p->file[P_PREFIX]->name, name);
     l->file[L_CTL] = ixp_create(ixps, buf);
     l->file[L_CTL]->after_write = handle_after_write_layout;
-    snprintf(buf, MAX_BUF, "/%s/layout/%s/name", p->file[P_PREFIX]->name,
-             name);
-    l->file[L_NAME] = wmii_create_ixpfile(ixps, buf, layout);
-    l->file[L_NAME]->after_write = handle_after_write_layout;
     l->def = match_layout_def(layout);
     l->def->init(l, nil);
     p->file[P_SEL_LAYOUT]->content = l->file[L_PREFIX]->content;
@@ -69,6 +63,8 @@ void
 unmap_layout(Layout *l)
 {
     Frame *f;
+	if(!l->def)
+		return;
     for(f = l->def->frames(l); f; f = f->next)
         XMoveWindow(dpy, f->win, 2 * rect.width, 2 * rect.height);
 }
@@ -77,6 +73,8 @@ void
 map_layout(Layout *l, Bool raise)
 {
     Frame *f;
+	if(!l->def)
+		return;
     for(f = l->def->frames(l); f; f = f->next) {
         XMoveWindow(dpy, f->win, f->rect.x, f->rect.y);
         if(raise)
@@ -110,7 +108,7 @@ handle_after_write_layout(IXPServer * s, File * file)
 {
     Page *p;
     for(p = pages; p; p = p->next) {
-        if(file == p->managed->file[L_CTL]) {
+        if(p->managed && (file == p->managed->file[L_CTL])) {
             run_action(file, p->managed,
                        p->managed->def->actions(p->managed));
             return;
@@ -118,15 +116,7 @@ handle_after_write_layout(IXPServer * s, File * file)
             run_action(file, p->floating,
                        p->floating->def->actions(p->floating));
             return;
-        } else if(file == p->managed->file[L_NAME]) {
-            LayoutDef *l = match_layout_def(file->content);
-            if(l) {
-                Client *clients = p->managed->def->deinit(p->managed);
-                p->managed->def = l;
-                p->managed->def->init(p->managed, clients);
-                invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
-            }
-        }
+		}
     }
 }
 

@@ -14,6 +14,7 @@ enum {
     P_NAME,
     P_LAYOUT_PREFIX,
     P_SEL_LAYOUT,
+    P_LAYOUT_NAME,
     P_CTL,
     P_LAST
 };
@@ -24,7 +25,6 @@ enum {
     L_FRAME_PREFIX,
     L_SEL_FRAME,
     L_CTL,
-    L_NAME,
     L_LAST
 };
 
@@ -80,6 +80,7 @@ enum {
 #define PROTO_DEL              1
 #define BORDER_WIDTH           3
 #define LAYOUT                 "column"
+#define LAYOUT_FLOAT           "float"
 #define GAP                    5
 
 #define ROOT_MASK              SubstructureRedirectMask

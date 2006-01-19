@@ -307,6 +307,10 @@ map_detached_clients()
     XRectangle cr;
 
     blitz_getbasegeometry(ndetached, &cols, &rows);
+	if(!cols)
+		cols = 1;
+	if(!rows)
+		rows = 1;
     dx = (cols - 1) * GAP;      /* GAPpx space */
     dy = (rows - 1) * GAP;      /* GAPpx space */
     tw = (rect.width - dx) / cols;
@@ -459,11 +463,12 @@ win_to_client(Window w)
             return c;
     for(p = pages; p; p = p->next) {
         Frame *f;
-        for(f = p->managed->def->frames(p->managed); f; f = f->next) {
-            for(c = f->clients; c; c = c->next)
-                if(c->win == w)
-                    return c;
-        }
+		if(p->managed->def)
+			for(f = p->managed->def->frames(p->managed); f; f = f->next) {
+				for(c = f->clients; c; c = c->next)
+					if(c->win == w)
+						return c;
+			}
         for(f = p->floating->def->frames(p->floating); f; f = f->next) {
             for(c = f->clients; c; c = c->next)
                 if(c->win == w)

@@ -74,9 +74,10 @@ win_to_frame(Window w)
     Page *p;
     for(p = pages; p; p = p->next) {
         Frame *f;
-        for(f = p->managed->def->frames(p->managed); f; f = f->next)
-            if(f->win == w)
-                return f;
+		if(p->managed->def)
+			for(f = p->managed->def->frames(p->managed); f; f = f->next)
+				if(f->win == w)
+					return f;
         for(f = p->floating->def->frames(p->floating); f; f = f->next)
             if(f->win == w)
                 return f;
@@ -320,6 +321,8 @@ handle_before_read_frames(IXPServer *s, File *file, Layout *l)
 {
     Frame *f;
     char buf[32];
+	if(!l->def)
+		return nil;
     for(f = l->def->frames(l); f; f = f->next) {
         if(file == f->file[F_GEOMETRY]) {
             snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
