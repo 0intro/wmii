@@ -451,8 +451,15 @@ handle_kpress(XKeyEvent * e)
         } else
             return;
         break;
-    case XK_Right:
     case XK_Tab:
+        if(!sel)
+            return;
+        if(strncmp(text,sel->file->name,strlen(sel->file->name))!=0) {
+            set_text(sel->file->name);
+            break;
+        } //if this didn't happen, we should continue with XK_Right behavior,
+          //so no "break;" here
+    case XK_Right:
         if(!sel)
             return;
         if(sel->next) {
@@ -489,9 +496,17 @@ handle_kpress(XKeyEvent * e)
         if(len) {
             size_t i = len;
             if(i) {
-                do
+                int prev_nitems;
+                update_items(text); //make sure nitems is in sync with text;
+                                    //this may not be the case when the user has
+                                    //has been using XK_Left or XK_Right
+                do {
                     text[--i] = 0;
-                while(nitems && i && nitems == update_items(text));
+                    prev_nitems = nitems; //since update_items changes nitems,
+                                          //nitems == update_items(text) is always true;
+                                          //hence prev_nitems
+                }
+                while(nitems && i && prev_nitems == update_items(text));
             }
             set_text(text);
             update_items(files[M_COMMAND]->content);
