@@ -21,23 +21,23 @@ static int other_wm_running;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 
 static void new_page(void *obj, char *arg);
-static void _select_page(void *obj, char *arg);
-static void _destroy_page(void *obj, char *arg);
+static void xselect_page(void *obj, char *arg);
+static void xdestroy_page(void *obj, char *arg);
 static void quit(void *obj, char *arg);
-static void _attach_client(void *obj, char *arg);
-static void _detach_client(void *obj, char *arg);
-static void _close_client(void *obj, char *arg);
+static void xattach_client(void *obj, char *arg);
+static void xdetach_client(void *obj, char *arg);
+static void xclose_client(void *obj, char *arg);
 static void pager(void *obj, char *arg);
 static void detached_clients(void *obj, char *arg);
 
 /* action table for /ctl namespace */
 Action wm_acttbl[] = {
     {"new", new_page},
-    {"destroy", _destroy_page},
-    {"select", _select_page},
-    {"attach", _attach_client},
-    {"detach", _detach_client},
-    {"close", _close_client},
+    {"destroy", xdestroy_page},
+    {"select", xselect_page},
+    {"attach", xattach_client},
+    {"detach", xdetach_client},
+    {"close", xclose_client},
     {"quit", quit},
     {"pager", pager},
     {"detclients", detached_clients},
@@ -390,7 +390,7 @@ detached_clients(void *obj, char *arg)
 }
 
 static void
-_close_client(void *obj, char *arg)
+xclose_client(void *obj, char *arg)
 {
     Client *c = sel_client();
     if(c)
@@ -398,7 +398,7 @@ _close_client(void *obj, char *arg)
 }
 
 static void
-_attach_client(void *obj, char *arg)
+xattach_client(void *obj, char *arg)
 {
     Client *c = detached;
     if(c) {
@@ -408,7 +408,7 @@ _attach_client(void *obj, char *arg)
 }
 
 static void
-_detach_client(void *obj, char *arg)
+xdetach_client(void *obj, char *arg)
 {
     Client *c = sel_client();
     if(c)
@@ -416,7 +416,7 @@ _detach_client(void *obj, char *arg)
 }
 
 static void
-_select_page(void *obj, char *arg)
+xselect_page(void *obj, char *arg)
 {
     Page *p = selpage;
     if(!p || !arg)
@@ -443,7 +443,7 @@ _select_page(void *obj, char *arg)
 }
 
 static void
-_destroy_page(void *obj, char *arg)
+xdestroy_page(void *obj, char *arg)
 {
     destroy_page(selpage);
     focus_page(selpage);

@@ -60,7 +60,7 @@ static void draw_bar(void *obj, char *arg);
 static void quit(void *obj, char *arg);
 static void display(void *obj, char *arg);
 static void reset(void *obj, char *arg);
-static void _destroy(void *obj, char *arg);
+static void xdestroy(void *obj, char *arg);
 static void handle_after_write(IXPServer * s, File * f);
 
 static Action acttbl[] = {
@@ -68,7 +68,7 @@ static Action acttbl[] = {
     {"display", display},
     {"update", draw_bar},
     {"reset", reset},
-    {"destroy", _destroy},
+    {"destroy", xdestroy},
     {0, 0}
 };
 
@@ -120,7 +120,7 @@ create_label(char *path)
 }
 
 static void
-_destroy(void *obj, char *arg)
+xdestroy(void *obj, char *arg)
 {
     char buf[512];
     if(!arg)
