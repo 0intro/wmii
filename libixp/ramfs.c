@@ -77,7 +77,7 @@ static int comp_file_name(const void *f1, const void *f2)
 	return strcmp(*(char **) f->name, *(char **) p->name);
 }
 
-static char *_ls(File * f)
+static char *xls(File * f)
 {
 	File *p;
 	char *result = 0;
@@ -143,7 +143,7 @@ ixp_read(IXPServer * s, int fd, size_t offset, void *out_buf,
 	if (f->before_read)
 		f->before_read(s, f);
 	if (is_directory(f)) {
-		result = _ls(f->content);
+		result = xls(f->content);
 		res_len = strlen(result);
 	} else if (f->size) {
 		result = f->content;
@@ -202,17 +202,17 @@ ixp_write(IXPServer * s, int fd, size_t offset, void *content,
 		f->after_write(s, f);
 }
 
-static void _ixp_remove(IXPServer * s, File * f)
+static void xremove(IXPServer * s, File * f)
 {
 	if (!f)
 		return;
 	if (f->next) {
-		_ixp_remove(s, f->next);
+		xremove(s, f->next);
 		if (s->errstr)
 			return;
 	}
 	if (!f->bind && is_directory(f)) {
-		_ixp_remove(s, f->content);
+		xremove(s, f->content);
 		if (s->errstr)
 			return;
 	}
@@ -251,7 +251,7 @@ void ixp_remove_file(IXPServer * s, File * f)
 		}
 	}
 	/* remove now */
-	_ixp_remove(s, f);
+	xremove(s, f);
 }
 
 

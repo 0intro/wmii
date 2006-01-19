@@ -12,7 +12,7 @@
 #define DEAD_SERVER  "server closed connection unexpectedly"
 #define MAX_SEEN_SHUTDOWN   3
 
-#define _MAX(x,y) ((x) > (y) ? (x) : (y))
+#define xMAX(x,y) ((x) > (y) ? (x) : (y))
 
 /* 9P message types */
 enum {

@@ -56,7 +56,7 @@ static void draw_bg(Display * dpy, Draw * d)
 	XFillRectangles(dpy, d->drawable, d->gc, rect, 4);
 }
 
-static void _draw_border(Display * dpy, Draw * d)
+static void xdraw_border(Display * dpy, Draw * d)
 {
 	XPoint points[5];
 
@@ -141,7 +141,7 @@ void blitz_drawmeter(Display * dpy, Draw * d)
 
 	val = blitz_strtonum(&d->data[3], 0, 100);
 	draw_bg(dpy, d);
-	_draw_border(dpy, d);
+	xdraw_border(dpy, d);
 
 	/* draw bg gradient */
 	mh = ((d->rect.height - 4) * val) / 100;
@@ -150,7 +150,7 @@ void blitz_drawmeter(Display * dpy, Draw * d)
 	XFillRectangle(dpy, d->drawable, d->gc, d->rect.x + 2, offy, w, mh);
 }
 
-static void _draw_label(Display * dpy, Draw * d)
+static void xdraw_label(Display * dpy, Draw * d)
 {
 	draw_bg(dpy, d);
 	if (d->data)
@@ -160,11 +160,11 @@ static void _draw_label(Display * dpy, Draw * d)
 /* draws label */
 void blitz_drawlabel(Display * dpy, Draw * d)
 {
-	_draw_label(dpy, d);
-	_draw_border(dpy, d);
+	xdraw_label(dpy, d);
+	xdraw_border(dpy, d);
 }
 
 void blitz_drawlabelnoborder(Display * dpy, Draw * d)
 {
-	_draw_label(dpy, d);
+	xdraw_label(dpy, d);
 }

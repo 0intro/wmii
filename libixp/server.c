@@ -166,7 +166,7 @@ static void update_conns(IXPServer * s)
 	FD_ZERO(&s->wr);
 	for (i = 0; i < MAX_CONN; i++) {
 		if (s->conn[i].fd >= 0) {
-			s->nfds = _MAX(s->nfds, s->conn[i].fd);
+			s->nfds = xMAX(s->nfds, s->conn[i].fd);
 			if (s->conn[i].read && !s->conn[i].mode
 				&& (!s->conn[i].len || s->conn[i].remain)) {
 				FD_SET(s->conn[i].fd, &s->rd);
