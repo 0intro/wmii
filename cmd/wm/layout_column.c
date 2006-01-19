@@ -180,6 +180,7 @@ detach_frame(Layout *l, Frame * old)
         acme->frames = old->next;
     if(old->next)
         old->next->prev = old->prev;
+	old->prev = old->next = nil;
     old->aux = nil;
     detach_frame_from_layout(old);
     acme->nframes--;
@@ -424,19 +425,7 @@ focus_col(Layout *l, Client *c, Bool raise)
     	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0,
 					 c->rect.width / 2, c->rect.height / 2);
 
-	if(old && (old != c)) {
-		ungrab_client(old, AnyModifier, AnyButton);
-		grab_client(old, AnyModifier, AnyButton);
-    	draw_frame(old->frame);
-	}
-	ungrab_client(c, AnyModifier, AnyButton);
-    grab_client(c, Mod1Mask, Button1);
-    grab_client(c, Mod1Mask, Button3);
-    XRaiseWindow(dpy, c->win);
-    XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-    draw_frame(c->frame);
-    invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
-	XSync(dpy, False);
+	focus_client(c, old);
 }
 
 static Frame *
@@ -504,7 +493,7 @@ select_frame(void *obj, char *arg)
         for(cell = col->cells; cell && i != idx; cell = cell->next)
             i++;
     }
-    if(cell && cell != col)
+    if(cell && cell != col->sel)
         focus_col(l, cell->frame->sel, True);
 }
 

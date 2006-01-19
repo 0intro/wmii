@@ -229,6 +229,7 @@ Client *sel_client();
 Client *clientat(Client * clients, size_t idx);
 void detach_detached(Client * c);
 void attach_detached(Client * c);
+void focus_client(Client *new, Client *old);
 
 /* frame.c */
 Frame *win_to_frame(Window w);

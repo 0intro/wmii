@@ -108,6 +108,7 @@ detach_frame(Layout *l, Frame * old)
     if(fl->sel == old)
         fl->sel = fl->frames;
 
+	old->prev = old->next = nil;
     detach_frame_from_layout(old);
     fl->nframes--;
 }
@@ -193,18 +194,7 @@ focus_float(Layout *l, Client *c, Bool raise)
 					 c->rect.width / 2, c->rect.height / 2);
     }
 
-	if(old && (old != c)) {
-		grab_client(old, AnyModifier, AnyButton);
-    	draw_frame(old->frame);
-	}
-	ungrab_client(c, AnyModifier, AnyButton);
-    grab_client(c, Mod1Mask, Button1);
-    grab_client(c, Mod1Mask, Button3);
-    XRaiseWindow(dpy, c->win);
-    XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-    draw_frame(c->frame);
-    invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
-	XSync(dpy, False);
+	focus_client(c, old);
 }
 
 static Frame *
