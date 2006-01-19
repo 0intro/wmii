@@ -49,6 +49,7 @@ focus_client(Client *new, Client *old)
     grab_client(new, Mod1Mask, Button3);
     XRaiseWindow(dpy, new->win);
     XSetInputFocus(dpy, new->win, RevertToPointerRoot, CurrentTime);
+    XDefineCursor(dpy, new->win, normal_cursor);
     draw_frame(new->frame);
     invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
 	XSync(dpy, False);
