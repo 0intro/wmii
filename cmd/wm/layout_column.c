@@ -504,7 +504,7 @@ select_frame(void *obj, char *arg)
         for(cell = col->cells; cell && i != idx; cell = cell->next)
             i++;
     }
-    if(cell)
+    if(cell && cell != col)
         focus_col(l, cell->frame->sel, True);
 }
 
