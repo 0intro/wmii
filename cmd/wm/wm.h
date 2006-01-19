@@ -24,6 +24,7 @@ enum {
     L_PREFIX,
     L_FRAME_PREFIX,
     L_SEL_FRAME,
+    L_NAME,
     L_CTL,
     L_LAST
 };

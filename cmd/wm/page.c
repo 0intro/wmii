@@ -238,15 +238,10 @@ toggle_layout(void *obj, char *arg)
 {
     Page *p = obj;
 
-    if(p->sel == p->managed)
-        p->sel = p->floating;
+    if(!p->managed->def || (p->sel == p->managed))
+    	focus_layout(p->floating);
     else
-        p->sel = p->managed;
-
-	if(!p->sel->def)
-		p->sel = p->floating;
-
-    focus_layout(p->sel);
+    	focus_layout(p->managed);
 }
 
 Page *

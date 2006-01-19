@@ -24,6 +24,8 @@ alloc_layout(Page * p, char *layout)
         name = "float";
     snprintf(buf, MAX_BUF, "/%s/layout/%s", p->file[P_PREFIX]->name, name);
     l->file[L_PREFIX] = ixp_create(ixps, buf);
+    snprintf(buf, MAX_BUF, "/%s/layout/%s/name", p->file[P_PREFIX]->name, name);
+    l->file[L_NAME] = wmii_create_ixpfile(ixps, buf, layout);
     snprintf(buf, MAX_BUF, "/%s/layout/%s/frame", p->file[P_PREFIX]->name, name);
     l->file[L_FRAME_PREFIX] = ixp_create(ixps, buf);
     snprintf(buf, MAX_BUF, "/%s/layout/%s/frame/sel",

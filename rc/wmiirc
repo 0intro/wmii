@@ -113,7 +113,7 @@ wmiir write /wm/event/clientupdate \
 wmiir write /wm/event/pageupdate \
 'wmiir write /bar/'^$plab^'/data `{wmiir read /wm/sel/name} &&' ^\
 'wmiir write /bar/'^$klab^'/data `{wmiir read /keys/lookup|sed ''s|/mode/||''} && ' ^\
-'wmiir write /bar/'^$llab^'/data `{wmiir read /wm/sel/layoutname}'
+'wmiir write /bar/'^$llab^'/data `{wmiir read /wm/sel/layout/sel/name}'
 
 for(page in `{wmiir read /wm | grep '^[0-9]'}) {
 	framesconf /wm/$page/layout/float/frame
