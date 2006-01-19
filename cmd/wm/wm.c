@@ -120,6 +120,8 @@ draw_pager_layout(Layout *l, Draw * d)
 {
     Frame *f;
     Frame *sel = sel_frame();
+	if(!l->def)
+		return;
     for(f = l->def->frames(l); f; f = f->next) {
         if(f == sel) {
             d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
