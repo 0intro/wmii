@@ -1,5 +1,5 @@
 /*
- * (C)opyright MMIV-MMV Anselm R. Garbe <garbeam at gmail dot com>
+ * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 
@@ -14,7 +14,7 @@
 
 static char *version[] = {
     "wmiiwarp - window manager improved warp - " VERSION "\n"
-        " (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
+        " (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
 };
 
 static void

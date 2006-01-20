@@ -1,5 +1,5 @@
 # libixp - lib ixp protocol
-#   (C)opyright MMIV-MMV Anselm R. Garbe
+#   (C)opyright MMIV-MMVI Anselm R. Garbe
 
 include ../config.mk
 

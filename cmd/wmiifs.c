@@ -1,5 +1,5 @@
 /*
- * (C)opyright MMV Anselm R. Garbe <garbeam at gmail dot com>
+ * (C)opyright MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 
@@ -49,7 +49,7 @@ static Action acttbl[] = {
 
 static char *version[] = {
     "wmiifs - window manager improved filesystem - " VERSION "\n"
-        " (C)opyright MMV Anselm R. Garbe\n", 0
+        " (C)opyright MMVI Anselm R. Garbe\n", 0
 };
 
 static void

@@ -1,5 +1,5 @@
 /*
- * (C)opyright MMIV-MMV Anselm R. Garbe <garbeam at gmail dot com>
+ * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 
@@ -14,7 +14,7 @@ static int exit_code = 0;
 
 static char *version[] = {
     "wmiir - window manager improved remote - " VERSION "\n"
-        " (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
+        " (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
 };
 
 static void

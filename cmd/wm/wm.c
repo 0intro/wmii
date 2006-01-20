@@ -1,5 +1,5 @@
 /*
- * (C)opyright MMIV-MMV Anselm R. Garbe <garbeam at gmail dot com>
+ * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 
@@ -46,7 +46,7 @@ Action wm_acttbl[] = {
 
 char *version[] = {
     "wmiiwm - window manager improved 2 - " VERSION "\n"
-        " (C)opyright MMIV-MMV Anselm R. Garbe\n", 0
+        " (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
 };
 
 static void
