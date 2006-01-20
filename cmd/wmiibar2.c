@@ -26,14 +26,13 @@
  * /display				Fdisplay	'top', 'bottom', 'none'
  * /font				Ffont		<xlib font name>
  * /new					Fnew 		returns id of new item
+ * /event				Fevent
  * /default/ 			Ditem
- * /default/bNpress		Fevent		<command, gets executed>
  * /default/bgcolor		Fcolor		<#RRGGBB, #RGB>
  * /default/fgcolor		Fcolor		<#RRGGBB, #RGB>
  * /default/bordercolor	Fcolor		<#RRGGBB, #RGB>
  * /1/					Ditem
  * /1/data 				Fdata		<arbitrary data which gets displayed>
- * /1/bNpress			Fevent		<command, gets executed>
  * /1/bgcolor			Fcolor		<#RRGGBB, #RGB>
  * /1/fgcolor			Fcolor		<#RRGGBB, #RGB>
  * /1/bordercolor		Fcolor		<#RRGGBB, #RGB> ...
@@ -64,11 +63,7 @@ static QFile qfilelist[] = {
     {"bgcolor", Fcolor},
     {"fgcolor", Fcolor},
     {"bordercolor", Fcolor},
-    {"b1press", Fevent},
-    {"b2press", Fevent},
-    {"b3press", Fevent},
-    {"b4press", Fevent},
-    {"b5press", Fevent},
+    {"event", Fevent},
     {0, 0},
 };
 
@@ -186,7 +181,7 @@ qfile_index(char *name, unsigned short *index)
 }
 
 static Bool
-make_qid(Qid * dir, char *wname, Qid * new)
+mkqid(Qid * dir, char *wname, Qid * new)
 {
     unsigned short idx;
     const char *errstr;
@@ -257,8 +252,7 @@ xwalk(IXPServer * s, IXPConn * c)
     if(s->fcall.nwname) {
         qid = map->qid;
         for(nwqid = 0; (nwqid < s->fcall.nwname)
-            && make_qid(&qid, s->fcall.wname[nwqid],
-                        &s->fcall.wqid[nwqid]); nwqid++)
+            && mkqid(&qid, s->fcall.wname[nwqid], &s->fcall.wqid[nwqid]); nwqid++)
             qid = s->fcall.wqid[nwqid];
         if(!nwqid) {
             s->errstr = "file not found";
@@ -315,45 +309,49 @@ xopen(IXPServer * s, IXPConn * c)
     return 0;
 }
 
+static unsigned int
+mkstat(Stat *stat, char *name, unsigned long long length)
+{
+    stat->mode = 0xff;
+    stat->atime = stat->mtime = time(0);
+    cext_strlcpy(stat->uid, getenv("USER"), sizeof(stat->uid));
+    cext_strlcpy(stat->gid, getenv("USER"), sizeof(stat->gid));
+    cext_strlcpy(stat->muid, getenv("USER"), sizeof(stat->muid));
+
+    cext_strlcpy(stat->name, name, sizeof(stat->name));
+    stat->length = length;
+    mkqid(&root_qid, name, &stat->qid);
+
+	return ixp_sizeof_stat(stat) + sizeof(unsigned short);
+}
+
 static int
 xread(IXPServer * s, IXPConn * c)
 {
+	Stat stat;
     Map *map = fid_to_map(c->aux, s->fcall.fid);
-    Stat stat = { 0 };
-    unsigned char *p;
+    unsigned char *p = s->fcall.data;
 
     fprintf(stderr, "%s", "reading\n");
     if(!map) {
         s->errstr = "invalid fid";
         return -1;
     }
-    stat.mode = 0xff;
-    stat.atime = stat.mtime = time(0);
-    cext_strlcpy(stat.uid, getenv("USER"), sizeof(stat.uid));
-    cext_strlcpy(stat.gid, getenv("USER"), sizeof(stat.gid));
-    cext_strlcpy(stat.muid, getenv("USER"), sizeof(stat.muid));
-
     fprintf(stderr, "%d\n", qpath_item(map->qid.path));
     switch (qpath_type(map->qid.path)) {
     default:
     case Droot:
-		s->fcall.count = 0;
-        p = s->fcall.data;
-        cext_strlcpy(stat.name, "display", sizeof(stat.name));
-        stat.length = strlen(align);
-        make_qid(&root_qid, "display", &stat.qid);
+		s->fcall.count = mkstat(&stat, "display", strlen(align));
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
-        cext_strlcpy(stat.name, "font", sizeof(stat.name));
-        stat.length = strlen(font);
-        make_qid(&root_qid, "font", &stat.qid);
+        s->fcall.count += mkstat(&stat, "font", strlen(font));
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
-        cext_strlcpy(stat.name, "new", sizeof(stat.name));
-        stat.length = 0;
-        make_qid(&root_qid, "new", &stat.qid);
+        s->fcall.count += mkstat(&stat, "new", 0);
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += ixp_sizeof_stat(&stat) + sizeof(unsigned short);
+        s->fcall.count += mkstat(&stat, "event", 0);
+        p = ixp_enc_stat(p, &stat);
+        s->fcall.count += mkstat(&stat, "default", 0);
+        p = ixp_enc_stat(p, &stat);
+		/* todo: add all labels */
         s->fcall.id = RREAD;
 		if(s->fcall.offset >= s->fcall.count)
 			s->fcall.count = 0; /* EOF */
