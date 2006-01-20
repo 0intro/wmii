@@ -255,7 +255,7 @@ void *ixp_dec_prefix(unsigned char *msg, unsigned int *size,
 void *ixp_enc_qid(unsigned char *msg, Qid * qid);
 void *ixp_dec_qid(unsigned char *msg, Qid * qid);
 void *ixp_enc_stat(unsigned char *msg, Stat * stat);
-void *ixp_dec_stat(unsigned char *msg, Stat * stat, unsigned short *len);
+void *ixp_dec_stat(unsigned char *msg, Stat * stat);
 
 /* message.c */
 unsigned short ixp_sizeof_stat(Stat * stat);

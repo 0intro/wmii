@@ -312,7 +312,7 @@ xopen(IXPServer * s, IXPConn * c)
 static unsigned int
 mkstat(Stat *stat, char *name, unsigned long long length)
 {
-    stat->mode = 0xff;
+    stat->mode = 0xfff;
     stat->atime = stat->mtime = time(0);
     cext_strlcpy(stat->uid, getenv("USER"), sizeof(stat->uid));
     cext_strlcpy(stat->gid, getenv("USER"), sizeof(stat->gid));
@@ -322,7 +322,7 @@ mkstat(Stat *stat, char *name, unsigned long long length)
     stat->length = length;
     mkqid(&root_qid, name, &stat->qid);
 
-	return ixp_sizeof_stat(stat) + sizeof(unsigned short);
+	return ixp_sizeof_stat(stat);
 }
 
 static int
@@ -341,15 +341,20 @@ xread(IXPServer * s, IXPConn * c)
     switch (qpath_type(map->qid.path)) {
     default:
     case Droot:
-		s->fcall.count = mkstat(&stat, "display", strlen(align));
+		s->fcall.count = mkstat(&stat, "display", strlen(align)) + sizeof(unsigned short);
+		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "font", strlen(font));
+        s->fcall.count += mkstat(&stat, "font", strlen(font)) + sizeof(unsigned short);
+		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "new", 0);
+        s->fcall.count += mkstat(&stat, "new", 0) + sizeof(unsigned short);
+		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "event", 0);
+        s->fcall.count += mkstat(&stat, "event", 0) + sizeof(unsigned short);
+		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "default", 0);
+        s->fcall.count += mkstat(&stat, "default", 0) + sizeof(unsigned short);
+		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));
         p = ixp_enc_stat(p, &stat);
 		/* todo: add all labels */
         s->fcall.id = RREAD;
@@ -385,9 +390,12 @@ xstat(IXPServer * s, IXPConn * c)
         s->errstr = "invalid fid";
         return -1;
     }
+
     s->fcall.id = RSTAT;
-	s->fcall.stat.mode = 0xff;
+	s->fcall.stat.mode = 0xfff;
     s->fcall.stat.atime = s->fcall.stat.mtime = time(0);
+
+	fprintf(stderr, "atime=%ld\n", s->fcall.stat.atime);
     cext_strlcpy(s->fcall.stat.uid, getenv("USER"), sizeof(s->fcall.stat.uid));
     cext_strlcpy(s->fcall.stat.gid, getenv("USER"), sizeof(s->fcall.stat.gid));
     cext_strlcpy(s->fcall.stat.muid, getenv("USER"), sizeof(s->fcall.stat.muid));
@@ -397,9 +405,11 @@ xstat(IXPServer * s, IXPConn * c)
     default:
     case Droot:
 		s->fcall.stat.name[0] = '/';
-		s->fcall.stat.name[1] = 0;
+		s->fcall.stat.name[1] = '\0';
         s->fcall.stat.length = 0;
 		s->fcall.stat.qid = root_qid;
+    fprintf(stderr, "stat: %ld %ld \n", s->fcall.stat.type, s->fcall.stat.dev);
+    fprintf(stderr, "qid: %ld %ld %lld\n", root_qid.type, root_qid.version, root_qid.path);
         break;
     case Ditem:
         break;

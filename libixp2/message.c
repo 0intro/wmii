@@ -21,7 +21,7 @@ unsigned short
 ixp_sizeof_stat(Stat * stat)
 {
     return IXP_QIDSZ
-        + sizeof(unsigned short)
+        + 2 * sizeof(unsigned short)
         + 4 * sizeof(unsigned int)
         + sizeof(unsigned long long)
         + sizeof_string(stat->name)
@@ -194,10 +194,12 @@ ixp_fcall_to_msg(Fcall * fcall, void *msg, unsigned int msglen)
         p = ixp_enc_u32(p, fcall->fid);
         break;
     case RSTAT:
+		p = ixp_enc_u16(p, ixp_sizeof_stat(&fcall->stat));
         p = ixp_enc_stat(p, &fcall->stat);
         break;
     case TWSTAT:
         p = ixp_enc_u32(p, fcall->fid);
+		p = ixp_enc_u16(p, ixp_sizeof_stat(&fcall->stat));
         p = ixp_enc_stat(p, &fcall->stat);
         break;
     }
@@ -221,8 +223,7 @@ ixp_msg_to_fcall(void *msg, unsigned int msglen, Fcall * fcall)
     case TVERSION:
     case RVERSION:
         p = ixp_dec_u32(p, &fcall->maxmsg);
-        p = ixp_dec_string(p, fcall->version, sizeof(fcall->version),
-                           &len);
+        p = ixp_dec_string(p, fcall->version, sizeof(fcall->version), &len);
         break;
     case TAUTH:
         p = ixp_dec_u32(p, &fcall->afid);
@@ -300,11 +301,13 @@ ixp_msg_to_fcall(void *msg, unsigned int msglen, Fcall * fcall)
         p = ixp_dec_u32(p, &fcall->fid);
         break;
     case RSTAT:
-        p = ixp_dec_stat(p, &fcall->stat, &len);
+		p = ixp_dec_u16(p, &len);
+        p = ixp_dec_stat(p, &fcall->stat);
         break;
     case TWSTAT:
         p = ixp_dec_u32(p, &fcall->fid);
-        p = ixp_dec_stat(p, &fcall->stat, &len);
+		p = ixp_dec_u16(p, &len);
+        p = ixp_dec_stat(p, &fcall->stat);
         break;
     }
 
