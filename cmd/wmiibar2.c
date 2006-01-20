@@ -223,8 +223,9 @@ xattach(IXPServer * s, IXPConn * c)
         for(m = maps; m && m->next; m = m->next); 
         m->next = new;
     }
-    fprintf(stderr, "attaching %u %u %s %s\n", s->fcall.fid, s->fcall.afid,
+    /*fprintf(stderr, "attaching %u %u %s %s\n", s->fcall.fid, s->fcall.afid,
             s->fcall.uname, s->fcall.aname);
+			*/
     new->qid = root_qid;
     new->fid = s->fcall.fid;
     s->fcall.id = RATTACH;
@@ -239,7 +240,7 @@ xwalk(IXPServer * s, IXPConn * c)
     Qid qid;
     Map *map;
 
-    fprintf(stderr, "%s", "walking\n");
+    /*fprintf(stderr, "%s", "walking\n");*/
     if(!(map = fid_to_map(c->aux, s->fcall.fid))) {
         s->errstr = "no directory associated with fid";
         return -1;
@@ -293,7 +294,7 @@ xopen(IXPServer * s, IXPConn * c)
 {
     Map *map = fid_to_map(c->aux, s->fcall.fid);
 
-    fprintf(stderr, "%s", "opening\n");
+    /*fprintf(stderr, "%s", "opening\n");*/
     if(!map) {
         s->errstr = "invalid fid";
         return -1;
@@ -332,17 +333,16 @@ xread(IXPServer * s, IXPConn * c)
     Map *map = fid_to_map(c->aux, s->fcall.fid);
     unsigned char *p = s->fcall.data;
 
-    fprintf(stderr, "reading %lld\n", s->fcall.offset);
+    /*fprintf(stderr, "reading %lld\n", s->fcall.offset);*/
     if(!map) {
         s->errstr = "invalid fid";
         return -1;
     }
-    fprintf(stderr, "%d\n", qpath_item(map->qid.path));
+    /*fprintf(stderr, "%d\n", qpath_item(map->qid.path));*/
     switch (qpath_type(map->qid.path)) {
     default:
     case Droot:
 		s->fcall.count = mkstat(&stat, "display", strlen(align), 0x0);
-/*		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));*/
         p = ixp_enc_stat(p, &stat);
         s->fcall.count += mkstat(&stat, "font", strlen(font), 0x0);
         p = ixp_enc_stat(p, &stat);
@@ -356,7 +356,6 @@ xread(IXPServer * s, IXPConn * c)
         s->fcall.id = RREAD;
 		if(s->fcall.offset >= s->fcall.count)
 			s->fcall.count = 0; /* EOF */
-    fprintf(stderr, "returning message size=%d\n", s->fcall.count);
         break;
     case Ditem:
         break;
@@ -382,7 +381,7 @@ xstat(IXPServer * s, IXPConn * c)
 {
     Map *map = fid_to_map(c->aux, s->fcall.fid);
 
-    fprintf(stderr, "%s", "stating\n");
+    /*fprintf(stderr, "%s", "stating\n");*/
     if(!map) {
         s->errstr = "invalid fid";
         return -1;
@@ -392,12 +391,12 @@ xstat(IXPServer * s, IXPConn * c)
 	s->fcall.stat.mode = 0xfff | DMDIR;
     s->fcall.stat.atime = s->fcall.stat.mtime = time(0);
 
-	fprintf(stderr, "atime=%ld\n", s->fcall.stat.atime);
+	/*fprintf(stderr, "atime=%ld\n", s->fcall.stat.atime);*/
     cext_strlcpy(s->fcall.stat.uid, getenv("USER"), sizeof(s->fcall.stat.uid));
     cext_strlcpy(s->fcall.stat.gid, getenv("USER"), sizeof(s->fcall.stat.gid));
     cext_strlcpy(s->fcall.stat.muid, getenv("USER"), sizeof(s->fcall.stat.muid));
 
-    fprintf(stderr, "%d\n", qpath_item(map->qid.path));
+    /*fprintf(stderr, "%d\n", qpath_item(map->qid.path));*/
     switch (qpath_type(map->qid.path)) {
     default:
     case Droot:
@@ -405,8 +404,8 @@ xstat(IXPServer * s, IXPConn * c)
 		s->fcall.stat.name[1] = 0;
         s->fcall.stat.length = 0;
 		s->fcall.stat.qid = root_qid;
-    fprintf(stderr, "stat: %ld %ld \n", s->fcall.stat.type, s->fcall.stat.dev);
-    fprintf(stderr, "qid: %ld %ld %lld\n", root_qid.type, root_qid.version, root_qid.path);
+    /*fprintf(stderr, "stat: %ld %ld \n", s->fcall.stat.type, s->fcall.stat.dev);*/
+    /*fprintf(stderr, "qid: %ld %ld %lld\n", root_qid.type, root_qid.version, root_qid.path);*/
         break;
     case Ditem:
         break;
@@ -449,7 +448,6 @@ xclunk(IXPServer * s, IXPConn * c)
         for(m = maps; m && m->next != map; m = m->next);
         m->next = map->next;
     }
-	fprintf(stderr, "xclunk 0x%x (maps=0x%x)\n", map, c->aux);
     free(map);
     s->fcall.id = RCLUNK;
     return 0;
@@ -460,7 +458,7 @@ freeconn(IXPServer * s, IXPConn * c)
 {
     Map *m, *maps = c->aux;
 
-	fprintf(stderr, "%s", "freecon\n");
+	/*fprintf(stderr, "%s", "freecon\n");*/
     while((m = maps)) {
         c->aux = maps = maps->next;
         free(m);

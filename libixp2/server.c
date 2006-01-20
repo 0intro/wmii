@@ -107,7 +107,7 @@ server_client_read(IXPServer * s, IXPConn * c)
 	else
 		memcpy(msg, c->retry, c->size);
 
-    fprintf(stderr, "msize=%d\n", msize);
+    /*fprintf(stderr, "msize=%d\n", msize);*/
     if((msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, &s->fcall))) {
         for(i = 0; s->funcs && s->funcs[i].id; i++) {
             if(s->funcs[i].id == s->fcall.id) {
@@ -124,14 +124,14 @@ server_client_read(IXPServer * s, IXPConn * c)
 					free(c->retry);
 				c->retry = nil;
                 msize = ixp_fcall_to_msg(&s->fcall, msg, s->fcall.maxmsg);
-                fprintf(stderr, "msize=%d\n", msize);
+                /*fprintf(stderr, "msize=%d\n", msize);*/
                 if(ixp_send_message(c->fd, msg, msize, &s->errstr) != msize)
                     break;
                 return;
             }
         }
     }
-	fprintf(stderr, "function id=%d\n", s->fcall.id);
+	/*fprintf(stderr, "function id=%d\n", s->fcall.id);*/
     if(!s->errstr)
         s->errstr = "function not supported";
     s->fcall.id = RERROR;
@@ -176,8 +176,8 @@ ixp_server_loop(IXPServer * s)
 int
 ixp_server_tversion(IXPServer * s, IXPConn * c)
 {
-    fprintf(stderr, "got version %s (%s) %d (%d)\n", s->fcall.version,
-            IXP_VERSION, s->fcall.maxmsg, IXP_MAX_MSG);
+    /*fprintf(stderr, "got version %s (%s) %d (%d)\n", s->fcall.version,
+            IXP_VERSION, s->fcall.maxmsg, IXP_MAX_MSG);*/
     if(strncmp(s->fcall.version, IXP_VERSION, strlen(IXP_VERSION))) {
         s->errstr = "9P versions differ";
         return -1;
