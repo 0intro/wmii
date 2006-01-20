@@ -94,19 +94,15 @@ print_dir(void *result, unsigned int msize)
 {
     void *p = result;
     static Stat stat, zerostat = { 0 };
-    unsigned int len = 0;
-	unsigned short size;
     do {
-		p = ixp_dec_u16(p, &size);
         p = ixp_dec_stat(p, &stat);
-		len += size + sizeof(unsigned short);
         if(stat.qid.type == IXP_QTDIR)
             fprintf(stdout, "%s/\n", stat.name);
         else
             fprintf(stdout, "%s\n", stat.name);
         stat = zerostat;
     }
-    while(len < msize);
+    while(p - result < msize);
 }
 
 static int

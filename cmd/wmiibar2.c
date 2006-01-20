@@ -310,9 +310,9 @@ xopen(IXPServer * s, IXPConn * c)
 }
 
 static unsigned int
-mkstat(Stat *stat, char *name, unsigned long long length)
+mkstat(Stat *stat, char *name, unsigned long long length, unsigned int mode)
 {
-    stat->mode = 0xfff;
+    stat->mode = 0xfff | mode; /* --rwxrwxrwx */
     stat->atime = stat->mtime = time(0);
     cext_strlcpy(stat->uid, getenv("USER"), sizeof(stat->uid));
     cext_strlcpy(stat->gid, getenv("USER"), sizeof(stat->gid));
@@ -332,7 +332,7 @@ xread(IXPServer * s, IXPConn * c)
     Map *map = fid_to_map(c->aux, s->fcall.fid);
     unsigned char *p = s->fcall.data;
 
-    fprintf(stderr, "%s", "reading\n");
+    fprintf(stderr, "reading %lld\n", s->fcall.offset);
     if(!map) {
         s->errstr = "invalid fid";
         return -1;
@@ -341,25 +341,22 @@ xread(IXPServer * s, IXPConn * c)
     switch (qpath_type(map->qid.path)) {
     default:
     case Droot:
-		s->fcall.count = mkstat(&stat, "display", strlen(align)) + sizeof(unsigned short);
-		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));
+		s->fcall.count = mkstat(&stat, "display", strlen(align), 0x0);
+/*		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));*/
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "font", strlen(font)) + sizeof(unsigned short);
-		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));
+        s->fcall.count += mkstat(&stat, "font", strlen(font), 0x0);
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "new", 0) + sizeof(unsigned short);
-		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));
+        s->fcall.count += mkstat(&stat, "new", 0, 0x0);
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "event", 0) + sizeof(unsigned short);
-		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));
+        s->fcall.count += mkstat(&stat, "event", 0, 0x0);
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "default", 0) + sizeof(unsigned short);
-		p = ixp_enc_u16(p, ixp_sizeof_stat(&stat));
+        s->fcall.count += mkstat(&stat, "default", 0, DMDIR);
         p = ixp_enc_stat(p, &stat);
 		/* todo: add all labels */
         s->fcall.id = RREAD;
 		if(s->fcall.offset >= s->fcall.count)
 			s->fcall.count = 0; /* EOF */
+    fprintf(stderr, "returning message size=%d\n", s->fcall.count);
         break;
     case Ditem:
         break;
@@ -392,7 +389,7 @@ xstat(IXPServer * s, IXPConn * c)
     }
 
     s->fcall.id = RSTAT;
-	s->fcall.stat.mode = 0xfff;
+	s->fcall.stat.mode = 0xfff | DMDIR;
     s->fcall.stat.atime = s->fcall.stat.mtime = time(0);
 
 	fprintf(stderr, "atime=%ld\n", s->fcall.stat.atime);
@@ -405,7 +402,7 @@ xstat(IXPServer * s, IXPConn * c)
     default:
     case Droot:
 		s->fcall.stat.name[0] = '/';
-		s->fcall.stat.name[1] = '\0';
+		s->fcall.stat.name[1] = 0;
         s->fcall.stat.length = 0;
 		s->fcall.stat.qid = root_qid;
     fprintf(stderr, "stat: %ld %ld \n", s->fcall.stat.type, s->fcall.stat.dev);
@@ -447,11 +444,12 @@ xclunk(IXPServer * s, IXPConn * c)
         return -1;
     }
     if(maps == map)
-        maps = maps->next;
+        c->aux = maps = maps->next;
     else {
         for(m = maps; m && m->next != map; m = m->next);
         m->next = map->next;
     }
+	fprintf(stderr, "xclunk 0x%x (maps=0x%x)\n", map, c->aux);
     free(map);
     s->fcall.id = RCLUNK;
     return 0;
@@ -462,12 +460,11 @@ freeconn(IXPServer * s, IXPConn * c)
 {
     Map *m, *maps = c->aux;
 
+	fprintf(stderr, "%s", "freecon\n");
     while((m = maps)) {
-        maps = maps->next;
+        c->aux = maps = maps->next;
         free(m);
     }
-    c->aux = nil;
-	printf("freecon\n");
 }
 
 static IXPTFunc funcs[] = {
