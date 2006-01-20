@@ -63,6 +63,7 @@ init_conn(IXPConn * c, int fd, int dont_close,
 {
     *c = zero_conn;
     c->fd = fd;
+	c->retry = nil;
     c->dont_close = dont_close;
     c->read = read;
     return c;
@@ -84,7 +85,7 @@ handle_conns(IXPServer * s)
     int i;
     for(i = 0; i < IXP_MAX_CONN; i++) {
         if(s->conn[i].fd >= 0) {
-            if(FD_ISSET(s->conn[i].fd, &s->rd) && s->conn[i].read)
+            if((s->conn[i].retry || FD_ISSET(s->conn[i].fd, &s->rd)) && s->conn[i].read)
                 /* call back read handler */
                 s->conn[i].read(s, &s->conn[i]);
         }
@@ -95,21 +96,36 @@ static void
 server_client_read(IXPServer * s, IXPConn * c)
 {
     unsigned int i, msize;
+	int ret;
     s->errstr = 0;
-    if(!(msize = ixp_recv_message(c->fd, msg, IXP_MAX_MSG, &s->errstr))) {
-        ixp_server_rm_conn(s, c);
-        return;
-    }
+	if(!c->retry) {
+		if(!(msize = ixp_recv_message(c->fd, msg, IXP_MAX_MSG, &s->errstr))) {
+			ixp_server_rm_conn(s, c);
+			return;
+		}
+	}
+	else
+		memcpy(msg, c->retry, c->size);
+
     fprintf(stderr, "msize=%d\n", msize);
     if((msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, &s->fcall))) {
         for(i = 0; s->funcs && s->funcs[i].id; i++) {
             if(s->funcs[i].id == s->fcall.id) {
-                if(s->funcs[i].tfunc(s, c) == -1)
-                    break;
+				ret = s->funcs[i].tfunc(s, c);
+				if(ret == -1)
+					break;
+				else if(ret == -2) {
+					c->size = msize;
+				    c->retry = cext_emallocz(msize);
+					memcpy(c->retry, msg, msize);
+					return;
+				}
+				if(c->retry)
+					free(c->retry);
+				c->retry = nil;
                 msize = ixp_fcall_to_msg(&s->fcall, msg, s->fcall.maxmsg);
                 fprintf(stderr, "msize=%d\n", msize);
-                if(ixp_send_message(c->fd, msg, msize, &s->errstr) !=
-                   msize)
+                if(ixp_send_message(c->fd, msg, msize, &s->errstr) != msize)
                     break;
                 return;
             }

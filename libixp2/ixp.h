@@ -190,6 +190,8 @@ typedef struct {
 struct IXPConn {
     int fd;
     int dont_close;
+	void *retry;
+	unsigned int size;
     void (*read) (IXPServer *, IXPConn *);
     void *aux;
 };
