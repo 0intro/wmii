@@ -223,7 +223,7 @@ typedef struct {
 } IXPClient;
 
 /* client.c */
-int ixp_client_init(IXPClient * c, char *sockfile);
+int ixp_client_init(IXPClient * c, char *address);
 void ixp_client_deinit(IXPClient * c);
 int ixp_client_remove(IXPClient * c, unsigned int newfid, char *filepath);
 int ixp_client_create(IXPClient * c, unsigned int dirfid, char *name,
@@ -277,14 +277,14 @@ IXPConn *ixp_server_add_conn(IXPServer * s, int fd, int dont_close,
 int ixp_server_tversion(IXPServer *, IXPConn * c);
 void ixp_server_rm_conn(IXPServer * s, IXPConn * c);
 void ixp_server_loop(IXPServer * s);
-int ixp_server_init(IXPServer * s, char *sockfile, IXPTFunc * funcs,
+int ixp_server_init(IXPServer * s, char *address, IXPTFunc * funcs,
                     void (*freeconn) (IXPServer *, IXPConn *));
 void ixp_server_deinit(IXPServer * s);
 
 /* socket.c */
-int ixp_connect_sock(char *sockfile);
+int ixp_connect_sock(char *address);
 int ixp_accept_sock(int fd);
-int ixp_create_sock(char *sockfile, char **errstr);
+int ixp_create_sock(char *address, char **errstr);
 
 /* transport.c */
 unsigned int ixp_send_message(int fd, void *msg, unsigned int msize,

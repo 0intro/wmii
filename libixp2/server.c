@@ -188,18 +188,18 @@ ixp_server_tversion(IXPServer * s, IXPConn * c)
 }
 
 int
-ixp_server_init(IXPServer * s, char *sockfile, IXPTFunc * funcs,
+ixp_server_init(IXPServer * s, char *address, IXPTFunc * funcs,
                 void (*freeconn) (IXPServer *, IXPConn *))
 {
     int fd, i;
     s->funcs = funcs;
     s->freeconn = freeconn;
     s->errstr = 0;
-    if(!sockfile) {
-        s->errstr = "no socket file provided or invalid directory";
+    if(!address) {
+        s->errstr = "no socket address provided or invalid directory";
         return -1;
     }
-    if((fd = ixp_create_sock(sockfile, &s->errstr)) < 0)
+    if((fd = ixp_create_sock(address, &s->errstr)) < 0)
         return -1;
     for(i = 0; i < IXP_MAX_CONN; i++)
         s->conn[i] = zero_conn;

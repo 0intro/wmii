@@ -10,6 +10,8 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
 #include <sys/un.h>
 #include <unistd.h>
 
@@ -17,7 +19,7 @@
 #include "ixp.h"
 
 static int
-connect_unix_sock(char *sockfile)
+connect_unix_sock(char *address)
 {
     int fd = 0;
     struct sockaddr_un addr = { 0 };
@@ -25,7 +27,7 @@ connect_unix_sock(char *sockfile)
 
     /* init */
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, sockfile, sizeof(addr.sun_path));
+    strncpy(addr.sun_path, address, sizeof(addr.sun_path));
     su_len = sizeof(struct sockaddr) + strlen(addr.sun_path);
 
     if((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
@@ -37,20 +39,52 @@ connect_unix_sock(char *sockfile)
     return fd;
 }
 
-int
-ixp_connect_sock(char *sockfile)
+static int
+connect_tcp_sock(char *host)
 {
-	char *p = strchr(sockfile, '!');
-	char *file, *type;
+    int fd = 0;
+    struct sockaddr_in addr = { 0 };
+	struct hostent *hp;
+	char *port = strrchr(host, '!');
+	const char *errstr = nil;
+
+	*port = 0;
+	port++;
+	addr.sin_port = cext_strtonum(port, 1024, 65535, &errstr);
+	if(errstr)
+		return -1;
+
+    /* init */
+    if((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+        return -1;
+	hp = gethostbyname(host);
+    addr.sin_family = AF_INET;
+	bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
+
+    if(connect(fd, (struct sockaddr *) &addr, sizeof(struct sockaddr_in))) {
+        close(fd);
+        return -1;
+    }
+    return fd;
+}
+
+int
+ixp_connect_sock(char *address)
+{
+	char *p = strchr(address, '!');
+	char *addr, *type;
 
 	if(!p)
 		return -1;
 	*p = 0;
-	file = &p[1];
-	type = sockfile; /* unix, tcp */
+	
+	addr = &p[1];
+	type = address; /* unix, tcp */
 
 	if(strncmp(type, "unix", 5))
-		return connect_unix_sock(file);
+		return connect_unix_sock(addr);
+	else if(!strncmp(type, "tcp", 4))
+		return connect_tcp_sock(addr);
     return -1;
 }
 
@@ -65,7 +99,45 @@ ixp_accept_sock(int fd)
 }
 
 static int
-create_unix_sock(char *sockfile, char **errstr)
+create_tcp_sock(char *host, char **errstr)
+{
+    int fd;
+	struct sockaddr_in addr = { 0 };
+	char *port = strrchr(host, '!');
+
+	if(!port) {
+		*errstr = "no port provided in address";
+		return -1;
+	}
+	*port = 0;
+	port++;
+	addr.sin_port = cext_strtonum(port, 1024, 65535, (const char **)errstr);
+	if(*errstr)
+		return -1;
+    signal(SIGPIPE, SIG_IGN);
+    if((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        *errstr = "cannot open socket";
+        return -1;
+    }
+    addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+
+    if(bind(fd, (struct sockaddr *) &addr, sizeof(struct sockaddr_in)) < 0) {
+        *errstr = "cannot bind socket";
+        close(fd);
+        return -1;
+    }
+
+    if(listen(fd, IXP_MAX_CONN) < 0) {
+        *errstr = "cannot listen on socket";
+        close(fd);
+        return -1;
+    }
+    return fd;
+}
+
+static int
+create_unix_sock(char *file, char **errstr)
 {
     int fd;
     int yes = 1;
@@ -84,7 +156,7 @@ create_unix_sock(char *sockfile, char **errstr)
         return -1;
     }
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, sockfile, sizeof(addr.sun_path));
+    strncpy(addr.sun_path, file, sizeof(addr.sun_path));
     su_len = sizeof(struct sockaddr) + strlen(addr.sun_path);
 
     if(bind(fd, (struct sockaddr *) &addr, su_len) < 0) {
@@ -92,7 +164,7 @@ create_unix_sock(char *sockfile, char **errstr)
         close(fd);
         return -1;
     }
-    chmod(sockfile, S_IRWXU);
+    chmod(file, S_IRWXU);
 
     if(listen(fd, IXP_MAX_CONN) < 0) {
         *errstr = "cannot listen on socket";
@@ -103,20 +175,25 @@ create_unix_sock(char *sockfile, char **errstr)
 }
 
 int
-ixp_create_sock(char *sockfile, char **errstr)
+ixp_create_sock(char *address, char **errstr)
 {
-	char *p = strchr(sockfile, '!');
-	char *file, *type;
+	char *p = strchr(address, '!');
+	char *addr, *type;
 
 	if(!p) {
 		*errstr = "no socket type defined";
 		return -1;
 	}
 	*p = 0;
-	file = &p[1];
-	type = sockfile; /* unix, tcp */
+	
+	addr = &p[1];
+	type = address; /* unix, tcp */
 
 	if(!strncmp(type, "unix", 5))
-		return create_unix_sock(file, errstr);
+		return create_unix_sock(addr, errstr);
+	else if(!strncmp(type, "tcp", 4))
+		return create_tcp_sock(addr, errstr);
+	else
+		*errstr = "unkown socket type";
     return -1;
 }
