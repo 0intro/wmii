@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include "../libixp2/ixp.h"
 
@@ -90,19 +91,28 @@ xwrite(char *file)
 }
 
 static void
-print_dir(void *result, unsigned int msize)
+xls(void *result, unsigned int msize)
 {
+	static char *dir[IXP_MAX_MSG];
+	size_t i = 0, j;
+	char buf[IXP_MAX_MSG];
     void *p = result;
     static Stat stat, zerostat = { 0 };
     do {
         p = ixp_dec_stat(p, &stat);
         if(stat.qid.type == IXP_QTDIR)
-            fprintf(stdout, "%s/\n", stat.name);
+			snprintf(buf, IXP_MAX_MSG, "%s/", stat.name);
         else
-            fprintf(stdout, "%s\n", stat.name);
+			snprintf(buf, IXP_MAX_MSG, "%s", stat.name);
+		dir[i++] = cext_estrdup(buf);
         stat = zerostat;
     }
     while(p - result < msize);
+	qsort(dir, i, sizeof(char *), alphasort);
+	for(j = 0; j < i; j++) {
+        fprintf(stdout, "%s\n", dir[j]);
+		free(dir[j]);
+	}
 }
 
 static int
@@ -123,7 +133,7 @@ xread(char *file)
     /* read */
 	while((count = ixp_client_read(&c, fid, offset, result, IXP_MAX_MSG)) > 0) {
 		if(is_directory)
-			print_dir(result, count);
+			xls(result, count);
 		else {
 			unsigned int i;
 			for(i = 0; i < count; i++)

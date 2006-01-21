@@ -260,10 +260,7 @@ xwalk(IXPServer * s, IXPConn * c)
             return -1;
         }
     }
-    /*
-     * following condition is required by 9P, a fid will only be valid if
-     * the walk was complete
-     */
+    /* a fid will only be valid, if the walk was complete */
     if(nwqid == s->fcall.nwname) {
         Map *m, *maps = c->aux;
         if(s->fcall.fid == s->fcall.newfid) {
@@ -353,6 +350,12 @@ xread(IXPServer * s, IXPConn * c)
         s->fcall.count += mkstat(&stat, "default", 0, DMDIR);
         p = ixp_enc_stat(p, &stat);
 		/* todo: add all labels */
+        s->fcall.count += mkstat(&stat, "1", 0, DMDIR);
+        p = ixp_enc_stat(p, &stat);
+        s->fcall.count += mkstat(&stat, "2", 0, DMDIR);
+        p = ixp_enc_stat(p, &stat);
+        s->fcall.count += mkstat(&stat, "3", 0, DMDIR);
+        p = ixp_enc_stat(p, &stat);
         s->fcall.id = RREAD;
 		if(s->fcall.offset >= s->fcall.count)
 			s->fcall.count = 0; /* EOF */
