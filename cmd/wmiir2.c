@@ -90,29 +90,43 @@ xwrite(char *file)
     return ixp_client_close(&c, fid);
 }
 
+static int
+comp(const void *s1, const void *s2)
+{
+	return strcmp(*(char **)s1, *(char **)s2);
+}
+
 static void
 xls(void *result, unsigned int msize)
 {
-	static char *dir[IXP_MAX_MSG];
-	size_t i = 0, j;
-	char buf[IXP_MAX_MSG];
+	size_t n = 0, j = 0;
+	char buf[IXP_MAX_FLEN];
     void *p = result;
+	char **dir;
     static Stat stat, zerostat = { 0 };
     do {
         p = ixp_dec_stat(p, &stat);
+		n++;
+    }
+    while(p - result < msize);
+	dir = (char **)cext_emallocz(sizeof(char *) * n);
+	p = result;
+	do {
+        p = ixp_dec_stat(p, &stat);
         if(stat.qid.type == IXP_QTDIR)
-			snprintf(buf, IXP_MAX_MSG, "%s/", stat.name);
+			snprintf(buf, sizeof(buf), "%s/", stat.name);
         else
-			snprintf(buf, IXP_MAX_MSG, "%s", stat.name);
-		dir[i++] = cext_estrdup(buf);
+			snprintf(buf, sizeof(buf), "%s", stat.name);
+		dir[j++] = cext_estrdup(buf);
         stat = zerostat;
     }
     while(p - result < msize);
-	qsort(dir, i, sizeof(char *), alphasort);
-	for(j = 0; j < i; j++) {
+	qsort(dir, n, sizeof(char *), comp);
+	for(j = 0; j < n; j++) {
         fprintf(stdout, "%s\n", dir[j]);
 		free(dir[j]);
 	}
+	free(dir);
 }
 
 static int

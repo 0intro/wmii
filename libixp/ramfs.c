@@ -95,7 +95,7 @@ static char *xls(File * f)
 			size++;
 		tmp[i++] = p;
 	}
-	qsort(tmp, num, sizeof(char *), comp_file_name);
+	qsort(tmp, num, sizeof(File *), comp_file_name);
 	result = cext_emallocz(size);
 	for (i = 0; i < num; i++) {
 		strncat(result, tmp[i]->name, size);
