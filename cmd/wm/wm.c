@@ -446,7 +446,6 @@ static void
 xdestroy_page(void *obj, char *arg)
 {
     destroy_page(selpage);
-    focus_page(selpage);
 }
 
 static void
