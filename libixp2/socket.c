@@ -16,8 +16,8 @@
 #include "cext.h"
 #include "ixp.h"
 
-int
-ixp_connect_sock(char *sockfile)
+static int
+connect_unix_sock(char *sockfile)
 {
     int fd = 0;
     struct sockaddr_un addr = { 0 };
@@ -38,6 +38,23 @@ ixp_connect_sock(char *sockfile)
 }
 
 int
+ixp_connect_sock(char *sockfile)
+{
+	char *p = strchr(sockfile, '!');
+	char *file, *type;
+
+	if(!p)
+		return -1;
+	*p = 0;
+	file = &p[1];
+	type = sockfile; /* unix, tcp */
+
+	if(strncmp(type, "unix", 5))
+		return connect_unix_sock(file);
+    return -1;
+}
+
+int
 ixp_accept_sock(int fd)
 {
     socklen_t su_len;
@@ -47,8 +64,8 @@ ixp_accept_sock(int fd)
     return accept(fd, (struct sockaddr *) &addr, &su_len);
 }
 
-int
-ixp_create_sock(char *sockfile, char **errstr)
+static int
+create_unix_sock(char *sockfile, char **errstr)
 {
     int fd;
     int yes = 1;
@@ -83,4 +100,23 @@ ixp_create_sock(char *sockfile, char **errstr)
         return -1;
     }
     return fd;
+}
+
+int
+ixp_create_sock(char *sockfile, char **errstr)
+{
+	char *p = strchr(sockfile, '!');
+	char *file, *type;
+
+	if(!p) {
+		*errstr = "no socket type defined";
+		return -1;
+	}
+	*p = 0;
+	file = &p[1];
+	type = sockfile; /* unix, tcp */
+
+	if(!strncmp(type, "unix", 5))
+		return create_unix_sock(file, errstr);
+    return -1;
 }
