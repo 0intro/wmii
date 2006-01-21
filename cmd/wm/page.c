@@ -60,7 +60,8 @@ alloc_page()
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	pageid++;
     npages++;
-    XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &npages, 1);
+    XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
+			        32, PropModeReplace, (unsigned char *) &npages, 1);
     return new;
 }
 
@@ -123,7 +124,8 @@ destroy_page(Page * p)
     if(!newselpage)
         newselpage = pages;
     npages--;
-    XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &npages, 1);
+    XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
+			        32, PropModeReplace, (unsigned char *) &npages, 1);
     focus_page(newselpage);
 }
 

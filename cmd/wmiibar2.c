@@ -133,7 +133,7 @@ exit_cleanup()
 }
 
 static unsigned long long
-make_qpath(unsigned char type, unsigned short item, unsigned short file)
+mkqpath(unsigned char type, unsigned short item, unsigned short file)
 {
     return ((unsigned long long) file << 24) | ((unsigned long long) item << 8) | (unsigned long long) type;
 }
@@ -194,7 +194,7 @@ mkqid(Qid * dir, char *wname, Qid * new)
             *new = root_qid;
             return True;
         } else if(!strncmp(wname, "default", 8)) {
-            new->path = make_qpath(Ditem, 0, NONE);
+            new->path = mkqpath(Ditem, 0, NONE);
             return True;
         }
         /* check if wname is a number, otherwise file not found */
@@ -202,11 +202,11 @@ mkqid(Qid * dir, char *wname, Qid * new)
         if(errstr || nitems < idx)
             return False;
         /* found */
-        new->path = make_qpath(Ditem, idx, NONE);
+        new->path = mkqpath(Ditem, idx, NONE);
     } else {
         new->type = IXP_QTFILE;
         new->path =
-            make_qpath(qfilelist[idx].type, qpath_item(dir->path), idx);
+            mkqpath(qfilelist[idx].type, qpath_item(dir->path), idx);
     }
     return True;
 }
@@ -519,7 +519,7 @@ main(int argc, char *argv[])
     }
     root_qid.type = IXP_QTDIR;
     root_qid.version = 0;
-    root_qid.path = make_qpath(Droot, NONE, NONE);
+    root_qid.path = mkqpath(Droot, NONE, NONE);
 
     mypid = getpid();
     atexit(exit_cleanup);
