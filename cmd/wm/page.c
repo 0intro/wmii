@@ -103,10 +103,12 @@ destroy_page(Page * p)
     }
 
     if(p == pages) {
-        if(p->next)
+        if(p->next) {
             p->next->prev = nil;
-        pages = p->next;
-        pages->index = 0;
+            pages = p->next;
+            pages->index = 0;
+        } else
+            pages = nil;
     } else {
         p->prev->next = p->next;
         if(p->next)
@@ -132,8 +134,11 @@ destroy_page(Page * p)
 void
 focus_page(Page * p)
 {
-    if(!p)
+    if(!p) {
+        XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+        invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
         return;
+    }
 
     if((p != selpage)) {
         if(selpage) {

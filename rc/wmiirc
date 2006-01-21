@@ -111,9 +111,9 @@ wmiir write /wm/event/clientupdate \
 'text=`{wmiir read /wm/sel/layout/sel/frame/sel/name}' ^\
 'wmiir write /bar/'^$clab^'/data $"text'
 wmiir write /wm/event/pageupdate \
-'wmiir write /bar/'^$plab^'/data `{wmiir read /wm/sel/name} &&' ^\
-'wmiir write /bar/'^$klab^'/data `{wmiir read /keys/lookup|sed ''s|/mode/||''} && ' ^\
-'wmiir write /bar/'^$llab^'/data `{wmiir read /wm/sel/layout/sel/name}'
+'text=`{wmiir read /wm/sel/name}; wmiir write /bar/'^$plab^'/data $"text &&' ^\
+'text=`{wmiir read /keys/lookup|sed ''s|/mode/||''}; wmiir write /bar/'^$klab^'/data $"text && ' ^\
+'text=`{wmiir read /wm/sel/layoutname}; wmiir write /bar/'^$llab^'/data $"text'
 
 for(page in `{wmiir read /wm | grep '^[0-9]'}) {
 	framesconf /wm/$page/layout/float/frame
