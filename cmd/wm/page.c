@@ -127,20 +127,17 @@ destroy_page(Page * p)
 void
 focus_page(Page * p)
 {
-	if(!p)
-		return;
+    if(!p)
+        return;
 
-    if((p != selpage)) {
-		if(selpage) {
-    		unmap_layout(selpage->managed);
-    		unmap_layout(selpage->floating);
-		}
-	}
+    if(selpage) {
+        unmap_layout(selpage->managed);
+        unmap_layout(selpage->floating);
+    }
 
-	if(p != selpage) {
-    	map_layout(p->managed, False);
-    	map_layout(p->floating, False);
-	}
+    map_layout(p->managed, False);
+    map_layout(p->floating, False);
+
     selpage = p;
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
