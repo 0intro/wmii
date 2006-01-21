@@ -67,6 +67,7 @@ alloc_page()
 void
 destroy_page(Page * p)
 {
+	Page *newselpage;
 	AttachQueue *o, *n;
 
 	while(attachqueue && (attachqueue->page == p)) {
@@ -93,10 +94,11 @@ destroy_page(Page * p)
     def[WM_SEL_PAGE]->content = 0;
     ixp_remove_file(ixps, p->file[P_PREFIX]);
     if(p == selpage) {
+        selpage = nil;
         if(p->prev)
-            selpage = p->prev;
+            newselpage = p->prev;
         else
-            selpage = nil;
+            newselpage = nil;
     }
 
     if(p == pages) {
@@ -118,10 +120,11 @@ destroy_page(Page * p)
         --(p->index);
     }
  
-    if(!selpage)
-        selpage = pages;
+    if(!newselpage)
+        newselpage = pages;
     npages--;
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &npages, 1);
+    focus_page(newselpage);
 }
 
 void
@@ -130,14 +133,17 @@ focus_page(Page * p)
     if(!p)
         return;
 
-    if(selpage) {
-        unmap_layout(selpage->managed);
-        unmap_layout(selpage->floating);
+    if((p != selpage)) {
+        if(selpage) {
+            unmap_layout(selpage->managed);
+            unmap_layout(selpage->floating);
+        }
     }
 
-    map_layout(p->managed, False);
-    map_layout(p->floating, False);
-
+    if(p != selpage) {
+        map_layout(p->managed, False);
+        map_layout(p->floating, False);
+    }
     selpage = p;
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
