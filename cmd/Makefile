@@ -46,32 +46,49 @@ all: wmiibar wmiibar2 wmiimenu wmiir wmiir2 wmiifs wmiikeys wmiiplumb wmiiwarp
 wmiibar: ${OBJ_bar}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_bar} ${LDFLAGS}
+# Solaris
+#	@${CC} -o $@ ${OBJ_bar} ${LDFLAGS} -lsocket
+
 
 wmiibar2: ${OBJ_bar2}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_bar2} ${LDFLAGS2}
+# Solaris
+#	@${CC} -o $@ ${OBJ_bar2} ${LDFLAGS2} -lsocket
 
 wmiimenu: ${OBJ_menu}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_menu} ${LDFLAGS}
+# Solaris
+#	@${CC} -o $@ ${OBJ_menu} ${LDFLAGS} -lsocket
 
 wmiir2: ${OBJ_r2}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_r2} -g -static -L${PREFIX}/lib -L/usr/lib -lc \
 		-L../libixp2 -lixp -L../libcext -lcext
+# Solaris
+#	@${CC} -o $@ ${OBJ_r2} -g -static -L${PREFIX}/lib -L/usr/lib -lc \
+#		-L../libixp2 -lixp -L../libcext -lcext -lsocket
 
 wmiir: ${OBJ_r}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_r} -g -static -L${PREFIX}/lib -L/usr/lib -lc \
 		-L../libixp -lixp -L../libcext -lcext
+# Solaris
+#	@${CC} -o $@ ${OBJ_r} -g -static -L${PREFIX}/lib -L/usr/lib -lc \
+#		-L../libixp -lixp -L../libcext -lcext -lsocket
 
 wmiifs: ${OBJ_fs}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_fs} ${LDFLAGS}
+# Solaris
+#	@${CC} -o $@ ${OBJ_fs} ${LDFLAGS} -lsocket
 
 wmiikeys: ${OBJ_keys}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_keys} ${LDFLAGS}
+# Solaris
+#	@${CC} -o $@ ${OBJ_keys} ${LDFLAGS} -lsocket
 
 wmiiplumb: ${OBJ_plumb}
 	@echo LD $@

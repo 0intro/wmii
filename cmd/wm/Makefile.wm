@@ -7,6 +7,8 @@ CFLAGS   += -I../../liblitz -I../../libixp -I../../libwmii \
             -I../../libcext
 LDFLAGS  += -L../../liblitz -llitz -L../../libixp -lixp \
             -L../../libwmii -lwmii -L../../libcext -lcext
+# Solaris
+# LDFLAGS += -lsocket
 
 SRC      = wm.c client.c event.c mouse.c frame.c page.c layoutdef.c layout.c
 
