@@ -54,10 +54,10 @@ fn items {
 
 fn framesconf {
     for(frame in `{wmiir read $1 | grep '^[0-9]'}) {
-    	wmiir write $1/$frame/tab $TAB
-    	wmiir write $1/$frame/handleinc $HANDLEINC
-		wmiir write $1/$frame/geometry '+0 +0 +0 +0'  # causes refresh
-	}
+        wmiir write $1/$frame/tab $TAB
+        wmiir write $1/$frame/handleinc $HANDLEINC
+        wmiir write $1/$frame/geometry '+0 +0 +0 +0'  # causes refresh
+    }
 }
 
 # WMIIBAR CONFIGURATION
@@ -70,10 +70,14 @@ fn barsucks {
 }
 
 wmiir write /bar/geometry $BAR_ALIGN
-if (~ $BAR_ALIGN south)
-    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk ''{print "+0 +0 +0 -"$4}''} wmiir write /wm/default/geometry $"val'
+if(~ $BAR_ALIGN south)
+    wmiir write /bar/event/resize \
+    'val=`{wmiir read /bar/geometry | ' ^\
+    'awk ''{print "+0 +0 +0 -"$4}''} wmiir write /wm/default/geometry $"val'
 if not
-    wmiir write /bar/event/resize 'val=`{wmiir read /bar/geometry|awk ''{print "+0 +"$4" +0 -"$4}''} wmiir write /wm/default/geometry $"val'
+    wmiir write /bar/event/resize \
+    'val=`{wmiir read /bar/geometry | ' ^\
+    'awk ''{print "+0 +"$4" +0 -"$4}''} wmiir write /wm/default/geometry $"val'
 
 wmiir write /bar/ctl reset
 wmiir write /bar/font $FONT
@@ -108,16 +112,16 @@ wmiir write /wm/default/tab $TAB
 
 wmiir write /wm/default/border 1
 wmiir write /wm/event/clientupdate \
-'text=`{wmiir read /wm/sel/layout/sel/frame/sel/name}' ^\
-'wmiir write /bar/'^$clab^'/data $"text'
+'s=`{wmiir read /wm/sel/layout/sel/frame/sel/name} ' ^\
+'wmiir write /bar/'^$clab^'/data $"s'
 wmiir write /wm/event/pageupdate \
-'text=`{wmiir read /wm/sel/name}; wmiir write /bar/'^$plab^'/data $"text &&' ^\
-'text=`{wmiir read /keys/lookup|sed ''s|/mode/||''}; wmiir write /bar/'^$klab^'/data $"text && ' ^\
-'text=`{wmiir read /wm/sel/layoutname}; wmiir write /bar/'^$llab^'/data $"text'
+'s=`{wmiir read /wm/sel/name} wmiir write /bar/'$plab'/data $"s && ' ^\
+'s=`{wmiir read /keys/lookup | sed s,/mode/,,} wmiir write /bar/'$klab'/data $"s && ' ^\
+'s=`{wmiir read /wm/sel/layoutname} wmiir write /bar/'$llab'/data $"s'
 
 for(page in `{wmiir read /wm | grep '^[0-9]'}) {
-	framesconf /wm/$page/layout/float/frame
-	framesconf /wm/$page/layout/managed/frame
+    framesconf /wm/$page/layout/float/frame
+    framesconf /wm/$page/layout/managed/frame
 }
 
 wmiir write /wm/default/sstyle/fgcolor $SEL_FG_COLOR
@@ -127,6 +131,7 @@ wmiir write /wm/default/nstyle/fgcolor $NORM_FG_COLOR
 wmiir write /wm/default/nstyle/bgcolor $NORM_BG_COLOR
 wmiir write /wm/default/nstyle/bordercolor $NORM_BORDER_COLOR
 wmiir write /wm/default/event/b2press 'wmiir write /wm/ctl close'
+
 
 # WMIIKEYS CONFIGURATION
 
@@ -185,6 +190,7 @@ wmiir write /keys/box/font $FONT
 selstyle /keys/box
 kmode normal
 
+
 # WMIIMENU CONFIGURATION
 wmiir write /menu/geometry $BAR_ALIGN
 items actions $WMII_CONFDIR:$HOME/.wmii-3
@@ -193,6 +199,7 @@ items programs $OLD_PATH
 wmiir write /menu/font $FONT
 normstyle /menu/nstyle >[2]/dev/null
 selstyle /menu/sstyle >[2]/dev/null
+
 
 # MISC
 xsetroot -solid black
