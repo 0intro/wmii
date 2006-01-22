@@ -81,7 +81,7 @@ ixp_connect_sock(char *address)
 	addr = &p[1];
 	type = address; /* unix, tcp */
 
-	if(strncmp(type, "unix", 5))
+	if(!strncmp(type, "unix", 5))
 		return connect_unix_sock(addr);
 	else if(!strncmp(type, "tcp", 4))
 		return connect_tcp_sock(addr);
