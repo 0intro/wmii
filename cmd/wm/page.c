@@ -128,17 +128,19 @@ destroy_page(Page * p)
     npages--;
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &npages, 1);
-    focus_page(newselpage);
+    if(newselpage)
+        focus_page(newselpage);
+    else {
+        invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+        XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+    }
 }
 
 void
 focus_page(Page * p)
 {
-    if(!p) {
-        XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
-        invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+    if(!p)
         return;
-    }
 
     if((p != selpage)) {
         if(selpage) {
