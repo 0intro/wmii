@@ -17,7 +17,9 @@ Requirements
 In order to build wmii you need the Xlib header files.
 Furthermore, the wmii configuration scripts rely on the 9base package [3]
 which contains ports of various Plan 9 standard tools, in particular the
-rc shell.
+rc shell.  However, if you already have plan9ports installed, then you
+can use this instead of 9base.  In any case, make sure that 9PREFIX in
+wmii's config.mk points to the right location.
 
 
 Installation
