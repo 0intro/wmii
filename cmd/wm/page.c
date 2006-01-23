@@ -85,8 +85,7 @@ destroy_page(Page * p)
 			o->next = n->next;
 			free(n);
 			n = o->next;
-		}
-		else
+		} else
 			n = n->next;
 	}
 
@@ -123,13 +122,15 @@ destroy_page(Page * p)
         --(p->index);
     }
  
-    if(!newselpage)
-        newselpage = pages;
     npages--;
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &npages, 1);
+
+    /* determine what to focus and do that */
     if(newselpage)
         focus_page(newselpage);
+    else if(pages)
+        focus_page(pages);
     else {
         invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
         XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
@@ -142,17 +143,15 @@ focus_page(Page * p)
     if(!p)
         return;
 
-    if((p != selpage)) {
+    if(p != selpage) {
         if(selpage) {
             unmap_layout(selpage->managed);
             unmap_layout(selpage->floating);
         }
-    }
-
-    if(p != selpage) {
         map_layout(p->managed, False);
         map_layout(p->floating, False);
     }
+
     selpage = p;
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
