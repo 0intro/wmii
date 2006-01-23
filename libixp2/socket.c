@@ -47,10 +47,11 @@ connect_tcp_sock(char *host)
 	struct hostent *hp;
 	char *port = strrchr(host, '!');
 	const char *errstr = nil;
+	unsigned int prt;
 
 	*port = 0;
 	port++;
-	addr.sin_port = cext_strtonum(port, 1024, 65535, &errstr);
+	prt = cext_strtonum(port, 1024, 65535, &errstr);
 	if(errstr)
 		return -1;
 
@@ -59,6 +60,7 @@ connect_tcp_sock(char *host)
         return -1;
 	hp = gethostbyname(host);
     addr.sin_family = AF_INET;
+	addr.sin_port = htons(prt);
 	bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
 
     if(connect(fd, (struct sockaddr *) &addr, sizeof(struct sockaddr_in))) {
@@ -104,6 +106,7 @@ create_tcp_sock(char *host, char **errstr)
     int fd;
 	struct sockaddr_in addr = { 0 };
 	char *port = strrchr(host, '!');
+	unsigned int prt;
 
 	if(!port) {
 		*errstr = "no port provided in address";
@@ -111,7 +114,7 @@ create_tcp_sock(char *host, char **errstr)
 	}
 	*port = 0;
 	port++;
-	addr.sin_port = cext_strtonum(port, 1024, 65535, (const char **)errstr);
+	prt = cext_strtonum(port, 1024, 65535, (const char **)errstr);
 	if(*errstr)
 		return -1;
     signal(SIGPIPE, SIG_IGN);
@@ -120,7 +123,8 @@ create_tcp_sock(char *host, char **errstr)
         return -1;
     }
     addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_port = htons(prt);
 
     if(bind(fd, (struct sockaddr *) &addr, sizeof(struct sockaddr_in)) < 0) {
         *errstr = "cannot bind socket";
