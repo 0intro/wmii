@@ -194,32 +194,25 @@ destroy_client(Client * c)
 
 /* speed reasoned function for client property change */
 void
-draw_client(Client * client)
+draw_client(Client *c)
 {
-    Frame *f = client->frame;
-    unsigned int i = 0, tw, tabh = tab_height(f);
+    Frame *f = c->frame;
+    unsigned int tabh = tab_height(f);
     Draw d = { 0 };
-    Client *c;
 
     if(!tabh)
         return;
 
-    tw = f->rect.width / f->nclients;
-    for(c = f->clients; c && c != client; c = c->next)
-        i++;
-
     d.drawable = f->win;
     d.gc = f->gc;
-    d.rect.x = i * tw;
+    d.rect.x = 0;
     d.rect.y = 0;
-    d.rect.width = tw;
-    if(i && (i == f->nclients - 1))
-        d.rect.width = f->rect.width - d.rect.x;
+    d.rect.width = f->rect.width;
     d.rect.height = tabh;
     d.data = c->name;
     d.font = font;
 
-    if((f == sel_frame()) && (c == f->sel)) {
+    if(f == sel_frame()) {
         d.bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
         d.fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
         d.border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
@@ -230,14 +223,6 @@ draw_client(Client * client)
     }
     blitz_drawlabel(dpy, &d);
     XSync(dpy, False);
-}
-
-void
-draw_clients(Frame * f)
-{
-    Client *c;
-    for(c = f->clients; c; c = c->next)
-        draw_client(c);
 }
 
 void

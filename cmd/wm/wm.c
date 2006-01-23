@@ -466,14 +466,12 @@ win_to_client(Window w)
         Frame *f;
 		if(p->managed->def)
 			for(f = p->managed->def->frames(p->managed); f; f = f->next) {
-				for(c = f->clients; c; c = c->next)
-					if(c->win == w)
-						return c;
+				if(f->client->win == w)
+					return f->client;
 			}
         for(f = p->floating->def->frames(p->floating); f; f = f->next) {
-            for(c = f->clients; c; c = c->next)
-                if(c->win == w)
-                    return c;
+             if(f->client->win == w)
+                 return f->client;
         }
     }
     return nil;
@@ -774,17 +772,12 @@ static void
 cleanup()
 {
     Page *p;
-    Client *c;
     for(p = pages; p; p = p->next) {
         Frame *f;
-        for(f = p->managed->def->frames(p->managed); f; f = f->next) {
-            while((c = f->clients))
-                detach_client_from_frame(c, False);
-        }
-        for(f = p->floating->def->frames(p->floating); f; f = f->next) {
-            while((c = f->clients))
-                detach_client_from_frame(c, False);
-        }
+        for(f = p->managed->def->frames(p->managed); f; f = f->next) 
+			detach_client_from_frame(f->client, False);
+        for(f = p->floating->def->frames(p->floating); f; f = f->next)
+            detach_client_from_frame(f->client, False);
     }
     XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 	XSync(dpy, False);

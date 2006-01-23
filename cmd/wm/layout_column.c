@@ -197,17 +197,16 @@ deinit_column(Layout *l)
     Column *column = acme->columns;
 
     while((f = acme->frames)) {
-        while((cl = f->clients)) {
-            detach_client_from_frame(cl, False);
-            cl->prev = cl->next = 0;
-            if(!c)
-                res = c = cl;
-            else {
-                c->next = cl;
-                cl->prev = c;
-                c = cl;
-            }
-        }
+		cl = f->client;
+		detach_client_from_frame(cl, False);
+		cl->prev = cl->next = 0;
+		if(!c)
+			res = c = cl;
+		else {
+			c->next = cl;
+			cl->prev = c;
+			c = cl;
+		}
         detach_frame(l, f);
         destroy_frame(f);
     }
@@ -273,11 +272,8 @@ detach_column(Layout *l, Client * c, Bool unmap)
     Column *column = old->column;
 
     detach_client_from_frame(c, unmap);
-    if(!f->clients) {
-        detach_frame(l, f);
-        destroy_frame(f);
-    } else
-        return;
+    detach_frame(l, f);
+    destroy_frame(f);
     if(column->cells) {
 		if(column->sel == old)
 			column->sel = column->cells;

@@ -168,7 +168,7 @@ resize_frame(Frame * f, XRectangle * r, XPoint * pt)
     Layout *l = f->layout;
     unsigned int tabh = tab_height(f);
     unsigned int bw = border_width(f);
-    Client *c;
+    Client *c = f->client;
 
     l->def->resize(f, r, pt);
 
@@ -182,15 +182,15 @@ resize_frame(Frame * f, XRectangle * r, XPoint * pt)
     XMoveResizeWindow(dpy, f->win, f->rect.x, f->rect.y, f->rect.width,
                       f->rect.height);
 
-    for(c = f->clients; c; c = c->next) {
-        c->rect.x = bw;
-        c->rect.y = tabh ? tabh : bw;
-        c->rect.width = c->frame->rect.width - 2 * bw;
-        c->rect.height = c->frame->rect.height - bw - (tabh ? tabh : bw);
-        XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width,
-                          c->rect.height);
-        configure_client(c);
-    }
+	if(f->client) {
+		c->rect.x = bw;
+		c->rect.y = tabh ? tabh : bw;
+		c->rect.width = c->frame->rect.width - 2 * bw;
+		c->rect.height = c->frame->rect.height - bw - (tabh ? tabh : bw);
+		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width,
+				c->rect.height);
+		configure_client(c);
+	}
 }
 
 /**
@@ -238,7 +238,7 @@ draw_frame(Frame * f)
 
         blitz_drawlabel(dpy, &d);
     }
-    draw_clients(f);
+    draw_client(f->client);
     XSync(dpy, False);
 }
 
@@ -246,9 +246,7 @@ void
 handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 {
     Align align;
-    int bindex, cindex = e->x / (f->rect.width / f->nclients);
-    Client *new = clientat(f->clients, cindex);
-    f->layout->def->focus(f->layout, new, False);
+    int bindex;
     if(e->button == Button1) {
         align = cursor_to_align(f->cursor);
         if(align == CENTER)
@@ -264,24 +262,13 @@ handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 }
 
 void
-attach_client_to_frame(Frame * f, Client * client)
+attach_client_to_frame(Frame * f, Client * c)
 {
-    Client *c;
-    for(c = f->clients; c && c->next; c = c->next);
-    if(!c) {
-        f->clients = client;
-        client->prev = client->next = nil;
-    } else {
-        client->prev = c;
-        client->next = nil;
-        c->next = client;
-    }
-	/*f->sel = client;*/
-    f->nclients++;
-    client->frame = f;
+    f->client = c;
+    c->frame = f;
     resize_frame(f, &f->rect, 0);
-    reparent_client(client, f->win, client->rect.x, client->rect.y);
-    map_client(client);
+    reparent_client(c, f->win, c->rect.x, c->rect.y);
+    map_client(c);
 }
 
 void
@@ -293,17 +280,7 @@ detach_client_from_frame(Client * c, Bool unmap)
     if(f->sel == c)
 		f->sel = nil;
 
-    if(f->clients == c) {
-        if(c->next)
-            c->next->prev = nil;
-        f->clients = c->next;
-    } else {
-        c->prev->next = c->next;
-        if(c->next)
-            c->next->prev = c->prev;
-    }
-
-    f->nclients--;
+	f->client = nil;
 
     if(!c->destroyed) {
         if(!unmap) {

@@ -123,17 +123,16 @@ deinit_float(Layout *l)
     Frame *f;
 
     while((f = fl->frames)) {
-        while((cl = f->clients)) {
-            detach_client_from_frame(cl, False);
-            cl->prev = cl->next = 0;
-            if(!res)
-                res = c = cl;
-            else {
-                c->next = cl;
-                cl->prev = c;
-                c = cl;
-            }
-        }
+		cl = f->client;
+		detach_client_from_frame(cl, False);
+		cl->prev = cl->next = 0;
+		if(!res)
+			res = c = cl;
+		else {
+			c->next = cl;
+			cl->prev = c;
+			c = cl;
+		}
         detach_frame(l, f);
         destroy_frame(f);
     }
@@ -168,10 +167,8 @@ detach_float(Layout *l, Client * c, Bool unmap)
 {
     Frame *f = c->frame;
     detach_client_from_frame(c, unmap);
-    if(!f->clients) {
-        detach_frame(l, f);
-        destroy_frame(f);
-    }
+    detach_frame(l, f);
+    destroy_frame(f);
 }
 
 static void
