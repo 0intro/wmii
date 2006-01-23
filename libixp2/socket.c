@@ -40,7 +40,7 @@ connect_unix_sock(char *address)
 }
 
 static int
-connect_tcp_sock(char *host)
+connect_inet_sock(char *host)
 {
     int fd = 0;
     struct sockaddr_in addr = { 0 };
@@ -81,12 +81,12 @@ ixp_connect_sock(char *address)
 	*p = 0;
 	
 	addr = &p[1];
-	type = address; /* unix, tcp */
+	type = address; /* unix, inet */
 
 	if(!strncmp(type, "unix", 5))
 		return connect_unix_sock(addr);
 	else if(!strncmp(type, "tcp", 4))
-		return connect_tcp_sock(addr);
+		return connect_inet_sock(addr);
     return -1;
 }
 
@@ -101,7 +101,7 @@ ixp_accept_sock(int fd)
 }
 
 static int
-create_tcp_sock(char *host, char **errstr)
+create_inet_sock(char *host, char **errstr)
 {
     int fd;
 	struct sockaddr_in addr = { 0 };
@@ -191,12 +191,12 @@ ixp_create_sock(char *address, char **errstr)
 	*p = 0;
 	
 	addr = &p[1];
-	type = address; /* unix, tcp */
+	type = address; /* unix, inet */
 
 	if(!strncmp(type, "unix", 5))
 		return create_unix_sock(addr, errstr);
 	else if(!strncmp(type, "tcp", 4))
-		return create_tcp_sock(addr, errstr);
+		return create_inet_sock(addr, errstr);
 	else
 		*errstr = "unkown socket type";
     return -1;
