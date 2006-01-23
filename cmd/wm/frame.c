@@ -247,6 +247,11 @@ handle_frame_buttonpress(XButtonEvent * e, Frame * f)
 {
     Align align;
     int bindex;
+	Layout *l = sel_layout();
+	if(l != f->layout)
+		focus_layout(f->layout);
+	l = f->layout;
+	l->def->focus(l, f->client, False);
     if(e->button == Button1) {
         align = cursor_to_align(f->cursor);
         if(align == CENTER)
