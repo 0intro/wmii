@@ -68,6 +68,9 @@ alloc_page()
 void
 destroy_page(Page * p)
 {
+	if(!p)
+		return;
+
 	Page *newselpage;
 	AttachQueue *o, *n;
 
