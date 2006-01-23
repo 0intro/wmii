@@ -69,7 +69,7 @@ xcreate(char *file)
     /* create */
     p++;
     if(ixp_client_create(&c, fid, p, (unsigned int) 0xff, IXP_OWRITE) == -1) {
-        fprintf(stderr, "wmiir: cannot create file '%s': %s\n", file, c.errstr);
+        fprintf(stderr, "wmiir: cannot create file '%s': %s\n", p, c.errstr);
         return -1;
     }
     write_data(fid);
