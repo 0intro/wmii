@@ -138,6 +138,8 @@ struct Frame {
     Client *sel;
     Client *clients;
     size_t nclients;
+	Bool maximized;
+	XRectangle old;
     GC gc;
     XRectangle rect;
     Cursor cursor;

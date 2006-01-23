@@ -22,9 +22,11 @@ static Client *sel_float(Layout *l);
 static Action *actions_float(Layout *l);
 
 static void select_frame(void *obj, char *arg);
+static void max_frame(void *obj, char *arg);
 
 Action lfloat_acttbl[] = {
     {"select", select_frame},
+    {"max", max_frame},
     {0, 0}
 };
 
@@ -202,6 +204,26 @@ frames_float(Layout *l)
 {
     Float *fl = l->aux;
     return fl->frames;
+}
+
+static void
+max_frame(void *obj, char *arg)
+{
+    Layout *l = obj;
+    Float *fl = l->aux;
+    Frame *f = fl->sel;
+
+    if(!f)
+        return;
+	if(f->maximized) {
+		resize_frame(f, &f->old, nil);
+		f->maximized = False;
+	}
+	else {
+		f->old = f->rect;
+		resize_frame(f, &rect, nil);
+		f->maximized = True;
+	}
 }
 
 static void

@@ -50,6 +50,7 @@ static Client *sel_column(Layout *l);
 static Action *actions_column(Layout *l);
 
 static void select_frame(void *obj, char *arg);
+static void max_frame(void *obj, char *arg);
 static void swap_frame(void *obj, char *arg);
 static void new_column(void *obj, char *arg);
 
@@ -57,6 +58,7 @@ static Action lcol_acttbl[] = {
     {"select", select_frame},
     {"swap", swap_frame},
     {"new", new_column},
+    {"max", max_frame},
     {0, 0}
 };
 
@@ -453,6 +455,37 @@ static Action *
 actions_column(Layout *l)
 {
     return lcol_acttbl;
+}
+
+static void
+max_frame(void *obj, char *arg)
+{
+    Layout *l = obj;
+    Acme *acme = l->aux;
+    Column *c = acme->sel;
+	Cell *cell;
+    Frame *f;
+	
+    if(!c)
+        return;
+
+    cell = c->sel;
+    if(!cell)
+        return;
+
+	f = cell->frame;
+	if(f->maximized) {
+		f->rect = f->old;
+		resize_frame(f, &f->old, nil);
+		f->maximized = False;
+	}
+	else {
+		f->old = f->rect;
+		f->rect = c->rect;
+		XRaiseWindow(dpy, f->win);
+		resize_frame(f, &c->rect, nil);
+		f->maximized = True;
+	}
 }
 
 static void
