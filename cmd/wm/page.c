@@ -135,6 +135,7 @@ destroy_page(Page * p)
     else if(pages)
         focus_page(pages);
     else {
+        invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
         invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
         XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
     }

@@ -58,8 +58,10 @@ focus_layout(Layout *l)
     p->file[P_SEL_LAYOUT]->content = l->file[L_PREFIX]->content;
     if((c = l->def->sel(l)))
         l->def->focus(l, c, False);
-    else
+    else {
+        invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
         XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+    }
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
