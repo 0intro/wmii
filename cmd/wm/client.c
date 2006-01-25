@@ -13,13 +13,42 @@
 static void handle_before_read_client(IXPServer * s, File * file);
 static void handle_after_write_client(IXPServer * s, File * file);
 
+void
+attach_client_to_array(Client *c, Client **array, size_t *size)
+{
+	size_t i;
+	if(!array) {
+		*size = 2;
+		array = cext_emallocz(sizeof(Client *) * (*size));
+	}
+	for(i = 0; (i < (*size)) && array[i]; i++);
+	if(i >= (*size)) {
+		Client **tmp = array;
+		(*size) *= 2;
+		array = cext_emallocz(sizeof(Client *) * (*size));
+		for(i = 0; tmp[i]; i++)
+			array[i] = tmp[i];
+		free(tmp);
+	}
+	array[i] = c;
+}
+
+void
+detach_client_from_array(Client *c, Client **array)
+{
+	size_t i;
+	for(i = 0; array[i] != c; i++);
+	for(; array[i + 1]; i++)
+		array[i] = array[i + 1];
+	array[i] = nil;
+}
+
 Client *
 alloc_client(Window w, XWindowAttributes *wa)
 {
     XTextProperty name;
     Client *c = (Client *) cext_emallocz(sizeof(Client));
     XSetWindowAttributes fwa;
-	size_t i;
     static int id = 1;
     char buf[MAX_BUF];
     int bw, th;
@@ -84,20 +113,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     c->frame.gc = XCreateGC(dpy, c->frame.win, 0, 0);
     XSync(dpy, False);
 
-	if(!clients) {
-		clientssz = 2;
-		clients = cext_emallocz(sizeof(Client *) * clientssz);
-	}
-	for(i = 0; (i < clientssz) && clients[i]; i++);
-	if(i >= clientssz) {
-		Client **tmp = clients;
-		clientssz *= 2;
-		clients = cext_emallocz(sizeof(Client *) * clientssz);
-		for(i = 0; tmp[i]; i++)
-			clients[i] = tmp[i];
-		free(tmp);
-	}
-	clients[i] = c;
+	attach_client_to_array(c, clients, &clientssz);
 
     return c;
 }
@@ -113,6 +129,7 @@ set_client_state(Client * c, int state)
                     (unsigned char *) data, 2);
 }
 
+/*
 void
 focus_client(Client *new, Client *old)
 {
@@ -131,6 +148,7 @@ focus_client(Client *new, Client *old)
     invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
 	XSync(dpy, False);
 }
+*/
 
 void
 map_client(Client * c)
@@ -148,8 +166,9 @@ unmap_client(Client * c)
 }
 
 void
-reparent_client(Client * c, Window w, int x, int y)
+reparent_client(Client *c, Window w, int x, int y)
 {
+	c->framed = w == c->frame.win;
     XReparentWindow(dpy, c->win, w, x, y);
     c->ignore_unmap++;
 }
@@ -186,16 +205,15 @@ configure_client(Client * c)
     e.window = c->win;
     e.x = c->rect.x;
     e.y = c->rect.y;
-    if(c->frame) {
-        e.x += c->frame->rect.x;
-        e.y += c->frame->rect.y;
-    }
+	if(c->framed) {
+    	e.x += c->frame.rect.x;
+    	e.y += c->frame.rect.y;
+	}
     e.width = c->rect.width;
     e.height = c->rect.height;
     e.border_width = c->border;
     e.above = None;
     e.override_redirect = False;
-
     XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
     XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *) & e);
     XSelectInput(dpy, c->win, CLIENT_MASK);
@@ -212,7 +230,7 @@ close_client(Client * c)
 }
 
 void
-handle_client_property(Client * c, XPropertyEvent * e)
+handle_client_property(Client *c, XPropertyEvent *e)
 {
     XTextProperty name;
     long msize;
@@ -229,7 +247,7 @@ handle_client_property(Client * c, XPropertyEvent * e)
 			cext_strlcpy(c->name, (char*) name.value, sizeof(c->name));
         	free(name.value);
 		}
-        if(c->frame)
+        if(c->framed)
             draw_client(c);
         invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
         break;
@@ -256,23 +274,22 @@ destroy_client(Client * c)
 void
 draw_client(Client *c)
 {
-    Client *f = c->frame;
-    unsigned int tabh = tab_height(f);
+    unsigned int tabh = tab_height(c);
     Draw d = { 0 };
 
     if(!tabh)
         return;
 
-    d.drawable = f->win;
-    d.gc = f->gc;
+    d.drawable = c->frame.win;
+    d.gc = c->frame.gc;
     d.rect.x = 0;
     d.rect.y = 0;
-    d.rect.width = f->rect.width;
+    d.rect.width = c->frame.rect.width;
     d.rect.height = tabh;
     d.data = c->name;
     d.font = font;
 
-    if(f == sel_frame()) {
+    if(c == sel_client()) {
         d.bg = blitz_loadcolor(dpy, screen, def[WM_SEL_BG_COLOR]->content);
         d.fg = blitz_loadcolor(dpy, screen, def[WM_SEL_FG_COLOR]->content);
         d.border = blitz_loadcolor(dpy, screen, def[WM_SEL_BORDER_COLOR]->content);
@@ -347,36 +364,51 @@ gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 }
 
 void
-attach_client(Client * c)
+attach_client(Client *c)
 {
-    Layout *l = 0;
-    Page *p = selpage;
+	Page *p;
+    if(!pages)
+		focus_page(alloc_page());
+	p = pages[sel_page];
 
-    if(!p) {
-        p = alloc_page();
-		focus_page(p);
+    /* XXX: do we need */ resize_client(c, &c->rect, 0);
+    reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
+	c->page = p;
+	c->managed = p->is_managed;
+
+	if(c->managed)
+		attach_column(c);
+	else {
+		attach_client_to_array(c, p->floating, &p->floatingsz);
+    	map_client(c);
 	}
-    /* transient stuff */
-    l = p->sel;
-    if(c && c->trans) {
-        Client *t = win_to_client(c->trans);
-        if(t && t->frame)
-            l = p->floating;
-    }
-    l->def->attach(l, c);
+
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
 
 void
-detach_client(Client * c, Bool unmap)
+detach_client(Client *c, Bool unmap)
 {
-    Client *f = c->frame;
-    Layout *l = f ? f->layout : nil;
-    if(l)
-        l->def->detach(l, c, unmap);
+	Client *c = sel_client();
+
+	if(c->managed)
+		detach_column(c);
+	else {
+		detach_client_from_array(c, c->page->floating);
+    	if(!c->destroyed) {
+        	if(!unmap) {
+            	attach_client_to_array(c, detached, &detachedsz);
+            	unmap_client(c);
+        	}
+        	c->rect.x = f->rect.x;
+        	c->rect.y = f->rect.y;
+        	reparent_client(c, root, c->rect.x, c->rect.y);
+    	}
+	}
+	c->page = nil;
     if(c->destroyed)
         destroy_client(c);
-    focus_page(selpage);
+    focus_page(sel_page);
 }
 
 Client *
@@ -395,35 +427,6 @@ clientat(Client * clients, size_t idx)
         i++;
     return c;
 }
-
-void
-detach_detached(Client * c)
-{
-    if(detached == c) {
-        if(c->next)
-            c->next->prev = nil;
-        detached = c->next;
-    } else {
-        if(c->next)
-            c->next->prev = c->prev;
-        if(c->prev)
-            c->prev->next = c->next;
-    }
-    ndetached--;
-}
-
-void
-attach_detached(Client * c)
-{
-    c->prev = nil;
-    c->next = detached;
-    if(detached)
-        detached->prev = c;
-    detached = c;
-	ndetached++;
-}
-
-
 
 Client *
 alloc_frame(XRectangle * r)
@@ -573,7 +576,7 @@ resize_incremental(Client * f, unsigned int tabh, unsigned int bw)
 }
 
 void
-resize_frame(Client * f, XRectangle * r, XPoint * pt)
+resize_client(Client * f, XRectangle * r, XPoint * pt)
 {
     Layout *l = f->layout;
     unsigned int tabh = tab_height(f);
@@ -674,16 +677,6 @@ handle_frame_buttonpress(XButtonEvent * e, Client * f)
     /* frame mouse handling */
     if(def[bindex]->content)
         wmii_spawn(dpy, def[bindex]->content);
-}
-
-void
-attach_client_to_frame(Client * f, Client * c)
-{
-    f->client = c;
-    c->frame = f;
-    resize_frame(f, &f->rect, 0);
-    reparent_client(c, f->win, c->rect.x, c->rect.y);
-    map_client(c);
 }
 
 void

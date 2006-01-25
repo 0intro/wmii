@@ -112,10 +112,13 @@ struct Client {
     unsigned int ignore_unmap;
     Bool destroyed;
 	Bool maximized;
+	Bool framed;
+	Bool managed;
     Window win;
     Window trans;
     XRectangle rect;
     XSizeHints size;
+	Page *page;
 	struct Frame {
 		Window win;
     	XRectangle rect;
@@ -196,10 +199,9 @@ void focus_client(Client *new, Client *old);
 Client *win_to_frame(Window w);
 Client *alloc_frame(XRectangle * r);
 void destroy_frame(Client * f);
-void resize_frame(Client * f, XRectangle * r, XPoint * pt);
+void resize_client(Client * f, XRectangle * r, XPoint * pt);
 void draw_frame(Client * f);
 void handle_frame_buttonpress(XButtonEvent * e, Client * f);
-void attach_client_to_frame(Client * f, Client * c);
 void detach_client_from_frame(Client * client, Bool unmap);
 unsigned int tab_height(Client * f);
 unsigned int border_width(Client * f);
@@ -225,6 +227,7 @@ XRectangle *rectangles(unsigned int *num);
 
 /* column.c */
 void arrange_column(Page *p);
+void attach_column(Client *c);
 
 /* wm.c */
 void invoke_wm_event(File * f);
