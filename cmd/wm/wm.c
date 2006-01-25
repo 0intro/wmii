@@ -116,73 +116,69 @@ scale_rect(XRectangle * from_dim, XRectangle * to_dim,
 }
 
 static void
-draw_pager_layout(Layout *l, Draw * d)
+draw_pager_client(Client *c, Draw *d)
 {
-    Frame *f;
-    Frame *sel = sel_frame();
-	if(!l->def)
-		return;
-    for(f = l->def->frames(l); f; f = f->next) {
-        if(f == sel) {
-            d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
-            d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
-            d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
-        } else {
-            d->bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
-            d->fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
-            d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
-        }
-        d->data = f->sel->name;
-        scale_rect(&rect, &initial_rect, &f->rect, &d->rect);
-        blitz_drawlabel(dpy, d);
-        XSync(dpy, False);      /* do not clear upwards */
+	if(c == sel_client()) {
+    	d->bg = blitz_loadcolor(dpy, screen, def[WM_SEL_BG_COLOR]->content);
+        d->fg = blitz_loadcolor(dpy, screen, def[WM_SEL_FG_COLOR]->content);
+        d->border = blitz_loadcolor(dpy, screen, def[WM_SEL_BORDER_COLOR]->content);
+    } else {
+    	d->bg = blitz_loadcolor(dpy, screen, def[WM_NORM_BG_COLOR]->content);
+        d->fg = blitz_loadcolor(dpy, screen, def[WM_NORM_FG_COLOR]->content);
+        d->border = blitz_loadcolor(dpy, screen, def[WM_NORM_BORDER_COLOR]->content);
     }
+    d->data = c->name;
+    scale_rect(&rect, &initial_rect, &c->frame.rect, &d->rect);
+    blitz_drawlabel(dpy, d);
+    XSync(dpy, False);      /* do not clear upwards */
 }
 
 static void
-draw_pager_page(Page * p, Draw * d)
+draw_pager_page(size_t idx, Draw *d)
 {
-    unsigned int idx = 1;
+	size_t i, j;
     char name[4];
     initial_rect = d->rect;
-    Page *page;
 
-    if(p == selpage) {
-        d->bg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BG_COLOR]->content);
-        d->fg = blitz_loadcolor(dpy, screen_num, def[WM_SEL_FG_COLOR]->content);
-        d->border = blitz_loadcolor(dpy, screen_num, def[WM_SEL_BORDER_COLOR]->content);
+    if(idx == sel_page) {
+        d->bg = blitz_loadcolor(dpy, screen, def[WM_SEL_BG_COLOR]->content);
+        d->fg = blitz_loadcolor(dpy, screen, def[WM_SEL_FG_COLOR]->content);
+        d->border = blitz_loadcolor(dpy, screen, def[WM_SEL_BORDER_COLOR]->content);
     } else {
-        d->bg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BG_COLOR]->content);
-        d->fg = blitz_loadcolor(dpy, screen_num, def[WM_NORM_FG_COLOR]->content);
-        d->border = blitz_loadcolor(dpy, screen_num, def[WM_NORM_BORDER_COLOR]->content);
+        d->bg = blitz_loadcolor(dpy, screen, def[WM_NORM_BG_COLOR]->content);
+        d->fg = blitz_loadcolor(dpy, screen, def[WM_NORM_FG_COLOR]->content);
+        d->border = blitz_loadcolor(dpy, screen, def[WM_NORM_BORDER_COLOR]->content);
     }
-    for(page = pages; page && page != p; page = page->next)
-        idx++;
-    snprintf(name, sizeof(name), "%d", idx);
+    snprintf(name, sizeof(name), "%d", idx + 1);
     d->data = name;
     blitz_drawlabel(dpy, d);
     XSync(dpy, False);
-    if(p->managed)
-        draw_pager_layout(p->managed, d);
-    draw_pager_layout(p->floating, d);
+
+	for(i = 0; (i < pages[idx]->managedsz) && pages[idx]->managed[i]; i++) {
+		Column *col = pages[idx]->managed[i];
+		for(j = 0; (i < col->clientssz) && col->clients[j]; j++)
+			draw_pager_client(col->clients[j], d);
+	}
+	for(i = 0; (i < pages[idx]->floatingsz) && pages[idx]->floating[i]; i++)
+		draw_pager_client(pages[idx]->floating[i], d);
 }
 
 static void
 draw_pager()
 {
     Draw d = { 0 };
-    unsigned int ic, ir, tw, th, rows, cols;
+    unsigned int i, ic, ir, tw, th, rows, cols;
     int dx;
-    Page *p;
 
-    blitz_getbasegeometry(npages, &cols, &rows);
+	for(i = 0; (i < pagessz) && pages[i]; i++);
+    blitz_getbasegeometry(i, &cols, &rows);
     dx = (cols - 1) * GAP;      /* GAPpx space */
     tw = (rect.width - dx) / cols;
     th = ((double) tw / rect.width) * rect.height;
     d.drawable = transient;
-    d.gc = transient_gc;
+    d.gc = gc_transient;
     d.font = font;
-    p = pages;
+	i = 0;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
             d.rect.x = ic * tw + (ic * GAP);
@@ -192,28 +188,27 @@ draw_pager()
             else
                 d.rect.y = ir * (rect.height - th) / (rows - 1);
             d.rect.height = th;
-            draw_pager_page(p, &d);
-            if(!p->next)
+            draw_pager_page(i++, &d);
+            if(!pages[i])
                 return;
-            p = p->next;
         }
     }
 }
 
-static Page *
+static int
 xy_to_pager_page(int x, int y)
 {
-    unsigned int ic, ir, tw, th, rows, cols;
+    unsigned int i, ic, ir, tw, th, rows, cols;
     int dx;
     XRectangle r;
-    Page *p;
 
-    blitz_getbasegeometry(npages, &cols, &rows);
+	for(i = 0; (i < pagessz) && pages[i]; i++);
+    blitz_getbasegeometry(i, &cols, &rows);
     dx = (cols - 1) * GAP;      /* GAPpx space */
     tw = (rect.width - dx) / cols;
     th = ((double) tw / rect.width) * rect.height;
 
-    p = pages;
+	i = 0;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
             r.x = ic * tw + (ic * GAP);
@@ -224,13 +219,13 @@ xy_to_pager_page(int x, int y)
                 r.y = ir * (rect.height - th) / (rows - 1);
             r.height = th;
             if(blitz_ispointinrect(x, y, &r))
-                return p;
-            if(!p->next)
-                return nil;
-            p = p->next;
+                return i;
+			i++;
+            if(!pages[i])
+                return -1;
         }
     }
-    return nil;
+    return -1;
 }
 
 static int
@@ -253,9 +248,12 @@ pager(void *obj, char *arg)
 {
     XEvent ev;
     int i;
+	size_t j;
 
     if(!pages)
         return;
+
+	for(j = 0; (j < pagessz) && pages[j]; j++);
 
     XClearWindow(dpy, transient);
     XMapRaised(dpy, transient);
@@ -282,8 +280,8 @@ pager(void *obj, char *arg)
         case KeyPress:
             XUnmapWindow(dpy, transient);
             if((i = handle_kpress(&ev.xkey)) != -1)
-                if(i < npages)
-					focus_page(pageat(i));
+                if(i < j)
+					focus_page(i);
             XUngrabKeyboard(dpy, CurrentTime);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
             return;
@@ -303,12 +301,12 @@ pager(void *obj, char *arg)
 static void
 map_detached_clients()
 {
-    unsigned int ic, ir, tw, th, rows, cols;
+    unsigned int i, ic, ir, tw, th, rows, cols;
     int dx, dy;
-    Client *c = detached;
     XRectangle cr;
 
-    blitz_getbasegeometry(ndetached, &cols, &rows);
+	for(i = 0; detached && detached[i]; i++);
+    blitz_getbasegeometry(i, &cols, &rows);
 	if(!cols)
 		cols = 1;
 	if(!rows)
@@ -318,21 +316,21 @@ map_detached_clients()
     tw = (rect.width - dx) / cols;
     th = (rect.height - dy) / rows;
 
+	i = 0;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
-            if(!c)
+			if(!detached[i++])
                 return;
             cr.x = ic * tw + (ic * GAP);
             cr.y = ir * th + (ir * GAP);
             cr.width = tw;
             cr.height = th;
-            XMoveResizeWindow(dpy, c->win, cr.x, cr.y, cr.width, cr.height);
-            configure_client(c);
-            map_client(c);
-			grab_client(c, AnyModifier, Button1);
-            XRaiseWindow(dpy, c->win);
+            XMoveResizeWindow(dpy, detached[i]->win, cr.x, cr.y, cr.width, cr.height);
+            configure_client(detached[i]);
+            map_client(detached[i]);
+			grab_client(detached[i], AnyModifier, Button1);
+            XRaiseWindow(dpy, detached[i]->win);
             XSync(dpy, False);
-            c = c->next;
         }
     }
 }
@@ -342,9 +340,11 @@ detached_clients(void *obj, char *arg)
 {
     XEvent ev;
     int n;
-    Client *c = detached;
+	size_t i, nc;
+	Client *c;
 
-    if(!c)
+	for(nc = 0; detached && detached[nc]; nc++);
+    if(!nc)
         return;
     XClearWindow(dpy, transient);
     XMapRaised(dpy, transient);
@@ -362,12 +362,12 @@ detached_clients(void *obj, char *arg)
         switch (ev.type) {
         case KeyPress:
             XUnmapWindow(dpy, transient);
-            for(c = detached; c; c = c->next)
-                unmap_client(c);
+            for(i = 0; detached[i]; i++)
+                unmap_client(detached[i]);
             if((n = handle_kpress(&ev.xkey)) != -1) {
-                if((c = clientat(detached, n))) {
-                    detach_detached(c);
-                    attach_client(c);
+                if(n < nc) {
+                    detach_detached(detached[n]);
+                    attach_client(detached[n]);
                 }
             }
             XUngrabKeyboard(dpy, CurrentTime);
@@ -375,8 +375,8 @@ detached_clients(void *obj, char *arg)
             break;
         case ButtonPress:
             XUnmapWindow(dpy, transient);
-            for(c = detached; c; c = c->next)
-                unmap_client(c);
+            for(i = 0; detached[i]; i++)
+                unmap_client(detached[i]);
             if((ev.xbutton.button == Button1)
                && (c = win_to_client(ev.xbutton.window))) {
                 detach_detached(c);
@@ -400,7 +400,7 @@ xclose_client(void *obj, char *arg)
 static void
 xattach_client(void *obj, char *arg)
 {
-    Client *c = detached;
+    Client *c = detached ? detached[0] : nil;
     if(c) {
         detach_detached(c);
         attach_client(c);
@@ -418,34 +418,32 @@ xdetach_client(void *obj, char *arg)
 static void
 xselect_page(void *obj, char *arg)
 {
-    Page *p = selpage;
-    if(!p || !arg)
+	size_t np;
+
+	for(np = 0; (np < pagessz) && pages[np]; np++);
+    if(!np || !arg)
         return;
     if(!strncmp(arg, "prev", 5)) {
-        if(p->prev)
-            p = p->prev;
-        else
-            for(p = pages; p && p->next; p = p->next);
+		if(sel_page > 0)
+			for(sel_page = 0; pages[sel_page]; sel_page++);
+		sel_page--;
     } else if(!strncmp(arg, "next", 5)) {
-        if(p->next)
-            p = p->next;
-        else
-            p = pages;
-    } else {
-		int idx = blitz_strtonum(arg, 0, pageid);
-		if(idx)
-			idx--;
+		if(pages[sel_page + 1])
+			sel_page++;
 		else
-			idx = 9;
-        p = pageat(idx);
+			sel_page = 0;
+    } else {
+		int idx = blitz_strtonum(arg, 0, np);
+		if(idx < np)
+			sel_page = idx;
 	}
-    focus_page(p);
+    focus_page(sel_page);
 }
 
 static void
 xdestroy_page(void *obj, char *arg)
 {
-    destroy_page(selpage);
+    destroy_page(sel_page);
 }
 
 static void
@@ -457,24 +455,12 @@ new_page(void *obj, char *arg)
 Client *
 win_to_client(Window w)
 {
-    Page *p;
-    Client *c;
-    for(c = detached; c; c = c->next)
-        if(c->win == w)
-            return c;
-    for(p = pages; p; p = p->next) {
-        Frame *f;
-		if(p->managed->def)
-			for(f = p->managed->def->frames(p->managed); f; f = f->next) {
-				if(f->client->win == w)
-					return f->client;
-			}
-        for(f = p->floating->def->frames(p->floating); f; f = f->next) {
-             if(f->client->win == w)
-                 return f->client;
-        }
-    }
-    return nil;
+	size_t i;
+
+	for(i = 0; clients && clients[i]; i++)
+		if(clients[i]->win == w)
+			return clients[i];
+	return nil;
 }
 
 void
@@ -495,8 +481,7 @@ scan_wins()
                || XGetTransientForHint(dpy, wins[i], &d1))
                 continue;
             if(wa.map_state == IsViewable) {
-                c = alloc_client(wins[i]);
-                init_client(c, &wa);
+                c = alloc_client(wins[i], &wa);
                 attach_client(c);
                 c->ignore_unmap++;      /* was viewable already */
             }
@@ -563,31 +548,6 @@ win_state(Window w)
     return res;
 }
 
-static void
-update_pages()
-{
-    Page *p;
-
-    for(p = pages; p; p = p->next) {
-        p->floating->def->arrange(p->floating);
-        p->managed->def->arrange(p->managed);
-    }
-}
-
-void
-handle_before_read(IXPServer * s, File * f)
-{
-    char buf[64];
-    if(f == def[WM_MANAGED_GEOMETRY]) {
-        snprintf(buf, 64, "%d %d %d %d", layout_rect.x, layout_rect.y,
-                 layout_rect.width, layout_rect.height);
-        if(f->content)
-            free(f->content);
-        f->content = cext_estrdup(buf);
-        f->size = strlen(buf);
-    }
-}
-
 void
 handle_after_write(IXPServer * s, File * f)
 {
@@ -595,22 +555,15 @@ handle_after_write(IXPServer * s, File * f)
         run_action(f, 0, wm_acttbl);
     else if(f == def[WM_TRANS_COLOR]) {
         unsigned long col[1];
-        col[0] = xorcolor.pixel;
-        XFreeColors(dpy, DefaultColormap(dpy, screen_num), col, 1, 0);
-        XAllocNamedColor(dpy, DefaultColormap(dpy, screen_num),
+        col[0] = color_xor.pixel;
+        XFreeColors(dpy, DefaultColormap(dpy, screen), col, 1, 0);
+        XAllocNamedColor(dpy, DefaultColormap(dpy, screen),
                          def[WM_TRANS_COLOR]->content,
-                         &xorcolor, &xorcolor);
-        XSetForeground(dpy, xorgc, xorcolor.pixel);
+                         &color_xor, &color_xor);
+        XSetForeground(dpy, gc_xor, color_xor.pixel);
     } else if(f == def[WM_FONT]) {
         XFreeFont(dpy, font);
         font = blitz_getfont(dpy, def[WM_FONT]->content);
-    } else if(f == def[WM_MANAGED_GEOMETRY]) {
-        char *geom = def[WM_MANAGED_GEOMETRY]->content;
-        if(geom && strrchr(geom, ' ')) {
-            layout_rect = rect;
-            blitz_strtorect(&rect, &layout_rect, geom);
-            update_pages();
-        }
     }
     check_event(0);
 }
@@ -653,11 +606,7 @@ init_default()
         wmii_create_ixpfile(ixps, "/default/transcolor",
                             BLITZ_SEL_FG_COLOR);
     def[WM_TRANS_COLOR]->after_write = handle_after_write;
-    def[WM_MANAGED_GEOMETRY] =
-        wmii_create_ixpfile(ixps, "/default/geometry",
-                            BLITZ_SEL_FG_COLOR);
-    def[WM_MANAGED_GEOMETRY]->after_write = handle_after_write;
-    def[WM_MANAGED_GEOMETRY]->before_read = handle_before_read;
+    def[WM_MANAGED_GEOMETRY] = wmii_create_ixpfile(ixps, "/default/geometry", BLITZ_SEL_FG_COLOR);
     def[WM_SEL_BG_COLOR] =
         wmii_create_ixpfile(ixps, "/default/sstyle/bgcolor",
                             BLITZ_SEL_BG_COLOR);
@@ -673,17 +622,14 @@ init_default()
     def[WM_NORM_FG_COLOR] =
         wmii_create_ixpfile(ixps, "/default/nstyle/fgcolor",
                             BLITZ_NORM_FG_COLOR);
-    def[WM_NORM_BORDER_COLOR] =
-        wmii_create_ixpfile(ixps, "/default/nstyle/bordercolor",
+    def[WM_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/nstyle/bordercolor",
                             BLITZ_NORM_BORDER_COLOR);
     def[WM_FONT] = wmii_create_ixpfile(ixps, "/default/font", BLITZ_FONT);
     def[WM_FONT]->after_write = handle_after_write;
     def[WM_SNAP_VALUE] = wmii_create_ixpfile(ixps, "/default/snapvalue", "20"); /* 0..1000 */
     def[WM_BORDER] = wmii_create_ixpfile(ixps, "/default/border", "1");
     def[WM_TAB] = wmii_create_ixpfile(ixps, "/default/tab", "1");
-    def[WM_HANDLE_INC] =
-        wmii_create_ixpfile(ixps, "/default/handleinc", "1");
-    def[WM_LAYOUT] = wmii_create_ixpfile(ixps, "/default/layout", LAYOUT);
+    def[WM_HANDLE_INC] = wmii_create_ixpfile(ixps, "/default/handleinc", "1");
     def[WM_SEL_PAGE] = ixp_create(ixps, "/sel");
     def[WM_EVENT_PAGE_UPDATE] = ixp_create(ixps, "/event/pageupdate");
     def[WM_EVENT_CLIENT_UPDATE] = ixp_create(ixps, "/event/clientupdate");
@@ -700,34 +646,33 @@ init_screen()
     XGCValues gcv;
     XSetWindowAttributes wa;
 
-    XAllocNamedColor(dpy, DefaultColormap(dpy, screen_num),
-                     def[WM_TRANS_COLOR]->content, &xorcolor, &xorcolor);
+    XAllocNamedColor(dpy, DefaultColormap(dpy, screen),
+                     def[WM_TRANS_COLOR]->content, &color_xor, &color_xor);
     gcv.subwindow_mode = IncludeInferiors;
     gcv.function = GXxor;
-    gcv.foreground = xorcolor.pixel;
+    gcv.foreground = color_xor.pixel;
     gcv.line_width = 4;
     gcv.plane_mask = AllPlanes;
     gcv.graphics_exposures = False;
-    xorgc = XCreateGC(dpy, root, GCForeground | GCGraphicsExposures
+    gc_xor = XCreateGC(dpy, root, GCForeground | GCGraphicsExposures
                       | GCFunction | GCSubwindowMode | GCLineWidth
                       | GCPlaneMask, &gcv);
     rect.x = rect.y = 0;
-    rect.width = DisplayWidth(dpy, screen_num);
-    rect.height = DisplayHeight(dpy, screen_num);
-    layout_rect = rect;
+    rect.width = DisplayWidth(dpy, screen);
+    rect.height = DisplayHeight(dpy, screen);
 
     wa.override_redirect = 1;
     wa.background_pixmap = ParentRelative;
     wa.event_mask = ExposureMask | ButtonPressMask;
     transient =
         XCreateWindow(dpy, root, 0, 0, rect.width, rect.height, 0,
-                      DefaultDepth(dpy, screen_num), CopyFromParent,
-                      DefaultVisual(dpy, screen_num),
+                      DefaultDepth(dpy, screen), CopyFromParent,
+                      DefaultVisual(dpy, screen),
                       CWOverrideRedirect | CWBackPixmap | CWEventMask,
                       &wa);
 
     XSync(dpy, False);
-    transient_gc = XCreateGC(dpy, transient, 0, 0);
+    gc_transient = XCreateGC(dpy, transient, 0, 0);
     XDefineCursor(dpy, transient, normal_cursor);
     XDefineCursor(dpy, root, normal_cursor);
 }
@@ -771,14 +716,12 @@ startup_error_handler(Display * dpy, XErrorEvent * error)
 static void
 cleanup()
 {
-    Page *p;
-    for(p = pages; p; p = p->next) {
-        Frame *f;
-        for(f = p->managed->def->frames(p->managed); f; f = f->next) 
-			detach_client_from_frame(f->client, False);
-        for(f = p->floating->def->frames(p->floating); f; f = f->next)
-            detach_client_from_frame(f->client, False);
-    }
+	size_t i;
+	Client *c;
+	for(i = 0; clients && clients[i]; i++) {
+		c = clients[i];
+		reparent_client(c, root, c->frame.rect.x + c->rect.x, c->frame.rect.y + c->rect.y);
+	}
     XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 	XSync(dpy, False);
 }
@@ -818,8 +761,8 @@ main(int argc, char *argv[])
         fprintf(stderr, "%s", "wmiiwm: cannot open display\n");
         exit(1);
     }
-    screen_num = DefaultScreen(dpy);
-    root = RootWindow(dpy, screen_num);
+    screen = DefaultScreen(dpy);
+    root = RootWindow(dpy, screen);
 
     /* check if another WM is already running */
     other_wm_running = 0;
@@ -850,12 +793,11 @@ main(int argc, char *argv[])
     }
     def[WM_CTL]->after_write = handle_after_write;
 
-    pages = selpage = nil;
-    ndetached = npages = 0;
-	pageid = 1;
-    detached = nil;
-    layouts = nil;
+	detachedsz = pagessz = clientssz = sel_page = 0;
+    pages = nil;
+	clients = detached = nil;
 	attachqueue = nil;
+
 
     init_atoms();
     init_cursors();
@@ -863,7 +805,6 @@ main(int argc, char *argv[])
     font = blitz_getfont(dpy, def[WM_FONT]->content);
     wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
     init_screen();
-    init_layouts();
     scan_wins();
 
     /* main event loop */

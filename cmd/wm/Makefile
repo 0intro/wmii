@@ -3,13 +3,25 @@
 
 include ../../config.mk
 
-all: layoutdef.c
-	@${MAKE} -f Makefile.wm
-	@echo built core wm
+CFLAGS   += -I../../liblitz -I../../libixp -I../../libwmii \
+            -I../../libcext
+LDFLAGS  += -L../../liblitz -llitz -L../../libixp -lixp \
+            -L../../libwmii -lwmii -L../../libcext -lcext
+# Solaris
+# LDFLAGS += -lsocket
 
-layoutdef.c:
-	@echo SH mklayout.sh
-	@sh mklayout.sh
+SRC      = wm.c client.c event.c mouse.c page.c column.c
+OBJ      = ${SRC:.c=.o}
+
+all: wmiiwm
+
+.c.o:
+	@echo CC $<
+	@${CC} -c ${CFLAGS} $<
+
+wmiiwm: ${OBJ}
+	@echo LD $@
+	@${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:
 	rm -f wmiiwm *.o layoutdef.*

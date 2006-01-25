@@ -208,7 +208,7 @@ handle_maprequest(XEvent * e)
 
 	/* attach heuristic support */
 	if(attachqueue && (attachqueue->page != selpage)) {
-		AttachQueue *r = attachqueue;
+		MapQueue *r = attachqueue;
 		focus_page(r->page);
 		attachqueue = attachqueue->next;
 		free(r);

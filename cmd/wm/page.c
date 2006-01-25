@@ -72,7 +72,7 @@ destroy_page(Page * p)
 		return;
 
 	Page *newselpage;
-	AttachQueue *o, *n;
+	MapQueue *o, *n;
 
 	while(attachqueue && (attachqueue->page == p)) {
 		n = attachqueue->next;
@@ -235,13 +235,13 @@ handle_after_write_page(IXPServer * s, File * file)
 static void
 xexec(void *obj, char *arg)
 {
-	AttachQueue *r;
+	MapQueue *r;
 
 	if(!attachqueue)
-		r = attachqueue = cext_emallocz(sizeof(AttachQueue));
+		r = attachqueue = cext_emallocz(sizeof(MapQueue));
 	else {
 		for(r = attachqueue; r && r->next; r = r->next);
-		r->next = cext_emallocz(sizeof(AttachQueue));
+		r->next = cext_emallocz(sizeof(MapQueue));
 		r = r->next;
 	}
 	r->page = obj;
@@ -257,14 +257,4 @@ toggle_layout(void *obj, char *arg)
     	focus_layout(p->floating);
     else
     	focus_layout(p->managed);
-}
-
-Page *
-pageat(unsigned int idx)
-{
-    unsigned int i = 0;
-    Page *p;
-    for(p = pages; p && i != idx; p = p->next)
-		i++;
-    return p;
 }
