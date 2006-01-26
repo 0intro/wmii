@@ -366,8 +366,9 @@ detached_clients(void *obj, char *arg)
                 unmap_client(detached[i]);
             if((n = handle_kpress(&ev.xkey)) != -1) {
                 if(n < nc) {
-                    detach_detached(detached[n]);
-                    attach_client(detached[n]);
+					c = detached[n];
+					detach_client_from_array(c, detached);
+                    attach_client(c);
                 }
             }
             XUngrabKeyboard(dpy, CurrentTime);
@@ -379,7 +380,7 @@ detached_clients(void *obj, char *arg)
                 unmap_client(detached[i]);
             if((ev.xbutton.button == Button1)
                && (c = win_to_client(ev.xbutton.window))) {
-                detach_detached(c);
+                detach_client_from_array(c, detached);
                 attach_client(c);
             }
             XUngrabKeyboard(dpy, CurrentTime);
@@ -402,7 +403,7 @@ xattach_client(void *obj, char *arg)
 {
     Client *c = detached ? detached[0] : nil;
     if(c) {
-        detach_detached(c);
+        detach_client_from_array(c, detached);
         attach_client(c);
     }
 }
@@ -793,11 +794,10 @@ main(int argc, char *argv[])
     }
     def[WM_CTL]->after_write = handle_after_write;
 
-	detachedsz = pagessz = clientssz = sel_page = 0;
+	aqueuesz = detachedsz = pagessz = clientssz = sel_page = 0;
     pages = nil;
 	clients = detached = nil;
-	attachqueue = nil;
-
+	aqueue = nil;
 
     init_atoms();
     init_cursors();

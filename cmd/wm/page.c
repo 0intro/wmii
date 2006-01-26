@@ -22,6 +22,36 @@ Action page_acttbl[] = {
     {0, 0}
 };
 
+void
+attach_page_to_array(Page *p, Page **array, size_t *size)
+{
+	size_t i;
+	if(!array) {
+		*size = 2;
+		array = cext_emallocz(sizeof(Page *) * (*size));
+	}
+	for(i = 0; (i < (*size)) && array[i]; i++);
+	if(i >= (*size)) {
+		Page **tmp = array;
+		(*size) *= 2;
+		array = cext_emallocz(sizeof(Page *) * (*size));
+		for(i = 0; tmp[i]; i++)
+			array[i] = tmp[i];
+		free(tmp);
+	}
+	array[i] = p;
+}
+
+void
+detach_page_from_array(Page *p, Page **array)
+{
+	size_t i;
+	for(i = 0; array[i] != p; i++);
+	for(; array[i + 1]; i++)
+		array[i] = array[i + 1];
+	array[i] = nil;
+}
+
 Page *
 alloc_page()
 {

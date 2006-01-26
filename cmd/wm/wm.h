@@ -77,15 +77,9 @@ enum {
 #define ROOT_MASK              SubstructureRedirectMask
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
 
-typedef struct MapQueue MapQueue;
 typedef struct Column Column;
 typedef struct Page Page;
 typedef struct Client Client;
-
-struct MapQueue {
-	Page *page;
-	MapQueue *next;
-};
 
 struct Column {
     Client **clients;
@@ -133,7 +127,8 @@ struct Client {
 Page **pages;
 size_t pagessz;
 size_t sel_page;
-MapQueue *attachqueue;
+Page **aqueue;
+size_t aqueuesz;
 Client **detached;
 size_t detachedsz;
 Client **clients;
@@ -177,6 +172,8 @@ unsigned int valid_mask, num_lock_mask;
 
 
 /* client.c */
+void attach_client_to_array(Client *c, Client **array, size_t *size);
+void detach_client_from_array(Client *c, Client **array);
 Client *alloc_client(Window w, XWindowAttributes *wa);
 void destroy_client(Client * c);
 void configure_client(Client * c);
@@ -192,20 +189,11 @@ void reparent_client(Client * c, Window w, int x, int y);
 void attach_client(Client * c);
 void detach_client(Client * c, Bool unmap);
 Client *sel_client();
-Client *clientat(Client * clients, size_t idx);
-void detach_detached(Client * c);
-void attach_detached(Client * c);
-void focus_client(Client *new, Client *old);
+void focus_client(Client *c);
 Client *win_to_frame(Window w);
-Client *alloc_frame(XRectangle * r);
-void destroy_frame(Client * f);
-void resize_client(Client * f, XRectangle * r, XPoint * pt);
-void draw_frame(Client * f);
-void handle_frame_buttonpress(XButtonEvent * e, Client * f);
-void detach_client_from_frame(Client * client, Bool unmap);
-unsigned int tab_height(Client * f);
-unsigned int border_width(Client * f);
-Client *sel_frame();
+void resize_client(Client *c, XRectangle * r, XPoint * pt);
+unsigned int tab_height(Client *c);
+unsigned int border_width(Client *c);
 
 /* event.c */
 void init_event_hander();
@@ -228,6 +216,8 @@ XRectangle *rectangles(unsigned int *num);
 /* column.c */
 void arrange_column(Page *p);
 void attach_column(Client *c);
+void detach_column(Client *c);
+void resize_column(Client *c, XRectangle *r, XPoint *pt);
 
 /* wm.c */
 void invoke_wm_event(File * f);

@@ -58,11 +58,25 @@ handle_buttonpress(XEvent * e)
 {
     Client *c;
     XButtonPressedEvent *ev = &e->xbutton;
-    Frame *f = win_to_frame(ev->window);
+    Align align;
+    int bindex;
 
-    if(f)
-        handle_frame_buttonpress(ev, f);
-	else if((c = win_to_client(ev->window)) && c->frame) {
+    if((c == win_to_frame(ev->window))) {
+		focus_client(c);
+		if(e->button == Button1) {
+			align = cursor_to_align(c->frame.cursor);
+			if(align == CENTER)
+				mouse_move(c);
+			else
+				mouse_resize(c, align);
+			return;
+		}
+		bindex = WM_EVENT_B2PRESS - 2 + e->button;
+		/* frame mouse handling */
+		if(def[bindex]->content)
+			wmii_spawn(dpy, def[bindex]->content);
+	}
+	else if((c = win_to_client(ev->window))) {
 		Layout *l = sel_layout();
 		if(l != c->frame->layout)
 			focus_layout(c->frame->layout);

@@ -129,26 +129,47 @@ set_client_state(Client * c, int state)
                     (unsigned char *) data, 2);
 }
 
-/*
 void
-focus_client(Client *new, Client *old)
+focus_client(Client *c)
 {
-	if(old && (old != new)) {
+	Page *p = pages ? pages[sel_page] : nil;
+	size_t i, j;
+	Client *old = sel_client();
+	
+	/* setup indexes */
+	p->is_managed = c->managed;
+	if(p->is_managed) {
+		for(i = 0; (i < p->managedsz) && p->managed[i]; i++) {
+			Column *col = p->managed[i];
+			for(j = 0; (j < col->clientssz) && col->clients[j] && (c != col->clients[j]); j++);
+			if((j < col->clientssz) && col->clients[j]) {
+				p->sel_managed = i;
+				col->sel = j;
+				break;
+			}
+		}
+	}
+	else {
+		for(i = 0; (i < p->floatingsz) && p->floating[i] && (p->floating[i] != c); i++);
+		if((i < p->floatingsz) && p->floating[i])
+			p->sel_float = i;
+	}
+	
+	if(old && (old != c)) {
 		ungrab_client(old, AnyModifier, AnyButton);
 		grab_client(old, AnyModifier, AnyButton);
-    	draw_frame(old->frame);
+    	draw_client(old);
 	}
-	ungrab_client(new, AnyModifier, AnyButton);
-    grab_client(new, Mod1Mask, Button1);
-    grab_client(new, Mod1Mask, Button3);
-    XRaiseWindow(dpy, new->win);
-    XSetInputFocus(dpy, new->win, RevertToPointerRoot, CurrentTime);
-    XDefineCursor(dpy, new->win, normal_cursor);
-    draw_frame(new->frame);
-    invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
+	ungrab_client(c, AnyModifier, AnyButton);
+    grab_client(c, Mod1Mask, Button1);
+    grab_client(c, Mod1Mask, Button3);
+    XRaiseWindow(dpy, c->frame.win);
+    XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
+    XDefineCursor(dpy, c->win, normal_cursor);
+    draw_client(c);
 	XSync(dpy, False);
+    invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
 }
-*/
 
 void
 map_client(Client * c)
@@ -266,7 +287,10 @@ handle_client_property(Client *c, XPropertyEvent *e)
 void
 destroy_client(Client * c)
 {
-    detach_detached(c);
+    XFreeGC(dpy, c->frame.gc);
+    XDestroyWindow(dpy, c->frame.win);
+    ixp_remove_file(ixps, c->file[C_PREFIX]);
+	detach_client_from_array(c, detached);
     free(c);
 }
 
@@ -274,30 +298,48 @@ destroy_client(Client * c)
 void
 draw_client(Client *c)
 {
-    unsigned int tabh = tab_height(c);
     Draw d = { 0 };
+    unsigned int tabh = tab_height(c);
+    int bw = border_width(c);
+    XRectangle notch;
 
+	d.drawable = c->frame.win;
+	d.font = font;
+	d.gc = c->frame.gc;
+
+	if(c == sel_client()) {
+		d.bg = blitz_loadcolor(dpy, screen, def[WM_SEL_BG_COLOR]->content);
+		d.fg = blitz_loadcolor(dpy, screen, def[WM_SEL_FG_COLOR]->content);
+		d.border = blitz_loadcolor(dpy, screen, def[WM_SEL_BORDER_COLOR]->content);
+	} else {
+		d.bg = blitz_loadcolor(dpy, screen, def[WM_NORM_BG_COLOR]->content);
+		d.fg = blitz_loadcolor(dpy, screen, def[WM_NORM_FG_COLOR]->content);
+		d.border = blitz_loadcolor(dpy, screen, def[WM_NORM_BORDER_COLOR]->content);
+	}
+
+	/* draw border */
+    if(bw) {
+        notch.x = bw;
+        notch.y = bw;
+        notch.width = c->frame.rect.width - 2 * bw;
+        notch.height = c->frame.rect.height - 2 * bw;
+        d.rect = c->frame.rect;
+        d.rect.x = d.rect.y = 0;
+        d.notch = &notch;
+
+        blitz_drawlabel(dpy, &d);
+    }
+    XSync(dpy, False);
+
+	/* draw tab */
     if(!tabh)
         return;
 
-    d.drawable = c->frame.win;
-    d.gc = c->frame.gc;
     d.rect.x = 0;
     d.rect.y = 0;
     d.rect.width = c->frame.rect.width;
     d.rect.height = tabh;
     d.data = c->name;
-    d.font = font;
-
-    if(c == sel_client()) {
-        d.bg = blitz_loadcolor(dpy, screen, def[WM_SEL_BG_COLOR]->content);
-        d.fg = blitz_loadcolor(dpy, screen, def[WM_SEL_FG_COLOR]->content);
-        d.border = blitz_loadcolor(dpy, screen, def[WM_SEL_BORDER_COLOR]->content);
-    } else {
-        d.bg = blitz_loadcolor(dpy, screen, def[WM_NORM_BG_COLOR]->content);
-        d.fg = blitz_loadcolor(dpy, screen, def[WM_NORM_FG_COLOR]->content);
-        d.border = blitz_loadcolor(dpy, screen, def[WM_NORM_BORDER_COLOR]->content);
-    }
     blitz_drawlabel(dpy, &d);
     XSync(dpy, False);
 }
@@ -389,8 +431,6 @@ attach_client(Client *c)
 void
 detach_client(Client *c, Bool unmap)
 {
-	Client *c = sel_client();
-
 	if(c->managed)
 		detach_column(c);
 	else {
@@ -400,8 +440,8 @@ detach_client(Client *c, Bool unmap)
             	attach_client_to_array(c, detached, &detachedsz);
             	unmap_client(c);
         	}
-        	c->rect.x = f->rect.x;
-        	c->rect.y = f->rect.y;
+        	c->rect.x = c->frame.rect.x;
+        	c->rect.y = c->frame.rect.y;
         	reparent_client(c, root, c->rect.x, c->rect.y);
     	}
 	}
@@ -414,146 +454,65 @@ detach_client(Client *c, Bool unmap)
 Client *
 sel_client()
 {
-	Layout *l = sel_layout();
-	return l ? l->def->sel(l) : nil;
-}
-
-Client *
-clientat(Client * clients, size_t idx)
-{
-    size_t i = 0;
-    Client *c = clients;
-    for(; (i != idx) && c; c = c->next)
-        i++;
-    return c;
-}
-
-Client *
-alloc_frame(XRectangle * r)
-{
-    XSetWindowAttributes wa;
-    static int id = 1;
-    char buf[MAX_BUF];
-    Client *f = (Client *) cext_emallocz(sizeof(Client));
-    int bw, th;
-
-    f->rect = *r;
-    f->cursor = normal_cursor;
-
-    snprintf(buf, MAX_BUF, "/detached/%d", id);
-    f->file[F_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, MAX_BUF, "/detached/%d/name", id);
-    f->file[F_NAME] = ixp_create(ixps, buf);
-	f->file[F_NAME]->before_read = handle_before_read_frame;
-    snprintf(buf, MAX_BUF, "/detached/%d/border", id);
-    f->file[F_BORDER] =
-        wmii_create_ixpfile(ixps, buf, def[WM_BORDER]->content);
-    f->file[F_BORDER]->after_write = handle_after_write_frame;
-    snprintf(buf, MAX_BUF, "/detached/%d/tab", id);
-    f->file[F_TAB] = wmii_create_ixpfile(ixps, buf, def[WM_TAB]->content);
-    f->file[F_TAB]->after_write = handle_after_write_frame;
-    snprintf(buf, MAX_BUF, "/detached/%d/handleinc", id);
-    f->file[F_HANDLE_INC] =
-        wmii_create_ixpfile(ixps, buf, def[WM_HANDLE_INC]->content);
-    f->file[F_HANDLE_INC]->after_write = handle_after_write_frame;
-    snprintf(buf, MAX_BUF, "/detached/%d/geometry", id);
-    f->file[F_GEOMETRY] = ixp_create(ixps, buf);
-    f->file[F_GEOMETRY]->before_read = handle_before_read_frame;
-    f->file[F_GEOMETRY]->after_write = handle_after_write_frame;
-    id++;
-
-    wa.override_redirect = 1;
-    wa.background_pixmap = ParentRelative;
-    wa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
-
-    bw = border_width(c);
-    th = tab_height(c);
-    c->frame.rect.width += 2 * bw;
-    c->frame.rect.height += bw + (th ? th : bw);
-    c->frame.win = XCreateWindow(dpy, root, c->frame.rect.x, c->frame.rect.y,
-						   c->frame.rect.width, c->frame.rect.height, 0,
-						   DefaultDepth(dpy, screen), CopyFromParent, DefaultVisual(dpy, screen),
-						   CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
-	c->frame.cursor = normal_cursor;
-    XDefineCursor(dpy, c->frame.win, c->frame.cursor);
-    c->frame.gc = XCreateGC(dpy, c->frame.win, 0, 0);
-    XSync(dpy, False);
-    return f;
+	Page *p = pages ? pages[sel_page] : nil;
+	if(p) {
+		if(p->is_managed) {
+			Column *col = p->managed[p->sel_managed];
+			return (col && col->clients) ? col->clients[col->sel] : nil;
+		}
+		else
+			return p->floating ? p->floating[p->sel_float] : nil;
+	}
+	return nil;
 }
 
 Client *
 win_to_frame(Window w)
 {
-    Page *p;
-    for(p = pages; p; p = p->next) {
-        Client *f;
-		if(p->managed->def)
-			for(f = p->managed->def->frames(p->managed); f; f = f->next)
-				if(f->win == w)
-					return f;
-        for(f = p->floating->def->frames(p->floating); f; f = f->next)
-            if(f->win == w)
-                return f;
-    }
-    return nil;
-}
+	size_t i;
 
-void
-destroy_frame(Client * f)
-{
-    XFreeGC(dpy, f->gc);
-    XDestroyWindow(dpy, f->win);
-    ixp_remove_file(ixps, f->file[F_PREFIX]);
-    free(f);
+	for(i = 0; clients && clients[i]; i++)
+		if(clients[i]->frame.win == w)
+			return clients[i];
+	return nil;
 }
 
 unsigned int
-tab_height(Client * f)
+tab_height(Client * c)
 {
-    if(blitz_strtonum(f->file[F_TAB]->content, 0, 1))
+    if(blitz_strtonum(c->file[C_TAB]->content, 0, 1))
         return font->ascent + font->descent + 4;
     return 0;
 }
 
 unsigned int
-border_width(Client * f)
+border_width(Client * c)
 {
-    if(blitz_strtonum(f->file[F_BORDER]->content, 0, 1))
+    if(blitz_strtonum(c->file[C_BORDER]->content, 0, 1))
         return BORDER_WIDTH;
     return 0;
 }
 
 static void
-check_dimensions(Client * f, unsigned int tabh, unsigned int bw)
+check_dimensions(Client *c, unsigned int tabh, unsigned int bw)
 {
-    Client *c = sel_client();
-    if(!c)
-        return;
-
     if(c->size.flags & PMinSize) {
-        if(f->rect.width - 2 * bw < c->size.min_width) {
-            f->rect.width = c->size.min_width + 2 * bw;
-        }
-        if(f->rect.height - bw - (tabh ? tabh : bw) < c->size.min_height) {
-            f->rect.height = c->size.min_height + bw + (tabh ? tabh : bw);
-        }
+        if(c->frame.rect.width - 2 * bw < c->size.min_width)
+            c->frame.rect.width = c->size.min_width + 2 * bw;
+        if(c->frame.rect.height - bw - (tabh ? tabh : bw) < c->size.min_height)
+            c->frame.rect.height = c->size.min_height + bw + (tabh ? tabh : bw);
     }
     if(c->size.flags & PMaxSize) {
-        if(f->rect.width - 2 * bw > c->size.max_width) {
-            f->rect.width = c->size.max_width + 2 * bw;
-        }
-        if(f->rect.height - bw - (tabh ? tabh : bw) > c->size.max_height) {
-            f->rect.height = c->size.max_height + bw + (tabh ? tabh : bw);
-        }
+        if(c->frame.rect.width - 2 * bw > c->size.max_width)
+            c->frame.rect.width = c->size.max_width + 2 * bw;
+        if(c->frame.rect.height - bw - (tabh ? tabh : bw) > c->size.max_height)
+            c->frame.rect.height = c->size.max_height + bw + (tabh ? tabh : bw);
     }
 }
 
 static void
-resize_incremental(Client * f, unsigned int tabh, unsigned int bw)
+resize_incremental(Client *c, unsigned int tabh, unsigned int bw)
 {
-    Client *c = f->sel;
-    if(!c)
-        return;
     /* increment stuff, see chapter 4.1.2.3 of the ICCCM Manual */
     if(c->size.flags & PResizeInc) {
         int base_width = 0, base_height = 0;
@@ -567,221 +526,88 @@ resize_incremental(Client * f, unsigned int tabh, unsigned int bw)
             base_height = c->size.min_height;
         }
         /* client_width = base_width + i * c->size.width_inc for an integer i */
-        f->rect.width -=
-            (f->rect.width - 2 * bw - base_width) % c->size.width_inc;
-        f->rect.height -=
-            (f->rect.height - bw - (tabh ? tabh : bw) -
-             base_height) % c->size.height_inc;
+        c->frame.rect.width -=
+            (c->frame.rect.width - 2 * bw - base_width) % c->size.width_inc;
+        c->frame.rect.height -=
+            (c->frame.rect.height - bw - (tabh ? tabh : bw) - base_height) % c->size.height_inc;
     }
 }
 
 void
-resize_client(Client * f, XRectangle * r, XPoint * pt)
+resize_client(Client *c, XRectangle *r, XPoint *pt)
 {
-    Layout *l = f->layout;
-    unsigned int tabh = tab_height(f);
-    unsigned int bw = border_width(f);
-    Client *c = f->client;
+    unsigned int tabh = tab_height(c);
+    unsigned int bw = border_width(c);
 
-    l->def->resize(f, r, pt);
+	if(c->managed)
+		resize_column(c, r, pt);
 
     /* resize if client requests special size */
-    check_dimensions(f, tabh, bw);
+    check_dimensions(c, tabh, bw);
 
-    if(f->file[F_HANDLE_INC]->content
-       && ((char *) f->file[F_HANDLE_INC]->content)[0] == '1')
-        resize_incremental(f, tabh, bw);
+    if(c->file[C_HANDLE_INC]->content
+       && ((char *) c->file[C_HANDLE_INC]->content)[0] == '1')
+        resize_incremental(c, tabh, bw);
 
-    XMoveResizeWindow(dpy, f->win, f->rect.x, f->rect.y, f->rect.width,
-                      f->rect.height);
+    XMoveResizeWindow(dpy, c->frame.win, c->frame.rect.x, c->frame.rect.y,
+					  c->frame.rect.width, c->frame.rect.height);
 
-	if(f->client) {
-		c->rect.x = bw;
-		c->rect.y = tabh ? tabh : bw;
-		c->rect.width = c->frame->rect.width - 2 * bw;
-		c->rect.height = c->frame->rect.height - bw - (tabh ? tabh : bw);
-		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width,
-				c->rect.height);
-		configure_client(c);
-	}
+	c->rect.x = bw;
+	c->rect.y = tabh ? tabh : bw;
+	c->rect.width = c->frame.rect.width - 2 * bw;
+	c->rect.height = c->frame.rect.height - bw - (tabh ? tabh : bw);
+	XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
+	configure_client(c);
 }
 
-/**
- * Assumes following file:
- *
- * ./sel-style/text-font	   "<value>"
- * ./sel-style/text-size	   "<int>"
- * ./sel-style/text-color	  "#RRGGBBAA"
- * ./sel-style/bg-color		"#RRGGBBAA"
- * ./sel-style/border-color	"#RRGGBBAA [#RRGGBBAA [#RRGGBBAA [#RRGGBBAA]]]"
- * ./norm-style/text-font	   "<value>"
- * ./norm-style/text-size	   "<int>"
- * ./norm-style/text-color	  "#RRGGBBAA"
- * ./norm-style/bg-color		"#RRGGBBAA"
- * ./norm-style/border-color	"#RRGGBBAA [#RRGGBBAA [#RRGGBBAA [#RRGGBBAA]]]"
- */
-void
-draw_frame(Client * f)
+static void
+handle_before_read_client(IXPServer * s, File *file)
 {
-    Draw d = { 0 };
-    int bw = border_width(f);
-    XRectangle notch;
-    if(bw) {
-        notch.x = bw;
-        notch.y = bw;
-        notch.width = f->rect.width - 2 * bw;
-        notch.height = f->rect.height - 2 * bw;
-        d.drawable = f->win;
-        d.font = font;
-        d.gc = f->gc;
+	size_t i;
+	char buf[32];
 
-        /* define ground plate (i = 0) */
-        if(f == sel_frame()) {
-            d.bg = blitz_loadcolor(dpy, screen, def[WM_SEL_BG_COLOR]->content);
-            d.fg = blitz_loadcolor(dpy, screen, def[WM_SEL_FG_COLOR]->content);
-            d.border = blitz_loadcolor(dpy, screen, def[WM_SEL_BORDER_COLOR]->content);
-        } else {
-            d.bg = blitz_loadcolor(dpy, screen, def[WM_NORM_BG_COLOR]->content);
-            d.fg = blitz_loadcolor(dpy, screen, def[WM_NORM_FG_COLOR]->content);
-            d.border = blitz_loadcolor(dpy, screen, def[WM_NORM_BORDER_COLOR]->content);
-        }
-        d.rect = f->rect;
-        d.rect.x = d.rect.y = 0;
-        d.notch = &notch;
-
-        blitz_drawlabel(dpy, &d);
-    }
-    draw_client(f->client);
-    XSync(dpy, False);
-}
-
-void
-handle_frame_buttonpress(XButtonEvent * e, Client * f)
-{
-    Align align;
-    int bindex;
-	Layout *l = sel_layout();
-	if(l != f->layout)
-		focus_layout(f->layout);
-	l = f->layout;
-	l->def->focus(l, f->client, False);
-    if(e->button == Button1) {
-        align = cursor_to_align(f->cursor);
-        if(align == CENTER)
-            mouse_move(f);
-        else
-            mouse_resize(f, align);
-        return;
-    }
-    bindex = WM_EVENT_B2PRESS - 2 + e->button;
-    /* frame mouse handling */
-    if(def[bindex]->content)
-        wmii_spawn(dpy, def[bindex]->content);
-}
-
-void
-detach_client_from_frame(Client * c, Bool unmap)
-{
-    Client *f = c->frame;
-
-    c->frame = nil;
-    if(f->sel == c)
-		f->sel = nil;
-
-	f->client = nil;
-
-    if(!c->destroyed) {
-        if(!unmap) {
-            attach_detached(c);
-            unmap_client(c);
-        }
-        c->rect.x = f->rect.x;
-        c->rect.y = f->rect.y;
-        reparent_client(c, root, c->rect.x, c->rect.y);
-    }
-}
-
-static Client *
-handle_before_read_frames(IXPServer *s, File *file, Layout *l)
-{
-    Client *f;
-    char buf[32];
-	if(!l->def)
-		return nil;
-    for(f = l->def->frames(l); f; f = f->next) {
-        if(file == f->file[F_GEOMETRY]) {
-            snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
-                     f->rect.width, f->rect.height);
+	for(i = 0; (i < clientssz) && clients[i]; i++) {
+		Client *c = clients[i];
+        if(file == c->file[C_GEOMETRY]) {
+            snprintf(buf, sizeof(buf), "%d %d %d %d", c->frame.rect.x, c->frame.rect.y,
+                     c->frame.rect.width, c->frame.rect.height);
             if(file->content)
                 free(file->content);
             file->content = cext_estrdup(buf);
             file->size = strlen(buf);
-            return f;
+			return;
         }
-	    else if(file == f->file[F_NAME]) {
+	    else if(file == c->file[C_NAME]) {
             if(file->content)
                 free(file->content);
-			if(f->sel && f->sel->name) {
-				file->content = cext_estrdup(f->sel->name);
-				file->size = strlen(f->sel->name);
-			}
-			else {
-				file->content = nil;
-				file->size = 0;
-			}
-            return f;
+			file->content = cext_estrdup(c->name);
+			file->size = strlen(c->name);
+            return ;
 		}
 	}
-    return nil;
 }
 
 static void
-handle_before_read_frame(IXPServer * s, File * file)
+handle_after_write_client(IXPServer *s, File *file)
 {
-    Page *p;
-    for(p = pages; p; p = p->next) {
-        if(handle_before_read_frames(s, file, p->managed)
-           || handle_before_read_frames(s, file, p->floating))
-            return;
-    }
-}
+	size_t i;
 
-static Client *
-handle_after_write_frames(IXPServer *s, File *file, Layout *l)
-{
-    Client *f;
-    for(f = l->def->frames(l); f; f = f->next) {
-        if(file == f->file[F_TAB] || file == f->file[F_BORDER]
-           || file == f->file[F_HANDLE_INC]) {
-            f->layout->def->arrange(f->layout);
-            return f;
-        } else if(file == f->file[F_GEOMETRY]) {
-            char *geom = f->file[F_GEOMETRY]->content;
-            if(geom && strrchr(geom, ' ')) {
-                XRectangle frect = f->rect;
-                blitz_strtorect(&rect, &frect, geom);
-                resize_frame(f, &frect, 0);
-            }
-            return f;
+	for(i = 0; (i < clientssz) && clients[i]; i++) {
+		Client *c = clients[i];
+        if(file == c->file[C_TAB] || file == c->file[C_BORDER]
+           || file == c->file[C_HANDLE_INC])
+		{
+			resize_client(c, &c->frame.rect, nil);
+            return;
         }
-    }
-    return nil;
-}
-
-static void
-handle_after_write_frame(IXPServer * s, File * file)
-{
-    Page *p;
-    for(p = pages; p; p = p->next) {
-        if(handle_after_write_frames(s, file, p->managed)
-           || handle_after_write_frames(s, file, p->floating))
+		else if(file == c->file[C_GEOMETRY]) {
+            char *geom = c->file[C_GEOMETRY]->content;
+            if(geom && strrchr(geom, ' ')) {
+                XRectangle frect = c->frame.rect;
+                blitz_strtorect(&rect, &frect, geom);
+                resize_client(c, &frect, 0);
+            }
             return;
-    }
-}
-
-Client *
-sel_frame()
-{
-	Client *c = sel_client();
-	return c ? c->frame : nil;
+        }
+	}
 }
