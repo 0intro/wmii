@@ -57,113 +57,72 @@ alloc_page()
 {
     Page *p, *new = cext_emallocz(sizeof(Page));
     char buf[MAX_BUF], buf2[16];
+	static int id = 1;
+	size_t np;
 
-    snprintf(buf2, sizeof(buf2), "%d", pageid);
-    snprintf(buf, sizeof(buf), "/%d", pageid);
+    snprintf(buf2, sizeof(buf2), "%d", id);
+    snprintf(buf, sizeof(buf), "/%d", id);
     new->file[P_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, sizeof(buf), "/%d/name", pageid);
+    snprintf(buf, sizeof(buf), "/%d/name", id);
     new->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
-    snprintf(buf, sizeof(buf), "/%d/layout/", pageid);
-    new->file[P_LAYOUT_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, sizeof(buf), "/%d/layout/sel", pageid);
-    new->file[P_SEL_LAYOUT] = ixp_create(ixps, buf);
-    new->file[P_SEL_LAYOUT]->bind = 1;    /* mount point */
-    snprintf(buf, MAX_BUF, "/%d/layoutname", pageid);
-    new->file[P_LAYOUT_NAME] = wmii_create_ixpfile(ixps, buf, def[WM_LAYOUT]->content);
-    new->file[P_LAYOUT_NAME]->after_write = handle_after_write_page;
-    snprintf(buf, sizeof(buf), "/%d/ctl", pageid);
+    snprintf(buf, sizeof(buf), "/%d/floating/", id);
+    new->file[P_FLOATING_PREFIX] = ixp_create(ixps, buf);
+    snprintf(buf, sizeof(buf), "/%d/managed/", id);
+    new->file[P_MANAGED_PREFIX] = ixp_create(ixps, buf);
+    snprintf(buf, sizeof(buf), "/%d/sel/", id);
+    new->file[P_SEL_PREFIX] = ixp_create(ixps, buf);
+    new->file[P_SEL_PREFIX]->bind = 1;    /* mount point */
+    snprintf(buf, sizeof(buf), "/%d/floating/sel", id);
+    new->file[P_SEL_FLOATING_CLIENT] = ixp_create(ixps, buf);
+    new->file[P_SEL_FLOATING_CLIENT]->bind = 1; 
+    snprintf(buf, sizeof(buf), "/%d/managed/sel", id);
+    new->file[P_SEL_MANAGED_CLIENT] = ixp_create(ixps, buf);
+    new->file[P_SEL_MANAGED_CLIENT]->bind = 1; 
+    snprintf(buf, sizeof(buf), "/%d/ctl", id);
     new->file[P_CTL] = ixp_create(ixps, buf);
     new->file[P_CTL]->after_write = handle_after_write_page;
-    new->floating = alloc_layout(new, LAYOUT_FLOAT);
-    new->sel = new->managed = alloc_layout(new, def[WM_LAYOUT]->content);
-    for(p = pages; p && p->next; p = p->next);
-    if(!p) {
-        pages = new;
-        new->index = 0;
-    }
-    else {
-        new->prev = p;
-        p->next = new;
-        new->index = p->index + 1;
-    }
     def[WM_SEL_PAGE]->content = new->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
-	pageid++;
-    npages++;
+	id++;
+	attach_page_to_array(p, pages, &pagessz);
+	for(np = 0; (np < pagessz) && pages[np]; np++);
+	focus_page(new);
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
-			        32, PropModeReplace, (unsigned char *) &npages, 1);
+			        32, PropModeReplace, (unsigned char *) &np, 1);
     return new;
 }
 
 void
-destroy_page(Page * p)
+destroy_page(Page *p)
 {
-	if(!p)
-		return;
+	unsigned int i;
+	size_t naqueue = 0;
 
-	Page *newselpage;
-	MapQueue *o, *n;
+	for(i = 0; (i < aqueuesz) && aqueue[i]; i++)
+		if(aqueue[i] == p)
+			naqueue++;
+	for(i = 0; i < naqueue; i++)
+		detach_page_from_array(p, aqueue);
 
-	while(attachqueue && (attachqueue->page == p)) {
-		n = attachqueue->next;
-		free(attachqueue);
-		attachqueue = n;
-	}
-	o = attachqueue;
-	n = nil;
-	if(attachqueue)
-		n = attachqueue->next;
-	while(n) {
-		if(n->page == p) {
-			o->next = n->next;
-			free(n);
-			n = o->next;
-		} else
-			n = n->next;
-	}
+	for(i = 0; (i < clientssz) && clients[i]; i++)
+		if(clients[i]->page == p)
+			detach_client(clients[i], False);
 
-    destroy_layout(p->floating);
-    destroy_layout(p->managed);
+	for(i = 0; (i < pagessz) && pages[i] && (p != pages[i]); i++);
+	if(sel_page && (sel_page == i))
+		sel_page--;
+
     def[WM_SEL_PAGE]->content = 0;
     ixp_remove_file(ixps, p->file[P_PREFIX]);
-    if(p == selpage) {
-        selpage = nil;
-        if(p->prev)
-            newselpage = p->prev;
-        else
-            newselpage = nil;
-    }
-
-    if(p == pages) {
-        if(p->next) {
-            p->next->prev = nil;
-            pages = p->next;
-            pages->index = 0;
-        } else
-            pages = nil;
-    } else {
-        p->prev->next = p->next;
-        if(p->next)
-            p->next->prev = p->prev;
-    }
-
     free(p); 
 
-    /* update page indexes */
-    for (p = pages; p && p->next; p = p->next) {
-      if (p->prev && p->prev->index + 1 != p->index) /* if page index difference is not one */
-        --(p->index);
-    }
- 
-    npages--;
+	for(i = 0; (i < pagessz) && pages[i]; i++);
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
-			        32, PropModeReplace, (unsigned char *) &npages, 1);
+			        32, PropModeReplace, (unsigned char *) &i, 1);
 
     /* determine what to focus and do that */
-    if(newselpage)
-        focus_page(newselpage);
-    else if(pages)
-        focus_page(pages);
+    if(pages[sel_page])
+        focus_page(pages[sel_page]);
     else {
         invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
         invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
@@ -172,26 +131,36 @@ destroy_page(Page * p)
 }
 
 void
-focus_page(Page * p)
+focus_page(Page *p)
 {
-    if(!p)
-        return;
+	unsigned int i, j;
+	Page *old = pages ? pages[sel_page] : nil;
 
-    if(p != selpage) {
-        if(selpage) {
-            unmap_layout(selpage->managed);
-            unmap_layout(selpage->floating);
-        }
-        map_layout(p->managed, False);
-        map_layout(p->floating, False);
-    }
+	if(!pages)
+		return;
 
-    selpage = p;
+	for(i = 0; (i < pagessz) && pages[i]; i++);
+
+	if(i == sel_page)
+		return;
+
+	sel_page = i;
+	for(j = 0; (j < clientssz) && clients[j]; j++) {
+		if(clients[j]->page == old)
+			XMoveWindow(dpy, clients[j]->frame.win, 2 * rect.width, 2 * rect.height);
+		else if(clients[j]->page == p)
+			XMoveWindow(dpy, clients[j]->frame.win,
+						clients[j]->frame.rect.x, clients[j]->frame.rect.y);
+	}
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
+	if(p->is_managed)
+		p->file[P_SEL_PREFIX]->content = p->file[P_MANAGED_PREFIX]->content;
+	else
+		p->file[P_SEL_PREFIX]->content = p->file[P_FLOATING_PREFIX]->content;
+
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
-    focus_layout(p->sel);
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
-			        32, PropModeReplace, (unsigned char *) &(selpage->index), 1);
+			        32, PropModeReplace, (unsigned char *) &sel_page, 1);
 }
 
 XRectangle *
@@ -226,38 +195,14 @@ rectangles(unsigned int *num)
 }
 
 static void
-handle_after_write_page(IXPServer * s, File * file)
+handle_after_write_page(IXPServer *s, File *file)
 {
-    Page *p;
-    for(p = pages; p; p = p->next) {
-        if(file == p->file[P_CTL]) {
-            run_action(file, p, page_acttbl);
-            return;
-        }
-		else if(file == p->file[P_LAYOUT_NAME]) {
-            LayoutDef *l = match_layout_def(file->content);
-            Client *clients = nil;
+	size_t i;
 
-			if(!strncmp(file->content, LAYOUT_FLOAT, strlen(LAYOUT_FLOAT)))
-				l = nil;
-			
-			if(p->managed->def)
-				clients = p->managed->def->deinit(p->managed);
-            p->managed->def = l;
-            if(l) {
-                p->managed->def->init(p->managed, clients);
-				focus_layout(p->managed);
-			}
-			else {
-				Client *n;
-				focus_layout(p->floating);
-				while(clients) {
-					n = clients->next;
-					p->floating->def->attach(p->floating, clients);
-					clients = n;
-				}
-            }   
-            invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+	for(i = 0; (i < pagessz) && pages[i]; i++) {
+        if(file == pages[i]->file[P_CTL]) {
+            run_action(file, pages[i], page_acttbl);
+            return;
         }
     }
 }
@@ -265,16 +210,7 @@ handle_after_write_page(IXPServer * s, File * file)
 static void
 xexec(void *obj, char *arg)
 {
-	MapQueue *r;
-
-	if(!attachqueue)
-		r = attachqueue = cext_emallocz(sizeof(MapQueue));
-	else {
-		for(r = attachqueue; r && r->next; r = r->next);
-		r->next = cext_emallocz(sizeof(MapQueue));
-		r = r->next;
-	}
-	r->page = obj;
+	attach_page_to_array(obj, aqueue, &aqueuesz);
     wmii_spawn(dpy, arg);
 }
 
@@ -283,8 +219,12 @@ toggle_layout(void *obj, char *arg)
 {
     Page *p = obj;
 
-    if(!p->managed->def || (p->sel == p->managed))
-    	focus_layout(p->floating);
-    else
-    	focus_layout(p->managed);
+	p->is_managed = !p->is_managed;
+	if(p->is_managed) {
+		Column *col = p->managed[p->sel_managed];
+		if(col && col->clientssz && col->clients[col->sel])
+			focus_client(col->clients[col->sel]);
+	}
+	else if(p->floating && p->floatingsz && p->floating[p->sel_float])
+		focus_client(p->floating[p->sel_float]);
 }

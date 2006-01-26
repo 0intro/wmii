@@ -450,7 +450,7 @@ xdestroy_page(void *obj, char *arg)
 static void
 new_page(void *obj, char *arg)
 {
-    focus_page(alloc_page());
+    alloc_page();
 }
 
 Client *

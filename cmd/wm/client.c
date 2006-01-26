@@ -137,6 +137,8 @@ focus_client(Client *c)
 	Client *old = sel_client();
 	
 	/* setup indexes */
+	if(c->page != p)
+		focus_page(c->page);
 	p->is_managed = c->managed;
 	if(p->is_managed) {
 		for(i = 0; (i < p->managedsz) && p->managed[i]; i++) {
@@ -145,14 +147,17 @@ focus_client(Client *c)
 			if((j < col->clientssz) && col->clients[j]) {
 				p->sel_managed = i;
 				col->sel = j;
+				p->file[P_SEL_MANAGED_CLIENT]->content = c->file[P_PREFIX]->content;
 				break;
 			}
 		}
 	}
 	else {
 		for(i = 0; (i < p->floatingsz) && p->floating[i] && (p->floating[i] != c); i++);
-		if((i < p->floatingsz) && p->floating[i])
+		if((i < p->floatingsz) && p->floating[i]) {
+			p->file[P_SEL_FLOATING_CLIENT]->content = c->file[P_PREFIX]->content;
 			p->sel_float = i;
+		}
 	}
 	
 	if(old && (old != c)) {
@@ -410,7 +415,7 @@ attach_client(Client *c)
 {
 	Page *p;
     if(!pages)
-		focus_page(alloc_page());
+		alloc_page();
 	p = pages[sel_page];
 
     /* XXX: do we need */ resize_client(c, &c->rect, 0);
