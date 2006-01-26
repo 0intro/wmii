@@ -46,7 +46,11 @@ void
 detach_client_from_array(Client *c, Client **array)
 {
 	size_t i;
-	for(i = 0; array[i] != c; i++);
+	if(!array)
+		return;
+	for(i = 0; array[i] && array[i] != c; i++);
+	if(!array[i])
+		return; /* not found */
 	for(; array[i + 1]; i++)
 		array[i] = array[i + 1];
 	array[i] = nil;
