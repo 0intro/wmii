@@ -85,6 +85,7 @@ typedef struct {
     char event[5][256];
 } Item;
 
+
 static size_t nitems = 0;
 static char *sockfile = nil;
 static pid_t mypid = 0;
@@ -94,6 +95,7 @@ static Display *dpy;
 static int screen_num;
 static char *align = nil;
 static char *font = nil;
+static char *display = nil;
 /*
 static GC gc;
 static Window win;
@@ -419,9 +421,11 @@ xstat(IXPServer * s, IXPConn * c)
 		}
         break;
 	case Fdisplay:
-		mkstat(&s->fcall.stat, qfile_name(qpath_type(map->qid.path)), 
-				strlen(display)
+		mkstat(&s->fcall.stat, qfile_name(qpath_type(map->qid.path)), strlen(display), 0x0);
+		break;
     case Fnew:
+		mkstat(&s->fcall.stat, qfile_name(qpath_type(map->qid.path)), 0, 0x0);
+		break;
     case Fdata:
     case Fevent:
     case Fcolor:
