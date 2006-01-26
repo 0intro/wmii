@@ -639,6 +639,7 @@ init_default()
     def[WM_EVENT_B3PRESS] = ixp_create(ixps, "/default/event/b3press");
     def[WM_EVENT_B4PRESS] = ixp_create(ixps, "/default/event/b4press");
     def[WM_EVENT_B5PRESS] = ixp_create(ixps, "/default/event/b5press");
+    def[WM_DETACHED_PREFIX] = ixp_create(ixps, "/detached");
 }
 
 static void

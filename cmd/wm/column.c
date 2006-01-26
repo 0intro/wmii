@@ -38,8 +38,8 @@ detach_column_from_array(Column *col, Column **array)
 	array[i] = nil;
 }
 
-static void
-xarrange_column(Page *p, Column *col)
+void
+arrange_column(Page *p, Column *col)
 {
 	size_t i, nc;
 	unsigned int h;
@@ -62,11 +62,11 @@ xarrange_column(Page *p, Column *col)
 }
 
 void
-arrange_column(Page *p)
+arrange_page(Page *p)
 {
 	size_t i;
 	for(i = 0; (i < p->columnsz) && p->column[i]; i++)
-		xarrange_column(p, p->column[i]);
+		arrange_column(p, p->column[i]);
 }
 
 void
@@ -84,7 +84,7 @@ attach_column(Client *c)
 
 	c->column = col;
 	attach_client_to_array(c, col->client, &col->clientsz);
-    xarrange_column(p, col);
+    arrange_column(p, col);
 }
 
 static void
@@ -103,7 +103,7 @@ update_column_width(Page *p)
         p->column[i]->rect.x = i * width;
         p->column[i]->rect.width = width;
     }
-    arrange_column(p);
+    arrange_page(p);
 }
 
 void
@@ -119,7 +119,7 @@ detach_column(Client *c)
 		update_column_width(p);
 	}
 	else
-		xarrange_column(p, col);
+		arrange_column(p, col);
 } 
 
 static void
@@ -205,8 +205,8 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 				return;
 			detach_client_from_array(c, src->client);
 			attach_client_to_array(c, tgt->client, &tgt->clientsz);
-            xarrange_column(p, src);
-            xarrange_column(p, tgt);
+            arrange_column(p, src);
+            arrange_column(p, tgt);
         } else {
 			for(i = 0; (i < src->clientsz) && src->client[i] &&
 				 !blitz_ispointinrect(pt->x, pt->y, &src->client[i]->frame.rect); i++);
@@ -215,7 +215,7 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 				for(j = 0; (j < src->clientsz) && src->client[j] && (src->client[j] != c); j++);
 				src->client[j] = src->client[i];
 				src->client[i] = c;
-				xarrange_column(p, src);
+				arrange_column(p, src);
             }
         }
 		focus_client(c);
@@ -232,198 +232,70 @@ resize_column(Client *c, XRectangle *r, XPoint *pt)
         drop_resize(c, r);
 }
 
-/*
-static void select_frame(void *obj, char *arg);
-static void max_frame(void *obj, char *arg);
-static void swap_frame(void *obj, char *arg);
-static void new_column(void *obj, char *arg);
-
-static Action lcol_acttbl[] = {
-    {"select", select_frame},
-    {"swap", swap_frame},
-    {"new", new_column},
-    {"max", max_frame},
-    {0, 0}
-};
-
-
-static void
-max_frame(void *obj, char *arg)
+void
+select_column(Client *c, char *arg)
 {
-    Layout *l = obj;
-    Acme *acme = l->aux;
-    Column *c = acme->sel;
-	Cell *cell;
-    Frame *f;
-	
-    if(!c)
-        return;
+	Page *p = c->page;
+    Column *col = c->column;
+	size_t i;
 
-    cell = c->sel;
-    if(!cell)
-        return;
-
-	f = cell->frame;
-	if(f->maximized) {
-		f->rect = f->old;
-		resize_frame(f, &f->old, nil);
-		f->maximized = False;
+	for(i = 0; (i < col->clientsz) && col->client[i] && (col->client[i] != c); i++);
+	if(!strncmp(arg, "prev", 5)) {
+		if(!i)
+			for(i = 0; (i < col->clientsz) && col->client[i]; i++);
+		focus_client(col->client[i - 1]);
+		return;
+	} else if(!strncmp(arg, "next", 5)) {
+		if(col->client[i + 1])
+			focus_client(col->client[i + 1]);
+		else
+			focus_client(col->client[0]);
+		return;
 	}
-	else {
-		f->old = f->rect;
-		f->rect = c->rect;
-		XRaiseWindow(dpy, f->win);
-		resize_frame(f, &c->rect, nil);
-		f->maximized = True;
+   
+	for(i = 0; (i < p->columnsz) && p->column[i] && (p->column[i] != col); i++);
+	if(!strncmp(arg, "west", 5)) {
+		if(!i)
+			for(i = 0; (i < p->columnsz) && p->column[i]; i++);
+		col = p->column[i - 1];
+	} else if(!strncmp(arg, "east", 5)) {
+		if(p->column[i + 1])
+			col = p->column[i + 1];
+		else
+			col = p->column[0];
+	} else {
+		const char *errstr;
+		for(i = 0; (i < p->columnsz) && p->column[i]; i++);
+		i = cext_strtonum(arg, 0, i - 1, &errstr);
+		if(errstr)
+			return;
+		col = p->column[i];	
 	}
+	focus_client(col->client[col->sel]);
 }
 
-static void
-select_frame(void *obj, char *arg)
+void
+new_column(Page *p)
 {
-    Layout *l = obj;
-    Acme *acme = l->aux;
-    Column *c, *column = acme->sel;
-    Cell *cell;
+	Client *c = sel_client_of_page(p);
+	Column *col, *old = c ? c->column : nil;
+	size_t i;
 
-    if(!column)
-        return;
+	if(!old)
+		return;
 
-    cell = column->sel;
-    if(!cell || !arg)
-        return;
-    if(!strncmp(arg, "prev", 5)) {
-        if(cell->prev)
-            cell = cell->prev;
-        else
-            for(cell = column->cells; cell && cell->next; cell = cell->next);
-    } else if(!strncmp(arg, "next", 5)) {
-        if(cell->next)
-            cell = cell->next;
-        else
-            cell = column->cells;
-    } else if(!strncmp(arg, "west", 5)) {
-        if(column->prev)
-            cell = column->prev->sel;
-        else {
-            for(c = acme->columns; c && c->next; c = c->next);
-			cell = c->sel;
-		}
-    } else if(!strncmp(arg, "east", 5)) {
-        if(column->next)
-            cell = column->next->sel;
-        else
-            cell = acme->columns->sel;
-    } else {
-        unsigned int i = 0, idx = blitz_strtonum(arg, 0, column->ncells - 1);
-        for(cell = column->cells; cell && i != idx; cell = cell->next)
-            i++;
-    }
-    if(cell && cell != column->sel)
-        focus_column(l, cell->frame->sel, True);
+	for(i = 0; (i < old->clientsz) && old->client[i]; i++);
+
+	if(i < 2)
+		return;
+
+    col = cext_emallocz(sizeof(Column));
+    col->rect = p->rect_column;
+	attach_column_to_array(col, p->column, &p->columnsz);
+	p->sel_column = i;
+	detach_client_from_array(c, old->client);
+	attach_client_to_array(c, col->client, &col->clientsz);
+	c->column = col;
+	update_column_width(p);
+	focus_client(c);
 }
-
-static void
-swap_frame(void *obj, char *arg)
-{
-    Layout *l = obj;
-    Acme *acme = l->aux;
-    Column *west = nil, *east = nil, *column = acme->sel;
-    Cell *north = nil, *south = nil, *cell = column->sel;
-    Frame *f;
-    XRectangle r;
-
-    if(!column || !cell || !arg)
-        return;
-
-    west = column->prev;
-    east = column->next;
-    north = cell->prev;
-    south = cell->next;
-
-	if(!west)
-		west = east;
-	if(!east)
-		east = west;
-
-    if(!strncmp(arg, "north", 6) && north) {
-        r = north->frame->rect;
-        north->frame->rect = cell->frame->rect;
-        cell->frame->rect = r;
-        f = north->frame;
-        north->frame = cell->frame;
-        cell->frame = f;
-        cell->frame->aux = cell;
-        north->frame->aux = north;
-        resize_frame(cell->frame, &cell->frame->rect, nil);
-        resize_frame(north->frame, &north->frame->rect, nil);
-        focus_column(l, cell->frame->sel, True);
-    } else if(!strncmp(arg, "south", 6) && south) {
-        r = south->frame->rect;
-        south->frame->rect = cell->frame->rect;
-        cell->frame->rect = r;
-        f = south->frame;
-        south->frame = cell->frame;
-        cell->frame = f;
-        cell->frame->aux = cell;
-        south->frame->aux = south;
-        resize_frame(cell->frame, &cell->frame->rect, nil);
-        resize_frame(south->frame, &south->frame->rect, nil);
-        focus_column(l, cell->frame->sel, True);
-    } else if(!strncmp(arg, "west", 5) && west && column->ncells && west->ncells) {
-        Cell *other = west->sel;
-        r = other->frame->rect;
-        other->frame->rect = cell->frame->rect;
-        cell->frame->rect = r;
-        f = other->frame;
-        other->frame = cell->frame;
-        cell->frame = f;
-        other->frame->aux = other;
-        cell->frame->aux = cell;
-        resize_frame(cell->frame, &cell->frame->rect, nil);
-        resize_frame(other->frame, &other->frame->rect, nil);
-        focus_column(l, other->frame->sel, True);
-    } else if(!strncmp(arg, "east", 5) && east && column->ncells && east->ncells) {
-        Cell *other = east->sel;
-        r = other->frame->rect;
-        other->frame->rect = cell->frame->rect;
-        cell->frame->rect = r;
-        f = other->frame;
-        other->frame = cell->frame;
-        cell->frame = f;
-        other->frame->aux = other;
-        cell->frame->aux = cell;
-        resize_frame(cell->frame, &cell->frame->rect, nil);
-        resize_frame(other->frame, &other->frame->rect, nil);
-        focus_column(l, other->frame->sel, True);
-    }
-}
-
-static void
-new_column(void *obj, char *arg)
-{
-    Layout *l = obj;
-    Acme *acme = l->aux;
-    Column *c, *new, *column = acme->sel;
-    Frame *f;
-
-    if(!column || column->ncells < 2)
-        return;
-
-    f = column->sel->frame;
-    for(c = acme->columns; c && c->next; c = c->next);
-
-    new = cext_emallocz(sizeof(Column));
-    new->rect = layout_rect;
-    new->prev = c;
-    c->next = new;
-    acme->ncolumns++;
-    acme->sel = new;
-
-    detach_frame(l, f);
-    attach_frame(l, new, f);
-
-    update_column_width(l);
-    focus_column(l, f->sel, True);
-}
-*/

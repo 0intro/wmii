@@ -30,6 +30,7 @@ enum {
     C_BORDER,
     C_TAB,
     C_HANDLE_INC,
+	C_CTL,
     C_LAST
 };
 
@@ -49,6 +50,7 @@ enum {
     WM_TAB,
     WM_HANDLE_INC,
     WM_SNAP_VALUE,
+	WM_DETACHED_PREFIX,
     WM_SEL_PAGE,
     WM_EVENT_PAGE_UPDATE,
     WM_EVENT_CLIENT_UPDATE,
@@ -190,6 +192,7 @@ void reparent_client(Client * c, Window w, int x, int y);
 void attach_client(Client * c);
 void detach_client(Client * c, Bool unmap);
 Client *sel_client();
+Client *sel_client_of_page(Page *p);
 void focus_client(Client *c);
 Client *win_to_frame(Window w);
 void resize_client(Client *c, XRectangle * r, XPoint * pt);
@@ -217,10 +220,13 @@ void focus_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
 
 /* column.c */
-void arrange_column(Page *p);
+void arrange_page(Page *p);
+void arrange_column(Page *p, Column *col);
 void attach_column(Client *c);
 void detach_column(Client *c);
 void resize_column(Client *c, XRectangle *r, XPoint *pt);
+void select_column(Client *c, char *arg);
+void new_column(Page *p);
 
 /* wm.c */
 void invoke_wm_event(File * f);

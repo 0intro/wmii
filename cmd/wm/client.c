@@ -13,6 +13,14 @@
 static void handle_before_read_client(IXPServer * s, File * file);
 static void handle_after_write_client(IXPServer * s, File * file);
 
+static void max_client(void *obj, char *arg);
+
+/* action table for /?/ namespace */
+Action client_acttbl[] = {
+    {"max", max_client},
+    {0, 0}
+};
+
 void
 attach_client_to_array(Client *c, Client **array, size_t *size)
 {
@@ -93,6 +101,9 @@ alloc_client(Window w, XWindowAttributes *wa)
     c->file[C_GEOMETRY] = ixp_create(ixps, buf);
     c->file[C_GEOMETRY]->before_read = handle_before_read_client;
     c->file[C_GEOMETRY]->after_write = handle_after_write_client;
+    snprintf(buf, MAX_BUF, "/detached/%d/ctl", id);
+    c->file[C_CTL] = ixp_create(ixps, buf);
+    c->file[C_CTL]->after_write = handle_after_write_client;
     id++;
 
 	/* client.frame */
@@ -422,10 +433,14 @@ attach_client(Client *c)
     reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
 	c->page = p;
 
-	if(p->is_column)
+	if(p->is_column) {
+		wmii_move_ixpfile(c->file[C_PREFIX], p->file[P_COLUMN_PREFIX]);
 		attach_column(c);
-	else
+	}
+	else {
+		wmii_move_ixpfile(c->file[C_PREFIX], p->file[P_FLOATING_PREFIX]);
 		attach_client_to_array(c, p->floating, &p->floatingsz);
+	}
     map_client(c);
 	focus_client(c);
 
@@ -435,6 +450,7 @@ attach_client(Client *c)
 void
 detach_client(Client *c, Bool unmap)
 {
+	wmii_move_ixpfile(c->file[C_PREFIX], def[WM_DETACHED_PREFIX]);
 	if(c->column)
 		detach_column(c);
 	else {
@@ -456,9 +472,8 @@ detach_client(Client *c, Bool unmap)
 }
 
 Client *
-sel_client()
+sel_client_of_page(Page *p)
 {
-	Page *p = page ? page[sel_page] : nil;
 	if(p) {
 		if(p->is_column) {
 			Column *col = p->column[p->sel_column];
@@ -468,6 +483,12 @@ sel_client()
 			return p->floating ? p->floating[p->sel_float] : nil;
 	}
 	return nil;
+}
+
+Client *
+sel_client()
+{
+	return page ? sel_client_of_page(page[sel_page]) : nil;
 }
 
 Client *
@@ -598,7 +619,11 @@ handle_after_write_client(IXPServer *s, File *file)
 
 	for(i = 0; (i < clientsz) && client[i]; i++) {
 		Client *c = client[i];
-        if(file == c->file[C_TAB] || file == c->file[C_BORDER]
+		if(file == c->file[C_CTL]) {
+            run_action(file, c, client_acttbl);
+            return;
+		}
+		else if(file == c->file[C_TAB] || file == c->file[C_BORDER]
            || file == c->file[C_HANDLE_INC])
 		{
 			resize_client(c, &c->frame.rect, nil);
@@ -615,3 +640,22 @@ handle_after_write_client(IXPServer *s, File *file)
         }
 	}
 }
+
+static void
+max_client(void *obj, char *arg)
+{
+	Client *c = obj;
+
+	if(c->maximized) {
+		/* XXX: do we really need this ? */ c->frame.rect = c->frame.revert;
+		resize_client(c, &c->frame.revert, nil);
+	}
+	else {
+		c->frame.revert = c->frame.rect;
+		c->frame.rect = c->column ? c->column->rect : rect;
+		XRaiseWindow(dpy, c->frame.win);
+		resize_client(c, &c->frame.rect, nil);
+	}
+	c->maximized = !c->maximized;
+}
+
