@@ -13,10 +13,10 @@
 enum {
     P_PREFIX,
     P_NAME,
-    P_MANAGED_PREFIX,
+    P_COLUMN_PREFIX,
     P_FLOATING_PREFIX,
     P_SEL_PREFIX,
-    P_SEL_MANAGED_CLIENT,
+    P_SEL_COLUMN_CLIENT,
     P_SEL_FLOATING_CLIENT,
     P_CTL,
     P_LAST
@@ -37,7 +37,7 @@ enum {
 enum {
     WM_CTL,
     WM_TRANS_COLOR,
-    WM_MANAGED_GEOMETRY,
+    WM_COLUMN_GEOMETRY,
     WM_SEL_BG_COLOR,
     WM_SEL_BORDER_COLOR,
     WM_SEL_FG_COLOR,
@@ -82,20 +82,21 @@ typedef struct Page Page;
 typedef struct Client Client;
 
 struct Column {
-    Client **clients;
-	size_t clientssz;
+    Client **client;
+	size_t clientsz;
 	size_t sel;
+	XRectangle rect;
 };
 
 struct Page {
 	Client **floating;
-	Column **managed;
+	Column **column;
 	size_t floatingsz;
-	size_t managedsz;
+	size_t columnsz;
 	size_t sel_float;
-	size_t sel_managed;
-	Bool is_managed;
-	XRectangle rect_managed;
+	size_t sel_column;
+	Bool is_column;
+	XRectangle rect_column;
     File *file[P_LAST];
 };
 
@@ -107,7 +108,7 @@ struct Client {
     Bool destroyed;
 	Bool maximized;
 	Bool attached;
-	Bool managed;
+	Column *column;
     Window win;
     Window trans;
     XRectangle rect;
@@ -124,15 +125,15 @@ struct Client {
 };
 
 /* global variables */
-Page **pages;
-size_t pagessz;
+Page **page;
+size_t pagesz;
 size_t sel_page;
 Page **aqueue;
 size_t aqueuesz;
 Client **detached;
 size_t detachedsz;
-Client **clients;
-size_t clientssz;
+Client **client;
+size_t clientsz;
 
 Display *dpy;
 IXPServer *ixps;

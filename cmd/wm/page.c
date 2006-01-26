@@ -67,25 +67,26 @@ alloc_page()
     new->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
     snprintf(buf, sizeof(buf), "/%d/floating/", id);
     new->file[P_FLOATING_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, sizeof(buf), "/%d/managed/", id);
-    new->file[P_MANAGED_PREFIX] = ixp_create(ixps, buf);
+    snprintf(buf, sizeof(buf), "/%d/column/", id);
+    new->file[P_COLUMN_PREFIX] = ixp_create(ixps, buf);
     snprintf(buf, sizeof(buf), "/%d/sel/", id);
     new->file[P_SEL_PREFIX] = ixp_create(ixps, buf);
     new->file[P_SEL_PREFIX]->bind = 1;    /* mount point */
     snprintf(buf, sizeof(buf), "/%d/floating/sel", id);
     new->file[P_SEL_FLOATING_CLIENT] = ixp_create(ixps, buf);
     new->file[P_SEL_FLOATING_CLIENT]->bind = 1; 
-    snprintf(buf, sizeof(buf), "/%d/managed/sel", id);
-    new->file[P_SEL_MANAGED_CLIENT] = ixp_create(ixps, buf);
-    new->file[P_SEL_MANAGED_CLIENT]->bind = 1; 
+    snprintf(buf, sizeof(buf), "/%d/column/sel", id);
+    new->file[P_SEL_COLUMN_CLIENT] = ixp_create(ixps, buf);
+    new->file[P_SEL_COLUMN_CLIENT]->bind = 1; 
     snprintf(buf, sizeof(buf), "/%d/ctl", id);
     new->file[P_CTL] = ixp_create(ixps, buf);
     new->file[P_CTL]->after_write = handle_after_write_page;
     def[WM_SEL_PAGE]->content = new->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	id++;
-	attach_page_to_array(p, pages, &pagessz);
-	for(np = 0; (np < pagessz) && pages[np]; np++);
+	p->rect_column = rect;
+	attach_page_to_array(p, page, &pagesz);
+	for(np = 0; (np < pagesz) && page[np]; np++);
 	focus_page(new);
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &np, 1);
@@ -104,11 +105,11 @@ destroy_page(Page *p)
 	for(i = 0; i < naqueue; i++)
 		detach_page_from_array(p, aqueue);
 
-	for(i = 0; (i < clientssz) && clients[i]; i++)
-		if(clients[i]->page == p)
-			detach_client(clients[i], False);
+	for(i = 0; (i < clientsz) && client[i]; i++)
+		if(client[i]->page == p)
+			detach_client(client[i], False);
 
-	for(i = 0; (i < pagessz) && pages[i] && (p != pages[i]); i++);
+	for(i = 0; (i < pagesz) && page[i] && (p != page[i]); i++);
 	if(sel_page && (sel_page == i))
 		sel_page--;
 
@@ -116,13 +117,13 @@ destroy_page(Page *p)
     ixp_remove_file(ixps, p->file[P_PREFIX]);
     free(p); 
 
-	for(i = 0; (i < pagessz) && pages[i]; i++);
+	for(i = 0; (i < pagesz) && page[i]; i++);
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &i, 1);
 
     /* determine what to focus and do that */
-    if(pages[sel_page])
-        focus_page(pages[sel_page]);
+    if(page[sel_page])
+        focus_page(page[sel_page]);
     else {
         invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
         invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
@@ -134,27 +135,27 @@ void
 focus_page(Page *p)
 {
 	unsigned int i, j;
-	Page *old = pages ? pages[sel_page] : nil;
+	Page *old = page ? page[sel_page] : nil;
 
-	if(!pages)
+	if(!page)
 		return;
 
-	for(i = 0; (i < pagessz) && pages[i]; i++);
+	for(i = 0; (i < pagesz) && page[i]; i++);
 
 	if(i == sel_page)
 		return;
 
 	sel_page = i;
-	for(j = 0; (j < clientssz) && clients[j]; j++) {
-		if(clients[j]->page == old)
-			XMoveWindow(dpy, clients[j]->frame.win, 2 * rect.width, 2 * rect.height);
-		else if(clients[j]->page == p)
-			XMoveWindow(dpy, clients[j]->frame.win,
-						clients[j]->frame.rect.x, clients[j]->frame.rect.y);
+	for(j = 0; (j < clientsz) && client[j]; j++) {
+		if(client[j]->page == old)
+			XMoveWindow(dpy, client[j]->frame.win, 2 * rect.width, 2 * rect.height);
+		else if(client[j]->page == p)
+			XMoveWindow(dpy, client[j]->frame.win,
+						client[j]->frame.rect.x, client[j]->frame.rect.y);
 	}
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
-	if(p->is_managed)
-		p->file[P_SEL_PREFIX]->content = p->file[P_MANAGED_PREFIX]->content;
+	if(p->is_column)
+		p->file[P_SEL_PREFIX]->content = p->file[P_COLUMN_PREFIX]->content;
 	else
 		p->file[P_SEL_PREFIX]->content = p->file[P_FLOATING_PREFIX]->content;
 
@@ -199,9 +200,9 @@ handle_after_write_page(IXPServer *s, File *file)
 {
 	size_t i;
 
-	for(i = 0; (i < pagessz) && pages[i]; i++) {
-        if(file == pages[i]->file[P_CTL]) {
-            run_action(file, pages[i], page_acttbl);
+	for(i = 0; (i < pagesz) && page[i]; i++) {
+        if(file == page[i]->file[P_CTL]) {
+            run_action(file, page[i], page_acttbl);
             return;
         }
     }
@@ -219,11 +220,11 @@ toggle_layout(void *obj, char *arg)
 {
     Page *p = obj;
 
-	p->is_managed = !p->is_managed;
-	if(p->is_managed) {
-		Column *col = p->managed[p->sel_managed];
-		if(col && col->clientssz && col->clients[col->sel])
-			focus_client(col->clients[col->sel]);
+	p->is_column = !p->is_column;
+	if(p->is_column) {
+		Column *col = p->column[p->sel_column];
+		if(col && col->clientsz && col->client[col->sel])
+			focus_client(col->client[col->sel]);
 	}
 	else if(p->floating && p->floatingsz && p->floating[p->sel_float])
 		focus_client(p->floating[p->sel_float]);

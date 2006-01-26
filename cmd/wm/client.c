@@ -113,7 +113,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     c->frame.gc = XCreateGC(dpy, c->frame.win, 0, 0);
     XSync(dpy, False);
 
-	attach_client_to_array(c, clients, &clientssz);
+	attach_client_to_array(c, client, &clientsz);
 
     return c;
 }
@@ -132,22 +132,22 @@ set_client_state(Client * c, int state)
 void
 focus_client(Client *c)
 {
-	Page *p = pages ? pages[sel_page] : nil;
+	Page *p = page ? page[sel_page] : nil;
 	size_t i, j;
 	Client *old = sel_client();
 	
 	/* setup indexes */
 	if(c->page != p)
 		focus_page(c->page);
-	p->is_managed = c->managed;
-	if(p->is_managed) {
-		for(i = 0; (i < p->managedsz) && p->managed[i]; i++) {
-			Column *col = p->managed[i];
-			for(j = 0; (j < col->clientssz) && col->clients[j] && (c != col->clients[j]); j++);
-			if((j < col->clientssz) && col->clients[j]) {
-				p->sel_managed = i;
+	p->is_column = c->column != nil;
+	if(p->is_column) {
+		for(i = 0; (i < p->columnsz) && p->column[i]; i++) {
+			Column *col = p->column[i];
+			for(j = 0; (j < col->clientsz) && col->client[j] && (c != col->client[j]); j++);
+			if((j < col->clientsz) && col->client[j]) {
+				p->sel_column = i;
 				col->sel = j;
-				p->file[P_SEL_MANAGED_CLIENT]->content = c->file[P_PREFIX]->content;
+				p->file[P_SEL_COLUMN_CLIENT]->content = c->file[P_PREFIX]->content;
 				break;
 			}
 		}
@@ -414,21 +414,20 @@ void
 attach_client(Client *c)
 {
 	Page *p;
-    if(!pages)
+    if(!page)
 		alloc_page();
-	p = pages[sel_page];
+	p = page[sel_page];
 
     /* XXX: do we need */ resize_client(c, &c->rect, 0);
     reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
 	c->page = p;
-	c->managed = p->is_managed;
 
-	if(c->managed)
+	if(p->is_column)
 		attach_column(c);
-	else {
+	else
 		attach_client_to_array(c, p->floating, &p->floatingsz);
-    	map_client(c);
-	}
+    map_client(c);
+	focus_client(c);
 
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 }
@@ -436,7 +435,7 @@ attach_client(Client *c)
 void
 detach_client(Client *c, Bool unmap)
 {
-	if(c->managed)
+	if(c->column)
 		detach_column(c);
 	else {
 		detach_client_from_array(c, c->page->floating);
@@ -453,17 +452,17 @@ detach_client(Client *c, Bool unmap)
 	c->page = nil;
     if(c->destroyed)
         destroy_client(c);
-    focus_page(pages[sel_page]);
+    focus_page(page[sel_page]);
 }
 
 Client *
 sel_client()
 {
-	Page *p = pages ? pages[sel_page] : nil;
+	Page *p = page ? page[sel_page] : nil;
 	if(p) {
-		if(p->is_managed) {
-			Column *col = p->managed[p->sel_managed];
-			return (col && col->clients) ? col->clients[col->sel] : nil;
+		if(p->is_column) {
+			Column *col = p->column[p->sel_column];
+			return (col && col->client) ? col->client[col->sel] : nil;
 		}
 		else
 			return p->floating ? p->floating[p->sel_float] : nil;
@@ -476,9 +475,9 @@ win_to_frame(Window w)
 {
 	size_t i;
 
-	for(i = 0; clients && clients[i]; i++)
-		if(clients[i]->frame.win == w)
-			return clients[i];
+	for(i = 0; client && client[i]; i++)
+		if(client[i]->frame.win == w)
+			return client[i];
 	return nil;
 }
 
@@ -544,7 +543,7 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
     unsigned int tabh = tab_height(c);
     unsigned int bw = border_width(c);
 
-	if(c->managed)
+	if(c->column)
 		resize_column(c, r, pt);
 
     /* resize if client requests special size */
@@ -571,8 +570,8 @@ handle_before_read_client(IXPServer * s, File *file)
 	size_t i;
 	char buf[32];
 
-	for(i = 0; (i < clientssz) && clients[i]; i++) {
-		Client *c = clients[i];
+	for(i = 0; (i < clientsz) && client[i]; i++) {
+		Client *c = client[i];
         if(file == c->file[C_GEOMETRY]) {
             snprintf(buf, sizeof(buf), "%d %d %d %d", c->frame.rect.x, c->frame.rect.y,
                      c->frame.rect.width, c->frame.rect.height);
@@ -597,8 +596,8 @@ handle_after_write_client(IXPServer *s, File *file)
 {
 	size_t i;
 
-	for(i = 0; (i < clientssz) && clients[i]; i++) {
-		Client *c = clients[i];
+	for(i = 0; (i < clientsz) && client[i]; i++) {
+		Client *c = client[i];
         if(file == c->file[C_TAB] || file == c->file[C_BORDER]
            || file == c->file[C_HANDLE_INC])
 		{

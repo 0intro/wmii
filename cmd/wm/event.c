@@ -215,7 +215,7 @@ handle_maprequest(XEvent * e)
 		detach_page_from_array(aqueue[0], aqueue);
 	}
 
-    /* there're clients which send map requests twice */
+    /* there're client which send map requests twice */
     c = win_to_client(ev->window);
     if(!c)
         c = alloc_client(ev->window, &wa);
@@ -269,7 +269,7 @@ static void handle_clientmessage(XEvent *e)
     if (ev->message_type == net_atoms[NET_NUMBER_OF_DESKTOPS] && ev->format == 32)
         return; /* ignore */
     else if (ev->message_type == net_atoms[NET_CURRENT_DESKTOP] && ev->format == 32) {
-		focus_page(pages[ev->data.l[0]]);
+		focus_page(page[ev->data.l[0]]);
         return;
     }
 }
