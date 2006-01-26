@@ -52,11 +52,11 @@ fn items {
     } | sort | wmiir -f &
 }
 
-fn framesconf {
-    for(frame in `{wmiir read $1 | grep '^[0-9]'}) {
-        wmiir write $1/$frame/tab $TAB
-        wmiir write $1/$frame/handleinc $HANDLEINC
-        wmiir write $1/$frame/geometry '+0 +0 +0 +0'  # causes refresh
+fn clientsconf {
+    for(client in `{wmiir read $1 | grep '^[0-9]'}) {
+        wmiir write $1/$client/tab $TAB
+        wmiir write $1/$client/handleinc $HANDLEINC
+        wmiir write $1/$client/geometry '+0 +0 +0 +0'  # causes refresh
     }
 }
 
@@ -88,9 +88,6 @@ wmiir write /bar/bordercolor $NORM_BORDER_COLOR
 plab=`{wmiir read /bar/new}
 wmiir write /bar/$plab/b1press 'wmiir write /wm/ctl pager'
 
-llab=`{wmiir read /bar/new}
-wmiir write /bar/$llab/b1press 'wmiir write /wm/ctl pager'
-
 klab=`{wmiir read /bar/new}
 
 clab=`{wmiir read /bar/new}
@@ -116,13 +113,10 @@ wmiir write /wm/event/clientupdate \
 'wmiir write /bar/'^$clab^'/data $"s'
 wmiir write /wm/event/pageupdate \
 's=`{wmiir read /wm/sel/name} wmiir write /bar/'$plab'/data $"s && ' ^\
-'s=`{wmiir read /keys/lookup | sed s,/mode/,,} wmiir write /bar/'$klab'/data $"s && ' ^\
-'s=`{wmiir read /wm/sel/layoutname} wmiir write /bar/'$llab'/data $"s'
+'s=`{wmiir read /keys/lookup | sed s,/mode/,,} wmiir write /bar/'$klab'/data $"s'
 
-for(page in `{wmiir read /wm | grep '^[0-9]'}) {
-    framesconf /wm/$page/layout/float/frame
-    framesconf /wm/$page/layout/managed/frame
-}
+for(page in `{wmiir read /wm | grep '^[0-9]'})
+    clientsconf /wm/$page/client
 
 wmiir write /wm/default/sstyle/fgcolor $SEL_FG_COLOR
 wmiir write /wm/default/sstyle/bgcolor $SEL_BG_COLOR
@@ -139,21 +133,21 @@ kbind bare $MODKEY-Escape 'kmode normal'
 
 kbind move Escape 'kmode normal'
 kbind move $MODKEY-C-r 'kmode resize'
-kbind move $NORTHKEY   'wmiir write /wm/sel/sel/sel/geometry ''-0 -30 -0 -0'''
-kbind move $SOUTHKEY   'wmiir write /wm/sel/sel/sel/geometry ''+0 +30 +0 +0'''
-kbind move $WESTKEY    'wmiir write /wm/sel/sel/sel/geometry ''-40 -0 -0 -0'''
-kbind move $EASTKEY    'wmiir write /wm/sel/sel/sel/geometry ''+40 +0 +0 +0'''
-kbind move S-$NORTHKEY 'wmiir write /wm/sel/sel/sel/geometry ''-0 north -0 -0'''
-kbind move S-$SOUTHKEY 'wmiir write /wm/sel/sel/sel/geometry ''+0 south +0 +0'''
-kbind move S-$WESTKEY  'wmiir write /wm/sel/sel/sel/geometry ''west -0 -0 -0'''
-kbind move S-$EASTKEY  'wmiir write /wm/sel/sel/sel/geometry ''east +0 +0 +0'''
+kbind move $NORTHKEY   'wmiir write /wm/sel/client/sel/geometry ''-0 -30 -0 -0'''
+kbind move $SOUTHKEY   'wmiir write /wm/sel/client/sel/geometry ''+0 +30 +0 +0'''
+kbind move $WESTKEY    'wmiir write /wm/sel/client/sel/geometry ''-40 -0 -0 -0'''
+kbind move $EASTKEY    'wmiir write /wm/sel/client/sel/geometry ''+40 +0 +0 +0'''
+kbind move S-$NORTHKEY 'wmiir write /wm/sel/client/sel/geometry ''-0 north -0 -0'''
+kbind move S-$SOUTHKEY 'wmiir write /wm/sel/client/sel/geometry ''+0 south +0 +0'''
+kbind move S-$WESTKEY  'wmiir write /wm/sel/client/sel/geometry ''west -0 -0 -0'''
+kbind move S-$EASTKEY  'wmiir write /wm/sel/client/sel/geometry ''east +0 +0 +0'''
 
 kbind resize Escape 'kmode normal'
 kbind resize $MODKEY-C-m 'kmode move'
-kbind resize $NORTHKEY 'wmiir write /wm/sel/sel/sel/geometry ''+0 +0 +0 -30'''
-kbind resize $SOUTHKEY 'wmiir write /wm/sel/sel/sel/geometry ''+0 +0 +0 +30'''
-kbind resize $WESTKEY  'wmiir write /wm/sel/sel/sel/geometry ''+0 +0 -40 +0'''
-kbind resize $EASTKEY  'wmiir write /wm/sel/sel/sel/geometry ''+0 +0 +40 +0'''
+kbind resize $NORTHKEY 'wmiir write /wm/sel/client/sel/geometry ''+0 +0 +0 -30'''
+kbind resize $SOUTHKEY 'wmiir write /wm/sel/client/sel/geometry ''+0 +0 +0 +30'''
+kbind resize $WESTKEY  'wmiir write /wm/sel/client/sel/geometry ''+0 +0 -40 +0'''
+kbind resize $EASTKEY  'wmiir write /wm/sel/client/sel/geometry ''+0 +0 +40 +0'''
 
 kbind normal $MODKEY-C-b 'kmode bare'
 kbind normal $MODKEY-C-m 'kmode move'
@@ -167,8 +161,8 @@ kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr
 kbind normal $MODKEY-d 'wmiir write /wm/ctl detach'
 kbind normal $MODKEY-a 'wmiir write /wm/ctl attach'
 kbind normal $MODKEY-S-a 'wmiir write /wm/ctl detclients'
-kbind normal $MODKEY-n 'wmiir write /wm/sel/ctl new'
-kbind normal $MODKEY-m 'wmiir write /wm/sel/sel/sel/ctl max'
+kbind normal $MODKEY-n 'wmiir write /wm/sel/ctl newcol'
+kbind normal $MODKEY-m 'wmiir write /wm/sel/client/sel/ctl max'
 kbind normal $MODKEY-Return 'wmiir write /wm/sel/ctl ''swap west'''
 kbind normal $MODKEY-S-Return 'wmiir write /wm/sel/ctl ''swap east'''
 kbind normal $MODKEY-C-y 'wmiir write /wm/ctl new'
@@ -189,7 +183,6 @@ wmiir write /keys/box/font $FONT
 selstyle /keys/box
 kmode normal
 
-
 # WMIIMENU CONFIGURATION
 wmiir write /menu/geometry $BAR_ALIGN
 items actions $WMII_CONFDIR:$HOME/.wmii-3
@@ -198,7 +191,6 @@ items programs $OLD_PATH
 wmiir write /menu/font $FONT
 normstyle /menu/nstyle >[2]/dev/null
 selstyle /menu/sstyle >[2]/dev/null
-
 
 # MISC
 xsetroot -solid black

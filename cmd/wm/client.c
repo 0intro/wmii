@@ -21,7 +21,7 @@ Action client_acttbl[] = {
     {0, 0}
 };
 
-void
+Client **
 attach_client_to_array(Client *c, Client **array, size_t *size)
 {
 	size_t i;
@@ -39,6 +39,7 @@ attach_client_to_array(Client *c, Client **array, size_t *size)
 		free(tmp);
 	}
 	array[i] = c;
+	return array;
 }
 
 void
@@ -113,6 +114,7 @@ alloc_client(Window w, XWindowAttributes *wa)
 
     bw = border_width(c);
     th = tab_height(c);
+	c->frame.rect = c->rect;
     c->frame.rect.width += 2 * bw;
     c->frame.rect.height += bw + (th ? th : bw);
     c->frame.win = XCreateWindow(dpy, root, c->frame.rect.x, c->frame.rect.y,
@@ -124,7 +126,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     c->frame.gc = XCreateGC(dpy, c->frame.win, 0, 0);
     XSync(dpy, False);
 
-	attach_client_to_array(c, client, &clientsz);
+	client = attach_client_to_array(c, client, &clientsz);
 
     return c;
 }
@@ -148,9 +150,12 @@ focus_client(Client *c)
 	Client *old = sel_client();
 	
 	/* setup indexes */
-	if(c->page != p)
+	if(c->page != p) {
 		focus_page(c->page);
+		p = c->page;
+	}
 	p->is_column = c->column != nil;
+	p->file[P_SEL_PREFIX]->content = c->file[P_PREFIX]->content;
 	if(p->is_column) {
 		for(i = 0; (i < p->columnsz) && p->column[i]; i++) {
 			Column *col = p->column[i];
@@ -158,17 +163,14 @@ focus_client(Client *c)
 			if((j < col->clientsz) && col->client[j]) {
 				p->sel_column = i;
 				col->sel = j;
-				p->file[P_SEL_COLUMN_CLIENT]->content = c->file[P_PREFIX]->content;
 				break;
 			}
 		}
 	}
 	else {
 		for(i = 0; (i < p->floatingsz) && p->floating[i] && (p->floating[i] != c); i++);
-		if((i < p->floatingsz) && p->floating[i]) {
-			p->file[P_SEL_FLOATING_CLIENT]->content = c->file[P_PREFIX]->content;
+		if((i < p->floatingsz) && p->floating[i])
 			p->sel_float = i;
-		}
 	}
 	
 	if(old && (old != c)) {
@@ -426,22 +428,20 @@ attach_client(Client *c)
 {
 	Page *p;
     if(!page)
-		alloc_page();
-	p = page[sel_page];
+		p = alloc_page();
+	else
+		p = page[sel_page];
 
-    /* XXX: do we need */ resize_client(c, &c->rect, 0);
     reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
 	c->page = p;
+	wmii_move_ixpfile(c->file[C_PREFIX], p->file[P_CLIENT_PREFIX]);
 
-	if(p->is_column) {
-		wmii_move_ixpfile(c->file[C_PREFIX], p->file[P_COLUMN_PREFIX]);
+	if(p->is_column)
 		attach_column(c);
-	}
-	else {
-		wmii_move_ixpfile(c->file[C_PREFIX], p->file[P_FLOATING_PREFIX]);
-		attach_client_to_array(c, p->floating, &p->floatingsz);
-	}
+	else
+		p->floating = attach_client_to_array(c, p->floating, &p->floatingsz);
     map_client(c);
+	XMapWindow(dpy, c->frame.win);
 	focus_client(c);
 
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
@@ -457,7 +457,7 @@ detach_client(Client *c, Bool unmap)
 		detach_client_from_array(c, c->page->floating);
     	if(!c->destroyed) {
         	if(!unmap) {
-            	attach_client_to_array(c, detached, &detachedsz);
+            	detached = attach_client_to_array(c, detached, &detachedsz);
             	unmap_client(c);
         	}
         	c->rect.x = c->frame.rect.x;
@@ -495,8 +495,7 @@ Client *
 win_to_frame(Window w)
 {
 	size_t i;
-
-	for(i = 0; client && client[i]; i++)
+	for(i = 0; (i < clientsz) && client[i]; i++)
 		if(client[i]->frame.win == w)
 			return client[i];
 	return nil;

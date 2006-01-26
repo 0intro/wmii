@@ -61,7 +61,7 @@ handle_buttonpress(XEvent * e)
     Align align;
     int bindex;
 
-    if((c == win_to_frame(ev->window))) {
+    if((c = win_to_frame(ev->window))) {
 		focus_client(c);
 		if(ev->button == Button1) {
 			align = cursor_to_align(c->frame.cursor);

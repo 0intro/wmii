@@ -458,7 +458,7 @@ win_to_client(Window w)
 {
 	size_t i;
 
-	for(i = 0; client && client[i]; i++)
+	for(i = 0; (i < clientsz) && client[i]; i++)
 		if(client[i]->win == w)
 			return client[i];
 	return nil;

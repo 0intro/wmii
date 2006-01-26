@@ -28,7 +28,7 @@ Action page_acttbl[] = {
     {0, 0}
 };
 
-void
+Page **
 attach_page_to_array(Page *p, Page **array, size_t *size)
 {
 	size_t i;
@@ -46,6 +46,7 @@ attach_page_to_array(Page *p, Page **array, size_t *size)
 		free(tmp);
 	}
 	array[i] = p;
+	return array;
 }
 
 void
@@ -61,42 +62,35 @@ detach_page_from_array(Page *p, Page **array)
 Page *
 alloc_page()
 {
-    Page *p, *new = cext_emallocz(sizeof(Page));
+    Page *p = cext_emallocz(sizeof(Page));
     char buf[MAX_BUF], buf2[16];
 	static int id = 1;
 	size_t np;
 
     snprintf(buf2, sizeof(buf2), "%d", id);
     snprintf(buf, sizeof(buf), "/%d", id);
-    new->file[P_PREFIX] = ixp_create(ixps, buf);
+    p->file[P_PREFIX] = ixp_create(ixps, buf);
     snprintf(buf, sizeof(buf), "/%d/name", id);
-    new->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
-    snprintf(buf, sizeof(buf), "/%d/floating/", id);
-    new->file[P_FLOATING_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, sizeof(buf), "/%d/column/", id);
-    new->file[P_COLUMN_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, sizeof(buf), "/%d/sel/", id);
-    new->file[P_SEL_PREFIX] = ixp_create(ixps, buf);
-    new->file[P_SEL_PREFIX]->bind = 1;    /* mount point */
-    snprintf(buf, sizeof(buf), "/%d/floating/sel", id);
-    new->file[P_SEL_FLOATING_CLIENT] = ixp_create(ixps, buf);
-    new->file[P_SEL_FLOATING_CLIENT]->bind = 1; 
-    snprintf(buf, sizeof(buf), "/%d/column/sel", id);
-    new->file[P_SEL_COLUMN_CLIENT] = ixp_create(ixps, buf);
-    new->file[P_SEL_COLUMN_CLIENT]->bind = 1; 
+    p->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
+    snprintf(buf, sizeof(buf), "/%d/client", id);
+    p->file[P_CLIENT_PREFIX] = ixp_create(ixps, buf);
+    snprintf(buf, sizeof(buf), "/%d/client/sel", id);
+    p->file[P_SEL_PREFIX] = ixp_create(ixps, buf);
+    p->file[P_SEL_PREFIX]->bind = 1;    /* mount point */
     snprintf(buf, sizeof(buf), "/%d/ctl", id);
-    new->file[P_CTL] = ixp_create(ixps, buf);
-    new->file[P_CTL]->after_write = handle_after_write_page;
-    def[WM_SEL_PAGE]->content = new->file[P_PREFIX]->content;
+    p->file[P_CTL] = ixp_create(ixps, buf);
+    p->file[P_CTL]->after_write = handle_after_write_page;
+    def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	id++;
 	p->rect_column = rect;
-	attach_page_to_array(p, page, &pagesz);
+	page = attach_page_to_array(p, page, &pagesz);
 	for(np = 0; (np < pagesz) && page[np]; np++);
-	focus_page(new);
+	focus_page(p);
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &np, 1);
-    return new;
+	p->is_column = True;
+    return p;
 }
 
 void
@@ -140,31 +134,25 @@ destroy_page(Page *p)
 void
 focus_page(Page *p)
 {
-	unsigned int i, j;
+	size_t i;
 	Page *old = page ? page[sel_page] : nil;
 
 	if(!page)
 		return;
 
-	for(i = 0; (i < pagesz) && page[i]; i++);
-
+	for(i = 0; (i < pagesz) && page[i] && (page[i] != p); i++);
 	if(i == sel_page)
 		return;
 
 	sel_page = i;
-	for(j = 0; (j < clientsz) && client[j]; j++) {
-		if(client[j]->page == old)
-			XMoveWindow(dpy, client[j]->frame.win, 2 * rect.width, 2 * rect.height);
-		else if(client[j]->page == p)
-			XMoveWindow(dpy, client[j]->frame.win,
-						client[j]->frame.rect.x, client[j]->frame.rect.y);
+	for(i = 0; (i < clientsz) && client[i]; i++) {
+		Client *c = client[i];
+		if(old && (c->page == old))
+			XMoveWindow(dpy, c->frame.win, 2 * rect.width, 2 * rect.height);
+		else if(c->page == p)
+			XMoveWindow(dpy, c->frame.win, c->frame.rect.x, c->frame.rect.y);
 	}
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
-	if(p->is_column)
-		p->file[P_SEL_PREFIX]->content = p->file[P_COLUMN_PREFIX]->content;
-	else
-		p->file[P_SEL_PREFIX]->content = p->file[P_FLOATING_PREFIX]->content;
-
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &sel_page, 1);
@@ -217,7 +205,7 @@ handle_after_write_page(IXPServer *s, File *file)
 static void
 xexec(void *obj, char *arg)
 {
-	attach_page_to_array(obj, aqueue, &aqueuesz);
+	aqueue = attach_page_to_array(obj, aqueue, &aqueuesz);
     wmii_spawn(dpy, arg);
 }
 
