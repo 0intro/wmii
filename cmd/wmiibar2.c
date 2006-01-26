@@ -168,27 +168,35 @@ fid_to_map(Map * maps, unsigned int fid)
     return nil;
 }
 
-static Bool
-qfile_index(char *name, unsigned short *index)
+static char *
+qfile_name(unsigned char type)
+{
+	size_t i;
+	for(i = 0; qfilelist[i].name; i++)
+		if(qfilelist[i].type == type)
+			return qfilelist[i].name;
+	return nil;
+}
+
+static int
+qfile_index(char *name)
 {
     int i;
     for(i = 0; qfilelist[i].name; i++)
-        if(!strncmp(name, qfilelist[i].name, strlen(qfilelist[i].name))) {
-            *index = i;
-            return True;
-        }
-    return False;
+        if(!strncmp(name, qfilelist[i].name, strlen(qfilelist[i].name)))
+            return i;
+    return -1;
 }
 
 static Bool
-mkqid(Qid * dir, char *wname, Qid * new)
+mkqid(Qid *dir, char *wname, Qid *new)
 {
-    unsigned short idx;
+	int i;
     const char *errstr;
     if(dir->type != IXP_QTDIR)
         return False;
     new->version = nil;
-    if(!qfile_index(wname, &idx)) {
+    if((i = qfile_index(wname)) == -1) {
         new->type = IXP_QTDIR;
         if(!strncmp(wname, "..", 3)) {
             *new = root_qid;
@@ -198,15 +206,15 @@ mkqid(Qid * dir, char *wname, Qid * new)
             return True;
         }
         /* check if wname is a number, otherwise file not found */
-        idx = (unsigned short) cext_strtonum(wname, 1, 0xffff, &errstr);
-        if(errstr || nitems < idx)
+        i = (unsigned short) cext_strtonum(wname, 1, 0xffff, &errstr);
+        if(errstr || nitems < i)
             return False;
         /* found */
-        new->path = mkqpath(Ditem, idx, NONE);
+        new->path = mkqpath(Ditem, i, NONE);
     } else {
         new->type = IXP_QTFILE;
         new->path =
-            mkqpath(qfilelist[idx].type, qpath_item(dir->path), idx);
+            mkqpath(qfilelist[i].type, qpath_item(dir->path), i);
     }
     return True;
 }
@@ -391,37 +399,32 @@ xstat(IXPServer * s, IXPConn * c)
     }
 
     s->fcall.id = RSTAT;
-	s->fcall.stat.mode = 0xfff | DMDIR;
-    s->fcall.stat.atime = s->fcall.stat.mtime = time(0);
-
-	/*fprintf(stderr, "atime=%ld\n", s->fcall.stat.atime);*/
-    cext_strlcpy(s->fcall.stat.uid, getenv("USER"), sizeof(s->fcall.stat.uid));
-    cext_strlcpy(s->fcall.stat.gid, getenv("USER"), sizeof(s->fcall.stat.gid));
-    cext_strlcpy(s->fcall.stat.muid, getenv("USER"), sizeof(s->fcall.stat.muid));
 
     /*fprintf(stderr, "%d\n", qpath_item(map->qid.path));*/
     switch (qpath_type(map->qid.path)) {
     default:
     case Droot:
-		s->fcall.stat.name[0] = '/';
-		s->fcall.stat.name[1] = 0;
-        s->fcall.stat.length = 0;
-		s->fcall.stat.qid = root_qid;
-    /*fprintf(stderr, "stat: %ld %ld \n", s->fcall.stat.type, s->fcall.stat.dev);*/
-    /*fprintf(stderr, "qid: %ld %ld %lld\n", root_qid.type, root_qid.version, root_qid.path);*/
+		mkstat(&s->fcall.stat, "/", 0, DMDIR);
         break;
     case Ditem:
+		{
+			unsigned short item = qpath_item(map->qid.path);
+			char buf[16];
+			if(!item)
+				mkstat(&s->fcall.stat, "default", 0, DMDIR);
+			else {
+				snprintf(buf, sizeof(buf), "%u", item);
+				mkstat(&s->fcall.stat, buf, 0, DMDIR);
+			}
+		}
         break;
-    case Fdisplay:
-        break;
+	case Fdisplay:
+		mkstat(&s->fcall.stat, qfile_name(qpath_type(map->qid.path)), 
+				strlen(display)
     case Fnew:
-        break;
     case Fdata:
-        break;
     case Fevent:
-        break;
     case Fcolor:
-        break;
     case Ffont:
         break;
     }
