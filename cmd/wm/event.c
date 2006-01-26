@@ -63,7 +63,7 @@ handle_buttonpress(XEvent * e)
 
     if((c == win_to_frame(ev->window))) {
 		focus_client(c);
-		if(e->button == Button1) {
+		if(ev->button == Button1) {
 			align = cursor_to_align(c->frame.cursor);
 			if(align == CENTER)
 				mouse_move(c);
@@ -71,31 +71,27 @@ handle_buttonpress(XEvent * e)
 				mouse_resize(c, align);
 			return;
 		}
-		bindex = WM_EVENT_B2PRESS - 2 + e->button;
+		bindex = WM_EVENT_B2PRESS - 2 + ev->button;
 		/* frame mouse handling */
 		if(def[bindex]->content)
 			wmii_spawn(dpy, def[bindex]->content);
 	}
 	else if((c = win_to_client(ev->window))) {
-		Layout *l = sel_layout();
-		if(l != c->frame->layout)
-			focus_layout(c->frame->layout);
-		l = c->frame->layout;
-		l->def->focus(l, c, False);
+		focus_client(c);
 		ev->state &= valid_mask;
 		if(ev->state & Mod1Mask) {
 			Align align;
-			XRaiseWindow(dpy, c->frame->win);
+			XRaiseWindow(dpy, c->frame.win);
 			switch (ev->button) {
 				case Button1:
-					mouse_move(c->frame);
+					mouse_move(c);
 					break;
 				case Button3:
 					align = xy_to_align(&c->rect, ev->x, ev->y);
 					if(align == CENTER)
-						mouse_move(c->frame);
+						mouse_move(c);
 					else
-						mouse_resize(c->frame, align);
+						mouse_resize(c, align);
 					break;
 				default:
 					break;
@@ -111,18 +107,14 @@ handle_configurerequest(XEvent * e)
     XWindowChanges wc;
     Client *c;
     unsigned int bw = 0, tabh = 0;
-    Frame *f = 0;
-
 
     c = win_to_client(ev->window);
     ev->value_mask &= ~CWSibling;
 
     if(c) {
-        f = c->frame;
-
-        if(f) {
-            bw = border_width(f);
-            tabh = tab_height(f);
+        if(c->attached) {
+            bw = border_width(c);
+            tabh = tab_height(c);
         }
         if(ev->value_mask & CWStackMode) {
             if(wc.stack_mode == Above)
@@ -145,23 +137,22 @@ handle_configurerequest(XEvent * e)
 
         gravitate(c, tabh ? tabh : bw, bw, 0);
 
-        if(f) {
-            f->rect.x = wc.x = c->rect.x - bw;
-            f->rect.y = wc.y = c->rect.y - (tabh ? tabh : bw);
-            f->rect.width = wc.width = c->rect.width + 2 * bw;
-            f->rect.height = wc.height =
-                c->rect.height + bw + (tabh ? tabh : bw);
+        if(c->attached) {
+            c->frame.rect.x = wc.x = c->rect.x - bw;
+            c->frame.rect.y = wc.y = c->rect.y - (tabh ? tabh : bw);
+            c->frame.rect.width = wc.width = c->rect.width + 2 * bw;
+            c->frame.rect.height = wc.height = c->rect.height + bw + (tabh ? tabh : bw);
             wc.border_width = 1;
             wc.sibling = None;
             wc.stack_mode = ev->detail;
-            XConfigureWindow(dpy, f->win, ev->value_mask, &wc);
+            XConfigureWindow(dpy, c->frame.win, ev->value_mask, &wc);
             configure_client(c);
         }
     }
     wc.x = ev->x;
     wc.y = ev->y;
 
-    if(f) {
+    if(c && c->attached) {
         /* if so, then bw and tabh are already initialized */
         wc.x = bw;
         wc.y = tabh ? tabh : bw;
@@ -177,8 +168,7 @@ handle_configurerequest(XEvent * e)
     wc.stack_mode = Above;
     ev->value_mask &= ~CWStackMode;
     ev->value_mask |= CWBorderWidth;
-    XConfigureWindow(dpy, e->xconfigurerequest.window, ev->value_mask,
-                     &wc);
+    XConfigureWindow(dpy, e->xconfigurerequest.window, ev->value_mask, &wc);
     XSync(dpy, False);
 
 }
@@ -197,11 +187,10 @@ handle_destroynotify(XEvent * e)
 static void
 handle_expose(XEvent * e)
 {
-    static Frame *f;
+    static Client *c;
     if(e->xexpose.count == 0) {
-        f = win_to_frame(e->xbutton.window);
-        if(f)
-            draw_frame(f);
+        if((c = win_to_frame(e->xbutton.window)))
+            draw_client(c);
     }
 }
 
@@ -221,33 +210,28 @@ handle_maprequest(XEvent * e)
     }
 
 	/* attach heuristic support */
-	if(attachqueue && (attachqueue->page != selpage)) {
-		MapQueue *r = attachqueue;
-		focus_page(r->page);
-		attachqueue = attachqueue->next;
-		free(r);
+	if(aqueuesz && aqueue[0]) {
+		focus_page(0);
+		detach_page_from_array(aqueue[0], aqueue);
 	}
 
-    /* there're client which send map requests twice */
+    /* there're clients which send map requests twice */
     c = win_to_client(ev->window);
     if(!c)
-        c = alloc_client(ev->window);
-    if(!c->frame) {
-        init_client(c, &wa);
+        c = alloc_client(ev->window, &wa);
+    if(!c->attached)
         attach_client(c);
-    }
 }
 
 static void
 handle_motionnotify(XEvent * e)
 {
-    Frame *f = win_to_frame(e->xmotion.window);
-    Cursor cursor;
-    if(f) {
-        cursor = cursor_for_motion(f, e->xmotion.x, e->xmotion.y);
-        if(cursor != f->cursor) {
-            f->cursor = cursor;
-            XDefineCursor(dpy, f->win, cursor);
+    Client *c = win_to_frame(e->xmotion.window);
+    if(c) {
+    	Cursor cursor = cursor_for_motion(c, e->xmotion.x, e->xmotion.y);
+        if(cursor != c->frame.cursor) {
+            c->frame.cursor = cursor;
+            XDefineCursor(dpy, c->frame.win, cursor);
         }
     }
 }
@@ -285,7 +269,7 @@ static void handle_clientmessage(XEvent *e)
     if (ev->message_type == net_atoms[NET_NUMBER_OF_DESKTOPS] && ev->format == 32)
         return; /* ignore */
     else if (ev->message_type == net_atoms[NET_CURRENT_DESKTOP] && ev->format == 32) {
-		focus_page(pageat(ev->data.l[0]));
+		focus_page(pages[ev->data.l[0]]);
         return;
     }
 }

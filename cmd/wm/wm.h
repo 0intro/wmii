@@ -106,7 +106,7 @@ struct Client {
     unsigned int ignore_unmap;
     Bool destroyed;
 	Bool maximized;
-	Bool framed;
+	Bool attached;
 	Bool managed;
     Window win;
     Window trans;
@@ -200,17 +200,19 @@ void init_event_hander();
 void check_event(Connection * c);
 
 /* mouse.c */
-void mouse_resize(Client * f, Align align);
-void mouse_move(Client * f);
-Cursor cursor_for_motion(Client * f, int x, int y);
+void mouse_resize(Client *c, Align align);
+void mouse_move(Client *c);
+Cursor cursor_for_motion(Client *c, int x, int y);
 Align cursor_to_align(Cursor cursor);
 Align xy_to_align(XRectangle * rect, int x, int y);
-void drop_move(Client * f, XRectangle * new, XPoint * pt);
+void drop_move(Client *c, XRectangle *new, XPoint *pt);
 
 /* page.c */
-size_t alloc_page();
-void destroy_page(size_t idx);
-void focus_page(size_t idx);
+void attach_page_to_array(Page *p, Page **array, size_t *size);
+void detach_page_from_array(Page *p, Page **array);
+Page *alloc_page();
+void destroy_page(Page *p);
+void focus_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
 
 /* column.c */

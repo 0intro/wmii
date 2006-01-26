@@ -189,7 +189,7 @@ unmap_client(Client * c)
 void
 reparent_client(Client *c, Window w, int x, int y)
 {
-	c->framed = w == c->frame.win;
+	c->attached = w == c->frame.win;
     XReparentWindow(dpy, c->win, w, x, y);
     c->ignore_unmap++;
 }
@@ -226,7 +226,7 @@ configure_client(Client * c)
     e.window = c->win;
     e.x = c->rect.x;
     e.y = c->rect.y;
-	if(c->framed) {
+	if(c->attached) {
     	e.x += c->frame.rect.x;
     	e.y += c->frame.rect.y;
 	}
@@ -268,7 +268,7 @@ handle_client_property(Client *c, XPropertyEvent *e)
 			cext_strlcpy(c->name, (char*) name.value, sizeof(c->name));
         	free(name.value);
 		}
-        if(c->framed)
+        if(c->attached)
             draw_client(c);
         invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
         break;
@@ -448,7 +448,7 @@ detach_client(Client *c, Bool unmap)
 	c->page = nil;
     if(c->destroyed)
         destroy_client(c);
-    focus_page(sel_page);
+    focus_page(pages[sel_page]);
 }
 
 Client *

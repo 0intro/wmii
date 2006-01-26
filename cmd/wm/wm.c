@@ -281,7 +281,7 @@ pager(void *obj, char *arg)
             XUnmapWindow(dpy, transient);
             if((i = handle_kpress(&ev.xkey)) != -1)
                 if(i < j)
-					focus_page(i);
+					focus_page(pages[i]);
             XUngrabKeyboard(dpy, CurrentTime);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
             return;
@@ -289,7 +289,7 @@ pager(void *obj, char *arg)
         case ButtonPress:
             XUnmapWindow(dpy, transient);
             if(ev.xbutton.button == Button1)
-                focus_page(xy_to_pager_page(ev.xbutton.x, ev.xbutton.y));
+                focus_page(pages[xy_to_pager_page(ev.xbutton.x, ev.xbutton.y)]);
             XUngrabKeyboard(dpy, CurrentTime);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
             return;
@@ -419,32 +419,32 @@ xdetach_client(void *obj, char *arg)
 static void
 xselect_page(void *obj, char *arg)
 {
-	size_t np;
+	size_t np, new = sel_page;
 
 	for(np = 0; (np < pagessz) && pages[np]; np++);
     if(!np || !arg)
         return;
     if(!strncmp(arg, "prev", 5)) {
-		if(sel_page > 0)
-			for(sel_page = 0; pages[sel_page]; sel_page++);
-		sel_page--;
+		if(new > 0)
+			for(new = 0; pages[new]; new++);
+		new--;
     } else if(!strncmp(arg, "next", 5)) {
-		if(pages[sel_page + 1])
-			sel_page++;
+		if(pages[new + 1])
+			new++;
 		else
-			sel_page = 0;
+			new = 0;
     } else {
 		int idx = blitz_strtonum(arg, 0, np);
 		if(idx < np)
-			sel_page = idx;
+			new = idx;
 	}
-    focus_page(sel_page);
+    focus_page(pages[new]);
 }
 
 static void
 xdestroy_page(void *obj, char *arg)
 {
-    destroy_page(sel_page);
+    destroy_page(pages[sel_page]);
 }
 
 static void

@@ -8,27 +8,27 @@
 #include "wm.h"
 
 Cursor
-cursor_for_motion(Frame * f, int x, int y)
+cursor_for_motion(Client *c, int x, int y)
 {
     int n, e, w, s, tn, te, tw, ts;
     int tabh, bw;
 
-    bw = border_width(f);
-    tabh = tab_height(f);
+    bw = border_width(c);
+    tabh = tab_height(c);
 
-    if(!f || !bw)
+    if(!bw)
         return normal_cursor;
 
     /* rectangle attributes of client are used */
     w = x < bw;
-    e = x >= f->rect.width - bw;
+    e = x >= c->frame.rect.width - bw;
     n = y < bw;
-    s = y >= f->rect.height - bw;
+    s = y >= c->frame.rect.height - bw;
 
     tw = x < (tabh ? tabh : 2 * bw);
-    te = x > f->rect.width - (tabh ? tabh : 2 * bw);
+    te = x > c->frame.rect.width - (tabh ? tabh : 2 * bw);
     tn = y < (tabh ? tabh : 2 * bw);
-    ts = s > f->rect.height - (tabh ? tabh : 2 * bw);
+    ts = s > c->frame.rect.height - (tabh ? tabh : 2 * bw);
 
     if((w && n) || (w && tn) || (n && tw))
         return nw_cursor;
@@ -296,7 +296,7 @@ draw_pseudo_border(XRectangle * r)
 
 
 void
-mouse_move(Frame * f)
+mouse_move(Client *c)
 {
     int px = 0, py = 0, wex, wey, ex, ey, first = 1, i;
     Window dummy;
@@ -311,11 +311,11 @@ mouse_move(Frame * f)
     unsigned int num;
     unsigned int dmask;
     XRectangle *rects = rectangles(&num);
-    XRectangle frect = f->rect;
+    XRectangle frect = c->frame.rect;
     XPoint pt;
 
-    XQueryPointer(dpy, f->win, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
-    XTranslateCoordinates(dpy, f->win, root, wex, wey, &ex, &ey, &dummy);
+    XQueryPointer(dpy, c->frame.win, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
+    XTranslateCoordinates(dpy, c->frame.win, root, wex, wey, &ex, &ey, &dummy);
     pt.x = ex;
     pt.y = ey;
     XSync(dpy, False);
@@ -337,7 +337,7 @@ mouse_move(Frame * f)
         case ButtonRelease:
             if(!first) {
                 draw_pseudo_border(&frect);
-                resize_frame(f, &frect, &pt);
+                resize_client(c, &frect, &pt);
             }
             free(rects);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
@@ -348,7 +348,7 @@ mouse_move(Frame * f)
         case MotionNotify:
             pt.x = ev.xmotion.x;
             pt.y = ev.xmotion.y;
-            XTranslateCoordinates(dpy, f->win, root, ev.xmotion.x,
+            XTranslateCoordinates(dpy, c->frame.win, root, ev.xmotion.x,
                                   ev.xmotion.y, &px, &py, &dummy);
             if(first)
                 first = 0;
@@ -545,7 +545,7 @@ snap_resize(XRectangle * r, XRectangle * o, Align align,
 
 
 void
-mouse_resize(Frame * f, Align align)
+mouse_resize(Client *c, Align align)
 {
     int px = 0, py = 0, i, ox, oy, first = 1;
     Window dummy;
@@ -560,14 +560,14 @@ mouse_resize(Frame * f, Align align)
     unsigned int dmask;
     unsigned int num;
     XRectangle *rects = rectangles(&num);
-    XRectangle frect = f->rect;
+    XRectangle frect = c->frame.rect;
     XRectangle origin = frect;
 
-    XQueryPointer(dpy, f->win, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
+    XQueryPointer(dpy, c->frame.win, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
     XSync(dpy, False);
     XGrabServer(dpy);
     while(XGrabPointer
-          (dpy, f->win, False, ButtonMotionMask | ButtonReleaseMask,
+          (dpy, c->frame.win, False, ButtonMotionMask | ButtonReleaseMask,
            GrabModeAsync, GrabModeAsync, None, resize_cursor,
            CurrentTime) != GrabSuccess)
         usleep(20000);
@@ -586,7 +586,7 @@ mouse_resize(Frame * f, Align align)
                 draw_pseudo_border(&frect);
                 pt.x = px;
                 pt.y = py;
-                resize_frame(f, &frect, &pt);
+                resize_client(c, &frect, &pt);
             }
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
             XUngrabServer(dpy);
@@ -594,7 +594,7 @@ mouse_resize(Frame * f, Align align)
             return;
             break;
         case MotionNotify:
-            XTranslateCoordinates(dpy, f->win, root, ev.xmotion.x,
+            XTranslateCoordinates(dpy, c->frame.win, root, ev.xmotion.x,
                                   ev.xmotion.y, &px, &py, &dummy);
 
             if(first)
