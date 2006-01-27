@@ -24,4 +24,4 @@ wmiiwm: ${OBJ}
 	@${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:
-	rm -f wmiiwm *.o layoutdef.*
+	rm -f wmiiwm *.o
