@@ -23,84 +23,59 @@
 /*
  * filesystem specification
  * / 					Droot
- * /display				Fdisplay	'top', 'bottom', 'none'
+ * /display				Fdisplay	'north', 'south', 'none'
  * /font				Ffont		<xlib font name>
  * /new					Fnew 		returns id of new item
  * /event				Fevent
  * /default/ 			Ditem
- * /default/bgcolor		Fcolor		<#RRGGBB, #RGB>
- * /default/fgcolor		Fcolor		<#RRGGBB, #RGB>
- * /default/bordercolor	Fcolor		<#RRGGBB, #RGB>
+ * /default/color		Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /1/					Ditem
  * /1/data 				Fdata		<arbitrary data which gets displayed>
- * /1/bgcolor			Fcolor		<#RRGGBB, #RGB>
- * /1/fgcolor			Fcolor		<#RRGGBB, #RGB>
- * /1/bordercolor		Fcolor		<#RRGGBB, #RGB> ...
+ * /1/color				Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  */
-enum {                          /* 8-bit qid.path.type */
+
+/* 8-bit qid.path.type */
+enum {                          
     Droot,
     Ditem,
     Fdisplay,
+    Ffont,
     Fnew,
-    Fdata,                      /* data to display */
     Fevent,
-    Fcolor,
-    Ffont
-};
-
-#define NONE (unsigned short)0xffff
-
-typedef struct {
-    char *name;
-    unsigned char type;
-} QFile;
-
-static QFile qfilelist[] = {
-    {"display", Fdisplay},
-    {"font", Ffont},
-    {"new", Fnew},
-    {"data", Fdata},
-    {"bgcolor", Fcolor},
-    {"fgcolor", Fcolor},
-    {"bordercolor", Fcolor},
-    {"event", Fevent},
-    {0, 0},
+    Fdata,                      /* data to display */
+    Fcolor
 };
 
 typedef struct Map Map;
 struct Map {
-    unsigned int fid;
-    Qid qid;
-    Map *next;
-};
+	unsigned int fid;
+	Qid qid; 
+	Map *next;
+};  
 
 typedef struct {
-    int id;
-    char text[256];
-    int value;
+    char data[256];
     unsigned long bg;
     unsigned long fg;
-    unsigned long border[4];
-    XFontStruct *font;
-    char event[5][256];
+    unsigned long border;
 } Item;
 
-
 static size_t nitems = 0;
+static Item **items = 0;
 static char *sockfile = nil;
 static pid_t mypid = 0;
 static IXPServer srv = { 0 };
 static Qid root_qid;
 static Display *dpy;
 static int screen_num;
-static char *align = nil;
 static char *font = nil;
 static char *display = nil;
+static Align align = SOUTH;
 /*
+static XFontStruct *xfont;
 static GC gc;
 static Window win;
 static XRectangle geom;
-static int mapped = 0;
 static Pixmap pmap;
 
 static Draw zero_draw = { 0 };
@@ -117,7 +92,7 @@ usage()
     fprintf(stderr, "%s %d",
             "usage: wmiibar -a <server address> [-v]\n"
             "      -a    server address \n"
-            "      -v    version info\n", NONE);
+            "      -v    version info\n", 0);
     exit(1);
 }
 
@@ -135,9 +110,9 @@ exit_cleanup()
 }
 
 static unsigned long long
-mkqpath(unsigned char type, unsigned short item, unsigned short file)
+mkqpath(unsigned char type, unsigned short item)
 {
-    return ((unsigned long long) file << 24) | ((unsigned long long) item << 8) | (unsigned long long) type;
+    return ((unsigned long long) item << 8) | (unsigned long long) type;
 }
 
 static unsigned char
@@ -152,90 +127,102 @@ qpath_item(unsigned long long path)
     return (path >> 8) & 0xffff;
 }
 
-/*
-static          unsigned short
-qpath_file(unsigned long long path)
+static char *
+qid_to_name(Qid *qid)
 {
-	return (path >> 24) & 0xffff;
+	unsigned char type = qpath_type(qid->path);
+	unsigned short i = qpath_item(qid->path);
+	static char buf[32];
+
+	switch(type) {
+		case Droot: return "/"; break;
+		case Ditem:
+			if(!i) 
+				return "default";
+			snprintf(buf, sizeof(buf), "%u", i);
+			return buf;
+			break;
+		case Fdisplay: return "display"; break;
+		case Ffont: return "font"; break;
+		case Fnew: return "new"; break;
+		case Fdata: return "data"; break;
+		case Fevent: return "event"; break;
+		case Fcolor: return "color"; break;
+		default: return nil; break;
+	}
 }
-*/
+
+static int
+name_to_type(char *name)
+{
+    const char *errstr;
+    unsigned int i;
+	if(!name || !name[0] || !strncmp(name, "..", 3))
+		return Droot;
+	if(!strncmp(name, "default", 8))
+		return Ditem;
+	if(!strncmp(name, "display", 8))
+		return Fdisplay;
+	if(!strncmp(name, "font", 5))
+		return Ffont;
+	if(!strncmp(name, "new", 4))
+		return Fnew;
+	if(!strncmp(name, "data", 5))
+		return Fdata;
+	if(!strncmp(name, "event", 6))
+		return Fevent;
+	if(!strncmp(name, "color", 6))
+		return Fcolor;
+   	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &errstr);
+    if(!errstr && i < nitems)
+		return Ditem;
+	return -1;
+}
 
 static Map *
-fid_to_map(Map * maps, unsigned int fid)
+fid_to_map(Map *maps, unsigned int fid)
 {
-    Map *m;
-    for(m = maps; m; m = m->next)
-        if(m->fid == fid)
-            return m;
-    return nil;
-}
-
-static char *
-qfile_name(unsigned char type)
-{
-	size_t i;
-	for(i = 0; qfilelist[i].name; i++)
-		if(qfilelist[i].type == type)
-			return qfilelist[i].name;
-	return nil;
+	Map *m;
+	for(m = maps; m && (m->fid != fid); m = m->next);
+	return m;
 }
 
 static int
-qfile_index(char *name)
-{
-    int i;
-    for(i = 0; qfilelist[i].name; i++)
-        if(!strncmp(name, qfilelist[i].name, strlen(qfilelist[i].name)))
-            return i;
-    return -1;
-}
-
-static Bool
 mkqid(Qid *dir, char *wname, Qid *new)
 {
-	int i;
     const char *errstr;
-    if(dir->type != IXP_QTDIR)
-        return False;
-    new->version = nil;
-    if((i = qfile_index(wname)) == -1) {
-        new->type = IXP_QTDIR;
-        if(!strncmp(wname, "..", 3)) {
-            *new = root_qid;
-            return True;
-        } else if(!strncmp(wname, "default", 8)) {
-            new->path = mkqpath(Ditem, 0, NONE);
-            return True;
-        }
-        /* check if wname is a number, otherwise file not found */
-        i = (unsigned short) cext_strtonum(wname, 1, 0xffff, &errstr);
-        if(errstr || nitems < i)
-            return False;
-        /* found */
-        new->path = mkqpath(Ditem, i, NONE);
-    } else {
-        new->type = IXP_QTFILE;
-        new->path =
-            mkqpath(qfilelist[i].type, qpath_item(dir->path), i);
-    }
-    return True;
+	int type = name_to_type(wname);
+
+    if((dir->type != IXP_QTDIR) || (type == -1))
+        return -1;
+	
+    new->version = 0;
+	if(type == Droot) {
+		new->type = IXP_QTDIR;
+		*new = root_qid;
+	}
+	else if(type == Ditem) {
+		new->type = IXP_QTDIR;
+		if(!strncmp(wname, "default", 8))
+			new->path = mkqpath(Ditem, 0);
+		else
+			new->path = mkqpath(Ditem, cext_strtonum(wname, 1, 0xffff, &errstr));
+	}
+	else {
+		new->type = IXP_QTFILE;
+    	new->path = mkqpath(type, qpath_item(dir->path));
+	}
+    return 0;
 }
 
 static int
-xattach(IXPServer * s, IXPConn * c)
+xattach(IXPServer *s, IXPConn *c)
 {
     Map *maps = c->aux;
-    Map *m, *new = cext_emallocz(sizeof(Map));
+    Map *new = cext_emallocz(sizeof(Map));
 
-    if(!maps)
-        c->aux = new;
-    else {
-        for(m = maps; m && m->next; m = m->next); 
-        m->next = new;
-    }
-    /*fprintf(stderr, "attaching %u %u %s %s\n", s->fcall.fid, s->fcall.afid,
-            s->fcall.uname, s->fcall.aname);
-			*/
+    c->aux = new;
+	new->next = maps;
     new->qid = root_qid;
     new->fid = s->fcall.fid;
     s->fcall.id = RATTACH;
@@ -244,10 +231,10 @@ xattach(IXPServer * s, IXPConn * c)
 }
 
 static int
-xwalk(IXPServer * s, IXPConn * c)
+xwalk(IXPServer *s, IXPConn *c)
 {
     unsigned short nwqid = 0;
-    Qid qid;
+    Qid dir;
     Map *map;
 
     /*fprintf(stderr, "%s", "walking\n");*/
@@ -261,10 +248,10 @@ xwalk(IXPServer * s, IXPConn * c)
         return -1;
     }
     if(s->fcall.nwname) {
-        qid = map->qid;
+        dir = map->qid;
         for(nwqid = 0; (nwqid < s->fcall.nwname)
-            && mkqid(&qid, s->fcall.wname[nwqid], &s->fcall.wqid[nwqid]); nwqid++)
-            qid = s->fcall.wqid[nwqid];
+            && !mkqid(&dir, s->fcall.wname[nwqid], &s->fcall.wqid[nwqid]); nwqid++)
+            dir = s->fcall.wqid[nwqid];
         if(!nwqid) {
             s->errstr = "file not found";
             return -1;
@@ -272,24 +259,13 @@ xwalk(IXPServer * s, IXPConn * c)
     }
     /* a fid will only be valid, if the walk was complete */
     if(nwqid == s->fcall.nwname) {
-        Map *m, *maps = c->aux;
-        if(s->fcall.fid == s->fcall.newfid) {
-            if(maps == map)
-                maps = maps->next;
-            else {
-                for(m = maps; m && m->next != map; m = m->next);
-                m->next = map->next;
-            }
-            free(map);
+        if(s->fcall.fid != s->fcall.newfid) {
+			Map *maps = c->aux;
+			map = c->aux = cext_emallocz(sizeof(Map));
+			map->next = maps;
         }
-        map = cext_emallocz(sizeof(Map));
-        map->qid = qid;
+        map->qid = dir;
         map->fid = s->fcall.newfid;
-        for(m = maps; m && m->next; m = m->next);
-        if(!m)
-            maps = map;
-        else
-            m->next = map;
     }
     s->fcall.id = RWALK;
     s->fcall.nwqid = nwqid;
@@ -318,7 +294,7 @@ xopen(IXPServer * s, IXPConn * c)
 }
 
 static unsigned int
-mkstat(Stat *stat, char *name, unsigned long long length, unsigned int mode)
+mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int mode)
 {
     stat->mode = 0xfff | mode; /* --rwxrwxrwx */
     stat->atime = stat->mtime = time(0);
@@ -328,8 +304,7 @@ mkstat(Stat *stat, char *name, unsigned long long length, unsigned int mode)
 
     cext_strlcpy(stat->name, name, sizeof(stat->name));
     stat->length = length;
-    mkqid(&root_qid, name, &stat->qid);
-
+    mkqid(dir, name, &stat->qid);
 	return ixp_sizeof_stat(stat);
 }
 
@@ -339,34 +314,36 @@ xread(IXPServer * s, IXPConn * c)
 	Stat stat;
     Map *map = fid_to_map(c->aux, s->fcall.fid);
     unsigned char *p = s->fcall.data;
+	unsigned int i;
+	char buf[32];
 
-    /*fprintf(stderr, "reading %lld\n", s->fcall.offset);*/
     if(!map) {
         s->errstr = "invalid fid";
         return -1;
     }
-    /*fprintf(stderr, "%d\n", qpath_item(map->qid.path));*/
+    s->fcall.id = RREAD;
     switch (qpath_type(map->qid.path)) {
-    default:
     case Droot:
-		s->fcall.count = mkstat(&stat, "display", strlen(align), 0x0);
+		if(align == SOUTH || align == NORTH)
+			s->fcall.count = mkstat(&stat, &root_qid, "display", 6, 0x0);
+		else
+			s->fcall.count = mkstat(&stat, &root_qid, "display", 5, 0x0); /* none */
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "font", strlen(font), 0x0);
+        s->fcall.count += mkstat(&stat, &root_qid, "font", strlen(font), 0x0);
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "new", 0, 0x0);
+        s->fcall.count += mkstat(&stat, &root_qid, "new", 0, 0x0);
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "event", 0, 0x0);
+        s->fcall.count += mkstat(&stat, &root_qid, "event", 0, 0x0);
         p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "default", 0, DMDIR);
+        s->fcall.count += mkstat(&stat, &root_qid, "default", 0, DMDIR);
         p = ixp_enc_stat(p, &stat);
-		/* todo: add all labels */
-        s->fcall.count += mkstat(&stat, "1", 0, DMDIR);
-        p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "2", 0, DMDIR);
-        p = ixp_enc_stat(p, &stat);
-        s->fcall.count += mkstat(&stat, "3", 0, DMDIR);
-        p = ixp_enc_stat(p, &stat);
-        s->fcall.id = RREAD;
+		for(i = 0; (i < nitems) && items[i]; i++) {
+			snprintf(buf, sizeof(buf), "%u", i + 1);
+        	s->fcall.count += mkstat(&stat, &root_qid, buf, 0, DMDIR);
+			if(s->fcall.count > s->fcall.iounit)
+				break;
+        	p = ixp_enc_stat(p, &stat);
+		}
 		if(s->fcall.offset >= s->fcall.count)
 			s->fcall.count = 0; /* EOF */
         break;
@@ -384,55 +361,62 @@ xread(IXPServer * s, IXPConn * c)
         break;
     case Ffont:
         break;
+    default:
+		fprintf(stderr, "filetype=%d\n", qpath_type(map->qid.path));
+        s->errstr = "invalid file";
+        return -1;
+		break;
     }
 
     return 0;
 }
 
 static int
-xstat(IXPServer * s, IXPConn * c)
+xstat(IXPServer *s, IXPConn *c)
 {
     Map *map = fid_to_map(c->aux, s->fcall.fid);
+	unsigned short i;
+	Qid dir;
 
-    /*fprintf(stderr, "%s", "stating\n");*/
     if(!map) {
         s->errstr = "invalid fid";
         return -1;
     }
+	else if((i = qpath_item(map->qid.path) < nitems)) {
+        s->errstr = "file not found";
+        return -1;
+    }
+   	dir.version = 0;
+	dir.type = IXP_QTDIR;
+	dir.path = mkqpath(Ditem, i);
 
     s->fcall.id = RSTAT;
-
-    /*fprintf(stderr, "%d\n", qpath_item(map->qid.path));*/
     switch (qpath_type(map->qid.path)) {
-    default:
     case Droot:
-		mkstat(&s->fcall.stat, "/", 0, DMDIR);
-        break;
     case Ditem:
-		{
-			unsigned short item = qpath_item(map->qid.path);
-			char buf[16];
-			if(!item)
-				mkstat(&s->fcall.stat, "default", 0, DMDIR);
-			else {
-				snprintf(buf, sizeof(buf), "%u", item);
-				mkstat(&s->fcall.stat, buf, 0, DMDIR);
-			}
-		}
+		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, DMDIR);
         break;
 	case Fdisplay:
-		mkstat(&s->fcall.stat, qfile_name(qpath_type(map->qid.path)), strlen(display), 0x0);
+		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), strlen(display), 0x0);
 		break;
     case Fnew:
-		mkstat(&s->fcall.stat, qfile_name(qpath_type(map->qid.path)), 0, 0x0);
-		break;
-    case Fdata:
     case Fevent:
-    case Fcolor:
+		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, 0x0);
+		break;
     case Ffont:
+		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), strlen(font), 0x0);
         break;
+    case Fdata:
+		mkstat(&s->fcall.stat, &dir, qid_to_name(&map->qid), strlen(items[i]->data), 0x0);
+		break;	
+    case Fcolor:
+		mkstat(&s->fcall.stat, &dir, qid_to_name(&map->qid), 24, 0x0);
+		break;
+    default:
+		s->errstr = "invalid type";
+		return -1;
+		break;
     }
-
     return 0;
 }
 
@@ -526,7 +510,7 @@ main(int argc, char *argv[])
     }
     root_qid.type = IXP_QTDIR;
     root_qid.version = 0;
-    root_qid.path = mkqpath(Droot, NONE, NONE);
+    root_qid.path = mkqpath(Droot, 0);
 
     mypid = getpid();
     atexit(exit_cleanup);
@@ -534,7 +518,6 @@ main(int argc, char *argv[])
     /* default item settings */
     item = cext_emallocz(sizeof(Item));
 
-    align = "bottom";
     font = "fixed";
 
     ixp_server_loop(&srv);
