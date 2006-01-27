@@ -69,7 +69,6 @@ static Qid root_qid;
 static Display *dpy;
 static int screen_num;
 static char *font = nil;
-static char *display = nil;
 static Align align = SOUTH;
 /*
 static XFontStruct *xfont;
@@ -234,10 +233,9 @@ static int
 xwalk(IXPServer *s, IXPConn *c)
 {
     unsigned short nwqid = 0;
-    Qid dir;
+    Qid dir = root_qid;
     Map *map;
 
-    /*fprintf(stderr, "%s", "walking\n");*/
     if(!(map = fid_to_map(c->aux, s->fcall.fid))) {
         s->errstr = "no directory associated with fid";
         return -1;
@@ -277,7 +275,6 @@ xopen(IXPServer * s, IXPConn * c)
 {
     Map *map = fid_to_map(c->aux, s->fcall.fid);
 
-    /*fprintf(stderr, "%s", "opening\n");*/
     if(!map) {
         s->errstr = "invalid fid";
         return -1;
@@ -362,7 +359,6 @@ xread(IXPServer * s, IXPConn * c)
     case Ffont:
         break;
     default:
-		fprintf(stderr, "filetype=%d\n", qpath_type(map->qid.path));
         s->errstr = "invalid file";
         return -1;
 		break;
@@ -382,7 +378,7 @@ xstat(IXPServer *s, IXPConn *c)
         s->errstr = "invalid fid";
         return -1;
     }
-	else if((i = qpath_item(map->qid.path) < nitems)) {
+	else if((i = qpath_item(map->qid.path) > nitems)) {
         s->errstr = "file not found";
         return -1;
     }
@@ -397,7 +393,10 @@ xstat(IXPServer *s, IXPConn *c)
 		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, DMDIR);
         break;
 	case Fdisplay:
-		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), strlen(display), 0x0);
+		if(align == SOUTH || align == NORTH)
+			mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 6, 0x0);
+		else
+			mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 5, 0x0);
 		break;
     case Fnew:
     case Fevent:
