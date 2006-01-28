@@ -104,3 +104,101 @@ ixp_server_deinit(IXPServer *s)
         if(s->conn[i].fd >= 0)
             ixp_server_free_conn(s, &s->conn[i]);
 }
+
+
+Fcall **
+ixp_server_attach_fcall(Fcall *f, Fcall **array, size_t *size)
+{
+	size_t i;
+	if(!array) {
+		*size = 2;
+		array = cext_emallocz(sizeof(Fcall *) * (*size));
+	}
+	for(i = 0; (i < (*size)) && array[i]; i++);
+	if(i >= (*size)) {
+		Fcall **tmp = array;
+		(*size) *= 2;
+		array = cext_emallocz(sizeof(Fcall *) * (*size));
+		for(i = 0; tmp[i]; i++)
+			array[i] = tmp[i];
+		free(tmp);
+	}
+	array[i] = f;
+	return array;
+}
+
+void
+ixp_server_detach_fcall(Fcall *f, Fcall **array)
+{
+	size_t i;
+	for(i = 0; array[i] != f; i++);
+	for(; array[i + 1]; i++)
+		array[i] = array[i + 1];
+	array[i] = nil;
+}
+
+IXPMap **
+ixp_server_attach_map(IXPMap *m, IXPMap **array, size_t *size)
+{
+	size_t i;
+	if(!array) {
+		*size = 2;
+		array = cext_emallocz(sizeof(IXPMap *) * (*size));
+	}
+	for(i = 0; (i < (*size)) && array[i]; i++);
+	if(i >= (*size)) {
+		IXPMap **tmp = array;
+		(*size) *= 2;
+		array = cext_emallocz(sizeof(IXPMap *) * (*size));
+		for(i = 0; tmp[i]; i++)
+			array[i] = tmp[i];
+		free(tmp);
+	}
+	array[i] = m;
+	return array;
+}
+
+void
+ixp_server_detach_map(IXPMap *m, IXPMap **array)
+{
+	size_t i;
+	for(i = 0; array[i] != m; i++);
+	for(; array[i + 1]; i++)
+		array[i] = array[i + 1];
+	array[i] = nil;
+}
+
+
+IXPMap *
+ixp_server_fid2map(IXPReq *r, unsigned int fid)
+{
+	size_t i;
+	for(i = 0; (i < r->mapsz) && r->map[i]; i++)
+		if(r->map[i]->fid == fid)
+			return r->map[i];
+	return nil;
+}
+
+void
+ixp_server_close_conn(IXPServer *s, IXPConn *c)
+{
+	IXPReq *r = c->aux;
+
+	if(r) {
+		size_t i;
+		if(r->map) {
+			for(i = 0; (i < r->mapsz) && r->map[i]; i++)
+				free(r->map[i]);
+			free(r->map);
+		}
+		if(r->async) {
+			for(i = 0; (i < r->asyncsz) && r->async[i]; i++)
+				free(r->async[i]);
+			free(r->async);
+			free(r);
+		}
+	}
+	c->aux = nil;
+	shutdown(c->fd, SHUT_RDWR);
+	close(c->fd);
+}
