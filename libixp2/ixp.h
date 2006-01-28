@@ -201,8 +201,7 @@ typedef struct {
 
 struct IXPConn {
     int fd;
-    int dont_close;
-	unsigned int size;
+	int dont_close;
     void (*read) (IXPServer *, IXPConn *);
     void *aux;
 };
