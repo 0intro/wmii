@@ -40,7 +40,6 @@ enum {
     Ditem,
     Fdisplay,
     Ffont,
-    Fnew,
     Fevent,
     Fdata,                      /* data to display */
     Fcolor
@@ -170,12 +169,13 @@ qid_to_name(Qid *qid)
 		case Ditem:
 			if(!i) 
 				return "default";
+			else if(i == nitem)
+				return "new";
 			snprintf(buf, sizeof(buf), "%u", i);
 			return buf;
 			break;
 		case Fdisplay: return "display"; break;
 		case Ffont: return "font"; break;
-		case Fnew: return "new"; break;
 		case Fdata: return "data"; break;
 		case Fevent: return "event"; break;
 		case Fcolor: return "color"; break;
@@ -190,14 +190,12 @@ name_to_type(char *name)
     unsigned int i;
 	if(!name || !name[0] || !strncmp(name, "..", 3))
 		return Droot;
-	if(!strncmp(name, "default", 8))
+	if(!strncmp(name, "default", 8) || !strncmp(name, "new", 4))
 		return Ditem;
 	if(!strncmp(name, "display", 8))
 		return Fdisplay;
 	if(!strncmp(name, "font", 5))
 		return Ffont;
-	if(!strncmp(name, "new", 4))
-		return Fnew;
 	if(!strncmp(name, "data", 5))
 		return Fdata;
 	if(!strncmp(name, "event", 6))
@@ -228,20 +226,28 @@ mkqid(Qid *dir, char *wname, Qid *new)
         return -1;
 	
     new->version = 0;
-	if(type == Droot) {
+	switch(type) {
+	case Droot:
 		new->type = IXP_QTDIR;
 		*new = root_qid;
-	}
-	else if(type == Ditem) {
+		break;
+	case Ditem:
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "default", 8))
 			new->path = mkqpath(Ditem, 0);
-		else
-			new->path = mkqpath(Ditem, cext_strtonum(wname, 1, 0xffff, &errstr));
-	}
-	else {
+		else if(!strncmp(wname, "new", 4))
+			new->path = mkqpath(Ditem, nitem);
+		else {
+			unsigned short i = cext_strtonum(wname, 1, 0xffff, &errstr);
+			if(i >= nitem)
+				return -1;
+			new->path = mkqpath(Ditem, i);
+		}
+		break;
+	default:
 		new->type = IXP_QTFILE;
     	new->path = mkqpath(type, qpath_item(dir->path));
+		break;
 	}
     return 0;
 }
@@ -269,7 +275,7 @@ xwalk(IXPServer *s, IXPConn *c)
     Map *map;
 
     if(!(map = fid_to_map(c->aux, s->fcall.fid))) {
-        s->errstr = "no directory associated with fid";
+        s->errstr = "no dir associated with fid";
         return -1;
     }
     if(s->fcall.fid != s->fcall.newfid
@@ -364,7 +370,7 @@ xread(IXPServer *s, IXPConn *c)
 			p = ixp_enc_stat(p, &stat);
 			s->fcall.count += mkstat(&stat, &root_qid, "font", strlen(font), 0x0);
 			p = ixp_enc_stat(p, &stat);
-			s->fcall.count += mkstat(&stat, &root_qid, "new", 0, 0x0);
+			s->fcall.count += mkstat(&stat, &root_qid, "new", 0, DMDIR);
 			p = ixp_enc_stat(p, &stat);
 			s->fcall.count += mkstat(&stat, &root_qid, "event", 0, 0x0);
 			p = ixp_enc_stat(p, &stat);
@@ -377,13 +383,16 @@ xread(IXPServer *s, IXPConn *c)
 			}
 			break;
 		case Ditem:
-			if(i >= nitem)
-				goto invalid_xread;
+			if(i > nitem)
+				goto error_xread;
 			if(!i) {
 				s->fcall.count = mkstat(&stat, &root_qid, "color", 24, 0x0);
 				p = ixp_enc_stat(p, &stat);
+				break;
 			}
-			else {
+			{
+				if(i == nitem)
+					new_item();
 				Qid dir = {IXP_QTDIR, 0, mkqpath(Ditem, i)};
 				s->fcall.count = mkstat(&stat, &dir, "color", 24, 0x0);
 				p = ixp_enc_stat(p, &stat);
@@ -411,29 +420,27 @@ xread(IXPServer *s, IXPConn *c)
 			if((s->fcall.count = strlen(font)))
 				memcpy(p, font, s->fcall.count);
 			break;
-		case Fnew:
-			snprintf(buf, sizeof(buf), "%u", nitem);
-			new_item(); /* only add new items on first TREAD */
-			s->fcall.count = strlen(buf);
-			memcpy(p, buf, s->fcall.count);
-			break;
 		case Fevent:
 			break;
 		case Fdata:
+			if(i == nitem)
+				new_item();
 			if(i >= nitem)
-				goto invalid_xread;
+				goto error_xread;
 			if((s->fcall.count = strlen(item[i]->data)))
 				memcpy(p, item[i]->data, s->fcall.count);
 			break;
 		case Fcolor:
+			if(i == nitem)
+				new_item();
 			if(i >= nitem)
-				goto invalid_xread;
+				goto error_xread;
 			if((s->fcall.count = strlen(item[i]->color)))
 				memcpy(p, item[i]->color, s->fcall.count);
 			break;
-invalid_xread:
 		default:
-			s->errstr = "invalid file";
+error_xread:
+            s->errstr = "invalid read request";
 			return -1;
 			break;
 		}
@@ -453,10 +460,6 @@ xstat(IXPServer *s, IXPConn *c)
         s->errstr = "invalid fid";
         return -1;
     }
-	else if((i = qpath_item(map->qid.path) >= nitem)) {
-        s->errstr = "file not found";
-        return -1;
-    }
    	dir.version = 0;
 	dir.type = IXP_QTDIR;
 	dir.path = mkqpath(Ditem, i);
@@ -473,7 +476,6 @@ xstat(IXPServer *s, IXPConn *c)
 		else
 			mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 5, 0x0);
 		break;
-    case Fnew:
     case Fevent:
 		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, 0x0);
 		break;
@@ -487,7 +489,7 @@ xstat(IXPServer *s, IXPConn *c)
 		mkstat(&s->fcall.stat, &dir, qid_to_name(&map->qid), 24, 0x0);
 		break;
     default:
-		s->errstr = "invalid type";
+		s->errstr = "invalid stat request";
 		return -1;
 		break;
     }
@@ -511,11 +513,11 @@ xwrite(IXPServer *s, IXPConn *c)
 	switch (qpath_type(map->qid.path)) {
 	case Fdisplay:
 		if(s->fcall.count > 5)
-			goto invalid_xwrite;
+			goto error_xwrite;
 		memcpy(buf, s->fcall.data, s->fcall.count);
 		buf[s->fcall.count] = 0;
 		if(!blitz_strtoalign(&align, buf))
-			goto invalid_xwrite;
+			goto error_xwrite;
 		/* TODO: resize/hide */
 		break;
 	case Ffont:
@@ -526,28 +528,34 @@ xwrite(IXPServer *s, IXPConn *c)
 		/* TODO: XQueryFont */
 		break;
 	case Fdata:
-		if(!i || (i >= nitem))
-			goto invalid_xwrite;
-		if(s->fcall.count >= sizeof(item[i]->data))
-			s->fcall.count = sizeof(item[i]->data) - 1;
-		memcpy(item[i]->data, s->fcall.data, s->fcall.count);
-		item[i]->data[s->fcall.count] = 0;
-		/* TODO: redraw */
+		{
+			unsigned int len = s->fcall.count;
+			if(i == nitem)
+				new_item();
+			if(!i || (i >= nitem))
+				goto error_xwrite;
+			if(len >= sizeof(item[i]->data))
+				len = sizeof(item[i]->data) - 1;
+			memcpy(item[i]->data, s->fcall.data, len);
+			item[i]->data[len] = 0;
+			/* TODO: redraw */
+		}
 		break;
 	case Fcolor:
+		if(i == nitem)
+			new_item();
 		if((i >= nitem) || (s->fcall.count >= 24))
-			goto invalid_xwrite;
+			goto error_xwrite;
 		memcpy(item[i]->color, s->fcall.data, s->fcall.count);
 		item[i]->color[s->fcall.count] = 0;
 		/* TODO: update color */
 		break;
-invalid_xwrite:
 	default:
-		s->errstr = "permission denied";
+error_xwrite:
+		s->errstr = "invalid write request";
 		return -1;
 		break;
 	}
-	s->fcall.count = 0;
 	return 0;
 }
 
