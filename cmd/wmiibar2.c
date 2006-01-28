@@ -625,6 +625,25 @@ xclunk(Req *r)
     return 0;
 }
 
+static int 
+do9p(Req *r)
+{
+	switch(r->fcall.id) {
+	case TVERSION: return xversion(r); break;
+	case TATTACH: return xattach(r); break;
+	case TWALK: return xwalk(r); break;
+	case TREMOVE: return xremove(r); break;
+	case TOPEN: return xopen(r); break;
+	case TREAD: return xread(r); break;
+	case TWRITE: return xwrite(r); break;
+	case TCLUNK: return xclunk(r); break;
+	case TSTAT: return xstat(r); break;
+	default:
+		break;
+	}
+	return -1;
+}
+
 static void
 handle_9p_req(IXPServer *s, IXPConn *c)
 {
@@ -637,33 +656,18 @@ handle_9p_req(IXPServer *s, IXPConn *c)
 		return;
 	}
     /*fprintf(stderr, "msize=%d\n", msize);*/
-    if((msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, &r->fcall))) {
-		switch(r->fcall.id) {
-		case TVERSION: ret = xversion(r); break;
-		case TATTACH: ret = xattach(r); break;
-		case TWALK: ret = xwalk(r); break;
-		case TREMOVE: ret = xremove(r); break;
-		case TOPEN: ret = xopen(r); break;
-		case TREAD: ret = xread(r); break;
-		case TWRITE: ret = xwrite(r); break;
-		case TCLUNK: ret = xclunk(r); break;
-		case TSTAT: ret = xstat(r); break;
-		default:
-			goto error_do9p;
-			break;
-		}
-	}
+    if((msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, &r->fcall)))
+		ret = do9p(r);
 	if(ret == -1) {	
-error_do9p:
 		/*fprintf(stderr, "function id=%d\n", s->fcall.id);*/
 		if(!errstr)
 			errstr = "function not supported";
 		r->fcall.id = RERROR;
 		cext_strlcpy(r->fcall.errstr, errstr, sizeof(r->fcall.errstr));
 	}
-    msize = ixp_fcall_to_msg(&r->fcall, msg, IXP_MAX_MSG);
-    if(ixp_send_message(c->fd, msg, msize, &errstr) != msize)
-        ixp_server_free_conn(s, c);
+	msize = ixp_fcall_to_msg(&r->fcall, msg, IXP_MAX_MSG);
+	if(ixp_send_message(c->fd, msg, msize, &errstr) != msize)
+		ixp_server_free_conn(s, c);
 }
 
 static void
