@@ -727,7 +727,7 @@ main(int argc, char *argv[])
 
     /* default item settings */
 	new_item();
-	cext_strlcpy(item[0]->color, "#000000 #ffffff #ffffff", sizeof(item[0]->color));
+	cext_strlcpy(item[0]->color, BLITZ_SEL_COLOR, sizeof(item[0]->color));
 
     font = strdup("fixed");
 
