@@ -16,6 +16,7 @@
 #include <X11/cursorfont.h>
 #include <X11/Xproto.h>
 #include <X11/Xutil.h>
+#include <sys/socket.h>
 
 #include "../libixp2/ixp.h"
 #include "blitz.h"
@@ -50,7 +51,11 @@ struct Map {
 	unsigned int fid;
 	Qid qid; 
 	Map *next;
-};  
+};
+typedef struct {
+	Map *maps;
+	Fcall fcall;
+} Req;
 
 typedef struct {
     char data[256];
@@ -60,10 +65,12 @@ typedef struct {
     unsigned long border;
 } Item;
 
+static unsigned char *msg[IXP_MAX_MSG];
+char *errstr = 0;
 static size_t nitem = 0;
 static size_t itemsz = 0;
 static Item **item = 0;
-static char *sockfile = nil;
+static char *address = nil;
 static pid_t mypid = 0;
 static IXPServer srv = { 0 };
 static Qid root_qid;
@@ -106,7 +113,7 @@ static void
 exit_cleanup()
 {
     if(mypid == getpid())
-        unlink(sockfile);
+        unlink(address);
 }
 
 static void
@@ -186,7 +193,7 @@ qid_to_name(Qid *qid)
 static int
 name_to_type(char *name)
 {
-    const char *errstr;
+	const char *err;
     unsigned int i;
 	if(!name || !name[0] || !strncmp(name, "..", 3))
 		return Droot;
@@ -202,8 +209,8 @@ name_to_type(char *name)
 		return Fevent;
 	if(!strncmp(name, "color", 6))
 		return Fcolor;
-   	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &errstr);
-    if(!errstr && i <= nitem)
+   	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
+    if(!err && (i <= nitem))
 		return Ditem;
 	return -1;
 }
@@ -219,7 +226,7 @@ fid_to_map(Map *maps, unsigned int fid)
 static int
 mkqid(Qid *dir, char *wname, Qid *new)
 {
-    const char *errstr;
+	const char *err;
 	int type = name_to_type(wname);
 	unsigned short i = qpath_item(dir->path);
 
@@ -239,8 +246,8 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		else if(!strncmp(wname, "new", 4))
 			new->path = mkqpath(Ditem, nitem);
 		else {
-			unsigned short i = cext_strtonum(wname, 1, 0xffff, &errstr);
-			if(i >= nitem)
+			unsigned short i = cext_strtonum(wname, 1, 0xffff, &err);
+			if(err || (i >= nitem))
 				return -1;
 			new->path = mkqpath(Ditem, i);
 		}
@@ -258,91 +265,91 @@ mkqid(Qid *dir, char *wname, Qid *new)
 }
 
 static int
-xversion(IXPServer *s, IXPConn * c)
+xversion(Req *r)
 {
-    if(strncmp(s->fcall.version, IXP_VERSION, strlen(IXP_VERSION))) {
-        s->errstr = "9P versions differ";
+    if(strncmp(r->fcall.version, IXP_VERSION, strlen(IXP_VERSION))) {
+        errstr = "9P versions differ";
         return -1;
-    } else if(s->fcall.maxmsg > IXP_MAX_MSG)
-        s->fcall.maxmsg = IXP_MAX_MSG;
-    s->fcall.id = RVERSION;
+    } else if(r->fcall.maxmsg > IXP_MAX_MSG)
+        r->fcall.maxmsg = IXP_MAX_MSG;
+    r->fcall.id = RVERSION;
     return 0;
 }
 
 static int
-xattach(IXPServer *s, IXPConn *c)
+xattach(Req *r)
 {
-    Map *maps = c->aux;
+    Map *maps = r->maps;
     Map *new = cext_emallocz(sizeof(Map));
 
-    c->aux = new;
+    r->maps = new;
 	new->next = maps;
     new->qid = root_qid;
-    new->fid = s->fcall.fid;
-    s->fcall.id = RATTACH;
-    s->fcall.qid = root_qid;
+    new->fid = r->fcall.fid;
+    r->fcall.id = RATTACH;
+    r->fcall.qid = root_qid;
     return 0;
 }
 
 static int
-xwalk(IXPServer *s, IXPConn *c)
+xwalk(Req *r)
 {
     unsigned short nwqid = 0;
     Qid dir = root_qid;
     Map *map;
 
-    if(!(map = fid_to_map(c->aux, s->fcall.fid))) {
-        s->errstr = "no dir associated with fid";
+    if(!(map = fid_to_map(r->maps, r->fcall.fid))) {
+        errstr = "no dir associated with fid";
         return -1;
     }
-    if(s->fcall.fid != s->fcall.newfid
-       && (fid_to_map(c->aux, s->fcall.newfid))) {
-        s->errstr = "fid alreay in use";
+    if(r->fcall.fid != r->fcall.newfid
+       && (fid_to_map(r->maps, r->fcall.newfid))) {
+        errstr = "fid alreay in use";
         return -1;
     }
-    if(s->fcall.nwname) {
+    if(r->fcall.nwname) {
         dir = map->qid;
-        for(nwqid = 0; (nwqid < s->fcall.nwname)
-            && !mkqid(&dir, s->fcall.wname[nwqid], &s->fcall.wqid[nwqid]); nwqid++)
-            dir = s->fcall.wqid[nwqid];
+        for(nwqid = 0; (nwqid < r->fcall.nwname)
+            && !mkqid(&dir, r->fcall.wname[nwqid], &r->fcall.wqid[nwqid]); nwqid++)
+            dir = r->fcall.wqid[nwqid];
         if(!nwqid) {
-            s->errstr = "file not found";
+            errstr = "file not found";
             return -1;
         }
     }
     /* a fid will only be valid, if the walk was complete */
-    if(nwqid == s->fcall.nwname) {
-        if(s->fcall.fid != s->fcall.newfid) {
-			Map *maps = c->aux;
-			map = c->aux = cext_emallocz(sizeof(Map));
+    if(nwqid == r->fcall.nwname) {
+        if(r->fcall.fid != r->fcall.newfid) {
+			Map *maps = r->maps;
+			map = r->maps = cext_emallocz(sizeof(Map));
 			map->next = maps;
         }
         map->qid = dir;
-        map->fid = s->fcall.newfid;
+        map->fid = r->fcall.newfid;
     }
-    s->fcall.id = RWALK;
-    s->fcall.nwqid = nwqid;
+    r->fcall.id = RWALK;
+    r->fcall.nwqid = nwqid;
     return 0;
 }
 
 static int
-xopen(IXPServer *s, IXPConn *c)
+xopen(Req *r)
 {
-    Map *map = fid_to_map(c->aux, s->fcall.fid);
+    Map *map = fid_to_map(r->maps, r->fcall.fid);
 
     if(!map) {
-        s->errstr = "invalid fid";
+        errstr = "invalid fid";
         return -1;
     }
-    if(!(s->fcall.mode | IXP_OREAD) && !(s->fcall.mode | IXP_OWRITE)) {
-		fprintf(stderr, "got mode 0x%x\n", s->fcall.mode);
-        s->errstr = "mode not supported";
+    if(!(r->fcall.mode | IXP_OREAD) && !(r->fcall.mode | IXP_OWRITE)) {
+		fprintf(stderr, "got mode 0x%x\n", r->fcall.mode);
+        errstr = "mode not supported";
         return -1;
     }
-    s->fcall.id = ROPEN;
-    s->fcall.qid = map->qid;
-    s->fcall.iounit =
-        s->fcall.maxmsg - (sizeof(unsigned char) + sizeof(unsigned short) + 2 * sizeof(unsigned int));
+    r->fcall.id = ROPEN;
+    r->fcall.qid = map->qid;
+    r->fcall.iounit =
+        r->fcall.maxmsg - (sizeof(unsigned char) + sizeof(unsigned short) + 2 * sizeof(unsigned int));
     return 0;
 }
 
@@ -362,62 +369,61 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 }
 
 static int
-xremove(IXPServer *s, IXPConn *c)
+xremove(Req *r)
 {
-    Map *map = fid_to_map(c->aux, s->fcall.fid);
+    Map *map = fid_to_map(r->maps, r->fcall.fid);
 	unsigned short i;
 
     if(!map) {
-        s->errstr = "invalid fid";
+        errstr = "invalid fid";
         return -1;
     }
 	i = qpath_item(map->qid.path);
-    s->fcall.id = RREMOVE;
 	if((qpath_type(map->qid.path) == Ditem) && i && (i < nitem)) {
 		Item *it = item[i];
 		detach_item(it);
 		free(it);
+    	r->fcall.id = RREMOVE;
 		return 0;
 	}
-	s->errstr = "permission denied";
+	errstr = "permission denied";
 	return -1;
 }
 
 static int
-xread(IXPServer *s, IXPConn *c)
+xread(Req *r)
 {
 	Stat stat;
-    Map *map = fid_to_map(c->aux, s->fcall.fid);
-    unsigned char *p = s->fcall.data;
+    Map *map = fid_to_map(r->maps, r->fcall.fid);
+    unsigned char *p = r->fcall.data;
 	unsigned short i;
 	char buf[32];
 
     if(!map) {
-        s->errstr = "invalid fid";
+        errstr = "invalid fid";
         return -1;
     }
 	i = qpath_item(map->qid.path);
-    s->fcall.id = RREAD;
-	s->fcall.count = 0; /* EOF by default */
-	if(!s->fcall.offset) {
+	r->fcall.count = 0; /* EOF by default */
+	if(!r->fcall.offset) {
 		switch (qpath_type(map->qid.path)) {
 		case Droot:
 			if(align == SOUTH || align == NORTH)
-				s->fcall.count = mkstat(&stat, &root_qid, "display", 6, DMREAD | DMWRITE);
+				r->fcall.count = mkstat(&stat, &root_qid, "display", 6, DMREAD | DMWRITE);
 			else
-				s->fcall.count = mkstat(&stat, &root_qid, "display", 5, DMREAD | DMWRITE); /* none */
+				r->fcall.count = mkstat(&stat, &root_qid, "display", 5, DMREAD | DMWRITE); /* none */
 			p = ixp_enc_stat(p, &stat);
-			s->fcall.count += mkstat(&stat, &root_qid, "font", strlen(font), DMREAD | DMWRITE);
+			r->fcall.count += mkstat(&stat, &root_qid, "font", strlen(font), DMREAD | DMWRITE);
 			p = ixp_enc_stat(p, &stat);
-			s->fcall.count += mkstat(&stat, &root_qid, "new", 0, DMDIR | DMREAD | DMEXEC);
+			r->fcall.count += mkstat(&stat, &root_qid, "new", 0, DMDIR | DMREAD | DMEXEC);
 			p = ixp_enc_stat(p, &stat);
-			s->fcall.count += mkstat(&stat, &root_qid, "event", 0, DMREAD);
+			r->fcall.count += mkstat(&stat, &root_qid, "event", 0, DMREAD);
 			p = ixp_enc_stat(p, &stat);
-			s->fcall.count += mkstat(&stat, &root_qid, "default", 0, DMDIR | DMREAD | DMEXEC);
+			r->fcall.count += mkstat(&stat, &root_qid, "default", 0, DMDIR | DMREAD | DMEXEC);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 1; i < nitem; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				s->fcall.count += mkstat(&stat, &root_qid, buf, 0, DMDIR | DMREAD | DMEXEC);
+				r->fcall.count += mkstat(&stat, &root_qid, buf, 0, DMDIR | DMREAD | DMEXEC);
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
@@ -425,7 +431,7 @@ xread(IXPServer *s, IXPConn *c)
 			if(i > nitem)
 				goto error_xread;
 			if(!i) {
-				s->fcall.count = mkstat(&stat, &root_qid, "color", 24, DMREAD | DMWRITE);
+				r->fcall.count = mkstat(&stat, &root_qid, "color", 24, DMREAD | DMWRITE);
 				p = ixp_enc_stat(p, &stat);
 				break;
 			}
@@ -433,9 +439,9 @@ xread(IXPServer *s, IXPConn *c)
 				if(i == nitem)
 					new_item();
 				Qid dir = {IXP_QTDIR, 0, mkqpath(Ditem, i)};
-				s->fcall.count = mkstat(&stat, &dir, "color", 24, DMREAD | DMWRITE);
+				r->fcall.count = mkstat(&stat, &dir, "color", 24, DMREAD | DMWRITE);
 				p = ixp_enc_stat(p, &stat);
-				s->fcall.count += mkstat(&stat, &dir, "data", strlen(item[i]->data), DMREAD | DMWRITE);
+				r->fcall.count += mkstat(&stat, &dir, "data", strlen(item[i]->data), DMREAD | DMWRITE);
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
@@ -443,21 +449,21 @@ xread(IXPServer *s, IXPConn *c)
 			switch(align) {
 			case SOUTH:
 				memcpy(p, "south", 5);
-				s->fcall.count = 5;
+				r->fcall.count = 5;
 				break;
 			case NORTH:
 				memcpy(p, "north", 5);
-				s->fcall.count = 5;
+				r->fcall.count = 5;
 				break;
 			default:
 				memcpy(p, "none", 4);
-				s->fcall.count = 4;
+				r->fcall.count = 4;
 				break;
 			}
 			break;
 		case Ffont:
-			if((s->fcall.count = strlen(font)))
-				memcpy(p, font, s->fcall.count);
+			if((r->fcall.count = strlen(font)))
+				memcpy(p, font, r->fcall.count);
 			break;
 		case Fevent:
 			break;
@@ -466,95 +472,94 @@ xread(IXPServer *s, IXPConn *c)
 				new_item();
 			if(i >= nitem)
 				goto error_xread;
-			if((s->fcall.count = strlen(item[i]->data)))
-				memcpy(p, item[i]->data, s->fcall.count);
+			if((r->fcall.count = strlen(item[i]->data)))
+				memcpy(p, item[i]->data, r->fcall.count);
 			break;
 		case Fcolor:
 			if(i == nitem)
 				new_item();
 			if(i >= nitem)
 				goto error_xread;
-			if((s->fcall.count = strlen(item[i]->color)))
-				memcpy(p, item[i]->color, s->fcall.count);
+			if((r->fcall.count = strlen(item[i]->color)))
+				memcpy(p, item[i]->color, r->fcall.count);
 			break;
 		default:
 error_xread:
-            s->errstr = "invalid read request";
+            errstr = "invalid read request";
 			return -1;
 			break;
 		}
 	}
-
+    r->fcall.id = RREAD;
     return 0;
 }
 
 static int
-xstat(IXPServer *s, IXPConn *c)
+xstat(Req *r)
 {
-    Map *map = fid_to_map(c->aux, s->fcall.fid);
+    Map *map = fid_to_map(r->maps, r->fcall.fid);
 	unsigned short i;
 	Qid dir;
 
     if(!map) {
-        s->errstr = "invalid fid";
+        errstr = "invalid fid";
         return -1;
     }
    	dir.version = 0;
 	dir.type = IXP_QTDIR;
 	dir.path = mkqpath(Ditem, i);
 
-    s->fcall.id = RSTAT;
     switch (qpath_type(map->qid.path)) {
     case Droot:
     case Ditem:
-		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, DMDIR | DMREAD | DMEXEC);
+		mkstat(&r->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case Fdisplay:
 		if(align == SOUTH || align == NORTH)
-			mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 6, DMREAD | DMWRITE);
+			mkstat(&r->fcall.stat, &root_qid, qid_to_name(&map->qid), 6, DMREAD | DMWRITE);
 		else
-			mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 5, DMREAD | DMWRITE);
+			mkstat(&r->fcall.stat, &root_qid, qid_to_name(&map->qid), 5, DMREAD | DMWRITE);
 		break;
     case Fevent:
-		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, DMREAD);
+		mkstat(&r->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, DMREAD);
 		break;
     case Ffont:
-		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), strlen(font), DMREAD | DMWRITE);
+		mkstat(&r->fcall.stat, &root_qid, qid_to_name(&map->qid), strlen(font), DMREAD | DMWRITE);
         break;
     case Fdata:
-		mkstat(&s->fcall.stat, &dir, qid_to_name(&map->qid), strlen(item[i]->data), DMREAD | DMWRITE);
+		mkstat(&r->fcall.stat, &dir, qid_to_name(&map->qid), strlen(item[i]->data), DMREAD | DMWRITE);
 		break;	
     case Fcolor:
-		mkstat(&s->fcall.stat, &dir, qid_to_name(&map->qid), 24, DMREAD | DMWRITE);
+		mkstat(&r->fcall.stat, &dir, qid_to_name(&map->qid), 24, DMREAD | DMWRITE);
 		break;
     default:
-		s->errstr = "invalid stat request";
+		errstr = "invalid stat request";
 		return -1;
 		break;
     }
+    r->fcall.id = RSTAT;
     return 0;
 }
 
 static int
-xwrite(IXPServer *s, IXPConn *c)
+xwrite(Req *r)
 {
 	char buf[256];
-    Map *map = fid_to_map(c->aux, s->fcall.fid);
+    Map *map = fid_to_map(r->maps, r->fcall.fid);
 	unsigned short i;
 
     if(!map) {
-        s->errstr = "invalid fid";
+        errstr = "invalid fid";
         return -1;
     }
 
 	i = qpath_item(map->qid.path);
-    s->fcall.id = RWRITE;
 	switch (qpath_type(map->qid.path)) {
 	case Fdisplay:
-		if(s->fcall.count > 5)
+		if(r->fcall.count > 5)
 			goto error_xwrite;
-		memcpy(buf, s->fcall.data, s->fcall.count);
-		buf[s->fcall.count] = 0;
+		memcpy(buf, r->fcall.data, r->fcall.count);
+		buf[r->fcall.count] = 0;
 		if(!blitz_strtoalign(&align, buf))
 			goto error_xwrite;
 		/* TODO: resize/hide */
@@ -562,20 +567,20 @@ xwrite(IXPServer *s, IXPConn *c)
 	case Ffont:
 		if(font)
 			free(font);
-		font = cext_emallocz(s->fcall.count + 1);
-		memcpy(font, s->fcall.data, s->fcall.count);
+		font = cext_emallocz(r->fcall.count + 1);
+		memcpy(font, r->fcall.data, r->fcall.count);
 		/* TODO: XQueryFont */
 		break;
 	case Fdata:
 		{
-			unsigned int len = s->fcall.count;
+			unsigned int len = r->fcall.count;
 			if(i == nitem)
 				new_item();
 			if(!i || (i >= nitem))
 				goto error_xwrite;
 			if(len >= sizeof(item[i]->data))
 				len = sizeof(item[i]->data) - 1;
-			memcpy(item[i]->data, s->fcall.data, len);
+			memcpy(item[i]->data, r->fcall.data, len);
 			item[i]->data[len] = 0;
 			/* TODO: redraw */
 		}
@@ -583,70 +588,118 @@ xwrite(IXPServer *s, IXPConn *c)
 	case Fcolor:
 		if(i == nitem)
 			new_item();
-		if((i >= nitem) || (s->fcall.count >= 24))
+		if((i >= nitem) || (r->fcall.count >= 24))
 			goto error_xwrite;
-		memcpy(item[i]->color, s->fcall.data, s->fcall.count);
-		item[i]->color[s->fcall.count] = 0;
+		memcpy(item[i]->color, r->fcall.data, r->fcall.count);
+		item[i]->color[r->fcall.count] = 0;
 		/* TODO: update color */
 		break;
 	default:
 error_xwrite:
-		s->errstr = "invalid write request";
+		errstr = "invalid write request";
 		return -1;
 		break;
 	}
+    r->fcall.id = RWRITE;
 	return 0;
 }
 
 static int
-xclunk(IXPServer *s, IXPConn *c)
+xclunk(Req *r)
 {
-    Map *maps = c->aux;
-    Map *m, *map = fid_to_map(maps, s->fcall.fid);
+    Map *maps = r->maps;
+    Map *m, *map = fid_to_map(r->maps, r->fcall.fid);
 
     if(!map) {
-        s->errstr = "invalid fid";
+        errstr = "invalid fid";
         return -1;
     }
     if(maps == map)
-        c->aux = maps = maps->next;
+        r->maps = maps = maps->next;
     else {
         for(m = maps; m && m->next != map; m = m->next);
         m->next = map->next;
     }
     free(map);
-    s->fcall.id = RCLUNK;
+    r->fcall.id = RCLUNK;
     return 0;
 }
 
 static void
-freeconn(IXPServer *s, IXPConn *c)
+handle_9p_req(IXPServer *s, IXPConn *c)
 {
-    Map *m, *maps = c->aux;
-
-    while((m = maps)) {
-        c->aux = maps = maps->next;
-        free(m);
-    }
+	Req *r = c->aux;
+    unsigned int msize;
+	int ret;
+    errstr = 0;
+	if(!(msize = ixp_recv_message(c->fd, msg, IXP_MAX_MSG, &errstr))) {
+		ixp_server_free_conn(s, c);
+		return;
+	}
+    /*fprintf(stderr, "msize=%d\n", msize);*/
+    if((msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, &r->fcall))) {
+		switch(r->fcall.id) {
+		case TVERSION: ret = xversion(r); break;
+		case TATTACH: ret = xattach(r); break;
+		case TWALK: ret = xwalk(r); break;
+		case TREMOVE: ret = xremove(r); break;
+		case TOPEN: ret = xopen(r); break;
+		case TREAD: ret = xread(r); break;
+		case TWRITE: ret = xwrite(r); break;
+		case TCLUNK: ret = xclunk(r); break;
+		case TSTAT: ret = xstat(r); break;
+		default:
+			goto error_do9p;
+			break;
+		}
+	}
+	if(ret == -1) {	
+error_do9p:
+		/*fprintf(stderr, "function id=%d\n", s->fcall.id);*/
+		if(!errstr)
+			errstr = "function not supported";
+		r->fcall.id = RERROR;
+		cext_strlcpy(r->fcall.errstr, errstr, sizeof(r->fcall.errstr));
+	}
+    msize = ixp_fcall_to_msg(&r->fcall, msg, IXP_MAX_MSG);
+    if(ixp_send_message(c->fd, msg, msize, &errstr) != msize)
+        ixp_server_free_conn(s, c);
 }
 
-static IXPTFunc funcs[] = {
-    {TVERSION, xversion},
-    {TATTACH, xattach},
-    {TWALK, xwalk},
-	{TREMOVE, xremove},
-    {TOPEN, xopen},
-    {TREAD, xread},
-    {TWRITE, xwrite},
-    {TCLUNK, xclunk},
-    {TSTAT, xstat},
-    {0, 0}
-};
+static void
+close_9p_conn(IXPServer *s, IXPConn *c)
+{
+	Req *r = c->aux;
+
+	if(r) {
+    	Map *m, *maps = r->maps;
+		while((m = maps)) {
+			r->maps = maps = maps->next;
+			free(m);
+		}
+		free(r);
+	}
+	c->aux = nil;
+	shutdown(c->fd, SHUT_RDWR);
+	close(c->fd);
+}
+
+static void
+new_9p_conn(IXPServer *s, IXPConn *c)
+{
+    IXPConn *new = ixp_server_alloc_conn(s);
+    if(new && ((new->fd = ixp_accept_sock(c->fd)) >= 0)) {
+		new->read = handle_9p_req;
+		new->close = close_9p_conn;
+		new->aux = cext_emallocz(sizeof(Req));
+	}
+}
 
 int
 main(int argc, char *argv[])
 {
     int i;
+	IXPConn *c;
 
     /* command line args */
     for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
@@ -657,7 +710,7 @@ main(int argc, char *argv[])
             break;
         case 'a':
             if(i + 1 < argc)
-                sockfile = argv[++i];
+                address = argv[++i];
             else
                 usage();
             break;
@@ -675,10 +728,20 @@ main(int argc, char *argv[])
     XSetErrorHandler(dummy_error_handler);
     screen_num = DefaultScreen(dpy);
 
-    if(ixp_server_init(&srv, sockfile, funcs, freeconn) == -1) {
-        fprintf(stderr, "wmiibar: fatal: %s\n", srv.errstr);
-        exit(1);
-    }
+    if(!address) {
+		fprintf(stderr, "%s\n", "wmiibar: no socket address provided");
+		exit(1);
+	}
+    ixp_server_init(&srv);
+	c = ixp_server_alloc_conn(&srv);
+	if((c->fd = ixp_create_sock(address, &errstr)) < 0) {
+        fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
+		exit(1);
+	}
+	c->read = new_9p_conn;
+	c->close = close_9p_conn;
+	/* TODO: add X conn */
+	
     root_qid.type = IXP_QTDIR;
     root_qid.version = 0;
     root_qid.path = mkqpath(Droot, 0);
@@ -691,9 +754,8 @@ main(int argc, char *argv[])
 
     font = strdup("fixed");
 
-    ixp_server_loop(&srv);
-    if(srv.errstr) {
-        fprintf(stderr, "wmiibar: fatal: %s\n", srv.errstr);
+    if((errstr = ixp_server_loop(&srv))) {
+        fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
         ixp_server_deinit(&srv);
         exit(1);
     }

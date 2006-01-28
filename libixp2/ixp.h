@@ -1,6 +1,6 @@
 /*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
- * See LICENSE file for license details.
+ *(C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+ *See LICENSE file for license details.
  */
 
 #include <sys/types.h>
@@ -17,7 +17,7 @@
 #define IXP_MAX_FLEN  	128
 #define IXP_MAX_ULEN  	32
 #define IXP_MAX_STAT  	64
-#define IXP_MAX_WELEM 	16      /* MAXWELEM */
+#define IXP_MAX_WELEM 	16      /*MAXWELEM */
 #define IXP_MAX_TFUNCS	14
 
 
@@ -68,7 +68,7 @@
 	muid[ s ]
 */
 
-/* 9P message types */
+/*9P message types */
 enum {
     TVERSION = 100,
     RVERSION,
@@ -100,19 +100,19 @@ enum {
     RWSTAT,
 };
 
-/* borrowed from libc.h of Plan 9 */
-#define DMDIR		0x80000000	/* mode bit for directories */
-#define DMAPPEND	0x40000000	/* mode bit for append only files */
-#define DMEXCL		0x20000000	/* mode bit for exclusive use files */
-#define DMMOUNT		0x10000000	/* mode bit for mounted channel */
-#define DMAUTH		0x08000000	/* mode bit for authentication file */
-#define DMTMP		0x04000000	/* mode bit for non-backed-up file */
+/*borrowed from libc.h of Plan 9 */
+#define DMDIR		0x80000000	/*mode bit for directories */
+#define DMAPPEND	0x40000000	/*mode bit for append only files */
+#define DMEXCL		0x20000000	/*mode bit for exclusive use files */
+#define DMMOUNT		0x10000000	/*mode bit for mounted channel */
+#define DMAUTH		0x08000000	/*mode bit for authentication file */
+#define DMTMP		0x04000000	/*mode bit for non-backed-up file */
 
-#define DMREAD		0x4<<6		/* mode bit for read permission */
-#define DMWRITE		0x2<<6		/* mode bit for write permission */
-#define DMEXEC		0x1<<6		/* mode bit for execute permission */
+#define DMREAD		0x4<<6		/*mode bit for read permission */
+#define DMWRITE		0x2<<6		/*mode bit for write permission */
+#define DMEXEC		0x1<<6		/*mode bit for execute permission */
 
-/* modes */
+/*modes */
 enum {
     IXP_OREAD = 0x00,
     IXP_OWRITE = 0x01,
@@ -125,7 +125,7 @@ enum {
     IXP_OAPPEND = 0x80,
 };
 
-/* qid.types */
+/*qid.types */
 enum {
     IXP_QTDIR = 0x80,
     IXP_QTAPPEND = 0x40,
@@ -138,8 +138,8 @@ enum {
     IXP_QTFILE = 0x00,
 };
 
-#define IXP_NOTAG    (unsigned short)~0U        /* Dummy tag */
-#define IXP_NOFID    (unsigned int)~0   /* No auth */
+#define IXP_NOTAG    (unsigned short)~0U        /*Dummy tag */
+#define IXP_NOFID    (unsigned int)~0   /*No auth */
 
 typedef struct {
     unsigned char type;
@@ -147,7 +147,7 @@ typedef struct {
     unsigned long long path;
 } Qid;
 
-/* stat structure */
+/*stat structure */
 typedef struct {
     unsigned short type;
     unsigned int dev;
@@ -166,55 +166,47 @@ typedef struct {
     unsigned char id;
     unsigned short tag;
     unsigned int fid;
-    unsigned int maxmsg;        /* Tversion, Rversion */
-    char version[IXP_MAX_VERSION];      /* Tversion, Rversion */
-    unsigned short oldtag;      /* Tflush */
-    char errstr[IXP_MAX_ERROR]; /* Rerror */
-    Qid qid;                    /* Rattach, Ropen, Rcreate */
-    unsigned int iounit;        /* Ropen, Rcreate */
-    Qid aqid;                   /* Rauth */
-    unsigned int afid;          /* Tauth, Tattach */
-    char uname[IXP_MAX_ULEN];   /* Tauth, Tattach */
-    char aname[IXP_MAX_FLEN];   /* Tauth, Tattach */
-    unsigned int perm;          /* Tcreate */
-    char name[IXP_MAX_FLEN];    /* Tcreate */
-    unsigned char mode;         /* Tcreate, Topen */
-    unsigned int newfid;        /* Twalk */
-    unsigned short nwname;      /* Twalk */
-    char wname[IXP_MAX_WELEM][IXP_MAX_FLEN]; /* Twalk */
-    unsigned short nwqid;       /* Rwalk */
-    Qid wqid[IXP_MAX_WELEM];    /* Rwalk */
-    unsigned long long offset;  /* Tread, Twrite */
-    unsigned int count;         /* Tread, Twrite, Rread */
-    Stat stat;                  /* Rstat */
-    unsigned short nstat;       /* Twstat, Rstat */
-    unsigned char data[IXP_MAX_MSG];    /* Twrite, Rread, Twstat,
-                                         * Rstat */
+    unsigned int maxmsg;        /*Tversion, Rversion */
+    char version[IXP_MAX_VERSION];      /*Tversion, Rversion */
+    unsigned short oldtag;      /*Tflush */
+    char errstr[IXP_MAX_ERROR]; /*Rerror */
+    Qid qid;                    /*Rattach, Ropen, Rcreate */
+    unsigned int iounit;        /*Ropen, Rcreate */
+    Qid aqid;                   /*Rauth */
+    unsigned int afid;          /*Tauth, Tattach */
+    char uname[IXP_MAX_ULEN];   /*Tauth, Tattach */
+    char aname[IXP_MAX_FLEN];   /*Tauth, Tattach */
+    unsigned int perm;          /*Tcreate */
+    char name[IXP_MAX_FLEN];    /*Tcreate */
+    unsigned char mode;         /*Tcreate, Topen */
+    unsigned int newfid;        /*Twalk */
+    unsigned short nwname;      /*Twalk */
+    char wname[IXP_MAX_WELEM][IXP_MAX_FLEN]; /*Twalk */
+    unsigned short nwqid;       /*Rwalk */
+    Qid wqid[IXP_MAX_WELEM];    /*Rwalk */
+    unsigned long long offset;  /*Tread, Twrite */
+    unsigned int count;         /*Tread, Twrite, Rread */
+    Stat stat;                  /*Rstat */
+    unsigned short nstat;       /*Twstat, Rstat */
+    unsigned char data[IXP_MAX_MSG];    /*Twrite, Rread, Twstat,
+                                         *Rstat */
 } Fcall;
 
 typedef struct IXPServer IXPServer;
 typedef struct IXPConn IXPConn;
-typedef struct {
-    unsigned char id;
-    int (*tfunc) (IXPServer *, IXPConn *);
-} IXPTFunc;
 
 struct IXPConn {
     int fd;
-	int dont_close;
     void (*read) (IXPServer *, IXPConn *);
+    void (*close) (IXPServer *, IXPConn *);
     void *aux;
 };
 
 struct IXPServer {
     int running;
     IXPConn conn[IXP_MAX_CONN];
-    void (*freeconn) (IXPServer *, IXPConn *);
     int maxfd;
     fd_set rd;
-    IXPTFunc *funcs;
-    Fcall fcall;
-    char *errstr;
 };
 
 typedef struct {
@@ -226,21 +218,21 @@ typedef struct {
 } IXPClient;
 
 /* client.c */
-int ixp_client_init(IXPClient * c, char *address);
-void ixp_client_deinit(IXPClient * c);
-int ixp_client_remove(IXPClient * c, unsigned int newfid, char *filepath);
-int ixp_client_create(IXPClient * c, unsigned int dirfid, char *name,
+int ixp_client_init(IXPClient *c, char *address);
+void ixp_client_deinit(IXPClient *c);
+int ixp_client_remove(IXPClient *c, unsigned int newfid, char *filepath);
+int ixp_client_create(IXPClient *c, unsigned int dirfid, char *name,
                       unsigned int perm, unsigned char mode);
-int ixp_client_walk(IXPClient * c, unsigned int newfid, char *filepath);
-int ixp_client_open(IXPClient * c, unsigned int newfid, char *filepath,
+int ixp_client_walk(IXPClient *c, unsigned int newfid, char *filepath);
+int ixp_client_open(IXPClient *c, unsigned int newfid, char *filepath,
                     unsigned char mode);
-int ixp_client_read(IXPClient * c, unsigned int fid,
+int ixp_client_read(IXPClient *c, unsigned int fid,
                     unsigned long long offset, void *result,
                     unsigned int res_len);
-int ixp_client_write(IXPClient * c, unsigned int fid,
+int ixp_client_write(IXPClient *c, unsigned int fid,
                      unsigned long long offset,
                      unsigned int count, unsigned char *data);
-int ixp_client_close(IXPClient * c, unsigned int fid);
+int ixp_client_close(IXPClient *c, unsigned int fid);
 
 /* convert.c */
 void *ixp_enc_u8(unsigned char *msg, unsigned char val);
@@ -262,26 +254,24 @@ void *ixp_enc_prefix(unsigned char *msg, unsigned int size,
                      unsigned char id, unsigned short tag);
 void *ixp_dec_prefix(unsigned char *msg, unsigned int *size,
                      unsigned char *id, unsigned short *tag);
-void *ixp_enc_qid(unsigned char *msg, Qid * qid);
-void *ixp_dec_qid(unsigned char *msg, Qid * qid);
-void *ixp_enc_stat(unsigned char *msg, Stat * stat);
-void *ixp_dec_stat(unsigned char *msg, Stat * stat);
+void *ixp_enc_qid(unsigned char *msg, Qid *qid);
+void *ixp_dec_qid(unsigned char *msg, Qid *qid);
+void *ixp_enc_stat(unsigned char *msg, Stat *stat);
+void *ixp_dec_stat(unsigned char *msg, Stat *stat);
 
 /* message.c */
-unsigned short ixp_sizeof_stat(Stat * stat);
-unsigned int ixp_fcall_to_msg(Fcall * fcall, void *msg,
+unsigned short ixp_sizeof_stat(Stat *stat);
+unsigned int ixp_fcall_to_msg(Fcall *fcall, void *msg,
                               unsigned int msglen);
 unsigned int ixp_msg_to_fcall(void *msg, unsigned int msglen,
-                              Fcall * fcall);
+                              Fcall *fcall);
 
 /* server.c */
-IXPConn *ixp_server_add_conn(IXPServer * s, int fd, int dont_close,
-                             void (*read) (IXPServer *, IXPConn *));
-void ixp_server_rm_conn(IXPServer * s, IXPConn * c);
-void ixp_server_loop(IXPServer * s);
-int ixp_server_init(IXPServer * s, char *address, IXPTFunc * funcs,
-                    void (*freeconn) (IXPServer *, IXPConn *));
-void ixp_server_deinit(IXPServer * s);
+IXPConn *ixp_server_alloc_conn(IXPServer *s);
+void ixp_server_free_conn(IXPServer *s, IXPConn *c);
+char *ixp_server_loop(IXPServer *s);
+void ixp_server_init(IXPServer *s);
+void ixp_server_deinit(IXPServer *s);
 
 /* socket.c */
 int ixp_connect_sock(char *address);
