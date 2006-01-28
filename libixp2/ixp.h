@@ -202,7 +202,6 @@ typedef struct {
 struct IXPConn {
     int fd;
     int dont_close;
-	void *retry;
 	unsigned int size;
     void (*read) (IXPServer *, IXPConn *);
     void *aux;
@@ -279,7 +278,6 @@ unsigned int ixp_msg_to_fcall(void *msg, unsigned int msglen,
 /* server.c */
 IXPConn *ixp_server_add_conn(IXPServer * s, int fd, int dont_close,
                              void (*read) (IXPServer *, IXPConn *));
-int ixp_server_tversion(IXPServer *, IXPConn * c);
 void ixp_server_rm_conn(IXPServer * s, IXPConn * c);
 void ixp_server_loop(IXPServer * s);
 int ixp_server_init(IXPServer * s, char *address, IXPTFunc * funcs,

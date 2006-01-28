@@ -258,6 +258,18 @@ mkqid(Qid *dir, char *wname, Qid *new)
 }
 
 static int
+xversion(IXPServer *s, IXPConn * c)
+{
+    if(strncmp(s->fcall.version, IXP_VERSION, strlen(IXP_VERSION))) {
+        s->errstr = "9P versions differ";
+        return -1;
+    } else if(s->fcall.maxmsg > IXP_MAX_MSG)
+        s->fcall.maxmsg = IXP_MAX_MSG;
+    s->fcall.id = RVERSION;
+    return 0;
+}
+
+static int
 xattach(IXPServer *s, IXPConn *c)
 {
     Map *maps = c->aux;
@@ -619,7 +631,7 @@ freeconn(IXPServer *s, IXPConn *c)
 }
 
 static IXPTFunc funcs[] = {
-    {TVERSION, ixp_server_tversion},
+    {TVERSION, xversion},
     {TATTACH, xattach},
     {TWALK, xwalk},
 	{TREMOVE, xremove},
