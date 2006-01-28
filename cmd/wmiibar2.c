@@ -122,6 +122,9 @@ new_item()
 		free(tmp);
 	}
 	item[nitem++] = cext_emallocz(sizeof(Item));
+	if(nitem > 1)
+		cext_strlcpy(item[nitem - 1]->color, item[0]->color,
+					 sizeof(item[nitem - 1]->color));
 }
 
 void
@@ -410,7 +413,7 @@ xread(IXPReq *r)
 			if(i > nitem)
 				goto error_xread;
 			if(!i) {
-				r->fcall->count = mkstat(&stat, &root_qid, "color", 24, DMREAD | DMWRITE);
+				r->fcall->count = mkstat(&stat, &root_qid, "color", strlen(item[0]->color), DMREAD | DMWRITE);
 				p = ixp_enc_stat(p, &stat);
 				break;
 			}
@@ -418,7 +421,7 @@ xread(IXPReq *r)
 				if(i == nitem)
 					new_item();
 				Qid dir = {IXP_QTDIR, 0, mkqpath(Ditem, i)};
-				r->fcall->count = mkstat(&stat, &dir, "color", 24, DMREAD | DMWRITE);
+				r->fcall->count = mkstat(&stat, &dir, "color", strlen(item[i]->color), DMREAD | DMWRITE);
 				p = ixp_enc_stat(p, &stat);
 				r->fcall->count += mkstat(&stat, &dir, "data", strlen(item[i]->data), DMREAD | DMWRITE);
 				p = ixp_enc_stat(p, &stat);
@@ -486,6 +489,7 @@ xstat(IXPReq *r)
         errstr = "invalid fid";
         return -1;
     }
+   	i = qpath_item(m->qid.path);
    	dir.version = 0;
 	dir.type = IXP_QTDIR;
 	dir.path = mkqpath(Ditem, i);
@@ -508,10 +512,14 @@ xstat(IXPReq *r)
 		mkstat(&r->fcall->stat, &root_qid, qid_to_name(&m->qid), strlen(font), DMREAD | DMWRITE);
         break;
     case Fdata:
+		if(i == nitem)
+			i = 0;
 		mkstat(&r->fcall->stat, &dir, qid_to_name(&m->qid), strlen(item[i]->data), DMREAD | DMWRITE);
 		break;	
     case Fcolor:
-		mkstat(&r->fcall->stat, &dir, qid_to_name(&m->qid), 24, DMREAD | DMWRITE);
+		if(i == nitem)
+			i = 0;
+		mkstat(&r->fcall->stat, &dir, qid_to_name(&m->qid), strlen(item[i]->color), DMREAD | DMWRITE);
 		break;
     default:
 		errstr = "invalid stat request";
@@ -569,7 +577,9 @@ xwrite(IXPReq *r)
 	case Fcolor:
 		if(i == nitem)
 			new_item();
-		if((i >= nitem) || (r->fcall->count >= 24))
+		if((i >= nitem) || (r->fcall->count != 24))
+			goto error_xwrite;
+		if(r->fcall->data[0] != '#' || r->fcall->data[8] != '#' || r->fcall->data[16] != '#')
 			goto error_xwrite;
 		memcpy(item[i]->color, r->fcall->data, r->fcall->count);
 		item[i]->color[r->fcall->count] = 0;
@@ -717,6 +727,7 @@ main(int argc, char *argv[])
 
     /* default item settings */
 	new_item();
+	cext_strlcpy(item[0]->color, "#000000 #ffffff #ffffff", sizeof(item[0]->color));
 
     font = strdup("fixed");
 

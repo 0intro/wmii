@@ -300,7 +300,5 @@ int ixp_accept_sock(int fd);
 int ixp_create_sock(char *address, char **errstr);
 
 /* transport.c */
-unsigned int ixp_send_message(int fd, void *msg, unsigned int msize,
-                              char **errstr);
-unsigned int ixp_recv_message(int fd, void *msg, unsigned int msglen,
-                              char **errstr);
+unsigned int ixp_send_message(int fd, void *msg, unsigned int msize, char **errstr);
+unsigned int ixp_recv_message(int fd, void *msg, unsigned int msglen, char **errstr);
