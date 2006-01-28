@@ -345,6 +345,27 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 }
 
 static int
+xremove(IXPServer *s, IXPConn *c)
+{
+    Map *map = fid_to_map(c->aux, s->fcall.fid);
+	unsigned short i;
+
+    if(!map) {
+        s->errstr = "invalid fid";
+        return -1;
+    }
+	i = qpath_item(map->qid.path);
+    s->fcall.id = RREMOVE;
+	if((qpath_type(map->qid.path) == Ditem) && i && (i < nitem)) {
+		Item *it = item[i];
+		detach_item(it);
+		free(it);
+		return 0;
+	}
+	return -1;
+}
+
+static int
 xread(IXPServer *s, IXPConn *c)
 {
 	Stat stat;
@@ -595,6 +616,7 @@ static IXPTFunc funcs[] = {
     {TVERSION, ixp_server_tversion},
     {TATTACH, xattach},
     {TWALK, xwalk},
+	{TREMOVE, xremove},
     {TOPEN, xopen},
     {TREAD, xread},
     {TWRITE, xwrite},
