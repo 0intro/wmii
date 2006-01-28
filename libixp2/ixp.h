@@ -100,12 +100,17 @@ enum {
     RWSTAT,
 };
 
+/* borrowed from libc.h of Plan 9 */
 #define DMDIR		0x80000000	/* mode bit for directories */
 #define DMAPPEND	0x40000000	/* mode bit for append only files */
 #define DMEXCL		0x20000000	/* mode bit for exclusive use files */
 #define DMMOUNT		0x10000000	/* mode bit for mounted channel */
 #define DMAUTH		0x08000000	/* mode bit for authentication file */
 #define DMTMP		0x04000000	/* mode bit for non-backed-up file */
+
+#define DMREAD		0x4<<6		/* mode bit for read permission */
+#define DMWRITE		0x2<<6		/* mode bit for write permission */
+#define DMEXEC		0x1<<6		/* mode bit for execute permission */
 
 /* modes */
 enum {

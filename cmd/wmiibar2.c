@@ -221,6 +221,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 {
     const char *errstr;
 	int type = name_to_type(wname);
+	unsigned short i = qpath_item(dir->path);
 
     if((dir->type != IXP_QTDIR) || (type == -1))
         return -1;
@@ -244,9 +245,13 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			new->path = mkqpath(Ditem, i);
 		}
 		break;
+	case Fcolor:
+	case Fdata:
+		if(!i || i > nitem)
+			return -1;
 	default:
 		new->type = IXP_QTFILE;
-    	new->path = mkqpath(type, qpath_item(dir->path));
+    	new->path = mkqpath(type, i);
 		break;
 	}
     return 0;
@@ -332,7 +337,7 @@ xopen(IXPServer *s, IXPConn *c)
 static unsigned int
 mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int mode)
 {
-    stat->mode = 0xfff | mode; /* --rwxrwxrwx */
+    stat->mode = mode;
     stat->atime = stat->mtime = time(0);
     cext_strlcpy(stat->uid, getenv("USER"), sizeof(stat->uid));
     cext_strlcpy(stat->gid, getenv("USER"), sizeof(stat->gid));
@@ -362,6 +367,7 @@ xremove(IXPServer *s, IXPConn *c)
 		free(it);
 		return 0;
 	}
+	s->errstr = "permission denied";
 	return -1;
 }
 
@@ -385,21 +391,21 @@ xread(IXPServer *s, IXPConn *c)
 		switch (qpath_type(map->qid.path)) {
 		case Droot:
 			if(align == SOUTH || align == NORTH)
-				s->fcall.count = mkstat(&stat, &root_qid, "display", 6, 0x0);
+				s->fcall.count = mkstat(&stat, &root_qid, "display", 6, DMREAD | DMWRITE);
 			else
-				s->fcall.count = mkstat(&stat, &root_qid, "display", 5, 0x0); /* none */
+				s->fcall.count = mkstat(&stat, &root_qid, "display", 5, DMREAD | DMWRITE); /* none */
 			p = ixp_enc_stat(p, &stat);
-			s->fcall.count += mkstat(&stat, &root_qid, "font", strlen(font), 0x0);
+			s->fcall.count += mkstat(&stat, &root_qid, "font", strlen(font), DMREAD | DMWRITE);
 			p = ixp_enc_stat(p, &stat);
-			s->fcall.count += mkstat(&stat, &root_qid, "new", 0, DMDIR);
+			s->fcall.count += mkstat(&stat, &root_qid, "new", 0, DMDIR | DMREAD | DMEXEC);
 			p = ixp_enc_stat(p, &stat);
-			s->fcall.count += mkstat(&stat, &root_qid, "event", 0, 0x0);
+			s->fcall.count += mkstat(&stat, &root_qid, "event", 0, DMREAD);
 			p = ixp_enc_stat(p, &stat);
-			s->fcall.count += mkstat(&stat, &root_qid, "default", 0, DMDIR);
+			s->fcall.count += mkstat(&stat, &root_qid, "default", 0, DMDIR | DMREAD | DMEXEC);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 1; i < nitem; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				s->fcall.count += mkstat(&stat, &root_qid, buf, 0, DMDIR);
+				s->fcall.count += mkstat(&stat, &root_qid, buf, 0, DMDIR | DMREAD | DMEXEC);
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
@@ -407,7 +413,7 @@ xread(IXPServer *s, IXPConn *c)
 			if(i > nitem)
 				goto error_xread;
 			if(!i) {
-				s->fcall.count = mkstat(&stat, &root_qid, "color", 24, 0x0);
+				s->fcall.count = mkstat(&stat, &root_qid, "color", 24, DMREAD | DMWRITE);
 				p = ixp_enc_stat(p, &stat);
 				break;
 			}
@@ -415,9 +421,9 @@ xread(IXPServer *s, IXPConn *c)
 				if(i == nitem)
 					new_item();
 				Qid dir = {IXP_QTDIR, 0, mkqpath(Ditem, i)};
-				s->fcall.count = mkstat(&stat, &dir, "color", 24, 0x0);
+				s->fcall.count = mkstat(&stat, &dir, "color", 24, DMREAD | DMWRITE);
 				p = ixp_enc_stat(p, &stat);
-				s->fcall.count += mkstat(&stat, &dir, "data", strlen(item[i]->data), 0x0);
+				s->fcall.count += mkstat(&stat, &dir, "data", strlen(item[i]->data), DMREAD | DMWRITE);
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
@@ -489,25 +495,25 @@ xstat(IXPServer *s, IXPConn *c)
     switch (qpath_type(map->qid.path)) {
     case Droot:
     case Ditem:
-		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, DMDIR);
+		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case Fdisplay:
 		if(align == SOUTH || align == NORTH)
-			mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 6, 0x0);
+			mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 6, DMREAD | DMWRITE);
 		else
-			mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 5, 0x0);
+			mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 5, DMREAD | DMWRITE);
 		break;
     case Fevent:
-		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, 0x0);
+		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), 0, DMREAD);
 		break;
     case Ffont:
-		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), strlen(font), 0x0);
+		mkstat(&s->fcall.stat, &root_qid, qid_to_name(&map->qid), strlen(font), DMREAD | DMWRITE);
         break;
     case Fdata:
-		mkstat(&s->fcall.stat, &dir, qid_to_name(&map->qid), strlen(item[i]->data), 0x0);
+		mkstat(&s->fcall.stat, &dir, qid_to_name(&map->qid), strlen(item[i]->data), DMREAD | DMWRITE);
 		break;	
     case Fcolor:
-		mkstat(&s->fcall.stat, &dir, qid_to_name(&map->qid), 24, 0x0);
+		mkstat(&s->fcall.stat, &dir, qid_to_name(&map->qid), 24, DMREAD | DMWRITE);
 		break;
     default:
 		s->errstr = "invalid stat request";
