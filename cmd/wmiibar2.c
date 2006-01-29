@@ -39,6 +39,7 @@
 enum {                          
     Droot,
     Ditem,
+	Fctl,
     Fdisplay,
     Ffont,
     Fevent,
@@ -53,6 +54,13 @@ typedef struct {
     unsigned long fg;
     unsigned long border;
 } Item;
+
+static char E9pversion[] = "9P versions differ";
+static char Enoperm[] = "permission denied";
+static char Enofid[] = "invalid fid";
+static char Enofile[] = "file not found";
+static char Enomode[] = "mode not supported";
+static char Enofunc[] = "function not supported";
 
 static unsigned char *msg[IXP_MAX_MSG];
 char *errstr = 0;
@@ -173,6 +181,7 @@ qid_to_name(Qid *qid)
 			snprintf(buf, sizeof(buf), "%u", i);
 			return buf;
 			break;
+		case Fctl: return "ctl"; break;
 		case Fdisplay: return "display"; break;
 		case Ffont: return "font"; break;
 		case Fdata: return "data"; break;
@@ -191,6 +200,8 @@ name_to_type(char *name)
 		return Droot;
 	if(!strncmp(name, "default", 8) || !strncmp(name, "new", 4))
 		return Ditem;
+	if(!strncmp(name, "ctl", 4))
+		return Fctl;
 	if(!strncmp(name, "display", 8))
 		return Fdisplay;
 	if(!strncmp(name, "font", 5))
@@ -254,7 +265,7 @@ static int
 xversion(IXPReq *r)
 {
     if(strncmp(r->fcall->version, IXP_VERSION, strlen(IXP_VERSION))) {
-        errstr = "9P versions differ";
+        errstr = E9pversion;
         return -1;
     } else if(r->fcall->maxmsg > IXP_MAX_MSG)
         r->fcall->maxmsg = IXP_MAX_MSG;
@@ -282,12 +293,12 @@ xwalk(IXPReq *r)
     IXPMap *m;
 
     if(!(m = ixp_server_fid2map(r, r->fcall->fid))) {
-        errstr = "no dir associated with fid";
+        errstr = Enofid;
         return -1;
     }
     if(r->fcall->fid != r->fcall->newfid
        && (ixp_server_fid2map(r, r->fcall->newfid))) {
-        errstr = "fid alreay in use";
+        errstr = Enofid;
         return -1;
     }
     if(r->fcall->nwname) {
@@ -296,7 +307,7 @@ xwalk(IXPReq *r)
             && !mkqid(&dir, r->fcall->wname[nwqid], &r->fcall->wqid[nwqid]); nwqid++)
             dir = r->fcall->wqid[nwqid];
         if(!nwqid) {
-            errstr = "file not found";
+            errstr = Enofile;
             return -1;
         }
     }
@@ -320,12 +331,11 @@ xopen(IXPReq *r)
     IXPMap *m = ixp_server_fid2map(r, r->fcall->fid);
 
     if(!m) {
-        errstr = "invalid fid";
+        errstr = Enofid;
         return -1;
     }
     if(!(r->fcall->mode | IXP_OREAD) && !(r->fcall->mode | IXP_OWRITE)) {
-		fprintf(stderr, "got mode 0x%x\n", r->fcall->mode);
-        errstr = "mode not supported";
+        errstr = Enomode;
         return -1;
     }
     r->fcall->id = ROPEN;
@@ -357,7 +367,7 @@ xremove(IXPReq *r)
 	unsigned short i;
 
     if(!m) {
-        errstr = "invalid fid";
+        errstr = Enofid;
         return -1;
     }
 	i = qpath_item(m->qid.path);
@@ -368,7 +378,7 @@ xremove(IXPReq *r)
     	r->fcall->id = RREMOVE;
 		return 0;
 	}
-	errstr = "permission denied";
+	errstr = Enoperm;
 	return -1;
 }
 
@@ -382,7 +392,7 @@ xread(IXPReq *r)
 	char buf[32];
 
     if(!m) {
-        errstr = "invalid fid";
+        errstr = Enofid;
         return -1;
     }
 	i = qpath_item(m->qid.path);
@@ -390,10 +400,12 @@ xread(IXPReq *r)
 	if(!r->fcall->offset) {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
+			r->fcall->count = mkstat(&stat, &root_qid, "ctl", 0, DMWRITE);
+			p = ixp_enc_stat(p, &stat);
 			if(align == SOUTH || align == NORTH)
-				r->fcall->count = mkstat(&stat, &root_qid, "display", 6, DMREAD | DMWRITE);
+				r->fcall->count += mkstat(&stat, &root_qid, "display", 6, DMREAD | DMWRITE);
 			else
-				r->fcall->count = mkstat(&stat, &root_qid, "display", 5, DMREAD | DMWRITE); /* none */
+				r->fcall->count += mkstat(&stat, &root_qid, "display", 5, DMREAD | DMWRITE); /* none */
 			p = ixp_enc_stat(p, &stat);
 			r->fcall->count += mkstat(&stat, &root_qid, "font", strlen(font), DMREAD | DMWRITE);
 			p = ixp_enc_stat(p, &stat);
@@ -426,6 +438,9 @@ xread(IXPReq *r)
 				r->fcall->count += mkstat(&stat, &dir, "data", strlen(item[i]->data), DMREAD | DMWRITE);
 				p = ixp_enc_stat(p, &stat);
 			}
+			break;
+		case Fctl:
+			errstr = Enoperm;
 			break;
 		case Fdisplay:
 			switch(align) {
@@ -469,7 +484,8 @@ xread(IXPReq *r)
 			break;
 		default:
 error_xread:
-            errstr = "invalid read request";
+			if(!errstr)
+				errstr = "invalid read";
 			return -1;
 			break;
 		}
@@ -486,7 +502,7 @@ xstat(IXPReq *r)
 	Qid dir;
 
     if(!m) {
-        errstr = "invalid fid";
+        errstr = Enofid;
         return -1;
     }
    	i = qpath_item(m->qid.path);
@@ -522,7 +538,8 @@ xstat(IXPReq *r)
 		mkstat(&r->fcall->stat, &dir, qid_to_name(&m->qid), strlen(item[i]->color), DMREAD | DMWRITE);
 		break;
     default:
-		errstr = "invalid stat request";
+		if(!errstr)
+			errstr = "invalid stat";
 		return -1;
 		break;
     }
@@ -538,7 +555,7 @@ xwrite(IXPReq *r)
 	unsigned short i;
 
     if(!m) {
-        errstr = "invalid fid";
+        errstr = Enofid;
         return -1;
     }
 
@@ -577,17 +594,20 @@ xwrite(IXPReq *r)
 	case Fcolor:
 		if(i == nitem)
 			new_item();
-		if((i >= nitem) || (r->fcall->count != 24))
+		if((i >= nitem) || (r->fcall->count != 24)
+			|| (r->fcall->data[0] != '#') || (r->fcall->data[8] != '#')
+		    || (r->fcall->data[16] != '#')) {
+			errstr = "wrong color format";
 			goto error_xwrite;
-		if(r->fcall->data[0] != '#' || r->fcall->data[8] != '#' || r->fcall->data[16] != '#')
-			goto error_xwrite;
+		}
 		memcpy(item[i]->color, r->fcall->data, r->fcall->count);
 		item[i]->color[r->fcall->count] = 0;
 		/* TODO: update color */
 		break;
 	default:
 error_xwrite:
-		errstr = "invalid write request";
+		if(!errstr)
+			errstr = "invalid write";
 		return -1;
 		break;
 	}
@@ -601,32 +621,13 @@ xclunk(IXPReq *r)
     IXPMap *m = ixp_server_fid2map(r, r->fcall->fid);
 
     if(!m) {
-        errstr = "invalid fid";
+        errstr = Enofid;
         return -1;
     }
 	ixp_server_detach_map(m, r->map);
     free(m);
     r->fcall->id = RCLUNK;
     return 0;
-}
-
-static int 
-doixp(IXPReq *r)
-{
-	switch(r->fcall->id) {
-	case TVERSION: return xversion(r); break;
-	case TATTACH: return xattach(r); break;
-	case TWALK: return xwalk(r); break;
-	case TREMOVE: return xremove(r); break;
-	case TOPEN: return xopen(r); break;
-	case TREAD: return xread(r); break;
-	case TWRITE: return xwrite(r); break;
-	case TCLUNK: return xclunk(r); break;
-	case TSTAT: return xstat(r); break;
-	default:
-		break;
-	}
-	return -1;
 }
 
 static void
@@ -642,11 +643,24 @@ handle_ixp_req(IXPServer *s, IXPConn *c)
 	}
 	if(!r->fcall)
 		r->fcall = cext_emallocz(sizeof(Fcall));
-    if((msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, r->fcall)))
-		ret = doixp(r);
+    if((msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, r->fcall))) {
+		switch(r->fcall->id) {
+		case TVERSION: ret = xversion(r); break;
+		case TATTACH: ret = xattach(r); break;
+		case TWALK: ret = xwalk(r); break;
+		case TREMOVE: ret = xremove(r); break;
+		case TOPEN: ret = xopen(r); break;
+		case TREAD: ret = xread(r); break;
+		case TWRITE: ret = xwrite(r); break;
+		case TCLUNK: ret = xclunk(r); break;
+		case TSTAT: ret = xstat(r); break;
+		default:
+			break;
+		}
+	}
 	if(ret == -1) {
 		if(!errstr)
-			errstr = "function not supported";
+			errstr = Enofunc;
 		r->fcall->id = RERROR;
 		cext_strlcpy(r->fcall->errstr, errstr, sizeof(r->fcall->errstr));
 	}
@@ -729,7 +743,7 @@ main(int argc, char *argv[])
 	new_item();
 	cext_strlcpy(item[0]->color, BLITZ_SEL_COLOR, sizeof(item[0]->color));
 
-    font = strdup("fixed");
+    font = strdup(BLITZ_FONT);
 
     if((errstr = ixp_server_loop(&srv))) {
         fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
