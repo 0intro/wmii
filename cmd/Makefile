@@ -33,7 +33,7 @@ OBJ_plumb = ${SRC_plumb:.c=.o}
 SRC_warp = wmiiwarp.c
 OBJ_warp = ${SRC_warp:.c=.o}
 
-all: wmiibar wmiibar2 wmiimenu wmiir wmiir2 wmiifs wmiikeys wmiiplumb wmiiwarp
+all: wmiibar wmiimenu wmiir wmiir2 wmiifs wmiikeys wmiiplumb wmiiwarp
 	@echo built wmii commands
 
 .c.o:
