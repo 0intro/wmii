@@ -209,6 +209,11 @@ struct IXPServer {
     fd_set rd;
 };
 
+/************* begin: this should be moved to libwmii ****************/
+/* once all tools are independent from old libixp, there won;t be any
+ * conflicts in libwmii with this stuff
+ */
+
 typedef struct IXPMap IXPMap;
 struct IXPMap {
 	unsigned int fid;
@@ -223,6 +228,15 @@ typedef struct {
 	size_t asyncsz;
 } IXPReq;
 
+/* server.c */
+Fcall ** ixp_server_attach_fcall(Fcall *f, Fcall **array, size_t *size);
+void ixp_server_detach_fcall(Fcall *f, Fcall **array);
+IXPMap ** ixp_server_attach_map(IXPMap *m, IXPMap **array, size_t *size);
+void ixp_server_detach_map(IXPMap *m, IXPMap **array);
+IXPMap * ixp_server_fid2map(IXPReq *r, unsigned int fid);
+void ixp_server_close_conn(IXPServer *s, IXPConn *c);
+
+/************* end: this should be moved to libwmii ****************/
 
 typedef struct {
     int fd;
@@ -287,12 +301,6 @@ void ixp_server_free_conn(IXPServer *s, IXPConn *c);
 char *ixp_server_loop(IXPServer *s);
 void ixp_server_init(IXPServer *s);
 void ixp_server_deinit(IXPServer *s);
-Fcall ** ixp_server_attach_fcall(Fcall *f, Fcall **array, size_t *size);
-void ixp_server_detach_fcall(Fcall *f, Fcall **array);
-IXPMap ** ixp_server_attach_map(IXPMap *m, IXPMap **array, size_t *size);
-void ixp_server_detach_map(IXPMap *m, IXPMap **array);
-IXPMap * ixp_server_fid2map(IXPReq *r, unsigned int fid);
-void ixp_server_close_conn(IXPServer *s, IXPConn *c);
 
 /* socket.c */
 int ixp_connect_sock(char *address);
