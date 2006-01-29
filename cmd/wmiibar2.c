@@ -128,7 +128,7 @@ new_item()
 					 sizeof(item[nitem - 1]->color));
 }
 
-void
+static void
 detach_item(Item *it)
 {
 	size_t i;
@@ -138,6 +138,10 @@ detach_item(Item *it)
 	item[i] = nil;
 	nitem--;
 }
+
+
+/* IXP stuff */
+
 
 static unsigned long long
 mkqpath(unsigned char type, unsigned short item)
@@ -333,8 +337,8 @@ xopen(IXPReq *r)
     }
     r->fcall->id = ROPEN;
     r->fcall->qid = m->qid;
-    r->fcall->iounit =
-        r->fcall->maxmsg - (sizeof(unsigned char) + sizeof(unsigned short) + 2 * sizeof(unsigned int));
+    r->fcall->iounit = r->fcall->maxmsg
+		- (sizeof(unsigned char) + sizeof(unsigned short) + 2 * sizeof(unsigned int));
     return 0;
 }
 
@@ -377,17 +381,20 @@ type_to_stat(Stat *stat, char *name, unsigned short i)
 		return mkstat(stat, &root_qid, name, 0, DMREAD);
 		break;
     case Ffont:
-		return mkstat(stat, &root_qid, name, strlen(font), DMREAD | DMWRITE);
+		return mkstat(stat, &root_qid, name, strlen(font),
+						DMREAD | DMWRITE);
         break;
     case Fdata:
 		if(i == nitem)
 			i = 0;
-		return mkstat(stat, &dir, name, strlen(item[i]->data), DMREAD | DMWRITE);
+		return mkstat(stat, &dir, name, strlen(item[i]->data),
+						DMREAD | DMWRITE);
 		break;	
     case Fcolor:
 		if(i == nitem)
 			i = 0;
-		return mkstat(stat, &dir, name, strlen(item[i]->color), DMREAD | DMWRITE);
+		return mkstat(stat, &dir, name, strlen(item[i]->color),
+						DMREAD | DMWRITE);
 		break;
     default:
 		fprintf(stderr, "'%s'\n", name);
@@ -697,6 +704,9 @@ new_ixp_conn(IXPServer *s, IXPConn *c)
 		new->aux = cext_emallocz(sizeof(IXPReq));
 	}
 }
+
+
+/* main */
 
 int
 main(int argc, char *argv[])
