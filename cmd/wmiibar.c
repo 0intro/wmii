@@ -1003,10 +1003,8 @@ main(int argc, char *argv[])
     XSetErrorHandler(dummy_error_handler);
     screen_num = DefaultScreen(dpy);
 
-    if(!address) {
-		fprintf(stderr, "%s\n", "wmiibar: no socket address provided");
-		exit(1);
-	}
+    if(!address)
+		usage();
 	i = ixp_create_sock(address, &errstr);
 	if(i < 0) {
         fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
