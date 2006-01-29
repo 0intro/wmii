@@ -86,6 +86,8 @@ static Window win;
 static XRectangle brect, rect;
 static Pixmap pmap;
 
+static void do_pend_fcall(char *event);
+
 static char *version[] = {
     "wmiibar - window manager improved bar - " VERSION "\n"
         "  (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
@@ -141,42 +143,38 @@ draw()
     d.rect.y = 0;
 	d.font = xfont;
 
-	if(!iexpand)
-		iexpand = nitem - 1;
-
-    for(i = 1; i < nitem; i++) {
-		Item *it = item[i];
-        if(i != iexpand) {
-            it->rect.height = brect.height;
-            if(it->data) {
-                if(!strncmp(it->data, "%m:", 3))
-                    /* meter */
-                    it->rect.width = brect.height / 2;
-                else
-                    it->rect.width +=
-                        XTextWidth(xfont, it->data, strlen(it->data));
-            }
-            w += it->rect.width;
-        }
-    }
-	if(w > brect.width) {
-        /* failsafe mode, give all labels same width */
-        w = brect.width;
-	    if(nitem)
-			w /= nitem;
-        for(i = 0; i < nitem; i++)
-			item[i]->rect.width = w;
-		if(i)
-			item[i - 1]->rect.width = brect.width - item[i - 1]->rect.x;
-    } else
-		item[iexpand]->rect.width = brect.width - w;
-	if(nitem == 1) {
+	if(nitem == 1) { /* /default only */
 		d.fg = item[0]->fg;
 		d.bg = item[0]->bg;
 		d.border = item[0]->border;
 		blitz_drawlabel(dpy, &d);
 	}
 	else {
+		if(!iexpand)
+			iexpand = nitem - 1;
+		for(i = 1; i < nitem; i++) {
+			Item *it = item[i];
+			it->rect.x = it->rect.y = 0;
+			it->rect.width = it->rect.height = brect.height;
+			if(i == iexpand)
+		   		continue;
+			if(strlen(it->data)) {
+				if(!strncmp(it->data, "%m:", 3))
+					it->rect.width = brect.height / 2;
+				else
+					it->rect.width += XTextWidth(xfont, it->data, strlen(it->data));
+			}
+			w += it->rect.width;
+		}
+		if(w >= brect.width) {
+			/* failsafe mode, give all labels same width */
+			w = brect.width / nitem;
+			for(i = 1; i < nitem; i++)
+				item[i]->rect.width = w;
+			i--;
+			item[i]->rect.width = brect.width - ((i - 1) * w);
+		} else
+			item[iexpand]->rect.width = brect.width - w;
 		for(i = 1; i < nitem; i++) {
 			d.fg = item[i]->fg;
 			d.bg = item[i]->bg;
@@ -206,6 +204,7 @@ update_color(Item *it)
 static void
 update_geometry()
 {
+	char buf[64];
     brect = rect;
     brect.height = xfont->ascent + xfont->descent + 4;
     if(align == SOUTH)
@@ -216,7 +215,8 @@ update_geometry()
     pmap = XCreatePixmap(dpy, win, brect.width, brect.height,
 						 DefaultDepth(dpy, screen_num));
     XSync(dpy, False);
-	/* TODO: send event, if any consumers */
+	snprintf(buf, sizeof(buf), "NewGeometry %d %d %d %d", brect.x, brect.y, brect.width, brect.height);
+	do_pend_fcall(buf);
 	draw();
 }
 
@@ -224,9 +224,11 @@ static void
 handle_buttonpress(XButtonPressedEvent * e)
 {
 	size_t i;
+	char buf[32];
     for(i = 0; i < nitem; i++)
         if(blitz_ispointinrect(e->x, e->y, &item[i]->rect)) {
-			/* TODO: send event, if any consumers */
+			snprintf(buf, sizeof(buf), "Button%dPress %d", e->button, i);
+			do_pend_fcall(buf);
         }
 }
 
@@ -253,7 +255,6 @@ check_x_event(IXPServer *s, IXPConn *c)
 
 
 /* IXP stuff */
-
 
 static unsigned long long
 mkqpath(unsigned char type, unsigned short item)
@@ -521,7 +522,6 @@ type_to_stat(Stat *stat, char *name, unsigned short i)
 						DMREAD | DMWRITE);
 		break;
     default:
-		fprintf(stderr, "'%s'\n", name);
 		errstr = "invalid stat";
 		break;
     }
@@ -544,6 +544,8 @@ xremove(IXPConn *c)
 		detach_item(it);
 		free(it);
     	c->fcall->id = RREMOVE;
+		if(iexpand >= nitem)
+			iexpand = 0;
 		draw();
 		return 0;
 	}
@@ -638,7 +640,7 @@ xread(IXPConn *c)
 		memcpy(p, buf, c->fcall->count);
 		break;
 	case Fevent:
-		/* has to be processed asynchroneous, will be enqueued */
+    	c->fcall->id = TREAD;
 		return 1;
 		break;
 	case Fdata:
@@ -744,6 +746,7 @@ xwrite(IXPConn *c)
 				i = (unsigned short) cext_strtonum(buf, 1, 0xffff, &err);
 				if(i < nitem) {
 					iexpand = i;
+					draw();
 					break;
 				}
 			}
@@ -867,6 +870,38 @@ do_fcall(IXPServer *s, IXPConn *c)
 	msize = ixp_fcall_to_msg(c->fcall, msg, IXP_MAX_MSG);
 	if(ixp_send_message(c->fd, msg, msize, &errstr) != msize)
 		close_ixp_conn(s, c);
+}
+
+static void
+do_pend_fcall(char *event)
+{
+	size_t i, j;
+	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++) {
+		IXPConn *c = srv.conn[i];
+		for(j = 0; (j < c->pendsz) && c->pend[j]; j++) {
+			Fcall *fcall = c->pend[j];
+			if(fcall->id == TREAD) {
+				IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+				unsigned char *p = fcall->data;
+				unsigned int msize;
+
+				if(!m) {
+					errstr = Enofid;
+					fcall->id = RERROR;
+				}
+				else if(qpath_type(m->qid.path) == Fevent) {
+					fcall->count = strlen(event);
+					memcpy(p, event, fcall->count);
+					fcall->id = RREAD;
+				}
+				msize = ixp_fcall_to_msg(fcall, msg, IXP_MAX_MSG);
+				if(ixp_send_message(c->fd, msg, msize, &errstr) != msize) {
+					close_ixp_conn(&srv, c);
+					break;
+				}
+			}
+		}
+	}
 }
 
 static void
