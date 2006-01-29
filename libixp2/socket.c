@@ -132,7 +132,7 @@ create_inet_sock(char *host, char **errstr)
         return -1;
     }
 
-    if(listen(fd, IXP_MAX_CONN) < 0) {
+    if(listen(fd, IXP_MAX_CACHE) < 0) {
         *errstr = "cannot listen on socket";
         close(fd);
         return -1;
@@ -171,7 +171,7 @@ create_unix_sock(char *file, char **errstr)
     }
     chmod(file, S_IRWXU);
 
-    if(listen(fd, IXP_MAX_CONN) < 0) {
+    if(listen(fd, IXP_MAX_CACHE) < 0) {
         *errstr = "cannot listen on socket";
         close(fd);
         return -1;

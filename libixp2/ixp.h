@@ -12,7 +12,7 @@
 #define IXP_VERSION   	"9P2000"
 #define IXP_MAX_VERSION 32
 #define IXP_MAX_ERROR   128
-#define IXP_MAX_CONN  	32
+#define IXP_MAX_CACHE 	32
 #define IXP_MAX_MSG   	8192
 #define IXP_MAX_FLEN  	128
 #define IXP_MAX_ULEN  	32
