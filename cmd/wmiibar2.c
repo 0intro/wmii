@@ -26,8 +26,10 @@
  * / 					Droot
  * /display				Fdisplay	'north', 'south', 'none'
  * /font				Ffont		<xlib font name>
- * /new					Fnew 		returns id of new item
  * /event				Fevent
+ * /expand				Fexpand 	id of expandable label
+ * /ctl					Fctl 		command interface
+ * /new					Dnew 		returns content of new item
  * /default/ 			Ditem
  * /default/color		Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /1/					Ditem
@@ -42,6 +44,7 @@ enum {
 	Fctl,
     Fdisplay,
     Ffont,
+	Fexpand,
     Fevent,
     Fdata,                      /* data to display */
     Fcolor
@@ -50,9 +53,10 @@ enum {
 typedef struct {
     char data[256];
 	char color[24];
-    unsigned long bg;
     unsigned long fg;
+    unsigned long bg;
     unsigned long border;
+	XRectangle rect;
 } Item;
 
 static char E9pversion[] = "9P version not supported";
@@ -66,6 +70,7 @@ static unsigned char *msg[IXP_MAX_MSG];
 char *errstr = 0;
 static size_t nitem = 0;
 static size_t itemsz = 0;
+static size_t iexpand = 0;
 static Item **item = 0;
 static char *address = nil;
 static pid_t mypid = 0;
@@ -74,16 +79,12 @@ static Qid root_qid;
 static Display *dpy;
 static int screen_num;
 static char *font = nil;
-static Align align = SOUTH;
-/*
+static Align align = CENTER;
 static XFontStruct *xfont;
 static GC gc;
 static Window win;
-static XRectangle geom;
-static Pixm pm;
-
-static Draw zero_draw = { 0 };
-*/
+static XRectangle brect, rect;
+static Pixmap pmap;
 
 static char *version[] = {
     "wmiibar - window manager improved bar - " VERSION "\n"
@@ -109,34 +110,145 @@ dummy_error_handler(Display * dpy, XErrorEvent * err)
 static void
 new_item()
 {
-	size_t i;
-	if(!item) {
-		itemsz = 2;
-		item = cext_emallocz(sizeof(Item *) * itemsz);
+	Item *it = cext_emallocz(sizeof(Item));
+	if(nitem > 0) {
+		cext_strlcpy(it->color, item[0]->color, sizeof(it->color));
+		it->fg = item[0]->fg;
+		it->bg = item[0]->bg;
+		it->border = item[0]->border;
 	}
-	if(nitem + 1 >= itemsz) {
-		Item **tmp = item;
-		itemsz *= 2;
-		item = cext_emallocz(sizeof(Item *) * itemsz);
-		for(i = 0; tmp[i]; i++)
-			item[i] = tmp[i];
-		free(tmp);
-	}
-	item[nitem++] = cext_emallocz(sizeof(Item));
-	if(nitem > 1)
-		cext_strlcpy(item[nitem - 1]->color, item[0]->color,
-					 sizeof(item[nitem - 1]->color));
+	item = (Item **)cext_array_attach((void **)item, it, sizeof(Item *), &itemsz);
+	nitem++;
 }
 
 static void
 detach_item(Item *it)
 {
-	size_t i;
-	for(i = 0; item[i] != it; i++);
-	for(; item[i + 1]; i++)
-		item[i] = item[i + 1];
-	item[i] = nil;
+	cext_array_detach((void **)item, it, &itemsz);
 	nitem--;
+}
+
+static void
+draw()
+{
+	size_t i;
+	unsigned int w = 0;
+	Draw d = { 0 };
+
+    d.gc = gc;
+    d.drawable = pmap;
+    d.rect = brect;
+    d.rect.y = 0;
+	d.font = xfont;
+
+	if(!iexpand)
+		iexpand = nitem - 1;
+
+    for(i = 1; i < nitem; i++) {
+		Item *it = item[i];
+        if(i != iexpand) {
+            it->rect.height = brect.height;
+            if(it->data) {
+                if(!strncmp(it->data, "%m:", 3))
+                    /* meter */
+                    it->rect.width = brect.height / 2;
+                else
+                    it->rect.width +=
+                        XTextWidth(xfont, it->data, strlen(it->data));
+            }
+            w += it->rect.width;
+        }
+    }
+	if(w > brect.width) {
+        /* failsafe mode, give all labels same width */
+        w = brect.width;
+	    if(nitem)
+			w /= nitem;
+        for(i = 0; i < nitem; i++)
+			item[i]->rect.width = w;
+		if(i)
+			item[i - 1]->rect.width = brect.width - item[i - 1]->rect.x;
+    } else
+		item[iexpand]->rect.width = brect.width - w;
+	if(nitem == 1) {
+		d.fg = item[0]->fg;
+		d.bg = item[0]->bg;
+		d.border = item[0]->border;
+		blitz_drawlabel(dpy, &d);
+	}
+	else {
+		for(i = 1; i < nitem; i++) {
+			d.fg = item[i]->fg;
+			d.bg = item[i]->bg;
+			d.border = item[i]->border;
+			if(i > 1)
+				item[i]->rect.x = item[i - 1]->rect.x + item[i - 1]->rect.width;
+			d.rect = item[i]->rect;
+			d.data = item[i]->data;
+			if(d.data && !strncmp(d.data, "%m:", 3))
+				blitz_drawmeter(dpy, &d);
+			else
+				blitz_drawlabel(dpy, &d);
+		}
+	}
+    XCopyArea(dpy, pmap, win, gc, 0, 0, brect.width, brect.height, 0, 0);
+    XSync(dpy, False);
+}
+
+static void
+update_color(Item *it)
+{
+    it->fg = blitz_loadcolor(dpy, screen_num, &it->color[0]);
+    it->bg = blitz_loadcolor(dpy, screen_num, &it->color[8]);
+    it->border = blitz_loadcolor(dpy, screen_num, &it->color[16]);
+}
+
+static void
+update_geometry()
+{
+    brect = rect;
+    brect.height = xfont->ascent + xfont->descent + 4;
+    if(align == SOUTH)
+        brect.y = rect.height - brect.height;
+    XMoveResizeWindow(dpy, win, brect.x, brect.y, brect.width, brect.height);
+    XSync(dpy, False);
+    XFreePixmap(dpy, pmap);
+    pmap = XCreatePixmap(dpy, win, brect.width, brect.height,
+						 DefaultDepth(dpy, screen_num));
+    XSync(dpy, False);
+	/* TODO: send event, if any consumers */
+	draw();
+}
+
+static void
+handle_buttonpress(XButtonPressedEvent * e)
+{
+	size_t i;
+    for(i = 0; i < nitem; i++)
+        if(blitz_ispointinrect(e->x, e->y, &item[i]->rect)) {
+			/* TODO: send event, if any consumers */
+        }
+}
+
+static void
+check_x_event(IXPServer *s, IXPConn *c)
+{
+    XEvent e;
+
+    while(XPending(dpy)) {
+        XNextEvent(dpy, &e);
+        switch (e.type) {
+        case ButtonPress:
+            handle_buttonpress(&e.xbutton);
+            break;
+        case Expose:
+            if(e.xexpose.count == 0)
+                draw();
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 
@@ -181,6 +293,7 @@ qid_to_name(Qid *qid)
 		case Fctl: return "ctl"; break;
 		case Fdisplay: return "display"; break;
 		case Ffont: return "font"; break;
+		case Fexpand: return "expand"; break;
 		case Fdata: return "data"; break;
 		case Fevent: return "event"; break;
 		case Fcolor: return "color"; break;
@@ -203,6 +316,8 @@ name_to_type(char *name)
 		return Fdisplay;
 	if(!strncmp(name, "font", 5))
 		return Ffont;
+	if(!strncmp(name, "expand", 7))
+		return Fexpand;
 	if(!strncmp(name, "data", 5))
 		return Fdata;
 	if(!strncmp(name, "event", 6))
@@ -386,6 +501,13 @@ type_to_stat(Stat *stat, char *name, unsigned short i)
 		return mkstat(stat, &root_qid, name, strlen(font),
 						DMREAD | DMWRITE);
         break;
+    case Fexpand:
+		{
+			char buf[16];
+			snprintf(buf, sizeof(buf), "%u", iexpand);
+			return mkstat(stat, &root_qid, name, strlen(buf), DMREAD | DMWRITE);
+		}
+		break;
     case Fdata:
 		if(i == nitem)
 			i = 0;
@@ -422,6 +544,7 @@ xremove(IXPConn *c)
 		detach_item(it);
 		free(it);
     	c->fcall->id = RREMOVE;
+		draw();
 		return 0;
 	}
 	errstr = Enoperm;
@@ -509,6 +632,11 @@ xread(IXPConn *c)
 		if((c->fcall->count = strlen(font)))
 			memcpy(p, font, c->fcall->count);
 		break;
+    case Fexpand:
+		snprintf(buf, sizeof(buf), "%u", iexpand);
+		c->fcall->count = strlen(buf);
+		memcpy(p, buf, c->fcall->count);
+		break;
 	case Fevent:
 		/* has to be processed asynchroneous, will be enqueued */
 		return 1;
@@ -584,20 +712,44 @@ xwrite(IXPConn *c)
 		return -1;
 		break;
 	case Fdisplay:
-		if(c->fcall->count > 5)
+		if(c->fcall->count != 6 && c->fcall->count != 5)
 			goto error_xwrite;
 		memcpy(buf, c->fcall->data, c->fcall->count);
 		buf[c->fcall->count] = 0;
-		if(!blitz_strtoalign(&align, buf))
+		if(blitz_strtoalign(&align, buf) == -1)
 			goto error_xwrite;
-		/* TODO: resize/hide */
+		update_geometry();
+		if(align == NORTH || align == SOUTH) {
+			XMapRaised(dpy, win);
+			draw();
+		}
+		else
+			XUnmapWindow(dpy, win);
+		XSync(dpy, False);
 		break;
 	case Ffont:
 		if(font)
 			free(font);
 		font = cext_emallocz(c->fcall->count + 1);
 		memcpy(font, c->fcall->data, c->fcall->count);
-		/* TODO: XQueryFont */
+    	xfont = blitz_getfont(dpy, font);
+		update_geometry();
+		break;
+    case Fexpand:
+		{
+			const char *err;
+			if(c->fcall->count && c->fcall->count < 16) {
+				memcpy(buf, c->fcall->data, c->fcall->count);
+				buf[c->fcall->count] = 0;
+				i = (unsigned short) cext_strtonum(buf, 1, 0xffff, &err);
+				if(i < nitem) {
+					iexpand = i;
+					break;
+				}
+			}
+		}
+		errstr = "item not found";
+		return -1;
 		break;
 	case Fdata:
 		{
@@ -610,7 +762,7 @@ xwrite(IXPConn *c)
 				len = sizeof(item[i]->data) - 1;
 			memcpy(item[i]->data, c->fcall->data, len);
 			item[i]->data[len] = 0;
-			/* TODO: redraw */
+			draw();
 		}
 		break;
 	case Fcolor:
@@ -625,7 +777,8 @@ xwrite(IXPConn *c)
 		}
 		memcpy(item[i]->color, c->fcall->data, c->fcall->count);
 		item[i]->color[c->fcall->count] = 0;
-		/* TODO: update color */
+		update_color(item[i]);
+		draw();
 		break;
 	default:
 error_xwrite:
@@ -674,7 +827,7 @@ close_ixp_conn(IXPServer *s, IXPConn *c)
 }
 
 static void
-handle_ixp_req(IXPServer *s, IXPConn *c)
+do_fcall(IXPServer *s, IXPConn *c)
 {
     unsigned int msize;
 	int ret = -1;
@@ -725,13 +878,12 @@ new_ixp_conn(IXPServer *s, IXPConn *c)
 	if(fd >= 0) {
 		new = cext_emallocz(sizeof(IXPConn));
 		new->fd = fd;
-		new->read = handle_ixp_req;
+		new->read = do_fcall;
 		new->close = close_ixp_conn;
 		s->conn = (IXPConn **)cext_array_attach((void **)s->conn, new,
 					sizeof(IXPConn *), &s->connsz);
 	}
 }
-
 
 
 /* main */
@@ -741,6 +893,8 @@ main(int argc, char *argv[])
 {
     int i;
 	IXPConn *c;
+    XSetWindowAttributes wa;
+    XGCValues gcv;
 
     /* command line args */
     for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
@@ -778,26 +932,62 @@ main(int argc, char *argv[])
         fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
 		exit(1);
 	}
+
+	/* IXP server */
 	c = cext_emallocz(sizeof(IXPConn));
 	c->fd = i;
 	c->read = new_ixp_conn;
 	c->close = close_ixp_conn;
 	srv.conn = (IXPConn **)cext_array_attach((void **)srv.conn, c,
 					sizeof(IXPConn *), &srv.connsz);
-	/* TODO: add X conn */
-	
+	/* X server */
+	c = cext_emallocz(sizeof(IXPConn));
+	c->fd = ConnectionNumber(dpy);
+	c->read = check_x_event;
+	srv.conn = (IXPConn **)cext_array_attach((void **)srv.conn, c,
+					sizeof(IXPConn *), &srv.connsz);
+
     root_qid.type = IXP_QTDIR;
     root_qid.version = 0;
     root_qid.path = mkqpath(Droot, 0);
 
     mypid = getpid();
 
-    /* default item settings */
+    /* default settings */
 	new_item();
 	cext_strlcpy(item[0]->color, BLITZ_SEL_COLOR, sizeof(item[0]->color));
+	update_color(item[0]);
 
+	/* X stuff */
     font = strdup(BLITZ_FONT);
+    xfont = blitz_getfont(dpy, font);
+    wa.override_redirect = 1;
+    wa.background_pixmap = ParentRelative;
+    wa.event_mask = ExposureMask | ButtonPressMask
+					| SubstructureRedirectMask | SubstructureNotifyMask;
 
+    rect.x = rect.y = 0;
+    rect.width = DisplayWidth(dpy, screen_num);
+    rect.height = DisplayHeight(dpy, screen_num);
+    brect = rect;
+    brect.height = xfont->ascent + xfont->descent + 4;
+    brect.y = rect.height - brect.height;
+
+    win = XCreateWindow(dpy, RootWindow(dpy, screen_num), brect.x, brect.y,
+                        brect.width, brect.height, 0, DefaultDepth(dpy, screen_num),
+                        CopyFromParent, DefaultVisual(dpy, screen_num),
+                        CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
+    XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
+    XSync(dpy, False);
+
+    gcv.function = GXcopy;
+    gcv.graphics_exposures = False;
+    gc = XCreateGC(dpy, win, 0, 0);
+
+    pmap = XCreatePixmap(dpy, win, brect.width, brect.height,
+                      	 DefaultDepth(dpy, screen_num));
+
+	/* main loop */
 	errstr = ixp_server_loop(&srv);
 
 	if(errstr)
