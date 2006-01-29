@@ -107,13 +107,6 @@ dummy_error_handler(Display * dpy, XErrorEvent * err)
 }
 
 static void
-exit_cleanup()
-{
-    if(mypid == getpid())
-        unlink(address);
-}
-
-static void
 new_item()
 {
 	size_t i;
@@ -753,7 +746,6 @@ main(int argc, char *argv[])
     root_qid.path = mkqpath(Droot, 0);
 
     mypid = getpid();
-    atexit(exit_cleanup);
 
     /* default item settings */
 	new_item();

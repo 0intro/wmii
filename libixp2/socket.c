@@ -163,6 +163,7 @@ create_unix_sock(char *file, char **errstr)
     strncpy(addr.sun_path, file, sizeof(addr.sun_path));
     su_len = sizeof(struct sockaddr) + strlen(addr.sun_path);
 
+	unlink(file); /* remove old socket, if any */
     if(bind(fd, (struct sockaddr *) &addr, su_len) < 0) {
         *errstr = "cannot bind socket";
         close(fd);
