@@ -215,7 +215,7 @@ update_geometry()
     pmap = XCreatePixmap(dpy, win, brect.width, brect.height,
 						 DefaultDepth(dpy, screen_num));
     XSync(dpy, False);
-	snprintf(buf, sizeof(buf), "NewGeometry %d %d %d %d", brect.x, brect.y, brect.width, brect.height);
+	snprintf(buf, sizeof(buf), "NewGeometry %d %d %d %d\n", brect.x, brect.y, brect.width, brect.height);
 	do_pend_fcall(buf);
 	draw();
 }
@@ -227,7 +227,7 @@ handle_buttonpress(XButtonPressedEvent * e)
 	char buf[32];
     for(i = 0; i < nitem; i++)
         if(blitz_ispointinrect(e->x, e->y, &item[i]->rect)) {
-			snprintf(buf, sizeof(buf), "Button%dPress %d", e->button, i);
+			snprintf(buf, sizeof(buf), "Button%dPress %d\n", e->button, i);
 			do_pend_fcall(buf);
         }
 }
