@@ -151,7 +151,8 @@ xread(char *file)
 		else {
 			unsigned int i;
 			for(i = 0; i < count; i++)
-				putchar(result[i]);
+				fputc(result[i], stdout);
+			fflush(stdout);
 		}
 		offset += count;
 	}

@@ -568,104 +568,139 @@ xread(IXPConn *c)
         return -1;
     }
 	i = qpath_item(m->qid.path);
-	c->fcall->count = 0; /* EOF by default */
-    c->fcall->id = RREAD;
-	if(c->fcall->offset)
-		return 0;
-	switch (qpath_type(m->qid.path)) {
-	case Droot:
-		c->fcall->count = type_to_stat(&stat, "ctl", 0);
-		p = ixp_enc_stat(p, &stat);
-		c->fcall->count += type_to_stat(&stat, "display", 0);
-		p = ixp_enc_stat(p, &stat);
-		c->fcall->count += type_to_stat(&stat, "font", 0);
-		p = ixp_enc_stat(p, &stat);
-		c->fcall->count += type_to_stat(&stat, "new", 0);
-		p = ixp_enc_stat(p, &stat);
-		c->fcall->count += type_to_stat(&stat, "event", 0);
-		p = ixp_enc_stat(p, &stat);
-		c->fcall->count += type_to_stat(&stat, "default", 0);
-		p = ixp_enc_stat(p, &stat);
-		for(i = 1; i < nitem; i++) {
-			snprintf(buf, sizeof(buf), "%u", i);
-			len = type_to_stat(&stat, buf, i);
-			if(c->fcall->count + len >= c->fcall->iounit)
-				break;
-			c->fcall->count += len;
-			p = ixp_enc_stat(p, &stat);
-		}
-		break;
-	case Ditem:
-		if(i > nitem)
-			goto error_xread;
-		if(!i) {
-			c->fcall->count = type_to_stat(&stat, "color", i);
-			p = ixp_enc_stat(p, &stat);
+
+	c->fcall->count = 0;
+	if(c->fcall->offset) {
+		switch (qpath_type(m->qid.path)) {
+		case Droot:
+			/* jump to offset */
+			len = type_to_stat(&stat, "ctl", 0);
+			len += type_to_stat(&stat, "display", 0);
+			len += type_to_stat(&stat, "font", 0);
+			len += type_to_stat(&stat, "new", 0);
+			len += type_to_stat(&stat, "event", 0);
+			len += type_to_stat(&stat, "default", 0);
+			for(i = 1; i < nitem; i++) {
+				snprintf(buf, sizeof(buf), "%u", i);
+				len += type_to_stat(&stat, buf, i);
+				if(len < c->fcall->offset)
+					continue;
+				else 
+					break;
+			}
+			/* offset found, proceeding */
+			for(; i < nitem; i++) {
+				snprintf(buf, sizeof(buf), "%u", i);
+				len = type_to_stat(&stat, buf, i);
+				if(c->fcall->count + len >= c->fcall->iounit)
+					break;
+				c->fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
 			break;
-		}
-		if(i == nitem)
-			new_item();
-		c->fcall->count = type_to_stat(&stat, "color", i);
-		p = ixp_enc_stat(p, &stat);
-		c->fcall->count += type_to_stat(&stat, "data", i);
-		p = ixp_enc_stat(p, &stat);
-		break;
-	case Fctl:
-		errstr = Enoperm;
-		return -1;
-		break;
-	case Fdisplay:
-		switch(align) {
-		case SOUTH:
-			memcpy(p, "south", 5);
-			c->fcall->count = 5;
-			break;
-		case NORTH:
-			memcpy(p, "north", 5);
-			c->fcall->count = 5;
+		case Fevent:
+			return 1;
 			break;
 		default:
-			memcpy(p, "none", 4);
-			c->fcall->count = 4;
 			break;
 		}
-		break;
-	case Ffont:
-		if((c->fcall->count = strlen(font)))
-			memcpy(p, font, c->fcall->count);
-		break;
-    case Fexpand:
-		snprintf(buf, sizeof(buf), "%u", iexpand);
-		c->fcall->count = strlen(buf);
-		memcpy(p, buf, c->fcall->count);
-		break;
-	case Fevent:
-    	c->fcall->id = TREAD;
-		return 1;
-		break;
-	case Fdata:
-		if(i == nitem)
-			new_item();
-		if(i >= nitem)
-			goto error_xread;
-		if((c->fcall->count = strlen(item[i]->data)))
-			memcpy(p, item[i]->data, c->fcall->count);
-		break;
-	case Fcolor:
-		if(i == nitem)
-			new_item();
-		if(i >= nitem)
-			goto error_xread;
-		if((c->fcall->count = strlen(item[i]->color)))
-			memcpy(p, item[i]->color, c->fcall->count);
-		break;
-	default:
-error_xread:
-		if(!errstr)
-			errstr = "invalid read";
-		return -1;
-		break;
 	}
+	else {
+		switch (qpath_type(m->qid.path)) {
+		case Droot:
+			c->fcall->count = type_to_stat(&stat, "ctl", 0);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "display", 0);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "font", 0);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "new", 0);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "event", 0);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "default", 0);
+			p = ixp_enc_stat(p, &stat);
+			for(i = 1; i < nitem; i++) {
+				snprintf(buf, sizeof(buf), "%u", i);
+				len = type_to_stat(&stat, buf, i);
+				if(c->fcall->count + len >= c->fcall->iounit)
+					break;
+				c->fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case Ditem:
+			if(i > nitem)
+				goto error_xread;
+			if(!i) {
+				c->fcall->count = type_to_stat(&stat, "color", i);
+				p = ixp_enc_stat(p, &stat);
+				break;
+			}
+			if(i == nitem)
+				new_item();
+			c->fcall->count = type_to_stat(&stat, "color", i);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "data", i);
+			p = ixp_enc_stat(p, &stat);
+			break;
+		case Fctl:
+			errstr = Enoperm;
+			return -1;
+			break;
+		case Fdisplay:
+			switch(align) {
+			case SOUTH:
+				memcpy(p, "south", 5);
+				c->fcall->count = 5;
+				break;
+			case NORTH:
+				memcpy(p, "north", 5);
+				c->fcall->count = 5;
+				break;
+			default:
+				memcpy(p, "none", 4);
+				c->fcall->count = 4;
+				break;
+			}
+			break;
+		case Ffont:
+			if((c->fcall->count = strlen(font)))
+				memcpy(p, font, c->fcall->count);
+			break;
+		case Fexpand:
+			snprintf(buf, sizeof(buf), "%u", iexpand);
+			c->fcall->count = strlen(buf);
+			memcpy(p, buf, c->fcall->count);
+			break;
+		case Fevent:
+			return 1;
+			break;
+		case Fdata:
+			if(i == nitem)
+				new_item();
+			if(i >= nitem)
+				goto error_xread;
+			if((c->fcall->count = strlen(item[i]->data)))
+				memcpy(p, item[i]->data, c->fcall->count);
+			break;
+		case Fcolor:
+			if(i == nitem)
+				new_item();
+			if(i >= nitem)
+				goto error_xread;
+			if((c->fcall->count = strlen(item[i]->color)))
+				memcpy(p, item[i]->color, c->fcall->count);
+			break;
+		default:
+	error_xread:
+			if(!errstr)
+				errstr = "invalid read";
+			return -1;
+			break;
+		}
+	}
+	c->fcall->id = RREAD;
     return 0;
 }
 
@@ -872,33 +907,45 @@ do_fcall(IXPServer *s, IXPConn *c)
 		close_ixp_conn(s, c);
 }
 
+static Fcall *
+pending(IXPConn *c, unsigned char id)
+{
+	size_t i;
+	for(i = 0; (i < c->pendsz) && c->pend[i]; i++)
+		if(c->pend[i]->id == id)
+			return c->pend[i];
+	return nil;
+}
+
 static void
 do_pend_fcall(char *event)
 {
-	size_t i, j;
+	size_t i;
+	Fcall *fcall;
 	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++) {
 		IXPConn *c = srv.conn[i];
-		for(j = 0; (j < c->pendsz) && c->pend[j]; j++) {
-			Fcall *fcall = c->pend[j];
-			if(fcall->id == TREAD) {
-				IXPMap *m = ixp_server_fid2map(c, fcall->fid);
-				unsigned char *p = fcall->data;
-				unsigned int msize;
+		/* all pending TREADs are on /event, so no qid checking necessary */
+		while((fcall = pending(c, TREAD))) {
+			IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+			unsigned char *p = fcall->data;
+			unsigned int msize;
 
-				if(!m) {
-					errstr = Enofid;
-					fcall->id = RERROR;
-				}
-				else if(qpath_type(m->qid.path) == Fevent) {
-					fcall->count = strlen(event);
-					memcpy(p, event, fcall->count);
-					fcall->id = RREAD;
-				}
-				msize = ixp_fcall_to_msg(fcall, msg, IXP_MAX_MSG);
-				if(ixp_send_message(c->fd, msg, msize, &errstr) != msize) {
-					close_ixp_conn(&srv, c);
-					break;
-				}
+			if(!m) {
+				errstr = Enofid;
+				fcall->id = RERROR;
+			}
+			else if(qpath_type(m->qid.path) == Fevent) {
+				fcall->count = strlen(event);
+				memcpy(p, event, fcall->count);
+				fcall->id = RREAD;
+			}
+			msize = ixp_fcall_to_msg(fcall, msg, IXP_MAX_MSG);
+			/* remove pending request */
+			cext_array_detach((void **)c->pend, fcall, &c->pendsz);
+			free(fcall);
+			if(ixp_send_message(c->fd, msg, msize, &errstr) != msize) {
+				close_ixp_conn(&srv, c);
+				break;
 			}
 		}
 	}
