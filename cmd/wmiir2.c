@@ -25,7 +25,7 @@ usage()
 {
     fprintf(stderr, "%s",
             "usage: wmiir [-a <server address>] [-v] <command>\n"
-            "      -a    server address (default: $WMIIR_SOCKET)\n"
+            "      -a    server address (default: $WMIIR_ADDRESS)\n"
             "      -v    version info\n"
             "valid commands:\n"
             "      create <file>      -- creates file and writes data from stdin to file\n"
@@ -181,7 +181,7 @@ int
 main(int argc, char *argv[])
 {
     int i = 0;
-    char *cmd, *file, *sockfile = getenv("WMIIR_SOCKET");
+    char *cmd, *file, *sockfile = getenv("WMIIR_ADDRESS");
 
     /* command line args */
 	if(argc < 2)
@@ -208,7 +208,7 @@ main(int argc, char *argv[])
 	file = argv[argc - 1];
 
     if(!sockfile) {
-        fprintf(stderr, "%s", "wmiir: error: WMIIR_SOCKET environment not set\n");
+        fprintf(stderr, "%s", "wmiir: error: $WMIIR_ADDRESS not set\n");
         usage();
     }
     /* open socket */

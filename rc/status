@@ -1,24 +1,23 @@
 #!9PREFIX/bin/rc
 # periodically print date and load average to the bar
 
+WMIIR_ADDRESS='unix!/tmp/.ixp-'^$USER^'/wmiibar-'^$WMII_IDENT
 PIDFILE=/tmp/.ixp-$USER/statuspid-$WMII_IDENT
+
+fn xwrite { echo -n $2 | wmiir2 write $1 }
 
 if(test -r $PIDFILE) {
     kill -2 `{cat $PIDFILE} >[2]/dev/null
 }
 echo $pid >$PIDFILE
 
-label=`{wmiir read /bar/new}
-wmiir write /bar/$label/b1press 'wmiir write /wm/ctl ''select prev'''
-wmiir write /bar/$label/b3press 'wmiir write /wm/ctl ''select next'''
-wmiir write /bar/$label/b4press 'wmiir write /wm/ctl ''select prev'''
-wmiir write /bar/$label/b5press 'wmiir write /wm/ctl ''select next'''
+wmiibar -a $WMIIR_ADDRESS &
 
 # install signal handler for artificial sigexit:
 fn sigint {
     if(test -f $PIDFILE && ~ `{cat $PIDFILE} $pid)
         rm -f $PIDFILE
-    wmiir write /bar/ctl 'destroy '^$label
+	xwrite /ctl quit
     exit
 }
 
@@ -28,7 +27,9 @@ fn statustext {
 }
 
 text=`{statustext}
-while(wmiir write /bar/$label/data $"text >[2]/dev/null) {
+xwrite /new/data $"text
+xwrite /display south
+while(xwrite /1/data $"text) {
     sleep 2
     text=`{statustext}
 }

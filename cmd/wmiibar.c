@@ -735,7 +735,7 @@ xwrite(IXPConn *c)
 	i = qpath_item(m->qid.path);
 	switch (qpath_type(m->qid.path)) {
 	case Fctl:
-		if(c->fcall->count == 5) {
+		if(c->fcall->count == 4) {
 			memcpy(buf, c->fcall->data, 4);
 			buf[4] = 0;
 			if(!strncmp(buf, "quit", 5)) {

@@ -21,13 +21,11 @@ wmiiwm -s /tmp/.ixp-$USER/wmiiwm-$WMII_IDENT &
 wmiiwmpid=$apid
 wmiifs -s /tmp/.ixp-$USER/wmiifs-$WMII_IDENT &
 wmiikeys -s /tmp/.ixp-$USER/wmiikeys-$WMII_IDENT &
-wmiibar -s /tmp/.ixp-$USER/wmiibar-$WMII_IDENT &
 wmiimenu -s /tmp/.ixp-$USER/wmiimenu-$WMII_IDENT &
 sleep 1
 
 # mount ixp file systems:
 wmiir write /ctl 'bind /wm /tmp/.ixp-'^$USER/wmiiwm-$WMII_IDENT
-wmiir write /ctl 'bind /bar /tmp/.ixp-'^$USER/wmiibar-$WMII_IDENT
 wmiir write /ctl 'bind /menu /tmp/.ixp-'^$USER/wmiimenu-$WMII_IDENT
 wmiir write /ctl 'bind /keys /tmp/.ixp-'^$USER/wmiikeys-$WMII_IDENT
 

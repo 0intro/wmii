@@ -60,45 +60,6 @@ fn clientsconf {
     }
 }
 
-# WMIIBAR CONFIGURATION
-
-fn barsucks {
-    wmiir write /bar/$1/b1press 'wmiir write /wm/ctl ''select prev'''
-    wmiir write /bar/$1/b3press 'wmiir write /wm/ctl ''select next'''
-    wmiir write /bar/$1/b4press 'wmiir write /wm/ctl ''select prev'''
-    wmiir write /bar/$1/b5press 'wmiir write /wm/ctl ''select next'''
-}
-
-wmiir write /bar/geometry $BAR_ALIGN
-if(~ $BAR_ALIGN south)
-    wmiir write /bar/event/resize \
-    'val=`{wmiir read /bar/geometry | ' ^\
-    'awk ''{print "+0 +0 +0 -"$4}''} wmiir write /wm/default/geometry $"val'
-if not
-    wmiir write /bar/event/resize \
-    'val=`{wmiir read /bar/geometry | ' ^\
-    'awk ''{print "+0 +"$4" +0 -"$4}''} wmiir write /wm/default/geometry $"val'
-
-wmiir write /bar/ctl reset
-wmiir write /bar/font $FONT
-wmiir write /bar/fgcolor $NORM_FG_COLOR
-wmiir write /bar/bgcolor $NORM_BG_COLOR
-wmiir write /bar/bordercolor $NORM_BORDER_COLOR
-
-plab=`{wmiir read /bar/new}
-wmiir write /bar/$plab/b1press 'wmiir write /wm/ctl pager'
-
-klab=`{wmiir read /bar/new}
-
-clab=`{wmiir read /bar/new}
-wmiir write /bar/$clab/fgcolor $SEL_FG_COLOR
-wmiir write /bar/$clab/bgcolor $SEL_BG_COLOR
-wmiir write /bar/$clab/bordercolor $SEL_BG_COLOR
-barsucks $clab
-
-wmiir write /bar/expandable $clab
-wmiir write /bar/ctl 'display 1'
-
 
 # WMIIWM CONFIGURATION
 
@@ -108,12 +69,6 @@ wmiir write /wm/default/handleinc $HANDLEINC
 wmiir write /wm/default/tab $TAB
 
 wmiir write /wm/default/border 1
-wmiir write /wm/event/clientupdate \
-'s=`{wmiir read /wm/sel/layout/sel/frame/sel/name} ' ^\
-'wmiir write /bar/'^$clab^'/data $"s'
-wmiir write /wm/event/pageupdate \
-'s=`{wmiir read /wm/sel/name} wmiir write /bar/'$plab'/data $"s && ' ^\
-'s=`{wmiir read /keys/lookup | sed s,/mode/,,} wmiir write /bar/'$klab'/data $"s'
 
 for(page in `{wmiir read /wm | grep '^[0-9]'})
     clientsconf /wm/$page/client
