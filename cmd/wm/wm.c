@@ -367,7 +367,7 @@ detached_client(void *obj, char *arg)
             if((n = handle_kpress(&ev.xkey)) != -1) {
                 if(n < nc) {
 					c = detached[n];
-					detach_client_from_array(c, detached);
+					cext_array_detach((void **)detached, c, &detachedsz);
                     attach_client(c);
                 }
             }
@@ -380,7 +380,7 @@ detached_client(void *obj, char *arg)
                 unmap_client(detached[i]);
             if((ev.xbutton.button == Button1)
                && (c = win_to_client(ev.xbutton.window))) {
-                detach_client_from_array(c, detached);
+				cext_array_detach((void **)detached, c, &detachedsz);
                 attach_client(c);
             }
             XUngrabKeyboard(dpy, CurrentTime);
@@ -403,7 +403,7 @@ xattach_client(void *obj, char *arg)
 {
     Client *c = detached ? detached[0] : nil;
     if(c) {
-        detach_client_from_array(c, detached);
+		cext_array_detach((void **)detached, c, &detachedsz);
         attach_client(c);
     }
 }

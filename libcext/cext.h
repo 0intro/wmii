@@ -9,6 +9,10 @@
 #define nil (void *)0
 #endif
 
+/* array.c */
+void ** cext_array_attach(void **array, void *p, size_t psize, size_t *size);
+void cext_array_detach(void **array, void *p, size_t *size);
+
 /* emallocz.c */
 void *cext_emallocz(size_t size);
 

@@ -194,49 +194,31 @@ typedef struct {
 
 typedef struct IXPServer IXPServer;
 typedef struct IXPConn IXPConn;
-
-struct IXPConn {
-    int fd;
-    void (*read) (IXPServer *, IXPConn *);
-    void (*close) (IXPServer *, IXPConn *);
-    void *aux;
-};
-
-struct IXPServer {
-    int running;
-    IXPConn conn[IXP_MAX_CONN];
-    int maxfd;
-    fd_set rd;
-};
-
-/************* begin: this should be moved to libwmii ****************/
-/* once all tools are independent from old libixp, there won;t be any
- * conflicts in libwmii with this stuff
- */
-
 typedef struct IXPMap IXPMap;
+
 struct IXPMap {
 	unsigned int fid;
 	Qid qid; 
 };
 
-typedef struct {
+struct IXPConn {
+    int fd;
+    void (*read) (IXPServer *, IXPConn *);
+    void (*close) (IXPServer *, IXPConn *);
 	IXPMap **map;
 	size_t mapsz;
 	Fcall *fcall;
-	Fcall **async;
-	size_t asyncsz;
-} IXPReq;
+	Fcall **pend;
+	size_t pendsz;
+};
 
-/* server.c */
-Fcall ** ixp_server_attach_fcall(Fcall *f, Fcall **array, size_t *size);
-void ixp_server_detach_fcall(Fcall *f, Fcall **array);
-IXPMap ** ixp_server_attach_map(IXPMap *m, IXPMap **array, size_t *size);
-void ixp_server_detach_map(IXPMap *m, IXPMap **array);
-IXPMap * ixp_server_fid2map(IXPReq *r, unsigned int fid);
-void ixp_server_close_conn(IXPServer *s, IXPConn *c);
-
-/************* end: this should be moved to libwmii ****************/
+struct IXPServer {
+    int running;
+	IXPConn **conn;
+	size_t connsz;
+    int maxfd;
+    fd_set rd;
+};
 
 typedef struct {
     int fd;
@@ -290,17 +272,12 @@ void *ixp_dec_stat(unsigned char *msg, Stat *stat);
 
 /* message.c */
 unsigned short ixp_sizeof_stat(Stat *stat);
-unsigned int ixp_fcall_to_msg(Fcall *fcall, void *msg,
-                              unsigned int msglen);
-unsigned int ixp_msg_to_fcall(void *msg, unsigned int msglen,
-                              Fcall *fcall);
+unsigned int ixp_fcall_to_msg(Fcall *fcall, void *msg, unsigned int msglen);
+unsigned int ixp_msg_to_fcall(void *msg, unsigned int msglen, Fcall *fcall);
 
 /* server.c */
-IXPConn *ixp_server_alloc_conn(IXPServer *s);
-void ixp_server_free_conn(IXPServer *s, IXPConn *c);
 char *ixp_server_loop(IXPServer *s);
-void ixp_server_init(IXPServer *s);
-void ixp_server_deinit(IXPServer *s);
+IXPMap *ixp_server_fid2map(IXPConn *c, unsigned int fid);
 
 /* socket.c */
 int ixp_connect_sock(char *address);

@@ -212,7 +212,7 @@ handle_maprequest(XEvent * e)
 	/* attach heuristic support */
 	if(aqueuesz && aqueue[0]) {
 		focus_page(0);
-		detach_page_from_array(aqueue[0], aqueue);
+		cext_array_detach((void **)aqueue, aqueue[0], &aqueuesz);
 	}
 
     /* there're client which send map requests twice */

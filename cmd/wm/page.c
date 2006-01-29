@@ -28,37 +28,6 @@ Action page_acttbl[] = {
     {0, 0}
 };
 
-Page **
-attach_page_to_array(Page *p, Page **array, size_t *size)
-{
-	size_t i;
-	if(!array) {
-		*size = 2;
-		array = cext_emallocz(sizeof(Page *) * (*size));
-	}
-	for(i = 0; (i < (*size)) && array[i]; i++);
-	if(i >= (*size)) {
-		Page **tmp = array;
-		(*size) *= 2;
-		array = cext_emallocz(sizeof(Page *) * (*size));
-		for(i = 0; tmp[i]; i++)
-			array[i] = tmp[i];
-		free(tmp);
-	}
-	array[i] = p;
-	return array;
-}
-
-void
-detach_page_from_array(Page *p, Page **array)
-{
-	size_t i;
-	for(i = 0; array[i] != p; i++);
-	for(; array[i + 1]; i++)
-		array[i] = array[i + 1];
-	array[i] = nil;
-}
-
 Page *
 alloc_page()
 {
@@ -84,7 +53,7 @@ alloc_page()
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	id++;
 	p->rect_column = rect;
-	page = attach_page_to_array(p, page, &pagesz);
+	page = (Page **)cext_array_attach((void **)page, p, sizeof(Page *), &pagesz);
 	for(np = 0; (np < pagesz) && page[np]; np++);
 	focus_page(p);
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
@@ -103,7 +72,7 @@ destroy_page(Page *p)
 		if(aqueue[i] == p)
 			naqueue++;
 	for(i = 0; i < naqueue; i++)
-		detach_page_from_array(p, aqueue);
+		cext_array_detach((void **)aqueue, p, &aqueuesz);
 
 	for(i = 0; (i < clientsz) && client[i]; i++)
 		if(client[i]->page == p)
@@ -205,7 +174,8 @@ handle_after_write_page(IXPServer *s, File *file)
 static void
 xexec(void *obj, char *arg)
 {
-	aqueue = attach_page_to_array(obj, aqueue, &aqueuesz);
+	aqueue = (Page **)cext_array_attach((void **)aqueue, obj,
+				sizeof(Page *), &aqueuesz);
     wmii_spawn(dpy, arg);
 }
 

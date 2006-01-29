@@ -21,41 +21,6 @@ Action client_acttbl[] = {
     {0, 0}
 };
 
-Client **
-attach_client_to_array(Client *c, Client **array, size_t *size)
-{
-	size_t i;
-	if(!array) {
-		*size = 2;
-		array = cext_emallocz(sizeof(Client *) * (*size));
-	}
-	for(i = 0; (i < (*size)) && array[i]; i++);
-	if(i >= (*size)) {
-		Client **tmp = array;
-		(*size) *= 2;
-		array = cext_emallocz(sizeof(Client *) * (*size));
-		for(i = 0; tmp[i]; i++)
-			array[i] = tmp[i];
-		free(tmp);
-	}
-	array[i] = c;
-	return array;
-}
-
-void
-detach_client_from_array(Client *c, Client **array)
-{
-	size_t i;
-	if(!array)
-		return;
-	for(i = 0; array[i] && array[i] != c; i++);
-	if(!array[i])
-		return; /* not found */
-	for(; array[i + 1]; i++)
-		array[i] = array[i + 1];
-	array[i] = nil;
-}
-
 Client *
 alloc_client(Window w, XWindowAttributes *wa)
 {
@@ -130,7 +95,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     c->frame.gc = XCreateGC(dpy, c->frame.win, 0, 0);
     XSync(dpy, False);
 
-	client = attach_client_to_array(c, client, &clientsz);
+	client = (Client **)cext_array_attach((void **)client, c, sizeof(Client *), &clientsz);
 
     return c;
 }
@@ -312,7 +277,7 @@ destroy_client(Client * c)
     XFreeGC(dpy, c->frame.gc);
     XDestroyWindow(dpy, c->frame.win);
     ixp_remove_file(ixps, c->file[C_PREFIX]);
-	detach_client_from_array(c, detached);
+	cext_array_detach((void **)detached, c, &detachedsz);
     free(c);
 }
 
@@ -443,7 +408,8 @@ attach_client(Client *c)
 	if(p->is_column)
 		attach_column(c);
 	else
-		p->floating = attach_client_to_array(c, p->floating, &p->floatingsz);
+		p->floating = (Client **)cext_array_attach((void **)p->floating, c,
+						sizeof(Client *), &p->floatingsz);
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
 	focus_client(c);
@@ -458,10 +424,11 @@ detach_client(Client *c, Bool unmap)
 	if(c->column)
 		detach_column(c);
 	else {
-		detach_client_from_array(c, c->page->floating);
+		cext_array_detach((void **)c->page->floating, c, &c->page->floatingsz);
     	if(!c->destroyed) {
         	if(!unmap) {
-            	detached = attach_client_to_array(c, detached, &detachedsz);
+            	detached = (Client **)cext_array_attach((void **)detached, c,
+								sizeof(Client *), &detachedsz);
             	unmap_client(c);
         	}
         	c->rect.x = c->frame.rect.x;

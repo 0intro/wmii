@@ -8,37 +8,6 @@
 
 #include "wm.h"
 
-static Column **
-attach_column_to_array(Column *col, Column **array, size_t *size)
-{
-	size_t i;
-	if(!array) {
-		*size = 2;
-		array = cext_emallocz(sizeof(Column *) * (*size));
-	}
-	for(i = 0; (i < (*size)) && array[i]; i++);
-	if(i >= (*size)) {
-		Column **tmp = array;
-		(*size) *= 2;
-		array = cext_emallocz(sizeof(Column *) * (*size));
-		for(i = 0; tmp[i]; i++)
-			array[i] = tmp[i];
-		free(tmp);
-	}
-	array[i] = col; 
-	return array;
-}
-
-static void
-detach_column_from_array(Column *col, Column **array)
-{
-	size_t i;
-	for(i = 0; array[i] != col; i++);
-	for(; array[i + 1]; i++)
-		array[i] = array[i + 1];
-	array[i] = nil;
-}
-
 void
 arrange_column(Page *p, Column *col)
 {
@@ -79,12 +48,14 @@ attach_column(Client *c)
 	if(!col) {
         col = cext_emallocz(sizeof(Column));
         col->rect = p->rect_column;
-		p->column = attach_column_to_array(col, p->column, &p->columnsz);
+		p->column = (Column **)cext_array_attach((void **)p->column, col,
+						sizeof(Column *), &p->columnsz);
 		p->sel_column = 0;
     }
 
 	c->column = col;
-	col->client = attach_client_to_array(c, col->client, &col->clientsz);
+	col->client = (Client **)cext_array_attach((void **)col->client, c,
+						sizeof(Client *), &col->clientsz);
     arrange_column(p, col);
 }
 
@@ -113,9 +84,9 @@ detach_column(Client *c)
 	Page *p = c->page;
 	Column *col = c->column;
 
-	detach_client_from_array(c, col->client);
+	cext_array_detach((void **)col->client, c, &col->clientsz);
 	if(!col->client[0]) {
-		detach_column_from_array(col, p->column);
+		cext_array_detach((void **)p->column, col, &p->columnsz);
 		free(col);
 		update_column_width(p);
 	}
@@ -204,8 +175,9 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
         if(tgt != src) {
 			if(src->clientsz <= 1 || !src->client[1])
 				return;
-			detach_client_from_array(c, src->client);
-			tgt->client = attach_client_to_array(c, tgt->client, &tgt->clientsz);
+			cext_array_detach((void **)src->client, c, &src->clientsz);
+			tgt->client = (Client **)cext_array_attach((void **)tgt->client, c,
+							sizeof(Client *), &tgt->clientsz);
             arrange_column(p, src);
             arrange_column(p, tgt);
         } else {
@@ -292,10 +264,12 @@ new_column(Page *p)
 
     col = cext_emallocz(sizeof(Column));
     col->rect = p->rect_column;
-	p->column = attach_column_to_array(col, p->column, &p->columnsz);
+	p->column = (Column **)cext_array_attach((void **)p->column, col,
+					sizeof(Column *), &p->columnsz);
 	p->sel_column = i;
-	detach_client_from_array(c, old->client);
-	col->client = attach_client_to_array(c, col->client, &col->clientsz);
+	cext_array_detach((void **)old->client, c, &old->clientsz);
+	col->client = (Client **)cext_array_attach((void **)col->client, c,
+					sizeof(Client *), &col->clientsz);
 	c->column = col;
 	update_column_width(p);
 	focus_client(c);

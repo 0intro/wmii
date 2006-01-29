@@ -172,8 +172,6 @@ unsigned int valid_mask, num_lock_mask;
 
 
 /* client.c */
-Client **attach_client_to_array(Client *c, Client **array, size_t *size);
-void detach_client_from_array(Client *c, Client **array);
 Client *alloc_client(Window w, XWindowAttributes *wa);
 void destroy_client(Client * c);
 void configure_client(Client * c);
@@ -209,8 +207,6 @@ Align xy_to_align(XRectangle * rect, int x, int y);
 void drop_move(Client *c, XRectangle *new, XPoint *pt);
 
 /* page.c */
-Page **attach_page_to_array(Page *p, Page **array, size_t *size);
-void detach_page_from_array(Page *p, Page **array);
 Page *alloc_page();
 void destroy_page(Page *p);
 void focus_page(Page *p);
