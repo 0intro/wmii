@@ -12,9 +12,6 @@ LDFLAGS2 += ${LIBS} -L../liblitz -llitz -L../libixp2 -lixp \
 SRC_bar = wmiibar.c
 OBJ_bar = ${SRC_bar:.c=.o}
 
-SRC_bar2 = wmiibar2.c
-OBJ_bar2 = ${SRC_bar2:.c=.o}
-
 SRC_menu = wmiimenu.c
 OBJ_menu = ${SRC_menu:.c=.o}
 
@@ -45,14 +42,7 @@ all: wmiibar wmiibar2 wmiimenu wmiir wmiir2 wmiifs wmiikeys wmiiplumb wmiiwarp
 
 wmiibar: ${OBJ_bar}
 	@echo LD $@
-	@${CC} -o $@ ${OBJ_bar} ${LDFLAGS}
-# Solaris
-#	@${CC} -o $@ ${OBJ_bar} ${LDFLAGS} -lsocket
-
-
-wmiibar2: ${OBJ_bar2}
-	@echo LD $@
-	@${CC} -o $@ ${OBJ_bar2} ${LDFLAGS2}
+	@${CC} -o $@ ${OBJ_bar} ${LDFLAGS2}
 # Solaris
 #	@${CC} -o $@ ${OBJ_bar2} ${LDFLAGS2} -lsocket
 
