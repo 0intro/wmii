@@ -55,9 +55,9 @@ typedef struct {
     unsigned long border;
 } Item;
 
-static char E9pversion[] = "9P versions differ";
+static char E9pversion[] = "9P version not supported";
 static char Enoperm[] = "permission denied";
-static char Enofid[] = "invalid fid";
+static char Enofid[] = "fid not assigned";
 static char Enofile[] = "file not found";
 static char Enomode[] = "mode not supported";
 static char Enofunc[] = "function not supported";
@@ -196,7 +196,7 @@ name_to_type(char *name)
 {
 	const char *err;
     unsigned int i;
-	if(!name || !name[0] || !strncmp(name, "..", 3))
+	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return Droot;
 	if(!strncmp(name, "default", 8) || !strncmp(name, "new", 4))
 		return Ditem;
@@ -397,6 +397,7 @@ type_to_stat(Stat *stat, char *name, unsigned short i)
 		return mkstat(stat, &dir, name, strlen(item[i]->color), DMREAD | DMWRITE);
 		break;
     default:
+		fprintf(stderr, "'%s'\n", name);
 		errstr = "invalid stat";
 		break;
     }
@@ -478,6 +479,7 @@ xread(IXPReq *r)
 			break;
 		case Fctl:
 			errstr = Enoperm;
+			return -1;
 			break;
 		case Fdisplay:
 			switch(align) {
@@ -543,11 +545,8 @@ xstat(IXPReq *r)
     }
 
 	name = qid_to_name(&m->qid);
-	if(!type_to_stat(&r->fcall->stat, name, qpath_item(m->qid.path))) {
-		if(!errstr)
-			errstr = "invalid stat";
+	if(!type_to_stat(&r->fcall->stat, name, qpath_item(m->qid.path)))
 		return -1;
-    }
     r->fcall->id = RSTAT;
     return 0;
 }
@@ -566,6 +565,18 @@ xwrite(IXPReq *r)
 
 	i = qpath_item(m->qid.path);
 	switch (qpath_type(m->qid.path)) {
+	case Fctl:
+		if(r->fcall->count == 5) {
+			memcpy(buf, r->fcall->data, 4);
+			buf[4] = 0;
+			if(!strncmp(buf, "quit", 5)) {
+				srv.running = 0;
+				break;
+			}
+		}
+		errstr = "command not supported";
+		return -1;
+		break;
 	case Fdisplay:
 		if(r->fcall->count > 5)
 			goto error_xwrite;
