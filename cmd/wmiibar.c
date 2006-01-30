@@ -24,14 +24,12 @@
 /*
  * filesystem specification
  * / 					Droot
- * /display				Fdisplay	'north', 'south', 'none'
  * /font				Ffont		<xlib font name>
+ * /color				Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /event				Fevent
  * /expand				Fexpand 	id of expandable label
  * /ctl					Fctl 		command interface
  * /new					Dnew 		returns content of new item
- * /default/ 			Ditem
- * /default/color		Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /1/					Ditem
  * /1/data 				Fdata		<arbitrary data which gets displayed>
  * /1/color				Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
@@ -42,7 +40,6 @@ enum {
     Droot,
     Ditem,
 	Fctl,
-    Fdisplay,
     Ffont,
 	Fexpand,
     Fevent,
@@ -79,7 +76,6 @@ static Qid root_qid;
 static Display *dpy;
 static int screen_num;
 static char *font = nil;
-static Align align = CENTER;
 static XFontStruct *xfont;
 static GC gc;
 static Window win;
@@ -207,8 +203,7 @@ update_geometry()
 	char buf[64];
     brect = rect;
     brect.height = xfont->ascent + xfont->descent + 4;
-    if(align == SOUTH)
-        brect.y = rect.height - brect.height;
+    brect.y = rect.height - brect.height;
     XMoveResizeWindow(dpy, win, brect.x, brect.y, brect.width, brect.height);
     XSync(dpy, False);
     XFreePixmap(dpy, pmap);
@@ -284,15 +279,12 @@ qid_to_name(Qid *qid)
 	switch(type) {
 		case Droot: return "/"; break;
 		case Ditem:
-			if(!i) 
-				return "default";
-			else if(i == nitem)
+			if(i == nitem)
 				return "new";
 			snprintf(buf, sizeof(buf), "%u", i);
 			return buf;
 			break;
 		case Fctl: return "ctl"; break;
-		case Fdisplay: return "display"; break;
 		case Ffont: return "font"; break;
 		case Fexpand: return "expand"; break;
 		case Fdata: return "data"; break;
@@ -309,12 +301,10 @@ name_to_type(char *name)
     unsigned int i;
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return Droot;
-	if(!strncmp(name, "default", 8) || !strncmp(name, "new", 4))
+	if(!strncmp(name, "new", 4))
 		return Ditem;
 	if(!strncmp(name, "ctl", 4))
 		return Fctl;
-	if(!strncmp(name, "display", 8))
-		return Fdisplay;
 	if(!strncmp(name, "font", 5))
 		return Ffont;
 	if(!strncmp(name, "expand", 7))
@@ -349,9 +339,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		break;
 	case Ditem:
 		new->type = IXP_QTDIR;
-		if(!strncmp(wname, "default", 8))
-			new->path = mkqpath(Ditem, 0);
-		else if(!strncmp(wname, "new", 4))
+		if(!strncmp(wname, "new", 4))
 			new->path = mkqpath(Ditem, nitem);
 		else {
 			unsigned short i = cext_strtonum(wname, 1, 0xffff, &err);
@@ -490,12 +478,6 @@ type_to_stat(Stat *stat, char *name, unsigned short i)
 	case Fctl:
 		return mkstat(stat, &root_qid, name, 0, DMWRITE);
 		break;
-	case Fdisplay:
-		if(align == SOUTH || align == NORTH)
-			return mkstat(stat, &root_qid, name, 6, DMREAD | DMWRITE);
-		else
-			return mkstat(stat, &root_qid, name, 5, DMREAD | DMWRITE);
-		break;
     case Fevent:
 		return mkstat(stat, &root_qid, name, 0, DMREAD);
 		break;
@@ -573,15 +555,14 @@ xread(IXPConn *c)
 		case Droot:
 			/* jump to offset */
 			len = type_to_stat(&stat, "ctl", 0);
-			len += type_to_stat(&stat, "display", 0);
 			len += type_to_stat(&stat, "font", 0);
+			len += type_to_stat(&stat, "color", 0);
 			len += type_to_stat(&stat, "new", 0);
 			len += type_to_stat(&stat, "event", 0);
-			len += type_to_stat(&stat, "default", 0);
 			for(i = 1; i < nitem; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len += type_to_stat(&stat, buf, i);
-				if(len < c->fcall->offset)
+				if(len <= c->fcall->offset)
 					continue;
 				else 
 					break;
@@ -590,7 +571,7 @@ xread(IXPConn *c)
 			for(; i < nitem; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, i);
-				if(c->fcall->count + len >= c->fcall->iounit)
+				if(c->fcall->count + len > c->fcall->iounit)
 					break;
 				c->fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
@@ -608,20 +589,18 @@ xread(IXPConn *c)
 		case Droot:
 			c->fcall->count = type_to_stat(&stat, "ctl", 0);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "display", 0);
-			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "font", 0);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "color", 0);
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "new", 0);
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "event", 0);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "default", 0);
-			p = ixp_enc_stat(p, &stat);
 			for(i = 1; i < nitem; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, i);
-				if(c->fcall->count + len >= c->fcall->iounit)
+				if(c->fcall->count + len > c->fcall->iounit)
 					break;
 				c->fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
@@ -630,11 +609,6 @@ xread(IXPConn *c)
 		case Ditem:
 			if(i > nitem)
 				goto error_xread;
-			if(!i) {
-				c->fcall->count = type_to_stat(&stat, "color", i);
-				p = ixp_enc_stat(p, &stat);
-				break;
-			}
 			if(i == nitem)
 				new_item();
 			c->fcall->count = type_to_stat(&stat, "color", i);
@@ -645,22 +619,6 @@ xread(IXPConn *c)
 		case Fctl:
 			errstr = Enoperm;
 			return -1;
-			break;
-		case Fdisplay:
-			switch(align) {
-			case SOUTH:
-				memcpy(p, "south", 5);
-				c->fcall->count = 5;
-				break;
-			case NORTH:
-				memcpy(p, "north", 5);
-				c->fcall->count = 5;
-				break;
-			default:
-				memcpy(p, "none", 4);
-				c->fcall->count = 4;
-				break;
-			}
 			break;
 		case Ffont:
 			if((c->fcall->count = strlen(font)))
@@ -745,22 +703,6 @@ xwrite(IXPConn *c)
 		}
 		errstr = "command not supported";
 		return -1;
-		break;
-	case Fdisplay:
-		if(c->fcall->count != 6 && c->fcall->count != 5)
-			goto error_xwrite;
-		memcpy(buf, c->fcall->data, c->fcall->count);
-		buf[c->fcall->count] = 0;
-		if(blitz_strtoalign(&align, buf) == -1)
-			goto error_xwrite;
-		update_geometry();
-		if(align == NORTH || align == SOUTH) {
-			XMapRaised(dpy, win);
-			draw();
-		}
-		else
-			XUnmapWindow(dpy, win);
-		XSync(dpy, False);
 		break;
 	case Ffont:
 		if(font)
@@ -1066,6 +1008,9 @@ main(int argc, char *argv[])
                       	 DefaultDepth(dpy, screen_num));
 
 	/* main loop */
+	XMapRaised(dpy, win);
+	draw();
+
 	errstr = ixp_server_loop(&srv);
 
 	if(errstr)
