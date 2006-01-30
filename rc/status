@@ -4,7 +4,7 @@
 WMIIR_ADDRESS='unix!/tmp/.ixp-'^$USER^'/wmiibar-'^$WMII_IDENT
 PIDFILE=/tmp/.ixp-$USER/statuspid-$WMII_IDENT
 
-fn xwrite { echo -n $2 | wmiir2 write $1 }
+fn xwrite { echo -n $2 | wmiir write $1 }
 
 if(test -r $PIDFILE) {
     kill -2 `{cat $PIDFILE} >[2]/dev/null
