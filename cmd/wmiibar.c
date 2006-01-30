@@ -92,10 +92,10 @@ static char *version[] = {
 static void
 usage()
 {
-    fprintf(stderr, "%s %d",
+    fprintf(stderr, "%s",
             "usage: wmiibar -a <server address> [-v]\n"
             "      -a    server address \n"
-            "      -v    version info\n", 0);
+            "      -v    version info\n");
     exit(1);
 }
 
@@ -443,8 +443,7 @@ xopen(IXPConn *c)
     }
     c->fcall->id = ROPEN;
     c->fcall->qid = m->qid;
-    c->fcall->iounit = c->fcall->maxmsg
-		- (sizeof(unsigned char) + sizeof(unsigned short) + 2 * sizeof(unsigned int));
+    c->fcall->iounit = 256;
     return 0;
 }
 

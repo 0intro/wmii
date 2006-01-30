@@ -137,10 +137,8 @@ int
 ixp_client_read(IXPClient * c, unsigned int fid, unsigned long long offset,
                 void *result, unsigned int res_len)
 {
-    unsigned int bytes =
-        c->fcall.maxmsg - (sizeof(unsigned char) + sizeof(unsigned short) +
-                           2 * sizeof(unsigned int) +
-                           sizeof(unsigned long long));
+    unsigned int bytes = c->fcall.iounit;
+
     /* read */
     c->fcall.id = TREAD;
     c->fcall.tag = IXP_NOTAG;
@@ -158,11 +156,9 @@ ixp_client_write(IXPClient * c, unsigned int fid,
                  unsigned long long offset, unsigned int count,
                  unsigned char *data)
 {
-    if(count >
-       c->fcall.maxmsg - (sizeof(unsigned char) + sizeof(unsigned short) +
-                          2 * sizeof(unsigned int) +
-                          sizeof(unsigned long long))) {
-        c->errstr = "message size exceeds buffer size";
+    if(count > c->fcall.iounit)
+	{
+        c->errstr = "iounit exceeded";
         return -1;
     }
     /* write */
