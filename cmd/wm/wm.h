@@ -9,56 +9,6 @@
 
 #include "wmii.h"
 
-/* array indexes of page file pointers */
-enum {
-    P_PREFIX,
-    P_NAME,
-    P_CLIENT_PREFIX,
-    P_SEL_PREFIX,
-    P_CTL,
-    P_LAST
-};
-
-/* array indexes of frame file pointers */
-enum {
-    C_PREFIX,
-    C_NAME,
-    C_GEOMETRY,
-    C_BORDER,
-    C_TAB,
-    C_HANDLE_INC,
-	C_CTL,
-    C_LAST
-};
-
-/* array indexes of wm file pointers */
-enum {
-    WM_CTL,
-    WM_TRANS_COLOR,
-    WM_COLUMN_GEOMETRY,
-    WM_SEL_BG_COLOR,
-    WM_SEL_BORDER_COLOR,
-    WM_SEL_FG_COLOR,
-    WM_NORM_BG_COLOR,
-    WM_NORM_BORDER_COLOR,
-    WM_NORM_FG_COLOR,
-    WM_FONT,
-    WM_BORDER,
-    WM_TAB,
-    WM_HANDLE_INC,
-    WM_SNAP_VALUE,
-	WM_DETACHED_PREFIX,
-    WM_SEL_PAGE,
-    WM_EVENT_PAGE_UPDATE,
-    WM_EVENT_CLIENT_UPDATE,
-    WM_EVENT_B1PRESS,
-    WM_EVENT_B2PRESS,
-    WM_EVENT_B3PRESS,
-    WM_EVENT_B4PRESS,
-    WM_EVENT_B5PRESS,
-    WM_LAST
-};
-
 /* array indexes of EWMH window properties */
 	                  /* TODO: set / react */
 enum {
@@ -96,7 +46,6 @@ struct Page {
 	size_t sel_column;
 	Bool is_column;
 	XRectangle rect_column;
-    File *file[P_LAST];
 };
 
 struct Client {
@@ -104,6 +53,7 @@ struct Client {
     int proto;
     unsigned int border;
     unsigned int ignore_unmap;
+	Bool handle_inc;
     Bool destroyed;
 	Bool maximized;
 	Bool attached;
@@ -119,8 +69,8 @@ struct Client {
 		XRectangle revert;
     	GC gc;
     	Cursor cursor;
+		Bool title;
 	} frame;
-	File *file[C_LAST];
 };
 
 /* global variables */
@@ -140,10 +90,21 @@ int screen;
 Window root;
 Window transient; /* pager / attach */
 XRectangle rect;
-XFontStruct *font;
+XFontStruct *xfont;
 XColor color_xor;
 GC gc_xor;
 GC gc_transient;
+
+/* default values */
+typedef struct {
+	char xorcolor[24];
+	char selcolor[24];
+	char normcolor[24];
+	char font[24];
+	unsigned int border;
+	unsigned int title;
+	unsigned int snap;
+} Default def;
 
 Atom wm_state; /* TODO: Maybe replace with wm_atoms[WM_ATOM_COUNT]? */
 Atom wm_change_state;
@@ -164,9 +125,6 @@ Cursor nw_cursor;
 Cursor ne_cursor;
 Cursor sw_cursor;
 Cursor se_cursor;
-
-/* default file pointers */
-File *def[WM_LAST];
 
 unsigned int valid_mask, num_lock_mask;
 
@@ -222,12 +180,14 @@ void select_column(Client *c, char *arg);
 void new_column(Page *p);
 
 /* wm.c */
+/*
 void invoke_wm_event(File * f);
 void run_action(File * f, void *obj, Action * acttbl);
+*/
 void scan_wins();
 Client *win_to_client(Window w);
 int win_proto(Window w);
 int win_state(Window w);
-void handle_after_write(IXPServer * s, File * f);
+/*void handle_after_write(IXPServer * s, File * f);*/
 void detach(Client * f, int client_destroyed);
 void set_client_state(Client * c, int state);

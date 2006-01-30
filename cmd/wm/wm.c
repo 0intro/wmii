@@ -8,7 +8,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <X11/cursorfont.h>
+#include <X11/cursorxfont.h>
 #include <X11/Xproto.h>
 #include <X11/keysym.h>
 #include <X11/Xatom.h>
@@ -177,7 +177,7 @@ draw_pager()
     th = ((double) tw / rect.width) * rect.height;
     d.drawable = transient;
     d.gc = gc_transient;
-    d.font = font;
+    d.xfont = xfont;
 	i = 0;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
@@ -563,8 +563,8 @@ handle_after_write(IXPServer * s, File * f)
                          &color_xor, &color_xor);
         XSetForeground(dpy, gc_xor, color_xor.pixel);
     } else if(f == def[WM_FONT]) {
-        XFreeFont(dpy, font);
-        font = blitz_getfont(dpy, def[WM_FONT]->content);
+        XFreeFont(dpy, xfont);
+        xfont = blitz_getxfont(dpy, def[WM_FONT]->content);
     }
     check_event(0);
 }
@@ -625,7 +625,7 @@ init_default()
                             BLITZ_NORM_FG_COLOR);
     def[WM_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/nstyle/bordercolor",
                             BLITZ_NORM_BORDER_COLOR);
-    def[WM_FONT] = wmii_create_ixpfile(ixps, "/default/font", BLITZ_FONT);
+    def[WM_FONT] = wmii_create_ixpfile(ixps, "/default/xfont", BLITZ_FONT);
     def[WM_FONT]->after_write = handle_after_write;
     def[WM_SNAP_VALUE] = wmii_create_ixpfile(ixps, "/default/snapvalue", "20"); /* 0..1000 */
     def[WM_BORDER] = wmii_create_ixpfile(ixps, "/default/border", "1");
@@ -803,7 +803,7 @@ main(int argc, char *argv[])
     init_atoms();
     init_cursors();
     init_default();
-    font = blitz_getfont(dpy, def[WM_FONT]->content);
+    xfont = blitz_getxfont(dpy, def[WM_FONT]->content);
     wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
     init_screen();
     scan_wins();

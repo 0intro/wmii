@@ -4,14 +4,13 @@
 include ../config.mk
 
 CFLAGS += -I ../libcext
-LDFLAGS += -L../libcext -lcext
 
-SRC = client.c message.c ramfs.c server.c
+SRC = client.c convert.c message.c server.c socket.c transport.c
 
 OBJ = ${SRC:.c=.o}
 
 all: libixp
-	@echo built libixp
+	@echo built libixp2
 
 .c.o:
 	@echo CC $<

@@ -291,7 +291,7 @@ draw_client(Client *c)
     XRectangle notch;
 
 	d.drawable = c->frame.win;
-	d.font = font;
+	d.xfont = xfont;
 	d.gc = c->frame.gc;
 
 	if(c == sel_client()) {
@@ -476,7 +476,7 @@ unsigned int
 tab_height(Client * c)
 {
     if(blitz_strtonum(c->file[C_TAB]->content, 0, 1))
-        return font->ascent + font->descent + 4;
+        return xfont->ascent + xfont->descent + 4;
     return 0;
 }
 

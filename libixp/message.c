@@ -3,170 +3,315 @@
  * See LICENSE file for license details.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "ixp.h"
 
-#include <cext.h>
+#define IXP_QIDSZ (sizeof(unsigned char) + sizeof(unsigned int)\
+                	+ sizeof(unsigned long long))
 
-void *tcreate_message(char *path, size_t * msg_len)
+static unsigned short
+sizeof_string(const char *s)
 {
-	char *msg;
-	ReqHeader h;
-	*msg_len = sizeof(ReqHeader) + strlen(path) + 1;
-	msg = cext_emallocz(*msg_len);
-	h.req = TCREATE;
-	memcpy(msg, &h, sizeof(ReqHeader));
-	memcpy(msg + sizeof(ReqHeader), path, strlen(path) + 1);
-	return msg;
+    return sizeof(unsigned short) + strlen(s);
 }
 
-void *topen_message(char *path, size_t * msg_len)
+unsigned short
+ixp_sizeof_stat(Stat * stat)
 {
-	char *msg;
-	ReqHeader h;
-	*msg_len = sizeof(ReqHeader) + strlen(path) + 1;
-	msg = cext_emallocz(*msg_len);
-	h.req = TOPEN;
-	memcpy(msg, &h, sizeof(ReqHeader));
-	memcpy(msg + sizeof(ReqHeader), path, strlen(path) + 1);
-	return msg;
+    return IXP_QIDSZ
+        + 2 * sizeof(unsigned short)
+        + 4 * sizeof(unsigned int)
+        + sizeof(unsigned long long)
+        + sizeof_string(stat->name)
+        + sizeof_string(stat->uid)
+        + sizeof_string(stat->gid)
+        + sizeof_string(stat->muid);
 }
 
-void *tread_message(int fd, size_t offset, size_t buf_len,
-					size_t * msg_len)
+unsigned int
+ixp_fcall_to_msg(Fcall * fcall, void *msg, unsigned int msglen)
 {
-	char *msg;
-	ReqHeader h;
-	*msg_len = sizeof(ReqHeader);
-	msg = cext_emallocz(*msg_len);
-	h.req = TREAD;
-	h.fd = fd;
-	h.offset = offset;
-	h.buf_len = buf_len;
-	memcpy(msg, &h, sizeof(ReqHeader));
-	return msg;
+    unsigned int i, msize =
+        sizeof(unsigned char) + sizeof(unsigned short) +
+        sizeof(unsigned int);
+    void *p = msg;
+
+    switch (fcall->id) {
+    case TVERSION:
+    case RVERSION:
+        msize += sizeof(unsigned int) + sizeof_string(fcall->version);
+        break;
+    case TAUTH:
+        msize +=
+            sizeof(unsigned int) + sizeof_string(fcall->uname) +
+            sizeof_string(fcall->aname);
+        break;
+    case RAUTH:
+    case RATTACH:
+        msize += IXP_QIDSZ;
+        break;
+    case TATTACH:
+        msize +=
+            2 * sizeof(unsigned int) + sizeof_string(fcall->uname) +
+            sizeof_string(fcall->aname);
+        break;
+    case RERROR:
+        msize += sizeof_string(fcall->errstr);
+        break;
+    case RWRITE:
+    case TCLUNK:
+    case TREMOVE:
+    case TSTAT:
+        msize += sizeof(unsigned int);
+        break;
+    case TWALK:
+        msize += sizeof(unsigned short) + 2 * sizeof(unsigned int);
+        for(i = 0; i < fcall->nwname; i++)
+            msize += sizeof_string(fcall->wname[i]);
+        break;
+    case TFLUSH:
+        msize += sizeof(unsigned short);
+        break;
+    case RWALK:
+        msize += sizeof(unsigned short) + fcall->nwqid * IXP_QIDSZ;
+        break;
+    case TOPEN:
+        msize += sizeof(unsigned int) + sizeof(unsigned char);
+        break;
+    case ROPEN:
+    case RCREATE:
+        msize += IXP_QIDSZ + sizeof(unsigned int);
+        break;
+    case TCREATE:
+        msize +=
+            sizeof(unsigned char) + 2 * sizeof(unsigned int) +
+            sizeof_string(fcall->name);
+        break;
+    case TREAD:
+        msize += 2 * sizeof(unsigned int) + sizeof(unsigned long long);
+        break;
+    case RREAD:
+        msize += sizeof(unsigned int) + fcall->count;
+        break;
+    case TWRITE:
+        msize +=
+            2 * sizeof(unsigned int) + sizeof(unsigned long long) +
+            fcall->count;
+        break;
+    case RSTAT:
+        msize += sizeof(unsigned short) + ixp_sizeof_stat(&fcall->stat);
+        break;
+    case TWSTAT:
+        msize += sizeof(unsigned int) + sizeof(unsigned short) + ixp_sizeof_stat(&fcall->stat);
+        break;
+    default:
+        break;
+    }
+
+    if(msize > msglen)
+        return 0;
+    p = ixp_enc_prefix(p, msize, fcall->id, fcall->tag);
+
+    switch (fcall->id) {
+    case TVERSION:
+    case RVERSION:
+        p = ixp_enc_u32(p, fcall->maxmsg);
+        p = ixp_enc_string(p, fcall->version);
+        break;
+    case TAUTH:
+        p = ixp_enc_u32(p, fcall->afid);
+        p = ixp_enc_string(p, fcall->uname);
+        p = ixp_enc_string(p, fcall->aname);
+        break;
+    case RAUTH:
+        p = ixp_enc_qid(p, &fcall->aqid);
+        break;
+    case RATTACH:
+        p = ixp_enc_qid(p, &fcall->qid);
+        break;
+    case TATTACH:
+        p = ixp_enc_u32(p, fcall->fid);
+        p = ixp_enc_u32(p, fcall->afid);
+        p = ixp_enc_string(p, fcall->uname);
+        p = ixp_enc_string(p, fcall->aname);
+        break;
+    case RERROR:
+        p = ixp_enc_string(p, fcall->errstr);
+        break;
+    case TFLUSH:
+        p = ixp_enc_u16(p, fcall->oldtag);
+        break;
+    case TWALK:
+        p = ixp_enc_u32(p, fcall->fid);
+        p = ixp_enc_u32(p, fcall->newfid);
+        p = ixp_enc_u16(p, fcall->nwname);
+        for(i = 0; i < fcall->nwname; i++)
+            p = ixp_enc_string(p, fcall->wname[i]);
+        break;
+    case RWALK:
+        p = ixp_enc_u16(p, fcall->nwqid);
+        for(i = 0; i < fcall->nwqid; i++)
+            p = ixp_enc_qid(p, &fcall->wqid[i]);
+        break;
+    case TOPEN:
+        p = ixp_enc_u32(p, fcall->fid);
+        p = ixp_enc_u8(p, fcall->mode);
+        break;
+    case ROPEN:
+    case RCREATE:
+        p = ixp_enc_qid(p, &fcall->qid);
+        p = ixp_enc_u32(p, fcall->iounit);
+        break;
+    case TCREATE:
+        p = ixp_enc_u32(p, fcall->fid);
+        p = ixp_enc_string(p, fcall->name);
+        p = ixp_enc_u32(p, fcall->perm);
+        p = ixp_enc_u8(p, fcall->mode);
+        break;
+    case TREAD:
+        p = ixp_enc_u32(p, fcall->fid);
+        p = ixp_enc_u64(p, fcall->offset);
+        p = ixp_enc_u32(p, fcall->count);
+        break;
+    case RREAD:
+        p = ixp_enc_u32(p, fcall->count);
+        p = ixp_enc_data(p, fcall->data, fcall->count);
+        break;
+    case TWRITE:
+        p = ixp_enc_u32(p, fcall->fid);
+        p = ixp_enc_u64(p, fcall->offset);
+        p = ixp_enc_u32(p, fcall->count);
+        p = ixp_enc_data(p, fcall->data, fcall->count);
+        break;
+    case RWRITE:
+        p = ixp_enc_u32(p, fcall->count);
+        break;
+    case TCLUNK:
+    case TREMOVE:
+    case TSTAT:
+        p = ixp_enc_u32(p, fcall->fid);
+        break;
+    case RSTAT:
+		p = ixp_enc_u16(p, ixp_sizeof_stat(&fcall->stat));
+        p = ixp_enc_stat(p, &fcall->stat);
+        break;
+    case TWSTAT:
+        p = ixp_enc_u32(p, fcall->fid);
+		p = ixp_enc_u16(p, ixp_sizeof_stat(&fcall->stat));
+        p = ixp_enc_stat(p, &fcall->stat);
+        break;
+    }
+
+	if(msg + msize == p)
+    	return msize;
+	return 0;
 }
 
-void *twrite_message(int fd, size_t offset, void *content,
-					 size_t content_len, size_t * msg_len)
+unsigned int
+ixp_msg_to_fcall(void *msg, unsigned int msglen, Fcall * fcall)
 {
-	char *msg;
-	ReqHeader h;
-	*msg_len = sizeof(ReqHeader) + content_len;
-	msg = cext_emallocz(*msg_len);
-	h.req = TWRITE;
-	h.fd = fd;
-	h.offset = offset;
-	h.buf_len = content_len;
-	memcpy(msg, &h, sizeof(ReqHeader));
-	memcpy(msg + sizeof(ReqHeader), content, content_len);
-	return msg;
-}
+    unsigned int i, msize;
+    unsigned short len;
+    void *p = ixp_dec_prefix(msg, &msize, &fcall->id, &fcall->tag);
 
-void *tclose_message(int fd, size_t * msg_len)
-{
-	char *msg;
-	ReqHeader h;
-	*msg_len = sizeof(ReqHeader);
-	msg = cext_emallocz(*msg_len);
-	h.req = TCLUNK;
-	h.fd = fd;
-	memcpy(msg, &h, sizeof(ReqHeader));
-	return msg;
-}
+    if(msize > msglen)          /* bad message */
+        return 0;
 
-void *tremove_message(char *path, size_t * msg_len)
-{
-	char *msg;
-	ReqHeader h;
-	*msg_len = sizeof(ReqHeader) + strlen(path) + 1;
-	msg = cext_emallocz(*msg_len);
-	h.req = TREMOVE;
-	memcpy(msg, &h, sizeof(ReqHeader));
-	memcpy(msg + sizeof(ReqHeader), path, strlen(path) + 1);
-	return msg;
-}
+    switch (fcall->id) {
+    case TVERSION:
+    case RVERSION:
+        p = ixp_dec_u32(p, &fcall->maxmsg);
+        p = ixp_dec_string(p, fcall->version, sizeof(fcall->version), &len);
+        break;
+    case TAUTH:
+        p = ixp_dec_u32(p, &fcall->afid);
+        p = ixp_dec_string(p, fcall->uname, sizeof(fcall->uname), &len);
+        p = ixp_dec_string(p, fcall->aname, sizeof(fcall->aname), &len);
+        break;
+    case RAUTH:
+        p = ixp_dec_qid(p, &fcall->aqid);
+        break;
+    case RATTACH:
+        p = ixp_dec_qid(p, &fcall->qid);
+        break;
+    case TATTACH:
+        p = ixp_dec_u32(p, &fcall->fid);
+        p = ixp_dec_u32(p, &fcall->afid);
+        p = ixp_dec_string(p, fcall->uname, sizeof(fcall->uname), &len);
+        p = ixp_dec_string(p, fcall->aname, sizeof(fcall->aname), &len);
+        break;
+    case RERROR:
+        p = ixp_dec_string(p, fcall->errstr, sizeof(fcall->errstr), &len);
+        break;
+    case TFLUSH:
+        p = ixp_dec_u16(p, &fcall->oldtag);
+        break;
+    case TWALK:
+        p = ixp_dec_u32(p, &fcall->fid);
+        p = ixp_dec_u32(p, &fcall->newfid);
+        p = ixp_dec_u16(p, &fcall->nwname);
+        for(i = 0; i < fcall->nwname; i++) {
 
-void *rcreate_message(size_t * msg_len)
-{
-	char *msg;
-	ResHeader h;
-	*msg_len = sizeof(ResHeader);
-	msg = cext_emallocz(*msg_len);
-	h.res = RCREATE;
-	memcpy(msg, &h, sizeof(ResHeader));
-	return msg;
-}
+            p = ixp_dec_string(p, fcall->wname[i], IXP_MAX_FLEN, &len);
+		}
+        break;
+    case RWALK:
+        p = ixp_dec_u16(p, &fcall->nwqid);
+        for(i = 0; i < fcall->nwqid; i++)
+            p = ixp_dec_qid(p, &fcall->wqid[i]);
+        break;
+    case TOPEN:
+        p = ixp_dec_u32(p, &fcall->fid);
+        p = ixp_dec_u8(p, &fcall->mode);
+        break;
+    case ROPEN:
+    case RCREATE:
+        p = ixp_dec_qid(p, &fcall->qid);
+        p = ixp_dec_u32(p, &fcall->iounit);
+        break;
+    case TCREATE:
+        p = ixp_dec_u32(p, &fcall->fid);
+        p = ixp_dec_string(p, fcall->name, sizeof(fcall->name), &len);
+        p = ixp_dec_u32(p, &fcall->perm);
+        p = ixp_dec_u8(p, &fcall->mode);
+        break;
+    case TREAD:
+        p = ixp_dec_u32(p, &fcall->fid);
+        p = ixp_dec_u64(p, &fcall->offset);
+        p = ixp_dec_u32(p, &fcall->count);
+        break;
+    case RREAD:
+        p = ixp_dec_u32(p, &fcall->count);
+        p = ixp_dec_data(p, fcall->data, fcall->count);
+        break;
+    case TWRITE:
+        p = ixp_dec_u32(p, &fcall->fid);
+        p = ixp_dec_u64(p, &fcall->offset);
+        p = ixp_dec_u32(p, &fcall->count);
+        p = ixp_dec_data(p, fcall->data, fcall->count);
+        break;
+    case RWRITE:
+        p = ixp_dec_u32(p, &fcall->count);
+        break;
+    case TCLUNK:
+    case TREMOVE:
+    case TSTAT:
+        p = ixp_dec_u32(p, &fcall->fid);
+        break;
+    case RSTAT:
+		p = ixp_dec_u16(p, &len);
+        p = ixp_dec_stat(p, &fcall->stat);
+        break;
+    case TWSTAT:
+        p = ixp_dec_u32(p, &fcall->fid);
+		p = ixp_dec_u16(p, &len);
+        p = ixp_dec_stat(p, &fcall->stat);
+        break;
+    }
 
-void *ropen_message(int fd, size_t * msg_len)
-{
-	char *msg;
-	ResHeader h;
-	*msg_len = sizeof(ResHeader);
-	msg = cext_emallocz(*msg_len);
-	h.res = ROPEN;
-	h.fd = fd;
-	memcpy(msg, &h, sizeof(ResHeader));
-	return msg;
-}
-
-void *rread_message(void *content, size_t content_len, size_t * msg_len)
-{
-	char *msg;
-	ResHeader h;
-	*msg_len = sizeof(ResHeader) + content_len;
-	msg = cext_emallocz(*msg_len);
-	h.res = RREAD;
-	h.buf_len = content_len;
-	memcpy(msg, &h, sizeof(ResHeader));
-	memmove(msg + sizeof(ResHeader), content, content_len);
-	return msg;
-}
-
-void *rwrite_message(size_t * msg_len)
-{
-	char *msg;
-	ResHeader h;
-	*msg_len = sizeof(ResHeader);
-	msg = cext_emallocz(*msg_len);
-	h.res = RWRITE;
-	memcpy(msg, &h, sizeof(ResHeader));
-	return msg;
-}
-
-void *rclose_message(size_t * msg_len)
-{
-	char *msg;
-	ResHeader h;
-	*msg_len = sizeof(ResHeader);
-	msg = cext_emallocz(*msg_len);
-	h.res = RCLUNK;
-	memcpy(msg, &h, sizeof(ResHeader));
-	return msg;
-}
-
-void *rremove_message(size_t * msg_len)
-{
-	char *msg;
-	ResHeader h;
-	*msg_len = sizeof(ResHeader);
-	msg = cext_emallocz(*msg_len);
-	h.res = RREMOVE;
-	memcpy(msg, &h, sizeof(ResHeader));
-	return msg;
-}
-
-void *rerror_message(char *errstr, size_t * msg_len)
-{
-	char *msg;
-	size_t len = strlen(errstr) + 1;
-	ResHeader h;
-	*msg_len = sizeof(ResHeader) + len;
-	msg = cext_emallocz(*msg_len);
-	h.res = RERROR;
-	memcpy(msg, &h, sizeof(ResHeader));
-	memmove(msg + sizeof(ResHeader), errstr, len);
-	return msg;
+	if(msg + msize == p)
+    	return msize;
+	return 0;
 }

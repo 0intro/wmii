@@ -18,7 +18,7 @@
 #include <X11/Xutil.h>
 #include <sys/socket.h>
 
-#include "../libixp2/ixp.h"
+#include "ixp.h"
 #include "blitz.h"
 
 /*

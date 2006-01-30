@@ -3,288 +3,192 @@
  * See LICENSE file for license details.
  */
 
-#include <errno.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/un.h>
+#include <sys/types.h>
+#include <unistd.h>
 
+#include "cext.h"
 #include "ixp.h"
 
-#include <cext.h>
+static unsigned char msg[IXP_MAX_MSG];
 
-static size_t offsets[MAX_CONN * MAX_OPEN_FILES][2];	/* set of possible fd's */
-
-static void check_error(IXPClient * c, void *msg)
+static int
+do_fcall(IXPClient * c)
 {
-	ResHeader h;
-
-	if (c->errstr)
-		free(c->errstr);
-	c->errstr = 0;
-
-	memcpy(&h, msg, sizeof(ResHeader));
-	if (h.res == RERROR)
-		c->errstr = strdup((char *) msg + sizeof(ResHeader));
+    unsigned int msize = ixp_fcall_to_msg(&c->fcall, msg, IXP_MAX_MSG);
+    c->errstr = 0;
+    if(ixp_send_message(c->fd, msg, msize, &c->errstr) != msize)
+        return -1;
+    if(!ixp_recv_message(c->fd, msg, IXP_MAX_MSG, &c->errstr))
+        return -1;
+    if(!(msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, &c->fcall))) {
+        c->errstr = "received bad message";
+        return -1;
+    }
+    if(c->fcall.id == RERROR) {
+        c->errstr = c->fcall.errstr;
+        return -1;
+    }
+    return 0;
 }
 
-static void handle_dead_server(IXPClient * c)
+int
+ixp_client_init(IXPClient * c, char *sockfile)
 {
-	if (c->errstr)
-		free(c->errstr);
-	c->errstr = strdup(DEAD_SERVER);
-	if (c->fd) {
-		shutdown(c->fd, SHUT_RDWR);
-		close(c->fd);
-	}
-	c->fd = -1;
+    if((c->fd = ixp_connect_sock(sockfile)) < 0) {
+        c->errstr = "cannot connect server";
+        return -1;
+    }
+    /* version */
+    c->fcall.id = TVERSION;
+    c->fcall.tag = IXP_NOTAG;
+    c->fcall.maxmsg = IXP_MAX_MSG;
+    cext_strlcpy(c->fcall.version, IXP_VERSION, sizeof(c->fcall.version));
+    if(do_fcall(c) == -1) {
+        ixp_client_deinit(c);
+        return -1;
+    }
+    if(strncmp(c->fcall.version, IXP_VERSION, strlen(IXP_VERSION))) {
+        c->errstr = "9P versions differ";
+        ixp_client_deinit(c);
+        return -1;           /* we cannot handle this version */
+    }
+    c->root_fid = getpid();
+
+    /* attach */
+    c->fcall.id = TATTACH;
+    c->fcall.tag = IXP_NOTAG;
+    c->fcall.fid = c->root_fid;
+    c->fcall.afid = IXP_NOFID;
+    cext_strlcpy(c->fcall.uname, getenv("USER"), sizeof(c->fcall.uname));
+    c->fcall.aname[0] = 0;
+    if(do_fcall(c) == -1) {
+        ixp_client_deinit(c);
+        return -1;
+    }
+    c->root_qid = c->fcall.qid;
+    return 0;
 }
 
-static void *poll_server(IXPClient * c, void *request, size_t req_len,
-						 size_t * out_len)
+int
+ixp_client_remove(IXPClient * c, unsigned int newfid, char *filepath)
 {
-	size_t num = 0;
-	void *result = 0;
-	int r, header = 0;
-
-	if (c->errstr)
-		free(c->errstr);
-	c->errstr = 0;
-
-	/* first send request */
-	while (num < req_len) {
-		FD_ZERO(&c->wr);
-		FD_SET(c->fd, &c->wr);
-		r = select(c->fd + 1, 0, &c->wr, 0, 0);
-		if (r == -1 && errno == EINTR)
-			continue;
-		if (r < 0) {
-			perror("ixp: client: select");
-			if (result)
-				free(result);
-			handle_dead_server(c);
-			return 0;
-		} else if (r > 0) {
-			if (!header) {
-				/* write header first */
-				r = write(c->fd, &req_len, sizeof(size_t));
-				if (r != sizeof(size_t)) {
-					if (result)
-						free(result);
-					handle_dead_server(c);
-					return 0;
-				}
-				header = 1;
-			}
-			r = write(c->fd, ((char *) request) + num, req_len - num);
-			if (r < 1) {
-				perror("ixp: client: write");
-				if (result)
-					free(result);
-				handle_dead_server(c);
-				return 0;
-			}
-			num += r;
-		}
-	}
-	free(request);				/* cleanup */
-
-	num = 0;
-	header = 0;
-	/* now wait for response */
-	do {
-		FD_ZERO(&c->rd);
-		FD_SET(c->fd, &c->rd);
-		r = select(c->fd + 1, &c->rd, 0, 0, 0);
-		if (r == -1 && errno == EINTR)
-			continue;
-		if (r < 0) {
-			perror("ixp: client: select");
-			if (result)
-				free(result);
-			handle_dead_server(c);
-			return 0;
-		} else if (r > 0) {
-			if (!header) {
-				r = read(c->fd, out_len, sizeof(size_t));
-				if (r != sizeof(size_t)) {
-					if (result)
-						free(result);
-					handle_dead_server(c);
-					return 0;
-				}
-				result = cext_emallocz(*out_len);
-				header = 1;
-			}
-			r = read(c->fd, ((char *) result) + num, *out_len - num);
-			if (r < 1) {
-				perror("ixp: client: read");
-				if (result)
-					free(result);
-				handle_dead_server(c);
-				return 0;
-			}
-			num += r;
-		}
-	}
-	while (num != *out_len);
-
-	/* error checking */
-	if (result)
-		check_error(c, result);
-	if (c->errstr) {
-		free(result);
-		result = 0;
-	}
-	return result;
+    if(ixp_client_walk(c, newfid, filepath) == -1)
+        return -1;
+    /* remove */
+    c->fcall.id = TREMOVE;
+    c->fcall.tag = IXP_NOTAG;
+    c->fcall.fid = newfid;
+    return do_fcall(c);
 }
 
-static void cixp_create(IXPClient * c, char *path)
+int
+ixp_client_create(IXPClient * c, unsigned int dirfid, char *name,
+                  unsigned int perm, unsigned char mode)
 {
-	ResHeader h;
-	size_t req_len, res_len;
-	void *req = tcreate_message(path, &req_len);
-	void *result = poll_server(c, req, req_len, &res_len);
-
-	if (!result)
-		return;
-	memcpy(&h, result, sizeof(ResHeader));
-	free(result);
+    /* create */
+    c->fcall.id = TCREATE;
+    c->fcall.tag = IXP_NOTAG;
+    c->fcall.fid = dirfid;
+    cext_strlcpy(c->fcall.name, name, sizeof(c->fcall.name));
+    c->fcall.perm = perm;
+    c->fcall.mode = mode;
+    return do_fcall(c);
 }
 
-static int cixp_open(IXPClient * c, char *path)
+int
+ixp_client_walk(IXPClient * c, unsigned int newfid, char *filepath)
 {
-	ResHeader h;
-	size_t req_len, res_len;
-	void *req = topen_message(path, &req_len);
-	void *result = poll_server(c, req, req_len, &res_len);
-
-	if (!result)
-		return -1;
-	memcpy(&h, result, sizeof(ResHeader));
-	free(result);
-	offsets[h.fd][0] = offsets[h.fd][1] = 0;
-	return h.fd;
+	unsigned int i;
+	char *wname[IXP_MAX_WELEM];
+    /* walk */
+    c->fcall.id = TWALK;
+    c->fcall.fid = c->root_fid;
+    c->fcall.newfid = newfid;
+    if(filepath) {
+        cext_strlcpy(c->fcall.name, filepath, sizeof(c->fcall.name));
+        c->fcall.nwname =
+            cext_tokenize(wname, IXP_MAX_WELEM, c->fcall.name, '/');
+		for(i = 0; i < c->fcall.nwname; i++)
+			cext_strlcpy(c->fcall.wname[i], wname[i], sizeof(c->fcall.wname[i]));
+    }
+    return do_fcall(c);
 }
 
-static size_t
-cixp_read(IXPClient * c, int fd, void *out_buf, size_t out_buf_len)
+int
+ixp_client_open(IXPClient * c, unsigned int newfid, char *filepath,
+                unsigned char mode)
 {
-	size_t len;
+    if(ixp_client_walk(c, newfid, filepath) == -1)
+        return -1;
 
-	len = seek_read(c, fd, offsets[fd][0], out_buf, out_buf_len);
-	if (c->errstr)
-		return 0;
-	if (len == out_buf_len)
-		offsets[fd][0] += len;
-	return len;
+    /* open */
+    c->fcall.id = TOPEN;
+    c->fcall.tag = IXP_NOTAG;
+    c->fcall.fid = newfid;
+    c->fcall.mode = mode;
+    return do_fcall(c);
 }
 
-size_t
-seek_read(IXPClient * c, int fd, size_t offset,
-		  void *out_buf, size_t out_buf_len)
+int
+ixp_client_read(IXPClient * c, unsigned int fid, unsigned long long offset,
+                void *result, unsigned int res_len)
 {
-	ResHeader h;
-	size_t req_len, res_len;
-	void *req = tread_message(fd, offset, out_buf_len, &req_len);
-	void *result = poll_server(c, req, req_len, &res_len);
+    unsigned int bytes = c->fcall.iounit;
 
-	if (!result)
-		return -1;
-	memcpy(&h, result, sizeof(ResHeader));
-	memcpy(out_buf, ((char *) result) + sizeof(ResHeader), h.buf_len);
-	free(result);
-	return h.buf_len;
+    /* read */
+    c->fcall.id = TREAD;
+    c->fcall.tag = IXP_NOTAG;
+    c->fcall.fid = fid;
+    c->fcall.offset = offset;
+    c->fcall.count = res_len < bytes ? res_len : bytes;
+    if(do_fcall(c) == -1)
+        return -1;
+    memcpy(result, c->fcall.data, c->fcall.count);
+    return c->fcall.count;
 }
 
-static void cixp_write(IXPClient * c, int fd, void *content, size_t in_len)
+int
+ixp_client_write(IXPClient * c, unsigned int fid,
+                 unsigned long long offset, unsigned int count,
+                 unsigned char *data)
 {
-	seek_write(c, fd, offsets[fd][1], content, in_len);
-	if (!c->errstr)
-		offsets[fd][1] += in_len;
+    if(count > c->fcall.iounit)
+	{
+        c->errstr = "iounit exceeded";
+        return -1;
+    }
+    /* write */
+    c->fcall.id = TWRITE;
+    c->fcall.tag = IXP_NOTAG;
+    c->fcall.fid = fid;
+    c->fcall.offset = offset;
+    c->fcall.count = count;
+    memcpy(c->fcall.data, data, count);
+    if(do_fcall(c) == -1)
+        return -1;
+    return c->fcall.count;
+}
+
+int
+ixp_client_close(IXPClient * c, unsigned int fid)
+{
+    /* clunk */
+    c->fcall.id = TCLUNK;
+    c->fcall.tag = IXP_NOTAG;
+    c->fcall.fid = fid;
+    return do_fcall(c);
 }
 
 void
-seek_write(IXPClient * c, int fd, size_t offset, void *content,
-		   size_t in_len)
+ixp_client_deinit(IXPClient * c)
 {
-	ResHeader h;
-	size_t req_len, res_len;
-	void *req = twrite_message(fd, offset, content, in_len, &req_len);
-	void *result = poll_server(c, req, req_len, &res_len);
-
-	if (!result)
-		return;
-	memcpy(&h, result, sizeof(ResHeader));
-	free(result);
-}
-
-static void cixp_close(IXPClient * c, int fd)
-{
-	ResHeader h;
-	size_t req_len, res_len;
-	void *req = tclose_message(fd, &req_len);
-	void *result = poll_server(c, req, req_len, &res_len);
-
-	if (!result)
-		return;
-	memcpy(&h, result, sizeof(ResHeader));
-	free(result);
-	offsets[fd][0] = offsets[fd][1] = 0;
-}
-
-static void cixp_remove(IXPClient * c, char *path)
-{
-	ResHeader h;
-	size_t req_len, res_len;
-	void *req = tremove_message(path, &req_len);
-	void *result = poll_server(c, req, req_len, &res_len);
-
-	if (!result)
-		return;
-	memcpy(&h, result, sizeof(ResHeader));
-	free(result);
-}
-
-IXPClient *init_ixp_client(char *sockfile)
-{
-	struct sockaddr_un addr = { 0 };
-	socklen_t su_len;
-
-	/* init */
-	IXPClient *c = (IXPClient *) cext_emallocz(sizeof(IXPClient));
-	c->create = cixp_create;
-	c->open = cixp_open;
-	c->read = cixp_read;
-	c->write = cixp_write;
-	c->close = cixp_close;
-	c->remove = cixp_remove;
-
-	addr.sun_family = AF_UNIX;
-	strncpy(addr.sun_path, sockfile, sizeof(addr.sun_path));
-	su_len = sizeof(struct sockaddr) + strlen(addr.sun_path);
-
-	if ((c->fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-		free(c);
-		return 0;
-	}
-	if (connect(c->fd, (struct sockaddr *) &addr, su_len)) {
-		close(c->fd);
-		free(c);
-		return 0;
-	}
-	return c;
-}
-
-void deinit_client(IXPClient * c)
-{
-	if (c->fd) {
-		shutdown(c->fd, SHUT_RDWR);
-		close(c->fd);
-	}
-	c->fd = -1;
-	free(c);
+    /* session finished, now shutdown */
+    if(c->fd) {
+        shutdown(c->fd, SHUT_RDWR);
+        close(c->fd);
+    }
 }

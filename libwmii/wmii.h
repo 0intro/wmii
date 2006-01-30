@@ -16,12 +16,6 @@ struct Action {
     void (*func) (void *obj, char *);
 };
 
-/* ixputil.c */
-File *wmii_create_ixpfile(IXPServer * s, char *key, char *val);
-void wmii_get_ixppath(File * f, char *path, size_t size);
-void wmii_move_ixpfile(File * f, File * to_parent);
-IXPServer *wmii_setup_server(char *sockfile);
-
 /* spawn.c */
 void wmii_spawn(void *dpy, char *cmd);
 
