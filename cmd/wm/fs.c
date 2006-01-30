@@ -29,9 +29,9 @@
  * /default/selcolor	Fcolor3		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /default/normcolor	Fcolor3		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /default/transcolor	Fcolor		<#RRGGBB>
- * /default/border		Fuint  		0..n
+ * /default/border		Fborder		0..n
  * /default/title 		Fbool  		0, 1
- * /default/snap 		Fuint  		0..n
+ * /default/snap 		Fsnap  		0..n
  * /event				Fevent
  * /ctl					Fctl 		command interface (root)
  * /new/				Dpage		returns new page
@@ -41,8 +41,8 @@
  * /1/float/			Dfloat
  * /1/float/sel/		Dclient
  * /1/float/1/			Dclient
- * /1/float/1/border	Fuint		0..n
- * /1/float/1/title		Fbool		0, 1
+ * /1/float/1/border	Fborder		0..n
+ * /1/float/1/title		Ftitle		0, 1
  * /1/float/1/name		Fname		name of client
  * /1/float/1/ctl 		Fctl 		command interface (client)
  * /1/col/				Dcolroot
@@ -50,8 +50,8 @@
  * /1/col/1/			Dcol
  * /1/col/1/sel/		Dclient
  * /1/col/1/1/			Dclient
- * /1/col/1/1/border	Fuint		0..n
- * /1/col/1/1/title		Fbool		0, 1
+ * /1/col/1/1/border	Fborder		0..n
+ * /1/col/1/1/title		Ftitle		0, 1
  * /1/col/1/1/name		Fname		name of client
  * /1/col/1/1/ctl 		Fctl 		command interface (client)
  * /1/col/1/ctl 		Fctl 		command interface (col)
@@ -65,11 +65,13 @@ enum {
 	Dfloat,
 	Dcolroot,
 	Dcol,
+	Dclient,
     Ffont,
 	Fcolor3,
 	Fcolor,
-	Fuint,
-	Fbool,
+	Fborder,
+	Fsnap,
+	Ftitle,
 	Fevent,
 	Fctl,
 	Fname
@@ -84,31 +86,14 @@ static char Enofunc[] = "function not supported";
 
 static unsigned char *msg[IXP_MAX_MSG];
 char *errstr = 0;
-static size_t nitem = 0;
-static size_t itemsz = 0;
-static size_t iexpand = 0;
-static Item **item = 0;
-static char *address = nil;
-static pid_t mypid = 0;
-static IXPServer srv = { 0 };
 static Qid root_qid;
-static Display *dpy;
-static int screen_num;
-static char *font = nil;
-static XFontStruct *xfont;
-static GC gc;
-static Window win;
-static XRectangle brect, rect;
-static Pixmap pmap;
-
-static void do_pend_fcall(char *event);
 
 /* IXP stuff */
 
 static unsigned long long
-mkqpath(unsigned char type, unsigned short item)
+mkqpath(unsigned char type, unsigned char level, unsigned short item)
 {
-    return ((unsigned long long) item << 8) | (unsigned long long) type;
+    return ((unsigned long long) item << 16) | ((unsigned long long) level << 8) | (unsigned long long) type;
 }
 
 static unsigned char
@@ -117,31 +102,45 @@ qpath_type(unsigned long long path)
     return path & 0xff;
 }
 
+static unsigned char
+qpath_level(unsigned long long path)
+{
+    return (path >> 8) & 0xffff;
+}
+
 static unsigned short
 qpath_item(unsigned long long path)
 {
-    return (path >> 8) & 0xffff;
+    return (path >> 16) & 0xffffff;
 }
 
 static char *
 qid_to_name(Qid *qid)
 {
 	unsigned char type = qpath_type(qid->path);
+	unsigned char level = qpath_level(qid->path);
 	unsigned short i = qpath_item(qid->path);
 	static char buf[32];
 
 	switch(type) {
 		case Droot: return "/"; break;
-		case Ditem:
-			if(i == nitem)
+		case Ddefault: return "default"; break;
+		case Dpage:
+		case Dcol:
+		case Dclient:
+			if(!level && (i == nitem)) /* only for page */
 				return "new";
 			snprintf(buf, sizeof(buf), "%u", i);
 			return buf;
 			break;
 		case Fctl: return "ctl"; break;
 		case Ffont: return "font"; break;
-		case Fexpand: return "expand"; break;
-		case Fdata: return "data"; break;
+		case Fcolor3: return "color"; break;
+		case Fcolor: return "color"; break;
+		case Fborder: return "border"; break;
+		case Fsnap: return "border"; break;
+		case Ftitle: return "title"; break;
+		case Fname: return "name"; break;
 		case Fevent: return "event"; break;
 		case Fcolor: return "color"; break;
 		default: return nil; break;

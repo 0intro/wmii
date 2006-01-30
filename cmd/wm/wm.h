@@ -94,6 +94,7 @@ XFontStruct *xfont;
 XColor color_xor;
 GC gc_xor;
 GC gc_transient;
+IXPServer *srv;
 
 /* default values */
 typedef struct {
