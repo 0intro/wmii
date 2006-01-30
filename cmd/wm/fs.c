@@ -24,37 +24,56 @@
 /*
  * filesystem specification
  * / 					Droot
- * /font				Ffont		<xlib font name>
- * /color				Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /default/			Ddefault
+ * /default/font		Ffont		<xlib font name>
+ * /default/selcolor	Fcolor3		<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /default/normcolor	Fcolor3		<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /default/transcolor	Fcolor		<#RRGGBB>
+ * /default/border		Fuint  		0..n
+ * /default/title 		Fbool  		0, 1
+ * /default/snap 		Fuint  		0..n
  * /event				Fevent
- * /expand				Fexpand 	id of expandable label
- * /ctl					Fctl 		command interface
- * /new/				Ditem
- * /1/					Ditem
- * /1/data 				Fdata		<arbitrary data which gets displayed>
- * /1/color				Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /ctl					Fctl 		command interface (root)
+ * /new/				Dpage		returns new page
+ * /sel/				Dpage		sel page
+ * /1/					Dpage		page
+ * /1/ctl				Fctl		command interface (page)
+ * /1/float/			Dfloat
+ * /1/float/sel/		Dclient
+ * /1/float/1/			Dclient
+ * /1/float/1/border	Fuint		0..n
+ * /1/float/1/title		Fbool		0, 1
+ * /1/float/1/name		Fname		name of client
+ * /1/float/1/ctl 		Fctl 		command interface (client)
+ * /1/col/				Dcolroot
+ * /1/col/sel/			Dcol
+ * /1/col/1/			Dcol
+ * /1/col/1/sel/		Dclient
+ * /1/col/1/1/			Dclient
+ * /1/col/1/1/border	Fuint		0..n
+ * /1/col/1/1/title		Fbool		0, 1
+ * /1/col/1/1/name		Fname		name of client
+ * /1/col/1/1/ctl 		Fctl 		command interface (client)
+ * /1/col/1/ctl 		Fctl 		command interface (col)
  */
 
 /* 8-bit qid.path.type */
 enum {                          
     Droot,
-    Ditem,
-	Fctl,
+	Ddefault,
+	Dpage,
+	Dfloat,
+	Dcolroot,
+	Dcol,
     Ffont,
-	Fexpand,
-    Fevent,
-    Fdata,                      /* data to display */
-    Fcolor
+	Fcolor3,
+	Fcolor,
+	Fuint,
+	Fbool,
+	Fevent,
+	Fctl,
+	Fname
 };
-
-typedef struct {
-    char data[256];
-	char color[24];
-    unsigned long fg;
-    unsigned long bg;
-    unsigned long border;
-	XRectangle rect;
-} Item;
 
 static char E9pversion[] = "9P version not supported";
 static char Enoperm[] = "permission denied";
@@ -83,171 +102,6 @@ static XRectangle brect, rect;
 static Pixmap pmap;
 
 static void do_pend_fcall(char *event);
-
-static char *version[] = {
-    "wmiibar - window manager improved bar - " VERSION "\n"
-        "  (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
-};
-
-static void
-usage()
-{
-    fprintf(stderr, "%s",
-            "usage: wmiibar -a <server address> [-v]\n"
-            "      -a    server address \n"
-            "      -v    version info\n");
-    exit(1);
-}
-
-static int
-dummy_error_handler(Display * dpy, XErrorEvent * err)
-{
-    return 0;
-}
-
-static void
-new_item()
-{
-	Item *it = cext_emallocz(sizeof(Item));
-	if(nitem > 0) {
-		cext_strlcpy(it->color, item[0]->color, sizeof(it->color));
-		it->fg = item[0]->fg;
-		it->bg = item[0]->bg;
-		it->border = item[0]->border;
-	}
-	item = (Item **)cext_array_attach((void **)item, it, sizeof(Item *), &itemsz);
-	nitem++;
-}
-
-static void
-detach_item(Item *it)
-{
-	cext_array_detach((void **)item, it, &itemsz);
-	nitem--;
-}
-
-static void
-draw()
-{
-	size_t i;
-	unsigned int w = 0;
-	Draw d = { 0 };
-
-    d.gc = gc;
-    d.drawable = pmap;
-    d.rect = brect;
-    d.rect.y = 0;
-	d.font = xfont;
-
-	if(nitem == 1) { /* /default only */
-		d.fg = item[0]->fg;
-		d.bg = item[0]->bg;
-		d.border = item[0]->border;
-		blitz_drawlabel(dpy, &d);
-	}
-	else {
-		if(!iexpand)
-			iexpand = nitem - 1;
-		for(i = 1; i < nitem; i++) {
-			Item *it = item[i];
-			it->rect.x = it->rect.y = 0;
-			it->rect.width = it->rect.height = brect.height;
-			if(i == iexpand)
-		   		continue;
-			if(strlen(it->data)) {
-				if(!strncmp(it->data, "%m:", 3))
-					it->rect.width = brect.height / 2;
-				else
-					it->rect.width += XTextWidth(xfont, it->data, strlen(it->data));
-			}
-			w += it->rect.width;
-		}
-		if(w >= brect.width) {
-			/* failsafe mode, give all labels same width */
-			w = brect.width / nitem;
-			for(i = 1; i < nitem; i++)
-				item[i]->rect.width = w;
-			i--;
-			item[i]->rect.width = brect.width - ((i - 1) * w);
-		} else
-			item[iexpand]->rect.width = brect.width - w;
-		for(i = 1; i < nitem; i++) {
-			d.fg = item[i]->fg;
-			d.bg = item[i]->bg;
-			d.border = item[i]->border;
-			if(i > 1)
-				item[i]->rect.x = item[i - 1]->rect.x + item[i - 1]->rect.width;
-			d.rect = item[i]->rect;
-			d.data = item[i]->data;
-			if(d.data && !strncmp(d.data, "%m:", 3))
-				blitz_drawmeter(dpy, &d);
-			else
-				blitz_drawlabel(dpy, &d);
-		}
-	}
-    XCopyArea(dpy, pmap, win, gc, 0, 0, brect.width, brect.height, 0, 0);
-    XSync(dpy, False);
-}
-
-static void
-update_color(Item *it)
-{
-    it->fg = blitz_loadcolor(dpy, screen_num, &it->color[0]);
-    it->bg = blitz_loadcolor(dpy, screen_num, &it->color[8]);
-    it->border = blitz_loadcolor(dpy, screen_num, &it->color[16]);
-}
-
-static void
-update_geometry()
-{
-	char buf[64];
-    brect = rect;
-    brect.height = xfont->ascent + xfont->descent + 4;
-    brect.y = rect.height - brect.height;
-    XMoveResizeWindow(dpy, win, brect.x, brect.y, brect.width, brect.height);
-    XSync(dpy, False);
-    XFreePixmap(dpy, pmap);
-    pmap = XCreatePixmap(dpy, win, brect.width, brect.height,
-						 DefaultDepth(dpy, screen_num));
-    XSync(dpy, False);
-	snprintf(buf, sizeof(buf), "NewGeometry %d %d %d %d\n", brect.x, brect.y, brect.width, brect.height);
-	do_pend_fcall(buf);
-	draw();
-}
-
-static void
-handle_buttonpress(XButtonPressedEvent * e)
-{
-	size_t i;
-	char buf[32];
-    for(i = 0; i < nitem; i++)
-        if(blitz_ispointinrect(e->x, e->y, &item[i]->rect)) {
-			snprintf(buf, sizeof(buf), "Button%dPress %d\n", e->button, i);
-			do_pend_fcall(buf);
-        }
-}
-
-static void
-check_x_event(IXPServer *s, IXPConn *c)
-{
-    XEvent e;
-
-    while(XPending(dpy)) {
-        XNextEvent(dpy, &e);
-        switch (e.type) {
-        case ButtonPress:
-            handle_buttonpress(&e.xbutton);
-            break;
-        case Expose:
-            if(e.xexpose.count == 0)
-                draw();
-            break;
-        default:
-            break;
-        }
-    }
-}
-
 
 /* IXP stuff */
 
@@ -904,121 +758,4 @@ new_ixp_conn(IXPServer *s, IXPConn *c)
 		s->conn = (IXPConn **)cext_array_attach((void **)s->conn, new,
 					sizeof(IXPConn *), &s->connsz);
 	}
-}
-
-
-/* main */
-
-int
-main(int argc, char *argv[])
-{
-    int i;
-	IXPConn *c;
-    XSetWindowAttributes wa;
-    XGCValues gcv;
-
-    /* command line args */
-    for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
-        switch (argv[i][1]) {
-        case 'v':
-            fprintf(stdout, "%s", version[0]);
-            exit(0);
-            break;
-        case 'a':
-            if(i + 1 < argc)
-                address = argv[++i];
-            else
-                usage();
-            break;
-        default:
-            usage();
-            break;
-        }
-    }
-
-    dpy = XOpenDisplay(0);
-    if(!dpy) {
-        fprintf(stderr, "%s", "wmiibar: cannot open display\n");
-        exit(1);
-    }
-    XSetErrorHandler(dummy_error_handler);
-    screen_num = DefaultScreen(dpy);
-
-    if(!address)
-		usage();
-	i = ixp_create_sock(address, &errstr);
-	if(i < 0) {
-        fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
-		exit(1);
-	}
-
-	/* IXP server */
-	c = cext_emallocz(sizeof(IXPConn));
-	c->fd = i;
-	c->read = new_ixp_conn;
-	c->close = close_ixp_conn;
-	srv.conn = (IXPConn **)cext_array_attach((void **)srv.conn, c,
-					sizeof(IXPConn *), &srv.connsz);
-	/* X server */
-	c = cext_emallocz(sizeof(IXPConn));
-	c->fd = ConnectionNumber(dpy);
-	c->read = check_x_event;
-	srv.conn = (IXPConn **)cext_array_attach((void **)srv.conn, c,
-					sizeof(IXPConn *), &srv.connsz);
-
-    root_qid.type = IXP_QTDIR;
-    root_qid.version = 0;
-    root_qid.path = mkqpath(Droot, 0);
-
-    mypid = getpid();
-
-    /* default settings */
-	new_item();
-	cext_strlcpy(item[0]->color, BLITZ_SEL_COLOR, sizeof(item[0]->color));
-	update_color(item[0]);
-
-	/* X stuff */
-    font = strdup(BLITZ_FONT);
-    xfont = blitz_getfont(dpy, font);
-    wa.override_redirect = 1;
-    wa.background_pixmap = ParentRelative;
-    wa.event_mask = ExposureMask | ButtonPressMask
-					| SubstructureRedirectMask | SubstructureNotifyMask;
-
-    rect.x = rect.y = 0;
-    rect.width = DisplayWidth(dpy, screen_num);
-    rect.height = DisplayHeight(dpy, screen_num);
-    brect = rect;
-    brect.height = xfont->ascent + xfont->descent + 4;
-    brect.y = rect.height - brect.height;
-
-    win = XCreateWindow(dpy, RootWindow(dpy, screen_num), brect.x, brect.y,
-                        brect.width, brect.height, 0, DefaultDepth(dpy, screen_num),
-                        CopyFromParent, DefaultVisual(dpy, screen_num),
-                        CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
-    XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
-    XSync(dpy, False);
-
-    gcv.function = GXcopy;
-    gcv.graphics_exposures = False;
-    gc = XCreateGC(dpy, win, 0, 0);
-
-    pmap = XCreatePixmap(dpy, win, brect.width, brect.height,
-                      	 DefaultDepth(dpy, screen_num));
-
-	/* main loop */
-	XMapRaised(dpy, win);
-	draw();
-
-	errstr = ixp_server_loop(&srv);
-
-	if(errstr)
-    	fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
-
-	/* cleanup */
-	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++)
-		if(srv.conn[i]->close)
-			srv.conn[i]->close(&srv, srv.conn[i]);
-
-	return errstr ? 1 : 0;
 }
