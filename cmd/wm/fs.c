@@ -479,39 +479,43 @@ xread(IXPConn *c)
 {
 	Stat stat;
     IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
-    unsigned char *p = c->fcall->data;
-	unsigned short i;
-	unsigned int len;
+    unsigned char typ, *p = c->fcall->data;
+	unsigned short pg, col, cl;
+	unsigned int i, len;
+	Qid dir = root_qid;
 	char buf[32];
 
     if(!m) {
         errstr = Enofid;
         return -1;
     }
-	i = qpath_item(m->qid.path);
+	typ = qpath_type(m->qid.path);
+	pg = qpath_page(m->qid.path);
+	col = qpath_col(m->qid.path);
+	cl = qpath_client(m->qid.path);
 
 	c->fcall->count = 0;
 	if(c->fcall->offset) {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
 			/* jump to offset */
-			len = type_to_stat(&stat, "ctl", 0);
-			len += type_to_stat(&stat, "font", 0);
-			len += type_to_stat(&stat, "color", 0);
-			len += type_to_stat(&stat, "new", 0);
-			len += type_to_stat(&stat, "event", 0);
-			for(i = 1; i < nitem; i++) {
+			len = type_to_stat(&stat, "ctl", &dir, 0);
+			len += type_to_stat(&stat, "event", &dir, 0);
+			len += type_to_stat(&stat, "default", &dir, 0);
+			len += type_to_stat(&stat, "sel", &dir, 0);
+			len += type_to_stat(&stat, "new", &dir, 0);
+			for(i = 1; i < npage; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len += type_to_stat(&stat, buf, i);
+				len += type_to_stat(&stat, buf, &dir, 0);
 				if(len <= c->fcall->offset)
 					continue;
 				else 
 					break;
 			}
 			/* offset found, proceeding */
-			for(; i < nitem; i++) {
+			for(; i < npage; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len = type_to_stat(&stat, buf, i);
+				len = type_to_stat(&stat, buf, &dir, 0);
 				if(c->fcall->count + len > c->fcall->iounit)
 					break;
 				c->fcall->count += len;
@@ -528,19 +532,19 @@ xread(IXPConn *c)
 	else {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
-			c->fcall->count = type_to_stat(&stat, "ctl", 0);
+			c->fcall->count = type_to_stat(&stat, "ctl", &dir, 0);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "font", 0);
+			c->fcall->count += type_to_stat(&stat, "event", &dir, 0);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "color", 0);
+			c->fcall->count += type_to_stat(&stat, "default", &dir, 0);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "new", 0);
+			c->fcall->count += type_to_stat(&stat, "sel", &dir, 0);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "event", 0);
+			c->fcall->count += type_to_stat(&stat, "new", &dir, 0);
 			p = ixp_enc_stat(p, &stat);
-			for(i = 1; i < nitem; i++) {
+			for(i = 1; i < npage; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len = type_to_stat(&stat, buf, i);
+				len = type_to_stat(&stat, buf, &dir, 0);
 				if(c->fcall->count + len > c->fcall->iounit)
 					break;
 				c->fcall->count += len;
