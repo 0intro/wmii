@@ -98,7 +98,6 @@ IXPServer *srv;
 
 /* default values */
 typedef struct {
-	char xorcolor[24];
 	char selcolor[24];
 	char normcolor[24];
 	char font[24];

@@ -26,9 +26,8 @@
  * / 					Droot
  * /default/			Ddefault
  * /default/font		Ffont		<xlib font name>
- * /default/selcolor	Fcolor3		<#RRGGBB> <#RRGGBB> <#RRGGBB>
- * /default/normcolor	Fcolor3		<#RRGGBB> <#RRGGBB> <#RRGGBB>
- * /default/transcolor	Fcolor		<#RRGGBB>
+ * /default/selcolor	Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /default/normcolor	Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /default/border		Fborder		0..n
  * /default/title 		Fbool  		0, 1
  * /default/snap 		Fsnap  		0..n
@@ -38,13 +37,12 @@
  * /sel/				Dpage		sel page
  * /1/					Dpage		page
  * /1/ctl				Fctl		command interface (page)
- * /1/float/			Dfloat
- * /1/float/sel/		Dclient
- * /1/float/1/			Dclient
- * /1/float/1/border	Fborder		0..n
- * /1/float/1/title		Ftitle		0, 1
- * /1/float/1/name		Fname		name of client
- * /1/float/1/ctl 		Fctl 		command interface (client)
+ * /1/sel/				Dclient
+ * /1/1/				Dclient
+ * /1/1/border			Fborder		0..n
+ * /1/1/title			Ftitle		0, 1
+ * /1/1/name			Fname		name of client
+ * /1/1/ctl 			Fctl 		command interface (client)
  * /1/col/				Dcolroot
  * /1/col/sel/			Dcol
  * /1/col/1/			Dcol
@@ -62,7 +60,6 @@ enum {
     Droot,
 	Ddefault,
 	Dpage,
-	Dfloat,
 	Dcolroot,
 	Dcol,
 	Dclient,
@@ -148,7 +145,7 @@ qid_to_name(Qid *qid)
 }
 
 static int
-name_to_type(char *name)
+name_to_type(char *name, unsigned char level)
 {
 	const char *err;
     unsigned int i;
@@ -160,17 +157,34 @@ name_to_type(char *name)
 		return Fctl;
 	if(!strncmp(name, "font", 5))
 		return Ffont;
-	if(!strncmp(name, "expand", 7))
-		return Fexpand;
 	if(!strncmp(name, "data", 5))
 		return Fdata;
 	if(!strncmp(name, "event", 6))
 		return Fevent;
 	if(!strncmp(name, "color", 6))
 		return Fcolor;
+	if(!strncmp(name, "snap", 5))
+		return Fsnap;
+	if(!strncmp(name, "name", 5))
+		return Fname;
+	if(!strncmp(name, "border", 7))
+		return Fname;
+	if(!strncmp(name, "title", 6))
+		return Fname;
+	if(!strncmp(name, "col", 4))
+		return Dcolroot;
+	if(!strncmp(name, "sel", 4))
+		goto dynamic_dir;
    	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
-    if(!err && (i <= nitem))
-		return Ditem;
+    if(err)
+		return -1;
+dynamic_dir:
+	switch(level) {
+	case 0: return Dpage; break;
+	case 2: return Dcol; break;
+	case 1:
+	case 3: return Dclient; break;
+	}
 	return -1;
 }
 
