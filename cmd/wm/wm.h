@@ -34,16 +34,19 @@ struct Column {
     Client **client;
 	size_t clientsz;
 	size_t sel;
+	size_t nclient;
 	XRectangle rect;
 };
 
 struct Page {
-	Client **floating;
-	Column **column;
-	size_t floatingsz;
-	size_t columnsz;
+	Client **floatc;
+	Column **col;
+	size_t floatcsz;
+	size_t colsz;
 	size_t sel_float;
-	size_t sel_column;
+	size_t sel_col;
+	size_t nfloat;
+	size_t ncol;
 	Bool is_column;
 	XRectangle rect_column;
 };
@@ -75,6 +78,7 @@ struct Client {
 
 /* global variables */
 Page **page;
+size_t npage;
 size_t pagesz;
 size_t sel_page;
 Page **aqueue;
@@ -104,7 +108,9 @@ typedef struct {
 	unsigned int border;
 	unsigned int title;
 	unsigned int snap;
-} Default def;
+} Default;
+
+Default def;
 
 Atom wm_state; /* TODO: Maybe replace with wm_atoms[WM_ATOM_COUNT]? */
 Atom wm_change_state;
@@ -154,7 +160,7 @@ unsigned int border_width(Client *c);
 
 /* event.c */
 void init_event_hander();
-void check_event(Connection * c);
+void check_event(IXPConn *c);
 
 /* mouse.c */
 void mouse_resize(Client *c, Align align);

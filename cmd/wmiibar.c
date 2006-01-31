@@ -334,7 +334,6 @@ mkqid(Qid *dir, char *wname, Qid *new)
     new->version = 0;
 	switch(type) {
 	case Droot:
-		new->type = IXP_QTDIR;
 		*new = root_qid;
 		break;
 	case Ditem:

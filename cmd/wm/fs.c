@@ -18,8 +18,7 @@
 #include <X11/Xutil.h>
 #include <sys/socket.h>
 
-#include "ixp.h"
-#include "blitz.h"
+#include "wm.h"
 
 /*
  * filesystem specification
@@ -44,6 +43,7 @@
  * /1/1/name			Fname		name of client
  * /1/1/ctl 			Fctl 		command interface (client)
  * /1/col/				Dcolroot
+ * /1/col/new/			Dcol
  * /1/col/sel/			Dcol
  * /1/col/1/			Dcol
  * /1/col/1/sel/		Dclient
@@ -64,7 +64,6 @@ enum {
 	Dcol,
 	Dclient,
     Ffont,
-	Fcolor3,
 	Fcolor,
 	Fborder,
 	Fsnap,
@@ -88,77 +87,104 @@ static Qid root_qid;
 /* IXP stuff */
 
 static unsigned long long
-mkqpath(unsigned char type, unsigned char level, unsigned short item)
+mkqpath(unsigned char type, unsigned short pg, unsigned short col, unsigned short c)
 {
-    return ((unsigned long long) item << 16) | ((unsigned long long) level << 8) | (unsigned long long) type;
+    return ((unsigned long long) type << 48) | ((unsigned long long) pg << 32)
+		| ((unsigned long long) col << 16) | (unsigned long long) c;
 }
 
 static unsigned char
 qpath_type(unsigned long long path)
 {
-    return path & 0xff;
-}
-
-static unsigned char
-qpath_level(unsigned long long path)
-{
-    return (path >> 8) & 0xffff;
+    return (path >> 48) & 0xff;
 }
 
 static unsigned short
-qpath_item(unsigned long long path)
+qpath_page(unsigned long long path)
 {
-    return (path >> 16) & 0xffffff;
+    return (path >> 32) & 0xffff;
+}
+
+static unsigned short
+qpath_col(unsigned long long path)
+{
+    return (path >> 16) & 0xffff;
+}
+
+static unsigned short
+qpath_client(unsigned long long path)
+{
+    return path & 0xffff;
 }
 
 static char *
 qid_to_name(Qid *qid)
 {
 	unsigned char type = qpath_type(qid->path);
-	unsigned char level = qpath_level(qid->path);
-	unsigned short i = qpath_item(qid->path);
+	unsigned short pg = qpath_page(qid->path);
+	unsigned short col = qpath_col(qid->path);
+	unsigned short c = qpath_client(qid->path);
 	static char buf[32];
 
 	switch(type) {
 		case Droot: return "/"; break;
 		case Ddefault: return "default"; break;
+		case Dcolroot: return "col"; break;
 		case Dpage:
-		case Dcol:
-		case Dclient:
-			if(!level && (i == nitem)) /* only for page */
+			if(pg == sel_page)
+				return "sel";
+			if(pg == npage)
 				return "new";
-			snprintf(buf, sizeof(buf), "%u", i);
+			snprintf(buf, sizeof(buf), "%u", pg);
+			return buf;
+			break;
+		case Dcol:
+			if(!npage)
+				return nil;
+			if(page[pg]->ncol == col)
+				return "new";
+			if(page[pg]->sel_col == col)
+				return "sel";
+			snprintf(buf, sizeof(buf), "%u", col);
+			return buf;
+			break;
+		case Dclient:
+			if(!npage || (!col && !page[pg]->nclient) || (col && !page[pg]->ncol))
+				return nil;
+			if(col)
+
+			snprintf(buf, sizeof(buf), "%u", c);
 			return buf;
 			break;
 		case Fctl: return "ctl"; break;
 		case Ffont: return "font"; break;
-		case Fcolor3: return "color"; break;
 		case Fcolor: return "color"; break;
 		case Fborder: return "border"; break;
 		case Fsnap: return "border"; break;
 		case Ftitle: return "title"; break;
 		case Fname: return "name"; break;
 		case Fevent: return "event"; break;
-		case Fcolor: return "color"; break;
 		default: return nil; break;
 	}
 }
 
 static int
-name_to_type(char *name, unsigned char level)
+name_to_type(char *name, unsigned short ppg, unsigned short pcol, unsigned short pc)
 {
 	const char *err;
     unsigned int i;
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return Droot;
-	if(!strncmp(name, "new", 4))
-		return Ditem;
+	if(!strncmp(name, "new", 4)) {
+		if(!ppg)
+			return Dpage;
+		else if(!pcol)
+			return Dcol;
+	}
 	if(!strncmp(name, "ctl", 4))
 		return Fctl;
 	if(!strncmp(name, "font", 5))
 		return Ffont;
-	if(!strncmp(name, "data", 5))
-		return Fdata;
 	if(!strncmp(name, "event", 6))
 		return Fevent;
 	if(!strncmp(name, "color", 6))
@@ -168,17 +194,16 @@ name_to_type(char *name, unsigned char level)
 	if(!strncmp(name, "name", 5))
 		return Fname;
 	if(!strncmp(name, "border", 7))
-		return Fname;
+		return Fborder;
 	if(!strncmp(name, "title", 6))
-		return Fname;
+		return Ftitle;
 	if(!strncmp(name, "col", 4))
 		return Dcolroot;
 	if(!strncmp(name, "sel", 4))
-		goto dynamic_dir;
+		return Dsel;
    	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
     if(err)
 		return -1;
-dynamic_dir:
 	switch(level) {
 	case 0: return Dpage; break;
 	case 2: return Dcol; break;
@@ -192,8 +217,11 @@ static int
 mkqid(Qid *dir, char *wname, Qid *new)
 {
 	const char *err;
-	int type = name_to_type(wname);
-	unsigned short i = qpath_item(dir->path);
+	unsigned char type = qpath_type(dir->path);
+	unsigned short pg = qpath_page(dir->path);
+	unsigned short col = qpath_col(dir->path);
+	unsigned short c = qpath_client(dir->path);
+	int type = name_to_type(wname, level);
 
     if((dir->type != IXP_QTDIR) || (type == -1))
         return -1;
@@ -201,19 +229,48 @@ mkqid(Qid *dir, char *wname, Qid *new)
     new->version = 0;
 	switch(type) {
 	case Droot:
-		new->type = IXP_QTDIR;
 		*new = root_qid;
 		break;
-	case Ditem:
+	case Ddefault:
+		new->type = IXP_QTDIR;
+		new->path = mkqpath(Ddefault, 0, 0, 0);
+		break;
+	case Dsel:
+		new->type = IXP_QTDIR;
+		{
+			Page *p = pagesz ? page[sel_page] : nil;
+			if(!p)
+				return -1;
+			switch(level) {
+			case 0: new->path = mkqpath(Ddefault, level, sel_page); break;
+			case 1: new->path = mkqpath(Ddefault, level, p->sel_float); break;
+			case 2: new->path = mkqpath(Ddefault, level, p->sel_col); break;
+			case 3: 
+				if(!p->col[p->sel_col])
+					return -1;
+				new->path = mkqpath(Ddefault, level, p->col[p->sel_col]->sel);
+				break;
+			}
+		}
+		break;
+	case Dpage:
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4))
-			new->path = mkqpath(Ditem, nitem);
+			new->path = mkqpath(Dpage, 0, npage);
 		else {
 			unsigned short i = cext_strtonum(wname, 1, 0xffff, &err);
-			if(err || (i >= nitem))
+			if(err || (i >= npage))
 				return -1;
-			new->path = mkqpath(Ditem, i);
+			new->path = mkqpath(Dpage, 0, i);
 		}
+		break;
+	case Dcolroot:
+		new->type = IXP_QTDIR;
+		new->path = mkqpath(Dcolroot, 1, i); /* encode associated page == i */
+		break;
+	case Dcol:
+		new->type = IXP_QTDIR;
+		new->path = mkqpath(Ddefault, 2, i);
 		break;
 	case Fdata: /* note, Fdata needs to be before Fcolor, fallthrough */
 		if(!i)
