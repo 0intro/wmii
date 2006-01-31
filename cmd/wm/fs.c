@@ -25,8 +25,8 @@
  * / 					Droot
  * /default/			Ddefault
  * /default/font		Ffont		<xlib font name>
- * /default/selcolor	Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
- * /default/normcolor	Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /default/selcolor	Fselcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /default/normcolor	Fnormcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /default/border		Fborder		0..n
  * /default/title 		Fbool  		0, 1
  * /default/snap 		Fsnap  		0..n
@@ -64,7 +64,8 @@ enum {
 	Dcol,
 	Dclient,
     Ffont,
-	Fcolor,
+	Fselcolor,
+	Fnormcolor,
 	Fborder,
 	Fsnap,
 	Ftitle,
@@ -87,10 +88,10 @@ static Qid root_qid;
 /* IXP stuff */
 
 static unsigned long long
-mkqpath(unsigned char type, unsigned short pg, unsigned short col, unsigned short c)
+mkqpath(unsigned char type, unsigned short pg, unsigned short col, unsigned short cl)
 {
     return ((unsigned long long) type << 48) | ((unsigned long long) pg << 32)
-		| ((unsigned long long) col << 16) | (unsigned long long) c;
+		| ((unsigned long long) col << 16) | (unsigned long long) cl;
 }
 
 static unsigned char
@@ -120,13 +121,13 @@ qpath_client(unsigned long long path)
 static char *
 qid_to_name(Qid *qid)
 {
-	unsigned char type = qpath_type(qid->path);
+	unsigned char typ = qpath_type(qid->path);
 	unsigned short pg = qpath_page(qid->path);
 	unsigned short col = qpath_col(qid->path);
-	unsigned short c = qpath_client(qid->path);
+	unsigned short cl = qpath_client(qid->path);
 	static char buf[32];
 
-	switch(type) {
+	switch(typ) {
 		case Droot: return "/"; break;
 		case Ddefault: return "default"; break;
 		case Dcolroot: return "col"; break;
@@ -139,8 +140,6 @@ qid_to_name(Qid *qid)
 			return buf;
 			break;
 		case Dcol:
-			if(!npage)
-				return nil;
 			if(page[pg]->ncol == col)
 				return "new";
 			if(page[pg]->sel_col == col)
@@ -149,16 +148,15 @@ qid_to_name(Qid *qid)
 			return buf;
 			break;
 		case Dclient:
-			if(!npage || (!col && !page[pg]->nclient) || (col && !page[pg]->ncol))
-				return nil;
-			if(col)
-
-			snprintf(buf, sizeof(buf), "%u", c);
+			if(!col && page[pg]->sel_float == cl)
+				return "sel";
+			snprintf(buf, sizeof(buf), "%u", cl);
 			return buf;
 			break;
 		case Fctl: return "ctl"; break;
 		case Ffont: return "font"; break;
-		case Fcolor: return "color"; break;
+		case Fselcolor: return "selcolor"; break;
+		case Fnormcolor: return "normcolor"; break;
 		case Fborder: return "border"; break;
 		case Fsnap: return "border"; break;
 		case Ftitle: return "title"; break;
@@ -169,16 +167,16 @@ qid_to_name(Qid *qid)
 }
 
 static int
-name_to_type(char *name, unsigned short ppg, unsigned short pcol, unsigned short pc)
+name_to_type(char *name, unsigned char dtyp)
 {
 	const char *err;
     unsigned int i;
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return Droot;
 	if(!strncmp(name, "new", 4)) {
-		if(!ppg)
+		if(dtyp == Droot)
 			return Dpage;
-		else if(!pcol)
+		else if(dtyp == Dpage)
 			return Dcol;
 	}
 	if(!strncmp(name, "ctl", 4))
@@ -187,8 +185,10 @@ name_to_type(char *name, unsigned short ppg, unsigned short pcol, unsigned short
 		return Ffont;
 	if(!strncmp(name, "event", 6))
 		return Fevent;
-	if(!strncmp(name, "color", 6))
-		return Fcolor;
+	if(!strncmp(name, "selcolor", 6))
+		return Fselcolor;
+	if(!strncmp(name, "normcolor", 6))
+		return Fnormcolor;
 	if(!strncmp(name, "snap", 5))
 		return Fsnap;
 	if(!strncmp(name, "name", 5))
@@ -199,16 +199,17 @@ name_to_type(char *name, unsigned short ppg, unsigned short pcol, unsigned short
 		return Ftitle;
 	if(!strncmp(name, "col", 4))
 		return Dcolroot;
-	if(!strncmp(name, "sel", 4))
-		return Dsel;
+	if(!strncmp(name, "sel", 6))
+		goto dyndir;
    	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
     if(err)
 		return -1;
-	switch(level) {
-	case 0: return Dpage; break;
-	case 2: return Dcol; break;
-	case 1:
-	case 3: return Dclient; break;
+dyndir:
+	switch(dtyp) {
+	case Droot: return Dpage; break;
+	case Dcol:
+	case Dpage: return Dclient; break;
+	case Dcolroot: return Dcol; break;
 	}
 	return -1;
 }
@@ -217,11 +218,12 @@ static int
 mkqid(Qid *dir, char *wname, Qid *new)
 {
 	const char *err;
-	unsigned char type = qpath_type(dir->path);
-	unsigned short pg = qpath_page(dir->path);
-	unsigned short col = qpath_col(dir->path);
-	unsigned short c = qpath_client(dir->path);
-	int type = name_to_type(wname, level);
+	unsigned char dtyp = qpath_type(dir->path);
+	unsigned short dpg = qpath_page(dir->path);
+	unsigned short dcol = qpath_col(dir->path);
+	unsigned short dcl = qpath_client(dir->path);
+	unsigned short i;
+	int type = name_to_type(wname, dtyp);
 
     if((dir->type != IXP_QTDIR) || (type == -1))
         return -1;
@@ -235,52 +237,60 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		new->type = IXP_QTDIR;
 		new->path = mkqpath(Ddefault, 0, 0, 0);
 		break;
-	case Dsel:
+	case Dcolroot:
 		new->type = IXP_QTDIR;
-		{
-			Page *p = pagesz ? page[sel_page] : nil;
-			if(!p)
-				return -1;
-			switch(level) {
-			case 0: new->path = mkqpath(Ddefault, level, sel_page); break;
-			case 1: new->path = mkqpath(Ddefault, level, p->sel_float); break;
-			case 2: new->path = mkqpath(Ddefault, level, p->sel_col); break;
-			case 3: 
-				if(!p->col[p->sel_col])
-					return -1;
-				new->path = mkqpath(Ddefault, level, p->col[p->sel_col]->sel);
-				break;
-			}
-		}
+		new->path = mkqpath(Dcolroot, dpg, 0, 0);
 		break;
 	case Dpage:
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4))
-			new->path = mkqpath(Dpage, 0, npage);
+			new->path = mkqpath(Dpage, npage, 0, 0);
+		else if(!strncmp(wname, "sel", 4))
+			new->path = mkqpath(Dpage, sel_page, 0, 0);
 		else {
-			unsigned short i = cext_strtonum(wname, 1, 0xffff, &err);
+			i = cext_strtonum(wname, 1, 0xffff, &err);
 			if(err || (i >= npage))
 				return -1;
-			new->path = mkqpath(Dpage, 0, i);
+			new->path = mkqpath(Dpage, i, 0, 0);
 		}
-		break;
-	case Dcolroot:
-		new->type = IXP_QTDIR;
-		new->path = mkqpath(Dcolroot, 1, i); /* encode associated page == i */
 		break;
 	case Dcol:
 		new->type = IXP_QTDIR;
-		new->path = mkqpath(Ddefault, 2, i);
+		if(!strncmp(wname, "new", 4))
+			new->path = mkqpath(Dcol, dpg, page[dpg]->ncol, 0);
+		else if(!strncmp(wname, "sel", 4))
+			new->path = mkqpath(Dcol, dpg, page[dpg]->sel_col, 0);
+		else {
+			i = cext_strtonum(wname, 1, 0xffff, &err);
+			if(err)
+				return -1;
+			new->path = mkqpath(Dcol, dpg, i, 0);
+		}
 		break;
-	case Fdata: /* note, Fdata needs to be before Fcolor, fallthrough */
-		if(!i)
-			return -1;
-	case Fcolor:
-		if(i > nitem)
-			return -1;
+	case Dclient:
+		new->type = IXP_QTDIR;
+		if(!strncmp(wname, "new", 4)) {
+			if(dcol)
+				new->path = mkqpath(Dclient, dpg, dcol, page[dpg]->col[dcol]->nclient);
+			else
+				new->path = mkqpath(Dclient, dpg, dcol, page[dpg]->nfloat);
+		}
+		else if(!strncmp(wname, "sel", 4)) {
+			if(dcol)
+				new->path = mkqpath(Dclient, dpg, dcol, page[dpg]->col[dcol]->sel);
+			else
+				new->path = mkqpath(Dclient, dpg, dcol, page[dpg]->sel_float);
+		}
+		else {
+			i = cext_strtonum(wname, 1, 0xffff, &err);
+			if(err)
+				return -1;
+			new->path = mkqpath(Dclient, dpg, dcol, i);
+		}
+		break;
 	default:
 		new->type = IXP_QTFILE;
-    	new->path = mkqpath(type, i);
+    	new->path = mkqpath(type, dpg, dcol, dcl);
 		break;
 	}
     return 0;
@@ -387,73 +397,81 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 }
 
 static unsigned int
-type_to_stat(Stat *stat, char *name, unsigned short i)
+type_to_stat(Stat *stat, char *name, Qid *dir, unsigned int idx)
 {
-	int type = name_to_type(name);
-	Qid dir = {IXP_QTDIR, 0, mkqpath(Ditem, i)};
+	unsigned char dtyp = qpath_type(dir->path);
+	unsigned short dpg = qpath_page(dir->path);
+	unsigned short dcol = qpath_col(dir->path);
+	int type = name_to_type(name, dtyp);
 	char buf[16];
 
     switch (type) {
     case Droot:
-    case Ditem:
-		return mkstat(stat, &root_qid, name, 0, DMDIR | DMREAD | DMEXEC);
+    case Ddefault:
+    case Dpage:
+    case Dcolroot:
+    case Dcol:
+    case Dclient:
+		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case Fctl:
-		return mkstat(stat, &root_qid, name, 0, DMWRITE);
+		return mkstat(stat, dir, name, 0, DMWRITE);
 		break;
     case Fevent:
-		return mkstat(stat, &root_qid, name, 0, DMREAD);
+		return mkstat(stat, dir, name, 0, DMREAD);
 		break;
     case Ffont:
-		return mkstat(stat, &root_qid, name, strlen(font),
-						DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, strlen(def.font), DMREAD | DMWRITE);
         break;
-    case Fexpand:
-		snprintf(buf, sizeof(buf), "%u", iexpand);
-		return mkstat(stat, &root_qid, name, strlen(buf), DMREAD | DMWRITE);
+    case Fselcolor:
+		return mkstat(stat, dir, name, 24, DMREAD | DMWRITE);
 		break;
-    case Fdata:
-		if(i == nitem)
-			i = 0;
-		return mkstat(stat, &dir, name, strlen(item[i]->data),
-						DMREAD | DMWRITE);
-		break;	
-    case Fcolor:
-		if(i == nitem)
-			i = 0;
-		return mkstat(stat, &dir, name, strlen(item[i]->color),
-						DMREAD | DMWRITE);
+    case Fnormcolor:
+		return mkstat(stat, dir, name, 24, DMREAD | DMWRITE);
 		break;
+    case Fborder:
+		if(dtyp == Ddefault)
+			snprintf(buf, sizeof(buf), "%d", def.border);
+		else {
+			if(dcol) {
+				Column *col = page[dpg]->col[dcol];
+				snprintf(buf, sizeof(buf), "%d", col->client[idx]->frame.border);
+			}
+			else
+				snprintf(buf, sizeof(buf), "%d", page[dpg]->floatc[idx]->frame.border);
+		}
+		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
+        break;
+    case Ftitle:
+		if(dtyp == Ddefault)
+			snprintf(buf, sizeof(buf), "%d", def.title);
+		else {
+			if(dcol) {
+				Column *col = page[dpg]->col[dcol];
+				snprintf(buf, sizeof(buf), "%d", col->client[idx]->frame.title);
+			}
+			else
+				snprintf(buf, sizeof(buf), "%d", page[dpg]->floatc[idx]->frame.title);
+		}
+		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
+        break;
+    case Fsnap:
+		snprintf(buf, sizeof(buf), "%d", def.snap);
+		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
+		break;
+    case Fname:
+		if(dcol) {
+			Column *col = page[dpg]->col[dcol];
+			return mkstat(stat, dir, name, strlen(col->client[idx]->name), DMREAD);
+		}
+		else
+			return mkstat(stat, dir, name, strlen(page[dpg]->floatc[idx]->name), DMREAD | DMWRITE);
+        break;
     default:
 		errstr = "invalid stat";
 		break;
     }
 	return 0;
-}
-
-static int
-xremove(IXPConn *c)
-{
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
-	unsigned short i;
-
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
-	i = qpath_item(m->qid.path);
-	if((qpath_type(m->qid.path) == Ditem) && i && (i < nitem)) {
-		Item *it = item[i];
-		detach_item(it);
-		free(it);
-    	c->fcall->id = RREMOVE;
-		if(iexpand >= nitem)
-			iexpand = 0;
-		draw();
-		return 0;
-	}
-	errstr = Enoperm;
-	return -1;
 }
 
 static int
@@ -744,7 +762,6 @@ do_fcall(IXPServer *s, IXPConn *c)
 		case TVERSION: ret = xversion(c); break;
 		case TATTACH: ret = xattach(c); break;
 		case TWALK: ret = xwalk(c); break;
-		case TREMOVE: ret = xremove(c); break;
 		case TOPEN: ret = xopen(c); break;
 		case TREAD: ret = xread(c); break;
 		case TWRITE: ret = xwrite(c); break;

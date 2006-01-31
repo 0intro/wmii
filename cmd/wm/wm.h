@@ -73,6 +73,7 @@ struct Client {
     	GC gc;
     	Cursor cursor;
 		Bool title;
+    	unsigned int border;
 	} frame;
 };
 
@@ -104,10 +105,16 @@ IXPServer *srv;
 typedef struct {
 	char selcolor[24];
 	char normcolor[24];
-	char font[24];
+	char *font;
 	unsigned int border;
 	unsigned int title;
 	unsigned int snap;
+	unsigned int selfg;
+	unsigned int selbg;
+	unsigned int selborder;
+	unsigned int normfg;
+	unsigned int normbg;
+	unsigned int normborder;
 } Default;
 
 Default def;

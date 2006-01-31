@@ -496,8 +496,7 @@ type_to_stat(Stat *stat, char *name, unsigned short i)
     case Fcolor:
 		if(i == nitem)
 			i = 0;
-		return mkstat(stat, &dir, name, strlen(item[i]->color),
-						DMREAD | DMWRITE);
+		return mkstat(stat, &dir, name, 24, DMREAD | DMWRITE);
 		break;
     default:
 		errstr = "invalid stat";
