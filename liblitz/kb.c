@@ -18,13 +18,13 @@ char *blitz_modtostr(unsigned long mod)
 	if (mod & ControlMask)
 		cext_strlcat(result, "C-", sizeof(result));
 	if (mod & Mod1Mask)
-		cext_strlcat(result, "M-", sizeof(result));
+		cext_strlcat(result, "M1-", sizeof(result));
 	if (mod & Mod2Mask)
 		cext_strlcat(result, "M2-", sizeof(result));
 	if (mod & Mod3Mask)
 		cext_strlcat(result, "M3-", sizeof(result));
 	if (mod & Mod4Mask)
-		cext_strlcat(result, "WIN-", sizeof(result));
+		cext_strlcat(result, "M4-", sizeof(result));
 	if (mod & Mod5Mask)
 		cext_strlcat(result, "M5-", sizeof(result));
 	return cext_estrdup(result);
@@ -37,13 +37,13 @@ unsigned long blitz_strtomod(char *val)
 		mod |= ShiftMask;
 	if (strstr(val, "C-"))
 		mod |= ControlMask;
-	if (strstr(val, "M-"))
+	if (strstr(val, "M1-"))
 		mod |= Mod1Mask;
 	if (strstr(val, "M2-"))
 		mod |= Mod2Mask;
 	if (strstr(val, "M3-"))
 		mod |= Mod3Mask;
-	if (strstr(val, "WIN-"))
+	if (strstr(val, "M2-"))
 		mod |= Mod4Mask;
 	if (strstr(val, "M5-"))
 		mod |= Mod5Mask;
