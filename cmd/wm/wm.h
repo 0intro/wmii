@@ -54,6 +54,7 @@ struct Client {
     Bool destroyed;
 	Bool maximized;
 	Bool attached;
+	Bool managed;
 	Area *area;
     Window win;
     Window trans;

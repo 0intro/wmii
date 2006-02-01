@@ -384,7 +384,7 @@ void
 detach_client(Client *c, Bool unmap)
 {
 	if(c->area)
-		detach_area(c);
+		detach_column(c);
 	else {
 		cext_array_detach((void **)c->page->floating, c, &c->page->floatingsz);
     	if(!c->destroyed) {

@@ -133,7 +133,7 @@ qid_to_name(Qid *qid)
 		case Droot: return "/"; break;
 		case Ddefault: return "default"; break;
 		case Dpage:
-			if(pg == sel_page)
+			if(pg == sel)
 				return "sel";
 			if(pg == npage)
 				return "new";
@@ -241,7 +241,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		if(!strncmp(wname, "new", 4))
 			new->path = mkqpath(Dpage, npage, 0, 0);
 		else if(!strncmp(wname, "sel", 4))
-			new->path = mkqpath(Dpage, sel_page, 0, 0);
+			new->path = mkqpath(Dpage, sel, 0, 0);
 		else {
 			i = cext_strtonum(wname, 1, 0xffff, &err);
 			if(err || (i >= npage))
