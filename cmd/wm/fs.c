@@ -36,23 +36,23 @@
  * /sel/				Dpage		sel page
  * /1/					Dpage		page
  * /1/ctl				Fctl		command interface (page)
- * /1/sel/				Dclient
- * /1/1/				Dclient
- * /1/1/border			Fborder		0..n
- * /1/1/title			Ftitle		0, 1
- * /1/1/name			Fname		name of client
- * /1/1/ctl 			Fctl 		command interface (client)
- * /1/col/				Dcolroot
- * /1/col/new/			Dcol
- * /1/col/sel/			Dcol
- * /1/col/1/			Dcol
- * /1/col/1/sel/		Dclient
- * /1/col/1/1/			Dclient
- * /1/col/1/1/border	Fborder		0..n
- * /1/col/1/1/title		Ftitle		0, 1
- * /1/col/1/1/name		Fname		name of client
- * /1/col/1/1/ctl 		Fctl 		command interface (client)
- * /1/col/1/ctl 		Fctl 		command interface (col)
+ * /1/sel/				Dcol
+ * /1/new/				Dcol
+ * /1/float/			Dcol		floating clients in col 0
+ * /1/float/sel/		Dclient
+ * /1/float/1/			Dclient
+ * /1/float/1/border	Fborder		0..n
+ * /1/float/1/title		Ftitle		0, 1
+ * /1/float/1/name		Fname		name of client
+ * /1/float/1/ctl 		Fctl 		command interface (client)
+ * /1/1/				Dcol
+ * /1/1/1/sel/			Dclient
+ * /1/1/1/1/			Dclient
+ * /1/1/1/border		Fborder		0..n
+ * /1/1/1/title			Ftitle		0, 1
+ * /1/1/1/name			Fname		name of client
+ * /1/1/1/ctl 			Fctl 		command interface (client)
+ * /1/1/ctl 			Fctl 		command interface (col)
  */
 
 /* 8-bit qid.path.type */
@@ -60,7 +60,6 @@ enum {
     Droot,
 	Ddefault,
 	Dpage,
-	Dcolroot,
 	Dcol,
 	Dclient,
     Ffont,
@@ -130,7 +129,6 @@ qid_to_name(Qid *qid)
 	switch(typ) {
 		case Droot: return "/"; break;
 		case Ddefault: return "default"; break;
-		case Dcolroot: return "col"; break;
 		case Dpage:
 			if(pg == sel_page)
 				return "sel";
@@ -197,8 +195,6 @@ name_to_type(char *name, unsigned char dtyp)
 		return Fborder;
 	if(!strncmp(name, "title", 6))
 		return Ftitle;
-	if(!strncmp(name, "col", 4))
-		return Dcolroot;
 	if(!strncmp(name, "sel", 6))
 		goto dyndir;
    	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
@@ -209,7 +205,6 @@ dyndir:
 	case Droot: return Dpage; break;
 	case Dcol:
 	case Dpage: return Dclient; break;
-	case Dcolroot: return Dcol; break;
 	}
 	return -1;
 }
@@ -228,6 +223,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
     if((dir->type != IXP_QTDIR) || (type == -1))
         return -1;
 	
+	new->dir = dir;
     new->version = 0;
 	switch(type) {
 	case Droot:
@@ -236,10 +232,6 @@ mkqid(Qid *dir, char *wname, Qid *new)
 	case Ddefault:
 		new->type = IXP_QTDIR;
 		new->path = mkqpath(Ddefault, 0, 0, 0);
-		break;
-	case Dcolroot:
-		new->type = IXP_QTDIR;
-		new->path = mkqpath(Dcolroot, dpg, 0, 0);
 		break;
 	case Dpage:
 		new->type = IXP_QTDIR;
@@ -409,7 +401,6 @@ type_to_stat(Stat *stat, char *name, Qid *dir, unsigned int idx)
     case Droot:
     case Ddefault:
     case Dpage:
-    case Dcolroot:
     case Dcol:
     case Dclient:
 		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
@@ -482,7 +473,6 @@ xread(IXPConn *c)
     unsigned char typ, *p = c->fcall->data;
 	unsigned short pg, col, cl;
 	unsigned int i, len;
-	Qid dir = root_qid;
 	char buf[32];
 
     if(!m) {
@@ -499,14 +489,14 @@ xread(IXPConn *c)
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
 			/* jump to offset */
-			len = type_to_stat(&stat, "ctl", &dir, 0);
-			len += type_to_stat(&stat, "event", &dir, 0);
-			len += type_to_stat(&stat, "default", &dir, 0);
-			len += type_to_stat(&stat, "sel", &dir, 0);
-			len += type_to_stat(&stat, "new", &dir, 0);
+			len = type_to_stat(&stat, "ctl", &m->qid, 0);
+			len += type_to_stat(&stat, "event", &m->qid, 0);
+			len += type_to_stat(&stat, "default", &m->qid, 0);
+			len += type_to_stat(&stat, "sel", &m->qid, 0);
+			len += type_to_stat(&stat, "new", &m->qid, 0);
 			for(i = 1; i < npage; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len += type_to_stat(&stat, buf, &dir, 0);
+				len += type_to_stat(&stat, buf, &m->qid, 0);
 				if(len <= c->fcall->offset)
 					continue;
 				else 
@@ -515,7 +505,7 @@ xread(IXPConn *c)
 			/* offset found, proceeding */
 			for(; i < npage; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len = type_to_stat(&stat, buf, &dir, 0);
+				len = type_to_stat(&stat, buf, &m->qid, 0);
 				if(c->fcall->count + len > c->fcall->iounit)
 					break;
 				c->fcall->count += len;
@@ -532,19 +522,19 @@ xread(IXPConn *c)
 	else {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
-			c->fcall->count = type_to_stat(&stat, "ctl", &dir, 0);
+			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid, 0);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "event", &dir, 0);
+			c->fcall->count += type_to_stat(&stat, "event", &m->qid, 0);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "default", &dir, 0);
+			c->fcall->count += type_to_stat(&stat, "default", &m->qid, 0);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "sel", &dir, 0);
+			c->fcall->count += type_to_stat(&stat, "sel", &m->qid, 0);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "new", &dir, 0);
+			c->fcall->count += type_to_stat(&stat, "new", &m->qid, 0);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 1; i < npage; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len = type_to_stat(&stat, buf, &dir, 0);
+				len = type_to_stat(&stat, buf, &m->qid, 0);
 				if(c->fcall->count + len > c->fcall->iounit)
 					break;
 				c->fcall->count += len;
