@@ -50,7 +50,7 @@ wmiimenu: ${OBJ_menu}
 
 wmiir: ${OBJ_r}
 	@echo LD $@
-	@${CC} -o $@ ${OBJ_r} -g -static -L${PREFIX}/lib -L/usr/lib -lc \
+	@${CC} -o $@ ${OBJ_r} -g -L${PREFIX}/lib -L/usr/lib -lc \
 		-L../libixp -lixp -L../libcext -lcext
 # Solaris
 #	@${CC} -o $@ ${OBJ_r} -g -static -L${PREFIX}/lib -L/usr/lib -lc \
