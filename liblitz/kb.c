@@ -7,45 +7,22 @@
 
 #include "blitz.h"
 
-/* free the result manually! */
-char *blitz_modtostr(unsigned long mod)
-{
-	char result[60];
-	result[0] = 0;
-
-	if (mod & ShiftMask)
-		cext_strlcat(result, "S-", sizeof(result));
-	if (mod & ControlMask)
-		cext_strlcat(result, "C-", sizeof(result));
-	if (mod & Mod1Mask)
-		cext_strlcat(result, "M1-", sizeof(result));
-	if (mod & Mod2Mask)
-		cext_strlcat(result, "M2-", sizeof(result));
-	if (mod & Mod3Mask)
-		cext_strlcat(result, "M3-", sizeof(result));
-	if (mod & Mod4Mask)
-		cext_strlcat(result, "M4-", sizeof(result));
-	if (mod & Mod5Mask)
-		cext_strlcat(result, "M5-", sizeof(result));
-	return cext_estrdup(result);
-}
-
 unsigned long blitz_strtomod(char *val)
 {
 	unsigned long mod = 0;
-	if (strstr(val, "S-"))
+	if (strstr(val, "Shift"))
 		mod |= ShiftMask;
-	if (strstr(val, "C-"))
+	if (strstr(val, "Control"))
 		mod |= ControlMask;
-	if (strstr(val, "M1-"))
+	if (strstr(val, "Mod1") || strstr(val, "Alt"))
 		mod |= Mod1Mask;
-	if (strstr(val, "M2-"))
+	if (strstr(val, "Mod2"))
 		mod |= Mod2Mask;
-	if (strstr(val, "M3-"))
+	if (strstr(val, "Mod3"))
 		mod |= Mod3Mask;
-	if (strstr(val, "M2-"))
+	if (strstr(val, "Mod4"))
 		mod |= Mod4Mask;
-	if (strstr(val, "M5-"))
+	if (strstr(val, "Mod5"))
 		mod |= Mod5Mask;
 	return mod;
 }

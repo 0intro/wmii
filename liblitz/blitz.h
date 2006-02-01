@@ -55,7 +55,6 @@ char *blitz_buttontostr(unsigned int button);
 unsigned int blitz_strtobutton(char *val);
 
 /* kb.c */
-char *blitz_modtostr(unsigned long mod);
 unsigned long blitz_strtomod(char *val);
 
 /* util.c */
