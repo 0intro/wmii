@@ -10,9 +10,6 @@
 
 #include "wm.h"
 
-static void handle_before_read_client(IXPServer * s, File * file);
-static void handle_after_write_client(IXPServer * s, File * file);
-
 static void max_client(void *obj, char *arg);
 
 /* action table for /?/ namespace */
@@ -27,8 +24,6 @@ alloc_client(Window w, XWindowAttributes *wa)
     XTextProperty name;
     Client *c = (Client *) cext_emallocz(sizeof(Client));
     XSetWindowAttributes fwa;
-    static int id = 1;
-    char buf[MAX_BUF];
     int bw, th;
     long msize;
 
@@ -50,31 +45,6 @@ alloc_client(Window w, XWindowAttributes *wa)
 		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
     	free(name.value);
 	}
-
-    snprintf(buf, MAX_BUF, "/detached/%d", id);
-    c->file[C_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, MAX_BUF, "/detached/%d/name", id);
-    c->file[C_NAME] = ixp_create(ixps, buf);
-	c->file[C_NAME]->before_read = handle_before_read_client;
-    snprintf(buf, MAX_BUF, "/detached/%d/border", id);
-    c->file[C_BORDER] =
-        wmii_create_ixpfile(ixps, buf, def[WM_BORDER]->content);
-    c->file[C_BORDER]->after_write = handle_after_write_client;
-    snprintf(buf, MAX_BUF, "/detached/%d/tab", id);
-    c->file[C_TAB] = wmii_create_ixpfile(ixps, buf, def[WM_TAB]->content);
-    c->file[C_TAB]->after_write = handle_after_write_client;
-    snprintf(buf, MAX_BUF, "/detached/%d/handleinc", id);
-    c->file[C_HANDLE_INC] =
-        wmii_create_ixpfile(ixps, buf, def[WM_HANDLE_INC]->content);
-    c->file[C_HANDLE_INC]->after_write = handle_after_write_client;
-    snprintf(buf, MAX_BUF, "/detached/%d/geometry", id);
-    c->file[C_GEOMETRY] = ixp_create(ixps, buf);
-    c->file[C_GEOMETRY]->before_read = handle_before_read_client;
-    c->file[C_GEOMETRY]->after_write = handle_after_write_client;
-    snprintf(buf, MAX_BUF, "/detached/%d/ctl", id);
-    c->file[C_CTL] = ixp_create(ixps, buf);
-    c->file[C_CTL]->after_write = handle_after_write_client;
-    id++;
 
 	/* client.frame */
     fwa.override_redirect = 1;
@@ -114,7 +84,7 @@ set_client_state(Client * c, int state)
 void
 focus_client(Client *c)
 {
-	Page *p = page ? page[sel_page] : nil;
+	Page *p = page ? page[sel] : nil;
 	size_t i, j;
 	Client *old = sel_client();
 	
@@ -123,23 +93,14 @@ focus_client(Client *c)
 		focus_page(c->page);
 		p = c->page;
 	}
-	p->is_area = c->area != nil;
-	p->file[P_SEL_PREFIX]->content = c->file[P_PREFIX]->content;
-	if(p->is_area) {
-		for(i = 0; (i < p->areasz) && p->area[i]; i++) {
-			Area *col = p->area[i];
-			for(j = 0; (j < col->clientsz) && col->client[j] && (c != col->client[j]); j++);
-			if((j < col->clientsz) && col->client[j]) {
-				p->sel_area = i;
-				col->sel = j;
-				break;
-			}
+	for(i = 0; i < p->narea; i++) {
+		Area *a = p->area[i];
+		for(j = 0; j < a->nclient && (c != a->client[j]); j++);
+		if(j < a->nclient) {
+			p->sel = i;
+			a->sel = j;
+			break;
 		}
-	}
-	else {
-		for(i = 0; (i < p->floatingsz) && p->floating[i] && (p->floating[i] != c); i++);
-		if((i < p->floatingsz) && p->floating[i])
-			p->sel_float = i;
 	}
 	
 	if(old && (old != c)) {
@@ -155,7 +116,7 @@ focus_client(Client *c)
     XDefineCursor(dpy, c->win, normal_cursor);
     draw_client(c);
 	XSync(dpy, False);
-    invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
+	/* TODO: client update */
 }
 
 void
@@ -257,7 +218,7 @@ handle_client_property(Client *c, XPropertyEvent *e)
 		}
         if(c->attached)
             draw_client(c);
-        invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
+		/* TODO: client update */
         break;
     case XA_WM_TRANSIENT_FOR:
         XGetTransientForHint(dpy, c->win, &c->trans);
@@ -276,8 +237,8 @@ destroy_client(Client * c)
 {
     XFreeGC(dpy, c->frame.gc);
     XDestroyWindow(dpy, c->frame.win);
-    ixp_remove_file(ixps, c->file[C_PREFIX]);
-	cext_array_detach((void **)detached, c, &detachedsz);
+	cext_array_detach((void **)det, c, &detsz);
+	ndet--;
     free(c);
 }
 
@@ -291,17 +252,17 @@ draw_client(Client *c)
     XRectangle notch;
 
 	d.drawable = c->frame.win;
-	d.xfont = xfont;
+	d.font = xfont;
 	d.gc = c->frame.gc;
 
 	if(c == sel_client()) {
-		d.bg = blitz_loadcolor(dpy, screen, def[WM_SEL_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen, def[WM_SEL_FG_COLOR]->content);
-		d.border = blitz_loadcolor(dpy, screen, def[WM_SEL_BORDER_COLOR]->content);
+		d.bg = def.selbg;
+		d.fg = def.selfg;
+		d.border = def.selborder;
 	} else {
-		d.bg = blitz_loadcolor(dpy, screen, def[WM_NORM_BG_COLOR]->content);
-		d.fg = blitz_loadcolor(dpy, screen, def[WM_NORM_FG_COLOR]->content);
-		d.border = blitz_loadcolor(dpy, screen, def[WM_NORM_BORDER_COLOR]->content);
+		d.bg = def.normbg;
+		d.fg = def.normfg;
+		d.border = def.normborder;
 	}
 
 	/* draw border */
@@ -399,28 +360,29 @@ attach_client(Client *c)
     if(!page)
 		p = alloc_page();
 	else
-		p = page[sel_page];
+		p = page[sel];
 
     reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
 	c->page = p;
-	wmii_move_ixpfile(c->file[C_PREFIX], p->file[P_CLIENT_PREFIX]);
 
-	if(p->is_area)
-		attach_area(c);
-	else
-		p->floating = (Client **)cext_array_attach((void **)p->floating, c,
-						sizeof(Client *), &p->floatingsz);
+	if(p->sel)
+		attach_column(c);
+	else {
+		Area *a = p->area[0];
+		a->client = (Client **)cext_array_attach((void **)a->client, c,
+						sizeof(Client *), &a->clientsz);
+		a->nclient++;
+	}
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
 	focus_client(c);
 
-    invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+	/* TODO: page update event */
 }
 
 void
 detach_client(Client *c, Bool unmap)
 {
-	wmii_move_ixpfile(c->file[C_PREFIX], def[WM_DETACHED_PREFIX]);
 	if(c->area)
 		detach_area(c);
 	else {

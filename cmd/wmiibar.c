@@ -62,6 +62,7 @@ static char Enofid[] = "fid not assigned";
 static char Enofile[] = "file not found";
 static char Enomode[] = "mode not supported";
 static char Enofunc[] = "function not supported";
+static char Enocommand[] = "command not supported";
 
 static unsigned char *msg[IXP_MAX_MSG];
 char *errstr = 0;
@@ -698,7 +699,7 @@ xwrite(IXPConn *c)
 				break;
 			}
 		}
-		errstr = "command not supported";
+		errstr = Enocommand;
 		return -1;
 		break;
 	case Ffont:
@@ -706,6 +707,7 @@ xwrite(IXPConn *c)
 			free(font);
 		font = cext_emallocz(c->fcall->count + 1);
 		memcpy(font, c->fcall->data, c->fcall->count);
+		XFreeFont(dpy, xfont);
     	xfont = blitz_getfont(dpy, font);
 		update_geometry();
 		break;

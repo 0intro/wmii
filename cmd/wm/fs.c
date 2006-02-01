@@ -80,7 +80,9 @@ static char Enofid[] = "fid not assigned";
 static char Enofile[] = "file not found";
 static char Enomode[] = "mode not supported";
 static char Enofunc[] = "function not supported";
+/*static char Enocommand[] = "command not supported";*/
 
+const char *err;
 static unsigned char *msg[IXP_MAX_MSG];
 char *errstr = 0;
 static Qid root_qid;
@@ -170,7 +172,6 @@ qid_to_name(Qid *qid)
 static int
 name_to_type(char *name, unsigned char dtyp)
 {
-	const char *err;
     unsigned int i;
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return Droot;
@@ -215,7 +216,6 @@ dyndir:
 static int
 mkqid(Qid *dir, char *wname, Qid *new)
 {
-	const char *err;
 	unsigned char dtyp = qpath_type(dir->path);
 	unsigned short dpg = qpath_page(dir->path);
 	unsigned short darea = qpath_area(dir->path);
@@ -364,7 +364,7 @@ xopen(IXPConn *c)
     }
     c->fcall->id = ROPEN;
     c->fcall->qid = m->qid;
-    c->fcall->iounit = 256;
+    c->fcall->iounit = 2048;
     return 0;
 }
 
@@ -390,7 +390,6 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 	unsigned short dpg = qpath_page(dir->path);
 	unsigned short darea = qpath_area(dir->path);
 	unsigned int idx;
-	const char *err;
 	int type = name_to_type(name, dtyp);
 	char buf[16];
 
@@ -710,80 +709,119 @@ xwrite(IXPConn *c)
 {
 	char buf[256];
     IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
+    unsigned char typ;
+	unsigned short pg, area, cl;
 	unsigned short i;
 
     if(!m) {
         errstr = Enofid;
         return -1;
     }
+	typ = qpath_type(m->qid.path);
+	pg = qpath_page(m->qid.path);
+	area = qpath_area(m->qid.path);
+	cl = qpath_client(m->qid.path);
+	if(cl)
+		cl--;
 
-	i = qpath_item(m->qid.path);
 	switch (qpath_type(m->qid.path)) {
 	case Fctl:
-		if(c->fcall->count == 4) {
-			memcpy(buf, c->fcall->data, 4);
-			buf[4] = 0;
-			if(!strncmp(buf, "quit", 5)) {
-				srv.running = 0;
-				break;
-			}
+		switch(qpath_type(m->qid.dir->path)) {
+		case Droot:
+			/* TODO: /ctl commands */
+			break;
+		case Dpage:
+			/* /TODO: /n/ctl commands */
+			break;
+		case Darea:
+			/* /TODO: /n/{float,n}/ctl commands */
+			break;
+		case Dclient:
+			/* /TODO: /n/{float,n}/n/ctl commands */
+			break;
+		default:
+			errstr = "command not supported";
+			return -1;
 		}
-		errstr = "command not supported";
-		return -1;
 		break;
 	case Ffont:
-		if(font)
-			free(font);
-		font = cext_emallocz(c->fcall->count + 1);
-		memcpy(font, c->fcall->data, c->fcall->count);
-    	xfont = blitz_getfont(dpy, font);
-		update_geometry();
+		if(def.font)
+			free(def.font);
+		def.font = cext_emallocz(c->fcall->count + 1);
+		memcpy(def.font, c->fcall->data, c->fcall->count);
+		XFreeFont(dpy, xfont);
+    	xfont = blitz_getfont(dpy, def.font);
+		/* TODO: update geometry */
 		break;
-    case Fexpand:
-		{
-			const char *err;
-			if(c->fcall->count && c->fcall->count < 16) {
-				memcpy(buf, c->fcall->data, c->fcall->count);
-				buf[c->fcall->count] = 0;
-				i = (unsigned short) cext_strtonum(buf, 1, 0xffff, &err);
-				if(i < nitem) {
-					iexpand = i;
-					draw();
-					break;
-				}
-			}
-		}
-		errstr = "item not found";
-		return -1;
-		break;
-	case Fdata:
-		{
-			unsigned int len = c->fcall->count;
-			if(i == nitem)
-				new_item();
-			if(!i || (i >= nitem))
-				goto error_xwrite;
-			if(len >= sizeof(item[i]->data))
-				len = sizeof(item[i]->data) - 1;
-			memcpy(item[i]->data, c->fcall->data, len);
-			item[i]->data[len] = 0;
-			draw();
-		}
-		break;
-	case Fcolor:
-		if(i == nitem)
-			new_item();
-		if((i >= nitem) || (c->fcall->count != 24)
+	case Fselcolor:
+		if((c->fcall->count != 24)
 			|| (c->fcall->data[0] != '#') || (c->fcall->data[8] != '#')
 		    || (c->fcall->data[16] != '#'))
 		{
 			errstr = "wrong color format";
 			goto error_xwrite;
 		}
-		memcpy(item[i]->color, c->fcall->data, c->fcall->count);
-		item[i]->color[c->fcall->count] = 0;
-		update_color(item[i]);
-		draw();
+		memcpy(def.selcolor, c->fcall->data, c->fcall->count);
+		def.selcolor[c->fcall->count] = 0;
+		/* TODO: update color */
+		break;
+	case Fnormcolor:
+		if((c->fcall->count != 24)
+			|| (c->fcall->data[0] != '#') || (c->fcall->data[8] != '#')
+		    || (c->fcall->data[16] != '#'))
+		{
+			errstr = "wrong color format";
+			goto error_xwrite;
+		}
+		memcpy(def.normcolor, c->fcall->data, c->fcall->count);
+		def.normcolor[c->fcall->count] = 0;
+		/* TODO: update color */
+		break;
+	case Fsnap:
+		if(c->fcall->count > sizeof(buf))
+			goto error_xwrite;
+		memcpy(buf, c->fcall->data, c->fcall->count);
+		buf[c->fcall->count] = 0;
+		i = cext_strtonum(buf, 1, 0xffff, &err);
+		if(err) {
+			errstr = "snap value out of range 0..0xffff";
+			return -1;
+		}
+		def.snap = i;
+		break;
+	case Fborder:
+		if(c->fcall->count > sizeof(buf))
+			goto error_xwrite;
+		memcpy(buf, c->fcall->data, c->fcall->count);
+		buf[c->fcall->count] = 0;
+		i = cext_strtonum(buf, 0, 0xffff, &err);
+		if(err) {
+			errstr = "border value out of range 0..0xffff";
+			return -1;
+		}
+		if(qpath_type(m->qid.dir->path) == Ddefault)
+			def.border = i;
+		else {
+			page[pg]->area[area]->client[cl]->frame.border = i;
+			/* TODO: resize client */
+		}
+		break;
+	case Ftitle:
+		if(c->fcall->count > sizeof(buf))
+			goto error_xwrite;
+		memcpy(buf, c->fcall->data, c->fcall->count);
+		buf[c->fcall->count] = 0;
+		i = cext_strtonum(buf, 0, 1, &err);
+		if(err) {
+			errstr = "title value out of range 0, 1";
+			return -1;
+		}
+		if(qpath_type(m->qid.dir->path) == Ddefault)
+			def.border = i;
+		else {
+			page[pg]->area[area]->client[cl]->frame.border = i;
+			/* TODO: resize client */
+		}
 		break;
 	default:
 error_xwrite:
@@ -811,7 +849,7 @@ xclunk(IXPConn *c)
     return 0;
 }
 
-static void
+void
 close_ixp_conn(IXPServer *s, IXPConn *c)
 {
 	size_t i;
@@ -883,7 +921,7 @@ pending(IXPConn *c, unsigned char id)
 	return nil;
 }
 
-static void
+void
 do_pend_fcall(char *event)
 {
 	size_t i;
@@ -917,7 +955,7 @@ do_pend_fcall(char *event)
 	}
 }
 
-static void
+void
 new_ixp_conn(IXPServer *s, IXPConn *c)
 {
     IXPConn *new;

@@ -8,7 +8,8 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <X11/cursorxfont.h>
+#include <unistd.h>
+#include <X11/cursorfont.h>
 #include <X11/Xproto.h>
 #include <X11/keysym.h>
 #include <X11/Xatom.h>
@@ -23,7 +24,6 @@ static int (*x_error_handler) (Display *, XErrorEvent *);
 static void new_page(void *obj, char *arg);
 static void xselect_page(void *obj, char *arg);
 static void xdestroy_page(void *obj, char *arg);
-static void quit(void *obj, char *arg);
 static void xattach_client(void *obj, char *arg);
 static void xdetach_client(void *obj, char *arg);
 static void xclose_client(void *obj, char *arg);
@@ -38,7 +38,6 @@ Action wm_acttbl[] = {
     {"attach", xattach_client},
     {"detach", xdetach_client},
     {"close", xclose_client},
-    {"quit", quit},
     {"pager", pager},
     {"detclient", detached_client},
     {0, 0}
@@ -53,48 +52,11 @@ static void
 usage()
 {
     fprintf(stderr, "%s",
-            "usage: wmiiwm -s <socket file> [-c] [-v]\n"
-            "      -s    socket file\n"
+            "usage: wmiiwm -a <address> [-c] [-v]\n"
+            "      -a    address\n"
             "      -c    checks if another WM is already running\n"
             "      -v    version info\n");
     exit(1);
-}
-
-void
-run_action(File * f, void *obj, Action * acttbl)
-{
-    int i;
-    size_t len;
-
-    if(!f->content)
-        return;
-    for(i = 0; acttbl[i].name; i++) {
-        len = strlen(acttbl[i].name);
-        if(!strncmp(acttbl[i].name, (char *) f->content, len)) {
-            if(f->size > len)
-                acttbl[i].func(obj, &((char *) f->content)[len + 1]);
-            else
-                acttbl[i].func(obj, 0);
-            return;
-            break;
-        }
-    }
-    fprintf(stderr, "wmiiwm: unknown action '%s'\n"
-            "     or invalid ctl device\n", (char *) f->content);
-}
-
-static void
-quit(void *obj, char *arg)
-{
-    ixps->runlevel = SHUTDOWN;
-}
-
-void
-invoke_wm_event(File * f)
-{
-    if(!f->content)
-        return;
-    wmii_spawn(dpy, f->content);
 }
 
 static void
@@ -119,13 +81,13 @@ static void
 draw_pager_client(Client *c, Draw *d)
 {
 	if(c == sel_client()) {
-    	d->bg = blitz_loadcolor(dpy, screen, def[WM_SEL_BG_COLOR]->content);
-        d->fg = blitz_loadcolor(dpy, screen, def[WM_SEL_FG_COLOR]->content);
-        d->border = blitz_loadcolor(dpy, screen, def[WM_SEL_BORDER_COLOR]->content);
+    	d->bg = def.selbg;
+        d->fg = def.selfg;
+        d->border = def.selborder;
     } else {
-    	d->bg = blitz_loadcolor(dpy, screen, def[WM_NORM_BG_COLOR]->content);
-        d->fg = blitz_loadcolor(dpy, screen, def[WM_NORM_FG_COLOR]->content);
-        d->border = blitz_loadcolor(dpy, screen, def[WM_NORM_BORDER_COLOR]->content);
+    	d->bg = def.normbg;
+        d->fg = def.normfg;
+        d->border = def.normborder;
     }
     d->data = c->name;
     scale_rect(&rect, &initial_rect, &c->frame.rect, &d->rect);
@@ -140,27 +102,25 @@ draw_pager_page(size_t idx, Draw *d)
     char name[4];
     initial_rect = d->rect;
 
-    if(idx == sel_page) {
-        d->bg = blitz_loadcolor(dpy, screen, def[WM_SEL_BG_COLOR]->content);
-        d->fg = blitz_loadcolor(dpy, screen, def[WM_SEL_FG_COLOR]->content);
-        d->border = blitz_loadcolor(dpy, screen, def[WM_SEL_BORDER_COLOR]->content);
+    if(idx == sel) {
+        d->bg = def.selbg;
+        d->fg = def.selfg;
+        d->border = def.selborder;
     } else {
-        d->bg = blitz_loadcolor(dpy, screen, def[WM_NORM_BG_COLOR]->content);
-        d->fg = blitz_loadcolor(dpy, screen, def[WM_NORM_FG_COLOR]->content);
-        d->border = blitz_loadcolor(dpy, screen, def[WM_NORM_BORDER_COLOR]->content);
+        d->bg = def.normbg;
+        d->fg = def.normfg;
+        d->border = def.normborder;
     }
     snprintf(name, sizeof(name), "%d", idx + 1);
     d->data = name;
     blitz_drawlabel(dpy, d);
     XSync(dpy, False);
 
-	for(i = 0; (i < page[idx]->areasz) && page[idx]->area[i]; i++) {
-		Area *col = page[idx]->area[i];
-		for(j = 0; (i < col->clientsz) && col->client[j]; j++)
-			draw_pager_client(col->client[j], d);
+	for(i = 0; i < page[idx]->narea && page[idx]->area[i]; i++) {
+		Area *a = page[idx]->area[i];
+		for(j = a->nclient - 1; j >= 0; j--)
+			draw_pager_client(a->client[j], d);
 	}
-	for(i = 0; (i < page[idx]->floatingsz) && page[idx]->floating[i]; i++)
-		draw_pager_client(page[idx]->floating[i], d);
 }
 
 static void
@@ -177,7 +137,7 @@ draw_pager()
     th = ((double) tw / rect.width) * rect.height;
     d.drawable = transient;
     d.gc = gc_transient;
-    d.xfont = xfont;
+    d.font = xfont;
 	i = 0;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
@@ -305,7 +265,7 @@ map_detached_client()
     int dx, dy;
     XRectangle cr;
 
-	for(i = 0; detached && detached[i]; i++);
+	for(i = 0; i < ndet; i++);
     blitz_getbasegeometry(i, &cols, &rows);
 	if(!cols)
 		cols = 1;
@@ -319,17 +279,17 @@ map_detached_client()
 	i = 0;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
-			if(!detached[i++])
+			if(!det[i++])
                 return;
             cr.x = ic * tw + (ic * GAP);
             cr.y = ir * th + (ir * GAP);
             cr.width = tw;
             cr.height = th;
-            XMoveResizeWindow(dpy, detached[i]->win, cr.x, cr.y, cr.width, cr.height);
-            configure_client(detached[i]);
-            map_client(detached[i]);
-			grab_client(detached[i], AnyModifier, Button1);
-            XRaiseWindow(dpy, detached[i]->win);
+            XMoveResizeWindow(dpy, det[i]->win, cr.x, cr.y, cr.width, cr.height);
+            configure_client(det[i]);
+            map_client(det[i]);
+			grab_client(det[i], AnyModifier, Button1);
+            XRaiseWindow(dpy, det[i]->win);
             XSync(dpy, False);
         }
     }
@@ -340,11 +300,10 @@ detached_client(void *obj, char *arg)
 {
     XEvent ev;
     int n;
-	size_t i, nc;
+	size_t i;
 	Client *c;
 
-	for(nc = 0; detached && detached[nc]; nc++);
-    if(!nc)
+    if(!ndet)
         return;
     XClearWindow(dpy, transient);
     XMapRaised(dpy, transient);
@@ -362,12 +321,13 @@ detached_client(void *obj, char *arg)
         switch (ev.type) {
         case KeyPress:
             XUnmapWindow(dpy, transient);
-            for(i = 0; detached[i]; i++)
-                unmap_client(detached[i]);
+            for(i = 0; i < ndet; i++)
+                unmap_client(det[i]);
             if((n = handle_kpress(&ev.xkey)) != -1) {
-                if(n < nc) {
-					c = detached[n];
-					cext_array_detach((void **)detached, c, &detachedsz);
+                if(n < ndet) {
+					c = det[n];
+					cext_array_detach((void **)det, c, &detsz);
+					ndet--;
                     attach_client(c);
                 }
             }
@@ -376,11 +336,12 @@ detached_client(void *obj, char *arg)
             break;
         case ButtonPress:
             XUnmapWindow(dpy, transient);
-            for(i = 0; detached[i]; i++)
-                unmap_client(detached[i]);
+            for(i = 0; i < ndet; i++)
+                unmap_client(det[i]);
             if((ev.xbutton.button == Button1)
                && (c = win_to_client(ev.xbutton.window))) {
-				cext_array_detach((void **)detached, c, &detachedsz);
+				cext_array_detach((void **)det, c, &detsz);
+				ndet--;
                 attach_client(c);
             }
             XUngrabKeyboard(dpy, CurrentTime);
@@ -401,9 +362,10 @@ xclose_client(void *obj, char *arg)
 static void
 xattach_client(void *obj, char *arg)
 {
-    Client *c = detached ? detached[0] : nil;
+    Client *c = ndet ? det[0] : nil;
     if(c) {
-		cext_array_detach((void **)detached, c, &detachedsz);
+		cext_array_detach((void **)det, c, &detsz);
+		ndet--;
         attach_client(c);
     }
 }
@@ -419,10 +381,9 @@ xdetach_client(void *obj, char *arg)
 static void
 xselect_page(void *obj, char *arg)
 {
-	size_t np, new = sel_page;
+	size_t new = sel;
 
-	for(np = 0; (np < pagesz) && page[np]; np++);
-    if(!np || !arg)
+    if(!npage || !arg)
         return;
     if(!strncmp(arg, "prev", 5)) {
 		if(new > 0)
@@ -434,8 +395,8 @@ xselect_page(void *obj, char *arg)
 		else
 			new = 0;
     } else {
-		int idx = blitz_strtonum(arg, 0, np);
-		if(idx < np)
+		int idx = blitz_strtonum(arg, 0, npage);
+		if(idx < npage)
 			new = idx;
 	}
     focus_page(page[new]);
@@ -444,7 +405,7 @@ xselect_page(void *obj, char *arg)
 static void
 xdestroy_page(void *obj, char *arg)
 {
-    destroy_page(page[sel_page]);
+    destroy_page(page[sel]);
 }
 
 static void
@@ -549,12 +510,8 @@ win_state(Window w)
     return res;
 }
 
-void
-handle_after_write(IXPServer * s, File * f)
-{
-    if(f == def[WM_CTL])
-        run_action(f, 0, wm_acttbl);
-    else if(f == def[WM_TRANS_COLOR]) {
+/* load color stuff */
+/*
         unsigned long col[1];
         col[0] = color_xor.pixel;
         XFreeColors(dpy, DefaultColormap(dpy, screen), col, 1, 0);
@@ -562,12 +519,7 @@ handle_after_write(IXPServer * s, File * f)
                          def[WM_TRANS_COLOR]->content,
                          &color_xor, &color_xor);
         XSetForeground(dpy, gc_xor, color_xor.pixel);
-    } else if(f == def[WM_FONT]) {
-        XFreeFont(dpy, xfont);
-        xfont = blitz_getxfont(dpy, def[WM_FONT]->content);
-    }
-    check_event(0);
-}
+		*/
 
 static void
 init_atoms()
@@ -601,55 +553,15 @@ init_cursors()
 }
 
 static void
-init_default()
-{
-    def[WM_TRANS_COLOR] =
-        wmii_create_ixpfile(ixps, "/default/transcolor",
-                            BLITZ_SEL_FG_COLOR);
-    def[WM_TRANS_COLOR]->after_write = handle_after_write;
-    def[WM_COLUMN_GEOMETRY] = wmii_create_ixpfile(ixps, "/default/geometry", BLITZ_SEL_FG_COLOR);
-    def[WM_SEL_BG_COLOR] =
-        wmii_create_ixpfile(ixps, "/default/sstyle/bgcolor",
-                            BLITZ_SEL_BG_COLOR);
-    def[WM_SEL_FG_COLOR] =
-        wmii_create_ixpfile(ixps, "/default/sstyle/fgcolor",
-                            BLITZ_SEL_FG_COLOR);
-    def[WM_SEL_BORDER_COLOR] =
-        wmii_create_ixpfile(ixps, "/default/sstyle/bordercolor",
-                            BLITZ_SEL_BORDER_COLOR);
-    def[WM_NORM_BG_COLOR] =
-        wmii_create_ixpfile(ixps, "/default/nstyle/bgcolor",
-                            BLITZ_NORM_BG_COLOR);
-    def[WM_NORM_FG_COLOR] =
-        wmii_create_ixpfile(ixps, "/default/nstyle/fgcolor",
-                            BLITZ_NORM_FG_COLOR);
-    def[WM_NORM_BORDER_COLOR] = wmii_create_ixpfile(ixps, "/default/nstyle/bordercolor",
-                            BLITZ_NORM_BORDER_COLOR);
-    def[WM_FONT] = wmii_create_ixpfile(ixps, "/default/xfont", BLITZ_FONT);
-    def[WM_FONT]->after_write = handle_after_write;
-    def[WM_SNAP_VALUE] = wmii_create_ixpfile(ixps, "/default/snapvalue", "20"); /* 0..1000 */
-    def[WM_BORDER] = wmii_create_ixpfile(ixps, "/default/border", "1");
-    def[WM_TAB] = wmii_create_ixpfile(ixps, "/default/tab", "1");
-    def[WM_HANDLE_INC] = wmii_create_ixpfile(ixps, "/default/handleinc", "1");
-    def[WM_SEL_PAGE] = ixp_create(ixps, "/sel");
-    def[WM_EVENT_PAGE_UPDATE] = ixp_create(ixps, "/event/pageupdate");
-    def[WM_EVENT_CLIENT_UPDATE] = ixp_create(ixps, "/event/clientupdate");
-    def[WM_EVENT_B1PRESS] = ixp_create(ixps, "/default/event/b1press");
-    def[WM_EVENT_B2PRESS] = ixp_create(ixps, "/default/event/b2press");
-    def[WM_EVENT_B3PRESS] = ixp_create(ixps, "/default/event/b3press");
-    def[WM_EVENT_B4PRESS] = ixp_create(ixps, "/default/event/b4press");
-    def[WM_EVENT_B5PRESS] = ixp_create(ixps, "/default/event/b5press");
-    def[WM_DETACHED_PREFIX] = ixp_create(ixps, "/detached");
-}
-
-static void
 init_screen()
 {
     XGCValues gcv;
     XSetWindowAttributes wa;
 
+	def.selcolor[7] = 0;
     XAllocNamedColor(dpy, DefaultColormap(dpy, screen),
-                     def[WM_TRANS_COLOR]->content, &color_xor, &color_xor);
+                     def.selcolor, &color_xor, &color_xor);
+	def.selcolor[7] = ' ';
     gcv.subwindow_mode = IncludeInferiors;
     gcv.function = GXxor;
     gcv.foreground = color_xor.pixel;
@@ -733,7 +645,7 @@ main(int argc, char *argv[])
 {
     int i;
     int checkwm = 0;
-    char *sockfile = 0;
+    char *address= 0;
 
     /* command line args */
     if(argc > 1) {
@@ -748,7 +660,7 @@ main(int argc, char *argv[])
                 break;
             case 's':
                 if(i + 1 < argc)
-                    sockfile = argv[++i];
+                    address = argv[++i];
                 else
                     usage();
                 break;
@@ -785,34 +697,24 @@ main(int argc, char *argv[])
     XSetErrorHandler(0);
     x_error_handler = XSetErrorHandler(wmii_error_handler);
 
-    ixps = wmii_setup_server(sockfile);
-
     init_event_hander();
 
-    if(!(def[WM_CTL] = ixp_create(ixps, "/ctl"))) {
-        perror("wmiiwm: cannot connect IXP server");
-        exit(1);
-    }
-    def[WM_CTL]->after_write = handle_after_write;
-
-	aqueuesz = detachedsz = pagesz = clientsz = sel_page = 0;
+	ndet = npage = nclient = aqsz = detsz = pagesz = clientsz = sel = 0;
     page = nil;
-	client = detached = nil;
-	aqueue = nil;
+	client = det = nil;
+	aq = nil;
+
+	def.font = strdup("fixed");
 
     init_atoms();
     init_cursors();
-    init_default();
-    xfont = blitz_getxfont(dpy, def[WM_FONT]->content);
+    xfont = blitz_getfont(dpy, def.font);
     wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
     init_screen();
     scan_wins();
 
     /* main event loop */
-    run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event,
-                               0);
     cleanup();
-/*	deinit_server(ixps);*/
     XCloseDisplay(dpy);
 
     return 0;

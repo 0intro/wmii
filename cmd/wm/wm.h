@@ -75,12 +75,14 @@ struct Client {
 Page **page;
 size_t npage;
 size_t pagesz;
-size_t sel_page;
-Page **aqueue;
-size_t aqueuesz;
-Client **detached;
-size_t detachedsz;
+size_t sel;
+Page **aq;
+size_t aqsz;
+Client **det;
+size_t ndet;
+size_t detsz;
 Client **client;
+size_t nclient;
 size_t clientsz;
 
 Display *dpy;
@@ -93,7 +95,7 @@ XFontStruct *xfont;
 XColor color_xor;
 GC gc_xor;
 GC gc_transient;
-IXPServer *srv;
+IXPServer srv;
 
 /* default values */
 typedef struct {
@@ -163,6 +165,11 @@ unsigned int border_width(Client *c);
 void init_event_hander();
 void check_event(IXPConn *c);
 
+/* fs.c */
+void do_pend_fcall(char *event);
+void new_ixp_conn(IXPServer *s, IXPConn *c);
+void close_ixp_conn(IXPServer *s, IXPConn *c);
+
 /* mouse.c */
 void mouse_resize(Client *c, Align align);
 void mouse_move(Client *c);
@@ -187,10 +194,6 @@ void select_column(Client *c, char *arg);
 void new_column(Page *p);
 
 /* wm.c */
-/*
-void invoke_wm_event(File * f);
-void run_action(File * f, void *obj, Action * acttbl);
-*/
 void scan_wins();
 Client *win_to_client(Window w);
 int win_proto(Window w);
