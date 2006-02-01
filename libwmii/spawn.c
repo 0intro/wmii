@@ -38,7 +38,7 @@ spawn_ixp_write(char *cmd)
         return;
     }
     if(ixp_client_write(&c, fid, 0, len, (void *)data) != len) {
-    	fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr);
+    	fprintf(stderr, "libwmii: cannot write file: %s\n", c.errstr);
 		return; 
 	}
     ixp_client_close(&c, fid);
