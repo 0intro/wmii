@@ -154,8 +154,8 @@ draw_pager_page(size_t idx, Draw *d)
     blitz_drawlabel(dpy, d);
     XSync(dpy, False);
 
-	for(i = 0; (i < page[idx]->columnsz) && page[idx]->column[i]; i++) {
-		Column *col = page[idx]->column[i];
+	for(i = 0; (i < page[idx]->areasz) && page[idx]->area[i]; i++) {
+		Area *col = page[idx]->area[i];
 		for(j = 0; (i < col->clientsz) && col->client[j]; j++)
 			draw_pager_client(col->client[j], d);
 	}

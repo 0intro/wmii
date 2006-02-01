@@ -348,7 +348,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			new->path = mkqpath(Ditem, i);
 		}
 		break;
-	case Fdata: /* note, Fdata needs to be before Fcolor, fallthrough */
+	case Fdata: /* note, Fdata has to be checked before Fcolor, fallthrough */
 		if(!i)
 			return -1;
 	case Fcolor:
@@ -562,8 +562,7 @@ xread(IXPConn *c)
 				len += type_to_stat(&stat, buf, &m->qid);
 				if(len <= c->fcall->offset)
 					continue;
-				else 
-					break;
+				break;
 			}
 			/* offset found, proceeding */
 			for(; i < nitem; i++) {

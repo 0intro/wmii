@@ -36,23 +36,24 @@
  * /sel/				Dpage		sel page
  * /1/					Dpage		page
  * /1/ctl				Fctl		command interface (page)
- * /1/sel/				Dcol
- * /1/new/				Dcol
- * /1/float/			Dcol		floating clients in col 0
+ * /1/sel/				Darea
+ * /1/new/				Darea
+ * /1/float/			Darea		floating clients in area 0
+ * /1/float/ctl 		Fctl		command interface (area)
  * /1/float/sel/		Dclient
  * /1/float/1/			Dclient
  * /1/float/1/border	Fborder		0..n
  * /1/float/1/title		Ftitle		0, 1
  * /1/float/1/name		Fname		name of client
  * /1/float/1/ctl 		Fctl 		command interface (client)
- * /1/1/				Dcol
+ * /1/1/				Darea
+ * /1/1/ctl 			Fctl 		command interface (area)
  * /1/1/1/sel/			Dclient
  * /1/1/1/1/			Dclient
  * /1/1/1/border		Fborder		0..n
  * /1/1/1/title			Ftitle		0, 1
  * /1/1/1/name			Fname		name of client
  * /1/1/1/ctl 			Fctl 		command interface (client)
- * /1/1/ctl 			Fctl 		command interface (col)
  */
 
 /* 8-bit qid.path.type */
@@ -60,7 +61,7 @@ enum {
     Droot,
 	Ddefault,
 	Dpage,
-	Dcol,
+	Darea,
 	Dclient,
     Ffont,
 	Fselcolor,
@@ -87,10 +88,10 @@ static Qid root_qid;
 /* IXP stuff */
 
 static unsigned long long
-mkqpath(unsigned char type, unsigned short pg, unsigned short col, unsigned short cl)
+mkqpath(unsigned char type, unsigned short pg, unsigned short area, unsigned short cl)
 {
     return ((unsigned long long) type << 48) | ((unsigned long long) pg << 32)
-		| ((unsigned long long) col << 16) | (unsigned long long) cl;
+		| ((unsigned long long) area << 16) | (unsigned long long) cl;
 }
 
 static unsigned char
@@ -106,7 +107,7 @@ qpath_page(unsigned long long path)
 }
 
 static unsigned short
-qpath_col(unsigned long long path)
+qpath_area(unsigned long long path)
 {
     return (path >> 16) & 0xffff;
 }
@@ -122,7 +123,7 @@ qid_to_name(Qid *qid)
 {
 	unsigned char typ = qpath_type(qid->path);
 	unsigned short pg = qpath_page(qid->path);
-	unsigned short col = qpath_col(qid->path);
+	unsigned short area = qpath_area(qid->path);
 	unsigned short cl = qpath_client(qid->path);
 	static char buf[32];
 
@@ -137,16 +138,18 @@ qid_to_name(Qid *qid)
 			snprintf(buf, sizeof(buf), "%u", pg);
 			return buf;
 			break;
-		case Dcol:
-			if(page[pg]->ncol == col)
+		case Darea:
+			if(!area)
+				return "float";
+			if(page[pg]->narea == area)
 				return "new";
-			if(page[pg]->sel_col == col)
+			if(page[pg]->sel == area)
 				return "sel";
-			snprintf(buf, sizeof(buf), "%u", col);
+			snprintf(buf, sizeof(buf), "%u", area);
 			return buf;
 			break;
 		case Dclient:
-			if(!col && page[pg]->sel_float == cl)
+			if(page[pg]->area[area]->sel == cl)
 				return "sel";
 			snprintf(buf, sizeof(buf), "%u", cl);
 			return buf;
@@ -175,7 +178,7 @@ name_to_type(char *name, unsigned char dtyp)
 		if(dtyp == Droot)
 			return Dpage;
 		else if(dtyp == Dpage)
-			return Dcol;
+			return Darea;
 	}
 	if(!strncmp(name, "ctl", 4))
 		return Fctl;
@@ -203,8 +206,8 @@ name_to_type(char *name, unsigned char dtyp)
 dyndir:
 	switch(dtyp) {
 	case Droot: return Dpage; break;
-	case Dcol:
-	case Dpage: return Dclient; break;
+	case Dpage: return Darea; break;
+	case Darea: return Dclient; break;
 	}
 	return -1;
 }
@@ -215,7 +218,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 	const char *err;
 	unsigned char dtyp = qpath_type(dir->path);
 	unsigned short dpg = qpath_page(dir->path);
-	unsigned short dcol = qpath_col(dir->path);
+	unsigned short darea = qpath_area(dir->path);
 	unsigned short dcl = qpath_client(dir->path);
 	unsigned short i;
 	int type = name_to_type(wname, dtyp);
@@ -246,43 +249,35 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			new->path = mkqpath(Dpage, i, 0, 0);
 		}
 		break;
-	case Dcol:
+	case Darea:
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4))
-			new->path = mkqpath(Dcol, dpg, page[dpg]->ncol, 0);
+			new->path = mkqpath(Darea, dpg, page[dpg]->narea, 0);
+		else if(!strncmp(wname, "float", 4))
+			new->path = mkqpath(Darea, dpg, 0, 0);
 		else if(!strncmp(wname, "sel", 4))
-			new->path = mkqpath(Dcol, dpg, page[dpg]->sel_col, 0);
+			new->path = mkqpath(Darea, dpg, page[dpg]->sel, 0);
 		else {
 			i = cext_strtonum(wname, 1, 0xffff, &err);
 			if(err)
 				return -1;
-			new->path = mkqpath(Dcol, dpg, i, 0);
+			new->path = mkqpath(Darea, dpg, i, 0);
 		}
 		break;
 	case Dclient:
 		new->type = IXP_QTDIR;
-		if(!strncmp(wname, "new", 4)) {
-			if(dcol)
-				new->path = mkqpath(Dclient, dpg, dcol, page[dpg]->col[dcol]->nclient);
-			else
-				new->path = mkqpath(Dclient, dpg, dcol, page[dpg]->nfloat);
-		}
-		else if(!strncmp(wname, "sel", 4)) {
-			if(dcol)
-				new->path = mkqpath(Dclient, dpg, dcol, page[dpg]->col[dcol]->sel);
-			else
-				new->path = mkqpath(Dclient, dpg, dcol, page[dpg]->sel_float);
-		}
+		if(!strncmp(wname, "sel", 4))
+			new->path = mkqpath(Dclient, dpg, darea, page[dpg]->area[darea]->sel);
 		else {
 			i = cext_strtonum(wname, 1, 0xffff, &err);
 			if(err)
 				return -1;
-			new->path = mkqpath(Dclient, dpg, dcol, i);
+			new->path = mkqpath(Dclient, dpg, darea, i);
 		}
 		break;
 	default:
 		new->type = IXP_QTFILE;
-    	new->path = mkqpath(type, dpg, dcol, dcl);
+    	new->path = mkqpath(type, dpg, darea, dcl);
 		break;
 	}
     return 0;
@@ -389,11 +384,13 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 }
 
 static unsigned int
-type_to_stat(Stat *stat, char *name, Qid *dir, unsigned int idx)
+type_to_stat(Stat *stat, char *name, Qid *dir)
 {
 	unsigned char dtyp = qpath_type(dir->path);
 	unsigned short dpg = qpath_page(dir->path);
-	unsigned short dcol = qpath_col(dir->path);
+	unsigned short darea = qpath_area(dir->path);
+	unsigned int idx;
+	const char *err;
 	int type = name_to_type(name, dtyp);
 	char buf[16];
 
@@ -401,7 +398,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir, unsigned int idx)
     case Droot:
     case Ddefault:
     case Dpage:
-    case Dcol:
+    case Darea:
     case Dclient:
 		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
         break;
@@ -424,12 +421,10 @@ type_to_stat(Stat *stat, char *name, Qid *dir, unsigned int idx)
 		if(dtyp == Ddefault)
 			snprintf(buf, sizeof(buf), "%d", def.border);
 		else {
-			if(dcol) {
-				Column *col = page[dpg]->col[dcol];
-				snprintf(buf, sizeof(buf), "%d", col->client[idx]->frame.border);
-			}
-			else
-				snprintf(buf, sizeof(buf), "%d", page[dpg]->floatc[idx]->frame.border);
+			idx = cext_strtonum(name, 1, 0xffff, &err);
+			if(err)
+				return 0;
+			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[idx]->frame.border);
 		}
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
@@ -437,12 +432,10 @@ type_to_stat(Stat *stat, char *name, Qid *dir, unsigned int idx)
 		if(dtyp == Ddefault)
 			snprintf(buf, sizeof(buf), "%d", def.title);
 		else {
-			if(dcol) {
-				Column *col = page[dpg]->col[dcol];
-				snprintf(buf, sizeof(buf), "%d", col->client[idx]->frame.title);
-			}
-			else
-				snprintf(buf, sizeof(buf), "%d", page[dpg]->floatc[idx]->frame.title);
+			idx = cext_strtonum(name, 1, 0xffff, &err);
+			if(err)
+				return 0;
+			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[idx]->frame.title);
 		}
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
@@ -451,12 +444,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir, unsigned int idx)
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
 		break;
     case Fname:
-		if(dcol) {
-			Column *col = page[dpg]->col[dcol];
-			return mkstat(stat, dir, name, strlen(col->client[idx]->name), DMREAD);
-		}
-		else
-			return mkstat(stat, dir, name, strlen(page[dpg]->floatc[idx]->name), DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, strlen(page[dpg]->area[darea]->client[idx]->name), DMREAD);
         break;
     default:
 		errstr = "invalid stat";
@@ -471,7 +459,7 @@ xread(IXPConn *c)
 	Stat stat;
     IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
     unsigned char typ, *p = c->fcall->data;
-	unsigned short pg, col, cl;
+	unsigned short pg, area, cl;
 	unsigned int i, len;
 	char buf[32];
 
@@ -481,31 +469,76 @@ xread(IXPConn *c)
     }
 	typ = qpath_type(m->qid.path);
 	pg = qpath_page(m->qid.path);
-	col = qpath_col(m->qid.path);
+	area = qpath_area(m->qid.path);
 	cl = qpath_client(m->qid.path);
+	if(cl)
+		cl--;
 
 	c->fcall->count = 0;
 	if(c->fcall->offset) {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
 			/* jump to offset */
-			len = type_to_stat(&stat, "ctl", &m->qid, 0);
-			len += type_to_stat(&stat, "event", &m->qid, 0);
-			len += type_to_stat(&stat, "default", &m->qid, 0);
-			len += type_to_stat(&stat, "sel", &m->qid, 0);
-			len += type_to_stat(&stat, "new", &m->qid, 0);
+			len = type_to_stat(&stat, "ctl", &m->qid);
+			len += type_to_stat(&stat, "event", &m->qid);
+			len += type_to_stat(&stat, "default", &m->qid);
+			len += type_to_stat(&stat, "sel", &m->qid);
+			len += type_to_stat(&stat, "new", &m->qid);
 			for(i = 1; i < npage; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len += type_to_stat(&stat, buf, &m->qid, 0);
+				len += type_to_stat(&stat, buf, &m->qid);
 				if(len <= c->fcall->offset)
 					continue;
-				else 
-					break;
+				break;
 			}
 			/* offset found, proceeding */
 			for(; i < npage; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len = type_to_stat(&stat, buf, &m->qid, 0);
+				len = type_to_stat(&stat, buf, &m->qid);
+				if(c->fcall->count + len > c->fcall->iounit)
+					break;
+				c->fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case Dpage:
+			/* jump to offset */
+			len = type_to_stat(&stat, "ctl", &m->qid);
+			len += type_to_stat(&stat, "sel", &m->qid);
+			len += type_to_stat(&stat, "new", &m->qid);
+			len += type_to_stat(&stat, "float", &m->qid);
+			for(i = 1; i < page[pg]->narea; i++) {
+				snprintf(buf, sizeof(buf), "%u", i);
+				len += type_to_stat(&stat, buf, &m->qid);
+				if(len <= c->fcall->offset)
+					continue;
+				break;
+			}
+			/* offset found, proceeding */
+			for(; i < page[pg]->narea; i++) {
+				snprintf(buf, sizeof(buf), "%u", i);
+				len = type_to_stat(&stat, buf, &m->qid);
+				if(c->fcall->count + len > c->fcall->iounit)
+					break;
+				c->fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case Darea:
+			/* jump to offset */
+			len = type_to_stat(&stat, "ctl", &m->qid);
+			len += type_to_stat(&stat, "sel", &m->qid);
+			for(i = 0; i < page[pg]->area[area]->nclient; i++) {
+				snprintf(buf, sizeof(buf), "%u", i + 1);
+				len += type_to_stat(&stat, buf, &m->qid);
+				if(len <= c->fcall->offset)
+					continue;
+				break;
+			}
+			/* offset found, proceeding */
+			for(; i < page[pg]->area[area]->nclient; i++) {
+				snprintf(buf, sizeof(buf), "%u", i + 1);
+				len = type_to_stat(&stat, buf, &m->qid);
 				if(c->fcall->count + len > c->fcall->iounit)
 					break;
 				c->fcall->count += len;
@@ -522,19 +555,19 @@ xread(IXPConn *c)
 	else {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
-			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid, 0);
+			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "event", &m->qid, 0);
+			c->fcall->count += type_to_stat(&stat, "event", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "default", &m->qid, 0);
+			c->fcall->count += type_to_stat(&stat, "default", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "sel", &m->qid, 0);
+			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "new", &m->qid, 0);
+			c->fcall->count += type_to_stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 1; i < npage; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len = type_to_stat(&stat, buf, &m->qid, 0);
+				len = type_to_stat(&stat, buf, &m->qid);
 				if(c->fcall->count + len > c->fcall->iounit)
 					break;
 				c->fcall->count += len;
@@ -542,13 +575,61 @@ xread(IXPConn *c)
 			}
 			break;
 		case Ddefault:
-			if(i > nitem)
-				goto error_xread;
-			if(i == nitem)
-				new_item();
-			c->fcall->count = type_to_stat(&stat, "color", i);
+			c->fcall->count = type_to_stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "data", i);
+			c->fcall->count += type_to_stat(&stat, "selcolor", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "normcolor", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "border", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "title", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "snap", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			break;
+		case Dpage:
+			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "new", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "float", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			for(i = 1; i < page[pg]->narea; i++) {
+				snprintf(buf, sizeof(buf), "%u", i);
+				len = type_to_stat(&stat, buf, &m->qid);
+				if(c->fcall->count + len > c->fcall->iounit)
+					break;
+				c->fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case Darea:
+			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			if(!page[pg]->area[area]->nclient)
+				break;
+			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			for(i = 0; i < page[pg]->area[area]->nclient; i++) {
+				snprintf(buf, sizeof(buf), "%u", i + 1);
+				len = type_to_stat(&stat, buf, &m->qid);
+				if(c->fcall->count + len > c->fcall->iounit)
+					break;
+				c->fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case Dclient:
+			c->fcall->count = type_to_stat(&stat, "border", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "title", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "name", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Fctl:
@@ -556,35 +637,46 @@ xread(IXPConn *c)
 			return -1;
 			break;
 		case Ffont:
-			if((c->fcall->count = strlen(font)))
-				memcpy(p, font, c->fcall->count);
-			break;
-		case Fexpand:
-			snprintf(buf, sizeof(buf), "%u", iexpand);
-			c->fcall->count = strlen(buf);
-			memcpy(p, buf, c->fcall->count);
+			if((c->fcall->count = strlen(def.font)))
+				memcpy(p, def.font, c->fcall->count);
 			break;
 		case Fevent:
 			return 1;
 			break;
-		case Fdata:
-			if(i == nitem)
-				new_item();
-			if(i >= nitem)
-				goto error_xread;
-			if((c->fcall->count = strlen(item[i]->data)))
-				memcpy(p, item[i]->data, c->fcall->count);
+		case Fselcolor:
+			if((c->fcall->count = strlen(def.selcolor)))
+				memcpy(p, def.selcolor, c->fcall->count);
 			break;
-		case Fcolor:
-			if(i == nitem)
-				new_item();
-			if(i >= nitem)
-				goto error_xread;
-			if((c->fcall->count = strlen(item[i]->color)))
-				memcpy(p, item[i]->color, c->fcall->count);
+		case Fnormcolor:
+			if((c->fcall->count = strlen(def.normcolor)))
+				memcpy(p, def.normcolor, c->fcall->count);
+			break;
+		case Fborder:
+			if(qpath_type(m->qid.dir->path) == Ddefault)
+				snprintf(buf, sizeof(buf), "%u", def.border);
+			else
+				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->frame.border);
+			c->fcall->count = strlen(buf);
+			memcpy(p, buf, c->fcall->count);
+			break;
+		case Ftitle:
+			if(qpath_type(m->qid.dir->path) == Ddefault)
+				snprintf(buf, sizeof(buf), "%u", def.title);
+			else
+				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->frame.title);
+			c->fcall->count = strlen(buf);
+			memcpy(p, buf, c->fcall->count);
+			break;
+		case Fsnap:
+			snprintf(buf, sizeof(buf), "%u", def.snap);
+			c->fcall->count = strlen(buf);
+			memcpy(p, buf, c->fcall->count);
+			break;
+		case Fname:
+			if((c->fcall->count = strlen(page[pg]->area[area]->client[cl]->name)))
+				memcpy(p, page[pg]->area[area]->client[cl]->name, c->fcall->count);
 			break;
 		default:
-	error_xread:
 			if(!errstr)
 				errstr = "invalid read";
 			return -1;
@@ -607,7 +699,7 @@ xstat(IXPConn *c)
     }
 
 	name = qid_to_name(&m->qid);
-	if(!type_to_stat(&c->fcall->stat, name, qpath_item(m->qid.path)))
+	if(!type_to_stat(&c->fcall->stat, name, &m->qid))
 		return -1;
     c->fcall->id = RSTAT;
     return 0;

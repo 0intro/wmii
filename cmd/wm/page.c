@@ -16,14 +16,14 @@ static void select_client(void *obj, char *arg);
 static void toggle_layout(void *obj, char *arg);
 static void xexec(void *obj, char *arg);
 static void swap_client(void *obj, char *arg);
-static void xnew_column(void *obj, char *arg);
+static void xnew_area(void *obj, char *arg);
 
 /* action table for /?/ namespace */
 Action page_acttbl[] = {
     {"toggle", toggle_layout},
     {"exec", xexec},
     {"swap", swap_client},
-    {"newcol", xnew_column},
+    {"newcol", xnew_area},
     {"select", select_client},
     {0, 0}
 };
@@ -52,13 +52,13 @@ alloc_page()
     def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
     invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
 	id++;
-	p->rect_column = rect;
+	p->rect_area = rect;
 	page = (Page **)cext_array_attach((void **)page, p, sizeof(Page *), &pagesz);
 	for(np = 0; (np < pagesz) && page[np]; np++);
 	focus_page(p);
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &np, 1);
-	p->is_column = True;
+	p->is_area = True;
     return p;
 }
 
@@ -184,9 +184,9 @@ toggle_layout(void *obj, char *arg)
 {
     Page *p = obj;
 
-	p->is_column = !p->is_column;
-	if(p->is_column) {
-		Column *col = p->column[p->sel_column];
+	p->is_area = !p->is_area;
+	if(p->is_area) {
+		Area *col = p->area[p->sel_area];
 		if(col && col->clientsz && col->client[col->sel])
 			focus_client(col->client[col->sel]);
 	}
@@ -199,16 +199,16 @@ swap_client(void *obj, char *arg)
 {
 	Page *p = obj;
 	Client *c = sel_client_of_page(p);
-    Column *west = nil, *east = nil, *col = c->column;
+    Area *west = nil, *east = nil, *col = c->area;
     Client *north = nil, *south = nil;
 	size_t i;
 
 	if(!col || !arg)
 		return;
 
-	for(i = 0; (i < p->columnsz) && p->column[i] && (p->column[i] != col); i++);
-    west = i ? p->column[i - 1] : nil;
-    east = (i < p->columnsz) && p->column[i + 1] ? p->column[i + 1] : nil;
+	for(i = 0; (i < p->areasz) && p->area[i] && (p->area[i] != col); i++);
+    west = i ? p->area[i - 1] : nil;
+    east = (i < p->areasz) && p->area[i + 1] ? p->area[i + 1] : nil;
 
 	for(i = 0; (i < col->clientsz) && col->client[i] && (col->client[i] != c); i++);
     north = i ? col->client[i - 1] : nil;
@@ -217,34 +217,34 @@ swap_client(void *obj, char *arg)
 	if(!strncmp(arg, "north", 6) && north) {
 		col->client[i] = col->client[i - 1]; 
 		col->client[i - 1] = c;
-		arrange_column(p, col);
+		arrange_area(p, col);
 	} else if(!strncmp(arg, "south", 6) && south) {
 		col->client[i] = col->client[i + 1];
 		col->client[i + 1] = c;
-		arrange_column(p, col);
+		arrange_area(p, col);
 	}
 	else if(!strncmp(arg, "west", 5) && west) {
 		col->client[i] = west->client[west->sel];
-		col->client[i]->column = col;
+		col->client[i]->area = col;
 		west->client[west->sel] = c;
-		west->client[west->sel]->column = west;
-		arrange_column(p, col);
-		arrange_column(p, west);
+		west->client[west->sel]->area = west;
+		arrange_area(p, col);
+		arrange_area(p, west);
 	} else if(!strncmp(arg, "east", 5) && east) {
 		col->client[i] = west->client[west->sel];
-		col->client[i]->column = col;
+		col->client[i]->area = col;
 		east->client[east->sel] = c;
-		east->client[east->sel]->column = east;
-		arrange_column(p, col);
-		arrange_column(p, east);
+		east->client[east->sel]->area = east;
+		arrange_area(p, col);
+		arrange_area(p, east);
 	}
 	focus_client(c);
 }
 
 static void
-xnew_column(void *obj, char *arg)
+xnew_area(void *obj, char *arg)
 {
-	new_column(obj);
+	new_area(obj);
 }
 
 static void
@@ -257,8 +257,8 @@ select_client(void *obj, char *arg)
 	if(!c || !arg)
 		return;
 
-	if(c->column)
-		select_column(c, arg);
+	if(c->area)
+		select_area(c, arg);
 	else {
 		for(i = 0; (i < p->floatingsz) && p->floating[i] && (p->floating[i] != c); i++);
 		if(!strncmp(arg, "prev", 5)) {

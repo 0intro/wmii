@@ -123,14 +123,14 @@ focus_client(Client *c)
 		focus_page(c->page);
 		p = c->page;
 	}
-	p->is_column = c->column != nil;
+	p->is_area = c->area != nil;
 	p->file[P_SEL_PREFIX]->content = c->file[P_PREFIX]->content;
-	if(p->is_column) {
-		for(i = 0; (i < p->columnsz) && p->column[i]; i++) {
-			Column *col = p->column[i];
+	if(p->is_area) {
+		for(i = 0; (i < p->areasz) && p->area[i]; i++) {
+			Area *col = p->area[i];
 			for(j = 0; (j < col->clientsz) && col->client[j] && (c != col->client[j]); j++);
 			if((j < col->clientsz) && col->client[j]) {
-				p->sel_column = i;
+				p->sel_area = i;
 				col->sel = j;
 				break;
 			}
@@ -405,8 +405,8 @@ attach_client(Client *c)
 	c->page = p;
 	wmii_move_ixpfile(c->file[C_PREFIX], p->file[P_CLIENT_PREFIX]);
 
-	if(p->is_column)
-		attach_column(c);
+	if(p->is_area)
+		attach_area(c);
 	else
 		p->floating = (Client **)cext_array_attach((void **)p->floating, c,
 						sizeof(Client *), &p->floatingsz);
@@ -421,8 +421,8 @@ void
 detach_client(Client *c, Bool unmap)
 {
 	wmii_move_ixpfile(c->file[C_PREFIX], def[WM_DETACHED_PREFIX]);
-	if(c->column)
-		detach_column(c);
+	if(c->area)
+		detach_area(c);
 	else {
 		cext_array_detach((void **)c->page->floating, c, &c->page->floatingsz);
     	if(!c->destroyed) {
@@ -446,8 +446,8 @@ Client *
 sel_client_of_page(Page *p)
 {
 	if(p) {
-		if(p->is_column) {
-			Column *col = p->column[p->sel_column];
+		if(p->is_area) {
+			Area *col = p->area[p->sel_area];
 			return (col && col->client) ? col->client[col->sel] : nil;
 		}
 		else
@@ -534,8 +534,8 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
     unsigned int tabh = tab_height(c);
     unsigned int bw = border_width(c);
 
-	if(c->column)
-		resize_column(c, r, pt);
+	if(c->area)
+		resize_area(c, r, pt);
 
     /* resize if client requests special size */
     check_dimensions(c, tabh, bw);
@@ -622,7 +622,7 @@ max_client(void *obj, char *arg)
 	}
 	else {
 		c->frame.revert = c->frame.rect;
-		c->frame.rect = c->column ? c->column->rect : rect;
+		c->frame.rect = c->area ? c->area->rect : rect;
 		XRaiseWindow(dpy, c->frame.win);
 		resize_client(c, &c->frame.rect, nil);
 	}

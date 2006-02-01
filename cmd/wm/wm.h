@@ -26,11 +26,11 @@ enum {
 #define ROOT_MASK              SubstructureRedirectMask
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
 
-typedef struct Column Column;
+typedef struct Area Area;
 typedef struct Page Page;
 typedef struct Client Client;
 
-struct Column {
+struct Area {
     Client **client;
 	size_t clientsz;
 	size_t sel;
@@ -39,16 +39,10 @@ struct Column {
 };
 
 struct Page {
-	Client **floatc;
-	Column **col;
-	size_t floatcsz;
-	size_t colsz;
-	size_t sel_float;
-	size_t sel_col;
-	size_t nfloat;
-	size_t ncol;
-	Bool is_column;
-	XRectangle rect_column;
+	Area **area;
+	size_t areasz;
+	size_t narea;
+	size_t sel;
 };
 
 struct Client {
@@ -60,7 +54,7 @@ struct Client {
     Bool destroyed;
 	Bool maximized;
 	Bool attached;
-	Column *column;
+	Area *area;
     Window win;
     Window trans;
     XRectangle rect;
@@ -185,7 +179,7 @@ XRectangle *rectangles(unsigned int *num);
 
 /* column.c */
 void arrange_page(Page *p);
-void arrange_column(Page *p, Column *col);
+void arrange_column(Page *p, Area *col);
 void attach_column(Client *c);
 void detach_column(Client *c);
 void resize_column(Client *c, XRectangle *r, XPoint *pt);
