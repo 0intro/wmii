@@ -551,7 +551,7 @@ xread(IXPConn *c)
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
-		case Ditem:
+		case Ddefault:
 			if(i > nitem)
 				goto error_xread;
 			if(i == nitem)

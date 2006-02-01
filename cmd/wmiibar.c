@@ -331,6 +331,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
     if((dir->type != IXP_QTDIR) || (type == -1))
         return -1;
 	
+	new->dir = dir;
     new->version = 0;
 	switch(type) {
 	case Droot:
@@ -462,41 +463,41 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 }
 
 static unsigned int
-type_to_stat(Stat *stat, char *name, unsigned short i)
+type_to_stat(Stat *stat, char *name, Qid *dir)
 {
 	int type = name_to_type(name);
-	Qid dir = {IXP_QTDIR, 0, mkqpath(Ditem, i)};
+	unsigned short i = qpath_item(dir->path);
 	char buf[16];
 
     switch (type) {
     case Droot:
     case Ditem:
-		return mkstat(stat, &root_qid, name, 0, DMDIR | DMREAD | DMEXEC);
+		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case Fctl:
-		return mkstat(stat, &root_qid, name, 0, DMWRITE);
+		return mkstat(stat, dir, name, 0, DMWRITE);
 		break;
     case Fevent:
-		return mkstat(stat, &root_qid, name, 0, DMREAD);
+		return mkstat(stat, dir, name, 0, DMREAD);
 		break;
     case Ffont:
-		return mkstat(stat, &root_qid, name, strlen(font),
+		return mkstat(stat, dir, name, strlen(font),
 						DMREAD | DMWRITE);
         break;
     case Fexpand:
 		snprintf(buf, sizeof(buf), "%u", iexpand);
-		return mkstat(stat, &root_qid, name, strlen(buf), DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
 		break;
     case Fdata:
 		if(i == nitem)
 			i = 0;
-		return mkstat(stat, &dir, name, strlen(item[i]->data),
+		return mkstat(stat, dir, name, strlen(item[i]->data),
 						DMREAD | DMWRITE);
 		break;	
     case Fcolor:
 		if(i == nitem)
 			i = 0;
-		return mkstat(stat, &dir, name, 24, DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, 24, DMREAD | DMWRITE);
 		break;
     default:
 		errstr = "invalid stat";
@@ -551,14 +552,14 @@ xread(IXPConn *c)
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
 			/* jump to offset */
-			len = type_to_stat(&stat, "ctl", 0);
-			len += type_to_stat(&stat, "font", 0);
-			len += type_to_stat(&stat, "color", 0);
-			len += type_to_stat(&stat, "new", 0);
-			len += type_to_stat(&stat, "event", 0);
+			len = type_to_stat(&stat, "ctl", &m->qid);
+			len += type_to_stat(&stat, "font", &m->qid);
+			len += type_to_stat(&stat, "color", &m->qid);
+			len += type_to_stat(&stat, "new", &m->qid);
+			len += type_to_stat(&stat, "event", &m->qid);
 			for(i = 1; i < nitem; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len += type_to_stat(&stat, buf, i);
+				len += type_to_stat(&stat, buf, &m->qid);
 				if(len <= c->fcall->offset)
 					continue;
 				else 
@@ -567,7 +568,7 @@ xread(IXPConn *c)
 			/* offset found, proceeding */
 			for(; i < nitem; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len = type_to_stat(&stat, buf, i);
+				len = type_to_stat(&stat, buf, &m->qid);
 				if(c->fcall->count + len > c->fcall->iounit)
 					break;
 				c->fcall->count += len;
@@ -584,19 +585,19 @@ xread(IXPConn *c)
 	else {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
-			c->fcall->count = type_to_stat(&stat, "ctl", 0);
+			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "font", 0);
+			c->fcall->count += type_to_stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "color", 0);
+			c->fcall->count += type_to_stat(&stat, "color", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "new", 0);
+			c->fcall->count += type_to_stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "event", 0);
+			c->fcall->count += type_to_stat(&stat, "event", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 1; i < nitem; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
-				len = type_to_stat(&stat, buf, i);
+				len = type_to_stat(&stat, buf, &m->qid);
 				if(c->fcall->count + len > c->fcall->iounit)
 					break;
 				c->fcall->count += len;
@@ -608,9 +609,9 @@ xread(IXPConn *c)
 				goto error_xread;
 			if(i == nitem)
 				new_item();
-			c->fcall->count = type_to_stat(&stat, "color", i);
+			c->fcall->count = type_to_stat(&stat, "color", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "data", i);
+			c->fcall->count += type_to_stat(&stat, "data", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Fctl:
@@ -669,7 +670,7 @@ xstat(IXPConn *c)
     }
 
 	name = qid_to_name(&m->qid);
-	if(!type_to_stat(&c->fcall->stat, name, qpath_item(m->qid.path)))
+	if(!type_to_stat(&c->fcall->stat, name, &m->qid))
 		return -1;
     c->fcall->id = RSTAT;
     return 0;
@@ -967,6 +968,7 @@ main(int argc, char *argv[])
     root_qid.type = IXP_QTDIR;
     root_qid.version = 0;
     root_qid.path = mkqpath(Droot, 0);
+	root_qid.dir = nil;
 
     mypid = getpid();
 

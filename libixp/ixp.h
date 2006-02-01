@@ -141,11 +141,14 @@ enum {
 #define IXP_NOTAG    (unsigned short)~0U        /*Dummy tag */
 #define IXP_NOFID    (unsigned int)~0   /*No auth */
 
-typedef struct {
+typedef struct Qid Qid;
+struct Qid {
     unsigned char type;
     unsigned int version;
     unsigned long long path;
-} Qid;
+	/* internal use only */
+	Qid *dir; /* points to parent, 0 if root dir */
+};
 
 /*stat structure */
 typedef struct {
