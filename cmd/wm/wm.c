@@ -122,7 +122,7 @@ draw_pager()
 
 	for(i = 0; (i < pagesz) && page[i]; i++);
     blitz_getbasegeometry(i, &cols, &rows);
-    dx = (cols - 1) * GAP;      /* GAPpx space */
+    dx = (cols - 1) * DEF_PAGER_GAP;      /* DEF_PAGER_GAPpx space */
     tw = (rect.width - dx) / cols;
     th = ((double) tw / rect.width) * rect.height;
     d.drawable = transient;
@@ -131,7 +131,7 @@ draw_pager()
 	i = 0;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
-            d.rect.x = ic * tw + (ic * GAP);
+            d.rect.x = ic * tw + (ic * DEF_PAGER_GAP);
             d.rect.width = tw;
             if(rows == 1)
                 d.rect.y = 0;
@@ -154,14 +154,14 @@ xy_to_pager_page(int x, int y)
 
 	for(i = 0; (i < pagesz) && page[i]; i++);
     blitz_getbasegeometry(i, &cols, &rows);
-    dx = (cols - 1) * GAP;      /* GAPpx space */
+    dx = (cols - 1) * DEF_PAGER_GAP;      /* DEF_PAGER_GAPpx space */
     tw = (rect.width - dx) / cols;
     th = ((double) tw / rect.width) * rect.height;
 
 	i = 0;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
-            r.x = ic * tw + (ic * GAP);
+            r.x = ic * tw + (ic * DEF_PAGER_GAP);
             r.width = tw;
             if(rows == 1)
                 r.y = 0;
@@ -261,8 +261,8 @@ map_detached_client()
 		cols = 1;
 	if(!rows)
 		rows = 1;
-    dx = (cols - 1) * GAP;      /* GAPpx space */
-    dy = (rows - 1) * GAP;      /* GAPpx space */
+    dx = (cols - 1) * DEF_PAGER_GAP;      /* DEF_PAGER_GAPpx space */
+    dy = (rows - 1) * DEF_PAGER_GAP;      /* DEF_PAGER_GAPpx space */
     tw = (rect.width - dx) / cols;
     th = (rect.height - dy) / rows;
 
@@ -271,8 +271,8 @@ map_detached_client()
         for(ic = 0; ic < cols; ic++) {
 			if(!det[i++])
                 return;
-            cr.x = ic * tw + (ic * GAP);
-            cr.y = ir * th + (ir * GAP);
+            cr.x = ic * tw + (ic * DEF_PAGER_GAP);
+            cr.y = ir * th + (ir * DEF_PAGER_GAP);
             cr.width = tw;
             cr.height = th;
             XMoveResizeWindow(dpy, det[i]->win, cr.x, cr.y, cr.width, cr.height);
@@ -722,7 +722,8 @@ main(int argc, char *argv[])
 	aq = nil;
 
 	def.font = strdup("fixed");
-	def.border = BORDER_WIDTH;
+	def.border = DEF_BORDER;
+	def.snap = DEF_SNAP;
 	def.title = True;
 	cext_strlcpy(def.selcolor, BLITZ_SEL_COLOR, sizeof(def.selcolor));
 	blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);

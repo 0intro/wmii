@@ -40,8 +40,9 @@ enum {
 #define NET_ATOM_COUNT         3
 
 #define PROTO_DEL              1
-#define BORDER_WIDTH           3
-#define GAP                    5
+#define DEF_BORDER             3
+#define DEF_SNAP               20
+#define DEF_PAGER_GAP          5
 
 #define ROOT_MASK              SubstructureRedirectMask
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
