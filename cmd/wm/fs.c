@@ -829,6 +829,8 @@ xwrite(IXPConn *c)
 		}
 		memcpy(def.selcolor, c->fcall->data, c->fcall->count);
 		def.selcolor[c->fcall->count] = 0;
+		blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
+    	XSetForeground(dpy, gc_xor, def.sel.bg);
 		/* TODO: update color */
 		break;
 	case Fnormcolor:
@@ -841,6 +843,7 @@ xwrite(IXPConn *c)
 		}
 		memcpy(def.normcolor, c->fcall->data, c->fcall->count);
 		def.normcolor[c->fcall->count] = 0;
+		blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
 		/* TODO: update color */
 		break;
 	case Fsnap:

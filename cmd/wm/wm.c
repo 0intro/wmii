@@ -500,17 +500,6 @@ win_state(Window w)
     return res;
 }
 
-/* load color stuff */
-/*
-        unsigned long col[1];
-        col[0] = color_xor.pixel;
-        XFreeColors(dpy, DefaultColormap(dpy, screen), col, 1, 0);
-        XAllocNamedColor(dpy, DefaultColormap(dpy, screen),
-                         def[WM_TRANS_COLOR]->content,
-                         &color_xor, &color_xor);
-        XSetForeground(dpy, gc_xor, color_xor.pixel);
-		*/
-
 static void
 init_atoms()
 {
@@ -548,13 +537,9 @@ init_screen()
     XGCValues gcv;
     XSetWindowAttributes wa;
 
-	def.selcolor[7] = 0;
-    XAllocNamedColor(dpy, DefaultColormap(dpy, screen),
-                     def.selcolor, &color_xor, &color_xor);
-	def.selcolor[7] = ' ';
     gcv.subwindow_mode = IncludeInferiors;
     gcv.function = GXxor;
-    gcv.foreground = color_xor.pixel;
+    gcv.foreground = def.sel.bg;
     gcv.line_width = 4;
     gcv.plane_mask = AllPlanes;
     gcv.graphics_exposures = False;

@@ -114,7 +114,6 @@ Window root;
 Window transient; /* pager / attach */
 XRectangle rect;
 XFontStruct *xfont;
-XColor color_xor;
 GC gc_xor;
 GC gc_transient;
 IXPServer srv;
