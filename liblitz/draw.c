@@ -7,7 +7,8 @@
 #include <string.h>
 #include "blitz.h"
 
-XFontStruct *blitz_getfont(Display * dpy, char *fontstr)
+XFontStruct *
+blitz_getfont(Display * dpy, char *fontstr)
 {
 	XFontStruct *font;
 	font = XLoadQueryFont(dpy, fontstr);
@@ -21,7 +22,8 @@ XFontStruct *blitz_getfont(Display * dpy, char *fontstr)
 	return font;
 }
 
-unsigned long blitz_loadcolor(Display * dpy, int mon, char *colstr)
+static unsigned long
+xloadcolor(Display * dpy, int mon, char *colstr)
 {
 	XColor color;
 	char col[8];
@@ -32,10 +34,22 @@ unsigned long blitz_loadcolor(Display * dpy, int mon, char *colstr)
 	return color.pixel;
 }
 
-static void draw_bg(Display * dpy, Draw * d)
+int
+blitz_loadcolor(Display *dpy, int mon, char *colstr, Color *c)
+{
+	if(!colstr || strlen(colstr) != 23)
+		return -1;
+    c->fg = xloadcolor(dpy, mon, &colstr[0]);
+    c->bg = xloadcolor(dpy, mon, &colstr[8]);
+    c->border = xloadcolor(dpy, mon, &colstr[16]);
+	return 0;
+}
+
+static void
+draw_bg(Display * dpy, Draw * d)
 {
 	XRectangle rect[4];
-	XSetForeground(dpy, d->gc, d->bg);
+	XSetForeground(dpy, d->gc, d->color.bg);
 	if (!d->notch) {
 		XFillRectangles(dpy, d->drawable, d->gc, &d->rect, 1);
 		return;
@@ -56,12 +70,13 @@ static void draw_bg(Display * dpy, Draw * d)
 	XFillRectangles(dpy, d->drawable, d->gc, rect, 4);
 }
 
-static void xdraw_border(Display * dpy, Draw * d)
+static void
+xdraw_border(Display * dpy, Draw * d)
 {
 	XPoint points[5];
 
 	XSetLineAttributes(dpy, d->gc, 1, LineSolid, CapButt, JoinMiter);
-	XSetForeground(dpy, d->gc, d->border);
+	XSetForeground(dpy, d->gc, d->color.border);
 	points[0].x = d->rect.x;
 	points[0].y = d->rect.y;
 	points[1].x = d->rect.width - 1;
@@ -75,7 +90,8 @@ static void xdraw_border(Display * dpy, Draw * d)
 	XDrawLines(dpy, d->drawable, d->gc, points, 5, CoordModePrevious);
 }
 
-static void draw_text(Display * dpy, Draw * d)
+static void
+draw_text(Display * dpy, Draw * d)
 {
 	unsigned int x, y, w, h, shortened = 0;
 	size_t len = 0;
@@ -121,18 +137,19 @@ static void draw_text(Display * dpy, Draw * d)
 		break;
 	}
 
-	XSetBackground(dpy, d->gc, d->bg);
+	XSetBackground(dpy, d->gc, d->color.bg);
 	/*
 	 * uncomment, if you want get an shadow effect XSetForeground(dpy,
 	 * d->gc, BlackPixel(dpy, DefaultScreen(dpy))); XDrawString(dpy,
 	 * d->drawable, d->gc, x + 1, y + 1, text, len);
 	 */
-	XSetForeground(dpy, d->gc, d->fg);
+	XSetForeground(dpy, d->gc, d->color.fg);
 	XDrawString(dpy, d->drawable, d->gc, x, y, text, len);
 }
 
 /* draws meter */
-void blitz_drawmeter(Display * dpy, Draw * d)
+void
+blitz_drawmeter(Display * dpy, Draw * d)
 {
 	unsigned int offy, mh, val, w = d->rect.width - 4;
 
@@ -146,11 +163,12 @@ void blitz_drawmeter(Display * dpy, Draw * d)
 	/* draw bg gradient */
 	mh = ((d->rect.height - 4) * val) / 100;
 	offy = d->rect.y + d->rect.height - 2 - mh;
-	XSetForeground(dpy, d->gc, d->fg);
+	XSetForeground(dpy, d->gc, d->color.fg);
 	XFillRectangle(dpy, d->drawable, d->gc, d->rect.x + 2, offy, w, mh);
 }
 
-static void xdraw_label(Display * dpy, Draw * d)
+static void
+xdraw_label(Display * dpy, Draw * d)
 {
 	draw_bg(dpy, d);
 	if (d->data)
@@ -158,13 +176,15 @@ static void xdraw_label(Display * dpy, Draw * d)
 }
 
 /* draws label */
-void blitz_drawlabel(Display * dpy, Draw * d)
+void
+blitz_drawlabel(Display * dpy, Draw * d)
 {
 	xdraw_label(dpy, d);
 	xdraw_border(dpy, d);
 }
 
-void blitz_drawlabelnoborder(Display * dpy, Draw * d)
+void
+blitz_drawlabelnoborder(Display * dpy, Draw * d)
 {
 	xdraw_label(dpy, d);
 }

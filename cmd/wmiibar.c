@@ -49,10 +49,8 @@ enum {
 
 typedef struct {
     char data[256];
-	char color[24];
-    unsigned long fg;
-    unsigned long bg;
-    unsigned long border;
+	char colstr[24];
+	Color color;
 	XRectangle rect;
 } Item;
 
@@ -74,7 +72,7 @@ static char *address = nil;
 static IXPServer srv = { 0 };
 static Qid root_qid;
 static Display *dpy;
-static int screen_num;
+static int screen;
 static char *font = nil;
 static XFontStruct *xfont;
 static GC gc;
@@ -110,10 +108,8 @@ new_item()
 {
 	Item *it = cext_emallocz(sizeof(Item));
 	if(nitem > 0) {
-		cext_strlcpy(it->color, item[0]->color, sizeof(it->color));
-		it->fg = item[0]->fg;
-		it->bg = item[0]->bg;
-		it->border = item[0]->border;
+		cext_strlcpy(it->colstr, item[0]->colstr, sizeof(it->colstr));
+		it->color = item[0]->color;
 	}
 	item = (Item **)cext_array_attach((void **)item, it, sizeof(Item *), &itemsz);
 	nitem++;
@@ -140,9 +136,7 @@ draw()
 	d.font = xfont;
 
 	if(nitem == 1) { /* /default only */
-		d.fg = item[0]->fg;
-		d.bg = item[0]->bg;
-		d.border = item[0]->border;
+		d.color = item[0]->color;
 		blitz_drawlabel(dpy, &d);
 	}
 	else {
@@ -172,9 +166,7 @@ draw()
 		} else
 			item[iexpand]->rect.width = brect.width - w;
 		for(i = 1; i < nitem; i++) {
-			d.fg = item[i]->fg;
-			d.bg = item[i]->bg;
-			d.border = item[i]->border;
+			d.color = item[i]->color;
 			if(i > 1)
 				item[i]->rect.x = item[i - 1]->rect.x + item[i - 1]->rect.width;
 			d.rect = item[i]->rect;
@@ -190,14 +182,6 @@ draw()
 }
 
 static void
-update_color(Item *it)
-{
-    it->fg = blitz_loadcolor(dpy, screen_num, &it->color[0]);
-    it->bg = blitz_loadcolor(dpy, screen_num, &it->color[8]);
-    it->border = blitz_loadcolor(dpy, screen_num, &it->color[16]);
-}
-
-static void
 update_geometry()
 {
 	char buf[64];
@@ -208,7 +192,7 @@ update_geometry()
     XSync(dpy, False);
     XFreePixmap(dpy, pmap);
     pmap = XCreatePixmap(dpy, win, brect.width, brect.height,
-						 DefaultDepth(dpy, screen_num));
+						 DefaultDepth(dpy, screen));
     XSync(dpy, False);
 	snprintf(buf, sizeof(buf), "NewGeometry %d %d %d %d\n", brect.x, brect.y, brect.width, brect.height);
 	do_pend_fcall(buf);
@@ -331,7 +315,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
     if((dir->type != IXP_QTDIR) || (type == -1))
         return -1;
 	
-	new->dir = dir;
+	new->dtype = qpath_type(dir->path);
     new->version = 0;
 	switch(type) {
 	case Droot:
@@ -642,8 +626,8 @@ xread(IXPConn *c)
 				new_item();
 			if(i >= nitem)
 				goto error_xread;
-			if((c->fcall->count = strlen(item[i]->color)))
-				memcpy(p, item[i]->color, c->fcall->count);
+			if((c->fcall->count = strlen(item[i]->colstr)))
+				memcpy(p, item[i]->colstr, c->fcall->count);
 			break;
 		default:
 	error_xread:
@@ -751,9 +735,9 @@ xwrite(IXPConn *c)
 			errstr = "wrong color format";
 			goto error_xwrite;
 		}
-		memcpy(item[i]->color, c->fcall->data, c->fcall->count);
-		item[i]->color[c->fcall->count] = 0;
-		update_color(item[i]);
+		memcpy(item[i]->colstr, c->fcall->data, c->fcall->count);
+		item[i]->colstr[c->fcall->count] = 0;
+		blitz_loadcolor(dpy, screen, item[i]->colstr, &item[i]->color);
 		draw();
 		break;
 	default:
@@ -941,7 +925,7 @@ main(int argc, char *argv[])
         exit(1);
     }
     XSetErrorHandler(dummy_error_handler);
-    screen_num = DefaultScreen(dpy);
+    screen = DefaultScreen(dpy);
 
     if(!address)
 		usage();
@@ -968,12 +952,11 @@ main(int argc, char *argv[])
     root_qid.type = IXP_QTDIR;
     root_qid.version = 0;
     root_qid.path = mkqpath(Droot, 0);
-	root_qid.dir = nil;
 
     /* default settings */
 	new_item();
-	cext_strlcpy(item[0]->color, BLITZ_SEL_COLOR, sizeof(item[0]->color));
-	update_color(item[0]);
+	cext_strlcpy(item[0]->colstr, BLITZ_SEL_COLOR, sizeof(item[0]->colstr));
+	blitz_loadcolor(dpy, screen, item[0]->colstr, &item[0]->color);
 
 	/* X stuff */
     font = strdup(BLITZ_FONT);
@@ -984,15 +967,15 @@ main(int argc, char *argv[])
 					| SubstructureRedirectMask | SubstructureNotifyMask;
 
     rect.x = rect.y = 0;
-    rect.width = DisplayWidth(dpy, screen_num);
-    rect.height = DisplayHeight(dpy, screen_num);
+    rect.width = DisplayWidth(dpy, screen);
+    rect.height = DisplayHeight(dpy, screen);
     brect = rect;
     brect.height = xfont->ascent + xfont->descent + 4;
     brect.y = rect.height - brect.height;
 
-    win = XCreateWindow(dpy, RootWindow(dpy, screen_num), brect.x, brect.y,
-                        brect.width, brect.height, 0, DefaultDepth(dpy, screen_num),
-                        CopyFromParent, DefaultVisual(dpy, screen_num),
+    win = XCreateWindow(dpy, RootWindow(dpy, screen), brect.x, brect.y,
+                        brect.width, brect.height, 0, DefaultDepth(dpy, screen),
+                        CopyFromParent, DefaultVisual(dpy, screen),
                         CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
     XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
     XSync(dpy, False);
@@ -1002,7 +985,7 @@ main(int argc, char *argv[])
     gc = XCreateGC(dpy, win, 0, 0);
 
     pmap = XCreatePixmap(dpy, win, brect.width, brect.height,
-                      	 DefaultDepth(dpy, screen_num));
+                      	 DefaultDepth(dpy, screen));
 
 	/* main loop */
 	XMapRaised(dpy, win);

@@ -168,6 +168,8 @@ name_to_type(char *name, unsigned char dtyp)
 		else if(dtyp == Dpage)
 			return Darea;
 	}
+	if(!strncmp(name, "default", 8))
+		return Ddefault;
 	if(!strncmp(name, "ctl", 4))
 		return Fctl;
 	if(!strncmp(name, "font", 5))
@@ -217,7 +219,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
     if((dir->type != IXP_QTDIR) || (type == -1))
         return -1;
 	
-	new->dir = dir;
+	new->dtype = dtyp;
     new->version = 0;
 	switch(type) {
 	case Droot:
@@ -319,7 +321,12 @@ xwalk(IXPConn *c)
         dir = m->qid;
         for(nwqid = 0; (nwqid < c->fcall->nwname)
             && !mkqid(&dir, c->fcall->wname[nwqid], &c->fcall->wqid[nwqid]); nwqid++)
+		{
+			fprintf(stderr, "dir.dtype=%d\n", dir.dtype);
             dir = c->fcall->wqid[nwqid];
+			fprintf(stderr, "walk: qid_to_name()=%s qpath_type(dir.path)=%d dir.dtype=%d\n",
+							qid_to_name(&dir), qpath_type(dir.path), dir.dtype);
+		}
         if(!nwqid) {
             errstr = Enofile;
             return -1;
@@ -567,6 +574,7 @@ xread(IXPConn *c)
 	else {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
+			fprintf(stderr, "%s", "Droot dir creation\n");
 			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "event", &m->qid);
@@ -603,6 +611,7 @@ xread(IXPConn *c)
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Dpage:
+			alloc_page();
 			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
@@ -670,7 +679,10 @@ xread(IXPConn *c)
 				memcpy(p, def.normcolor, c->fcall->count);
 			break;
 		case Fborder:
-			if(qpath_type(m->qid.dir->path) == Ddefault)
+			fprintf(stderr, "Fborder: qpath_type(m->qid.path)=%d, m->qid.dtype=%d\n",
+							qpath_type(m->qid.path), m->qid.dtype);
+
+			if(m->qid.dtype == Ddefault)
 				snprintf(buf, sizeof(buf), "%u", def.border);
 			else
 				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->frame.border);
@@ -678,7 +690,7 @@ xread(IXPConn *c)
 			memcpy(p, buf, c->fcall->count);
 			break;
 		case Ftitle:
-			if(qpath_type(m->qid.dir->path) == Ddefault)
+			if(m->qid.dtype == Ddefault)
 				snprintf(buf, sizeof(buf), "%u", def.title);
 			else
 				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->frame.title);
@@ -686,7 +698,7 @@ xread(IXPConn *c)
 			memcpy(p, buf, c->fcall->count);
 			break;
 		case Finc:
-			if(qpath_type(m->qid.dir->path) == Ddefault)
+			if(m->qid.dtype == Ddefault)
 				snprintf(buf, sizeof(buf), "%u", def.inc);
 			else
 				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->inc);
@@ -760,7 +772,7 @@ xwrite(IXPConn *c)
 
 	switch (qpath_type(m->qid.path)) {
 	case Fctl:
-		switch(qpath_type(m->qid.dir->path)) {
+		switch(m->qid.dtype) {
 		case Droot:
 			/* TODO: /ctl commands */
 			break;
@@ -833,7 +845,7 @@ xwrite(IXPConn *c)
 			errstr = "border value out of range 0..0xffff";
 			return -1;
 		}
-		if(qpath_type(m->qid.dir->path) == Ddefault)
+		if(m->qid.dtype == Ddefault)
 			def.border = i;
 		else {
 			page[pg]->area[area]->client[cl]->frame.border = i;
@@ -850,7 +862,7 @@ xwrite(IXPConn *c)
 			errstr = "title value out of range 0, 1";
 			return -1;
 		}
-		if(qpath_type(m->qid.dir->path) == Ddefault)
+		if(m->qid.dtype == Ddefault)
 			def.border = i;
 		else {
 			page[pg]->area[area]->client[cl]->frame.border = i;
@@ -867,7 +879,7 @@ xwrite(IXPConn *c)
 			errstr = "increment value out of range 0, 1";
 			return -1;
 		}
-		if(qpath_type(m->qid.dir->path) == Ddefault)
+		if(m->qid.dtype == Ddefault)
 			def.inc = i;
 		else {
 			page[pg]->area[area]->client[cl]->inc = i;

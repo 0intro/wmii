@@ -255,15 +255,10 @@ draw_client(Client *c)
 	d.font = xfont;
 	d.gc = c->frame.gc;
 
-	if(c == sel_client()) {
-		d.bg = def.selbg;
-		d.fg = def.selfg;
-		d.border = def.selborder;
-	} else {
-		d.bg = def.normbg;
-		d.fg = def.normfg;
-		d.border = def.normborder;
-	}
+	if(c == sel_client())
+		d.color = def.sel;
+	else
+		d.color = def.norm;
 
 	/* draw border */
     if(bw) {

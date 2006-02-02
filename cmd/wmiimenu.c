@@ -54,7 +54,7 @@ static GC gc;
 static Window win;
 static XRectangle rect;
 static XRectangle mrect;
-static int screen_num;
+static int screen;
 static char *sockfile = 0;
 static File *files[M_LAST];
 static size_t nitems = 0;
@@ -156,7 +156,7 @@ show()
     update_items(files[M_COMMAND]->content);
     draw_menu();
     while(XGrabKeyboard
-          (dpy, RootWindow(dpy, screen_num), True, GrabModeAsync,
+          (dpy, RootWindow(dpy, screen), True, GrabModeAsync,
            GrabModeAsync, CurrentTime) != GrabSuccess)
         usleep(1000);
 }
@@ -310,9 +310,9 @@ draw_menu()
     d.rect.x = 0;
     d.rect.y = 0;
     d.bg =
-        blitz_loadcolor(dpy, screen_num, files[M_NORM_BG_COLOR]->content);
+        blitz_loadcolor(dpy, screen, files[M_NORM_BG_COLOR]->content);
     d.border =
-        blitz_loadcolor(dpy, screen_num,
+        blitz_loadcolor(dpy, screen,
                         files[M_NORM_BORDER_COLOR]->content);
     blitz_drawlabelnoborder(dpy, &d);
 
@@ -320,7 +320,7 @@ draw_menu()
     d.align = WEST;
     d.font = font;
     d.fg =
-        blitz_loadcolor(dpy, screen_num,
+        blitz_loadcolor(dpy, screen,
                         files[M_NORM_TEXT_COLOR]->content);
     d.data = files[M_COMMAND]->content;
     if(cmdw && sel)
@@ -331,10 +331,10 @@ draw_menu()
     d.align = CENTER;
     if(sel) {
         d.bg =
-            blitz_loadcolor(dpy, screen_num,
+            blitz_loadcolor(dpy, screen,
                             files[M_NORM_BG_COLOR]->content);
         d.fg =
-            blitz_loadcolor(dpy, screen_num,
+            blitz_loadcolor(dpy, screen,
                             files[M_NORM_TEXT_COLOR]->content);
         d.data = offset[OFF_PREV] ? "<" : nil;
         d.rect.x = offx;
@@ -352,34 +352,34 @@ draw_menu()
             /*fprintf(stderr, "%s (%d, %d, %d, %d)\n", item->name, d.rect.x, d.rect.y, d.rect.width, d.rect.height); */
             if(sel == i) {
                 d.bg =
-                    blitz_loadcolor(dpy, screen_num,
+                    blitz_loadcolor(dpy, screen,
                                     files[M_SEL_BG_COLOR]->content);
                 d.fg =
-                    blitz_loadcolor(dpy, screen_num,
+                    blitz_loadcolor(dpy, screen,
                                     files[M_SEL_TEXT_COLOR]->content);
                 d.border =
-                    blitz_loadcolor(dpy, screen_num,
+                    blitz_loadcolor(dpy, screen,
                                     files[M_SEL_BORDER_COLOR]->content);
                 blitz_drawlabel(dpy, &d);
             } else {
                 d.bg =
-                    blitz_loadcolor(dpy, screen_num,
+                    blitz_loadcolor(dpy, screen,
                                     files[M_NORM_BG_COLOR]->content);
                 d.fg =
-                    blitz_loadcolor(dpy, screen_num,
+                    blitz_loadcolor(dpy, screen,
                                     files[M_NORM_TEXT_COLOR]->content);
                 d.border =
-                    blitz_loadcolor(dpy, screen_num,
+                    blitz_loadcolor(dpy, screen,
                                     files[M_NORM_BORDER_COLOR]->content);
                 blitz_drawlabelnoborder(dpy, &d);
             }
         }
 
         d.bg =
-            blitz_loadcolor(dpy, screen_num,
+            blitz_loadcolor(dpy, screen,
                             files[M_NORM_BG_COLOR]->content);
         d.fg =
-            blitz_loadcolor(dpy, screen_num,
+            blitz_loadcolor(dpy, screen,
                             files[M_NORM_TEXT_COLOR]->content);
         d.data = offset[OFF_NEXT] ? ">" : nil;
         d.rect.x = mrect.width - seek;
@@ -560,7 +560,7 @@ update_geometry()
     XFreePixmap(dpy, pmap);
     pmap =
         XCreatePixmap(dpy, win, mrect.width, mrect.height,
-                      DefaultDepth(dpy, screen_num));
+                      DefaultDepth(dpy, screen));
     XSync(dpy, False);
 }
 
@@ -648,7 +648,7 @@ main(int argc, char *argv[])
         fprintf(stderr, "%s", "wmiimenu: cannot open display\n");
         exit(1);
     }
-    screen_num = DefaultScreen(dpy);
+    screen = DefaultScreen(dpy);
 
     ixps = wmii_setup_server(sockfile);
 
@@ -691,16 +691,16 @@ main(int argc, char *argv[])
         | SubstructureRedirectMask | SubstructureNotifyMask;
 
     rect.x = rect.y = 0;
-    rect.width = DisplayWidth(dpy, screen_num);
-    rect.height = DisplayHeight(dpy, screen_num);
+    rect.width = DisplayWidth(dpy, screen);
+    rect.height = DisplayHeight(dpy, screen);
     mrect = rect;
     mrect.height = font->ascent + font->descent + 4;
     mrect.y = rect.height - mrect.height;
 
-    win = XCreateWindow(dpy, RootWindow(dpy, screen_num), mrect.x, mrect.y,
+    win = XCreateWindow(dpy, RootWindow(dpy, screen), mrect.x, mrect.y,
                         mrect.width, mrect.height, 0, DefaultDepth(dpy,
-                                                                   screen_num),
-                        CopyFromParent, DefaultVisual(dpy, screen_num),
+                                                                   screen),
+                        CopyFromParent, DefaultVisual(dpy, screen),
                         CWOverrideRedirect | CWBackPixmap | CWEventMask,
                         &wa);
     XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_xterm));
@@ -713,7 +713,7 @@ main(int argc, char *argv[])
     gc = XCreateGC(dpy, win, 0, 0);
     pmap =
         XCreatePixmap(dpy, win, mrect.width, mrect.height,
-                      DefaultDepth(dpy, screen_num));
+                      DefaultDepth(dpy, screen));
 
     /* main event loop */
     run_server_with_fd_support(ixps, ConnectionNumber(dpy), check_event,

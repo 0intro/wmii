@@ -127,14 +127,10 @@ typedef struct {
 	char *font;
 	Bool title;
 	Bool inc;
+	Color sel;
+	Color norm;
 	unsigned int border;
 	unsigned int snap;
-	unsigned int selfg;
-	unsigned int selbg;
-	unsigned int selborder;
-	unsigned int normfg;
-	unsigned int normbg;
-	unsigned int normborder;
 } Default;
 
 Default def;
@@ -185,7 +181,7 @@ void resize_client(Client *c, XRectangle * r, XPoint * pt);
 unsigned int tab_height(Client *c);
 
 /* event.c */
-void init_event_hander();
+void init_x_event_handler();
 void check_x_event(IXPServer *s, IXPConn *c);
 
 /* fs.c */

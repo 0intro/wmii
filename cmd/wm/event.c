@@ -24,7 +24,7 @@ static void handle_clientmessage(XEvent * e);
 void (*handler[LASTEvent]) (XEvent *);
 
 void
-init_event_hander()
+init_x_event_handler()
 {
     int i;
     /* init event handler */

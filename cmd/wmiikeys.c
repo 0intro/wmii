@@ -47,7 +47,7 @@ static Window win;
 static Window root;
 static XRectangle krect;
 static XRectangle rect;
-static int screen_num;
+static int screen;
 static char *sockfile = nil;
 static Shortcut *shortcuts = nil;
 static File *files[K_LAST];
@@ -332,10 +332,10 @@ draw_shortcut_box(char *text)
     d.rect.y = 0;
     d.rect.width = krect.width;
     d.rect.height = krect.height;
-    d.bg = blitz_loadcolor(dpy, screen_num, files[K_BG_COLOR]->content);
-    d.fg = blitz_loadcolor(dpy, screen_num, files[K_FG_COLOR]->content);
+    d.bg = blitz_loadcolor(dpy, screen, files[K_BG_COLOR]->content);
+    d.fg = blitz_loadcolor(dpy, screen, files[K_FG_COLOR]->content);
     d.border =
-        blitz_loadcolor(dpy, screen_num, files[K_BORDER_COLOR]->content);
+        blitz_loadcolor(dpy, screen, files[K_BORDER_COLOR]->content);
     blitz_drawlabel(dpy, &d);
 }
 
@@ -443,7 +443,7 @@ main(int argc, char *argv[])
         exit(1);
     }
     XSetErrorHandler(dummy_error_handler);
-    screen_num = DefaultScreen(dpy);
+    screen = DefaultScreen(dpy);
 
     /* init */
     ixps = wmii_setup_server(sockfile);
@@ -473,19 +473,19 @@ main(int argc, char *argv[])
     wa.event_mask =
         ExposureMask | SubstructureRedirectMask | SubstructureNotifyMask;
 
-    root = RootWindow(dpy, screen_num);
+    root = RootWindow(dpy, screen);
     rect.x = rect.y = 0;
-    rect.width = DisplayWidth(dpy, screen_num);
-    rect.height = DisplayHeight(dpy, screen_num);
+    rect.width = DisplayWidth(dpy, screen);
+    rect.height = DisplayHeight(dpy, screen);
     krect.x = krect.y = 0;
     krect.width = krect.height = 1;
 
     wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
 
-    win = XCreateWindow(dpy, RootWindow(dpy, screen_num), krect.x, krect.y,
+    win = XCreateWindow(dpy, RootWindow(dpy, screen), krect.x, krect.y,
                         krect.width, krect.height, 0, DefaultDepth(dpy,
-                                                                   screen_num),
-                        CopyFromParent, DefaultVisual(dpy, screen_num),
+                                                                   screen),
+                        CopyFromParent, DefaultVisual(dpy, screen),
                         CWOverrideRedirect | CWBackPixmap | CWEventMask,
                         &wa);
     XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));

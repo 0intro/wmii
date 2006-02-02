@@ -21,24 +21,26 @@ typedef enum {
 	SEAST, SOUTH, SWEST
 } Align;
 
-typedef struct Draw Draw;
-
-struct Draw {
-	Drawable drawable;
-	GC gc;
+typedef struct {
 	unsigned long bg;
 	unsigned long fg;
 	unsigned long border;
+} Color;
+
+typedef struct {
+	Drawable drawable;
+	GC gc;
+	Color color;
 	Align align;
 	XFontStruct *font;
 	XRectangle rect;			/* relative rect */
 	XRectangle *notch;			/* relative notch rect */
 	char *data;
-};
+} Draw;
 
 /* draw.c */
 XFontStruct *blitz_getfont(Display * dpy, char *fontstr);
-unsigned long blitz_loadcolor(Display * dpy, int mon, char *colstr);
+int blitz_loadcolor(Display *dpy, int mon, char *colstr, Color *c);
 void blitz_drawlabel(Display * dpy, Draw * r);
 void blitz_drawmeter(Display * dpy, Draw * r);
 void blitz_drawlabelnoborder(Display * dpy, Draw * r);
