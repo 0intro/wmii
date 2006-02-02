@@ -4,6 +4,7 @@
  */
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "wm.h"
 
@@ -13,7 +14,7 @@ cursor_for_motion(Client *c, int x, int y)
     int n, e, w, s, tn, te, tw, ts;
     int tabh, bw;
 
-    bw = border_width(c);
+    bw = c->frame.border;
     tabh = tab_height(c);
 
     if(!bw)
@@ -302,12 +303,8 @@ mouse_move(Client *c)
     Window dummy;
     XEvent ev;
     /* borders */
-    int snapw =
-        rect.width * blitz_strtonum(def[WM_SNAP_VALUE]->content, 0,
-                                    1000) / 1000;
-    int snaph =
-        rect.height * blitz_strtonum(def[WM_SNAP_VALUE]->content, 0,
-                                     1000) / 1000;
+    int snapw = rect.width * def.snap / 1000;
+    int snaph = rect.height * def.snap / 1000;
     unsigned int num;
     unsigned int dmask;
     XRectangle *rects = rectangles(&num);
@@ -551,12 +548,8 @@ mouse_resize(Client *c, Align align)
     Window dummy;
     XEvent ev;
     /* borders */
-    int snapw =
-        rect.width * blitz_strtonum(def[WM_SNAP_VALUE]->content, 0,
-                                    1000) / 1000;
-    int snaph =
-        rect.height * blitz_strtonum(def[WM_SNAP_VALUE]->content, 0,
-                                     1000) / 1000;
+    int snapw = rect.width * def.snap / 1000;
+    int snaph = rect.height * def.snap / 1000;
     unsigned int dmask;
     unsigned int num;
     XRectangle *rects = rectangles(&num);

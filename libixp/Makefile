@@ -10,7 +10,7 @@ SRC = client.c convert.c message.c server.c socket.c transport.c
 OBJ = ${SRC:.c=.o}
 
 all: libixp
-	@echo built libixp2
+	@echo built libixp
 
 .c.o:
 	@echo CC $<

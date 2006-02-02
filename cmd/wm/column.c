@@ -9,7 +9,7 @@
 #include "wm.h"
 
 void
-arrange_column(Page *p, Column *col)
+arrange_column(Page *p, Area *col)
 {
 	size_t i;
 	unsigned int h;
@@ -21,12 +21,12 @@ arrange_column(Page *p, Column *col)
 	for(i = 0; (i < col->clientsz) && col->client[i]; i++) {
 		Client *c = col->client[i];
         c->frame.rect = col->rect;
-        c->frame.rect.y = p->rect_column.y + i * h;
+        c->frame.rect.y += i * h;
         if((i + 1 < col->clientsz) && col->client[i + 1])
             c->frame.rect.height = h;
         else
             c->frame.rect.height =
-				p->rect_column.height - c->frame.rect.y + p->rect_column.y;
+				col->rect.height - c->frame.rect.y + col->rect.y;
         resize_client(c, &c->frame.rect, 0);
 	}
 }
@@ -35,25 +35,26 @@ void
 arrange_page(Page *p)
 {
 	size_t i;
-	for(i = 0; (i < p->columnsz) && p->column[i]; i++)
-		arrange_column(p, p->column[i]);
+	for(i = 1; i < p->narea; i++)
+		arrange_column(p, p->area[i]);
 }
 
 void
 attach_column(Client *c)
 {
-	Page *p = page[sel_page];
-	Column *col = p->columnsz ? p->column[p->sel_column] : nil;
+	Page *p = page[sel];
+	Area *col = p->narea && (p->sel > 0) ? p->area[p->sel] : nil;
 
 	if(!col) {
-        col = cext_emallocz(sizeof(Column));
-        col->rect = p->rect_column;
-		p->column = (Column **)cext_array_attach((void **)p->column, col,
-						sizeof(Column *), &p->columnsz);
-		p->sel_column = 0;
+        col = cext_emallocz(sizeof(Area));
+        col->rect = rect;
+		p->area = (Area **)cext_array_attach((void **)p->area, col,
+						sizeof(Area *), &p->areasz);
+		p->sel = p->narea;
+		p->narea++;
     }
 
-	c->column = col;
+	c->area = col;
 	col->client = (Client **)cext_array_attach((void **)col->client, c,
 						sizeof(Client *), &col->clientsz);
     arrange_column(p, col);
@@ -65,15 +66,14 @@ update_column_width(Page *p)
 	size_t i;
 	unsigned int width;
 
-	for(i = 0; (i < p->columnsz) && p->column[i]; i++);
-	if(!i)
+	if(p->narea == 1)
 		return;
 
-    width = p->rect_column.width / i;
-	for(i = 0; (i < p->columnsz) && p->column[i]; i++) {
-        p->column[i]->rect = p->rect_column;
-        p->column[i]->rect.x = i * width;
-        p->column[i]->rect.width = width;
+    width = rect.width / (p->narea - 1);
+	for(i = 1; i < p->narea; i++) {
+        p->area[i]->rect = rect;
+        p->area[i]->rect.x = i * width;
+        p->area[i]->rect.width = width;
     }
     arrange_page(p);
 }
@@ -82,11 +82,12 @@ void
 detach_column(Client *c)
 {
 	Page *p = c->page;
-	Column *col = c->column;
+	Area *col = c->area;
 
 	cext_array_detach((void **)col->client, c, &col->clientsz);
 	if(!col->client[0]) {
-		cext_array_detach((void **)p->column, col, &p->columnsz);
+		cext_array_detach((void **)p->area, col, &p->areasz);
+		p->narea--;
 		free(col);
 		update_column_width(p);
 	}
@@ -95,7 +96,7 @@ detach_column(Client *c)
 } 
 
 static void
-match_horiz(Column *col, XRectangle *r)
+match_horiz(Area *col, XRectangle *r)
 {
 	size_t i;
 
@@ -111,13 +112,13 @@ static void
 drop_resize(Client *c, XRectangle *new)
 {
 	Page *p = c->page;
-    Column *west = nil, *east = nil, *col = c->column;
+    Area *west = nil, *east = nil, *col = c->area;
     Client *north = nil, *south = nil;
 	size_t i;
 
-	for(i = 0; (i < p->columnsz) && p->column[i] && (p->column[i] != col); i++);
-    west = i ? p->column[i - 1] : nil;
-    east = (i < p->columnsz) && p->column[i + 1] ? p->column[i + 1] : nil;
+	for(i = 0; (i < p->narea) && (p->area[i] != col); i++);
+    west = i ? p->area[i - 1] : nil;
+    east = (i < p->areasz) && p->area[i + 1] ? p->area[i + 1] : nil;
 
 	for(i = 0; (i < col->clientsz) && col->client[i] && (col->client[i] != c); i++);
     north = i ? col->client[i - 1] : nil;
@@ -162,15 +163,15 @@ static void
 drop_moving(Client *c, XRectangle *new, XPoint * pt)
 {
 	Page *p = c->page;
-    Column *tgt = nil, *src = c->column;
+    Area *tgt = nil, *src = c->area;
 	size_t i;
 
     if(!pt)
         return;
 
-	for(i = 0; (i < p->columnsz) && p->column[i] &&
-			!blitz_ispointinrect(pt->x, pt->y, &p->column[i]->rect); i++);
-	tgt = (i < p->columnsz) ? p->column[i] : nil;
+	for(i = 0; (i < p->areasz) && p->area[i] &&
+			!blitz_ispointinrect(pt->x, pt->y, &p->area[i]->rect); i++);
+	tgt = (i < p->areasz) ? p->area[i] : nil;
     if(tgt) {
         if(tgt != src) {
 			if(src->clientsz <= 1 || !src->client[1])
@@ -209,7 +210,7 @@ void
 select_column(Client *c, char *arg)
 {
 	Page *p = c->page;
-    Column *col = c->column;
+    Area *col = c->area;
 	size_t i;
 
 	for(i = 0; (i < col->clientsz) && col->client[i] && (col->client[i] != c); i++);
@@ -226,23 +227,23 @@ select_column(Client *c, char *arg)
 		return;
 	}
    
-	for(i = 0; (i < p->columnsz) && p->column[i] && (p->column[i] != col); i++);
+	for(i = 0; (i < p->areasz) && p->area[i] && (p->area[i] != col); i++);
 	if(!strncmp(arg, "west", 5)) {
 		if(!i)
-			for(i = 0; (i < p->columnsz) && p->column[i]; i++);
-		col = p->column[i - 1];
+			for(i = 0; (i < p->areasz) && p->area[i]; i++);
+		col = p->area[i - 1];
 	} else if(!strncmp(arg, "east", 5)) {
-		if(p->column[i + 1])
-			col = p->column[i + 1];
+		if(p->area[i + 1])
+			col = p->area[i + 1];
 		else
-			col = p->column[0];
+			col = p->area[0];
 	} else {
 		const char *errstr;
-		for(i = 0; (i < p->columnsz) && p->column[i]; i++);
+		for(i = 0; (i < p->areasz) && p->area[i]; i++);
 		i = cext_strtonum(arg, 0, i - 1, &errstr);
 		if(errstr)
 			return;
-		col = p->column[i];	
+		col = p->area[i];	
 	}
 	focus_client(col->client[col->sel]);
 }
@@ -251,26 +252,21 @@ void
 new_column(Page *p)
 {
 	Client *c = sel_client_of_page(p);
-	Column *col, *old = c ? c->column : nil;
-	size_t i;
+	Area *col, *old = c ? c->area : nil;
 
-	if(!old)
+	if(!old || old->nclient < 2)
 		return;
 
-	for(i = 0; (i < old->clientsz) && old->client[i]; i++);
-
-	if(i < 2)
-		return;
-
-    col = cext_emallocz(sizeof(Column));
-    col->rect = p->rect_column;
-	p->column = (Column **)cext_array_attach((void **)p->column, col,
-					sizeof(Column *), &p->columnsz);
-	p->sel_column = i;
+    col = cext_emallocz(sizeof(Area));
+    col->rect = rect;
+	p->area = (Area **)cext_array_attach((void **)p->area, col,
+					sizeof(Area *), &p->areasz);
+	p->sel = p->narea;
+	p->narea++;
 	cext_array_detach((void **)old->client, c, &old->clientsz);
 	col->client = (Client **)cext_array_attach((void **)col->client, c,
 					sizeof(Client *), &col->clientsz);
-	c->column = col;
+	c->area = col;
 	update_column_width(p);
 	focus_client(c);
 }

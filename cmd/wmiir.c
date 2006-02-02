@@ -9,8 +9,7 @@
 #include <unistd.h>
 #include <dirent.h>
 
-#include "ixp.h"
-
+#include <ixp.h>
 #include <cext.h>
 
 static IXPClient c = { 0 };

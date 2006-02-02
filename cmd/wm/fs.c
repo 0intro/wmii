@@ -28,8 +28,9 @@
  * /default/selcolor	Fselcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /default/normcolor	Fnormcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /default/border		Fborder		0..n
- * /default/title 		Fbool  		0, 1
+ * /default/title 		Ftitle 		0, 1
  * /default/snap 		Fsnap  		0..n
+ * /default/inc 		Finc   		0..n
  * /event				Fevent
  * /ctl					Fctl 		command interface (root)
  * /new/				Dpage		returns new page
@@ -44,7 +45,9 @@
  * /1/float/1/			Dclient
  * /1/float/1/border	Fborder		0..n
  * /1/float/1/title		Ftitle		0, 1
+ * /1/float/1/inc  		Finc  		0, 1
  * /1/float/1/name		Fname		name of client
+ * /1/float/1/geom		Fgeom		geometry of client
  * /1/float/1/ctl 		Fctl 		command interface (client)
  * /1/1/				Darea
  * /1/1/ctl 			Fctl 		command interface (area)
@@ -52,7 +55,9 @@
  * /1/1/1/1/			Dclient
  * /1/1/1/border		Fborder		0..n
  * /1/1/1/title			Ftitle		0, 1
+ * /1/1/1/inc  			Finc  		0, 1
  * /1/1/1/name			Fname		name of client
+ * /1/1/1/geom			Fgeom		geometry of client
  * /1/1/1/ctl 			Fctl 		command interface (client)
  */
 
@@ -69,6 +74,8 @@ enum {
 	Fborder,
 	Fsnap,
 	Ftitle,
+	Finc,
+	Fgeom,
 	Fevent,
 	Fctl,
 	Fname
@@ -163,6 +170,8 @@ qid_to_name(Qid *qid)
 		case Fborder: return "border"; break;
 		case Fsnap: return "border"; break;
 		case Ftitle: return "title"; break;
+		case Finc: return "inc"; break;
+		case Fgeom: return "geometry"; break;
 		case Fname: return "name"; break;
 		case Fevent: return "event"; break;
 		default: return nil; break;
@@ -187,9 +196,9 @@ name_to_type(char *name, unsigned char dtyp)
 		return Ffont;
 	if(!strncmp(name, "event", 6))
 		return Fevent;
-	if(!strncmp(name, "selcolor", 6))
+	if(!strncmp(name, "selcolor", 9))
 		return Fselcolor;
-	if(!strncmp(name, "normcolor", 6))
+	if(!strncmp(name, "normcolor", 10))
 		return Fnormcolor;
 	if(!strncmp(name, "snap", 5))
 		return Fsnap;
@@ -199,7 +208,11 @@ name_to_type(char *name, unsigned char dtyp)
 		return Fborder;
 	if(!strncmp(name, "title", 6))
 		return Ftitle;
-	if(!strncmp(name, "sel", 6))
+	if(!strncmp(name, "inc", 4))
+		return Finc;
+	if(!strncmp(name, "geometry", 9))
+		return Fgeom;
+	if(!strncmp(name, "sel", 4))
 		goto dyndir;
    	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
     if(err)
@@ -391,7 +404,8 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 	unsigned short darea = qpath_area(dir->path);
 	unsigned int idx;
 	int type = name_to_type(name, dtyp);
-	char buf[16];
+	char buf[32];
+	Client *c;
 
     switch (type) {
     case Droot:
@@ -438,6 +452,26 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		}
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
+    case Finc:
+		if(dtyp == Ddefault)
+			snprintf(buf, sizeof(buf), "%d", def.inc);
+		else {
+			idx = cext_strtonum(name, 1, 0xffff, &err);
+			if(err)
+				return 0;
+			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[idx]->inc);
+		}
+		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
+        break;
+    case Fgeom:
+		idx = cext_strtonum(name, 1, 0xffff, &err);
+		if(err)
+			return 0;
+		c = page[dpg]->area[darea]->client[idx];
+		snprintf(buf, sizeof(buf), "%d %d %d %d", c->frame.rect.x, c->frame.rect.y,
+				c->frame.rect.width, c->frame.rect.height);
+		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
+        break;
     case Fsnap:
 		snprintf(buf, sizeof(buf), "%d", def.snap);
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
@@ -461,6 +495,7 @@ xread(IXPConn *c)
 	unsigned short pg, area, cl;
 	unsigned int i, len;
 	char buf[32];
+	Client *client;
 
     if(!m) {
         errstr = Enofid;
@@ -584,6 +619,8 @@ xread(IXPConn *c)
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "title", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "inc", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "snap", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
@@ -626,7 +663,11 @@ xread(IXPConn *c)
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "title", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "inc", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "name", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			c->fcall->count += type_to_stat(&stat, "geometry", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
@@ -663,6 +704,21 @@ xread(IXPConn *c)
 				snprintf(buf, sizeof(buf), "%u", def.title);
 			else
 				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->frame.title);
+			c->fcall->count = strlen(buf);
+			memcpy(p, buf, c->fcall->count);
+			break;
+		case Finc:
+			if(qpath_type(m->qid.dir->path) == Ddefault)
+				snprintf(buf, sizeof(buf), "%u", def.inc);
+			else
+				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->inc);
+			c->fcall->count = strlen(buf);
+			memcpy(p, buf, c->fcall->count);
+			break;
+		case Fgeom:
+			client = page[pg]->area[area]->client[cl];
+			snprintf(buf, sizeof(buf), "%d %d %d %d", client->frame.rect.x, client->frame.rect.y,
+					client->frame.rect.width, client->frame.rect.height);
 			c->fcall->count = strlen(buf);
 			memcpy(p, buf, c->fcall->count);
 			break;
@@ -822,6 +878,31 @@ xwrite(IXPConn *c)
 			page[pg]->area[area]->client[cl]->frame.border = i;
 			/* TODO: resize client */
 		}
+		break;
+	case Finc:
+		if(c->fcall->count > sizeof(buf))
+			goto error_xwrite;
+		memcpy(buf, c->fcall->data, c->fcall->count);
+		buf[c->fcall->count] = 0;
+		i = cext_strtonum(buf, 0, 1, &err);
+		if(err) {
+			errstr = "increment value out of range 0, 1";
+			return -1;
+		}
+		if(qpath_type(m->qid.dir->path) == Ddefault)
+			def.inc = i;
+		else {
+			page[pg]->area[area]->client[cl]->inc = i;
+			/* TODO: resize client */
+		}
+		break;
+	case Fgeom:
+		if(c->fcall->count > sizeof(buf))
+			goto error_xwrite;
+		memcpy(buf, c->fcall->data, c->fcall->count);
+		buf[c->fcall->count] = 0;
+		blitz_strtorect(&rect, &page[pg]->area[area]->client[cl]->frame.rect, buf);
+		/* TODO: resize client */
 		break;
 	default:
 error_xwrite:

@@ -10,20 +10,16 @@
 
 #include "wm.h"
 
-static void handle_after_write_page(IXPServer * s, File * file);
-
 static void select_client(void *obj, char *arg);
-static void toggle_layout(void *obj, char *arg);
 static void xexec(void *obj, char *arg);
 static void swap_client(void *obj, char *arg);
-static void xnew_area(void *obj, char *arg);
+static void xnew_column(void *obj, char *arg);
 
 /* action table for /?/ namespace */
 Action page_acttbl[] = {
-    {"toggle", toggle_layout},
     {"exec", xexec},
     {"swap", swap_client},
-    {"newcol", xnew_area},
+    {"newcol", xnew_column},
     {"select", select_client},
     {0, 0}
 };
@@ -32,33 +28,16 @@ Page *
 alloc_page()
 {
     Page *p = cext_emallocz(sizeof(Page));
-    char buf[MAX_BUF], buf2[16];
-	static int id = 1;
-	size_t np;
+	Area *a = cext_emallocz(sizeof(Area));
 
-    snprintf(buf2, sizeof(buf2), "%d", id);
-    snprintf(buf, sizeof(buf), "/%d", id);
-    p->file[P_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, sizeof(buf), "/%d/name", id);
-    p->file[P_NAME] = wmii_create_ixpfile(ixps, buf, buf2);
-    snprintf(buf, sizeof(buf), "/%d/client", id);
-    p->file[P_CLIENT_PREFIX] = ixp_create(ixps, buf);
-    snprintf(buf, sizeof(buf), "/%d/client/sel", id);
-    p->file[P_SEL_PREFIX] = ixp_create(ixps, buf);
-    p->file[P_SEL_PREFIX]->bind = 1;    /* mount point */
-    snprintf(buf, sizeof(buf), "/%d/ctl", id);
-    p->file[P_CTL] = ixp_create(ixps, buf);
-    p->file[P_CTL]->after_write = handle_after_write_page;
-    def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
-    invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
-	id++;
-	p->rect_area = rect;
+	p->area = (Area **)cext_array_attach((void **)p->area, a, sizeof(Area *), &p->areasz);
+	p->narea++;
+	do_pend_fcall("NewPage\n");
 	page = (Page **)cext_array_attach((void **)page, p, sizeof(Page *), &pagesz);
-	for(np = 0; (np < pagesz) && page[np]; np++);
+	npage++;
 	focus_page(p);
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
-			        32, PropModeReplace, (unsigned char *) &np, 1);
-	p->is_area = True;
+			        32, PropModeReplace, (unsigned char *) &npage, 1);
     return p;
 }
 
@@ -68,34 +47,31 @@ destroy_page(Page *p)
 	unsigned int i;
 	size_t naqueue = 0;
 
-	for(i = 0; (i < aqueuesz) && aqueue[i]; i++)
-		if(aqueue[i] == p)
+	for(i = 0; (i < aqsz) && aq[i]; i++)
+		if(aq[i] == p)
 			naqueue++;
 	for(i = 0; i < naqueue; i++)
-		cext_array_detach((void **)aqueue, p, &aqueuesz);
+		cext_array_detach((void **)aq, p, &aqsz);
 
-	for(i = 0; (i < clientsz) && client[i]; i++)
+	for(i = 0; i < nclient; i++)
 		if(client[i]->page == p)
 			detach_client(client[i], False);
 
-	for(i = 0; (i < pagesz) && page[i] && (p != page[i]); i++);
-	if(sel_page && (sel_page == i))
-		sel_page--;
-
-    def[WM_SEL_PAGE]->content = 0;
-    ixp_remove_file(ixps, p->file[P_PREFIX]);
+	for(i = 0; (i < npage) && (p != page[i]); i++);
+	if(sel && (sel == i))
+		sel--;
     free(p); 
+	npage--;
 
-	for(i = 0; (i < pagesz) && page[i]; i++);
+	for(i = 0; i < npage; i++);
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &i, 1);
 
     /* determine what to focus and do that */
-    if(page[sel_page])
-        focus_page(page[sel_page]);
+    if(page[sel])
+        focus_page(page[sel]);
     else {
-        invoke_wm_event(def[WM_EVENT_CLIENT_UPDATE]);
-        invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+		do_pend_fcall("NoPage\n");
         XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
     }
 }
@@ -104,27 +80,26 @@ void
 focus_page(Page *p)
 {
 	size_t i;
-	Page *old = page ? page[sel_page] : nil;
+	Page *old = page ? page[sel] : nil;
 
 	if(!page)
 		return;
 
-	for(i = 0; (i < pagesz) && page[i] && (page[i] != p); i++);
-	if(i == sel_page)
+	for(i = 0; (i < npage) && (page[i] != p); i++);
+	if(i == sel)
 		return;
 
-	sel_page = i;
-	for(i = 0; (i < clientsz) && client[i]; i++) {
+	sel = i;
+	for(i = 0; i < nclient; i++) {
 		Client *c = client[i];
 		if(old && (c->page == old))
 			XMoveWindow(dpy, c->frame.win, 2 * rect.width, 2 * rect.height);
 		else if(c->page == p)
 			XMoveWindow(dpy, c->frame.win, c->frame.rect.x, c->frame.rect.y);
 	}
-    def[WM_SEL_PAGE]->content = p->file[P_PREFIX]->content;
-    invoke_wm_event(def[WM_EVENT_PAGE_UPDATE]);
+	do_pend_fcall("SelPage\n");
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
-			        32, PropModeReplace, (unsigned char *) &sel_page, 1);
+			        32, PropModeReplace, (unsigned char *) &sel, 1);
 }
 
 XRectangle *
@@ -159,39 +134,11 @@ rectangles(unsigned int *num)
 }
 
 static void
-handle_after_write_page(IXPServer *s, File *file)
-{
-	size_t i;
-
-	for(i = 0; (i < pagesz) && page[i]; i++) {
-        if(file == page[i]->file[P_CTL]) {
-            run_action(file, page[i], page_acttbl);
-            return;
-        }
-    }
-}
-
-static void
 xexec(void *obj, char *arg)
 {
-	aqueue = (Page **)cext_array_attach((void **)aqueue, obj,
-				sizeof(Page *), &aqueuesz);
+	aq = (Page **)cext_array_attach((void **)aq, obj,
+				sizeof(Page *), &aqsz);
     wmii_spawn(dpy, arg);
-}
-
-static void
-toggle_layout(void *obj, char *arg)
-{
-    Page *p = obj;
-
-	p->is_area = !p->is_area;
-	if(p->is_area) {
-		Area *col = p->area[p->sel_area];
-		if(col && col->clientsz && col->client[col->sel])
-			focus_client(col->client[col->sel]);
-	}
-	else if(p->floating && p->floatingsz && p->floating[p->sel_float])
-		focus_client(p->floating[p->sel_float]);
 }
 
 static void
@@ -206,45 +153,45 @@ swap_client(void *obj, char *arg)
 	if(!col || !arg)
 		return;
 
-	for(i = 0; (i < p->areasz) && p->area[i] && (p->area[i] != col); i++);
+	for(i = 1; i < p->narea && (p->area[i] != col); i++);
     west = i ? p->area[i - 1] : nil;
     east = (i < p->areasz) && p->area[i + 1] ? p->area[i + 1] : nil;
 
-	for(i = 0; (i < col->clientsz) && col->client[i] && (col->client[i] != c); i++);
+	for(i = 0; (i < col->nclient) && (col->client[i] != c); i++);
     north = i ? col->client[i - 1] : nil;
-    south = (i < col->clientsz) && col->client[i + 1] ? col->client[i + 1] : nil;
+    south = (i + 1 < col->nclient) ? col->client[i + 1] : nil;
 
 	if(!strncmp(arg, "north", 6) && north) {
 		col->client[i] = col->client[i - 1]; 
 		col->client[i - 1] = c;
-		arrange_area(p, col);
+		arrange_column(p, col);
 	} else if(!strncmp(arg, "south", 6) && south) {
 		col->client[i] = col->client[i + 1];
 		col->client[i + 1] = c;
-		arrange_area(p, col);
+		arrange_column(p, col);
 	}
 	else if(!strncmp(arg, "west", 5) && west) {
 		col->client[i] = west->client[west->sel];
-		col->client[i]->area = col;
 		west->client[west->sel] = c;
 		west->client[west->sel]->area = west;
-		arrange_area(p, col);
-		arrange_area(p, west);
+		col->client[i]->area = col;
+		arrange_column(p, col);
+		arrange_column(p, west);
 	} else if(!strncmp(arg, "east", 5) && east) {
 		col->client[i] = west->client[west->sel];
 		col->client[i]->area = col;
 		east->client[east->sel] = c;
 		east->client[east->sel]->area = east;
-		arrange_area(p, col);
-		arrange_area(p, east);
+		arrange_column(p, col);
+		arrange_column(p, east);
 	}
 	focus_client(c);
 }
 
 static void
-xnew_area(void *obj, char *arg)
+xnew_column(void *obj, char *arg)
 {
-	new_area(obj);
+	new_column(obj);
 }
 
 static void
@@ -257,28 +204,37 @@ select_client(void *obj, char *arg)
 	if(!c || !arg)
 		return;
 
-	if(c->area)
-		select_area(c, arg);
+	if(index_of_area(c->page, c->area) > 0)
+		select_column(c, arg);
 	else {
-		for(i = 0; (i < p->floatingsz) && p->floating[i] && (p->floating[i] != c); i++);
+		Area *a = c->area;
+		for(i = 0; (i < a->nclient) && (a->client[i] != c); i++);
 		if(!strncmp(arg, "prev", 5)) {
 			if(!i)
-				for(i = 0; (i < p->floatingsz) && p->floating[i]; i++);
-			focus_client(p->floating[i - 1]);
+				i = a->nclient - 1;
+			focus_client(a->client[i]);
 		} else if(!strncmp(arg, "next", 5)) {
-			if(p->floating[i + 1])
-				focus_client(p->floating[i + 1]);
+			if(i + 1 < a->nclient)
+				focus_client(a->client[i + 1]);
 			else
-				focus_client(p->floating[0]);
+				focus_client(a->client[0]);
 		}
 		else {
 			const char *errstr;
-			for(i = 0; (i < p->floatingsz) && p->floating[i]; i++);
-			i = cext_strtonum(arg, 0, i - 1, &errstr);
+			i = cext_strtonum(arg, 0, a->nclient - 1, &errstr);
 			if(errstr)
 				return;
-			focus_client(p->floating[i]);
+			focus_client(a->client[i]);
 		}
 	}
 }
 
+int
+index_of_area(Page *p, Area *a)
+{
+	int i;
+	for(i = 0; i < p->narea; i++)
+		if(p->area[i] == a)
+			return i;
+	return -1;
+}

@@ -24,7 +24,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     XTextProperty name;
     Client *c = (Client *) cext_emallocz(sizeof(Client));
     XSetWindowAttributes fwa;
-    int bw, th;
+    int bw = def.border, th;
     long msize;
 
 	/* client itself */
@@ -51,7 +51,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     fwa.background_pixmap = ParentRelative;
 	fwa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
 
-    bw = border_width(c);
+	c->frame.border = bw;
     th = tab_height(c);
 	c->frame.rect = c->rect;
     c->frame.rect.width += 2 * bw;
@@ -248,7 +248,7 @@ draw_client(Client *c)
 {
     Draw d = { 0 };
     unsigned int tabh = tab_height(c);
-    int bw = border_width(c);
+    unsigned int bw = c->frame.border;
     XRectangle notch;
 
 	d.drawable = c->frame.win;
@@ -383,14 +383,17 @@ attach_client(Client *c)
 void
 detach_client(Client *c, Bool unmap)
 {
-	if(c->area)
+	if(index_of_area(c->page, c->area) > 0)
 		detach_column(c);
 	else {
-		cext_array_detach((void **)c->page->floating, c, &c->page->floatingsz);
+		Area *a = c->page->area[0];
+		cext_array_detach((void **)a->client, c, &a->clientsz);
+		a->nclient--;
     	if(!c->destroyed) {
         	if(!unmap) {
-            	detached = (Client **)cext_array_attach((void **)detached, c,
-								sizeof(Client *), &detachedsz);
+            	det = (Client **)cext_array_attach((void **)det, c,
+								sizeof(Client *), &detsz);
+				ndet++;
             	unmap_client(c);
         	}
         	c->rect.x = c->frame.rect.x;
@@ -401,19 +404,15 @@ detach_client(Client *c, Bool unmap)
 	c->page = nil;
     if(c->destroyed)
         destroy_client(c);
-    focus_page(page[sel_page]);
+    focus_page(page[sel]);
 }
 
 Client *
 sel_client_of_page(Page *p)
 {
 	if(p) {
-		if(p->is_area) {
-			Area *col = p->area[p->sel_area];
-			return (col && col->client) ? col->client[col->sel] : nil;
-		}
-		else
-			return p->floating ? p->floating[p->sel_float] : nil;
+		Area *a = p->narea ? p->area[p->sel] : nil;
+		return (a && a->nclient) ? a->client[a->sel] : nil;
 	}
 	return nil;
 }
@@ -421,7 +420,7 @@ sel_client_of_page(Page *p)
 Client *
 sel_client()
 {
-	return page ? sel_client_of_page(page[sel_page]) : nil;
+	return npage ? sel_client_of_page(page[sel]) : nil;
 }
 
 Client *
@@ -437,16 +436,8 @@ win_to_frame(Window w)
 unsigned int
 tab_height(Client * c)
 {
-    if(blitz_strtonum(c->file[C_TAB]->content, 0, 1))
+    if(c->frame.title)
         return xfont->ascent + xfont->descent + 4;
-    return 0;
-}
-
-unsigned int
-border_width(Client * c)
-{
-    if(blitz_strtonum(c->file[C_BORDER]->content, 0, 1))
-        return BORDER_WIDTH;
     return 0;
 }
 
@@ -494,17 +485,16 @@ void
 resize_client(Client *c, XRectangle *r, XPoint *pt)
 {
     unsigned int tabh = tab_height(c);
-    unsigned int bw = border_width(c);
+    unsigned int bw = c->frame.border;
 
-	if(c->area)
-		resize_area(c, r, pt);
+	if(index_of_area(c->page, c->area) > 0)
+		resize_column(c, r, pt);
 
     /* resize if client requests special size */
     check_dimensions(c, tabh, bw);
 
-    if(c->file[C_HANDLE_INC]->content
-       && ((char *) c->file[C_HANDLE_INC]->content)[0] == '1')
-        resize_incremental(c, tabh, bw);
+    if(c->inc)
+    	resize_incremental(c, tabh, bw);
 
     XMoveResizeWindow(dpy, c->frame.win, c->frame.rect.x, c->frame.rect.y,
 					  c->frame.rect.width, c->frame.rect.height);
@@ -518,62 +508,6 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 }
 
 static void
-handle_before_read_client(IXPServer * s, File *file)
-{
-	size_t i;
-	char buf[32];
-
-	for(i = 0; (i < clientsz) && client[i]; i++) {
-		Client *c = client[i];
-        if(file == c->file[C_GEOMETRY]) {
-            snprintf(buf, sizeof(buf), "%d %d %d %d", c->frame.rect.x, c->frame.rect.y,
-                     c->frame.rect.width, c->frame.rect.height);
-            if(file->content)
-                free(file->content);
-            file->content = cext_estrdup(buf);
-            file->size = strlen(buf);
-			return;
-        }
-	    else if(file == c->file[C_NAME]) {
-            if(file->content)
-                free(file->content);
-			file->content = cext_estrdup(c->name);
-			file->size = strlen(c->name);
-            return ;
-		}
-	}
-}
-
-static void
-handle_after_write_client(IXPServer *s, File *file)
-{
-	size_t i;
-
-	for(i = 0; (i < clientsz) && client[i]; i++) {
-		Client *c = client[i];
-		if(file == c->file[C_CTL]) {
-            run_action(file, c, client_acttbl);
-            return;
-		}
-		else if(file == c->file[C_TAB] || file == c->file[C_BORDER]
-           || file == c->file[C_HANDLE_INC])
-		{
-			resize_client(c, &c->frame.rect, nil);
-            return;
-        }
-		else if(file == c->file[C_GEOMETRY]) {
-            char *geom = c->file[C_GEOMETRY]->content;
-            if(geom && strrchr(geom, ' ')) {
-                XRectangle frect = c->frame.rect;
-                blitz_strtorect(&rect, &frect, geom);
-                resize_client(c, &frect, 0);
-            }
-            return;
-        }
-	}
-}
-
-static void
 max_client(void *obj, char *arg)
 {
 	Client *c = obj;
@@ -584,7 +518,7 @@ max_client(void *obj, char *arg)
 	}
 	else {
 		c->frame.revert = c->frame.rect;
-		c->frame.rect = c->area ? c->area->rect : rect;
+		c->frame.rect = c->area->rect;
 		XRaiseWindow(dpy, c->frame.win);
 		resize_client(c, &c->frame.rect, nil);
 	}

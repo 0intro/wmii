@@ -43,7 +43,7 @@ init_event_hander()
 }
 
 void
-check_event(Connection * c)
+check_x_event(IXPServer *s, IXPConn *c)
 {
     XEvent ev;
     while(XPending(dpy)) {      /* main evet loop */
@@ -59,7 +59,7 @@ handle_buttonpress(XEvent * e)
     Client *c;
     XButtonPressedEvent *ev = &e->xbutton;
     Align align;
-    int bindex;
+	static char buf[32];
 
     if((c = win_to_frame(ev->window))) {
 		focus_client(c);
@@ -71,10 +71,8 @@ handle_buttonpress(XEvent * e)
 				mouse_resize(c, align);
 			return;
 		}
-		bindex = WM_EVENT_B2PRESS - 2 + ev->button;
-		/* frame mouse handling */
-		if(def[bindex]->content)
-			wmii_spawn(dpy, def[bindex]->content);
+		snprintf(buf, sizeof(buf), "Button%dPress\n", ev->button);
+		do_pend_fcall(buf);
 	}
 	else if((c = win_to_client(ev->window))) {
 		focus_client(c);
@@ -113,7 +111,7 @@ handle_configurerequest(XEvent * e)
 
     if(c) {
         if(c->attached) {
-            bw = border_width(c);
+            bw = c->frame.border;
             tabh = tab_height(c);
         }
         if(ev->value_mask & CWStackMode) {
@@ -210,9 +208,9 @@ handle_maprequest(XEvent * e)
     }
 
 	/* attach heuristic support */
-	if(aqueuesz && aqueue[0]) {
+	if(aqsz && aq[0]) {
 		focus_page(0);
-		cext_array_detach((void **)aqueue, aqueue[0], &aqueuesz);
+		cext_array_detach((void **)aq, aq[0], &aqsz);
 	}
 
     /* there're client which send map requests twice */

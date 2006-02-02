@@ -50,17 +50,17 @@ struct Client {
     int proto;
     unsigned int border;
     unsigned int ignore_unmap;
-	Bool handle_inc;
+	Bool inc;
     Bool destroyed;
 	Bool maximized;
 	Bool attached;
 	Bool managed;
+	Page *page;
 	Area *area;
     Window win;
     Window trans;
     XRectangle rect;
     XSizeHints size;
-	Page *page;
 	struct Frame {
 		Window win;
     	XRectangle rect;
@@ -103,8 +103,9 @@ typedef struct {
 	char selcolor[24];
 	char normcolor[24];
 	char *font;
+	Bool title;
+	Bool inc;
 	unsigned int border;
-	unsigned int title;
 	unsigned int snap;
 	unsigned int selfg;
 	unsigned int selbg;
@@ -160,11 +161,10 @@ void focus_client(Client *c);
 Client *win_to_frame(Window w);
 void resize_client(Client *c, XRectangle * r, XPoint * pt);
 unsigned int tab_height(Client *c);
-unsigned int border_width(Client *c);
 
 /* event.c */
 void init_event_hander();
-void check_event(IXPConn *c);
+void check_x_event(IXPServer *s, IXPConn *c);
 
 /* fs.c */
 void do_pend_fcall(char *event);
@@ -184,6 +184,7 @@ Page *alloc_page();
 void destroy_page(Page *p);
 void focus_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
+int index_of_area(Page *p, Area *a);
 
 /* column.c */
 void arrange_page(Page *p);
