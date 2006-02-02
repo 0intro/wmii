@@ -24,7 +24,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     XTextProperty name;
     Client *c = (Client *) cext_emallocz(sizeof(Client));
     XSetWindowAttributes fwa;
-    int bw = def.border, th;
+    int bw = def.border, bh;
     long msize;
 
 	/* client itself */
@@ -51,14 +51,16 @@ alloc_client(Window w, XWindowAttributes *wa)
     fwa.background_pixmap = ParentRelative;
 	fwa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
 
+	c->frame.bar = def.bar;
 	c->frame.border = bw;
-    th = tab_height(c);
+    bh = bar_height(c);
 	c->frame.rect = c->rect;
     c->frame.rect.width += 2 * bw;
-    c->frame.rect.height += bw + (th ? th : bw);
+    c->frame.rect.height += bw + (bh ? bh : bw);
     c->frame.win = XCreateWindow(dpy, root, c->frame.rect.x, c->frame.rect.y,
 						   c->frame.rect.width, c->frame.rect.height, 0,
-						   DefaultDepth(dpy, screen), CopyFromParent, DefaultVisual(dpy, screen),
+						   DefaultDepth(dpy, screen), CopyFromParent,
+						   DefaultVisual(dpy, screen),
 						   CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
 	c->frame.cursor = normal_cursor;
     XDefineCursor(dpy, c->frame.win, c->frame.cursor);
@@ -247,7 +249,7 @@ void
 draw_client(Client *c)
 {
     Draw d = { 0 };
-    unsigned int tabh = tab_height(c);
+    unsigned int bh = bar_height(c);
     unsigned int bw = c->frame.border;
     XRectangle notch;
 
@@ -274,14 +276,15 @@ draw_client(Client *c)
     }
     XSync(dpy, False);
 
-	/* draw tab */
-    if(!tabh)
+	/* draw bar */
+    if(!bh)
         return;
 
     d.rect.x = 0;
     d.rect.y = 0;
     d.rect.width = c->frame.rect.width;
-    d.rect.height = tabh;
+    d.rect.height = bh;
+	d.notch = nil;
     d.data = c->name;
     blitz_drawlabel(dpy, &d);
     XSync(dpy, False);
@@ -430,9 +433,9 @@ win_to_frame(Window w)
 }
 
 unsigned int
-tab_height(Client * c)
+bar_height(Client * c)
 {
-    if(c->frame.title)
+    if(c->frame.bar)
         return xfont->ascent + xfont->descent + 4;
     return 0;
 }
@@ -480,7 +483,7 @@ resize_incremental(Client *c, unsigned int tabh, unsigned int bw)
 void
 resize_client(Client *c, XRectangle *r, XPoint *pt)
 {
-    unsigned int tabh = tab_height(c);
+    unsigned int bh = bar_height(c);
     unsigned int bw = c->frame.border;
 
 	if(index_of_area(c->page, c->area) > 0)
@@ -489,18 +492,18 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 		c->frame.rect = *r;
 
     /* resize if client requests special size */
-    check_dimensions(c, tabh, bw);
+    check_dimensions(c, bh, bw);
 
     if(c->inc)
-    	resize_incremental(c, tabh, bw);
+    	resize_incremental(c, bh, bw);
 
     XMoveResizeWindow(dpy, c->frame.win, c->frame.rect.x, c->frame.rect.y,
 					  c->frame.rect.width, c->frame.rect.height);
 
 	c->rect.x = bw;
-	c->rect.y = tabh ? tabh : bw;
+	c->rect.y = bh ? bh : bw;
 	c->rect.width = c->frame.rect.width - 2 * bw;
-	c->rect.height = c->frame.rect.height - bw - (tabh ? tabh : bw);
+	c->rect.height = c->frame.rect.height - bw - (bh ? bh : bw);
 	XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 	configure_client(c);
 }

@@ -28,7 +28,7 @@
  * /default/selcolor	Fselcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /default/normcolor	Fnormcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /default/border		Fborder		0..n
- * /default/title 		Ftitle 		0, 1
+ * /default/bar 		Fbar 		0, 1
  * /default/snap 		Fsnap  		0..n
  * /default/inc 		Finc   		0..n
  * /event				Fevent
@@ -44,7 +44,7 @@
  * /1/float/sel/		Dclient
  * /1/float/1/			Dclient
  * /1/float/1/border	Fborder		0..n
- * /1/float/1/title		Ftitle		0, 1
+ * /1/float/1/bar		Fbar		0, 1
  * /1/float/1/inc  		Finc  		0, 1
  * /1/float/1/name		Fname		name of client
  * /1/float/1/geom		Fgeom		geometry of client
@@ -54,7 +54,7 @@
  * /1/1/1/sel/			Dclient
  * /1/1/1/1/			Dclient
  * /1/1/1/border		Fborder		0..n
- * /1/1/1/title			Ftitle		0, 1
+ * /1/1/1/bar			Fbar		0, 1
  * /1/1/1/inc  			Finc  		0, 1
  * /1/1/1/name			Fname		name of client
  * /1/1/1/geom			Fgeom		geometry of client
@@ -151,7 +151,7 @@ qid_to_name(Qid *qid)
 		case Fnormcolor: return "normcolor"; break;
 		case Fborder: return "border"; break;
 		case Fsnap: return "border"; break;
-		case Ftitle: return "title"; break;
+		case Fbar: return "bar"; break;
 		case Finc: return "inc"; break;
 		case Fgeom: return "geometry"; break;
 		case Fname: return "name"; break;
@@ -190,8 +190,8 @@ name_to_type(char *name, unsigned char dtyp)
 		return Fname;
 	if(!strncmp(name, "border", 7))
 		return Fborder;
-	if(!strncmp(name, "title", 6))
-		return Ftitle;
+	if(!strncmp(name, "bar", 4))
+		return Fbar;
 	if(!strncmp(name, "inc", 4))
 		return Finc;
 	if(!strncmp(name, "geometry", 9))
@@ -436,14 +436,14 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		}
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
-    case Ftitle:
+    case Fbar:
 		if(dtyp == Ddefault)
-			snprintf(buf, sizeof(buf), "%d", def.title);
+			snprintf(buf, sizeof(buf), "%d", def.bar);
 		else {
 			idx = cext_strtonum(name, 0, 0xffff, &err);
 			if(err)
 				return 0;
-			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[idx]->frame.title);
+			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[idx]->frame.bar);
 		}
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
@@ -624,7 +624,7 @@ xread(IXPConn *c)
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "border", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "title", &m->qid);
+			c->fcall->count += type_to_stat(&stat, "bar", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "inc", &m->qid);
 			p = ixp_enc_stat(p, &stat);
@@ -670,7 +670,7 @@ xread(IXPConn *c)
 		case Dclient:
 			c->fcall->count = type_to_stat(&stat, "border", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "title", &m->qid);
+			c->fcall->count += type_to_stat(&stat, "bar", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "inc", &m->qid);
 			p = ixp_enc_stat(p, &stat);
@@ -711,11 +711,11 @@ xread(IXPConn *c)
 			c->fcall->count = strlen(buf);
 			memcpy(p, buf, c->fcall->count);
 			break;
-		case Ftitle:
+		case Fbar:
 			if(m->qid.dtype == Ddefault)
-				snprintf(buf, sizeof(buf), "%u", def.title);
+				snprintf(buf, sizeof(buf), "%u", def.bar);
 			else
-				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->frame.title);
+				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->frame.bar);
 			c->fcall->count = strlen(buf);
 			memcpy(p, buf, c->fcall->count);
 			break;
@@ -875,14 +875,14 @@ xwrite(IXPConn *c)
 			/* TODO: resize client */
 		}
 		break;
-	case Ftitle:
+	case Fbar:
 		if(c->fcall->count > sizeof(buf))
 			goto error_xwrite;
 		memcpy(buf, c->fcall->data, c->fcall->count);
 		buf[c->fcall->count] = 0;
 		i = cext_strtonum(buf, 0, 1, &err);
 		if(err) {
-			errstr = "title value out of range 0, 1";
+			errstr = "bar value out of range 0, 1";
 			return -1;
 		}
 		if(m->qid.dtype == Ddefault)

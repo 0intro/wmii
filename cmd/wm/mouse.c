@@ -12,10 +12,10 @@ Cursor
 cursor_for_motion(Client *c, int x, int y)
 {
     int n, e, w, s, tn, te, tw, ts;
-    int tabh, bw;
+    unsigned int bh, bw;
 
     bw = c->frame.border;
-    tabh = tab_height(c);
+    bh = bar_height(c);
 
     if(!bw)
         return normal_cursor;
@@ -26,10 +26,10 @@ cursor_for_motion(Client *c, int x, int y)
     n = y < bw;
     s = y >= c->frame.rect.height - bw;
 
-    tw = x < (tabh ? tabh : 2 * bw);
-    te = x > c->frame.rect.width - (tabh ? tabh : 2 * bw);
-    tn = y < (tabh ? tabh : 2 * bw);
-    ts = s > c->frame.rect.height - (tabh ? tabh : 2 * bw);
+    tw = x < (bh ? bh : 2 * bw);
+    te = x > c->frame.rect.width - (bh ? bh : 2 * bw);
+    tn = y < (bh ? bh : 2 * bw);
+    ts = s > c->frame.rect.height - (bh ? bh : 2 * bw);
 
     if((w && n) || (w && tn) || (n && tw))
         return nw_cursor;

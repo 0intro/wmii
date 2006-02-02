@@ -104,7 +104,7 @@ handle_configurerequest(XEvent * e)
     XConfigureRequestEvent *ev = &e->xconfigurerequest;
     XWindowChanges wc;
     Client *c;
-    unsigned int bw = 0, tabh = 0;
+    unsigned int bw = 0, bh = 0;
 
     c = win_to_client(ev->window);
     ev->value_mask &= ~CWSibling;
@@ -112,7 +112,7 @@ handle_configurerequest(XEvent * e)
     if(c) {
         if(c->attached) {
             bw = c->frame.border;
-            tabh = tab_height(c);
+            bh = bar_height(c);
         }
         if(ev->value_mask & CWStackMode) {
             if(wc.stack_mode == Above)
@@ -120,7 +120,7 @@ handle_configurerequest(XEvent * e)
             else
                 ev->value_mask &= ~CWStackMode;
         }
-        gravitate(c, tabh ? tabh : bw, bw, 1);
+        gravitate(c, bh ? bh : bw, bw, 1);
 
         if(ev->value_mask & CWX)
             c->rect.x = ev->x;
@@ -133,13 +133,13 @@ handle_configurerequest(XEvent * e)
         if(ev->value_mask & CWBorderWidth)
             c->border = ev->border_width;
 
-        gravitate(c, tabh ? tabh : bw, bw, 0);
+        gravitate(c, bh ? bh : bw, bw, 0);
 
         if(c->attached) {
             c->frame.rect.x = wc.x = c->rect.x - bw;
-            c->frame.rect.y = wc.y = c->rect.y - (tabh ? tabh : bw);
+            c->frame.rect.y = wc.y = c->rect.y - (bh ? bh : bw);
             c->frame.rect.width = wc.width = c->rect.width + 2 * bw;
-            c->frame.rect.height = wc.height = c->rect.height + bw + (tabh ? tabh : bw);
+            c->frame.rect.height = wc.height = c->rect.height + bw + (bh ? bh : bw);
             wc.border_width = 1;
             wc.sibling = None;
             wc.stack_mode = ev->detail;
@@ -153,7 +153,7 @@ handle_configurerequest(XEvent * e)
     if(c && c->attached) {
         /* if so, then bw and tabh are already initialized */
         wc.x = bw;
-        wc.y = tabh ? tabh : bw;
+        wc.y = bh ? bh : bw;
     }
     wc.width = ev->width;
     if(!wc.width)

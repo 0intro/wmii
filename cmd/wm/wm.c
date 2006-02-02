@@ -706,13 +706,13 @@ main(int argc, char *argv[])
 	client = det = nil;
 	aq = nil;
 
-	def.font = strdup("fixed");
+	def.font = strdup(BLITZ_FONT);
 	def.border = DEF_BORDER;
 	def.snap = DEF_SNAP;
-	def.title = True;
+	def.bar = True;
 	cext_strlcpy(def.selcolor, BLITZ_SEL_COLOR, sizeof(def.selcolor));
 	blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
-	cext_strlcpy(def.normcolor, BLITZ_SEL_COLOR, sizeof(def.normcolor));
+	cext_strlcpy(def.normcolor, BLITZ_NORM_COLOR, sizeof(def.normcolor));
 	blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
 
     init_atoms();

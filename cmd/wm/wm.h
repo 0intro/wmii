@@ -29,7 +29,7 @@ enum {
 	Fnormcolor,
 	Fborder,
 	Fsnap,
-	Ftitle,
+	Fbar,
 	Finc,
 	Fgeom,
 	Fevent,
@@ -88,7 +88,7 @@ struct Client {
 		XRectangle revert;
     	GC gc;
     	Cursor cursor;
-		Bool title;
+		Bool bar;
     	unsigned int border;
 	} frame;
 };
@@ -125,7 +125,7 @@ typedef struct {
 	char selcolor[24];
 	char normcolor[24];
 	char *font;
-	Bool title;
+	Bool bar;
 	Bool inc;
 	Color sel;
 	Color norm;
@@ -178,7 +178,7 @@ Client *sel_client_of_page(Page *p);
 void focus_client(Client *c);
 Client *win_to_frame(Window w);
 void resize_client(Client *c, XRectangle * r, XPoint * pt);
-unsigned int tab_height(Client *c);
+unsigned int bar_height(Client *c);
 
 /* event.c */
 void init_x_event_handler();
