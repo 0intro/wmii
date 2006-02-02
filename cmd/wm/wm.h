@@ -118,7 +118,7 @@ GC gc_xor;
 GC gc_transient;
 IXPServer srv;
 char *errstr;
-static Qid root_qid;
+Qid root_qid;
 
 /* default values */
 typedef struct {
