@@ -233,8 +233,11 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4))
 			new->path = mkqpath(Dpage, npage, 0, 0);
-		else if(!strncmp(wname, "sel", 4))
+		else if(!strncmp(wname, "sel", 4)) {
+			if(!npage)
+				return -1;
 			new->path = mkqpath(Dpage, sel, 0, 0);
+		}
 		else {
 			i = cext_strtonum(wname, 1, 0xffff, &err);
 			if(err || (i >= npage))
@@ -243,6 +246,8 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		}
 		break;
 	case Darea:
+		if(!npage)
+			return -1;
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4))
 			new->path = mkqpath(Darea, dpg, page[dpg]->narea, 0);
@@ -252,18 +257,20 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			new->path = mkqpath(Darea, dpg, page[dpg]->sel, 0);
 		else {
 			i = cext_strtonum(wname, 1, 0xffff, &err);
-			if(err)
+			if(err || (i >= page[dpg]->narea))
 				return -1;
 			new->path = mkqpath(Darea, dpg, i, 0);
 		}
 		break;
 	case Dclient:
+		if(!npage)
+			return -1;
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "sel", 4))
 			new->path = mkqpath(Dclient, dpg, darea, page[dpg]->area[darea]->sel);
 		else {
 			i = cext_strtonum(wname, 1, 0xffff, &err);
-			if(err)
+			if(err || (i >= page[dpg]->area[darea]->nclient))
 				return -1;
 			new->path = mkqpath(Dclient, dpg, darea, i);
 		}
@@ -393,11 +400,11 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 	Client *c;
 
     switch (type) {
-    case Droot:
-    case Ddefault:
-    case Dpage:
-    case Darea:
     case Dclient:
+    case Darea:
+    case Dpage:
+    case Ddefault:
+    case Droot:
 		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case Fctl:
@@ -501,7 +508,8 @@ xread(IXPConn *c)
 			len = type_to_stat(&stat, "ctl", &m->qid);
 			len += type_to_stat(&stat, "event", &m->qid);
 			len += type_to_stat(&stat, "default", &m->qid);
-			len += type_to_stat(&stat, "sel", &m->qid);
+			if(npage)
+				len += type_to_stat(&stat, "sel", &m->qid);
 			len += type_to_stat(&stat, "new", &m->qid);
 			for(i = 1; i < npage; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
@@ -581,8 +589,10 @@ xread(IXPConn *c)
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "default", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
-			p = ixp_enc_stat(p, &stat);
+			if(npage) {
+				c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
+				p = ixp_enc_stat(p, &stat);
+			}
 			c->fcall->count += type_to_stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 1; i < npage; i++) {
