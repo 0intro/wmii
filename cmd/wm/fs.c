@@ -126,8 +126,12 @@ qid_to_name(Qid *qid)
 			return buf;
 			break;
 		case Darea:
-			if(!area)
-				return "float";
+			if(!area) {
+				if(page[pg]->sel)
+					return "float";
+				else
+					return "sel";
+			}
 			if(page[pg]->narea == area)
 				return "new";
 			if(page[pg]->sel == area)
@@ -246,13 +250,12 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		}
 		break;
 	case Darea:
+		fprintf(stderr, "mkqid(): %s\n", "Darea");
 		if(!npage)
 			return -1;
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4))
 			new->path = mkqpath(Darea, dpg, page[dpg]->narea, 0);
-		else if(!strncmp(wname, "float", 4))
-			new->path = mkqpath(Darea, dpg, 0, 0);
 		else if(!strncmp(wname, "sel", 4))
 			new->path = mkqpath(Darea, dpg, page[dpg]->sel, 0);
 		else {
@@ -497,8 +500,6 @@ xread(IXPConn *c)
 	pg = qpath_page(m->qid.path);
 	area = qpath_area(m->qid.path);
 	cl = qpath_client(m->qid.path);
-	if(cl)
-		cl--;
 
 	c->fcall->count = 0;
 	if(c->fcall->offset) {
@@ -508,10 +509,11 @@ xread(IXPConn *c)
 			len = type_to_stat(&stat, "ctl", &m->qid);
 			len += type_to_stat(&stat, "event", &m->qid);
 			len += type_to_stat(&stat, "default", &m->qid);
-			if(npage)
-				len += type_to_stat(&stat, "sel", &m->qid);
 			len += type_to_stat(&stat, "new", &m->qid);
-			for(i = 1; i < npage; i++) {
+			len += type_to_stat(&stat, "sel", &m->qid);
+			for(i = 0; i < npage; i++) {
+				if(i == sel)
+					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len += type_to_stat(&stat, buf, &m->qid);
 				if(len <= c->fcall->offset)
@@ -520,6 +522,8 @@ xread(IXPConn *c)
 			}
 			/* offset found, proceeding */
 			for(; i < npage; i++) {
+				if(i == sel)
+					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
 				if(c->fcall->count + len > c->fcall->iounit)
@@ -531,10 +535,11 @@ xread(IXPConn *c)
 		case Dpage:
 			/* jump to offset */
 			len = type_to_stat(&stat, "ctl", &m->qid);
-			len += type_to_stat(&stat, "sel", &m->qid);
 			len += type_to_stat(&stat, "new", &m->qid);
-			len += type_to_stat(&stat, "float", &m->qid);
-			for(i = 1; i < page[pg]->narea; i++) {
+			len += type_to_stat(&stat, "sel", &m->qid);
+			for(i = 0; i < page[pg]->narea; i++) {
+				if(i == page[pg]->sel)
+					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len += type_to_stat(&stat, buf, &m->qid);
 				if(len <= c->fcall->offset)
@@ -543,6 +548,8 @@ xread(IXPConn *c)
 			}
 			/* offset found, proceeding */
 			for(; i < page[pg]->narea; i++) {
+				if(i == page[pg]->sel)
+					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
 				if(c->fcall->count + len > c->fcall->iounit)
@@ -556,7 +563,9 @@ xread(IXPConn *c)
 			len = type_to_stat(&stat, "ctl", &m->qid);
 			len += type_to_stat(&stat, "sel", &m->qid);
 			for(i = 0; i < page[pg]->area[area]->nclient; i++) {
-				snprintf(buf, sizeof(buf), "%u", i + 1);
+				if(i == page[pg]->area[area]->sel)
+					continue;
+				snprintf(buf, sizeof(buf), "%u", i);
 				len += type_to_stat(&stat, buf, &m->qid);
 				if(len <= c->fcall->offset)
 					continue;
@@ -564,7 +573,9 @@ xread(IXPConn *c)
 			}
 			/* offset found, proceeding */
 			for(; i < page[pg]->area[area]->nclient; i++) {
-				snprintf(buf, sizeof(buf), "%u", i + 1);
+				if(i == page[pg]->area[area]->sel)
+					continue;
+				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
 				if(c->fcall->count + len > c->fcall->iounit)
 					break;
@@ -589,13 +600,13 @@ xread(IXPConn *c)
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "default", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			if(npage) {
-				c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
-				p = ixp_enc_stat(p, &stat);
-			}
 			c->fcall->count += type_to_stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			for(i = 1; i < npage; i++) {
+			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			for(i = 0; i < npage; i++) {
+				if(i == npage)
+					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
 				if(c->fcall->count + len > c->fcall->iounit)
@@ -621,16 +632,17 @@ xread(IXPConn *c)
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Dpage:
-			alloc_page();
+			if(pg == npage)
+				alloc_page();
 			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
-			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			c->fcall->count += type_to_stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "float", &m->qid);
+			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			for(i = 1; i < page[pg]->narea; i++) {
+			for(i = 0; i < page[pg]->narea; i++) {
+				if(i == page[pg]->area[area]->sel)
+					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
 				if(c->fcall->count + len > c->fcall->iounit)
@@ -642,12 +654,12 @@ xread(IXPConn *c)
 		case Darea:
 			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			if(!page[pg]->area[area]->nclient)
-				break;
 			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < page[pg]->area[area]->nclient; i++) {
-				snprintf(buf, sizeof(buf), "%u", i + 1);
+				if(i == page[pg]->area[area]->sel)
+					continue;
+				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
 				if(c->fcall->count + len > c->fcall->iounit)
 					break;
@@ -777,8 +789,6 @@ xwrite(IXPConn *c)
 	pg = qpath_page(m->qid.path);
 	area = qpath_area(m->qid.path);
 	cl = qpath_client(m->qid.path);
-	if(cl)
-		cl--;
 
 	switch (qpath_type(m->qid.path)) {
 	case Fctl:
