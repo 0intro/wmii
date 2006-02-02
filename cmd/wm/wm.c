@@ -646,6 +646,7 @@ main(int argc, char *argv[])
     int i;
     int checkwm = 0;
     char *address= 0;
+	IXPConn *c;
 
     /* command line args */
     if(argc > 1) {
@@ -697,6 +698,34 @@ main(int argc, char *argv[])
     XSetErrorHandler(0);
     x_error_handler = XSetErrorHandler(wmii_error_handler);
 
+	errstr = nil;
+    if(!address)
+		usage();
+	i = ixp_create_sock(address, &errstr);
+	if(i < 0) {
+        fprintf(stderr, "wmii: fatal: %s\n", errstr);
+		exit(1);
+	}
+
+	/* IXP server */
+	c = cext_emallocz(sizeof(IXPConn));
+	c->fd = i;
+	c->read = new_ixp_conn;
+	c->close = close_ixp_conn;
+	srv.conn = (IXPConn **)cext_array_attach((void **)srv.conn, c,
+					sizeof(IXPConn *), &srv.connsz);
+	/* X server */
+	c = cext_emallocz(sizeof(IXPConn));
+	c->fd = ConnectionNumber(dpy);
+	c->read = check_x_event;
+	srv.conn = (IXPConn **)cext_array_attach((void **)srv.conn, c,
+					sizeof(IXPConn *), &srv.connsz);
+
+    root_qid.type = IXP_QTDIR;
+    root_qid.version = 0;
+    root_qid.path = mkqpath(Droot, 0, 0, 0);
+	root_qid.dir = nil;
+
     init_event_hander();
 
 	ndet = npage = nclient = aqsz = detsz = pagesz = clientsz = sel = 0;
@@ -714,6 +743,11 @@ main(int argc, char *argv[])
     scan_wins();
 
     /* main event loop */
+	errstr = ixp_server_loop(&srv);
+	if(errstr)
+    	fprintf(stderr, "wmii: fatal: %s\n", errstr);
+
+
     cleanup();
     XCloseDisplay(dpy);
 

@@ -61,26 +61,6 @@
  * /1/1/1/ctl 			Fctl 		command interface (client)
  */
 
-/* 8-bit qid.path.type */
-enum {                          
-    Droot,
-	Ddefault,
-	Dpage,
-	Darea,
-	Dclient,
-    Ffont,
-	Fselcolor,
-	Fnormcolor,
-	Fborder,
-	Fsnap,
-	Ftitle,
-	Finc,
-	Fgeom,
-	Fevent,
-	Fctl,
-	Fname
-};
-
 static char E9pversion[] = "9P version not supported";
 static char Enoperm[] = "permission denied";
 static char Enofid[] = "fid not assigned";
@@ -91,12 +71,10 @@ static char Enofunc[] = "function not supported";
 
 const char *err;
 static unsigned char *msg[IXP_MAX_MSG];
-char *errstr = 0;
-static Qid root_qid;
 
 /* IXP stuff */
 
-static unsigned long long
+unsigned long long
 mkqpath(unsigned char type, unsigned short pg, unsigned short area, unsigned short cl)
 {
     return ((unsigned long long) type << 48) | ((unsigned long long) pg << 32)

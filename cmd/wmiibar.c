@@ -71,7 +71,6 @@ static size_t itemsz = 0;
 static size_t iexpand = 0;
 static Item **item = 0;
 static char *address = nil;
-static pid_t mypid = 0;
 static IXPServer srv = { 0 };
 static Qid root_qid;
 static Display *dpy;
@@ -971,8 +970,6 @@ main(int argc, char *argv[])
     root_qid.path = mkqpath(Droot, 0);
 	root_qid.dir = nil;
 
-    mypid = getpid();
-
     /* default settings */
 	new_item();
 	cext_strlcpy(item[0]->color, BLITZ_SEL_COLOR, sizeof(item[0]->color));
@@ -1012,7 +1009,6 @@ main(int argc, char *argv[])
 	draw();
 
 	errstr = ixp_server_loop(&srv);
-
 	if(errstr)
     	fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
 
@@ -1020,6 +1016,7 @@ main(int argc, char *argv[])
 	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++)
 		if(srv.conn[i]->close)
 			srv.conn[i]->close(&srv, srv.conn[i]);
+	XCloseDisplay(dpy);
 
 	return errstr ? 1 : 0;
 }

@@ -17,6 +17,26 @@ enum {
 	NET_WM_DESKTOP          /*  ✗      ✗  */
 };
 
+/* 8-bit qid.path.type */
+enum {                          
+    Droot,
+	Ddefault,
+	Dpage,
+	Darea,
+	Dclient,
+    Ffont,
+	Fselcolor,
+	Fnormcolor,
+	Fborder,
+	Fsnap,
+	Ftitle,
+	Finc,
+	Fgeom,
+	Fevent,
+	Fctl,
+	Fname
+};
+
 #define NET_ATOM_COUNT         3
 
 #define PROTO_DEL              1
@@ -97,6 +117,8 @@ XColor color_xor;
 GC gc_xor;
 GC gc_transient;
 IXPServer srv;
+char *errstr;
+static Qid root_qid;
 
 /* default values */
 typedef struct {
@@ -167,6 +189,8 @@ void init_event_hander();
 void check_x_event(IXPServer *s, IXPConn *c);
 
 /* fs.c */
+unsigned long long mkqpath(unsigned char type, unsigned short pg,
+						unsigned short area, unsigned short cl);
 void do_pend_fcall(char *event);
 void new_ixp_conn(IXPServer *s, IXPConn *c);
 void close_ixp_conn(IXPServer *s, IXPConn *c);
