@@ -722,6 +722,8 @@ main(int argc, char *argv[])
 	aq = nil;
 
 	def.font = strdup("fixed");
+	def.border = BORDER_WIDTH;
+	def.title = True;
 	cext_strlcpy(def.selcolor, BLITZ_SEL_COLOR, sizeof(def.selcolor));
 	blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
 	cext_strlcpy(def.normcolor, BLITZ_SEL_COLOR, sizeof(def.normcolor));

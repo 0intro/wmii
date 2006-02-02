@@ -198,7 +198,7 @@ name_to_type(char *name, unsigned char dtyp)
 		return Fgeom;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
-   	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
+   	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
     if(err)
 		return -1;
 dyndir:
@@ -243,7 +243,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			new->path = mkqpath(Dpage, sel, 0, 0);
 		}
 		else {
-			i = cext_strtonum(wname, 1, 0xffff, &err);
+			i = cext_strtonum(wname, 0, 0xffff, &err);
 			if(err || (i >= npage))
 				return -1;
 			new->path = mkqpath(Dpage, i, 0, 0);
@@ -259,7 +259,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		else if(!strncmp(wname, "sel", 4))
 			new->path = mkqpath(Darea, dpg, page[dpg]->sel, 0);
 		else {
-			i = cext_strtonum(wname, 1, 0xffff, &err);
+			i = cext_strtonum(wname, 0, 0xffff, &err);
 			if(err || (i >= page[dpg]->narea))
 				return -1;
 			new->path = mkqpath(Darea, dpg, i, 0);
@@ -272,7 +272,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		if(!strncmp(wname, "sel", 4))
 			new->path = mkqpath(Dclient, dpg, darea, page[dpg]->area[darea]->sel);
 		else {
-			i = cext_strtonum(wname, 1, 0xffff, &err);
+			i = cext_strtonum(wname, 0, 0xffff, &err);
 			if(err || (i >= page[dpg]->area[darea]->nclient))
 				return -1;
 			new->path = mkqpath(Dclient, dpg, darea, i);
@@ -429,7 +429,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		if(dtyp == Ddefault)
 			snprintf(buf, sizeof(buf), "%d", def.border);
 		else {
-			idx = cext_strtonum(name, 1, 0xffff, &err);
+			idx = cext_strtonum(name, 0, 0xffff, &err);
 			if(err)
 				return 0;
 			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[idx]->frame.border);
@@ -440,7 +440,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		if(dtyp == Ddefault)
 			snprintf(buf, sizeof(buf), "%d", def.title);
 		else {
-			idx = cext_strtonum(name, 1, 0xffff, &err);
+			idx = cext_strtonum(name, 0, 0xffff, &err);
 			if(err)
 				return 0;
 			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[idx]->frame.title);
@@ -451,7 +451,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		if(dtyp == Ddefault)
 			snprintf(buf, sizeof(buf), "%d", def.inc);
 		else {
-			idx = cext_strtonum(name, 1, 0xffff, &err);
+			idx = cext_strtonum(name, 0, 0xffff, &err);
 			if(err)
 				return 0;
 			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[idx]->inc);
@@ -459,7 +459,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
     case Fgeom:
-		idx = cext_strtonum(name, 1, 0xffff, &err);
+		idx = cext_strtonum(name, 0, 0xffff, &err);
 		if(err)
 			return 0;
 		c = page[dpg]->area[darea]->client[idx];
@@ -848,7 +848,7 @@ xwrite(IXPConn *c)
 			goto error_xwrite;
 		memcpy(buf, c->fcall->data, c->fcall->count);
 		buf[c->fcall->count] = 0;
-		i = cext_strtonum(buf, 1, 0xffff, &err);
+		i = cext_strtonum(buf, 0, 0xffff, &err);
 		if(err) {
 			errstr = "snap value out of range 0..0xffff";
 			return -1;
