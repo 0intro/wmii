@@ -368,6 +368,7 @@ attach_client(Client *c)
 						sizeof(Client *), &a->clientsz);
 		a->nclient++;
 	}
+	resize_client(c, &c->frame.rect, nil);
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
 	focus_client(c);
@@ -484,6 +485,8 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 
 	if(index_of_area(c->page, c->area) > 0)
 		resize_column(c, r, pt);
+	else
+		c->frame.rect = *r;
 
     /* resize if client requests special size */
     check_dimensions(c, tabh, bw);
