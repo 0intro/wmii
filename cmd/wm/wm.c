@@ -661,7 +661,6 @@ main(int argc, char *argv[])
             }
         }
     }
-#if 0
     dpy = XOpenDisplay(0);
     if(!dpy) {
         fprintf(stderr, "%s", "wmiiwm: cannot open display\n");
@@ -688,7 +687,6 @@ main(int argc, char *argv[])
     }
     XSetErrorHandler(0);
     x_error_handler = XSetErrorHandler(wmii_error_handler);
-#endif
 	errstr = nil;
     if(!address)
 		usage();
@@ -709,7 +707,6 @@ main(int argc, char *argv[])
     root_qid.type = IXP_QTDIR;
     root_qid.version = 0;
     root_qid.path = mkqpath(Droot, 0, 0, 0);
-#if 0
 	/* X server */
 	c = cext_emallocz(sizeof(IXPConn));
 	c->fd = ConnectionNumber(dpy);
@@ -717,8 +714,7 @@ main(int argc, char *argv[])
 	srv.conn = (IXPConn **)cext_array_attach((void **)srv.conn, c,
 					sizeof(IXPConn *), &srv.connsz);
 
-    init_event_hander();
-#endif
+    init_x_event_handler();
 
 	ndet = npage = nclient = aqsz = detsz = pagesz = clientsz = sel = 0;
     page = nil;
@@ -727,18 +723,16 @@ main(int argc, char *argv[])
 
 	def.font = strdup("fixed");
 	cext_strlcpy(def.selcolor, BLITZ_SEL_COLOR, sizeof(def.selcolor));
-	/*blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);*/
+	blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
 	cext_strlcpy(def.normcolor, BLITZ_SEL_COLOR, sizeof(def.normcolor));
-	/*blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);*/
+	blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
 
-#if 0
     init_atoms();
     init_cursors();
     xfont = blitz_getfont(dpy, def.font);
     wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
     init_screen();
     scan_wins();
-#endif
     /* main event loop */
 	errstr = ixp_server_loop(&srv);
 	if(errstr)
@@ -746,7 +740,7 @@ main(int argc, char *argv[])
 
 
     cleanup();
-    /*XCloseDisplay(dpy);*/
+    XCloseDisplay(dpy);
 
     return 0;
 }
