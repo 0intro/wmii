@@ -65,18 +65,17 @@ static char Enofid[] = "fid not assigned";
 static char Enofile[] = "file not found";
 static char Enomode[] = "mode not supported";
 static char Enofunc[] = "function not supported";
-/*static char Enocommand[] = "command not supported";*/
+static char Enocommand[] = "command not supported";
 
 const char *err;
-static unsigned char *msg[IXP_MAX_MSG];
 
 /* IXP stuff */
 
 unsigned long long
-mkqpath(unsigned char type, unsigned short pg, unsigned short area, unsigned short cl)
+mkqpath(unsigned char type, unsigned short pgid, unsigned short aid, unsigned short cid)
 {
-    return ((unsigned long long) type << 48) | ((unsigned long long) pg << 32)
-		| ((unsigned long long) area << 16) | (unsigned long long) cl;
+    return ((unsigned long long) type << 48) | ((unsigned long long) pgid << 32)
+		| ((unsigned long long) aid << 16) | (unsigned long long) cid;
 }
 
 static unsigned char
@@ -86,19 +85,19 @@ qpath_type(unsigned long long path)
 }
 
 static unsigned short
-qpath_page(unsigned long long path)
+qpath_pgid(unsigned long long path)
 {
     return (path >> 32) & 0xffff;
 }
 
 static unsigned short
-qpath_area(unsigned long long path)
+qpath_aid(unsigned long long path)
 {
     return (path >> 16) & 0xffff;
 }
 
 static unsigned short
-qpath_client(unsigned long long path)
+qpath_cid(unsigned long long path)
 {
     return path & 0xffff;
 }
@@ -107,10 +106,18 @@ static char *
 qid_to_name(Qid *qid)
 {
 	unsigned char typ = qpath_type(qid->path);
-	unsigned short pg = qpath_page(qid->path);
-	unsigned short area = qpath_area(qid->path);
-	unsigned short cl = qpath_client(qid->path);
+	unsigned short pgid = qpath_pgid(qid->path);
+	unsigned short aid = qpath_aid(qid->path);
+	unsigned short cid = qpath_cid(qid->path);
+	int pg = 0, area = 0, cl = 0;
 	static char buf[32];
+
+	if(pgid && ((pg = index_of_page_id(pgid)) == -1))
+		return nil;
+	if(aid && ((area = index_of_area_id(page[pg], aid)) == -1))
+		return nil;
+	if(cid && ((cl = index_of_client_id(page[pg]->area[area], cid)) == -1))
+		return nil;
 
 	switch(typ) {
 		case Droot: return "/"; break;
@@ -212,12 +219,19 @@ static int
 mkqid(Qid *dir, char *wname, Qid *new)
 {
 	unsigned char dtyp = qpath_type(dir->path);
-	unsigned short dpg = qpath_page(dir->path);
-	unsigned short darea = qpath_area(dir->path);
-	unsigned short dcl = qpath_client(dir->path);
+	unsigned short dpgid = qpath_pgid(dir->path);
+	unsigned short daid = qpath_aid(dir->path);
+	unsigned short dcid = qpath_cid(dir->path);
+	int dpg = 0, darea = 0, dcl = 0;
 	unsigned short i;
 	int type = name_to_type(wname, dtyp);
 
+	if(dpgid && ((dpg = index_of_page_id(dpgid)) == -1))
+		return -1;
+	if(daid && ((darea = index_of_area_id(page[dpg], daid)) == -1))
+		return -1;
+	if(dcid && ((dcl = index_of_client_id(page[dpg]->area[darea], dcid)) == -1))
+		return -1;
     if((dir->type != IXP_QTDIR) || (type == -1))
         return -1;
 	
@@ -234,17 +248,17 @@ mkqid(Qid *dir, char *wname, Qid *new)
 	case Dpage:
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4))
-			new->path = mkqpath(Dpage, npage, 0, 0);
+			new->path = mkqpath(Dpage, NEW_OBJ, 0, 0);
 		else if(!strncmp(wname, "sel", 4)) {
 			if(!npage)
 				return -1;
-			new->path = mkqpath(Dpage, sel, 0, 0);
+			new->path = mkqpath(Dpage, page[sel]->id, 0, 0);
 		}
 		else {
 			i = cext_strtonum(wname, 0, 0xffff, &err);
 			if(err || (i >= npage))
 				return -1;
-			new->path = mkqpath(Dpage, i, 0, 0);
+			new->path = mkqpath(Dpage, page[i]->id, 0, 0);
 		}
 		break;
 	case Darea:
@@ -253,125 +267,122 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			return -1;
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4))
-			new->path = mkqpath(Darea, dpg, page[dpg]->narea, 0);
-		else if(!strncmp(wname, "sel", 4))
-			new->path = mkqpath(Darea, dpg, page[dpg]->sel, 0);
+			new->path = mkqpath(Darea, dpgid, NEW_OBJ, 0);
+		else if(!strncmp(wname, "sel", 4)) {
+			Page *p = page[dpg];
+			new->path = mkqpath(Darea, dpgid, p->area[p->sel]->id, 0);
+		}
 		else {
 			i = cext_strtonum(wname, 0, 0xffff, &err);
 			if(err || (i >= page[dpg]->narea))
 				return -1;
-			new->path = mkqpath(Darea, dpg, i, 0);
+			new->path = mkqpath(Darea, dpgid, page[dpg]->area[i]->id, 0);
 		}
 		break;
 	case Dclient:
 		if(!npage)
 			return -1;
 		new->type = IXP_QTDIR;
-		if(!strncmp(wname, "sel", 4))
-			new->path = mkqpath(Dclient, dpg, darea, page[dpg]->area[darea]->sel);
+		if(!strncmp(wname, "sel", 4)) {
+			Area *a = page[dpg]->area[darea];
+			new->path = mkqpath(Dclient, dpgid, daid, a->client[a->sel]->id);
+		}
 		else {
+			Area *a = page[dpg]->area[darea];
 			i = cext_strtonum(wname, 0, 0xffff, &err);
 			if(err || (i >= page[dpg]->area[darea]->nclient))
 				return -1;
-			new->path = mkqpath(Dclient, dpg, darea, i);
+			new->path = mkqpath(Dclient, dpgid, daid, a->client[i]->id);
 		}
 		break;
 	default:
 		new->type = IXP_QTFILE;
-    	new->path = mkqpath(type, dpg, darea, dcl);
+    	new->path = mkqpath(type, dpgid, daid, dcid);
 		break;
 	}
     return 0;
 }
 
-static int
-xversion(IXPConn *c)
+static char *
+xversion(IXPConn *c, Fcall *fcall)
 {
-    if(strncmp(c->fcall->version, IXP_VERSION, strlen(IXP_VERSION))) {
-        errstr = E9pversion;
-        return -1;
-    } else if(c->fcall->maxmsg > IXP_MAX_MSG)
-        c->fcall->maxmsg = IXP_MAX_MSG;
-    c->fcall->id = RVERSION;
-    return 0;
+    if(strncmp(fcall->version, IXP_VERSION, strlen(IXP_VERSION)))
+        return E9pversion;
+    else if(fcall->maxmsg > IXP_MAX_MSG)
+        fcall->maxmsg = IXP_MAX_MSG;
+    fcall->id = RVERSION;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
-static int
-xattach(IXPConn *c)
+static char *
+xattach(IXPConn *c, Fcall *fcall)
 {
     IXPMap *new = cext_emallocz(sizeof(IXPMap));
     new->qid = root_qid;
-    new->fid = c->fcall->fid;
+    new->fid = fcall->fid;
 	c->map = (IXPMap **)cext_array_attach((void **)c->map, new,
 					sizeof(IXPMap *), &c->mapsz);
-    c->fcall->id = RATTACH;
-    c->fcall->qid = root_qid;
-    return 0;
+    fcall->id = RATTACH;
+    fcall->qid = root_qid;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
-static int
-xwalk(IXPConn *c)
+static char *
+xwalk(IXPConn *c, Fcall *fcall)
 {
     unsigned short nwqid = 0;
     Qid dir = root_qid;
     IXPMap *m;
 
-    if(!(m = ixp_server_fid2map(c, c->fcall->fid))) {
-        errstr = Enofid;
-        return -1;
-    }
-    if(c->fcall->fid != c->fcall->newfid
-       && (ixp_server_fid2map(c, c->fcall->newfid))) {
-        errstr = Enofid;
-        return -1;
-    }
-    if(c->fcall->nwname) {
+    if(!(m = ixp_server_fid2map(c, fcall->fid)))
+        return Enofid;
+    if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
+        return Enofid;
+    if(fcall->nwname) {
         dir = m->qid;
-        for(nwqid = 0; (nwqid < c->fcall->nwname)
-            && !mkqid(&dir, c->fcall->wname[nwqid], &c->fcall->wqid[nwqid]); nwqid++)
+        for(nwqid = 0; (nwqid < fcall->nwname)
+            && !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid]); nwqid++)
 		{
 			fprintf(stderr, "dir.dtype=%d\n", dir.dtype);
-            dir = c->fcall->wqid[nwqid];
+            dir = fcall->wqid[nwqid];
 			fprintf(stderr, "walk: qid_to_name()=%s qpath_type(dir.path)=%d dir.dtype=%d\n",
 							qid_to_name(&dir), qpath_type(dir.path), dir.dtype);
 		}
-        if(!nwqid) {
-            errstr = Enofile;
-            return -1;
-        }
+        if(!nwqid) 
+			return Enofile;
     }
     /* a fid will only be valid, if the walk was complete */
-    if(nwqid == c->fcall->nwname) {
-        if(c->fcall->fid != c->fcall->newfid) {
+    if(nwqid == fcall->nwname) {
+        if(fcall->fid != fcall->newfid) {
 			m = cext_emallocz(sizeof(IXPMap));
 			c->map = (IXPMap **)cext_array_attach((void **)c->map, m,
 							sizeof(IXPMap *), &c->mapsz);
         }
         m->qid = dir;
-        m->fid = c->fcall->newfid;
+        m->fid = fcall->newfid;
     }
-    c->fcall->id = RWALK;
-    c->fcall->nwqid = nwqid;
-    return 0;
+    fcall->id = RWALK;
+    fcall->nwqid = nwqid;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
-static int
-xopen(IXPConn *c)
+static char *
+xopen(IXPConn *c, Fcall *fcall)
 {
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
-    if(!(c->fcall->mode | IXP_OREAD) && !(c->fcall->mode | IXP_OWRITE)) {
-        errstr = Enomode;
-        return -1;
-    }
-    c->fcall->id = ROPEN;
-    c->fcall->qid = m->qid;
-    c->fcall->iounit = 2048;
-    return 0;
+    if(!m)
+        return Enofid;
+    if(!(fcall->mode | IXP_OREAD) && !(fcall->mode | IXP_OWRITE))
+        return Enomode;
+    fcall->id = ROPEN;
+    fcall->qid = m->qid;
+    fcall->iounit = 2048;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
 static unsigned int
@@ -393,12 +404,21 @@ static unsigned int
 type_to_stat(Stat *stat, char *name, Qid *dir)
 {
 	unsigned char dtyp = qpath_type(dir->path);
-	unsigned short dpg = qpath_page(dir->path);
-	unsigned short darea = qpath_area(dir->path);
+	unsigned short dpgid = qpath_pgid(dir->path);
+	unsigned short daid = qpath_aid(dir->path);
+	unsigned short dcid = qpath_cid(dir->path);
 	unsigned int idx;
+	int dpg = 0, darea = 0, dcl = 0;
 	int type = name_to_type(name, dtyp);
 	char buf[32];
 	Client *c;
+
+	if(dpgid && ((dpg = index_of_page_id(dpgid)) == -1))
+		return 0;
+	if(daid && ((darea = index_of_area_id(page[dpg], daid)) == -1))
+		return 0;
+	if(dcid && ((dcl = index_of_client_id(page[dpg]->area[darea], dcid)) == -1))
+		return 0;
 
     switch (type) {
     case Dclient:
@@ -465,35 +485,38 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
     case Fname:
 		return mkstat(stat, dir, name, strlen(page[dpg]->area[darea]->client[idx]->name), DMREAD);
         break;
-    default:
-		errstr = "invalid stat";
-		break;
     }
 	return 0;
 }
 
-static int
-xread(IXPConn *c)
+static char *
+xread(IXPConn *c, Fcall *fcall)
 {
 	Stat stat;
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
-    unsigned char typ, *p = c->fcall->data;
-	unsigned short pg, area, cl;
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+    unsigned char *p = fcall->data;
+	unsigned short pgid, aid, cid;
 	unsigned int i, len;
 	char buf[32];
 	Client *client;
+	int pg, area, cl;
 
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
-	typ = qpath_type(m->qid.path);
-	pg = qpath_page(m->qid.path);
-	area = qpath_area(m->qid.path);
-	cl = qpath_client(m->qid.path);
+    if(!m)
+        return Enofid;
 
-	c->fcall->count = 0;
-	if(c->fcall->offset) {
+	pgid = qpath_pgid(m->qid.path);
+	aid = qpath_aid(m->qid.path);
+	cid = qpath_cid(m->qid.path);
+
+	if(pgid && ((pg = index_of_page_id(pgid)) == -1))
+		return Enofile;
+	if(aid && ((area = index_of_area_id(page[pg], aid)) == -1))
+		return Enofile;
+	if(cid && ((cl = index_of_client_id(page[pg]->area[area], cid)) == -1))
+		return Enofile;
+
+	fcall->count = 0;
+	if(fcall->offset) {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
 			/* jump to offset */
@@ -507,7 +530,7 @@ xread(IXPConn *c)
 					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len += type_to_stat(&stat, buf, &m->qid);
-				if(len <= c->fcall->offset)
+				if(len <= fcall->offset)
 					continue;
 				break;
 			}
@@ -517,9 +540,9 @@ xread(IXPConn *c)
 					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
-				if(c->fcall->count + len > c->fcall->iounit)
+				if(fcall->count + len > fcall->iounit)
 					break;
-				c->fcall->count += len;
+				fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
@@ -533,7 +556,7 @@ xread(IXPConn *c)
 					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len += type_to_stat(&stat, buf, &m->qid);
-				if(len <= c->fcall->offset)
+				if(len <= fcall->offset)
 					continue;
 				break;
 			}
@@ -543,9 +566,9 @@ xread(IXPConn *c)
 					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
-				if(c->fcall->count + len > c->fcall->iounit)
+				if(fcall->count + len > fcall->iounit)
 					break;
-				c->fcall->count += len;
+				fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
@@ -558,7 +581,7 @@ xread(IXPConn *c)
 					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len += type_to_stat(&stat, buf, &m->qid);
-				if(len <= c->fcall->offset)
+				if(len <= fcall->offset)
 					continue;
 				break;
 			}
@@ -568,14 +591,15 @@ xread(IXPConn *c)
 					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
-				if(c->fcall->count + len > c->fcall->iounit)
+				if(fcall->count + len > fcall->iounit)
 					break;
-				c->fcall->count += len;
+				fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
 		case Fevent:
-			return 1;
+			ixp_server_enqueue_fcall(c, fcall);
+			return nil;
 			break;
 		default:
 			break;
@@ -585,111 +609,111 @@ xread(IXPConn *c)
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
 			fprintf(stderr, "%s", "Droot dir creation\n");
-			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
+			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "event", &m->qid);
+			fcall->count += type_to_stat(&stat, "event", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "default", &m->qid);
+			fcall->count += type_to_stat(&stat, "default", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "new", &m->qid);
+			fcall->count += type_to_stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
+			fcall->count += type_to_stat(&stat, "sel", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < npage; i++) {
 				if(i == npage)
 					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
-				if(c->fcall->count + len > c->fcall->iounit)
+				if(fcall->count + len > fcall->iounit)
 					break;
-				c->fcall->count += len;
+				fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
 		case Ddefault:
-			c->fcall->count = type_to_stat(&stat, "font", &m->qid);
+			fcall->count = type_to_stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "selcolor", &m->qid);
+			fcall->count += type_to_stat(&stat, "selcolor", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "normcolor", &m->qid);
+			fcall->count += type_to_stat(&stat, "normcolor", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "border", &m->qid);
+			fcall->count += type_to_stat(&stat, "border", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "bar", &m->qid);
+			fcall->count += type_to_stat(&stat, "bar", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "inc", &m->qid);
+			fcall->count += type_to_stat(&stat, "inc", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "snap", &m->qid);
+			fcall->count += type_to_stat(&stat, "snap", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Dpage:
 			if(pg == npage)
 				alloc_page();
-			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
+			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "new", &m->qid);
+			fcall->count += type_to_stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
+			fcall->count += type_to_stat(&stat, "sel", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < page[pg]->narea; i++) {
 				if(i == page[pg]->area[area]->sel)
 					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
-				if(c->fcall->count + len > c->fcall->iounit)
+				if(fcall->count + len > fcall->iounit)
 					break;
-				c->fcall->count += len;
+				fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
 		case Darea:
-			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
+			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "sel", &m->qid);
+			fcall->count += type_to_stat(&stat, "sel", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < page[pg]->area[area]->nclient; i++) {
 				if(i == page[pg]->area[area]->sel)
 					continue;
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
-				if(c->fcall->count + len > c->fcall->iounit)
+				if(fcall->count + len > fcall->iounit)
 					break;
-				c->fcall->count += len;
+				fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
 		case Dclient:
-			c->fcall->count = type_to_stat(&stat, "border", &m->qid);
+			fcall->count = type_to_stat(&stat, "border", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "bar", &m->qid);
+			fcall->count += type_to_stat(&stat, "bar", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "inc", &m->qid);
+			fcall->count += type_to_stat(&stat, "inc", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "name", &m->qid);
+			fcall->count += type_to_stat(&stat, "name", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "geometry", &m->qid);
+			fcall->count += type_to_stat(&stat, "geometry", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "ctl", &m->qid);
+			fcall->count += type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Fctl:
-			errstr = Enoperm;
-			return -1;
+			return Enoperm;
 			break;
 		case Ffont:
-			if((c->fcall->count = strlen(def.font)))
-				memcpy(p, def.font, c->fcall->count);
+			if((fcall->count = strlen(def.font)))
+				memcpy(p, def.font, fcall->count);
 			break;
 		case Fevent:
-			return 1;
+			ixp_server_enqueue_fcall(c, fcall);
+			return nil;
 			break;
 		case Fselcolor:
-			if((c->fcall->count = strlen(def.selcolor)))
-				memcpy(p, def.selcolor, c->fcall->count);
+			if((fcall->count = strlen(def.selcolor)))
+				memcpy(p, def.selcolor, fcall->count);
 			break;
 		case Fnormcolor:
-			if((c->fcall->count = strlen(def.normcolor)))
-				memcpy(p, def.normcolor, c->fcall->count);
+			if((fcall->count = strlen(def.normcolor)))
+				memcpy(p, def.normcolor, fcall->count);
 			break;
 		case Fborder:
 			fprintf(stderr, "Fborder: qpath_type(m->qid.path)=%d, m->qid.dtype=%d\n",
@@ -699,84 +723,86 @@ xread(IXPConn *c)
 				snprintf(buf, sizeof(buf), "%u", def.border);
 			else
 				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->frame.border);
-			c->fcall->count = strlen(buf);
-			memcpy(p, buf, c->fcall->count);
+			fcall->count = strlen(buf);
+			memcpy(p, buf, fcall->count);
 			break;
 		case Fbar:
 			if(m->qid.dtype == Ddefault)
 				snprintf(buf, sizeof(buf), "%u", def.bar);
 			else
 				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->frame.bar);
-			c->fcall->count = strlen(buf);
-			memcpy(p, buf, c->fcall->count);
+			fcall->count = strlen(buf);
+			memcpy(p, buf, fcall->count);
 			break;
 		case Finc:
 			snprintf(buf, sizeof(buf), "%u", def.inc);
-			c->fcall->count = strlen(buf);
-			memcpy(p, buf, c->fcall->count);
+			fcall->count = strlen(buf);
+			memcpy(p, buf, fcall->count);
 			break;
 		case Fgeom:
 			client = page[pg]->area[area]->client[cl];
 			snprintf(buf, sizeof(buf), "%d %d %d %d", client->frame.rect.x, client->frame.rect.y,
 					client->frame.rect.width, client->frame.rect.height);
-			c->fcall->count = strlen(buf);
-			memcpy(p, buf, c->fcall->count);
+			fcall->count = strlen(buf);
+			memcpy(p, buf, fcall->count);
 			break;
 		case Fsnap:
 			snprintf(buf, sizeof(buf), "%u", def.snap);
-			c->fcall->count = strlen(buf);
-			memcpy(p, buf, c->fcall->count);
+			fcall->count = strlen(buf);
+			memcpy(p, buf, fcall->count);
 			break;
 		case Fname:
-			if((c->fcall->count = strlen(page[pg]->area[area]->client[cl]->name)))
-				memcpy(p, page[pg]->area[area]->client[cl]->name, c->fcall->count);
+			if((fcall->count = strlen(page[pg]->area[area]->client[cl]->name)))
+				memcpy(p, page[pg]->area[area]->client[cl]->name, fcall->count);
 			break;
 		default:
-			if(!errstr)
-				errstr = "invalid read";
-			return -1;
+			return "invalid read";
 			break;
 		}
 	}
-	c->fcall->id = RREAD;
-    return 0;
+	fcall->id = RREAD;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
-static int
-xstat(IXPConn *c)
+static char *
+xstat(IXPConn *c, Fcall *fcall)
 {
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	char *name;
 
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
-
+    if(!m)
+        return Enofid;
 	name = qid_to_name(&m->qid);
-	if(!type_to_stat(&c->fcall->stat, name, &m->qid))
-		return -1;
-    c->fcall->id = RSTAT;
-    return 0;
+	if(!type_to_stat(&fcall->stat, name, &m->qid))
+		return Enofile;
+    fcall->id = RSTAT;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
-static int
-xwrite(IXPConn *c)
+static char *
+xwrite(IXPConn *c, Fcall *fcall)
 {
 	char buf[256];
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
-    unsigned char typ;
-	unsigned short pg, area, cl;
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	unsigned short pgid, aid, cid;
 	unsigned short i;
+	int pg, area, cl;
 
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
-	typ = qpath_type(m->qid.path);
-	pg = qpath_page(m->qid.path);
-	area = qpath_area(m->qid.path);
-	cl = qpath_client(m->qid.path);
+    if(!m)
+        return Enofid;
+
+	pgid = qpath_pgid(m->qid.path);
+	aid = qpath_aid(m->qid.path);
+	cid = qpath_cid(m->qid.path);
+
+	if(pgid && ((pg = index_of_page_id(pgid)) == -1))
+		return Enofile;
+	if(aid && ((area = index_of_area_id(page[pg], aid)) == -1))
+		return Enofile;
+	if(cid && ((cl = index_of_client_id(page[pg]->area[area], cid)) == -1))
+		return Enofile;
 
 	switch (qpath_type(m->qid.path)) {
 	case Fctl:
@@ -794,68 +820,59 @@ xwrite(IXPConn *c)
 			/* /TODO: /n/{float,n}/n/ctl commands */
 			break;
 		default:
-			errstr = "command not supported";
-			return -1;
+			return Enocommand;
 		}
 		break;
 	case Ffont:
 		if(def.font)
 			free(def.font);
-		def.font = cext_emallocz(c->fcall->count + 1);
-		memcpy(def.font, c->fcall->data, c->fcall->count);
+		def.font = cext_emallocz(fcall->count + 1);
+		memcpy(def.font, fcall->data, fcall->count);
 		XFreeFont(dpy, xfont);
     	xfont = blitz_getfont(dpy, def.font);
 		/* TODO: update geometry */
 		break;
 	case Fselcolor:
-		if((c->fcall->count != 24)
-			|| (c->fcall->data[0] != '#') || (c->fcall->data[8] != '#')
-		    || (c->fcall->data[16] != '#'))
-		{
-			errstr = "wrong color format";
-			goto error_xwrite;
-		}
-		memcpy(def.selcolor, c->fcall->data, c->fcall->count);
-		def.selcolor[c->fcall->count] = 0;
+		if((fcall->count != 24)
+			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
+		    || (fcall->data[16] != '#')
+		)
+			return "wrong color format";
+		memcpy(def.selcolor, fcall->data, fcall->count);
+		def.selcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
     	XSetForeground(dpy, gc_xor, def.sel.bg);
 		/* TODO: update color */
 		break;
 	case Fnormcolor:
-		if((c->fcall->count != 24)
-			|| (c->fcall->data[0] != '#') || (c->fcall->data[8] != '#')
-		    || (c->fcall->data[16] != '#'))
-		{
-			errstr = "wrong color format";
-			goto error_xwrite;
-		}
-		memcpy(def.normcolor, c->fcall->data, c->fcall->count);
-		def.normcolor[c->fcall->count] = 0;
+		if((fcall->count != 24)
+			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
+		    || (fcall->data[16] != '#')
+		)
+			return "wrong color format";
+		memcpy(def.normcolor, fcall->data, fcall->count);
+		def.normcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
 		/* TODO: update color */
 		break;
 	case Fsnap:
-		if(c->fcall->count > sizeof(buf))
-			goto error_xwrite;
-		memcpy(buf, c->fcall->data, c->fcall->count);
-		buf[c->fcall->count] = 0;
+		if(fcall->count > sizeof(buf))
+			return "snap value out of range 0..0xffff";
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
 		i = cext_strtonum(buf, 0, 0xffff, &err);
-		if(err) {
-			errstr = "snap value out of range 0..0xffff";
-			return -1;
-		}
+		if(err)
+			return "snap value out of range 0..0xffff";
 		def.snap = i;
 		break;
 	case Fborder:
-		if(c->fcall->count > sizeof(buf))
-			goto error_xwrite;
-		memcpy(buf, c->fcall->data, c->fcall->count);
-		buf[c->fcall->count] = 0;
+		if(fcall->count > sizeof(buf))
+			return "border value out of range 0..0xffff";
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
 		i = cext_strtonum(buf, 0, 0xffff, &err);
-		if(err) {
-			errstr = "border value out of range 0..0xffff";
-			return -1;
-		}
+		if(err)
+			return "border value out of range 0..0xffff";
 		if(m->qid.dtype == Ddefault)
 			def.border = i;
 		else {
@@ -864,15 +881,13 @@ xwrite(IXPConn *c)
 		}
 		break;
 	case Fbar:
-		if(c->fcall->count > sizeof(buf))
-			goto error_xwrite;
-		memcpy(buf, c->fcall->data, c->fcall->count);
-		buf[c->fcall->count] = 0;
+		if(fcall->count > sizeof(buf))
+			return "bar value out of range 0, 1";
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
 		i = cext_strtonum(buf, 0, 1, &err);
-		if(err) {
-			errstr = "bar value out of range 0, 1";
-			return -1;
-		}
+		if(err)
+			return "bar value out of range 0, 1";
 		if(m->qid.dtype == Ddefault)
 			def.border = i;
 		else {
@@ -881,122 +896,69 @@ xwrite(IXPConn *c)
 		}
 		break;
 	case Finc:
-		if(c->fcall->count > sizeof(buf))
-			goto error_xwrite;
-		memcpy(buf, c->fcall->data, c->fcall->count);
-		buf[c->fcall->count] = 0;
+		if(fcall->count > sizeof(buf))
+			return "increment value out of range 0, 1";
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
 		i = cext_strtonum(buf, 0, 1, &err);
-		if(err) {
-			errstr = "increment value out of range 0, 1";
-			return -1;
-		}
+		if(err)
+			return "increment value out of range 0, 1";
 		def.inc = i;
 		/* TODO: resize all clients */
 		break;
 	case Fgeom:
-		if(c->fcall->count > sizeof(buf))
-			goto error_xwrite;
-		memcpy(buf, c->fcall->data, c->fcall->count);
-		buf[c->fcall->count] = 0;
+		if(fcall->count > sizeof(buf))
+			return "geometry values out of range";
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
 		blitz_strtorect(&rect, &page[pg]->area[area]->client[cl]->frame.rect, buf);
 		/* TODO: resize client */
 		break;
 	default:
-error_xwrite:
-		if(!errstr)
-			errstr = "invalid write";
-		return -1;
+		return "invalid write";
 		break;
 	}
-    c->fcall->id = RWRITE;
-	return 0;
+    fcall->id = RWRITE;
+	ixp_server_respond_fcall(c, fcall);
+	return nil;
 }
 
-static int
-xclunk(IXPConn *c)
+static char *
+xclunk(IXPConn *c, Fcall *fcall)
 {
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
+    if(!m)
+        return Enofid;
 	cext_array_detach((void **)c->map, m, &c->mapsz);
     free(m);
-    c->fcall->id = RCLUNK;
-    return 0;
-}
-
-void
-close_ixp_conn(IXPServer *s, IXPConn *c)
-{
-	size_t i;
-	cext_array_detach((void **)s->conn, c, &s->connsz);
-	if(c->map) {
-		for(i = 0; (i < c->mapsz) && c->map[i]; i++)
-			free(c->map[i]);
-		free(c->map);
-	}
-	if(c->pend) {
-		for(i = 0; (i < c->pendsz) && c->pend[i]; i++)
-			free(c->pend[i]);
-		free(c->pend);
-	}
-	shutdown(c->fd, SHUT_RDWR);
-	close(c->fd);
-	free(c);
+    fcall->id = RCLUNK;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
 static void
-do_fcall(IXPServer *s, IXPConn *c)
+do_fcall(IXPConn *c)
 {
+	static Fcall fcall;
     unsigned int msize;
-	int ret = -1;
-    errstr = 0;
-	if(!(msize = ixp_recv_message(c->fd, msg, IXP_MAX_MSG, &errstr))) {
-		close_ixp_conn(s, c);
-		return;
-	}
-	if(!c->fcall)
-		c->fcall = cext_emallocz(sizeof(Fcall));
-    if((msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, c->fcall))) {
-		switch(c->fcall->id) {
-		case TVERSION: ret = xversion(c); break;
-		case TATTACH: ret = xattach(c); break;
-		case TWALK: ret = xwalk(c); break;
-		case TOPEN: ret = xopen(c); break;
-		case TREAD: ret = xread(c); break;
-		case TWRITE: ret = xwrite(c); break;
-		case TCLUNK: ret = xclunk(c); break;
-		case TSTAT: ret = xstat(c); break;
-		default:
-			break;
-		}
-	}
-	if(ret == -1) {
-		if(!errstr)
-			errstr = Enofunc;
-		c->fcall->id = RERROR;
-		cext_strlcpy(c->fcall->errstr, errstr, sizeof(c->fcall->errstr));
-	}
-	else if(ret == 1) {
-		c->pend = (Fcall **)cext_array_attach((void **)c->pend, c->fcall, sizeof(Fcall *), &c->pendsz);
-		c->fcall = nil;
-		return;	 /* response asynchroneously */
-	}
-	msize = ixp_fcall_to_msg(c->fcall, msg, IXP_MAX_MSG);
-	if(ixp_send_message(c->fd, msg, msize, &errstr) != msize)
-		close_ixp_conn(s, c);
-}
+	char *errstr;
 
-static Fcall *
-pending(IXPConn *c, unsigned char id)
-{
-	size_t i;
-	for(i = 0; (i < c->pendsz) && c->pend[i]; i++)
-		if(c->pend[i]->id == id)
-			return c->pend[i];
-	return nil;
+	if((msize = ixp_server_receive_fcall(c, &fcall))) {
+		switch(fcall.id) {
+		case TVERSION: errstr = xversion(c, &fcall); break;
+		case TATTACH: errstr = xattach(c, &fcall); break;
+		case TWALK: errstr = xwalk(c, &fcall); break;
+		case TOPEN: errstr = xopen(c, &fcall); break;
+		case TREAD: errstr = xread(c, &fcall); break;
+		case TWRITE: errstr = xwrite(c, &fcall); break;
+		case TCLUNK: errstr = xclunk(c, &fcall); break;
+		case TSTAT: errstr = xstat(c, &fcall); break;
+		default: errstr = Enofunc; break;
+		}
+		if(errstr)
+			ixp_server_respond_error(c, &fcall, errstr);
+	}
 }
 
 void
@@ -1007,44 +969,31 @@ do_pend_fcall(char *event)
 	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++) {
 		IXPConn *c = srv.conn[i];
 		/* all pending TREADs are on /event, so no qid checking necessary */
-		while((fcall = pending(c, TREAD))) {
+		while((fcall = ixp_server_dequeue_fcall(c, TREAD))) {
 			IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 			unsigned char *p = fcall->data;
-			unsigned int msize;
 
 			if(!m) {
-				errstr = Enofid;
-				fcall->id = RERROR;
+				if(ixp_server_respond_error(c, fcall, Enofid))
+					break;
 			}
 			else if(qpath_type(m->qid.path) == Fevent) {
 				fcall->count = strlen(event);
 				memcpy(p, event, fcall->count);
 				fcall->id = RREAD;
+				if(ixp_server_respond_fcall(c, fcall))
+					break;
 			}
-			msize = ixp_fcall_to_msg(fcall, msg, IXP_MAX_MSG);
-			/* remove pending request */
-			cext_array_detach((void **)c->pend, fcall, &c->pendsz);
 			free(fcall);
-			if(ixp_send_message(c->fd, msg, msize, &errstr) != msize) {
-				close_ixp_conn(&srv, c);
-				break;
-			}
 		}
 	}
 }
 
 void
-new_ixp_conn(IXPServer *s, IXPConn *c)
+new_ixp_conn(IXPConn *c)
 {
-    IXPConn *new;
 	int fd = ixp_accept_sock(c->fd);
 	
-	if(fd >= 0) {
-		new = cext_emallocz(sizeof(IXPConn));
-		new->fd = fd;
-		new->read = do_fcall;
-		new->close = close_ixp_conn;
-		s->conn = (IXPConn **)cext_array_attach((void **)s->conn, new,
-					sizeof(IXPConn *), &s->connsz);
-	}
+	if(fd >= 0)
+		ixp_server_open_conn(c->srv, fd, do_fcall, ixp_server_close_conn);
 }

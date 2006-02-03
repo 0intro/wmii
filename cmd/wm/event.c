@@ -43,7 +43,7 @@ init_x_event_handler()
 }
 
 void
-check_x_event(IXPServer *s, IXPConn *c)
+check_x_event(IXPConn *c)
 {
     XEvent ev;
     while(XPending(dpy)) {      /* main evet loop */

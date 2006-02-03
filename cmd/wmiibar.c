@@ -107,7 +107,7 @@ dummy_error_handler(Display * dpy, XErrorEvent * err)
 static void
 new_item()
 {
-	static unsigned int id = 0;
+	static unsigned int id = 1;
 	Item *it = cext_emallocz(sizeof(Item));
 	it->id = id++;
 	if(nitem > 0) {
@@ -603,7 +603,7 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Ditem:
 			if(i > nitem)
-				goto error_xread;
+				return Enofile;
 			if(i == nitem)
 				new_item();
 			fcall->count = type_to_stat(&stat, "color", &m->qid);
@@ -627,7 +627,7 @@ xread(IXPConn *c, Fcall *fcall)
 			if(i == nitem)
 				new_item();
 			if(i >= nitem)
-				goto error_xread;
+				return Enofile;
 			if((fcall->count = strlen(item[i]->data)))
 				memcpy(p, item[i]->data, fcall->count);
 			break;
@@ -635,7 +635,7 @@ xread(IXPConn *c, Fcall *fcall)
 			if(i == nitem)
 				new_item();
 			if(i >= nitem)
-				goto error_xread;
+				return Enofile;
 			if((fcall->count = strlen(item[i]->colstr)))
 				memcpy(p, item[i]->colstr, fcall->count);
 			break;
@@ -644,7 +644,6 @@ xread(IXPConn *c, Fcall *fcall)
 			return nil;
 			break;
 		default:
-	error_xread:
 			return "invalid read";
 			break;
 		}
@@ -718,7 +717,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 				}
 			}
 		}
-		return "item not found";
+		return Enofile;
 		break;
 	case Fdata:
 		{
@@ -726,7 +725,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			if(i == nitem)
 				new_item();
 			if(!i || (i >= nitem))
-				goto error_xwrite;
+				return Enofile;
 			if(len >= sizeof(item[i]->data))
 				len = sizeof(item[i]->data) - 1;
 			memcpy(item[i]->data, fcall->data, len);
@@ -748,7 +747,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		draw();
 		break;
 	default:
-error_xwrite:
 		return "invalid write";
 		break;
 	}
@@ -880,12 +878,12 @@ main(int argc, char *argv[])
 
 	/* IXP server */
 	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);
-	/* X server */
-	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
-
     root_qid.type = IXP_QTDIR;
     root_qid.version = 0;
     root_qid.path = mkqpath(Droot, 0);
+
+	/* X server */
+	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
 
     /* default settings */
 	new_item();

@@ -26,7 +26,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     XSetWindowAttributes fwa;
     int bw = def.border, bh;
     long msize;
-	static unsigned short id = 0;
+	static unsigned short id = 1;
 
 	/* client itself */
 	c->id = id++;

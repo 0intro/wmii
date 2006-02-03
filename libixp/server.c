@@ -111,7 +111,11 @@ ixp_server_fid2map(IXPConn *c, unsigned int fid)
 void
 ixp_server_enqueue_fcall(IXPConn *c, Fcall *fcall)
 {
-	c->pend = (Fcall **)cext_array_attach((void **)c->pend, fcall, sizeof(Fcall *), &c->pendsz);
+	Fcall *new = cext_emallocz(sizeof(Fcall));
+    ixp_fcall_to_msg(fcall, msg, IXP_MAX_MSG);
+	ixp_msg_to_fcall(msg, IXP_MAX_MSG, new);
+	c->pend = (Fcall **)cext_array_attach((void **)c->pend,
+			new, sizeof(Fcall *), &c->pendsz);
 }
 
 Fcall *
@@ -125,6 +129,7 @@ ixp_server_dequeue_fcall(IXPConn *c, unsigned short id)
 			cext_array_detach((void **)c->pend, fcall, &c->pendsz);
 			break;
 		}
+	/* free it */
 	return fcall;
 }
 

@@ -620,8 +620,7 @@ main(int argc, char *argv[])
 {
     int i;
     int checkwm = 0;
-    char *address= 0;
-	IXPConn *c;
+    char *address = nil, *errstr;
 
     /* command line args */
     if(argc > 1) {
@@ -682,23 +681,13 @@ main(int argc, char *argv[])
 	}
 
 	/* IXP server */
-	c = cext_emallocz(sizeof(IXPConn));
-	c->fd = i;
-	c->read = new_ixp_conn;
-	c->close = close_ixp_conn;
-	srv.conn = (IXPConn **)cext_array_attach((void **)srv.conn, c,
-					sizeof(IXPConn *), &srv.connsz);
-
+	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);
     root_qid.type = IXP_QTDIR;
     root_qid.version = 0;
     root_qid.path = mkqpath(Droot, 0, 0, 0);
-	/* X server */
-	c = cext_emallocz(sizeof(IXPConn));
-	c->fd = ConnectionNumber(dpy);
-	c->read = check_x_event;
-	srv.conn = (IXPConn **)cext_array_attach((void **)srv.conn, c,
-					sizeof(IXPConn *), &srv.connsz);
 
+	/* X server */
+	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
     init_x_event_handler();
 
 	ndet = npage = nclient = aqsz = detsz = pagesz = clientsz = sel = 0;
@@ -726,9 +715,9 @@ main(int argc, char *argv[])
 	if(errstr)
     	fprintf(stderr, "wmii: fatal: %s\n", errstr);
 
-
+	ixp_server_close(&srv);
     cleanup();
     XCloseDisplay(dpy);
 
-    return 0;
+    return errstr ? 1 : 0;
 }

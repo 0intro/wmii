@@ -27,7 +27,7 @@ Action page_acttbl[] = {
 Page *
 alloc_page()
 {
-	static unsigned short id = 0;
+	static unsigned short id = 1;
     Page *p = cext_emallocz(sizeof(Page));
 	Area *a = cext_emallocz(sizeof(Area));
 

@@ -120,7 +120,6 @@ XFontStruct *xfont;
 GC gc_xor;
 GC gc_transient;
 IXPServer srv;
-char *errstr;
 Qid root_qid;
 
 /* default values */
@@ -191,14 +190,13 @@ int index_of_client_id(Area *a, unsigned short id);
 
 /* event.c */
 void init_x_event_handler();
-void check_x_event(IXPServer *s, IXPConn *c);
+void check_x_event(IXPConn *c);
 
 /* fs.c */
 unsigned long long mkqpath(unsigned char type, unsigned short pg,
 						unsigned short area, unsigned short cl);
 void do_pend_fcall(char *event);
-void new_ixp_conn(IXPServer *s, IXPConn *c);
-void close_ixp_conn(IXPServer *s, IXPConn *c);
+void new_ixp_conn(IXPConn *c);
 
 /* mouse.c */
 void mouse_resize(Client *c, Align align);

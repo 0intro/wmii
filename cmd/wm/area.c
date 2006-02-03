@@ -10,7 +10,7 @@
 Area *
 alloc_area()
 {
-	static unsigned short id = 0;
+	static unsigned short id = 1;
 	Area *a = cext_emallocz(sizeof(Area));
 
 	a->id = id++;
