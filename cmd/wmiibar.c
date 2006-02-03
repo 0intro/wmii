@@ -767,7 +767,8 @@ xclunk(IXPConn *c, Fcall *fcall)
 	cext_array_detach((void **)c->map, m, &c->mapsz);
     free(m);
     fcall->id = RCLUNK;
-    return 0;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
 static void
@@ -795,16 +796,6 @@ do_fcall(IXPConn *c)
 	}
 }
 
-static Fcall *
-pending(IXPConn *c, unsigned char id)
-{
-	size_t i;
-	for(i = 0; (i < c->pendsz) && c->pend[i]; i++)
-		if(c->pend[i]->id == id)
-			return c->pend[i];
-	return nil;
-}
-
 static void
 do_pend_fcall(char *event)
 {
@@ -813,7 +804,7 @@ do_pend_fcall(char *event)
 	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++) {
 		IXPConn *c = srv.conn[i];
 		/* all pending TREADs are on /event, so no qid checking necessary */
-		while((fcall = pending(c, TREAD))) {
+		while((fcall = ixp_server_dequeue_fcall(c, TREAD))) {
 			IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 			unsigned char *p = fcall->data;
 
@@ -828,7 +819,6 @@ do_pend_fcall(char *event)
 				if(ixp_server_respond_fcall(c, fcall))
 					break;
 			}
-			cext_array_detach((void **)c->pend, fcall, &c->pendsz);
 			free(fcall);
 		}
 	}
@@ -940,9 +930,7 @@ main(int argc, char *argv[])
     	fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
 
 	/* cleanup */
-	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++)
-		if(srv.conn[i]->close)
-			srv.conn[i]->close(srv.conn[i]);
+	ixp_server_close(&srv);
 	XCloseDisplay(dpy);
 
 	return errstr ? 1 : 0;

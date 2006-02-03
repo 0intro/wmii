@@ -108,9 +108,24 @@ ixp_server_fid2map(IXPConn *c, unsigned int fid)
 	return nil;
 }
 
-void ixp_server_enqueue_fcall(IXPConn *c, Fcall *fcall)
+void
+ixp_server_enqueue_fcall(IXPConn *c, Fcall *fcall)
 {
 	c->pend = (Fcall **)cext_array_attach((void **)c->pend, fcall, sizeof(Fcall *), &c->pendsz);
+}
+
+Fcall *
+ixp_server_dequeue_fcall(IXPConn *c, unsigned short id)
+{
+	Fcall *fcall = nil;
+	size_t i;
+	for(i = 0; (i < c->pendsz) && c->pend[i]; i++)
+		if(c->pend[i]->id == id) {
+			fcall = c->pend[i];
+			cext_array_detach((void **)c->pend, fcall, &c->pendsz);
+			break;
+		}
+	return fcall;
 }
 
 unsigned int
@@ -152,4 +167,13 @@ ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr)
 		return -1;
 	}
 	return 0;
+}
+
+void
+ixp_server_close(IXPServer *s)
+{
+	size_t i;
+	for(i = 0; (i < s->connsz) && s->conn[i]; i++)
+		if(s->conn[i]->close)
+			s->conn[i]->close(s->conn[i]);
 }
