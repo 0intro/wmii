@@ -71,3 +71,28 @@ ixp_server_fid2map(IXPConn *c, unsigned int fid)
 			return c->map[i];
 	return nil;
 }
+
+static int
+xcomp_qid(Qid *q1, Qid *q2)
+{
+	return !((q1->type == q2->type) &&
+		     (q1->version == q2->version) &&
+		     (q1->path == q2->path) &&
+		     (q1->dtype == q2->dtype));
+}
+
+void
+ixp_server_close_conns_qid(IXPServer *s, Qid *qid)
+{
+	size_t i, j;
+	for(i = 0; (i < s->connsz) && s->conn[i]; i++) {
+		IXPConn *c = s->conn[i];
+		if(!c->close)
+			continue;
+		for(j = 0; (j < c->mapsz) && c->map[j]; j++)
+			if(!xcomp_qid(qid, &c->map[j]->qid)) {
+				c->close(s, c);
+				break;
+			}
+	}
+}

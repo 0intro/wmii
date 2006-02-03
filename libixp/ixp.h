@@ -281,6 +281,7 @@ unsigned int ixp_msg_to_fcall(void *msg, unsigned int msglen, Fcall *fcall);
 /* server.c */
 char *ixp_server_loop(IXPServer *s);
 IXPMap *ixp_server_fid2map(IXPConn *c, unsigned int fid);
+void ixp_server_close_conns_qid(IXPServer *s, Qid *qid);
 
 /* socket.c */
 int ixp_connect_sock(char *address);

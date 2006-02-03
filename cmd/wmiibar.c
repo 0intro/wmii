@@ -495,6 +495,7 @@ xremove(IXPConn *c)
 {
     IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
 	unsigned short i;
+	Qid qitem, qid;
 
     if(!m) {
         errstr = Enofid;
@@ -503,6 +504,17 @@ xremove(IXPConn *c)
 	i = qpath_item(m->qid.path);
 	if((qpath_type(m->qid.path) == Ditem) && i && (i < nitem)) {
 		Item *it = item[i];
+		qitem = m->qid;
+		/* clunk */
+		cext_array_detach((void **)c->map, m, &c->mapsz);
+    	free(m);
+		/* close all connections which might have outstanding requests to this item */
+		if(!mkqid(&qitem, "data", &qid))
+			ixp_server_close_conns_qid(&srv, &qid);
+		if(!mkqid(&qitem, "color", &qid))
+			ixp_server_close_conns_qid(&srv, &qid);
+		ixp_server_close_conns_qid(&srv, &qitem);
+		/* now detach the item */
 		detach_item(it);
 		free(it);
     	c->fcall->id = RREMOVE;
