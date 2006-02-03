@@ -48,11 +48,14 @@ enum {
 };
 
 typedef struct {
+	unsigned short id;
     char data[256];
 	char colstr[24];
 	Color color;
 	XRectangle rect;
 } Item;
+
+#define NEW_ITEM (unsigned short)0xffff
 
 static char E9pversion[] = "9P version not supported";
 static char Enoperm[] = "permission denied";
@@ -106,7 +109,9 @@ dummy_error_handler(Display * dpy, XErrorEvent * err)
 static void
 new_item()
 {
+	static unsigned int id = 0;
 	Item *it = cext_emallocz(sizeof(Item));
+	it->id = id++;
 	if(nitem > 0) {
 		cext_strlcpy(it->colstr, item[0]->colstr, sizeof(it->colstr));
 		it->color = item[0]->color;
@@ -232,13 +237,24 @@ check_x_event(IXPServer *s, IXPConn *c)
     }
 }
 
+int
+index_of_id(unsigned short id)
+{
+	int i;
+	if(id == NEW_ITEM)
+		return nitem;
+	for(i = 0; i < nitem; i++)
+		if(item[i]->id == id)
+			return i;
+	return -1;
+}
 
 /* IXP stuff */
 
 static unsigned long long
-mkqpath(unsigned char type, unsigned short item)
+mkqpath(unsigned char type, unsigned short id)
 {
-    return ((unsigned long long) item << 8) | (unsigned long long) type;
+    return ((unsigned long long) id << 8) | (unsigned long long) type;
 }
 
 static unsigned char
@@ -248,7 +264,7 @@ qpath_type(unsigned long long path)
 }
 
 static unsigned short
-qpath_item(unsigned long long path)
+qpath_id(unsigned long long path)
 {
     return (path >> 8) & 0xffff;
 }
@@ -257,9 +273,11 @@ static char *
 qid_to_name(Qid *qid)
 {
 	unsigned char type = qpath_type(qid->path);
-	unsigned short i = qpath_item(qid->path);
+	int i = index_of_id(qpath_id(qid->path));
 	static char buf[32];
 
+	if(i == -1)
+		return nil;
 	switch(type) {
 		case Droot: return "/"; break;
 		case Ditem:
@@ -309,10 +327,11 @@ static int
 mkqid(Qid *dir, char *wname, Qid *new)
 {
 	const char *err;
+	unsigned short id = qpath_id(dir->path);
 	int type = name_to_type(wname);
-	unsigned short i = qpath_item(dir->path);
+	int i = index_of_id(id);
 
-    if((dir->type != IXP_QTDIR) || (type == -1))
+    if((i == -1) || (dir->type != IXP_QTDIR) || (type == -1))
         return -1;
 	
 	new->dtype = qpath_type(dir->path);
@@ -324,12 +343,12 @@ mkqid(Qid *dir, char *wname, Qid *new)
 	case Ditem:
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4))
-			new->path = mkqpath(Ditem, nitem);
+			new->path = mkqpath(Ditem, NEW_ITEM);
 		else {
-			unsigned short i = cext_strtonum(wname, 1, 0xffff, &err);
+			i = cext_strtonum(wname, 1, 0xffff, &err);
 			if(err || (i >= nitem))
 				return -1;
-			new->path = mkqpath(Ditem, i);
+			new->path = mkqpath(Ditem, item[i]->id);
 		}
 		break;
 	case Fdata: /* note, Fdata has to be checked before Fcolor, fallthrough */
@@ -340,7 +359,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			return -1;
 	default:
 		new->type = IXP_QTFILE;
-    	new->path = mkqpath(type, i);
+    	new->path = mkqpath(type, id);
 		break;
 	}
     return 0;
@@ -450,9 +469,11 @@ static unsigned int
 type_to_stat(Stat *stat, char *name, Qid *dir)
 {
 	int type = name_to_type(name);
-	unsigned short i = qpath_item(dir->path);
+	int i = index_of_id(qpath_id(dir->path));
 	char buf[16];
 
+	if(i == -1)
+		return 0;
     switch (type) {
     case Droot:
     case Ditem:
@@ -494,26 +515,22 @@ static int
 xremove(IXPConn *c)
 {
     IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
-	unsigned short i;
-	Qid qitem, qid;
+	int i;
 
     if(!m) {
         errstr = Enofid;
         return -1;
     }
-	i = qpath_item(m->qid.path);
+	i = index_of_id(qpath_id(m->qid.path));
+	if(i == -1) {
+		errstr = Enofile;
+		return -1;
+	}
 	if((qpath_type(m->qid.path) == Ditem) && i && (i < nitem)) {
 		Item *it = item[i];
-		qitem = m->qid;
 		/* clunk */
 		cext_array_detach((void **)c->map, m, &c->mapsz);
     	free(m);
-		/* close all connections which might have outstanding requests to this item */
-		if(!mkqid(&qitem, "data", &qid))
-			ixp_server_close_conns_qid(&srv, &qid);
-		if(!mkqid(&qitem, "color", &qid))
-			ixp_server_close_conns_qid(&srv, &qid);
-		ixp_server_close_conns_qid(&srv, &qitem);
 		/* now detach the item */
 		detach_item(it);
 		free(it);
@@ -533,15 +550,19 @@ xread(IXPConn *c)
 	Stat stat;
     IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
     unsigned char *p = c->fcall->data;
-	unsigned short i;
 	unsigned int len;
+	int i;
 	char buf[32];
 
     if(!m) {
         errstr = Enofid;
         return -1;
     }
-	i = qpath_item(m->qid.path);
+	i = index_of_id(qpath_id(m->qid.path));
+	if(i == -1) {
+		errstr = Enofile;
+		return -1;
+	}
 
 	c->fcall->count = 0;
 	if(c->fcall->offset) {
@@ -676,14 +697,18 @@ xwrite(IXPConn *c)
 {
 	char buf[256];
     IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
-	unsigned short i;
+	int i;
 
     if(!m) {
         errstr = Enofid;
         return -1;
     }
 
-	i = qpath_item(m->qid.path);
+	i = index_of_id(qpath_id(m->qid.path));
+	if(i == -1) {
+		errstr = Enofile;
+		return -1;
+	}
 	switch (qpath_type(m->qid.path)) {
 	case Fctl:
 		if(c->fcall->count == 4) {
