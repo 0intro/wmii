@@ -60,25 +60,20 @@ handle_buttonpress(XEvent * e)
     XButtonPressedEvent *ev = &e->xbutton;
     Align align;
 	static char buf[32];
-
-    if((c = win_to_frame(ev->window))) {
+	if((c = win_to_frame(ev->window))) {
 		focus_client(c);
 		if(ev->button == Button1) {
 			align = cursor_to_align(c->frame.cursor);
 			if(align == CENTER)
 				mouse_move(c);
-			else
+			else 
 				mouse_resize(c, align);
-			return;
 		}
-		snprintf(buf, sizeof(buf), "Button%dPress\n", ev->button);
-		do_pend_fcall(buf);
 	}
 	else if((c = win_to_client(ev->window))) {
 		focus_client(c);
 		ev->state &= valid_mask;
 		if(ev->state & Mod1Mask) {
-			Align align;
 			XRaiseWindow(dpy, c->frame.win);
 			switch (ev->button) {
 				case Button1:
@@ -91,11 +86,13 @@ handle_buttonpress(XEvent * e)
 					else
 						mouse_resize(c, align);
 					break;
-				default:
-					break;
 			}
 		}
-    }
+	}
+	if(c) {
+		snprintf(buf, sizeof(buf), "Button%dPress\n", ev->button);
+		do_pend_fcall(buf);
+	}
 }
 
 static void

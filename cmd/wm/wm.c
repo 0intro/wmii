@@ -278,7 +278,7 @@ map_detached_client()
             XMoveResizeWindow(dpy, det[i]->win, cr.x, cr.y, cr.width, cr.height);
             configure_client(det[i]);
             map_client(det[i]);
-			grab_client(det[i], AnyModifier, Button1);
+			grab_window(det[i]->win, AnyModifier, Button1);
             XRaiseWindow(dpy, det[i]->win);
             XSync(dpy, False);
         }
@@ -613,6 +613,29 @@ cleanup()
 	}
     XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 	XSync(dpy, False);
+}
+
+void
+grab_window(Window w, unsigned long mod, unsigned int button)
+{
+    XGrabButton(dpy, button, mod, w, False,
+                ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
+    if((mod != AnyModifier) && num_lock_mask) {
+        XGrabButton(dpy, button, mod | num_lock_mask, w, False,
+                    ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
+        XGrabButton(dpy, button, mod | num_lock_mask | LockMask, w,
+                    False, ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
+    }
+}
+
+void
+ungrab_window(Window w, unsigned long mod, unsigned int button)
+{
+    XUngrabButton(dpy, button, mod, w);
+    if(mod != AnyModifier && num_lock_mask) {
+        XUngrabButton(dpy, button, mod | num_lock_mask, w);
+        XUngrabButton(dpy, button, mod | num_lock_mask | LockMask, w);
+    }
 }
 
 int

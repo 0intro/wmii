@@ -173,8 +173,6 @@ void handle_client_property(Client * c, XPropertyEvent * e);
 void close_client(Client * c);
 void draw_client(Client * client);
 void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert);
-void grab_client(Client * c, unsigned long mod, unsigned int button);
-void ungrab_client(Client * c, unsigned long mod, unsigned int button);
 void unmap_client(Client * c);
 void map_client(Client * c);
 void reparent_client(Client * c, Window w, int x, int y);
@@ -228,5 +226,5 @@ Client *win_to_client(Window w);
 int win_proto(Window w);
 int win_state(Window w);
 /*void handle_after_write(IXPServer * s, File * f);*/
-void detach(Client * f, int client_destroyed);
-void set_client_state(Client * c, int state);
+void grab_window(Window w, unsigned long mod, unsigned int button);
+void ungrab_window(Window w, unsigned long mod, unsigned int button);
