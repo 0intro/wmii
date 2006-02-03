@@ -126,9 +126,8 @@ rectangles(unsigned int *num)
             }
         }
     }
-    if(wins) {
+    if(wins)
         XFree(wins);
-    }
     *num = j;
     return result;
 }
