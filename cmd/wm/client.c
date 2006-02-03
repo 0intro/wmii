@@ -26,8 +26,10 @@ alloc_client(Window w, XWindowAttributes *wa)
     XSetWindowAttributes fwa;
     int bw = def.border, bh;
     long msize;
+	static unsigned short id = 0;
 
 	/* client itself */
+	c->id = id++;
     c->win = w;
     c->rect.x = wa->x;
     c->rect.y = wa->y;
@@ -68,6 +70,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     XSync(dpy, False);
 
 	client = (Client **)cext_array_attach((void **)client, c, sizeof(Client *), &clientsz);
+	nclient++;
 
     return c;
 }
@@ -139,7 +142,6 @@ unmap_client(Client * c)
 void
 reparent_client(Client *c, Window w, int x, int y)
 {
-	c->attached = w == c->frame.win;
     XReparentWindow(dpy, c->win, w, x, y);
     c->ignore_unmap++;
 }
@@ -176,7 +178,7 @@ configure_client(Client * c)
     e.window = c->win;
     e.x = c->rect.x;
     e.y = c->rect.y;
-	if(c->attached) {
+	if(c->page) {
     	e.x += c->frame.rect.x;
     	e.y += c->frame.rect.y;
 	}
@@ -218,7 +220,7 @@ handle_client_property(Client *c, XPropertyEvent *e)
 			cext_strlcpy(c->name, (char*) name.value, sizeof(c->name));
         	free(name.value);
 		}
-        if(c->attached)
+        if(c->page)
             draw_client(c);
 		/* TODO: client update */
         break;
@@ -237,10 +239,17 @@ handle_client_property(Client *c, XPropertyEvent *e)
 void
 destroy_client(Client * c)
 {
+	size_t i;
+	for(i = 0; i < ndet; i++)
+		if(det[i] == c) {
+			cext_array_detach((void **)det, c, &detsz);
+			ndet--;
+			break;
+		}
     XFreeGC(dpy, c->frame.gc);
     XDestroyWindow(dpy, c->frame.win);
-	cext_array_detach((void **)det, c, &detsz);
-	ndet--;
+	cext_array_detach((void **)client, c, &clientsz);
+	nclient--;
     free(c);
 }
 
@@ -382,23 +391,25 @@ attach_client(Client *c)
 void
 detach_client(Client *c, Bool unmap)
 {
-	if(index_of_area(c->page, c->area) > 0)
-		detach_column(c);
-	else {
-		Area *a = c->page->area[0];
-		cext_array_detach((void **)a->client, c, &a->clientsz);
-		a->nclient--;
-    	if(!c->destroyed) {
-        	if(!unmap) {
-            	det = (Client **)cext_array_attach((void **)det, c,
-								sizeof(Client *), &detsz);
-				ndet++;
-            	unmap_client(c);
-        	}
-        	c->rect.x = c->frame.rect.x;
-        	c->rect.y = c->frame.rect.y;
-        	reparent_client(c, root, c->rect.x, c->rect.y);
-    	}
+	if(c->page) {
+		if(index_of_area(c->page, c->area) > 0)
+			detach_column(c);
+		else {
+			Area *a = c->page->area[0];
+			cext_array_detach((void **)a->client, c, &a->clientsz);
+			a->nclient--;
+			if(!c->destroyed) {
+				if(!unmap) {
+					det = (Client **)cext_array_attach((void **)det, c,
+							sizeof(Client *), &detsz);
+					ndet++;
+					unmap_client(c);
+				}
+				c->rect.x = c->frame.rect.x;
+				c->rect.y = c->frame.rect.y;
+				reparent_client(c, root, c->rect.x, c->rect.y);
+			}
+		}
 	}
 	c->page = nil;
     if(c->destroyed)
@@ -526,3 +537,14 @@ max_client(void *obj, char *arg)
 	c->maximized = !c->maximized;
 }
 
+int
+index_of_client_id(Area *a, unsigned short id)
+{
+	int i;
+	if(id == NEW_OBJ)
+		return a->nclient;
+	for(i = 0; i < a->nclient; i++)
+		if(a->client[i]->id == id)
+			return i;
+	return -1;
+}

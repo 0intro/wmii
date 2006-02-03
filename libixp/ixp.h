@@ -206,11 +206,11 @@ struct IXPMap {
 
 struct IXPConn {
     int fd;
-    void (*read) (IXPServer *, IXPConn *);
-    void (*close) (IXPServer *, IXPConn *);
+	IXPServer *srv;
+    void (*read) (IXPConn *);
+    void (*close) (IXPConn *);
 	IXPMap **map;
 	size_t mapsz;
-	Fcall *fcall;
 	Fcall **pend;
 	size_t pendsz;
 };
@@ -279,8 +279,15 @@ unsigned int ixp_fcall_to_msg(Fcall *fcall, void *msg, unsigned int msglen);
 unsigned int ixp_msg_to_fcall(void *msg, unsigned int msglen, Fcall *fcall);
 
 /* server.c */
+IXPConn *ixp_server_open_conn(IXPServer *s, int fd,
+		void (*read)(IXPConn *c), void (*close)(IXPConn *c));
+void ixp_server_close_conn(IXPConn *c);
 char *ixp_server_loop(IXPServer *s);
 IXPMap *ixp_server_fid2map(IXPConn *c, unsigned int fid);
+void ixp_server_enqueue_fcall(IXPConn *c, Fcall *fcall);
+unsigned int ixp_server_receive_fcall(IXPConn *c, Fcall *fcall);
+int ixp_server_respond_fcall(IXPConn *c, Fcall *fcall);
+int ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr);
 
 /* socket.c */
 int ixp_connect_sock(char *address);

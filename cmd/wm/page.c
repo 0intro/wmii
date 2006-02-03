@@ -27,9 +27,11 @@ Action page_acttbl[] = {
 Page *
 alloc_page()
 {
+	static unsigned short id = 0;
     Page *p = cext_emallocz(sizeof(Page));
 	Area *a = cext_emallocz(sizeof(Area));
 
+	p->id = id++;
 	p->area = (Area **)cext_array_attach((void **)p->area, a, sizeof(Area *), &p->areasz);
 	p->narea++;
 	do_pend_fcall("NewPage\n");
@@ -53,9 +55,9 @@ destroy_page(Page *p)
 	for(i = 0; i < naqueue; i++)
 		cext_array_detach((void **)aq, p, &aqsz);
 
-	for(i = 0; i < nclient; i++)
-		if(client[i]->page == p)
-			detach_client(client[i], False);
+	for(i = 0; i < p->narea; i++)
+		destroy_area(p->area[i]);
+	free(p->area);
 
 	for(i = 0; (i < npage) && (p != page[i]); i++);
 	if(sel && (sel == i))
@@ -229,11 +231,13 @@ select_client(void *obj, char *arg)
 }
 
 int
-index_of_area(Page *p, Area *a)
+index_of_page_id(unsigned short id)
 {
 	int i;
-	for(i = 0; i < p->narea; i++)
-		if(p->area[i] == a)
+	if(id == NEW_OBJ)
+		return npage;
+	for(i = 0; i < npage; i++)
+		if(page[i]->id == id)
 			return i;
 	return -1;
 }

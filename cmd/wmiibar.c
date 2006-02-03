@@ -65,8 +65,6 @@ static char Enomode[] = "mode not supported";
 static char Enofunc[] = "function not supported";
 static char Enocommand[] = "command not supported";
 
-static unsigned char *msg[IXP_MAX_MSG];
-char *errstr = 0;
 static size_t nitem = 0;
 static size_t itemsz = 0;
 static size_t iexpand = 0;
@@ -217,7 +215,7 @@ handle_buttonpress(XButtonPressedEvent * e)
 }
 
 static void
-check_x_event(IXPServer *s, IXPConn *c)
+check_x_event(IXPConn *c)
 {
     XEvent e;
 
@@ -365,89 +363,82 @@ mkqid(Qid *dir, char *wname, Qid *new)
     return 0;
 }
 
-static int
-xversion(IXPConn *c)
+
+static char *
+xversion(IXPConn *c, Fcall *fcall)
 {
-    if(strncmp(c->fcall->version, IXP_VERSION, strlen(IXP_VERSION))) {
-        errstr = E9pversion;
-        return -1;
-    } else if(c->fcall->maxmsg > IXP_MAX_MSG)
-        c->fcall->maxmsg = IXP_MAX_MSG;
-    c->fcall->id = RVERSION;
-    return 0;
+    if(strncmp(fcall->version, IXP_VERSION, strlen(IXP_VERSION)))
+        return E9pversion;
+    else if(fcall->maxmsg > IXP_MAX_MSG)
+        fcall->maxmsg = IXP_MAX_MSG;
+    fcall->id = RVERSION;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
-static int
-xattach(IXPConn *c)
+static char *
+xattach(IXPConn *c, Fcall *fcall)
 {
     IXPMap *new = cext_emallocz(sizeof(IXPMap));
     new->qid = root_qid;
-    new->fid = c->fcall->fid;
+    new->fid = fcall->fid;
 	c->map = (IXPMap **)cext_array_attach((void **)c->map, new,
 					sizeof(IXPMap *), &c->mapsz);
-    c->fcall->id = RATTACH;
-    c->fcall->qid = root_qid;
-    return 0;
+    fcall->id = RATTACH;
+    fcall->qid = root_qid;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
-static int
-xwalk(IXPConn *c)
+static char * 
+xwalk(IXPConn *c, Fcall *fcall)
 {
     unsigned short nwqid = 0;
     Qid dir = root_qid;
     IXPMap *m;
 
-    if(!(m = ixp_server_fid2map(c, c->fcall->fid))) {
-        errstr = Enofid;
-        return -1;
-    }
-    if(c->fcall->fid != c->fcall->newfid
-       && (ixp_server_fid2map(c, c->fcall->newfid))) {
-        errstr = Enofid;
-        return -1;
-    }
-    if(c->fcall->nwname) {
+    if(!(m = ixp_server_fid2map(c, fcall->fid)))
+        return Enofid;
+    if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
+        return Enofid;
+    if(fcall->nwname) {
         dir = m->qid;
-        for(nwqid = 0; (nwqid < c->fcall->nwname)
-            && !mkqid(&dir, c->fcall->wname[nwqid], &c->fcall->wqid[nwqid]); nwqid++)
-            dir = c->fcall->wqid[nwqid];
-        if(!nwqid) {
-            errstr = Enofile;
-            return -1;
-        }
+        for(nwqid = 0; (nwqid < fcall->nwname)
+            && !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid]); nwqid++)
+            dir = fcall->wqid[nwqid];
+        if(!nwqid)
+			return Enofile;
     }
     /* a fid will only be valid, if the walk was complete */
-    if(nwqid == c->fcall->nwname) {
-        if(c->fcall->fid != c->fcall->newfid) {
+    if(nwqid == fcall->nwname) {
+        if(fcall->fid != fcall->newfid) {
 			m = cext_emallocz(sizeof(IXPMap));
-			c->map = (IXPMap **)cext_array_attach((void **)c->map, m,
-							sizeof(IXPMap *), &c->mapsz);
+			c->map = (IXPMap **)cext_array_attach((void **)c->map,
+						m, sizeof(IXPMap *), &c->mapsz);
         }
         m->qid = dir;
-        m->fid = c->fcall->newfid;
+        m->fid = fcall->newfid;
     }
-    c->fcall->id = RWALK;
-    c->fcall->nwqid = nwqid;
-    return 0;
+    fcall->id = RWALK;
+    fcall->nwqid = nwqid;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
-static int
-xopen(IXPConn *c)
+static char *
+xopen(IXPConn *c, Fcall *fcall)
 {
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
-    if(!(c->fcall->mode | IXP_OREAD) && !(c->fcall->mode | IXP_OWRITE)) {
-        errstr = Enomode;
-        return -1;
-    }
-    c->fcall->id = ROPEN;
-    c->fcall->qid = m->qid;
-    c->fcall->iounit = 256;
-    return 0;
+    if(!m)
+        return Enofid;
+    if(!(fcall->mode | IXP_OREAD) && !(fcall->mode | IXP_OWRITE))
+        return Enomode;
+    fcall->id = ROPEN;
+    fcall->qid = m->qid;
+    fcall->iounit = 256;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
 static unsigned int
@@ -504,28 +495,21 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 			i = 0;
 		return mkstat(stat, dir, name, 24, DMREAD | DMWRITE);
 		break;
-    default:
-		errstr = "invalid stat";
-		break;
     }
 	return 0;
 }
 
-static int
-xremove(IXPConn *c)
+static char *
+xremove(IXPConn *c, Fcall *fcall)
 {
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	int i;
 
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
+    if(!m)
+        return Enofid;
 	i = index_of_id(qpath_id(m->qid.path));
-	if(i == -1) {
-		errstr = Enofile;
-		return -1;
-	}
+	if(i == -1)
+		return Enofile;
 	if((qpath_type(m->qid.path) == Ditem) && i && (i < nitem)) {
 		Item *it = item[i];
 		/* clunk */
@@ -534,38 +518,34 @@ xremove(IXPConn *c)
 		/* now detach the item */
 		detach_item(it);
 		free(it);
-    	c->fcall->id = RREMOVE;
 		if(iexpand >= nitem)
 			iexpand = 0;
 		draw();
-		return 0;
+    	fcall->id = RREMOVE;
+		ixp_server_respond_fcall(c, fcall);
+		return nil;
 	}
-	errstr = Enoperm;
-	return -1;
+	return Enoperm;
 }
 
-static int
-xread(IXPConn *c)
+static char *
+xread(IXPConn *c, Fcall *fcall)
 {
 	Stat stat;
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
-    unsigned char *p = c->fcall->data;
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+    unsigned char *p = fcall->data;
 	unsigned int len;
 	int i;
 	char buf[32];
 
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
+    if(!m)
+        return Enofid;
 	i = index_of_id(qpath_id(m->qid.path));
-	if(i == -1) {
-		errstr = Enofile;
-		return -1;
-	}
+	if(i == -1)
+		return Enofile;
 
-	c->fcall->count = 0;
-	if(c->fcall->offset) {
+	fcall->count = 0;
+	if(fcall->offset) {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
 			/* jump to offset */
@@ -577,7 +557,7 @@ xread(IXPConn *c)
 			for(i = 1; i < nitem; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len += type_to_stat(&stat, buf, &m->qid);
-				if(len <= c->fcall->offset)
+				if(len <= fcall->offset)
 					continue;
 				break;
 			}
@@ -585,14 +565,15 @@ xread(IXPConn *c)
 			for(; i < nitem; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
-				if(c->fcall->count + len > c->fcall->iounit)
+				if(fcall->count + len > fcall->iounit)
 					break;
-				c->fcall->count += len;
+				fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
 		case Fevent:
-			return 1;
+			ixp_server_enqueue_fcall(c, fcall);
+			return nil;
 			break;
 		default:
 			break;
@@ -601,22 +582,22 @@ xread(IXPConn *c)
 	else {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
-			c->fcall->count = type_to_stat(&stat, "ctl", &m->qid);
+			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "font", &m->qid);
+			fcall->count += type_to_stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "color", &m->qid);
+			fcall->count += type_to_stat(&stat, "color", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "new", &m->qid);
+			fcall->count += type_to_stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "event", &m->qid);
+			fcall->count += type_to_stat(&stat, "event", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 1; i < nitem; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type_to_stat(&stat, buf, &m->qid);
-				if(c->fcall->count + len > c->fcall->iounit)
+				if(fcall->count + len > fcall->iounit)
 					break;
-				c->fcall->count += len;
+				fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
@@ -625,108 +606,100 @@ xread(IXPConn *c)
 				goto error_xread;
 			if(i == nitem)
 				new_item();
-			c->fcall->count = type_to_stat(&stat, "color", &m->qid);
+			fcall->count = type_to_stat(&stat, "color", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			c->fcall->count += type_to_stat(&stat, "data", &m->qid);
+			fcall->count += type_to_stat(&stat, "data", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Fctl:
-			errstr = Enoperm;
-			return -1;
+			return Enoperm;
 			break;
 		case Ffont:
-			if((c->fcall->count = strlen(font)))
-				memcpy(p, font, c->fcall->count);
+			if((fcall->count = strlen(font)))
+				memcpy(p, font, fcall->count);
 			break;
 		case Fexpand:
 			snprintf(buf, sizeof(buf), "%u", iexpand);
-			c->fcall->count = strlen(buf);
-			memcpy(p, buf, c->fcall->count);
-			break;
-		case Fevent:
-			return 1;
+			fcall->count = strlen(buf);
+			memcpy(p, buf, fcall->count);
 			break;
 		case Fdata:
 			if(i == nitem)
 				new_item();
 			if(i >= nitem)
 				goto error_xread;
-			if((c->fcall->count = strlen(item[i]->data)))
-				memcpy(p, item[i]->data, c->fcall->count);
+			if((fcall->count = strlen(item[i]->data)))
+				memcpy(p, item[i]->data, fcall->count);
 			break;
 		case Fcolor:
 			if(i == nitem)
 				new_item();
 			if(i >= nitem)
 				goto error_xread;
-			if((c->fcall->count = strlen(item[i]->colstr)))
-				memcpy(p, item[i]->colstr, c->fcall->count);
+			if((fcall->count = strlen(item[i]->colstr)))
+				memcpy(p, item[i]->colstr, fcall->count);
+			break;
+		case Fevent:
+			ixp_server_enqueue_fcall(c, fcall);
+			return nil;
 			break;
 		default:
 	error_xread:
-			if(!errstr)
-				errstr = "invalid read";
-			return -1;
+			return "invalid read";
 			break;
 		}
 	}
-	c->fcall->id = RREAD;
-    return 0;
+	fcall->id = RREAD;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
-static int
-xstat(IXPConn *c)
+static char *
+xstat(IXPConn *c, Fcall *fcall)
 {
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	char *name;
 
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
-
+    if(!m)
+        return Enofid;
 	name = qid_to_name(&m->qid);
-	if(!type_to_stat(&c->fcall->stat, name, &m->qid))
-		return -1;
-    c->fcall->id = RSTAT;
-    return 0;
+	if(!type_to_stat(&fcall->stat, name, &m->qid))
+		return Enofile;
+    fcall->id = RSTAT;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
-static int
-xwrite(IXPConn *c)
+static char *
+xwrite(IXPConn *c, Fcall *fcall)
 {
 	char buf[256];
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	int i;
 
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
+    if(!m)
+        return Enofid;
 
 	i = index_of_id(qpath_id(m->qid.path));
-	if(i == -1) {
-		errstr = Enofile;
-		return -1;
-	}
+	if(i == -1)
+		return Enofile;
 	switch (qpath_type(m->qid.path)) {
 	case Fctl:
-		if(c->fcall->count == 4) {
-			memcpy(buf, c->fcall->data, 4);
+		if(fcall->count == 4) {
+			memcpy(buf, fcall->data, 4);
 			buf[4] = 0;
 			if(!strncmp(buf, "quit", 5)) {
 				srv.running = 0;
 				break;
 			}
 		}
-		errstr = Enocommand;
-		return -1;
+		return Enocommand;
 		break;
 	case Ffont:
 		if(font)
 			free(font);
-		font = cext_emallocz(c->fcall->count + 1);
-		memcpy(font, c->fcall->data, c->fcall->count);
+		font = cext_emallocz(fcall->count + 1);
+		memcpy(font, fcall->data, fcall->count);
 		XFreeFont(dpy, xfont);
     	xfont = blitz_getfont(dpy, font);
 		update_geometry();
@@ -734,9 +707,9 @@ xwrite(IXPConn *c)
     case Fexpand:
 		{
 			const char *err;
-			if(c->fcall->count && c->fcall->count < 16) {
-				memcpy(buf, c->fcall->data, c->fcall->count);
-				buf[c->fcall->count] = 0;
+			if(fcall->count && fcall->count < 16) {
+				memcpy(buf, fcall->data, fcall->count);
+				buf[fcall->count] = 0;
 				i = (unsigned short) cext_strtonum(buf, 1, 0xffff, &err);
 				if(i < nitem) {
 					iexpand = i;
@@ -745,19 +718,18 @@ xwrite(IXPConn *c)
 				}
 			}
 		}
-		errstr = "item not found";
-		return -1;
+		return "item not found";
 		break;
 	case Fdata:
 		{
-			unsigned int len = c->fcall->count;
+			unsigned int len = fcall->count;
 			if(i == nitem)
 				new_item();
 			if(!i || (i >= nitem))
 				goto error_xwrite;
 			if(len >= sizeof(item[i]->data))
 				len = sizeof(item[i]->data) - 1;
-			memcpy(item[i]->data, c->fcall->data, len);
+			memcpy(item[i]->data, fcall->data, len);
 			item[i]->data[len] = 0;
 			draw();
 		}
@@ -765,105 +737,62 @@ xwrite(IXPConn *c)
 	case Fcolor:
 		if(i == nitem)
 			new_item();
-		if((i >= nitem) || (c->fcall->count != 24)
-			|| (c->fcall->data[0] != '#') || (c->fcall->data[8] != '#')
-		    || (c->fcall->data[16] != '#'))
-		{
-			errstr = "wrong color format";
-			goto error_xwrite;
-		}
-		memcpy(item[i]->colstr, c->fcall->data, c->fcall->count);
-		item[i]->colstr[c->fcall->count] = 0;
+		if((i >= nitem) || (fcall->count != 24)
+			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
+		    || (fcall->data[16] != '#')
+		  )
+			return "wrong color format";
+		memcpy(item[i]->colstr, fcall->data, fcall->count);
+		item[i]->colstr[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, item[i]->colstr, &item[i]->color);
 		draw();
 		break;
 	default:
 error_xwrite:
-		if(!errstr)
-			errstr = "invalid write";
-		return -1;
+		return "invalid write";
 		break;
 	}
-    c->fcall->id = RWRITE;
-	return 0;
+    fcall->id = RWRITE;
+	ixp_server_respond_fcall(c, fcall);
+	return nil;
 }
 
-static int
-xclunk(IXPConn *c)
+static char *
+xclunk(IXPConn *c, Fcall *fcall)
 {
-    IXPMap *m = ixp_server_fid2map(c, c->fcall->fid);
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 
-    if(!m) {
-        errstr = Enofid;
-        return -1;
-    }
+    if(!m)
+        return Enofid;
 	cext_array_detach((void **)c->map, m, &c->mapsz);
     free(m);
-    c->fcall->id = RCLUNK;
+    fcall->id = RCLUNK;
     return 0;
 }
 
 static void
-close_ixp_conn(IXPServer *s, IXPConn *c)
+do_fcall(IXPConn *c)
 {
-	size_t i;
-	cext_array_detach((void **)s->conn, c, &s->connsz);
-	if(c->map) {
-		for(i = 0; (i < c->mapsz) && c->map[i]; i++)
-			free(c->map[i]);
-		free(c->map);
-	}
-	if(c->pend) {
-		for(i = 0; (i < c->pendsz) && c->pend[i]; i++)
-			free(c->pend[i]);
-		free(c->pend);
-	}
-	shutdown(c->fd, SHUT_RDWR);
-	close(c->fd);
-	free(c);
-}
-
-static void
-do_fcall(IXPServer *s, IXPConn *c)
-{
+	static Fcall fcall;
     unsigned int msize;
-	int ret = -1;
-    errstr = 0;
-	if(!(msize = ixp_recv_message(c->fd, msg, IXP_MAX_MSG, &errstr))) {
-		close_ixp_conn(s, c);
-		return;
-	}
-	if(!c->fcall)
-		c->fcall = cext_emallocz(sizeof(Fcall));
-    if((msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, c->fcall))) {
-		switch(c->fcall->id) {
-		case TVERSION: ret = xversion(c); break;
-		case TATTACH: ret = xattach(c); break;
-		case TWALK: ret = xwalk(c); break;
-		case TREMOVE: ret = xremove(c); break;
-		case TOPEN: ret = xopen(c); break;
-		case TREAD: ret = xread(c); break;
-		case TWRITE: ret = xwrite(c); break;
-		case TCLUNK: ret = xclunk(c); break;
-		case TSTAT: ret = xstat(c); break;
-		default:
-			break;
+	char *errstr;
+
+	if((msize = ixp_server_receive_fcall(c, &fcall))) {
+		switch(fcall.id) {
+		case TVERSION: errstr = xversion(c, &fcall); break;
+		case TATTACH: errstr = xattach(c, &fcall); break;
+		case TWALK: errstr = xwalk(c, &fcall); break;
+		case TREMOVE: errstr = xremove(c, &fcall); break;
+		case TOPEN: errstr = xopen(c, &fcall); break;
+		case TREAD: errstr = xread(c, &fcall); break;
+		case TWRITE: errstr = xwrite(c, &fcall); break;
+		case TCLUNK: errstr = xclunk(c, &fcall); break;
+		case TSTAT: errstr = xstat(c, &fcall); break;
+		default: errstr = Enofunc; break;
 		}
+		if(errstr)
+			ixp_server_respond_error(c, &fcall, errstr);
 	}
-	if(ret == -1) {
-		if(!errstr)
-			errstr = Enofunc;
-		c->fcall->id = RERROR;
-		cext_strlcpy(c->fcall->errstr, errstr, sizeof(c->fcall->errstr));
-	}
-	else if(ret == 1) {
-		c->pend = (Fcall **)cext_array_attach((void **)c->pend, c->fcall, sizeof(Fcall *), &c->pendsz);
-		c->fcall = nil;
-		return;	 /* response asynchroneously */
-	}
-	msize = ixp_fcall_to_msg(c->fcall, msg, IXP_MAX_MSG);
-	if(ixp_send_message(c->fd, msg, msize, &errstr) != msize)
-		close_ixp_conn(s, c);
 }
 
 static Fcall *
@@ -887,45 +816,32 @@ do_pend_fcall(char *event)
 		while((fcall = pending(c, TREAD))) {
 			IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 			unsigned char *p = fcall->data;
-			unsigned int msize;
 
 			if(!m) {
-				errstr = Enofid;
-				fcall->id = RERROR;
+				if(ixp_server_respond_error(c, fcall, Enofid))
+					break;
 			}
 			else if(qpath_type(m->qid.path) == Fevent) {
 				fcall->count = strlen(event);
 				memcpy(p, event, fcall->count);
 				fcall->id = RREAD;
+				if(ixp_server_respond_fcall(c, fcall))
+					break;
 			}
-			msize = ixp_fcall_to_msg(fcall, msg, IXP_MAX_MSG);
-			/* remove pending request */
 			cext_array_detach((void **)c->pend, fcall, &c->pendsz);
 			free(fcall);
-			if(ixp_send_message(c->fd, msg, msize, &errstr) != msize) {
-				close_ixp_conn(&srv, c);
-				break;
-			}
 		}
 	}
 }
 
 static void
-new_ixp_conn(IXPServer *s, IXPConn *c)
+new_ixp_conn(IXPConn *c)
 {
-    IXPConn *new;
 	int fd = ixp_accept_sock(c->fd);
 	
-	if(fd >= 0) {
-		new = cext_emallocz(sizeof(IXPConn));
-		new->fd = fd;
-		new->read = do_fcall;
-		new->close = close_ixp_conn;
-		s->conn = (IXPConn **)cext_array_attach((void **)s->conn, new,
-					sizeof(IXPConn *), &s->connsz);
-	}
+	if(fd >= 0)
+		ixp_server_open_conn(c->srv, fd, do_fcall, ixp_server_close_conn);
 }
-
 
 /* main */
 
@@ -933,7 +849,7 @@ int
 main(int argc, char *argv[])
 {
     int i;
-	IXPConn *c;
+	char *errstr;
     XSetWindowAttributes wa;
     XGCValues gcv;
 
@@ -973,18 +889,9 @@ main(int argc, char *argv[])
 	}
 
 	/* IXP server */
-	c = cext_emallocz(sizeof(IXPConn));
-	c->fd = i;
-	c->read = new_ixp_conn;
-	c->close = close_ixp_conn;
-	srv.conn = (IXPConn **)cext_array_attach((void **)srv.conn, c,
-					sizeof(IXPConn *), &srv.connsz);
+	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);
 	/* X server */
-	c = cext_emallocz(sizeof(IXPConn));
-	c->fd = ConnectionNumber(dpy);
-	c->read = check_x_event;
-	srv.conn = (IXPConn **)cext_array_attach((void **)srv.conn, c,
-					sizeof(IXPConn *), &srv.connsz);
+	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
 
     root_qid.type = IXP_QTDIR;
     root_qid.version = 0;
@@ -1035,7 +942,7 @@ main(int argc, char *argv[])
 	/* cleanup */
 	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++)
 		if(srv.conn[i]->close)
-			srv.conn[i]->close(&srv, srv.conn[i]);
+			srv.conn[i]->close(srv.conn[i]);
 	XCloseDisplay(dpy);
 
 	return errstr ? 1 : 0;

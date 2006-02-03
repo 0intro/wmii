@@ -110,7 +110,7 @@ handle_configurerequest(XEvent * e)
     ev->value_mask &= ~CWSibling;
 
     if(c) {
-        if(c->attached) {
+        if(c->page) {
             bw = c->frame.border;
             bh = bar_height(c);
         }
@@ -135,7 +135,7 @@ handle_configurerequest(XEvent * e)
 
         gravitate(c, bh ? bh : bw, bw, 0);
 
-        if(c->attached) {
+        if(c->page) {
             c->frame.rect.x = wc.x = c->rect.x - bw;
             c->frame.rect.y = wc.y = c->rect.y - (bh ? bh : bw);
             c->frame.rect.width = wc.width = c->rect.width + 2 * bw;
@@ -150,7 +150,7 @@ handle_configurerequest(XEvent * e)
     wc.x = ev->x;
     wc.y = ev->y;
 
-    if(c && c->attached) {
+    if(c && c->page) {
         /* if so, then bw and tabh are already initialized */
         wc.x = bw;
         wc.y = bh ? bh : bw;
@@ -217,7 +217,7 @@ handle_maprequest(XEvent * e)
     c = win_to_client(ev->window);
     if(!c)
         c = alloc_client(ev->window, &wa);
-    if(!c->attached)
+    if(!c->page)
         attach_client(c);
 }
 

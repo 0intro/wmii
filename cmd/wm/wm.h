@@ -47,11 +47,14 @@ enum {
 #define ROOT_MASK              SubstructureRedirectMask
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
 
+#define NEW_OBJ                (unsigned short)0xffff
+
 typedef struct Area Area;
 typedef struct Page Page;
 typedef struct Client Client;
 
 struct Area {
+	unsigned short id;
     Client **client;
 	size_t clientsz;
 	size_t sel;
@@ -60,6 +63,7 @@ struct Area {
 };
 
 struct Page {
+	unsigned short id;
 	Area **area;
 	size_t areasz;
 	size_t narea;
@@ -67,6 +71,7 @@ struct Page {
 };
 
 struct Client {
+	unsigned short id;
 	char name[256];
     int proto;
     unsigned int border;
@@ -74,8 +79,6 @@ struct Client {
 	Bool inc;
     Bool destroyed;
 	Bool maximized;
-	Bool attached;
-	Bool managed;
 	Page *page;
 	Area *area;
     Window win;
@@ -157,6 +160,11 @@ Cursor se_cursor;
 
 unsigned int valid_mask, num_lock_mask;
 
+/* area.c */
+Area *alloc_area();
+void destroy_area(Area *a);
+int index_of_area(Page *p, Area *a);
+int index_of_area_id(Page *p, unsigned short id);
 
 /* client.c */
 Client *alloc_client(Window w, XWindowAttributes *wa);
@@ -179,6 +187,7 @@ void focus_client(Client *c);
 Client *win_to_frame(Window w);
 void resize_client(Client *c, XRectangle * r, XPoint * pt);
 unsigned int bar_height(Client *c);
+int index_of_client_id(Area *a, unsigned short id);
 
 /* event.c */
 void init_x_event_handler();
@@ -204,7 +213,7 @@ Page *alloc_page();
 void destroy_page(Page *p);
 void focus_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
-int index_of_area(Page *p, Area *a);
+int index_of_page_id(unsigned short id);
 
 /* column.c */
 void arrange_page(Page *p);

@@ -45,7 +45,6 @@
  * /1/float/1/			Dclient
  * /1/float/1/border	Fborder		0..n
  * /1/float/1/bar		Fbar		0, 1
- * /1/float/1/inc  		Finc  		0, 1
  * /1/float/1/name		Fname		name of client
  * /1/float/1/geom		Fgeom		geometry of client
  * /1/float/1/ctl 		Fctl 		command interface (client)
@@ -55,7 +54,6 @@
  * /1/1/1/1/			Dclient
  * /1/1/1/border		Fborder		0..n
  * /1/1/1/bar			Fbar		0, 1
- * /1/1/1/inc  			Finc  		0, 1
  * /1/1/1/name			Fname		name of client
  * /1/1/1/geom			Fgeom		geometry of client
  * /1/1/1/ctl 			Fctl 		command interface (client)
@@ -448,14 +446,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
     case Finc:
-		if(dtyp == Ddefault)
-			snprintf(buf, sizeof(buf), "%d", def.inc);
-		else {
-			idx = cext_strtonum(name, 0, 0xffff, &err);
-			if(err)
-				return 0;
-			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[idx]->inc);
-		}
+		snprintf(buf, sizeof(buf), "%d", def.inc);
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
     case Fgeom:
@@ -720,10 +711,7 @@ xread(IXPConn *c)
 			memcpy(p, buf, c->fcall->count);
 			break;
 		case Finc:
-			if(m->qid.dtype == Ddefault)
-				snprintf(buf, sizeof(buf), "%u", def.inc);
-			else
-				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->inc);
+			snprintf(buf, sizeof(buf), "%u", def.inc);
 			c->fcall->count = strlen(buf);
 			memcpy(p, buf, c->fcall->count);
 			break;
@@ -902,12 +890,8 @@ xwrite(IXPConn *c)
 			errstr = "increment value out of range 0, 1";
 			return -1;
 		}
-		if(m->qid.dtype == Ddefault)
-			def.inc = i;
-		else {
-			page[pg]->area[area]->client[cl]->inc = i;
-			/* TODO: resize client */
-		}
+		def.inc = i;
+		/* TODO: resize all clients */
 		break;
 	case Fgeom:
 		if(c->fcall->count > sizeof(buf))
