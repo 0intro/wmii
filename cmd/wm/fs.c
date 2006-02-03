@@ -499,7 +499,7 @@ xread(IXPConn *c, Fcall *fcall)
 	unsigned int i, len;
 	char buf[32];
 	Client *client;
-	int pg, area, cl;
+	int pg = 0, area = 0, cl = 0;
 
     if(!m)
         return Enofid;
@@ -788,7 +788,7 @@ xwrite(IXPConn *c, Fcall *fcall)
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned short pgid, aid, cid;
 	unsigned short i;
-	int pg, area, cl;
+	int pg = 0, area = 0, cl = 0;
 
     if(!m)
         return Enofid;
