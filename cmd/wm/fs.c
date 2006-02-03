@@ -207,6 +207,7 @@ name_to_type(char *name, unsigned char dtyp)
     if(err)
 		return -1;
 dyndir:
+	fprintf(stderr, "nametotype: dtyp = %d\n", dtyp);
 	switch(dtyp) {
 	case Droot: return Dpage; break;
 	case Dpage: return Darea; break;
@@ -350,8 +351,10 @@ xwalk(IXPConn *c, Fcall *fcall)
 			fprintf(stderr, "walk: qid_to_name()=%s qpath_type(dir.path)=%d dir.dtype=%d\n",
 							qid_to_name(&dir), qpath_type(dir.path), dir.dtype);
 		}
-        if(!nwqid) 
+        if(!nwqid) {
+			fprintf(stderr, "%s", "xwalk: no sucj file\n");
 			return Enofile;
+		}
     }
     /* a fid will only be valid, if the walk was complete */
     if(nwqid == fcall->nwname) {
@@ -407,11 +410,13 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 	unsigned short dpgid = qpath_pgid(dir->path);
 	unsigned short daid = qpath_aid(dir->path);
 	unsigned short dcid = qpath_cid(dir->path);
-	unsigned int idx;
 	int dpg = 0, darea = 0, dcl = 0;
-	int type = name_to_type(name, dtyp);
+	int type = name_to_type(name, dir->dtype);
 	char buf[32];
 	Client *c;
+
+	fprintf(stderr, "typetostat(0): name=%s dpgid=%d daid=%d dcid=%d\n", name, dpgid, daid, dcid);
+	fprintf(stderr, "typetostat (0) Dtype=%d\n", type);
 
 	if(dpgid && ((dpg = index_of_page_id(dpgid)) == -1))
 		return 0;
@@ -419,6 +424,9 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		return 0;
 	if(dcid && ((dcl = index_of_client_id(page[dpg]->area[darea], dcid)) == -1))
 		return 0;
+
+	fprintf(stderr, "typetostat(1): dpg=%d darea=%d dcl=%d\n", dpg, darea, dcl);
+	fprintf(stderr, "typetostat (3) Dtype=%d\n", type);
 
     switch (type) {
     case Dclient:
@@ -446,23 +454,15 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
     case Fborder:
 		if(dtyp == Ddefault)
 			snprintf(buf, sizeof(buf), "%d", def.border);
-		else {
-			idx = cext_strtonum(name, 0, 0xffff, &err);
-			if(err)
-				return 0;
-			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[idx]->frame.border);
-		}
+		else
+			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[dcl]->frame.border);
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
     case Fbar:
 		if(dtyp == Ddefault)
 			snprintf(buf, sizeof(buf), "%d", def.bar);
-		else {
-			idx = cext_strtonum(name, 0, 0xffff, &err);
-			if(err)
-				return 0;
-			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[idx]->frame.bar);
-		}
+		else
+			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[dcl]->frame.bar);
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
     case Finc:
@@ -470,10 +470,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
     case Fgeom:
-		idx = cext_strtonum(name, 0, 0xffff, &err);
-		if(err)
-			return 0;
-		c = page[dpg]->area[darea]->client[idx];
+		c = page[dpg]->area[darea]->client[dcl];
 		snprintf(buf, sizeof(buf), "%d %d %d %d", c->frame.rect.x, c->frame.rect.y,
 				c->frame.rect.width, c->frame.rect.height);
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
@@ -483,7 +480,8 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
 		break;
     case Fname:
-		return mkstat(stat, dir, name, strlen(page[dpg]->area[darea]->client[idx]->name), DMREAD);
+		c = page[dpg]->area[darea]->client[dcl];
+		return mkstat(stat, dir, name, strlen(c->name), DMREAD);
         break;
     }
 	return 0;
@@ -684,16 +682,19 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Dclient:
 			fcall->count = type_to_stat(&stat, "border", &m->qid);
+			fprintf(stderr, "msgl=%d\n", fcall->count);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "bar", &m->qid);
-			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "inc", &m->qid);
+			fprintf(stderr, "msgl=%d\n", fcall->count);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "name", &m->qid);
+			fprintf(stderr, "msgl=%d\n", fcall->count);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "geometry", &m->qid);
+			fprintf(stderr, "msgl=%d\n", fcall->count);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "ctl", &m->qid);
+			fprintf(stderr, "msgl=%d\n", fcall->count);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Fctl:
@@ -945,6 +946,7 @@ do_fcall(IXPConn *c)
 	char *errstr;
 
 	if((msize = ixp_server_receive_fcall(c, &fcall))) {
+			fprintf(stderr, "do_fcall=%d\n", fcall.id);
 		switch(fcall.id) {
 		case TVERSION: errstr = xversion(c, &fcall); break;
 		case TATTACH: errstr = xattach(c, &fcall); break;
