@@ -23,7 +23,7 @@ fn sigint {
 
 fn statustext {
     # if you need a formatted date, use awk
-    echo (`{date} `{uptime | sed 's/.*://; s/,//g'})
+    echo `{date} `{uptime | sed 's/.*://; s/,//g'}
 }
 
 text=`{statustext}
