@@ -10,16 +10,12 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
-static char *version[] = {
-    "wmiiplumb - window manager improved plumb - " VERSION "\n"
-        " (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
-};
+static char version[] = "wmiiplumb - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
 static void
 usage()
 {
-    fprintf(stderr, "%s\n",
-            "usage: wmiiplumb [-v]\n" "     -v      version info\n");
+    fprintf(stderr, "%s\n", "usage: wmiiplumb [-v]\n");
     exit(1);
 }
 
@@ -56,7 +52,7 @@ main(int argc, char **argv)
     /* command line args */
     if(argc > 1) {
         if(!strncmp(argv[1], "-v", 3)) {
-            fprintf(stdout, "%s", version[0]);
+            fprintf(stdout, "%s", version);
             exit(0);
         } else
             usage();

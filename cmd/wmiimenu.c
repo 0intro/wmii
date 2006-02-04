@@ -82,18 +82,12 @@ static Action acttbl[2] = {
     {"display", display}
 };
 
-static char *version[] = {
-    "wmiimenu - window manager improved menu - " VERSION "\n"
-        " (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
-};
+static char version[] = "wmiimenu - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
 static void
 usage()
 {
-    fprintf(stderr, "%s",
-            "usage: wmiimenu [-s <socket file>] [-r] [-v]\n"
-            "      -s      socket file (default: /tmp/.ixp-$USER/wmiimenu-%s-%s)\n"
-            "      -v      version info\n");
+    fprintf(stderr, "%s", "usage: wmiimenu [-a <address>] [-r] [-v]\n");
     exit(1);
 }
 

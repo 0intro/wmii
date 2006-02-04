@@ -66,18 +66,12 @@ static Action acttbl[] = {
     {0, 0}
 };
 
-static char *version[] = {
-    "wmiikeys - window manager improved keys - " VERSION "\n"
-        "  (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
-};
+static char version[] = "wmiikeys - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
 static void
 usage()
 {
-    fprintf(stderr, "%s",
-            "usage: wmiikeys [-s <socket file>] [-v]\n"
-            "      -s     socket file (default: /tmp/.ixp-$USER/wmiikeys-$WMII_IDENT)\n"
-            "      -v     version info\n");
+    fprintf(stderr, "%s", "usage: wmiikeys [-a <address>] [-v]\n");
     exit(1);
 }
 

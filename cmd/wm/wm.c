@@ -43,19 +43,12 @@ Action wm_acttbl[] = {
     {0, 0}
 };
 
-char *version[] = {
-    "wmiiwm - window manager improved 2 - " VERSION "\n"
-        " (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
-};
+static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
 static void
 usage()
 {
-    fprintf(stderr, "%s",
-            "usage: wmiiwm -a <address> [-c] [-v]\n"
-            "      -a    address\n"
-            "      -c    checks if another WM is already running\n"
-            "      -v    version info\n");
+    fprintf(stderr, "%s", "usage: wmiiwm -a <address> [-c] [-v]\n");
     exit(1);
 }
 
@@ -650,7 +643,7 @@ main(int argc, char *argv[])
         for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
             switch (argv[i][1]) {
             case 'v':
-                fprintf(stdout, "%s", version[0]);
+                fprintf(stdout, "%s", version);
                 exit(0);
                 break;
             case 'c':

@@ -83,18 +83,12 @@ static Pixmap pmap;
 
 static void do_pend_fcall(char *event);
 
-static char *version[] = {
-    "wmiibar - window manager improved bar - " VERSION "\n"
-        "  (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
-};
+static char version[] = "wmiibar - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
 static void
 usage()
 {
-    fprintf(stderr, "%s",
-            "usage: wmiibar -a <server address> [-v]\n"
-            "      -a    server address \n"
-            "      -v    version info\n");
+    fprintf(stderr, "%s", "usage: wmiibar -a <address> [-v]\n");
     exit(1);
 }
 
@@ -845,7 +839,7 @@ main(int argc, char *argv[])
     for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
         switch (argv[i][1]) {
         case 'v':
-            fprintf(stdout, "%s", version[0]);
+            fprintf(stdout, "%s", version);
             exit(0);
             break;
         case 'a':

@@ -13,17 +13,12 @@
 
 #include "cext.h"
 
-static char *version[] = {
-    "wmiiwarp - window manager improved warp - " VERSION "\n"
-        " (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
-};
+static char version[] = "wmiiwarp - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
 static void
 usage()
 {
-    fprintf(stderr,
-            "usage: wmiiwarp [-v] <x> <y>\n"
-            "      -v     version info\n");
+    fprintf(stderr, "%s", "usage: wmiiwarp <x> <y> [-v]\n");
     exit(1);
 }
 
@@ -38,7 +33,7 @@ main(int argc, char **argv)
     if(argc < 2)
         usage();
     if(!strncmp(argv[1], "-v", 2)) {
-        fprintf(stdout, "%s", version[0]);
+        fprintf(stdout, "%s", version);
         exit(0);
     }
     dpy = XOpenDisplay(0);

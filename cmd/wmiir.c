@@ -14,23 +14,12 @@
 
 static IXPClient c = { 0 };
 
-static char *version[] = {
-    "wmiir - window manager improved remote - " VERSION "\n"
-        " (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
-};
+static char version[] = "wmiir - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
 static void
 usage()
 {
-    fprintf(stderr, "%s",
-            "usage: wmiir [-a <server address>] [-v] <command>\n"
-            "      -a    server address (default: $WMII_ADDRESS)\n"
-            "      -v    version info\n"
-            "valid commands:\n"
-            "      create <file>      -- creates file and writes data from stdin to file\n"
-            "      read   <file/dir>  -- prints file/directory contents\n"
-            "      write  <file>      -- writes data from stdin to file\n"
-            "      remove <file>      -- removes file\n");
+    fprintf(stderr, "%s", "usage: wmiir [-a <address>] [-v] <command>\n");
     exit(1);
 }
 
@@ -190,7 +179,7 @@ main(int argc, char *argv[])
 	for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
 		switch (argv[i][1]) {
 			case 'v':
-				fprintf(stderr, "%s", version[0]);
+				fprintf(stderr, "%s", version);
 				exit(0);
 				break;
 			case 'a':

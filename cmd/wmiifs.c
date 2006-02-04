@@ -47,17 +47,12 @@ static Action acttbl[] = {
     {0, 0}
 };
 
-static char *version[] = {
-    "wmiifs - window manager improved filesystem - " VERSION "\n"
-        " (C)opyright MMVI Anselm R. Garbe\n", 0
-};
+static char version[] = "wmiifs - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
 static void
 usage()
 {
-    fprintf(stderr,
-            "usage: wmiifs -s <socket file> [-v]\n"
-            "      -s   socket file\n" "      -v   version info\n");
+    fprintf(stderr, "usage: wmiifs -a <address> [-v]\n");
     exit(1);
 }
 
