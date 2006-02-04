@@ -264,13 +264,15 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		break;
 	case Darea:
 		fprintf(stderr, "mkqid(): %s\n", "Darea");
-		if(!npage)
+		if(!npage || dpg >= npage)
 			return -1;
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4))
 			new->path = mkqpath(Darea, dpgid, NEW_OBJ, 0);
 		else if(!strncmp(wname, "sel", 4)) {
 			Page *p = page[dpg];
+			if(!p->narea)
+				return -1;
 			new->path = mkqpath(Darea, dpgid, p->area[p->sel]->id, 0);
 		}
 		else {
@@ -286,6 +288,8 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "sel", 4)) {
 			Area *a = page[dpg]->area[darea];
+			if(!a->nclient)
+				return -1;
 			new->path = mkqpath(Dclient, dpgid, daid, a->client[a->sel]->id);
 		}
 		else {
