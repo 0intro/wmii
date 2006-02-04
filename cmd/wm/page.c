@@ -102,6 +102,7 @@ focus_page(Page *p)
 	do_pend_fcall("SelPage\n");
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &sel, 1);
+	XSync(dpy, False);
 }
 
 XRectangle *

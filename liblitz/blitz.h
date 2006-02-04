@@ -7,8 +7,8 @@
 #include <cext.h>
 
 #define BLITZ_FONT				"fixed"
-#define BLITZ_SEL_COLOR			"#eeeeee #005577 #006699"
-#define BLITZ_NORM_COLOR		"#bbbbbb #222222 #000000"
+#define BLITZ_SEL_COLOR			"#ffffff #666699 #9999cc"
+#define BLITZ_NORM_COLOR		"#ffffff #888888 #bbbbbb"
 
 typedef enum {
 	CENTER, WEST, NWEST, NORTH, NEAST, EAST,

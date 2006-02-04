@@ -109,7 +109,7 @@ focus_client(Client *c)
 	}
 	
 	if(old && (old != c)) {
-		grab_window(old->win, AnyModifier, AnyButton);
+		grab_window(old->win, AnyModifier, Button1);
     	draw_client(old);
 	}
 	ungrab_window(c->win, AnyModifier, AnyButton);
@@ -481,7 +481,7 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
     /* resize if client requests special size */
     check_dimensions(c, bh, bw);
 
-    if(c->inc)
+    if(def.inc)
     	resize_incremental(c, bh, bw);
 
     XMoveResizeWindow(dpy, c->frame.win, c->frame.rect.x, c->frame.rect.y,

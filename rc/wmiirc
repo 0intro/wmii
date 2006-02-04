@@ -1,16 +1,11 @@
 #!9PREFIX/bin/rc
 # configure wmii
 
-TAB=0
+CLIENT_BAR=0
 HANDLEINC=1
-BAR_ALIGN=south
 
-SEL_BG_COLOR='#204060'
-SEL_FG_COLOR='#eeeeee'
-SEL_BORDER_COLOR='#406080'
-NORM_BG_COLOR='#000000'
-NORM_FG_COLOR='#eeeeee'
-NORM_BORDER_COLOR='#111111'
+SEL_COLOR="#ffffff #666699 #9999cc"
+NORM_COLOR="#ffffff #888888 #bbbbbb"
 FONT='-artwiz-snap-normal-*-*-*-*-*-*-*-*-*-*-*'
 
 MODKEY=M
@@ -148,5 +143,5 @@ normstyle /menu/nstyle >[2]/dev/null
 selstyle /menu/sstyle >[2]/dev/null
 
 # MISC
-xsetroot -solid black
+xsetroot -mod 2 2 -bg \#666699 -fg \#888888
 status&

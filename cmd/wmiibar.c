@@ -265,10 +265,11 @@ static char *
 qid_to_name(Qid *qid)
 {
 	unsigned char type = qpath_type(qid->path);
-	int i = index_of_id(qpath_id(qid->path));
+	unsigned short id = qpath_id(qid->path);
+	int i;
 	static char buf[32];
 
-	if(i == -1)
+	if(id && ((i = index_of_id(id)) == -1))
 		return nil;
 	switch(type) {
 		case Droot: return "/"; break;
@@ -320,10 +321,12 @@ mkqid(Qid *dir, char *wname, Qid *new)
 {
 	const char *err;
 	unsigned short id = qpath_id(dir->path);
-	int type = name_to_type(wname);
-	int i = index_of_id(id);
+	int i, type = name_to_type(wname);
+   
+    if(id && ((i = index_of_id(id)) == -1))
+		return -1;
 
-    if((i == -1) || (dir->type != IXP_QTDIR) || (type == -1))
+    if((dir->type != IXP_QTDIR) || (type == -1))
         return -1;
 	
 	new->dtype = qpath_type(dir->path);
@@ -453,11 +456,11 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 static unsigned int
 type_to_stat(Stat *stat, char *name, Qid *dir)
 {
-	int type = name_to_type(name);
-	int i = index_of_id(qpath_id(dir->path));
+	int i, type = name_to_type(name);
+	unsigned short id = qpath_id(dir->path);
 	char buf[16];
 
-	if(i == -1)
+	if(id && ((i = index_of_id(id)) == -1))
 		return 0;
     switch (type) {
     case Droot:
@@ -497,12 +500,12 @@ static char *
 xremove(IXPConn *c, Fcall *fcall)
 {
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	unsigned short id = qpath_id(m->qid.path);
 	int i;
 
     if(!m)
         return Enofid;
-	i = index_of_id(qpath_id(m->qid.path));
-	if(i == -1)
+	if(id && ((i = qpath_id(id)) == -1))
 		return Enofile;
 	if((qpath_type(m->qid.path) == Ditem) && i && (i < nitem)) {
 		Item *it = item[i];
@@ -527,6 +530,7 @@ xread(IXPConn *c, Fcall *fcall)
 {
 	Stat stat;
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	unsigned short id;
     unsigned char *p = fcall->data;
 	unsigned int len;
 	int i;
@@ -534,8 +538,8 @@ xread(IXPConn *c, Fcall *fcall)
 
     if(!m)
         return Enofid;
-	i = index_of_id(qpath_id(m->qid.path));
-	if(i == -1)
+	id = qpath_id(m->qid.path);
+	if(id && ((i = index_of_id(id)) == -1))
 		return Enofile;
 
 	fcall->count = 0;
@@ -668,13 +672,13 @@ xwrite(IXPConn *c, Fcall *fcall)
 {
 	char buf[256];
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	unsigned short id;
 	int i;
 
     if(!m)
         return Enofid;
-
-	i = index_of_id(qpath_id(m->qid.path));
-	if(i == -1)
+	id = qpath_id(m->qid.path);
+	if(id && ((i = index_of_id(id)) == -1))
 		return Enofile;
 	switch (qpath_type(m->qid.path)) {
 	case Fctl:

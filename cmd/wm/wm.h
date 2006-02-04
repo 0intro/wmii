@@ -76,7 +76,6 @@ struct Client {
     int proto;
     unsigned int border;
     unsigned int ignore_unmap;
-	Bool inc;
     Bool destroyed;
 	Bool maximized;
 	Page *page;
