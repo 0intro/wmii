@@ -88,9 +88,6 @@ static char *version[] = {
         "  (C)opyright MMIV-MMVI Anselm R. Garbe\n", 0
 };
 
-static char ctlusage[] =
-	"quit                           - quits the bar\n";
-
 static void
 usage()
 {
@@ -474,7 +471,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case Fctl:
-		return mkstat(stat, dir, name, 0, DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, 0, DMWRITE);
 		break;
     case Fevent:
 		return mkstat(stat, dir, name, 0, DMREAD);
@@ -615,8 +612,7 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Fctl:
-			fcall->count = strlen(ctlusage);
-			memcpy(p, ctlusage, fcall->count);
+			return Enoperm;
 			break;
 		case Ffont:
 			if((fcall->count = strlen(font)))

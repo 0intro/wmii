@@ -60,7 +60,7 @@
  */
 
 static char E9pversion[] = "9P version not supported";
-/*static char Enoperm[] = "permission denied";*/
+static char Enoperm[] = "permission denied";
 static char Enofid[] = "fid not assigned";
 static char Enofile[] = "file not found";
 static char Enomode[] = "mode not supported";
@@ -68,24 +68,6 @@ static char Enofunc[] = "function not supported";
 static char Enocommand[] = "command not supported";
 
 const char *err;
-
-static char Droot_ctlusage[] =
-	"quit                           - quits the wm\n"
-	"select [next | prev] [index]   - selects the page\n"
-	"attach                         - attaches the client\n"
-	"detached                       - shows detached clients\n"
-	"pager                          - shows the pager\n";
-
-static char Dpage_ctlusage[] =
-	"exec <command>                 - executes command in page\n"
-	"select [next | prev] [index]   - selects the area\n";
-
-static char Darea_ctlusage[] =
-	"select [next | prev] [index]   - selects the client\n";
-
-static char Dclient_ctlusage[] =
-	"detach                         - detaches the client\n"
-	"kill                           - kills the client\n";
 
 /* IXP stuff */
 
@@ -455,7 +437,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case Fctl:
-		return mkstat(stat, dir, name, 0, DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, 0, DMWRITE);
 		break;
     case Fevent:
 		return mkstat(stat, dir, name, 0, DMREAD);
@@ -716,20 +698,8 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Fctl:
-			{
-			char *us = nil;
-			switch(m->qid.dtype) {
-			case Droot: us = Droot_ctlusage; break;
-			case Dpage: us = Dpage_ctlusage; break;
-			case Darea: us = Darea_ctlusage; break;
-			case Dclient: us = Dclient_ctlusage; break;
-			}
-			if(!us)
-				return Enofile;
-			fcall->count = strlen(us);
-			memcpy(p, us, fcall->count);
+			return Enoperm;
 			break;
-			}
 		case Ffont:
 			if((fcall->count = strlen(def.font)))
 				memcpy(p, def.font, fcall->count);
