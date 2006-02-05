@@ -70,7 +70,6 @@ static size_t nitem = 0;
 static size_t itemsz = 0;
 static size_t iexpand = 0;
 static Item **item = 0;
-static char *address = nil;
 static IXPServer srv = { 0 };
 static Qid root_qid;
 static Display *dpy;
@@ -138,8 +137,6 @@ draw()
 		blitz_drawlabel(dpy, &d);
 	}
 	else {
-		if(!iexpand)
-			iexpand = nitem - 1;
 		for(i = 0; i < nitem; i++) {
 			Item *it = item[i];
 			it->rect.x = it->rect.y = 0;
@@ -314,7 +311,7 @@ name_to_type(char *name)
 		return Fevent;
 	if(!strncmp(name, "color", 6))
 		return Fcolor;
-   	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
+   	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
     if(!err && (i <= nitem))
 		return Ditem;
 	return -1;
@@ -344,10 +341,10 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		if(!strncmp(wname, "new", 4))
 			new->path = mkqpath(Ditem, NEW_ITEM);
 		else {
-			i = cext_strtonum(wname, 0, 0xffff, &err);
-			if(err || (i >= nitem))
+			i = cext_strtonum(wname, 1, 0xffff, &err);
+			if(err || (i - 1 >= nitem))
 				return -1;
-			new->path = mkqpath(Ditem, item[i]->id);
+			new->path = mkqpath(Ditem, item[i - 1]->id);
 		}
 		break;
 	case Fdata: /* note, Fdata has to be checked before Fcolor, fallthrough */
@@ -478,8 +475,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		return mkstat(stat, dir, name, 0, DMREAD);
 		break;
     case Ffont:
-		return mkstat(stat, dir, name, strlen(font),
-						DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, strlen(font), DMREAD | DMWRITE);
         break;
     case Fdefcolor:
 		return mkstat(stat, dir, name, 24, DMREAD | DMWRITE);
@@ -491,8 +487,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
     case Fdata:
 		if(i == nitem)
 			i = 0;
-		return mkstat(stat, dir, name, strlen(item[i]->data),
-						DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, strlen(item[i]->data), DMREAD | DMWRITE);
 		break;	
     case Fcolor:
 		return mkstat(stat, dir, name, 24, DMREAD | DMWRITE);
@@ -554,11 +549,11 @@ xread(IXPConn *c, Fcall *fcall)
 			/* jump to offset */
 			len = type_to_stat(&stat, "ctl", &m->qid);
 			len += type_to_stat(&stat, "font", &m->qid);
-			len += type_to_stat(&stat, "color", &m->qid);
+			len += type_to_stat(&stat, "defcolor", &m->qid);
 			len += type_to_stat(&stat, "new", &m->qid);
 			len += type_to_stat(&stat, "event", &m->qid);
 			for(i = 0; i < nitem; i++) {
-				snprintf(buf, sizeof(buf), "%u", i);
+				snprintf(buf, sizeof(buf), "%u", i + 1);
 				len += type_to_stat(&stat, buf, &m->qid);
 				if(len <= fcall->offset)
 					continue;
@@ -566,7 +561,7 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			/* offset found, proceeding */
 			for(; i < nitem; i++) {
-				snprintf(buf, sizeof(buf), "%u", i);
+				snprintf(buf, sizeof(buf), "%u", i + 1);
 				len = type_to_stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -589,14 +584,14 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "color", &m->qid);
+			fcall->count += type_to_stat(&stat, "defcolor", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "event", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < nitem; i++) {
-				snprintf(buf, sizeof(buf), "%u", i);
+				snprintf(buf, sizeof(buf), "%u", i + 1);
 				len = type_to_stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -626,7 +621,7 @@ xread(IXPConn *c, Fcall *fcall)
 				memcpy(p, defcolstr, fcall->count);
 			break;
 		case Fexpand:
-			snprintf(buf, sizeof(buf), "%u", iexpand);
+			snprintf(buf, sizeof(buf), "%u", iexpand + 1);
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -727,8 +722,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 				memcpy(buf, fcall->data, fcall->count);
 				buf[fcall->count] = 0;
 				i = (unsigned short) cext_strtonum(buf, 1, 0xffff, &err);
-				if(i < nitem) {
-					iexpand = i;
+				if(!err && (i - 1 < nitem)) {
+					iexpand = i - 1;
 					draw();
 					break;
 				}
@@ -855,11 +850,12 @@ main(int argc, char *argv[])
 {
     int i;
 	char *errstr;
+	char *address = nil;
     XSetWindowAttributes wa;
     XGCValues gcv;
 
     /* command line args */
-    for(i = 0; (i < argc) && (argv[i][0] == '-'); i++) {
+    for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
         switch (argv[i][1]) {
         case 'v':
             fprintf(stdout, "%s", version);
