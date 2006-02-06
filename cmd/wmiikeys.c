@@ -21,9 +21,9 @@
 /*
  * filesystem specification
  * / 					Droot
+ * /ctl					Fctl		command interface
  * /font				Ffont		<xlib font name>
  * /color				Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
- * /ctl					Fctl		command interface
  * /reset				Freset		setup interface
  * /shortcut/			Dshortcut
  * /shortcut/foo		Fshortcut   shortcut file
@@ -63,7 +63,7 @@ static size_t nshortcut = 0;
 static int grabkb = 0;
 static unsigned int num_lock_mask, valid_mask;
 static char *font;
-static char *colstr;
+static char colstr[23];
 static Draw box;
 Qid root_qid;
 
@@ -142,6 +142,7 @@ create_shortcut(char *name, char *cmd)
             k = chain[i];
         s->key = XKeysymToKeycode(dpy, XStringToKeysym(k));
         s->mod = blitz_strtomod(chain[i]);
+		s->cmd = cmd;
     }
 	r->id = id++;
 	return r;
@@ -278,7 +279,7 @@ draw_shortcut_box(char *prefix)
 }
 
 static void
-check_event(IXPConn *c)
+check_x_event(IXPConn *c)
 {
     XEvent ev;
     while(XPending(dpy)) {
@@ -474,7 +475,7 @@ xopen(IXPConn *c, Fcall *fcall)
         return Enomode;
     fcall->id = ROPEN;
     fcall->qid = m->qid;
-    fcall->iounit = 256;
+    fcall->iounit = 2048;
 	ixp_server_respond_fcall(c, fcall);
     return nil;
 }
@@ -535,17 +536,15 @@ xremove(IXPConn *c, Fcall *fcall)
         return Enofid;
 	if(id && ((i = qpath_id(id)) == -1))
 		return Enofile;
-	if((qpath_type(m->qid.path) == Ditem) && i && (i < nitem)) {
-		Item *it = item[i];
+	if((qpath_type(m->qid.path) == Fshortcut) && (i < nshortcut)) {
+		Shortcut *s = shortcut[i];
 		/* clunk */
 		cext_array_detach((void **)c->map, m, &c->mapsz);
     	free(m);
 		/* now detach the item */
-		detach_item(it);
-		free(it);
-		if(iexpand >= nitem)
-			iexpand = 0;
-		draw();
+		cext_array_detach((void **)shortcut, s, &shortcutsz);
+		nshortcut--;
+		destroy_shortcut(s);
     	fcall->id = RREMOVE;
 		ixp_server_respond_fcall(c, fcall);
 		return nil;
@@ -562,7 +561,6 @@ xread(IXPConn *c, Fcall *fcall)
     unsigned char *p = fcall->data;
 	unsigned int len;
 	int i;
-	char buf[32];
 
     if(!m)
         return Enofid;
@@ -573,34 +571,22 @@ xread(IXPConn *c, Fcall *fcall)
 	fcall->count = 0;
 	if(fcall->offset) {
 		switch (qpath_type(m->qid.path)) {
-		case Droot:
+		case Dshortcut:
 			/* jump to offset */
-			len = type_to_stat(&stat, "ctl", &m->qid);
-			len += type_to_stat(&stat, "font", &m->qid);
-			len += type_to_stat(&stat, "defcolor", &m->qid);
-			len += type_to_stat(&stat, "expand", &m->qid);
-			len += type_to_stat(&stat, "new", &m->qid);
-			len += type_to_stat(&stat, "event", &m->qid);
-			for(i = 0; i < nitem; i++) {
-				snprintf(buf, sizeof(buf), "%u", i + 1);
-				len += type_to_stat(&stat, buf, &m->qid);
+			for(i = 0; i < nshortcut; i++) {
+				len += type_to_stat(&stat, shortcut[i]->name, &m->qid);
 				if(len <= fcall->offset)
 					continue;
 				break;
 			}
 			/* offset found, proceeding */
-			for(; i < nitem; i++) {
-				snprintf(buf, sizeof(buf), "%u", i + 1);
-				len = type_to_stat(&stat, buf, &m->qid);
+			for(; i < nshortcut; i++) {
+				len = type_to_stat(&stat, shortcut[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
 			}
-			break;
-		case Fevent:
-			ixp_server_enqueue_fcall(c, fcall);
-			return nil;
 			break;
 		default:
 			break;
@@ -613,62 +599,37 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "defcolor", &m->qid);
+			fcall->count += type_to_stat(&stat, "color", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "expand", &m->qid);
+			fcall->count += type_to_stat(&stat, "reset", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "new", &m->qid);
+			fcall->count += type_to_stat(&stat, "shortcut", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "event", &m->qid);
-			p = ixp_enc_stat(p, &stat);
-			for(i = 0; i < nitem; i++) {
-				snprintf(buf, sizeof(buf), "%u", i + 1);
-				len = type_to_stat(&stat, buf, &m->qid);
+			break;
+		case Dshortcut:
+			for(i = 0; i < nshortcut; i++) {
+				len = type_to_stat(&stat, shortcut[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
-		case Ditem:
-			if(i >= nitem)
-				return Enofile;
-			fcall->count = type_to_stat(&stat, "color", &m->qid);
-			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "data", &m->qid);
-			p = ixp_enc_stat(p, &stat);
-			break;
 		case Fctl:
+		case Freset:
 			return Enoperm;
 			break;
 		case Ffont:
 			if((fcall->count = strlen(font)))
 				memcpy(p, font, fcall->count);
 			break;
-		case Fdefcolor:
-			if((fcall->count = strlen(defcolstr)))
-				memcpy(p, defcolstr, fcall->count);
-			break;
-		case Fexpand:
-			snprintf(buf, sizeof(buf), "%u", iexpand + 1);
-			fcall->count = strlen(buf);
-			memcpy(p, buf, fcall->count);
-			break;
-		case Fdata:
-			if(i >= nitem)
-				return Enofile;
-			if((fcall->count = strlen(item[i]->data)))
-				memcpy(p, item[i]->data, fcall->count);
-			break;
 		case Fcolor:
-			if(i >= nitem)
-				return Enofile;
-			if((fcall->count = strlen(item[i]->colstr)))
-				memcpy(p, item[i]->colstr, fcall->count);
+			if((fcall->count = strlen(colstr)))
+				memcpy(p, colstr, fcall->count);
 			break;
-		case Fevent:
-			ixp_server_enqueue_fcall(c, fcall);
-			return nil;
+		case Fshortcut:
+			if((fcall->count = strlen(shortcut[i]->cmd)))
+				memcpy(p, shortcut[i]->cmd, fcall->count);
 			break;
 		default:
 			return "invalid read";
@@ -727,58 +688,32 @@ xwrite(IXPConn *c, Fcall *fcall)
 			free(font);
 		font = cext_emallocz(fcall->count + 1);
 		memcpy(font, fcall->data, fcall->count);
-		XFreeFont(dpy, xfont);
-    	xfont = blitz_getfont(dpy, font);
-		update_geometry();
+		XFreeFont(dpy, box.font);
+    	box.font = blitz_getfont(dpy, font);
 		break;
-	case Fdefcolor:
+	case Fcolor:
 		if((fcall->count != 23)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
 		  )
 			return "wrong color format";
-		memcpy(defcolstr, fcall->data, fcall->count);
-		defcolstr[fcall->count] = 0;
-		blitz_loadcolor(dpy, screen, defcolstr, &defcolor);
+		memcpy(colstr, fcall->data, fcall->count);
+		colstr[fcall->count] = 0;
+		blitz_loadcolor(dpy, screen, colstr, &box.color);
 		break;
-    case Fexpand:
+    case Freset:
+		break;
+	case Fshortcut:
 		{
-			const char *err;
-			if(fcall->count && fcall->count < 16) {
-				memcpy(buf, fcall->data, fcall->count);
-				buf[fcall->count] = 0;
-				i = (unsigned short) cext_strtonum(buf, 1, 0xffff, &err);
-				if(!err && (i - 1 < nitem)) {
-					iexpand = i - 1;
-					draw();
-					break;
-				}
-			}
+			Shortcut *tmp, *s = shortcut[i];
+			if(s->cmd)
+				free(s->cmd);
+			s->cmd = cext_emallocz(fcall->count) + 1;
+			for(tmp = s; tmp; tmp = tmp->next)
+				tmp->cmd = s->cmd;
+			memcpy(s->cmd, fcall->data, fcall->count);
+			s->cmd[fcall->count] = 0;
 		}
-		return Enofile;
-		break;
-	case Fdata:
-		{
-			unsigned int len = fcall->count;
-			if(i >= nitem)
-				return Enofile;
-			if(len >= sizeof(item[i]->data))
-				len = sizeof(item[i]->data) - 1;
-			memcpy(item[i]->data, fcall->data, len);
-			item[i]->data[len] = 0;
-			draw();
-		}
-		break;
-	case Fcolor:
-		if((i >= nitem) || (fcall->count != 23)
-			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
-		    || (fcall->data[16] != '#')
-		  )
-			return "wrong color format";
-		memcpy(item[i]->colstr, fcall->data, fcall->count);
-		item[i]->colstr[fcall->count] = 0;
-		blitz_loadcolor(dpy, screen, item[i]->colstr, &item[i]->color);
-		draw();
 		break;
 	default:
 		return "invalid write";
@@ -799,14 +734,14 @@ do_fcall(IXPConn *c)
 	if((msize = ixp_server_receive_fcall(c, &fcall))) {
 		/*fprintf(stderr, "fcall=%d\n", fcall.id);*/
 		switch(fcall.id) {
-		case TVERSION: errstr = xversion(c, &fcall); break;
-		case TATTACH: errstr = xattach(c, &fcall); break;
+		case TVERSION: errstr = wmii_ixp_version(c, &fcall); break;
+		case TATTACH: errstr = wmii_ixp_attach(c, &fcall); break;
 		case TWALK: errstr = xwalk(c, &fcall); break;
 		case TREMOVE: errstr = xremove(c, &fcall); break;
 		case TOPEN: errstr = xopen(c, &fcall); break;
 		case TREAD: errstr = xread(c, &fcall); break;
 		case TWRITE: errstr = xwrite(c, &fcall); break;
-		case TCLUNK: errstr = xclunk(c, &fcall); break;
+		case TCLUNK: errstr = wmii_ixp_clunk(c, &fcall); break;
 		case TSTAT: errstr = xstat(c, &fcall); break;
 		default: errstr = Enofunc; break;
 		}
@@ -832,17 +767,19 @@ main(int argc, char *argv[])
     int i;
     XSetWindowAttributes wa;
     XGCValues gcv;
+	char *errstr;
+	char *address = nil;
 
     /* command line args */
     for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
         switch (argv[i][1]) {
         case 'v':
-            fprintf(stdout, "%s", version[0]);
+            fprintf(stdout, "%s", version);
             exit(0);
             break;
-        case 's':
+        case 'a':
             if(i + 1 < argc)
-                sockfile = argv[++i];
+                address = argv[++i];
             else
                 usage();
             break;
@@ -852,6 +789,9 @@ main(int argc, char *argv[])
         }
     }
 
+    if(!address)
+		usage();
+
     dpy = XOpenDisplay(0);
     if(!dpy) {
         fprintf(stderr, "%s", "wmiikeys: cannot open display\n");
@@ -860,28 +800,25 @@ main(int argc, char *argv[])
     XSetErrorHandler(dummy_error_handler);
     screen = DefaultScreen(dpy);
 
-    /* init */
-    ixps = wmii_setup_server(sockfile);
+	i = ixp_create_sock(address, &errstr);
+	if(i < 0) {
+        fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
+		exit(1);
+	}
 
-    if(!(files[K_CTL] = ixp_create(ixps, "/ctl"))) {
-        perror("wmiikeys: cannot connect IXP server");
-        exit(1);
-    }
-    files[K_CTL]->after_write = handle_after_write;
-    files[K_LOOKUP] = ixp_create(ixps, "/lookup");
-    files[K_LOOKUP]->after_write = handle_after_write;
-    files[K_GRAB_KB] = wmii_create_ixpfile(ixps, "/grabkeyb", "0");
-    files[K_GRAB_KB]->after_write = handle_after_write;
-    files[K_FONT] = wmii_create_ixpfile(ixps, "/box/font", BLITZ_FONT);
-    files[K_FONT]->after_write = handle_after_write;
-    font = blitz_getfont(dpy, files[K_FONT]->content);
-    files[K_FG_COLOR] =
-        wmii_create_ixpfile(ixps, "/box/fgcolor", BLITZ_SEL_FG_COLOR);
-    files[K_BG_COLOR] =
-        wmii_create_ixpfile(ixps, "/box/bgcolor", BLITZ_SEL_BG_COLOR);
-    files[K_BORDER_COLOR] =
-        wmii_create_ixpfile(ixps, "/box/bordercolor",
-                            BLITZ_SEL_BORDER_COLOR);
+	/* IXP server */
+	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);
+    root_qid.type = IXP_QTDIR;
+    root_qid.version = 0;
+    root_qid.path = mkqpath(Droot, 0);
+
+	/* X server */
+	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
+
+	font = strdup(BLITZ_FONT);
+    box.font = blitz_getfont(dpy, font);
+	cext_strlcpy(colstr, BLITZ_SEL_COLOR, sizeof(colstr));
+	blitz_loadcolor(dpy, screen, colstr, &box.color);
 
     wa.override_redirect = 1;
     wa.background_pixmap = ParentRelative;
@@ -892,31 +829,30 @@ main(int argc, char *argv[])
     rect.x = rect.y = 0;
     rect.width = DisplayWidth(dpy, screen);
     rect.height = DisplayHeight(dpy, screen);
-    krect.x = krect.y = 0;
-    krect.width = krect.height = 1;
+    box.rect.x = box.rect.y = 0;
+    box.rect.width = box.rect.height = 1;
 
     wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
 
-    win = XCreateWindow(dpy, RootWindow(dpy, screen), krect.x, krect.y,
-                        krect.width, krect.height, 0, DefaultDepth(dpy,
-                                                                   screen),
+    win = XCreateWindow(dpy, RootWindow(dpy, screen), box.rect.x, box.rect.y,
+                        box.rect.width, box.rect.height, 0, DefaultDepth(dpy, screen),
                         CopyFromParent, DefaultVisual(dpy, screen),
-                        CWOverrideRedirect | CWBackPixmap | CWEventMask,
-                        &wa);
+                        CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
     XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
     XSync(dpy, False);
 
     gcv.function = GXcopy;
     gcv.graphics_exposures = False;
+    box.gc = XCreateGC(dpy, win, 0, 0);
 
-    gc = XCreateGC(dpy, win, 0, 0);
+    /* main loop */
+	errstr = ixp_server_loop(&srv);
+	if(errstr)
+    	fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
 
-    /* main event loop */
-    run_server_with_fd_support(ixps, ConnectionNumber(dpy),
-                               check_event, 0);
-    deinit_server(ixps);
-    XFreeGC(dpy, gc);
-    XCloseDisplay(dpy);
+	/* cleanup */
+	ixp_server_close(&srv);
+	XCloseDisplay(dpy);
 
-    return 0;
+	return errstr ? 1 : 0;
 }

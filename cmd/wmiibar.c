@@ -477,7 +477,7 @@ xremove(IXPConn *c, Fcall *fcall)
         return Enofid;
 	if(id && ((i = qpath_id(id)) == -1))
 		return Enofile;
-	if((qpath_type(m->qid.path) == Ditem) && i && (i < nitem)) {
+	if((qpath_type(m->qid.path) == Ditem) && (i < nitem)) {
 		Item *it = item[i];
 		/* clunk */
 		cext_array_detach((void **)c->map, m, &c->mapsz);
@@ -824,6 +824,9 @@ main(int argc, char *argv[])
         }
     }
 
+    if(!address)
+		usage();
+
     dpy = XOpenDisplay(0);
     if(!dpy) {
         fprintf(stderr, "%s", "wmiibar: cannot open display\n");
@@ -832,8 +835,6 @@ main(int argc, char *argv[])
     XSetErrorHandler(dummy_error_handler);
     screen = DefaultScreen(dpy);
 
-    if(!address)
-		usage();
 	i = ixp_create_sock(address, &errstr);
 	if(i < 0) {
         fprintf(stderr, "wmiibar: fatal: %s\n", errstr);

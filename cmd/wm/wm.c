@@ -601,6 +601,10 @@ main(int argc, char *argv[])
             }
         }
     }
+
+    if(!address)
+		usage();
+
     dpy = XOpenDisplay(0);
     if(!dpy) {
         fprintf(stderr, "%s", "wmiiwm: cannot open display\n");
@@ -628,8 +632,6 @@ main(int argc, char *argv[])
     XSetErrorHandler(0);
     x_error_handler = XSetErrorHandler(wmii_error_handler);
 	errstr = nil;
-    if(!address)
-		usage();
 	i = ixp_create_sock(address, &errstr);
 	if(i < 0) {
         fprintf(stderr, "wmii: fatal: %s\n", errstr);
