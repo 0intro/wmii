@@ -21,28 +21,6 @@ static XRectangle initial_rect;
 static int other_wm_running;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 
-static void new_page(void *obj, char *arg);
-static void xselect_page(void *obj, char *arg);
-static void xdestroy_page(void *obj, char *arg);
-static void xattach_client(void *obj, char *arg);
-static void xdetach_client(void *obj, char *arg);
-static void xclose_client(void *obj, char *arg);
-static void pager(void *obj, char *arg);
-static void detached_client(void *obj, char *arg);
-
-/* action table for /ctl namespace */
-Action wm_acttbl[] = {
-    {"new", new_page},
-    {"destroy", xdestroy_page},
-    {"select", xselect_page},
-    {"attach", xattach_client},
-    {"detach", xdetach_client},
-    {"close", xclose_client},
-    {"pager", pager},
-    {"detclient", detached_client},
-    {0, 0}
-};
-
 static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
 static void
@@ -86,7 +64,7 @@ draw_pager_client(Client *c, Draw *d)
 static void
 draw_pager_page(size_t idx, Draw *d)
 {
-	size_t i, j;
+	int i, j;
     char name[4];
     initial_rect = d->rect;
 
@@ -99,8 +77,10 @@ draw_pager_page(size_t idx, Draw *d)
     blitz_drawlabel(dpy, d);
     XSync(dpy, False);
 
-	for(i = 0; i < page[idx]->narea && page[idx]->area[i]; i++) {
+	for(i = 0; i < page[idx]->narea; i++) {
 		Area *a = page[idx]->area[i];
+		if(!a->nclient)
+			continue;
 		for(j = a->nclient - 1; j >= 0; j--)
 			draw_pager_client(a->client[j], d);
 	}
@@ -186,8 +166,8 @@ handle_kpress(XKeyEvent * e)
     return -1;
 }
 
-static void
-pager(void *obj, char *arg)
+void
+pager()
 {
     XEvent ev;
     int i;
@@ -242,7 +222,7 @@ pager(void *obj, char *arg)
 }
 
 static void
-map_detached_client()
+map_detached_clients()
 {
     unsigned int i, ic, ir, tw, th, rows, cols;
     int dx, dy;
@@ -278,8 +258,8 @@ map_detached_client()
     }
 }
 
-static void
-detached_client(void *obj, char *arg)
+void
+detached_clients()
 {
     XEvent ev;
     int n;
@@ -290,7 +270,7 @@ detached_client(void *obj, char *arg)
         return;
     XClearWindow(dpy, transient);
     XMapRaised(dpy, transient);
-    map_detached_client();
+    map_detached_clients();
     while(XGrabKeyboard
           (dpy, transient, True, GrabModeAsync, GrabModeAsync,
            CurrentTime) != GrabSuccess)
@@ -334,16 +314,8 @@ detached_client(void *obj, char *arg)
     }
 }
 
-static void
-xclose_client(void *obj, char *arg)
-{
-    Client *c = sel_client();
-    if(c)
-        close_client(c);
-}
-
-static void
-xattach_client(void *obj, char *arg)
+void
+attach_detached_client()
 {
     Client *c = ndet ? det[0] : nil;
     if(c) {
@@ -353,16 +325,8 @@ xattach_client(void *obj, char *arg)
     }
 }
 
-static void
-xdetach_client(void *obj, char *arg)
-{
-    Client *c = sel_client();
-    if(c)
-        detach_client(c, False);
-}
-
-static void
-xselect_page(void *obj, char *arg)
+void
+select_page(char *arg)
 {
 	size_t new = sel;
 
@@ -383,18 +347,6 @@ xselect_page(void *obj, char *arg)
 			new = idx;
 	}
     focus_page(page[new]);
-}
-
-static void
-xdestroy_page(void *obj, char *arg)
-{
-    destroy_page(page[sel]);
-}
-
-static void
-new_page(void *obj, char *arg)
-{
-    alloc_page();
 }
 
 Client *

@@ -227,3 +227,8 @@ int win_state(Window w);
 /*void handle_after_write(IXPServer * s, File * f);*/
 void grab_window(Window w, unsigned long mod, unsigned int button);
 void ungrab_window(Window w, unsigned long mod, unsigned int button);
+void pager();
+void detached_clients();
+void attach_detached_client();
+void select_page(char *arg);
+

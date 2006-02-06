@@ -822,9 +822,24 @@ xwrite(IXPConn *c, Fcall *fcall)
 
 	switch (qpath_type(m->qid.path)) {
 	case Fctl:
+		if(fcall->count > sizeof(buf) - 1)
+			return Enocommand;
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
 		switch(m->qid.dtype) {
 		case Droot:
-			/* TODO: /ctl commands */
+			if(!strncmp(buf, "quit", 5))
+				srv.running = 0;
+			else if(!strncmp(buf, "pager", 6))
+				pager();
+			else if(!strncmp(buf, "detached", 9))
+				detached_clients();
+			else if(!strncmp(buf, "attach", 7))
+				attach_detached_client();
+			else if(!strncmp(buf, "select", 6))
+				select_page(&buf[7]);
+			else
+				return Enocommand;
 			break;
 		case Dpage:
 			/* /TODO: /n/ctl commands */
@@ -836,7 +851,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			/* /TODO: /n/{float,n}/n/ctl commands */
 			break;
 		default:
-			return Enocommand;
+			break;
 		}
 		break;
 	case Ffont:
