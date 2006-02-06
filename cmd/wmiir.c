@@ -19,7 +19,7 @@ static char version[] = "wmiir - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Ga
 static void
 usage()
 {
-    fprintf(stderr, "%s", "usage: wmiir [-a <address>] [-v] <command>\n");
+    fprintf(stderr, "%s", "usage: wmiir [-a <address>] [-v] create | read | write | remove <file>\n");
     exit(1);
 }
 

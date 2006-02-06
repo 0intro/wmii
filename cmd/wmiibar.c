@@ -56,8 +56,6 @@ typedef struct {
 	XRectangle rect;
 } Item;
 
-#define NEW_ITEM (unsigned short)0xffff
-
 static char E9pversion[] = "9P version not supported";
 static char Enoperm[] = "permission denied";
 static char Enofid[] = "fid not assigned";
@@ -100,7 +98,7 @@ dummy_error_handler(Display * dpy, XErrorEvent * err)
     return 0;
 }
 
-static void
+static Item *
 new_item()
 {
 	static unsigned int id = 1;
@@ -110,6 +108,7 @@ new_item()
 	it->color = defcolor;
 	item = (Item **)cext_array_attach((void **)item, it, sizeof(Item *), &itemsz);
 	nitem++;
+	return it;
 }
 
 static void
@@ -140,9 +139,10 @@ draw()
 		for(i = 0; i < nitem; i++) {
 			Item *it = item[i];
 			it->rect.x = it->rect.y = 0;
-			it->rect.width = it->rect.height = brect.height;
+			it->rect.height = brect.height;
 			if(i == iexpand)
 		   		continue;
+			it->rect.width = brect.height;
 			if(strlen(it->data)) {
 				if(!strncmp(it->data, "%m:", 3))
 					it->rect.width = brect.height / 2;
@@ -151,19 +151,25 @@ draw()
 			}
 			w += it->rect.width;
 		}
+
 		if(w >= brect.width) {
 			/* failsafe mode, give all labels same width */
 			w = brect.width / nitem;
-			for(i = 0; i < nitem; i++)
+			for(i = 0; i < nitem; i++) {
+				item[i]->rect.x = i * w;
 				item[i]->rect.width = w;
+			}
 			i--;
-			item[i]->rect.width = brect.width - ((i - 1) * w);
-		} else
+			item[i]->rect.width = brect.width - item[i]->rect.x;
+		}
+		else {
 			item[iexpand]->rect.width = brect.width - w;
+			for(i = 1; i < nitem; i++)
+				item[i]->rect.x = item[i - 1]->rect.x + item[i - 1]->rect.width;
+		}
+
 		for(i = 0; i < nitem; i++) {
 			d.color = item[i]->color;
-			if(i > 1)
-				item[i]->rect.x = item[i - 1]->rect.x + item[i - 1]->rect.width;
 			d.rect = item[i]->rect;
 			d.data = item[i]->data;
 			if(d.data && !strncmp(d.data, "%m:", 3))
@@ -231,8 +237,6 @@ int
 index_of_id(unsigned short id)
 {
 	int i;
-	if(id == NEW_ITEM)
-		return nitem;
 	for(i = 0; i < nitem; i++)
 		if(item[i]->id == id)
 			return i;
@@ -272,9 +276,7 @@ qid_to_name(Qid *qid)
 	switch(type) {
 		case Droot: return "/"; break;
 		case Ditem:
-			if(i == nitem)
-				return "new";
-			snprintf(buf, sizeof(buf), "%u", i);
+			snprintf(buf, sizeof(buf), "%u", i + 1);
 			return buf;
 			break;
 		case Fctl: return "ctl"; break;
@@ -311,14 +313,14 @@ name_to_type(char *name)
 		return Fevent;
 	if(!strncmp(name, "color", 6))
 		return Fcolor;
-   	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
-    if(!err && (i <= nitem))
+   	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
+    if(!err && (i - 1 <= nitem))
 		return Ditem;
 	return -1;
 }
 
 static int
-mkqid(Qid *dir, char *wname, Qid *new)
+mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 {
 	const char *err;
 	unsigned short id = qpath_id(dir->path);
@@ -338,8 +340,13 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		break;
 	case Ditem:
 		new->type = IXP_QTDIR;
-		if(!strncmp(wname, "new", 4))
-			new->path = mkqpath(Ditem, NEW_ITEM);
+		if(!strncmp(wname, "new", 4)) {
+			/*fprintf(stderr, "mkqid iswalk=%d, wname=%s\n", iswalk, wname);*/
+			if(iswalk)
+				new->path = mkqpath(Ditem, new_item()->id);
+			else
+				new->path = mkqpath(Ditem, 0);
+		}
 		else {
 			i = cext_strtonum(wname, 1, 0xffff, &err);
 			if(err || (i - 1 >= nitem))
@@ -347,11 +354,9 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			new->path = mkqpath(Ditem, item[i - 1]->id);
 		}
 		break;
-	case Fdata: /* note, Fdata has to be checked before Fcolor, fallthrough */
-		if(!i)
-			return -1;
+	case Fdata:
 	case Fcolor:
-		if(i > nitem)
+		if(i >= nitem)
 			return -1;
 	default:
 		new->type = IXP_QTFILE;
@@ -402,8 +407,10 @@ xwalk(IXPConn *c, Fcall *fcall)
     if(fcall->nwname) {
         dir = m->qid;
         for(nwqid = 0; (nwqid < fcall->nwname)
-            && !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid]); nwqid++)
+            && !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid], True); nwqid++) {
+			/*fprintf(stderr, "wname=%s nwqid=%d\n", fcall->wname[nwqid], nwqid);*/
             dir = fcall->wqid[nwqid];
+		}
         if(!nwqid)
 			return Enofile;
     }
@@ -450,7 +457,7 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 
     cext_strlcpy(stat->name, name, sizeof(stat->name));
     stat->length = length;
-    mkqid(dir, name, &stat->qid);
+    mkqid(dir, name, &stat->qid, False);
 	return ixp_sizeof_stat(stat);
 }
 
@@ -478,19 +485,17 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		return mkstat(stat, dir, name, strlen(font), DMREAD | DMWRITE);
         break;
     case Fdefcolor:
-		return mkstat(stat, dir, name, 24, DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, 23, DMREAD | DMWRITE);
         break;
     case Fexpand:
-		snprintf(buf, sizeof(buf), "%u", iexpand);
+		snprintf(buf, sizeof(buf), "%u", iexpand + 1);
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
 		break;
     case Fdata:
-		if(i == nitem)
-			i = 0;
-		return mkstat(stat, dir, name, strlen(item[i]->data), DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, (i == nitem) ? 0 : strlen(item[i]->data), DMREAD | DMWRITE);
 		break;	
     case Fcolor:
-		return mkstat(stat, dir, name, 24, DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, 23, DMREAD | DMWRITE);
 		break;
     }
 	return 0;
@@ -550,6 +555,7 @@ xread(IXPConn *c, Fcall *fcall)
 			len = type_to_stat(&stat, "ctl", &m->qid);
 			len += type_to_stat(&stat, "font", &m->qid);
 			len += type_to_stat(&stat, "defcolor", &m->qid);
+			len += type_to_stat(&stat, "expand", &m->qid);
 			len += type_to_stat(&stat, "new", &m->qid);
 			len += type_to_stat(&stat, "event", &m->qid);
 			for(i = 0; i < nitem; i++) {
@@ -586,6 +592,8 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "defcolor", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			fcall->count += type_to_stat(&stat, "expand", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "event", &m->qid);
@@ -600,10 +608,8 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case Ditem:
-			if(i > nitem)
+			if(i >= nitem)
 				return Enofile;
-			if(i == nitem)
-				new_item();
 			fcall->count = type_to_stat(&stat, "color", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "data", &m->qid);
@@ -626,16 +632,12 @@ xread(IXPConn *c, Fcall *fcall)
 			memcpy(p, buf, fcall->count);
 			break;
 		case Fdata:
-			if(i == nitem)
-				new_item();
 			if(i >= nitem)
 				return Enofile;
 			if((fcall->count = strlen(item[i]->data)))
 				memcpy(p, item[i]->data, fcall->count);
 			break;
 		case Fcolor:
-			if(i == nitem)
-				new_item();
 			if(i >= nitem)
 				return Enofile;
 			if((fcall->count = strlen(item[i]->colstr)))
@@ -664,6 +666,7 @@ xstat(IXPConn *c, Fcall *fcall)
     if(!m)
         return Enofid;
 	name = qid_to_name(&m->qid);
+	/*fprintf(stderr, "xstat: name=%s\n", name);*/
 	if(!type_to_stat(&fcall->stat, name, &m->qid))
 		return Enofile;
     fcall->id = RSTAT;
@@ -706,7 +709,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		update_geometry();
 		break;
 	case Fdefcolor:
-		if((fcall->count != 24)
+		if((fcall->count != 23)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
 		  )
@@ -734,9 +737,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 	case Fdata:
 		{
 			unsigned int len = fcall->count;
-			if(i == nitem)
-				new_item();
-			if(!i || (i >= nitem))
+			if(i >= nitem)
 				return Enofile;
 			if(len >= sizeof(item[i]->data))
 				len = sizeof(item[i]->data) - 1;
@@ -746,9 +747,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		}
 		break;
 	case Fcolor:
-		if(i == nitem)
-			new_item();
-		if((i >= nitem) || (fcall->count != 24)
+		if((i >= nitem) || (fcall->count != 23)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
 		  )
@@ -789,6 +788,7 @@ do_fcall(IXPConn *c)
 	char *errstr;
 
 	if((msize = ixp_server_receive_fcall(c, &fcall))) {
+		/*fprintf(stderr, "fcall=%d\n", fcall.id);*/
 		switch(fcall.id) {
 		case TVERSION: errstr = xversion(c, &fcall); break;
 		case TATTACH: errstr = xattach(c, &fcall); break;
