@@ -18,8 +18,7 @@
 #include <X11/Xutil.h>
 #include <sys/socket.h>
 
-#include "ixp.h"
-#include "blitz.h"
+#include "wmii.h"
 
 /*
  * filesystem specification
@@ -233,7 +232,7 @@ check_x_event(IXPConn *c)
     }
 }
 
-int
+static int
 index_of_id(unsigned short id)
 {
 	int i;
