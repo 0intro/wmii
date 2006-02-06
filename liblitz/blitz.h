@@ -25,7 +25,6 @@ typedef struct {
 	Drawable drawable;
 	GC gc;
 	Color color;
-	Align align;
 	XFontStruct *font;
 	XRectangle rect;			/* relative rect */
 	XRectangle *notch;			/* relative notch rect */

@@ -125,17 +125,7 @@ draw_text(Display * dpy, Draw * d)
 		if (len > 1)
 			text[len - 1] = '.';
 	}
-	switch (d->align) {
-	case WEST:
-		x = d->rect.x + h / 2;
-		break;
-	case EAST:
-		x = d->rect.x + d->rect.width - (h / 2 + w);
-		break;
-	default:					/* CENTER */
-		x = d->rect.x + (d->rect.width - w) / 2;
-		break;
-	}
+	x = d->rect.x + h / 2;
 
 	XSetBackground(dpy, d->gc, d->color.bg);
 	/*
