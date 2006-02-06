@@ -62,7 +62,10 @@ handle_buttonpress(XEvent * e)
 	static char buf[32];
 	if((c = win_to_frame(ev->window))) {
 		if(ev->button == Button1) {
-			focus_client(c);
+			if(sel_client() != c) {
+				focus_client(c);
+				return;
+			}
 			align = cursor_to_align(c->frame.cursor);
 			if(align == CENTER)
 				mouse_move(c);
@@ -99,7 +102,7 @@ handle_buttonpress(XEvent * e)
 }
 
 static void
-handle_configurerequest(XEvent * e)
+handle_configurerequest(XEvent *e)
 {
     XConfigureRequestEvent *ev = &e->xconfigurerequest;
     XWindowChanges wc;
@@ -107,19 +110,14 @@ handle_configurerequest(XEvent * e)
     unsigned int bw = 0, bh = 0;
 
     c = win_to_client(ev->window);
-    ev->value_mask &= ~CWSibling;
 
     if(c) {
+
         if(c->page) {
             bw = c->frame.border;
             bh = bar_height(c);
         }
-        if(ev->value_mask & CWStackMode) {
-            if(wc.stack_mode == Above)
-                XRaiseWindow(dpy, c->win);
-            else
-                ev->value_mask &= ~CWStackMode;
-        }
+
         gravitate(c, bh ? bh : bw, bw, 1);
 
         if(ev->value_mask & CWX)
@@ -141,30 +139,21 @@ handle_configurerequest(XEvent * e)
             c->frame.rect.width = wc.width = c->rect.width + 2 * bw;
             c->frame.rect.height = wc.height = c->rect.height + bw + (bh ? bh : bw);
             wc.border_width = 1;
-            wc.sibling = None;
-            wc.stack_mode = ev->detail;
             XConfigureWindow(dpy, c->frame.win, ev->value_mask, &wc);
             configure_client(c);
         }
     }
+
     wc.x = ev->x;
     wc.y = ev->y;
-
     if(c && c->page) {
         /* if so, then bw and tabh are already initialized */
         wc.x = bw;
-        wc.y = bh ? bh : bw;
+        wc.y = (bh ? bh : bw);
     }
     wc.width = ev->width;
-    if(!wc.width)
-        wc.width = 1;           /* borken app fix */
     wc.height = ev->height;
-    if(!wc.height)
-        wc.height = 1;          /* borken app fix */
     wc.border_width = 0;
-    wc.sibling = None;
-    wc.stack_mode = Above;
-    ev->value_mask &= ~CWStackMode;
     ev->value_mask |= CWBorderWidth;
     XConfigureWindow(dpy, e->xconfigurerequest.window, ev->value_mask, &wc);
     XSync(dpy, False);

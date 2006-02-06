@@ -124,6 +124,9 @@ xread(char *file)
     unsigned int fid = c.root_fid << 2;
     int count, is_directory = 0;
     static unsigned char result[IXP_MAX_MSG];
+	void *dircontent = nil;
+	size_t dircontentsz = 0;
+	size_t ndircontent = 0;
 	unsigned long long offset = 0;
 
     /* open */
@@ -135,8 +138,22 @@ xread(char *file)
 
     /* read */
 	while((count = ixp_client_read(&c, fid, offset, result, IXP_MAX_MSG)) > 0) {
-		if(is_directory)
-			xls(result, count);
+		if(is_directory) {
+			if(ndircontent + count > dircontentsz) {
+				void *tmp = dircontent;
+				if(!dircontentsz)
+					dircontentsz = IXP_MAX_MSG;
+				else
+					dircontentsz *= 2;
+				dircontent = cext_emallocz(dircontentsz);
+				if(tmp) {
+					memcpy(dircontent, tmp, ndircontent);
+					free(tmp);
+				}
+			}
+			memcpy(dircontent + ndircontent, result, count);	
+			ndircontent += count;
+		}
 		else {
 			unsigned int i;
 			for(i = 0; i < count; i++)
@@ -149,6 +166,8 @@ xread(char *file)
         fprintf(stderr, "wmiir: cannot read file/directory '%s': %s\n", file, c.errstr);
         return -1;
     }
+	if(is_directory)
+		xls(dircontent, ndircontent);
     return ixp_client_close(&c, fid);
 }
 
