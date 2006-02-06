@@ -451,23 +451,26 @@ check_dimensions(Client *c, unsigned int tabh, unsigned int bw)
 static void
 resize_incremental(Client *c, unsigned int tabh, unsigned int bw)
 {
+    XSizeHints *s = &c->size;
+
     /* increment stuff, see chapter 4.1.2.3 of the ICCCM Manual */
-    if(c->size.flags & PResizeInc) {
-        int base_width = 0, base_height = 0;
+    if(s->flags & PResizeInc && s->width_inc > 0 && s->height_inc > 0) {
+		int w = 0, h = 0;
 
         if(c->size.flags & PBaseSize) {
-            base_width = c->size.base_width;
-            base_height = c->size.base_height;
+            w = c->size.base_width;
+            h = c->size.base_height;
         } else if(c->size.flags & PMinSize) {
             /* base_{width,height} default to min_{width,height} */
-            base_width = c->size.min_width;
-            base_height = c->size.min_height;
+            w = c->size.min_width;
+            h = c->size.min_height;
         }
         /* client_width = base_width + i * c->size.width_inc for an integer i */
-        c->frame.rect.width -=
-            (c->frame.rect.width - 2 * bw - base_width) % c->size.width_inc;
-        c->frame.rect.height -=
-            (c->frame.rect.height - bw - (tabh ? tabh : bw) - base_height) % c->size.height_inc;
+        w = c->frame.rect.width - 2 * bw - w;
+        c->frame.rect.width -= w % s->width_inc;
+
+        h = c->frame.rect.height - bw - (tabh ? tabh : bw) - h;
+        c->frame.rect.height -= h % s->height_inc;
     }
 }
 
