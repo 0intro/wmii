@@ -220,7 +220,7 @@ main(int argc, char *argv[])
         usage();
     }
     /* open socket */
-    if(ixp_client_init(&c, address) == -1) {
+    if(ixp_client_init(&c, address, getpid()) == -1) {
         fprintf(stderr, "wmiir: %s\n", c.errstr);
         exit(1);
     }

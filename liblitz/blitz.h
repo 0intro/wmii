@@ -22,6 +22,7 @@ typedef struct {
 } Color;
 
 typedef struct {
+	Align align;
 	Drawable drawable;
 	GC gc;
 	Color color;

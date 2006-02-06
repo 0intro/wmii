@@ -29,7 +29,7 @@ spawn_ixp_write(char *cmd)
 	len = strlen(data);
 	fprintf(stderr, "spawn_ixp_write write file=%s data=%s address=%s\n", file, data, address);
 
-    if(ixp_client_init(&c, address) == -1) {
+    if(ixp_client_init(&c, address, getpid()) == -1) {
 		free(address);
         fprintf(stderr, "libwmii: %s\n", c.errstr);
 		return;

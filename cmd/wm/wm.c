@@ -101,6 +101,7 @@ draw_pager()
     d.drawable = transient;
     d.gc = gc_transient;
     d.font = xfont;
+	d.align = CENTER;
 	i = 0;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {

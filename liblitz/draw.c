@@ -125,8 +125,17 @@ draw_text(Display * dpy, Draw * d)
 		if (len > 1)
 			text[len - 1] = '.';
 	}
-	x = d->rect.x + h / 2;
-
+	switch (d->align) {
+		case EAST:
+			x = d->rect.x + d->rect.width - (h / 2 + w);
+			break;
+		case CENTER:
+			x = d->rect.x + (d->rect.width - w) / 2;
+			break;
+		default:
+			x = d->rect.x + h / 2;
+			break;
+	}
 	XSetBackground(dpy, d->gc, d->color.bg);
 	/*
 	 * uncomment, if you want get an shadow effect XSetForeground(dpy,

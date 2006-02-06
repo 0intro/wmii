@@ -232,7 +232,7 @@ typedef struct {
 } IXPClient;
 
 /* client.c */
-int ixp_client_init(IXPClient *c, char *address);
+int ixp_client_init(IXPClient *c, char *address, unsigned int rootfid);
 void ixp_client_deinit(IXPClient *c);
 int ixp_client_remove(IXPClient *c, unsigned int newfid, char *filepath);
 int ixp_client_create(IXPClient *c, unsigned int dirfid, char *name,
@@ -247,6 +247,7 @@ int ixp_client_write(IXPClient *c, unsigned int fid,
                      unsigned long long offset,
                      unsigned int count, unsigned char *data);
 int ixp_client_close(IXPClient *c, unsigned int fid);
+int ixp_client_do_fcall(IXPClient * c);
 
 /* convert.c */
 void *ixp_enc_u8(unsigned char *msg, unsigned char val);

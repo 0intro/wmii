@@ -24,11 +24,20 @@ enum {
 	Fctl
 };
 
+typedef struct Bind Bind;
+struct Bind {
+	unsigned int fid;
+	IXPClient c;
+};
+
 typedef struct Mount Mount;
 struct Mount {
 	unsigned short id;
-	char wname[256];
+	char wname[IXP_MAX_FLEN];
 	char address[256];
+	Bind **bind;
+	size_t bindsz;
+	size_t nbind;
 };
 
 Qid root_qid;
@@ -151,6 +160,7 @@ xwalk(IXPConn *c, Fcall *fcall)
 	unsigned short nwqid = 0;
 	Qid dir = root_qid;
 	IXPMap *m;
+	Mount *mnt;
 
 	if(!(m = ixp_server_fid2map(c, fcall->fid)))
 		return Enofid;
@@ -158,13 +168,41 @@ xwalk(IXPConn *c, Fcall *fcall)
 		return Enofid;
 	if(fcall->nwname) {
 		dir = m->qid;
-		for(nwqid = 0; (nwqid < fcall->nwname)
-			&& !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid], True); nwqid++) {
-			/*fprintf(stderr, "wname=%s nwqid=%d\n", fcall->wname[nwqid], nwqid);*/
-			dir = fcall->wqid[nwqid];
+		if((mnt = mount_of_name(fcall->wname[0])) && (fcall->nwname > 1)) {
+			Bind *b = cext_emallocz(sizeof(Bind));
+			int i;
+
+			mnt->bind = (Bind **)cext_array_attach((void **)mnt->bind, b, sizeof(Bind *), &mnt->bindsz);
+			mnt->nbind++;
+
+			/* open socket */
+			if(ixp_client_init(&b->c, mnt->address, mnt->nbind - 1) == -1)
+				return Enofile;
+
+			b->c.fcall.id = TWALK;
+			b->c.fcall.fid = fcall->fid;
+			b->c.fcall.newfid = fcall->newfid;
+			b->c.fcall.nwname = fcall->nwname - 1;
+			for(i = 1; i < fcall->nwname; i++)
+				cext_strlcpy(b->c.fcall.wname[i - 1], fcall->wname[i], sizeof(b->c.fcall.wname[i - 1]));
+
+			if(ixp_client_do_fcall(&b->c) == -1);
+				/* TODO: unbind client, also in other cases, THINK */
+
+			!mkqid(&dir, fcall->wname[0], &fcall->wqid[0], True);
+			for(i = 0; i < b->c.fcall.nwname; i++)
+				fcall->wqid[i + 1] = b->c.fcall.wqid[i];
+			nwqid = i + 1;
 		}
-		if(!nwqid)
-			return Enofile;
+		else {
+			for(nwqid = 0; (nwqid < fcall->nwname)
+				&& !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid], True); nwqid++) {
+				/*fprintf(stderr, "wname=%s nwqid=%d\n", fcall->wname[nwqid], nwqid);*/
+				dir = fcall->wqid[nwqid];
+			}
+			if(!nwqid)
+				return Enofile;
+		}
 	}
 	/* a fid will only be valid, if the walk was complete */
 	if(nwqid == fcall->nwname) {
@@ -229,7 +267,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 	case Dmount:
 		if(!(mnt = mount_of_name(name)))
 			return -1;
-		return mkstat(stat, dir, name, 0, DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, 0, DMREAD | DMWRITE | DMMOUNT);
 		break;
 	}
 	return 0;
