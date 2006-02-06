@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <X11/Xatom.h>
@@ -31,7 +32,7 @@
 /* 8-bit qid.path.type */
 enum {                          
     Droot,
-    Dshortcut
+    Dshortcut,
 	Fctl,
     Ffont,
     Fcolor,
@@ -43,21 +44,12 @@ typedef struct Shortcut Shortcut;
 
 struct Shortcut {
 	unsigned short id;
-    char name[MAX_BUF];
+    char name[256];
 	char *cmd;
     unsigned long mod;
     KeyCode key;
     Shortcut *next;
 };
-
-static char E9pversion[] = "9P version not supported";
-static char Enoperm[] = "permission denied";
-static char Enofid[] = "fid not assigned";
-static char Enofile[] = "file not found";
-static char Enomode[] = "mode not supported";
-static char Enofunc[] = "function not supported";
-static char Enocommand[] = "command not supported";
-
 
 static IXPServer srv;
 static Display *dpy;
@@ -73,6 +65,7 @@ static unsigned int num_lock_mask, valid_mask;
 static char *font;
 static char *colstr;
 static Draw box;
+Qid root_qid;
 
 static void draw_shortcut_box(char *prefix);
 
@@ -141,7 +134,7 @@ create_shortcut(char *name, char *cmd)
             s->next = cext_emallocz(sizeof(Shortcut));
             s = s->next;
         }
-        cext_strlcpy(s->name, chain[i], MAX_BUF);
+        cext_strlcpy(s->name, chain[i], sizeof(s->name));
         k = strrchr(chain[i], '-');
         if(k)
             k++;
@@ -319,12 +312,22 @@ dummy_error_handler(Display * dpy, XErrorEvent * err)
     return 0;
 }
 
+static Shortcut *
+shortcut_of_name(char *name)
+{
+	size_t i;
+	for(i = 0; i < nshortcut; i++)
+		if(!strncmp(shortcut[i]->name, name, sizeof(shortcut[i]->name)))
+			return shortcut[i];
+	return nil;
+}
+
 static int
 index_of_id(unsigned short id)
 {
 	int i;
-	for(i = 0; i < nitem; i++)
-		if(item[i]->id == id)
+	for(i = 0; i < nshortcut; i++)
+		if(shortcut[i]->id == id)
 			return i;
 	return -1;
 }
@@ -355,23 +358,17 @@ qid_to_name(Qid *qid)
 	unsigned char type = qpath_type(qid->path);
 	unsigned short id = qpath_id(qid->path);
 	int i;
-	static char buf[32];
 
 	if(id && ((i = index_of_id(id)) == -1))
 		return nil;
 	switch(type) {
 		case Droot: return "/"; break;
-		case Ditem:
-			snprintf(buf, sizeof(buf), "%u", i + 1);
-			return buf;
-			break;
+		case Dshortcut: return "shortcut"; break;
 		case Fctl: return "ctl"; break;
 		case Ffont: return "font"; break;
-		case Fdefcolor: return "defcolor"; break;
-		case Fexpand: return "expand"; break;
-		case Fdata: return "data"; break;
-		case Fevent: return "event"; break;
 		case Fcolor: return "color"; break;
+		case Freset: return "reset"; break;
+		case Fshortcut: return shortcut[i]->name; break;
 		default: return nil; break;
 	}
 }
@@ -379,36 +376,26 @@ qid_to_name(Qid *qid)
 static int
 name_to_type(char *name)
 {
-	const char *err;
-    unsigned int i;
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return Droot;
-	if(!strncmp(name, "new", 4))
-		return Ditem;
+	if(!strncmp(name, "shortcut", 4))
+		return Dshortcut;
 	if(!strncmp(name, "ctl", 4))
 		return Fctl;
 	if(!strncmp(name, "font", 5))
 		return Ffont;
-	if(!strncmp(name, "defcolor", 9))
-		return Fdefcolor;
-	if(!strncmp(name, "expand", 7))
-		return Fexpand;
-	if(!strncmp(name, "data", 5))
-		return Fdata;
-	if(!strncmp(name, "event", 6))
-		return Fevent;
 	if(!strncmp(name, "color", 6))
 		return Fcolor;
-   	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
-    if(!err && (i - 1 <= nitem))
-		return Ditem;
+	if(!strncmp(name, "reset", 6))
+		return Freset;
+	if(shortcut_of_name(name))
+		return Fshortcut;
 	return -1;
 }
 
 static int
 mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 {
-	const char *err;
 	unsigned short id = qpath_id(dir->path);
 	int i, type = name_to_type(wname);
    
@@ -424,25 +411,12 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case Droot:
 		*new = root_qid;
 		break;
-	case Ditem:
+	case Dshortcut:
 		new->type = IXP_QTDIR;
-		if(!strncmp(wname, "new", 4)) {
-			/*fprintf(stderr, "mkqid iswalk=%d, wname=%s\n", iswalk, wname);*/
-			if(iswalk)
-				new->path = mkqpath(Ditem, new_item()->id);
-			else
-				new->path = mkqpath(Ditem, 0);
-		}
-		else {
-			i = cext_strtonum(wname, 1, 0xffff, &err);
-			if(err || (i - 1 >= nitem))
-				return -1;
-			new->path = mkqpath(Ditem, item[i - 1]->id);
-		}
+		new->path = mkqpath(Dshortcut, 0);
 		break;
-	case Fdata:
-	case Fcolor:
-		if(i >= nitem)
+	case Fshortcut:
+		if(i >= nshortcut)
 			return -1;
 	default:
 		new->type = IXP_QTFILE;
@@ -450,33 +424,6 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		break;
 	}
     return 0;
-}
-
-
-static char *
-xversion(IXPConn *c, Fcall *fcall)
-{
-    if(strncmp(fcall->version, IXP_VERSION, strlen(IXP_VERSION)))
-        return E9pversion;
-    else if(fcall->maxmsg > IXP_MAX_MSG)
-        fcall->maxmsg = IXP_MAX_MSG;
-    fcall->id = RVERSION;
-	ixp_server_respond_fcall(c, fcall);
-    return nil;
-}
-
-static char *
-xattach(IXPConn *c, Fcall *fcall)
-{
-    IXPMap *new = cext_emallocz(sizeof(IXPMap));
-    new->qid = root_qid;
-    new->fid = fcall->fid;
-	c->map = (IXPMap **)cext_array_attach((void **)c->map, new,
-					sizeof(IXPMap *), &c->mapsz);
-    fcall->id = RATTACH;
-    fcall->qid = root_qid;
-	ixp_server_respond_fcall(c, fcall);
-    return nil;
 }
 
 static char * 
@@ -552,36 +499,26 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 {
 	int i, type = name_to_type(name);
 	unsigned short id = qpath_id(dir->path);
-	char buf[16];
 
 	if(id && ((i = index_of_id(id)) == -1))
 		return 0;
     switch (type) {
     case Droot:
-    case Ditem:
+    case Dshortcut:
 		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case Fctl:
+	case Freset:
 		return mkstat(stat, dir, name, 0, DMWRITE);
-		break;
-    case Fevent:
-		return mkstat(stat, dir, name, 0, DMREAD);
 		break;
     case Ffont:
 		return mkstat(stat, dir, name, strlen(font), DMREAD | DMWRITE);
         break;
-    case Fdefcolor:
-		return mkstat(stat, dir, name, 23, DMREAD | DMWRITE);
-        break;
-    case Fexpand:
-		snprintf(buf, sizeof(buf), "%u", iexpand + 1);
-		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
-		break;
-    case Fdata:
-		return mkstat(stat, dir, name, (i == nitem) ? 0 : strlen(item[i]->data), DMREAD | DMWRITE);
-		break;	
     case Fcolor:
 		return mkstat(stat, dir, name, 23, DMREAD | DMWRITE);
+        break;
+    case Fshortcut:
+		return mkstat(stat, dir, name, strlen(shortcut[i]->cmd), DMREAD | DMWRITE);
 		break;
     }
 	return 0;
@@ -850,20 +787,6 @@ xwrite(IXPConn *c, Fcall *fcall)
     fcall->id = RWRITE;
 	ixp_server_respond_fcall(c, fcall);
 	return nil;
-}
-
-static char *
-xclunk(IXPConn *c, Fcall *fcall)
-{
-    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
-
-    if(!m)
-        return Enofid;
-	cext_array_detach((void **)c->map, m, &c->mapsz);
-    free(m);
-    fcall->id = RCLUNK;
-	ixp_server_respond_fcall(c, fcall);
-    return nil;
 }
 
 static void

@@ -10,12 +10,15 @@
 
 #include "wm.h"
 
+/*
 static void select_client(void *obj, char *arg);
 static void xexec(void *obj, char *arg);
 static void swap_client(void *obj, char *arg);
 static void xnew_column(void *obj, char *arg);
+*/
 
 /* action table for /?/ namespace */
+/*
 Action page_acttbl[] = {
     {"exec", xexec},
     {"swap", swap_client},
@@ -23,6 +26,7 @@ Action page_acttbl[] = {
     {"select", select_client},
     {0, 0}
 };
+*/
 
 Page *
 alloc_page()
@@ -135,6 +139,7 @@ rectangles(unsigned int *num)
     return result;
 }
 
+/*
 static void
 xexec(void *obj, char *arg)
 {
@@ -142,7 +147,9 @@ xexec(void *obj, char *arg)
 				sizeof(Page *), &aqsz);
     wmii_spawn(dpy, arg);
 }
+*/
 
+/*
 static void
 swap_client(void *obj, char *arg)
 {
@@ -230,6 +237,7 @@ select_client(void *obj, char *arg)
 		}
 	}
 }
+*/
 
 int
 index_of_page_id(unsigned short id)

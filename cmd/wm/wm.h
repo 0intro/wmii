@@ -119,7 +119,6 @@ XFontStruct *xfont;
 GC gc_xor;
 GC gc_transient;
 IXPServer srv;
-Qid root_qid;
 
 /* default values */
 typedef struct {

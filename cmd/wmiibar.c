@@ -55,20 +55,11 @@ typedef struct {
 	XRectangle rect;
 } Item;
 
-static char E9pversion[] = "9P version not supported";
-static char Enoperm[] = "permission denied";
-static char Enofid[] = "fid not assigned";
-static char Enofile[] = "file not found";
-static char Enomode[] = "mode not supported";
-static char Enofunc[] = "function not supported";
-static char Enocommand[] = "command not supported";
-
 static size_t nitem = 0;
 static size_t itemsz = 0;
 static size_t iexpand = 0;
 static Item **item = 0;
 static IXPServer srv = { 0 };
-static Qid root_qid;
 static Display *dpy;
 static int screen;
 static char *font = nil;
@@ -79,6 +70,7 @@ static XRectangle brect, rect;
 static Pixmap pmap;
 static char defcolstr[24];
 static Color defcolor;
+Qid root_qid;
 
 static void do_pend_fcall(char *event);
 
@@ -365,32 +357,6 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
     return 0;
 }
 
-
-static char *
-xversion(IXPConn *c, Fcall *fcall)
-{
-    if(strncmp(fcall->version, IXP_VERSION, strlen(IXP_VERSION)))
-        return E9pversion;
-    else if(fcall->maxmsg > IXP_MAX_MSG)
-        fcall->maxmsg = IXP_MAX_MSG;
-    fcall->id = RVERSION;
-	ixp_server_respond_fcall(c, fcall);
-    return nil;
-}
-
-static char *
-xattach(IXPConn *c, Fcall *fcall)
-{
-    IXPMap *new = cext_emallocz(sizeof(IXPMap));
-    new->qid = root_qid;
-    new->fid = fcall->fid;
-	c->map = (IXPMap **)cext_array_attach((void **)c->map, new,
-					sizeof(IXPMap *), &c->mapsz);
-    fcall->id = RATTACH;
-    fcall->qid = root_qid;
-	ixp_server_respond_fcall(c, fcall);
-    return nil;
-}
 
 static char * 
 xwalk(IXPConn *c, Fcall *fcall)
@@ -765,20 +731,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 	return nil;
 }
 
-static char *
-xclunk(IXPConn *c, Fcall *fcall)
-{
-    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
-
-    if(!m)
-        return Enofid;
-	cext_array_detach((void **)c->map, m, &c->mapsz);
-    free(m);
-    fcall->id = RCLUNK;
-	ixp_server_respond_fcall(c, fcall);
-    return nil;
-}
-
 static void
 do_fcall(IXPConn *c)
 {
@@ -789,14 +741,14 @@ do_fcall(IXPConn *c)
 	if((msize = ixp_server_receive_fcall(c, &fcall))) {
 		/*fprintf(stderr, "fcall=%d\n", fcall.id);*/
 		switch(fcall.id) {
-		case TVERSION: errstr = xversion(c, &fcall); break;
-		case TATTACH: errstr = xattach(c, &fcall); break;
+		case TVERSION: errstr = wmii_ixp_version(c, &fcall); break;
+		case TATTACH: errstr = wmii_ixp_attach(c, &fcall); break;
 		case TWALK: errstr = xwalk(c, &fcall); break;
 		case TREMOVE: errstr = xremove(c, &fcall); break;
 		case TOPEN: errstr = xopen(c, &fcall); break;
 		case TREAD: errstr = xread(c, &fcall); break;
 		case TWRITE: errstr = xwrite(c, &fcall); break;
-		case TCLUNK: errstr = xclunk(c, &fcall); break;
+		case TCLUNK: errstr = wmii_ixp_clunk(c, &fcall); break;
 		case TSTAT: errstr = xstat(c, &fcall); break;
 		default: errstr = Enofunc; break;
 		}

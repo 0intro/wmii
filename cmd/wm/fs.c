@@ -59,14 +59,7 @@
  * /1/1/1/ctl 			Fctl 		command interface (client)
  */
 
-static char E9pversion[] = "9P version not supported";
-static char Enoperm[] = "permission denied";
-static char Enofid[] = "fid not assigned";
-static char Enofile[] = "file not found";
-static char Enomode[] = "mode not supported";
-static char Enofunc[] = "function not supported";
-static char Enocommand[] = "command not supported";
-
+Qid root_qid;
 const char *err;
 
 /* IXP stuff */

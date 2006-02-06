@@ -10,13 +10,17 @@
 
 #include "wm.h"
 
+/*
 static void max_client(void *obj, char *arg);
+*/
 
 /* action table for /?/ namespace */
+/*
 Action client_acttbl[] = {
     {"max", max_client},
     {0, 0}
 };
+*/
 
 Client *
 alloc_client(Window w, XWindowAttributes *wa)
@@ -495,13 +499,14 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 	configure_client(c);
 }
 
+/*
 static void
 max_client(void *obj, char *arg)
 {
 	Client *c = obj;
 
 	if(c->maximized) {
-		/* XXX: do we really need this ? */ c->frame.rect = c->frame.revert;
+		c->frame.rect = c->frame.revert;
 		resize_client(c, &c->frame.revert, nil);
 	}
 	else {
@@ -512,6 +517,7 @@ max_client(void *obj, char *arg)
 	}
 	c->maximized = !c->maximized;
 }
+*/
 
 int
 index_of_client_id(Area *a, unsigned short id)

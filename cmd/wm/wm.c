@@ -388,18 +388,6 @@ scan_wins()
         XFree(wins);
 }
 
-void *
-get_func(void *acttbl[][2], int rows, char *fname)
-{
-    int i;
-    for(i = 0; i < rows; i++) {
-        if(!strncmp((char *) acttbl[i][0], fname, MAX_BUF)) {
-            return acttbl[i][1];
-        }
-    }
-    return 0;
-}
-
 int
 win_proto(Window w)
 {
