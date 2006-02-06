@@ -9,7 +9,7 @@
 /* ixp.c */
 #define E9pversion		"9P version not supported"
 #define Enoperm 		"permission denied"
-#define Enofid 			"fid not assigned"
+#define Enofid 			"fid not found"
 #define Enofile 		"file not found"
 #define Enomode 		"mode not supported"
 #define Enofunc 		"function not supported"

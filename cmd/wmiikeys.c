@@ -142,21 +142,12 @@ create_shortcut(char *name, char *cmd)
             k = chain[i];
         s->key = XKeysymToKeycode(dpy, XStringToKeysym(k));
         s->mod = blitz_strtomod(chain[i]);
-		s->cmd = cmd;
+		s->cmd = strdup(cmd);
     }
 	r->id = id++;
 	return r;
 
 }
-
-/* create
-    if(r) {
-        s->cmd = cmd;
-		shortcut = (Shortcut **)cext_attach_array((void **)shortcut, r, &shortcutsz);
-		nshortcut++;
-        grab_shortcut(r);
-    }
-	*/
 
 static void
 destroy_shortcut(Shortcut *s)
@@ -232,6 +223,7 @@ handle_shortcut_gkb(Window w, unsigned long mod, KeyCode key)
 	for(i = 0; i < nshortcut; i++) {
 		Shortcut *s = shortcut[i];
 		if((s->mod == mod) && (s->key == key)) {
+			fprintf(stderr, "invoking %s\n", s->cmd);
 			if(s->cmd)
         		wmii_spawn(dpy, s->cmd);
         	return;
@@ -397,12 +389,9 @@ name_to_type(char *name)
 static int
 mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 {
-	unsigned short id = qpath_id(dir->path);
-	int i, type = name_to_type(wname);
+	Shortcut *s;
+	int type = name_to_type(wname);
    
-    if(id && ((i = index_of_id(id)) == -1))
-		return -1;
-
     if((dir->type != IXP_QTDIR) || (type == -1))
         return -1;
 	
@@ -417,11 +406,14 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		new->path = mkqpath(Dshortcut, 0);
 		break;
 	case Fshortcut:
-		if(i >= nshortcut)
+		if(!(s = shortcut_of_name(wname)))
 			return -1;
+		new->type = IXP_QTFILE;
+		new->path = mkqpath(type, s->id);
+		break;
 	default:
 		new->type = IXP_QTFILE;
-    	new->path = mkqpath(type, id);
+    	new->path = mkqpath(type, 0);
 		break;
 	}
     return 0;
@@ -498,11 +490,9 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 static unsigned int
 type_to_stat(Stat *stat, char *name, Qid *dir)
 {
-	int i, type = name_to_type(name);
-	unsigned short id = qpath_id(dir->path);
+	Shortcut *s;
+	int type = name_to_type(name);
 
-	if(id && ((i = index_of_id(id)) == -1))
-		return 0;
     switch (type) {
     case Droot:
     case Dshortcut:
@@ -519,7 +509,9 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		return mkstat(stat, dir, name, 23, DMREAD | DMWRITE);
         break;
     case Fshortcut:
-		return mkstat(stat, dir, name, strlen(shortcut[i]->cmd), DMREAD | DMWRITE);
+		if(!(s = shortcut_of_name(name)))
+			return -1;
+		return mkstat(stat, dir, name, strlen(s->cmd), DMREAD | DMWRITE);
 		break;
     }
 	return 0;
@@ -544,6 +536,7 @@ xremove(IXPConn *c, Fcall *fcall)
 		/* now detach the item */
 		cext_array_detach((void **)shortcut, s, &shortcutsz);
 		nshortcut--;
+		free(s->cmd);
 		destroy_shortcut(s);
     	fcall->id = RREMOVE;
 		ixp_server_respond_fcall(c, fcall);
@@ -559,7 +552,7 @@ xread(IXPConn *c, Fcall *fcall)
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned short id;
     unsigned char *p = fcall->data;
-	unsigned int len;
+	unsigned int len = 0;
 	int i;
 
     if(!m)
@@ -575,12 +568,14 @@ xread(IXPConn *c, Fcall *fcall)
 			/* jump to offset */
 			for(i = 0; i < nshortcut; i++) {
 				len += type_to_stat(&stat, shortcut[i]->name, &m->qid);
+				fprintf(stderr, "len=%d <= fcall->offset=%lld\n", len, fcall->offset);
 				if(len <= fcall->offset)
 					continue;
 				break;
 			}
 			/* offset found, proceeding */
 			for(; i < nshortcut; i++) {
+				fprintf(stderr, "offset xread %s\n", shortcut[i]->name);
 				len = type_to_stat(&stat, shortcut[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -608,6 +603,7 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Dshortcut:
 			for(i = 0; i < nshortcut; i++) {
+				fprintf(stderr, "normal xread %s\n", shortcut[i]->name);
 				len = type_to_stat(&stat, shortcut[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -658,6 +654,27 @@ xstat(IXPConn *c, Fcall *fcall)
     return nil;
 }
 
+static void
+process_reset_line(char *line)
+{
+	Shortcut *s;
+	char *p;
+	fprintf(stderr, "got line: '%s'\n", line);
+
+	/* ignore comments */
+	for(p = line; *p && ((*p == ' ') || (*p == '\t')); p++);
+	if(*p && ((*p == '#') || (*p == '\n')))
+		return;
+
+	p = strchr(line, ' ');
+	*p = 0;
+	++p;
+	s = create_shortcut(line, p);
+	shortcut = (Shortcut **)cext_array_attach((void **)shortcut, s, sizeof(Shortcut *), &shortcutsz);
+	nshortcut++;
+	grab_shortcut(s);
+}
+
 static char *
 xwrite(IXPConn *c, Fcall *fcall)
 {
@@ -702,6 +719,46 @@ xwrite(IXPConn *c, Fcall *fcall)
 		blitz_loadcolor(dpy, screen, colstr, &box.color);
 		break;
     case Freset:
+		{
+			if(fcall->count > 2048)
+				goto error_xwrite;
+			static size_t lastcount;
+			static char last[2048]; /* iounit */
+			char fcallbuf[2048], tmp[2048]; /* iounit */
+			char *p1, *p2;
+			if(!fcall->offset) {
+				while(nshortcut) {
+					Shortcut *s = shortcut[0];
+					ungrab_shortcut(s);
+					cext_array_detach((void **)shortcut, s, &shortcutsz);
+					nshortcut--;
+					free(s->cmd);
+					destroy_shortcut(s);
+				}
+			}
+		    memcpy(fcallbuf, fcall->data, fcall->count);
+		    fcallbuf[fcall->count] = 0;
+			if(fcall->offset) {
+				p1 = strrchr(last, '\n');
+				p2 = strchr(fcallbuf, '\n');
+				memcpy(tmp, p1, lastcount - (p1 - last));
+				memcpy(tmp + (lastcount - (p1 - last)), p2, p2 - fcallbuf);
+				tmp[(lastcount - (p1 - last)) + (p2 - fcallbuf)] = 0;
+				process_reset_line(tmp);
+			}
+			else p2 = fcallbuf;
+			lastcount = fcall->count;
+			memcpy(last, fcall->data, fcall->count);
+			while(p2 - fcallbuf < fcall->count) {
+				p1 = strchr(p2, '\n');
+				*p1 = 0;
+				process_reset_line(p2);
+				*p1 = '\n';
+				p2 = ++p1;
+			}
+			lastcount = fcall->count;
+			memcpy(last, fcall->data, fcall->count);
+		}
 		break;
 	case Fshortcut:
 		{
@@ -715,6 +772,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			s->cmd[fcall->count] = 0;
 		}
 		break;
+error_xwrite:
 	default:
 		return "invalid write";
 		break;

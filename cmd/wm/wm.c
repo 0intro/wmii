@@ -81,7 +81,7 @@ draw_pager_page(size_t idx, Draw *d)
 		Area *a = page[idx]->area[i];
 		if(!a->nclient)
 			continue;
-		for(j = a->nclient - 1; j >= 0; j--)
+		for(j = 0; j < a->nclient; j++)
 			draw_pager_client(a->client[j], d);
 	}
 }

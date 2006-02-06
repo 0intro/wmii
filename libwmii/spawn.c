@@ -15,10 +15,10 @@
 static void
 spawn_ixp_write(char *cmd)
 {
-	static IXPClient c;
+	IXPClient c;
 	char *file = cmd;
 	char *data = strchr(cmd, ' ');
-	char *address = getenv("WMII_ADDRESS");
+	char *address = strdup(getenv("WMII_ADDRESS"));
     unsigned int fid = c.root_fid << 2;
 	size_t len;
 
@@ -27,11 +27,14 @@ spawn_ixp_write(char *cmd)
 	*data = 0;
 	data++;
 	len = strlen(data);
+	fprintf(stderr, "spawn_ixp_write write file=%s data=%s address=%s\n", file, data, address);
 
     if(ixp_client_init(&c, address) == -1) {
+		free(address);
         fprintf(stderr, "libwmii: %s\n", c.errstr);
 		return;
     }
+	free(address);
     /* open */
     if(ixp_client_open(&c, fid, file, IXP_OWRITE) == -1) {
         fprintf(stderr, "libwmii: cannot open file '%s': %s\n", file, c.errstr);
@@ -48,18 +51,34 @@ spawn_ixp_write(char *cmd)
 void
 wmii_spawn(void *dpy, char *cmd)
 {
-    /* the questionable double-fork is done to catch all zombies */
+	static char *ixpcmd = nil;
+	static size_t ixpcmdsz = 0;
+	size_t len;
+
 	if(!cmd)
 		return;
-	if(!strncmp(cmd, "#write ", 7))
-		spawn_ixp_write(&cmd[7]);
-	else if(fork() == 0) {
+	if(!strncmp(cmd, "#write ", 7)) {
+	    if(!(len = strlen(&cmd[7]) + 1))
+			return;
+		if(len > ixpcmdsz) {
+			ixpcmdsz = len + 1;
+			if(ixpcmd)
+				free(ixpcmd);
+			ixpcmd = cext_emallocz(ixpcmdsz);
+		}
+		cext_strlcpy(ixpcmd, &cmd[7], len);
+		spawn_ixp_write(ixpcmd);
+		return;
+	}
+
+    /* the questionable double-fork is done to catch all zombies */
+	if(fork() == 0) {
         if(fork() == 0) {
-            setsid();
-            close(ConnectionNumber(dpy));
-            execlp("rc", "rc", "-c", cmd, (char *) 0);
-            perror("failed");
-            exit(1);
+			setsid();
+			close(ConnectionNumber(dpy));
+			execlp("rc", "rc", "-c", cmd, (char *) 0);
+			perror("failed");
+			exit(1);
         }
         exit(0);
     }

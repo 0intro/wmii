@@ -48,10 +48,12 @@ ixp_client_init(IXPClient * c, char *sockfile)
     c->fcall.maxmsg = IXP_MAX_MSG;
     cext_strlcpy(c->fcall.version, IXP_VERSION, sizeof(c->fcall.version));
     if(do_fcall(c) == -1) {
+		fprintf(stderr, "error: %s\n", c->fcall.errstr);
         ixp_client_deinit(c);
         return -1;
     }
     if(strncmp(c->fcall.version, IXP_VERSION, strlen(IXP_VERSION))) {
+		fprintf(stderr, "error: %s\n", c->fcall.errstr);
         c->errstr = "9P versions differ";
         ixp_client_deinit(c);
         return -1;           /* we cannot handle this version */
@@ -66,6 +68,7 @@ ixp_client_init(IXPClient * c, char *sockfile)
     cext_strlcpy(c->fcall.uname, getenv("USER"), sizeof(c->fcall.uname));
     c->fcall.aname[0] = 0;
     if(do_fcall(c) == -1) {
+		fprintf(stderr, "error: %s\n", c->fcall.errstr);
         ixp_client_deinit(c);
         return -1;
     }
