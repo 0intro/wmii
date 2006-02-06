@@ -454,7 +454,7 @@ resize_incremental(Client *c, unsigned int tabh, unsigned int bw)
     XSizeHints *s = &c->size;
 
     /* increment stuff, see chapter 4.1.2.3 of the ICCCM Manual */
-    if(s->flags & PResizeInc && s->width_inc > 0 && s->height_inc > 0) {
+    if(s->flags & PResizeInc) {
 		int w = 0, h = 0;
 
         if(c->size.flags & PBaseSize) {
@@ -467,10 +467,12 @@ resize_incremental(Client *c, unsigned int tabh, unsigned int bw)
         }
         /* client_width = base_width + i * c->size.width_inc for an integer i */
         w = c->frame.rect.width - 2 * bw - w;
-        c->frame.rect.width -= w % s->width_inc;
+        if(s->width_inc > 0)
+            c->frame.rect.width -= w % s->width_inc;
 
         h = c->frame.rect.height - bw - (tabh ? tabh : bw) - h;
-        c->frame.rect.height -= h % s->height_inc;
+        if(s->height_inc > 0)
+            c->frame.rect.height -= h % s->height_inc;
     }
 }
 
