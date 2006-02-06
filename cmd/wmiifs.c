@@ -6,46 +6,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "wmii.h"
 
-/* array indexes for file pointers */
-typedef enum {
-    F_CTL,
-    F_LAST
-} FsIndexes;
+/*
+ * filesystem specification
+ * / 					Droot
+ * /ctl					Fctl 		command interface
+ * /foobar				Dmount
+ */
 
-typedef struct Route Route;
-struct Route {
-    File dest;
-    int src;
+/* 8-bit qid.path.type */
+enum {                          
+    Droot,
+    Dmount,
+	Fctl
 };
 
-typedef struct Bind Bind;
-struct Bind {
-    IXPClient *client;
-    Route route[MAX_CONN * MAX_OPEN_FILES];
-    File *mount;
-    char *prefix;
-    Bind *next;
+typedef struct Mount Mount;
+struct Mount {
+	unsigned short id;
+	char wname[256];
+	char address[256];
 };
 
+Qid root_qid;
 static Display *dpy;
-static IXPServer *ixps;
-static char *sockfile = nil;
-static File *files[F_LAST];
-static Bind *bindings = nil;
-
-static void quit(void *obj, char *arg);
-static void bind(void *obj, char *arg);
-static void unbind(void *obj, char *arg);
-
-static Action acttbl[] = {
-    {"quit", quit},
-    {"unbind", unbind},
-    {"bind", bind},
-    {0, 0}
-};
+static IXPServer srv;
+static Mount **mount = nil;
+static size_t mountsz = 0;
+static size_t nmount = 0;
 
 static char version[] = "wmiifs - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
@@ -56,330 +47,393 @@ usage()
     exit(1);
 }
 
-static void
-quit(void *obj, char *arg)
+static Mount *
+mount_of_name(char *name)
 {
-    Bind *b;
-    while((b = bindings)) {
-        bindings = bindings->next;
-        if(b->mount) {
-            b->mount->content = nil;
-            ixp_remove(ixps, b->prefix);
-            if(ixps->errstr)
-                fprintf(stderr, "wmiifs: error on unbind %s: %s\n",
-                        b->prefix, ixps->errstr);
-        }
-        free(b->prefix);
-        free(b);
-    }
-    bindings = nil;
-    ixps->runlevel = SHUTDOWN;
+	size_t i;
+	for(i = 0; i < nmount; i++)
+		if(!strncmp(mount[i]->wname, name, sizeof(mount[i]->wname)))
+			return mount[i];
+	return nil;
+}
+
+static int
+index_of_id(unsigned short id)
+{
+	int i;
+	for(i = 0; i < nmount; i++)
+		if(mount[i]->id == id)
+			return i;
+	return -1;
+}
+
+/* IXP stuff */
+
+static unsigned long long
+mkqpath(unsigned char type, unsigned short id)
+{
+	return ((unsigned long long) id << 8) | (unsigned long long) type;
+}
+
+static unsigned char
+qpath_type(unsigned long long path)
+{
+	return path & 0xff;
+}
+
+static unsigned short
+qpath_id(unsigned long long path)
+{
+	return (path >> 8) & 0xffff;
+}
+
+static char *
+qid_to_name(Qid *qid)
+{
+	unsigned char type = qpath_type(qid->path);
+	unsigned short id = qpath_id(qid->path);
+	int i;
+
+	if(id && ((i = index_of_id(id)) == -1))
+		return nil;
+	switch(type) {
+		case Droot: return "/"; break;
+		case Dmount: return mount[i]->wname; break;
+		case Fctl: return "ctl"; break;
+		default: return nil; break;
+	}
+}
+
+static int
+name_to_type(char *name)
+{
+	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
+		return Droot;
+	if(!strncmp(name, "ctl", 4))
+		return Fctl;
+	if(mount_of_name(name))
+		return Dmount;
+	return -1;
+}
+
+static int
+mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
+{
+	Mount *mnt;
+	int type = name_to_type(wname);
+   
+	if((dir->type != IXP_QTDIR) || (type == -1))
+		return -1;
+	
+	new->dtype = qpath_type(dir->path);
+	new->version = 0;
+	switch(type) {
+	case Droot:
+		*new = root_qid;
+		break;
+	case Dmount:
+		if(!(mnt = mount_of_name(wname)))
+			return -1;
+		new->type = IXP_QTDIR;
+		new->path = mkqpath(type, mnt->id);
+		break;
+	default:
+		new->type = IXP_QTFILE;
+		new->path = mkqpath(type, 0);
+		break;
+	}
+	return 0;
+}
+
+static char * 
+xwalk(IXPConn *c, Fcall *fcall)
+{
+	unsigned short nwqid = 0;
+	Qid dir = root_qid;
+	IXPMap *m;
+
+	if(!(m = ixp_server_fid2map(c, fcall->fid)))
+		return Enofid;
+	if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
+		return Enofid;
+	if(fcall->nwname) {
+		dir = m->qid;
+		for(nwqid = 0; (nwqid < fcall->nwname)
+			&& !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid], True); nwqid++) {
+			/*fprintf(stderr, "wname=%s nwqid=%d\n", fcall->wname[nwqid], nwqid);*/
+			dir = fcall->wqid[nwqid];
+		}
+		if(!nwqid)
+			return Enofile;
+	}
+	/* a fid will only be valid, if the walk was complete */
+	if(nwqid == fcall->nwname) {
+		if(fcall->fid != fcall->newfid) {
+			m = cext_emallocz(sizeof(IXPMap));
+			c->map = (IXPMap **)cext_array_attach((void **)c->map,
+						m, sizeof(IXPMap *), &c->mapsz);
+		}
+		m->qid = dir;
+		m->fid = fcall->newfid;
+	}
+	fcall->id = RWALK;
+	fcall->nwqid = nwqid;
+	ixp_server_respond_fcall(c, fcall);
+	return nil;
+}
+
+static char *
+xopen(IXPConn *c, Fcall *fcall)
+{
+	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+
+	if(!m)
+		return Enofid;
+	if(!(fcall->mode | IXP_OREAD) && !(fcall->mode | IXP_OWRITE))
+		return Enomode;
+	fcall->id = ROPEN;
+	fcall->qid = m->qid;
+	fcall->iounit = 2048;
+	ixp_server_respond_fcall(c, fcall);
+	return nil;
+}
+
+static unsigned int
+mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int mode)
+{
+	stat->mode = mode;
+	stat->atime = stat->mtime = time(0);
+	cext_strlcpy(stat->uid, getenv("USER"), sizeof(stat->uid));
+	cext_strlcpy(stat->gid, getenv("USER"), sizeof(stat->gid));
+	cext_strlcpy(stat->muid, getenv("USER"), sizeof(stat->muid));
+
+	cext_strlcpy(stat->name, name, sizeof(stat->name));
+	stat->length = length;
+	mkqid(dir, name, &stat->qid, False);
+	return ixp_sizeof_stat(stat);
+}
+
+static unsigned int
+type_to_stat(Stat *stat, char *name, Qid *dir)
+{
+	Mount *mnt;
+	int type = name_to_type(name);
+
+	switch (type) {
+	case Droot:
+		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
+		break;
+	case Fctl:
+		return mkstat(stat, dir, name, 0, DMWRITE);
+		break;
+	case Dmount:
+		if(!(mnt = mount_of_name(name)))
+			return -1;
+		return mkstat(stat, dir, name, 0, DMREAD | DMWRITE);
+		break;
+	}
+	return 0;
+}
+
+static char *
+xremove(IXPConn *c, Fcall *fcall)
+{
+	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	unsigned short id = qpath_id(m->qid.path);
+	int i;
+
+	if(!m)
+		return Enofid;
+	if(id && ((i = qpath_id(id)) == -1))
+		return Enofile;
+	if((qpath_type(m->qid.path) == Dmount) && (i < nmount)) {
+		/* TODO: umount */
+		fcall->id = RREMOVE;
+		ixp_server_respond_fcall(c, fcall);
+		return nil;
+	}
+	return Enoperm;
+}
+
+static char *
+xread(IXPConn *c, Fcall *fcall)
+{
+	Stat stat;
+	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	unsigned short id;
+	unsigned char *p = fcall->data;
+	unsigned int len = 0;
+	int i;
+
+	if(!m)
+		return Enofid;
+	id = qpath_id(m->qid.path);
+	if(id && ((i = index_of_id(id)) == -1))
+		return Enofile;
+
+	fcall->count = 0;
+	if(fcall->offset) {
+		switch (qpath_type(m->qid.path)) {
+		case Droot:
+			/* jump to offset */
+			len = type_to_stat(&stat, "ctl", &m->qid);
+			for(i = 0; i < nmount; i++) {
+				len += type_to_stat(&stat, mount[i]->wname, &m->qid);
+				if(len <= fcall->offset)
+					continue;
+				break;
+			}
+			/* offset found, proceeding */
+			for(; i < nmount; i++) {
+				len = type_to_stat(&stat, mount[i]->wname, &m->qid);
+				if(fcall->count + len > fcall->iounit)
+					break;
+				fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	else {
+		switch (qpath_type(m->qid.path)) {
+		case Droot:
+			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			for(i = 0; i < nmount; i++) {
+				len = type_to_stat(&stat, mount[i]->wname, &m->qid);
+				if(fcall->count + len > fcall->iounit)
+					break;
+				fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case Dmount:
+			/* TODO: */
+			break;
+		case Fctl:
+			return Enoperm;
+			break;
+		default:
+			return "invalid read";
+			break;
+		}
+	}
+	fcall->id = RREAD;
+	ixp_server_respond_fcall(c, fcall);
+	return nil;
+}
+
+static char *
+xstat(IXPConn *c, Fcall *fcall)
+{
+	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	char *name;
+
+	if(!m)
+		return Enofid;
+	name = qid_to_name(&m->qid);
+	/*fprintf(stderr, "xstat: name=%s\n", name);*/
+	if(!type_to_stat(&fcall->stat, name, &m->qid))
+		return Enofile;
+	fcall->id = RSTAT;
+	ixp_server_respond_fcall(c, fcall);
+	return nil;
+}
+
+static char *
+xwrite(IXPConn *c, Fcall *fcall)
+{
+	char buf[256];
+	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+
+	if(!m)
+		return Enofid;
+	switch (qpath_type(m->qid.path)) {
+	case Fctl:
+		if(fcall->count == 4) {
+			memcpy(buf, fcall->data, 4);
+			buf[4] = 0;
+			if(!strncmp(buf, "quit", 5)) {
+				srv.running = 0;
+				break;
+			}
+		}
+		return Enocommand;
+		break;
+	default:
+		return "invalid write";
+		break;
+	}
+	fcall->id = RWRITE;
+	ixp_server_respond_fcall(c, fcall);
+	return nil;
 }
 
 static void
-do_unbind(Bind * bind)
+do_fcall(IXPConn *c)
 {
-    Bind *b;
-    if(bind == bindings)
-        bindings = bind->next;
-    else {
-        for(b = bindings; b && b->next != bind; b = b->next);
-        b->next = bind->next;
-    }
-    /* free stuff */
-    deinit_client(bind->client);
-    free(bind->prefix);
-    free(bind);
+	static Fcall fcall;
+	unsigned int msize;
+	char *errstr;
+
+	if((msize = ixp_server_receive_fcall(c, &fcall))) {
+		/*fprintf(stderr, "fcall=%d\n", fcall.id);*/
+		switch(fcall.id) {
+		case TVERSION: errstr = wmii_ixp_version(c, &fcall); break;
+		case TATTACH: errstr = wmii_ixp_attach(c, &fcall); break;
+		case TWALK: errstr = xwalk(c, &fcall); break;
+		case TREMOVE: errstr = xremove(c, &fcall); break;
+		case TOPEN: errstr = xopen(c, &fcall); break;
+		case TREAD: errstr = xread(c, &fcall); break;
+		case TWRITE: errstr = xwrite(c, &fcall); break;
+		case TCLUNK: errstr = wmii_ixp_clunk(c, &fcall); break;
+		case TSTAT: errstr = xstat(c, &fcall); break;
+		default: errstr = Enofunc; break;
+		}
+		if(errstr)
+			ixp_server_respond_error(c, &fcall, errstr);
+	}
 }
 
 static void
-unbind(void *obj, char *arg)
+new_ixp_conn(IXPConn *c)
 {
-    Bind *b;
-
-    for(b = bindings; b && strncmp(b->prefix, arg, strlen(b->prefix));
-        b = b->next);
-
-    if(!b) {
-        fprintf(stderr, "wmiifs: unbind: '%s' no such path\n", arg);
-        return;
-    }
-    do_unbind(b);
+	int fd = ixp_accept_sock(c->fd);
+	
+	if(fd >= 0)
+		ixp_server_open_conn(c->srv, fd, do_fcall, ixp_server_close_conn);
 }
 
 static void
-bind(void *obj, char *arg)
-{
-    Bind *b, *new = nil;
-    char cmd[1024];
-    char *sfile;
-
-    if(!arg)
-        return;
-    cext_strlcpy(cmd, arg, sizeof(cmd));
-    sfile = strchr(cmd, ' ');
-    if(!sfile) {
-        fprintf(stderr,
-                "wmiifs: bind: '%s' without socket argument, ignoring\n",
-                arg);
-        return;                 /* shortcut with empty argument */
-    }
-    *sfile = 0;
-    sfile++;
-    if(*sfile == 0) {
-        fprintf(stderr,
-                "wmiifs: bind: '%s' without socket argument, ignoring\n",
-                arg);
-        return;                 /* shortcut with empty argument */
-    }
-    new = cext_emallocz(sizeof(Bind));
-    new->client = init_ixp_client(sfile);
-
-    if(!new->client) {
-        fprintf(stderr,
-                "wmiifs: bind: cannot connect to server '%s', ignoring\n",
-                sfile);
-        free(new);
-        return;
-    }
-    new->prefix = strdup(cmd);
-    new->mount = ixp_create(ixps, new->prefix);
-    new->mount->content = new->mount;   /* shall be a directory */
-
-    if(!bindings)
-        bindings = new;
-    else {
-        for(b = bindings; b && b->next; b = b->next);
-        b->next = new;
-    }
-}
-
-static void
-handle_after_write(IXPServer * s, File * f)
-{
-    int i;
-    size_t len;
-
-    for(i = 0; acttbl[i].name; i++) {
-        len = strlen(acttbl[i].name);
-        if(!strncmp(acttbl[i].name, (char *) f->content, len)) {
-            if(strlen(f->content) > len) {
-                acttbl[i].func(0, &((char *) f->content)[len + 1]);
-            } else {
-                acttbl[i].func(0, 0);
-            }
-            break;
-        }
-    }
-}
-
-static Bind *
-fd_to_bind(int fd, int *client_fd)
-{
-    File *f = fd_to_file(ixps, fd);
-    unsigned int i;
-    Bind *b;
-
-    if(!f)
-        return nil;
-    for(b = bindings; b; b = b->next) {
-        for(i = 0; i < MAX_CONN * MAX_OPEN_FILES; i++) {
-            if(&b->route[i].dest == f) {
-                *client_fd = b->route[i].src;
-                return b;
-            }
-        }
-    }
-    return nil;
-}
-
-static File *
-fixp_create(IXPServer * s, char *path)
-{
-    Bind *b;
-    size_t len;
-
-    for(b = bindings; b && strncmp(b->prefix, path, strlen(b->prefix));
-        b = b->next);
-
-    if(!b) {
-        File *f = ixp_create(s, path);
-        return f;
-    }
-    /* route to b */
-    len = strlen(b->prefix);
-    b->client->create(b->client, path[len] == 0 ? "/" : &path[len]);
-    if(b->client->errstr) {
-        if(!strcmp(b->client->errstr, DEAD_SERVER))
-            do_unbind(b);
-    }
-    return nil;
-}
-
-static File *
-fixp_open(IXPServer * s, char *path)
-{
-    Bind *b;
-    int fd;
-    size_t len;
-
-    for(b = bindings; b && strncmp(b->prefix, path, strlen(b->prefix));
-        b = b->next);
-
-    if(!b) {
-        File *f = ixp_open(s, path);
-        return f;
-    }
-    /* route to b */
-    len = strlen(b->prefix);
-    fd = b->client->open(b->client, path[len] == 0 ? "/" : &path[len]);
-    if(b->client->errstr) {
-        set_error(s, b->client->errstr);
-        if(!strcmp(b->client->errstr, DEAD_SERVER))
-            do_unbind(b);
-        return nil;
-    }
-    b->route[fd].src = fd;
-    return &b->route[fd].dest;
-}
-
-static size_t
-fixp_read(IXPServer * s, int fd, size_t offset, void *out_buf,
-          size_t out_buf_len)
-{
-    int cfd;
-    Bind *b = fd_to_bind(fd, &cfd);
-    size_t result;
-
-    if(!b) {
-        result = ixp_read(s, fd, offset, out_buf, out_buf_len);
-        return result;
-    }
-    /* route to b */
-    result = seek_read(b->client, cfd, offset, out_buf, out_buf_len);
-    if(b->client->errstr) {
-        set_error(s, b->client->errstr);
-        if(!strcmp(b->client->errstr, DEAD_SERVER))
-            do_unbind(b);
-    }
-    return result;
-}
-
-static void
-fixp_write(IXPServer * s, int fd, size_t offset, void *content,
-           size_t in_len)
-{
-    int cfd;
-    Bind *b = fd_to_bind(fd, &cfd);
-
-    if(!b) {
-        ixp_write(s, fd, offset, content, in_len);
-        return;
-    }
-    /* route to b */
-    seek_write(b->client, cfd, offset, content, in_len);
-    if(b->client->errstr) {
-        set_error(s, b->client->errstr);
-        if(!strcmp(b->client->errstr, DEAD_SERVER))
-            do_unbind(b);
-    }
-}
-
-static void
-fixp_close(IXPServer * s, int fd)
-{
-    int cfd;
-    Bind *b = fd_to_bind(fd, &cfd);
-
-    if(!b) {
-        ixp_close(s, fd);
-        return;
-    }
-    /* route to b */
-    b->client->close(b->client, cfd);
-    if(b->client->errstr) {
-        set_error(s, b->client->errstr);
-        if(!strcmp(b->client->errstr, DEAD_SERVER))
-            do_unbind(b);
-    }
-}
-
-static void
-fixp_remove(IXPServer * s, char *path)
-{
-    Bind *b;
-    size_t len;
-
-    for(b = bindings; b && strncmp(b->prefix, path, strlen(b->prefix));
-        b = b->next);
-
-    if(!b) {
-        ixp_remove(s, path);
-        return;
-    }
-    /* route to b */
-    len = strlen(b->prefix);
-    b->client->remove(b->client, path[len] == 0 ? "/" : &path[len]);
-    if(b->client->errstr) {
-        set_error(s, b->client->errstr);
-        if(!strcmp(b->client->errstr, DEAD_SERVER))
-            do_unbind(b);
-    }
-}
-
-static void
-check_event(Connection * e)
+check_x_event(IXPConn *c)
 {
     XEvent ev;
-    while(XPending(dpy)) {
-        /*
-         * wmiifs isn't interested in any X events, so just drop them
-         * all
-         */
+    while(XPending(dpy))
         XNextEvent(dpy, &ev);
-    }
     /* why check them? because X won't kill wmiifs when X dies */
 }
 
-static void
-run()
-{
-    if(!(files[F_CTL] = ixp_create(ixps, "/ctl"))) {
-        perror("wmiifs: cannot connect IXP server");
-        exit(1);
-    }
-    files[F_CTL]->after_write = handle_after_write;
-
-    /* routing functions */
-    ixps->create = fixp_create;
-    ixps->remove = fixp_remove;
-    ixps->open = fixp_open;
-    ixps->close = fixp_close;
-    ixps->read = fixp_read;
-    ixps->write = fixp_write;
-
-    /* main event loop */
-    run_server_with_fd_support(ixps, ConnectionNumber(dpy),
-                               check_event, 0);
-
-    deinit_server(ixps);
-}
+/* main */
 
 int
 main(int argc, char *argv[])
 {
     int i;
+	char *errstr;
+	char *address = nil;
 
     /* command line args */
     for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
         switch (argv[i][1]) {
         case 'v':
-            fprintf(stdout, "%s", version[0]);
+            fprintf(stdout, "%s", version);
             exit(0);
             break;
-        case 's':
+        case 'a':
             if(i + 1 < argc)
-                sockfile = argv[++i];
+                address = argv[++i];
             else
                 usage();
             break;
@@ -389,20 +443,36 @@ main(int argc, char *argv[])
         }
     }
 
-    if(!getenv("HOME")) {
-        fprintf(stderr, "%s",
-                "wmiifs: $HOME environment variable is not set\n");
-        usage();
-    }
     /* just for the case X crashes/gets quit */
     dpy = XOpenDisplay(0);
     if(!dpy) {
         fprintf(stderr, "%s", "wmiifs: cannot open display\n");
         exit(1);
     }
-    ixps = wmii_setup_server(sockfile);
 
-    run();
+	i = ixp_create_sock(address, &errstr);
+	if(i < 0) {
+        fprintf(stderr, "wmiifs: fatal: %s\n", errstr);
+		exit(1);
+	}
 
-    return 0;
+	/* IXP server */
+	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);
+    root_qid.type = IXP_QTDIR;
+    root_qid.version = 0;
+    root_qid.path = mkqpath(Droot, 0);
+
+	/* X server */
+	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
+
+    /* main loop */
+	errstr = ixp_server_loop(&srv);
+	if(errstr)
+    	fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
+
+	/* cleanup */
+	ixp_server_close(&srv);
+	XCloseDisplay(dpy);
+
+	return errstr ? 1 : 0;
 }

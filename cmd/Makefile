@@ -28,7 +28,7 @@ SRC_warp = wmiiwarp.c
 OBJ_warp = ${SRC_warp:.c=.o}
 
 #all: wmiibar wmiimenu wmiir wmiifs wmiikeys wmiiplumb wmiiwarp
-all: wmiibar wmiikeys wmiir wmiiplumb wmiiwarp
+all: wmiifs wmiibar wmiikeys wmiir wmiiplumb wmiiwarp
 	@echo built wmii commands
 
 .c.o:
