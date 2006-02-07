@@ -42,7 +42,7 @@ static size_t nmount = 0;
 static unsigned short tag = 0;
 static unsigned char *msg[IXP_MAX_MSG];
 
-static void rx_fcall(IXPConn *c);
+static void do_rx_fcall(IXPConn *c);
 
 static char version[] = "wmiifs - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 static char Enoserv[] = "server not found";
@@ -123,7 +123,7 @@ xmount(char *arg)
 		return Enoserv;
 	}
 
-	mnt->respond = ixp_server_open_conn(&srv, mnt->client.fd, rx_fcall, xclose_mount);
+	mnt->respond = ixp_server_open_conn(&srv, mnt->client.fd, do_rx_fcall, xclose_mount);
 	return nil;
 }
 
@@ -215,6 +215,63 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	return 0;
 }
 
+static unsigned int
+mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int mode)
+{
+	stat->mode = mode;
+	stat->atime = stat->mtime = time(0);
+	cext_strlcpy(stat->uid, getenv("USER"), sizeof(stat->uid));
+	cext_strlcpy(stat->gid, getenv("USER"), sizeof(stat->gid));
+	cext_strlcpy(stat->muid, getenv("USER"), sizeof(stat->muid));
+
+	cext_strlcpy(stat->name, name, sizeof(stat->name));
+	stat->length = length;
+	mkqid(dir, name, &stat->qid, False);
+	return ixp_sizeof_stat(stat);
+}
+
+static unsigned int
+type_to_stat(Stat *stat, char *name, Qid *dir)
+{
+	Mount *mnt;
+	int type = name_to_type(name);
+
+	switch (type) {
+	case Droot:
+		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
+		break;
+	case Fctl:
+		return mkstat(stat, dir, name, 0, DMWRITE);
+		break;
+	case Dmount:
+		if(!(mnt = mount_of_name(name)))
+			return -1;
+		return mkstat(stat, dir, name, 0, DMREAD | DMWRITE | DMMOUNT);
+		break;
+	}
+	return 0;
+}
+
+static Mount *
+map2mount(IXPMap *m)
+{
+	unsigned short id;
+	int i;
+	if((id = qpath_id(m->qid.path))) { /* remote */
+   		i = index_of_id(id);
+	    if((i >= 0) && (i < nmount))
+			return mount[i];
+	}
+	return nil;
+}
+
+static char * 
+rxwalk(IXPConn *c, Fcall *fcall)
+{
+
+	return nil;
+}
+
 static char * 
 txwalk(IXPConn *c, Fcall *fcall)
 {
@@ -277,16 +334,21 @@ txwalk(IXPConn *c, Fcall *fcall)
 	return nil;
 }
 
-static Mount *
-map2mount(IXPMap *m)
+static char *
+rxcreate(IXPConn *c, Fcall *fcall)
 {
-	unsigned short id;
-	int i;
-	if((id = qpath_id(m->qid.path))) { /* remote */
-   		i = index_of_id(id);
-	    if((i >= 0) && (i < nmount))
-			return mount[i];
-	}
+	return nil;
+}
+
+static char *
+txcreate(IXPConn *c, Fcall *fcall)
+{
+	return nil;
+}
+
+static char *
+rxopen(IXPConn *c, Fcall *fcall)
+{
 	return nil;
 }
 
@@ -325,41 +387,10 @@ txopen(IXPConn *c, Fcall *fcall)
 	return nil;
 }
 
-static unsigned int
-mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int mode)
+static char *
+rxremove(IXPConn *c, Fcall *fcall)
 {
-	stat->mode = mode;
-	stat->atime = stat->mtime = time(0);
-	cext_strlcpy(stat->uid, getenv("USER"), sizeof(stat->uid));
-	cext_strlcpy(stat->gid, getenv("USER"), sizeof(stat->gid));
-	cext_strlcpy(stat->muid, getenv("USER"), sizeof(stat->muid));
-
-	cext_strlcpy(stat->name, name, sizeof(stat->name));
-	stat->length = length;
-	mkqid(dir, name, &stat->qid, False);
-	return ixp_sizeof_stat(stat);
-}
-
-static unsigned int
-type_to_stat(Stat *stat, char *name, Qid *dir)
-{
-	Mount *mnt;
-	int type = name_to_type(name);
-
-	switch (type) {
-	case Droot:
-		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
-		break;
-	case Fctl:
-		return mkstat(stat, dir, name, 0, DMWRITE);
-		break;
-	case Dmount:
-		if(!(mnt = mount_of_name(name)))
-			return -1;
-		return mkstat(stat, dir, name, 0, DMREAD | DMWRITE | DMMOUNT);
-		break;
-	}
-	return 0;
+	return nil;
 }
 
 static char *
@@ -380,6 +411,12 @@ txremove(IXPConn *c, Fcall *fcall)
 		return nil;
 	}
 	return Enoperm;
+}
+
+static char *
+rxread(IXPConn *c, Fcall *fcall)
+{
+	return nil;
 }
 
 static char *
@@ -453,7 +490,13 @@ txread(IXPConn *c, Fcall *fcall)
 }
 
 static char *
-xstat(IXPConn *c, Fcall *fcall)
+rxstat(IXPConn *c, Fcall *fcall)
+{
+	return nil;
+}
+
+static char *
+txstat(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	char *name;
@@ -466,6 +509,14 @@ xstat(IXPConn *c, Fcall *fcall)
 		return Enofile;
 	fcall->id = RSTAT;
 	ixp_server_respond_fcall(c, fcall);
+	return nil;
+}
+
+static char *
+rxwrite(IXPConn *c, Fcall *fcall)
+{
+
+
 	return nil;
 }
 
@@ -505,6 +556,13 @@ txwrite(IXPConn *c, Fcall *fcall)
 	return nil;
 }
 
+char *
+rxclunk(IXPConn *c, Fcall *fcall)
+{
+
+
+	return nil;
+}
 
 char *
 txclunk(IXPConn *c, Fcall *fcall)
@@ -521,7 +579,7 @@ txclunk(IXPConn *c, Fcall *fcall)
 }
 
 static void
-rx_fcall(IXPConn *c)
+do_rx_fcall(IXPConn *c)
 {
 	static Fcall fcall;
 	unsigned int msize;
@@ -546,7 +604,7 @@ rx_fcall(IXPConn *c)
 }
 
 static void
-tx_fcall(IXPConn *c)
+do_tx_fcall(IXPConn *c)
 {
 	static Fcall fcall;
 	unsigned int msize;
@@ -578,7 +636,7 @@ new_ixp_conn(IXPConn *c)
 	int fd = ixp_accept_sock(c->fd);
 	
 	if(fd >= 0)
-		ixp_server_open_conn(c->srv, fd, tx_fcall, ixp_server_close_conn);
+		ixp_server_open_conn(c->srv, fd, do_tx_fcall, ixp_server_close_conn);
 }
 
 static void
