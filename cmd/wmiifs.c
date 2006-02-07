@@ -468,10 +468,20 @@ xopen(IXPConn *c, Fcall *fcall)
 }
 
 static void
-mntremove(IXPConn *c, Fcall *fcall)
+mntclunkremove(IXPConn *c, Fcall *fcall)
 {
+	Bind *b = rx_to_bind(c);
+	IXPMap *m;
 
-
+	if(!(m = ixp_server_fid2map(b->tx, b->fcall.fid))) {
+		ixp_server_respond_error(b->tx, &b->fcall, Enofid);
+		xunbind(b);
+		return;
+	}
+	cext_array_detach((void **)b->tx->map, m, &b->tx->mapsz);
+	free(m);
+	ixp_server_respond_fcall(b->tx, &b->fcall);
+	xunbind(b);
 }
 
 static char *
@@ -632,25 +642,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 	return nil;
 }
 
-static void
-mntclunk(IXPConn *c, Fcall *fcall)
-{
-	Bind *b = rx_to_bind(c);
-	IXPMap *m;
-
-	if(!(m = ixp_server_fid2map(b->tx, b->fcall.fid))) {
-		ixp_server_respond_error(b->tx, &b->fcall, Enofid);
-		xunbind(b);
-		return;
-	}
-	fprintf(stderr, "mntclunk fid=%d\n", m->fid);
-	cext_array_detach((void **)b->tx->map, m, &b->tx->mapsz);
-	free(m);
-    b->fcall.id = RCLUNK;
-	ixp_server_respond_fcall(b->tx, &b->fcall);
-	xunbind(b);
-}
-
 char *
 xclunk(IXPConn *c, Fcall *fcall)
 {
@@ -678,8 +669,8 @@ do_mnt_fcall(IXPConn *c)
 		fprintf(stderr, "mntfcall=%d\n", fcall.id);
 		switch(fcall.id) {
 		case RWALK: mntwalk(c, &fcall); break;
-		case RREMOVE: mntremove(c, &fcall); break;
-		case RCLUNK: mntclunk(c, &fcall); break;
+		case RREMOVE:
+		case RCLUNK: mntclunkremove(c, &fcall); break;
 		case RCREATE:
 		case ROPEN:
 		case RREAD:
