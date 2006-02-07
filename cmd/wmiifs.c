@@ -24,20 +24,13 @@ enum {
 	Fctl
 };
 
-typedef struct Bind Bind;
-struct Bind {
-	unsigned int fid;
-	IXPClient c;
-};
-
 typedef struct Mount Mount;
 struct Mount {
 	unsigned short id;
 	char wname[IXP_MAX_FLEN];
 	char address[256];
-	Bind **bind;
-	size_t bindsz;
-	size_t nbind;
+	IXPClient client;
+	IXPConn *respond;
 };
 
 Qid root_qid;
@@ -46,8 +39,12 @@ static IXPServer srv;
 static Mount **mount = nil;
 static size_t mountsz = 0;
 static size_t nmount = 0;
+static unsigned char *msg[IXP_MAX_MSG];
+
+static void rx_fcall(IXPConn *c);
 
 static char version[] = "wmiifs - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
+static char Enoserv[] = "server not found";
 
 static void
 usage()
@@ -63,6 +60,70 @@ mount_of_name(char *name)
 	for(i = 0; i < nmount; i++)
 		if(!strncmp(mount[i]->wname, name, sizeof(mount[i]->wname)))
 			return mount[i];
+	return nil;
+}
+
+static void
+xunmount(Mount *mnt)
+{
+	cext_array_detach((void **)mount, mnt, &mountsz);
+	nmount--;
+	ixp_client_deinit(&mnt->client);
+	free(mnt);
+}
+
+static void
+xclose_mount(IXPConn *c)
+{
+	size_t i;
+	cext_array_detach((void **)srv.conn, c, &srv.connsz);
+	for(i = 0; i < nmount; i++)
+		if(mount[i]->respond == c) {
+			xunmount(mount[i]);
+			break;
+		}
+	if(c->map) {
+		for(i = 0; (i < c->mapsz) && c->map[i]; i++)
+			free(c->map[i]);
+		free(c->map);
+	}
+	if(c->pend) {
+		for(i = 0; (i < c->pendsz) && c->pend[i]; i++)
+			free(c->pend[i]);
+		free(c->pend);
+	}
+	free(c);
+}
+
+
+static char *
+xmount(char *arg)
+{
+	static unsigned int id = 1;
+	char *address = arg;
+	char *wname = strchr(address, ' ');
+	Mount *mnt;
+
+	*wname = 0;
+	wname++;
+
+	if(!address || !wname || !*address || !*wname)
+		return Enoserv;
+
+	mnt = cext_emallocz(sizeof(Mount));
+	cext_strlcpy(mnt->wname, wname, sizeof(mnt->wname));
+	cext_strlcpy(mnt->address, address, sizeof(mnt->address));
+	mount = (Mount **)cext_array_attach((void **)mount, mnt, sizeof(Mount *), &mountsz);
+	nmount++;
+
+	/* open socket */
+	if(ixp_client_init(&mnt->client, mnt->address, id++) == -1) {
+		xunmount(mnt);
+		return Enoserv;
+	}
+
+	mnt->respond = ixp_server_open_conn(&srv, mnt->client.fd, rx_fcall, xclose_mount);
+
 	return nil;
 }
 
@@ -157,6 +218,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 static char * 
 xwalk(IXPConn *c, Fcall *fcall)
 {
+	static unsigned short tag = 0;
 	unsigned short nwqid = 0;
 	Qid dir = root_qid;
 	IXPMap *m;
@@ -169,30 +231,25 @@ xwalk(IXPConn *c, Fcall *fcall)
 	if(fcall->nwname) {
 		dir = m->qid;
 		if((mnt = mount_of_name(fcall->wname[0])) && (fcall->nwname > 1)) {
-			Bind *b = cext_emallocz(sizeof(Bind));
-			int i;
+			unsigned int i;
 
-			mnt->bind = (Bind **)cext_array_attach((void **)mnt->bind, b, sizeof(Bind *), &mnt->bindsz);
-			mnt->nbind++;
+			ixp_fcall_to_msg(fcall, msg, IXP_MAX_MSG);
+			ixp_msg_to_fcall(msg, IXP_MAX_MSG, &mnt->client.fcall);
+			fcall->tag = mnt->client.fcall.tag = tag++;
 
-			/* open socket */
-			if(ixp_client_init(&b->c, mnt->address, mnt->nbind - 1) == -1)
-				return Enofile;
-
-			b->c.fcall.id = TWALK;
-			b->c.fcall.fid = fcall->fid;
-			b->c.fcall.newfid = fcall->newfid;
-			b->c.fcall.nwname = fcall->nwname - 1;
+			mnt->client.fcall.nwname = fcall->nwname - 1;
 			for(i = 1; i < fcall->nwname; i++)
-				cext_strlcpy(b->c.fcall.wname[i - 1], fcall->wname[i], sizeof(b->c.fcall.wname[i - 1]));
+				cext_strlcpy(mnt->client.fcall.wname[i - 1], fcall->wname[i],
+					      		sizeof(mnt->client.fcall.wname[i - 1]));
 
-			if(ixp_client_do_fcall(&b->c) == -1);
-				/* TODO: unbind client, also in other cases, THINK */
-
-			!mkqid(&dir, fcall->wname[0], &fcall->wqid[0], True);
-			for(i = 0; i < b->c.fcall.nwname; i++)
-				fcall->wqid[i + 1] = b->c.fcall.wqid[i];
-			nwqid = i + 1;
+    		i = ixp_fcall_to_msg(&mnt->client.fcall, msg, IXP_MAX_MSG);
+			mnt->client.errstr = 0;
+			if(ixp_send_message(mnt->client.fd, msg, i, &mnt->client.errstr) != i) {
+				xclose_mount(mnt->respond);
+				return Enofile;
+			}
+			ixp_server_enqueue_fcall(mnt->respond, fcall);
+			return nil;
 		}
 		else {
 			for(nwqid = 0; (nwqid < fcall->nwname)
@@ -383,6 +440,7 @@ xstat(IXPConn *c, Fcall *fcall)
 static char *
 xwrite(IXPConn *c, Fcall *fcall)
 {
+	char *err;
 	char buf[256];
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 
@@ -390,13 +448,19 @@ xwrite(IXPConn *c, Fcall *fcall)
 		return Enofid;
 	switch (qpath_type(m->qid.path)) {
 	case Fctl:
-		if(fcall->count == 4) {
-			memcpy(buf, fcall->data, 4);
-			buf[4] = 0;
-			if(!strncmp(buf, "quit", 5)) {
-				srv.running = 0;
-				break;
-			}
+		if(fcall->count > sizeof(buf) - 1)
+			return Enocommand;
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
+		if(!strncmp(buf, "quit", 5)) {
+			srv.running = 0;
+			break;
+		}
+		else if(!strncmp(buf, "mount ", 6)) {
+			err = xmount(&buf[6]);
+			if(err)
+				return err;
+			break;
 		}
 		return Enocommand;
 		break;
@@ -410,7 +474,33 @@ xwrite(IXPConn *c, Fcall *fcall)
 }
 
 static void
-do_fcall(IXPConn *c)
+rx_fcall(IXPConn *c)
+{
+	static Fcall fcall;
+	unsigned int msize;
+	char *errstr;
+
+	if((msize = ixp_server_receive_fcall(c, &fcall))) {
+		/*fprintf(stderr, "fcall=%d\n", fcall.id);*/
+		switch(fcall.id) {
+		case TVERSION: errstr = wmii_ixp_version(c, &fcall); break;
+		case TATTACH: errstr = wmii_ixp_attach(c, &fcall); break;
+		case TWALK: errstr = xwalk(c, &fcall); break;
+		case TREMOVE: errstr = xremove(c, &fcall); break;
+		case TOPEN: errstr = xopen(c, &fcall); break;
+		case TREAD: errstr = xread(c, &fcall); break;
+		case TWRITE: errstr = xwrite(c, &fcall); break;
+		case TCLUNK: errstr = wmii_ixp_clunk(c, &fcall); break;
+		case TSTAT: errstr = xstat(c, &fcall); break;
+		default: errstr = Enofunc; break;
+		}
+		if(errstr)
+			ixp_server_respond_error(c, &fcall, errstr);
+	}
+}
+
+static void
+tx_fcall(IXPConn *c)
 {
 	static Fcall fcall;
 	unsigned int msize;
@@ -441,7 +531,7 @@ new_ixp_conn(IXPConn *c)
 	int fd = ixp_accept_sock(c->fd);
 	
 	if(fd >= 0)
-		ixp_server_open_conn(c->srv, fd, do_fcall, ixp_server_close_conn);
+		ixp_server_open_conn(c->srv, fd, tx_fcall, ixp_server_close_conn);
 }
 
 static void
