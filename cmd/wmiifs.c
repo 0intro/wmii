@@ -298,8 +298,7 @@ mntrespond(IXPConn *c, Fcall *fcall)
 {
 	Bind *b = rx_to_bind(c);
 	fprintf(stderr, "mntrespond, welcome: fcall->id=%d\n", fcall->id);
-	memcpy(&b->fcall, &b->client.fcall, sizeof(Fcall));
-	b->fcall.id++;
+	memcpy(&b->fcall, fcall, sizeof(Fcall));
 	ixp_server_respond_fcall(b->tx, &b->fcall);
 }
 
@@ -324,8 +323,10 @@ mntwalk(IXPConn *c, Fcall *fcall)
 		return;
 	}
 	dir = b->fcall.wqid[0]; /* mount point */
-	for(nwqid = 0; nwqid < b->client.fcall.nwqid; nwqid++)
-		b->fcall.wqid[nwqid + 1] = b->client.fcall.wqid[nwqid];
+	for(nwqid = 0; nwqid < fcall->nwqid; nwqid++)
+		b->fcall.wqid[nwqid + 1] = fcall->wqid[nwqid];
+	if(!fcall->nwqid)
+		nwqid++;
 
 	if(!nwqid) {
 	fprintf(stderr, "%s", "wmiifs: mntwalk nwqid wrong \n");
@@ -339,8 +340,8 @@ mntwalk(IXPConn *c, Fcall *fcall)
 	if(nwqid == b->fcall.nwname) {
 		if(b->fcall.fid != b->fcall.newfid) {
 			m = cext_emallocz(sizeof(IXPMap));
-			c->map = (IXPMap **)
-				cext_array_attach((void **)c->map, m, sizeof(IXPMap *), &c->mapsz);
+			b->tx->map = (IXPMap **)
+				cext_array_attach((void **)b->tx->map, m, sizeof(IXPMap *), &b->tx->mapsz);
 		}
 		m->qid = dir; /* mount point, even if not */
 		m->fid = b->fcall.newfid;
@@ -567,6 +568,7 @@ xstat(IXPConn *c, Fcall *fcall)
 	fprintf(stderr, "xstat: welcome, fcall->fid=%d\n", fcall->fid);
 	if(!m)
 		return Enofid;
+	fprintf(stderr, "xstat: now fetching bind, fcall->fid=%d\n", fcall->fid);
 	if((b = fid_to_bind(m->fid)))
 		return mntrequest(b, fcall);
 	name = qid_to_name(&m->qid);
@@ -632,6 +634,18 @@ xwrite(IXPConn *c, Fcall *fcall)
 static void
 mntclunk(IXPConn *c, Fcall *fcall)
 {
+	Bind *b = rx_to_bind(c);
+	IXPMap *m;
+
+	if(!(m = ixp_server_fid2map(b->tx, b->fcall.fid))) {
+		ixp_server_respond_error(b->tx, &b->fcall, Enofid);
+		xunbind(b);
+		return;
+	}
+	cext_array_detach((void **)b->tx->map, m, &b->tx->mapsz);
+	free(m);
+    b->fcall.id = RCLUNK;
+	ixp_server_respond_fcall(b->tx, &b->fcall);
 }
 
 char *
