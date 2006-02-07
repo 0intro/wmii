@@ -116,6 +116,7 @@ draw()
 	unsigned int w = 0;
 	Draw d = { 0 };
 
+	d.align = WEST;
     d.gc = gc;
     d.drawable = pmap;
     d.rect = brect;
