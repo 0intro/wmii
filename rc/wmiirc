@@ -143,5 +143,5 @@ normstyle /menu/nstyle >[2]/dev/null
 selstyle /menu/sstyle >[2]/dev/null
 
 # MISC
-xsetroot -mod 2 2 -bg \#666699 -fg \#888888
+xsetroot -mod 2 2 -bg \#555588 -fg \#666666
 status&

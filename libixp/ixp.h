@@ -289,7 +289,8 @@ void ixp_server_enqueue_fcall(IXPConn *c, Fcall *fcall);
 unsigned int ixp_server_receive_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr);
-Fcall *ixp_server_dequeue_fcall(IXPConn *c, unsigned short id);
+Fcall *ixp_server_dequeue_fcall_tag(IXPConn *c, unsigned short tag);
+Fcall *ixp_server_dequeue_fcall_id(IXPConn *c, unsigned char id);
 void ixp_server_close(IXPServer *s);
 
 /* socket.c */

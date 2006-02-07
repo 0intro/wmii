@@ -39,6 +39,7 @@ static IXPServer srv;
 static Mount **mount = nil;
 static size_t mountsz = 0;
 static size_t nmount = 0;
+static unsigned short tag = 0;
 static unsigned char *msg[IXP_MAX_MSG];
 
 static void rx_fcall(IXPConn *c);
@@ -218,7 +219,6 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 static char * 
 xwalk(IXPConn *c, Fcall *fcall)
 {
-	static unsigned short tag = 0;
 	unsigned short nwqid = 0;
 	Qid dir = root_qid;
 	IXPMap *m;
@@ -248,6 +248,7 @@ xwalk(IXPConn *c, Fcall *fcall)
 				xclose_mount(mnt->respond);
 				return Enofile;
 			}
+			/* message will be received by mnt->respond */
 			ixp_server_enqueue_fcall(mnt->respond, fcall);
 			return nil;
 		}
@@ -277,19 +278,51 @@ xwalk(IXPConn *c, Fcall *fcall)
 	return nil;
 }
 
+static Mount *
+map2mount(IXPMap *m)
+{
+	unsigned short id;
+	int i;
+	if((id = qpath_id(m->qid.path))) { /* remote */
+   		i = index_of_id(id);
+	    if((i >= 0) && (i < nmount))
+			return mount[i];
+	}
+	return nil;
+}
+
 static char *
 xopen(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	Mount *mnt;
 
 	if(!m)
 		return Enofid;
-	if(!(fcall->mode | IXP_OREAD) && !(fcall->mode | IXP_OWRITE))
-		return Enomode;
-	fcall->id = ROPEN;
-	fcall->qid = m->qid;
-	fcall->iounit = 2048;
-	ixp_server_respond_fcall(c, fcall);
+	if((mnt = map2mount(m))) { /* remote */
+		unsigned int msize;
+		ixp_fcall_to_msg(fcall, msg, IXP_MAX_MSG);
+		ixp_msg_to_fcall(msg, IXP_MAX_MSG, &mnt->client.fcall);
+		fcall->tag = mnt->client.fcall.tag = tag++;
+
+    	msize = ixp_fcall_to_msg(&mnt->client.fcall, msg, IXP_MAX_MSG);
+		mnt->client.errstr = 0;
+		if(ixp_send_message(mnt->client.fd, msg, msize, &mnt->client.errstr) != msize) {
+			xclose_mount(mnt->respond);
+			return Enofile;
+		}
+		/* message will be received by mnt->respond */
+		ixp_server_enqueue_fcall(mnt->respond, fcall);
+		return nil;
+	}
+	else { /* local */
+		if(!(fcall->mode | IXP_OREAD) && !(fcall->mode | IXP_OWRITE))
+			return Enomode;
+		fcall->id = ROPEN;
+		fcall->qid = m->qid;
+		fcall->iounit = 2048;
+		ixp_server_respond_fcall(c, fcall);
+	}
 	return nil;
 }
 

@@ -994,7 +994,7 @@ do_pend_fcall(char *event)
 	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++) {
 		IXPConn *c = srv.conn[i];
 		/* all pending TREADs are on /event, so no qid checking necessary */
-		while((fcall = ixp_server_dequeue_fcall(c, TREAD))) {
+		while((fcall = ixp_server_dequeue_fcall_id(c, TREAD))) {
 			IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 			unsigned char *p = fcall->data;
 
