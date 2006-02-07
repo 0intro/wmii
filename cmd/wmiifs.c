@@ -74,6 +74,16 @@ name_to_mount(char *name)
 }
 
 static Bind *
+fid_to_bind(unsigned int fid)
+{
+	size_t i;
+	for(i = 0; i < nbind; i++)
+		if(bind[i]->fid == fid)
+			return bind[i];
+	return nil;
+}
+
+static Bind *
 rx_to_bind(IXPConn *c)
 {
 	size_t i;
@@ -280,19 +290,6 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 	return 0;
 }
 
-static Mount *
-map_to_mount(IXPMap *m)
-{
-	unsigned short id;
-	int i;
-	if((id = qpath_id(m->qid.path))) { /* remote */
-   		i = index_of_id(id);
-	    if((i >= 0) && (i < nmount))
-			return mount[i];
-	}
-	return nil;
-}
-
 static void
 mnterror(IXPConn *c, Fcall *fcall)
 {
@@ -311,18 +308,15 @@ mntwalk(IXPConn *c, Fcall *fcall)
 		return;
 	}
 	
-		fprintf(stderr, "mntwalk: %s\n", b->fcall.wname[0]);
 	if(mkqid(&dir, b->fcall.wname[0], &b->fcall.wqid[0], True) == -1) {
 		ixp_server_respond_error(b->tx, &b->fcall, Enofile);
 		xunbind(b);
 		return;
 	}
-		fprintf(stderr, "%s\n", "mntwalk 2");
 	dir = b->fcall.wqid[0]; /* mount point */
 	for(nwqid = 1; nwqid - 1 < b->client.fcall.nwqid; nwqid++)
 		b->fcall.wqid[nwqid] = b->client.fcall.wqid[nwqid - 1];
 
-	fprintf(stderr, "mntwalk: %d\n", nwqid);
 	if(!nwqid) {
 		ixp_server_respond_error(b->tx, &b->fcall, Enofile);
 		xunbind(b);
@@ -345,6 +339,23 @@ mntwalk(IXPConn *c, Fcall *fcall)
 }
 
 static char *
+mux(Bind *b, Fcall *tx)
+{
+	unsigned int msize;
+	ixp_fcall_to_msg(tx, msg, IXP_MAX_MSG);
+	ixp_msg_to_fcall(msg, IXP_MAX_MSG, &b->client.fcall);
+	ixp_msg_to_fcall(msg, IXP_MAX_MSG, &b->fcall);
+
+    msize = ixp_fcall_to_msg(&b->client.fcall, msg, IXP_MAX_MSG);
+	b->client.errstr = 0;
+	if(ixp_send_message(b->client.fd, msg, msize, &b->client.errstr) != msize) {
+		xunbind(b);
+		return Enofile;
+	}
+	return nil;
+}
+
+static char *
 xwalk(IXPConn *c, Fcall *fcall)
 {
 	unsigned short nwqid = 0;
@@ -359,7 +370,6 @@ xwalk(IXPConn *c, Fcall *fcall)
 	if(fcall->nwname) {
 		dir = m->qid;
 		if((mnt = name_to_mount(fcall->wname[0]))) {
-	fprintf(stderr, "%s", "xwalk: remote\n");
 			unsigned int i;
 			Bind *b = xbind(mnt->address, fcall->fid, c);
 			if(!b)
@@ -372,21 +382,13 @@ xwalk(IXPConn *c, Fcall *fcall)
 			b->client.fcall.nwname = fcall->nwname - 1;
 			for(i = 1; i < fcall->nwname; i++)
 				cext_strlcpy(b->client.fcall.wname[i - 1], fcall->wname[i],
-					      		sizeof(b->client.fcall.wname[i - 1]));
+						     sizeof(b->client.fcall.wname[i - 1]));
 
-    		i = ixp_fcall_to_msg(&b->client.fcall, msg, IXP_MAX_MSG);
-			b->client.errstr = 0;
-			if(ixp_send_message(b->client.fd, msg, i, &b->client.errstr) != i) {
-				xunbind(b);
-				return Enofile;
-			}
-			return nil;
+			return mux(b, &b->client.fcall);
 		}
 		else {
-	fprintf(stderr, "%s", "xwalk: local\n");
 			for(nwqid = 0; (nwqid < fcall->nwname)
 				&& !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid], True); nwqid++) {
-				/*fprintf(stderr, "wname=%s nwqid=%d\n", fcall->wname[nwqid], nwqid);*/
 				dir = fcall->wqid[nwqid];
 			}
 			if(!nwqid)
@@ -429,36 +431,20 @@ static char *
 xopen(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
-	Mount *mnt;
+	Bind *b;
 
 	if(!m)
 		return Enofid;
-	if((mnt = map_to_mount(m))) { /* remote */
-#if 0
-		unsigned int msize;
-		ixp_fcall_to_msg(fcall, msg, IXP_MAX_MSG);
-		ixp_msg_to_fcall(msg, IXP_MAX_MSG, &mnt->client.fcall);
-		fcall->tag = mnt->client.fcall.tag = tag++;
 
-    	msize = ixp_fcall_to_msg(&mnt->client.fcall, msg, IXP_MAX_MSG);
-		mnt->client.errstr = 0;
-		if(ixp_send_message(mnt->client.fd, msg, msize, &mnt->client.errstr) != msize) {
-			xclose_mount(mnt->respond);
-			return Enofile;
-		}
-		/* message will be received by mnt->respond */
-		ixp_server_enqueue_fcall(mnt->respond, fcall);
-#endif
-		return nil;
-	}
-	else { /* local */
-		if(!(fcall->mode | IXP_OREAD) && !(fcall->mode | IXP_OWRITE))
-			return Enomode;
-		fcall->id = ROPEN;
-		fcall->qid = m->qid;
-		fcall->iounit = 2048;
-		ixp_server_respond_fcall(c, fcall);
-	}
+	if((b = fid_to_bind(m->fid)))
+		return mux(b, fcall);
+
+	if(!(fcall->mode | IXP_OREAD) && !(fcall->mode | IXP_OWRITE))
+		return Enomode;
+	fcall->id = ROPEN;
+	fcall->qid = m->qid;
+	fcall->iounit = 2048;
+	ixp_server_respond_fcall(c, fcall);
 	return nil;
 }
 
@@ -472,10 +458,13 @@ xremove(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned short id = qpath_id(m->qid.path);
+	Bind *b;
 	int i;
 
 	if(!m)
 		return Enofid;
+	if((b = fid_to_bind(m->fid)))
+		return mux(b, fcall);
 	if(id && ((i = qpath_id(id)) == -1))
 		return Enofile;
 	if((qpath_type(m->qid.path) == Dmount) && (i < nmount)) {
@@ -500,10 +489,13 @@ xread(IXPConn *c, Fcall *fcall)
 	unsigned short id;
 	unsigned char *p = fcall->data;
 	unsigned int len = 0;
+	Bind *b;
 	int i;
 
 	if(!m)
 		return Enofid;
+	if((b = fid_to_bind(m->fid)))
+		return mux(b, fcall);
 	id = qpath_id(m->qid.path);
 	if(id && ((i = index_of_id(id)) == -1))
 		return Enofile;
@@ -565,18 +557,27 @@ xread(IXPConn *c, Fcall *fcall)
 static void
 mntstat(IXPConn *c, Fcall *fcall)
 {
+	Bind *b = rx_to_bind(c);
+
+	if(!b) {
+		fprintf(stderr, "%s\n", "wmiifs: fatal, no bind associated to connection");
+		return;
+	}
+	
 }
 
 static char *
 xstat(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	Bind *b;
 	char *name;
 
 	if(!m)
 		return Enofid;
+	if((b = fid_to_bind(m->fid)))
+		return mux(b, fcall);
 	name = qid_to_name(&m->qid);
-	/*fprintf(stderr, "xstat: name=%s\n", name);*/
 	if(!type_to_stat(&fcall->stat, name, &m->qid))
 		return Enofile;
 	fcall->id = RSTAT;
@@ -595,9 +596,12 @@ xwrite(IXPConn *c, Fcall *fcall)
 	char *err;
 	char buf[256];
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	Bind *b;
 
 	if(!m)
 		return Enofid;
+	if((b = fid_to_bind(m->fid)))
+		return mux(b, fcall);
 	switch (qpath_type(m->qid.path)) {
 	case Fctl:
 		if(fcall->count > sizeof(buf) - 1)
@@ -634,9 +638,12 @@ char *
 xclunk(IXPConn *c, Fcall *fcall)
 {
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	Bind *b;
 
     if(!m)
         return Enofid;
+	if((b = fid_to_bind(m->fid)))
+		return mux(b, fcall);
 	cext_array_detach((void **)c->map, m, &c->mapsz);
     free(m);
     fcall->id = RCLUNK;
@@ -674,7 +681,6 @@ do_fcall(IXPConn *c)
 	char *errstr;
 
 	if((msize = ixp_server_receive_fcall(c, &fcall))) {
-		fprintf(stderr, "fcall=%d\n", fcall.id);
 		switch(fcall.id) {
 		case TVERSION: errstr = wmii_ixp_version(c, &fcall); break;
 		case TATTACH: errstr = wmii_ixp_attach(c, &fcall); break;
