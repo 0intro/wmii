@@ -166,7 +166,7 @@ xread(char *file)
         fprintf(stderr, "wmiir: cannot read file/directory '%s': %s\n", file, c.errstr);
         return -1;
     }
-	if(is_directory)
+	if(is_directory && ndircontent)
 		xls(dircontent, ndircontent);
     return ixp_client_close(&c, fid);
 }

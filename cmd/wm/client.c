@@ -242,6 +242,7 @@ draw_client(Client *c)
     unsigned int bw = c->frame.border;
     XRectangle notch;
 
+	d.align = WEST;
 	d.drawable = c->frame.win;
 	d.font = xfont;
 	d.gc = c->frame.gc;

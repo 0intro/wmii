@@ -119,21 +119,6 @@ ixp_server_enqueue_fcall(IXPConn *c, Fcall *fcall)
 }
 
 Fcall *
-ixp_server_dequeue_fcall_tag(IXPConn *c, unsigned short tag)
-{
-	Fcall *fcall = nil;
-	size_t i;
-	for(i = 0; (i < c->pendsz) && c->pend[i]; i++)
-		if(c->pend[i]->tag == tag) {
-			fcall = c->pend[i];
-			cext_array_detach((void **)c->pend, fcall, &c->pendsz);
-			break;
-		}
-	/* free it */
-	return fcall;
-}
-
-Fcall *
 ixp_server_dequeue_fcall_id(IXPConn *c, unsigned char id)
 {
 	Fcall *fcall = nil;

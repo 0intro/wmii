@@ -110,6 +110,7 @@ handle_configurerequest(XEvent *e)
     unsigned int bw = 0, bh = 0;
 
     c = win_to_client(ev->window);
+	ev->value_mask &= ~CWSibling;
 
     if(c) {
 
@@ -139,6 +140,8 @@ handle_configurerequest(XEvent *e)
             c->frame.rect.width = wc.width = c->rect.width + 2 * bw;
             c->frame.rect.height = wc.height = c->rect.height + bw + (bh ? bh : bw);
             wc.border_width = 1;
+			wc.sibling = None;
+			wc.stack_mode = ev->detail;
             XConfigureWindow(dpy, c->frame.win, ev->value_mask, &wc);
             configure_client(c);
         }
@@ -147,14 +150,17 @@ handle_configurerequest(XEvent *e)
     wc.x = ev->x;
     wc.y = ev->y;
     if(c && c->page) {
-        /* if so, then bw and tabh are already initialized */
+        /* if so, then bw and bh are already initialized */
         wc.x = bw;
         wc.y = (bh ? bh : bw);
     }
     wc.width = ev->width;
     wc.height = ev->height;
     wc.border_width = 0;
+	wc.sibling = None;
+	wc.stack_mode = Above;
 	ev->value_mask &= ~CWStackMode;
+	ev->value_mask |= CWBorderWidth;
     XConfigureWindow(dpy, ev->window, ev->value_mask, &wc);
     XSync(dpy, False);
 
