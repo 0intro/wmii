@@ -124,7 +124,6 @@ xmount(char *arg)
 	}
 
 	mnt->respond = ixp_server_open_conn(&srv, mnt->client.fd, rx_fcall, xclose_mount);
-
 	return nil;
 }
 
@@ -217,7 +216,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 }
 
 static char * 
-xwalk(IXPConn *c, Fcall *fcall)
+txwalk(IXPConn *c, Fcall *fcall)
 {
 	unsigned short nwqid = 0;
 	Qid dir = root_qid;
@@ -292,7 +291,7 @@ map2mount(IXPMap *m)
 }
 
 static char *
-xopen(IXPConn *c, Fcall *fcall)
+txopen(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	Mount *mnt;
@@ -364,7 +363,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 }
 
 static char *
-xremove(IXPConn *c, Fcall *fcall)
+txremove(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned short id = qpath_id(m->qid.path);
@@ -384,7 +383,7 @@ xremove(IXPConn *c, Fcall *fcall)
 }
 
 static char *
-xread(IXPConn *c, Fcall *fcall)
+txread(IXPConn *c, Fcall *fcall)
 {
 	Stat stat;
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
@@ -471,7 +470,7 @@ xstat(IXPConn *c, Fcall *fcall)
 }
 
 static char *
-xwrite(IXPConn *c, Fcall *fcall)
+txwrite(IXPConn *c, Fcall *fcall)
 {
 	char *err;
 	char buf[256];
@@ -506,6 +505,21 @@ xwrite(IXPConn *c, Fcall *fcall)
 	return nil;
 }
 
+
+char *
+txclunk(IXPConn *c, Fcall *fcall)
+{
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+
+    if(!m)
+        return Enofid;
+	cext_array_detach((void **)c->map, m, &c->mapsz);
+    free(m);
+    fcall->id = RCLUNK;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
+}
+
 static void
 rx_fcall(IXPConn *c)
 {
@@ -516,15 +530,14 @@ rx_fcall(IXPConn *c)
 	if((msize = ixp_server_receive_fcall(c, &fcall))) {
 		/*fprintf(stderr, "fcall=%d\n", fcall.id);*/
 		switch(fcall.id) {
-		case TVERSION: errstr = wmii_ixp_version(c, &fcall); break;
-		case TATTACH: errstr = wmii_ixp_attach(c, &fcall); break;
-		case TWALK: errstr = xwalk(c, &fcall); break;
-		case TREMOVE: errstr = xremove(c, &fcall); break;
-		case TOPEN: errstr = xopen(c, &fcall); break;
-		case TREAD: errstr = xread(c, &fcall); break;
-		case TWRITE: errstr = xwrite(c, &fcall); break;
-		case TCLUNK: errstr = wmii_ixp_clunk(c, &fcall); break;
-		case TSTAT: errstr = xstat(c, &fcall); break;
+		case RWALK: errstr = rxwalk(c, &fcall); break;
+		case RREMOVE: errstr = rxremove(c, &fcall); break;
+		case RCREATE: errstr = rxcreate(c, &fcall); break;
+		case ROPEN: errstr = rxopen(c, &fcall); break;
+		case RREAD: errstr = rxread(c, &fcall); break;
+		case RWRITE: errstr = rxwrite(c, &fcall); break;
+		case RCLUNK: errstr = rxclunk(c, &fcall); break;
+		case RSTAT: errstr = rxstat(c, &fcall); break;
 		default: errstr = Enofunc; break;
 		}
 		if(errstr)
@@ -544,13 +557,14 @@ tx_fcall(IXPConn *c)
 		switch(fcall.id) {
 		case TVERSION: errstr = wmii_ixp_version(c, &fcall); break;
 		case TATTACH: errstr = wmii_ixp_attach(c, &fcall); break;
-		case TWALK: errstr = xwalk(c, &fcall); break;
-		case TREMOVE: errstr = xremove(c, &fcall); break;
-		case TOPEN: errstr = xopen(c, &fcall); break;
-		case TREAD: errstr = xread(c, &fcall); break;
-		case TWRITE: errstr = xwrite(c, &fcall); break;
-		case TCLUNK: errstr = wmii_ixp_clunk(c, &fcall); break;
-		case TSTAT: errstr = xstat(c, &fcall); break;
+		case TWALK: errstr = txwalk(c, &fcall); break;
+		case TREMOVE: errstr = txremove(c, &fcall); break;
+		case TCREATE: errstr = txcreate(c, &fcall); break;
+		case TOPEN: errstr = txopen(c, &fcall); break;
+		case TREAD: errstr = txread(c, &fcall); break;
+		case TWRITE: errstr = txwrite(c, &fcall); break;
+		case TCLUNK: errstr = txclunk(c, &fcall); break;
+		case TSTAT: errstr = txstat(c, &fcall); break;
 		default: errstr = Enofunc; break;
 		}
 		if(errstr)
