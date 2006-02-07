@@ -112,8 +112,7 @@ void
 ixp_server_enqueue_fcall(IXPConn *c, Fcall *fcall)
 {
 	Fcall *new = cext_emallocz(sizeof(Fcall));
-    ixp_fcall_to_msg(fcall, msg, IXP_MAX_MSG);
-	ixp_msg_to_fcall(msg, IXP_MAX_MSG, new);
+	memcpy(&new, &fcall, sizeof(Fcall));
 	c->pend = (Fcall **)cext_array_attach((void **)c->pend,
 			new, sizeof(Fcall *), &c->pendsz);
 }

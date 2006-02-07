@@ -346,10 +346,13 @@ xwalk(IXPConn *c, Fcall *fcall)
     Qid dir = root_qid;
     IXPMap *m;
 
+	fprintf(stderr, "wm: xwalk: fid=%d\n", fcall->fid);
     if(!(m = ixp_server_fid2map(c, fcall->fid)))
         return Enofid;
+	fprintf(stderr, "wm: xwalk1: fid=%d\n", fcall->fid);
     if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
         return Enofid;
+	fprintf(stderr, "wm: xwalk2: fid=%d\n", fcall->fid);
     if(fcall->nwname) {
         dir = m->qid;
         for(nwqid = 0; (nwqid < fcall->nwname)
@@ -361,10 +364,11 @@ xwalk(IXPConn *c, Fcall *fcall)
 							qid_to_name(&dir), qpath_type(dir.path), dir.dtype);
 		}
         if(!nwqid) {
-			fprintf(stderr, "%s", "xwalk: no sucj file\n");
+			fprintf(stderr, "%s", "xwalk: no such file\n");
 			return Enofile;
 		}
     }
+	fprintf(stderr, "wm: xwalk3: fid=%d\n", fcall->fid);
     /* a fid will only be valid, if the walk was complete */
     if(nwqid == fcall->nwname) {
         if(fcall->fid != fcall->newfid) {
