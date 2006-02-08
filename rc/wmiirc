@@ -2,145 +2,69 @@
 # configure wmii
 
 CLIENT_BAR=0
+CLIENT_BORDER=3
 HANDLEINC=1
 
-SEL_COLOR="#ffffff #666699 #9999cc"
-NORM_COLOR="#ffffff #888888 #bbbbbb"
-FONT='-artwiz-snap-normal-*-*-*-*-*-*-*-*-*-*-*'
+SEL_COLOR="#ffffff #555588 #8888bb"
+NORM_COLOR="#dddddd #666666 #999999"
+FONT="fixed"
 
-MODKEY=M
-NORTHKEY=k
-SOUTHKEY=j
-WESTKEY=h
-EASTKEY=l
-
-nl='
-'
-
-fn kbind {
-    wmiir create /keys/mode/$1/$2 $3
-}
-
-fn selstyle {
-    wmiir write $1/fgcolor $SEL_FG_COLOR
-    wmiir write $1/bgcolor $SEL_BG_COLOR
-    wmiir write $1/bordercolor $SEL_BORDER_COLOR
-}
-
-fn normstyle {
-    wmiir write $1/fgcolor $NORM_FG_COLOR
-    wmiir write $1/bgcolor $NORM_BG_COLOR
-    wmiir write $1/bordercolor $NORM_BORDER_COLOR
-}
-
-fn items {
-    ifs=:$nl { dirs=`{echo $2} }
-    {
-        for(dir in $dirs) {
-            for(file in $dir/*) {
-                if(! ~ $file $dir^'/*' && ! test -d $file && test -x $file) {
-                    file=`{basename $file}
-                    echo create /menu/items/$1/$"file $"file
-                }
-            }
-        }
-    } | sort | wmiir -f &
-}
-
-fn clientsconf {
-    for(client in `{wmiir read $1 | grep '^[0-9]'}) {
-        wmiir write $1/$client/tab $TAB
-        wmiir write $1/$client/handleinc $HANDLEINC
-        wmiir write $1/$client/geometry '+0 +0 +0 +0'  # causes refresh
-    }
-}
-
+fn xwrite { echo -n $2 | wmiir write $1 }
 
 # WMIIWM CONFIGURATION
 
-wmiir write /wm/default/font $FONT
-wmiir write /wm/default/transcolor $SEL_BORDER_COLOR
-wmiir write /wm/default/handleinc $HANDLEINC
-wmiir write /wm/default/tab $TAB
+xwrite /wm/default/bar $CLIENT_BAR
+xwrite /wm/default/border $CLIENT_BORDER
+xwrite /wm/default/font $FONT
+xwrite /wm/default/selcolor $SEL_COLOR
+xwrite /wm/default/normcolor $NORM_COLOR
 
-wmiir write /wm/default/border 1
-
-for(page in `{wmiir read /wm | grep '^[0-9]'})
-    clientsconf /wm/$page/client
-
-wmiir write /wm/default/sstyle/fgcolor $SEL_FG_COLOR
-wmiir write /wm/default/sstyle/bgcolor $SEL_BG_COLOR
-wmiir write /wm/default/sstyle/bordercolor $SEL_BORDER_COLOR
-wmiir write /wm/default/nstyle/fgcolor $NORM_FG_COLOR
-wmiir write /wm/default/nstyle/bgcolor $NORM_BG_COLOR
-wmiir write /wm/default/nstyle/bordercolor $NORM_BORDER_COLOR
-wmiir write /wm/default/event/b2press 'wmiir write /wm/ctl close'
+for(page in `{wmiir read /wm | grep '^d' | awk '{print $10}'}) {
+	for(area in `{wmiir read /wm/$page | grep '^d' | awk '{print $10}'}) {
+		for(client in `{wmiir read /wm/$page/$area | grep '^d' | awk '{print $10}'}) {
+			xwrite /wm/$page/$area/$client/bar $CLIENT_BAR
+			xwrite /wm/$page/$area/$client/border $CLIENT_BORDER
+		}
+	}
+}
 
 
 # WMIIKEYS CONFIGURATION
 
-kbind bare $MODKEY-Escape 'kmode normal'
+cat <<END
+Control-Alt-c 		echo -n kill | wmiir write /wm/sel/sel/sel/ctl
+Control-Alt-q,y 	quit
+Control-Alt-w,y 	wmiirc
+Alt-t 				extern xterm -rv
+Alt-d 				echo -n detach | wmiir write /wm/sel/sel/sel/ctl
+Alt-a 				echo -n attach | wmiir write /wm/ctl
+Shift-Alt-a 		echo -n detached | wmiir write /wm/ctl
+Alt-n				wmiir read /wm/sel/new >/dev/null >[2=1]
+Alt-m 				echo -n max | wmiir write /wm/sel/sel/sel/ctl
+Alt-Return 			echo -n swap west | wmiir write /wm/sel/sel/ctl
+Shift-Alt-Return 	echo -n swap east | wmiir write /wm/sel/sel/ctl
+Control-Alt-y 		wmiir read /wm/new >/dev/null >[2=1]
+Alt-h 				echo -n select next | wmiir write /wm/sel/ctl
+Alt-l 				echo -n select prev | wmiir write /wm/sel/ctl
+Alt-Tab 			echo -n select next | wmiir write /wm/sel/sel/ctl
+Alt-j 				echo -n select next | wmiir write /wm/sel/sel/ctl
+Alt-k 				echo -n select prev | wmiir write /wm/sel/sel/ctl
+Shift-Alt-h			echo -n select prev | wmiir write /wm/ctl
+Shift-Alt-l			echo -n select next | wmiir write /wm/ctl
+Shift-Alt-p			echo -n pager | wmiir write /wm/ctl
+Shift-Alt-1			echo -n select 1 | wmiir write /wm/ctl
+Shift-Alt-2			echo -n select 2 | wmiir write /wm/ctl
+Shift-Alt-3			echo -n select 3 | wmiir write /wm/ctl
+Shift-Alt-4			echo -n select 4 | wmiir write /wm/ctl
+Shift-Alt-5			echo -n select 5 | wmiir write /wm/ctl
+Shift-Alt-6			echo -n select 6 | wmiir write /wm/ctl
+Shift-Alt-7			echo -n select 7 | wmiir write /wm/ctl
+Shift-Alt-8			echo -n select 8 | wmiir write /wm/ctl
+Shift-Alt-9			echo -n select 9 | wmiir write /wm/ctl
+END | wmiir write /keys/reset
 
-kbind move Escape 'kmode normal'
-kbind move $MODKEY-C-r 'kmode resize'
-kbind move $NORTHKEY   'wmiir write /wm/sel/client/sel/geometry ''-0 -30 -0 -0'''
-kbind move $SOUTHKEY   'wmiir write /wm/sel/client/sel/geometry ''+0 +30 +0 +0'''
-kbind move $WESTKEY    'wmiir write /wm/sel/client/sel/geometry ''-40 -0 -0 -0'''
-kbind move $EASTKEY    'wmiir write /wm/sel/client/sel/geometry ''+40 +0 +0 +0'''
-kbind move S-$NORTHKEY 'wmiir write /wm/sel/client/sel/geometry ''-0 north -0 -0'''
-kbind move S-$SOUTHKEY 'wmiir write /wm/sel/client/sel/geometry ''+0 south +0 +0'''
-kbind move S-$WESTKEY  'wmiir write /wm/sel/client/sel/geometry ''west -0 -0 -0'''
-kbind move S-$EASTKEY  'wmiir write /wm/sel/client/sel/geometry ''east +0 +0 +0'''
-
-kbind resize Escape 'kmode normal'
-kbind resize $MODKEY-C-m 'kmode move'
-kbind resize $NORTHKEY 'wmiir write /wm/sel/client/sel/geometry ''+0 +0 +0 -30'''
-kbind resize $SOUTHKEY 'wmiir write /wm/sel/client/sel/geometry ''+0 +0 +0 +30'''
-kbind resize $WESTKEY  'wmiir write /wm/sel/client/sel/geometry ''+0 +0 -40 +0'''
-kbind resize $EASTKEY  'wmiir write /wm/sel/client/sel/geometry ''+0 +0 +40 +0'''
-
-kbind normal $MODKEY-C-b 'kmode bare'
-kbind normal $MODKEY-C-m 'kmode move'
-kbind normal $MODKEY-C-r 'kmode resize'
-kbind normal $MODKEY-C-a 'wmiir write /menu/precmd ''''; wmiir write /menu/lookup /items/actions; wmiir write /menu/ctl ''display 1'''
-kbind normal $MODKEY-C-p 'wmiir write /menu/precmd extern; wmiir write /menu/lookup /items/programs; wmiir write /menu/ctl ''display 1'''
-kbind normal $MODKEY-C-c 'wmiir write /wm/ctl close'
-kbind normal $MODKEY-C-q,y quit
-kbind normal $MODKEY-C-w,y wmiirc
-kbind normal $MODKEY-t 'extern xterm ''+sb'' -bg ''#000000'' -fg ''#ffffff'' -cr ''#ffffff'' -sl 4000'
-kbind normal $MODKEY-d 'wmiir write /wm/ctl detach'
-kbind normal $MODKEY-a 'wmiir write /wm/ctl attach'
-kbind normal $MODKEY-S-a 'wmiir write /wm/ctl detclients'
-kbind normal $MODKEY-n 'wmiir write /wm/sel/ctl newcol'
-kbind normal $MODKEY-m 'wmiir write /wm/sel/client/sel/ctl max'
-kbind normal $MODKEY-Return 'wmiir write /wm/sel/ctl ''swap west'''
-kbind normal $MODKEY-S-Return 'wmiir write /wm/sel/ctl ''swap east'''
-kbind normal $MODKEY-C-y 'wmiir write /wm/ctl new'
-kbind normal $MODKEY-$WESTKEY 'wmiir write /wm/sel/ctl ''select west'''
-kbind normal $MODKEY-$EASTKEY 'wmiir write /wm/sel/ctl ''select east'''
-kbind normal $MODKEY-Tab 'wmiir write /wm/sel/ctl ''select next'''
-kbind normal $MODKEY-$SOUTHKEY 'wmiir write /wm/sel/ctl ''select next'''
-kbind normal $MODKEY-$NORTHKEY 'wmiir write /wm/sel/ctl ''select prev'''
-kbind normal $MODKEY-S-$WESTKEY 'wmiir write /wm/ctl ''select prev'''
-kbind normal $MODKEY-S-$EASTKEY 'wmiir write /wm/ctl ''select next'''
-kbind normal $MODKEY-space 'wmiir write /wm/sel/ctl toggle'
-kbind normal $MODKEY-S-p 'wmiir write /wm/ctl pager'
-for(i in 0 1 2 3 4 5 6 7 8 9) {
-    kbind normal $MODKEY-S-$i 'wmiir write /wm/ctl ''select '^$i^''''
-}
-
-wmiir write /keys/box/font $FONT
-selstyle /keys/box
-kmode normal
-
-# WMIIMENU CONFIGURATION
-wmiir write /menu/geometry $BAR_ALIGN
-items actions $WMII_CONFDIR:$HOME/.wmii-3
-wmiir create /menu/items/actions/rmpage 'wmiir write /wm/ctl destroy'
-items programs $OLD_PATH
-wmiir write /menu/font $FONT
-normstyle /menu/nstyle >[2]/dev/null
-selstyle /menu/sstyle >[2]/dev/null
+xwrite /keys/font $FONT
+xwrite /keys/color $SEL_COLOR
 
 # MISC
 xsetroot -mod 2 2 -bg \#555588 -fg \#666666

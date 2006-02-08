@@ -76,5 +76,4 @@ wmiiwarp: ${OBJ_warp}
 	@${CC} -o $@ ${OBJ_warp} ${LDFLAGS}
 
 clean:
-	rm -f wmiibar wmiibar2 wmiimenu wmiir wmiir2 wmiikeys wmiiplumb wmiifs\
-		wmiiwarp *.o
+	rm -f wmiibar wmiimenu wmiir wmiikeys wmiiplumb wmiifs wmiiwarp *.o

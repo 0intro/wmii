@@ -1,8 +1,8 @@
 #!9PREFIX/bin/rc
 # quit wmii
 
-wmiir write /bar/ctl quit
-wmiir write /menu/ctl quit
-wmiir write /keys/ctl quit
-wmiir write /wm/ctl quit
-wmiir write /ctl quit
+echo -n quit | wmiir write /bar/ctl
+#echo -n quit | wmiir write /menu/ctl
+echo -n quit | wmiir write /keys/ctl
+echo -n quit | wmiir write /wm/ctl
+echo -n quit | wmiir write /ctl

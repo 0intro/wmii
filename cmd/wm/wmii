@@ -13,21 +13,21 @@ WMII_CONFDIR=CONFPREFIX/wmii-3
 OLD_PATH=$PATH
 PATH=$HOME/.wmii-3:$WMII_CONFDIR:9PREFIX/bin:$PATH
 WMII_IDENT=`{date -n}^'-'^$pid
-WMIIR_SOCKET=/tmp/.ixp-$USER/wmiifs-$WMII_IDENT
+WMII_ADDRESS=unix!/tmp/.ixp-$USER/wmiifs-$WMII_IDENT
 
 # start window manager and utilities:
 mkdir -p /tmp/.ixp-$USER
-wmiiwm -s /tmp/.ixp-$USER/wmiiwm-$WMII_IDENT &
-wmiiwmpid=$apid
-wmiifs -s /tmp/.ixp-$USER/wmiifs-$WMII_IDENT &
-wmiikeys -s /tmp/.ixp-$USER/wmiikeys-$WMII_IDENT &
-wmiimenu -s /tmp/.ixp-$USER/wmiimenu-$WMII_IDENT &
+wmiifs -a $WMII_ADDRESS &
+wmiifspid=$apid
+wmiiwm -a unix!/tmp/.ixp-$USER/wmiiwm-$WMII_IDENT &
+wmiikeys -a unix!/tmp/.ixp-$USER/wmiikeys-$WMII_IDENT &
+#wmiimenu -a /tmp/.ixp-$USER/wmiimenu-$WMII_IDENT &
 sleep 1
 
 # mount ixp file systems:
-wmiir write /ctl 'bind /wm /tmp/.ixp-'^$USER/wmiiwm-$WMII_IDENT
-wmiir write /ctl 'bind /menu /tmp/.ixp-'^$USER/wmiimenu-$WMII_IDENT
-wmiir write /ctl 'bind /keys /tmp/.ixp-'^$USER/wmiikeys-$WMII_IDENT
+echo -n mount unix!/tmp/.ixp-$USER/wmiiwm-$WMII_IDENT /wm | wmiir write /ctl
+echo -n mount unix!/tmp/.ixp-$USER/wmiibar-$WMII_IDENT /bar | wmiir write /ctl
+echo -n mount unix!/tmp/.ixp-$USER/wmiikeys-$WMII_IDENT /keys | wmiir write /ctl
 
 # display the wmii introduction if necessary:
 if(mkdir $HOME/.wmii-3 >[2]/dev/null) {
@@ -37,5 +37,5 @@ if(mkdir $HOME/.wmii-3 >[2]/dev/null) {
 # run configuration:
 wmiirc &
 
-# wait for wmiiwm's termination:
-wait $wmiiwmpid
+# wait for wmiifs's termination:
+wait $wmiifspid
