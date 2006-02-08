@@ -5,8 +5,8 @@ CLIENT_BAR=0
 CLIENT_BORDER=3
 HANDLEINC=1
 
-SEL_COLOR="#ffffff #555588 #8888bb"
-NORM_COLOR="#dddddd #666666 #999999"
+SEL_COLOR="#ffffff #444466 #666688"
+NORM_COLOR="#dddddd #555555 #777777"
 FONT="fixed"
 
 fn xwrite { echo -n $2 | wmiir write $1 }
@@ -28,35 +28,35 @@ for(page in `{wmiir read /wm | grep '^d' | awk '{print $10}'}) {
 
 # WMIIKEYS CONFIGURATION
 cat | wmiir write /keys/reset <<END
-Control-Alt-c 		echo -n kill | wmiir write /wm/sel/sel/sel/ctl
-Control-Alt-q,y 	quit
-Control-Alt-w,y 	wmiirc
-Alt-t 				extern xterm -rv
-Alt-d 				echo -n detach | wmiir write /wm/sel/sel/sel/ctl
-Alt-a 				echo -n attach | wmiir write /wm/ctl
-Shift-Alt-a 		echo -n detached | wmiir write /wm/ctl
-Alt-n				wmiir read /wm/sel/new >/dev/null >[2=1]
-Alt-m 				echo -n max | wmiir write /wm/sel/sel/sel/ctl
-Alt-Return 			echo -n swap west | wmiir write /wm/sel/sel/ctl
-Shift-Alt-Return 	echo -n swap east | wmiir write /wm/sel/sel/ctl
-Control-Alt-y 		wmiir read /wm/new >/dev/null >[2=1]
-Alt-h 				echo -n select next | wmiir write /wm/sel/ctl
-Alt-l 				echo -n select prev | wmiir write /wm/sel/ctl
-Alt-Tab 			echo -n select next | wmiir write /wm/sel/sel/ctl
-Alt-j 				echo -n select next | wmiir write /wm/sel/sel/ctl
-Alt-k 				echo -n select prev | wmiir write /wm/sel/sel/ctl
-Shift-Alt-h			echo -n select prev | wmiir write /wm/ctl
-Shift-Alt-l			echo -n select next | wmiir write /wm/ctl
-Shift-Alt-p			echo -n pager | wmiir write /wm/ctl
-Shift-Alt-1			echo -n select 1 | wmiir write /wm/ctl
-Shift-Alt-2			echo -n select 2 | wmiir write /wm/ctl
-Shift-Alt-3			echo -n select 3 | wmiir write /wm/ctl
-Shift-Alt-4			echo -n select 4 | wmiir write /wm/ctl
-Shift-Alt-5			echo -n select 5 | wmiir write /wm/ctl
-Shift-Alt-6			echo -n select 6 | wmiir write /wm/ctl
-Shift-Alt-7			echo -n select 7 | wmiir write /wm/ctl
-Shift-Alt-8			echo -n select 8 | wmiir write /wm/ctl
-Shift-Alt-9			echo -n select 9 | wmiir write /wm/ctl
+Control-Alt-c echo -n kill | wmiir write /wm/sel/sel/sel/ctl
+Control-Alt-q,y quit
+Control-Alt-w,y wmiirc
+Alt-t extern xterm -rv
+Alt-d echo -n detach | wmiir write /wm/sel/sel/sel/ctl
+Alt-a echo -n attach | wmiir write /wm/ctl
+Shift-Alt-a echo -n detached | wmiir write /wm/ctl
+Alt-n wmiir read /wm/sel/new >/dev/null >[2=1]
+Alt-m echo -n max | wmiir write /wm/sel/sel/sel/ctl
+Alt-Return echo -n swap west | wmiir write /wm/sel/sel/ctl
+Shift-Alt-Return echo -n swap east | wmiir write /wm/sel/sel/ctl
+Control-Alt-y wmiir read /wm/new >/dev/null >[2=1]
+Alt-h echo -n select next | wmiir write /wm/sel/ctl
+Alt-l echo -n select prev | wmiir write /wm/sel/ctl
+Alt-Tab echo -n select next | wmiir write /wm/sel/sel/ctl
+Alt-j echo -n select next | wmiir write /wm/sel/sel/ctl
+Alt-k echo -n select prev | wmiir write /wm/sel/sel/ctl
+Shift-Alt-h echo -n select prev | wmiir write /wm/ctl
+Shift-Alt-l echo -n select next | wmiir write /wm/ctl
+Shift-Alt-p echo -n pager | wmiir write /wm/ctl
+Shift-Alt-1 echo -n select 1 | wmiir write /wm/ctl
+Shift-Alt-2 echo -n select 2 | wmiir write /wm/ctl
+Shift-Alt-3 echo -n select 3 | wmiir write /wm/ctl
+Shift-Alt-4 echo -n select 4 | wmiir write /wm/ctl
+Shift-Alt-5 echo -n select 5 | wmiir write /wm/ctl
+Shift-Alt-6 echo -n select 6 | wmiir write /wm/ctl
+Shift-Alt-7 echo -n select 7 | wmiir write /wm/ctl
+Shift-Alt-8 echo -n select 8 | wmiir write /wm/ctl
+Shift-Alt-9 echo -n select 9 | wmiir write /wm/ctl
 END
 
 xwrite /keys/font $FONT
@@ -68,5 +68,5 @@ xwrite /bar/defcolor $SEL_COLOR
 echo -n fnord | wmiir write /bar/new/data 
 
 # MISC
-xsetroot -mod 2 2 -bg '#555588' -fg '#666666'
+xsetroot -mod 2 2 -bg '#444466' -fg '#555555'
 status&
