@@ -1,4 +1,4 @@
-#!9PREFIX/bin/rc
+#!9PREFIX/bin/rc -x
 # configure wmii
 
 CLIENT_BAR=0
@@ -12,13 +12,11 @@ FONT="fixed"
 fn xwrite { echo -n $2 | wmiir write $1 }
 
 # WMIIWM CONFIGURATION
-
 xwrite /wm/default/bar $CLIENT_BAR
 xwrite /wm/default/border $CLIENT_BORDER
 xwrite /wm/default/font $FONT
 xwrite /wm/default/selcolor $SEL_COLOR
 xwrite /wm/default/normcolor $NORM_COLOR
-
 for(page in `{wmiir read /wm | grep '^d' | awk '{print $10}'}) {
 	for(area in `{wmiir read /wm/$page | grep '^d' | awk '{print $10}'}) {
 		for(client in `{wmiir read /wm/$page/$area | grep '^d' | awk '{print $10}'}) {
@@ -28,10 +26,8 @@ for(page in `{wmiir read /wm | grep '^d' | awk '{print $10}'}) {
 	}
 }
 
-
 # WMIIKEYS CONFIGURATION
-
-cat <<END
+cat | wmiir write /keys/reset <<END
 Control-Alt-c 		echo -n kill | wmiir write /wm/sel/sel/sel/ctl
 Control-Alt-q,y 	quit
 Control-Alt-w,y 	wmiirc
@@ -61,11 +57,16 @@ Shift-Alt-6			echo -n select 6 | wmiir write /wm/ctl
 Shift-Alt-7			echo -n select 7 | wmiir write /wm/ctl
 Shift-Alt-8			echo -n select 8 | wmiir write /wm/ctl
 Shift-Alt-9			echo -n select 9 | wmiir write /wm/ctl
-END | wmiir write /keys/reset
+END
 
 xwrite /keys/font $FONT
 xwrite /keys/color $SEL_COLOR
 
+# WMIIBAR CONFIGURATION
+xwrite /bar/font $FONT
+xwrite /bar/defcolor $SEL_COLOR
+echo -n fnord | wmiir write /bar/new/data 
+
 # MISC
-xsetroot -mod 2 2 -bg \#555588 -fg \#666666
+xsetroot -mod 2 2 -bg '#555588' -fg '#666666'
 status&

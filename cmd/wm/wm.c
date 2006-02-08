@@ -609,9 +609,6 @@ main(int argc, char *argv[])
         }
     }
 
-    if(!address)
-		usage();
-
     dpy = XOpenDisplay(0);
     if(!dpy) {
         fprintf(stderr, "%s", "wmiiwm: cannot open display\n");
@@ -636,6 +633,10 @@ main(int argc, char *argv[])
         XCloseDisplay(dpy);
         exit(0);
     }
+	/* above -c is checked */
+    if(!address)
+		usage();
+
     XSetErrorHandler(0);
     x_error_handler = XSetErrorHandler(wmii_error_handler);
 	errstr = nil;

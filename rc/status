@@ -23,8 +23,7 @@ fn statustext {
 }
 
 text=`{statustext}
-xwrite /new/data $"text
-while(xwrite /1/data $"text) {
+while(xwrite /bar/1/data $"text) {
     sleep 2
     text=`{statustext}
 }

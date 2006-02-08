@@ -689,6 +689,8 @@ process_reset_line(char *line)
 		return;
 
 	p = strchr(line, ' ');
+	if(!p)
+		return;
 	*p = 0;
 	++p;
 	k = create_key(line, p);

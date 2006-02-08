@@ -21,6 +21,7 @@ wmiifs -a $WMII_ADDRESS &
 wmiifspid=$apid
 wmiiwm -a unix!/tmp/.ixp-$USER/wmiiwm-$WMII_IDENT &
 wmiikeys -a unix!/tmp/.ixp-$USER/wmiikeys-$WMII_IDENT &
+wmiibar -a unix!/tmp/.ixp-$USER/wmiibar-$WMII_IDENT &
 #wmiimenu -a /tmp/.ixp-$USER/wmiimenu-$WMII_IDENT &
 sleep 1
 
