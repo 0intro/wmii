@@ -196,7 +196,7 @@ name_to_type(char *name, unsigned char dtyp)
     if(err)
 		return -1;
 dyndir:
-	fprintf(stderr, "nametotype: dtyp = %d\n", dtyp);
+	/*fprintf(stderr, "nametotype: dtyp = %d\n", dtyp);*/
 	switch(dtyp) {
 	case Droot: return Dpage; break;
 	case Dpage: return Darea; break;
@@ -259,7 +259,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		}
 		break;
 	case Darea:
-		fprintf(stderr, "mkqid(): %s\n", "Darea");
+		/*fprintf(stderr, "mkqid(): %s\n", "Darea");*/
 		if(!npage || dpg >= npage)
 			return -1;
 		new->type = IXP_QTDIR;
@@ -346,29 +346,29 @@ xwalk(IXPConn *c, Fcall *fcall)
     Qid dir = root_qid;
     IXPMap *m;
 
-	fprintf(stderr, "wm: xwalk: fid=%d\n", fcall->fid);
+	/*fprintf(stderr, "wm: xwalk: fid=%d\n", fcall->fid);*/
     if(!(m = ixp_server_fid2map(c, fcall->fid)))
         return Enofid;
-	fprintf(stderr, "wm: xwalk1: fid=%d\n", fcall->fid);
+	/*fprintf(stderr, "wm: xwalk1: fid=%d\n", fcall->fid);*/
     if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
         return Enofid;
-	fprintf(stderr, "wm: xwalk2: fid=%d\n", fcall->fid);
+	/*fprintf(stderr, "wm: xwalk2: fid=%d\n", fcall->fid);*/
     if(fcall->nwname) {
         dir = m->qid;
         for(nwqid = 0; (nwqid < fcall->nwname)
             && !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid], True); nwqid++)
 		{
-			fprintf(stderr, "dir.dtype=%d\n", dir.dtype);
+			/*fprintf(stderr, "dir.dtype=%d\n", dir.dtype);*/
             dir = fcall->wqid[nwqid];
-			fprintf(stderr, "walk: qid_to_name()=%s qpath_type(dir.path)=%d dir.dtype=%d\n",
-							qid_to_name(&dir), qpath_type(dir.path), dir.dtype);
+			/*fprintf(stderr, "walk: qid_to_name()=%s qpath_type(dir.path)=%d dir.dtype=%d\n",
+							qid_to_name(&dir), qpath_type(dir.path), dir.dtype);*/
 		}
         if(!nwqid) {
-			fprintf(stderr, "%s", "xwalk: no such file\n");
+			/*fprintf(stderr, "%s", "xwalk: no such file\n");*/
 			return Enofile;
 		}
     }
-	fprintf(stderr, "wm: xwalk3: fid=%d\n", fcall->fid);
+	/*fprintf(stderr, "wm: xwalk3: fid=%d\n", fcall->fid);*/
     /* a fid will only be valid, if the walk was complete */
     if(nwqid == fcall->nwname) {
         if(fcall->fid != fcall->newfid) {
@@ -428,8 +428,9 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 	char buf[32];
 	Client *c;
 
-	fprintf(stderr, "typetostat(0): name=%s dpgid=%d daid=%d dcid=%d\n", name, dpgid, daid, dcid);
+	/*fprintf(stderr, "typetostat(0): name=%s dpgid=%d daid=%d dcid=%d\n", name, dpgid, daid, dcid);
 	fprintf(stderr, "typetostat (0) Dtype=%d\n", type);
+	*/
 
 	if(dpgid && ((dpg = index_of_page_id(dpgid)) == -1))
 		return 0;
@@ -438,8 +439,10 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 	if(dcid && ((dcl = index_of_client_id(page[dpg]->area[darea], dcid)) == -1))
 		return 0;
 
+	/*
 	fprintf(stderr, "typetostat(1): dpg=%d darea=%d dcl=%d\n", dpg, darea, dcl);
 	fprintf(stderr, "typetostat (3) Dtype=%d\n", type);
+	*/
 
     switch (type) {
     case Dclient:
@@ -622,7 +625,7 @@ xread(IXPConn *c, Fcall *fcall)
 	else {
 		switch (qpath_type(m->qid.path)) {
 		case Droot:
-			fprintf(stderr, "%s", "Droot dir creation\n");
+			/*fprintf(stderr, "%s", "Droot dir creation\n");*/
 			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "event", &m->qid);
@@ -660,7 +663,7 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Dpage:
-			fprintf(stderr, "XXXXXXXXXX p->narea=%d\n", page[pg]->narea);
+			/*fprintf(stderr, "XXXXXXXXXX p->narea=%d\n", page[pg]->narea);*/
 			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "new", &m->qid);
@@ -694,19 +697,19 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Dclient:
 			fcall->count = type_to_stat(&stat, "border", &m->qid);
-			fprintf(stderr, "msgl=%d\n", fcall->count);
+			/*fprintf(stderr, "msgl=%d\n", fcall->count);*/
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "bar", &m->qid);
-			fprintf(stderr, "msgl=%d\n", fcall->count);
+			/*fprintf(stderr, "msgl=%d\n", fcall->count);*/
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "name", &m->qid);
-			fprintf(stderr, "msgl=%d\n", fcall->count);
+			/*fprintf(stderr, "msgl=%d\n", fcall->count);*/
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "geometry", &m->qid);
-			fprintf(stderr, "msgl=%d\n", fcall->count);
+			/*fprintf(stderr, "msgl=%d\n", fcall->count);*/
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "ctl", &m->qid);
-			fprintf(stderr, "msgl=%d\n", fcall->count);
+			/*fprintf(stderr, "msgl=%d\n", fcall->count);*/
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Fctl:
@@ -729,8 +732,8 @@ xread(IXPConn *c, Fcall *fcall)
 				memcpy(p, def.normcolor, fcall->count);
 			break;
 		case Fborder:
-			fprintf(stderr, "Fborder: qpath_type(m->qid.path)=%d, m->qid.dtype=%d\n",
-							qpath_type(m->qid.path), m->qid.dtype);
+			/*fprintf(stderr, "Fborder: qpath_type(m->qid.path)=%d, m->qid.dtype=%d\n",
+							qpath_type(m->qid.path), m->qid.dtype);*/
 
 			if(m->qid.dtype == Ddefault)
 				snprintf(buf, sizeof(buf), "%u", def.border);
@@ -973,7 +976,7 @@ do_fcall(IXPConn *c)
 	char *errstr;
 
 	if((msize = ixp_server_receive_fcall(c, &fcall))) {
-			fprintf(stderr, "do_fcall=%d\n", fcall.id);
+			/*fprintf(stderr, "do_fcall=%d\n", fcall.id);*/
 		switch(fcall.id) {
 		case TVERSION: errstr = xversion(c, &fcall); break;
 		case TATTACH: errstr = xattach(c, &fcall); break;
