@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <time.h>
 
 #include <ixp.h>
 #include <cext.h>
@@ -80,40 +81,80 @@ xwrite(char *file)
 }
 
 static int
-comp(const void *s1, const void *s2)
+comp_stat(const void *s1, const void *s2)
 {
-	return strcmp(*(char **)s1, *(char **)s2);
+	Stat *st1 = (Stat *)s1;
+	Stat *st2 = (Stat *)s2;
+	return strcmp(st1->name, st2->name);
+}
+
+static void
+setrwx(long m, char *s)
+{
+	static char *modes[] =
+	{
+		"---",
+		"--x",
+		"-w-",
+		"-wx",
+		"r--",
+		"r-x",
+		"rw-",
+		"rwx",
+	};
+	strncpy(s, modes[m], 3);
+}
+
+static char *
+mode_to_str(unsigned int mode)
+{
+	static char buf[16];
+
+	if(mode & DMDIR)
+		buf[0]='d';
+	else
+		buf[0]='-';
+
+	buf[1]='-';
+	setrwx((mode >> 6) & 7, &buf[2]);
+	setrwx((mode >> 3) & 7, &buf[5]);
+	setrwx((mode >> 0) & 7, &buf[8]);
+	buf[11] = 0;
+	return buf;
+}
+
+static char *
+time_to_str(unsigned int t)
+{
+	static char buf[32];
+	cext_strlcpy(buf, ctime((time_t *)&t), sizeof(buf));
+	buf[strlen(buf) - 1] = 0;
+	return buf;
 }
 
 static void
 xls(void *result, unsigned int msize)
 {
-	size_t n = 0, j = 0;
-	char buf[IXP_MAX_FLEN];
+	size_t n = 0, i = 0;
     void *p = result;
-	char **dir;
-    static Stat stat, zerostat = { 0 };
+	Stat *dir;
+    static Stat stat;
     do {
         p = ixp_dec_stat(p, &stat);
 		n++;
     }
     while(p - result < msize);
-	dir = (char **)cext_emallocz(sizeof(char *) * n);
+	dir = (Stat *)cext_emallocz(sizeof(Stat) * n);
 	p = result;
 	do {
-        p = ixp_dec_stat(p, &stat);
-        if(stat.qid.type == IXP_QTDIR)
-			snprintf(buf, sizeof(buf), "%s/", stat.name);
-        else
-			snprintf(buf, sizeof(buf), "%s", stat.name);
-		dir[j++] = cext_estrdup(buf);
-        stat = zerostat;
+        p = ixp_dec_stat(p, &dir[i++]);
     }
     while(p - result < msize);
-	qsort(dir, n, sizeof(char *), comp);
-	for(j = 0; j < n; j++) {
-        fprintf(stdout, "%s\n", dir[j]);
-		free(dir[j]);
+	qsort(dir, n, sizeof(Stat), comp_stat);
+	for(i = 0; i < n; i++) {
+        fprintf(stdout, "%s %s %s %5lld %s %s\n", mode_to_str(dir[i].mode),
+				 dir[i].uid, dir[i].gid, dir[i].length,
+				 time_to_str(dir[i].mtime), dir[i].name);
 	}
 	free(dir);
 }
