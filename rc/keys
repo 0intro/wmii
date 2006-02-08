@@ -16,13 +16,12 @@ fn sigint {
     exit
 }
 
-xterm -rv&
 wmiikeys -a $ADDRESS &
 fn xwrite { echo -n $2 | wmiir write $1 }
 xwrite /ctl 'mount '^$ADDRESS^' /keys'
 sleep 1
 
-wmiir write /keys/reset <<END
+wmiir write /keys/grab <<END
 Control-Alt-c
 Control-Alt-q,y
 Control-Alt-w,y

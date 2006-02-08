@@ -22,7 +22,7 @@
  * filesystem specification
  * / 					Droot
  * /ctl					Fctl		command interface
- * /reset				Freset		setup interface
+ * /grab				Fgrab		setup interface
  * /event				Fevent		read for receiving key presses
  * /foo					Fkey        key file
  */
@@ -31,7 +31,7 @@
 enum {                          
     Droot,
 	Fctl,
-	Freset,
+	Fgrab,
 	Fevent,
     Fkey
 };
@@ -329,7 +329,7 @@ qid_to_name(Qid *qid)
 	switch(type) {
 		case Droot: return "/"; break;
 		case Fctl: return "ctl"; break;
-		case Freset: return "reset"; break;
+		case Fgrab: return "grab"; break;
 		case Fevent: return "event"; break;
 		case Fkey: return key[i]->name; break;
 		default: return nil; break;
@@ -343,8 +343,8 @@ name_to_type(char *name)
 		return Droot;
 	if(!strncmp(name, "ctl", 4))
 		return Fctl;
-	if(!strncmp(name, "reset", 6))
-		return Freset;
+	if(!strncmp(name, "grab", 5))
+		return Fgrab;
 	if(!strncmp(name, "event", 6))
 		return Fevent;
 	if(key_of_name(name))
@@ -457,7 +457,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
     switch (type) {
     case Droot:
 	case Fctl:
-	case Freset:
+	case Fgrab:
 		return mkstat(stat, dir, name, 0, DMWRITE);
 		break;
 	case Fevent:
@@ -519,7 +519,7 @@ xread(IXPConn *c, Fcall *fcall)
 		case Droot:
 			/* jump to offset */
 			len = type_to_stat(&stat, "ctl", &m->qid);
-			len += type_to_stat(&stat, "reset", &m->qid);
+			len += type_to_stat(&stat, "grab", &m->qid);
 			len += type_to_stat(&stat, "event", &m->qid);
 			for(i = 0; i < nkey; i++) {
 				len += type_to_stat(&stat, key[i]->name, &m->qid);
@@ -550,7 +550,7 @@ xread(IXPConn *c, Fcall *fcall)
 		case Droot:
 			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "reset", &m->qid);
+			fcall->count += type_to_stat(&stat, "grab", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "event", &m->qid);
 			p = ixp_enc_stat(p, &stat);
@@ -619,7 +619,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		}
 		return Enocommand;
 		break;
-    case Freset:
+    case Fgrab:
 		if(fcall->count > 2048)
 			return Enoperm;
 		{
