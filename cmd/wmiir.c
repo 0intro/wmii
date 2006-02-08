@@ -32,7 +32,6 @@ write_data(unsigned int fid)
 	size_t len = 0;
 
 	while((len = read(0, data, c.fcall.iounit)) > 0) {
-		fprintf(stderr, "read=%d, bufsz=%d\n", len, c.fcall.iounit);
         if(ixp_client_write
            (&c, fid, offset, len, data) != len) {
             fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr);

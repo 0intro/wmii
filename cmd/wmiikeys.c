@@ -25,30 +25,30 @@
  * /font				Ffont		<xlib font name>
  * /color				Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /reset				Freset		setup interface
- * /shortcut/			Dshortcut
- * /shortcut/foo		Fshortcut   shortcut file
+ * /key/				Dkey
+ * /key/foo				Fkey        key file
  */
 
 /* 8-bit qid.path.type */
 enum {                          
     Droot,
-    Dshortcut,
+    Dkey,
 	Fctl,
     Ffont,
     Fcolor,
 	Freset,
-    Fshortcut
+    Fkey
 };
 
-typedef struct Shortcut Shortcut;
+typedef struct Key Key;
 
-struct Shortcut {
+struct Key {
 	unsigned short id;
     char name[256];
 	char *cmd;
     unsigned long mod;
     KeyCode key;
-    Shortcut *next;
+    Key *next;
 };
 
 static IXPServer srv;
@@ -57,9 +57,9 @@ static Window win;
 static Window root;
 static XRectangle rect;
 static int screen;
-static Shortcut **shortcut = nil;
-static size_t shortcutsz = 0;
-static size_t nshortcut = 0;
+static Key **key = nil;
+static size_t keysz = 0;
+static size_t nkey = 0;
 static int grabkb = 0;
 static unsigned int num_lock_mask, valid_mask;
 static char *font;
@@ -67,7 +67,7 @@ static char colstr[23];
 static Draw box;
 Qid root_qid;
 
-static void draw_shortcut_box(char *prefix);
+static void draw_key_box(char *prefix);
 
 static char version[] = "wmiikeys - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
@@ -90,71 +90,73 @@ center()
 }
 
 static void
-grab_shortcut(Shortcut * s)
+grab_key(Key *k)
 {
-    XGrabKey(dpy, s->key, s->mod, root,
+    XGrabKey(dpy, k->key, k->mod, root,
              True, GrabModeAsync, GrabModeAsync);
     if(num_lock_mask) {
-        XGrabKey(dpy, s->key, s->mod | num_lock_mask, root,
+        XGrabKey(dpy, k->key, k->mod | num_lock_mask, root,
                  True, GrabModeAsync, GrabModeAsync);
-        XGrabKey(dpy, s->key, s->mod | num_lock_mask | LockMask, root,
+        XGrabKey(dpy, k->key, k->mod | num_lock_mask | LockMask, root,
                  True, GrabModeAsync, GrabModeAsync);
     }
     XSync(dpy, False);
 }
 
 static void
-ungrab_shortcut(Shortcut * s)
+ungrab_key(Key *k)
 {
-    XUngrabKey(dpy, s->key, s->mod, root);
+    XUngrabKey(dpy, k->key, k->mod, root);
     if(num_lock_mask) {
-        XUngrabKey(dpy, s->key, s->mod | num_lock_mask, root);
-        XUngrabKey(dpy, s->key, s->mod | num_lock_mask | LockMask, root);
+        XUngrabKey(dpy, k->key, k->mod | num_lock_mask, root);
+        XUngrabKey(dpy, k->key, k->mod | num_lock_mask | LockMask, root);
     }
     XSync(dpy, False);
 }
 
-static Shortcut *
-create_shortcut(char *name, char *cmd)
+static Key *
+create_key(char *name, char *cmd)
 {
 	char buf[256];
     char *chain[8];
-    char *k;
+    char *key;
     size_t i, toks;
 	static unsigned short id = 1;
-    Shortcut *s = 0, *r = 0;
+    Key *k = 0, *r = 0;
 
     cext_strlcpy(buf, name, sizeof(buf));
     toks = cext_tokenize(chain, 8, buf, ',');
 
     for(i = 0; i < toks; i++) {
-        if(!s)
-            r = s = cext_emallocz(sizeof(Shortcut));
+        if(!k)
+            r = k = cext_emallocz(sizeof(Key));
         else {
-            s->next = cext_emallocz(sizeof(Shortcut));
-            s = s->next;
+            k->next = cext_emallocz(sizeof(Key));
+            k = k->next;
         }
-        cext_strlcpy(s->name, chain[i], sizeof(s->name));
-        k = strrchr(chain[i], '-');
-        if(k)
-            k++;
+        cext_strlcpy(k->name, chain[i], sizeof(k->name));
+        key = strrchr(chain[i], '-');
+        if(key)
+            key++;
         else
-            k = chain[i];
-        s->key = XKeysymToKeycode(dpy, XStringToKeysym(k));
-        s->mod = blitz_strtomod(chain[i]);
-		s->cmd = strdup(cmd);
+            key = chain[i];
+        k->key = XKeysymToKeycode(dpy, XStringToKeysym(key));
+        k->mod = blitz_strtomod(chain[i]);
     }
+	k->cmd = cmd ? strdup(cmd) : nil;
 	r->id = id++;
 	return r;
 
 }
 
 static void
-destroy_shortcut(Shortcut *s)
+destroy_key(Key *k)
 {
-    if(s->next)
-        destroy_shortcut(s->next);
-    free(s);
+	if(k->cmd)
+		free(k->cmd);
+    if(k->next)
+        destroy_key(k->next);
+    free(k);
 }
 
 static void
@@ -193,39 +195,39 @@ emulate_key_press(unsigned long mod, KeyCode key)
 }
 
 static void
-handle_shortcut_chain(Window w, Shortcut *processed, char *prefix)
+handle_key_chain(Window w, Key *processed, char *prefix)
 {
 	char buf[256];
     unsigned long mod;
     KeyCode key;
-    Shortcut *s = processed->next;
+    Key *k = processed->next;
 
-    draw_shortcut_box(prefix);
+    draw_key_box(prefix);
     next_keystroke(&mod, &key);
 
     if((processed->mod == mod) && (processed->key == key)) {
-        /* double shortcut */
+        /* double key */
         emulate_key_press(mod, key);
-    } else if((s->mod == mod) && (s->key == key)) {
-        if(s->cmd)
-            wmii_spawn(dpy, s->cmd);
-        else if(s->next) {
-            snprintf(buf, sizeof(buf), "%s/%s", prefix, s->name);
-            handle_shortcut_chain(w, s, buf);
+    } else if((k->mod == mod) && (k->key == key)) {
+        if(k->cmd)
+            wmii_spawn(dpy, k->cmd);
+        else if(k->next) {
+            snprintf(buf, sizeof(buf), "%s/%s", prefix, k->name);
+            handle_key_chain(w, k, buf);
         }
     }
 }
 
 static void
-handle_shortcut_gkb(Window w, unsigned long mod, KeyCode key)
+handle_key_gkb(Window w, unsigned long mod, KeyCode keycode)
 {
 	size_t i;
-	for(i = 0; i < nshortcut; i++) {
-		Shortcut *s = shortcut[i];
-		if((s->mod == mod) && (s->key == key)) {
-			fprintf(stderr, "invoking %s\n", s->cmd);
-			if(s->cmd)
-        		wmii_spawn(dpy, s->cmd);
+	for(i = 0; i < nkey; i++) {
+		Key *k = key[i];
+		if((k->mod == mod) && (k->key == keycode)) {
+			fprintf(stderr, "invoking %s\n", k->cmd);
+			if(k->cmd)
+        		wmii_spawn(dpy, k->cmd);
         	return;
 		}
     }
@@ -233,32 +235,32 @@ handle_shortcut_gkb(Window w, unsigned long mod, KeyCode key)
 }
 
 static void
-handle_shortcut(Window w, unsigned long mod, KeyCode key)
+handle_key(Window w, unsigned long mod, KeyCode keycode)
 {
 	size_t i;
-	for(i = 0; i < nshortcut; i++) {
-		Shortcut *s = shortcut[i];
-		if((s->mod == mod) && (s->key == key)) {
-			if(s->next) {
+	for(i = 0; i < nkey; i++) {
+		Key *k = key[i];
+		if((k->mod == mod) && (k->key == keycode)) {
+			if(k->next) {
         		XGrabKeyboard(dpy, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
         		XMapRaised(dpy, win);
         		XSync(dpy, False);
 
-				handle_shortcut_chain(w, s, s->name);
+				handle_key_chain(w, k, k->name);
 
         		XUngrabKeyboard(dpy, CurrentTime);
         		XUnmapWindow(dpy, win);
         		XSync(dpy, False);
 			}
-			else if(s->cmd)
-        		wmii_spawn(dpy, s->cmd);
+			else if(k->cmd)
+        		wmii_spawn(dpy, k->cmd);
         	return;
 		}
     }
 }
 
 static void
-draw_shortcut_box(char *prefix)
+draw_key_box(char *prefix)
 {
 	if(!strlen(box.data))
 		return;
@@ -280,16 +282,16 @@ check_x_event(IXPConn *c)
         case KeyPress:
             ev.xkey.state &= valid_mask;
             if(grabkb)
-                handle_shortcut_gkb(root, ev.xkey.state, (KeyCode) ev.xkey.keycode);
+                handle_key_gkb(root, ev.xkey.state, (KeyCode) ev.xkey.keycode);
             else
-                handle_shortcut(root, ev.xkey.state, (KeyCode) ev.xkey.keycode);
+                handle_key(root, ev.xkey.state, (KeyCode) ev.xkey.keycode);
             break;
         case KeymapNotify:
 			{
 				size_t i;
-				for(i = 0; i < nshortcut; i++) {
-					ungrab_shortcut(shortcut[i]);
-					grab_shortcut(shortcut[i]);
+				for(i = 0; i < nkey; i++) {
+					ungrab_key(key[i]);
+					grab_key(key[i]);
 				}
 			}
             break;
@@ -305,13 +307,13 @@ dummy_error_handler(Display * dpy, XErrorEvent * err)
     return 0;
 }
 
-static Shortcut *
-shortcut_of_name(char *name)
+static Key *
+key_of_name(char *name)
 {
 	size_t i;
-	for(i = 0; i < nshortcut; i++)
-		if(!strncmp(shortcut[i]->name, name, sizeof(shortcut[i]->name)))
-			return shortcut[i];
+	for(i = 0; i < nkey; i++)
+		if(!strncmp(key[i]->name, name, sizeof(key[i]->name)))
+			return key[i];
 	return nil;
 }
 
@@ -319,8 +321,8 @@ static int
 index_of_id(unsigned short id)
 {
 	int i;
-	for(i = 0; i < nshortcut; i++)
-		if(shortcut[i]->id == id)
+	for(i = 0; i < nkey; i++)
+		if(key[i]->id == id)
 			return i;
 	return -1;
 }
@@ -356,12 +358,12 @@ qid_to_name(Qid *qid)
 		return nil;
 	switch(type) {
 		case Droot: return "/"; break;
-		case Dshortcut: return "shortcut"; break;
+		case Dkey: return "key"; break;
 		case Fctl: return "ctl"; break;
 		case Ffont: return "font"; break;
 		case Fcolor: return "color"; break;
 		case Freset: return "reset"; break;
-		case Fshortcut: return shortcut[i]->name; break;
+		case Fkey: return key[i]->name; break;
 		default: return nil; break;
 	}
 }
@@ -371,8 +373,8 @@ name_to_type(char *name)
 {
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return Droot;
-	if(!strncmp(name, "shortcut", 4))
-		return Dshortcut;
+	if(!strncmp(name, "key", 4))
+		return Dkey;
 	if(!strncmp(name, "ctl", 4))
 		return Fctl;
 	if(!strncmp(name, "font", 5))
@@ -381,15 +383,15 @@ name_to_type(char *name)
 		return Fcolor;
 	if(!strncmp(name, "reset", 6))
 		return Freset;
-	if(shortcut_of_name(name))
-		return Fshortcut;
+	if(key_of_name(name))
+		return Fkey;
 	return -1;
 }
 
 static int
 mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 {
-	Shortcut *s;
+	Key *k;
 	int type = name_to_type(wname);
    
     if((dir->type != IXP_QTDIR) || (type == -1))
@@ -401,15 +403,15 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case Droot:
 		*new = root_qid;
 		break;
-	case Dshortcut:
+	case Dkey:
 		new->type = IXP_QTDIR;
-		new->path = mkqpath(Dshortcut, 0);
+		new->path = mkqpath(Dkey, 0);
 		break;
-	case Fshortcut:
-		if(!(s = shortcut_of_name(wname)))
+	case Fkey:
+		if(!(k = key_of_name(wname)))
 			return -1;
 		new->type = IXP_QTFILE;
-		new->path = mkqpath(type, s->id);
+		new->path = mkqpath(type, k->id);
 		break;
 	default:
 		new->type = IXP_QTFILE;
@@ -490,12 +492,12 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 static unsigned int
 type_to_stat(Stat *stat, char *name, Qid *dir)
 {
-	Shortcut *s;
+	Key *k;
 	int type = name_to_type(name);
 
     switch (type) {
     case Droot:
-    case Dshortcut:
+    case Dkey:
 		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case Fctl:
@@ -508,10 +510,12 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
     case Fcolor:
 		return mkstat(stat, dir, name, 23, DMREAD | DMWRITE);
         break;
-    case Fshortcut:
-		if(!(s = shortcut_of_name(name)))
+    case Fkey:
+		if(!(k = key_of_name(name)))
 			return -1;
-		return mkstat(stat, dir, name, strlen(s->cmd), DMREAD | DMWRITE);
+		while(k->next)
+			k = k->next;
+		return mkstat(stat, dir, name, strlen(k->cmd), DMREAD | DMWRITE);
 		break;
     }
 	return 0;
@@ -528,16 +532,18 @@ xremove(IXPConn *c, Fcall *fcall)
         return Enofid;
 	if(id && ((i = qpath_id(id)) == -1))
 		return Enofile;
-	if((qpath_type(m->qid.path) == Fshortcut) && (i < nshortcut)) {
-		Shortcut *s = shortcut[i];
+	if((qpath_type(m->qid.path) == Fkey) && (i < nkey)) {
+		Key *p, *k = key[i];
 		/* clunk */
 		cext_array_detach((void **)c->map, m, &c->mapsz);
     	free(m);
 		/* now detach the item */
-		cext_array_detach((void **)shortcut, s, &shortcutsz);
-		nshortcut--;
-		free(s->cmd);
-		destroy_shortcut(s);
+		cext_array_detach((void **)key, k, &keysz);
+		nkey--;
+		for(p = k; p->next; p = p->next);
+		if(p->cmd)
+			free(p->cmd);
+		destroy_key(k);
     	fcall->id = RREMOVE;
 		ixp_server_respond_fcall(c, fcall);
 		return nil;
@@ -564,19 +570,19 @@ xread(IXPConn *c, Fcall *fcall)
 	fcall->count = 0;
 	if(fcall->offset) {
 		switch (qpath_type(m->qid.path)) {
-		case Dshortcut:
+		case Dkey:
 			/* jump to offset */
-			for(i = 0; i < nshortcut; i++) {
-				len += type_to_stat(&stat, shortcut[i]->name, &m->qid);
+			for(i = 0; i < nkey; i++) {
+				len += type_to_stat(&stat, key[i]->name, &m->qid);
 				fprintf(stderr, "len=%d <= fcall->offset=%lld\n", len, fcall->offset);
 				if(len <= fcall->offset)
 					continue;
 				break;
 			}
 			/* offset found, proceeding */
-			for(; i < nshortcut; i++) {
-				fprintf(stderr, "offset xread %s\n", shortcut[i]->name);
-				len = type_to_stat(&stat, shortcut[i]->name, &m->qid);
+			for(; i < nkey; i++) {
+				fprintf(stderr, "offset xread %s\n", key[i]->name);
+				len = type_to_stat(&stat, key[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -598,13 +604,13 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "reset", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "shortcut", &m->qid);
+			fcall->count += type_to_stat(&stat, "key", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
-		case Dshortcut:
-			for(i = 0; i < nshortcut; i++) {
-				fprintf(stderr, "normal xread %s\n", shortcut[i]->name);
-				len = type_to_stat(&stat, shortcut[i]->name, &m->qid);
+		case Dkey:
+			for(i = 0; i < nkey; i++) {
+				fprintf(stderr, "normal xread %s\n", key[i]->name);
+				len = type_to_stat(&stat, key[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -623,9 +629,14 @@ xread(IXPConn *c, Fcall *fcall)
 			if((fcall->count = strlen(colstr)))
 				memcpy(p, colstr, fcall->count);
 			break;
-		case Fshortcut:
-			if((fcall->count = strlen(shortcut[i]->cmd)))
-				memcpy(p, shortcut[i]->cmd, fcall->count);
+		case Fkey:
+			{
+				Key *k = key[i];
+				while(k->next)
+					k = k->next;
+				if((fcall->count = k->cmd ? strlen(k->cmd) : 0))
+					memcpy(p, k->cmd, fcall->count);
+			}
 			break;
 		default:
 			return "invalid read";
@@ -657,7 +668,7 @@ xstat(IXPConn *c, Fcall *fcall)
 static void
 process_reset_line(char *line)
 {
-	Shortcut *s;
+	Key *k;
 	char *p;
 	fprintf(stderr, "got line: '%s'\n", line);
 
@@ -669,10 +680,10 @@ process_reset_line(char *line)
 	p = strchr(line, ' ');
 	*p = 0;
 	++p;
-	s = create_shortcut(line, p);
-	shortcut = (Shortcut **)cext_array_attach((void **)shortcut, s, sizeof(Shortcut *), &shortcutsz);
-	nshortcut++;
-	grab_shortcut(s);
+	k = create_key(line, p);
+	key = (Key **)cext_array_attach((void **)key, k, sizeof(Key *), &keysz);
+	nkey++;
+	grab_key(k);
 }
 
 static char *
@@ -727,13 +738,12 @@ xwrite(IXPConn *c, Fcall *fcall)
 			char fcallbuf[2048], tmp[2048]; /* iounit */
 			char *p1, *p2;
 			if(!fcall->offset) {
-				while(nshortcut) {
-					Shortcut *s = shortcut[0];
-					ungrab_shortcut(s);
-					cext_array_detach((void **)shortcut, s, &shortcutsz);
-					nshortcut--;
-					free(s->cmd);
-					destroy_shortcut(s);
+				while(nkey) {
+					Key *k = key[0];
+					ungrab_key(k);
+					cext_array_detach((void **)key, k, &keysz);
+					nkey--;
+					destroy_key(k);
 				}
 			}
 		    memcpy(fcallbuf, fcall->data, fcall->count);
@@ -760,16 +770,16 @@ xwrite(IXPConn *c, Fcall *fcall)
 			memcpy(last, fcall->data, fcall->count);
 		}
 		break;
-	case Fshortcut:
+	case Fkey:
 		{
-			Shortcut *tmp, *s = shortcut[i];
-			if(s->cmd)
-				free(s->cmd);
-			s->cmd = cext_emallocz(fcall->count) + 1;
-			for(tmp = s; tmp; tmp = tmp->next)
-				tmp->cmd = s->cmd;
-			memcpy(s->cmd, fcall->data, fcall->count);
-			s->cmd[fcall->count] = 0;
+			Key *k = key[i];
+			while(k->next)
+				k = k->next;
+			if(k->cmd)
+				free(k->cmd);
+			k->cmd = cext_emallocz(fcall->count + 1);
+			memcpy(k->cmd, fcall->data, fcall->count);
+			k->cmd[fcall->count] = 0;
 		}
 		break;
 error_xwrite:
