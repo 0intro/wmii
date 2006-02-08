@@ -230,5 +230,4 @@ void pager();
 void detached_clients();
 void attach_detached_client();
 void select_page(char *arg);
-void quit();
 

@@ -19,9 +19,6 @@ char *wmii_ixp_version(IXPConn *c, Fcall *fcall);
 char *wmii_ixp_attach(IXPConn *c, Fcall *fcall);
 char *wmii_ixp_clunk(IXPConn *c, Fcall *fcall);
 
-/* signal.c */
-void wmii_signal(void (*sigchld_handler)());
-
 /* spawn.c */
 void wmii_spawn(void *dpy, char *cmd);
 

@@ -5,28 +5,25 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include "wmii.h"
 
-void
+void 
 wmii_spawn(void *dpy, char *cmd)
 {
-	pid_t pid = fork();
-
-	switch (pid)
-	{
-		case 0:
+	/* double-fork catches all zombies */
+	if (fork() == 0) {
+		if (fork() == 0) {
 			setsid();
 			close(ConnectionNumber(dpy));
 			execlp("rc", "rc", "-c", cmd, (char *) 0);
-			exit(1);
 			perror("failed");
 			exit(1);
-		case -1:
-			perror("can't fork");
+		}
+		exit(0);
 	}
+	wait(0);
 }
