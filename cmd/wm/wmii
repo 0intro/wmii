@@ -20,7 +20,6 @@ mkdir -p /tmp/.ixp-$USER
 wmiifs -a $WMII_ADDRESS &
 wmiifspid=$apid
 wmiiwm -a unix!/tmp/.ixp-$USER/wmiiwm-$WMII_IDENT &
-wmiikeys -a unix!/tmp/.ixp-$USER/wmiikeys-$WMII_IDENT &
 wmiibar -a unix!/tmp/.ixp-$USER/wmiibar-$WMII_IDENT &
 #wmiimenu -a /tmp/.ixp-$USER/wmiimenu-$WMII_IDENT &
 sleep 1
@@ -28,7 +27,6 @@ sleep 1
 # mount ixp file systems:
 echo -n mount unix!/tmp/.ixp-$USER/wmiiwm-$WMII_IDENT /wm | wmiir write /ctl
 echo -n mount unix!/tmp/.ixp-$USER/wmiibar-$WMII_IDENT /bar | wmiir write /ctl
-echo -n mount unix!/tmp/.ixp-$USER/wmiikeys-$WMII_IDENT /keys | wmiir write /ctl
 
 # display the wmii introduction if necessary:
 if(mkdir $HOME/.wmii-3 >[2]/dev/null) {

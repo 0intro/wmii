@@ -26,37 +26,6 @@ for(page in `{wmiir read /wm | grep '^d' | awk '{print $10}' | grep -v new}) {
 	}
 }
 
-# WMIIKEYS CONFIGURATION
-wmiir write /keys/reset <<END
-Control-Alt-c #write /wm/sel/sel/sel/ctl kill
-Control-Alt-q,y quit
-Control-Alt-w,y wmiirc
-Alt-t extern xterm -rv
-Alt-d #write /wm/sel/sel/sel/ctl detach
-Alt-a #write /wm/ctl attach
-Shift-Alt-a #write /wm/ctl detached
-Alt-n wmiir read /wm/sel/new >/dev/null >[2=1]
-Alt-m #write /wm/sel/sel/sel/ctl max
-Alt-Return #write /wm/sel/sel/ctl swap east
-Shift-Alt-Return #write /wm/sel/sel/ctl swap west
-Control-Alt-y wmiir read /wm/new >/dev/null >[2=1]
-Alt-h #write /wm/sel/ctl select next
-Alt-l #write /wm/sel/ctl select prev
-Alt-Tab #write /wm/sel/sel/ctl select next
-Alt-j #write /wm/sel/sel/ctl select next
-Alt-k #write /wm/sel/sel/ctl select prev
-Shift-Alt-h #write /wm/ctl select prev
-Shift-Alt-l #write /wm/ctl select next
-Shift-Alt-p #write /wm/ctl pager
-Shift-Alt-1 #write /wm/ctl select 1
-Shift-Alt-2 #write /wm/ctl select 2
-Shift-Alt-3 #write /wm/ctl select 3
-Shift-Alt-4 #write /wm/ctl select 4
-END
-
-xwrite /keys/font $FONT
-xwrite /keys/color $SEL_COLOR
-
 # WMIIBAR CONFIGURATION
 xwrite /bar/font $FONT
 xwrite /bar/defcolor $SEL_COLOR
@@ -64,4 +33,5 @@ echo -n fnord | wmiir write /bar/new/data
 
 # MISC
 xsetroot -mod 2 2 -bg '#444466' -fg '#555555'
+keys&
 status&

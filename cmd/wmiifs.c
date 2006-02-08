@@ -145,6 +145,8 @@ xmount(char *arg)
 	char *p, *wname = strchr(address, ' ');
 	Mount *mnt;
 
+	if(!wname)
+		return "no mount point supplied";
 	*wname = 0;
 	wname++;
 	if(*wname == '/')
@@ -156,15 +158,13 @@ xmount(char *arg)
 	if(!address || !wname || !*address || !*wname)
 		return Enoserv;
 
-	if(name_to_mount(wname))
-		return "already mounted";
-
-	mnt = cext_emallocz(sizeof(Mount));
+	if(!(mnt = name_to_mount(wname))) {
+		mnt = cext_emallocz(sizeof(Mount));
+		cext_strlcpy(mnt->address, address, sizeof(mnt->address));
+		mount = (Mount **)cext_array_attach((void **)mount, mnt, sizeof(Mount *), &mountsz);
+		nmount++;
+	}
 	cext_strlcpy(mnt->wname, wname, sizeof(mnt->wname));
-	cext_strlcpy(mnt->address, address, sizeof(mnt->address));
-	mount = (Mount **)cext_array_attach((void **)mount, mnt, sizeof(Mount *), &mountsz);
-	nmount++;
-
 	return nil;
 }
 
