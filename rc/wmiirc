@@ -5,9 +5,9 @@ CLIENT_BAR=0
 CLIENT_BORDER=3
 HANDLEINC=1
 
-SEL_COLOR="#ffffff #444466 #666688"
-NORM_COLOR="#dddddd #555555 #777777"
-FONT="fixed"
+SEL_COLOR='#ffffff #444466 #666688'
+NORM_COLOR='#dddddd #555555 #777777'
+FONT=fixed
 
 fn xwrite { echo -n $2 | wmiir write $1 }
 
@@ -27,7 +27,7 @@ for(page in `{wmiir read /wm | grep '^d' | awk '{print $10}' | grep -v new}) {
 }
 
 # WMIIKEYS CONFIGURATION
-cat | wmiir write /keys/reset <<END
+wmiir write /keys/reset <<END
 Control-Alt-c #write /wm/sel/sel/sel/ctl kill
 Control-Alt-q,y quit
 Control-Alt-w,y wmiirc
