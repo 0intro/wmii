@@ -826,7 +826,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		switch(m->qid.dtype) {
 		case Droot:
 			if(!strncmp(buf, "quit", 5))
-				srv.running = 0;
+				quit();
 			else if(!strncmp(buf, "pager", 6))
 				pager();
 			else if(!strncmp(buf, "detached", 9))

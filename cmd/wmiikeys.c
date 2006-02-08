@@ -78,6 +78,12 @@ usage()
     exit(1);
 }
 
+static void
+quit()
+{
+	srv.running = 0;
+}
+
 /* X stuff */
 
 static void
@@ -863,6 +869,8 @@ main(int argc, char *argv[])
         fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
 		exit(1);
 	}
+
+	wmii_signal(quit);
 
 	/* IXP server */
 	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);

@@ -89,6 +89,12 @@ dummy_error_handler(Display * dpy, XErrorEvent * err)
     return 0;
 }
 
+static void
+quit()
+{
+	srv.running = 0;
+}
+
 static Item *
 new_item()
 {
@@ -659,7 +665,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			memcpy(buf, fcall->data, 4);
 			buf[4] = 0;
 			if(!strncmp(buf, "quit", 5)) {
-				srv.running = 0;
+				quit();
 				break;
 			}
 		}
@@ -841,6 +847,8 @@ main(int argc, char *argv[])
         fprintf(stderr, "wmiibar: fatal: %s\n", errstr);
 		exit(1);
 	}
+
+	wmii_signal(quit);
 
 	/* IXP server */
 	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);

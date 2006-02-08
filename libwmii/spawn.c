@@ -15,18 +15,18 @@
 void
 wmii_spawn(void *dpy, char *cmd)
 {
-	if(!cmd)
-		return;
-    /* the questionable double-fork is done to catch all zombies */
-	if(fork() == 0) {
-        if(fork() == 0) {
+	pid_t pid = fork();
+
+	switch (pid)
+	{
+		case 0:
 			setsid();
 			close(ConnectionNumber(dpy));
 			execlp("rc", "rc", "-c", cmd, (char *) 0);
+			exit(1);
 			perror("failed");
 			exit(1);
-        }
-        exit(0);
-    }
-    wait(0);
+		case -1:
+			perror("can't fork");
+	}
 }
