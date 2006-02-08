@@ -22,21 +22,17 @@
  * filesystem specification
  * / 					Droot
  * /ctl					Fctl		command interface
- * /font				Ffont		<xlib font name>
- * /color				Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /reset				Freset		setup interface
- * /key/				Dkey
- * /key/foo				Fkey        key file
+ * /event				Fevent		read for receiving key presses
+ * /foo					Fkey        key file
  */
 
 /* 8-bit qid.path.type */
 enum {                          
     Droot,
-    Dkey,
 	Fctl,
-    Ffont,
-    Fcolor,
 	Freset,
+	Fevent,
     Fkey
 };
 
@@ -44,8 +40,6 @@ typedef struct Key Key;
 struct Key {
 	unsigned short id;
     char name[128];
-    char seq[128];
-	char *cmd;
     unsigned long mod;
     KeyCode key;
     Key *next;
@@ -54,21 +48,15 @@ struct Key {
 static IXPServer srv;
 static Display *dpy;
 static Window root;
-static Window win;
-static XRectangle rect;
-static int screen;
 static Key **key = nil;
 static size_t keysz = 0;
 static size_t nkey = 0;
 static unsigned int num_lock_mask, valid_mask;
-static char *font;
-static char colstr[24];
-static Draw box;
 Qid root_qid;
 
-static void draw_key_box(char *prefix);
-
 static char version[] = "wmiikeys - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
+
+static void do_pend_fcall(char *event);
 
 static void
 usage()
@@ -78,15 +66,6 @@ usage()
 }
 
 /* X stuff */
-
-static void
-center()
-{
-    int x = rect.width / 2 - box.rect.width / 2;
-    int y = rect.height / 2 - box.rect.height / 2;
-    XMoveResizeWindow(dpy, win, x, y, box.rect.width, box.rect.height);
-	XSync(dpy, False);
-}
 
 static void
 grab_key(Key *k)
@@ -114,7 +93,7 @@ ungrab_key(Key *k)
 }
 
 static Key *
-create_key(char *name, char *cmd)
+create_key(char *name)
 {
 	char buf[128];
     char *seq[8];
@@ -133,7 +112,6 @@ create_key(char *name, char *cmd)
             k->next = cext_emallocz(sizeof(Key));
             k = k->next;
         }
-        cext_strlcpy(k->seq, seq[i], sizeof(k->seq));
         cext_strlcpy(k->name, name, sizeof(k->name));
         key = strrchr(seq[i], '-');
         if(key)
@@ -143,7 +121,6 @@ create_key(char *name, char *cmd)
         k->key = XKeysymToKeycode(dpy, XStringToKeysym(key));
         k->mod = blitz_strtomod(seq[i]);
     }
-	k->cmd = cmd ? strdup(cmd) : nil;
 	r->id = id++;
 	return r;
 
@@ -152,8 +129,6 @@ create_key(char *name, char *cmd)
 static void
 destroy_key(Key *k)
 {
-	if(k->cmd)
-		free(k->cmd);
     if(k->next)
         destroy_key(k->next);
     free(k);
@@ -212,15 +187,14 @@ match_keys(Key **t, size_t n, unsigned long mod, KeyCode keycode, Bool next, siz
 }
 
 static void
-handle_key_seq(Window w, char *prefix, Key **done, size_t ndone)
+handle_key_seq(Window w, Key **done, size_t ndone)
 {
     unsigned long mod;
     KeyCode key;
-	char buf[128];
 	Key **found = nil;
 	size_t nfound = 0; 
+	char buf[128];
 
-    draw_key_box(prefix);
     next_keystroke(&mod, &key);
 
 	found = match_keys(done, ndone, mod, key, True, &nfound);
@@ -232,13 +206,13 @@ handle_key_seq(Window w, char *prefix, Key **done, size_t ndone)
 			XBell(dpy, 0);
 			return; /* grabbed but not found */
 		case 1: 
-			if(found[0]->cmd) {
-				wmii_spawn(dpy, found[0]->cmd);
+			if(!found[0]->next) {
+				snprintf(buf, sizeof(buf), "%s\n", found[0]->name);
+				do_pend_fcall(buf);
 				break;
 			}
 		default:
-			snprintf(buf, sizeof(buf), "%s,%s", prefix, found[0]->seq);
-			handle_key_seq(w, found[0]->seq, found, nfound);
+			handle_key_seq(w, found, nfound);
 			break;
 		}
 	}
@@ -249,41 +223,26 @@ static void
 handle_key(Window w, unsigned long mod, KeyCode keycode)
 {
 	size_t nfound;
+	char buf[128];
 	Key **found = match_keys(key, nkey, mod, keycode, False, &nfound);
 	switch(nfound) {
 	case 0:
 		XBell(dpy, 0);
 		return; /* grabbed but not found */
 	case 1: 
-		if(found[0]->cmd) {
-			wmii_spawn(dpy, found[0]->cmd);
+		if(!found[0]->next) {
+			snprintf(buf, sizeof(buf), "%s\n", found[0]->name);
+			do_pend_fcall(buf);
 			break;
 		}
 	default:
 		XGrabKeyboard(dpy, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
-		XMapRaised(dpy, win);
-		XSync(dpy, False);
-		handle_key_seq(w, found[0]->seq, found, nfound);
+		handle_key_seq(w, found, nfound);
 		XUngrabKeyboard(dpy, CurrentTime);
-		XUnmapWindow(dpy, win);
 		XSync(dpy, False);
 		break;
     }
 	free(found);
-}
-
-static void
-draw_key_box(char *prefix)
-{
-	if(!strlen(prefix))
-		return;
-	box.rect.x = box.rect.y = 0;
-    box.rect.height = box.font->ascent + box.font->descent + 4;
-    box.rect.width = XTextWidth(box.font, prefix, strlen(prefix)) + box.rect.height;
-	box.data = prefix;
-    center();
-    blitz_drawlabel(dpy, &box);
-    XSync(dpy, False);
 }
 
 static void
@@ -369,11 +328,9 @@ qid_to_name(Qid *qid)
 		return nil;
 	switch(type) {
 		case Droot: return "/"; break;
-		case Dkey: return "bin"; break;
 		case Fctl: return "ctl"; break;
-		case Ffont: return "font"; break;
-		case Fcolor: return "color"; break;
 		case Freset: return "reset"; break;
+		case Fevent: return "event"; break;
 		case Fkey: return key[i]->name; break;
 		default: return nil; break;
 	}
@@ -384,16 +341,12 @@ name_to_type(char *name)
 {
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return Droot;
-	if(!strncmp(name, "bin", 4))
-		return Dkey;
 	if(!strncmp(name, "ctl", 4))
 		return Fctl;
-	if(!strncmp(name, "font", 5))
-		return Ffont;
-	if(!strncmp(name, "color", 6))
-		return Fcolor;
 	if(!strncmp(name, "reset", 6))
 		return Freset;
+	if(!strncmp(name, "event", 6))
+		return Fevent;
 	if(key_of_name(name))
 		return Fkey;
 	return -1;
@@ -413,10 +366,6 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	switch(type) {
 	case Droot:
 		*new = root_qid;
-		break;
-	case Dkey:
-		new->type = IXP_QTDIR;
-		new->path = mkqpath(Dkey, 0);
 		break;
 	case Fkey:
 		if(!(k = key_of_name(wname)))
@@ -503,30 +452,19 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 static unsigned int
 type_to_stat(Stat *stat, char *name, Qid *dir)
 {
-	Key *k;
 	int type = name_to_type(name);
 
     switch (type) {
     case Droot:
-    case Dkey:
-		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
-        break;
 	case Fctl:
 	case Freset:
 		return mkstat(stat, dir, name, 0, DMWRITE);
 		break;
-    case Ffont:
-		return mkstat(stat, dir, name, strlen(font), DMREAD | DMWRITE);
-        break;
-    case Fcolor:
-		return mkstat(stat, dir, name, 23, DMREAD | DMWRITE);
-        break;
+	case Fevent:
+		return mkstat(stat, dir, name, 0, DMREAD);
+		break;
     case Fkey:
-		if(!(k = key_of_name(name)))
-			return -1;
-		while(k->next)
-			k = k->next;
-		return mkstat(stat, dir, name, strlen(k->cmd), DMREAD | DMWRITE | DMEXEC);
+		return mkstat(stat, dir, name, 0, 0);
 		break;
     }
 	return 0;
@@ -544,16 +482,13 @@ xremove(IXPConn *c, Fcall *fcall)
 	if(id && ((i = qpath_id(id)) == -1))
 		return Enofile;
 	if((qpath_type(m->qid.path) == Fkey) && (i < nkey)) {
-		Key *p, *k = key[i];
+		Key *k = key[i];
 		/* clunk */
 		cext_array_detach((void **)c->map, m, &c->mapsz);
     	free(m);
 		/* now detach the item */
 		cext_array_detach((void **)key, k, &keysz);
 		nkey--;
-		for(p = k; p->next; p = p->next);
-		if(p->cmd)
-			free(p->cmd);
 		destroy_key(k);
     	fcall->id = RREMOVE;
 		ixp_server_respond_fcall(c, fcall);
@@ -581,8 +516,11 @@ xread(IXPConn *c, Fcall *fcall)
 	fcall->count = 0;
 	if(fcall->offset) {
 		switch (qpath_type(m->qid.path)) {
-		case Dkey:
+		case Droot:
 			/* jump to offset */
+			len = type_to_stat(&stat, "ctl", &m->qid);
+			len += type_to_stat(&stat, "reset", &m->qid);
+			len += type_to_stat(&stat, "event", &m->qid);
 			for(i = 0; i < nkey; i++) {
 				len += type_to_stat(&stat, key[i]->name, &m->qid);
 				fprintf(stderr, "len=%d <= fcall->offset=%lld\n", len, fcall->offset);
@@ -600,6 +538,9 @@ xread(IXPConn *c, Fcall *fcall)
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
+		case Fevent:
+			ixp_server_enqueue_fcall(c, fcall);
+			return nil;
 		default:
 			break;
 		}
@@ -609,16 +550,10 @@ xread(IXPConn *c, Fcall *fcall)
 		case Droot:
 			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "font", &m->qid);
-			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "color", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "reset", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "bin", &m->qid);
+			fcall->count += type_to_stat(&stat, "event", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			break;
-		case Dkey:
 			for(i = 0; i < nkey; i++) {
 				fprintf(stderr, "normal xread %s\n", key[i]->name);
 				len = type_to_stat(&stat, key[i]->name, &m->qid);
@@ -629,28 +564,11 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case Fctl:
-		case Freset:
-			return Enoperm;
-			break;
-		case Ffont:
-			if((fcall->count = strlen(font)))
-				memcpy(p, font, fcall->count);
-			break;
-		case Fcolor:
-			if((fcall->count = strlen(colstr)))
-				memcpy(p, colstr, fcall->count);
-			break;
-		case Fkey:
-			{
-				Key *k = key[i];
-				while(k->next)
-					k = k->next;
-				if((fcall->count = k->cmd ? strlen(k->cmd) : 0))
-					memcpy(p, k->cmd, fcall->count);
-			}
-			break;
+		case Fevent:
+			ixp_server_enqueue_fcall(c, fcall);
+			return nil;
 		default:
-			return "invalid read";
+			return Enoperm;
 			break;
 		}
 	}
@@ -674,29 +592,6 @@ xstat(IXPConn *c, Fcall *fcall)
     fcall->id = RSTAT;
 	ixp_server_respond_fcall(c, fcall);
     return nil;
-}
-
-static void
-process_reset_line(char *line)
-{
-	Key *k;
-	char *p;
-	fprintf(stderr, "got line: '%s'\n", line);
-
-	/* ignore comments */
-	for(p = line; *p && ((*p == ' ') || (*p == '\t')); p++);
-	if(*p && ((*p == '#') || (*p == '\n')))
-		return;
-
-	p = strchr(line, ' ');
-	if(!p)
-		return;
-	*p = 0;
-	++p;
-	k = create_key(line, p);
-	key = (Key **)cext_array_attach((void **)key, k, sizeof(Key *), &keysz);
-	nkey++;
-	grab_key(k);
 }
 
 static char *
@@ -724,32 +619,15 @@ xwrite(IXPConn *c, Fcall *fcall)
 		}
 		return Enocommand;
 		break;
-	case Ffont:
-		if(font)
-			free(font);
-		font = cext_emallocz(fcall->count + 1);
-		memcpy(font, fcall->data, fcall->count);
-		XFreeFont(dpy, box.font);
-    	box.font = blitz_getfont(dpy, font);
-		break;
-	case Fcolor:
-		if((fcall->count != 23)
-			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
-		    || (fcall->data[16] != '#')
-		  )
-			return "wrong color format";
-		memcpy(colstr, fcall->data, fcall->count);
-		colstr[fcall->count] = 0;
-		blitz_loadcolor(dpy, screen, colstr, &box.color);
-		break;
     case Freset:
+		if(fcall->count > 2048)
+			return Enoperm;
 		{
-			if(fcall->count > 2048)
-				goto error_xwrite;
 			static size_t lastcount;
 			static char last[2048]; /* iounit */
 			char fcallbuf[2048], tmp[2048]; /* iounit */
 			char *p1, *p2;
+			Key *k;
 			if(!fcall->offset) {
 				while(nkey) {
 					Key *k = key[0];
@@ -767,7 +645,11 @@ xwrite(IXPConn *c, Fcall *fcall)
 				memcpy(tmp, p1, lastcount - (p1 - last));
 				memcpy(tmp + (lastcount - (p1 - last)), p2, p2 - fcallbuf);
 				tmp[(lastcount - (p1 - last)) + (p2 - fcallbuf)] = 0;
-				process_reset_line(tmp);
+				k = create_key(tmp);
+				key = (Key **)cext_array_attach((void **)key, k, sizeof(Key *), &keysz);
+				nkey++;
+				grab_key(k);
+
 			}
 			else p2 = fcallbuf;
 			lastcount = fcall->count;
@@ -775,7 +657,10 @@ xwrite(IXPConn *c, Fcall *fcall)
 			while(p2 - fcallbuf < fcall->count) {
 				p1 = strchr(p2, '\n');
 				*p1 = 0;
-				process_reset_line(p2);
+				k = create_key(p2);
+				key = (Key **)cext_array_attach((void **)key, k, sizeof(Key *), &keysz);
+				nkey++;
+				grab_key(k);
 				*p1 = '\n';
 				p2 = ++p1;
 			}
@@ -783,21 +668,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			memcpy(last, fcall->data, fcall->count);
 		}
 		break;
-	case Fkey:
-		{
-			Key *k = key[i];
-			while(k->next)
-				k = k->next;
-			if(k->cmd)
-				free(k->cmd);
-			k->cmd = cext_emallocz(fcall->count + 1);
-			memcpy(k->cmd, fcall->data, fcall->count);
-			k->cmd[fcall->count] = 0;
-		}
-		break;
-error_xwrite:
 	default:
-		return "invalid write";
+		return Enoperm;
 		break;
 	}
     fcall->id = RWRITE;
@@ -833,6 +705,34 @@ do_fcall(IXPConn *c)
 }
 
 static void
+do_pend_fcall(char *event)
+{
+	size_t i;
+	Fcall *fcall;
+	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++) {
+		IXPConn *c = srv.conn[i];
+		/* all pending TREADs are on /event, so no qid checking necessary */
+		while((fcall = ixp_server_dequeue_fcall_id(c, TREAD))) {
+			IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+			unsigned char *p = fcall->data;
+
+			if(!m) {
+				if(ixp_server_respond_error(c, fcall, Enofid))
+					break;
+			}
+			else if(qpath_type(m->qid.path) == Fevent) {
+				fcall->count = strlen(event);
+				memcpy(p, event, fcall->count);
+				fcall->id = RREAD;
+				if(ixp_server_respond_fcall(c, fcall))
+					break;
+			}
+			free(fcall);
+		}
+	}
+}
+
+static void
 new_ixp_conn(IXPConn *c)
 {
 	int fd = ixp_accept_sock(c->fd);
@@ -847,7 +747,6 @@ int
 main(int argc, char *argv[])
 {
     int i;
-    XSetWindowAttributes wa;
 	char *errstr;
 	char *address = nil;
 
@@ -879,7 +778,6 @@ main(int argc, char *argv[])
         exit(1);
     }
     XSetErrorHandler(dummy_error_handler);
-    screen = DefaultScreen(dpy);
 
 	i = ixp_create_sock(address, &errstr);
 	if(i < 0) {
@@ -896,35 +794,8 @@ main(int argc, char *argv[])
 	/* X server */
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
 
-	font = strdup(BLITZ_FONT);
-    box.font = blitz_getfont(dpy, font);
-	cext_strlcpy(colstr, BLITZ_SEL_COLOR, sizeof(colstr));
-	blitz_loadcolor(dpy, screen, colstr, &box.color);
-	fprintf(stderr, "box.color: %lud %lud %lud\n", box.color.fg, box.color.bg, box.color.border);
-
-    wa.override_redirect = 1;
-    wa.background_pixmap = ParentRelative;
-    wa.event_mask =
-        ExposureMask | SubstructureRedirectMask | SubstructureNotifyMask;
-
-    root = RootWindow(dpy, screen);
-    rect.x = rect.y = 0;
-    rect.width = DisplayWidth(dpy, screen);
-    rect.height = DisplayHeight(dpy, screen);
-    box.rect.x = box.rect.y = 0;
-    box.rect.width = box.rect.height = 1;
-
+    root = RootWindow(dpy, DefaultScreen(dpy));
     wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
-
-	box.drawable = win =
-		XCreateWindow(dpy, RootWindow(dpy, screen), box.rect.x, box.rect.y,
-                        box.rect.width, box.rect.height, 0, DefaultDepth(dpy, screen),
-                        CopyFromParent, DefaultVisual(dpy, screen),
-                        CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
-    XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
-    XSync(dpy, False);
-
-    box.gc = XCreateGC(dpy, win, 0, 0);
 
     /* main loop */
 	errstr = ixp_server_loop(&srv);
