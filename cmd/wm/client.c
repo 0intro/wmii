@@ -113,6 +113,7 @@ focus_client(Client *c)
 	}
 	
 	if(old && (old != c)) {
+		c->revert = old;
 		grab_window(old->win, AnyModifier, Button1);
     	draw_client(old);
 	}
@@ -373,6 +374,11 @@ void
 detach_client(Client *c, Bool unmap)
 {
 	if(c->page) {
+		size_t i;
+		for(i = 0; i < nclient; i++)
+			if(client[i]->revert == c)
+				client[i]->revert = nil;
+
 		if(index_of_area(c->page, c->area) > 0)
 			detach_column(c);
 		else {
@@ -393,9 +399,10 @@ detach_client(Client *c, Bool unmap)
 		}
 	}
 	c->page = nil;
+	if(c->revert)
+		focus_client(c->revert);
     if(c->destroyed)
         destroy_client(c);
-    focus_page(page[sel]);
 }
 
 Client *

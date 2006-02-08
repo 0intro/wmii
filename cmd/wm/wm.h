@@ -84,6 +84,7 @@ struct Client {
     Window trans;
     XRectangle rect;
     XSizeHints size;
+	Client *revert;
 	struct Frame {
 		Window win;
     	XRectangle rect;
