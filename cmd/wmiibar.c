@@ -804,7 +804,6 @@ main(int argc, char *argv[])
 	char *errstr;
 	char *address = nil;
     XSetWindowAttributes wa;
-    XGCValues gcv;
 
     /* command line args */
     for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
@@ -877,8 +876,6 @@ main(int argc, char *argv[])
     XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
     XSync(dpy, False);
 
-    gcv.function = GXcopy;
-    gcv.graphics_exposures = False;
     gc = XCreateGC(dpy, win, 0, 0);
 
     pmap = XCreatePixmap(dpy, win, brect.width, brect.height,

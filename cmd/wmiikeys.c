@@ -41,10 +41,10 @@ enum {
 };
 
 typedef struct Key Key;
-
 struct Key {
 	unsigned short id;
-    char name[256];
+    char name[128];
+    char seq[128];
 	char *cmd;
     unsigned long mod;
     KeyCode key;
@@ -53,17 +53,16 @@ struct Key {
 
 static IXPServer srv;
 static Display *dpy;
-static Window win;
 static Window root;
+static Window win;
 static XRectangle rect;
 static int screen;
 static Key **key = nil;
 static size_t keysz = 0;
 static size_t nkey = 0;
-static int grabkb = 0;
 static unsigned int num_lock_mask, valid_mask;
 static char *font;
-static char colstr[23];
+static char colstr[24];
 static Draw box;
 Qid root_qid;
 
@@ -117,15 +116,15 @@ ungrab_key(Key *k)
 static Key *
 create_key(char *name, char *cmd)
 {
-	char buf[256];
-    char *chain[8];
+	char buf[128];
+    char *seq[8];
     char *key;
     size_t i, toks;
 	static unsigned short id = 1;
     Key *k = 0, *r = 0;
 
     cext_strlcpy(buf, name, sizeof(buf));
-    toks = cext_tokenize(chain, 8, buf, ',');
+    toks = cext_tokenize(seq, 8, buf, ',');
 
     for(i = 0; i < toks; i++) {
         if(!k)
@@ -134,14 +133,15 @@ create_key(char *name, char *cmd)
             k->next = cext_emallocz(sizeof(Key));
             k = k->next;
         }
-        cext_strlcpy(k->name, chain[i], sizeof(k->name));
-        key = strrchr(chain[i], '-');
+        cext_strlcpy(k->seq, seq[i], sizeof(k->seq));
+        cext_strlcpy(k->name, name, sizeof(k->name));
+        key = strrchr(seq[i], '-');
         if(key)
             key++;
         else
-            key = chain[i];
+            key = seq[i];
         k->key = XKeysymToKeycode(dpy, XStringToKeysym(key));
-        k->mod = blitz_strtomod(chain[i]);
+        k->mod = blitz_strtomod(seq[i]);
     }
 	k->cmd = cmd ? strdup(cmd) : nil;
 	r->id = id++;
@@ -194,75 +194,88 @@ emulate_key_press(unsigned long mod, KeyCode key)
     XSync(dpy, False);
 }
 
-static void
-handle_key_chain(Window w, Key *processed, char *prefix)
+static Key **
+match_keys(Key **t, size_t n, unsigned long mod, KeyCode keycode, Bool next, size_t *nres)
 {
-	char buf[256];
+	Key **result = nil;
+	size_t ressz = 0;
+	size_t i = 0;
+	*nres = 0;
+	for(i = 0; i < n; i++) {
+		Key *k = next ? t[i]->next : t[i];
+		if(k && (k->mod == mod) && (k->key == keycode)) {
+			result = (Key **)cext_array_attach((void **)result, k, sizeof(Key *), &ressz);
+			(*nres)++;
+		}
+	}
+	return result;
+}
+
+static void
+handle_key_seq(Window w, char *prefix, Key **done, size_t ndone)
+{
     unsigned long mod;
     KeyCode key;
-    Key *k = processed->next;
+	char buf[128];
+	Key **found = nil;
+	size_t nfound = 0; 
 
     draw_key_box(prefix);
     next_keystroke(&mod, &key);
 
-    if((processed->mod == mod) && (processed->key == key)) {
-        /* double key */
-        emulate_key_press(mod, key);
-    } else if((k->mod == mod) && (k->key == key)) {
-        if(k->cmd)
-            wmii_spawn(dpy, k->cmd);
-        else if(k->next) {
-            snprintf(buf, sizeof(buf), "%s/%s", prefix, k->name);
-            handle_key_chain(w, k, buf);
-        }
-    }
-}
-
-static void
-handle_key_gkb(Window w, unsigned long mod, KeyCode keycode)
-{
-	size_t i;
-	for(i = 0; i < nkey; i++) {
-		Key *k = key[i];
-		if((k->mod == mod) && (k->key == keycode)) {
-			fprintf(stderr, "invoking %s\n", k->cmd);
-			if(k->cmd)
-        		wmii_spawn(dpy, k->cmd);
-        	return;
+	found = match_keys(done, ndone, mod, key, True, &nfound);
+	if((done[0]->mod == mod) && (done[0]->key == key))
+		emulate_key_press(mod, key); /* double key */
+	else {
+		switch(nfound) {
+		case 0:
+			XBell(dpy, 0);
+			return; /* grabbed but not found */
+		case 1: 
+			if(found[0]->cmd) {
+				wmii_spawn(dpy, found[0]->cmd);
+				break;
+			}
+		default:
+			snprintf(buf, sizeof(buf), "%s,%s", prefix, found[0]->seq);
+			handle_key_seq(w, found[0]->seq, found, nfound);
+			break;
 		}
-    }
-    XBell(dpy, 0);
+	}
+	free(found);
 }
 
 static void
 handle_key(Window w, unsigned long mod, KeyCode keycode)
 {
-	size_t i;
-	for(i = 0; i < nkey; i++) {
-		Key *k = key[i];
-		if((k->mod == mod) && (k->key == keycode)) {
-			if(k->next) {
-        		XGrabKeyboard(dpy, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
-        		XMapRaised(dpy, win);
-        		XSync(dpy, False);
-
-				handle_key_chain(w, k, k->name);
-
-        		XUngrabKeyboard(dpy, CurrentTime);
-        		XUnmapWindow(dpy, win);
-        		XSync(dpy, False);
-			}
-			else if(k->cmd)
-        		wmii_spawn(dpy, k->cmd);
-        	return;
+	size_t nfound;
+	Key **found = match_keys(key, nkey, mod, keycode, False, &nfound);
+	switch(nfound) {
+	case 0:
+		XBell(dpy, 0);
+		return; /* grabbed but not found */
+	case 1: 
+		if(found[0]->cmd) {
+			wmii_spawn(dpy, found[0]->cmd);
+			break;
 		}
+	default:
+		XGrabKeyboard(dpy, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+		XMapRaised(dpy, win);
+		XSync(dpy, False);
+		handle_key_seq(w, found[0]->seq, found, nfound);
+		XUngrabKeyboard(dpy, CurrentTime);
+		XUnmapWindow(dpy, win);
+		XSync(dpy, False);
+		break;
     }
+	free(found);
 }
 
 static void
 draw_key_box(char *prefix)
 {
-	if(!strlen(box.data))
+	if(!strlen(prefix))
 		return;
 	box.rect.x = box.rect.y = 0;
     box.rect.height = box.font->ascent + box.font->descent + 4;
@@ -270,6 +283,7 @@ draw_key_box(char *prefix)
 	box.data = prefix;
     center();
     blitz_drawlabel(dpy, &box);
+    XSync(dpy, False);
 }
 
 static void
@@ -281,10 +295,7 @@ check_x_event(IXPConn *c)
         switch (ev.type) {
         case KeyPress:
             ev.xkey.state &= valid_mask;
-            if(grabkb)
-                handle_key_gkb(root, ev.xkey.state, (KeyCode) ev.xkey.keycode);
-            else
-                handle_key(root, ev.xkey.state, (KeyCode) ev.xkey.keycode);
+            handle_key(root, ev.xkey.state, (KeyCode) ev.xkey.keycode);
             break;
         case KeymapNotify:
 			{
@@ -689,7 +700,7 @@ process_reset_line(char *line)
 static char *
 xwrite(IXPConn *c, Fcall *fcall)
 {
-	char buf[256];
+	char buf[128];
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned short id;
 	int i;
@@ -834,7 +845,6 @@ main(int argc, char *argv[])
 {
     int i;
     XSetWindowAttributes wa;
-    XGCValues gcv;
 	char *errstr;
 	char *address = nil;
 
@@ -887,6 +897,7 @@ main(int argc, char *argv[])
     box.font = blitz_getfont(dpy, font);
 	cext_strlcpy(colstr, BLITZ_SEL_COLOR, sizeof(colstr));
 	blitz_loadcolor(dpy, screen, colstr, &box.color);
+	fprintf(stderr, "box.color: %lud %lud %lud\n", box.color.fg, box.color.bg, box.color.border);
 
     wa.override_redirect = 1;
     wa.background_pixmap = ParentRelative;
@@ -902,15 +913,14 @@ main(int argc, char *argv[])
 
     wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
 
-    win = XCreateWindow(dpy, RootWindow(dpy, screen), box.rect.x, box.rect.y,
+	box.drawable = win =
+		XCreateWindow(dpy, RootWindow(dpy, screen), box.rect.x, box.rect.y,
                         box.rect.width, box.rect.height, 0, DefaultDepth(dpy, screen),
                         CopyFromParent, DefaultVisual(dpy, screen),
                         CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
     XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_left_ptr));
     XSync(dpy, False);
 
-    gcv.function = GXcopy;
-    gcv.graphics_exposures = False;
     box.gc = XCreateGC(dpy, win, 0, 0);
 
     /* main loop */
