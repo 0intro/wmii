@@ -991,6 +991,7 @@ do_fcall(IXPConn *c)
 		if(errstr)
 			ixp_server_respond_error(c, &fcall, errstr);
 	}
+	check_x_event(nil);
 }
 
 void

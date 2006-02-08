@@ -76,10 +76,8 @@ destroy_page(Page *p)
     /* determine what to focus and do that */
     if(page[sel])
         focus_page(page[sel]);
-    else {
+    else
 		do_pend_fcall("NoPage\n");
-        XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
-    }
 }
 
 void
