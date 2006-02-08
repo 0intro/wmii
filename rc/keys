@@ -8,6 +8,8 @@ if(test -r $PIDFILE) {
 }
 echo $pid >$PIDFILE
 
+fn xwrite { echo -n $2 | wmiir write $1 }
+
 fn sigint {
     if(test -f $PIDFILE && ~ `{cat $PIDFILE} $pid)
     	rm -f $PIDFILE
@@ -17,7 +19,6 @@ fn sigint {
 }
 
 wmiikeys -a $ADDRESS &
-fn xwrite { echo -n $2 | wmiir write $1 }
 xwrite /ctl 'mount '^$ADDRESS^' /keys'
 sleep 1
 
