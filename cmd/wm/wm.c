@@ -208,6 +208,7 @@ pager()
 					focus_page(page[i]);
             XUngrabKeyboard(dpy, CurrentTime);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
+			XSync(dpy, False);
             return;
             break;
         case ButtonPress:
@@ -216,6 +217,7 @@ pager()
                 focus_page(page[xy_to_pager_page(ev.xbutton.x, ev.xbutton.y)]);
             XUngrabKeyboard(dpy, CurrentTime);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
+			XSync(dpy, False);
             return;
             break;
         }
@@ -296,6 +298,7 @@ detached_clients()
                 }
             }
             XUngrabKeyboard(dpy, CurrentTime);
+			XSync(dpy, False);
             return;
             break;
         case ButtonPress:
@@ -309,6 +312,7 @@ detached_clients()
                 attach_client(c);
             }
             XUngrabKeyboard(dpy, CurrentTime);
+			XSync(dpy, False);
             return;
             break;
         }
