@@ -369,7 +369,7 @@ qid_to_name(Qid *qid)
 		return nil;
 	switch(type) {
 		case Droot: return "/"; break;
-		case Dkey: return "key"; break;
+		case Dkey: return "bin"; break;
 		case Fctl: return "ctl"; break;
 		case Ffont: return "font"; break;
 		case Fcolor: return "color"; break;
@@ -384,7 +384,7 @@ name_to_type(char *name)
 {
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return Droot;
-	if(!strncmp(name, "key", 4))
+	if(!strncmp(name, "bin", 4))
 		return Dkey;
 	if(!strncmp(name, "ctl", 4))
 		return Fctl;
@@ -526,7 +526,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 			return -1;
 		while(k->next)
 			k = k->next;
-		return mkstat(stat, dir, name, strlen(k->cmd), DMREAD | DMWRITE);
+		return mkstat(stat, dir, name, strlen(k->cmd), DMREAD | DMWRITE | DMEXEC);
 		break;
     }
 	return 0;
@@ -615,7 +615,7 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "reset", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "key", &m->qid);
+			fcall->count += type_to_stat(&stat, "bin", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Dkey:
