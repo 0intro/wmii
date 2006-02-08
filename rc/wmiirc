@@ -28,35 +28,30 @@ for(page in `{wmiir read /wm | grep '^d' | awk '{print $10}' | grep -v new}) {
 
 # WMIIKEYS CONFIGURATION
 cat | wmiir write /keys/reset <<END
-Control-Alt-c echo -n kill | wmiir write /wm/sel/sel/sel/ctl
+Control-Alt-c #write /wm/sel/sel/sel/ctl kill
 Control-Alt-q,y quit
 Control-Alt-w,y wmiirc
 Alt-t extern xterm -rv
-Alt-d echo -n detach | wmiir write /wm/sel/sel/sel/ctl
-Alt-a echo -n attach | wmiir write /wm/ctl
-Shift-Alt-a echo -n detached | wmiir write /wm/ctl
+Alt-d #write /wm/sel/sel/sel/ctl detach
+Alt-a #write /wm/ctl attach
+Shift-Alt-a #write /wm/ctl detached
 Alt-n wmiir read /wm/sel/new >/dev/null >[2=1]
-Alt-m echo -n max | wmiir write /wm/sel/sel/sel/ctl
-Alt-Return echo -n swap west | wmiir write /wm/sel/sel/ctl
-Shift-Alt-Return echo -n swap east | wmiir write /wm/sel/sel/ctl
+Alt-m #write /wm/sel/sel/sel/ctl max
+Alt-Return #write /wm/sel/sel/ctl swap east
+Shift-Alt-Return #write /wm/sel/sel/ctl swap west
 Control-Alt-y wmiir read /wm/new >/dev/null >[2=1]
-Alt-h echo -n select next | wmiir write /wm/sel/ctl
-Alt-l echo -n select prev | wmiir write /wm/sel/ctl
-Alt-Tab echo -n select next | wmiir write /wm/sel/sel/ctl
-Alt-j echo -n select next | wmiir write /wm/sel/sel/ctl
-Alt-k echo -n select prev | wmiir write /wm/sel/sel/ctl
-Shift-Alt-h echo -n select prev | wmiir write /wm/ctl
-Shift-Alt-l echo -n select next | wmiir write /wm/ctl
-Shift-Alt-p echo -n pager | wmiir write /wm/ctl
-Shift-Alt-1 echo -n select 1 | wmiir write /wm/ctl
-Shift-Alt-2 echo -n select 2 | wmiir write /wm/ctl
-Shift-Alt-3 echo -n select 3 | wmiir write /wm/ctl
-Shift-Alt-4 echo -n select 4 | wmiir write /wm/ctl
-Shift-Alt-5 echo -n select 5 | wmiir write /wm/ctl
-Shift-Alt-6 echo -n select 6 | wmiir write /wm/ctl
-Shift-Alt-7 echo -n select 7 | wmiir write /wm/ctl
-Shift-Alt-8 echo -n select 8 | wmiir write /wm/ctl
-Shift-Alt-9 echo -n select 9 | wmiir write /wm/ctl
+Alt-h #write /wm/sel/ctl select next
+Alt-l #write /wm/sel/ctl select prev
+Alt-Tab #write /wm/sel/sel/ctl select next
+Alt-j #write /wm/sel/sel/ctl select next
+Alt-k #write /wm/sel/sel/ctl select prev
+Shift-Alt-h #write /wm/ctl select prev
+Shift-Alt-l #write /wm/ctl select next
+Shift-Alt-p #write /wm/ctl pager
+Shift-Alt-1 #write /wm/ctl select 1
+Shift-Alt-2 #write /wm/ctl select 2
+Shift-Alt-3 #write /wm/ctl select 3
+Shift-Alt-4 #write /wm/ctl select 4
 END
 
 xwrite /keys/font $FONT

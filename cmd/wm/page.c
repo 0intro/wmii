@@ -100,8 +100,10 @@ focus_page(Page *p)
 		Client *c = client[i];
 		if(old && (c->page == old))
 			XMoveWindow(dpy, c->frame.win, 2 * rect.width, 2 * rect.height);
-		else if(c->page == p)
+		else if(c->page == p) {
 			XMoveWindow(dpy, c->frame.win, c->frame.rect.x, c->frame.rect.y);
+			draw_client(c);
+		}
 	}
 	do_pend_fcall("SelPage\n");
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
