@@ -30,6 +30,7 @@ for(page in `{wmiir read /wm | grep '^d' | awk '{print $10}' | grep -v new}) {
 xwrite /bar/font $FONT
 xwrite /bar/defcolor $SEL_COLOR
 echo -n fnord | wmiir write /bar/new/data 
+echo -n key | wmiir write /bar/new/data 
 
 # MISC
 xsetroot -mod 2 2 -bg '#444466' -fg '#555555'

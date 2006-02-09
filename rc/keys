@@ -1,28 +1,15 @@
-#!9PREFIX/bin/rc
+#!9PREFIX/bin/rc -x
 # configure wmiikeys
-
-ADDRESS=unix!/tmp/.ixp-$USER/wmiikeys-$WMII_IDENT
-PIDFILE=/tmp/.ixp-$USER/keyspid-$WMII_IDENT
-if(test -r $PIDFILE) {
-    kill -2 `{cat $PIDFILE} >[2]/dev/null
-}
-echo $pid >$PIDFILE
 
 fn xwrite { echo -n $2 | wmiir write $1 }
 
-fn sigint {
-    if(test -f $PIDFILE && ~ `{cat $PIDFILE} $pid)
-    	rm -f $PIDFILE
-	xwrite /keys/ctl quit
-	xwrite /ctl 'unmount /keys'
-    exit
-}
-
-wmiikeys -a $ADDRESS &
-xwrite /ctl 'mount '^$ADDRESS^' /keys'
+xwrite /keys/ctl quit >/dev/null >[2=1]
+xwrite /ctl 'mount unix!/tmp/.ixp-'^$USER^'/wmiikeys-'^$WMII_IDENT^' /keys'
+wmiikeys -a unix!/tmp/.ixp-$USER/wmiikeys-$WMII_IDENT &
 sleep 1
 
-wmiir write /keys/grab <<END
+wmiir -a unix!/tmp/.ixp-$USER/wmiikeys-$WMII_IDENT write /grab <<END
+Control-Alt-k
 Control-Alt-c
 Control-Alt-q,y
 Control-Alt-w,y
@@ -49,8 +36,12 @@ Shift-Alt-3
 Shift-Alt-4
 END
 
-wmiir read /keys/event | while(key=`{read}) {
+wmiir -a unix!/tmp/.ixp-$USER/wmiikeys-$WMII_IDENT read /event | \
+while(key=`{read}) {
+	xwrite /bar/2/data $key
 	switch($key) {
+	case Control-Alt-k
+		keys
 	case Control-Alt-c
 		xwrite /wm/sel/sel/sel/ctl kill
 	case Control-Alt-q,y
@@ -95,5 +86,3 @@ wmiir read /keys/event | while(key=`{read}) {
 		xwrite /wm/ctl 'select '^`{echo $k|sed 's/.*-//g'}
 	}
 }
-
-sigint
