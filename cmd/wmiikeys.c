@@ -637,6 +637,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 					destroy_key(k);
 				}
 			}
+			if(!fcall->count)
+				break;
 		    memcpy(fcallbuf, fcall->data, fcall->count);
 		    fcallbuf[fcall->count] = 0;
 			if(fcall->offset) {
@@ -656,6 +658,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			memcpy(last, fcall->data, fcall->count);
 			while(p2 - fcallbuf < fcall->count) {
 				p1 = strchr(p2, '\n');
+				if(!p1)
+					return "cannot grab, no \n supplied";
 				*p1 = 0;
 				k = create_key(p2);
 				key = (Key **)cext_array_attach((void **)key, k, sizeof(Key *), &keysz);

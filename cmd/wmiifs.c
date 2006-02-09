@@ -100,6 +100,8 @@ xunbind(Bind *b) {
 	cext_array_detach((void **)bind, b, &bindsz);
 	nbind--;
 	ixp_client_deinit(&b->client);
+	if(b->tx && b->tx->close)
+		b->tx->close(b->tx);
 	free(b);
 }
 
@@ -113,7 +115,7 @@ close_rx_conn(IXPConn *c)
 }
 
 static Bind *
-xbind(char *address, unsigned int fid, IXPConn *tx)
+xbind(char *address, unsigned int fid)
 {
 	char addr[256];
 	Bind *b = cext_emallocz(sizeof(Bind));
@@ -124,7 +126,6 @@ xbind(char *address, unsigned int fid, IXPConn *tx)
 		return nil;
 	}
 	b->rx = ixp_server_open_conn(&srv, b->client.fd, do_mnt_fcall, close_rx_conn);
-	b->tx = tx;
 	bind = (Bind **)cext_array_attach((void **)bind, b, sizeof(Bind *), &bindsz);
 	nbind++;
 	return b;
@@ -390,7 +391,7 @@ xwalk(IXPConn *c, Fcall *fcall)
 			unsigned int i;
 			Bind *b;
 		   
-			if(!(b = xbind(mnt->address, fcall->fid, c)))
+			if(!(b = xbind(mnt->address, fcall->fid)))
 				return Enoserv;
 
 			memcpy(&b->client.fcall, fcall, sizeof(Fcall));
@@ -408,6 +409,7 @@ xwalk(IXPConn *c, Fcall *fcall)
 				xunbind(b);
 				return Enofile;
 			}
+			b->tx = c;
 			return nil;
 		}
 		else {
