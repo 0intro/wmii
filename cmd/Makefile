@@ -3,11 +3,8 @@
 
 include ../config.mk
 
-CFLAGS += -I../liblitz -I../libixp -I../libwmii -I../libcext
-LDFLAGS += -L../liblitz -llitz -L../libwmii -lwmii -L../libixp -lixp  -L../libcext -lcext
-
-SRC_bar = wmiibar.c
-OBJ_bar = ${SRC_bar:.c=.o}
+CFLAGS += -I../liblitz -I../libixp -I../libcext
+LDFLAGS += -L../liblitz -llitz -L../libixp -lixp -L../libcext -lcext
 
 SRC_menu = wmiimenu.c
 OBJ_menu = ${SRC_menu:.c=.o}
@@ -15,28 +12,19 @@ OBJ_menu = ${SRC_menu:.c=.o}
 SRC_r = wmiir.c
 OBJ_r = ${SRC_r:.c=.o}
 
-SRC_fs = wmiifs.c
-OBJ_fs = ${SRC_fs:.c=.o}
-
 SRC_plumb = wmiiplumb.c
 OBJ_plumb = ${SRC_plumb:.c=.o}
 
 SRC_warp = wmiiwarp.c
 OBJ_warp = ${SRC_warp:.c=.o}
 
-#all: wmiibar wmiimenu wmiir wmiifs wmiiplumb wmiiwarp
-all: wmiifs wmiibar wmiir wmiiplumb wmiiwarp
+#all: wmiimenu wmiir wmiiplumb wmiiwarp
+all: wmiir wmiiplumb wmiiwarp
 	@echo built wmii commands
 
 .c.o:
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<
-
-wmiibar: ${OBJ_bar}
-	@echo LD $@
-	@${CC} -o $@ ${OBJ_bar} ${LDFLAGS}
-# Solaris
-#	@${CC} -o $@ ${OBJ_bar} ${LDFLAGS} -lsocket
 
 wmiimenu: ${OBJ_menu}
 	@echo LD $@
@@ -52,12 +40,6 @@ wmiir: ${OBJ_r}
 #	@${CC} -o $@ ${OBJ_r} -g -static -L${PREFIX}/lib -L/usr/lib -lc \
 #		-L../libixp -lixp -L../libcext -lcext -lsocket
 
-wmiifs: ${OBJ_fs}
-	@echo LD $@
-	@${CC} -o $@ ${OBJ_fs} ${LDFLAGS}
-# Solaris
-#	@${CC} -o $@ ${OBJ_fs} ${LDFLAGS} -lsocket
-
 wmiiplumb: ${OBJ_plumb}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_plumb} ${LDFLAGS}
@@ -67,4 +49,4 @@ wmiiwarp: ${OBJ_warp}
 	@${CC} -o $@ ${OBJ_warp} ${LDFLAGS}
 
 clean:
-	rm -f wmiibar wmiimenu wmiir wmiiplumb wmiifs wmiiwarp *.o
+	rm -f wmiimenu wmiir wmiiplumb wmiiwarp *.o

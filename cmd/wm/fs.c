@@ -13,12 +13,19 @@
 #include <time.h>
 #include <unistd.h>
 #include <X11/Xatom.h>
-#include <X11/cursorfont.h>
 #include <X11/Xproto.h>
 #include <X11/Xutil.h>
 #include <sys/socket.h>
 
 #include "wm.h"
+
+static char E9pversion[] = "9P version not supported";
+static char Enoperm[] = "permission denied";
+static char Enofid[] = "fid not found";
+static char Enofile[] = "file not found";
+static char Enomode[] = "mode not supported";
+static char Enofunc[] = "function not supported";
+static char Enocommand[] = "command not supported";
 
 /*
  * filesystem specification
@@ -31,6 +38,12 @@
  * /keys/				Dkeys
  * /keys/grab			Fgrab		interface to grab shortcuts
  * /keys/foo			Fkey
+ * /bar/				Dbar
+ * /bar/expand			Fexpand 	id of expandable label
+ * /bar/new/			Ditem
+ * /bar/1/				Ditem
+ * /bar/1/data 			Fdata		<arbitrary data which gets displayed>
+ * /bar/1/color			Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /event				Fevent
  * /ctl					Fctl 		command interface (root)
  * /new/				Dpage		returns new page
@@ -116,9 +129,14 @@ qid_to_name(Qid *qid)
 		case Droot: return "/"; break;
 		case Ddef: return "def"; break;
 		case Dkeys: return "keys"; break;
+		case Dbar: return "bar"; break;
 		case Dpage:
 			if(pg == sel)
 				return "sel";
+			snprintf(buf, sizeof(buf), "%u", pg + 1);
+			return buf;
+			break;
+		case Ditem:
 			snprintf(buf, sizeof(buf), "%u", pg + 1);
 			return buf;
 			break;
@@ -140,6 +158,9 @@ qid_to_name(Qid *qid)
 			snprintf(buf, sizeof(buf), "%u", cl + 1);
 			return buf;
 			break;
+		case Fcolor: return "color"; break;
+		case Fdata: return "data"; break;
+		case Fexpand: return "expand"; break;
 		case Fctl: return "ctl"; break;
 		case Fborder: return "border"; break;
 		case Fsnap: return "border"; break;
@@ -163,9 +184,13 @@ name_to_type(char *name, unsigned char dtyp)
 	if(!strncmp(name, "new", 4)) {
 		if(dtyp == Droot)
 			return Dpage;
-		else if(dtyp == Dpage)
+		if(dtyp == Dbar)
+			return Ditem;
+		if(dtyp == Dpage)
 			return Darea;
 	}
+	if(!strncmp(name, "bar", 4))
+		return Dbar;
 	if(!strncmp(name, "def", 4))
 		return Ddef;
 	if(!strncmp(name, "keys", 5))
@@ -188,6 +213,12 @@ name_to_type(char *name, unsigned char dtyp)
 		return Finc;
 	if(!strncmp(name, "geometry", 9))
 		return Fgeom;
+	if(!strncmp(name, "expand", 7))
+		return Fexpand;
+	if(!strncmp(name, "color", 6))
+		return Fcolor;
+	if(!strncmp(name, "data", 5))
+		return Fdata;
 	if(key_of_name(name))
 		return Fkey;
 	if(!strncmp(name, "sel", 4))
@@ -199,6 +230,7 @@ dyndir:
 	/*fprintf(stderr, "nametotype: dtyp = %d\n", dtyp);*/
 	switch(dtyp) {
 	case Droot: return Dpage; break;
+	case Dbar: return Ditem; break;
 	case Dpage: return Darea; break;
 	case Darea: return Dclient; break;
 	}
@@ -239,6 +271,27 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		new->type = IXP_QTDIR;
 		new->path = mkqpath(Dkeys, 0, 0, 0);
 		break;
+	case Dbar:
+		new->type = IXP_QTDIR;
+		new->path = mkqpath(Dbar, 0, 0, 0);
+		break;
+	case Ditem:
+		new->type = IXP_QTDIR;
+		if(!strncmp(wname, "new", 4)) {
+			/*fprintf(stderr, "mkqid iswalk=%d, wname=%s\n", iswalk, wname);*/
+			if(iswalk)
+				new->path = mkqpath(Ditem, new_item()->id, 0, 0);
+			else
+				new->path = mkqpath(Ditem, 0,0 ,0);
+		}
+		else {
+			i = cext_strtonum(wname, 1, 0xffff, &err);
+			if(err || (i - 1 >= nitem))
+				return -1;
+			new->path = mkqpath(Ditem, item[i - 1]->id, 0, 0);
+		}
+		break;
+
 	case Dpage:
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4)) {
@@ -318,6 +371,10 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			new->path = mkqpath(Fkey, k->id, 0, 0);
 		}
 		break;
+	case Fdata:
+	case Fcolor:
+		if(dpgid >= nitem)
+			return -1;
 	default:
 		new->type = IXP_QTFILE;
     	new->path = mkqpath(type, dpgid, daid, dcid);
@@ -463,6 +520,7 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
     case Dpage:
     case Ddef:
 	case Dkeys:
+	case Dbar:
     case Droot:
 		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
         break;
@@ -508,8 +566,47 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
     case Fkey:
 		return mkstat(stat, dir, name, 0, 0);
 		break;
+    case Fexpand:
+		snprintf(buf, sizeof(buf), "%u", iexpand + 1);
+		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
+		break;
+    case Fdata:
+		return mkstat(stat, dir, name, (dpg == nitem) ? 0 : strlen(item[dpg]->data), DMREAD | DMWRITE);
+		break;	
+    case Fcolor:
+		return mkstat(stat, dir, name, 23, DMREAD | DMWRITE);
+		break;
     }
 	return 0;
+}
+
+static char *
+xremove(IXPConn *c, Fcall *fcall)
+{
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	unsigned short id = qpath_pgid(m->qid.path);
+	int i;
+
+    if(!m)
+        return Enofid;
+	if(id && ((i = index_of_page_id(id)) == -1))
+		return Enofile;
+	if((qpath_type(m->qid.path) == Ditem) && (i < nitem)) {
+		Item *it = item[i];
+		/* clunk */
+		cext_array_detach((void **)c->map, m, &c->mapsz);
+    	free(m);
+		/* now detach the item */
+		detach_item(it);
+		free(it);
+		if(iexpand >= nitem)
+			iexpand = 0;
+		draw_bar();
+    	fcall->id = RREMOVE;
+		ixp_server_respond_fcall(c, fcall);
+		return nil;
+	}
+	return Enoperm;
 }
 
 static char *
@@ -546,6 +643,8 @@ xread(IXPConn *c, Fcall *fcall)
 			len = type_to_stat(&stat, "ctl", &m->qid);
 			len += type_to_stat(&stat, "event", &m->qid);
 			len += type_to_stat(&stat, "default", &m->qid);
+			len += type_to_stat(&stat, "keys", &m->qid);
+			len += type_to_stat(&stat, "bar", &m->qid);
 			len += type_to_stat(&stat, "new", &m->qid);
 			for(i = 0; i < npage; i++) {
 				if(i == sel)
@@ -584,6 +683,27 @@ xread(IXPConn *c, Fcall *fcall)
 			for(; i < nkey; i++) {
 				fprintf(stderr, "offset xread %s\n", key[i]->name);
 				len = type_to_stat(&stat, key[i]->name, &m->qid);
+				if(fcall->count + len > fcall->iounit)
+					break;
+				fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case Dbar:
+			/* jump to offset */
+			len = type_to_stat(&stat, "expand", &m->qid);
+			len += type_to_stat(&stat, "new", &m->qid);
+			for(i = 0; i < nitem; i++) {
+				snprintf(buf, sizeof(buf), "%u", i + 1);
+				len += type_to_stat(&stat, buf, &m->qid);
+				if(len <= fcall->offset)
+					continue;
+				break;
+			}
+			/* offset found, proceeding */
+			for(; i < nitem; i++) {
+				snprintf(buf, sizeof(buf), "%u", i + 1);
+				len = type_to_stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -661,6 +781,10 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "default", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			fcall->count += type_to_stat(&stat, "keys", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			fcall->count += type_to_stat(&stat, "bar", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < npage; i++) {
@@ -687,13 +811,29 @@ xread(IXPConn *c, Fcall *fcall)
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
+		case Dbar:
+			fcall->count = type_to_stat(&stat, "expand", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			fcall->count += type_to_stat(&stat, "new", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			for(i = 0; i < nitem; i++) {
+				snprintf(buf, sizeof(buf), "%u", i + 1);
+				len = type_to_stat(&stat, buf, &m->qid);
+				if(fcall->count + len > fcall->iounit)
+					break;
+				fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case Ditem:
+			if(i >= nitem)
+				return Enofile;
+			fcall->count = type_to_stat(&stat, "color", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			fcall->count += type_to_stat(&stat, "data", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			break;
 		case Ddef:
-			fcall->count = type_to_stat(&stat, "font", &m->qid);
-			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "selcolor", &m->qid);
-			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "normcolor", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "border", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "bar", &m->qid);
@@ -704,7 +844,6 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Dpage:
-			/*fprintf(stderr, "XXXXXXXXXX p->narea=%d\n", page[pg]->narea);*/
 			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "new", &m->qid);
@@ -799,6 +938,23 @@ xread(IXPConn *c, Fcall *fcall)
 		case Fname:
 			if((fcall->count = strlen(page[pg]->area[area]->client[cl]->name)))
 				memcpy(p, page[pg]->area[area]->client[cl]->name, fcall->count);
+			break;
+		case Fexpand:
+			snprintf(buf, sizeof(buf), "%u", iexpand + 1);
+			fcall->count = strlen(buf);
+			memcpy(p, buf, fcall->count);
+			break;
+		case Fdata:
+			if(pg >= nitem)
+				return Enofile;
+			if((fcall->count = strlen(item[pg]->data)))
+				memcpy(p, item[pg]->data, fcall->count);
+			break;
+		case Fcolor:
+			if(pg >= nitem)
+				return Enofile;
+			if((fcall->count = strlen(item[pg]->colstr)))
+				memcpy(p, item[pg]->colstr, fcall->count);
 			break;
 		default:
 			return "invalid read";
@@ -950,7 +1106,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 			static char last[2048]; /* iounit */
 			char fcallbuf[2048], tmp[2048]; /* iounit */
 			char *p1, *p2;
-			Key *k;
 			if(!fcall->offset) {
 				while(nkey) {
 					Key *k = key[0];
@@ -970,10 +1125,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 				memcpy(tmp, p1, lastcount - (p1 - last));
 				memcpy(tmp + (lastcount - (p1 - last)), p2, p2 - fcallbuf);
 				tmp[(lastcount - (p1 - last)) + (p2 - fcallbuf)] = 0;
-				k = create_key(tmp);
-				key = (Key **)cext_array_attach((void **)key, k, sizeof(Key *), &keysz);
-				nkey++;
-				grab_key(k);
+				grab_key(create_key(tmp));
 
 			}
 			else p2 = fcallbuf;
@@ -984,16 +1136,52 @@ xwrite(IXPConn *c, Fcall *fcall)
 				if(!p1)
 					return "cannot grab, no \n supplied";
 				*p1 = 0;
-				k = create_key(p2);
-				key = (Key **)cext_array_attach((void **)key, k, sizeof(Key *), &keysz);
-				nkey++;
-				grab_key(k);
+				grab_key(create_key(p2));
 				*p1 = '\n';
 				p2 = ++p1;
 			}
 			lastcount = fcall->count;
 			memcpy(last, fcall->data, fcall->count);
 		}
+		break;
+    case Fexpand:
+		{
+			const char *err;
+			if(fcall->count && fcall->count < 16) {
+				memcpy(buf, fcall->data, fcall->count);
+				buf[fcall->count] = 0;
+				i = (unsigned short) cext_strtonum(buf, 1, 0xffff, &err);
+				if(!err && (pg - 1 < nitem)) {
+					iexpand = pg - 1;
+					draw_bar();
+					break;
+				}
+			}
+		}
+		return Enofile;
+		break;
+	case Fdata:
+		{
+			unsigned int len = fcall->count;
+			if(pg >= nitem)
+				return Enofile;
+			if(len >= sizeof(item[pg]->data))
+				len = sizeof(item[pg]->data) - 1;
+			memcpy(item[pg]->data, fcall->data, len);
+			item[pg]->data[len] = 0;
+			draw_bar();
+		}
+		break;
+	case Fcolor:
+		if((pg >= nitem) || (fcall->count != 23)
+			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
+		    || (fcall->data[16] != '#')
+		  )
+			return "wrong color format";
+		memcpy(item[pg]->colstr, fcall->data, fcall->count);
+		item[pg]->colstr[fcall->count] = 0;
+		blitz_loadcolor(dpy, screen, item[pg]->colstr, &item[pg]->color);
+		draw_bar();
 		break;
 	default:
 		return "invalid write";
@@ -1032,6 +1220,7 @@ do_fcall(IXPConn *c)
 		case TATTACH: errstr = xattach(c, &fcall); break;
 		case TWALK: errstr = xwalk(c, &fcall); break;
 		case TOPEN: errstr = xopen(c, &fcall); break;
+		case TREMOVE: errstr = xremove(c, &fcall); break;
 		case TREAD: errstr = xread(c, &fcall); break;
 		case TWRITE: errstr = xwrite(c, &fcall); break;
 		case TCLUNK: errstr = xclunk(c, &fcall); break;

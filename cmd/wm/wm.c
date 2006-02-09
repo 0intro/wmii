@@ -394,6 +394,27 @@ scan_wins()
         XFree(wins);
 }
 
+static int
+win_property(Window w, Atom a, Atom t, long l, unsigned char **prop)
+{
+    Atom real;
+    int format;
+    unsigned long res, extra;
+    int status;
+
+    status =
+        XGetWindowProperty(dpy, w, a, 0L, l, False, t, &real, &format,
+                           &res, &extra, prop);
+
+    if(status != Success || *prop == 0) {
+        return 0;
+    }
+    if(res == 0) {
+        free((void *) *prop);
+    }
+    return res;
+}
+
 int
 win_proto(Window w)
 {
@@ -402,8 +423,7 @@ win_proto(Window w)
     int protos = 0;
     int i;
 
-    res =
-        wmii_property(dpy, w, wm_protocols, XA_ATOM, 20L,
+    res = win_property(w, wm_protocols, XA_ATOM, 20L,
                       ((unsigned char **) &protocols));
     if(res <= 0) {
         return protos;
@@ -425,8 +445,8 @@ win_state(Window w)
     int res;
 
     long *prop = 0;
-    if(wmii_property
-       (dpy, w, wm_state, wm_state, 2L, ((unsigned char **) &prop)) > 0) {
+    if(win_property(w, wm_state, wm_state, 2L,
+					((unsigned char **) &prop)) > 0) {
         res = (int) *prop;
         free((long *) prop);
     } else {
@@ -561,6 +581,7 @@ main(int argc, char *argv[])
     int i;
     int checkwm = 0;
     char *address = nil, *errstr;
+    XSetWindowAttributes wa;
 
     /* command line args */
     if(argc > 1) {
@@ -638,6 +659,11 @@ main(int argc, char *argv[])
 	client = det = nil;
 	aq = nil;
 
+	key = nil;
+	keysz = nkey = 0;
+	item = nil;
+	nitem = itemsz = iexpand = 0;
+
 	def.font = strdup(BLITZ_FONT);
 	def.border = DEF_BORDER;
 	def.snap = DEF_SNAP;
@@ -650,9 +676,29 @@ main(int argc, char *argv[])
     init_atoms();
     init_cursors();
     xfont = blitz_getfont(dpy, def.font);
-    wmii_init_lock_modifiers(dpy, &valid_mask, &num_lock_mask);
+    init_lock_modifiers();
     init_screen();
     scan_wins();
+
+    wa.override_redirect = 1;
+    wa.background_pixmap = ParentRelative;
+    wa.event_mask = ExposureMask | ButtonPressMask
+					| SubstructureRedirectMask | SubstructureNotifyMask;
+    brect = rect;
+    brect.height = xfont->ascent + xfont->descent + 4;
+    brect.y = rect.height - brect.height;
+    winbar = XCreateWindow(dpy, RootWindow(dpy, screen), brect.x, brect.y,
+                        brect.width, brect.height, 0, DefaultDepth(dpy, screen),
+                        CopyFromParent, DefaultVisual(dpy, screen),
+                        CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
+
+    XDefineCursor(dpy, winbar, XCreateFontCursor(dpy, XC_left_ptr));
+    XSync(dpy, False);
+
+    gcbar = XCreateGC(dpy, winbar, 0, 0);
+
+    pmapbar = XCreatePixmap(dpy, winbar, brect.width, brect.height,
+                      	 	DefaultDepth(dpy, screen));
     /* main event loop */
 	errstr = ixp_server_loop(&srv);
 	if(errstr)

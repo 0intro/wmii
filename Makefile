@@ -3,13 +3,13 @@
 
 include config.mk
 
-SUBDIRS = libcext liblitz libixp libwmii cmd
+SUBDIRS = libcext liblitz libixp cmd
 
-BIN = cmd/wm/wmii cmd/wm/wmiiwm cmd/wmiibar cmd/wmiifs \
+BIN = cmd/wm/wmii cmd/wm/wmiiwm cmd/wmiibar \
 	cmd/wmiiplumb cmd/wmiir cmd/wmiiwarp
 #cmd/wmiimenu cmd/wmiiplumb cmd/wmiir cmd/wmiiwarp
 
-MAN1 = cmd/wm/wmii.1 cmd/wm/wmiiwm.1 cmd/wmiibar.1 cmd/wmiifs.1 \
+MAN1 = cmd/wm/wmii.1 cmd/wm/wmiiwm.1 cmd/wmiibar.1 \
 	cmd/wmiimenu.1 cmd/wmiir.1
 
 all:

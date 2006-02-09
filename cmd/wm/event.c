@@ -64,7 +64,15 @@ handle_buttonpress(XEvent *e)
     XButtonPressedEvent *ev = &e->xbutton;
     Align align;
 	static char buf[32];
-	if((c = win_to_frame(ev->window))) {
+	if(ev->window == winbar) {
+		size_t i;
+		for(i = 0; i < nitem; i++)
+			if(blitz_ispointinrect(ev->x, ev->y, &item[i]->rect)) {
+				snprintf(buf, sizeof(buf), "L%d B%d\n", i, ev->button);
+				do_pend_fcall(buf);
+			}
+	}
+	else if((c = win_to_frame(ev->window))) {
 		if(ev->button == Button1) {
 			if(sel_client() != c) {
 				focus_client(c);
@@ -184,9 +192,12 @@ handle_destroynotify(XEvent *e)
 static void
 handle_expose(XEvent *e)
 {
+	XExposeEvent *ev = &e->xexpose;
     static Client *c;
-    if(e->xexpose.count == 0) {
-        if((c = win_to_frame(e->xbutton.window)))
+    if(ev->count == 0) {
+		if(ev->window == winbar) 
+			draw_bar();
+		else if((c = win_to_frame(ev->window)))
             draw_client(c);
     }
 }

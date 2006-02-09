@@ -174,11 +174,26 @@ configure_client(Client * c)
     XSync(dpy, False);
 }
 
+static void
+send_client_message(Window w, Atom a, long value)
+{
+    XEvent e;
+    e.type = ClientMessage;
+    e.xclient.window = w;
+    e.xclient.message_type = a;
+    e.xclient.format = 32;
+    e.xclient.data.l[0] = value;
+    e.xclient.data.l[1] = CurrentTime;
+
+    XSendEvent(dpy, w, False, NoEventMask, &e);
+    XSync(dpy, False);
+}
+
 void
 close_client(Client * c)
 {
     if(c->proto & PROTO_DEL)
-        wmii_send_message(dpy, c->win, wm_protocols, wm_delete);
+        send_client_message(c->win, wm_protocols, wm_delete);
     else
         XKillClient(dpy, c->win);
 }
@@ -543,3 +558,4 @@ index_of_client_id(Area *a, unsigned short id)
 			return i;
 	return -1;
 }
+

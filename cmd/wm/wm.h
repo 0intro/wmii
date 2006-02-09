@@ -7,7 +7,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include "wmii.h"
+#include "ixp.h"
+#include "blitz.h"
 
 /* array indexes of EWMH window properties */
 	                  /* TODO: set / react */
@@ -25,6 +26,11 @@ enum {
 	Darea,
 	Dclient,
 	Dkeys,
+	Dbar,
+    Ditem,
+	Fexpand,
+    Fdata,                      /* data to display */
+    Fcolor,
 	Fkey,
 	Fgrab,
 	Fborder,
@@ -105,6 +111,27 @@ struct Key {
     Key *next;
 };
 
+typedef struct {
+	unsigned short id;
+    char data[256];
+	char colstr[24];
+	Color color;
+	XRectangle rect;
+} Item;
+
+/* default values */
+typedef struct {
+	char selcolor[24];
+	char normcolor[24];
+	char *font;
+	Bool bar;
+	Bool inc;
+	Color sel;
+	Color norm;
+	unsigned int border;
+	unsigned int snap;
+} Default;
+
 /* global variables */
 Page **page;
 size_t npage;
@@ -121,6 +148,10 @@ size_t clientsz;
 Key **key;
 size_t keysz;
 size_t nkey;
+Item **item;
+size_t nitem;
+size_t itemsz;
+size_t iexpand;
 
 Display *dpy;
 IXPServer *ixps;
@@ -132,19 +163,11 @@ XFontStruct *xfont;
 GC gc_xor;
 GC gc_transient;
 IXPServer srv;
-
-/* default values */
-typedef struct {
-	char selcolor[24];
-	char normcolor[24];
-	char *font;
-	Bool bar;
-	Bool inc;
-	Color sel;
-	Color norm;
-	unsigned int border;
-	unsigned int snap;
-} Default;
+Pixmap pmapbar;
+Window winbar;
+GC gcbar;
+XRectangle brect;
+Qid root_qid;
 
 Default def;
 
@@ -175,6 +198,12 @@ Area *alloc_area();
 void destroy_area(Area *a);
 int index_of_area(Page *p, Area *a);
 int index_of_area_id(Page *p, unsigned short id);
+
+/* bar.c */
+Item *new_item();
+void detach_item(Item *it);
+void draw_bar();
+int index_of_item_id(unsigned short id);
 
 /* client.c */
 Client *alloc_client(Window w, XWindowAttributes *wa);
@@ -212,9 +241,10 @@ void handle_key(Window w, unsigned long mod, KeyCode keycode);
 void grab_key(Key *k);
 void ungrab_key(Key *k);
 Key * key_of_name(char *name);
-int index_of_id(unsigned short id);
+int index_of_key_id(unsigned short id);
 Key *create_key(char *name);
 void destroy_key(Key *k);
+void init_lock_modifiers();
 
 /* mouse.c */
 void mouse_resize(Client *c, Align align);
@@ -232,6 +262,9 @@ void destroy_page(Page *p);
 void focus_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
 int index_of_page_id(unsigned short id);
+
+/* spawn.c */
+void spawn(char *cmd);
 
 /* column.c */
 void arrange_page(Page *p);
