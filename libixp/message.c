@@ -31,7 +31,7 @@ ixp_sizeof_stat(Stat * stat)
 }
 
 unsigned int
-ixp_fcall_to_msg(Fcall * fcall, void *msg, unsigned int msglen)
+ixp_fcall_to_msg(void *msg, Fcall *fcall, unsigned int msglen)
 {
     unsigned int i, msize =
         sizeof(unsigned char) + sizeof(unsigned short) +
@@ -210,7 +210,7 @@ ixp_fcall_to_msg(Fcall * fcall, void *msg, unsigned int msglen)
 }
 
 unsigned int
-ixp_msg_to_fcall(void *msg, unsigned int msglen, Fcall * fcall)
+ixp_msg_to_fcall(Fcall *fcall, void *msg, unsigned int msglen)
 {
     unsigned int i, msize;
     unsigned short len;

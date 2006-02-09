@@ -362,7 +362,7 @@ mntrequest(Bind *b, Fcall *tx)
 	/*fprintf(stderr, "mntrequest: welcome, tx=%x tx->id=%d fid=%d\n", b->tx, tx->id, tx->fid);*/
 	memcpy(&b->client.fcall, tx, sizeof(Fcall));
 	memcpy(&b->fcall, tx, sizeof(Fcall));
-    msize = ixp_fcall_to_msg(&b->client.fcall, msg, IXP_MAX_MSG);
+    msize = ixp_fcall_to_msg(msg, &b->client.fcall, IXP_MAX_MSG);
 	b->client.errstr = 0;
 	if(ixp_send_message(b->client.fd, msg, msize, &b->client.errstr) != msize) {
 		xunbind(b);
@@ -403,7 +403,7 @@ xwalk(IXPConn *c, Fcall *fcall)
 				cext_strlcpy(b->client.fcall.wname[i - 1], fcall->wname[i],
 						     sizeof(b->client.fcall.wname[i - 1]));
 
-			i = ixp_fcall_to_msg(&b->client.fcall, msg, IXP_MAX_MSG);
+			i = ixp_fcall_to_msg(msg, &b->client.fcall, IXP_MAX_MSG);
 			b->client.errstr = 0;
 			if(ixp_send_message(b->client.fd, msg, i, &b->client.errstr) != i) {
 				xunbind(b);

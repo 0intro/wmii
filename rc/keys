@@ -1,4 +1,4 @@
-#!9PREFIX/bin/rc -x
+#!9PREFIX/bin/rc
 # configure wmiikeys
 
 fn xwrite { echo -n $2 | wmiir write $1 }

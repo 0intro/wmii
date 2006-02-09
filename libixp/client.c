@@ -18,13 +18,13 @@ int
 ixp_client_do_fcall(IXPClient * c)
 {
 	static unsigned char msg[IXP_MAX_MSG];
-    unsigned int msize = ixp_fcall_to_msg(&c->fcall, msg, IXP_MAX_MSG);
+    unsigned int msize = ixp_fcall_to_msg(msg, &c->fcall, IXP_MAX_MSG);
     c->errstr = 0;
     if(ixp_send_message(c->fd, msg, msize, &c->errstr) != msize)
         return -1;
     if(!ixp_recv_message(c->fd, msg, IXP_MAX_MSG, &c->errstr))
         return -1;
-    if(!(msize = ixp_msg_to_fcall(msg, IXP_MAX_MSG, &c->fcall))) {
+    if(!(msize = ixp_msg_to_fcall(&c->fcall, msg, IXP_MAX_MSG))) {
         c->errstr = "received bad message";
         return -1;
     }

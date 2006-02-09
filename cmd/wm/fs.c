@@ -23,14 +23,14 @@
 /*
  * filesystem specification
  * / 					Droot
- * /default/			Ddefault
- * /default/font		Ffont		<xlib font name>
- * /default/selcolor	Fselcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
- * /default/normcolor	Fnormcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
- * /default/border		Fborder		0..n
- * /default/bar 		Fbar 		0, 1
- * /default/snap 		Fsnap  		0..n
- * /default/inc 		Finc   		0..n
+ * /def/			Ddef
+ * /def/font		Ffont		<xlib font name>
+ * /def/selcolor	Fselcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /def/normcolor	Fnormcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /def/border		Fborder		0..n
+ * /def/bar 		Fbar 		0, 1
+ * /def/snap 		Fsnap  		0..n
+ * /def/inc 		Finc   		0..n
  * /event				Fevent
  * /ctl					Fctl 		command interface (root)
  * /new/				Dpage		returns new page

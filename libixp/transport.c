@@ -29,7 +29,7 @@ ixp_send_message(int fd, void *msg, unsigned int msize, char **errstr)
         if(r == -1 && errno == EINTR)
             continue;
         if(r < 1) {
-            *errstr = "cannot send message";
+            *errstr = "broken pipe";
             return 0;
         }
         num += r;
@@ -49,7 +49,7 @@ ixp_recv_data(int fd, void *msg, unsigned int msize, char **errstr)
         if(r == -1 && errno == EINTR)
             continue;
         if(r < 1) {
-            *errstr = "cannot receive data";
+            *errstr = "broken pipe";
             return 0;
         }
         num += r;
@@ -68,7 +68,7 @@ ixp_recv_message(int fd, void *msg, unsigned int msglen, char **errstr)
         return 0;
     ixp_dec_u32(msg, &msize);
     if(msize > msglen) {
-        *errstr = "message size exceeds buffer size";
+        *errstr = "invalid message header";
         return 0;
     }
     /* receive message */
