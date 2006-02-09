@@ -7,8 +7,8 @@
 #include <cext.h>
 
 #define BLITZ_FONT				"fixed"
-#define BLITZ_SEL_COLOR			"#ffffff #555588 #8888bb"
-#define BLITZ_NORM_COLOR		"#dddddd #666666 #999999"
+#define BLITZ_SELCOLORS			"#ffffff #555588 #8888bb"
+#define BLITZ_NORMCOLORS		"#dddddd #666666 #999999"
 
 typedef enum {
 	CENTER, WEST, NWEST, NORTH, NEAST, EAST,
@@ -45,13 +45,3 @@ int blitz_strtorect(XRectangle * root, XRectangle * r, char *val);
 Bool blitz_ispointinrect(int x, int y, XRectangle * r);
 int blitz_distance(XRectangle * origin, XRectangle * target);
 void blitz_getbasegeometry(unsigned int size, unsigned int *cols, unsigned int *rows);
-
-/* mouse.c */
-char *blitz_buttontostr(unsigned int button);
-unsigned int blitz_strtobutton(char *val);
-
-/* kb.c */
-unsigned long blitz_strtomod(char *val);
-
-/* util.c */
-long long blitz_strtonum(const char *numstr, long long minval, long long maxval);

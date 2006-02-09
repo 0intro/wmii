@@ -23,14 +23,14 @@
 /*
  * filesystem specification
  * / 					Droot
- * /def/			Ddef
- * /def/font		Ffont		<xlib font name>
- * /def/selcolor	Fselcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
- * /def/normcolor	Fnormcolor	<#RRGGBB> <#RRGGBB> <#RRGGBB>
- * /def/border		Fborder		0..n
- * /def/bar 		Fbar 		0, 1
- * /def/snap 		Fsnap  		0..n
- * /def/inc 		Finc   		0..n
+ * /def/				Ddef
+ * /def/border			Fborder		0..n
+ * /def/bar 			Fbar 		0, 1
+ * /def/snap 			Fsnap  		0..n
+ * /def/inc 			Finc   		0..n
+ * /keys/				Dkeys
+ * /keys/grab			Fgrab		interface to grab shortcuts
+ * /keys/foo			Fkey
  * /event				Fevent
  * /ctl					Fctl 		command interface (root)
  * /new/				Dpage		returns new page
@@ -114,7 +114,8 @@ qid_to_name(Qid *qid)
 
 	switch(typ) {
 		case Droot: return "/"; break;
-		case Ddefault: return "default"; break;
+		case Ddef: return "def"; break;
+		case Dkeys: return "keys"; break;
 		case Dpage:
 			if(pg == sel)
 				return "sel";
@@ -140,9 +141,6 @@ qid_to_name(Qid *qid)
 			return buf;
 			break;
 		case Fctl: return "ctl"; break;
-		case Ffont: return "font"; break;
-		case Fselcolor: return "selcolor"; break;
-		case Fnormcolor: return "normcolor"; break;
 		case Fborder: return "border"; break;
 		case Fsnap: return "border"; break;
 		case Fbar: return "bar"; break;
@@ -150,6 +148,8 @@ qid_to_name(Qid *qid)
 		case Fgeom: return "geometry"; break;
 		case Fname: return "name"; break;
 		case Fevent: return "event"; break;
+		case Fkey: return key[pg]->name; break; 
+		case Fgrab: return "grab"; break; 
 		default: return nil; break;
 	}
 }
@@ -166,18 +166,16 @@ name_to_type(char *name, unsigned char dtyp)
 		else if(dtyp == Dpage)
 			return Darea;
 	}
-	if(!strncmp(name, "default", 8))
-		return Ddefault;
+	if(!strncmp(name, "def", 4))
+		return Ddef;
+	if(!strncmp(name, "keys", 5))
+		return Dkeys;
+	if(!strncmp(name, "grab", 5))
+		return Fgrab;
 	if(!strncmp(name, "ctl", 4))
 		return Fctl;
-	if(!strncmp(name, "font", 5))
-		return Ffont;
 	if(!strncmp(name, "event", 6))
 		return Fevent;
-	if(!strncmp(name, "selcolor", 9))
-		return Fselcolor;
-	if(!strncmp(name, "normcolor", 10))
-		return Fnormcolor;
 	if(!strncmp(name, "snap", 5))
 		return Fsnap;
 	if(!strncmp(name, "name", 5))
@@ -190,6 +188,8 @@ name_to_type(char *name, unsigned char dtyp)
 		return Finc;
 	if(!strncmp(name, "geometry", 9))
 		return Fgeom;
+	if(key_of_name(name))
+		return Fkey;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
    	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
@@ -231,9 +231,13 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case Droot:
 		*new = root_qid;
 		break;
-	case Ddefault:
+	case Ddef:
 		new->type = IXP_QTDIR;
-		new->path = mkqpath(Ddefault, 0, 0, 0);
+		new->path = mkqpath(Ddef, 0, 0, 0);
+		break;
+	case Dkeys:
+		new->type = IXP_QTDIR;
+		new->path = mkqpath(Dkeys, 0, 0, 0);
 		break;
 	case Dpage:
 		new->type = IXP_QTDIR;
@@ -303,6 +307,15 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			if(err || (i - 1 >= page[dpg]->area[darea]->nclient))
 				return -1;
 			new->path = mkqpath(Dclient, dpgid, daid, a->client[i - 1]->id);
+		}
+		break;
+	case Fkey:
+		{
+			Key *k;
+			if(!(k = key_of_name(wname)))
+				return -1;
+			new->type = IXP_QTFILE;
+			new->path = mkqpath(Fkey, k->id, 0, 0);
 		}
 		break;
 	default:
@@ -448,34 +461,27 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
     case Dclient:
     case Darea:
     case Dpage:
-    case Ddefault:
+    case Ddef:
+	case Dkeys:
     case Droot:
 		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case Fctl:
+	case Fgrab:
 		return mkstat(stat, dir, name, 0, DMWRITE);
 		break;
     case Fevent:
 		return mkstat(stat, dir, name, 0, DMREAD);
 		break;
-    case Ffont:
-		return mkstat(stat, dir, name, strlen(def.font), DMREAD | DMWRITE);
-        break;
-    case Fselcolor:
-		return mkstat(stat, dir, name, 24, DMREAD | DMWRITE);
-		break;
-    case Fnormcolor:
-		return mkstat(stat, dir, name, 24, DMREAD | DMWRITE);
-		break;
     case Fborder:
-		if(dtyp == Ddefault)
+		if(dtyp == Ddef)
 			snprintf(buf, sizeof(buf), "%d", def.border);
 		else
 			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[dcl]->frame.border);
 		return mkstat(stat, dir, name, strlen(buf), DMREAD | DMWRITE);
         break;
     case Fbar:
-		if(dtyp == Ddefault)
+		if(dtyp == Ddef)
 			snprintf(buf, sizeof(buf), "%d", def.bar);
 		else
 			snprintf(buf, sizeof(buf), "%d", page[dpg]->area[darea]->client[dcl]->frame.bar);
@@ -499,6 +505,9 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		c = page[dpg]->area[darea]->client[dcl];
 		return mkstat(stat, dir, name, strlen(c->name), DMREAD);
         break;
+    case Fkey:
+		return mkstat(stat, dir, name, 0, 0);
+		break;
     }
 	return 0;
 }
@@ -555,6 +564,26 @@ xread(IXPConn *c, Fcall *fcall)
 				else
 					snprintf(buf, sizeof(buf), "%u", i + 1);
 				len = type_to_stat(&stat, buf, &m->qid);
+				if(fcall->count + len > fcall->iounit)
+					break;
+				fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case Dkeys:
+			/* jump to offset */
+			len = type_to_stat(&stat, "grab", &m->qid);
+			for(i = 0; i < nkey; i++) {
+				len += type_to_stat(&stat, key[i]->name, &m->qid);
+				fprintf(stderr, "len=%d <= fcall->offset=%lld\n", len, fcall->offset);
+				if(len <= fcall->offset)
+					continue;
+				break;
+			}
+			/* offset found, proceeding */
+			for(; i < nkey; i++) {
+				fprintf(stderr, "offset xread %s\n", key[i]->name);
+				len = type_to_stat(&stat, key[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -646,7 +675,19 @@ xread(IXPConn *c, Fcall *fcall)
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
-		case Ddefault:
+		case Dkeys:
+			fcall->count = type_to_stat(&stat, "grab", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			for(i = 0; i < nkey; i++) {
+				fprintf(stderr, "normal xread %s\n", key[i]->name);
+				len = type_to_stat(&stat, key[i]->name, &m->qid);
+				if(fcall->count + len > fcall->iounit)
+					break;
+				fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case Ddef:
 			fcall->count = type_to_stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "selcolor", &m->qid);
@@ -715,27 +756,15 @@ xread(IXPConn *c, Fcall *fcall)
 		case Fctl:
 			return Enoperm;
 			break;
-		case Ffont:
-			if((fcall->count = strlen(def.font)))
-				memcpy(p, def.font, fcall->count);
-			break;
 		case Fevent:
 			ixp_server_enqueue_fcall(c, fcall);
 			return nil;
-			break;
-		case Fselcolor:
-			if((fcall->count = strlen(def.selcolor)))
-				memcpy(p, def.selcolor, fcall->count);
-			break;
-		case Fnormcolor:
-			if((fcall->count = strlen(def.normcolor)))
-				memcpy(p, def.normcolor, fcall->count);
 			break;
 		case Fborder:
 			/*fprintf(stderr, "Fborder: qpath_type(m->qid.path)=%d, m->qid.dtype=%d\n",
 							qpath_type(m->qid.path), m->qid.dtype);*/
 
-			if(m->qid.dtype == Ddefault)
+			if(m->qid.dtype == Ddef)
 				snprintf(buf, sizeof(buf), "%u", def.border);
 			else
 				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->frame.border);
@@ -743,7 +772,7 @@ xread(IXPConn *c, Fcall *fcall)
 			memcpy(p, buf, fcall->count);
 			break;
 		case Fbar:
-			if(m->qid.dtype == Ddefault)
+			if(m->qid.dtype == Ddef)
 				snprintf(buf, sizeof(buf), "%u", def.bar);
 			else
 				snprintf(buf, sizeof(buf), "%u", page[pg]->area[area]->client[cl]->frame.bar);
@@ -854,38 +883,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 			break;
 		}
 		break;
-	case Ffont:
-		if(def.font)
-			free(def.font);
-		def.font = cext_emallocz(fcall->count + 1);
-		memcpy(def.font, fcall->data, fcall->count);
-		XFreeFont(dpy, xfont);
-    	xfont = blitz_getfont(dpy, def.font);
-		/* TODO: update geometry */
-		break;
-	case Fselcolor:
-		if((fcall->count != 24)
-			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
-		    || (fcall->data[16] != '#')
-		)
-			return "wrong color format";
-		memcpy(def.selcolor, fcall->data, fcall->count);
-		def.selcolor[fcall->count] = 0;
-		blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
-    	XSetForeground(dpy, gc_xor, def.sel.bg);
-		/* TODO: update color */
-		break;
-	case Fnormcolor:
-		if((fcall->count != 24)
-			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
-		    || (fcall->data[16] != '#')
-		)
-			return "wrong color format";
-		memcpy(def.normcolor, fcall->data, fcall->count);
-		def.normcolor[fcall->count] = 0;
-		blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
-		/* TODO: update color */
-		break;
 	case Fsnap:
 		if(fcall->count > sizeof(buf))
 			return "snap value out of range 0..0xffff";
@@ -904,7 +901,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		i = cext_strtonum(buf, 0, 0xffff, &err);
 		if(err)
 			return "border value out of range 0..0xffff";
-		if(m->qid.dtype == Ddefault)
+		if(m->qid.dtype == Ddef)
 			def.border = i;
 		else {
 			page[pg]->area[area]->client[cl]->frame.border = i;
@@ -919,7 +916,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		i = cext_strtonum(buf, 0, 1, &err);
 		if(err)
 			return "bar value out of range 0, 1";
-		if(m->qid.dtype == Ddefault)
+		if(m->qid.dtype == Ddef)
 			def.border = i;
 		else {
 			page[pg]->area[area]->client[cl]->frame.border = i;
@@ -944,6 +941,59 @@ xwrite(IXPConn *c, Fcall *fcall)
 		buf[fcall->count] = 0;
 		blitz_strtorect(&rect, &page[pg]->area[area]->client[cl]->frame.rect, buf);
 		/* TODO: resize client */
+		break;
+    case Fgrab:
+		if(fcall->count > 2048)
+			return Enoperm;
+		{
+			static size_t lastcount;
+			static char last[2048]; /* iounit */
+			char fcallbuf[2048], tmp[2048]; /* iounit */
+			char *p1, *p2;
+			Key *k;
+			if(!fcall->offset) {
+				while(nkey) {
+					Key *k = key[0];
+					ungrab_key(k);
+					cext_array_detach((void **)key, k, &keysz);
+					nkey--;
+					destroy_key(k);
+				}
+			}
+			if(!fcall->count)
+				break;
+		    memcpy(fcallbuf, fcall->data, fcall->count);
+		    fcallbuf[fcall->count] = 0;
+			if(fcall->offset) {
+				p1 = strrchr(last, '\n');
+				p2 = strchr(fcallbuf, '\n');
+				memcpy(tmp, p1, lastcount - (p1 - last));
+				memcpy(tmp + (lastcount - (p1 - last)), p2, p2 - fcallbuf);
+				tmp[(lastcount - (p1 - last)) + (p2 - fcallbuf)] = 0;
+				k = create_key(tmp);
+				key = (Key **)cext_array_attach((void **)key, k, sizeof(Key *), &keysz);
+				nkey++;
+				grab_key(k);
+
+			}
+			else p2 = fcallbuf;
+			lastcount = fcall->count;
+			memcpy(last, fcall->data, fcall->count);
+			while(p2 - fcallbuf < fcall->count) {
+				p1 = strchr(p2, '\n');
+				if(!p1)
+					return "cannot grab, no \n supplied";
+				*p1 = 0;
+				k = create_key(p2);
+				key = (Key **)cext_array_attach((void **)key, k, sizeof(Key *), &keysz);
+				nkey++;
+				grab_key(k);
+				*p1 = '\n';
+				p2 = ++p1;
+			}
+			lastcount = fcall->count;
+			memcpy(last, fcall->data, fcall->count);
+		}
 		break;
 	default:
 		return "invalid write";

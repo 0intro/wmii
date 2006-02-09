@@ -5,10 +5,6 @@ CLIENT_BAR=0
 CLIENT_BORDER=3
 HANDLEINC=1
 
-SEL_COLOR='#ffffff #444466 #666688'
-NORM_COLOR='#dddddd #555555 #777777'
-FONT=fixed
-
 fn xwrite { echo -n $2 | wmiir write $1 }
 
 # WMIIWM CONFIGURATION
@@ -34,5 +30,79 @@ echo -n key | wmiir write /bar/new/data
 
 # MISC
 xsetroot -mod 2 2 -bg '#444466' -fg '#555555'
-keys&
 status&
+
+wmiir write /wm/keys/grab <<END
+Control-Alt-k
+Control-Alt-c
+Control-Alt-q,y
+Control-Alt-w,y
+Alt-t
+Alt-d
+Alt-a
+Shift-Alt-a
+Alt-n
+Alt-m
+Alt-Return
+Shift-Alt-Return
+Control-Alt-y
+Alt-h
+Alt-l
+Alt-Tab
+Alt-j
+Alt-k
+Shift-Alt-h
+Shift-Alt-l
+Shift-Alt-p
+Shift-Alt-1
+Shift-Alt-2
+Shift-Alt-3
+Shift-Alt-4
+END
+
+wmiir read /wm/event | \
+while(key=`{read}) {
+	xwrite /bar/2/data $key
+	switch($key) {
+	case Control-Alt-c
+		xwrite /wm/sel/sel/sel/ctl kill
+	case Control-Alt-q,y
+		quit
+	case Alt-t
+		extern xterm -rv &
+	case Alt-d
+		xwrite /wm/sel/sel/sel/ctl detach
+	case Alt-a
+		xwrite /wm/ctl attach
+	case Shift-Alt-a
+		xwrite /wm/ctl detached
+	case Alt-n
+		wmiir read /wm/sel/new >/dev/null >[2=1]
+	case Alt-m
+		xwrite /wm/sel/sel/sel/ctl max
+	case Alt-Return
+		xwrite /wm/sel/sel/ctl 'swap east'
+	case Shift-Alt-Return
+		xwrite /wm/sel/sel/ctl 'swap west'
+	case Control-Alt-y
+		wmiir read /wm/new >/dev/null >[2=1]
+	case Alt-h
+		xwrite /wm/sel/ctl 'select next'
+	case Alt-l
+		xwrite /wm/sel/ctl 'select prev'
+	case Alt-Tab
+		xwrite /wm/sel/sel/ctl 'select next'
+	case Alt-j
+		xwrite /wm/sel/sel/ctl 'select next'
+	case Alt-k
+		xwrite /wm/sel/sel/ctl 'select prev'
+	case Shift-Alt-h
+		xwrite /wm/ctl 'select prev'
+	case Shift-Alt-l
+		xwrite /wm/ctl 'select next'
+	case Shift-Alt-p
+		xwrite /wm/ctl pager
+	case Shift-Alt-[1-9]
+		xwrite /wm/ctl 'select '^`{echo $k|sed 's/.*-//g'}
+	}
+}

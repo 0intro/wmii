@@ -20,13 +20,13 @@ enum {
 /* 8-bit qid.path.type */
 enum {                          
     Droot,
-	Ddefault,
+	Ddef,
 	Dpage,
 	Darea,
 	Dclient,
-    Ffont,
-	Fselcolor,
-	Fnormcolor,
+	Dkeys,
+	Fkey,
+	Fgrab,
 	Fborder,
 	Fsnap,
 	Fbar,
@@ -96,6 +96,15 @@ struct Client {
 	} frame;
 };
 
+typedef struct Key Key;
+struct Key {
+	unsigned short id;
+    char name[128];
+    unsigned long mod;
+    KeyCode key;
+    Key *next;
+};
+
 /* global variables */
 Page **page;
 size_t npage;
@@ -109,6 +118,9 @@ size_t detsz;
 Client **client;
 size_t nclient;
 size_t clientsz;
+Key **key;
+size_t keysz;
+size_t nkey;
 
 Display *dpy;
 IXPServer *ixps;
@@ -195,6 +207,15 @@ unsigned long long mkqpath(unsigned char type, unsigned short pg,
 void do_pend_fcall(char *event);
 void new_ixp_conn(IXPConn *c);
 
+/* kb.c */
+void handle_key(Window w, unsigned long mod, KeyCode keycode);
+void grab_key(Key *k);
+void ungrab_key(Key *k);
+Key * key_of_name(char *name);
+int index_of_id(unsigned short id);
+Key *create_key(char *name);
+void destroy_key(Key *k);
+
 /* mouse.c */
 void mouse_resize(Client *c, Align align);
 void mouse_move(Client *c);
@@ -202,6 +223,8 @@ Cursor cursor_for_motion(Client *c, int x, int y);
 Align cursor_to_align(Cursor cursor);
 Align xy_to_align(XRectangle * rect, int x, int y);
 void drop_move(Client *c, XRectangle *new, XPoint *pt);
+void grab_mouse(Window w, unsigned long mod, unsigned int button);
+void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 
 /* page.c */
 Page *alloc_page();
@@ -225,8 +248,6 @@ Client *win_to_client(Window w);
 int win_proto(Window w);
 int win_state(Window w);
 /*void handle_after_write(IXPServer * s, File * f);*/
-void grab_window(Window w, unsigned long mod, unsigned int button);
-void ungrab_window(Window w, unsigned long mod, unsigned int button);
 void pager();
 void detached_clients();
 void attach_detached_client();

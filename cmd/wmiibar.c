@@ -852,7 +852,7 @@ main(int argc, char *argv[])
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
 
     /* default settings */
-	cext_strlcpy(defcolstr, BLITZ_SEL_COLOR, sizeof(defcolstr));
+	cext_strlcpy(defcolstr, BLITZ_SELCOLORS, sizeof(defcolstr));
 	blitz_loadcolor(dpy, screen, defcolstr, &defcolor);
 
 	/* X stuff */

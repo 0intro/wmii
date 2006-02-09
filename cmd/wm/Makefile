@@ -10,7 +10,7 @@ LDFLAGS  += -L../../liblitz -llitz -L../../libwmii -lwmii \
 # Solaris
 # LDFLAGS += -lsocket
 
-SRC      = area.c fs.c wm.c client.c event.c mouse.c page.c column.c
+SRC      = area.c fs.c wm.c kb.c client.c event.c mouse.c page.c column.c
 OBJ      = ${SRC:.c=.o}
 
 all: wmiiwm

@@ -114,12 +114,12 @@ focus_client(Client *c)
 	
 	if(old && (old != c)) {
 		c->revert = old;
-		grab_window(old->win, AnyModifier, Button1);
+		grab_mouse(old->win, AnyModifier, Button1);
     	draw_client(old);
 	}
-	ungrab_window(c->win, AnyModifier, AnyButton);
-    grab_window(c->win, Mod1Mask, Button1);
-    grab_window(c->win, Mod1Mask, Button3);
+	ungrab_mouse(c->win, AnyModifier, AnyButton);
+    grab_mouse(c->win, Mod1Mask, Button1);
+    grab_mouse(c->win, Mod1Mask, Button3);
     XRaiseWindow(dpy, c->frame.win);
     XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
     XDefineCursor(dpy, c->win, normal_cursor);
@@ -138,7 +138,7 @@ map_client(Client * c)
 void
 unmap_client(Client * c)
 {
-	ungrab_window(c->win, AnyModifier, AnyButton);
+	ungrab_mouse(c->win, AnyModifier, AnyButton);
     XUnmapWindow(dpy, c->win);
     set_client_state(c, WithdrawnState);
 }

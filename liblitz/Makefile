@@ -6,7 +6,7 @@ include ../config.mk
 CFLAGS += -I../libixp -I../libcext
 LDFLAGS += -L../libixp -lixp -L../libcext -lcext
 
-SRC = draw.c geometry.c kb.c mouse.c util.c
+SRC = draw.c geometry.c
 OBJ = ${SRC:.c=.o}
 
 all: liblitz

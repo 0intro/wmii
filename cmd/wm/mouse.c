@@ -602,3 +602,26 @@ mouse_resize(Client *c, Align align)
         }
     }
 }
+
+void
+grab_mouse(Window w, unsigned long mod, unsigned int button)
+{
+    XGrabButton(dpy, button, mod, w, False,
+                ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
+    if((mod != AnyModifier) && num_lock_mask) {
+        XGrabButton(dpy, button, mod | num_lock_mask, w, False,
+                    ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
+        XGrabButton(dpy, button, mod | num_lock_mask | LockMask, w,
+                    False, ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
+    }
+}
+
+void
+ungrab_mouse(Window w, unsigned long mod, unsigned int button)
+{
+    XUngrabButton(dpy, button, mod, w);
+    if(mod != AnyModifier && num_lock_mask) {
+        XUngrabButton(dpy, button, mod | num_lock_mask, w);
+        XUngrabButton(dpy, button, mod | num_lock_mask | LockMask, w);
+    }
+}

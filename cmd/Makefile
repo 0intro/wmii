@@ -18,17 +18,14 @@ OBJ_r = ${SRC_r:.c=.o}
 SRC_fs = wmiifs.c
 OBJ_fs = ${SRC_fs:.c=.o}
 
-SRC_keys = wmiikeys.c
-OBJ_keys = ${SRC_keys:.c=.o}
-
 SRC_plumb = wmiiplumb.c
 OBJ_plumb = ${SRC_plumb:.c=.o}
 
 SRC_warp = wmiiwarp.c
 OBJ_warp = ${SRC_warp:.c=.o}
 
-#all: wmiibar wmiimenu wmiir wmiifs wmiikeys wmiiplumb wmiiwarp
-all: wmiifs wmiibar wmiikeys wmiir wmiiplumb wmiiwarp
+#all: wmiibar wmiimenu wmiir wmiifs wmiiplumb wmiiwarp
+all: wmiifs wmiibar wmiir wmiiplumb wmiiwarp
 	@echo built wmii commands
 
 .c.o:
@@ -61,12 +58,6 @@ wmiifs: ${OBJ_fs}
 # Solaris
 #	@${CC} -o $@ ${OBJ_fs} ${LDFLAGS} -lsocket
 
-wmiikeys: ${OBJ_keys}
-	@echo LD $@
-	@${CC} -o $@ ${OBJ_keys} ${LDFLAGS}
-# Solaris
-#	@${CC} -o $@ ${OBJ_keys} ${LDFLAGS} -lsocket
-
 wmiiplumb: ${OBJ_plumb}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_plumb} ${LDFLAGS}
@@ -76,4 +67,4 @@ wmiiwarp: ${OBJ_warp}
 	@${CC} -o $@ ${OBJ_warp} ${LDFLAGS}
 
 clean:
-	rm -f wmiibar wmiimenu wmiir wmiikeys wmiiplumb wmiifs wmiiwarp *.o
+	rm -f wmiibar wmiimenu wmiir wmiiplumb wmiifs wmiiwarp *.o

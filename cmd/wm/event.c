@@ -15,6 +15,8 @@ static void handle_buttonpress(XEvent * e);
 static void handle_configurerequest(XEvent * e);
 static void handle_destroynotify(XEvent * e);
 static void handle_expose(XEvent * e);
+static void handle_keypress(XEvent * e);
+static void handle_keymapnotify(XEvent * e);
 static void handle_maprequest(XEvent * e);
 static void handle_motionnotify(XEvent * e);
 static void handle_propertynotify(XEvent * e);
@@ -35,6 +37,8 @@ init_x_event_handler()
     handler[ConfigureRequest] = handle_configurerequest;
     handler[DestroyNotify] = handle_destroynotify;
     handler[Expose] = handle_expose;
+    handler[KeyPress] = handle_keypress;
+    handler[KeymapNotify] = handle_keymapnotify;
     handler[MapRequest] = handle_maprequest;
     handler[MotionNotify] = handle_motionnotify;
     handler[PropertyNotify] = handle_propertynotify;
@@ -54,7 +58,7 @@ check_x_event(IXPConn *c)
 }
 
 static void
-handle_buttonpress(XEvent * e)
+handle_buttonpress(XEvent *e)
 {
     Client *c;
     XButtonPressedEvent *ev = &e->xbutton;
@@ -167,7 +171,7 @@ handle_configurerequest(XEvent *e)
 }
 
 static void
-handle_destroynotify(XEvent * e)
+handle_destroynotify(XEvent *e)
 {
     XDestroyWindowEvent *ev = &e->xdestroywindow;
     Client *c = win_to_client(ev->window);
@@ -178,7 +182,7 @@ handle_destroynotify(XEvent * e)
 }
 
 static void
-handle_expose(XEvent * e)
+handle_expose(XEvent *e)
 {
     static Client *c;
     if(e->xexpose.count == 0) {
@@ -188,7 +192,25 @@ handle_expose(XEvent * e)
 }
 
 static void
-handle_maprequest(XEvent * e)
+handle_keypress(XEvent *e)
+{
+	XKeyEvent *ev = &e->xkey;
+	ev->state &= valid_mask;
+    handle_key(root, ev->state, (KeyCode) ev->keycode);
+}
+
+static void
+handle_keymapnotify(XEvent *e)
+{
+	size_t i;
+	for(i = 0; i < nkey; i++) {
+		ungrab_key(key[i]);
+		grab_key(key[i]);
+	}
+}
+
+static void
+handle_maprequest(XEvent *e)
 {
     XMapRequestEvent *ev = &e->xmaprequest;
     static XWindowAttributes wa;
@@ -217,7 +239,7 @@ handle_maprequest(XEvent * e)
 }
 
 static void
-handle_motionnotify(XEvent * e)
+handle_motionnotify(XEvent *e)
 {
     Client *c = win_to_frame(e->xmotion.window);
     if(c) {
@@ -230,7 +252,7 @@ handle_motionnotify(XEvent * e)
 }
 
 static void
-handle_propertynotify(XEvent * e)
+handle_propertynotify(XEvent *e)
 {
     XPropertyEvent *ev = &e->xproperty;
     Client *c;
@@ -243,7 +265,7 @@ handle_propertynotify(XEvent * e)
 }
 
 static void
-handle_unmapnotify(XEvent * e)
+handle_unmapnotify(XEvent *e)
 {
     XUnmapEvent *ev = &e->xunmap;
     Client *c;
@@ -266,4 +288,3 @@ static void handle_clientmessage(XEvent *e)
         return;
     }
 }
-

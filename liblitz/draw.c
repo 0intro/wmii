@@ -150,12 +150,15 @@ draw_text(Display * dpy, Draw * d)
 void
 blitz_drawmeter(Display * dpy, Draw * d)
 {
+	const char *err;
 	unsigned int offy, mh, val, w = d->rect.width - 4;
 
 	if (!d->data || strncmp(d->data, "%m:", 3))
 		return;
 
-	val = blitz_strtonum(&d->data[3], 0, 100);
+	val = cext_strtonum(&d->data[3], 0, 100, &err);
+	if(err)
+		val = 100;
 	draw_bg(dpy, d);
 	xdraw_border(dpy, d);
 

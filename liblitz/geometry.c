@@ -47,6 +47,7 @@ int blitz_strtoalign(Align *result, char *val)
  */
 int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 {
+	const char *err;
 	char buf[64];
 	char *x, *y, *w, *h;
 	char *p;
@@ -73,13 +74,13 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 		}
 	}
 	if (x && (sx = (x[0] >= '0') && (x[0] <= '9')))
-		rx = blitz_strtonum(x, 0, 65535);
+		rx = cext_strtonum(x, 0, 65535, &err);
 	if (y && (sy = (y[0] >= '0') && (y[0] <= '9')))
-		ry = blitz_strtonum(y, 0, 65535);
+		ry = cext_strtonum(y, 0, 65535, &err);
 	if (w && (sw = (w[0] >= '0') && (w[0] <= '9')))
-		rw = blitz_strtonum(w, 0, 65535);
+		rw = cext_strtonum(w, 0, 65535, &err);
 	if (h && (sh = (h[0] >= '0') && (h[0] <= '9')))
-		rh = blitz_strtonum(h, 0, 65535);
+		rh = cext_strtonum(h, 0, 65535, &err);
 
 	if (!sx && !sw && x && w
 		&& x[0] != '-' && x[0] != '+' && w[0] != '-' && w[0] != '+') {
@@ -155,34 +156,34 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 	if (x) {
 		p = strchr(x, '-');
 		if (p)
-			rx -= blitz_strtonum(++p, 0, 65535);
+			rx -= cext_strtonum(++p, 0, 65535, &err);
 		p = strchr(x, '+');
 		if (p)
-			rx += blitz_strtonum(++p, 0, 65535);
+			rx += cext_strtonum(++p, 0, 65535, &err);
 	}
 	if (y) {
 		p = strchr(y, '-');
 		if (p)
-			ry -= blitz_strtonum(++p, 0, 65535);
+			ry -= cext_strtonum(++p, 0, 65535, &err);
 		p = strchr(y, '+');
 		if (p)
-			ry += blitz_strtonum(++p, 0, 65535);
+			ry += cext_strtonum(++p, 0, 65535, &err);
 	}
 	if (w) {
 		p = strchr(w, '-');
 		if (p)
-			rw -= blitz_strtonum(++p, 0, 65535);
+			rw -= cext_strtonum(++p, 0, 65535, &err);
 		p = strchr(w, '+');
 		if (p)
-			rw += blitz_strtonum(++p, 0, 65535);
+			rw += cext_strtonum(++p, 0, 65535, &err);
 	}
 	if (h) {
 		p = strchr(h, '-');
 		if (p)
-			rh -= blitz_strtonum(++p, 0, 65535);
+			rh -= cext_strtonum(++p, 0, 65535, &err);
 		p = strchr(h, '+');
 		if (p)
-			rh += blitz_strtonum(++p, 0, 65535);
+			rh += cext_strtonum(++p, 0, 65535, &err);
 	}
 
 	if (rw < 1)

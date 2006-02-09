@@ -254,7 +254,7 @@ map_detached_clients()
             XMoveResizeWindow(dpy, det[i]->win, cr.x, cr.y, cr.width, cr.height);
             configure_client(det[i]);
             map_client(det[i]);
-			grab_window(det[i]->win, AnyModifier, Button1);
+			grab_mouse(det[i]->win, AnyModifier, Button1);
             XRaiseWindow(dpy, det[i]->win);
             XSync(dpy, False);
         }
@@ -334,6 +334,7 @@ void
 select_page(char *arg)
 {
 	size_t new = sel;
+	const char *err;
 
     if(!npage || !arg)
         return;
@@ -347,7 +348,7 @@ select_page(char *arg)
 		else
 			new = 0;
     } else {
-		int idx = blitz_strtonum(arg, 0, npage);
+		int idx = cext_strtonum(arg, 0, npage, &err);
 		if(idx < npage)
 			new = idx;
 	}
@@ -553,30 +554,6 @@ cleanup()
 	XSync(dpy, False);
 }
 
-void
-grab_window(Window w, unsigned long mod, unsigned int button)
-{
-    XGrabButton(dpy, button, mod, w, False,
-                ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
-    if((mod != AnyModifier) && num_lock_mask) {
-        XGrabButton(dpy, button, mod | num_lock_mask, w, False,
-                    ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
-        XGrabButton(dpy, button, mod | num_lock_mask | LockMask, w,
-                    False, ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
-    }
-}
-
-void
-ungrab_window(Window w, unsigned long mod, unsigned int button)
-{
-    XUngrabButton(dpy, button, mod, w);
-    if(mod != AnyModifier && num_lock_mask) {
-        XUngrabButton(dpy, button, mod | num_lock_mask, w);
-        XUngrabButton(dpy, button, mod | num_lock_mask | LockMask, w);
-    }
-}
-
-
 
 int
 main(int argc, char *argv[])
@@ -665,9 +642,9 @@ main(int argc, char *argv[])
 	def.border = DEF_BORDER;
 	def.snap = DEF_SNAP;
 	def.inc = def.bar = True;
-	cext_strlcpy(def.selcolor, BLITZ_SEL_COLOR, sizeof(def.selcolor));
+	cext_strlcpy(def.selcolor, BLITZ_SELCOLORS, sizeof(def.selcolor));
 	blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
-	cext_strlcpy(def.normcolor, BLITZ_NORM_COLOR, sizeof(def.normcolor));
+	cext_strlcpy(def.normcolor, BLITZ_NORMCOLORS, sizeof(def.normcolor));
 	blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
 
     init_atoms();
