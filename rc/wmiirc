@@ -72,9 +72,11 @@ for(i in 1 2 3 4 5 6 7 8 9)
 
 # WMIIBAR CONFIGURATION
 for(i in 1 2 3)
-	wmiir remove /bar/1
-for(i in 1 2 3)
-	xwrite /bar/new/data $i
+	wmiir remove /bar/1 >/dev/null >[2=1]
+xwrite /bar/new/colors $WMII_NORMCOLORS
+xwrite /bar/new/colors $WMII_SELCOLORS
+xwrite /bar/new/colors $WMII_NORMCOLORS
+xwrite /bar/1/data 1
 xwrite /bar/expand 2
 
 

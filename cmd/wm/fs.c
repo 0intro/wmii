@@ -1146,6 +1146,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		}
 		break;
 	case Fcolors:
+		fprintf(stderr, "Fcolors len=%d i1=%d nlabel=%d\n", fcall->count, i1, nlabel);
 		if((i1 >= nlabel) || (fcall->count != 23)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
@@ -1157,7 +1158,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 		draw_bar();
 		break;
 	case Fselcolors:
-		if((i1 >= nlabel) || (fcall->count != 23)
+		fprintf(stderr, "Fselcolors len=%d\n", fcall->count);
+		if((fcall->count != 23)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
 		  )
@@ -1170,7 +1172,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 				draw_client(client[i]);
 		break;
 	case Fnormcolors:
-		if((i1 >= nlabel) || (fcall->count != 23)
+		fprintf(stderr, "Fnormcolors len=%d\n", fcall->count);
+		if((fcall->count != 23)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
 		  )
