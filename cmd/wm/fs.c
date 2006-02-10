@@ -37,6 +37,9 @@ static char Enocommand[] = "command not supported";
  * /def/bar 			Fbar 		0, 1
  * /def/snap 			Fsnap  		0..n
  * /def/inc 			Finc   		0..n
+ * /def/font			Ffont  		xlib font name
+ * /def/selcolors		Fselcolors	sel color
+ * /def/normcolors		Fnormcolors normal colors
  * /keys/				Dkeys
  * /keys/foo			Fkey
  * /bar/				Dbar
@@ -44,7 +47,7 @@ static char Enocommand[] = "command not supported";
  * /bar/new/			Dlabel
  * /bar/1/				Dlabel
  * /bar/1/data 			Fdata		<arbitrary data which gets displayed>
- * /bar/1/color			Fcolor		<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /bar/1/colors		Fcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /event				Fevent
  * /ctl					Fctl 		command interface (root)
  * /new/				Dpage		returns new page
@@ -130,7 +133,7 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 	   		case Dpage: *i1 = pid_to_index(i1id); break;
 			case Fkey: *i1 = kid_to_index(i1id); break;
 			case Fdata:
-			case Fcolor:
+			case Fcolors:
 			case Dlabel: *i1 = lid_to_index(i1id); break;
 		}
 	   if(i2id && (*i1 != -1)) {
@@ -186,7 +189,10 @@ qid_to_name(Qid *qid)
 			snprintf(buf, sizeof(buf), "%u", i3 + 1);
 			return buf;
 			break;
-		case Fcolor: return "color"; break;
+		case Fselcolors: return "selcolors"; break;
+		case Fnormcolors: return "normcolors"; break;
+		case Ffont: return "font"; break;
+		case Fcolors: return "colors"; break;
 		case Fdata: return "data"; break;
 		case Fexpand: return "expand"; break;
 		case Fctl: return "ctl"; break;
@@ -240,8 +246,14 @@ name_to_type(char *name, unsigned char dir_type)
 		return Fgeom;
 	if(!strncmp(name, "expand", 7))
 		return Fexpand;
-	if(!strncmp(name, "color", 6))
-		return Fcolor;
+	if(!strncmp(name, "colors", 7))
+		return Fcolors;
+	if(!strncmp(name, "selcolors", 10))
+		return Fselcolors;
+	if(!strncmp(name, "normcolors", 11))
+		return Fnormcolors;
+	if(!strncmp(name, "font", 5))
+		return Ffont;
 	if(!strncmp(name, "data", 5))
 		return Fdata;
 	if(name_to_key(name))
@@ -381,7 +393,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		}
 		break;
 	case Fdata:
-	case Fcolor:
+	case Fcolors:
 		if((dir_type == Dlabel) && (dir_i1 >= nlabel))
 			return -1;
 	default:
@@ -563,8 +575,12 @@ type_to_stat(Stat *stat, char *wname, Qid *dir)
     case Fdata:
 		return mkstat(stat, dir, wname, (dir_i1 == nlabel) ? 0 : strlen(label[dir_i1]->data), DMREAD | DMWRITE);
 		break;	
-    case Fcolor:
+    case Fcolors:
+    case Fselcolors:
+    case Fnormcolors:
 		return mkstat(stat, dir, wname, 23, DMREAD | DMWRITE);
+    case Ffont:
+		return mkstat(stat, dir, wname, strlen(def.font), DMREAD | DMWRITE);
 		break;
     }
 	return 0;
@@ -822,7 +838,7 @@ xread(IXPConn *c, Fcall *fcall)
 		case Dlabel:
 			if(i1 >= nlabel)
 				return Enofile;
-			fcall->count = type_to_stat(&stat, "color", &m->qid);
+			fcall->count = type_to_stat(&stat, "colors", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "data", &m->qid);
 			p = ixp_enc_stat(p, &stat);
@@ -835,6 +851,12 @@ xread(IXPConn *c, Fcall *fcall)
 			fcall->count += type_to_stat(&stat, "inc", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "snap", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			fcall->count += type_to_stat(&stat, "selcolors", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			fcall->count += type_to_stat(&stat, "normcolors", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			fcall->count += type_to_stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Dpage:
@@ -941,11 +963,23 @@ xread(IXPConn *c, Fcall *fcall)
 			if((fcall->count = strlen(label[i1]->data)))
 				memcpy(p, label[i1]->data, fcall->count);
 			break;
-		case Fcolor:
+		case Fcolors:
 			if(i1 >= nlabel)
 				return Enofile;
 			if((fcall->count = strlen(label[i1]->colstr)))
 				memcpy(p, label[i1]->colstr, fcall->count);
+			break;
+		case Fselcolors:
+			if((fcall->count = strlen(def.selcolor)))
+				memcpy(p, def.selcolor, fcall->count);
+			break;
+		case Fnormcolors:
+			if((fcall->count = strlen(def.normcolor)))
+				memcpy(p, def.normcolor, fcall->count);
+			break;
+		case Ffont:
+			if((fcall->count = strlen(def.font)))
+				memcpy(p, def.font, fcall->count);
 			break;
 		default:
 			return "invalid read";
@@ -1111,7 +1145,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			draw_bar();
 		}
 		break;
-	case Fcolor:
+	case Fcolors:
 		if((i1 >= nlabel) || (fcall->count != 23)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
@@ -1121,6 +1155,46 @@ xwrite(IXPConn *c, Fcall *fcall)
 		label[i1]->colstr[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, label[i1]->colstr, &label[i1]->color);
 		draw_bar();
+		break;
+	case Fselcolors:
+		if((i1 >= nlabel) || (fcall->count != 23)
+			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
+		    || (fcall->data[16] != '#')
+		  )
+			return "wrong color format";
+		memcpy(def.selcolor, fcall->data, fcall->count);
+		def.selcolor[fcall->count] = 0;
+		blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
+		for(i = 0; i < nclient; i++)
+			if(client[i]->page == page[sel])
+				draw_client(client[i]);
+		break;
+	case Fnormcolors:
+		if((i1 >= nlabel) || (fcall->count != 23)
+			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
+		    || (fcall->data[16] != '#')
+		  )
+			return "wrong color format";
+		memcpy(def.normcolor, fcall->data, fcall->count);
+		def.normcolor[fcall->count] = 0;
+		blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
+		for(i = 0; i < nclient; i++)
+			if(client[i]->page == page[sel])
+				draw_client(client[i]);
+		break;
+	case Ffont:
+		if(def.font)
+			free(def.font);
+		def.font = cext_emallocz(fcall->count + 1);
+		memcpy(def.font, fcall->data, fcall->count);
+		XFreeFont(dpy, xfont);
+    	xfont = blitz_getfont(dpy, def.font);
+		for(i = 0; i < nclient; i++) {
+			if(!client[i]->page)
+				continue;
+			resize_client(client[i], &client[i]->frame.rect, 0);
+		}
+		update_bar_geometry();
 		break;
 	default:
 		return "invalid write";

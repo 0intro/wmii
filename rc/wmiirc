@@ -17,6 +17,10 @@ fn sigint {
     exit
 }
 
+WMII_FONT='fixed'
+WMII_SELCOLORS='#ffffff #555588 #8888bb'
+WMII_NORMCOLORS='#dddddd #666666 #999999'
+
 CLIENT_BAR=0
 CLIENT_BORDER=3
 MODKEY=Alt
@@ -27,9 +31,9 @@ xwrite /def/bar $CLIENT_BAR
 xwrite /def/border $CLIENT_BORDER
 xwrite /def/inc 1
 xwrite /def/snap 20
-#xwrite /def/font $FONT
-#xwrite /def/selcolor $SEL_COLOR
-#xwrite /def/normcolor $NORM_COLOR
+xwrite /def/font $WMII_FONT
+xwrite /def/selcolors $WMII_SELCOLORS
+xwrite /def/normcolors $WMII_NORMCOLORS
 for(page in `{wmiir read / | grep '^d' | awk '{print $10}' | grep -v new}) {
 	for(area in `{wmiir read /$page | grep '^d' | awk '{print $10}' | grep -v new}) {
 		for(client in `{wmiir read /$page/$area | grep '^d' | awk '{print $10}'}) {

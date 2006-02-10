@@ -30,7 +30,10 @@ enum {
     Dlabel,
 	Fexpand,
     Fdata,                      /* data to display */
-    Fcolor,
+    Fcolors,
+    Ffont,
+    Fselcolors,
+    Fnormcolors,
 	Fkey,
 	Fborder,
 	Fsnap,
@@ -201,6 +204,7 @@ Label *new_label();
 void detach_label(Label *l);
 void draw_bar();
 int lid_to_index(unsigned short id);
+void update_bar_geometry();
 
 /* client.c */
 Client *alloc_client(Window w, XWindowAttributes *wa);

@@ -28,6 +28,20 @@ detach_label(Label *l)
 }
 
 void
+update_bar_geometry()
+{
+    brect = rect;
+    brect.height = xfont->ascent + xfont->descent + 4;
+    brect.y = rect.height - brect.height;
+    XMoveResizeWindow(dpy, winbar, brect.x, brect.y, brect.width, brect.height);
+    XSync(dpy, False);
+    XFreePixmap(dpy, pmapbar);
+    pmapbar = XCreatePixmap(dpy, winbar, brect.width, brect.height, DefaultDepth(dpy, screen));
+    XSync(dpy, False);
+	draw_bar();
+}
+
+void
 draw_bar()
 {
 	size_t i;
