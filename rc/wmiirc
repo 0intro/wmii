@@ -18,10 +18,10 @@ fn sigint {
 }
 
 WMII_FONT='fixed'
-WMII_SELCOLORS='#000000 #e6ff80 #ccff00'
-WMII_NORMCOLORS='#000000 #acbf60 #93aa39'
+WMII_SELCOLORS='#e6ffbf #3e551c #5c6a47'
+WMII_NORMCOLORS='#c9dfa7 #11130d #171c10'
 
-CLIENT_BAR=0
+CLIENT_BAR=1
 CLIENT_BORDER=3
 MODKEY=Alt
 
@@ -102,7 +102,7 @@ while(event=`{read}) {
 		case $MODKEY-Control-q,y
 			xwrite /ctl quit
 		case $MODKEY-t
-			extern xterm -bg '#f2ffbf' &
+			extern xterm -rv &
 		case $MODKEY-d
 			xwrite /sel/sel/sel/ctl detach
 		case $MODKEY-a
