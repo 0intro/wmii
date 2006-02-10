@@ -1,7 +1,7 @@
 #!9PREFIX/bin/rc
 # periodically print date and load average to the bar
 
-PIDFILE=/tmp/ns.$USER.$DISPLAY/statuspid-$DISPLAY
+PIDFILE=/tmp/ns.$USER.$DISPLAY/statuspid
 
 fn xwrite { echo -n $2 | wmiir write $1 }
 

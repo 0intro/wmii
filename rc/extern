@@ -3,7 +3,7 @@
 
 PATH=$OLD_PATH
 OLD_PATH=()
-wmiiwmpid=()
+wmiircpid=()
 apid=()
 home=()
 ifs=()

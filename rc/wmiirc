@@ -1,7 +1,7 @@
 #!9PREFIX/bin/rc
 # configure wmii
 
-PIDFILE=/tmp/ns.$USER.$DISPLAY/wmiircpid-$DISPLAY
+PIDFILE=/tmp/ns.$USER.$DISPLAY/wmiircpid
 
 fn xwrite { echo -n $2 | wmiir write $1 }
 
