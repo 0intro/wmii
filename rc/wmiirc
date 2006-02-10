@@ -18,8 +18,8 @@ fn sigint {
 }
 
 WMII_FONT='fixed'
-WMII_SELCOLORS='#ffffff #555588 #8888bb'
-WMII_NORMCOLORS='#dddddd #666666 #999999'
+WMII_SELCOLORS='#ffffff #004488 #2266aa'
+WMII_NORMCOLORS='#444444 #dddddd #888888'
 
 CLIENT_BAR=0
 CLIENT_BORDER=3
@@ -78,7 +78,7 @@ xwrite /bar/expand 2
 
 
 # MISC
-xsetroot -mod 2 2 -bg '#444466' -fg '#555555'
+xsetroot -solid '#222222'
 status &
 
 # EVENT LOOP
