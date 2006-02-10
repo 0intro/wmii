@@ -18,8 +18,8 @@ fn sigint {
 }
 
 WMII_FONT='fixed'
-WMII_SELCOLORS='#ffffff #004488 #2266aa'
-WMII_NORMCOLORS='#444444 #dddddd #888888'
+WMII_SELCOLORS='#000000 #e6ff80 #ccff00'
+WMII_NORMCOLORS='#000000 #acbf60 #93aa39'
 
 CLIENT_BAR=0
 CLIENT_BORDER=3
@@ -71,14 +71,15 @@ for(i in 1 2 3 4 5 6 7 8 9)
 
 
 # WMIIBAR CONFIGURATION
-xwrite /bar/new/data 1
-xwrite /bar/new/data ''
-xwrite /bar/new/data fnord
+for(i in 1 2 3)
+	wmiir remove /bar/1
+for(i in 1 2 3)
+	xwrite /bar/new/data $i
 xwrite /bar/expand 2
 
 
 # MISC
-xsetroot -solid '#222222'
+xsetroot -solid '#4a551c'
 status &
 
 # EVENT LOOP

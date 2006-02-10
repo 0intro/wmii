@@ -24,6 +24,7 @@ if(mkdir $HOME/.wmii-3 >[2]/dev/null) {
 }
 
 # run configuration:
+sleep 1
 wmiirc &
 
 # wait for wmiifs's termination:
