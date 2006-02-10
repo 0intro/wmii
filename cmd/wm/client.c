@@ -551,8 +551,6 @@ int
 cid_to_index(Area *a, unsigned short id)
 {
 	int i;
-	if(id == NEW_OBJ)
-		return a->nclient;
 	for(i = 0; i < a->nclient; i++)
 		if(a->client[i]->id == id)
 			return i;

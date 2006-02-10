@@ -295,7 +295,6 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case Dlabel:
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4)) {
-			/*fprintf(stderr, "mkqid iswalk=%d, wname=%s\n", iswalk, wname);*/
 			if(iswalk)
 				new->path = mkqpath(Dlabel, new_label()->id, 0, 0);
 			else
@@ -337,9 +336,8 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			new->type = IXP_QTDIR;
 			if(!strncmp(wname, "new", 4)) {
 				if(iswalk) {
-					Area *a = alloc_area();
-					p->area = (Area **)cext_array_attach((void **)p->area, a, sizeof(Area *), &p->areasz);
-					p->narea++;
+					Area *a = alloc_area(p);
+					fprintf(stderr, "p->id %d, a->id %d\n", p->id, a->id);
 					new->path = mkqpath(Darea, p->id, a->id, 0);
 				}
 				else
@@ -384,7 +382,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		break;
 	case Fdata:
 	case Fcolor:
-		if(dir_i1 >= nlabel)
+		if((dir_type == Dlabel) && (dir_i1 >= nlabel))
 			return -1;
 	default:
 		new->type = IXP_QTFILE;
@@ -439,10 +437,7 @@ xwalk(IXPConn *c, Fcall *fcall)
         for(nwqid = 0; (nwqid < fcall->nwname)
             && !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid], True); nwqid++)
 		{
-			/*fprintf(stderr, "dir.dtype=%d\n", dir.dtype);*/
             dir = fcall->wqid[nwqid];
-			/*fprintf(stderr, "walk: qid_to_name()=%s qpath_type(dir.path)=%d dir.dtype=%d\n",
-							qid_to_name(&dir), qpath_type(dir.path), dir.dtype);*/
 		}
         if(!nwqid) {
 			/*fprintf(stderr, "%s", "xwalk: no such file\n");*/

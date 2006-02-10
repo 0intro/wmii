@@ -33,12 +33,9 @@ alloc_page()
 {
 	static unsigned short id = 1;
     Page *p = cext_emallocz(sizeof(Page));
-	Area *a = cext_emallocz(sizeof(Area));
 
 	p->id = id++;
-	p->area = (Area **)cext_array_attach((void **)p->area, a, sizeof(Area *), &p->areasz);
-	p->narea++;
-	do_pend_fcall("NewPage\n");
+	alloc_area(p);
 	page = (Page **)cext_array_attach((void **)page, p, sizeof(Page *), &pagesz);
 	npage++;
 	focus_page(p);
@@ -243,8 +240,6 @@ int
 pid_to_index(unsigned short id)
 {
 	int i;
-	if(id == NEW_OBJ)
-		return npage;
 	for(i = 0; i < npage; i++)
 		if(page[i]->id == id)
 			return i;

@@ -52,8 +52,6 @@ enum {
 #define ROOT_MASK              SubstructureRedirectMask
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
 
-#define NEW_OBJ                (unsigned short)0xffff
-
 typedef struct Area Area;
 typedef struct Page Page;
 typedef struct Client Client;
@@ -193,7 +191,7 @@ Cursor se_cursor;
 unsigned int valid_mask, num_lock_mask;
 
 /* area.c */
-Area *alloc_area();
+Area *alloc_area(Page *p);
 void destroy_area(Area *a);
 int area_to_index(Page *p, Area *a);
 int aid_to_index(Page *p, unsigned short id);

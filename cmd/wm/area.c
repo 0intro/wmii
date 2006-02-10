@@ -8,12 +8,13 @@
 #include "wm.h"
 
 Area *
-alloc_area()
+alloc_area(Page *p)
 {
 	static unsigned short id = 1;
 	Area *a = cext_emallocz(sizeof(Area));
-
 	a->id = id++;
+	p->area = (Area **)cext_array_attach((void **)p->area, a, sizeof(Area *), &p->areasz);
+	p->narea++;
     return a;
 }
 
@@ -41,8 +42,6 @@ int
 aid_to_index(Page *p, unsigned short id)
 {
 	int i;
-	if(id == NEW_OBJ)
-		return p->narea;
 	for(i = 0; i < p->narea; i++)
 		if(p->area[i]->id == id)
 			return i;

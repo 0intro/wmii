@@ -1,4 +1,4 @@
-#!9PREFIX/bin/rc -x
+#!9PREFIX/bin/rc
 # configure wmii
 
 PIDFILE=/tmp/ns.$USER.$DISPLAY/wmiircpid-$DISPLAY
@@ -69,7 +69,6 @@ echo -n key | wmiir write /bar/new/data
 
 # MISC
 xsetroot -mod 2 2 -bg '#444466' -fg '#555555'
-extern xterm -rv&
 status &
 
 wmiir read /event | \
