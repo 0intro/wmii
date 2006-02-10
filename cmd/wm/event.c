@@ -66,8 +66,8 @@ handle_buttonpress(XEvent *e)
 	static char buf[32];
 	if(ev->window == winbar) {
 		size_t i;
-		for(i = 0; i < nitem; i++)
-			if(blitz_ispointinrect(ev->x, ev->y, &item[i]->rect)) {
+		for(i = 0; i < nlabel; i++)
+			if(blitz_ispointinrect(ev->x, ev->y, &label[i]->rect)) {
 				snprintf(buf, sizeof(buf), "L%d B%d\n", i, ev->button);
 				do_pend_fcall(buf);
 			}

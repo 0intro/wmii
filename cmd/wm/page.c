@@ -213,7 +213,7 @@ select_client(void *obj, char *arg)
 	if(!c || !arg)
 		return;
 
-	if(index_of_area(c->page, c->area) > 0)
+	if(area_to_index(c->page, c->area) > 0)
 		select_column(c, arg);
 	else {
 		Area *a = c->area;
@@ -240,7 +240,7 @@ select_client(void *obj, char *arg)
 */
 
 int
-index_of_page_id(unsigned short id)
+pid_to_index(unsigned short id)
 {
 	int i;
 	if(id == NEW_OBJ)

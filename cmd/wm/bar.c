@@ -7,24 +7,24 @@
 
 #include "wm.h"
 
-Item *
-new_item()
+Label *
+new_label()
 {
 	static unsigned int id = 1;
-	Item *it = cext_emallocz(sizeof(Item));
-	it->id = id++;
-	cext_strlcpy(it->colstr, def.selcolor, sizeof(it->colstr));
-	it->color = def.sel;
-	item = (Item **)cext_array_attach((void **)item, it, sizeof(Item *), &itemsz);
-	nitem++;
-	return it;
+	Label *l = cext_emallocz(sizeof(Label));
+	l->id = id++;
+	cext_strlcpy(l->colstr, def.selcolor, sizeof(l->colstr));
+	l->color = def.sel;
+	label = (Label **)cext_array_attach((void **)label, l, sizeof(Label *), &labelsz);
+	nlabel++;
+	return l;
 }
 
 void
-detach_item(Item *it)
+detach_label(Label *l)
 {
-	cext_array_detach((void **)item, it, &itemsz);
-	nitem--;
+	cext_array_detach((void **)label, l, &labelsz);
+	nlabel--;
 }
 
 void
@@ -41,47 +41,47 @@ draw_bar()
     d.rect.y = 0;
 	d.font = xfont;
 
-	if(!nitem) { /* /default only */
+	if(!nlabel) { /* /default only */
 		d.color = def.sel;
 		blitz_drawlabel(dpy, &d);
 	}
 	else {
-		for(i = 0; i < nitem; i++) {
-			Item *it = item[i];
-			it->rect.x = it->rect.y = 0;
-			it->rect.height = brect.height;
+		for(i = 0; i < nlabel; i++) {
+			Label *l = label[i];
+			l->rect.x = l->rect.y = 0;
+			l->rect.height = brect.height;
 			if(i == iexpand)
 		   		continue;
-			it->rect.width = brect.height;
-			if(strlen(it->data)) {
-				if(!strncmp(it->data, "%m:", 3))
-					it->rect.width = brect.height / 2;
+			l->rect.width = brect.height;
+			if(strlen(l->data)) {
+				if(!strncmp(l->data, "%m:", 3))
+					l->rect.width = brect.height / 2;
 				else
-					it->rect.width += XTextWidth(xfont, it->data, strlen(it->data));
+					l->rect.width += XTextWidth(xfont, l->data, strlen(l->data));
 			}
-			w += it->rect.width;
+			w += l->rect.width;
 		}
 
 		if(w >= brect.width) {
 			/* failsafe mode, give all labels same width */
-			w = brect.width / nitem;
-			for(i = 0; i < nitem; i++) {
-				item[i]->rect.x = i * w;
-				item[i]->rect.width = w;
+			w = brect.width / nlabel;
+			for(i = 0; i < nlabel; i++) {
+				label[i]->rect.x = i * w;
+				label[i]->rect.width = w;
 			}
 			i--;
-			item[i]->rect.width = brect.width - item[i]->rect.x;
+			label[i]->rect.width = brect.width - label[i]->rect.x;
 		}
 		else {
-			item[iexpand]->rect.width = brect.width - w;
-			for(i = 1; i < nitem; i++)
-				item[i]->rect.x = item[i - 1]->rect.x + item[i - 1]->rect.width;
+			label[iexpand]->rect.width = brect.width - w;
+			for(i = 1; i < nlabel; i++)
+				label[i]->rect.x = label[i - 1]->rect.x + label[i - 1]->rect.width;
 		}
 
-		for(i = 0; i < nitem; i++) {
-			d.color = item[i]->color;
-			d.rect = item[i]->rect;
-			d.data = item[i]->data;
+		for(i = 0; i < nlabel; i++) {
+			d.color = label[i]->color;
+			d.rect = label[i]->rect;
+			d.data = label[i]->data;
 			if(d.data && !strncmp(d.data, "%m:", 3))
 				blitz_drawmeter(dpy, &d);
 			else
@@ -93,11 +93,11 @@ draw_bar()
 }
 
 int
-index_of_bar_id(unsigned short id)
+lid_to_index(unsigned short id)
 {
 	int i;
-	for(i = 0; i < nitem; i++)
-		if(item[i]->id == id)
+	for(i = 0; i < nlabel; i++)
+		if(label[i]->id == id)
 			return i;
 	return -1;
 }

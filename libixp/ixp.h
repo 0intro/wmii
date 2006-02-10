@@ -147,7 +147,7 @@ struct Qid {
     unsigned int version;
     unsigned long long path;
 	/* internal use only */
-	unsigned char dtype;
+	unsigned char dir_type;
 };
 
 /*stat structure */

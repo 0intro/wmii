@@ -27,7 +27,7 @@ enum {
 	Dclient,
 	Dkeys,
 	Dbar,
-    Ditem,
+    Dlabel,
 	Fexpand,
     Fdata,                      /* data to display */
     Fcolor,
@@ -116,7 +116,7 @@ typedef struct {
 	char colstr[24];
 	Color color;
 	XRectangle rect;
-} Item;
+} Label;
 
 /* default values */
 typedef struct {
@@ -147,9 +147,9 @@ size_t clientsz;
 Key **key;
 size_t keysz;
 size_t nkey;
-Item **item;
-size_t nitem;
-size_t itemsz;
+Label **label;
+size_t nlabel;
+size_t labelsz;
 size_t iexpand;
 
 Display *dpy;
@@ -195,14 +195,14 @@ unsigned int valid_mask, num_lock_mask;
 /* area.c */
 Area *alloc_area();
 void destroy_area(Area *a);
-int index_of_area(Page *p, Area *a);
-int index_of_area_id(Page *p, unsigned short id);
+int area_to_index(Page *p, Area *a);
+int aid_to_index(Page *p, unsigned short id);
 
 /* bar.c */
-Item *new_item();
-void detach_item(Item *it);
+Label *new_label();
+void detach_label(Label *l);
 void draw_bar();
-int index_of_item_id(unsigned short id);
+int lid_to_index(unsigned short id);
 
 /* client.c */
 Client *alloc_client(Window w, XWindowAttributes *wa);
@@ -223,7 +223,7 @@ void focus_client(Client *c);
 Client *win_to_frame(Window w);
 void resize_client(Client *c, XRectangle * r, XPoint * pt);
 unsigned int bar_height(Client *c);
-int index_of_client_id(Area *a, unsigned short id);
+int cid_to_index(Area *a, unsigned short id);
 
 /* event.c */
 void init_x_event_handler();
@@ -239,8 +239,8 @@ void new_ixp_conn(IXPConn *c);
 void handle_key(Window w, unsigned long mod, KeyCode keycode);
 void grab_key(Key *k);
 void ungrab_key(Key *k);
-Key * key_of_name(char *name);
-int index_of_key_id(unsigned short id);
+Key * name_to_key(char *name);
+int kid_to_index(unsigned short id);
 Key *create_key(char *name);
 void destroy_key(Key *k);
 void init_lock_modifiers();
@@ -260,7 +260,7 @@ Page *alloc_page();
 void destroy_page(Page *p);
 void focus_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
-int index_of_page_id(unsigned short id);
+int pid_to_index(unsigned short id);
 
 /* spawn.c */
 void spawn(char *cmd);

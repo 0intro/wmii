@@ -394,7 +394,7 @@ detach_client(Client *c, Bool unmap)
 			if(client[i]->revert == c)
 				client[i]->revert = nil;
 
-		if(index_of_area(c->page, c->area) > 0)
+		if(area_to_index(c->page, c->area) > 0)
 			detach_column(c);
 		else {
 			Area *a = c->page->area[0];
@@ -505,7 +505,7 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
     unsigned int bh = bar_height(c);
     unsigned int bw = c->frame.border;
 
-	if(index_of_area(c->page, c->area) > 0)
+	if(area_to_index(c->page, c->area) > 0)
 		resize_column(c, r, pt);
 	else
 		c->frame.rect = *r;
@@ -548,7 +548,7 @@ max_client(void *obj, char *arg)
 */
 
 int
-index_of_client_id(Area *a, unsigned short id)
+cid_to_index(Area *a, unsigned short id)
 {
 	int i;
 	if(id == NEW_OBJ)

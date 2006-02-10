@@ -28,7 +28,7 @@ destroy_area(Area *a)
 }
 
 int
-index_of_area(Page *p, Area *a)
+area_to_index(Page *p, Area *a)
 {
 	int i;
 	for(i = 0; i < p->narea; i++)
@@ -38,7 +38,7 @@ index_of_area(Page *p, Area *a)
 }
 
 int
-index_of_area_id(Page *p, unsigned short id)
+aid_to_index(Page *p, unsigned short id)
 {
 	int i;
 	if(id == NEW_OBJ)

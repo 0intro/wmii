@@ -661,8 +661,8 @@ main(int argc, char *argv[])
 
 	key = nil;
 	keysz = nkey = 0;
-	item = nil;
-	nitem = itemsz = iexpand = 0;
+	label = nil;
+	nlabel = labelsz = iexpand = 0;
 
 	def.font = strdup(BLITZ_FONT);
 	def.border = DEF_BORDER;
