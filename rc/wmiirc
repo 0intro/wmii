@@ -28,7 +28,7 @@ xwrite /def/border $CLIENT_BORDER
 #xwrite /def/font $FONT
 #xwrite /def/selcolor $SEL_COLOR
 #xwrite /def/normcolor $NORM_COLOR
-for(page in `{wmiir read  | grep '^d' | awk '{print $10}' | grep -v new}) {
+for(page in `{wmiir read / | grep '^d' | awk '{print $10}' | grep -v new}) {
 	for(area in `{wmiir read /$page | grep '^d' | awk '{print $10}' | grep -v new}) {
 		for(client in `{wmiir read /$page/$area | grep '^d' | awk '{print $10}'}) {
 			xwrite /$page/$area/$client/bar $CLIENT_BAR
