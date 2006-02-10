@@ -11,28 +11,14 @@ wmiimenu \- window manager improved 2 menu
 is a generic, highly customizable, and efficient menu for the X Window System,
 originally designed for
 .BR wmii (1).
-It supports arbitrary, user defined menu contents, which get executed.
-Like wmii,
-.B wmiimenu
-also implements a socket-based fileserver, which is accessed to configure and
-interoperate with other components.
+It supports arbitrary, user defined menu contents, which get printed to stdout when selected.
 .SS Options
-.TP
-.BI \-s " socketfile"
-specifies the socketfile that
-.B wmiimenu
-should create.
 .TP
 .B \-v
 prints version information to stderr, then exits.
 .SS Customization
 .B wmiimenu
-is customized through manipulating its filesystem namespace.
-In the default setup of
-.BR wmii (1)
-the namespace of
-.B wmiimenu
-can be found in /menu.
+is customized by feeding it a list of newline-separated items from stdin.
 .SH SEE ALSO
 .BR wmiibar (1),
 .BR wmiifs (1),
