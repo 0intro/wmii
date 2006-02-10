@@ -90,6 +90,14 @@ set_client_state(Client * c, int state)
                     (unsigned char *) data, 2);
 }
 
+static void
+client_name_event(Client *c)
+{
+	char buf[256];
+	snprintf(buf, sizeof(buf), "C %s\n", c->name);
+	do_pend_fcall(buf);
+}
+
 void
 focus_client(Client *c)
 {
@@ -125,7 +133,7 @@ focus_client(Client *c)
     XDefineCursor(dpy, c->win, normal_cursor);
     draw_client(c);
 	XSync(dpy, False);
-	/* TODO: client update */
+	client_name_event(c);
 }
 
 void
@@ -218,7 +226,7 @@ handle_client_property(Client *c, XPropertyEvent *e)
 		}
         if(c->page)
             draw_client(c);
-		/* TODO: client update */
+		client_name_event(c);
         break;
     case XA_WM_TRANSIENT_FOR:
         XGetTransientForHint(dpy, c->win, &c->trans);
@@ -381,8 +389,6 @@ attach_client(Client *c)
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
 	focus_client(c);
-
-	/* TODO: page update event */
 }
 
 void

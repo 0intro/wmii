@@ -330,31 +330,6 @@ attach_detached_client()
     }
 }
 
-void
-select_page(char *arg)
-{
-	size_t new = sel;
-	const char *err;
-
-    if(!npage || !arg)
-        return;
-    if(!strncmp(arg, "prev", 5)) {
-		if(new > 0)
-			for(new = 0; page[new]; new++);
-		new--;
-    } else if(!strncmp(arg, "next", 5)) {
-		if(page[new + 1])
-			new++;
-		else
-			new = 0;
-    } else {
-		int idx = cext_strtonum(arg, 0, npage, &err);
-		if(idx < npage)
-			new = idx;
-	}
-    focus_page(page[new]);
-}
-
 Client *
 win_to_client(Window w)
 {

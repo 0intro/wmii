@@ -82,6 +82,8 @@ focus_page(Page *p)
 {
 	size_t i;
 	Page *old = page ? page[sel] : nil;
+	char buf[16];
+	Client *c;
 
 	if(!page)
 		return;
@@ -92,7 +94,7 @@ focus_page(Page *p)
 
 	sel = i;
 	for(i = 0; i < nclient; i++) {
-		Client *c = client[i];
+		c = client[i];
 		if(old && (c->page == old))
 			XMoveWindow(dpy, c->frame.win, 2 * rect.width, 2 * rect.height);
 		else if(c->page == p) {
@@ -100,7 +102,10 @@ focus_page(Page *p)
 			draw_client(c);
 		}
 	}
-	do_pend_fcall("SelPage\n");
+	if((c = sel_client_of_page(p)))
+		focus_client(c);
+	snprintf(buf, sizeof(buf), "P %d\n", sel + 1);
+	do_pend_fcall(buf);
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &sel, 1);
 	XSync(dpy, False);
@@ -244,4 +249,29 @@ pid_to_index(unsigned short id)
 		if(page[i]->id == id)
 			return i;
 	return -1;
+}
+
+void
+select_page(char *arg)
+{
+	size_t new = sel;
+	const char *err;
+
+    if(!npage || !arg)
+        return;
+    if(!strncmp(arg, "prev", 5)) {
+		if(new > 0)
+			for(new = 0; page[new]; new++);
+		new--;
+    } else if(!strncmp(arg, "next", 5)) {
+		if(page[new + 1])
+			new++;
+		else
+			new = 0;
+    } else {
+		int idx = cext_strtonum(arg, 0, npage, &err);
+		if(idx < npage)
+			new = idx;
+	}
+    focus_page(page[new]);
 }

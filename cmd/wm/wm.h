@@ -259,6 +259,7 @@ void destroy_page(Page *p);
 void focus_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
 int pid_to_index(unsigned short id);
+void select_page(char *arg);
 
 /* spawn.c */
 void spawn(char *cmd);
@@ -281,5 +282,4 @@ int win_state(Window w);
 void pager();
 void detached_clients();
 void attach_detached_client();
-void select_page(char *arg);
 

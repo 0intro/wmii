@@ -25,7 +25,7 @@ MODKEY=Alt
 # WMIIWM CONFIGURATION
 xwrite /def/bar $CLIENT_BAR
 xwrite /def/border $CLIENT_BORDER
-xwrite /def/handleinc 1
+xwrite /def/inc 1
 xwrite /def/snap 20
 #xwrite /def/font $FONT
 #xwrite /def/selcolor $SEL_COLOR
@@ -67,8 +67,10 @@ for(i in 1 2 3 4 5 6 7 8 9)
 
 
 # WMIIBAR CONFIGURATION
-xwrite /bar/new/data status
-xwrite /bar/new/data event
+xwrite /bar/new/data 1
+xwrite /bar/new/data ''
+xwrite /bar/new/data fnord
+xwrite /bar/expand 2
 
 
 # MISC
@@ -78,7 +80,12 @@ status &
 # EVENT LOOP
 wmiir read /event | \
 while(event=`{read}) {
-	xwrite /bar/2/data $"event
+	if(~ $event(1) P)
+		xwrite /bar/1/data $event(2)
+	if(~ $event(1) C) {
+		text=`{echo $"event | sed 's/^C //g'}
+		xwrite /bar/2/data $"text
+	}
 	if(~ $event(1) K) { # key press
 		switch($event(2)) {
 		case $MODKEY-Control-c
