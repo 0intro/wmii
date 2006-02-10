@@ -1081,8 +1081,9 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(m->qid.dir_type == Ddef)
 			def.border = i;
 		else {
-			page[i1]->area[i2]->client[i3]->frame.border = i;
-			/* TODO: resize client */
+			Client *c = page[i1]->area[i2]->client[i3];
+			c->frame.border = i;
+			resize_client(c, &c->frame.rect, 0);
 		}
 		break;
 	case Fbar:
@@ -1096,8 +1097,9 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(m->qid.dir_type == Ddef)
 			def.border = i;
 		else {
-			page[i1]->area[i2]->client[i3]->frame.border = i;
-			/* TODO: resize client */
+			Client *c = page[i1]->area[i2]->client[i3];
+			c->frame.bar = i;
+			resize_client(c, &c->frame.rect, 0);
 		}
 		break;
 	case Finc:
@@ -1109,15 +1111,20 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(err)
 			return "increment value out of range 0, 1";
 		def.inc = i;
-		/* TODO: resize all clients */
+		for(i = 0; i < nclient; i++)
+			if(client[i]->page)
+				resize_client(client[i], &client[i]->frame.rect, 0);
 		break;
 	case Fgeom:
-		if(fcall->count > sizeof(buf))
-			return "geometry values out of range";
-		memcpy(buf, fcall->data, fcall->count);
-		buf[fcall->count] = 0;
-		blitz_strtorect(&rect, &page[i1]->area[i2]->client[i3]->frame.rect, buf);
-		/* TODO: resize client */
+		{
+			Client *c = page[i1]->area[i2]->client[i3];
+			if(fcall->count > sizeof(buf))
+				return "geometry values out of range";
+			memcpy(buf, fcall->data, fcall->count);
+			buf[fcall->count] = 0;
+			blitz_strtorect(&rect, &c->frame.rect, buf);
+			resize_client(c, &c->frame.rect, 0);
+		}
 		break;
     case Fexpand:
 		{
