@@ -1,7 +1,0 @@
-#!9PREFIX/bin/rc
-# activate shortcuts of the given mode
-
-wmiir write /keys/grabkeyb 0
-wmiir write /keys/lookup /mode/$1
-
-eval `{wmiir read /wm/event/pageupdate}
