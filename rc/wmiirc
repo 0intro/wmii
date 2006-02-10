@@ -99,7 +99,7 @@ while(event=`{read}) {
 		case $MODKEY-Control-q,y
 			xwrite /ctl quit
 		case $MODKEY-t
-			extern xterm -rv &
+			extern xterm &
 		case $MODKEY-d
 			xwrite /sel/sel/sel/ctl detach
 		case $MODKEY-a
