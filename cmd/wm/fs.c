@@ -27,6 +27,8 @@ static char Enomode[] = "mode not supported";
 static char Enofunc[] = "function not supported";
 static char Enocommand[] = "command not supported";
 
+#define WMII_IOUNIT 	2048
+
 /*
  * filesystem specification
  * / 					Droot
@@ -36,7 +38,6 @@ static char Enocommand[] = "command not supported";
  * /def/snap 			Fsnap  		0..n
  * /def/inc 			Finc   		0..n
  * /keys/				Dkeys
- * /keys/grab			Fgrab		interface to grab shortcuts
  * /keys/foo			Fkey
  * /bar/				Dbar
  * /bar/expand			Fexpand 	id of expandable label
@@ -170,7 +171,6 @@ qid_to_name(Qid *qid)
 		case Fname: return "name"; break;
 		case Fevent: return "event"; break;
 		case Fkey: return key[pg]->name; break; 
-		case Fgrab: return "grab"; break; 
 		default: return nil; break;
 	}
 }
@@ -189,14 +189,16 @@ name_to_type(char *name, unsigned char dtyp)
 		if(dtyp == Dpage)
 			return Darea;
 	}
-	if(!strncmp(name, "bar", 4))
-		return Dbar;
+	if(!strncmp(name, "bar", 4)) {
+		if(dtyp == Droot)
+			return Dbar;
+		else
+			return Fbar;
+	}
 	if(!strncmp(name, "def", 4))
 		return Ddef;
 	if(!strncmp(name, "keys", 5))
 		return Dkeys;
-	if(!strncmp(name, "grab", 5))
-		return Fgrab;
 	if(!strncmp(name, "ctl", 4))
 		return Fctl;
 	if(!strncmp(name, "event", 6))
@@ -207,8 +209,6 @@ name_to_type(char *name, unsigned char dtyp)
 		return Fname;
 	if(!strncmp(name, "border", 7))
 		return Fborder;
-	if(!strncmp(name, "bar", 4))
-		return Fbar;
 	if(!strncmp(name, "inc", 4))
 		return Finc;
 	if(!strncmp(name, "geometry", 9))
@@ -466,7 +466,7 @@ xopen(IXPConn *c, Fcall *fcall)
         return Enomode;
     fcall->id = ROPEN;
     fcall->qid = m->qid;
-    fcall->iounit = 2048;
+    fcall->iounit = WMII_IOUNIT;
 	ixp_server_respond_fcall(c, fcall);
     return nil;
 }
@@ -525,9 +525,6 @@ type_to_stat(Stat *stat, char *name, Qid *dir)
 		return mkstat(stat, dir, name, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case Fctl:
-	case Fgrab:
-		return mkstat(stat, dir, name, 0, DMWRITE);
-		break;
     case Fevent:
 		return mkstat(stat, dir, name, 0, DMREAD);
 		break;
@@ -642,7 +639,7 @@ xread(IXPConn *c, Fcall *fcall)
 			/* jump to offset */
 			len = type_to_stat(&stat, "ctl", &m->qid);
 			len += type_to_stat(&stat, "event", &m->qid);
-			len += type_to_stat(&stat, "default", &m->qid);
+			len += type_to_stat(&stat, "def", &m->qid);
 			len += type_to_stat(&stat, "keys", &m->qid);
 			len += type_to_stat(&stat, "bar", &m->qid);
 			len += type_to_stat(&stat, "new", &m->qid);
@@ -779,7 +776,7 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "event", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "default", &m->qid);
+			fcall->count += type_to_stat(&stat, "def", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "keys", &m->qid);
 			p = ixp_enc_stat(p, &stat);
@@ -1023,6 +1020,10 @@ xwrite(IXPConn *c, Fcall *fcall)
 				attach_detached_client();
 			else if(!strncmp(buf, "select", 6))
 				select_page(&buf[7]);
+			else if(!strncmp(buf, "grab ", 5)) {
+				if(strlen(&buf[5]))
+					grab_key(create_key(&buf[5]));
+			}
 			else
 				return Enocommand;
 			break;
@@ -1097,52 +1098,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		buf[fcall->count] = 0;
 		blitz_strtorect(&rect, &page[pg]->area[area]->client[cl]->frame.rect, buf);
 		/* TODO: resize client */
-		break;
-    case Fgrab:
-		if(fcall->count > 2048)
-			return Enoperm;
-		{
-			static size_t lastcount;
-			static char last[2048]; /* iounit */
-			char fcallbuf[2048], tmp[2048]; /* iounit */
-			char *p1, *p2;
-			if(!fcall->offset) {
-				while(nkey) {
-					Key *k = key[0];
-					ungrab_key(k);
-					cext_array_detach((void **)key, k, &keysz);
-					nkey--;
-					destroy_key(k);
-				}
-			}
-			if(!fcall->count)
-				break;
-		    memcpy(fcallbuf, fcall->data, fcall->count);
-		    fcallbuf[fcall->count] = 0;
-			if(fcall->offset) {
-				p1 = strrchr(last, '\n');
-				p2 = strchr(fcallbuf, '\n');
-				memcpy(tmp, p1, lastcount - (p1 - last));
-				memcpy(tmp + (lastcount - (p1 - last)), p2, p2 - fcallbuf);
-				tmp[(lastcount - (p1 - last)) + (p2 - fcallbuf)] = 0;
-				grab_key(create_key(tmp));
-
-			}
-			else p2 = fcallbuf;
-			lastcount = fcall->count;
-			memcpy(last, fcall->data, fcall->count);
-			while(p2 - fcallbuf < fcall->count) {
-				p1 = strchr(p2, '\n');
-				if(!p1)
-					return "cannot grab, no \n supplied";
-				*p1 = 0;
-				grab_key(create_key(p2));
-				*p1 = '\n';
-				p2 = ++p1;
-			}
-			lastcount = fcall->count;
-			memcpy(last, fcall->data, fcall->count);
-		}
 		break;
     case Fexpand:
 		{

@@ -699,6 +699,9 @@ main(int argc, char *argv[])
 
     pmapbar = XCreatePixmap(dpy, winbar, brect.width, brect.height,
                       	 	DefaultDepth(dpy, screen));
+	XMapRaised(dpy, winbar);
+	draw_bar();
+
     /* main event loop */
 	errstr = ixp_server_loop(&srv);
 	if(errstr)

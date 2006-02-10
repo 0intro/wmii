@@ -1,108 +1,122 @@
 #!9PREFIX/bin/rc -x
 # configure wmii
 
-CLIENT_BAR=0
-CLIENT_BORDER=3
-HANDLEINC=1
+PIDFILE=/tmp/ns.$USER.$DISPLAY/wmiircpid-$DISPLAY
 
 fn xwrite { echo -n $2 | wmiir write $1 }
 
+if(test -r $PIDFILE) {
+    kill -2 `{cat $PIDFILE} >[2]/dev/null
+}
+echo $pid >$PIDFILE
+
+# install signal handler for artificial sigexit:
+fn sigint {
+    if(test -f $PIDFILE && ~ `{cat $PIDFILE} $pid)
+    	rm -f $PIDFILE
+    exit
+}
+
+CLIENT_BAR=0
+CLIENT_BORDER=3
+HANDLEINC=1
+MODKEY=Alt
+
 # WMIIWM CONFIGURATION
-xwrite /wm/default/bar $CLIENT_BAR
-xwrite /wm/default/border $CLIENT_BORDER
-xwrite /wm/default/font $FONT
-xwrite /wm/default/selcolor $SEL_COLOR
-xwrite /wm/default/normcolor $NORM_COLOR
-for(page in `{wmiir read /wm | grep '^d' | awk '{print $10}' | grep -v new}) {
-	for(area in `{wmiir read /wm/$page | grep '^d' | awk '{print $10}' | grep -v new}) {
-		for(client in `{wmiir read /wm/$page/$area | grep '^d' | awk '{print $10}'}) {
-			xwrite /wm/$page/$area/$client/bar $CLIENT_BAR
-			xwrite /wm/$page/$area/$client/border $CLIENT_BORDER
+xwrite /def/bar $CLIENT_BAR
+xwrite /def/border $CLIENT_BORDER
+#xwrite /def/font $FONT
+#xwrite /def/selcolor $SEL_COLOR
+#xwrite /def/normcolor $NORM_COLOR
+for(page in `{wmiir read  | grep '^d' | awk '{print $10}' | grep -v new}) {
+	for(area in `{wmiir read /$page | grep '^d' | awk '{print $10}' | grep -v new}) {
+		for(client in `{wmiir read /$page/$area | grep '^d' | awk '{print $10}'}) {
+			xwrite /$page/$area/$client/bar $CLIENT_BAR
+			xwrite /$page/$area/$client/border $CLIENT_BORDER
 		}
 	}
 }
 
+for(i in \
+	$MODKEY-Control-q,y \
+	$MODKEY-Control-w,y \
+	$MODKEY-Control-c \
+	$MODKEY-t \
+	$MODKEY-d \
+	$MODKEY-a \
+	$MODKEY-Shift-a \
+	$MODKEY-n \
+	$MODKEY-m \
+	$MODKEY-Return \
+	$MODKEY-Shift-Return \
+	$MODKEY-Control-y \
+	$MODKEY-h \
+	$MODKEY-l \
+	$MODKEY-Tab \
+	$MODKEY-j \
+	$MODKEY-k \
+	$MODKEY-Shift-h \
+	$MODKEY-Shift-l \
+	$MODKEY-Shift-p)
+	xwrite /ctl 'grab '^$i
+
+for(i in 1 2 3 4 5 6 7 8 9)
+	xwrite /ctl 'grab '^$MODKEY^'-Shift-'^$i
+#
 # WMIIBAR CONFIGURATION
-xwrite /bar/font $FONT
-xwrite /bar/defcolor $SEL_COLOR
 echo -n fnord | wmiir write /bar/new/data 
 echo -n key | wmiir write /bar/new/data 
 
 # MISC
 xsetroot -mod 2 2 -bg '#444466' -fg '#555555'
-status&
+extern xterm -rv&
+status &
 
-wmiir write /wm/keys/grab <<END
-Control-Alt-k
-Control-Alt-c
-Control-Alt-q,y
-Control-Alt-w,y
-Alt-t
-Alt-d
-Alt-a
-Shift-Alt-a
-Alt-n
-Alt-m
-Alt-Return
-Shift-Alt-Return
-Control-Alt-y
-Alt-h
-Alt-l
-Alt-Tab
-Alt-j
-Alt-k
-Shift-Alt-h
-Shift-Alt-l
-Shift-Alt-p
-Shift-Alt-1
-Shift-Alt-2
-Shift-Alt-3
-Shift-Alt-4
-END
-
-wmiir read /wm/event | \
+wmiir read /event | \
 while(key=`{read}) {
 	xwrite /bar/2/data $key
 	switch($key) {
-	case Control-Alt-c
-		xwrite /wm/sel/sel/sel/ctl kill
-	case Control-Alt-q,y
-		quit
-	case Alt-t
+	case $MODKEY-Control-c
+		xwrite /sel/sel/sel/ctl kill
+	case $MODKEY-Control-w,y
+		wmiirc &
+	case $MODKEY-Control-q,y
+		xwrite /ctl quit
+	case $MODKEY-t
 		extern xterm -rv &
-	case Alt-d
-		xwrite /wm/sel/sel/sel/ctl detach
-	case Alt-a
-		xwrite /wm/ctl attach
-	case Shift-Alt-a
-		xwrite /wm/ctl detached
-	case Alt-n
-		wmiir read /wm/sel/new >/dev/null >[2=1]
-	case Alt-m
-		xwrite /wm/sel/sel/sel/ctl max
-	case Alt-Return
-		xwrite /wm/sel/sel/ctl 'swap east'
-	case Shift-Alt-Return
-		xwrite /wm/sel/sel/ctl 'swap west'
-	case Control-Alt-y
-		wmiir read /wm/new >/dev/null >[2=1]
-	case Alt-h
-		xwrite /wm/sel/ctl 'select next'
-	case Alt-l
-		xwrite /wm/sel/ctl 'select prev'
-	case Alt-Tab
-		xwrite /wm/sel/sel/ctl 'select next'
-	case Alt-j
-		xwrite /wm/sel/sel/ctl 'select next'
-	case Alt-k
-		xwrite /wm/sel/sel/ctl 'select prev'
-	case Shift-Alt-h
-		xwrite /wm/ctl 'select prev'
-	case Shift-Alt-l
-		xwrite /wm/ctl 'select next'
-	case Shift-Alt-p
-		xwrite /wm/ctl pager
-	case Shift-Alt-[1-9]
-		xwrite /wm/ctl 'select '^`{echo $k|sed 's/.*-//g'}
+	case $MODKEY-d
+		xwrite /sel/sel/sel/ctl detach
+	case $MODKEY-a
+		xwrite /ctl attach
+	case $MODKEY-Shift-a
+		xwrite /ctl detached
+	case $MODKEY-n
+		wmiir read /sel/new >/dev/null >[2=1]
+	case $MODKEY-m
+		xwrite /sel/sel/sel/ctl max
+	case $MODKEY-Return
+		xwrite /sel/sel/ctl 'swap east'
+	case $MODKEY-Shift-Return
+		xwrite /sel/sel/ctl 'swap west'
+	case $MODKEY-Control-y
+		wmiir read /new >/dev/null >[2=1]
+	case $MODKEY-h
+		xwrite /sel/ctl 'select next'
+	case $MODKEY-l
+		xwrite /sel/ctl 'select prev'
+	case $MODKEY-Tab
+		xwrite /sel/sel/ctl 'select next'
+	case $MODKEY-j
+		xwrite /sel/sel/ctl 'select next'
+	case $MODKEY-k
+		xwrite /sel/sel/ctl 'select prev'
+	case $MODKEY-Shift-h
+		xwrite /ctl 'select prev'
+	case $MODKEY-Shift-l
+		xwrite /ctl 'select next'
+	case $MODKEY-Shift-p
+		xwrite /ctl pager
+	case $MODKEY-Shift-[1-9]
+		xwrite /ctl 'select '^`{echo $k|sed 's/.*-//g'}
 	}
 }

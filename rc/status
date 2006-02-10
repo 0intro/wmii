@@ -1,7 +1,7 @@
 #!9PREFIX/bin/rc
 # periodically print date and load average to the bar
 
-PIDFILE=/tmp/.ixp-$USER/statuspid-$WMII_IDENT
+PIDFILE=/tmp/ns.$USER.$DISPLAY/statuspid-$DISPLAY
 
 fn xwrite { echo -n $2 | wmiir write $1 }
 
@@ -13,7 +13,7 @@ echo $pid >$PIDFILE
 # install signal handler for artificial sigexit:
 fn sigint {
     if(test -f $PIDFILE && ~ `{cat $PIDFILE} $pid)
-    rm -f $PIDFILE
+    	rm -f $PIDFILE
     exit
 }
 

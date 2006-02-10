@@ -32,7 +32,6 @@ enum {
     Fdata,                      /* data to display */
     Fcolor,
 	Fkey,
-	Fgrab,
 	Fborder,
 	Fsnap,
 	Fbar,
