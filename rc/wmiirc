@@ -19,12 +19,14 @@ fn sigint {
 
 CLIENT_BAR=0
 CLIENT_BORDER=3
-HANDLEINC=1
 MODKEY=Alt
+
 
 # WMIIWM CONFIGURATION
 xwrite /def/bar $CLIENT_BAR
 xwrite /def/border $CLIENT_BORDER
+xwrite /def/handleinc 1
+xwrite /def/snap 20
 #xwrite /def/font $FONT
 #xwrite /def/selcolor $SEL_COLOR
 #xwrite /def/normcolor $NORM_COLOR
@@ -62,15 +64,18 @@ for(i in \
 
 for(i in 1 2 3 4 5 6 7 8 9)
 	xwrite /ctl 'grab '^$MODKEY^'-Shift-'^$i
-#
+
+
 # WMIIBAR CONFIGURATION
-echo -n fnord | wmiir write /bar/new/data 
-echo -n key | wmiir write /bar/new/data 
+xwrite /bar/new/data status
+xwrite /bar/new/data event
+
 
 # MISC
 xsetroot -mod 2 2 -bg '#444466' -fg '#555555'
 status &
 
+# EVENT LOOP
 wmiir read /event | \
 while(event=`{read}) {
 	xwrite /bar/2/data $"event
