@@ -41,7 +41,7 @@ while(key=`{read}) {
 	xwrite /bar/2/data $key
 	switch($key) {
 	case Control-Alt-k
-		keys
+		keys &
 	case Control-Alt-c
 		xwrite /wm/sel/sel/sel/ctl kill
 	case Control-Alt-q,y
