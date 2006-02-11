@@ -235,7 +235,7 @@ void check_x_event(IXPConn *c);
 /* fs.c */
 unsigned long long mkqpath(unsigned char type, unsigned short pg,
 						unsigned short area, unsigned short cl);
-void do_pend_fcall(char *event);
+void broadcast_event(char *event);
 void new_ixp_conn(IXPConn *c);
 
 /* kb.c */

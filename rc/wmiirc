@@ -45,18 +45,11 @@ for(page in `{wmiir read / | grep '^d' | awk '{print $10}' | grep -v new}) {
 
 # KEYS CONFIGURATION
 for(i in \
- 	Escape \
-	$MODKEY-h \
-	$MODKEY-j \
-	$MODKEY-k \
-	$MODKEY-l \
-	$MODKEY-Control-q,y \
-	$MODKEY-Control-w,y \
 	$MODKEY-Control-c \
+	$MODKEY-Control-w,y \
+	$MODKEY-Control-q,y \
 	$MODKEY-Control-p \
 	$MODKEY-Control-a \
-	$MODKEY-Control-r \
-	$MODKEY-Control-m \
 	$MODKEY-t \
 	$MODKEY-d \
 	$MODKEY-a \
@@ -72,8 +65,6 @@ for(i in \
 	$MODKEY-j \
 	$MODKEY-k \
 	$MODKEY-Shift-h \
-	$MODKEY-Shift-j \
-	$MODKEY-Shift-k \
 	$MODKEY-Shift-l \
 	$MODKEY-Shift-p)
 	xwrite /ctl 'grab '^$i
@@ -113,8 +104,6 @@ xsetroot -solid '#1a1c10'
 status &
 
 # EVENT LOOP
-kmode='normal'
-barh=16 #`{wmiir read /bar/geometry|awk '{print $4}'}
 wmiir read /event | \
 while(event=`{read}) {
 	if(~ $event(1) PN)
@@ -141,109 +130,54 @@ while(event=`{read}) {
 		}
 	}
 	if(~ $event(1) K) { # key press
-		if (~ $kmode 'normal')
-			switch($event(2)) {
-			case $MODKEY-Control-c
-				xwrite /sel/sel/sel/ctl kill
-			case $MODKEY-Control-w,y
-				wmiirc &
-			case $MODKEY-Control-q,y
-				xwrite /ctl quit
-			case $MODKEY-Control-p
-				extern `{cat /tmp/ns.$USER.$DISPLAY/p.menu | wmiimenu} &
-			case $MODKEY-Control-a
-				`{items /usr/local/etc/wmii-3:$HOME/.wmii-3 | wmiimenu} &
-			case $MODKEY-Control-r
-				kmode='resize'
-			case $MODKEY-Control-m
-				kmode='move'
-			case $MODKEY-t
-				extern xterm -rv &
-			case $MODKEY-d
-				xwrite /sel/sel/sel/ctl detach
-			case $MODKEY-a
-				xwrite /ctl attach
-			case $MODKEY-Shift-a
-				xwrite /ctl detached
-			case $MODKEY-n
-				wmiir read /sel/new >/dev/null >[2=1]
-			case $MODKEY-m
-				xwrite /sel/sel/sel/ctl max
-			case $MODKEY-Return
-				xwrite /sel/sel/ctl 'swap east'
-			case $MODKEY-Shift-Return
-				xwrite /sel/sel/ctl 'swap west'
-			case $MODKEY-Control-y
-				wmiir read /new >/dev/null >[2=1]
-			case $MODKEY-h
-				xwrite /sel/ctl 'select next'
-			case $MODKEY-l
-				xwrite /sel/ctl 'select prev'
-			case $MODKEY-Tab
-				xwrite /sel/sel/ctl 'select next'
-			case $MODKEY-j
-				xwrite /sel/sel/ctl 'select next'
-			case $MODKEY-k
-				xwrite /sel/sel/ctl 'select prev'
-			case $MODKEY-Shift-h
-				xwrite /ctl 'select prev'
-			case $MODKEY-Shift-l
-				xwrite /ctl 'select next'
-			case $MODKEY-Shift-p
-				xwrite /ctl pager
-			case $MODKEY-Shift-[1-9]
-				xwrite /ctl 'select '^`{echo $event(2)|sed 's/.*-//g'}
-			}
-
-		if (~ $kmode 'move')
-			switch($event(2)) {
-			case Escape 
-				kmode='normal'
-			case $MODKEY-Control-r 
-				kmode='resize'
-			case $MODKEY-k
-				xwrite /sel/sel/sel/geometry '-0 -30 -0 -0'
-			case $MODKEY-j
-				xwrite /sel/sel/sel/geometry '+0 +30 +0 +0'
-			case $MODKEY-h
-				xwrite /sel/sel/sel/geometry '-40 -0 -0 -0'
-			case $MODKEY-l
-				xwrite /sel/sel/sel/geometry '+40 +0 +0 +0'
-			case $MODKEY-Shift-k
-				xwrite /sel/sel/sel/geometry '-0 north -0 -0'
-			case $MODKEY-Shift-j
-				xwrite /sel/sel/sel/geometry '+0 south-'^$barh^' +0 +0'
-			case $MODKEY-Shift-h
-				xwrite /sel/sel/sel/geometry 'west -0 -0 -0'
-			case $MODKEY-Shift-l 
-				xwrite /sel/sel/sel/geometry 'east +0 +0 +0'
-			}
-		
-		if (~ $kmode 'resize')
-			switch($event(2)) {
-			case Escape 
-				kmode='normal'
-			case $MODKEY-Control-m
-				kmode='move'
-			case $MODKEY-k 
-				xwrite /sel/sel/sel/geometry '+0 +0 +0 -30'
-			case $MODKEY-j
-				xwrite /sel/sel//sel/geometry '+0 +0 +0 +30'
-			case $MODKEY-h  
-				xwrite /sel/sel/sel/geometry '+0 +0 -40 +0'
-			case $MODKEY-l $EASTKEY
-				xwrite /sel/sel/sel/geometry '+0 +0 +40 +0'
-			case $MODKEY-Shift-k
-				xwrite /sel/sel/sel/geometry '-0 north -0 +0'
-			case $MODKEY-Shift-j
-				xwrite /sel/sel/sel/geometry '-0 0 -0 south-'^$barh
-			case $MODKEY-Shift-h
-				xwrite /sel/sel/sel/geometry '0 -0 west -0'
-			case $MODKEY-Shift-l
-				xwrite /sel/sel/sel/geometry '0 -0 east -0'
-			
-			}
-
+		switch($event(2)) {
+		case $MODKEY-Control-c
+			xwrite /sel/sel/sel/ctl kill
+		case $MODKEY-Control-w,y
+			wmiirc &
+		case $MODKEY-Control-q,y
+			xwrite /ctl quit
+		case $MODKEY-Control-p
+			extern `{cat /tmp/ns.$USER.$DISPLAY/p.menu | wmiimenu} &
+		case $MODKEY-Control-a
+			`{items /usr/local/etc/wmii-3:$HOME/.wmii-3 | wmiimenu} &
+		case $MODKEY-t
+			extern xterm -rv &
+		case $MODKEY-d
+			xwrite /sel/sel/sel/ctl detach
+		case $MODKEY-a
+			xwrite /ctl attach
+		case $MODKEY-Shift-a
+			xwrite /ctl detached
+		case $MODKEY-n
+			wmiir read /sel/new >/dev/null >[2=1]
+		case $MODKEY-m
+			xwrite /sel/sel/sel/ctl max
+		case $MODKEY-Return
+			xwrite /sel/sel/ctl 'swap east'
+		case $MODKEY-Shift-Return
+			xwrite /sel/sel/ctl 'swap west'
+		case $MODKEY-Control-y
+			wmiir read /new >/dev/null >[2=1]
+		case $MODKEY-h
+			xwrite /sel/ctl 'select next'
+		case $MODKEY-l
+			xwrite /sel/ctl 'select prev'
+		case $MODKEY-Tab
+			xwrite /sel/sel/ctl 'select next'
+		case $MODKEY-j
+			xwrite /sel/sel/ctl 'select next'
+		case $MODKEY-k
+			xwrite /sel/sel/ctl 'select prev'
+		case $MODKEY-Shift-h
+			xwrite /ctl 'select prev'
+		case $MODKEY-Shift-l
+			xwrite /ctl 'select next'
+		case $MODKEY-Shift-p
+			xwrite /ctl pager
+		case $MODKEY-Shift-[1-9]
+			xwrite /ctl 'select '^`{echo $event(2)|sed 's/.*-//g'}
+		}
 	}
 }
 

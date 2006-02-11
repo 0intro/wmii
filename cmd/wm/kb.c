@@ -208,7 +208,7 @@ handle_key_seq(Window w, Key **done, size_t ndone)
 		case 1: 
 			if(!found[0]->next) {
 				snprintf(buf, sizeof(buf), "K %s\n", found[0]->name);
-				do_pend_fcall(buf);
+				broadcast_event(buf);
 				break;
 			}
 		default:
@@ -232,7 +232,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 	case 1: 
 		if(!found[0]->next) {
 			snprintf(buf, sizeof(buf), "K %s\n", found[0]->name);
-			do_pend_fcall(buf);
+			broadcast_event(buf);
 			break;
 		}
 	default:

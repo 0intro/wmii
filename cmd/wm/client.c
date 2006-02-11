@@ -95,7 +95,7 @@ client_name_event(Client *c)
 {
 	char buf[256];
 	snprintf(buf, sizeof(buf), "CN %s\n", c->name);
-	do_pend_fcall(buf);
+	broadcast_event(buf);
 }
 
 void

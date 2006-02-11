@@ -1048,7 +1048,10 @@ xwrite(IXPConn *c, Fcall *fcall)
 				return Enocommand;
 			break;
 		case Dpage:
-			/* /TODO: /n/ctl commands */
+			if(!strncmp(buf, "exec ", 5)) {
+				aq = (Page **)cext_array_attach((void **)aq, page[i1], sizeof(Page *), &aqsz);
+				spawn(&buf[5]);
+			}
 			break;
 		case Darea:
 			/* /TODO: /n/{float,n}/ctl commands */
@@ -1257,7 +1260,7 @@ do_fcall(IXPConn *c)
 }
 
 void
-do_pend_fcall(char *event)
+broadcast_event(char *event)
 {
 	size_t i;
 	Fcall *fcall;

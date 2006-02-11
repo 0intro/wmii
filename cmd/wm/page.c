@@ -71,11 +71,10 @@ destroy_page(Page *p)
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &i, 1);
 
-    /* determine what to focus and do that */
     if(npage)
         focus_page(page[sel]);
     else
-		do_pend_fcall("PN -\n");
+		broadcast_event("PN -\n");
 }
 
 int
@@ -96,12 +95,15 @@ focus_page(Page *p)
 	Client *c;
 	int i = page_to_index(p);
 
-	if(!npage || (i == -1))
+	if(!npage || (i == -1)) {
+		fprintf(stderr, "returning from focus_page %d %d\n", npage, i);
+
 		return;
+	}
 	sel = i;
 	for(i = 0; i < nclient; i++) {
 		c = client[i];
-		if(old && (c->area && c->area->page == old))
+		if(old && (old != p) && (c->area && c->area->page == old))
 			XMoveWindow(dpy, c->frame.win, 2 * rect.width, 2 * rect.height);
 		else if(c->area && c->area->page == p) {
 			XMoveWindow(dpy, c->frame.win, c->frame.rect.x, c->frame.rect.y);
@@ -111,7 +113,7 @@ focus_page(Page *p)
 	if((c = sel_client_of_page(p)))
 		focus_client(c);
 	snprintf(buf, sizeof(buf), "PN %d\n", sel + 1);
-	do_pend_fcall(buf);
+	broadcast_event(buf);
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &sel, 1);
 	XSync(dpy, False);
@@ -146,16 +148,6 @@ rectangles(unsigned int *num)
     *num = j;
     return result;
 }
-
-/*
-static void
-xexec(void *obj, char *arg)
-{
-	aq = (Page **)cext_array_attach((void **)aq, obj,
-				sizeof(Page *), &aqsz);
-    wmii_spawn(dpy, arg);
-}
-*/
 
 /*
 static void
@@ -275,9 +267,10 @@ select_page(char *arg)
 		else
 			new = 0;
     } else {
-		int idx = cext_strtonum(arg, 0, npage, &err);
+		int idx = cext_strtonum(arg, 1, npage, &err);
 		if(idx && (idx - 1 < npage))
-			new = idx;
+			new = idx - 1;
 	}
     focus_page(page[new]);
 }
+
