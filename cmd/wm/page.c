@@ -60,38 +60,44 @@ destroy_page(Page *p)
 		destroy_area(p->area[i]);
 	free(p->area);
 
-	for(i = 0; (i < npage) && (p != page[i]); i++);
-	if(sel && (sel == i))
+	if((sel + 1 == npage) && (sel - 1 >= 0))
 		sel--;
-    free(p); 
+
+	cext_array_detach((void **)page, p, &pagesz);
 	npage--;
+    free(p); 
 
 	for(i = 0; i < npage; i++);
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &i, 1);
 
     /* determine what to focus and do that */
-    if(page[sel])
+    if(npage)
         focus_page(page[sel]);
     else
 		do_pend_fcall("PN -\n");
 }
 
+int
+page_to_index(Page *p)
+{
+	int i;
+	for(i = 0; i < npage; i++)
+		if(p == page[i])
+			return i;
+	return -1;
+}
+
 void
 focus_page(Page *p)
 {
-	size_t i;
 	Page *old = page ? page[sel] : nil;
 	char buf[16];
 	Client *c;
+	int i = page_to_index(p);
 
-	if(!page)
+	if(!npage || (i == -1))
 		return;
-
-	for(i = 0; (i < npage) && (page[i] != p); i++);
-	if(i == sel)
-		return;
-
 	sel = i;
 	for(i = 0; i < nclient; i++) {
 		c = client[i];

@@ -265,6 +265,7 @@ void focus_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
 int pid_to_index(unsigned short id);
 void select_page(char *arg);
+int page_to_index(Page *p);
 
 /* spawn.c */
 void spawn(char *cmd);

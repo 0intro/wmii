@@ -51,7 +51,7 @@ scale_rect(XRectangle * from_dim, XRectangle * to_dim,
 static void
 draw_pager_client(Client *c, Draw *d)
 {
-	if(c == sel_client())
+	if(c == sel_client_of_page(c->area->page))
     	d->color = def.sel;
     else
     	d->color = def.norm;

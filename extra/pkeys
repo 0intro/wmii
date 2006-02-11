@@ -1,6 +1,0 @@
-#!/usr/local/9/bin/rc
-
-mdir=/keys/mode/
-for (mode in `{wmiir read $mdir})
-	for (key in `{wmiir read $mdir$mode})
-		echo $mode$key '->' `{wmiir read $mdir$mode$key}

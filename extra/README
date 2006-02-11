@@ -1,8 +1,0 @@
-Scripts in this directory have been contributed by various different
-people. For License information look into the source code of the
-appropriate script.
-
-
-Name:           pkeys
-Purpose:        Print the current key bindings.
-Requirements:   9base
