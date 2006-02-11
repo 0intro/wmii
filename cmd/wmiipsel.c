@@ -10,12 +10,12 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
-static char version[] = "wmiiplumb - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
+static char version[] = "wmiipsel - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
 static void
 usage()
 {
-    fprintf(stderr, "%s\n", "usage: wmiiplumb [-v]\n");
+    fprintf(stderr, "%s\n", "usage: wmiipsel [-v]\n");
     exit(1);
 }
 
@@ -59,7 +59,7 @@ main(int argc, char **argv)
     }
     dpy = XOpenDisplay(0);
     if(!dpy) {
-        fprintf(stderr, "%s", "wmiiplumb: cannot open display\n");
+        fprintf(stderr, "%s", "wmiipsel: cannot open display\n");
         exit(1);
     }
     xa_clip_string = XInternAtom(dpy, "PLUMB_STRING", False);

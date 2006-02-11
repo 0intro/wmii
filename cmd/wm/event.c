@@ -68,7 +68,7 @@ handle_buttonpress(XEvent *e)
 		size_t i;
 		for(i = 0; i < nlabel; i++)
 			if(blitz_ispointinrect(ev->x, ev->y, &label[i]->rect)) {
-				snprintf(buf, sizeof(buf), "L%d B%d\n", i, ev->button);
+				snprintf(buf, sizeof(buf), "LB %d %d\n", i + 1, ev->button);
 				do_pend_fcall(buf);
 			}
 	}
@@ -107,8 +107,8 @@ handle_buttonpress(XEvent *e)
 		else if(ev->button == Button1)
 			focus_client(c);
 	}
-	if(c) {
-		snprintf(buf, sizeof(buf), "Button%dPress\n", ev->button);
+	if(c && c->area) {
+		snprintf(buf, sizeof(buf), "CB %d %d\n", client_to_index(c) + 1, ev->button);
 		do_pend_fcall(buf);
 	}
 }
@@ -126,7 +126,7 @@ handle_configurerequest(XEvent *e)
 
     if(c) {
 
-        if(c->page) {
+        if(c->area) {
             bw = c->frame.border;
             bh = bar_height(c);
         }
@@ -146,7 +146,7 @@ handle_configurerequest(XEvent *e)
 
         gravitate(c, bh ? bh : bw, bw, 0);
 
-        if(c->page) {
+        if(c->area) {
             c->frame.rect.x = wc.x = c->rect.x - bw;
             c->frame.rect.y = wc.y = c->rect.y - (bh ? bh : bw);
             c->frame.rect.width = wc.width = c->rect.width + 2 * bw;
@@ -161,7 +161,7 @@ handle_configurerequest(XEvent *e)
 
     wc.x = ev->x;
     wc.y = ev->y;
-    if(c && c->page) {
+    if(c && c->area) {
         /* if so, then bw and bh are already initialized */
         wc.x = bw;
         wc.y = (bh ? bh : bw);
@@ -245,7 +245,7 @@ handle_maprequest(XEvent *e)
     c = win_to_client(ev->window);
     if(!c)
         c = alloc_client(ev->window, &wa);
-    if(!c->page)
+    if(!c->area)
         attach_client(c);
 }
 

@@ -74,7 +74,7 @@ destroy_page(Page *p)
     if(page[sel])
         focus_page(page[sel]);
     else
-		do_pend_fcall("NoPage\n");
+		do_pend_fcall("PN -\n");
 }
 
 void
@@ -95,16 +95,16 @@ focus_page(Page *p)
 	sel = i;
 	for(i = 0; i < nclient; i++) {
 		c = client[i];
-		if(old && (c->page == old))
+		if(old && (c->area && c->area->page == old))
 			XMoveWindow(dpy, c->frame.win, 2 * rect.width, 2 * rect.height);
-		else if(c->page == p) {
+		else if(c->area && c->area->page == p) {
 			XMoveWindow(dpy, c->frame.win, c->frame.rect.x, c->frame.rect.y);
 			draw_client(c);
 		}
 	}
 	if((c = sel_client_of_page(p)))
 		focus_client(c);
-	snprintf(buf, sizeof(buf), "P %d\n", sel + 1);
+	snprintf(buf, sizeof(buf), "PN %d\n", sel + 1);
 	do_pend_fcall(buf);
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &sel, 1);
@@ -260,17 +260,17 @@ select_page(char *arg)
     if(!npage || !arg)
         return;
     if(!strncmp(arg, "prev", 5)) {
-		if(new > 0)
-			for(new = 0; page[new]; new++);
+		if(!new)
+			new = npage;
 		new--;
     } else if(!strncmp(arg, "next", 5)) {
-		if(page[new + 1])
+		if(new < npage - 1)
 			new++;
 		else
 			new = 0;
     } else {
 		int idx = cext_strtonum(arg, 0, npage, &err);
-		if(idx < npage)
+		if(idx && (idx - 1 < npage))
 			new = idx;
 	}
     focus_page(page[new]);

@@ -81,8 +81,8 @@ update_column_width(Page *p)
 void
 detach_column(Client *c)
 {
-	Page *p = c->page;
 	Area *col = c->area;
+	Page *p = col->page;
 
 	cext_array_detach((void **)col->client, c, &col->clientsz);
 	if(!col->client[0]) {
@@ -111,8 +111,8 @@ match_horiz(Area *col, XRectangle *r)
 static void
 drop_resize(Client *c, XRectangle *new)
 {
-	Page *p = c->page;
     Area *west = nil, *east = nil, *col = c->area;
+	Page *p = col->page;
     Client *north = nil, *south = nil;
 	size_t i;
 
@@ -162,8 +162,8 @@ drop_resize(Client *c, XRectangle *new)
 static void
 drop_moving(Client *c, XRectangle *new, XPoint * pt)
 {
-	Page *p = c->page;
     Area *tgt = nil, *src = c->area;
+	Page *p = src->page;
 	size_t i;
 
     if(!pt)
@@ -209,8 +209,8 @@ resize_column(Client *c, XRectangle *r, XPoint *pt)
 void
 select_column(Client *c, char *arg)
 {
-	Page *p = c->page;
     Area *col = c->area;
+	Page *p = col->page;
 	size_t i;
 
 	for(i = 0; (i < col->clientsz) && col->client[i] && (col->client[i] != c); i++);

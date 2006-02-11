@@ -62,6 +62,7 @@ typedef struct Client Client;
 struct Area {
 	unsigned short id;
     Client **client;
+	Page *page;
 	size_t clientsz;
 	size_t sel;
 	size_t nclient;
@@ -84,7 +85,6 @@ struct Client {
     unsigned int ignore_unmap;
     Bool destroyed;
 	Bool maximized;
-	Page *page;
 	Area *area;
     Window win;
     Window trans;
@@ -196,7 +196,7 @@ unsigned int valid_mask, num_lock_mask;
 /* area.c */
 Area *alloc_area(Page *p);
 void destroy_area(Area *a);
-int area_to_index(Page *p, Area *a);
+int area_to_index(Area *a);
 int aid_to_index(Page *p, unsigned short id);
 
 /* bar.c */
@@ -226,6 +226,7 @@ Client *win_to_frame(Window w);
 void resize_client(Client *c, XRectangle * r, XPoint * pt);
 unsigned int bar_height(Client *c);
 int cid_to_index(Area *a, unsigned short id);
+int client_to_index(Client *c);
 
 /* event.c */
 void init_x_event_handler();

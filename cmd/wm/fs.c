@@ -1112,7 +1112,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return "increment value out of range 0, 1";
 		def.inc = i;
 		for(i = 0; i < nclient; i++)
-			if(client[i]->page)
+			if(client[i]->area)
 				resize_client(client[i], &client[i]->frame.rect, 0);
 		break;
 	case Fgeom:
@@ -1175,7 +1175,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		def.selcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
 		for(i = 0; i < nclient; i++)
-			if(client[i]->page == page[sel])
+			if(client[i]->area->page == page[sel])
 				draw_client(client[i]);
 		break;
 	case Fnormcolors:
@@ -1189,7 +1189,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		def.normcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
 		for(i = 0; i < nclient; i++)
-			if(client[i]->page == page[sel])
+			if(client[i]->area->page == page[sel])
 				draw_client(client[i]);
 		break;
 	case Ffont:
@@ -1200,7 +1200,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		XFreeFont(dpy, xfont);
     	xfont = blitz_getfont(dpy, def.font);
 		for(i = 0; i < nclient; i++) {
-			if(!client[i]->page)
+			if(!client[i]->area->page)
 				continue;
 			resize_client(client[i], &client[i]->frame.rect, 0);
 		}

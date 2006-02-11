@@ -12,6 +12,7 @@ alloc_area(Page *p)
 {
 	static unsigned short id = 1;
 	Area *a = cext_emallocz(sizeof(Area));
+	a->page = p;
 	a->id = id++;
 	p->area = (Area **)cext_array_attach((void **)p->area, a, sizeof(Area *), &p->areasz);
 	p->narea++;
@@ -29,9 +30,10 @@ destroy_area(Area *a)
 }
 
 int
-area_to_index(Page *p, Area *a)
+area_to_index(Area *a)
 {
 	int i;
+	Page *p = a->page;
 	for(i = 0; i < p->narea; i++)
 		if(p->area[i] == a)
 			return i;

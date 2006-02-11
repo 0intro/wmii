@@ -94,7 +94,7 @@ static void
 client_name_event(Client *c)
 {
 	char buf[256];
-	snprintf(buf, sizeof(buf), "C %s\n", c->name);
+	snprintf(buf, sizeof(buf), "CN %s\n", c->name);
 	do_pend_fcall(buf);
 }
 
@@ -106,9 +106,9 @@ focus_client(Client *c)
 	Client *old = sel_client();
 	
 	/* setup indexes */
-	if(c->page != p) {
-		focus_page(c->page);
-		p = c->page;
+	if(c->area->page != p) {
+		focus_page(c->area->page);
+		p = c->area->page;
 	}
 	for(i = 0; i < p->narea; i++) {
 		Area *a = p->area[i];
@@ -167,7 +167,7 @@ configure_client(Client * c)
     e.window = c->win;
     e.x = c->rect.x;
     e.y = c->rect.y;
-	if(c->page) {
+	if(c->area) {
     	e.x += c->frame.rect.x;
     	e.y += c->frame.rect.y;
 	}
@@ -224,7 +224,7 @@ handle_client_property(Client *c, XPropertyEvent *e)
 			cext_strlcpy(c->name, (char*) name.value, sizeof(c->name));
         	free(name.value);
 		}
-        if(c->page)
+        if(c->area)
             draw_client(c);
 		client_name_event(c);
         break;
@@ -375,7 +375,6 @@ attach_client(Client *c)
 		p = page[sel];
 
     reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
-	c->page = p;
 
 	if(p->sel)
 		attach_column(c);
@@ -384,6 +383,7 @@ attach_client(Client *c)
 		a->client = (Client **)cext_array_attach((void **)a->client, c,
 						sizeof(Client *), &a->clientsz);
 		a->nclient++;
+		c->area = a;
 	}
 	resize_client(c, &c->frame.rect, nil);
     map_client(c);
@@ -394,16 +394,16 @@ attach_client(Client *c)
 void
 detach_client(Client *c, Bool unmap)
 {
-	if(c->page) {
+	if(c->area) {
 		size_t i;
 		for(i = 0; i < nclient; i++)
 			if(client[i]->revert == c)
 				client[i]->revert = nil;
 
-		if(area_to_index(c->page, c->area) > 0)
+		if(area_to_index(c->area) > 0)
 			detach_column(c);
 		else {
-			Area *a = c->page->area[0];
+			Area *a = c->area;
 			cext_array_detach((void **)a->client, c, &a->clientsz);
 			a->nclient--;
 			if(!c->destroyed) {
@@ -419,7 +419,7 @@ detach_client(Client *c, Bool unmap)
 			}
 		}
 	}
-	c->page = nil;
+	c->area = nil;
 	if(c->revert)
 		focus_client(c->revert);
     if(c->destroyed)
@@ -511,7 +511,7 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
     unsigned int bh = bar_height(c);
     unsigned int bw = c->frame.border;
 
-	if(area_to_index(c->page, c->area) > 0)
+	if(area_to_index(c->area) > 0)
 		resize_column(c, r, pt);
 	else
 		c->frame.rect = *r;
@@ -563,3 +563,13 @@ cid_to_index(Area *a, unsigned short id)
 	return -1;
 }
 
+int
+client_to_index(Client *c)
+{
+	int i;
+	Area *a = c->area;
+	for(i = 0; i < a->nclient; i++)
+		if(a->client[i] == c)
+			return i;
+	return -1;
+}
