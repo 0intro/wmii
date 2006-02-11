@@ -84,6 +84,11 @@ handle_buttonpress(XEvent *e)
 			else 
 				mouse_resize(c, align);
 		}
+	
+		if(c && c->area) {
+			snprintf(buf, sizeof(buf), "CB %d %d\n", client_to_index(c) + 1, ev->button);
+			do_pend_fcall(buf);
+		}
 	}
 	else if((c = win_to_client(ev->window))) {
 		ev->state &= valid_mask;
@@ -106,11 +111,13 @@ handle_buttonpress(XEvent *e)
 		}
 		else if(ev->button == Button1)
 			focus_client(c);
+
+		if(c && c->area) {
+			snprintf(buf, sizeof(buf), "CB %d %d\n", client_to_index(c) + 1, ev->button);
+			do_pend_fcall(buf);
+		}
 	}
-	if(c && c->area) {
-		snprintf(buf, sizeof(buf), "CB %d %d\n", client_to_index(c) + 1, ev->button);
-		do_pend_fcall(buf);
-	}
+	
 }
 
 static void
