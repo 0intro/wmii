@@ -96,6 +96,8 @@ fn items {
         }
     } | sort
 }
+rm -f /tmp/ns.$USER.$DISPLAY/p.menu
+@ items $OLD_PATH > /tmp/ns.$USER.$DISPLAY/p.menu
 
 # MISC
 xsetroot -solid '#1a1c10'
@@ -119,7 +121,7 @@ while(event=`{read}) {
 		case $MODKEY-Control-q,y
 			xwrite /ctl quit
 		case $MODKEY-Control-p
-			extern `{items $OLD_PATH | wmiimenu} &
+			extern `{cat /tmp/ns.$USER.$DISPLAY/p.menu | wmiimenu} &
 		case $MODKEY-Control-a
 			`{items CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu} &
 		case $MODKEY-t
