@@ -1,15 +1,10 @@
 Abstract
 --------
-window manager improved 2 (wmii) [1] is an improved, modularized and
-lightweight X11 window manager which supports tabbed, tiled and
-conventional window management through layouts.
-wmii consists of components that are independent processes and
-communicate via a socket-based virtual filesystem which is oriented
-on the "everything is file" paradigm of the Plan 9 [2] operating system.
-The core distribution of wmii contains the window manager itself,
-a master file system routing utility (wmiifs), a generic bar (wmiibar),
-a shortcut handler (wmiikeys), and a generic interaction menu (wmiimenu)
-beside several tiny utilities like wmiir, wmiiplumb, and wmiiwarp.
+window manager improved 2 is a dynamic window manager for X11.
+It supports classic and tiled window management with extended
+keyboard, mouse, and 9P-based [2] remote control.
+It consists of the wmiiwm(1) window manager, the wmiir(1)
+remote access utility, and a tiny wmiimenu(1).
 
 
 Requirements
@@ -52,22 +47,22 @@ This will start wmii on display :1 of the host foo.bar.
 
 Configuration
 -------------
-The configuration of wmii is done by customizing the existing actions.
-Customizing an action means copying the appropriate file from the directory
-$WMII_CONFDIR (usually /usr/local/etc/wmii-3) to
-$HOME/.wmii-3 and editing it to fit your needs. The action of main
-interest is called 'wmiirc': it is executed on startup.
+The configuration of wmii is done by customizing the wmiirc script,
+which remotly controls the window manager and handles various events
+the window manager reports while runtime.
+To customize the wmiirc, copy the file from PREFIX/etc/wmii-3
+(usually /usr/local/etc/wmii-3) to $HOME/.wmii-3 and edit it to fit
+your needs.
 
 
 Credits
 -------
-Beside all thanks to the wmi contributors, the following people have
-contributed especially to wmii in various ways:
+The following people have contributed especially to wmii in various ways:
 
 - Christoph Wegscheider <christoph (dot) wegscheider (at) wegi (dot) net>
 - Georg Neis <gn (at) wmii (dot) de>
 - Uwe Zeisberger <zeisberg (at) informatik (dot) uni-freiburg (dot) de>
-- Uriel <uriell (at) binarydream (dot) org>
+- Uriel <uriel (at) wmii (dot) de>
 - Scot Doyle <scot (at) scotdoyle (dot) com>
 - Sebastian Hartmann <seb (dot) wmi (at) gmx (dot) de>
 - Bernhard Leiner <bleiner (at) gmail (dot) com>
@@ -85,7 +80,5 @@ contributed especially to wmii in various ways:
 References
 ----------
 [1] http://wmii.de
-[2] http://www.cs.bell-labs.com/plan9dist/
+[2] http://www.cs.bell-labs.com/sys/man/5/INDEX.html 
 [3] http://wmii.de/repos/9base/
-
---Anselm R. Garbe
