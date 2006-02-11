@@ -26,7 +26,7 @@ CLIENT_BORDER=3
 MODKEY=Alt
 
 
-# WMIIWM CONFIGURATION
+# WM CONFIGURATION
 xwrite /def/bar $CLIENT_BAR
 xwrite /def/border $CLIENT_BORDER
 xwrite /def/inc 1
@@ -43,10 +43,13 @@ for(page in `{wmiir read / | grep '^d' | awk '{print $10}' | grep -v new}) {
 	}
 }
 
+# KEYS CONFIGURATION
 for(i in \
 	$MODKEY-Control-q,y \
 	$MODKEY-Control-w,y \
 	$MODKEY-Control-c \
+	$MODKEY-Control-p \
+	$MODKEY-Control-a \
 	$MODKEY-t \
 	$MODKEY-d \
 	$MODKEY-a \
@@ -70,7 +73,7 @@ for(i in 1 2 3 4 5 6 7 8 9)
 	xwrite /ctl 'grab '^$MODKEY^'-Shift-'^$i
 
 
-# WMIIBAR CONFIGURATION
+# BAR CONFIGURATION
 for(i in 1 2 3)
 	wmiir remove /bar/1 >/dev/null >[2=1]
 xwrite /bar/new/colors $WMII_NORMCOLORS
@@ -79,9 +82,23 @@ xwrite /bar/new/colors $WMII_NORMCOLORS
 xwrite /bar/1/data 1
 xwrite /bar/expand 2
 
+# MENU CONFIGURATION
+nl='
+'
+fn items {
+    ifs=:$nl { dirs=`{echo $1} }
+    {
+        for(dir in $dirs) {
+            for(file in $dir/*) {
+                if(! ~ $file $dir^'/*' && ! test -d $file && test -x $file)
+					echo `{basename $file}
+            }
+        }
+    } | sort
+}
 
 # MISC
-xsetroot -solid '#4a551c'
+xsetroot -solid '#1a1c10'
 status &
 
 # EVENT LOOP
@@ -101,6 +118,10 @@ while(event=`{read}) {
 			wmiirc &
 		case $MODKEY-Control-q,y
 			xwrite /ctl quit
+		case $MODKEY-Control-p
+			extern `{items $OLD_PATH | wmiimenu} &
+		case $MODKEY-Control-a
+			`{items CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu} &
 		case $MODKEY-t
 			extern xterm -rv &
 		case $MODKEY-d

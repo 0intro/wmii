@@ -12,13 +12,13 @@ OBJ_menu = ${SRC_menu:.c=.o}
 SRC_r = wmiir.c
 OBJ_r = ${SRC_r:.c=.o}
 
-SRC_plumb = wmiiplumb.c
-OBJ_plumb = ${SRC_plumb:.c=.o}
+SRC_psel = wmiipsel.c
+OBJ_psel = ${SRC_psel:.c=.o}
 
 SRC_warp = wmiiwarp.c
 OBJ_warp = ${SRC_warp:.c=.o}
 
-all: wmiimenu wmiir wmiiplumb wmiiwarp
+all: wmiimenu wmiir wmiipsel wmiiwarp
 	@echo built wmii commands
 
 .c.o:
@@ -39,13 +39,13 @@ wmiir: ${OBJ_r}
 #	@${CC} -o $@ ${OBJ_r} -g -static -L${PREFIX}/lib -L/usr/lib -lc \
 #		-L../libixp -lixp -L../libcext -lcext -lsocket
 
-wmiiplumb: ${OBJ_plumb}
+wmiipsel: ${OBJ_psel}
 	@echo LD $@
-	@${CC} -o $@ ${OBJ_plumb} ${LDFLAGS}
+	@${CC} -o $@ ${OBJ_psel} ${LDFLAGS}
 
 wmiiwarp: ${OBJ_warp}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ_warp} ${LDFLAGS}
 
 clean:
-	rm -f wmiimenu wmiir wmiiplumb wmiiwarp *.o
+	rm -f wmiimenu wmiir wmiipsel wmiiwarp *.o

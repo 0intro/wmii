@@ -5,9 +5,8 @@ include config.mk
 
 SUBDIRS = libcext liblitz libixp cmd
 
-BIN = cmd/wm/wmii cmd/wm/wmiiwm \
-	cmd/wmiiplumb cmd/wmiir cmd/wmiiwarp
-#cmd/wmiimenu cmd/wmiiplumb cmd/wmiir cmd/wmiiwarp
+BIN = cmd/wm/wmii cmd/wm/wmiiwm cmd/wmiimenu \
+	cmd/wmiipsel cmd/wmiir cmd/wmiiwarp
 
 MAN1 = cmd/wm/wmii.1 cmd/wm/wmiiwm.1 \
 	cmd/wmiimenu.1 cmd/wmiir.1
@@ -46,7 +45,7 @@ install: all
 	@echo installed executable files to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${CONFPREFIX}/wmii-3
 	@cd rc; for i in *; do \
-		sed 's|9PREFIX|${9PREFIX}|' <$$i >${DESTDIR}${CONFPREFIX}/wmii-3/$$i; \
+		sed 's|CONFPREFIX|${CONFPREFIX}|; s|9PREFIX|${9PREFIX}|' <$$i >${DESTDIR}${CONFPREFIX}/wmii-3/$$i; \
 		chmod 755 ${DESTDIR}${CONFPREFIX}/wmii-3/$$i; \
 	done
 	@echo installed rc scripts to ${DESTDIR}${CONFPREFIX}/wmii-3
