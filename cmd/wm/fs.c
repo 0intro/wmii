@@ -776,7 +776,8 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case Fevent:
-			ixp_server_enqueue_fcall(c, fcall);
+			memcpy(&c->pending, fcall, sizeof(Fcall));
+			c->is_pending = 1;
 			return nil;
 			break;
 		default:
@@ -912,7 +913,8 @@ xread(IXPConn *c, Fcall *fcall)
 			return Enoperm;
 			break;
 		case Fevent:
-			ixp_server_enqueue_fcall(c, fcall);
+			memcpy(&c->pending, fcall, sizeof(Fcall));
+			c->is_pending = 1;
 			return nil;
 			break;
 		case Fborder:
@@ -1263,26 +1265,24 @@ void
 broadcast_event(char *event)
 {
 	size_t i;
-	Fcall *fcall;
+	fprintf(stderr, "broadcasting: %s", event);
 	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++) {
 		IXPConn *c = srv.conn[i];
-		/* all pending TREADs are on /event, so no qid checking necessary */
-		while((fcall = ixp_server_dequeue_fcall_id(c, TREAD))) {
-			IXPMap *m = ixp_server_fid2map(c, fcall->fid);
-			unsigned char *p = fcall->data;
-
+		if(c->is_pending) {
+			/* pending reads on /event only, no qid checking */
+			IXPMap *m = ixp_server_fid2map(c, c->pending.fid);
+			unsigned char *p = c->pending.data;
 			if(!m) {
-				if(ixp_server_respond_error(c, fcall, Enofid))
+				if(ixp_server_respond_error(c, &c->pending, Enofid))
 					break;
 			}
 			else if(qpath_type(m->qid.path) == Fevent) {
-				fcall->count = strlen(event);
-				memcpy(p, event, fcall->count);
-				fcall->id = RREAD;
-				if(ixp_server_respond_fcall(c, fcall))
+				c->pending.count = strlen(event);
+				memcpy(p, event, c->pending.count);
+				c->pending.id = RREAD;
+				if(ixp_server_respond_fcall(c, &c->pending))
 					break;
 			}
-			free(fcall);
 		}
 	}
 }

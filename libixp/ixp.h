@@ -210,8 +210,8 @@ struct IXPConn {
     void (*close) (IXPConn *);
 	IXPMap **map;
 	size_t mapsz;
-	Fcall **pend;
-	size_t pendsz;
+	Fcall pending;
+	int is_pending;
 };
 
 struct IXPServer {
@@ -284,11 +284,9 @@ IXPConn *ixp_server_open_conn(IXPServer *s, int fd,
 void ixp_server_close_conn(IXPConn *c);
 char *ixp_server_loop(IXPServer *s);
 IXPMap *ixp_server_fid2map(IXPConn *c, unsigned int fid);
-void ixp_server_enqueue_fcall(IXPConn *c, Fcall *fcall);
 unsigned int ixp_server_receive_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr);
-Fcall *ixp_server_dequeue_fcall_id(IXPConn *c, unsigned char id);
 void ixp_server_close(IXPServer *s);
 
 /* socket.c */

@@ -43,11 +43,6 @@ ixp_server_close_conn(IXPConn *c)
 			free(c->map[i]);
 		free(c->map);
 	}
-	if(c->pend) {
-		for(i = 0; (i < c->pendsz) && c->pend[i]; i++)
-			free(c->pend[i]);
-		free(c->pend);
-	}
 	shutdown(c->fd, SHUT_RDWR);
 	close(c->fd);
 	free(c);
@@ -106,30 +101,6 @@ ixp_server_fid2map(IXPConn *c, unsigned int fid)
 		if(c->map[i]->fid == fid)
 			return c->map[i];
 	return nil;
-}
-
-void
-ixp_server_enqueue_fcall(IXPConn *c, Fcall *fcall)
-{
-	Fcall *new = cext_emallocz(sizeof(Fcall));
-	memcpy(new, fcall, sizeof(Fcall));
-	c->pend = (Fcall **)cext_array_attach((void **)c->pend,
-			new, sizeof(Fcall *), &c->pendsz);
-}
-
-Fcall *
-ixp_server_dequeue_fcall_id(IXPConn *c, unsigned char id)
-{
-	Fcall *fcall = nil;
-	size_t i;
-	for(i = 0; (i < c->pendsz) && c->pend[i]; i++)
-		if(c->pend[i]->id == id) {
-			fcall = c->pend[i];
-			cext_array_detach((void **)c->pend, fcall, &c->pendsz);
-			break;
-		}
-	/* free it */
-	return fcall;
 }
 
 unsigned int
