@@ -97,7 +97,7 @@ fn items {
     } | sort
 }
 rm -f /tmp/ns.$USER.$DISPLAY/p.menu
-@ items $OLD_PATH > /tmp/ns.$USER.$DISPLAY/p.menu
+@ items $OLD_PATH > /tmp/ns.$USER.$DISPLAY/p.menu &
 
 # MISC
 xsetroot -solid '#1a1c10'
