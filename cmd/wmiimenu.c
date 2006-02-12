@@ -87,7 +87,6 @@ update_items(char *pattern)
     size_t plen = strlen(pattern);
     int i;
 
-    cmdw = 0;
 	curroff = prevoff = nextoff = 0;
 	sel = -1;
 
@@ -104,9 +103,11 @@ update_items(char *pattern)
             nitem++;
 		}
     }
+	if(nitem)
+		sel = 0;
     
     update_offsets();
-	return nitem++;
+	return nitem;
 }
 
 /* creates draw structs for menu mode drawing */
@@ -124,13 +125,13 @@ draw_menu()
     /* print command */
     draw.align = WEST;
     draw.data = text;
-    if(cmdw && sel >= 0)
+    if(cmdw && nitem)
         draw.rect.width = cmdw;
     offx += draw.rect.width;
     blitz_drawlabelnoborder(dpy, &draw);
 
     draw.align = CENTER;
-    if(sel >= 0) {
+    if(nitem) {
         draw.color = normcolor;
         draw.data = prevoff < curroff ? "<" : nil;
         draw.rect.x = offx;
@@ -218,7 +219,7 @@ handle_kpress(XKeyEvent * e)
 		sel--;
         break;
     case XK_Tab:
-        if(sel < 0)
+        if(!nitem)
             return;
         cext_strlcpy(text, item[sel], sizeof(text));
         update_items(text);
@@ -264,10 +265,12 @@ handle_kpress(XKeyEvent * e)
     }
     if(sel >= 0) {
         if(sel == curroff - 1) {
-			sel = prevoff;
+			curroff = prevoff;
             update_offsets();
-        } else if(sel == nextoff)
+        } else if((sel == nextoff) && (nitem > nextoff)) {
+			curroff = nextoff;
             update_offsets();
+		}
     }
     draw_menu();
 }
@@ -301,8 +304,9 @@ read_allitems()
 	size_t len = 0, max = 0;
 
 	while(fgets(buf, sizeof(buf), stdin)) {
+		len = strlen(buf);
+		buf[len - 1] = 0; /* removing \n */
 		p = strdup(buf);
-		len = strlen(p);
         if(max < len) {
 			maxname = p;
             max = len;
