@@ -36,31 +36,29 @@ ixp_client_do_fcall(IXPClient * c)
 }
 
 int
-ixp_client_init(IXPClient *c, char *sockfile, unsigned int rootfid)
+ixp_client_dial(IXPClient *c, char *sockfile, unsigned int rootfid)
 {
     if((c->fd = ixp_connect_sock(sockfile)) < 0) {
         c->errstr = "cannot connect server";
         return -1;
     }
-    /* version */
     c->fcall.id = TVERSION;
     c->fcall.tag = IXP_NOTAG;
     c->fcall.maxmsg = IXP_MAX_MSG;
     cext_strlcpy(c->fcall.version, IXP_VERSION, sizeof(c->fcall.version));
     if(ixp_client_do_fcall(c) == -1) {
 		fprintf(stderr, "error: %s\n", c->fcall.errstr);
-        ixp_client_deinit(c);
+        ixp_client_hangup(c);
         return -1;
     }
     if(strncmp(c->fcall.version, IXP_VERSION, strlen(IXP_VERSION))) {
 		fprintf(stderr, "error: %s\n", c->fcall.errstr);
         c->errstr = "9P versions differ";
-        ixp_client_deinit(c);
+        ixp_client_hangup(c);
         return -1;           /* we cannot handle this version */
     }
     c->root_fid = rootfid;
 
-    /* attach */
     c->fcall.id = TATTACH;
     c->fcall.tag = IXP_NOTAG;
     c->fcall.fid = c->root_fid;
@@ -69,7 +67,7 @@ ixp_client_init(IXPClient *c, char *sockfile, unsigned int rootfid)
     c->fcall.aname[0] = 0;
     if(ixp_client_do_fcall(c) == -1) {
 		fprintf(stderr, "error: %s\n", c->fcall.errstr);
-        ixp_client_deinit(c);
+        ixp_client_hangup(c);
         return -1;
     }
     c->root_qid = c->fcall.qid;
@@ -81,7 +79,6 @@ ixp_client_remove(IXPClient * c, unsigned int newfid, char *filepath)
 {
     if(ixp_client_walk(c, newfid, filepath) == -1)
         return -1;
-    /* remove */
     c->fcall.id = TREMOVE;
     c->fcall.tag = IXP_NOTAG;
     c->fcall.fid = newfid;
@@ -92,7 +89,6 @@ int
 ixp_client_create(IXPClient * c, unsigned int dirfid, char *name,
                   unsigned int perm, unsigned char mode)
 {
-    /* create */
     c->fcall.id = TCREATE;
     c->fcall.tag = IXP_NOTAG;
     c->fcall.fid = dirfid;
@@ -107,7 +103,6 @@ ixp_client_walk(IXPClient * c, unsigned int newfid, char *filepath)
 {
 	unsigned int i;
 	char *wname[IXP_MAX_WELEM];
-    /* walk */
     c->fcall.id = TWALK;
     c->fcall.fid = c->root_fid;
     c->fcall.newfid = newfid;
@@ -128,7 +123,6 @@ ixp_client_open(IXPClient * c, unsigned int newfid, char *filepath,
     if(ixp_client_walk(c, newfid, filepath) == -1)
         return -1;
 
-    /* open */
     c->fcall.id = TOPEN;
     c->fcall.tag = IXP_NOTAG;
     c->fcall.fid = newfid;
@@ -142,7 +136,6 @@ ixp_client_read(IXPClient * c, unsigned int fid, unsigned long long offset,
 {
     unsigned int bytes = c->fcall.iounit;
 
-    /* read */
     c->fcall.id = TREAD;
     c->fcall.tag = IXP_NOTAG;
     c->fcall.fid = fid;
@@ -164,7 +157,6 @@ ixp_client_write(IXPClient * c, unsigned int fid,
         c->errstr = "iounit exceeded";
         return -1;
     }
-    /* write */
     c->fcall.id = TWRITE;
     c->fcall.tag = IXP_NOTAG;
     c->fcall.fid = fid;
@@ -179,7 +171,6 @@ ixp_client_write(IXPClient * c, unsigned int fid,
 int
 ixp_client_close(IXPClient * c, unsigned int fid)
 {
-    /* clunk */
     c->fcall.id = TCLUNK;
     c->fcall.tag = IXP_NOTAG;
     c->fcall.fid = fid;
@@ -187,7 +178,7 @@ ixp_client_close(IXPClient * c, unsigned int fid)
 }
 
 void
-ixp_client_deinit(IXPClient * c)
+ixp_client_hangup(IXPClient * c)
 {
     /* session finished, now shutdown */
     if(c->fd) {

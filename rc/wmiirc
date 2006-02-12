@@ -67,10 +67,10 @@ for(i in \
 	$MODKEY-Shift-h \
 	$MODKEY-Shift-l \
 	$MODKEY-Shift-p)
-	xwrite /ctl 'grab '^$i
+	echo -n | wmiir create /keys/$i
 
 for(i in `{seq 1 9})
-	xwrite /ctl 'grab '^$MODKEY^'-Shift-'^$i
+	echo -n | wmiir create /keys/$MODKEY-$i
 
 
 # BAR CONFIGURATION

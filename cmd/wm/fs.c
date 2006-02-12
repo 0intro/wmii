@@ -474,6 +474,28 @@ xwalk(IXPConn *c, Fcall *fcall)
 }
 
 static char *
+xcreate(IXPConn *c, Fcall *fcall)
+{
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+
+    if(!(fcall->mode | IXP_OWRITE))
+        return Enomode;
+    if(!m)
+        return Enofid;
+	if(!strncmp(fcall->name, ".", 2) || !strncmp(fcall->name, "..", 3))
+		return "illegal file name";
+	if(qpath_type(m->qid.path) != Dkeys)
+		return Enoperm;
+	grab_key(create_key(fcall->name));
+	mkqid(&m->qid, fcall->name, &m->qid, False);
+    fcall->id = RCREATE;
+    fcall->qid = m->qid;
+    fcall->iounit = WMII_IOUNIT;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
+}
+
+static char *
 xopen(IXPConn *c, Fcall *fcall)
 {
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
@@ -1042,10 +1064,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 				attach_detached_client();
 			else if(!strncmp(buf, "select", 6))
 				select_page(&buf[7]);
-			else if(!strncmp(buf, "grab ", 5)) {
-				if(strlen(&buf[5]))
-					grab_key(create_key(&buf[5]));
-			}
 			else
 				return Enocommand;
 			break;
@@ -1211,6 +1229,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 		}
 		update_bar_geometry();
 		break;
+	case Fkey:
+		break;
 	default:
 		return "invalid write";
 		break;
@@ -1247,6 +1267,7 @@ do_fcall(IXPConn *c)
 		case TVERSION: errstr = xversion(c, &fcall); break;
 		case TATTACH: errstr = xattach(c, &fcall); break;
 		case TWALK: errstr = xwalk(c, &fcall); break;
+		case TCREATE: errstr = xcreate(c, &fcall); break;
 		case TOPEN: errstr = xopen(c, &fcall); break;
 		case TREMOVE: errstr = xremove(c, &fcall); break;
 		case TREAD: errstr = xread(c, &fcall); break;

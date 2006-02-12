@@ -55,9 +55,8 @@ xcreate(char *file)
         fprintf(stderr, "wmiir: cannot walk to '%s': %s\n", file, c.errstr);
         return -1;
     }
-    /* create */
     p++;
-    if(ixp_client_create(&c, fid, p, (unsigned int) 0xff, IXP_OWRITE) == -1) {
+    if(ixp_client_create(&c, fid, p, DMWRITE, IXP_OWRITE) == -1) {
         fprintf(stderr, "wmiir: cannot create file '%s': %s\n", p, c.errstr);
         return -1;
     }
@@ -169,14 +168,12 @@ xread(char *file)
 	size_t ndircontent = 0;
 	unsigned long long offset = 0;
 
-    /* open */
     if(ixp_client_open(&c, fid, file, IXP_OREAD) == -1) {
         fprintf(stderr, "wmiir: cannot open file '%s': %s\n", file, c.errstr);
         return -1;
     }
     is_directory = !c.fcall.nwqid || (c.fcall.qid.type == IXP_QTDIR);
 
-    /* read */
 	while((count = ixp_client_read(&c, fid, offset, result, IXP_MAX_MSG)) > 0) {
 		if(is_directory) {
 			if(ndircontent + count > dircontentsz) {
@@ -216,7 +213,6 @@ xremove(char *file)
 {
     unsigned int fid;
 
-    /* remove */
     fid = c.root_fid << 2;
     if(ixp_client_remove(&c, fid, file) == -1) {
         fprintf(stderr, "wmiir: cannot remove file '%s': %s\n", file, c.errstr);
@@ -259,8 +255,8 @@ main(int argc, char *argv[])
         fprintf(stderr, "%s", "wmiir: error: $WMII_ADDRESS not set\n");
         usage();
     }
-    /* open socket */
-    if(ixp_client_init(&c, address, getpid()) == -1) {
+	
+    if(ixp_client_dial(&c, address, getpid()) == -1) {
         fprintf(stderr, "wmiir: %s\n", c.errstr);
         exit(1);
     }
@@ -277,7 +273,7 @@ main(int argc, char *argv[])
 		usage();
 
     /* close socket */
-    ixp_client_deinit(&c);
+    ixp_client_hangup(&c);
 
     return 0;
 }

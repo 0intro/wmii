@@ -231,8 +231,8 @@ typedef struct {
 } IXPClient;
 
 /* client.c */
-int ixp_client_init(IXPClient *c, char *address, unsigned int rootfid);
-void ixp_client_deinit(IXPClient *c);
+int ixp_client_dial(IXPClient *c, char *address, unsigned int rootfid);
+void ixp_client_hangup(IXPClient *c);
 int ixp_client_remove(IXPClient *c, unsigned int newfid, char *filepath);
 int ixp_client_create(IXPClient *c, unsigned int dirfid, char *name,
                       unsigned int perm, unsigned char mode);
