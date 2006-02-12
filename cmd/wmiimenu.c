@@ -85,7 +85,7 @@ static size_t
 update_items(char *pattern)
 {
     size_t plen = strlen(pattern);
-    int i, matched = pattern ? plen == 0 : 1;
+    int i;
 
     cmdw = 0;
 	curroff = prevoff = nextoff = 0;
@@ -96,7 +96,7 @@ update_items(char *pattern)
 	nitem = 0;
 
     for(i = 0; i < nallitem; i++) {
-        if(matched|| !strncmp(pattern, allitem[i], plen)
+        if(!plen || !strncmp(pattern, allitem[i], plen)
 			|| (pattern && strstr(allitem[i], pattern)))
 		{
 			item = (char **)cext_array_attach((void **)item, allitem[i],
@@ -160,6 +160,7 @@ draw_menu()
         draw.rect.width = seek;
         blitz_drawlabelnoborder(dpy, &draw);
     }
+    XSync(dpy, False);
     XCopyArea(dpy, draw.drawable, win, draw.gc, 0, 0, mrect.width, mrect.height, 0, 0);
     XSync(dpy, False);
 }
