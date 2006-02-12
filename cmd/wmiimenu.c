@@ -13,54 +13,39 @@
 #include <time.h>
 #include <unistd.h>
 #include <X11/Xlib.h>
-#include <X11/Xatom.h>
 #include <X11/cursorfont.h>
-#include <X11/Xproto.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 
 #include "blitz.h"
 
-
-enum {
-    OFF_NEXT, OFF_PREV, OFF_CURR, OFF_LAST
-};
-
-typedef struct Item Item;
-struct Item {
-    char *name;
-    Item *next;
-    Item *prev;
-};
-
-static char *command = 0;
-static Item *allitems = nil;
-static char *fontstr = 0;
-static char *normcolstr = 0;
-static char *selcolstr = 0;
-static int done = 0;
-static int retvalue = 0;
+static Bool done = False;
+static int ret = 0;
+static char text[4096];
+static Color selcolor;
+static Color normcolor;
 
 static Display *dpy;
-static GC gc;
 static Window win;
-static XRectangle rect;
 static XRectangle mrect;
 static int screen;
-static size_t nitems = 0;
-static Item *sel = nil;
-static Item *items = nil;
-static Item *offset[OFF_LAST];
+static char **allitem = nil;
+static size_t nallitem = 0;
+static size_t allitemsz = 0;
+static char **item = nil;
+static size_t itemsz = 0;
+static size_t nitem = 0;
+static int sel = -1;
+static size_t nextoff = 0;
+static size_t prevoff = 0;
+static size_t curroff = 0;
 static unsigned int cmdw = 0;
-static Pixmap pmap;
+static Draw draw = { 0 };
 static const int seek = 30;     /* 30px */
-static XFontStruct *font;
 
 static void check_event(void);
 static void draw_menu(void);
 static void handle_kpress(XKeyEvent * e);
-static void set_text(char *text);
-static size_t update_items(char *prefix);
 
 static char version[] = "wmiimenu - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
@@ -72,210 +57,110 @@ usage()
 }
 
 static void
-return_item(char *cmd)
-{
-    char *rc = cmd;
-
-    if(!cmd || cmd[0] == 0)
-        return;
-
-    if(sel && strlen(sel->name))
-        rc = cmd = sel->name;
-
-    fprintf(stdout, "%s", rc);
-    done = 1;
-}
-
-static void
-show()
-{
-    set_text(0);
-    XMapRaised(dpy, win);
-    XSync(dpy, False);
-    update_items(command);
-    draw_menu();
-    while(XGrabKeyboard
-          (dpy, RootWindow(dpy, screen), True, GrabModeAsync,
-           GrabModeAsync, CurrentTime) != GrabSuccess)
-    usleep(1000);
-    
-}
-
-static void
-hide()
-{
-    XUngrabKeyboard(dpy, CurrentTime);
-    XUnmapWindow(dpy, win);
-    XSync(dpy, False);
-}
-
-void
-set_text(char *text)
-{
-    if(command) {
-        free(command);
-        command = 0;
-    }
-    if(text && strlen(text)) {
-        command = strdup(text);
-    }
-}
-
-static void
 update_offsets()
 {
-    Item *i;
+	size_t i;
     unsigned int w = cmdw + 2 * seek;
 
-    if(!items)
+    if(!nitem)
         return;
 
-    /* calc next offset */
-    for(i = offset[OFF_CURR]; i; i = i->next) {
-        w += XTextWidth(font, i->name,
-                        strlen(i->name)) + mrect.height;
+    for(i = curroff; i < nitem; i++) {
+        w += XTextWidth(draw.font, item[i], strlen(item[i])) + mrect.height;
         if(w > mrect.width)
             break;
     }
-    offset[OFF_NEXT] = i;
+	nextoff = i;
 
     w = cmdw + 2 * seek;
-    for(i = offset[OFF_CURR]->prev; i && i->prev; i = i->prev) {
-        w += XTextWidth(font, i->name,
-                        strlen(i->name)) + mrect.height;
+    for(i = curroff; i > 0; i--) {
+        w += XTextWidth(draw.font, item[i], strlen(item[i])) + mrect.height;
         if(w > mrect.width)
             break;
     }
-    offset[OFF_PREV] = i;
+	prevoff = i;
 }
 
-static size_t
+static size_t 
 update_items(char *pattern)
 {
-    size_t plen = pattern ? strlen(pattern) : 0, len, max = 0;
-    int matched = pattern ? plen == 0 : 1;
-    Item *i, *new, *p, *maxitem = 0;
+    size_t plen = strlen(pattern);
+    int i, matched = pattern ? plen == 0 : 1;
 
     cmdw = 0;
-    offset[OFF_CURR] = offset[OFF_PREV] = offset[OFF_NEXT] = nil;
+	curroff = prevoff = nextoff = 0;
+	sel = -1;
 
-    while((i = items)) {
-        items = items->next;
-        free(i);
-    }
-    sel = items = nil;
-    nitems = 0;
+	for(i = 0; i < nitem; i++)
+		item[i] = nil; /* faster than cext_array_detach */
+	nitem = 0;
 
-    /* build new items */
-    for(p = allitems; p; p = p->next) {
-        len = strlen(p->name);
-        if(max < len) {
-            maxitem = p;
-            max = len;
-        }
-    }
-
-    if(maxitem)
-        cmdw = XTextWidth(font, maxitem->name, max) + mrect.height;
-
-    for(p = allitems; p; p = p->next) {
-        if(matched || !strncmp(pattern, p->name, plen)) {
-            new = cext_emallocz(sizeof(Item));
-            new->name = strdup(p->name);
-            new->next=0;
-            new->prev=0;
-            nitems++;
-            if(!items)
-                offset[OFF_CURR] = sel = items = i = new;
-	    else {
-                i->next = new;
-                new->prev = i;
-                i = new;
-            }
-        }
+    for(i = 0; i < nallitem; i++) {
+        if(matched|| !strncmp(pattern, allitem[i], plen)
+			|| (pattern && strstr(allitem[i], pattern)))
+		{
+			item = (char **)cext_array_attach((void **)item, allitem[i],
+											sizeof(char *), &itemsz);
+            nitem++;
+		}
     }
     
-    for(p = allitems; p; p = p->next) {
-        if(pattern && strstr(p->name, pattern)) {
-            new = cext_emallocz(sizeof(Item));
-            new->name = strdup(p->name);
-            new->next=0;
-            new->prev=0;
-            nitems++;
-            if(!items)
-                offset[OFF_CURR] = sel = items = i = new;
-            else {
-                if(strncmp(pattern, p->name, plen)) { /* yuck... */
-                    i->next = new;
-                    new->prev = i;
-                    i = new;
-                }
-            }
-        }
-    }
-
     update_offsets();
-    return nitems;
+	return nitem++;
 }
 
 /* creates draw structs for menu mode drawing */
 static void
 draw_menu()
 {
-    Draw d = { 0 };
-    unsigned int offx = 0;
-    Item *i = sel;
+    unsigned int i, offx = 0;
 
-    d.gc = gc;
-    d.font = font;
-    d.drawable = pmap;
-    d.rect = mrect;
-    d.rect.x = 0;
-    d.rect.y = 0;
-    blitz_loadcolor(dpy, screen, normcolstr, &(d.color));
-    blitz_drawlabelnoborder(dpy, &d);
+    draw.rect = mrect;
+    draw.rect.x = 0;
+    draw.rect.y = 0;
+	draw.color = normcolor;
+    blitz_drawlabelnoborder(dpy, &draw);
 
     /* print command */
-    d.align = WEST;
-    d.font = font;
-    d.data = command;
-    if(cmdw && sel)
-        d.rect.width = cmdw;
-    offx += d.rect.width;
-    blitz_drawlabelnoborder(dpy, &d);
+    draw.align = WEST;
+    draw.data = text;
+    if(cmdw && sel >= 0)
+        draw.rect.width = cmdw;
+    offx += draw.rect.width;
+    blitz_drawlabelnoborder(dpy, &draw);
 
-    d.align = CENTER;
-    if(sel) {
-        blitz_loadcolor(dpy, screen, normcolstr, &(d.color));
-        d.data = offset[OFF_PREV] ? "<" : nil;
-        d.rect.x = offx;
-        d.rect.width = seek;
-        offx += d.rect.width;
-        blitz_drawlabelnoborder(dpy, &d);
+    draw.align = CENTER;
+    if(sel >= 0) {
+        draw.color = normcolor;
+        draw.data = prevoff < curroff ? "<" : nil;
+        draw.rect.x = offx;
+        draw.rect.width = seek;
+        offx += draw.rect.width;
+        blitz_drawlabelnoborder(dpy, &draw);
 
         /* determine maximum items */
-        for(i = offset[OFF_CURR]; i && i != offset[OFF_NEXT]; i = i->next) {
-            d.data = i->name;
-            d.rect.x = offx;
-            d.rect.width =
-                XTextWidth(d.font, d.data, strlen(d.data)) + mrect.height;
-            offx += d.rect.width;
+        for(i = curroff; i < nextoff; i++) {
+            draw.data = item[i];
+            draw.rect.x = offx;
+            draw.rect.width =
+                XTextWidth(draw.font, draw.data, strlen(draw.data)) + mrect.height;
+            offx += draw.rect.width;
             if(sel == i) {
-                blitz_loadcolor(dpy, screen, selcolstr, &(d.color));
-                blitz_drawlabel(dpy, &d);
+				draw.color = selcolor;
+                blitz_drawlabel(dpy, &draw);
             } else {
-                blitz_loadcolor(dpy, screen, normcolstr, &(d.color));
-                blitz_drawlabelnoborder(dpy, &d);
+				draw.color = normcolor;
+                blitz_drawlabelnoborder(dpy, &draw);
             }
         }
 
-        blitz_loadcolor(dpy, screen, normcolstr, &(d.color));
-        d.data = offset[OFF_NEXT] ? ">" : nil;
-        d.rect.x = mrect.width - seek;
-        d.rect.width = seek;
-        blitz_drawlabelnoborder(dpy, &d);
+        draw.color = normcolor;
+        draw.data = nitem > nextoff ? ">" : nil;
+        draw.rect.x = mrect.width - seek;
+        draw.rect.width = seek;
+        blitz_drawlabelnoborder(dpy, &draw);
     }
-    XCopyArea(dpy, pmap, win, gc, 0, 0, mrect.width, mrect.height, 0, 0);
+    XCopyArea(dpy, draw.drawable, win, draw.gc, 0, 0, mrect.width, mrect.height, 0, 0);
     XSync(dpy, False);
 }
 
@@ -285,14 +170,8 @@ handle_kpress(XKeyEvent * e)
     KeySym ksym;
     char buf[32];
     int num;
-    static char text[4096];
-    size_t len = 0;
+    size_t len = strlen(text);
 
-    text[0] = 0;
-    if(command) {
-        cext_strlcpy(text, command, sizeof(text));
-        len = strlen(text);
-    }
     buf[0] = 0;
     num = XLookupString(e, buf, sizeof(buf), &ksym, 0);
 
@@ -321,7 +200,7 @@ handle_kpress(XKeyEvent * e)
             break;
         case XK_U:
         case XK_u:
-            set_text(0);
+            text[0] = 0;
             update_items(0);
             draw_menu();
             return;
@@ -333,48 +212,43 @@ handle_kpress(XKeyEvent * e)
     }
     switch (ksym) {
     case XK_Left:
-        if(!sel)
+        if(sel <= 0)
             return;
-        if(sel->prev) {
-            sel = sel->prev;
-        } else
-            return;
+		sel--;
         break;
     case XK_Tab:
-        if(!sel)
+        if(sel < 0)
             return;
-        set_text(sel->name);
-        update_items(command);
+        cext_strlcpy(text, item[sel], sizeof(text));
+        update_items(text);
         break;
     case XK_Right:
-        if(!sel)
+        if(sel < 0 || (sel + 1 == nitem))
             return;
-        if(sel->next) {
-            sel = sel->next;
-        } else
-            return;
+		sel++;
         break;
     case XK_Return:
-        if(sel)
-            return_item(sel->name);
+        if(sel >= 0)
+			fprintf(stdout, "%s", item[sel]);
         else if(text)
-            return_item(text);
-	break;
+			fprintf(stdout, "%s", text);
+		fflush(stdout);
+		done = True;
+		break;
     case XK_Escape:
-	retvalue = 1;
-	done = 1;
+		ret = 1;
+		done = True;
         break;
     case XK_BackSpace:
         if(len) {
             size_t i = len;
             if(i) {
-                int prev_nitems;
+                int prev_nitem;
                 do
                     text[--i] = 0;
-                while((prev_nitems = nitems) && i && prev_nitems == update_items(text));
+                while((prev_nitem = nitem) && i && prev_nitem == update_items(text));
             }
-            set_text(text);
-            update_items(command);
+            update_items(text);
         }
         break;
     default:
@@ -384,18 +258,15 @@ handle_kpress(XKeyEvent * e)
                 cext_strlcat(text, buf, sizeof(text));
             else
                 cext_strlcpy(text, buf, sizeof(text));
-            set_text(text);
-            update_items(command);
+            update_items(text);
         }
     }
-    if(sel) {
-        if(sel == offset[OFF_CURR]->prev) {
-            offset[OFF_CURR] = offset[OFF_PREV];
+    if(sel >= 0) {
+        if(sel == curroff - 1) {
+			sel = prevoff;
             update_offsets();
-        } else if(sel == offset[OFF_NEXT]) {
-            offset[OFF_CURR] = offset[OFF_NEXT];
+        } else if(sel == nextoff)
             update_offsets();
-        }
     }
     draw_menu();
 }
@@ -422,51 +293,26 @@ check_event()
     }
 }
 
-static void
-update_geometry()
-{
-    mrect = rect;
-    mrect.height = font->ascent + font->descent + 4;
-    mrect.y = rect.height - mrect.height;
-    XMoveResizeWindow(dpy, win, mrect.x, mrect.y, mrect.width,
-                      mrect.height);
-    XSync(dpy, False);
-    XFreePixmap(dpy, pmap);
-    pmap =
-        XCreatePixmap(dpy, win, mrect.width, mrect.height,
-                      DefaultDepth(dpy, screen));
-    XSync(dpy, False);
-}
-
 void
-init_allitems()
+read_allitems()
 {
-    char text[4096];
-    allitems = cext_emallocz(sizeof(Item));
-    allitems->prev = 0;
-    Item *curitem = allitems;
-    char ch;
-    int i = 0;
-    while ((ch = (char)fgetc(stdin)) != EOF) {
-        if (!iscntrl(ch) && i<4095) {
-		text[i]=ch;
-                i++;
-	} else {
-            text[i] = 0;
-            if (strlen(text)) {
-                curitem->name = strdup(text);
-                curitem->next = cext_emallocz(sizeof(Item));
-                curitem->next->prev = curitem;
-                curitem = curitem->next;
-	    }
-	    i=0;
+    char *maxname = 0, *p, buf[1024];
+	size_t len = 0, max = 0;
+
+	while(fgets(buf, sizeof(buf), stdin)) {
+		p = strdup(buf);
+		len = strlen(p);
+        if(max < len) {
+			maxname = p;
+            max = len;
         }
-    }
-    if (curitem == allitems)
-        allitems = 0;
-    if (curitem->prev)
-        curitem->prev->next = 0;
-    free(curitem);
+		allitem = (char **)cext_array_attach((void **)allitem, p,
+					sizeof(char *), &allitemsz);
+		nallitem++;
+	}
+
+    if(maxname)
+        cmdw = XTextWidth(draw.font, maxname, max) + mrect.height;
 }
 								 
 int
@@ -474,7 +320,7 @@ main(int argc, char *argv[])
 {
     int i;
     XSetWindowAttributes wa;
-    XGCValues gcv;
+	char *fontstr, *selcolstr, *normcolstr;
 
     /* command line args */
     for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
@@ -500,64 +346,63 @@ main(int argc, char *argv[])
     fontstr = getenv("WMII_FONT");
     if (!fontstr)
 	    fontstr = strdup(BLITZ_FONT);
-    font = blitz_getfont(dpy, fontstr);
+    draw.font = blitz_getfont(dpy, fontstr);
     normcolstr = getenv("WMII_NORMCOLORS");
     if (!normcolstr || strlen(normcolstr) != 23)
 	    normcolstr = strdup(BLITZ_NORMCOLORS);
+	blitz_loadcolor(dpy, screen, normcolstr, &normcolor);
     selcolstr = getenv("WMII_SELCOLORS");
     if (!selcolstr || strlen(selcolstr) != 23)
 	    selcolstr = strdup(BLITZ_SELCOLORS);
+	blitz_loadcolor(dpy, screen, selcolstr, &selcolor);
 
-    /* init */
     wa.override_redirect = 1;
     wa.background_pixmap = ParentRelative;
     wa.event_mask = ExposureMask | ButtonPressMask | KeyPressMask
         | SubstructureRedirectMask | SubstructureNotifyMask;
 
-    rect.x = rect.y = 0;
-    rect.width = DisplayWidth(dpy, screen);
-    rect.height = DisplayHeight(dpy, screen);
-    mrect = rect;
-    mrect.height = font->ascent + font->descent + 4;
-    mrect.y = rect.height - mrect.height;
+    mrect.width = DisplayWidth(dpy, screen);
+    mrect.height = draw.font->ascent + draw.font->descent + 4;
+    mrect.y = DisplayHeight(dpy, screen) - mrect.height;
+	mrect.x = 0;
 
     win = XCreateWindow(dpy, RootWindow(dpy, screen), mrect.x, mrect.y,
-                        mrect.width, mrect.height, 0, DefaultDepth(dpy,
-                                                                   screen),
+                        mrect.width, mrect.height, 0, DefaultDepth(dpy, screen),
                         CopyFromParent, DefaultVisual(dpy, screen),
                         CWOverrideRedirect | CWBackPixmap | CWEventMask,
                         &wa);
     XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_xterm));
     XSync(dpy, False);
 
-    /* window pixmap */
-    gcv.function = GXcopy;
-    gcv.graphics_exposures = False;
+    /* pixmap */
+    draw.gc = XCreateGC(dpy, win, 0, 0);
+    draw.drawable = XCreatePixmap(dpy, win, mrect.width, mrect.height,
+                   	   DefaultDepth(dpy, screen));
 
-    gc = XCreateGC(dpy, win, 0, 0);
-    pmap =
-        XCreatePixmap(dpy, win, mrect.width, mrect.height,
-                      DefaultDepth(dpy, screen));
+    XSync(dpy, False);
+    read_allitems();
 
-    /* initialize some more stuff */
-    update_geometry();
-    init_allitems();
-    if(!allitems) {
-        fprintf(stderr, "%s", "wmiimenu: feed me newline-separated items on stdin please.\n");
-        exit(1);
-    }
+    text[0] = 0;
+    XMapRaised(dpy, win);
+    XSync(dpy, False);
+    update_items(text);
+    draw_menu();
+
+    while(XGrabKeyboard
+          (dpy, RootWindow(dpy, screen), True, GrabModeAsync,
+           GrabModeAsync, CurrentTime) != GrabSuccess)
+    	usleep(1000);
 
     /* main event loop */
-    show();
     while (!done) {
 	    check_event();
 	    usleep(1000);
     }
-    hide();
 
-    XFreePixmap(dpy, pmap);
-    XFreeGC(dpy, gc);
+    XFreePixmap(dpy, draw.drawable);
+    XFreeGC(dpy, draw.gc);
+	XDestroyWindow(dpy, win);
     XCloseDisplay(dpy);
 
-    return retvalue;
+    return ret;
 }
