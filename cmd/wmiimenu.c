@@ -95,8 +95,16 @@ update_items(char *pattern)
 	nitem = 0;
 
     for(i = 0; i < nallitem; i++) {
-        if(!plen || !strncmp(pattern, allitem[i], plen)
-			|| (pattern && strstr(allitem[i], pattern)))
+        if(!plen || !strncmp(pattern, allitem[i], plen))
+		{
+			item = (char **)cext_array_attach((void **)item, allitem[i],
+											sizeof(char *), &itemsz);
+            nitem++;
+		}
+    }
+    for(i = 0; i < nallitem; i++) {
+        if(plen && strncmp(pattern, allitem[i], plen)
+			&& strstr(allitem[i], pattern))
 		{
 			item = (char **)cext_array_attach((void **)item, allitem[i],
 											sizeof(char *), &itemsz);
@@ -161,7 +169,6 @@ draw_menu()
         draw.rect.width = seek;
         blitz_drawlabelnoborder(dpy, &draw);
     }
-    XSync(dpy, False);
     XCopyArea(dpy, draw.drawable, win, draw.gc, 0, 0, mrect.width, mrect.height, 0, 0);
     XSync(dpy, False);
 }
