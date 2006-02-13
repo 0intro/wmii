@@ -13,16 +13,12 @@
 /*
 static void select_client(void *obj, char *arg);
 static void xexec(void *obj, char *arg);
-static void swap_client(void *obj, char *arg);
-static void xnew_column(void *obj, char *arg);
 */
 
 /* action table for /?/ namespace */
 /*
 Action page_acttbl[] = {
-    {"exec", xexec},
     {"swap", swap_client},
-    {"newcol", xnew_column},
     {"select", select_client},
     {0, 0}
 };
@@ -149,96 +145,6 @@ rectangles(unsigned int *num)
     return result;
 }
 
-/*
-static void
-swap_client(void *obj, char *arg)
-{
-	Page *p = obj;
-	Client *c = sel_client_of_page(p);
-    Area *west = nil, *east = nil, *col = c->area;
-    Client *north = nil, *south = nil;
-	size_t i;
-
-	if(!col || !arg)
-		return;
-
-	for(i = 1; i < p->narea && (p->area[i] != col); i++);
-    west = i ? p->area[i - 1] : nil;
-    east = (i < p->areasz) && p->area[i + 1] ? p->area[i + 1] : nil;
-
-	for(i = 0; (i < col->nclient) && (col->client[i] != c); i++);
-    north = i ? col->client[i - 1] : nil;
-    south = (i + 1 < col->nclient) ? col->client[i + 1] : nil;
-
-	if(!strncmp(arg, "north", 6) && north) {
-		col->client[i] = col->client[i - 1]; 
-		col->client[i - 1] = c;
-		arrange_column(p, col);
-	} else if(!strncmp(arg, "south", 6) && south) {
-		col->client[i] = col->client[i + 1];
-		col->client[i + 1] = c;
-		arrange_column(p, col);
-	}
-	else if(!strncmp(arg, "west", 5) && west) {
-		col->client[i] = west->client[west->sel];
-		west->client[west->sel] = c;
-		west->client[west->sel]->area = west;
-		col->client[i]->area = col;
-		arrange_column(p, col);
-		arrange_column(p, west);
-	} else if(!strncmp(arg, "east", 5) && east) {
-		col->client[i] = west->client[west->sel];
-		col->client[i]->area = col;
-		east->client[east->sel] = c;
-		east->client[east->sel]->area = east;
-		arrange_column(p, col);
-		arrange_column(p, east);
-	}
-	focus_client(c);
-}
-
-static void
-xnew_column(void *obj, char *arg)
-{
-	new_column(obj);
-}
-
-static void
-select_client(void *obj, char *arg)
-{
-	Page *p = obj;
-	Client *c = sel_client_of_page(p);
-	size_t i;
-
-	if(!c || !arg)
-		return;
-
-	if(area_to_index(c->page, c->area) > 0)
-		select_column(c, arg);
-	else {
-		Area *a = c->area;
-		for(i = 0; (i < a->nclient) && (a->client[i] != c); i++);
-		if(!strncmp(arg, "prev", 5)) {
-			if(!i)
-				i = a->nclient - 1;
-			focus_client(a->client[i]);
-		} else if(!strncmp(arg, "next", 5)) {
-			if(i + 1 < a->nclient)
-				focus_client(a->client[i + 1]);
-			else
-				focus_client(a->client[0]);
-		}
-		else {
-			const char *errstr;
-			i = cext_strtonum(arg, 0, a->nclient - 1, &errstr);
-			if(errstr)
-				return;
-			focus_client(a->client[i]);
-		}
-	}
-}
-*/
-
 int
 pid_to_index(unsigned short id)
 {
@@ -255,7 +161,7 @@ select_page(char *arg)
 	size_t new = sel;
 	const char *err;
 
-    if(!npage || !arg)
+    if(!npage)
         return;
     if(!strncmp(arg, "prev", 5)) {
 		if(!new)

@@ -573,3 +573,41 @@ client_to_index(Client *c)
 			return i;
 	return -1;
 }
+
+
+void
+select_client(Area *a, char *arg)
+{
+	Client *c;
+/*	size_t i;*/
+
+	if(!a->nclient)
+		return;
+
+	if(area_to_index(a) > 0)
+		/*select_column(a->client[a-c, arg)*/;
+	else {
+		c = a->client[a->sel];
+		/*
+		Area *a = c->area;
+		for(i = 0; (i < a->nclient) && (a->client[i] != c); i++);
+		if(!strncmp(arg, "prev", 5)) {
+			if(!i)
+				i = a->nclient - 1;
+			focus_client(a->client[i]);
+		} else if(!strncmp(arg, "next", 5)) {
+			if(i + 1 < a->nclient)
+				focus_client(a->client[i + 1]);
+			else
+				focus_client(a->client[0]);
+		}
+		else {
+			const char *errstr;
+			i = cext_strtonum(arg, 0, a->nclient - 1, &errstr);
+			if(errstr)
+				return;
+			focus_client(a->client[i]);
+		}
+		*/
+	}
+}

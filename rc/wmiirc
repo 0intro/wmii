@@ -100,7 +100,7 @@ rm -f /tmp/ns.$USER.$DISPLAY/p.menu
 @ items $OLD_PATH > /tmp/ns.$USER.$DISPLAY/p.menu &
 
 # MISC
-xsetroot -solid '#162028'
+xsetroot -solid '#0b1014'
 status &
 
 # EVENT LOOP
