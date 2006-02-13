@@ -395,10 +395,10 @@ main(int argc, char *argv[])
     read_allitems();
 
     text[0] = 0;
-    XMapRaised(dpy, win);
-    XSync(dpy, False);
     update_items(text);
+    XMapRaised(dpy, win);
     draw_menu();
+    XSync(dpy, False);
 
     while(XGrabKeyboard
           (dpy, RootWindow(dpy, screen), True, GrabModeAsync,
