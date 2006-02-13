@@ -16,7 +16,7 @@ Let's go!
 - Start two xterms by pressing M-t twice.
 - Switch between the three windows: M-j, M-k
   You can also use M-Tab instead of M-j.  If you prefer the mouse, then
-  just move the pointer above the desired window; no click is required.
+  just click the desired window.
 - Create a new page: M-C-y
   IMPORTANT: this text will then no longer be visible.  In order to continue
   reading you'll now often have to go back to the first page.  Use M-h
@@ -42,6 +42,11 @@ Let's go!
 - Swap the remaining terminal with the left master tile by moving the terminal
   window somewhere to the left.  Afterwards, swap them once again, but this
   time by pressing M-Enter.
+- Working with mouse efficiently:
+  selecting a window: just click the desired window
+  move a window : press M+Button1Press and move the window
+  resize a window (only with non managed): press M+Button3Press and resize it
+  (this can also be done by clicking the titlebar of the window/borders respectively)
 - We'll now have a look at the internal filesystem used by wmii.  Executing
   	wmiir read /
   in the shell of the terminal will list all the files in the root directory.
