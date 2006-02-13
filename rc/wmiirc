@@ -19,7 +19,7 @@ fn sigint {
 
 WMII_FONT='fixed'
 WMII_SELCOLORS='#ffffff #285577 #4c7899'
-WMII_NORMCOLORS='#222222 #dddddd #666666'
+WMII_NORMCOLORS='#222222 #eeeeee #666666'
 
 CLIENT_BAR=1
 CLIENT_BORDER=3
@@ -100,7 +100,7 @@ rm -f /tmp/ns.$USER.$DISPLAY/p.menu
 @ items $OLD_PATH > /tmp/ns.$USER.$DISPLAY/p.menu &
 
 # MISC
-xsetroot -mod 2 2 -fg '#142a3b' -bg '#162028'
+xsetroot -solid '#162028'
 status &
 
 # EVENT LOOP
