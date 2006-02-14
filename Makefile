@@ -23,7 +23,7 @@ all:
 
 dist: clean
 	mkdir -p wmii-${VERSION}
-	cp -R Makefile README LICENSE config.mk rc ${SUBDIRS} extra doc wmii-${VERSION}
+	cp -R Makefile README LICENSE config.mk rc ${SUBDIRS} doc wmii-${VERSION}
 	tar -cf wmii-${VERSION}.tar wmii-${VERSION}
 	gzip wmii-${VERSION}.tar
 	rm -rf wmii-${VERSION}
