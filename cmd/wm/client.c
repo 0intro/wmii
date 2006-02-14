@@ -576,38 +576,30 @@ client_to_index(Client *c)
 
 
 void
-select_client(Area *a, char *arg)
+select_client(Client *c, char *arg)
 {
-	Client *c;
-/*	size_t i;*/
-
-	if(!a->nclient)
-		return;
-
-	if(area_to_index(a) > 0)
-		/*select_column(a->client[a-c, arg)*/;
+	if(area_to_index(c->area) > 0)
+		select_column(c, arg);
 	else {
-		c = a->client[a->sel];
-		/*
 		Area *a = c->area;
-		for(i = 0; (i < a->nclient) && (a->client[i] != c); i++);
+		int i = client_to_index(c);
 		if(!strncmp(arg, "prev", 5)) {
 			if(!i)
 				i = a->nclient - 1;
-			focus_client(a->client[i]);
+			else
+				i--;
 		} else if(!strncmp(arg, "next", 5)) {
 			if(i + 1 < a->nclient)
-				focus_client(a->client[i + 1]);
+				i++;
 			else
-				focus_client(a->client[0]);
+				i = 0;
 		}
 		else {
 			const char *errstr;
-			i = cext_strtonum(arg, 0, a->nclient - 1, &errstr);
+			i = cext_strtonum(arg, 1, a->nclient, &errstr);
 			if(errstr)
 				return;
-			focus_client(a->client[i]);
 		}
-		*/
+		focus_client(a->client[i - 1]);
 	}
 }

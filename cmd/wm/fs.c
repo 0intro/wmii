@@ -1074,7 +1074,11 @@ xwrite(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case Darea:
-			/* /TODO: /n/{float,n}/ctl commands */
+			if(!strncmp(buf, "select ", 7)) {
+			   Area *a = page[i1]->area[i2];
+			   if(a->nclient)
+				   select_client(a->client[a->sel], &buf[7]);
+			}
 			break;
 		case Dclient:
 			/* /TODO: /n/{float,n}/n/ctl commands */
