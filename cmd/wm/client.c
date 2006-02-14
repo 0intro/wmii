@@ -583,6 +583,8 @@ select_client(Client *c, char *arg)
 	else {
 		Area *a = c->area;
 		int i = client_to_index(c);
+		if(i == -1)
+			return;
 		if(!strncmp(arg, "prev", 5)) {
 			if(!i)
 				i = a->nclient - 1;
@@ -599,7 +601,8 @@ select_client(Client *c, char *arg)
 			i = cext_strtonum(arg, 1, a->nclient, &errstr);
 			if(errstr)
 				return;
+			i--;
 		}
-		focus_client(a->client[i - 1]);
+		focus_client(a->client[i]);
 	}
 }
