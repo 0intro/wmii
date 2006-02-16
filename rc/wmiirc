@@ -70,7 +70,7 @@ for(i in \
 	echo -n | wmiir create /keys/$i
 
 for(i in `{seq 1 9})
-	echo -n | wmiir create /keys/$MODKEY-$i
+	echo -n | wmiir create /keys/$MODKEY-Shift-$i
 
 
 # BAR CONFIGURATION
