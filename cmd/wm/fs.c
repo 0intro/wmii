@@ -1028,6 +1028,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 	unsigned short i;
 	unsigned char type;
 	int i1 = 0, i2 = 0, i3 = 0;
+	Client *cl;
 
     if(!m)
         return Enofid;
@@ -1071,7 +1072,9 @@ xwrite(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case Dclient:
-			/* /TODO: /n/{float,n}/n/ctl commands */
+			cl = page[i1]->area[i2]->client[i3];
+			if(!strncmp(buf, "kill", 5))
+				kill_client(cl);
 			break;
 		default:
 			break;
@@ -1133,15 +1136,13 @@ xwrite(IXPConn *c, Fcall *fcall)
 				resize_client(client[i], &client[i]->frame.rect, 0);
 		break;
 	case Fgeom:
-		{
-			Client *c = page[i1]->area[i2]->client[i3];
-			if(fcall->count > sizeof(buf))
-				return "geometry values out of range";
-			memcpy(buf, fcall->data, fcall->count);
-			buf[fcall->count] = 0;
-			blitz_strtorect(&rect, &c->frame.rect, buf);
-			resize_client(c, &c->frame.rect, 0);
-		}
+		cl = page[i1]->area[i2]->client[i3];
+		if(fcall->count > sizeof(buf))
+			return "geometry values out of range";
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
+		blitz_strtorect(&rect, &cl->frame.rect, buf);
+		resize_client(cl, &cl->frame.rect, 0);
 		break;
     case Fexpand:
 		{

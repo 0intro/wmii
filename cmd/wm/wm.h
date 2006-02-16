@@ -210,7 +210,7 @@ Client *alloc_client(Window w, XWindowAttributes *wa);
 void destroy_client(Client * c);
 void configure_client(Client * c);
 void handle_client_property(Client * c, XPropertyEvent * e);
-void close_client(Client * c);
+void kill_client(Client * c);
 void draw_client(Client * client);
 void gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert);
 void unmap_client(Client * c);

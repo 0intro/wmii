@@ -209,7 +209,7 @@ send_client_message(Window w, Atom a, long value)
 }
 
 void
-close_client(Client * c)
+kill_client(Client * c)
 {
     if(c->proto & PROTO_DEL)
         send_client_message(c->win, wm_protocols, wm_delete);
