@@ -191,6 +191,7 @@ handle_destroynotify(XEvent *e)
     XDestroyWindowEvent *ev = &e->xdestroywindow;
     Client *c = win_to_client(ev->window);
     if(c) {
+		fprintf(stderr, "destroy: %s\n", c->name);
         c->destroyed = True;
         detach_client(c, False);
     }
@@ -282,11 +283,9 @@ handle_unmapnotify(XEvent *e)
     XUnmapEvent *ev = &e->xunmap;
     Client *c;
     if((c = win_to_client(ev->window))) {
-        if(!c->ignore_unmap)
-            detach_client(c, True);
-        else
-            c->ignore_unmap--;
-    }
+		fprintf(stderr, "unmap %s\n", c->name);
+        detach_client(c, True);
+	}
 }
 
 static void handle_clientmessage(XEvent *e)

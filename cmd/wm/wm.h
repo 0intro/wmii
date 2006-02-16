@@ -83,7 +83,6 @@ struct Client {
 	char name[256];
     int proto;
     unsigned int border;
-    unsigned int ignore_unmap;
     Bool destroyed;
 	Bool maximized;
 	Area *area;

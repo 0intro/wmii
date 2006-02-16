@@ -150,7 +150,9 @@ focus_client(Client *c, Bool fevent)
 void
 map_client(Client * c)
 {
+	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
     XMapRaised(dpy, c->win);
+	XSelectInput(dpy, c->win, CLIENT_MASK);
     set_client_state(c, NormalState);
 }
 
@@ -158,15 +160,18 @@ void
 unmap_client(Client * c)
 {
 	ungrab_mouse(c->win, AnyModifier, AnyButton);
+	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
     XUnmapWindow(dpy, c->win);
+	XSelectInput(dpy, c->win, CLIENT_MASK);
     set_client_state(c, WithdrawnState);
 }
 
 void
 reparent_client(Client *c, Window w, int x, int y)
 {
-    XReparentWindow(dpy, c->win, w, x, y);
-    c->ignore_unmap++;
+	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+	XReparentWindow(dpy, c->win, w, x, y);
+	XSelectInput(dpy, c->win, CLIENT_MASK);
 }
 
 void
@@ -428,6 +433,7 @@ detach_client(Client *c, Bool unmap)
 				c->rect.x = c->frame.rect.x;
 				c->rect.y = c->frame.rect.y;
 				reparent_client(c, root, c->rect.x, c->rect.y);
+				XUnmapWindow(dpy, c->frame.win);
 			}
 		}
 	}

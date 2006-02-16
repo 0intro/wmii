@@ -361,7 +361,6 @@ scan_wins()
             if(wa.map_state == IsViewable) {
                 c = alloc_client(wins[i], &wa);
                 attach_client(c);
-                c->ignore_unmap++;      /* was viewable already */
             }
         }
     }
