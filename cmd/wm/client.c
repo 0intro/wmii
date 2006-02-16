@@ -98,8 +98,17 @@ client_name_event(Client *c)
 	broadcast_event(buf);
 }
 
+static void
+client_focus_event(Client *c)
+{
+	char buf[256];
+	snprintf(buf, sizeof(buf), "CF %d %d %d %d\n", c->frame.rect.x, c->frame.rect.y,
+			 c->frame.rect.width, c->frame.rect.height);
+	broadcast_event(buf);
+}
+
 void
-focus_client(Client *c)
+focus_client(Client *c, Bool fevent)
 {
 	Page *p = page ? page[sel] : nil;
 	size_t i, j;
@@ -134,6 +143,8 @@ focus_client(Client *c)
     draw_client(c);
 	XSync(dpy, False);
 	client_name_event(c);
+	if(fevent)
+		client_focus_event(c);
 }
 
 void
@@ -369,7 +380,6 @@ void
 attach_client(Client *c)
 {
 	Page *p;
-	char buf[32];
     if(!page)
 		p = alloc_page();
 	else
@@ -389,10 +399,7 @@ attach_client(Client *c)
 	resize_client(c, &c->frame.rect, nil);
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
-	focus_client(c);
-	snprintf(buf, sizeof(buf), "CA %d %d %d %d\n", c->frame.rect.x, c->frame.rect.y,
-			 c->frame.rect.width, c->frame.rect.height);
-	broadcast_event(buf);
+	focus_client(c, True);
 }
 
 void
@@ -425,7 +432,7 @@ detach_client(Client *c, Bool unmap)
 	}
 	c->area = nil;
 	if(c->revert)
-		focus_client(c->revert);
+		focus_client(c->revert, True);
     if(c->destroyed)
         destroy_client(c);
 }
@@ -606,6 +613,6 @@ select_client(Client *c, char *arg)
 				return;
 			i--;
 		}
-		focus_client(a->client[i]);
+		focus_client(a->client[i], True);
 	}
 }

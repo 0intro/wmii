@@ -91,7 +91,7 @@ focus_page(Page *p)
 		}
 	}
 	if((c = sel_client_of_page(p)))
-		focus_client(c);
+		focus_client(c, False);
 	snprintf(buf, sizeof(buf), "PN %d\n", sel + 1);
 	broadcast_event(buf);
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,

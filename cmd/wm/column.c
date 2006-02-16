@@ -192,7 +192,7 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 				arrange_column(p, src);
             }
         }
-		focus_client(c);
+		focus_client(c, False);
     }
 }
 
@@ -217,13 +217,13 @@ select_column(Client *c, char *arg)
 	if(!strncmp(arg, "prev", 5)) {
 		if(!i)
 			for(i = 0; (i < col->clientsz) && col->client[i]; i++);
-		focus_client(col->client[i - 1]);
+		focus_client(col->client[i - 1], True);
 		return;
 	} else if(!strncmp(arg, "next", 5)) {
 		if(col->client[i + 1])
-			focus_client(col->client[i + 1]);
+			focus_client(col->client[i + 1], True);
 		else
-			focus_client(col->client[0]);
+			focus_client(col->client[0], True);
 		return;
 	}
    
@@ -245,7 +245,7 @@ select_column(Client *c, char *arg)
 			return;
 		col = p->area[i];	
 	}
-	focus_client(col->client[col->sel]);
+	focus_client(col->client[col->sel], True);
 }
 
 void
@@ -268,7 +268,7 @@ new_column(Page *p)
 					sizeof(Client *), &col->clientsz);
 	c->area = col;
 	update_column_width(p);
-	focus_client(c);
+	focus_client(c, True);
 }
 
 /*

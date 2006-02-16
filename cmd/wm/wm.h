@@ -220,7 +220,7 @@ void attach_client(Client * c);
 void detach_client(Client * c, Bool unmap);
 Client *sel_client();
 Client *sel_client_of_page(Page *p);
-void focus_client(Client *c);
+void focus_client(Client *c, Bool fevent);
 Client *win_to_frame(Window w);
 void resize_client(Client *c, XRectangle * r, XPoint * pt);
 unsigned int bar_height(Client *c);

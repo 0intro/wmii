@@ -112,8 +112,8 @@ while(event=`{read}) {
 		text=`{echo $"event | sed 's/^CN //g'}
 		xwrite /bar/2/data $"text
 	}
-	if(~ $event(1) CA)
-		xwrite /ctl 'warp '^`{echo $event(2) + 10 | bc}^' '^`{echo $event(3) + 10 | bc}
+	if(~ $event(1) CF)
+		xwrite /ctl 'warp '^$event(2)^' '^$event(3)
 	if(~ $event(1) LB) { # label button press
 		switch($event(3)) { # button
 		case 1

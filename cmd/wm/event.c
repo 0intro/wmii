@@ -75,7 +75,7 @@ handle_buttonpress(XEvent *e)
 	else if((c = win_to_frame(ev->window))) {
 		if(ev->button == Button1) {
 			if(sel_client() != c) {
-				focus_client(c);
+				focus_client(c, False);
 				return;
 			}
 			align = cursor_to_align(c->frame.cursor);
@@ -96,11 +96,11 @@ handle_buttonpress(XEvent *e)
 			XRaiseWindow(dpy, c->frame.win);
 			switch (ev->button) {
 				case Button1:
-					focus_client(c);
+					focus_client(c, False);
 					mouse_move(c);
 					break;
 				case Button3:
-					focus_client(c);
+					focus_client(c, False);
 					align = xy_to_align(&c->rect, ev->x, ev->y);
 					if(align == CENTER)
 						mouse_move(c);
@@ -110,7 +110,7 @@ handle_buttonpress(XEvent *e)
 			}
 		}
 		else if(ev->button == Button1)
-			focus_client(c);
+			focus_client(c, False);
 
 		if(c && c->area) {
 			snprintf(buf, sizeof(buf), "CB %d %d\n", client_to_index(c) + 1, ev->button);
