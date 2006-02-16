@@ -95,7 +95,7 @@ client_name_event(Client *c)
 {
 	char buf[256];
 	snprintf(buf, sizeof(buf), "CN %s\n", c->name);
-	broadcast_event(buf);
+	write_event(buf);
 }
 
 static void
@@ -104,7 +104,7 @@ client_focus_event(Client *c)
 	char buf[256];
 	snprintf(buf, sizeof(buf), "CF %d %d %d %d\n", c->frame.rect.x, c->frame.rect.y,
 			 c->frame.rect.width, c->frame.rect.height);
-	broadcast_event(buf);
+	write_event(buf);
 }
 
 void
@@ -237,7 +237,8 @@ handle_client_property(Client *c, XPropertyEvent *e)
 		}
         if(c->area)
             draw_client(c);
-		client_name_event(c);
+		if(c == sel_client())
+			client_name_event(c);
         break;
     case XA_WM_TRANSIENT_FOR:
         XGetTransientForHint(dpy, c->win, &c->trans);

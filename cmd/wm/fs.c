@@ -129,12 +129,11 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 
 	if(i1id) {
 		switch(*type) {
-			case Fctl:
-	   		case Dpage: *i1 = pid_to_index(i1id); break;
 			case Fkey: *i1 = kid_to_index(i1id); break;
 			case Fdata:
 			case Fcolors:
 			case Dlabel: *i1 = lid_to_index(i1id); break;
+			default: *i1 = pid_to_index(i1id); break;
 		}
 	   if(i2id && (*i1 != -1)) {
 			*i2 = aid_to_index(page[*i1], i2id);
@@ -349,14 +348,14 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			if(!strncmp(wname, "new", 4)) {
 				if(iswalk) {
 					Area *a = alloc_area(p);
-					fprintf(stderr, "p->id %d, a->id %d\n", p->id, a->id);
 					new->path = mkqpath(Darea, p->id, a->id, 0);
 				}
 				else
 					new->path = mkqpath(Darea, p->id, 0, 0); /* simple stat */
 			}
-			else if(!strncmp(wname, "sel", 4))
+			else if(!strncmp(wname, "sel", 4)) {
 				new->path = mkqpath(Darea, p->id, p->area[p->sel]->id, 0);
+			}
 			else {
 				i = cext_strtonum(wname, 1, 0xffff, &err);
 				if(err || (i - 1 >= p->narea))
@@ -443,7 +442,6 @@ xwalk(IXPConn *c, Fcall *fcall)
 	/*fprintf(stderr, "wm: xwalk1: fid=%d\n", fcall->fid);*/
     if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
         return Enofid;
-	/*fprintf(stderr, "wm: xwalk2: fid=%d\n", fcall->fid);*/
     if(fcall->nwname) {
         dir = m->qid;
         for(nwqid = 0; (nwqid < fcall->nwname)
@@ -452,13 +450,13 @@ xwalk(IXPConn *c, Fcall *fcall)
             dir = fcall->wqid[nwqid];
 		}
         if(!nwqid) {
-			/*fprintf(stderr, "%s", "xwalk: no such file\n");*/
+			fprintf(stderr, "%s", "xwalk: no such file\n");
 			return Enofile;
 		}
     }
-	/*fprintf(stderr, "wm: xwalk3: fid=%d\n", fcall->fid);*/
     /* a fid will only be valid, if the walk was complete */
     if(nwqid == fcall->nwname) {
+		/*fprintf(stderr, "wm: xwalk4: newfid=%d\n", fcall->newfid);*/
         if(fcall->fid != fcall->newfid) {
 			m = cext_emallocz(sizeof(IXPMap));
 			c->map = (IXPMap **)cext_array_attach((void **)c->map, m,
@@ -708,14 +706,12 @@ xread(IXPConn *c, Fcall *fcall)
 			len = 0;
 			for(i = 0; i < nkey; i++) {
 				len += type_to_stat(&stat, key[i]->name, &m->qid);
-				fprintf(stderr, "len=%d <= fcall->offset=%lld\n", len, fcall->offset);
 				if(len <= fcall->offset)
 					continue;
 				break;
 			}
 			/* offset found, proceeding */
 			for(; i < nkey; i++) {
-				fprintf(stderr, "offset xread %s\n", key[i]->name);
 				len = type_to_stat(&stat, key[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -809,7 +805,6 @@ xread(IXPConn *c, Fcall *fcall)
 	else {
 		switch (type) {
 		case Droot:
-			/*fprintf(stderr, "%s", "Droot dir creation\n");*/
 			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "event", &m->qid);
@@ -836,7 +831,6 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Dkeys:
 			for(i = 0; i < nkey; i++) {
-				fprintf(stderr, "normal xread %s\n", key[i]->name);
 				len = type_to_stat(&stat, key[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -916,19 +910,14 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Dclient:
 			fcall->count = type_to_stat(&stat, "border", &m->qid);
-			/*fprintf(stderr, "msgl=%d\n", fcall->count);*/
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "bar", &m->qid);
-			/*fprintf(stderr, "msgl=%d\n", fcall->count);*/
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "name", &m->qid);
-			/*fprintf(stderr, "msgl=%d\n", fcall->count);*/
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "geometry", &m->qid);
-			/*fprintf(stderr, "msgl=%d\n", fcall->count);*/
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "ctl", &m->qid);
-			/*fprintf(stderr, "msgl=%d\n", fcall->count);*/
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Fctl:
@@ -1181,7 +1170,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		}
 		break;
 	case Fcolors:
-		fprintf(stderr, "Fcolors len=%d i1=%d nlabel=%d\n", fcall->count, i1, nlabel);
 		if((i1 >= nlabel) || (fcall->count != 23)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
@@ -1193,7 +1181,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		draw_bar();
 		break;
 	case Fselcolors:
-		fprintf(stderr, "Fselcolors len=%d\n", fcall->count);
 		if((fcall->count != 23)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
@@ -1207,7 +1194,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 				draw_client(client[i]);
 		break;
 	case Fnormcolors:
-		fprintf(stderr, "Fnormcolors len=%d\n", fcall->count);
 		if((fcall->count != 23)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
@@ -1267,7 +1253,7 @@ do_fcall(IXPConn *c)
 	char *errstr;
 
 	if((msize = ixp_server_receive_fcall(c, &fcall))) {
-			/*fprintf(stderr, "do_fcall=%d\n", fcall.id);*/
+		/*fprintf(stderr, "do_fcall=%d\n", fcall.id);*/
 		switch(fcall.id) {
 		case TVERSION: errstr = xversion(c, &fcall); break;
 		case TATTACH: errstr = xattach(c, &fcall); break;
@@ -1288,10 +1274,9 @@ do_fcall(IXPConn *c)
 }
 
 void
-broadcast_event(char *event)
+write_event(char *event)
 {
 	size_t i;
-	fprintf(stderr, "broadcasting: %s", event);
 	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++) {
 		IXPConn *c = srv.conn[i];
 		if(c->is_pending) {

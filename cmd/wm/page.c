@@ -30,12 +30,10 @@ void
 destroy_page(Page *p)
 {
 	unsigned int i;
+	Page *new = p->revert;
 	for(i = 0; i < p->narea; i++)
 		destroy_area(p->area[i]);
 	free(p->area);
-
-	if((sel + 1 == npage) && (sel - 1 >= 0))
-		sel--;
 
 	cext_array_detach((void **)page, p, &pagesz);
 	npage--;
@@ -48,10 +46,10 @@ destroy_page(Page *p)
 	}
 
     free(p); 
-    if(npage)
-        focus_page(page[sel]);
-    else
-		broadcast_event("PN -\n");
+    if(npage && new)
+        focus_page(new);
+	else
+		write_event("PN -\n");
 }
 
 int
@@ -72,14 +70,11 @@ focus_page(Page *p)
 	Client *c;
 	int i = page_to_index(p);
 
-	if(!npage || (i == -1)) {
-		fprintf(stderr, "returning from focus_page %d %d\n", npage, i);
+	if(!npage || (i == -1))
+		return;
 
-		return;
-	}
-	if(sel == i)
-		return;
-	page[i]->revert = page[sel];
+	if(old && old != p)
+		p->revert = old;
 	sel = i;
 	for(i = 0; i < nclient; i++) {
 		c = client[i];
@@ -93,7 +88,7 @@ focus_page(Page *p)
 	if((c = sel_client_of_page(p)))
 		focus_client(c, False);
 	snprintf(buf, sizeof(buf), "PN %d\n", sel + 1);
-	broadcast_event(buf);
+	write_event(buf);
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &sel, 1);
 	XSync(dpy, False);
