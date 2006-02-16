@@ -195,13 +195,13 @@ handle_kpress(XKeyEvent * e)
             ksym = XK_Left;
     } else if(e->state & ControlMask) {
         switch (ksym) {
-        case XK_E:
-        case XK_e:
-            ksym = XK_End;
-            break;
         case XK_H:
         case XK_h:
             ksym = XK_BackSpace;
+            break;
+        case XK_I:
+        case XK_i:
+            ksym = XK_Tab;
             break;
         case XK_J:
         case XK_j:
@@ -210,9 +210,12 @@ handle_kpress(XKeyEvent * e)
         case XK_U:
         case XK_u:
             text[0] = 0;
-            update_items(0);
+            update_items(text);
             draw_menu();
             return;
+            break;
+        case XK_bracketleft:
+            ksym = XK_Escape;
             break;
         default:               /* ignore other control sequences */
             return;
