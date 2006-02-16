@@ -75,6 +75,7 @@ struct Page {
 	size_t areasz;
 	size_t narea;
 	size_t sel;
+	Page *revert;
 };
 
 struct Client {
@@ -137,8 +138,6 @@ Page **page;
 size_t npage;
 size_t pagesz;
 size_t sel;
-Page **aq;
-size_t aqsz;
 Client **det;
 size_t ndet;
 size_t detsz;
@@ -258,6 +257,7 @@ Align xy_to_align(XRectangle * rect, int x, int y);
 void drop_move(Client *c, XRectangle *new, XPoint *pt);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
+char *warp_mouse(char *arg);
 
 /* page.c */
 Page *alloc_page();

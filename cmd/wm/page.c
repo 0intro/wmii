@@ -10,20 +10,6 @@
 
 #include "wm.h"
 
-/*
-static void select_client(void *obj, char *arg);
-static void xexec(void *obj, char *arg);
-*/
-
-/* action table for /?/ namespace */
-/*
-Action page_acttbl[] = {
-    {"swap", swap_client},
-    {"select", select_client},
-    {0, 0}
-};
-*/
-
 Page *
 alloc_page()
 {
@@ -44,14 +30,6 @@ void
 destroy_page(Page *p)
 {
 	unsigned int i;
-	size_t naqueue = 0;
-
-	for(i = 0; (i < aqsz) && aq[i]; i++)
-		if(aq[i] == p)
-			naqueue++;
-	for(i = 0; i < naqueue; i++)
-		cext_array_detach((void **)aq, p, &aqsz);
-
 	for(i = 0; i < p->narea; i++)
 		destroy_area(p->area[i]);
 	free(p->area);
@@ -61,12 +39,15 @@ destroy_page(Page *p)
 
 	cext_array_detach((void **)page, p, &pagesz);
 	npage--;
+
+	for(i = 0; i < npage; i++) {
+		if(page[i]->revert == p)
+			page[i]->revert = nil;
+		XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
+				32, PropModeReplace, (unsigned char *) &i, 1);
+	}
+
     free(p); 
-
-	for(i = 0; i < npage; i++);
-    XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
-			        32, PropModeReplace, (unsigned char *) &i, 1);
-
     if(npage)
         focus_page(page[sel]);
     else
@@ -96,6 +77,9 @@ focus_page(Page *p)
 
 		return;
 	}
+	if(sel == i)
+		return;
+	page[i]->revert = page[sel];
 	sel = i;
 	for(i = 0; i < nclient; i++) {
 		c = client[i];
@@ -179,4 +163,3 @@ select_page(char *arg)
 	}
     focus_page(page[new]);
 }
-

@@ -5,8 +5,7 @@ include config.mk
 
 SUBDIRS = libcext liblitz libixp cmd
 
-BIN = cmd/wm/wmii cmd/wm/wmiiwm cmd/wmiimenu \
-	cmd/wmiipsel cmd/wmiir cmd/wmiiwarp
+BIN = cmd/wm/wmii cmd/wm/wmiiwm cmd/wmiimenu cmd/wmiipsel cmd/wmiir 
 
 MAN1 = cmd/wm/wmii.1 cmd/wm/wmiiwm.1 \
 	cmd/wmiimenu.1 cmd/wmiir.1

@@ -4,6 +4,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "wm.h"
@@ -624,4 +625,26 @@ ungrab_mouse(Window w, unsigned long mod, unsigned int button)
         XUngrabButton(dpy, button, mod | num_lock_mask, w);
         XUngrabButton(dpy, button, mod | num_lock_mask | LockMask, w);
     }
+}
+
+char *
+warp_mouse(char *arg)
+{
+	const char *errstr;
+	char *sx = arg, *sy;
+	unsigned int x, y;
+	sy = strchr(sx, ' ');
+	if(!sy)
+		return "invalid argument";
+	*sy = 0;
+	sy++;
+	x = cext_strtonum(sx, 0, rect.width, &errstr);
+	if(errstr)
+		return "invalid x argument";
+	y = cext_strtonum(sy, 0, rect.height, &errstr);
+	if(errstr)
+		return "invalid y argument";
+	XWarpPointer(dpy, None, root, 0, 0, 0, 0, x, y);
+	XSync(dpy, False);
+	return nil;
 }

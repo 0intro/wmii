@@ -242,12 +242,6 @@ handle_maprequest(XEvent *e)
         return;
     }
 
-	/* attach heuristic support */
-	if(aqsz && aq[0]) {
-		focus_page(0);
-		cext_array_detach((void **)aq, aq[0], &aqsz);
-	}
-
     /* there're client which send map requests twice */
     c = win_to_client(ev->window);
     if(!c)

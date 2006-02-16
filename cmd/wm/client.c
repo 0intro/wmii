@@ -369,6 +369,7 @@ void
 attach_client(Client *c)
 {
 	Page *p;
+	char buf[32];
     if(!page)
 		p = alloc_page();
 	else
@@ -389,6 +390,9 @@ attach_client(Client *c)
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
 	focus_client(c);
+	snprintf(buf, sizeof(buf), "CA %d %d %d %d\n", c->frame.rect.x, c->frame.rect.y,
+			 c->frame.rect.width, c->frame.rect.height);
+	broadcast_event(buf);
 }
 
 void
@@ -573,7 +577,6 @@ client_to_index(Client *c)
 			return i;
 	return -1;
 }
-
 
 void
 select_client(Client *c, char *arg)

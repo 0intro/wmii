@@ -1064,14 +1064,15 @@ xwrite(IXPConn *c, Fcall *fcall)
 				attach_detached_client();
 			else if(!strncmp(buf, "select", 6))
 				select_page(&buf[7]);
+			else if(!strncmp(buf, "warp ", 5)) {
+				char *err;
+				if((err = warp_mouse(&buf[5])))
+					return err;
+			}
 			else
 				return Enocommand;
 			break;
 		case Dpage:
-			if(!strncmp(buf, "exec ", 5)) {
-				aq = (Page **)cext_array_attach((void **)aq, page[i1], sizeof(Page *), &aqsz);
-				spawn(&buf[5]);
-			}
 			break;
 		case Darea:
 			if(!strncmp(buf, "select ", 7)) {

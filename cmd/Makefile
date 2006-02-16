@@ -15,10 +15,7 @@ OBJ_r = ${SRC_r:.c=.o}
 SRC_psel = wmiipsel.c
 OBJ_psel = ${SRC_psel:.c=.o}
 
-SRC_warp = wmiiwarp.c
-OBJ_warp = ${SRC_warp:.c=.o}
-
-all: wmiimenu wmiir wmiipsel wmiiwarp
+all: wmiimenu wmiir wmiipsel
 	@echo built wmii commands
 
 .c.o:

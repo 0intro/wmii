@@ -629,10 +629,9 @@ main(int argc, char *argv[])
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
     init_x_event_handler();
 
-	ndet = npage = nclient = aqsz = detsz = pagesz = clientsz = sel = 0;
+	ndet = npage = nclient = detsz = pagesz = clientsz = sel = 0;
     page = nil;
 	client = det = nil;
-	aq = nil;
 
 	key = nil;
 	keysz = nkey = 0;
