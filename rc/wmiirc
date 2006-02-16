@@ -142,7 +142,7 @@ while(event=`{read}) {
 		case $MODKEY-Control-p
 			extern `{cat /tmp/ns.$USER.$DISPLAY/p.menu | wmiimenu} &
 		case $MODKEY-Control-a
-			`{items /usr/local/etc/wmii-3:$HOME/.wmii-3 | wmiimenu} &
+			`{items CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu} &
 		case $MODKEY-t
 			extern xterm -rv &
 		case $MODKEY-d
