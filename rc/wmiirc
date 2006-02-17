@@ -123,10 +123,10 @@ while(event=`{read}) {
 				xwrite /ctl pager
 			}
 			if not {
-				xwrite /ctl 'select next'
+				xwrite /ctl 'select prev'
 			}
 		case 3
-			xwrite /ctl 'select prev'
+			xwrite /ctl 'select next'
 		case 4
 			xwrite /ctl 'select next'
 		case 5
