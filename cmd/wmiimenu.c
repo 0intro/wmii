@@ -190,10 +190,7 @@ handle_kpress(XKeyEvent * e)
         return;
 
     /* first check if a control mask is omitted */
-    if(e->state & ShiftMask) {
-        if(ksym == XK_ISO_Left_Tab)
-            ksym = XK_Left;
-    } else if(e->state & ControlMask) {
+    if(e->state & ControlMask) {
         switch (ksym) {
         case XK_H:
         case XK_h:
@@ -206,6 +203,14 @@ handle_kpress(XKeyEvent * e)
         case XK_J:
         case XK_j:
             ksym = XK_Return;
+            break;
+        case XK_N:
+        case XK_n:
+            ksym = XK_Right;
+            break;
+        case XK_P:
+        case XK_p:
+            ksym = XK_Left;
             break;
         case XK_U:
         case XK_u:
