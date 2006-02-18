@@ -3,7 +3,9 @@
 
 PIDFILE=/tmp/ns.$USER.$DISPLAY/wmiircpid
 
-fn xwrite { echo -n $2 | wmiir write $1 }
+fn xwrite {
+    echo -n $2 | wmiir write $1
+}
 
 if(test -r $PIDFILE) {
     kill -2 `{cat $PIDFILE} >[2]/dev/null
@@ -13,17 +15,17 @@ echo $pid >$PIDFILE
 # install signal handler for artificial sigexit:
 fn sigint {
     if(test -f $PIDFILE && ~ `{cat $PIDFILE} $pid)
-    	rm -f $PIDFILE
+        rm -f $PIDFILE
     exit
 }
 
-WMII_FONT='fixed'
-WMII_SELCOLORS='#ffffff #285577 #4c7899'
-WMII_NORMCOLORS='#222222 #eeeeee #666666'
 
 CLIENT_BAR=1
 CLIENT_BORDER=3
 MODKEY=Alt
+WMII_FONT='fixed'
+WMII_NORMCOLORS='#222222 #eeeeee #666666'
+WMII_SELCOLORS='#ffffff #285577 #4c7899'
 
 
 # WM CONFIGURATION
@@ -34,48 +36,47 @@ xwrite /def/snap 20
 xwrite /def/font $WMII_FONT
 xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
-for(page in `{wmiir read / | grep '^d' | awk '{print $10}' | grep -v new}) {
-	for(area in `{wmiir read /$page | grep '^d' | awk '{print $10}' | grep -v new}) {
-		for(client in `{wmiir read /$page/$area | grep '^d' | awk '{print $10}'}) {
-			xwrite /$page/$area/$client/bar $CLIENT_BAR
-			xwrite /$page/$area/$client/border $CLIENT_BORDER
-		}
-	}
+for(page in `{wmiir read / | awk '/^d/ && !/new$/ {print $NF}'}) {
+    for(area in `{wmiir read /$page | awk '/^d/ && !/new$/ {print $NF}'}) {
+        for(client in `{wmiir read /$page/$area | awk '/^d/ {print $NF}'}) {
+            xwrite /$page/$area/$client/bar $CLIENT_BAR
+            xwrite /$page/$area/$client/border $CLIENT_BORDER
+        }
+    }
 }
 
 # KEYS CONFIGURATION
 for(i in \
-	$MODKEY-Control-c \
-	$MODKEY-Control-w,y \
-	$MODKEY-Control-q,y \
-	$MODKEY-Control-p \
-	$MODKEY-Control-a \
-	$MODKEY-t \
-	$MODKEY-d \
-	$MODKEY-a \
-	$MODKEY-Shift-a \
-	$MODKEY-n \
-	$MODKEY-m \
-	$MODKEY-Return \
-	$MODKEY-Shift-Return \
-	$MODKEY-Control-y \
-	$MODKEY-h \
-	$MODKEY-l \
-	$MODKEY-Tab \
-	$MODKEY-j \
-	$MODKEY-k \
-	$MODKEY-Shift-h \
-	$MODKEY-Shift-l \
-	$MODKEY-Shift-p)
-	echo -n | wmiir create /keys/$i
-
+    $MODKEY-Control-c \
+    $MODKEY-Control-w,y \
+    $MODKEY-Control-q,y \
+    $MODKEY-Control-p \
+    $MODKEY-Control-a \
+    $MODKEY-t \
+    $MODKEY-d \
+    $MODKEY-a \
+    $MODKEY-Shift-a \
+    $MODKEY-n \
+    $MODKEY-m \
+    $MODKEY-Return \
+    $MODKEY-Shift-Return \
+    $MODKEY-Control-y \
+    $MODKEY-h \
+    $MODKEY-l \
+    $MODKEY-Tab \
+    $MODKEY-j \
+    $MODKEY-k \
+    $MODKEY-Shift-h \
+    $MODKEY-Shift-l \
+    $MODKEY-Shift-p)
+    echo -n | wmiir create /keys/$i
 for(i in `{seq 1 9})
-	echo -n | wmiir create /keys/$MODKEY-Shift-$i
+    echo -n | wmiir create /keys/$MODKEY-Shift-$i
 
 
 # BAR CONFIGURATION
 for(i in 1 2 3)
-	wmiir remove /bar/1 >/dev/null >[2=1]
+    wmiir remove /bar/1 >/dev/null >[2=1]
 xwrite /bar/new/colors $WMII_NORMCOLORS
 xwrite /bar/new/colors $WMII_SELCOLORS
 xwrite /bar/new/colors $WMII_NORMCOLORS
@@ -88,100 +89,96 @@ nl='
 fn items {
     ifs=:$nl { dirs=`{echo $1} }
     {
-        for(dir in $dirs) {
-            for(file in $dir/*) {
+        for(dir in $dirs)
+            for(file in $dir/*)
                 if(! ~ $file $dir^'/*' && ! test -d $file && test -x $file)
-					echo `{basename $file}
-            }
-        }
+                    echo `{basename $file}
     } | sort | uniq
 }
-rm -f /tmp/ns.$USER.$DISPLAY/p.menu
-@ items $OLD_PATH > /tmp/ns.$USER.$DISPLAY/p.menu &
+items $OLD_PATH >/tmp/ns.$USER.$DISPLAY/p.menu &
 
 # MISC
 xsetroot -solid '#0b1014'
 status &
 
 # EVENT LOOP
-wmiir read /event | \
+wmiir read /event |
 while(event=`{read}) {
-	if(~ $event(1) PN)
-		xwrite /bar/1/data $event(2)
-	if(~ $event(1) CN) {
-		buf=`{echo $"event | sed 's/^CN //g'}
-		xwrite /bar/2/data $"buf
-	}
-	if(~ $event(1) CF) {
-		buf=`{echo $event(2) $event(3) | awk '{printf("warp %d %d", $1+4, $2+4)}'}
-		xwrite /ctl $"buf
-	}
-	if(~ $event(1) LB) { # label button press
-		switch($event(3)) { # button
-		case 1
-			if(~ $event(2) 1) { # label
-				xwrite /ctl pager
-			}
-			if not {
-				xwrite /ctl 'select prev'
-			}
-		case 3
-			xwrite /ctl 'select next'
-		case 4
-			xwrite /ctl 'select next'
-		case 5
-			xwrite /ctl 'select prev'
-		}
-	}
-	if(~ $event(1) K) { # key press
-		switch($event(2)) {
-		case $MODKEY-Control-c
-			xwrite /sel/sel/sel/ctl kill
-		case $MODKEY-Control-w,y
-			wmiirc &
-		case $MODKEY-Control-q,y
-			xwrite /ctl quit
-		case $MODKEY-Control-p
-			extern `{cat /tmp/ns.$USER.$DISPLAY/p.menu | wmiimenu} &
-		case $MODKEY-Control-a
-			`{items CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu} &
-		case $MODKEY-t
-			extern xterm -rv &
-		case $MODKEY-d
-			xwrite /sel/sel/sel/ctl detach
-		case $MODKEY-a
-			xwrite /ctl attach
-		case $MODKEY-Shift-a
-			xwrite /ctl detached
-		case $MODKEY-n
-			wmiir read /sel/new >/dev/null >[2=1]
-		case $MODKEY-m
-			xwrite /sel/sel/sel/ctl max
-		case $MODKEY-Return
-			xwrite /sel/sel/ctl 'swap east'
-		case $MODKEY-Shift-Return
-			xwrite /sel/sel/ctl 'swap west'
-		case $MODKEY-Control-y
-			wmiir read /new >/dev/null >[2=1]
-		case $MODKEY-h
-			xwrite /sel/ctl 'select next'
-		case $MODKEY-l
-			xwrite /sel/ctl 'select prev'
-		case $MODKEY-Tab
-			xwrite /sel/sel/ctl 'select next'
-		case $MODKEY-j
-			xwrite /sel/sel/ctl 'select next'
-		case $MODKEY-k
-			xwrite /sel/sel/ctl 'select prev'
-		case $MODKEY-Shift-h
-			xwrite /ctl 'select prev'
-		case $MODKEY-Shift-l
-			xwrite /ctl 'select next'
-		case $MODKEY-Shift-p
-			xwrite /ctl pager
-		case $MODKEY-Shift-[1-9]
-			xwrite /ctl 'select '^`{echo $event(2)|sed 's/.*-//g'}
-		}
-	}
+    if(~ $event(1) PN)
+        xwrite /bar/1/data $event(2)
+    if(~ $event(1) CN) {
+        buf=`{echo $"event | sed 's/^CN //'}
+        xwrite /bar/2/data $"buf
+    }
+    if(~ $event(1) CF) {
+        buf=`{echo $event(2) $event(3) | awk '{printf("warp %d %d", $1+4, $2+4)}'}
+        xwrite /ctl $"buf
+    }
+    if(~ $event(1) LB) { # label button press
+        switch($event(3)) { # button
+        case 1
+            if(~ $event(2) 1) { # label
+                xwrite /ctl pager
+            }
+            if not {
+                xwrite /ctl 'select prev'
+            }
+        case 3
+            xwrite /ctl 'select next'
+        case 4
+            xwrite /ctl 'select next'
+        case 5
+            xwrite /ctl 'select prev'
+        }
+    }
+    if(~ $event(1) K) { # key press
+        switch($event(2)) {
+        case $MODKEY-Control-c
+            xwrite /sel/sel/sel/ctl kill
+        case $MODKEY-Control-w,y
+            wmiirc &
+        case $MODKEY-Control-q,y
+            xwrite /ctl quit
+        case $MODKEY-Control-p
+            extern `{cat /tmp/ns.$USER.$DISPLAY/p.menu | wmiimenu} &
+        case $MODKEY-Control-a
+            `{items CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu} &
+        case $MODKEY-t
+            extern xterm -rv &
+        case $MODKEY-d
+            xwrite /sel/sel/sel/ctl detach
+        case $MODKEY-a
+            xwrite /ctl attach
+        case $MODKEY-Shift-a
+            xwrite /ctl detached
+        case $MODKEY-n
+            wmiir read /sel/new >/dev/null >[2=1]
+        case $MODKEY-m
+            xwrite /sel/sel/sel/ctl max
+        case $MODKEY-Return
+            xwrite /sel/sel/ctl 'swap east'
+        case $MODKEY-Shift-Return
+            xwrite /sel/sel/ctl 'swap west'
+        case $MODKEY-Control-y
+            wmiir read /new >/dev/null >[2=1]
+        case $MODKEY-h
+            xwrite /sel/ctl 'select next'
+        case $MODKEY-l
+            xwrite /sel/ctl 'select prev'
+        case $MODKEY-Tab
+            xwrite /sel/sel/ctl 'select next'
+        case $MODKEY-j
+            xwrite /sel/sel/ctl 'select next'
+        case $MODKEY-k
+            xwrite /sel/sel/ctl 'select prev'
+        case $MODKEY-Shift-h
+            xwrite /ctl 'select prev'
+        case $MODKEY-Shift-l
+            xwrite /ctl 'select next'
+        case $MODKEY-Shift-p
+            xwrite /ctl pager
+        case $MODKEY-Shift-[1-9]
+            xwrite /ctl 'select '^`{echo $event(2) | sed 's/.*-//'}
+        }
+    }
 }
-
