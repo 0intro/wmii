@@ -9,8 +9,8 @@ if(! wmiiwm -c) {
     exit 1  # wmiiwm is already running or $DISPLAY is unset
 }
 
-OLD_PATH=$PATH
-PATH=$HOME/.wmii-3:CONFPREFIX/wmii-3:9PREFIX/bin:$PATH
+old_path=$path
+path=($HOME/.wmii-3 CONFPREFIX/wmii-3 9PREFIX/bin $path)
 WMII_ADDRESS=unix!/tmp/ns.$USER.$DISPLAY/wmii
 
 # start window manager and utilities:

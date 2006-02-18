@@ -87,15 +87,9 @@ xwrite /bar/expand 2
 nl='
 '
 fn items {
-    ifs=:$nl { dirs=`{echo $1} }
-    {
-        for(dir in $dirs)
-            for(file in $dir/*)
-                if(! ~ $file $dir^'/*' && ! test -d $file && test -x $file)
-                    echo `{basename $file}
-    } | sort | uniq
+    ls -lpQ $* | awk '!/^d/ && $1 ~ /x/ {print $NF}' | sort | uniq
 }
-items $OLD_PATH >/tmp/ns.$USER.$DISPLAY/p.menu &
+items $old_path >/tmp/ns.$USER.$DISPLAY/p.menu &
 
 # MISC
 xsetroot -solid '#0b1014'
@@ -147,7 +141,7 @@ while(event=`{read}) {
             } &
         case $MODKEY-Control-a
             {
-                cmd=`{items CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu}
+                cmd=`{items CONFPREFIX/wmii-3 $HOME/.wmii-3 | wmiimenu}
                 if(! ~ $#cmd 0)
                     $cmd
             } &
