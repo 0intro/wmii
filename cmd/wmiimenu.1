@@ -15,11 +15,18 @@ It supports arbitrary, user defined menu contents.
 .TP
 .B \-v
 prints version information to stderr, then exits.
-.SS Keys 
+.SS Usage
 .B wmiimenu
-is completely keyboard controlled, these are the keys:
+reads a list of newline-separated items from stdin and creates a menu.
+When the user selects an item or enters any text and presses Enter, his choice
+is printed to stdout and
+.B wmiimenu
+terminates.
+.SS Keyboard Control 
+.B wmiimenu
+is completely controlled by the keyboard.  The following keys are recognized:
 .TP 2
-Any printable character:
+Any printable character
 append the character to the text in the input field. This works as a filter:
 only items containing this text will be displayed.
 .TP 2
@@ -40,10 +47,6 @@ remove enough characters from the input field to change its filtering effect.
 .TP 2
 C-u
 remove all characters from the input field.
-.SS Customization
-.B wmiimenu
-is customized by providing it a list of newline-separated items from stdin on startup.
-The selected item is printed to stdout.
 .SH SEE ALSO
 .BR wmii (1),
 .BR wmiiwm (1),
