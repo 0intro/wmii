@@ -320,7 +320,8 @@ read_allitems()
 
 	while(fgets(buf, sizeof(buf), stdin)) {
 		len = strlen(buf);
-		buf[len - 1] = 0; /* removing \n */
+		if (buf[len - 1] == '\n') /* there might be no \n after the last item */
+			buf[len - 1] = 0; /* removing \n */
 		p = strdup(buf);
         if(max < len) {
 			maxname = p;
