@@ -140,9 +140,17 @@ while(event=`{read}) {
         case $MODKEY-Control-q,y
             xwrite /ctl quit
         case $MODKEY-Control-p
-            extern `{cat /tmp/ns.$USER.$DISPLAY/p.menu | wmiimenu} &
+            {
+                cmd=`{cat /tmp/ns.$USER.$DISPLAY/p.menu | wmiimenu}
+                if(! ~ $#cmd 0)
+                    extern $cmd
+            } &
         case $MODKEY-Control-a
-            `{items CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu} &
+            {
+                cmd=`{items CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu}
+                if(! ~ $#cmd 0)
+                    $cmd
+            } &
         case $MODKEY-t
             extern xterm -rv &
         case $MODKEY-d
