@@ -15,6 +15,7 @@ alloc_area(Page *p)
 	a->page = p;
 	a->id = id++;
 	p->area = (Area **)cext_array_attach((void **)p->area, a, sizeof(Area *), &p->areasz);
+	p->sel = p->narea;
 	p->narea++;
     return a;
 }

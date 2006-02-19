@@ -423,6 +423,8 @@ detach_client(Client *c, Bool unmap)
 			Area *a = c->area;
 			cext_array_detach((void **)a->client, c, &a->clientsz);
 			a->nclient--;
+			if(a->sel >= a->nclient)
+				a->sel = 0;
 			if(!c->destroyed) {
 				if(!unmap) {
 					det = (Client **)cext_array_attach((void **)det, c,
