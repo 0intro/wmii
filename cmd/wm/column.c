@@ -9,20 +9,18 @@
 #include "wm.h"
 
 void
-arrange_column(Page *p, Area *col)
+arrange_column(Area *col)
 {
 	size_t i;
 	unsigned int h;
 
-	for(i = 0; (i < col->clientsz) && col->client[i]; i++);
 	h = col->rect.height;
-    if(i)
-		h /= i;
-	for(i = 0; (i < col->clientsz) && col->client[i]; i++) {
+	h /= col->nclient;
+	for(i = 0; i < col->nclient; i++) {
 		Client *c = col->client[i];
         c->frame.rect = col->rect;
         c->frame.rect.y += i * h;
-        if((i + 1 < col->clientsz) && col->client[i + 1])
+        if(i + 1 < col->nclient)
             c->frame.rect.height = h;
         else
             c->frame.rect.height =
@@ -32,68 +30,24 @@ arrange_column(Page *p, Area *col)
 }
 
 void
-arrange_page(Page *p)
+arrange_page(Page *p, Bool update_colums)
 {
 	size_t i;
-	for(i = 1; i < p->narea; i++)
-		arrange_column(p, p->area[i]);
-}
-
-void
-attach_column(Client *c)
-{
-	Page *p = page[sel];
-	Area *col = p->narea && (p->sel > 0) ? p->area[p->sel] : nil;
-
-	if(!col) {
-        col = cext_emallocz(sizeof(Area));
-        col->rect = rect;
-		p->area = (Area **)cext_array_attach((void **)p->area, col,
-						sizeof(Area *), &p->areasz);
-		p->sel = p->narea;
-		p->narea++;
-    }
-
-	c->area = col;
-	col->client = (Client **)cext_array_attach((void **)col->client, c,
-						sizeof(Client *), &col->clientsz);
-    arrange_column(p, col);
-}
-
-static void
-update_column_width(Page *p)
-{
-	size_t i;
-	unsigned int width;
 
 	if(p->narea == 1)
 		return;
-
-    width = rect.width / (p->narea - 1);
-	for(i = 1; i < p->narea; i++) {
-        p->area[i]->rect = rect;
-        p->area[i]->rect.x = i * width;
-        p->area[i]->rect.width = width;
-    }
-    arrange_page(p);
-}
-
-void
-detach_column(Client *c)
-{
-	Area *col = c->area;
-	Page *p = col->page;
-
-	cext_array_detach((void **)col->client, c, &col->clientsz);
-	if(!col->client[0]) {
-		cext_array_detach((void **)p->area, col, &p->areasz);
-		p->narea--;
-		free(col);
-		update_column_width(p);
+	
+	if(update_colums) {
+		unsigned int width = rect.width / (p->narea - 1);
+		for(i = 1; i < p->narea; i++) {
+			p->area[i]->rect = rect;
+			p->area[i]->rect.x = i * width;
+			p->area[i]->rect.width = width;
+		}
 	}
-	else
-		arrange_column(p, col);
-} 
+	for(i = 1; i < p->narea; i++)
+		arrange_column(p->area[i]);
+}
 
 static void
 match_horiz(Area *col, XRectangle *r)
@@ -179,8 +133,8 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 			cext_array_detach((void **)src->client, c, &src->clientsz);
 			tgt->client = (Client **)cext_array_attach((void **)tgt->client, c,
 							sizeof(Client *), &tgt->clientsz);
-            arrange_column(p, src);
-            arrange_column(p, tgt);
+            arrange_column(src);
+            arrange_column(tgt);
         } else {
 			for(i = 0; (i < src->clientsz) && src->client[i] &&
 				 !blitz_ispointinrect(pt->x, pt->y, &src->client[i]->frame.rect); i++);
@@ -189,7 +143,7 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 				for(j = 0; (j < src->clientsz) && src->client[j] && (src->client[j] != c); j++);
 				src->client[j] = src->client[i];
 				src->client[i] = c;
-				arrange_column(p, src);
+				arrange_column(src);
             }
         }
 		focus_client(c, False);
@@ -267,7 +221,7 @@ new_column(Page *p)
 	col->client = (Client **)cext_array_attach((void **)col->client, c,
 					sizeof(Client *), &col->clientsz);
 	c->area = col;
-	update_column_width(p);
+	arrange_page(p, True);
 	focus_client(c, True);
 }
 

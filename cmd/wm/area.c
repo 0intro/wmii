@@ -14,6 +14,7 @@ alloc_area(Page *p)
 	Area *a = cext_emallocz(sizeof(Area));
 	a->page = p;
 	a->id = id++;
+	update_area_geometry(a);
 	p->area = (Area **)cext_array_attach((void **)p->area, a, sizeof(Area *), &p->areasz);
 	p->sel = p->narea;
 	p->narea++;
@@ -21,12 +22,22 @@ alloc_area(Page *p)
 }
 
 void
+update_area_geometry(Area *a)
+{
+	a->rect = rect;
+	a->rect.height -= brect.height;
+}
+
+void
 destroy_area(Area *a)
 {
 	size_t i;
+	Page *p = a->page;
 	while(a->nclient)
 		detach_client(client[i], False);
 	free(a->client);
+	cext_array_detach((void **)p->area, a, &p->areasz);
+	p->narea--;
 	free(a);
 }
 

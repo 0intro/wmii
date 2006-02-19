@@ -10,18 +10,6 @@
 
 #include "wm.h"
 
-/*
-static void max_client(void *obj, char *arg);
-*/
-
-/* action table for /?/ namespace */
-/*
-Action client_acttbl[] = {
-    {"max", max_client},
-    {0, 0}
-};
-*/
-
 Client *
 alloc_client(Window w, XWindowAttributes *wa)
 {
@@ -393,16 +381,15 @@ attach_client(Client *c)
 
     reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
 
-	if(p->sel)
-		attach_column(c);
-	else {
-		Area *a = p->area[0];
-		a->client = (Client **)cext_array_attach((void **)a->client, c,
-						sizeof(Client *), &a->clientsz);
-		a->nclient++;
-		c->area = a;
-	}
-	resize_client(c, &c->frame.rect, nil);
+	Area *a = p->area[p->sel];
+	a->client = (Client **)cext_array_attach((void **)a->client, c,
+			sizeof(Client *), &a->clientsz);
+	a->nclient++;
+	c->area = a;
+	if(p->sel > 0) /* column mode */
+		arrange_column(a);
+	else /* normal mode */
+		resize_client(c, &c->frame.rect, nil);
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
 	focus_client(c, True);
@@ -411,32 +398,39 @@ attach_client(Client *c)
 void
 detach_client(Client *c, Bool unmap)
 {
-	if(c->area) {
+	Area *a = c->area;
+	if(a) {
 		size_t i;
 		for(i = 0; i < nclient; i++)
 			if(client[i]->revert == c)
 				client[i]->revert = nil;
 
-		if(area_to_index(c->area) > 0)
-			detach_column(c);
-		else {
-			Area *a = c->area;
-			cext_array_detach((void **)a->client, c, &a->clientsz);
-			a->nclient--;
-			if(a->sel >= a->nclient)
-				a->sel = 0;
-			if(!c->destroyed) {
-				if(!unmap) {
-					det = (Client **)cext_array_attach((void **)det, c,
+		cext_array_detach((void **)a->client, c, &a->clientsz);
+		a->nclient--;
+		if(a->sel >= a->nclient)
+			a->sel = 0;
+		if(!c->destroyed) {
+			if(!unmap) {
+				det = (Client **)cext_array_attach((void **)det, c,
 							sizeof(Client *), &detsz);
-					ndet++;
-					unmap_client(c);
-				}
-				c->rect.x = c->frame.rect.x;
-				c->rect.y = c->frame.rect.y;
-				reparent_client(c, root, c->rect.x, c->rect.y);
-				XUnmapWindow(dpy, c->frame.win);
+				ndet++;
+				unmap_client(c);
 			}
+			c->rect.x = c->frame.rect.x;
+			c->rect.y = c->frame.rect.y;
+			reparent_client(c, root, c->rect.x, c->rect.y);
+			XUnmapWindow(dpy, c->frame.win);
+		}
+		if(area_to_index(a)) { /* column */
+		    if(!a->nclient) {
+				Page *p = a->page;
+				if(p->narea != 2) {
+					destroy_area(a);
+					arrange_page(p, True);
+				}
+			}
+			else
+				arrange_column(a);
 		}
 	}
 	c->area = nil;

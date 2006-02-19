@@ -196,6 +196,7 @@ Area *alloc_area(Page *p);
 void destroy_area(Area *a);
 int area_to_index(Area *a);
 int aid_to_index(Page *p, unsigned short id);
+void update_area_geometry(Area *a);
 
 /* bar.c */
 Label *new_label();
@@ -271,10 +272,8 @@ int page_to_index(Page *p);
 void spawn(char *cmd);
 
 /* column.c */
-void arrange_page(Page *p);
-void arrange_column(Page *p, Area *col);
-void attach_column(Client *c);
-void detach_column(Client *c);
+void arrange_page(Page *p, Bool update_colums);
+void arrange_column(Area *col);
 void resize_column(Client *c, XRectangle *r, XPoint *pt);
 void select_column(Client *c, char *arg);
 void new_column(Page *p);

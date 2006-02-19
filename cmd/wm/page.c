@@ -18,6 +18,7 @@ alloc_page()
 
 	p->id = id++;
 	alloc_area(p);
+	alloc_area(p);
 	page = (Page **)cext_array_attach((void **)page, p, sizeof(Page *), &pagesz);
 	npage++;
 	focus_page(p);
@@ -31,9 +32,8 @@ destroy_page(Page *p)
 {
 	unsigned int i;
 	Page *new = p->revert;
-	for(i = 0; i < p->narea; i++)
-		destroy_area(p->area[i]);
-	free(p->area);
+	while(p->narea)
+		destroy_area(p->area[0]);
 
 	cext_array_detach((void **)page, p, &pagesz);
 	npage--;

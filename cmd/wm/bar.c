@@ -30,6 +30,7 @@ detach_label(Label *l)
 void
 update_bar_geometry()
 {
+	size_t i, j;
     brect = rect;
     brect.height = xfont->ascent + xfont->descent + 4;
     brect.y = rect.height - brect.height;
@@ -39,6 +40,11 @@ update_bar_geometry()
     pmapbar = XCreatePixmap(dpy, winbar, brect.width, brect.height, DefaultDepth(dpy, screen));
     XSync(dpy, False);
 	draw_bar();
+	for(i = 0; i < npage; i++)
+		for(j = 1; j < page[i]->narea; j++) {
+			update_area_geometry(page[i]->area[j]);
+			arrange_column(page[i]->area[j]);
+		}
 }
 
 void
