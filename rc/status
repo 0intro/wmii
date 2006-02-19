@@ -3,17 +3,20 @@
 
 PIDFILE=/tmp/ns.$USER.$DISPLAY/statuspid
 
-fn xwrite { echo -n $2 | wmiir write $1 }
-
 if(test -r $PIDFILE) {
     kill -2 `{cat $PIDFILE} >[2]/dev/null
 }
+if (~ $1 stop) exit
 echo $pid >$PIDFILE
+
+xwrite /bar/new/colors $WMII_NORMCOLORS
+lab=`{wmiir read /bar|maxlab}
 
 # install signal handler for artificial sigexit:
 fn sigint {
     if(test -f $PIDFILE && ~ `{cat $PIDFILE} $pid)
     	rm -f $PIDFILE
+	wmiir remove /bar/$lab
     exit
 }
 
@@ -22,8 +25,6 @@ fn statustext {
     echo `{date} `{uptime | sed 's/.*://; s/,//g'}
 }
 
-text=`{statustext}
-while(xwrite /bar/3/data $"text) {
+while(text=`{statustext} xwrite /bar/$lab/data $"text){
     sleep 2
-    text=`{statustext}
 }

@@ -6,6 +6,9 @@ PIDFILE=/tmp/ns.$USER.$DISPLAY/wmiircpid
 fn xwrite {
     echo -n $2 | wmiir write $1
 }
+fn maxlab {
+    awk '/[0-9]+$/ {if($10>max) max=$10} END{print max}'
+}
 
 if(test -r $PIDFILE) {
     kill -2 `{cat $PIDFILE} >[2]/dev/null
@@ -46,11 +49,10 @@ for(page in `{wmiir read / | awk '/^d/ && !/new$/ {print $NF}'}) {
 }
 
 # BAR CONFIGURATION
-for(i in 1 2 3)
+for(i in `{seq 1 `{wmiir read /bar|maxlab}})
     wmiir remove /bar/1 >/dev/null >[2=1]
 xwrite /bar/new/colors $WMII_NORMCOLORS
 xwrite /bar/new/colors $WMII_SELCOLORS
-xwrite /bar/new/colors $WMII_NORMCOLORS
 xwrite /bar/1/data 1
 xwrite /bar/expand 2
 
