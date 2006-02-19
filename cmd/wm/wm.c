@@ -245,8 +245,8 @@ map_detached_clients()
 	i = 0;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
-			if(!det[i++])
-                return;
+			if(i >= ndet)
+				return;
             cr.x = ic * tw + (ic * DEF_PAGER_GAP);
             cr.y = ir * th + (ir * DEF_PAGER_GAP);
             cr.width = tw;
