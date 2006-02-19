@@ -84,7 +84,6 @@ struct Client {
     int proto;
     unsigned int border;
     Bool destroyed;
-	Bool maximized;
 	Area *area;
     Window win;
     Window trans;
@@ -197,6 +196,7 @@ void destroy_area(Area *a);
 int area_to_index(Area *a);
 int aid_to_index(Page *p, unsigned short id);
 void update_area_geometry(Area *a);
+void select_area(Area *a, char *arg);
 
 /* bar.c */
 Label *new_label();
@@ -275,7 +275,6 @@ void spawn(char *cmd);
 void arrange_page(Page *p, Bool update_colums);
 void arrange_column(Area *col);
 void resize_column(Client *c, XRectangle *r, XPoint *pt);
-void select_column(Client *c, char *arg);
 Area *new_column(Area *old);
 
 /* wm.c */

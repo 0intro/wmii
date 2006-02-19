@@ -547,26 +547,6 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 	configure_client(c);
 }
 
-/*
-static void
-max_client(void *obj, char *arg)
-{
-	Client *c = obj;
-
-	if(c->maximized) {
-		c->frame.rect = c->frame.revert;
-		resize_client(c, &c->frame.revert, nil);
-	}
-	else {
-		c->frame.revert = c->frame.rect;
-		c->frame.rect = c->area->rect;
-		XRaiseWindow(dpy, c->frame.win);
-		resize_client(c, &c->frame.rect, nil);
-	}
-	c->maximized = !c->maximized;
-}
-*/
-
 int
 cid_to_index(Area *a, unsigned short id)
 {
@@ -591,31 +571,27 @@ client_to_index(Client *c)
 void
 select_client(Client *c, char *arg)
 {
-	if(area_to_index(c->area) > 0)
-		select_column(c, arg);
-	else {
-		Area *a = c->area;
-		int i = client_to_index(c);
-		if(i == -1)
-			return;
-		if(!strncmp(arg, "prev", 5)) {
-			if(!i)
-				i = a->nclient - 1;
-			else
-				i--;
-		} else if(!strncmp(arg, "next", 5)) {
-			if(i + 1 < a->nclient)
-				i++;
-			else
-				i = 0;
-		}
-		else {
-			const char *errstr;
-			i = cext_strtonum(arg, 1, a->nclient, &errstr);
-			if(errstr)
-				return;
+	Area *a = c->area;
+	int i = client_to_index(c);
+	if(i == -1)
+		return;
+	if(!strncmp(arg, "prev", 5)) {
+		if(!i)
+			i = a->nclient - 1;
+		else
 			i--;
-		}
-		focus_client(a->client[i], True);
+	} else if(!strncmp(arg, "next", 5)) {
+		if(i + 1 < a->nclient)
+			i++;
+		else
+			i = 0;
 	}
+	else {
+		const char *errstr;
+		i = cext_strtonum(arg, 1, a->nclient, &errstr);
+		if(errstr)
+			return;
+		i--;
+	}
+	focus_client(a->client[i], True);
 }

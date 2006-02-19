@@ -146,9 +146,9 @@ while(event=`{read}) {
         case $MODKEY-Control-y
             wmiir read /new >/dev/null >[2=1]
         case $MODKEY-h
-            xwrite /sel/ctl 'select next'
-        case $MODKEY-l
             xwrite /sel/ctl 'select prev'
+        case $MODKEY-l
+            xwrite /sel/ctl 'select next'
         case $MODKEY-Tab
             xwrite /sel/sel/ctl 'select next'
         case $MODKEY-j

@@ -1065,6 +1065,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 				return Enocommand;
 			break;
 		case Dpage:
+			if(!strncmp(buf, "select ", 7))
+				select_area(page[i1]->area[page[i1]->sel], &buf[7]);
 			break;
 		case Darea:
 			if(!strncmp(buf, "select ", 7)) {

@@ -42,7 +42,7 @@ arrange_page(Page *p, Bool update_colums)
 	for(i = 1; i < p->narea; i++) {
 		Area *a = p->area[i];
 		if(update_colums) {
-			a->rect = rect;
+			update_area_geometry(a);
 			a->rect.x = (i - 1) * width;
 			a->rect.width = width;
 		}
@@ -161,48 +161,6 @@ resize_column(Client *c, XRectangle *r, XPoint *pt)
         drop_resize(c, r);
 }
 
-void
-select_column(Client *c, char *arg)
-{
-    Area *col = c->area;
-	Page *p = col->page;
-	size_t i;
-
-	for(i = 0; (i < col->clientsz) && col->client[i] && (col->client[i] != c); i++);
-	if(!strncmp(arg, "prev", 5)) {
-		if(!i)
-			for(i = 0; (i < col->clientsz) && col->client[i]; i++);
-		focus_client(col->client[i - 1], True);
-		return;
-	} else if(!strncmp(arg, "next", 5)) {
-		if(col->client[i + 1])
-			focus_client(col->client[i + 1], True);
-		else
-			focus_client(col->client[0], True);
-		return;
-	}
-   
-	for(i = 0; (i < p->areasz) && p->area[i] && (p->area[i] != col); i++);
-	if(!strncmp(arg, "west", 5)) {
-		if(!i)
-			for(i = 0; (i < p->areasz) && p->area[i]; i++);
-		col = p->area[i - 1];
-	} else if(!strncmp(arg, "east", 5)) {
-		if(p->area[i + 1])
-			col = p->area[i + 1];
-		else
-			col = p->area[0];
-	} else {
-		const char *errstr;
-		for(i = 0; (i < p->areasz) && p->area[i]; i++);
-		i = cext_strtonum(arg, 0, i - 1, &errstr);
-		if(errstr)
-			return;
-		col = p->area[i];	
-	}
-	focus_client(col->client[col->sel], True);
-}
-
 Area *
 new_column(Area *old)
 {
@@ -216,6 +174,8 @@ new_column(Area *old)
 	col = alloc_area(p);
 	cext_array_detach((void **)old->client, c, &old->clientsz);
 	old->nclient--;
+	if(old->sel == old->nclient)
+		old->sel = 0;
 	col->client = (Client **)cext_array_attach((void **)col->client, c,
 					sizeof(Client *), &col->clientsz);
 	col->nclient++;

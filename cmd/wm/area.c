@@ -4,6 +4,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "wm.h"
 
@@ -61,3 +62,35 @@ aid_to_index(Page *p, unsigned short id)
 			return i;
 	return -1;
 }
+
+void
+select_area(Area *a, char *arg)
+{
+	Area *new;
+	Page *p = a->page;
+	int i = area_to_index(a);
+	if(i == -1)
+		return;
+	if(!strncmp(arg, "prev", 5)) {
+		if(!i)
+			i = p->narea - 1;
+		else
+			i--;
+	} else if(!strncmp(arg, "next", 5)) {
+		if(i + 1 < p->narea)
+			i++;
+		else
+			i = 0;
+	}
+	else {
+		const char *errstr;
+		i = cext_strtonum(arg, 1, p->narea, &errstr);
+		if(errstr)
+			return;
+		i--;
+	}
+	new = p->area[i];
+	if(new->nclient)
+		focus_client(new->client[new->sel], True);
+}
+
