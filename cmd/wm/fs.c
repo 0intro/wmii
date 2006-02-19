@@ -1075,6 +1075,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			cl = page[i1]->area[i2]->client[i3];
 			if(!strncmp(buf, "kill", 5))
 				kill_client(cl);
+			if(!strncmp(buf, "detach", 7))
+				detach_client(cl, False);
 			break;
 		default:
 			break;
