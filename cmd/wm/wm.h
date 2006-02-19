@@ -276,7 +276,7 @@ void arrange_page(Page *p, Bool update_colums);
 void arrange_column(Area *col);
 void resize_column(Client *c, XRectangle *r, XPoint *pt);
 void select_column(Client *c, char *arg);
-void new_column(Page *p);
+Area *new_column(Area *old);
 
 /* wm.c */
 void scan_wins();

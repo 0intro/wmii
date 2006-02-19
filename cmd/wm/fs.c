@@ -347,7 +347,9 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			new->type = IXP_QTDIR;
 			if(!strncmp(wname, "new", 4)) {
 				if(iswalk) {
-					Area *a = alloc_area(p);
+					Area *a = new_column(p->area[p->sel]);
+					if(!a)
+						return -1;
 					new->path = mkqpath(Darea, p->id, a->id, 0);
 				}
 				else
