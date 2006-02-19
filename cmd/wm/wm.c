@@ -231,8 +231,7 @@ map_detached_clients()
     int dx, dy;
     XRectangle cr;
 
-	for(i = 0; i < ndet; i++);
-    blitz_getbasegeometry(i, &cols, &rows);
+    blitz_getbasegeometry(ndet, &cols, &rows);
 	if(!cols)
 		cols = 1;
 	if(!rows)
@@ -255,8 +254,8 @@ map_detached_clients()
             configure_client(det[i]);
             map_client(det[i]);
 			grab_mouse(det[i]->win, AnyModifier, Button1);
-            XRaiseWindow(dpy, det[i]->win);
             XSync(dpy, False);
+			i++;
         }
     }
 }
