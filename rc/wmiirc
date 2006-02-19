@@ -45,35 +45,6 @@ for(page in `{wmiir read / | awk '/^d/ && !/new$/ {print $NF}'}) {
     }
 }
 
-# KEYS CONFIGURATION
-for(i in \
-    $MODKEY-Control-c \
-    $MODKEY-Control-w,y \
-    $MODKEY-Control-q,y \
-    $MODKEY-Control-p \
-    $MODKEY-Control-a \
-    $MODKEY-t \
-    $MODKEY-d \
-    $MODKEY-a \
-    $MODKEY-Shift-a \
-    $MODKEY-n \
-    $MODKEY-m \
-    $MODKEY-Return \
-    $MODKEY-Shift-Return \
-    $MODKEY-Control-y \
-    $MODKEY-h \
-    $MODKEY-l \
-    $MODKEY-Tab \
-    $MODKEY-j \
-    $MODKEY-k \
-    $MODKEY-Shift-h \
-    $MODKEY-Shift-l \
-    $MODKEY-Shift-p)
-    echo -n | wmiir create /keys/$i
-for(i in `{seq 1 9})
-    echo -n | wmiir create /keys/$MODKEY-Shift-$i
-
-
 # BAR CONFIGURATION
 for(i in 1 2 3)
     wmiir remove /bar/1 >/dev/null >[2=1]
@@ -95,6 +66,15 @@ items $old_path >/tmp/ns.$USER.$DISPLAY/p.menu &
 xsetroot -solid '#0b1014'
 status &
 
+# KEYS CONFIGURATION
+for(i in \
+    $MODKEY-Control-^(c w,y q,y p a y) \
+    $MODKEY-^(t d a n m Return) \
+    $MODKEY-^(h l j k Tab ) \
+    $MODKEY-Shift-^(a h l p Return) \
+    $MODKEY-Shift-^`{seq 1 9})
+    echo -n | wmiir create /keys/$i
+
 # EVENT LOOP
 wmiir read /event |
 while(event=`{read}) {
@@ -105,7 +85,7 @@ while(event=`{read}) {
         xwrite /bar/2/data $"buf
     }
     if(~ $event(1) CF) {
-        buf=`{echo $event(2) $event(3) | awk '{printf("warp %d %d", $1+4, $2+4)}'}
+        buf=`{echo $event| awk '{print "warp "$2+4" "$3+4}'}
         xwrite /ctl $"buf
     }
     if(~ $event(1) LB) { # label button press
@@ -180,7 +160,7 @@ while(event=`{read}) {
         case $MODKEY-Shift-p
             xwrite /ctl pager
         case $MODKEY-Shift-[1-9]
-            xwrite /ctl 'select '^`{echo $event(2) | sed 's/.*-//'}
+            xwrite /ctl 'select '^`{echo $event|awk -F- '{print $3}'}
         }
     }
 }
