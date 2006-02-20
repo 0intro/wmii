@@ -93,7 +93,7 @@ xdraw_border(Display * dpy, Draw * d)
 static void
 draw_text(Display * dpy, Draw * d)
 {
-	unsigned int x, y, w, h, shortened = 0;
+	unsigned int x = 0, y = 0, w = 1, h = 1, shortened = 0;
 	size_t len = 0;
 	static char text[2048];
 
