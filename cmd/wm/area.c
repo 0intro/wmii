@@ -92,5 +92,7 @@ select_area(Area *a, char *arg)
 	new = p->area[i];
 	if(new->nclient)
 		focus_client(new->client[new->sel], True);
+	else
+		p->sel = i;
 }
 
