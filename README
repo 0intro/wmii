@@ -52,7 +52,9 @@ which remotly controls the window manager and handles various events
 the window manager reports while runtime.
 To customize the wmiirc, copy the file from PREFIX/etc/wmii-3
 (usually /usr/local/etc/wmii-3) to $HOME/.wmii-3 and edit it to fit
-your needs.
+your needs.  You should be familiar with rc, though.  The rc manpage
+(included in 9base) is quite small and there's also a paper available
+[4].
 
 
 Credits
@@ -82,3 +84,4 @@ References
 [1] http://wmii.de
 [2] http://www.cs.bell-labs.com/sys/man/5/INDEX.html 
 [3] http://wmii.de/repos/9base/
+[4] http://www.star.le.ac.uk/~tjg/rc/misc/td
