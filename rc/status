@@ -15,8 +15,8 @@ lab=`{wmiir read /bar|maxlab}
 # install signal handler for artificial sigexit:
 fn sigint {
     if(test -f $PIDFILE && ~ `{cat $PIDFILE} $pid)
-    	rm -f $PIDFILE
-	wmiir remove /bar/$lab
+        rm -f $PIDFILE
+    wmiir remove /bar/$lab
     exit
 }
 

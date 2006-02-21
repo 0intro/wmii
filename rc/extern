@@ -3,7 +3,6 @@
 
 path=$old_path
 old_path=()
-wmiircpid=()
 apid=()
 cmd=()
 home=()
