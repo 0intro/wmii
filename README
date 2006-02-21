@@ -48,13 +48,11 @@ This will start wmii on display :1 of the host foo.bar.
 Configuration
 -------------
 The configuration of wmii is done by customizing the wmiirc script,
-which remotly controls the window manager and handles various events
-the window manager reports while runtime.
-To customize the wmiirc, copy the file from PREFIX/etc/wmii-3
-(usually /usr/local/etc/wmii-3) to $HOME/.wmii-3 and edit it to fit
-your needs.  You should be familiar with rc, though.  The rc manpage
-(included in 9base) is quite small and there's also a paper available
-[4].
+which remotely controls the window manager and handles various events.
+Copy the file from PREFIX/etc/wmii-3/ (usually /usr/local/etc/wmii-3/)
+to $HOME/.wmii-3/ and edit it to fit your needs.  You should be familiar
+with rc, though. The rc manpage (included in 9base) is quite small and
+there's also a paper available [4].
 
 
 Credits
