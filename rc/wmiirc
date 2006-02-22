@@ -129,12 +129,6 @@ while(event=`{read}) {
             } &
         case $MODKEY-t
             extern xterm -rv &
-        case $MODKEY-d
-            xwrite /sel/sel/sel/ctl detach
-        case $MODKEY-a
-            xwrite /ctl attach
-        case $MODKEY-Shift-a
-            xwrite /ctl detached
         case $MODKEY-n
             wmiir read /sel/new >/dev/null >[2=1]
         case $MODKEY-m

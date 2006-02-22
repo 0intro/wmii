@@ -1050,10 +1050,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 				srv.running = 0;
 			else if(!strncmp(buf, "pager", 6))
 				pager();
-			else if(!strncmp(buf, "detached", 9))
-				detached_clients();
-			else if(!strncmp(buf, "attach", 7))
-				attach_detached_client();
 			else if(!strncmp(buf, "select", 6))
 				select_page(&buf[7]);
 			else if(!strncmp(buf, "warp ", 5)) {

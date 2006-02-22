@@ -224,111 +224,6 @@ pager()
     }
 }
 
-static void
-map_detached_clients()
-{
-    unsigned int i, ic, ir, tw, th, rows, cols;
-    int dx, dy;
-    XRectangle cr;
-
-    blitz_getbasegeometry(ndet, &cols, &rows);
-	if(!cols)
-		cols = 1;
-	if(!rows)
-		rows = 1;
-    dx = (cols - 1) * DEF_PAGER_GAP;      /* DEF_PAGER_GAPpx space */
-    dy = (rows - 1) * DEF_PAGER_GAP;      /* DEF_PAGER_GAPpx space */
-    tw = (rect.width - dx) / cols;
-    th = (rect.height - dy) / rows;
-
-	i = 0;
-    for(ir = 0; ir < rows; ir++) {
-        for(ic = 0; ic < cols; ic++) {
-			if(i >= ndet)
-				return;
-            cr.x = ic * tw + (ic * DEF_PAGER_GAP);
-            cr.y = ir * th + (ir * DEF_PAGER_GAP);
-            cr.width = tw;
-            cr.height = th;
-            XMoveResizeWindow(dpy, det[i]->win, cr.x, cr.y, cr.width, cr.height);
-            configure_client(det[i]);
-            map_client(det[i]);
-			grab_mouse(det[i]->win, AnyModifier, Button1);
-            XSync(dpy, False);
-			i++;
-        }
-    }
-}
-
-void
-detached_clients()
-{
-    XEvent ev;
-    int n;
-	size_t i;
-	Client *c;
-
-    if(!ndet)
-        return;
-    XClearWindow(dpy, transient);
-    XMapRaised(dpy, transient);
-    map_detached_clients();
-    while(XGrabKeyboard
-          (dpy, transient, True, GrabModeAsync, GrabModeAsync,
-           CurrentTime) != GrabSuccess)
-        usleep(20000);
-
-    for(;;) {
-        while(!XCheckMaskEvent(dpy, ButtonPressMask | KeyPressMask, &ev)) {
-            usleep(20000);
-            continue;
-        }
-        switch (ev.type) {
-        case KeyPress:
-            XUnmapWindow(dpy, transient);
-            for(i = 0; i < ndet; i++)
-                unmap_client(det[i]);
-            if((n = handle_kpress(&ev.xkey)) != -1) {
-                if(n < ndet) {
-					c = det[n];
-					cext_array_detach((void **)det, c, &detsz);
-					ndet--;
-                    attach_client(c);
-                }
-            }
-            XUngrabKeyboard(dpy, CurrentTime);
-			XSync(dpy, False);
-            return;
-            break;
-        case ButtonPress:
-            XUnmapWindow(dpy, transient);
-            for(i = 0; i < ndet; i++)
-                unmap_client(det[i]);
-            if((ev.xbutton.button == Button1)
-               && (c = win_to_client(ev.xbutton.window))) {
-				cext_array_detach((void **)det, c, &detsz);
-				ndet--;
-                attach_client(c);
-            }
-            XUngrabKeyboard(dpy, CurrentTime);
-			XSync(dpy, False);
-            return;
-            break;
-        }
-    }
-}
-
-void
-attach_detached_client()
-{
-    Client *c = ndet ? det[0] : nil;
-    if(c) {
-		cext_array_detach((void **)det, c, &detsz);
-		ndet--;
-        attach_client(c);
-    }
-}
-
 Client *
 win_to_client(Window w)
 {
@@ -627,9 +522,9 @@ main(int argc, char *argv[])
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
     init_x_event_handler();
 
-	ndet = npage = nclient = detsz = pagesz = clientsz = sel = 0;
+	npage = nclient = pagesz = clientsz = sel = 0;
     page = nil;
-	client = det = nil;
+	client = nil;
 
 	key = nil;
 	keysz = nkey = 0;

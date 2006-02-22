@@ -248,13 +248,6 @@ handle_client_property(Client *c, XPropertyEvent *e)
 void
 destroy_client(Client * c)
 {
-	size_t i;
-	for(i = 0; i < ndet; i++)
-		if(det[i] == c) {
-			cext_array_detach((void **)det, c, &detsz);
-			ndet--;
-			break;
-		}
     XFreeGC(dpy, c->frame.gc);
     XDestroyWindow(dpy, c->frame.win);
 	cext_array_detach((void **)client, c, &clientsz);
@@ -410,12 +403,8 @@ detach_client(Client *c, Bool unmap)
 		if(a->sel >= a->nclient)
 			a->sel = 0;
 		if(!c->destroyed) {
-			if(!unmap) {
-				det = (Client **)cext_array_attach((void **)det, c,
-							sizeof(Client *), &detsz);
-				ndet++;
+			if(!unmap)
 				unmap_client(c);
-			}
 			c->rect.x = c->frame.rect.x;
 			c->rect.y = c->frame.rect.y;
 			reparent_client(c, root, c->rect.x, c->rect.y);

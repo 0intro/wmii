@@ -136,9 +136,6 @@ Page **page;
 size_t npage;
 size_t pagesz;
 size_t sel;
-Client **det;
-size_t ndet;
-size_t detsz;
 Client **client;
 size_t nclient;
 size_t clientsz;
@@ -284,6 +281,4 @@ int win_proto(Window w);
 int win_state(Window w);
 /*void handle_after_write(IXPServer * s, File * f);*/
 void pager();
-void detached_clients();
-void attach_detached_client();
 
