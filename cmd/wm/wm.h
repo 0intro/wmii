@@ -224,6 +224,7 @@ unsigned int bar_height(Client *c);
 int cid_to_index(Area *a, unsigned short id);
 int client_to_index(Client *c);
 void select_client(Client *c, char *arg);
+void send_client(Client *c, char *arg);
 
 /* event.c */
 void init_x_event_handler();

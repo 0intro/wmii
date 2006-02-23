@@ -584,3 +584,23 @@ select_client(Client *c, char *arg)
 	}
 	focus_client(a->client[i], True);
 }
+
+void
+send_client(Client *c, char *arg) {
+	const char *errstr;
+	Page *p;
+	int i;
+   
+
+	if(!strncmp(arg, "new", 4))
+		p = alloc_page();
+	else {
+		i = cext_strtonum(arg, 1, npage, &errstr);
+		if(errstr)
+			return;
+		p = page[i - 1];
+	}
+	detach_client(c, False);
+	focus_page(p);
+	attach_client(c);
+}
