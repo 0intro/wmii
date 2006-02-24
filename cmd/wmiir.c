@@ -224,7 +224,7 @@ xremove(char *file)
 int
 main(int argc, char *argv[])
 {
-    int i = 0;
+    int ret = 0, i = 0;
     char *cmd, *file, *address = getenv("WMII_ADDRESS");
 
     /* command line args */
@@ -262,18 +262,18 @@ main(int argc, char *argv[])
     }
 
 	if(!strncmp(cmd, "create", 7))
-		xcreate(file);
+		ret = xcreate(file);
 	else if(!strncmp(cmd, "write", 6))
-		xwrite(file);
+		ret = xwrite(file);
 	else if(!strncmp(cmd, "read", 5))
-		xread(file);
+		ret = xread(file);
 	else if(!strncmp(cmd, "remove", 7))
-		xremove(file);
+		ret = xremove(file);
 	else
 		usage();
 
     /* close socket */
     ixp_client_hangup(&c);
 
-    return 0;
+    return ret;
 }

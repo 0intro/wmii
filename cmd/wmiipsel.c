@@ -20,7 +20,7 @@ usage()
 }
 
 static void
-print_sel(Display * dpy, Window w, XSelectionEvent * e)
+print_sel(Display *dpy, Window w, XSelectionEvent * e)
 {
     Atom typeret;
     int format;
