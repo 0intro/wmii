@@ -32,7 +32,7 @@ WMII_SELCOLORS='#ffffff #285577 #4c7899'
 
 # WM CONFIGURATION
 xwrite /def/border $CLIENT_BORDER
-xwrite /def/inc 1
+xwrite /def/inc 0
 xwrite /def/snap 20
 xwrite /def/font $WMII_FONT
 xwrite /def/selcolors $WMII_SELCOLORS
