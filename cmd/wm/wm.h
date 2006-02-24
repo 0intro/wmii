@@ -194,6 +194,7 @@ int area_to_index(Area *a);
 int aid_to_index(Page *p, unsigned short id);
 void update_area_geometry(Area *a);
 void select_area(Area *a, char *arg);
+void sendto_area(Area *new, Client *c);
 
 /* bar.c */
 Label *new_label();

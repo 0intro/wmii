@@ -55,7 +55,7 @@ match_horiz(Area *col, XRectangle *r)
 {
 	size_t i;
 
-	for(i = 0; (i < col->clientsz) && col->client[i]; i++) {
+	for(i = 0; i < col->nclient; i++) {
 		Client *c = col->client[i];
         c->frame.rect.x = r->x;
         c->frame.rect.width = r->width;
@@ -73,11 +73,11 @@ drop_resize(Client *c, XRectangle *new)
 
 	for(i = 0; (i < p->narea) && (p->area[i] != col); i++);
     west = i ? p->area[i - 1] : nil;
-    east = (i < p->areasz) && p->area[i + 1] ? p->area[i + 1] : nil;
+    east = i + 1 < p->narea ? p->area[i + 1] : nil;
 
-	for(i = 0; (i < col->clientsz) && col->client[i] && (col->client[i] != c); i++);
+	for(i = 0; (i < col->nclient) && (col->client[i] != c); i++);
     north = i ? col->client[i - 1] : nil;
-    south = (i < col->clientsz) && col->client[i + 1] ? col->client[i + 1] : nil;
+    south = i + 1 < col->nclient ? col->client[i + 1] : nil;
 
     /* horizontal resize */
     if(west && (new->x != c->frame.rect.x)) {
@@ -121,29 +121,22 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 	Page *p = src->page;
 	size_t i;
 
-    if(!pt)
+    if(!pt || src->nclient < 2)
         return;
 
-	for(i = 0; (i < p->areasz) && p->area[i] &&
+	for(i = 1; (i < p->narea) &&
 			!blitz_ispointinrect(pt->x, pt->y, &p->area[i]->rect); i++);
-	tgt = (i < p->areasz) ? p->area[i] : nil;
-    if(tgt) {
-        if(tgt != src) {
-			if(src->clientsz <= 1 || !src->client[1])
-				return;
-			cext_array_detach((void **)src->client, c, &src->clientsz);
-			tgt->client = (Client **)cext_array_attach((void **)tgt->client, c,
-							sizeof(Client *), &tgt->clientsz);
-            arrange_column(src);
-            arrange_column(tgt);
-        } else {
-			for(i = 0; (i < src->clientsz) && src->client[i] &&
+	if((tgt = ((i < p->narea) ? p->area[i] : nil))) {
+        if(tgt != src)
+			sendto_area(tgt, c);
+        else {
+			for(i = 0; (i < src->nclient) &&
 				 !blitz_ispointinrect(pt->x, pt->y, &src->client[i]->frame.rect); i++);
-			if((i < src->clientsz) && src->client[i] && (c != src->client[i])) {
-				size_t j;
-				for(j = 0; (j < src->clientsz) && src->client[j] && (src->client[j] != c); j++);
+			if((i < src->nclient) && (c != src->client[i])) {
+				size_t j = client_to_index(c);
+				Client *tmp = src->client[j];
 				src->client[j] = src->client[i];
-				src->client[i] = c;
+				src->client[i] = tmp;
 				arrange_column(src);
             }
         }
@@ -185,53 +178,3 @@ new_column(Area *old)
 	focus_client(c, True);
 	return col;
 }
-
-/*
-static void
-swap_client(void *obj, char *arg)
-{
-	Page *p = obj;
-	Client *c = sel_client_of_page(p);
-    Area *west = nil, *east = nil, *col = c->area;
-    Client *north = nil, *south = nil;
-	size_t i;
-
-	if(!col || !arg)
-		return;
-
-	for(i = 1; i < p->narea && (p->area[i] != col); i++);
-    west = i ? p->area[i - 1] : nil;
-    east = (i < p->areasz) && p->area[i + 1] ? p->area[i + 1] : nil;
-
-	for(i = 0; (i < col->nclient) && (col->client[i] != c); i++);
-    north = i ? col->client[i - 1] : nil;
-    south = (i + 1 < col->nclient) ? col->client[i + 1] : nil;
-
-	if(!strncmp(arg, "north", 6) && north) {
-		col->client[i] = col->client[i - 1]; 
-		col->client[i - 1] = c;
-		arrange_column(p, col);
-	} else if(!strncmp(arg, "south", 6) && south) {
-		col->client[i] = col->client[i + 1];
-		col->client[i + 1] = c;
-		arrange_column(p, col);
-	}
-	else if(!strncmp(arg, "west", 5) && west) {
-		col->client[i] = west->client[west->sel];
-		west->client[west->sel] = c;
-		west->client[west->sel]->area = west;
-		col->client[i]->area = col;
-		arrange_column(p, col);
-		arrange_column(p, west);
-	} else if(!strncmp(arg, "east", 5) && east) {
-		col->client[i] = west->client[west->sel];
-		col->client[i]->area = col;
-		east->client[east->sel] = c;
-		east->client[east->sel]->area = east;
-		arrange_column(p, col);
-		arrange_column(p, east);
-	}
-	focus_client(c);
-}
-
-*/
