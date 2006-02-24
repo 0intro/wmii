@@ -74,7 +74,8 @@ for(i in \
     $MODKEY-^(t d a n m Return) \
     $MODKEY-^(h l j k Tab ) \
     $MODKEY-Shift-^(a h l p Return) \
-    $MODKEY-Shift-^`{seq 1 9})
+    $MODKEY-Shift-^`{seq 1 9} \
+    $MODKEY-Control-^`{seq 1 9})
     echo -n | wmiir create /keys/$i
 
 # EVENT LOOP
@@ -157,6 +158,8 @@ while(event=`{read}) {
             xwrite /ctl pager
         case $MODKEY-Shift-[1-9]
             xwrite /ctl 'select '^`{echo $event|awk -F- '{print $3}'}
+        case $MODKEY-Control-[1-9]
+            xwrite /sel/sel/sel/ctl 'sendto '^`{echo $event|awk -F- '{print $3}'}
         }
     }
 }
