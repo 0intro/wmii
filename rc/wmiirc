@@ -22,7 +22,6 @@ fn sigint {
     exit
 }
 
-
 CLIENT_BORDER=3
 MODKEY=Alt
 WMII_FONT='fixed'
