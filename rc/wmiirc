@@ -23,7 +23,6 @@ fn sigint {
 }
 
 
-CLIENT_BAR=1
 CLIENT_BORDER=3
 MODKEY=Alt
 WMII_FONT='fixed'
@@ -32,21 +31,12 @@ WMII_SELCOLORS='#ffffff #285577 #4c7899'
 
 
 # WM CONFIGURATION
-xwrite /def/bar $CLIENT_BAR
 xwrite /def/border $CLIENT_BORDER
 xwrite /def/inc 1
 xwrite /def/snap 20
 xwrite /def/font $WMII_FONT
 xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
-for(page in `{wmiir read / | awk '/^d/ && !/new$/ {print $NF}'}) {
-    for(area in `{wmiir read /$page | awk '/^d/ && !/new$/ {print $NF}'}) {
-        for(client in `{wmiir read /$page/$area | awk '/^d/ {print $NF}'}) {
-            xwrite /$page/$area/$client/bar $CLIENT_BAR
-            xwrite /$page/$area/$client/border $CLIENT_BORDER
-        }
-    }
-}
 
 # BAR CONFIGURATION
 for(i in `{seq 1 `{wmiir read /bar|maxlab}})
@@ -88,7 +78,7 @@ while(event=`{read}) {
         xwrite /bar/2/data $"buf
     }
     if(~ $event(1) CF) {
-        buf=`{echo $event| awk '{print "warp "$2+4" "$3+4}'}
+        buf=`{echo $event| awk '{print "warp "$2+6" "$3+6}'}
         xwrite /ctl $"buf
     }
     if(~ $event(1) LB) { # label button press

@@ -15,8 +15,8 @@ cursor_for_motion(Client *c, int x, int y)
     int n, e, w, s, tn, te, tw, ts;
     unsigned int bh, bw;
 
-    bw = c->frame.border;
-    bh = bar_height(c);
+    bw = def.border;
+    bh = bar_height();
 
     if(!bw)
         return normal_cursor;

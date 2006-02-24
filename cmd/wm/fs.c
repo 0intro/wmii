@@ -34,7 +34,6 @@ static char Enocommand[] = "command not supported";
  * / 					Droot
  * /def/				Ddef
  * /def/border			Fborder		0..n
- * /def/bar 			Fbar 		0, 1
  * /def/snap 			Fsnap  		0..n
  * /def/inc 			Finc   		0..n
  * /def/font			Ffont  		xlib font name
@@ -60,8 +59,6 @@ static char Enocommand[] = "command not supported";
  * /1/float/ctl 		Fctl		command interface (area)
  * /1/float/sel/		Dclient
  * /1/float/1/			Dclient
- * /1/float/1/border	Fborder		0..n
- * /1/float/1/bar		Fbar		0, 1
  * /1/float/1/name		Fname		name of client
  * /1/float/1/geom		Fgeom		geometry of client
  * /1/float/1/ctl 		Fctl 		command interface (client)
@@ -69,8 +66,6 @@ static char Enocommand[] = "command not supported";
  * /1/1/ctl 			Fctl 		command interface (area)
  * /1/1/1/sel/			Dclient
  * /1/1/1/1/			Dclient
- * /1/1/1/border		Fborder		0..n
- * /1/1/1/bar			Fbar		0, 1
  * /1/1/1/name			Fname		name of client
  * /1/1/1/geom			Fgeom		geometry of client
  * /1/1/1/ctl 			Fctl 		command interface (client)
@@ -158,7 +153,6 @@ qid_to_name(Qid *qid)
 		case Droot: return "/"; break;
 		case Ddef: return "def"; break;
 		case Dkeys: return "keys"; break;
-		case Fbar: 
 		case Dbar: return "bar"; break;
 		case Dpage:
 			if(i1 == sel)
@@ -219,12 +213,8 @@ name_to_type(char *name, unsigned char dir_type)
 		case Dpage: return Darea; break;
 		}
 	}
-	if(!strncmp(name, "bar", 4)) {
-		if(dir_type == Droot)
-			return Dbar;
-		else
-			return Fbar;
-	}
+	if(!strncmp(name, "bar", 4))
+		return Dbar;
 	if(!strncmp(name, "def", 4))
 		return Ddef;
 	if(!strncmp(name, "keys", 5))
@@ -556,17 +546,7 @@ type_to_stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, 0, DMREAD);
 		break;
     case Fborder:
-		if(dir_type == Ddef)
-			snprintf(buf, sizeof(buf), "%d", def.border);
-		else
-			snprintf(buf, sizeof(buf), "%d", page[dir_i1]->area[dir_i2]->client[dir_i3]->frame.border);
-		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
-        break;
-    case Fbar:
-		if(dir_type == Ddef)
-			snprintf(buf, sizeof(buf), "%d", def.bar);
-		else
-			snprintf(buf, sizeof(buf), "%d", page[dir_i1]->area[dir_i2]->client[dir_i3]->frame.bar);
+		snprintf(buf, sizeof(buf), "%d", def.border);
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
         break;
     case Finc:
@@ -865,8 +845,6 @@ xread(IXPConn *c, Fcall *fcall)
 		case Ddef:
 			fcall->count += type_to_stat(&stat, "border", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "bar", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "inc", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "snap", &m->qid);
@@ -913,8 +891,6 @@ xread(IXPConn *c, Fcall *fcall)
 		case Dclient:
 			fcall->count = type_to_stat(&stat, "border", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "bar", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "name", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type_to_stat(&stat, "geometry", &m->qid);
@@ -931,18 +907,7 @@ xread(IXPConn *c, Fcall *fcall)
 			return nil;
 			break;
 		case Fborder:
-			if(m->qid.dir_type == Ddef)
-				snprintf(buf, sizeof(buf), "%u", def.border);
-			else
-				snprintf(buf, sizeof(buf), "%u", page[i1]->area[i2]->client[i3]->frame.border);
-			fcall->count = strlen(buf);
-			memcpy(p, buf, fcall->count);
-			break;
-		case Fbar:
-			if(m->qid.dir_type == Ddef)
-				snprintf(buf, sizeof(buf), "%u", def.bar);
-			else
-				snprintf(buf, sizeof(buf), "%u", page[i1]->area[i2]->client[i3]->frame.bar);
+			snprintf(buf, sizeof(buf), "%u", def.border);
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -1102,29 +1067,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 		i = cext_strtonum(buf, 0, 0xffff, &err);
 		if(err)
 			return "border value out of range 0..0xffff";
-		if(m->qid.dir_type == Ddef)
-			def.border = i;
-		else {
-			Client *c = page[i1]->area[i2]->client[i3];
-			c->frame.border = i;
-			resize_client(c, &c->frame.rect, 0);
-		}
-		break;
-	case Fbar:
-		if(fcall->count > sizeof(buf))
-			return "bar value out of range 0, 1";
-		memcpy(buf, fcall->data, fcall->count);
-		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 0, 1, &err);
-		if(err)
-			return "bar value out of range 0, 1";
-		if(m->qid.dir_type == Ddef)
-			def.border = i;
-		else {
-			Client *c = page[i1]->area[i2]->client[i3];
-			c->frame.bar = i;
-			resize_client(c, &c->frame.rect, 0);
-		}
+		def.border = i;
+		resize_all_clients();
 		break;
 	case Finc:
 		if(fcall->count > sizeof(buf))
@@ -1135,9 +1079,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(err)
 			return "increment value out of range 0, 1";
 		def.inc = i;
-		for(i = 0; i < nclient; i++)
-			if(client[i]->area)
-				resize_client(client[i], &client[i]->frame.rect, 0);
+		resize_all_clients();
 		break;
 	case Fgeom:
 		cl = page[i1]->area[i2]->client[i3];
@@ -1218,12 +1160,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(def.font, fcall->data, fcall->count);
 		XFreeFont(dpy, xfont);
     	xfont = blitz_getfont(dpy, def.font);
-		for(i = 0; i < nclient; i++) {
-			if(!client[i]->area->page)
-				continue;
-			resize_client(client[i], &client[i]->frame.rect, 0);
-		}
 		update_bar_geometry();
+		resize_all_clients();
 		break;
 	case Fkey:
 		break;

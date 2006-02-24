@@ -96,8 +96,6 @@ struct Client {
 		XRectangle revert;
     	GC gc;
     	Cursor cursor;
-		Bool bar;
-    	unsigned int border;
 	} frame;
 };
 
@@ -123,7 +121,6 @@ typedef struct {
 	char selcolor[24];
 	char normcolor[24];
 	char *font;
-	Bool bar;
 	Bool inc;
 	Color sel;
 	Color norm;
@@ -202,6 +199,7 @@ void detach_label(Label *l);
 void draw_bar();
 int lid_to_index(unsigned short id);
 void update_bar_geometry();
+unsigned int bar_height();
 
 /* client.c */
 Client *alloc_client(Window w, XWindowAttributes *wa);
@@ -221,12 +219,12 @@ Client *sel_client_of_page(Page *p);
 void focus_client(Client *c, Bool fevent);
 Client *win_to_frame(Window w);
 void resize_client(Client *c, XRectangle * r, XPoint * pt);
-unsigned int bar_height(Client *c);
 int cid_to_index(Area *a, unsigned short id);
 int client_to_index(Client *c);
 void select_client(Client *c, char *arg);
 void sendtopage_client(Client *c, char *arg);
 void sendtoarea_client(Client *c, char *arg);
+void resize_all_clients();
 
 /* event.c */
 void init_x_event_handler();

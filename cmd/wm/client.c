@@ -45,9 +45,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     fwa.background_pixmap = ParentRelative;
 	fwa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
 
-	c->frame.bar = def.bar;
-	c->frame.border = bw;
-    bh = bar_height(c);
+    bh = bar_height();
 	c->frame.rect = c->rect;
     c->frame.rect.width += 2 * bw;
     c->frame.rect.height += bw + (bh ? bh : bw);
@@ -260,8 +258,8 @@ void
 draw_client(Client *c)
 {
     Draw d = { 0 };
-    unsigned int bh = bar_height(c);
-    unsigned int bw = c->frame.border;
+    unsigned int bh = bar_height();
+    unsigned int bw = def.border;
     XRectangle notch;
 
 	d.align = WEST;
@@ -455,14 +453,6 @@ win_to_frame(Window w)
 	return nil;
 }
 
-unsigned int
-bar_height(Client * c)
-{
-    if(c->frame.bar)
-        return xfont->ascent + xfont->descent + 4;
-    return 0;
-}
-
 static void
 check_dimensions(Client *c, unsigned int tabh, unsigned int bw)
 {
@@ -511,8 +501,8 @@ resize_incremental(Client *c, unsigned int tabh, unsigned int bw)
 void
 resize_client(Client *c, XRectangle *r, XPoint *pt)
 {
-    unsigned int bh = bar_height(c);
-    unsigned int bw = c->frame.border;
+    unsigned int bh = bar_height();
+    unsigned int bw = def.border;
 
 	if(area_to_index(c->area) > 0)
 		resize_column(c, r, pt);
@@ -634,4 +624,13 @@ sendtoarea_client(Client *c, char *arg) {
 	}
 
 	sendto_area(new, c);
+}
+
+void
+resize_all_clients()
+{
+	size_t i;
+	for(i = 0; i < nclient; i++)
+		if(client[i]->area)
+			resize_client(client[i], &client[i]->frame.rect, 0);
 }

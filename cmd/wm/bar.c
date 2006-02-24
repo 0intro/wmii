@@ -27,12 +27,18 @@ detach_label(Label *l)
 	nlabel--;
 }
 
+unsigned int
+bar_height()
+{
+	return xfont->ascent + xfont->descent + 4;
+}
+
 void
 update_bar_geometry()
 {
 	size_t i, j;
     brect = rect;
-    brect.height = xfont->ascent + xfont->descent + 4;
+    brect.height = bar_height();
     brect.y = rect.height - brect.height;
     XMoveResizeWindow(dpy, winbar, brect.x, brect.y, brect.width, brect.height);
     XSync(dpy, False);

@@ -134,8 +134,8 @@ handle_configurerequest(XEvent *e)
     if(c) {
 
         if(c->area) {
-            bw = c->frame.border;
-            bh = bar_height(c);
+            bw = def.border;
+            bh = bar_height();
         }
 
         gravitate(c, bh ? bh : bw, bw, 1);
