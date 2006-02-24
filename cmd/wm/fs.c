@@ -1075,8 +1075,10 @@ xwrite(IXPConn *c, Fcall *fcall)
 			cl = page[i1]->area[i2]->client[i3];
 			if(!strncmp(buf, "kill", 5))
 				kill_client(cl);
-			if(!strncmp(buf, "sendto ", 7))
-				send_client(cl, &buf[7]);
+			else if(!strncmp(buf, "sendtopage ", 11))
+				sendtopage_client(cl, &buf[11]);
+			else if(!strncmp(buf, "sendtoarea ", 11))
+				sendtoarea_client(cl, &buf[11]);
 			break;
 		default:
 			break;

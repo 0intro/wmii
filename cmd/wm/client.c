@@ -586,7 +586,7 @@ select_client(Client *c, char *arg)
 }
 
 void
-send_client(Client *c, char *arg) {
+sendtopage_client(Client *c, char *arg) {
 	const char *errstr;
 	Page *p;
 	int i;
@@ -603,4 +603,46 @@ send_client(Client *c, char *arg) {
 	detach_client(c, False);
 	focus_page(p);
 	attach_client(c);
+}
+
+void
+sendtoarea_client(Client *c, char *arg) {
+	const char *errstr;
+	Area *new, *a = c->area;
+	Page *p = a->page;
+	int i = area_to_index(a);
+
+	if(i == -1 || a->nclient < 2)
+		return;
+	if(!strncmp(arg, "prev", 5)) {
+		if(i == 1)
+			new = p->area[p->narea - 1];
+		else
+			new = p->area[i - 1];
+	}
+	else if(!strncmp(arg, "next", 5)) {
+		if(i < p->narea - 1)
+			new = p->area[i + 1];
+		else
+			new = p->area[1];
+	}
+	else {
+		i = cext_strtonum(arg, 1, p->narea, &errstr);
+		if(errstr)
+			return;
+		new = p->area[i - 1];
+	}
+
+	cext_array_detach((void **)a->client, c, &a->clientsz);
+	a->nclient--;
+	if(a->sel >= a->nclient)
+		a->sel = 0;
+
+	new->client = (Client **)cext_array_attach(
+			(void **)new->client, c, sizeof(Client *), &new->clientsz);
+	new->nclient++;
+	c->area = new;
+	arrange_column(a);
+	arrange_column(new);
+	focus_client(c, True);
 }

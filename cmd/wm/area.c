@@ -72,7 +72,7 @@ select_area(Area *a, char *arg)
 	if(i == -1)
 		return;
 	if(!strncmp(arg, "prev", 5)) {
-		if(!i)
+		if(i == 1)
 			i = p->narea - 1;
 		else
 			i--;
@@ -80,7 +80,7 @@ select_area(Area *a, char *arg)
 		if(i + 1 < p->narea)
 			i++;
 		else
-			i = 0;
+			i = 1;
 	}
 	else {
 		const char *errstr;
@@ -95,4 +95,3 @@ select_area(Area *a, char *arg)
 	else
 		p->sel = i;
 }
-

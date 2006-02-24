@@ -135,9 +135,9 @@ while(event=`{read}) {
         case $MODKEY-m
             xwrite /sel/sel/sel/ctl max
         case $MODKEY-Return
-            xwrite /sel/sel/ctl 'swap east'
+            xwrite /sel/sel/sel/ctl 'sendtoarea prev'
         case $MODKEY-Shift-Return
-            xwrite /sel/sel/ctl 'swap west'
+            xwrite /sel/sel/sel/ctl 'sendtoarea next'
         case $MODKEY-Control-y
             wmiir read /new >/dev/null >[2=1]
         case $MODKEY-h
@@ -159,7 +159,7 @@ while(event=`{read}) {
         case $MODKEY-Shift-[1-9]
             xwrite /ctl 'select '^`{echo $event|awk -F- '{print $3}'}
         case $MODKEY-Control-[1-9]
-            xwrite /sel/sel/sel/ctl 'sendto '^`{echo $event|awk -F- '{print $3}'}
+            xwrite /sel/sel/sel/ctl 'sendtopage '^`{echo $event|awk -F- '{print $3}'}
         }
     }
 }
