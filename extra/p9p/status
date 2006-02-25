@@ -1,4 +1,4 @@
-#!9PREFIX/bin/rc
+#!/usr/local/plan9/bin/rc
 # periodically print date and load average to the bar
 
 PIDFILE=/tmp/ns.$USER.$DISPLAY/statuspid

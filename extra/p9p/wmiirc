@@ -1,4 +1,4 @@
-#!9PREFIX/bin/rc
+#!/usr/local/plan9/bin/rc
 # configure wmii
 
 PIDFILE=/tmp/ns.$USER.$DISPLAY/wmiircpid

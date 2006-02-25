@@ -1,4 +1,4 @@
-#!9PREFIX/bin/rc
+#!/usr/local/plan9/bin/rc
 # display a welcome message that contains the wmii tutorial
 
 xmessage -file - <<END
