@@ -579,6 +579,7 @@ void
 sendtopage_client(Client *c, char *arg) {
 	const char *errstr;
 	Page *p;
+	Page *selp = page[sel];
 	int i;
    
 
@@ -593,6 +594,7 @@ sendtopage_client(Client *c, char *arg) {
 	detach_client(c, False);
 	focus_page(p);
 	attach_client(c);
+	focus_page(selp);
 }
 
 void
