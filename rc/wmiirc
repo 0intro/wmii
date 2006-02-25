@@ -52,48 +52,15 @@ status &
 proglist $OLD_PATH >/tmp/ns.$USER.$DISPLAY/progs &
 
 # SHORTCUTS
-while read key
+echo $MODKEY-Control-{c,'w,y','q,y',p,a,y} \
+     $MODKEY-{t,n,m,Return,h,l,j,k,Tab} \
+     $MODKEY-Shift-{h,l,p,Return,1,2,3,4,5,6,7,8,9} \
+     $MODKEY-Control-{1,2,3,4,5,6,7,8,9} |
+while read -d' ' key
 do
+	echo $key
 	echo -n | wmiir create /keys/$key
-done <<EOF
-$MODKEY-Control-c
-$MODKEY-Control-w,y
-$MODKEY-Control-q,y
-$MODKEY-Control-p
-$MODKEY-Control-a
-$MODKEY-Control-y
-$MODKEY-t
-$MODKEY-n
-$MODKEY-m
-$MODKEY-Return
-$MODKEY-h
-$MODKEY-l
-$MODKEY-j
-$MODKEY-k
-$MODKEY-Tab
-$MODKEY-Shift-h
-$MODKEY-Shift-l
-$MODKEY-Shift-p
-$MODKEY-Shift-Return
-$MODKEY-Shift-1
-$MODKEY-Shift-2
-$MODKEY-Shift-3
-$MODKEY-Shift-4
-$MODKEY-Shift-5
-$MODKEY-Shift-6
-$MODKEY-Shift-7
-$MODKEY-Shift-8
-$MODKEY-Shift-9
-$MODKEY-Control-1
-$MODKEY-Control-2
-$MODKEY-Control-3
-$MODKEY-Control-4
-$MODKEY-Control-5
-$MODKEY-Control-6
-$MODKEY-Control-7
-$MODKEY-Control-8
-$MODKEY-Control-9
-EOF
+done
 
 # EVENT LOOP
 wmiir read /event 2>/dev/null |
