@@ -1,4 +1,4 @@
-#!9PREFIX/bin/rc
+#!/usr/local/plan9/bin/rc
 # window manager improved 2 wrapper
 
 if(! ~ $#* 0) {
