@@ -1,0 +1,9 @@
+#!/bin/sh
+# clean the environment and execute the given command
+
+PATH=$OLD_PATH export PATH
+unset OLD_PATH
+unset WMII_NORMCOLORS
+unset WMII_SELCOLORS
+
+exec "$@"

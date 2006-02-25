@@ -1,0 +1,23 @@
+#!/bin/sh
+# periodically print date and load average to the bar
+
+pidfile=/tmp/ns.$USER.$DISPLAY/statuspid
+
+xwrite() {
+	file="$1"; shift
+	echo -n "$@" | wmiir write "$file"
+}
+
+# race condition alert
+test -f $pidfile && kill `cat $pidfile` 2>/dev/null
+echo $$ >$pidfile
+sleep 2
+xwrite /bar/new/colors $WMII_NORMCOLORS
+n=`wmiir read /bar | awk '/[0-9]+$/ {if($NF>max) max=$NF} END {print max}'`
+trap "wmiir remove /bar/$n 2>/dev/null; exit" 15
+
+while true
+do
+	xwrite /bar/$n/data `date` `uptime | sed 's/.*://; s/,//g'` || exit
+	sleep 2
+done

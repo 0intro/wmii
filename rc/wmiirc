@@ -1,0 +1,170 @@
+#!/bin/sh
+# configure wmii
+
+pidfile=/tmp/ns.$USER.$DISPLAY/wmiircpid
+
+xwrite() {
+	file="$1"; shift
+	echo -n "$@" | wmiir write "$file"
+}
+
+proglist() {
+	for dir in `echo $@ | sed 's/^:/.:/; s/::/:.:/; s/:$/:./' | tr : ' '`
+	do
+		for i in $dir/*
+		do
+			test -x "$i" && test ! -d "$i" && echo `basename "$i"`
+		done
+	done | sort | uniq
+}
+
+test -f $pidfile && kill -9 `cat $pidfile` 2>/dev/null
+echo $$ >$pidfile
+
+MODKEY=Alt
+WMII_NORMCOLORS='#222222 #eeeeee #666666' export WMII_NORMCOLORS
+WMII_SELCOLORS='#ffffff #285577 #4c7899' export WMII_SELCOLORS
+
+# WM CONFIGURATION
+xwrite /def/border 3
+xwrite /def/inc 1
+xwrite /def/snap 20
+xwrite /def/font fixed
+xwrite /def/selcolors $WMII_SELCOLORS
+xwrite /def/normcolors $WMII_NORMCOLORS
+
+# BAR CONFIGURATION
+i=1
+n=`wmiir read /bar | awk '/[0-9]+$/ {if($NF>max) max=$NF} END {print max}'`
+while test $i -le ${n:-0}
+do
+	wmiir remove /bar/1
+	i=`expr $i + 1`
+done
+xwrite /bar/new/colors $WMII_NORMCOLORS
+xwrite /bar/new/colors $WMII_SELCOLORS
+xwrite /bar/1/data 1
+xwrite /bar/expand 2
+
+# MISC
+xsetroot -solid '#0b1014'
+status &
+proglist $OLD_PATH >/tmp/ns.$USER.$DISPLAY/progs &
+
+# SHORTCUTS
+while read key
+do
+	echo -n | wmiir create /keys/$key
+done <<EOF
+$MODKEY-Control-c
+$MODKEY-Control-w,y
+$MODKEY-Control-q,y
+$MODKEY-Control-p
+$MODKEY-Control-a
+$MODKEY-Control-y
+$MODKEY-t
+$MODKEY-n
+$MODKEY-m
+$MODKEY-Return
+$MODKEY-h
+$MODKEY-l
+$MODKEY-j
+$MODKEY-k
+$MODKEY-Tab
+$MODKEY-Shift-h
+$MODKEY-Shift-l
+$MODKEY-Shift-p
+$MODKEY-Shift-Return
+$MODKEY-Shift-1
+$MODKEY-Shift-2
+$MODKEY-Shift-3
+$MODKEY-Shift-4
+$MODKEY-Shift-5
+$MODKEY-Shift-6
+$MODKEY-Shift-7
+$MODKEY-Shift-8
+$MODKEY-Shift-9
+$MODKEY-Control-1
+$MODKEY-Control-2
+$MODKEY-Control-3
+$MODKEY-Control-4
+$MODKEY-Control-5
+$MODKEY-Control-6
+$MODKEY-Control-7
+$MODKEY-Control-8
+$MODKEY-Control-9
+EOF
+
+# EVENT LOOP
+wmiir read /event 2>/dev/null |
+while read event
+do
+	set -- $event
+	type="$1"; shift
+	case "$type" in
+	PN)
+		xwrite /bar/1/data "$@";;
+	CN)
+		xwrite /bar/2/data "$@";;
+	CF)
+		xwrite /ctl `echo "$@" | awk '{print "warp " $1+6 " " $2+6}'`;;
+	LB)
+		case "$2" in
+		1)
+			if test 1 -eq "$1"
+			then
+				xwrite /ctl pager
+			else
+				xwrite /ctl select prev
+			fi;;
+		3|4)
+			xwrite /ctl select next;;
+		5)
+			xwrite /ctl select prev;;
+		esac;;
+	K)
+		case "$1" in
+		$MODKEY-Control-c)
+			xwrite /sel/sel/sel/ctl kill;;
+		$MODKEY-Control-w,y)
+			wmiirc &;;
+		$MODKEY-Control-q,y)
+			xwrite /ctl quit;;
+		$MODKEY-Control-p)
+			extern `wmiimenu </tmp/ns.$USER.$DISPLAY/progs` &;;
+		$MODKEY-Control-a)
+			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
+		$MODKEY-t)
+			extern xterm &;;
+		$MODKEY-n)
+			wmiir read /sel/new >/dev/null;;
+		$MODKEY-m)
+			xwrite /sel/sel/sel/ctl max;;
+		$MODKEY-Return)
+			xwrite /sel/sel/ctl sendtoarea prev;;
+		$MODKEY-Shift-Return)
+			xwrite /sel/sel/sel/ctl sendtoarea next;;
+		$MODKEY-Control-y)
+			wmiir read /new >/dev/null;;
+		$MODKEY-h)
+			xwrite /sel/ctl select prev;;
+		$MODKEY-l)
+			xwrite /sel/ctl select next;;
+		$MODKEY-Tab)
+			xwrite /sel/sel/ctl select next;;
+		$MODKEY-j)
+			xwrite /sel/sel/ctl select next;;
+		$MODKEY-k)
+			xwrite /sel/sel/ctl select prev;;
+		$MODKEY-Shift-h)
+			xwrite /ctl select prev;;
+		$MODKEY-Shift-l)
+			xwrite /ctl select next;;
+		$MODKEY-Shift-p)
+			xwrite /ctl pager;;
+		$MODKEY-Shift-[1-9])
+			xwrite /ctl select `echo $1 | sed 's/.*-//'`;;
+		esac;;
+	esac
+done &
+echo $! >$pidfile
