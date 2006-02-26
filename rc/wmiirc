@@ -34,12 +34,9 @@ xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
 
 # BAR CONFIGURATION
-i=1
-n=`wmiir read /bar | awk '/[0-9]+$/ {if($NF>max) max=$NF} END {print max}'`
-while test $i -le ${n:-0}
+while wmiir remove /bar/1 2>/dev/null
 do
-	wmiir remove /bar/1
-	i=`expr $i + 1`
+	:
 done
 xwrite /bar/new/colors $WMII_NORMCOLORS
 xwrite /bar/new/colors $WMII_SELCOLORS
@@ -164,6 +161,8 @@ do
 			xwrite /ctl pager;;
 		$MODKEY-Shift-[1-9])
 			xwrite /ctl select `echo $1 | sed 's/.*-//'`;;
+		$MODKEY-Control-[1-9])
+			xwrite /sel/sel/sel/ctl sendtopage `echo $1 | sed 's/.*-//'`;;
 		esac;;
 	esac
 done &
