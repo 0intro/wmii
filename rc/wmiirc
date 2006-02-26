@@ -141,7 +141,7 @@ do
 		$MODKEY-m)
 			xwrite /sel/sel/sel/ctl max;;
 		$MODKEY-Return)
-			xwrite /sel/sel/ctl sendtoarea prev;;
+			xwrite /sel/sel/sel/ctl sendtoarea prev;;
 		$MODKEY-Shift-Return)
 			xwrite /sel/sel/sel/ctl sendtoarea next;;
 		$MODKEY-Control-y)
