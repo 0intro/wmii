@@ -22,6 +22,7 @@ test -f $pidfile && kill -9 `cat $pidfile` 2>/dev/null
 echo $$ >$pidfile
 
 MODKEY=Alt
+WMII_FONT='fixed' export WMII_FONT
 WMII_NORMCOLORS='#222222 #eeeeee #666666' export WMII_NORMCOLORS
 WMII_SELCOLORS='#ffffff #285577 #4c7899' export WMII_SELCOLORS
 
@@ -29,7 +30,7 @@ WMII_SELCOLORS='#ffffff #285577 #4c7899' export WMII_SELCOLORS
 xwrite /def/border 3
 xwrite /def/inc 1
 xwrite /def/snap 20
-xwrite /def/font fixed
+xwrite /def/font $WMII_FONT
 xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
 
