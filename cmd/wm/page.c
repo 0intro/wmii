@@ -68,21 +68,23 @@ focus_page(Page *p)
 	Page *old = page ? page[sel] : nil;
 	char buf[16];
 	Client *c;
-	int i = page_to_index(p);
+	int i, pi = page_to_index(p);
+	int px;
 
-	if(!npage || (i == -1))
+	if(!npage || (pi == -1))
 		return;
 
 	if(old && old != p)
 		p->revert = old;
-	sel = i;
+	sel = pi;
+	px = sel * rect.width;
 	for(i = 0; i < nclient; i++) {
 		c = client[i];
-		if(old && (old != p) && (c->area && c->area->page == old))
-			XMoveWindow(dpy, c->frame.win, 2 * rect.width, 2 * rect.height);
-		else if(c->area && c->area->page == p) {
-			XMoveWindow(dpy, c->frame.win, c->frame.rect.x, c->frame.rect.y);
-			draw_client(c);
+		if(c->area) {
+			pi = page_to_index(c->area->page);
+			XMoveWindow(dpy, c->frame.win, px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y);
+			if(c->area->page == p)
+				draw_client(c);
 		}
 	}
 	if((c = sel_client_of_page(p)))

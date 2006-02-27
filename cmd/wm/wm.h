@@ -213,6 +213,7 @@ void unmap_client(Client *c);
 void map_client(Client *c);
 void reparent_client(Client *c, Window w, int x, int y);
 void attach_client(Client *c);
+void attach_client_to_page(Page *p, Client *c);
 void detach_client(Client *c, Bool unmap);
 Client *sel_client();
 Client *sel_client_of_page(Page *p);

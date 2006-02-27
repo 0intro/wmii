@@ -362,17 +362,14 @@ gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 }
 
 void
-attach_client(Client *c)
+attach_client_to_page(Page *p, Client *c)
 {
-	Page *p;
-    if(!page)
-		p = alloc_page();
-	else
-		p = page[sel];
+	Area *a = p->area[p->sel];
+	int pi = page_to_index(p);
+	int px = sel * rect.width;
+
 
     reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
-
-	Area *a = p->area[p->sel];
 	a->client = (Client **)cext_array_attach((void **)a->client, c,
 			sizeof(Client *), &a->clientsz);
 	a->nclient++;
@@ -381,8 +378,22 @@ attach_client(Client *c)
 		arrange_column(a);
 	else /* normal mode */
 		resize_client(c, &c->frame.rect, nil);
+	XMoveWindow(dpy, c->frame.win,
+			px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y);
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
+}
+
+void
+attach_client(Client *c)
+{
+	Page *p;
+    if(!page)
+		p = alloc_page();
+	else
+		p = page[sel];
+
+	attach_client_to_page(p, c);
 	focus_client(c, True);
 }
 
@@ -577,24 +588,19 @@ select_client(Client *c, char *arg)
 
 void
 sendtopage_client(Client *c, char *arg) {
-	const char *errstr;
 	Page *p;
-	Page *selp = page[sel];
-	int i;
-   
 
 	if(!strncmp(arg, "new", 4))
 		p = alloc_page();
 	else {
-		i = cext_strtonum(arg, 1, npage, &errstr);
+		const char *errstr;
+		int i = cext_strtonum(arg, 1, npage, &errstr);
 		if(errstr)
 			return;
 		p = page[i - 1];
 	}
 	detach_client(c, False);
-	focus_page(p);
-	attach_client(c);
-	focus_page(selp);
+	attach_client_to_page(p, c);
 }
 
 void
