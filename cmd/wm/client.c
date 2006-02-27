@@ -125,7 +125,6 @@ focus_client(Client *c, Bool fevent)
     grab_mouse(c->win, Mod1Mask, Button3);
     XRaiseWindow(dpy, c->frame.win);
     XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-    XDefineCursor(dpy, c->win, normal_cursor);
     draw_client(c);
 	XSync(dpy, False);
 	client_name_event(c);
