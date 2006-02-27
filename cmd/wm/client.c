@@ -365,9 +365,6 @@ void
 attach_client_to_page(Page *p, Client *c)
 {
 	Area *a = p->area[p->sel];
-	int pi = page_to_index(p);
-	int px = sel * rect.width;
-
 
     reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
 	a->client = (Client **)cext_array_attach((void **)a->client, c,
@@ -378,8 +375,6 @@ attach_client_to_page(Page *p, Client *c)
 		arrange_column(a);
 	else /* normal mode */
 		resize_client(c, &c->frame.rect, nil);
-	XMoveWindow(dpy, c->frame.win,
-			px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y);
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
 }
@@ -514,6 +509,9 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 {
     unsigned int bh = bar_height();
     unsigned int bw = def.border;
+	int pi = page_to_index(c->area->page);
+	int px = sel * rect.width;
+
 
 	if(area_to_index(c->area) > 0)
 		resize_column(c, r, pt);
@@ -526,7 +524,7 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
     if(def.inc)
     	resize_incremental(c, bh, bw);
 
-    XMoveResizeWindow(dpy, c->frame.win, c->frame.rect.x, c->frame.rect.y,
+    XMoveResizeWindow(dpy, c->frame.win, px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y,
 					  c->frame.rect.width, c->frame.rect.height);
 
 	c->rect.x = bw;
@@ -589,6 +587,7 @@ select_client(Client *c, char *arg)
 void
 sendtopage_client(Client *c, char *arg) {
 	Page *p;
+	Client *new;
 
 	if(!strncmp(arg, "new", 4))
 		p = alloc_page();
@@ -601,6 +600,9 @@ sendtopage_client(Client *c, char *arg) {
 	}
 	detach_client(c, False);
 	attach_client_to_page(p, c);
+	if((new = sel_client_of_page(page[sel])))
+		focus_client(new, True);
+
 }
 
 void
