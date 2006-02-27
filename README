@@ -10,11 +10,6 @@ remote access utility, and a tiny wmiimenu(1).
 Requirements
 ------------
 In order to build wmii you need the Xlib header files.
-Furthermore, the wmii configuration scripts rely on the 9base package [3]
-which contains ports of various Plan 9 standard tools, in particular the
-rc shell.  However, if you already have plan9ports installed, then you
-can use this instead of 9base.  In any case, make sure that 9PREFIX in
-wmii's config.mk points to the right location.
 
 
 Installation
@@ -47,12 +42,10 @@ This will start wmii on display :1 of the host foo.bar.
 
 Configuration
 -------------
-The configuration of wmii is done by customizing the wmiirc script,
+The configuration of wmii is done by customizing the sh script wmiirc,
 which remotely controls the window manager and handles various events.
 Copy the file from PREFIX/etc/wmii-3/ (usually /usr/local/etc/wmii-3/)
-to $HOME/.wmii-3/ and edit it to fit your needs.  You should be familiar
-with rc, though. The rc manpage (included in 9base) is quite small and
-there's also a paper available [4].
+to $HOME/.wmii-3/ and edit it to fit your needs.
 
 
 Credits
@@ -81,5 +74,3 @@ References
 ----------
 [1] http://wmii.de
 [2] http://www.cs.bell-labs.com/sys/man/5/INDEX.html 
-[3] http://wmii.de/repos/9base/
-[4] http://www.star.le.ac.uk/~tjg/rc/misc/td
