@@ -1216,7 +1216,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Enofile;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 1, 0xffff, &err);
+		i = cext_strtonum(buf, 0, 0xffff, &err);
 		if(err)
 			return "max value out of range 1..0xffff";
 		page[i1]->area[i2]->maxclient = i;
@@ -1227,7 +1227,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Enofile;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 1, 0xffff, &err);
+		i = cext_strtonum(buf, 1, COL_MODE_LAST, &err);
 		if(err)
 			return "max value out of range 1..0xffff";
 		page[i1]->area[i2]->mode = i;
