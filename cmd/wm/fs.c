@@ -57,7 +57,6 @@ static char Enocommand[] = "command not supported";
  * /1/new/				Darea
  * /1/float/			Darea		floating clients in area 0
  * /1/float/ctl 		Fctl		command interface (area)
- * /1/float/max			Fmax		maximum clients
  * /1/float/mode		Fmode	col mode
  * /1/float/sel/		Dclient
  * /1/float/1/			Dclient
@@ -66,7 +65,6 @@ static char Enocommand[] = "command not supported";
  * /1/float/1/ctl 		Fctl 		command interface (client)
  * /1/1/				Darea
  * /1/1/ctl 			Fctl 		command interface (area)
- * /1/1/max				Fmax		maximum clients
  * /1/1/mode			Fmode	col mode
  * /1/1/1/sel/			Dclient
  * /1/1/1/1/			Dclient

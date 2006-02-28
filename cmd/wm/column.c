@@ -11,21 +11,49 @@
 void
 arrange_column(Area *col)
 {
-	size_t i;
+	size_t i, yoff;
 	unsigned int h;
 
-	h = col->rect.height;
-	h /= col->nclient;
-	for(i = 0; i < col->nclient; i++) {
-		Client *c = col->client[i];
-        c->frame.rect = col->rect;
-        c->frame.rect.y += i * h;
-        if(i + 1 < col->nclient)
-            c->frame.rect.height = h;
-        else
-            c->frame.rect.height =
-				col->rect.height - c->frame.rect.y + col->rect.y;
-        resize_client(c, &c->frame.rect, 0);
+	switch(col->mode) {
+	case COL_EQUAL:
+		h = col->rect.height;
+		h /= col->nclient;
+		for(i = 0; i < col->nclient; i++) {
+			Client *c = col->client[i];
+			c->frame.rect = col->rect;
+			c->frame.rect.y += i * h;
+			if(i + 1 < col->nclient)
+				c->frame.rect.height = h;
+			else
+				c->frame.rect.height =
+					col->rect.height - c->frame.rect.y + col->rect.y;
+			resize_client(c, &c->frame.rect, 0);
+		}
+		break;
+	case COL_MAX:
+		for(i = 0; i < col->nclient; i++) {
+			Client *c = col->client[i];
+			c->frame.rect = col->rect;
+			resize_client(c, &c->frame.rect, 0);
+		}
+		break;
+	case COL_STACK:
+		yoff = col->rect.y;
+		h = col->rect.height - (col->nclient - 1) * bar_height();
+		for(i = 0; i < col->nclient; i++) {
+			Client *c = col->client[i];
+			c->frame.rect = col->rect;
+			c->frame.rect.y = yoff;
+			if(i == col->sel)
+				c->frame.rect.height = h;
+			else
+				c->frame.rect.height = bar_height();
+			yoff += c->frame.rect.height;
+			resize_client(c, &c->frame.rect, 0);
+		}
+		break;
+	default:
+		break;
 	}
 }
 

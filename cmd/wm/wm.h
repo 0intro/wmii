@@ -61,7 +61,7 @@ typedef struct Area Area;
 typedef struct Page Page;
 typedef struct Client Client;
 
-typedef enum { COL_MAX, COL_EQUAL, COL_STACK, COL_MODE_LAST } ColumnMode;
+typedef enum { COL_EQUAL, COL_STACK, COL_MAX, COL_MODE_LAST } ColumnMode;
 
 struct Area {
 	unsigned short id;

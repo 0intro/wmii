@@ -95,8 +95,9 @@ void
 focus_client(Client *c)
 {
 	Client *old = sel_client();
+	int i = area_to_index(c->area);
 	
-	c->area->page->sel = area_to_index(c->area);
+	c->area->page->sel = i;
 	c->area->sel = client_to_index(c);
 	if(old && (old != c)) {
 		c->revert = old;
@@ -112,6 +113,8 @@ focus_client(Client *c)
 	XSync(dpy, False);
 	client_name_event(c);
 	client_focus_event(c);
+	if(i > 0 && c->area->mode == COL_STACK)
+		arrange_column(c->area);
 }
 
 void
