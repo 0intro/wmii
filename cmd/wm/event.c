@@ -97,6 +97,7 @@ handle_buttonpress(XEvent *e)
 			switch (ev->button) {
 				case Button1:
 					focus(c);
+					mouse_move(c);
 					break;
 				case Button3:
 					focus(c);
