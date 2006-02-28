@@ -32,11 +32,9 @@ update_area_geometry(Area *a)
 void
 destroy_area(Area *a)
 {
-	size_t i;
 	Page *p = a->page;
-	while(a->nclient)
-		detach_client(client[i], False);
-	free(a->client);
+	if(a->client)
+		free(a->client);
 	cext_array_detach((void **)p->area, a, &p->areasz);
 	p->narea--;
 	free(a);

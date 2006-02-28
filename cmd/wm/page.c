@@ -27,12 +27,16 @@ alloc_page()
     return p;
 }
 
-void
+Page *
 destroy_page(Page *p)
 {
 	unsigned int i;
 	Page *old = p->revert;
 	Client *c;
+
+	for(i = 0; i < p->narea; i++)
+		if(p->area[i]->nclient)
+			return p;
 
 	while(p->narea)
 		destroy_area(p->area[0]);
@@ -55,6 +59,7 @@ destroy_page(Page *p)
 	}
 	else
 		write_event("PN -\n");
+	return nil;
 }
 
 int

@@ -261,7 +261,7 @@ char *warp_mouse(char *arg);
 
 /* page.c */
 Page *alloc_page();
-void destroy_page(Page *p);
+Page *destroy_page(Page *p);
 void focus_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
 int pid_to_index(unsigned short id);
