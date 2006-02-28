@@ -601,8 +601,11 @@ xremove(IXPConn *c, Fcall *fcall)
 		return Enofile;
 	switch(type) {
 	case Dpage:
-		if(destroy_page(page[i1]) == page[i1])
-			return Enoperm;
+		{
+			char *ret = destroy_page(page[i1]);
+			if(ret)
+				return ret;
+		}
 		break;
 	case Dlabel:
 		{

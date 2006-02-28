@@ -59,6 +59,8 @@ typedef struct Area Area;
 typedef struct Page Page;
 typedef struct Client Client;
 
+typedef enum { COL_MAX, COL_EQUAL, COL_STACK } ColumnMode;
+
 struct Area {
 	unsigned short id;
     Client **client;
@@ -66,6 +68,8 @@ struct Area {
 	size_t clientsz;
 	size_t sel;
 	size_t nclient;
+	size_t maxclient;
+	ColumnMode mode;
 	XRectangle rect;
 };
 
@@ -261,7 +265,7 @@ char *warp_mouse(char *arg);
 
 /* page.c */
 Page *alloc_page();
-Page *destroy_page(Page *p);
+char *destroy_page(Page *p);
 void focus_page(Page *p);
 XRectangle *rectangles(unsigned int *num);
 int pid_to_index(unsigned short id);

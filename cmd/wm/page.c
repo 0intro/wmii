@@ -27,7 +27,7 @@ alloc_page()
     return p;
 }
 
-Page *
+char *
 destroy_page(Page *p)
 {
 	unsigned int i;
@@ -36,7 +36,7 @@ destroy_page(Page *p)
 
 	for(i = 0; i < p->narea; i++)
 		if(p->area[i]->nclient)
-			return p;
+			return "page not empty";
 
 	while(p->narea)
 		destroy_area(p->area[0]);
