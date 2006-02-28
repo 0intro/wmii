@@ -572,6 +572,8 @@ sendtopage_client(Client *c, char *arg) {
 
 	if(!strncmp(arg, "new", 4))
 		p = alloc_page();
+	else if(!strncmp(arg, "sel", 4))
+		p = page[sel];
 	else {
 		const char *errstr;
 		int i = cext_strtonum(arg, 1, npage, &errstr);
