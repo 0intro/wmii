@@ -104,8 +104,6 @@ do
 		xwrite /bar/1/data "$@";;
 	CN)
 		xwrite /bar/2/data "$@";;
-	CF)
-		xwrite /ctl `echo "$@" | awk '{print "warp " $1+6 " " $2+6}'`;;
 	LB)
 		case "$2" in
 		1)
