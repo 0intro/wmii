@@ -39,6 +39,9 @@ write_data(unsigned int fid)
         }
 		offset += len;
     }
+	if(offset == 0) /* do an explicit empty write when no writing has been done yet */
+		if(ixp_client_write(&c, fid, offset, 0, 0) != 0)
+			fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr); 
 	free(data);
 }
 
