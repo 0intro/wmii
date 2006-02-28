@@ -447,16 +447,16 @@ static void
 check_dimensions(Client *c, unsigned int tabh, unsigned int bw)
 {
     if(c->size.flags & PMinSize) {
-        if(c->frame.rect.width - 2 * bw < c->size.min_width)
-            c->frame.rect.width = c->size.min_width + 2 * bw;
-        if(c->frame.rect.height - bw - (tabh ? tabh : bw) < c->size.min_height)
-            c->frame.rect.height = c->size.min_height + bw + (tabh ? tabh : bw);
+        if(c->rect.width < c->size.min_width)
+            c->rect.width = c->size.min_width;
+        if(c->rect.height < c->size.min_height)
+            c->rect.height = c->size.min_height;
     }
     if(c->size.flags & PMaxSize) {
-        if(c->frame.rect.width - 2 * bw > c->size.max_width)
-            c->frame.rect.width = c->size.max_width + 2 * bw;
-        if(c->frame.rect.height - bw - (tabh ? tabh : bw) > c->size.max_height)
-            c->frame.rect.height = c->size.max_height + bw + (tabh ? tabh : bw);
+        if(c->rect.width > c->size.max_width)
+            c->rect.width = c->size.max_width;
+        if(c->rect.height > c->size.max_height)
+            c->rect.height = c->size.max_height;
     }
 }
 
@@ -502,9 +502,6 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 	else
 		c->frame.rect = *r;
 
-    /* resize if client requests special size */
-    check_dimensions(c, bh, bw);
-
     if(def.inc)
     	resize_incremental(c, bh, bw);
 
@@ -515,6 +512,10 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 	c->rect.y = bh ? bh : bw;
 	c->rect.width = c->frame.rect.width - 2 * bw;
 	c->rect.height = c->frame.rect.height - bw - (bh ? bh : bw);
+
+    /* resize if client requests special size */
+    check_dimensions(c, bh, bw);
+
 	XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 	configure_client(c);
 }
