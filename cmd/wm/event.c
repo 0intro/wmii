@@ -72,10 +72,10 @@ handle_buttonpress(XEvent *e)
 				write_event(buf);
 			}
 	}
-	else if((c = win_to_frame(ev->window))) {
+	else if((c = win_to_clientframe(ev->window))) {
 		if(ev->button == Button1) {
 			if(sel_client() != c) {
-				focus_client(c, False);
+				focus(c);
 				return;
 			}
 			align = cursor_to_align(c->frame.cursor);
@@ -96,11 +96,10 @@ handle_buttonpress(XEvent *e)
 			XRaiseWindow(dpy, c->frame.win);
 			switch (ev->button) {
 				case Button1:
-					focus_client(c, False);
-					mouse_move(c);
+					focus(c);
 					break;
 				case Button3:
-					focus_client(c, False);
+					focus(c);
 					align = xy_to_align(&c->rect, ev->x, ev->y);
 					if(align == CENTER)
 						mouse_move(c);
@@ -110,9 +109,9 @@ handle_buttonpress(XEvent *e)
 			}
 		}
 		else if(ev->button == Button1)
-			focus_client(c, False);
+			focus(c);
 
-		if(c && c->area) {
+		if(c) {
 			snprintf(buf, sizeof(buf), "CB %d %d\n", client_to_index(c) + 1, ev->button);
 			write_event(buf);
 		}
@@ -132,7 +131,6 @@ handle_configurerequest(XEvent *e)
 	ev->value_mask &= ~CWSibling;
 
     if(c) {
-
         if(c->area) {
             bw = def.border;
             bh = bar_height();
@@ -205,7 +203,7 @@ handle_expose(XEvent *e)
     if(ev->count == 0) {
 		if(ev->window == winbar) 
 			draw_bar();
-		else if((c = win_to_frame(ev->window)))
+		else if((c = win_to_clientframe(ev->window)))
             draw_client(c);
     }
 }
@@ -254,7 +252,7 @@ handle_maprequest(XEvent *e)
 static void
 handle_motionnotify(XEvent *e)
 {
-    Client *c = win_to_frame(e->xmotion.window);
+    Client *c = win_to_clientframe(e->xmotion.window);
     if(c) {
     	Cursor cursor = cursor_for_motion(c, e->xmotion.x, e->xmotion.y);
         if(cursor != c->frame.cursor) {
@@ -291,11 +289,17 @@ handle_unmapnotify(XEvent *e)
 static void handle_clientmessage(XEvent *e)
 {
     XClientMessageEvent *ev = &e->xclient;
+	Client *c;
 
     if (ev->message_type == net_atoms[NET_NUMBER_OF_DESKTOPS] && ev->format == 32)
         return; /* ignore */
     else if (ev->message_type == net_atoms[NET_CURRENT_DESKTOP] && ev->format == 32) {
-		focus_page(page[ev->data.l[0]]);
-        return;
+		int i = ev->data.l[0];
+		if(i < npage) {
+			Page *p = page[i];
+			focus_page(p);
+			if((c = sel_client_of_page(p)))
+				focus_client(c);
+		}
     }
 }

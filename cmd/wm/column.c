@@ -138,9 +138,9 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 				src->client[j] = src->client[i];
 				src->client[i] = tmp;
 				arrange_column(src);
+				focus_client(c);
             }
         }
-		focus_client(c, False);
     }
 }
 
@@ -175,6 +175,6 @@ new_column(Area *old)
 
 	c->area = col;
 	arrange_page(p, True);
-	focus_client(c, True);
+	focus_client(c);
 	return col;
 }

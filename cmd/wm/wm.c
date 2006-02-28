@@ -172,12 +172,10 @@ pager()
 {
     XEvent ev;
     int i;
-	size_t j;
+	Client *c;
 
-    if(!page)
+    if(!npage)
         return;
-
-	for(j = 0; (j < pagesz) && page[j]; j++);
 
     XClearWindow(dpy, transient);
     XMapRaised(dpy, transient);
@@ -204,8 +202,11 @@ pager()
         case KeyPress:
             XUnmapWindow(dpy, transient);
             if((i = handle_kpress(&ev.xkey)) != -1)
-                if(i < j)
+                if(i < npage) {
 					focus_page(page[i]);
+					if((c = sel_client_of_page(page[i])))
+						focus_client(c);
+				}
             XUngrabKeyboard(dpy, CurrentTime);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
 			XSync(dpy, False);
@@ -213,8 +214,12 @@ pager()
             break;
         case ButtonPress:
             XUnmapWindow(dpy, transient);
-            if(ev.xbutton.button == Button1)
-                focus_page(page[xy_to_pager_page(ev.xbutton.x, ev.xbutton.y)]);
+            if(ev.xbutton.button == Button1) {
+				i = xy_to_pager_page(ev.xbutton.x, ev.xbutton.y);
+                focus_page(page[i]);
+				if((c = sel_client_of_page(page[i])))
+					focus_client(c);
+			}
             XUngrabKeyboard(dpy, CurrentTime);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
 			XSync(dpy, False);

@@ -20,7 +20,6 @@ alloc_client(Window w, XWindowAttributes *wa)
     long msize;
 	static unsigned short id = 1;
 
-	/* client itself */
 	c->id = id++;
     c->win = w;
     c->rect.x = wa->x;
@@ -40,7 +39,6 @@ alloc_client(Window w, XWindowAttributes *wa)
     	free(name.value);
 	}
 
-	/* client.frame */
     fwa.override_redirect = 1;
     fwa.background_pixmap = ParentRelative;
 	fwa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
@@ -94,27 +92,12 @@ client_focus_event(Client *c)
 }
 
 void
-focus_client(Client *c, Bool fevent)
+focus_client(Client *c)
 {
-	Page *p = page ? page[sel] : nil;
-	size_t i, j;
 	Client *old = sel_client();
 	
-	/* setup indexes */
-	if(c->area->page != p) {
-		focus_page(c->area->page);
-		p = c->area->page;
-	}
-	for(i = 0; i < p->narea; i++) {
-		Area *a = p->area[i];
-		for(j = 0; j < a->nclient && (c != a->client[j]); j++);
-		if(j < a->nclient) {
-			p->sel = i;
-			a->sel = j;
-			break;
-		}
-	}
-	
+	c->area->page->sel = area_to_index(c->area);
+	c->area->sel = client_to_index(c);
 	if(old && (old != c)) {
 		c->revert = old;
 		grab_mouse(old->win, AnyModifier, Button1);
@@ -128,8 +111,7 @@ focus_client(Client *c, Bool fevent)
     draw_client(c);
 	XSync(dpy, False);
 	client_name_event(c);
-	if(fevent)
-		client_focus_event(c);
+	client_focus_event(c);
 }
 
 void
@@ -388,7 +370,7 @@ attach_client(Client *c)
 		p = page[sel];
 
 	attach_client_to_page(p, c);
-	focus_client(c, True);
+	focus_client(c);
 }
 
 void
@@ -427,7 +409,7 @@ detach_client(Client *c, Bool unmap)
 	}
 	c->area = nil;
 	if(c->revert)
-		focus_client(c->revert, True);
+		focus_client(c->revert);
     if(c->destroyed)
         destroy_client(c);
 }
@@ -449,7 +431,7 @@ sel_client()
 }
 
 Client *
-win_to_frame(Window w)
+win_to_clientframe(Window w)
 {
 	size_t i;
 	for(i = 0; (i < clientsz) && client[i]; i++)
@@ -580,13 +562,13 @@ select_client(Client *c, char *arg)
 			return;
 		i--;
 	}
-	focus_client(a->client[i], True);
+	focus_client(a->client[i]);
 }
 
 void
 sendtopage_client(Client *c, char *arg) {
 	Page *p;
-	Client *new;
+	Client *next;
 
 	if(!strncmp(arg, "new", 4))
 		p = alloc_page();
@@ -599,15 +581,14 @@ sendtopage_client(Client *c, char *arg) {
 	}
 	detach_client(c, False);
 	attach_client_to_page(p, c);
-	if((new = sel_client_of_page(page[sel])))
-		focus_client(new, True);
-
+	if((next = sel_client_of_page(page[sel])))
+		focus_client(next);
 }
 
 void
 sendtoarea_client(Client *c, char *arg) {
 	const char *errstr;
-	Area *new, *a = c->area;
+	Area *next, *a = c->area;
 	Page *p = a->page;
 	int i = area_to_index(a);
 
@@ -615,24 +596,23 @@ sendtoarea_client(Client *c, char *arg) {
 		return;
 	if(!strncmp(arg, "prev", 5)) {
 		if(i == 1)
-			new = p->area[p->narea - 1];
+			next = p->area[p->narea - 1];
 		else
-			new = p->area[i - 1];
+			next = p->area[i - 1];
 	}
 	else if(!strncmp(arg, "next", 5)) {
 		if(i < p->narea - 1)
-			new = p->area[i + 1];
+			next = p->area[i + 1];
 		else
-			new = p->area[1];
+			next = p->area[1];
 	}
 	else {
 		i = cext_strtonum(arg, 1, p->narea, &errstr);
 		if(errstr)
 			return;
-		new = p->area[i - 1];
+		next = p->area[i - 1];
 	}
-
-	sendto_area(new, c);
+	sendto_area(next, c);
 }
 
 void
@@ -642,4 +622,14 @@ resize_all_clients()
 	for(i = 0; i < nclient; i++)
 		if(client[i]->area)
 			resize_client(client[i], &client[i]->frame.rect, 0);
+}
+
+/* convenience function */
+void
+focus(Client *c)
+{
+	Page *p = c->area->page;
+	if(page[sel] != p)
+		focus_page(p);
+	focus_client(c);
 }

@@ -91,9 +91,8 @@ select_area(Area *a, char *arg)
 	}
 	new = p->area[i];
 	if(new->nclient)
-		focus_client(new->client[new->sel], True);
-	else
-		p->sel = i;
+		focus_client(new->client[new->sel]);
+	p->sel = i;
 }
 
 void
@@ -109,8 +108,9 @@ sendto_area(Area *new, Client *c)
 	new->client = (Client **)cext_array_attach(
 			(void **)new->client, c, sizeof(Client *), &new->clientsz);
 	new->nclient++;
+
 	c->area = new;
 	arrange_column(a);
 	arrange_column(new);
-	focus_client(c, True);
+	focus_client(c);
 }

@@ -217,8 +217,8 @@ void attach_client_to_page(Page *p, Client *c);
 void detach_client(Client *c, Bool unmap);
 Client *sel_client();
 Client *sel_client_of_page(Page *p);
-void focus_client(Client *c, Bool fevent);
-Client *win_to_frame(Window w);
+void focus_client(Client *c);
+Client *win_to_clientframe(Window w);
 void resize_client(Client *c, XRectangle *r, XPoint *pt);
 int cid_to_index(Area *a, unsigned short id);
 int client_to_index(Client *c);
@@ -226,6 +226,7 @@ void select_client(Client *c, char *arg);
 void sendtopage_client(Client *c, char *arg);
 void sendtoarea_client(Client *c, char *arg);
 void resize_all_clients();
+void focus(Client *c);
 
 /* event.c */
 void init_x_event_handler();

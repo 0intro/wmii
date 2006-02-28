@@ -31,7 +31,9 @@ void
 destroy_page(Page *p)
 {
 	unsigned int i;
-	Page *new = p->revert;
+	Page *old = p->revert;
+	Client *c;
+
 	while(p->narea)
 		destroy_area(p->area[0]);
 
@@ -46,8 +48,11 @@ destroy_page(Page *p)
 	}
 
     free(p); 
-    if(npage && new)
-        focus_page(new);
+    if(npage && old) {
+        focus_page(old);
+		if((c = sel_client_of_page(old)))
+			focus_client(c);
+	}
 	else
 		write_event("PN -\n");
 }
@@ -78,6 +83,7 @@ focus_page(Page *p)
 		p->revert = old;
 	sel = pi;
 	px = sel * rect.width;
+	/* gives all(!) clients proper geometry (for use of different pagers) */
 	for(i = 0; i < nclient; i++) {
 		c = client[i];
 		if(c->area) {
@@ -87,8 +93,6 @@ focus_page(Page *p)
 				draw_client(c);
 		}
 	}
-	if((c = sel_client_of_page(p)))
-		focus_client(c, False);
 	snprintf(buf, sizeof(buf), "PN %d\n", sel + 1);
 	write_event(buf);
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
@@ -141,6 +145,7 @@ select_page(char *arg)
 {
 	size_t new = sel;
 	const char *err;
+	Client *c;
 
     if(!npage)
         return;
@@ -159,4 +164,6 @@ select_page(char *arg)
 			new = idx - 1;
 	}
     focus_page(page[new]);
+	if((c = sel_client_of_page(page[new])))
+		focus_client(c);
 }

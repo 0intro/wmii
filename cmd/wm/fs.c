@@ -314,7 +314,6 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			if(iswalk) {
 				Page *p = alloc_page();
 				new->path = mkqpath(Dpage, p->id, 0, 0);
-				focus_page(p);
 			}
 			else
 				new->path = mkqpath(Dpage, 0, 0, 0);
