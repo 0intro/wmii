@@ -57,6 +57,8 @@ static char Enocommand[] = "command not supported";
  * /1/new/				Darea
  * /1/float/			Darea		floating clients in area 0
  * /1/float/ctl 		Fctl		command interface (area)
+ * /1/float/max			Fmax		maximum clients
+ * /1/float/mode		Fmode	col mode
  * /1/float/sel/		Dclient
  * /1/float/1/			Dclient
  * /1/float/1/name		Fname		name of client
@@ -64,6 +66,8 @@ static char Enocommand[] = "command not supported";
  * /1/float/1/ctl 		Fctl 		command interface (client)
  * /1/1/				Darea
  * /1/1/ctl 			Fctl 		command interface (area)
+ * /1/1/max				Fmax		maximum clients
+ * /1/1/mode			Fmode	col mode
  * /1/1/1/sel/			Dclient
  * /1/1/1/1/			Dclient
  * /1/1/1/name			Fname		name of client
@@ -194,6 +198,8 @@ qid_to_name(Qid *qid)
 		case Finc: return "inc"; break;
 		case Fgeom: return "geometry"; break;
 		case Fname: return "name"; break;
+		case Fmax: return "max"; break;
+		case Fmode: return "mode"; break;
 		case Fevent: return "event"; break;
 		case Fkey: return key[i1]->name; break; 
 		default: return nil; break;
@@ -245,6 +251,10 @@ name_to_type(char *name, unsigned char dir_type)
 		return Ffont;
 	if(!strncmp(name, "data", 5))
 		return Fdata;
+	if(!strncmp(name, "max", 4))
+		return Fmax;
+	if(!strncmp(name, "mode", 5))
+		return Fmode;
 	if(name_to_key(name))
 		return Fkey;
 	if(!strncmp(name, "sel", 4))
@@ -576,6 +586,14 @@ type_to_stat(Stat *stat, char *wname, Qid *dir)
     case Fdata:
 		return mkstat(stat, dir, wname, (dir_i1 == nlabel) ? 0 : strlen(label[dir_i1]->data), DMREAD | DMWRITE);
 		break;	
+    case Fmax:
+		snprintf(buf, sizeof(buf), "%d", page[dir_i1]->area[dir_i2]->maxclient);
+		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
+		break;	
+    case Fmode:
+		snprintf(buf, sizeof(buf), "%d", page[dir_i1]->area[dir_i2]->mode);
+		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
+		break;	
     case Fcolors:
     case Fselcolors:
     case Fnormcolors:
@@ -758,6 +776,10 @@ xread(IXPConn *c, Fcall *fcall)
 		case Darea:
 			/* jump to offset */
 			len = type_to_stat(&stat, "ctl", &m->qid);
+			if(i2) {
+				len += type_to_stat(&stat, "max", &m->qid);
+				len += type_to_stat(&stat, "mode", &m->qid);
+			}
 			for(i = 0; i < page[i1]->area[i2]->nclient; i++) {
 				if(i == page[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
@@ -882,6 +904,12 @@ xread(IXPConn *c, Fcall *fcall)
 		case Darea:
 			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			if(i2) {
+				fcall->count += type_to_stat(&stat, "max", &m->qid);
+				p = ixp_enc_stat(p, &stat);
+				fcall->count += type_to_stat(&stat, "mode", &m->qid);
+				p = ixp_enc_stat(p, &stat);
+			}
 			for(i = 0; i < page[i1]->area[i2]->nclient; i++) {
 				if(i == page[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
@@ -967,6 +995,20 @@ xread(IXPConn *c, Fcall *fcall)
 			if((fcall->count = strlen(def.font)))
 				memcpy(p, def.font, fcall->count);
 			break;
+		case Fmax:
+			if(!i2)
+				return Enofile;
+			snprintf(buf, sizeof(buf), "%d", page[i1]->area[i2]->maxclient);
+			fcall->count = strlen(buf);
+			memcpy(p, buf, fcall->count);
+			break;	
+		case Fmode:
+			if(!i2)
+				return Enofile;
+			snprintf(buf, sizeof(buf), "%d", page[i1]->area[i2]->mode);
+			fcall->count = strlen(buf);
+			memcpy(p, buf, fcall->count);
+			break;	
 		default:
 			return "invalid read";
 			break;
@@ -1169,6 +1211,28 @@ xwrite(IXPConn *c, Fcall *fcall)
 		update_bar_geometry();
 		resize_all_clients();
 		break;
+	case Fmax:
+		if(!i2)
+			return Enofile;
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
+		i = cext_strtonum(buf, 1, 0xffff, &err);
+		if(err)
+			return "max value out of range 1..0xffff";
+		page[i1]->area[i2]->maxclient = i;
+		/* TODO: detach to many clients/attach */
+		break;	
+	case Fmode:
+		if(!i2)
+			return Enofile;
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
+		i = cext_strtonum(buf, 1, 0xffff, &err);
+		if(err)
+			return "max value out of range 1..0xffff";
+		page[i1]->area[i2]->mode = i;
+		arrange_column(page[i1]->area[i2]);
+		break;	
 	case Fkey:
 		break;
 	default:

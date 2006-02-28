@@ -42,7 +42,9 @@ enum {
 	Fgeom,
 	Fevent,
 	Fctl,
-	Fname
+	Fname,
+	Fmax,
+	Fmode
 };
 
 #define NET_ATOM_COUNT         3
