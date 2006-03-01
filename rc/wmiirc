@@ -35,7 +35,7 @@ xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
 
 # BAR CONFIGURATION
-while wmiir remove /bar/1 2>/dev/null
+while wmiir remove /bar/0 2>/dev/null
 do
 	:
 done
@@ -57,7 +57,7 @@ done <<EOF
 $MODKEY-Control-c
 $MODKEY-Control-w,y
 $MODKEY-Control-q,y
-$MODKEY-Control-r,y
+$MODKEY-Control-r
 $MODKEY-Control-p
 $MODKEY-Control-a
 $MODKEY-Control-y
@@ -123,7 +123,7 @@ do
 			wmiirc &;;
 		$MODKEY-Control-q,y)
 			xwrite /ctl quit;;
-		$MODKEY-Control-r,y)
+		$MODKEY-Control-r)
 			wmiir remove /sel;;
 		$MODKEY-Control-p)
 			extern `wmiimenu </tmp/ns.$USER.$DISPLAY/progs` &;;
