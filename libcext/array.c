@@ -8,9 +8,9 @@
 #include "cext.h"
 
 void **
-cext_array_attach(void **array, void *p, size_t psize, size_t *size)
+cext_array_attach(void **array, void *p, unsigned int psize, unsigned int *size)
 {
-	size_t i;
+	unsigned int i;
 	if(!array) {
 		*size = 2;
 		array = cext_emallocz(psize * (*size));
@@ -29,9 +29,9 @@ cext_array_attach(void **array, void *p, size_t psize, size_t *size)
 }
 
 void
-cext_array_detach(void **array, void *p, size_t *size)
+cext_array_detach(void **array, void *p, unsigned int *size)
 {
-	size_t i;
+	unsigned int i;
 	if(!array)
 		return;
 	for(i = 0; (i < (*size)) && array[i] && array[i] != p; i++);

@@ -92,7 +92,7 @@ create_key(char *name)
 	char buf[128];
     char *seq[8];
     char *kstr;
-    size_t i, toks;
+    unsigned int i, toks;
 	static unsigned short id = 1;
     Key *k = 0, *r = 0;
 
@@ -170,11 +170,11 @@ emulate_key_press(unsigned long mod, KeyCode key)
 }
 
 static Key **
-match_keys(Key **t, size_t n, unsigned long mod, KeyCode keycode, Bool next, size_t *nres)
+match_keys(Key **t, unsigned int n, unsigned long mod, KeyCode keycode, Bool next, unsigned int *nres)
 {
 	Key **result = nil;
-	size_t ressz = 0;
-	size_t i = 0;
+	unsigned int ressz = 0;
+	unsigned int i = 0;
 	*nres = 0;
 	for(i = 0; i < n; i++) {
 		Key *k = next ? t[i]->next : t[i];
@@ -187,12 +187,12 @@ match_keys(Key **t, size_t n, unsigned long mod, KeyCode keycode, Bool next, siz
 }
 
 static void
-handle_key_seq(Window w, Key **done, size_t ndone)
+handle_key_seq(Window w, Key **done, unsigned int ndone)
 {
     unsigned long mod;
     KeyCode key;
 	Key **found = nil;
-	size_t nfound = 0; 
+	unsigned int nfound = 0; 
 	char buf[128];
 
     next_keystroke(&mod, &key);
@@ -222,7 +222,7 @@ handle_key_seq(Window w, Key **done, size_t ndone)
 void
 handle_key(Window w, unsigned long mod, KeyCode keycode)
 {
-	size_t nfound;
+	unsigned int nfound;
 	char buf[128];
 	Key **found = match_keys(key, nkey, mod, keycode, False, &nfound);
 	switch(nfound) {
@@ -248,7 +248,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 Key *
 name2key(char *name)
 {
-	size_t i;
+	unsigned int i;
 	for(i = 0; i < nkey; i++)
 		if(!strncmp(key[i]->name, name, sizeof(key[i]->name)))
 			return key[i];

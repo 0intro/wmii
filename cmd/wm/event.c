@@ -65,7 +65,7 @@ handle_buttonpress(XEvent *e)
     Align align;
 	static char buf[32];
 	if(ev->window == winbar) {
-		size_t i;
+		unsigned int i;
 		for(i = 0; i < nlabel; i++)
 			if(blitz_ispointinrect(ev->x, ev->y, &label[i]->rect)) {
 				snprintf(buf, sizeof(buf), "LB %d %d\n", i + 1, ev->button);
@@ -220,7 +220,7 @@ handle_keypress(XEvent *e)
 static void
 handle_keymapnotify(XEvent *e)
 {
-	size_t i;
+	unsigned int i;
 	for(i = 0; i < nkey; i++) {
 		ungrab_key(key[i]);
 		grab_key(key[i]);

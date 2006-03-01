@@ -30,15 +30,15 @@ static Window win;
 static XRectangle mrect;
 static int screen;
 static char **allitem = nil;
-static size_t nallitem = 0;
-static size_t allitemsz = 0;
+static unsigned int nallitem = 0;
+static unsigned int allitemsz = 0;
 static char **item = nil;
-static size_t itemsz = 0;
-static size_t nitem = 0;
+static unsigned int itemsz = 0;
+static unsigned int nitem = 0;
 static int sel = -1;
-static size_t nextoff = 0;
-static size_t prevoff = 0;
-static size_t curroff = 0;
+static unsigned int nextoff = 0;
+static unsigned int prevoff = 0;
+static unsigned int curroff = 0;
 static unsigned int cmdw = 0;
 static Draw draw = { 0 };
 static const int seek = 30;     /* 30px */
@@ -59,7 +59,7 @@ usage()
 static void
 update_offsets()
 {
-	size_t i;
+	unsigned int i;
     unsigned int w = cmdw + 2 * seek;
 
     if(!nitem)
@@ -81,10 +81,10 @@ update_offsets()
 	prevoff = i;
 }
 
-static size_t 
+static unsigned int 
 update_items(char *pattern)
 {
-    size_t plen = strlen(pattern);
+    unsigned int plen = strlen(pattern);
     int i;
 
 	curroff = prevoff = nextoff = 0;
@@ -179,7 +179,7 @@ handle_kpress(XKeyEvent * e)
     KeySym ksym;
     char buf[32];
     int num;
-    size_t len = strlen(text);
+    unsigned int len = strlen(text);
 
     buf[0] = 0;
     num = XLookupString(e, buf, sizeof(buf), &ksym, 0);
@@ -258,7 +258,7 @@ handle_kpress(XKeyEvent * e)
         break;
     case XK_BackSpace:
         if(len) {
-            size_t i = len;
+            unsigned int i = len;
             if(i) {
                 int prev_nitem;
                 do
@@ -316,7 +316,7 @@ void
 read_allitems()
 {
     char *maxname = 0, *p, buf[1024];
-	size_t len = 0, max = 0;
+	unsigned int len = 0, max = 0;
 
 	while(fgets(buf, sizeof(buf), stdin)) {
 		len = strlen(buf);

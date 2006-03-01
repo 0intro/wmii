@@ -32,7 +32,7 @@ str2colmode(char *arg)
 void
 arrange_column(Area *col)
 {
-	size_t i, yoff;
+	unsigned int i, yoff;
 	unsigned int h;
 
 	if(!col->nclient)
@@ -77,7 +77,7 @@ arrange_column(Area *col)
 void
 arrange_page(Page *p, Bool update_colums)
 {
-	size_t i;
+	unsigned int i;
 	unsigned int width;
 
 	if(p->narea == 1)
@@ -98,7 +98,7 @@ arrange_page(Page *p, Bool update_colums)
 static void
 match_horiz(Area *col, XRectangle *r)
 {
-	size_t i;
+	unsigned int i;
 
 	for(i = 0; i < col->nclient; i++) {
 		Client *c = col->client[i];
@@ -114,7 +114,7 @@ drop_resize(Client *c, XRectangle *new)
     Area *west = nil, *east = nil, *col = c->area;
 	Page *p = col->page;
     Client *north = nil, *south = nil;
-	size_t i;
+	unsigned int i;
 
 	for(i = 0; (i < p->narea) && (p->area[i] != col); i++);
     west = i ? p->area[i - 1] : nil;
@@ -164,7 +164,7 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 {
     Area *tgt = nil, *src = c->area;
 	Page *p = src->page;
-	size_t i;
+	unsigned int i;
 
     if(!pt || src->nclient < 2)
         return;
@@ -178,7 +178,7 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 			for(i = 0; (i < src->nclient) &&
 				 !blitz_ispointinrect(pt->x, pt->y, &src->client[i]->frame.rect); i++);
 			if((i < src->nclient) && (c != src->client[i])) {
-				size_t j = client2index(c);
+				unsigned int j = client2index(c);
 				Client *tmp = src->client[j];
 				src->client[j] = src->client[i];
 				src->client[i] = tmp;

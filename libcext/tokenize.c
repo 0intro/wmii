@@ -7,11 +7,11 @@
 
 #include "cext.h"
 
-size_t
-cext_tokenize(char **result, size_t reslen, char *str, char delim)
+unsigned int
+cext_tokenize(char **result, unsigned int reslen, char *str, char delim)
 {
     char *p, *n;
-    size_t i = 0;
+    unsigned int i = 0;
 
     if(!str)
         return 0;

@@ -23,12 +23,12 @@
  * will be copied.  Always NUL terminates (unless siz == 0).
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
-size_t
-cext_strlcpy(char *dst, const char *src, size_t siz)
+unsigned int
+cext_strlcpy(char *dst, const char *src, unsigned int siz)
 {
     register char *d = dst;
     register const char *s = src;
-    register size_t n = siz;
+    register unsigned int n = siz;
 
     /* Copy as many bytes as will fit */
     if(n != 0 && --n != 0) {

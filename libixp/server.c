@@ -35,7 +35,7 @@ IXPConn *ixp_server_open_conn(IXPServer *s, int fd, void (*read)(IXPConn *c),
 void
 ixp_server_close_conn(IXPConn *c)
 {
-	size_t i;
+	unsigned int i;
 	IXPServer *s = c->srv;
 	cext_array_detach((void **)s->conn, c, &s->connsz);
 	if(c->map) {
@@ -96,7 +96,7 @@ ixp_server_loop(IXPServer *s)
 IXPMap *
 ixp_server_fid2map(IXPConn *c, unsigned int fid)
 {
-	size_t i;
+	unsigned int i;
 	for(i = 0; (i < c->mapsz) && c->map[i]; i++)
 		if(c->map[i]->fid == fid)
 			return c->map[i];
@@ -147,7 +147,7 @@ ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr)
 void
 ixp_server_close(IXPServer *s)
 {
-	size_t i;
+	unsigned int i;
 	for(i = 0; (i < s->connsz) && s->conn[i]; i++)
 		if(s->conn[i]->close)
 			s->conn[i]->close(s->conn[i]);

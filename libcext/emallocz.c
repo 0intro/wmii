@@ -9,7 +9,7 @@
 #include "cext.h"
 
 void *
-cext_emallocz(size_t size)
+cext_emallocz(unsigned int size)
 {
     void *res = calloc(1, size);
 

@@ -148,7 +148,7 @@ pid2index(unsigned short id)
 void
 select_page(char *arg)
 {
-	size_t new = sel;
+	unsigned int new = sel;
 	const char *err;
 	Client *c;
 

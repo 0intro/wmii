@@ -62,7 +62,7 @@ draw_pager_client(Client *c, Draw *d)
 }
 
 static void
-draw_pager_page(size_t idx, Draw *d)
+draw_pager_page(unsigned int idx, Draw *d)
 {
 	int i, j;
     char name[4];
@@ -231,7 +231,7 @@ pager()
 Client *
 win2client(Window w)
 {
-	size_t i;
+	unsigned int i;
 
 	for(i = 0; (i < clientsz) && client[i]; i++)
 		if(client[i]->win == w)
@@ -436,7 +436,7 @@ startup_error_handler(Display * dpy, XErrorEvent * error)
 static void
 cleanup()
 {
-	size_t i;
+	unsigned int i;
 	Client *c;
 	for(i = 0; client && client[i]; i++) {
 		c = client[i];
@@ -573,6 +573,7 @@ main(int argc, char *argv[])
 	draw_bar();
 
 	alloc_page(); /* page 0 */
+	alloc_page(); /* page 1 */
     scan_wins();
 
     /* main event loop */

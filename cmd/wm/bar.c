@@ -36,7 +36,7 @@ bar_height()
 void
 update_bar_geometry()
 {
-	size_t i, j;
+	unsigned int i, j;
     brect = rect;
     brect.height = bar_height();
     brect.y = rect.height - brect.height;
@@ -56,7 +56,7 @@ update_bar_geometry()
 void
 draw_bar()
 {
-	size_t i;
+	unsigned int i;
 	unsigned int w = 0;
 	Draw d = { 0 };
 

@@ -209,7 +209,7 @@ struct IXPConn {
     void (*read) (IXPConn *);
     void (*close) (IXPConn *);
 	IXPMap **map;
-	size_t mapsz;
+	unsigned int mapsz;
 	Fcall pending;
 	int is_pending;
 };
@@ -217,7 +217,7 @@ struct IXPConn {
 struct IXPServer {
     int running;
 	IXPConn **conn;
-	size_t connsz;
+	unsigned int connsz;
     int maxfd;
     fd_set rd;
 };

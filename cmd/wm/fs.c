@@ -1289,7 +1289,7 @@ do_fcall(IXPConn *c)
 void
 write_event(char *event)
 {
-	size_t i;
+	unsigned int i;
 	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++) {
 		IXPConn *c = srv.conn[i];
 		if(c->is_pending) {

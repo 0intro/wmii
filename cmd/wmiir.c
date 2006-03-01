@@ -29,7 +29,7 @@ write_data(unsigned int fid)
 {
 	void *data = cext_emallocz(c.fcall.iounit);
 	unsigned long long offset = 0;
-	size_t len = 0;
+	unsigned int len = 0;
 
 	while((len = read(0, data, c.fcall.iounit)) > 0) {
         if(ixp_client_write
@@ -136,7 +136,7 @@ time2str(unsigned int t)
 static void
 xls(void *result, unsigned int msize)
 {
-	size_t n = 0, i = 0;
+	unsigned int n = 0, i = 0;
     void *p = result;
 	Stat *dir;
     static Stat stat;
@@ -167,8 +167,8 @@ xread(char *file)
     int count, is_directory = 0;
     static unsigned char result[IXP_MAX_MSG];
 	void *dircontent = nil;
-	size_t dircontentsz = 0;
-	size_t ndircontent = 0;
+	unsigned int dircontentsz = 0;
+	unsigned int ndircontent = 0;
 	unsigned long long offset = 0;
 
     if(ixp_client_open(&c, fid, file, IXP_OREAD) == -1) {

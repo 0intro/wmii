@@ -67,10 +67,10 @@ struct Area {
 	unsigned short id;
     Client **client;
 	Page *page;
-	size_t clientsz;
-	size_t sel;
-	size_t nclient;
-	size_t maxclient;
+	unsigned int clientsz;
+	unsigned int sel;
+	unsigned int nclient;
+	unsigned int maxclient;
 	ColumnMode mode;
 	XRectangle rect;
 };
@@ -78,9 +78,9 @@ struct Area {
 struct Page {
 	unsigned short id;
 	Area **area;
-	size_t areasz;
-	size_t narea;
-	size_t sel;
+	unsigned int areasz;
+	unsigned int narea;
+	unsigned int sel;
 	Page *revert;
 };
 
@@ -136,19 +136,19 @@ typedef struct {
 
 /* global variables */
 Page **page;
-size_t npage;
-size_t pagesz;
-size_t sel;
+unsigned int npage;
+unsigned int pagesz;
+unsigned int sel;
 Client **client;
-size_t nclient;
-size_t clientsz;
+unsigned int nclient;
+unsigned int clientsz;
 Key **key;
-size_t keysz;
-size_t nkey;
+unsigned int keysz;
+unsigned int nkey;
 Label **label;
-size_t nlabel;
-size_t labelsz;
-size_t iexpand;
+unsigned int nlabel;
+unsigned int labelsz;
+unsigned int iexpand;
 
 Display *dpy;
 IXPServer *ixps;

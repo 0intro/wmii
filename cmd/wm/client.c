@@ -381,7 +381,7 @@ detach_client(Client *c, Bool unmap)
 {
 	Area *a = c->area;
 	if(a) {
-		size_t i;
+		unsigned int i;
 		for(i = 0; i < nclient; i++)
 			if(client[i]->revert == c)
 				client[i]->revert = nil;
@@ -436,7 +436,7 @@ sel_client()
 Client *
 win2clientframe(Window w)
 {
-	size_t i;
+	unsigned int i;
 	for(i = 0; (i < clientsz) && client[i]; i++)
 		if(client[i]->frame.win == w)
 			return client[i];
@@ -627,7 +627,7 @@ sendtoarea_client(Client *c, char *arg) {
 void
 resize_all_clients()
 {
-	size_t i;
+	unsigned int i;
 	for(i = 0; i < nclient; i++)
 		if(client[i]->area)
 			resize_client(client[i], &client[i]->frame.rect, 0);
