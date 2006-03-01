@@ -32,11 +32,56 @@ str2colmode(char *arg)
 	return -1;
 }
 
+static void
+relax_column(Area *col)
+{
+	unsigned int i, yoff, h, w, hdiff, wdiff;
+
+	if(!col->nclient)
+		return;
+
+	/* some relaxing from potential increment gaps */
+	h = w = 0;
+	for(i = 0; i < col->nclient; i++) {
+		Client *c = col->client[i];
+		if(col->mode == COL_MAX) {
+			if(h < c->frame.rect.height)
+				h = c->frame.rect.height;
+		}
+		else
+			h += c->frame.rect.height;
+		if(w < c->frame.rect.width)
+			w = c->frame.rect.width;
+	}
+	wdiff = (col->rect.width - w) / 2; 
+
+	/* try to add rest space to all clients if not COL_STACK mode */
+	if(col->mode != COL_STACK) {
+		for(i = 0; (h < col->rect.height) && (i < col->nclient); i++) {
+			Client *c = col->client[i];
+			unsigned int tmp = c->frame.rect.height;
+			c->frame.rect.height += (col->rect.height - h);
+			resize_client(c, &c->frame.rect, 0, True);
+			h += (c->frame.rect.height - tmp);
+		}
+	}
+
+	hdiff = (col->rect.height - h) / col->nclient;
+	yoff = col->rect.y + hdiff / 2;
+	for(i = 0; i < col->nclient; i++) {
+		Client *c = col->client[i];
+		c->frame.rect.x = col->rect.x + wdiff;
+		c->frame.rect.y = yoff;
+		if(col->mode != COL_MAX)
+			yoff = c->frame.rect.y + c->frame.rect.height + hdiff;
+		resize_client(c, &c->frame.rect, 0, False);
+	}
+}
+
 void
 arrange_column(Area *col)
 {
-	unsigned int i, yoff;
-	unsigned int h, w, hdiff, wdiff;
+	unsigned int i, yoff, h;
 
 	if(!col->nclient)
 		return;
@@ -83,42 +128,7 @@ arrange_column(Area *col)
 		break;
 	}
 
-	/* some relaxing due to potential increment gaps */
-	h = w = 0;
-	for(i = 0; i < col->nclient; i++) {
-		Client *c = col->client[i];
-		if(col->mode == COL_MAX) {
-			if(h < c->frame.rect.height)
-				h = c->frame.rect.height;
-		}
-		else
-			h += c->frame.rect.height;
-		if(w < c->frame.rect.width)
-			w = c->frame.rect.width;
-	}
-	wdiff = (col->rect.width - w) / 2; 
-
-	/* try to add rest space to all clients if not COL_STACK mode */
-	if(col->mode != COL_STACK) {
-		for(i = 0; (h < col->rect.height) && (i < col->nclient); i++) {
-			Client *c = col->client[i];
-			unsigned int tmp = c->frame.rect.height;
-			c->frame.rect.height += (col->rect.height - h);
-			resize_client(c, &c->frame.rect, 0, True);
-			h += (c->frame.rect.height - tmp);
-		}
-	}
-
-	hdiff = (col->rect.height - h) / col->nclient;
-	yoff = col->rect.y + hdiff / 2;
-	for(i = 0; i < col->nclient; i++) {
-		Client *c = col->client[i];
-		c->frame.rect.x += wdiff;
-		c->frame.rect.y = yoff;
-		if(col->mode != COL_MAX)
-			yoff = c->frame.rect.y + c->frame.rect.height + hdiff;
-		resize_client(c, &c->frame.rect, 0, False);
-	}
+	relax_column(col);
 }
 
 void
@@ -178,6 +188,7 @@ drop_resize(Client *c, XRectangle *new)
         col->rect.x = new->x;
         match_horiz(west, &west->rect);
         match_horiz(col, &col->rect);
+		relax_column(west);
     }
     if(east && (new->x + new->width != c->frame.rect.x + c->frame.rect.width)) {
         east->rect.width -= new->x + new->width - east->rect.x;
@@ -186,6 +197,7 @@ drop_resize(Client *c, XRectangle *new)
         col->rect.width = new->width;
         match_horiz(col, &col->rect);
         match_horiz(east, &east->rect);
+		relax_column(east);
     }
 
     /* vertical resize */
@@ -204,6 +216,7 @@ drop_resize(Client *c, XRectangle *new)
         resize_client(c, &c->frame.rect, nil, False);
         resize_client(south, &south->frame.rect, nil, False);
     }
+	relax_column(col);
 }
 
 static void
