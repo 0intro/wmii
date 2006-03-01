@@ -130,7 +130,7 @@ do
 		$MODKEY-Control-a)
 			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
 		$MODKEY-t)
-			extern xterm &;;
+			extern xterm -rv&;;
 		$MODKEY-n)
 			wmiir read /sel/new >/dev/null;;
 		$MODKEY-Shift-m)

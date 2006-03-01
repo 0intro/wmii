@@ -25,10 +25,10 @@ str2colmode(char *arg)
 {
 	if(!strncmp("equal", arg, 6))
 		return COL_EQUAL;
-	else if(!strncmp("stack", arg, 6))
+	if(!strncmp("stack", arg, 6))
 		return COL_STACK;
-	else if(!strncmp("max", arg, 4))
-		return COL_STACK;
+	if(!strncmp("max", arg, 4))
+		return COL_MAX;
 	return -1;
 }
 
@@ -86,12 +86,16 @@ arrange_column(Area *col)
 	/* some relaxing due to potential increment gaps */
 	h = w = 0;
 	for(i = 0; i < col->nclient; i++) {
-		h += col->client[i]->frame.rect.height;
-		if(w < col->client[i]->frame.rect.width)
-			w = col->client[i]->frame.rect.width;
+		Client *c = col->client[i];
+		if(col->mode == COL_MAX) {
+			if(h < c->frame.rect.height)
+				h = c->frame.rect.height;
+		}
+		else
+			h += c->frame.rect.height;
+		if(w < c->frame.rect.width)
+			w = c->frame.rect.width;
 	}
-	if(col->mode == COL_MAX)
-		h = col->client[i]->frame.rect.height;
 	hdiff = (col->rect.height - h) / col->nclient;
 	wdiff = (col->rect.width - w) / 2; 
 
@@ -100,7 +104,8 @@ arrange_column(Area *col)
 		Client *c = col->client[i];
 		c->frame.rect.x += wdiff;
 		c->frame.rect.y = yoff;
-		yoff = c->frame.rect.y + c->frame.rect.height + hdiff;
+		if(col->mode != COL_MAX)
+			yoff = c->frame.rect.y + c->frame.rect.height + hdiff;
 		resize_client(c, &c->frame.rect, 0, False);
 	}
 }
