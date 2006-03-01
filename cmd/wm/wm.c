@@ -72,7 +72,7 @@ draw_pager_page(size_t idx, Draw *d)
         d->color = def.sel;
     else
         d->color = def.norm;
-    snprintf(name, sizeof(name), "%d", idx + 1);
+    snprintf(name, sizeof(name), "%d", idx);
     d->data = name;
     blitz_drawlabel(dpy, d);
     XSync(dpy, False);
