@@ -550,7 +550,6 @@ main(int argc, char *argv[])
     xfont = blitz_getfont(dpy, def.font);
     init_lock_modifiers();
     init_screen();
-    scan_wins();
 
     wa.override_redirect = 1;
     wa.background_pixmap = ParentRelative;
@@ -573,6 +572,9 @@ main(int argc, char *argv[])
                       	 	DefaultDepth(dpy, screen));
 	XMapRaised(dpy, winbar);
 	draw_bar();
+
+	alloc_page(); /* page 0 */
+    scan_wins();
 
     /* main event loop */
 	errstr = ixp_server_loop(&srv);

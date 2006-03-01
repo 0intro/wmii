@@ -561,10 +561,9 @@ select_client(Client *c, char *arg)
 	}
 	else {
 		const char *errstr;
-		i = cext_strtonum(arg, 1, a->nclient, &errstr);
+		i = cext_strtonum(arg, 0, a->nclient - 1, &errstr);
 		if(errstr)
 			return;
-		i--;
 	}
 	focus_client(a->client[i]);
 }
@@ -580,10 +579,10 @@ sendtopage_client(Client *c, char *arg) {
 		p = page[sel];
 	else {
 		const char *errstr;
-		int i = cext_strtonum(arg, 1, npage, &errstr);
+		int i = cext_strtonum(arg, 0, npage - 1, &errstr);
 		if(errstr)
 			return;
-		p = page[i - 1];
+		p = page[i];
 	}
 	detach_client(c, False);
 	attach_client2page(p, c);
@@ -613,10 +612,10 @@ sendtoarea_client(Client *c, char *arg) {
 			next = p->area[1];
 	}
 	else {
-		i = cext_strtonum(arg, 1, p->narea, &errstr);
+		i = cext_strtonum(arg, 0, p->narea - 1, &errstr);
 		if(errstr)
 			return;
-		next = p->area[i - 1];
+		next = p->area[i];
 	}
 	sendto_area(next, c);
 }

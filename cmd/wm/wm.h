@@ -283,6 +283,7 @@ void arrange_column(Area *col);
 void resize_column(Client *c, XRectangle *r, XPoint *pt);
 Area *new_column(Area *old);
 ColumnMode str2colmode(char *arg);
+char *colmode2str(ColumnMode mode);
 
 /* wm.c */
 void scan_wins();

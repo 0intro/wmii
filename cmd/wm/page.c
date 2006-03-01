@@ -98,7 +98,7 @@ focus_page(Page *p)
 				draw_client(c);
 		}
 	}
-	snprintf(buf, sizeof(buf), "PN %d\n", sel + 1);
+	snprintf(buf, sizeof(buf), "PN %d\n", sel);
 	write_event(buf);
     XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &sel, 1);
@@ -155,18 +155,18 @@ select_page(char *arg)
     if(!npage)
         return;
     if(!strncmp(arg, "prev", 5)) {
-		if(!new)
+		if(new == 1)
 			new = npage;
 		new--;
     } else if(!strncmp(arg, "next", 5)) {
 		if(new < npage - 1)
 			new++;
 		else
-			new = 0;
+			new = 1;
     } else {
-		int idx = cext_strtonum(arg, 1, npage, &err);
-		if(idx && (idx - 1 < npage))
-			new = idx - 1;
+		int idx = cext_strtonum(arg, 0, npage - 1, &err);
+		if(idx < npage)
+			new = idx;
 	}
     focus_page(page[new]);
 	if((c = sel_client_of_page(page[new])))

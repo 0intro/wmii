@@ -82,10 +82,9 @@ select_area(Area *a, char *arg)
 	}
 	else {
 		const char *errstr;
-		i = cext_strtonum(arg, 1, p->narea, &errstr);
+		i = cext_strtonum(arg, 0, p->narea - 1, &errstr);
 		if(errstr)
 			return;
-		i--;
 	}
 	new = p->area[i];
 	if(new->nclient)

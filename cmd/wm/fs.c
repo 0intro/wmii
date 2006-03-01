@@ -159,29 +159,29 @@ qid2name(Qid *qid)
 		case Dpage:
 			if(i1 == sel)
 				return "sel";
-			snprintf(buf, sizeof(buf), "%u", i1 + 1);
+			snprintf(buf, sizeof(buf), "%u", i1);
 			return buf;
 			break;
 		case Dlabel:
-			snprintf(buf, sizeof(buf), "%u", i1 + 1);
+			snprintf(buf, sizeof(buf), "%u", i1);
 			return buf;
 			break;
 		case Darea:
 			if(!i2) {
-				if(page[i1]->sel)
-					return "float";
-				else
+				if(i2 == page[i1]->sel)
 					return "sel";
+				else
+					return "float";
 			}
 			if(page[i1]->sel == i2)
 				return "sel";
-			snprintf(buf, sizeof(buf), "%u", i2 + 1);
+			snprintf(buf, sizeof(buf), "%u", i2);
 			return buf;
 			break;
 		case Dclient:
 			if(page[i1]->area[i2]->sel == i3)
 				return "sel";
-			snprintf(buf, sizeof(buf), "%u", i3 + 1);
+			snprintf(buf, sizeof(buf), "%u", i3);
 			return buf;
 			break;
 		case Fselcolors: return "selcolors"; break;
@@ -257,7 +257,7 @@ name2type(char *name, unsigned char dir_type)
 		return Fkey;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
-   	i = (unsigned short) cext_strtonum(name, 1, 0xffff, &err);
+   	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
     if(err)
 		return -1;
 dyndir:
@@ -310,10 +310,10 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 				new->path = mkqpath(Dlabel, 0,0 ,0);
 		}
 		else {
-			i = cext_strtonum(wname, 1, 0xffff, &err);
-			if(err || (i - 1 >= nlabel))
+			i = cext_strtonum(wname, 0, 0xffff, &err);
+			if(err || (i >= nlabel))
 				return -1;
-			new->path = mkqpath(Dlabel, label[i - 1]->id, 0, 0);
+			new->path = mkqpath(Dlabel, label[i]->id, 0, 0);
 		}
 		break;
 	case Dpage:
@@ -332,10 +332,10 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			new->path = mkqpath(Dpage, page[sel]->id, 0, 0);
 		}
 		else {
-			i = cext_strtonum(wname, 1, 0xffff, &err);
-			if(err || (i - 1 >= npage))
+			i = cext_strtonum(wname, 0, 0xffff, &err);
+			if(err || (i >= npage))
 				return -1;
-			new->path = mkqpath(Dpage, page[i - 1]->id, 0, 0);
+			new->path = mkqpath(Dpage, page[i]->id, 0, 0);
 		}
 		break;
 	case Darea:
@@ -356,10 +356,10 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 				new->path = mkqpath(Darea, p->id, p->area[p->sel]->id, 0);
 			}
 			else {
-				i = cext_strtonum(wname, 1, 0xffff, &err);
-				if(err || (i - 1 >= p->narea))
+				i = cext_strtonum(wname, 0, 0xffff, &err);
+				if(err || (i >= p->narea))
 					return -1;
-				new->path = mkqpath(Darea, p->id, p->area[i - 1]->id, 0);
+				new->path = mkqpath(Darea, p->id, p->area[i]->id, 0);
 			}
 		}
 		break;
@@ -374,10 +374,10 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 				new->path = mkqpath(Dclient, p->id, a->id, a->client[a->sel]->id);
 			}
 			else {
-				i = cext_strtonum(wname, 1, 0xffff, &err);
-				if(err || (i - 1 >= a->nclient))
+				i = cext_strtonum(wname, 0, 0xffff, &err);
+				if(err || (i >= a->nclient))
 					return -1;
-				new->path = mkqpath(Dclient, p->id, a->id, a->client[i - 1]->id);
+				new->path = mkqpath(Dclient, p->id, a->id, a->client[i]->id);
 			}
 		}
 		break;
@@ -578,7 +578,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, 0, DMWRITE);
 		break;
     case Fexpand:
-		snprintf(buf, sizeof(buf), "%u", iexpand + 1);
+		snprintf(buf, sizeof(buf), "%u", iexpand);
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 		break;
     case Fdata:
@@ -589,8 +589,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 		break;	
     case Fmode:
-		snprintf(buf, sizeof(buf), "%d", page[dir_i1]->area[dir_i2]->mode);
-		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, strlen(colmode2str(page[dir_i1]->area[dir_i2]->mode)), DMREAD | DMWRITE);
 		break;	
     case Fcolors:
     case Fselcolors:
@@ -686,7 +685,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(i == sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
-					snprintf(buf, sizeof(buf), "%u", i + 1);
+					snprintf(buf, sizeof(buf), "%u", i);
 				len += type2stat(&stat, buf, &m->qid);
 				if(len <= fcall->offset)
 					continue;
@@ -697,7 +696,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(i == sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
-					snprintf(buf, sizeof(buf), "%u", i + 1);
+					snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -728,7 +727,7 @@ xread(IXPConn *c, Fcall *fcall)
 			len = type2stat(&stat, "expand", &m->qid);
 			len += type2stat(&stat, "new", &m->qid);
 			for(i = 0; i < nlabel; i++) {
-				snprintf(buf, sizeof(buf), "%u", i + 1);
+				snprintf(buf, sizeof(buf), "%u", i);
 				len += type2stat(&stat, buf, &m->qid);
 				if(len <= fcall->offset)
 					continue;
@@ -736,7 +735,7 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			/* offset found, proceeding */
 			for(; i < nlabel; i++) {
-				snprintf(buf, sizeof(buf), "%u", i + 1);
+				snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -752,7 +751,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(i == page[i1]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
-					snprintf(buf, sizeof(buf), "%u", i + 1);
+					snprintf(buf, sizeof(buf), "%u", i);
 				len += type2stat(&stat, buf, &m->qid);
 				if(len <= fcall->offset)
 					continue;
@@ -763,7 +762,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(i == page[i1]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
-					snprintf(buf, sizeof(buf), "%u", i + 1);
+					snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -782,7 +781,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(i == page[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
-					snprintf(buf, sizeof(buf), "%u", i + 1);
+					snprintf(buf, sizeof(buf), "%u", i);
 				len += type2stat(&stat, buf, &m->qid);
 				if(len <= fcall->offset)
 					continue;
@@ -793,7 +792,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(i == page[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
-					snprintf(buf, sizeof(buf), "%u", i + 1);
+					snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -829,7 +828,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(i == sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
-					snprintf(buf, sizeof(buf), "%u", i + 1);
+					snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -852,7 +851,7 @@ xread(IXPConn *c, Fcall *fcall)
 			fcall->count += type2stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < nlabel; i++) {
-				snprintf(buf, sizeof(buf), "%u", i + 1);
+				snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -891,7 +890,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(i == page[i1]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
-					snprintf(buf, sizeof(buf), "%u", i + 1);
+					snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -912,7 +911,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(i == page[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
-					snprintf(buf, sizeof(buf), "%u", i + 1);
+					snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
@@ -965,7 +964,7 @@ xread(IXPConn *c, Fcall *fcall)
 				memcpy(p, page[i1]->area[i2]->client[i3]->name, fcall->count);
 			break;
 		case Fexpand:
-			snprintf(buf, sizeof(buf), "%u", iexpand + 1);
+			snprintf(buf, sizeof(buf), "%u", iexpand);
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -1003,7 +1002,7 @@ xread(IXPConn *c, Fcall *fcall)
 		case Fmode:
 			if(!i2)
 				return Enofile;
-			snprintf(buf, sizeof(buf), "%d", page[i1]->area[i2]->mode);
+			snprintf(buf, sizeof(buf), "%s", colmode2str(page[i1]->area[i2]->mode));
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;	
@@ -1142,9 +1141,9 @@ xwrite(IXPConn *c, Fcall *fcall)
 			if(fcall->count && fcall->count < 16) {
 				memcpy(buf, fcall->data, fcall->count);
 				buf[fcall->count] = 0;
-				i = (unsigned short) cext_strtonum(buf, 1, 0xffff, &err);
-				if(!err && (i - 1 < nlabel)) {
-					iexpand = i - 1;
+				i = (unsigned short) cext_strtonum(buf, 0, 0xffff, &err);
+				if(!err && (i < nlabel)) {
+					iexpand = i;
 					draw_bar();
 					break;
 				}

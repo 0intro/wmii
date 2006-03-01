@@ -33,6 +33,7 @@ xwrite /def/snap 20
 xwrite /def/font $WMII_FONT
 xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
+wmiir read /new >/dev/null
 
 # BAR CONFIGURATION
 while wmiir remove /bar/1 2>/dev/null
@@ -41,8 +42,8 @@ do
 done
 xwrite /bar/new/colors $WMII_NORMCOLORS
 xwrite /bar/new/colors $WMII_SELCOLORS
-xwrite /bar/1/data 1
-xwrite /bar/expand 2
+xwrite /bar/0/data 1
+xwrite /bar/expand 1
 
 # MISC
 xsetroot -solid '#0b1014'
@@ -75,6 +76,7 @@ $MODKEY-Shift-h
 $MODKEY-Shift-l
 $MODKEY-Shift-p
 $MODKEY-Shift-Return
+$MODKEY-Shift-0
 $MODKEY-Shift-1
 $MODKEY-Shift-2
 $MODKEY-Shift-3
@@ -84,24 +86,8 @@ $MODKEY-Shift-6
 $MODKEY-Shift-7
 $MODKEY-Shift-8
 $MODKEY-Shift-9
-$MODKEY-Control-1
-$MODKEY-Control-2
-$MODKEY-Control-3
-$MODKEY-Control-4
-$MODKEY-Control-5
-$MODKEY-Control-6
-$MODKEY-Control-7
-$MODKEY-Control-8
-$MODKEY-Control-9
-Control-Shift-1
-Control-Shift-2
-Control-Shift-3
-Control-Shift-4
-Control-Shift-5
-Control-Shift-6
-Control-Shift-7
-Control-Shift-8
-Control-Shift-9
+$MODKEY-d
+$MODKEY-a
 EOF
 
 # EVENT LOOP
@@ -112,9 +98,9 @@ do
 	type="$1"; shift
 	case "$type" in
 	PN)
-		xwrite /bar/1/data "$@";;
+		xwrite /bar/0/data "$@";;
 	CN)
-		xwrite /bar/2/data "$@";;
+		xwrite /bar/1/data "$@";;
 	LB)
 		case "$2" in
 		1)
@@ -173,12 +159,12 @@ do
 			xwrite /ctl select next;;
 		$MODKEY-Shift-p)
 			xwrite /ctl pager;;
-		$MODKEY-Shift-[1-9])
+		$MODKEY-Shift-[0-9])
 			xwrite /ctl select `echo $1 | sed 's/.*-//'`;;
-		$MODKEY-Control-[1-9])
-			xwrite /sel/sel/sel/ctl sendtopage `echo $1 | sed 's/.*-//'`;;
-		Control-Shift-[1-9])
-			xwrite /`echo $1 | sed 's/.*-//'`/sel/sel/ctl sendtopage sel;;
+		$MODKEY-d)
+			xwrite /sel/sel/sel/ctl sendtopage 0;;
+		$MODKEY-a)
+			xwrite /0/sel/sel/ctl sendtopage sel;;
 		esac;;
 	esac
 done &

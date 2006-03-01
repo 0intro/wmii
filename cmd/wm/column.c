@@ -8,6 +8,17 @@
 
 #include "wm.h"
 
+char *
+colmode2str(ColumnMode mode)
+{
+	switch(mode) {
+	case COL_EQUAL: return "equal"; break;
+	case COL_STACK: return "stack"; break;
+	default: break;
+	}
+	return nil;		
+}
+
 ColumnMode
 str2colmode(char *arg)
 {
