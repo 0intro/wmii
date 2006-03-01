@@ -368,7 +368,7 @@ void
 attach_client(Client *c)
 {
 	Page *p;
-    if(!page)
+    if(!npage)
 		p = alloc_page();
 	else
 		p = page[sel];
