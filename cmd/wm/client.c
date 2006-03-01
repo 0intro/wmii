@@ -588,7 +588,9 @@ sendtopage_client(Client *c, char *arg) {
 	}
 	detach_client(c, False);
 	attach_client2page(p, c);
-	if((next = sel_client_of_page(page[sel])))
+	if(p == page[sel])
+		focus_client(c);
+	else if((next = sel_client_of_page(page[sel])))
 		focus_client(next);
 }
 
