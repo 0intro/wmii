@@ -37,6 +37,8 @@ destroy_area(Area *a)
 		free(a->client);
 	cext_array_detach((void **)p->area, a, &p->areasz);
 	p->narea--;
+	if(p->sel >= p->narea)
+		p->sel = p->narea - 1;
 	free(a);
 }
 
