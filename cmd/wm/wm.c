@@ -130,13 +130,12 @@ xy2pager_page(int x, int y)
     int dx;
     XRectangle r;
 
-	for(i = 0; (i < pagesz) && page[i]; i++);
-    blitz_getbasegeometry(i, &cols, &rows);
+    blitz_getbasegeometry(npage - 1, &cols, &rows);
     dx = (cols - 1) * DEF_PAGER_GAP;      /* DEF_PAGER_GAPpx space */
     tw = (rect.width - dx) / cols;
     th = ((double) tw / rect.width) * rect.height;
 
-	i = 0;
+	i = 1;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
             r.x = ic * tw + (ic * DEF_PAGER_GAP);
@@ -149,7 +148,7 @@ xy2pager_page(int x, int y)
             if(blitz_ispointinrect(x, y, &r))
                 return i;
 			i++;
-            if(!page[i])
+            if(i == npage)
                 return -1;
         }
     }
@@ -162,12 +161,9 @@ handle_kpress(XKeyEvent * e)
     KeySym ksym = XKeycodeToKeysym(dpy, e->keycode, 0);
 
     if(ksym >= XK_1 && ksym <= XK_9)
-        return ksym - XK_1;
-	else if(ksym == XK_0)
-		return 9;
+        return ksym - XK_1 + 1;
     else if(ksym >= XK_a && ksym <= XK_z)
         return 10 + ksym - XK_a;
-
     return -1;
 }
 
@@ -389,12 +385,11 @@ init_screen()
     wa.override_redirect = 1;
     wa.background_pixmap = ParentRelative;
     wa.event_mask = ExposureMask | ButtonPressMask;
-    transient =
-        XCreateWindow(dpy, root, 0, 0, rect.width, rect.height, 0,
-                      DefaultDepth(dpy, screen), CopyFromParent,
-                      DefaultVisual(dpy, screen),
-                      CWOverrideRedirect | CWBackPixmap | CWEventMask,
-                      &wa);
+
+    transient = XCreateWindow(dpy, root, 0, 0, rect.width, rect.height,
+					0, DefaultDepth(dpy, screen), CopyFromParent,
+                    DefaultVisual(dpy, screen),
+                    CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
 
     XSync(dpy, False);
     gc_transient = XCreateGC(dpy, transient, 0, 0);
