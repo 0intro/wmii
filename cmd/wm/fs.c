@@ -126,22 +126,22 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 
 	if(i1id) {
 		switch(*type) {
-			case Fkey: *i1 = kid_to_index(i1id); break;
+			case Fkey: *i1 = kid2index(i1id); break;
 			case Fdata:
 			case Fcolors:
-			case Dlabel: *i1 = lid_to_index(i1id); break;
-			default: *i1 = pid_to_index(i1id); break;
+			case Dlabel: *i1 = lid2index(i1id); break;
+			default: *i1 = pid2index(i1id); break;
 		}
 	   if(i2id && (*i1 != -1)) {
-			*i2 = aid_to_index(page[*i1], i2id);
+			*i2 = aid2index(page[*i1], i2id);
 		   if(i3id && (*i2 != -1))
-			   *i3 = cid_to_index(page[*i1]->area[*i2], i3id);
+			   *i3 = cid2index(page[*i1]->area[*i2], i3id);
 	   }
 	}
 }
 
 static char *
-qid_to_name(Qid *qid)
+qid2name(Qid *qid)
 {
 	unsigned char type;
 	int i1 = 0, i2 = 0, i3 = 0;
@@ -205,7 +205,7 @@ qid_to_name(Qid *qid)
 }
 
 static int
-name_to_type(char *name, unsigned char dir_type)
+name2type(char *name, unsigned char dir_type)
 {
     unsigned int i;
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
@@ -253,7 +253,7 @@ name_to_type(char *name, unsigned char dir_type)
 		return Fmax;
 	if(!strncmp(name, "mode", 5))
 		return Fmode;
-	if(name_to_key(name))
+	if(name2key(name))
 		return Fkey;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
@@ -281,7 +281,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	decode_qpath(dir, &dir_type, &dir_i1, &dir_i2, &dir_i3);
 	if((dir_i1 == -1) || (dir_i2 == -1) || (dir_i3 == -1))
 		return -1;
-	type = name_to_type(wname, dir_type);
+	type = name2type(wname, dir_type);
 
 	new->dir_type = dir_type;
     new->version = 0;
@@ -384,7 +384,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case Fkey:
 		{
 			Key *k;
-			if(!(k = name_to_key(wname)))
+			if(!(k = name2key(wname)))
 				return -1;
 			new->type = IXP_QTFILE;
 			new->path = mkqpath(Fkey, k->id, 0, 0);
@@ -524,7 +524,7 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 }
 
 static unsigned int
-type_to_stat(Stat *stat, char *wname, Qid *dir)
+type2stat(Stat *stat, char *wname, Qid *dir)
 {
 	unsigned char dir_type;
 	int dir_i1 = 0, dir_i2 = 0, dir_i3 = 0;
@@ -535,7 +535,7 @@ type_to_stat(Stat *stat, char *wname, Qid *dir)
 	decode_qpath(dir, &dir_type, &dir_i1, &dir_i2, &dir_i3);
 	if((dir_i1 == -1) || (dir_i2 == -1) || (dir_i3 == -1))
 		return -1;
-	type = name_to_type(wname, dir_type);
+	type = name2type(wname, dir_type);
 
     switch (type) {
     case Dclient:
@@ -676,18 +676,18 @@ xread(IXPConn *c, Fcall *fcall)
 		switch (type) {
 		case Droot:
 			/* jump to offset */
-			len = type_to_stat(&stat, "ctl", &m->qid);
-			len += type_to_stat(&stat, "event", &m->qid);
-			len += type_to_stat(&stat, "def", &m->qid);
-			len += type_to_stat(&stat, "keys", &m->qid);
-			len += type_to_stat(&stat, "bar", &m->qid);
-			len += type_to_stat(&stat, "new", &m->qid);
+			len = type2stat(&stat, "ctl", &m->qid);
+			len += type2stat(&stat, "event", &m->qid);
+			len += type2stat(&stat, "def", &m->qid);
+			len += type2stat(&stat, "keys", &m->qid);
+			len += type2stat(&stat, "bar", &m->qid);
+			len += type2stat(&stat, "new", &m->qid);
 			for(i = 0; i < npage; i++) {
 				if(i == sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i + 1);
-				len += type_to_stat(&stat, buf, &m->qid);
+				len += type2stat(&stat, buf, &m->qid);
 				if(len <= fcall->offset)
 					continue;
 				break;
@@ -698,7 +698,7 @@ xread(IXPConn *c, Fcall *fcall)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i + 1);
-				len = type_to_stat(&stat, buf, &m->qid);
+				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -709,14 +709,14 @@ xread(IXPConn *c, Fcall *fcall)
 			/* jump to offset */
 			len = 0;
 			for(i = 0; i < nkey; i++) {
-				len += type_to_stat(&stat, key[i]->name, &m->qid);
+				len += type2stat(&stat, key[i]->name, &m->qid);
 				if(len <= fcall->offset)
 					continue;
 				break;
 			}
 			/* offset found, proceeding */
 			for(; i < nkey; i++) {
-				len = type_to_stat(&stat, key[i]->name, &m->qid);
+				len = type2stat(&stat, key[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -725,11 +725,11 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Dbar:
 			/* jump to offset */
-			len = type_to_stat(&stat, "expand", &m->qid);
-			len += type_to_stat(&stat, "new", &m->qid);
+			len = type2stat(&stat, "expand", &m->qid);
+			len += type2stat(&stat, "new", &m->qid);
 			for(i = 0; i < nlabel; i++) {
 				snprintf(buf, sizeof(buf), "%u", i + 1);
-				len += type_to_stat(&stat, buf, &m->qid);
+				len += type2stat(&stat, buf, &m->qid);
 				if(len <= fcall->offset)
 					continue;
 				break;
@@ -737,7 +737,7 @@ xread(IXPConn *c, Fcall *fcall)
 			/* offset found, proceeding */
 			for(; i < nlabel; i++) {
 				snprintf(buf, sizeof(buf), "%u", i + 1);
-				len = type_to_stat(&stat, buf, &m->qid);
+				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -746,14 +746,14 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Dpage:
 			/* jump to offset */
-			len = type_to_stat(&stat, "ctl", &m->qid);
-			len += type_to_stat(&stat, "new", &m->qid);
+			len = type2stat(&stat, "ctl", &m->qid);
+			len += type2stat(&stat, "new", &m->qid);
 			for(i = 0; i < page[i1]->narea; i++) {
 				if(i == page[i1]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i + 1);
-				len += type_to_stat(&stat, buf, &m->qid);
+				len += type2stat(&stat, buf, &m->qid);
 				if(len <= fcall->offset)
 					continue;
 				break;
@@ -764,7 +764,7 @@ xread(IXPConn *c, Fcall *fcall)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i + 1);
-				len = type_to_stat(&stat, buf, &m->qid);
+				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -773,17 +773,17 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Darea:
 			/* jump to offset */
-			len = type_to_stat(&stat, "ctl", &m->qid);
+			len = type2stat(&stat, "ctl", &m->qid);
 			if(i2) {
-				len += type_to_stat(&stat, "max", &m->qid);
-				len += type_to_stat(&stat, "mode", &m->qid);
+				len += type2stat(&stat, "max", &m->qid);
+				len += type2stat(&stat, "mode", &m->qid);
 			}
 			for(i = 0; i < page[i1]->area[i2]->nclient; i++) {
 				if(i == page[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i + 1);
-				len += type_to_stat(&stat, buf, &m->qid);
+				len += type2stat(&stat, buf, &m->qid);
 				if(len <= fcall->offset)
 					continue;
 				break;
@@ -794,7 +794,7 @@ xread(IXPConn *c, Fcall *fcall)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i + 1);
-				len = type_to_stat(&stat, buf, &m->qid);
+				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -813,24 +813,24 @@ xread(IXPConn *c, Fcall *fcall)
 	else {
 		switch (type) {
 		case Droot:
-			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
+			fcall->count = type2stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "event", &m->qid);
+			fcall->count += type2stat(&stat, "event", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "def", &m->qid);
+			fcall->count += type2stat(&stat, "def", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "keys", &m->qid);
+			fcall->count += type2stat(&stat, "keys", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "bar", &m->qid);
+			fcall->count += type2stat(&stat, "bar", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "new", &m->qid);
+			fcall->count += type2stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < npage; i++) {
 				if(i == sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i + 1);
-				len = type_to_stat(&stat, buf, &m->qid);
+				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -839,7 +839,7 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Dkeys:
 			for(i = 0; i < nkey; i++) {
-				len = type_to_stat(&stat, key[i]->name, &m->qid);
+				len = type2stat(&stat, key[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -847,13 +847,13 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case Dbar:
-			fcall->count = type_to_stat(&stat, "expand", &m->qid);
+			fcall->count = type2stat(&stat, "expand", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "new", &m->qid);
+			fcall->count += type2stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < nlabel; i++) {
 				snprintf(buf, sizeof(buf), "%u", i + 1);
-				len = type_to_stat(&stat, buf, &m->qid);
+				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -863,36 +863,36 @@ xread(IXPConn *c, Fcall *fcall)
 		case Dlabel:
 			if(i1 >= nlabel)
 				return Enofile;
-			fcall->count = type_to_stat(&stat, "colors", &m->qid);
+			fcall->count = type2stat(&stat, "colors", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "data", &m->qid);
+			fcall->count += type2stat(&stat, "data", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Ddef:
-			fcall->count += type_to_stat(&stat, "border", &m->qid);
+			fcall->count += type2stat(&stat, "border", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "inc", &m->qid);
+			fcall->count += type2stat(&stat, "inc", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "snap", &m->qid);
+			fcall->count += type2stat(&stat, "snap", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "selcolors", &m->qid);
+			fcall->count += type2stat(&stat, "selcolors", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "normcolors", &m->qid);
+			fcall->count += type2stat(&stat, "normcolors", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "font", &m->qid);
+			fcall->count += type2stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Dpage:
-			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
+			fcall->count = type2stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "new", &m->qid);
+			fcall->count += type2stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < page[i1]->narea; i++) {
 				if(i == page[i1]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i + 1);
-				len = type_to_stat(&stat, buf, &m->qid);
+				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -900,12 +900,12 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case Darea:
-			fcall->count = type_to_stat(&stat, "ctl", &m->qid);
+			fcall->count = type2stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			if(i2) {
-				fcall->count += type_to_stat(&stat, "max", &m->qid);
+				fcall->count += type2stat(&stat, "max", &m->qid);
 				p = ixp_enc_stat(p, &stat);
-				fcall->count += type_to_stat(&stat, "mode", &m->qid);
+				fcall->count += type2stat(&stat, "mode", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 			}
 			for(i = 0; i < page[i1]->area[i2]->nclient; i++) {
@@ -913,7 +913,7 @@ xread(IXPConn *c, Fcall *fcall)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i + 1);
-				len = type_to_stat(&stat, buf, &m->qid);
+				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -921,13 +921,13 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case Dclient:
-			fcall->count = type_to_stat(&stat, "border", &m->qid);
+			fcall->count = type2stat(&stat, "border", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "name", &m->qid);
+			fcall->count += type2stat(&stat, "name", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "geometry", &m->qid);
+			fcall->count += type2stat(&stat, "geometry", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type_to_stat(&stat, "ctl", &m->qid);
+			fcall->count += type2stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case Fctl:
@@ -1025,8 +1025,8 @@ xstat(IXPConn *c, Fcall *fcall)
 
     if(!m)
         return Enofid;
-	name = qid_to_name(&m->qid);
-	if(!type_to_stat(&fcall->stat, name, &m->qid))
+	name = qid2name(&m->qid);
+	if(!type2stat(&fcall->stat, name, &m->qid))
 		return Enofile;
     fcall->id = RSTAT;
 	ixp_server_respond_fcall(c, fcall);
@@ -1097,22 +1097,22 @@ xwrite(IXPConn *c, Fcall *fcall)
 		break;
 	case Fsnap:
 		if(fcall->count > sizeof(buf))
-			return "snap value out of range 0..0xffff";
+			return "snap value out of range 0x0000,..,0xffff";
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		i = cext_strtonum(buf, 0, 0xffff, &err);
 		if(err)
-			return "snap value out of range 0..0xffff";
+			return "snap value out of range 0x0000,..,0xffff";
 		def.snap = i;
 		break;
 	case Fborder:
 		if(fcall->count > sizeof(buf))
-			return "border value out of range 0..0xffff";
+			return "border value out of range 0x0000,..,0xffff";
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		i = cext_strtonum(buf, 0, 0xffff, &err);
 		if(err)
-			return "border value out of range 0..0xffff";
+			return "border value out of range 0x0000,..,0xffff";
 		def.border = i;
 		resize_all_clients();
 		break;
@@ -1221,15 +1221,18 @@ xwrite(IXPConn *c, Fcall *fcall)
 		/* TODO: detach to many clients/attach */
 		break;	
 	case Fmode:
-		if(!i2)
-			return Enofile;
-		memcpy(buf, fcall->data, fcall->count);
-		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 0, COL_MODE_LAST - 1, &err);
-		if(err)
-			return "max value out of range 0x0000..0xffff";
-		page[i1]->area[i2]->mode = i;
-		arrange_column(page[i1]->area[i2]);
+		{
+			ColumnMode mode;
+			if(!i2)
+				return Enofile;
+			memcpy(buf, fcall->data, fcall->count);
+			buf[fcall->count] = 0;
+			mode = str2colmode(buf);
+			if(mode == -1)
+				return "invalid column mode";
+			page[i1]->area[i2]->mode = mode;
+			arrange_column(page[i1]->area[i2]);
+		}
 		break;	
 	case Fkey:
 		break;

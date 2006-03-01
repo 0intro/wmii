@@ -63,7 +63,7 @@ destroy_page(Page *p)
 }
 
 int
-page_to_index(Page *p)
+page2index(Page *p)
 {
 	int i;
 	for(i = 0; i < npage; i++)
@@ -78,7 +78,7 @@ focus_page(Page *p)
 	Page *old = page ? page[sel] : nil;
 	char buf[16];
 	Client *c;
-	int i, pi = page_to_index(p);
+	int i, pi = page2index(p);
 	int px;
 
 	if(!npage || (pi == -1))
@@ -92,7 +92,7 @@ focus_page(Page *p)
 	for(i = 0; i < nclient; i++) {
 		c = client[i];
 		if(c->area) {
-			pi = page_to_index(c->area->page);
+			pi = page2index(c->area->page);
 			XMoveWindow(dpy, c->frame.win, px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y);
 			if(c->area->page == p)
 				draw_client(c);
@@ -136,7 +136,7 @@ rectangles(unsigned int *num)
 }
 
 int
-pid_to_index(unsigned short id)
+pid2index(unsigned short id)
 {
 	int i;
 	for(i = 0; i < npage; i++)

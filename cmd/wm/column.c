@@ -8,6 +8,16 @@
 
 #include "wm.h"
 
+ColumnMode
+str2colmode(char *arg)
+{
+	if(!strncmp("equal", arg, 6))
+		return COL_EQUAL;
+	else if(!strncmp("stack", arg, 6))
+		return COL_STACK;
+	return -1;
+}
+
 void
 arrange_column(Area *col)
 {
@@ -27,13 +37,6 @@ arrange_column(Area *col)
 			else
 				c->frame.rect.height =
 					col->rect.height - c->frame.rect.y + col->rect.y;
-			resize_client(c, &c->frame.rect, 0);
-		}
-		break;
-	case COL_MAX:
-		for(i = 0; i < col->nclient; i++) {
-			Client *c = col->client[i];
-			c->frame.rect = col->rect;
 			resize_client(c, &c->frame.rect, 0);
 		}
 		break;
@@ -161,7 +164,7 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 			for(i = 0; (i < src->nclient) &&
 				 !blitz_ispointinrect(pt->x, pt->y, &src->client[i]->frame.rect); i++);
 			if((i < src->nclient) && (c != src->client[i])) {
-				size_t j = client_to_index(c);
+				size_t j = client2index(c);
 				Client *tmp = src->client[j];
 				src->client[j] = src->client[i];
 				src->client[i] = tmp;
@@ -189,7 +192,7 @@ new_column(Area *old)
 	Client *c = sel_client_of_page(p);
 	Area *col;
 
-	if(!area_to_index(old) || (old->nclient < 2))
+	if(!area2index(old) || (old->nclient < 2))
 		return nil;
 
 	col = alloc_area(p);

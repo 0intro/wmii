@@ -119,7 +119,7 @@ draw_bar()
 }
 
 int
-lid_to_index(unsigned short id)
+lid2index(unsigned short id)
 {
 	int i;
 	for(i = 0; i < nlabel; i++)

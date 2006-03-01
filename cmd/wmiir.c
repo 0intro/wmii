@@ -107,7 +107,7 @@ setrwx(long m, char *s)
 }
 
 static char *
-mode_to_str(unsigned int mode)
+mode2str(unsigned int mode)
 {
 	static char buf[16];
 
@@ -125,7 +125,7 @@ mode_to_str(unsigned int mode)
 }
 
 static char *
-time_to_str(unsigned int t)
+time2str(unsigned int t)
 {
 	static char buf[32];
 	cext_strlcpy(buf, ctime((time_t *)&t), sizeof(buf));
@@ -153,9 +153,9 @@ xls(void *result, unsigned int msize)
     while(p - result < msize);
 	qsort(dir, n, sizeof(Stat), comp_stat);
 	for(i = 0; i < n; i++) {
-        fprintf(stdout, "%s %s %s %5lld %s %s\n", mode_to_str(dir[i].mode),
+        fprintf(stdout, "%s %s %s %5lld %s %s\n", mode2str(dir[i].mode),
 				 dir[i].uid, dir[i].gid, dir[i].length,
-				 time_to_str(dir[i].mtime), dir[i].name);
+				 time2str(dir[i].mtime), dir[i].name);
 	}
 	free(dir);
 }

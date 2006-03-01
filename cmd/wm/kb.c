@@ -96,7 +96,7 @@ create_key(char *name)
 	static unsigned short id = 1;
     Key *k = 0, *r = 0;
 
-	if((k = name_to_key(name)))
+	if((k = name2key(name)))
 		return k;
 
     cext_strlcpy(buf, name, sizeof(buf));
@@ -246,7 +246,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 }
 
 Key *
-name_to_key(char *name)
+name2key(char *name)
 {
 	size_t i;
 	for(i = 0; i < nkey; i++)
@@ -256,7 +256,7 @@ name_to_key(char *name)
 }
 
 int
-kid_to_index(unsigned short id)
+kid2index(unsigned short id)
 {
 	int i;
 	for(i = 0; i < nkey; i++)

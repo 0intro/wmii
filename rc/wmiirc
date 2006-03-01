@@ -69,7 +69,6 @@ $MODKEY-l
 $MODKEY-j
 $MODKEY-k
 $MODKEY-Tab
-$MODKEY-Shift-m
 $MODKEY-Shift-s
 $MODKEY-Shift-equal
 $MODKEY-Shift-h
@@ -148,12 +147,10 @@ do
 			extern xterm &;;
 		$MODKEY-n)
 			wmiir read /sel/new >/dev/null;;
-		$MODKEY-Shift-m)
-			xwrite /sel/sel/mode 2;;
 		$MODKEY-Shift-s)
-			xwrite /sel/sel/mode 1;;
+			xwrite /sel/sel/mode stack;;
 		$MODKEY-Shift-equal)
-			xwrite /sel/sel/mode 0;;
+			xwrite /sel/sel/mode equal;;
 		$MODKEY-Return)
 			xwrite /sel/sel/sel/ctl sendtoarea prev;;
 		$MODKEY-Shift-Return)

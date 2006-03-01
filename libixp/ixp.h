@@ -275,8 +275,8 @@ void *ixp_dec_stat(unsigned char *msg, Stat *stat);
 
 /* message.c */
 unsigned short ixp_sizeof_stat(Stat *stat);
-unsigned int ixp_fcall_to_msg(void *msg, Fcall *fcall, unsigned int msglen);
-unsigned int ixp_msg_to_fcall(Fcall *call, void *msg, unsigned int msglen);
+unsigned int ixp_fcall2msg(void *msg, Fcall *fcall, unsigned int msglen);
+unsigned int ixp_msg2fcall(Fcall *call, void *msg, unsigned int msglen);
 
 /* server.c */
 IXPConn *ixp_server_open_conn(IXPServer *s, int fd,

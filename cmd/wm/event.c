@@ -72,13 +72,13 @@ handle_buttonpress(XEvent *e)
 				write_event(buf);
 			}
 	}
-	else if((c = win_to_clientframe(ev->window))) {
+	else if((c = win2clientframe(ev->window))) {
 		if(ev->button == Button1) {
 			if(sel_client() != c) {
 				focus(c);
 				return;
 			}
-			align = cursor_to_align(c->frame.cursor);
+			align = cursor2align(c->frame.cursor);
 			if(align == CENTER)
 				mouse_move(c);
 			else 
@@ -86,11 +86,11 @@ handle_buttonpress(XEvent *e)
 		}
 	
 		if(c && c->area) {
-			snprintf(buf, sizeof(buf), "CB %d %d\n", client_to_index(c) + 1, ev->button);
+			snprintf(buf, sizeof(buf), "CB %d %d\n", client2index(c) + 1, ev->button);
 			write_event(buf);
 		}
 	}
-	else if((c = win_to_client(ev->window))) {
+	else if((c = win2client(ev->window))) {
 		ev->state &= valid_mask;
 		if(ev->state & Mod1Mask) {
 			XRaiseWindow(dpy, c->frame.win);
@@ -101,7 +101,7 @@ handle_buttonpress(XEvent *e)
 					break;
 				case Button3:
 					focus(c);
-					align = xy_to_align(&c->rect, ev->x, ev->y);
+					align = xy2align(&c->rect, ev->x, ev->y);
 					if(align == CENTER)
 						mouse_move(c);
 					else
@@ -113,7 +113,7 @@ handle_buttonpress(XEvent *e)
 			focus(c);
 
 		if(c) {
-			snprintf(buf, sizeof(buf), "CB %d %d\n", client_to_index(c) + 1, ev->button);
+			snprintf(buf, sizeof(buf), "CB %d %d\n", client2index(c) + 1, ev->button);
 			write_event(buf);
 		}
 	}
@@ -128,7 +128,7 @@ handle_configurerequest(XEvent *e)
     Client *c;
     unsigned int bw = 0, bh = 0;
 
-    c = win_to_client(ev->window);
+    c = win2client(ev->window);
 	ev->value_mask &= ~CWSibling;
 
     if(c) {
@@ -188,7 +188,7 @@ static void
 handle_destroynotify(XEvent *e)
 {
     XDestroyWindowEvent *ev = &e->xdestroywindow;
-    Client *c = win_to_client(ev->window);
+    Client *c = win2client(ev->window);
     if(c) {
 		fprintf(stderr, "destroy: %s\n", c->name);
         c->destroyed = True;
@@ -204,7 +204,7 @@ handle_expose(XEvent *e)
     if(ev->count == 0) {
 		if(ev->window == winbar) 
 			draw_bar();
-		else if((c = win_to_clientframe(ev->window)))
+		else if((c = win2clientframe(ev->window)))
             draw_client(c);
     }
 }
@@ -243,7 +243,7 @@ handle_maprequest(XEvent *e)
     }
 
     /* there're client which send map requests twice */
-    c = win_to_client(ev->window);
+    c = win2client(ev->window);
     if(!c)
         c = alloc_client(ev->window, &wa);
     if(!c->area)
@@ -253,7 +253,7 @@ handle_maprequest(XEvent *e)
 static void
 handle_motionnotify(XEvent *e)
 {
-    Client *c = win_to_clientframe(e->xmotion.window);
+    Client *c = win2clientframe(e->xmotion.window);
     if(c) {
     	Cursor cursor = cursor_for_motion(c, e->xmotion.x, e->xmotion.y);
         if(cursor != c->frame.cursor) {
@@ -272,7 +272,7 @@ handle_propertynotify(XEvent *e)
     if(ev->state == PropertyDelete)
         return;                 /* ignore */
 
-    if((c = win_to_client(ev->window)))
+    if((c = win2client(ev->window)))
         handle_client_property(c, ev);
 }
 
@@ -281,7 +281,7 @@ handle_unmapnotify(XEvent *e)
 {
     XUnmapEvent *ev = &e->xunmap;
     Client *c;
-    if((c = win_to_client(ev->window))) {
+    if((c = win2client(ev->window))) {
 		fprintf(stderr, "unmap %s\n", c->name);
         detach_client(c, True);
 	}

@@ -41,7 +41,7 @@ destroy_area(Area *a)
 }
 
 int
-area_to_index(Area *a)
+area2index(Area *a)
 {
 	int i;
 	Page *p = a->page;
@@ -52,7 +52,7 @@ area_to_index(Area *a)
 }
 
 int
-aid_to_index(Page *p, unsigned short id)
+aid2index(Page *p, unsigned short id)
 {
 	int i;
 	for(i = 0; i < p->narea; i++)
@@ -66,7 +66,7 @@ select_area(Area *a, char *arg)
 {
 	Area *new;
 	Page *p = a->page;
-	int i = area_to_index(a);
+	int i = area2index(a);
 	if(i == -1)
 		return;
 	if(!strncmp(arg, "prev", 5)) {

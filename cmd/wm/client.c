@@ -95,10 +95,10 @@ void
 focus_client(Client *c)
 {
 	Client *old = sel_client();
-	int i = area_to_index(c->area);
+	int i = area2index(c->area);
 	
 	c->area->page->sel = i;
-	c->area->sel = client_to_index(c);
+	c->area->sel = client2index(c);
 	if(old && (old != c)) {
 		c->revert = old;
 		grab_mouse(old->win, AnyModifier, Button1);
@@ -346,7 +346,7 @@ gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 }
 
 void
-attach_client_to_page(Page *p, Client *c)
+attach_client2page(Page *p, Client *c)
 {
 	Area *a = p->area[p->sel];
 
@@ -372,7 +372,7 @@ attach_client(Client *c)
 	else
 		p = page[sel];
 
-	attach_client_to_page(p, c);
+	attach_client2page(p, c);
 	focus_client(c);
 }
 
@@ -398,7 +398,7 @@ detach_client(Client *c, Bool unmap)
 			reparent_client(c, root, c->rect.x, c->rect.y);
 			XUnmapWindow(dpy, c->frame.win);
 		}
-		if(area_to_index(a)) { /* column */
+		if(area2index(a)) { /* column */
 		    if(!a->nclient) {
 				Page *p = a->page;
 				if(p->narea != 2) {
@@ -434,7 +434,7 @@ sel_client()
 }
 
 Client *
-win_to_clientframe(Window w)
+win2clientframe(Window w)
 {
 	size_t i;
 	for(i = 0; (i < clientsz) && client[i]; i++)
@@ -493,11 +493,11 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 {
     unsigned int bh = bar_height();
     unsigned int bw = def.border;
-	int pi = page_to_index(c->area->page);
+	int pi = page2index(c->area->page);
 	int px = sel * rect.width;
 
 
-	if(area_to_index(c->area) > 0)
+	if(area2index(c->area) > 0)
 		resize_column(c, r, pt);
 	else
 		c->frame.rect = *r;
@@ -521,7 +521,7 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 }
 
 int
-cid_to_index(Area *a, unsigned short id)
+cid2index(Area *a, unsigned short id)
 {
 	int i;
 	for(i = 0; i < a->nclient; i++)
@@ -531,7 +531,7 @@ cid_to_index(Area *a, unsigned short id)
 }
 
 int
-client_to_index(Client *c)
+client2index(Client *c)
 {
 	int i;
 	Area *a = c->area;
@@ -545,7 +545,7 @@ void
 select_client(Client *c, char *arg)
 {
 	Area *a = c->area;
-	int i = client_to_index(c);
+	int i = client2index(c);
 	if(i == -1)
 		return;
 	if(!strncmp(arg, "prev", 5)) {
@@ -586,7 +586,7 @@ sendtopage_client(Client *c, char *arg) {
 		p = page[i - 1];
 	}
 	detach_client(c, False);
-	attach_client_to_page(p, c);
+	attach_client2page(p, c);
 	if((next = sel_client_of_page(page[sel])))
 		focus_client(next);
 }
@@ -596,7 +596,7 @@ sendtoarea_client(Client *c, char *arg) {
 	const char *errstr;
 	Area *next, *a = c->area;
 	Page *p = a->page;
-	int i = area_to_index(a);
+	int i = area2index(a);
 
 	if(i == -1 || a->nclient < 2)
 		return;

@@ -120,7 +120,7 @@ draw_pager()
 }
 
 static int
-xy_to_pager_page(int x, int y)
+xy2pager_page(int x, int y)
 {
     unsigned int i, ic, ir, tw, th, rows, cols;
     int dx;
@@ -215,7 +215,7 @@ pager()
         case ButtonPress:
             XUnmapWindow(dpy, transient);
             if(ev.xbutton.button == Button1) {
-				i = xy_to_pager_page(ev.xbutton.x, ev.xbutton.y);
+				i = xy2pager_page(ev.xbutton.x, ev.xbutton.y);
                 focus_page(page[i]);
 				if((c = sel_client_of_page(page[i])))
 					focus_client(c);
@@ -230,7 +230,7 @@ pager()
 }
 
 Client *
-win_to_client(Window w)
+win2client(Window w)
 {
 	size_t i;
 

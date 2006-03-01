@@ -113,14 +113,14 @@ ixp_server_receive_fcall(IXPConn *c, Fcall *fcall)
 			c->close(c);
 		return 0;
 	}
-    return ixp_msg_to_fcall(fcall, msg, IXP_MAX_MSG);
+    return ixp_msg2fcall(fcall, msg, IXP_MAX_MSG);
 }
 
 int
 ixp_server_respond_fcall(IXPConn *c, Fcall *fcall)
 {
 	char *errstr;
-	unsigned int msize = ixp_fcall_to_msg(msg, fcall, IXP_MAX_MSG);
+	unsigned int msize = ixp_fcall2msg(msg, fcall, IXP_MAX_MSG);
 	if(ixp_send_message(c->fd, msg, msize, &errstr) != msize) {
 		if(c->close)
 			c->close(c);
@@ -135,7 +135,7 @@ ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr)
 	unsigned int msize;
 	fcall->id = RERROR;
 	cext_strlcpy(fcall->errstr, errstr, sizeof(fcall->errstr));
-	msize = ixp_fcall_to_msg(msg, fcall, IXP_MAX_MSG);
+	msize = ixp_fcall2msg(msg, fcall, IXP_MAX_MSG);
 	if(ixp_send_message(c->fd, msg, msize, &errstr) != msize) {
 		if(c->close)
 			c->close(c);

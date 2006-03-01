@@ -53,7 +53,7 @@ cursor_for_motion(Client *c, int x, int y)
 }
 
 Align
-xy_to_align(XRectangle * rect, int x, int y)
+xy2align(XRectangle * rect, int x, int y)
 {
 
     int w = x <= rect->x + rect->width / 2;
@@ -85,7 +85,7 @@ xy_to_align(XRectangle * rect, int x, int y)
 }
 
 Align
-cursor_to_align(Cursor cursor)
+cursor2align(Cursor cursor)
 {
     if(cursor == w_cursor)
         return WEST;
