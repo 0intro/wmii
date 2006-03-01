@@ -19,5 +19,5 @@ trap "wmiir remove /bar/$n 2>/dev/null; exit" 15
 while true
 do
 	xwrite /bar/$n/data `date` `uptime | sed 's/.*://; s/,//g'` || exit
-	sleep 2
+	sleep 1
 done
