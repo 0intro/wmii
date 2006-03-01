@@ -96,9 +96,20 @@ arrange_column(Area *col)
 		if(w < c->frame.rect.width)
 			w = c->frame.rect.width;
 	}
-	hdiff = (col->rect.height - h) / col->nclient;
 	wdiff = (col->rect.width - w) / 2; 
 
+	/* try to add rest space to all clients if not COL_STACK mode */
+	if(col->mode != COL_STACK) {
+		for(i = 0; (h < col->rect.height) && (i < col->nclient); i++) {
+			Client *c = col->client[i];
+			unsigned int tmp = c->frame.rect.height;
+			c->frame.rect.height += (col->rect.height - h);
+			resize_client(c, &c->frame.rect, 0, True);
+			h += (c->frame.rect.height - tmp);
+		}
+	}
+
+	hdiff = (col->rect.height - h) / col->nclient;
 	yoff = col->rect.y + hdiff / 2;
 	for(i = 0; i < col->nclient; i++) {
 		Client *c = col->client[i];
