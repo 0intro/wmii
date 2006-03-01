@@ -359,7 +359,7 @@ attach_client2page(Page *p, Client *c)
 	if(p->sel > 0) /* column mode */
 		arrange_column(a);
 	else /* normal mode */
-		resize_client(c, &c->frame.rect, nil);
+		resize_client(c, &c->frame.rect, nil, False);
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
 }
@@ -485,7 +485,7 @@ match_sizehints(Client *c, unsigned int tabh, unsigned int bw)
 }
 
 void
-resize_client(Client *c, XRectangle *r, XPoint *pt)
+resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 {
     unsigned int bh = bar_height();
     unsigned int bw = def.border;
@@ -501,8 +501,9 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 	if((c->area->mode != COL_STACK) || (c->area->sel == client2index(c)))
 		match_sizehints(c, bh, bw);
 
-    XMoveResizeWindow(dpy, c->frame.win, px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y,
-					  c->frame.rect.width, c->frame.rect.height);
+	if(!ignore_xcall)
+		XMoveResizeWindow(dpy, c->frame.win, px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y,
+				c->frame.rect.width, c->frame.rect.height);
 
 	if((c->area->mode != COL_STACK) || (c->area->sel == client2index(c))) {
 		c->rect.x = bw;
@@ -622,7 +623,7 @@ resize_all_clients()
 	unsigned int i;
 	for(i = 0; i < nclient; i++)
 		if(client[i]->area)
-			resize_client(client[i], &client[i]->frame.rect, 0);
+			resize_client(client[i], &client[i]->frame.rect, 0, False);
 }
 
 /* convenience function */

@@ -1107,7 +1107,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		blitz_strtorect(&rect, &cl->frame.rect, buf);
-		resize_client(cl, &cl->frame.rect, 0);
+		resize_client(cl, &cl->frame.rect, 0, False);
 		break;
     case Fexpand:
 		{

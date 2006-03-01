@@ -335,7 +335,7 @@ mouse_move(Client *c)
         case ButtonRelease:
             if(!first) {
                 draw_pseudo_border(&frect);
-                resize_client(c, &frect, &pt);
+                resize_client(c, &frect, &pt, False);
             }
             free(rects);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
@@ -580,7 +580,7 @@ mouse_resize(Client *c, Align align)
                 draw_pseudo_border(&frect);
                 pt.x = px;
                 pt.y = py;
-                resize_client(c, &frect, &pt);
+                resize_client(c, &frect, &pt, False);
             }
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
             XUngrabServer(dpy);

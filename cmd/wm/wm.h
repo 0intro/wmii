@@ -223,7 +223,7 @@ Client *sel_client();
 Client *sel_client_of_page(Page *p);
 void focus_client(Client *c);
 Client *win2clientframe(Window w);
-void resize_client(Client *c, XRectangle *r, XPoint *pt);
+void resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall);
 int cid2index(Area *a, unsigned short id);
 int client2index(Client *c);
 void select_client(Client *c, char *arg);

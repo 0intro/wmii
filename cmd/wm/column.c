@@ -54,7 +54,7 @@ arrange_column(Area *col)
 			else
 				c->frame.rect.height =
 					col->rect.height - c->frame.rect.y + col->rect.y;
-			resize_client(c, &c->frame.rect, 0);
+			resize_client(c, &c->frame.rect, 0, True);
 		}
 		break;
 	case COL_STACK:
@@ -69,14 +69,14 @@ arrange_column(Area *col)
 			else
 				c->frame.rect.height = bar_height();
 			yoff += c->frame.rect.height;
-			resize_client(c, &c->frame.rect, 0);
+			resize_client(c, &c->frame.rect, 0, True);
 		}
 		break;
 	case COL_MAX:
 		for(i = 0; i < col->nclient; i++) {
 			Client *c = col->client[i];
 			c->frame.rect = col->rect;
-			resize_client(c, &c->frame.rect, 0);
+			resize_client(c, &c->frame.rect, 0, True);
 		}
 		break;
 	default:
@@ -101,8 +101,7 @@ arrange_column(Area *col)
 		c->frame.rect.x += wdiff;
 		c->frame.rect.y = yoff;
 		yoff = c->frame.rect.y + c->frame.rect.height + hdiff;
-		XMoveWindow(dpy, col->client[i]->frame.win, col->client[i]->frame.rect.x,
-				col->client[i]->frame.rect.y);
+		resize_client(c, &c->frame.rect, 0, False);
 	}
 }
 
@@ -136,7 +135,7 @@ match_horiz(Area *col, XRectangle *r)
 		Client *c = col->client[i];
         c->frame.rect.x = r->x;
         c->frame.rect.width = r->width;
-        resize_client(c, &c->frame.rect, nil);
+        resize_client(c, &c->frame.rect, nil, False);
     }
 }
 
@@ -178,16 +177,16 @@ drop_resize(Client *c, XRectangle *new)
         north->frame.rect.height = new->y - north->frame.rect.y;
         c->frame.rect.height += c->frame.rect.y - new->y;
         c->frame.rect.y = new->y;
-        resize_client(north, &north->frame.rect, nil);
-        resize_client(c, &c->frame.rect, nil);
+        resize_client(north, &north->frame.rect, nil, False);
+        resize_client(c, &c->frame.rect, nil, False);
     }
     if(south && (new->y + new->height != c->frame.rect.y + c->frame.rect.height)) {
         south->frame.rect.height -= new->y + new->height - south->frame.rect.y;
         south->frame.rect.y = new->y + new->height;
         c->frame.rect.y = new->y;
         c->frame.rect.height = new->height;
-        resize_client(c, &c->frame.rect, nil);
-        resize_client(south, &south->frame.rect, nil);
+        resize_client(c, &c->frame.rect, nil, False);
+        resize_client(south, &south->frame.rect, nil, False);
     }
 }
 
