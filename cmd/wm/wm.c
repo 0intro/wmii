@@ -540,7 +540,6 @@ main(int argc, char *argv[])
 	def.font = strdup(BLITZ_FONT);
 	def.border = DEF_BORDER;
 	def.snap = DEF_SNAP;
-	def.inc = True;
 	cext_strlcpy(def.selcolor, BLITZ_SELCOLORS, sizeof(def.selcolor));
 	blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
 	cext_strlcpy(def.normcolor, BLITZ_NORMCOLORS, sizeof(def.normcolor));

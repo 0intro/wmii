@@ -35,7 +35,6 @@ static char Enocommand[] = "command not supported";
  * /def/				Ddef
  * /def/border			Fborder		0..n
  * /def/snap 			Fsnap  		0..n
- * /def/inc 			Finc   		0..n
  * /def/font			Ffont  		xlib font name
  * /def/selcolors		Fselcolors	sel color
  * /def/normcolors		Fnormcolors normal colors
@@ -193,7 +192,6 @@ qid2name(Qid *qid)
 		case Fctl: return "ctl"; break;
 		case Fborder: return "border"; break;
 		case Fsnap: return "border"; break;
-		case Finc: return "inc"; break;
 		case Fgeom: return "geometry"; break;
 		case Fname: return "name"; break;
 		case Fmax: return "max"; break;
@@ -233,8 +231,6 @@ name2type(char *name, unsigned char dir_type)
 		return Fname;
 	if(!strncmp(name, "border", 7))
 		return Fborder;
-	if(!strncmp(name, "inc", 4))
-		return Finc;
 	if(!strncmp(name, "geometry", 9))
 		return Fgeom;
 	if(!strncmp(name, "expand", 7))
@@ -556,10 +552,6 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		snprintf(buf, sizeof(buf), "%d", def.border);
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
         break;
-    case Finc:
-		snprintf(buf, sizeof(buf), "%d", def.inc);
-		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
-        break;
     case Fgeom:
 		c = page[dir_i1]->area[dir_i2]->client[dir_i3];
 		snprintf(buf, sizeof(buf), "%d %d %d %d", c->frame.rect.x, c->frame.rect.y,
@@ -870,8 +862,6 @@ xread(IXPConn *c, Fcall *fcall)
 		case Ddef:
 			fcall->count += type2stat(&stat, "border", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "inc", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "snap", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "selcolors", &m->qid);
@@ -939,11 +929,6 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Fborder:
 			snprintf(buf, sizeof(buf), "%u", def.border);
-			fcall->count = strlen(buf);
-			memcpy(p, buf, fcall->count);
-			break;
-		case Finc:
-			snprintf(buf, sizeof(buf), "%u", def.inc);
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -1113,17 +1098,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(err)
 			return "border value out of range 0x0000,..,0xffff";
 		def.border = i;
-		resize_all_clients();
-		break;
-	case Finc:
-		if(fcall->count > sizeof(buf))
-			return "increment value out of range 0, 1";
-		memcpy(buf, fcall->data, fcall->count);
-		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 0, 1, &err);
-		if(err)
-			return "increment value out of range 0, 1";
-		def.inc = i;
 		resize_all_clients();
 		break;
 	case Fgeom:

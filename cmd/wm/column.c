@@ -14,6 +14,7 @@ colmode2str(ColumnMode mode)
 	switch(mode) {
 	case COL_EQUAL: return "equal"; break;
 	case COL_STACK: return "stack"; break;
+	case COL_MAX: return "max"; break;
 	default: break;
 	}
 	return nil;		
@@ -26,6 +27,8 @@ str2colmode(char *arg)
 		return COL_EQUAL;
 	else if(!strncmp("stack", arg, 6))
 		return COL_STACK;
+	else if(!strncmp("max", arg, 4))
+		return COL_STACK;
 	return -1;
 }
 
@@ -33,7 +36,7 @@ void
 arrange_column(Area *col)
 {
 	unsigned int i, yoff;
-	unsigned int h;
+	unsigned int h, w, hdiff, wdiff;
 
 	if(!col->nclient)
 		return;
@@ -69,8 +72,37 @@ arrange_column(Area *col)
 			resize_client(c, &c->frame.rect, 0);
 		}
 		break;
+	case COL_MAX:
+		for(i = 0; i < col->nclient; i++) {
+			Client *c = col->client[i];
+			c->frame.rect = col->rect;
+			resize_client(c, &c->frame.rect, 0);
+		}
+		break;
 	default:
 		break;
+	}
+
+	/* some relaxing due to potential increment gaps */
+	h = w = 0;
+	for(i = 0; i < col->nclient; i++) {
+		h += col->client[i]->frame.rect.height;
+		if(w < col->client[i]->frame.rect.width)
+			w = col->client[i]->frame.rect.width;
+	}
+	if(col->mode == COL_MAX)
+		h = col->client[i]->frame.rect.height;
+	hdiff = (col->rect.height - h) / col->nclient;
+	wdiff = (col->rect.width - w) / 2; 
+
+	yoff = col->rect.y + hdiff / 2;
+	for(i = 0; i < col->nclient; i++) {
+		Client *c = col->client[i];
+		c->frame.rect.x += wdiff;
+		c->frame.rect.y = yoff;
+		yoff = c->frame.rect.y + c->frame.rect.height + hdiff;
+		XMoveWindow(dpy, col->client[i]->frame.win, col->client[i]->frame.rect.x,
+				col->client[i]->frame.rect.y);
 	}
 }
 

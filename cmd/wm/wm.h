@@ -38,7 +38,6 @@ enum {
 	Fborder,
 	Fsnap,
 	Fbar,
-	Finc,
 	Fgeom,
 	Fevent,
 	Fctl,
@@ -127,7 +126,6 @@ typedef struct {
 	char selcolor[24];
 	char normcolor[24];
 	char *font;
-	Bool inc;
 	Color sel;
 	Color norm;
 	unsigned int border;
