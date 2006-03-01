@@ -162,9 +162,7 @@ handle_kpress(XKeyEvent * e)
     KeySym ksym = XKeycodeToKeysym(dpy, e->keycode, 0);
 
     if(ksym >= XK_1 && ksym <= XK_9)
-        return ksym - XK_1;
-	else if(ksym == XK_0)
-		return 9;
+        return ksym - XK_0;
     else if(ksym >= XK_a && ksym <= XK_z)
         return 10 + ksym - XK_a;
 
