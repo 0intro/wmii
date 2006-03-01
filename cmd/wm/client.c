@@ -402,7 +402,7 @@ detach_client(Client *c, Bool unmap)
 		if(area2index(a)) { /* column */
 		    if(!a->nclient) {
 				Page *p = a->page;
-				if(p->narea != 2) {
+				if(p->narea > 2) {
 					destroy_area(a);
 					arrange_page(p, True);
 				}
