@@ -18,7 +18,7 @@ proglist() {
 	done | sort | uniq
 }
 
-test -f $pidfile && kill -9 `cat $pidfile` 2>/dev/null
+test -f $pidfile && kill `cat $pidfile` 2>/dev/null
 echo $$ >$pidfile
 
 MODKEY=Alt

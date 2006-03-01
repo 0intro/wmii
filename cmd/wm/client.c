@@ -508,16 +508,18 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
     XMoveResizeWindow(dpy, c->frame.win, px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y,
 					  c->frame.rect.width, c->frame.rect.height);
 
-	c->rect.x = bw;
-	c->rect.y = bh ? bh : bw;
-	c->rect.width = c->frame.rect.width - 2 * bw;
-	c->rect.height = c->frame.rect.height - bw - (bh ? bh : bw);
+	if((c->area->mode != COL_STACK) || (c->area->sel == client2index(c))) {
+		c->rect.x = bw;
+		c->rect.y = bh ? bh : bw;
+		c->rect.width = c->frame.rect.width - 2 * bw;
+		c->rect.height = c->frame.rect.height - bw - (bh ? bh : bw);
 
-    /* resize if client requests special size */
-    check_dimensions(c, bh, bw);
+		/* resize if client requests special size */
+		check_dimensions(c, bh, bw);
 
-	XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
-	configure_client(c);
+		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
+		configure_client(c);
+	}
 }
 
 int

@@ -93,8 +93,7 @@ draw_pager()
     unsigned int i, ic, ir, tw, th, rows, cols;
     int dx;
 
-	for(i = 0; (i < pagesz) && page[i]; i++);
-    blitz_getbasegeometry(i, &cols, &rows);
+    blitz_getbasegeometry(npage - 1, &cols, &rows);
     dx = (cols - 1) * DEF_PAGER_GAP;      /* DEF_PAGER_GAPpx space */
     tw = (rect.width - dx) / cols;
     th = ((double) tw / rect.width) * rect.height;
@@ -102,7 +101,7 @@ draw_pager()
     d.gc = gc_transient;
     d.font = xfont;
 	d.align = CENTER;
-	i = 0;
+	i = 1;
     for(ir = 0; ir < rows; ir++) {
         for(ic = 0; ic < cols; ic++) {
             d.rect.x = ic * tw + (ic * DEF_PAGER_GAP);
@@ -113,7 +112,7 @@ draw_pager()
                 d.rect.y = ir * (rect.height - th) / (rows - 1);
             d.rect.height = th;
             draw_pager_page(i++, &d);
-            if(!page[i])
+            if(i == npage)
                 return;
         }
     }
@@ -174,7 +173,7 @@ pager()
     int i;
 	Client *c;
 
-    if(!npage)
+    if(npage < 2)
         return;
 
     XClearWindow(dpy, transient);
