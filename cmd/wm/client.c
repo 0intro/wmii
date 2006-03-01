@@ -445,28 +445,23 @@ win2clientframe(Window w)
 }
 
 static void
-check_dimensions(Client *c, unsigned int tabh, unsigned int bw)
+match_sizehints(Client *c, unsigned int tabh, unsigned int bw)
 {
-    if(c->size.flags & PMinSize) {
+    XSizeHints *s = &c->size;
+
+    if(s->flags & PMinSize) {
         if(c->rect.width < c->size.min_width)
             c->rect.width = c->size.min_width;
         if(c->rect.height < c->size.min_height)
             c->rect.height = c->size.min_height;
     }
-    if(c->size.flags & PMaxSize) {
+    if(s->flags & PMaxSize) {
         if(c->rect.width > c->size.max_width)
             c->rect.width = c->size.max_width;
         if(c->rect.height > c->size.max_height)
             c->rect.height = c->size.max_height;
     }
-}
 
-static void
-resize_incremental(Client *c, unsigned int tabh, unsigned int bw)
-{
-    XSizeHints *s = &c->size;
-
-    /* increment stuff, see chapter 4.1.2.3 of the ICCCM Manual */
     if(s->flags & PResizeInc) {
 		int w = 0, h = 0;
 
@@ -503,8 +498,8 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 	else
 		c->frame.rect = *r;
 
-    if(def.inc)
-    	resize_incremental(c, bh, bw);
+	if((c->area->mode != COL_STACK) || (c->area->sel == client2index(c)))
+		match_sizehints(c, bh, bw);
 
     XMoveResizeWindow(dpy, c->frame.win, px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y,
 					  c->frame.rect.width, c->frame.rect.height);
@@ -514,10 +509,6 @@ resize_client(Client *c, XRectangle *r, XPoint *pt)
 		c->rect.y = bh ? bh : bw;
 		c->rect.width = c->frame.rect.width - 2 * bw;
 		c->rect.height = c->frame.rect.height - bw - (bh ? bh : bw);
-
-		/* resize if client requests special size */
-		check_dimensions(c, bh, bw);
-
 		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		configure_client(c);
 	}
