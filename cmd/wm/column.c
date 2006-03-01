@@ -24,6 +24,9 @@ arrange_column(Area *col)
 	size_t i, yoff;
 	unsigned int h;
 
+	if(!col->nclient)
+		return;
+
 	switch(col->mode) {
 	case COL_EQUAL:
 		h = col->rect.height;
