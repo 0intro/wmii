@@ -215,11 +215,13 @@ pager()
         case ButtonPress:
             XUnmapWindow(dpy, transient);
             if(ev.xbutton.button == Button1) {
-				i = xy2pager_page(ev.xbutton.x, ev.xbutton.y);
+                if((i = xy2pager_page(ev.xbutton.x, ev.xbutton.y)) != -1) {
                 focus_page(page[i]);
 				if((c = sel_client_of_page(page[i])))
 					focus_client(c);
 			}
+
+            }
             XUngrabKeyboard(dpy, CurrentTime);
             XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
 			XSync(dpy, False);
