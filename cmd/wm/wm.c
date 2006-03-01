@@ -55,8 +55,13 @@ draw_pager_client(Client *c, Draw *d)
     	d->color = def.sel;
     else
     	d->color = def.norm;
+
     d->data = c->name;
     scale_rect(&rect, &initial_rect, &c->frame.rect, &d->rect);
+
+	if(d->rect.height < bar_height())
+		d->data = nil;
+
     blitz_drawlabel(dpy, d);
     XSync(dpy, False);      /* do not clear upwards */
 }
