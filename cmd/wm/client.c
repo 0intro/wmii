@@ -100,7 +100,8 @@ focus_client(Client *c)
 	c->area->page->sel = i;
 	c->area->sel = client2index(c);
 	if(old && (old != c)) {
-		c->revert = old;
+	    if(old->area == c->area)
+			c->revert = old;
 		grab_mouse(old->win, AnyModifier, Button1);
     	draw_client(old);
 	}
