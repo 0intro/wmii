@@ -11,7 +11,7 @@ xwrite() {
 # race condition alert
 test -f $pidfile && kill `cat $pidfile` 2>/dev/null
 echo $$ >$pidfile
-sleep 2
+sleep 1
 xwrite /bar/new/colors $WMII_NORMCOLORS
 n=`wmiir read /bar | awk '/[0-9]+$/ {if($NF>max) max=$NF} END {print max}'`
 trap "wmiir remove /bar/$n 2>/dev/null; exit" 15
