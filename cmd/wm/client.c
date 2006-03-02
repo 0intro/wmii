@@ -612,8 +612,10 @@ sendtoarea_client(Client *c, char *arg) {
 		destroy_area(a);
 		arrange_page(p, True);
 	}
-	else
+	else {
+		arrange_column(a);
 		arrange_column(to);
+	}
 }
 
 void
