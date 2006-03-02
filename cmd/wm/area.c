@@ -140,3 +140,37 @@ attach_client2area(Area *a, Client *c)
 		resize_client(c, &c->frame.rect, nil, False);
 }
 
+void
+detach_client_area(Client *c)
+{
+	Area *a = c->area;
+	Page *p = a->page;
+	int i = area2index(a);
+	cext_array_detach((void **)a->client, c, &a->clientsz);
+	a->nclient--;
+	if(a->sel >= a->nclient)
+		a->sel = 0;
+	if(i) { /* column */
+		if(a->maxclient && (a->nclient < a->maxclient)) {
+			for(++i; i < p->narea; i++) {
+				Area *tmp = p->area[i];
+				if(!tmp->maxclient)
+					sendto_area(a, tmp->client[0]);
+				else
+					continue;
+				if(!tmp->nclient)
+					destroy_area(tmp);
+				arrange_page(p, True);
+				break;
+			}
+		}
+		if(!a->nclient) {
+			if(p->narea > 2) {
+				destroy_area(a);
+				arrange_page(p, True);
+			}
+		}
+		else
+			arrange_column(a);
+	}
+}

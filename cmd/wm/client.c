@@ -380,10 +380,6 @@ detach_client(Client *c, Bool unmap)
 			if(client[i]->revert == c)
 				client[i]->revert = nil;
 
-		cext_array_detach((void **)a->client, c, &a->clientsz);
-		a->nclient--;
-		if(a->sel >= a->nclient)
-			a->sel = 0;
 		if(!c->destroyed) {
 			if(!unmap)
 				unmap_client(c);
@@ -392,17 +388,7 @@ detach_client(Client *c, Bool unmap)
 			reparent_client(c, root, c->rect.x, c->rect.y);
 			XUnmapWindow(dpy, c->frame.win);
 		}
-		if(area2index(a)) { /* column */
-		    if(!a->nclient) {
-				Page *p = a->page;
-				if(p->narea > 2) {
-					destroy_area(a);
-					arrange_page(p, True);
-				}
-			}
-			else
-				arrange_column(a);
-		}
+		detach_client_area(c);
 	}
 	c->area = nil;
 	if(c->revert)

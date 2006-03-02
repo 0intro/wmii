@@ -197,6 +197,7 @@ void update_area_geometry(Area *a);
 void select_area(Area *a, char *arg);
 void sendto_area(Area *to, Client *c);
 void attach_client2area(Area *a, Client *c);
+void detach_client_area(Client *c);
 
 /* bar.c */
 Label *new_label();
