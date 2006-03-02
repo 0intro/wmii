@@ -173,11 +173,12 @@ drop_resize(Client *c, XRectangle *new)
     Client *north = nil, *south = nil;
 	unsigned int i;
 
-	for(i = 0; (i < p->narea) && (p->area[i] != col); i++);
-    west = i ? p->area[i - 1] : nil;
+	for(i = 1; (i < p->narea) && (p->area[i] != col); i++);
+	/* first managed area is indexed 1, thus (i > 1) ? ... */
+    west = (i > 1) ? p->area[i - 1] : nil;
     east = i + 1 < p->narea ? p->area[i + 1] : nil;
 
-	for(i = 0; (i < col->nclient) && (col->client[i] != c); i++);
+	for(i = 1; (i < col->nclient) && (col->client[i] != c); i++);
     north = i ? col->client[i - 1] : nil;
     south = i + 1 < col->nclient ? col->client[i + 1] : nil;
 

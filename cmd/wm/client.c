@@ -587,7 +587,7 @@ sendtoarea_client(Client *c, char *arg) {
 	Page *p = a->page;
 	int i = area2index(a);
 
-	if(i == -1 || a->nclient < 2)
+	if(i == -1)
 		return;
 	if(!strncmp(arg, "prev", 5)) {
 		if(i == 1)
@@ -608,6 +608,8 @@ sendtoarea_client(Client *c, char *arg) {
 		to = p->area[i];
 	}
 	sendto_area(to, c);
+	if(!a->nclient)
+		destroy_area(a);
 	arrange_column(to);
 }
 
