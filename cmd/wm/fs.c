@@ -194,7 +194,6 @@ qid2name(Qid *qid)
 		case Fsnap: return "border"; break;
 		case Fgeom: return "geometry"; break;
 		case Fname: return "name"; break;
-		case Fcapacity: return "capacity"; break;
 		case Fmode: return "mode"; break;
 		case Fevent: return "event"; break;
 		case Fkey: return key[i1]->name; break; 
@@ -245,8 +244,6 @@ name2type(char *name, unsigned char dir_type)
 		return Ffont;
 	if(!strncmp(name, "data", 5))
 		return Fdata;
-	if(!strncmp(name, "capacity", 9))
-		return Fcapacity;
 	if(!strncmp(name, "mode", 5))
 		return Fmode;
 	if(name2key(name))
@@ -340,7 +337,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			new->type = IXP_QTDIR;
 			if(!strncmp(wname, "new", 4)) {
 				if(iswalk) {
-					Area *a = new_area(p->area[p->sel]);
+					Area *a = new_area(p);
 					if(!a)
 						return -1;
 					new->path = mkqpath(Darea, p->id, a->id, 0);
@@ -576,10 +573,6 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     case Fdata:
 		return mkstat(stat, dir, wname, (dir_i1 == nlabel) ? 0 : strlen(label[dir_i1]->data), DMREAD | DMWRITE);
 		break;	
-    case Fcapacity:
-		snprintf(buf, sizeof(buf), "%d", page[dir_i1]->area[dir_i2]->capacity);
-		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
-		break;	
     case Fmode:
 		return mkstat(stat, dir, wname, strlen(colmode2str(page[dir_i1]->area[dir_i2]->mode)), DMREAD | DMWRITE);
 		break;	
@@ -765,10 +758,8 @@ xread(IXPConn *c, Fcall *fcall)
 		case Darea:
 			/* jump to offset */
 			len = type2stat(&stat, "ctl", &m->qid);
-			if(i2) {
-				len += type2stat(&stat, "capacity", &m->qid);
+			if(i2)
 				len += type2stat(&stat, "mode", &m->qid);
-			}
 			for(i = 0; i < page[i1]->area[i2]->nclient; i++) {
 				if(i == page[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
@@ -891,12 +882,9 @@ xread(IXPConn *c, Fcall *fcall)
 		case Darea:
 			fcall->count = type2stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			if(i2) {
-				fcall->count += type2stat(&stat, "capacity", &m->qid);
-				p = ixp_enc_stat(p, &stat);
+			if(i2)
 				fcall->count += type2stat(&stat, "mode", &m->qid);
 				p = ixp_enc_stat(p, &stat);
-			}
 			for(i = 0; i < page[i1]->area[i2]->nclient; i++) {
 				if(i == page[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
@@ -977,13 +965,6 @@ xread(IXPConn *c, Fcall *fcall)
 			if((fcall->count = strlen(def.font)))
 				memcpy(p, def.font, fcall->count);
 			break;
-		case Fcapacity:
-			if(!i2)
-				return Enofile;
-			snprintf(buf, sizeof(buf), "%d", page[i1]->area[i2]->capacity);
-			fcall->count = strlen(buf);
-			memcpy(p, buf, fcall->count);
-			break;	
 		case Fmode:
 			if(!i2)
 				return Enofile;
@@ -1182,17 +1163,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		update_bar_geometry();
 		resize_all_clients();
 		break;
-	case Fcapacity:
-		if(!i2)
-			return Enofile;
-		memcpy(buf, fcall->data, fcall->count);
-		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 0, 0xffff, &err);
-		if(err)
-			return "max value out of range 0x0000..0xffff";
-		page[i1]->area[i2]->capacity = i;
-		match_capacity(page[i1]->area[i2]);
-		break;	
 	case Fmode:
 		{
 			ColumnMode mode;

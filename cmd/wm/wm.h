@@ -42,7 +42,6 @@ enum {
 	Fevent,
 	Fctl,
 	Fname,
-	Fcapacity,
 	Fmode
 };
 
@@ -69,7 +68,6 @@ struct Area {
 	unsigned int clientsz;
 	unsigned int sel;
 	unsigned int nclient;
-	unsigned int capacity;
 	ColumnMode mode;
 	XRectangle rect;
 };
@@ -201,10 +199,9 @@ void detach_fromarea(Client *c);
 void arrange_page(Page *p, Bool updategeometry);
 void arrange_area(Area *a);
 void resize_area(Client *c, XRectangle *r, XPoint *pt);
-Area *new_area(Area *old);
+Area *new_area(Page *p);
 ColumnMode str2colmode(char *arg);
 char *colmode2str(ColumnMode mode);
-void match_capacity(Area *a);
 
 /* bar.c */
 Label *new_label();

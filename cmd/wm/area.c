@@ -34,6 +34,8 @@ void
 destroy_area(Area *a)
 {
 	Page *p = a->page;
+	if(a->nclient)
+		return;
 	if(a->client)
 		free(a->client);
 	cext_array_detach((void **)p->area, a, &p->areasz);
@@ -44,7 +46,6 @@ destroy_area(Area *a)
 		else 
 			p->sel = 0;
 	}
-	fprintf(stderr, "destroy_area: p->sel == %d\n", p->sel);
 	free(a);
 }
 
@@ -112,32 +113,13 @@ send_toarea(Area *to, Client *c)
 void
 attach_toarea(Area *a, Client *c)
 {
-	Page *p = a->page;
-	if(0 && area2index(a) && a->capacity && (a->capacity == a->nclient)) {
-		Area *to = nil;
-		int i;
-		for(i = p->sel; i < p->narea; i++) {
-			to = p->area[i];
-			if(!to->capacity || (to->capacity > to->nclient))
-				break;
-			to = nil;
-		}
-		if(!to) {
-			to = alloc_area(p);
-			send_toarea(to, a->client[a->sel]);
-			arrange_page(p, True);
-		}
-		else
-			send_toarea(to, a->client[a->sel]);
-	}
-
 	a->client = (Client **)cext_array_attach(
 			(void **)a->client, c, sizeof(Client *), &a->clientsz);
 	a->nclient++;
 	c->area = a;
-	if(p->sel > 0) /* area mode */
+	if(area2index(a)) /* column */
 		arrange_area(a);
-	else /* normal mode */
+	else /* floating */
 		resize_client(c, &c->frame.rect, nil, False);
 }
 
@@ -145,41 +127,11 @@ void
 detach_fromarea(Client *c)
 {
 	Area *a = c->area;
-	Page *p = a->page;
-	int i = area2index(a);
-
 	cext_array_detach((void **)a->client, c, &a->clientsz);
 	a->nclient--;
 	if(a->sel >= a->nclient)
 		a->sel = 0;
-
-	if(0 && i > 0) {
-		if(a->nclient < a->capacity) {
-			for(++i; i < p->narea; i++) {
-				Area *tmp = p->area[i];
-				if(!tmp->nclient)
-					continue;
-				send_toarea(a, tmp->client[0]);
-				arrange_page(p, True);
-			}
-		}
-	}
-	if(!a->nclient) {
-		destroy_area(a);
-		arrange_page(p, True);
-	}
-	else
-		arrange_area(a);
-}
-
-void
-match_capacity(Area *a)
-{
-	while(a->nclient > a->capacity) {
-		Client *c = a->client[a->nclient - 1];
-		detach_fromarea(c);
-		attach_client(c);
-	}
+	arrange_area(a);
 }
 
 char *
@@ -437,26 +389,10 @@ resize_area(Client *c, XRectangle *r, XPoint *pt)
 }
 
 Area *
-new_area(Area *old)
+new_area(Page *p)
 {
-	Page *p = old->page;
-	Client *c = sel_client_of_page(p);
-	Area *a;
-
-	if(!area2index(old) || (old->nclient < 2))
-		return nil;
-
-	a = alloc_area(p);
-	cext_array_detach((void **)old->client, c, &old->clientsz);
-	old->nclient--;
-	if(old->sel == old->nclient)
-		old->sel = 0;
-	a->client = (Client **)cext_array_attach((void **)a->client, c,
-					sizeof(Client *), &a->clientsz);
-	a->nclient++;
-
-	c->area = a;
+	Area *a = alloc_area(p);
 	arrange_page(p, True);
-	focus_client(c);
 	return a;
 }
+

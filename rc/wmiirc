@@ -40,9 +40,11 @@ do
 	:
 done
 xwrite /bar/new/colors $WMII_NORMCOLORS
+xwrite /bar/new/colors $WMII_NORMCOLORS
 xwrite /bar/new/colors $WMII_SELCOLORS
 xwrite /bar/0/data 1
-xwrite /bar/expand 1
+xwrite /bar/1/data 1
+xwrite /bar/expand 2
 
 # MISC
 xsetroot -solid '#0b1014'
@@ -99,8 +101,10 @@ do
 	case "$type" in
 	PN)
 		xwrite /bar/0/data "$@";;
-	CN)
+	AN)
 		xwrite /bar/1/data "$@";;
+	CN)
+		xwrite /bar/2/data "$@";;
 	LB)
 		case "$2" in
 		1)

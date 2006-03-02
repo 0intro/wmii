@@ -75,6 +75,14 @@ set_client_state(Client * c, int state)
 }
 
 static void
+area_name_event(int aidx)
+{
+	char buf[256];
+	snprintf(buf, sizeof(buf), "AN %d\n", aidx);
+	write_event(buf);
+}
+
+static void
 client_name_event(Client *c)
 {
 	char buf[256];
@@ -98,6 +106,7 @@ focus_client(Client *c)
 	int i = area2index(c->area);
 	
 	c->area->page->sel = i;
+	area_name_event(i);
 	c->area->sel = client2index(c);
 	if(old && (old != c)) {
 	    if(old->area == c->area)
