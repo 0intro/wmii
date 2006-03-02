@@ -608,9 +608,12 @@ sendtoarea_client(Client *c, char *arg) {
 		to = p->area[i];
 	}
 	sendto_area(to, c);
-	if(!a->nclient)
+	if(!a->nclient) {
 		destroy_area(a);
-	arrange_column(to);
+		arrange_page(p, True);
+	}
+	else
+		arrange_column(to);
 }
 
 void
