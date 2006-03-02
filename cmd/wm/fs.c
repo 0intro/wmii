@@ -340,7 +340,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			new->type = IXP_QTDIR;
 			if(!strncmp(wname, "new", 4)) {
 				if(iswalk) {
-					Area *a = new_column(p->area[p->sel]);
+					Area *a = new_area(p->area[p->sel]);
 					if(!a)
 						return -1;
 					new->path = mkqpath(Darea, p->id, a->id, 0);
@@ -1191,7 +1191,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(err)
 			return "max value out of range 0x0000..0xffff";
 		page[i1]->area[i2]->capacity = i;
-		/* TODO: detach to many clients/attach */
+		match_capacity(page[i1]->area[i2]);
 		break;	
 	case Fmode:
 		{
@@ -1202,9 +1202,9 @@ xwrite(IXPConn *c, Fcall *fcall)
 			buf[fcall->count] = 0;
 			mode = str2colmode(buf);
 			if(mode == -1)
-				return "invalid column mode";
+				return "invalid area mode";
 			page[i1]->area[i2]->mode = mode;
-			arrange_column(page[i1]->area[i2]);
+			arrange_area(page[i1]->area[i2]);
 		}
 		break;	
 	case Fkey:

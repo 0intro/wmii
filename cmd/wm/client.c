@@ -115,7 +115,7 @@ focus_client(Client *c)
 	client_name_event(c);
 	client_focus_event(c);
 	if(i > 0 && c->area->mode == COL_STACK)
-		arrange_column(c->area);
+		arrange_area(c->area);
 }
 
 void
@@ -473,7 +473,7 @@ resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 
 
 	if(area2index(c->area) > 0)
-		resize_column(c, r, pt);
+		resize_area(c, r, pt);
 	else
 		c->frame.rect = *r;
 
@@ -599,8 +599,8 @@ sendtoarea_client(Client *c, char *arg) {
 		arrange_page(p, True);
 	}
 	else {
-		arrange_column(a);
-		arrange_column(to);
+		arrange_area(a);
+		arrange_area(to);
 	}
 }
 

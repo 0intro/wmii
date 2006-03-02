@@ -49,7 +49,7 @@ update_bar_geometry()
 	for(i = 0; i < npage; i++)
 		for(j = 1; j < page[i]->narea; j++) {
 			update_area_geometry(page[i]->area[j]);
-			arrange_column(page[i]->area[j]);
+			arrange_area(page[i]->area[j]);
 		}
 }
 

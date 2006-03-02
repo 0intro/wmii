@@ -198,6 +198,13 @@ void select_area(Area *a, char *arg);
 void sendto_area(Area *to, Client *c);
 void attach_client2area(Area *a, Client *c);
 void detach_client_area(Client *c);
+void arrange_page(Page *p, Bool update_area_geometry);
+void arrange_area(Area *a);
+void resize_area(Client *c, XRectangle *r, XPoint *pt);
+Area *new_area(Area *old);
+ColumnMode str2colmode(char *arg);
+char *colmode2str(ColumnMode mode);
+void match_capacity(Area *a);
 
 /* bar.c */
 Label *new_label();
@@ -273,17 +280,6 @@ XRectangle *rectangles(unsigned int *num);
 int pid2index(unsigned short id);
 void select_page(char *arg);
 int page2index(Page *p);
-
-/* spawn.c */
-void spawn(char *cmd);
-
-/* column.c */
-void arrange_page(Page *p, Bool update_colums);
-void arrange_column(Area *col);
-void resize_column(Client *c, XRectangle *r, XPoint *pt);
-Area *new_column(Area *old);
-ColumnMode str2colmode(char *arg);
-char *colmode2str(ColumnMode mode);
 
 /* wm.c */
 void scan_wins();
