@@ -18,6 +18,7 @@ alloc_area(Page *p)
 	update_area_geometry(a);
 	p->area = (Area **)cext_array_attach((void **)p->area, a, sizeof(Area *), &p->areasz);
 	p->sel = p->narea;
+	fprintf(stderr, "alloc_area: p->sel == %d\n", p->sel);
 	p->narea++;
     return a;
 }
@@ -37,12 +38,13 @@ destroy_area(Area *a)
 		free(a->client);
 	cext_array_detach((void **)p->area, a, &p->areasz);
 	p->narea--;
-	if(p->sel >= p->narea) {
+	if(p->sel == p->narea) {
 		if(p->narea)
 			p->sel = p->narea - 1;
 		else 
 			p->sel = 0;
 	}
+	fprintf(stderr, "destroy_area: p->sel == %d\n", p->sel);
 	free(a);
 }
 
@@ -96,6 +98,7 @@ select_area(Area *a, char *arg)
 	if(new->nclient)
 		focus_client(new->client[new->sel]);
 	p->sel = i;
+	fprintf(stderr, "select_area: p->sel == %d\n", p->sel);
 }
 
 void
@@ -110,7 +113,7 @@ void
 attach_toarea(Area *a, Client *c)
 {
 	Page *p = a->page;
-	if(area2index(a) && a->capacity && (a->capacity == a->nclient)) {
+	if(0 && area2index(a) && a->capacity && (a->capacity == a->nclient)) {
 		Area *to = nil;
 		int i;
 		for(i = p->sel; i < p->narea; i++) {
@@ -161,7 +164,7 @@ detach_fromarea(Client *c)
 			}
 		}
 	}
-	if(!a->nclient && (p->narea > 2)) {
+	if(!a->nclient) {
 		destroy_area(a);
 		arrange_page(p, True);
 	}
