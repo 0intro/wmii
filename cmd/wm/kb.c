@@ -121,6 +121,9 @@ create_key(char *name)
 	r->id = id++;
 	key = (Key **)cext_array_attach((void **)key, r, sizeof(Key *), &keysz);
 	nkey++;
+
+
+	
 	return r;
 }
 
@@ -135,7 +138,7 @@ destroy_key(Key *k)
 }
 
 static void
-next_keystroke(unsigned long *mod, KeyCode *key)
+next_keystroke(unsigned long *mod, KeyCode *keyCode)
 {
     XEvent e;
     KeySym sym;
@@ -143,7 +146,7 @@ next_keystroke(unsigned long *mod, KeyCode *key)
     do {
         XMaskEvent(dpy, KeyPressMask, &e);
         *mod |= e.xkey.state & valid_mask;
-        *key = (KeyCode) e.xkey.keycode;
+        *keyCode = (KeyCode) e.xkey.keycode;
         sym = XKeycodeToKeysym(dpy, e.xkey.keycode, 0);
     } while(IsModifierKey(sym));
 }
