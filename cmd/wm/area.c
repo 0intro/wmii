@@ -37,8 +37,12 @@ destroy_area(Area *a)
 		free(a->client);
 	cext_array_detach((void **)p->area, a, &p->areasz);
 	p->narea--;
-	if(p->sel >= p->narea)
-		p->sel = p->narea - 1;
+	if(p->sel >= p->narea) {
+		if(p->narea)
+			p->sel = p->narea - 1;
+		else 
+			p->sel = 0;
+	}
 	free(a);
 }
 
@@ -95,15 +99,15 @@ select_area(Area *a, char *arg)
 }
 
 void
-sendto_area(Area *to, Client *c)
+send_toarea(Area *to, Client *c)
 {
-	detach_client_area(c, True);
-	attach_client2area(to, c);
+	detach_fromarea(c);
+	attach_toarea(to, c);
 	focus_client(c);
 }
 
 void
-attach_client2area(Area *a, Client *c)
+attach_toarea(Area *a, Client *c)
 {
 	Page *p = a->page;
 	if(area2index(a) && a->capacity && (a->capacity == a->nclient)) {
@@ -117,11 +121,11 @@ attach_client2area(Area *a, Client *c)
 		}
 		if(!to) {
 			to = alloc_area(p);
-			sendto_area(to, a->client[a->sel]);
+			send_toarea(to, a->client[a->sel]);
 			arrange_page(p, True);
 		}
 		else
-			sendto_area(to, a->client[a->sel]);
+			send_toarea(to, a->client[a->sel]);
 	}
 
 	a->client = (Client **)cext_array_attach(
@@ -135,38 +139,34 @@ attach_client2area(Area *a, Client *c)
 }
 
 void
-detach_client_area(Client *c, Bool ignfetch)
+detach_fromarea(Client *c)
 {
 	Area *a = c->area;
 	Page *p = a->page;
 	int i = area2index(a);
+
 	cext_array_detach((void **)a->client, c, &a->clientsz);
 	a->nclient--;
 	if(a->sel >= a->nclient)
 		a->sel = 0;
-	if(i && !ignfetch) { /* area */
-		if(a->capacity && (a->nclient < a->capacity)) {
+
+	if(0 && i > 0) {
+		if(a->nclient < a->capacity) {
 			for(++i; i < p->narea; i++) {
 				Area *tmp = p->area[i];
-				if(!tmp->capacity)
-					sendto_area(a, tmp->client[0]);
-				else
-					continue;
 				if(!tmp->nclient)
-					destroy_area(tmp);
-				arrange_page(p, True);
-				break;
-			}
-		}
-		if(!a->nclient) {
-			if(p->narea > 2) {
-				destroy_area(a);
+					continue;
+				send_toarea(a, tmp->client[0]);
 				arrange_page(p, True);
 			}
 		}
-		else
-			arrange_area(a);
 	}
+	if(!a->nclient && (p->narea > 2)) {
+		destroy_area(a);
+		arrange_page(p, True);
+	}
+	else
+		arrange_area(a);
 }
 
 void
@@ -174,7 +174,7 @@ match_capacity(Area *a)
 {
 	while(a->nclient > a->capacity) {
 		Client *c = a->client[a->nclient - 1];
-		detach_client_area(c, True);
+		detach_fromarea(c);
 		attach_client(c);
 	}
 }
@@ -303,7 +303,7 @@ arrange_area(Area *a)
 }
 
 void
-arrange_page(Page *p, Bool update_areas)
+arrange_page(Page *p, Bool updategeometry)
 {
 	unsigned int i;
 	unsigned int width;
@@ -314,7 +314,7 @@ arrange_page(Page *p, Bool update_areas)
 	width = rect.width / (p->narea - 1);
 	for(i = 1; i < p->narea; i++) {
 		Area *a = p->area[i];
-		if(update_areas) {
+		if(updategeometry) {
 			update_area_geometry(a);
 			a->rect.x = (i - 1) * width;
 			a->rect.width = width;
@@ -405,12 +405,12 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 			!blitz_ispointinrect(pt->x, pt->y, &p->area[i]->rect); i++);
 	if((tgt = ((i < p->narea) ? p->area[i] : nil))) {
         if(tgt != src) {
-			sendto_area(tgt, c);
+			send_toarea(tgt, c);
 			arrange_area(tgt);
 		}
         else {
-			for(i = 0; (i < src->nclient) &&
-				 !blitz_ispointinrect(pt->x, pt->y, &src->client[i]->frame.rect); i++);
+			for(i = 0; (i < src->nclient) && !blitz_ispointinrect(
+						pt->x, pt->y, &src->client[i]->frame.rect); i++);
 			if((i < src->nclient) && (c != src->client[i])) {
 				unsigned int j = client2index(c);
 				Client *tmp = src->client[j];

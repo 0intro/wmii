@@ -347,12 +347,12 @@ gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 }
 
 void
-attach_client2page(Page *p, Client *c)
+attach_topage(Page *p, Client *c)
 {
 	Area *a = p->area[p->sel];
 
     reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
-	attach_client2area(a, c);
+	attach_toarea(a, c);
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
 }
@@ -366,7 +366,7 @@ attach_client(Client *c)
 	else
 		p = page[sel];
 
-	attach_client2page(p, c);
+	attach_topage(p, c);
 	focus_client(c);
 }
 
@@ -388,7 +388,7 @@ detach_client(Client *c, Bool unmap)
 			reparent_client(c, root, c->rect.x, c->rect.y);
 			XUnmapWindow(dpy, c->frame.win);
 		}
-		detach_client_area(c, False);
+		detach_fromarea(c);
 	}
 	c->area = nil;
 	if(c->revert)
@@ -543,7 +543,8 @@ select_client(Client *c, char *arg)
 }
 
 void
-sendtopage_client(Client *c, char *arg) {
+sendtopage_client(Client *c, char *arg)
+{
 	Page *p;
 	Client *to;
 
@@ -559,7 +560,7 @@ sendtopage_client(Client *c, char *arg) {
 		p = page[i];
 	}
 	detach_client(c, False);
-	attach_client2page(p, c);
+	attach_topage(p, c);
 	if(p == page[sel])
 		focus_client(c);
 	else if((to = sel_client_of_page(page[sel])))
@@ -567,7 +568,8 @@ sendtopage_client(Client *c, char *arg) {
 }
 
 void
-sendtoarea_client(Client *c, char *arg) {
+sendtoarea_client(Client *c, char *arg)
+{
 	const char *errstr;
 	Area *to, *a = c->area;
 	Page *p = a->page;
@@ -593,7 +595,7 @@ sendtoarea_client(Client *c, char *arg) {
 			return;
 		to = p->area[i];
 	}
-	sendto_area(to, c);
+	send_toarea(to, c);
 	if(!a->nclient) {
 		destroy_area(a);
 		arrange_page(p, True);
