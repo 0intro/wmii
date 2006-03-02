@@ -232,8 +232,10 @@ drop_moving(Client *c, XRectangle *new, XPoint * pt)
 	for(i = 1; (i < p->narea) &&
 			!blitz_ispointinrect(pt->x, pt->y, &p->area[i]->rect); i++);
 	if((tgt = ((i < p->narea) ? p->area[i] : nil))) {
-        if(tgt != src)
+        if(tgt != src) {
 			sendto_area(tgt, c);
+			arrange_column(tgt);
+		}
         else {
 			for(i = 0; (i < src->nclient) &&
 				 !blitz_ispointinrect(pt->x, pt->y, &src->client[i]->frame.rect); i++);

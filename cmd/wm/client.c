@@ -352,14 +352,7 @@ attach_client2page(Page *p, Client *c)
 	Area *a = p->area[p->sel];
 
     reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
-	a->client = (Client **)cext_array_attach((void **)a->client, c,
-			sizeof(Client *), &a->clientsz);
-	a->nclient++;
-	c->area = a;
-	if(p->sel > 0) /* column mode */
-		arrange_column(a);
-	else /* normal mode */
-		resize_client(c, &c->frame.rect, nil, False);
+	attach_client2area(a, c);
     map_client(c);
 	XMapWindow(dpy, c->frame.win);
 }
@@ -566,7 +559,7 @@ select_client(Client *c, char *arg)
 void
 sendtopage_client(Client *c, char *arg) {
 	Page *p;
-	Client *next;
+	Client *to;
 
 	if(!strncmp(arg, "new", 4))
 		p = alloc_page();
@@ -583,14 +576,14 @@ sendtopage_client(Client *c, char *arg) {
 	attach_client2page(p, c);
 	if(p == page[sel])
 		focus_client(c);
-	else if((next = sel_client_of_page(page[sel])))
-		focus_client(next);
+	else if((to = sel_client_of_page(page[sel])))
+		focus_client(to);
 }
 
 void
 sendtoarea_client(Client *c, char *arg) {
 	const char *errstr;
-	Area *next, *a = c->area;
+	Area *to, *a = c->area;
 	Page *p = a->page;
 	int i = area2index(a);
 
@@ -598,23 +591,24 @@ sendtoarea_client(Client *c, char *arg) {
 		return;
 	if(!strncmp(arg, "prev", 5)) {
 		if(i == 1)
-			next = p->area[p->narea - 1];
+			to = p->area[p->narea - 1];
 		else
-			next = p->area[i - 1];
+			to = p->area[i - 1];
 	}
 	else if(!strncmp(arg, "next", 5)) {
 		if(i < p->narea - 1)
-			next = p->area[i + 1];
+			to = p->area[i + 1];
 		else
-			next = p->area[1];
+			to = p->area[1];
 	}
 	else {
 		i = cext_strtonum(arg, 0, p->narea - 1, &errstr);
 		if(errstr)
 			return;
-		next = p->area[i];
+		to = p->area[i];
 	}
-	sendto_area(next, c);
+	sendto_area(to, c);
+	arrange_column(to);
 }
 
 void

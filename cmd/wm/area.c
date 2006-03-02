@@ -95,7 +95,7 @@ select_area(Area *a, char *arg)
 }
 
 void
-sendto_area(Area *new, Client *c)
+sendto_area(Area *to, Client *c)
 {
 	Area *a = c->area;
 
@@ -104,12 +104,39 @@ sendto_area(Area *new, Client *c)
 	if(a->sel >= a->nclient)
 		a->sel = 0;
 
-	new->client = (Client **)cext_array_attach(
-			(void **)new->client, c, sizeof(Client *), &new->clientsz);
-	new->nclient++;
-
-	c->area = new;
-	arrange_column(a);
-	arrange_column(new);
+	attach_client2area(to, c);
 	focus_client(c);
 }
+
+void
+attach_client2area(Area *a, Client *c)
+{
+	Page *p = a->page;
+	if(area2index(a) && a->maxclient && (a->maxclient == a->nclient)) {
+		Area *to = nil;
+		int i;
+		for(i = p->sel; i < p->narea; i++) {
+			to = p->area[i];
+			if(!to->maxclient || (to->maxclient > to->nclient))
+				break;
+			to = nil;
+		}
+		if(!to) {
+			to = alloc_area(p);
+			sendto_area(to, a->client[a->sel]);
+			arrange_page(p, True);
+		}
+		else
+			sendto_area(to, a->client[a->sel]);
+	}
+
+	a->client = (Client **)cext_array_attach(
+			(void **)a->client, c, sizeof(Client *), &a->clientsz);
+	a->nclient++;
+	c->area = a;
+	if(p->sel > 0) /* column mode */
+		arrange_column(a);
+	else /* normal mode */
+		resize_client(c, &c->frame.rect, nil, False);
+}
+

@@ -18,7 +18,7 @@ alloc_page()
 
 	p->id = id++;
 	alloc_area(p);
-	alloc_area(p);
+	alloc_area(p)->maxclient = 1; /* default column is master */
 	page = (Page **)cext_array_attach((void **)page, p, sizeof(Page *), &pagesz);
 	npage++;
 	focus_page(p);
