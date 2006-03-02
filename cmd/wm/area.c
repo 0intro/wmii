@@ -97,7 +97,7 @@ select_area(Area *a, char *arg)
 void
 sendto_area(Area *to, Client *c)
 {
-	detach_client_area(c);
+	detach_client_area(c, True);
 	attach_client2area(to, c);
 	focus_client(c);
 }
@@ -135,7 +135,7 @@ attach_client2area(Area *a, Client *c)
 }
 
 void
-detach_client_area(Client *c)
+detach_client_area(Client *c, Bool ignfetch)
 {
 	Area *a = c->area;
 	Page *p = a->page;
@@ -144,7 +144,7 @@ detach_client_area(Client *c)
 	a->nclient--;
 	if(a->sel >= a->nclient)
 		a->sel = 0;
-	if(i) { /* area */
+	if(i && !ignfetch) { /* area */
 		if(a->capacity && (a->nclient < a->capacity)) {
 			for(++i; i < p->narea; i++) {
 				Area *tmp = p->area[i];
@@ -174,7 +174,7 @@ match_capacity(Area *a)
 {
 	while(a->nclient > a->capacity) {
 		Client *c = a->client[a->nclient - 1];
-		detach_client_area(c);
+		detach_client_area(c, True);
 		attach_client(c);
 	}
 }

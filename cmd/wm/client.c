@@ -388,7 +388,7 @@ detach_client(Client *c, Bool unmap)
 			reparent_client(c, root, c->rect.x, c->rect.y);
 			XUnmapWindow(dpy, c->frame.win);
 		}
-		detach_client_area(c);
+		detach_client_area(c, False);
 	}
 	c->area = nil;
 	if(c->revert)
