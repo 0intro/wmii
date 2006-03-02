@@ -42,7 +42,7 @@ enum {
 	Fevent,
 	Fctl,
 	Fname,
-	Fmax,
+	Fcapacity,
 	Fmode
 };
 
@@ -69,7 +69,7 @@ struct Area {
 	unsigned int clientsz;
 	unsigned int sel;
 	unsigned int nclient;
-	unsigned int maxclient;
+	unsigned int capacity;
 	ColumnMode mode;
 	XRectangle rect;
 };

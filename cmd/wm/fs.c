@@ -194,7 +194,7 @@ qid2name(Qid *qid)
 		case Fsnap: return "border"; break;
 		case Fgeom: return "geometry"; break;
 		case Fname: return "name"; break;
-		case Fmax: return "max"; break;
+		case Fcapacity: return "capacity"; break;
 		case Fmode: return "mode"; break;
 		case Fevent: return "event"; break;
 		case Fkey: return key[i1]->name; break; 
@@ -245,8 +245,8 @@ name2type(char *name, unsigned char dir_type)
 		return Ffont;
 	if(!strncmp(name, "data", 5))
 		return Fdata;
-	if(!strncmp(name, "max", 4))
-		return Fmax;
+	if(!strncmp(name, "capacity", 9))
+		return Fcapacity;
 	if(!strncmp(name, "mode", 5))
 		return Fmode;
 	if(name2key(name))
@@ -576,8 +576,8 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     case Fdata:
 		return mkstat(stat, dir, wname, (dir_i1 == nlabel) ? 0 : strlen(label[dir_i1]->data), DMREAD | DMWRITE);
 		break;	
-    case Fmax:
-		snprintf(buf, sizeof(buf), "%d", page[dir_i1]->area[dir_i2]->maxclient);
+    case Fcapacity:
+		snprintf(buf, sizeof(buf), "%d", page[dir_i1]->area[dir_i2]->capacity);
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 		break;	
     case Fmode:
@@ -766,7 +766,7 @@ xread(IXPConn *c, Fcall *fcall)
 			/* jump to offset */
 			len = type2stat(&stat, "ctl", &m->qid);
 			if(i2) {
-				len += type2stat(&stat, "max", &m->qid);
+				len += type2stat(&stat, "capacity", &m->qid);
 				len += type2stat(&stat, "mode", &m->qid);
 			}
 			for(i = 0; i < page[i1]->area[i2]->nclient; i++) {
@@ -892,7 +892,7 @@ xread(IXPConn *c, Fcall *fcall)
 			fcall->count = type2stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			if(i2) {
-				fcall->count += type2stat(&stat, "max", &m->qid);
+				fcall->count += type2stat(&stat, "capacity", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 				fcall->count += type2stat(&stat, "mode", &m->qid);
 				p = ixp_enc_stat(p, &stat);
@@ -977,10 +977,10 @@ xread(IXPConn *c, Fcall *fcall)
 			if((fcall->count = strlen(def.font)))
 				memcpy(p, def.font, fcall->count);
 			break;
-		case Fmax:
+		case Fcapacity:
 			if(!i2)
 				return Enofile;
-			snprintf(buf, sizeof(buf), "%d", page[i1]->area[i2]->maxclient);
+			snprintf(buf, sizeof(buf), "%d", page[i1]->area[i2]->capacity);
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;	
@@ -1182,7 +1182,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		update_bar_geometry();
 		resize_all_clients();
 		break;
-	case Fmax:
+	case Fcapacity:
 		if(!i2)
 			return Enofile;
 		memcpy(buf, fcall->data, fcall->count);
@@ -1190,7 +1190,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		i = cext_strtonum(buf, 1, 0xffff, &err);
 		if(err)
 			return "max value out of range 0x0001..0xffff";
-		page[i1]->area[i2]->maxclient = i;
+		page[i1]->area[i2]->capacity = i;
 		/* TODO: detach to many clients/attach */
 		break;	
 	case Fmode:

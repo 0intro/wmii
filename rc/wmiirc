@@ -28,11 +28,11 @@ WMII_SELCOLORS='#ffffff #285577 #4c7899' export WMII_SELCOLORS
 
 # WM CONFIGURATION
 xwrite /def/border 3
-xwrite /def/inc 1
 xwrite /def/snap 20
 xwrite /def/font $WMII_FONT
 xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
+xwrite /1/1/capacity 1
 
 # BAR CONFIGURATION
 while wmiir remove /bar/0 2>/dev/null
@@ -144,7 +144,7 @@ do
 		$MODKEY-Shift-Return)
 			xwrite /sel/sel/sel/ctl sendtoarea next;;
 		$MODKEY-Control-y)
-			wmiir read /new >/dev/null;;
+			xwrite /new/1/capacity 1;;
 		$MODKEY-h)
 			xwrite /sel/ctl select prev;;
 		$MODKEY-l)

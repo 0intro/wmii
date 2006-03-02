@@ -112,12 +112,12 @@ void
 attach_client2area(Area *a, Client *c)
 {
 	Page *p = a->page;
-	if(area2index(a) && a->maxclient && (a->maxclient == a->nclient)) {
+	if(area2index(a) && a->capacity && (a->capacity == a->nclient)) {
 		Area *to = nil;
 		int i;
 		for(i = p->sel; i < p->narea; i++) {
 			to = p->area[i];
-			if(!to->maxclient || (to->maxclient > to->nclient))
+			if(!to->capacity || (to->capacity > to->nclient))
 				break;
 			to = nil;
 		}
@@ -151,10 +151,10 @@ detach_client_area(Client *c)
 	if(a->sel >= a->nclient)
 		a->sel = 0;
 	if(i) { /* column */
-		if(a->maxclient && (a->nclient < a->maxclient)) {
+		if(a->capacity && (a->nclient < a->capacity)) {
 			for(++i; i < p->narea; i++) {
 				Area *tmp = p->area[i];
-				if(!tmp->maxclient)
+				if(!tmp->capacity)
 					sendto_area(a, tmp->client[0]);
 				else
 					continue;
