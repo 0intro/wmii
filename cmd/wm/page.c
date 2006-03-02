@@ -155,7 +155,7 @@ select_page(char *arg)
     if(!npage)
         return;
     if(!strncmp(arg, "prev", 5)) {
-		if(new == 1)
+		if(new <= 1)
 			new = npage;
 		new--;
     } else if(!strncmp(arg, "next", 5)) {
