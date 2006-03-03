@@ -68,7 +68,7 @@ handle_buttonpress(XEvent *e)
 		unsigned int i;
 		for(i = 0; i < nlabel; i++)
 			if(blitz_ispointinrect(ev->x, ev->y, &label[i]->rect)) {
-				snprintf(buf, sizeof(buf), "LB %d %d\n", i + 1, ev->button);
+				snprintf(buf, sizeof(buf), "LB %d %d\n", i, ev->button);
 				write_event(buf);
 			}
 	}
