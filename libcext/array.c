@@ -18,11 +18,12 @@ cext_array_attach(void **array, void *p, unsigned int psize, unsigned int *size)
 	for(i = 0; (i < (*size)) && array[i]; i++);
 	if(i >= (*size)) {
 		void **tmp = array;
-		(*size) *= 2;
-		array = cext_emallocz(psize * (*size));
-		for(i = 0; tmp[i]; i++)
+		unsigned int newsz = (*size) * 2;
+		array = cext_emallocz(psize * newsz);
+		for(i = 0; i < (*size); i++)
 			array[i] = tmp[i];
 		free(tmp);
+		*size = newsz;
 	}
 	array[i] = p;
 	return array;
@@ -37,7 +38,7 @@ cext_array_detach(void **array, void *p, unsigned int *size)
 	for(i = 0; (i < (*size)) && array[i] && array[i] != p; i++);
 	if((i >= (*size)) || !array[i])
 		return; /* not found */
-	for(; array[i + 1]; i++)
+	for(; (i + 1 < (*size)) && array[i + 1]; i++)
 		array[i] = array[i + 1];
 	array[i] = nil;
 }
