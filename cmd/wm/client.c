@@ -44,17 +44,17 @@ alloc_client(Window w, XWindowAttributes *wa)
 	fwa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
 
     bh = bar_height();
-	c->frame.rect = c->rect;
-    c->frame.rect.width += 2 * bw;
-    c->frame.rect.height += bw + (bh ? bh : bw);
-    c->frame.win = XCreateWindow(dpy, root, c->frame.rect.x, c->frame.rect.y,
-						   c->frame.rect.width, c->frame.rect.height, 0,
+	c->frect = c->rect;
+    c->frect.width += 2 * bw;
+    c->frect.height += bw + (bh ? bh : bw);
+    c->framewin = XCreateWindow(dpy, root, c->frect.x, c->frect.y,
+						   c->frect.width, c->frect.height, 0,
 						   DefaultDepth(dpy, screen), CopyFromParent,
 						   DefaultVisual(dpy, screen),
 						   CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
-	c->frame.cursor = normal_cursor;
-    XDefineCursor(dpy, c->frame.win, c->frame.cursor);
-    c->frame.gc = XCreateGC(dpy, c->frame.win, 0, 0);
+	c->cursor = normal_cursor;
+    XDefineCursor(dpy, c->framewin, c->cursor);
+    c->gc = XCreateGC(dpy, c->framewin, 0, 0);
     XSync(dpy, False);
 
 	client = (Client **)cext_array_attach((void **)client, c, sizeof(Client *), &clientsz);
@@ -86,8 +86,8 @@ static void
 client_focus_event(Client *c)
 {
 	char buf[256];
-	snprintf(buf, sizeof(buf), "CF %d %d %d %d\n", c->frame.rect.x, c->frame.rect.y,
-			 c->frame.rect.width, c->frame.rect.height);
+	snprintf(buf, sizeof(buf), "CF %d %d %d %d\n", c->frect.x, c->frect.y,
+			 c->frect.width, c->frect.height);
 	write_event(buf);
 }
 
@@ -106,7 +106,7 @@ focus_client(Client *c)
 	ungrab_mouse(c->win, AnyModifier, AnyButton);
     grab_mouse(c->win, Mod1Mask, Button1);
     grab_mouse(c->win, Mod1Mask, Button3);
-    XRaiseWindow(dpy, c->frame.win);
+    XRaiseWindow(dpy, c->framewin);
     XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
     draw_client(c);
 	XSync(dpy, False);
@@ -153,8 +153,8 @@ configure_client(Client * c)
     e.x = c->rect.x;
     e.y = c->rect.y;
 	if(c->area) {
-    	e.x += c->frame.rect.x;
-    	e.y += c->frame.rect.y;
+    	e.x += c->frect.x;
+    	e.y += c->frect.y;
 	}
     e.width = c->rect.width;
     e.height = c->rect.height;
@@ -229,8 +229,8 @@ handle_client_property(Client *c, XPropertyEvent *e)
 void
 destroy_client(Client * c)
 {
-    XFreeGC(dpy, c->frame.gc);
-    XDestroyWindow(dpy, c->frame.win);
+    XFreeGC(dpy, c->gc);
+    XDestroyWindow(dpy, c->framewin);
 	cext_array_detach((void **)client, c, &clientsz);
 	nclient--;
     free(c);
@@ -246,9 +246,9 @@ draw_client(Client *c)
     XRectangle notch;
 
 	d.align = WEST;
-	d.drawable = c->frame.win;
+	d.drawable = c->framewin;
 	d.font = xfont;
-	d.gc = c->frame.gc;
+	d.gc = c->gc;
 
 	if(c == sel_client())
 		d.color = def.sel;
@@ -259,9 +259,9 @@ draw_client(Client *c)
     if(bw) {
         notch.x = bw;
         notch.y = bw;
-        notch.width = c->frame.rect.width - 2 * bw;
-        notch.height = c->frame.rect.height - 2 * bw;
-        d.rect = c->frame.rect;
+        notch.width = c->frect.width - 2 * bw;
+        notch.height = c->frect.height - 2 * bw;
+        d.rect = c->frect;
         d.rect.x = d.rect.y = 0;
         d.notch = &notch;
 
@@ -275,7 +275,7 @@ draw_client(Client *c)
 
     d.rect.x = 0;
     d.rect.y = 0;
-    d.rect.width = c->frame.rect.width;
+    d.rect.width = c->frect.width;
     d.rect.height = bh;
 	d.notch = nil;
     d.data = c->name;
@@ -349,10 +349,10 @@ attach_totag(Tag *t, Client *c)
 {
 	Area *a = t->area[t->sel];
 
-    reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
+    reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	attach_toarea(a, c);
     map_client(c);
-	XMapWindow(dpy, c->frame.win);
+	XMapWindow(dpy, c->framewin);
 }
 
 void
@@ -376,10 +376,10 @@ detach_client(Client *c, Bool unmap)
 		if(!c->destroyed) {
 			if(!unmap)
 				unmap_client(c);
-			c->rect.x = c->frame.rect.x;
-			c->rect.y = c->frame.rect.y;
+			c->rect.x = c->frect.x;
+			c->rect.y = c->frect.y;
 			reparent_client(c, root, c->rect.x, c->rect.y);
-			XUnmapWindow(dpy, c->frame.win);
+			XUnmapWindow(dpy, c->framewin);
 		}
 		detach_fromarea(c);
 	}
@@ -409,7 +409,7 @@ win2clientframe(Window w)
 {
 	unsigned int i;
 	for(i = 0; (i < clientsz) && client[i]; i++)
-		if(client[i]->frame.win == w)
+		if(client[i]->framewin == w)
 			return client[i];
 	return nil;
 }
@@ -444,13 +444,13 @@ match_sizehints(Client *c, unsigned int tabh, unsigned int bw)
             h = c->size.min_height;
         }
         /* client_width = base_width + i * c->size.width_inc for an integer i */
-        w = c->frame.rect.width - 2 * bw - w;
+        w = c->frect.width - 2 * bw - w;
         if(s->width_inc > 0)
-            c->frame.rect.width -= w % s->width_inc;
+            c->frect.width -= w % s->width_inc;
 
-        h = c->frame.rect.height - bw - (tabh ? tabh : bw) - h;
+        h = c->frect.height - bw - (tabh ? tabh : bw) - h;
         if(s->height_inc > 0)
-            c->frame.rect.height -= h % s->height_inc;
+            c->frect.height -= h % s->height_inc;
     }
 }
 
@@ -466,20 +466,20 @@ resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 	if(area2index(c->area) > 0)
 		resize_area(c, r, pt);
 	else
-		c->frame.rect = *r;
+		c->frect = *r;
 
 	if((c->area->mode != Colstack) || (c->area->sel == client2index(c)))
 		match_sizehints(c, bh, bw);
 
 	if(!ignore_xcall)
-		XMoveResizeWindow(dpy, c->frame.win, px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y,
-				c->frame.rect.width, c->frame.rect.height);
+		XMoveResizeWindow(dpy, c->framewin, px - (pi * rect.width) + c->frect.x, c->frect.y,
+				c->frect.width, c->frect.height);
 
 	if((c->area->mode != Colstack) || (c->area->sel == client2index(c))) {
 		c->rect.x = bw;
 		c->rect.y = bh ? bh : bw;
-		c->rect.width = c->frame.rect.width - 2 * bw;
-		c->rect.height = c->frame.rect.height - bw - (bh ? bh : bw);
+		c->rect.width = c->frect.width - 2 * bw;
+		c->rect.height = c->frect.height - bw - (bh ? bh : bw);
 		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		configure_client(c);
 	}
@@ -601,7 +601,7 @@ resize_all_clients()
 	unsigned int i;
 	for(i = 0; i < nclient; i++)
 		if(client[i]->area)
-			resize_client(client[i], &client[i]->frame.rect, 0, False);
+			resize_client(client[i], &client[i]->frect, 0, False);
 }
 
 /* convenience function */

@@ -100,12 +100,10 @@ struct Client {
     Window trans;
     XRectangle rect;
     XSizeHints size;
-	struct Frame {
-		Window win;
-    	XRectangle rect;
-    	GC gc;
-    	Cursor cursor;
-	} frame;
+	Window framewin;
+    XRectangle frect;
+    GC gc;
+    Cursor cursor;
 };
 
 typedef struct Key Key;

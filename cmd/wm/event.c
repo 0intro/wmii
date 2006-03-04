@@ -78,7 +78,7 @@ handle_buttonpress(XEvent *e)
 				focus(c);
 				return;
 			}
-			align = cursor2align(c->frame.cursor);
+			align = cursor2align(c->cursor);
 			if(align == CENTER)
 				mouse_move(c);
 			else 
@@ -93,7 +93,7 @@ handle_buttonpress(XEvent *e)
 	else if((c = win2client(ev->window))) {
 		ev->state &= valid_mask;
 		if(ev->state & Mod1Mask) {
-			XRaiseWindow(dpy, c->frame.win);
+			XRaiseWindow(dpy, c->framewin);
 			switch (ev->button) {
 				case Button1:
 					focus(c);
@@ -153,14 +153,14 @@ handle_configurerequest(XEvent *e)
         gravitate(c, bh ? bh : bw, bw, 0);
 
         if(c->area) {
-            c->frame.rect.x = wc.x = c->rect.x - bw;
-            c->frame.rect.y = wc.y = c->rect.y - (bh ? bh : bw);
-            c->frame.rect.width = wc.width = c->rect.width + 2 * bw;
-            c->frame.rect.height = wc.height = c->rect.height + bw + (bh ? bh : bw);
+            c->frect.x = wc.x = c->rect.x - bw;
+            c->frect.y = wc.y = c->rect.y - (bh ? bh : bw);
+            c->frect.width = wc.width = c->rect.width + 2 * bw;
+            c->frect.height = wc.height = c->rect.height + bw + (bh ? bh : bw);
             wc.border_width = 1;
 			wc.sibling = None;
 			wc.stack_mode = ev->detail;
-            XConfigureWindow(dpy, c->frame.win, ev->value_mask, &wc);
+            XConfigureWindow(dpy, c->framewin, ev->value_mask, &wc);
             configure_client(c);
         }
     }
@@ -256,9 +256,9 @@ handle_motionnotify(XEvent *e)
     Client *c = win2clientframe(e->xmotion.window);
     if(c) {
     	Cursor cursor = cursor_for_motion(c, e->xmotion.x, e->xmotion.y);
-        if(cursor != c->frame.cursor) {
-            c->frame.cursor = cursor;
-            XDefineCursor(dpy, c->frame.win, cursor);
+        if(cursor != c->cursor) {
+            c->cursor = cursor;
+            XDefineCursor(dpy, c->framewin, cursor);
         }
     }
 }

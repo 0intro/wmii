@@ -539,8 +539,8 @@ type2stat(Stat *stat, char *wname, Qid *dir)
         break;
     case Fgeom:
 		c = tag[dir_i1]->area[dir_i2]->client[dir_i3];
-		snprintf(buf, sizeof(buf), "%d %d %d %d", c->frame.rect.x, c->frame.rect.y,
-				c->frame.rect.width, c->frame.rect.height);
+		snprintf(buf, sizeof(buf), "%d %d %d %d", c->frect.x, c->frect.y,
+				c->frect.width, c->frect.height);
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
         break;
     case Fsnap:
@@ -905,8 +905,8 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case Fgeom:
 			client = tag[i1]->area[i2]->client[i3];
-			snprintf(buf, sizeof(buf), "%d %d %d %d", client->frame.rect.x, client->frame.rect.y,
-					client->frame.rect.width, client->frame.rect.height);
+			snprintf(buf, sizeof(buf), "%d %d %d %d", client->frect.x, client->frect.y,
+					client->frect.width, client->frect.height);
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -1067,8 +1067,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return "geometry values out of range";
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		blitz_strtorect(&rect, &cl->frame.rect, buf);
-		resize_client(cl, &cl->frame.rect, 0, False);
+		blitz_strtorect(&rect, &cl->frect, buf);
+		resize_client(cl, &cl->frect, 0, False);
 		break;
     case Fexpand:
 		{

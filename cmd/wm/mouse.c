@@ -23,14 +23,14 @@ cursor_for_motion(Client *c, int x, int y)
 
     /* rectangle attributes of client are used */
     w = x < bw;
-    e = x >= c->frame.rect.width - bw;
+    e = x >= c->frect.width - bw;
     n = y < bw;
-    s = y >= c->frame.rect.height - bw;
+    s = y >= c->frect.height - bw;
 
     tw = x < (bh ? bh : 2 * bw);
-    te = x > c->frame.rect.width - (bh ? bh : 2 * bw);
+    te = x > c->frect.width - (bh ? bh : 2 * bw);
     tn = y < (bh ? bh : 2 * bw);
-    ts = s > c->frame.rect.height - (bh ? bh : 2 * bw);
+    ts = s > c->frect.height - (bh ? bh : 2 * bw);
 
     if((w && n) || (w && tn) || (n && tw))
         return nw_cursor;
@@ -309,11 +309,11 @@ mouse_move(Client *c)
     unsigned int num;
     unsigned int dmask;
     XRectangle *rects = rectangles(&num);
-    XRectangle frect = c->frame.rect;
+    XRectangle frect = c->frect;
     XPoint pt;
 
-    XQueryPointer(dpy, c->frame.win, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
-    XTranslateCoordinates(dpy, c->frame.win, root, wex, wey, &ex, &ey, &dummy);
+    XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
+    XTranslateCoordinates(dpy, c->framewin, root, wex, wey, &ex, &ey, &dummy);
     pt.x = ex;
     pt.y = ey;
     XSync(dpy, False);
@@ -346,7 +346,7 @@ mouse_move(Client *c)
         case MotionNotify:
             pt.x = ev.xmotion.x;
             pt.y = ev.xmotion.y;
-            XTranslateCoordinates(dpy, c->frame.win, root, ev.xmotion.x,
+            XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
                                   ev.xmotion.y, &px, &py, &dummy);
             if(first)
                 first = 0;
@@ -554,14 +554,14 @@ mouse_resize(Client *c, Align align)
     unsigned int dmask;
     unsigned int num;
     XRectangle *rects = rectangles(&num);
-    XRectangle frect = c->frame.rect;
+    XRectangle frect = c->frect;
     XRectangle origin = frect;
 
-    XQueryPointer(dpy, c->frame.win, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
+    XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
     XSync(dpy, False);
     XGrabServer(dpy);
     while(XGrabPointer
-          (dpy, c->frame.win, False, ButtonMotionMask | ButtonReleaseMask,
+          (dpy, c->framewin, False, ButtonMotionMask | ButtonReleaseMask,
            GrabModeAsync, GrabModeAsync, None, resize_cursor,
            CurrentTime) != GrabSuccess)
         usleep(20000);
@@ -588,7 +588,7 @@ mouse_resize(Client *c, Align align)
             return;
             break;
         case MotionNotify:
-            XTranslateCoordinates(dpy, c->frame.win, root, ev.xmotion.x,
+            XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
                                   ev.xmotion.y, &px, &py, &dummy);
 
             if(first)
