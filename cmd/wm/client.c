@@ -70,8 +70,8 @@ set_client_state(Client * c, int state)
 
     data[0] = (long) state;
     data[1] = (long) None;
-    XChangeProperty(dpy, c->win, wm_state, wm_state, 32, PropModeReplace,
-                    (unsigned char *) data, 2);
+    XChangeProperty(dpy, c->win, wm_atom[WMState], wm_atom[WMState], 32,
+					PropModeReplace, (unsigned char *) data, 2);
 }
 
 static void
@@ -114,7 +114,7 @@ focus_client(Client *c)
 	XSync(dpy, False);
 	client_name_event(c);
 	client_focus_event(c);
-	if(i > 0 && c->area->mode == COL_STACK)
+	if(i > 0 && c->area->mode == Colstack)
 		arrange_area(c->area);
 }
 
@@ -188,7 +188,7 @@ void
 kill_client(Client * c)
 {
     if(c->proto & PROTO_DEL)
-        send_client_message(c->win, wm_protocols, wm_delete);
+        send_client_message(c->win, wm_atom[WMProtocols], wm_atom[WMDelete]);
     else
         XKillClient(dpy, c->win);
 }
@@ -199,7 +199,7 @@ handle_client_property(Client *c, XPropertyEvent *e)
     XTextProperty name;
     long msize;
 
-    if(e->atom == wm_protocols) {
+    if(e->atom == wm_atom[WMProtocols]) {
         /* update */
         c->proto = win_proto(c->win);
         return;
@@ -477,14 +477,14 @@ resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 	else
 		c->frame.rect = *r;
 
-	if((c->area->mode != COL_STACK) || (c->area->sel == client2index(c)))
+	if((c->area->mode != Colstack) || (c->area->sel == client2index(c)))
 		match_sizehints(c, bh, bw);
 
 	if(!ignore_xcall)
 		XMoveResizeWindow(dpy, c->frame.win, px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y,
 				c->frame.rect.width, c->frame.rect.height);
 
-	if((c->area->mode != COL_STACK) || (c->area->sel == client2index(c))) {
+	if((c->area->mode != Colstack) || (c->area->sel == client2index(c))) {
 		c->rect.x = bw;
 		c->rect.y = bh ? bh : bw;
 		c->rect.width = c->frame.rect.width - 2 * bw;

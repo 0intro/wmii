@@ -22,7 +22,7 @@ alloc_tag()
 	tag = (Tag **)cext_array_attach((void **)tag, t, sizeof(Tag *), &tagsz);
 	ntag++;
 	focus_tag(t);
-    XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
+    XChangeProperty(dpy, root, net_atom[NetNumWS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &ntag, 1);
     return t;
 }
@@ -47,7 +47,7 @@ destroy_tag(Tag *t)
 	for(i = 0; i < ntag; i++) {
 		if(tag[i]->revert == t)
 			tag[i]->revert = nil;
-		XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
+		XChangeProperty(dpy, root, net_atom[NetNumWS], XA_CARDINAL,
 				32, PropModeReplace, (unsigned char *) &i, 1);
 	}
 
@@ -100,7 +100,7 @@ focus_tag(Tag *t)
 	}
 	snprintf(buf, sizeof(buf), "PN %d\n", sel);
 	write_event(buf);
-    XChangeProperty(dpy, root, net_atoms[NET_CURRENT_DESKTOP], XA_CARDINAL,
+    XChangeProperty(dpy, root, net_atom[NetSelWS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &sel, 1);
 	XSync(dpy, False);
 }

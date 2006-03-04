@@ -292,9 +292,9 @@ static void handle_clientmessage(XEvent *e)
     XClientMessageEvent *ev = &e->xclient;
 	Client *c;
 
-    if (ev->message_type == net_atoms[NET_NUMBER_OF_DESKTOPS] && ev->format == 32)
+    if (ev->message_type == net_atom[NetNumWS] && ev->format == 32)
         return; /* ignore */
-    else if (ev->message_type == net_atoms[NET_CURRENT_DESKTOP] && ev->format == 32) {
+    else if (ev->message_type == net_atom[NetSelWS] && ev->format == 32) {
 		int i = ev->data.l[0];
 		if(i < ntag) {
 			Tag *p = tag[i];

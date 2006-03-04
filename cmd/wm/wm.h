@@ -10,12 +10,25 @@
 #include "ixp.h"
 #include "blitz.h"
 
-/* array indexes of EWMH window properties */
-	                  /* TODO: set / react */
+/* array indexes of atoms */
 enum {
-	NET_NUMBER_OF_DESKTOPS, /*  ✓      –  */
-	NET_CURRENT_DESKTOP,    /*  ✓      ✓  */
-	NET_WM_DESKTOP          /*  ✗      ✗  */
+	WMState,
+	WMProtocols,
+	WMDelete,
+	WMLast
+};
+
+enum {
+	NetNumWS,
+	NetSelWS,
+	NetWS,
+	NetLast
+};
+
+enum {
+	Colequal,
+	Colstack,
+	Colmax
 };
 
 /* 8-bit qid.path.type */
@@ -45,12 +58,9 @@ enum {
 	Fmode
 };
 
-#define NET_ATOM_COUNT         3
-
 #define PROTO_DEL              1
 #define DEF_BORDER             3
 #define DEF_SNAP               20
-#define DEF_PAGER_GAP          5
 
 #define ROOT_MASK              SubstructureRedirectMask
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
@@ -59,7 +69,6 @@ typedef struct Area Area;
 typedef struct Tag Tag;
 typedef struct Client Client;
 
-typedef enum { COL_EQUAL, COL_STACK, COL_MAX, COL_MODE_LAST } ColumnMode;
 
 struct Area {
 	unsigned short id;
@@ -68,7 +77,7 @@ struct Area {
 	unsigned int clientsz;
 	unsigned int sel;
 	unsigned int nclient;
-	ColumnMode mode;
+	int mode;
 	XRectangle rect;
 };
 
@@ -161,13 +170,8 @@ XRectangle brect;
 Qid root_qid;
 
 Default def;
-
-Atom wm_state; /* TODO: Maybe replace with wm_atoms[WM_ATOM_COUNT]? */
-Atom wm_change_state;
-Atom wm_protocols;
-Atom wm_delete;
-Atom motif_wm_hints;
-Atom net_atoms[NET_ATOM_COUNT];
+Atom wm_atom[WMLast];
+Atom net_atom[NetLast];
 
 Cursor normal_cursor;
 Cursor resize_cursor;
@@ -198,8 +202,8 @@ void arrange_tag(Tag *t, Bool updategeometry);
 void arrange_area(Area *a);
 void resize_area(Client *c, XRectangle *r, XPoint *pt);
 Area *new_area(Tag *t);
-ColumnMode str2colmode(char *arg);
-char *colmode2str(ColumnMode mode);
+int str2mode(char *arg);
+char *mode2str(int mode);
 
 /* bar.c */
 Label *new_label();

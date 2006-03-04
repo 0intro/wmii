@@ -562,7 +562,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, (dir_i1 == nlabel) ? 0 : strlen(label[dir_i1]->data), DMREAD | DMWRITE);
 		break;	
     case Fmode:
-		return mkstat(stat, dir, wname, strlen(colmode2str(tag[dir_i1]->area[dir_i2]->mode)), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, strlen(mode2str(tag[dir_i1]->area[dir_i2]->mode)), DMREAD | DMWRITE);
 		break;	
     case Fcolors:
     case Fselcolors:
@@ -951,7 +951,7 @@ xread(IXPConn *c, Fcall *fcall)
 		case Fmode:
 			if(!i2)
 				return Enofile;
-			snprintf(buf, sizeof(buf), "%s", colmode2str(tag[i1]->area[i2]->mode));
+			snprintf(buf, sizeof(buf), "%s", mode2str(tag[i1]->area[i2]->mode));
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;	
@@ -986,9 +986,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 {
 	char buf[256];
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
-	unsigned short i;
 	unsigned char type;
-	int i1 = 0, i2 = 0, i3 = 0;
+	int i, i1 = 0, i2 = 0, i3 = 0;
 	Client *cl;
 
     if(!m)
@@ -1145,18 +1144,14 @@ xwrite(IXPConn *c, Fcall *fcall)
 		resize_all_clients();
 		break;
 	case Fmode:
-		{
-			ColumnMode mode;
-			if(!i2)
-				return Enofile;
-			memcpy(buf, fcall->data, fcall->count);
-			buf[fcall->count] = 0;
-			mode = str2colmode(buf);
-			if(mode == -1)
-				return "invalid area mode";
-			tag[i1]->area[i2]->mode = mode;
-			arrange_area(tag[i1]->area[i2]);
-		}
+		if(!i2)
+			return Enofile;
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
+		if((i = str2mode(buf)) == -1)
+			return "invalid area mode";
+		tag[i1]->area[i2]->mode = i;
+		arrange_area(tag[i1]->area[i2]);
 		break;	
 	case Fkey:
 		break;

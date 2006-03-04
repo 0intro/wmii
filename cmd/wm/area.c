@@ -142,26 +142,26 @@ detach_fromarea(Client *c)
 }
 
 char *
-colmode2str(ColumnMode mode)
+mode2str(int mode)
 {
 	switch(mode) {
-	case COL_EQUAL: return "equal"; break;
-	case COL_STACK: return "stack"; break;
-	case COL_MAX: return "max"; break;
+	case Colequal: return "equal"; break;
+	case Colstack: return "stack"; break;
+	case Colmax: return "max"; break;
 	default: break;
 	}
 	return nil;		
 }
 
-ColumnMode
-str2colmode(char *arg)
+int
+str2mode(char *arg)
 {
 	if(!strncmp("equal", arg, 6))
-		return COL_EQUAL;
+		return Colequal;
 	if(!strncmp("stack", arg, 6))
-		return COL_STACK;
+		return Colstack;
 	if(!strncmp("max", arg, 4))
-		return COL_MAX;
+		return Colmax;
 	return -1;
 }
 
@@ -177,7 +177,7 @@ relax_area(Area *a)
 	h = 0;
 	for(i = 0; i < a->nclient; i++) {
 		Client *c = a->client[i];
-		if(a->mode == COL_MAX) {
+		if(a->mode == Colmax) {
 			if(h < c->frame.rect.height)
 				h = c->frame.rect.height;
 		}
@@ -186,7 +186,7 @@ relax_area(Area *a)
 	}
 
 	/* try to add rest space to all clients if not COL_STACK mode */
-	if(a->mode != COL_STACK) {
+	if(a->mode != Colstack) {
 		for(i = 0; (h < a->rect.height) && (i < a->nclient); i++) {
 			Client *c = a->client[i];
 			unsigned int tmp = c->frame.rect.height;
@@ -202,7 +202,7 @@ relax_area(Area *a)
 		Client *c = a->client[i];
 		c->frame.rect.x = a->rect.x + (a->rect.width - c->frame.rect.width) / 2;
 		c->frame.rect.y = yoff;
-		if(a->mode != COL_MAX)
+		if(a->mode != Colmax)
 			yoff = c->frame.rect.y + c->frame.rect.height + hdiff;
 		resize_client(c, &c->frame.rect, 0, False);
 	}
@@ -217,7 +217,7 @@ arrange_area(Area *a)
 		return;
 
 	switch(a->mode) {
-	case COL_EQUAL:
+	case Colequal:
 		h = a->rect.height;
 		h /= a->nclient;
 		for(i = 0; i < a->nclient; i++) {
@@ -232,7 +232,7 @@ arrange_area(Area *a)
 			resize_client(c, &c->frame.rect, 0, True);
 		}
 		break;
-	case COL_STACK:
+	case Colstack:
 		yoff = a->rect.y;
 		h = a->rect.height - (a->nclient - 1) * bar_height();
 		for(i = 0; i < a->nclient; i++) {
@@ -247,7 +247,7 @@ arrange_area(Area *a)
 			resize_client(c, &c->frame.rect, 0, True);
 		}
 		break;
-	case COL_MAX:
+	case Colmax:
 		for(i = 0; i < a->nclient; i++) {
 			Client *c = a->client[i];
 			c->frame.rect = a->rect;

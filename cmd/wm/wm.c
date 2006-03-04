@@ -96,15 +96,14 @@ win_proto(Window w)
     int protos = 0;
     int i;
 
-    res = win_property(w, wm_protocols, XA_ATOM, 20L,
+    res = win_property(w, wm_atom[WMProtocols], XA_ATOM, 20L,
                       ((unsigned char **) &protocols));
     if(res <= 0) {
         return protos;
     }
     for(i = 0; i < res; i++) {
-        if(protocols[i] == wm_delete) {
+        if(protocols[i] == wm_atom[WMDelete])
             protos |= PROTO_DEL;
-        }
     }
     free((char *) protocols);
     return protos;
@@ -118,8 +117,9 @@ win_state(Window w)
     int res;
 
     long *prop = 0;
-    if(win_property(w, wm_state, wm_state, 2L,
-					((unsigned char **) &prop)) > 0) {
+    if(win_property(w, wm_atom[WMState], wm_atom[WMState], 2L,
+					((unsigned char **) &prop)) > 0)
+	{
         res = (int) *prop;
         free((long *) prop);
     } else {
@@ -135,15 +135,14 @@ win_state(Window w)
 static void
 init_atoms()
 {
-    wm_state = XInternAtom(dpy, "WM_STATE", False);
-    wm_change_state = XInternAtom(dpy, "WM_CHANGE_STATE", False);
-    wm_protocols = XInternAtom(dpy, "WM_PROTOCOLS", False);
-    wm_delete = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
-    motif_wm_hints = XInternAtom(dpy, "_MOTIF_WM_HINTS", False);
-    net_atoms[NET_NUMBER_OF_DESKTOPS] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
-    net_atoms[NET_CURRENT_DESKTOP] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
-    net_atoms[NET_WM_DESKTOP] = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
-    XChangeProperty(dpy, root, XInternAtom(dpy, "_NET_SUPPORTED", False), XA_ATOM, 32, PropModeReplace, (unsigned char *) net_atoms, NET_ATOM_COUNT);
+    wm_atom[WMState] = XInternAtom(dpy, "WM_STATE", False);
+    wm_atom[WMProtocols] = XInternAtom(dpy, "WM_PROTOCOLS", False);
+    wm_atom[WMDelete] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
+    net_atom[NetNumWS] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
+    net_atom[NetSelWS] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
+    net_atom[NetWS] = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
+    XChangeProperty(dpy, root, XInternAtom(dpy, "_NET_SUPPORTED", False), XA_ATOM, 32,
+			PropModeReplace, (unsigned char *) net_atom, NetLast);
 }
 
 static void
