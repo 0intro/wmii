@@ -577,7 +577,11 @@ sendtoarea_client(Client *c, char *arg)
 
 	if(i == -1)
 		return;
-	if(!strncmp(arg, "prev", 5)) {
+	if(!strncmp(arg, "new", 4)) {
+		to = alloc_area(t);
+		arrange_tag(t, True);
+	}
+	else if(!strncmp(arg, "prev", 5)) {
 		if(i == 1)
 			to = t->area[t->narea - 1];
 		else

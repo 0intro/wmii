@@ -122,9 +122,9 @@ do
 		$MODKEY-Control-a)
 			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
 		$MODKEY-t)
-			extern xterm -rv&;;
+			extern xterm &;;
 		$MODKEY-n)
-			wmiir read /sel/new >/dev/null;;
+			xwrite /sel/sel/sel/ctl sendtoarea new;;
 		$MODKEY-Shift-m)
 			xwrite /sel/sel/mode max;;
 		$MODKEY-Shift-s)
