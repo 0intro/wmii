@@ -31,8 +31,6 @@ char *
 destroy_tag(Tag *t)
 {
 	unsigned int i;
-	Tag *old = t->revert;
-	Client *c;
 
 	for(i = 0; i < t->narea; i++)
 		if(t->area[i]->nclient)
@@ -44,21 +42,11 @@ destroy_tag(Tag *t)
 	cext_array_detach((void **)tag, t, &tagsz);
 	ntag--;
 
-	for(i = 0; i < ntag; i++) {
-		if(tag[i]->revert == t)
-			tag[i]->revert = nil;
+	for(i = 0; i < ntag; i++) 
 		XChangeProperty(dpy, root, net_atom[NetNumWS], XA_CARDINAL,
 				32, PropModeReplace, (unsigned char *) &i, 1);
-	}
 
     free(t); 
-    if(ntag && old) {
-        focus_tag(old);
-		if((c = sel_client_of_tag(old)))
-			focus_client(c);
-	}
-	else
-		write_event("PN -\n");
 	return nil;
 }
 
@@ -75,7 +63,6 @@ tag2index(Tag *t)
 void
 focus_tag(Tag *t)
 {
-	Tag *old = tag ? tag[sel] : nil;
 	char buf[16];
 	Client *c;
 	int i, pi = tag2index(t);
@@ -84,8 +71,6 @@ focus_tag(Tag *t)
 	if(!ntag || (pi == -1))
 		return;
 
-	if(old && old != t)
-		t->revert = old;
 	sel = pi;
 	px = sel * rect.width;
 	/* gives all(!) clients proper geometry (for use of different tagrs) */

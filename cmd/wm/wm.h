@@ -87,7 +87,6 @@ struct Tag {
 	unsigned int areasz;
 	unsigned int narea;
 	unsigned int sel;
-	Tag *revert;
 };
 
 struct Client {
@@ -101,11 +100,9 @@ struct Client {
     Window trans;
     XRectangle rect;
     XSizeHints size;
-	Client *revert;
 	struct Frame {
 		Window win;
     	XRectangle rect;
-		XRectangle revert;
     	GC gc;
     	Cursor cursor;
 	} frame;

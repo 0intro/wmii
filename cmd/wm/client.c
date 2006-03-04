@@ -100,8 +100,6 @@ focus_client(Client *c)
 	c->area->tag->sel = i;
 	c->area->sel = client2index(c);
 	if(old && (old != c)) {
-	    if(old->area == c->area)
-			c->revert = old;
 		grab_mouse(old->win, AnyModifier, Button1);
     	draw_client(old);
 	}
@@ -375,11 +373,6 @@ detach_client(Client *c, Bool unmap)
 {
 	Area *a = c->area;
 	if(a) {
-		unsigned int i;
-		for(i = 0; i < nclient; i++)
-			if(client[i]->revert == c)
-				client[i]->revert = nil;
-
 		if(!c->destroyed) {
 			if(!unmap)
 				unmap_client(c);
@@ -391,8 +384,6 @@ detach_client(Client *c, Bool unmap)
 		detach_fromarea(c);
 	}
 	c->area = nil;
-	if(c->revert)
-		focus_client(c->revert);
     if(c->destroyed)
         destroy_client(c);
 }
