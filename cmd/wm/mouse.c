@@ -13,24 +13,20 @@ Cursor
 cursor_for_motion(Client *c, int x, int y)
 {
     int n, e, w, s, tn, te, tw, ts;
-    unsigned int bh, bw;
 
-    bw = def.border;
-    bh = bar_height();
-
-    if(!bw)
+    if(!def.border)
         return normal_cursor;
 
     /* rectangle attributes of client are used */
-    w = x < bw;
-    e = x >= c->frect.width - bw;
-    n = y < bw;
-    s = y >= c->frect.height - bw;
+    w = x < def.border;
+    e = x >= c->frect.width - def.border;
+    n = y < def.border;
+    s = y >= c->frect.height - def.border;
 
-    tw = x < (bh ? bh : 2 * bw);
-    te = x > c->frect.width - (bh ? bh : 2 * bw);
-    tn = y < (bh ? bh : 2 * bw);
-    ts = s > c->frect.height - (bh ? bh : 2 * bw);
+    tw = x < bar_height();
+    te = x > c->frect.width - bar_height();
+    tn = y < bar_height();
+    ts = s > c->frect.height - bar_height();
 
     if((w && n) || (w && tn) || (n && tw))
         return nw_cursor;
@@ -53,7 +49,7 @@ cursor_for_motion(Client *c, int x, int y)
 }
 
 Align
-xy2align(XRectangle * rect, int x, int y)
+xy2align(XRectangle *rect, int x, int y)
 {
 
     int w = x <= rect->x + rect->width / 2;

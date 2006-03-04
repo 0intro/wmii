@@ -126,18 +126,12 @@ handle_configurerequest(XEvent *e)
     XConfigureRequestEvent *ev = &e->xconfigurerequest;
     XWindowChanges wc;
     Client *c;
-    unsigned int bw = 0, bh = 0;
 
     c = win2client(ev->window);
 	ev->value_mask &= ~CWSibling;
 
     if(c) {
-        if(c->area) {
-            bw = def.border;
-            bh = bar_height();
-        }
-
-        gravitate(c, bh ? bh : bw, bw, 1);
+        gravitate(c, True);
 
         if(ev->value_mask & CWX)
             c->rect.x = ev->x;
@@ -150,13 +144,13 @@ handle_configurerequest(XEvent *e)
         if(ev->value_mask & CWBorderWidth)
             c->border = ev->border_width;
 
-        gravitate(c, bh ? bh : bw, bw, 0);
+        gravitate(c, False);
 
         if(c->area) {
-            c->frect.x = wc.x = c->rect.x - bw;
-            c->frect.y = wc.y = c->rect.y - (bh ? bh : bw);
-            c->frect.width = wc.width = c->rect.width + 2 * bw;
-            c->frect.height = wc.height = c->rect.height + bw + (bh ? bh : bw);
+            c->frect.x = wc.x = c->rect.x - def.border;
+            c->frect.y = wc.y = c->rect.y - bar_height();
+            c->frect.width = wc.width = c->rect.width + 2 * def.border;
+            c->frect.height = wc.height = c->rect.height + def.border + bar_height();
             wc.border_width = 1;
 			wc.sibling = None;
 			wc.stack_mode = ev->detail;
@@ -168,9 +162,8 @@ handle_configurerequest(XEvent *e)
     wc.x = ev->x;
     wc.y = ev->y;
     if(c && c->area) {
-        /* if so, then bw and bh are already initialized */
-        wc.x = bw;
-        wc.y = (bh ? bh : bw);
+        wc.x = def.border;
+        wc.y = bar_height();
     }
     wc.width = ev->width;
     wc.height = ev->height;

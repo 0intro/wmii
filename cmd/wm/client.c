@@ -16,7 +16,6 @@ alloc_client(Window w, XWindowAttributes *wa)
     XTextProperty name;
     Client *c = (Client *) cext_emallocz(sizeof(Client));
     XSetWindowAttributes fwa;
-    int bw = def.border, bh;
     long msize;
 	static unsigned short id = 1;
 
@@ -43,10 +42,9 @@ alloc_client(Window w, XWindowAttributes *wa)
     fwa.background_pixmap = ParentRelative;
 	fwa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
 
-    bh = bar_height();
 	c->frect = c->rect;
-    c->frect.width += 2 * bw;
-    c->frect.height += bw + (bh ? bh : bw);
+    c->frect.width += 2 * def.border;
+    c->frect.height += def.border + bar_height();
     c->framewin = XCreateWindow(dpy, root, c->frect.x, c->frect.y,
 						   c->frect.width, c->frect.height, 0,
 						   DefaultDepth(dpy, screen), CopyFromParent,
@@ -241,9 +239,6 @@ void
 draw_client(Client *c)
 {
     Draw d = { 0 };
-    unsigned int bh = bar_height();
-    unsigned int bw = def.border;
-    XRectangle notch;
 
 	d.align = WEST;
 	d.drawable = c->framewin;
@@ -256,27 +251,16 @@ draw_client(Client *c)
 		d.color = def.norm;
 
 	/* draw border */
-    if(bw) {
-        notch.x = bw;
-        notch.y = bw;
-        notch.width = c->frect.width - 2 * bw;
-        notch.height = c->frect.height - 2 * bw;
+    if(def.border) {
         d.rect = c->frect;
-        d.rect.x = d.rect.y = 0;
-        d.notch = &notch;
-
+		d.rect.x = d.rect.y = 0;
+        d.notch = &c->rect;
         blitz_drawlabel(dpy, &d);
     }
-    XSync(dpy, False);
-
-	/* draw bar */
-    if(!bh)
-        return;
-
     d.rect.x = 0;
     d.rect.y = 0;
     d.rect.width = c->frect.width;
-    d.rect.height = bh;
+    d.rect.height = bar_height();
 	d.notch = nil;
     d.data = c->name;
     blitz_drawlabel(dpy, &d);
@@ -284,7 +268,7 @@ draw_client(Client *c)
 }
 
 void
-gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
+gravitate(Client *c, Bool invert)
 {
     int dx = 0, dy = 0;
     int gravity = NorthWestGravity;
@@ -298,19 +282,19 @@ gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
     case NorthWestGravity:
     case NorthGravity:
     case NorthEastGravity:
-        dy = tabh;
+        dy = bar_height();
         break;
     case EastGravity:
     case CenterGravity:
     case WestGravity:
-        dy = -(c->rect.height / 2) + tabh;
+        dy = -(c->rect.height / 2) + bar_height();
         break;
     case SouthEastGravity:
     case SouthGravity:
     case SouthWestGravity:
         dy = -c->rect.height;
         break;
-    default:                   /* don't care */
+    default:
         break;
     }
 
@@ -320,19 +304,19 @@ gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
     case NorthWestGravity:
     case WestGravity:
     case SouthWestGravity:
-        dx = bw;
+        dx = def.border;
         break;
     case NorthGravity:
     case CenterGravity:
     case SouthGravity:
-        dx = -(c->rect.width / 2) + bw;
+        dx = -(c->rect.width / 2) + def.border;
         break;
     case NorthEastGravity:
     case EastGravity:
     case SouthEastGravity:
-        dx = -(c->rect.width + bw);
+        dx = -(c->rect.width + def.border);
         break;
-    default:                   /* don't care */
+    default:
         break;
     }
 
@@ -415,7 +399,7 @@ win2clientframe(Window w)
 }
 
 static void
-match_sizehints(Client *c, unsigned int tabh, unsigned int bw)
+match_sizehints(Client *c)
 {
     XSizeHints *s = &c->size;
 
@@ -444,11 +428,11 @@ match_sizehints(Client *c, unsigned int tabh, unsigned int bw)
             h = c->size.min_height;
         }
         /* client_width = base_width + i * c->size.width_inc for an integer i */
-        w = c->frect.width - 2 * bw - w;
+        w = c->frect.width - 2 * def.border - w;
         if(s->width_inc > 0)
             c->frect.width -= w % s->width_inc;
 
-        h = c->frect.height - bw - (tabh ? tabh : bw) - h;
+        h = c->frect.height - def.border - bar_height() - h;
         if(s->height_inc > 0)
             c->frect.height -= h % s->height_inc;
     }
@@ -457,8 +441,6 @@ match_sizehints(Client *c, unsigned int tabh, unsigned int bw)
 void
 resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 {
-    unsigned int bh = bar_height();
-    unsigned int bw = def.border;
 	int pi = tag2index(c->area->tag);
 	int px = sel * rect.width;
 
@@ -469,17 +451,17 @@ resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 		c->frect = *r;
 
 	if((c->area->mode != Colstack) || (c->area->sel == client2index(c)))
-		match_sizehints(c, bh, bw);
+		match_sizehints(c);
 
 	if(!ignore_xcall)
 		XMoveResizeWindow(dpy, c->framewin, px - (pi * rect.width) + c->frect.x, c->frect.y,
 				c->frect.width, c->frect.height);
 
 	if((c->area->mode != Colstack) || (c->area->sel == client2index(c))) {
-		c->rect.x = bw;
-		c->rect.y = bh ? bh : bw;
-		c->rect.width = c->frect.width - 2 * bw;
-		c->rect.height = c->frect.height - bw - (bh ? bh : bw);
+		c->rect.x = def.border;
+		c->rect.y = bar_height();
+		c->rect.width = c->frect.width - 2 * def.border;
+		c->rect.height = c->frect.height - def.border - bar_height();
 		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		configure_client(c);
 	}

@@ -215,7 +215,7 @@ void configure_client(Client *c);
 void handle_client_property(Client *c, XPropertyEvent *e);
 void kill_client(Client *c);
 void draw_client(Client *client);
-void gravitate(Client *c, unsigned int tabh, unsigned int bw, int invert);
+void gravitate(Client *c, Bool invert);
 void unmap_client(Client *c);
 void map_client(Client *c);
 void reparent_client(Client *c, Window w, int x, int y);
