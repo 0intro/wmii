@@ -22,7 +22,7 @@ enum {
 enum {                          
     Droot,
 	Ddef,
-	Dpage,
+	Dtag,
 	Darea,
 	Dclient,
 	Dkeys,
@@ -56,7 +56,7 @@ enum {
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
 
 typedef struct Area Area;
-typedef struct Page Page;
+typedef struct Tag Tag;
 typedef struct Client Client;
 
 typedef enum { COL_EQUAL, COL_STACK, COL_MAX, COL_MODE_LAST } ColumnMode;
@@ -64,7 +64,7 @@ typedef enum { COL_EQUAL, COL_STACK, COL_MAX, COL_MODE_LAST } ColumnMode;
 struct Area {
 	unsigned short id;
     Client **client;
-	Page *page;
+	Tag *tag;
 	unsigned int clientsz;
 	unsigned int sel;
 	unsigned int nclient;
@@ -72,13 +72,13 @@ struct Area {
 	XRectangle rect;
 };
 
-struct Page {
+struct Tag {
 	unsigned short id;
 	Area **area;
 	unsigned int areasz;
 	unsigned int narea;
 	unsigned int sel;
-	Page *revert;
+	Tag *revert;
 };
 
 struct Client {
@@ -131,9 +131,9 @@ typedef struct {
 } Default;
 
 /* global variables */
-Page **page;
-unsigned int npage;
-unsigned int pagesz;
+Tag **tag;
+unsigned int ntag;
+unsigned int tagsz;
 unsigned int sel;
 Client **client;
 unsigned int nclient;
@@ -150,11 +150,9 @@ Display *dpy;
 IXPServer *ixps;
 int screen;
 Window root;
-Window transient; /* pager / attach */
 XRectangle rect;
 XFontStruct *xfont;
 GC gc_xor;
-GC gc_transient;
 IXPServer srv;
 Pixmap pmapbar;
 Window winbar;
@@ -187,19 +185,19 @@ Cursor se_cursor;
 unsigned int valid_mask, num_lock_mask;
 
 /* area.c */
-Area *alloc_area(Page *p);
+Area *alloc_area(Tag *t);
 void destroy_area(Area *a);
 int area2index(Area *a);
-int aid2index(Page *p, unsigned short id);
+int aid2index(Tag *t, unsigned short id);
 void update_area_geometry(Area *a);
 void select_area(Area *a, char *arg);
 void send_toarea(Area *to, Client *c);
 void attach_toarea(Area *a, Client *c);
 void detach_fromarea(Client *c);
-void arrange_page(Page *p, Bool updategeometry);
+void arrange_tag(Tag *t, Bool updategeometry);
 void arrange_area(Area *a);
 void resize_area(Client *c, XRectangle *r, XPoint *pt);
-Area *new_area(Page *p);
+Area *new_area(Tag *t);
 ColumnMode str2colmode(char *arg);
 char *colmode2str(ColumnMode mode);
 
@@ -223,17 +221,17 @@ void unmap_client(Client *c);
 void map_client(Client *c);
 void reparent_client(Client *c, Window w, int x, int y);
 void attach_client(Client *c);
-void attach_topage(Page *p, Client *c);
+void attach_totag(Tag *t, Client *c);
 void detach_client(Client *c, Bool unmap);
 Client *sel_client();
-Client *sel_client_of_page(Page *p);
+Client *sel_client_of_tag(Tag *t);
 void focus_client(Client *c);
 Client *win2clientframe(Window w);
 void resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall);
 int cid2index(Area *a, unsigned short id);
 int client2index(Client *c);
 void select_client(Client *c, char *arg);
-void sendtopage_client(Client *c, char *arg);
+void sendtotag_client(Client *c, char *arg);
 void sendtoarea_client(Client *c, char *arg);
 void resize_all_clients();
 void focus(Client *c);
@@ -269,20 +267,17 @@ void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 char *warp_mouse(char *arg);
 
-/* page.c */
-Page *alloc_page();
-char *destroy_page(Page *p);
-void focus_page(Page *p);
+/* tag.c */
+Tag *alloc_tag();
+char *destroy_tag(Tag *t);
+void focus_tag(Tag *t);
 XRectangle *rectangles(unsigned int *num);
 int pid2index(unsigned short id);
-void select_page(char *arg);
-int page2index(Page *p);
+void select_tag(char *arg);
+int tag2index(Tag *t);
 
 /* wm.c */
 void scan_wins();
 Client *win2client(Window w);
 int win_proto(Window w);
 int win_state(Window w);
-/*void handle_after_write(IXPServer * s, File * f);*/
-void pager();
-

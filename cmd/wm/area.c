@@ -9,17 +9,17 @@
 #include "wm.h"
 
 Area *
-alloc_area(Page *p)
+alloc_area(Tag *t)
 {
 	static unsigned short id = 1;
 	Area *a = cext_emallocz(sizeof(Area));
-	a->page = p;
+	a->tag = t;
 	a->id = id++;
 	update_area_geometry(a);
-	p->area = (Area **)cext_array_attach((void **)p->area, a, sizeof(Area *), &p->areasz);
-	p->sel = p->narea;
-	fprintf(stderr, "alloc_area: p->sel == %d\n", p->sel);
-	p->narea++;
+	t->area = (Area **)cext_array_attach((void **)t->area, a, sizeof(Area *), &t->areasz);
+	t->sel = t->narea;
+	fprintf(stderr, "alloc_area: t->sel == %d\n", t->sel);
+	t->narea++;
     return a;
 }
 
@@ -33,18 +33,18 @@ update_area_geometry(Area *a)
 void
 destroy_area(Area *a)
 {
-	Page *p = a->page;
+	Tag *t = a->tag;
 	if(a->nclient)
 		return;
 	if(a->client)
 		free(a->client);
-	cext_array_detach((void **)p->area, a, &p->areasz);
-	p->narea--;
-	if(p->sel == p->narea) {
-		if(p->narea)
-			p->sel = p->narea - 1;
+	cext_array_detach((void **)t->area, a, &t->areasz);
+	t->narea--;
+	if(t->sel == t->narea) {
+		if(t->narea)
+			t->sel = t->narea - 1;
 		else 
-			p->sel = 0;
+			t->sel = 0;
 	}
 	free(a);
 }
@@ -53,19 +53,19 @@ int
 area2index(Area *a)
 {
 	int i;
-	Page *p = a->page;
-	for(i = 0; i < p->narea; i++)
-		if(p->area[i] == a)
+	Tag *t = a->tag;
+	for(i = 0; i < t->narea; i++)
+		if(t->area[i] == a)
 			return i;
 	return -1;
 }
 
 int
-aid2index(Page *p, unsigned short id)
+aid2index(Tag *t, unsigned short id)
 {
 	int i;
-	for(i = 0; i < p->narea; i++)
-		if(p->area[i]->id == id)
+	for(i = 0; i < t->narea; i++)
+		if(t->area[i]->id == id)
 			return i;
 	return -1;
 }
@@ -74,32 +74,32 @@ void
 select_area(Area *a, char *arg)
 {
 	Area *new;
-	Page *p = a->page;
+	Tag *t = a->tag;
 	int i = area2index(a);
 	if(i == -1)
 		return;
 	if(!strncmp(arg, "prev", 5)) {
 		if(i == 1)
-			i = p->narea - 1;
+			i = t->narea - 1;
 		else
 			i--;
 	} else if(!strncmp(arg, "next", 5)) {
-		if(i + 1 < p->narea)
+		if(i + 1 < t->narea)
 			i++;
 		else
 			i = 1;
 	}
 	else {
 		const char *errstr;
-		i = cext_strtonum(arg, 0, p->narea - 1, &errstr);
+		i = cext_strtonum(arg, 0, t->narea - 1, &errstr);
 		if(errstr)
 			return;
 	}
-	new = p->area[i];
+	new = t->area[i];
 	if(new->nclient)
 		focus_client(new->client[new->sel]);
-	p->sel = i;
-	fprintf(stderr, "select_area: p->sel == %d\n", p->sel);
+	t->sel = i;
+	fprintf(stderr, "select_area: t->sel == %d\n", t->sel);
 }
 
 void
@@ -129,9 +129,16 @@ detach_fromarea(Client *c)
 	Area *a = c->area;
 	cext_array_detach((void **)a->client, c, &a->clientsz);
 	a->nclient--;
-	if(a->sel >= a->nclient)
-		a->sel = 0;
-	arrange_area(a);
+	if(a->nclient) {
+		if(a->sel >= a->nclient)
+			a->sel = 0;
+		arrange_area(a);
+	}
+	else {
+		Tag *t = a->tag;
+		destroy_area(a);
+		arrange_tag(t, True);
+	}
 }
 
 char *
@@ -161,13 +168,13 @@ str2colmode(char *arg)
 static void
 relax_area(Area *a)
 {
-	unsigned int i, yoff, h, w, hdiff, wdiff;
+	unsigned int i, yoff, h, hdiff;
 
 	if(!a->nclient)
 		return;
 
 	/* some relaxing from potential increment gaps */
-	h = w = 0;
+	h = 0;
 	for(i = 0; i < a->nclient; i++) {
 		Client *c = a->client[i];
 		if(a->mode == COL_MAX) {
@@ -176,10 +183,7 @@ relax_area(Area *a)
 		}
 		else
 			h += c->frame.rect.height;
-		if(w < c->frame.rect.width)
-			w = c->frame.rect.width;
 	}
-	wdiff = (a->rect.width - w) / 2; 
 
 	/* try to add rest space to all clients if not COL_STACK mode */
 	if(a->mode != COL_STACK) {
@@ -196,7 +200,7 @@ relax_area(Area *a)
 	yoff = a->rect.y + hdiff / 2;
 	for(i = 0; i < a->nclient; i++) {
 		Client *c = a->client[i];
-		c->frame.rect.x = a->rect.x + wdiff;
+		c->frame.rect.x = a->rect.x + (a->rect.width - c->frame.rect.width) / 2;
 		c->frame.rect.y = yoff;
 		if(a->mode != COL_MAX)
 			yoff = c->frame.rect.y + c->frame.rect.height + hdiff;
@@ -258,17 +262,17 @@ arrange_area(Area *a)
 }
 
 void
-arrange_page(Page *p, Bool updategeometry)
+arrange_tag(Tag *t, Bool updategeometry)
 {
 	unsigned int i;
 	unsigned int width;
 
-	if(p->narea == 1)
+	if(t->narea == 1)
 		return;
 	
-	width = rect.width / (p->narea - 1);
-	for(i = 1; i < p->narea; i++) {
-		Area *a = p->area[i];
+	width = rect.width / (t->narea - 1);
+	for(i = 1; i < t->narea; i++) {
+		Area *a = t->area[i];
 		if(updategeometry) {
 			update_area_geometry(a);
 			a->rect.x = (i - 1) * width;
@@ -295,14 +299,14 @@ static void
 drop_resize(Client *c, XRectangle *new)
 {
     Area *west = nil, *east = nil, *a = c->area;
-	Page *p = a->page;
+	Tag *t = a->tag;
     Client *north = nil, *south = nil;
 	unsigned int i;
 
-	for(i = 1; (i < p->narea) && (p->area[i] != a); i++);
+	for(i = 1; (i < t->narea) && (t->area[i] != a); i++);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
-    west = (i > 1) ? p->area[i - 1] : nil;
-    east = i + 1 < p->narea ? p->area[i + 1] : nil;
+    west = (i > 1) ? t->area[i - 1] : nil;
+    east = i + 1 < t->narea ? t->area[i + 1] : nil;
 
 	for(i = 1; (i < a->nclient) && (a->client[i] != c); i++);
     north = i ? a->client[i - 1] : nil;
@@ -350,15 +354,15 @@ static void
 drop_moving(Client *c, XRectangle *new, XPoint * pt)
 {
     Area *tgt = nil, *src = c->area;
-	Page *p = src->page;
+	Tag *t = src->tag;
 	unsigned int i;
 
     if(!pt || src->nclient < 2)
         return;
 
-	for(i = 1; (i < p->narea) &&
-			!blitz_ispointinrect(pt->x, pt->y, &p->area[i]->rect); i++);
-	if((tgt = ((i < p->narea) ? p->area[i] : nil))) {
+	for(i = 1; (i < t->narea) &&
+			!blitz_ispointinrect(pt->x, pt->y, &t->area[i]->rect); i++);
+	if((tgt = ((i < t->narea) ? t->area[i] : nil))) {
         if(tgt != src) {
 			send_toarea(tgt, c);
 			arrange_area(tgt);
@@ -389,10 +393,10 @@ resize_area(Client *c, XRectangle *r, XPoint *pt)
 }
 
 Area *
-new_area(Page *p)
+new_area(Tag *t)
 {
-	Area *a = alloc_area(p);
-	arrange_page(p, True);
+	Area *a = alloc_area(t);
+	arrange_tag(t, True);
 	return a;
 }
 

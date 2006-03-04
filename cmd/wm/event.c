@@ -296,10 +296,10 @@ static void handle_clientmessage(XEvent *e)
         return; /* ignore */
     else if (ev->message_type == net_atoms[NET_CURRENT_DESKTOP] && ev->format == 32) {
 		int i = ev->data.l[0];
-		if(i < npage) {
-			Page *p = page[i];
-			focus_page(p);
-			if((c = sel_client_of_page(p)))
+		if(i < ntag) {
+			Tag *p = tag[i];
+			focus_tag(p);
+			if((c = sel_client_of_tag(p)))
 				focus_client(c);
 		}
     }

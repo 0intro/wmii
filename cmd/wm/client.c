@@ -75,14 +75,6 @@ set_client_state(Client * c, int state)
 }
 
 static void
-area_name_event(int aidx)
-{
-	char buf[256];
-	snprintf(buf, sizeof(buf), "AN %d\n", aidx);
-	write_event(buf);
-}
-
-static void
 client_name_event(Client *c)
 {
 	char buf[256];
@@ -105,8 +97,7 @@ focus_client(Client *c)
 	Client *old = sel_client();
 	int i = area2index(c->area);
 	
-	c->area->page->sel = i;
-	area_name_event(i);
+	c->area->tag->sel = i;
 	c->area->sel = client2index(c);
 	if(old && (old != c)) {
 	    if(old->area == c->area)
@@ -356,9 +347,9 @@ gravitate(Client * c, unsigned int tabh, unsigned int bw, int invert)
 }
 
 void
-attach_topage(Page *p, Client *c)
+attach_totag(Tag *t, Client *c)
 {
-	Area *a = p->area[p->sel];
+	Area *a = t->area[t->sel];
 
     reparent_client(c, c->frame.win, c->rect.x, c->rect.y);
 	attach_toarea(a, c);
@@ -369,13 +360,13 @@ attach_topage(Page *p, Client *c)
 void
 attach_client(Client *c)
 {
-	Page *p;
-    if(!npage)
-		p = alloc_page();
+	Tag *t;
+    if(!ntag)
+		t = alloc_tag();
 	else
-		p = page[sel];
+		t = tag[sel];
 
-	attach_topage(p, c);
+	attach_totag(t, c);
 	focus_client(c);
 }
 
@@ -407,10 +398,10 @@ detach_client(Client *c, Bool unmap)
 }
 
 Client *
-sel_client_of_page(Page *p)
+sel_client_of_tag(Tag *t)
 {
-	if(p) {
-		Area *a = p->narea ? p->area[p->sel] : nil;
+	if(t) {
+		Area *a = t->narea ? t->area[t->sel] : nil;
 		return (a && a->nclient) ? a->client[a->sel] : nil;
 	}
 	return nil;
@@ -419,7 +410,7 @@ sel_client_of_page(Page *p)
 Client *
 sel_client()
 {
-	return npage ? sel_client_of_page(page[sel]) : nil;
+	return ntag ? sel_client_of_tag(tag[sel]) : nil;
 }
 
 Client *
@@ -477,7 +468,7 @@ resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 {
     unsigned int bh = bar_height();
     unsigned int bw = def.border;
-	int pi = page2index(c->area->page);
+	int pi = tag2index(c->area->tag);
 	int px = sel * rect.width;
 
 
@@ -552,27 +543,27 @@ select_client(Client *c, char *arg)
 }
 
 void
-sendtopage_client(Client *c, char *arg)
+sendtotag_client(Client *c, char *arg)
 {
-	Page *p;
+	Tag *t;
 	Client *to;
 
 	if(!strncmp(arg, "new", 4))
-		p = alloc_page();
+		t = alloc_tag();
 	else if(!strncmp(arg, "sel", 4))
-		p = page[sel];
+		t = tag[sel];
 	else {
 		const char *errstr;
-		int i = cext_strtonum(arg, 0, npage - 1, &errstr);
+		int i = cext_strtonum(arg, 0, ntag - 1, &errstr);
 		if(errstr)
 			return;
-		p = page[i];
+		t = tag[i];
 	}
 	detach_client(c, False);
-	attach_topage(p, c);
-	if(p == page[sel])
+	attach_totag(t, c);
+	if(t == tag[sel])
 		focus_client(c);
-	else if((to = sel_client_of_page(page[sel])))
+	else if((to = sel_client_of_tag(tag[sel])))
 		focus_client(to);
 }
 
@@ -581,38 +572,32 @@ sendtoarea_client(Client *c, char *arg)
 {
 	const char *errstr;
 	Area *to, *a = c->area;
-	Page *p = a->page;
+	Tag *t = a->tag;
 	int i = area2index(a);
 
 	if(i == -1)
 		return;
 	if(!strncmp(arg, "prev", 5)) {
 		if(i == 1)
-			to = p->area[p->narea - 1];
+			to = t->area[t->narea - 1];
 		else
-			to = p->area[i - 1];
+			to = t->area[i - 1];
 	}
 	else if(!strncmp(arg, "next", 5)) {
-		if(i < p->narea - 1)
-			to = p->area[i + 1];
+		if(i < t->narea - 1)
+			to = t->area[i + 1];
 		else
-			to = p->area[1];
+			to = t->area[1];
 	}
 	else {
-		i = cext_strtonum(arg, 0, p->narea - 1, &errstr);
+		i = cext_strtonum(arg, 0, t->narea - 1, &errstr);
 		if(errstr)
 			return;
-		to = p->area[i];
+		to = t->area[i];
 	}
 	send_toarea(to, c);
-	if(!a->nclient) {
-		destroy_area(a);
-		arrange_page(p, True);
-	}
-	else {
-		arrange_area(a);
-		arrange_area(to);
-	}
+	arrange_area(a);
+	arrange_area(to);
 }
 
 void
@@ -628,8 +613,8 @@ resize_all_clients()
 void
 focus(Client *c)
 {
-	Page *p = c->area->page;
-	if(page[sel] != p)
-		focus_page(p);
+	Tag *t = c->area->tag;
+	if(tag[sel] != t)
+		focus_tag(t);
 	focus_client(c);
 }

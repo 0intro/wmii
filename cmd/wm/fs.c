@@ -48,12 +48,11 @@ static char Enocommand[] = "command not supported";
  * /bar/1/colors		Fcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /event				Fevent
  * /ctl					Fctl 		command interface (root)
- * /new/				Dpage		returns new page
- * /sel/				Dpage		sel page
- * /1/					Dpage		page
- * /1/ctl				Fctl		command interface (page)
+ * /new/				Dtag		returns new tag
+ * /sel/				Dtag		sel tag
+ * /1/					Dtag		tag
+ * /1/ctl				Fctl		command interface (tag)
  * /1/sel/				Darea
- * /1/new/				Darea
  * /1/float/			Darea		floating clients in area 0
  * /1/float/ctl 		Fctl		command interface (area)
  * /1/float/mode		Fmode	col mode
@@ -79,10 +78,10 @@ const char *err;
 
 /**
  * Qid->path is calculated related to the index of the associated structure.
- * i1 is associated to page, key or label
+ * i1 is associated to tag, key or label
  * i2 is associated to area
  * i3 is associated to client
- * ie /sel/sel/ctl is i1id = sel page id, i2id = sel area id , i3id = 0 (no id)
+ * ie /sel/sel/ctl is i1id = sel tag id, i2id = sel area id , i3id = 0 (no id)
  */
 unsigned long long
 mkqpath(unsigned char type, unsigned short i1id, unsigned short i2id, unsigned short i3id)
@@ -132,9 +131,9 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 			default: *i1 = pid2index(i1id); break;
 		}
 	   if(i2id && (*i1 != -1)) {
-			*i2 = aid2index(page[*i1], i2id);
+			*i2 = aid2index(tag[*i1], i2id);
 		   if(i3id && (*i2 != -1))
-			   *i3 = cid2index(page[*i1]->area[*i2], i3id);
+			   *i3 = cid2index(tag[*i1]->area[*i2], i3id);
 	   }
 	}
 }
@@ -155,7 +154,7 @@ qid2name(Qid *qid)
 		case Ddef: return "def"; break;
 		case Dkeys: return "keys"; break;
 		case Dbar: return "bar"; break;
-		case Dpage:
+		case Dtag:
 			if(i1 == sel)
 				return "sel";
 			snprintf(buf, sizeof(buf), "%u", i1);
@@ -167,18 +166,18 @@ qid2name(Qid *qid)
 			break;
 		case Darea:
 			if(!i2) {
-				if(i2 == page[i1]->sel)
+				if(i2 == tag[i1]->sel)
 					return "sel";
 				else
 					return "float";
 			}
-			if(page[i1]->sel == i2)
+			if(tag[i1]->sel == i2)
 				return "sel";
 			snprintf(buf, sizeof(buf), "%u", i2);
 			return buf;
 			break;
 		case Dclient:
-			if(page[i1]->area[i2]->sel == i3)
+			if(tag[i1]->area[i2]->sel == i3)
 				return "sel";
 			snprintf(buf, sizeof(buf), "%u", i3);
 			return buf;
@@ -209,9 +208,8 @@ name2type(char *name, unsigned char dir_type)
 		return Droot;
 	if(!strncmp(name, "new", 4)) {
 		switch(dir_type) {
-		case Droot: return Dpage; break;
+		case Droot: return Dtag; break;
 		case Dbar: 	return Dlabel; break;
-		case Dpage: return Darea; break;
 		}
 	}
 	if(!strncmp(name, "bar", 4))
@@ -256,9 +254,9 @@ name2type(char *name, unsigned char dir_type)
 dyndir:
 	/*fprintf(stderr, "nametotype: dir_type = %d\n", dir_type);*/
 	switch(dir_type) {
-	case Droot: return Dpage; break;
+	case Droot: return Dtag; break;
 	case Dbar: return Dlabel; break;
-	case Dpage: return Darea; break;
+	case Dtag: return Darea; break;
 	case Darea: return Dclient; break;
 	}
 	return -1;
@@ -309,43 +307,33 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			new->path = mkqpath(Dlabel, label[i]->id, 0, 0);
 		}
 		break;
-	case Dpage:
+	case Dtag:
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4)) {
 			if(iswalk) {
-				Page *p = alloc_page();
-				new->path = mkqpath(Dpage, p->id, 0, 0);
+				Tag *p = alloc_tag();
+				new->path = mkqpath(Dtag, p->id, 0, 0);
 			}
 			else
-				new->path = mkqpath(Dpage, 0, 0, 0);
+				new->path = mkqpath(Dtag, 0, 0, 0);
 		}
 		else if(!strncmp(wname, "sel", 4)) {
-			if(!npage)
+			if(!ntag)
 				return -1;
-			new->path = mkqpath(Dpage, page[sel]->id, 0, 0);
+			new->path = mkqpath(Dtag, tag[sel]->id, 0, 0);
 		}
 		else {
 			i = cext_strtonum(wname, 0, 0xffff, &err);
-			if(err || (i >= npage))
+			if(err || (i >= ntag))
 				return -1;
-			new->path = mkqpath(Dpage, page[i]->id, 0, 0);
+			new->path = mkqpath(Dtag, tag[i]->id, 0, 0);
 		}
 		break;
 	case Darea:
 		{
-			Page *p = page[dir_i1];
+			Tag *p = tag[dir_i1];
 			new->type = IXP_QTDIR;
-			if(!strncmp(wname, "new", 4)) {
-				if(iswalk) {
-					Area *a = new_area(p);
-					if(!a)
-						return -1;
-					new->path = mkqpath(Darea, p->id, a->id, 0);
-				}
-				else
-					new->path = mkqpath(Darea, p->id, 0, 0); /* simple stat */
-			}
-			else if(!strncmp(wname, "sel", 4)) {
+			if(!strncmp(wname, "sel", 4)) {
 				new->path = mkqpath(Darea, p->id, p->area[p->sel]->id, 0);
 			}
 			else {
@@ -358,7 +346,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		break;
 	case Dclient:
 		{
-			Page *p = page[dir_i1];
+			Tag *p = tag[dir_i1];
 			Area *a = p->area[dir_i2];
 			new->type = IXP_QTDIR;
 			if(!strncmp(wname, "sel", 4)) {
@@ -533,7 +521,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     switch (type) {
     case Dclient:
     case Darea:
-    case Dpage:
+    case Dtag:
     case Ddef:
 	case Dkeys:
 	case Dbar:
@@ -550,7 +538,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
         break;
     case Fgeom:
-		c = page[dir_i1]->area[dir_i2]->client[dir_i3];
+		c = tag[dir_i1]->area[dir_i2]->client[dir_i3];
 		snprintf(buf, sizeof(buf), "%d %d %d %d", c->frame.rect.x, c->frame.rect.y,
 				c->frame.rect.width, c->frame.rect.height);
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
@@ -560,7 +548,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 		break;
     case Fname:
-		c = page[dir_i1]->area[dir_i2]->client[dir_i3];
+		c = tag[dir_i1]->area[dir_i2]->client[dir_i3];
 		return mkstat(stat, dir, wname, strlen(c->name), DMREAD);
         break;
     case Fkey:
@@ -574,7 +562,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, (dir_i1 == nlabel) ? 0 : strlen(label[dir_i1]->data), DMREAD | DMWRITE);
 		break;	
     case Fmode:
-		return mkstat(stat, dir, wname, strlen(colmode2str(page[dir_i1]->area[dir_i2]->mode)), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, strlen(colmode2str(tag[dir_i1]->area[dir_i2]->mode)), DMREAD | DMWRITE);
 		break;	
     case Fcolors:
     case Fselcolors:
@@ -592,6 +580,7 @@ xremove(IXPConn *c, Fcall *fcall)
 {
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned char type;
+	char *ret;
 	int i1 = 0, i2 = 0, i3 = 0;
 
     if(!m)
@@ -600,12 +589,9 @@ xremove(IXPConn *c, Fcall *fcall)
 	if((i1 == -1) || (i2 == -1) || (i3 == -1))
 		return Enofile;
 	switch(type) {
-	case Dpage:
-		{
-			char *ret = destroy_page(page[i1]);
-			if(ret)
-				return ret;
-		}
+	case Dtag:
+		if((ret = destroy_tag(tag[i1])))
+			return ret;
 		break;
 	case Dlabel:
 		{
@@ -666,7 +652,7 @@ xread(IXPConn *c, Fcall *fcall)
 			len += type2stat(&stat, "keys", &m->qid);
 			len += type2stat(&stat, "bar", &m->qid);
 			len += type2stat(&stat, "new", &m->qid);
-			for(i = 0; i < npage; i++) {
+			for(i = 0; i < ntag; i++) {
 				if(i == sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
@@ -677,7 +663,7 @@ xread(IXPConn *c, Fcall *fcall)
 				break;
 			}
 			/* offset found, proceeding */
-			for(; i < npage; i++) {
+			for(; i < ntag; i++) {
 				if(i == sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
@@ -728,12 +714,11 @@ xread(IXPConn *c, Fcall *fcall)
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
-		case Dpage:
+		case Dtag:
 			/* jump to offset */
 			len = type2stat(&stat, "ctl", &m->qid);
-			len += type2stat(&stat, "new", &m->qid);
-			for(i = 0; i < page[i1]->narea; i++) {
-				if(i == page[i1]->sel)
+			for(i = 0; i < tag[i1]->narea; i++) {
+				if(i == tag[i1]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i);
@@ -743,8 +728,8 @@ xread(IXPConn *c, Fcall *fcall)
 				break;
 			}
 			/* offset found, proceeding */
-			for(; i < page[i1]->narea; i++) {
-				if(i == page[i1]->sel)
+			for(; i < tag[i1]->narea; i++) {
+				if(i == tag[i1]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i);
@@ -760,8 +745,8 @@ xread(IXPConn *c, Fcall *fcall)
 			len = type2stat(&stat, "ctl", &m->qid);
 			if(i2)
 				len += type2stat(&stat, "mode", &m->qid);
-			for(i = 0; i < page[i1]->area[i2]->nclient; i++) {
-				if(i == page[i1]->area[i2]->sel)
+			for(i = 0; i < tag[i1]->area[i2]->nclient; i++) {
+				if(i == tag[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i);
@@ -771,8 +756,8 @@ xread(IXPConn *c, Fcall *fcall)
 				break;
 			}
 			/* offset found, proceeding */
-			for(; i < page[i1]->area[i2]->nclient; i++) {
-				if(i == page[i1]->area[i2]->sel)
+			for(; i < tag[i1]->area[i2]->nclient; i++) {
+				if(i == tag[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i);
@@ -807,7 +792,7 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "new", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			for(i = 0; i < npage; i++) {
+			for(i = 0; i < ntag; i++) {
 				if(i == sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
@@ -862,13 +847,11 @@ xread(IXPConn *c, Fcall *fcall)
 			fcall->count += type2stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
-		case Dpage:
+		case Dtag:
 			fcall->count = type2stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "new", &m->qid);
-			p = ixp_enc_stat(p, &stat);
-			for(i = 0; i < page[i1]->narea; i++) {
-				if(i == page[i1]->sel)
+			for(i = 0; i < tag[i1]->narea; i++) {
+				if(i == tag[i1]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i);
@@ -885,8 +868,8 @@ xread(IXPConn *c, Fcall *fcall)
 			if(i2)
 				fcall->count += type2stat(&stat, "mode", &m->qid);
 				p = ixp_enc_stat(p, &stat);
-			for(i = 0; i < page[i1]->area[i2]->nclient; i++) {
-				if(i == page[i1]->area[i2]->sel)
+			for(i = 0; i < tag[i1]->area[i2]->nclient; i++) {
+				if(i == tag[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
 					snprintf(buf, sizeof(buf), "%u", i);
@@ -921,7 +904,7 @@ xread(IXPConn *c, Fcall *fcall)
 			memcpy(p, buf, fcall->count);
 			break;
 		case Fgeom:
-			client = page[i1]->area[i2]->client[i3];
+			client = tag[i1]->area[i2]->client[i3];
 			snprintf(buf, sizeof(buf), "%d %d %d %d", client->frame.rect.x, client->frame.rect.y,
 					client->frame.rect.width, client->frame.rect.height);
 			fcall->count = strlen(buf);
@@ -933,8 +916,8 @@ xread(IXPConn *c, Fcall *fcall)
 			memcpy(p, buf, fcall->count);
 			break;
 		case Fname:
-			if((fcall->count = strlen(page[i1]->area[i2]->client[i3]->name)))
-				memcpy(p, page[i1]->area[i2]->client[i3]->name, fcall->count);
+			if((fcall->count = strlen(tag[i1]->area[i2]->client[i3]->name)))
+				memcpy(p, tag[i1]->area[i2]->client[i3]->name, fcall->count);
 			break;
 		case Fexpand:
 			snprintf(buf, sizeof(buf), "%u", iexpand);
@@ -968,7 +951,7 @@ xread(IXPConn *c, Fcall *fcall)
 		case Fmode:
 			if(!i2)
 				return Enofile;
-			snprintf(buf, sizeof(buf), "%s", colmode2str(page[i1]->area[i2]->mode));
+			snprintf(buf, sizeof(buf), "%s", colmode2str(tag[i1]->area[i2]->mode));
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;	
@@ -1024,10 +1007,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 		case Droot:
 			if(!strncmp(buf, "quit", 5))
 				srv.running = 0;
-			else if(!strncmp(buf, "pager", 6))
-				pager();
 			else if(!strncmp(buf, "select", 6))
-				select_page(&buf[7]);
+				select_tag(&buf[7]);
 			else if(!strncmp(buf, "warp ", 5)) {
 				char *err;
 				if((err = warp_mouse(&buf[5])))
@@ -1036,23 +1017,23 @@ xwrite(IXPConn *c, Fcall *fcall)
 			else
 				return Enocommand;
 			break;
-		case Dpage:
+		case Dtag:
 			if(!strncmp(buf, "select ", 7))
-				select_area(page[i1]->area[page[i1]->sel], &buf[7]);
+				select_area(tag[i1]->area[tag[i1]->sel], &buf[7]);
 			break;
 		case Darea:
 			if(!strncmp(buf, "select ", 7)) {
-			   Area *a = page[i1]->area[i2];
+			   Area *a = tag[i1]->area[i2];
 			   if(a->nclient)
 				   select_client(a->client[a->sel], &buf[7]);
 			}
 			break;
 		case Dclient:
-			cl = page[i1]->area[i2]->client[i3];
+			cl = tag[i1]->area[i2]->client[i3];
 			if(!strncmp(buf, "kill", 5))
 				kill_client(cl);
-			else if(!strncmp(buf, "sendtopage ", 11))
-				sendtopage_client(cl, &buf[11]);
+			else if(!strncmp(buf, "sendtotag ", 11))
+				sendtotag_client(cl, &buf[11]);
 			else if(!strncmp(buf, "sendtoarea ", 11))
 				sendtoarea_client(cl, &buf[11]);
 			break;
@@ -1082,7 +1063,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		resize_all_clients();
 		break;
 	case Fgeom:
-		cl = page[i1]->area[i2]->client[i3];
+		cl = tag[i1]->area[i2]->client[i3];
 		if(fcall->count > sizeof(buf))
 			return "geometry values out of range";
 		memcpy(buf, fcall->data, fcall->count);
@@ -1137,7 +1118,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		def.selcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
 		for(i = 0; i < nclient; i++)
-			if(client[i]->area->page == page[sel])
+			if(client[i]->area->tag == tag[sel])
 				draw_client(client[i]);
 		break;
 	case Fnormcolors:
@@ -1150,7 +1131,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		def.normcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
 		for(i = 0; i < nclient; i++)
-			if(client[i]->area->page == page[sel])
+			if(client[i]->area->tag == tag[sel])
 				draw_client(client[i]);
 		break;
 	case Ffont:
@@ -1173,8 +1154,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			mode = str2colmode(buf);
 			if(mode == -1)
 				return "invalid area mode";
-			page[i1]->area[i2]->mode = mode;
-			arrange_area(page[i1]->area[i2]);
+			tag[i1]->area[i2]->mode = mode;
+			arrange_area(tag[i1]->area[i2]);
 		}
 		break;	
 	case Fkey:

@@ -46,10 +46,10 @@ update_bar_geometry()
     pmapbar = XCreatePixmap(dpy, winbar, brect.width, brect.height, DefaultDepth(dpy, screen));
     XSync(dpy, False);
 	draw_bar();
-	for(i = 0; i < npage; i++)
-		for(j = 1; j < page[i]->narea; j++) {
-			update_area_geometry(page[i]->area[j]);
-			arrange_area(page[i]->area[j]);
+	for(i = 0; i < ntag; i++)
+		for(j = 1; j < tag[i]->narea; j++) {
+			update_area_geometry(tag[i]->area[j]);
+			arrange_area(tag[i]->area[j]);
 		}
 }
 

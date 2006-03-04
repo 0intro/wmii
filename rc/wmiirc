@@ -40,11 +40,9 @@ do
 	:
 done
 xwrite /bar/new/colors $WMII_NORMCOLORS
-xwrite /bar/new/colors $WMII_NORMCOLORS
 xwrite /bar/new/colors $WMII_SELCOLORS
 xwrite /bar/0/data 1
-xwrite /bar/1/data 1
-xwrite /bar/expand 2
+xwrite /bar/expand 1
 
 # MISC
 xsetroot -solid '#0b1014'
@@ -76,7 +74,6 @@ $MODKEY-Shift-s
 $MODKEY-Shift-equal
 $MODKEY-Shift-h
 $MODKEY-Shift-l
-$MODKEY-Shift-p
 $MODKEY-Shift-Return
 $MODKEY-Shift-0
 $MODKEY-Shift-1
@@ -101,19 +98,10 @@ do
 	case "$type" in
 	PN)
 		xwrite /bar/0/data "$@";;
-	AN)
-		xwrite /bar/1/data "$@";;
-	CN)
-		xwrite /bar/2/data "$@";;
 	LB)
 		case "$2" in
 		1)
-			if test 1 -eq "$1"
-			then
-				xwrite /ctl pager
-			else
-				xwrite /ctl select prev
-			fi;;
+			xwrite /ctl select prev;;
 		3|4)
 			xwrite /ctl select next;;
 		5)
@@ -163,8 +151,6 @@ do
 			xwrite /ctl select prev;;
 		$MODKEY-Shift-l)
 			xwrite /ctl select next;;
-		$MODKEY-Shift-p)
-			xwrite /ctl pager;;
 		$MODKEY-Shift-[0-9])
 			xwrite /ctl select `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-d)

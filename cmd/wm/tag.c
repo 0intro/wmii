@@ -10,51 +10,51 @@
 
 #include "wm.h"
 
-Page *
-alloc_page()
+Tag *
+alloc_tag()
 {
 	static unsigned short id = 1;
-    Page *p = cext_emallocz(sizeof(Page));
+    Tag *t = cext_emallocz(sizeof(Tag));
 
-	p->id = id++;
-	alloc_area(p);
-	alloc_area(p);
-	page = (Page **)cext_array_attach((void **)page, p, sizeof(Page *), &pagesz);
-	npage++;
-	focus_page(p);
+	t->id = id++;
+	alloc_area(t);
+	alloc_area(t);
+	tag = (Tag **)cext_array_attach((void **)tag, t, sizeof(Tag *), &tagsz);
+	ntag++;
+	focus_tag(t);
     XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
-			        32, PropModeReplace, (unsigned char *) &npage, 1);
-    return p;
+			        32, PropModeReplace, (unsigned char *) &ntag, 1);
+    return t;
 }
 
 char *
-destroy_page(Page *p)
+destroy_tag(Tag *t)
 {
 	unsigned int i;
-	Page *old = p->revert;
+	Tag *old = t->revert;
 	Client *c;
 
-	for(i = 0; i < p->narea; i++)
-		if(p->area[i]->nclient)
-			return "page not empty";
+	for(i = 0; i < t->narea; i++)
+		if(t->area[i]->nclient)
+			return "tag not empty";
 
-	while(p->narea)
-		destroy_area(p->area[0]);
+	while(t->narea)
+		destroy_area(t->area[0]);
 
-	cext_array_detach((void **)page, p, &pagesz);
-	npage--;
+	cext_array_detach((void **)tag, t, &tagsz);
+	ntag--;
 
-	for(i = 0; i < npage; i++) {
-		if(page[i]->revert == p)
-			page[i]->revert = nil;
+	for(i = 0; i < ntag; i++) {
+		if(tag[i]->revert == t)
+			tag[i]->revert = nil;
 		XChangeProperty(dpy, root, net_atoms[NET_NUMBER_OF_DESKTOPS], XA_CARDINAL,
 				32, PropModeReplace, (unsigned char *) &i, 1);
 	}
 
-    free(p); 
-    if(npage && old) {
-        focus_page(old);
-		if((c = sel_client_of_page(old)))
+    free(t); 
+    if(ntag && old) {
+        focus_tag(old);
+		if((c = sel_client_of_tag(old)))
 			focus_client(c);
 	}
 	else
@@ -63,38 +63,38 @@ destroy_page(Page *p)
 }
 
 int
-page2index(Page *p)
+tag2index(Tag *t)
 {
 	int i;
-	for(i = 0; i < npage; i++)
-		if(p == page[i])
+	for(i = 0; i < ntag; i++)
+		if(t == tag[i])
 			return i;
 	return -1;
 }
 
 void
-focus_page(Page *p)
+focus_tag(Tag *t)
 {
-	Page *old = page ? page[sel] : nil;
+	Tag *old = tag ? tag[sel] : nil;
 	char buf[16];
 	Client *c;
-	int i, pi = page2index(p);
+	int i, pi = tag2index(t);
 	int px;
 
-	if(!npage || (pi == -1))
+	if(!ntag || (pi == -1))
 		return;
 
-	if(old && old != p)
-		p->revert = old;
+	if(old && old != t)
+		t->revert = old;
 	sel = pi;
 	px = sel * rect.width;
-	/* gives all(!) clients proper geometry (for use of different pagers) */
+	/* gives all(!) clients proper geometry (for use of different tagrs) */
 	for(i = 0; i < nclient; i++) {
 		c = client[i];
 		if(c->area) {
-			pi = page2index(c->area->page);
+			pi = tag2index(c->area->tag);
 			XMoveWindow(dpy, c->frame.win, px - (pi * rect.width) + c->frame.rect.x, c->frame.rect.y);
-			if(c->area->page == p)
+			if(c->area->tag == t)
 				draw_client(c);
 		}
 	}
@@ -139,36 +139,36 @@ int
 pid2index(unsigned short id)
 {
 	int i;
-	for(i = 0; i < npage; i++)
-		if(page[i]->id == id)
+	for(i = 0; i < ntag; i++)
+		if(tag[i]->id == id)
 			return i;
 	return -1;
 }
 
 void
-select_page(char *arg)
+select_tag(char *arg)
 {
 	unsigned int new = sel;
 	const char *err;
 	Client *c;
 
-    if(!npage)
+    if(!ntag)
         return;
     if(!strncmp(arg, "prev", 5)) {
 		if(new <= 1)
-			new = npage;
+			new = ntag;
 		new--;
     } else if(!strncmp(arg, "next", 5)) {
-		if(new < npage - 1)
+		if(new < ntag - 1)
 			new++;
 		else
 			new = 1;
     } else {
-		int idx = cext_strtonum(arg, 0, npage - 1, &err);
-		if(idx < npage)
+		int idx = cext_strtonum(arg, 0, ntag - 1, &err);
+		if(idx < ntag)
 			new = idx;
 	}
-    focus_page(page[new]);
-	if((c = sel_client_of_page(page[new])))
+    focus_tag(tag[new]);
+	if((c = sel_client_of_tag(tag[new])))
 		focus_client(c);
 }

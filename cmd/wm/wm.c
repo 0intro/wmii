@@ -17,7 +17,6 @@
 
 #include "wm.h"
 
-static XRectangle initial_rect;
 static int other_wm_running;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 
@@ -28,207 +27,6 @@ usage()
 {
     fprintf(stderr, "%s", "usage: wmiiwm -a <address> [-c] [-v]\n");
     exit(1);
-}
-
-static void
-scale_rect(XRectangle * from_dim, XRectangle * to_dim,
-           XRectangle * src, XRectangle * tgt)
-{
-    double wfact = (double) to_dim->width / (double) from_dim->width;
-    double hfact = (double) to_dim->height / (double) from_dim->height;
-
-    tgt->x = to_dim->x + (src->x * wfact);
-    tgt->y = to_dim->y + (src->y * hfact);
-    tgt->width = (src->width * wfact);
-    tgt->height = (src->height * hfact);
-
-    if(tgt->width < 1)
-        tgt->width = 1;
-    if(tgt->height < 1)
-        tgt->height = 1;
-}
-
-static void
-draw_pager_client(Client *c, Draw *d)
-{
-	if(c == sel_client_of_page(c->area->page))
-    	d->color = def.sel;
-    else
-    	d->color = def.norm;
-
-    d->data = c->name;
-    scale_rect(&rect, &initial_rect, &c->frame.rect, &d->rect);
-
-	if(d->rect.height < bar_height())
-		d->data = nil;
-
-    blitz_drawlabel(dpy, d);
-    XSync(dpy, False);      /* do not clear upwards */
-}
-
-static void
-draw_pager_page(unsigned int idx, Draw *d)
-{
-	int i, j;
-    char name[4];
-    initial_rect = d->rect;
-
-    if(idx == sel)
-        d->color = def.sel;
-    else
-        d->color = def.norm;
-    snprintf(name, sizeof(name), "%d", idx);
-    d->data = name;
-    blitz_drawlabel(dpy, d);
-    XSync(dpy, False);
-
-	for(i = 0; i < page[idx]->narea; i++) {
-		Area *a = page[idx]->area[i];
-		if(!a->nclient)
-			continue;
-		for(j = 0; j < a->nclient; j++)
-			draw_pager_client(a->client[j], d);
-	}
-}
-
-static void
-draw_pager()
-{
-    Draw d = { 0 };
-    unsigned int i, ic, ir, tw, th, rows, cols;
-    int dx;
-
-    blitz_getbasegeometry(npage - 1, &cols, &rows);
-    dx = (cols - 1) * DEF_PAGER_GAP;      /* DEF_PAGER_GAPpx space */
-    tw = (rect.width - dx) / cols;
-    th = ((double) tw / rect.width) * rect.height;
-    d.drawable = transient;
-    d.gc = gc_transient;
-    d.font = xfont;
-	d.align = CENTER;
-	i = 1;
-    for(ir = 0; ir < rows; ir++) {
-        for(ic = 0; ic < cols; ic++) {
-            d.rect.x = ic * tw + (ic * DEF_PAGER_GAP);
-            d.rect.width = tw;
-            if(rows == 1)
-                d.rect.y = 0;
-            else
-                d.rect.y = ir * (rect.height - th) / (rows - 1);
-            d.rect.height = th;
-            draw_pager_page(i++, &d);
-            if(i == npage)
-                return;
-        }
-    }
-}
-
-static int
-xy2pager_page(int x, int y)
-{
-    unsigned int i, ic, ir, tw, th, rows, cols;
-    int dx;
-    XRectangle r;
-
-    blitz_getbasegeometry(npage - 1, &cols, &rows);
-    dx = (cols - 1) * DEF_PAGER_GAP;      /* DEF_PAGER_GAPpx space */
-    tw = (rect.width - dx) / cols;
-    th = ((double) tw / rect.width) * rect.height;
-
-	i = 1;
-    for(ir = 0; ir < rows; ir++) {
-        for(ic = 0; ic < cols; ic++) {
-            r.x = ic * tw + (ic * DEF_PAGER_GAP);
-            r.width = tw;
-            if(rows == 1)
-                r.y = 0;
-            else
-                r.y = ir * (rect.height - th) / (rows - 1);
-            r.height = th;
-            if(blitz_ispointinrect(x, y, &r))
-                return i;
-			i++;
-            if(i == npage)
-                return -1;
-        }
-    }
-    return -1;
-}
-
-static int
-handle_kpress(XKeyEvent * e)
-{
-    KeySym ksym = XKeycodeToKeysym(dpy, e->keycode, 0);
-
-    if(ksym >= XK_1 && ksym <= XK_9)
-        return ksym - XK_1 + 1;
-    else if(ksym >= XK_a && ksym <= XK_z)
-        return 10 + ksym - XK_a;
-    return -1;
-}
-
-void
-pager()
-{
-    XEvent ev;
-    int i;
-	Client *c;
-
-    if(npage < 2)
-        return;
-
-    XClearWindow(dpy, transient);
-    XMapRaised(dpy, transient);
-    draw_pager();
-
-    while(XGrabKeyboard
-          (dpy, transient, True, GrabModeAsync, GrabModeAsync,
-           CurrentTime) != GrabSuccess)
-        usleep(20000);
-
-    while(XGrabPointer
-          (dpy, transient, False, ButtonPressMask, GrabModeAsync,
-           GrabModeAsync, None, normal_cursor, CurrentTime) != GrabSuccess)
-        usleep(20000);
-
-    for(;;) {
-        while(!XCheckWindowEvent
-              (dpy, transient, ButtonPressMask | KeyPressMask, &ev)) {
-            usleep(20000);
-            continue;
-        }
-
-        switch (ev.type) {
-        case KeyPress:
-            XUnmapWindow(dpy, transient);
-            if((i = handle_kpress(&ev.xkey)) != -1)
-                if(i < npage) {
-					focus_page(page[i]);
-					if((c = sel_client_of_page(page[i])))
-						focus_client(c);
-				}
-            XUngrabKeyboard(dpy, CurrentTime);
-            XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
-			XSync(dpy, False);
-            return;
-            break;
-        case ButtonPress:
-            XUnmapWindow(dpy, transient);
-            if(ev.xbutton.button == Button1) {
-                if((i = xy2pager_page(ev.xbutton.x, ev.xbutton.y)) != -1) {
-                focus_page(page[i]);
-				if((c = sel_client_of_page(page[i])))
-					focus_client(c);
-			}
-
-            }
-            XUngrabKeyboard(dpy, CurrentTime);
-            XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
-			XSync(dpy, False);
-            return;
-            break;
-        }
-    }
 }
 
 Client *
@@ -369,7 +167,6 @@ static void
 init_screen()
 {
     XGCValues gcv;
-    XSetWindowAttributes wa;
 
     gcv.subwindow_mode = IncludeInferiors;
     gcv.function = GXxor;
@@ -384,18 +181,6 @@ init_screen()
     rect.width = DisplayWidth(dpy, screen);
     rect.height = DisplayHeight(dpy, screen);
 
-    wa.override_redirect = 1;
-    wa.background_pixmap = ParentRelative;
-    wa.event_mask = ExposureMask | ButtonPressMask;
-
-    transient = XCreateWindow(dpy, root, 0, 0, rect.width, rect.height,
-					0, DefaultDepth(dpy, screen), CopyFromParent,
-                    DefaultVisual(dpy, screen),
-                    CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
-
-    XSync(dpy, False);
-    gc_transient = XCreateGC(dpy, transient, 0, 0);
-    XDefineCursor(dpy, transient, normal_cursor);
     XDefineCursor(dpy, root, normal_cursor);
 }
 
@@ -528,8 +313,8 @@ main(int argc, char *argv[])
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
     init_x_event_handler();
 
-	npage = nclient = pagesz = clientsz = sel = 0;
-    page = nil;
+	ntag = nclient = tagsz = clientsz = sel = 0;
+    tag = nil;
 	client = nil;
 
 	key = nil;
@@ -573,8 +358,8 @@ main(int argc, char *argv[])
 	XMapRaised(dpy, winbar);
 	draw_bar();
 
-	alloc_page(); /* page 0 */
-	alloc_page(); /* page 1 */
+	alloc_tag(); /* tag 0 */
+	alloc_tag(); /* tag 1 */
     scan_wins();
 
     /* main event loop */
