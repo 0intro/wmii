@@ -85,8 +85,8 @@ handle_buttonpress(XEvent *e)
 				mouse_resize(c, align);
 		}
 	
-		if(c && c->area) {
-			snprintf(buf, sizeof(buf), "CB %d %d\n", client2index(c) + 1, ev->button);
+		if(c->frame) {
+			snprintf(buf, sizeof(buf), "CB %d %d\n", frame2index(c->frame) + 1, ev->button);
 			write_event(buf);
 		}
 	}
@@ -112,8 +112,8 @@ handle_buttonpress(XEvent *e)
 		else if(ev->button == Button1)
 			focus(c);
 
-		if(c) {
-			snprintf(buf, sizeof(buf), "CB %d %d\n", client2index(c) + 1, ev->button);
+		if(c->frame) {
+			snprintf(buf, sizeof(buf), "CB %d %d\n", frame2index(c->frame) + 1, ev->button);
 			write_event(buf);
 		}
 	}
@@ -146,11 +146,12 @@ handle_configurerequest(XEvent *e)
 
         gravitate(c, False);
 
-        if(c->area) {
-            c->frect.x = wc.x = c->rect.x - def.border;
-            c->frect.y = wc.y = c->rect.y - bar_height();
-            c->frect.width = wc.width = c->rect.width + 2 * def.border;
-            c->frect.height = wc.height = c->rect.height + def.border + bar_height();
+        if(c->frame) {
+			Frame *f = c->frame;
+            f->rect.x = wc.x = c->rect.x - def.border;
+            f->rect.y = wc.y = c->rect.y - bar_height();
+            f->rect.width = wc.width = c->rect.width + 2 * def.border;
+            f->rect.height = wc.height = c->rect.height + def.border + bar_height();
             wc.border_width = 1;
 			wc.sibling = None;
 			wc.stack_mode = ev->detail;
@@ -161,7 +162,7 @@ handle_configurerequest(XEvent *e)
 
     wc.x = ev->x;
     wc.y = ev->y;
-    if(c && c->area) {
+    if(c && c->frame) {
         wc.x = def.border;
         wc.y = bar_height();
     }
@@ -197,7 +198,7 @@ handle_expose(XEvent *e)
     if(ev->count == 0) {
 		if(ev->window == winbar) 
 			draw_bar();
-		else if((c = win2clientframe(ev->window)))
+		else if((c = win2clientframe(ev->window)) && c->frame)
             draw_client(c);
     }
 }
@@ -239,7 +240,7 @@ handle_maprequest(XEvent *e)
     c = win2client(ev->window);
     if(!c)
         c = alloc_client(ev->window, &wa);
-    if(!c->area)
+    if(!c->frame)
         attach_client(c);
 }
 

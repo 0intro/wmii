@@ -133,7 +133,7 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 	   if(i2id && (*i1 != -1)) {
 			*i2 = aid2index(tag[*i1], i2id);
 		   if(i3id && (*i2 != -1))
-			   *i3 = cid2index(tag[*i1]->area[*i2], i3id);
+			   *i3 = frid2index(tag[*i1]->area[*i2], i3id);
 	   }
 	}
 }
@@ -350,15 +350,15 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			Area *a = p->area[dir_i2];
 			new->type = IXP_QTDIR;
 			if(!strncmp(wname, "sel", 4)) {
-				if(!a->nclient)
+				if(!a->nframe)
 					return -1;
-				new->path = mkqpath(Dclient, p->id, a->id, a->client[a->sel]->id);
+				new->path = mkqpath(Dclient, p->id, a->id, a->frame[a->sel]->id);
 			}
 			else {
 				i = cext_strtonum(wname, 0, 0xffff, &err);
-				if(err || (i >= a->nclient))
+				if(err || (i >= a->nframe))
 					return -1;
-				new->path = mkqpath(Dclient, p->id, a->id, a->client[i]->id);
+				new->path = mkqpath(Dclient, p->id, a->id, a->frame[i]->id);
 			}
 		}
 		break;
@@ -511,7 +511,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 	int dir_i1 = 0, dir_i2 = 0, dir_i3 = 0;
 	int type;
 	char buf[32];
-	Client *c;
+	Frame *f;
 
 	decode_qpath(dir, &dir_type, &dir_i1, &dir_i2, &dir_i3);
 	if((dir_i1 == -1) || (dir_i2 == -1) || (dir_i3 == -1))
@@ -538,9 +538,9 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
         break;
     case Fgeom:
-		c = tag[dir_i1]->area[dir_i2]->client[dir_i3];
-		snprintf(buf, sizeof(buf), "%d %d %d %d", c->frect.x, c->frect.y,
-				c->frect.width, c->frect.height);
+		f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
+		snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
+				f->rect.width, f->rect.height);
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
         break;
     case Fsnap:
@@ -548,8 +548,8 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 		break;
     case Fname:
-		c = tag[dir_i1]->area[dir_i2]->client[dir_i3];
-		return mkstat(stat, dir, wname, strlen(c->name), DMREAD);
+		f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
+		return mkstat(stat, dir, wname, strlen(f->client->name), DMREAD);
         break;
     case Fkey:
 		return mkstat(stat, dir, wname, 0, DMWRITE);
@@ -633,7 +633,7 @@ xread(IXPConn *c, Fcall *fcall)
 	char buf[32];
 	unsigned char type;
 	int i1 = 0, i2 = 0, i3 = 0;
-	Client *client;
+	Frame *f;
 
     if(!m)
         return Enofid;
@@ -745,7 +745,7 @@ xread(IXPConn *c, Fcall *fcall)
 			len = type2stat(&stat, "ctl", &m->qid);
 			if(i2)
 				len += type2stat(&stat, "mode", &m->qid);
-			for(i = 0; i < tag[i1]->area[i2]->nclient; i++) {
+			for(i = 0; i < tag[i1]->area[i2]->nframe; i++) {
 				if(i == tag[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
@@ -756,7 +756,7 @@ xread(IXPConn *c, Fcall *fcall)
 				break;
 			}
 			/* offset found, proceeding */
-			for(; i < tag[i1]->area[i2]->nclient; i++) {
+			for(; i < tag[i1]->area[i2]->nframe; i++) {
 				if(i == tag[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
@@ -868,7 +868,7 @@ xread(IXPConn *c, Fcall *fcall)
 			if(i2)
 				fcall->count += type2stat(&stat, "mode", &m->qid);
 				p = ixp_enc_stat(p, &stat);
-			for(i = 0; i < tag[i1]->area[i2]->nclient; i++) {
+			for(i = 0; i < tag[i1]->area[i2]->nframe; i++) {
 				if(i == tag[i1]->area[i2]->sel)
 					snprintf(buf, sizeof(buf), "%s", "sel");
 				else
@@ -904,9 +904,9 @@ xread(IXPConn *c, Fcall *fcall)
 			memcpy(p, buf, fcall->count);
 			break;
 		case Fgeom:
-			client = tag[i1]->area[i2]->client[i3];
-			snprintf(buf, sizeof(buf), "%d %d %d %d", client->frect.x, client->frect.y,
-					client->frect.width, client->frect.height);
+			f = tag[i1]->area[i2]->frame[i3];
+			snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
+					f->rect.width, f->rect.height);
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -916,8 +916,8 @@ xread(IXPConn *c, Fcall *fcall)
 			memcpy(p, buf, fcall->count);
 			break;
 		case Fname:
-			if((fcall->count = strlen(tag[i1]->area[i2]->client[i3]->name)))
-				memcpy(p, tag[i1]->area[i2]->client[i3]->name, fcall->count);
+			if((fcall->count = strlen(tag[i1]->area[i2]->frame[i3]->client->name)))
+				memcpy(p, tag[i1]->area[i2]->frame[i3]->client->name, fcall->count);
 			break;
 		case Fexpand:
 			snprintf(buf, sizeof(buf), "%u", iexpand);
@@ -988,7 +988,7 @@ xwrite(IXPConn *c, Fcall *fcall)
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned char type;
 	int i, i1 = 0, i2 = 0, i3 = 0;
-	Client *cl;
+	Frame *f;
 
     if(!m)
         return Enofid;
@@ -1023,18 +1023,18 @@ xwrite(IXPConn *c, Fcall *fcall)
 		case Darea:
 			if(!strncmp(buf, "select ", 7)) {
 			   Area *a = tag[i1]->area[i2];
-			   if(a->nclient)
-				   select_client(a->client[a->sel], &buf[7]);
+			   if(a->nframe)
+				   select_client(a->frame[a->sel]->client, &buf[7]);
 			}
 			break;
 		case Dclient:
-			cl = tag[i1]->area[i2]->client[i3];
+			f = tag[i1]->area[i2]->frame[i3];
 			if(!strncmp(buf, "kill", 5))
-				kill_client(cl);
+				kill_client(f->client);
 			else if(!strncmp(buf, "sendtotag ", 11))
-				sendtotag_client(cl, &buf[11]);
+				sendtotag_client(f->client, &buf[11]);
 			else if(!strncmp(buf, "sendtoarea ", 11))
-				sendtoarea_client(cl, &buf[11]);
+				sendtoarea_client(f->client, &buf[11]);
 			break;
 		default:
 			break;
@@ -1062,13 +1062,13 @@ xwrite(IXPConn *c, Fcall *fcall)
 		resize_all_clients();
 		break;
 	case Fgeom:
-		cl = tag[i1]->area[i2]->client[i3];
+		f = tag[i1]->area[i2]->frame[i3];
 		if(fcall->count > sizeof(buf))
 			return "geometry values out of range";
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		blitz_strtorect(&rect, &cl->frect, buf);
-		resize_client(cl, &cl->frect, 0, False);
+		blitz_strtorect(&rect, &f->rect, buf);
+		resize_client(f->client, &f->rect, 0, False);
 		break;
     case Fexpand:
 		{
@@ -1117,7 +1117,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		def.selcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
 		for(i = 0; i < nclient; i++)
-			if(client[i]->area->tag == tag[sel])
+			if(client[i]->frame->area->tag == tag[sel])
 				draw_client(client[i]);
 		break;
 	case Fnormcolors:
@@ -1130,7 +1130,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		def.normcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
 		for(i = 0; i < nclient; i++)
-			if(client[i]->area->tag == tag[sel])
+			if(client[i]->frame->area->tag == tag[sel])
 				draw_client(client[i]);
 		break;
 	case Ffont:

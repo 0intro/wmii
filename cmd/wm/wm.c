@@ -226,7 +226,7 @@ cleanup()
 	Client *c;
 	for(i = 0; client && client[i]; i++) {
 		c = client[i];
-		reparent_client(c, root, c->frect.x, c->frect.y);
+		reparent_client(c, root, c->frame->rect.x, c->frame->rect.y);
 	}
     XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 	XSync(dpy, False);

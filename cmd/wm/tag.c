@@ -33,7 +33,7 @@ destroy_tag(Tag *t)
 	unsigned int i;
 
 	for(i = 0; i < t->narea; i++)
-		if(t->area[i]->nclient)
+		if(t->area[i]->nframe)
 			return "tag not empty";
 
 	while(t->narea)
@@ -64,7 +64,6 @@ void
 focus_tag(Tag *t)
 {
 	char buf[16];
-	Client *c;
 	int i, pi = tag2index(t);
 	int px;
 
@@ -75,12 +74,12 @@ focus_tag(Tag *t)
 	px = sel * rect.width;
 	/* gives all(!) clients proper geometry (for use of different tagrs) */
 	for(i = 0; i < nclient; i++) {
-		c = client[i];
-		if(c->area) {
-			pi = tag2index(c->area->tag);
-			XMoveWindow(dpy, c->framewin, px - (pi * rect.width) + c->frect.x, c->frect.y);
-			if(c->area->tag == t)
-				draw_client(c);
+		if(client[i]->frame) {
+			Frame *f = client[i]->frame;
+			pi = tag2index(f->area->tag);
+			XMoveWindow(dpy, client[i]->framewin, px - (pi * rect.width) + f->rect.x, f->rect.y);
+			if(f->area->tag == t)
+				draw_client(client[i]);
 		}
 	}
 	snprintf(buf, sizeof(buf), "PN %d\n", sel);

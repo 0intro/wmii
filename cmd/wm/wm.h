@@ -65,18 +65,19 @@ enum {
 #define ROOT_MASK              SubstructureRedirectMask
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
 
-typedef struct Area Area;
 typedef struct Tag Tag;
+typedef struct Area Area;
+typedef struct Frame Frame;
 typedef struct Client Client;
 
 
 struct Area {
 	unsigned short id;
-    Client **client;
+    Frame **frame;
 	Tag *tag;
-	unsigned int clientsz;
+	unsigned int framesz;
 	unsigned int sel;
-	unsigned int nclient;
+	unsigned int nframe;
 	int mode;
 	XRectangle rect;
 };
@@ -89,21 +90,26 @@ struct Tag {
 	unsigned int sel;
 };
 
-struct Client {
+struct Frame {
+	Area *area;
 	unsigned short id;
+	XRectangle rect;
+	Client *client;
+};
+
+struct Client {
 	char name[256];
     int proto;
     unsigned int border;
     Bool destroyed;
-	Area *area;
     Window win;
     Window trans;
     XRectangle rect;
     XSizeHints size;
 	Window framewin;
-    XRectangle frect;
     GC gc;
     Cursor cursor;
+	Frame *frame;
 };
 
 typedef struct Key Key;
@@ -227,8 +233,8 @@ Client *sel_client_of_tag(Tag *t);
 void focus_client(Client *c);
 Client *win2clientframe(Window w);
 void resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall);
-int cid2index(Area *a, unsigned short id);
-int client2index(Client *c);
+int frid2index(Area *a, unsigned short id);
+int frame2index(Frame *f);
 void select_client(Client *c, char *arg);
 void sendtotag_client(Client *c, char *arg);
 void sendtoarea_client(Client *c, char *arg);
