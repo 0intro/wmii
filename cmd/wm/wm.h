@@ -53,7 +53,7 @@ enum {
 enum {                          
     FsDroot,
 	FsDdef,
-	FsDtag,
+	FsDws,
 	FsDarea,
 	FsDclient,
 	FsDkeys,
@@ -73,6 +73,7 @@ enum {
 	FsFevent,
 	FsFctl,
 	FsFname,
+	FsFtag,
 	FsFmode
 };
 
@@ -117,7 +118,7 @@ struct Frame {
 
 struct Client {
 	char name[256];
-	char tags[256];
+	char tag[256];
     int proto;
     unsigned int border;
     Bool destroyed;
@@ -284,7 +285,7 @@ Tag *alloc_tag();
 char *destroy_tag(Tag *t);
 void focus_tag(Tag *t);
 XRectangle *rectangles(unsigned int *num);
-int pid2index(unsigned short id);
+int tid2index(unsigned short id);
 void select_tag(char *arg);
 int tag2index(Tag *t);
 

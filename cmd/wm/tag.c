@@ -120,7 +120,7 @@ rectangles(unsigned int *num)
 }
 
 int
-pid2index(unsigned short id)
+tid2index(unsigned short id)
 {
 	int i;
 	for(i = 0; i < ntag; i++)

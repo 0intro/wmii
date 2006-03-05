@@ -48,27 +48,28 @@ static char Enocommand[] = "command not supported";
  * /bar/1/colors		FsFcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /event				FsFevent
  * /ctl					FsFctl 		command interface (root)
- * /new/				FsDtag		returns new tag
- * /sel/				FsDtag		sel tag
- * /1/					FsDtag		tag
- * /1/ctl				FsFctl		command interface (tag)
- * /1/sel/				FsDarea
- * /1/float/			FsDarea		floating clients in area 0
- * /1/float/ctl 		FsFctl		command interface (area)
- * /1/float/mode		FsFmode	col mode
- * /1/float/sel/		FsDclient
- * /1/float/1/			FsDclient
- * /1/float/1/name		FsFname		name of client
- * /1/float/1/geom		FsFgeom		geometry of client
- * /1/float/1/ctl 		FsFctl 		command interface (client)
- * /1/1/				FsDarea
- * /1/1/ctl 			FsFctl 		command interface (area)
- * /1/1/mode			FsFmode	col mode
- * /1/1/1/sel/			FsDclient
- * /1/1/1/1/			FsDclient
- * /1/1/1/name			FsFname		name of client
- * /1/1/1/geom			FsFgeom		geometry of client
- * /1/1/1/ctl 			FsFctl 		command interface (client)
+ * /ws/				    FsDws		returns new tag
+ * /ws/					FsDws		tag
+ * /ws/ctl				FsFctl		command interface (tag)
+ * /ws/sel/				FsDarea
+ * /ws/float/			FsDarea		floating clients in area 0
+ * /ws/float/ctl 		FsFctl		command interface (area)
+ * /ws/float/mode		FsFmode	col mode
+ * /ws/float/sel/		FsDclient
+ * /ws/float/1/			FsDclient
+ * /ws/float/1/name		FsFname		name of client
+ * /ws/float/1/tag		FsFtag		tag of client
+ * /ws/float/1/geom		FsFgeom		geometry of client
+ * /ws/float/1/ctl 		FsFctl 		command interface (client)
+ * /ws/1/				FsDarea
+ * /ws/1/ctl 			FsFctl 		command interface (area)
+ * /ws/1/mode			FsFmode	col mode
+ * /ws/1/1/sel/			FsDclient
+ * /ws/1/1/1/			FsDclient
+ * /ws/1/1/name			FsFname		name of client
+ * /ws/1/1/tag			FsFtag		tag of client
+ * /ws/1/1/geom			FsFgeom		geometry of client
+ * /ws/1/1/ctl 			FsFctl 		command interface (client)
  */
 
 Qid root_qid;
@@ -128,13 +129,13 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 			case FsFdata:
 			case FsFcolors:
 			case FsDlabel: *i1 = lid2index(i1id); break;
-			default: *i1 = pid2index(i1id); break;
+			default: *i1 = tid2index(i1id); break;
 		}
-	   if(i2id && (*i1 != -1)) {
+		if(i2id && (*i1 != -1)) {
 			*i2 = aid2index(tag[*i1], i2id);
-		   if(i3id && (*i2 != -1))
-			   *i3 = frid2index(tag[*i1]->area[*i2], i3id);
-	   }
+			if(i3id && (*i2 != -1))
+				*i3 = frid2index(tag[*i1]->area[*i2], i3id);
+		}
 	}
 }
 
@@ -142,29 +143,33 @@ static char *
 qid2name(Qid *qid)
 {
 	unsigned char type;
-	int i1 = 0, i2 = 0, i3 = 0;
+	int i1 = -1, i2 = -1, i3 = -1;
 	static char buf[32];
 
 	decode_qpath(qid, &type, &i1, &i2, &i3);
-	if((i1 == -1) || (i2 == -1) || (i3 == -1))
-		return 0;
 
 	switch(type) {
 		case FsDroot: return "/"; break;
 		case FsDdef: return "def"; break;
 		case FsDkeys: return "keys"; break;
 		case FsDbar: return "bar"; break;
-		case FsDtag:
+		case FsDws:
+			if(i1 == -1)
+				return nil;
 			if(i1 == sel)
 				return "sel";
 			snprintf(buf, sizeof(buf), "%u", i1);
 			return buf;
 			break;
 		case FsDlabel:
+			if(i1 == -1)
+				return nil;
 			snprintf(buf, sizeof(buf), "%u", i1);
 			return buf;
 			break;
 		case FsDarea:
+			if(i1 == -1 || i2 == -1)
+				return nil;
 			if(!i2) {
 				if(i2 == tag[i1]->sel)
 					return "sel";
@@ -177,6 +182,8 @@ qid2name(Qid *qid)
 			return buf;
 			break;
 		case FsDclient:
+			if(i1 == -1 || i2 == -1 || i3 == -1)
+				return nil;
 			if(tag[i1]->area[i2]->sel == i3)
 				return "sel";
 			snprintf(buf, sizeof(buf), "%u", i3);
@@ -186,16 +193,45 @@ qid2name(Qid *qid)
 		case FsFnormcolors: return "normcolors"; break;
 		case FsFfont: return "font"; break;
 		case FsFcolors: return "colors"; break;
-		case FsFdata: return "data"; break;
-		case FsFexpand: return "expand"; break;
+		case FsFdata:
+			if(i1 == -1)
+				return nil;
+			return "data";
+			break;
+		case FsFexpand:
+			if(i1 == -1)
+				return nil;
+			return "expand";
+			break;
 		case FsFctl: return "ctl"; break;
 		case FsFborder: return "border"; break;
-		case FsFsnap: return "border"; break;
-		case FsFgeom: return "geometry"; break;
-		case FsFname: return "name"; break;
-		case FsFmode: return "mode"; break;
+		case FsFsnap: return "snap"; break;
+		case FsFgeom:
+			if(i1 == -1 || i2 == -1 || i3 == -1)
+				return nil;
+			return "geom";
+			break;
+		case FsFname:
+			if(i1 == -1 || i2 == -1 || i3 == -1)
+				return nil;
+			return "name";
+			break;
+		case FsFtag:
+			if(i1 == -1 || i2 == -1 || i3 == -1)
+				return nil;
+		 	return "tag";
+			break;
+		case FsFmode:
+			if(i1 == -1 || i2 == -1)
+				return nil;
+			return "mode";
+			break;
 		case FsFevent: return "event"; break;
-		case FsFkey: return key[i1]->name; break; 
+		case FsFkey:
+			if(i1 == -1)
+				return nil;
+		 	return key[i1]->name;
+			break; 
 		default: return nil; break;
 	}
 }
@@ -208,7 +244,7 @@ name2type(char *name, unsigned char dir_type)
 		return FsDroot;
 	if(!strncmp(name, "new", 4)) {
 		switch(dir_type) {
-		case FsDroot: return FsDtag; break;
+		case FsDroot: return FsDws; break;
 		case FsDbar: 	return FsDlabel; break;
 		}
 	}
@@ -226,9 +262,11 @@ name2type(char *name, unsigned char dir_type)
 		return FsFsnap;
 	if(!strncmp(name, "name", 5))
 		return FsFname;
+	if(!strncmp(name, "tag", 4))
+		return FsFtag;
 	if(!strncmp(name, "border", 7))
 		return FsFborder;
-	if(!strncmp(name, "geometry", 9))
+	if(!strncmp(name, "geom", 5))
 		return FsFgeom;
 	if(!strncmp(name, "expand", 7))
 		return FsFexpand;
@@ -254,9 +292,9 @@ name2type(char *name, unsigned char dir_type)
 dyndir:
 	/*fprintf(stderr, "nametotype: dir_type = %d\n", dir_type);*/
 	switch(dir_type) {
-	case FsDroot: return FsDtag; break;
+	case FsDroot: return FsDws; break;
 	case FsDbar: return FsDlabel; break;
-	case FsDtag: return FsDarea; break;
+	case FsDws: return FsDarea; break;
 	case FsDarea: return FsDclient; break;
 	}
 	return -1;
@@ -266,12 +304,10 @@ static int
 mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 {
 	unsigned char dir_type;
-	int dir_i1 = 0, dir_i2 = 0, dir_i3 = 0;
+	int dir_i1 = -1, dir_i2 = -1, dir_i3 = -1;
 	int type, i;
 
 	decode_qpath(dir, &dir_type, &dir_i1, &dir_i2, &dir_i3);
-	if((dir_i1 == -1) || (dir_i2 == -1) || (dir_i3 == -1))
-		return -1;
 	type = name2type(wname, dir_type);
 
 	new->dir_type = dir_type;
@@ -298,7 +334,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			if(iswalk)
 				new->path = mkqpath(FsDlabel, new_label()->id, 0, 0);
 			else
-				new->path = mkqpath(FsDlabel, 0,0 ,0);
+				new->path = mkqpath(FsDlabel, 0, 0 ,0);
 		}
 		else {
 			i = cext_strtonum(wname, 0, 0xffff, &err);
@@ -307,29 +343,31 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			new->path = mkqpath(FsDlabel, label[i]->id, 0, 0);
 		}
 		break;
-	case FsDtag:
+	case FsDws:
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4)) {
 			if(iswalk) {
 				Tag *p = alloc_tag();
-				new->path = mkqpath(FsDtag, p->id, 0, 0);
+				new->path = mkqpath(FsDws, p->id, 0, 0);
 			}
 			else
-				new->path = mkqpath(FsDtag, 0, 0, 0);
+				new->path = mkqpath(FsDws, 0, 0, 0);
 		}
 		else if(!strncmp(wname, "sel", 4)) {
 			if(!ntag)
 				return -1;
-			new->path = mkqpath(FsDtag, tag[sel]->id, 0, 0);
+			new->path = mkqpath(FsDws, tag[sel]->id, 0, 0);
 		}
 		else {
 			i = cext_strtonum(wname, 0, 0xffff, &err);
 			if(err || (i >= ntag))
 				return -1;
-			new->path = mkqpath(FsDtag, tag[i]->id, 0, 0);
+			new->path = mkqpath(FsDws, tag[i]->id, 0, 0);
 		}
 		break;
 	case FsDarea:
+		if(dir_i1 == -1)
+			return -1;
 		{
 			Tag *p = tag[dir_i1];
 			new->type = IXP_QTDIR;
@@ -345,6 +383,8 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		}
 		break;
 	case FsDclient:
+		if(dir_i1 == -1 || dir_i2 == -1)
+			return -1;
 		{
 			Tag *p = tag[dir_i1];
 			Area *a = p->area[dir_i2];
@@ -373,8 +413,25 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		break;
 	case FsFdata:
 	case FsFcolors:
-		if((dir_type == FsDlabel) && (dir_i1 >= nlabel))
+		if((dir_type == FsDlabel) && (dir_i1 == -1))
 			return -1;
+		new->type = IXP_QTFILE;
+		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
+		break;
+	case FsFmode:
+		if(dir_i1 == -1 || dir_i2 == -1)
+			return -1;
+		new->type = IXP_QTFILE;
+		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
+		break;
+	case FsFgeom:
+	case FsFname:
+	case FsFtag:
+		if(dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1)
+			return -1;
+		new->type = IXP_QTFILE;
+		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
+		break;
 	default:
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
@@ -521,7 +578,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     switch (type) {
     case FsDclient:
     case FsDarea:
-    case FsDtag:
+    case FsDws:
     case FsDdef:
 	case FsDkeys:
 	case FsDbar:
@@ -550,6 +607,10 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     case FsFname:
 		f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
 		return mkstat(stat, dir, wname, strlen(f->client->name), DMREAD);
+        break;
+    case FsFtag:
+		f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
+		return mkstat(stat, dir, wname, strlen(f->client->tag), DMREAD | DMWRITE);
         break;
     case FsFkey:
 		return mkstat(stat, dir, wname, 0, DMWRITE);
@@ -589,7 +650,7 @@ xremove(IXPConn *c, Fcall *fcall)
 	if((i1 == -1) || (i2 == -1) || (i3 == -1))
 		return Enofile;
 	switch(type) {
-	case FsDtag:
+	case FsDws:
 		if((ret = destroy_tag(tag[i1])))
 			return ret;
 		break;
@@ -714,7 +775,7 @@ xread(IXPConn *c, Fcall *fcall)
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
-		case FsDtag:
+		case FsDws:
 			/* jump to offset */
 			len = type2stat(&stat, "ctl", &m->qid);
 			for(i = 0; i < tag[i1]->narea; i++) {
@@ -847,7 +908,7 @@ xread(IXPConn *c, Fcall *fcall)
 			fcall->count += type2stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
-		case FsDtag:
+		case FsDws:
 			fcall->count = type2stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < tag[i1]->narea; i++) {
@@ -881,11 +942,11 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsDclient:
-			fcall->count = type2stat(&stat, "border", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "name", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "geometry", &m->qid);
+			fcall->count += type2stat(&stat, "tag", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			fcall->count += type2stat(&stat, "geom", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "ctl", &m->qid);
 			p = ixp_enc_stat(p, &stat);
@@ -918,6 +979,10 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsFname:
 			if((fcall->count = strlen(tag[i1]->area[i2]->frame[i3]->client->name)))
 				memcpy(p, tag[i1]->area[i2]->frame[i3]->client->name, fcall->count);
+			break;
+		case FsFtag:
+			if((fcall->count = strlen(tag[i1]->area[i2]->frame[i3]->client->tag)))
+				memcpy(p, tag[i1]->area[i2]->frame[i3]->client->tag, fcall->count);
 			break;
 		case FsFexpand:
 			snprintf(buf, sizeof(buf), "%u", iexpand);
@@ -1016,7 +1081,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			else
 				return Enocommand;
 			break;
-		case FsDtag:
+		case FsDws:
 			if(!strncmp(buf, "select ", 7))
 				select_area(tag[i1]->area[tag[i1]->sel], &buf[7]);
 			break;
@@ -1060,6 +1125,13 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return "border value out of range 0x0000,..,0xffff";
 		def.border = i;
 		resize_all_clients();
+		break;
+	case FsFtag:
+		f = tag[i1]->area[i2]->frame[i3];
+		if(fcall->count > sizeof(f->client->tag))
+			return "tag value too long";
+		memcpy(f->client->tag, fcall->data, fcall->count);
+		/* TODO: update_tags */
 		break;
 	case FsFgeom:
 		f = tag[i1]->area[i2]->frame[i3];
