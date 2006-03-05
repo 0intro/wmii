@@ -356,9 +356,6 @@ main(int argc, char *argv[])
                       	 	DefaultDepth(dpy, screen));
 	XMapRaised(dpy, winbar);
 	draw_bar();
-
-	alloc_tag("scratch");
-	alloc_tag("default");
     scan_wins();
 
     /* main event loop */

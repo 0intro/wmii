@@ -85,8 +85,6 @@ $MODKEY-Shift-6
 $MODKEY-Shift-7
 $MODKEY-Shift-8
 $MODKEY-Shift-9
-$MODKEY-d
-$MODKEY-a
 EOF
 
 # EVENT LOOP
@@ -153,10 +151,6 @@ do
 			xwrite /ctl select next;;
 		$MODKEY-Shift-[0-9])
 			xwrite /ctl select `echo $1 | sed 's/.*-//'`;;
-		$MODKEY-d)
-			xwrite /sel/sel/sel/ctl sendtopage 0;;
-		$MODKEY-a)
-			xwrite /0/sel/sel/ctl sendtopage sel;;
 		esac;;
 	esac
 done &

@@ -343,7 +343,7 @@ attach_client(Client *c)
 {
 	Tag *t;
     if(!ntag)
-		t = alloc_tag("new");
+		t = alloc_tag("nil");
 	else
 		t = tag[sel];
 
@@ -513,31 +513,6 @@ select_client(Client *c, char *arg)
 			return;
 	}
 	focus_client(a->frame[i]->client);
-}
-
-void
-sendtotag_client(Client *c, char *arg)
-{
-	Tag *t;
-	Client *to;
-
-	if(!strncmp(arg, "new", 4))
-		t = alloc_tag("new");
-	else if(!strncmp(arg, "sel", 4))
-		t = tag[sel];
-	else {
-		const char *errstr;
-		int i = cext_strtonum(arg, 0, ntag - 1, &errstr);
-		if(errstr)
-			return;
-		t = tag[i];
-	}
-	detach_client(c, False);
-	attach_totag(t, c);
-	if(t == tag[sel])
-		focus_client(c);
-	else if((to = sel_client_of_tag(tag[sel])))
-		focus_client(to);
 }
 
 void

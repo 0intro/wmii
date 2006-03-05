@@ -248,7 +248,6 @@ void resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall);
 int frid2index(Area *a, unsigned short id);
 int frame2index(Frame *f);
 void select_client(Client *c, char *arg);
-void sendtotag_client(Client *c, char *arg);
 void sendtoarea_client(Client *c, char *arg);
 void resize_all_clients();
 void focus(Client *c);

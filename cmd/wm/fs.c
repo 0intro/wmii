@@ -1138,8 +1138,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 			f = tag[i1]->area[i2]->frame[i3];
 			if(!strncmp(buf, "kill", 5))
 				kill_client(f->client);
-			else if(!strncmp(buf, "sendtotag ", 11))
-				sendtotag_client(f->client, &buf[11]);
 			else if(!strncmp(buf, "sendtoarea ", 11))
 				sendtoarea_client(f->client, &buf[11]);
 			break;
