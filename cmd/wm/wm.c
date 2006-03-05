@@ -148,18 +148,17 @@ init_atoms()
 static void
 init_cursors()
 {
-    normal_cursor = XCreateFontCursor(dpy, XC_left_ptr);
-    resize_cursor = XCreateFontCursor(dpy, XC_sizing);
-    move_cursor = XCreateFontCursor(dpy, XC_fleur);
-    drag_cursor = XCreateFontCursor(dpy, XC_cross);
-    w_cursor = XCreateFontCursor(dpy, XC_left_side);
-    e_cursor = XCreateFontCursor(dpy, XC_right_side);
-    n_cursor = XCreateFontCursor(dpy, XC_top_side);
-    s_cursor = XCreateFontCursor(dpy, XC_bottom_side);
-    nw_cursor = XCreateFontCursor(dpy, XC_top_left_corner);
-    ne_cursor = XCreateFontCursor(dpy, XC_top_right_corner);
-    sw_cursor = XCreateFontCursor(dpy, XC_bottom_left_corner);
-    se_cursor = XCreateFontCursor(dpy, XC_bottom_right_corner);
+    cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
+    cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
+    cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
+    cursor[CurW] = XCreateFontCursor(dpy, XC_left_side);
+    cursor[CurE] = XCreateFontCursor(dpy, XC_right_side);
+    cursor[CurN] = XCreateFontCursor(dpy, XC_top_side);
+    cursor[CurS] = XCreateFontCursor(dpy, XC_bottom_side);
+    cursor[CurNW] = XCreateFontCursor(dpy, XC_top_left_corner);
+    cursor[CurNE] = XCreateFontCursor(dpy, XC_top_right_corner);
+    cursor[CurSW] = XCreateFontCursor(dpy, XC_bottom_left_corner);
+    cursor[CurSE] = XCreateFontCursor(dpy, XC_bottom_right_corner);
 }
 
 static void
@@ -180,7 +179,7 @@ init_screen()
     rect.width = DisplayWidth(dpy, screen);
     rect.height = DisplayHeight(dpy, screen);
 
-    XDefineCursor(dpy, root, normal_cursor);
+    XDefineCursor(dpy, root, cursor[CurNormal]);
 }
 
 /*

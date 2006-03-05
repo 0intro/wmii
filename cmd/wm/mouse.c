@@ -16,7 +16,7 @@ cursor_for_motion(Client *c, int x, int y)
     int n, e, w, s, tn, te, tw, ts;
 
     if(!def.border)
-        return normal_cursor;
+        return cursor[CurNormal];
 
     /* rectangle attributes of client are used */
     w = x < def.border;
@@ -30,23 +30,23 @@ cursor_for_motion(Client *c, int x, int y)
     ts = s > f->rect.height - bar_height();
 
     if((w && n) || (w && tn) || (n && tw))
-        return nw_cursor;
+        return cursor[CurNW];
     else if((e && n) || (e && tn) || (n && te))
-        return ne_cursor;
+        return cursor[CurNE];
     else if((w && s) || (w && ts) || (s && tw))
-        return sw_cursor;
+        return cursor[CurSW];
     else if((e && s) || (e && ts) || (s && te))
-        return se_cursor;
+        return cursor[CurSE];
     else if(w)
-        return w_cursor;
+        return cursor[CurW];
     else if(e)
-        return e_cursor;
+        return cursor[CurE];
     else if(n)
-        return n_cursor;
+        return cursor[CurN];
     else if(s)
-        return s_cursor;
+        return cursor[CurS];
 
-    return normal_cursor;
+    return cursor[CurNormal];
 }
 
 Align
@@ -82,29 +82,29 @@ xy2align(XRectangle *rect, int x, int y)
 }
 
 Align
-cursor2align(Cursor cursor)
+cursor2align(Cursor cur)
 {
-    if(cursor == w_cursor)
+    if(cur == cursor[CurW])
         return WEST;
-    else if(cursor == nw_cursor)
+    else if(cur == cursor[CurNW])
         return NWEST;
-    else if(cursor == n_cursor)
+    else if(cur == cursor[CurN])
         return NORTH;
-    else if(cursor == ne_cursor)
+    else if(cur == cursor[CurNE])
         return NEAST;
-    else if(cursor == e_cursor)
+    else if(cur == cursor[CurE])
         return EAST;
-    else if(cursor == se_cursor)
+    else if(cur == cursor[CurSE])
         return SEAST;
-    else if(cursor == s_cursor)
+    else if(cur == cursor[CurS])
         return SOUTH;
-    else if(cursor == sw_cursor)
+    else if(cur == cursor[CurSW])
         return SWEST;
     return CENTER;              /* should not happen */
 }
 
 static int
-check_vert_match(XRectangle * r, XRectangle * neighbor)
+check_vert_match(XRectangle *r, XRectangle *neighbor)
 {
     /* check if neighbor matches edge */
     return (((neighbor->y <= r->y)
@@ -317,7 +317,7 @@ mouse_move(Client *c)
     XGrabServer(dpy);
     while(XGrabPointer
           (dpy, root, False, ButtonMotionMask | ButtonReleaseMask,
-           GrabModeAsync, GrabModeAsync, None, move_cursor,
+           GrabModeAsync, GrabModeAsync, None, cursor[CurMove],
            CurrentTime) != GrabSuccess)
         usleep(20000);
 
@@ -559,7 +559,7 @@ mouse_resize(Client *c, Align align)
     XGrabServer(dpy);
     while(XGrabPointer
           (dpy, c->framewin, False, ButtonMotionMask | ButtonReleaseMask,
-           GrabModeAsync, GrabModeAsync, None, resize_cursor,
+           GrabModeAsync, GrabModeAsync, None, cursor[CurResize],
            CurrentTime) != GrabSuccess)
         usleep(20000);
 

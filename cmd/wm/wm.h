@@ -10,7 +10,7 @@
 #include "ixp.h"
 #include "blitz.h"
 
-/* array indexes of atoms */
+/* WM atoms */
 enum {
 	WMState,
 	WMProtocols,
@@ -18,6 +18,7 @@ enum {
 	WMLast
 };
 
+/* NET atoms */
 enum {
 	NetNumWS,
 	NetSelWS,
@@ -25,10 +26,27 @@ enum {
 	NetLast
 };
 
+/* Column modes */
 enum {
 	Colequal,
 	Colstack,
 	Colmax
+};
+
+/* Cursor */
+enum {
+	CurNormal,
+	CurResize,
+	CurMove,
+	CurW,
+	CurE,
+	CurN,
+	CurS,
+	CurNW,
+	CurNE,
+	CurSW,
+	CurSE,
+	CurLast
 };
 
 /* 8-bit qid.path.type */
@@ -69,7 +87,6 @@ typedef struct Tag Tag;
 typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
-
 
 struct Area {
 	unsigned short id;
@@ -176,19 +193,7 @@ Default def;
 Atom wm_atom[WMLast];
 Atom net_atom[NetLast];
 
-Cursor normal_cursor;
-Cursor resize_cursor;
-Cursor move_cursor;
-Cursor drag_cursor;
-Cursor w_cursor;
-Cursor e_cursor;
-Cursor n_cursor;
-Cursor s_cursor;
-Cursor nw_cursor;
-Cursor ne_cursor;
-Cursor sw_cursor;
-Cursor se_cursor;
-
+Cursor cursor[CurLast];
 unsigned int valid_mask, num_lock_mask;
 
 /* area.c */
@@ -267,8 +272,8 @@ void init_lock_modifiers();
 void mouse_resize(Client *c, Align align);
 void mouse_move(Client *c);
 Cursor cursor_for_motion(Client *c, int x, int y);
-Align cursor2align(Cursor cursor);
-Align xy2align(XRectangle * rect, int x, int y);
+Align cursor2align(Cursor cur);
+Align xy2align(XRectangle *rect, int x, int y);
 void drop_move(Client *c, XRectangle *new, XPoint *pt);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);

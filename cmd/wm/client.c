@@ -45,7 +45,7 @@ alloc_client(Window w, XWindowAttributes *wa)
 						   DefaultDepth(dpy, screen), CopyFromParent,
 						   DefaultVisual(dpy, screen),
 						   CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
-	c->cursor = normal_cursor;
+	c->cursor = cursor[CurNormal];
     XDefineCursor(dpy, c->framewin, c->cursor);
     c->gc = XCreateGC(dpy, c->framewin, 0, 0);
     XSync(dpy, False);
