@@ -51,29 +51,29 @@ enum {
 
 /* 8-bit qid.path.type */
 enum {                          
-    Droot,
-	Ddef,
-	Dtag,
-	Darea,
-	Dclient,
-	Dkeys,
-	Dbar,
-    Dlabel,
-	Fexpand,
-    Fdata,                      /* data to display */
-    Fcolors,
-    Ffont,
-    Fselcolors,
-    Fnormcolors,
-	Fkey,
-	Fborder,
-	Fsnap,
-	Fbar,
-	Fgeom,
-	Fevent,
-	Fctl,
-	Fname,
-	Fmode
+    FsDroot,
+	FsDdef,
+	FsDtag,
+	FsDarea,
+	FsDclient,
+	FsDkeys,
+	FsDbar,
+    FsDlabel,
+	FsFexpand,
+    FsFdata,                      /* data to display */
+    FsFcolors,
+    FsFfont,
+    FsFselcolors,
+    FsFnormcolors,
+	FsFkey,
+	FsFborder,
+	FsFsnap,
+	FsFbar,
+	FsFgeom,
+	FsFevent,
+	FsFctl,
+	FsFname,
+	FsFmode
 };
 
 #define PROTO_DEL              1
