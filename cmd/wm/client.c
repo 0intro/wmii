@@ -236,6 +236,7 @@ void
 draw_client(Client *c)
 {
     Draw d = { 0 };
+	char buf[512];
 
 	d.align = WEST;
 	d.drawable = c->framewin;
@@ -259,7 +260,8 @@ draw_client(Client *c)
     d.rect.width = c->frame->rect.width;
     d.rect.height = bar_height();
 	d.notch = nil;
-    d.data = c->name;
+	snprintf(buf, sizeof(buf), "%s | %s", c->tags, c->name);
+    d.data = buf;
     blitz_drawlabel(dpy, &d);
     XSync(dpy, False);
 }
@@ -341,7 +343,7 @@ attach_client(Client *c)
 {
 	Tag *t;
     if(!ntag)
-		t = alloc_tag();
+		t = alloc_tag("new");
 	else
 		t = tag[sel];
 
@@ -520,7 +522,7 @@ sendtotag_client(Client *c, char *arg)
 	Client *to;
 
 	if(!strncmp(arg, "new", 4))
-		t = alloc_tag();
+		t = alloc_tag("new");
 	else if(!strncmp(arg, "sel", 4))
 		t = tag[sel];
 	else {

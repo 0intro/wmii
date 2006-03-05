@@ -57,6 +57,7 @@ enum {
 	FsDarea,
 	FsDclient,
 	FsDkeys,
+	FsDtags,
 	FsDbar,
     FsDlabel,
 	FsFexpand,
@@ -73,7 +74,7 @@ enum {
 	FsFevent,
 	FsFctl,
 	FsFname,
-	FsFtag,
+	FsFtags,
 	FsFmode
 };
 
@@ -118,7 +119,7 @@ struct Frame {
 
 struct Client {
 	char name[256];
-	char tag[256];
+	char tags[256];
     int proto;
     unsigned int border;
     Bool destroyed;
@@ -175,6 +176,9 @@ Label **label;
 unsigned int nlabel;
 unsigned int labelsz;
 unsigned int iexpand;
+char **ctag;
+unsigned int nctag;
+unsigned int ctagsz;
 
 Display *dpy;
 IXPServer *ixps;
@@ -281,13 +285,15 @@ void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 char *warp_mouse(char *arg);
 
 /* tag.c */
-Tag *alloc_tag();
+Tag *alloc_tag(char *name);
 char *destroy_tag(Tag *t);
 void focus_tag(Tag *t);
 XRectangle *rectangles(unsigned int *num);
 int tid2index(unsigned short id);
 void select_tag(char *arg);
 int tag2index(Tag *t);
+Bool has_ctag(char *tag);
+void update_ctags();
 
 /* wm.c */
 void scan_wins();

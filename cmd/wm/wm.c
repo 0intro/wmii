@@ -311,8 +311,9 @@ main(int argc, char *argv[])
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
     init_x_event_handler();
 
-	ntag = nclient = tagsz = clientsz = sel = 0;
+	nctag = ctagsz = ntag = nclient = tagsz = clientsz = sel = 0;
     tag = nil;
+	ctag = nil;
 	client = nil;
 
 	key = nil;
@@ -356,8 +357,8 @@ main(int argc, char *argv[])
 	XMapRaised(dpy, winbar);
 	draw_bar();
 
-	alloc_tag(); /* tag 0 */
-	alloc_tag(); /* tag 1 */
+	alloc_tag("scratch");
+	alloc_tag("default");
     scan_wins();
 
     /* main event loop */

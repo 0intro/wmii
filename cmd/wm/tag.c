@@ -11,12 +11,13 @@
 #include "wm.h"
 
 Tag *
-alloc_tag()
+alloc_tag(char *name)
 {
 	static unsigned short id = 1;
     Tag *t = cext_emallocz(sizeof(Tag));
 
 	t->id = id++;
+	cext_strlcpy(t->name, name, sizeof(t->name));
 	alloc_area(t);
 	alloc_area(t);
 	tag = (Tag **)cext_array_attach((void **)tag, t, sizeof(Tag *), &tagsz);
@@ -155,4 +156,46 @@ select_tag(char *arg)
     focus_tag(tag[new]);
 	if((c = sel_client_of_tag(tag[new])))
 		focus_client(c);
+}
+
+Bool
+has_ctag(char *tag)
+{
+	unsigned int i;
+	for(i = 0; i < nctag; i++)
+		if(!strncmp(ctag[i], tag, strlen(ctag[i])))
+			return True;
+	return False;
+}
+
+void
+update_ctags()
+{
+	unsigned int i;
+	char buf[256];
+	char *tags[128];
+
+	for(i = 0; i < nctag; i++) {
+		free(ctag[i]);
+		ctag[i] = nil;
+	}
+	nctag = 0;
+
+	for(i = 0; i < nclient; i++) {
+		unsigned int j, k;
+		cext_strlcpy(buf, client[i]->tags, sizeof(buf));
+		fprintf(stderr, "update_ctags: %s\n", buf);
+		j = cext_tokenize(tags, 128, buf, ' ');
+		fprintf(stderr, "update_ctags: %d\n", j);
+		for(k = 0; k < j; k++) {
+			fprintf(stderr, "update_ctags: tag=%s\n", tags[k]);
+			if(!has_ctag(tags[k])) {
+				ctag = (char **)cext_array_attach((void **)ctag, strdup(tags[k]),
+						sizeof(char *), &ctagsz);
+				nctag++;
+			}
+		}
+	}
+	for(i = 0; i < nctag; i++)
+		fprintf(stderr, "tag=%s\n", ctag[i]);
 }
