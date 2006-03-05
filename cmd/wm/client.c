@@ -68,14 +68,6 @@ set_client_state(Client * c, int state)
 }
 
 static void
-client_name_event(Client *c)
-{
-	char buf[256];
-	snprintf(buf, sizeof(buf), "CN %s\n", c->name);
-	write_event(buf);
-}
-
-static void
 client_focus_event(Client *c)
 {
 	char buf[256];
@@ -104,7 +96,6 @@ focus_client(Client *c)
     XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
     draw_client(c);
 	XSync(dpy, False);
-	client_name_event(c);
 	client_focus_event(c);
 	if(i > 0 && f->area->mode == Colstack)
 		arrange_area(f->area);
@@ -206,8 +197,6 @@ handle_client_property(Client *c, XPropertyEvent *e)
 		}
         if(c->frame)
             draw_client(c);
-		if(c == sel_client())
-			client_name_event(c);
         break;
     case XA_WM_TRANSIENT_FOR:
         XGetTransientForHint(dpy, c->win, &c->trans);

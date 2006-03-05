@@ -83,7 +83,7 @@ focus_tag(Tag *t)
 				draw_client(client[i]);
 		}
 	}
-	snprintf(buf, sizeof(buf), "PN %d\n", sel);
+	snprintf(buf, sizeof(buf), "WS %s\n", t->name);
 	write_event(buf);
     XChangeProperty(dpy, root, net_atom[NetSelWS], XA_CARDINAL,
 			        32, PropModeReplace, (unsigned char *) &sel, 1);
@@ -133,29 +133,34 @@ tid2index(unsigned short id)
 void
 select_tag(char *arg)
 {
-	unsigned int new = sel;
-	const char *err;
 	Client *c;
-
-    if(!ntag)
-        return;
-    if(!strncmp(arg, "prev", 5)) {
-		if(new <= 1)
-			new = ntag;
-		new--;
-    } else if(!strncmp(arg, "next", 5)) {
-		if(new < ntag - 1)
-			new++;
-		else
-			new = 1;
-    } else {
-		int idx = cext_strtonum(arg, 0, ntag - 1, &err);
-		if(idx < ntag)
-			new = idx;
-	}
-    focus_tag(tag[new]);
-	if((c = sel_client_of_tag(tag[new])))
+	Tag *t = ctag2tag(arg);
+	if(!t)
+		return;
+    focus_tag(t);
+	if((c = sel_client_of_tag(t)))
 		focus_client(c);
+}
+
+Tag *
+ctag2tag(char *name)
+{
+	unsigned int i;
+	Tag *t;
+
+	if(!has_ctag(name))
+		return nil;
+	for(i = 0; i < ntag; i++) {
+		t = tag[i];
+		if(!strncmp(t->name, name, strlen(t->name)))
+			return t;
+	}
+
+	t = alloc_tag(name);
+	for(i = 0; i < nclient; i++)
+		if(strstr(client[i]->tags, name))
+			attach_totag(t, client[i]);
+	return t;
 }
 
 Bool

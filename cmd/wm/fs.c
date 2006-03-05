@@ -50,8 +50,7 @@ static char Enocommand[] = "command not supported";
  * /bar/1/colors		FsFcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /event				FsFevent
  * /ctl					FsFctl 			command interface (root)
- * /ws/				    FsDws			returns new tag
- * /ws/					FsDws			tag
+ * /ws/				    FsDws			ws
  * /ws/ctl				FsFctl			command interface (tag)
  * /ws/sel/				FsDarea
  * /ws/float/			FsDarea			floating clients in area 0
@@ -156,14 +155,7 @@ qid2name(Qid *qid)
 		case FsDkeys: return "keys"; break;
 		case FsDtags: return "tags"; break;
 		case FsDbar: return "bar"; break;
-		case FsDws:
-			if(i1 == -1)
-				return nil;
-			if(i1 == sel)
-				return "sel";
-			snprintf(buf, sizeof(buf), "%u", i1);
-			return buf;
-			break;
+		case FsDws: return "ws"; break;
 		case FsDlabel:
 			if(i1 == -1)
 				return nil;
@@ -245,18 +237,16 @@ name2type(char *name, unsigned char dir_type)
     unsigned int i;
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return FsDroot;
-	if(!strncmp(name, "new", 4)) {
-		switch(dir_type) {
-		case FsDroot: return FsDws; break;
-		case FsDbar: 	return FsDlabel; break;
-		}
-	}
+	if(!strncmp(name, "new", 4) && (dir_type == FsDbar))
+		return FsDlabel;
 	if(!strncmp(name, "tags", 5)) {
 		switch(dir_type) {	
 		case FsDroot: return FsDtags; break;
 		case FsDclient: return FsFtags; break;
 		}
 	}
+	if(!strncmp(name, "ws", 3))
+		return FsDws;
 	if(!strncmp(name, "bar", 4))
 		return FsDbar;
 	if(!strncmp(name, "def", 4))
@@ -301,7 +291,6 @@ name2type(char *name, unsigned char dir_type)
 dyndir:
 	/*fprintf(stderr, "nametotype: dir_type = %d\n", dir_type);*/
 	switch(dir_type) {
-	case FsDroot: return FsDws; break;
 	case FsDbar: return FsDlabel; break;
 	case FsDws: return FsDarea; break;
 	case FsDarea: return FsDclient; break;
@@ -332,6 +321,10 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		new->type = IXP_QTDIR;
 		new->path = mkqpath(type, 0, 0, 0);
 		break;
+	case FsDws:
+		new->type = IXP_QTDIR;
+		new->path = mkqpath(FsDws, ntag ? tag[sel]->id : 0, 0, 0);
+		break;
 	case FsDlabel:
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4)) {
@@ -345,28 +338,6 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			if(err || (i >= nlabel))
 				return -1;
 			new->path = mkqpath(FsDlabel, label[i]->id, 0, 0);
-		}
-		break;
-	case FsDws:
-		new->type = IXP_QTDIR;
-		if(!strncmp(wname, "new", 4)) {
-			if(iswalk) {
-				Tag *p = alloc_tag(wname);
-				new->path = mkqpath(FsDws, p->id, 0, 0);
-			}
-			else
-				new->path = mkqpath(FsDws, 0, 0, 0);
-		}
-		else if(!strncmp(wname, "sel", 4)) {
-			if(!ntag)
-				return -1;
-			new->path = mkqpath(FsDws, tag[sel]->id, 0, 0);
-		}
-		else {
-			i = cext_strtonum(wname, 0, 0xffff, &err);
-			if(err || (i >= ntag))
-				return -1;
-			new->path = mkqpath(FsDws, tag[i]->id, 0, 0);
 		}
 		break;
 	case FsDarea:
@@ -653,7 +624,6 @@ xremove(IXPConn *c, Fcall *fcall)
 {
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned char type;
-	char *ret;
 	int i1 = 0, i2 = 0, i3 = 0;
 
     if(!m)
@@ -662,10 +632,6 @@ xremove(IXPConn *c, Fcall *fcall)
 	if((i1 == -1) || (i2 == -1) || (i3 == -1))
 		return Enofile;
 	switch(type) {
-	case FsDws:
-		if((ret = destroy_tag(tag[i1])))
-			return ret;
-		break;
 	case FsDlabel:
 		{
 			Label *l = label[i1];
@@ -717,38 +683,6 @@ xread(IXPConn *c, Fcall *fcall)
 	fcall->count = 0;
 	if(fcall->offset) {
 		switch (type) {
-		case FsDroot:
-			/* jump to offset */
-			len = type2stat(&stat, "ctl", &m->qid);
-			len += type2stat(&stat, "event", &m->qid);
-			len += type2stat(&stat, "def", &m->qid);
-			len += type2stat(&stat, "keys", &m->qid);
-			len += type2stat(&stat, "bar", &m->qid);
-			len += type2stat(&stat, "tags", &m->qid);
-			len += type2stat(&stat, "new", &m->qid);
-			for(i = 0; i < ntag; i++) {
-				if(i == sel)
-					snprintf(buf, sizeof(buf), "%s", "sel");
-				else
-					snprintf(buf, sizeof(buf), "%u", i);
-				len += type2stat(&stat, buf, &m->qid);
-				if(len <= fcall->offset)
-					continue;
-				break;
-			}
-			/* offset found, proceeding */
-			for(; i < ntag; i++) {
-				if(i == sel)
-					snprintf(buf, sizeof(buf), "%s", "sel");
-				else
-					snprintf(buf, sizeof(buf), "%u", i);
-				len = type2stat(&stat, buf, &m->qid);
-				if(fcall->count + len > fcall->iounit)
-					break;
-				fcall->count += len;
-				p = ixp_enc_stat(p, &stat);
-			}
-			break;
 		case FsDkeys:
 			/* jump to offset */
 			len = 0;
@@ -884,19 +818,8 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "tags", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "new", &m->qid);
+			fcall->count += type2stat(&stat, "ws", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			for(i = 0; i < ntag; i++) {
-				if(i == sel)
-					snprintf(buf, sizeof(buf), "%s", "sel");
-				else
-					snprintf(buf, sizeof(buf), "%u", i);
-				len = type2stat(&stat, buf, &m->qid);
-				if(fcall->count + len > fcall->iounit)
-					break;
-				fcall->count += len;
-				p = ixp_enc_stat(p, &stat);
-			}
 			break;
 		case FsDkeys:
 			for(i = 0; i < nkey; i++) {

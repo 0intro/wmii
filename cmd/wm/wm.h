@@ -293,6 +293,7 @@ void select_tag(char *arg);
 int tag2index(Tag *t);
 Bool has_ctag(char *tag);
 void update_ctags();
+Tag *ctag2tag(char *name);
 
 /* wm.c */
 void scan_wins();
