@@ -148,7 +148,8 @@ detach_fromarea(Client *c)
 	}
 	else {
 		Tag *t = a->tag;
-		destroy_area(a);
+		if(t->narea > 2)
+			destroy_area(a);
 		arrange_tag(t, True);
 	}
 }
