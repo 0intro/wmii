@@ -83,6 +83,7 @@ struct Area {
 };
 
 struct Tag {
+	char name[256];
 	unsigned short id;
 	Area **area;
 	unsigned int areasz;
@@ -99,6 +100,7 @@ struct Frame {
 
 struct Client {
 	char name[256];
+	char tags[256];
     int proto;
     unsigned int border;
     Bool destroyed;
