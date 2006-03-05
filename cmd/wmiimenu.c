@@ -43,7 +43,6 @@ static unsigned int cmdw = 0;
 static Draw draw = { 0 };
 static const int seek = 30;     /* 30px */
 
-static void check_event(void);
 static void draw_menu(void);
 static void handle_kpress(XKeyEvent * e);
 
@@ -290,28 +289,6 @@ handle_kpress(XKeyEvent * e)
     draw_menu();
 }
 
-static void
-check_event()
-{
-    XEvent ev;
-
-    while(XPending(dpy)) {
-        XNextEvent(dpy, &ev);
-        switch (ev.type) {
-        case KeyPress:
-            handle_kpress(&ev.xkey);
-            break;
-        case Expose:
-            if(ev.xexpose.count == 0) {
-                draw_menu();
-            }
-            break;
-        default:
-            break;
-        }
-    }
-}
-
 void
 read_allitems()
 {
@@ -342,6 +319,7 @@ main(int argc, char *argv[])
     int i;
     XSetWindowAttributes wa;
 	char *fontstr, *selcolstr, *normcolstr;
+    XEvent ev;
 
     /* command line args */
     for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
@@ -415,9 +393,21 @@ main(int argc, char *argv[])
     	usleep(1000);
 
     /* main event loop */
-    while (!done) {
-	    check_event();
-	    usleep(1000);
+
+    while(!XNextEvent(dpy, &ev)) {
+        switch (ev.type) {
+        case KeyPress:
+            handle_kpress(&ev.xkey);
+            break;
+        case Expose:
+            if(ev.xexpose.count == 0) {
+                draw_menu();
+            }
+            break;
+        default: break;
+        }
+		if(done)
+			break;
     }
 
     XFreePixmap(dpy, draw.drawable);
