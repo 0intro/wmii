@@ -158,6 +158,7 @@ detach_fromarea(Client *c)
 			destroy_area(a);
 		arrange_tag(t, True);
 	}
+	update_ctags();
 }
 
 char *
@@ -210,7 +211,7 @@ relax_area(Area *a)
 			Frame *f = a->frame[i];
 			unsigned int tmp = f->rect.height;
 			f->rect.height += (a->rect.height - h);
-			resize_client(f->client, &f->rect, 0, True);
+			resize_client(f->client, &f->rect, nil, True);
 			h += (f->rect.height - tmp);
 		}
 	}
@@ -223,7 +224,7 @@ relax_area(Area *a)
 		f->rect.y = yoff;
 		if(a->mode != Colmax)
 			yoff = f->rect.y + f->rect.height + hdiff;
-		resize_client(f->client, &f->rect, 0, False);
+		resize_client(f->client, &f->rect, nil, False);
 	}
 }
 
@@ -248,7 +249,7 @@ arrange_area(Area *a)
 			else
 				f->rect.height =
 					a->rect.height - f->rect.y + a->rect.y;
-			resize_client(f->client, &f->rect, 0, True);
+			resize_client(f->client, &f->rect, nil, True);
 		}
 		break;
 	case Colstack:
@@ -263,14 +264,14 @@ arrange_area(Area *a)
 			else
 				f->rect.height = bar_height();
 			yoff += f->rect.height;
-			resize_client(f->client, &f->rect, 0, True);
+			resize_client(f->client, &f->rect, nil, True);
 		}
 		break;
 	case Colmax:
 		for(i = 0; i < a->nframe; i++) {
 			Frame *f = a->frame[i];
 			f->rect = a->rect;
-			resize_client(f->client, &f->rect, 0, True);
+			resize_client(f->client, &f->rect, nil, True);
 		}
 		break;
 	default:

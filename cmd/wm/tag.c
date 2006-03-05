@@ -42,6 +42,8 @@ destroy_tag(Tag *t)
 
 	cext_array_detach((void **)tag, t, &tagsz);
 	ntag--;
+	if(sel >= ntag)
+		sel = 0;
 
 	for(i = 0; i < ntag; i++) 
 		XChangeProperty(dpy, root, net_atom[NetNumWS], XA_CARDINAL,
@@ -130,20 +132,8 @@ tid2index(unsigned short id)
 	return -1;
 }
 
-void
-select_tag(char *arg)
-{
-	Client *c;
-	Tag *t = ctag2tag(arg);
-	if(!t)
-		return;
-    focus_tag(t);
-	if((c = sel_client_of_tag(t)))
-		focus_client(c);
-}
-
 Tag *
-ctag2tag(char *name)
+get_tag(char *name)
 {
 	unsigned int i;
 	Tag *t;
@@ -163,6 +153,18 @@ ctag2tag(char *name)
 	return t;
 }
 
+void
+select_tag(char *arg)
+{
+	Client *c;
+	Tag *t = get_tag(arg);
+	if(!t)
+		return;
+    focus_tag(t);
+	if((c = sel_client_of_tag(t)))
+		focus_client(c);
+}
+
 Bool
 has_ctag(char *tag)
 {
@@ -173,27 +175,47 @@ has_ctag(char *tag)
 	return False;
 }
 
+Bool
+is_clientof(Tag *t, Client *c)
+{
+	unsigned int i, j;
+	for(i = 0; i < t->narea; i++) {
+		Area *a = t->area[i];
+		for(j = 0; j < a->nframe; j++)
+			if(a->frame[j]->client == c)
+				return True;
+	}
+	return False;
+}
+
 void
 update_ctags()
 {
-	unsigned int i;
+	unsigned int i, j, k;
 	char buf[256];
 	char *tags[128];
 
 	for(i = 0; i < nctag; i++) {
+		Bool exists = False;
+		for(j = 0; j < nclient; j++)
+			if(strstr(client[j]->tags, ctag[i]))
+				exists = True;
+		if(!exists) {
+			for(j = 0; j < ntag; j++)
+				if(strstr(tag[j]->name, ctag[i])) {
+					destroy_tag(tag[j]);
+					j--;
+				}
+		}
 		free(ctag[i]);
 		ctag[i] = nil;
 	}
 	nctag = 0;
 
 	for(i = 0; i < nclient; i++) {
-		unsigned int j, k;
 		cext_strlcpy(buf, client[i]->tags, sizeof(buf));
-		fprintf(stderr, "update_ctags: %s\n", buf);
 		j = cext_tokenize(tags, 128, buf, ' ');
-		fprintf(stderr, "update_ctags: %d\n", j);
 		for(k = 0; k < j; k++) {
-			fprintf(stderr, "update_ctags: tag=%s\n", tags[k]);
 			if(!has_ctag(tags[k])) {
 				ctag = (char **)cext_array_attach((void **)ctag, strdup(tags[k]),
 						sizeof(char *), &ctagsz);
@@ -201,6 +223,16 @@ update_ctags()
 			}
 		}
 	}
-	for(i = 0; i < nctag; i++)
-		fprintf(stderr, "tag=%s\n", ctag[i]);
+
+	for(i = 0; i < nclient; i++)
+		for(j = 0; j < ntag; j++) {
+			if(strstr(client[i]->tags, tag[j]->name)) {
+				if(!is_clientof(tag[j], client[i]))
+					attach_totag(tag[j], client[i]);
+			}
+			else {
+				if(is_clientof(tag[j], client[i]))
+					detach_fromtag(tag[j], client[i], False);
+			}
+		}
 }

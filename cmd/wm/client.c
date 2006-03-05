@@ -341,8 +341,9 @@ attach_client(Client *c)
 }
 
 void
-detach_client(Client *c, Bool unmap)
+detach_fromtag(Tag *t, Client *c, Bool unmap)
 {
+	/* TODO: later check c->frame's if it is a member of t */
 	Frame *f = c->frame;
 	if(f) {
 		if(!c->destroyed) {
@@ -357,6 +358,15 @@ detach_client(Client *c, Bool unmap)
 	}
     if(c->destroyed)
         destroy_client(c);
+}
+
+void
+detach_client(Client *c, Bool unmap)
+{
+	int i;
+	for(i = 0; i < ntag; i++)
+		if(is_clientof(tag[i], c))
+			detach_fromtag(tag[i], client[i], unmap);
 }
 
 Client *
@@ -433,7 +443,7 @@ resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 	int px = sel * rect.width;
 
 
-	if(area2index(f->area) > 0)
+	if((area2index(f->area) > 0) && pt)
 		resize_area(c, r, pt);
 	else
 		f->rect = *r;

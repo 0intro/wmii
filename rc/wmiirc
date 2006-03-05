@@ -70,6 +70,15 @@ $MODKEY-n
 $MODKEY-m
 $MODKEY-s
 $MODKEY-equal
+$MODKEY-1
+$MODKEY-2
+$MODKEY-3
+$MODKEY-4
+$MODKEY-5
+$MODKEY-6
+$MODKEY-7
+$MODKEY-8
+$MODKEY-9
 $MODKEY-Shift-1
 $MODKEY-Shift-2
 $MODKEY-Shift-3
@@ -126,6 +135,8 @@ do
 			xwrite /ws/sel/ctl select next;;
 		$MODKEY-k)
 			xwrite /ws/sel/ctl select prev;;
+		$MODKEY-[0-9])
+			xwrite /ws/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Shift-[0-9])
 			xwrite /ctl select `echo $1 | sed 's/.*-//'`;;
 		esac;;

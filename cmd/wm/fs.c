@@ -41,7 +41,7 @@ static char Enocommand[] = "command not supported";
  * /keys/				FsDkeys
  * /keys/foo			FsFkey
  * /tags/				FsDtags
- * /tags/foo			FsFtag
+ * /tags/foo			FsFtags
  * /bar/				FsDbar
  * /bar/expand			FsFexpand 		id of expandable label
  * /bar/new/			FsDlabel
@@ -1094,6 +1094,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(fcall->count > sizeof(f->client->tags))
 			return "tags value too long";
 		memcpy(f->client->tags, fcall->data, fcall->count);
+		f->client->tags[fcall->count] = 0;
 		update_ctags();
 		break;
 	case FsFgeom:

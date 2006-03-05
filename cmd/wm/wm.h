@@ -251,6 +251,7 @@ void select_client(Client *c, char *arg);
 void sendtoarea_client(Client *c, char *arg);
 void resize_all_clients();
 void focus(Client *c);
+void detach_fromtag(Tag *t, Client *c, Bool unmap);
 
 /* event.c */
 void init_x_event_handler();
@@ -293,7 +294,7 @@ void select_tag(char *arg);
 int tag2index(Tag *t);
 Bool has_ctag(char *tag);
 void update_ctags();
-Tag *ctag2tag(char *name);
+Bool is_clientof(Tag *t, Client *c);
 
 /* wm.c */
 void scan_wins();
