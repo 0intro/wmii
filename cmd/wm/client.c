@@ -217,6 +217,7 @@ destroy_client(Client * c)
     XDestroyWindow(dpy, c->framewin);
 	cext_array_detach((void **)client, c, &clientsz);
 	nclient--;
+	update_ctags();
     free(c);
 }
 
@@ -344,7 +345,6 @@ detach_client(Client *c, Bool unmap)
 		reparent_client(c, root, c->rect.x, c->rect.y);
 		XUnmapWindow(dpy, c->framewin);
 	}
-/*	update_ctags();*/
 }
 
 Client *
