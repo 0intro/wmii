@@ -20,7 +20,7 @@ static char version[] = "wmiir - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Ga
 static void
 usage()
 {
-    fprintf(stderr, "%s", "usage: wmiir [-a <address>] [-v] append | create | read | remove | write <file>\n");
+    fprintf(stderr, "%s", "usage: wmiir [-a <address>] [-v] create | read | remove | write <file>\n");
     exit(1);
 }
 
@@ -263,9 +263,7 @@ main(int argc, char *argv[])
         exit(1);
     }
 
-	if(!strncmp(cmd, "append", 7))
-		ret = xwrite(file, IXP_OAPPEND);
-	else if(!strncmp(cmd, "create", 7))
+	if(!strncmp(cmd, "create", 7))
 		ret = xcreate(file);
 	else if(!strncmp(cmd, "read", 5))
 		ret = xread(file);
