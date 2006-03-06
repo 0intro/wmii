@@ -366,7 +366,7 @@ detach_client(Client *c, Bool unmap)
 	int i;
 	for(i = 0; i < ntag; i++)
 		if(is_clientof(tag[i], c))
-			detach_fromtag(tag[i], client[i], unmap);
+			detach_fromtag(tag[i], c, unmap);
 }
 
 Client *
