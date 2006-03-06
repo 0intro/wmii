@@ -82,6 +82,7 @@ focus_tag(Tag *t)
 			Frame *f = client[i]->frame[client[i]->sel];
 			pi = tag2index(f->area->tag);
 			XMoveWindow(dpy, client[i]->framewin, px - (pi * rect.width) + f->rect.x, f->rect.y);
+			resize_client(client[i], &f->rect, nil, False);
 			if(f->area->tag == t)
 				draw_client(client[i]);
 		}

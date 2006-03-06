@@ -194,7 +194,7 @@ handle_expose(XEvent *e)
     if(ev->count == 0) {
 		if(ev->window == winbar) 
 			draw_bar();
-		else if((c = win2clientframe(ev->window)) && c->frame)
+		else if((c = win2clientframe(ev->window)) && c->nframe)
             draw_client(c);
     }
 }
