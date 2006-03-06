@@ -233,3 +233,33 @@ update_ctags()
 			}
 		}
 }
+ 
+void
+detach_fromtag(Tag *t, Client *c, Bool unmap)
+{
+	int i;
+	char *p = strstr(c->tags, t->name);
+	fprintf(stderr, "%s %s %s\n", c->tags, t->name, p);
+	if(p) 
+		memmove(p, p + strlen(t->name), strlen(p + strlen(t->name)));
+	fprintf(stderr, "%s %s %s\n", c->tags, t->name, p);
+	for(i = 0; i < t->narea; i++)
+		if(clientofarea(t->area[i], c))
+			detach_fromarea(t->area[i], c);
+}
+
+void
+attach_totag(Tag *t, Client *c)
+{
+	Area *a = t->area[t->sel];
+
+	if(!strstr(c->tags, t->name)) {
+		if(c->tags[0] != 0)
+			cext_strlcat(c->tags, " ", sizeof(c->tags));
+		cext_strlcat(c->tags, t->name, sizeof(c->tags));
+	}
+    reparent_client(c, c->framewin, c->rect.x, c->rect.y);
+	attach_toarea(a, c);
+    map_client(c);
+	XMapWindow(dpy, c->framewin);
+}
