@@ -282,10 +282,10 @@ name2type(char *name, unsigned char dir_type)
 		return FsFmode;
 	if(!strncmp(name, "tag", 4))
 		return FsFtag;
+	if(has_ctag(name) && (dir_type == FsDtags))
+		return FsFtag;
 	if(name2key(name))
 		return FsFkey;
-	if(has_ctag(name))
-		return FsFtag;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
    	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
