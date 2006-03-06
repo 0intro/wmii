@@ -515,7 +515,8 @@ xopen(IXPConn *c, Fcall *fcall)
 
     if(!m)
         return Enofid;
-    if(!(fcall->mode | IXP_OREAD) && !(fcall->mode | IXP_OWRITE))
+    if(!(fcall->mode | IXP_OREAD)
+		&& !((fcall->mode | IXP_OWRITE) || (fcall->mode | IXP_OAPPEND)))
         return Enomode;
     fcall->id = ROPEN;
     fcall->qid = m->qid;
@@ -1098,10 +1099,16 @@ xwrite(IXPConn *c, Fcall *fcall)
 		break;
 	case FsFtags:
 		f = tag[i1]->area[i2]->frame[i3];
-		if(fcall->count > sizeof(f->client->tags))
+		if(fcall->mode | IXP_OAPPEND) {
+			cext_strlcat(f->client->tags, " ", sizeof(f->client->tags));
+			i = strlen(f->client->tags);
+		}
+		else
+			i = 0;
+		if(fcall->count + i > sizeof(f->client->tags))
 			return "tags value too long";
-		memcpy(f->client->tags, fcall->data, fcall->count);
-		f->client->tags[fcall->count] = 0;
+		memcpy(f->client->tags + i, fcall->data, fcall->count);
+		f->client->tags[fcall->count + i] = 0;
 		update_ctags();
 		break;
 	case FsFgeom:

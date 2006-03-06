@@ -20,7 +20,7 @@ static char version[] = "wmiir - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Ga
 static void
 usage()
 {
-    fprintf(stderr, "%s", "usage: wmiir [-a <address>] [-v] create | read | write | remove <file>\n");
+    fprintf(stderr, "%s", "usage: wmiir [-a <address>] [-v] append | create | read | remove | write <file>\n");
     exit(1);
 }
 
@@ -68,12 +68,11 @@ xcreate(char *file)
 }
 
 static int
-xwrite(char *file)
+xwrite(char *file, unsigned char mode)
 {
-	
     /* open */
     unsigned int fid = c.root_fid << 2;
-    if(ixp_client_open(&c, fid, file, IXP_OWRITE) == -1) {
+    if(ixp_client_open(&c, fid, file, mode) == -1) {
         fprintf(stderr, "wmiir: cannot open file '%s': %s\n", file, c.errstr);
         return -1;
     }
@@ -264,14 +263,16 @@ main(int argc, char *argv[])
         exit(1);
     }
 
-	if(!strncmp(cmd, "create", 7))
+	if(!strncmp(cmd, "append", 7))
+		ret = xwrite(file, IXP_OAPPEND);
+	else if(!strncmp(cmd, "create", 7))
 		ret = xcreate(file);
-	else if(!strncmp(cmd, "write", 6))
-		ret = xwrite(file);
 	else if(!strncmp(cmd, "read", 5))
 		ret = xread(file);
 	else if(!strncmp(cmd, "remove", 7))
 		ret = xremove(file);
+	else if(!strncmp(cmd, "write", 6))
+		ret = xwrite(file, IXP_OWRITE);
 	else
 		usage();
 
