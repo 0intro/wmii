@@ -129,16 +129,10 @@ attach_toarea(Area *a, Client *c)
 	a->frame = (Frame **)cext_array_attach(
 			(void **)a->frame, f, sizeof(Frame *), &a->framesz);
 	a->nframe++;
-	if(!strstr(c->tags, a->tag->name)) {
-		if(c->tags[0] != 0)
-			cext_strlcat(c->tags, " ", sizeof(c->tags));
-		cext_strlcat(c->tags, a->tag->name, sizeof(c->tags));
-	}
 	if(area2index(a)) /* column */
 		arrange_area(a);
 	else /* floating */
 		resize_client(c, &f->rect, nil, False);
-	update_ctags();
 }
 
 void
@@ -160,7 +154,6 @@ detach_fromarea(Area *a, Client *c)
 			destroy_area(a);
 		arrange_tag(t, True);
 	}
-	update_ctags();
 }
 
 char *

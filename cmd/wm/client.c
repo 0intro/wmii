@@ -321,6 +321,11 @@ attach_totag(Tag *t, Client *c)
 {
 	Area *a = t->area[t->sel];
 
+	if(!strstr(c->tags, t->name)) {
+		if(c->tags[0] != 0)
+			cext_strlcat(c->tags, " ", sizeof(c->tags));
+		cext_strlcat(c->tags, t->name, sizeof(c->tags));
+	}
     reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	attach_toarea(a, c);
     map_client(c);
@@ -338,12 +343,14 @@ attach_client(Client *c)
 
 	attach_totag(t, c);
 	focus_client(c);
+	update_ctags();
 }
 
 void
 detach_fromtag(Tag *t, Client *c, Bool unmap)
 {
 	int i;
+
 	for(i = 0; i < t->narea; i++)
 		if(clientofarea(t->area[i], c))
 			detach_fromarea(t->area[i], c);
@@ -357,10 +364,13 @@ detach_client(Client *c, Bool unmap)
 		detach_fromtag(tag[i], c, unmap);
 	if(!unmap)
 		unmap_client(c);
-	c->rect.x = c->frame->rect.x;
-	c->rect.y = c->frame->rect.y;
-	reparent_client(c, root, c->rect.x, c->rect.y);
-	XUnmapWindow(dpy, c->framewin);
+	if(c->frame) {
+		c->rect.x = c->frame->rect.x;
+		c->rect.y = c->frame->rect.y;
+		reparent_client(c, root, c->rect.x, c->rect.y);
+		XUnmapWindow(dpy, c->framewin);
+	}
+	update_ctags();
 }
 
 Client *

@@ -191,6 +191,7 @@ update_ctags()
 	char buf[256];
 	char *tags[128];
 
+	fprintf(stderr, "%s", "update_ctags\n");
 	for(i = 0; i < nctag; i++) {
 		Bool exists = False;
 		for(j = 0; j < nclient; j++)
