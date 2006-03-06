@@ -202,7 +202,7 @@ update_ctags()
 				exists = True;
 		if(!exists) {
 			for(j = 0; j < ntag; j++)
-				if(strstr(tag[j]->name, ctag[i])) {
+				if(!strncmp(tag[j]->name, ctag[i], strlen(tag[j]->name))) {
 					destroy_tag(tag[j]);
 					j--;
 				}

@@ -412,12 +412,3 @@ resize_area(Client *c, XRectangle *r, XPoint *pt)
     else
         drop_resize(f, r);
 }
-
-Area *
-new_area(Tag *t)
-{
-	Area *a = alloc_area(t);
-	arrange_tag(t, True);
-	return a;
-}
-

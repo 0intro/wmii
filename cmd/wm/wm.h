@@ -214,7 +214,6 @@ void detach_fromarea(Client *c);
 void arrange_tag(Tag *t, Bool updategeometry);
 void arrange_area(Area *a);
 void resize_area(Client *c, XRectangle *r, XPoint *pt);
-Area *new_area(Tag *t);
 int str2mode(char *arg);
 char *mode2str(int mode);
 
