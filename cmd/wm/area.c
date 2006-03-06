@@ -103,9 +103,9 @@ select_area(Area *a, char *arg)
 }
 
 void
-send_toarea(Area *to, Client *c)
+send_toarea(Area *to, Area *from, Client *c)
 {
-	detach_fromarea(c);
+	detach_fromarea(from, c);
 	attach_toarea(to, c);
 	focus_client(c);
 }
@@ -116,7 +116,7 @@ attach_toarea(Area *a, Client *c)
 	static unsigned short id = 1;
 	Frame *f;
    
-	if(is_clientof(a->tag, c))
+	if(clientoftag(a->tag, c))
 		return;
 	f = cext_emallocz(sizeof(Frame));
 	f->id = id++;
@@ -142,21 +142,20 @@ attach_toarea(Area *a, Client *c)
 }
 
 void
-detach_fromarea(Client *c)
+detach_fromarea(Area *a, Client *c)
 {
 	Frame *f = c->frame;
-	Area *a = f->area;
+	Tag *t = a->tag;
+
 	cext_array_detach((void **)a->frame, f, &a->framesz);
 	free(f);
 	a->nframe--;
 	c->frame = nil;
-	if(a->nframe) {
-		if(a->sel >= a->nframe)
-			a->sel = 0;
+	if(a->sel >= a->nframe)
+		a->sel = 0;
+	if(a->nframe)
 		arrange_area(a);
-	}
 	else {
-		Tag *t = a->tag;
 		if(t->narea > 2)
 			destroy_area(a);
 		arrange_tag(t, True);
@@ -387,7 +386,7 @@ drop_moving(Frame *f, XRectangle *new, XPoint * pt)
 			!blitz_ispointinrect(pt->x, pt->y, &t->area[i]->rect); i++);
 	if((tgt = ((i < t->narea) ? t->area[i] : nil))) {
         if(tgt != src) {
-			send_toarea(tgt, f->client);
+			send_toarea(tgt, src, f->client);
 			arrange_area(tgt);
 		}
         else {
@@ -415,3 +414,14 @@ resize_area(Client *c, XRectangle *r, XPoint *pt)
     else
         drop_resize(f, r);
 }
+
+Bool
+clientofarea(Area *a, Client *c)
+{
+	unsigned int i;
+	for(i = 0; i < a->nframe; i++)
+		if(a->frame[i]->client == c)
+			return True;
+	return False;
+}
+

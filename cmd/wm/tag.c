@@ -147,7 +147,7 @@ get_tag(char *name)
 
 	t = alloc_tag(name);
 	for(i = 0; i < nclient; i++)
-		if(!is_clientof(t, client[i]) && strstr(client[i]->tags, name))
+		if(!clientoftag(t, client[i]) && strstr(client[i]->tags, name))
 			attach_totag(t, client[i]);
 	return t;
 }
@@ -175,15 +175,12 @@ has_ctag(char *tag)
 }
 
 Bool
-is_clientof(Tag *t, Client *c)
+clientoftag(Tag *t, Client *c)
 {
-	unsigned int i, j;
-	for(i = 0; i < t->narea; i++) {
-		Area *a = t->area[i];
-		for(j = 0; j < a->nframe; j++)
-			if(a->frame[j]->client == c)
-				return True;
-	}
+	unsigned int i;
+	for(i = 0; i < t->narea; i++)
+		if(clientofarea(t->area[i], c))
+			return True;
 	return False;
 }
 
@@ -226,11 +223,11 @@ update_ctags()
 	for(i = 0; i < nclient; i++)
 		for(j = 0; j < ntag; j++) {
 			if(strstr(client[i]->tags, tag[j]->name)) {
-				if(!is_clientof(tag[j], client[i]))
+				if(!clientoftag(tag[j], client[i]))
 					attach_totag(tag[j], client[i]);
 			}
 			else {
-				if(is_clientof(tag[j], client[i]))
+				if(clientoftag(tag[j], client[i]))
 					detach_fromtag(tag[j], client[i], False);
 			}
 		}

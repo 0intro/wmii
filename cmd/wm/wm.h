@@ -210,14 +210,15 @@ int area2index(Area *a);
 int aid2index(Tag *t, unsigned short id);
 void update_area_geometry(Area *a);
 void select_area(Area *a, char *arg);
-void send_toarea(Area *to, Client *c);
+void send_toarea(Area *to, Area *from, Client *c);
 void attach_toarea(Area *a, Client *c);
-void detach_fromarea(Client *c);
+void detach_fromarea(Area *a, Client *c);
 void arrange_tag(Tag *t, Bool updategeometry);
 void arrange_area(Area *a);
 void resize_area(Client *c, XRectangle *r, XPoint *pt);
 int str2mode(char *arg);
 char *mode2str(int mode);
+Bool clientofarea(Area *a, Client *c);
 
 /* bar.c */
 Label *new_label();
@@ -295,7 +296,7 @@ void select_tag(char *arg);
 int tag2index(Tag *t);
 Bool has_ctag(char *tag);
 void update_ctags();
-Bool is_clientof(Tag *t, Client *c);
+Bool clientoftag(Tag *t, Client *c);
 
 /* wm.c */
 void scan_wins();

@@ -343,21 +343,10 @@ attach_client(Client *c)
 void
 detach_fromtag(Tag *t, Client *c, Bool unmap)
 {
-	/* TODO: later check c->frame's if it is a member of t */
-	Frame *f = c->frame;
-	if(f) {
-		if(!c->destroyed) {
-			if(!unmap)
-				unmap_client(c);
-			c->rect.x = f->rect.x;
-			c->rect.y = f->rect.y;
-			reparent_client(c, root, c->rect.x, c->rect.y);
-			XUnmapWindow(dpy, c->framewin);
-		}
-		detach_fromarea(c);
-	}
-    if(c->destroyed)
-        destroy_client(c);
+	int i;
+	for(i = 0; i < t->narea; i++)
+		if(clientofarea(t->area[i], c))
+			detach_fromarea(t->area[i], c);
 }
 
 void
@@ -365,8 +354,13 @@ detach_client(Client *c, Bool unmap)
 {
 	int i;
 	for(i = 0; i < ntag; i++)
-		if(is_clientof(tag[i], c))
-			detach_fromtag(tag[i], c, unmap);
+		detach_fromtag(tag[i], c, unmap);
+	if(!unmap)
+		unmap_client(c);
+	c->rect.x = c->frame->rect.x;
+	c->rect.y = c->frame->rect.y;
+	reparent_client(c, root, c->rect.x, c->rect.y);
+	XUnmapWindow(dpy, c->framewin);
 }
 
 Client *
@@ -547,9 +541,7 @@ sendtoarea_client(Client *c, char *arg)
 			return;
 		to = t->area[i];
 	}
-	send_toarea(to, c);
-	arrange_area(a);
-	arrange_area(to);
+	send_toarea(to, a, c);
 }
 
 void
