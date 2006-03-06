@@ -195,6 +195,7 @@ update_ctags()
 	char buf[256];
 	char *tags[128];
 
+	return;
 	for(i = 0; i < nctag; i++) {
 		Bool exists = False;
 		for(j = 0; j < nclient; j++)
