@@ -18,14 +18,6 @@ enum {
 	WMLast
 };
 
-/* NET atoms */
-enum {
-	NetNumWS,
-	NetSelWS,
-	NetWS,
-	NetLast
-};
-
 /* Column modes */
 enum {
 	Colequal,
@@ -198,7 +190,6 @@ Qid root_qid;
 
 Default def;
 Atom wm_atom[WMLast];
-Atom net_atom[NetLast];
 
 Cursor cursor[CurLast];
 unsigned int valid_mask, num_lock_mask;

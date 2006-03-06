@@ -138,11 +138,6 @@ init_atoms()
     wm_atom[WMState] = XInternAtom(dpy, "WM_STATE", False);
     wm_atom[WMProtocols] = XInternAtom(dpy, "WM_PROTOCOLS", False);
     wm_atom[WMDelete] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
-    net_atom[NetNumWS] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
-    net_atom[NetSelWS] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
-    net_atom[NetWS] = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
-    XChangeProperty(dpy, root, XInternAtom(dpy, "_NET_SUPPORTED", False), XA_ATOM, 32,
-			PropModeReplace, (unsigned char *) net_atom, NetLast);
 }
 
 static void

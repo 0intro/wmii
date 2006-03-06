@@ -21,7 +21,6 @@ static void handle_maprequest(XEvent * e);
 static void handle_motionnotify(XEvent * e);
 static void handle_propertynotify(XEvent * e);
 static void handle_unmapnotify(XEvent * e);
-static void handle_clientmessage(XEvent * e);
 
 void (*handler[LASTEvent]) (XEvent *);
 
@@ -43,7 +42,6 @@ init_x_event_handler()
     handler[MotionNotify] = handle_motionnotify;
     handler[PropertyNotify] = handle_propertynotify;
     handler[UnmapNotify] = handle_unmapnotify;
-    handler[ClientMessage] = handle_clientmessage;
 }
 
 void
@@ -275,22 +273,4 @@ handle_unmapnotify(XEvent *e)
     Client *c;
     if((c = win2client(ev->window)))
         detach_client(c, True);
-}
-
-static void handle_clientmessage(XEvent *e)
-{
-    XClientMessageEvent *ev = &e->xclient;
-	Client *c;
-
-    if (ev->message_type == net_atom[NetNumWS] && ev->format == 32)
-        return; /* ignore */
-    else if (ev->message_type == net_atom[NetSelWS] && ev->format == 32) {
-		int i = ev->data.l[0];
-		if(i < ntag) {
-			Tag *p = tag[i];
-			focus_tag(p);
-			if((c = sel_client_of_tag(p)))
-				focus_client(c);
-		}
-    }
 }

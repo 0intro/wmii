@@ -23,8 +23,6 @@ alloc_tag(char *name)
 	tag = (Tag **)cext_array_attach((void **)tag, t, sizeof(Tag *), &tagsz);
 	ntag++;
 	focus_tag(t);
-    XChangeProperty(dpy, root, net_atom[NetNumWS], XA_CARDINAL,
-			        32, PropModeReplace, (unsigned char *) &ntag, 1);
     return t;
 }
 
@@ -44,10 +42,6 @@ destroy_tag(Tag *t)
 	ntag--;
 	if(sel >= ntag)
 		sel = 0;
-
-	for(i = 0; i < ntag; i++) 
-		XChangeProperty(dpy, root, net_atom[NetNumWS], XA_CARDINAL,
-				32, PropModeReplace, (unsigned char *) &i, 1);
 
     free(t); 
 	return nil;
@@ -86,8 +80,6 @@ focus_tag(Tag *t)
 		}
 	snprintf(buf, sizeof(buf), "WS %s\n", t->name);
 	write_event(buf);
-    XChangeProperty(dpy, root, net_atom[NetSelWS], XA_CARDINAL,
-			        32, PropModeReplace, (unsigned char *) &sel, 1);
 	XSync(dpy, False);
 }
 
