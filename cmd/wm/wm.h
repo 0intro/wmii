@@ -75,6 +75,7 @@ enum {
 	FsFctl,
 	FsFname,
 	FsFtags,
+	FsFtag,
 	FsFmode
 };
 
@@ -90,6 +91,15 @@ typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
+struct Tag {
+	char name[256];
+	unsigned short id;
+	Area **area;
+	unsigned int areasz;
+	unsigned int narea;
+	unsigned int sel;
+};
+
 struct Area {
 	unsigned short id;
     Frame **frame;
@@ -99,15 +109,6 @@ struct Area {
 	unsigned int nframe;
 	int mode;
 	XRectangle rect;
-};
-
-struct Tag {
-	char name[256];
-	unsigned short id;
-	Area **area;
-	unsigned int areasz;
-	unsigned int narea;
-	unsigned int sel;
 };
 
 struct Frame {
@@ -154,6 +155,7 @@ typedef struct {
 typedef struct {
 	char selcolor[24];
 	char normcolor[24];
+	char tag[256];
 	char *font;
 	Color sel;
 	Color norm;

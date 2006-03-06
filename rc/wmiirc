@@ -40,7 +40,7 @@ do
 done
 xwrite /bar/new/colors $WMII_NORMCOLORS
 xwrite /bar/new/colors $WMII_SELCOLORS
-xwrite /bar/0/data nil
+xwrite /bar/0/data 1
 xwrite /bar/expand 1
 
 # MISC

@@ -114,8 +114,11 @@ void
 attach_toarea(Area *a, Client *c)
 {
 	static unsigned short id = 1;
-	Frame *f = cext_emallocz(sizeof(Frame));
-
+	Frame *f;
+   
+	if(is_clientof(a->tag, c))
+		return;
+	f = cext_emallocz(sizeof(Frame));
 	f->id = id++;
 	f->area = a;
 	f->client = c;

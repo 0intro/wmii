@@ -332,7 +332,7 @@ attach_client(Client *c)
 {
 	Tag *t;
     if(!ntag)
-		t = alloc_tag("nil");
+		t = alloc_tag(def.tag);
 	else
 		t = tag[sel];
 

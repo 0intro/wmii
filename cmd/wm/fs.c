@@ -38,6 +38,7 @@ static char Enocommand[] = "command not supported";
  * /def/font			FsFfont  		xlib font name
  * /def/selcolors		FsFselcolors	sel color
  * /def/normcolors		FsFnormcolors 	normal colors
+ * /def/tag				FsFtag			default tag
  * /keys/				FsDkeys
  * /keys/foo			FsFkey
  * /tags/				FsDtags
@@ -279,10 +280,12 @@ name2type(char *name, unsigned char dir_type)
 		return FsFdata;
 	if(!strncmp(name, "mode", 5))
 		return FsFmode;
+	if(!strncmp(name, "tag", 4))
+		return FsFtag;
 	if(name2key(name))
 		return FsFkey;
 	if(has_ctag(name))
-		return FsFtags;
+		return FsFtag;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
    	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
@@ -585,16 +588,14 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, strlen(f->client->name), DMREAD);
         break;
     case FsFtags:
-		switch(dir_type) {
-		case FsDclient:
-			f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
-			return mkstat(stat, dir, wname, strlen(f->client->tags), DMREAD | DMWRITE);
-			break;
-		case FsDtags:
-			return mkstat(stat, dir, wname, 0, 0);
-			break;
-		}
-        break;
+		f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
+		return mkstat(stat, dir, wname, strlen(f->client->tags), DMREAD | DMWRITE);
+		break;
+	case FsFtag:
+		if(dir_type ==  FsDdef)
+			return mkstat(stat, dir, wname, strlen(def.tag), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, 0, 0);
+		break;
     case FsFkey:
 		return mkstat(stat, dir, wname, 0, DMWRITE);
 		break;
@@ -872,6 +873,8 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			fcall->count += type2stat(&stat, "tag", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			break;
 		case FsDws:
 			fcall->count = type2stat(&stat, "ctl", &m->qid);
@@ -965,6 +968,10 @@ xread(IXPConn *c, Fcall *fcall)
 				return Enofile;
 			if((fcall->count = strlen(label[i1]->colstr)))
 				memcpy(p, label[i1]->colstr, fcall->count);
+			break;
+		case FsFtag:
+			if((fcall->count = strlen(def.tag)))
+				memcpy(p, def.tag, fcall->count);
 			break;
 		case FsFselcolors:
 			if((fcall->count = strlen(def.selcolor)))
@@ -1142,6 +1149,10 @@ xwrite(IXPConn *c, Fcall *fcall)
 		label[i1]->colstr[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, label[i1]->colstr, &label[i1]->color);
 		draw_bar();
+		break;
+	case FsFtag:
+		memcpy(def.tag, fcall->data, fcall->count);
+		def.tag[fcall->count] = 0;
 		break;
 	case FsFselcolors:
 		if((fcall->count != 23)

@@ -75,8 +75,8 @@ focus_tag(Tag *t)
 
 	sel = pi;
 	px = sel * rect.width;
-	/* gives all(!) clients proper geometry (for use of different tagrs) */
-	for(i = 0; i < nclient; i++) {
+	/* gives all(!) clients proper geometry (for use of different tags) */
+	for(i = 0; i < nclient; i++)
 		if(client[i]->frame) {
 			Frame *f = client[i]->frame;
 			pi = tag2index(f->area->tag);
@@ -84,7 +84,6 @@ focus_tag(Tag *t)
 			if(f->area->tag == t)
 				draw_client(client[i]);
 		}
-	}
 	snprintf(buf, sizeof(buf), "WS %s\n", t->name);
 	write_event(buf);
     XChangeProperty(dpy, root, net_atom[NetSelWS], XA_CARDINAL,
@@ -148,7 +147,7 @@ get_tag(char *name)
 
 	t = alloc_tag(name);
 	for(i = 0; i < nclient; i++)
-		if(strstr(client[i]->tags, name))
+		if(!is_clientof(t, client[i]) && strstr(client[i]->tags, name))
 			attach_totag(t, client[i]);
 	return t;
 }
@@ -195,7 +194,6 @@ update_ctags()
 	char buf[256];
 	char *tags[128];
 
-	return;
 	for(i = 0; i < nctag; i++) {
 		Bool exists = False;
 		for(j = 0; j < nclient; j++)
