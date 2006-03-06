@@ -125,7 +125,10 @@ attach_toarea(Area *a, Client *c)
 	f->rect = c->rect;
     f->rect.width += 2 * def.border;
     f->rect.height += def.border + bar_height();
-	c->frame = f;
+	c->frame = (Frame **)cext_array_attach(
+			(void **)c->frame, f, sizeof(Frame *), &c->framesz);
+	c->nframe++;
+	c->sel = c->nframe - 1;
 	a->frame = (Frame **)cext_array_attach(
 			(void **)a->frame, f, sizeof(Frame *), &a->framesz);
 	a->nframe++;
@@ -138,13 +141,23 @@ attach_toarea(Area *a, Client *c)
 void
 detach_fromarea(Area *a, Client *c)
 {
-	Frame *f = c->frame;
+	Frame *f;
 	Tag *t = a->tag;
+	int i;
 
+	for(i = 0; i < c->nframe; i++)
+		if(c->frame[i]->area == a) {
+			f = c->frame[i];
+			break;
+		}
+
+	cext_array_detach((void **)c->frame, f, &c->framesz);
 	cext_array_detach((void **)a->frame, f, &a->framesz);
 	free(f);
+	c->nframe--;
 	a->nframe--;
-	c->frame = nil;
+	if(c->sel >= c->nframe)
+		c->sel = 0;
 	if(a->sel >= a->nframe)
 		a->sel = 0;
 	if(a->nframe)
@@ -400,7 +413,7 @@ drop_moving(Frame *f, XRectangle *new, XPoint * pt)
 void
 resize_area(Client *c, XRectangle *r, XPoint *pt)
 {
-	Frame *f = c->frame;
+	Frame *f = c->frame[c->sel];
     if((f->rect.width == r->width)
        && (f->rect.height == r->height))
         drop_moving(f, r, pt);

@@ -1024,7 +1024,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 	char buf[256];
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned char type;
-	int i, i1 = 0, i2 = 0, i3 = 0;
+	int i, j, i1 = 0, i2 = 0, i3 = 0;
 	Frame *f;
 
     if(!m)
@@ -1164,8 +1164,9 @@ xwrite(IXPConn *c, Fcall *fcall)
 		def.selcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
 		for(i = 0; i < nclient; i++)
-			if(client[i]->frame->area->tag == tag[sel])
-				draw_client(client[i]);
+			for(j = 0; j < client[i]->nframe; j++)
+				if(client[i]->frame[j]->area->tag == tag[sel])
+					draw_client(client[i]);
 		break;
 	case FsFnormcolors:
 		if((fcall->count != 23)
@@ -1177,8 +1178,9 @@ xwrite(IXPConn *c, Fcall *fcall)
 		def.normcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
 		for(i = 0; i < nclient; i++)
-			if(client[i]->frame->area->tag == tag[sel])
-				draw_client(client[i]);
+			for(j = 0; j < client[i]->nframe; j++)
+				if(client[i]->frame[j]->area->tag == tag[sel])
+					draw_client(client[i]);
 		break;
 	case FsFfont:
 		if(def.font)

@@ -71,8 +71,8 @@ static void
 client_focus_event(Client *c)
 {
 	char buf[256];
-	snprintf(buf, sizeof(buf), "CF %d %d %d %d\n", c->frame->rect.x, c->frame->rect.y,
-			 c->frame->rect.width, c->frame->rect.height);
+	snprintf(buf, sizeof(buf), "CF %d %d %d %d\n", c->frame[c->sel]->rect.x, c->frame[c->sel]->rect.y,
+			 c->frame[c->sel]->rect.width, c->frame[c->sel]->rect.height);
 	write_event(buf);
 }
 
@@ -80,7 +80,7 @@ void
 focus_client(Client *c)
 {
 	Client *old = sel_client();
-	Frame *f = c->frame;
+	Frame *f = c->frame[c->sel];
 	int i = area2index(f->area);
 	
 	f->area->tag->sel = i;
@@ -132,7 +132,7 @@ void
 configure_client(Client *c)
 {
     XConfigureEvent e;
-	Frame *f = c->frame;
+	Frame *f = c->frame[c->sel];
     e.type = ConfigureNotify;
     e.event = c->win;
     e.window = c->win;
@@ -240,14 +240,14 @@ draw_client(Client *c)
 
 	/* draw border */
     if(def.border) {
-        d.rect = c->frame->rect;
+        d.rect = c->frame[c->sel]->rect;
 		d.rect.x = d.rect.y = 0;
         d.notch = &c->rect;
         blitz_drawlabel(dpy, &d);
     }
     d.rect.x = 0;
     d.rect.y = 0;
-    d.rect.width = c->frame->rect.width;
+    d.rect.width = c->frame[c->sel]->rect.width;
     d.rect.height = bar_height();
 	d.notch = nil;
 	snprintf(buf, sizeof(buf), "%s | %s", c->tags, c->name);
@@ -339,9 +339,9 @@ detach_client(Client *c, Bool unmap)
 		detach_fromtag(tag[i], c, unmap);
 	if(!unmap)
 		unmap_client(c);
-	if(c->frame) {
-		c->rect.x = c->frame->rect.x;
-		c->rect.y = c->frame->rect.y;
+	if(c->nframe) {
+		c->rect.x = c->frame[c->sel]->rect.x;
+		c->rect.y = c->frame[c->sel]->rect.y;
 		reparent_client(c, root, c->rect.x, c->rect.y);
 		XUnmapWindow(dpy, c->framewin);
 	}
@@ -403,20 +403,20 @@ match_sizehints(Client *c)
             h = c->size.min_height;
         }
         /* client_width = base_width + i * c->size.width_inc for an integer i */
-        w = c->frame->rect.width - 2 * def.border - w;
+        w = c->frame[c->sel]->rect.width - 2 * def.border - w;
         if(s->width_inc > 0)
-            c->frame->rect.width -= w % s->width_inc;
+            c->frame[c->sel]->rect.width -= w % s->width_inc;
 
-        h = c->frame->rect.height - def.border - bar_height() - h;
+        h = c->frame[c->sel]->rect.height - def.border - bar_height() - h;
         if(s->height_inc > 0)
-            c->frame->rect.height -= h % s->height_inc;
+            c->frame[c->sel]->rect.height -= h % s->height_inc;
     }
 }
 
 void
 resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 {
-	Frame *f = c->frame;
+	Frame *f = c->frame[c->sel];
 	int pi = tag2index(f->area->tag);
 	int px = sel * rect.width;
 
@@ -467,7 +467,7 @@ frame2index(Frame *f)
 void
 select_client(Client *c, char *arg)
 {
-	Frame *f = c->frame;
+	Frame *f = c->frame[c->sel];
 	Area *a = f->area;
 	int i = frame2index(f);
 	if(i == -1)
@@ -496,7 +496,7 @@ void
 sendtoarea_client(Client *c, char *arg)
 {
 	const char *errstr;
-	Frame *f = c->frame;
+	Frame *f = c->frame[c->sel];
 	Area *to, *a = f->area;
 	Tag *t = a->tag;
 	int i = area2index(a);
@@ -533,15 +533,15 @@ resize_all_clients()
 {
 	unsigned int i;
 	for(i = 0; i < nclient; i++)
-		if(client[i]->frame->area)
-			resize_client(client[i], &client[i]->frame->rect, 0, False);
+		if(client[i]->frame[client[i]->sel]->area)
+			resize_client(client[i], &client[i]->frame[client[i]->sel]->rect, 0, False);
 }
 
 /* convenience function */
 void
 focus(Client *c)
 {
-	Frame *f = c->frame;
+	Frame *f = c->frame[c->sel];
 	Tag *t = f->area->tag;
 	if(tag[sel] != t)
 		focus_tag(t);

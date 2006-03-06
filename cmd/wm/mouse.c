@@ -12,7 +12,7 @@
 Cursor
 cursor_for_motion(Client *c, int x, int y)
 {
-	Frame *f = c->frame;
+	Frame *f = c->frame[c->sel];
     int n, e, w, s, tn, te, tw, ts;
 
     if(!def.border)
@@ -306,7 +306,7 @@ mouse_move(Client *c)
     unsigned int num;
     unsigned int dmask;
     XRectangle *rects = rectangles(&num);
-    XRectangle frect = c->frame->rect;
+    XRectangle frect = c->frame[c->sel]->rect;
     XPoint pt;
 
     XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
@@ -551,7 +551,7 @@ mouse_resize(Client *c, Align align)
     unsigned int dmask;
     unsigned int num;
     XRectangle *rects = rectangles(&num);
-    XRectangle frect = c->frame->rect;
+    XRectangle frect = c->frame[c->sel]->rect;
     XRectangle origin = frect;
 
     XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);

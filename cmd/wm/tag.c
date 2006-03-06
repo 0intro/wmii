@@ -61,7 +61,7 @@ void
 focus_tag(Tag *t)
 {
 	char buf[16];
-	int i, pi = tag2index(t);
+	int i, j, pi = tag2index(t);
 	int px;
 
 	if(!ntag || (pi == -1))
@@ -69,10 +69,17 @@ focus_tag(Tag *t)
 
 	sel = pi;
 	px = sel * rect.width;
+
+	/* select correct frames of clients */
+	for(i = 0; i < nclient; i++)
+		for(j = 0; j < client[i]->nframe; j++)
+			if(client[i]->frame[j]->area->tag == t)
+				client[i]->sel = j;
+
 	/* gives all(!) clients proper geometry (for use of different tags) */
 	for(i = 0; i < nclient; i++)
-		if(client[i]->frame) {
-			Frame *f = client[i]->frame;
+		if(client[i]->nframe) {
+			Frame *f = client[i]->frame[client[i]->sel];
 			pi = tag2index(f->area->tag);
 			XMoveWindow(dpy, client[i]->framewin, px - (pi * rect.width) + f->rect.x, f->rect.y);
 			if(f->area->tag == t)

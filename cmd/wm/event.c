@@ -83,8 +83,8 @@ handle_buttonpress(XEvent *e)
 				mouse_resize(c, align);
 		}
 	
-		if(c->frame) {
-			snprintf(buf, sizeof(buf), "CB %d %d\n", frame2index(c->frame) + 1, ev->button);
+		if(c->nframe) {
+			snprintf(buf, sizeof(buf), "CB %d %d\n", frame2index(c->frame[c->sel]) + 1, ev->button);
 			write_event(buf);
 		}
 	}
@@ -110,8 +110,8 @@ handle_buttonpress(XEvent *e)
 		else if(ev->button == Button1)
 			focus(c);
 
-		if(c->frame) {
-			snprintf(buf, sizeof(buf), "CB %d %d\n", frame2index(c->frame) + 1, ev->button);
+		if(c->nframe) {
+			snprintf(buf, sizeof(buf), "CB %d %d\n", frame2index(c->frame[c->sel]) + 1, ev->button);
 			write_event(buf);
 		}
 	}
@@ -144,8 +144,8 @@ handle_configurerequest(XEvent *e)
 
         gravitate(c, False);
 
-        if(c->frame) {
-			Frame *f = c->frame;
+        if(c->nframe) {
+			Frame *f = c->frame[c->sel];
             f->rect.x = wc.x = c->rect.x - def.border;
             f->rect.y = wc.y = c->rect.y - bar_height();
             f->rect.width = wc.width = c->rect.width + 2 * def.border;

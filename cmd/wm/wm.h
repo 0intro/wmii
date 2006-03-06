@@ -123,7 +123,10 @@ struct Client {
 	Window framewin;
     GC gc;
     Cursor cursor;
-	Frame *frame;
+	Frame **frame;
+	unsigned int framesz;
+	unsigned int sel;
+	unsigned int nframe;
 };
 
 typedef struct Key Key;
