@@ -238,9 +238,9 @@ void
 detach_fromtag(Tag *t, Client *c, Bool unmap)
 {
 	int i;
-	c->tags[0] = 0;
 	/* TODO: achieve something to remove a specific tag from client's tags */
 #if 0
+	c->tags[0] = 0;
 	char *p = strstr(c->tags, t->name);
 	if(p) 
 		memmove(p, p + strlen(t->name), strlen(p + strlen(t->name)));

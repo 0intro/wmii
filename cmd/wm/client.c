@@ -344,7 +344,7 @@ detach_client(Client *c, Bool unmap)
 		reparent_client(c, root, c->rect.x, c->rect.y);
 		XUnmapWindow(dpy, c->framewin);
 	}
-	update_ctags();
+/*	update_ctags();*/
 }
 
 Client *
