@@ -307,6 +307,8 @@ name2type(char *name, unsigned char dir_type)
 		return FsFdata;
 	if(!strncmp(name, "mode", 5))
 		return FsFmode;
+	if(!strncmp(name, "tag", 4))
+		return FsFtag;
 	if(has_ctag(name) && (dir_type == FsDtags))
 		return FsFtag;
 	if(name2key(name))
