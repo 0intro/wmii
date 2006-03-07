@@ -195,6 +195,7 @@ update_ctags()
 
 	fprintf(stderr, "%s", "update_ctags\n");
 	for(i = 0; i < nctag; i++) {
+#if 0
 		Bool exists = False;
 		for(j = 0; j < nclient; j++)
 			if(strstr(client[j]->tags, ctag[i]))
@@ -206,6 +207,7 @@ update_ctags()
 					j--;
 				}
 		}
+#endif
 		free(ctag[i]);
 		ctag[i] = nil;
 	}
