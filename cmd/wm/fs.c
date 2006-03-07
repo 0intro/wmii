@@ -355,6 +355,8 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case FsDcache:
 	case FsDclients:
 	case FsDbar:
+		if(dir_type != FsDroot)
+			return -1;
 		new->type = IXP_QTDIR;
 		new->path = mkqpath(type, 0, 0, 0);
 		break;
@@ -362,7 +364,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "ws", 3) && dir_type == FsDroot)
 			new->path = mkqpath(FsDws, ntag ? tag[sel]->id : 0, 0, 0);
-		else {
+		else if(dir_type == FsDcache) {
 			for(i = 0; i < ntag; i++)
 				if(!strncmp(wname, tag[i]->name, strlen(tag[i]->name)))
 					break;
@@ -370,8 +372,12 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 				return -1;
 			new->path = mkqpath(FsDws, tag[i]->id, 0, 0);
 		}
+		else
+			return -1;
 		break;
 	case FsDlabel:
+		if(dir_type !=  FsDbar)
+			return -1;
 		new->type = IXP_QTDIR;
 		if(!strncmp(wname, "new", 4)) {
 			if(iswalk)
@@ -387,7 +393,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		}
 		break;
 	case FsDarea:
-		if(dir_i1 == -1)
+		if(dir_i1 == -1 || dir_type != FsDws)
 			return -1;
 		{
 			Tag *p = tag[dir_i1];
@@ -404,7 +410,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		}
 		break;
 	case FsDclient:
-		if(dir_i1 == -1 || dir_i2 == -1)
+		if(dir_i1 == -1 || dir_i2 == -1 || dir_type != FsDarea)
 			return -1;
 		{
 			Tag *p = tag[dir_i1];
@@ -424,12 +430,16 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		}
 		break;
 	case FsDGclient:
+		if(dir_type != FsDclients)
+			return -1;
 		i = cext_strtonum(wname, 0, 0xffff, &err);
 		if(err || (i >= nclient))
 			return -1;
 		new->path = mkqpath(FsDGclient, client[i]->id, 0, 0);
 		break;
 	case FsFkey:
+		if(dir_type != FsDkeys)
+			return -1;
 		{
 			Key *k;
 			if(!(k = name2key(wname)))
@@ -440,13 +450,13 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		break;
 	case FsFdata:
 	case FsFcolors:
-		if((dir_type == FsDlabel) && (dir_i1 == -1))
+		if((dir_i1 == -1) || (dir_type != FsDlabel))
 			return -1;
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
 		break;
 	case FsFmode:
-		if(dir_i1 == -1 || dir_i2 == -1)
+		if(dir_i1 == -1 || dir_i2 == -1 || dir_type != FsDarea)
 			return -1;
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
@@ -454,9 +464,9 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case FsFgeom:
 	case FsFname:
 	case FsFtags:
-		if((dir_type == FsDclient) && (dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1))
+		if((dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1) || dir_type != FsDclient)
 			return -1;
-		else if(dir_i1 == -1)
+		else if(dir_i1 == -1 || dir_type != FsDGclient)
 			return -1;
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
