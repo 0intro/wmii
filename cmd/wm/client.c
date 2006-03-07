@@ -17,7 +17,9 @@ alloc_client(Window w, XWindowAttributes *wa)
     Client *c = (Client *) cext_emallocz(sizeof(Client));
     XSetWindowAttributes fwa;
     long msize;
+	static unsigned int id = 1;
 
+	c->id = id++;
     c->win = w;
     c->rect.x = wa->x;
     c->rect.y = wa->y;
@@ -546,4 +548,14 @@ focus(Client *c)
 	if(tag[sel] != t)
 		focus_tag(t);
 	focus_client(c);
+}
+
+int
+cid2index(unsigned short id)
+{
+	int i;
+	for(i = 0; i < nclient; i++)
+		if(client[i]->id == id)
+			return i;
+	return -1;
 }

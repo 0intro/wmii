@@ -47,7 +47,9 @@ enum {
 	FsDdef,
 	FsDws,
 	FsDarea,
+	FsDclients,
 	FsDclient,
+	FsDGclient,
 	FsDkeys,
 	FsDtags,
 	FsDbar,
@@ -111,6 +113,7 @@ struct Frame {
 };
 
 struct Client {
+	unsigned short id;
 	char name[256];
 	char tags[256];
     int proto;
@@ -234,7 +237,6 @@ void unmap_client(Client *c);
 void map_client(Client *c);
 void reparent_client(Client *c, Window w, int x, int y);
 void attach_client(Client *c);
-void attach_totag(Tag *t, Client *c);
 void detach_client(Client *c, Bool unmap);
 Client *sel_client();
 Client *sel_client_of_tag(Tag *t);
@@ -247,7 +249,7 @@ void select_client(Client *c, char *arg);
 void sendtoarea_client(Client *c, char *arg);
 void resize_all_clients();
 void focus(Client *c);
-void detach_fromtag(Tag *t, Client *c, Bool unmap);
+int cid2index(unsigned short id);
 
 /* event.c */
 void init_x_event_handler();
@@ -291,6 +293,8 @@ int tag2index(Tag *t);
 Bool has_ctag(char *tag);
 void update_ctags();
 Bool clientoftag(Tag *t, Client *c);
+void detach_fromtag(Tag *t, Client *c, Bool unmap);
+void attach_totag(Tag *t, Client *c);
 
 /* wm.c */
 void scan_wins();

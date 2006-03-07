@@ -49,20 +49,13 @@ static char Enocommand[] = "command not supported";
  * /bar/1/				FsDlabel
  * /bar/1/data 			FsFdata			<arbitrary data which gets displayed>
  * /bar/1/colors		FsFcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /clients/			FsDclients
+ * /clients/1/			FsDGclient		see /X/X/X/ namespace below
  * /event				FsFevent
  * /ctl					FsFctl 			command interface (root)
  * /ws/				    FsDws			ws
  * /ws/ctl				FsFctl			command interface (tag)
  * /ws/sel/				FsDarea
- * /ws/float/			FsDarea			floating clients in area 0
- * /ws/float/ctl 		FsFctl			command interface (area)
- * /ws/float/mode		FsFmode			col mode
- * /ws/float/sel/		FsDclient
- * /ws/float/1/			FsDclient
- * /ws/float/1/name		FsFname			name of client
- * /ws/float/1/tags		FsFtags			tags of client
- * /ws/float/1/geom		FsFgeom			geometry of client
- * /ws/float/1/ctl 		FsFctl 			command interface (client)
  * /ws/1/				FsDarea
  * /ws/1/ctl 			FsFctl 			command interface (area)
  * /ws/1/mode			FsFmode			col mode
@@ -126,12 +119,17 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 	*type = qpath_type(qid->path);
 
 	if(i1id) {
-		switch(*type) {
-			case FsFkey: *i1 = kid2index(i1id); break;
-			case FsFdata:
-			case FsFcolors:
-			case FsDlabel: *i1 = lid2index(i1id); break;
-			default: *i1 = tid2index(i1id); break;
+		if(qid->dir_type == FsDGclient || qid->dir_type == FsDclients)
+			*i1 = cid2index(i1id);
+		else {
+			switch(*type) {
+				case FsFkey: *i1 = kid2index(i1id); break;
+				case FsFdata:
+				case FsFcolors:
+				case FsDlabel: *i1 = lid2index(i1id); break;
+							   break;
+				default: *i1 = tid2index(i1id); break;
+			}
 		}
 		if(i2id && (*i1 != -1)) {
 			*i2 = aid2index(tag[*i1], i2id);
@@ -155,6 +153,7 @@ qid2name(Qid *qid)
 		case FsDdef: return "def"; break;
 		case FsDkeys: return "keys"; break;
 		case FsDtags: return "tags"; break;
+		case FsDclients: return "clients"; break;
 		case FsDbar: return "bar"; break;
 		case FsDws: return "ws"; break;
 		case FsDlabel:
@@ -175,6 +174,12 @@ qid2name(Qid *qid)
 			if(tag[i1]->sel == i2)
 				return "sel";
 			snprintf(buf, sizeof(buf), "%u", i2);
+			return buf;
+			break;
+		case FsDGclient:
+			if(i1 == -1)
+				return nil;
+			snprintf(buf, sizeof(buf), "%u", i1);
 			return buf;
 			break;
 		case FsDclient:
@@ -203,17 +208,23 @@ qid2name(Qid *qid)
 		case FsFborder: return "border"; break;
 		case FsFsnap: return "snap"; break;
 		case FsFgeom:
-			if(i1 == -1 || i2 == -1 || i3 == -1)
+			if((qid->dir_type == FsDclient) && (i1 == -1 || i2 == -1 || i3 == -1))
+				return nil;
+			else if(i1 == -1)
 				return nil;
 			return "geom";
 			break;
 		case FsFname:
-			if(i1 == -1 || i2 == -1 || i3 == -1)
+			if((qid->dir_type == FsDclient) && (i1 == -1 || i2 == -1 || i3 == -1))
+				return nil;
+			else if(i1 == -1)
 				return nil;
 			return "name";
 			break;
 		case FsFtags:
-			if(i1 == -1 || i2 == -1 || i3 == -1)
+			if((qid->dir_type == FsDclient) && (i1 == -1 || i2 == -1 || i3 == -1))
+				return nil;
+			else if(i1 == -1)
 				return nil;
 		 	return "tags";
 			break;
@@ -243,9 +254,12 @@ name2type(char *name, unsigned char dir_type)
 	if(!strncmp(name, "tags", 5)) {
 		switch(dir_type) {	
 		case FsDroot: return FsDtags; break;
+		case FsDGclient:
 		case FsDclient: return FsFtags; break;
 		}
 	}
+	if(!strncmp(name, "clients", 8))
+		return FsDclients;
 	if(!strncmp(name, "ws", 3))
 		return FsDws;
 	if(!strncmp(name, "bar", 4))
@@ -280,8 +294,6 @@ name2type(char *name, unsigned char dir_type)
 		return FsFdata;
 	if(!strncmp(name, "mode", 5))
 		return FsFmode;
-	if(!strncmp(name, "tag", 4))
-		return FsFtag;
 	if(has_ctag(name) && (dir_type == FsDtags))
 		return FsFtag;
 	if(name2key(name))
@@ -296,6 +308,7 @@ dyndir:
 	switch(dir_type) {
 	case FsDbar: return FsDlabel; break;
 	case FsDws: return FsDarea; break;
+	case FsDclients: return FsDGclient; break;
 	case FsDarea: return FsDclient; break;
 	}
 	return -1;
@@ -320,6 +333,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case FsDdef:
 	case FsDkeys:
 	case FsDtags:
+	case FsDclients:
 	case FsDbar:
 		new->type = IXP_QTDIR;
 		new->path = mkqpath(type, 0, 0, 0);
@@ -380,6 +394,12 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			}
 		}
 		break;
+	case FsDGclient:
+		i = cext_strtonum(wname, 0, 0xffff, &err);
+		if(err || (i >= nclient))
+			return -1;
+		new->path = mkqpath(FsDGclient, client[i]->id, 0, 0);
+		break;
 	case FsFkey:
 		{
 			Key *k;
@@ -405,7 +425,9 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case FsFgeom:
 	case FsFname:
 	case FsFtags:
-		if(dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1)
+		if((dir_type == FsDclient) && (dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1))
+			return -1;
+		else if(dir_i1 == -1)
 			return -1;
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
@@ -555,17 +577,21 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 
     switch (type) {
     case FsDclient:
+    case FsDGclient:
     case FsDarea:
     case FsDws:
     case FsDdef:
 	case FsDkeys:
 	case FsDtags:
+	case FsDclients:
 	case FsDbar:
 	case FsDlabel:
     case FsDroot:
 		return mkstat(stat, dir, wname, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case FsFctl:
+		return mkstat(stat, dir, wname, 0, DMWRITE);
+		break;
     case FsFevent:
 		return mkstat(stat, dir, wname, 0, DMREAD);
 		break;
@@ -574,9 +600,16 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
         break;
     case FsFgeom:
-		f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
-		snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
-				f->rect.width, f->rect.height);
+		if(dir_type == FsDclient) {
+			f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
+			snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
+					f->rect.width, f->rect.height);
+		}
+		else {
+			Client *c = client[dir_i1];
+			snprintf(buf, sizeof(buf), "%d %d %d %d", c->rect.x, c->rect.y,
+					c->rect.width, c->rect.height);
+		}
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
         break;
     case FsFsnap:
@@ -584,12 +617,20 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 		break;
     case FsFname:
-		f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
-		return mkstat(stat, dir, wname, strlen(f->client->name), DMREAD);
+		if(dir_type == FsDclient) {
+			f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
+			return mkstat(stat, dir, wname, strlen(f->client->name), DMREAD);
+		}
+		else 
+			return mkstat(stat, dir, wname, strlen(client[dir_i1]->name), DMREAD);
         break;
     case FsFtags:
-		f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
-		return mkstat(stat, dir, wname, strlen(f->client->tags), DMREAD | DMWRITE);
+		if(dir_type == FsDclient) {
+			f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
+			return mkstat(stat, dir, wname, strlen(f->client->tags), DMREAD | DMWRITE);
+		}
+		else 
+			return mkstat(stat, dir, wname, strlen(client[dir_i1]->tags), DMREAD | DMWRITE);
 		break;
 	case FsFtag:
 		if(dir_type ==  FsDdef)
@@ -720,6 +761,26 @@ xread(IXPConn *c, Fcall *fcall)
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
+		case FsDclients:
+			/* jump to offset */
+			len = 0;
+			for(i = 0; i < nclient; i++) {
+				snprintf(buf, sizeof(buf), "%u", i);
+				len += type2stat(&stat, buf, &m->qid);
+				if(len <= fcall->offset)
+					continue;
+				break;
+			}
+			/* offset found, proceeding */
+			for(; i < nclient; i++) {
+				snprintf(buf, sizeof(buf), "%u", i);
+				len = type2stat(&stat, buf, &m->qid);
+				if(fcall->count + len > fcall->iounit)
+					break;
+				fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
 		case FsDbar:
 			/* jump to offset */
 			len = type2stat(&stat, "expand", &m->qid);
@@ -819,12 +880,24 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "tags", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			fcall->count += type2stat(&stat, "clients", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "ws", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case FsDkeys:
 			for(i = 0; i < nkey; i++) {
 				len = type2stat(&stat, key[i]->name, &m->qid);
+				if(fcall->count + len > fcall->iounit)
+					break;
+				fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case FsDclients:
+			for(i = 0; i < nclient; i++) {
+				snprintf(buf, sizeof(buf), "%u", i);
+				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -909,8 +982,9 @@ xread(IXPConn *c, Fcall *fcall)
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
+		case FsDGclient:
 		case FsDclient:
-			fcall->count += type2stat(&stat, "name", &m->qid);
+			fcall->count = type2stat(&stat, "name", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "tags", &m->qid);
 			p = ixp_enc_stat(p, &stat);
@@ -933,9 +1007,16 @@ xread(IXPConn *c, Fcall *fcall)
 			memcpy(p, buf, fcall->count);
 			break;
 		case FsFgeom:
-			f = tag[i1]->area[i2]->frame[i3];
-			snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
-					f->rect.width, f->rect.height);
+			if(m->qid.dir_type == FsDclient) {
+				f = tag[i1]->area[i2]->frame[i3];
+				snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
+						f->rect.width, f->rect.height);
+			}
+			else {
+				Client *c =  client[i1];
+				snprintf(buf, sizeof(buf), "%d %d %d %d", c->rect.x, c->rect.y,
+						c->rect.width, c->rect.height);
+			}
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -945,12 +1026,24 @@ xread(IXPConn *c, Fcall *fcall)
 			memcpy(p, buf, fcall->count);
 			break;
 		case FsFname:
-			if((fcall->count = strlen(tag[i1]->area[i2]->frame[i3]->client->name)))
-				memcpy(p, tag[i1]->area[i2]->frame[i3]->client->name, fcall->count);
+			if(m->qid.dir_type == FsDclient) {
+				if((fcall->count = strlen(tag[i1]->area[i2]->frame[i3]->client->name)))
+					memcpy(p, tag[i1]->area[i2]->frame[i3]->client->name, fcall->count);
+			}
+			else {
+				if((fcall->count = strlen(client[i1]->name)))
+					memcpy(p, client[i1]->name, fcall->count);
+			}
 			break;
 		case FsFtags:
-			if((fcall->count = strlen(tag[i1]->area[i2]->frame[i3]->client->tags)))
-				memcpy(p, tag[i1]->area[i2]->frame[i3]->client->tags, fcall->count);
+			if(m->qid.dir_type == FsDclient) {
+				if((fcall->count = strlen(tag[i1]->area[i2]->frame[i3]->client->tags)))
+					memcpy(p, tag[i1]->area[i2]->frame[i3]->client->tags, fcall->count);
+			}
+			else {
+				if((fcall->count = strlen(client[i1]->tags)))
+					memcpy(p, client[i1]->tags, fcall->count);
+			}
 			break;
 		case FsFexpand:
 			snprintf(buf, sizeof(buf), "%u", iexpand);
@@ -1033,7 +1126,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 	if((i1 == -1) || (i2 == -1) || (i3 == -1))
 		return Enofile;
 
-	switch (qpath_type(m->qid.path)) {
+	switch(type) {
 	case FsFctl:
 		if(fcall->count > sizeof(buf) - 1)
 			return Enocommand;
@@ -1071,6 +1164,12 @@ xwrite(IXPConn *c, Fcall *fcall)
 			else if(!strncmp(buf, "sendtoarea ", 11))
 				sendtoarea_client(f->client, &buf[11]);
 			break;
+		case FsDGclient:
+			if(!strncmp(buf, "kill", 5))
+				kill_client(client[i1]);
+			else if(!strncmp(buf, "sendtoarea ", 11))
+				sendtoarea_client(client[i1], &buf[11]);
+			break;
 		default:
 			break;
 		}
@@ -1097,21 +1196,31 @@ xwrite(IXPConn *c, Fcall *fcall)
 		resize_all_clients();
 		break;
 	case FsFtags:
-		f = tag[i1]->area[i2]->frame[i3];
-		if(fcall->count > sizeof(f->client->tags))
-			return "tags value too long";
-		memcpy(f->client->tags, fcall->data, fcall->count);
-		f->client->tags[fcall->count] = 0;
+		if(m->qid.dir_type == FsDclient) {
+			f = tag[i1]->area[i2]->frame[i3];
+			if(fcall->count > sizeof(f->client->tags))
+				return "tags value too long";
+			memcpy(f->client->tags, fcall->data, fcall->count);
+			f->client->tags[fcall->count] = 0;
+		}
+		else {
+			if(fcall->count > sizeof(client[i1]->tags))
+				return "tags value too long";
+			memcpy(client[i1]->tags, fcall->data, fcall->count);
+			client[i1]->tags[fcall->count] = 0;
+		}
 		update_ctags();
 		break;
 	case FsFgeom:
-		f = tag[i1]->area[i2]->frame[i3];
 		if(fcall->count > sizeof(buf))
 			return "geometry values out of range";
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		blitz_strtorect(&rect, &f->rect, buf);
-		resize_client(f->client, &f->rect, 0, False);
+		if(m->qid.dir_type == FsDclient) {
+			f = tag[i1]->area[i2]->frame[i3];
+			blitz_strtorect(&rect, &f->rect, buf);
+			resize_client(f->client, &f->rect, 0, False);
+		}
 		break;
     case FsFexpand:
 		{
