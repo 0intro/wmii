@@ -464,10 +464,11 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case FsFgeom:
 	case FsFname:
 	case FsFtags:
-		if((dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1) || dir_type != FsDclient)
+		if((dir_type == FsDclient) && ((dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1)))
 			return -1;
-		else if(dir_i1 == -1 || dir_type != FsDGclient)
+		else if(dir_i1 == -1 && dir_type != FsDGclient)
 			return -1;
+		else if((dir_type != FsDGclient) && (dir_type != FsDclient))
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
 		break;

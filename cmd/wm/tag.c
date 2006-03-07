@@ -239,10 +239,22 @@ update_ctags()
 void
 detach_fromtag(Tag *t, Client *c, Bool unmap)
 {
-	int i;
-	for(i = 0; i < t->narea; i++)
-		if(clientofarea(t->area[i], c))
+	int i, n = 0;
+	for(i = 0; i < t->narea; i++) {
+		if(clientofarea(t->area[i], c)) {
 			detach_fromarea(t->area[i], c);
+			XMoveWindow(dpy, c->framewin, 2 * rect.width, 0);
+		}
+	}
+	for(i = 0; i < t->narea; i++) 
+		n += t->area[i]->nframe;
+	if(!n)
+		destroy_tag(t);
+	if(ntag) {
+		Client *c = sel_client_of_tag(tag[sel]);
+		focus_tag(tag[sel]);
+		focus_client(c);
+	}
 }
 
 void
