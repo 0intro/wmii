@@ -210,6 +210,7 @@ update_ctags()
 	unsigned int i, j, k;
 	char buf[256];
 	char *tags[128];
+	char *t;
 
 	fprintf(stderr, "%s", "update_ctags\n");
 	for(i = 0; i < nctag; i++) {
@@ -222,8 +223,11 @@ update_ctags()
 		cext_strlcpy(buf, client[i]->tags, sizeof(buf));
 		j = cext_tokenize(tags, 128, buf, ' ');
 		for(k = 0; k < j; k++) {
-			if(!has_ctag(tags[k])) {
-				ctag = (char **)cext_array_attach((void **)ctag, strdup(tags[k]),
+			t = tags[k];
+			if(*t == '~')
+				t++;
+			if(!has_ctag(t)) {
+				ctag = (char **)cext_array_attach((void **)ctag, strdup(t),
 						sizeof(char *), &ctagsz);
 				nctag++;
 			}
