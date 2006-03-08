@@ -183,9 +183,7 @@ handle_destroynotify(XEvent *e)
     Client *c = win2client(ev->window);
 	if(!c)
 		return;
-    if(c->frame)
-        detach_client(c, False);
-	destroy_client(c);
+	destroy_client(c, False);
 }
 
 static void
@@ -224,7 +222,6 @@ handle_maprequest(XEvent *e)
 {
     XMapRequestEvent *ev = &e->xmaprequest;
     static XWindowAttributes wa;
-    static Client *c;
 
     if(!XGetWindowAttributes(dpy, ev->window, &wa))
         return;
@@ -235,11 +232,8 @@ handle_maprequest(XEvent *e)
     }
 
     /* there're client which send map requests twice */
-    c = win2client(ev->window);
-    if(!c)
-        c = alloc_client(ev->window, &wa);
-    if(!c->frame)
-        attach_client(c);
+    if(!win2client(ev->window))
+        manage_client(alloc_client(ev->window, &wa));
 }
 
 static void
@@ -265,7 +259,7 @@ handle_propertynotify(XEvent *e)
         return;                 /* ignore */
 
     if((c = win2client(ev->window)))
-        handle_client_property(c, ev);
+        update_client_property(c, ev);
 }
 
 static void
@@ -274,5 +268,5 @@ handle_unmapnotify(XEvent *e)
     XUnmapEvent *ev = &e->xunmap;
     Client *c;
     if((c = win2client(ev->window)))
-        detach_client(c, True);
+        destroy_client(c, True);
 }

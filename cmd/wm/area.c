@@ -40,7 +40,7 @@ destroy_area(Area *a)
 		free(a->frame);
 	cext_array_detach((void **)t->area, a, &t->areasz);
 	t->narea--;
-	if(t->sel > 0)
+	if(t->sel > 1)
 		t->sel--;
 	free(a);
 }

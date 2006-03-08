@@ -327,7 +327,7 @@ name2type(char *name, unsigned char dir_type)
 		return FsFmode;
 	if(!strncmp(name, "tag", 4))
 		return FsFtag;
-	if(has_ctag(name) && (dir_type == FsDtags))
+	if(has_tag(name) && (dir_type == FsDtags))
 		return FsFtag;
 	if((dir_type == FsDclass) && name2class(name))
 		return FsFclasstag;
@@ -1346,7 +1346,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			memcpy(client[i1]->tags, fcall->data, fcall->count);
 			client[i1]->tags[fcall->count] = 0;
 		}
-		update_ctags();
+		update_tags();
 		break;
 	case FsFgeom:
 		if(fcall->count > sizeof(buf))

@@ -48,7 +48,6 @@ scan_wins()
     Window *wins;
     XWindowAttributes wa;
     Window d1, d2;
-    Client *c;
 
     if(XQueryTree(dpy, root, &d1, &d2, &wins, &num)) {
         for(i = 0; i < num; i++) {
@@ -57,10 +56,8 @@ scan_wins()
             if(wa.override_redirect
                || XGetTransientForHint(dpy, wins[i], &d1))
                 continue;
-            if(wa.map_state == IsViewable) {
-                c = alloc_client(wins[i], &wa);
-                attach_client(c);
-            }
+            if(wa.map_state == IsViewable)
+				manage_client(alloc_client(wins[i], &wa));
         }
     }
     if(wins)

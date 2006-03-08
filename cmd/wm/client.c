@@ -185,7 +185,7 @@ kill_client(Client * c)
 }
 
 void
-handle_client_property(Client *c, XPropertyEvent *e)
+update_client_property(Client *c, XPropertyEvent *e)
 {
     XTextProperty name;
     long msize;
@@ -215,17 +215,6 @@ handle_client_property(Client *c, XPropertyEvent *e)
         }
         break;
     }
-}
-
-void
-destroy_client(Client * c)
-{
-    XFreeGC(dpy, c->gc);
-    XDestroyWindow(dpy, c->framewin);
-	cext_array_detach((void **)client, c, &clientsz);
-	nclient--;
-	update_ctags();
-    free(c);
 }
 
 /* speed reasoned function for client property change */
@@ -328,21 +317,29 @@ gravitate(Client *c, Bool invert)
 }
 
 void
-attach_client(Client *c)
+manage_client(Client *c)
 {
 	TClass *tc = client2class(c);
 	Tag *t;
 
+	if(c->trans) {
+		c->tags[0] = '~';
+		c->tags[1] = 0;
+	}
+	else
+		c->tags[0] = 0;
+
 	t = ntag ? tag[sel] : alloc_tag(def.tag);
-	cext_strlcpy(c->tags, tc && strlen(tc->tags) ? tc->tags : t->name, sizeof(c->tags));
-	update_ctags();
+	cext_strlcat(c->tags, tc && strlen(tc->tags) ? tc->tags : t->name, sizeof(c->tags));
+	update_tags();
 }
 
 void
-detach_client(Client *c, Bool unmap)
+destroy_client(Client *c, Bool unmap)
 {
 	int i;
 	Client *cl;
+
 	for(i = 0; i < ntag; i++)
 		detach_fromtag(tag[i], c, unmap);
 	if(!unmap)
@@ -351,8 +348,15 @@ detach_client(Client *c, Bool unmap)
 		c->rect.x = c->frame[c->sel]->rect.x;
 		c->rect.y = c->frame[c->sel]->rect.y;
 		reparent_client(c, root, c->rect.x, c->rect.y);
-		XUnmapWindow(dpy, c->framewin);
 	}
+
+    XFreeGC(dpy, c->gc);
+    XDestroyWindow(dpy, c->framewin);
+	cext_array_detach((void **)client, c, &clientsz);
+	nclient--;
+	update_tags();
+    free(c);
+
 	if((cl = sel_client_of_tag(tag[sel])))
 		focus_client(cl);
 }

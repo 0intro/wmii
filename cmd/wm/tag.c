@@ -139,7 +139,7 @@ get_tag(char *name)
 	unsigned int i, n = 0;
 	Tag *t;
 
-	if(!has_ctag(name))
+	if(!has_tag(name))
 		return nil;
 	for(i = 0; i < ntag; i++) {
 		t = tag[i];
@@ -185,7 +185,7 @@ select_tag(char *arg)
 }
 
 Bool
-has_ctag(char *tag)
+has_tag(char *tag)
 {
 	unsigned int i;
 	for(i = 0; i < nctag; i++)
@@ -205,14 +205,14 @@ clientoftag(Tag *t, Client *c)
 }
 
 void
-update_ctags()
+update_tags()
 {
 	unsigned int i, j, k;
 	char buf[256];
 	char *tags[128];
 	char *t;
 
-	fprintf(stderr, "%s", "update_ctags\n");
+	fprintf(stderr, "%s", "update_tags\n");
 	for(i = 0; i < nctag; i++) {
 		free(ctag[i]);
 		ctag[i] = nil;
@@ -226,7 +226,7 @@ update_ctags()
 			t = tags[k];
 			if(*t == '~')
 				t++;
-			if(!has_ctag(t)) {
+			if(!has_tag(t)) {
 				ctag = (char **)cext_array_attach((void **)ctag, strdup(t),
 						sizeof(char *), &ctagsz);
 				nctag++;
