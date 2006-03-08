@@ -181,6 +181,8 @@ handle_destroynotify(XEvent *e)
 {
     XDestroyWindowEvent *ev = &e->xdestroywindow;
     Client *c = win2client(ev->window);
+	if(!c)
+		return;
     if(c->frame)
         detach_client(c, False);
 	destroy_client(c);
@@ -194,7 +196,7 @@ handle_expose(XEvent *e)
     if(ev->count == 0) {
 		if(ev->window == winbar) 
 			draw_bar();
-		else if((c = win2clientframe(ev->window)) && c->nframe)
+		else if((c = win2clientframe(ev->window)))
             draw_client(c);
     }
 }

@@ -103,7 +103,7 @@ select_area(Area *a, char *arg)
 }
 
 void
-send_toarea(Area *to, Area *from, Client *c)
+send2area(Area *to, Area *from, Client *c)
 {
 	detach_fromarea(from, c);
 	attach_toarea(to, c);
@@ -392,7 +392,7 @@ drop_moving(Frame *f, XRectangle *new, XPoint * pt)
 			!blitz_ispointinrect(pt->x, pt->y, &t->area[i]->rect); i++);
 	if((tgt = ((i < t->narea) ? t->area[i] : nil))) {
         if(tgt != src) {
-			send_toarea(tgt, src, f->client);
+			send2area(tgt, src, f->client);
 			arrange_area(tgt);
 		}
         else {

@@ -1,6 +1,7 @@
 #!/bin/sh
 # start wmiiwm and wait for its termination
 
+test $# -eq 0 || exec wmiiwm "$@"
 wmiiwm -c || exit 1
 
 OLD_PATH=$PATH export OLD_PATH

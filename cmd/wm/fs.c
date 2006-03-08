@@ -1180,14 +1180,14 @@ xwrite(IXPConn *c, Fcall *fcall)
 			f = tag[i1]->area[i2]->frame[i3];
 			if(!strncmp(buf, "kill", 5))
 				kill_client(f->client);
-			else if(!strncmp(buf, "sendtoarea ", 11))
-				sendtoarea_client(f->client, &buf[11]);
+			else if(!strncmp(buf, "sendto ", 7))
+				send2area_client(f->client, &buf[7]);
 			break;
 		case FsDGclient:
 			if(!strncmp(buf, "kill", 5))
 				kill_client(client[i1]);
-			else if(!strncmp(buf, "sendtoarea ", 11))
-				sendtoarea_client(client[i1], &buf[11]);
+			else if(!strncmp(buf, "sendto ", 7))
+				send2area_client(client[i1], &buf[7]);
 			break;
 		default:
 			break;

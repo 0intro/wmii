@@ -71,7 +71,6 @@ $MODKEY-n
 $MODKEY-m
 $MODKEY-s
 $MODKEY-equal
-$MODKEY-0
 $MODKEY-1
 $MODKEY-2
 $MODKEY-3
@@ -81,7 +80,6 @@ $MODKEY-6
 $MODKEY-7
 $MODKEY-8
 $MODKEY-9
-$MODKEY-Shift-0
 $MODKEY-Shift-1
 $MODKEY-Shift-2
 $MODKEY-Shift-3
@@ -115,7 +113,7 @@ do
 		$MODKEY-Control-a)
 			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
 		$MODKEY-Control-t)
-			xwrite /ctl select `wmiir read /tags | awk '{print $NF}' | wmiimenu`;;
+			xwrite /ctl select `wmiir read /tags | awk '{print $10}' | wmiimenu`;;
 		$MODKEY-t)
 			extern xterm &;;
 		$MODKEY-m)
@@ -125,11 +123,11 @@ do
 		$MODKEY-equal)
 			xwrite /ws/sel/mode equal;;
 		$MODKEY-n)
-			xwrite /ws/sel/sel/ctl sendtoarea new;;
+			xwrite /ws/sel/sel/ctl sendto new;;
 		$MODKEY-Return)
-			xwrite /ws/sel/sel/ctl sendtoarea prev;;
+			xwrite /ws/sel/sel/ctl sendto prev;;
 		$MODKEY-Shift-Return)
-			xwrite /ws/sel/sel/ctl sendtoarea next;;
+			xwrite /ws/sel/sel/ctl sendto next;;
 		$MODKEY-h)
 			xwrite /ws/ctl select prev;;
 		$MODKEY-l)

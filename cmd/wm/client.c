@@ -16,6 +16,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     XTextProperty name;
     Client *c = (Client *) cext_emallocz(sizeof(Client));
     XSetWindowAttributes fwa;
+	XClassHint ch;
     long msize;
 	static unsigned int id = 1;
 
@@ -36,6 +37,10 @@ alloc_client(Window w, XWindowAttributes *wa)
 	if(name.value) {
 		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
     	free(name.value);
+	}
+	if(XGetClassHint(dpy, c->win, &ch)) {
+		cext_strlcpy(c->class, ch.res_class, sizeof(c->class));
+		cext_strlcpy(c->instance, ch.res_name, sizeof(c->instance));
 	}
 
     fwa.override_redirect = 1;
@@ -229,6 +234,9 @@ draw_client(Client *c)
 {
     Draw d = { 0 };
 	char buf[512];
+
+	if(!c->nframe)
+		return; /* might not have been attached atm */
 
 	d.align = WEST;
 	d.drawable = c->framewin;
@@ -467,7 +475,7 @@ select_client(Client *c, char *arg)
 }
 
 void
-sendtoarea_client(Client *c, char *arg)
+send2area_client(Client *c, char *arg)
 {
 	const char *errstr;
 	Frame *f = c->frame[c->sel];
@@ -501,7 +509,7 @@ sendtoarea_client(Client *c, char *arg)
 			return;
 		to = t->area[i];
 	}
-	send_toarea(to, a, c);
+	send2area(to, a, c);
 }
 
 void
