@@ -335,7 +335,7 @@ attach_client(Client *c)
     if(!ntag)
 		alloc_tag(def.tag);
 
-	cext_strlcpy(c->tags, tc ? tc->tags : def.tag, sizeof(c->tags));
+	cext_strlcpy(c->tags, tc && strlen(tc->tags) ? tc->tags : def.tag, sizeof(c->tags));
 	update_ctags();
 }
 
