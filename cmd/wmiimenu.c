@@ -127,6 +127,7 @@ draw_menu()
     draw.rect.x = 0;
     draw.rect.y = 0;
 	draw.color = normcolor;
+    draw.data = nil;
     blitz_drawlabelnoborder(dpy, &draw);
 
     /* print command */
