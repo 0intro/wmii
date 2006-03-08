@@ -368,16 +368,6 @@ sel_client()
 	return ntag ? sel_client_of_tag(tag[sel]) : nil;
 }
 
-Client *
-win2clientframe(Window w)
-{
-	unsigned int i;
-	for(i = 0; (i < clientsz) && client[i]; i++)
-		if(client[i]->framewin == w)
-			return client[i];
-	return nil;
-}
-
 static void
 match_sizehints(Client *c)
 {
@@ -446,27 +436,6 @@ resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		configure_client(c);
 	}
-}
-
-int
-frid2index(Area *a, unsigned short id)
-{
-	int i;
-	for(i = 0; i < a->nframe; i++)
-		if(a->frame[i]->id == id)
-			return i;
-	return -1;
-}
-
-int
-frame2index(Frame *f)
-{
-	int i;
-	Area *a = f->area;
-	for(i = 0; i < a->nframe; i++)
-		if(a->frame[i] == f)
-			return i;
-	return -1;
 }
 
 void

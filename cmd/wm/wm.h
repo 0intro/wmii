@@ -241,10 +241,7 @@ void detach_client(Client *c, Bool unmap);
 Client *sel_client();
 Client *sel_client_of_tag(Tag *t);
 void focus_client(Client *c);
-Client *win2clientframe(Window w);
 void resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall);
-int frid2index(Area *a, unsigned short id);
-int frame2index(Frame *f);
 void select_client(Client *c, char *arg);
 void sendtoarea_client(Client *c, char *arg);
 void resize_all_clients();
@@ -254,6 +251,11 @@ int cid2index(unsigned short id);
 /* event.c */
 void init_x_event_handler();
 void check_x_event(IXPConn *c);
+
+/* frame.c */
+int frid2index(Area *a, unsigned short id);
+int frame2index(Frame *f);
+Client *win2clientframe(Window w);
 
 /* fs.c */
 unsigned long long mkqpath(unsigned char type, unsigned short pg,
