@@ -136,7 +136,7 @@ tid2index(unsigned short id)
 Tag *
 get_tag(char *name)
 {
-	unsigned int i;
+	unsigned int i, n = 0;
 	Tag *t;
 
 	if(!has_ctag(name))
@@ -147,9 +147,15 @@ get_tag(char *name)
 			return t;
 	}
 
+	for(i = 0; i < nclient; i++)
+		if(strstr(client[i]->tags, name))
+			n++;
+	if(!n)
+		return nil;
+
 	t = alloc_tag(name);
 	for(i = 0; i < nclient; i++)
-		if(!clientoftag(t, client[i]) && strstr(client[i]->tags, name))
+		if(strstr(client[i]->tags, name))
 			attach_totag(t, client[i]);
 	return t;
 }
@@ -157,11 +163,23 @@ get_tag(char *name)
 void
 select_tag(char *arg)
 {
+	int i, j, n;
 	Client *c;
 	Tag *t = get_tag(arg);
 	if(!t)
 		return;
     focus_tag(t);
+
+	for(i = 0; i < ntag; i++) {
+		n = 0;
+		for(j = 0; j < tag[i]->narea; j++)
+			n += tag[i]->area[j]->nframe;
+		if(!n) {
+			destroy_tag(tag[i]);
+			i--;
+		}
+	}
+
 	if((c = sel_client_of_tag(t)))
 		focus_client(c);
 }
@@ -195,19 +213,6 @@ update_ctags()
 
 	fprintf(stderr, "%s", "update_ctags\n");
 	for(i = 0; i < nctag; i++) {
-#if 0
-		Bool exists = False;
-		for(j = 0; j < nclient; j++)
-			if(strstr(client[j]->tags, ctag[i]))
-				exists = True;
-		if(!exists) {
-			for(j = 0; j < ntag; j++)
-				if(!strncmp(tag[j]->name, ctag[i], strlen(tag[j]->name))) {
-					destroy_tag(tag[j]);
-					j--;
-				}
-		}
-#endif
 		free(ctag[i]);
 		ctag[i] = nil;
 	}
@@ -241,22 +246,16 @@ update_ctags()
 void
 detach_fromtag(Tag *t, Client *c, Bool unmap)
 {
-	int i, n = 0;
+	int i;
+	Client *cl;
 	for(i = 0; i < t->narea; i++) {
 		if(clientofarea(t->area[i], c)) {
 			detach_fromarea(t->area[i], c);
 			XMoveWindow(dpy, c->framewin, 2 * rect.width, 0);
 		}
 	}
-	for(i = 0; i < t->narea; i++) 
-		n += t->area[i]->nframe;
-	if(!n)
-		destroy_tag(t);
-	if(ntag) {
-		Client *c = sel_client_of_tag(tag[sel]);
-		focus_tag(tag[sel]);
-		focus_client(c);
-	}
+	if((cl = sel_client_of_tag(t)))
+		focus_client(cl);
 }
 
 void

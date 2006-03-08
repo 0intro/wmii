@@ -65,8 +65,6 @@ static char Enocommand[] = "command not supported";
  * /ws/1/1/tags			FsFtags			tag of client
  * /ws/1/1/geom			FsFgeom			geometry of client
  * /ws/1/1/ctl 			FsFctl 			command interface (client)
- * /cache/ 				FsDcache		cache of existing ws'es
- * /cache/foo 			FsDws			cache of existing ws'es
  */
 
 Qid root_qid;
@@ -155,7 +153,6 @@ qid2name(Qid *qid)
 		case FsDdef: return "def"; break;
 		case FsDkeys: return "keys"; break;
 		case FsDtags: return "tags"; break;
-		case FsDcache: return "cache"; break;
 		case FsDclients: return "clients"; break;
 		case FsDbar: return "bar"; break;
 		case FsDws:
@@ -269,8 +266,6 @@ name2type(char *name, unsigned char dir_type)
 		case FsDclient: return FsFtags; break;
 		}
 	}
-	if(!strncmp(name, "cache", 6))
-		return FsDcache;
 	if(!strncmp(name, "clients", 8))
 		return FsDclients;
 	if(!strncmp(name, "ws", 3) && (dir_type == FsDroot))
@@ -315,18 +310,12 @@ name2type(char *name, unsigned char dir_type)
 		return FsFkey;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
-	if(dir_type == FsDcache) {
-		for(i = 0; i < ntag; i++) 
-			if(!strncmp(name, tag[i]->name, strlen(tag[i]->name)))
-				goto dyndir;
-	}
    	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
     if(err)
 		return -1;
 dyndir:
 	/*fprintf(stderr, "nametotype: dir_type = %d\n", dir_type);*/
 	switch(dir_type) {
-	case FsDcache: return FsDws; break;
 	case FsDbar: return FsDlabel; break;
 	case FsDws: return FsDarea; break;
 	case FsDclients: return FsDGclient; break;
@@ -354,7 +343,6 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case FsDdef:
 	case FsDkeys:
 	case FsDtags:
-	case FsDcache:
 	case FsDclients:
 	case FsDbar:
 		if(dir_type != FsDroot)
@@ -364,18 +352,7 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		break;
 	case FsDws:
 		new->type = IXP_QTDIR;
-		if(!strncmp(wname, "ws", 3) && dir_type == FsDroot)
-			new->path = mkqpath(FsDws, ntag ? tag[sel]->id : 0, 0, 0);
-		else if(dir_type == FsDcache) {
-			for(i = 0; i < ntag; i++)
-				if(!strncmp(wname, tag[i]->name, strlen(tag[i]->name)))
-					break;
-			if(i >= ntag)
-				return -1;
-			new->path = mkqpath(FsDws, tag[i]->id, 0, 0);
-		}
-		else
-			return -1;
+		new->path = mkqpath(FsDws, ntag ? tag[sel]->id : 0, 0, 0);
 		break;
 	case FsDlabel:
 		if(dir_type !=  FsDbar)
@@ -625,7 +602,6 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     case FsDdef:
 	case FsDkeys:
 	case FsDtags:
-	case FsDcache:
 	case FsDclients:
 	case FsDbar:
 	case FsDlabel:
@@ -786,24 +762,6 @@ xread(IXPConn *c, Fcall *fcall)
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
-		case FsDcache:
-			/* jump to offset */
-			len = 0;
-			for(i = 0; i < ntag; i++) {
-				len += type2stat(&stat, tag[i]->name, &m->qid);
-				if(len <= fcall->offset)
-					continue;
-				break;
-			}
-			/* offset found, proceeding */
-			for(; i < ntag; i++) {
-				len = type2stat(&stat, tag[i]->name, &m->qid);
-				if(fcall->count + len > fcall->iounit)
-					break;
-				fcall->count += len;
-				p = ixp_enc_stat(p, &stat);
-			}
-			break;
 		case FsDtags:
 			/* jump to offset */
 			len = 0;
@@ -943,8 +901,6 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "clients", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "cache", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "ws", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
@@ -961,15 +917,6 @@ xread(IXPConn *c, Fcall *fcall)
 			for(i = 0; i < nclient; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
-				if(fcall->count + len > fcall->iounit)
-					break;
-				fcall->count += len;
-				p = ixp_enc_stat(p, &stat);
-			}
-			break;
-		case FsDcache:
-			for(i = 0; i < ntag; i++) {
-				len = type2stat(&stat, tag[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;

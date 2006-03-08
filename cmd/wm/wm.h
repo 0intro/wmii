@@ -46,7 +46,6 @@ enum {
     FsDroot,
 	FsDdef,
 	FsDws,
-	FsDcache,
 	FsDarea,
 	FsDclients,
 	FsDclient,
