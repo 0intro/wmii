@@ -531,14 +531,16 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     case FsDarea:
     case FsDws:
     case FsDdef:
-	case FsDkeys:
-	case FsDclass:
 	case FsDtags:
 	case FsDclients:
 	case FsDbar:
 	case FsDlabel:
     case FsDroot:
 		return mkstat(stat, dir, wname, 0, DMDIR | DMREAD | DMEXEC);
+        break;
+	case FsDkeys:
+	case FsDclass:
+		return mkstat(stat, dir, wname, 0, DMDIR | DMREAD | DMWRITE | DMEXEC);
         break;
 	case FsFctl:
 		return mkstat(stat, dir, wname, 0, DMWRITE);
