@@ -40,12 +40,8 @@ destroy_area(Area *a)
 		free(a->frame);
 	cext_array_detach((void **)t->area, a, &t->areasz);
 	t->narea--;
-	if(t->sel == t->narea) {
-		if(t->narea)
-			t->sel = t->narea - 1;
-		else 
-			t->sel = 0;
-	}
+	if(t->sel > 0)
+		t->sel--;
 	free(a);
 }
 
@@ -155,11 +151,11 @@ detach_fromarea(Area *a, Client *c)
 	cext_array_detach((void **)a->frame, f, &a->framesz);
 	free(f);
 	c->nframe--;
+	if(c->sel > 0)
+		c->sel--;
 	a->nframe--;
-	if(c->sel >= c->nframe)
-		c->sel = 0;
-	if(a->sel >= a->nframe)
-		a->sel = 0;
+	if(a->sel > 0)
+		a->sel--;
 	if(a->nframe)
 		arrange_area(a);
 	else {

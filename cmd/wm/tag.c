@@ -263,10 +263,20 @@ attach_totag(Tag *t, Client *c)
 {
 	Area *a = t->area[t->sel];
 
-	if(c->tags[0] == 0)
-		cext_strlcat(c->tags, t->name, sizeof(c->tags));
     reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	attach_toarea(a, c);
     map_client(c);
 	XMapWindow(dpy, c->framewin);
+	if(t == tag[sel])
+		focus_client(c);
+}
+
+Client *
+sel_client_of_tag(Tag *t)
+{
+	if(t) {
+		Area *a = t->narea ? t->area[t->sel] : nil;
+		return (a && a->nframe) ? a->frame[a->sel]->client : nil;
+	}
+	return nil;
 }

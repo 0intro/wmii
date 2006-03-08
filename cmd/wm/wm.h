@@ -261,7 +261,6 @@ void reparent_client(Client *c, Window w, int x, int y);
 void attach_client(Client *c);
 void detach_client(Client *c, Bool unmap);
 Client *sel_client();
-Client *sel_client_of_tag(Tag *t);
 void focus_client(Client *c);
 void resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall);
 void select_client(Client *c, char *arg);
@@ -319,6 +318,7 @@ void update_ctags();
 Bool clientoftag(Tag *t, Client *c);
 void detach_fromtag(Tag *t, Client *c, Bool unmap);
 void attach_totag(Tag *t, Client *c);
+Client *sel_client_of_tag(Tag *t);
 
 /* wm.c */
 void scan_wins();

@@ -330,14 +330,12 @@ gravitate(Client *c, Bool invert)
 void
 attach_client(Client *c)
 {
-	Tag *t;
-    if(!ntag)
-		t = alloc_tag(def.tag);
-	else
-		t = tag[sel];
+	TClass *tc = client2class(c);
 
-	attach_totag(t, c);
-	focus_client(c);
+    if(!ntag)
+		alloc_tag(def.tag);
+
+	cext_strlcpy(c->tags, tc ? tc->tags : def.tag, sizeof(c->tags));
 	update_ctags();
 }
 
@@ -358,16 +356,6 @@ detach_client(Client *c, Bool unmap)
 	}
 	if((cl = sel_client_of_tag(tag[sel])))
 		focus_client(cl);
-}
-
-Client *
-sel_client_of_tag(Tag *t)
-{
-	if(t) {
-		Area *a = t->narea ? t->area[t->sel] : nil;
-		return (a && a->nframe) ? a->frame[a->sel]->client : nil;
-	}
-	return nil;
 }
 
 Client *
