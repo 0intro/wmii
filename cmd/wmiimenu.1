@@ -50,12 +50,19 @@ remove all characters from the input field.
 .SH ENVIRONMENT
 .TP
 WMII_FONT
+The X11 font used to display each item in the menu.
+.br
+Default: fixed
 .TP
 WMII_NORMCOLORS
-This variable specifies the foreground, background, and border colors of a label. Syntactically, three blank-separated color values of the form #RRGGBB are expected.
+The foreground, background, and border colors of a label. Syntactically, three blank-separated color values of the form #RRGGBB are expected.
+.br
+Default: #222222 #eeeeee #666666
 .TP
 WMII_SELCOLORS
 Like WMII_NORMCOLORS, but for the selected label.
+.br
+Default: #ffffff #285577 #4c7899
 .SH SEE ALSO
 .BR wmii (1),
 .BR wmiiwm (1),
