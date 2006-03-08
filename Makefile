@@ -17,7 +17,7 @@ all:
 	@echo "LDFLAGS  = ${LDFLAGS}"
 	@echo "CC       = ${CC}"
 	@for i in ${SUBDIRS} cmd/wm; do \
-		(cd $$i; make;) \
+		(cd $$i; make) \
 	done
 
 dist: clean
