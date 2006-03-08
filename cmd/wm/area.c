@@ -159,7 +159,7 @@ detach_fromarea(Area *a, Client *c)
 	if(a->nframe)
 		arrange_area(a);
 	else {
-		if(t->narea > 2)
+		if(area2index(a) && t->narea > 2)
 			destroy_area(a);
 		arrange_tag(t, True);
 	}
