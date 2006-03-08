@@ -88,7 +88,7 @@ focus_tag(Tag *t)
 				draw_client(client[i]);
 			}
 		}
-	snprintf(buf, sizeof(buf), "WS %s\n", t->name);
+	snprintf(buf, sizeof(buf), "TF %s\n", t->name);
 	write_event(buf);
 	XSync(dpy, False);
 }

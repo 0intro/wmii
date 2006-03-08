@@ -100,7 +100,7 @@ do
 	set -- $event
 	type="$1"; shift
 	case "$type" in
-	WS)
+	TF)
 		xwrite /bar/0/data "$@";;
 	K)
 		case "$1" in
