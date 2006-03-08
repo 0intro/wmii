@@ -9,17 +9,17 @@ SRC = client.c convert.c message.c server.c socket.c transport.c
 
 OBJ = ${SRC:.c=.o}
 
-all: libixp
+all: libixp.a
 	@echo built libixp
 
 .c.o:
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<
 
-libixp: ${OBJ}
-	@echo AR $@.a
-	@${AR} $@.a ${OBJ}
-	@${RANLIB} $@.a
+libixp.a: ${OBJ}
+	@echo AR $@
+	@${AR} $@ ${OBJ}
+	@${RANLIB} $@
 
 clean:
 	rm -f libixp.a *.o

@@ -9,17 +9,17 @@ LDFLAGS += -L../libixp -lixp -L../libcext -lcext
 SRC = draw.c geometry.c
 OBJ = ${SRC:.c=.o}
 
-all: liblitz
+all: liblitz.a
 	@echo built liblitz
 
 .c.o:
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<
 
-liblitz: ${OBJ}
-	@echo AR $@.a
-	@${AR} $@.a ${OBJ}
-	@${RANLIB} $@.a
+liblitz.a: ${OBJ}
+	@echo AR $@
+	@${AR} $@ ${OBJ}
+	@${RANLIB} $@
 
 clean:
 	rm -f liblitz.a *.o

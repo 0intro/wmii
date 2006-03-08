@@ -9,17 +9,17 @@ OBJ = ${SRC:.c=.o}
 
 .PREFIXES = .c .o
 
-all: libcext
+all: libcext.a
 	@echo built libcext
 
 .c.o:
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<
 
-libcext: ${OBJ}
-	@echo AR $@.a
-	@${AR} $@.a ${OBJ}
-	@${RANLIB} $@.a
+libcext.a: ${OBJ}
+	@echo AR $@
+	@${AR} $@ ${OBJ}
+	@${RANLIB} $@
 
 clean:
 	rm -f libcext.a *.o
