@@ -241,10 +241,10 @@ void update_bar_geometry();
 unsigned int bar_height();
 
 /* class.c */
-TClass *alloc_class(char *name, char *tags);
+TClass *get_class(const char *name);
 void destroy_class(TClass *tclass);
 int classid2index(unsigned short id);
-TClass *name2class(char *name);
+TClass *name2class(const char *name);
 TClass *client2class(Client *c);
 
 /* client.c */
@@ -289,9 +289,9 @@ void new_ixp_conn(IXPConn *c);
 void handle_key(Window w, unsigned long mod, KeyCode keycode);
 void grab_key(Key *k);
 void ungrab_key(Key *k);
-Key * name2key(char *name);
+Key *name2key(const char *name);
 int kid2index(unsigned short id);
-Key *create_key(char *name);
+Key *get_key(const char *name);
 void destroy_key(Key *k);
 void init_lock_modifiers();
 

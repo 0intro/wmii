@@ -126,7 +126,7 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 		else {
 			switch(*type) {
 				case FsFkey: *i1 = kid2index(i1id); break;
-				case FsFclass: *i1 = classid2index(i1id); break;
+				case FsFclasstag: *i1 = classid2index(i1id); break;
 				case FsFdata:
 				case FsFcolors:
 				case FsDlabel: *i1 = lid2index(i1id); break;
@@ -147,7 +147,7 @@ qid2name(Qid *qid)
 {
 	unsigned char type;
 	int i1 = -1, i2 = -1, i3 = -1;
-	static char buf[32];
+	static char buf[256];
 
 	decode_qpath(qid, &type, &i1, &i2, &i3);
 
@@ -253,6 +253,12 @@ qid2name(Qid *qid)
 			return "mode";
 			break;
 		case FsFevent: return "event"; break;
+		case FsFclasstag:
+			if(i1 == -1)
+				return nil;
+			snprintf(buf, sizeof(buf), "%s:%s", class[i1]->class, class[i1]->instance);
+			return buf;
+			break;
 		case FsFkey:
 			if(i1 == -1)
 				return nil;
@@ -262,7 +268,7 @@ qid2name(Qid *qid)
 	}
 }
 
-static int
+static unsigned char
 name2type(char *name, unsigned char dir_type)
 {
     unsigned int i;
@@ -323,6 +329,8 @@ name2type(char *name, unsigned char dir_type)
 		return FsFtag;
 	if(has_ctag(name) && (dir_type == FsDtags))
 		return FsFtag;
+	if((dir_type == FsDclass) && name2class(name))
+		return FsFclasstag;
 	if((dir_type == FsDkeys) && name2key(name))
 		return FsFkey;
 	if(!strncmp(name, "sel", 4))
@@ -345,8 +353,8 @@ static int
 mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 {
 	unsigned char dir_type;
-	int dir_i1 = -1, dir_i2 = -1, dir_i3 = -1;
-	int type, i;
+	int dir_i1 = -1, dir_i2 = -1, dir_i3 = -1, i;
+	unsigned char type;
 
 	decode_qpath(dir, &dir_type, &dir_i1, &dir_i2, &dir_i3);
 	type = name2type(wname, dir_type);
@@ -434,6 +442,17 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 			return -1;
 		new->path = mkqpath(FsDGclient, client[i]->id, 0, 0);
 		break;
+	case FsFclasstag:
+		if(dir_type != FsDclass)
+			return -1;
+		{
+			TClass *tc;
+			if(!(tc = name2class(wname)))
+				return -1;
+			new->type = IXP_QTFILE;
+			new->path = mkqpath(FsFclasstag, tc->id, 0, 0);
+		}
+		break;
 	case FsFkey:
 		if(dir_type != FsDkeys)
 			return -1;
@@ -478,112 +497,6 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
     return 0;
 }
 
-static char *
-xversion(IXPConn *c, Fcall *fcall)
-{
-    if(strncmp(fcall->version, IXP_VERSION, strlen(IXP_VERSION)))
-        return E9pversion;
-    else if(fcall->maxmsg > IXP_MAX_MSG)
-        fcall->maxmsg = IXP_MAX_MSG;
-    fcall->id = RVERSION;
-	ixp_server_respond_fcall(c, fcall);
-    return nil;
-}
-
-static char *
-xattach(IXPConn *c, Fcall *fcall)
-{
-    IXPMap *new = cext_emallocz(sizeof(IXPMap));
-    new->qid = root_qid;
-    new->fid = fcall->fid;
-	c->map = (IXPMap **)cext_array_attach((void **)c->map, new,
-					sizeof(IXPMap *), &c->mapsz);
-    fcall->id = RATTACH;
-    fcall->qid = root_qid;
-	ixp_server_respond_fcall(c, fcall);
-    return nil;
-}
-
-static char *
-xwalk(IXPConn *c, Fcall *fcall)
-{
-    unsigned short nwqid = 0;
-    Qid dir = root_qid;
-    IXPMap *m;
-
-	/*fprintf(stderr, "wm: xwalk: fid=%d\n", fcall->fid);*/
-    if(!(m = ixp_server_fid2map(c, fcall->fid)))
-        return Enofid;
-	/*fprintf(stderr, "wm: xwalk1: fid=%d\n", fcall->fid);*/
-    if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
-        return Enofid;
-    if(fcall->nwname) {
-        dir = m->qid;
-        for(nwqid = 0; (nwqid < fcall->nwname)
-            && !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid], True); nwqid++)
-		{
-            dir = fcall->wqid[nwqid];
-		}
-        if(!nwqid) {
-			fprintf(stderr, "%s", "xwalk: no such file\n");
-			return Enofile;
-		}
-    }
-    /* a fid will only be valid, if the walk was complete */
-    if(nwqid == fcall->nwname) {
-		/*fprintf(stderr, "wm: xwalk4: newfid=%d\n", fcall->newfid);*/
-        if(fcall->fid != fcall->newfid) {
-			m = cext_emallocz(sizeof(IXPMap));
-			c->map = (IXPMap **)cext_array_attach((void **)c->map, m,
-							sizeof(IXPMap *), &c->mapsz);
-        }
-        m->qid = dir;
-        m->fid = fcall->newfid;
-    }
-    fcall->id = RWALK;
-    fcall->nwqid = nwqid;
-	ixp_server_respond_fcall(c, fcall);
-    return nil;
-}
-
-static char *
-xcreate(IXPConn *c, Fcall *fcall)
-{
-    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
-
-    if(!(fcall->mode | IXP_OWRITE))
-        return Enomode;
-    if(!m)
-        return Enofid;
-	if(!strncmp(fcall->name, ".", 2) || !strncmp(fcall->name, "..", 3))
-		return "illegal file name";
-	if(qpath_type(m->qid.path) != FsDkeys)
-		return Enoperm;
-	grab_key(create_key(fcall->name));
-	mkqid(&m->qid, fcall->name, &m->qid, False);
-    fcall->id = RCREATE;
-    fcall->qid = m->qid;
-    fcall->iounit = WMII_IOUNIT;
-	ixp_server_respond_fcall(c, fcall);
-    return nil;
-}
-
-static char *
-xopen(IXPConn *c, Fcall *fcall)
-{
-    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
-
-    if(!m)
-        return Enofid;
-    if(!(fcall->mode | IXP_OREAD) && !(fcall->mode | IXP_OWRITE))
-        return Enomode;
-    fcall->id = ROPEN;
-    fcall->qid = m->qid;
-    fcall->iounit = WMII_IOUNIT;
-	ixp_server_respond_fcall(c, fcall);
-    return nil;
-}
-
 static unsigned int
 mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int mode)
 {
@@ -602,10 +515,9 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 static unsigned int
 type2stat(Stat *stat, char *wname, Qid *dir)
 {
-	unsigned char dir_type;
+	unsigned char dir_type, type;
 	int dir_i1 = 0, dir_i2 = 0, dir_i3 = 0;
-	int type;
-	char buf[32];
+	char buf[256];
 	Frame *f;
 
 	decode_qpath(dir, &dir_type, &dir_i1, &dir_i2, &dir_i3);
@@ -685,6 +597,9 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 			return mkstat(stat, dir, wname, strlen(def.tag), DMREAD | DMWRITE);
 		return mkstat(stat, dir, wname, 0, 0);
 		break;
+    case FsFclasstag:
+		return mkstat(stat, dir, wname, strlen(class[dir_i1]->tags), DMREAD | DMWRITE);
+		break;
     case FsFkey:
 		return mkstat(stat, dir, wname, 0, DMWRITE);
 		break;
@@ -707,6 +622,122 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		break;
     }
 	return 0;
+}
+
+static char *
+xversion(IXPConn *c, Fcall *fcall)
+{
+    if(strncmp(fcall->version, IXP_VERSION, strlen(IXP_VERSION)))
+        return E9pversion;
+    else if(fcall->maxmsg > IXP_MAX_MSG)
+        fcall->maxmsg = IXP_MAX_MSG;
+    fcall->id = RVERSION;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
+}
+
+static char *
+xattach(IXPConn *c, Fcall *fcall)
+{
+    IXPMap *new = cext_emallocz(sizeof(IXPMap));
+    new->qid = root_qid;
+    new->fid = fcall->fid;
+	c->map = (IXPMap **)cext_array_attach((void **)c->map, new,
+					sizeof(IXPMap *), &c->mapsz);
+    fcall->id = RATTACH;
+    fcall->qid = root_qid;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
+}
+
+static char *
+xwalk(IXPConn *c, Fcall *fcall)
+{
+    unsigned short nwqid = 0;
+    Qid dir = root_qid;
+    IXPMap *m;
+
+	/*fprintf(stderr, "wm: xwalk: fid=%d\n", fcall->fid);*/
+    if(!(m = ixp_server_fid2map(c, fcall->fid)))
+        return Enofid;
+	/*fprintf(stderr, "wm: xwalk1: fid=%d\n", fcall->fid);*/
+    if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
+        return Enofid;
+    if(fcall->nwname) {
+        dir = m->qid;
+        for(nwqid = 0; (nwqid < fcall->nwname)
+            && !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid], True); nwqid++)
+		{
+            dir = fcall->wqid[nwqid];
+		}
+        if(!nwqid) {
+			fprintf(stderr, "%s", "xwalk: no such file\n");
+			return Enofile;
+		}
+    }
+    /* a fid will only be valid, if the walk was complete */
+    if(nwqid == fcall->nwname) {
+		/*fprintf(stderr, "wm: xwalk4: newfid=%d\n", fcall->newfid);*/
+        if(fcall->fid != fcall->newfid) {
+			m = cext_emallocz(sizeof(IXPMap));
+			c->map = (IXPMap **)cext_array_attach((void **)c->map, m,
+							sizeof(IXPMap *), &c->mapsz);
+        }
+        m->qid = dir;
+        m->fid = fcall->newfid;
+    }
+    fcall->id = RWALK;
+    fcall->nwqid = nwqid;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
+}
+
+static char *
+xcreate(IXPConn *c, Fcall *fcall)
+{
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	unsigned char type;
+
+    if(!(fcall->mode | IXP_OWRITE))
+        return Enomode;
+    if(!m)
+        return Enofid;
+	if(!strncmp(fcall->name, ".", 2) || !strncmp(fcall->name, "..", 3))
+		return "illegal file name";
+	type = qpath_type(m->qid.path);
+	switch(type) {
+	case FsDkeys:
+		grab_key(get_key(fcall->name));
+		break;
+	case FsDclass:
+		get_class(fcall->name);
+		break;
+	default:
+		return Enoperm;
+		break;
+	}
+	mkqid(&m->qid, fcall->name, &m->qid, False);
+	fcall->qid = m->qid;
+	fcall->id = RCREATE;
+	fcall->iounit = WMII_IOUNIT;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
+}
+
+static char *
+xopen(IXPConn *c, Fcall *fcall)
+{
+    IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+
+    if(!m)
+        return Enofid;
+    if(!(fcall->mode | IXP_OREAD) && !(fcall->mode | IXP_OWRITE))
+        return Enomode;
+    fcall->id = ROPEN;
+    fcall->qid = m->qid;
+    fcall->iounit = WMII_IOUNIT;
+	ixp_server_respond_fcall(c, fcall);
+    return nil;
 }
 
 static char *
@@ -736,6 +767,12 @@ xremove(IXPConn *c, Fcall *fcall)
 			draw_bar();
 		}
 		break;
+	case FsFclasstag:
+		{
+			TClass *tc = class[i1];
+			destroy_class(tc);
+		}
+		break;
 	case FsFkey:
 		{
 			Key *k = key[i1];
@@ -759,7 +796,7 @@ xread(IXPConn *c, Fcall *fcall)
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
     unsigned char *p = fcall->data;
 	unsigned int i, len;
-	char buf[32];
+	char buf[256];
 	unsigned char type;
 	int i1 = 0, i2 = 0, i3 = 0;
 	Frame *f;
@@ -785,6 +822,26 @@ xread(IXPConn *c, Fcall *fcall)
 			/* offset found, proceeding */
 			for(; i < nkey; i++) {
 				len = type2stat(&stat, key[i]->name, &m->qid);
+				if(fcall->count + len > fcall->iounit)
+					break;
+				fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case FsDclass:
+			/* jump to offset */
+			len = 0;
+			for(i = 0; i < nclass; i++) {
+				snprintf(buf, sizeof(buf), "%s:%s", class[i]->class, class[i]->instance);
+				len += type2stat(&stat, buf, &m->qid);
+				if(len <= fcall->offset)
+					continue;
+				break;
+			}
+			/* offset found, proceeding */
+			for(; i < nclass; i++) {
+				snprintf(buf, sizeof(buf), "%s:%s", class[i]->class, class[i]->instance);
+				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -938,6 +995,16 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDkeys:
 			for(i = 0; i < nkey; i++) {
 				len = type2stat(&stat, key[i]->name, &m->qid);
+				if(fcall->count + len > fcall->iounit)
+					break;
+				fcall->count += len;
+				p = ixp_enc_stat(p, &stat);
+			}
+			break;
+		case FsDclass:
+			for(i = 0; i < nclass; i++) {
+				snprintf(buf, sizeof(buf), "%s:%s", class[i]->class, class[i]->instance);
+				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -1139,6 +1206,12 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsFfont:
 			if((fcall->count = strlen(def.font)))
 				memcpy(p, def.font, fcall->count);
+			break;
+		case FsFclasstag:
+			if(i1 >= nclass)
+				return Enofile;
+			if((fcall->count = strlen(class[i1]->tags)))
+				memcpy(p, class[i1]->tags, fcall->count);
 			break;
 		case FsFmode:
 			if(!i2)
@@ -1372,6 +1445,11 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return "invalid area mode";
 		tag[i1]->area[i2]->mode = i;
 		arrange_area(tag[i1]->area[i2]);
+		break;	
+	case FsFclasstag:
+		if(fcall->count > sizeof(class[i1]->tags))
+			return "tags too long";
+		memcpy(class[i1]->tags, fcall->data, fcall->count);
 		break;	
 	case FsFkey:
 		break;

@@ -87,7 +87,7 @@ ungrab_key(Key *k)
 }
 
 Key *
-create_key(char *name)
+get_key(const char *name)
 {
 	char buf[128];
     char *seq[8];
@@ -249,7 +249,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 }
 
 Key *
-name2key(char *name)
+name2key(const char *name)
 {
 	unsigned int i;
 	for(i = 0; i < nkey; i++)
