@@ -331,11 +331,10 @@ void
 attach_client(Client *c)
 {
 	TClass *tc = client2class(c);
+	Tag *t;
 
-    if(!ntag)
-		alloc_tag(def.tag);
-
-	cext_strlcpy(c->tags, tc && strlen(tc->tags) ? tc->tags : def.tag, sizeof(c->tags));
+	t = ntag ? tag[sel] : alloc_tag(def.tag);
+	cext_strlcpy(c->tags, tc && strlen(tc->tags) ? tc->tags : t->name, sizeof(c->tags));
 	update_ctags();
 }
 
