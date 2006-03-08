@@ -58,6 +58,7 @@ $MODKEY-Control-w,y
 $MODKEY-Control-q,y
 $MODKEY-Control-p
 $MODKEY-Control-a
+$MODKEY-Control-t
 $MODKEY-t
 $MODKEY-Return
 $MODKEY-Shift-Return
@@ -111,6 +112,8 @@ do
 			extern `wmiimenu </tmp/ns.$USER.$DISPLAY/progs` &;;
 		$MODKEY-Control-a)
 			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
+		$MODKEY-Control-t)
+			xwrite /ctl select `wmiir read /tags | awk '{print $10}' | wmiimenu`;;
 		$MODKEY-t)
 			extern xterm &;;
 		$MODKEY-m)
