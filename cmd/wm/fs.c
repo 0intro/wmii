@@ -306,7 +306,7 @@ name2type(char *name, unsigned char dir_type)
 		return FsFtag;
 	if(has_ctag(name) && (dir_type == FsDtags))
 		return FsFtag;
-	if(name2key(name))
+	if((dir_type == FsDkeys) && name2key(name))
 		return FsFkey;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
