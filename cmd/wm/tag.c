@@ -139,7 +139,7 @@ get_tag(char *name)
 	unsigned int i, n = 0;
 	Tag *t;
 
-	if(!has_tag(name))
+	if(!has_tag(ctag, name, nctag))
 		return nil;
 	for(i = 0; i < ntag; i++) {
 		t = tag[i];
@@ -185,11 +185,11 @@ select_tag(char *arg)
 }
 
 Bool
-has_tag(char *tag)
+has_tag(char **tags, char *tag, unsigned int ntags)
 {
 	unsigned int i;
-	for(i = 0; i < nctag; i++)
-		if(!strncmp(ctag[i], tag, strlen(ctag[i])))
+	for(i = 0; i < ntags; i++)
+		if(!strncmp(tags[i], tag, strlen(tags[i])))
 			return True;
 	return False;
 }
@@ -212,12 +212,9 @@ update_tags()
 	char *tags[128];
 	char *t;
 
-	fprintf(stderr, "%s", "update_tags\n");
-	for(i = 0; i < nctag; i++) {
-		free(ctag[i]);
-		ctag[i] = nil;
-	}
-	nctag = 0;
+	char **newctag = nil;
+	unsigned int newctagsz = 0;
+	unsigned int nnewctag = 0;
 
 	for(i = 0; i < nclient; i++) {
 		cext_strlcpy(buf, client[i]->tags, sizeof(buf));
@@ -226,13 +223,31 @@ update_tags()
 			t = tags[k];
 			if(*t == '~')
 				t++;
-			if(!has_tag(t)) {
-				ctag = (char **)cext_array_attach((void **)ctag, strdup(t),
-						sizeof(char *), &ctagsz);
-				nctag++;
+			if(!has_tag(newctag, t, nnewctag)) {
+				newctag = (char **)cext_array_attach((void **)newctag, strdup(t),
+							sizeof(char *), &newctagsz);
+				nnewctag++;
 			}
 		}
 	}
+
+	/* propagate tagging events */
+	for(i = 0; i < nnewctag; i++)
+		if(!has_tag(ctag, newctag[i], nctag)) {
+			snprintf(buf, sizeof(buf), "NT %s\n", newctag[i]);
+			write_event(buf);
+		}
+	for(i = 0; i < nctag; i++) {
+		if(!has_tag(newctag, ctag[i], nnewctag)) {
+			snprintf(buf, sizeof(buf), "RT %s\n", ctag[i]);
+			write_event(buf);
+		}
+		free(ctag[i]);
+	}
+	free(ctag);
+	ctag = newctag;
+	nctag = nnewctag;
+	ctagsz = newctagsz;
 
 	for(i = 0; i < nclient; i++)
 		for(j = 0; j < ntag; j++) {

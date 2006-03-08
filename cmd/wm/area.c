@@ -159,8 +159,22 @@ detach_fromarea(Area *a, Client *c)
 	if(a->nframe)
 		arrange_area(a);
 	else {
-		if(area2index(a) && t->narea > 2)
+		i = area2index(a);
+		if(i && t->narea > 2)
 			destroy_area(a);
+		else if(!i && !a->nframe) {
+			if(c->trans) {
+				/* focus area of transient, if possible */
+				Client *cl = win2client(c->trans);
+				if(cl && cl->nframe) {
+				   a = cl->frame[cl->sel]->area;
+				   if(a->tag == t)
+					   t->sel = area2index(a);
+				}
+			}
+			else if(t->area[1]->nframe)
+				t->sel = 1; /* focus first col as fallback */
+		}
 		arrange_tag(t, True);
 	}
 }
