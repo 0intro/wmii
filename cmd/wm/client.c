@@ -337,6 +337,7 @@ void
 detach_client(Client *c, Bool unmap)
 {
 	int i;
+	Client *cl;
 	for(i = 0; i < ntag; i++)
 		detach_fromtag(tag[i], c, unmap);
 	if(!unmap)
@@ -347,6 +348,8 @@ detach_client(Client *c, Bool unmap)
 		reparent_client(c, root, c->rect.x, c->rect.y);
 		XUnmapWindow(dpy, c->framewin);
 	}
+	if((cl = sel_client_of_tag(tag[sel])))
+		focus_client(cl);
 }
 
 Client *
@@ -506,6 +509,8 @@ sendtoarea_client(Client *c, char *arg)
 	if(i == -1)
 		return;
 	if(!strncmp(arg, "new", 4)) {
+		if(a->nframe == 1)
+			return;
 		to = alloc_area(t);
 		arrange_tag(t, True);
 	}
