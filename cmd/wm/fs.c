@@ -1452,6 +1452,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(fcall->count > sizeof(class[i1]->tags))
 			return "tags too long";
 		memcpy(class[i1]->tags, fcall->data, fcall->count);
+		class[i1]->tags[fcall->count] = 0;
 		break;	
 	case FsFkey:
 		break;

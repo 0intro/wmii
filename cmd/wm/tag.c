@@ -261,8 +261,12 @@ detach_fromtag(Tag *t, Client *c, Bool unmap)
 void
 attach_totag(Tag *t, Client *c)
 {
-	Area *a = t->area[t->sel];
+	Area *a;
 
+	if(strchr(c->tags, '~'))
+		a = t->area[0];
+	else
+   		a = t->area[t->sel];
     reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	attach_toarea(a, c);
     map_client(c);
