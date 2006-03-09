@@ -34,10 +34,6 @@ xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
 
 # BAR CONFIGURATION
-while wmiir remove /bar/0 2>/dev/null
-do
-	:
-done
 wmiir create /bar/foo
 xwrite /bar/foo/colors $WMII_SELCOLORS
 xwrite /bar/expand foo
@@ -70,6 +66,7 @@ $MODKEY-n
 $MODKEY-m
 $MODKEY-s
 $MODKEY-equal
+$MODKEY-0
 $MODKEY-1
 $MODKEY-2
 $MODKEY-3
@@ -79,6 +76,7 @@ $MODKEY-6
 $MODKEY-7
 $MODKEY-8
 $MODKEY-9
+$MODKEY-Shift-0
 $MODKEY-Shift-1
 $MODKEY-Shift-2
 $MODKEY-Shift-3
@@ -99,20 +97,23 @@ do
 	case "$type" in
 	NT)
 		wmiir create /bar/$1
-		xwrite /bar/$1/colors $WMII_SELCOLORS
+		if test $1 = "$oldtag"
+		then
+			xwrite /bar/$1/colors $WMII_NORMCOLORS
+		else
+			xwrite /bar/$1/colors $WMII_SELCOLORS
+		fi
 		xwrite /bar/$1/data $1;;
 	RT)
 		wmiir remove /bar/$1;;
 	TF)
-		if test -z "$old"
+		if test -n "$oldtag"
 		then
-			:  # no old tag label
-		else
-			xwrite /bar/$old/colors $WMII_SELCOLORS
+			xwrite /bar/$oldtag/colors $WMII_SELCOLORS
 		fi
 		xwrite /bar/$1/data $1
 		xwrite /bar/$1/colors $WMII_NORMCOLORS
-		old=$1;;
+		oldtag=$1;;
 	LB)
 		if wmiir read /tags | awk "\$NF == $1 {exit 1}" 
 		then 
@@ -132,8 +133,6 @@ do
 			extern `wmiimenu </tmp/ns.$USER.$DISPLAY/progs` &;;
 		$MODKEY-Control-a)
 			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
-		$MODKEY-Control-t)
-			xwrite /ctl select `wmiir read /tags | awk '{print $NF}' | wmiimenu`;;
 		$MODKEY-t)
 			extern xterm &;;
 		$MODKEY-m)
