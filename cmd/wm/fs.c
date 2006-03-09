@@ -1322,19 +1322,16 @@ xwrite(IXPConn *c, Fcall *fcall)
 		resize_all_clients();
 		break;
 	case FsFtags:
+		if(fcall->count > sizeof(buf))
+			return "tags value too long";
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
 		if(m->qid.dir_type == FsDclient) {
 			f = tag[i1]->area[i2]->frame[i3];
-			if(fcall->count > sizeof(f->client->tags))
-				return "tags value too long";
-			memcpy(f->client->tags, fcall->data, fcall->count);
-			f->client->tags[fcall->count] = 0;
+			cext_strlcat(f->client->tags, buf, sizeof(f->client->tags));
 		}
-		else {
-			if(fcall->count > sizeof(client[i1]->tags))
-				return "tags value too long";
-			memcpy(client[i1]->tags, fcall->data, fcall->count);
-			client[i1]->tags[fcall->count] = 0;
-		}
+		else
+			cext_strlcpy(client[i1]->tags, buf, sizeof(client[i1]->tags));
 		update_tags();
 		break;
 	case FsFgeom:
