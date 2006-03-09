@@ -159,8 +159,12 @@ detach_fromarea(Area *a, Client *c)
 	if(i && a->nframe)
 		arrange_area(a);
 	else {
-		if(i && t->narea > 2)
-			destroy_area(a);
+		if(i) {
+		    if(t->narea > 2)
+				destroy_area(a);
+			else if(!a->nframe && t->area[0]->nframe)
+				t->sel = 0; /* focus floating area if it contains something */
+		}
 		else if(!i && !a->nframe) {
 			if(c->trans) {
 				/* focus area of transient, if possible */
