@@ -109,7 +109,7 @@ focus_client(Client *c)
 }
 
 void
-map_client(Client * c)
+map_client(Client *c)
 {
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
     XMapRaised(dpy, c->win);
@@ -118,7 +118,7 @@ map_client(Client * c)
 }
 
 void
-unmap_client(Client * c)
+unmap_client(Client *c)
 {
 	ungrab_mouse(c->win, AnyModifier, AnyButton);
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
@@ -331,6 +331,8 @@ manage_client(Client *c)
 
 	t = ntag ? tag[sel] : alloc_tag(def.tag);
 	cext_strlcat(c->tags, tc && strlen(tc->tags) ? tc->tags : t->name, sizeof(c->tags));
+	if(!strncmp(c->tags, "~", 2)) /* allows ~ predefinition to only set specific TClass'es floating */ 
+		cext_strlcat(c->tags, t->name, sizeof(c->tags));
 	update_tags();
 
 	/* shorthand proposed by Georg Neis */

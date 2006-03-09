@@ -223,6 +223,8 @@ update_tags()
 			t = tags[k];
 			if(*t == '~')
 				t++;
+			if(!*t) /* should not happen, but some user might try */
+				continue;
 			if(!has_tag(newctag, t, nnewctag)) {
 				newctag = (char **)cext_array_attach((void **)newctag, strdup(t),
 							sizeof(char *), &newctagsz);

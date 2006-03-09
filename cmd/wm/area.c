@@ -18,7 +18,6 @@ alloc_area(Tag *t)
 	update_area_geometry(a);
 	t->area = (Area **)cext_array_attach((void **)t->area, a, sizeof(Area *), &t->areasz);
 	t->sel = t->narea;
-	fprintf(stderr, "alloc_area: t->sel == %d\n", t->sel);
 	t->narea++;
     return a;
 }
