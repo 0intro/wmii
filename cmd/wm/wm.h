@@ -321,6 +321,7 @@ Bool clientoftag(Tag *t, Client *c);
 void detach_fromtag(Tag *t, Client *c, Bool unmap);
 void attach_totag(Tag *t, Client *c);
 Client *sel_client_of_tag(Tag *t);
+void restack_tag(Tag *t);
 
 /* wm.c */
 void scan_wins();

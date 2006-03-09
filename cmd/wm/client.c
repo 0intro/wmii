@@ -99,7 +99,9 @@ focus_client(Client *c)
 	ungrab_mouse(c->win, AnyModifier, AnyButton);
     grab_mouse(c->win, Mod1Mask, Button1);
     grab_mouse(c->win, Mod1Mask, Button3);
-    XRaiseWindow(dpy, c->framewin);
+
+	restack_tag(f->area->tag);
+
     XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
     draw_client(c);
 	XSync(dpy, False);
@@ -112,7 +114,7 @@ void
 map_client(Client *c)
 {
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-    XMapRaised(dpy, c->win);
+    XMapWindow(dpy, c->win);
 	XSelectInput(dpy, c->win, CLIENT_MASK);
     set_client_state(c, NormalState);
 }

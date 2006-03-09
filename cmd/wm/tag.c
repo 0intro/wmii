@@ -305,3 +305,32 @@ sel_client_of_tag(Tag *t)
 	}
 	return nil;
 }
+
+void
+restack_tag(Tag *t)
+{
+	unsigned int i, j, n = 0;
+	static Window *wins = nil;
+   	static unsigned int winssz = 0;
+
+	if(nclient > winssz) {
+		winssz = 2 * nclient;
+		free(wins);
+		wins = cext_emallocz(sizeof(Window) * winssz);
+	}
+
+	for(i = 0; i < t->narea; i++) {
+		Area *a = t->area[i];
+		if(a->nframe) {
+			wins[n++] = a->frame[a->sel]->client->framewin;
+			for(j = 0; j < a->nframe; j++) {
+				if(j == a->sel)
+					continue;
+				wins[n++] = a->frame[j]->client->framewin;
+			}
+		}
+	}
+
+	if(n)
+		XRestackWindows(dpy, wins, n);
+}

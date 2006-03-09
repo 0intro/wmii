@@ -91,7 +91,6 @@ handle_buttonpress(XEvent *e)
 	else if((c = win2client(ev->window))) {
 		ev->state &= valid_mask;
 		if(ev->state & Mod1Mask) {
-			XRaiseWindow(dpy, c->framewin);
 			switch (ev->button) {
 				case Button1:
 					focus(c);
