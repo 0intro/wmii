@@ -259,13 +259,13 @@ update_tags()
 			}
 			else {
 				if(clientoftag(tag[j], client[i]))
-					detach_fromtag(tag[j], client[i], False);
+					detach_fromtag(tag[j], client[i]);
 			}
 		}
 }
  
 void
-detach_fromtag(Tag *t, Client *c, Bool unmap)
+detach_fromtag(Tag *t, Client *c)
 {
 	int i;
 	Client *cl;

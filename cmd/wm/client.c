@@ -350,16 +350,26 @@ manage_client(Client *c)
 	}
 }
 
+static int
+dummy_error_handler(Display *dpy, XErrorEvent *error)
+{
+	return 0;
+}
+
 void
-destroy_client(Client *c, Bool unmap)
+destroy_client(Client *c)
 {
 	int i;
 	Client *cl;
 
+	XGrabServer(dpy);
+	XSetErrorHandler(dummy_error_handler);
+
 	for(i = 0; i < ntag; i++)
-		detach_fromtag(tag[i], c, unmap);
-	if(!unmap)
-		unmap_client(c);
+		detach_fromtag(tag[i], c);
+
+	unmap_client(c);
+
 	if(c->nframe) {
 		c->rect.x = c->frame[c->sel]->rect.x;
 		c->rect.y = c->frame[c->sel]->rect.y;
@@ -375,6 +385,10 @@ destroy_client(Client *c, Bool unmap)
 
 	if((cl = sel_client_of_tag(tag[sel])))
 		focus_client(cl);
+
+	XSync(dpy, False);
+	XSetErrorHandler(wmii_error_handler);
+	XUngrabServer(dpy);
 }
 
 Client *

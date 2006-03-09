@@ -1328,7 +1328,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		buf[fcall->count] = 0;
 		if(m->qid.dir_type == FsDclient) {
 			f = tag[i1]->area[i2]->frame[i3];
-			cext_strlcat(f->client->tags, buf, sizeof(f->client->tags));
+			cext_strlcpy(f->client->tags, buf, sizeof(f->client->tags));
 		}
 		else
 			cext_strlcpy(client[i1]->tags, buf, sizeof(client[i1]->tags));

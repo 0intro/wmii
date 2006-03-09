@@ -179,11 +179,11 @@ handle_configurerequest(XEvent *e)
 static void
 handle_destroynotify(XEvent *e)
 {
+    Client *c;
     XDestroyWindowEvent *ev = &e->xdestroywindow;
-    Client *c = win2client(ev->window);
-	if(!c)
-		return;
-	destroy_client(c, False);
+
+	if((c = win2client(ev->window)))
+		destroy_client(c);
 }
 
 static void
@@ -265,8 +265,9 @@ handle_propertynotify(XEvent *e)
 static void
 handle_unmapnotify(XEvent *e)
 {
-    XUnmapEvent *ev = &e->xunmap;
     Client *c;
+    XUnmapEvent *ev = &e->xunmap;
+
     if((c = win2client(ev->window)))
-        destroy_client(c, True);
+        destroy_client(c);
 }

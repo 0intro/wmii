@@ -19,7 +19,6 @@
 
 static int other_wm_running;
 static int (*x_error_handler) (Display *, XErrorEvent *);
-
 static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
 static void
@@ -180,9 +179,13 @@ init_screen()
  * Other types of errors call Xlib's default error handler, which
  * calls exit().
  */
-static int
-wmii_error_handler(Display * dpy, XErrorEvent * error)
+int
+wmii_error_handler(Display *dpy, XErrorEvent *error)
 {
+	Client *c;
+
+	if((c = win2client(error->resourceid)))
+		destroy_client(c);
     if(error->error_code == BadWindow
        || (error->request_code == X_SetInputFocus
            && error->error_code == BadMatch)
