@@ -492,19 +492,19 @@ send2area_client(Client *c, char *arg)
 
 	if(i == -1)
 		return;
-	if(!strncmp(arg, "new", 4)) {
+	if(!strncmp(arg, "new", 4) && i) {
 		if(a->nframe == 1)
 			return;
 		to = alloc_area(t);
 		arrange_tag(t, True);
 	}
-	else if(!strncmp(arg, "prev", 5)) {
+	else if(!strncmp(arg, "prev", 5) && i) {
 		if(i == 1)
 			to = t->area[t->narea - 1];
 		else
 			to = t->area[i - 1];
 	}
-	else if(!strncmp(arg, "next", 5)) {
+	else if(!strncmp(arg, "next", 5) && i) {
 		if(i < t->narea - 1)
 			to = t->area[i + 1];
 		else
