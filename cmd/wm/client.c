@@ -532,8 +532,13 @@ resize_all_clients()
 void
 focus(Client *c)
 {
-	Frame *f = c->frame[c->sel];
-	Tag *t = f->area->tag;
+	Frame *f = c->nframe ? c->frame[c->sel] : nil;
+	Tag *t;
+
+	if(!f)
+		return;
+
+	t = f->area->tag;
 	if(tag[sel] != t)
 		focus_tag(t);
 	focus_client(c);
