@@ -96,8 +96,10 @@ get_key(const char *name)
 	static unsigned short id = 1;
     Key *k = 0, *r = 0;
 
-	if((k = name2key(name)))
+	if((k = name2key(name))) {
+		ungrab_key(k);
 		return k;
+	}
 
     cext_strlcpy(buf, name, sizeof(buf));
     toks = cext_tokenize(seq, 8, buf, ',');
@@ -121,8 +123,6 @@ get_key(const char *name)
 	r->id = id++;
 	key = (Key **)cext_array_attach((void **)key, r, sizeof(Key *), &keysz);
 	nkey++;
-
-
 	
 	return r;
 }
