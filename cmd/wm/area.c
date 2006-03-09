@@ -349,7 +349,7 @@ drop_resize(Frame *f, XRectangle *new)
     west = (i > 1) ? t->area[i - 1] : nil;
     east = i + 1 < t->narea ? t->area[i + 1] : nil;
 
-	for(i = 1; (i < a->nframe) && (a->frame[i] != f); i++);
+	for(i = 0; (i < a->nframe) && (a->frame[i] != f); i++);
     north = i ? a->frame[i - 1] : nil;
     south = i + 1 < a->nframe ? a->frame[i + 1] : nil;
 
