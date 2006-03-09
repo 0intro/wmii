@@ -188,7 +188,7 @@ unsigned int nkey;
 Label **label;
 unsigned int nlabel;
 unsigned int labelsz;
-unsigned int iexpand;
+char expand[256];
 char **ctag;
 unsigned int nctag;
 unsigned int ctagsz;

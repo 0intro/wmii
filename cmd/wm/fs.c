@@ -597,8 +597,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, 0, DMWRITE);
 		break;
     case FsFexpand:
-		snprintf(buf, sizeof(buf), "%s", iexpand >= nlabel ? "nil" : label[iexpand]->name);
-		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, strlen(expand), DMREAD | DMWRITE);
 		break;
     case FsFdata:
 		return mkstat(stat, dir, wname, (dir_i1 == nlabel) ? 0 : strlen(label[dir_i1]->data), DMREAD | DMWRITE);
@@ -759,8 +758,6 @@ xremove(IXPConn *c, Fcall *fcall)
 			/* now detach the label */
 			destroy_label(l);
 			free(l);
-			if(iexpand >= nlabel)
-				iexpand = 0;
 			draw_bar();
 		}
 		break;
@@ -1165,8 +1162,8 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsFexpand:
-			fcall->count = strlen(iexpand >= nlabel ? "nil" : label[iexpand]->name);
-			memcpy(p, iexpand >= nlabel ? "nil" : label[iexpand]->name, fcall->count);
+			fcall->count = strlen(expand);
+			memcpy(p, expand, fcall->count);
 			break;
 		case FsFdata:
 			if(i1 >= nlabel)
@@ -1347,19 +1344,9 @@ xwrite(IXPConn *c, Fcall *fcall)
 		}
 		break;
     case FsFexpand:
-		{
-			Label *l;
-			if(fcall->count && fcall->count < 16) {
-				memcpy(buf, fcall->data, fcall->count);
-				buf[fcall->count] = 0;
-				if((l = name2label(buf))) {
-					iexpand = label2index(l);
-					draw_bar();
-					break;
-				}
-			}
-		}
-		return Enofile;
+		memcpy(expand, fcall->data, fcall->count);
+		expand[fcall->count] = 0;
+		draw_bar();
 		break;
 	case FsFdata:
 		{

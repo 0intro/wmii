@@ -308,10 +308,11 @@ main(int argc, char *argv[])
 	ctag = nil;
 	client = nil;
 
+	expand[0] = 0;
 	key = nil;
 	keysz = nkey = 0;
 	label = nil;
-	nlabel = labelsz = iexpand = 0;
+	nlabel = labelsz = 0;
 	class = nil;
 	nclass = classsz = 0;
 

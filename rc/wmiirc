@@ -99,7 +99,7 @@ do
 	case "$type" in
 	NT)
 		wmiir create /bar/$1
-		xwrite /bar/$1/colors $WMII_NORMCOLORS
+		xwrite /bar/$1/colors $WMII_SELCOLORS
 		xwrite /bar/$1/data $1;;
 	RT)
 		wmiir remove /bar/$1;;
@@ -108,9 +108,10 @@ do
 		then
 			:  # no old tag label
 		else
-			xwrite /bar/$old/data $old
+			xwrite /bar/$old/colors $WMII_SELCOLORS
 		fi
-		xwrite /bar/$1/data '*'$1
+		xwrite /bar/$1/data $1
+		xwrite /bar/$1/colors $WMII_NORMCOLORS
 		old=$1;;
 	LB)
 		if wmiir read /tags | awk "\$NF == $1 {exit 1}" 

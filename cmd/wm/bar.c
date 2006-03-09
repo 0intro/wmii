@@ -11,9 +11,9 @@
 static int
 comp_label(const void *l1, const void *l2)
 {
-	Label *ll1 = (Label *)l1;
-	Label *ll2 = (Label *)l2;
-	return strcmp((const char *)ll1->name, (const char *)ll2->name);
+	Label *ll1 = *(Label **)l1;
+	Label *ll2 = *(Label **)l2;
+	return strcmp(ll1->name, ll2->name);
 }
 
 Label *
@@ -31,8 +31,8 @@ get_label(char *name)
 	l->color = def.sel;
 	label = (Label **)cext_array_attach((void **)label, l, sizeof(Label *), &labelsz);
 	nlabel++;
-
 	qsort(label, nlabel, sizeof(Label *), comp_label);
+
 	return l;
 }
 
@@ -72,9 +72,13 @@ update_bar_geometry()
 void
 draw_bar()
 {
-	unsigned int i;
+	unsigned int i, iexp = 0;
 	unsigned int w = 0;
+	Label *exp = name2label(expand);
 	Draw d = { 0 };
+
+	if(exp)
+		iexp = label2index(exp);
 
 	d.align = WEST;
     d.gc = gcbar;
@@ -92,7 +96,7 @@ draw_bar()
 			Label *l = label[i];
 			l->rect.x = l->rect.y = 0;
 			l->rect.height = brect.height;
-			if(i == iexpand)
+			if(i == iexp)
 		   		continue;
 			l->rect.width = brect.height;
 			if(strlen(l->data)) {
@@ -115,7 +119,7 @@ draw_bar()
 			label[i]->rect.width = brect.width - label[i]->rect.x;
 		}
 		else {
-			label[iexpand]->rect.width = brect.width - w;
+			label[iexp]->rect.width = brect.width - w;
 			for(i = 1; i < nlabel; i++)
 				label[i]->rect.x = label[i - 1]->rect.x + label[i - 1]->rect.width;
 		}
