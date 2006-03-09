@@ -287,7 +287,7 @@ name2type(char *name, unsigned char dir_type)
 	if(!strncmp(name, "def", 4))
 		return FsDdef;
 	if(!strncmp(name, "class", 6)) {
-		if(dir_type == FsDroot)
+		if(dir_type == FsDdef)
 			return FsDclass;
 		else
 			return FsFclass;
@@ -363,12 +363,17 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		*new = root_qid;
 		break;
 	case FsDdef:
-	case FsDclass:
 	case FsDkeys:
 	case FsDtags:
 	case FsDclients:
 	case FsDbar:
 		if(dir_type != FsDroot)
+			return -1;
+		new->type = IXP_QTDIR;
+		new->path = mkqpath(type, 0, 0, 0);
+		break;
+	case FsDclass:
+		if(dir_type != FsDdef)
 			return -1;
 		new->type = IXP_QTDIR;
 		new->path = mkqpath(type, 0, 0, 0);
@@ -977,8 +982,6 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "clients", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "class", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "ws", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
@@ -1041,6 +1044,8 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDdef:
 			fcall->count += type2stat(&stat, "border", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			fcall->count += type2stat(&stat, "class", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "snap", &m->qid);
 			p = ixp_enc_stat(p, &stat);

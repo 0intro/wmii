@@ -507,9 +507,11 @@ void
 resize_all_clients()
 {
 	unsigned int i;
-	for(i = 0; i < nclient; i++)
-		if(client[i]->frame[client[i]->sel]->area)
-			resize_client(client[i], &client[i]->frame[client[i]->sel]->rect, 0, False);
+	for(i = 0; i < nclient; i++) {
+		Client *c = client[i];
+		if(c->nframe && c->frame[c->sel]->area)
+			resize_client(c, &c->frame[c->sel]->rect, 0, False);
+	}
 }
 
 /* convenience function */
