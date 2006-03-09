@@ -33,9 +33,9 @@ xwrite /def/font $WMII_FONT
 xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
 # some broken apps:
-wmir create /def/class/'Gimp:*'
+wmiir create /def/class/'Gimp:*'
 xwrite /def/class/'Gimp:*' '~'
-wmir create /def/class/'xmms:*'
+wmiir create /def/class/'xmms:*'
 xwrite /def/class/'xmms:*' '~'
 
 # BAR CONFIGURATION
@@ -62,6 +62,8 @@ $MODKEY-Control-t
 $MODKEY-t
 $MODKEY-Return
 $MODKEY-Shift-Return
+$MODKEY-space
+$MODKEY-Shift-space
 $MODKEY-h
 $MODKEY-l
 $MODKEY-j
@@ -152,6 +154,10 @@ do
 			xwrite /ws/sel/sel/ctl sendto prev;;
 		$MODKEY-Shift-Return)
 			xwrite /ws/sel/sel/ctl sendto next;;
+		$MODKEY-space)
+			xwrite /ws/sel/sel/ctl sendto 0;;
+		$MODKEY-Shift-space)
+			xwrite /ws/sel/0/ctl sendto sel;;
 		$MODKEY-h)
 			xwrite /ws/ctl select prev;;
 		$MODKEY-l)
