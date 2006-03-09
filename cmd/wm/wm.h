@@ -49,7 +49,6 @@ enum {
 	FsDarea,
 	FsDclients,
 	FsDclient,
-	FsDclass,
 	FsDGclient,
 	FsDkeys,
 	FsDtags,
@@ -69,8 +68,6 @@ enum {
 	FsFevent,
 	FsFctl,
 	FsFname,
-	FsFclass,
-	FsFclasstag,
 	FsFtags,
 	FsFtag,
 	FsFmode
@@ -119,8 +116,6 @@ struct Client {
 	unsigned short id;
 	char name[256];
 	char tags[256];
-	char class[128];
-	char instance[128];
     int proto;
     unsigned int border;
     Bool destroyed;
@@ -136,13 +131,6 @@ struct Client {
 	unsigned int sel;
 	unsigned int nframe;
 };
-
-typedef struct {
-	unsigned short id;
-	char class[128];
-	char instance[128];
-	char tags[256];
-} TClass;
 
 typedef struct Key Key;
 struct Key {
@@ -192,9 +180,6 @@ char expand[256];
 char **ctag;
 unsigned int nctag;
 unsigned int ctagsz;
-TClass **class;
-unsigned int nclass;
-unsigned int classsz;
 
 Display *dpy;
 IXPServer *ixps;
@@ -242,13 +227,6 @@ void update_bar_geometry();
 unsigned int bar_height();
 Label *name2label(const char *name);
 int label2index(Label *l);
-
-/* class.c */
-TClass *get_class(const char *name);
-void destroy_class(TClass *tclass);
-int classid2index(unsigned short id);
-TClass *name2class(const char *name);
-TClass *client2class(Client *c);
 
 /* client.c */
 Client *alloc_client(Window w, XWindowAttributes *wa);

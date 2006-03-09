@@ -16,7 +16,6 @@ alloc_client(Window w, XWindowAttributes *wa)
     XTextProperty name;
     Client *c = (Client *) cext_emallocz(sizeof(Client));
     XSetWindowAttributes fwa;
-	XClassHint ch;
     long msize;
 	static unsigned int id = 1;
 
@@ -38,11 +37,6 @@ alloc_client(Window w, XWindowAttributes *wa)
 		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
     	free(name.value);
 	}
-	if(XGetClassHint(dpy, c->win, &ch)) {
-		cext_strlcpy(c->class, ch.res_class, sizeof(c->class));
-		cext_strlcpy(c->instance, ch.res_name, sizeof(c->instance));
-	}
-
     fwa.override_redirect = 1;
     fwa.background_pixmap = ParentRelative;
 	fwa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
@@ -321,9 +315,23 @@ gravitate(Client *c, Bool invert)
 void
 manage_client(Client *c)
 {
-	TClass *tc = client2class(c);
 	Tag *t;
+	XClassHint ch;
+	char buf[256];
+	unsigned int i;
 
+	for(i = 0; i < nclient; i++)
+		if(client[i] == c)
+			break;
+
+	/* TCR -> tag client request */
+	XGetClassHint(dpy, c->win, &ch);
+	snprintf(buf, sizeof(buf), "TCR %u 0x%x 0x%x %s:%s\n", i,
+			(unsigned int)c->win, (unsigned int)c->trans, ch.res_class, ch.res_name);
+	XFree(ch.res_class);
+	XFree(ch.res_name);
+	write_event(buf);
+		    
 	if(c->trans) {
 		c->tags[0] = '~';
 		c->tags[1] = 0;
@@ -332,9 +340,8 @@ manage_client(Client *c)
 		c->tags[0] = 0;
 
 	t = ntag ? tag[sel] : alloc_tag(def.tag);
-	cext_strlcat(c->tags, tc && strlen(tc->tags) ? tc->tags : t->name, sizeof(c->tags));
-	if(!strncmp(c->tags, "~", 2)) /* allows ~ predefinition to only set specific TClass'es floating */ 
-		cext_strlcat(c->tags, t->name, sizeof(c->tags));
+	cext_strlcat(c->tags, t->name, sizeof(c->tags));
+
 	update_tags();
 
 	/* shorthand proposed by Georg Neis */
@@ -343,7 +350,7 @@ manage_client(Client *c)
 		char ct[256];
 		char *p;
 
-		cext_strlcpy(ct, tc && strlen(tc->tags) ? tc->tags : t->name, sizeof(ct));
+		cext_strlcpy(ct, t->name, sizeof(ct));
 		if((p = strchr(ct, ' ')))
 			*p = 0;
 		select_tag(ct);

@@ -316,8 +316,6 @@ main(int argc, char *argv[])
 	keysz = nkey = 0;
 	label = nil;
 	nlabel = labelsz = 0;
-	class = nil;
-	nclass = classsz = 0;
 
 	def.font = strdup(BLITZ_FONT);
 	def.border = DEF_BORDER;

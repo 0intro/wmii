@@ -169,6 +169,7 @@ select_tag(char *arg)
 	if(!t)
 		return;
     focus_tag(t);
+	cext_strlcpy(def.tag, arg, sizeof(def.tag));
 
 	for(i = 0; i < ntag; i++) {
 		n = 0;
@@ -262,6 +263,9 @@ update_tags()
 					detach_fromtag(tag[j], client[i]);
 			}
 		}
+
+	if(!ntag && nctag)
+		select_tag(ctag[0]);
 }
  
 void
