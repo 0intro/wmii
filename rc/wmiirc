@@ -122,12 +122,7 @@ do
 		xwrite /bar/$1/colors $WMII_NORMCOLORS
 		oldtag=$1;;
 	LB)
-		if wmiir read /tags | awk "\$NF == $1 {exit 1}" 
-		then 
-			:  # no tag label
-		else
-			xwrite /ctl select $1
-		fi;;
+		xwrite /ctl select $1;;
 	K)
 		case "$1" in
 		$MODKEY-Control-c)

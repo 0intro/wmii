@@ -68,6 +68,7 @@ handle_buttonpress(XEvent *e)
 			if(blitz_ispointinrect(ev->x, ev->y, &label[i]->rect)) {
 				snprintf(buf, sizeof(buf), "LB %s %d\n", label[i]->name, ev->button);
 				write_event(buf);
+				return;
 			}
 	}
 	else if((c = win2clientframe(ev->window))) {
