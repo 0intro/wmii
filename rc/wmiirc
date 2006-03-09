@@ -157,7 +157,7 @@ do
 		$MODKEY-space)
 			xwrite /ws/sel/sel/ctl sendto 0;;
 		$MODKEY-Shift-space)
-			xwrite /ws/sel/0/ctl sendto sel;;
+			xwrite /ws/sel/sel/ctl sendto 1;;
 		$MODKEY-h)
 			xwrite /ws/ctl select prev;;
 		$MODKEY-l)
