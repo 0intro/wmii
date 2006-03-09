@@ -156,10 +156,10 @@ detach_fromarea(Area *a, Client *c)
 	a->nframe--;
 	if(a->sel > 0)
 		a->sel--;
-	if(a->nframe)
+	i = area2index(a);
+	if(i && a->nframe)
 		arrange_area(a);
 	else {
-		i = area2index(a);
 		if(i && t->narea > 2)
 			destroy_area(a);
 		else if(!i && !a->nframe) {
