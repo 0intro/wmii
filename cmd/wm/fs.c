@@ -45,10 +45,9 @@ static char Enocommand[] = "command not supported";
  * /tags/foo			FsFtags
  * /bar/				FsDbar
  * /bar/expand			FsFexpand 		id of expandable label
- * /bar/new/			FsDlabel
- * /bar/1/				FsDlabel
- * /bar/1/data 			FsFdata			<arbitrary data which gets displayed>
- * /bar/1/colors		FsFcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /bar/lab/			FsDlabel
+ * /bar/lab/data 		FsFdata			<arbitrary data which gets displayed>
+ * /bar/lab/colors		FsFcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /class				FsDclass		class namespace to define client-specific tags
  * /class/class:inst    FsFclasstag
  * /clients/			FsDclients
@@ -130,7 +129,6 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 				case FsFdata:
 				case FsFcolors:
 				case FsDlabel: *i1 = lid2index(i1id); break;
-							   break;
 				default: *i1 = tid2index(i1id); break;
 			}
 		}
@@ -171,8 +169,7 @@ qid2name(Qid *qid)
 		case FsDlabel:
 			if(i1 == -1)
 				return nil;
-			snprintf(buf, sizeof(buf), "%u", i1);
-			return buf;
+			return label[i1]->name;
 			break;
 		case FsDarea:
 			if(i1 == -1 || i2 == -1)
@@ -274,8 +271,6 @@ name2type(char *name, unsigned char dir_type)
     unsigned int i;
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return FsDroot;
-	if(!strncmp(name, "new", 4) && (dir_type == FsDbar))
-		return FsDlabel;
 	if(!strncmp(name, "tags", 5)) {
 		switch(dir_type) {	
 		case FsDroot: return FsDtags; break;
@@ -329,6 +324,8 @@ name2type(char *name, unsigned char dir_type)
 		return FsFtag;
 	if(has_tag(ctag, name, nctag) && (dir_type == FsDtags))
 		return FsFtag;
+	if((dir_type == FsDbar) && name2label(name))
+		return FsDlabel;
 	if((dir_type == FsDclass) && name2class(name))
 		return FsFclasstag;
 	if((dir_type == FsDkeys) && name2key(name))
@@ -350,7 +347,7 @@ dyndir:
 }
 
 static int
-mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
+mkqid(Qid *dir, char *wname, Qid *new)
 {
 	unsigned char dir_type;
 	int dir_i1 = -1, dir_i2 = -1, dir_i3 = -1, i;
@@ -379,23 +376,6 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 	case FsDws:
 		new->type = IXP_QTDIR;
 		new->path = mkqpath(FsDws, ntag ? tag[sel]->id : 0, 0, 0);
-		break;
-	case FsDlabel:
-		if(dir_type !=  FsDbar)
-			return -1;
-		new->type = IXP_QTDIR;
-		if(!strncmp(wname, "new", 4)) {
-			if(iswalk)
-				new->path = mkqpath(FsDlabel, new_label()->id, 0, 0);
-			else
-				new->path = mkqpath(FsDlabel, 0, 0 ,0);
-		}
-		else {
-			i = cext_strtonum(wname, 0, 0xffff, &err);
-			if(err || (i >= nlabel))
-				return -1;
-			new->path = mkqpath(FsDlabel, label[i]->id, 0, 0);
-		}
 		break;
 	case FsDarea:
 		if(dir_i1 == -1 || dir_type != FsDws)
@@ -441,6 +421,17 @@ mkqid(Qid *dir, char *wname, Qid *new, Bool iswalk)
 		if(err || (i >= nclient))
 			return -1;
 		new->path = mkqpath(FsDGclient, client[i]->id, 0, 0);
+		break;
+	case FsDlabel:
+		if(dir_type !=  FsDbar)
+			return -1;
+		{
+			Label *l;
+			if(!(l = name2label(wname)))
+				return -1;
+			new->type = IXP_QTDIR;
+			new->path = mkqpath(FsDlabel, l->id, 0, 0);
+		}
 		break;
 	case FsFclasstag:
 		if(dir_type != FsDclass)
@@ -508,7 +499,7 @@ mkstat(Stat *stat, Qid *dir, char *name, unsigned long long length, unsigned int
 
     cext_strlcpy(stat->name, name, sizeof(stat->name));
     stat->length = length;
-    mkqid(dir, name, &stat->qid, False);
+    mkqid(dir, name, &stat->qid);
 	return ixp_sizeof_stat(stat);
 }
 
@@ -533,11 +524,11 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     case FsDdef:
 	case FsDtags:
 	case FsDclients:
-	case FsDbar:
 	case FsDlabel:
     case FsDroot:
 		return mkstat(stat, dir, wname, 0, DMDIR | DMREAD | DMEXEC);
         break;
+	case FsDbar:
 	case FsDkeys:
 	case FsDclass:
 		return mkstat(stat, dir, wname, 0, DMDIR | DMREAD | DMWRITE | DMEXEC);
@@ -606,7 +597,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, 0, DMWRITE);
 		break;
     case FsFexpand:
-		snprintf(buf, sizeof(buf), "%u", iexpand);
+		snprintf(buf, sizeof(buf), "%s", iexpand >= nlabel ? "nil" : label[iexpand]->name);
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 		break;
     case FsFdata:
@@ -659,16 +650,14 @@ xwalk(IXPConn *c, Fcall *fcall)
     Qid dir = root_qid;
     IXPMap *m;
 
-	/*fprintf(stderr, "wm: xwalk: fid=%d\n", fcall->fid);*/
     if(!(m = ixp_server_fid2map(c, fcall->fid)))
         return Enofid;
-	/*fprintf(stderr, "wm: xwalk1: fid=%d\n", fcall->fid);*/
     if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
         return Enofid;
     if(fcall->nwname) {
         dir = m->qid;
         for(nwqid = 0; (nwqid < fcall->nwname)
-            && !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid], True); nwqid++)
+            && !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid]); nwqid++)
 		{
             dir = fcall->wqid[nwqid];
 		}
@@ -679,7 +668,6 @@ xwalk(IXPConn *c, Fcall *fcall)
     }
     /* a fid will only be valid, if the walk was complete */
     if(nwqid == fcall->nwname) {
-		/*fprintf(stderr, "wm: xwalk4: newfid=%d\n", fcall->newfid);*/
         if(fcall->fid != fcall->newfid) {
 			m = cext_emallocz(sizeof(IXPMap));
 			c->map = (IXPMap **)cext_array_attach((void **)c->map, m,
@@ -714,11 +702,16 @@ xcreate(IXPConn *c, Fcall *fcall)
 	case FsDclass:
 		get_class(fcall->name);
 		break;
+	case FsDbar:
+		if(!strncmp(fcall->name, "expand", 7))
+			return "illegal file name";
+		get_label(fcall->name);
+		break;
 	default:
 		return Enoperm;
 		break;
 	}
-	mkqid(&m->qid, fcall->name, &m->qid, False);
+	mkqid(&m->qid, fcall->name, &m->qid);
 	fcall->qid = m->qid;
 	fcall->id = RCREATE;
 	fcall->iounit = WMII_IOUNIT;
@@ -754,15 +747,17 @@ xremove(IXPConn *c, Fcall *fcall)
 	decode_qpath(&m->qid, &type, &i1, &i2, &i3);
 	if((i1 == -1) || (i2 == -1) || (i3 == -1))
 		return Enofile;
+	if(type != FsDlabel && type != FsFclasstag && type != FsFkey)
+		return Enoperm;
+	/* clunk */
+	cext_array_detach((void **)c->map, m, &c->mapsz);
+	free(m);
 	switch(type) {
 	case FsDlabel:
 		{
 			Label *l = label[i1];
-			/* clunk */
-			cext_array_detach((void **)c->map, m, &c->mapsz);
-			free(m);
 			/* now detach the label */
-			detach_label(l);
+			destroy_label(l);
 			free(l);
 			if(iexpand >= nlabel)
 				iexpand = 0;
@@ -783,7 +778,6 @@ xremove(IXPConn *c, Fcall *fcall)
 		}
 		break;
 	default:
-		return Enoperm;
 		break;
 	}
     fcall->id = RREMOVE;
@@ -891,18 +885,15 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDbar:
 			/* jump to offset */
 			len = type2stat(&stat, "expand", &m->qid);
-			len += type2stat(&stat, "new", &m->qid);
 			for(i = 0; i < nlabel; i++) {
-				snprintf(buf, sizeof(buf), "%u", i);
-				len += type2stat(&stat, buf, &m->qid);
+				len += type2stat(&stat, label[i]->name, &m->qid);
 				if(len <= fcall->offset)
 					continue;
 				break;
 			}
 			/* offset found, proceeding */
 			for(; i < nlabel; i++) {
-				snprintf(buf, sizeof(buf), "%u", i);
-				len = type2stat(&stat, buf, &m->qid);
+				len = type2stat(&stat, label[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -1035,11 +1026,8 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDbar:
 			fcall->count = type2stat(&stat, "expand", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "new", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < nlabel; i++) {
-				snprintf(buf, sizeof(buf), "%u", i);
-				len = type2stat(&stat, buf, &m->qid);
+				len = type2stat(&stat, label[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -1177,9 +1165,8 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsFexpand:
-			snprintf(buf, sizeof(buf), "%u", iexpand);
-			fcall->count = strlen(buf);
-			memcpy(p, buf, fcall->count);
+			fcall->count = strlen(iexpand >= nlabel ? "nil" : label[iexpand]->name);
+			memcpy(p, iexpand >= nlabel ? "nil" : label[iexpand]->name, fcall->count);
 			break;
 		case FsFdata:
 			if(i1 >= nlabel)
@@ -1361,13 +1348,12 @@ xwrite(IXPConn *c, Fcall *fcall)
 		break;
     case FsFexpand:
 		{
-			const char *err;
+			Label *l;
 			if(fcall->count && fcall->count < 16) {
 				memcpy(buf, fcall->data, fcall->count);
 				buf[fcall->count] = 0;
-				i = (unsigned short) cext_strtonum(buf, 0, 0xffff, &err);
-				if(!err && (i < nlabel)) {
-					iexpand = i;
+				if((l = name2label(buf))) {
+					iexpand = label2index(l);
 					draw_bar();
 					break;
 				}

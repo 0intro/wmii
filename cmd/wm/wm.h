@@ -154,6 +154,7 @@ struct Key {
 };
 
 typedef struct {
+    char name[256];
 	unsigned short id;
     char data[256];
 	char colstr[24];
@@ -233,12 +234,14 @@ char *mode2str(int mode);
 Bool clientofarea(Area *a, Client *c);
 
 /* bar.c */
-Label *new_label();
-void detach_label(Label *l);
+Label *get_label(char *name);
+void destroy_label(Label *l);
 void draw_bar();
 int lid2index(unsigned short id);
 void update_bar_geometry();
 unsigned int bar_height();
+Label *name2label(const char *name);
+int label2index(Label *l);
 
 /* class.c */
 TClass *get_class(const char *name);

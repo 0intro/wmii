@@ -4,24 +4,40 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "wm.h"
 
+static int
+comp_label(const void *l1, const void *l2)
+{
+	Label *ll1 = (Label *)l1;
+	Label *ll2 = (Label *)l2;
+	return strcmp((const char *)ll1->name, (const char *)ll2->name);
+}
+
 Label *
-new_label()
+get_label(char *name)
 {
 	static unsigned int id = 1;
-	Label *l = cext_emallocz(sizeof(Label));
+	Label *l = name2label(name);
+   
+	if(l)
+		return l;
+	l = cext_emallocz(sizeof(Label));
 	l->id = id++;
+	cext_strlcpy(l->name, name, sizeof(l->name));
 	cext_strlcpy(l->colstr, def.selcolor, sizeof(l->colstr));
 	l->color = def.sel;
 	label = (Label **)cext_array_attach((void **)label, l, sizeof(Label *), &labelsz);
 	nlabel++;
+
+	qsort(label, nlabel, sizeof(Label *), comp_label);
 	return l;
 }
 
 void
-detach_label(Label *l)
+destroy_label(Label *l)
 {
 	cext_array_detach((void **)label, l, &labelsz);
 	nlabel--;
@@ -119,6 +135,16 @@ draw_bar()
 }
 
 int
+label2index(Label *l)
+{
+	int i;
+	for(i = 0; i < nlabel; i++)
+		if(label[i] == l)
+			return i;
+	return -1;
+}
+
+int
 lid2index(unsigned short id)
 {
 	int i;
@@ -126,4 +152,17 @@ lid2index(unsigned short id)
 		if(label[i]->id == id)
 			return i;
 	return -1;
+}
+
+Label *
+name2label(const char *name)
+{
+	char buf[256];
+	unsigned int i;
+
+ 	cext_strlcpy(buf, name, sizeof(buf));	
+	for(i = 0; i < nlabel; i++)
+		if(!strncmp(label[i]->name, name, sizeof(label[i]->name)))
+			return label[i];
+	return nil;
 }

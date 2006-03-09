@@ -38,10 +38,9 @@ while wmiir remove /bar/0 2>/dev/null
 do
 	:
 done
-xwrite /bar/new/colors $WMII_NORMCOLORS
-xwrite /bar/new/colors $WMII_SELCOLORS
-xwrite /bar/0/data 1
-xwrite /bar/expand 1
+wmiir create /bar/foo
+xwrite /bar/foo/colors $WMII_SELCOLORS
+xwrite /bar/expand foo
 
 # MISC
 xsetroot -solid '#0b1014'
@@ -51,7 +50,7 @@ proglist $OLD_PATH >/tmp/ns.$USER.$DISPLAY/progs &
 # SHORTCUTS
 while read key
 do
-	echo -n | wmiir create /keys/$key
+	wmiir create /keys/$key
 done <<EOF
 $MODKEY-Control-c
 $MODKEY-Control-w,y
@@ -71,7 +70,6 @@ $MODKEY-n
 $MODKEY-m
 $MODKEY-s
 $MODKEY-equal
-$MODKEY-0
 $MODKEY-1
 $MODKEY-2
 $MODKEY-3
@@ -81,7 +79,6 @@ $MODKEY-6
 $MODKEY-7
 $MODKEY-8
 $MODKEY-9
-$MODKEY-Shift-0
 $MODKEY-Shift-1
 $MODKEY-Shift-2
 $MODKEY-Shift-3
@@ -100,8 +97,28 @@ do
 	set -- $event
 	type="$1"; shift
 	case "$type" in
+	NT)
+		wmiir create /bar/$1
+		xwrite /bar/$1/colors $WMII_NORMCOLORS
+		xwrite /bar/$1/data $1;;
+	RT)
+		wmiir remove /bar/$1;;
 	TF)
-		xwrite /bar/0/data "$@";;
+		if test -z "$old"
+		then
+			:  # no old tag label
+		else
+			xwrite /bar/$old/data $old
+		fi
+		xwrite /bar/$1/data '*'$1
+		old=$1;;
+	LB)
+		if wmiir read /tags | awk "\$NF == $1 {exit 1}" 
+		then 
+			:  # no tag label
+		else
+			xwrite /ctl select $1
+		fi;;
 	K)
 		case "$1" in
 		$MODKEY-Control-c)
