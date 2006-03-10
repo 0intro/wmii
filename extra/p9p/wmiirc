@@ -5,7 +5,6 @@ fn xwrite {a=$1; shift; echo -n $* | wmiir write $a}
 
 if(test -r $PIDFILE)
 	kill `{cat $PIDFILE}
-if(~ stop $1) exit
 echo $pid >$PIDFILE
 
 MODKEY=Alt
@@ -41,11 +40,47 @@ xsetroot -solid '#0b1014'
 status &
 
 # KEYS CONFIGURATION
-for(i in \
-	$MODKEY-^(t Return space h l j k Tab m s e n `{seq 0 9}) \
-	$MODKEY-Shift-^(Return space `{seq 0 9}) \
-	$MODKEY-Control-^(c w,y q,y p a)) \
-    	echo -n | wmiir create /def/$i
+wmiir write /def/keys <<END
+$MODKEY-Control-c
+$MODKEY-Control-w,y
+$MODKEY-Control-q,y
+$MODKEY-Control-p
+$MODKEY-Control-a
+$MODKEY-Shift-Return
+$MODKEY-Shift-space
+$MODKEY-Shift-0
+$MODKEY-Shift-1
+$MODKEY-Shift-2
+$MODKEY-Shift-3
+$MODKEY-Shift-4
+$MODKEY-Shift-5
+$MODKEY-Shift-6
+$MODKEY-Shift-7
+$MODKEY-Shift-8
+$MODKEY-Shift-9
+$MODKEY-t
+$MODKEY-Return
+$MODKEY-space
+$MODKEY-h
+$MODKEY-l
+$MODKEY-j
+$MODKEY-k
+$MODKEY-Tab
+$MODKEY-m
+$MODKEY-s
+$MODKEY-e
+$MODKEY-n
+$MODKEY-0
+$MODKEY-1
+$MODKEY-2
+$MODKEY-3
+$MODKEY-4
+$MODKEY-5
+$MODKEY-6
+$MODKEY-7
+$MODKEY-8
+$MODKEY-9
+END
 
 # EVENT LOOP
 oldt=''
