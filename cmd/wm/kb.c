@@ -61,7 +61,7 @@ blitz_strtomod(char *val)
 	return mod;
 }
 
-void
+static void
 grab_key(Key *k)
 {
     XGrabKey(dpy, k->key, k->mod, root,
@@ -75,7 +75,7 @@ grab_key(Key *k)
     XSync(dpy, False);
 }
 
-void
+static void
 ungrab_key(Key *k)
 {
     XUngrabKey(dpy, k->key, k->mod, root);
@@ -86,7 +86,17 @@ ungrab_key(Key *k)
     XSync(dpy, False);
 }
 
-Key *
+static Key *
+name2key(const char *name)
+{
+	unsigned int i;
+	for(i = 0; i < nkey; i++)
+		if(!strncmp(key[i]->name, name, sizeof(key[i]->name)))
+			return key[i];
+	return nil;
+}
+
+static Key *
 get_key(const char *name)
 {
 	char buf[128];
@@ -248,34 +258,24 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 	free(found);
 }
 
-Key *
-name2key(const char *name)
-{
-	unsigned int i;
-	for(i = 0; i < nkey; i++)
-		if(!strncmp(key[i]->name, name, sizeof(key[i]->name)))
-			return key[i];
-	return nil;
-}
-
-int
-kid2index(unsigned short id)
-{
-	int i;
-	for(i = 0; i < nkey; i++)
-		if(key[i]->id == id)
-			return i;
-	return -1;
-}
-
-
 void
 update_keys()
 {
-	unsigned int i;
-	for(i = 0; i < nkey; i++) {
-		ungrab_key(key[i]);
-		grab_key(key[i]);
+	char *l, *p;
+
+	while(nkey) {
+		ungrab_key(key[0]);
+		destroy_key(key[0]);
+	}
+
+	for(l = p = def.keys; p && *p;) {
+		if(*p == '\n') {
+			*p = 0;
+			grab_key(get_key(l));
+			*p = '\n';
+			l = ++p;
+		}
+		else
+			p++;
 	}
 }
-

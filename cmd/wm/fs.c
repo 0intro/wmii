@@ -38,9 +38,8 @@ static char Enocommand[] = "command not supported";
  * /def/font			FsFfont  		xlib font name
  * /def/selcolors		FsFselcolors	sel color
  * /def/normcolors		FsFnormcolors 	normal colors
- * /def/rules      		FsFrules 		normal colors
- * /keys/				FsDkeys
- * /keys/foo			FsFkey
+ * /def/rules      		FsFrules 		rules
+ * /def/keys       		FsFkeys  		keys
  * /tags/				FsDtags
  * /tags/foo			FsFtags
  * /bar/				FsDbar
@@ -123,7 +122,6 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 			*i1 = cid2index(i1id);
 		else {
 			switch(*type) {
-				case FsFkey: *i1 = kid2index(i1id); break;
 				case FsFdata:
 				case FsFcolors:
 				case FsDlabel: *i1 = lid2index(i1id); break;
@@ -150,7 +148,6 @@ qid2name(Qid *qid)
 	switch(type) {
 		case FsDroot: return "/"; break;
 		case FsDdef: return "def"; break;
-		case FsDkeys: return "keys"; break;
 		case FsDtags: return "tags"; break;
 		case FsDclients: return "clients"; break;
 		case FsDbar: return "bar"; break;
@@ -200,6 +197,7 @@ qid2name(Qid *qid)
 		case FsFnormcolors: return "normcolors"; break;
 		case FsFfont: return "font"; break;
 		case FsFrules: return "rules"; break;
+		case FsFkeys: return "keys"; break;
 		case FsFcolors: return "colors"; break;
 		case FsFdata:
 			if(i1 == -1)
@@ -245,11 +243,6 @@ qid2name(Qid *qid)
 			return "mode";
 			break;
 		case FsFevent: return "event"; break;
-		case FsFkey:
-			if(i1 == -1)
-				return nil;
-		 	return key[i1]->name;
-			break; 
 		default: return nil; break;
 	}
 }
@@ -275,8 +268,6 @@ name2type(char *name, unsigned char dir_type)
 		return FsDbar;
 	if(!strncmp(name, "def", 4))
 		return FsDdef;
-	if(!strncmp(name, "keys", 5))
-		return FsDkeys;
 	if(!strncmp(name, "ctl", 4))
 		return FsFctl;
 	if(!strncmp(name, "event", 6))
@@ -301,6 +292,8 @@ name2type(char *name, unsigned char dir_type)
 		return FsFnormcolors;
 	if(!strncmp(name, "font", 5))
 		return FsFfont;
+	if(!strncmp(name, "keys", 5))
+		return FsFkeys;
 	if(!strncmp(name, "rules", 6))
 		return FsFrules;
 	if(!strncmp(name, "data", 5))
@@ -311,8 +304,6 @@ name2type(char *name, unsigned char dir_type)
 		return FsFtag;
 	if((dir_type == FsDbar) && name2label(name))
 		return FsDlabel;
-	if((dir_type == FsDkeys) && name2key(name))
-		return FsFkey;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
    	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
@@ -346,7 +337,6 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		*new = root_qid;
 		break;
 	case FsDdef:
-	case FsDkeys:
 	case FsDtags:
 	case FsDclients:
 	case FsDbar:
@@ -415,17 +405,6 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			new->path = mkqpath(FsDlabel, l->id, 0, 0);
 		}
 		break;
-	case FsFkey:
-		if(dir_type != FsDkeys)
-			return -1;
-		{
-			Key *k;
-			if(!(k = name2key(wname)))
-				return -1;
-			new->type = IXP_QTFILE;
-			new->path = mkqpath(FsFkey, k->id, 0, 0);
-		}
-		break;
 	case FsFdata:
 	case FsFcolors:
 		if((dir_i1 == -1) || (dir_type != FsDlabel))
@@ -457,6 +436,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 	case FsFselcolors:
 	case FsFnormcolors:
 	case FsFsnap:
+	case FsFkeys:
 		if(dir_type != FsDdef) 
 			return -1;
 	default:
@@ -508,7 +488,6 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case FsDbar:
-	case FsDkeys:
 	case FsFctl:
 		return mkstat(stat, dir, wname, 0, DMWRITE);
 		break;
@@ -565,9 +544,6 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 			return mkstat(stat, dir, wname, strlen(def.tag), DMREAD | DMWRITE);
 		return mkstat(stat, dir, wname, 0, 0);
 		break;
-    case FsFkey:
-		return mkstat(stat, dir, wname, 0, DMWRITE);
-		break;
     case FsFexpand:
 		return mkstat(stat, dir, wname, strlen(expand), DMREAD | DMWRITE);
 		break;
@@ -581,6 +557,9 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     case FsFselcolors:
     case FsFnormcolors:
 		return mkstat(stat, dir, wname, 23, DMREAD | DMWRITE);
+		break;
+    case FsFkeys:
+		return mkstat(stat, dir, wname, def.keys ? strlen(def.keys) : 0, DMREAD | DMWRITE);
 		break;
     case FsFrules:
 		return mkstat(stat, dir, wname, def.rules ? strlen(def.rules) : 0, DMREAD | DMWRITE);
@@ -671,9 +650,6 @@ xcreate(IXPConn *c, Fcall *fcall)
 		return "illegal file name";
 	type = qpath_type(m->qid.path);
 	switch(type) {
-	case FsDkeys:
-		grab_key(get_key(fcall->name));
-		break;
 	case FsDbar:
 		if(!strncmp(fcall->name, "expand", 7))
 			return "illegal file name";
@@ -719,7 +695,7 @@ xremove(IXPConn *c, Fcall *fcall)
 	decode_qpath(&m->qid, &type, &i1, &i2, &i3);
 	if((i1 == -1) || (i2 == -1) || (i3 == -1))
 		return Enofile;
-	if(type != FsDlabel && type != FsFkey)
+	if(type != FsDlabel)
 		return Enoperm;
 	/* clunk */
 	cext_array_detach((void **)c->map, m, &c->mapsz);
@@ -732,13 +708,6 @@ xremove(IXPConn *c, Fcall *fcall)
 			destroy_label(l);
 			free(l);
 			draw_bar();
-		}
-		break;
-	case FsFkey:
-		{
-			Key *k = key[i1];
-			ungrab_key(k);
-			destroy_key(k);
 		}
 		break;
 	default:
@@ -770,24 +739,6 @@ xread(IXPConn *c, Fcall *fcall)
 	fcall->count = 0;
 	if(fcall->offset) {
 		switch (type) {
-		case FsDkeys:
-			/* jump to offset */
-			len = 0;
-			for(i = 0; i < nkey; i++) {
-				len += type2stat(&stat, key[i]->name, &m->qid);
-				if(len <= fcall->offset)
-					continue;
-				break;
-			}
-			/* offset found, proceeding */
-			for(; i < nkey; i++) {
-				len = type2stat(&stat, key[i]->name, &m->qid);
-				if(fcall->count + len > fcall->iounit)
-					break;
-				fcall->count += len;
-				p = ixp_enc_stat(p, &stat);
-			}
-			break;
 		case FsDtags:
 			/* jump to offset */
 			len = 0;
@@ -904,6 +855,20 @@ xread(IXPConn *c, Fcall *fcall)
 			c->is_pending = 1;
 			return nil;
 			break;
+		case FsFkeys:
+			len = def.keys ? strlen(def.keys) : 0;
+			if(len <= fcall->offset) {
+				fcall->count = 0;
+				break;
+			}
+			fcall->count = len - fcall->offset;
+			if(fcall->count > fcall->iounit) {
+				memcpy(p, def.keys + fcall->offset, fcall->iounit);
+				fcall->count = fcall->iounit;
+			}
+			else if(fcall->count)
+				memcpy(p, def.keys + fcall->offset, fcall->count);
+			break;
 		case FsFrules:
 			len = def.rules ? strlen(def.rules) : 0;
 			if(len <= fcall->offset) {
@@ -931,8 +896,6 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "def", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "keys", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "bar", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "tags", &m->qid);
@@ -941,15 +904,6 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "ws", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			break;
-		case FsDkeys:
-			for(i = 0; i < nkey; i++) {
-				len = type2stat(&stat, key[i]->name, &m->qid);
-				if(fcall->count + len > fcall->iounit)
-					break;
-				fcall->count += len;
-				p = ixp_enc_stat(p, &stat);
-			}
 			break;
 		case FsDclients:
 			for(i = 0; i < nclient; i++) {
@@ -999,6 +953,8 @@ xread(IXPConn *c, Fcall *fcall)
 			fcall->count += type2stat(&stat, "normcolors", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "font", &m->qid);
+			p = ixp_enc_stat(p, &stat);
+			fcall->count += type2stat(&stat, "keys", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "rules", &m->qid);
 			p = ixp_enc_stat(p, &stat);
@@ -1141,6 +1097,15 @@ xread(IXPConn *c, Fcall *fcall)
 			if((fcall->count = strlen(def.normcolor)))
 				memcpy(p, def.normcolor, fcall->count);
 			break;
+		case FsFkeys:
+			fcall->count = def.keys ? strlen(def.keys) : 0;
+			if(fcall->count > fcall->iounit) {
+				memcpy(p, def.keys, fcall->iounit);
+				fcall->count = fcall->iounit;
+			}
+			else if(fcall->count)
+				memcpy(p, def.keys, fcall->count);
+			break;
 		case FsFrules:
 			fcall->count = def.rules ? strlen(def.rules) : 0;
 			if(fcall->count > fcall->iounit) {
@@ -1190,7 +1155,7 @@ xstat(IXPConn *c, Fcall *fcall)
 static char *
 xwrite(IXPConn *c, Fcall *fcall)
 {
-	char buf[256];
+	char buf[256], *tmp;
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned char type;
 	unsigned int len;
@@ -1352,22 +1317,33 @@ xwrite(IXPConn *c, Fcall *fcall)
 				if(client[i]->frame[j]->area->tag == tag[sel])
 					draw_client(client[i]);
 		break;
-	case FsFrules:
-		{
-			char *tmp;
-			if(def.rulessz < fcall->offset + fcall->count + 1) {
-				def.rulessz = fcall->offset + fcall->count + 1;
-				tmp = cext_emallocz(def.rulessz);
-				len = def.rules ? strlen(def.rules) : 0;
-				if(len) {
-					memcpy(tmp, def.rules, len);
-					free(def.rules);
-				}
-				def.rules = tmp;
+	case FsFkeys:
+		if(def.keyssz < fcall->offset + fcall->count + 1) {
+			def.keyssz = fcall->offset + fcall->count + 1;
+			tmp = cext_emallocz(def.keyssz);
+			len = def.keys ? strlen(def.keys) : 0;
+			if(len) {
+				memcpy(tmp, def.keys, len);
+				free(def.keys);
 			}
-			memcpy(def.rules + fcall->offset, fcall->data, fcall->count);
-			def.rules[fcall->offset + fcall->count] = 0;
+			def.keys = tmp;
 		}
+		memcpy(def.keys + fcall->offset, fcall->data, fcall->count);
+		def.keys[fcall->offset + fcall->count] = 0;
+		break;
+	case FsFrules:
+		if(def.rulessz < fcall->offset + fcall->count + 1) {
+			def.rulessz = fcall->offset + fcall->count + 1;
+			tmp = cext_emallocz(def.rulessz);
+			len = def.rules ? strlen(def.rules) : 0;
+			if(len) {
+				memcpy(tmp, def.rules, len);
+				free(def.rules);
+			}
+			def.rules = tmp;
+		}
+		memcpy(def.rules + fcall->offset, fcall->data, fcall->count);
+		def.rules[fcall->offset + fcall->count] = 0;
 		break;
 	case FsFfont:
 		if(def.font)
@@ -1389,8 +1365,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		tag[i1]->area[i2]->mode = i;
 		arrange_area(tag[i1]->area[i2]);
 		break;	
-	case FsFkey:
-		break;
 	default:
 		return "invalid write";
 		break;
@@ -1407,6 +1381,8 @@ xclunk(IXPConn *c, Fcall *fcall)
 
     if(!m)
         return Enofid;
+	if(qpath_type(m->qid.path) == FsFkeys)
+	   update_keys();	
 	cext_array_detach((void **)c->map, m, &c->mapsz);
     free(m);
     fcall->id = RCLUNK;

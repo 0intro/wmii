@@ -47,7 +47,7 @@ proglist $OLD_PATH >/tmp/ns.$USER.$DISPLAY/progs &
 # SHORTCUTS
 while read key
 do
-	wmiir create /keys/$key
+	wmiir write /def/keys
 done <<EOF
 $MODKEY-Control-c
 $MODKEY-Control-w,y

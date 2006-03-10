@@ -318,7 +318,8 @@ main(int argc, char *argv[])
 	nlabel = labelsz = 0;
 	def.rules = nil;
 	def.rulessz = 0;
-
+	def.keys = nil;
+	def.keyssz = 0;
 	def.font = strdup(BLITZ_FONT);
 	def.border = DEF_BORDER;
 	def.snap = DEF_SNAP;

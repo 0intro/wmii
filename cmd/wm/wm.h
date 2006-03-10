@@ -50,7 +50,6 @@ enum {
 	FsDclients,
 	FsDclient,
 	FsDGclient,
-	FsDkeys,
 	FsDtags,
 	FsDbar,
     FsDlabel,
@@ -60,7 +59,7 @@ enum {
     FsFfont,
     FsFselcolors,
     FsFnormcolors,
-	FsFkey,
+	FsFkeys,
 	FsFborder,
 	FsFsnap,
 	FsFbar,
@@ -163,6 +162,8 @@ typedef struct {
 	Color norm;
 	unsigned int border;
 	unsigned int snap;
+	char *keys;
+	unsigned int keyssz;
 	char *rules;
 	unsigned int rulessz;
 } Default;
@@ -271,13 +272,8 @@ void new_ixp_conn(IXPConn *c);
 
 /* kb.c */
 void handle_key(Window w, unsigned long mod, KeyCode keycode);
-void grab_key(Key *k);
-void ungrab_key(Key *k);
-Key *name2key(const char *name);
-int kid2index(unsigned short id);
-Key *get_key(const char *name);
-void destroy_key(Key *k);
 void init_lock_modifiers();
+void update_keys();
 
 /* mouse.c */
 void mouse_resize(Client *c, Align align);

@@ -210,11 +210,7 @@ handle_keypress(XEvent *e)
 static void
 handle_keymapnotify(XEvent *e)
 {
-	unsigned int i;
-	for(i = 0; i < nkey; i++) {
-		ungrab_key(key[i]);
-		grab_key(key[i]);
-	}
+	update_keys();
 }
 
 static void
