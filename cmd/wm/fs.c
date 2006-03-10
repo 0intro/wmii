@@ -1180,11 +1180,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 				srv.running = 0;
 			else if(!strncmp(buf, "select", 6))
 				select_tag(&buf[7]);
-			else if(!strncmp(buf, "warp ", 5)) {
-				char *err;
-				if((err = warp_mouse(&buf[5])))
-					return err;
-			}
 			else
 				return Enocommand;
 			break;

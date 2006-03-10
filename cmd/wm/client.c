@@ -78,15 +78,6 @@ set_client_state(Client * c, int state)
 					PropModeReplace, (unsigned char *) data, 2);
 }
 
-static void
-client_focus_event(Client *c)
-{
-	char buf[256];
-	snprintf(buf, sizeof(buf), "CF %d %d %d %d\n", c->frame[c->sel]->rect.x, c->frame[c->sel]->rect.y,
-			 c->frame[c->sel]->rect.width, c->frame[c->sel]->rect.height);
-	write_event(buf);
-}
-
 void
 focus_client(Client *c)
 {
@@ -109,7 +100,6 @@ focus_client(Client *c)
     XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
     draw_client(c);
 	XSync(dpy, False);
-	client_focus_event(c);
 	if(i > 0 && f->area->mode == Colstack)
 		arrange_area(f->area);
 }

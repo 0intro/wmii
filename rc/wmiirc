@@ -45,10 +45,7 @@ status &
 proglist $OLD_PATH >/tmp/ns.$USER.$DISPLAY/progs &
 
 # SHORTCUTS
-while read key
-do
-	wmiir write /def/keys
-done <<EOF
+wmiir write /def/keys <<EOF
 $MODKEY-Control-c
 $MODKEY-Control-w,y
 $MODKEY-Control-q,y

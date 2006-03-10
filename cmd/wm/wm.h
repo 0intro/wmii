@@ -284,7 +284,6 @@ Align xy2align(XRectangle *rect, int x, int y);
 void drop_move(Client *c, XRectangle *new, XPoint *pt);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
-char *warp_mouse(char *arg);
 
 /* rule.c */
 void match_tags(char *ruledef, Client *c);
