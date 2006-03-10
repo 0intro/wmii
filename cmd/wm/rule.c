@@ -111,9 +111,13 @@ void
 match_tags(Client *c)
 {
 	unsigned int n;
-	Rule *rules = parse(def.rules, &n);
+	Rule *rules;
 	char *tags;
 
+	if(!def.rules)
+		return;
+
+   	rules = parse(def.rules, &n);
 	c->tags[0] = 0;
 	tags = match(rules, n, c->name);
 	fprintf(stderr, "match_tags tags=%s c->name=%s\n", tags, c->name);
