@@ -299,6 +299,8 @@ name2type(char *name, unsigned char dir_type)
 		return FsFselcolors;
 	if(!strncmp(name, "normcolors", 11))
 		return FsFnormcolors;
+	if(!strncmp(name, "font", 5))
+		return FsFfont;
 	if(!strncmp(name, "rules", 6))
 		return FsFrules;
 	if(!strncmp(name, "data", 5))
@@ -449,6 +451,14 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
 		break;
+	case FsFborder:
+	case FsFfont:
+	case FsFrules:
+	case FsFselcolors:
+	case FsFnormcolors:
+	case FsFsnap:
+		if(dir_type != FsDdef) 
+			return -1;
 	default:
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
@@ -571,6 +581,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     case FsFselcolors:
     case FsFnormcolors:
 		return mkstat(stat, dir, wname, 23, DMREAD | DMWRITE);
+		break;
     case FsFrules:
 		return mkstat(stat, dir, wname, def.rules ? strlen(def.rules) : 0, DMREAD | DMWRITE);
 		break;
@@ -975,6 +986,8 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "font", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			fcall->count += type2stat(&stat, "rules", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			break;
 		case FsDws:
 			fcall->count = type2stat(&stat, "ctl", &m->qid);
@@ -1013,6 +1026,8 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDGclient:
 		case FsDclient:
+			fcall->count = type2stat(&stat, "class", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "name", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "tags", &m->qid);
@@ -1061,7 +1076,7 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			else {
 				if((fcall->count = strlen(client[i1]->classinst)))
-					memcpy(p, client[i1]->name, fcall->count);
+					memcpy(p, client[i1]->classinst, fcall->count);
 			}
 			break;
 		case FsFname:
