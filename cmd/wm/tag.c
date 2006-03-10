@@ -243,7 +243,7 @@ update_tags()
 		}
 	for(i = 0; i < nctag; i++) {
 		if(!istag(newctag, ctag[i], nnewctag)) {
-			snprintf(buf, sizeof(buf), "RemoveTagT %s\n", ctag[i]);
+			snprintf(buf, sizeof(buf), "RemoveTag %s\n", ctag[i]);
 			write_event(buf);
 		}
 		free(ctag[i]);
