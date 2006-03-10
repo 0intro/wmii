@@ -4,7 +4,6 @@
  */
 
 #include <X11/Xlib.h>
-#include <X11/xpm.h>
 #include <cext.h>
 
 #define BLITZ_FONT				"fixed"
@@ -43,9 +42,6 @@ XFontStruct *blitz_getfont(Display *dpy, char *fontstr);
 int blitz_loadcolor(Display *dpy, int mon, char *colstr, Color *c);
 void blitz_drawlabel(Display *dpy, Draw *r);
 void blitz_drawmeter(Display *dpy, Draw *r);
-int blitz_createicon(Display *dpy, Icon *ico, char *data[]);
-void blitz_freeicon(Display *dpy, Icon *ico);
-void blitz_drawicon(Display *dpy, Draw *d, Icon *ico);
 void blitz_drawborder(Display *dpy, Draw *r);
 
 /* geometry.c */
