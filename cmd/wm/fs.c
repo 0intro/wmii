@@ -305,7 +305,7 @@ name2type(char *name, unsigned char dir_type)
 	if((dir_type == FsDbar) && name2label(name))
 		return FsDlabel;
 	if((dir_type == FsDtags) && istag(ctag, name, nctag))
-		return FsDlabel;
+		return FsFtag;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
    	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
