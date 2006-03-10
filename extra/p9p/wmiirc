@@ -1,57 +1,40 @@
 #!/usr/local/plan9/bin/rc
 # configure wmii
+PIDFILE=/tmp/ns.$USER.$DISPLAY/`{basename $0}^'pid'
+fn xwrite {a=$1; shift; echo -n $* | wmiir write $a}
 
-PIDFILE=/tmp/ns.$USER.$DISPLAY/wmiircpid
-
-fn xwrite {
-    echo -n $2 | wmiir write $1
-}
-fn maxlab {
-    awk '/[0-9]+$/ {if($10>max) max=$10} END{print max}'
-}
-
-if(test -r $PIDFILE) {
-    kill -2 `{cat $PIDFILE} >[2]/dev/null
-}
+if(test -r $PIDFILE)
+	kill `{cat $PIDFILE}
+if(~ stop $1) exit
 echo $pid >$PIDFILE
 
-# install signal handler for artificial sigexit:
-fn sigint {
-    if(test -f $PIDFILE && ~ `{cat $PIDFILE} $pid)
-        rm -f $PIDFILE
-    exit
-}
-
-CLIENT_BORDER=3
 MODKEY=Alt
 WMII_FONT='fixed'
 WMII_NORMCOLORS='#222222 #eeeeee #666666'
 WMII_SELCOLORS='#ffffff #285577 #4c7899'
 
-
 # WM CONFIGURATION
-xwrite /def/border $CLIENT_BORDER
-xwrite /def/inc 0
+xwrite /def/border 3
 xwrite /def/snap 20
 xwrite /def/font $WMII_FONT
 xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
+xwrite /ws/tag 1
+
+# TAGGING RULES
+wmiir write /def/rules <<END
+/XMMS:.*/ -> ~0
+/Gimp.*:.*/ -> ~3
+END
 
 # BAR CONFIGURATION
-for(i in `{seq 1 `{wmiir read /bar|maxlab}})
-    wmiir remove /bar/1 >/dev/null >[2=1]
-xwrite /bar/new/colors $WMII_NORMCOLORS
-xwrite /bar/new/colors $WMII_SELCOLORS
-xwrite /bar/1/data 1
-xwrite /bar/expand 2
+wmiir create /bar/foo
+xwrite /bar/foo/colors $WMII_SELCOLORS
+xwrite /bar/expand foo
 
 # MENU CONFIGURATION
-nl='
-'
-fn items {
-    ls -lpQ $* | awk '!/^d/ && $1 ~ /x/ {print $NF}' | sort | uniq
-}
-items $old_path >/tmp/ns.$USER.$DISPLAY/p.menu &
+fn items {ls -lpL $* | awk '!/^d/ && $1 ~ /x/ {print $NF}'| sort | uniq}
+items `{echo $OLD_PATH | sed 's/:/ /g'} >/tmp/ns.$USER.$DISPLAY/p.menu &
 
 # MISC
 xsetroot -solid '#0b1014'
@@ -59,96 +42,85 @@ status &
 
 # KEYS CONFIGURATION
 for(i in \
-    $MODKEY-Control-^(c w,y q,y p a y) \
-    $MODKEY-^(t d a n m Return) \
-    $MODKEY-^(h l j k Tab ) \
-    $MODKEY-Shift-^(a h l p Return) \
-    $MODKEY-Shift-^`{seq 1 9} \
-    $MODKEY-Control-^`{seq 1 9})
-    echo -n | wmiir create /keys/$i
+	$MODKEY-^(t Return space h l j k Tab m s e n `{seq 0 9}) \
+	$MODKEY-Shift-^(Return space `{seq 0 9}) \
+	$MODKEY-Control-^(c w,y q,y p a)) \
+    	echo -n | wmiir create /def/$i
 
 # EVENT LOOP
-wmiir read /event |
-while(event=`{read}) {
-    if(~ $event(1) PN)
-        xwrite /bar/1/data $event(2)
-    if(~ $event(1) CN) {
-        buf=`{echo $"event | sed 's/^CN //'}
-        xwrite /bar/2/data $"buf
-    }
-    if(~ $event(1) CF) {
-        buf=`{echo $event| awk '{print "warp "$2+6" "$3+6}'}
-        xwrite /ctl $"buf
-    }
-    if(~ $event(1) LB) { # label button press
-        switch($event(3)) { # button
-        case 1
-            if(~ $event(2) 1) { # label
-                xwrite /ctl pager
-            }
-            if not {
-                xwrite /ctl 'select prev'
-            }
-        case 3
-            xwrite /ctl 'select next'
-        case 4
-            xwrite /ctl 'select next'
-        case 5
-            xwrite /ctl 'select prev'
-        }
-    }
-    if(~ $event(1) K) { # key press
-        switch($event(2)) {
-        case $MODKEY-Control-c
-            xwrite /sel/sel/sel/ctl kill
-        case $MODKEY-Control-w,y
-            wmiirc &
-        case $MODKEY-Control-q,y
-            xwrite /ctl quit
-        case $MODKEY-Control-p
-            {
-                cmd=`{cat /tmp/ns.$USER.$DISPLAY/p.menu | wmiimenu}
-                if(! ~ $#cmd 0)
-                    extern $cmd
-            } &
-        case $MODKEY-Control-a
-            {
-                cmd=`{items CONFPREFIX/wmii-3 $HOME/.wmii-3 | wmiimenu}
-                if(! ~ $#cmd 0)
-                    $cmd
-            } &
-        case $MODKEY-t
-            extern xterm -rv &
-        case $MODKEY-n
-            wmiir read /sel/new >/dev/null >[2=1]
-        case $MODKEY-m
-            xwrite /sel/sel/sel/ctl max
-        case $MODKEY-Return
-            xwrite /sel/sel/sel/ctl 'sendtoarea prev'
-        case $MODKEY-Shift-Return
-            xwrite /sel/sel/sel/ctl 'sendtoarea next'
-        case $MODKEY-Control-y
-            wmiir read /new >/dev/null >[2=1]
-        case $MODKEY-h
-            xwrite /sel/ctl 'select prev'
-        case $MODKEY-l
-            xwrite /sel/ctl 'select next'
-        case $MODKEY-Tab
-            xwrite /sel/sel/ctl 'select next'
-        case $MODKEY-j
-            xwrite /sel/sel/ctl 'select next'
-        case $MODKEY-k
-            xwrite /sel/sel/ctl 'select prev'
-        case $MODKEY-Shift-h
-            xwrite /ctl 'select prev'
-        case $MODKEY-Shift-l
-            xwrite /ctl 'select next'
-        case $MODKEY-Shift-p
-            xwrite /ctl pager
-        case $MODKEY-Shift-[1-9]
-            xwrite /ctl 'select '^`{echo $event|awk -F- '{print $3}'}
-        case $MODKEY-Control-[1-9]
-            xwrite /sel/sel/sel/ctl 'sendtopage '^`{echo $event|awk -F- '{print $3}'}
-        }
-    }
-}
+oldt=''
+wmiir read /event| 
+while(e=`{read}) {
+	switch($e(1)) {
+	case NT
+		t=$e(2)
+		wmiir create /bar/$t
+		if(~ $t $olt)
+			xwrite /bar/$"t/colors $WMII_NORMCOLORS
+		if not
+			xwrite /bar/$"t/colors $WMII_SELCOLORS
+		xwrite /bar/$"t/data $e(2)
+	case RT
+		wmiir remove /bar/$e(2)
+	case TF
+		t=$e(2)
+		if (! ~ $#oldt 0)
+			xwrite /bar/$oldt/colors $WMII_SELCOLORS
+		xwrite /bar/$t/data $e(2)
+		xwrite /bar/$t/colors $WMII_NORMCOLORS
+		oldt=$e(2)
+	case LB
+		xwrite /ctl select $e(2)
+	case K
+		switch($e(2)) {
+		case $MODKEY-Control-c
+			xwrite /ws/sel/sel/ctl kill
+		case $MODKEY-Control-w,y
+			wmiirc&
+		case $MODKEY-Control-q,y
+			xwrite /ctl quit
+		case $MODKEY-Control-p
+			extern `{wmiimenu < /tmp/ns.$USER.$DISPLAY/p.menu}&
+		case $MODKEY-Control-a
+			`{items /usr/local/etc/wmii-3 $HOME/.wmii-3 | wmiimenu}&
+		case $MODKEY-t
+			extern xterm&
+		case $MODKEY-m
+	                xwrite /ws/sel/mode max
+	        case $MODKEY-s
+                        xwrite /ws/sel/mode stack
+               	case $MODKEY-e
+	                xwrite /ws/sel/mode equal
+                case $MODKEY-n
+               	        xwrite /ws/sel/sel/ctl sendto new
+                case $MODKEY-Return
+	               xwrite /ws/sel/sel/ctl sendto prev
+		case $MODKEY-Shift-Return
+                        xwrite /ws/sel/sel/ctl sendto next
+		case $MODKEY-space
+			xwrite /ws/sel/sel/ctl sendto 0
+		case $MODKEY-Shift-space
+                        xwrite /ws/sel/sel/ctl sendto 1
+	        case $MODKEY-h
+                        xwrite /ws/ctl select prev
+	        case $MODKEY-l
+			xwrite /ws/ctl select next
+		case $MODKEY-Tab
+			xwrite /ws/sel/ctl select next
+		case $MODKEY-j
+        	                xwrite /ws/sel/ctl select next
+		case $MODKEY-k
+                        xwrite /ws/sel/ctl select prev
+		case $MODKEY-[0-9]
+                        xwrite /ctl `{echo $e | awk -F- '{print "select "$2}'}
+
+		case $MODKEY-Shift-Return
+			xwrite /ws/sel/sel/ctl sendto next
+		case $MODKEY-Shift-space
+			xwrite /ws/sel/sel/ctl sendto 1
+		case $MODKEY-Shift-[0-9]
+                        xwrite /ws/sel/sel/tags ' '`{echo $e | awk -F- '{print $3}'}
+		}
+	}
+} &
+echo $apid >$PIDFILE
