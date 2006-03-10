@@ -267,3 +267,15 @@ kid2index(unsigned short id)
 			return i;
 	return -1;
 }
+
+
+void
+update_keys()
+{
+	unsigned int i;
+	for(i = 0; i < nkey; i++) {
+		ungrab_key(key[i]);
+		grab_key(key[i]);
+	}
+}
+

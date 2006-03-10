@@ -39,9 +39,13 @@ alloc_client(Window w, XWindowAttributes *wa)
     	free(name.value);
 	}
 	if(XGetClassHint(dpy, c->win, &ch)) {
-		snprintf(c->classinst, sizeof(c->classinst), "%s:%s", ch.res_class, ch.res_name);
-		XFree(ch.res_class);
-		XFree(ch.res_name);
+		ch.res_class = ch.res_name = nil;
+		snprintf(c->classinst, sizeof(c->classinst), "%s:%s",
+				ch.res_class ? ch.res_class : "", ch.res_name ? ch.res_name : "");
+		if(ch.res_class)
+			XFree(ch.res_class);
+		if(ch.res_name)
+			XFree(ch.res_name);
 	}
     fwa.override_redirect = 1;
     fwa.background_pixmap = ParentRelative;
