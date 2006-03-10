@@ -490,6 +490,8 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, 0, DMDIR | DMREAD | DMEXEC);
         break;
 	case FsDbar:
+		return mkstat(stat, dir, wname, 0, DMDIR | DMREAD | DMWRITE | DMEXEC);
+        break;
 	case FsFctl:
 		return mkstat(stat, dir, wname, 0, DMWRITE);
 		break;
