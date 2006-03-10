@@ -904,6 +904,20 @@ xread(IXPConn *c, Fcall *fcall)
 			c->is_pending = 1;
 			return nil;
 			break;
+		case FsFrules:
+			len = def.rules ? strlen(def.rules) : 0;
+			if(len <= fcall->offset) {
+				fcall->count = 0;
+				break;
+			}
+			fcall->count = len - fcall->offset;
+			if(fcall->count > fcall->iounit) {
+				memcpy(p, def.rules + fcall->offset, fcall->iounit);
+				fcall->count = fcall->iounit;
+			}
+			else if(fcall->count)
+				memcpy(p, def.rules + fcall->offset, fcall->count);
+			break;
 		default:
 			break;
 		}
@@ -1128,9 +1142,13 @@ xread(IXPConn *c, Fcall *fcall)
 				memcpy(p, def.normcolor, fcall->count);
 			break;
 		case FsFrules:
-			/* TODO: offset handling */
-			if((fcall->count = def.rules ? strlen(def.rules) : 0))
-				memcpy(p, def.font, fcall->count);
+			fcall->count = def.rules ? strlen(def.rules) : 0;
+			if(fcall->count > fcall->iounit) {
+				memcpy(p, def.rules, fcall->iounit);
+				fcall->count = fcall->iounit;
+			}
+			else if(fcall->count)
+				memcpy(p, def.rules, fcall->count);
 			break;
 		case FsFfont:
 			if((fcall->count = strlen(def.font)))
@@ -1175,6 +1193,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 	char buf[256];
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned char type;
+	unsigned int len;
 	int i, j, i1 = 0, i2 = 0, i3 = 0;
 	Frame *f;
 
@@ -1283,14 +1302,12 @@ xwrite(IXPConn *c, Fcall *fcall)
 		draw_bar();
 		break;
 	case FsFdata:
-		{
-			unsigned int len = fcall->count;
-			if(len >= sizeof(label[i1]->data))
-				len = sizeof(label[i1]->data) - 1;
-			memcpy(label[i1]->data, fcall->data, len);
-			label[i1]->data[len] = 0;
-			draw_bar();
-		}
+		len = fcall->count;
+		if(len >= sizeof(label[i1]->data))
+			len = sizeof(label[i1]->data) - 1;
+		memcpy(label[i1]->data, fcall->data, len);
+		label[i1]->data[len] = 0;
+		draw_bar();
 		break;
 	case FsFtag:
 		memcpy(def.tag, fcall->data, fcall->count);
@@ -1336,15 +1353,21 @@ xwrite(IXPConn *c, Fcall *fcall)
 					draw_client(client[i]);
 		break;
 	case FsFrules:
-		/* TODO: offset handling */
-		if(def.rulessz < fcall->count) {
-			def.rulessz = 2 * fcall->count;
-			if(def.rules)
-				free(def.rules);
-			def.rules = cext_emallocz(def.rulessz);
+		{
+			char *tmp;
+			if(def.rulessz < fcall->offset + fcall->count + 1) {
+				def.rulessz = fcall->offset + fcall->count + 1;
+				tmp = cext_emallocz(def.rulessz);
+				len = def.rules ? strlen(def.rules) : 0;
+				if(len) {
+					memcpy(tmp, def.rules, len);
+					free(def.rules);
+				}
+				def.rules = tmp;
+			}
+			memcpy(def.rules + fcall->offset, fcall->data, fcall->count);
+			def.rules[fcall->offset + fcall->count] = 0;
 		}
-		memcpy(def.rules, fcall->data, fcall->count);
-		def.rules[fcall->count] = 0;
 		break;
 	case FsFfont:
 		if(def.font)
