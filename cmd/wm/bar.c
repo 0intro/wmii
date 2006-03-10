@@ -100,12 +100,8 @@ draw_bar()
 			if(i == iexp)
 		   		continue;
 			l->rect.width = brect.height;
-			if(strlen(l->data)) {
-				if(!strncmp(l->data, "%m:", 3))
-					l->rect.width = brect.height / 2;
-				else
-					l->rect.width += XTextWidth(xfont, l->data, strlen(l->data));
-			}
+			if(strlen(l->data))
+				l->rect.width += XTextWidth(xfont, l->data, strlen(l->data));
 			w += l->rect.width;
 		}
 
