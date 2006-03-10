@@ -38,10 +38,11 @@ alloc_client(Window w, XWindowAttributes *wa)
 		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
     	free(name.value);
 	}
-	XGetClassHint(dpy, c->win, &ch);
-	snprintf(c->classinst, sizeof(c->classinst), "%s:%s", ch.res_class, ch.res_name);
-	XFree(ch.res_class);
-	XFree(ch.res_name);
+	if(XGetClassHint(dpy, c->win, &ch)) {
+		snprintf(c->classinst, sizeof(c->classinst), "%s:%s", ch.res_class, ch.res_name);
+		XFree(ch.res_class);
+		XFree(ch.res_name);
+	}
     fwa.override_redirect = 1;
     fwa.background_pixmap = ParentRelative;
 	fwa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
