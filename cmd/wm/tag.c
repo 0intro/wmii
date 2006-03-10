@@ -288,7 +288,7 @@ attach_totag(Tag *t, Client *c)
 {
 	Area *a;
 
-	if(strchr(c->tags, '~'))
+	if(c->trans || strchr(c->tags, '~'))
 		a = t->area[0];
 	else
    		a = t->area[t->sel];

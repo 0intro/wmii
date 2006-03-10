@@ -34,6 +34,12 @@ xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
 xwrite /ws/tag 1
 
+# TAGGING RULES
+wmiir write /def/rules <<EOF
+/Xmms:.*/ -> ~0
+/Gimp.*:.*/ -> ~3
+EOF
+
 # BAR CONFIGURATION
 wmiir create /bar/foo
 xwrite /bar/foo/colors $WMII_SELCOLORS

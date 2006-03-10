@@ -108,17 +108,19 @@ match(Rule *rule, unsigned int nrule, char *prop)
 }
 
 void
-match_tags(char *ruledef, Client *c)
+match_tags(Client *c)
 {
 	unsigned int n;
-	Rule *rules = parse(ruledef, &n);
+	Rule *rules = parse(def.rules, &n);
 	char *tags;
 
 	c->tags[0] = 0;
 	tags = match(rules, n, c->name);
+	fprintf(stderr, "match_tags tags=%s c->name=%s\n", tags, c->name);
 	if(strlen(tags))
 		cext_strlcat(c->tags, tags, sizeof(c->tags));
 	tags = match(rules, n, c->classinst);
+	fprintf(stderr, "match_tags tags=%s c->name=%s\n", tags, c->name);
 	if(strlen(tags))
 		cext_strlcat(c->tags, tags, sizeof(c->tags));
 
