@@ -68,7 +68,7 @@ $MODKEY-Tab
 $MODKEY-n
 $MODKEY-m
 $MODKEY-s
-$MODKEY-equal
+$MODKEY-e
 $MODKEY-0
 $MODKEY-1
 $MODKEY-2
@@ -137,7 +137,7 @@ do
 			xwrite /ws/sel/mode max;;
 		$MODKEY-s)
 			xwrite /ws/sel/mode stack;;
-		$MODKEY-equal)
+		$MODKEY-e)
 			xwrite /ws/sel/mode equal;;
 		$MODKEY-n)
 			xwrite /ws/sel/sel/ctl sendto new;;
