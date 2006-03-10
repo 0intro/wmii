@@ -36,9 +36,9 @@ wmiir write /def/rules <<EOF
 EOF
 
 # BAR CONFIGURATION
-wmiir create /bar/foo
-xwrite /bar/foo/colors $WMII_SELCOLORS
-xwrite /bar/expand foo
+wmiir create /bar/spare
+xwrite /bar/spare/colors $WMII_SELCOLORS
+xwrite /bar/expand spare
 
 # MISC
 xsetroot -solid '#0b1014'
