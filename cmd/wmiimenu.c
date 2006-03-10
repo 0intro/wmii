@@ -128,7 +128,7 @@ draw_menu()
     draw.rect.y = 0;
 	draw.color = normcolor;
     draw.data = nil;
-    blitz_drawlabelnoborder(dpy, &draw);
+    blitz_drawlabel(dpy, &draw);
 
     /* print command */
     draw.align = WEST;
@@ -136,7 +136,7 @@ draw_menu()
     if(cmdw && nitem)
         draw.rect.width = cmdw;
     offx += draw.rect.width;
-    blitz_drawlabelnoborder(dpy, &draw);
+    blitz_drawlabel(dpy, &draw);
 
     draw.align = CENTER;
     if(nitem) {
@@ -145,7 +145,7 @@ draw_menu()
         draw.rect.x = offx;
         draw.rect.width = seek;
         offx += draw.rect.width;
-        blitz_drawlabelnoborder(dpy, &draw);
+        blitz_drawlabel(dpy, &draw);
 
         /* determine maximum items */
         for(i = curroff; i < nextoff; i++) {
@@ -157,9 +157,10 @@ draw_menu()
             if(sel == i) {
 				draw.color = selcolor;
                 blitz_drawlabel(dpy, &draw);
+				blitz_drawborder(dpy, &draw);
             } else {
 				draw.color = normcolor;
-                blitz_drawlabelnoborder(dpy, &draw);
+                blitz_drawlabel(dpy, &draw);
             }
         }
 
@@ -167,7 +168,7 @@ draw_menu()
         draw.data = nitem > nextoff ? ">" : nil;
         draw.rect.x = mrect.width - seek;
         draw.rect.width = seek;
-        blitz_drawlabelnoborder(dpy, &draw);
+        blitz_drawlabel(dpy, &draw);
     }
     XCopyArea(dpy, draw.drawable, win, draw.gc, 0, 0, mrect.width, mrect.height, 0, 0);
     XSync(dpy, False);

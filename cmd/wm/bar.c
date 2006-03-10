@@ -90,6 +90,7 @@ draw_bar()
 	if(!nlabel) { /* /default only */
 		d.color = def.sel;
 		blitz_drawlabel(dpy, &d);
+		blitz_drawborder(dpy, &d);
 	}
 	else {
 		for(i = 0; i < nlabel; i++) {
@@ -132,6 +133,7 @@ draw_bar()
 				blitz_drawmeter(dpy, &d);
 			else
 				blitz_drawlabel(dpy, &d);
+			blitz_drawborder(dpy, &d);
 		}
 	}
     XCopyArea(dpy, pmapbar, winbar, gcbar, 0, 0, brect.width, brect.height, 0, 0);

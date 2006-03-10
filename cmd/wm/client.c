@@ -235,6 +235,7 @@ draw_client(Client *c)
 		d.rect.x = d.rect.y = 0;
         d.notch = &c->rect;
         blitz_drawlabel(dpy, &d);
+		blitz_drawborder(dpy, &d);
     }
     d.rect.x = 0;
     d.rect.y = 0;
@@ -244,6 +245,7 @@ draw_client(Client *c)
 	snprintf(buf, sizeof(buf), "%s | %s", c->tags, c->name);
     d.data = buf;
     blitz_drawlabel(dpy, &d);
+	blitz_drawborder(dpy, &d);
     XSync(dpy, False);
 }
 

@@ -8,7 +8,7 @@
 #include "blitz.h"
 
 XFontStruct *
-blitz_getfont(Display * dpy, char *fontstr)
+blitz_getfont(Display *dpy, char *fontstr)
 {
 	XFontStruct *font;
 	font = XLoadQueryFont(dpy, fontstr);
@@ -23,7 +23,7 @@ blitz_getfont(Display * dpy, char *fontstr)
 }
 
 static unsigned long
-xloadcolor(Display * dpy, int mon, char *colstr)
+xloadcolor(Display *dpy, int mon, char *colstr)
 {
 	XColor color;
 	char col[8];
@@ -46,7 +46,7 @@ blitz_loadcolor(Display *dpy, int mon, char *colstr, Color *c)
 }
 
 static void
-draw_bg(Display * dpy, Draw * d)
+xdrawbg(Display *dpy, Draw *d)
 {
 	XRectangle rect[4];
 	XSetForeground(dpy, d->gc, d->color.bg);
@@ -70,8 +70,8 @@ draw_bg(Display * dpy, Draw * d)
 	XFillRectangles(dpy, d->drawable, d->gc, rect, 4);
 }
 
-static void
-xdraw_border(Display * dpy, Draw * d)
+void
+blitz_drawborder(Display *dpy, Draw *d)
 {
 	XPoint points[5];
 
@@ -91,7 +91,7 @@ xdraw_border(Display * dpy, Draw * d)
 }
 
 static void
-draw_text(Display * dpy, Draw * d)
+xdrawtext(Display *dpy, Draw *d)
 {
 	unsigned int x = 0, y = 0, w = 1, h = 1, shortened = 0;
 	unsigned int len = 0;
@@ -146,7 +146,6 @@ draw_text(Display * dpy, Draw * d)
 	XDrawString(dpy, d->drawable, d->gc, x, y, text, len);
 }
 
-/* draws meter */
 void
 blitz_drawmeter(Display * dpy, Draw * d)
 {
@@ -159,8 +158,8 @@ blitz_drawmeter(Display * dpy, Draw * d)
 	val = cext_strtonum(&d->data[3], 0, 100, &err);
 	if(err)
 		val = 100;
-	draw_bg(dpy, d);
-	xdraw_border(dpy, d);
+	xdrawbg(dpy, d);
+	blitz_drawborder(dpy, d);
 
 	/* draw bg gradient */
 	mh = ((d->rect.height - 4) * val) / 100;
@@ -169,24 +168,70 @@ blitz_drawmeter(Display * dpy, Draw * d)
 	XFillRectangle(dpy, d->drawable, d->gc, d->rect.x + 2, offy, w, mh);
 }
 
-static void
-xdraw_label(Display * dpy, Draw * d)
+void
+blitz_drawlabel(Display *dpy, Draw * d)
 {
-	draw_bg(dpy, d);
+	xdrawbg(dpy, d);
 	if (d->data)
-		draw_text(dpy, d);
+		xdrawtext(dpy, d);
 }
 
-/* draws label */
-void
-blitz_drawlabel(Display * dpy, Draw * d)
+int
+blitz_createicon(Display *dpy, Icon *ico, char *data[])
 {
-	xdraw_label(dpy, d);
-	xdraw_border(dpy, d);
+	printf("Entering blitz_createicon\n");
+	fflush(NULL);
+	XpmAttributes attr;
+	XImage* mask;
+	GC gc;
+
+	printf("%s …\n", data[0] );
+
+  	attr.valuemask = XpmSize;
+	int retval;
+	retval = XpmCreateImageFromData(dpy, data, &ico->image, &mask, &attr);
+	if(retval)
+		return retval;
+	printf(" %dx%d\n", ico->image->width, ico->image->height);
+	ico->mask = XCreatePixmap(dpy, XDefaultRootWindow(dpy), mask->width, mask->height, mask->depth);
+	gc = XCreateGC (dpy, ico->mask, 0, NULL);
+	XPutImage(dpy, ico->mask, gc, mask, 0, 0, 0, 0, mask->width, mask->height);
+	printf("mask: %dx%d (%d)\n", mask->width, mask->height, sizeof(Pixmap));
+
+	XpmFreeAttributes(&attr);
+	return 0;
 }
 
 void
-blitz_drawlabelnoborder(Display * dpy, Draw * d)
+blitz_freeicon(Display *dpy, Icon *ico)
 {
-	xdraw_label(dpy, d);
+	if(ico->image) {
+		XDestroyImage(ico->image);
+		ico->image = nil;
+		XFreePixmap(dpy, ico->mask);
+	}
+}
+
+void
+blitz_drawicon(Display *dpy, Draw *d, Icon *ico)
+{
+	int y, w, h;
+	xdrawbg(dpy, d);
+	if (d->rect.width - 4 < ico->image->width)
+		w = d->rect.width - 4;
+	else
+		w = ico->image->width;
+	if (d->rect.height - 4 < ico->image->height)
+		h = d->rect.height - 4;
+	else
+		h = ico->image->height;
+	y = (h - ico->image->height) / 2;
+	XSetClipMask(dpy, d->gc, ico->mask);
+	XSetClipOrigin(dpy, d->gc, d->rect.x + 2, d->rect.y + 2 + y);
+	/* vertically centered */
+	if (y < 0)
+		XPutImage(dpy, d->drawable, d->gc, ico->image, 0, -y, d->rect.x + 2, d->rect.y + 2, w, h);
+	else
+		XPutImage(dpy, d->drawable, d->gc, ico->image, 0, y, d->rect.x + 2, d->rect.y + 2 + y, w, h);
+	XSetClipMask(dpy, d->gc, None);
 }

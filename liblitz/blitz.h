@@ -4,6 +4,7 @@
  */
 
 #include <X11/Xlib.h>
+#include <X11/xpm.h>
 #include <cext.h>
 
 #define BLITZ_FONT				"fixed"
@@ -32,16 +33,24 @@ typedef struct {
 	char *data;
 } Draw;
 
+typedef struct {
+	XImage* image;
+	Pixmap mask;
+} Icon;
+
 /* draw.c */
-XFontStruct *blitz_getfont(Display * dpy, char *fontstr);
+XFontStruct *blitz_getfont(Display *dpy, char *fontstr);
 int blitz_loadcolor(Display *dpy, int mon, char *colstr, Color *c);
-void blitz_drawlabel(Display * dpy, Draw * r);
-void blitz_drawmeter(Display * dpy, Draw * r);
-void blitz_drawlabelnoborder(Display * dpy, Draw * r);
+void blitz_drawlabel(Display *dpy, Draw *r);
+void blitz_drawmeter(Display *dpy, Draw *r);
+int blitz_createicon(Display *dpy, Icon *ico, char *data[]);
+void blitz_freeicon(Display *dpy, Icon *ico);
+void blitz_drawicon(Display *dpy, Draw *d, Icon *ico);
+void blitz_drawborder(Display *dpy, Draw *r);
 
 /* geometry.c */
 int blitz_strtoalign(Align *result, char *val);
-int blitz_strtorect(XRectangle * root, XRectangle * r, char *val);
-Bool blitz_ispointinrect(int x, int y, XRectangle * r);
-int blitz_distance(XRectangle * origin, XRectangle * target);
+int blitz_strtorect(XRectangle *root, XRectangle *r, char *val);
+Bool blitz_ispointinrect(int x, int y, XRectangle *r);
+int blitz_distance(XRectangle *origin, XRectangle *target);
 void blitz_getbasegeometry(unsigned int size, unsigned int *cols, unsigned int *rows);
