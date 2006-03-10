@@ -48,7 +48,7 @@ static char Enocommand[] = "command not supported";
  * /bar/lab/data 		FsFdata			<arbitrary data which gets displayed>
  * /bar/lab/colors		FsFcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /clients/			FsDclients
- * /clients/1/			FsDGclient		see /X/X/X/ namespace below
+ * /clients/1/			FsDGclient		see /ws/X/X/ namespace below
  * /event				FsFevent
  * /ctl					FsFctl 			command interface (root)
  * /ws/				    FsDws			ws
@@ -59,6 +59,7 @@ static char Enocommand[] = "command not supported";
  * /ws/1/ctl 			FsFctl 			command interface (area)
  * /ws/1/mode			FsFmode			col mode
  * /ws/1/sel/			FsDclient
+ * /ws/1/1/class		FsFclass		class:instance of client
  * /ws/1/1/name			FsFname			name of client
  * /ws/1/1/tags			FsFtags			tag of client
  * /ws/1/1/geom			FsFgeom			geometry of client
@@ -218,12 +219,16 @@ qid2name(Qid *qid)
 				return nil;
 			return "geom";
 			break;
+		case FsFclass:
 		case FsFname:
 			if((qid->dir_type == FsDclient) && (i1 == -1 || i2 == -1 || i3 == -1))
 				return nil;
 			else if(i1 == -1)
 				return nil;
-			return "name";
+			if(type == FsFname)
+				return "name";
+			else 
+				return "class";
 			break;
 		case FsFtags:
 			if((qid->dir_type == FsDclient) && (i1 == -1 || i2 == -1 || i3 == -1))
@@ -276,6 +281,8 @@ name2type(char *name, unsigned char dir_type)
 		return FsFevent;
 	if(!strncmp(name, "snap", 5))
 		return FsFsnap;
+	if(!strncmp(name, "class", 5))
+		return FsFclass;
 	if(!strncmp(name, "name", 5))
 		return FsFname;
 	if(!strncmp(name, "border", 7))
@@ -430,6 +437,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		break;
 	case FsFgeom:
 	case FsFname:
+	case FsFclass:
 	case FsFtags:
 		if((dir_type == FsDclient) && ((dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1)))
 			return -1;
@@ -516,6 +524,14 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		snprintf(buf, sizeof(buf), "%d", def.snap);
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 		break;
+    case FsFclass:
+		if(dir_type == FsDclient) {
+			f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
+			return mkstat(stat, dir, wname, strlen(f->client->classinst), DMREAD);
+		}
+		else 
+			return mkstat(stat, dir, wname, strlen(client[dir_i1]->classinst), DMREAD);
+        break;
     case FsFname:
 		if(dir_type == FsDclient) {
 			f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
@@ -1032,6 +1048,16 @@ xread(IXPConn *c, Fcall *fcall)
 			snprintf(buf, sizeof(buf), "%u", def.snap);
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
+			break;
+		case FsFclass:
+			if(m->qid.dir_type == FsDclient) {
+				if((fcall->count = strlen(tag[i1]->area[i2]->frame[i3]->client->classinst)))
+					memcpy(p, tag[i1]->area[i2]->frame[i3]->client->classinst, fcall->count);
+			}
+			else {
+				if((fcall->count = strlen(client[i1]->classinst)))
+					memcpy(p, client[i1]->name, fcall->count);
+			}
 			break;
 		case FsFname:
 			if(m->qid.dir_type == FsDclient) {

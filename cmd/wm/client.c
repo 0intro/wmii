@@ -16,6 +16,7 @@ alloc_client(Window w, XWindowAttributes *wa)
     XTextProperty name;
     Client *c = (Client *) cext_emallocz(sizeof(Client));
     XSetWindowAttributes fwa;
+	XClassHint ch;
     long msize;
 	static unsigned int id = 1;
 
@@ -37,15 +38,19 @@ alloc_client(Window w, XWindowAttributes *wa)
 		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
     	free(name.value);
 	}
+	XGetClassHint(dpy, c->win, &ch);
+	snprintf(c->classinst, sizeof(c->classinst), "%s:%s", ch.res_class, ch.res_name);
+	XFree(ch.res_class);
+	XFree(ch.res_name);
     fwa.override_redirect = 1;
     fwa.background_pixmap = ParentRelative;
 	fwa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
 
     c->framewin = XCreateWindow(dpy, root, c->rect.x, c->rect.y,
 						   c->rect.width + 2 * def.border, c->rect.height + def.border + bar_height(), 0,
-						   DefaultDepth(dpy, screen), CopyFromParent,
-						   DefaultVisual(dpy, screen),
+						   DefaultDepth(dpy, screen), CopyFromParent, DefaultVisual(dpy, screen),
 						   CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
+
 	c->cursor = cursor[CurNormal];
     XDefineCursor(dpy, c->framewin, c->cursor);
     c->gc = XCreateGC(dpy, c->framewin, 0, 0);
@@ -316,21 +321,6 @@ void
 manage_client(Client *c)
 {
 	Tag *t;
-	XClassHint ch;
-	char buf[256];
-	unsigned int i;
-
-	for(i = 0; i < nclient; i++)
-		if(client[i] == c)
-			break;
-
-	/* TCR -> tag client request */
-	XGetClassHint(dpy, c->win, &ch);
-	snprintf(buf, sizeof(buf), "TCR %u 0x%x 0x%x %s:%s\n", i,
-			(unsigned int)c->win, (unsigned int)c->trans, ch.res_class, ch.res_name);
-	XFree(ch.res_class);
-	XFree(ch.res_name);
-	write_event(buf);
 		    
 	if(c->trans) {
 		c->tags[0] = '~';

@@ -69,6 +69,7 @@ enum {
 	FsFctl,
 	FsFname,
 	FsFtags,
+	FsFclass,
 	FsFtag,
 	FsFmode
 };
@@ -116,6 +117,7 @@ struct Client {
 	unsigned short id;
 	char name[256];
 	char tags[256];
+	char classinst[256];
     int proto;
     unsigned int border;
     Bool destroyed;
