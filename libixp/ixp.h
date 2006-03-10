@@ -100,7 +100,7 @@ enum {
     RWSTAT,
 };
 
-/*borrowed from libc.h of Plan 9 */
+/* borrowed from libc.h of Plan 9 */
 #define DMDIR		0x80000000	/*mode bit for directories */
 #define DMAPPEND	0x40000000	/*mode bit for append only files */
 #define DMEXCL		0x20000000	/*mode bit for exclusive use files */
@@ -112,7 +112,7 @@ enum {
 #define DMWRITE		0x2<<6		/*mode bit for write permission */
 #define DMEXEC		0x1<<6		/*mode bit for execute permission */
 
-/*modes */
+/* modes */
 enum {
     IXP_OREAD = 0x00,
     IXP_OWRITE = 0x01,
@@ -125,7 +125,7 @@ enum {
     IXP_OAPPEND = 0x80,
 };
 
-/*qid.types */
+/* qid.types */
 enum {
     IXP_QTDIR = 0x80,
     IXP_QTAPPEND = 0x40,
