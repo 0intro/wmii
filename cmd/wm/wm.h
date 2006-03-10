@@ -68,6 +68,7 @@ enum {
 	FsFevent,
 	FsFctl,
 	FsFname,
+	FsFrules,
 	FsFtags,
 	FsFclass,
 	FsFtag,
@@ -162,6 +163,8 @@ typedef struct {
 	Color norm;
 	unsigned int border;
 	unsigned int snap;
+	char *rules;
+	unsigned int rulessz;
 } Default;
 
 /* global variables */

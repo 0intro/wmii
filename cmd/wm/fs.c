@@ -38,6 +38,7 @@ static char Enocommand[] = "command not supported";
  * /def/font			FsFfont  		xlib font name
  * /def/selcolors		FsFselcolors	sel color
  * /def/normcolors		FsFnormcolors 	normal colors
+ * /def/rules      		FsFrules 		normal colors
  * /keys/				FsDkeys
  * /keys/foo			FsFkey
  * /tags/				FsDtags
@@ -198,6 +199,7 @@ qid2name(Qid *qid)
 		case FsFselcolors: return "selcolors"; break;
 		case FsFnormcolors: return "normcolors"; break;
 		case FsFfont: return "font"; break;
+		case FsFrules: return "rules"; break;
 		case FsFcolors: return "colors"; break;
 		case FsFdata:
 			if(i1 == -1)
@@ -297,8 +299,8 @@ name2type(char *name, unsigned char dir_type)
 		return FsFselcolors;
 	if(!strncmp(name, "normcolors", 11))
 		return FsFnormcolors;
-	if(!strncmp(name, "font", 5))
-		return FsFfont;
+	if(!strncmp(name, "rules", 6))
+		return FsFrules;
 	if(!strncmp(name, "data", 5))
 		return FsFdata;
 	if(!strncmp(name, "mode", 5))
@@ -569,6 +571,9 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     case FsFselcolors:
     case FsFnormcolors:
 		return mkstat(stat, dir, wname, 23, DMREAD | DMWRITE);
+    case FsFrules:
+		return mkstat(stat, dir, wname, def.rules ? strlen(def.rules) : 0, DMREAD | DMWRITE);
+		break;
     case FsFfont:
 		return mkstat(stat, dir, wname, strlen(def.font), DMREAD | DMWRITE);
 		break;
@@ -1107,6 +1112,11 @@ xread(IXPConn *c, Fcall *fcall)
 			if((fcall->count = strlen(def.normcolor)))
 				memcpy(p, def.normcolor, fcall->count);
 			break;
+		case FsFrules:
+			/* TODO: offset handling */
+			if((fcall->count = def.rules ? strlen(def.rules) : 0))
+				memcpy(p, def.font, fcall->count);
+			break;
 		case FsFfont:
 			if((fcall->count = strlen(def.font)))
 				memcpy(p, def.font, fcall->count);
@@ -1309,6 +1319,17 @@ xwrite(IXPConn *c, Fcall *fcall)
 			for(j = 0; j < client[i]->nframe; j++)
 				if(client[i]->frame[j]->area->tag == tag[sel])
 					draw_client(client[i]);
+		break;
+	case FsFrules:
+		/* TODO: offset handling */
+		if(def.rulessz < fcall->count) {
+			def.rulessz = 2 * fcall->count;
+			if(def.rules)
+				free(def.rules);
+			def.rules = cext_emallocz(def.rulessz);
+		}
+		memcpy(def.rules, fcall->data, fcall->count);
+		def.rules[fcall->count] = 0;
 		break;
 	case FsFfont:
 		if(def.font)
