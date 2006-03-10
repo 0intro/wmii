@@ -163,7 +163,7 @@ init_screen()
     gcv.line_width = 4;
     gcv.plane_mask = AllPlanes;
     gcv.graphics_exposures = False;
-    gc_xor = XCreateGC(dpy, root, GCForeground | GCGraphicsExposures
+    xorgc = XCreateGC(dpy, root, GCForeground | GCGraphicsExposures
                       | GCFunction | GCSubwindowMode | GCLineWidth
                       | GCPlaneMask, &gcv);
     rect.x = rect.y = 0;
@@ -342,19 +342,19 @@ main(int argc, char *argv[])
     brect = rect;
     brect.height = xfont->ascent + xfont->descent + 4;
     brect.y = rect.height - brect.height;
-    winbar = XCreateWindow(dpy, RootWindow(dpy, screen), brect.x, brect.y,
+    barwin = XCreateWindow(dpy, RootWindow(dpy, screen), brect.x, brect.y,
                         brect.width, brect.height, 0, DefaultDepth(dpy, screen),
                         CopyFromParent, DefaultVisual(dpy, screen),
                         CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
 
-    XDefineCursor(dpy, winbar, XCreateFontCursor(dpy, XC_left_ptr));
+    XDefineCursor(dpy, barwin, XCreateFontCursor(dpy, XC_left_ptr));
     XSync(dpy, False);
 
-    gcbar = XCreateGC(dpy, winbar, 0, 0);
+    bargc = XCreateGC(dpy, barwin, 0, 0);
 
-    pmapbar = XCreatePixmap(dpy, winbar, brect.width, brect.height,
+    barpmap = XCreatePixmap(dpy, barwin, brect.width, brect.height,
                       	 	DefaultDepth(dpy, screen));
-	XMapRaised(dpy, winbar);
+	XMapRaised(dpy, barwin);
 	draw_bar();
     scan_wins();
 

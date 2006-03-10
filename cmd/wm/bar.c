@@ -56,10 +56,10 @@ update_bar_geometry()
     brect = rect;
     brect.height = bar_height();
     brect.y = rect.height - brect.height;
-    XMoveResizeWindow(dpy, winbar, brect.x, brect.y, brect.width, brect.height);
+    XMoveResizeWindow(dpy, barwin, brect.x, brect.y, brect.width, brect.height);
     XSync(dpy, False);
-    XFreePixmap(dpy, pmapbar);
-    pmapbar = XCreatePixmap(dpy, winbar, brect.width, brect.height, DefaultDepth(dpy, screen));
+    XFreePixmap(dpy, barpmap);
+    barpmap = XCreatePixmap(dpy, barwin, brect.width, brect.height, DefaultDepth(dpy, screen));
     XSync(dpy, False);
 	draw_bar();
 	for(i = 0; i < ntag; i++)
@@ -81,8 +81,8 @@ draw_bar()
 		iexp = label2index(exp);
 
 	d.align = WEST;
-    d.gc = gcbar;
-    d.drawable = pmapbar;
+    d.gc = bargc;
+    d.drawable = barpmap;
     d.rect = brect;
     d.rect.y = 0;
 	d.font = xfont;
@@ -129,14 +129,11 @@ draw_bar()
 			d.color = label[i]->color;
 			d.rect = label[i]->rect;
 			d.data = label[i]->data;
-			if(d.data && !strncmp(d.data, "%m:", 3))
-				blitz_drawmeter(dpy, &d);
-			else
-				blitz_drawlabel(dpy, &d);
+			blitz_drawlabel(dpy, &d);
 			blitz_drawborder(dpy, &d);
 		}
 	}
-    XCopyArea(dpy, pmapbar, winbar, gcbar, 0, 0, brect.width, brect.height, 0, 0);
+    XCopyArea(dpy, barpmap, barwin, bargc, 0, 0, brect.width, brect.height, 0, 0);
     XSync(dpy, False);
 }
 

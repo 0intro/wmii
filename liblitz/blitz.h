@@ -32,16 +32,10 @@ typedef struct {
 	char *data;
 } Draw;
 
-typedef struct {
-	XImage* image;
-	Pixmap mask;
-} Icon;
-
 /* draw.c */
 XFontStruct *blitz_getfont(Display *dpy, char *fontstr);
 int blitz_loadcolor(Display *dpy, int mon, char *colstr, Color *c);
 void blitz_drawlabel(Display *dpy, Draw *r);
-void blitz_drawmeter(Display *dpy, Draw *r);
 void blitz_drawborder(Display *dpy, Draw *r);
 
 /* geometry.c */

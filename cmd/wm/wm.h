@@ -193,11 +193,11 @@ int screen;
 Window root;
 XRectangle rect;
 XFontStruct *xfont;
-GC gc_xor;
+GC xorgc;
 IXPServer srv;
-Pixmap pmapbar;
-Window winbar;
-GC gcbar;
+Pixmap barpmap;
+Window barwin;
+GC bargc;
 XRectangle brect;
 Qid root_qid;
 

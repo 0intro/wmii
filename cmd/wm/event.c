@@ -62,7 +62,7 @@ handle_buttonpress(XEvent *e)
     XButtonPressedEvent *ev = &e->xbutton;
     Align align;
 	static char buf[32];
-	if(ev->window == winbar) {
+	if(ev->window == barwin) {
 		unsigned int i;
 		for(i = 0; i < nlabel; i++)
 			if(blitz_ispointinrect(ev->x, ev->y, &label[i]->rect)) {
@@ -192,7 +192,7 @@ handle_expose(XEvent *e)
 	XExposeEvent *ev = &e->xexpose;
     static Client *c;
     if(ev->count == 0) {
-		if(ev->window == winbar) 
+		if(ev->window == barwin) 
 			draw_bar();
 		else if((c = win2clientframe(ev->window)))
             draw_client(c);

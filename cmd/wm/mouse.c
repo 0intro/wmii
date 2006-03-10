@@ -289,7 +289,7 @@ draw_pseudo_border(XRectangle * r)
     pseudo.y += 2;
     pseudo.width -= 4;
     pseudo.height -= 4;
-    XDrawRectangles(dpy, root, gc_xor, &pseudo, 1);
+    XDrawRectangles(dpy, root, xorgc, &pseudo, 1);
     XSync(dpy, False);
 }
 

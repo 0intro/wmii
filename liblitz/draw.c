@@ -137,35 +137,8 @@ xdrawtext(Display *dpy, Draw *d)
 			break;
 	}
 	XSetBackground(dpy, d->gc, d->color.bg);
-	/*
-	 * uncomment, if you want get an shadow effect XSetForeground(dpy,
-	 * d->gc, BlackPixel(dpy, DefaultScreen(dpy))); XDrawString(dpy,
-	 * d->drawable, d->gc, x + 1, y + 1, text, len);
-	 */
 	XSetForeground(dpy, d->gc, d->color.fg);
 	XDrawString(dpy, d->drawable, d->gc, x, y, text, len);
-}
-
-void
-blitz_drawmeter(Display * dpy, Draw * d)
-{
-	const char *err;
-	unsigned int offy, mh, val, w = d->rect.width - 4;
-
-	if (!d->data || strncmp(d->data, "%m:", 3))
-		return;
-
-	val = cext_strtonum(&d->data[3], 0, 100, &err);
-	if(err)
-		val = 100;
-	xdrawbg(dpy, d);
-	blitz_drawborder(dpy, d);
-
-	/* draw bg gradient */
-	mh = ((d->rect.height - 4) * val) / 100;
-	offy = d->rect.y + d->rect.height - 2 - mh;
-	XSetForeground(dpy, d->gc, d->color.fg);
-	XFillRectangle(dpy, d->drawable, d->gc, d->rect.x + 2, offy, w, mh);
 }
 
 void
