@@ -288,7 +288,7 @@ void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 char *warp_mouse(char *arg);
 
 /* rule.c */
-char *match_tags(char *ruledef, Client *c);
+void match_tags(char *ruledef, Client *c);
 
 /* tag.c */
 Tag *alloc_tag(char *name);

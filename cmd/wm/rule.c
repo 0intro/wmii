@@ -5,16 +5,20 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <regex.h>
 #include "wm.h"
 
 /* 
  * basic rule matching language
  *
- * /pattern/ -> tag [tag ...] 
+ * /regex/ -> tag [tag ...] 
+ *
+ * regex might contain POSIX regex syntax defined in regex(3)
  */
 
 typedef struct {
-	char pattern[256];
+	char regex[256];
 	char tags[256];
 } Rule;
 
@@ -31,71 +35,92 @@ parse(char *data, unsigned int *n)
 	Rule *rules;
 	unsigned int i;
 	int mode = IGNORE;
-	char *last = nil, *p, *pattern, *tags;
+	char *p, *regex, *tags;
 
 	if(!data || !strlen(data))
 		return nil;
 
 	*n = 0;
-	for(last = p = data; *p; p++)
+	for(p = data; *p; p++)
 		if(*p == '\n')
-			*n++;
+			(*n)++;
 
 	rules = cext_emallocz(sizeof(Rule) * (*n));
 
 	i = 0;
-	for(p = data; *p; p++) {
+	for(p = data; *p; p++)
 		switch(mode) {
-			case IGNORE:
-				if(*p == '/') {
-					mode = PATTERN;
-					pattern = rules[i].pattern;
-				}
-				else if(*p == '>' && last && *last == '-') {
-					mode = TAGS;
-					tags = rules[i].tags;
-				}
-				break;
-			case PATTERN:
-				if(*p == '/') {
-					mode = IGNORE;
-					*pattern = 0;
-				}
-				else {
-					*pattern = *p;
-					pattern++;
-				}
-				break;
-			case TAGS:
-				if(*p == ' ' && !strlen(tags))
-					break;
-				else if(*p == '\n') {
-					*tags = 0;
-					mode = IGNORE;
-					i++;
-				}
-				else {
-					*tags = *p;
-					tags++;
-				}
-				break;
+		case IGNORE:
+			if(*p == '/') {
+				mode = PATTERN;
+				regex = rules[i].regex;
+			}
+			else if(*p == '>') {
+				mode = TAGS;
+				tags = rules[i].tags;
+			}
+			break;
+		case PATTERN:
+			if(*p == '/') {
+				mode = IGNORE;
+				*regex = 0;
+			}
+			else {
+				*regex = *p;
+				regex++;
+			}
+			break;
+		case TAGS:
+			if(*p == '\n' || *(p + 1) == 0) {
+				*tags = 0;
+				mode = IGNORE;
+				i++;
+			}
+			else {
+				*tags = *p;
+				tags++;
+			}
+			break;
 		}
-		last = p;
-	}
 
 	return rules;
 }
 
-char *
+
+static char *
+match(Rule *rule, unsigned int nrule, char *prop)
+{
+	unsigned int i;
+	regex_t regex;
+	regmatch_t tmpregm;
+	static char result[256];
+
+	result[0] = 0;	
+	for(i = 0; i < nrule; i++) {
+		Rule r = rule[i];
+		if(!regcomp(&regex, r.regex, 0)) {
+			if(!regexec(&regex, prop, 1, &tmpregm, 0))
+				cext_strlcat(result, r.tags, sizeof(result));
+			regfree(&regex);
+		}
+	}
+	return result;
+}
+
+void
 match_tags(char *ruledef, Client *c)
 {
 	unsigned int n;
 	Rule *rules = parse(ruledef, &n);
+	char *tags;
 
-
-
-
+	c->tags[0] = 0;
+	tags = match(rules, n, c->name);
+	if(strlen(tags))
+		cext_strlcat(c->tags, tags, sizeof(c->tags));
+	tags = match(rules, n, c->classinst);
+	if(strlen(tags))
+		cext_strlcat(c->tags, tags, sizeof(c->tags));
 
 	free(rules);
-	return nil;
 }
