@@ -1,7 +1,7 @@
 #!/usr/local/plan9/bin/rc
 # clean the environment and execute the given command
 
-path=$old_path
+path=$OLD_PATH
 old_path=()
 apid=()
 cmd=()
