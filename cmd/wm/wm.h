@@ -296,7 +296,7 @@ XRectangle *rectangles(unsigned int *num);
 int tid2index(unsigned short id);
 void select_tag(char *arg);
 int tag2index(Tag *t);
-Bool has_tag(char **tags, char *tag, unsigned int ntags);
+Bool istag(char **tags, char *tag, unsigned int ntags);
 void update_tags();
 Bool clientoftag(Tag *t, Client *c);
 void detach_fromtag(Tag *t, Client *c);

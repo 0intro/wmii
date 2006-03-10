@@ -140,7 +140,7 @@ get_tag(char *name)
 	unsigned int i, n = 0;
 	Tag *t;
 
-	if(!has_tag(ctag, name, nctag))
+	if(!istag(ctag, name, nctag))
 		return nil;
 	for(i = 0; i < ntag; i++) {
 		t = tag[i];
@@ -187,7 +187,7 @@ select_tag(char *arg)
 }
 
 Bool
-has_tag(char **tags, char *tag, unsigned int ntags)
+istag(char **tags, char *tag, unsigned int ntags)
 {
 	unsigned int i;
 	for(i = 0; i < ntags; i++)
@@ -227,7 +227,7 @@ update_tags()
 				t++;
 			if(!*t) /* should not happen, but some user might try */
 				continue;
-			if(!has_tag(newctag, t, nnewctag)) {
+			if(!istag(newctag, t, nnewctag)) {
 				newctag = (char **)cext_array_attach((void **)newctag, strdup(t),
 							sizeof(char *), &newctagsz);
 				nnewctag++;
@@ -237,12 +237,12 @@ update_tags()
 
 	/* propagate tagging events */
 	for(i = 0; i < nnewctag; i++)
-		if(!has_tag(ctag, newctag[i], nctag)) {
+		if(!istag(ctag, newctag[i], nctag)) {
 			snprintf(buf, sizeof(buf), "NewTag %s\n", newctag[i]);
 			write_event(buf);
 		}
 	for(i = 0; i < nctag; i++) {
-		if(!has_tag(newctag, ctag[i], nnewctag)) {
+		if(!istag(newctag, ctag[i], nnewctag)) {
 			snprintf(buf, sizeof(buf), "RemoveTagT %s\n", ctag[i]);
 			write_event(buf);
 		}
