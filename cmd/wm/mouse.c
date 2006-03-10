@@ -319,12 +319,12 @@ mouse_move(Client *c)
           (dpy, root, False, ButtonMotionMask | ButtonReleaseMask,
            GrabModeAsync, GrabModeAsync, None, cursor[CurMove],
            CurrentTime) != GrabSuccess)
-        usleep(20000);
+        usleep(1000);
 
     for(;;) {
         while(!XCheckMaskEvent
               (dpy, ButtonReleaseMask | ButtonMotionMask, &ev)) {
-            usleep(20000);
+            usleep(1000);
             continue;
         }
 
@@ -561,12 +561,12 @@ mouse_resize(Client *c, Align align)
           (dpy, c->framewin, False, ButtonMotionMask | ButtonReleaseMask,
            GrabModeAsync, GrabModeAsync, None, cursor[CurResize],
            CurrentTime) != GrabSuccess)
-        usleep(20000);
+        usleep(1000);
 
     for(;;) {
         while(!XCheckMaskEvent
               (dpy, ButtonReleaseMask | ButtonMotionMask, &ev)) {
-            usleep(20000);
+            usleep(1000);
             continue;
         }
 
