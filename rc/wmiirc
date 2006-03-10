@@ -101,7 +101,7 @@ do
 	set -- $event
 	type="$1"; shift
 	case "$type" in
-	NT)
+	NewTag)
 		wmiir create /bar/$1
 		if test $1 = "$oldtag"
 		then
@@ -110,9 +110,9 @@ do
 			xwrite /bar/$1/colors $WMII_SELCOLORS
 		fi
 		xwrite /bar/$1/data $1;;
-	RT)
+	RemoveTag)
 		wmiir remove /bar/$1;;
-	TF)
+	FocusTag)
 		if test -n "$oldtag"
 		then
 			xwrite /bar/$oldtag/colors $WMII_SELCOLORS
@@ -120,9 +120,9 @@ do
 		xwrite /bar/$1/data $1
 		xwrite /bar/$1/colors $WMII_NORMCOLORS
 		oldtag=$1;;
-	LB)
+	LabelClick)
 		xwrite /ctl select $1;;
-	K)
+	Key)
 		case "$1" in
 		$MODKEY-Control-c)
 			xwrite /ws/sel/sel/ctl kill;;

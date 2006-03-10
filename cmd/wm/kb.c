@@ -30,9 +30,8 @@ init_lock_modifiers()
     if(modmap && modmap->max_keypermod > 0) {
         int max = NUM_MASKS * modmap->max_keypermod;
         for(i = 0; i < max; i++) {
-            if(num_lock && (modmap->modifiermap[i] == num_lock)) {
+            if(num_lock && (modmap->modifiermap[i] == num_lock))
                 num_lock_mask = masks[i / modmap->max_keypermod];
-            }
         }
     }
     XFreeModifiermap(modmap);
@@ -220,7 +219,7 @@ handle_key_seq(Window w, Key **done, unsigned int ndone)
 			return; /* grabbed but not found */
 		case 1: 
 			if(!found[0]->next) {
-				snprintf(buf, sizeof(buf), "K %s\n", found[0]->name);
+				snprintf(buf, sizeof(buf), "Key %s\n", found[0]->name);
 				write_event(buf);
 				break;
 			}
@@ -244,7 +243,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 		return; /* grabbed but not found */
 	case 1: 
 		if(!found[0]->next) {
-			snprintf(buf, sizeof(buf), "K %s\n", found[0]->name);
+			snprintf(buf, sizeof(buf), "Key %s\n", found[0]->name);
 			write_event(buf);
 			break;
 		}
@@ -263,19 +262,25 @@ update_keys()
 {
 	char *l, *p;
 
+	init_lock_modifiers();
+	
 	while(nkey) {
 		ungrab_key(key[0]);
 		destroy_key(key[0]);
 	}
 
 	for(l = p = def.keys; p && *p;) {
-		if(*p == '\n') {
-			*p = 0;
+		if(*p == '\n' || !*(p + 1)) {
+			if(*(p + 1))
+				*p = 0;
 			grab_key(get_key(l));
-			*p = '\n';
+			if(*(p + 1))
+				*p = '\n';
 			l = ++p;
 		}
 		else
 			p++;
 	}
+
+	XSync(dpy, False);
 }

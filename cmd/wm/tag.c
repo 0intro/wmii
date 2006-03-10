@@ -61,14 +61,13 @@ void
 focus_tag(Tag *t)
 {
 	char buf[16];
-	int i, j, pi = tag2index(t);
-	int px;
+	int i, j;
 
-	if(!ntag || (pi == -1))
+	if(!ntag)
 		return;
 
-	sel = pi;
-	px = sel * rect.width;
+	XGrabServer(dpy);
+	sel = tag2index(t);
 
 	/* select correct frames of clients */
 	for(i = 0; i < nclient; i++)
@@ -80,17 +79,19 @@ focus_tag(Tag *t)
 	for(i = 0; i < nclient; i++)
 		if(client[i]->nframe) {
 			Frame *f = client[i]->frame[client[i]->sel];
-			pi = tag2index(f->area->tag);
-			XMoveWindow(dpy, client[i]->framewin, px - (pi * rect.width) + f->rect.x, f->rect.y);
 			if(f->area->tag == t) {
+				XMoveWindow(dpy, client[i]->framewin, f->rect.x, f->rect.y);
 				if(client[i]->nframe > 1)
 					resize_client(client[i], &f->rect, nil, False);
 				draw_client(client[i]);
 			}
+			else
+				XMoveWindow(dpy, client[i]->framewin, 2 * rect.width + f->rect.x, f->rect.y);
 		}
-	snprintf(buf, sizeof(buf), "TF %s\n", t->name);
+	snprintf(buf, sizeof(buf), "FocusTag %s\n", t->name);
 	write_event(buf);
 	XSync(dpy, False);
+	XUngrabServer(dpy);
 }
 
 XRectangle *
@@ -237,12 +238,12 @@ update_tags()
 	/* propagate tagging events */
 	for(i = 0; i < nnewctag; i++)
 		if(!has_tag(ctag, newctag[i], nctag)) {
-			snprintf(buf, sizeof(buf), "NT %s\n", newctag[i]);
+			snprintf(buf, sizeof(buf), "NewTag %s\n", newctag[i]);
 			write_event(buf);
 		}
 	for(i = 0; i < nctag; i++) {
 		if(!has_tag(newctag, ctag[i], nnewctag)) {
-			snprintf(buf, sizeof(buf), "RT %s\n", ctag[i]);
+			snprintf(buf, sizeof(buf), "RemoveTagT %s\n", ctag[i]);
 			write_event(buf);
 		}
 		free(ctag[i]);

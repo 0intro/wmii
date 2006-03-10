@@ -272,8 +272,8 @@ void new_ixp_conn(IXPConn *c);
 
 /* kb.c */
 void handle_key(Window w, unsigned long mod, KeyCode keycode);
-void init_lock_modifiers();
 void update_keys();
+void init_lock_modifiers();
 
 /* mouse.c */
 void mouse_resize(Client *c, Align align);

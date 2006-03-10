@@ -332,7 +332,7 @@ main(int argc, char *argv[])
     init_atoms();
     init_cursors();
     xfont = blitz_getfont(dpy, def.font);
-    init_lock_modifiers();
+	init_lock_modifiers();
     init_screen();
 
     wa.override_redirect = 1;
