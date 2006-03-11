@@ -167,12 +167,6 @@ qid2name(Qid *qid)
 		case FsDarea:
 			if(i1 == -1 || i2 == -1)
 				return nil;
-			if(!i2) {
-				if(i2 == tag[i1]->sel)
-					return "sel";
-				else
-					return "float";
-			}
 			if(tag[i1]->sel == i2)
 				return "sel";
 			snprintf(buf, sizeof(buf), "%u", i2);
