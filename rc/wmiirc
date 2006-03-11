@@ -143,7 +143,7 @@ do
 		$MODKEY-Shift-Return)
 			xwrite /ws/sel/sel/ctl sendto next;;
 		$MODKEY-space)
-			xwrite /ws/sel/ctl select toggle;;
+			xwrite /ws/ctl select toggle;;
 		$MODKEY-Shift-space)
 			xwrite /ws/sel/sel/ctl sendto toggle;;
 		$MODKEY-h)
