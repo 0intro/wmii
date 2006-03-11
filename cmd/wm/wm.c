@@ -182,10 +182,6 @@ init_screen()
 int
 wmii_error_handler(Display *dpy, XErrorEvent *error)
 {
-	Client *c;
-
-	if((c = win2client(error->resourceid)))
-		destroy_client(c);
     if(error->error_code == BadWindow
        || (error->request_code == X_SetInputFocus
            && error->error_code == BadMatch)
