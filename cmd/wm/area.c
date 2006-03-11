@@ -15,18 +15,12 @@ alloc_area(Tag *t)
 	Area *a = cext_emallocz(sizeof(Area));
 	a->tag = t;
 	a->id = id++;
-	update_area_geometry(a);
+	a->rect = rect;
+	a->rect.height = rect.height - brect.height;
 	t->area = (Area **)cext_array_attach((void **)t->area, a, sizeof(Area *), &t->areasz);
 	t->sel = t->narea;
 	t->narea++;
     return a;
-}
-
-void
-update_area_geometry(Area *a)
-{
-	a->rect = rect;
-	a->rect.height -= brect.height;
 }
 
 void
@@ -332,7 +326,7 @@ arrange_tag(Tag *t, Bool updategeometry)
 	for(i = 1; i < t->narea; i++) {
 		Area *a = t->area[i];
 		if(updategeometry) {
-			update_area_geometry(a);
+			a->rect.height = rect.height - brect.height;
 			a->rect.x = (i - 1) * width;
 			a->rect.width = width;
 		}

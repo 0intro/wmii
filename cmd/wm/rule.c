@@ -122,11 +122,9 @@ match_tags(Client *c)
    	rules = parse(def.rules, &n);
 	c->tags[0] = 0;
 	tags = match(rules, n, c->name);
-	fprintf(stderr, "match_tags tags=%s c->name=%s\n", tags, c->name);
 	if(strlen(tags))
 		cext_strlcat(c->tags, tags, sizeof(c->tags));
 	tags = match(rules, n, c->classinst);
-	fprintf(stderr, "match_tags tags=%s c->name=%s\n", tags, c->name);
 	if(strlen(tags))
 		cext_strlcat(c->tags, tags, sizeof(c->tags));
 

@@ -1357,7 +1357,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		XFreeFont(dpy, xfont);
     	xfont = blitz_getfont(dpy, def.font);
 		update_bar_geometry();
-		resize_all_clients();
 		break;
 	case FsFmode:
 		if(!i2)

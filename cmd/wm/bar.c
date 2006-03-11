@@ -62,11 +62,17 @@ update_bar_geometry()
     barpmap = XCreatePixmap(dpy, barwin, brect.width, brect.height, DefaultDepth(dpy, screen));
     XSync(dpy, False);
 	draw_bar();
-	for(i = 0; i < ntag; i++)
+	for(i = 0; i < ntag; i++) {
 		for(j = 1; j < tag[i]->narea; j++) {
-			update_area_geometry(tag[i]->area[j]);
-			arrange_area(tag[i]->area[j]);
+			Area *a = tag[i]->area[j];
+			a->rect.height = rect.height - brect.height;
+			arrange_area(a);
 		}
+		for(j = 0; j < tag[i]->area[0]->nframe; j++) {
+			Frame *f = tag[i]->area[0]->frame[j];
+			resize_client(f->client, &f->rect, nil, False);
+		}
+	}
 }
 
 void

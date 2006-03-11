@@ -432,7 +432,7 @@ resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 {
 	Frame *f = c->frame[c->sel];
 
-	if((area2index(f->area) > 0) && pt)
+	if(area2index(f->area))
 		resize_area(c, r, pt);
 	else
 		f->rect = *r;

@@ -213,7 +213,6 @@ Area *alloc_area(Tag *t);
 void destroy_area(Area *a);
 int area2index(Area *a);
 int aid2index(Tag *t, unsigned short id);
-void update_area_geometry(Area *a);
 void select_area(Area *a, char *arg);
 void send2area(Area *to, Area *from, Client *c);
 void attach_toarea(Area *a, Client *c);
