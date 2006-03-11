@@ -92,6 +92,7 @@ struct Tag {
 	unsigned int areasz;
 	unsigned int narea;
 	unsigned int sel;
+	unsigned int revert;
 };
 
 struct Area {
@@ -131,6 +132,7 @@ struct Client {
 	unsigned int framesz;
 	unsigned int sel;
 	unsigned int nframe;
+	Area *revert;
 };
 
 typedef struct Key Key;

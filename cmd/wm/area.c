@@ -32,11 +32,17 @@ update_area_geometry(Area *a)
 void
 destroy_area(Area *a)
 {
+	unsigned int i;
 	Tag *t = a->tag;
 	if(a->nframe)
 		return;
 	if(a->frame)
 		free(a->frame);
+	if(t->revert == area2index(a))
+		t->revert = 0;
+	for(i = 0; i < nclient; i++)
+		if(client[i]->revert == a)
+			client[i]->revert = 0;
 	cext_array_detach((void **)t->area, a, &t->areasz);
 	t->narea--;
 	if(t->sel > 1)
@@ -73,9 +79,13 @@ select_area(Area *a, char *arg)
 	int i = area2index(a);
 	if(i == -1)
 		return;
+	if(i)
+		t->revert = i;
 	if(!strncmp(arg, "toggle", 7)) {
 		if(i)
 			i = 0;
+		else if(t->revert < t->narea)
+			i = t->revert;
 		else
 			i = 1;
 	} else if(!strncmp(arg, "prev", 5)) {
@@ -105,6 +115,7 @@ select_area(Area *a, char *arg)
 void
 send2area(Area *to, Area *from, Client *c)
 {
+	c->revert = from;
 	detach_fromarea(from, c);
 	attach_toarea(to, c);
 	focus_client(c);
