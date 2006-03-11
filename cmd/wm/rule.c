@@ -77,6 +77,8 @@ parse(char *data, unsigned int *n)
 				i++;
 			}
 			else {
+				if(!strlen(tags) && (*p == ' ' || *p == '\t'))
+					continue; /* skip prefixed whitespaces */
 				*tags = *p;
 				tags++;
 			}
