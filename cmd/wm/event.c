@@ -131,14 +131,16 @@ handle_configurerequest(XEvent *e)
     if(c) {
         gravitate(c, True);
 
-        if(ev->value_mask & CWX)
-            c->rect.x = ev->x;
-        if(ev->value_mask & CWY)
-            c->rect.y = ev->y;
-        if(ev->value_mask & CWWidth)
-            c->rect.width = ev->width;
-        if(ev->value_mask & CWHeight)
-            c->rect.height = ev->height;
+        if(c->frame && (area2index(c->frame[c->sel]->area) == 0)) {
+			if(ev->value_mask & CWX)
+				c->rect.x = ev->x;
+			if(ev->value_mask & CWY)
+				c->rect.y = ev->y;
+            if(ev->value_mask & CWWidth)
+                c->rect.width = ev->width;
+            if(ev->value_mask & CWHeight)
+                c->rect.height = ev->height;
+        }
         if(ev->value_mask & CWBorderWidth)
             c->border = ev->border_width;
 
@@ -162,12 +164,18 @@ handle_configurerequest(XEvent *e)
 
     wc.x = ev->x;
     wc.y = ev->y;
-    if(c && c->frame) {
-        wc.x = def.border;
-        wc.y = bar_height();
-    }
     wc.width = ev->width;
     wc.height = ev->height;
+
+    if(c && c->frame) {
+		wc.x = def.border;
+		wc.y = bar_height();
+        if(area2index(c->frame[c->sel]->area) > 0) {
+            wc.width = c->rect.width;
+            wc.height = c->rect.height;
+        }
+    }
+
     wc.border_width = 0;
 	wc.sibling = None;
 	wc.stack_mode = Above;

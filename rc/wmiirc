@@ -2,7 +2,9 @@
 # configure wmii
 
 # give wmiiwm a chance to start
-sleep 1
+while ! wmiir read / > /dev/null 2>&1; do
+:
+done
 
 xwrite() {
 	file="$1"; shift
