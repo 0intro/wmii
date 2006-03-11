@@ -106,9 +106,9 @@ select_area(Area *a, char *arg)
 			return;
 	}
 	new = t->area[i];
-	t->sel = i;
 	if(new->nframe)
 		focus_client(new->frame[new->sel]->client);
+	t->sel = i;
 	for(i = 0; i < a->nframe; i++)
 		draw_client(a->frame[i]->client);
 }
