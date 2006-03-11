@@ -76,12 +76,12 @@ select_area(Area *a, char *arg)
 	if(!strncmp(arg, "prev", 5)) {
 		if(i == 1)
 			i = t->narea - 1;
-		else
+		else if(i != 0)
 			i--;
 	} else if(!strncmp(arg, "next", 5)) {
 		if(i + 1 < t->narea)
 			i++;
-		else
+		else if (i != 0)
 			i = 1;
 	}
 	else {
