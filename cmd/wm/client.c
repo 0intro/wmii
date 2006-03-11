@@ -510,6 +510,12 @@ send2area_client(Client *c, char *arg)
 		else
 			to = t->area[1];
 	}
+	else if(!strncmp(arg, "toggle", 7)) {
+		if(i)
+			to = t->area[0];
+		else
+			to = t->area[1];
+	}
 	else {
 		i = cext_strtonum(arg, 0, t->narea - 1, &errstr);
 		if(errstr)

@@ -73,7 +73,12 @@ select_area(Area *a, char *arg)
 	int i = area2index(a);
 	if(i == -1)
 		return;
-	if(!strncmp(arg, "prev", 5)) {
+	if(!strncmp(arg, "toggle", 7)) {
+		if(i)
+			i = 0;
+		else
+			i = 1;
+	} else if(!strncmp(arg, "prev", 5)) {
 		if(i == 1)
 			i = t->narea - 1;
 		else if(i != 0)
