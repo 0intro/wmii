@@ -305,7 +305,8 @@ mouse_move(Client *c)
     int snaph = rect.height * def.snap / 1000;
     unsigned int num;
     unsigned int dmask;
-    XRectangle *rects = rectangles(&num);
+    XRectangle *rects = rectangles(c->frame[c->sel]->area->tag,
+			area2index(c->frame[c->sel]->area) == 0, &num);
     XRectangle frect = c->frame[c->sel]->rect;
     XPoint pt;
 
@@ -550,7 +551,8 @@ mouse_resize(Client *c, Align align)
     int snaph = rect.height * def.snap / 1000;
     unsigned int dmask;
     unsigned int num;
-    XRectangle *rects = rectangles(&num);
+    XRectangle *rects = rectangles(c->frame[c->sel]->area->tag,
+			area2index(c->frame[c->sel]->area) == 0, &num);
     XRectangle frect = c->frame[c->sel]->rect;
     XRectangle origin = frect;
 

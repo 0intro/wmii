@@ -122,11 +122,16 @@ match_tags(Client *c)
    	rules = parse(def.rules, &n);
 	c->tags[0] = 0;
 	tags = match(rules, n, c->name);
-	if(strlen(tags))
+	if(strlen(tags)) {
+		if(strlen(c->tags))
+			cext_strlcat(c->tags, " ", sizeof(c->tags));
 		cext_strlcat(c->tags, tags, sizeof(c->tags));
+	}
 	tags = match(rules, n, c->classinst);
-	if(strlen(tags))
+	if(strlen(tags)) {
+		if(strlen(c->tags))
+			cext_strlcat(c->tags, " ", sizeof(c->tags));
 		cext_strlcat(c->tags, tags, sizeof(c->tags));
-
+	}
 	free(rules);
 }

@@ -1,6 +1,9 @@
 #!/bin/sh
 # configure wmii
 
+# give wmiiwm a chance to start
+sleep 1
+
 xwrite() {
 	file="$1"; shift
 	echo -n "$@" | wmiir write "$file"

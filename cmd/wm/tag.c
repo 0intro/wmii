@@ -95,32 +95,33 @@ focus_tag(Tag *t)
 }
 
 XRectangle *
-rectangles(unsigned int *num)
+rectangles(Tag *t, Bool isfloat, unsigned int *num)
 {
-    XRectangle *result = 0;
-    int i, j = 0;
-    Window d1, d2;
-    Window *wins;
-    XWindowAttributes wa;
-    XRectangle r;
+    XRectangle *result = nil;
+	unsigned int i;
+	
+	*num = 0;
+	if(isfloat)
+		*num = t->area[0]->nframe;
+	else {
+		for(i = 1; i < t->narea; i++)
+			*num += t->area[i]->nframe;
+	}
 
-    if(XQueryTree(dpy, root, &d1, &d2, &wins, num)) {
+	if(*num) {
         result = cext_emallocz(*num * sizeof(XRectangle));
-        for(i = 0; i < *num; i++) {
-            if(!XGetWindowAttributes(dpy, wins[i], &wa))
-                continue;
-            if(wa.override_redirect && (wa.map_state == IsViewable)) {
-                r.x = wa.x;
-                r.y = wa.y;
-                r.width = wa.width;
-                r.height = wa.height;
-                result[j++] = r;
-            }
-        }
-    }
-    if(wins)
-        XFree(wins);
-    *num = j;
+		if(isfloat) {
+			for(i = 0; i < *num; i++)
+				result[i] = t->area[0]->frame[0]->rect;
+		}
+		else {
+			unsigned int j, n = 0;
+			for(i = 1; i < t->narea; i++) {
+				for(j = 0; j < t->area[i]->nframe; j++)
+					result[n++] = t->area[i]->frame[j]->rect;
+			}
+		}
+	}
     return result;
 }
 

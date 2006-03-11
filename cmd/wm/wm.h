@@ -292,7 +292,7 @@ void match_tags(Client *c);
 Tag *alloc_tag(char *name);
 char *destroy_tag(Tag *t);
 void focus_tag(Tag *t);
-XRectangle *rectangles(unsigned int *num);
+XRectangle *rectangles(Tag *t, Bool isfloat, unsigned int *num);
 int tid2index(unsigned short id);
 void select_tag(char *arg);
 int tag2index(Tag *t);
