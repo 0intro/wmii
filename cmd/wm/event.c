@@ -239,10 +239,10 @@ handle_motionnotify(XEvent *e)
 {
     Client *c = win2clientframe(e->xmotion.window);
     if(c) {
-    	Cursor cursor = cursor_for_motion(c, e->xmotion.x, e->xmotion.y);
-        if(cursor != c->cursor) {
-            c->cursor = cursor;
-            XDefineCursor(dpy, c->framewin, cursor);
+    	Cursor cur = cursor_for_motion(c, e->xmotion.x, e->xmotion.y);
+        if(cur != c->cursor) {
+            c->cursor = cur;
+            XDefineCursor(dpy, c->framewin, cur);
         }
     }
 }
