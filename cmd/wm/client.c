@@ -314,8 +314,12 @@ void
 manage_client(Client *c)
 {
 	Tag *t;
+	Client *trans;
 		    
-	match_tags(c);
+	if(c->trans && (trans = win2client(c->trans)))
+		cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
+	else
+		match_tags(c);
 
 	t = ntag ? tag[sel] : alloc_tag(def.tag);
 	if(!c->tags[0])
