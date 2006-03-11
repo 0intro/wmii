@@ -50,11 +50,10 @@ enum {
 	FsDclients,
 	FsDclient,
 	FsDGclient,
-	FsDtags,
 	FsDbar,
     FsDlabel,
 	FsFexpand,
-    FsFdata,                      /* data to display */
+    FsFdata,
     FsFcolors,
     FsFfont,
     FsFselcolors,
@@ -296,7 +295,6 @@ XRectangle *rectangles(unsigned int *num);
 int tid2index(unsigned short id);
 void select_tag(char *arg);
 int tag2index(Tag *t);
-Bool istag(char **tags, char *tag, unsigned int ntags);
 void update_tags();
 Bool clientoftag(Tag *t, Client *c);
 void detach_fromtag(Tag *t, Client *c);

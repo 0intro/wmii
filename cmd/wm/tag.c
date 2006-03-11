@@ -134,6 +134,16 @@ tid2index(unsigned short id)
 	return -1;
 }
 
+static Bool
+istag(char **tags, char *tag, unsigned int ntags)
+{
+	unsigned int i;
+	for(i = 0; i < ntags; i++)
+		if(!strncmp(tags[i], tag, strlen(tags[i])))
+			return True;
+	return False;
+}
+
 Tag *
 get_tag(char *name)
 {
@@ -184,16 +194,6 @@ select_tag(char *arg)
 
 	if((c = sel_client_of_tag(t)))
 		focus_client(c);
-}
-
-Bool
-istag(char **tags, char *tag, unsigned int ntags)
-{
-	unsigned int i;
-	for(i = 0; i < ntags; i++)
-		if(!strncmp(tags[i], tag, strlen(tags[i])))
-			return True;
-	return False;
 }
 
 Bool

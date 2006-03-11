@@ -26,6 +26,7 @@ static char Enofile[] = "file not found";
 static char Enomode[] = "mode not supported";
 static char Enofunc[] = "function not supported";
 static char Enocommand[] = "command not supported";
+static char Ebadvalue[] = "bad value";
 
 #define WMII_IOUNIT 	2048
 
@@ -40,8 +41,7 @@ static char Enocommand[] = "command not supported";
  * /def/normcolors		FsFnormcolors 	normal colors
  * /def/rules      		FsFrules 		rules
  * /def/keys       		FsFkeys  		keys
- * /tags/				FsDtags
- * /tags/foo			FsFtags
+ * /tags				FsFtags
  * /bar/				FsDbar
  * /bar/expand			FsFexpand 		id of expandable label
  * /bar/lab/			FsDlabel
@@ -148,7 +148,6 @@ qid2name(Qid *qid)
 	switch(type) {
 		case FsDroot: return "/"; break;
 		case FsDdef: return "def"; break;
-		case FsDtags: return "tags"; break;
 		case FsDclients: return "clients"; break;
 		case FsDbar: return "bar"; break;
 		case FsDws:
@@ -233,7 +232,7 @@ qid2name(Qid *qid)
 		case FsFtags:
 			if((qid->dir_type == FsDclient) && (i1 == -1 || i2 == -1 || i3 == -1))
 				return nil;
-			else if(i1 == -1)
+			else if((qid->dir_type == FsDGclient) && (i1 == -1))
 				return nil;
 		 	return "tags";
 			break;
@@ -253,13 +252,8 @@ name2type(char *name, unsigned char dir_type)
     unsigned int i;
 	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
 		return FsDroot;
-	if(!strncmp(name, "tags", 5)) {
-		switch(dir_type) {	
-		case FsDroot: return FsDtags; break;
-		case FsDGclient:
-		case FsDclient: return FsFtags; break;
-		}
-	}
+	if(!strncmp(name, "tags", 5))
+		return FsFtags;
 	if(!strncmp(name, "clients", 8))
 		return FsDclients;
 	if(!strncmp(name, "ws", 3) && (dir_type == FsDroot))
@@ -304,8 +298,6 @@ name2type(char *name, unsigned char dir_type)
 		return FsFtag;
 	if((dir_type == FsDbar) && name2label(name))
 		return FsDlabel;
-	if((dir_type == FsDtags) && istag(ctag, name, nctag))
-		return FsFtag;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
    	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
@@ -339,7 +331,6 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		*new = root_qid;
 		break;
 	case FsDdef:
-	case FsDtags:
 	case FsDclients:
 	case FsDbar:
 		if(dir_type != FsDroot)
@@ -426,9 +417,8 @@ mkqid(Qid *dir, char *wname, Qid *new)
 	case FsFtags:
 		if((dir_type == FsDclient) && ((dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1)))
 			return -1;
-		else if(dir_i1 == -1 && dir_type != FsDGclient)
+		else if((dir_type == FsDGclient) && (dir_i1 == -1))
 			return -1;
-		else if((dir_type != FsDGclient) && (dir_type != FsDclient))
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
 		break;
@@ -483,7 +473,6 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     case FsDarea:
     case FsDws:
     case FsDdef:
-	case FsDtags:
 	case FsDclients:
 	case FsDlabel:
     case FsDroot:
@@ -536,12 +525,23 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 			return mkstat(stat, dir, wname, strlen(client[dir_i1]->name), DMREAD);
         break;
     case FsFtags:
-		if(dir_type == FsDclient) {
+		switch(dir_type) {
+		case FsDclient:
 			f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
 			return mkstat(stat, dir, wname, strlen(f->client->tags), DMREAD | DMWRITE);
-		}
-		else 
+			break;
+		case FsDGclient:
 			return mkstat(stat, dir, wname, strlen(client[dir_i1]->tags), DMREAD | DMWRITE);
+			break;
+		default:
+			{
+				unsigned int i, len = 0;
+				for(i = 0; i < nctag; i++)
+					len += strlen(ctag[i]) + 1;
+				return mkstat(stat, dir, wname, len, DMREAD);
+			}
+			break;
+		}
 		break;
 	case FsFtag:
 		if(dir_type == FsDws)
@@ -743,24 +743,6 @@ xread(IXPConn *c, Fcall *fcall)
 	fcall->count = 0;
 	if(fcall->offset) {
 		switch (type) {
-		case FsDtags:
-			/* jump to offset */
-			len = 0;
-			for(i = 0; i < nctag; i++) {
-				len += type2stat(&stat, ctag[i], &m->qid);
-				if(len <= fcall->offset)
-					continue;
-				break;
-			}
-			/* offset found, proceeding */
-			for(; i < nctag; i++) {
-				len = type2stat(&stat, ctag[i], &m->qid);
-				if(fcall->count + len > fcall->iounit)
-					break;
-				fcall->count += len;
-				p = ixp_enc_stat(p, &stat);
-			}
-			break;
 		case FsDclients:
 			/* jump to offset */
 			len = 0;
@@ -887,6 +869,26 @@ xread(IXPConn *c, Fcall *fcall)
 			else if(fcall->count)
 				memcpy(p, def.rules + fcall->offset, fcall->count);
 			break;
+		case FsFtags:
+			if(m->qid.dir_type != FsDroot)
+		   		return Enoperm;
+			len = 0;
+			/* jump to offset */
+			for(i = 0; i < nctag; i++) {
+				len += strlen(ctag[i]) + 1;
+				if(len <= fcall->offset)
+					continue;
+			}
+			/* offset found, proceeding */
+			for(; i < nctag; i++) {
+				len = strlen(ctag[i]) + 1;
+				if(fcall->count + len > fcall->iounit)
+					break;
+				memcpy(p + fcall->count, ctag[i], len - 1);
+				memcpy(p + fcall->count + len - 1, "\n", 1);
+				fcall->count += len;
+			}
+			break;
 		default:
 			break;
 		}
@@ -913,15 +915,6 @@ xread(IXPConn *c, Fcall *fcall)
 			for(i = 0; i < nclient; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
-				if(fcall->count + len > fcall->iounit)
-					break;
-				fcall->count += len;
-				p = ixp_enc_stat(p, &stat);
-			}
-			break;
-		case FsDtags:
-			for(i = 0; i < nctag; i++) {
-				len = type2stat(&stat, ctag[i], &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -1064,13 +1057,25 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsFtags:
-			if(m->qid.dir_type == FsDclient) {
+			switch(m->qid.dir_type) {
+			case FsDclient:
 				if((fcall->count = strlen(tag[i1]->area[i2]->frame[i3]->client->tags)))
 					memcpy(p, tag[i1]->area[i2]->frame[i3]->client->tags, fcall->count);
-			}
-			else {
+				break;
+			case FsDGclient:
 				if((fcall->count = strlen(client[i1]->tags)))
 					memcpy(p, client[i1]->tags, fcall->count);
+				break;
+			default:
+				for(i = 0; i < nctag; i++) {
+					len = strlen(ctag[i]) + 1;
+					if(fcall->count + len > fcall->iounit)
+						break;
+					memcpy(p + fcall->count, ctag[i], len - 1);
+					memcpy(p + fcall->count + len - 1, "\n", 1);
+					fcall->count += len;
+				}
+				break;
 			}
 			break;
 		case FsFexpand:
@@ -1131,7 +1136,7 @@ xread(IXPConn *c, Fcall *fcall)
 			memcpy(p, buf, fcall->count);
 			break;	
 		default:
-			return "invalid read";
+			return Enoperm;
 			break;
 		}
 	}
@@ -1217,28 +1222,30 @@ xwrite(IXPConn *c, Fcall *fcall)
 		break;
 	case FsFsnap:
 		if(fcall->count > sizeof(buf))
-			return "snap value out of range 0x0000,..,0xffff";
+			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		i = cext_strtonum(buf, 0, 0xffff, &err);
 		if(err)
-			return "snap value out of range 0x0000,..,0xffff";
+			return Ebadvalue;
 		def.snap = i;
 		break;
 	case FsFborder:
 		if(fcall->count > sizeof(buf))
-			return "border value out of range 0x0000,..,0xffff";
+			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		i = cext_strtonum(buf, 0, 0xffff, &err);
 		if(err)
-			return "border value out of range 0x0000,..,0xffff";
+			return Ebadvalue;
 		def.border = i;
 		resize_all_clients();
 		break;
 	case FsFtags:
+		if(m->qid.dir_type == FsDroot)
+			return Enoperm;
 		if(fcall->count > sizeof(buf))
-			return "tags value too long";
+			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		if(m->qid.dir_type == FsDclient) {
@@ -1251,7 +1258,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		break;
 	case FsFgeom:
 		if(fcall->count > sizeof(buf))
-			return "geometry values out of range";
+			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		if(m->qid.dir_type == FsDclient) {
@@ -1282,7 +1289,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
 		  )
-			return "wrong color format";
+			return Ebadvalue;
 		memcpy(label[i1]->colstr, fcall->data, fcall->count);
 		label[i1]->colstr[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, label[i1]->colstr, &label[i1]->color);
@@ -1293,7 +1300,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
 		  )
-			return "wrong color format";
+			return Ebadvalue;
 		memcpy(def.selcolor, fcall->data, fcall->count);
 		def.selcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
@@ -1307,7 +1314,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			|| (fcall->data[0] != '#') || (fcall->data[8] != '#')
 		    || (fcall->data[16] != '#')
 		  )
-			return "wrong color format";
+			return Ebadvalue;
 		memcpy(def.normcolor, fcall->data, fcall->count);
 		def.normcolor[fcall->count] = 0;
 		blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
@@ -1360,12 +1367,12 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		if((i = str2mode(buf)) == -1)
-			return "invalid area mode";
+			return Ebadvalue;
 		tag[i1]->area[i2]->mode = i;
 		arrange_area(tag[i1]->area[i2]);
 		break;	
 	default:
-		return "invalid write";
+		return Enoperm;
 		break;
 	}
     fcall->id = RWRITE;
