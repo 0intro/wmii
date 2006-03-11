@@ -322,7 +322,7 @@ manage_client(Client *c)
 		match_tags(c);
 
 	t = ntag ? tag[sel] : alloc_tag(def.tag);
-	if(!c->tags[0])
+	if(c->tags[0] == 0)
 		cext_strlcpy(c->tags, t->name, sizeof(c->tags));
 
 	update_tags();
