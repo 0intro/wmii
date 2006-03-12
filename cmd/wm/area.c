@@ -221,9 +221,37 @@ static void
 relax_area(Area *a)
 {
 	unsigned int i, yoff, h, hdiff;
+	Bool fallthrough = False;
 
 	if(!a->nframe)
 		return;
+
+	switch(a->mode) {
+	case Colequal:
+		h = a->rect.height;
+		h /= a->nframe;
+		if(h < 2 * bar_height())
+			fallthrough = True;
+		break;
+	case Colstack:
+		yoff = a->rect.y;
+		h = a->rect.height - (a->nframe - 1) * bar_height();
+		if(h < 3 * bar_height())
+			fallthrough = True;
+		break;
+	default:
+		break;
+	}
+
+	if(fallthrough) {
+		for(i = 0; i < a->nframe; i++) {
+			Frame *f = a->frame[i];
+			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
+			f->rect.y = a->rect.y + hdiff / 2;
+			resize_client(f->client, &f->rect, nil, False);
+		}
+		return;
+	}
 
 	/* some relaxing from potential increment gaps */
 	h = 0;
