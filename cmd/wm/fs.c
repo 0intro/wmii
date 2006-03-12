@@ -479,7 +479,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		return mkstat(stat, dir, wname, 0, DMWRITE);
 		break;
     case FsFevent:
-		return mkstat(stat, dir, wname, 0, DMREAD);
+		return mkstat(stat, dir, wname, 0, DMREAD | DMWRITE);
 		break;
     case FsFborder:
 		snprintf(buf, sizeof(buf), "%d", def.border);
@@ -1361,6 +1361,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 	case FsFmode:
 		if(!i2)
 			return Enofile;
+		if(fcall->count > sizeof(buf))
+			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		if((i = str2mode(buf)) == -1)
@@ -1368,6 +1370,13 @@ xwrite(IXPConn *c, Fcall *fcall)
 		tag[i1]->area[i2]->mode = i;
 		arrange_area(tag[i1]->area[i2]);
 		break;	
+	case FsFevent:
+		if(fcall->count > sizeof(buf))
+			return Ebadvalue;
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
+		write_event(buf);
+		break;
 	default:
 		return Enoperm;
 		break;

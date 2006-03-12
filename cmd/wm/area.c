@@ -272,6 +272,8 @@ arrange_area(Area *a)
 	case Colequal:
 		h = a->rect.height;
 		h /= a->nframe;
+		if(h < 2 * bar_height())
+			goto Fallthrough;
 		for(i = 0; i < a->nframe; i++) {
 			Frame *f = a->frame[i];
 			f->rect = a->rect;
@@ -287,6 +289,8 @@ arrange_area(Area *a)
 	case Colstack:
 		yoff = a->rect.y;
 		h = a->rect.height - (a->nframe - 1) * bar_height();
+		if(h < 3 * bar_height())
+			goto Fallthrough;
 		for(i = 0; i < a->nframe; i++) {
 			Frame *f = a->frame[i];
 			f->rect = a->rect;
@@ -299,6 +303,7 @@ arrange_area(Area *a)
 			resize_client(f->client, &f->rect, nil, True);
 		}
 		break;
+Fallthrough:
 	case Colmax:
 		for(i = 0; i < a->nframe; i++) {
 			Frame *f = a->frame[i];
