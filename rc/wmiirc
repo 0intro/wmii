@@ -1,11 +1,6 @@
 #!/bin/sh
 # configure wmii
 
-# give wmiiwm a chance to start
-while ! wmiir read / > /dev/null 2>&1; do
-:
-done
-
 xwrite() {
 	file="$1"; shift
 	echo -n "$@" | wmiir write "$file"
@@ -20,6 +15,15 @@ proglist() {
 		done
 	done | sort | uniq
 }
+
+pidfile=/tmp/ns.$USER.$DISPLAY/wmiircpid
+test -f $pidfile && kill `cat $pidfile` 2>/dev/null
+echo $$ >$pidfile
+
+# give wmiiwm a chance to start
+while ! wmiir read / > /dev/null 2>&1; do
+	sleep 1
+done
 
 MODKEY=Alt
 WMII_FONT='fixed' export WMII_FONT
@@ -168,3 +172,4 @@ do
 		esac;;
 	esac
 done &
+echo $! >$pidfile
