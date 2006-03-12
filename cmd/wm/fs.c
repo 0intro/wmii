@@ -864,23 +864,23 @@ xread(IXPConn *c, Fcall *fcall)
 				memcpy(p, def.rules + fcall->offset, fcall->count);
 			break;
 		case FsFtags:
-			if(m->qid.dir_type != FsDroot)
-		   		return Enoperm;
-			len = 0;
-			/* jump to offset */
-			for(i = 0; i < nctag; i++) {
-				len += strlen(ctag[i]) + 1;
-				if(len <= fcall->offset)
-					continue;
-			}
-			/* offset found, proceeding */
-			for(; i < nctag; i++) {
-				len = strlen(ctag[i]) + 1;
-				if(fcall->count + len > fcall->iounit)
-					break;
-				memcpy(p + fcall->count, ctag[i], len - 1);
-				memcpy(p + fcall->count + len - 1, "\n", 1);
-				fcall->count += len;
+			if(m->qid.dir_type != FsDroot) {
+				len = 0;
+				/* jump to offset */
+				for(i = 0; i < nctag; i++) {
+					len += strlen(ctag[i]) + 1;
+					if(len <= fcall->offset)
+						continue;
+				}
+				/* offset found, proceeding */
+				for(; i < nctag; i++) {
+					len = strlen(ctag[i]) + 1;
+					if(fcall->count + len > fcall->iounit)
+						break;
+					memcpy(p + fcall->count, ctag[i], len - 1);
+					memcpy(p + fcall->count + len - 1, "\n", 1);
+					fcall->count += len;
+				}
 			}
 			break;
 		default:
