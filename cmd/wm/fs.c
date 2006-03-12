@@ -864,7 +864,7 @@ xread(IXPConn *c, Fcall *fcall)
 				memcpy(p, def.rules + fcall->offset, fcall->count);
 			break;
 		case FsFtags:
-			if(m->qid.dir_type != FsDroot) {
+			if(m->qid.dir_type == FsDroot) {
 				len = 0;
 				/* jump to offset */
 				for(i = 0; i < nctag; i++) {
