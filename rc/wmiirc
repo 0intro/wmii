@@ -130,7 +130,7 @@ do
 		$MODKEY-Control-c)
 			xwrite /ws/sel/sel/ctl kill;;
 		$MODKEY-Control-w,y)
-			exec wmiirc;;
+			wmiirc &;;
 		$MODKEY-Control-q,y)
 			xwrite /ctl quit;;
 		$MODKEY-Control-p)
