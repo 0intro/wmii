@@ -45,7 +45,7 @@ alloc_client(Window w, XWindowAttributes *wa)
 	}
     fwa.override_redirect = 1;
     fwa.background_pixmap = ParentRelative;
-	fwa.event_mask = SubstructureRedirectMask | ExposureMask | ButtonPressMask | PointerMotionMask;
+	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask | ButtonPressMask | PointerMotionMask;
 
     c->framewin = XCreateWindow(dpy, root, c->rect.x, c->rect.y,
 						   c->rect.width + 2 * def.border, c->rect.height + def.border + bar_height(), 0,
@@ -363,9 +363,9 @@ destroy_client(Client *c)
 	if(c->nframe) {
 		c->rect.x = c->frame[c->sel]->rect.x;
 		c->rect.y = c->frame[c->sel]->rect.y;
-		reparent_client(c, root, c->rect.x, c->rect.y);
 	}
 
+	reparent_client(c, root, c->rect.x, c->rect.y);
     XFreeGC(dpy, c->gc);
     XDestroyWindow(dpy, c->framewin);
 	cext_array_detach((void **)client, c, &clientsz);
