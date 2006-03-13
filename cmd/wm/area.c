@@ -247,7 +247,7 @@ relax_area(Area *a)
 		for(i = 0; i < a->nframe; i++) {
 			Frame *f = a->frame[i];
 			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
-			f->rect.y = a->rect.y + hdiff / 2;
+			f->rect.y = a->rect.y + (a->rect.height - f->rect.height) / 2;
 			resize_client(f->client, &f->rect, nil, False);
 		}
 		return;
