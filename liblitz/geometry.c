@@ -41,7 +41,7 @@ int blitz_strtoalign(Align *result, char *val)
 }
 
 /**
- * Basic Syntax: <x>,<y>,<width>,<height>
+ * Basic Syntax: <x> <y> <width> <height>
  * Each component can be of following format:
  * <...> = [+|-]0..n|<alignment>[[+|-]0..n]
  */
