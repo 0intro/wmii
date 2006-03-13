@@ -148,27 +148,35 @@ istag(char **tags, char *tag, unsigned int ntags)
 Tag *
 get_tag(char *name)
 {
-	unsigned int i, n = 0;
+	unsigned int i, n = 0, j, nt;
 	Tag *t;
+	char buf[256];
+	char *tags[128];
 
-	if(!istag(ctag, name, nctag))
-		return nil;
 	for(i = 0; i < ntag; i++) {
 		t = tag[i];
 		if(!strncmp(t->name, name, strlen(t->name)))
 			return t;
 	}
 
+	cext_strlcpy(buf, name, sizeof(buf));
+	nt = cext_tokenize(tags, 128, buf, ' ');
+
 	for(i = 0; i < nclient; i++)
-		if(strstr(client[i]->tags, name))
-			n++;
+		for(j = 0; j < nt; j++)
+			if(strstr(client[i]->tags, tags[j]))
+				n++;
+
+	fprintf(stderr, "get_tag %d\n", n);
 	if(!n)
 		return nil;
 
 	t = alloc_tag(name);
 	for(i = 0; i < nclient; i++)
-		if(strstr(client[i]->tags, name))
-			attach_totag(t, client[i]);
+		for(j = 0; j < nt; j++)
+			if(strstr(client[i]->tags, tags[j]))
+				if(!clientoftag(t, client[i]))
+					attach_totag(t, client[i]);
 	return t;
 }
 

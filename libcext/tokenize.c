@@ -28,7 +28,7 @@ cext_tokenize(char **result, unsigned int reslen, char *str, char delim)
         } else
             n++;
     }
-    if(strlen(p))
+    if((i < reslen) && (p < n) && strlen(p))
         result[i++] = p;
     return i;                   /* number of tokens */
 }
