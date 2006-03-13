@@ -170,7 +170,7 @@ send_client_message(Window w, Atom a, long value)
 void
 kill_client(Client * c)
 {
-    if(c->proto & PROTO_DEL)
+    if(c->proto & WM_PROTOCOL_DELWIN)
         send_client_message(c->win, wm_atom[WMProtocols], wm_atom[WMDelete]);
     else
         XKillClient(dpy, c->win);

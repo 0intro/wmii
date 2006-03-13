@@ -99,7 +99,7 @@ win_proto(Window w)
     }
     for(i = 0; i < res; i++) {
         if(protocols[i] == wm_atom[WMDelete])
-            protos |= PROTO_DEL;
+            protos |= WM_PROTOCOL_DELWIN;
     }
     free((char *) protocols);
     return protos;

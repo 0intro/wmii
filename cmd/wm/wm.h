@@ -73,12 +73,12 @@ enum {
 	FsFmode
 };
 
-#define PROTO_DEL              1
 #define DEF_BORDER             3
 #define DEF_SNAP               20
 
 #define ROOT_MASK              SubstructureRedirectMask
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
+#define WM_PROTOCOL_DELWIN     1
 
 typedef struct Tag Tag;
 typedef struct Area Area;

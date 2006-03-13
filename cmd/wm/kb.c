@@ -10,14 +10,12 @@
 
 #include "wm.h"
 
-#define NUM_MASKS      8
-
 void
 init_lock_modifiers()
 {
     XModifierKeymap *modmap;
     KeyCode num_lock;
-    static int masks[NUM_MASKS] = {
+    static int masks[] = {
         ShiftMask, LockMask, ControlMask, Mod1Mask,
         Mod2Mask, Mod3Mask, Mod4Mask, Mod5Mask
     };
@@ -28,7 +26,7 @@ init_lock_modifiers()
     num_lock = XKeysymToKeycode(dpy, XStringToKeysym("Num_Lock"));
 
     if(modmap && modmap->max_keypermod > 0) {
-        int max = NUM_MASKS * modmap->max_keypermod;
+        int max = (sizeof(masks) / sizeof(int)) * modmap->max_keypermod;
         for(i = 0; i < max; i++) {
             if(num_lock && (modmap->modifiermap[i] == num_lock))
                 num_lock_mask = masks[i / modmap->max_keypermod];
@@ -63,7 +61,6 @@ blitz_strtomod(char *val)
 static void
 grab_key(Key *k)
 {
-	fprintf(stderr, "grabbing %s %ld %d\n", k->name, k->mod, k->key);
     XGrabKey(dpy, k->key, k->mod, root,
              True, GrabModeAsync, GrabModeAsync);
     if(num_lock_mask) {
