@@ -63,6 +63,7 @@ blitz_strtomod(char *val)
 static void
 grab_key(Key *k)
 {
+	fprintf(stderr, "grabbing %s %ld %d\n", k->name, k->mod, k->key);
     XGrabKey(dpy, k->key, k->mod, root,
              True, GrabModeAsync, GrabModeAsync);
     if(num_lock_mask) {
@@ -270,17 +271,17 @@ update_keys()
 	}
 
 	for(l = p = def.keys; p && *p;) {
-		if(*p == '\n' || !*(p + 1)) {
-			if(*(p + 1))
-				*p = 0;
+		if(*p == '\n') {
+			*p = 0;
 			grab_key(get_key(l));
-			if(*(p + 1))
-				*p = '\n';
+			*p = '\n';
 			l = ++p;
 		}
 		else
 			p++;
 	}
+	if(l < p && strlen(l))
+		grab_key(get_key(l));
 
 	XSync(dpy, False);
 }
