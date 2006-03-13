@@ -442,8 +442,12 @@ resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
 	if((f->area->mode != Colstack) || (f->area->sel == frame2index(f)))
 		match_sizehints(c);
 
-	if(!ignore_xcall)
-		XMoveResizeWindow(dpy, c->framewin, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+	if(!ignore_xcall) {
+		if(f->area->tag == tag[sel])
+			XMoveResizeWindow(dpy, c->framewin, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+		else
+			XMoveResizeWindow(dpy, c->framewin, 2 * rect.width + f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+	}
 
 	if((f->area->mode != Colstack) || (f->area->sel == frame2index(f))) {
 		c->rect.x = def.border;
