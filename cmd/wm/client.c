@@ -321,6 +321,8 @@ manage_client(Client *c)
 	else
 		match_tags(c);
 
+    reparent_client(c, c->framewin, c->rect.x, c->rect.y);
+
 	t = ntag ? tag[sel] : alloc_tag(def.tag);
 	if(c->tags[0] == 0)
 		cext_strlcpy(c->tags, t->name, sizeof(c->tags));

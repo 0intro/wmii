@@ -295,7 +295,6 @@ attach_totag(Tag *t, Client *c)
 	else
    		a = t->area[t->sel];
 
-    reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	attach_toarea(a, c);
     map_client(c);
 	XMapWindow(dpy, c->framewin);
