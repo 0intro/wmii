@@ -153,21 +153,23 @@ get_tag(char *name)
 	char buf[256];
 	char *tags[128];
 
+	fprintf(stderr, "get_tag %s\n", name);
 	for(i = 0; i < ntag; i++) {
 		t = tag[i];
-		if(!strncmp(t->name, name, strlen(t->name)))
+		if(!strncmp(t->name, name, strlen(name)))
 			return t;
 	}
 
 	cext_strlcpy(buf, name, sizeof(buf));
-	nt = cext_tokenize(tags, 128, buf, ' ');
+	nt = cext_tokenize(tags, 128, buf, '+');
+	fprintf(stderr, "get_tag nt=%d\n", nt);
 
 	for(i = 0; i < nclient; i++)
 		for(j = 0; j < nt; j++)
 			if(strstr(client[i]->tags, tags[j]))
 				n++;
 
-	fprintf(stderr, "get_tag %d\n", n);
+	fprintf(stderr, "get_tag n=%d\n", n);
 	if(!n)
 		return nil;
 
@@ -186,6 +188,7 @@ select_tag(char *arg)
 	int i, j, n;
 	Client *c;
 	Tag *t = get_tag(arg);
+
 	if(!t)
 		return;
     focus_tag(t);
@@ -221,7 +224,6 @@ update_tags()
 	unsigned int i, j, k;
 	char buf[256];
 	char *tags[128];
-	char *t;
 
 	char **newctag = nil;
 	unsigned int newctagsz = 0;
@@ -231,13 +233,10 @@ update_tags()
 		cext_strlcpy(buf, client[i]->tags, sizeof(buf));
 		j = cext_tokenize(tags, 128, buf, ' ');
 		for(k = 0; k < j; k++) {
-			t = tags[k];
-			if(*t == '~')
-				t++;
-			if(!*t) /* should not happen, but some user might try */
+			if(!strncmp(tags[k], "~", 2)) /* magic floating tag */
 				continue;
-			if(!istag(newctag, t, nnewctag)) {
-				newctag = (char **)cext_array_attach((void **)newctag, strdup(t),
+			if(!istag(newctag, tags[k], nnewctag)) {
+				newctag = (char **)cext_array_attach((void **)newctag, strdup(tags[k]),
 							sizeof(char *), &newctagsz);
 				nnewctag++;
 			}

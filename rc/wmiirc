@@ -37,8 +37,8 @@ xwrite /ws/tag 1
 
 # TAGGING RULES
 wmiir write /def/rules <<EOF
-/XMMS:.*/ -> ~0
-/Gimp.*:.*/ -> ~3
+/XMMS:.*/ -> ~
+/Gimp.*:.*/ -> ~
 EOF
 
 # BAR CONFIGURATION
