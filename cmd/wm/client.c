@@ -326,20 +326,12 @@ manage_client(Client *c)
 	t = ntag ? tag[sel] : alloc_tag(def.tag);
 	if(c->tags[0] == 0)
 		cext_strlcpy(c->tags, t->name, sizeof(c->tags));
+	else if(!strncmp(c->tags, "~", 2)) {
+		c->tags[1] = ' ';
+		cext_strlcpy(c->tags + 2, t->name, sizeof(c->tags) - 2);
+	}
 
 	update_tags();
-
-	/* shorthand proposed by Georg Neis */
-	if(!sel_client_of_tag(t)) {
-		/* consider removing the empty tag page instead */
-		char ct[256];
-		char *p;
-
-		cext_strlcpy(ct, t->name, sizeof(ct));
-		if((p = strchr(ct, ' ')))
-			*p = 0;
-		select_tag(ct);
-	}
 }
 
 static int

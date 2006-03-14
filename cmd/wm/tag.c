@@ -10,6 +10,16 @@
 
 #include "wm.h"
 
+static Bool
+istag(char **tags, unsigned int ntags, char *tag)
+{
+	unsigned int i;
+	for(i = 0; i < ntags; i++)
+		if(!strncmp(tags[i], tag, strlen(tags[i])))
+			return True;
+	return False;
+}
+
 Tag *
 alloc_tag(char *name)
 {
@@ -135,16 +145,6 @@ tid2index(unsigned short id)
 	return -1;
 }
 
-static Bool
-istag(char **tags, char *tag, unsigned int ntags)
-{
-	unsigned int i;
-	for(i = 0; i < ntags; i++)
-		if(!strncmp(tags[i], tag, strlen(tags[i])))
-			return True;
-	return False;
-}
-
 Tag *
 get_tag(char *name)
 {
@@ -153,7 +153,6 @@ get_tag(char *name)
 	char buf[256];
 	char *tags[128];
 
-	fprintf(stderr, "get_tag %s\n", name);
 	for(i = 0; i < ntag; i++) {
 		t = tag[i];
 		if(!strncmp(t->name, name, strlen(name)))
@@ -162,14 +161,12 @@ get_tag(char *name)
 
 	cext_strlcpy(buf, name, sizeof(buf));
 	nt = cext_tokenize(tags, 128, buf, '+');
-	fprintf(stderr, "get_tag nt=%d\n", nt);
 
 	for(i = 0; i < nclient; i++)
 		for(j = 0; j < nt; j++)
 			if(strstr(client[i]->tags, tags[j]))
 				n++;
 
-	fprintf(stderr, "get_tag n=%d\n", n);
 	if(!n)
 		return nil;
 
@@ -235,7 +232,7 @@ update_tags()
 		for(k = 0; k < j; k++) {
 			if(!strncmp(tags[k], "~", 2)) /* magic floating tag */
 				continue;
-			if(!istag(newctag, tags[k], nnewctag)) {
+			if(!istag(newctag, nnewctag, tags[k])) {
 				newctag = (char **)cext_array_attach((void **)newctag, strdup(tags[k]),
 							sizeof(char *), &newctagsz);
 				nnewctag++;
@@ -245,17 +242,18 @@ update_tags()
 
 	/* propagate tagging events */
 	for(i = 0; i < nnewctag; i++)
-		if(!istag(ctag, newctag[i], nctag)) {
+		if(!istag(ctag, nctag, newctag[i])) {
 			snprintf(buf, sizeof(buf), "NewTag %s\n", newctag[i]);
 			write_event(buf);
 		}
 	for(i = 0; i < nctag; i++) {
-		if(!istag(newctag, ctag[i], nnewctag)) {
+		if(!istag(newctag, nnewctag, ctag[i])) {
 			snprintf(buf, sizeof(buf), "RemoveTag %s\n", ctag[i]);
 			write_event(buf);
 		}
 		free(ctag[i]);
 	}
+
 	free(ctag);
 	ctag = newctag;
 	nctag = nnewctag;
