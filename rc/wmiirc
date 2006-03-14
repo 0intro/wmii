@@ -7,12 +7,10 @@ xwrite() {
 }
 
 proglist() {
-	for dir in `echo $@ | sed 's/^:/.:/; s/::/:.:/; s/:$/:./' | tr : ' '`
+	echo "$@" | tr ':' '\n' | grep -v '^$' | uniq |
+	while read dir
 	do
-		for i in $dir/*
-		do
-			test -x "$i" && test ! -d "$i" && echo `basename "$i"`
-		done
+		find "$dir" -perm -u+x -type f -print | sed 's,^.*/,,'
 	done | sort | uniq
 }
 
