@@ -6,11 +6,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <cext.h>
 
 #include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xatom.h>
+
+#include "cext.h"
 
 static char version[] = "wmiiwarp - " VERSION ", (C)opyright MMIV-MMV Anselm R. Garbe\n";
 
