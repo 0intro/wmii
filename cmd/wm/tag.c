@@ -160,13 +160,12 @@ get_tag(char *name)
 	}
 
 	cext_strlcpy(buf, name, sizeof(buf));
-	nt = cext_tokenize(tags, 128, buf, '+');
+	nt = cext_tokenize(tags, 128, buf, ' ');
 
 	for(i = 0; i < nclient; i++)
 		for(j = 0; j < nt; j++)
 			if(strstr(client[i]->tags, tags[j]))
 				n++;
-
 	if(!n)
 		return nil;
 
