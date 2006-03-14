@@ -15,7 +15,7 @@ istag(char **tags, unsigned int ntags, char *tag)
 {
 	unsigned int i;
 	for(i = 0; i < ntags; i++)
-		if(!strncmp(tags[i], tag, strlen(tags[i])))
+		if(!strncmp(tags[i], tag, strlen(tag)))
 			return True;
 	return False;
 }
@@ -32,14 +32,6 @@ alloc_tag(char *name)
 	alloc_area(t);
 	tag = (Tag **)cext_array_attach((void **)tag, t, sizeof(Tag *), &tagsz);
 	ntag++;
-	if(!istag(ctag, nctag, name)) {
-		char buf[256];
-		ctag = (char **)cext_array_attach((void **)ctag, strdup(name),
-				sizeof(char *), &ctagsz);
-		nctag++;
-		snprintf(buf, sizeof(buf), "NewTag %s\n", name);
-		write_event(buf);
-	}
 	focus_tag(t);
     return t;
 }
@@ -157,7 +149,7 @@ Tag *
 get_tag(char *name)
 {
 	unsigned int i, n = 0, j, nt;
-	Tag *t;
+	Tag *t = nil;
 	char buf[256];
 	char *tags[128];
 
@@ -195,6 +187,14 @@ select_tag(char *arg)
 		return;
     focus_tag(t);
 	cext_strlcpy(def.tag, arg, sizeof(def.tag));
+	if(!istag(ctag, nctag, arg)) {
+		char buf[256];
+		ctag = (char **)cext_array_attach((void **)ctag, strdup(arg),
+				sizeof(char *), &ctagsz);
+		nctag++;
+		snprintf(buf, sizeof(buf), "NewTag %s\n", arg);
+		write_event(buf);
+	}
 
 	for(i = 0; i < ntag; i++) {
 		n = 0;
@@ -269,20 +269,17 @@ update_tags()
 			Bool detach = False, attach = False;
 			cext_strlcpy(buf, tag[j]->name, sizeof(buf));
 			nt = cext_tokenize(tags, 128, buf, '+');
-			for(k = 0; k < nt; k++)
-				if(strstr(client[i]->tags, tags[k])) {
-					if(!clientoftag(tag[j], client[i]))
-						attach = True;
-				}
-				else {
-					if(clientoftag(tag[j], client[i]))
-						detach = True;
-				}
+			for(k = 0; k < nt; k++) {
+				if(strstr(client[i]->tags, tags[k]) && !clientoftag(tag[j], client[i]))
+					attach = True;
+			}
+			if(!strstr(client[i]->tags, tag[j]->name) && clientoftag(tag[j], client[i]))
+				detach = True;
 
-			if(attach)
-				attach_totag(tag[j], client[i]);
-			else if(detach)
+			if(detach)
 				detach_fromtag(tag[j], client[i]);
+			else if(attach)
+				attach_totag(tag[j], client[i]);
 		}
 
 	if(!ntag && nctag)
