@@ -7,11 +7,8 @@ xwrite() {
 }
 
 proglist() {
-	echo "$@" | tr ':' '\n' | grep -v '^$' | uniq |
-	while read dir
-	do
-		find "$dir" -perm -u+x -type f -print | sed 's,^.*/,,'
-	done | sort | uniq
+	find -L `echo "$@" | tr ':' '\n' | uniq` -perm -u+x -type f -print |
+		sed 's,^.*/,, ' | sort | uniq
 }
 
 # give wmiiwm a chance to start
