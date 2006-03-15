@@ -73,6 +73,9 @@ enum {
 	FsFmode
 };
 
+#define MAX_TAGS               8
+#define MAX_TAGLEN             32
+
 #define DEF_BORDER             3
 #define DEF_SNAP               20
 
@@ -116,7 +119,8 @@ struct Frame {
 struct Client {
 	unsigned short id;
 	char name[256];
-	char tags[256];
+	char tag[MAX_TAGS][MAX_TAGLEN];
+	unsigned int ntag;
 	char classinst[256];
     int proto;
     unsigned int border;
@@ -254,6 +258,9 @@ void send2area_client(Client *c, char *arg);
 void resize_all_clients();
 void focus(Client *c);
 int cid2index(unsigned short id);
+void tags4client(Client *c, const char *tags);
+void client2tags(Client *c, char *tags, unsigned int tagsz);
+Bool clienthastag(Client *c, const char *t);
 
 /* event.c */
 void init_x_event_handler();
@@ -302,6 +309,7 @@ void detach_fromtag(Tag *t, Client *c);
 void attach_totag(Tag *t, Client *c);
 Client *sel_client_of_tag(Tag *t);
 void restack_tag(Tag *t);
+unsigned int str2tags(const char *stags, char tags[MAX_TAGS][MAX_TAGLEN]);
 
 /* wm.c */
 void scan_wins();

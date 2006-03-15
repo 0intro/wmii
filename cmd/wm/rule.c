@@ -19,7 +19,8 @@
 
 typedef struct {
 	char regex[256];
-	char tags[256];
+	char tag[8][32];
+	unsigned int ntag;
 } Rule;
 
 enum {
@@ -57,7 +58,7 @@ parse(char *data, unsigned int *n)
 			}
 			else if(*p == '>') {
 				mode = TAGS;
-				tags = rules[i].tags;
+				tags = rules[i].tag[0];
 			}
 			break;
 		case PATTERN:
@@ -77,9 +78,14 @@ parse(char *data, unsigned int *n)
 				i++;
 			}
 			else {
-				if(!strlen(tags) && (*p == ' ' || *p == '\t'))
-					continue; /* skip prefixed whitespaces */
-				*tags = *p;
+				if(*p == ' ' || *p == '\t') {
+					if(*tags == 0)
+						continue; /* skip prefixed whitespaces */
+					*tags = 0;
+					tags = rules[i].tag[++rules[i].ntag];
+				}
+				else
+					*tags = *p;
 				tags++;
 			}
 			break;
@@ -89,24 +95,26 @@ parse(char *data, unsigned int *n)
 }
 
 
-static char *
-match(Rule *rule, unsigned int nrule, char *prop)
+static void
+match(Rule *rule, unsigned int rulesz, Client *c, const char *prop)
 {
-	unsigned int i;
+	unsigned int i, j;
 	regex_t regex;
 	regmatch_t tmpregm;
-	static char result[256];
 
-	result[0] = 0;	
-	for(i = 0; i < nrule; i++) {
+	c->ntag = 0;
+	for(i = 0; i < rulesz && c->ntag < 8; i++) {
 		Rule r = rule[i];
 		if(!regcomp(&regex, r.regex, 0)) {
-			if(!regexec(&regex, prop, 1, &tmpregm, 0))
-				cext_strlcat(result, r.tags, sizeof(result));
-			regfree(&regex);
+			if(!regexec(&regex, prop, 1, &tmpregm, 0)) {
+				for(j = 0; c->ntag < 8 && j < r.ntag; j++) {
+					cext_strlcpy(c->tag[c->ntag], r.tag[j], sizeof(c->tag[c->ntag]));
+					c->ntag++;
+				}
+				regfree(&regex);
+			}
 		}
 	}
-	return result;
 }
 
 void
@@ -114,24 +122,12 @@ match_tags(Client *c)
 {
 	unsigned int n;
 	Rule *rules;
-	char *tags;
 
 	if(!def.rules)
 		return;
 
    	rules = parse(def.rules, &n);
-	c->tags[0] = 0;
-	tags = match(rules, n, c->name);
-	if(strlen(tags)) {
-		if(strlen(c->tags))
-			cext_strlcat(c->tags, " ", sizeof(c->tags));
-		cext_strlcat(c->tags, tags, sizeof(c->tags));
-	}
-	tags = match(rules, n, c->classinst);
-	if(strlen(tags)) {
-		if(strlen(c->tags))
-			cext_strlcat(c->tags, " ", sizeof(c->tags));
-		cext_strlcat(c->tags, tags, sizeof(c->tags));
-	}
+	match(rules, n, c, c->name);
+	match(rules, n, c, c->classinst);
 	free(rules);
 }

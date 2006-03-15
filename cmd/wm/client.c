@@ -215,6 +215,7 @@ draw_client(Client *c)
 {
     Draw d = { 0 };
 	char buf[512];
+	unsigned int i;
 
 	if(!c->nframe)
 		return; /* might not have been attached atm */
@@ -242,7 +243,12 @@ draw_client(Client *c)
     d.rect.width = c->frame[c->sel]->rect.width;
     d.rect.height = bar_height();
 	d.notch = nil;
-	snprintf(buf, sizeof(buf), "%s | %s", c->tags, c->name);
+	buf[0] = 0;
+	for(i = 0; i < c->ntag; i++) {
+		cext_strlcat(buf, c->tag[i], sizeof(buf));
+		cext_strlcat(buf, " | ", sizeof(buf));
+	}
+	cext_strlcat(buf, c->name, sizeof(buf) - strlen(buf));
     d.data = buf;
     blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
@@ -315,20 +321,22 @@ manage_client(Client *c)
 {
 	Tag *t;
 	Client *trans;
+	unsigned int i;
 		    
-	if(c->trans && (trans = win2client(c->trans)))
-		cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
+	if(c->trans && (trans = win2client(c->trans))) {
+		for(i = 0; i < trans->ntag; i++)
+			cext_strlcpy(c->tag[i], trans->tag[i], sizeof(c->tag[i]));
+		c->ntag = trans->ntag;
+	}
 	else
 		match_tags(c);
 
     reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 
 	t = ntag ? tag[sel] : alloc_tag(def.tag);
-	if(c->tags[0] == 0)
-		cext_strlcpy(c->tags, t->name, sizeof(c->tags));
-	else if(!strncmp(c->tags, "~", 2)) {
-		c->tags[1] = ' ';
-		cext_strlcpy(c->tags + 2, t->name, sizeof(c->tags) - 2);
+	if(!c->ntag) {
+		c->ntag++;
+		cext_strlcpy(c->tag[0], t->name, sizeof(c->tag[0]));
 	}
 
 	update_tags();
@@ -560,4 +568,32 @@ cid2index(unsigned short id)
 		if(client[i]->id == id)
 			return i;
 	return -1;
+}
+
+void
+client2tags(Client *c, char *tags, unsigned int tagsz)
+{
+	unsigned int i, len = 0, l;
+
+	tags[0] = 0;
+	for(i = 0; i < c->ntag; i++) {
+		l = strlen(c->tag[i]);
+		if(len + l + 1 >= tagsz)
+			return;
+		if(len)
+			tags[len++] = ' ';
+		memcpy(tags + len, c->tag[i], l);
+		len += l;
+		tags[len] = 0;
+	}
+}
+
+Bool
+clienthastag(Client *c, const char *t)
+{
+	unsigned int i;
+	for(i = 0; i < c->ntag; i++)
+		if(!strncmp(c->tag[i], t, sizeof(c->tag[i])))
+			return True;
+	return False;
 }

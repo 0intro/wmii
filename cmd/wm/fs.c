@@ -522,10 +522,12 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		switch(dir_type) {
 		case FsDclient:
 			f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
-			return mkstat(stat, dir, wname, strlen(f->client->tags), DMREAD | DMWRITE);
+			client2tags(f->client, buf, sizeof(buf));
+			return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 			break;
 		case FsDGclient:
-			return mkstat(stat, dir, wname, strlen(client[dir_i1]->tags), DMREAD | DMWRITE);
+			client2tags(client[dir_i1], buf, sizeof(buf));
+			return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 			break;
 		default:
 			{
@@ -1053,12 +1055,14 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsFtags:
 			switch(m->qid.dir_type) {
 			case FsDclient:
-				if((fcall->count = strlen(tag[i1]->area[i2]->frame[i3]->client->tags)))
-					memcpy(p, tag[i1]->area[i2]->frame[i3]->client->tags, fcall->count);
+				client2tags(tag[i1]->area[i2]->frame[i3]->client, buf, sizeof(buf));
+				if((fcall->count = strlen(buf)))
+					memcpy(p, buf, fcall->count);
 				break;
 			case FsDGclient:
-				if((fcall->count = strlen(client[i1]->tags)))
-					memcpy(p, client[i1]->tags, fcall->count);
+				client2tags(client[i1], buf, sizeof(buf));
+				if((fcall->count = strlen(buf)))
+					memcpy(p, buf, fcall->count);
 				break;
 			default:
 				for(i = 0; i < nctag; i++) {
@@ -1254,10 +1258,10 @@ xwrite(IXPConn *c, Fcall *fcall)
 		buf[fcall->count] = 0;
 		if(m->qid.dir_type == FsDclient) {
 			f = tag[i1]->area[i2]->frame[i3];
-			cext_strlcpy(f->client->tags, buf, sizeof(f->client->tags));
+			f->client->ntag = str2tags(buf, f->client->tag);
 		}
 		else
-			cext_strlcpy(client[i1]->tags, buf, sizeof(client[i1]->tags));
+			client[i1]->ntag = str2tags(buf, client[i1]->tag);
 		update_tags();
 		break;
 	case FsFgeom:
@@ -1373,9 +1377,11 @@ xwrite(IXPConn *c, Fcall *fcall)
 	case FsFevent:
 		if(fcall->count > sizeof(buf))
 			return Ebadvalue;
-		memcpy(buf, fcall->data, fcall->count);
-		buf[fcall->count] = 0;
-		write_event(buf);
+		if(fcall->count) {
+			memcpy(buf, fcall->data, fcall->count);
+			buf[fcall->count] = 0;
+			write_event(buf);
+		}
 		break;
 	default:
 		return Enoperm;

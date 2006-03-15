@@ -151,7 +151,7 @@ get_tag(char *name)
 	unsigned int i, n = 0, j, nt;
 	Tag *t = nil;
 	char buf[256];
-	char *tags[128];
+	char *tags[8];
 
 	for(i = 0; i < ntag; i++) {
 		t = tag[i];
@@ -160,18 +160,20 @@ get_tag(char *name)
 	}
 
 	cext_strlcpy(buf, name, sizeof(buf));
-	nt = cext_tokenize(tags, 128, buf, '+');
+	nt = cext_tokenize(tags, 8, buf, ' ');
 	for(i = 0; i < nclient; i++)
 		for(j = 0; j < nt; j++)
-			if(strstr(client[i]->tags, tags[j]))
+			if(clienthastag(client[i], tags[j])) {
 				n++;
+				break;
+			}
 	if(!n)
 		return nil;
 
 	t = alloc_tag(name);
 	for(i = 0; i < nclient; i++)
 		for(j = 0; j < nt; j++)
-			if(strstr(client[i]->tags, tags[j]) && !clientoftag(t, client[i]))
+			if(clienthastag(client[i], tags[j]) && !clientoftag(t, client[i]))
 				attach_totag(t, client[i]);
 	return t;
 }
@@ -223,22 +225,19 @@ clientoftag(Tag *t, Client *c)
 void
 update_tags()
 {
-	unsigned int i, j, k, nt;
+	unsigned int i, j;
 	char buf[256];
-	char *tags[128];
 
 	char **newctag = nil;
 	unsigned int newctagsz = 0;
 	unsigned int nnewctag = 0;
 
 	for(i = 0; i < nclient; i++) {
-		cext_strlcpy(buf, client[i]->tags, sizeof(buf));
-		nt = cext_tokenize(tags, 128, buf, ' ');
-		for(k = 0; k < nt; k++) {
-			if(!strncmp(tags[k], "~", 2)) /* magic floating tag */
+		for(j = 0; j < client[i]->ntag; j++) {
+			if(!strncmp(client[i]->tag[j], "~", 2)) /* magic floating tag */
 				continue;
-			if(!istag(newctag, nnewctag, tags[k])) {
-				newctag = (char **)cext_array_attach((void **)newctag, strdup(tags[k]),
+			if(!istag(newctag, nnewctag, client[i]->tag[j])) {
+				newctag = (char **)cext_array_attach((void **)newctag, strdup(client[i]->tag[j]),
 							sizeof(char *), &newctagsz);
 				nnewctag++;
 			}
@@ -266,20 +265,14 @@ update_tags()
 
 	for(i = 0; i < nclient; i++)
 		for(j = 0; j < ntag; j++) {
-			Bool detach = False, attach = False;
-			cext_strlcpy(buf, tag[j]->name, sizeof(buf));
-			nt = cext_tokenize(tags, 128, buf, '+');
-			for(k = 0; k < nt; k++) {
-				if(strstr(client[i]->tags, tags[k]) && !clientoftag(tag[j], client[i]))
-					attach = True;
+			if(!clienthastag(client[i], tag[j]->name)) {
+				if(clientoftag(tag[j], client[i]))
+					detach_fromtag(tag[j], client[i]);
 			}
-			if(!strstr(client[i]->tags, tag[j]->name) && clientoftag(tag[j], client[i]))
-				detach = True;
-
-			if(detach)
-				detach_fromtag(tag[j], client[i]);
-			else if(attach)
-				attach_totag(tag[j], client[i]);
+			else {
+				if(!clientoftag(tag[j], client[i]))
+					attach_totag(tag[j], client[i]);
+			}
 		}
 
 	if(!ntag && nctag)
@@ -306,7 +299,7 @@ attach_totag(Tag *t, Client *c)
 {
 	Area *a;
 
-	if(c->trans || strchr(c->tags, '~'))
+	if(c->trans || clienthastag(c, "~"))
 		a = t->area[0];
 	else
    		a = t->area[t->sel];
@@ -355,4 +348,18 @@ restack_tag(Tag *t)
 
 	if(n)
 		XRestackWindows(dpy, wins, n);
+}
+
+unsigned int
+str2tags(const char *stags, char tags[MAX_TAGS][MAX_TAGLEN])
+{
+	unsigned int i, n;
+	char buf[256];
+	char *toks[MAX_TAGS];
+
+	cext_strlcpy(buf, stags, sizeof(buf));
+	n = cext_tokenize(toks, MAX_TAGS, buf, ' ');
+	for(i = 0; i < n; i++)
+		cext_strlcpy(tags[i], toks[i], MAX_TAGLEN);
+	return n;
 }
