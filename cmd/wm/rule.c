@@ -36,7 +36,7 @@ parse(char *data, unsigned int *n)
 	static unsigned int rulesz = 0;
 	unsigned int i;
 	int mode = IGNORE;
-	char *p, *r, *t, regex[256], tags[MAX_TAGLEN];
+	char *p, *r, *t, regex[256], tags[256];
 
 	if(!data || !strlen(data))
 		return nil;
@@ -85,12 +85,9 @@ parse(char *data, unsigned int *n)
 				i++;
 			}
 			else {
-				if(*p == ' ' || *p == '\t') {
-					if(tags[0] == 0)
-						continue; /* skip prefixed whitespaces */
-				}
-				else
-					*t = *p;
+				if((*p == ' ' || *p == '\t') && (tags[0] == 0))
+					continue; /* skip prefixed whitespaces */
+				*t = *p;
 				t++;
 			}
 			break;

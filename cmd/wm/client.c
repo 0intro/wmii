@@ -335,11 +335,21 @@ manage_client(Client *c)
 
 	t = ntag ? tag[sel] : alloc_tag(def.tag);
 	if(!c->ntag) {
-		c->ntag++;
 		cext_strlcpy(c->tag[0], t->name, sizeof(c->tag[0]));
+		c->ntag++;
+	}
+	{
+		unsigned int i;
+		for(i = 0; i < c->ntag; i++)
+			fprintf(stderr, "(a) c->tag[%d] -> %s\n", i, c->tag[i]);
 	}
 
 	update_tags();
+	{
+		unsigned int i;
+		for(i = 0; i < c->ntag; i++)
+			fprintf(stderr, "(b) c->tag[%d] -> %s\n", i, c->tag[i]);
+	}
 }
 
 static int
