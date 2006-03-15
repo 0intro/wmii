@@ -19,24 +19,24 @@
 
 typedef struct {
 	char regex[256];
-	char tag[8][32];
+	char tag[MAX_TAGS][MAX_TAGLEN];
 	unsigned int ntag;
 } Rule;
 
 enum {
 	IGNORE,
-	PATTERN,
+	REGEX,
 	TAGS
 };
 
-/* free the result */
 static Rule *
 parse(char *data, unsigned int *n)
 {
-	Rule *rules;
+	static Rule *rule = nil;
+	static unsigned int rulesz = 0;
 	unsigned int i;
 	int mode = IGNORE;
-	char *p, *regex, *tags;
+	char *p, *r, *t, regex[256], tags[MAX_TAGLEN];
 
 	if(!data || !strlen(data))
 		return nil;
@@ -46,68 +46,73 @@ parse(char *data, unsigned int *n)
 		if(*p == '\n')
 			(*n)++;
 
-	rules = cext_emallocz(sizeof(Rule) * (*n));
+	if(*n > rulesz) {
+		if(rule)
+			free(rule);
+		rule = cext_emallocz(sizeof(Rule) * (*n));
+		rulesz = *n;
+	}
 
 	i = 0;
 	for(p = data; *p; p++)
 		switch(mode) {
 		case IGNORE:
 			if(*p == '/') {
-				mode = PATTERN;
-				regex = rules[i].regex;
+				mode = REGEX;
+				r = regex;
 			}
 			else if(*p == '>') {
 				mode = TAGS;
-				tags = rules[i].tag[0];
+				t = tags;
 			}
 			break;
-		case PATTERN:
+		case REGEX:
 			if(*p == '/') {
 				mode = IGNORE;
-				*regex = 0;
+				*r = 0;
+				cext_strlcpy(rule[i].regex, regex, sizeof(rule[i].regex));
 			}
 			else {
-				*regex = *p;
-				regex++;
+				*r = *p;
+				r++;
 			}
 			break;
 		case TAGS:
 			if(*p == '\n' || *(p + 1) == 0) {
-				*tags = 0;
+				*t = 0;
+				rule[i].ntag = str2tags(rule[i].tag, tags);
 				mode = IGNORE;
 				i++;
 			}
 			else {
 				if(*p == ' ' || *p == '\t') {
-					if(*tags == 0)
+					if(tags[0] == 0)
 						continue; /* skip prefixed whitespaces */
-					*tags = 0;
-					tags = rules[i].tag[++rules[i].ntag];
 				}
 				else
-					*tags = *p;
-				tags++;
+					*t = *p;
+				t++;
 			}
 			break;
 		}
 
-	return rules;
+	return rule;
 }
 
 
 static void
-match(Rule *rule, unsigned int rulesz, Client *c, const char *prop)
+match(Rule *rule, unsigned int rulez, Client *c, const char *prop)
 {
 	unsigned int i, j;
 	regex_t regex;
 	regmatch_t tmpregm;
 
 	c->ntag = 0;
-	for(i = 0; i < rulesz && c->ntag < 8; i++) {
+	for(i = 0; i < rulez && c->ntag < MAX_TAGS; i++) {
 		Rule r = rule[i];
 		if(!regcomp(&regex, r.regex, 0)) {
 			if(!regexec(&regex, prop, 1, &tmpregm, 0)) {
-				for(j = 0; c->ntag < 8 && j < r.ntag; j++) {
+				for(j = 0; c->ntag < MAX_TAGS && j < r.ntag; j++) {
 					cext_strlcpy(c->tag[c->ntag], r.tag[j], sizeof(c->tag[c->ntag]));
 					c->ntag++;
 				}
@@ -121,13 +126,25 @@ void
 match_tags(Client *c)
 {
 	unsigned int n;
-	Rule *rules;
+	Rule *rule;
 
 	if(!def.rules)
 		return;
 
-   	rules = parse(def.rules, &n);
-	match(rules, n, c, c->name);
-	match(rules, n, c, c->classinst);
-	free(rules);
+   	rule = parse(def.rules, &n);
+	{
+		unsigned int i,j;
+		for(i=0;i<n;i++) {
+			fprintf(stderr, "rule[%d].regex -> %s\n", i, rule[i].regex);
+			for(j=0;j<rule[i].ntag;j++)
+				fprintf(stderr, "rule[%d].tag[%d] -> %s\n", i, j, rule[i].tag[j]);
+		}	
+	}
+	match(rule, n, c, c->name);
+	match(rule, n, c, c->classinst);
+	{
+		unsigned int i;
+		for(i = 0; i < c->ntag; i++)
+			fprintf(stderr, "c->tag[%d] -> %s\n", i, c->tag[i]);
+	}
 }

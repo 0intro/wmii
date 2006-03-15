@@ -522,11 +522,11 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		switch(dir_type) {
 		case FsDclient:
 			f = tag[dir_i1]->area[dir_i2]->frame[dir_i3];
-			client2tags(f->client, buf, sizeof(buf));
+			tags2str(buf, sizeof(buf), f->client->tag, f->client->ntag); 
 			return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 			break;
 		case FsDGclient:
-			client2tags(client[dir_i1], buf, sizeof(buf));
+			tags2str(buf, sizeof(buf), client[dir_i1]->tag, client[dir_i1]->ntag); 
 			return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 			break;
 		default:
@@ -1055,12 +1055,15 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsFtags:
 			switch(m->qid.dir_type) {
 			case FsDclient:
-				client2tags(tag[i1]->area[i2]->frame[i3]->client, buf, sizeof(buf));
-				if((fcall->count = strlen(buf)))
-					memcpy(p, buf, fcall->count);
+				{
+					Client *c = tag[i1]->area[i2]->frame[i3]->client;
+					tags2str(buf, sizeof(buf), c->tag, c->ntag); 
+					if((fcall->count = strlen(buf)))
+						memcpy(p, buf, fcall->count);
+				}
 				break;
 			case FsDGclient:
-				client2tags(client[i1], buf, sizeof(buf));
+				tags2str(buf, sizeof(buf), client[i1]->tag, client[i1]->ntag); 
 				if((fcall->count = strlen(buf)))
 					memcpy(p, buf, fcall->count);
 				break;
@@ -1258,10 +1261,10 @@ xwrite(IXPConn *c, Fcall *fcall)
 		buf[fcall->count] = 0;
 		if(m->qid.dir_type == FsDclient) {
 			f = tag[i1]->area[i2]->frame[i3];
-			f->client->ntag = str2tags(buf, f->client->tag);
+			f->client->ntag = str2tags(f->client->tag, buf);
 		}
 		else
-			client[i1]->ntag = str2tags(buf, client[i1]->tag);
+			client[i1]->ntag = str2tags(client[i1]->tag, buf);
 		update_tags();
 		break;
 	case FsFgeom:

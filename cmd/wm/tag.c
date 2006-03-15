@@ -351,7 +351,7 @@ restack_tag(Tag *t)
 }
 
 unsigned int
-str2tags(const char *stags, char tags[MAX_TAGS][MAX_TAGLEN])
+str2tags(char tags[MAX_TAGS][MAX_TAGLEN], const char *stags)
 {
 	unsigned int i, n;
 	char buf[256];
@@ -362,4 +362,23 @@ str2tags(const char *stags, char tags[MAX_TAGS][MAX_TAGLEN])
 	for(i = 0; i < n; i++)
 		cext_strlcpy(tags[i], toks[i], MAX_TAGLEN);
 	return n;
+}
+
+void
+tags2str(char *stags, unsigned int stagsz,
+		 char tags[MAX_TAGS][MAX_TAGLEN], unsigned int ntags)
+{
+	unsigned int i, len = 0, l;
+
+	stags[0] = 0;
+	for(i = 0; i < ntags; i++) {
+		l = strlen(tags[i]);
+		if(len + l + 1 >= stagsz)
+			return;
+		if(len)
+			stags[len++] = ' ';
+		memcpy(stags + len, tags[i], l);
+		len += l;
+		stags[len] = 0;
+	}
 }

@@ -570,24 +570,6 @@ cid2index(unsigned short id)
 	return -1;
 }
 
-void
-client2tags(Client *c, char *tags, unsigned int tagsz)
-{
-	unsigned int i, len = 0, l;
-
-	tags[0] = 0;
-	for(i = 0; i < c->ntag; i++) {
-		l = strlen(c->tag[i]);
-		if(len + l + 1 >= tagsz)
-			return;
-		if(len)
-			tags[len++] = ' ';
-		memcpy(tags + len, c->tag[i], l);
-		len += l;
-		tags[len] = 0;
-	}
-}
-
 Bool
 clienthastag(Client *c, const char *t)
 {

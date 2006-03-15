@@ -258,8 +258,6 @@ void send2area_client(Client *c, char *arg);
 void resize_all_clients();
 void focus(Client *c);
 int cid2index(unsigned short id);
-void tags4client(Client *c, const char *tags);
-void client2tags(Client *c, char *tags, unsigned int tagsz);
 Bool clienthastag(Client *c, const char *t);
 
 /* event.c */
@@ -309,7 +307,9 @@ void detach_fromtag(Tag *t, Client *c);
 void attach_totag(Tag *t, Client *c);
 Client *sel_client_of_tag(Tag *t);
 void restack_tag(Tag *t);
-unsigned int str2tags(const char *stags, char tags[MAX_TAGS][MAX_TAGLEN]);
+unsigned int str2tags(char tags[MAX_TAGS][MAX_TAGLEN], const char *stags);
+void tags2str(char *stags, unsigned int stagsz,
+		 	  char tags[MAX_TAGS][MAX_TAGLEN], unsigned int ntags);
 
 /* wm.c */
 void scan_wins();
