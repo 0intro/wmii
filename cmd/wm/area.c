@@ -141,7 +141,7 @@ attach_toarea(Area *a, Client *c)
 	if(area2index(a)) /* column */
 		arrange_area(a);
 	else /* floating */
-		resize_client(c, &f->rect, nil, False);
+		resize_client(c, &f->rect,  False);
 }
 
 void
@@ -248,7 +248,7 @@ relax_area(Area *a)
 			Frame *f = a->frame[i];
 			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 			f->rect.y = a->rect.y + (a->rect.height - f->rect.height) / 2;
-			resize_client(f->client, &f->rect, nil, False);
+			resize_client(f->client, &f->rect, False);
 		}
 		return;
 	}
@@ -271,7 +271,7 @@ relax_area(Area *a)
 			Frame *f = a->frame[i];
 			unsigned int tmp = f->rect.height;
 			f->rect.height += (a->rect.height - h);
-			resize_client(f->client, &f->rect, nil, True);
+			resize_client(f->client, &f->rect, True);
 			h += (f->rect.height - tmp);
 		}
 	}
@@ -284,7 +284,7 @@ relax_area(Area *a)
 		f->rect.y = yoff;
 		if(a->mode != Colmax)
 			yoff = f->rect.y + f->rect.height + hdiff;
-		resize_client(f->client, &f->rect, nil, False);
+		resize_client(f->client, &f->rect, False);
 	}
 }
 
@@ -311,7 +311,7 @@ arrange_area(Area *a)
 			else
 				f->rect.height =
 					a->rect.height - f->rect.y + a->rect.y;
-			resize_client(f->client, &f->rect, nil, True);
+			resize_client(f->client, &f->rect, True);
 		}
 		break;
 	case Colstack:
@@ -328,7 +328,7 @@ arrange_area(Area *a)
 			else
 				f->rect.height = bar_height();
 			yoff += f->rect.height;
-			resize_client(f->client, &f->rect, nil, True);
+			resize_client(f->client, &f->rect, True);
 		}
 		break;
 Fallthrough:
@@ -336,7 +336,7 @@ Fallthrough:
 		for(i = 0; i < a->nframe; i++) {
 			Frame *f = a->frame[i];
 			f->rect = a->rect;
-			resize_client(f->client, &f->rect, nil, True);
+			resize_client(f->client, &f->rect, True);
 		}
 		break;
 	default:
@@ -376,7 +376,7 @@ match_horiz(Area *a, XRectangle *r)
 		Frame *f = a->frame[i];
         f->rect.x = r->x;
         f->rect.width = r->width;
-        resize_client(f->client, &f->rect, nil, False);
+        resize_client(f->client, &f->rect, False);
     }
 }
 
@@ -421,16 +421,16 @@ drop_resize(Frame *f, XRectangle *new)
         north->rect.height = new->y - north->rect.y;
         f->rect.height += f->rect.y - new->y;
         f->rect.y = new->y;
-        resize_client(north->client, &north->rect, nil, False);
-        resize_client(f->client, &f->rect, nil, False);
+        resize_client(north->client, &north->rect, False);
+        resize_client(f->client, &f->rect, False);
     }
     if(south && (new->y + new->height != f->rect.y + f->rect.height)) {
         south->rect.height -= new->y + new->height - south->rect.y;
         south->rect.y = new->y + new->height;
         f->rect.y = new->y;
         f->rect.height = new->height;
-        resize_client(f->client, &f->rect, nil, False);
-        resize_client(south->client, &south->rect, nil, False);
+        resize_client(f->client, &f->rect, False);
+        resize_client(south->client, &south->rect, False);
     }
 	relax_area(a);
 }
@@ -471,8 +471,7 @@ void
 resize_area(Client *c, XRectangle *r, XPoint *pt)
 {
 	Frame *f = c->frame[c->sel];
-    if((f->rect.width == r->width)
-       && (f->rect.height == r->height))
+    if((f->rect.width == r->width) && (f->rect.height == r->height))
         drop_moving(f, r, pt);
     else
         drop_resize(f, r);

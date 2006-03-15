@@ -1271,7 +1271,10 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(m->qid.dir_type == FsDclient) {
 			f = tag[i1]->area[i2]->frame[i3];
 			blitz_strtorect(&rect, &f->rect, buf);
-			resize_client(f->client, &f->rect, 0, False);
+			if(i2)
+				resize_area(f->client, &f->rect, nil);
+			else
+				resize_client(f->client, &f->rect, False);
 		}
 		break;
     case FsFexpand:

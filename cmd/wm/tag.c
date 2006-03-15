@@ -93,7 +93,7 @@ focus_tag(Tag *t)
 			if(f->area->tag == t) {
 				XMoveWindow(dpy, client[i]->framewin, f->rect.x, f->rect.y);
 				if(client[i]->nframe > 1)
-					resize_client(client[i], &f->rect, nil, False);
+					resize_client(client[i], &f->rect, False);
 				draw_client(client[i]);
 			}
 			else

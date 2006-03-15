@@ -253,7 +253,7 @@ void manage_client(Client *c);
 void destroy_client(Client *c);
 Client *sel_client();
 void focus_client(Client *c);
-void resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall);
+void resize_client(Client *c, XRectangle *r, Bool ignore_xcall);
 void select_client(Client *c, char *arg);
 void send2area_client(Client *c, char *arg);
 void resize_all_clients();

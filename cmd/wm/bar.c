@@ -70,7 +70,7 @@ update_bar_geometry()
 		}
 		for(j = 0; j < tag[i]->area[0]->nframe; j++) {
 			Frame *f = tag[i]->area[0]->frame[j];
-			resize_client(f->client, &f->rect, nil, False);
+			resize_client(f->client, &f->rect, False);
 		}
 	}
 }

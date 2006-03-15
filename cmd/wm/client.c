@@ -435,14 +435,10 @@ match_sizehints(Client *c)
 }
 
 void
-resize_client(Client *c, XRectangle *r, XPoint *pt, Bool ignore_xcall)
+resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 {
 	Frame *f = c->frame[c->sel];
-
-	if(area2index(f->area))
-		resize_area(c, r, pt);
-	else
-		f->rect = *r;
+	f->rect = *r;
 
 	if((f->area->mode != Colstack) || (f->area->sel == frame2index(f)))
 		match_sizehints(c);
@@ -545,7 +541,7 @@ resize_all_clients()
 	for(i = 0; i < nclient; i++) {
 		Client *c = client[i];
 		if(c->nframe && c->frame[c->sel]->area)
-			resize_client(c, &c->frame[c->sel]->rect, 0, False);
+			resize_client(c, &c->frame[c->sel]->rect, False);
 	}
 }
 
