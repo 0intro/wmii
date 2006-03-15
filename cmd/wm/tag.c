@@ -36,15 +36,9 @@ alloc_tag(char *name)
     return t;
 }
 
-char *
+static void
 destroy_tag(Tag *t)
 {
-	unsigned int i;
-
-	for(i = 0; i < t->narea; i++)
-		if(t->area[i]->nframe)
-			return "tag not empty";
-
 	while(t->narea)
 		destroy_area(t->area[0]);
 
@@ -54,7 +48,6 @@ destroy_tag(Tag *t)
 		sel = 0;
 
     free(t); 
-	return nil;
 }
 
 int
