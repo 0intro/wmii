@@ -27,7 +27,7 @@ alloc_tag(char *name)
     Tag *t = cext_emallocz(sizeof(Tag));
 
 	t->id = id++;
-	cext_strlcpy(t->name, name, sizeof(t->name));
+	t->ntag = str2tags(t->tag, name);
 	alloc_area(t);
 	alloc_area(t);
 	tag = (Tag **)cext_array_attach((void **)tag, t, sizeof(Tag *), &tagsz);
@@ -70,7 +70,8 @@ tag2index(Tag *t)
 void
 focus_tag(Tag *t)
 {
-	char buf[16];
+	char buf[256];
+	char name[256];
 	int i, j;
 
 	if(!ntag)
@@ -98,7 +99,8 @@ focus_tag(Tag *t)
 			else
 				XMoveWindow(dpy, client[i]->framewin, 2 * rect.width + f->rect.x, f->rect.y);
 		}
-	snprintf(buf, sizeof(buf), "FocusTag %s\n", t->name);
+	tags2str(name, sizeof(name), t->tag, t->ntag);
+	snprintf(buf, sizeof(buf), "FocusTag %s\n", name);
 	write_event(buf);
 	XSync(dpy, False);
 	XUngrabServer(dpy);
@@ -148,31 +150,29 @@ tid2index(unsigned short id)
 Tag *
 get_tag(char *name)
 {
-	unsigned int i, n = 0, j, nt;
+	unsigned int i, j, ntags;
 	Tag *t = nil;
-	char buf[256];
-	char *tags[8];
+	char tname[256];
+	char tags[MAX_TAGS][MAX_TAGLEN];
 
 	for(i = 0; i < ntag; i++) {
 		t = tag[i];
-		if(!strncmp(t->name, name, strlen(name)))
+		tags2str(tname, sizeof(tname), t->tag, t->ntag);
+		if(!strncmp(tname, name, strlen(name)))
 			return t;
 	}
 
-	cext_strlcpy(buf, name, sizeof(buf));
-	nt = cext_tokenize(tags, 8, buf, ' ');
+	ntags = str2tags(tags, name);
 	for(i = 0; i < nclient; i++)
-		for(j = 0; j < nt; j++)
-			if(clienthastag(client[i], tags[j])) {
-				n++;
-				break;
-			}
-	if(!n)
-		return nil;
+		for(j = 0; j < ntags; j++)
+			if(clienthastag(client[i], tags[j]))
+				goto Createtag;
+	return nil;
 
+Createtag:
 	t = alloc_tag(name);
 	for(i = 0; i < nclient; i++)
-		for(j = 0; j < nt; j++)
+		for(j = 0; j < ntags; j++)
 			if(clienthastag(client[i], tags[j]) && !clientoftag(t, client[i]))
 				attach_totag(t, client[i]);
 	return t;
@@ -187,7 +187,6 @@ select_tag(char *arg)
 
 	if(!t)
 		return;
-    focus_tag(t);
 	cext_strlcpy(def.tag, arg, sizeof(def.tag));
 	if(!istag(ctag, nctag, arg)) {
 		char buf[256];
@@ -197,6 +196,7 @@ select_tag(char *arg)
 		snprintf(buf, sizeof(buf), "NewTag %s\n", arg);
 		write_event(buf);
 	}
+    focus_tag(t);
 
 	for(i = 0; i < ntag; i++) {
 		n = 0;
@@ -225,7 +225,7 @@ clientoftag(Tag *t, Client *c)
 void
 update_tags()
 {
-	unsigned int i, j;
+	unsigned int i, j, k;
 	char buf[256];
 
 	char **newctag = nil;
@@ -265,13 +265,20 @@ update_tags()
 
 	for(i = 0; i < nclient; i++)
 		for(j = 0; j < ntag; j++) {
-			if(!clienthastag(client[i], tag[j]->name)) {
-				if(clientoftag(tag[j], client[i]))
-					detach_fromtag(tag[j], client[i]);
-			}
-			else {
+			Bool hastag = False;
+			for(k = 0; k < tag[j]->ntag; k++) {
+				if(clienthastag(client[i], tag[j]->tag[k]))
+					hastag = True;
+					break;
+				}
+			
+			if(hastag) {
 				if(!clientoftag(tag[j], client[i]))
 					attach_totag(tag[j], client[i]);
+			}
+			else {
+				if(clientoftag(tag[j], client[i]))
+					detach_fromtag(tag[j], client[i]);
 			}
 		}
 
@@ -358,7 +365,7 @@ str2tags(char tags[MAX_TAGS][MAX_TAGLEN], const char *stags)
 	char *toks[MAX_TAGS];
 
 	cext_strlcpy(buf, stags, sizeof(buf));
-	n = cext_tokenize(toks, MAX_TAGS, buf, ' ');
+	n = cext_tokenize(toks, MAX_TAGS, buf, '+');
 	for(i = 0; i < n; i++)
 		cext_strlcpy(tags[i], toks[i], MAX_TAGLEN);
 	return n;
@@ -376,7 +383,7 @@ tags2str(char *stags, unsigned int stagsz,
 		if(len + l + 1 >= stagsz)
 			return;
 		if(len)
-			stags[len++] = ' ';
+			stags[len++] = '+';
 		memcpy(stags + len, tags[i], l);
 		len += l;
 		stags[len] = 0;

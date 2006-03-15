@@ -215,7 +215,6 @@ draw_client(Client *c)
 {
     Draw d = { 0 };
 	char buf[512];
-	unsigned int i;
 
 	if(!c->nframe)
 		return; /* might not have been attached atm */
@@ -243,11 +242,9 @@ draw_client(Client *c)
     d.rect.width = c->frame[c->sel]->rect.width;
     d.rect.height = bar_height();
 	d.notch = nil;
-	buf[0] = 0;
-	for(i = 0; i < c->ntag; i++) {
-		cext_strlcat(buf, c->tag[i], sizeof(buf));
-		cext_strlcat(buf, " | ", sizeof(buf));
-	}
+
+	tags2str(buf, sizeof(buf), c->tag, c->ntag);
+	cext_strlcat(buf, " | ", sizeof(buf));
 	cext_strlcat(buf, c->name, sizeof(buf) - strlen(buf));
     d.data = buf;
     blitz_drawlabel(dpy, &d);
@@ -335,12 +332,16 @@ manage_client(Client *c)
 
 	t = ntag ? tag[sel] : alloc_tag(def.tag);
 	if(!c->ntag) {
-		cext_strlcpy(c->tag[0], t->name, sizeof(c->tag[0]));
-		c->ntag++;
+		for(i = 0; i < t->ntag; i++) {
+			cext_strlcpy(c->tag[i], t->tag[i], sizeof(c->tag[i]));
+			c->ntag++;
+		}
 	}
 	else if((c->ntag == 1) && !strncmp(c->tag[0], "~", 2)) {
-		cext_strlcpy(c->tag[1], t->name, sizeof(c->tag[1]));
-		c->ntag++;
+		for(i = 0; i < t->ntag && i + 1 < MAX_TAGS; i++) {
+			cext_strlcpy(c->tag[i + 1], t->tag[i], sizeof(c->tag[i + 1]));
+			c->ntag++;
+		}
 	}
 
 	update_tags();

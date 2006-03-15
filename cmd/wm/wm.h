@@ -89,7 +89,8 @@ typedef struct Frame Frame;
 typedef struct Client Client;
 
 struct Tag {
-	char name[256];
+	char tag[MAX_TAGS][MAX_TAGLEN];
+	unsigned int ntag;
 	unsigned short id;
 	Area **area;
 	unsigned int areasz;

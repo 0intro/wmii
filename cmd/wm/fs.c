@@ -153,11 +153,7 @@ qid2name(Qid *qid)
 		case FsDws:
 			if(qid->dir_type == FsDroot)
 				return "ws";
-			else {
-				if(i1 == -1)
-					return nil;
-				return tag[i1]->name;
-			}
+			return nil;
 			break;
 		case FsDlabel:
 			if(i1 == -1)
