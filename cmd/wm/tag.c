@@ -171,10 +171,20 @@ Createtag:
 	return t;
 }
 
+static Bool
+hasclient(Tag *t)
+{
+	unsigned int i;
+	for(i = 0; i < t->narea; i++)
+		if(t->area[i]->nframe)
+			return True;
+	return False;
+}
+
 void
 select_tag(char *arg)
 {
-	int i, j, n;
+	int i;
 	Client *c;
 	Tag *t = get_tag(arg);
 
@@ -191,15 +201,12 @@ select_tag(char *arg)
 	}
     focus_tag(t);
 
-	for(i = 0; i < ntag; i++) {
-		n = 0;
-		for(j = 0; j < tag[i]->narea; j++)
-			n += tag[i]->area[j]->nframe;
-		if(!n) {
+	/* cleanup on select */
+	for(i = 0; i < ntag; i++)
+		if(!hasclient(tag[i])) {
 			destroy_tag(tag[i]);
 			i--;
 		}
-	}
 
 	if((c = sel_client_of_tag(t)))
 		focus_client(c);
@@ -236,6 +243,16 @@ update_tags()
 			}
 		}
 	}
+
+	for(i = 0; i < ntag; i++)
+		if(hasclient(tag[i])) {
+		   	tags2str(buf, sizeof(buf), tag[i]->tag, tag[i]->ntag);
+			if(!istag(newctag, nnewctag, buf)) {
+				newctag = (char **)cext_array_attach((void **)newctag, strdup(client[i]->tag[j]),
+							sizeof(char *), &newctagsz);
+				nnewctag++;
+			}
+		}
 
 	/* propagate tagging events */
 	for(i = 0; i < nnewctag; i++)
