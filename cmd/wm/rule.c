@@ -129,19 +129,6 @@ match_tags(Client *c)
 		return;
 
    	rule = parse(def.rules, &n);
-	{
-		unsigned int i,j;
-		for(i=0;i<n;i++) {
-			fprintf(stderr, "rule[%d].regex -> %s\n", i, rule[i].regex);
-			for(j=0;j<rule[i].ntag;j++)
-				fprintf(stderr, "rule[%d].tag[%d] -> %s\n", i, j, rule[i].tag[j]);
-		}	
-	}
 	match(rule, n, c, c->name);
 	match(rule, n, c, c->classinst);
-	{
-		unsigned int i;
-		for(i = 0; i < c->ntag; i++)
-			fprintf(stderr, "c->tag[%d] -> %s\n", i, c->tag[i]);
-	}
 }

@@ -338,18 +338,12 @@ manage_client(Client *c)
 		cext_strlcpy(c->tag[0], t->name, sizeof(c->tag[0]));
 		c->ntag++;
 	}
-	{
-		unsigned int i;
-		for(i = 0; i < c->ntag; i++)
-			fprintf(stderr, "(a) c->tag[%d] -> %s\n", i, c->tag[i]);
+	else if((c->ntag == 1) && !strncmp(c->tag[0], "~", 2)) {
+		cext_strlcpy(c->tag[1], t->name, sizeof(c->tag[1]));
+		c->ntag++;
 	}
 
 	update_tags();
-	{
-		unsigned int i;
-		for(i = 0; i < c->ntag; i++)
-			fprintf(stderr, "(b) c->tag[%d] -> %s\n", i, c->tag[i]);
-	}
 }
 
 static int
