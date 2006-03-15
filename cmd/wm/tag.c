@@ -248,7 +248,7 @@ update_tags()
 		if(hasclient(tag[i])) {
 		   	tags2str(buf, sizeof(buf), tag[i]->tag, tag[i]->ntag);
 			if(!istag(newctag, nnewctag, buf)) {
-				newctag = (char **)cext_array_attach((void **)newctag, strdup(client[i]->tag[j]),
+				newctag = (char **)cext_array_attach((void **)newctag, strdup(buf),
 							sizeof(char *), &newctagsz);
 				nnewctag++;
 			}
