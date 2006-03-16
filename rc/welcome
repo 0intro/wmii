@@ -7,30 +7,32 @@ Welcome to wmii, the non-wimp environment of the WMI Project.
 This is a small step by step tutorial, intended to make you a little bit
 familiar with wmii.
 
+Note, \$MODKEY is the Alt-key by default.
+
 Let's go!
 
-- Start two xterms by pressing $MODKEY-t twice.
-- Switch between the three windows: $MODKEY-j, $MODKEY-k
-  You can also use $MODKEY-Tab instead of $MODKEY-j.  If you prefer the mouse,
+- Start two xterms by pressing \$MODKEY-t twice.
+- Switch between the three windows: \$MODKEY-j, \$MODKEY-k
+  You can also use \$MODKEY-Tab instead of \$MODKEY-j.  If you prefer the mouse,
   then just click the desired window.
-- Create a new column with: $MODKEY-n
-- Tag the selected client with another tag: $MODKEY-Shift-2
+- Create a new column with: \$MODKEY-n
+- Tag the selected client with another tag: \$MODKEY-Shift-2
   IMPORTANT: before you do next step, note that you can select the current tag
-		  with $MODKEY-1.
-- Select the new tag: $MODKEY-2
-- Select the floating area: $MODKEY-space
-- Open the programs menu: $MODKEY-Control-p
+		  with \$MODKEY-1.
+- Select the new tag: \$MODKEY-2
+- Select the floating area: \$MODKEY-space
+- Open the programs menu: \$MODKEY-Control-p
   Type 'xclock' and press Enter.
 - Resize the xclock window: left-click on the border and, while holding the
   button down, move the cursor around.
 - Move the xclock window: left-click on the title bar and, while holding
   the button down, move the cursor around.
-- Open the actions menu: $MODKEY-Control-a
+- Open the actions menu: \$MODKEY-Control-a
   Rerun wmiirc by selecting 'wmiirc'.
 - Working with mouse efficiently:
   selecting a window: just click the desired window
-  move a window: press $MODKEY-Button1Press
-  and resize a window: press $MODKEY-Button3Press and resize it
+  move a window: press \$MODKEY-Button1Press
+  and resize a window: press \$MODKEY-Button3Press and resize it
   (this can also be done by clicking the titlebar of the window/borders respectively)
 - We'll now have a look at the internal filesystem used by wmii.  Executing
   	wmiir read /
@@ -41,7 +43,7 @@ Let's go!
   will show you the content of the bar.
 
 We hope that these steps gave you an idea of how wmii works.  You can reread
-them at any time by pressing $MODKEY-Control-a and selecting 'welcome'.
+them at any time by pressing \$MODKEY-Control-a and selecting 'welcome'.
 
 You should now take a look at the wmii(1) man page.  An FAQ is available on
 <http://wmii.de>.
