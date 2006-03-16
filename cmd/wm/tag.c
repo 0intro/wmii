@@ -60,12 +60,24 @@ tag2index(Tag *t)
 	return -1;
 }
 
+static void
+update_frame_selectors(Tag *t)
+{
+	unsigned int i, j;
+
+	/* select correct frames of clients */
+	for(i = 0; i < nclient; i++)
+		for(j = 0; j < client[i]->nframe; j++)
+			if(client[i]->frame[j]->area->tag == t)
+				client[i]->sel = j;
+}
+
 void
 focus_tag(Tag *t)
 {
 	char buf[256];
 	char name[256];
-	int i, j;
+	unsigned int i;
 
 	if(!ntag)
 		return;
@@ -73,11 +85,7 @@ focus_tag(Tag *t)
 	XGrabServer(dpy);
 	sel = tag2index(t);
 
-	/* select correct frames of clients */
-	for(i = 0; i < nclient; i++)
-		for(j = 0; j < client[i]->nframe; j++)
-			if(client[i]->frame[j]->area->tag == t)
-				client[i]->sel = j;
+	update_frame_selectors(t);
 
 	/* gives all(!) clients proper geometry (for use of different tags) */
 	for(i = 0; i < nclient; i++)
@@ -222,15 +230,34 @@ clientoftag(Tag *t, Client *c)
 	return False;
 }
 
+static void
+organize_client(Tag *t, Client *c)
+{
+	unsigned int i;
+	Bool hastag = False;
+	for(i = 0; i < t->ntag; i++) {
+		if(clienthastag(c, t->tag[i]))
+			hastag = True;
+		break;
+	}
+
+	if(hastag) {
+		if(!clientoftag(t, c))
+			attach_totag(t, c);
+	}
+	else {
+		if(clientoftag(t, c))
+			detach_fromtag(t, c);
+	}
+}
+
 void
 update_tags()
 {
-	unsigned int i, j, k;
+	unsigned int i, j;
 	char buf[256];
-
 	char **newctag = nil;
-	unsigned int newctagsz = 0;
-	unsigned int nnewctag = 0;
+	unsigned int newctagsz = 0, nnewctag = 0;
 
 	for(i = 0; i < nclient; i++) {
 		for(j = 0; j < client[i]->ntag; j++) {
@@ -273,24 +300,15 @@ update_tags()
 	nctag = nnewctag;
 	ctagsz = newctagsz;
 
-	for(i = 0; i < nclient; i++)
+	for(i = 0; i < nclient; i++) {
 		for(j = 0; j < ntag; j++) {
-			Bool hastag = False;
-			for(k = 0; k < tag[j]->ntag; k++) {
-				if(clienthastag(client[i], tag[j]->tag[k]))
-					hastag = True;
-					break;
-				}
-			
-			if(hastag) {
-				if(!clientoftag(tag[j], client[i]))
-					attach_totag(tag[j], client[i]);
-			}
-			else {
-				if(clientoftag(tag[j], client[i]))
-					detach_fromtag(tag[j], client[i]);
-			}
+			Tag *t = tag[j];
+			if(j == sel)
+				continue;
+			organize_client(t, client[i]);
 		}
+		organize_client(tag[sel], client[i]);
+	}
 
 	if(!ntag && nctag)
 		select_tag(ctag[0]);

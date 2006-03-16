@@ -175,6 +175,7 @@ detach_fromarea(Area *a, Client *c)
 				destroy_area(a);
 			else if(!a->nframe && t->area[0]->nframe)
 				t->sel = 0; /* focus floating area if it contains something */
+			arrange_tag(t, True);
 		}
 		else if(!i && !a->nframe) {
 			if(c->trans) {
@@ -189,7 +190,6 @@ detach_fromarea(Area *a, Client *c)
 			else if(t->area[1]->nframe)
 				t->sel = 1; /* focus first col as fallback */
 		}
-		arrange_tag(t, True);
 	}
 }
 
