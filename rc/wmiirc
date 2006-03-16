@@ -7,8 +7,13 @@ xwrite() {
 }
 
 proglist() {
-	find -L `echo "$@" | tr ':' '\n' | uniq` -perm -u+x -type f -print |
-		sed 's,^.*/,, ' | sort | uniq
+	for dir in `echo $@ | sed 's/^:/.:/; s/::/:.:/; s/:$/:./' | tr : ' '`
+	do
+		for i in $dir/*
+		do
+			test -x "$i" && test ! -d "$i" && echo `basename "$i"`
+		done
+	done | sort | uniq
 }
 
 # give wmiiwm a chance to start
