@@ -7,7 +7,7 @@ xwrite() {
 }
 
 proglist() {
-	ls -lpL `echo "$@" | tr ':' ' '` | awk '!/^d/ && $1 ~ /x/ {print $NF}' | sort | uniq
+	ls -lL `echo "$@" | tr ':' ' '` | awk '!/^d/ && $1 ~ /x/ {print $NF}' | sort | uniq
 }
 
 # give wmiiwm a chance to start
