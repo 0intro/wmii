@@ -7,7 +7,7 @@ xwrite() {
 }
 
 proglist() {
-	find `echo "$@" | tr ':' '\n' | uniq` -perm -u+x -type f -print |
+	find -L `echo "$@" | tr ':' '\n' | uniq` -perm -u+x -type f -print |
 		sed 's,^.*/,, ' | sort | uniq
 }
 
