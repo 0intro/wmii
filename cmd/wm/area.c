@@ -387,6 +387,7 @@ drop_resize(Frame *f, XRectangle *new)
 	Tag *t = a->tag;
     Frame *north = nil, *south = nil;
 	unsigned int i;
+	unsigned int min = 2 * bar_height();
 
 	for(i = 1; (i < t->narea) && (t->area[i] != a); i++);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
@@ -399,6 +400,10 @@ drop_resize(Frame *f, XRectangle *new)
 
     /* horizontal resize */
     if(west && (new->x != f->rect.x)) {
+	if(new->x < (west->rect.x + min)) {
+		new->width -= (west->rect.x + west->rect.width) - new->x;
+		new->x = west->rect.x + min;
+	}
         west->rect.width = new->x - west->rect.x;
         a->rect.width += f->rect.x - new->x;
         a->rect.x = new->x;
@@ -407,6 +412,8 @@ drop_resize(Frame *f, XRectangle *new)
 		relax_area(west);
     }
     if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
+	if((new->x + new->width) > (east->rect.x + east->rect.width - min))
+		new->width = (east->rect.x + east->rect.width - min) - new->x;
         east->rect.width -= new->x + new->width - east->rect.x;
         east->rect.x = new->x + new->width;
         a->rect.x = new->x;
@@ -418,6 +425,10 @@ drop_resize(Frame *f, XRectangle *new)
 
     /* vertical resize */
     if(north && (new->y != f->rect.y)) {
+	if(new->y < (north->rect.y + min)) {
+		new->height -= (north->rect.y + north->rect.height) - new->y;
+		new->y = north->rect.y + min;
+	}
         north->rect.height = new->y - north->rect.y;
         f->rect.height += f->rect.y - new->y;
         f->rect.y = new->y;
@@ -425,6 +436,8 @@ drop_resize(Frame *f, XRectangle *new)
         resize_client(f->client, &f->rect, False);
     }
     if(south && (new->y + new->height != f->rect.y + f->rect.height)) {
+	if((new->y + new->height) > (south->rect.y + south->rect.height - min))
+		new->height = (south->rect.y + south->rect.height - min) - new->y;
         south->rect.height -= new->y + new->height - south->rect.y;
         south->rect.y = new->y + new->height;
         f->rect.y = new->y;
