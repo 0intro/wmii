@@ -540,8 +540,12 @@ resize_all_clients()
 	unsigned int i;
 	for(i = 0; i < nclient; i++) {
 		Client *c = client[i];
-		if(c->nframe && c->frame[c->sel]->area)
-			resize_client(c, &c->frame[c->sel]->rect, False);
+		if(c->nframe && c->frame[c->sel]->area) {
+			if(area2index(c->frame[c->sel]->area))
+				resize_area(c, &c->frame[c->sel]->rect, nil);
+			else
+				resize_client(c, &c->frame[c->sel]->rect, False);
+		}
 	}
 }
 
