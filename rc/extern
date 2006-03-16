@@ -3,7 +3,6 @@
 
 PATH=$OLD_PATH export PATH
 unset OLD_PATH
-unset MODKEY
 unset WMII_FONT
 unset WMII_NORMCOLORS
 unset WMII_SELCOLORS
