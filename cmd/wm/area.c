@@ -423,6 +423,8 @@ drop_resize(Frame *f, XRectangle *new)
 		relax_area(east);
     }
 
+    if(a->mode == Colstack || a->mode == Colmax)
+	    goto AfterVertical;
     /* vertical resize */
     if(north && (new->y != f->rect.y)) {
 	if(new->y < (north->rect.y + min)) {
@@ -445,7 +447,9 @@ drop_resize(Frame *f, XRectangle *new)
         resize_client(f->client, &f->rect, False);
         resize_client(south->client, &south->rect, False);
     }
-	relax_area(a);
+
+    AfterVertical:
+    relax_area(a);
 }
 
 static void
