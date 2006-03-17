@@ -403,7 +403,8 @@ drop_resize(Frame *f, XRectangle *new)
 	if(new->x < 0 || new->x < (west->rect.x + min)) {
 		new->width -= (west->rect.x + min) - new->x;
 		new->x = west->rect.x + min;
-	}
+	} else if(new->width < min)
+		new->x -= min - new->width;
         west->rect.width = new->x - west->rect.x;
         a->rect.width += f->rect.x - new->x;
         a->rect.x = new->x;
@@ -414,6 +415,8 @@ drop_resize(Frame *f, XRectangle *new)
     if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
 	if((new->x + new->width) > (east->rect.x + east->rect.width - min))
 		new->width = (east->rect.x + east->rect.width - min) - new->x;
+	else if(new->width < min)
+		new->width = min;
         east->rect.width -= new->x + new->width - east->rect.x;
         east->rect.x = new->x + new->width;
         a->rect.x = new->x;
@@ -430,7 +433,8 @@ drop_resize(Frame *f, XRectangle *new)
 	if(new->y < 0 || new->y < (north->rect.y + min)) {
 		new->height -= (north->rect.y + min) - new->y;
 		new->y = north->rect.y + min;
-	}
+	} else if(new->height < min)
+		new->y -= min - new->height;
         north->rect.height = new->y - north->rect.y;
         f->rect.height += f->rect.y - new->y;
         f->rect.y = new->y;
@@ -440,6 +444,8 @@ drop_resize(Frame *f, XRectangle *new)
     if(south && (new->y + new->height != f->rect.y + f->rect.height)) {
 	if((new->y + new->height) > (south->rect.y + south->rect.height - min))
 		new->height = (south->rect.y + south->rect.height - min) - new->y;
+	else if(new->height < min)
+		new->height = min;
         south->rect.height -= new->y + new->height - south->rect.y;
         south->rect.y = new->y + new->height;
         f->rect.y = new->y;
