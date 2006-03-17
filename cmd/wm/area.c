@@ -400,7 +400,7 @@ drop_resize(Frame *f, XRectangle *new)
 
     /* horizontal resize */
     if(west && (new->x != f->rect.x)) {
-	if(new->x < (west->rect.x + min)) {
+	if(new->x < 0 || new->x < (west->rect.x + min)) {
 		new->width -= (west->rect.x + west->rect.width) - new->x;
 		new->x = west->rect.x + min;
 	}
@@ -427,7 +427,7 @@ drop_resize(Frame *f, XRectangle *new)
 	    goto AfterVertical;
     /* vertical resize */
     if(north && (new->y != f->rect.y)) {
-	if(new->y < (north->rect.y + min)) {
+	if(new->y < 0 || new->y < (north->rect.y + min)) {
 		new->height -= (north->rect.y + north->rect.height) - new->y;
 		new->y = north->rect.y + min;
 	}
@@ -447,8 +447,8 @@ drop_resize(Frame *f, XRectangle *new)
         resize_client(f->client, &f->rect, False);
         resize_client(south->client, &south->rect, False);
     }
+AfterVertical:
 
-    AfterVertical:
     relax_area(a);
 }
 
