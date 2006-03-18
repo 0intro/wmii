@@ -83,15 +83,19 @@ select_area(Area *a, char *arg)
 		else
 			i = 1;
 	} else if(!strncmp(arg, "prev", 5)) {
-		if(i == 1)
-			i = t->narea - 1;
-		else if(i != 0)
-			i--;
+		if(i>0) {
+			if(i == 1)
+				i = t->narea - 1;
+			else
+				i--;
+		}
 	} else if(!strncmp(arg, "next", 5)) {
-		if(i + 1 < t->narea)
-			i++;
-		else if (i != 0)
-			i = 1;
+		if(i>0) {
+			if(i + 1 < t->narea)
+				i++;
+			else
+				i = 1;
+		}
 	}
 	else {
 		const char *errstr;
