@@ -1201,7 +1201,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDws:
 			if(!strncmp(buf, "select ", 7))
-				select_area(tag[i1]->area[tag[i1]->sel], &buf[7]);
+				if(ntag)
+					select_area(tag[i1]->area[tag[i1]->sel], &buf[7]);
 			break;
 		case FsDarea:
 			if(!strncmp(buf, "select ", 7)) {
