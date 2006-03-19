@@ -412,8 +412,8 @@ drop_resize(Frame *f, XRectangle *new)
 		new->width = min;
 	}
         west->rect.width = new->x - west->rect.x;
-        a->rect.width += f->rect.x - new->x;
-        a->rect.x = new->x;
+        a->rect.width += a->rect.x - (new->x - (f->rect.x - a->rect.x));
+        a->rect.x = new->x - (f->rect.x - a->rect.x);
         match_horiz(west, &west->rect);
         match_horiz(a, &a->rect);
 		relax_area(west);
@@ -425,8 +425,8 @@ drop_resize(Frame *f, XRectangle *new)
 		new->width = min;
         east->rect.width -= new->x + new->width - east->rect.x;
         east->rect.x = new->x + new->width;
-        a->rect.x = new->x;
-        a->rect.width = new->width;
+        a->rect.x = new->x - (f->rect.x - a->rect.x);
+        a->rect.width = new->width + (f->rect.x - a->rect.x);
         match_horiz(a, &a->rect);
         match_horiz(east, &east->rect);
 		relax_area(east);
