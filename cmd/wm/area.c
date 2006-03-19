@@ -392,6 +392,7 @@ drop_resize(Frame *f, XRectangle *new)
     Frame *north = nil, *south = nil;
 	unsigned int i;
 	unsigned int min = 2 * bar_height();
+	Bool horiz_resize = False;
 
 	for(i = 1; (i < t->narea) && (t->area[i] != a); i++);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
@@ -403,9 +404,8 @@ drop_resize(Frame *f, XRectangle *new)
     south = i + 1 < a->nframe ? a->frame[i + 1] : nil;
 
     /* horizontal resize */
-    if(west && (new->x != a->rect.x)) {
-	if(!east) /* rightmost column should always touch the right side o/t screen */
-		new->width = rect.width - new->x;
+    if(west && (new->x != f->rect.x)) {
+	horiz_resize = True;
 	if(new->x < 0 || new->x < (west->rect.x + min)) {
 		new->width -= (west->rect.x + min) - new->x;
 		new->x = west->rect.x + min;
@@ -417,26 +417,22 @@ drop_resize(Frame *f, XRectangle *new)
         a->rect.width += a->rect.x - new->x;
         a->rect.x = new->x;
         match_horiz(west, &west->rect);
-        match_horiz(a, &a->rect);
 		relax_area(west);
     }
-    if(east && (new->x + new->width != a->rect.x + a->rect.width)) {
-	if(!west) { /* leftmost column should always touch the left side o/t screen */
-		new->width += new->x - rect.x;
-		new->x = rect.x;
-	}
+    if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
+	horiz_resize = True;
 	if((new->x + new->width) > (east->rect.x + east->rect.width - min))
 		new->width = (east->rect.x + east->rect.width - min) - new->x;
 	else if(new->width < min)
 		new->width = min;
         east->rect.width -= new->x + new->width - east->rect.x;
         east->rect.x = new->x + new->width;
-        a->rect.x = new->x;
-        a->rect.width = new->width;
-        match_horiz(a, &a->rect);
+        a->rect.width = (new->x + new->width) - a->rect.x;
         match_horiz(east, &east->rect);
 		relax_area(east);
     }
+    if(horiz_resize)
+        match_horiz(a, &a->rect);
 
     if(a->mode == Colstack || a->mode == Colmax)
 	    goto AfterVertical;
