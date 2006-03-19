@@ -407,8 +407,10 @@ drop_resize(Frame *f, XRectangle *new)
 	if(new->x < 0 || new->x < (west->rect.x + min)) {
 		new->width -= (west->rect.x + min) - new->x;
 		new->x = west->rect.x + min;
-	} else if(new->width < min)
+	} else if(new->width < min) {
 		new->x -= min - new->width;
+		new->width = min;
+	}
         west->rect.width = new->x - west->rect.x;
         a->rect.width += f->rect.x - new->x;
         a->rect.x = new->x;
@@ -437,8 +439,10 @@ drop_resize(Frame *f, XRectangle *new)
 	if(new->y < 0 || new->y < (north->rect.y + min)) {
 		new->height -= (north->rect.y + min) - new->y;
 		new->y = north->rect.y + min;
-	} else if(new->height < min)
+	} else if(new->height < min) {
 		new->y -= min - new->height;
+		new->height = min;
+	}
         north->rect.height = new->y - north->rect.y;
         f->rect.height += f->rect.y - new->y;
         f->rect.y = new->y;
