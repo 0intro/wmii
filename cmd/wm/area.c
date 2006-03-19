@@ -403,7 +403,9 @@ drop_resize(Frame *f, XRectangle *new)
     south = i + 1 < a->nframe ? a->frame[i + 1] : nil;
 
     /* horizontal resize */
-    if(west && (new->x != f->rect.x)) {
+    if(west && (new->x != a->rect.x)) {
+	if(!east) /* rightmost column should always touch the right side o/t screen */
+		new->width = rect.width - new->x;
 	if(new->x < 0 || new->x < (west->rect.x + min)) {
 		new->width -= (west->rect.x + min) - new->x;
 		new->x = west->rect.x + min;
@@ -411,8 +413,6 @@ drop_resize(Frame *f, XRectangle *new)
 		new->x -= min - new->width;
 		new->width = min;
 	}
-	new->x -= f->rect.x - a->rect.x;
-	new->width += f->rect.x - a->rect.x;
         west->rect.width = new->x - west->rect.x;
         a->rect.width += a->rect.x - new->x;
         a->rect.x = new->x;
@@ -420,13 +420,15 @@ drop_resize(Frame *f, XRectangle *new)
         match_horiz(a, &a->rect);
 		relax_area(west);
     }
-    if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
+    if(east && (new->x + new->width != a->rect.x + a->rect.width)) {
+	if(!west) { /* leftmost column should always touch the left side o/t screen */
+		new->width += new->x - rect.x;
+		new->x = rect.x;
+	}
 	if((new->x + new->width) > (east->rect.x + east->rect.width - min))
 		new->width = (east->rect.x + east->rect.width - min) - new->x;
 	else if(new->width < min)
 		new->width = min;
-	new->x -= f->rect.x - a->rect.x;
-	new->width += f->rect.x - a->rect.x;
         east->rect.width -= new->x + new->width - east->rect.x;
         east->rect.x = new->x + new->width;
         a->rect.x = new->x;
