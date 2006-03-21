@@ -151,7 +151,7 @@ xls(void *result, unsigned int msize)
     while(p - result < msize);
 	qsort(dir, n, sizeof(Stat), comp_stat);
 	for(i = 0; i < n; i++) {
-        fprintf(stdout, "%s %s %s %5lld %s %s\n", mode2str(dir[i].mode),
+        fprintf(stdout, "%s %s %s %5llu %s %s\n", mode2str(dir[i].mode),
 				 dir[i].uid, dir[i].gid, dir[i].length,
 				 time2str(dir[i].mtime), dir[i].name);
 	}

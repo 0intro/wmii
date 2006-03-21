@@ -235,6 +235,7 @@ organize_client(Tag *t, Client *c)
 {
 	unsigned int i;
 	Bool hastag = False;
+
 	for(i = 0; i < t->ntag; i++) {
 		if(clienthastag(c, t->tag[i]))
 			hastag = True;
@@ -242,12 +243,16 @@ organize_client(Tag *t, Client *c)
 	}
 
 	if(hastag) {
-		if(!clientoftag(t, c))
+		if(!clientoftag(t, c)) {
+			fprintf(stderr, "org attach %s?\n", c->name);
 			attach_totag(t, c);
+		}
 	}
 	else {
-		if(clientoftag(t, c))
+		if(clientoftag(t, c)) {
+			fprintf(stderr, "org detach %s?\n", c->name);
 			detach_fromtag(t, c);
+		}
 	}
 }
 
@@ -300,7 +305,7 @@ update_tags()
 	nctag = nnewctag;
 	ctagsz = newctagsz;
 
-	for(i = 0; i < nclient; i++) {
+	for(i = 0; ntag && (i < nclient); i++) {
 		for(j = 0; j < ntag; j++) {
 			Tag *t = tag[j];
 			if(j == sel)

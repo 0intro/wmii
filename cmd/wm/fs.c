@@ -401,10 +401,20 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
 		break;
+	case FsFtag:
+		if(dir_i1 == -1 || dir_type != FsDws)
+			return -1;
+		new->type = IXP_QTFILE;
+		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
+		break;
 	case FsFgeom:
 	case FsFname:
 	case FsFclass:
+		if(dir_type == FsDroot)
+			return -1;
 	case FsFtags:
+		if(dir_type != FsDroot && dir_type != FsDGclient && dir_type != FsDclient)
+			return -1;
 		if((dir_type == FsDclient) && ((dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1)))
 			return -1;
 		else if((dir_type == FsDGclient) && (dir_i1 == -1))
