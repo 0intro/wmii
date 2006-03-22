@@ -72,7 +72,7 @@ handle_buttonpress(XEvent *e)
 	}
 	else if((c = win2clientframe(ev->window))) {
 		if(ev->button == Button1) {
-			Align align = xy2align(&c->frame[c->sel]->rect, ev->x, ev->y);
+			Align align = xy2align(&c->rect, ev->x, ev->y);
 			if(sel_client() != c) {
 				focus(c);
 				return;
@@ -82,7 +82,6 @@ handle_buttonpress(XEvent *e)
 			else 
 				mouse_resize(c, align);
 		}
-	
 		if(c->nframe) {
 			snprintf(buf, sizeof(buf), "ClientClick %d %d\n", frame2index(c->frame[c->sel]) + 1, ev->button);
 			write_event(buf);
@@ -91,7 +90,7 @@ handle_buttonpress(XEvent *e)
 	else if((c = win2client(ev->window))) {
 		ev->state &= valid_mask;
 		if(ev->state & Mod1Mask) {
-			Align align = xy2align(&c->frame[c->sel]->rect, ev->x, ev->y);
+			Align align = xy2align(&c->rect, ev->x, ev->y);
 			switch (ev->button) {
 				case Button1:
 					focus(c);
@@ -247,7 +246,7 @@ handle_motionnotify(XEvent *e)
     Client *c = win2clientframe(e->xmotion.window);
     if(c) {
     	Cursor cur = cursor4motion(c, e->xmotion.x, e->xmotion.y);
-		if(cur == cursor[CurNormal])
+		if(cur == cursor[CurUnknown])
             XUndefineCursor(dpy, c->framewin);
 		else
             XDefineCursor(dpy, c->framewin, cur);

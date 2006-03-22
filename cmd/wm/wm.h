@@ -27,6 +27,7 @@ enum {
 
 /* Cursor */
 enum {
+	CurUnknown,
 	CurNormal,
 	CurResize,
 	CurMove,

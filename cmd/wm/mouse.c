@@ -45,8 +45,10 @@ cursor4motion(Client *c, int x, int y)
         return cursor[CurN];
     else if(s)
         return cursor[CurS];
-
-    return cursor[CurNormal];
+	
+	if(tn)
+		return cursor[CurNormal];
+	return cursor[CurUnknown];
 }
 
 Align
@@ -78,6 +80,7 @@ xy2align(XRectangle *rect, int x, int y)
         return NORTH;
     else if(s)
         return SOUTH;
+
     return CENTER;
 }
 

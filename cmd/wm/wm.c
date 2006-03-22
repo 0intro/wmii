@@ -139,6 +139,7 @@ init_atoms()
 static void
 init_cursors()
 {
+    cursor[CurUnknown] = XCreateFontCursor(dpy, XC_cross);
     cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
     cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
     cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
@@ -169,8 +170,6 @@ init_screen()
     rect.x = rect.y = 0;
     rect.width = DisplayWidth(dpy, screen);
     rect.height = DisplayHeight(dpy, screen);
-
-    XDefineCursor(dpy, root, cursor[CurNormal]);
 }
 
 /*
@@ -331,10 +330,15 @@ main(int argc, char *argv[])
 	init_lock_modifiers();
     init_screen();
 
+	wa.event_mask = ROOT_MASK;
+	wa.cursor = cursor[CurNormal];
+	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &wa);
+	
     wa.override_redirect = 1;
     wa.background_pixmap = ParentRelative;
     wa.event_mask = ExposureMask | ButtonPressMask
 					| SubstructureRedirectMask | SubstructureNotifyMask;
+
     brect = rect;
     brect.height = xfont->ascent + xfont->descent + 4;
     brect.y = rect.height - brect.height;
@@ -342,8 +346,6 @@ main(int argc, char *argv[])
                         brect.width, brect.height, 0, DefaultDepth(dpy, screen),
                         CopyFromParent, DefaultVisual(dpy, screen),
                         CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
-
-    XDefineCursor(dpy, barwin, XCreateFontCursor(dpy, XC_left_ptr));
     XSync(dpy, False);
 
     bargc = XCreateGC(dpy, barwin, 0, 0);
