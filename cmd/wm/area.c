@@ -17,10 +17,11 @@ alloc_area(Tag *t)
 	a->id = id++;
 	a->rect = rect;
 	a->rect.height = rect.height - brect.height;
-	t->area = (Area **)cext_array_attach((void **)t->area, a, sizeof(Area *), &t->areasz);
+	t->area = (Area **)cext_array_attach((void **)t->area, a,
+			sizeof(Area *), &t->areasz);
 	t->sel = t->narea;
 	t->narea++;
-    return a;
+	return a;
 }
 
 void
@@ -133,8 +134,8 @@ attach_toarea(Area *a, Client *c)
 	f->area = a;
 	f->client = c;
 	f->rect = c->rect;
-    f->rect.width += 2 * def.border;
-    f->rect.height += def.border + bar_height();
+	f->rect.width += 2 * def.border;
+	f->rect.height += def.border + bar_height();
 	c->frame = (Frame **)cext_array_attach(
 			(void **)c->frame, f, sizeof(Frame *), &c->framesz);
 	c->nframe++;
@@ -378,114 +379,114 @@ match_horiz(Area *a, XRectangle *r)
 
 	for(i = 0; i < a->nframe; i++) {
 		Frame *f = a->frame[i];
-        f->rect.x = r->x;
-        f->rect.width = r->width;
-        resize_client(f->client, &f->rect, False);
-    }
+		f->rect.x = r->x;
+		f->rect.width = r->width;
+		resize_client(f->client, &f->rect, False);
+	}
 }
 
 static void
 drop_resize(Frame *f, XRectangle *new)
 {
-    Area *west = nil, *east = nil, *a = f->area;
+	Area *west = nil, *east = nil, *a = f->area;
 	Tag *t = a->tag;
-    Frame *north = nil, *south = nil;
+	Frame *north = nil, *south = nil;
 	unsigned int i;
 	unsigned int min = 2 * bar_height();
 	Bool horiz_resize = False;
 
 	for(i = 1; (i < t->narea) && (t->area[i] != a); i++);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
-    west = (i > 1) ? t->area[i - 1] : nil;
-    east = i + 1 < t->narea ? t->area[i + 1] : nil;
+	west = (i > 1) ? t->area[i - 1] : nil;
+	east = i + 1 < t->narea ? t->area[i + 1] : nil;
 
 	for(i = 0; (i < a->nframe) && (a->frame[i] != f); i++);
-    north = i ? a->frame[i - 1] : nil;
-    south = i + 1 < a->nframe ? a->frame[i + 1] : nil;
+	north = i ? a->frame[i - 1] : nil;
+	south = i + 1 < a->nframe ? a->frame[i + 1] : nil;
 
-    /* horizontal resize */
-    if(west && (new->x != f->rect.x)) {
-	horiz_resize = True;
-	if(new->x < 0 || new->x < (west->rect.x + min)) {
-		new->width -= (west->rect.x + min) - new->x;
-		new->x = west->rect.x + min;
-	} else if(new->width < min) {
-		new->x -= min - new->width;
-		new->width = min;
-	}
-        west->rect.width = new->x - west->rect.x;
-        a->rect.width += a->rect.x - new->x;
-        a->rect.x = new->x;
-        match_horiz(west, &west->rect);
+	/* horizontal resize */
+	if(west && (new->x != f->rect.x)) {
+		horiz_resize = True;
+		if(new->x < 0 || new->x < (west->rect.x + min)) {
+			new->width -= (west->rect.x + min) - new->x;
+			new->x = west->rect.x + min;
+		} else if(new->width < min) {
+			new->x -= min - new->width;
+			new->width = min;
+		}
+		west->rect.width = new->x - west->rect.x;
+		a->rect.width += a->rect.x - new->x;
+		a->rect.x = new->x;
+		match_horiz(west, &west->rect);
 		relax_area(west);
-    }
-    if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
-	horiz_resize = True;
-	if((new->x + new->width) > (east->rect.x + east->rect.width - min))
-		new->width = (east->rect.x + east->rect.width - min) - new->x;
-	else if(new->width < min)
-		new->width = min;
-        east->rect.width -= new->x + new->width - east->rect.x;
-        east->rect.x = new->x + new->width;
-        a->rect.width = (new->x + new->width) - a->rect.x;
-        match_horiz(east, &east->rect);
-		relax_area(east);
-    }
-    if(horiz_resize)
-        match_horiz(a, &a->rect);
-
-    if(a->mode == Colstack || a->mode == Colmax)
-	    goto AfterVertical;
-    /* vertical resize */
-    if(north && (new->y != f->rect.y)) {
-	if(new->y < 0 || new->y < (north->rect.y + min)) {
-		new->height -= (north->rect.y + min) - new->y;
-		new->y = north->rect.y + min;
-	} else if(new->height < min) {
-		new->y -= min - new->height;
-		new->height = min;
 	}
-        north->rect.height = new->y - north->rect.y;
-        f->rect.height += f->rect.y - new->y;
-        f->rect.y = new->y;
-        resize_client(north->client, &north->rect, False);
-        resize_client(f->client, &f->rect, False);
-    }
-    if(south && (new->y + new->height != f->rect.y + f->rect.height)) {
-	if((new->y + new->height) > (south->rect.y + south->rect.height - min))
-		new->height = (south->rect.y + south->rect.height - min) - new->y;
-	else if(new->height < min)
-		new->height = min;
-        south->rect.height -= new->y + new->height - south->rect.y;
-        south->rect.y = new->y + new->height;
-        f->rect.y = new->y;
-        f->rect.height = new->height;
-        resize_client(f->client, &f->rect, False);
-        resize_client(south->client, &south->rect, False);
-    }
+	if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
+		horiz_resize = True;
+		if((new->x + new->width) > (east->rect.x + east->rect.width - min))
+			new->width = (east->rect.x + east->rect.width - min) - new->x;
+		else if(new->width < min)
+			new->width = min;
+		east->rect.width -= new->x + new->width - east->rect.x;
+		east->rect.x = new->x + new->width;
+		a->rect.width = (new->x + new->width) - a->rect.x;
+		match_horiz(east, &east->rect);
+		relax_area(east);
+	}
+	if(horiz_resize)
+		match_horiz(a, &a->rect);
+
+	if(a->mode == Colstack || a->mode == Colmax)
+		goto AfterVertical;
+	/* vertical resize */
+	if(north && (new->y != f->rect.y)) {
+		if(new->y < 0 || new->y < (north->rect.y + min)) {
+			new->height -= (north->rect.y + min) - new->y;
+			new->y = north->rect.y + min;
+		} else if(new->height < min) {
+			new->y -= min - new->height;
+			new->height = min;
+		}
+		north->rect.height = new->y - north->rect.y;
+		f->rect.height += f->rect.y - new->y;
+		f->rect.y = new->y;
+		resize_client(north->client, &north->rect, False);
+		resize_client(f->client, &f->rect, False);
+	}
+	if(south && (new->y + new->height != f->rect.y + f->rect.height)) {
+		if((new->y + new->height) > (south->rect.y + south->rect.height - min))
+			new->height = (south->rect.y + south->rect.height - min) - new->y;
+		else if(new->height < min)
+			new->height = min;
+		south->rect.height -= new->y + new->height - south->rect.y;
+		south->rect.y = new->y + new->height;
+		f->rect.y = new->y;
+		f->rect.height = new->height;
+		resize_client(f->client, &f->rect, False);
+		resize_client(south->client, &south->rect, False);
+	}
 AfterVertical:
 
-    relax_area(a);
+	relax_area(a);
 }
 
 static void
 drop_moving(Frame *f, XRectangle *new, XPoint * pt)
 {
-    Area *tgt = nil, *src = f->area;
+	Area *tgt = nil, *src = f->area;
 	Tag *t = src->tag;
 	unsigned int i;
 
-    if(!pt || src->nframe < 2)
-        return;
+	if(!pt || src->nframe < 2)
+		return;
 
 	for(i = 1; (i < t->narea) &&
 			!blitz_ispointinrect(pt->x, pt->y, &t->area[i]->rect); i++);
 	if((tgt = ((i < t->narea) ? t->area[i] : nil))) {
-        if(tgt != src) {
+		if(tgt != src) {
 			send2area(tgt, src, f->client);
 			arrange_area(tgt);
 		}
-        else {
+		else {
 			for(i = 0; (i < src->nframe) && !blitz_ispointinrect(
 						pt->x, pt->y, &src->frame[i]->rect); i++);
 			if((i < src->nframe) && (f != src->frame[i])) {
@@ -495,19 +496,19 @@ drop_moving(Frame *f, XRectangle *new, XPoint * pt)
 				src->frame[i] = tmp;
 				arrange_area(src);
 				focus_client(f->client);
-            }
-        }
-    }
+			}
+		}
+	}
 }
 
 void
 resize_area(Client *c, XRectangle *r, XPoint *pt)
 {
 	Frame *f = c->frame[c->sel];
-    if((f->rect.width == r->width) && (f->rect.height == r->height))
-        drop_moving(f, r, pt);
-    else
-        drop_resize(f, r);
+	if((f->rect.width == r->width) && (f->rect.height == r->height))
+		drop_moving(f, r, pt);
+	else
+		drop_resize(f, r);
 }
 
 Bool
