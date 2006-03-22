@@ -20,8 +20,8 @@ static char version[] = "wmiir - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Ga
 static void
 usage()
 {
-    fprintf(stderr, "%s", "usage: wmiir [-a <address>] [-v] create | read | remove | write <file>\n");
-    exit(1);
+	fprintf(stderr, "%s", "usage: wmiir [-a <address>] [-v] create | read | remove | write <file>\n");
+	exit(1);
 }
 
 static void
@@ -32,13 +32,12 @@ write_data(unsigned int fid)
 	unsigned int len = 0;
 
 	while((len = read(0, data, c.fcall.iounit)) > 0) {
-        if(ixp_client_write
-           (&c, fid, offset, len, data) != len) {
-            fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr);
-            break;
-        }
+		if(ixp_client_write(&c, fid, offset, len, data) != len) {
+			fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr);
+			break;
+		}
 		offset += len;
-    }
+	}
 	if(offset == 0) /* do an explicit empty write when no writing has been done yet */
 		if(ixp_client_write(&c, fid, offset, 0, 0) != 0)
 			fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr); 
@@ -48,35 +47,35 @@ write_data(unsigned int fid)
 static int
 xcreate(char *file)
 {
-    unsigned int fid;
-    char *p = strrchr(file, '/');
+	unsigned int fid;
+	char *p = strrchr(file, '/');
 
-    fid = c.root_fid << 2;
-    /* walk to bottom-most directory */
-    *p = 0;
-    if(ixp_client_walk(&c, fid, file) == -1) {
-        fprintf(stderr, "wmiir: cannot walk to '%s': %s\n", file, c.errstr);
-        return -1;
-    }
-    p++;
-    if(ixp_client_create(&c, fid, p, DMWRITE, IXP_OWRITE) == -1) {
-        fprintf(stderr, "wmiir: cannot create file '%s': %s\n", p, c.errstr);
-        return -1;
-    }
-    return ixp_client_close(&c, fid);
+	fid = c.root_fid << 2;
+	/* walk to bottom-most directory */
+	*p = 0;
+	if(ixp_client_walk(&c, fid, file) == -1) {
+		fprintf(stderr, "wmiir: cannot walk to '%s': %s\n", file, c.errstr);
+		return -1;
+	}
+	p++;
+	if(ixp_client_create(&c, fid, p, DMWRITE, IXP_OWRITE) == -1) {
+		fprintf(stderr, "wmiir: cannot create file '%s': %s\n", p, c.errstr);
+		return -1;
+	}
+	return ixp_client_close(&c, fid);
 }
 
 static int
 xwrite(char *file, unsigned char mode)
 {
-    /* open */
-    unsigned int fid = c.root_fid << 2;
-    if(ixp_client_open(&c, fid, file, mode) == -1) {
-        fprintf(stderr, "wmiir: cannot open file '%s': %s\n", file, c.errstr);
-        return -1;
-    }
-    write_data(fid);
-    return ixp_client_close(&c, fid);
+	/* open */
+	unsigned int fid = c.root_fid << 2;
+	if(ixp_client_open(&c, fid, file, mode) == -1) {
+		fprintf(stderr, "wmiir: cannot open file '%s': %s\n", file, c.errstr);
+		return -1;
+	}
+	write_data(fid);
+	return ixp_client_close(&c, fid);
 }
 
 static int
@@ -135,25 +134,26 @@ static void
 xls(void *result, unsigned int msize)
 {
 	unsigned int n = 0, i = 0;
-    void *p = result;
+	void *p = result;
 	Stat *dir;
-    static Stat stat;
-    do {
-        p = ixp_dec_stat(p, &stat);
+	static Stat stat;
+
+	do {
+		p = ixp_dec_stat(p, &stat);
 		n++;
-    }
-    while(p - result < msize);
+	}
+	while(p - result < msize);
 	dir = (Stat *)cext_emallocz(sizeof(Stat) * n);
 	p = result;
 	do {
-        p = ixp_dec_stat(p, &dir[i++]);
-    }
-    while(p - result < msize);
+		p = ixp_dec_stat(p, &dir[i++]);
+	}
+	while(p - result < msize);
 	qsort(dir, n, sizeof(Stat), comp_stat);
 	for(i = 0; i < n; i++) {
-        fprintf(stdout, "%s %s %s %5llu %s %s\n", mode2str(dir[i].mode),
-				 dir[i].uid, dir[i].gid, dir[i].length,
-				 time2str(dir[i].mtime), dir[i].name);
+		fprintf(stdout, "%s %s %s %5llu %s %s\n", mode2str(dir[i].mode),
+				dir[i].uid, dir[i].gid, dir[i].length,
+				time2str(dir[i].mtime), dir[i].name);
 	}
 	free(dir);
 }
@@ -161,19 +161,19 @@ xls(void *result, unsigned int msize)
 static int
 xread(char *file)
 {
-    unsigned int fid = c.root_fid << 2;
-    int count, is_directory = 0;
-    static unsigned char result[IXP_MAX_MSG];
+	unsigned int fid = c.root_fid << 2;
+	int count, is_directory = 0;
+	static unsigned char result[IXP_MAX_MSG];
 	void *dircontent = nil;
 	unsigned int dircontentsz = 0;
 	unsigned int ndircontent = 0;
 	unsigned long long offset = 0;
 
-    if(ixp_client_open(&c, fid, file, IXP_OREAD) == -1) {
-        fprintf(stderr, "wmiir: cannot open file '%s': %s\n", file, c.errstr);
-        return -1;
-    }
-    is_directory = !c.fcall.nwqid || (c.fcall.qid.type == IXP_QTDIR);
+	if(ixp_client_open(&c, fid, file, IXP_OREAD) == -1) {
+		fprintf(stderr, "wmiir: cannot open file '%s': %s\n", file, c.errstr);
+		return -1;
+	}
+	is_directory = !c.fcall.nwqid || (c.fcall.qid.type == IXP_QTDIR);
 
 	while((count = ixp_client_read(&c, fid, offset, result, IXP_MAX_MSG)) > 0) {
 		if(is_directory) {
@@ -200,35 +200,35 @@ xread(char *file)
 		}
 		offset += count;
 	}
-    if(count == -1) {
-        fprintf(stderr, "wmiir: cannot read file/directory '%s': %s\n", file, c.errstr);
-        return -1;
-    }
+	if(count == -1) {
+		fprintf(stderr, "wmiir: cannot read file/directory '%s': %s\n", file, c.errstr);
+		return -1;
+	}
 	if(is_directory && ndircontent)
 		xls(dircontent, ndircontent);
-    return ixp_client_close(&c, fid);
+	return ixp_client_close(&c, fid);
 }
 
 static int
 xremove(char *file)
 {
-    unsigned int fid;
+	unsigned int fid;
 
-    fid = c.root_fid << 2;
-    if(ixp_client_remove(&c, fid, file) == -1) {
-        fprintf(stderr, "wmiir: cannot remove file '%s': %s\n", file, c.errstr);
-        return -1;
-    }
-    return 0;
+	fid = c.root_fid << 2;
+	if(ixp_client_remove(&c, fid, file) == -1) {
+		fprintf(stderr, "wmiir: cannot remove file '%s': %s\n", file, c.errstr);
+		return -1;
+	}
+	return 0;
 }
 
 int
 main(int argc, char *argv[])
 {
-    int ret = 0, i = 0;
-    char *cmd, *file, *address = getenv("WMII_ADDRESS");
+	int ret = 0, i = 0;
+	char *cmd, *file, *address = getenv("WMII_ADDRESS");
 
-    /* command line args */
+	/* command line args */
 	if(argc < 2)
 		usage();
 
@@ -252,15 +252,15 @@ main(int argc, char *argv[])
 	cmd = argv[argc - 2];
 	file = argv[argc - 1];
 
-    if(!address) {
-        fprintf(stderr, "%s", "wmiir: error: $WMII_ADDRESS not set\n");
-        usage();
-    }
-	
-    if(ixp_client_dial(&c, address, getpid()) == -1) {
-        fprintf(stderr, "wmiir: %s\n", c.errstr);
-        exit(1);
-    }
+	if(!address) {
+		fprintf(stderr, "%s", "wmiir: error: $WMII_ADDRESS not set\n");
+		usage();
+	}
+
+	if(ixp_client_dial(&c, address, getpid()) == -1) {
+		fprintf(stderr, "wmiir: %s\n", c.errstr);
+		exit(1);
+	}
 
 	if(!strncmp(cmd, "create", 7))
 		ret = xcreate(file);
@@ -273,8 +273,8 @@ main(int argc, char *argv[])
 	else
 		usage();
 
-    /* close socket */
-    ixp_client_hangup(&c);
-
-    return ret;
+	/* close socket */
+	ixp_client_hangup(&c);
+	
+	return ret;
 }
