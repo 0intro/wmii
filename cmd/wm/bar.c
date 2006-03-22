@@ -21,7 +21,7 @@ get_label(char *name)
 {
 	static unsigned int id = 1;
 	Label *l = name2label(name);
-   
+
 	if(l)
 		return l;
 	l = cext_emallocz(sizeof(Label));
@@ -53,14 +53,15 @@ void
 update_bar_geometry()
 {
 	unsigned int i, j;
-    brect = rect;
-    brect.height = bar_height();
-    brect.y = rect.height - brect.height;
-    XMoveResizeWindow(dpy, barwin, brect.x, brect.y, brect.width, brect.height);
-    XSync(dpy, False);
-    XFreePixmap(dpy, barpmap);
-    barpmap = XCreatePixmap(dpy, barwin, brect.width, brect.height, DefaultDepth(dpy, screen));
-    XSync(dpy, False);
+	brect = rect;
+	brect.height = bar_height();
+	brect.y = rect.height - brect.height;
+	XMoveResizeWindow(dpy, barwin, brect.x, brect.y, brect.width, brect.height);
+	XSync(dpy, False);
+	XFreePixmap(dpy, barpmap);
+	barpmap = XCreatePixmap(dpy, barwin, brect.width, brect.height,
+			DefaultDepth(dpy, screen));
+	XSync(dpy, False);
 	draw_bar();
 	for(i = 0; i < ntag; i++) {
 		for(j = 1; j < tag[i]->narea; j++) {
@@ -87,10 +88,10 @@ draw_bar()
 		iexp = label2index(exp);
 
 	d.align = WEST;
-    d.gc = bargc;
-    d.drawable = barpmap;
-    d.rect = brect;
-    d.rect.y = 0;
+	d.gc = bargc;
+	d.drawable = barpmap;
+	d.rect = brect;
+	d.rect.y = 0;
 	d.font = xfont;
 
 	if(!nlabel) { /* /default only */
@@ -135,8 +136,8 @@ draw_bar()
 			blitz_drawborder(dpy, &d);
 		}
 	}
-    XCopyArea(dpy, barpmap, barwin, bargc, 0, 0, brect.width, brect.height, 0, 0);
-    XSync(dpy, False);
+	XCopyArea(dpy, barpmap, barwin, bargc, 0, 0, brect.width, brect.height, 0, 0);
+	XSync(dpy, False);
 }
 
 int

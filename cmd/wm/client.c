@@ -13,61 +13,66 @@
 Client *
 alloc_client(Window w, XWindowAttributes *wa)
 {
-    XTextProperty name;
-    Client *c = (Client *) cext_emallocz(sizeof(Client));
-    XSetWindowAttributes fwa;
+	XTextProperty name;
+	Client *c = (Client *) cext_emallocz(sizeof(Client));
+	XSetWindowAttributes fwa;
 	XClassHint ch;
-    long msize;
+	long msize;
 	static unsigned int id = 1;
 
 	c->id = id++;
-    c->win = w;
-    c->rect.x = wa->x;
-    c->rect.y = wa->y;
-    c->border = wa->border_width;
-    c->rect.width = wa->width + 2 * c->border;
-    c->rect.height = wa->height + 2 * c->border;
-    XSetWindowBorderWidth(dpy, c->win, 0);
-    c->proto = win_proto(c->win);
-    XGetTransientForHint(dpy, c->win, &c->trans);
-    if(!XGetWMNormalHints(dpy, c->win, &c->size, &msize) || !c->size.flags)
-        c->size.flags = PSize;
-    XAddToSaveSet(dpy, c->win);
-    XGetWMName(dpy, c->win, &name);
+	c->win = w;
+	c->rect.x = wa->x;
+	c->rect.y = wa->y;
+	c->border = wa->border_width;
+	c->rect.width = wa->width + 2 * c->border;
+	c->rect.height = wa->height + 2 * c->border;
+	XSetWindowBorderWidth(dpy, c->win, 0);
+	c->proto = win_proto(c->win);
+	XGetTransientForHint(dpy, c->win, &c->trans);
+	if(!XGetWMNormalHints(dpy, c->win, &c->size, &msize) || !c->size.flags)
+		c->size.flags = PSize;
+	XAddToSaveSet(dpy, c->win);
+	XGetWMName(dpy, c->win, &name);
 	if(name.value) {
 		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
-    	free(name.value);
+		free(name.value);
 	}
 	if(XGetClassHint(dpy, c->win, &ch)) {
-		snprintf(c->classinst, sizeof(c->classinst), "%s:%s", ch.res_class, ch.res_name);
+		snprintf(c->classinst, sizeof(c->classinst), "%s:%s", ch.res_class,
+				ch.res_name);
 		XFree(ch.res_class);
 		XFree(ch.res_name);
 	}
-    fwa.override_redirect = 1;
-    fwa.background_pixmap = ParentRelative;
-	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask | ButtonPressMask;
+	fwa.override_redirect = 1;
+	fwa.background_pixmap = ParentRelative;
+	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask
+		| ExposureMask | ButtonPressMask;
 
-    c->framewin = XCreateWindow(dpy, root, c->rect.x, c->rect.y,
-						   c->rect.width + 2 * def.border, c->rect.height + def.border + bar_height(), 0,
-						   DefaultDepth(dpy, screen), CopyFromParent, DefaultVisual(dpy, screen),
-						   CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
-    c->gc = XCreateGC(dpy, c->framewin, 0, 0);
-    XSync(dpy, False);
-	client = (Client **)cext_array_attach((void **)client, c, sizeof(Client *), &clientsz);
+	c->framewin = XCreateWindow(dpy, root, c->rect.x, c->rect.y,
+			c->rect.width + 2 * def.border,
+			c->rect.height + def.border + bar_height(), 0,
+			DefaultDepth(dpy, screen), CopyFromParent,
+			DefaultVisual(dpy, screen),
+			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
+	c->gc = XCreateGC(dpy, c->framewin, 0, 0);
+	XSync(dpy, False);
+	client = (Client **)cext_array_attach((void **)client, c,
+			sizeof(Client *), &clientsz);
 	nclient++;
 
-    return c;
+	return c;
 }
 
 void
 set_client_state(Client * c, int state)
 {
-    long data[2];
+	long data[2];
 
-    data[0] = (long) state;
-    data[1] = (long) None;
-    XChangeProperty(dpy, c->win, wm_atom[WMState], wm_atom[WMState], 32,
-					PropModeReplace, (unsigned char *) data, 2);
+	data[0] = (long) state;
+	data[1] = (long) None;
+	XChangeProperty(dpy, c->win, wm_atom[WMState], wm_atom[WMState], 32,
+			PropModeReplace, (unsigned char *) data, 2);
 }
 
 void
@@ -76,21 +81,21 @@ focus_client(Client *c)
 	Client *old = sel_client();
 	Frame *f = c->frame[c->sel];
 	int i = area2index(f->area);
-	
+
 	f->area->tag->sel = i;
 	f->area->sel = frame2index(f);
 	if(old && (old != c)) {
 		grab_mouse(old->win, AnyModifier, Button1);
-    	draw_client(old);
+		draw_client(old);
 	}
 	ungrab_mouse(c->win, AnyModifier, AnyButton);
-    grab_mouse(c->win, Mod1Mask, Button1);
-    grab_mouse(c->win, Mod1Mask, Button3);
+	grab_mouse(c->win, Mod1Mask, Button1);
+	grab_mouse(c->win, Mod1Mask, Button3);
 
 	restack_tag(f->area->tag);
 
-    XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-    draw_client(c);
+	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
+	draw_client(c);
 	XSync(dpy, False);
 	if(i > 0 && f->area->mode == Colstack)
 		arrange_area(f->area);
@@ -100,9 +105,9 @@ void
 map_client(Client *c)
 {
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-    XMapWindow(dpy, c->win);
+	XMapWindow(dpy, c->win);
 	XSelectInput(dpy, c->win, CLIENT_MASK);
-    set_client_state(c, NormalState);
+	set_client_state(c, NormalState);
 }
 
 void
@@ -110,9 +115,9 @@ unmap_client(Client *c)
 {
 	ungrab_mouse(c->win, AnyModifier, AnyButton);
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-    XUnmapWindow(dpy, c->win);
+	XUnmapWindow(dpy, c->win);
 	XSelectInput(dpy, c->win, CLIENT_MASK);
-    set_client_state(c, WithdrawnState);
+	set_client_state(c, WithdrawnState);
 }
 
 void
@@ -126,90 +131,89 @@ reparent_client(Client *c, Window w, int x, int y)
 void
 configure_client(Client *c)
 {
-    XConfigureEvent e;
+	XConfigureEvent e;
 	Frame *f = c->frame[c->sel];
-    e.type = ConfigureNotify;
-    e.event = c->win;
-    e.window = c->win;
-    e.x = c->rect.x;
-    e.y = c->rect.y;
+	e.type = ConfigureNotify;
+	e.event = c->win;
+	e.window = c->win;
+	e.x = c->rect.x;
+	e.y = c->rect.y;
 	if(f) {
-    	e.x += f->rect.x;
-    	e.y += f->rect.y;
+		e.x += f->rect.x;
+		e.y += f->rect.y;
 	}
-    e.width = c->rect.width;
-    e.height = c->rect.height;
-    e.border_width = c->border;
-    e.above = None;
-    e.override_redirect = False;
-    XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-    XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *) & e);
-    XSelectInput(dpy, c->win, CLIENT_MASK);
-    XSync(dpy, False);
+	e.width = c->rect.width;
+	e.height = c->rect.height;
+	e.border_width = c->border;
+	e.above = None;
+	e.override_redirect = False;
+	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+	XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *) & e);
+	XSelectInput(dpy, c->win, CLIENT_MASK);
+	XSync(dpy, False);
 }
 
 static void
 send_client_message(Window w, Atom a, long value)
 {
-    XEvent e;
-    e.type = ClientMessage;
-    e.xclient.window = w;
-    e.xclient.message_type = a;
-    e.xclient.format = 32;
-    e.xclient.data.l[0] = value;
-    e.xclient.data.l[1] = CurrentTime;
+	XEvent e;
+	e.type = ClientMessage;
+	e.xclient.window = w;
+	e.xclient.message_type = a;
+	e.xclient.format = 32;
+	e.xclient.data.l[0] = value;
+	e.xclient.data.l[1] = CurrentTime;
 
-    XSendEvent(dpy, w, False, NoEventMask, &e);
-    XSync(dpy, False);
+	XSendEvent(dpy, w, False, NoEventMask, &e);
+	XSync(dpy, False);
 }
 
 void
 kill_client(Client * c)
 {
-    if(c->proto & WM_PROTOCOL_DELWIN)
-        send_client_message(c->win, wm_atom[WMProtocols], wm_atom[WMDelete]);
-    else
-        XKillClient(dpy, c->win);
+	if(c->proto & WM_PROTOCOL_DELWIN)
+		send_client_message(c->win, wm_atom[WMProtocols], wm_atom[WMDelete]);
+	else
+		XKillClient(dpy, c->win);
 }
 
 void
 update_client_property(Client *c, XPropertyEvent *e)
 {
-    XTextProperty name;
-    long msize;
+	XTextProperty name;
+	long msize;
 
-    if(e->atom == wm_atom[WMProtocols]) {
-        /* update */
-        c->proto = win_proto(c->win);
-        return;
-    }
-    switch (e->atom) {
-    case XA_WM_NAME:
-        XGetWMName(dpy, c->win, &name);
-        if(name.value) {
+	if(e->atom == wm_atom[WMProtocols]) {
+		/* update */
+		c->proto = win_proto(c->win);
+		return;
+	}
+	switch (e->atom) {
+	case XA_WM_NAME:
+		XGetWMName(dpy, c->win, &name);
+		if(name.value) {
 			cext_strlcpy(c->name, (char*) name.value, sizeof(c->name));
-        	free(name.value);
+			free(name.value);
 		}
-        if(c->frame)
-            draw_client(c);
-        break;
-    case XA_WM_TRANSIENT_FOR:
-        XGetTransientForHint(dpy, c->win, &c->trans);
-        break;
-    case XA_WM_NORMAL_HINTS:
-        if(!XGetWMNormalHints(dpy, c->win, &c->size, &msize)
-           || !c->size.flags) {
-            c->size.flags = PSize;
-        }
-        break;
-    }
+		if(c->frame)
+			draw_client(c);
+		break;
+	case XA_WM_TRANSIENT_FOR:
+		XGetTransientForHint(dpy, c->win, &c->trans);
+		break;
+	case XA_WM_NORMAL_HINTS:
+		if(!XGetWMNormalHints(dpy, c->win, &c->size, &msize) || !c->size.flags) {
+			c->size.flags = PSize;
+		}
+		break;
+	}
 }
 
 /* speed reasoned function for client property change */
 void
 draw_client(Client *c)
 {
-    Draw d = { 0 };
+	Draw d = { 0 };
 	char buf[512];
 
 	if(!c->nframe)
@@ -226,87 +230,88 @@ draw_client(Client *c)
 		d.color = def.norm;
 
 	/* draw border */
-    if(def.border) {
-        d.rect = c->frame[c->sel]->rect;
+	if(def.border) {
+		d.rect = c->frame[c->sel]->rect;
 		d.rect.x = d.rect.y = 0;
-        d.notch = &c->rect;
-        blitz_drawlabel(dpy, &d);
+		d.notch = &c->rect;
+		blitz_drawlabel(dpy, &d);
 		blitz_drawborder(dpy, &d);
-    }
-    d.rect.x = 0;
-    d.rect.y = 0;
-    d.rect.width = c->frame[c->sel]->rect.width;
-    d.rect.height = bar_height();
+	}
+	d.rect.x = 0;
+	d.rect.y = 0;
+	d.rect.width = c->frame[c->sel]->rect.width;
+	d.rect.height = bar_height();
 	d.notch = nil;
 
 	tags2str(buf, sizeof(buf), c->tag, c->ntag);
 	cext_strlcat(buf, " | ", sizeof(buf));
 	cext_strlcat(buf, c->name, sizeof(buf) - strlen(buf));
-    d.data = buf;
-    blitz_drawlabel(dpy, &d);
+	d.data = buf;
+	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
-    XSync(dpy, False);
+	XSync(dpy, False);
 }
 
 void
 gravitate(Client *c, Bool invert)
 {
-    int dx = 0, dy = 0;
-    int gravity = NorthWestGravity;
+	int dx = 0, dy = 0;
+	int gravity = NorthWestGravity;
 
-    if(c->size.flags & PWinGravity) {
-        gravity = c->size.win_gravity;
-    }
-    /* y */
-    switch (gravity) {
-    case StaticGravity:
-    case NorthWestGravity:
-    case NorthGravity:
-    case NorthEastGravity:
-        dy = bar_height();
-        break;
-    case EastGravity:
-    case CenterGravity:
-    case WestGravity:
-        dy = -(c->rect.height / 2) + bar_height();
-        break;
-    case SouthEastGravity:
-    case SouthGravity:
-    case SouthWestGravity:
-        dy = -c->rect.height;
-        break;
-    default:
-        break;
-    }
+	if(c->size.flags & PWinGravity) {
+		gravity = c->size.win_gravity;
+	}
 
-    /* x */
-    switch (gravity) {
-    case StaticGravity:
-    case NorthWestGravity:
-    case WestGravity:
-    case SouthWestGravity:
-        dx = def.border;
-        break;
-    case NorthGravity:
-    case CenterGravity:
-    case SouthGravity:
-        dx = -(c->rect.width / 2) + def.border;
-        break;
-    case NorthEastGravity:
-    case EastGravity:
-    case SouthEastGravity:
-        dx = -(c->rect.width + def.border);
-        break;
-    default:
-        break;
-    }
+	/* y */
+	switch (gravity) {
+	case StaticGravity:
+	case NorthWestGravity:
+	case NorthGravity:
+	case NorthEastGravity:
+		dy = bar_height();
+		break;
+	case EastGravity:
+	case CenterGravity:
+	case WestGravity:
+		dy = -(c->rect.height / 2) + bar_height();
+		break;
+	case SouthEastGravity:
+	case SouthGravity:
+	case SouthWestGravity:
+		dy = -c->rect.height;
+		break;
+	default:
+		break;
+	}
 
-    if(invert) {
-        dx = -dx;
-        dy = -dy;
-    }
-    c->rect.x += dx;
-    c->rect.y += dy;
+	/* x */
+	switch (gravity) {
+	case StaticGravity:
+	case NorthWestGravity:
+	case WestGravity:
+	case SouthWestGravity:
+		dx = def.border;
+		break;
+	case NorthGravity:
+	case CenterGravity:
+	case SouthGravity:
+		dx = -(c->rect.width / 2) + def.border;
+		break;
+	case NorthEastGravity:
+	case EastGravity:
+	case SouthEastGravity:
+		dx = -(c->rect.width + def.border);
+		break;
+	default:
+		break;
+	}
+
+	if(invert) {
+		dx = -dx;
+		dy = -dy;
+	}
+	c->rect.x += dx;
+	c->rect.y += dy;
 }
 
 void
@@ -315,7 +320,7 @@ manage_client(Client *c)
 	Tag *t;
 	Client *trans;
 	unsigned int i;
-		    
+
 	if(c->trans && (trans = win2client(c->trans))) {
 		for(i = 0; i < trans->ntag; i++)
 			cext_strlcpy(c->tag[i], trans->tag[i], sizeof(c->tag[i]));
@@ -324,7 +329,7 @@ manage_client(Client *c)
 	else
 		match_tags(c);
 
-    reparent_client(c, c->framewin, c->rect.x, c->rect.y);
+	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 
 	t = ntag ? tag[sel] : alloc_tag(def.tag);
 	if(!c->ntag) {
@@ -369,12 +374,12 @@ destroy_client(Client *c)
 	}
 
 	reparent_client(c, root, c->rect.x, c->rect.y);
-    XFreeGC(dpy, c->gc);
-    XDestroyWindow(dpy, c->framewin);
+	XFreeGC(dpy, c->gc);
+	XDestroyWindow(dpy, c->framewin);
 	cext_array_detach((void **)client, c, &clientsz);
 	nclient--;
 	update_tags();
-    free(c);
+	free(c);
 
 	if((cl = sel_client_of_tag(tag[sel])))
 		focus_client(cl);
@@ -393,41 +398,41 @@ sel_client()
 static void
 match_sizehints(Client *c)
 {
-    XSizeHints *s = &c->size;
+	XSizeHints *s = &c->size;
 
-    if(s->flags & PMinSize) {
-        if(c->rect.width < c->size.min_width)
-            c->rect.width = c->size.min_width;
-        if(c->rect.height < c->size.min_height)
-            c->rect.height = c->size.min_height;
-    }
-    if(s->flags & PMaxSize) {
-        if(c->rect.width > c->size.max_width)
-            c->rect.width = c->size.max_width;
-        if(c->rect.height > c->size.max_height)
-            c->rect.height = c->size.max_height;
-    }
+	if(s->flags & PMinSize) {
+		if(c->rect.width < c->size.min_width)
+			c->rect.width = c->size.min_width;
+		if(c->rect.height < c->size.min_height)
+			c->rect.height = c->size.min_height;
+	}
+	if(s->flags & PMaxSize) {
+		if(c->rect.width > c->size.max_width)
+			c->rect.width = c->size.max_width;
+		if(c->rect.height > c->size.max_height)
+			c->rect.height = c->size.max_height;
+	}
 
-    if(s->flags & PResizeInc) {
+	if(s->flags & PResizeInc) {
 		int w = 0, h = 0;
 
-        if(c->size.flags & PBaseSize) {
-            w = c->size.base_width;
-            h = c->size.base_height;
-        } else if(c->size.flags & PMinSize) {
-            /* base_{width,height} default to min_{width,height} */
-            w = c->size.min_width;
-            h = c->size.min_height;
-        }
-        /* client_width = base_width + i * c->size.width_inc for an integer i */
-        w = c->frame[c->sel]->rect.width - 2 * def.border - w;
-        if(s->width_inc > 0)
-            c->frame[c->sel]->rect.width -= w % s->width_inc;
+		if(c->size.flags & PBaseSize) {
+			w = c->size.base_width;
+			h = c->size.base_height;
+		} else if(c->size.flags & PMinSize) {
+			/* base_{width,height} default to min_{width,height} */
+			w = c->size.min_width;
+			h = c->size.min_height;
+		}
+		/* client_width = base_width + i * c->size.width_inc for an integer i */
+		w = c->frame[c->sel]->rect.width - 2 * def.border - w;
+		if(s->width_inc > 0)
+			c->frame[c->sel]->rect.width -= w % s->width_inc;
 
-        h = c->frame[c->sel]->rect.height - def.border - bar_height() - h;
-        if(s->height_inc > 0)
-            c->frame[c->sel]->rect.height -= h % s->height_inc;
-    }
+		h = c->frame[c->sel]->rect.height - def.border - bar_height() - h;
+		if(s->height_inc > 0)
+			c->frame[c->sel]->rect.height -= h % s->height_inc;
+	}
 }
 
 void
@@ -441,9 +446,11 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 
 	if(!ignore_xcall) {
 		if(f->area->tag == tag[sel])
-			XMoveResizeWindow(dpy, c->framewin, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+			XMoveResizeWindow(dpy, c->framewin, f->rect.x,
+					f->rect.y, f->rect.width, f->rect.height);
 		else
-			XMoveResizeWindow(dpy, c->framewin, 2 * rect.width + f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+			XMoveResizeWindow(dpy, c->framewin, 2 * rect.width + f->rect.x,
+					f->rect.y, f->rect.width, f->rect.height);
 	}
 
 	if((f->area->mode != Colstack) || (f->area->sel == frame2index(f))) {
@@ -451,7 +458,8 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		c->rect.y = bar_height();
 		c->rect.width = f->rect.width - 2 * def.border;
 		c->rect.height = f->rect.height - def.border - bar_height();
-		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
+		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y,
+				c->rect.width, c->rect.height);
 		configure_client(c);
 	}
 }
