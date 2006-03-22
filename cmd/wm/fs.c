@@ -21,7 +21,6 @@
 
 static char E9pversion[] = "9P version not supported";
 static char Enoperm[] = "permission denied";
-static char Enofid[] = "fid not found";
 static char Enofile[] = "file not found";
 static char Enomode[] = "mode not supported";
 static char Enofunc[] = "function not supported";
@@ -431,9 +430,13 @@ mkqid(Qid *dir, char *wname, Qid *new)
 	case FsFkeys:
 		if(dir_type != FsDdef) 
 			return -1;
-	default:
+	case FsFctl:
+	case FsFevent:
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
+		break;
+	default:
+		return -1;
 		break;
 	}
     return 0;
@@ -611,9 +614,9 @@ xwalk(IXPConn *c, Fcall *fcall)
     IXPMap *m;
 
     if(!(m = ixp_server_fid2map(c, fcall->fid)))
-        return Enofid;
+        return Enofile;
     if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
-        return Enofid;
+        return Enofile;
     if(fcall->nwname) {
         dir = m->qid;
         for(nwqid = 0; (nwqid < fcall->nwname)
@@ -622,7 +625,7 @@ xwalk(IXPConn *c, Fcall *fcall)
             dir = fcall->wqid[nwqid];
 		}
         if(!nwqid) {
-			fprintf(stderr, "%s", "xwalk: no such file\n");
+			fprintf(stderr, "xwalk: no such file '%s'\n", fcall->wname[nwqid]);
 			return Enofile;
 		}
     }
@@ -651,7 +654,7 @@ xcreate(IXPConn *c, Fcall *fcall)
     if(!(fcall->mode | IXP_OWRITE))
         return Enomode;
     if(!m)
-        return Enofid;
+        return Enofile;
 	if(!strncmp(fcall->name, ".", 2) || !strncmp(fcall->name, "..", 3))
 		return "illegal file name";
 	type = qpath_type(m->qid.path);
@@ -679,7 +682,7 @@ xopen(IXPConn *c, Fcall *fcall)
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 
     if(!m)
-        return Enofid;
+        return Enofile;
     if(!(fcall->mode | IXP_OREAD) && !(fcall->mode | IXP_OWRITE))
         return Enomode;
     fcall->id = ROPEN;
@@ -697,7 +700,7 @@ xremove(IXPConn *c, Fcall *fcall)
 	int i1 = 0, i2 = 0, i3 = 0;
 
     if(!m)
-        return Enofid;
+        return Enofile;
 	decode_qpath(&m->qid, &type, &i1, &i2, &i3);
 	if((i1 == -1) || (i2 == -1) || (i3 == -1))
 		return Enofile;
@@ -737,7 +740,7 @@ xread(IXPConn *c, Fcall *fcall)
 	Frame *f;
 
     if(!m)
-        return Enofid;
+        return Enofile;
 	decode_qpath(&m->qid, &type, &i1, &i2, &i3);
 	if((i1 == -1) || (i2 == -1) || (i3 == -1))
 		return Enofile;
@@ -1162,7 +1165,7 @@ xstat(IXPConn *c, Fcall *fcall)
 	char *name;
 
     if(!m)
-        return Enofid;
+        return Enofile;
 	name = qid2name(&m->qid);
 	if(!type2stat(&fcall->stat, name, &m->qid))
 		return Enofile;
@@ -1192,7 +1195,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 	Frame *f;
 
     if(!m)
-        return Enofid;
+        return Enofile;
 	decode_qpath(&m->qid, &type, &i1, &i2, &i3);
 	if((i1 == -1) || (i2 == -1) || (i3 == -1))
 		return Enofile;
@@ -1414,7 +1417,7 @@ xclunk(IXPConn *c, Fcall *fcall)
     IXPMap *m = ixp_server_fid2map(c, fcall->fid);
 
     if(!m)
-        return Enofid;
+        return Enofile;
 	if(qpath_type(m->qid.path) == FsFkeys)
 	   update_keys();	
 	cext_array_detach((void **)c->map, m, &c->mapsz);
@@ -1463,7 +1466,7 @@ write_event(char *event)
 			IXPMap *m = ixp_server_fid2map(c, c->pending.fid);
 			unsigned char *p = c->pending.data;
 			if(!m) {
-				if(ixp_server_respond_error(c, &c->pending, Enofid))
+				if(ixp_server_respond_error(c, &c->pending, Enofile))
 					break;
 			}
 			else if(qpath_type(m->qid.path) == FsFevent) {
