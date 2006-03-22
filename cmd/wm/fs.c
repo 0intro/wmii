@@ -552,8 +552,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		break;
 	case FsFtag:
 		if(dir_type == FsDws)
-			return mkstat(stat, dir, wname, strlen(def.tag), DMREAD | DMWRITE);
-		return mkstat(stat, dir, wname, 0, 0);
+			return mkstat(stat, dir, wname, strlen(def.tag), DMREAD);
 		break;
     case FsFexpand:
 		return mkstat(stat, dir, wname, strlen(expand), DMREAD | DMWRITE);
@@ -1308,10 +1307,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(label[i1]->data, fcall->data, len);
 		label[i1]->data[len] = 0;
 		draw_bar();
-		break;
-	case FsFtag:
-		memcpy(def.tag, fcall->data, fcall->count);
-		def.tag[fcall->count] = 0;
 		break;
 	case FsFcolors:
 		if((i1 >= nlabel) || (fcall->count != 23)
