@@ -78,7 +78,7 @@ select_area(Area *a, char *arg)
 	if(!strncmp(arg, "toggle", 7)) {
 		if(i)
 			i = 0;
-		else if(t->revert < t->narea)
+		else if(t->revert > 0 && t->revert < t->narea)
 			i = t->revert;
 		else
 			i = 1;
