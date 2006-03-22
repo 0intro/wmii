@@ -662,7 +662,7 @@ xcreate(IXPConn *c, Fcall *fcall)
 		get_label(fcall->name);
 		break;
 	default:
-		return Enoperm;
+		return Enofile;
 		break;
 	}
 	mkqid(&m->qid, fcall->name, &m->qid);
