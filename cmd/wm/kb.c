@@ -127,9 +127,11 @@ get_key(const char *name)
         k->key = XKeysymToKeycode(dpy, XStringToKeysym(kstr));
         k->mod = blitz_strtomod(seq[i]);
     }
-	r->id = id++;
-	key = (Key **)cext_array_attach((void **)key, r, sizeof(Key *), &keysz);
-	nkey++;
+	if(r) {
+		r->id = id++;
+		key = (Key **)cext_array_attach((void **)key, r, sizeof(Key *), &keysz);
+		nkey++;
+	}
 	
 	return r;
 }
@@ -258,6 +260,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 void
 update_keys()
 {
+	Key *k;
 	char *l, *p;
 
 	init_lock_modifiers();
@@ -270,15 +273,18 @@ update_keys()
 	for(l = p = def.keys; p && *p;) {
 		if(*p == '\n') {
 			*p = 0;
-			grab_key(get_key(l));
+			if((k = get_key(l)))
+				grab_key(k);
 			*p = '\n';
 			l = ++p;
 		}
 		else
 			p++;
 	}
-	if(l < p && strlen(l))
-		grab_key(get_key(l));
+	if(l < p && strlen(l)) {
+		if((k = get_key(l)))
+			grab_key(k);
+	}
 
 	XSync(dpy, False);
 }

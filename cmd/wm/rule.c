@@ -98,14 +98,14 @@ parse(char *data, unsigned int *n)
 
 
 static void
-match(Rule *rule, unsigned int rulez, Client *c, const char *prop)
+match(Rule *rule, unsigned int rulesz, Client *c, const char *prop)
 {
 	unsigned int i, j;
 	regex_t regex;
 	regmatch_t tmpregm;
 
 	c->ntag = 0;
-	for(i = 0; i < rulez && c->ntag < MAX_TAGS; i++) {
+	for(i = 0; i < rulesz && c->ntag < MAX_TAGS; i++) {
 		Rule r = rule[i];
 		if(!regcomp(&regex, r.regex, 0)) {
 			if(!regexec(&regex, prop, 1, &tmpregm, 0)) {
