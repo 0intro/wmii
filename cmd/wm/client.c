@@ -51,12 +51,8 @@ alloc_client(Window w, XWindowAttributes *wa)
 						   c->rect.width + 2 * def.border, c->rect.height + def.border + bar_height(), 0,
 						   DefaultDepth(dpy, screen), CopyFromParent, DefaultVisual(dpy, screen),
 						   CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
-
-	c->cursor = cursor[CurNormal];
-    XDefineCursor(dpy, c->framewin, c->cursor);
     c->gc = XCreateGC(dpy, c->framewin, 0, 0);
     XSync(dpy, False);
-
 	client = (Client **)cext_array_attach((void **)client, c, sizeof(Client *), &clientsz);
 	nclient++;
 

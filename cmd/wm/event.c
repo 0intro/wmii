@@ -60,7 +60,6 @@ handle_buttonpress(XEvent *e)
 {
     Client *c;
     XButtonPressedEvent *ev = &e->xbutton;
-    Align align;
 	static char buf[32];
 	if(ev->window == barwin) {
 		unsigned int i;
@@ -73,11 +72,11 @@ handle_buttonpress(XEvent *e)
 	}
 	else if((c = win2clientframe(ev->window))) {
 		if(ev->button == Button1) {
+			Align align = xy2align(&c->frame[c->sel]->rect, ev->x, ev->y);
 			if(sel_client() != c) {
 				focus(c);
 				return;
 			}
-			align = cursor2align(c->cursor);
 			if(align == CENTER)
 				mouse_move(c);
 			else 
@@ -92,6 +91,7 @@ handle_buttonpress(XEvent *e)
 	else if((c = win2client(ev->window))) {
 		ev->state &= valid_mask;
 		if(ev->state & Mod1Mask) {
+			Align align = xy2align(&c->frame[c->sel]->rect, ev->x, ev->y);
 			switch (ev->button) {
 				case Button1:
 					focus(c);
@@ -99,7 +99,6 @@ handle_buttonpress(XEvent *e)
 					break;
 				case Button3:
 					focus(c);
-					align = xy2align(&c->rect, ev->x, ev->y);
 					if(align == CENTER)
 						mouse_move(c);
 					else
@@ -247,11 +246,11 @@ handle_motionnotify(XEvent *e)
 {
     Client *c = win2clientframe(e->xmotion.window);
     if(c) {
-    	Cursor cur = cursor_for_motion(c, e->xmotion.x, e->xmotion.y);
-        if(cur != c->cursor) {
-            c->cursor = cur;
+    	Cursor cur = cursor4motion(c, e->xmotion.x, e->xmotion.y);
+		if(cur == cursor[CurNormal])
+            XUndefineCursor(dpy, c->framewin);
+		else
             XDefineCursor(dpy, c->framewin, cur);
-        }
     }
 }
 

@@ -10,7 +10,7 @@
 #include "wm.h"
 
 Cursor
-cursor_for_motion(Client *c, int x, int y)
+cursor4motion(Client *c, int x, int y)
 {
 	Frame *f = c->frame[c->sel];
     int n, e, w, s, tn, te, tw, ts;
@@ -79,28 +79,6 @@ xy2align(XRectangle *rect, int x, int y)
     else if(s)
         return SOUTH;
     return CENTER;
-}
-
-Align
-cursor2align(Cursor cur)
-{
-    if(cur == cursor[CurW])
-        return WEST;
-    else if(cur == cursor[CurNW])
-        return NWEST;
-    else if(cur == cursor[CurN])
-        return NORTH;
-    else if(cur == cursor[CurNE])
-        return NEAST;
-    else if(cur == cursor[CurE])
-        return EAST;
-    else if(cur == cursor[CurSE])
-        return SEAST;
-    else if(cur == cursor[CurS])
-        return SOUTH;
-    else if(cur == cursor[CurSW])
-        return SWEST;
-    return CENTER;              /* should not happen */
 }
 
 static int

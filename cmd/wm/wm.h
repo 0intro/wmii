@@ -132,7 +132,6 @@ struct Client {
     XSizeHints size;
 	Window framewin;
     GC gc;
-    Cursor cursor;
 	Frame **frame;
 	unsigned int framesz;
 	unsigned int sel;
@@ -284,8 +283,7 @@ void init_lock_modifiers();
 /* mouse.c */
 void mouse_resize(Client *c, Align align);
 void mouse_move(Client *c);
-Cursor cursor_for_motion(Client *c, int x, int y);
-Align cursor2align(Cursor cur);
+Cursor cursor4motion(Client *c, int x, int y);
 Align xy2align(XRectangle *rect, int x, int y);
 void drop_move(Client *c, XRectangle *new, XPoint *pt);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
