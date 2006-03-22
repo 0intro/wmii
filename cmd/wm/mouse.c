@@ -15,14 +15,14 @@ cursor4motion(Client *c, int x, int y)
 	Frame *f = c->frame[c->sel];
     int n, e, w, s, tn, te, tw, ts;
 
-    if(!def.border)
+    if(!def.border < 2)
         return cursor[CurNormal];
 
     /* rectangle attributes of client are used */
-    w = x < def.border;
-    e = x >= f->rect.width - def.border;
+    w = x < def.border - 1;
+    e = x >= f->rect.width - (def.border - 1);
     n = y < def.border;
-    s = y >= f->rect.height - def.border;
+    s = y >= f->rect.height - (def.border - 1);
 
     tw = x < bar_height();
     te = x > f->rect.width - bar_height();
