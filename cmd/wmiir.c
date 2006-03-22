@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 	for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
 		switch (argv[i][1]) {
 			case 'v':
-				fprintf(stderr, "%s", version);
+				fprintf(stdout, "%s", version);
 				exit(0);
 				break;
 			case 'a':
