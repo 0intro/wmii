@@ -7,7 +7,7 @@ xwrite() {
 }
 
 proglist() {
-	ls -lL `echo "$@" 2>/dev/null | tr : ' '` |
+	ls -lL `echo "$@" | tr : ' '` 2>/dev/null |
 	awk 'NF>2 && !/^d/ && $1 ~ /x/ {print $NF}' | sort -u
 }
 
