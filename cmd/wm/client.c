@@ -516,7 +516,7 @@ send2area_client(Client *c, char *arg)
 	else if(!strncmp(arg, "toggle", 7)) {
 		if(i)
 			to = t->area[0];
-		else if(c->revert)
+		else if(c->revert && c->revert != t->area[0])
 			to = c->revert;
 		else
 			to = t->area[1];
