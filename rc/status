@@ -1,13 +1,12 @@
 #!/bin/sh
 # periodically print date and load average to the bar
 
-wmiir remove /bar/status && sleep 2
-
 xwrite() {
 	file="$1"; shift
 	echo -n "$@" | wmiir write "$file"
 }
 
+wmiir remove /bar/status && sleep 2
 wmiir create /bar/status
 xwrite /bar/status/colors $WMII_NORMCOLORS
 
