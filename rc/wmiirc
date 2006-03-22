@@ -7,11 +7,12 @@ xwrite() {
 }
 
 proglist() {
-	ls -lL `echo "$@" | tr ':' ' '` | awk '!/^d/ && $1 ~ /x/ {print $NF}' | sort | uniq
+	ls -lL `echo "$@" 2>/dev/null | tr : ' '` |
+	awk 'NF>2 && !/^d/ && $1 ~ /x/ {print $NF}' | sort -u
 }
 
 # give wmiiwm a chance to start
-while ! echo Start wmiirc | wmiir write /event > /dev/null 2>&1
+while ! echo Start wmiirc | wmiir write /event >/dev/null 2>&1
 do
 	sleep 1
 done
@@ -96,14 +97,13 @@ do
 	type="$1"; shift
 	case "$type" in
 	Start)
-		if test $1 = "wmiirc"
+		if test "$1" = wmiirc
 		then
-			exit 0
-		fi
-		;;
+			exit
+		fi;;
 	NewTag)
 		wmiir create /bar/$1
-		if test $1 = "$oldtag"
+		if test "$1" = "$oldtag"
 		then
 			xwrite /bar/$1/colors $WMII_NORMCOLORS
 		else
@@ -117,7 +117,7 @@ do
 		then
 			xwrite /bar/$oldtag/colors $WMII_SELCOLORS
 		fi
-		xwrite /bar/$1/data "$1"
+		xwrite /bar/$1/data $1
 		xwrite /bar/$1/colors $WMII_NORMCOLORS
 		oldtag=$1;;
 	LabelClick)
@@ -127,8 +127,7 @@ do
 		$MODKEY-Control-c)
 			xwrite /ws/sel/sel/ctl kill;;
 		$MODKEY-Control-w,y)
-			wmiirc &
-			exit 0;;
+			exec wmiirc;;
 		$MODKEY-Control-q,y)
 			xwrite /ctl quit;;
 		$MODKEY-Control-p)
@@ -169,4 +168,4 @@ do
 			xwrite /ws/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
 		esac;;
 	esac
-done &
+done
