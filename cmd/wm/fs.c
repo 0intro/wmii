@@ -785,25 +785,27 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDws:
 			/* jump to offset */
-			len = type2stat(&stat, "ctl", &m->qid);
-			len += type2stat(&stat, "tag", &m->qid);
-			if(tag[i1]->narea)
-				len += type2stat(&stat, "sel", &m->qid);
-			for(i = 0; i < tag[i1]->narea; i++) {
-				snprintf(buf, sizeof(buf), "%u", i);
-				len += type2stat(&stat, buf, &m->qid);
-				if(len <= fcall->offset)
-					continue;
-				break;
-			}
-			/* offset found, proceeding */
-			for(; i < tag[i1]->narea; i++) {
-				snprintf(buf, sizeof(buf), "%u", i);
-				len = type2stat(&stat, buf, &m->qid);
-				if(fcall->count + len > fcall->iounit)
+			len = type2stat(&stat, "tag", &m->qid);
+			if(ntag) {
+				len += type2stat(&stat, "ctl", &m->qid);
+				if(tag[i1]->narea)
+					len += type2stat(&stat, "sel", &m->qid);
+				for(i = 0; i < tag[i1]->narea; i++) {
+					snprintf(buf, sizeof(buf), "%u", i);
+					len += type2stat(&stat, buf, &m->qid);
+					if(len <= fcall->offset)
+						continue;
 					break;
-				fcall->count += len;
-				p = ixp_enc_stat(p, &stat);
+				}
+				/* offset found, proceeding */
+				for(; i < tag[i1]->narea; i++) {
+					snprintf(buf, sizeof(buf), "%u", i);
+					len = type2stat(&stat, buf, &m->qid);
+					if(fcall->count + len > fcall->iounit)
+						break;
+					fcall->count += len;
+					p = ixp_enc_stat(p, &stat);
+				}
 			}
 			break;
 		case FsDarea:
@@ -898,10 +900,14 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "bar", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "tags", &m->qid);
-			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "clients", &m->qid);
-			p = ixp_enc_stat(p, &stat);
+			if(nctag) {
+				fcall->count += type2stat(&stat, "tags", &m->qid);
+				p = ixp_enc_stat(p, &stat);
+			}
+			if(nclient) {
+				fcall->count += type2stat(&stat, "clients", &m->qid);
+				p = ixp_enc_stat(p, &stat);
+			}
 			fcall->count += type2stat(&stat, "ws", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
@@ -951,21 +957,23 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case FsDws:
-			fcall->count = type2stat(&stat, "ctl", &m->qid);
+			fcall->count = type2stat(&stat, "tag", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "tag", &m->qid);
-			p = ixp_enc_stat(p, &stat);
-			if(tag[i1]->narea) {
-				fcall->count += type2stat(&stat, "sel", &m->qid);
+			if(ntag) {
+				fcall->count += type2stat(&stat, "ctl", &m->qid);
 				p = ixp_enc_stat(p, &stat);
-			}
-			for(i = 0; i < tag[i1]->narea; i++) {
-				snprintf(buf, sizeof(buf), "%u", i);
-				len = type2stat(&stat, buf, &m->qid);
-				if(fcall->count + len > fcall->iounit)
-					break;
-				fcall->count += len;
-				p = ixp_enc_stat(p, &stat);
+				if(tag[i1]->narea) {
+					fcall->count += type2stat(&stat, "sel", &m->qid);
+					p = ixp_enc_stat(p, &stat);
+				}
+				for(i = 0; i < tag[i1]->narea; i++) {
+					snprintf(buf, sizeof(buf), "%u", i);
+					len = type2stat(&stat, buf, &m->qid);
+					if(fcall->count + len > fcall->iounit)
+						break;
+					fcall->count += len;
+					p = ixp_enc_stat(p, &stat);
+				}
 			}
 			break;
 		case FsDarea:
