@@ -8,19 +8,20 @@ xwrite() {
 
 proglist() {
 	ls -lL `echo "$@" | tr : ' '` 2>/dev/null |
-	awk 'NF>2 && !/^d/ && $1 ~ /x/ {print $NF}' | sort -u
+	awk 'NF>2 && $1 ~ /^[^d].*x/ {print $NF}' | sort -u
 }
-
-# give wmiiwm a chance to start
-while ! echo Start wmiirc | wmiir write /event >/dev/null 2>&1
-do
-	sleep 1
-done
 
 MODKEY=Alt
 WMII_FONT='fixed' export WMII_FONT
 WMII_NORMCOLORS='#222222 #eeeeee #666666' export WMII_NORMCOLORS
 WMII_SELCOLORS='#ffffff #285577 #4c7899' export WMII_SELCOLORS
+
+# give wmiiwm a chance to start
+while :
+do
+	echo Start wmiirc | wmiir write /event >/dev/null 2>&1 && break
+	sleep 1
+done
 
 # WM CONFIGURATION
 xwrite /def/border 3
