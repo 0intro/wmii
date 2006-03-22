@@ -391,20 +391,17 @@ mkqid(Qid *dir, char *wname, Qid *new)
 	case FsFcolors:
 		if((dir_i1 == -1) || (dir_type != FsDlabel))
 			return -1;
-		new->type = IXP_QTFILE;
-		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
+		goto Mkfile;
 		break;
 	case FsFmode:
 		if(dir_i1 == -1 || dir_i2 == -1 || dir_type != FsDarea)
 			return -1;
-		new->type = IXP_QTFILE;
-		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
+		goto Mkfile;
 		break;
 	case FsFtag:
 		if(dir_i1 == -1 || dir_type != FsDws)
 			return -1;
-		new->type = IXP_QTFILE;
-		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
+		goto Mkfile;
 		break;
 	case FsFgeom:
 	case FsFname:
@@ -418,8 +415,12 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			return -1;
 		else if((dir_type == FsDGclient) && (dir_i1 == -1))
 			return -1;
-		new->type = IXP_QTFILE;
-		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
+		goto Mkfile;
+		break;
+	case FsFexpand:
+		if(dir_type != FsDbar)
+			return -1;
+		goto Mkfile;
 		break;
 	case FsFborder:
 	case FsFfont:
@@ -432,6 +433,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			return -1;
 	case FsFctl:
 	case FsFevent:
+Mkfile:
 		new->type = IXP_QTFILE;
 		new->path = mkqpath(type, qpath_i1id(dir->path), qpath_i2id(dir->path), qpath_i3id(dir->path));
 		break;
