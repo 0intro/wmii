@@ -9,48 +9,6 @@
 
 #include "wm.h"
 
-Cursor
-cursor4motion(Client *c, int x, int y)
-{
-	Frame *f = c->frame[c->sel];
-    int n, e, w, s, tn, te, tw, ts;
-
-    if(!def.border < 2)
-        return cursor[CurNormal];
-
-    /* rectangle attributes of client are used */
-    w = x < def.border - 1;
-    e = x >= f->rect.width - (def.border - 1);
-    n = y < def.border;
-    s = y >= f->rect.height - (def.border - 1);
-
-    tw = x < bar_height();
-    te = x > f->rect.width - bar_height();
-    tn = y < bar_height();
-    ts = s > f->rect.height - bar_height();
-
-    if((w && n) || (w && tn) || (n && tw))
-        return cursor[CurNW];
-    else if((e && n) || (e && tn) || (n && te))
-        return cursor[CurNE];
-    else if((w && s) || (w && ts) || (s && tw))
-        return cursor[CurSW];
-    else if((e && s) || (e && ts) || (s && te))
-        return cursor[CurSE];
-    else if(w)
-        return cursor[CurW];
-    else if(e)
-        return cursor[CurE];
-    else if(n)
-        return cursor[CurN];
-    else if(s)
-        return cursor[CurS];
-	
-	if(tn)
-		return cursor[CurNormal];
-	return cursor[CurUnknown];
-}
-
 Align
 xy2align(XRectangle *rect, int x, int y)
 {

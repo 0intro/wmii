@@ -45,7 +45,7 @@ alloc_client(Window w, XWindowAttributes *wa)
 	}
     fwa.override_redirect = 1;
     fwa.background_pixmap = ParentRelative;
-	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask | ButtonPressMask | PointerMotionMask;
+	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask | ButtonPressMask;
 
     c->framewin = XCreateWindow(dpy, root, c->rect.x, c->rect.y,
 						   c->rect.width + 2 * def.border, c->rect.height + def.border + bar_height(), 0,

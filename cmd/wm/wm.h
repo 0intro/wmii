@@ -27,18 +27,9 @@ enum {
 
 /* Cursor */
 enum {
-	CurUnknown,
 	CurNormal,
 	CurResize,
 	CurMove,
-	CurW,
-	CurE,
-	CurN,
-	CurS,
-	CurNW,
-	CurNE,
-	CurSW,
-	CurSE,
 	CurLast
 };
 
@@ -284,7 +275,6 @@ void init_lock_modifiers();
 /* mouse.c */
 void mouse_resize(Client *c, Align align);
 void mouse_move(Client *c);
-Cursor cursor4motion(Client *c, int x, int y);
 Align xy2align(XRectangle *rect, int x, int y);
 void drop_move(Client *c, XRectangle *new, XPoint *pt);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);

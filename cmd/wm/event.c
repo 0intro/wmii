@@ -18,7 +18,6 @@ static void handle_expose(XEvent * e);
 static void handle_keypress(XEvent * e);
 static void handle_keymapnotify(XEvent * e);
 static void handle_maprequest(XEvent * e);
-static void handle_motionnotify(XEvent * e);
 static void handle_propertynotify(XEvent * e);
 static void handle_unmapnotify(XEvent * e);
 
@@ -39,7 +38,6 @@ init_x_event_handler()
     handler[KeyPress] = handle_keypress;
     handler[KeymapNotify] = handle_keymapnotify;
     handler[MapRequest] = handle_maprequest;
-    handler[MotionNotify] = handle_motionnotify;
     handler[PropertyNotify] = handle_propertynotify;
     handler[UnmapNotify] = handle_unmapnotify;
 }
@@ -72,15 +70,10 @@ handle_buttonpress(XEvent *e)
 	}
 	else if((c = win2clientframe(ev->window))) {
 		if(ev->button == Button1) {
-			Align align = xy2align(&c->rect, ev->x, ev->y);
 			if(sel_client() != c) {
 				focus(c);
 				return;
 			}
-			if(align == CENTER)
-				mouse_move(c);
-			else 
-				mouse_resize(c, align);
 		}
 		if(c->nframe) {
 			snprintf(buf, sizeof(buf), "ClientClick %d %d\n", frame2index(c->frame[c->sel]) + 1, ev->button);
@@ -90,19 +83,20 @@ handle_buttonpress(XEvent *e)
 	else if((c = win2client(ev->window))) {
 		ev->state &= valid_mask;
 		if(ev->state & Mod1Mask) {
-			Align align = xy2align(&c->rect, ev->x, ev->y);
+			focus(c);
 			switch (ev->button) {
-				case Button1:
-					focus(c);
-					mouse_move(c);
-					break;
-				case Button3:
-					focus(c);
+			case Button1:
+				mouse_move(c);
+				break;
+			case Button3:
+				{
+					Align align = xy2align(&c->rect, ev->x, ev->y);
 					if(align == CENTER)
 						mouse_move(c);
 					else
 						mouse_resize(c, align);
-					break;
+				}
+				break;
 			}
 		}
 		else if(ev->button == Button1)
@@ -238,19 +232,6 @@ handle_maprequest(XEvent *e)
     /* there're client which send map requests twice */
     if(!win2client(ev->window))
         manage_client(alloc_client(ev->window, &wa));
-}
-
-static void
-handle_motionnotify(XEvent *e)
-{
-    Client *c = win2clientframe(e->xmotion.window);
-    if(c) {
-    	Cursor cur = cursor4motion(c, e->xmotion.x, e->xmotion.y);
-		if(cur == cursor[CurUnknown])
-            XUndefineCursor(dpy, c->framewin);
-		else
-            XDefineCursor(dpy, c->framewin, cur);
-    }
 }
 
 static void

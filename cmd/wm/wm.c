@@ -139,18 +139,9 @@ init_atoms()
 static void
 init_cursors()
 {
-    cursor[CurUnknown] = XCreateFontCursor(dpy, XC_cross);
     cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
     cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
     cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
-    cursor[CurW] = XCreateFontCursor(dpy, XC_left_side);
-    cursor[CurE] = XCreateFontCursor(dpy, XC_right_side);
-    cursor[CurN] = XCreateFontCursor(dpy, XC_top_side);
-    cursor[CurS] = XCreateFontCursor(dpy, XC_bottom_side);
-    cursor[CurNW] = XCreateFontCursor(dpy, XC_top_left_corner);
-    cursor[CurNE] = XCreateFontCursor(dpy, XC_top_right_corner);
-    cursor[CurSW] = XCreateFontCursor(dpy, XC_bottom_left_corner);
-    cursor[CurSE] = XCreateFontCursor(dpy, XC_bottom_right_corner);
 }
 
 static void
