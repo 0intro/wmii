@@ -98,13 +98,13 @@ do
 	type="$1"; shift
 	case "$type" in
 	Start)
-		if test "$1" = wmiirc
+		if test wmiirc = "$1"
 		then
 			exit
 		fi;;
 	NewTag)
 		wmiir create /bar/$1
-		if test "$1" = "$oldtag"
+		if test "X$1" = "X$oldtag"
 		then
 			xwrite /bar/$1/colors $WMII_NORMCOLORS
 		else
