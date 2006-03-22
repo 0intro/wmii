@@ -244,13 +244,13 @@ organize_client(Tag *t, Client *c)
 
 	if(hastag) {
 		if(!clientoftag(t, c)) {
-			fprintf(stderr, "org attach %s?\n", c->name);
+			/*fprintf(stderr, "org attach %s?\n", c->name);*/
 			attach_totag(t, c);
 		}
 	}
 	else {
 		if(clientoftag(t, c)) {
-			fprintf(stderr, "org detach %s?\n", c->name);
+			/*fprintf(stderr, "org detach %s?\n", c->name);*/
 			detach_fromtag(t, c);
 		}
 	}
