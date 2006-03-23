@@ -102,7 +102,7 @@ focus_tag(Tag *t)
 		}
 	tags2str(name, sizeof(name), t->tag, t->ntag);
 	snprintf(buf, sizeof(buf), "FocusTag %s\n", name);
-	write_event(buf);
+	write_event(buf, True);
 	XSync(dpy, False);
 	XUngrabServer(dpy);
 }
@@ -205,7 +205,7 @@ select_tag(char *arg)
 				sizeof(char *), &ctagsz);
 		nctag++;
 		snprintf(buf, sizeof(buf), "NewTag %s\n", arg);
-		write_event(buf);
+		write_event(buf, True);
 	}
     focus_tag(t);
 
@@ -290,12 +290,12 @@ update_tags()
 	for(i = 0; i < nnewctag; i++)
 		if(!istag(ctag, nctag, newctag[i])) {
 			snprintf(buf, sizeof(buf), "NewTag %s\n", newctag[i]);
-			write_event(buf);
+			write_event(buf, True);
 		}
 	for(i = 0; i < nctag; i++) {
 		if(!istag(newctag, nnewctag, ctag[i])) {
 			snprintf(buf, sizeof(buf), "RemoveTag %s\n", ctag[i]);
-			write_event(buf);
+			write_event(buf, True);
 		}
 		free(ctag[i]);
 	}

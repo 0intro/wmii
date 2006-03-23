@@ -27,6 +27,8 @@ static char Enofunc[] = "function not supported";
 static char Enocommand[] = "command not supported";
 static char Ebadvalue[] = "bad value";
 
+static char **queue = nil;
+static unsigned int nqueue = 0, queuesz = 0;
 #define WMII_IOUNIT 	2048
 
 /*
@@ -839,6 +841,12 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsFevent:
 			memcpy(&c->pending, fcall, sizeof(Fcall));
 			c->is_pending = 1;
+			if(nqueue) {
+				char *event = queue[0];
+				cext_array_detach((void **)queue, event, &queuesz);
+				nqueue--;
+				write_event(event, False);
+			}
 			return nil;
 			break;
 		case FsFkeys:
@@ -1396,7 +1404,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(fcall->count) {
 			memcpy(buf, fcall->data, fcall->count);
 			buf[fcall->count] = 0;
-			write_event(buf);
+			write_event(buf, False);
 		}
 		break;
 	default:
@@ -1453,27 +1461,33 @@ do_fcall(IXPConn *c)
 }
 
 void
-write_event(char *event)
+write_event(char *event, Bool enqueue)
 {
-	unsigned int i;
+	unsigned int i, written = 0;
+	
 	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++) {
 		IXPConn *c = srv.conn[i];
 		if(c->is_pending) {
 			/* pending reads on /event only, no qid checking */
 			IXPMap *m = ixp_server_fid2map(c, c->pending.fid);
-			unsigned char *p = c->pending.data;
 			if(!m) {
 				if(ixp_server_respond_error(c, &c->pending, Enofile))
-					break;
+					return;
 			}
 			else if(qpath_type(m->qid.path) == FsFevent) {
+				/* pending reads on /event only, no qid checking */
 				c->pending.count = strlen(event);
-				memcpy(p, event, c->pending.count);
+				memcpy(c->pending.data, event, c->pending.count);
 				c->pending.id = RREAD;
 				if(ixp_server_respond_fcall(c, &c->pending))
-					break;
+					return;
 			}
+			written++;
 		}
+	}
+	if(!written) {
+		queue = (char **)cext_array_attach((void **)queue, event, sizeof(char *), &queuesz);
+		nqueue++;
 	}
 }
 

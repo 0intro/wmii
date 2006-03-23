@@ -63,6 +63,7 @@ parse(char *data, unsigned int *n)
 			}
 			else if(*p == '>') {
 				mode = TAGS;
+				tags[0] = 0;
 				t = tags;
 			}
 			break;

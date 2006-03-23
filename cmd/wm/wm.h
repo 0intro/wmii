@@ -264,7 +264,7 @@ Client *win2clientframe(Window w);
 /* fs.c */
 unsigned long long mkqpath(unsigned char type, unsigned short pg,
 						unsigned short area, unsigned short cl);
-void write_event(char *event);
+void write_event(char *event, Bool enqueue);
 void new_ixp_conn(IXPConn *c);
 
 /* kb.c */

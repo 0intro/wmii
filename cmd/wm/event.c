@@ -64,7 +64,7 @@ handle_buttonpress(XEvent *e)
 		for(i = 0; i < nlabel; i++)
 			if(blitz_ispointinrect(ev->x, ev->y, &label[i]->rect)) {
 				snprintf(buf, sizeof(buf), "LabelClick %s %d\n", label[i]->name, ev->button);
-				write_event(buf);
+				write_event(buf, True);
 				return;
 			}
 	}
@@ -77,7 +77,7 @@ handle_buttonpress(XEvent *e)
 		}
 		if(c->nframe) {
 			snprintf(buf, sizeof(buf), "ClientClick %d %d\n", frame2index(c->frame[c->sel]) + 1, ev->button);
-			write_event(buf);
+			write_event(buf, True);
 		}
 	}
 	else if((c = win2client(ev->window))) {
@@ -104,7 +104,7 @@ handle_buttonpress(XEvent *e)
 
 		if(c->nframe) {
 			snprintf(buf, sizeof(buf), "ClientClick %d %d\n", frame2index(c->frame[c->sel]) + 1, ev->button);
-			write_event(buf);
+			write_event(buf, True);
 		}
 	}
 	
