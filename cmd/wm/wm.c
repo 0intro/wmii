@@ -160,7 +160,7 @@ init_screen()
 	rect.width = DisplayWidth(dpy, screen);
 	rect.height = DisplayHeight(dpy, screen);
 
-	def.snap = rect.height / 50;
+	def.snap = rect.height / 63;
 }
 
 /*

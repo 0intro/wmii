@@ -84,14 +84,14 @@ select_area(Area *a, char *arg)
 		else
 			i = 1;
 	} else if(!strncmp(arg, "prev", 5)) {
-		if(i>0) {
+		if(i > 0) {
 			if(i == 1)
 				i = v->narea - 1;
 			else
 				i--;
 		}
 	} else if(!strncmp(arg, "next", 5)) {
-		if(i>0) {
+		if(i > 0) {
 			if(i + 1 < v->narea)
 				i++;
 			else

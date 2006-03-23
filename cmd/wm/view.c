@@ -128,7 +128,7 @@ rectangles(View *v, Bool isfloat, unsigned int *num)
 }
 
 int
-tid2index(unsigned short id)
+vid2index(unsigned short id)
 {
 	int i;
 	for(i = 0; i < nview; i++)

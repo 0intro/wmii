@@ -125,7 +125,7 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 				case FsFdata:
 				case FsFcolors:
 				case FsDlabel: *i1 = lid2index(i1id); break;
-				default: *i1 = tid2index(i1id); break;
+				default: *i1 = vid2index(i1id); break;
 			}
 		}
 		if(i2id && (*i1 != -1)) {

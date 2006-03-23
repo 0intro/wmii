@@ -287,7 +287,7 @@ void update_tags();
 View *alloc_view(char *name);
 void focus_view(View *v);
 XRectangle *rectangles(View *v, Bool isfloat, unsigned int *num);
-int tid2index(unsigned short id);
+int vid2index(unsigned short id);
 void select_view(char *arg);
 int view2index(View *v);
 Bool clientofview(View *v, Client *c);
