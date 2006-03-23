@@ -37,7 +37,7 @@ enum {
 enum {                          
     FsDroot,
 	FsDdef,
-	FsDws,
+	FsDview,
 	FsDarea,
 	FsDclients,
 	FsDclient,

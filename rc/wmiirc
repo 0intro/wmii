@@ -121,11 +121,11 @@ do
 		xwrite /bar/$1/colors $WMII_NORMCOLORS
 		oldtag=$1;;
 	LabelClick)
-		xwrite /ctl select $1;;
+		xwrite /ctl view $1;;
 	Key)
 		case "$1" in
 		$MODKEY-Control-c)
-			xwrite /ws/sel/sel/ctl kill;;
+			xwrite /view/sel/sel/ctl kill;;
 		$MODKEY-Control-w,y)
 			wmiirc &;;
 		$MODKEY-Control-q,y)
@@ -137,35 +137,35 @@ do
 		$MODKEY-t)
 			extern xterm &;;
 		$MODKEY-m)
-			xwrite /ws/sel/mode max;;
+			xwrite /view/sel/mode max;;
 		$MODKEY-s)
-			xwrite /ws/sel/mode stack;;
+			xwrite /view/sel/mode stack;;
 		$MODKEY-e)
-			xwrite /ws/sel/mode equal;;
+			xwrite /view/sel/mode equal;;
 		$MODKEY-n)
-			xwrite /ws/sel/sel/ctl sendto new;;
+			xwrite /view/sel/sel/ctl sendto new;;
 		$MODKEY-Return)
-			xwrite /ws/sel/sel/ctl sendto prev;;
+			xwrite /view/sel/sel/ctl sendto prev;;
 		$MODKEY-Shift-Return)
-			xwrite /ws/sel/sel/ctl sendto next;;
+			xwrite /view/sel/sel/ctl sendto next;;
 		$MODKEY-space)
-			xwrite /ws/ctl select toggle;;
+			xwrite /view/ctl select toggle;;
 		$MODKEY-Shift-space)
-			xwrite /ws/sel/sel/ctl sendto toggle;;
+			xwrite /view/sel/sel/ctl sendto toggle;;
 		$MODKEY-h)
-			xwrite /ws/ctl select prev;;
+			xwrite /view/ctl select prev;;
 		$MODKEY-l)
-			xwrite /ws/ctl select next;;
+			xwrite /view/ctl select next;;
 		$MODKEY-Tab)
-			xwrite /ws/sel/ctl select next;;
+			xwrite /view/sel/ctl select next;;
 		$MODKEY-j)
-			xwrite /ws/sel/ctl select next;;
+			xwrite /view/sel/ctl select next;;
 		$MODKEY-k)
-			xwrite /ws/sel/ctl select prev;;
+			xwrite /view/sel/ctl select prev;;
 		$MODKEY-[0-9])
-			xwrite /ctl select `echo $1 | sed 's/.*-//'`;;
+			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Shift-[0-9])
-			xwrite /ws/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
+			xwrite /view/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
 		esac;;
 	esac
 done

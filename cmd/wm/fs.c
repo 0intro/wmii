@@ -49,22 +49,22 @@ static unsigned int nqueue = 0, queuesz = 0;
  * /bar/lab/data 		FsFdata			<arbitrary data which gets displayed>
  * /bar/lab/colors		FsFcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /clients/			FsDclients
- * /clients/1/			FsDGclient		see /ws/X/X/ namespace below
+ * /clients/1/			FsDGclient		see /view/X/X/ namespace below
  * /event				FsFevent
  * /ctl					FsFctl 			command interface (root)
- * /ws/				    FsDws			ws
- * /ws/tag				FsFtag			current tag
- * /ws/ctl				FsFctl			command interface (tag)
- * /ws/sel/				FsDarea
- * /ws/1/				FsDarea
- * /ws/1/ctl 			FsFctl 			command interface (area)
- * /ws/1/mode			FsFmode			col mode
- * /ws/1/sel/			FsDclient
- * /ws/1/1/class		FsFclass		class:instance of client
- * /ws/1/1/name			FsFname			name of client
- * /ws/1/1/tags			FsFtags			tag of client
- * /ws/1/1/geom			FsFgeom			geometry of client
- * /ws/1/1/ctl 			FsFctl 			command interface (client)
+ * /view/				FsDview			view
+ * /view/tag			FsFtag			current tag
+ * /view/ctl			FsFctl			command interface (tag)
+ * /view/sel/			FsDarea
+ * /view/1/				FsDarea
+ * /view/1/ctl 			FsFctl 			command interface (area)
+ * /view/1/mode			FsFmode			col mode
+ * /view/1/sel/			FsDclient
+ * /view/1/1/class		FsFclass		class:instance of client
+ * /view/1/1/name		FsFname			name of client
+ * /view/1/1/tags		FsFtags			tag of client
+ * /view/1/1/geom		FsFgeom			geometry of client
+ * /view/1/1/ctl 		FsFctl 			command interface (client)
  */
 
 Qid root_qid;
@@ -77,7 +77,7 @@ const char *err;
  * i1 is associated to tag, key, global client, or label
  * i2 is associated to area
  * i3 is associated to client
- * ie /ws/sel/ctl is i1id = sel tag id, i2id = sel area id , i3id = 0 (no id)
+ * ie /view/sel/ctl is i1id = sel tag id, i2id = sel area id , i3id = 0 (no id)
  */
 unsigned long long
 mkqpath(unsigned char type, unsigned short i1id, unsigned short i2id, unsigned short i3id)
@@ -151,9 +151,9 @@ qid2name(Qid *qid)
 		case FsDdef: return "def"; break;
 		case FsDclients: return "clients"; break;
 		case FsDbar: return "bar"; break;
-		case FsDws:
+		case FsDview:
 			if(qid->dir_type == FsDroot)
-				return "ws";
+				return "view";
 			return nil;
 			break;
 		case FsDlabel:
@@ -247,8 +247,8 @@ name2type(char *name, unsigned char dir_type)
 		return FsFtags;
 	if(!strncmp(name, "clients", 8))
 		return FsDclients;
-	if(!strncmp(name, "ws", 3) && (dir_type == FsDroot))
-		return FsDws;
+	if(!strncmp(name, "view", 5) && (dir_type == FsDroot))
+		return FsDview;
 	if(!strncmp(name, "bar", 4))
 		return FsDbar;
 	if(!strncmp(name, "def", 4))
@@ -298,7 +298,7 @@ dyndir:
 	/*fprintf(stderr, "nametotype: dir_type = %d\n", dir_type);*/
 	switch(dir_type) {
 	case FsDbar: return FsDlabel; break;
-	case FsDws: return FsDarea; break;
+	case FsDview: return FsDarea; break;
 	case FsDclients: return FsDGclient; break;
 	case FsDarea: return FsDclient; break;
 	}
@@ -329,12 +329,12 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		new->type = IXP_QTDIR;
 		new->path = mkqpath(type, 0, 0, 0);
 		break;
-	case FsDws:
+	case FsDview:
 		new->type = IXP_QTDIR;
-		new->path = mkqpath(FsDws, ntag ? tag[sel]->id : 0, 0, 0);
+		new->path = mkqpath(FsDview, ntag ? tag[sel]->id : 0, 0, 0);
 		break;
 	case FsDarea:
-		if(dir_i1 == -1 || dir_type != FsDws)
+		if(dir_i1 == -1 || dir_type != FsDview)
 			return -1;
 		{
 			Tag *p = tag[dir_i1];
@@ -401,7 +401,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		goto Mkfile;
 		break;
 	case FsFtag:
-		if(dir_i1 == -1 || dir_type != FsDws)
+		if(dir_i1 == -1 || dir_type != FsDview)
 			return -1;
 		goto Mkfile;
 		break;
@@ -478,7 +478,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
     case FsDclient:
     case FsDGclient:
     case FsDarea:
-    case FsDws:
+    case FsDview:
     case FsDdef:
 	case FsDclients:
 	case FsDlabel:
@@ -553,7 +553,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		}
 		break;
 	case FsFtag:
-		if(dir_type == FsDws)
+		if(dir_type == FsDview)
 			return mkstat(stat, dir, wname, strlen(def.tag), DMREAD);
 		break;
     case FsFexpand:
@@ -789,7 +789,7 @@ xread(IXPConn *c, Fcall *fcall)
 				p = ixp_enc_stat(p, &stat);
 			}
 			break;
-		case FsDws:
+		case FsDview:
 			/* jump to offset */
 			len = type2stat(&stat, "tag", &m->qid);
 			if(ntag) {
@@ -921,7 +921,7 @@ xread(IXPConn *c, Fcall *fcall)
 				fcall->count += type2stat(&stat, "clients", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 			}
-			fcall->count += type2stat(&stat, "ws", &m->qid);
+			fcall->count += type2stat(&stat, "view", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case FsDclients:
@@ -969,7 +969,7 @@ xread(IXPConn *c, Fcall *fcall)
 			fcall->count += type2stat(&stat, "rules", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			break;
-		case FsDws:
+		case FsDview:
 			fcall->count = type2stat(&stat, "tag", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			if(ntag) {
@@ -1220,12 +1220,12 @@ xwrite(IXPConn *c, Fcall *fcall)
 		case FsDroot:
 			if(!strncmp(buf, "quit", 5))
 				srv.running = 0;
-			else if(!strncmp(buf, "select", 6))
+			else if(!strncmp(buf, "view", 5))
 				select_tag(&buf[7]);
 			else
 				return Enocommand;
 			break;
-		case FsDws:
+		case FsDview:
 			if(!strncmp(buf, "select ", 7))
 				if(ntag)
 					select_area(tag[i1]->area[tag[i1]->sel], &buf[7]);
