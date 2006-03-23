@@ -11,12 +11,12 @@
 void *
 cext_emallocz(unsigned int size)
 {
-    void *res = calloc(1, size);
+	void *res = calloc(1, size);
 
-    if(!res) {
-        fprintf(stderr, "fatal: could not malloc() %d bytes\n",
-                (int) size);
-        exit(1);
-    }
-    return res;
+	if(!res) {
+		fprintf(stderr, "fatal: could not malloc() %d bytes\n",
+				(int) size);
+		exit(1);
+	}
+	return res;
 }

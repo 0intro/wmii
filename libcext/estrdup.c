@@ -12,10 +12,10 @@
 char *
 cext_estrdup(const char *s)
 {
-    char *tmp;
+	char *tmp;
 
-    tmp = (char *) cext_emallocz(strlen(s) + 1);
-    strcpy(tmp, (char *) s);
+	tmp = (char *) cext_emallocz(strlen(s) + 1);
+	strcpy(tmp, (char *) s);
 
-    return tmp;
+	return tmp;
 }

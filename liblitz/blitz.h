@@ -6,9 +6,9 @@
 #include <X11/Xlib.h>
 #include <cext.h>
 
-#define BLITZ_FONT				"fixed"
-#define BLITZ_SELCOLORS			"#ffffff #285577 #4c7899"
-#define BLITZ_NORMCOLORS		"#222222 #eeeeee #666666"
+#define BLITZ_FONT		"fixed"
+#define BLITZ_SELCOLORS		"#ffffff #285577 #4c7899"
+#define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
 
 typedef enum {
 	CENTER, WEST, NWEST, NORTH, NEAST, EAST,
@@ -27,8 +27,8 @@ typedef struct {
 	GC gc;
 	Color color;
 	XFontStruct *font;
-	XRectangle rect;			/* relative rect */
-	XRectangle *notch;			/* relative notch rect */
+	XRectangle rect;	/* relative rect */
+	XRectangle *notch;	/* relative notch rect */
 	char *data;
 } Draw;
 

@@ -39,9 +39,9 @@ blitz_loadcolor(Display *dpy, int mon, char *colstr, Color *c)
 {
 	if(!colstr || strlen(colstr) != 23)
 		return -1;
-    c->fg = xloadcolor(dpy, mon, &colstr[0]);
-    c->bg = xloadcolor(dpy, mon, &colstr[8]);
-    c->border = xloadcolor(dpy, mon, &colstr[16]);
+	c->fg = xloadcolor(dpy, mon, &colstr[0]);
+	c->bg = xloadcolor(dpy, mon, &colstr[8]);
+	c->border = xloadcolor(dpy, mon, &colstr[16]);
 	return 0;
 }
 
@@ -126,15 +126,15 @@ xdrawtext(Display *dpy, Draw *d)
 			text[len - 1] = '.';
 	}
 	switch (d->align) {
-		case EAST:
-			x = d->rect.x + d->rect.width - (h / 2 + w);
-			break;
-		case CENTER:
-			x = d->rect.x + (d->rect.width - w) / 2;
-			break;
-		default:
-			x = d->rect.x + h / 2;
-			break;
+	case EAST:
+		x = d->rect.x + d->rect.width - (h / 2 + w);
+		break;
+	case CENTER:
+		x = d->rect.x + (d->rect.width - w) / 2;
+		break;
+	default:
+		x = d->rect.x + h / 2;
+		break;
 	}
 	XSetBackground(dpy, d->gc, d->color.bg);
 	XSetForeground(dpy, d->gc, d->color.fg);
