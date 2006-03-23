@@ -74,8 +74,6 @@ handle_buttonpress(XEvent *e)
 				focus(c);
 				return;
 			}
-			else
-				mouse_move(c);
 		}
 		if(c->nframe) {
 			snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
