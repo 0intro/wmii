@@ -407,12 +407,12 @@ drop_resize(Frame *f, XRectangle *new)
 	/* horizontal resize */
 	if(west && (new->x != f->rect.x)) {
 		horiz_resize = True;
-		if(new->x < 0 || new->x < (west->rect.x + min)) {
-			new->width -= (west->rect.x + min) - new->x;
-			new->x = west->rect.x + min;
-		} else if(new->width < min) {
-			new->x -= min - new->width;
-			new->width = min;
+		if(new->x < 0 || new->x < (west->rect.x + MIN_COLWIDTH)) {
+			new->width -= (west->rect.x + MIN_COLWIDTH) - new->x;
+			new->x = west->rect.x + MIN_COLWIDTH;
+		} else if(new->width < MIN_COLWIDTH) {
+			new->x -= MIN_COLWIDTH - new->width;
+			new->width = MIN_COLWIDTH;
 		}
 		west->rect.width = new->x - west->rect.x;
 		a->rect.width += a->rect.x - new->x;
@@ -422,10 +422,10 @@ drop_resize(Frame *f, XRectangle *new)
 	}
 	if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
 		horiz_resize = True;
-		if((new->x + new->width) > (east->rect.x + east->rect.width - min))
-			new->width = (east->rect.x + east->rect.width - min) - new->x;
-		else if(new->width < min)
-			new->width = min;
+		if((new->x + new->width) > (east->rect.x + east->rect.width - MIN_COLWIDTH))
+			new->width = (east->rect.x + east->rect.width - MIN_COLWIDTH) - new->x;
+		else if(new->width < MIN_COLWIDTH)
+			new->width = MIN_COLWIDTH;
 		east->rect.width -= new->x + new->width - east->rect.x;
 		east->rect.x = new->x + new->width;
 		a->rect.width = (new->x + new->width) - a->rect.x;
