@@ -73,7 +73,7 @@ ixp_recv_message(int fd, void *msg, unsigned int msglen, char **errstr)
 	}
 	/* receive message */
 	if(ixp_recv_data(fd, msg + sizeof(unsigned int),
-				msize - sizeof(unsigned int), errstr) 
+				msize - sizeof(unsigned int), errstr)
 			!= msize - sizeof(unsigned int))
 		return 0;
 	return msize;

@@ -40,7 +40,7 @@ write_data(unsigned int fid)
 	}
 	if(offset == 0) /* do an explicit empty write when no writing has been done yet */
 		if(ixp_client_write(&c, fid, offset, 0, 0) != 0)
-			fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr); 
+			fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr);
 	free(data);
 }
 
@@ -189,7 +189,7 @@ xread(char *file)
 					free(tmp);
 				}
 			}
-			memcpy(dircontent + ndircontent, result, count);	
+			memcpy(dircontent + ndircontent, result, count);
 			ndircontent += count;
 		}
 		else {
@@ -275,6 +275,6 @@ main(int argc, char *argv[])
 
 	/* close socket */
 	ixp_client_hangup(&c);
-	
+
 	return ret;
 }

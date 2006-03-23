@@ -310,7 +310,7 @@ main(int argc, char *argv[])
 	def.keys = nil;
 	def.keyssz = 0;
 	def.font = strdup(BLITZ_FONT);
-	def.border = 2; 
+	def.border = 2;
 	if(!strlen(def.tag))
 		cext_strlcpy(def.tag, "1", sizeof(def.tag));
 	cext_strlcpy(def.selcolor, BLITZ_SELCOLORS, sizeof(def.selcolor));
@@ -327,7 +327,7 @@ main(int argc, char *argv[])
 	wa.event_mask = SubstructureRedirectMask;
 	wa.cursor = cursor[CurNormal];
 	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &wa);
-	
+
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
 	wa.event_mask = ExposureMask | ButtonPressMask

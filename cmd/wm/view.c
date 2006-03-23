@@ -35,7 +35,7 @@ destroy_view(View *v)
 	if(sel >= nview)
 		sel = 0;
 
-	free(v); 
+	free(v);
 }
 
 int
@@ -101,7 +101,7 @@ rectangles(View *v, Bool isfloat, unsigned int *num)
 {
 	XRectangle *result = nil;
 	unsigned int i;
-	
+
 	*num = 0;
 	if(isfloat)
 		*num = v->area[0]->nframe;

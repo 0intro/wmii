@@ -9,10 +9,10 @@
 #include <regex.h>
 #include "wm.h"
 
-/* 
+/*
  * basic rule matching language
  *
- * /regex/ -> tag [tag ...] 
+ * /regex/ -> tag [tag ...]
  *
  * regex might contain POSIX regex syntax defined in regex(3)
  */

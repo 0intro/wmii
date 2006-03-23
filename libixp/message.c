@@ -212,7 +212,7 @@ ixp_msg2fcall(Fcall *fcall, void *msg, unsigned int msglen)
 	unsigned int i, msize;
 	unsigned short len;
 	void *p = ixp_dec_prefix(msg, &msize, &fcall->id, &fcall->tag);
-	
+
 	if(msize > msglen)          /* bad message */
 		return 0;
 	switch (fcall->id) {

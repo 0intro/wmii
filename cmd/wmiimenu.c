@@ -80,7 +80,7 @@ update_offsets()
 	prevoff = i;
 }
 
-static unsigned int 
+static unsigned int
 update_items(char *pattern)
 {
 	unsigned int plen = strlen(pattern);
@@ -111,7 +111,7 @@ update_items(char *pattern)
 	}
 	if(nitem)
 		sel = 0;
-	
+
 	update_offsets();
 	return nitem;
 }

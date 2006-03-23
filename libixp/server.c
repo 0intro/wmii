@@ -127,7 +127,7 @@ ixp_server_respond_fcall(IXPConn *c, Fcall *fcall)
 	}
 	return 0;
 }
- 
+
 int
 ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr)
 {

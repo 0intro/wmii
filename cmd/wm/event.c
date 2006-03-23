@@ -95,7 +95,7 @@ handle_buttonpress(XEvent *e)
 			write_event(buf, True);
 		}
 	}
-	
+
 }
 
 static void

@@ -126,7 +126,7 @@ attach_toarea(Area *a, Client *c)
 {
 	static unsigned short id = 1;
 	Frame *f;
-   
+
 	if(clientofview(a->view, c))
 		return;
 	f = cext_emallocz(sizeof(Frame));
@@ -207,7 +207,7 @@ mode2str(int mode)
 	case Colmax: return "max"; break;
 	default: break;
 	}
-	return nil;		
+	return nil;
 }
 
 int
@@ -359,7 +359,7 @@ arrange_tag(View *v, Bool updategeometry)
 
 	if(v->narea == 1)
 		return;
-	
+
 	width = rect.width / (v->narea - 1);
 	for(i = 1; i < v->narea; i++) {
 		Area *a = v->area[i];

@@ -106,7 +106,7 @@ update_tags()
 	if(!nview && ntag)
 		select_view(tag[0]);
 }
- 
+
 unsigned int
 str2tags(char tags[MAX_TAGS][MAX_TAGLEN], const char *stags)
 {
