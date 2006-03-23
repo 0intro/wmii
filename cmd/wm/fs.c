@@ -34,47 +34,37 @@ static unsigned int nqueue = 0, queuesz = 0;
 
 /*
  * filesystem specification
- * / 					FsDroot
- * /def/				FsDdef
- * /def/border			FsFborder		0..n
- * /def/font			FsFfont			xlib font name
- * /					FsDroot
- * /def/				FsDdef
- * /def/border			FsFborder		0..n
- * /def/font			FsFfont			xlib font name
- * /def/selcolors		FsFselcolors	sel color
+ * /				FsDroot
+ * /def/			FsDdef
+ * /def/border			FsFborder	0..n
+ * /def/font			FsFfont		xlib font name
+ * /def/selcolors		FsFselcolors	selected colors
  * /def/normcolors		FsFnormcolors	normal colors
- * /def/rules			FsFrules		rules
- * /def/keys			FsFkeys			keys
- * /tags				FsFtags
- * /bar/				FsDbar
- * /bar/expand			FsFexpand 		id of expandable label
- * /def/normcolors		FsFnormcolors	normal colors
- * /def/rules			FsFrules		rules
- * /def/keys			FsFkeys			keys
- * /tags				FsFtags
- * /bar/				FsDbar
- * /bar/expand			FsFexpand		id of expandable label
+ * /def/rules			FsFrules	rules
+ * /def/keys			FsFkeys		keys
+ * /tags			FsFtags
+ * /bar/			FsDbar
+ * /bar/expand			FsFexpand	id of expandable label
  * /bar/lab/			FsDlabel
- * /bar/lab/data		FsFdata			<arbitrary data which gets displayed>
- * /bar/lab/colors		FsFcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
+ * /bar/lab/data		FsFdata		<arbitrary data which gets displayed>
+ * /bar/lab/colors		FsFcolors	<#RRGGBB> <#RRGGBB> <#RRGGBB>
  * /clients/			FsDclients
- * /clients/1/			FsDGclient		see /view/X/X/ namespace below
- * /event				FsFevent
- * /ctl					FsFctl 			command interface (root)
- * /view/				FsDview			view
- * /view/tag			FsFtag			current tag
- * /view/ctl			FsFctl			command interface (tag)
+ * /clients/1/			FsDGclient	see /view/X/X/ namespace below
+ * /event			FsFevent
+ * /ctl				FsFctl		command interface (root)
+ * /view/			FsDview		view
+ * /view/tag			FsFtag		current tag
+ * /view/ctl			FsFctl		command interface (tag)
  * /view/sel/			FsDarea
- * /view/1/				FsDarea
- * /view/1/ctl			FsFctl			command interface (area)
- * /view/1/mode			FsFmode			col mode
+ * /view/1/			FsDarea
+ * /view/1/ctl			FsFctl		command interface (area)
+ * /view/1/mode			FsFmode		column mode
  * /view/1/sel/			FsDclient
- * /view/1/1/class		FsFclass		class:instance of client
- * /view/1/1/name		FsFname			name of client
- * /view/1/1/tags		FsFtags			tag of client
- * /view/1/1/geom		FsFgeom			geometry of client
- * /view/1/1/ctl 		FsFctl			command interface (client)
+ * /view/1/1/class		FsFclass	class:instance of client
+ * /view/1/1/name		FsFname		name of client
+ * /view/1/1/tags		FsFtags		tag of client
+ * /view/1/1/geom		FsFgeom		geometry of client
+ * /view/1/1/ctl 		FsFctl		command interface (client)
  */
 
 Qid root_qid;
