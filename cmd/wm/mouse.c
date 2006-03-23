@@ -29,14 +29,6 @@ xy2align(XRectangle *rect, int x, int y)
 		return SEAST;
 	else if(sw)
 		return SWEST;
-	else if(w)
-		return WEST;
-	else if(e)
-		return EAST;
-	else if(n)
-		return NORTH;
-	else if(s)
-		return SOUTH;
 
 	return CENTER;
 }
@@ -301,7 +293,6 @@ snap_resize(XRectangle * r, XRectangle * o, Align align,
 	/* x */
 	switch (align) {
 	case NEAST:
-	case EAST:
 	case SEAST:
 		w = px - r->x + (o->width - ox);
 		if(w < 10)
@@ -338,7 +329,6 @@ snap_resize(XRectangle * r, XRectangle * o, Align align,
 		}
 		break;
 	case NWEST:
-	case WEST:
 	case SWEST:
 		w = r->width + r->x - px + ox;
 		if(w < 10)
@@ -387,7 +377,6 @@ snap_resize(XRectangle * r, XRectangle * o, Align align,
 	pend = 0;
 	switch (align) {
 	case SWEST:
-	case SOUTH:
 	case SEAST:
 		h = py - r->y + (o->height - oy);
 		if(h < 10)
@@ -424,7 +413,6 @@ snap_resize(XRectangle * r, XRectangle * o, Align align,
 		}
 		break;
 	case NWEST:
-	case NORTH:
 	case NEAST:
 		h = r->height + r->y - py + oy;
 		if(h < 10)
