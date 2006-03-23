@@ -300,7 +300,6 @@ main(int argc, char *argv[])
 	tag = nil;
 	client = nil;
 
-	expand[0] = 0;
 	key = nil;
 	keysz = nkey = 0;
 	label = nil;

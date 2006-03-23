@@ -35,15 +35,6 @@ wmiir write /def/rules <<EOF
 /Gimp.*:.*/ -> ~
 EOF
 
-# BAR CONFIGURATION
-wmiir create /bar/0tag
-xwrite /bar/0tag/colors $WMII_SELCOLORS
-wmiir create /bar/0tags
-xwrite /bar/0tags/colors $WMII_NORMCOLORS
-wmiir create /bar/spare
-xwrite /bar/spare/colors $WMII_SELCOLORS
-xwrite /bar/expand spare
-
 # MISC
 xsetroot -solid '#0b1014'
 status &
@@ -104,10 +95,6 @@ do
 		then
 			exit
 		fi;;
-	FocusTag)
-		xwrite /bar/0tag/data $1;;
-	UpdateTags)
-		xwrite /bar/0tags/data $1;;
 	Key)
 		case "$1" in
 		$MODKEY-Control-c)

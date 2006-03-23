@@ -44,7 +44,6 @@ enum {
 	FsDGclient,
 	FsDbar,
 	FsDlabel,
-	FsFexpand,
 	FsFdata,
 	FsFcolors,
 	FsFfont,
@@ -172,7 +171,6 @@ unsigned int nkey;
 Label **label;
 unsigned int nlabel;
 unsigned int labelsz;
-char expand[256];
 char **tag;
 unsigned int ntag;
 unsigned int tagsz;

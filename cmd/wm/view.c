@@ -63,8 +63,6 @@ update_frame_selectors(View *v)
 void
 focus_view(View *v)
 {
-	char buf[256];
-	char name[256];
 	unsigned int i;
 
 	if(!nview)
@@ -89,9 +87,7 @@ focus_view(View *v)
 				XMoveWindow(dpy, client[i]->framewin,
 						2 * rect.width + f->rect.x, f->rect.y);
 		}
-	tags2str(name, sizeof(name), v->tag, v->ntag);
-	snprintf(buf, sizeof(buf), "FocusTag %s\n", name);
-	write_event(buf);
+	draw_bar();
 	XSync(dpy, False);
 	XUngrabServer(dpy);
 }

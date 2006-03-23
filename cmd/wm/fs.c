@@ -41,7 +41,6 @@ static char Ebadvalue[] = "bad value";
  * /def/keys		FsFkeys			keys
  * /tags			FsFtags
  * /bar/			FsDbar
- * /bar/expand		FsFexpand		id of expandable label
  * /bar/lab/		FsDlabel
  * /bar/lab/data	FsFdata			<arbitrary data which gets displayed>
  * /bar/lab/colors	FsFcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
@@ -191,11 +190,6 @@ qid2name(Qid *qid)
 			return nil;
 		return "data";
 		break;
-	case FsFexpand:
-		if(i1 == -1)
-			return nil;
-		return "expand";
-		break;
 	case FsFctl: return "ctl"; break;
 	case FsFborder: return "border"; break;
 	case FsFgeom:
@@ -261,8 +255,6 @@ name2type(char *name, unsigned char dir_type)
 		return FsFborder;
 	if(!strncmp(name, "geom", 5))
 		return FsFgeom;
-	if(!strncmp(name, "expand", 7))
-		return FsFexpand;
 	if(!strncmp(name, "colors", 7))
 		return FsFcolors;
 	if(!strncmp(name, "selcolors", 10))
@@ -413,11 +405,6 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			return -1;
 		goto Mkfile;
 		break;
-	case FsFexpand:
-		if(dir_type != FsDbar)
-			return -1;
-		goto Mkfile;
-		break;
 	case FsFborder:
 	case FsFfont:
 	case FsFrules:
@@ -546,9 +533,6 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		if(dir_type == FsDview)
 			return mkstat(stat, dir, wname, strlen(def.tag), DMREAD);
 		break;
-	case FsFexpand:
-		return mkstat(stat, dir, wname, strlen(expand), DMREAD | DMWRITE);
-		break;
 	case FsFdata:
 		return mkstat(stat, dir, wname, (dir_i1 == nlabel) ? 0 : strlen(label[dir_i1]->data), DMREAD | DMWRITE);
 		break;
@@ -651,8 +635,6 @@ xcreate(IXPConn *c, Fcall *fcall)
 	type = qpath_type(m->qid.path);
 	switch(type) {
 	case FsDbar:
-		if(!strncmp(fcall->name, "expand", 7))
-			return "illegal file name";
 		get_label(fcall->name);
 		break;
 	default:
@@ -761,7 +743,6 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDbar:
 			/* jump to offset */
-			len = type2stat(&stat, "expand", &m->qid);
 			for(i = 0; i < nlabel; i++) {
 				len += type2stat(&stat, label[i]->name, &m->qid);
 				if(len <= fcall->offset)
@@ -916,8 +897,6 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsDbar:
-			fcall->count = type2stat(&stat, "expand", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			for(i = 0; i < nlabel; i++) {
 				len = type2stat(&stat, label[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
@@ -1074,10 +1053,6 @@ xread(IXPConn *c, Fcall *fcall)
 				}
 				break;
 			}
-			break;
-		case FsFexpand:
-			fcall->count = strlen(expand);
-			memcpy(p, expand, fcall->count);
 			break;
 		case FsFdata:
 			if(i1 >= nlabel)
@@ -1267,11 +1242,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 			else
 				resize_client(f->client, &f->rect, False);
 		}
-		break;
-	case FsFexpand:
-		memcpy(expand, fcall->data, fcall->count);
-		expand[fcall->count] = 0;
-		draw_bar();
 		break;
 	case FsFdata:
 		len = fcall->count;

@@ -48,8 +48,6 @@ void
 update_tags()
 {
 	unsigned int i, j;
-	char buf[1024];
-
 	for(i = 0; i < ntag; i++) {
 		free(tag[i]);
 		tag[i] = nil;
@@ -67,15 +65,6 @@ update_tags()
 			}
 		}
 	}
-
-	cext_strlcpy(buf, "UpdateTags ", sizeof(buf));
-	for(i = 0; i < ntag; i++) {
-		cext_strlcat(buf, tag[i], sizeof(buf) - strlen(buf));
-		if(i + 1 < ntag)
-			cext_strlcat(buf, "+", sizeof(buf) - strlen(buf));
-	}
-	cext_strlcat(buf, "\n", sizeof(buf) - strlen(buf));
-	write_event(buf);
 
 	for(i = 0; nview && (i < nclient); i++) {
 		for(j = 0; j < nview; j++) {
