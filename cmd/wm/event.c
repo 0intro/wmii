@@ -69,19 +69,6 @@ handle_buttonpress(XEvent *e)
 			}
 	}
 	else if((c = win2clientframe(ev->window))) {
-		if(ev->button == Button1) {
-			if(sel_client() != c) {
-				focus(c);
-				return;
-			}
-		}
-		if(c->nframe) {
-			snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
-					frame2index(c->frame[c->sel]) + 1, ev->button);
-			write_event(buf, True);
-		}
-	}
-	else if((c = win2client(ev->window))) {
 		ev->state &= valid_mask;
 		if(ev->state & Mod1Mask) {
 			focus(c);
@@ -102,7 +89,6 @@ handle_buttonpress(XEvent *e)
 		}
 		else if(ev->button == Button1)
 			focus(c);
-
 		if(c->nframe) {
 			snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
 					frame2index(c->frame[c->sel]) + 1, ev->button);

@@ -87,12 +87,12 @@ focus_client(Client *c)
 	f->area->view->sel = i;
 	f->area->sel = frame2index(f);
 	if(old && (old != c)) {
-		grab_mouse(old->win, AnyModifier, Button1);
+		grab_mouse(old->framewin, AnyModifier, Button1);
 		draw_client(old);
 	}
-	ungrab_mouse(c->win, AnyModifier, AnyButton);
-	grab_mouse(c->win, Mod1Mask, Button1);
-	grab_mouse(c->win, Mod1Mask, Button3);
+	ungrab_mouse(c->framewin, AnyModifier, AnyButton);
+	grab_mouse(c->framewin, Mod1Mask, Button1);
+	grab_mouse(c->framewin, Mod1Mask, Button3);
 
 	restack_view(f->area->view);
 
