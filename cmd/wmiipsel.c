@@ -61,10 +61,10 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s", "wmiipsel: cannot open display\n");
 		exit(1);
 	}
-	xa_clip_string = XInternAtom(dpy, "PLUMB_STRING", False);
+	xa_clip_string = XInternAtom(dpy, "WMII_PSEL_STRING", False);
 	w = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 10, 10, 200, 200,
 			1, CopyFromParent, CopyFromParent);
-	while(1 && !pdone) {
+	while(!pdone) {
 		XConvertSelection(dpy, XA_PRIMARY, XA_STRING, xa_clip_string,
 				w, CurrentTime);
 		XFlush(dpy);
@@ -84,7 +84,4 @@ main(int argc, char **argv)
 		}
 	}
 	return 0;
-	/*
-	 * XDestroyWindow(dpy, w); XCloseDisplay(dpy); return 1;
-	 */
 }
