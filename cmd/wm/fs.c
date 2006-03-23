@@ -1486,7 +1486,7 @@ write_event(char *event, Bool enqueue)
 			written++;
 		}
 	}
-	if(!written) {
+	if(enqueue && !written) {
 		queue = (char **)cext_array_attach((void **)queue, strdup(event), sizeof(char *), &queuesz);
 		nqueue++;
 	}
