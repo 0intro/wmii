@@ -947,8 +947,6 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDdef:
 			fcall->count = type2stat(&stat, "border", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			fcall->count += type2stat(&stat, "snap", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "selcolors", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "normcolors", &m->qid);
