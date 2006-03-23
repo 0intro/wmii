@@ -166,7 +166,7 @@ name2label(const char *name)
 	char buf[256];
 	unsigned int i;
 
- 	cext_strlcpy(buf, name, sizeof(buf));	
+ 	cext_strlcpy(buf, name, sizeof(buf));
 	for(i = 0; i < nlabel; i++)
 		if(!strncmp(label[i]->name, name, sizeof(label[i]->name)))
 			return label[i];

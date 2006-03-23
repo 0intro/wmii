@@ -205,7 +205,7 @@ handle_key_seq(Window w, Key **done, unsigned int ndone)
 	unsigned long mod;
 	KeyCode key;
 	Key **found = nil;
-	unsigned int nfound = 0; 
+	unsigned int nfound = 0;
 	char buf[128];
 
 	next_keystroke(&mod, &key);
@@ -218,7 +218,7 @@ handle_key_seq(Window w, Key **done, unsigned int ndone)
 		case 0:
 			XBell(dpy, 0);
 			return; /* grabbed but not found */
-		case 1: 
+		case 1:
 			if(!found[0]->next) {
 				snprintf(buf, sizeof(buf), "Key %s\n", found[0]->name);
 				write_event(buf, True);
@@ -242,7 +242,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 	case 0:
 		XBell(dpy, 0);
 		return; /* grabbed but not found */
-	case 1: 
+	case 1:
 		if(!found[0]->next) {
 			snprintf(buf, sizeof(buf), "Key %s\n", found[0]->name);
 			write_event(buf, True);
