@@ -52,7 +52,6 @@ enum {
 	FsFnormcolors,
 	FsFkeys,
 	FsFborder,
-	FsFsnap,
 	FsFbar,
 	FsFgeom,
 	FsFevent,
@@ -67,12 +66,6 @@ enum {
 
 #define MAX_TAGS		8
 #define MAX_TAGLEN		32
-
-#define DEF_BORDER		2
-#define DEF_SNAP		20
-
-#define ROOT_MASK		SubstructureRedirectMask
-#define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask)
 #define WM_PROTOCOL_DELWIN	1
 
 typedef struct View View;

@@ -161,6 +161,8 @@ init_screen()
     rect.x = rect.y = 0;
     rect.width = DisplayWidth(dpy, screen);
     rect.height = DisplayHeight(dpy, screen);
+
+	def.snap = rect.height / 50;
 }
 
 /*
@@ -261,7 +263,7 @@ main(int argc, char *argv[])
     other_wm_running = 0;
     XSetErrorHandler(startup_error_handler);
     /* this causes an error if some other WM is running */
-    XSelectInput(dpy, root, ROOT_MASK);
+    XSelectInput(dpy, root, SubstructureRedirectMask);
     XSync(dpy, False);
 
     if(other_wm_running) {
@@ -311,8 +313,7 @@ main(int argc, char *argv[])
 	def.keys = nil;
 	def.keyssz = 0;
 	def.font = strdup(BLITZ_FONT);
-	def.border = DEF_BORDER;
-	def.snap = DEF_SNAP;
+	def.border = 2;
 	if(!strlen(def.tag))
 		cext_strlcpy(def.tag, "1", sizeof(def.tag));
 	cext_strlcpy(def.selcolor, BLITZ_SELCOLORS, sizeof(def.selcolor));
@@ -326,7 +327,7 @@ main(int argc, char *argv[])
 	init_lock_modifiers();
     init_screen();
 
-	wa.event_mask = ROOT_MASK;
+	wa.event_mask = SubstructureRedirectMask;
 	wa.cursor = cursor[CurNormal];
 	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &wa);
 	

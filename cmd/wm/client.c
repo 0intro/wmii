@@ -10,6 +10,8 @@
 
 #include "wm.h"
 
+#define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask)
+
 Client *
 alloc_client(Window w, XWindowAttributes *wa)
 {

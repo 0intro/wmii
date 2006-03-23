@@ -36,7 +36,6 @@ static unsigned int nqueue = 0, queuesz = 0;
  * / 					FsDroot
  * /def/				FsDdef
  * /def/border			FsFborder		0..n
- * /def/snap 			FsFsnap  		0..n
  * /def/font			FsFfont  		xlib font name
  * /def/selcolors		FsFselcolors	sel color
  * /def/normcolors		FsFnormcolors 	normal colors
@@ -201,7 +200,6 @@ qid2name(Qid *qid)
 			break;
 		case FsFctl: return "ctl"; break;
 		case FsFborder: return "border"; break;
-		case FsFsnap: return "snap"; break;
 		case FsFgeom:
 			if((qid->dir_type == FsDclient) && (i1 == -1 || i2 == -1 || i3 == -1))
 				return nil;
@@ -257,8 +255,6 @@ name2type(char *name, unsigned char dir_type)
 		return FsFctl;
 	if(!strncmp(name, "event", 6))
 		return FsFevent;
-	if(!strncmp(name, "snap", 5))
-		return FsFsnap;
 	if(!strncmp(name, "class", 5))
 		return FsFclass;
 	if(!strncmp(name, "name", 5))
@@ -429,7 +425,6 @@ mkqid(Qid *dir, char *wname, Qid *new)
 	case FsFrules:
 	case FsFselcolors:
 	case FsFnormcolors:
-	case FsFsnap:
 	case FsFkeys:
 		if(dir_type != FsDdef) 
 			return -1;
@@ -511,10 +506,6 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		}
 		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
         break;
-    case FsFsnap:
-		snprintf(buf, sizeof(buf), "%d", def.snap);
-		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
-		break;
     case FsFclass:
 		if(dir_type == FsDclient) {
 			f = view[dir_i1]->area[dir_i2]->frame[dir_i3];
@@ -1049,11 +1040,6 @@ xread(IXPConn *c, Fcall *fcall)
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
-		case FsFsnap:
-			snprintf(buf, sizeof(buf), "%u", def.snap);
-			fcall->count = strlen(buf);
-			memcpy(p, buf, fcall->count);
-			break;
 		case FsFclass:
 			if(m->qid.dir_type == FsDclient) {
 				if((fcall->count = strlen(view[i1]->area[i2]->frame[i3]->client->classinst)))
@@ -1253,16 +1239,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		default:
 			break;
 		}
-		break;
-	case FsFsnap:
-		if(fcall->count > sizeof(buf))
-			return Ebadvalue;
-		memcpy(buf, fcall->data, fcall->count);
-		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 0, 0xffff, &err);
-		if(err)
-			return Ebadvalue;
-		def.snap = i;
 		break;
 	case FsFborder:
 		if(fcall->count > sizeof(buf))
