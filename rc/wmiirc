@@ -36,6 +36,10 @@ wmiir write /def/rules <<EOF
 EOF
 
 # BAR CONFIGURATION
+wmiir create /bar/0tag
+xwrite /bar/0tag/colors $WMII_SELCOLORS
+wmiir create /bar/0tags
+xwrite /bar/0tags/colors $WMII_NORMCOLORS
 wmiir create /bar/spare
 xwrite /bar/spare/colors $WMII_SELCOLORS
 xwrite /bar/expand spare
@@ -100,27 +104,10 @@ do
 		then
 			exit
 		fi;;
-	NewTag)
-		wmiir create /bar/$1
-		if test "X$1" = "X$oldtag"
-		then
-			xwrite /bar/$1/colors $WMII_NORMCOLORS
-		else
-			xwrite /bar/$1/colors $WMII_SELCOLORS
-		fi
-		xwrite /bar/$1/data $1;;
-	RemoveTag)
-		wmiir remove /bar/$1;;
 	FocusTag)
-		if test -n "$oldtag"
-		then
-			xwrite /bar/$oldtag/colors $WMII_SELCOLORS
-		fi
-		xwrite /bar/$1/data $1
-		xwrite /bar/$1/colors $WMII_NORMCOLORS
-		oldtag=$1;;
-	LabelClick)
-		xwrite /ctl view $1;;
+		xwrite /bar/0tag/data $1;;
+	UpdateTags)
+		xwrite /bar/0tags/data $1;;
 	Key)
 		case "$1" in
 		$MODKEY-Control-c)

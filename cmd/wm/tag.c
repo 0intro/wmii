@@ -9,11 +9,11 @@
 #include "wm.h"
 
 Bool
-istag(char **tags, unsigned int ntags, char *tag)
+istag(char *t)
 {
 	unsigned int i;
-	for(i = 0; i < ntags; i++)
-		if(!strncmp(tags[i], tag, strlen(tag)))
+	for(i = 0; i < ntag; i++)
+		if(!strncmp(tag[i], t, strlen(t)))
 			return True;
 	return False;
 }
@@ -48,50 +48,34 @@ void
 update_tags()
 {
 	unsigned int i, j;
-	char buf[256];
-	char **newtag = nil;
-	unsigned int newtagsz = 0, nnewtag = 0;
+	char buf[1024];
+
+	for(i = 0; i < ntag; i++) {
+		free(tag[i]);
+		tag[i] = nil;
+	}
+	ntag = 0;
 
 	for(i = 0; i < nclient; i++) {
 		for(j = 0; j < client[i]->ntag; j++) {
 			if(!strncmp(client[i]->tag[j], "~", 2)) /* magic floating tag */
 				continue;
-			if(!istag(newtag, nnewtag, client[i]->tag[j])) {
-				newtag = (char **)cext_array_attach((void **)newtag, strdup(client[i]->tag[j]),
-							sizeof(char *), &newtagsz);
-				nnewtag++;
+			if(!istag(client[i]->tag[j])) {
+				tag = (char **)cext_array_attach((void **)tag, strdup(client[i]->tag[j]),
+							sizeof(char *), &tagsz);
+				ntag++;
 			}
 		}
 	}
 
-	for(i = 0; i < nview; i++)
-		if(hasclient(view[i])) {
-		   	tags2str(buf, sizeof(buf), view[i]->tag, view[i]->ntag);
-			if(!istag(newtag, nnewtag, buf)) {
-				newtag = (char **)cext_array_attach((void **)newtag, strdup(buf),
-							sizeof(char *), &newtagsz);
-				nnewtag++;
-			}
-		}
-
-	/* propagate tagging events */
-	for(i = 0; i < nnewtag; i++)
-		if(!istag(tag, ntag, newtag[i])) {
-			snprintf(buf, sizeof(buf), "NewTag %s\n", newtag[i]);
-			write_event(buf, True);
-		}
+	cext_strlcpy(buf, "UpdateTags ", sizeof(buf));
 	for(i = 0; i < ntag; i++) {
-		if(!istag(newtag, nnewtag, tag[i])) {
-			snprintf(buf, sizeof(buf), "RemoveTag %s\n", tag[i]);
-			write_event(buf, True);
-		}
-		free(tag[i]);
+		cext_strlcat(buf, tag[i], sizeof(buf) - strlen(buf));
+		if(i + 1 < ntag)
+			cext_strlcat(buf, "+", sizeof(buf) - strlen(buf));
 	}
-
-	free(tag);
-	tag = newtag;
-	ntag = nnewtag;
-	tagsz = newtagsz;
+	cext_strlcat(buf, "\n", sizeof(buf) - strlen(buf));
+	write_event(buf);
 
 	for(i = 0; nview && (i < nclient); i++) {
 		for(j = 0; j < nview; j++) {

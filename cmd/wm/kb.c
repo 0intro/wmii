@@ -221,7 +221,7 @@ handle_key_seq(Window w, Key **done, unsigned int ndone)
 		case 1:
 			if(!found[0]->next) {
 				snprintf(buf, sizeof(buf), "Key %s\n", found[0]->name);
-				write_event(buf, True);
+				write_event(buf);
 				break;
 			}
 		default:
@@ -245,7 +245,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 	case 1:
 		if(!found[0]->next) {
 			snprintf(buf, sizeof(buf), "Key %s\n", found[0]->name);
-			write_event(buf, True);
+			write_event(buf);
 			break;
 		}
 	default:

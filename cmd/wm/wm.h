@@ -257,7 +257,7 @@ Client *win2clientframe(Window w);
 /* fs.c */
 unsigned long long mkqpath(unsigned char type, unsigned short pg,
 		unsigned short area, unsigned short cl);
-void write_event(char *event, Bool enqueue);
+void write_event(char *event);
 void new_ixp_conn(IXPConn *c);
 
 /* kb.c */
@@ -280,7 +280,7 @@ void match_tags(Client *c);
 unsigned int str2tags(char tags[MAX_TAGS][MAX_TAGLEN], const char *stags);
 void tags2str(char *stags, unsigned int stagsz,
 		char tags[MAX_TAGS][MAX_TAGLEN], unsigned int ntags);
-Bool istag(char **tags, unsigned int ntags, char *tag);
+Bool istag(char *t);
 void update_tags();
 
 /* view.c */

@@ -91,7 +91,7 @@ focus_view(View *v)
 		}
 	tags2str(name, sizeof(name), v->tag, v->ntag);
 	snprintf(buf, sizeof(buf), "FocusTag %s\n", name);
-	write_event(buf, True);
+	write_event(buf);
 	XSync(dpy, False);
 	XUngrabServer(dpy);
 }
@@ -188,13 +188,13 @@ select_view(char *arg)
 	if(!v)
 		return;
 	cext_strlcpy(def.tag, arg, sizeof(def.tag));
-	if(!istag(tag, ntag, arg)) {
+	if(!istag(arg)) {
 		char buf[256];
 		tag = (char **)cext_array_attach((void **)tag, strdup(arg),
 				sizeof(char *), &tagsz);
 		ntag++;
 		snprintf(buf, sizeof(buf), "NewTag %s\n", arg);
-		write_event(buf, True);
+		write_event(buf);
 	}
 	focus_view(v);
 
