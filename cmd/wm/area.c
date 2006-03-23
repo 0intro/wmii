@@ -9,18 +9,18 @@
 #include "wm.h"
 
 Area *
-alloc_area(Tag *t)
+alloc_area(View *v)
 {
 	static unsigned short id = 1;
 	Area *a = cext_emallocz(sizeof(Area));
-	a->tag = t;
+	a->view = v;
 	a->id = id++;
 	a->rect = rect;
 	a->rect.height = rect.height - brect.height;
-	t->area = (Area **)cext_array_attach((void **)t->area, a,
-			sizeof(Area *), &t->areasz);
-	t->sel = t->narea;
-	t->narea++;
+	v->area = (Area **)cext_array_attach((void **)v->area, a,
+			sizeof(Area *), &v->areasz);
+	v->sel = v->narea;
+	v->narea++;
 	return a;
 }
 
@@ -28,20 +28,20 @@ void
 destroy_area(Area *a)
 {
 	unsigned int i;
-	Tag *t = a->tag;
+	View *v = a->view;
 	if(a->nframe)
 		return;
 	if(a->frame)
 		free(a->frame);
-	if(t->revert == area2index(a))
-		t->revert = 0;
+	if(v->revert == area2index(a))
+		v->revert = 0;
 	for(i = 0; i < nclient; i++)
 		if(client[i]->revert == a)
 			client[i]->revert = 0;
-	cext_array_detach((void **)t->area, a, &t->areasz);
-	t->narea--;
-	if(t->sel > 1)
-		t->sel--;
+	cext_array_detach((void **)v->area, a, &v->areasz);
+	v->narea--;
+	if(v->sel > 1)
+		v->sel--;
 	free(a);
 }
 
@@ -49,19 +49,19 @@ int
 area2index(Area *a)
 {
 	int i;
-	Tag *t = a->tag;
-	for(i = 0; i < t->narea; i++)
-		if(t->area[i] == a)
+	View *v = a->view;
+	for(i = 0; i < v->narea; i++)
+		if(v->area[i] == a)
 			return i;
 	return -1;
 }
 
 int
-aid2index(Tag *t, unsigned short id)
+aid2index(View *v, unsigned short id)
 {
 	int i;
-	for(i = 0; i < t->narea; i++)
-		if(t->area[i]->id == id)
+	for(i = 0; i < v->narea; i++)
+		if(v->area[i]->id == id)
 			return i;
 	return -1;
 }
@@ -70,29 +70,29 @@ void
 select_area(Area *a, char *arg)
 {
 	Area *new;
-	Tag *t = a->tag;
+	View *v = a->view;
 	int i = area2index(a);
 	if(i == -1)
 		return;
 	if(i)
-		t->revert = i;
+		v->revert = i;
 	if(!strncmp(arg, "toggle", 7)) {
 		if(i)
 			i = 0;
-		else if(t->revert > 0 && t->revert < t->narea)
-			i = t->revert;
+		else if(v->revert > 0 && v->revert < v->narea)
+			i = v->revert;
 		else
 			i = 1;
 	} else if(!strncmp(arg, "prev", 5)) {
 		if(i>0) {
 			if(i == 1)
-				i = t->narea - 1;
+				i = v->narea - 1;
 			else
 				i--;
 		}
 	} else if(!strncmp(arg, "next", 5)) {
 		if(i>0) {
-			if(i + 1 < t->narea)
+			if(i + 1 < v->narea)
 				i++;
 			else
 				i = 1;
@@ -100,14 +100,14 @@ select_area(Area *a, char *arg)
 	}
 	else {
 		const char *errstr;
-		i = cext_strtonum(arg, 0, t->narea - 1, &errstr);
+		i = cext_strtonum(arg, 0, v->narea - 1, &errstr);
 		if(errstr)
 			return;
 	}
-	new = t->area[i];
+	new = v->area[i];
 	if(new->nframe)
 		focus_client(new->frame[new->sel]->client);
-	t->sel = i;
+	v->sel = i;
 	for(i = 0; i < a->nframe; i++)
 		draw_client(a->frame[i]->client);
 }
@@ -127,7 +127,7 @@ attach_toarea(Area *a, Client *c)
 	static unsigned short id = 1;
 	Frame *f;
    
-	if(clientoftag(a->tag, c))
+	if(clientoftag(a->view, c))
 		return;
 	f = cext_emallocz(sizeof(Frame));
 	f->id = id++;
@@ -153,7 +153,7 @@ void
 detach_fromarea(Area *a, Client *c)
 {
 	Frame *f;
-	Tag *t = a->tag;
+	View *v = a->view;
 	int i;
 
 	for(i = 0; i < c->nframe; i++)
@@ -176,11 +176,11 @@ detach_fromarea(Area *a, Client *c)
 		arrange_area(a);
 	else {
 		if(i) {
-		    if(t->narea > 2)
+		    if(v->narea > 2)
 				destroy_area(a);
-			else if(!a->nframe && t->area[0]->nframe)
-				t->sel = 0; /* focus floating area if it contains something */
-			arrange_tag(t, True);
+			else if(!a->nframe && v->area[0]->nframe)
+				v->sel = 0; /* focus floating area if it contains something */
+			arrange_tag(v, True);
 		}
 		else if(!i && !a->nframe) {
 			if(c->trans) {
@@ -188,12 +188,12 @@ detach_fromarea(Area *a, Client *c)
 				Client *cl = win2client(c->trans);
 				if(cl && cl->nframe) {
 				   a = cl->frame[cl->sel]->area;
-				   if(a->tag == t)
-					   t->sel = area2index(a);
+				   if(a->view == v)
+					   v->sel = area2index(a);
 				}
 			}
-			else if(t->area[1]->nframe)
-				t->sel = 1; /* focus first col as fallback */
+			else if(v->area[1]->nframe)
+				v->sel = 1; /* focus first col as fallback */
 		}
 	}
 }
@@ -352,17 +352,17 @@ Fallthrough:
 }
 
 void
-arrange_tag(Tag *t, Bool updategeometry)
+arrange_tag(View *v, Bool updategeometry)
 {
 	unsigned int i;
 	unsigned int width;
 
-	if(t->narea == 1)
+	if(v->narea == 1)
 		return;
 	
-	width = rect.width / (t->narea - 1);
-	for(i = 1; i < t->narea; i++) {
-		Area *a = t->area[i];
+	width = rect.width / (v->narea - 1);
+	for(i = 1; i < v->narea; i++) {
+		Area *a = v->area[i];
 		if(updategeometry) {
 			a->rect.height = rect.height - brect.height;
 			a->rect.x = (i - 1) * width;
@@ -389,16 +389,16 @@ static void
 drop_resize(Frame *f, XRectangle *new)
 {
 	Area *west = nil, *east = nil, *a = f->area;
-	Tag *t = a->tag;
+	View *v = a->view;
 	Frame *north = nil, *south = nil;
 	unsigned int i;
 	unsigned int min = 2 * bar_height();
 	Bool horiz_resize = False;
 
-	for(i = 1; (i < t->narea) && (t->area[i] != a); i++);
+	for(i = 1; (i < v->narea) && (v->area[i] != a); i++);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
-	west = (i > 1) ? t->area[i - 1] : nil;
-	east = i + 1 < t->narea ? t->area[i + 1] : nil;
+	west = (i > 1) ? v->area[i - 1] : nil;
+	east = i + 1 < v->narea ? v->area[i + 1] : nil;
 
 	for(i = 0; (i < a->nframe) && (a->frame[i] != f); i++);
 	north = i ? a->frame[i - 1] : nil;
@@ -473,15 +473,15 @@ static void
 drop_moving(Frame *f, XRectangle *new, XPoint * pt)
 {
 	Area *tgt = nil, *src = f->area;
-	Tag *t = src->tag;
+	View *v = src->view;
 	unsigned int i;
 
 	if(!pt || src->nframe < 2)
 		return;
 
-	for(i = 1; (i < t->narea) &&
-			!blitz_ispointinrect(pt->x, pt->y, &t->area[i]->rect); i++);
-	if((tgt = ((i < t->narea) ? t->area[i] : nil))) {
+	for(i = 1; (i < v->narea) &&
+			!blitz_ispointinrect(pt->x, pt->y, &v->area[i]->rect); i++);
+	if((tgt = ((i < v->narea) ? v->area[i] : nil))) {
 		if(tgt != src) {
 			send2area(tgt, src, f->client);
 			arrange_area(tgt);

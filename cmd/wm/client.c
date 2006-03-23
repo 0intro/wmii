@@ -82,7 +82,7 @@ focus_client(Client *c)
 	Frame *f = c->frame[c->sel];
 	int i = area2index(f->area);
 
-	f->area->tag->sel = i;
+	f->area->view->sel = i;
 	f->area->sel = frame2index(f);
 	if(old && (old != c)) {
 		grab_mouse(old->win, AnyModifier, Button1);
@@ -92,7 +92,7 @@ focus_client(Client *c)
 	grab_mouse(c->win, Mod1Mask, Button1);
 	grab_mouse(c->win, Mod1Mask, Button3);
 
-	restack_tag(f->area->tag);
+	restack_tag(f->area->view);
 
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	draw_client(c);
@@ -317,7 +317,7 @@ gravitate(Client *c, Bool invert)
 void
 manage_client(Client *c)
 {
-	Tag *t;
+	View *v;
 	Client *trans;
 	unsigned int i;
 
@@ -331,16 +331,16 @@ manage_client(Client *c)
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 
-	t = ntag ? tag[sel] : alloc_tag(def.tag);
+	v = nview ? view[sel] : alloc_tag(def.tag);
 	if(!c->ntag) {
-		for(i = 0; i < t->ntag; i++) {
-			cext_strlcpy(c->tag[i], t->tag[i], sizeof(c->tag[i]));
+		for(i = 0; i < v->ntag; i++) {
+			cext_strlcpy(c->tag[i], v->tag[i], sizeof(c->tag[i]));
 			c->ntag++;
 		}
 	}
 	else if((c->ntag == 1) && !strncmp(c->tag[0], "~", 2)) {
-		for(i = 0; i < t->ntag && i + 1 < MAX_TAGS; i++) {
-			cext_strlcpy(c->tag[i + 1], t->tag[i], sizeof(c->tag[i + 1]));
+		for(i = 0; i < v->ntag && i + 1 < MAX_TAGS; i++) {
+			cext_strlcpy(c->tag[i + 1], v->tag[i], sizeof(c->tag[i + 1]));
 			c->ntag++;
 		}
 	}
@@ -363,8 +363,8 @@ destroy_client(Client *c)
 	XGrabServer(dpy);
 	XSetErrorHandler(dummy_error_handler);
 
-	for(i = 0; i < ntag; i++)
-		detach_fromtag(tag[i], c);
+	for(i = 0; i < nview; i++)
+		detach_fromtag(view[i], c);
 
 	unmap_client(c);
 
@@ -381,7 +381,7 @@ destroy_client(Client *c)
 	update_tags();
 	free(c);
 
-	if((cl = sel_client_of_tag(tag[sel])))
+	if((cl = sel_client_of_tag(view[sel])))
 		focus_client(cl);
 
 	XSync(dpy, False);
@@ -392,7 +392,7 @@ destroy_client(Client *c)
 Client *
 sel_client()
 {
-	return ntag ? sel_client_of_tag(tag[sel]) : nil;
+	return nview ? sel_client_of_tag(view[sel]) : nil;
 }
 
 static void
@@ -445,7 +445,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		match_sizehints(c);
 
 	if(!ignore_xcall) {
-		if(f->area->tag == tag[sel])
+		if(f->area->view == view[sel])
 			XMoveResizeWindow(dpy, c->framewin, f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);
 		else
@@ -498,7 +498,7 @@ send2area_client(Client *c, char *arg)
 	const char *errstr;
 	Frame *f = c->frame[c->sel];
 	Area *to, *a = f->area;
-	Tag *t = a->tag;
+	View *v = a->view;
 	int i = area2index(a);
 
 	if(i == -1)
@@ -506,34 +506,34 @@ send2area_client(Client *c, char *arg)
 	if(!strncmp(arg, "new", 4) && i) {
 		if(a->nframe == 1)
 			return;
-		to = alloc_area(t);
-		arrange_tag(t, True);
+		to = alloc_area(v);
+		arrange_tag(v, True);
 	}
 	else if(!strncmp(arg, "prev", 5) && i) {
 		if(i == 1)
-			to = t->area[t->narea - 1];
+			to = v->area[v->narea - 1];
 		else
-			to = t->area[i - 1];
+			to = v->area[i - 1];
 	}
 	else if(!strncmp(arg, "next", 5) && i) {
-		if(i < t->narea - 1)
-			to = t->area[i + 1];
+		if(i < v->narea - 1)
+			to = v->area[i + 1];
 		else
-			to = t->area[1];
+			to = v->area[1];
 	}
 	else if(!strncmp(arg, "toggle", 7)) {
 		if(i)
-			to = t->area[0];
-		else if(c->revert && c->revert != t->area[0])
+			to = v->area[0];
+		else if(c->revert && c->revert != v->area[0])
 			to = c->revert;
 		else
-			to = t->area[1];
+			to = v->area[1];
 	}
 	else {
-		i = cext_strtonum(arg, 0, t->narea - 1, &errstr);
+		i = cext_strtonum(arg, 0, v->narea - 1, &errstr);
 		if(errstr)
 			return;
-		to = t->area[i];
+		to = v->area[i];
 	}
 	send2area(to, a, c);
 }
@@ -558,14 +558,14 @@ void
 focus(Client *c)
 {
 	Frame *f = c->nframe ? c->frame[c->sel] : nil;
-	Tag *t;
+	View *v;
 
 	if(!f)
 		return;
 
-	t = f->area->tag;
-	if(tag[sel] != t)
-		focus_tag(t);
+	v = f->area->view;
+	if(view[sel] != v)
+		focus_tag(v);
 	focus_client(c);
 }
 

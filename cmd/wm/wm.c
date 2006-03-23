@@ -296,8 +296,8 @@ main(int argc, char *argv[])
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
     init_x_event_handler();
 
-	nctag = ctagsz = ntag = nclient = tagsz = clientsz = sel = 0;
-    tag = nil;
+	nctag = ctagsz = nview = nclient = viewsz = clientsz = sel = 0;
+    view = nil;
 	ctag = nil;
 	client = nil;
 

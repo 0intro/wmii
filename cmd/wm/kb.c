@@ -182,14 +182,14 @@ emulate_key_press(unsigned long mod, KeyCode key)
 }
 
 static Key **
-match_keys(Key **t, unsigned int n, unsigned long mod, KeyCode keycode, Bool next, unsigned int *nres)
+match_keys(Key **keys, unsigned int n, unsigned long mod, KeyCode keycode, Bool next, unsigned int *nres)
 {
 	Key **result = nil;
 	unsigned int ressz = 0;
 	unsigned int i = 0;
 	*nres = 0;
 	for(i = 0; i < n; i++) {
-		Key *k = next ? t[i]->next : t[i];
+		Key *k = next ? keys[i]->next : keys[i];
 		if(k && (k->mod == mod) && (k->key == keycode)) {
 			result = (Key **)cext_array_attach((void **)result, k, sizeof(Key *), &ressz);
 			(*nres)++;

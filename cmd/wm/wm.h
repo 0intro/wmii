@@ -75,12 +75,12 @@ enum {
 #define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
 #define WM_PROTOCOL_DELWIN     1
 
-typedef struct Tag Tag;
+typedef struct View View;
 typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
-struct Tag {
+struct View {
 	char tag[MAX_TAGS][MAX_TAGLEN];
 	unsigned int ntag;
 	unsigned short id;
@@ -94,7 +94,7 @@ struct Tag {
 struct Area {
 	unsigned short id;
     Frame **frame;
-	Tag *tag;
+	View *view;
 	unsigned int framesz;
 	unsigned int sel;
 	unsigned int nframe;
@@ -166,9 +166,9 @@ typedef struct {
 } Default;
 
 /* global variables */
-Tag **tag;
-unsigned int ntag;
-unsigned int tagsz;
+View **view;
+unsigned int nview;
+unsigned int viewsz;
 unsigned int sel;
 Client **client;
 unsigned int nclient;
@@ -205,15 +205,15 @@ Cursor cursor[CurLast];
 unsigned int valid_mask, num_lock_mask;
 
 /* area.c */
-Area *alloc_area(Tag *t);
+Area *alloc_area(View *t);
 void destroy_area(Area *a);
 int area2index(Area *a);
-int aid2index(Tag *t, unsigned short id);
+int aid2index(View *t, unsigned short id);
 void select_area(Area *a, char *arg);
 void send2area(Area *to, Area *from, Client *c);
 void attach_toarea(Area *a, Client *c);
 void detach_fromarea(Area *a, Client *c);
-void arrange_tag(Tag *t, Bool updategeometry);
+void arrange_tag(View *t, Bool updategeometry);
 void arrange_area(Area *a);
 void resize_area(Client *c, XRectangle *r, XPoint *pt);
 int str2mode(char *arg);
@@ -284,21 +284,25 @@ void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 void match_tags(Client *c);
 
 /* tag.c */
-Tag *alloc_tag(char *name);
-void focus_tag(Tag *t);
-XRectangle *rectangles(Tag *t, Bool isfloat, unsigned int *num);
-int tid2index(unsigned short id);
-void select_tag(char *arg);
-int tag2index(Tag *t);
-void update_tags();
-Bool clientoftag(Tag *t, Client *c);
-void detach_fromtag(Tag *t, Client *c);
-void attach_totag(Tag *t, Client *c);
-Client *sel_client_of_tag(Tag *t);
-void restack_tag(Tag *t);
 unsigned int str2tags(char tags[MAX_TAGS][MAX_TAGLEN], const char *stags);
 void tags2str(char *stags, unsigned int stagsz,
 		 	  char tags[MAX_TAGS][MAX_TAGLEN], unsigned int ntags);
+Bool istag(char **tags, unsigned int ntags, char *tag);
+void update_tags();
+
+/* view */
+View *alloc_tag(char *name);
+void focus_tag(View *v);
+XRectangle *rectangles(View *v, Bool isfloat, unsigned int *num);
+int tid2index(unsigned short id);
+void select_tag(char *arg);
+int tag2index(View *v);
+Bool clientoftag(View *v, Client *c);
+void detach_fromtag(View *v, Client *c);
+void attach_totag(View *v, Client *c);
+Client *sel_client_of_tag(View *v);
+void restack_tag(View *v);
+Bool hasclient(View *v);
 
 /* wm.c */
 void scan_wins();

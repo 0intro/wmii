@@ -63,14 +63,14 @@ update_bar_geometry()
 			DefaultDepth(dpy, screen));
 	XSync(dpy, False);
 	draw_bar();
-	for(i = 0; i < ntag; i++) {
-		for(j = 1; j < tag[i]->narea; j++) {
-			Area *a = tag[i]->area[j];
+	for(i = 0; i < nview; i++) {
+		for(j = 1; j < view[i]->narea; j++) {
+			Area *a = view[i]->area[j];
 			a->rect.height = rect.height - brect.height;
 			arrange_area(a);
 		}
-		for(j = 0; j < tag[i]->area[0]->nframe; j++) {
-			Frame *f = tag[i]->area[0]->frame[j];
+		for(j = 0; j < view[i]->area[0]->nframe; j++) {
+			Frame *f = view[i]->area[0]->frame[j];
 			resize_client(f->client, &f->rect, False);
 		}
 	}
