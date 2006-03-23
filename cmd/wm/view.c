@@ -3,10 +3,8 @@
  * See LICENSE file for license details.
  */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <X11/Xatom.h>
 
 #include "wm.h"
 

@@ -1220,7 +1220,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		case FsDroot:
 			if(!strncmp(buf, "quit", 5))
 				srv.running = 0;
-			else if(!strncmp(buf, "view", 5))
+			else if(!strncmp(buf, "view ", 5))
 				select_view(&buf[5]);
 			else
 				return Enocommand;
