@@ -35,7 +35,7 @@ enum {
 
 /* 8-bit qid.path.type */
 enum {                          
-    FsDroot,
+	FsDroot,
 	FsDdef,
 	FsDview,
 	FsDarea,
@@ -43,13 +43,13 @@ enum {
 	FsDclient,
 	FsDGclient,
 	FsDbar,
-    FsDlabel,
+	FsDlabel,
 	FsFexpand,
-    FsFdata,
-    FsFcolors,
-    FsFfont,
-    FsFselcolors,
-    FsFnormcolors,
+	FsFdata,
+	FsFcolors,
+	FsFfont,
+	FsFselcolors,
+	FsFnormcolors,
 	FsFkeys,
 	FsFborder,
 	FsFsnap,
@@ -65,15 +65,15 @@ enum {
 	FsFmode
 };
 
-#define MAX_TAGS               8
-#define MAX_TAGLEN             32
+#define MAX_TAGS		8
+#define MAX_TAGLEN		32
 
-#define DEF_BORDER             3
-#define DEF_SNAP               20
+#define DEF_BORDER		3
+#define DEF_SNAP		20
 
-#define ROOT_MASK              SubstructureRedirectMask
-#define CLIENT_MASK            (StructureNotifyMask | PropertyChangeMask)
-#define WM_PROTOCOL_DELWIN     1
+#define ROOT_MASK		SubstructureRedirectMask
+#define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask)
+#define WM_PROTOCOL_DELWIN	1
 
 typedef struct View View;
 typedef struct Area Area;
@@ -93,7 +93,7 @@ struct View {
 
 struct Area {
 	unsigned short id;
-    Frame **frame;
+	Frame **frame;
 	View *view;
 	unsigned int framesz;
 	unsigned int sel;
@@ -115,15 +115,15 @@ struct Client {
 	char tag[MAX_TAGS][MAX_TAGLEN];
 	unsigned int ntag;
 	char classinst[256];
-    int proto;
-    unsigned int border;
-    Bool destroyed;
-    Window win;
-    Window trans;
-    XRectangle rect;
-    XSizeHints size;
+	int proto;
+	unsigned int border;
+	Bool destroyed;
+	Window win;
+	Window trans;
+	XRectangle rect;
+	XSizeHints size;
 	Window framewin;
-    GC gc;
+	GC gc;
 	Frame **frame;
 	unsigned int framesz;
 	unsigned int sel;
@@ -134,16 +134,16 @@ struct Client {
 typedef struct Key Key;
 struct Key {
 	unsigned short id;
-    char name[128];
-    unsigned long mod;
-    KeyCode key;
-    Key *next;
+	char name[128];
+	unsigned long mod;
+	KeyCode key;
+	Key *next;
 };
 
 typedef struct {
-    char name[256];
+	char name[256];
 	unsigned short id;
-    char data[256];
+	char data[256];
 	char colstr[24];
 	Color color;
 	XRectangle rect;
@@ -263,7 +263,7 @@ Client *win2clientframe(Window w);
 
 /* fs.c */
 unsigned long long mkqpath(unsigned char type, unsigned short pg,
-						unsigned short area, unsigned short cl);
+		unsigned short area, unsigned short cl);
 void write_event(char *event, Bool enqueue);
 void new_ixp_conn(IXPConn *c);
 
@@ -286,7 +286,7 @@ void match_tags(Client *c);
 /* tag.c */
 unsigned int str2tags(char tags[MAX_TAGS][MAX_TAGLEN], const char *stags);
 void tags2str(char *stags, unsigned int stagsz,
-		 	  char tags[MAX_TAGS][MAX_TAGLEN], unsigned int ntags);
+		char tags[MAX_TAGS][MAX_TAGLEN], unsigned int ntags);
 Bool istag(char **tags, unsigned int ntags, char *tag);
 void update_tags();
 
