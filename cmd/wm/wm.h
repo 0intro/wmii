@@ -68,7 +68,7 @@ enum {
 #define MAX_TAGS		8
 #define MAX_TAGLEN		32
 
-#define DEF_BORDER		3
+#define DEF_BORDER		2
 #define DEF_SNAP		20
 
 #define ROOT_MASK		SubstructureRedirectMask
