@@ -127,7 +127,7 @@ attach_toarea(Area *a, Client *c)
 	static unsigned short id = 1;
 	Frame *f;
    
-	if(clientoftag(a->view, c))
+	if(clientofview(a->view, c))
 		return;
 	f = cext_emallocz(sizeof(Frame));
 	f->id = id++;

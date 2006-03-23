@@ -290,18 +290,18 @@ void tags2str(char *stags, unsigned int stagsz,
 Bool istag(char **tags, unsigned int ntags, char *tag);
 void update_tags();
 
-/* view */
-View *alloc_tag(char *name);
-void focus_tag(View *v);
+/* view.c */
+View *alloc_view(char *name);
+void focus_view(View *v);
 XRectangle *rectangles(View *v, Bool isfloat, unsigned int *num);
 int tid2index(unsigned short id);
-void select_tag(char *arg);
-int tag2index(View *v);
-Bool clientoftag(View *v, Client *c);
-void detach_fromtag(View *v, Client *c);
-void attach_totag(View *v, Client *c);
-Client *sel_client_of_tag(View *v);
-void restack_tag(View *v);
+void select_view(char *arg);
+int view2index(View *v);
+Bool clientofview(View *v, Client *c);
+void detach_fromview(View *v, Client *c);
+void attach_toview(View *v, Client *c);
+Client *sel_client_of_view(View *v);
+void restack_view(View *v);
 Bool hasclient(View *v);
 
 /* wm.c */

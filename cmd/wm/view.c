@@ -11,7 +11,7 @@
 #include "wm.h"
 
 View *
-alloc_tag(char *name)
+alloc_view(char *name)
 {
 	static unsigned short id = 1;
     View *v = cext_emallocz(sizeof(View));
@@ -22,12 +22,12 @@ alloc_tag(char *name)
 	alloc_area(v);
 	view = (View **)cext_array_attach((void **)view, v, sizeof(View *), &viewsz);
 	nview++;
-	focus_tag(v);
+	focus_view(v);
     return v;
 }
 
 static void
-destroy_tag(View *v)
+destroy_view(View *v)
 {
 	while(v->narea)
 		destroy_area(v->area[0]);
@@ -41,7 +41,7 @@ destroy_tag(View *v)
 }
 
 int
-tag2index(View *v)
+view2index(View *v)
 {
 	int i;
 	for(i = 0; i < nview; i++)
@@ -63,7 +63,7 @@ update_frame_selectors(View *v)
 }
 
 void
-focus_tag(View *v)
+focus_view(View *v)
 {
 	char buf[256];
 	char name[256];
@@ -73,7 +73,7 @@ focus_tag(View *v)
 		return;
 
 	XGrabServer(dpy);
-	sel = tag2index(v);
+	sel = view2index(v);
 
 	update_frame_selectors(v);
 
@@ -139,7 +139,7 @@ tid2index(unsigned short id)
 }
 
 View *
-get_tag(char *name)
+get_view(char *name)
 {
 	unsigned int i, j, ntags;
 	View *v = nil;
@@ -157,15 +157,15 @@ get_tag(char *name)
 	for(i = 0; i < nclient; i++)
 		for(j = 0; j < ntags; j++)
 			if(clienthastag(client[i], tags[j]))
-				goto Createtag;
+				goto Createview;
 	return nil;
 
-Createtag:
-	v = alloc_tag(name);
+Createview:
+	v = alloc_view(name);
 	for(i = 0; i < nclient; i++)
 		for(j = 0; j < ntags; j++)
-			if(clienthastag(client[i], tags[j]) && !clientoftag(v, client[i]))
-				attach_totag(v, client[i]);
+			if(clienthastag(client[i], tags[j]) && !clientofview(v, client[i]))
+				attach_toview(v, client[i]);
 	return v;
 }
 
@@ -180,11 +180,11 @@ hasclient(View *v)
 }
 
 void
-select_tag(char *arg)
+select_view(char *arg)
 {
 	int i;
 	Client *c;
-	View *v = get_tag(arg);
+	View *v = get_view(arg);
 
 	if(!v)
 		return;
@@ -197,21 +197,21 @@ select_tag(char *arg)
 		snprintf(buf, sizeof(buf), "NewTag %s\n", arg);
 		write_event(buf, True);
 	}
-    focus_tag(v);
+    focus_view(v);
 
 	/* cleanup on select */
 	for(i = 0; i < nview; i++)
 		if(!hasclient(view[i])) {
-			destroy_tag(view[i]);
+			destroy_view(view[i]);
 			i--;
 		}
 
-	if((c = sel_client_of_tag(v)))
+	if((c = sel_client_of_view(v)))
 		focus_client(c);
 }
 
 Bool
-clientoftag(View *v, Client *c)
+clientofview(View *v, Client *c)
 {
 	unsigned int i;
 	for(i = 0; i < v->narea; i++)
@@ -221,7 +221,7 @@ clientoftag(View *v, Client *c)
 }
 
 void
-detach_fromtag(View *v, Client *c)
+detach_fromview(View *v, Client *c)
 {
 	int i;
 	Client *cl;
@@ -231,12 +231,12 @@ detach_fromtag(View *v, Client *c)
 			XMoveWindow(dpy, c->framewin, 2 * rect.width, 0);
 		}
 	}
-	if((cl = sel_client_of_tag(v)))
+	if((cl = sel_client_of_view(v)))
 		focus_client(cl);
 }
 
 void
-attach_totag(View *v, Client *c)
+attach_toview(View *v, Client *c)
 {
 	Area *a;
 
@@ -253,7 +253,7 @@ attach_totag(View *v, Client *c)
 }
 
 Client *
-sel_client_of_tag(View *v)
+sel_client_of_view(View *v)
 {
 	if(v) {
 		Area *a = v->narea ? v->area[v->sel] : nil;
@@ -263,7 +263,7 @@ sel_client_of_tag(View *v)
 }
 
 void
-restack_tag(View *v)
+restack_view(View *v)
 {
 	unsigned int i, j, n = 0;
 	static Window *wins = nil;

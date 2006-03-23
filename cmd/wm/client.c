@@ -92,7 +92,7 @@ focus_client(Client *c)
 	grab_mouse(c->win, Mod1Mask, Button1);
 	grab_mouse(c->win, Mod1Mask, Button3);
 
-	restack_tag(f->area->view);
+	restack_view(f->area->view);
 
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	draw_client(c);
@@ -331,7 +331,7 @@ manage_client(Client *c)
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 
-	v = nview ? view[sel] : alloc_tag(def.tag);
+	v = nview ? view[sel] : alloc_view(def.tag);
 	if(!c->ntag) {
 		for(i = 0; i < v->ntag; i++) {
 			cext_strlcpy(c->tag[i], v->tag[i], sizeof(c->tag[i]));
@@ -364,7 +364,7 @@ destroy_client(Client *c)
 	XSetErrorHandler(dummy_error_handler);
 
 	for(i = 0; i < nview; i++)
-		detach_fromtag(view[i], c);
+		detach_fromview(view[i], c);
 
 	unmap_client(c);
 
@@ -381,7 +381,7 @@ destroy_client(Client *c)
 	update_tags();
 	free(c);
 
-	if((cl = sel_client_of_tag(view[sel])))
+	if((cl = sel_client_of_view(view[sel])))
 		focus_client(cl);
 
 	XSync(dpy, False);
@@ -392,7 +392,7 @@ destroy_client(Client *c)
 Client *
 sel_client()
 {
-	return nview ? sel_client_of_tag(view[sel]) : nil;
+	return nview ? sel_client_of_view(view[sel]) : nil;
 }
 
 static void
@@ -565,7 +565,7 @@ focus(Client *c)
 
 	v = f->area->view;
 	if(view[sel] != v)
-		focus_tag(v);
+		focus_view(v);
 	focus_client(c);
 }
 

@@ -33,15 +33,15 @@ organize_client(View *v, Client *c)
 	}
 
 	if(hastag) {
-		if(!clientoftag(v, c)) {
+		if(!clientofview(v, c)) {
 			/*fprintf(stderr, "org attach %s?\n", c->name);*/
-			attach_totag(v, c);
+			attach_toview(v, c);
 		}
 	}
 	else {
-		if(clientoftag(v, c)) {
+		if(clientofview(v, c)) {
 			/*fprintf(stderr, "org detach %s?\n", c->name);*/
-			detach_fromtag(v, c);
+			detach_fromview(v, c);
 		}
 	}
 }
@@ -106,7 +106,7 @@ update_tags()
 	}
 
 	if(!nview && nctag)
-		select_tag(ctag[0]);
+		select_view(ctag[0]);
 }
  
 unsigned int
