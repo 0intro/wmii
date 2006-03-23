@@ -846,6 +846,7 @@ xread(IXPConn *c, Fcall *fcall)
 				cext_array_detach((void **)queue, event, &queuesz);
 				nqueue--;
 				write_event(event, False);
+				free(event);
 			}
 			return nil;
 			break;
@@ -1486,7 +1487,7 @@ write_event(char *event, Bool enqueue)
 		}
 	}
 	if(!written) {
-		queue = (char **)cext_array_attach((void **)queue, event, sizeof(char *), &queuesz);
+		queue = (char **)cext_array_attach((void **)queue, strdup(event), sizeof(char *), &queuesz);
 		nqueue++;
 	}
 }
