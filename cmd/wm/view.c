@@ -12,7 +12,7 @@ View *
 alloc_view(char *name)
 {
 	static unsigned short id = 1;
-    View *v = cext_emallocz(sizeof(View));
+	View *v = cext_emallocz(sizeof(View));
 
 	v->id = id++;
 	v->ntag = str2tags(v->tag, name);
@@ -21,7 +21,7 @@ alloc_view(char *name)
 	view = (View **)cext_array_attach((void **)view, v, sizeof(View *), &viewsz);
 	nview++;
 	focus_view(v);
-    return v;
+	return v;
 }
 
 static void
@@ -35,7 +35,7 @@ destroy_view(View *v)
 	if(sel >= nview)
 		sel = 0;
 
-    free(v); 
+	free(v); 
 }
 
 int
@@ -86,7 +86,8 @@ focus_view(View *v)
 				draw_client(client[i]);
 			}
 			else
-				XMoveWindow(dpy, client[i]->framewin, 2 * rect.width + f->rect.x, f->rect.y);
+				XMoveWindow(dpy, client[i]->framewin,
+						2 * rect.width + f->rect.x, f->rect.y);
 		}
 	tags2str(name, sizeof(name), v->tag, v->ntag);
 	snprintf(buf, sizeof(buf), "FocusTag %s\n", name);
@@ -98,7 +99,7 @@ focus_view(View *v)
 XRectangle *
 rectangles(View *v, Bool isfloat, unsigned int *num)
 {
-    XRectangle *result = nil;
+	XRectangle *result = nil;
 	unsigned int i;
 	
 	*num = 0;
@@ -110,7 +111,7 @@ rectangles(View *v, Bool isfloat, unsigned int *num)
 	}
 
 	if(*num) {
-        result = cext_emallocz(*num * sizeof(XRectangle));
+		result = cext_emallocz(*num * sizeof(XRectangle));
 		if(isfloat) {
 			for(i = 0; i < *num; i++)
 				result[i] = v->area[0]->frame[0]->rect;
@@ -123,7 +124,7 @@ rectangles(View *v, Bool isfloat, unsigned int *num)
 			}
 		}
 	}
-    return result;
+	return result;
 }
 
 int
@@ -195,7 +196,7 @@ select_view(char *arg)
 		snprintf(buf, sizeof(buf), "NewTag %s\n", arg);
 		write_event(buf, True);
 	}
-    focus_view(v);
+	focus_view(v);
 
 	/* cleanup on select */
 	for(i = 0; i < nview; i++)
@@ -241,10 +242,10 @@ attach_toview(View *v, Client *c)
 	if(c->trans || clienthastag(c, "~"))
 		a = v->area[0];
 	else
-   		a = v->area[v->sel];
+		a = v->area[v->sel];
 
 	attach_toarea(a, c);
-    map_client(c);
+	map_client(c);
 	XMapWindow(dpy, c->framewin);
 	if(v == view[sel])
 		focus_client(c);
@@ -265,7 +266,7 @@ restack_view(View *v)
 {
 	unsigned int i, j, n = 0;
 	static Window *wins = nil;
-   	static unsigned int winssz = 0;
+	static unsigned int winssz = 0;
 
 	if(nclient > winssz) {
 		winssz = 2 * nclient;
