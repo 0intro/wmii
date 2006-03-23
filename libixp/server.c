@@ -20,7 +20,7 @@
 static unsigned char *msg[IXP_MAX_MSG];
 
 IXPConn *ixp_server_open_conn(IXPServer *s, int fd, void (*read)(IXPConn *c),
-							 void (*close)(IXPConn *c))
+		void (*close)(IXPConn *c))
 {
 	IXPConn *c = cext_emallocz(sizeof(IXPConn));
 	c->fd = fd;
@@ -28,7 +28,7 @@ IXPConn *ixp_server_open_conn(IXPServer *s, int fd, void (*read)(IXPConn *c),
 	c->read = read;
 	c->close = close;
 	s->conn = (IXPConn **)cext_array_attach((void **)s->conn, c,
-					sizeof(IXPConn *), &s->connsz);
+			sizeof(IXPConn *), &s->connsz);
 	return c;
 }
 
@@ -51,45 +51,44 @@ ixp_server_close_conn(IXPConn *c)
 static void
 prepare_select(IXPServer *s)
 {
-    int i;
-    FD_ZERO(&s->rd);
-    for(i = 0; (i < s->connsz) && s->conn[i]; i++) {
-    	if(s->maxfd < s->conn[i]->fd)
-        	s->maxfd = s->conn[i]->fd;
-        if(s->conn[i]->read)
-        	FD_SET(s->conn[i]->fd, &s->rd);
-    }
+	int i;
+	FD_ZERO(&s->rd);
+	for(i = 0; (i < s->connsz) && s->conn[i]; i++) {
+		if(s->maxfd < s->conn[i]->fd)
+			s->maxfd = s->conn[i]->fd;
+		if(s->conn[i]->read)
+			FD_SET(s->conn[i]->fd, &s->rd);
+	}
 }
 
 static void
 handle_conns(IXPServer *s)
 {
-    int i;
-    for(i = 0; (i < s->connsz) && s->conn[i]; i++)
-    	if(FD_ISSET(s->conn[i]->fd, &s->rd) && s->conn[i]->read)
-        	/* call read handler */
-            s->conn[i]->read(s->conn[i]);
+	int i;
+	for(i = 0; (i < s->connsz) && s->conn[i]; i++)
+		if(FD_ISSET(s->conn[i]->fd, &s->rd) && s->conn[i]->read)
+			/* call read handler */
+			s->conn[i]->read(s->conn[i]);
 }
 
 char *
 ixp_server_loop(IXPServer *s)
 {
-    int r;
-    s->running = 1;
+	int r;
+	s->running = 1;
 
-    /* main loop */
-    while(s->running && s->conn) {
+	/* main loop */
+	while(s->running && s->conn) {
+		prepare_select(s);
 
-        prepare_select(s);
-
-        r = select(s->maxfd + 1, &s->rd, 0, 0, 0);
-        if(r == -1 && errno == EINTR)
-            continue;
-        if(r < 0)
-            return "fatal select error";
-        else if(r > 0)
-            handle_conns(s);
-    }
+		r = select(s->maxfd + 1, &s->rd, 0, 0, 0);
+		if(r == -1 && errno == EINTR)
+			continue;
+		if(r < 0)
+			return "fatal select error";
+		else if(r > 0)
+			handle_conns(s);
+	}
 	return nil;
 }
 
@@ -106,14 +105,14 @@ ixp_server_fid2map(IXPConn *c, unsigned int fid)
 unsigned int
 ixp_server_receive_fcall(IXPConn *c, Fcall *fcall)
 {
-    unsigned int msize;
-    char *errstr = 0;
+	unsigned int msize;
+	char *errstr = 0;
 	if(!(msize = ixp_recv_message(c->fd, msg, IXP_MAX_MSG, &errstr))) {
 		if(c->close)
 			c->close(c);
 		return 0;
 	}
-    return ixp_msg2fcall(fcall, msg, IXP_MAX_MSG);
+	return ixp_msg2fcall(fcall, msg, IXP_MAX_MSG);
 }
 
 int
