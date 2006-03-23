@@ -180,9 +180,9 @@ Label **label;
 unsigned int nlabel;
 unsigned int labelsz;
 char expand[256];
-char **ctag;
-unsigned int nctag;
-unsigned int ctagsz;
+char **tag;
+unsigned int ntag;
+unsigned int tagsz;
 
 Display *dpy;
 IXPServer *ixps;

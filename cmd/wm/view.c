@@ -189,11 +189,11 @@ select_view(char *arg)
 	if(!v)
 		return;
 	cext_strlcpy(def.tag, arg, sizeof(def.tag));
-	if(!istag(ctag, nctag, arg)) {
+	if(!istag(tag, ntag, arg)) {
 		char buf[256];
-		ctag = (char **)cext_array_attach((void **)ctag, strdup(arg),
-				sizeof(char *), &ctagsz);
-		nctag++;
+		tag = (char **)cext_array_attach((void **)tag, strdup(arg),
+				sizeof(char *), &tagsz);
+		ntag++;
 		snprintf(buf, sizeof(buf), "NewTag %s\n", arg);
 		write_event(buf, True);
 	}

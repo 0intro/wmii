@@ -51,17 +51,17 @@ update_tags()
 {
 	unsigned int i, j;
 	char buf[256];
-	char **newctag = nil;
-	unsigned int newctagsz = 0, nnewctag = 0;
+	char **newtag = nil;
+	unsigned int newtagsz = 0, nnewtag = 0;
 
 	for(i = 0; i < nclient; i++) {
 		for(j = 0; j < client[i]->ntag; j++) {
 			if(!strncmp(client[i]->tag[j], "~", 2)) /* magic floating tag */
 				continue;
-			if(!istag(newctag, nnewctag, client[i]->tag[j])) {
-				newctag = (char **)cext_array_attach((void **)newctag, strdup(client[i]->tag[j]),
-							sizeof(char *), &newctagsz);
-				nnewctag++;
+			if(!istag(newtag, nnewtag, client[i]->tag[j])) {
+				newtag = (char **)cext_array_attach((void **)newtag, strdup(client[i]->tag[j]),
+							sizeof(char *), &newtagsz);
+				nnewtag++;
 			}
 		}
 	}
@@ -69,31 +69,31 @@ update_tags()
 	for(i = 0; i < nview; i++)
 		if(hasclient(view[i])) {
 		   	tags2str(buf, sizeof(buf), view[i]->tag, view[i]->ntag);
-			if(!istag(newctag, nnewctag, buf)) {
-				newctag = (char **)cext_array_attach((void **)newctag, strdup(buf),
-							sizeof(char *), &newctagsz);
-				nnewctag++;
+			if(!istag(newtag, nnewtag, buf)) {
+				newtag = (char **)cext_array_attach((void **)newtag, strdup(buf),
+							sizeof(char *), &newtagsz);
+				nnewtag++;
 			}
 		}
 
 	/* propagate tagging events */
-	for(i = 0; i < nnewctag; i++)
-		if(!istag(ctag, nctag, newctag[i])) {
-			snprintf(buf, sizeof(buf), "NewTag %s\n", newctag[i]);
+	for(i = 0; i < nnewtag; i++)
+		if(!istag(tag, ntag, newtag[i])) {
+			snprintf(buf, sizeof(buf), "NewTag %s\n", newtag[i]);
 			write_event(buf, True);
 		}
-	for(i = 0; i < nctag; i++) {
-		if(!istag(newctag, nnewctag, ctag[i])) {
-			snprintf(buf, sizeof(buf), "RemoveTag %s\n", ctag[i]);
+	for(i = 0; i < ntag; i++) {
+		if(!istag(newtag, nnewtag, tag[i])) {
+			snprintf(buf, sizeof(buf), "RemoveTag %s\n", tag[i]);
 			write_event(buf, True);
 		}
-		free(ctag[i]);
+		free(tag[i]);
 	}
 
-	free(ctag);
-	ctag = newctag;
-	nctag = nnewctag;
-	ctagsz = newctagsz;
+	free(tag);
+	tag = newtag;
+	ntag = nnewtag;
+	tagsz = newtagsz;
 
 	for(i = 0; nview && (i < nclient); i++) {
 		for(j = 0; j < nview; j++) {
@@ -105,8 +105,8 @@ update_tags()
 		organize_client(view[sel], client[i]);
 	}
 
-	if(!nview && nctag)
-		select_view(ctag[0]);
+	if(!nview && ntag)
+		select_view(tag[0]);
 }
  
 unsigned int

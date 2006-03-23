@@ -545,8 +545,8 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		default:
 			{
 				unsigned int i, len = 0;
-				for(i = 0; i < nctag; i++)
-					len += strlen(ctag[i]) + 1;
+				for(i = 0; i < ntag; i++)
+					len += strlen(tag[i]) + 1;
 				return mkstat(stat, dir, wname, len, DMREAD);
 			}
 			break;
@@ -882,17 +882,17 @@ xread(IXPConn *c, Fcall *fcall)
 			if(m->qid.dir_type == FsDroot) {
 				len = 0;
 				/* jump to offset */
-				for(i = 0; i < nctag; i++) {
-					len += strlen(ctag[i]) + 1;
+				for(i = 0; i < ntag; i++) {
+					len += strlen(tag[i]) + 1;
 					if(len <= fcall->offset)
 						continue;
 				}
 				/* offset found, proceeding */
-				for(; i < nctag; i++) {
-					len = strlen(ctag[i]) + 1;
+				for(; i < ntag; i++) {
+					len = strlen(tag[i]) + 1;
 					if(fcall->count + len > fcall->iounit)
 						break;
-					memcpy(p + fcall->count, ctag[i], len - 1);
+					memcpy(p + fcall->count, tag[i], len - 1);
 					memcpy(p + fcall->count + len - 1, "\n", 1);
 					fcall->count += len;
 				}
@@ -913,7 +913,7 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "bar", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			if(nctag) {
+			if(ntag) {
 				fcall->count += type2stat(&stat, "tags", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 			}
@@ -1090,11 +1090,11 @@ xread(IXPConn *c, Fcall *fcall)
 					memcpy(p, buf, fcall->count);
 				break;
 			default:
-				for(i = 0; i < nctag; i++) {
-					len = strlen(ctag[i]) + 1;
+				for(i = 0; i < ntag; i++) {
+					len = strlen(tag[i]) + 1;
 					if(fcall->count + len > fcall->iounit)
 						break;
-					memcpy(p + fcall->count, ctag[i], len - 1);
+					memcpy(p + fcall->count, tag[i], len - 1);
 					memcpy(p + fcall->count + len - 1, "\n", 1);
 					fcall->count += len;
 				}
