@@ -143,7 +143,6 @@ draw_bar()
 
 	for(i = 0; i < nlabel; i++) {
 		l = label[i];
-		fprintf(stderr, "%d=i %d %d %d %d\n", l->intern, l->rect.x, l->rect.y, l->rect.width, l->rect.height);
 		d.color = l->color;
 		d.rect = l->rect;
 		d.data = l->data;
