@@ -70,32 +70,27 @@ handle_buttonpress(XEvent *e)
 	}
 	else if((c = win2clientframe(ev->window))) {
 		ev->state &= valid_mask;
-		if(ev->state & Mod1Mask) {
-			focus(c);
-			switch (ev->button) {
-			case Button1:
-				mouse_move(c);
-				break;
-			case Button3:
-				{
-					Align align = xy2align(&c->rect, ev->x, ev->y);
-					if(align == CENTER)
-						mouse_move(c);
-					else
-						mouse_resize(c, align);
-				}
-				break;
+		if((ev->state & Mod1Mask) && (ev->button == Button3)) {
+			if(sel_client() != c)
+				focus(c);
+			else {
+				Align align = xy2align(&c->rect, ev->x, ev->y);
+				if(align != CENTER)
+					mouse_resize(c, align);
 			}
 		}
-		else if(ev->button == Button1)
-			focus(c);
+		else if(ev->button == Button1) {
+			if(sel_client() != c)
+				focus(c);
+			else
+				mouse_move(c);
+		}
 		if(c->nframe) {
 			snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
 					frame2index(c->frame[c->sel]) + 1, ev->button);
 			write_event(buf);
 		}
 	}
-
 }
 
 static void
