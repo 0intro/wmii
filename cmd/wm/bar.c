@@ -135,7 +135,7 @@ draw_bar()
 		i--;
 		label[i]->rect.width = brect.width - label[i]->rect.x;
 	}
-	else {
+	else if(n < nlabel) {
 		label[n]->rect.x = brect.width - w;
 		for(i = n + 1; i < nlabel; i++)
 			label[i]->rect.x = label[i - 1]->rect.x + label[i - 1]->rect.width;
