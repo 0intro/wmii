@@ -241,14 +241,17 @@ draw_client(Client *c)
 	}
 	d.rect.x = 0;
 	d.rect.y = 0;
-	d.rect.width = c->frame[c->sel]->rect.width;
 	d.rect.height = bar_height();
 	d.notch = nil;
 
 	tags2str(buf, sizeof(buf), c->tag, c->ntag);
-	cext_strlcat(buf, " | ", sizeof(buf));
-	cext_strlcat(buf, c->name, sizeof(buf) - strlen(buf));
+	d.rect.width = d.rect.height + XTextWidth(xfont, buf, strlen(buf));
 	d.data = buf;
+	blitz_drawlabel(dpy, &d);
+	blitz_drawborder(dpy, &d);
+	d.rect.x = d.rect.width;
+	d.rect.width = c->frame[c->sel]->rect.width - d.rect.x;
+	d.data = c->name;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
 	XSync(dpy, False);
