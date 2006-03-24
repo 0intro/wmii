@@ -80,10 +80,9 @@ update_bar_geometry()
 void
 draw_bar()
 {
-	unsigned int i = 0;
-	unsigned int x = 0, w = 0;
-	char name[256];
+	unsigned int i = 0, n = 0, x = 0, w = 0;
 	Draw d = { 0 };
+	Label *l = nil;
 
 	d.align = WEST;
 	d.gc = bargc;
@@ -95,60 +94,61 @@ draw_bar()
 	d.color = def.norm;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
-	if(ntag) {
-		for(i = 0; i < nview; i++) {
-			View *v = view[i];
-			tags2str(name, sizeof(name), v->tag, v->ntag);
-			d.data = name;
-			if(i == sel)
-				d.color = def.sel;
-			else
-				d.color = def.norm;
-			d.rect.x = x;
-			d.rect.width = brect.height;
-			if(strlen(name))
-				d.rect.width += XTextWidth(xfont, name, strlen(name));
-			blitz_drawlabel(dpy, &d);
-			blitz_drawborder(dpy, &d);
-			x += d.rect.width;
-		}
+
+	if(!nlabel)
+		return;
+	for(i = 0; (i < nlabel) && label[i]->intern; i++) {
+		l = label[i];
+		if(nview && !strncmp(l->data, def.tag, sizeof(l->data)))
+			l->color = def.sel;
+		else
+			l->color = def.norm;
+		l->rect.y = 0;
+		l->rect.x = x;
+		l->rect.width = l->rect.height = brect.height;
+		if(strlen(l->name))
+			l->rect.width += XTextWidth(xfont, l->name, strlen(l->name));
+		x += l->rect.width;
 	}
 
-	if(nlabel) {
-		for(i = 0; i < nlabel; i++) {
-			Label *l = label[i];
-			l->rect.x = x;
-			l->rect.y = 0;
-			l->rect.height = brect.height;
-			l->rect.width = brect.height;
-			if(strlen(l->data))
-				l->rect.width += XTextWidth(xfont, l->data, strlen(l->data));
-			w += l->rect.width;
-		}
+	if(i)
+		n = i;
+	for(; i < nlabel; i++) {
+		l = label[i];
+		l->rect.x = x;
+		l->rect.y = 0;
+		l->rect.height = brect.height;
+		l->rect.width = brect.height;
+		if(strlen(l->data))
+			l->rect.width += XTextWidth(xfont, l->data, strlen(l->data));
+		w += l->rect.width;
+	}
 
-		if(w >= brect.width - x) {
-			/* failsafe mode, give all labels same width */
-			w = (brect.width - x) / nlabel;
-			for(i = 0; i < nlabel; i++) {
-				label[i]->rect.x = x + i * w;
-				label[i]->rect.width = w;
-			}
-			i--;
-			label[i]->rect.width = brect.width - label[i]->rect.x;
+	if(w >= brect.width - x) {
+		/* failsafe mode, give all labels same width */
+		w = (brect.width - x) / (nlabel - n);
+		for(i = n; i < nlabel; i++) {
+			l = label[i];
+			l->rect.x = x + i * w;
+			l->rect.width = w;
 		}
-		else {
-			label[0]->rect.x = brect.width - w;
-			for(i = 1; i < nlabel; i++)
-				label[i]->rect.x = label[i - 1]->rect.x + label[i - 1]->rect.width;
-		}
+		i--;
+		label[i]->rect.width = brect.width - label[i]->rect.x;
+	}
+	else {
+		label[n]->rect.x = brect.width - w;
+		for(i = n + 1; i < nlabel; i++)
+			label[i]->rect.x = label[i - 1]->rect.x + label[i - 1]->rect.width;
+	}
 
-		for(i = 0; i < nlabel; i++) {
-			d.color = label[i]->color;
-			d.rect = label[i]->rect;
-			d.data = label[i]->data;
-			blitz_drawlabel(dpy, &d);
-			blitz_drawborder(dpy, &d);
-		}
+	for(i = 0; i < nlabel; i++) {
+		l = label[i];
+		fprintf(stderr, "%d=i %d %d %d %d\n", l->intern, l->rect.x, l->rect.y, l->rect.width, l->rect.height);
+		d.color = l->color;
+		d.rect = l->rect;
+		d.data = l->data;
+		blitz_drawlabel(dpy, &d);
+		blitz_drawborder(dpy, &d);
 	}
 	XCopyArea(dpy, barpmap, barwin, bargc, 0, 0, brect.width, brect.height, 0, 0);
 	XSync(dpy, False);
@@ -185,4 +185,33 @@ name2label(const char *name)
 		if(!strncmp(label[i]->name, name, sizeof(label[i]->name)))
 			return label[i];
 	return nil;
+}
+
+void
+update_bar_tags()
+{
+	unsigned int i;
+	char vname[256];
+	Label *l = nil;
+
+	for(i = 0; (i < nlabel) && label[i]->intern; i++) {
+		l = label[i];
+		if(!istag(l->name) && !name2view(l->name)) {
+			destroy_label(l);
+			i--;
+		}
+	}
+	for(i = 0; i < ntag; i++) {
+		l = get_label(tag[i]);
+		l->intern = True;
+		cext_strlcpy(l->data, tag[i], sizeof(l->data));
+	}
+	for(i = 0; i < nview; i++) {
+		View *v = view[i];
+		tags2str(vname, sizeof(vname), v->tag, v->ntag);
+		l = get_label(vname);
+		l->intern = True;
+		cext_strlcpy(l->data, vname, sizeof(l->data));
+	}
+	draw_bar();
 }

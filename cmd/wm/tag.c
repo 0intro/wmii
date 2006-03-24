@@ -78,6 +78,8 @@ update_tags()
 
 	if(!nview && ntag)
 		select_view(tag[0]);
+	else
+		update_bar_tags();
 }
 
 unsigned int

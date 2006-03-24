@@ -140,6 +140,7 @@ typedef struct {
 	char colstr[24];
 	Color color;
 	XRectangle rect;
+	Bool intern;
 } Label;
 
 /* default values */
@@ -221,6 +222,7 @@ void update_bar_geometry();
 unsigned int bar_height();
 Label *name2label(const char *name);
 int label2index(Label *l);
+void update_bar_tags();
 
 /* client.c */
 Client *alloc_client(Window w, XWindowAttributes *wa);
@@ -295,6 +297,7 @@ void attach_toview(View *v, Client *c);
 Client *sel_client_of_view(View *v);
 void restack_view(View *v);
 Bool hasclient(View *v);
+View *name2view(char *name);
 
 /* wm.c */
 void scan_wins();

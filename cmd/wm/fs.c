@@ -686,6 +686,8 @@ xremove(IXPConn *c, Fcall *fcall)
 	case FsDlabel:
 		{
 			Label *l = label[i1];
+			if(l->intern)
+				return Enoperm;
 			/* now detach the label */
 			destroy_label(l);
 			free(l);
@@ -743,6 +745,7 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDbar:
 			/* jump to offset */
+			len = 0;
 			for(i = 0; i < nlabel; i++) {
 				len += type2stat(&stat, label[i]->name, &m->qid);
 				if(len <= fcall->offset)

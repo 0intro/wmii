@@ -95,6 +95,8 @@ do
 		then
 			exit
 		fi;;
+	LabelClick)
+		xwrite /ctl view $1;;
 	Key)
 		case "$1" in
 		$MODKEY-Control-c)

@@ -87,7 +87,7 @@ focus_view(View *v)
 				XMoveWindow(dpy, client[i]->framewin,
 						2 * rect.width + f->rect.x, f->rect.y);
 		}
-	draw_bar();
+	update_bar_tags();
 	XSync(dpy, False);
 	XUngrabServer(dpy);
 }
@@ -134,12 +134,11 @@ vid2index(unsigned short id)
 }
 
 View *
-get_view(char *name)
+name2view(char *name)
 {
-	unsigned int i, j, ntags;
 	View *v = nil;
 	char vname[256];
-	char tags[MAX_TAGS][MAX_TAGLEN];
+	unsigned int i;
 
 	for(i = 0; i < nview; i++) {
 		v = view[i];
@@ -147,6 +146,19 @@ get_view(char *name)
 		if(!strncmp(vname, name, strlen(name)))
 			return v;
 	}
+
+	return nil;
+}
+
+View *
+get_view(char *name)
+{
+	unsigned int i, j, ntags;
+	View *v = name2view(name);
+	char tags[MAX_TAGS][MAX_TAGLEN];
+
+	if(v)
+		return v;
 
 	ntags = str2tags(tags, name);
 	for(i = 0; i < nclient; i++)
