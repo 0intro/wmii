@@ -150,12 +150,10 @@ init_screen()
 	gcv.subwindow_mode = IncludeInferiors;
 	gcv.function = GXxor;
 	gcv.foreground = def.sel.bg;
-	gcv.line_width = 4;
 	gcv.plane_mask = AllPlanes;
 	gcv.graphics_exposures = False;
 	xorgc = XCreateGC(dpy, root, GCForeground | GCGraphicsExposures
-			| GCFunction | GCSubwindowMode | GCLineWidth
-			| GCPlaneMask, &gcv);
+			| GCFunction | GCSubwindowMode | GCPlaneMask, &gcv);
 	rect.x = rect.y = 0;
 	rect.width = DisplayWidth(dpy, screen);
 	rect.height = DisplayHeight(dpy, screen);

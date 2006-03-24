@@ -212,6 +212,12 @@ draw_pseudo_border(XRectangle * r)
 	pseudo.y += 2;
 	pseudo.width -= 4;
 	pseudo.height -= 4;
+	XSetLineAttributes(dpy, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
+	XDrawLine(dpy, root, xorgc, pseudo.x + 2, pseudo.y +  pseudo.height / 2,
+				pseudo.x + pseudo.width - 2, pseudo.y + pseudo.height / 2);
+	XDrawLine(dpy, root, xorgc, pseudo.x + pseudo.width / 2, pseudo.y + 2,
+				pseudo.x + pseudo.width / 2, pseudo.y + pseudo.height - 2);
+	XSetLineAttributes(dpy, xorgc, 4, LineSolid, CapNotLast, JoinMiter);
 	XDrawRectangles(dpy, root, xorgc, &pseudo, 1);
 	XSync(dpy, False);
 }
