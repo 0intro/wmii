@@ -1231,6 +1231,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		else
 			client[i1]->ntag = str2tags(client[i1]->tag, buf);
 		update_tags();
+		draw_client(client[i1]);
 		break;
 	case FsFgeom:
 		if(fcall->count > sizeof(buf))
