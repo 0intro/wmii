@@ -1220,7 +1220,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 	case FsFtags:
 		if(m->qid.dir_type == FsDroot)
 			return Enoperm;
-		if(fcall->count > sizeof(buf))
+		if(!fcall->count || (fcall->count > sizeof(buf)))
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
