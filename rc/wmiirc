@@ -56,7 +56,6 @@ $MODKEY-h
 $MODKEY-l
 $MODKEY-j
 $MODKEY-k
-$MODKEY-Tab
 $MODKEY-n
 $MODKEY-m
 $MODKEY-s
@@ -131,8 +130,6 @@ do
 			xwrite /view/ctl select prev;;
 		$MODKEY-l)
 			xwrite /view/ctl select next;;
-		$MODKEY-Tab)
-			xwrite /view/sel/ctl select next;;
 		$MODKEY-j)
 			xwrite /view/sel/ctl select next;;
 		$MODKEY-k)
