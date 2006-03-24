@@ -49,8 +49,8 @@ $MODKEY-Control-p
 $MODKEY-Control-a
 $MODKEY-Control-t
 $MODKEY-t
-$MODKEY-Return
-$MODKEY-Shift-Return
+$MODKEY-Shift-h
+$MODKEY-Shift-l
 $MODKEY-space
 $MODKEY-Shift-space
 $MODKEY-h
@@ -120,9 +120,9 @@ do
 			xwrite /view/sel/mode equal;;
 		$MODKEY-n)
 			xwrite /view/sel/sel/ctl sendto new;;
-		$MODKEY-Return)
+		$MODKEY-Shift-h)
 			xwrite /view/sel/sel/ctl sendto prev;;
-		$MODKEY-Shift-Return)
+		$MODKEY-Shift-l)
 			xwrite /view/sel/sel/ctl sendto next;;
 		$MODKEY-space)
 			xwrite /view/ctl select toggle;;
