@@ -13,8 +13,7 @@ Let's go!
 
 - Start two xterms by pressing $MODKEY-t twice.
 - Switch between the three windows: $MODKEY-j, $MODKEY-k
-  You can also use $MODKEY-Tab instead of $MODKEY-j.  If you prefer the mouse,
-  then just click the desired window.
+  If you prefer the mouse, then just click the desired window.
 - Create a new column with: $MODKEY-n
 - Tag the selected client with another tag: $MODKEY-Shift-2
   IMPORTANT: before you do next step, note that you can select the current tag
