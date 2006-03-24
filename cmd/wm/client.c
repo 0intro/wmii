@@ -245,15 +245,24 @@ draw_client(Client *c)
 	d.notch = nil;
 
 	tags2str(buf, sizeof(buf), c->tag, c->ntag);
-	d.rect.width = d.rect.height + XTextWidth(xfont, buf, strlen(buf));
-	d.data = buf;
-	blitz_drawlabel(dpy, &d);
-	blitz_drawborder(dpy, &d);
-	d.rect.x = d.rect.width;
+	d.rect.x = d.rect.height + XTextWidth(xfont, buf, strlen(buf));
 	d.rect.width = c->frame[c->sel]->rect.width - d.rect.x;
 	d.data = c->name;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
+
+	if(c->frame[c->sel]->area->mode == Colmax) {
+		/* invert tag label */
+		unsigned long tmp = d.color.fg;
+		d.color.fg = d.color.bg;
+		d.color.bg = tmp;
+	}
+	d.rect.width = d.rect.x;
+	d.rect.x = 0;
+	d.data = buf;
+	blitz_drawlabel(dpy, &d);
+	blitz_drawborder(dpy, &d);
+
 	XSync(dpy, False);
 }
 
