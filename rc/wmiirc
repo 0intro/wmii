@@ -47,6 +47,7 @@ $MODKEY-Control-w,y
 $MODKEY-Control-q,y
 $MODKEY-Control-p
 $MODKEY-Control-a
+$MODKEY-Control-t
 $MODKEY-t
 $MODKEY-Return
 $MODKEY-Shift-Return
@@ -80,6 +81,7 @@ $MODKEY-Shift-6
 $MODKEY-Shift-7
 $MODKEY-Shift-8
 $MODKEY-Shift-9
+$MODKEY-Shift-t
 EOF
 
 # EVENT LOOP
@@ -136,8 +138,12 @@ do
 			xwrite /view/sel/ctl select prev;;
 		$MODKEY-[0-9])
 			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
+		$MODKEY-Control-t)
+			xwrite /ctl view `wmiir read /tags | wmiimenu` &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /view/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
+		$MODKEY-Shift-t)
+			xwrite /view/sel/sel/tags `wmiir read /view/sel/sel/tags | wmiimenu` &;;
 		esac;;
 	esac
 done
