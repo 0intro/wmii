@@ -106,7 +106,7 @@ handle_configurerequest(XEvent *e)
 	if(c) {
 		gravitate(c, True);
 
-		if(c->frame && (area2index(c->frame[c->sel]->area) == 0)) {
+		if(c->nframe && (area2index(c->frame[c->sel]->area) == 0)) {
 			if(ev->value_mask & CWX)
 				c->rect.x = ev->x;
 			if(ev->value_mask & CWY)
@@ -121,7 +121,7 @@ handle_configurerequest(XEvent *e)
 
 		gravitate(c, False);
 
-		if(c->nframe) {
+		if(c->nframe && c->sel) {
 			Frame *f = c->frame[c->sel];
 			f->rect.x = wc.x = c->rect.x - def.border;
 			f->rect.y = wc.y = c->rect.y - bar_height();
@@ -143,7 +143,7 @@ handle_configurerequest(XEvent *e)
 	wc.width = ev->width;
 	wc.height = ev->height;
 
-	if(c && c->frame) {
+	if(c && c->nframe) {
 		wc.x = def.border;
 		wc.y = bar_height();
 		if(area2index(c->frame[c->sel]->area) > 0) {
