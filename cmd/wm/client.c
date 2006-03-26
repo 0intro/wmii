@@ -519,7 +519,7 @@ send2area_client(Client *c, char *arg)
 	if(i == -1)
 		return;
 	if(!strncmp(arg, "new", 4) && i) {
-		if(a->nframe == 1 || v->narea - 1 >= rect.width / (2 * MIN_COLWIDTH))
+		if(a->nframe == 1 || v->narea - 1 >= rect.width / MIN_COLWIDTH)
 			return;
 		to = alloc_area(v);
 		arrange_tag(v, True);

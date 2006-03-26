@@ -393,7 +393,6 @@ drop_resize(Frame *f, XRectangle *new)
 	Frame *north = nil, *south = nil;
 	unsigned int i;
 	unsigned int min = 2 * bar_height();
-	Bool horiz_resize = False;
 
 	for(i = 1; (i < v->narea) && (v->area[i] != a); i++);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
@@ -404,36 +403,47 @@ drop_resize(Frame *f, XRectangle *new)
 	north = i ? a->frame[i - 1] : nil;
 	south = i + 1 < a->nframe ? a->frame[i + 1] : nil;
 
-	/* horizontal resize */
+	/* validate (and trim if necessary) horizontal resize */
+	if(new->width < MIN_COLWIDTH) {
+		if(new->x + new->width == f->rect.x + f->rect.width)
+			new->x = a->rect.x + a->rect.width - MIN_COLWIDTH;
+		new->width = MIN_COLWIDTH;
+	}
 	if(west && (new->x != f->rect.x)) {
-		horiz_resize = True;
 		if(new->x < 0 || new->x < (west->rect.x + MIN_COLWIDTH)) {
 			new->width -= (west->rect.x + MIN_COLWIDTH) - new->x;
 			new->x = west->rect.x + MIN_COLWIDTH;
-		} else if(new->width < MIN_COLWIDTH) {
-			new->x -= MIN_COLWIDTH - new->width;
-			new->width = MIN_COLWIDTH;
 		}
+	} else {
+		new->width += new->x - a->rect.x;
+		new->x = a->rect.x;
+	}
+	if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
+		if((new->x + new->width) > (east->rect.x + east->rect.width - MIN_COLWIDTH))
+			new->width = (east->rect.x + east->rect.width - MIN_COLWIDTH) - new->x;
+	} else
+		new->width = (a->rect.x + a->rect.width) - new->x;
+	if(new->width < MIN_COLWIDTH)
+		goto AfterHorizontal;
+
+	/* horizontal resize */
+	if(west && (new->x != a->rect.x)) {
 		west->rect.width = new->x - west->rect.x;
 		a->rect.width += a->rect.x - new->x;
 		a->rect.x = new->x;
+		match_horiz(a, &a->rect);
 		match_horiz(west, &west->rect);
 		relax_area(west);
 	}
-	if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
-		horiz_resize = True;
-		if((new->x + new->width) > (east->rect.x + east->rect.width - MIN_COLWIDTH))
-			new->width = (east->rect.x + east->rect.width - MIN_COLWIDTH) - new->x;
-		else if(new->width < MIN_COLWIDTH)
-			new->width = MIN_COLWIDTH;
+	if(east && (new->x + new->width != a->rect.x + a->rect.width)) {
 		east->rect.width -= new->x + new->width - east->rect.x;
 		east->rect.x = new->x + new->width;
 		a->rect.width = (new->x + new->width) - a->rect.x;
+		match_horiz(a, &a->rect);
 		match_horiz(east, &east->rect);
 		relax_area(east);
 	}
-	if(horiz_resize)
-		match_horiz(a, &a->rect);
+AfterHorizontal:
 
 	if(a->mode == Colstack || a->mode == Colmax)
 		goto AfterVertical;
