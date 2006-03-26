@@ -545,6 +545,7 @@ send2area_client(Client *c, char *arg)
 		a->frame[j] = a->frame[i];
 		a->frame[i] = f;
 		arrange_area(a);
+		focus_client(c);
 		return;
 	}
 	else if(!strncmp(arg, "down", 5)) {
@@ -556,6 +557,7 @@ send2area_client(Client *c, char *arg)
 		a->frame[j] = a->frame[i];
 		a->frame[i] = f;
 		arrange_area(a);
+		focus_client(c);
 		return;
 	}
 	else if(!strncmp(arg, "toggle", 7)) {

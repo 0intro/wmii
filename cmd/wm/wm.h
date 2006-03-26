@@ -275,6 +275,7 @@ void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 
 /* rule.c */
+void update_rules();
 void match_tags(Client *c);
 
 /* tag.c */

@@ -1353,11 +1353,14 @@ static char *
 xclunk(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
+	unsigned char type = qpath_type(m->qid.path);
 
 	if(!m)
 		return Enofile;
-	if(qpath_type(m->qid.path) == FsFkeys)
+	if(type == FsFkeys)
 		update_keys();
+	else if(type == FsFrules)
+		update_rules();
 	cext_array_detach((void **)c->map, m, &c->mapsz);
 	free(m);
 	fcall->id = RCLUNK;

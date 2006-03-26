@@ -24,44 +24,46 @@ typedef struct {
 	Bool is_valid;
 } Rule;
 
+static Rule *rule = nil;
+static unsigned int rulesz = 0;
+static unsigned int nrule = 0;
+
 enum {
 	IGNORE,
 	REGEX,
 	TAGS
 };
 
-static Rule *
-parse(char *data, unsigned int *n)
+void
+update_rules()
 {
-	static Rule *rule = nil;
-	static unsigned int rulesz = 0;
 	unsigned int i;
 	int mode = IGNORE;
 	char *p, *r, *t, regex[256], tags[256];
 
-	if(!data || !strlen(data))
-		return nil;
+	if(!def.rules || !strlen(def.rules))
+		return;
 
-	*n = 0;
-	for(p = data; *p; p++)
-		if(*p == '\n')
-			(*n)++;
-
-	for(i = 0; i < rulesz; i++)
+	for(i = 0; i < nrule; i++)
 		if(rule[i].is_valid) {
 			regfree(&rule[i].regex);
 			rule[i].is_valid = False;
 		}
 
-	if(*n > rulesz) {
+	nrule = 0;
+	for(p = def.rules; *p; p++)
+		if(*p == '\n')
+			nrule++;
+
+	if(nrule > rulesz) {
 		if(rule)
 			free(rule);
-		rule = cext_emallocz(sizeof(Rule) * (*n));
-		rulesz = *n;
+		rule = cext_emallocz(sizeof(Rule) * nrule);
+		rulesz = nrule;
 	}
 
 	i = 0;
-	for(p = data; *p; p++)
+	for(p = def.rules; *p; p++)
 		switch(mode) {
 		case IGNORE:
 			if(*p == '/') {
@@ -78,7 +80,7 @@ parse(char *data, unsigned int *n)
 			if(*p == '/') {
 				mode = IGNORE;
 				*r = 0;
-				rule[i].is_valid = regcomp(&rule[i].regex, regex, 0);
+				rule[i].is_valid = !regcomp(&rule[i].regex, regex, 0);
 			}
 			else {
 				*r = *p;
@@ -100,26 +102,22 @@ parse(char *data, unsigned int *n)
 			}
 			break;
 		}
-
-	return rule;
 }
 
 
 static void
-match(Rule *rule, unsigned int rulesz, Client *c, const char *prop)
+match(Client *c, const char *prop)
 {
 	unsigned int i, j;
 	regmatch_t tmpregm;
 
 	c->ntag = 0;
-	for(i = 0; i < rulesz && c->ntag < MAX_TAGS; i++) {
+	for(i = 0; i < nrule; i++) {
 		Rule *r = &rule[i];
-		if(r->is_valid) {
-			if(!regexec(&r->regex, prop, 1, &tmpregm, 0)) {
-				for(j = 0; c->ntag < MAX_TAGS && j < r->ntag; j++) {
-					cext_strlcpy(c->tag[c->ntag], r->tag[j], sizeof(c->tag[c->ntag]));
-					c->ntag++;
-				}
+		if(r->is_valid && !regexec(&r->regex, prop, 1, &tmpregm, 0)) {
+			for(j = 0; c->ntag < MAX_TAGS && j < r->ntag; j++) {
+				cext_strlcpy(c->tag[c->ntag], r->tag[j], sizeof(c->tag[c->ntag]));
+				c->ntag++;
 			}
 		}
 	}
@@ -128,13 +126,8 @@ match(Rule *rule, unsigned int rulesz, Client *c, const char *prop)
 void
 match_tags(Client *c)
 {
-	unsigned int n;
-	Rule *rule;
-
 	if(!def.rules)
 		return;
-
-   	rule = parse(def.rules, &n);
-	match(rule, n, c, c->name);
-	match(rule, n, c, c->classinst);
+	match(c, c->name);
+	match(c, c->classinst);
 }

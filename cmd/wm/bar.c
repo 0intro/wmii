@@ -93,11 +93,11 @@ update_bar_geometry()
 void
 draw_bar()
 {
-	unsigned int i = 0, x = 0;
+	unsigned int i = 0, w = 0;
+	int exp = 0;
 	Draw d = { 0 };
 	Label *l = nil;
 
-	d.align = CENTER;
 	d.gc = bargc;
 	d.drawable = barpmap;
 	d.rect = brect;
@@ -111,7 +111,7 @@ draw_bar()
 	if(!nlabel)
 		return;
 
-	for(i = 0; (i < nlabel) && (x < brect.width); i++) {
+	for(i = 0; (i < nlabel) && (w < brect.width); i++) {
 		l = label[i];
 		if(l->intern) {
 			if(nview && !strncmp(l->name, def.tag, sizeof(l->name)))
@@ -119,32 +119,42 @@ draw_bar()
 			else
 				l->color = def.norm;
 		}
+		l->rect.x = 0;
 		l->rect.y = 0;
-		l->rect.x = x;
 		l->rect.width = brect.height;
 		if(strlen(l->name))
 			l->rect.width += XTextWidth(xfont, l->data, strlen(l->data));
 		l->rect.height = brect.height;
-		x += l->rect.width;
+		w += l->rect.width;
 	}
 
 	if(i != nlabel) { /* give all labels same width */
-		unsigned int w = brect.width / nlabel;
+		w = brect.width / nlabel;
 		for(i = 0; i < nlabel; i++) {
 			l = label[i];
 			l->rect.x = i * w;
 			l->rect.width = w;
 		}
 	}
-	label[nlabel - 1]->rect.width = brect.width - label[nlabel - 1]->rect.x;
+	else { /* expand label properly */
+		for(exp = 0; (exp < nlabel) && (label[exp]->intern); exp++);
+		if(exp == nlabel)
+			exp = -1;
+		else
+			label[exp]->rect.width += (brect.width - w);
+		for(i = 1; i < nlabel; i++)
+			label[i]->rect.x = label[i - 1]->rect.x + label[i - 1]->rect.width;
+	}
 
 	for(i = 0; i < nlabel; i++) {
 		l = label[i];
 		d.color = l->color;
 		d.rect = l->rect;
 		d.data = l->data;
-		if(i + 1 == nlabel)
+		if(i == exp)
 			d.align = EAST;
+		else
+			d.align = CENTER;
 		blitz_drawlabel(dpy, &d);
 		blitz_drawborder(dpy, &d);
 	}
