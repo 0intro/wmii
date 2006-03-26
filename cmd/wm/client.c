@@ -197,7 +197,7 @@ update_client_property(Client *c, XPropertyEvent *e)
 			cext_strlcpy(c->name, (char*) name.value, sizeof(c->name));
 			free(name.value);
 		}
-		if(c->frame)
+		if(c->nframe)
 			draw_client(c);
 		break;
 	case XA_WM_TRANSIENT_FOR:
@@ -221,7 +221,6 @@ draw_client(Client *c)
 	if(!c->nframe)
 		return; /* might not have been attached atm */
 
-	d.align = WEST;
 	d.drawable = c->framewin;
 	d.font = xfont;
 	d.gc = c->gc;
@@ -245,6 +244,7 @@ draw_client(Client *c)
 	d.notch = nil;
 
 	tags2str(buf, sizeof(buf), c->tag, c->ntag);
+	d.align = WEST;
 	d.rect.x = d.rect.height + XTextWidth(xfont, buf, strlen(buf));
 	d.rect.width = c->frame[c->sel]->rect.width - d.rect.x;
 	d.data = c->name;
@@ -257,6 +257,7 @@ draw_client(Client *c)
 		d.color.fg = d.color.bg;
 		d.color.bg = tmp;
 	}
+	d.align = CENTER;
 	d.rect.width = d.rect.x;
 	d.rect.x = 0;
 	d.data = buf;

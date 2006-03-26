@@ -13,6 +13,10 @@ comp_label(const void *l1, const void *l2)
 {
 	Label *ll1 = *(Label **)l1;
 	Label *ll2 = *(Label **)l2;
+	if(ll1->intern && !ll2->intern)
+		return -1;
+	if(!ll1->intern && ll2->intern)
+		return 1;
 	return strcmp(ll1->name, ll2->name);
 }
 
@@ -80,11 +84,11 @@ update_bar_geometry()
 void
 draw_bar()
 {
-	unsigned int i = 0, n = 0, x = 0, w = 0;
+	unsigned int i = 0, x = 0;
 	Draw d = { 0 };
 	Label *l = nil;
 
-	d.align = WEST;
+	d.align = CENTER;
 	d.gc = bargc;
 	d.drawable = barpmap;
 	d.rect = brect;
@@ -97,55 +101,41 @@ draw_bar()
 
 	if(!nlabel)
 		return;
-	for(i = 0; (i < nlabel) && label[i]->intern; i++) {
+
+	for(i = 0; (i < nlabel) && (x < brect.width); i++) {
 		l = label[i];
-		if(nview && !strncmp(l->data, def.tag, sizeof(l->data)))
-			l->color = def.sel;
-		else
-			l->color = def.norm;
+		if(l->intern) {
+			if(nview && !strncmp(l->name, def.tag, sizeof(l->name)))
+				l->color = def.sel;
+			else
+				l->color = def.norm;
+		}
 		l->rect.y = 0;
 		l->rect.x = x;
-		l->rect.width = l->rect.height = brect.height;
+		l->rect.width = brect.height;
 		if(strlen(l->name))
-			l->rect.width += XTextWidth(xfont, l->name, strlen(l->name));
+			l->rect.width += XTextWidth(xfont, l->data, strlen(l->data));
+		l->rect.height = brect.height;
 		x += l->rect.width;
 	}
 
-	if(i)
-		n = i;
-	for(; i < nlabel; i++) {
-		l = label[i];
-		l->rect.x = x;
-		l->rect.y = 0;
-		l->rect.height = brect.height;
-		l->rect.width = brect.height;
-		if(strlen(l->data))
-			l->rect.width += XTextWidth(xfont, l->data, strlen(l->data));
-		w += l->rect.width;
-	}
-
-	if(w >= brect.width - x) {
-		/* failsafe mode, give all labels same width */
-		w = (brect.width - x) / (nlabel - n);
-		for(i = n; i < nlabel; i++) {
+	if(i != nlabel) { /* give all labels same width */
+		unsigned int w = brect.width / nlabel;
+		for(i = 0; i < nlabel; i++) {
 			l = label[i];
-			l->rect.x = x + i * w;
+			l->rect.x = i * w;
 			l->rect.width = w;
 		}
-		i--;
-		label[i]->rect.width = brect.width - label[i]->rect.x;
 	}
-	else if(n < nlabel) {
-		label[n]->rect.x = brect.width - w;
-		for(i = n + 1; i < nlabel; i++)
-			label[i]->rect.x = label[i - 1]->rect.x + label[i - 1]->rect.width;
-	}
+	label[nlabel - 1]->rect.width = brect.width - label[nlabel - 1]->rect.x;
 
 	for(i = 0; i < nlabel; i++) {
 		l = label[i];
 		d.color = l->color;
 		d.rect = l->rect;
 		d.data = l->data;
+		if(i + 1 == nlabel)
+			d.align = EAST;
 		blitz_drawlabel(dpy, &d);
 		blitz_drawborder(dpy, &d);
 	}
