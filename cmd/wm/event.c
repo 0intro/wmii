@@ -121,7 +121,7 @@ handle_configurerequest(XEvent *e)
 
 		gravitate(c, False);
 
-		if(c->nframe && c->sel) {
+		if(c->nframe) {
 			Frame *f = c->frame[c->sel];
 			f->rect.x = wc.x = c->rect.x - def.border;
 			f->rect.y = wc.y = c->rect.y - bar_height();
