@@ -18,9 +18,10 @@
  */
 
 typedef struct {
-	char regex[256];
+	regex_t regex;
 	char tag[MAX_TAGS][MAX_TAGLEN];
 	unsigned int ntag;
+	Bool is_valid;
 } Rule;
 
 enum {
@@ -45,6 +46,12 @@ parse(char *data, unsigned int *n)
 	for(p = data; *p; p++)
 		if(*p == '\n')
 			(*n)++;
+
+	for(i = 0; i < rulesz; i++)
+		if(rule[i].is_valid) {
+			regfree(&rule[i].regex);
+			rule[i].is_valid = False;
+		}
 
 	if(*n > rulesz) {
 		if(rule)
@@ -71,7 +78,7 @@ parse(char *data, unsigned int *n)
 			if(*p == '/') {
 				mode = IGNORE;
 				*r = 0;
-				cext_strlcpy(rule[i].regex, regex, sizeof(rule[i].regex));
+				rule[i].is_valid = regcomp(&rule[i].regex, regex, 0);
 			}
 			else {
 				*r = *p;
@@ -102,19 +109,17 @@ static void
 match(Rule *rule, unsigned int rulesz, Client *c, const char *prop)
 {
 	unsigned int i, j;
-	regex_t regex;
 	regmatch_t tmpregm;
 
 	c->ntag = 0;
 	for(i = 0; i < rulesz && c->ntag < MAX_TAGS; i++) {
-		Rule r = rule[i];
-		if(!regcomp(&regex, r.regex, 0)) {
-			if(!regexec(&regex, prop, 1, &tmpregm, 0)) {
-				for(j = 0; c->ntag < MAX_TAGS && j < r.ntag; j++) {
-					cext_strlcpy(c->tag[c->ntag], r.tag[j], sizeof(c->tag[c->ntag]));
+		Rule *r = &rule[i];
+		if(r->is_valid) {
+			if(!regexec(&r->regex, prop, 1, &tmpregm, 0)) {
+				for(j = 0; c->ntag < MAX_TAGS && j < r->ntag; j++) {
+					cext_strlcpy(c->tag[c->ntag], r->tag[j], sizeof(c->tag[c->ntag]));
 					c->ntag++;
 				}
-				regfree(&regex);
 			}
 		}
 	}

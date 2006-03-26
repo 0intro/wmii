@@ -9,7 +9,7 @@
 #include "wm.h"
 
 static int
-comp_label(const void *l1, const void *l2)
+comp_label_intern(const void *l1, const void *l2)
 {
 	Label *ll1 = *(Label **)l1;
 	Label *ll2 = *(Label **)l2;
@@ -17,6 +17,14 @@ comp_label(const void *l1, const void *l2)
 		return -1;
 	if(!ll1->intern && ll2->intern)
 		return 1;
+	return 0;
+}
+
+static int
+comp_label_name(const void *l1, const void *l2)
+{
+	Label *ll1 = *(Label **)l1;
+	Label *ll2 = *(Label **)l2;
 	return strcmp(ll1->name, ll2->name);
 }
 
@@ -36,7 +44,8 @@ get_label(char *name)
 	label = (Label **)cext_array_attach((void **)label, l,
 			sizeof(Label *), &labelsz);
 	nlabel++;
-	qsort(label, nlabel, sizeof(Label *), comp_label);
+	qsort(label, nlabel, sizeof(Label *), comp_label_name);
+	qsort(label, nlabel, sizeof(Label *), comp_label_intern);
 
 	return l;
 }

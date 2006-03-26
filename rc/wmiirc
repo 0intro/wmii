@@ -51,6 +51,8 @@ $MODKEY-Control-t
 $MODKEY-t
 $MODKEY-Shift-h
 $MODKEY-Shift-l
+$MODKEY-Shift-j
+$MODKEY-Shift-k
 $MODKEY-space
 $MODKEY-Shift-space
 $MODKEY-h
@@ -124,6 +126,10 @@ do
 			xwrite /view/sel/sel/ctl sendto prev;;
 		$MODKEY-Shift-l)
 			xwrite /view/sel/sel/ctl sendto next;;
+		$MODKEY-Shift-j)
+			xwrite /view/sel/sel/ctl sendto down;;
+		$MODKEY-Shift-k)
+			xwrite /view/sel/sel/ctl sendto up;;
 		$MODKEY-space)
 			xwrite /view/ctl select toggle;;
 		$MODKEY-Shift-space)

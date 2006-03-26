@@ -536,6 +536,28 @@ send2area_client(Client *c, char *arg)
 		else
 			to = v->area[1];
 	}
+	else if(!strncmp(arg, "up", 3)) {
+		int j = frame2index(f);
+		if(j)
+			i = j - 1;
+		else
+			i = a->nframe - 1;
+		a->frame[j] = a->frame[i];
+		a->frame[i] = f;
+		arrange_area(a);
+		return;
+	}
+	else if(!strncmp(arg, "down", 5)) {
+		int j = frame2index(f);
+		if(j + 1 < a->nframe)
+			i = j + 1;
+		else
+			i = 0;
+		a->frame[j] = a->frame[i];
+		a->frame[i] = f;
+		arrange_area(a);
+		return;
+	}
 	else if(!strncmp(arg, "toggle", 7)) {
 		if(i)
 			to = v->area[0];
