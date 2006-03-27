@@ -508,6 +508,35 @@ select_client(Client *c, char *arg)
 }
 
 void
+restack_client(Client *c, char *arg)
+{
+	Frame *f = c->frame[c->sel];
+	Area *a = f->area;
+	int i = area2index(a), j = frame2index(f);
+
+	if(i == -1 || j == -1)
+		return;
+
+	if(!strncmp(arg, "up", 3)) {
+		if(j)
+			i = j - 1;
+		else
+			i = a->nframe - 1;
+	}
+	else if(!strncmp(arg, "down", 5)) {
+		if(j + 1 < a->nframe)
+			i = j + 1;
+		else
+			i = 0;
+	}
+
+	a->frame[j] = a->frame[i];
+	a->frame[i] = f;
+	arrange_area(a);
+	focus_client(c);
+}
+
+void
 send2area_client(Client *c, char *arg)
 {
 	const char *errstr;
@@ -535,30 +564,6 @@ send2area_client(Client *c, char *arg)
 			to = v->area[i + 1];
 		else
 			to = v->area[1];
-	}
-	else if(!strncmp(arg, "up", 3)) {
-		int j = frame2index(f);
-		if(j)
-			i = j - 1;
-		else
-			i = a->nframe - 1;
-		a->frame[j] = a->frame[i];
-		a->frame[i] = f;
-		arrange_area(a);
-		focus_client(c);
-		return;
-	}
-	else if(!strncmp(arg, "down", 5)) {
-		int j = frame2index(f);
-		if(j + 1 < a->nframe)
-			i = j + 1;
-		else
-			i = 0;
-		a->frame[j] = a->frame[i];
-		a->frame[i] = f;
-		arrange_area(a);
-		focus_client(c);
-		return;
 	}
 	else if(!strncmp(arg, "toggle", 7)) {
 		if(i)

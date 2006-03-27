@@ -234,7 +234,7 @@ detach_fromview(View *v, Client *c)
 	Client *cl;
 	for(i = 0; i < v->narea; i++) {
 		if(clientofarea(v->area[i], c)) {
-			detach_fromarea(v->area[i], c, True);
+			detach_fromarea(v->area[i], c);
 			XMoveWindow(dpy, c->framewin, 2 * rect.width, 0);
 		}
 	}

@@ -55,7 +55,6 @@ static char Ebadvalue[] = "bad value";
  * /view/1/			FsDarea
  * /view/1/ctl		FsFctl			command interface (area)
  * /view/1/mode		FsFmode			column mode
- * /view/1/capacity	FsFcapacity		capacity of column
  * /view/1/sel/		FsDclient
  * /view/1/1/class	FsFclass		class:instance of client
  * /view/1/1/name	FsFname			name of client
@@ -218,11 +217,6 @@ qid2name(Qid *qid)
 			return nil;
 		return "tags";
 		break;
-	case FsFcapacity:
-		if(i1 == -1 || i2 == -1)
-			return nil;
-		return "capacity";
-		break;
 	case FsFmode:
 		if(i1 == -1 || i2 == -1)
 			return nil;
@@ -275,8 +269,6 @@ name2type(char *name, unsigned char dir_type)
 		return FsFrules;
 	if(!strncmp(name, "data", 5))
 		return FsFdata;
-	if(!strncmp(name, "capacity", 9))
-		return FsFcapacity;
 	if(!strncmp(name, "mode", 5))
 		return FsFmode;
 	if(!strncmp(name, "tag", 4))
@@ -389,7 +381,6 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			return -1;
 		goto Mkfile;
 		break;
-	case FsFcapacity:
 	case FsFmode:
 		if(dir_i1 == -1 || dir_i2 == -1 || dir_type != FsDarea)
 			return -1;
@@ -544,10 +535,6 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		break;
 	case FsFdata:
 		return mkstat(stat, dir, wname, (dir_i1 == nlabel) ? 0 : strlen(label[dir_i1]->data), DMREAD | DMWRITE);
-		break;
-	case FsFcapacity:
-		snprintf(buf, sizeof(buf), "%u", view[dir_i1]->area[dir_i2]->capacity);
-		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 		break;
 	case FsFmode:
 		return mkstat(stat, dir, wname, strlen(mode2str(view[dir_i1]->area[dir_i2]->mode)), DMREAD | DMWRITE);
@@ -802,10 +789,8 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDarea:
 			/* jump to offset */
 			len = type2stat(&stat, "ctl", &m->qid);
-			if(i2) {
+			if(i2)
 				len += type2stat(&stat, "mode", &m->qid);
-				len += type2stat(&stat, "capacity", &m->qid);
-			}
 			if(view[i1]->area[i2]->nframe)
 				len += type2stat(&stat, "sel", &m->qid);
 			for(i = 0; i < view[i1]->area[i2]->nframe; i++) {
@@ -971,8 +956,6 @@ xread(IXPConn *c, Fcall *fcall)
 			if(i2) {
 				fcall->count += type2stat(&stat, "mode", &m->qid);
 				p = ixp_enc_stat(p, &stat);
-				fcall->count += type2stat(&stat, "capacity", &m->qid);
-				p = ixp_enc_stat(p, &stat);
 			}
 			if(view[i1]->area[i2]->nframe) {
 				fcall->count += type2stat(&stat, "sel", &m->qid);
@@ -1120,13 +1103,6 @@ xread(IXPConn *c, Fcall *fcall)
 			if((fcall->count = strlen(def.font)))
 				memcpy(p, def.font, fcall->count);
 			break;
-		case FsFcapacity:
-			if(!i2)
-				return Enofile;
-			snprintf(buf, sizeof(buf), "%u", view[i1]->area[i2]->capacity);
-			fcall->count = strlen(buf);
-			memcpy(p, buf, fcall->count);
-			break;
 		case FsFmode:
 			if(!i2)
 				return Enofile;
@@ -1219,12 +1195,16 @@ xwrite(IXPConn *c, Fcall *fcall)
 				kill_client(f->client);
 			else if(!strncmp(buf, "sendto ", 7))
 				send2area_client(f->client, &buf[7]);
+			else if(!strncmp(buf, "restack ", 8))
+				restack_client(f->client, &buf[8]);
 			break;
 		case FsDGclient:
 			if(!strncmp(buf, "kill", 5))
 				kill_client(client[i1]);
 			else if(!strncmp(buf, "sendto ", 7))
 				send2area_client(client[i1], &buf[7]);
+			else if(!strncmp(buf, "restack ", 8))
+				restack_client(client[i1], &buf[8]);
 			break;
 		default:
 			break;
@@ -1342,35 +1322,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		XFreeFont(dpy, xfont);
 		xfont = blitz_getfont(dpy, def.font);
 		update_bar_geometry();
-		break;
-	case FsFcapacity:
-		if(!i2)
-			return Enofile;
-		if(fcall->count > sizeof(buf))
-			return Ebadvalue;
-		memcpy(buf, fcall->data, fcall->count);
-		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 0, 0xffff, &err);
-		if(err)
-			return Ebadvalue;
-		view[i1]->area[i2]->capacity = i;
-		if(i) {
-			Area *a = view[i1]->area[i2];
-			len = 0;
-			while(a->nframe > a->capacity)
-				pre_attach(a);
-			for(i = 1; i < view[i1]->narea; i++)
-				len += view[i1]->area[i]->nframe;
-			if(len > a->capacity) {
-				while(a->nframe < a->capacity) {
-					i = a->nframe;
-					post_detach(a);
-					if(i == a->nframe)
-						break;
-				}
-			}
-			arrange_area(a);
-		}
 		break;
 	case FsFmode:
 		if(!i2)

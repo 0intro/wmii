@@ -60,7 +60,6 @@ enum {
 	FsFtags,
 	FsFclass,
 	FsFtag,
-	FsFcapacity,
 	FsFmode
 };
 
@@ -92,7 +91,6 @@ struct Area {
 	unsigned int framesz;
 	unsigned int sel;
 	unsigned int nframe;
-	unsigned int capacity;
 	int mode;
 	XRectangle rect;
 };
@@ -207,14 +205,13 @@ int aid2index(View *t, unsigned short id);
 void select_area(Area *a, char *arg);
 void send2area(Area *to, Area *from, Client *c);
 void attach_toarea(Area *a, Client *c);
-void detach_fromarea(Area *a, Client *c, Bool postarrange);
+void detach_fromarea(Area *a, Client *c);
 void arrange_area(Area *a);
 void resize_area(Client *c, XRectangle *r, XPoint *pt);
 int str2mode(char *arg);
 char *mode2str(int mode);
 Bool clientofarea(Area *a, Client *c);
-void pre_attach(Area *a);
-void post_detach(Area *a);
+void restack_client(Client *c, char *arg);
 
 /* bar.c */
 Label *get_label(char *name);

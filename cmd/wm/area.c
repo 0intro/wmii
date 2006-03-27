@@ -116,56 +116,9 @@ void
 send2area(Area *to, Area *from, Client *c)
 {
 	c->revert = from;
-	detach_fromarea(from, c, True);
+	detach_fromarea(from, c);
 	attach_toarea(to, c);
 	focus_client(c);
-}
-
-void
-pre_attach(Area *a)
-{
-	Area *new = nil;
-	Client *c;
-	View *v = a->view;
-	unsigned int i, j;
-
-	if(!a->capacity || (a->nframe < a->capacity))
-		return;
-	i = area2index(a);
-	for(j = i + 1; j < v->narea; j++)
-		if(!v->area[j]->capacity
-				|| (v->area[j]->capacity > v->area[j]->nframe))
-		{
-			new = v->area[j];
-			break;
-		}
-	if(!new) {
-		new = alloc_area(v);
-		arrange_view(v, True);
-	}
-	c = a->frame[a->sel]->client;
-	detach_fromarea(a, c, False);
-	attach_toarea(new, c);
-	arrange_area(new);
-}
-
-void
-post_detach(Area *a)
-{
-	Client *c;
-	Area *det;
-	View *v = a->view;
-	unsigned int i = area2index(a);
-
-	if(!a->capacity || i + 1 >= v->narea)
-		return;
-	det = v->area[i + 1];
-	if(!det->nframe)
-		return;
-	c = det->frame[det->sel]->client;
-	detach_fromarea(det, c, True);
-	attach_toarea(a, c);
-	arrange_area(a);
 }
 
 void
@@ -176,7 +129,6 @@ attach_toarea(Area *a, Client *c)
 
 	if(clientofview(a->view, c))
 		return;
-	pre_attach(a);
 	f = cext_emallocz(sizeof(Frame));
 	f->id = id++;
 	f->area = a;
@@ -198,7 +150,7 @@ attach_toarea(Area *a, Client *c)
 }
 
 void
-detach_fromarea(Area *a, Client *c, Bool postarrange)
+detach_fromarea(Area *a, Client *c)
 {
 	Frame *f;
 	View *v = a->view;
@@ -219,11 +171,6 @@ detach_fromarea(Area *a, Client *c, Bool postarrange)
 	a->nframe--;
 	if(a->sel > 0)
 		a->sel--;
-
-	if(!postarrange)
-		return;
-
-	post_detach(a);
 
 	i = area2index(a);
 	if(i && a->nframe)
@@ -515,10 +462,8 @@ drop_moving(Frame *f, XRectangle *new, XPoint * pt)
 	for(i = 1; (i < v->narea) &&
 			!blitz_ispointinrect(pt->x, pt->y, &v->area[i]->rect); i++);
 	if((tgt = ((i < v->narea) ? v->area[i] : nil))) {
-		if(tgt != src) {
+		if(tgt != src)
 			send2area(tgt, src, f->client);
-			arrange_area(tgt);
-		}
 		else {
 			for(i = 0; (i < src->nframe) && !blitz_ispointinrect(
 						pt->x, pt->y, &src->frame[i]->rect); i++);

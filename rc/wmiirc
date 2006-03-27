@@ -127,9 +127,9 @@ do
 		$MODKEY-Shift-l)
 			xwrite /view/sel/sel/ctl sendto next;;
 		$MODKEY-Shift-j)
-			xwrite /view/sel/sel/ctl sendto down;;
+			xwrite /view/sel/sel/ctl restack down;;
 		$MODKEY-Shift-k)
-			xwrite /view/sel/sel/ctl sendto up;;
+			xwrite /view/sel/sel/ctl restack up;;
 		$MODKEY-space)
 			xwrite /view/ctl select toggle;;
 		$MODKEY-Shift-space)
