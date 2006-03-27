@@ -374,7 +374,7 @@ drop_resize(Frame *f, XRectangle *new)
 	View *v = a->view;
 	Frame *north = nil, *south = nil;
 	unsigned int i;
-	unsigned int min = 2 * bar_height();
+	unsigned int min_height = 2 * bar_height();
 
 	for(i = 1; (i < v->narea) && (v->area[i] != a); i++);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
@@ -427,17 +427,30 @@ drop_resize(Frame *f, XRectangle *new)
 	}
 AfterHorizontal:
 
+	/* skip vertical resize unless the column is in equal mode */
 	if(a->mode != Colequal)
 		goto AfterVertical;
+	
+	/* validate (and trim if necessary) vertical resize */
+	if(new->height < (f->rect.height < min_height ? f->rect.height : min_height)) {
+		if(new->y + new->height == f->rect.y + f->rect.height)
+			new->y = f->rect.y + f->rect.height - (f->rect.height < min_height ? f->rect.height : min_height);
+		new->height = f->rect.height < min_height ? f->rect.height : min_height;
+	}
+	if(north && (new->y != f->rect.y))
+		if(new->y < 0 || new->y < (north->rect.y + min_height)) {
+			new->height -= (north->rect.y + min_height) - new->y;
+			new->y = north->rect.y + min_height;
+		}
+	if(south && (new->y + new->height != f->rect.y + f->rect.height)) {
+		if((new->y + new->height) > (south->rect.y + south->rect.height - min_height))
+			new->height = (south->rect.y + south->rect.height - min_height) - new->y;
+	}
+	if(new->height < (f->rect.height < min_height ? f->rect.height : min_height))
+		goto AfterVertical;
+
 	/* vertical resize */
 	if(north && (new->y != f->rect.y)) {
-		if(new->y < 0 || new->y < (north->rect.y + min)) {
-			new->height -= (north->rect.y + min) - new->y;
-			new->y = north->rect.y + min;
-		} else if(new->height < min) {
-			new->y -= min - new->height;
-			new->height = min;
-		}
 		north->rect.height = new->y - north->rect.y;
 		f->rect.height += f->rect.y - new->y;
 		f->rect.y = new->y;
@@ -445,10 +458,6 @@ AfterHorizontal:
 		resize_client(f->client, &f->rect, False);
 	}
 	if(south && (new->y + new->height != f->rect.y + f->rect.height)) {
-		if((new->y + new->height) > (south->rect.y + south->rect.height - min))
-			new->height = (south->rect.y + south->rect.height - min) - new->y;
-		else if(new->height < min)
-			new->height = min;
 		south->rect.height -= new->y + new->height - south->rect.y;
 		south->rect.y = new->y + new->height;
 		f->rect.y = new->y;
