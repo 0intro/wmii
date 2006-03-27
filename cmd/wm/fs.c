@@ -1195,16 +1195,12 @@ xwrite(IXPConn *c, Fcall *fcall)
 				kill_client(f->client);
 			else if(!strncmp(buf, "sendto ", 7))
 				send2area_client(f->client, &buf[7]);
-			else if(!strncmp(buf, "restack ", 8))
-				restack_client(f->client, &buf[8]);
+			else if(!strncmp(buf, "swap ", 5))
+				swap_client(f->client, &buf[5]);
 			break;
 		case FsDGclient:
 			if(!strncmp(buf, "kill", 5))
 				kill_client(client[i1]);
-			else if(!strncmp(buf, "sendto ", 7))
-				send2area_client(client[i1], &buf[7]);
-			else if(!strncmp(buf, "restack ", 8))
-				restack_client(client[i1], &buf[8]);
 			break;
 		default:
 			break;

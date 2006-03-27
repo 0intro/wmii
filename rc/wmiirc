@@ -63,7 +63,6 @@ $MODKEY-n
 $MODKEY-m
 $MODKEY-s
 $MODKEY-e
-$MODKEY-x
 $MODKEY-0
 $MODKEY-1
 $MODKEY-2
@@ -121,18 +120,16 @@ do
 			xwrite /view/sel/mode stack;;
 		$MODKEY-e)
 			xwrite /view/sel/mode equal;;
-		$MODKEY-x)
-			xwrite /view/sel/mode excl;;
 		$MODKEY-n)
 			xwrite /view/sel/sel/ctl sendto new;;
 		$MODKEY-Shift-h)
-			xwrite /view/sel/sel/ctl sendto prev;;
+			xwrite /view/sel/sel/ctl swap prev;;
 		$MODKEY-Shift-l)
-			xwrite /view/sel/sel/ctl sendto next;;
+			xwrite /view/sel/sel/ctl swap next;;
 		$MODKEY-Shift-j)
-			xwrite /view/sel/sel/ctl restack down;;
+			xwrite /view/sel/sel/ctl swap down;;
 		$MODKEY-Shift-k)
-			xwrite /view/sel/sel/ctl restack up;;
+			xwrite /view/sel/sel/ctl swap up;;
 		$MODKEY-space)
 			xwrite /view/ctl select toggle;;
 		$MODKEY-Shift-space)

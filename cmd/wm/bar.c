@@ -122,7 +122,7 @@ draw_bar()
 		l->rect.x = 0;
 		l->rect.y = 0;
 		l->rect.width = brect.height;
-		if(strlen(l->name))
+		if(strlen(l->data))
 			l->rect.width += XTextWidth(xfont, l->data, strlen(l->data));
 		l->rect.height = brect.height;
 		w += l->rect.width;

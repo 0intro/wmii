@@ -508,30 +508,53 @@ select_client(Client *c, char *arg)
 }
 
 void
-restack_client(Client *c, char *arg)
+swap_client(Client *c, char *arg)
 {
 	Frame *f = c->frame[c->sel];
-	Area *a = f->area;
+	Area *o, *a = f->area;
+	View *v = a->view;
 	int i = area2index(a), j = frame2index(f);
 
 	if(i == -1 || j == -1)
 		return;
 
-	if(!strncmp(arg, "up", 3)) {
+	if(!strncmp(arg, "prev", 5)) {
+		if(i == 1)
+			o = v->area[v->narea - 1];
+		else
+			o = v->area[i - 1];
+		goto Swaparea;
+	}
+	else if(!strncmp(arg, "next", 5)) {
+		if(i < v->narea - 1)
+			o = v->area[i + 1];
+		else
+			o = v->area[1];
+Swaparea:
+		if(o == a)
+			return;
+		a->frame[j] = o->frame[o->sel];
+		o->frame[o->sel]->area = a;
+		o->frame[o->sel] = f;
+		f->area = a;
+		arrange_column(o);
+	}
+	else if(!strncmp(arg, "up", 3)) {
 		if(j)
 			i = j - 1;
 		else
 			i = a->nframe - 1;
+		a->frame[j] = a->frame[i];
+		a->frame[i] = f;
 	}
 	else if(!strncmp(arg, "down", 5)) {
 		if(j + 1 < a->nframe)
 			i = j + 1;
 		else
 			i = 0;
+		a->frame[j] = a->frame[i];
+		a->frame[i] = f;
 	}
-
-	a->frame[j] = a->frame[i];
-	a->frame[i] = f;
 	arrange_column(a);
 	focus_client(c);
 }

@@ -22,7 +22,6 @@ enum {
 enum {
 	Colequal,
 	Colstack,
-	Colexcl,
 	Colmax
 };
 
@@ -212,7 +211,6 @@ void resize_area(Client *c, XRectangle *r, XPoint *pt);
 int str2mode(char *arg);
 char *mode2str(int mode);
 Bool clientofarea(Area *a, Client *c);
-void restack_client(Client *c, char *arg);
 
 /* bar.c */
 Label *get_label(char *name);
@@ -246,6 +244,7 @@ void resize_all_clients();
 void focus(Client *c);
 int cid2index(unsigned short id);
 Bool clienthastag(Client *c, const char *t);
+void swap_client(Client *c, char *arg);
 
 /* event.c */
 void init_x_event_handler();

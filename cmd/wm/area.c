@@ -206,7 +206,6 @@ mode2str(int mode)
 	switch(mode) {
 	case Colequal: return "equal"; break;
 	case Colstack: return "stack"; break;
-	case Colexcl: return "excl"; break;
 	case Colmax: return "max"; break;
 	default: break;
 	}
@@ -220,8 +219,6 @@ str2mode(char *arg)
 		return Colequal;
 	if(!strncmp("stack", arg, 6))
 		return Colstack;
-	if(!strncmp("excl", arg, 5))
-		return Colexcl;
 	if(!strncmp("max", arg, 4))
 		return Colmax;
 	return -1;
@@ -267,7 +264,7 @@ relax_area(Area *a)
 	h = 0;
 	for(i = 0; i < a->nframe; i++) {
 		Frame *f = a->frame[i];
-		if(a->mode == Colmax || a->mode == Colexcl) {
+		if(a->mode == Colmax) {
 			if(h < f->rect.height)
 				h = f->rect.height;
 		}
@@ -292,7 +289,7 @@ relax_area(Area *a)
 		Frame *f = a->frame[i];
 		f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 		f->rect.y = yoff;
-		if((a->mode != Colmax) && (a->mode != Colexcl))
+		if(a->mode != Colmax)
 			yoff = f->rect.y + f->rect.height + hdiff;
 		resize_client(f->client, &f->rect, False);
 	}
@@ -341,31 +338,6 @@ arrange_column(Area *a)
 			resize_client(f->client, &f->rect, True);
 		}
 		break;
-	case Colexcl:
-		if(a->nframe > 1) {
-			Client *c = a->frame[a->sel]->client;
-			Area *to = nil;
-			for(i = area2index(a) + 1; i < a->view->narea; i++)
-				if(a->view->area[i]->mode != Colexcl) {
-					to = a->view->area[i];
-					break;
-				}
-			if(!to) {
-				to = alloc_area(a->view);
-				a->view->sel = area2index(a);
-				arrange_view(a->view, True);
-			}
-			while(a->nframe > 1) {
-				for(i = 0; i < a->nframe; i++) {
-					Client *cl = a->frame[i]->client;
-					if(cl != c) {
-						detach_fromarea(a, cl);
-						attach_toarea(to, cl);
-						break;
-					}
-				}
-			}
-		}
 Fallthrough:
 	case Colmax:
 		for(i = 0; i < a->nframe; i++) {
