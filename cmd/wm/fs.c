@@ -1330,6 +1330,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		view[i1]->area[i2]->mode = i;
 		arrange_column(view[i1]->area[i2]);
+		if(view[i1]->area[i2]->nframe == 1) /* little hack to update the taglabel */
+			draw_client(view[i1]->area[i2]->frame[view[i1]->area[i2]->sel]->client);
 		break;
 	case FsFevent:
 		if(fcall->count > sizeof(buf))
