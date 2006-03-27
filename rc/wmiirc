@@ -48,13 +48,15 @@ $MODKEY-Control-q,y
 $MODKEY-Control-p
 $MODKEY-Control-a
 $MODKEY-Control-t
-$MODKEY-t
+$MODKEY-Control-h
+$MODKEY-Control-l
 $MODKEY-Shift-h
 $MODKEY-Shift-l
 $MODKEY-Shift-j
 $MODKEY-Shift-k
 $MODKEY-space
 $MODKEY-Shift-space
+$MODKEY-t
 $MODKEY-h
 $MODKEY-l
 $MODKEY-j
@@ -122,6 +124,10 @@ do
 			xwrite /view/sel/mode equal;;
 		$MODKEY-n)
 			xwrite /view/sel/sel/ctl sendto new;;
+		$MODKEY-Control-h)
+			xwrite /view/sel/sel/ctl sendto prev;;
+		$MODKEY-Control-l)
+			xwrite /view/sel/sel/ctl sendto next;;
 		$MODKEY-Shift-h)
 			xwrite /view/sel/sel/ctl swap prev;;
 		$MODKEY-Shift-l)

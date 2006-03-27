@@ -635,7 +635,7 @@ xcreate(IXPConn *c, Fcall *fcall)
 	type = qpath_type(m->qid.path);
 	switch(type) {
 	case FsDbar:
-		get_label(fcall->name);
+		get_label(fcall->name, False);
 		break;
 	default:
 		return Enofile;

@@ -29,7 +29,7 @@ comp_label_name(const void *l1, const void *l2)
 }
 
 Label *
-get_label(char *name)
+get_label(char *name, Bool intern)
 {
 	static unsigned int id = 1;
 	Label *l = name2label(name);
@@ -38,6 +38,7 @@ get_label(char *name)
 		return l;
 	l = cext_emallocz(sizeof(Label));
 	l->id = id++;
+	l->intern = intern;
 	cext_strlcpy(l->name, name, sizeof(l->name));
 	cext_strlcpy(l->colstr, def.selcolor, sizeof(l->colstr));
 	l->color = def.sel;
@@ -210,15 +211,13 @@ update_bar_tags()
 		}
 	}
 	for(i = 0; i < ntag; i++) {
-		l = get_label(tag[i]);
-		l->intern = True;
+		l = get_label(tag[i], True);
 		cext_strlcpy(l->data, tag[i], sizeof(l->data));
 	}
 	for(i = 0; i < nview; i++) {
 		View *v = view[i];
 		tags2str(vname, sizeof(vname), v->tag, v->ntag);
-		l = get_label(vname);
-		l->intern = True;
+		l = get_label(vname, True);
 		cext_strlcpy(l->data, vname, sizeof(l->data));
 	}
 	draw_bar();

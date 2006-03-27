@@ -213,7 +213,7 @@ char *mode2str(int mode);
 Bool clientofarea(Area *a, Client *c);
 
 /* bar.c */
-Label *get_label(char *name);
+Label *get_label(char *name, Bool intern);
 void destroy_label(Label *l);
 void draw_bar();
 int lid2index(unsigned short id);
