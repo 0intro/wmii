@@ -67,7 +67,7 @@ enum {
 #define MAX_TAGS			8
 #define MAX_TAGLEN			32
 #define WM_PROTOCOL_DELWIN	1
-#define MIN_COLWIDTH		32
+#define MIN_COLWIDTH		64
 
 typedef struct View View;
 typedef struct Area Area;
