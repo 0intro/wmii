@@ -518,14 +518,14 @@ swap_client(Client *c, char *arg)
 	if(i == -1 || j == -1)
 		return;
 
-	if(!strncmp(arg, "prev", 5)) {
+	if(!strncmp(arg, "prev", 5) && i) {
 		if(i == 1)
 			o = v->area[v->narea - 1];
 		else
 			o = v->area[i - 1];
 		goto Swaparea;
 	}
-	else if(!strncmp(arg, "next", 5)) {
+	else if(!strncmp(arg, "next", 5) && i) {
 		if(i < v->narea - 1)
 			o = v->area[i + 1];
 		else
@@ -539,7 +539,7 @@ Swaparea:
 		f->area = o;
 		arrange_column(o);
 	}
-	else if(!strncmp(arg, "up", 3)) {
+	else if(!strncmp(arg, "up", 3) && i) {
 		if(j)
 			i = j - 1;
 		else
@@ -547,7 +547,7 @@ Swaparea:
 		a->frame[j] = a->frame[i];
 		a->frame[i] = f;
 	}
-	else if(!strncmp(arg, "down", 5)) {
+	else if(!strncmp(arg, "down", 5) && i) {
 		if(j + 1 < a->nframe)
 			i = j + 1;
 		else
@@ -555,7 +555,8 @@ Swaparea:
 		a->frame[j] = a->frame[i];
 		a->frame[i] = f;
 	}
-	arrange_column(a);
+	if(area2index(a))
+		arrange_column(a);
 	focus_client(c);
 }
 
