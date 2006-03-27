@@ -100,7 +100,7 @@ focus_client(Client *c)
 	draw_client(c);
 	XSync(dpy, False);
 	if(i > 0 && f->area->mode == Colstack)
-		arrange_area(f->area);
+		arrange_column(f->area);
 }
 
 void
@@ -532,7 +532,7 @@ restack_client(Client *c, char *arg)
 
 	a->frame[j] = a->frame[i];
 	a->frame[i] = f;
-	arrange_area(a);
+	arrange_column(a);
 	focus_client(c);
 }
 

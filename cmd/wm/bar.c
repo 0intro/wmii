@@ -81,7 +81,7 @@ update_bar_geometry()
 		for(j = 1; j < view[i]->narea; j++) {
 			Area *a = view[i]->area[j];
 			a->rect.height = rect.height - brect.height;
-			arrange_area(a);
+			arrange_column(a);
 		}
 		for(j = 0; j < view[i]->area[0]->nframe; j++) {
 			Frame *f = view[i]->area[0]->frame[j];

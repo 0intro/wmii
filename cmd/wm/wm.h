@@ -22,6 +22,7 @@ enum {
 enum {
 	Colequal,
 	Colstack,
+	Colexcl,
 	Colmax
 };
 
@@ -206,7 +207,7 @@ void select_area(Area *a, char *arg);
 void send2area(Area *to, Area *from, Client *c);
 void attach_toarea(Area *a, Client *c);
 void detach_fromarea(Area *a, Client *c);
-void arrange_area(Area *a);
+void arrange_column(Area *a);
 void resize_area(Client *c, XRectangle *r, XPoint *pt);
 int str2mode(char *arg);
 char *mode2str(int mode);

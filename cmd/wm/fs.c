@@ -1333,7 +1333,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if((i = str2mode(buf)) == -1)
 			return Ebadvalue;
 		view[i1]->area[i2]->mode = i;
-		arrange_area(view[i1]->area[i2]);
+		arrange_column(view[i1]->area[i2]);
 		break;
 	case FsFevent:
 		if(fcall->count > sizeof(buf))

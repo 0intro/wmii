@@ -143,8 +143,9 @@ attach_toarea(Area *a, Client *c)
 	a->frame = (Frame **)cext_array_attach(
 			(void **)a->frame, f, sizeof(Frame *), &a->framesz);
 	a->nframe++;
+	a->sel = a->nframe - 1;
 	if(area2index(a)) /* column */
-		arrange_area(a);
+		arrange_column(a);
 	else /* floating */
 		resize_client(c, &f->rect,  False);
 }
@@ -174,7 +175,7 @@ detach_fromarea(Area *a, Client *c)
 
 	i = area2index(a);
 	if(i && a->nframe)
-		arrange_area(a);
+		arrange_column(a);
 	else {
 		if(i) {
 		    if(v->narea > 2)
@@ -205,6 +206,7 @@ mode2str(int mode)
 	switch(mode) {
 	case Colequal: return "equal"; break;
 	case Colstack: return "stack"; break;
+	case Colexcl: return "excl"; break;
 	case Colmax: return "max"; break;
 	default: break;
 	}
@@ -218,6 +220,8 @@ str2mode(char *arg)
 		return Colequal;
 	if(!strncmp("stack", arg, 6))
 		return Colstack;
+	if(!strncmp("excl", arg, 5))
+		return Colexcl;
 	if(!strncmp("max", arg, 4))
 		return Colmax;
 	return -1;
@@ -263,7 +267,7 @@ relax_area(Area *a)
 	h = 0;
 	for(i = 0; i < a->nframe; i++) {
 		Frame *f = a->frame[i];
-		if(a->mode == Colmax) {
+		if(a->mode == Colmax || a->mode == Colexcl) {
 			if(h < f->rect.height)
 				h = f->rect.height;
 		}
@@ -288,14 +292,14 @@ relax_area(Area *a)
 		Frame *f = a->frame[i];
 		f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 		f->rect.y = yoff;
-		if(a->mode != Colmax)
+		if((a->mode != Colmax) && (a->mode != Colexcl))
 			yoff = f->rect.y + f->rect.height + hdiff;
 		resize_client(f->client, &f->rect, False);
 	}
 }
 
 void
-arrange_area(Area *a)
+arrange_column(Area *a)
 {
 	unsigned int i, yoff, h;
 
@@ -337,6 +341,31 @@ arrange_area(Area *a)
 			resize_client(f->client, &f->rect, True);
 		}
 		break;
+	case Colexcl:
+		if(a->nframe > 1) {
+			Client *c = a->frame[a->sel]->client;
+			Area *to = nil;
+			for(i = area2index(a) + 1; i < a->view->narea; i++)
+				if(a->view->area[i]->mode != Colexcl) {
+					to = a->view->area[i];
+					break;
+				}
+			if(!to) {
+				to = alloc_area(a->view);
+				a->view->sel = area2index(a);
+				arrange_view(a->view, True);
+			}
+			while(a->nframe > 1) {
+				for(i = 0; i < a->nframe; i++) {
+					Client *cl = a->frame[i]->client;
+					if(cl != c) {
+						detach_fromarea(a, cl);
+						attach_toarea(to, cl);
+						break;
+					}
+				}
+			}
+		}
 Fallthrough:
 	case Colmax:
 		for(i = 0; i < a->nframe; i++) {
@@ -415,7 +444,7 @@ drop_resize(Frame *f, XRectangle *new)
 	if(horiz_resize)
 		match_horiz(a, &a->rect);
 
-	if(a->mode == Colstack || a->mode == Colmax)
+	if(a->mode != Colequal)
 		goto AfterVertical;
 	/* vertical resize */
 	if(north && (new->y != f->rect.y)) {
@@ -472,7 +501,7 @@ drop_moving(Frame *f, XRectangle *new, XPoint * pt)
 				Frame *tmp = src->frame[j];
 				src->frame[j] = src->frame[i];
 				src->frame[i] = tmp;
-				arrange_area(src);
+				arrange_column(src);
 				focus_client(f->client);
 			}
 		}

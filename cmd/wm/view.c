@@ -315,6 +315,6 @@ arrange_view(View *v, Bool updategeometry)
 			a->rect.x = (i - 1) * width;
 			a->rect.width = width;
 		}
-		arrange_area(a);
+		arrange_column(a);
 	}
 }
