@@ -534,9 +534,9 @@ Swaparea:
 		if(o == a)
 			return;
 		a->frame[j] = o->frame[o->sel];
-		o->frame[o->sel]->area = a;
+		a->frame[j]->area = a;
 		o->frame[o->sel] = f;
-		f->area = a;
+		f->area = o;
 		arrange_column(o);
 	}
 	else if(!strncmp(arg, "up", 3)) {
