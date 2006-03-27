@@ -94,7 +94,7 @@ void
 draw_bar()
 {
 	unsigned int i = 0, w = 0;
-	int exp = 0;
+	int exp = -1;
 	Draw d = { 0 };
 	Label *l = nil;
 

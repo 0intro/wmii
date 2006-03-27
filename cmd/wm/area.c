@@ -116,9 +116,56 @@ void
 send2area(Area *to, Area *from, Client *c)
 {
 	c->revert = from;
-	detach_fromarea(from, c);
+	detach_fromarea(from, c, True);
 	attach_toarea(to, c);
 	focus_client(c);
+}
+
+void
+pre_attach(Area *a)
+{
+	Area *new = nil;
+	Client *c;
+	View *v = a->view;
+	unsigned int i, j;
+
+	if(!a->capacity || (a->nframe < a->capacity))
+		return;
+	i = area2index(a);
+	for(j = i + 1; j < v->narea; j++)
+		if(!v->area[j]->capacity
+				|| (v->area[j]->capacity > v->area[j]->nframe))
+		{
+			new = v->area[j];
+			break;
+		}
+	if(!new) {
+		new = alloc_area(v);
+		arrange_view(v, True);
+	}
+	c = a->frame[a->sel]->client;
+	detach_fromarea(a, c, False);
+	attach_toarea(new, c);
+	arrange_area(new);
+}
+
+void
+post_detach(Area *a)
+{
+	Client *c;
+	Area *det;
+	View *v = a->view;
+	unsigned int i = area2index(a);
+
+	if(!a->capacity || i + 1 >= v->narea)
+		return;
+	det = v->area[i + 1];
+	if(!det->nframe)
+		return;
+	c = det->frame[det->sel]->client;
+	detach_fromarea(det, c, True);
+	attach_toarea(a, c);
+	arrange_area(a);
 }
 
 void
@@ -129,6 +176,7 @@ attach_toarea(Area *a, Client *c)
 
 	if(clientofview(a->view, c))
 		return;
+	pre_attach(a);
 	f = cext_emallocz(sizeof(Frame));
 	f->id = id++;
 	f->area = a;
@@ -150,7 +198,7 @@ attach_toarea(Area *a, Client *c)
 }
 
 void
-detach_fromarea(Area *a, Client *c)
+detach_fromarea(Area *a, Client *c, Bool postarrange)
 {
 	Frame *f;
 	View *v = a->view;
@@ -171,6 +219,12 @@ detach_fromarea(Area *a, Client *c)
 	a->nframe--;
 	if(a->sel > 0)
 		a->sel--;
+
+	if(!postarrange)
+		return;
+
+	post_detach(a);
+
 	i = area2index(a);
 	if(i && a->nframe)
 		arrange_area(a);
@@ -180,7 +234,7 @@ detach_fromarea(Area *a, Client *c)
 				destroy_area(a);
 			else if(!a->nframe && v->area[0]->nframe)
 				v->sel = 0; /* focus floating area if it contains something */
-			arrange_tag(v, True);
+			arrange_view(v, True);
 		}
 		else if(!i && !a->nframe) {
 			if(c->trans) {
@@ -351,27 +405,6 @@ Fallthrough:
 	relax_area(a);
 }
 
-void
-arrange_tag(View *v, Bool updategeometry)
-{
-	unsigned int i;
-	unsigned int width;
-
-	if(v->narea == 1)
-		return;
-
-	width = rect.width / (v->narea - 1);
-	for(i = 1; i < v->narea; i++) {
-		Area *a = v->area[i];
-		if(updategeometry) {
-			a->rect.height = rect.height - brect.height;
-			a->rect.x = (i - 1) * width;
-			a->rect.width = width;
-		}
-		arrange_area(a);
-	}
-}
-
 static void
 match_horiz(Area *a, XRectangle *r)
 {
@@ -393,6 +426,7 @@ drop_resize(Frame *f, XRectangle *new)
 	Frame *north = nil, *south = nil;
 	unsigned int i;
 	unsigned int min = 2 * bar_height();
+	Bool horiz_resize = False;
 
 	for(i = 1; (i < v->narea) && (v->area[i] != a); i++);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
@@ -403,47 +437,36 @@ drop_resize(Frame *f, XRectangle *new)
 	north = i ? a->frame[i - 1] : nil;
 	south = i + 1 < a->nframe ? a->frame[i + 1] : nil;
 
-	/* validate (and trim if necessary) horizontal resize */
-	if(new->width < MIN_COLWIDTH) {
-		if(new->x + new->width == f->rect.x + f->rect.width)
-			new->x = a->rect.x + a->rect.width - MIN_COLWIDTH;
-		new->width = MIN_COLWIDTH;
-	}
+	/* horizontal resize */
 	if(west && (new->x != f->rect.x)) {
+		horiz_resize = True;
 		if(new->x < 0 || new->x < (west->rect.x + MIN_COLWIDTH)) {
 			new->width -= (west->rect.x + MIN_COLWIDTH) - new->x;
 			new->x = west->rect.x + MIN_COLWIDTH;
+		} else if(new->width < MIN_COLWIDTH) {
+			new->x -= MIN_COLWIDTH - new->width;
+			new->width = MIN_COLWIDTH;
 		}
-	} else {
-		new->width += new->x - a->rect.x;
-		new->x = a->rect.x;
-	}
-	if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
-		if((new->x + new->width) > (east->rect.x + east->rect.width - MIN_COLWIDTH))
-			new->width = (east->rect.x + east->rect.width - MIN_COLWIDTH) - new->x;
-	} else
-		new->width = (a->rect.x + a->rect.width) - new->x;
-	if(new->width < MIN_COLWIDTH)
-		goto AfterHorizontal;
-
-	/* horizontal resize */
-	if(west && (new->x != a->rect.x)) {
 		west->rect.width = new->x - west->rect.x;
 		a->rect.width += a->rect.x - new->x;
 		a->rect.x = new->x;
-		match_horiz(a, &a->rect);
 		match_horiz(west, &west->rect);
 		relax_area(west);
 	}
-	if(east && (new->x + new->width != a->rect.x + a->rect.width)) {
+	if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
+		horiz_resize = True;
+		if((new->x + new->width) > (east->rect.x + east->rect.width - MIN_COLWIDTH))
+			new->width = (east->rect.x + east->rect.width - MIN_COLWIDTH) - new->x;
+		else if(new->width < MIN_COLWIDTH)
+			new->width = MIN_COLWIDTH;
 		east->rect.width -= new->x + new->width - east->rect.x;
 		east->rect.x = new->x + new->width;
 		a->rect.width = (new->x + new->width) - a->rect.x;
-		match_horiz(a, &a->rect);
 		match_horiz(east, &east->rect);
 		relax_area(east);
 	}
-AfterHorizontal:
+	if(horiz_resize)
+		match_horiz(a, &a->rect);
 
 	if(a->mode == Colstack || a->mode == Colmax)
 		goto AfterVertical;

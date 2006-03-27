@@ -60,13 +60,14 @@ enum {
 	FsFtags,
 	FsFclass,
 	FsFtag,
+	FsFcapacity,
 	FsFmode
 };
 
-#define MAX_TAGS		8
-#define MAX_TAGLEN		32
+#define MAX_TAGS			8
+#define MAX_TAGLEN			32
 #define WM_PROTOCOL_DELWIN	1
-#define MIN_COLWIDTH		64
+#define MIN_COLWIDTH		32
 
 typedef struct View View;
 typedef struct Area Area;
@@ -91,6 +92,7 @@ struct Area {
 	unsigned int framesz;
 	unsigned int sel;
 	unsigned int nframe;
+	unsigned int capacity;
 	int mode;
 	XRectangle rect;
 };
@@ -205,13 +207,14 @@ int aid2index(View *t, unsigned short id);
 void select_area(Area *a, char *arg);
 void send2area(Area *to, Area *from, Client *c);
 void attach_toarea(Area *a, Client *c);
-void detach_fromarea(Area *a, Client *c);
-void arrange_tag(View *t, Bool updategeometry);
+void detach_fromarea(Area *a, Client *c, Bool postarrange);
 void arrange_area(Area *a);
 void resize_area(Client *c, XRectangle *r, XPoint *pt);
 int str2mode(char *arg);
 char *mode2str(int mode);
 Bool clientofarea(Area *a, Client *c);
+void pre_attach(Area *a);
+void post_detach(Area *a);
 
 /* bar.c */
 Label *get_label(char *name);
@@ -286,6 +289,7 @@ Bool istag(char *t);
 void update_tags();
 
 /* view.c */
+void arrange_view(View *v, Bool updategeometry);
 View *alloc_view(char *name);
 void focus_view(View *v);
 XRectangle *rectangles(View *v, Bool isfloat, unsigned int *num);

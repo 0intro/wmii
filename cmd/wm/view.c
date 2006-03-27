@@ -234,7 +234,7 @@ detach_fromview(View *v, Client *c)
 	Client *cl;
 	for(i = 0; i < v->narea; i++) {
 		if(clientofarea(v->area[i], c)) {
-			detach_fromarea(v->area[i], c);
+			detach_fromarea(v->area[i], c, True);
 			XMoveWindow(dpy, c->framewin, 2 * rect.width, 0);
 		}
 	}
@@ -296,4 +296,25 @@ restack_view(View *v)
 
 	if(n)
 		XRestackWindows(dpy, wins, n);
+}
+
+void
+arrange_view(View *v, Bool updategeometry)
+{
+	unsigned int i;
+	unsigned int width;
+
+	if(v->narea == 1)
+		return;
+
+	width = rect.width / (v->narea - 1);
+	for(i = 1; i < v->narea; i++) {
+		Area *a = v->area[i];
+		if(updategeometry) {
+			a->rect.height = rect.height - brect.height;
+			a->rect.x = (i - 1) * width;
+			a->rect.width = width;
+		}
+		arrange_area(a);
+	}
 }
