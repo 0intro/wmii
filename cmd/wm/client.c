@@ -537,9 +537,7 @@ Swaparea:
 		a->frame[j]->area = a;
 		o->frame[o->sel] = f;
 		f->area = o;
-		c = a->frame[j]->client;
 		arrange_column(o);
-		draw_client(f->client);
 	}
 	else if(!strncmp(arg, "up", 3)) {
 		if(j)
