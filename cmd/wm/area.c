@@ -432,10 +432,12 @@ AfterHorizontal:
 		goto AfterVertical;
 	
 	/* validate (and trim if necessary) vertical resize */
-	if(new->height < (f->rect.height < min_height ? f->rect.height : min_height)) {
+	if(new->height < min_height) {
+		if(f->rect.height < min_height && (new->y == f->rect.y || new->y + new->height == f->rect.y + f->rect.height))
+			goto AfterVertical;
 		if(new->y + new->height == f->rect.y + f->rect.height)
-			new->y = f->rect.y + f->rect.height - (f->rect.height < min_height ? f->rect.height : min_height);
-		new->height = f->rect.height < min_height ? f->rect.height : min_height;
+			new->y = f->rect.y + f->rect.height - min_height;
+		new->height = min_height;
 	}
 	if(north && (new->y != f->rect.y))
 		if(new->y < 0 || new->y < (north->rect.y + min_height)) {
@@ -446,7 +448,7 @@ AfterHorizontal:
 		if((new->y + new->height) > (south->rect.y + south->rect.height - min_height))
 			new->height = (south->rect.y + south->rect.height - min_height) - new->y;
 	}
-	if(new->height < (f->rect.height < min_height ? f->rect.height : min_height))
+	if(new->height < min_height)
 		goto AfterVertical;
 
 	/* vertical resize */
