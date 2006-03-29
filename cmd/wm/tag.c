@@ -76,7 +76,14 @@ update_tags()
 		organize_client(view[sel], client[i]);
 	}
 
-	if(!nview && ntag)
+	if(!hasclient(view[sel])) {
+		destroy_view(view[sel]);
+		if(nview)
+			focus_view(view[sel]);
+		else
+			update_bar_tags();
+	}
+	else if(!nview && ntag)
 		select_view(tag[0]);
 	else
 		update_bar_tags();

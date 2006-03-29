@@ -19,12 +19,11 @@ alloc_view(char *name)
 	alloc_area(v);
 	alloc_area(v);
 	view = (View **)cext_array_attach((void **)view, v, sizeof(View *), &viewsz);
-	nview++;
-	focus_view(v);
+	sel = nview++;
 	return v;
 }
 
-static void
+void
 destroy_view(View *v)
 {
 	while(v->narea)
@@ -63,13 +62,22 @@ update_frame_selectors(View *v)
 void
 focus_view(View *v)
 {
+	Client *c;
 	unsigned int i;
+	char vname[256];
 
-	if(!nview)
-		return;
+	/* cleanup other empty views */
+	for(i = 0; i < nview; i++)
+		if(!hasclient(view[i])) {
+			destroy_view(view[i]);
+			i--;
+		}
 
 	XGrabServer(dpy);
 	sel = view2index(v);
+
+	tags2str(vname, sizeof(vname), v->tag, v->ntag);
+	cext_strlcpy(def.tag, vname, sizeof(def.tag));
 
 	update_frame_selectors(v);
 
@@ -87,6 +95,8 @@ focus_view(View *v)
 				XMoveWindow(dpy, client[i]->framewin,
 						2 * rect.width + f->rect.x, f->rect.y);
 		}
+	if((c = sel_client_of_view(v)))
+		focus_client(c);
 	update_bar_tags();
 	XSync(dpy, False);
 	XUngrabServer(dpy);
@@ -189,32 +199,15 @@ hasclient(View *v)
 void
 select_view(char *arg)
 {
-	int i;
-	Client *c;
 	View *v = get_view(arg);
-
 	if(!v)
 		return;
-	cext_strlcpy(def.tag, arg, sizeof(def.tag));
 	if(!istag(arg)) {
-		char buf[256];
 		tag = (char **)cext_array_attach((void **)tag, strdup(arg),
 				sizeof(char *), &tagsz);
 		ntag++;
-		snprintf(buf, sizeof(buf), "NewTag %s\n", arg);
-		write_event(buf);
 	}
 	focus_view(v);
-
-	/* cleanup on select */
-	for(i = 0; i < nview; i++)
-		if(!hasclient(view[i])) {
-			destroy_view(view[i]);
-			i--;
-		}
-
-	if((c = sel_client_of_view(v)))
-		focus_client(c);
 }
 
 Bool

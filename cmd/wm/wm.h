@@ -300,6 +300,7 @@ Client *sel_client_of_view(View *v);
 void restack_view(View *v);
 Bool hasclient(View *v);
 View *name2view(char *name);
+void destroy_view(View *v);
 
 /* wm.c */
 void scan_wins();
