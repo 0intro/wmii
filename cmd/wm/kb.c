@@ -138,11 +138,14 @@ get_key(const char *name)
 void
 destroy_key(Key *k)
 {
+	Key *n;
 	cext_array_detach((void **)key, k, &keysz);
 	nkey--;
-	if(k->next)
-		destroy_key(k->next);
-	free(k);
+	while(k) {
+		n = k->next;
+		free(k);
+		k = n;
+	}
 }
 
 static void
