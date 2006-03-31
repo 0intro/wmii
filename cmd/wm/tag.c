@@ -56,8 +56,6 @@ update_tags()
 
 	for(i = 0; i < nclient; i++) {
 		for(j = 0; j < client[i]->ntag; j++) {
-			if(!strncmp(client[i]->tag[j], "~", 2)) /* magic floating tag */
-				continue;
 			if(!istag(client[i]->tag[j])) {
 				tag = (char **)cext_array_attach((void **)tag, strdup(client[i]->tag[j]),
 							sizeof(char *), &tagsz);

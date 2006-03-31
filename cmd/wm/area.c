@@ -72,10 +72,12 @@ select_area(Area *a, char *arg)
 	Area *new;
 	View *v = a->view;
 	int i = area2index(a);
+
 	if(i == -1)
 		return;
 	if(i)
 		v->revert = i;
+
 	if(!strncmp(arg, "toggle", 7)) {
 		if(i)
 			i = 0;
@@ -110,6 +112,11 @@ select_area(Area *a, char *arg)
 	v->sel = i;
 	for(i = 0; i < a->nframe; i++)
 		draw_client(a->frame[i]->client);
+
+	if(!new->nframe) {
+		update_view_label(v);
+		draw_bar();
+	}
 }
 
 void
@@ -129,6 +136,7 @@ attach_toarea(Area *a, Client *c)
 
 	if(clientofview(a->view, c))
 		return;
+	c->floating = !area2index(a); /* set floating flag */
 	f = cext_emallocz(sizeof(Frame));
 	f->id = id++;
 	f->area = a;

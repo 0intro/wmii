@@ -240,7 +240,7 @@ attach_toview(View *v, Client *c)
 {
 	Area *a;
 
-	if(c->trans || clienthastag(c, "~"))
+	if(c->trans || c->floating)
 		a = v->area[0];
 	else
 		a = v->area[v->sel];

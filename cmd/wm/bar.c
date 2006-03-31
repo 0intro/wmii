@@ -8,6 +8,16 @@
 
 #include "wm.h"
 
+void
+update_view_label(View *v)
+{
+	static char vname[256];
+	Label *l;
+	tags2str(vname, sizeof(vname), v->tag, v->ntag);
+	if((l = name2label(vname)))
+		snprintf(l->data, sizeof(l->data), "%s[%d]", vname, v->sel);
+}
+
 static int
 comp_label_intern(const void *l1, const void *l2)
 {
@@ -186,7 +196,7 @@ lid2index(unsigned short id)
 Label *
 name2label(const char *name)
 {
-	char buf[256];
+	static char buf[256];
 	unsigned int i;
 
  	cext_strlcpy(buf, name, sizeof(buf));
@@ -200,7 +210,6 @@ void
 update_bar_tags()
 {
 	unsigned int i;
-	char vname[256];
 	Label *l = nil;
 
 	for(i = 0; (i < nlabel) && label[i]->intern; i++) {
@@ -214,11 +223,8 @@ update_bar_tags()
 		l = get_label(tag[i], True);
 		cext_strlcpy(l->data, tag[i], sizeof(l->data));
 	}
-	for(i = 0; i < nview; i++) {
-		View *v = view[i];
-		tags2str(vname, sizeof(vname), v->tag, v->ntag);
-		l = get_label(vname, True);
-		cext_strlcpy(l->data, vname, sizeof(l->data));
-	}
+	for(i = 0; i < nview; i++)
+		update_view_label(view[i]);
+
 	draw_bar();
 }

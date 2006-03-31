@@ -82,9 +82,10 @@ focus_client(Client *c)
 {
 	Client *old = sel_client();
 	Frame *f = c->frame[c->sel];
+	View *v = f->area->view;
 	int i = area2index(f->area);
 
-	f->area->view->sel = i;
+	v->sel = i;
 	f->area->sel = frame2index(f);
 	if(old && (old != c)) {
 		grab_mouse(old->framewin, AnyModifier, Button1);
@@ -94,7 +95,9 @@ focus_client(Client *c)
 	grab_mouse(c->framewin, Mod1Mask, Button1);
 	grab_mouse(c->framewin, Mod1Mask, Button3);
 
-	restack_view(f->area->view);
+	restack_view(v);
+	update_view_label(v);
+	draw_bar();
 
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	draw_client(c);
@@ -350,12 +353,6 @@ manage_client(Client *c)
 	if(!c->ntag) {
 		for(i = 0; i < v->ntag; i++) {
 			cext_strlcpy(c->tag[i], v->tag[i], sizeof(c->tag[i]));
-			c->ntag++;
-		}
-	}
-	else if((c->ntag == 1) && !strncmp(c->tag[0], "~", 2)) {
-		for(i = 0; i < v->ntag && i + 1 < MAX_TAGS; i++) {
-			cext_strlcpy(c->tag[i + 1], v->tag[i], sizeof(c->tag[i + 1]));
 			c->ntag++;
 		}
 	}

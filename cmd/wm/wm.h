@@ -110,7 +110,7 @@ struct Client {
 	char classinst[256];
 	int proto;
 	unsigned int border;
-	Bool destroyed;
+	Bool floating;
 	Window win;
 	Window trans;
 	XRectangle rect;
@@ -222,6 +222,7 @@ unsigned int bar_height();
 Label *name2label(const char *name);
 int label2index(Label *l);
 void update_bar_tags();
+void update_view_label(View *v);
 
 /* client.c */
 Client *alloc_client(Window w, XWindowAttributes *wa);

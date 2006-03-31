@@ -116,8 +116,12 @@ match(Client *c, const char *prop)
 		Rule *r = &rule[i];
 		if(r->is_valid && !regexec(&r->regex, prop, 1, &tmpregm, 0)) {
 			for(j = 0; c->ntag < MAX_TAGS && j < r->ntag; j++) {
-				cext_strlcpy(c->tag[c->ntag], r->tag[j], sizeof(c->tag[c->ntag]));
-				c->ntag++;
+				if(!strncmp(r->tag[j], "~", 2))
+					c->floating = True;
+				else {
+					cext_strlcpy(c->tag[c->ntag], r->tag[j], sizeof(c->tag[c->ntag]));
+					c->ntag++;
+				}
 			}
 		}
 	}
