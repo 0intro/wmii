@@ -20,6 +20,8 @@
 #define IXP_MAX_WELEM	16	/*MAXWELEM */
 #define IXP_MAX_TFUNCS	14
 
+#define IXP_PORT	564
+
 
 /*
 	size[4] Tversion tag[2] msize[4] version[s]

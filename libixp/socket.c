@@ -49,9 +49,14 @@ connect_inet_sock(char *host)
 	const char *errstr = nil;
 	unsigned int prt;
 
-	*port = 0;
-	port++;
-	prt = cext_strtonum(port, 1024, 65535, &errstr);
+	if(!port)
+		prt = IXP_PORT;
+	else {
+		*port = 0;
+		port++;
+		prt = cext_strtonum(port, 0, 65535, &errstr);
+	}
+
 	if(errstr)
 		return -1;
 
