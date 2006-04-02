@@ -42,6 +42,14 @@ comp_label_name(const void *l1, const void *l2)
 	return strcmp(ll1->name, ll2->name);
 }
 
+/* We expect the optimiser to remove this function, It is included to ensure type safeness.
+ */
+static evector_t *
+label_to_evector(label_vec_t *view)
+{
+	return (evector_t *) view;
+}
+
 Label *
 get_label(char *name, Bool intern)
 {
@@ -56,11 +64,9 @@ get_label(char *name, Bool intern)
 	cext_strlcpy(l->name, name, sizeof(l->name));
 	cext_strlcpy(l->colstr, def.selcolor, sizeof(l->colstr));
 	l->color = def.sel;
-	label = (Label **)cext_array_attach((void **)label, l,
-			sizeof(Label *), &labelsz);
-	nlabel++;
-	qsort(label, nlabel, sizeof(Label *), comp_label_name);
-	qsort(label, nlabel, sizeof(Label *), comp_label_intern);
+	cext_evector_attach(label_to_evector(&label), l);
+	qsort(label.data, label.size, sizeof(Label *), comp_label_name);
+	qsort(label.data, label.size, sizeof(Label *), comp_label_intern);
 
 	return l;
 }
@@ -68,8 +74,7 @@ get_label(char *name, Bool intern)
 void
 destroy_label(Label *l)
 {
-	cext_array_detach((void **)label, l, &labelsz);
-	nlabel--;
+	cext_evector_detach(label_to_evector(&label), l);
 }
 
 unsigned int
@@ -92,14 +97,14 @@ update_bar_geometry()
 			DefaultDepth(dpy, screen));
 	XSync(dpy, False);
 	draw_bar();
-	for(i = 0; i < nview; i++) {
-		for(j = 1; j < view[i]->narea; j++) {
-			Area *a = view[i]->area[j];
+	for(i = 0; i < view.size; i++) {
+		for(j = 1; j < view.data[i]->area.size; j++) {
+			Area *a = view.data[i]->area.data[j];
 			a->rect.height = rect.height - brect.height;
 			arrange_column(a);
 		}
-		for(j = 0; j < view[i]->area[0]->nframe; j++) {
-			Frame *f = view[i]->area[0]->frame[j];
+		for(j = 0; j < view.data[i]->area.data[0]->frame.size; j++) {
+			Frame *f = view.data[i]->area.data[0]->frame.data[j];
 			resize_client(f->client, &f->rect, False);
 		}
 	}
@@ -123,13 +128,13 @@ draw_bar()
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
 
-	if(!nlabel)
+	if(!label.size)
 		return;
 
-	for(i = 0; (i < nlabel) && (w < brect.width); i++) {
-		l = label[i];
+	for(i = 0; (i < label.size) && (w < brect.width); i++) {
+		l = label.data[i];
 		if(l->intern) {
-			if(nview && !strncmp(l->name, def.tag, sizeof(l->name)))
+			if(view.size && !strncmp(l->name, def.tag, sizeof(l->name)))
 				l->color = def.sel;
 			else
 				l->color = def.norm;
@@ -143,26 +148,26 @@ draw_bar()
 		w += l->rect.width;
 	}
 
-	if(i != nlabel) { /* give all labels same width */
-		w = brect.width / nlabel;
-		for(i = 0; i < nlabel; i++) {
-			l = label[i];
+	if(i != label.size) { /* give all labels same width */
+		w = brect.width / label.size;
+		for(i = 0; i < label.size; i++) {
+			l = label.data[i];
 			l->rect.x = i * w;
 			l->rect.width = w;
 		}
 	}
 	else { /* expand label properly */
-		for(exp = 0; (exp < nlabel) && (label[exp]->intern); exp++);
-		if(exp == nlabel)
+		for(exp = 0; (exp < label.size) && (label.data[exp]->intern); exp++);
+		if(exp == label.size)
 			exp = -1;
 		else
-			label[exp]->rect.width += (brect.width - w);
-		for(i = 1; i < nlabel; i++)
-			label[i]->rect.x = label[i - 1]->rect.x + label[i - 1]->rect.width;
+			label.data[exp]->rect.width += (brect.width - w);
+		for(i = 1; i < label.size; i++)
+			label.data[i]->rect.x = label.data[i - 1]->rect.x + label.data[i - 1]->rect.width;
 	}
 
-	for(i = 0; i < nlabel; i++) {
-		l = label[i];
+	for(i = 0; i < label.size; i++) {
+		l = label.data[i];
 		d.color = l->color;
 		d.rect = l->rect;
 		d.data = l->data;
@@ -181,8 +186,8 @@ int
 label2index(Label *l)
 {
 	int i;
-	for(i = 0; i < nlabel; i++)
-		if(label[i] == l)
+	for(i = 0; i < label.size; i++)
+		if(label.data[i] == l)
 			return i;
 	return -1;
 }
@@ -191,8 +196,8 @@ int
 lid2index(unsigned short id)
 {
 	int i;
-	for(i = 0; i < nlabel; i++)
-		if(label[i]->id == id)
+	for(i = 0; i < label.size; i++)
+		if(label.data[i]->id == id)
 			return i;
 	return -1;
 }
@@ -204,9 +209,9 @@ name2label(const char *name)
 	unsigned int i;
 
  	cext_strlcpy(buf, name, sizeof(buf));
-	for(i = 0; i < nlabel; i++)
-		if(!strncmp(label[i]->name, name, sizeof(label[i]->name)))
-			return label[i];
+	for(i = 0; i < label.size; i++)
+		if(!strncmp(label.data[i]->name, name, sizeof(label.data[i]->name)))
+			return label.data[i];
 	return nil;
 }
 
@@ -216,19 +221,19 @@ update_bar_tags()
 	unsigned int i;
 	Label *l = nil;
 
-	for(i = 0; (i < nlabel) && label[i]->intern; i++) {
-		l = label[i];
+	for(i = 0; (i < label.size) && label.data[i]->intern; i++) {
+		l = label.data[i];
 		if(!istag(l->name) && !name2view(l->name)) {
 			destroy_label(l);
 			i--;
 		}
 	}
-	for(i = 0; i < ntag; i++) {
-		l = get_label(tag[i], True);
-		cext_strlcpy(l->data, tag[i], sizeof(l->data));
+	for(i = 0; i < tag.size; i++) {
+		l = get_label(tag.data[i], True);
+		cext_strlcpy(l->data, tag.data[i], sizeof(l->data));
 	}
-	for(i = 0; i < nview; i++)
-		update_view_label(view[i]);
+	for(i = 0; i < view.size; i++)
+		update_view_label(view.data[i]);
 
 	draw_bar();
 }

@@ -19,6 +19,8 @@ all: wmiiwm
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<
 
+${OBJ}: wm.h
+
 wmiiwm: ${OBJ}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ} ${LDFLAGS}

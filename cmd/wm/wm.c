@@ -33,9 +33,9 @@ win2client(Window w)
 {
 	unsigned int i;
 
-	for(i = 0; (i < clientsz) && client[i]; i++)
-		if(client[i]->win == w)
-			return client[i];
+	for(i = 0; (i < client.size) && client.data[i]; i++)
+		if(client.data[i]->win == w)
+			return client.data[i];
 	return nil;
 }
 
@@ -201,10 +201,10 @@ static void
 cleanup()
 {
 	unsigned int i;
-	Client *c;
-	for(i = 0; client && client[i]; i++) {
-		c = client[i];
-		reparent_client(c, root, c->frame[c->sel]->rect.x, c->frame[c->sel]->rect.y);
+	for(i = 0; i<client.size; i++) {
+		Client *c = client.data[i];
+		Frame *cf = c->frame.data[c->sel];
+		reparent_client(c, root, cf->rect.x, cf->rect.y);
 	}
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 	XSync(dpy, False);
@@ -293,15 +293,15 @@ main(int argc, char *argv[])
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
 	init_x_event_handler();
 
-	ntag = tagsz = nview = nclient = viewsz = clientsz = sel = 0;
-	view = nil;
-	tag = nil;
-	client = nil;
+	tag.size = view.size = client.size = sel = 0;
+	view.data = nil;
+	tag.data = nil;
+	client.data = nil;
 
-	key = nil;
-	keysz = nkey = 0;
-	label = nil;
-	nlabel = labelsz = 0;
+	key.data = nil;
+	key.size = 0;
+	label.data = nil;
+	label.size = 0;
 	def.rules = nil;
 	def.rulessz = 0;
 	def.keys = nil;

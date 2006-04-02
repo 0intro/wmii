@@ -126,9 +126,9 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 			}
 		}
 		if(i2id && (*i1 != -1)) {
-			*i2 = aid2index(view[*i1], i2id);
+			*i2 = aid2index(view.data[*i1], i2id);
 			if(i3id && (*i2 != -1))
-				*i3 = frid2index(view[*i1]->area[*i2], i3id);
+				*i3 = frid2index(view.data[*i1]->area.data[*i2], i3id);
 		}
 	}
 }
@@ -155,12 +155,12 @@ qid2name(Qid *qid)
 	case FsDlabel:
 		if(i1 == -1)
 			return nil;
-		return label[i1]->name;
+		return label.data[i1]->name;
 		break;
 	case FsDarea:
 		if(i1 == -1 || i2 == -1)
 			return nil;
-		if(view[i1]->sel == i2)
+		if(view.data[i1]->sel == i2)
 			return "sel";
 		snprintf(buf, sizeof(buf), "%u", i2);
 		return buf;
@@ -174,7 +174,7 @@ qid2name(Qid *qid)
 	case FsDclient:
 		if(i1 == -1 || i2 == -1 || i3 == -1)
 			return nil;
-		if(view[i1]->area[i2]->sel == i3)
+		if(view.data[i1]->area.data[i2]->sel == i3)
 			return "sel";
 		snprintf(buf, sizeof(buf), "%u", i3);
 		return buf;
@@ -317,22 +317,22 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		break;
 	case FsDview:
 		new->type = IXP_QTDIR;
-		new->path = mkqpath(FsDview, nview ? view[sel]->id : 0, 0, 0);
+		new->path = mkqpath(FsDview, view.size ? view.data[sel]->id : 0, 0, 0);
 		break;
 	case FsDarea:
 		if(dir_i1 == -1 || dir_type != FsDview)
 			return -1;
 		{
-			View *p = view[dir_i1];
+			View *p = view.data[dir_i1];
 			new->type = IXP_QTDIR;
 			if(!strncmp(wname, "sel", 4)) {
-				new->path = mkqpath(FsDarea, p->id, p->area[p->sel]->id, 0);
+				new->path = mkqpath(FsDarea, p->id, p->area.data[p->sel]->id, 0);
 			}
 			else {
 				i = cext_strtonum(wname, 0, 0xffff, &err);
-				if(err || (i >= p->narea))
+				if(err || (i >= p->area.size))
 					return -1;
-				new->path = mkqpath(FsDarea, p->id, p->area[i]->id, 0);
+				new->path = mkqpath(FsDarea, p->id, p->area.data[i]->id, 0);
 			}
 		}
 		break;
@@ -340,19 +340,19 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		if(dir_i1 == -1 || dir_i2 == -1 || dir_type != FsDarea)
 			return -1;
 		{
-			View *p = view[dir_i1];
-			Area *a = p->area[dir_i2];
+			View *p = view.data[dir_i1];
+			Area *a = p->area.data[dir_i2];
 			new->type = IXP_QTDIR;
 			if(!strncmp(wname, "sel", 4)) {
-				if(!a->nframe)
+				if(!a->frame.size)
 					return -1;
-				new->path = mkqpath(FsDclient, p->id, a->id, a->frame[a->sel]->id);
+				new->path = mkqpath(FsDclient, p->id, a->id, a->frame.data[a->sel]->id);
 			}
 			else {
 				i = cext_strtonum(wname, 0, 0xffff, &err);
-				if(err || (i >= a->nframe))
+				if(err || (i >= a->frame.size))
 					return -1;
-				new->path = mkqpath(FsDclient, p->id, a->id, a->frame[i]->id);
+				new->path = mkqpath(FsDclient, p->id, a->id, a->frame.data[i]->id);
 			}
 		}
 		break;
@@ -360,9 +360,9 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		if(dir_type != FsDclients)
 			return -1;
 		i = cext_strtonum(wname, 0, 0xffff, &err);
-		if(err || (i >= nclient))
+		if(err || (i >= client.size))
 			return -1;
-		new->path = mkqpath(FsDGclient, client[i]->id, 0, 0);
+		new->path = mkqpath(FsDGclient, client.data[i]->id, 0, 0);
 		break;
 	case FsDlabel:
 		if(dir_type !=  FsDbar)
@@ -481,12 +481,12 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		break;
 	case FsFgeom:
 		if(dir_type == FsDclient) {
-			f = view[dir_i1]->area[dir_i2]->frame[dir_i3];
+			f = view.data[dir_i1]->area.data[dir_i2]->frame.data[dir_i3];
 			snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
 					f->rect.width, f->rect.height);
 		}
 		else {
-			Client *c = client[dir_i1];
+			Client *c = client.data[dir_i1];
 			snprintf(buf, sizeof(buf), "%d %d %d %d", c->rect.x, c->rect.y,
 					c->rect.width, c->rect.height);
 		}
@@ -494,36 +494,36 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		break;
 	case FsFclass:
 		if(dir_type == FsDclient) {
-			f = view[dir_i1]->area[dir_i2]->frame[dir_i3];
+			f = view.data[dir_i1]->area.data[dir_i2]->frame.data[dir_i3];
 			return mkstat(stat, dir, wname, strlen(f->client->classinst), DMREAD);
 		}
 		else
-			return mkstat(stat, dir, wname, strlen(client[dir_i1]->classinst), DMREAD);
+			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->classinst), DMREAD);
 		break;
 	case FsFname:
 		if(dir_type == FsDclient) {
-			f = view[dir_i1]->area[dir_i2]->frame[dir_i3];
+			f = view.data[dir_i1]->area.data[dir_i2]->frame.data[dir_i3];
 			return mkstat(stat, dir, wname, strlen(f->client->name), DMREAD);
 		}
 		else
-			return mkstat(stat, dir, wname, strlen(client[dir_i1]->name), DMREAD);
+			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->name), DMREAD);
 		break;
 	case FsFtags:
 		switch(dir_type) {
 		case FsDclient:
-			f = view[dir_i1]->area[dir_i2]->frame[dir_i3];
+			f = view.data[dir_i1]->area.data[dir_i2]->frame.data[dir_i3];
 			tags2str(buf, sizeof(buf), f->client->tag, f->client->ntag);
 			return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 			break;
 		case FsDGclient:
-			tags2str(buf, sizeof(buf), client[dir_i1]->tag, client[dir_i1]->ntag);
+			tags2str(buf, sizeof(buf), client.data[dir_i1]->tag, client.data[dir_i1]->ntag);
 			return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
 			break;
 		default:
 			{
 				unsigned int i, len = 0;
-				for(i = 0; i < ntag; i++)
-					len += strlen(tag[i]) + 1;
+				for(i = 0; i < tag.size; i++)
+					len += strlen(tag.data[i]) + 1;
 				return mkstat(stat, dir, wname, len, DMREAD);
 			}
 			break;
@@ -534,10 +534,10 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 			return mkstat(stat, dir, wname, strlen(def.tag), DMREAD);
 		break;
 	case FsFdata:
-		return mkstat(stat, dir, wname, (dir_i1 == nlabel) ? 0 : strlen(label[dir_i1]->data), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, (dir_i1 == label.size) ? 0 : strlen(label.data[dir_i1]->data), DMREAD | DMWRITE);
 		break;
 	case FsFmode:
-		return mkstat(stat, dir, wname, strlen(mode2str(view[dir_i1]->area[dir_i2]->mode)), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, strlen(mode2str(view.data[dir_i1]->area.data[dir_i2]->mode)), DMREAD | DMWRITE);
 		break;
 	case FsFcolors:
 	case FsFselcolors:
@@ -685,7 +685,7 @@ xremove(IXPConn *c, Fcall *fcall)
 	switch(type) {
 	case FsDlabel:
 		{
-			Label *l = label[i1];
+			Label *l = label.data[i1];
 			if(l->intern)
 				return Enoperm;
 			/* now detach the label */
@@ -726,7 +726,7 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDclients:
 			/* jump to offset */
 			len = 0;
-			for(i = 0; i < nclient; i++) {
+			for(i = 0; i < client.size; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len += type2stat(&stat, buf, &m->qid);
 				if(len <= fcall->offset)
@@ -734,7 +734,7 @@ xread(IXPConn *c, Fcall *fcall)
 				break;
 			}
 			/* offset found, proceeding */
-			for(; i < nclient; i++) {
+			for(; i < client.size; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
@@ -746,15 +746,15 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDbar:
 			/* jump to offset */
 			len = 0;
-			for(i = 0; i < nlabel; i++) {
-				len += type2stat(&stat, label[i]->name, &m->qid);
+			for(i = 0; i < label.size; i++) {
+				len += type2stat(&stat, label.data[i]->name, &m->qid);
 				if(len <= fcall->offset)
 					continue;
 				break;
 			}
 			/* offset found, proceeding */
-			for(; i < nlabel; i++) {
-				len = type2stat(&stat, label[i]->name, &m->qid);
+			for(; i < label.size; i++) {
+				len = type2stat(&stat, label.data[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -764,11 +764,11 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDview:
 			/* jump to offset */
 			len = type2stat(&stat, "tag", &m->qid);
-			if(nview) {
+			if(view.size) {
 				len += type2stat(&stat, "ctl", &m->qid);
-				if(view[i1]->narea)
+				if(view.data[i1]->area.size)
 					len += type2stat(&stat, "sel", &m->qid);
-				for(i = 0; i < view[i1]->narea; i++) {
+				for(i = 0; i < view.data[i1]->area.size; i++) {
 					snprintf(buf, sizeof(buf), "%u", i);
 					len += type2stat(&stat, buf, &m->qid);
 					if(len <= fcall->offset)
@@ -776,7 +776,7 @@ xread(IXPConn *c, Fcall *fcall)
 					break;
 				}
 				/* offset found, proceeding */
-				for(; i < view[i1]->narea; i++) {
+				for(; i < view.data[i1]->area.size; i++) {
 					snprintf(buf, sizeof(buf), "%u", i);
 					len = type2stat(&stat, buf, &m->qid);
 					if(fcall->count + len > fcall->iounit)
@@ -791,9 +791,9 @@ xread(IXPConn *c, Fcall *fcall)
 			len = type2stat(&stat, "ctl", &m->qid);
 			if(i2)
 				len += type2stat(&stat, "mode", &m->qid);
-			if(view[i1]->area[i2]->nframe)
+			if(view.data[i1]->area.data[i2]->frame.size)
 				len += type2stat(&stat, "sel", &m->qid);
-			for(i = 0; i < view[i1]->area[i2]->nframe; i++) {
+			for(i = 0; i < view.data[i1]->area.data[i2]->frame.size; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len += type2stat(&stat, buf, &m->qid);
 				if(len <= fcall->offset)
@@ -801,7 +801,7 @@ xread(IXPConn *c, Fcall *fcall)
 				break;
 			}
 			/* offset found, proceeding */
-			for(; i < view[i1]->area[i2]->nframe; i++) {
+			for(; i < view.data[i1]->area.data[i2]->frame.size; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
@@ -847,17 +847,17 @@ xread(IXPConn *c, Fcall *fcall)
 			if(m->qid.dir_type == FsDroot) {
 				len = 0;
 				/* jump to offset */
-				for(i = 0; i < ntag; i++) {
-					len += strlen(tag[i]) + 1;
+				for(i = 0; i < tag.size; i++) {
+					len += strlen(tag.data[i]) + 1;
 					if(len <= fcall->offset)
 						continue;
 				}
 				/* offset found, proceeding */
-				for(; i < ntag; i++) {
-					len = strlen(tag[i]) + 1;
+				for(; i < tag.size; i++) {
+					len = strlen(tag.data[i]) + 1;
 					if(fcall->count + len > fcall->iounit)
 						break;
-					memcpy(p + fcall->count, tag[i], len - 1);
+					memcpy(p + fcall->count, tag.data[i], len - 1);
 					memcpy(p + fcall->count + len - 1, "\n", 1);
 					fcall->count += len;
 				}
@@ -878,11 +878,11 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "bar", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			if(ntag) {
+			if(tag.size) {
 				fcall->count += type2stat(&stat, "tags", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 			}
-			if(nclient) {
+			if(client.size) {
 				fcall->count += type2stat(&stat, "clients", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 			}
@@ -890,7 +890,7 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case FsDclients:
-			for(i = 0; i < nclient; i++) {
+			for(i = 0; i < client.size; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
@@ -900,8 +900,8 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsDbar:
-			for(i = 0; i < nlabel; i++) {
-				len = type2stat(&stat, label[i]->name, &m->qid);
+			for(i = 0; i < label.size; i++) {
+				len = type2stat(&stat, label.data[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -909,7 +909,7 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsDlabel:
-			if(i1 >= nlabel)
+			if(i1 >= label.size)
 				return Enofile;
 			fcall->count = type2stat(&stat, "colors", &m->qid);
 			p = ixp_enc_stat(p, &stat);
@@ -933,14 +933,14 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDview:
 			fcall->count = type2stat(&stat, "tag", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			if(nview) {
+			if(view.size) {
 				fcall->count += type2stat(&stat, "ctl", &m->qid);
 				p = ixp_enc_stat(p, &stat);
-				if(view[i1]->narea) {
+				if(view.data[i1]->area.size) {
 					fcall->count += type2stat(&stat, "sel", &m->qid);
 					p = ixp_enc_stat(p, &stat);
 				}
-				for(i = 0; i < view[i1]->narea; i++) {
+				for(i = 0; i < view.data[i1]->area.size; i++) {
 					snprintf(buf, sizeof(buf), "%u", i);
 					len = type2stat(&stat, buf, &m->qid);
 					if(fcall->count + len > fcall->iounit)
@@ -957,11 +957,11 @@ xread(IXPConn *c, Fcall *fcall)
 				fcall->count += type2stat(&stat, "mode", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 			}
-			if(view[i1]->area[i2]->nframe) {
+			if(view.data[i1]->area.data[i2]->frame.size) {
 				fcall->count += type2stat(&stat, "sel", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 			}
-			for(i = 0; i < view[i1]->area[i2]->nframe; i++) {
+			for(i = 0; i < view.data[i1]->area.data[i2]->frame.size; i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
 				len = type2stat(&stat, buf, &m->qid);
 				if(fcall->count + len > fcall->iounit)
@@ -998,12 +998,12 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsFgeom:
 			if(m->qid.dir_type == FsDclient) {
-				f = view[i1]->area[i2]->frame[i3];
+				f = view.data[i1]->area.data[i2]->frame.data[i3];
 				snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
 						f->rect.width, f->rect.height);
 			}
 			else {
-				Client *c =  client[i1];
+				Client *c =  client.data[i1];
 				snprintf(buf, sizeof(buf), "%d %d %d %d", c->rect.x, c->rect.y,
 						c->rect.width, c->rect.height);
 			}
@@ -1012,45 +1012,45 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsFclass:
 			if(m->qid.dir_type == FsDclient) {
-				if((fcall->count = strlen(view[i1]->area[i2]->frame[i3]->client->classinst)))
-					memcpy(p, view[i1]->area[i2]->frame[i3]->client->classinst, fcall->count);
+				if((fcall->count = strlen(view.data[i1]->area.data[i2]->frame.data[i3]->client->classinst)))
+					memcpy(p, view.data[i1]->area.data[i2]->frame.data[i3]->client->classinst, fcall->count);
 			}
 			else {
-				if((fcall->count = strlen(client[i1]->classinst)))
-					memcpy(p, client[i1]->classinst, fcall->count);
+				if((fcall->count = strlen(client.data[i1]->classinst)))
+					memcpy(p, client.data[i1]->classinst, fcall->count);
 			}
 			break;
 		case FsFname:
 			if(m->qid.dir_type == FsDclient) {
-				if((fcall->count = strlen(view[i1]->area[i2]->frame[i3]->client->name)))
-					memcpy(p, view[i1]->area[i2]->frame[i3]->client->name, fcall->count);
+				if((fcall->count = strlen(view.data[i1]->area.data[i2]->frame.data[i3]->client->name)))
+					memcpy(p, view.data[i1]->area.data[i2]->frame.data[i3]->client->name, fcall->count);
 			}
 			else {
-				if((fcall->count = strlen(client[i1]->name)))
-					memcpy(p, client[i1]->name, fcall->count);
+				if((fcall->count = strlen(client.data[i1]->name)))
+					memcpy(p, client.data[i1]->name, fcall->count);
 			}
 			break;
 		case FsFtags:
 			switch(m->qid.dir_type) {
 			case FsDclient:
 				{
-					Client *c = view[i1]->area[i2]->frame[i3]->client;
+					Client *c = view.data[i1]->area.data[i2]->frame.data[i3]->client;
 					tags2str(buf, sizeof(buf), c->tag, c->ntag);
 					if((fcall->count = strlen(buf)))
 						memcpy(p, buf, fcall->count);
 				}
 				break;
 			case FsDGclient:
-				tags2str(buf, sizeof(buf), client[i1]->tag, client[i1]->ntag);
+				tags2str(buf, sizeof(buf), client.data[i1]->tag, client.data[i1]->ntag);
 				if((fcall->count = strlen(buf)))
 					memcpy(p, buf, fcall->count);
 				break;
 			default:
-				for(i = 0; i < ntag; i++) {
-					len = strlen(tag[i]) + 1;
+				for(i = 0; i < tag.size; i++) {
+					len = strlen(tag.data[i]) + 1;
 					if(fcall->count + len > fcall->iounit)
 						break;
-					memcpy(p + fcall->count, tag[i], len - 1);
+					memcpy(p + fcall->count, tag.data[i], len - 1);
 					memcpy(p + fcall->count + len - 1, "\n", 1);
 					fcall->count += len;
 				}
@@ -1058,20 +1058,20 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsFdata:
-			if(i1 >= nlabel)
+			if(i1 >= label.size)
 				return Enofile;
-			if((fcall->count = strlen(label[i1]->data)))
-				memcpy(p, label[i1]->data, fcall->count);
+			if((fcall->count = strlen(label.data[i1]->data)))
+				memcpy(p, label.data[i1]->data, fcall->count);
 			break;
 		case FsFtag:
 			if((fcall->count = strlen(def.tag)))
 				memcpy(p, def.tag, fcall->count);
 			break;
 		case FsFcolors:
-			if(i1 >= nlabel)
+			if(i1 >= label.size)
 				return Enofile;
-			if((fcall->count = strlen(label[i1]->colstr)))
-				memcpy(p, label[i1]->colstr, fcall->count);
+			if((fcall->count = strlen(label.data[i1]->colstr)))
+				memcpy(p, label.data[i1]->colstr, fcall->count);
 			break;
 		case FsFselcolors:
 			if((fcall->count = strlen(def.selcolor)))
@@ -1106,7 +1106,7 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsFmode:
 			if(!i2)
 				return Enofile;
-			snprintf(buf, sizeof(buf), "%s", mode2str(view[i1]->area[i2]->mode));
+			snprintf(buf, sizeof(buf), "%s", mode2str(view.data[i1]->area.data[i2]->mode));
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -1140,10 +1140,10 @@ static void
 draw_clients()
 {
 	unsigned int i, j;
-	for(i = 0; i < nclient; i++)
-		for(j = 0; j < client[i]->nframe; j++)
-			if(client[i]->frame[j]->area->view == view[sel])
-				draw_client(client[i]);
+	for(i = 0; i < client.size; i++)
+		for(j = 0; j < client.data[i]->frame.size; j++)
+			if(client.data[i]->frame.data[j]->area->view == view.data[sel])
+				draw_client(client.data[i]);
 }
 
 static char *
@@ -1179,18 +1179,18 @@ xwrite(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDview:
 			if(!strncmp(buf, "select ", 7))
-				if(nview)
-					select_area(view[i1]->area[view[i1]->sel], &buf[7]);
+				if(view.size)
+					select_area(view.data[i1]->area.data[view.data[i1]->sel], &buf[7]);
 			break;
 		case FsDarea:
 			if(!strncmp(buf, "select ", 7)) {
-			   Area *a = view[i1]->area[i2];
-			   if(a->nframe)
-				   select_client(a->frame[a->sel]->client, &buf[7]);
+			   Area *a = view.data[i1]->area.data[i2];
+			   if(a->frame.size)
+				   select_client(a->frame.data[a->sel]->client, &buf[7]);
 			}
 			break;
 		case FsDclient:
-			f = view[i1]->area[i2]->frame[i3];
+			f = view.data[i1]->area.data[i2]->frame.data[i3];
 			if(!strncmp(buf, "kill", 5))
 				kill_client(f->client);
 			else if(!strncmp(buf, "sendto ", 7))
@@ -1200,7 +1200,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDGclient:
 			if(!strncmp(buf, "kill", 5))
-				kill_client(client[i1]);
+				kill_client(client.data[i1]);
 			break;
 		default:
 			break;
@@ -1225,13 +1225,13 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		if(m->qid.dir_type == FsDclient) {
-			f = view[i1]->area[i2]->frame[i3];
+			f = view.data[i1]->area.data[i2]->frame.data[i3];
 			f->client->ntag = str2tags(f->client->tag, buf);
 		}
 		else
-			client[i1]->ntag = str2tags(client[i1]->tag, buf);
+			client.data[i1]->ntag = str2tags(client.data[i1]->tag, buf);
 		update_tags();
-		draw_client(client[i1]);
+		draw_client(client.data[i1]);
 		break;
 	case FsFgeom:
 		if(fcall->count > sizeof(buf))
@@ -1239,7 +1239,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		if(m->qid.dir_type == FsDclient) {
-			f = view[i1]->area[i2]->frame[i3];
+			f = view.data[i1]->area.data[i2]->frame.data[i3];
 			blitz_strtorect(&rect, &f->rect, buf);
 			if(i2)
 				resize_area(f->client, &f->rect, nil);
@@ -1249,19 +1249,19 @@ xwrite(IXPConn *c, Fcall *fcall)
 		break;
 	case FsFdata:
 		len = fcall->count;
-		if(len >= sizeof(label[i1]->data))
-			len = sizeof(label[i1]->data) - 1;
-		memcpy(label[i1]->data, fcall->data, len);
-		label[i1]->data[len] = 0;
+		if(len >= sizeof(label.data[i1]->data))
+			len = sizeof(label.data[i1]->data) - 1;
+		memcpy(label.data[i1]->data, fcall->data, len);
+		label.data[i1]->data[len] = 0;
 		draw_bar();
 		break;
 	case FsFcolors:
-		if((i1 >= nlabel) || (fcall->count != 23) || (fcall->data[0] != '#')
+		if((i1 >= label.size) || (fcall->count != 23) || (fcall->data[0] != '#')
 				|| (fcall->data[8] != '#') || (fcall->data[16] != '#'))
 			return Ebadvalue;
-		memcpy(label[i1]->colstr, fcall->data, fcall->count);
-		label[i1]->colstr[fcall->count] = 0;
-		blitz_loadcolor(dpy, screen, label[i1]->colstr, &label[i1]->color);
+		memcpy(label.data[i1]->colstr, fcall->data, fcall->count);
+		label.data[i1]->colstr[fcall->count] = 0;
+		blitz_loadcolor(dpy, screen, label.data[i1]->colstr, &label.data[i1]->color);
 		draw_bar();
 		break;
 	case FsFselcolors:
@@ -1328,10 +1328,10 @@ xwrite(IXPConn *c, Fcall *fcall)
 		buf[fcall->count] = 0;
 		if((i = str2mode(buf)) == -1)
 			return Ebadvalue;
-		view[i1]->area[i2]->mode = i;
-		arrange_column(view[i1]->area[i2]);
-		if(view[i1]->area[i2]->nframe == 1) /* little hack to update the taglabel */
-			draw_client(view[i1]->area[i2]->frame[view[i1]->area[i2]->sel]->client);
+		view.data[i1]->area.data[i2]->mode = i;
+		arrange_column(view.data[i1]->area.data[i2]);
+		if(view.data[i1]->area.data[i2]->frame.size == 1) /* little hack to update the taglabel */
+			draw_client(view.data[i1]->area.data[i2]->frame.data[view.data[i1]->area.data[i2]->sel]->client);
 		break;
 	case FsFevent:
 		if(fcall->count > sizeof(buf))

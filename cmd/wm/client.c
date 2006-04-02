@@ -12,6 +12,14 @@
 
 #define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask)
 
+/* We expect the optimiser to remove this function, It is included to ensure type safeness.
+ */
+static evector_t *
+client_to_evector(client_vec_t *view)
+{
+	return (evector_t *) view;
+}
+
 Client *
 alloc_client(Window w, XWindowAttributes *wa)
 {
@@ -59,10 +67,7 @@ alloc_client(Window w, XWindowAttributes *wa)
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
 	c->gc = XCreateGC(dpy, c->framewin, 0, 0);
 	XSync(dpy, False);
-	client = (Client **)cext_array_attach((void **)client, c,
-			sizeof(Client *), &clientsz);
-	nclient++;
-
+	cext_evector_attach(client_to_evector(&client), c);
 	return c;
 }
 
@@ -81,7 +86,7 @@ void
 focus_client(Client *c)
 {
 	Client *old = sel_client();
-	Frame *f = c->frame[c->sel];
+	Frame *f = c->frame.data[c->sel];
 	View *v = f->area->view;
 	int i = area2index(f->area);
 
@@ -137,7 +142,7 @@ void
 configure_client(Client *c)
 {
 	XConfigureEvent e;
-	Frame *f = c->frame[c->sel];
+	Frame *f = c->frame.data[c->sel];
 	e.type = ConfigureNotify;
 	e.event = c->win;
 	e.window = c->win;
@@ -200,7 +205,7 @@ update_client_property(Client *c, XPropertyEvent *e)
 			cext_strlcpy(c->name, (char*) name.value, sizeof(c->name));
 			free(name.value);
 		}
-		if(c->nframe)
+		if(c->frame.size)
 			draw_client(c);
 		break;
 	case XA_WM_TRANSIENT_FOR:
@@ -221,7 +226,7 @@ draw_client(Client *c)
 	Draw d = { 0 };
 	char buf[512];
 
-	if(!c->nframe)
+	if(!c->frame.size)
 		return; /* might not have been attached atm */
 
 	d.drawable = c->framewin;
@@ -235,7 +240,7 @@ draw_client(Client *c)
 
 	/* draw border */
 	if(def.border) {
-		d.rect = c->frame[c->sel]->rect;
+		d.rect = c->frame.data[c->sel]->rect;
 		d.rect.x = d.rect.y = 0;
 		d.notch = &c->rect;
 		blitz_drawlabel(dpy, &d);
@@ -249,12 +254,12 @@ draw_client(Client *c)
 	tags2str(buf, sizeof(buf), c->tag, c->ntag);
 	d.align = WEST;
 	d.rect.x = d.rect.height + XTextWidth(xfont, buf, strlen(buf));
-	d.rect.width = c->frame[c->sel]->rect.width - d.rect.x;
+	d.rect.width = c->frame.data[c->sel]->rect.width - d.rect.x;
 	d.data = c->name;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
 
-	if(c->frame[c->sel]->area->mode == Colmax) {
+	if(c->frame.data[c->sel]->area->mode == Colmax) {
 		/* invert tag label */
 		unsigned long tmp = d.color.fg;
 		d.color.fg = d.color.bg;
@@ -349,7 +354,7 @@ manage_client(Client *c)
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 
-	v = nview ? view[sel] : alloc_view(def.tag);
+	v = view.size ? view.data[sel] : alloc_view(def.tag);
 	if(!c->ntag) {
 		for(i = 0; i < v->ntag; i++) {
 			cext_strlcpy(c->tag[i], v->tag[i], sizeof(c->tag[i]));
@@ -375,25 +380,24 @@ destroy_client(Client *c)
 	XGrabServer(dpy);
 	XSetErrorHandler(dummy_error_handler);
 
-	for(i = 0; i < nview; i++)
-		detach_fromview(view[i], c);
+	for(i = 0; i < view.size; i++)
+		detach_fromview(view.data[i], c);
 
 	unmap_client(c);
 
-	if(c->nframe) {
-		c->rect.x = c->frame[c->sel]->rect.x;
-		c->rect.y = c->frame[c->sel]->rect.y;
+	if(c->frame.size) {
+		c->rect.x = c->frame.data[c->sel]->rect.x;
+		c->rect.y = c->frame.data[c->sel]->rect.y;
 	}
 
 	reparent_client(c, root, c->rect.x, c->rect.y);
 	XFreeGC(dpy, c->gc);
 	XDestroyWindow(dpy, c->framewin);
-	cext_array_detach((void **)client, c, &clientsz);
-	nclient--;
+	cext_evector_detach(client_to_evector(&client), c);
 	update_tags();
 	free(c);
 
-	if((cl = sel_client_of_view(view[sel])))
+	if((cl = sel_client_of_view(view.data[sel])))
 		focus_client(cl);
 
 	XSync(dpy, False);
@@ -404,7 +408,7 @@ destroy_client(Client *c)
 Client *
 sel_client()
 {
-	return nview ? sel_client_of_view(view[sel]) : nil;
+	return view.size ? sel_client_of_view(view.data[sel]) : nil;
 }
 
 static void
@@ -437,27 +441,27 @@ match_sizehints(Client *c)
 			h = c->size.min_height;
 		}
 		/* client_width = base_width + i * c->size.width_inc for an integer i */
-		w = c->frame[c->sel]->rect.width - 2 * def.border - w;
+		w = c->frame.data[c->sel]->rect.width - 2 * def.border - w;
 		if(s->width_inc > 0)
-			c->frame[c->sel]->rect.width -= w % s->width_inc;
+			c->frame.data[c->sel]->rect.width -= w % s->width_inc;
 
-		h = c->frame[c->sel]->rect.height - def.border - bar_height() - h;
+		h = c->frame.data[c->sel]->rect.height - def.border - bar_height() - h;
 		if(s->height_inc > 0)
-			c->frame[c->sel]->rect.height -= h % s->height_inc;
+			c->frame.data[c->sel]->rect.height -= h % s->height_inc;
 	}
 }
 
 void
 resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 {
-	Frame *f = c->frame[c->sel];
+	Frame *f = c->frame.data[c->sel];
 	f->rect = *r;
 
 	if((f->area->mode != Colstack) || (f->area->sel == frame2index(f)))
 		match_sizehints(c);
 
 	if(!ignore_xcall) {
-		if(f->area->view == view[sel])
+		if(f->area->view == view.data[sel])
 			XMoveResizeWindow(dpy, c->framewin, f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);
 		else
@@ -479,35 +483,35 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 void
 select_client(Client *c, char *arg)
 {
-	Frame *f = c->frame[c->sel];
+	Frame *f = c->frame.data[c->sel];
 	Area *a = f->area;
 	int i = frame2index(f);
 	if(i == -1)
 		return;
 	if(!strncmp(arg, "prev", 5)) {
 		if(!i)
-			i = a->nframe - 1;
+			i = a->frame.size - 1;
 		else
 			i--;
 	} else if(!strncmp(arg, "next", 5)) {
-		if(i + 1 < a->nframe)
+		if(i + 1 < a->frame.size)
 			i++;
 		else
 			i = 0;
 	}
 	else {
 		const char *errstr;
-		i = cext_strtonum(arg, 0, a->nframe - 1, &errstr);
+		i = cext_strtonum(arg, 0, a->frame.size - 1, &errstr);
 		if(errstr)
 			return;
 	}
-	focus_client(a->frame[i]->client);
+	focus_client(a->frame.data[i]->client);
 }
 
 void
 swap_client(Client *c, char *arg)
 {
-	Frame *f = c->frame[c->sel];
+	Frame *f = c->frame.data[c->sel];
 	Area *o, *a = f->area;
 	View *v = a->view;
 	int i = area2index(a), j = frame2index(f);
@@ -517,22 +521,22 @@ swap_client(Client *c, char *arg)
 
 	if(!strncmp(arg, "prev", 5) && i) {
 		if(i == 1)
-			o = v->area[v->narea - 1];
+			o = v->area.data[v->area.size - 1];
 		else
-			o = v->area[i - 1];
+			o = v->area.data[i - 1];
 		goto Swaparea;
 	}
 	else if(!strncmp(arg, "next", 5) && i) {
-		if(i < v->narea - 1)
-			o = v->area[i + 1];
+		if(i < v->area.size - 1)
+			o = v->area.data[i + 1];
 		else
-			o = v->area[1];
+			o = v->area.data[1];
 Swaparea:
 		if(o == a)
 			return;
-		a->frame[j] = o->frame[o->sel];
-		a->frame[j]->area = a;
-		o->frame[o->sel] = f;
+		a->frame.data[j] = o->frame.data[o->sel];
+		a->frame.data[j]->area = a;
+		o->frame.data[o->sel] = f;
 		f->area = o;
 		arrange_column(o);
 	}
@@ -540,17 +544,17 @@ Swaparea:
 		if(j)
 			i = j - 1;
 		else
-			i = a->nframe - 1;
-		a->frame[j] = a->frame[i];
-		a->frame[i] = f;
+			i = a->frame.size - 1;
+		a->frame.data[j] = a->frame.data[i];
+		a->frame.data[i] = f;
 	}
 	else if(!strncmp(arg, "down", 5) && i) {
-		if(j + 1 < a->nframe)
+		if(j + 1 < a->frame.size)
 			i = j + 1;
 		else
 			i = 0;
-		a->frame[j] = a->frame[i];
-		a->frame[i] = f;
+		a->frame.data[j] = a->frame.data[i];
+		a->frame.data[i] = f;
 	}
 	if(area2index(a))
 		arrange_column(a);
@@ -561,7 +565,7 @@ void
 send2area_client(Client *c, char *arg)
 {
 	const char *errstr;
-	Frame *f = c->frame[c->sel];
+	Frame *f = c->frame.data[c->sel];
 	Area *to, *a = f->area;
 	View *v = a->view;
 	int i = area2index(a);
@@ -569,36 +573,36 @@ send2area_client(Client *c, char *arg)
 	if(i == -1)
 		return;
 	if(!strncmp(arg, "new", 4) && i) {
-		if(a->nframe == 1 || v->narea - 1 >= rect.width / MIN_COLWIDTH)
+		if(a->frame.size == 1 || v->area.size - 1 >= rect.width / MIN_COLWIDTH)
 			return;
 		to = alloc_area(v);
 		arrange_view(v, True);
 	}
 	else if(!strncmp(arg, "prev", 5) && i) {
 		if(i == 1)
-			to = v->area[v->narea - 1];
+			to = v->area.data[v->area.size - 1];
 		else
-			to = v->area[i - 1];
+			to = v->area.data[i - 1];
 	}
 	else if(!strncmp(arg, "next", 5) && i) {
-		if(i < v->narea - 1)
-			to = v->area[i + 1];
+		if(i < v->area.size - 1)
+			to = v->area.data[i + 1];
 		else
-			to = v->area[1];
+			to = v->area.data[1];
 	}
 	else if(!strncmp(arg, "toggle", 7)) {
 		if(i)
-			to = v->area[0];
-		else if(c->revert && c->revert != v->area[0])
+			to = v->area.data[0];
+		else if(c->revert && c->revert != v->area.data[0])
 			to = c->revert;
 		else
-			to = v->area[1];
+			to = v->area.data[1];
 	}
 	else {
-		i = cext_strtonum(arg, 0, v->narea - 1, &errstr);
+		i = cext_strtonum(arg, 0, v->area.size - 1, &errstr);
 		if(errstr)
 			return;
-		to = v->area[i];
+		to = v->area.data[i];
 	}
 	send2area(to, a, c);
 }
@@ -607,13 +611,13 @@ void
 resize_all_clients()
 {
 	unsigned int i;
-	for(i = 0; i < nclient; i++) {
-		Client *c = client[i];
-		if(c->nframe && c->frame[c->sel]->area) {
-			if(area2index(c->frame[c->sel]->area))
-				resize_area(c, &c->frame[c->sel]->rect, nil);
+	for(i = 0; i < client.size; i++) {
+		Client *c = client.data[i];
+		if(c->frame.size && c->frame.data[c->sel]->area) {
+			if(area2index(c->frame.data[c->sel]->area))
+				resize_area(c, &c->frame.data[c->sel]->rect, nil);
 			else
-				resize_client(c, &c->frame[c->sel]->rect, False);
+				resize_client(c, &c->frame.data[c->sel]->rect, False);
 		}
 	}
 }
@@ -622,14 +626,14 @@ resize_all_clients()
 void
 focus(Client *c)
 {
-	Frame *f = c->nframe ? c->frame[c->sel] : nil;
+	Frame *f = c->frame.size ? c->frame.data[c->sel] : nil;
 	View *v;
 
 	if(!f)
 		return;
 
 	v = f->area->view;
-	if(view[sel] != v)
+	if(view.data[sel] != v)
 		focus_view(v);
 	focus_client(c);
 }
@@ -638,8 +642,8 @@ int
 cid2index(unsigned short id)
 {
 	int i;
-	for(i = 0; i < nclient; i++)
-		if(client[i]->id == id)
+	for(i = 0; i < client.size; i++)
+		if(client.data[i]->id == id)
 			return i;
 	return -1;
 }

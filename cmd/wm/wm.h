@@ -73,24 +73,24 @@ typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
+EVECTOR(area_vec_t, Area*);
+
 struct View {
 	char tag[MAX_TAGS][MAX_TAGLEN];
 	unsigned int ntag;
 	unsigned short id;
-	Area **area;
-	unsigned int areasz;
-	unsigned int narea;
+	area_vec_t area;
 	unsigned int sel;
 	unsigned int revert;
 };
 
+EVECTOR(frame_vec_t, Frame*);
+
 struct Area {
 	unsigned short id;
-	Frame **frame;
+	frame_vec_t frame;
 	View *view;
-	unsigned int framesz;
 	unsigned int sel;
-	unsigned int nframe;
 	int mode;
 	XRectangle rect;
 };
@@ -117,10 +117,8 @@ struct Client {
 	XSizeHints size;
 	Window framewin;
 	GC gc;
-	Frame **frame;
-	unsigned int framesz;
+	frame_vec_t frame;
 	unsigned int sel;
-	unsigned int nframe;
 	Area *revert;
 };
 
@@ -160,22 +158,24 @@ typedef struct {
 } Default;
 
 /* global variables */
-View **view;
-unsigned int nview;
-unsigned int viewsz;
+EVECTOR(view_vec_t, View*);
+view_vec_t view;
 unsigned int sel;
-Client **client;
-unsigned int nclient;
-unsigned int clientsz;
-Key **key;
-unsigned int keysz;
-unsigned int nkey;
-Label **label;
-unsigned int nlabel;
-unsigned int labelsz;
-char **tag;
-unsigned int ntag;
-unsigned int tagsz;
+
+EVECTOR(client_vec_t, Client*);
+client_vec_t client;
+
+EVECTOR(key_vec_t, Key*);
+key_vec_t key;
+
+EVECTOR(label_vec_t, Label*);
+label_vec_t label;
+
+EVECTOR(tag_vec_t, char  *);
+tag_vec_t tag;
+//char **tag;
+//unsigned int ntag;
+//unsigned int tagsz;
 
 Display *dpy;
 IXPServer *ixps;
@@ -284,6 +284,7 @@ unsigned int str2tags(char tags[MAX_TAGS][MAX_TAGLEN], const char *stags);
 void tags2str(char *stags, unsigned int stagsz,
 		char tags[MAX_TAGS][MAX_TAGLEN], unsigned int ntags);
 Bool istag(char *t);
+void ensure_tag(char *t);
 void update_tags();
 
 /* view.c */

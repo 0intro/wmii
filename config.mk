@@ -1,7 +1,7 @@
 # Customize to fit your system
 
 # paths
-PREFIX = /usr/local
+PREFIX = /tmp/wmiibin
 CONFPREFIX = ${PREFIX}/etc
 MANPREFIX = ${PREFIX}/share/man
 
@@ -14,9 +14,9 @@ VERSION = 3-current
 LIBS = -L${PREFIX}/lib -L/usr/lib -lc -lm -L${X11LIB} -lX11
 
 # Linux/BSD
-CFLAGS = -g -Wall -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
+CFLAGS = -ggdb -Wall -O -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
 	-DVERSION=\"${VERSION}\"
-LDFLAGS = -g ${LIBS}
+LDFLAGS = -ggdb ${LIBS}
 
 # Solaris
 #CFLAGS = -fast -xtarget=ultra ${INCLUDES} -DVERSION=\"${VERSION}\"

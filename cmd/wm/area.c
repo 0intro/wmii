@@ -8,6 +8,14 @@
 
 #include "wm.h"
 
+/* We expect the optimiser to remove this function, It is included to ensure type safeness.
+ */
+static evector_t *
+area_to_evector(area_vec_t *view)
+{
+	return (evector_t *) view;
+}
+
 Area *
 alloc_area(View *v)
 {
@@ -17,10 +25,8 @@ alloc_area(View *v)
 	a->id = id++;
 	a->rect = rect;
 	a->rect.height = rect.height - brect.height;
-	v->area = (Area **)cext_array_attach((void **)v->area, a,
-			sizeof(Area *), &v->areasz);
-	v->sel = v->narea;
-	v->narea++;
+	cext_evector_attach(area_to_evector(&v->area), a);
+	v->sel = v->area.size -1;
 	return a;
 }
 
@@ -29,17 +35,16 @@ destroy_area(Area *a)
 {
 	unsigned int i;
 	View *v = a->view;
-	if(a->nframe)
+	if(a->frame.size)
 		return;
-	if(a->frame)
-		free(a->frame);
+	if(a->frame.data)
+		free(a->frame.data);
 	if(v->revert == area2index(a))
 		v->revert = 0;
-	for(i = 0; i < nclient; i++)
-		if(client[i]->revert == a)
-			client[i]->revert = 0;
-	cext_array_detach((void **)v->area, a, &v->areasz);
-	v->narea--;
+	for(i = 0; i < client.size; i++)
+		if(client.data[i]->revert == a)
+			client.data[i]->revert = 0;
+	cext_evector_detach(area_to_evector(&v->area), a);
 	if(v->sel > 1)
 		v->sel--;
 	free(a);
@@ -50,8 +55,8 @@ area2index(Area *a)
 {
 	int i;
 	View *v = a->view;
-	for(i = 0; i < v->narea; i++)
-		if(v->area[i] == a)
+	for(i = 0; i < v->area.size; i++)
+		if(v->area.data[i] == a)
 			return i;
 	return -1;
 }
@@ -60,8 +65,8 @@ int
 aid2index(View *v, unsigned short id)
 {
 	int i;
-	for(i = 0; i < v->narea; i++)
-		if(v->area[i]->id == id)
+	for(i = 0; i < v->area.size; i++)
+		if(v->area.data[i]->id == id)
 			return i;
 	return -1;
 }
@@ -81,20 +86,20 @@ select_area(Area *a, char *arg)
 	if(!strncmp(arg, "toggle", 7)) {
 		if(i)
 			i = 0;
-		else if(v->revert > 0 && v->revert < v->narea)
+		else if(v->revert > 0 && v->revert < v->area.size)
 			i = v->revert;
 		else
 			i = 1;
 	} else if(!strncmp(arg, "prev", 5)) {
 		if(i > 0) {
 			if(i == 1)
-				i = v->narea - 1;
+				i = v->area.size - 1;
 			else
 				i--;
 		}
 	} else if(!strncmp(arg, "next", 5)) {
 		if(i > 0) {
-			if(i + 1 < v->narea)
+			if(i + 1 < v->area.size)
 				i++;
 			else
 				i = 1;
@@ -102,18 +107,18 @@ select_area(Area *a, char *arg)
 	}
 	else {
 		const char *errstr;
-		i = cext_strtonum(arg, 0, v->narea - 1, &errstr);
+		i = cext_strtonum(arg, 0, v->area.size - 1, &errstr);
 		if(errstr)
 			return;
 	}
-	new = v->area[i];
-	if(new->nframe)
-		focus_client(new->frame[new->sel]->client);
+	new = v->area.data[i];
+	if(new->frame.size)
+		focus_client(new->frame.data[new->sel]->client);
 	v->sel = i;
-	for(i = 0; i < a->nframe; i++)
-		draw_client(a->frame[i]->client);
+	for(i = 0; i < a->frame.size; i++)
+		draw_client(a->frame.data[i]->client);
 
-	if(!new->nframe) {
+	if(!new->frame.size) {
 		update_view_label(v);
 		draw_bar();
 	}
@@ -126,6 +131,14 @@ send2area(Area *to, Area *from, Client *c)
 	detach_fromarea(from, c);
 	attach_toarea(to, c);
 	focus_client(c);
+}
+
+/* We expect the optimiser to remove this function, It is included to ensure type safeness.
+ */
+static evector_t *
+frame_to_evector(frame_vec_t *view)
+{
+	return (evector_t *) view;
 }
 
 void
@@ -144,14 +157,10 @@ attach_toarea(Area *a, Client *c)
 	f->rect = c->rect;
 	f->rect.width += 2 * def.border;
 	f->rect.height += def.border + bar_height();
-	c->frame = (Frame **)cext_array_attach(
-			(void **)c->frame, f, sizeof(Frame *), &c->framesz);
-	c->nframe++;
-	c->sel = c->nframe - 1;
-	a->frame = (Frame **)cext_array_attach(
-			(void **)a->frame, f, sizeof(Frame *), &a->framesz);
-	a->nframe++;
-	a->sel = a->nframe - 1;
+	cext_evector_attach(frame_to_evector(&c->frame), f);
+	c->sel = c->frame.size - 1;
+	cext_evector_attach(frame_to_evector(&a->frame),f);
+	a->sel = a->frame.size - 1;
 	if(area2index(a)) /* column */
 		arrange_column(a);
 	else /* floating */
@@ -161,48 +170,46 @@ attach_toarea(Area *a, Client *c)
 void
 detach_fromarea(Area *a, Client *c)
 {
-	Frame *f;
+	Frame *f = nil;
 	View *v = a->view;
 	int i;
 
-	for(i = 0; i < c->nframe; i++)
-		if(c->frame[i]->area == a) {
-			f = c->frame[i];
+	for(i = 0; i < c->frame.size; i++)
+		if(c->frame.data[i]->area == a) {
+			f = c->frame.data[i];
 			break;
 		}
 
-	cext_array_detach((void **)c->frame, f, &c->framesz);
-	cext_array_detach((void **)a->frame, f, &a->framesz);
+	cext_evector_detach(frame_to_evector(&c->frame), f);
+	cext_evector_detach(frame_to_evector(&a->frame), f);
 	free(f);
-	c->nframe--;
 	if(c->sel > 0)
 		c->sel--;
-	a->nframe--;
 	if(a->sel > 0)
 		a->sel--;
 
 	i = area2index(a);
-	if(i && a->nframe)
+	if(i && a->frame.size)
 		arrange_column(a);
 	else {
 		if(i) {
-		    if(v->narea > 2)
+		    if(v->area.size > 2)
 				destroy_area(a);
-			else if(!a->nframe && v->area[0]->nframe)
+			else if(!a->frame.size && v->area.data[0]->frame.size)
 				v->sel = 0; /* focus floating area if it contains something */
 			arrange_view(v, True);
 		}
-		else if(!i && !a->nframe) {
+		else if(!i && !a->frame.size) {
 			if(c->trans) {
 				/* focus area of transient, if possible */
 				Client *cl = win2client(c->trans);
-				if(cl && cl->nframe) {
-				   a = cl->frame[cl->sel]->area;
+				if(cl && cl->frame.size) {
+				   a = cl->frame.data[cl->sel]->area;
 				   if(a->view == v)
 					   v->sel = area2index(a);
 				}
 			}
-			else if(v->area[1]->nframe)
+			else if(v->area.data[1]->frame.size)
 				v->sel = 1; /* focus first col as fallback */
 		}
 	}
@@ -238,19 +245,19 @@ relax_area(Area *a)
 	unsigned int i, yoff, h, hdiff;
 	Bool fallthrough = False;
 
-	if(!a->nframe)
+	if(!a->frame.size)
 		return;
 
 	switch(a->mode) {
 	case Colequal:
 		h = a->rect.height;
-		h /= a->nframe;
+		h /= a->frame.size;
 		if(h < 2 * bar_height())
 			fallthrough = True;
 		break;
 	case Colstack:
 		yoff = a->rect.y;
-		h = a->rect.height - (a->nframe - 1) * bar_height();
+		h = a->rect.height - (a->frame.size - 1) * bar_height();
 		if(h < 3 * bar_height())
 			fallthrough = True;
 		break;
@@ -259,8 +266,8 @@ relax_area(Area *a)
 	}
 
 	if(fallthrough) {
-		for(i = 0; i < a->nframe; i++) {
-			Frame *f = a->frame[i];
+		for(i = 0; i < a->frame.size; i++) {
+			Frame *f = a->frame.data[i];
 			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 			f->rect.y = a->rect.y + (a->rect.height - f->rect.height) / 2;
 			resize_client(f->client, &f->rect, False);
@@ -270,8 +277,8 @@ relax_area(Area *a)
 
 	/* some relaxing from potential increment gaps */
 	h = 0;
-	for(i = 0; i < a->nframe; i++) {
-		Frame *f = a->frame[i];
+	for(i = 0; i < a->frame.size; i++) {
+		Frame *f = a->frame.data[i];
 		if(a->mode == Colmax) {
 			if(h < f->rect.height)
 				h = f->rect.height;
@@ -282,8 +289,8 @@ relax_area(Area *a)
 
 	/* try to add rest space to all clients if not COL_STACK mode */
 	if(a->mode != Colstack) {
-		for(i = 0; (h < a->rect.height) && (i < a->nframe); i++) {
-			Frame *f = a->frame[i];
+		for(i = 0; (h < a->rect.height) && (i < a->frame.size); i++) {
+			Frame *f = a->frame.data[i];
 			unsigned int tmp = f->rect.height;
 			f->rect.height += (a->rect.height - h);
 			resize_client(f->client, &f->rect, True);
@@ -291,10 +298,10 @@ relax_area(Area *a)
 		}
 	}
 
-	hdiff = (a->rect.height - h) / a->nframe;
+	hdiff = (a->rect.height - h) / a->frame.size;
 	yoff = a->rect.y + hdiff / 2;
-	for(i = 0; i < a->nframe; i++) {
-		Frame *f = a->frame[i];
+	for(i = 0; i < a->frame.size; i++) {
+		Frame *f = a->frame.data[i];
 		f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 		f->rect.y = yoff;
 		if(a->mode != Colmax)
@@ -308,20 +315,20 @@ arrange_column(Area *a)
 {
 	unsigned int i, yoff, h;
 
-	if(!a->nframe)
+	if(!a->frame.size)
 		return;
 
 	switch(a->mode) {
 	case Colequal:
 		h = a->rect.height;
-		h /= a->nframe;
+		h /= a->frame.size;
 		if(h < 2 * bar_height())
 			goto Fallthrough;
-		for(i = 0; i < a->nframe; i++) {
-			Frame *f = a->frame[i];
+		for(i = 0; i < a->frame.size; i++) {
+			Frame *f = a->frame.data[i];
 			f->rect = a->rect;
 			f->rect.y += i * h;
-			if(i + 1 < a->nframe)
+			if(i + 1 < a->frame.size)
 				f->rect.height = h;
 			else
 				f->rect.height =
@@ -331,11 +338,11 @@ arrange_column(Area *a)
 		break;
 	case Colstack:
 		yoff = a->rect.y;
-		h = a->rect.height - (a->nframe - 1) * bar_height();
+		h = a->rect.height - (a->frame.size - 1) * bar_height();
 		if(h < 3 * bar_height())
 			goto Fallthrough;
-		for(i = 0; i < a->nframe; i++) {
-			Frame *f = a->frame[i];
+		for(i = 0; i < a->frame.size; i++) {
+			Frame *f = a->frame.data[i];
 			f->rect = a->rect;
 			f->rect.y = yoff;
 			if(i == a->sel)
@@ -348,8 +355,8 @@ arrange_column(Area *a)
 		break;
 Fallthrough:
 	case Colmax:
-		for(i = 0; i < a->nframe; i++) {
-			Frame *f = a->frame[i];
+		for(i = 0; i < a->frame.size; i++) {
+			Frame *f = a->frame.data[i];
 			f->rect = a->rect;
 			resize_client(f->client, &f->rect, True);
 		}
@@ -366,8 +373,8 @@ match_horiz(Area *a, XRectangle *r)
 {
 	unsigned int i;
 
-	for(i = 0; i < a->nframe; i++) {
-		Frame *f = a->frame[i];
+	for(i = 0; i < a->frame.size; i++) {
+		Frame *f = a->frame.data[i];
 		f->rect.x = r->x;
 		f->rect.width = r->width;
 		resize_client(f->client, &f->rect, False);
@@ -384,14 +391,14 @@ drop_resize(Frame *f, XRectangle *new)
 	unsigned int i;
 	unsigned int min_height = 2 * bar_height();
 
-	for(i = 1; (i < v->narea) && (v->area[i] != a); i++);
+	for(i = 1; (i < v->area.size) && (v->area.data[i] != a); i++);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
-	west = (i > 1) ? v->area[i - 1] : nil;
-	east = i + 1 < v->narea ? v->area[i + 1] : nil;
+	west = (i > 1) ? v->area.data[i - 1] : nil;
+	east = i + 1 < v->area.size ? v->area.data[i + 1] : nil;
 
-	for(i = 0; (i < a->nframe) && (a->frame[i] != f); i++);
-	north = i ? a->frame[i - 1] : nil;
-	south = i + 1 < a->nframe ? a->frame[i + 1] : nil;
+	for(i = 0; (i < a->frame.size) && (a->frame.data[i] != f); i++);
+	north = i ? a->frame.data[i - 1] : nil;
+	south = i + 1 < a->frame.size ? a->frame.data[i + 1] : nil;
 
 	/* validate (and trim if necessary) horizontal resize */
 	if(new->width < MIN_COLWIDTH) {
@@ -487,22 +494,22 @@ drop_moving(Frame *f, XRectangle *new, XPoint * pt)
 	View *v = src->view;
 	unsigned int i;
 
-	if(!pt || src->nframe < 2)
+	if(!pt || src->frame.size < 2)
 		return;
 
-	for(i = 1; (i < v->narea) &&
-			!blitz_ispointinrect(pt->x, pt->y, &v->area[i]->rect); i++);
-	if((tgt = ((i < v->narea) ? v->area[i] : nil))) {
+	for(i = 1; (i < v->area.size) &&
+			!blitz_ispointinrect(pt->x, pt->y, &v->area.data[i]->rect); i++);
+	if((tgt = ((i < v->area.size) ? v->area.data[i] : nil))) {
 		if(tgt != src)
 			send2area(tgt, src, f->client);
 		else {
-			for(i = 0; (i < src->nframe) && !blitz_ispointinrect(
-						pt->x, pt->y, &src->frame[i]->rect); i++);
-			if((i < src->nframe) && (f != src->frame[i])) {
+			for(i = 0; (i < src->frame.size) && !blitz_ispointinrect(
+						pt->x, pt->y, &src->frame.data[i]->rect); i++);
+			if((i < src->frame.size) && (f != src->frame.data[i])) {
 				unsigned int j = frame2index(f);
-				Frame *tmp = src->frame[j];
-				src->frame[j] = src->frame[i];
-				src->frame[i] = tmp;
+				Frame *tmp = src->frame.data[j];
+				src->frame.data[j] = src->frame.data[i];
+				src->frame.data[i] = tmp;
 				arrange_column(src);
 				focus_client(f->client);
 			}
@@ -513,7 +520,7 @@ drop_moving(Frame *f, XRectangle *new, XPoint * pt)
 void
 resize_area(Client *c, XRectangle *r, XPoint *pt)
 {
-	Frame *f = c->frame[c->sel];
+	Frame *f = c->frame.data[c->sel];
 	if((f->rect.width == r->width) && (f->rect.height == r->height))
 		drop_moving(f, r, pt);
 	else
@@ -524,8 +531,8 @@ Bool
 clientofarea(Area *a, Client *c)
 {
 	unsigned int i;
-	for(i = 0; i < a->nframe; i++)
-		if(a->frame[i]->client == c)
+	for(i = 0; i < a->frame.size; i++)
+		if(a->frame.data[i]->client == c)
 			return True;
 	return False;
 }

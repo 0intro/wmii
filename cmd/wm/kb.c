@@ -86,10 +86,18 @@ static Key *
 name2key(const char *name)
 {
 	unsigned int i;
-	for(i = 0; i < nkey; i++)
-		if(!strncmp(key[i]->name, name, sizeof(key[i]->name)))
-			return key[i];
+	for(i = 0; i < key.size; i++)
+		if(!strncmp(key.data[i]->name, name, sizeof(key.data[i]->name)))
+			return key.data[i];
 	return nil;
+}
+
+/* We expect the optimiser to remove this function, It is included to ensure type safeness.
+ */
+static evector_t *
+key_to_evector(key_vec_t *view)
+{
+	return (evector_t *) view;
 }
 
 static Key *
@@ -128,8 +136,7 @@ get_key(const char *name)
 	}
 	if(r) {
 		r->id = id++;
-		key = (Key **)cext_array_attach((void **)key, r, sizeof(Key *), &keysz);
-		nkey++;
+		cext_evector_attach(key_to_evector(&key), r);
 	}
 
 	return r;
@@ -139,8 +146,7 @@ void
 destroy_key(Key *k)
 {
 	Key *n;
-	cext_array_detach((void **)key, k, &keysz);
-	nkey--;
+	cext_evector_detach(key_to_evector(&key), k);
 	while(k) {
 		n = k->next;
 		free(k);
@@ -240,7 +246,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 {
 	unsigned int nfound;
 	char buf[128];
-	Key **found = match_keys(key, nkey, mod, keycode, False, &nfound);
+	Key **found = match_keys(key.data, key.size, mod, keycode, False, &nfound);
 	switch(nfound) {
 	case 0:
 		XBell(dpy, 0);
@@ -269,9 +275,9 @@ update_keys()
 
 	init_lock_modifiers();
 
-	while(nkey) {
-		ungrab_key(key[0]);
-		destroy_key(key[0]);
+	while(key.size) {
+		ungrab_key(key.data[0]);
+		destroy_key(key.data[0]);
 	}
 
 	for(l = p = def.keys; p && *p;) {

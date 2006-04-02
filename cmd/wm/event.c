@@ -60,10 +60,10 @@ handle_buttonpress(XEvent *e)
 	static char buf[32];
 	if(ev->window == barwin) {
 		unsigned int i;
-		for(i = 0; i < nlabel; i++)
-			if(blitz_ispointinrect(ev->x, ev->y, &label[i]->rect)) {
+		for(i = 0; i < label.size; i++)
+			if(blitz_ispointinrect(ev->x, ev->y, &label.data[i]->rect)) {
 				snprintf(buf, sizeof(buf), "LabelClick %s %d\n",
-						label[i]->name, ev->button);
+						label.data[i]->name, ev->button);
 				write_event(buf);
 				return;
 			}
@@ -85,9 +85,9 @@ handle_buttonpress(XEvent *e)
 			else
 				mouse_move(c);
 		}
-		if(c->nframe) {
+		if(c->frame.size) {
 			snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
-					frame2index(c->frame[c->sel]) + 1, ev->button);
+					frame2index(c->frame.data[c->sel]) + 1, ev->button);
 			write_event(buf);
 		}
 	}
@@ -106,7 +106,7 @@ handle_configurerequest(XEvent *e)
 	if(c) {
 		gravitate(c, True);
 
-		if(c->nframe && (area2index(c->frame[c->sel]->area) == 0)) {
+		if(c->frame.size && (area2index(c->frame.data[c->sel]->area) == 0)) {
 			if(ev->value_mask & CWX)
 				c->rect.x = ev->x;
 			if(ev->value_mask & CWY)
@@ -121,8 +121,8 @@ handle_configurerequest(XEvent *e)
 
 		gravitate(c, False);
 
-		if(c->nframe) {
-			Frame *f = c->frame[c->sel];
+		if(c->frame.size) {
+			Frame *f = c->frame.data[c->sel];
 			f->rect.x = wc.x = c->rect.x - def.border;
 			f->rect.y = wc.y = c->rect.y - bar_height();
 			f->rect.width = wc.width = c->rect.width + 2 * def.border;
@@ -131,7 +131,7 @@ handle_configurerequest(XEvent *e)
 			wc.border_width = 1;
 			wc.sibling = None;
 			wc.stack_mode = ev->detail;
-			if(f->area->view != view[sel])
+			if(f->area->view != view.data[sel])
 				f->rect.x += 2 * rect.width;
 			XConfigureWindow(dpy, c->framewin, ev->value_mask, &wc);
 			configure_client(c);
@@ -143,10 +143,10 @@ handle_configurerequest(XEvent *e)
 	wc.width = ev->width;
 	wc.height = ev->height;
 
-	if(c && c->nframe) {
+	if(c && c->frame.size) {
 		wc.x = def.border;
 		wc.y = bar_height();
-		if(area2index(c->frame[c->sel]->area) > 0) {
+		if(area2index(c->frame.data[c->sel]->area) > 0) {
 			wc.width = c->rect.width;
 			wc.height = c->rect.height;
 		}

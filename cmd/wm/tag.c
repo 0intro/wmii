@@ -12,8 +12,8 @@ Bool
 istag(char *t)
 {
 	unsigned int i;
-	for(i = 0; i < ntag; i++)
-		if(!strncmp(tag[i], t, strlen(t)))
+	for(i = 0; i < tag.size; i++)
+		if(!strncmp(tag.data[i], t, strlen(t)))
 			return True;
 	return False;
 }
@@ -44,46 +44,59 @@ organize_client(View *v, Client *c)
 	}
 }
 
+
+/* We expect the optimiser to remove this function, It is included to ensure type safeness.
+ */
+static evector_t *
+tag_to_evector(tag_vec_t *view)
+{
+	return (evector_t *) view;
+}
+
+void
+ensure_tag(char *arg)
+{
+	if(!istag(arg)) {
+		cext_evector_attach(tag_to_evector(&tag), strdup(arg));
+	}
+}
+
 void
 update_tags()
 {
 	unsigned int i, j;
-	for(i = 0; i < ntag; i++) {
-		free(tag[i]);
-		tag[i] = nil;
+	for(i = 0; i < tag.size; i++) {
+		free(tag.data[i]);
+		tag.data[i] = nil;
 	}
-	ntag = 0;
+	tag.size = 0;
 
-	for(i = 0; i < nclient; i++) {
-		for(j = 0; j < client[i]->ntag; j++) {
-			if(!istag(client[i]->tag[j])) {
-				tag = (char **)cext_array_attach((void **)tag, strdup(client[i]->tag[j]),
-							sizeof(char *), &tagsz);
-				ntag++;
-			}
+	for(i = 0; i < client.size; i++) {
+		for(j = 0; j < client.data[i]->ntag; j++) {
+			ensure_tag(client.data[i]->tag[j]);
 		}
 	}
 
-	for(i = 0; nview && (i < nclient); i++) {
-		for(j = 0; j < nview; j++) {
-			View *v = view[j];
+	for(i = 0; view.size && (i < client.size); i++) {
+		for(j = 0; j < view.size; j++) {
+			View *v = view.data[j];
 			if(j == sel)
 				continue;
-			organize_client(v, client[i]);
+			organize_client(v, client.data[i]);
 		}
-		organize_client(view[sel], client[i]);
+		organize_client(view.data[sel], client.data[i]);
 	}
 
-	if(nview && !hasclient(view[sel])) {
-		destroy_view(view[sel]);
-		if(nview)
-			focus_view(view[sel]);
+	if(view.size && !hasclient(view.data[sel])) {
+		destroy_view(view.data[sel]);
+		if(view.size)
+			focus_view(view.data[sel]);
 		else
 			update_bar_tags();
 	}
 
-	if(!nview && ntag)
-		select_view(tag[0]);
+	if(!view.size && tag.size)
+		select_view(tag.data[0]);
 	else
 		update_bar_tags();
 }

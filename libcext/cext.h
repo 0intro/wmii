@@ -16,6 +16,18 @@ void cext_array_detach(void **array, void *p, unsigned int *size);
 /* emallocz.c */
 void *cext_emallocz(unsigned int size);
 
+/* evector.c */
+#define EVECTOR(name, type) \
+typedef struct { \
+	unsigned int size; \
+	type * data; \
+} name
+
+EVECTOR(evector_t, void*);
+
+void cext_evector_attach(evector_t *vector, void *data_to_be_added);
+void cext_evector_detach(evector_t *vector, void *data_to_be_removed);
+
 /* estrdup.c */
 char *cext_estrdup(const char *s);
 

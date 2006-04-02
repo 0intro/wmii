@@ -3,7 +3,7 @@
 
 include ../config.mk
 
-SRC = array.c emallocz.c estrdup.c strlcat.c strlcpy.c strtonum.c tokenize.c
+SRC = array.c emallocz.c estrdup.c evector.c strlcat.c strlcpy.c strtonum.c tokenize.c
 
 OBJ = ${SRC:.c=.o}
 
@@ -15,6 +15,8 @@ all: libcext.a
 .c.o:
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<
+
+$(OBJ): cext.h
 
 libcext.a: ${OBJ}
 	@echo AR $@

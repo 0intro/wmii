@@ -233,9 +233,9 @@ mouse_move(Client *c)
 	int snaph = rect.height * def.snap / 1000;
 	unsigned int num;
 	unsigned int dmask;
-	XRectangle *rects = rectangles(c->frame[c->sel]->area->view,
-			area2index(c->frame[c->sel]->area) == 0, &num);
-	XRectangle frect = c->frame[c->sel]->rect;
+	XRectangle *rects = rectangles(c->frame.data[c->sel]->area->view,
+			area2index(c->frame.data[c->sel]->area) == 0, &num);
+	XRectangle frect = c->frame.data[c->sel]->rect;
 	XPoint pt;
 
 	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
@@ -259,7 +259,7 @@ mouse_move(Client *c)
 		case ButtonRelease:
 			if(!first) {
 				draw_pseudo_border(&frect);
-				if(area2index(c->frame[c->sel]->area))
+				if(area2index(c->frame.data[c->sel]->area))
 					resize_area(c, &frect, &pt);
 				else
 					resize_client(c, &frect, False);
@@ -475,9 +475,9 @@ mouse_resize(Client *c, Align align)
 	int snaph = rect.height * def.snap / 1000;
 	unsigned int dmask;
 	unsigned int num;
-	XRectangle *rects = rectangles(c->frame[c->sel]->area->view,
-			area2index(c->frame[c->sel]->area) == 0, &num);
-	XRectangle frect = c->frame[c->sel]->rect;
+	XRectangle *rects = rectangles(c->frame.data[c->sel]->area->view,
+			area2index(c->frame.data[c->sel]->area) == 0, &num);
+	XRectangle frect = c->frame.data[c->sel]->rect;
 	XRectangle origin = frect;
 
 	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
@@ -501,7 +501,7 @@ mouse_resize(Client *c, Align align)
 				draw_pseudo_border(&frect);
 				pt.x = px;
 				pt.y = py;
-				if(area2index(c->frame[c->sel]->area))
+				if(area2index(c->frame.data[c->sel]->area))
 					resize_area(c, &frect, &pt);
 				else
 					resize_client(c, &frect, False);

@@ -39,7 +39,7 @@ update_rules()
 {
 	unsigned int i;
 	int mode = IGNORE;
-	char *p, *r, *t, regex[256], tags[256];
+	char *p, *r=nil, *t=nil, regex[256], tags[256];
 
 	if(!def.rules || !strlen(def.rules))
 		return;
@@ -81,6 +81,7 @@ update_rules()
 				mode = IGNORE;
 				*r = 0;
 				rule[i].is_valid = !regcomp(&rule[i].regex, regex, 0);
+				/* Is there a memory leak here if the rule is invalid? */
 			}
 			else {
 				*r = *p;
