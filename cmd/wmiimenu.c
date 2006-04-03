@@ -29,12 +29,11 @@ static Display *dpy;
 static Window win;
 static XRectangle mrect;
 static int screen;
-static char **allitem = nil;
-static unsigned int nallitem = 0;
-static unsigned int allitemsz = 0;
-static char **item = nil;
-static unsigned int itemsz = 0;
-static unsigned int nitem = 0;
+
+EVECTOR(ItemVector, char *);
+static ItemVector allitem = {0};
+static ItemVector item = {0};
+
 static int sel = -1;
 static unsigned int nextoff = 0;
 static unsigned int prevoff = 0;
@@ -47,6 +46,12 @@ static void draw_menu(void);
 static void handle_kpress(XKeyEvent * e);
 
 static char version[] = "wmiimenu - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
+
+static Vector *
+item2vector(ItemVector *iv)
+{
+	return (Vector *) iv;
+}
 
 static void
 usage()
@@ -61,11 +66,11 @@ update_offsets()
 	unsigned int i;
 	unsigned int w = cmdw + 2 * seek;
 
-	if(!nitem)
+	if(!item.size)
 		return;
 
-	for(i = curroff; i < nitem; i++) {
-		w += XTextWidth(draw.font, item[i], strlen(item[i])) + mrect.height;
+	for(i = curroff; i < item.size; i++) {
+		w += XTextWidth(draw.font, item.data[i], strlen(item.data[i])) + mrect.height;
 		if(w > mrect.width)
 			break;
 	}
@@ -73,7 +78,7 @@ update_offsets()
 
 	w = cmdw + 2 * seek;
 	for(i = curroff; i > 0; i--) {
-		w += XTextWidth(draw.font, item[i], strlen(item[i])) + mrect.height;
+		w += XTextWidth(draw.font, item.data[i], strlen(item.data[i])) + mrect.height;
 		if(w > mrect.width)
 			break;
 	}
@@ -89,31 +94,21 @@ update_items(char *pattern)
 	curroff = prevoff = nextoff = 0;
 	sel = -1;
 
-	for(i = 0; i < nitem; i++)
-		item[i] = nil; /* faster than cext_array_detach */
-	nitem = 0;
+	while(item.size)
+		cext_vdetach(item2vector(&item), item.data[0]);
 
-	for(i = 0; i < nallitem; i++) {
-		if(!plen || !strncmp(pattern, allitem[i], plen)) {
-			item = (char **)cext_array_attach((void **)item, allitem[i],
-					sizeof(char *), &itemsz);
-			nitem++;
-		}
-	}
-	for(i = 0; i < nallitem; i++) {
-		if(plen && strncmp(pattern, allitem[i], plen)
-				&& strstr(allitem[i], pattern))
-		{
-			item = (char **)cext_array_attach((void **)item, allitem[i],
-					sizeof(char *), &itemsz);
-			nitem++;
-		}
-	}
-	if(nitem)
+	for(i = 0; i < allitem.size; i++)
+		if(!plen || !strncmp(pattern, allitem.data[i], plen)) 
+			cext_vattach(item2vector(&item), allitem.data[i]);
+	for(i = 0; i < allitem.size; i++)
+		if(plen && strncmp(pattern, allitem.data[i], plen)
+				&& strstr(allitem.data[i], pattern))
+			cext_vattach(item2vector(&item), allitem.data[i]);
+	if(item.size)
 		sel = 0;
 
 	update_offsets();
-	return nitem;
+	return item.size;
 }
 
 /* creates draw structs for menu mode drawing */
@@ -132,13 +127,13 @@ draw_menu()
 	/* print command */
 	draw.align = WEST;
 	draw.data = text;
-	if(cmdw && nitem)
+	if(cmdw && item.size)
 		draw.rect.width = cmdw;
 	offx += draw.rect.width;
 	blitz_drawlabel(dpy, &draw);
 
 	draw.align = CENTER;
-	if(nitem) {
+	if(item.size) {
 		draw.color = normcolor;
 		draw.data = prevoff < curroff ? "<" : nil;
 		draw.rect.x = offx;
@@ -148,7 +143,7 @@ draw_menu()
 
 		/* determine maximum items */
 		for(i = curroff; i < nextoff; i++) {
-			draw.data = item[i];
+			draw.data = item.data[i];
 			draw.rect.x = offx;
 			draw.rect.width = XTextWidth(draw.font, draw.data,
 					strlen(draw.data)) + mrect.height;
@@ -164,7 +159,7 @@ draw_menu()
 		}
 
 		draw.color = normcolor;
-		draw.data = nitem > nextoff ? ">" : nil;
+		draw.data = item.size > nextoff ? ">" : nil;
 		draw.rect.x = mrect.width - seek;
 		draw.rect.width = seek;
 		blitz_drawlabel(dpy, &draw);
@@ -235,19 +230,19 @@ handle_kpress(XKeyEvent * e)
 		sel--;
 		break;
 	case XK_Tab:
-		if(!nitem)
+		if(!item.size)
 			return;
-		cext_strlcpy(text, item[sel], sizeof(text));
+		cext_strlcpy(text, item.data[sel], sizeof(text));
 		update_items(text);
 		break;
 	case XK_Right:
-		if(sel < 0 || (sel + 1 == nitem))
+		if(sel < 0 || (sel + 1 == item.size))
 			return;
 		sel++;
 		break;
 	case XK_Return:
 		if(sel >= 0)
-			fprintf(stdout, "%s", item[sel]);
+			fprintf(stdout, "%s", item.data[sel]);
 		else if(text)
 			fprintf(stdout, "%s", text);
 		fflush(stdout);
@@ -264,7 +259,7 @@ handle_kpress(XKeyEvent * e)
 				int prev_nitem;
 				do
 					text[--i] = 0;
-				while((prev_nitem = nitem) && i &&
+				while((prev_nitem = item.size) && i &&
 						prev_nitem == update_items(text));
 			}
 			update_items(text);
@@ -284,7 +279,7 @@ handle_kpress(XKeyEvent * e)
 		if(sel == curroff - 1) {
 			curroff = prevoff;
 			update_offsets();
-		} else if((sel == nextoff) && (nitem > nextoff)) {
+		} else if((sel == nextoff) && (item.size > nextoff)) {
 			curroff = nextoff;
 			update_offsets();
 		}
@@ -307,9 +302,7 @@ read_allitems()
 			maxname = p;
 			max = len;
 		}
-		allitem = (char **)cext_array_attach((void **)allitem, p,
-				sizeof(char *), &allitemsz);
-		nallitem++;
+		cext_vattach(item2vector(&allitem), p);
 	}
 
 	if(maxname)

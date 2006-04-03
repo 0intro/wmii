@@ -73,7 +73,7 @@ typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
-EVECTOR(AreaVector, Area*);
+EVECTOR(AreaVector, Area *);
 
 struct View {
 	char tag[MAX_TAGS][MAX_TAGLEN];
@@ -84,7 +84,7 @@ struct View {
 	unsigned int revert;
 };
 
-EVECTOR(FrameVector, Frame*);
+EVECTOR(FrameVector, Frame *);
 
 struct Area {
 	unsigned short id;
@@ -158,20 +158,20 @@ typedef struct {
 } Default;
 
 /* global variables */
-EVECTOR(ViewVector, View*);
+EVECTOR(ViewVector, View *);
 ViewVector view;
 unsigned int sel;
 
-EVECTOR(ClientVector, Client*);
+EVECTOR(ClientVector, Client *);
 ClientVector client;
 
-EVECTOR(KeyVector, Key*);
+EVECTOR(KeyVector, Key *);
 KeyVector key;
 
-EVECTOR(LabelVector, Label*);
+EVECTOR(LabelVector, Label *);
 LabelVector label;
 
-EVECTOR(TagVector, char  *);
+EVECTOR(TagVector, char *);
 TagVector tag;
 
 Display *dpy;
