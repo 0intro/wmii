@@ -1,7 +1,6 @@
 /* extendible vectors. Icarus Sparry 2006.  Public domain. */
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "cext.h"
@@ -24,7 +23,8 @@ cext_vdetach(Vector *v, void *data)
 	if (!p) return;
 	for(end = p + v->size - 1; p <= end; p++)
 		if (*p == data) {
-			memmove(p, p + 1, end - p);
+			for(; p < end; p++)
+				p[0] = p[1];
 			*end = nil;
 			--v->size;
 			return;
