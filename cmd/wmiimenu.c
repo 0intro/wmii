@@ -17,7 +17,8 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 
-#include "blitz.h"
+#include <blitz.h>
+#include <cext.h>
 
 static Bool done = False;
 static int ret = 0;
@@ -30,7 +31,7 @@ static Window win;
 static XRectangle mrect;
 static int screen;
 
-EVECTOR(ItemVector, char *);
+VECTOR(ItemVector, char *);
 static ItemVector allitem = {0};
 static ItemVector item = {0};
 

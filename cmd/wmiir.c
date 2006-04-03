@@ -11,7 +11,6 @@
 #include <time.h>
 
 #include <ixp.h>
-#include <cext.h>
 
 static IXPClient c = { 0 };
 

@@ -7,8 +7,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include "ixp.h"
-#include "blitz.h"
+#include <ixp.h>
+#include <blitz.h>
 
 /* WM atoms */
 enum {
@@ -73,8 +73,7 @@ typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
-EVECTOR(AreaVector, Area *);
-
+VECTOR(AreaVector, Area *);
 struct View {
 	char tag[MAX_TAGS][MAX_TAGLEN];
 	unsigned int ntag;
@@ -84,8 +83,7 @@ struct View {
 	unsigned int revert;
 };
 
-EVECTOR(FrameVector, Frame *);
-
+VECTOR(FrameVector, Frame *);
 struct Area {
 	unsigned short id;
 	FrameVector frame;
@@ -158,20 +156,20 @@ typedef struct {
 } Default;
 
 /* global variables */
-EVECTOR(ViewVector, View *);
+VECTOR(ViewVector, View *);
 ViewVector view;
 unsigned int sel;
 
-EVECTOR(ClientVector, Client *);
+VECTOR(ClientVector, Client *);
 ClientVector client;
 
-EVECTOR(KeyVector, Key *);
+VECTOR(KeyVector, Key *);
 KeyVector key;
 
-EVECTOR(LabelVector, Label *);
+VECTOR(LabelVector, Label *);
 LabelVector label;
 
-EVECTOR(TagVector, char *);
+VECTOR(TagVector, char *);
 TagVector tag;
 
 Display *dpy;

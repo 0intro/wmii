@@ -4,7 +4,6 @@
  */
 
 #include <X11/Xlib.h>
-#include <cext.h>
 
 #define BLITZ_FONT		"fixed"
 #define BLITZ_SELCOLORS		"#ffffff #285577 #4c7899"

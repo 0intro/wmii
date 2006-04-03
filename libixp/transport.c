@@ -15,8 +15,6 @@
 
 #include "ixp.h"
 
-#include <cext.h>
-
 unsigned int
 ixp_send_message(int fd, void *msg, unsigned int msize, char **errstr)
 {

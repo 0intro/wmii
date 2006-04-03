@@ -15,7 +15,6 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#include "cext.h"
 #include "ixp.h"
 
 static int

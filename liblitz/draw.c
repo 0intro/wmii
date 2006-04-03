@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <cext.h>
+
 #include "blitz.h"
 
 XFontStruct *

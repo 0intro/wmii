@@ -33,13 +33,13 @@ long long cext_strtonum(const char *numstr, long long minval,
 unsigned int cext_tokenize(char **result, unsigned int reslen, char *str, char delim);
 
 /* vector.c */
-#define EVECTOR(name, type) \
+#define VECTOR(name, type) \
 typedef struct { \
 	unsigned int size; \
 	type *data; \
 } name
 
-EVECTOR(Vector, void*);
+VECTOR(Vector, void*);
 
 void cext_vattach(Vector *v, void *p);
 void cext_vdetach(Vector *v, void *p);

@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "cext.h"
 #include "ixp.h"
 
 int

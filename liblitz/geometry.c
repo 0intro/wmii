@@ -6,6 +6,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include <cext.h>
 
 #include "blitz.h"
 

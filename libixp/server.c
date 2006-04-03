@@ -15,7 +15,6 @@
 #include <unistd.h>
 
 #include "ixp.h"
-#include "cext.h"
 
 static unsigned char *msg[IXP_MAX_MSG];
 
