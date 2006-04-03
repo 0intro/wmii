@@ -12,12 +12,10 @@
 
 #define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask)
 
-/* We expect the optimiser to remove this function, It is included to ensure type safeness.
- */
-static evector_t *
-client_to_evector(client_vec_t *view)
+static Vector *
+client2vector(ClientVector *cv)
 {
-	return (evector_t *) view;
+	return (Vector *) cv;
 }
 
 Client *
@@ -67,7 +65,7 @@ alloc_client(Window w, XWindowAttributes *wa)
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
 	c->gc = XCreateGC(dpy, c->framewin, 0, 0);
 	XSync(dpy, False);
-	cext_evector_attach(client_to_evector(&client), c);
+	cext_vattach(client2vector(&client), c);
 	return c;
 }
 
@@ -393,7 +391,7 @@ destroy_client(Client *c)
 	reparent_client(c, root, c->rect.x, c->rect.y);
 	XFreeGC(dpy, c->gc);
 	XDestroyWindow(dpy, c->framewin);
-	cext_evector_detach(client_to_evector(&client), c);
+	cext_vdetach(client2vector(&client), c);
 	update_tags();
 	free(c);
 

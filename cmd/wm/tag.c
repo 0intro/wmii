@@ -44,20 +44,17 @@ organize_client(View *v, Client *c)
 	}
 }
 
-
-/* We expect the optimiser to remove this function, It is included to ensure type safeness.
- */
-static evector_t *
-tag_to_evector(tag_vec_t *view)
+static Vector *
+tag2vector(TagVector *tv)
 {
-	return (evector_t *) view;
+	return (Vector *) tv;
 }
 
 void
 ensure_tag(char *arg)
 {
 	if(!istag(arg)) {
-		cext_evector_attach(tag_to_evector(&tag), strdup(arg));
+		cext_vattach(tag2vector(&tag), strdup(arg));
 	}
 }
 

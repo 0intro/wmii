@@ -8,12 +8,10 @@
 
 #include "wm.h"
 
-/* We expect the optimiser to remove this function, It is included to ensure type safeness.
- */
-static evector_t *
-area_to_evector(area_vec_t *view)
+static Vector *
+area2vector(AreaVector *av)
 {
-	return (evector_t *) view;
+	return (Vector *) av;
 }
 
 Area *
@@ -25,7 +23,7 @@ alloc_area(View *v)
 	a->id = id++;
 	a->rect = rect;
 	a->rect.height = rect.height - brect.height;
-	cext_evector_attach(area_to_evector(&v->area), a);
+	cext_vattach(area2vector(&v->area), a);
 	v->sel = v->area.size -1;
 	return a;
 }
@@ -44,7 +42,7 @@ destroy_area(Area *a)
 	for(i = 0; i < client.size; i++)
 		if(client.data[i]->revert == a)
 			client.data[i]->revert = 0;
-	cext_evector_detach(area_to_evector(&v->area), a);
+	cext_vdetach(area2vector(&v->area), a);
 	if(v->sel > 1)
 		v->sel--;
 	free(a);
@@ -133,12 +131,10 @@ send2area(Area *to, Area *from, Client *c)
 	focus_client(c);
 }
 
-/* We expect the optimiser to remove this function, It is included to ensure type safeness.
- */
-static evector_t *
-frame_to_evector(frame_vec_t *view)
+static Vector *
+frame2vector(FrameVector *fv)
 {
-	return (evector_t *) view;
+	return (Vector *) fv;
 }
 
 void
@@ -157,9 +153,9 @@ attach_toarea(Area *a, Client *c)
 	f->rect = c->rect;
 	f->rect.width += 2 * def.border;
 	f->rect.height += def.border + bar_height();
-	cext_evector_attach(frame_to_evector(&c->frame), f);
+	cext_vattach(frame2vector(&c->frame), f);
 	c->sel = c->frame.size - 1;
-	cext_evector_attach(frame_to_evector(&a->frame),f);
+	cext_vattach(frame2vector(&a->frame),f);
 	a->sel = a->frame.size - 1;
 	if(area2index(a)) /* column */
 		arrange_column(a);
@@ -180,8 +176,8 @@ detach_fromarea(Area *a, Client *c)
 			break;
 		}
 
-	cext_evector_detach(frame_to_evector(&c->frame), f);
-	cext_evector_detach(frame_to_evector(&a->frame), f);
+	cext_vdetach(frame2vector(&c->frame), f);
+	cext_vdetach(frame2vector(&a->frame), f);
 	free(f);
 	if(c->sel > 0)
 		c->sel--;

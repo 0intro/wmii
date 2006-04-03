@@ -7,7 +7,7 @@
 #include "cext.h"
 
 void
-cext_evector_attach(evector_t *v, void *p)
+cext_vattach(Vector *v, void *p)
 {
 	++v->size;
 	if (!(v->data = realloc(v->data, v->size * sizeof(void *)))) {
@@ -18,7 +18,7 @@ cext_evector_attach(evector_t *v, void *p)
 }
 
 void
-cext_evector_detach(evector_t *v, void *data)
+cext_vdetach(Vector *v, void *data)
 {
 	void **p = v->data, **end;
 	if (!p) return;

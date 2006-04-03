@@ -92,12 +92,10 @@ name2key(const char *name)
 	return nil;
 }
 
-/* We expect the optimiser to remove this function, It is included to ensure type safeness.
- */
-static evector_t *
-key_to_evector(key_vec_t *view)
+static Vector *
+key2vector(KeyVector *kv)
 {
-	return (evector_t *) view;
+	return (Vector *) kv;
 }
 
 static Key *
@@ -136,7 +134,7 @@ get_key(const char *name)
 	}
 	if(r) {
 		r->id = id++;
-		cext_evector_attach(key_to_evector(&key), r);
+		cext_vattach(key2vector(&key), r);
 	}
 
 	return r;
@@ -146,7 +144,7 @@ void
 destroy_key(Key *k)
 {
 	Key *n;
-	cext_evector_detach(key_to_evector(&key), k);
+	cext_vdetach(key2vector(&key), k);
 	while(k) {
 		n = k->next;
 		free(k);

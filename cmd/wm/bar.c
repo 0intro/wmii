@@ -42,12 +42,10 @@ comp_label_name(const void *l1, const void *l2)
 	return strcmp(ll1->name, ll2->name);
 }
 
-/* We expect the optimiser to remove this function, It is included to ensure type safeness.
- */
-static evector_t *
-label_to_evector(label_vec_t *view)
+static Vector *
+label2vector(LabelVector *lv)
 {
-	return (evector_t *) view;
+	return (Vector *) lv;
 }
 
 Label *
@@ -64,7 +62,7 @@ get_label(char *name, Bool intern)
 	cext_strlcpy(l->name, name, sizeof(l->name));
 	cext_strlcpy(l->colstr, def.selcolor, sizeof(l->colstr));
 	l->color = def.sel;
-	cext_evector_attach(label_to_evector(&label), l);
+	cext_vattach(label2vector(&label), l);
 	qsort(label.data, label.size, sizeof(Label *), comp_label_name);
 	qsort(label.data, label.size, sizeof(Label *), comp_label_intern);
 
@@ -74,7 +72,7 @@ get_label(char *name, Bool intern)
 void
 destroy_label(Label *l)
 {
-	cext_evector_detach(label_to_evector(&label), l);
+	cext_vdetach(label2vector(&label), l);
 }
 
 unsigned int

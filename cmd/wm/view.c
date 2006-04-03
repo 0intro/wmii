@@ -8,12 +8,10 @@
 
 #include "wm.h"
 
-/* We expect the optimiser to remove this function, It is included to ensure type safeness.
- */
-static evector_t *
-view_to_evector(view_vec_t *view)
+static Vector *
+view2vector(ViewVector *vv)
 {
-	return (evector_t *) view;
+	return (Vector *) vv;
 }
 
 View *
@@ -27,7 +25,7 @@ alloc_view(char *name)
 	alloc_area(v);
 	alloc_area(v);
 	sel = view.size;
-	cext_evector_attach(view_to_evector(&view), v);
+	cext_vattach(view2vector(&view), v);
 	return v;
 }
 
@@ -37,7 +35,7 @@ destroy_view(View *v)
 	while(v->area.size)
 		destroy_area(v->area.data[0]);
 
-	cext_evector_detach(view_to_evector(&view), v);
+	cext_vdetach(view2vector(&view), v);
 	if(sel >= view.size)
 		sel = 0;
 

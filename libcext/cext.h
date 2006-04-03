@@ -16,18 +16,6 @@ void cext_array_detach(void **array, void *p, unsigned int *size);
 /* emallocz.c */
 void *cext_emallocz(unsigned int size);
 
-/* evector.c */
-#define EVECTOR(name, type) \
-typedef struct { \
-	unsigned int size; \
-	type * data; \
-} name
-
-EVECTOR(evector_t, void*);
-
-void cext_evector_attach(evector_t *v, void *p);
-void cext_evector_detach(evector_t *v, void *p);
-
 /* estrdup.c */
 char *cext_estrdup(const char *s);
 
@@ -43,3 +31,16 @@ long long cext_strtonum(const char *numstr, long long minval,
 
 /* tokenize.c */
 unsigned int cext_tokenize(char **result, unsigned int reslen, char *str, char delim);
+
+/* vector.c */
+#define EVECTOR(name, type) \
+typedef struct { \
+	unsigned int size; \
+	type * data; \
+} name
+
+EVECTOR(Vector, void*);
+
+void cext_vattach(Vector *v, void *p);
+void cext_vdetach(Vector *v, void *p);
+

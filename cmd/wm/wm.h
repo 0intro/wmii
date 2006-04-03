@@ -73,22 +73,22 @@ typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
-EVECTOR(area_vec_t, Area*);
+EVECTOR(AreaVector, Area*);
 
 struct View {
 	char tag[MAX_TAGS][MAX_TAGLEN];
 	unsigned int ntag;
 	unsigned short id;
-	area_vec_t area;
+	AreaVector area;
 	unsigned int sel;
 	unsigned int revert;
 };
 
-EVECTOR(frame_vec_t, Frame*);
+EVECTOR(FrameVector, Frame*);
 
 struct Area {
 	unsigned short id;
-	frame_vec_t frame;
+	FrameVector frame;
 	View *view;
 	unsigned int sel;
 	int mode;
@@ -117,7 +117,7 @@ struct Client {
 	XSizeHints size;
 	Window framewin;
 	GC gc;
-	frame_vec_t frame;
+	FrameVector frame;
 	unsigned int sel;
 	Area *revert;
 };
@@ -158,24 +158,21 @@ typedef struct {
 } Default;
 
 /* global variables */
-EVECTOR(view_vec_t, View*);
-view_vec_t view;
+EVECTOR(ViewVector, View*);
+ViewVector view;
 unsigned int sel;
 
-EVECTOR(client_vec_t, Client*);
-client_vec_t client;
+EVECTOR(ClientVector, Client*);
+ClientVector client;
 
-EVECTOR(key_vec_t, Key*);
-key_vec_t key;
+EVECTOR(KeyVector, Key*);
+KeyVector key;
 
-EVECTOR(label_vec_t, Label*);
-label_vec_t label;
+EVECTOR(LabelVector, Label*);
+LabelVector label;
 
-EVECTOR(tag_vec_t, char  *);
-tag_vec_t tag;
-//char **tag;
-//unsigned int ntag;
-//unsigned int tagsz;
+EVECTOR(TagVector, char  *);
+TagVector tag;
 
 Display *dpy;
 IXPServer *ixps;
