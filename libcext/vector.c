@@ -24,7 +24,7 @@ cext_vdetach(Vector *v, void *data)
 	if (!p) return;
 	for(end = p + v->size - 1; p <= end; p++)
 		if (*p == data) {
-			memmove(p, p + 1, end - p + 1);
+			memmove(p, p + 1, end - (p + 1));
 			*end = nil;
 			--v->size;
 			return;
