@@ -36,7 +36,7 @@ unsigned int cext_tokenize(char **result, unsigned int reslen, char *str, char d
 #define EVECTOR(name, type) \
 typedef struct { \
 	unsigned int size; \
-	type * data; \
+	type *data; \
 } name
 
 EVECTOR(Vector, void*);

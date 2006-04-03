@@ -187,82 +187,78 @@ emulate_key_press(unsigned long mod, KeyCode key)
 	XSync(dpy, False);
 }
 
-static Key **
-match_keys(Key **keys, unsigned int n, unsigned long mod, KeyCode keycode,
-		Bool next, unsigned int *nres)
+static KeyVector *
+match_keys(Key **keys, unsigned int n, unsigned long mod, KeyCode keycode, Bool seq)
 {
-	Key **result = nil;
-	unsigned int ressz = 0;
+	static KeyVector result = {0};
 	unsigned int i = 0;
-	*nres = 0;
+	while(result.size)
+		cext_vdetach(key2vector(&result), result.data[0]);
 	for(i = 0; i < n; i++) {
-		Key *k = next ? keys[i]->next : keys[i];
-		if(k && (k->mod == mod) && (k->key == keycode)) {
-			result = (Key **)cext_array_attach((void **)result, k,
-					sizeof(Key *), &ressz);
-			(*nres)++;
-		}
+		Key *k = keys[i];
+		if(seq)
+			k = k->next;
+		if(k && (k->mod == mod) && (k->key == keycode))
+			cext_vattach(key2vector(&result), k);
 	}
-	return result;
+	return &result;
 }
 
 static void
-handle_key_seq(Window w, Key **done, unsigned int ndone)
+handle_key_seq(Window w, KeyVector *done)
 {
 	unsigned long mod;
 	KeyCode key;
-	Key **found = nil;
-	unsigned int nfound = 0;
+	KeyVector *found = nil;
 	char buf[128];
 
 	next_keystroke(&mod, &key);
 
-	found = match_keys(done, ndone, mod, key, True, &nfound);
-	if((done[0]->mod == mod) && (done[0]->key == key))
+	found = match_keys(done->data, done->size, mod, key, True);
+	if((done->data[0]->mod == mod) && (done->data[0]->key == key))
 		emulate_key_press(mod, key); /* double key */
 	else {
-		switch(nfound) {
+		switch(done->size) {
 		case 0:
 			XBell(dpy, 0);
-			return; /* grabbed but not found */
+			break; /* grabbed but not found */
 		case 1:
-			if(!found[0]->next) {
-				snprintf(buf, sizeof(buf), "Key %s\n", found[0]->name);
+			if(!found->data[0]->next) {
 				write_event(buf);
 				break;
 			}
 		default:
-			handle_key_seq(w, found, nfound);
+			handle_key_seq(w, found);
 			break;
 		}
 	}
-	free(found);
+	while(done->size)
+		cext_vdetach(key2vector(done), done->data[0]);
 }
 
 void
 handle_key(Window w, unsigned long mod, KeyCode keycode)
 {
-	unsigned int nfound;
 	char buf[128];
-	Key **found = match_keys(key.data, key.size, mod, keycode, False, &nfound);
-	switch(nfound) {
+	KeyVector *found = match_keys(key.data, key.size, mod, keycode, False);
+	switch(found->size) {
 	case 0:
 		XBell(dpy, 0);
-		return; /* grabbed but not found */
+		break; /* grabbed but not found */
 	case 1:
-		if(!found[0]->next) {
-			snprintf(buf, sizeof(buf), "Key %s\n", found[0]->name);
+		if(!found->data[0]->next) {
 			write_event(buf);
 			break;
 		}
 	default:
 		XGrabKeyboard(dpy, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
-		handle_key_seq(w, found, nfound);
+		handle_key_seq(w, found);
 		XUngrabKeyboard(dpy, CurrentTime);
 		XSync(dpy, False);
 		break;
 	}
-	free(found);
+	while(found->size)
+		cext_vdetach(key2vector(found), found->data[0]);
 }
 
 void
