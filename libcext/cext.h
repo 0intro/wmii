@@ -25,8 +25,8 @@ typedef struct { \
 
 EVECTOR(evector_t, void*);
 
-void cext_evector_attach(evector_t *vector, void *data_to_be_added);
-void cext_evector_detach(evector_t *vector, void *data_to_be_removed);
+void cext_evector_attach(evector_t *v, void *p);
+void cext_evector_detach(evector_t *v, void *p);
 
 /* estrdup.c */
 char *cext_estrdup(const char *s);
