@@ -187,42 +187,42 @@ emulate_key_press(unsigned long mod, KeyCode key)
 	XSync(dpy, False);
 }
 
-static KeyVector *
-match_keys(Key **keys, unsigned int n, unsigned long mod, KeyCode keycode, Bool seq)
+static KeyVector
+match_keys(KeyVector kv, unsigned long mod, KeyCode keycode, Bool seq)
 {
-	KeyVector *result = cext_emallocz(sizeof(KeyVector));
+	KeyVector result = {0};
 	unsigned int i = 0;
-	for(i = 0; i < n; i++) {
-		Key *k = keys[i];
+	for(i = 0; i < kv.size; i++) {
+		Key *k = kv.data[i];
 		if(seq)
 			k = k->next;
 		if(k && (k->mod == mod) && (k->key == keycode))
-			cext_vattach(key2vector(result), k);
+			cext_vattach(key2vector(&result), k);
 	}
 	return result;
 }
 
 static void
-handle_key_seq(Window w, KeyVector *done)
+handle_key_seq(Window w, KeyVector done)
 {
 	unsigned long mod;
 	KeyCode key;
-	KeyVector *found = nil;
+	KeyVector found = {0};
 	char buf[128];
 
 	next_keystroke(&mod, &key);
 
-	found = match_keys(done->data, done->size, mod, key, True);
-	if((done->data[0]->mod == mod) && (done->data[0]->key == key))
+	found = match_keys(done, mod, key, True);
+	if((done.data[0]->mod == mod) && (done.data[0]->key == key))
 		emulate_key_press(mod, key); /* double key */
 	else {
-		switch(found->size) {
+		switch(found.size) {
 		case 0:
 			XBell(dpy, 0);
 			break; /* grabbed but not found */
 		case 1:
-			if(!found->data[0]->next) {
-				snprintf(buf, sizeof(buf), "Key %s\n", found->data[0]->name);
+			if(!found.data[0]->next) {
+				snprintf(buf, sizeof(buf), "Key %s\n", found.data[0]->name);
 				write_event(buf);
 				break;
 			}
@@ -231,23 +231,21 @@ handle_key_seq(Window w, KeyVector *done)
 			break;
 		}
 	}
-	while(found->size)
-		cext_vdetach(key2vector(found), found->data[0]);
-	free(found);
+	free(found.data);
 }
 
 void
 handle_key(Window w, unsigned long mod, KeyCode keycode)
 {
 	char buf[128];
-	KeyVector *found = match_keys(key.data, key.size, mod, keycode, False);
-	switch(found->size) {
+	KeyVector found = match_keys(key, mod, keycode, False);
+	switch(found.size) {
 	case 0:
 		XBell(dpy, 0);
 		break; /* grabbed but not found */
 	case 1:
-		if(!found->data[0]->next) {
-			snprintf(buf, sizeof(buf), "Key %s\n", found->data[0]->name);
+		if(!found.data[0]->next) {
+			snprintf(buf, sizeof(buf), "Key %s\n", found.data[0]->name);
 			write_event(buf);
 			break;
 		}
@@ -258,9 +256,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 		XSync(dpy, False);
 		break;
 	}
-	while(found->size)
-		cext_vdetach(key2vector(found), found->data[0]);
-	free(found);
+	free(found.data);
 }
 
 void
