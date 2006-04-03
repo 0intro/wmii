@@ -154,21 +154,22 @@ struct IXPMap {
 	Qid qid; 
 };
 
+
+VECTOR(MapVector, IXPMap *);
 struct IXPConn {
 	int fd;
 	IXPServer *srv;
 	void (*read) (IXPConn *);
 	void (*close) (IXPConn *);
-	IXPMap **map;
-	unsigned int mapsz;
+	MapVector map;
 	Fcall pending;
 	int is_pending;
 };
 
+VECTOR(ConnVector, IXPConn *);
 struct IXPServer {
 	int running;
-	IXPConn **conn;
-	unsigned int connsz;
+	ConnVector conn;
 	int maxfd;
 	fd_set rd;
 };
@@ -239,6 +240,7 @@ unsigned int ixp_server_receive_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr);
 void ixp_server_close(IXPServer *s);
+Vector *ixp_map2vector(MapVector *mv);
 
 /* socket.c */
 int ixp_connect_sock(char *address);

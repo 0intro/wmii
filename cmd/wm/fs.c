@@ -575,8 +575,7 @@ xattach(IXPConn *c, Fcall *fcall)
 	IXPMap *new = cext_emallocz(sizeof(IXPMap));
 	new->qid = root_qid;
 	new->fid = fcall->fid;
-	c->map = (IXPMap **)cext_array_attach((void **)c->map, new,
-			sizeof(IXPMap *), &c->mapsz);
+	cext_vattach(ixp_map2vector(&c->map), new);
 	fcall->id = RATTACH;
 	fcall->qid = root_qid;
 	ixp_server_respond_fcall(c, fcall);
@@ -608,8 +607,7 @@ xwalk(IXPConn *c, Fcall *fcall)
 	if(nwqid == fcall->nwname) {
 		if(fcall->fid != fcall->newfid) {
 			m = cext_emallocz(sizeof(IXPMap));
-			c->map = (IXPMap **)cext_array_attach((void **)c->map, m,
-					sizeof(IXPMap *), &c->mapsz);
+			cext_vattach(ixp_map2vector(&c->map), m);
 		}
 		m->qid = dir;
 		m->fid = fcall->newfid;
@@ -680,7 +678,7 @@ xremove(IXPConn *c, Fcall *fcall)
 	if(type != FsDlabel)
 		return Enoperm;
 	/* clunk */
-	cext_array_detach((void **)c->map, m, &c->mapsz);
+	cext_vdetach(ixp_map2vector(&c->map), m);
 	free(m);
 	switch(type) {
 	case FsDlabel:
@@ -1363,7 +1361,7 @@ xclunk(IXPConn *c, Fcall *fcall)
 		update_keys();
 	else if(type == FsFrules)
 		update_rules();
-	cext_array_detach((void **)c->map, m, &c->mapsz);
+	cext_vdetach(ixp_map2vector(&c->map), m);
 	free(m);
 	fcall->id = RCLUNK;
 	ixp_server_respond_fcall(c, fcall);
@@ -1403,8 +1401,8 @@ write_event(char *event)
 {
 	unsigned int i = 0;
 
-	for(i = 0; (i < srv.connsz) && srv.conn[i]; i++) {
-		IXPConn *c = srv.conn[i];
+	for(i = 0; i < srv.conn.size; i++) {
+		IXPConn *c = srv.conn.data[i];
 		if(c->is_pending) {
 			/* pending reads on /event only, no qid checking */
 			IXPMap *m = ixp_server_fid2map(c, c->pending.fid);
