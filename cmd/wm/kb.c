@@ -190,18 +190,16 @@ emulate_key_press(unsigned long mod, KeyCode key)
 static KeyVector *
 match_keys(Key **keys, unsigned int n, unsigned long mod, KeyCode keycode, Bool seq)
 {
-	static KeyVector result = {0};
+	KeyVector *result = cext_emallocz(sizeof(KeyVector));
 	unsigned int i = 0;
-	while(result.size)
-		cext_vdetach(key2vector(&result), result.data[0]);
 	for(i = 0; i < n; i++) {
 		Key *k = keys[i];
 		if(seq)
 			k = k->next;
 		if(k && (k->mod == mod) && (k->key == keycode))
-			cext_vattach(key2vector(&result), k);
+			cext_vattach(key2vector(result), k);
 	}
-	return &result;
+	return result;
 }
 
 static void
@@ -218,12 +216,13 @@ handle_key_seq(Window w, KeyVector *done)
 	if((done->data[0]->mod == mod) && (done->data[0]->key == key))
 		emulate_key_press(mod, key); /* double key */
 	else {
-		switch(done->size) {
+		switch(found->size) {
 		case 0:
 			XBell(dpy, 0);
 			break; /* grabbed but not found */
 		case 1:
 			if(!found->data[0]->next) {
+				snprintf(buf, sizeof(buf), "Key %s\n", found->data[0]->name);
 				write_event(buf);
 				break;
 			}
@@ -232,8 +231,9 @@ handle_key_seq(Window w, KeyVector *done)
 			break;
 		}
 	}
-	while(done->size)
-		cext_vdetach(key2vector(done), done->data[0]);
+	while(found->size)
+		cext_vdetach(key2vector(found), found->data[0]);
+	free(found);
 }
 
 void
@@ -247,6 +247,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 		break; /* grabbed but not found */
 	case 1:
 		if(!found->data[0]->next) {
+			snprintf(buf, sizeof(buf), "Key %s\n", found->data[0]->name);
 			write_event(buf);
 			break;
 		}
@@ -259,6 +260,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 	}
 	while(found->size)
 		cext_vdetach(key2vector(found), found->data[0]);
+	free(found);
 }
 
 void
