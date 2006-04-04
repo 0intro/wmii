@@ -75,8 +75,7 @@ typedef struct Client Client;
 
 VECTOR(AreaVector, Area *);
 struct View {
-	char tag[MAX_TAGS][MAX_TAGLEN];
-	unsigned int ntag;
+	char name[MAX_TAGLEN];
 	unsigned short id;
 	AreaVector area;
 	unsigned int sel;
@@ -143,7 +142,7 @@ typedef struct {
 typedef struct {
 	char selcolor[24];
 	char normcolor[24];
-	char tag[256];
+	char tag[MAX_TAGLEN];
 	char *font;
 	Color sel;
 	Color norm;
@@ -217,7 +216,6 @@ unsigned int bar_height();
 Label *name2label(const char *name);
 int label2index(Label *l);
 void update_bar_tags();
-void update_view_label(View *v);
 
 /* client.c */
 Client *alloc_client(Window w, XWindowAttributes *wa);

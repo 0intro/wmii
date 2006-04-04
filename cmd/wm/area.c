@@ -115,11 +115,6 @@ select_area(Area *a, char *arg)
 	v->sel = i;
 	for(i = 0; i < a->frame.size; i++)
 		draw_client(a->frame.data[i]->client);
-
-	if(!new->frame.size) {
-		update_view_label(v);
-		draw_bar();
-	}
 }
 
 void

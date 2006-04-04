@@ -21,7 +21,7 @@ alloc_view(char *name)
 	View *v = cext_emallocz(sizeof(View));
 
 	v->id = id++;
-	v->ntag = str2tags(v->tag, name);
+	cext_strlcpy(v->name, name, sizeof(v->name));
 	alloc_area(v);
 	alloc_area(v);
 	sel = view.size;
@@ -69,7 +69,6 @@ focus_view(View *v)
 {
 	Client *c;
 	unsigned int i;
-	char vname[256];
 
 	/* cleanup other empty views */
 	for(i = 0; i < view.size; i++)
@@ -81,8 +80,7 @@ focus_view(View *v)
 	XGrabServer(dpy);
 	sel = view2index(v);
 
-	tags2str(vname, sizeof(vname), v->tag, v->ntag);
-	cext_strlcpy(def.tag, vname, sizeof(def.tag));
+	cext_strlcpy(def.tag, v->name, sizeof(def.tag));
 
 	update_frame_selectors(v);
 
@@ -152,42 +150,33 @@ View *
 name2view(char *name)
 {
 	View *v = nil;
-	char vname[256];
 	unsigned int i;
 
-	for(i = 0; i < view.size; i++) {
-		v = view.data[i];
-		tags2str(vname, sizeof(vname), v->tag, v->ntag);
-		if(!strncmp(vname, name, strlen(name)))
+	for(i = 0; i < view.size; i++)
+		if(!strncmp(view.data[i]->name, name, strlen(name)))
 			return v;
-	}
-
 	return nil;
 }
 
 View *
 get_view(char *name)
 {
-	unsigned int i, j, ntags;
+	unsigned int i;
 	View *v = name2view(name);
-	char tags[MAX_TAGS][MAX_TAGLEN];
 
 	if(v)
 		return v;
 
-	ntags = str2tags(tags, name);
 	for(i = 0; i < client.size; i++)
-		for(j = 0; j < ntags; j++)
-			if(clienthastag(client.data[i], tags[j]))
-				goto Createview;
+		if(clienthastag(client.data[i], name))
+			goto Createview;
 	return nil;
 
 Createview:
 	v = alloc_view(name);
 	for(i = 0; i < client.size; i++)
-		for(j = 0; j < ntags; j++)
-			if(clienthastag(client.data[i], tags[j]) && !clientofview(v, client.data[i]))
-				attach_toview(v, client.data[i]);
+		if(clienthastag(client.data[i], name) && !clientofview(v, client.data[i]))
+			attach_toview(v, client.data[i]);
 	return v;
 }
 

@@ -21,16 +21,7 @@ istag(char *t)
 static void
 organize_client(View *v, Client *c)
 {
-	unsigned int i;
-	Bool hastag = False;
-
-	for(i = 0; i < v->ntag; i++) {
-		if(clienthastag(c, v->tag[i]))
-			hastag = True;
-		break;
-	}
-
-	if(hastag) {
+	if(clienthastag(c, v->name)) {
 		if(!clientofview(v, c)) {
 			/*fprintf(stderr, "org attach %s?\n", c->name);*/
 			attach_toview(v, c);

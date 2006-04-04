@@ -99,8 +99,6 @@ focus_client(Client *c)
 	grab_mouse(c->framewin, Mod1Mask, Button3);
 
 	restack_view(v);
-	update_view_label(v);
-	draw_bar();
 
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	draw_client(c);
@@ -354,10 +352,8 @@ manage_client(Client *c)
 
 	v = view.size ? view.data[sel] : alloc_view(def.tag);
 	if(!c->ntag) {
-		for(i = 0; i < v->ntag; i++) {
-			cext_strlcpy(c->tag[i], v->tag[i], sizeof(c->tag[i]));
-			c->ntag++;
-		}
+		cext_strlcpy(c->tag[0], v->name, sizeof(c->tag[0]));
+		c->ntag++;
 	}
 
 	update_tags();

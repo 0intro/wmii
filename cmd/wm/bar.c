@@ -8,20 +8,6 @@
 
 #include "wm.h"
 
-void
-update_view_label(View *v)
-{
-	static char vname[256];
-	Label *l;
-	tags2str(vname, sizeof(vname), v->tag, v->ntag);
-	if((l = name2label(vname))) {
-		if(!v->sel)
-			snprintf(l->data, sizeof(l->data), "~%s", vname);
-		else
-			cext_strlcpy(l->data, vname, sizeof(l->data));
-	}
-}
-
 static int
 comp_label_intern(const void *l1, const void *l2)
 {
@@ -230,8 +216,6 @@ update_bar_tags()
 		l = get_label(tag.data[i], True);
 		cext_strlcpy(l->data, tag.data[i], sizeof(l->data));
 	}
-	for(i = 0; i < view.size; i++)
-		update_view_label(view.data[i]);
 
 	draw_bar();
 }
