@@ -647,7 +647,9 @@ clienthastag(Client *c, const char *t)
 {
 	unsigned int i;
 	for(i = 0; i < c->ntag; i++)
-		if(!strncmp(c->tag[i], t, sizeof(c->tag[i])))
+		if(!strncmp(c->tag[i], t, sizeof(c->tag[i]))
+			|| !strncmp(c->tag[i], "*", 2))
+		return True;
 			return True;
 	return False;
 }
