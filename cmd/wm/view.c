@@ -196,7 +196,6 @@ select_view(char *arg)
 	View *v = get_view(arg);
 	if(!v)
 		return;
-	ensure_tag(arg);
 	focus_view(v);
 }
 

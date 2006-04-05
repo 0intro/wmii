@@ -44,9 +44,8 @@ tag2vector(TagVector *tv)
 void
 ensure_tag(char *arg)
 {
-	if(!istag(arg)) {
+	if(!istag(arg) && strncmp(arg, "*", 2))
 		cext_vattach(tag2vector(&tag), strdup(arg));
-	}
 }
 
 void
@@ -60,9 +59,8 @@ update_tags()
 	tag.size = 0;
 
 	for(i = 0; i < client.size; i++) {
-		for(j = 0; j < client.data[i]->ntag; j++) {
+		for(j = 0; j < client.data[i]->ntag; j++)
 			ensure_tag(client.data[i]->tag[j]);
-		}
 	}
 
 	for(i = 0; view.size && (i < client.size); i++) {
