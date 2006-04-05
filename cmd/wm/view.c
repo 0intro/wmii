@@ -70,6 +70,7 @@ focus_view(View *v)
 	Client *c;
 	unsigned int i;
 
+	fprintf(stderr, "%d\n", view.size);
 	/* cleanup other empty views */
 	for(i = 0; i < view.size; i++)
 		if(!hasclient(view.data[i])) {
@@ -149,12 +150,11 @@ vid2index(unsigned short id)
 View *
 name2view(char *name)
 {
-	View *v = nil;
 	unsigned int i;
 
 	for(i = 0; i < view.size; i++)
 		if(!strncmp(view.data[i]->name, name, strlen(name)))
-			return v;
+			return view.data[i];
 	return nil;
 }
 
