@@ -193,7 +193,7 @@ void select_area(Area *a, char *arg);
 void send2area(Area *to, Area *from, Client *c);
 void attach_toarea(Area *a, Client *c);
 void detach_fromarea(Area *a, Client *c);
-void arrange_column(Area *a);
+void arrange_column(Area *a, Bool dirty);
 void resize_area(Client *c, XRectangle *r, XPoint *pt);
 int str2mode(char *arg);
 char *mode2str(int mode);
@@ -272,7 +272,7 @@ void update_tags();
 void str2tagvector(TagVector *tv, const char *tags);
 
 /* view.c */
-void arrange_view(View *v, Bool updategeometry);
+void arrange_view(View *v, Bool dirty);
 View *alloc_view(char *name);
 void focus_view(View *v);
 XRectangle *rectangles(View *v, Bool isfloat, unsigned int *num);

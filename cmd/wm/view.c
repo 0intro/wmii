@@ -289,7 +289,7 @@ restack_view(View *v)
 }
 
 void
-arrange_view(View *v, Bool updategeometry)
+arrange_view(View *v, Bool dirty)
 {
 	unsigned int i;
 	unsigned int width;
@@ -300,11 +300,11 @@ arrange_view(View *v, Bool updategeometry)
 	width = rect.width / (v->area.size - 1);
 	for(i = 1; i < v->area.size; i++) {
 		Area *a = v->area.data[i];
-		if(updategeometry) {
+		if(dirty) {
 			a->rect.height = rect.height - brect.height;
 			a->rect.x = (i - 1) * width;
 			a->rect.width = width;
 		}
-		arrange_column(a);
+		arrange_column(a, False);
 	}
 }

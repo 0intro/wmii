@@ -136,11 +136,12 @@ void
 attach_toarea(Area *a, Client *c)
 {
 	static unsigned short id = 1;
+	unsigned int aidx = area2index(a);
 	Frame *f;
 
 	if(clientofview(a->view, c))
 		return;
-	c->floating = !area2index(a); /* set floating flag */
+	c->floating = !aidx;
 	f = cext_emallocz(sizeof(Frame));
 	f->id = id++;
 	f->area = a;
@@ -152,8 +153,11 @@ attach_toarea(Area *a, Client *c)
 	c->sel = c->frame.size - 1;
 	cext_vattach(frame2vector(&a->frame),f);
 	a->sel = a->frame.size - 1;
-	if(area2index(a)) /* column */
-		arrange_column(a);
+	if(aidx) { /* column */
+		if(a->frame.size > 1)
+			f->rect.height = a->rect.height / (a->frame.size - 1);
+		arrange_column(a, False);
+	}
 	else /* floating */
 		resize_client(c, &f->rect,  False);
 }
@@ -181,7 +185,7 @@ detach_fromarea(Area *a, Client *c)
 
 	i = area2index(a);
 	if(i && a->frame.size)
-		arrange_column(a);
+		arrange_column(a, False);
 	else {
 		if(i) {
 		    if(v->area.size > 2)
@@ -302,33 +306,39 @@ relax_area(Area *a)
 }
 
 void
-arrange_column(Area *a)
+arrange_column(Area *a, Bool dirty)
 {
-	unsigned int i, yoff, h;
+	unsigned int i, yoff = a->rect.y, h, dy = 0;
+	float scale = 1.0;
 
 	if(!a->frame.size)
 		return;
 
 	switch(a->mode) {
 	case Colequal:
-		h = a->rect.height;
-		h /= a->frame.size;
-		if(h < 2 * bar_height())
+		h = a->rect.height / a->frame.size;
+		if(h < (2 * bar_height()))
 			goto Fallthrough;
+		if(dirty) {
+			for(i = 0; i < a->frame.size; i++)
+				a->frame.data[i]->rect.height = h;
+		}
+		for(i = 0; i < a->frame.size; i++)
+			dy += a->frame.data[i]->rect.height;
+		scale = (float)a->rect.height / (float)dy;
 		for(i = 0; i < a->frame.size; i++) {
 			Frame *f = a->frame.data[i];
-			f->rect = a->rect;
-			f->rect.y += i * h;
-			if(i + 1 < a->frame.size)
-				f->rect.height = h;
-			else
-				f->rect.height =
-					a->rect.height - f->rect.y + a->rect.y;
+			f->rect.x = a->rect.x;
+			f->rect.y = yoff;
+			f->rect.width = a->rect.width;
+			f->rect.height *= scale;
+			if(i == a->frame.size - 1)
+				f->rect.height = a->rect.height - f->rect.y + a->rect.y;
+			yoff += f->rect.height;
 			resize_client(f->client, &f->rect, True);
 		}
 		break;
 	case Colstack:
-		yoff = a->rect.y;
 		h = a->rect.height - (a->frame.size - 1) * bar_height();
 		if(h < 3 * bar_height())
 			goto Fallthrough;
@@ -501,7 +511,7 @@ drop_moving(Frame *f, XRectangle *new, XPoint * pt)
 				Frame *tmp = src->frame.data[j];
 				src->frame.data[j] = src->frame.data[i];
 				src->frame.data[i] = tmp;
-				arrange_column(src);
+				arrange_column(src, False);
 				focus_client(f->client);
 			}
 		}

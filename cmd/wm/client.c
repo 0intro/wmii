@@ -98,7 +98,7 @@ focus_client(Client *c)
 	draw_client(c);
 	XSync(dpy, False);
 	if(i > 0 && f->area->mode == Colstack)
-		arrange_column(f->area);
+		arrange_column(f->area, False);
 }
 
 void
@@ -522,7 +522,7 @@ Swaparea:
 		a->frame.data[j]->area = a;
 		o->frame.data[o->sel] = f;
 		f->area = o;
-		arrange_column(o);
+		arrange_column(o, False);
 	}
 	else if(!strncmp(arg, "up", 3) && i) {
 		if(j)
@@ -541,7 +541,7 @@ Swaparea:
 		a->frame.data[i] = f;
 	}
 	if(area2index(a))
-		arrange_column(a);
+		arrange_column(a, False);
 	focus_client(c);
 }
 

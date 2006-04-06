@@ -532,10 +532,12 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 			return mkstat(stat, dir, wname, strlen(def.tag), IXP_DMREAD);
 		break;
 	case FsFdata:
-		return mkstat(stat, dir, wname, (dir_i1 == label.size) ? 0 : strlen(label.data[dir_i1]->data), IXP_DMREAD | IXP_DMWRITE);
+		return mkstat(stat, dir, wname, (dir_i1 == label.size) ? 0 : strlen(label.data[dir_i1]->data),
+				IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFmode:
-		return mkstat(stat, dir, wname, strlen(mode2str(view.data[dir_i1]->area.data[dir_i2]->mode)), IXP_DMREAD | IXP_DMWRITE);
+		return mkstat(stat, dir, wname, strlen(mode2str(view.data[dir_i1]->area.data[dir_i2]->mode)),
+				IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFcolors:
 	case FsFselcolors:
@@ -1324,7 +1326,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if((i = str2mode(buf)) == -1)
 			return Ebadvalue;
 		view.data[i1]->area.data[i2]->mode = i;
-		arrange_column(view.data[i1]->area.data[i2]);
+		arrange_column(view.data[i1]->area.data[i2], True);
 		if(view.data[i1]->area.data[i2]->frame.size == 1) /* little hack to update the taglabel */
 			draw_client(view.data[i1]->area.data[i2]->frame.data[view.data[i1]->area.data[i2]->sel]->client);
 		break;
