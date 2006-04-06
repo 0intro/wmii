@@ -269,9 +269,17 @@ restack_view(View *v)
 		if(a->frame.size) {
 			wins[n++] = a->frame.data[a->sel]->client->framewin;
 			for(j = 0; j < a->frame.size; j++) {
+				Client *c = a->frame.data[j]->client;
+				if((v->sel == i) && (a->sel == j)) {
+					ungrab_mouse(c->framewin, AnyModifier, AnyButton);
+					grab_mouse(c->framewin, Mod1Mask, Button1);
+					grab_mouse(c->framewin, Mod1Mask, Button3);
+				}
+				else
+					grab_mouse(c->framewin, AnyModifier, Button1);
 				if(j == a->sel)
 					continue;
-				wins[n++] = a->frame.data[j]->client->framewin;
+				wins[n++] = c->framewin;
 			}
 		}
 	}

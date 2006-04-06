@@ -90,14 +90,8 @@ focus_client(Client *c)
 
 	v->sel = i;
 	f->area->sel = frame2index(f);
-	if(old && (old != c)) {
-		grab_mouse(old->framewin, AnyModifier, Button1);
+	if(old)
 		draw_client(old);
-	}
-	ungrab_mouse(c->framewin, AnyModifier, AnyButton);
-	grab_mouse(c->framewin, Mod1Mask, Button1);
-	grab_mouse(c->framewin, Mod1Mask, Button3);
-
 	restack_view(v);
 
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
