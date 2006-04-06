@@ -17,49 +17,43 @@
  * regex might contain POSIX regex syntax defined in regex(3)
  */
 
-typedef struct {
-	regex_t regex;
-	char tag[MAX_TAGS][MAX_TAGLEN];
-	unsigned int ntag;
-	Bool is_valid;
-} Rule;
-
-static Rule *rule = nil;
-static unsigned int rulesz = 0;
-static unsigned int nrule = 0;
-
 enum {
 	IGNORE,
 	REGEX,
 	TAGS
 };
 
+typedef struct {
+	regex_t regex;
+	char tags[256];
+	Bool is_valid;
+} Rule;
+VECTOR(RuleVector, Rule *);
+
+static RuleVector rule;
+
+static Vector *
+rule2vector(RuleVector *rv)
+{
+	return (Vector *) rv;
+}
+
 void
 update_rules()
 {
 	unsigned int i;
 	int mode = IGNORE;
-	char *p, *r=nil, *t=nil, regex[256], tags[256];
+	char *p, *r = nil, *t = nil, regex[256], tags[256];
 
 	if(!def.rules || !strlen(def.rules))
 		return;
 
-	for(i = 0; i < nrule; i++)
-		if(rule[i].is_valid) {
-			regfree(&rule[i].regex);
-			rule[i].is_valid = False;
-		}
-
-	nrule = 0;
-	for(p = def.rules; *p; p++)
-		if(*p == '\n')
-			nrule++;
-
-	if(nrule > rulesz) {
-		if(rule)
-			free(rule);
-		rule = cext_emallocz(sizeof(Rule) * nrule);
-		rulesz = nrule;
+	while(rule.size) {
+		Rule *r = rule.data[i];
+		if(r->is_valid)
+			regfree(&r->regex);
+		cext_vdetach(rule2vector(&rule), r);
+		free(r);
 	}
 
 	i = 0;
@@ -80,8 +74,6 @@ update_rules()
 			if(*p == '/') {
 				mode = IGNORE;
 				*r = 0;
-				rule[i].is_valid = !regcomp(&rule[i].regex, regex, 0);
-				/* Is there a memory leak here if the rule is invalid? */
 			}
 			else {
 				*r = *p;
@@ -90,10 +82,12 @@ update_rules()
 			break;
 		case TAGS:
 			if(*p == '\n' || *(p + 1) == 0) {
+				Rule *rul = cext_emallocz(sizeof(Rule));
 				*t = 0;
-				rule[i].ntag = str2tags(rule[i].tag, tags);
+				rul->is_valid = !regcomp(&rul->regex, regex, 0);
+				cext_strlcpy(rul->tags, tags, sizeof(rul->tags));
 				mode = IGNORE;
-				i++;
+				cext_vattach(rule2vector(&rule), rul);
 			}
 			else {
 				if((*p == ' ' || *p == '\t') && (tags[0] == 0))
@@ -109,21 +103,17 @@ update_rules()
 static void
 match(Client *c, const char *prop)
 {
-	unsigned int i, j;
+	unsigned int i;
 	regmatch_t tmpregm;
 
-	c->ntag = 0;
-	for(i = 0; i < nrule; i++) {
-		Rule *r = &rule[i];
+	c->tags[0] = 0;
+	for(i = 0; i < rule.size; i++) {
+		Rule *r = rule.data[i];
 		if(r->is_valid && !regexec(&r->regex, prop, 1, &tmpregm, 0)) {
-			for(j = 0; c->ntag < MAX_TAGS && j < r->ntag; j++) {
-				if(!strncmp(r->tag[j], "~", 2))
-					c->floating = True;
-				else {
-					cext_strlcpy(c->tag[c->ntag], r->tag[j], sizeof(c->tag[c->ntag]));
-					c->ntag++;
-				}
-			}
+			if(!strncmp(r->tags, "~", 2))
+				c->floating = True;
+			else
+				cext_strlcat(c->tags, r->tags, sizeof(c->tags) - strlen(c->tags));
 		}
 	}
 }

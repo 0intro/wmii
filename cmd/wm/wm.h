@@ -63,8 +63,6 @@ enum {
 	FsFmode
 };
 
-enum { MAX_TAGS = 8 };
-enum { MAX_TAGLEN = 32 };
 enum { MIN_COLWIDTH = 64 };
 enum { WM_PROTOCOL_DELWIN = 1 };
 
@@ -75,7 +73,7 @@ typedef struct Client Client;
 
 VECTOR(AreaVector, Area *);
 struct View {
-	char name[MAX_TAGLEN];
+	char name[256];
 	unsigned short id;
 	AreaVector area;
 	unsigned int sel;
@@ -99,10 +97,12 @@ struct Frame {
 	Client *client;
 };
 
+VECTOR(TagVector, char *);
 struct Client {
 	unsigned short id;
 	char name[256];
-	char tag[MAX_TAGS][MAX_TAGLEN];
+	char tags[256];
+	TagVector tag;
 	unsigned int ntag;
 	char classinst[256];
 	int proto;
@@ -142,7 +142,7 @@ typedef struct {
 typedef struct {
 	char selcolor[24];
 	char normcolor[24];
-	char tag[MAX_TAGLEN];
+	char tag[256];
 	char *font;
 	Color sel;
 	Color norm;
@@ -159,7 +159,6 @@ VECTOR(ViewVector, View *);
 VECTOR(ClientVector, Client *);
 VECTOR(KeyVector, Key *);
 VECTOR(LabelVector, Label *);
-VECTOR(TagVector, char *);
 
 /* global variables */
 ViewVector view;
@@ -268,12 +267,10 @@ void update_rules();
 void match_tags(Client *c);
 
 /* tag.c */
-unsigned int str2tags(char tags[MAX_TAGS][MAX_TAGLEN], const char *stags);
-void tags2str(char *stags, unsigned int stagsz,
-		char tags[MAX_TAGS][MAX_TAGLEN], unsigned int ntags);
 Bool istag(char *t);
 void ensure_tag(char *t);
 void update_tags();
+void str2tagvector(TagVector *tv, const char *tags);
 
 /* view.c */
 void arrange_view(View *v, Bool updategeometry);

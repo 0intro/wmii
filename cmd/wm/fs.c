@@ -512,12 +512,10 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		switch(dir_type) {
 		case FsDclient:
 			f = view.data[dir_i1]->area.data[dir_i2]->frame.data[dir_i3];
-			tags2str(buf, sizeof(buf), f->client->tag, f->client->ntag);
-			return mkstat(stat, dir, wname, strlen(buf), IXP_DMREAD | IXP_DMWRITE);
+			return mkstat(stat, dir, wname, strlen(f->client->tags), IXP_DMREAD | IXP_DMWRITE);
 			break;
 		case FsDGclient:
-			tags2str(buf, sizeof(buf), client.data[dir_i1]->tag, client.data[dir_i1]->ntag);
-			return mkstat(stat, dir, wname, strlen(buf), IXP_DMREAD | IXP_DMWRITE);
+			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->tags), IXP_DMREAD | IXP_DMWRITE);
 			break;
 		default:
 			{
@@ -1033,15 +1031,13 @@ xread(IXPConn *c, Fcall *fcall)
 			case FsDclient:
 				{
 					Client *c = view.data[i1]->area.data[i2]->frame.data[i3]->client;
-					tags2str(buf, sizeof(buf), c->tag, c->ntag);
-					if((fcall->count = strlen(buf)))
-						memcpy(p, buf, fcall->count);
+					if((fcall->count = strlen(c->tags)))
+						memcpy(p, c->tags, fcall->count);
 				}
 				break;
 			case FsDGclient:
-				tags2str(buf, sizeof(buf), client.data[i1]->tag, client.data[i1]->ntag);
-				if((fcall->count = strlen(buf)))
-					memcpy(p, buf, fcall->count);
+				if((fcall->count = strlen(client.data[i1]->tags)))
+					memcpy(p, client.data[i1]->tags, fcall->count);
 				break;
 			default:
 				for(i = 0; i < tag.size; i++) {
@@ -1153,6 +1149,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 	unsigned int len;
 	int i, i1 = 0, i2 = 0, i3 = 0;
 	Frame *f;
+	Client *cl;
 
 	if(!m)
 		return Enofile;
@@ -1222,14 +1219,14 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		if(m->qid.dir_type == FsDclient) {
-			f = view.data[i1]->area.data[i2]->frame.data[i3];
-			f->client->ntag = str2tags(f->client->tag, buf);
-		}
+		if(m->qid.dir_type == FsDclient)
+			cl = view.data[i1]->area.data[i2]->frame.data[i3]->client;
 		else
-			client.data[i1]->ntag = str2tags(client.data[i1]->tag, buf);
+			cl = client.data[i1];
+		cext_strlcpy(cl->tags, buf, sizeof(cl->tags));
+		str2tagvector(&cl->tag, buf);
 		update_tags();
-		draw_client(client.data[i1]);
+		draw_client(cl);
 		break;
 	case FsFgeom:
 		if(fcall->count > sizeof(buf))

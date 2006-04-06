@@ -220,7 +220,6 @@ void
 draw_client(Client *c)
 {
 	Draw d = { 0 };
-	char buf[512];
 
 	if(!c->frame.size)
 		return; /* might not have been attached atm */
@@ -247,9 +246,8 @@ draw_client(Client *c)
 	d.rect.height = bar_height();
 	d.notch = nil;
 
-	tags2str(buf, sizeof(buf), c->tag, c->ntag);
 	d.align = WEST;
-	d.rect.x = d.rect.height + XTextWidth(xfont, buf, strlen(buf));
+	d.rect.x = d.rect.height + XTextWidth(xfont, c->tags, strlen(c->tags));
 	d.rect.width = c->frame.data[c->sel]->rect.width - d.rect.x;
 	d.data = c->name;
 	blitz_drawlabel(dpy, &d);
@@ -264,7 +262,7 @@ draw_client(Client *c)
 	d.align = CENTER;
 	d.rect.width = d.rect.x;
 	d.rect.x = 0;
-	d.data = buf;
+	d.data = c->tags;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
 
@@ -342,8 +340,8 @@ manage_client(Client *c)
 
 	if(c->trans && (trans = win2client(c->trans))) {
 		for(i = 0; i < trans->ntag; i++)
-			cext_strlcpy(c->tag[i], trans->tag[i], sizeof(c->tag[i]));
-		c->ntag = trans->ntag;
+			cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
+		str2tagvector(&c->tag, c->tags);
 	}
 	else
 		match_tags(c);
@@ -352,8 +350,8 @@ manage_client(Client *c)
 
 	v = view.size ? view.data[sel] : alloc_view(def.tag);
 	if(!c->ntag) {
-		cext_strlcpy(c->tag[0], v->name, sizeof(c->tag[0]));
-		c->ntag++;
+		cext_strlcpy(c->tags, v->name, sizeof(c->tags));
+		str2tagvector(&c->tag, c->tags);
 	}
 
 	update_tags();
@@ -646,9 +644,9 @@ Bool
 clienthastag(Client *c, const char *t)
 {
 	unsigned int i;
-	for(i = 0; i < c->ntag; i++)
-		if(!strncmp(c->tag[i], t, sizeof(c->tag[i]))
-			|| !strncmp(c->tag[i], "*", 2))
+	for(i = 0; i < c->tag.size; i++)
+		if(!strncmp(c->tag.data[i], t, strlen(t))
+				|| !strncmp(c->tag.data[i], "*", 2))
 			return True;
 	return False;
 }

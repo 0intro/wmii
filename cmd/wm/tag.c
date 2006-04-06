@@ -59,8 +59,8 @@ update_tags()
 	tag.size = 0;
 
 	for(i = 0; i < client.size; i++) {
-		for(j = 0; j < client.data[i]->ntag; j++)
-			ensure_tag(client.data[i]->tag[j]);
+		for(j = 0; j < client.data[i]->tag.size; j++)
+			ensure_tag(client.data[i]->tag.data[j]);
 	}
 
 	for(i = 0; view.size && (i < client.size); i++) {
@@ -87,35 +87,21 @@ update_tags()
 		update_bar_tags();
 }
 
-unsigned int
-str2tags(char tags[MAX_TAGS][MAX_TAGLEN], const char *stags)
+void
+str2tagvector(TagVector *tv, const char *tags)
 {
 	unsigned int i, n;
 	char buf[256];
-	char *toks[MAX_TAGS];
+	char *toks[16];
+	char *p;
 
-	cext_strlcpy(buf, stags, sizeof(buf));
-	n = cext_tokenize(toks, MAX_TAGS, buf, '+');
-	for(i = 0; i < n; i++)
-		cext_strlcpy(tags[i], toks[i], MAX_TAGLEN);
-	return n;
-}
-
-void
-tags2str(char *stags, unsigned int stagsz,
-		 char tags[MAX_TAGS][MAX_TAGLEN], unsigned int ntags)
-{
-	unsigned int i, len = 0, l;
-
-	stags[0] = 0;
-	for(i = 0; i < ntags; i++) {
-		l = strlen(tags[i]);
-		if(len + l + 1 >= stagsz)
-			return;
-		if(len)
-			stags[len++] = '+';
-		memcpy(stags + len, tags[i], l);
-		len += l;
-		stags[len] = 0;
+	while(tv->size) {
+		p = tv->data[0];
+		cext_vdetach(tag2vector(tv), p);
+		free(p);
 	}
+	cext_strlcpy(buf, tags, sizeof(buf));
+	n = cext_tokenize(toks, 16, buf, '+');
+	for(i = 0; i < n; i++)
+		cext_vattach(tag2vector(tv), strdup(toks[i]));
 }
