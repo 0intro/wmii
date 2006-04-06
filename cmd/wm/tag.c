@@ -52,11 +52,11 @@ void
 update_tags()
 {
 	unsigned int i, j;
-	for(i = 0; i < tag.size; i++) {
-		free(tag.data[i]);
-		tag.data[i] = nil;
+	while(tag.size) {
+		char *p = tag.data[0];
+		cext_vdetach(tag2vector(&tag), p);
+		free(p);
 	}
-	tag.size = 0;
 
 	for(i = 0; i < client.size; i++) {
 		for(j = 0; j < client.data[i]->tag.size; j++)

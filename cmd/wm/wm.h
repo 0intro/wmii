@@ -103,7 +103,6 @@ struct Client {
 	char name[256];
 	char tags[256];
 	TagVector tag;
-	unsigned int ntag;
 	char classinst[256];
 	int proto;
 	unsigned int border;

@@ -41,7 +41,6 @@ rule2vector(RuleVector *rv)
 void
 update_rules()
 {
-	unsigned int i;
 	int mode = IGNORE;
 	char *p, *r = nil, *t = nil, regex[256], tags[256];
 
@@ -49,14 +48,13 @@ update_rules()
 		return;
 
 	while(rule.size) {
-		Rule *r = rule.data[i];
+		Rule *r = rule.data[0];
 		if(r->is_valid)
 			regfree(&r->regex);
 		cext_vdetach(rule2vector(&rule), r);
 		free(r);
 	}
 
-	i = 0;
 	for(p = def.rules; *p; p++)
 		switch(mode) {
 		case IGNORE:
@@ -106,14 +104,15 @@ match(Client *c, const char *prop)
 	unsigned int i;
 	regmatch_t tmpregm;
 
-	c->tags[0] = 0;
 	for(i = 0; i < rule.size; i++) {
 		Rule *r = rule.data[i];
 		if(r->is_valid && !regexec(&r->regex, prop, 1, &tmpregm, 0)) {
 			if(!strncmp(r->tags, "~", 2))
 				c->floating = True;
-			else
-				cext_strlcat(c->tags, r->tags, sizeof(c->tags) - strlen(c->tags));
+			else {
+				cext_strlcpy(c->tags, r->tags, sizeof(c->tags));
+				str2tagvector(&c->tag, c->tags);
+			}
 		}
 	}
 }

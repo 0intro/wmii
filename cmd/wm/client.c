@@ -336,11 +336,9 @@ manage_client(Client *c)
 {
 	View *v;
 	Client *trans;
-	unsigned int i;
 
 	if(c->trans && (trans = win2client(c->trans))) {
-		for(i = 0; i < trans->ntag; i++)
-			cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
+		cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
 		str2tagvector(&c->tag, c->tags);
 	}
 	else
@@ -349,7 +347,7 @@ manage_client(Client *c)
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 
 	v = view.size ? view.data[sel] : alloc_view(def.tag);
-	if(!c->ntag) {
+	if(!strlen(c->tags)) {
 		cext_strlcpy(c->tags, v->name, sizeof(c->tags));
 		str2tagvector(&c->tag, c->tags);
 	}
