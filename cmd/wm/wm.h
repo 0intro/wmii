@@ -167,20 +167,16 @@ typedef struct {
 	unsigned int size;
 	View **data;
 } ViewVector;
-ViewVector view;
-unsigned int sel;
 
 typedef struct {
 	unsigned int size;
 	Client **data;
 } ClientVector;
-ClientVector client;
 
 typedef struct {
 	unsigned int size;
 	Key **data;
 } KeyVector;
-KeyVector key;
 
 typedef struct {
 	unsigned int size;
@@ -192,10 +188,14 @@ typedef struct {
 	unsigned int size;
 	char **data;
 } TagVector;
-TagVector tag;
 
+/* global variables */
+ViewVector view;
+unsigned int sel;
+ClientVector client;
+TagVector tag;
+KeyVector key;
 Display *dpy;
-IXPServer *ixps;
 int screen;
 Window root;
 XRectangle rect;
@@ -207,12 +207,11 @@ Window barwin;
 GC bargc;
 XRectangle brect;
 Qid root_qid;
-
 Default def;
 Atom wm_atom[WMLast];
-
 Cursor cursor[CurLast];
-unsigned int valid_mask, num_lock_mask;
+unsigned int valid_mask;
+unsigned int num_lock_mask;
 
 /* area.c */
 Area *alloc_area(View *t);

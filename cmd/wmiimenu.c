@@ -20,32 +20,29 @@
 #include <blitz.h>
 #include <cext.h>
 
-static Bool done = False;
-static int ret = 0;
-static char text[4096];
-static Color selcolor;
-static Color normcolor;
-
-static Display *dpy;
-static Window win;
-static XRectangle mrect;
-static int screen;
-
 typedef struct {
 	unsigned int size;
 	char **data;
 } ItemVector;
 
+static Bool done = False;
+static int ret = 0;
+static char text[4096];
+static Color selcolor;
+static Color normcolor;
+static Display *dpy;
+static Window win;
+static XRectangle mrect;
+static int screen;
 static ItemVector allitem = {0};
 static ItemVector item = {0};
-
 static int sel = -1;
 static unsigned int nextoff = 0;
 static unsigned int prevoff = 0;
 static unsigned int curroff = 0;
 static unsigned int cmdw = 0;
 static Draw draw = { 0 };
-static const int seek = 30;	/* 30px */
+static const int seek = 30;		/* 30px */
 
 static void draw_menu(void);
 static void handle_kpress(XKeyEvent * e);
