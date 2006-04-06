@@ -57,7 +57,7 @@ xcreate(char *file)
 		return -1;
 	}
 	p++;
-	if(ixp_client_create(&c, fid, p, DMWRITE, IXP_OWRITE) == -1) {
+	if(ixp_client_create(&c, fid, p, IXP_DMWRITE, IXP_OWRITE) == -1) {
 		fprintf(stderr, "wmiir: cannot create file '%s': %s\n", p, c.errstr);
 		return -1;
 	}
@@ -107,7 +107,7 @@ mode2str(unsigned int mode)
 {
 	static char buf[16];
 
-	if(mode & DMDIR)
+	if(mode & IXP_DMDIR)
 		buf[0]='d';
 	else
 		buf[0]='-';

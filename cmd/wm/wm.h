@@ -63,17 +63,21 @@ enum {
 	FsFmode
 };
 
-#define MAX_TAGS			8
-#define MAX_TAGLEN			32
-#define WM_PROTOCOL_DELWIN	1
-#define MIN_COLWIDTH		64
+enum { MAX_TAGS = 8 };
+enum { MAX_TAGLEN = 32 };
+enum { MIN_COLWIDTH = 64 };
+enum { WM_PROTOCOL_DELWIN = 1 };
 
 typedef struct View View;
 typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
-VECTOR(AreaVector, Area *);
+typedef struct {
+	unsigned int size;
+	Area **data;
+} AreaVector;
+
 struct View {
 	char name[MAX_TAGLEN];
 	unsigned short id;
@@ -82,7 +86,11 @@ struct View {
 	unsigned int revert;
 };
 
-VECTOR(FrameVector, Frame *);
+typedef struct {
+	unsigned int size;
+	Frame **data;
+} FrameVector;
+
 struct Area {
 	unsigned short id;
 	FrameVector frame;
@@ -155,20 +163,35 @@ typedef struct {
 } Default;
 
 /* global variables */
-VECTOR(ViewVector, View *);
+typedef struct {
+	unsigned int size;
+	View **data;
+} ViewVector;
 ViewVector view;
 unsigned int sel;
 
-VECTOR(ClientVector, Client *);
+typedef struct {
+	unsigned int size;
+	Client **data;
+} ClientVector;
 ClientVector client;
 
-VECTOR(KeyVector, Key *);
+typedef struct {
+	unsigned int size;
+	Key **data;
+} KeyVector;
 KeyVector key;
 
-VECTOR(LabelVector, Label *);
+typedef struct {
+	unsigned int size;
+	Label **data;
+} LabelVector;
 LabelVector label;
 
-VECTOR(TagVector, char *);
+typedef struct {
+	unsigned int size;
+	char **data;
+} TagVector;
 TagVector tag;
 
 Display *dpy;

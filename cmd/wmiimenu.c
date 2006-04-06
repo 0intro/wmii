@@ -31,7 +31,11 @@ static Window win;
 static XRectangle mrect;
 static int screen;
 
-VECTOR(ItemVector, char *);
+typedef struct {
+	unsigned int size;
+	char **data;
+} ItemVector;
+
 static ItemVector allitem = {0};
 static ItemVector item = {0};
 

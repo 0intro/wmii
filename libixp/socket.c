@@ -49,12 +49,10 @@ connect_inet_sock(char *host)
 	unsigned int prt;
 
 	if(!port)
-		prt = IXP_PORT;
-	else {
-		*port = 0;
-		port++;
-		prt = cext_strtonum(port, 0, 65535, &errstr);
-	}
+		return -1;
+	*port = 0;
+	port++;
+	prt = cext_strtonum(port, 0, 65535, &errstr);
 
 	if(errstr)
 		return -1;

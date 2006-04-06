@@ -6,18 +6,17 @@
 #include <sys/types.h>
 #include <cext.h>
 
-#define IXP_VERSION	"9P2000"
-#define IXP_MAX_VERSION	32
-#define IXP_MAX_ERROR	128
-#define IXP_MAX_CACHE	32
-#define IXP_MAX_MSG	8192
-#define IXP_MAX_FLEN	128
-#define IXP_MAX_ULEN	32
-#define IXP_MAX_STAT	64
-#define IXP_MAX_WELEM	16	/* MAXWELEM */
-#define IXP_MAX_TFUNCS	14
+#define IXP_VERSION		"9P2000"
+#define IXP_NOTAG	(unsigned short)~0U	/*Dummy tag */
+#define IXP_NOFID	(unsigned int)~0	/*No auth */
 
-#define IXP_PORT		5640
+enum { IXP_MAX_VERSION = 32 };
+enum { IXP_MAX_ERROR = 128 };
+enum { IXP_MAX_CACHE = 32 };
+enum { IXP_MAX_MSG = 8192 };
+enum { IXP_MAX_FLEN = 128 };
+enum { IXP_MAX_ULEN = 32 };
+enum { IXP_MAX_WELEM = 16 };
 
 /* 9P message types */
 enum {
@@ -52,16 +51,17 @@ enum {
 };
 
 /* borrowed from libc.h of Plan 9 */
-#define DMDIR		0x80000000	/*mode bit for directories */
-#define DMAPPEND	0x40000000	/*mode bit for append only files */
-#define DMEXCL		0x20000000	/*mode bit for exclusive use files */
-#define DMMOUNT		0x10000000	/*mode bit for mounted channel */
-#define DMAUTH		0x08000000	/*mode bit for authentication file */
-#define DMTMP		0x04000000	/*mode bit for non-backed-up file */
-
-#define DMREAD		0x4<<6		/*mode bit for read permission */
-#define DMWRITE		0x2<<6		/*mode bit for write permission */
-#define DMEXEC		0x1<<6		/*mode bit for execute permission */
+enum {
+	IXP_DMDIR = 0x80000000,		/* mode bit for directories */
+	IXP_DMAPPEND = 0x40000000,	/* mode bit for append only files */
+	IXP_DMEXCL = 0x20000000,	/* mode bit for exclusive use files */
+	IXP_DMMOUNT = 0x10000000,	/* mode bit for mounted channel */
+	IXP_DMAUTH = 0x08000000,	/* mode bit for authentication file */
+	IXP_DMTMP = 0x04000000,		/* mode bit for non-backed-up file */
+	IXP_DMREAD = 0x4<<6,		/* mode bit for read permission */
+	IXP_DMWRITE = 0x2<<6,		/* mode bit for write permission */
+	IXP_DMEXEC = 0x1<<6			/* mode bit for execute permission */
+};
 
 /* modes */
 enum {
@@ -88,9 +88,6 @@ enum {
 	IXP_QTLINK = 0x01,
 	IXP_QTFILE = 0x00,
 };
-
-#define IXP_NOTAG	(unsigned short)~0U	/*Dummy tag */
-#define IXP_NOFID	(unsigned int)~0	/*No auth */
 
 typedef struct Qid Qid;
 struct Qid {
@@ -155,7 +152,11 @@ struct IXPMap {
 };
 
 
-VECTOR(MapVector, IXPMap *);
+typedef struct {
+	unsigned int size;
+	IXPMap **data;
+} MapVector;
+
 struct IXPConn {
 	int fd;
 	IXPServer *srv;
@@ -166,7 +167,11 @@ struct IXPConn {
 	int is_pending;
 };
 
-VECTOR(ConnVector, IXPConn *);
+typedef struct {
+	unsigned int size;
+	IXPConn **data;
+} ConnVector;
+
 struct IXPServer {
 	int running;
 	ConnVector conn;

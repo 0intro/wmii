@@ -27,7 +27,7 @@ static char Enofunc[] = "function not supported";
 static char Enocommand[] = "command not supported";
 static char Ebadvalue[] = "bad value";
 
-#define WMII_IOUNIT		2048
+enum { WMII_IOUNIT = 2048 };
 
 /*
  * filesystem specification
@@ -464,20 +464,20 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 	case FsDclients:
 	case FsDlabel:
 	case FsDroot:
-		return mkstat(stat, dir, wname, 0, DMDIR | DMREAD | DMEXEC);
+		return mkstat(stat, dir, wname, 0, IXP_DMDIR | IXP_DMREAD | IXP_DMEXEC);
 		break;
 	case FsDbar:
-		return mkstat(stat, dir, wname, 0, DMDIR | DMREAD | DMWRITE | DMEXEC);
+		return mkstat(stat, dir, wname, 0, IXP_DMDIR | IXP_DMREAD | IXP_DMWRITE | IXP_DMEXEC);
 		break;
 	case FsFctl:
-		return mkstat(stat, dir, wname, 0, DMWRITE);
+		return mkstat(stat, dir, wname, 0, IXP_DMWRITE);
 		break;
 	case FsFevent:
-		return mkstat(stat, dir, wname, 0, DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, 0, IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFborder:
 		snprintf(buf, sizeof(buf), "%d", def.border);
-		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, strlen(buf), IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFgeom:
 		if(dir_type == FsDclient) {
@@ -490,68 +490,68 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 			snprintf(buf, sizeof(buf), "%d %d %d %d", c->rect.x, c->rect.y,
 					c->rect.width, c->rect.height);
 		}
-		return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, strlen(buf), IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFclass:
 		if(dir_type == FsDclient) {
 			f = view.data[dir_i1]->area.data[dir_i2]->frame.data[dir_i3];
-			return mkstat(stat, dir, wname, strlen(f->client->classinst), DMREAD);
+			return mkstat(stat, dir, wname, strlen(f->client->classinst), IXP_DMREAD);
 		}
 		else
-			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->classinst), DMREAD);
+			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->classinst), IXP_DMREAD);
 		break;
 	case FsFname:
 		if(dir_type == FsDclient) {
 			f = view.data[dir_i1]->area.data[dir_i2]->frame.data[dir_i3];
-			return mkstat(stat, dir, wname, strlen(f->client->name), DMREAD);
+			return mkstat(stat, dir, wname, strlen(f->client->name), IXP_DMREAD);
 		}
 		else
-			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->name), DMREAD);
+			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->name), IXP_DMREAD);
 		break;
 	case FsFtags:
 		switch(dir_type) {
 		case FsDclient:
 			f = view.data[dir_i1]->area.data[dir_i2]->frame.data[dir_i3];
 			tags2str(buf, sizeof(buf), f->client->tag, f->client->ntag);
-			return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
+			return mkstat(stat, dir, wname, strlen(buf), IXP_DMREAD | IXP_DMWRITE);
 			break;
 		case FsDGclient:
 			tags2str(buf, sizeof(buf), client.data[dir_i1]->tag, client.data[dir_i1]->ntag);
-			return mkstat(stat, dir, wname, strlen(buf), DMREAD | DMWRITE);
+			return mkstat(stat, dir, wname, strlen(buf), IXP_DMREAD | IXP_DMWRITE);
 			break;
 		default:
 			{
 				unsigned int i, len = 0;
 				for(i = 0; i < tag.size; i++)
 					len += strlen(tag.data[i]) + 1;
-				return mkstat(stat, dir, wname, len, DMREAD);
+				return mkstat(stat, dir, wname, len, IXP_DMREAD);
 			}
 			break;
 		}
 		break;
 	case FsFtag:
 		if(dir_type == FsDview)
-			return mkstat(stat, dir, wname, strlen(def.tag), DMREAD);
+			return mkstat(stat, dir, wname, strlen(def.tag), IXP_DMREAD);
 		break;
 	case FsFdata:
-		return mkstat(stat, dir, wname, (dir_i1 == label.size) ? 0 : strlen(label.data[dir_i1]->data), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, (dir_i1 == label.size) ? 0 : strlen(label.data[dir_i1]->data), IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFmode:
-		return mkstat(stat, dir, wname, strlen(mode2str(view.data[dir_i1]->area.data[dir_i2]->mode)), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, strlen(mode2str(view.data[dir_i1]->area.data[dir_i2]->mode)), IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFcolors:
 	case FsFselcolors:
 	case FsFnormcolors:
-		return mkstat(stat, dir, wname, 23, DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, 23, IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFkeys:
-		return mkstat(stat, dir, wname, def.keys ? strlen(def.keys) : 0, DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, def.keys ? strlen(def.keys) : 0, IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFrules:
-		return mkstat(stat, dir, wname, def.rules ? strlen(def.rules) : 0, DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, def.rules ? strlen(def.rules) : 0, IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFfont:
-		return mkstat(stat, dir, wname, strlen(def.font), DMREAD | DMWRITE);
+		return mkstat(stat, dir, wname, strlen(def.font), IXP_DMREAD | IXP_DMWRITE);
 		break;
 	}
 	return 0;

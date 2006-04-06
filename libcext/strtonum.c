@@ -19,9 +19,11 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#define INVALID		1
-#define TOOSMALL 	2
-#define TOOLARGE 	3
+enum {
+	INVALID = 1,
+	TOOSMALL = 2,
+	TOOLARGE = 3
+};
 
 long long
 cext_strtonum(const char *numstr, long long minval, long long maxval,
