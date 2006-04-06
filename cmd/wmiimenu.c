@@ -20,11 +20,7 @@
 #include <blitz.h>
 #include <cext.h>
 
-typedef struct {
-	unsigned int size;
-	char **data;
-} ItemVector;
-
+VECTOR(ItemVector, char *);
 static Bool done = False;
 static int ret = 0;
 static char text[4096];

@@ -73,11 +73,7 @@ typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
-typedef struct {
-	unsigned int size;
-	Area **data;
-} AreaVector;
-
+VECTOR(AreaVector, Area *);
 struct View {
 	char name[MAX_TAGLEN];
 	unsigned short id;
@@ -86,11 +82,7 @@ struct View {
 	unsigned int revert;
 };
 
-typedef struct {
-	unsigned int size;
-	Frame **data;
-} FrameVector;
-
+VECTOR(FrameVector, Frame *);
 struct Area {
 	unsigned short id;
 	FrameVector frame;
@@ -163,31 +155,11 @@ typedef struct {
 } Default;
 
 /* global variables */
-typedef struct {
-	unsigned int size;
-	View **data;
-} ViewVector;
-
-typedef struct {
-	unsigned int size;
-	Client **data;
-} ClientVector;
-
-typedef struct {
-	unsigned int size;
-	Key **data;
-} KeyVector;
-
-typedef struct {
-	unsigned int size;
-	Label **data;
-} LabelVector;
-LabelVector label;
-
-typedef struct {
-	unsigned int size;
-	char **data;
-} TagVector;
+VECTOR(ViewVector, View *);
+VECTOR(ClientVector, Client *);
+VECTOR(KeyVector, Key *);
+VECTOR(LabelVector, Label *);
+VECTOR(TagVector, char *);
 
 /* global variables */
 ViewVector view;
@@ -195,6 +167,7 @@ unsigned int sel;
 ClientVector client;
 TagVector tag;
 KeyVector key;
+LabelVector label;
 Display *dpy;
 int screen;
 Window root;
