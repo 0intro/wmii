@@ -20,7 +20,7 @@ enum {
 
 /* Column modes */
 enum {
-	Colequal,
+	Coldefault,
 	Colstack,
 	Colmax
 };

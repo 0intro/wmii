@@ -64,7 +64,7 @@ $MODKEY-k
 $MODKEY-n
 $MODKEY-m
 $MODKEY-s
-$MODKEY-e
+$MODKEY-d
 $MODKEY-0
 $MODKEY-1
 $MODKEY-2
@@ -120,8 +120,8 @@ do
 			xwrite /view/sel/mode max;;
 		$MODKEY-s)
 			xwrite /view/sel/mode stack;;
-		$MODKEY-e)
-			xwrite /view/sel/mode equal;;
+		$MODKEY-d)
+			xwrite /view/sel/mode default;;
 		$MODKEY-n)
 			xwrite /view/sel/sel/ctl sendto new;;
 		$MODKEY-Control-h)

@@ -214,7 +214,7 @@ char *
 mode2str(int mode)
 {
 	switch(mode) {
-	case Colequal: return "equal"; break;
+	case Coldefault: return "default"; break;
 	case Colstack: return "stack"; break;
 	case Colmax: return "max"; break;
 	default: break;
@@ -225,8 +225,8 @@ mode2str(int mode)
 int
 str2mode(char *arg)
 {
-	if(!strncmp("equal", arg, 6))
-		return Colequal;
+	if(!strncmp("default", arg, 8))
+		return Coldefault;
 	if(!strncmp("stack", arg, 6))
 		return Colstack;
 	if(!strncmp("max", arg, 4))
@@ -244,7 +244,7 @@ relax_area(Area *a)
 		return;
 
 	switch(a->mode) {
-	case Colequal:
+	case Coldefault:
 		h = a->rect.height;
 		h /= a->frame.size;
 		if(h < 2 * bar_height())
@@ -315,7 +315,7 @@ arrange_column(Area *a, Bool dirty)
 		return;
 
 	switch(a->mode) {
-	case Colequal:
+	case Coldefault:
 		h = a->rect.height / a->frame.size;
 		if(h < (2 * bar_height()))
 			goto Fallthrough;
@@ -444,7 +444,7 @@ drop_resize(Frame *f, XRectangle *new)
 AfterHorizontal:
 
 	/* skip vertical resize unless the column is in equal mode */
-	if(a->mode != Colequal)
+	if(a->mode != Coldefault)
 		goto AfterVertical;
 	
 	/* validate (and trim if necessary) vertical resize */
