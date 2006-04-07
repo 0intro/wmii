@@ -24,7 +24,7 @@ cext_vdetach(Vector *v, void *data)
 	for(i = 0; i < v->size; i++)
 		if (v->data[i] == data) {
 			memmove(v->data + i, v->data + i + 1,
-					(v->size - i) * sizeof(void *));
+					(v->size - i - 1) * sizeof(void *));
 			--v->size;
 			return;
 		}
