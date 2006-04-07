@@ -134,6 +134,61 @@ frame2vector(FrameVector *fv)
 	return (Vector *) fv;
 }
 
+typedef struct {
+	int x;
+	int y;
+} Gravity;
+
+void
+place_client(Area *a, Client *c)
+{
+	static Gravity gravity[] =
+	{ 
+		{0, 0},		/* CENTER */
+		{-1, -1},	/* NW */
+		{0, -1},	/* N */
+		{1, -1},	/* NE */
+		{1, 0},		/* E */
+		{1, 1},		/* SE */
+		{0, 1},		/* S */
+		{-1, 1},	/* SW */
+		{-1, 0}		/* W */
+	};
+	unsigned int dx = rect.width / 3, dy =  rect.height / 3;
+	Frame *f = c->frame.data[c->sel];
+	if(c->trans)
+		return;
+
+	/* first of all, caculate center */
+	f->rect.x = (rect.width - f->rect.width) / 2;
+	f->rect.y = (rect.height - f->rect.height) / 2;
+
+	
+	switch(a->frame.size) {
+		case 0: return; break;
+		case 1:
+			f->rect.x = 0;
+			f->rect.y = 0;
+			break;
+		case 2:
+			f->rect.x = a->rect.x + a->rect.width - f->rect.width;
+			f->rect.y = 0;
+			break;
+		case 3:
+			f->rect.x = 0;
+			f->rect.y = a->rect.y + a->rect.height - f->rect.height;
+			break;
+		case 4:
+			f->rect.x = a->rect.x + a->rect.width - f->rect.width;
+			f->rect.y = a->rect.y + a->rect.height - f->rect.height;
+			break;
+		default:
+			f->rect.x = (a->frame.size - 4) * def.snap;
+			f->rect.y = (a->frame.size - 4) * def.snap;
+			break;
+	}
+}
+
 void
 attach_toarea(Area *a, Client *c)
 {
@@ -160,8 +215,10 @@ attach_toarea(Area *a, Client *c)
 			f->rect.height = a->rect.height / (a->frame.size - 1);
 		arrange_column(a, False);
 	}
-	else /* floating */
+	else { /* floating */
+		/*place_client(a, c);*/
 		resize_client(c, &f->rect,  False);
+	}
 }
 
 void
@@ -451,7 +508,8 @@ AfterHorizontal:
 	
 	/* validate (and trim if necessary) vertical resize */
 	if(new->height < min_height) {
-		if(f->rect.height < min_height && (new->y == f->rect.y || new->y + new->height == f->rect.y + f->rect.height))
+		if(f->rect.height < min_height
+			&& (new->y == f->rect.y || new->y + new->height == f->rect.y + f->rect.height))
 			goto AfterVertical;
 		if(new->y + new->height == f->rect.y + f->rect.height)
 			new->y = f->rect.y + f->rect.height - min_height;
@@ -539,4 +597,3 @@ clientofarea(Area *a, Client *c)
 			return True;
 	return False;
 }
-
