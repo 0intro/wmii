@@ -291,19 +291,26 @@ restack_view(View *v)
 void
 arrange_view(View *v, Bool dirty)
 {
-	unsigned int i;
-	unsigned int width;
+	unsigned int i, xoff = 0;
+	unsigned int dx = 0;
+	float scale = 1.0;
 
 	if(v->area.size == 1)
 		return;
 
-	width = rect.width / (v->area.size - 1);
+	if(dirty) {
+		for(i = 1; i < v->area.size; i++)
+			dx += v->area.data[i]->rect.width;
+		scale = (float)rect.width / (float)dx;
+	}
 	for(i = 1; i < v->area.size; i++) {
 		Area *a = v->area.data[i];
 		if(dirty) {
+			a->rect.x = xoff;
+			a->rect.y = 0;
 			a->rect.height = rect.height - brect.height;
-			a->rect.x = (i - 1) * width;
-			a->rect.width = width;
+			a->rect.width *= scale;
+			xoff += a->rect.width;
 		}
 		arrange_column(a, False);
 	}

@@ -23,6 +23,8 @@ alloc_area(View *v)
 	a->id = id++;
 	a->rect = rect;
 	a->rect.height = rect.height - brect.height;
+	if(v->area.size > 2)
+		a->rect.width = rect.width / (v->area.size - 2);
 	cext_vattach(area2vector(&v->area), a);
 	v->sel = v->area.size -1;
 	return a;
