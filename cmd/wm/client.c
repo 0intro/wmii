@@ -381,7 +381,7 @@ destroy_client(Client *c)
 	update_tags();
 	free(c);
 
-	if((cl = sel_client_of_view(view.data[sel])))
+	if(view.size && (cl = sel_client_of_view(view.data[sel])))
 		focus_client(cl);
 
 	XSync(dpy, False);
@@ -495,10 +495,10 @@ select_client(Client *c, char *arg)
 void
 swap_client(Client *c, char *arg)
 {
-	Frame *f = c->frame.data[c->sel];
-	Area *o, *a = f->area;
+	Frame *f1 = c->frame.data[c->sel], *f2;
+	Area *o, *a = f1->area;
 	View *v = a->view;
-	int i = area2index(a), j = frame2index(f);
+	int i = area2index(a), j = frame2index(f1);
 
 	if(i == -1 || j == -1)
 		return;
@@ -518,10 +518,13 @@ swap_client(Client *c, char *arg)
 Swaparea:
 		if(o == a)
 			return;
-		a->frame.data[j] = o->frame.data[o->sel];
-		a->frame.data[j]->area = a;
-		o->frame.data[o->sel] = f;
-		f->area = o;
+		f2 = o->frame.data[o->sel];
+
+		f1->client = f2->client;
+		f2->client = c;
+		f1->client->frame.data[f1->client->sel] = f1;
+		f2->client->frame.data[f2->client->sel] = f2;
+
 		arrange_column(o, False);
 	}
 	else if(!strncmp(arg, "up", 3) && i) {
@@ -530,7 +533,7 @@ Swaparea:
 		else
 			i = a->frame.size - 1;
 		a->frame.data[j] = a->frame.data[i];
-		a->frame.data[i] = f;
+		a->frame.data[i] = f1;
 	}
 	else if(!strncmp(arg, "down", 5) && i) {
 		if(j + 1 < a->frame.size)
@@ -538,7 +541,7 @@ Swaparea:
 		else
 			i = 0;
 		a->frame.data[j] = a->frame.data[i];
-		a->frame.data[i] = f;
+		a->frame.data[i] = f1;
 	}
 	if(area2index(a))
 		arrange_column(a, False);
