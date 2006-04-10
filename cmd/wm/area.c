@@ -215,8 +215,6 @@ attach_toarea(Area *a, Client *c)
 	unsigned int aidx = area2index(a);
 	Frame *f;
 
-	if(clientofview(a->view, c))
-		return;
 	c->floating = !aidx;
 	f = cext_emallocz(sizeof(Frame));
 	f->id = id++;

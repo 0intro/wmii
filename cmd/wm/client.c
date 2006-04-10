@@ -330,15 +330,13 @@ manage_client(Client *c)
 {
 	Client *trans;
 
-	if(c->trans && (trans = win2client(c->trans))) {
+	if(c->trans && (trans = win2client(c->trans)))
 		cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
-		str2tagvector(&c->tag, c->tags);
-	}
 	else
 		match_tags(c, True);
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
-	update_tags();
+	update_tags(c);
 }
 
 static int
@@ -350,8 +348,7 @@ dummy_error_handler(Display *dpy, XErrorEvent *error)
 void
 destroy_client(Client *c)
 {
-	int i;
-	Client *cl;
+	unsigned int i;
 
 	XGrabServer(dpy);
 	XSetErrorHandler(dummy_error_handler);
@@ -370,11 +367,8 @@ destroy_client(Client *c)
 	XFreeGC(dpy, c->gc);
 	XDestroyWindow(dpy, c->framewin);
 	cext_vdetach(client2vector(&client), c);
-	update_tags();
+	update_tags(nil);
 	free(c);
-
-	if(view.size && (cl = sel_client_of_view(view.data[sel])))
-		focus_client(cl);
 
 	XSync(dpy, False);
 	XSetErrorHandler(wmii_error_handler);
@@ -631,9 +625,9 @@ Bool
 clienthastag(Client *c, const char *t)
 {
 	unsigned int i;
-	for(i = 0; i < c->tag.size; i++)
-		if(!strncmp(c->tag.data[i], t, strlen(t))
-				|| !strncmp(c->tag.data[i], "*", 2))
+	for(i = 0; i < c->view.size; i++)
+		if(!strncmp(c->view.data[i]->name, t, strlen(t))
+				|| !strncmp(c->tags, "*", 2))
 			return True;
 	return False;
 }

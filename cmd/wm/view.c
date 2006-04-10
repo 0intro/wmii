@@ -8,7 +8,7 @@
 
 #include "wm.h"
 
-static Vector *
+Vector *
 view2vector(ViewVector *vv)
 {
 	return (Vector *) vv;
@@ -32,6 +32,7 @@ alloc_view(char *name)
 void
 destroy_view(View *v)
 {
+	fprintf(stderr, "destroy_view: %s\n", v->name);
 	while(v->area.size)
 		destroy_area(v->area.data[0]);
 
@@ -69,13 +70,6 @@ focus_view(View *v)
 {
 	Client *c;
 	unsigned int i;
-
-	/* cleanup other empty views */
-	for(i = 0; i < view.size; i++)
-		if(!hasclient(view.data[i])) {
-			destroy_view(view.data[i]);
-			i--;
-		}
 
 	XGrabServer(dpy);
 	sel = view2index(v);
@@ -158,23 +152,8 @@ name2view(char *name)
 View *
 get_view(char *name)
 {
-	unsigned int i;
 	View *v = name2view(name);
-
-	if(v)
-		return v;
-
-	for(i = 0; i < client.size; i++)
-		if(clienthastag(client.data[i], name))
-			goto Createview;
-	return nil;
-
-Createview:
-	v = alloc_view(name);
-	for(i = 0; i < client.size; i++)
-		if(clienthastag(client.data[i], name) && !clientofview(v, client.data[i]))
-			attach_toview(v, client.data[i]);
-	return v;
+	return v ? v : alloc_view(name);
 }
 
 Bool
@@ -190,7 +169,7 @@ hasclient(View *v)
 void
 select_view(char *arg)
 {
-	View *v = get_view(arg);
+	View *v = name2view(arg);
 	if(!v)
 		return;
 	focus_view(v);
@@ -200,8 +179,8 @@ Bool
 clientofview(View *v, Client *c)
 {
 	unsigned int i;
-	for(i = 0; i < v->area.size; i++)
-		if(clientofarea(v->area.data[i], c))
+	for(i = 0; i < c->view.size; i++)
+		if(v == c->view.data[i])
 			return True;
 	return False;
 }
@@ -209,22 +188,24 @@ clientofview(View *v, Client *c)
 void
 detach_fromview(View *v, Client *c)
 {
-	int i;
-	Client *cl;
+	unsigned int i;
+
+	fprintf(stderr, "detach_fromview: %s\n", c->name);
+	cext_vdetach(view2vector(&c->view), v);
 	for(i = 0; i < v->area.size; i++) {
 		if(clientofarea(v->area.data[i], c)) {
 			detach_fromarea(v->area.data[i], c);
 			XMoveWindow(dpy, c->framewin, 2 * rect.width, 0);
 		}
 	}
-	if((cl = sel_client_of_view(v)))
-		focus_client(cl);
 }
 
 void
 attach_toview(View *v, Client *c)
 {
 	Area *a;
+
+	fprintf(stderr, "attach_toview: %s\n", c->name);
 
 	if(c->trans || c->floating)
 		a = v->area.data[0];
@@ -234,8 +215,7 @@ attach_toview(View *v, Client *c)
 	attach_toarea(a, c);
 	map_client(c);
 	XMapWindow(dpy, c->framewin);
-	if(v == view.data[sel])
-		focus_client(c);
+	cext_vattach(view2vector(&c->view), v);
 }
 
 Client *

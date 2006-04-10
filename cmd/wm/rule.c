@@ -110,15 +110,11 @@ match(Client *c, const char *prop, Bool newclient)
 			if(!strncmp(r->tags, "~", 2))
 				c->floating = True;
 			else if(!strncmp(r->tags, "!", 2)) {
-				if(view.size && newclient) {
+				if(view.size && newclient)
 					cext_strlcpy(c->tags, view.data[sel]->name, sizeof(c->tags));
-					str2tagvector(&c->tag, c->tags);
-				}
 			}
-			else {
+			else
 				cext_strlcpy(c->tags, r->tags, sizeof(c->tags));
-				str2tagvector(&c->tag, c->tags);
-			}
 		}
 	}
 }

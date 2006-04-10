@@ -207,14 +207,14 @@ update_bar_tags()
 
 	for(i = 0; (i < label.size) && label.data[i]->intern; i++) {
 		l = label.data[i];
-		if(!istag(l->name) && !name2view(l->name)) {
+		if(!name2view(l->name)) {
 			destroy_label(l);
 			i--;
 		}
 	}
-	for(i = 0; i < tag.size; i++) {
-		l = get_label(tag.data[i], True);
-		cext_strlcpy(l->data, tag.data[i], sizeof(l->data));
+	for(i = 0; i < view.size; i++) {
+		l = get_label(view.data[i]->name, True);
+		cext_strlcpy(l->data, view.data[i]->name, sizeof(l->data));
 	}
 
 	draw_bar();

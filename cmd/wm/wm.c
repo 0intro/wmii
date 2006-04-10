@@ -289,9 +289,8 @@ main(int argc, char *argv[])
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
 	init_x_event_handler();
 
-	tag.size = view.size = client.size = sel = 0;
+	view.size = client.size = sel = 0;
 	view.data = nil;
-	tag.data = nil;
 	client.data = nil;
 
 	key.data = nil;

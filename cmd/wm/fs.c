@@ -512,8 +512,8 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		default:
 			{
 				unsigned int i, len = 0;
-				for(i = 0; i < tag.size; i++)
-					len += strlen(tag.data[i]) + 1;
+				for(i = 0; i < view.size; i++)
+					len += strlen(view.data[i]->name) + 1;
 				return mkstat(stat, dir, wname, len, IXP_DMREAD);
 			}
 			break;
@@ -833,17 +833,17 @@ xread(IXPConn *c, Fcall *fcall)
 			if(m->qid.dir_type == FsDroot) {
 				len = 0;
 				/* jump to offset */
-				for(i = 0; i < tag.size; i++) {
-					len += strlen(tag.data[i]) + 1;
+				for(i = 0; i < view.size; i++) {
+					len += strlen(view.data[i]->name) + 1;
 					if(len <= fcall->offset)
 						continue;
 				}
 				/* offset found, proceeding */
-				for(; i < tag.size; i++) {
-					len = strlen(tag.data[i]) + 1;
+				for(; i < view.size; i++) {
+					len = strlen(view.data[i]->name) + 1;
 					if(fcall->count + len > fcall->iounit)
 						break;
-					memcpy(p + fcall->count, tag.data[i], len - 1);
+					memcpy(p + fcall->count, view.data[i]->name, len - 1);
 					memcpy(p + fcall->count + len - 1, "\n", 1);
 					fcall->count += len;
 				}
@@ -864,7 +864,7 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "bar", &m->qid);
 			p = ixp_enc_stat(p, &stat);
-			if(tag.size) {
+			if(view.size) {
 				fcall->count += type2stat(&stat, "tags", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 			}
@@ -1028,11 +1028,11 @@ xread(IXPConn *c, Fcall *fcall)
 					memcpy(p, client.data[i1]->tags, fcall->count);
 				break;
 			default:
-				for(i = 0; i < tag.size; i++) {
-					len = strlen(tag.data[i]) + 1;
+				for(i = 0; i < view.size; i++) {
+					len = strlen(view.data[i]->name) + 1;
 					if(fcall->count + len > fcall->iounit)
 						break;
-					memcpy(p + fcall->count, tag.data[i], len - 1);
+					memcpy(p + fcall->count, view.data[i]->name, len - 1);
 					memcpy(p + fcall->count + len - 1, "\n", 1);
 					fcall->count += len;
 				}
@@ -1210,8 +1210,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		else
 			cl = client.data[i1];
 		cext_strlcpy(cl->tags, buf, sizeof(cl->tags));
-		str2tagvector(&cl->tag, buf);
-		update_tags();
+		update_tags(cl);
 		draw_client(cl);
 		break;
 	case FsFgeom:

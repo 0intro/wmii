@@ -96,12 +96,12 @@ struct Frame {
 	Client *client;
 };
 
-VECTOR(TagVector, char *);
+VECTOR(ViewVector, View *);
 struct Client {
 	unsigned short id;
 	char name[256];
 	char tags[256];
-	TagVector tag;
+	ViewVector view;
 	char classinst[256];
 	int proto;
 	unsigned int border;
@@ -152,7 +152,6 @@ typedef struct {
 } Default;
 
 /* global variables */
-VECTOR(ViewVector, View *);
 VECTOR(ClientVector, Client *);
 VECTOR(KeyVector, Key *);
 VECTOR(LabelVector, Label *);
@@ -161,7 +160,6 @@ VECTOR(LabelVector, Label *);
 ViewVector view;
 unsigned int sel;
 ClientVector client;
-TagVector tag;
 KeyVector key;
 LabelVector label;
 Display *dpy;
@@ -264,13 +262,11 @@ void update_rules();
 void match_tags(Client *c, Bool newclient);
 
 /* tag.c */
-Bool istag(char *t);
-void ensure_tag(char *t);
-void update_tags();
-void str2tagvector(TagVector *tv, const char *tags);
+void update_tags(Client *c);
 void retag();
 
 /* view.c */
+Vector *view2vector(ViewVector *vv);
 void arrange_view(View *v, Bool dirty);
 View *alloc_view(char *name);
 void focus_view(View *v);
@@ -286,6 +282,7 @@ void restack_view(View *v);
 Bool hasclient(View *v);
 View *name2view(char *name);
 void destroy_view(View *v);
+View *get_view(char *name);
 
 /* wm.c */
 void scan_wins();
