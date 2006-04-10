@@ -336,7 +336,7 @@ manage_client(Client *c)
 		match_tags(c, True);
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
-	update_tags(c);
+	update_views(c);
 }
 
 static int
@@ -367,7 +367,7 @@ destroy_client(Client *c)
 	XFreeGC(dpy, c->gc);
 	XDestroyWindow(dpy, c->framewin);
 	cext_vdetach(client2vector(&client), c);
-	update_tags(nil);
+	update_views(nil);
 	free(c);
 
 	XSync(dpy, False);

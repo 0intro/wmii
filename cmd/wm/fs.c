@@ -1210,7 +1210,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		else
 			cl = client.data[i1];
 		cext_strlcpy(cl->tags, buf, sizeof(cl->tags));
-		update_tags(cl);
+		update_views(cl);
 		draw_client(cl);
 		break;
 	case FsFgeom:

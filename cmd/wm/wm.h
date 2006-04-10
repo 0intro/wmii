@@ -261,10 +261,6 @@ void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 void update_rules();
 void match_tags(Client *c, Bool newclient);
 
-/* tag.c */
-void update_tags(Client *c);
-void retag();
-
 /* view.c */
 Vector *view2vector(ViewVector *vv);
 void arrange_view(View *v, Bool dirty);
@@ -283,6 +279,8 @@ Bool hasclient(View *v);
 View *name2view(char *name);
 void destroy_view(View *v);
 View *get_view(char *name);
+void update_views(Client *c);
+void retag();
 
 /* wm.c */
 void scan_wins();
