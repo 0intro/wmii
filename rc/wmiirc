@@ -45,29 +45,17 @@ proglist $OLD_PATH >/tmp/ns.$USER.$DISPLAY/progs &
 
 # SHORTCUTS
 wmiir write /def/keys <<EOF
-$MODKEY-Control-c
-$MODKEY-Control-w,y
-$MODKEY-Control-q,y
-$MODKEY-Control-p
-$MODKEY-Control-a
-$MODKEY-Control-t
-$MODKEY-Control-h
-$MODKEY-Control-l
-$MODKEY-Shift-h
-$MODKEY-Shift-l
-$MODKEY-Shift-j
-$MODKEY-Shift-k
-$MODKEY-space
-$MODKEY-Shift-space
-$MODKEY-t
 $MODKEY-h
 $MODKEY-l
 $MODKEY-j
 $MODKEY-k
-$MODKEY-n
-$MODKEY-m
-$MODKEY-s
+$MODKEY-space
 $MODKEY-d
+$MODKEY-s
+$MODKEY-m
+$MODKEY-a
+$MODKEY-p
+$MODKEY-t
 $MODKEY-0
 $MODKEY-1
 $MODKEY-2
@@ -78,6 +66,15 @@ $MODKEY-6
 $MODKEY-7
 $MODKEY-8
 $MODKEY-9
+$MODKEY-w,y
+$MODKEY-q,y
+$MODKEY-x
+$MODKEY-Shift-h
+$MODKEY-Shift-l
+$MODKEY-Shift-space
+$MODKEY-Shift-n
+$MODKEY-Shift-c
+$MODKEY-Shift-t
 $MODKEY-Shift-0
 $MODKEY-Shift-1
 $MODKEY-Shift-2
@@ -88,7 +85,10 @@ $MODKEY-Shift-6
 $MODKEY-Shift-7
 $MODKEY-Shift-8
 $MODKEY-Shift-9
-$MODKEY-Shift-t
+$MODKEY-Control-h
+$MODKEY-Control-l
+$MODKEY-Control-j
+$MODKEY-Control-k
 EOF
 
 # EVENT LOOP
@@ -107,42 +107,6 @@ do
 		xwrite /ctl view "$1";;
 	Key)
 		case "$1" in
-		$MODKEY-Control-c)
-			xwrite /view/sel/sel/ctl kill;;
-		$MODKEY-Control-w,y)
-			wmiirc &;;
-		$MODKEY-Control-q,y)
-			xwrite /ctl quit;;
-		$MODKEY-Control-p)
-			extern `wmiimenu </tmp/ns.$USER.$DISPLAY/progs` &;;
-		$MODKEY-Control-a)
-			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
-		$MODKEY-t)
-			extern xterm &;;
-		$MODKEY-m)
-			xwrite /view/sel/mode max;;
-		$MODKEY-s)
-			xwrite /view/sel/mode stack;;
-		$MODKEY-d)
-			xwrite /view/sel/mode default;;
-		$MODKEY-n)
-			xwrite /view/sel/sel/ctl sendto new;;
-		$MODKEY-Control-h)
-			xwrite /view/sel/sel/ctl sendto prev;;
-		$MODKEY-Control-l)
-			xwrite /view/sel/sel/ctl sendto next;;
-		$MODKEY-Shift-h)
-			xwrite /view/sel/sel/ctl swap prev;;
-		$MODKEY-Shift-l)
-			xwrite /view/sel/sel/ctl swap next;;
-		$MODKEY-Shift-j)
-			xwrite /view/sel/sel/ctl swap down;;
-		$MODKEY-Shift-k)
-			xwrite /view/sel/sel/ctl swap up;;
-		$MODKEY-space)
-			xwrite /view/ctl select toggle;;
-		$MODKEY-Shift-space)
-			xwrite /view/sel/sel/ctl sendto toggle;;
 		$MODKEY-h)
 			xwrite /view/ctl select prev;;
 		$MODKEY-l)
@@ -151,14 +115,50 @@ do
 			xwrite /view/sel/ctl select next;;
 		$MODKEY-k)
 			xwrite /view/sel/ctl select prev;;
+		$MODKEY-space)
+			xwrite /view/ctl select toggle;;
+		$MODKEY-d)
+			xwrite /view/sel/mode default;;
+		$MODKEY-s)
+			xwrite /view/sel/mode stack;;
+		$MODKEY-m)
+			xwrite /view/sel/mode max;;
+		$MODKEY-a)
+			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
+		$MODKEY-p)
+			extern `wmiimenu </tmp/ns.$USER.$DISPLAY/progs` &;;
+		$MODKEY-t)
+			xwrite /ctl view "`wmiir read /tags | wmiimenu`" &;;
 		$MODKEY-[0-9])
 			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
-		$MODKEY-Control-t)
-			xwrite /ctl view "`wmiir read /tags | wmiimenu`" &;;
-		$MODKEY-Shift-[0-9])
-			xwrite /view/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
+		$MODKEY-w,y)
+			wmiirc &;;
+		$MODKEY-q,y)
+			xwrite /ctl quit;;
+		$MODKEY-x)
+			extern xterm &;;
+		$MODKEY-Shift-h)
+			xwrite /view/sel/sel/ctl sendto prev;;
+		$MODKEY-Shift-l)
+			xwrite /view/sel/sel/ctl sendto next;;
+		$MODKEY-Shift-space)
+			xwrite /view/sel/sel/ctl sendto toggle;;
+		$MODKEY-Shift-n)
+			xwrite /view/sel/sel/ctl sendto new;;
+		$MODKEY-Shift-c)
+			xwrite /view/sel/sel/ctl kill;;
 		$MODKEY-Shift-t)
 			xwrite /view/sel/sel/tags "`wmiir read /view/sel/sel/tags | wmiimenu`" &;;
+		$MODKEY-Shift-[0-9])
+			xwrite /view/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
+		$MODKEY-Control-h)
+			xwrite /view/sel/sel/ctl swap prev;;
+		$MODKEY-Control-l)
+			xwrite /view/sel/sel/ctl swap next;;
+		$MODKEY-Control-j)
+			xwrite /view/sel/sel/ctl swap down;;
+		$MODKEY-Control-k)
+			xwrite /view/sel/sel/ctl swap up;;
 		esac;;
 	esac
 done
