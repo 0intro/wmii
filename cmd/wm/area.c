@@ -134,61 +134,78 @@ frame2vector(FrameVector *fv)
 	return (Vector *) fv;
 }
 
-typedef struct {
-	int x;
-	int y;
-} Gravity;
-
 void
 place_client(Area *a, Client *c)
 {
-#if 0
-	static Gravity gravity[] =
-	{ 
-		{0, 0},		/* CENTER */
-		{-1, -1},	/* NW */
-		{0, -1},	/* N */
-		{1, -1},	/* NE */
-		{1, 0},		/* E */
-		{1, 1},		/* SE */
-		{0, 1},		/* S */
-		{-1, 1},	/* SW */
-		{-1, 0}		/* W */
-	};
-	unsigned int dx = rect.width / 3, dy =  rect.height / 3;
-#endif
+	static unsigned int mx, my;
+	static Bool *field = nil;
+	unsigned int i, j, k, x, y, maxx, maxy, dx, dy;
+	XPoint p1 = {0, 0}, p2 = {0, 0};
 	Frame *f = c->frame.data[c->sel];
+
 	if(c->trans)
 		return;
 
-	/* first of all, caculate center */
-	f->rect.x = (rect.width - f->rect.width) / 2;
-	f->rect.y = (rect.height - f->rect.height) / 2;
-
-	
-	switch(a->frame.size) {
-		case 0: return; break;
-		case 1:
-			f->rect.x = 0;
-			f->rect.y = 0;
-			break;
-		case 2:
-			f->rect.x = a->rect.x + a->rect.width - f->rect.width;
-			f->rect.y = 0;
-			break;
-		case 3:
-			f->rect.x = 0;
-			f->rect.y = a->rect.y + a->rect.height - f->rect.height;
-			break;
-		case 4:
-			f->rect.x = a->rect.x + a->rect.width - f->rect.width;
-			f->rect.y = a->rect.y + a->rect.height - f->rect.height;
-			break;
-		default:
-			f->rect.x = (a->frame.size - 4) * def.snap;
-			f->rect.y = (a->frame.size - 4) * def.snap;
-			break;
+	if(!field) {
+		mx = rect.width / 8;
+		my = rect.height / 8;
+		field = cext_emallocz(my * mx * sizeof(Bool));
 	}
+
+	for(y = 0; y < my; y++)
+		for(x = 0; x < mx; x++)
+			field[y*mx + x] = True;
+
+	dx = rect.width / mx;
+	dy = rect.height / my;
+	for(k = 0; k < a->frame.size; k++) {
+		Frame *f = a->frame.data[k];
+		if(f->client == c)
+			continue;
+		x = f->rect.x / dx;
+		y = f->rect.y / dy;
+		maxx = x + f->rect.width / dx;
+		maxy = y + f->rect.height / dy;
+		for(j = y; j < maxy; j++)
+			for(i = x; i < maxx; i++)
+				field[j*mx + i] = False;
+	}
+
+	/*
+	for(y = 0; y < my; y++) {
+		for(x = 0; x < mx; x++)
+			putchar(field[y*mx + x] + '0');
+		putchar('\n');
+	}
+	fflush(stdout);
+	*/
+
+	for(y = 0; y < my; y++)
+		for(x = 0; x < mx; x++) {
+			if(field[y*mx + x]) {
+				for(i = x; field[y*mx + i] && (i < mx); i++);
+				for(j = y; field[j*mx + x] && (j < my); j++);
+				if((i - x) * (j - y) > (p2.x - p1.x) * (p2.y - p1.y)) {
+					p1.x = x;
+					p1.y = y;
+					p2.x = i;
+					p2.y = j;
+				}
+			}
+		}
+
+	p1.x *= dx;
+	p1.y *= dy;
+
+	if(p1.x + f->rect.width < a->rect.x + a->rect.width)
+		f->rect.x = p1.x;
+	else
+		f->rect.x = p1.x + f->rect.width - (a->rect.x + a->rect.width);
+
+	if(p1.y + f->rect.height < a->rect.y + a->rect.height)
+		f->rect.y = p1.y;
+	else
+		f->rect.y = p1.y + f->rect.height - (a->rect.y + a->rect.height);
 }
 
 void
@@ -218,7 +235,7 @@ attach_toarea(Area *a, Client *c)
 		arrange_column(a, False);
 	}
 	else { /* floating */
-		/*place_client(a, c);*/
+		place_client(a, c);
 		resize_client(c, &f->rect,  False);
 	}
 }

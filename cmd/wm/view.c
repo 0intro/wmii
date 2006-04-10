@@ -70,7 +70,6 @@ focus_view(View *v)
 	Client *c;
 	unsigned int i;
 
-	fprintf(stderr, "%d\n", view.size);
 	/* cleanup other empty views */
 	for(i = 0; i < view.size; i++)
 		if(!hasclient(view.data[i])) {
@@ -84,6 +83,8 @@ focus_view(View *v)
 	update_frame_selectors(v);
 
 	/* gives all(!) clients proper geometry (for use of different tags) */
+	if((c = sel_client_of_view(v)))
+		focus_client(c);
 	for(i = 0; i < client.size; i++)
 		if(client.data[i]->frame.size) {
 			Frame *f = client.data[i]->frame.data[client.data[i]->sel];
@@ -97,8 +98,6 @@ focus_view(View *v)
 				XMoveWindow(dpy, client.data[i]->framewin,
 						2 * rect.width + f->rect.x, f->rect.y);
 		}
-	if((c = sel_client_of_view(v)))
-		focus_client(c);
 	update_bar_tags();
 	XSync(dpy, False);
 	XUngrabServer(dpy);
@@ -252,21 +251,21 @@ sel_client_of_view(View *v)
 void
 restack_view(View *v)
 {
-	unsigned int i, j, n = 0;
+	unsigned int i, n = 0;
+	int j;
 	static Window *wins = nil;
 	static unsigned int winssz = 0;
 
 	if(client.size > winssz) {
 		winssz = 2 * client.size;
-		free(wins);
-		wins = cext_emallocz(sizeof(Window) * winssz);
+		wins = realloc(wins, sizeof(Window) * winssz);
 	}
 
 	for(i = 0; i < v->area.size; i++) {
 		Area *a = v->area.data[i];
 		if(a->frame.size) {
 			wins[n++] = a->frame.data[a->sel]->client->framewin;
-			for(j = 0; j < a->frame.size; j++) {
+			for(j = a->frame.size - 1; j >= 0; j--) {
 				Client *c = a->frame.data[j]->client;
 				if((v->sel == i) && (a->sel == j)) {
 					ungrab_mouse(c->framewin, AnyModifier, AnyButton);

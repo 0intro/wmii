@@ -4,7 +4,7 @@
 include ../../config.mk
 
 CFLAGS   += -I../../liblitz -I../../libixp -I../../libcext
-LDFLAGS  += -L../../liblitz -llitz -L../../libixp -lixp -L../../libcext -lcext
+LDFLAGS  += -L../../liblitz -llitz -L../../libixp -lixp -L../../libcext -lcext -lm
 
 # Solaris
 # LDFLAGS += -lsocket
