@@ -66,8 +66,6 @@ $MODKEY-6
 $MODKEY-7
 $MODKEY-8
 $MODKEY-9
-$MODKEY-w,y
-$MODKEY-q,y
 $MODKEY-x
 $MODKEY-Shift-h
 $MODKEY-Shift-l
@@ -131,10 +129,6 @@ do
 			xwrite /ctl view "`wmiir read /tags | wmiimenu`" &;;
 		$MODKEY-[0-9])
 			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
-		$MODKEY-w,y)
-			wmiirc &;;
-		$MODKEY-q,y)
-			xwrite /ctl quit;;
 		$MODKEY-x)
 			extern xterm &;;
 		$MODKEY-Shift-h)
