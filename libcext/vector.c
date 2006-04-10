@@ -14,7 +14,7 @@ cext_vattach(Vector *v, void *p)
 		fprintf(stderr, "%s\n", "Out of memory in cext_evector_attach\n");
 		exit(1);
 	}
-	v->data[v->size - 1]=p;
+	v->data[v->size - 1] = p;
 }
 
 void
@@ -25,9 +25,11 @@ cext_vdetach(Vector *v, void *data)
 		if (v->data[i] == data) {
 			memmove(v->data + i, v->data + i + 1,
 					(v->size - i - 1) * sizeof(void *));
-			--v->size;
-			return;
+			v->data[--v->size] = nil;
+			break;
 		}
-	if(v->size == 0)
+	if(v->size == 0) {
 		free(v->data);
+		v->data = nil;
+	}
 }
