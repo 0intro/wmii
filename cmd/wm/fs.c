@@ -49,7 +49,6 @@ enum { WMII_IOUNIT = 2048 };
  * /event			FsFevent
  * /ctl				FsFctl			command interface (root)
  * /view/			FsDview			view
- * /view/tag		FsFtag			current tag
  * /view/ctl		FsFctl			command interface (tag)
  * /view/sel/		FsDarea
  * /view/1/			FsDarea
@@ -271,8 +270,6 @@ name2type(char *name, unsigned char dir_type)
 		return FsFdata;
 	if(!strncmp(name, "mode", 5))
 		return FsFmode;
-	if(!strncmp(name, "tag", 4))
-		return FsFtag;
 	if((dir_type == FsDbar) && name2label(name))
 		return FsDlabel;
 	if(!strncmp(name, "sel", 4))
@@ -383,11 +380,6 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		break;
 	case FsFmode:
 		if(dir_i1 == -1 || dir_i2 == -1 || dir_type != FsDarea)
-			return -1;
-		goto Mkfile;
-		break;
-	case FsFtag:
-		if(dir_i1 == -1 || dir_type != FsDview)
 			return -1;
 		goto Mkfile;
 		break;
@@ -526,10 +518,6 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 			}
 			break;
 		}
-		break;
-	case FsFtag:
-		if(dir_type == FsDview)
-			return mkstat(stat, dir, wname, strlen(def.tag), IXP_DMREAD);
 		break;
 	case FsFdata:
 		return mkstat(stat, dir, wname, (dir_i1 == label.size) ? 0 : strlen(label.data[dir_i1]->data),
@@ -761,7 +749,7 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDview:
 			/* jump to offset */
-			len = type2stat(&stat, "tag", &m->qid);
+			len = 0;
 			if(view.size) {
 				len += type2stat(&stat, "ctl", &m->qid);
 				if(view.data[i1]->area.size)
@@ -929,8 +917,6 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			break;
 		case FsDview:
-			fcall->count = type2stat(&stat, "tag", &m->qid);
-			p = ixp_enc_stat(p, &stat);
 			if(view.size) {
 				fcall->count += type2stat(&stat, "ctl", &m->qid);
 				p = ixp_enc_stat(p, &stat);
@@ -1059,10 +1045,6 @@ xread(IXPConn *c, Fcall *fcall)
 			if((fcall->count = strlen(label.data[i1]->data)))
 				memcpy(p, label.data[i1]->data, fcall->count);
 			break;
-		case FsFtag:
-			if((fcall->count = strlen(def.tag)))
-				memcpy(p, def.tag, fcall->count);
-			break;
 		case FsFcolors:
 			if(i1 >= label.size)
 				return Enofile;
@@ -1171,6 +1153,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 				srv.running = 0;
 			else if(!strncmp(buf, "view ", 5))
 				select_view(&buf[5]);
+			else if(!strncmp(buf, "retag", 6))
+				retag();
 			else
 				return Enocommand;
 			break;

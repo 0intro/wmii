@@ -328,7 +328,6 @@ gravitate(Client *c, Bool invert)
 void
 manage_client(Client *c)
 {
-	View *v;
 	Client *trans;
 
 	if(c->trans && (trans = win2client(c->trans))) {
@@ -336,16 +335,9 @@ manage_client(Client *c)
 		str2tagvector(&c->tag, c->tags);
 	}
 	else
-		match_tags(c);
+		match_tags(c, True);
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
-
-	v = view.size ? view.data[sel] : alloc_view(def.tag);
-	if(!strlen(c->tags)) {
-		cext_strlcpy(c->tags, v->name, sizeof(c->tags));
-		str2tagvector(&c->tag, c->tags);
-	}
-
 	update_tags();
 }
 

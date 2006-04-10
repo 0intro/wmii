@@ -24,7 +24,7 @@ static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. G
 static void
 usage()
 {
-	fprintf(stderr, "%s", "usage: wmiiwm -a <address> [-t <default tag>] [-c] [-v]\n");
+	fprintf(stderr, "%s", "usage: wmiiwm -a <address> [-c] [-v]\n");
 	exit(1);
 }
 
@@ -219,7 +219,6 @@ main(int argc, char *argv[])
 	XSetWindowAttributes wa;
 
 	/* command line args */
-	def.tag[0] = 0;
 	if(argc > 1) {
 		for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
 			switch (argv[i][1]) {
@@ -229,9 +228,6 @@ main(int argc, char *argv[])
 				break;
 			case 'c':
 				checkwm = 1;
-				break;
-			case 't':
-				cext_strlcpy(def.tag, argv[++i], sizeof(def.tag));
 				break;
 			case 'a':
 				if(i + 1 < argc)
@@ -302,14 +298,12 @@ main(int argc, char *argv[])
 	key.size = 0;
 	label.data = nil;
 	label.size = 0;
-	def.rules = nil;
-	def.rulessz = 0;
+	def.rules = strdup("/.*/ -> 1\n/.*/ -> !");
+	def.rulessz = strlen(def.rules);
 	def.keys = nil;
 	def.keyssz = 0;
 	def.font = strdup(BLITZ_FONT);
 	def.border = 2;
-	if(!strlen(def.tag))
-		cext_strlcpy(def.tag, "1", sizeof(def.tag));
 	cext_strlcpy(def.selcolor, BLITZ_SELCOLORS, sizeof(def.selcolor));
 	blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
 	cext_strlcpy(def.normcolor, BLITZ_NORMCOLORS, sizeof(def.normcolor));

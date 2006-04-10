@@ -31,9 +31,12 @@ xwrite /def/normcolors $WMII_NORMCOLORS
 
 # TAGGING RULES
 wmiir write /def/rules <<EOF
+/.*/ -> 1
+/.*/ -> !
 /XMMS:.*/ -> ~
 /Gimp.*:.*/ -> ~
 EOF
+xwrite /ctl retag
 
 # MISC
 xsetroot -solid '#0b1014'

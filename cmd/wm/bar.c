@@ -118,7 +118,7 @@ draw_bar()
 	for(i = 0; (i < label.size) && (w < brect.width); i++) {
 		l = label.data[i];
 		if(l->intern) {
-			if(view.size && !strncmp(l->name, def.tag, sizeof(l->name)))
+			if(view.size && !strncmp(l->name, view.data[sel]->name, sizeof(l->name)))
 				l->color = def.sel;
 			else
 				l->color = def.norm;

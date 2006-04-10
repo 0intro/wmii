@@ -142,6 +142,7 @@ typedef struct {
 void
 place_client(Area *a, Client *c)
 {
+#if 0
 	static Gravity gravity[] =
 	{ 
 		{0, 0},		/* CENTER */
@@ -155,6 +156,7 @@ place_client(Area *a, Client *c)
 		{-1, 0}		/* W */
 	};
 	unsigned int dx = rect.width / 3, dy =  rect.height / 3;
+#endif
 	Frame *f = c->frame.data[c->sel];
 	if(c->trans)
 		return;

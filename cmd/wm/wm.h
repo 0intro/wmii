@@ -59,7 +59,6 @@ enum {
 	FsFrules,
 	FsFtags,
 	FsFclass,
-	FsFtag,
 	FsFmode
 };
 
@@ -141,7 +140,6 @@ typedef struct {
 typedef struct {
 	char selcolor[24];
 	char normcolor[24];
-	char tag[256];
 	char *font;
 	Color sel;
 	Color norm;
@@ -263,13 +261,14 @@ void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 
 /* rule.c */
 void update_rules();
-void match_tags(Client *c);
+void match_tags(Client *c, Bool newclient);
 
 /* tag.c */
 Bool istag(char *t);
 void ensure_tag(char *t);
 void update_tags();
 void str2tagvector(TagVector *tv, const char *tags);
+void retag();
 
 /* view.c */
 void arrange_view(View *v, Bool dirty);

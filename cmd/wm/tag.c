@@ -105,3 +105,13 @@ str2tagvector(TagVector *tv, const char *tags)
 	for(i = 0; i < n; i++)
 		cext_vattach(tag2vector(tv), strdup(toks[i]));
 }
+
+void
+retag()
+{
+	unsigned int i;
+	for(i = 0; i < client.size; i++)
+		match_tags(client.data[i], False);
+	update_tags();
+}
+

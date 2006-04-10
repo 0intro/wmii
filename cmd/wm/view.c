@@ -81,8 +81,6 @@ focus_view(View *v)
 	XGrabServer(dpy);
 	sel = view2index(v);
 
-	cext_strlcpy(def.tag, v->name, sizeof(def.tag));
-
 	update_frame_selectors(v);
 
 	/* gives all(!) clients proper geometry (for use of different tags) */

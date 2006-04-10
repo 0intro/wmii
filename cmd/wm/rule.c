@@ -99,7 +99,7 @@ update_rules()
 
 
 static void
-match(Client *c, const char *prop)
+match(Client *c, const char *prop, Bool newclient)
 {
 	unsigned int i;
 	regmatch_t tmpregm;
@@ -109,6 +109,12 @@ match(Client *c, const char *prop)
 		if(r->is_valid && !regexec(&r->regex, prop, 1, &tmpregm, 0)) {
 			if(!strncmp(r->tags, "~", 2))
 				c->floating = True;
+			else if(!strncmp(r->tags, "!", 2)) {
+				if(view.size && newclient) {
+					cext_strlcpy(c->tags, view.data[sel]->name, sizeof(c->tags));
+					str2tagvector(&c->tag, c->tags);
+				}
+			}
 			else {
 				cext_strlcpy(c->tags, r->tags, sizeof(c->tags));
 				str2tagvector(&c->tag, c->tags);
@@ -118,10 +124,10 @@ match(Client *c, const char *prop)
 }
 
 void
-match_tags(Client *c)
+match_tags(Client *c, Bool newclient)
 {
 	if(!def.rules)
 		return;
-	match(c, c->name);
-	match(c, c->classinst);
+	match(c, c->name, newclient);
+	match(c, c->classinst, newclient);
 }
