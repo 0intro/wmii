@@ -28,4 +28,6 @@ cext_vdetach(Vector *v, void *data)
 			--v->size;
 			return;
 		}
+	if(v->size == 0)
+		free(v->data);
 }
