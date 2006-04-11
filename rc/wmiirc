@@ -70,7 +70,6 @@ $MODKEY-Return
 $MODKEY-Shift-h
 $MODKEY-Shift-l
 $MODKEY-Shift-space
-$MODKEY-Shift-n
 $MODKEY-Shift-c
 $MODKEY-Shift-t
 $MODKEY-Shift-0
@@ -137,8 +136,6 @@ do
 			xwrite /view/sel/sel/ctl sendto next;;
 		$MODKEY-Shift-space)
 			xwrite /view/sel/sel/ctl sendto toggle;;
-		$MODKEY-Shift-n)
-			xwrite /view/sel/sel/ctl sendto new;;
 		$MODKEY-Shift-c)
 			xwrite /view/sel/sel/ctl kill;;
 		$MODKEY-Shift-t)

@@ -545,23 +545,29 @@ send2area_client(Client *c, char *arg)
 
 	if(i == -1)
 		return;
-	if(!strncmp(arg, "new", 4) && i) {
-		if(a->frame.size == 1 || v->area.size - 1 >= rect.width / MIN_COLWIDTH)
-			return;
-		to = alloc_area(v);
-		arrange_view(v, True);
-	}
-	else if(!strncmp(arg, "prev", 5) && i) {
-		if(i == 1)
-			to = v->area.data[v->area.size - 1];
+
+	if(!strncmp(arg, "prev", 5) && i) {
+		if(i == 1) {
+			Area *p, *n;
+			unsigned int j;
+			p = to = alloc_area(v);
+			for(j = 1; j < v->area.size; j++) {
+				n = v->area.data[j];
+				v->area.data[j] = p;
+				p = n;
+			}
+			arrange_view(v, True);
+		}
 		else
 			to = v->area.data[i - 1];
 	}
 	else if(!strncmp(arg, "next", 5) && i) {
 		if(i < v->area.size - 1)
 			to = v->area.data[i + 1];
-		else
-			to = v->area.data[1];
+		else {
+			to = alloc_area(v);
+			arrange_view(v, True);
+		}
 	}
 	else if(!strncmp(arg, "toggle", 7)) {
 		if(i)
