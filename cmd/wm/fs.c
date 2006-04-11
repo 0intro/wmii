@@ -50,6 +50,7 @@ enum { WMII_IOUNIT = 2048 };
  * /ctl				FsFctl			command interface (root)
  * /view/			FsDview			view
  * /view/ctl		FsFctl			command interface (tag)
+ * /view/name		FsFname			current view name
  * /view/sel/		FsDarea
  * /view/1/			FsDarea
  * /view/1/ctl		FsFctl			command interface (area)
@@ -389,11 +390,12 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		if(dir_type == FsDroot)
 			return -1;
 	case FsFtags:
-		if(dir_type != FsDroot && dir_type != FsDGclient && dir_type != FsDclient)
+		if((dir_type != FsDroot) && (dir_type != FsDview)
+			&& (dir_type != FsDGclient) && (dir_type != FsDclient))
 			return -1;
 		if((dir_type == FsDclient) && ((dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1)))
 			return -1;
-		else if((dir_type == FsDGclient) && (dir_i1 == -1))
+		else if(dir_i1 == -1)
 			return -1;
 		goto Mkfile;
 		break;
@@ -497,6 +499,8 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 			f = view.data[dir_i1]->area.data[dir_i2]->frame.data[dir_i3];
 			return mkstat(stat, dir, wname, strlen(f->client->name), IXP_DMREAD);
 		}
+		else if(dir_type == FsDview)
+			return mkstat(stat, dir, wname, view.size ? strlen(view.data[dir_i1]->name) : 0, IXP_DMREAD);
 		else
 			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->name), IXP_DMREAD);
 		break;
@@ -751,6 +755,7 @@ xread(IXPConn *c, Fcall *fcall)
 			/* jump to offset */
 			len = 0;
 			if(view.size) {
+				len = type2stat(&stat, "name", &m->qid);
 				len += type2stat(&stat, "ctl", &m->qid);
 				if(view.data[i1]->area.size)
 					len += type2stat(&stat, "sel", &m->qid);
@@ -918,6 +923,8 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDview:
 			if(view.size) {
+				fcall->count = type2stat(&stat, "name", &m->qid);
+				p = ixp_enc_stat(p, &stat);
 				fcall->count += type2stat(&stat, "ctl", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 				if(view.data[i1]->area.size) {
@@ -1008,6 +1015,10 @@ xread(IXPConn *c, Fcall *fcall)
 			if(m->qid.dir_type == FsDclient) {
 				if((fcall->count = strlen(view.data[i1]->area.data[i2]->frame.data[i3]->client->name)))
 					memcpy(p, view.data[i1]->area.data[i2]->frame.data[i3]->client->name, fcall->count);
+			}
+			else if(m->qid.dir_type == FsDview) {
+				if((fcall->count = strlen(view.data[i1]->name)))
+					memcpy(p, view.data[i1]->name, fcall->count);
 			}
 			else {
 				if((fcall->count = strlen(client.data[i1]->name)))
