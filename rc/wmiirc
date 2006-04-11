@@ -33,8 +33,8 @@ xwrite /def/normcolors $WMII_NORMCOLORS
 wmiir write /def/rules <<EOF
 /.*/ -> 1
 /.*/ -> !
-/XMMS:.*/ -> ~
-/Gimp.*:.*/ -> ~
+/XMMS.*/ -> ~
+/Gimp.*/ -> ~
 EOF
 xwrite /ctl retag
 
@@ -125,7 +125,7 @@ do
 		$MODKEY-p)
 			extern `wmiimenu </tmp/ns.$USER.$DISPLAY/progs` &;;
 		$MODKEY-t)
-			xwrite /ctl view "`wmiir read /tags | wmiimenu`" &;;
+			xwrite /ctl view "`wmiir read /tags | sort | wmiimenu`" &;;
 		$MODKEY-[0-9])
 			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Return)
