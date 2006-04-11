@@ -55,7 +55,7 @@ $MODKEY-s
 $MODKEY-m
 $MODKEY-a
 $MODKEY-p
-$MODKEY-Return
+$MODKEY-t
 $MODKEY-0
 $MODKEY-1
 $MODKEY-2
@@ -66,7 +66,7 @@ $MODKEY-6
 $MODKEY-7
 $MODKEY-8
 $MODKEY-9
-$MODKEY-x
+$MODKEY-Return
 $MODKEY-Shift-h
 $MODKEY-Shift-l
 $MODKEY-Shift-space
@@ -125,11 +125,11 @@ do
 			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
 		$MODKEY-p)
 			extern `wmiimenu </tmp/ns.$USER.$DISPLAY/progs` &;;
-		$MODKEY-Return)
+		$MODKEY-t)
 			xwrite /ctl view "`wmiir read /tags | wmiimenu`" &;;
 		$MODKEY-[0-9])
 			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
-		$MODKEY-x)
+		$MODKEY-Return)
 			extern xterm &;;
 		$MODKEY-Shift-h)
 			xwrite /view/sel/sel/ctl sendto prev;;
