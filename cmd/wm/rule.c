@@ -135,8 +135,8 @@ match_tags(Client *c)
 {
 	if(!def.rules)
 		goto Fallback;
-	match(c, c->name);
 	match(c, c->classinst);
+	match(c, c->name);
 
 Fallback:
 	if(!strlen(c->tags))
