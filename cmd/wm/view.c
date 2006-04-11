@@ -144,7 +144,8 @@ name2view(char *name)
 	unsigned int i;
 
 	for(i = 0; i < view.size; i++)
-		if(!strncmp(view.data[i]->name, name, strlen(name)))
+		if(!strncmp(view.data[i]->name, name, strlen(name))
+			&& !strncmp(view.data[i]->name, name, strlen(view.data[i]->name)))
 			return view.data[i];
 	return nil;
 }

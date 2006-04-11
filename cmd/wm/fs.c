@@ -395,7 +395,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 			return -1;
 		if((dir_type == FsDclient) && ((dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1)))
 			return -1;
-		else if(dir_i1 == -1)
+		else if(((dir_type == FsDview) || (dir_type == FsDGclient)) && (dir_i1 == -1))
 			return -1;
 		goto Mkfile;
 		break;
