@@ -123,7 +123,11 @@ void
 match_tags(Client *c, Bool newclient)
 {
 	if(!def.rules)
-		return;
+		goto Fallback;
 	match(c, c->name, newclient);
 	match(c, c->classinst, newclient);
+
+Fallback:
+	if(!strlen(c->tags))
+		cext_strlcpy(c->tags, "nil", sizeof(c->tags));
 }

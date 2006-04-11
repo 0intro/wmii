@@ -297,8 +297,8 @@ main(int argc, char *argv[])
 	key.size = 0;
 	label.data = nil;
 	label.size = 0;
-	def.rules = strdup("/.*/ -> 1\n/.*/ -> !");
-	def.rulessz = strlen(def.rules);
+	def.rules = nil;
+	def.rulessz = 0;
 	def.keys = nil;
 	def.keyssz = 0;
 	def.font = strdup(BLITZ_FONT);
