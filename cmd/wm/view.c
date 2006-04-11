@@ -369,12 +369,3 @@ update_views()
 	else
 		update_bar_tags();
 }
-
-void
-retag()
-{
-	unsigned int i;
-	for(i = 0; i < client.size; i++)
-		match_tags(client.data[i], False);
-	update_views();
-}

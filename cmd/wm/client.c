@@ -333,7 +333,7 @@ manage_client(Client *c)
 	if(c->trans && (trans = win2client(c->trans)))
 		cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
 	else
-		match_tags(c, True);
+		match_tags(c);
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	update_views(c);

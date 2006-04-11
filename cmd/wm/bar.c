@@ -64,7 +64,8 @@ destroy_label(Label *l)
 unsigned int
 bar_height()
 {
-	return xfont->ascent + xfont->descent + 4;
+	enum { BAR_PADDING = 4 };
+	return xfont->ascent + xfont->descent + BAR_PADDING;
 }
 
 void

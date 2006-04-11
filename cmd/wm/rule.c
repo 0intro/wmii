@@ -99,7 +99,7 @@ update_rules()
 
 
 static void
-match(Client *c, const char *prop, Bool newclient)
+match(Client *c, const char *prop)
 {
 	unsigned int i;
 	regmatch_t tmpregm;
@@ -110,8 +110,19 @@ match(Client *c, const char *prop, Bool newclient)
 			if(!strncmp(r->tags, "~", 2))
 				c->floating = True;
 			else if(!strncmp(r->tags, "!", 2)) {
-				if(view.size && newclient)
-					cext_strlcpy(c->tags, view.data[sel]->name, sizeof(c->tags));
+				if(view.size) {
+					if(c->view.size) {
+						c->tags[0] = 0;
+						unsigned int j;
+						for(j = 0; j < c->view.size; j++) {
+							cext_strlcat(c->tags, c->view.data[j]->name, sizeof(c->tags));
+							if(j + 1 < c->view.size)
+								cext_strlcat(c->tags, "+", sizeof(c->tags));
+						}
+					}
+					else
+						cext_strlcpy(c->tags, view.data[sel]->name, sizeof(c->tags));
+				}
 			}
 			else
 				cext_strlcpy(c->tags, r->tags, sizeof(c->tags));
@@ -120,14 +131,23 @@ match(Client *c, const char *prop, Bool newclient)
 }
 
 void
-match_tags(Client *c, Bool newclient)
+match_tags(Client *c)
 {
 	if(!def.rules)
 		goto Fallback;
-	match(c, c->name, newclient);
-	match(c, c->classinst, newclient);
+	match(c, c->name);
+	match(c, c->classinst);
 
 Fallback:
 	if(!strlen(c->tags))
 		cext_strlcpy(c->tags, "nil", sizeof(c->tags));
+}
+
+void
+retag()
+{
+	unsigned int i;
+	for(i = 0; i < client.size; i++)
+		match_tags(client.data[i]);
+	update_views();
 }
