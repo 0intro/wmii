@@ -152,11 +152,20 @@ name2view(char *name)
 View *
 get_view(char *name)
 {
+	unsigned int i;
 	View *v = name2view(name);
-	return v ? v : alloc_view(name);
+
+	if(!v)
+		v = alloc_view(name);
+
+	for(i = 0; i < client.size; i++)
+		if(strstr(client.data[i]->tags, "*"))
+			attach_toview(v, client.data[i]);
+
+	return v;
 }
 
-Bool
+static Bool
 hasclient(View *v)
 {
 	unsigned int i;
@@ -175,7 +184,7 @@ select_view(char *arg)
 	focus_view(v);
 }
 
-Bool
+static Bool
 clientofview(View *v, Client *c)
 {
 	unsigned int i;
@@ -205,7 +214,8 @@ attach_toview(View *v, Client *c)
 {
 	Area *a;
 
-	fprintf(stderr, "attach_toview: %s\n", c->name);
+	if(clientofview(v, c))
+		return;
 
 	if(c->trans || c->floating)
 		a = v->area.data[0];
@@ -304,21 +314,25 @@ update_views(Client *c)
 		unsigned int j, n;
 		Bool match;
 
-		fprintf(stderr, "tags: %s\n", c->tags);
 		cext_strlcpy(buf, c->tags, sizeof(buf));
 		n = cext_tokenize(toks, 16, buf, '+');
 
 		for(i = 0; i < n; i++) {
-			View *v = get_view(toks[i]);
-			if(!clientofview(v, c))
-				attach_toview(v, c);
+			if(!strncmp(toks[i], "*", 2)) {
+				for(j = 0; j < view.size; j++) {
+					attach_toview(view.data[j], c);
+				}
+			}
+			else
+				attach_toview(get_view(toks[i]), c);
 		}
 
 		for(i = 0; i < c->view.size; i++) {
 			View *v = c->view.data[i];
 			match = False;
 			for(j = 0; j < n; j++) {
-				if(!strncmp(v->name, toks[j], sizeof(v->name)))
+				if(!strncmp(v->name, toks[j], sizeof(v->name))
+					|| !strncmp(toks[j], "*", 2))
 					match = True;
 			}
 			if(!match)
