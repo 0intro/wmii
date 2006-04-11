@@ -226,7 +226,6 @@ void send2area_client(Client *c, char *arg);
 void resize_all_clients();
 void focus(Client *c);
 int cid2index(unsigned short id);
-Bool clienthastag(Client *c, const char *t);
 void swap_client(Client *c, char *arg);
 
 /* event.c */
@@ -262,7 +261,6 @@ void update_rules();
 void match_tags(Client *c, Bool newclient);
 
 /* view.c */
-Vector *view2vector(ViewVector *vv);
 void arrange_view(View *v, Bool dirty);
 View *alloc_view(char *name);
 void focus_view(View *v);
@@ -277,7 +275,7 @@ void restack_view(View *v);
 View *name2view(char *name);
 void destroy_view(View *v);
 View *get_view(char *name);
-void update_views(Client *c);
+void update_views();
 void retag();
 
 /* wm.c */

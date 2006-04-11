@@ -620,14 +620,3 @@ cid2index(unsigned short id)
 			return i;
 	return -1;
 }
-
-Bool
-clienthastag(Client *c, const char *t)
-{
-	unsigned int i;
-	for(i = 0; i < c->view.size; i++)
-		if(!strncmp(c->view.data[i]->name, t, strlen(t))
-				|| !strncmp(c->tags, "*", 2))
-			return True;
-	return False;
-}

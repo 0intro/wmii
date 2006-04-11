@@ -8,7 +8,7 @@
 
 #include "wm.h"
 
-Vector *
+static Vector *
 view2vector(ViewVector *vv)
 {
 	return (Vector *) vv;
@@ -152,27 +152,18 @@ name2view(char *name)
 View *
 get_view(char *name)
 {
-	unsigned int i;
 	View *v = name2view(name);
-
-	if(!v)
-		v = alloc_view(name);
-
-	for(i = 0; i < client.size; i++)
-		if(strstr(client.data[i]->tags, "*"))
-			attach_toview(v, client.data[i]);
-
-	return v;
+	return v ? v : alloc_view(name);
 }
 
 static Bool
-hasclient(View *v)
+isempty(View *v)
 {
 	unsigned int i;
 	for(i = 0; i < v->area.size; i++)
 		if(v->area.data[i]->frame.size)
-			return True;
-	return False;
+			return False;
+	return True;
 }
 
 void
@@ -185,11 +176,11 @@ select_view(char *arg)
 }
 
 static Bool
-clientofview(View *v, Client *c)
+isclientof(View *v, Client *c)
 {
 	unsigned int i;
-	for(i = 0; i < c->view.size; i++)
-		if(v == c->view.data[i])
+	for(i = 0; i < v->area.size; i++)
+		if(clientofarea(v->area.data[i], c))
 			return True;
 	return False;
 }
@@ -199,8 +190,6 @@ detach_fromview(View *v, Client *c)
 {
 	unsigned int i;
 
-	fprintf(stderr, "detach_fromview: %s\n", c->name);
-	cext_vdetach(view2vector(&c->view), v);
 	for(i = 0; i < v->area.size; i++) {
 		if(clientofarea(v->area.data[i], c)) {
 			detach_fromarea(v->area.data[i], c);
@@ -214,7 +203,7 @@ attach_toview(View *v, Client *c)
 {
 	Area *a;
 
-	if(clientofview(v, c))
+	if(isclientof(v, c))
 		return;
 
 	if(c->trans || c->floating)
@@ -225,7 +214,6 @@ attach_toview(View *v, Client *c)
 	attach_toarea(a, c);
 	map_client(c);
 	XMapWindow(dpy, c->framewin);
-	cext_vattach(view2vector(&c->view), v);
 }
 
 Client *
@@ -303,48 +291,80 @@ arrange_view(View *v, Bool dirty)
 	}
 }
 
-void
-update_views(Client *c)
+static void
+update_client_views(Client *c)
+{
+	char buf[256];
+	char *toks[16];
+	unsigned int i, n;
+
+	cext_strlcpy(buf, c->tags, sizeof(buf));
+	n = cext_tokenize(toks, 16, buf, '+');
+
+	while(c->view.size)
+		cext_vdetach(view2vector(&c->view), c->view.data[0]);
+
+	for(i = 0; i < n; i++) {
+		if(!strncmp(toks[i], "*", 2))
+			continue;
+		cext_vattach(view2vector(&c->view), get_view(toks[i]));
+	}
+}
+
+static Bool
+isviewof(Client *c, View *v)
 {
 	unsigned int i;
+	for(i = 0; i < c->view.size; i++)
+		if(c->view.data[i] == v)
+			return True;
+	return False;
+}
 
-	if(c) {
-		char buf[256];
-		char *toks[16];
-		unsigned int j, n;
-		Bool match;
+static View *
+emptyview()
+{
+	unsigned int i;
+	for(i = 0; i < view.size; i++)
+		if(isempty(view.data[i]))
+			return view.data[i];
+	return nil;
+}
 
-		cext_strlcpy(buf, c->tags, sizeof(buf));
-		n = cext_tokenize(toks, 16, buf, '+');
+void
+update_views()
+{
+	unsigned int i, j;
+	View *v, *old = view.size ? view.data[sel] : nil;
 
-		for(i = 0; i < n; i++) {
-			if(!strncmp(toks[i], "*", 2)) {
-				for(j = 0; j < view.size; j++) {
+	for(i = 0; i < client.size; i++)
+		update_client_views(client.data[i]);
+
+	for(i = 0; i < client.size; i++) {
+		Client *c = client.data[i];
+		for(j = 0; j < view.size; j++) {
+			if(strstr(c->tags, "*"))
+				attach_toview(view.data[j], c);
+			else if(isviewof(c, view.data[j])) {
+				if(!isclientof(view.data[j], c))
 					attach_toview(view.data[j], c);
-				}
 			}
-			else
-				attach_toview(get_view(toks[i]), c);
-		}
-
-		for(i = 0; i < c->view.size; i++) {
-			View *v = c->view.data[i];
-			match = False;
-			for(j = 0; j < n; j++) {
-				if(!strncmp(v->name, toks[j], sizeof(v->name))
-					|| !strncmp(toks[j], "*", 2))
-					match = True;
+			else {
+				if(isclientof(view.data[j], c))
+					detach_fromview(view.data[j], c);
 			}
-			if(!match)
-				detach_fromview(v, c);
 		}
 	}
 
-	for(i = 0; i < view.size; i++)
-		if(!hasclient(view.data[i]))
-			destroy_view(view.data[i]);
+	while((v = emptyview())) {
+		if(v == old)
+			old = nil;
+		destroy_view(v);
+	}
 
-	if(view.size)
+	if(old)
+		focus_view(old);
+	else if(view.size)
 		focus_view(view.data[sel]);
 	else
 		update_bar_tags();
@@ -354,8 +374,7 @@ void
 retag()
 {
 	unsigned int i;
-	for(i = 0; i < client.size; i++) {
+	for(i = 0; i < client.size; i++)
 		match_tags(client.data[i], False);
-		update_views(client.data[i]);
-	}
+	update_views();
 }
