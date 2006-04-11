@@ -183,8 +183,8 @@ place_client(Area *a, Client *c)
 	for(y = 0; y < my; y++)
 		for(x = 0; x < mx; x++) {
 			if(field[y*mx + x]) {
-				for(i = x; field[y*mx + i] && (i < mx); i++);
-				for(j = y; field[j*mx + x] && (j < my); j++);
+				for(i = x; (i < mx) && field[y*mx + i]; i++);
+				for(j = y; (j < my) && field[j*mx + x]; j++);
 				if((i - x) * (j - y) > (p2.x - p1.x) * (p2.y - p1.y)) {
 					p1.x = x;
 					p1.y = y;
