@@ -11,22 +11,22 @@ Note: $MODKEY is the Alt-key by default.
 
 Let's go!
 
-- Start two xterms by pressing $MODKEY-t twice.
+- Start two xterms by pressing $MODKEY-x twice.
 - Switch between the three windows: $MODKEY-j, $MODKEY-k
   If you prefer the mouse, then just click the desired window.
-- Create a new column with: $MODKEY-n
+- Create a new column with: $MODKEY-Shift-n
 - Tag the selected client with another tag: $MODKEY-Shift-2
   IMPORTANT: before you do next step, note that you can select the current tag
 		  with $MODKEY-1.
 - Select the new tag: $MODKEY-2
 - Select the floating area: $MODKEY-space
-- Open the programs menu: $MODKEY-Control-p
+- Open the programs menu: $MODKEY-p
   Type 'xclock' and press Enter.
 - Resize the xclock window: left-click on the border and, while holding the
   button down, move the cursor around.
 - Move the xclock window: left-click on the title bar and, while holding
   the button down, move the cursor around.
-- Open the actions menu: $MODKEY-Control-a
+- Open the actions menu: $MODKEY-a
   Rerun wmiirc by selecting 'wmiirc'.
 - Working with mouse efficiently:
   selecting a window: just click the desired window
