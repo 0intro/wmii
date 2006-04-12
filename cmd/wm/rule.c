@@ -135,11 +135,11 @@ match_tags(Client *c)
 {
 	if(!def.rules)
 		goto Fallback;
-	match(c, c->classinst);
 	match(c, c->name);
+	match(c, c->classinst);
 
 Fallback:
-	if(!strlen(c->tags))
+	if(!strlen(c->tags) || !strncmp(c->tags, "*", 2))
 		cext_strlcpy(c->tags, "nil", sizeof(c->tags));
 }
 
