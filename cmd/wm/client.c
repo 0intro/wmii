@@ -240,23 +240,36 @@ draw_client(Client *c)
 	d.rect.height = height_of_bar();
 	d.notch = nil;
 
-	d.align = WEST;
-	d.rect.x = d.rect.height + XTextWidth(xfont, c->tags, strlen(c->tags));
-	d.rect.width = c->frame.data[c->sel]->rect.width - d.rect.x;
-	d.data = c->name;
-	blitz_drawlabel(dpy, &d);
-	blitz_drawborder(dpy, &d);
-
+	/* max mode bar */
 	if(c->frame.data[c->sel]->area->mode == Colmax) {
-		/* invert tag label */
 		unsigned long tmp = d.color.fg;
+		char buf[256];
 		d.color.fg = d.color.bg;
 		d.color.bg = tmp;
+		snprintf(buf, sizeof(buf), "%d/%d",
+				idx_of_frame(c->frame.data[c->sel]) + 1,
+				c->frame.data[c->sel]->area->frame.size);
+		d.align = CENTER;
+		d.rect.width = d.rect.height + XTextWidth(xfont, buf, strlen(buf));
+		d.data = buf;
+		blitz_drawlabel(dpy, &d);
+		blitz_drawborder(dpy, &d);
+		d.color.bg = d.color.fg;
+		d.color.fg = tmp;
+		d.rect.x += d.rect.width;
 	}
-	d.align = CENTER;
-	d.rect.width = d.rect.x;
-	d.rect.x = 0;
+
+	/* tag bar */
+	d.rect.width = d.rect.height + XTextWidth(xfont, c->tags, strlen(c->tags));
 	d.data = c->tags;
+	blitz_drawlabel(dpy, &d);
+	blitz_drawborder(dpy, &d);
+	d.rect.x += d.rect.width;
+
+	/* title bar */
+	d.align = WEST;
+	d.rect.width = c->frame.data[c->sel]->rect.width - d.rect.x;
+	d.data = c->name;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
 
@@ -549,7 +562,7 @@ send_client_to(Client *c, char *arg)
 	if(!strncmp(arg, "prev", 5) && i) {
 		if(i > 1)
 			to = v->area.data[i - 1];
-		else if(a->frame.size == 1) {
+		else if(a->frame.size > 1) {
 			Area *p, *n;
 			unsigned int j;
 			p = to = create_area(v);
@@ -566,7 +579,7 @@ send_client_to(Client *c, char *arg)
 	else if(!strncmp(arg, "next", 5) && i) {
 		if(i < v->area.size - 1)
 			to = v->area.data[i + 1];
-		else if(a->frame.size == 1) {
+		else if(a->frame.size > 1) {
 			to = create_area(v);
 			arrange_view(v, True);
 		}
