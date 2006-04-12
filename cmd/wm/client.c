@@ -547,11 +547,10 @@ send_client_to(Client *c, char *arg)
 		return;
 
 	if(!strncmp(arg, "prev", 5) && i) {
-		if(a->frame.size == 1)
-			return;
 		if(i > 1)
 			to = v->area.data[i - 1];
-		else {
+		else if(a->frame.size == 1) {
+			return;
 			Area *p, *n;
 			unsigned int j;
 			p = to = create_area(v);
@@ -562,16 +561,18 @@ send_client_to(Client *c, char *arg)
 			}
 			arrange_view(v, True);
 		}
+		else
+			return;
 	}
 	else if(!strncmp(arg, "next", 5) && i) {
-		if(a->frame.size == 1)
-			return;
 		if(i < v->area.size - 1)
 			to = v->area.data[i + 1];
-		else {
+		else if(a->frame.size == 1) {
 			to = create_area(v);
 			arrange_view(v, True);
 		}
+		else
+			return;
 	}
 	else if(!strncmp(arg, "toggle", 7)) {
 		if(i)
