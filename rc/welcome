@@ -11,10 +11,10 @@ Note: $MODKEY is the Alt-key by default.
 
 Let's go!
 
-- Start two xterms by pressing $MODKEY-x twice.
+- Start two xterms by pressing $MODKEY-Return twice.
 - Switch between the three windows: $MODKEY-j, $MODKEY-k
   If you prefer the mouse, then just click the desired window.
-- Create a new column with: $MODKEY-Shift-n
+- Create a new column with: $MODKEY-Shift-l
 - Tag the selected client with another tag: $MODKEY-Shift-2
   IMPORTANT: before you do next step, note that you can select the current tag
 		  with $MODKEY-1.
