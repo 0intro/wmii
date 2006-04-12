@@ -139,7 +139,7 @@ apply_rules(Client *c)
 	match(c, c->classinst);
 
 Fallback:
-	if(!strlen(c->tags) || (view.size && !strncmp(c->tags, "*", 2)))
+	if(!strlen(c->tags) || (!view.size && !strncmp(c->tags, "*", 2)))
 		cext_strlcpy(c->tags, "nil", sizeof(c->tags));
 }
 
