@@ -106,7 +106,7 @@ do
 		then
 			exit
 		fi;;
-	LabelClick)
+	BarClick)
 		xwrite /ctl view "$1";;
 	Key)
 		case "$1" in
