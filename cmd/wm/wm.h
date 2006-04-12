@@ -37,13 +37,14 @@ enum {
 enum {                          
 	FsDroot,
 	FsDdef,
+	FsDviews,
 	FsDview,
 	FsDarea,
 	FsDclients,
 	FsDclient,
 	FsDGclient,
+	FsDbars,
 	FsDbar,
-	FsDlabel,
 	FsFdata,
 	FsFcolors,
 	FsFfont,
@@ -58,9 +59,9 @@ enum {
 	FsFctl,
 	FsFname,
 	FsFrules,
-	FsFtags,
 	FsFclass,
-	FsFmode
+	FsFmode,
+	FsFtags
 };
 
 enum { MIN_COLWIDTH = 64 };

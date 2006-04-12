@@ -111,51 +111,51 @@ do
 	Key)
 		case "$1" in
 		$MODKEY-$LEFT)
-			xwrite /view/ctl select prev;;
-		$MODKEY-$RIGHT)
-			xwrite /view/ctl select next;;
-		$MODKEY-$DOWN)
-			xwrite /view/sel/ctl select next;;
-		$MODKEY-$UP)
 			xwrite /view/sel/ctl select prev;;
+		$MODKEY-$RIGHT)
+			xwrite /view/sel/ctl select next;;
+		$MODKEY-$DOWN)
+			xwrite /view/sel/sel/ctl select next;;
+		$MODKEY-$UP)
+			xwrite /view/sel/sel/ctl select prev;;
 		$MODKEY-space)
-			xwrite /view/ctl select toggle;;
+			xwrite /view/sel/ctl select toggle;;
 		$MODKEY-d)
-			xwrite /view/sel/mode default;;
+			xwrite /view/sel/sel/mode default;;
 		$MODKEY-s)
-			xwrite /view/sel/mode stack;;
+			xwrite /view/sel/sel/mode stack;;
 		$MODKEY-m)
-			xwrite /view/sel/mode max;;
+			xwrite /view/sel/sel/mode max;;
 		$MODKEY-a)
 			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
 		$MODKEY-p)
 			extern `wmiimenu </tmp/ns.$USER.$DISPLAY/progs` &;;
 		$MODKEY-t)
-			xwrite /ctl view "`wmiir read /tags | sort | wmiimenu`" &;;
+			xwrite /ctl view "`wmiir read /view | awk '{print $10}' | grep -v sel | wmiimenu`" &;;
 		$MODKEY-[0-9])
 			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Return)
 			extern xterm &;;
 		$MODKEY-Shift-h)
-			xwrite /view/sel/sel/ctl sendto prev;;
+			xwrite /view/sel/sel/sel/ctl sendto prev;;
 		$MODKEY-Shift-l)
-			xwrite /view/sel/sel/ctl sendto next;;
+			xwrite /view/sel/sel/sel/ctl sendto next;;
 		$MODKEY-Shift-space)
-			xwrite /view/sel/sel/ctl sendto toggle;;
+			xwrite /view/sel/sel/sel/ctl sendto toggle;;
 		$MODKEY-Shift-c)
-			xwrite /view/sel/sel/ctl kill;;
+			xwrite /view/sel/sel/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite /view/sel/sel/tags "`wmiir read /view/sel/sel/tags | wmiimenu`" &;;
+			xwrite /view/sel/sel/sel/tags "`wmiir read /view/sel/sel/sel/tags | wmiimenu`" &;;
 		$MODKEY-Shift-[0-9])
-			xwrite /view/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
+			xwrite /view/sel/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Control-$LEFT)
-			xwrite /view/sel/sel/ctl swap prev;;
+			xwrite /view/sel/sel/sel/ctl swap prev;;
 		$MODKEY-Control-$RIGHT)
-			xwrite /view/sel/sel/ctl swap next;;
+			xwrite /view/sel/sel/sel/ctl swap next;;
 		$MODKEY-Control-$DOWN)
-			xwrite /view/sel/sel/ctl swap down;;
+			xwrite /view/sel/sel/sel/ctl swap down;;
 		$MODKEY-Control-$UP)
-			xwrite /view/sel/sel/ctl swap up;;
+			xwrite /view/sel/sel/sel/ctl swap up;;
 		esac;;
 	esac
 done
