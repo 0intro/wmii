@@ -28,17 +28,6 @@ usage()
 	exit(1);
 }
 
-Client *
-win2client(Window w)
-{
-	unsigned int i;
-
-	for(i = 0; (i < client.size) && client.data[i]; i++)
-		if(client.data[i]->win == w)
-			return client.data[i];
-	return nil;
-}
-
 void
 scan_wins()
 {
@@ -55,7 +44,7 @@ scan_wins()
 			if(wa.override_redirect || XGetTransientForHint(dpy, wins[i], &d1))
 				continue;
 			if(wa.map_state == IsViewable)
-				manage_client(alloc_client(wins[i], &wa));
+				manage_client(create_client(wins[i], &wa));
 		}
 	}
 	if(wins)
@@ -311,7 +300,7 @@ main(int argc, char *argv[])
 	init_atoms();
 	init_cursors();
 	xfont = blitz_getfont(dpy, def.font);
-	init_lock_modifiers();
+	init_lock_keys();
 	init_screen();
 
 	wa.event_mask = SubstructureRedirectMask;

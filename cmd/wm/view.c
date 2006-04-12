@@ -15,15 +15,15 @@ view2vector(ViewVector *vv)
 }
 
 View *
-alloc_view(char *name)
+create_view(char *name)
 {
 	static unsigned short id = 1;
 	View *v = cext_emallocz(sizeof(View));
 
 	v->id = id++;
 	cext_strlcpy(v->name, name, sizeof(v->name));
-	alloc_area(v);
-	alloc_area(v);
+	create_area(v);
+	create_area(v);
 	sel = view.size;
 	cext_vattach(view2vector(&view), v);
 	return v;
@@ -44,7 +44,7 @@ destroy_view(View *v)
 }
 
 int
-view2index(View *v)
+idx_of_view(View *v)
 {
 	int i;
 	for(i = 0; i < view.size; i++)
@@ -72,7 +72,7 @@ focus_view(View *v)
 	unsigned int i;
 
 	XGrabServer(dpy);
-	sel = view2index(v);
+	sel = idx_of_view(v);
 
 	update_frame_selectors(v);
 
@@ -92,13 +92,13 @@ focus_view(View *v)
 				XMoveWindow(dpy, client.data[i]->framewin,
 						2 * rect.width + f->rect.x, f->rect.y);
 		}
-	update_bar_tags();
+	update_view_bars();
 	XSync(dpy, False);
 	XUngrabServer(dpy);
 }
 
 XRectangle *
-rectangles(View *v, Bool isfloat, unsigned int *num)
+rects_of_view(View *v, Bool isfloat, unsigned int *num)
 {
 	XRectangle *result = nil;
 	unsigned int i;
@@ -129,7 +129,7 @@ rectangles(View *v, Bool isfloat, unsigned int *num)
 }
 
 int
-vid2index(unsigned short id)
+idx_of_view_id(unsigned short id)
 {
 	int i;
 	for(i = 0; i < view.size; i++)
@@ -139,7 +139,7 @@ vid2index(unsigned short id)
 }
 
 View *
-name2view(char *name)
+view_of_name(char *name)
 {
 	unsigned int i;
 
@@ -150,15 +150,15 @@ name2view(char *name)
 	return nil;
 }
 
-View *
+static View *
 get_view(char *name)
 {
-	View *v = name2view(name);
-	return v ? v : alloc_view(name);
+	View *v = view_of_name(name);
+	return v ? v : create_view(name);
 }
 
 static Bool
-isempty(View *v)
+is_empty(View *v)
 {
 	unsigned int i;
 	for(i = 0; i < v->area.size; i++)
@@ -170,41 +170,41 @@ isempty(View *v)
 void
 select_view(char *arg)
 {
-	View *v = name2view(arg);
+	View *v = view_of_name(arg);
 	if(!v)
 		return;
 	focus_view(v);
 }
 
 static Bool
-isclientof(View *v, Client *c)
+is_of_view(View *v, Client *c)
 {
 	unsigned int i;
 	for(i = 0; i < v->area.size; i++)
-		if(clientofarea(v->area.data[i], c))
+		if(is_of_area(v->area.data[i], c))
 			return True;
 	return False;
 }
 
 void
-detach_fromview(View *v, Client *c)
+detach_from_view(View *v, Client *c)
 {
 	unsigned int i;
 
 	for(i = 0; i < v->area.size; i++) {
-		if(clientofarea(v->area.data[i], c)) {
-			detach_fromarea(v->area.data[i], c);
+		if(is_of_area(v->area.data[i], c)) {
+			detach_from_area(v->area.data[i], c);
 			XMoveWindow(dpy, c->framewin, 2 * rect.width, 0);
 		}
 	}
 }
 
 void
-attach_toview(View *v, Client *c)
+attach_to_view(View *v, Client *c)
 {
 	Area *a;
 
-	if(isclientof(v, c))
+	if(is_of_view(v, c))
 		return;
 
 	if(c->trans || c->floating)
@@ -212,7 +212,7 @@ attach_toview(View *v, Client *c)
 	else
 		a = v->area.data[v->sel];
 
-	attach_toarea(a, c);
+	attach_to_area(a, c);
 	map_client(c);
 	XMapWindow(dpy, c->framewin);
 }
@@ -313,7 +313,7 @@ update_client_views(Client *c)
 }
 
 static Bool
-isviewof(Client *c, View *v)
+is_view_of(Client *c, View *v)
 {
 	unsigned int i;
 	for(i = 0; i < c->view.size; i++)
@@ -323,11 +323,11 @@ isviewof(Client *c, View *v)
 }
 
 static View *
-emptyview()
+next_empty_view()
 {
 	unsigned int i;
 	for(i = 0; i < view.size; i++)
-		if(isempty(view.data[i]))
+		if(is_empty(view.data[i]))
 			return view.data[i];
 	return nil;
 }
@@ -345,19 +345,19 @@ update_views()
 		Client *c = client.data[i];
 		for(j = 0; j < view.size; j++) {
 			if(strstr(c->tags, "*"))
-				attach_toview(view.data[j], c);
-			else if(isviewof(c, view.data[j])) {
-				if(!isclientof(view.data[j], c))
-					attach_toview(view.data[j], c);
+				attach_to_view(view.data[j], c);
+			else if(is_view_of(c, view.data[j])) {
+				if(!is_of_view(view.data[j], c))
+					attach_to_view(view.data[j], c);
 			}
 			else {
-				if(isclientof(view.data[j], c))
-					detach_fromview(view.data[j], c);
+				if(is_of_view(view.data[j], c))
+					detach_from_view(view.data[j], c);
 			}
 		}
 	}
 
-	while((v = emptyview())) {
+	while((v = next_empty_view())) {
 		if(v == old)
 			old = nil;
 		destroy_view(v);
@@ -368,5 +368,5 @@ update_views()
 	else if(view.size)
 		focus_view(view.data[sel]);
 	else
-		update_bar_tags();
+		update_view_bars();
 }

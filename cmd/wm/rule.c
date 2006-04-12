@@ -131,7 +131,7 @@ match(Client *c, const char *prop)
 }
 
 void
-match_tags(Client *c)
+apply_rules(Client *c)
 {
 	if(!def.rules)
 		goto Fallback;
@@ -144,10 +144,10 @@ Fallback:
 }
 
 void
-retag()
+reapply_rules()
 {
 	unsigned int i;
 	for(i = 0; i < client.size; i++)
-		match_tags(client.data[i]);
+		apply_rules(client.data[i]);
 	update_views();
 }

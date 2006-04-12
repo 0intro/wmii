@@ -11,8 +11,8 @@
 static int
 comp_label_intern(const void *l1, const void *l2)
 {
-	Label *ll1 = *(Label **)l1;
-	Label *ll2 = *(Label **)l2;
+	Bar *ll1 = *(Bar **)l1;
+	Bar *ll2 = *(Bar **)l2;
 	if(ll1->intern && !ll2->intern)
 		return -1;
 	if(!ll1->intern && ll2->intern)
@@ -23,57 +23,57 @@ comp_label_intern(const void *l1, const void *l2)
 static int
 comp_label_name(const void *l1, const void *l2)
 {
-	Label *ll1 = *(Label **)l1;
-	Label *ll2 = *(Label **)l2;
+	Bar *ll1 = *(Bar **)l1;
+	Bar *ll2 = *(Bar **)l2;
 	return strcmp(ll1->name, ll2->name);
 }
 
 static Vector *
-label2vector(LabelVector *lv)
+label2vector(BarVector *lv)
 {
 	return (Vector *) lv;
 }
 
-Label *
-get_label(char *name, Bool intern)
+Bar *
+create_bar(char *name, Bool intern)
 {
 	static unsigned int id = 1;
-	Label *l = name2label(name);
+	Bar *l = bar_of_name(name);
 
 	if(l)
 		return l;
-	l = cext_emallocz(sizeof(Label));
+	l = cext_emallocz(sizeof(Bar));
 	l->id = id++;
 	l->intern = intern;
 	cext_strlcpy(l->name, name, sizeof(l->name));
 	cext_strlcpy(l->colstr, def.selcolor, sizeof(l->colstr));
 	l->color = def.sel;
 	cext_vattach(label2vector(&label), l);
-	qsort(label.data, label.size, sizeof(Label *), comp_label_name);
-	qsort(label.data, label.size, sizeof(Label *), comp_label_intern);
+	qsort(label.data, label.size, sizeof(Bar *), comp_label_name);
+	qsort(label.data, label.size, sizeof(Bar *), comp_label_intern);
 
 	return l;
 }
 
 void
-destroy_label(Label *l)
+destroy_bar(Bar *l)
 {
 	cext_vdetach(label2vector(&label), l);
 }
 
 unsigned int
-bar_height()
+height_of_bar()
 {
 	enum { BAR_PADDING = 4 };
 	return xfont->ascent + xfont->descent + BAR_PADDING;
 }
 
 void
-update_bar_geometry()
+resize_bar()
 {
 	unsigned int i, j;
 	brect = rect;
-	brect.height = bar_height();
+	brect.height = height_of_bar();
 	brect.y = rect.height - brect.height;
 	XMoveResizeWindow(dpy, barwin, brect.x, brect.y, brect.width, brect.height);
 	XSync(dpy, False);
@@ -101,7 +101,7 @@ draw_bar()
 	unsigned int i = 0, w = 0;
 	int exp = -1;
 	Draw d = { 0 };
-	Label *l = nil;
+	Bar *l = nil;
 
 	d.gc = bargc;
 	d.drawable = barpmap;
@@ -168,7 +168,7 @@ draw_bar()
 }
 
 int
-label2index(Label *l)
+idx_of_bar(Bar *l)
 {
 	int i;
 	for(i = 0; i < label.size; i++)
@@ -178,7 +178,7 @@ label2index(Label *l)
 }
 
 int
-lid2index(unsigned short id)
+idx_of_bar_id(unsigned short id)
 {
 	int i;
 	for(i = 0; i < label.size; i++)
@@ -187,8 +187,8 @@ lid2index(unsigned short id)
 	return -1;
 }
 
-Label *
-name2label(const char *name)
+Bar *
+bar_of_name(const char *name)
 {
 	static char buf[256];
 	unsigned int i;
@@ -201,20 +201,20 @@ name2label(const char *name)
 }
 
 void
-update_bar_tags()
+update_view_bars()
 {
 	unsigned int i;
-	Label *l = nil;
+	Bar *l = nil;
 
 	for(i = 0; (i < label.size) && label.data[i]->intern; i++) {
 		l = label.data[i];
-		if(!name2view(l->name)) {
-			destroy_label(l);
+		if(!view_of_name(l->name)) {
+			destroy_bar(l);
 			i--;
 		}
 	}
 	for(i = 0; i < view.size; i++) {
-		l = get_label(view.data[i]->name, True);
+		l = create_bar(view.data[i]->name, True);
 		cext_strlcpy(l->data, view.data[i]->name, sizeof(l->data));
 	}
 

@@ -9,30 +9,6 @@
 
 #include "wm.h"
 
-Align
-xy2align(XRectangle *rect, int x, int y)
-{
-	int w = x <= rect->x + rect->width / 2;
-	int n = y <= rect->y + rect->height / 2;
-	int e = x > rect->x + rect->width / 2;
-	int s = y > rect->y + rect->height / 2;
-	int nw = w && n;
-	int ne = e && n;
-	int sw = w && s;
-	int se = e && s;
-
-	if(nw)
-		return NWEST;
-	else if(ne)
-		return NEAST;
-	else if(se)
-		return SEAST;
-	else if(sw)
-		return SWEST;
-
-	return CENTER;
-}
-
 static int
 check_vert_match(XRectangle *r, XRectangle *neighbor)
 {
@@ -223,7 +199,7 @@ draw_pseudo_border(XRectangle * r)
 }
 
 void
-mouse_move(Client *c)
+do_mouse_move(Client *c)
 {
 	int px = 0, py = 0, wex, wey, ex, ey, first = 1, i;
 	Window dummy;
@@ -233,8 +209,8 @@ mouse_move(Client *c)
 	int snaph = rect.height * def.snap / 1000;
 	unsigned int num;
 	unsigned int dmask;
-	XRectangle *rects = rectangles(c->frame.data[c->sel]->area->view,
-			area2index(c->frame.data[c->sel]->area) == 0, &num);
+	XRectangle *rects = rects_of_view(c->frame.data[c->sel]->area->view,
+			idx_of_area(c->frame.data[c->sel]->area) == 0, &num);
 	XRectangle frect = c->frame.data[c->sel]->rect;
 	XPoint pt;
 
@@ -259,8 +235,8 @@ mouse_move(Client *c)
 		case ButtonRelease:
 			if(!first) {
 				draw_pseudo_border(&frect);
-				if(area2index(c->frame.data[c->sel]->area))
-					resize_area(c, &frect, &pt);
+				if(idx_of_area(c->frame.data[c->sel]->area))
+					resize_column(c, &frect, &pt);
 				else
 					resize_client(c, &frect, False);
 			}
@@ -465,7 +441,7 @@ snap_resize(XRectangle * r, XRectangle * o, Align align,
 }
 
 void
-mouse_resize(Client *c, Align align)
+do_mouse_resize(Client *c, Align align)
 {
 	int px = 0, py = 0, i, ox, oy, first = 1;
 	Window dummy;
@@ -475,8 +451,8 @@ mouse_resize(Client *c, Align align)
 	int snaph = rect.height * def.snap / 1000;
 	unsigned int dmask;
 	unsigned int num;
-	XRectangle *rects = rectangles(c->frame.data[c->sel]->area->view,
-			area2index(c->frame.data[c->sel]->area) == 0, &num);
+	XRectangle *rects = rects_of_view(c->frame.data[c->sel]->area->view,
+			idx_of_area(c->frame.data[c->sel]->area) == 0, &num);
 	XRectangle frect = c->frame.data[c->sel]->rect;
 	XRectangle origin = frect;
 
@@ -501,8 +477,8 @@ mouse_resize(Client *c, Align align)
 				draw_pseudo_border(&frect);
 				pt.x = px;
 				pt.y = py;
-				if(area2index(c->frame.data[c->sel]->area))
-					resize_area(c, &frect, &pt);
+				if(idx_of_area(c->frame.data[c->sel]->area))
+					resize_column(c, &frect, &pt);
 				else
 					resize_client(c, &frect, False);
 			}

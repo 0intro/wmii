@@ -11,7 +11,7 @@
 #include "wm.h"
 
 void
-init_lock_modifiers()
+init_lock_keys()
 {
 	XModifierKeymap *modmap;
 	KeyCode num_lock;
@@ -265,7 +265,7 @@ update_keys()
 	Key *k;
 	char *l, *p;
 
-	init_lock_modifiers();
+	init_lock_keys();
 
 	while(key.size) {
 		ungrab_key(key.data[0]);

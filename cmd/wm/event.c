@@ -62,32 +62,32 @@ handle_buttonpress(XEvent *e)
 		unsigned int i;
 		for(i = 0; i < label.size; i++)
 			if(blitz_ispointinrect(ev->x, ev->y, &label.data[i]->rect)) {
-				snprintf(buf, sizeof(buf), "LabelClick %s %d\n",
+				snprintf(buf, sizeof(buf), "BarClick %s %d\n",
 						label.data[i]->name, ev->button);
 				write_event(buf);
 				return;
 			}
 	}
-	else if((c = win2clientframe(ev->window))) {
+	else if((c = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
 		if((ev->state & Mod1Mask) && (ev->button == Button3)) {
 			if(sel_client() != c)
 				focus(c);
 			else {
-				Align align = xy2align(&c->rect, ev->x, ev->y);
+				Align align = blitz_align_of_rect(&c->rect, ev->x, ev->y);
 				if(align != CENTER)
-					mouse_resize(c, align);
+					do_mouse_resize(c, align);
 			}
 		}
 		else if(ev->button == Button1) {
 			if(sel_client() != c)
 				focus(c);
 			else
-				mouse_move(c);
+				do_mouse_move(c);
 		}
 		if(c->frame.size) {
 			snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
-					frame2index(c->frame.data[c->sel]) + 1, ev->button);
+					idx_of_frame(c->frame.data[c->sel]) + 1, ev->button);
 			write_event(buf);
 		}
 	}
@@ -100,13 +100,13 @@ handle_configurerequest(XEvent *e)
 	XWindowChanges wc;
 	Client *c;
 
-	c = win2client(ev->window);
+	c = client_of_win(ev->window);
 	ev->value_mask &= ~CWSibling;
 
 	if(c) {
-		gravitate(c, True);
+		gravitate_client(c, True);
 
-		if(c->frame.size && (area2index(c->frame.data[c->sel]->area) == 0)) {
+		if(c->frame.size && (idx_of_area(c->frame.data[c->sel]->area) == 0)) {
 			if(ev->value_mask & CWX)
 				c->rect.x = ev->x;
 			if(ev->value_mask & CWY)
@@ -119,15 +119,15 @@ handle_configurerequest(XEvent *e)
 		if(ev->value_mask & CWBorderWidth)
 			c->border = ev->border_width;
 
-		gravitate(c, False);
+		gravitate_client(c, False);
 
 		if(c->frame.size) {
 			Frame *f = c->frame.data[c->sel];
 			f->rect.x = wc.x = c->rect.x - def.border;
-			f->rect.y = wc.y = c->rect.y - bar_height();
+			f->rect.y = wc.y = c->rect.y - height_of_bar();
 			f->rect.width = wc.width = c->rect.width + 2 * def.border;
 			f->rect.height = wc.height = c->rect.height + def.border
-				+ bar_height();
+				+ height_of_bar();
 			wc.border_width = 1;
 			wc.sibling = None;
 			wc.stack_mode = ev->detail;
@@ -145,8 +145,8 @@ handle_configurerequest(XEvent *e)
 
 	if(c && c->frame.size) {
 		wc.x = def.border;
-		wc.y = bar_height();
-		if(area2index(c->frame.data[c->sel]->area) > 0) {
+		wc.y = height_of_bar();
+		if(idx_of_area(c->frame.data[c->sel]->area) > 0) {
 			wc.width = c->rect.width;
 			wc.height = c->rect.height;
 		}
@@ -167,7 +167,7 @@ handle_destroynotify(XEvent *e)
 	Client *c;
 	XDestroyWindowEvent *ev = &e->xdestroywindow;
 
-	if((c = win2client(ev->window)))
+	if((c = client_of_win(ev->window)))
 		destroy_client(c);
 }
 
@@ -179,7 +179,7 @@ handle_expose(XEvent *e)
 	if(ev->count == 0) {
 		if(ev->window == barwin)
 			draw_bar();
-		else if((c = win2clientframe(ev->window)))
+		else if((c = frame_of_win(ev->window)))
 			draw_client(c);
 	}
 }
@@ -213,8 +213,8 @@ handle_maprequest(XEvent *e)
 	}
 
 	/* there're client which send map requests twice */
-	if(!win2client(ev->window))
-		manage_client(alloc_client(ev->window, &wa));
+	if(!client_of_win(ev->window))
+		manage_client(create_client(ev->window, &wa));
 }
 
 static void
@@ -226,8 +226,8 @@ handle_propertynotify(XEvent *e)
 	if(ev->state == PropertyDelete)
 		return; /* ignore */
 
-	if((c = win2client(ev->window)))
-		update_client_property(c, ev);
+	if((c = client_of_win(ev->window)))
+		prop_client(c, ev);
 }
 
 static void
@@ -236,6 +236,6 @@ handle_unmapnotify(XEvent *e)
 	Client *c;
 	XUnmapEvent *ev = &e->xunmap;
 
-	if((c = win2client(ev->window)))
+	if((c = client_of_win(ev->window)))
 		destroy_client(c);
 }

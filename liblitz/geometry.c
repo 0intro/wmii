@@ -10,6 +10,30 @@
 
 #include "blitz.h"
 
+Align
+blitz_align_of_rect(XRectangle *rect, int x, int y)
+{
+	int w = x <= rect->x + rect->width / 2;
+	int n = y <= rect->y + rect->height / 2;
+	int e = x > rect->x + rect->width / 2;
+	int s = y > rect->y + rect->height / 2;
+	int nw = w && n;
+	int ne = e && n;
+	int sw = w && s;
+	int se = e && s;
+
+	if(nw)
+		return NWEST;
+	else if(ne)
+		return NEAST;
+	else if(se)
+		return SEAST;
+	else if(sw)
+		return SWEST;
+
+	return CENTER;
+}
+
 int blitz_strtoalign(Align *result, char *val)
 {
 	/*

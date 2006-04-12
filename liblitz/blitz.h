@@ -38,6 +38,7 @@ void blitz_drawlabel(Display *dpy, Draw *r);
 void blitz_drawborder(Display *dpy, Draw *r);
 
 /* geometry.c */
+Align blitz_align_of_rect(XRectangle *rect, int x, int y);
 int blitz_strtoalign(Align *result, char *val);
 int blitz_strtorect(XRectangle *root, XRectangle *r, char *val);
 Bool blitz_ispointinrect(int x, int y, XRectangle *r);

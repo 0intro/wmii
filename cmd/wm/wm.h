@@ -134,7 +134,7 @@ typedef struct {
 	Color color;
 	XRectangle rect;
 	Bool intern;
-} Label;
+} Bar;
 
 /* default values */
 typedef struct {
@@ -154,14 +154,14 @@ typedef struct {
 /* global variables */
 VECTOR(ClientVector, Client *);
 VECTOR(KeyVector, Key *);
-VECTOR(LabelVector, Label *);
+VECTOR(BarVector, Bar *);
 
 /* global variables */
 ViewVector view;
 unsigned int sel;
 ClientVector client;
 KeyVector key;
-LabelVector label;
+BarVector label;
 Display *dpy;
 int screen;
 Window root;
@@ -181,61 +181,66 @@ unsigned int valid_mask;
 unsigned int num_lock_mask;
 
 /* area.c */
-Area *alloc_area(View *t);
+Area *create_area(View *t);
 void destroy_area(Area *a);
-int area2index(Area *a);
-int aid2index(View *t, unsigned short id);
+int idx_of_area(Area *a);
+int idx_of_area_id(View *t, unsigned short id);
 void select_area(Area *a, char *arg);
-void send2area(Area *to, Area *from, Client *c);
-void attach_toarea(Area *a, Client *c);
-void detach_fromarea(Area *a, Client *c);
-void arrange_column(Area *a, Bool dirty);
-void resize_area(Client *c, XRectangle *r, XPoint *pt);
-int str2mode(char *arg);
-char *mode2str(int mode);
-Bool clientofarea(Area *a, Client *c);
+void send_to_area(Area *to, Area *from, Client *c);
+void attach_to_area(Area *a, Client *c);
+void detach_from_area(Area *a, Client *c);
+Bool is_of_area(Area *a, Client *c);
 
 /* bar.c */
-Label *get_label(char *name, Bool intern);
-void destroy_label(Label *l);
+Bar *create_bar(char *name, Bool intern);
+void destroy_bar(Bar *b);
 void draw_bar();
-int lid2index(unsigned short id);
-void update_bar_geometry();
-unsigned int bar_height();
-Label *name2label(const char *name);
-int label2index(Label *l);
-void update_bar_tags();
+int idx_of_bar_id(unsigned short id);
+void resize_bar();
+unsigned int height_of_bar();
+Bar *bar_of_name(const char *name);
+int idx_of_bar(Bar *l);
+void update_view_bars();
 
 /* client.c */
-Client *alloc_client(Window w, XWindowAttributes *wa);
+Client *create_client(Window w, XWindowAttributes *wa);
+void destroy_client(Client *c);
 void configure_client(Client *c);
-void update_client_property(Client *c, XPropertyEvent *e);
+void prop_client(Client *c, XPropertyEvent *e);
 void kill_client(Client *c);
 void draw_client(Client *client);
-void gravitate(Client *c, Bool invert);
+void gravitate_client(Client *c, Bool invert);
 void unmap_client(Client *c);
 void map_client(Client *c);
 void reparent_client(Client *c, Window w, int x, int y);
 void manage_client(Client *c);
-void destroy_client(Client *c);
-Client *sel_client();
 void focus_client(Client *c);
+void focus(Client *c);
 void resize_client(Client *c, XRectangle *r, Bool ignore_xcall);
 void select_client(Client *c, char *arg);
-void send2area_client(Client *c, char *arg);
+void send_client_to(Client *c, char *arg);
 void resize_all_clients();
-void focus(Client *c);
-int cid2index(unsigned short id);
 void swap_client(Client *c, char *arg);
+Client *sel_client();
+int idx_of_client_id(unsigned short id);
+Client *client_of_win(Window w);
+
+/* column.c */
+void arrange_column(Area *a, Bool dirty);
+void resize_column(Client *c, XRectangle *r, XPoint *pt);
+int column_mode_of_str(char *arg);
+char *str_of_column_mode(int mode);
 
 /* event.c */
 void init_x_event_handler();
 void check_x_event(IXPConn *c);
 
 /* frame.c */
-int frid2index(Area *a, unsigned short id);
-int frame2index(Frame *f);
-Client *win2clientframe(Window w);
+Frame *create_frame(Area *a, Client *c);
+void destroy_frame(Frame *f);
+int idx_of_frame_id(Area *a, unsigned short id);
+int idx_of_frame(Frame *f);
+Client *frame_of_win(Window w);
 
 /* fs.c */
 unsigned long long mkqpath(unsigned char type, unsigned short pg,
@@ -243,44 +248,40 @@ unsigned long long mkqpath(unsigned char type, unsigned short pg,
 void write_event(char *event);
 void new_ixp_conn(IXPConn *c);
 
-/* kb.c */
+/* key.c */
 void handle_key(Window w, unsigned long mod, KeyCode keycode);
 void update_keys();
-void init_lock_modifiers();
+void init_lock_keys();
 
 /* mouse.c */
-void mouse_resize(Client *c, Align align);
-void mouse_move(Client *c);
-Align xy2align(XRectangle *rect, int x, int y);
-void drop_move(Client *c, XRectangle *new, XPoint *pt);
+void do_mouse_resize(Client *c, Align align);
+void do_mouse_move(Client *c);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 
 /* rule.c */
 void update_rules();
-void match_tags(Client *c);
+void apply_rules(Client *c);
+void reapply_rules();
 
 /* view.c */
 void arrange_view(View *v, Bool dirty);
-View *alloc_view(char *name);
+View *create_view(char *name);
 void focus_view(View *v);
-XRectangle *rectangles(View *v, Bool isfloat, unsigned int *num);
-int vid2index(unsigned short id);
+XRectangle *rects_of_view(View *v, Bool isfloat, unsigned int *num);
+int idx_of_view_id(unsigned short id);
 void select_view(char *arg);
-int view2index(View *v);
-void detach_fromview(View *v, Client *c);
-void attach_toview(View *v, Client *c);
+int idx_of_view(View *v);
+void detach_from_view(View *v, Client *c);
+void attach_to_view(View *v, Client *c);
 Client *sel_client_of_view(View *v);
 void restack_view(View *v);
-View *name2view(char *name);
+View *view_of_name(char *name);
 void destroy_view(View *v);
-View *get_view(char *name);
 void update_views();
-void retag();
 
 /* wm.c */
 void scan_wins();
-Client *win2client(Window w);
 int win_proto(Window w);
 int win_state(Window w);
 int wmii_error_handler(Display *dpy, XErrorEvent *error);

@@ -3,10 +3,53 @@
  * See LICENSE file for license details.
  */
 
+#include <stdlib.h>
+
 #include "wm.h"
 
+static Vector *
+frame2vector(FrameVector *fv)
+{
+	return (Vector *) fv;
+}
+
+Frame *
+create_frame(Area *a, Client *c)
+{
+	static unsigned short id = 1;
+	Frame *f = cext_emallocz(sizeof(Frame));
+
+	f->id = id++;
+	f->area = a;
+	f->client = c;
+	f->rect = c->rect;
+	f->rect.width += 2 * def.border;
+	f->rect.height += def.border + height_of_bar();
+	cext_vattach(frame2vector(&c->frame), f);
+	c->sel = c->frame.size - 1;
+	cext_vattach(frame2vector(&a->frame),f);
+	a->sel = a->frame.size - 1;
+
+	return f;
+}
+
+void
+destroy_frame(Frame *f)
+{
+	Client *c = f->client;
+	Area *a = f->area;
+
+	cext_vdetach(frame2vector(&c->frame), f);
+	cext_vdetach(frame2vector(&a->frame), f);
+	free(f);
+	if(c->sel > 0)
+		c->sel--;
+	if(a->sel > 0)
+		a->sel--;
+}
+
 int
-frid2index(Area *a, unsigned short id)
+idx_of_frame_id(Area *a, unsigned short id)
 {
 	int i;
 	for(i = 0; i < a->frame.size; i++)
@@ -16,7 +59,7 @@ frid2index(Area *a, unsigned short id)
 }
 
 int
-frame2index(Frame *f)
+idx_of_frame(Frame *f)
 {
 	int i;
 	Area *a = f->area;
@@ -27,7 +70,7 @@ frame2index(Frame *f)
 }
 
 Client *
-win2clientframe(Window w)
+frame_of_win(Window w)
 {
 	unsigned int i;
 	for(i = 0; (i < client.size) && client.data[i]; i++)

@@ -116,19 +116,19 @@ decode_qpath(Qid *qid, unsigned char *type, int *i1, int *i2, int *i3)
 
 	if(i1id) {
 		if(qid->dir_type == FsDGclient || qid->dir_type == FsDclients)
-			*i1 = cid2index(i1id);
+			*i1 = idx_of_client_id(i1id);
 		else {
 			switch(*type) {
 				case FsFdata:
 				case FsFcolors:
-				case FsDlabel: *i1 = lid2index(i1id); break;
-				default: *i1 = vid2index(i1id); break;
+				case FsDlabel: *i1 = idx_of_bar_id(i1id); break;
+				default: *i1 = idx_of_view_id(i1id); break;
 			}
 		}
 		if(i2id && (*i1 != -1)) {
-			*i2 = aid2index(view.data[*i1], i2id);
+			*i2 = idx_of_area_id(view.data[*i1], i2id);
 			if(i3id && (*i2 != -1))
-				*i3 = frid2index(view.data[*i1]->area.data[*i2], i3id);
+				*i3 = idx_of_frame_id(view.data[*i1]->area.data[*i2], i3id);
 		}
 	}
 }
@@ -271,7 +271,7 @@ name2type(char *name, unsigned char dir_type)
 		return FsFdata;
 	if(!strncmp(name, "mode", 5))
 		return FsFmode;
-	if((dir_type == FsDbar) && name2label(name))
+	if((dir_type == FsDbar) && bar_of_name(name))
 		return FsDlabel;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
@@ -366,8 +366,8 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		if(dir_type !=  FsDbar)
 			return -1;
 		{
-			Label *l;
-			if(!(l = name2label(wname)))
+			Bar *l;
+			if(!(l = bar_of_name(wname)))
 				return -1;
 			new->type = IXP_QTDIR;
 			new->path = mkqpath(FsDlabel, l->id, 0, 0);
@@ -528,7 +528,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 				IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFmode:
-		return mkstat(stat, dir, wname, strlen(mode2str(view.data[dir_i1]->area.data[dir_i2]->mode)),
+		return mkstat(stat, dir, wname, strlen(str_of_column_mode(view.data[dir_i1]->area.data[dir_i2]->mode)),
 				IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFcolors:
@@ -625,7 +625,7 @@ xcreate(IXPConn *c, Fcall *fcall)
 	type = qpath_type(m->qid.path);
 	switch(type) {
 	case FsDbar:
-		get_label(fcall->name, False);
+		create_bar(fcall->name, False);
 		break;
 	default:
 		return Enofile;
@@ -675,11 +675,11 @@ xremove(IXPConn *c, Fcall *fcall)
 	switch(type) {
 	case FsDlabel:
 		{
-			Label *l = label.data[i1];
+			Bar *l = label.data[i1];
 			if(l->intern)
 				return Enoperm;
 			/* now detach the label */
-			destroy_label(l);
+			destroy_bar(l);
 			free(l);
 			draw_bar();
 		}
@@ -1095,7 +1095,7 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsFmode:
 			if(!i2)
 				return Enofile;
-			snprintf(buf, sizeof(buf), "%s", mode2str(view.data[i1]->area.data[i2]->mode));
+			snprintf(buf, sizeof(buf), "%s", str_of_column_mode(view.data[i1]->area.data[i2]->mode));
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -1164,8 +1164,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 				srv.running = 0;
 			else if(!strncmp(buf, "view ", 5))
 				select_view(&buf[5]);
-			else if(!strncmp(buf, "retag", 6))
-				retag();
+			else if(!strncmp(buf, "reapply_rules", 6))
+				reapply_rules();
 			else
 				return Enocommand;
 			break;
@@ -1186,7 +1186,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			if(!strncmp(buf, "kill", 5))
 				kill_client(f->client);
 			else if(!strncmp(buf, "sendto ", 7))
-				send2area_client(f->client, &buf[7]);
+				send_client_to(f->client, &buf[7]);
 			else if(!strncmp(buf, "swap ", 5))
 				swap_client(f->client, &buf[5]);
 			break;
@@ -1233,7 +1233,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			f = view.data[i1]->area.data[i2]->frame.data[i3];
 			blitz_strtorect(&rect, &f->rect, buf);
 			if(i2)
-				resize_area(f->client, &f->rect, nil);
+				resize_column(f->client, &f->rect, nil);
 			else
 				resize_client(f->client, &f->rect, False);
 		}
@@ -1308,7 +1308,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(def.font, fcall->data, fcall->count);
 		XFreeFont(dpy, xfont);
 		xfont = blitz_getfont(dpy, def.font);
-		update_bar_geometry();
+		resize_bar();
 		break;
 	case FsFmode:
 		if(!i2)
@@ -1317,7 +1317,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		if((i = str2mode(buf)) == -1)
+		if((i = column_mode_of_str(buf)) == -1)
 			return Ebadvalue;
 		view.data[i1]->area.data[i2]->mode = i;
 		arrange_column(view.data[i1]->area.data[i2], True);
