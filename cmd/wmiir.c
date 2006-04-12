@@ -125,7 +125,7 @@ time2str(unsigned int t)
 {
 	static char buf[32];
 	char *tstr = ctime((time_t *)&t);
-	cext_strlcpy(buf, tstr ? tstr : "invalid", sizeof(buf));
+	cext_strlcpy(buf, tstr ? tstr : "invalid ", sizeof(buf));
 	buf[strlen(buf) - 1] = 0;
 	return buf;
 }
