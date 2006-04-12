@@ -408,7 +408,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		if(dir_type == FsDroot)
 			return -1;
 	case FsFtags:
-		if((dir_type != FsDGclient) && (dir_type != FsDclient))
+		if((dir_type != FsDview) && (dir_type != FsDGclient) && (dir_type != FsDclient))
 			return -1;
 		if((dir_type == FsDclient) && ((dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1)))
 			return -1;
