@@ -103,7 +103,7 @@ setrwx(long m, char *s)
 }
 
 static char *
-mode2str(unsigned int mode)
+str_of_mode(unsigned int mode)
 {
 	static char buf[16];
 
@@ -121,10 +121,13 @@ mode2str(unsigned int mode)
 }
 
 static char *
-time2str(unsigned int t)
+str_of_time(unsigned int t)
 {
 	static char buf[32];
-	char *tstr = ctime((time_t *)&t);
+	struct timeval tv = {0};
+
+	tv.tv_sec = t;
+	char *tstr = ctime(&tv.tv_sec);
 	cext_strlcpy(buf, tstr ? tstr : "invalid ", sizeof(buf));
 	buf[strlen(buf) - 1] = 0;
 	return buf;
@@ -151,9 +154,9 @@ xls(void *result, unsigned int msize)
 	while(p - result < msize);
 	qsort(dir, n, sizeof(Stat), comp_stat);
 	for(i = 0; i < n; i++) {
-		fprintf(stdout, "%s %s %s %5llu %s %s\n", mode2str(dir[i].mode),
+		fprintf(stdout, "%s %s %s %5llu %s %s\n", str_of_mode(dir[i].mode),
 				dir[i].uid, dir[i].gid, dir[i].length,
-				time2str(dir[i].mtime), dir[i].name);
+				str_of_time(dir[i].mtime), dir[i].name);
 	}
 	free(dir);
 }
