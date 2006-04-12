@@ -44,7 +44,7 @@ blitz_strtomod(char *val)
 		mod |= ShiftMask;
 	if (strstr(val, "Control"))
 		mod |= ControlMask;
-	if (strstr(val, "Mod1") || strstr(val, "Alt"))
+	if (strstr(val, "Mod1"))
 		mod |= Mod1Mask;
 	if (strstr(val, "Mod2"))
 		mod |= Mod2Mask;

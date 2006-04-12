@@ -11,7 +11,12 @@ proglist() {
 	awk 'NF>2 && $1 ~ /^[^d].*x/ {print $NF}' | sort -u
 }
 
-MODKEY=Alt
+MODKEY=Mod1
+UP=k
+DOWN=j
+LEFT=h
+RIGHT=l
+
 WMII_FONT='fixed' export WMII_FONT
 WMII_NORMCOLORS='#222222 #eeeeee #666666' export WMII_NORMCOLORS
 WMII_SELCOLORS='#ffffff #285577 #4c7899' export WMII_SELCOLORS
@@ -45,10 +50,10 @@ proglist $OLD_PATH >/tmp/ns.$USER.$DISPLAY/progs &
 
 # SHORTCUTS
 wmiir write /def/keys <<EOF
-$MODKEY-h
-$MODKEY-l
-$MODKEY-j
-$MODKEY-k
+$MODKEY-$LEFT
+$MODKEY-$RIGHT
+$MODKEY-$DOWN
+$MODKEY-$UP
 $MODKEY-space
 $MODKEY-d
 $MODKEY-s
@@ -67,8 +72,8 @@ $MODKEY-7
 $MODKEY-8
 $MODKEY-9
 $MODKEY-Return
-$MODKEY-Shift-h
-$MODKEY-Shift-l
+$MODKEY-Shift-$LEFT
+$MODKEY-Shift-$RIGHT
 $MODKEY-Shift-space
 $MODKEY-Shift-c
 $MODKEY-Shift-t
@@ -82,10 +87,10 @@ $MODKEY-Shift-6
 $MODKEY-Shift-7
 $MODKEY-Shift-8
 $MODKEY-Shift-9
-$MODKEY-Control-h
-$MODKEY-Control-l
-$MODKEY-Control-j
-$MODKEY-Control-k
+$MODKEY-Control-$LEFT
+$MODKEY-Control-$RIGHT
+$MODKEY-Control-$DOWN
+$MODKEY-Control-$UP
 EOF
 
 # EVENT LOOP
@@ -104,13 +109,13 @@ do
 		xwrite /ctl view "$1";;
 	Key)
 		case "$1" in
-		$MODKEY-h)
+		$MODKEY-$LEFT)
 			xwrite /view/ctl select prev;;
-		$MODKEY-l)
+		$MODKEY-$RIGHT)
 			xwrite /view/ctl select next;;
-		$MODKEY-j)
+		$MODKEY-$DOWN)
 			xwrite /view/sel/ctl select next;;
-		$MODKEY-k)
+		$MODKEY-$UP)
 			xwrite /view/sel/ctl select prev;;
 		$MODKEY-space)
 			xwrite /view/ctl select toggle;;
@@ -142,13 +147,13 @@ do
 			xwrite /view/sel/sel/tags "`wmiir read /view/sel/sel/tags | wmiimenu`" &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /view/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
-		$MODKEY-Control-h)
+		$MODKEY-Control-$LEFT)
 			xwrite /view/sel/sel/ctl swap prev;;
-		$MODKEY-Control-l)
+		$MODKEY-Control-$RIGHT)
 			xwrite /view/sel/sel/ctl swap next;;
-		$MODKEY-Control-j)
+		$MODKEY-Control-$DOWN)
 			xwrite /view/sel/sel/ctl swap down;;
-		$MODKEY-Control-k)
+		$MODKEY-Control-$UP)
 			xwrite /view/sel/sel/ctl swap up;;
 		esac;;
 	esac
