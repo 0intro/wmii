@@ -107,7 +107,7 @@ do
 			exit
 		fi;;
 	BarClick)
-		xwrite /ctl view "$1";;
+		xwrite /view/ctl view "$1";;
 	Key)
 		case "$1" in
 		$MODKEY-$LEFT)
@@ -131,9 +131,9 @@ do
 		$MODKEY-p)
 			extern `wmiimenu </tmp/ns.$USER.$DISPLAY/progs` &;;
 		$MODKEY-t)
-			xwrite /ctl view "`wmiir read /view | awk '{print $10}' | grep -v sel | wmiimenu`" &;;
+			xwrite /view/ctl view "`wmiir read /view | awk '{print $10}' | grep -v 'sel' | grep -v 'ctl' | wmiimenu`" &;;
 		$MODKEY-[0-9])
-			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
+			xwrite /view/ctl view `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Return)
 			extern xterm &;;
 		$MODKEY-Shift-h)

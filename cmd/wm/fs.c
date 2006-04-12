@@ -44,11 +44,14 @@ enum { WMII_IOUNIT = 2048 };
  * /bar/lab/			FsDbar
  * /bar/lab/data		FsFdata			<arbitrary data which gets displayed>
  * /bar/lab/colors		FsFcolors		<#RRGGBB> <#RRGGBB> <#RRGGBB>
- * /client/			FsDclients
+ * /client/				FsDclients
  * /client/1/			FsDGclient		see /view/X/X/X/ namespace below
  * /event				FsFevent
  * /ctl					FsFctl			command interface (root)
  * /view/				FsDviews		views
+ * /view/ctl			FsFctl			command interface (view)
+ * /view/sel/			FsDview
+ * /view/X/				FsDview
  * /view/X/ctl			FsFctl			command interface (tag)
  * /view/X/name			FsFname			current view name
  * /view/X/sel/			FsDarea
@@ -760,7 +763,7 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDviews:
 			/* jump to offset */
-			len = 0;
+			len = type2stat(&stat, "ctl", &m->qid);
 			if(view.size)
 				len += type2stat(&stat, "sel", &m->qid);
 			for(i = 0; i < view.size; i++) {
@@ -896,8 +899,10 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsDviews:
+			fcall->count = type2stat(&stat, "ctl", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			if(view.size) {
-				fcall->count = type2stat(&stat, "sel", &m->qid);
+				fcall->count += type2stat(&stat, "sel", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 			}
 			for(i = 0; i < view.size; i++) {
@@ -1172,10 +1177,14 @@ xwrite(IXPConn *c, Fcall *fcall)
 		case FsDroot:
 			if(!strncmp(buf, "quit", 5))
 				srv.running = 0;
-			else if(!strncmp(buf, "view ", 5))
-				select_view(&buf[5]);
-			else if(!strncmp(buf, "reapply_rules", 6))
+			else if(!strncmp(buf, "retag", 6))
 				reapply_rules();
+			else
+				return Enocommand;
+			break;
+		case FsDviews:
+			if(!strncmp(buf, "view ", 5))
+				select_view(&buf[5]);
 			else
 				return Enocommand;
 			break;
