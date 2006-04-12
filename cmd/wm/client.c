@@ -550,7 +550,6 @@ send_client_to(Client *c, char *arg)
 		if(i > 1)
 			to = v->area.data[i - 1];
 		else if(a->frame.size == 1) {
-			return;
 			Area *p, *n;
 			unsigned int j;
 			p = to = create_area(v);
