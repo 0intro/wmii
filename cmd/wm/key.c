@@ -36,8 +36,8 @@ init_lock_keys()
 	valid_mask = 255 & ~(num_lock_mask | LockMask);
 }
 
-static unsigned long
-blitz_strtomod(char *val)
+unsigned long
+mod_key_of_str(char *val)
 {
 	unsigned long mod = 0;
 	if (strstr(val, "Shift"))
@@ -130,7 +130,7 @@ get_key(const char *name)
 		else
 			kstr = seq[i];
 		k->key = XKeysymToKeycode(dpy, XStringToKeysym(kstr));
-		k->mod = blitz_strtomod(seq[i]);
+		k->mod = mod_key_of_str(seq[i]);
 	}
 	if(r) {
 		r->id = id++;

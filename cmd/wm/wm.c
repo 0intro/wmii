@@ -296,6 +296,8 @@ main(int argc, char *argv[])
 	blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
 	cext_strlcpy(def.normcolor, BLITZ_NORMCOLORS, sizeof(def.normcolor));
 	blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
+	cext_strlcpy(def.grabmod, "Mod1", sizeof(def.grabmod));
+	def.mod = Mod1Mask;
 
 	init_atoms();
 	init_cursors();

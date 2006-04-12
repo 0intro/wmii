@@ -50,6 +50,7 @@ enum {
 	FsFselcolors,
 	FsFnormcolors,
 	FsFkeys,
+	FsFgrabmod,
 	FsFborder,
 	FsFbar,
 	FsFgeom,
@@ -149,6 +150,8 @@ typedef struct {
 	unsigned int keyssz;
 	char *rules;
 	unsigned int rulessz;
+	char grabmod[5];
+	unsigned long mod;
 } Default;
 
 /* global variables */
@@ -252,6 +255,7 @@ void new_ixp_conn(IXPConn *c);
 void handle_key(Window w, unsigned long mod, KeyCode keycode);
 void update_keys();
 void init_lock_keys();
+unsigned long mod_key_of_str(char *val);
 
 /* mouse.c */
 void do_mouse_resize(Client *c, Align align);

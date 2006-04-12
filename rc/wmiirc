@@ -49,6 +49,7 @@ status &
 proglist $OLD_PATH >/tmp/ns.$USER.$DISPLAY/progs &
 
 # SHORTCUTS
+xwrite /def/grabmod $MODKEY
 wmiir write /def/keys <<EOF
 $MODKEY-$LEFT
 $MODKEY-$RIGHT

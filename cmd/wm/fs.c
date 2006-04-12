@@ -39,6 +39,7 @@ enum { WMII_IOUNIT = 2048 };
  * /def/normcolors	FsFnormcolors	normal colors
  * /def/rules		FsFrules		rules
  * /def/keys		FsFkeys			keys
+ * /def/grabmod		FsFgrabmod		grab modifier
  * /tags			FsFtags
  * /bar/			FsDbar
  * /bar/lab/		FsDlabel
@@ -182,6 +183,7 @@ qid2name(Qid *qid)
 	case FsFselcolors: return "selcolors"; break;
 	case FsFnormcolors: return "normcolors"; break;
 	case FsFfont: return "font"; break;
+	case FsFgrabmod: return "grabmod"; break;
 	case FsFrules: return "rules"; break;
 	case FsFkeys: return "keys"; break;
 	case FsFcolors: return "colors"; break;
@@ -263,6 +265,8 @@ name2type(char *name, unsigned char dir_type)
 		return FsFnormcolors;
 	if(!strncmp(name, "font", 5))
 		return FsFfont;
+	if(!strncmp(name, "grabmod", 8))
+		return FsFgrabmod;
 	if(!strncmp(name, "keys", 5))
 		return FsFkeys;
 	if(!strncmp(name, "rules", 6))
@@ -400,6 +404,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		goto Mkfile;
 		break;
 	case FsFborder:
+	case FsFgrabmod:
 	case FsFfont:
 	case FsFrules:
 	case FsFselcolors:
@@ -544,6 +549,8 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		break;
 	case FsFfont:
 		return mkstat(stat, dir, wname, strlen(def.font), IXP_DMREAD | IXP_DMWRITE);
+	case FsFgrabmod:
+		return mkstat(stat, dir, wname, strlen(def.grabmod), IXP_DMREAD | IXP_DMWRITE);
 		break;
 	}
 	return 0;
@@ -920,6 +927,8 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "rules", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			fcall->count += type2stat(&stat, "grabmod", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			break;
 		case FsDview:
 			if(view.size) {
@@ -1087,6 +1096,10 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			else if(fcall->count)
 				memcpy(p, def.rules, fcall->count);
+			break;
+		case FsFgrabmod:
+			if((fcall->count = strlen(def.grabmod)))
+				memcpy(p, def.grabmod, fcall->count);
 			break;
 		case FsFfont:
 			if((fcall->count = strlen(def.font)))
@@ -1300,6 +1313,23 @@ xwrite(IXPConn *c, Fcall *fcall)
 		}
 		memcpy(def.rules + fcall->offset, fcall->data, fcall->count);
 		def.rules[fcall->offset + fcall->count] = 0;
+		break;
+	case FsFgrabmod:
+		{
+			unsigned long mod;
+			if(fcall->count > sizeof(buf))
+				return Ebadvalue;
+			memcpy(buf, fcall->data, fcall->count);
+			buf[fcall->count] = 0;
+			mod = mod_key_of_str(buf);
+			if((mod != Mod1Mask) || (mod != Mod2Mask) || (mod != Mod3Mask)
+					|| (mod != Mod4Mask) || (mod != Mod5Mask))
+				return Ebadvalue;
+			cext_strlcpy(def.grabmod, buf, sizeof(def.grabmod));
+			def.mod = mod;
+			if(view.size)
+				restack_view(view.data[sel]);
+		}
 		break;
 	case FsFfont:
 		if(def.font)
