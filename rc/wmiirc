@@ -136,9 +136,9 @@ do
 			xwrite /view/ctl view `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Return)
 			extern xterm &;;
-		$MODKEY-Shift-h)
+		$MODKEY-Shift-$LEFT)
 			xwrite /view/sel/sel/sel/ctl sendto prev;;
-		$MODKEY-Shift-l)
+		$MODKEY-Shift-$RIGHT)
 			xwrite /view/sel/sel/sel/ctl sendto next;;
 		$MODKEY-Shift-space)
 			xwrite /view/sel/sel/sel/ctl sendto toggle;;
