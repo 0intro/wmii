@@ -70,7 +70,7 @@ handle_buttonpress(XEvent *e)
 	}
 	else if((c = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
-		if((ev->state & Mod1Mask) && (ev->button == Button3)) {
+		if((ev->state & def.mod) && (ev->button == Button3)) {
 			if(sel_client() != c)
 				focus(c);
 			else {
