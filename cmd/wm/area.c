@@ -17,6 +17,8 @@ vector_of_areas(AreaVector *av)
 Area *
 create_area(View *v)
 {
+	if(v->area.size >= 2 && v->area.size - 1 >= rect.width / MIN_COLWIDTH)
+		return nil;
 	static unsigned short id = 1;
 	Area *a = cext_emallocz(sizeof(Area));
 	a->view = v;
@@ -26,7 +28,7 @@ create_area(View *v)
 	if(v->area.size > 1)
 		a->rect.width = rect.width / (v->area.size - 1);
 	cext_vattach(vector_of_areas(&v->area), a);
-	v->sel = v->area.size -1;
+	v->sel = v->area.size - 1;
 	return a;
 }
 

@@ -565,7 +565,8 @@ send_client_to(Client *c, char *arg)
 		else if(a->frame.size > 1) {
 			Area *p, *n;
 			unsigned int j;
-			p = to = create_area(v);
+			if(!(p = to = create_area(v)))
+				return;
 			for(j = 1; j < v->area.size; j++) {
 				n = v->area.data[j];
 				v->area.data[j] = p;
@@ -580,7 +581,8 @@ send_client_to(Client *c, char *arg)
 		if(i < v->area.size - 1)
 			to = v->area.data[i + 1];
 		else if(a->frame.size > 1) {
-			to = create_area(v);
+			if(!(to = create_area(v)))
+				return;
 			arrange_view(v, True);
 		}
 		else
