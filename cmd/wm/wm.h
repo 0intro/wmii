@@ -37,7 +37,6 @@ enum {
 enum {                          
 	FsDroot,
 	FsDdef,
-	FsDviews,
 	FsDview,
 	FsDarea,
 	FsDclients,
@@ -268,6 +267,7 @@ void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 void update_rules();
 void apply_rules(Client *c);
 void reapply_rules();
+Bool permit_tags(const char *tags);
 
 /* view.c */
 void arrange_view(View *v, Bool dirty);

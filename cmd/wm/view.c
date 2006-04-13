@@ -213,6 +213,7 @@ attach_to_view(View *v, Client *c)
 		a = v->area.data[v->sel];
 
 	attach_to_area(a, c);
+	v->sel = idx_of_area(a);
 	map_client(c);
 	XMapWindow(dpy, c->framewin);
 }

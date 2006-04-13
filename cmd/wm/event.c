@@ -29,7 +29,7 @@ init_x_event_handler()
 	int i;
 	/* init event handler */
 	for(i = 0; i < LASTEvent; i++)
-		handler[i] = 0;
+		handler[i] = nil;
 	handler[ButtonPress] = handle_buttonpress;
 	handler[ConfigureRequest] = handle_configurerequest;
 	handler[DestroyNotify] = handle_destroynotify;

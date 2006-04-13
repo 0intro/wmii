@@ -38,6 +38,26 @@ rule2vector(RuleVector *rv)
 	return (Vector *) rv;
 }
 
+Bool
+permit_tags(const char *tags)
+{
+	static char *exclude[]
+		= { "bar", "client", "ctl", "def", "event", "view" };
+	char buf[256];
+	char *toks[16];
+	unsigned int i, j, n;
+
+	cext_strlcpy(buf, tags, sizeof(buf));
+	n = cext_tokenize(toks, 16, buf, '+');
+	for(i = 0; i < (sizeof(exclude)/sizeof(exclude[0])); i++)
+		for(j = 0; j < n; j++) {
+			if(!strncmp(exclude[i], toks[j], strlen(toks[j])) &&
+				!strncmp(exclude[i], toks[j], strlen(exclude[i])))
+				return False;
+		}
+	return True;
+}
+
 void
 update_rules()
 {
@@ -80,12 +100,17 @@ update_rules()
 			break;
 		case TAGS:
 			if(*p == '\n' || *(p + 1) == 0) {
-				Rule *rul = cext_emallocz(sizeof(Rule));
 				*t = 0;
-				rul->is_valid = !regcomp(&rul->regex, regex, 0);
-				cext_strlcpy(rul->tags, tags, sizeof(rul->tags));
+				if(permit_tags(tags)) {
+					Rule *rul = cext_emallocz(sizeof(Rule));
+					rul->is_valid = !regcomp(&rul->regex, regex, 0);
+					cext_strlcpy(rul->tags, tags, sizeof(rul->tags));
+					cext_vattach(rule2vector(&rule), rul);
+				}
+				else
+					fprintf(stderr, "wmiiwm: ignoring rule with tags '%s', restricted tag name\n",
+							tags);
 				mode = IGNORE;
-				cext_vattach(rule2vector(&rule), rul);
 			}
 			else {
 				if((*p == ' ' || *p == '\t') && (tags[0] == 0))
