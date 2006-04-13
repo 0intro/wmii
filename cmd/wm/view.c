@@ -364,13 +364,17 @@ update_views()
 		destroy_view(v);
 	}
 
-	if(view.size && view.data[sel] != old) {
-		focus_view(view.data[sel]);
-		return;
-	}
-	else if(old) {
+	if(old) {
+		if(view.data[sel] != old) {
+			focus_view(old);
+			return;
+		}
 		focus_client(sel_client_of_view(old));
 		draw_clients();
+	}
+	else if(view.size) {
+		focus_view(view.data[sel]);
+		return;
 	}
 	update_view_bars();
 }
