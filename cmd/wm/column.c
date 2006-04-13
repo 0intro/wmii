@@ -108,6 +108,8 @@ arrange_column(Area *a, Bool dirty)
 {
 	unsigned int i, yoff = a->rect.y, h, dy = 0;
 	float scale = 1.0;
+	unsigned int min_height = 2 * height_of_bar();
+	int hdiff = 0;
 
 	if(!a->frame.size)
 		return;
@@ -130,6 +132,10 @@ arrange_column(Area *a, Bool dirty)
 			f->rect.y = yoff;
 			f->rect.width = a->rect.width;
 			f->rect.height *= scale;
+			if(f->rect.height < min_height)
+				f->rect.height = min_height;
+			else if((hdiff = f->rect.y + f->rect.height - a->rect.height + (a->frame.size - i) * min_height) > 0)
+				f->rect.height -= hdiff;
 			if(i == a->frame.size - 1)
 				f->rect.height = a->rect.height - f->rect.y + a->rect.y;
 			yoff += f->rect.height;
