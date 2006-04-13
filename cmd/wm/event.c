@@ -60,10 +60,10 @@ handle_buttonpress(XEvent *e)
 	static char buf[32];
 	if(ev->window == barwin) {
 		unsigned int i;
-		for(i = 0; i < label.size; i++)
-			if(blitz_ispointinrect(ev->x, ev->y, &label.data[i]->rect)) {
+		for(i = 0; i < bar.size; i++)
+			if(blitz_ispointinrect(ev->x, ev->y, &bar.data[i]->rect)) {
 				snprintf(buf, sizeof(buf), "BarClick %s %d\n",
-						label.data[i]->name, ev->button);
+						bar.data[i]->name, ev->button);
 				write_event(buf);
 				return;
 			}

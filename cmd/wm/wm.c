@@ -284,8 +284,8 @@ main(int argc, char *argv[])
 
 	key.data = nil;
 	key.size = 0;
-	label.data = nil;
-	label.size = 0;
+	bar.data = nil;
+	bar.size = 0;
 	def.rules = nil;
 	def.rulessz = 0;
 	def.keys = nil;

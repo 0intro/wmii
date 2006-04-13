@@ -164,7 +164,7 @@ ViewVector view;
 unsigned int sel;
 ClientVector client;
 KeyVector key;
-BarVector label;
+BarVector bar;
 Display *dpy;
 int screen;
 Window root;

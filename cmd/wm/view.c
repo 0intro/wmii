@@ -14,6 +14,14 @@ vector_of_views(ViewVector *vv)
 	return (Vector *) vv;
 }
 
+static int
+comp_view_name(const void *v1, const void *v2)
+{
+	View *vv1 = *(View **)v1;
+	View *vv2 = *(View **)v2;
+	return strcmp(vv1->name, vv2->name);
+}
+
 View *
 create_view(char *name)
 {
@@ -26,6 +34,7 @@ create_view(char *name)
 	create_area(v);
 	sel = view.size;
 	cext_vattach(vector_of_views(&view), v);
+	qsort(view.data, view.size, sizeof(View *), comp_view_name);
 	return v;
 }
 

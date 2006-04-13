@@ -9,7 +9,7 @@
 #include "wm.h"
 
 static int
-comp_label_intern(const void *l1, const void *l2)
+comp_bar_intern(const void *l1, const void *l2)
 {
 	Bar *ll1 = *(Bar **)l1;
 	Bar *ll2 = *(Bar **)l2;
@@ -21,7 +21,7 @@ comp_label_intern(const void *l1, const void *l2)
 }
 
 static int
-comp_label_name(const void *l1, const void *l2)
+comp_bar_name(const void *l1, const void *l2)
 {
 	Bar *ll1 = *(Bar **)l1;
 	Bar *ll2 = *(Bar **)l2;
@@ -48,17 +48,16 @@ create_bar(char *name, Bool intern)
 	cext_strlcpy(l->name, name, sizeof(l->name));
 	cext_strlcpy(l->colstr, def.selcolor, sizeof(l->colstr));
 	l->color = def.sel;
-	cext_vattach(vector_of_bars(&label), l);
-	qsort(label.data, label.size, sizeof(Bar *), comp_label_name);
-	qsort(label.data, label.size, sizeof(Bar *), comp_label_intern);
-
+	cext_vattach(vector_of_bars(&bar), l);
+	qsort(bar.data, bar.size, sizeof(Bar *), comp_bar_name);
+	qsort(bar.data, bar.size, sizeof(Bar *), comp_bar_intern);
 	return l;
 }
 
 void
 destroy_bar(Bar *l)
 {
-	cext_vdetach(vector_of_bars(&label), l);
+	cext_vdetach(vector_of_bars(&bar), l);
 }
 
 unsigned int
@@ -113,11 +112,11 @@ draw_bar()
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
 
-	if(!label.size)
+	if(!bar.size)
 		return;
 
-	for(i = 0; (i < label.size) && (w < brect.width); i++) {
-		l = label.data[i];
+	for(i = 0; (i < bar.size) && (w < brect.width); i++) {
+		l = bar.data[i];
 		if(l->intern) {
 			if(view.size && !strncmp(l->name, view.data[sel]->name, sizeof(l->name)))
 				l->color = def.sel;
@@ -133,26 +132,26 @@ draw_bar()
 		w += l->rect.width;
 	}
 
-	if(i != label.size) { /* give all labels same width */
-		w = brect.width / label.size;
-		for(i = 0; i < label.size; i++) {
-			l = label.data[i];
+	if(i != bar.size) { /* give all bars same width */
+		w = brect.width / bar.size;
+		for(i = 0; i < bar.size; i++) {
+			l = bar.data[i];
 			l->rect.x = i * w;
 			l->rect.width = w;
 		}
 	}
-	else { /* expand label properly */
-		for(exp = 0; (exp < label.size) && (label.data[exp]->intern); exp++);
-		if(exp == label.size)
+	else { /* expand bar properly */
+		for(exp = 0; (exp < bar.size) && (bar.data[exp]->intern); exp++);
+		if(exp == bar.size)
 			exp = -1;
 		else
-			label.data[exp]->rect.width += (brect.width - w);
-		for(i = 1; i < label.size; i++)
-			label.data[i]->rect.x = label.data[i - 1]->rect.x + label.data[i - 1]->rect.width;
+			bar.data[exp]->rect.width += (brect.width - w);
+		for(i = 1; i < bar.size; i++)
+			bar.data[i]->rect.x = bar.data[i - 1]->rect.x + bar.data[i - 1]->rect.width;
 	}
 
-	for(i = 0; i < label.size; i++) {
-		l = label.data[i];
+	for(i = 0; i < bar.size; i++) {
+		l = bar.data[i];
 		d.color = l->color;
 		d.rect = l->rect;
 		d.data = l->data;
@@ -171,8 +170,8 @@ int
 idx_of_bar(Bar *l)
 {
 	int i;
-	for(i = 0; i < label.size; i++)
-		if(label.data[i] == l)
+	for(i = 0; i < bar.size; i++)
+		if(bar.data[i] == l)
 			return i;
 	return -1;
 }
@@ -181,8 +180,8 @@ int
 idx_of_bar_id(unsigned short id)
 {
 	int i;
-	for(i = 0; i < label.size; i++)
-		if(label.data[i]->id == id)
+	for(i = 0; i < bar.size; i++)
+		if(bar.data[i]->id == id)
 			return i;
 	return -1;
 }
@@ -194,9 +193,9 @@ bar_of_name(const char *name)
 	unsigned int i;
 
  	cext_strlcpy(buf, name, sizeof(buf));
-	for(i = 0; i < label.size; i++)
-		if(!strncmp(label.data[i]->name, name, sizeof(label.data[i]->name)))
-			return label.data[i];
+	for(i = 0; i < bar.size; i++)
+		if(!strncmp(bar.data[i]->name, name, sizeof(bar.data[i]->name)))
+			return bar.data[i];
 	return nil;
 }
 
@@ -206,8 +205,8 @@ update_view_bars()
 	unsigned int i;
 	Bar *l = nil;
 
-	for(i = 0; (i < label.size) && label.data[i]->intern; i++) {
-		l = label.data[i];
+	for(i = 0; (i < bar.size) && bar.data[i]->intern; i++) {
+		l = bar.data[i];
 		if(!view_of_name(l->name)) {
 			destroy_bar(l);
 			i--;

@@ -71,7 +71,7 @@ const char *err;
 
 /*
  * Qid->path is calculated related to the index of the associated structure.
- * i1 is associated to tag, key, global client, or label
+ * i1 is associated to tag, key, global client, or bar
  * i2 is associated to area
  * i3 is associated to client
  * ie /view/sel/ctl is i1id = sel tag id, i2id = sel area id , i3id = 0 (no id)
@@ -158,7 +158,7 @@ qid2name(Qid *qid)
 	case FsDbar:
 		if(i1 == -1)
 			return nil;
-		return label.data[i1]->name;
+		return bar.data[i1]->name;
 		break;
 	case FsDarea:
 		if(i1 == -1 || i2 == -1)
@@ -526,7 +526,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->tags), IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFdata:
-		return mkstat(stat, dir, wname, (dir_i1 == label.size) ? 0 : strlen(label.data[dir_i1]->data),
+		return mkstat(stat, dir, wname, (dir_i1 == bar.size) ? 0 : strlen(bar.data[dir_i1]->data),
 				IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFmode:
@@ -679,10 +679,10 @@ xremove(IXPConn *c, Fcall *fcall)
 	switch(type) {
 	case FsDbar:
 		{
-			Bar *l = label.data[i1];
+			Bar *l = bar.data[i1];
 			if(l->intern)
 				return Enoperm;
-			/* now detach the label */
+			/* now detach the bar */
 			destroy_bar(l);
 			free(l);
 			draw_bar();
@@ -765,15 +765,15 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDbars:
 			/* jump to offset */
 			len = 0;
-			for(i = 0; i < label.size; i++) {
-				len += type2stat(&stat, label.data[i]->name, &m->qid);
+			for(i = 0; i < bar.size; i++) {
+				len += type2stat(&stat, bar.data[i]->name, &m->qid);
 				if(len <= fcall->offset)
 					continue;
 				break;
 			}
 			/* offset found, proceeding */
-			for(; i < label.size; i++) {
-				len = type2stat(&stat, label.data[i]->name, &m->qid);
+			for(; i < bar.size; i++) {
+				len = type2stat(&stat, bar.data[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -905,8 +905,8 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsDbars:
-			for(i = 0; i < label.size; i++) {
-				len = type2stat(&stat, label.data[i]->name, &m->qid);
+			for(i = 0; i < bar.size; i++) {
+				len = type2stat(&stat, bar.data[i]->name, &m->qid);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
@@ -914,7 +914,7 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsDbar:
-			if(i1 >= label.size)
+			if(i1 >= bar.size)
 				return Enofile;
 			fcall->count = type2stat(&stat, "colors", &m->qid);
 			p = ixp_enc_stat(p, &stat);
@@ -1053,16 +1053,16 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsFdata:
-			if(i1 >= label.size)
+			if(i1 >= bar.size)
 				return Enofile;
-			if((fcall->count = strlen(label.data[i1]->data)))
-				memcpy(p, label.data[i1]->data, fcall->count);
+			if((fcall->count = strlen(bar.data[i1]->data)))
+				memcpy(p, bar.data[i1]->data, fcall->count);
 			break;
 		case FsFcolors:
-			if(i1 >= label.size)
+			if(i1 >= bar.size)
 				return Enofile;
-			if((fcall->count = strlen(label.data[i1]->colstr)))
-				memcpy(p, label.data[i1]->colstr, fcall->count);
+			if((fcall->count = strlen(bar.data[i1]->colstr)))
+				memcpy(p, bar.data[i1]->colstr, fcall->count);
 			break;
 		case FsFselcolors:
 			if((fcall->count = strlen(def.selcolor)))
@@ -1236,19 +1236,19 @@ xwrite(IXPConn *c, Fcall *fcall)
 		break;
 	case FsFdata:
 		len = fcall->count;
-		if(len >= sizeof(label.data[i1]->data))
-			len = sizeof(label.data[i1]->data) - 1;
-		memcpy(label.data[i1]->data, fcall->data, len);
-		label.data[i1]->data[len] = 0;
+		if(len >= sizeof(bar.data[i1]->data))
+			len = sizeof(bar.data[i1]->data) - 1;
+		memcpy(bar.data[i1]->data, fcall->data, len);
+		bar.data[i1]->data[len] = 0;
 		draw_bar();
 		break;
 	case FsFcolors:
-		if((i1 >= label.size) || (fcall->count != 23) || (fcall->data[0] != '#')
+		if((i1 >= bar.size) || (fcall->count != 23) || (fcall->data[0] != '#')
 				|| (fcall->data[8] != '#') || (fcall->data[16] != '#'))
 			return Ebadvalue;
-		memcpy(label.data[i1]->colstr, fcall->data, fcall->count);
-		label.data[i1]->colstr[fcall->count] = 0;
-		blitz_loadcolor(dpy, screen, label.data[i1]->colstr, &label.data[i1]->color);
+		memcpy(bar.data[i1]->colstr, fcall->data, fcall->count);
+		bar.data[i1]->colstr[fcall->count] = 0;
+		blitz_loadcolor(dpy, screen, bar.data[i1]->colstr, &bar.data[i1]->color);
 		draw_bar();
 		break;
 	case FsFselcolors:
@@ -1334,7 +1334,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		view.data[i1]->area.data[i2]->mode = i;
 		arrange_column(view.data[i1]->area.data[i2], True);
-		if(view.data[i1]->area.data[i2]->frame.size == 1) /* little hack to update the taglabel */
+		if(view.data[i1]->area.data[i2]->frame.size == 1) /* little hack to update the tagbar */
 			draw_client(view.data[i1]->area.data[i2]->frame.data[view.data[i1]->area.data[i2]->sel]->client);
 		break;
 	case FsFevent:
