@@ -112,6 +112,8 @@ match(Client *c, const char *prop)
 			else if(!strncmp(r->tags, "!", 2)) {
 				if(view.size) {
 					if(c->view.size) {
+						if(c->view.size == 1 && !strncmp(c->view.data[0]->name,"nil",4))
+							continue;
 						c->tags[0] = 0;
 						unsigned int j;
 						for(j = 0; j < c->view.size; j++) {
