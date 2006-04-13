@@ -279,6 +279,7 @@ arrange_view(View *v, Bool dirty)
 {
 	unsigned int i, xoff = 0;
 	unsigned int dx = 0;
+	int wdiff = 0;
 	float scale = 1.0;
 
 	if(v->area.size == 1)
@@ -296,6 +297,10 @@ arrange_view(View *v, Bool dirty)
 			a->rect.y = 0;
 			a->rect.height = rect.height - brect.height;
 			a->rect.width *= scale;
+			if(a->rect.width < MIN_COLWIDTH)
+				a->rect.width = MIN_COLWIDTH;
+			else if((wdiff = a->rect.x + a->rect.width - rect.width + (v->area.size - 1 - i) * MIN_COLWIDTH) > 0)
+				a->rect.width -= wdiff;
 			xoff += a->rect.width;
 		}
 		arrange_column(a, False);
