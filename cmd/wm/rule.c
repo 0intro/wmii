@@ -139,7 +139,7 @@ match(Client *c, const char *prop)
 			if(!strncmp(r->tags, "~", 2))
 				c->floating = True;
 			else if(!c->view.size || !strncmp(c->tags, "nil", 4)) {
-				if(strncmp(r->tags, "!", 2)) {
+				if(!strncmp(r->tags, "!", 2)) {
 					if(view.size) {
 						c->tags[0] = 0;
 						unsigned int j;
