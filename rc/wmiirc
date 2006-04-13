@@ -130,7 +130,7 @@ do
 		$MODKEY-p)
 			extern `wmiimenu </tmp/ns.$USER.$DISPLAY/progs` &;;
 		$MODKEY-t)
-			xwrite /ctl view "`wmiir read / | awk '!/bar|client|ctl|def|event|view/{print $10}' | wmiimenu`" &;;
+			xwrite /ctl view "`wmiir read /tags | wmiimenu`" &;;
 		$MODKEY-[0-9])
 			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Return)
