@@ -138,17 +138,10 @@ match(Client *c, const char *prop)
 		if(r->is_valid && !regexec(&r->regex, prop, 1, &tmpregm, 0)) {
 			if(!strncmp(r->tags, "~", 2))
 				c->floating = True;
-			else if(!c->view.size || !strncmp(c->tags, "nil", 4)) {
+			else if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4)) {
 				if(!strncmp(r->tags, "!", 2)) {
-					if(view.size) {
-						c->tags[0] = 0;
-						unsigned int j;
-						for(j = 0; j < c->view.size; j++) {
-							cext_strlcat(c->tags, c->view.data[j]->name, sizeof(c->tags));
-							if(j + 1 < c->view.size)
-								cext_strlcat(c->tags, "+", sizeof(c->tags));
-						}
-					}
+					if(view.size)
+						cext_strlcpy(c->tags, view.data[sel]->name, sizeof(c->tags));
 					else
 						cext_strlcpy(c->tags, "nil", sizeof(c->tags));
 				}
