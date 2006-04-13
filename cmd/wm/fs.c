@@ -1328,8 +1328,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			memcpy(buf, fcall->data, fcall->count);
 			buf[fcall->count] = 0;
 			mod = mod_key_of_str(buf);
-			if((mod != Mod1Mask) || (mod != Mod2Mask) || (mod != Mod3Mask)
-					|| (mod != Mod4Mask) || (mod != Mod5Mask))
+			if((mod != Mod1Mask) && (mod != Mod2Mask) && (mod != Mod3Mask)
+					&& (mod != Mod4Mask) && (mod != Mod5Mask))
 				return Ebadvalue;
 			cext_strlcpy(def.grabmod, buf, sizeof(def.grabmod));
 			def.mod = mod;
