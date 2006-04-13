@@ -266,7 +266,6 @@ void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 /* rule.c */
 void update_rules();
 void apply_rules(Client *c);
-void reapply_rules();
 Bool permit_tags(const char *tags);
 
 /* view.c */

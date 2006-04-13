@@ -41,7 +41,6 @@ wmiir write /def/rules <<EOF
 /XMMS.*/ -> ~
 /Gimp.*/ -> ~
 EOF
-xwrite /ctl retag
 
 # MISC
 xsetroot -solid '#0b1014'

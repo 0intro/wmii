@@ -61,6 +61,7 @@ permit_tags(const char *tags)
 void
 update_rules()
 {
+	unsigned int i;
 	int mode = IGNORE;
 	char *p, *r = nil, *t = nil, regex[256], tags[256];
 
@@ -120,6 +121,9 @@ update_rules()
 			}
 			break;
 		}
+	for(i = 0; i < client.size; i++)
+		apply_rules(client.data[i]);
+	update_views();
 }
 
 
@@ -134,11 +138,9 @@ match(Client *c, const char *prop)
 		if(r->is_valid && !regexec(&r->regex, prop, 1, &tmpregm, 0)) {
 			if(!strncmp(r->tags, "~", 2))
 				c->floating = True;
-			else if(!strncmp(r->tags, "!", 2)) {
-				if(view.size) {
-					if(c->view.size) {
-						if(c->view.size == 1 && !strncmp(c->view.data[0]->name,"nil",4))
-							continue;
+			else if(!c->view.size || !strncmp(c->tags, "nil", 4)) {
+				if(strncmp(r->tags, "!", 2)) {
+					if(view.size) {
 						c->tags[0] = 0;
 						unsigned int j;
 						for(j = 0; j < c->view.size; j++) {
@@ -148,11 +150,11 @@ match(Client *c, const char *prop)
 						}
 					}
 					else
-						cext_strlcpy(c->tags, view.data[sel]->name, sizeof(c->tags));
+						cext_strlcpy(c->tags, "nil", sizeof(c->tags));
 				}
+				else
+					cext_strlcpy(c->tags, r->tags, sizeof(c->tags));
 			}
-			else
-				cext_strlcpy(c->tags, r->tags, sizeof(c->tags));
 		}
 	}
 }
@@ -168,13 +170,4 @@ apply_rules(Client *c)
 Fallback:
 	if(!strlen(c->tags) || (!view.size && !strncmp(c->tags, "*", 2)))
 		cext_strlcpy(c->tags, "nil", sizeof(c->tags));
-}
-
-void
-reapply_rules()
-{
-	unsigned int i;
-	for(i = 0; i < client.size; i++)
-		apply_rules(client.data[i]);
-	update_views();
 }
