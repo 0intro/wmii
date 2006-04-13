@@ -40,6 +40,7 @@ enum { WMII_IOUNIT = 2048 };
  * /def/rules		FsFrules		rules
  * /def/keys		FsFkeys			keys
  * /def/grabmod		FsFgrabmod		grab modifier
+ * /tags			FsFtags
  * /bar/			FsDbars
  * /bar/lab/		FsDbar
  * /bar/lab/data	FsFdata			<arbitrary data which gets displayed>
@@ -203,19 +204,23 @@ qid2name(Qid *qid)
 			return nil;
 		return "geom";
 		break;
+	case FsFtags:
+		if((qid->dir_type == FsDclient) && (i1 == -1 || i2 == -1 || i3 == -1))
+			return nil;
+		else if((qid->dir_type == FsDGclient) && (i1 == -1))
+			return nil;
+		return "tags";
+		break;
 	case FsFclass:
 	case FsFname:
-	case FsFtags:
 		if((qid->dir_type == FsDclient) && (i1 == -1 || i2 == -1 || i3 == -1))
 			return nil;
 		else if(i1 == -1)
 			return nil;
 		if(type == FsFname)
 			return "name";
-		else if(type == FsFclass)
-			return "class";
 		else
-			return "tags";
+			return "class";
 		break;
 	case FsFmode:
 		if(i1 == -1 || i2 == -1)
@@ -403,7 +408,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		if(dir_type == FsDroot)
 			return -1;
 	case FsFtags:
-		if((dir_type != FsDview) && (dir_type != FsDGclient) && (dir_type != FsDclient))
+		if((dir_type != FsDroot) && (dir_type != FsDview) && (dir_type != FsDGclient) && (dir_type != FsDclient))
 			return -1;
 		if((dir_type == FsDclient) && ((dir_i1 == -1 || dir_i2 == -1 || dir_i3 == -1)))
 			return -1;
@@ -518,12 +523,23 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->name), IXP_DMREAD);
 		break;
 	case FsFtags:
-		if(dir_type == FsDclient) {
+		switch(dir_type) {
+		case FsDclient:
 			f = view.data[dir_i1]->area.data[dir_i2]->frame.data[dir_i3];
 			return mkstat(stat, dir, wname, strlen(f->client->tags), IXP_DMREAD | IXP_DMWRITE);
-		}
-		else if(dir_type == FsDGclient)
+			break;
+		case FsDGclient:
 			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->tags), IXP_DMREAD | IXP_DMWRITE);
+			break;
+		default:
+			{
+				unsigned int i, len = 0;
+				for(i = 0; i < view.size; i++)
+					len += strlen(view.data[i]->name) + 1;
+				return mkstat(stat, dir, wname, len, IXP_DMREAD);
+			}
+			break;
+		}
 		break;
 	case FsFdata:
 		return mkstat(stat, dir, wname, (dir_i1 == bar.size) ? 0 : strlen(bar.data[dir_i1]->data),
@@ -725,8 +741,10 @@ xread(IXPConn *c, Fcall *fcall)
 			len += type2stat(&stat, "bar", &m->qid);
 			if(client.size)
 				len += type2stat(&stat, "client", &m->qid);
-			if(view.size)
+			if(view.size) {
+				len += type2stat(&stat, "tags", &m->qid);
 				len += type2stat(&stat, "view", &m->qid);
+			}
 			for(i = 0; i < view.size; i++) {
 				len += type2stat(&stat, view.data[i]->name, &m->qid);
 				if(len <= fcall->offset)
@@ -863,6 +881,26 @@ xread(IXPConn *c, Fcall *fcall)
 			else if(fcall->count)
 				memcpy(p, def.rules + fcall->offset, fcall->count);
 			break;
+		case FsFtags:
+			if(m->qid.dir_type == FsDroot) {
+				len = 0;
+				/* jump to offset */
+				for(i = 0; i < view.size; i++) {
+					len += strlen(view.data[i]->name) + 1;
+					if(len <= fcall->offset)
+						continue;
+				}
+				/* offset found, proceeding */
+				for(; i < view.size; i++) {
+					len = strlen(view.data[i]->name) + 1;
+					if(fcall->count + len > fcall->iounit)
+						break;
+					memcpy(p + fcall->count, view.data[i]->name, len - 1);
+					memcpy(p + fcall->count + len - 1, "\n", 1);
+					fcall->count += len;
+				}
+			}
+			break;
 		default:
 			break;
 		}
@@ -883,6 +921,8 @@ xread(IXPConn *c, Fcall *fcall)
 				p = ixp_enc_stat(p, &stat);
 			}
 			if(view.size) {
+				fcall->count += type2stat(&stat, "tags", &m->qid);
+				p = ixp_enc_stat(p, &stat);
 				fcall->count += type2stat(&stat, "view", &m->qid);
 				p = ixp_enc_stat(p, &stat);
 			}
@@ -1042,14 +1082,28 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsFtags:
-			if(m->qid.dir_type == FsDclient) {
-				Client *c = view.data[i1]->area.data[i2]->frame.data[i3]->client;
-				if((fcall->count = strlen(c->tags)))
-					memcpy(p, c->tags, fcall->count);
-			}
-			else if(m->qid.dir_type == FsDGclient) {
+			switch(m->qid.dir_type) {
+			case FsDclient:
+				{
+					Client *c = view.data[i1]->area.data[i2]->frame.data[i3]->client;
+					if((fcall->count = strlen(c->tags)))
+						memcpy(p, c->tags, fcall->count);
+				}
+				break;
+			case FsDGclient:
 				if((fcall->count = strlen(client.data[i1]->tags)))
 					memcpy(p, client.data[i1]->tags, fcall->count);
+				break;
+			default:
+				for(i = 0; i < view.size; i++) {
+					len = strlen(view.data[i]->name) + 1;
+					if(fcall->count + len > fcall->iounit)
+						break;
+					memcpy(p + fcall->count, view.data[i]->name, len - 1);
+					memcpy(p + fcall->count + len - 1, "\n", 1);
+					fcall->count += len;
+				}
+				break;
 			}
 			break;
 		case FsFdata:
