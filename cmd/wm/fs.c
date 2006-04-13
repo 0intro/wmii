@@ -571,7 +571,7 @@ xattach(IXPConn *c, Fcall *fcall)
 	IXPMap *new = cext_emallocz(sizeof(IXPMap));
 	new->qid = root_qid;
 	new->fid = fcall->fid;
-	cext_vattach(ixp_map2vector(&c->map), new);
+	cext_vattach(ixp_vector_of_maps(&c->map), new);
 	fcall->id = RATTACH;
 	fcall->qid = root_qid;
 	ixp_server_respond_fcall(c, fcall);
@@ -603,7 +603,7 @@ xwalk(IXPConn *c, Fcall *fcall)
 	if(nwqid == fcall->nwname) {
 		if(fcall->fid != fcall->newfid) {
 			m = cext_emallocz(sizeof(IXPMap));
-			cext_vattach(ixp_map2vector(&c->map), m);
+			cext_vattach(ixp_vector_of_maps(&c->map), m);
 		}
 		m->qid = dir;
 		m->fid = fcall->newfid;
@@ -674,7 +674,7 @@ xremove(IXPConn *c, Fcall *fcall)
 	if(type != FsDbar)
 		return Enoperm;
 	/* clunk */
-	cext_vdetach(ixp_map2vector(&c->map), m);
+	cext_vdetach(ixp_vector_of_maps(&c->map), m);
 	free(m);
 	switch(type) {
 	case FsDbar:
@@ -1131,16 +1131,6 @@ xstat(IXPConn *c, Fcall *fcall)
 	return nil;
 }
 
-static void
-draw_clients()
-{
-	unsigned int i, j;
-	for(i = 0; i < client.size; i++)
-		for(j = 0; j < client.data[i]->frame.size; j++)
-			if(client.data[i]->frame.data[j]->area->view == view.data[sel])
-				draw_client(client.data[i]);
-}
-
 static char *
 xwrite(IXPConn *c, Fcall *fcall)
 {
@@ -1377,7 +1367,7 @@ xclunk(IXPConn *c, Fcall *fcall)
 		update_keys();
 	else if(type == FsFrules)
 		update_rules();
-	cext_vdetach(ixp_map2vector(&c->map), m);
+	cext_vdetach(ixp_vector_of_maps(&c->map), m);
 	free(m);
 	fcall->id = RCLUNK;
 	ixp_server_respond_fcall(c, fcall);

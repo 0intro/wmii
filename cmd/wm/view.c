@@ -9,7 +9,7 @@
 #include "wm.h"
 
 static Vector *
-view2vector(ViewVector *vv)
+vector_of_views(ViewVector *vv)
 {
 	return (Vector *) vv;
 }
@@ -25,7 +25,7 @@ create_view(char *name)
 	create_area(v);
 	create_area(v);
 	sel = view.size;
-	cext_vattach(view2vector(&view), v);
+	cext_vattach(vector_of_views(&view), v);
 	return v;
 }
 
@@ -36,7 +36,7 @@ destroy_view(View *v)
 	while(v->area.size)
 		destroy_area(v->area.data[0]);
 
-	cext_vdetach(view2vector(&view), v);
+	cext_vdetach(vector_of_views(&view), v);
 	if(sel >= view.size)
 		sel = 0;
 
@@ -304,12 +304,12 @@ update_client_views(Client *c)
 	n = cext_tokenize(toks, 16, buf, '+');
 
 	while(c->view.size)
-		cext_vdetach(view2vector(&c->view), c->view.data[0]);
+		cext_vdetach(vector_of_views(&c->view), c->view.data[0]);
 
 	for(i = 0; i < n; i++) {
 		if(!strncmp(toks[i], "*", 2))
 			continue;
-		cext_vattach(view2vector(&c->view), get_view(toks[i]));
+		cext_vattach(vector_of_views(&c->view), get_view(toks[i]));
 	}
 }
 
@@ -364,10 +364,13 @@ update_views()
 		destroy_view(v);
 	}
 
-	if(old)
-		focus_view(old);
-	else if(view.size)
+	if(view.size && view.data[sel] != old) {
 		focus_view(view.data[sel]);
-	else
-		update_view_bars();
+		return;
+	}
+	else if(old) {
+		focus_client(sel_client_of_view(old));
+		draw_clients();
+	}
+	update_view_bars();
 }

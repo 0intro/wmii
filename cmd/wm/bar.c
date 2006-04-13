@@ -29,7 +29,7 @@ comp_label_name(const void *l1, const void *l2)
 }
 
 static Vector *
-label2vector(BarVector *lv)
+vector_of_bars(BarVector *lv)
 {
 	return (Vector *) lv;
 }
@@ -48,7 +48,7 @@ create_bar(char *name, Bool intern)
 	cext_strlcpy(l->name, name, sizeof(l->name));
 	cext_strlcpy(l->colstr, def.selcolor, sizeof(l->colstr));
 	l->color = def.sel;
-	cext_vattach(label2vector(&label), l);
+	cext_vattach(vector_of_bars(&label), l);
 	qsort(label.data, label.size, sizeof(Bar *), comp_label_name);
 	qsort(label.data, label.size, sizeof(Bar *), comp_label_intern);
 
@@ -58,7 +58,7 @@ create_bar(char *name, Bool intern)
 void
 destroy_bar(Bar *l)
 {
-	cext_vdetach(label2vector(&label), l);
+	cext_vdetach(vector_of_bars(&label), l);
 }
 
 unsigned int

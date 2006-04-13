@@ -9,7 +9,7 @@
 #include "wm.h"
 
 static Vector *
-area2vector(AreaVector *av)
+vector_of_areas(AreaVector *av)
 {
 	return (Vector *) av;
 }
@@ -25,7 +25,7 @@ create_area(View *v)
 	a->rect.height = rect.height - brect.height;
 	if(v->area.size > 1)
 		a->rect.width = rect.width / (v->area.size - 1);
-	cext_vattach(area2vector(&v->area), a);
+	cext_vattach(vector_of_areas(&v->area), a);
 	v->sel = v->area.size -1;
 	return a;
 }
@@ -44,7 +44,7 @@ destroy_area(Area *a)
 	for(i = 0; i < client.size; i++)
 		if(client.data[i]->revert == a)
 			client.data[i]->revert = 0;
-	cext_vdetach(area2vector(&v->area), a);
+	cext_vdetach(vector_of_areas(&v->area), a);
 	if(v->sel > 1)
 		v->sel--;
 	free(a);

@@ -19,13 +19,13 @@
 static unsigned char *msg[IXP_MAX_MSG];
 
 static Vector *
-conn2vector(ConnVector *cv)
+vector_of_conns(ConnVector *cv)
 {
 	return (Vector *) cv;
 }
 
 Vector *
-ixp_map2vector(MapVector *mv)
+ixp_vector_of_maps(MapVector *mv)
 {
 	return (Vector *) mv;
 }
@@ -38,7 +38,7 @@ IXPConn *ixp_server_open_conn(IXPServer *s, int fd, void (*read)(IXPConn *c),
 	c->srv = s;
 	c->read = read;
 	c->close = close;
-	cext_vattach(conn2vector(&s->conn), c);
+	cext_vattach(vector_of_conns(&s->conn), c);
 	return c;
 }
 
@@ -46,10 +46,10 @@ void
 ixp_server_close_conn(IXPConn *c)
 {
 	IXPServer *s = c->srv;
-	cext_vdetach(conn2vector(&s->conn), c);
+	cext_vdetach(vector_of_conns(&s->conn), c);
 	while(c->map.size) {
 		IXPMap *m =  c->map.data[0];
-		cext_vdetach(ixp_map2vector(&c->map), m);
+		cext_vdetach(ixp_vector_of_maps(&c->map), m);
 		free(m);
 	}
 	shutdown(c->fd, SHUT_RDWR);

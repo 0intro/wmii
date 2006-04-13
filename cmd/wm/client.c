@@ -13,7 +13,7 @@
 #define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask)
 
 static Vector *
-client2vector(ClientVector *cv)
+vector_of_clients(ClientVector *cv)
 {
 	return (Vector *) cv;
 }
@@ -65,7 +65,7 @@ create_client(Window w, XWindowAttributes *wa)
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
 	c->gc = XCreateGC(dpy, c->framewin, 0, 0);
 	XSync(dpy, False);
-	cext_vattach(client2vector(&client), c);
+	cext_vattach(vector_of_clients(&client), c);
 	return c;
 }
 
@@ -349,7 +349,7 @@ manage_client(Client *c)
 		apply_rules(c);
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
-	update_views(c);
+	update_views();
 }
 
 static int
@@ -379,8 +379,8 @@ destroy_client(Client *c)
 	reparent_client(c, root, c->rect.x, c->rect.y);
 	XFreeGC(dpy, c->gc);
 	XDestroyWindow(dpy, c->framewin);
-	cext_vdetach(client2vector(&client), c);
-	update_views(nil);
+	cext_vdetach(vector_of_clients(&client), c);
+	update_views();
 	free(c);
 
 	XSync(dpy, False);
@@ -654,3 +654,14 @@ client_of_win(Window w)
 			return client.data[i];
 	return nil;
 }
+
+void
+draw_clients()
+{
+	unsigned int i, j;
+	for(i = 0; i < client.size; i++)
+		for(j = 0; j < client.data[i]->frame.size; j++)
+			if(client.data[i]->frame.data[j]->area->view == view.data[sel])
+				draw_client(client.data[i]);
+}
+

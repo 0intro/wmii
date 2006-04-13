@@ -227,6 +227,7 @@ void swap_client(Client *c, char *arg);
 Client *sel_client();
 int idx_of_client_id(unsigned short id);
 Client *client_of_win(Window w);
+void draw_clients();
 
 /* column.c */
 void arrange_column(Area *a, Bool dirty);

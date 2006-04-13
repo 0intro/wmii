@@ -8,7 +8,7 @@
 #include "wm.h"
 
 static Vector *
-frame2vector(FrameVector *fv)
+vector_of_frames(FrameVector *fv)
 {
 	return (Vector *) fv;
 }
@@ -25,9 +25,9 @@ create_frame(Area *a, Client *c)
 	f->rect = c->rect;
 	f->rect.width += 2 * def.border;
 	f->rect.height += def.border + height_of_bar();
-	cext_vattach(frame2vector(&c->frame), f);
+	cext_vattach(vector_of_frames(&c->frame), f);
 	c->sel = c->frame.size - 1;
-	cext_vattach(frame2vector(&a->frame),f);
+	cext_vattach(vector_of_frames(&a->frame),f);
 	a->sel = a->frame.size - 1;
 
 	return f;
@@ -39,8 +39,8 @@ destroy_frame(Frame *f)
 	Client *c = f->client;
 	Area *a = f->area;
 
-	cext_vdetach(frame2vector(&c->frame), f);
-	cext_vdetach(frame2vector(&a->frame), f);
+	cext_vdetach(vector_of_frames(&c->frame), f);
+	cext_vdetach(vector_of_frames(&a->frame), f);
 	free(f);
 	if(c->sel > 0)
 		c->sel--;

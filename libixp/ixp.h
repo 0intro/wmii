@@ -245,7 +245,7 @@ unsigned int ixp_server_receive_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr);
 void ixp_server_close(IXPServer *s);
-Vector *ixp_map2vector(MapVector *mv);
+Vector *ixp_vector_of_maps(MapVector *mv);
 
 /* socket.c */
 int ixp_connect_sock(char *address);

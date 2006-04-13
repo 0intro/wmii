@@ -33,7 +33,7 @@ VECTOR(RuleVector, Rule *);
 static RuleVector rule;
 
 static Vector *
-rule2vector(RuleVector *rv)
+vector_of_rules(RuleVector *rv)
 {
 	return (Vector *) rv;
 }
@@ -72,7 +72,7 @@ update_rules()
 		Rule *r = rule.data[0];
 		if(r->is_valid)
 			regfree(&r->regex);
-		cext_vdetach(rule2vector(&rule), r);
+		cext_vdetach(vector_of_rules(&rule), r);
 		free(r);
 	}
 
@@ -106,7 +106,7 @@ update_rules()
 					Rule *rul = cext_emallocz(sizeof(Rule));
 					rul->is_valid = !regcomp(&rul->regex, regex, 0);
 					cext_strlcpy(rul->tags, tags, sizeof(rul->tags));
-					cext_vattach(rule2vector(&rule), rul);
+					cext_vattach(vector_of_rules(&rule), rul);
 				}
 				else
 					fprintf(stderr, "wmiiwm: ignoring rule with tags '%s', restricted tag name\n",
