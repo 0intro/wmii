@@ -136,6 +136,7 @@ match(Client *c, const char *prop)
 	for(i = 0; i < rule.size; i++) {
 		Rule *r = rule.data[i];
 		if(r->is_valid && !regexec(&r->regex, prop, 1, &tmpregm, 0)) {
+			fprintf(stderr, "[%d] c->class=%s c->tags=%s r->tags=%s\n", i, c->classinst, c->tags, r->tags);
 			if(!strncmp(r->tags, "~", 2))
 				c->floating = True;
 			else if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4)) {
@@ -157,8 +158,8 @@ apply_rules(Client *c)
 {
 	if(!def.rules)
 		goto Fallback;
-	match(c, c->name);
 	match(c, c->classinst);
+	match(c, c->name);
 
 Fallback:
 	if(!strlen(c->tags) || (!view.size && !strncmp(c->tags, "*", 2)))

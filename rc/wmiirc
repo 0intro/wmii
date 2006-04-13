@@ -36,10 +36,10 @@ xwrite /def/normcolors $WMII_NORMCOLORS
 
 # TAGGING RULES
 wmiir write /def/rules <<EOF
-/.*/ -> 1
-/.*/ -> !
 /XMMS.*/ -> ~
 /Gimp.*/ -> ~
+/.*/ -> !
+/.*/ -> 1
 EOF
 
 # MISC
