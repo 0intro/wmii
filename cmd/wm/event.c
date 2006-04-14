@@ -70,13 +70,18 @@ handle_buttonpress(XEvent *e)
 	}
 	else if((c = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
-		if((ev->state & def.mod) && (ev->button == Button3)) {
-			if(sel_client() != c)
+		if(ev->state & def.mod) {
+			if((ev->button == Button1 || ev->button == Button3)
+				&& (sel_client() != c))
 				focus(c);
-			else {
+			if(ev->button == Button1)
+				do_mouse_move(c);
+			else if (ev->button == Button3) {
 				Align align = blitz_align_of_rect(&c->rect, ev->x, ev->y);
 				if(align != CENTER)
 					do_mouse_resize(c, align);
+				else
+					do_mouse_move(c);
 			}
 		}
 		else if(ev->button == Button1) {
