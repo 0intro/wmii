@@ -45,8 +45,8 @@ EOF
 # MISC
 xsetroot -solid '#0b1014'
 status &
-PROGMENU_CACHE=/tmp/ns.$USER.`echo $DISPLAY | sed 's/.[0-9]$//'`/progs
-proglist $PATH >$PROGMENU_CACHE &
+PROGS_FILE=/tmp/.wmiimenu.$USER.progs
+proglist $PATH >$PROGS_FILE &
 
 # SHORTCUTS
 xwrite /def/grabmod $MODKEY
@@ -129,7 +129,7 @@ do
 		$MODKEY-a)
 			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
 		$MODKEY-p)
-			`wmiimenu <$PROGMENU_CACHE` &;;
+			`wmiimenu <$PROGS_FILE` &;;
 		$MODKEY-t)
 			xwrite /ctl view "`wmiir read /tags | wmiimenu`" &;;
 		$MODKEY-[0-9])
