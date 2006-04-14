@@ -169,8 +169,8 @@ place_client(Area *a, Client *c)
 		y = fr->rect.y / dy;
 		maxx = x + fr->rect.width / dx;
 		maxy = y + fr->rect.height / dy;
-		for(j = y; j < maxy; j++)
-			for(i = x; i < maxx; i++)
+		for(j = y; j < my && j < maxy; j++)
+			for(i = x; i < mx && i < maxx; i++)
 				field[j*mx + i] = False;
 	}
 
