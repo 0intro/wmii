@@ -1409,8 +1409,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, MIN_COLWIDTH, rect.width - MIN_COLWIDTH, &err);
-		if(err)
+		i = cext_strtonum(buf, 0, rect.width - MIN_COLWIDTH, &err);
+		if(err || (i && i < MIN_COLWIDTH))
 			return Ebadvalue;
 		def.colw = i;
 		break;
