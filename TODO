@@ -3,7 +3,4 @@
                  destroyed
 09:42 <@garbeam> if one moved the client outside the screen area more than 50% at left or right border, a new 
                  column is created, if the old column > 1 client
-10:00 <@garbeam> /def/colwidth will be used for column creation of columns > 1, /def/colmode would define the mode 
-                 of new columns
-10:00 <@garbeam> though /def/colwidth will use promille or percentage values
 
