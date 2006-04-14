@@ -3,8 +3,7 @@
 
 wmiiwm -c || exit 1
 
-OLD_PATH=$PATH export OLD_PATH
-PATH=$HOME/.wmii-3:CONFPREFIX/wmii-3:$PATH export PATH
+PATH=$PATH:$HOME/.wmii-3:CONFPREFIX/wmii-3 export PATH
 WMII_ADDRESS=unix!/tmp/ns.$USER.$DISPLAY/wmii export WMII_ADDRESS
 
 mkdir -m 700 /tmp/ns.$USER.$DISPLAY 2>/dev/null
