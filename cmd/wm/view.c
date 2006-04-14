@@ -114,10 +114,10 @@ rects_of_view(View *v, Bool isfloat, unsigned int *num)
 
 	*num = 0;
 	if(isfloat)
-		*num = v->area.data[0]->frame.size;
+		*num = v->area.data[0]->frame.size + 1;
 	else {
 		for(i = 1; i < v->area.size; i++)
-			*num += v->area.data[i]->frame.size;
+			*num += v->area.data[i]->frame.size + 1;
 	}
 
 	if(*num) {
@@ -133,6 +133,7 @@ rects_of_view(View *v, Bool isfloat, unsigned int *num)
 					result[n++] = v->area.data[i]->frame.data[j]->rect;
 			}
 		}
+		result[*num - 1] = brect;
 	}
 	return result;
 }
