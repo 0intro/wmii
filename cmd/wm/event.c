@@ -82,8 +82,6 @@ handle_buttonpress(XEvent *e)
 		else if(ev->button == Button1) {
 			if(sel_client() != c)
 				focus(c);
-			else
-				do_mouse_move(c);
 		}
 		if(c->frame.size) {
 			snprintf(buf, sizeof(buf), "ClientClick %d %d\n",

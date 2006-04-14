@@ -19,17 +19,19 @@ create_area(View *v)
 {
 	if(v->area.size >= 2 && v->area.size - 1 >= rect.width / MIN_COLWIDTH)
 		return nil;
-	static unsigned short id = 1;
-	Area *a = cext_emallocz(sizeof(Area));
-	a->view = v;
-	a->id = id++;
-	a->rect = rect;
-	a->rect.height = rect.height - brect.height;
-	if(v->area.size > 1)
-		a->rect.width = rect.width / (v->area.size - 1);
-	cext_vattach(vector_of_areas(&v->area), a);
-	v->sel = v->area.size - 1;
-	return a;
+	{
+		static unsigned short id = 1;
+		Area *a = cext_emallocz(sizeof(Area));
+		a->view = v;
+		a->id = id++;
+		a->rect = rect;
+		a->rect.height = rect.height - brect.height;
+		if(v->area.size > 1)
+			a->rect.width = rect.width / (v->area.size - 1);
+		cext_vattach(vector_of_areas(&v->area), a);
+		v->sel = v->area.size - 1;
+		return a;
+	}
 }
 
 void
@@ -135,11 +137,13 @@ place_client(Area *a, Client *c)
 {
 	static unsigned int mx, my;
 	static Bool *field = nil;
-	unsigned int i, j, k, x, y, maxx, maxy, dx, dy;
+	Bool fit = False;
+	unsigned int i, j, k, x, y, maxx, maxy, dx, dy, cx, cy;
 	XPoint p1 = {0, 0}, p2 = {0, 0};
 	Frame *f = c->frame.data[c->sel];
 
-	if(c->trans)
+	if(c->trans || f->rect.width >= a->rect.width
+			|| f->rect.height >= a->rect.height)
 		return;
 
 	if(!field) {
@@ -155,53 +159,54 @@ place_client(Area *a, Client *c)
 	dx = rect.width / mx;
 	dy = rect.height / my;
 	for(k = 0; k < a->frame.size; k++) {
-		Frame *f = a->frame.data[k];
-		if(f->client == c)
+		Frame *fr = a->frame.data[k];
+		if(fr == f) {
+			cx = f->rect.width / dx;
+			cy = f->rect.height / dy;
 			continue;
-		x = f->rect.x / dx;
-		y = f->rect.y / dy;
-		maxx = x + f->rect.width / dx;
-		maxy = y + f->rect.height / dy;
+		}
+		x = fr->rect.x / dx;
+		y = fr->rect.y / dy;
+		maxx = x + fr->rect.width / dx;
+		maxy = y + fr->rect.height / dy;
 		for(j = y; j < maxy; j++)
 			for(i = x; i < maxx; i++)
 				field[j*mx + i] = False;
 	}
-
-	/*
-	for(y = 0; y < my; y++) {
-		for(x = 0; x < mx; x++)
-			putchar(field[y*mx + x] + '0');
-		putchar('\n');
-	}
-	fflush(stdout);
-	*/
 
 	for(y = 0; y < my; y++)
 		for(x = 0; x < mx; x++) {
 			if(field[y*mx + x]) {
 				for(i = x; (i < mx) && field[y*mx + i]; i++);
 				for(j = y; (j < my) && field[j*mx + x]; j++);
-				if((i - x) * (j - y) > (p2.x - p1.x) * (p2.y - p1.y)) {
+				if(((i - x) * (j - y) > (p2.x - p1.x) * (p2.y - p1.y)) 
+					&& (i - x > cx) && (j - y > cy))
+				{
+					fit = True;
 					p1.x = x;
 					p1.y = y;
 					p2.x = i;
 					p2.y = j;
+					fprintf(stderr, "place_client fit %d %d %d %d, (%d > %d) && (%d > %d)\n",
+						   	x, y, i, j, i-x, cx, j - y, cy);
 				}
 			}
 		}
 
-	p1.x *= dx;
-	p1.y *= dy;
+	if(fit) {
+		p1.x *= dx;
+		p1.y *= dy;
+	}
 
-	if(p1.x + f->rect.width < a->rect.x + a->rect.width)
+	if(fit && (p1.x + f->rect.width < a->rect.x + a->rect.width))
 		f->rect.x = p1.x;
-	else
-		f->rect.x = p1.x + f->rect.width - (a->rect.x + a->rect.width);
+	else 
+		f->rect.x = a->rect.x + (random()%(a->rect.width - f->rect.width));
 
-	if(p1.y + f->rect.height < a->rect.y + a->rect.height)
+	if(fit && (p1.y + f->rect.height < a->rect.y + a->rect.height))
 		f->rect.y = p1.y;
 	else
-		f->rect.y = p1.y + f->rect.height - (a->rect.y + a->rect.height);
+		f->rect.y = a->rect.y + (random()%(a->rect.height - f->rect.height));
 }
 
 void

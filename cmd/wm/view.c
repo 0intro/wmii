@@ -378,21 +378,8 @@ update_views()
 		destroy_view(v);
 	}
 
-	if(view.size) {
-		if(old) {
-			Client *c;
-			if(view.data[sel] != old) {
-				focus_view(old);
-				return;
-			}
-			if((c = sel_client_of_view(old))) {
-				focus_client(c);
-				draw_clients();
-			}
-		}
-		else
-			focus_view(view.data[sel]);
-	}
+	if(view.size)
+		focus_view(view.data[sel]);
 	else
 		update_view_bars();
 }
