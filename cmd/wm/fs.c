@@ -188,6 +188,7 @@ qid2name(Qid *qid)
 	case FsFselcolors: return "selcolors"; break;
 	case FsFnormcolors: return "normcolors"; break;
 	case FsFfont: return "font"; break;
+	case FsFcolw: return "colwidth"; break;
 	case FsFgrabmod: return "grabmod"; break;
 	case FsFrules: return "rules"; break;
 	case FsFkeys: return "keys"; break;
@@ -275,6 +276,8 @@ name2type(char *name, unsigned char dir_type)
 		return FsFnormcolors;
 	if(!strncmp(name, "font", 5))
 		return FsFfont;
+	if(!strncmp(name, "colwidth", 9))
+		return FsFcolw;
 	if(!strncmp(name, "grabmod", 8))
 		return FsFgrabmod;
 	if(!strncmp(name, "keys", 5))
@@ -428,6 +431,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 	case FsFborder:
 	case FsFgrabmod:
 	case FsFfont:
+	case FsFcolw:
 	case FsFrules:
 	case FsFselcolors:
 	case FsFnormcolors:
@@ -575,6 +579,9 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 	case FsFrules:
 		return mkstat(stat, dir, wname, def.rules ? strlen(def.rules) : 0, IXP_DMREAD | IXP_DMWRITE);
 		break;
+	case FsFcolw:
+		snprintf(buf, sizeof(buf), "%d", def.colw);
+		return mkstat(stat, dir, wname, strlen(buf), IXP_DMREAD | IXP_DMWRITE);
 	case FsFfont:
 		return mkstat(stat, dir, wname, strlen(def.font), IXP_DMREAD | IXP_DMWRITE);
 	case FsFgrabmod:
@@ -993,6 +1000,8 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "colmode", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			fcall->count += type2stat(&stat, "colwidth", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			break;
 		case FsDview:
 			if(view.size) {
@@ -1164,6 +1173,11 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsFgrabmod:
 			if((fcall->count = strlen(def.grabmod)))
 				memcpy(p, def.grabmod, fcall->count);
+			break;
+		case FsFcolw:
+			snprintf(buf, sizeof(buf), "%d", def.colw);
+			if((fcall->count = strlen(buf)))
+				memcpy(p, buf, fcall->count);
 			break;
 		case FsFfont:
 			if((fcall->count = strlen(def.font)))
@@ -1389,6 +1403,16 @@ xwrite(IXPConn *c, Fcall *fcall)
 			if(view.size)
 				restack_view(view.data[sel]);
 		}
+		break;
+	case FsFcolw:
+		if(fcall->count > sizeof(buf))
+			return Ebadvalue;
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
+		i = cext_strtonum(buf, MIN_COLWIDTH, rect.width - MIN_COLWIDTH, &err);
+		if(err)
+			return Ebadvalue;
+		def.colw = i;
 		break;
 	case FsFfont:
 		if(def.font)

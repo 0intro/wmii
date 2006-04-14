@@ -154,6 +154,7 @@ typedef struct {
 	char grabmod[5];
 	unsigned long mod;
 	int colmode;
+	unsigned int colw;
 } Default;
 
 /* global variables */

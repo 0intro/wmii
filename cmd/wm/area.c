@@ -17,7 +17,14 @@ vector_of_areas(AreaVector *av)
 Area *
 create_area(View *v)
 {
-	if(v->area.size >= 2 && v->area.size - 1 >= rect.width / MIN_COLWIDTH)
+	unsigned int w;
+    if(def.colw)
+		w = def.colw;
+	else if(v->area.size > 1)
+		w = rect.width / v->area.size;
+	else
+		w = rect.width;
+	if(v->area.size >= 2 && (v->area.size - 1) * MIN_COLWIDTH + w > rect.width)
 		return nil;
 	{
 		static unsigned short id = 1;
@@ -28,7 +35,8 @@ create_area(View *v)
 		a->rect.height = rect.height - brect.height;
 		a->mode = def.colmode;
 		if(v->area.size > 1)
-			a->rect.width = rect.width / (v->area.size - 1);
+			w *= 2;
+		a->rect.width = w;
 		cext_vattach(vector_of_areas(&v->area), a);
 		v->sel = v->area.size - 1;
 		return a;

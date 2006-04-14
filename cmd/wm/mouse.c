@@ -205,8 +205,8 @@ do_mouse_move(Client *c)
 	Window dummy;
 	XEvent ev;
 	/* borders */
-	int snapw = rect.width * def.snap / 1000;
-	int snaph = rect.height * def.snap / 1000;
+	int snapw = (rect.width * def.snap) / 1000;
+	int snaph = (rect.height * def.snap) / 1000;
 	unsigned int num;
 	unsigned int dmask;
 	XRectangle *rects = rects_of_view(c->frame.data[c->sel]->area->view,
@@ -447,8 +447,8 @@ do_mouse_resize(Client *c, Align align)
 	Window dummy;
 	XEvent ev;
 	/* borders */
-	int snapw = rect.width * def.snap / 1000;
-	int snaph = rect.height * def.snap / 1000;
+	int snapw = (rect.width * def.snap) / 1000;
+	int snaph = (rect.height * def.snap) / 1000;
 	unsigned int dmask;
 	unsigned int num;
 	XRectangle *rects = rects_of_view(c->frame.data[c->sel]->area->view,
