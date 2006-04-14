@@ -121,14 +121,12 @@ str_of_mode(unsigned int mode)
 }
 
 static char *
-str_of_time(unsigned int t)
+str_of_time(unsigned int val)
 {
 	static char buf[32];
-	struct timeval tv = {0};
-
-	tv.tv_sec = t;
-	char *tstr = ctime(&tv.tv_sec);
-	cext_strlcpy(buf, tstr ? tstr : "invalid ", sizeof(buf));
+	time_t t = (time_t)(int)val;
+	char *tstr = ctime(&t);
+	cext_strlcpy(buf, tstr ? tstr : "in v a l id ", sizeof(buf));
 	buf[strlen(buf) - 1] = 0;
 	return buf;
 }
