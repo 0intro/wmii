@@ -165,10 +165,16 @@ place_client(Area *a, Client *c)
 			cy = f->rect.height / dy;
 			continue;
 		}
-		x = fr->rect.x / dx;
-		y = fr->rect.y / dy;
-		maxx = x + fr->rect.width / dx;
-		maxy = y + fr->rect.height / dy;
+		if(fr->rect.x < 0)
+			x = 0;
+		else
+			x = fr->rect.x / dx;
+		if(fr->rect.y < 0)
+			y = 0;
+		else
+			y = fr->rect.y / dy;
+		maxx = (fr->rect.x + fr->rect.width) / dx;
+		maxy = (fr->rect.y + fr->rect.height) / dy;
 		for(j = y; j < my && j < maxy; j++)
 			for(i = x; i < mx && i < maxx; i++)
 				field[j*mx + i] = False;
@@ -187,8 +193,6 @@ place_client(Area *a, Client *c)
 					p1.y = y;
 					p2.x = i;
 					p2.y = j;
-					fprintf(stderr, "place_client fit %d %d %d %d, (%d > %d) && (%d > %d)\n",
-						   	x, y, i, j, i-x, cx, j - y, cy);
 				}
 			}
 		}
