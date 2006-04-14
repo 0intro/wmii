@@ -228,8 +228,6 @@ qid2name(Qid *qid)
 	case FsFmode:
 		if((qid->dir_type == FsDarea) && (i1 == -1 || i2 == -1))
 			return nil;
-		else if(qid->dir_type != FsDdef)
-			return nil;
 		if(qid->dir_type == FsDdef)
 			return "colmode";
 		else
@@ -409,8 +407,6 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		break;
 	case FsFmode:
 		if((dir_type == FsDarea) && (dir_i1 == -1 || dir_i2 == -1))
-			return -1;
-		if(dir_type != FsDdef)
 			return -1;
 		goto Mkfile;
 		break;
