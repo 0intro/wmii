@@ -292,6 +292,7 @@ main(int argc, char *argv[])
 	def.keyssz = 0;
 	def.font = strdup(BLITZ_FONT);
 	def.border = 2;
+	def.colmode = Coldefault;
 	cext_strlcpy(def.selcolor, BLITZ_SELCOLORS, sizeof(def.selcolor));
 	blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
 	cext_strlcpy(def.normcolor, BLITZ_NORMCOLORS, sizeof(def.normcolor));

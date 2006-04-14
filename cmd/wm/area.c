@@ -26,6 +26,7 @@ create_area(View *v)
 		a->id = id++;
 		a->rect = rect;
 		a->rect.height = rect.height - brect.height;
+		a->mode = def.colmode;
 		if(v->area.size > 1)
 			a->rect.width = rect.width / (v->area.size - 1);
 		cext_vattach(vector_of_areas(&v->area), a);

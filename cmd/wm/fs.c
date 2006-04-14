@@ -40,6 +40,8 @@ enum { WMII_IOUNIT = 2048 };
  * /def/rules		FsFrules		rules
  * /def/keys		FsFkeys			keys
  * /def/grabmod		FsFgrabmod		grab modifier
+ * /def/colmode		FsFmode			column mode
+ * /def/colwidth	FsFcolw			column width
  * /tags			FsFtags
  * /bar/			FsDbars
  * /bar/lab/		FsDbar
@@ -223,9 +225,14 @@ qid2name(Qid *qid)
 			return "class";
 		break;
 	case FsFmode:
-		if(i1 == -1 || i2 == -1)
+		if((qid->dir_type == FsDarea) && (i1 == -1 || i2 == -1))
 			return nil;
-		return "mode";
+		else if(qid->dir_type != FsDdef)
+			return nil;
+		if(qid->dir_type == FsDdef)
+			return "colmode";
+		else
+			return "mode";
 		break;
 	case FsFevent: return "event"; break;
 	default: return nil; break;
@@ -276,7 +283,7 @@ name2type(char *name, unsigned char dir_type)
 		return FsFrules;
 	if(!strncmp(name, "data", 5))
 		return FsFdata;
-	if(!strncmp(name, "mode", 5))
+	if(!strncmp(name, "mode", 5) || !strncmp(name, "colmode", 8))
 		return FsFmode;
 	if((dir_type == FsDbars) && bar_of_name(name))
 		return FsDbar;
@@ -398,7 +405,9 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		goto Mkfile;
 		break;
 	case FsFmode:
-		if(dir_i1 == -1 || dir_i2 == -1 || dir_type != FsDarea)
+		if((dir_type == FsDarea) && (dir_i1 == -1 || dir_i2 == -1))
+			return -1;
+		if(dir_type != FsDdef)
 			return -1;
 		goto Mkfile;
 		break;
@@ -546,8 +555,14 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 				IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFmode:
-		return mkstat(stat, dir, wname, strlen(str_of_column_mode(view.data[dir_i1]->area.data[dir_i2]->mode)),
-				IXP_DMREAD | IXP_DMWRITE);
+		{
+			int i;
+			if(dir_type == FsDarea)
+				i = view.data[dir_i1]->area.data[dir_i2]->mode;
+			else
+				i = def.colmode;
+			return mkstat(stat, dir, wname, strlen(str_of_column_mode(i)), IXP_DMREAD | IXP_DMWRITE);
+		}
 		break;
 	case FsFcolors:
 	case FsFselcolors:
@@ -976,6 +991,8 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "grabmod", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			fcall->count += type2stat(&stat, "colmode", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			break;
 		case FsDview:
 			if(view.size) {
@@ -1153,9 +1170,14 @@ xread(IXPConn *c, Fcall *fcall)
 				memcpy(p, def.font, fcall->count);
 			break;
 		case FsFmode:
-			if(!i2)
-				return Enofile;
-			snprintf(buf, sizeof(buf), "%s", str_of_column_mode(view.data[i1]->area.data[i2]->mode));
+			if(m->qid.dir_type == FsDarea) {
+				if(!i2)
+					return Enofile;
+				i = view.data[i1]->area.data[i2]->mode;
+			}
+			else
+				i = def.colmode;
+			snprintf(buf, sizeof(buf), "%s", str_of_column_mode(i));
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -1378,18 +1400,23 @@ xwrite(IXPConn *c, Fcall *fcall)
 		resize_bar();
 		break;
 	case FsFmode:
-		if(!i2)
-			return Enofile;
 		if(fcall->count > sizeof(buf))
 			return Ebadvalue;
+		if(m->qid.dir_type == FsDarea && !i2)
+			return Enofile;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		if((i = column_mode_of_str(buf)) == -1)
 			return Ebadvalue;
-		view.data[i1]->area.data[i2]->mode = i;
-		arrange_column(view.data[i1]->area.data[i2], True);
-		if(view.data[i1]->area.data[i2]->frame.size == 1) /* little hack to update the tagbar */
-			draw_client(view.data[i1]->area.data[i2]->frame.data[view.data[i1]->area.data[i2]->sel]->client);
+		if(m->qid.dir_type == FsDarea) {
+			view.data[i1]->area.data[i2]->mode = i;
+			arrange_column(view.data[i1]->area.data[i2], True);
+			if(view.data[i1]->area.data[i2]->frame.size == 1) /* little hack to update the tagbar */
+				draw_client(view.data[i1]->area.data[i2]
+						->frame.data[view.data[i1]->area.data[i2]->sel]->client);
+		}
+		else
+			def.colmode = i;
 		break;
 	case FsFevent:
 		if(fcall->count > sizeof(buf))

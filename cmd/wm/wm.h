@@ -60,7 +60,8 @@ enum {
 	FsFrules,
 	FsFclass,
 	FsFmode,
-	FsFtags
+	FsFtags,
+	FsFcolw
 };
 
 enum { MIN_COLWIDTH = 64 };
@@ -152,6 +153,7 @@ typedef struct {
 	unsigned int rulessz;
 	char grabmod[5];
 	unsigned long mod;
+	int colmode;
 } Default;
 
 /* global variables */
