@@ -18,12 +18,12 @@ Area *
 create_area(View *v)
 {
 	unsigned int w;
-	if(def.colw)
-		w = def.colw;
-	else if(v->area.size > 1)
-		w = rect.width / v->area.size;
-	else
+	if(v->area.size < 2)
 		w = rect.width;
+	else if(def.colw)
+		w = def.colw;
+	else
+		w = rect.width / v->area.size;
 	if(v->area.size >= 2 && (v->area.size - 1) * MIN_COLWIDTH + w > rect.width)
 		return nil;
 	else
