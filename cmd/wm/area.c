@@ -36,7 +36,7 @@ create_area(View *v)
 		a->rect.height = rect.height - brect.height;
 		a->mode = def.colmode;
 		if(v->area.size > 1)
-			w = rect.width / ((float)rect.width / a->rect.width - 1);
+			w = rect.width / ((float)rect.width / w - 1);
 		a->rect.width = w;
 		cext_vattach(vector_of_areas(&v->area), a);
 		v->sel = v->area.size - 1;
