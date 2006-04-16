@@ -32,9 +32,9 @@ create_view(char *name)
 	cext_strlcpy(v->name, name, sizeof(v->name));
 	create_area(v);
 	create_area(v);
-	sel = view.size;
 	cext_vattach(vector_of_views(&view), v);
 	qsort(view.data, view.size, sizeof(View *), comp_view_name);
+	sel = idx_of_view(v);
 	return v;
 }
 
