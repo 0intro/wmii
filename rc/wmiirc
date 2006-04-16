@@ -145,7 +145,7 @@ do
 		$MODKEY-Shift-c)
 			xwrite /view/sel/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite /view/sel/sel/tags "`wmiir read /view/sel/sel/tags | wmiimenu`" &;;
+			xwrite /view/sel/sel/tags "`wmiir read /tags | wmiimenu`" &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /view/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Control-$LEFT)
