@@ -379,7 +379,9 @@ update_views()
 		destroy_view(v);
 	}
 
-	if(view.size)
+	if(old)
+		focus_view(old);
+	else if(view.size)
 		focus_view(view.data[sel]);
 	else
 		update_view_bars();
