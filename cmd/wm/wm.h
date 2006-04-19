@@ -237,6 +237,8 @@ void arrange_column(Area *a, Bool dirty);
 void resize_column(Client *c, XRectangle *r, XPoint *pt);
 int column_mode_of_str(char *arg);
 char *str_of_column_mode(int mode);
+Area *new_left_column(View *v);
+Area *new_right_column(View *v);
 
 /* event.c */
 void init_x_event_handler();

@@ -239,10 +239,10 @@ handle_kpress(XKeyEvent * e)
 		sel++;
 		break;
 	case XK_Return:
-		if(sel >= 0)
-			fprintf(stdout, "%s", item.data[sel]);
-		else if(text)
+		if(text)
 			fprintf(stdout, "%s", text);
+		else if(sel >= 0)
+			fprintf(stdout, "%s", item.data[sel]);
 		fflush(stdout);
 		done = True;
 		break;

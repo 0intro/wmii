@@ -306,6 +306,11 @@ drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 	for(i = 1; (i < v->area.size) &&
 			!blitz_ispointinrect(pt->x, pt->y, &v->area.data[i]->rect); i++);
 	if((tgt = ((i < v->area.size) ? v->area.data[i] : nil))) {
+		int x = new->x + (2 * new->width / 3);
+		if(x < 0)
+			tgt = new_left_column(v);
+		else if(x > rect.width)
+			tgt = new_right_column(v);
 		if(tgt != src)
 			send_to_area(tgt, src, f->client);
 		else {
@@ -331,4 +336,29 @@ resize_column(Client *c, XRectangle *r, XPoint *pt)
 		drop_moving(f, r, pt);
 	else
 		drop_resize(f, r);
+}
+
+Area *
+new_left_column(View *v) {
+	Area *a, *p, *n;
+	unsigned int i;
+	if(!(a = p = create_area(v)))
+		return nil;
+	for(i = 1; i < v->area.size; i++) {
+		n = v->area.data[i];
+		v->area.data[i] = p;
+		p = n;
+	}
+	arrange_view(v, True);
+	return a;
+}
+
+Area *
+new_right_column(View *v)
+{
+	Area *a;
+	if(!(a = create_area(v)))
+		return nil;
+	arrange_view(v, True);
+	return a;
 }
