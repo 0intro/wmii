@@ -7,8 +7,7 @@ xwrite() {
 }
 
 proglist() {
-	ls -lL `echo "$@" | tr : ' '` 2>/dev/null |
-	awk 'NF>2 && $1 ~ /^[^d].*x/ {print $NF}' | sort -u
+	ls -lL "$@" 2>/dev/null | awk 'NF>2 && $1 ~ /^[^d].*x/ {print $NF}' | sort -u
 }
 
 MODKEY=Mod1
@@ -17,9 +16,11 @@ DOWN=j
 LEFT=h
 RIGHT=l
 
-WMII_FONT='fixed' export WMII_FONT
-WMII_NORMCOLORS='#222222 #eeeeee #666666' export WMII_NORMCOLORS
-WMII_SELCOLORS='#ffffff #285577 #4c7899' export WMII_SELCOLORS
+WMII_FONT='fixed'
+WMII_NORMCOLORS='#222222 #eeeeee #666666'
+WMII_SELCOLORS='#ffffff #285577 #4c7899'
+
+export WMII_FONT WMII_NORMCOLORS WMII_SELCOLORS
 
 # give wmiiwm a chance to start
 while :
@@ -46,7 +47,7 @@ EOF
 xsetroot -solid '#0b1014'
 status &
 PROGS_FILE=/tmp/.wmiimenu.$USER.progs
-proglist $PATH >$PROGS_FILE &
+proglist `echo "$PATH" | tr : ' '` >$PROGS_FILE &
 
 # SHORTCUTS
 xwrite /def/grabmod $MODKEY
@@ -127,7 +128,7 @@ do
 		$MODKEY-m)
 			xwrite /view/sel/mode max;;
 		$MODKEY-a)
-			`proglist CONFPREFIX/wmii-3:$HOME/.wmii-3 | wmiimenu` &;;
+			`proglist CONFPREFIX/wmii-3 $HOME/.wmii-3 | wmiimenu` &;;
 		$MODKEY-p)
 			`wmiimenu <$PROGS_FILE` &;;
 		$MODKEY-t)
