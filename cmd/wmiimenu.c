@@ -239,8 +239,10 @@ handle_kpress(XKeyEvent * e)
 		sel++;
 		break;
 	case XK_Return:
-		if(e->state & ShiftMask)
-			fprintf(stdout, "%s", text);
+		if(e->state & ShiftMask) {
+			if(text)
+				fprintf(stdout, "%s", text);
+		}
 		else if(sel >= 0)
 			fprintf(stdout, "%s", item.data[sel]);
 		else if(text)
