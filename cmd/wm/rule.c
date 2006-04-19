@@ -38,6 +38,14 @@ vector_of_rules(RuleVector *rv)
 	return (Vector *) rv;
 }
 
+VECTOR(PropVector, char *);
+
+static Vector *
+vector_of_props(PropVector *pv)
+{
+	return (Vector *) pv;
+}
+
 Bool
 permit_tags(const char *tags)
 {
@@ -128,27 +136,28 @@ update_rules()
 
 
 static void
-match(Client *c, const char *prop)
+match(Client *c, PropVector prop)
 {
-	unsigned int i;
+	unsigned int i,j;
 	regmatch_t tmpregm;
 
 	for(i = 0; i < rule.size; i++) {
 		Rule *r = rule.data[i];
-		if(r->is_valid && !regexec(&r->regex, prop, 1, &tmpregm, 0)) {
-			if(!strncmp(r->tags, "~", 2))
-				c->floating = True;
-			else if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4)) {
-				if(!strncmp(r->tags, "!", 2)) {
-					if(view.size)
-						cext_strlcpy(c->tags, view.data[sel]->name, sizeof(c->tags));
+		for(j=0; j < prop.size; j++)
+			if(r->is_valid && !regexec(&r->regex, prop.data[j], 1, &tmpregm, 0)) {
+				if(!strncmp(r->tags, "~", 2))
+					c->floating = True;
+				else if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4)) {
+					if(!strncmp(r->tags, "!", 2)) {
+						if(view.size)
+							cext_strlcpy(c->tags, view.data[sel]->name, sizeof(c->tags));
+						else
+							cext_strlcpy(c->tags, "nil", sizeof(c->tags));
+					}
 					else
-						cext_strlcpy(c->tags, "nil", sizeof(c->tags));
+						cext_strlcpy(c->tags, r->tags, sizeof(c->tags));
 				}
-				else
-					cext_strlcpy(c->tags, r->tags, sizeof(c->tags));
 			}
-		}
 	}
 }
 
@@ -157,8 +166,16 @@ apply_rules(Client *c)
 {
 	if(!def.rules)
 		goto Fallback;
-	match(c, c->classinst);
-	match(c, c->name);
+
+	PropVector prop = {0};
+
+	cext_vattach(vector_of_props(&prop), c->classinst);
+	cext_vattach(vector_of_props(&prop), c->name);
+
+	match(c, prop);
+
+	while(prop.size)
+		cext_vdetach(vector_of_props(&prop), prop.data[0]);
 
 Fallback:
 	if(!strlen(c->tags) || (!view.size && !strncmp(c->tags, "*", 2)))
