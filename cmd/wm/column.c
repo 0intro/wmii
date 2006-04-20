@@ -303,7 +303,7 @@ drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 	for(i = 1; (i < v->area.size) &&
 			!blitz_ispointinrect(pt->x, pt->y, &v->area.data[i]->rect); i++);
 	if((tgt = ((i < v->area.size) ? v->area.data[i] : nil))) {
-		if(src->frame.size > 1) {
+		if(src->frame.size > 1 || src != tgt) {
 			int x = new->x + (new->width / 2);
 			if(x < 0)
 				tgt = new_left_column(v);
