@@ -300,6 +300,9 @@ drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 	View *v = src->view;
 	unsigned int i;
 
+	if(!pt)
+		return;
+
 	for(i = 1; (i < v->area.size) &&
 			!blitz_ispointinrect(pt->x, pt->y, &v->area.data[i]->rect); i++);
 	if((tgt = ((i < v->area.size) ? v->area.data[i] : nil))) {
