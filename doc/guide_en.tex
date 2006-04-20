@@ -650,9 +650,9 @@ Salvador\\Peir\'o
   \subsection{Filling the status-bar}
 
     \label{subsec:status}
-    The status bar of wmii, has it's own directory \verb+/bar+ with
+    The status bar of wmii has it's own directory \verb+/bar+ with
     one subdirectory for each of the labels created. So while editing
-    this document the status-bar looked like:
+    this document my status-bar looked like:
 
     \begin{verbatim}
       $ wmiir read /bar
@@ -675,19 +675,19 @@ Salvador\\Peir\'o
     to show (content).
     
     So you can start your own experiments by creating a new label, and
-    explore and modify it by reading \& writing values to it's
+    exploring and modifying it by reading \& writing values to it's
     \verb+colors+ \& \verb+data+ files.  A nice feature of the bar
     (and clients) is that they generate events corresponding to mouse
     clicks on them.  So you can open a terminal and launch
     \verb+wmiir read /event+ and and see how the events are generated
     when you click the bar, this is a mechanism that allows
     controlling applications directly from the bar, when you've
-    finished, and don't want to look the \verb+foo+ label, just issue
+    finished, and don't need the \verb+foo+ label anymore, just issue
     a \verb+wmiir remove /bar/foo+.
   
-    If you want to know more take a look at the status script, also
-    look the pages at \hrefx{http://wmii.de} for good examples, some
-    useful ideas that are already written:
+    If you want to know more take a look at the status script and have
+    a look at the pages at \hrefx{http://wmii.de} for good examples,
+    like the following:
 
     \begin{itemize*}
     \item \emph{status}: monitoring remaining battery, temperature,\dots on laptops
@@ -696,21 +696,20 @@ Salvador\\Peir\'o
     \item \emph{status-net}: monitoring wireless network signal
     \end{itemize*}
   
-    And last read the default status script and ask yourself: what it
-    does?  \verbatiminput{../rc/status} The first line is a
-    \verb+xwrite+ function declaration, to save us from typing a lot,
-    all it does is to issue a write over the file named by first
-    argument. The following 3 lines take care of creating and setting
-    up the \verb+status+ label. And the last section is a \verb+while+
-    loop that \emph{tries} to write the machine's load and date
-    information to the bar.\\
+    And last read the default status script and ask yourself: what
+    does it do?  \verbatiminput{../rc/status} The first line is a
+    \verb+xwrite+ function declaration, to save us from typing a lot
+    by issueing a write over the file named by first argument. The
+    following 3 lines take care of creating and setting up the
+    \verb+status+ label. And the last section is a \verb+while+ loop
+    that \emph{tries} to write the machine's load and date information
+    to the bar.\\
   
     The tricky bit here is \emph{tries}, so what could make the write
-    fail?, what would happen if \verb+xwrite+ wrote to a non existent
-    (removed) label, then it would fail, thus the condition of the
-    loop would be false, and the status script would end cleanly, that
-    makes sense because who want a program that updates a nonexistent
-    label.\\
+    fail? If \verb+xwrite+ tried to write to a non existent (removed)
+    label, then it would fail, thus the condition of the loop would be
+    false, and the status script would end cleanly, which makes sense
+    because who wants a program that updates a nonexistent label.\\
 
     Now if we go back to the first lines of the script you can see
     that there is a \verb+sleep delay+ between the removal of the
@@ -718,14 +717,13 @@ Salvador\\Peir\'o
   
     This ensures that the \verb+status+ label will not exist, so all
     the writes made from a any previously running \verb+status+ script
-    to it will fail, so they will finish.This way we make sure that we
-    only run one at each time.  And thus we keep the one-to-one
+    to it will fail, so they will finish. This way we make sure that
+    we only run one at each time.  And thus we keep the one-to-one
     correspondence between label and status script.\\
   
     Now if you think that was neat, go to a public library and pick up
-    a copy of for example: 
-
-% \href{http://tpop.awl.com}{The Practice of  Programming} (recall I don't get a cent for this).
+    a copy of for example: \href{http://tpop.awl.com}{The Practice of
+    Programming} (recall I don't get a cent for this).
   
   \subsection{Assigning new tags}
   
@@ -747,7 +745,7 @@ Salvador\\Peir\'o
       echo -n view web | wmiir write /ctl
     \end{verbatim}
 
-    As the development of wmii-3 prograssed, it became clear that this
+    As the development of wmii-3 progressed, it became clear that this
     action is so common, that it got its own keybinding. By default
     \emph{MOD-t} brings up a menu to choose a view and
     \emph{MOD-Shift-t} brings up a menu enabling you to assign new
@@ -757,8 +755,10 @@ Salvador\\Peir\'o
     
     We hope this has eased your way through wmii, because this is the
     purpose of this document and so, if you've seen something that you
-    thing it's wrong, confusion or missing in this document, feel free
-    to drop us a note, by the way you consider convenient:
+    think is wrong, confusing or missing in this document, feel free
+    to drop us a note:
+
+    Contact information is to be found here:
     \href{http://wmii.de/index.php/BeginnersGuide}{direct mail},
     \href{http://wmii.de/index.php/MailingList}{[wmii]} mailing-list,
     \href{http://wmii.de/index.php/IRC}{\#wmii} irc channel or even
@@ -766,11 +766,12 @@ Salvador\\Peir\'o
     you're on your own \texttt{;-P}.}.
   
     Also remember that wmii is written by people with taste, so most
-    of the decisions made, have strong reasons supporting them, so if
-    you think something doesn't make sense in the picture just try to
-    understand it first by yourself before asking, probably you'll end
-    up learning a lot and if in the end it's wrong you'll provide
-    better feedback to solve the issue.
+    of the decisions made have strong reasons supporting them, so if
+    you think something doesn't make sense or doesn't fit into the
+    picture, just try to understand it by yourself first before
+    asking, probably you'll end up learning a lot and if its really
+    wrong in the end, you'll provide us with much better feedback to
+    solve the issue.
 
 \newpage
 
