@@ -90,7 +90,7 @@ handle_buttonpress(XEvent *e)
 		}
 		if(c->frame.size) {
 			snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
-					idx_of_frame(c->frame.data[c->sel]) + 1, ev->button);
+					idx_of_client_id(c->id), ev->button);
 			write_event(buf);
 		}
 	}
