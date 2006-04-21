@@ -1,5 +1,5 @@
 %guide to wmii-3
-%Copyright (C) 2005, 2006 by Steffen Liebergeld, Salva Peiro
+%Copyright (C) 2005, 2006 by Steffen Liebergeld, Salva Peir\'o
 
 %This program is free software; you can redistribute it and/or
 %modify it under the terms of the GNU General Public License
@@ -39,18 +39,16 @@
       \setlength{\parskip}{0pt}}
   {\end{itemize}}
 \date{\today}
-\author{ 
-Steffen \\ Liebergeld \\ \emph{author}
-\and
-Salvador \\ Peir\'o \\ \emph{inquisitor}
+\author{
+Steffen\\Liebergeld \\\\
+\small{with help from}\\
+Salvador\\Peir\'o
 }
 
 \title{A Guide to wmii-3%
-\thanks{This work was partly funded by the EEE \emph{(European Easter's Egg)}
-commission. thanks to the wmii community in particular all the people in the Credits section} \\
-\small{(\emph{when did wmii got lost?})}
+\thanks{Thanks to the wmii community in particular all the people in the Credits section}
 }
-%\email{stepardo@gmail.com et saoret.one@gmail.com}
+%\email{stepardo@gmail.com \and saoret.one@gmail.com}
 
 \begin{document}
 
@@ -61,6 +59,11 @@ commission. thanks to the wmii community in particular all the people in the Cre
 \newpage
 
 \section{Abstract}
+
+  \subsection{Who brought this to you}
+    
+    This guide was written by Steffen Liebergeld, who got lots of help
+    from Salvador Peir\'o and a patch from Jochen Schwartz.
 
   \subsection{The purpose of this document}
 
@@ -93,12 +96,21 @@ commission. thanks to the wmii community in particular all the people in the Cre
   \subsection{Target audience}
 
     I presume the reader already has experience with Unix, knows all
-    the basic terminology and concepts like files or editors. It is
-    helpful if you know what a socket and a network protocol is.
+    the basic terminology and concepts like files or editors.
 
     I hope you are open minded against new ideas, and willing to spend
-    some time learning it~\footnote{remember the refrain:
-    \emph{``nobody can teach you what you don't want to know''.}}.
+    some time learning it~\footnote{remember the refrain: ``nobody can
+    teach you what you don't want to know''.}.
+
+    If you only want to know how to operate wmii-3 and are not
+    interested in the inner workings or in scripting, you may read the
+    chapters ``Configuration and install'', ``Terminology'' and
+    ``First steps'' and skip the rest.
+
+    However, to get the most out of wmii-3 you should possibly read
+    the whole document. Another possibility is to read the
+    introductory chapters first, use some time to get settled in the
+    wmii-world and read the scripting chapters later on.
   
 \section{Configuration and install}
 
@@ -325,7 +337,7 @@ commission. thanks to the wmii community in particular all the people in the Cre
     It should be clear, that you really need at least two clients to
     have two columns.
 
-    If you press \emph{MOD-k} to change focus, you will see that wmii
+    If you press \emph{MOD-j} to change focus, you will see that wmii
     actually cycles the focus in the current column only. That is why
     you need commands to change the current column.
 
@@ -350,12 +362,12 @@ commission. thanks to the wmii community in particular all the people in the Cre
     \emph{MOD-s}. As you see now, there in only one client using as
     much space as possible, whereas you only see the title-bars of the
     other clients in the column. You may still switch between the
-    clients in the column using \emph{MOD-Tab}.
+    clients in the column using \emph{MOD-j}.
 
     The third layout is the max-layout, which maximises all the
     clients to use all the space in the column each. Only the focused
     client is visible and the other are hidden behind. You may still
-    switch between those clients with \emph{MOD-Tab}.
+    switch between those clients with \emph{MOD-j}.
 
   \subsection{Float pages}
 
@@ -371,7 +383,7 @@ commission. thanks to the wmii community in particular all the people in the Cre
     fashioned programs rely on the old window managing concept, where
     all the clients fly around on the desktop and the user has to tell
     them where to stay. We have the term floating windows for this
-    pragma.
+    rule.
 
     To come to the point: wmii also allows you to use floating
     clients. You may enable floating mode for a window by focusing it
@@ -379,8 +391,8 @@ commission. thanks to the wmii community in particular all the people in the Cre
     (the column it came from) by pressing \emph{MOD-Shift-Space}.
 
     As a side note, this floating mode is actually the zeroth column
-    internally. You will see later on why this was implemented this
-    way.
+    internally. That is why there is not much special internal
+    handling needed.
 
   \subsection{Tags}
 
@@ -579,11 +591,11 @@ commission. thanks to the wmii community in particular all the people in the Cre
     your local copy will be executed instead.
     
     This works because in the \emph{wmii} launcher script alters and
-    exports the variable \verb+\${}PATH+ as\\
-    \verb+\${}PATH=\~{}/.wmii-3:\${}CONFPREFIX/wmii:\${}PATH+ before
+    exports the variable \verb+$PATH+ as\\
+    \verb+$PATH=~/.wmii-3:$CONFPREFIX/wmii:$PATH+ before
     launching the wmiiwm, this way local user actions under
     \verb+~/.wmii-3+ take precedence over the defaults from
-    \verb+\${}CONFPREFIX/wmii+ of the default actions.
+    \verb+$CONFPREFIX/wmii+ of the default actions.
     
     You may edit this file on the fly, which means you don't need to
     stop wmii before editing. After you've finished editing, you may
@@ -607,12 +619,40 @@ commission. thanks to the wmii community in particular all the people in the Cre
     the \emph{hjkl} vim home row) this is probably the place to look
     at.
 
+  \subsection{Changing the looks}
+
+    The look of wmii-3 is determined by colours only. And because we
+    wanted small and unimportant things to be as unobstrusive as
+    possible, we used another virtue of unix: \emph{Environment
+    variables}.
+
+    \begin{verbatim}
+      WMII_SELCOLORS='#000000 #eaffff #8888cc'
+      WMII_NORMCOLORS='#000000 #ffffea #bdb76b'
+      WMII_FONT=static
+    \end{verbatim}
+
+    \verb+WMII_SELCOLORS+ define the colours of the selected clients
+    window title and border, whereas \verb+WMII_NORMCOLORS+ defines
+    the colours of all the other clients. The numbers are hexadecimal
+    rgb, which you might know from html. You might get them with the
+    Gimps colour-chooser.
+
+    The definitions are as follows: the first is the colour of the
+    strings in bars and menus. The second is the main colour of bars
+    borders, whereas the third defines the borders and is used for the
+    3d-effects of title-bars and menus.
+
+    \verb+WMII_FONT+ accepts font names or full font strings, which
+    you might get from xfontsel. It defines the font to be used in
+    titlebars, status-bar and in wmiimenu.
+
   \subsection{Filling the status-bar}
 
     \label{subsec:status}
-    The status bar of wmii, has it's own directory \verb+/bar+ with
+    The status bar of wmii has it's own directory \verb+/bar+ with
     one subdirectory for each of the labels created. So while editing
-    this document the status-bar looked like:
+    this document my status-bar looked like:
 
     \begin{verbatim}
       $ wmiir read /bar
@@ -635,19 +675,19 @@ commission. thanks to the wmii community in particular all the people in the Cre
     to show (content).
     
     So you can start your own experiments by creating a new label, and
-    explore and modify it by reading \& writing values to it's
+    exploring and modifying it by reading \& writing values to it's
     \verb+colors+ \& \verb+data+ files.  A nice feature of the bar
     (and clients) is that they generate events corresponding to mouse
     clicks on them.  So you can open a terminal and launch
     \verb+wmiir read /event+ and and see how the events are generated
     when you click the bar, this is a mechanism that allows
     controlling applications directly from the bar, when you've
-    finished, and don't want to look the \verb+foo+ label, just issue
+    finished, and don't need the \verb+foo+ label anymore, just issue
     a \verb+wmiir remove /bar/foo+.
   
-    If you want to know more take a look at the status script, also
-    look the pages at \hrefx{http://wmii.de} for good examples, some
-    useful ideas that are already written:
+    If you want to know more take a look at the status script and have
+    a look at the pages at \hrefx{http://wmii.de} for good examples,
+    like the following:
 
     \begin{itemize*}
     \item \emph{status}: monitoring remaining battery, temperature,\dots on laptops
@@ -656,21 +696,20 @@ commission. thanks to the wmii community in particular all the people in the Cre
     \item \emph{status-net}: monitoring wireless network signal
     \end{itemize*}
   
-    And last read the default status script and ask yourself: what it
-    does?  \verbatiminput{../rc/status} The first line is a
-    \verb+xwrite+ function declaration, to save us from typing a lot,
-    all it does is to issue a write over the file named by first
-    argument. The following 3 lines take care of creating and setting
-    up the \verb+status+ label. And the last section is a \verb+while+
-    loop that \emph{tries} to write the machine's load and date
-    information to the bar.\\
+    And last read the default status script and ask yourself: what
+    does it do?  \verbatiminput{../rc/status} The first line is a
+    \verb+xwrite+ function declaration, to save us from typing a lot
+    by issueing a write over the file named by first argument. The
+    following 3 lines take care of creating and setting up the
+    \verb+status+ label. And the last section is a \verb+while+ loop
+    that \emph{tries} to write the machine's load and date information
+    to the bar.\\
   
     The tricky bit here is \emph{tries}, so what could make the write
-    fail?, what would happen if \verb+xwrite+ wrote to a non existent
-    (removed) label, then it would fail, thus the condition of the
-    loop would be false, and the status script would end cleanly, that
-    makes sense because who want a program that updates a nonexistent
-    label.\\
+    fail? If \verb+xwrite+ tried to write to a non existent (removed)
+    label, then it would fail, thus the condition of the loop would be
+    false, and the status script would end cleanly, which makes sense
+    because who wants a program that updates a nonexistent label.\\
 
     Now if we go back to the first lines of the script you can see
     that there is a \verb+sleep delay+ between the removal of the
@@ -678,14 +717,13 @@ commission. thanks to the wmii community in particular all the people in the Cre
   
     This ensures that the \verb+status+ label will not exist, so all
     the writes made from a any previously running \verb+status+ script
-    to it will fail, so they will finish.This way we make sure that we
-    only run one at each time.  And thus we keep the one-to-one
+    to it will fail, so they will finish. This way we make sure that
+    we only run one at each time.  And thus we keep the one-to-one
     correspondence between label and status script.\\
   
     Now if you think that was neat, go to a public library and pick up
-    a copy of for example: 
-
-% \href{http://tpop.awl.com}{The Practice of  Programming} (recall I don't get a cent for this).
+    a copy of for example: \href{http://tpop.awl.com}{The Practice of
+    Programming} (recall I don't get a cent for this).
   
   \subsection{Assigning new tags}
   
@@ -696,24 +734,31 @@ commission. thanks to the wmii community in particular all the people in the Cre
 
     \begin{verbatim}
       echo -n web code | wmiir write /view/sel/sel/tags
-  \end{verbatim}
+    \end{verbatim}
 
-  This command would give the current focused client the tags
-  ``web'' and ``code''.
+    This command would give the current focused client the tags
+    ``web'' and ``code''.
+    
+    You may now go to the new view web by executing the following:
 
-  You may now go to the new view web by executing the following:
+    \begin{verbatim}
+      echo -n view web | wmiir write /ctl
+    \end{verbatim}
 
-  \begin{verbatim}
-    echo -n view web | wmiir write /ctl
-  \end{verbatim}
-
+    As the development of wmii-3 progressed, it became clear that this
+    action is so common, that it got its own keybinding. By default
+    \emph{MOD-t} brings up a menu to choose a view and
+    \emph{MOD-Shift-t} brings up a menu enabling you to assign new
+    tags to the focused client.
 
   \section{The End}
     
     We hope this has eased your way through wmii, because this is the
     purpose of this document and so, if you've seen something that you
-    thing it's wrong, confusion or missing in this document, feel free
-    to drop us a note, by the way you consider convenient:
+    think is wrong, confusing or missing in this document, feel free
+    to drop us a note:
+
+    Contact information is to be found here:
     \href{http://wmii.de/index.php/BeginnersGuide}{direct mail},
     \href{http://wmii.de/index.php/MailingList}{[wmii]} mailing-list,
     \href{http://wmii.de/index.php/IRC}{\#wmii} irc channel or even
@@ -721,12 +766,32 @@ commission. thanks to the wmii community in particular all the people in the Cre
     you're on your own \texttt{;-P}.}.
   
     Also remember that wmii is written by people with taste, so most
-    of the decisions made, have strong reasons supporting them, so if
-    you think something doesn't make sense in the picture just try to
-    understand it first by yourself before asking, probably you'll end
-    up learning a lot and if in the end it's wrong you'll provide
-    better feedback to solve the issue.
+    of the decisions made have strong reasons supporting them, so if
+    you think something doesn't make sense or doesn't fit into the
+    picture, just try to understand it by yourself first before
+    asking, probably you'll end up learning a lot and if its really
+    wrong in the end, you'll provide us with much better feedback to
+    solve the issue.
+
+\newpage
 
 \section{Copyright notice}
+
+guide to wmii-3\\
+Copyright (C) 2005, 2006 by Steffen Liebergeld, Salva Peir\'o
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 2
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA.
 
 \end{document}
