@@ -18,10 +18,20 @@ vector_of_clients(ClientVector *cv)
 	return (Vector *) cv;
 }
 
+static void
+update_client_name(Client *c)
+{
+	XTextProperty name;
+	XGetTextProperty(dpy, c->win, &name, XA_WM_NAME);
+	if(name.value) {
+		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
+		free(name.value);
+	}
+}
+
 Client *
 create_client(Window w, XWindowAttributes *wa)
 {
-	XTextProperty name;
 	Client *c = (Client *) cext_emallocz(sizeof(Client));
 	XSetWindowAttributes fwa;
 	XClassHint ch;
@@ -41,11 +51,7 @@ create_client(Window w, XWindowAttributes *wa)
 	if(!XGetWMNormalHints(dpy, c->win, &c->size, &msize) || !c->size.flags)
 		c->size.flags = PSize;
 	XAddToSaveSet(dpy, c->win);
-	XGetWMName(dpy, c->win, &name);
-	if(name.value) {
-		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
-		free(name.value);
-	}
+	update_client_name(c);
 	if(XGetClassHint(dpy, c->win, &ch)) {
 		snprintf(c->classinst, sizeof(c->classinst), "%s:%s", ch.res_class,
 				ch.res_name);
@@ -180,7 +186,6 @@ kill_client(Client * c)
 void
 prop_client(Client *c, XPropertyEvent *e)
 {
-	XTextProperty name;
 	long msize;
 
 	if(e->atom == wm_atom[WMProtocols]) {
@@ -190,11 +195,7 @@ prop_client(Client *c, XPropertyEvent *e)
 	}
 	switch (e->atom) {
 	case XA_WM_NAME:
-		XGetWMName(dpy, c->win, &name);
-		if(name.value) {
-			cext_strlcpy(c->name, (char*) name.value, sizeof(c->name));
-			free(name.value);
-		}
+		update_client_name(c);
 		if(c->frame.size)
 			draw_client(c);
 		break;

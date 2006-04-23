@@ -102,14 +102,7 @@ xdrawtext(Display *dpy, BlitzDraw *d)
 	}
 	XSetBackground(dpy, d->gc, d->color.bg);
 	XSetForeground(dpy, d->gc, d->color.fg);
-#ifdef X_HAVE_UTF8_STRING
-	if(d->font.set)
-		Xutf8DrawString(dpy, d->drawable, d->font.set, d->gc, x, y, text, len);
-	else
-		XDrawString(dpy, d->drawable, d->gc, x, y, text, len);
-#else
 	XDrawString(dpy, d->drawable, d->gc, x, y, text, len);
-#endif
 }
 
 void
