@@ -12,24 +12,15 @@
 void
 blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr)
 {
-	char *fontname = fontstr;
-	char **missing = nil, *def = "?";
-	int nmissing;
-	if(font->set)
-		XFreeFontSet(dpy, font->set);
-	if(font->font)
-		XFreeFont(dpy, font->font);
-	font->font = XLoadQueryFont(dpy, fontname);
-	if (!font->font) {
-		fontname = "fixed";
-		font->font = XLoadQueryFont(dpy, fontname);
-		if (!font->font) {
-			fprintf(stderr, "%s", "liblitz: error, cannot load 'fixed' font\n");
-			exit(1);
-		}
-	}
-	font->set = XCreateFontSet(dpy, fontname, &missing, &nmissing, &def);
+	if(font->xfont)
+		XFreeFont(dpy, font->xfont);
 
-	if(missing)
-		XFreeStringList(missing);
+	font->xfont = XLoadQueryFont(dpy, fontstr);
+	if (!font->xfont)
+		font->xfont = XLoadQueryFont(dpy, "fixed");
+
+	if (!font->xfont) {
+		fprintf(stderr, "%s", "liblitz: error, cannot load 'fixed' font\n");
+		exit(1);
+	}
 }

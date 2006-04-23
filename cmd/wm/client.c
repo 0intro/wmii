@@ -251,7 +251,7 @@ draw_client(Client *c)
 				idx_of_frame(c->frame.data[c->sel]) + 1,
 				c->frame.data[c->sel]->area->frame.size);
 		d.align = CENTER;
-		d.rect.width = d.rect.height + XTextWidth(blitzfont.font, buf, strlen(buf));
+		d.rect.width = d.rect.height + XTextWidth(blitzfont.xfont, buf, strlen(buf));
 		d.data = buf;
 		blitz_drawlabel(dpy, &d);
 		blitz_drawborder(dpy, &d);
@@ -261,7 +261,7 @@ draw_client(Client *c)
 	}
 
 	/* tag bar */
-	d.rect.width = d.rect.height + XTextWidth(blitzfont.font, c->tags, strlen(c->tags));
+	d.rect.width = d.rect.height + XTextWidth(blitzfont.xfont, c->tags, strlen(c->tags));
 	d.data = c->tags;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);

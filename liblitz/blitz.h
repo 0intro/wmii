@@ -21,8 +21,7 @@ typedef struct {
 } BlitzColor;
 
 typedef struct {
-	XFontStruct *font;
-	XFontSet set;
+	XFontStruct *xfont;
 } BlitzFont;
 
 typedef struct {

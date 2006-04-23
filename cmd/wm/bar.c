@@ -64,7 +64,7 @@ unsigned int
 height_of_bar()
 {
 	enum { BAR_PADDING = 4 };
-	return blitzfont.font->ascent + blitzfont.font->descent + BAR_PADDING;
+	return blitzfont.xfont->ascent + blitzfont.xfont->descent + BAR_PADDING;
 }
 
 void
@@ -127,7 +127,7 @@ draw_bar()
 		l->rect.y = 0;
 		l->rect.width = brect.height;
 		if(strlen(l->data))
-			l->rect.width += XTextWidth(blitzfont.font, l->data, strlen(l->data));
+			l->rect.width += XTextWidth(blitzfont.xfont, l->data, strlen(l->data));
 		l->rect.height = brect.height;
 		w += l->rect.width;
 	}

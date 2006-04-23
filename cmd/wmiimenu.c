@@ -68,7 +68,7 @@ update_offsets()
 		return;
 
 	for(i = curroff; i < item.size; i++) {
-		w += XTextWidth(draw.font.font, item.data[i], strlen(item.data[i])) + mrect.height;
+		w += XTextWidth(draw.font.xfont, item.data[i], strlen(item.data[i])) + mrect.height;
 		if(w > mrect.width)
 			break;
 	}
@@ -76,7 +76,7 @@ update_offsets()
 
 	w = cmdw + 2 * seek;
 	for(i = curroff; i > 0; i--) {
-		w += XTextWidth(draw.font.font, item.data[i], strlen(item.data[i])) + mrect.height;
+		w += XTextWidth(draw.font.xfont, item.data[i], strlen(item.data[i])) + mrect.height;
 		if(w > mrect.width)
 			break;
 	}
@@ -143,7 +143,7 @@ draw_menu()
 		for(i = curroff; i < nextoff; i++) {
 			draw.data = item.data[i];
 			draw.rect.x = offx;
-			draw.rect.width = XTextWidth(draw.font.font, draw.data,
+			draw.rect.width = XTextWidth(draw.font.xfont, draw.data,
 					strlen(draw.data)) + mrect.height;
 			offx += draw.rect.width;
 			if(sel == i) {
@@ -308,7 +308,7 @@ read_allitems()
 	}
 
 	if(maxname)
-		cmdw = XTextWidth(draw.font.font, maxname, max) + mrect.height;
+		cmdw = XTextWidth(draw.font.xfont, maxname, max) + mrect.height;
 }
 
 int
@@ -359,7 +359,7 @@ main(int argc, char *argv[])
 		| SubstructureRedirectMask | SubstructureNotifyMask;
 
 	mrect.width = DisplayWidth(dpy, screen);
-	mrect.height = draw.font.font->ascent + draw.font.font->descent + 4;
+	mrect.height = draw.font.xfont->ascent + draw.font.xfont->descent + 4;
 	mrect.y = DisplayHeight(dpy, screen) - mrect.height;
 	mrect.x = 0;
 

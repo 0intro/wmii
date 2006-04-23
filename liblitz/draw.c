@@ -66,12 +66,12 @@ xdrawtext(Display *dpy, BlitzDraw *d)
 
 	len = strlen(d->data);
 	cext_strlcpy(text, d->data, sizeof(text));
-	XSetFont(dpy, d->gc, d->font.font->fid);
-	h = d->font.font->ascent + d->font.font->descent;
-	y = d->rect.y + d->rect.height / 2 - h / 2 + d->font.font->ascent;
+	XSetFont(dpy, d->gc, d->font.xfont->fid);
+	h = d->font.xfont->ascent + d->font.xfont->descent;
+	y = d->rect.y + d->rect.height / 2 - h / 2 + d->font.xfont->ascent;
 
 	/* shorten text if necessary */
-	while (len && (w = XTextWidth(d->font.font, text, len)) > d->rect.width) {
+	while (len && (w = XTextWidth(d->font.xfont, text, len)) > d->rect.width) {
 		text[len - 1] = 0;
 		len--;
 		shortened = 1;
