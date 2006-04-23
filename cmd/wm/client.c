@@ -22,11 +22,29 @@ static void
 update_client_name(Client *c)
 {
 	XTextProperty name;
-	XGetTextProperty(dpy, c->win, &name, XA_WM_NAME);
-	if(name.value) {
-		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
-		free(name.value);
+	XGetTextProperty(dpy, c->win, &name, net_atom[NetWMName]);
+	if(!name.value || !name.nitems)
+		XGetTextProperty(dpy, c->win, &name, XA_WM_NAME);
+	if(name.value && name.nitems) {
+		if(name.encoding == XA_STRING)
+			cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
+		else {
+			int n;
+			char **list = nil;
+			name.nitems = strlen((char *)name.value);
+			if(Xutf8TextPropertyToTextList(dpy, &name, &list, &n) == Success
+					&& n > 0 && *list)
+			{
+				cext_strlcpy(c->name, *list, sizeof(c->name));
+				XFreeStringList(list);
+			}
+			else
+				c->name[0] = 0;
+		}
+		XFree(name.value);
 	}
+	else
+		c->name[0] = 0;
 }
 
 Client *
@@ -194,11 +212,6 @@ prop_client(Client *c, XPropertyEvent *e)
 		return;
 	}
 	switch (e->atom) {
-	case XA_WM_NAME:
-		update_client_name(c);
-		if(c->frame.size)
-			draw_client(c);
-		break;
 	case XA_WM_TRANSIENT_FOR:
 		XGetTransientForHint(dpy, c->win, &c->trans);
 		break;
@@ -207,6 +220,11 @@ prop_client(Client *c, XPropertyEvent *e)
 			c->size.flags = PSize;
 		}
 		break;
+	}
+	if(e->atom == XA_WM_NAME || e->atom == net_atom[NetWMName]) {
+		update_client_name(c);
+		if(c->frame.size)
+			draw_client(c);
 	}
 }
 

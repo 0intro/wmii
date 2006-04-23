@@ -22,6 +22,7 @@ typedef struct {
 
 typedef struct {
 	XFontStruct *xfont;
+	XFontSet set;
 } BlitzFont;
 
 typedef struct {
