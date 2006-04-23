@@ -18,6 +18,13 @@ enum {
 	WMLast
 };
 
+/* NET atoms */
+enum {
+	NetSupported,
+	NetWMName,
+	NetLast
+};
+
 /* Column modes */
 enum {
 	Coldefault,
@@ -182,6 +189,7 @@ XRectangle brect;
 Qid root_qid;
 Default def;
 Atom wm_atom[WMLast];
+Atom net_atom[NetLast];
 Cursor cursor[CurLast];
 unsigned int valid_mask;
 unsigned int num_lock_mask;
