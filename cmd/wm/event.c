@@ -77,7 +77,7 @@ handle_buttonpress(XEvent *e)
 			if(ev->button == Button1)
 				do_mouse_move(c);
 			else if (ev->button == Button3) {
-				Align align = blitz_align_of_rect(&c->rect, ev->x, ev->y);
+				BlitzAlign align = blitz_align_of_rect(&c->rect, ev->x, ev->y);
 				if(align != CENTER)
 					do_mouse_resize(c, align);
 				else

@@ -9,46 +9,8 @@
 
 #include "blitz.h"
 
-XFontStruct *
-blitz_getfont(Display *dpy, char *fontstr)
-{
-	XFontStruct *font;
-	font = XLoadQueryFont(dpy, fontstr);
-	if (!font) {
-		font = XLoadQueryFont(dpy, "fixed");
-		if (!font) {
-			fprintf(stderr, "%s", "wmii: error, cannot load fixed font\n");
-			return 0;
-		}
-	}
-	return font;
-}
-
-static unsigned long
-xloadcolor(Display *dpy, int mon, char *colstr)
-{
-	XColor color;
-	char col[8];
-
-	cext_strlcpy(col, colstr, sizeof(col));
-	col[7] = 0;
-	XAllocNamedColor(dpy, DefaultColormap(dpy, mon), col, &color, &color);
-	return color.pixel;
-}
-
-int
-blitz_loadcolor(Display *dpy, int mon, char *colstr, Color *c)
-{
-	if(!colstr || strlen(colstr) != 23)
-		return -1;
-	c->fg = xloadcolor(dpy, mon, &colstr[0]);
-	c->bg = xloadcolor(dpy, mon, &colstr[8]);
-	c->border = xloadcolor(dpy, mon, &colstr[16]);
-	return 0;
-}
-
 static void
-xdrawbg(Display *dpy, Draw *d)
+xdrawbg(Display *dpy, BlitzDraw *d)
 {
 	XRectangle rect[4];
 	XSetForeground(dpy, d->gc, d->color.bg);
@@ -73,7 +35,7 @@ xdrawbg(Display *dpy, Draw *d)
 }
 
 void
-blitz_drawborder(Display *dpy, Draw *d)
+blitz_drawborder(Display *dpy, BlitzDraw *d)
 {
 	XPoint points[5];
 
@@ -93,7 +55,7 @@ blitz_drawborder(Display *dpy, Draw *d)
 }
 
 static void
-xdrawtext(Display *dpy, Draw *d)
+xdrawtext(Display *dpy, BlitzDraw *d)
 {
 	unsigned int x = 0, y = 0, w = 1, h = 1, shortened = 0;
 	unsigned int len = 0;
@@ -104,12 +66,12 @@ xdrawtext(Display *dpy, Draw *d)
 
 	len = strlen(d->data);
 	cext_strlcpy(text, d->data, sizeof(text));
-	XSetFont(dpy, d->gc, d->font->fid);
-	h = d->font->ascent + d->font->descent;
-	y = d->rect.y + d->rect.height / 2 - h / 2 + d->font->ascent;
+	XSetFont(dpy, d->gc, d->font.font->fid);
+	h = d->font.font->ascent + d->font.font->descent;
+	y = d->rect.y + d->rect.height / 2 - h / 2 + d->font.font->ascent;
 
 	/* shorten text if necessary */
-	while (len && (w = XTextWidth(d->font, text, len)) > d->rect.width) {
+	while (len && (w = XTextWidth(d->font.font, text, len)) > d->rect.width) {
 		text[len - 1] = 0;
 		len--;
 		shortened = 1;
@@ -144,7 +106,7 @@ xdrawtext(Display *dpy, Draw *d)
 }
 
 void
-blitz_drawlabel(Display *dpy, Draw * d)
+blitz_drawlabel(Display *dpy, BlitzDraw * d)
 {
 	xdrawbg(dpy, d);
 	if (d->data)

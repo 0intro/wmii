@@ -295,15 +295,15 @@ main(int argc, char *argv[])
 	def.colmode = Coldefault;
 	def.colw = 0;
 	cext_strlcpy(def.selcolor, BLITZ_SELCOLORS, sizeof(def.selcolor));
-	blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
+	blitz_loadcolor(dpy, &def.sel, screen, def.selcolor);
 	cext_strlcpy(def.normcolor, BLITZ_NORMCOLORS, sizeof(def.normcolor));
-	blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
+	blitz_loadcolor(dpy, &def.norm, screen, def.normcolor);
 	cext_strlcpy(def.grabmod, "Mod1", sizeof(def.grabmod));
 	def.mod = Mod1Mask;
 
 	init_atoms();
 	init_cursors();
-	xfont = blitz_getfont(dpy, def.font);
+	blitz_loadfont(dpy, &blitzfont, def.font);
 	init_lock_keys();
 	init_screen();
 
@@ -317,7 +317,7 @@ main(int argc, char *argv[])
 		| SubstructureRedirectMask | SubstructureNotifyMask;
 
 	brect = rect;
-	brect.height = xfont->ascent + xfont->descent + 4;
+	brect.height = height_of_bar();
 	brect.y = rect.height - brect.height;
 	barwin = XCreateWindow(dpy, RootWindow(dpy, screen), brect.x, brect.y,
 			brect.width, brect.height, 0, DefaultDepth(dpy, screen),

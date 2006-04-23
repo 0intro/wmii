@@ -24,8 +24,8 @@ VECTOR(ItemVector, char *);
 static Bool done = False;
 static int ret = 0;
 static char text[4096];
-static Color selcolor;
-static Color normcolor;
+static BlitzColor selcolor;
+static BlitzColor normcolor;
 static Display *dpy;
 static Window win;
 static XRectangle mrect;
@@ -37,7 +37,7 @@ static unsigned int nextoff = 0;
 static unsigned int prevoff = 0;
 static unsigned int curroff = 0;
 static unsigned int cmdw = 0;
-static Draw draw = { 0 };
+static BlitzDraw draw = { 0 };
 static const int seek = 30;		/* 30px */
 
 static void draw_menu(void);
@@ -68,7 +68,7 @@ update_offsets()
 		return;
 
 	for(i = curroff; i < item.size; i++) {
-		w += XTextWidth(draw.font, item.data[i], strlen(item.data[i])) + mrect.height;
+		w += XTextWidth(draw.font.font, item.data[i], strlen(item.data[i])) + mrect.height;
 		if(w > mrect.width)
 			break;
 	}
@@ -76,7 +76,7 @@ update_offsets()
 
 	w = cmdw + 2 * seek;
 	for(i = curroff; i > 0; i--) {
-		w += XTextWidth(draw.font, item.data[i], strlen(item.data[i])) + mrect.height;
+		w += XTextWidth(draw.font.font, item.data[i], strlen(item.data[i])) + mrect.height;
 		if(w > mrect.width)
 			break;
 	}
@@ -143,7 +143,7 @@ draw_menu()
 		for(i = curroff; i < nextoff; i++) {
 			draw.data = item.data[i];
 			draw.rect.x = offx;
-			draw.rect.width = XTextWidth(draw.font, draw.data,
+			draw.rect.width = XTextWidth(draw.font.font, draw.data,
 					strlen(draw.data)) + mrect.height;
 			offx += draw.rect.width;
 			if(sel == i) {
@@ -308,7 +308,7 @@ read_allitems()
 	}
 
 	if(maxname)
-		cmdw = XTextWidth(draw.font, maxname, max) + mrect.height;
+		cmdw = XTextWidth(draw.font.font, maxname, max) + mrect.height;
 }
 
 int
@@ -343,15 +343,15 @@ main(int argc, char *argv[])
 	fontstr = getenv("WMII_FONT");
 	if (!fontstr)
 		fontstr = strdup(BLITZ_FONT);
-	draw.font = blitz_getfont(dpy, fontstr);
+	blitz_loadfont(dpy, &draw.font, fontstr);
 	normcolstr = getenv("WMII_NORMCOLORS");
 	if (!normcolstr || strlen(normcolstr) != 23)
 		normcolstr = strdup(BLITZ_NORMCOLORS);
-	blitz_loadcolor(dpy, screen, normcolstr, &normcolor);
+	blitz_loadcolor(dpy, &normcolor, screen, normcolstr);
 	selcolstr = getenv("WMII_SELCOLORS");
 	if (!selcolstr || strlen(selcolstr) != 23)
 		selcolstr = strdup(BLITZ_SELCOLORS);
-	blitz_loadcolor(dpy, screen, selcolstr, &selcolor);
+	blitz_loadcolor(dpy, &selcolor, screen, selcolstr);
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
@@ -359,7 +359,7 @@ main(int argc, char *argv[])
 		| SubstructureRedirectMask | SubstructureNotifyMask;
 
 	mrect.width = DisplayWidth(dpy, screen);
-	mrect.height = draw.font->ascent + draw.font->descent + 4;
+	mrect.height = draw.font.font->ascent + draw.font.font->descent + 4;
 	mrect.y = DisplayHeight(dpy, screen) - mrect.height;
 	mrect.x = 0;
 

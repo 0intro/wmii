@@ -12,34 +12,43 @@
 typedef enum {
 	CENTER, WEST, NWEST, NORTH, NEAST, EAST,
 	SEAST, SOUTH, SWEST
-} Align;
+} BlitzAlign;
 
 typedef struct {
 	unsigned long bg;
 	unsigned long fg;
 	unsigned long border;
-} Color;
+} BlitzColor;
 
 typedef struct {
-	Align align;
+	XFontStruct *font;
+	XFontSet set;
+} BlitzFont;
+
+typedef struct {
+	BlitzAlign align;
 	Drawable drawable;
 	GC gc;
-	Color color;
-	XFontStruct *font;
+	BlitzColor color;
+	BlitzFont font;
 	XRectangle rect;	/* relative rect */
 	XRectangle *notch;	/* relative notch rect */
 	char *data;
-} Draw;
+} BlitzDraw;
+
+/* font.c */
+void blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr);
+
+/* color.c */
+int blitz_loadcolor(Display *dpy, BlitzColor *c, int mon, char *colstr);
 
 /* draw.c */
-XFontStruct *blitz_getfont(Display *dpy, char *fontstr);
-int blitz_loadcolor(Display *dpy, int mon, char *colstr, Color *c);
-void blitz_drawlabel(Display *dpy, Draw *r);
-void blitz_drawborder(Display *dpy, Draw *r);
+void blitz_drawlabel(Display *dpy, BlitzDraw *d);
+void blitz_drawborder(Display *dpy, BlitzDraw *d);
 
 /* geometry.c */
-Align blitz_align_of_rect(XRectangle *rect, int x, int y);
-int blitz_strtoalign(Align *result, char *val);
+BlitzAlign blitz_align_of_rect(XRectangle *rect, int x, int y);
+int blitz_strtoalign(BlitzAlign *result, char *val);
 int blitz_strtorect(XRectangle *root, XRectangle *r, char *val);
 Bool blitz_ispointinrect(int x, int y, XRectangle *r);
 int blitz_distance(XRectangle *origin, XRectangle *target);

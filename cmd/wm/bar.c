@@ -64,7 +64,7 @@ unsigned int
 height_of_bar()
 {
 	enum { BAR_PADDING = 4 };
-	return xfont->ascent + xfont->descent + BAR_PADDING;
+	return blitzfont.font->ascent + blitzfont.font->descent + BAR_PADDING;
 }
 
 void
@@ -99,14 +99,14 @@ draw_bar()
 {
 	unsigned int i = 0, w = 0;
 	int exp = -1;
-	Draw d = { 0 };
+	BlitzDraw d = { 0 };
 	Bar *l = nil;
 
 	d.gc = bargc;
 	d.drawable = barpmap;
 	d.rect = brect;
 	d.rect.x = d.rect.y = 0;
-	d.font = xfont;
+	d.font = blitzfont;
 
 	d.color = def.norm;
 	blitz_drawlabel(dpy, &d);
@@ -127,7 +127,7 @@ draw_bar()
 		l->rect.y = 0;
 		l->rect.width = brect.height;
 		if(strlen(l->data))
-			l->rect.width += XTextWidth(xfont, l->data, strlen(l->data));
+			l->rect.width += XTextWidth(blitzfont.font, l->data, strlen(l->data));
 		l->rect.height = brect.height;
 		w += l->rect.width;
 	}

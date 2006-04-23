@@ -133,7 +133,7 @@ typedef struct {
 	unsigned short id;
 	char data[256];
 	char colstr[24];
-	Color color;
+	BlitzColor color;
 	XRectangle rect;
 	Bool intern;
 } Bar;
@@ -143,8 +143,8 @@ typedef struct {
 	char selcolor[24];
 	char normcolor[24];
 	char *font;
-	Color sel;
-	Color norm;
+	BlitzColor sel;
+	BlitzColor norm;
 	unsigned int border;
 	unsigned int snap;
 	char *keys;
@@ -172,7 +172,7 @@ Display *dpy;
 int screen;
 Window root;
 XRectangle rect;
-XFontStruct *xfont;
+BlitzFont blitzfont;
 GC xorgc;
 IXPServer srv;
 Pixmap barpmap;
@@ -264,7 +264,7 @@ void init_lock_keys();
 unsigned long mod_key_of_str(char *val);
 
 /* mouse.c */
-void do_mouse_resize(Client *c, Align align);
+void do_mouse_resize(Client *c, BlitzAlign align);
 void do_mouse_move(Client *c);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);

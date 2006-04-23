@@ -213,13 +213,13 @@ prop_client(Client *c, XPropertyEvent *e)
 void
 draw_client(Client *c)
 {
-	Draw d = { 0 };
+	BlitzDraw d = { 0 };
 
 	if(!c->frame.size)
 		return; /* might not have been attached atm */
 
 	d.drawable = c->framewin;
-	d.font = xfont;
+	d.font = blitzfont;
 	d.gc = c->gc;
 
 	if(c == sel_client())
@@ -250,7 +250,7 @@ draw_client(Client *c)
 				idx_of_frame(c->frame.data[c->sel]) + 1,
 				c->frame.data[c->sel]->area->frame.size);
 		d.align = CENTER;
-		d.rect.width = d.rect.height + XTextWidth(xfont, buf, strlen(buf));
+		d.rect.width = d.rect.height + XTextWidth(blitzfont.font, buf, strlen(buf));
 		d.data = buf;
 		blitz_drawlabel(dpy, &d);
 		blitz_drawborder(dpy, &d);
@@ -260,7 +260,7 @@ draw_client(Client *c)
 	}
 
 	/* tag bar */
-	d.rect.width = d.rect.height + XTextWidth(xfont, c->tags, strlen(c->tags));
+	d.rect.width = d.rect.height + XTextWidth(blitzfont.font, c->tags, strlen(c->tags));
 	d.data = c->tags;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);

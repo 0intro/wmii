@@ -265,7 +265,7 @@ do_mouse_move(Client *c)
 }
 
 static void
-snap_resize(XRectangle * r, XRectangle * o, Align align,
+snap_resize(XRectangle * r, XRectangle * o, BlitzAlign align,
 		XRectangle * rects, unsigned int num, int px, int ox, int py,
 		int oy, int snapw, int snaph)
 {
@@ -441,7 +441,7 @@ snap_resize(XRectangle * r, XRectangle * o, Align align,
 }
 
 void
-do_mouse_resize(Client *c, Align align)
+do_mouse_resize(Client *c, BlitzAlign align)
 {
 	int px = 0, py = 0, i, ox, oy, first = 1;
 	Window dummy;

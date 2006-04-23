@@ -1334,7 +1334,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(bar.data[i1]->colstr, fcall->data, fcall->count);
 		bar.data[i1]->colstr[fcall->count] = 0;
-		blitz_loadcolor(dpy, screen, bar.data[i1]->colstr, &bar.data[i1]->color);
+		blitz_loadcolor(dpy, &bar.data[i1]->color, screen, bar.data[i1]->colstr);
 		draw_bar();
 		break;
 	case FsFselcolors:
@@ -1343,7 +1343,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(def.selcolor, fcall->data, fcall->count);
 		def.selcolor[fcall->count] = 0;
-		blitz_loadcolor(dpy, screen, def.selcolor, &def.sel);
+		blitz_loadcolor(dpy, &def.sel, screen, def.selcolor);
 		draw_clients();
 		break;
 	case FsFnormcolors:
@@ -1352,7 +1352,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(def.normcolor, fcall->data, fcall->count);
 		def.normcolor[fcall->count] = 0;
-		blitz_loadcolor(dpy, screen, def.normcolor, &def.norm);
+		blitz_loadcolor(dpy, &def.norm, screen, def.normcolor);
 		draw_clients();
 		break;
 	case FsFkeys:
@@ -1415,8 +1415,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			free(def.font);
 		def.font = cext_emallocz(fcall->count + 1);
 		memcpy(def.font, fcall->data, fcall->count);
-		XFreeFont(dpy, xfont);
-		xfont = blitz_getfont(dpy, def.font);
+		blitz_loadfont(dpy, &blitzfont, def.font);
 		resize_bar();
 		break;
 	case FsFmode:

@@ -10,7 +10,7 @@
 
 #include "blitz.h"
 
-Align
+BlitzAlign
 blitz_align_of_rect(XRectangle *rect, int x, int y)
 {
 	int w = x <= rect->x + rect->width / 2;
@@ -34,7 +34,7 @@ blitz_align_of_rect(XRectangle *rect, int x, int y)
 	return CENTER;
 }
 
-int blitz_strtoalign(Align *result, char *val)
+int blitz_strtoalign(BlitzAlign *result, char *val)
 {
 	/*
 	 * note, resize allows syntax like "east-20", this we cannot do
@@ -109,7 +109,7 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 
 	if (!sx && !sw && x && w
 		&& x[0] != '-' && x[0] != '+' && w[0] != '-' && w[0] != '+') {
-		Align ax, aw;
+		BlitzAlign ax, aw;
 		blitz_strtoalign(&ax, x);
 		blitz_strtoalign(&aw, w);
 		if ((ax == CENTER) && (aw == EAST)) {
@@ -124,7 +124,7 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 			}
 		}
 	} else if (!sx && x && x[0] != '-' && x[0] != '+') {
-		Align ax;
+		BlitzAlign ax;
 		blitz_strtoalign(&ax, x);
 		if (ax == CENTER) {
 			rx = root->x + (root->width / 2) - (rw / 2);
@@ -134,7 +134,7 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 			rx = root->x;
 		}
 	} else if (!sw && w && w[0] != '-' && w[0] != '+') {
-		Align aw;
+		BlitzAlign aw;
 		blitz_strtoalign(&aw, w);
 		if (aw == CENTER) {
 			rw = (root->width / 2) - rx;
@@ -144,7 +144,7 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 	}
 	if (!sy && !sh && y && h
 		&& y[0] != '-' && y[0] != '+' && h[0] != '-' && h[0] != '+') {
-		Align ay, ah;
+		BlitzAlign ay, ah;
 		blitz_strtoalign(&ay, y);
 		blitz_strtoalign(&ah, h);
 		if ((ay == CENTER) && (ah == SOUTH)) {
@@ -159,7 +159,7 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 			}
 		}
 	} else if (!sy && y && y[0] != '-' && y[0] != '+') {
-		Align ay;
+		BlitzAlign ay;
 		blitz_strtoalign(&ay, y);
 		if (ay == CENTER) {
 			ry = root->y + (root->height / 2) - (rh / 2);
@@ -169,7 +169,7 @@ int blitz_strtorect(XRectangle *root, XRectangle *r, char *val)
 			ry = root->y;
 		}
 	} else if (!sh && h && h[0] != '-' && h[0] != '+') {
-		Align ah;
+		BlitzAlign ah;
 		blitz_strtoalign(&ah, h);
 		if (ah == CENTER) {
 			rh = (root->height / 2) - ry;
