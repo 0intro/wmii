@@ -20,18 +20,19 @@
 \usepackage[left=3cm,top=2cm,right=2cm,bottom=3cm]{geometry}
 %\usepackage{ngerman}
 \usepackage{times}
-\usepackage{indentfirst,html,moreverb}
+\usepackage{hyperref} % option [dvipdfm] disables clickable refs
+\usepackage{indentfirst,moreverb}
 % remove this if you want, it's just a matter of imposed imperialist cultures
 % so if I'm given the chance to choose I choose to indent the first paragraph
 % (I learn this way in the school, and don't want to relearn the british way)
 
-%% welcome to the the dirty hacks section
+%% welcome to the dirty tricks section
 \newcommand{\hrefx}[1]{\href{#1}{#1}} % explicit \href
 % un'% below so latex2html can handle refs correctly (until a better solution is found)
+%\usepackage{html} % gives clickable refs to latex2html
 %\renewcommand{\href}[2]{\htmladdnormallink{#2}{#1}}
 %\renewcommand{\hrefx}[1]{\htmladdnormallink{#1}{#1}}
 %\renewcommand{\verbatiminput}[1]{\input{#1}}
-%\usepackage[dvipdfm]{hyperref} % disable clickable refs
 
 \newenvironment{itemize*}
   {\begin{itemize}
@@ -45,8 +46,9 @@ Steffen\\Liebergeld \\\\
 Salvador\\Peir\'o
 }
 
-\title{A Guide to wmii-3%
-\thanks{Thanks to the wmii community in particular all the people in the Credits section}
+\title{A Guide to wmii--3%
+\thanks{Thanks to the wmii community, in particular all the 
+people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 }
 %\email{stepardo@gmail.com \and saoret.one@gmail.com}
 
@@ -63,30 +65,31 @@ Salvador\\Peir\'o
   \subsection{Who brought this to you}
     
     This guide was written by Steffen Liebergeld, who got lots of help
-    from Salvador Peir\'o and a patch from Jochen Schwartz.
+    from Salvador Peir\'o and a patch from Jochen Schwartz, and lots of
+    corrections and suggestions of the wmii users.
 
   \subsection{The purpose of this document}
 
     This document tries to be a good starting point for people new to
-    wmii-3.  People who have used wmi, wmii-2.5 or even ion will get
-    to know what is new and different in wmii-3, and people who have
+    wmii--3.  People who have used wmi, wmii--2.5 or even ion will get
+    to know what is new and different in wmii--3, and people who have
     never used a tiling window manager before will fall in love with
     the new concept.
   
-  \subsection{Wmii - the second generation of window manager improved}
+  \subsection{Wmii --- the second generation of window manager improved}
 
-    Wmii-3 is a new kind of window manager. It is designed to have a
+    Wmii--3 is a new kind of window manager. It is designed to have a
     small memory footprint, be extremely modularised and have as
     little code as possible, thus ensuring as few bugs as possible. In
-    fact, one of our official goal is to not to exceed $10 K$ lines of
+    fact, one of our official goal is to not to exceed $10 k$ lines of
     code~\footnote{
-    the $10 K$ SLOC restriction benefits that it's easier
+    the $10 k$ SLOC restriction benefits that it's easier
     to read/understand, thus it's easier to use and get used to it.}.
 
     Wmii tries to be very portable and to give the user as many
     freedom as possible.
 
-    Wmii-3 is the third mayor release of the second generation of the
+    Wmii--3 is the third mayor release of the second generation of the
     window manager improved~\footnote{ the ii is actually a roman
     letter for the number 2.}.  Wmii first introduced a new paradigm
     in version 2.5, namely the dynamic window management, that
@@ -104,15 +107,16 @@ Salvador\\Peir\'o
 
     If you only want to know how to operate wmii-3 and are not
     interested in the inner workings or in scripting, you may read the
-    chapters ``Configuration and install'', ``Terminology'' and
-    ``First steps'' and skip the rest.
+    sections \ref{sec:conf&install}, \ref{sec:terms} and subsection 
+    \ref{subsec:firststeps} and skip the rest.
 
-    However, to get the most out of wmii-3 you should possibly read
+    However, to get the most out of wmii--3 you should possibly read
     the whole document. Another possibility is to read the
     introductory chapters first, use some time to get settled in the
-    wmii-world and read the scripting chapters later on.
+    wmii--world and read the scripting chapters later on.
   
 \section{Configuration and install}
+\label{sec:conf&install}
 
   \subsection{Obtaining wmii}
 
@@ -125,7 +129,7 @@ Salvador\\Peir\'o
   \subsection{Configuration and Installation}
   
     First of all, have a look if there are binary packages of wmii in
-    your distribution. Debian, Ubuntu and gentoo should already have
+    your distribution. Debian, Ubuntu and Gentoo should already have
     good packages. If you found a package to trust, you may now safely
     skip this paragraph.
 
@@ -144,7 +148,7 @@ Salvador\\Peir\'o
 
     In case you're installing a newer version of wmii, this is the
     first thing you should do otherwise you'll end up messing
-    binaries, configuration files and manual-pages of different and
+    binaries, configuration files and manual--pages of different and
     thus incompatible versions, to do this run the above commands.
     
     \item Unpack it:
@@ -159,14 +163,14 @@ Salvador\\Peir\'o
     \end{verbatim}
     
     The most important variable to set is the \verb+PREFIX+, which
-    states, where you want wmii-3 to be installed to.
+    states, where you want wmii--3 to be installed to.
     
     \item Run make and make install:
     \begin{verbatim}
       make && make install
     \end{verbatim}
     
-    \item Instruct the X-Server to start wmii as your default window
+    \item Instruct the X--server to start wmii as your default window
     manager. You may do that by editing the file \emph{\~{}/.xinitrc}.
 
     \begin{verbatim}
@@ -184,13 +188,14 @@ Salvador\\Peir\'o
     
     And you are finished. Please note that we do not use the autoconf
     tools for various reasons, you may read about it here~\footnote{
-    \hrefx{http://www.ohse.de/uwe/articles/aal.html} \linebreak[1] and
+    \hrefx{http://www.ohse.de/uwe/articles/aal.html} and
     \hrefx{http://lists.cse.psu.edu/archives/9fans/2003-November/029714.html}
     } . Please don't ask us to use autoconf, we won't do it.
 
 
 \section{Terminology}
-  
+\label{sec:terms}  
+
   Before you actually start doing your first steps in wmii, we have to
   make sure we are both talking about the same things. So here is some
   terminology.
@@ -199,12 +204,12 @@ Salvador\\Peir\'o
 
     A client is a program, that draws a window to the
     screen~\footnote{ Actually it is the program that requests the
-    X-server to draw the window. But never mind;-)}.  For example your
+    X--server to draw the window. But never mind;-)}.  For example your
     browser or your xterm is a client.
   
   \subsection{Focus}
 
-    In X11, exactly one client gets the users input. If you write some
+    In X11, exactly one client gets the user's input. If you write some
     command in your xterm, this xterm has the focus, whereas all the
     other windows do not receive/react on the input you
     give~\footnote{ Actually this is not precise at all, because some
@@ -224,10 +229,10 @@ Salvador\\Peir\'o
     Tags are names/labels you can give for clients. That allows you to
     group clients.  In wmii, there are no workspaces anymore. Instead,
     we simply show only one tag at one time. Thus, if you name a
-    client "web-browser" and request the wm to only show the tag
-    "web-browser", you will only see that one client. If you tag a
+    client ``web-browser'' and request the wm to only show the tag
+    ``web-browser'', you will only see that one client. If you tag a
     xterm with the same tag, it will also be shown, when your first
-    client with the tag "web-browser" is visible. It is also possible
+    client with the tag ``web-browser'' is visible. It is also possible
     to give clients multiple tags, but more on this later.
 
   \subsection{View}
@@ -235,7 +240,7 @@ Salvador\\Peir\'o
     The view concept refers to the tags that you want to view at a
     given time, so when you request the window manager to only show
     windows with one particular tag, you may call this a view. You
-    might imagine, that this somehow resembles the "workspace" of
+    might imagine, that this somehow resembles the ``workspace'' of
     other window managers.
 
     You might have different views with only one of them visible at a
@@ -265,7 +270,7 @@ Salvador\\Peir\'o
     maximised in the column, showing only one of them at a time, while
     hiding the others. And last but not least you may have the clients
     stacked, which means to have one client use as much space as
-    possible and to show only the title-bars of the other windows.
+    possible and to show only the title--bars of the other windows.
 
 \section{Getting started}
 
@@ -279,9 +284,9 @@ Salvador\\Peir\'o
   On a special note, the \emph{MOD} key I am referring to may resemble
   different keys on different platforms. It is what X knows as the
   \emph{Mod1} or \emph{Alt} key. Probably this is the key labelled with
-  \emph{Alt} at the left of the space-bar on your keyboard.
+  \emph{Alt} at the left of the space--bar on your keyboard.
 
-  The notation \emph{MOD}-\emph{Key} means to press \emph{MOD}, hold
+  The notation \emph{MOD}--\emph{Key} means to press \emph{MOD}, hold
   it and to press \emph{Key}.
 
   All key combinations may be freely configured, but for the sake of
@@ -290,35 +295,33 @@ Salvador\\Peir\'o
   section \ref{sec:scripting}.
 
   \subsection{First steps}
-
+  \label{subsec:firststeps}
     You may now start your X session. Since it is the first time you
     start wmii, a window with a little tutorial will show up. You are
     free to read it, but you may also follow the beginners guide :-)
 
-    First of all, press \emph{MOD-Enter} to start an xterm. It will
+    First of all, press \emph{MOD--Enter} to start an xterm. It will
     take half of the vertical space, so you now have two equally big
-    windows. If you press \emph{MOD-Enter} again, you have three
+    windows. If you press \emph{MOD--Enter} again, you have three
     windows that are equally big.
 
     To switch between the three windows, you may now press
-    \emph{MOD-j}, which cycles the focus between the three windows.
+    \emph{MOD--j}, which cycles the focus between the three windows.
 
-    You may also press \emph{MOD-k} to switch to the window above or
-    \emph{MOD-j} to switch to the window below the current.
+    You may also press \emph{MOD--k} to switch to the window above or
+    \emph{MOD--j} to switch to the window below the current.
 
-    Now have a look at the title-bars of those windows. They show some
+    Now have a look at the title--bars of those windows. They show some
     important information: the first term is the name of the tag of
-    the window. Then, after the vertical line (the pipe symbol) wmii
-    shows the title of the window.
+    the window. The following term shows the title of the window.
 
-    The same information is also shown on the menu-bar. The first
+    The same information is also shown on the menu--bar. The first
     things are names of the different tags you gave to your windows,
-    with the current view highlighted. Then it shows the title of the
-    focused window. On the right side it shows some system status
-    information like the load and the current time (see subsection~%
-    \ref{subsec:status} for details).
+    with the current view highlighted. On the right side it shows some
+    system status information like the load and the current time 
+    (see subsection~\ref{subsec:status} for details).
 
-  \subsection{Using Columns}
+  \subsection{Using columns}
 
     As you know wmii uses columns to align your windows. Even now,
     that you didn't really see it your view already consists of one
@@ -326,7 +329,7 @@ Salvador\\Peir\'o
 
     In wmii columns are defined by its clients. Thus you need a client
     to create a new column. That is why you may now focus a client of
-    your choice and press \emph{MOD-Shift-l}. As you see, wmii created
+    your choice and press \emph{MOD--Shift--l}. As you see, wmii created
     a new column by dividing the view horizontally in two equally big
     spaces. The last focused client has been put into the new column.
 
@@ -337,16 +340,16 @@ Salvador\\Peir\'o
     It should be clear, that you really need at least two clients to
     have two columns.
 
-    If you press \emph{MOD-j} to change focus, you will see that wmii
+    If you press \emph{MOD--j} to change focus, you will see that wmii
     actually cycles the focus in the current column only. That is why
     you need commands to change the current column.
 
-    In wmii you may use \emph{MOD-l} to change to the column on the
-    right and \emph{MOD-h} to change to the column on the left.
+    In wmii you may use \emph{MOD--l} to change to the column on the
+    right and \emph{MOD--h} to change to the column on the left.
 
     It is also possible to make a client swap columns. To move a
-    client to the column on the left, press \emph{MOD-Control-h} and
-    to move it to the right column, press \emph{MOD-Control-l}.
+    client to the column on the left, press \emph{MOD--Control--h} and
+    to move it to the right column, press \emph{MOD--Control--l}.
 
   \subsection{What about layouts}
 
@@ -355,19 +358,19 @@ Salvador\\Peir\'o
     have different columns in one view, each having another layout.
 
     The default layout is to give each client in the column equally
-    much vertical space. You may enable this layout with \emph{MOD-d}
+    much vertical space. You may enable this layout with \emph{MOD--d}
     (where the ``d'' stands for default).
 
     Another layout is the stacked layout. You enable stacking by
-    \emph{MOD-s}. As you see now, there in only one client using as
-    much space as possible, whereas you only see the title-bars of the
+    \emph{MOD--s}. As you see now, there in only one client using as
+    much space as possible, whereas you only see the title--bars of the
     other clients in the column. You may still switch between the
-    clients in the column using \emph{MOD-j}.
+    clients in the column using \emph{MOD--j}.
 
     The third layout is the max-layout, which maximises all the
     clients to use all the space in the column each. Only the focused
     client is visible and the other are hidden behind. You may still
-    switch between those clients with \emph{MOD-j}.
+    switch between those clients with \emph{MOD--j}.
 
   \subsection{Float pages}
 
@@ -386,9 +389,9 @@ Salvador\\Peir\'o
     rule.
 
     To come to the point: wmii also allows you to use floating
-    clients. You may enable floating mode for a window by focusing it
-    and pressing \emph{MOD-Space}. You may bring it back into a column
-    (the column it came from) by pressing \emph{MOD-Shift-Space}.
+    clients. You may toggle your focus between floating and column 
+    modes by pressing \emph{MOD--Space}. While \emph{MOD--Shift--Space}
+    toggles the focused window between floating and column modes .
 
     As a side note, this floating mode is actually the zeroth column
     internally. That is why there is not much special internal
@@ -407,9 +410,9 @@ Salvador\\Peir\'o
     actually possible.
 
     You may give the focused client another tag by pressing
-    \emph{MOD-Shift-Number}, number being one of the numbers 1 to 9.
+    \emph{MOD--Shift--Number}, number being one of the numbers 0 to 9.
 
-    You can then switch views by pressing \emph{MOD-Number}.
+    You can then switch views by pressing \emph{MOD--Number}.
 
     Whenever a new client is created, it automatically gets the tag of
     the current view.
@@ -423,20 +426,20 @@ Salvador\\Peir\'o
     then be able to assign multiple tags to one client and to use
     proper strings as tags.
 
-  \subsection{How do I close a window}
+  \subsection{How do I close a window?}
 
-    Well, first of all every X-Client should have an option to close a
-    window. But -as Murphy said- the world isn't like it should
-    be. Thus, the Window Manager has to provide a fix for this. In
+    Well, first of all every X-client should have an option to close a
+    window. But --as Murphy said-- the world isn't like it should
+    be. Thus, the window manager has to provide a fix for this. In
     wmii, we abandoned silly title-bar buttons and created a shortcut
-    \emph{MOD-Shift-c} to close a window.
+    \emph{MOD--Shift--c} to close a window.
 
-  \subsection{How do I start programs}
+  \subsection{How do I start programs?}
 
-    You may start programs out of a xterm. But in wmii, there is a
+    You may start programs out of an xterm. But in wmii, there is a
     special program launcher, which is accessible per
-    \emph{MOD-p}. Please note, that the logic behind this program
-    launcher is mainly implemented in a shell-script.
+    \emph{MOD--p}. Please note, that the logic behind this program
+    launcher is mainly implemented in a shell--script.
 
     You will see a list of programs. If you now start to type, the
     launcher will cut that list to only show programs whose names
@@ -449,6 +452,10 @@ Salvador\\Peir\'o
     enter~\footnote{On my system it is sufficient to type ``efo'' to
     start firefox;-)}.
 
+  \subsection{How do I quit wmii?}
+    You may quit wmii, by using the action's menu (\emph{MOD--a})
+    and selecting the action ``quit'. That's all.
+    
 \section{Looking under the hood}
 
   In this chapter you will learn how wmii was designed, which ideas
@@ -462,7 +469,7 @@ Salvador\\Peir\'o
     client itself, thus taking all the extra work from the user and
     letting him concentrate on his work.
 
-  \subsection{Modularity - using distinct tools for distinct tasks}
+  \subsection{Modularity -- using distinct tools for distinct tasks}
 
     The developers of wmii know about the most powerful ideas of
     Unix. One of them is the idea to use distinct tools for distinct
@@ -470,7 +477,7 @@ Salvador\\Peir\'o
     split the task into two smaller binaries, each with a distinct
     job.
   
-  \subsection{The glue that puts it all together - 9p}
+  \subsection{The glue that puts it all together -- 9P}
 
     Programs in Unix have several different possibilities to exchange
     information, the most powerful being sockets.
@@ -481,15 +488,15 @@ Salvador\\Peir\'o
 
     The basic ideas for configuring and running wmii were taken from
     Plan9 too. Like in Plan9, everything configurable in wmii has a
-    file-like interface, so everything is accessed consistently Thus,
+    file--like interface, so everything is accessed consistently Thus,
     if you want to interact with a running wmii, you may access those
-    files either using the shipped tool \emph{wmiir} or - if you use
-    9p2000 - you may also mount the virtual file-system of wmii under
+    files either using the shipped tool \emph{wmiir} or -- if you use
+    9P2000 -- you may also mount the virtual file--system of wmii under
     some directory in the hierarchy maintained by the OS kernel.
 
   \subsection{Tools}
 
-  This section gives an little overview of the tools that wmii, but
+  This section gives a little overview of the tools that come wmii, but
   for more detailed explanations you should read the man page of each
   tool, that comes with wmii.
   
@@ -497,7 +504,7 @@ Salvador\\Peir\'o
   
   \item
     \emph{wmiir} is a little tool we use to alter the files in the
-    virtual file-system of wmii. It basically has four operations:
+    virtual file--system of wmii. It basically has four operations:
 
     \begin{itemize*}
     \item read
@@ -508,15 +515,15 @@ Salvador\\Peir\'o
 
     Wmiir needs to know the address of the file-system to work
     on, so on startup wmii sets the environment variable 
-    \verb+WMIIR_ADDRESS+ to make sure any tool wanting to
-    communicate with wmiiwm know it's file-system address.
+    \verb+WMII_ADDRESS+ to make sure any tool wanting to
+    communicate with wmiiwm know it's file--system address.
     This address can be:
     \begin{itemize*}
       \item a  local unix address given with \verb+unix!/path/to/socket+ 
       \item a tcp address given with \verb+tcp!hostname:port+ 
     \end{itemize*}
     
-    If you want to work on another file-system, you may specify it
+    If you want to work on another file--system, you may specify it
     manually with the switch \emph{-a  address}. A sample invocation
     would look like the following:
     \begin{verbatim}
@@ -573,14 +580,14 @@ Salvador\\Peir\'o
 
 % - who doesn't have a shell?, extra! we're giving them for free this week
 
-  \subsection{actions}
+  \subsection{Actions}
 
     In wmii you may group certain tasks into \emph{actions}. Actions
     are nothing more than simple scripts which are located either in
     your local or in the default wmii configuration
     directory~\footnote{ \texttt{\$CONFPREFIX} is set in
     \emph{config.mk} and by default points to \texttt{/usr/local/etc}
-    or \texttt{~/.wmii-3} if you have such a directory}.
+    or \texttt{\~{}/.wmii-3} if you have such a directory}.
     By pressing \emph{MOD-a} you can open the actions-menu. If works
     similar to the program launcher, but only shows actions.
 
@@ -601,7 +608,10 @@ Salvador\\Peir\'o
     stop wmii before editing. After you've finished editing, you may
     simply run wmiirc and the changes will take effect, to do so just
     open the actions menu (via \emph{MOD-a}) and choose the
-    \emph{action}.
+    \emph{action}. It's also possible launch wmii actions directly
+    from an xterm (or similar terminal emulator program), this is a nice
+    side effect that results of exporting \verb+$PATH+ in the wmii 
+    startup script.
 
   \subsection{wmiirc}
   
@@ -635,21 +645,21 @@ Salvador\\Peir\'o
     \verb+WMII_SELCOLORS+ define the colours of the selected clients
     window title and border, whereas \verb+WMII_NORMCOLORS+ defines
     the colours of all the other clients. The numbers are hexadecimal
-    rgb, which you might know from html. You might get them with the
+    rgb, which you might know from HTML. You might get them with the
     Gimps colour-chooser.
 
     The definitions are as follows: the first is the colour of the
-    strings in bars and menus. The second is the main colour of bars
+    strings in bars and menus. The second is the main colour of bar
     borders, whereas the third defines the borders and is used for the
-    3d-effects of title-bars and menus.
+    3D-effects of title-bars and menus.
 
     \verb+WMII_FONT+ accepts font names or full font strings, which
     you might get from xfontsel. It defines the font to be used in
     titlebars, status-bar and in wmiimenu.
 
   \subsection{Filling the status-bar}
-
     \label{subsec:status}
+    
     The status bar of wmii has it's own directory \verb+/bar+ with
     one subdirectory for each of the labels created. So while editing
     this document my status-bar looked like:
@@ -671,7 +681,7 @@ Salvador\\Peir\'o
 
 
     The first file contains the colour definitions that control how the
-    bar will be painted(appearance), while the second holds the data
+    bar will be painted (appearance), while the second holds the data
     to show (content).
     
     So you can start your own experiments by creating a new label, and
@@ -690,7 +700,7 @@ Salvador\\Peir\'o
     like the following:
 
     \begin{itemize*}
-    \item \emph{status}: monitoring remaining battery, temperature,\dots on laptops
+    \item \emph{status}: monitoring remaining battery, temperature, \dots on laptops
     \item \emph{status-mpd}: controlling the running mpd
     \item \emph{status-load}: show the machine load
     \item \emph{status-net}: monitoring wireless network signal
@@ -699,7 +709,7 @@ Salvador\\Peir\'o
     And last read the default status script and ask yourself: what
     does it do?  \verbatiminput{../rc/status} The first line is a
     \verb+xwrite+ function declaration, to save us from typing a lot
-    by issueing a write over the file named by first argument. The
+    by issuing a write over the file named by first argument. The
     following 3 lines take care of creating and setting up the
     \verb+status+ label. And the last section is a \verb+while+ loop
     that \emph{tries} to write the machine's load and date information
