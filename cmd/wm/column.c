@@ -104,12 +104,40 @@ relax_column(Area *a)
 }
 
 void
-arrange_column(Area *a, Bool dirty)
+scale_column(Area *a, float h)
 {
-	unsigned int i, yoff = a->rect.y, h, dy = 0;
-	float scale = 1.0;
+	unsigned int i, yoff = a->rect.y;
 	unsigned int min_height = 2 * height_of_bar();
 	int hdiff = 0;
+	float scale, dy = 0;
+
+	if(!a->frame.size)
+		return;
+
+	for(i = 0; i < a->frame.size; i++)
+		dy += a->frame.data[i]->rect.height;
+	scale = h / dy;
+	for(i = 0; i < a->frame.size; i++) {
+		Frame *f = a->frame.data[i];
+		f->rect.x = a->rect.x;
+		f->rect.y = yoff;
+		f->rect.width = a->rect.width;
+		f->rect.height *= scale;
+		if(f->rect.height < min_height)
+			f->rect.height = min_height;
+		else if((hdiff = yoff + f->rect.height - h + (a->frame.size - i) * min_height) > 0)
+			f->rect.height -= hdiff;
+		if(i == a->frame.size - 1)
+			f->rect.height = a->rect.height - yoff;
+		yoff += f->rect.height;
+		resize_client(f->client, &f->rect, True);
+	}
+}
+
+void
+arrange_column(Area *a, Bool dirty)
+{
+	unsigned int i, yoff = a->rect.y, h;
 
 	if(!a->frame.size)
 		return;
@@ -117,30 +145,13 @@ arrange_column(Area *a, Bool dirty)
 	switch(a->mode) {
 	case Coldefault:
 		h = a->rect.height / a->frame.size;
-		if(h < (2 * height_of_bar()))
+		if(h < 2 * height_of_bar()) /* min height */
 			goto Fallthrough;
 		if(dirty) {
 			for(i = 0; i < a->frame.size; i++)
 				a->frame.data[i]->rect.height = h;
 		}
-		for(i = 0; i < a->frame.size; i++)
-			dy += a->frame.data[i]->rect.height;
-		scale = (float)a->rect.height / (float)dy;
-		for(i = 0; i < a->frame.size; i++) {
-			Frame *f = a->frame.data[i];
-			f->rect.x = a->rect.x;
-			f->rect.y = yoff;
-			f->rect.width = a->rect.width;
-			f->rect.height *= scale;
-			if(f->rect.height < min_height)
-				f->rect.height = min_height;
-			else if((hdiff = f->rect.y + f->rect.height - a->rect.height + (a->frame.size - i) * min_height) > 0)
-				f->rect.height -= hdiff;
-			if(i == a->frame.size - 1)
-				f->rect.height = a->rect.height - f->rect.y + a->rect.y;
-			yoff += f->rect.height;
-			resize_client(f->client, &f->rect, True);
-		}
+		scale_column(a, a->rect.height);
 		break;
 	case Colstack:
 		h = a->rect.height - (a->frame.size - 1) * height_of_bar();

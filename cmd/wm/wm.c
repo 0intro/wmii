@@ -127,6 +127,8 @@ init_atoms()
 
 	XChangeProperty(dpy, root, net_atom[NetSupported],
 					XA_ATOM, 32, PropModeReplace, (unsigned char *)net_atom, NetLast);
+
+	UTF8_STRING = XInternAtom(dpy, "UTF8_STRING", False);
 }
 
 static void

@@ -190,6 +190,7 @@ Qid root_qid;
 Default def;
 Atom wm_atom[WMLast];
 Atom net_atom[NetLast];
+Atom UTF8_STRING;
 Cursor cursor[CurLast];
 unsigned int valid_mask;
 unsigned int num_lock_mask;
@@ -242,6 +243,7 @@ void draw_clients();
 
 /* column.c */
 void arrange_column(Area *a, Bool dirty);
+void scale_column(Area *a, float h);
 void resize_column(Client *c, XRectangle *r, XPoint *pt);
 int column_mode_of_str(char *arg);
 char *str_of_column_mode(int mode);

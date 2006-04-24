@@ -22,29 +22,25 @@ static void
 update_client_name(Client *c)
 {
 	XTextProperty name;
+
+	c->name[0] = 0;
 	XGetTextProperty(dpy, c->win, &name, net_atom[NetWMName]);
-	if(!name.value || !name.nitems)
-		XGetTextProperty(dpy, c->win, &name, XA_WM_NAME);
-	if(name.value && name.nitems) {
-		if(name.encoding == XA_STRING)
-			cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
-		else {
-			int n;
-			char **list = nil;
-			name.nitems = strlen((char *)name.value);
-			if(Xutf8TextPropertyToTextList(dpy, &name, &list, &n) == Success
-					&& n > 0 && *list)
-			{
-				cext_strlcpy(c->name, *list, sizeof(c->name));
-				XFreeStringList(list);
-			}
-			else
-				c->name[0] = 0;
+	if(name.value && name.nitems && name.encoding == UTF8_STRING && name.format == 8) {
+		int n;
+		char **list = nil;
+		if(Xutf8TextPropertyToTextList(dpy, &name, &list, &n) == Success
+				&& n > 0 && *list)
+		{
+			cext_strlcpy(c->name, *list, sizeof(c->name));
+			XFreeStringList(list);
 		}
 		XFree(name.value);
+		return;
 	}
-	else
-		c->name[0] = 0;
+	if(XGetWMName(dpy, c->win, &name) && name.value) {
+		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
+		XFree(name.value);
+	}
 }
 
 Client *

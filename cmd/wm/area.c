@@ -226,15 +226,21 @@ place_client(Area *a, Client *c)
 void
 attach_to_area(Area *a, Client *c)
 {
-	unsigned int aidx = idx_of_area(a);
-	Frame *f = create_frame(a, c);
+	unsigned int h = 0, aidx = idx_of_area(a);
+	Frame *f;
 
 	c->floating = !aidx;
-	if(aidx) { /* column */
+	if(aidx && a->frame.size) {
+		h = a->rect.height / a->frame.size;
 		if(a->frame.size > 1)
-			f->rect.height = a->rect.height / (a->frame.size - 1);
-		arrange_column(a, False);
+			scale_column(a, a->rect.height - h);
 	}
+
+	f = create_frame(a, c);
+	f->rect.height = h;
+
+	if(aidx) /* column */
+		arrange_column(a, False);
 	else { /* floating */
 		place_client(a, c);
 		resize_client(c, &f->rect,  False);
