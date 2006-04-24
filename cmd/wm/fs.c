@@ -1312,12 +1312,14 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		if(m->qid.dir_type == FsDclient) {
+			XRectangle new;
 			f = view.data[i1]->area.data[i2]->frame.data[i3];
-			blitz_strtorect(&rect, &f->rect, buf);
+			new = f->rect;
+			blitz_strtorect(&rect, &new, buf);
 			if(i2)
-				resize_column(f->client, &f->rect, nil);
+				resize_column(f->client, &new, nil);
 			else
-				resize_client(f->client, &f->rect, False);
+				resize_client(f->client, &new, False);
 		}
 		break;
 	case FsFdata:
