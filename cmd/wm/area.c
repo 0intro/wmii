@@ -230,17 +230,19 @@ attach_to_area(Area *a, Client *c)
 	Frame *f;
 
 	c->floating = !aidx;
-	if(aidx && a->frame.size) {
-		h = a->rect.height / a->frame.size;
-		if(a->frame.size > 1)
+	if(aidx) {
+		h = a->rect.height / (a->frame.size + 1);
+		fprintf(stderr, "attach height=%d\n", h);
+		if(a->frame.size)
 			scale_column(a, a->rect.height - h);
 	}
 
 	f = create_frame(a, c);
-	f->rect.height = h;
 
-	if(aidx) /* column */
+	if(aidx) { /* column */
+		f->rect.height = h;
 		arrange_column(a, False);
+	}
 	else { /* floating */
 		place_client(a, c);
 		resize_client(c, &f->rect,  False);
