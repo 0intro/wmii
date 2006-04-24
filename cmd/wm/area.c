@@ -148,7 +148,7 @@ send_to_area(Area *to, Area *from, Client *c)
 void
 place_client(Area *a, Client *c)
 {
-	static unsigned int mx, my;
+	static unsigned int mx, my, offset;
 	static Bool *field = nil;
 	Bool fit = False;
 	unsigned int i, j, k, x, y, maxx, maxy, dx, dy, cx, cy;
@@ -218,13 +218,17 @@ place_client(Area *a, Client *c)
 
 	if(fit && (p1.x + f->rect.width < a->rect.x + a->rect.width))
 		f->rect.x = p1.x;
-	else 
-		f->rect.x = a->rect.x + (random()%(a->rect.width - f->rect.width));
+	else {
+		offset = (a->rect.width - f->rect.width) > 0 ? (a->rect.width - f->rect.width) : 1;
+		f->rect.x = a->rect.x + (random()%offset);
+	}
 
 	if(fit && (p1.y + f->rect.height < a->rect.y + a->rect.height))
 		f->rect.y = p1.y;
-	else
-		f->rect.y = a->rect.y + (random()%(a->rect.height - f->rect.height));
+	else {
+		offset = (a->rect.height - f->rect.height) > 0 ? (a->rect.height - f->rect.height) : 1;
+		f->rect.y = a->rect.y + (random()%offset);
+	}
 }
 
 void
