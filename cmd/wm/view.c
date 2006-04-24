@@ -382,6 +382,20 @@ update_views()
 		}
 	}
 
+	for(i=0; i < view.size; i++) {
+		Bool destroy = True;
+		for(j=0; j < client.size; j++) {
+			if(is_view_of(client.data[j], view.data[i]))
+			destroy = False;
+		}
+		if(destroy && view.size > 1) {
+			for(j=0; j < client.size; j++) {
+				if(is_of_view(view.data[i], client.data[j]))
+				detach_from_view(view.data[i], client.data[j]);
+			}
+		}
+	}
+
 	while((v = next_empty_view())) {
 		if(v == old)
 			old = nil;
