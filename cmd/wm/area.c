@@ -155,8 +155,9 @@ place_client(Area *a, Client *c)
 	XPoint p1 = {0, 0}, p2 = {0, 0};
 	Frame *f = c->frame.data[c->sel];
 
-	if(c->trans || f->rect.width >= a->rect.width
-			|| f->rect.height >= a->rect.height)
+	if(c->trans)
+		return;
+	if(c->rect.width >= a->rect.width || c->rect.height >= a->rect.height)
 		return;
 
 	if(!field) {

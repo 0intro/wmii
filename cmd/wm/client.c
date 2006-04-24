@@ -28,7 +28,7 @@ update_client_name(Client *c)
 	if(name.value && name.nitems && name.encoding == UTF8_STRING && name.format == 8) {
 		int n;
 		char **list = nil;
-		if(XmbTextPropertyToTextList(dpy, &name, &list, &n) == Success
+		if(Xutf8TextPropertyToTextList(dpy, &name, &list, &n) == Success
 				&& n > 0 && *list)
 		{
 			cext_strlcpy(c->name, *list, sizeof(c->name));
@@ -459,6 +459,10 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		match_sizehints(c);
 
 	if(!ignore_xcall) {
+		if(!idx_of_area(f->area) && c->rect.width >= rect.width && c->rect.height >= rect.height) {
+			f->rect.x = -def.border;
+			f->rect.y = -height_of_bar();
+		}
 		if(f->area->view == view.data[sel])
 			XMoveResizeWindow(dpy, c->framewin, f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);

@@ -105,11 +105,14 @@ handle_configurerequest(XEvent *e)
 
 	c = client_of_win(ev->window);
 	ev->value_mask &= ~CWSibling;
-
 	if(c) {
+
+		if(c->frame.size && idx_of_area(c->frame.data[c->sel]->area))
+			return;
+
 		gravitate_client(c, True);
 
-		if(c->frame.size && (idx_of_area(c->frame.data[c->sel]->area) == 0)) {
+		if(c->frame.size) {
 			if(ev->value_mask & CWX)
 				c->rect.x = ev->x;
 			if(ev->value_mask & CWY)
@@ -126,8 +129,14 @@ handle_configurerequest(XEvent *e)
 
 		if(c->frame.size) {
 			Frame *f = c->frame.data[c->sel];
-			f->rect.x = wc.x = c->rect.x - def.border;
-			f->rect.y = wc.y = c->rect.y - height_of_bar();
+			if(c->rect.width >= rect.width && c->rect.height >= rect.height) {
+				f->rect.x = wc.x = -def.border;
+				f->rect.y = wc.y = -height_of_bar();
+			}
+			else {
+				f->rect.x = wc.x = c->rect.x - def.border;
+				f->rect.y = wc.y = c->rect.y - height_of_bar();
+			}
 			f->rect.width = wc.width = c->rect.width + 2 * def.border;
 			f->rect.height = wc.height = c->rect.height + def.border
 				+ height_of_bar();
