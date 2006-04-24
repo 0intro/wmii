@@ -18,7 +18,6 @@
 \documentclass[12pt,a4paper]{article} %options given to article are inherited to all packages
 \usepackage[latin1]{inputenc}
 \usepackage[left=3cm,top=2cm,right=2cm,bottom=3cm]{geometry}
-%\usepackage{ngerman}
 \usepackage{times}
 \usepackage{hyperref} % option [dvipdfm] disables clickable refs
 \hypersetup{pdftex, colorlinks=true, linkcolor=blue, filecolor=blue,
@@ -65,12 +64,6 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 \newpage
 
 \section{Abstract}
-
-  \subsection{Who brought this to you}
-    
-    This guide was written by Steffen Liebergeld, who got lots of help
-    from Salvador Peir\'o and a patch from Jochen Schwartz, and lots of
-    corrections and suggestions of the wmii users.
 
   \subsection{The purpose of this document}
 
@@ -300,6 +293,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
   \subsection{First steps}
   \label{subsec:firststeps}
+
     You may now start your X session. Since it is the first time you
     start wmii, a window with a little tutorial will show up. You are
     free to read it, but you may also follow the beginners guide :-)
@@ -355,7 +349,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     client to the column on the left, press \emph{MOD--Control--h} and
     to move it to the right column, press \emph{MOD--Control--l}.
 
-  \subsection{What about layouts}
+  \subsection{What about layouts?}
 
     Layouts are different methods of how to align windows in a
     column. They apply only to one column each. Thus it is possible to
@@ -500,9 +494,9 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
   \subsection{Tools}
 
-  This section gives a little overview of the tools that come wmii, but
-  for more detailed explanations you should read the man page of each
-  tool, that comes with wmii.
+    This section gives a little overview of the tools that come wmii,
+    but for more detailed explanations you should read the man page of
+    each tool, that comes with wmii.
   
   \begin{description}
   
@@ -765,29 +759,223 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     \emph{MOD-Shift-t} brings up a menu enabling you to assign new
     tags to the focused client.
 
-  \section{The End}
+\section{The End}
+\label{sec:end}
     
-    We hope this has eased your way through wmii, because this is the
-    purpose of this document and so, if you've seen something that you
-    think is wrong, confusing or missing in this document, feel free
-    to drop us a note:
+  We hope this has eased your way through wmii, because this is the
+  purpose of this document and so, if you've seen something that you
+  think is wrong, confusing or missing in this document, feel free
+  to drop us a note:
 
-    Contact information is to be found here:
-    \href{http://wmii.de/index.php/BeginnersGuide}{direct mail},
-    \href{http://wmii.de/index.php/MailingList}{[wmii]} mailing-list,
-    \href{http://wmii.de/index.php/IRC}{\#wmii} irc channel or even
-    with smoke signals~\footnote{ but don't ask us for advice, here
-    you're on your own \texttt{;-P}.}.
-  
-    Also remember that wmii is written by people with taste, so most
-    of the decisions made have strong reasons supporting them, so if
-    you think something doesn't make sense or doesn't fit into the
-    picture, just try to understand it by yourself first before
-    asking, probably you'll end up learning a lot and if its really
-    wrong in the end, you'll provide us with much better feedback to
-    solve the issue.
+  Contact information is to be found here:
+  \href{http://wmii.de/index.php/BeginnersGuide}{direct mail},
+  \href{http://wmii.de/index.php/MailingList}{[wmii]} mailing-list,
+  \href{http://wmii.de/index.php/IRC}{\#wmii} irc channel or even
+  with smoke signals~\footnote{ but don't ask us for advice, here
+  you're on your own \texttt{;-P}.}.
+
+  Also remember that wmii is written by people with taste, so most
+  of the decisions made have strong reasons supporting them, so if
+  you think something doesn't make sense or doesn't fit into the
+  picture, just try to understand it by yourself first before
+  asking, probably you'll end up learning a lot and if its really
+  wrong in the end, you'll provide us with much better feedback to
+  solve the issue.
 
 \newpage
+
+\section{Appendix}
+\label{sec:appendix}
+
+\subsection{filesystem}
+
+\begin{description}
+
+\item [/bar]
+\begin{itemize*}
+\item the bar namespace
+\item to add a label, create /bar/\verb+label+ (this automatically creates the
+\verb+colors+ and \verb+data+ files.
+\item to delete it, remove /bar/\verb+label+
+\end{itemize*}
+
+\item [/bar/label]
+\begin{itemize*}
+\item each bar has it's own namespace which is named according to it's 
+label
+\item label can be any arbitrary string
+\end{itemize*}
+
+\item [/bar/label/data]
+\begin{itemize*}
+\item the data written to the label \verb+label+
+\end{itemize*}
+
+\item [/bar/label/colors]
+\begin{itemize*}
+\item the colours of the bar
+\end{itemize*}
+
+\item [/clients]
+\begin{itemize*}
+\item the clients namespace
+\\end{itemize*}
+
+\item [/clients/n]
+\begin{itemize*}
+\item every client, including ones not shown in the view has a namespace here
+\item \verb+n+ is a non-negative interger and clients are numbered oldest first
+\end{itemize*}
+
+\item [/clients/n/class]
+\begin{itemize*}
+\item a file containing the class:instance information for client \verb+n+
+\end{itemize*}
+
+\item [/clients/n/ctl]
+\begin{itemize*}
+\item control file for client \verb+n+
+\item accepted commands:
+\begin{itemize*}
+\item kill (removes client)
+\item sendto \verb+area|prev|next|new+
+\item swap \verb+up|down|prev|next+
+\end{itemize*}
+\end{itemize*}
+
+\item [/clients/n/geom]
+\begin{itemize*}
+\item the window geometry of client \verb+n+
+\item displayed as four blank seperated integers (x y width height?) 
+\end{itemize*}
+
+\item [/clients/n/name]
+\begin{itemize*}
+\item the name of client \verb+n+ as it's seen by wmii (displayed in the tagbar)
+\end{itemize*}
+
+\item [/clients/n/tags]
+\begin{itemize*}
+\item a plus(+)-seperated list of tags to which client \verb+n+ is related 
+\end{itemize*}
+
+\item [/ctl]
+\begin{itemize*}
+\item the wmii control file and command interface
+\item accepted commands:
+\begin{itemize*}
+\item quit
+\item retag
+\item view \verb+tag+
+\end{itemize*}
+\end{itemize*}
+
+\item [/def]
+\item [/def/border] width of the border around clients
+\item [/def/font] the font used by wmii (an xlib font name)
+\item [/def/keys] a newline seperated list of the keys to be watched by wmii
+\item [/def/rules] 
+\begin{itemize*}
+\item a newline seperated list of rules to specify how to automatically tag clients
+\item matches against the class.instance valuas of a client
+\item syntax: \verb+/$regex/ -> $tag+ (tag might be \~{} to indicate floating mode
+\end{itemize*}
+
+\item [/view]
+\begin{itemize*}
+\item a manifestation of the collection of clients associated with a specifiy 
+tag or tags
+\end{itemize*}
+
+\item [/view/area]
+\begin{itemize*}
+\item each area has its own namespace in the current view
+\item the areas are numbered starting with 0
+\item 0 is always the floating area, the others are columns
+\end{itemize*}
+
+\item [/view/area/ctl]
+\begin{itemize*}
+\item accepted commands:
+\begin{itemize*}
+\item select \verb+client|prev|next+
+\item client refers to the client number relative to the number and
+age of the clients in \verb+area+
+\end{itemize*}
+\end{itemize*}
+
+\item [/view/area/mode] the current layout for the area, equal, stack or max
+\item [/view/area/sel] the selected client of the area
+\item [/view/area/client] the namespace for each client in \verb+area+
+\item [/view/ctl] accepted commands: select \verb+area|prev|next|toggle+
+\item [/view/sel] the selected area in workspace
+\item [/view/tag] the tag which is common to all clients in the workspace
+
+\end{description}
+
+\newpage
+
+\subsection{keybindings}
+Here are the default keybindings. \verb+$MODKEY+ is a placeholder, which is
+usually mapped to Mod1 or Alt.
+\begin{table}[h]
+\begin{tabular}{|l|l|}
+\hline % Puts in a horizontal line 
+Keybinding &Action \\ %Table Headers , columns seperated by &,
+                            %rows ended by \\
+\hline 
+\hline 
+Moving Focus&\\
+\verb+$MODKEY+-h&move focus to prev column \\
+\verb+$MODKEY+-l&move focus to next column \\
+\verb+$MODKEY+-j&move focus to next client in column \\
+\verb+$MODKEY+-k&move focus to prev client in column \\
+\verb+$MODKEY+-space&toggle to/from floating column 0 \\
+\verb+$MODKEY+-[0-9]&select tag/view [0-9] \\
+Moving Clients&\\
+\verb+$MODKEY+-Control-h&swap client with last client of prev column \\
+\verb+$MODKEY+-Control-l&swap client with last client of next column \\
+\verb+$MODKEY+-Control-j&swap client down in the column \\
+\verb+$MODKEY+-Control-k&swap client up in the column \\
+\verb+$MODKEY+-Shift-h&send client to prev column \\
+\verb+$MODKEY+-Shift-l&send client to next column \\
+\verb+$MODKEY+-Shift-space&send client to/from floating column 0 \\
+\verb+$MODKEY+-Shift-[0-9]&send client to tag/view [0-9] \\
+Layouts&\\
+\verb+$MODKEY+-d&select default layout \\
+\verb+$MODKEY+-s&select stacked layout \\
+\verb+$MODKEY+-m&select max layout \\
+Menu Bar Functions&\\
+\verb+$MODKEY+-a&choose action from menu bar \\
+\verb+$MODKEY+-p&choose program from menu bar \\
+\verb+$MODKEY+-t&choose view from menu bar \\
+\verb+$MODKEY+-Shift-t&assign tag(s)  to client from menu bar \\
+Clients and Applications&\\
+\verb+$MODKEY+-Return&open terminal client \\
+\verb+$MODKEY+-Shift-c&kill client \\
+\hline 
+\end{tabular} 
+\caption{Default keybindings of wmii} 
+\end{table}
+
+\newpage
+
+\section{Credits}
+\label{sec:credits}
+
+
+\begin{description}
+\item [Author] Steffen Liebergeld
+\item [Main critic and inquisitor] Salvador Peir\'o
+
+\item [Helpers]
+ \\
+Anselm Garbe \\
+Denis Grelich \\
+Ross Mohn \\
+Neptun Florin \\
+Jochen Schwartz \\
+\end{description}
 
 \section{Copyright notice}
 
