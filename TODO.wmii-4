@@ -1,0 +1,8 @@
+- idea for column mode:
+	*: is the current default mode with fallback (shows arbitrary clients)
+	0: is the current max mode, shows only one client at the time (same bahvior as current)
+	n: shows n clients, in stacking mode, using the selected client as center, n == 1 is current stacking mode,
+		n == equal will use the center of (n/2), n == unequal has always a center element.
+- tagbars
+- slot will be similiar to old wmi-10 slot, a separate window at the right side of the screen
+- MWM/EWMH handling to support borderless apps?
