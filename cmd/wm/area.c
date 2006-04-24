@@ -17,31 +17,34 @@ vector_of_areas(AreaVector *av)
 Area *
 create_area(View *v)
 {
+	static unsigned short id = 1;
 	unsigned int w;
-	if(v->area.size < 2)
-		w = rect.width;
-	else if(def.colw)
-		w = def.colw;
+	Area *a = nil;
+
+	if(v->area.size > 1) {
+		if(def.colw)
+			w = def.colw;
+		else
+			w = rect.width / v->area.size - 1;
+	}
 	else
-		w = rect.width / v->area.size;
+		w = rect.width;
+
 	if(v->area.size >= 2 && (v->area.size - 1) * MIN_COLWIDTH + w > rect.width)
 		return nil;
-	else
-	{
-		static unsigned short id = 1;
-		Area *a = cext_emallocz(sizeof(Area));
-		a->view = v;
-		a->id = id++;
-		a->rect = rect;
-		a->rect.height = rect.height - brect.height;
-		a->mode = def.colmode;
-		if(v->area.size > 1)
-			w = rect.width / ((float)rect.width / w - 1);
-		a->rect.width = w;
-		cext_vattach(vector_of_areas(&v->area), a);
-		v->sel = v->area.size - 1;
-		return a;
-	}
+
+	if(v->area.size > 1)
+		scale_view(v, rect.width - w);
+	a = cext_emallocz(sizeof(Area));
+	a->view = v;
+	a->id = id++;
+	a->rect = rect;
+	a->rect.height = rect.height - brect.height;
+	a->mode = def.colmode;
+	a->rect.width = w;
+	cext_vattach(vector_of_areas(&v->area), a);
+	v->sel = v->area.size - 1;
+	return a;
 }
 
 void
@@ -232,7 +235,6 @@ attach_to_area(Area *a, Client *c)
 	c->floating = !aidx;
 	if(aidx) {
 		h = a->rect.height / (a->frame.size + 1);
-		fprintf(stderr, "attach height=%d\n", h);
 		if(a->frame.size)
 			scale_column(a, a->rect.height - h);
 	}

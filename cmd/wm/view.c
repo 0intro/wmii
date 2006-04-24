@@ -276,25 +276,38 @@ restack_view(View *v)
 }
 
 void
-arrange_view(View *v)
+scale_view(View *v, float w)
 {
-	unsigned int i, xoff = 0;
-	unsigned int dx = 0;
-	int wdiff = 0;
-	float scale = 1.0;
+	unsigned int i;
+	float scale, dx = 0;
 
 	if(v->area.size == 1)
 		return;
 
 	for(i = 1; i < v->area.size; i++)
 		dx += v->area.data[i]->rect.width;
-	scale = (float)rect.width / (float)dx;
+	scale = w / dx;
+	for(i = 1; i < v->area.size; i++) {
+		Area *a = v->area.data[i];
+		a->rect.width *= scale;
+	}
+}
+
+void
+arrange_view(View *v)
+{
+	unsigned int i, xoff = 0;
+	int wdiff = 0;
+
+	if(v->area.size == 1)
+		return;
+
+	scale_view(v, rect.width);
 	for(i = 1; i < v->area.size; i++) {
 		Area *a = v->area.data[i];
 		a->rect.x = xoff;
 		a->rect.y = 0;
 		a->rect.height = rect.height - brect.height;
-		a->rect.width *= scale;
 		if(a->rect.width < MIN_COLWIDTH)
 			a->rect.width = MIN_COLWIDTH;
 		else if((wdiff = a->rect.x + a->rect.width - rect.width + (v->area.size - 1 - i) * MIN_COLWIDTH) > 0)

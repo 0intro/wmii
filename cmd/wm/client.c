@@ -28,7 +28,7 @@ update_client_name(Client *c)
 	if(name.value && name.nitems && name.encoding == UTF8_STRING && name.format == 8) {
 		int n;
 		char **list = nil;
-		if(Xutf8TextPropertyToTextList(dpy, &name, &list, &n) == Success
+		if(XmbTextPropertyToTextList(dpy, &name, &list, &n) == Success
 				&& n > 0 && *list)
 		{
 			cext_strlcpy(c->name, *list, sizeof(c->name));

@@ -1,3 +1,2 @@
-- separate scaling stuff from arrange_{view,column} to scale_{view,column}
 - FocusIn sets focus handling
 - maximize stuff

@@ -112,17 +112,13 @@ scale_column(Area *a, float h)
 	if(!a->frame.size)
 		return;
 
-	fprintf(stderr, " >>> scale column h=%f\n", h);
 	for(i = 0; i < a->frame.size; i++)
 		dy += a->frame.data[i]->rect.height;
 	scale = h / dy;
 	for(i = 0; i < a->frame.size; i++) {
 		Frame *f = a->frame.data[i];
-		fprintf(stderr, "old height: %d, ", f->rect.height);
 		f->rect.height *= scale;
-		fprintf(stderr, "new height: %d\n", f->rect.height);
 	}
-	fprintf(stderr, "%s", " <<< scale column\n");
 }
 
 void
