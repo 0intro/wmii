@@ -270,7 +270,7 @@ detach_from_area(Area *a, Client *c)
 				destroy_area(a);
 			else if(!a->frame.size && v->area.data[0]->frame.size)
 				v->sel = 0; /* focus floating area if it contains something */
-			arrange_view(v, True);
+			arrange_view(v);
 		}
 		else if(!i && !a->frame.size) {
 			if(c->trans) {

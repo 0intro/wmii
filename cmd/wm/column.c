@@ -369,7 +369,7 @@ new_left_column(View *v) {
 		v->area.data[i] = p;
 		p = n;
 	}
-	arrange_view(v, True);
+	arrange_view(v);
 	return a;
 }
 
@@ -379,6 +379,6 @@ new_right_column(View *v)
 	Area *a;
 	if(!(a = create_area(v)))
 		return nil;
-	arrange_view(v, True);
+	arrange_view(v);
 	return a;
 }

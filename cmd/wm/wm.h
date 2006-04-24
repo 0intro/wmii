@@ -285,7 +285,7 @@ void apply_rules(Client *c);
 Bool permit_tags(const char *tags);
 
 /* view.c */
-void arrange_view(View *v, Bool dirty);
+void arrange_view(View *v);
 View *create_view(char *name);
 void focus_view(View *v);
 XRectangle *rects_of_view(View *v, Bool isfloat, unsigned int *num);

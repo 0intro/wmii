@@ -276,7 +276,7 @@ restack_view(View *v)
 }
 
 void
-arrange_view(View *v, Bool dirty)
+arrange_view(View *v)
 {
 	unsigned int i, xoff = 0;
 	unsigned int dx = 0;
@@ -286,24 +286,20 @@ arrange_view(View *v, Bool dirty)
 	if(v->area.size == 1)
 		return;
 
-	if(dirty) {
-		for(i = 1; i < v->area.size; i++)
-			dx += v->area.data[i]->rect.width;
-		scale = (float)rect.width / (float)dx;
-	}
+	for(i = 1; i < v->area.size; i++)
+		dx += v->area.data[i]->rect.width;
+	scale = (float)rect.width / (float)dx;
 	for(i = 1; i < v->area.size; i++) {
 		Area *a = v->area.data[i];
-		if(dirty) {
-			a->rect.x = xoff;
-			a->rect.y = 0;
-			a->rect.height = rect.height - brect.height;
-			a->rect.width *= scale;
-			if(a->rect.width < MIN_COLWIDTH)
-				a->rect.width = MIN_COLWIDTH;
-			else if((wdiff = a->rect.x + a->rect.width - rect.width + (v->area.size - 1 - i) * MIN_COLWIDTH) > 0)
-				a->rect.width -= wdiff;
-			xoff += a->rect.width;
-		}
+		a->rect.x = xoff;
+		a->rect.y = 0;
+		a->rect.height = rect.height - brect.height;
+		a->rect.width *= scale;
+		if(a->rect.width < MIN_COLWIDTH)
+			a->rect.width = MIN_COLWIDTH;
+		else if((wdiff = a->rect.x + a->rect.width - rect.width + (v->area.size - 1 - i) * MIN_COLWIDTH) > 0)
+			a->rect.width -= wdiff;
+		xoff += a->rect.width;
 		arrange_column(a, False);
 	}
 }
