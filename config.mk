@@ -20,7 +20,7 @@ LDFLAGS = -g ${LIBS}
 
 # Solaris
 #CFLAGS = -fast -xtarget=ultra ${INCLUDES} -DVERSION=\"${VERSION}\"
-# Note: - under Solaris add -D__EXTENSIONS__ to CFLAGS
+#LIBS += -lnsl -lsocket
 
 AR = ar cr
 CC = cc
