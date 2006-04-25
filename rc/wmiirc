@@ -131,7 +131,7 @@ do
 		$MODKEY-f)
 			xwrite /view/0/sel/geom 0 0 east south;;
 		$MODKEY-a)
-			`proglist CONFPREFIX/wmii-3 $HOME/.wmii-3 | wmiimenu` &;;
+			PATH=$HOME/.wmii3:CONFPREFIX/wmii-3:$PATH `proglist CONFPREFIX/wmii-3 $HOME/.wmii-3 | wmiimenu` &;;
 		$MODKEY-p)
 			`wmiimenu <$PROGS_FILE` &;;
 		$MODKEY-t)
