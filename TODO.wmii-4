@@ -8,3 +8,6 @@
 - MWM/EWMH handling to support borderless apps?
 - implement client/id file, change /client/<n> namespace to /client/<id>/
 - consider a Focus event whenever a client is focused
+- screen dimension rescaling if screen resolution changes (even with Xrandr)
+- Xinerama support
+- partly EWMH support
