@@ -313,7 +313,7 @@ main(int argc, char *argv[])
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
-	wa.event_mask = ExposureMask | ButtonPressMask
+	wa.event_mask = ExposureMask | ButtonReleaseMask
 		| SubstructureRedirectMask | SubstructureNotifyMask;
 
 	brect = rect;

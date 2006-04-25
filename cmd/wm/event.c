@@ -12,6 +12,7 @@
 
 /* local functions */
 static void handle_buttonpress(XEvent * e);
+static void handle_buttonrelease(XEvent * e);
 static void handle_configurerequest(XEvent * e);
 static void handle_destroynotify(XEvent * e);
 static void handle_enternotify(XEvent * e);
@@ -32,6 +33,7 @@ init_x_event_handler()
 	for(i = 0; i < LASTEvent; i++)
 		handler[i] = nil;
 	handler[ButtonPress] = handle_buttonpress;
+	handler[ButtonRelease] = handle_buttonrelease;
 	handler[ConfigureRequest] = handle_configurerequest;
 	handler[DestroyNotify] = handle_destroynotify;
 	handler[EnterNotify] = handle_enternotify;
@@ -62,7 +64,7 @@ flush_enter_events()
 }
 
 static void
-handle_buttonpress(XEvent *e)
+handle_buttonrelease(XEvent *e)
 {
 	Client *c;
 	XButtonPressedEvent *ev = &e->xbutton;
@@ -77,7 +79,20 @@ handle_buttonpress(XEvent *e)
 				return;
 			}
 	}
-	else if((c = frame_of_win(ev->window))) {
+	else if((c = frame_of_win(ev->window)) && c->frame.size) {
+		snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
+				idx_of_client_id(c->id), ev->button);
+		write_event(buf);
+	}
+}
+
+static void
+handle_buttonpress(XEvent *e)
+{
+	Client *c;
+	XButtonPressedEvent *ev = &e->xbutton;
+
+	if((c = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
 		if(ev->state & def.mod) {
 			if((ev->button == Button1 || ev->button == Button3)
@@ -96,11 +111,6 @@ handle_buttonpress(XEvent *e)
 		else if(ev->button == Button1) {
 			if(sel_client() != c)
 				focus(c);
-		}
-		if(c->frame.size) {
-			snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
-					idx_of_client_id(c->id), ev->button);
-			write_event(buf);
 		}
 	}
 }
