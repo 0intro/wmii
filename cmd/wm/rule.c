@@ -122,8 +122,8 @@ update_rules()
 				mode = IGNORE;
 			}
 			else {
-				if((*p == ' ' || *p == '\t') && (tags[0] == 0))
-					continue; /* skip prefixed whitespaces */
+				if(*p == ' ' || *p == '\t')
+					continue; /* skip whitespaces */
 				*t = *p;
 				t++;
 			}
