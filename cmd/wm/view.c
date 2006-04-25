@@ -383,12 +383,12 @@ update_views()
 	}
 
 	for(i=0; i < view.size; i++) {
-		Bool destroy = True;
+		Bool only_wildcards = True;
 		for(j=0; j < client.size; j++) {
 			if(is_view_of(client.data[j], view.data[i]))
-			destroy = False;
+			only_wildcards = False;
 		}
-		if(destroy && view.size > 1) {
+		if(only_wildcards && view.size > 1) {
 			for(j=0; j < client.size; j++) {
 				if(is_of_view(view.data[i], client.data[j]))
 				detach_from_view(view.data[i], client.data[j]);

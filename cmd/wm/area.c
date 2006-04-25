@@ -160,10 +160,10 @@ send_to_area(Area *to, Area *from, Client *c)
 void
 place_client(Area *a, Client *c)
 {
-	static unsigned int mx, my, offset;
+	static unsigned int mx, my;
 	static Bool *field = nil;
 	Bool fit = False;
-	unsigned int i, j, k, x, y, maxx, maxy, dx, dy, cx, cy;
+	unsigned int i, j, k, x, y, maxx, maxy, dx, dy, cx, cy, diff;
 	XPoint p1 = {0, 0}, p2 = {0, 0};
 	Frame *f = c->frame.data[c->sel];
 
@@ -231,15 +231,15 @@ place_client(Area *a, Client *c)
 	if(fit && (p1.x + f->rect.width < a->rect.x + a->rect.width))
 		f->rect.x = p1.x;
 	else {
-		offset = (a->rect.width - f->rect.width) > 0 ? (a->rect.width - f->rect.width) : 1;
-		f->rect.x = a->rect.x + (random()%offset);
+		diff = a->rect.width - f->rect.width;
+		f->rect.x = a->rect.x + (random() % (diff ? diff : 1));
 	}
 
 	if(fit && (p1.y + f->rect.height < a->rect.y + a->rect.height))
 		f->rect.y = p1.y;
 	else {
-		offset = (a->rect.height - f->rect.height) > 0 ? (a->rect.height - f->rect.height) : 1;
-		f->rect.y = a->rect.y + (random()%offset);
+		diff = a->rect.height - f->rect.height;
+		f->rect.y = a->rect.y + (random() % (diff ? diff : 1));
 	}
 }
 
