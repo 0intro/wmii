@@ -37,20 +37,20 @@ clean:
 install: all
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
 	@cp -f ${BIN} ${DESTDIR}${PREFIX}/bin
-	@sed 's|CONFPREFIX|${CONFPREFIX}|' <cmd/wm/wmii >${DESTDIR}${PREFIX}/bin/wmii
+	@sed 's|CONFPREFIX|${CONFPREFIX}|g' <cmd/wm/wmii >${DESTDIR}${PREFIX}/bin/wmii
 	@for i in ${BIN}; do \
 		chmod 755 ${DESTDIR}${PREFIX}/bin/`basename $$i`; \
 	done
 	@echo installed executable files to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${CONFPREFIX}/wmii-3
 	@cd rc; for i in *; do \
-		sed 's|CONFPREFIX|${CONFPREFIX}|' <$$i >${DESTDIR}${CONFPREFIX}/wmii-3/$$i; \
+		sed 's|CONFPREFIX|${CONFPREFIX}|g' <$$i >${DESTDIR}${CONFPREFIX}/wmii-3/$$i; \
 		chmod 755 ${DESTDIR}${CONFPREFIX}/wmii-3/$$i; \
 	done
 	@echo installed rc scripts to ${DESTDIR}${CONFPREFIX}/wmii-3
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@cp -f ${MAN1} ${DESTDIR}${MANPREFIX}/man1
-	@sed 's|CONFPREFIX|${CONFPREFIX}|' <cmd/wm/wmii.1 >${DESTDIR}${MANPREFIX}/man1/wmii.1
+	@sed 's|CONFPREFIX|${CONFPREFIX}|g' <cmd/wm/wmii.1 >${DESTDIR}${MANPREFIX}/man1/wmii.1
 	@for i in ${MAN1}; do \
 		chmod 444 ${DESTDIR}${MANPREFIX}/man1/`basename $$i`; \
 	done

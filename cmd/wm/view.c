@@ -103,6 +103,7 @@ focus_view(View *v)
 	update_view_bars();
 	XSync(dpy, False);
 	XUngrabServer(dpy);
+	flush_enter_events();
 }
 
 XRectangle *
