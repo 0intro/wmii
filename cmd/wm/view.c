@@ -34,7 +34,6 @@ create_view(char *name)
 	create_area(v);
 	cext_vattach(vector_of_views(&view), v);
 	qsort(view.data, view.size, sizeof(View *), comp_view_name);
-	sel = idx_of_view(v);
 	return v;
 }
 
@@ -257,13 +256,11 @@ restack_view(View *v)
 			wins[n++] = a->frame.data[a->sel]->client->framewin;
 			for(j = a->frame.size - 1; j >= 0; j--) {
 				Client *c = a->frame.data[j]->client;
+				ungrab_mouse(c->framewin, AnyModifier, AnyButton);
 				if((v->sel == i) && (a->sel == j)) {
-					ungrab_mouse(c->framewin, AnyModifier, AnyButton);
 					grab_mouse(c->framewin, def.mod, Button1);
 					grab_mouse(c->framewin, def.mod, Button3);
 				}
-				else
-					grab_mouse(c->framewin, AnyModifier, Button1);
 				if(j == a->sel)
 					continue;
 				wins[n++] = c->framewin;

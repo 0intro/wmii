@@ -14,6 +14,7 @@
 static void handle_buttonpress(XEvent * e);
 static void handle_configurerequest(XEvent * e);
 static void handle_destroynotify(XEvent * e);
+static void handle_enternotify(XEvent * e);
 static void handle_expose(XEvent * e);
 static void handle_keypress(XEvent * e);
 static void handle_keymapnotify(XEvent * e);
@@ -33,6 +34,7 @@ init_x_event_handler()
 	handler[ButtonPress] = handle_buttonpress;
 	handler[ConfigureRequest] = handle_configurerequest;
 	handler[DestroyNotify] = handle_destroynotify;
+	handler[EnterNotify] = handle_enternotify;
 	handler[Expose] = handle_expose;
 	handler[KeyPress] = handle_keypress;
 	handler[KeymapNotify] = handle_keymapnotify;
@@ -50,6 +52,13 @@ check_x_event(IXPConn *c)
 		if(handler[ev.type])
 			(handler[ev.type]) (&ev); /* call handler */
 	}
+}
+
+void
+flush_enter_events()
+{
+	XEvent ev;
+	while(XCheckMaskEvent(dpy, EnterWindowMask, &ev));
 }
 
 static void
@@ -184,6 +193,21 @@ handle_destroynotify(XEvent *e)
 }
 
 static void
+handle_enternotify(XEvent *e)
+{
+	XCrossingEvent *ev = &e->xcrossing;
+	Client *c;
+
+	if(ev->mode != NotifyNormal || ev->detail == NotifyInferior)
+		return;
+
+	if((c = frame_of_win(ev->window))) {
+		if(c != sel_client_of_view(view.data[sel]))
+			focus(c);
+	}
+}
+
+static void
 handle_expose(XEvent *e)
 {
 	XExposeEvent *ev = &e->xexpose;
@@ -218,13 +242,13 @@ handle_maprequest(XEvent *e)
 
 	if(!XGetWindowAttributes(dpy, ev->window, &wa))
 		return;
+
 	if(wa.override_redirect) {
 		XSelectInput(dpy, ev->window,
 				(StructureNotifyMask | PropertyChangeMask));
 		return;
 	}
 
-	/* there're client which send map requests twice */
 	if(!client_of_win(ev->window))
 		manage_client(create_client(ev->window, &wa));
 }

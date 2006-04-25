@@ -75,7 +75,7 @@ create_client(Window w, XWindowAttributes *wa)
 	fwa.override_redirect = 1;
 	fwa.background_pixmap = ParentRelative;
 	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask
-		| ExposureMask | ButtonPressMask;
+		| EnterWindowMask | ExposureMask | ButtonPressMask;
 
 	c->framewin = XCreateWindow(dpy, root, c->rect.x, c->rect.y,
 			c->rect.width + 2 * def.border,
@@ -133,7 +133,6 @@ map_client(Client *c)
 void
 unmap_client(Client *c)
 {
-	ungrab_mouse(c->win, AnyModifier, AnyButton);
 	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XUnmapWindow(dpy, c->win);
 	XSelectInput(dpy, c->win, CLIENT_MASK);
@@ -365,6 +364,7 @@ manage_client(Client *c)
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	update_views();
+	flush_enter_events();
 }
 
 static int
@@ -401,6 +401,7 @@ destroy_client(Client *c)
 	XSync(dpy, False);
 	XSetErrorHandler(wmii_error_handler);
 	XUngrabServer(dpy);
+	flush_enter_events();
 }
 
 Client *
@@ -508,6 +509,7 @@ select_client(Client *c, char *arg)
 			return;
 	}
 	focus_client(a->frame.data[i]->client);
+	flush_enter_events();
 }
 
 void
@@ -564,6 +566,7 @@ Swaparea:
 	if(idx_of_area(a))
 		arrange_column(a, False);
 	focus_client(c);
+	flush_enter_events();
 }
 
 void
@@ -613,6 +616,7 @@ send_client_to(Client *c, char *arg)
 		to = v->area.data[i];
 	}
 	send_to_area(to, a, c);
+	flush_enter_events();
 }
 
 void
@@ -628,6 +632,7 @@ resize_all_clients()
 				resize_client(c, &c->frame.data[c->sel]->rect, False);
 		}
 	}
+	flush_enter_events();
 }
 
 /* convenience function */
