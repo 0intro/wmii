@@ -68,7 +68,7 @@ update_offsets()
 		return;
 
 	for(i = curroff; i < item.size; i++) {
-		w += XTextWidth(draw.font.xfont, item.data[i], strlen(item.data[i])) + mrect.height;
+		w += blitz_textwidth(dpy, &draw.font, item.data[i]) + mrect.height;
 		if(w > mrect.width)
 			break;
 	}
@@ -76,7 +76,7 @@ update_offsets()
 
 	w = cmdw + 2 * seek;
 	for(i = curroff; i > 0; i--) {
-		w += XTextWidth(draw.font.xfont, item.data[i], strlen(item.data[i])) + mrect.height;
+		w += blitz_textwidth(dpy, &draw.font, item.data[i]) + mrect.height;
 		if(w > mrect.width)
 			break;
 	}
@@ -143,8 +143,7 @@ draw_menu()
 		for(i = curroff; i < nextoff; i++) {
 			draw.data = item.data[i];
 			draw.rect.x = offx;
-			draw.rect.width = XTextWidth(draw.font.xfont, draw.data,
-					strlen(draw.data)) + mrect.height;
+			draw.rect.width = blitz_textwidth(dpy, &draw.font, draw.data) + mrect.height;
 			offx += draw.rect.width;
 			if(sel == i) {
 				draw.color = selcolor;
@@ -308,7 +307,7 @@ read_allitems()
 	}
 
 	if(maxname)
-		cmdw = XTextWidth(draw.font.xfont, maxname, max) + mrect.height;
+		cmdw = blitz_textwidth(dpy, &draw.font, maxname) + mrect.height;
 }
 
 int

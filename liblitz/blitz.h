@@ -37,6 +37,7 @@ typedef struct {
 } BlitzDraw;
 
 /* font.c */
+unsigned int blitz_textwidth(Display *dpy, BlitzFont *font, char *text);
 void blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr);
 
 /* color.c */

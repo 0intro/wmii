@@ -121,14 +121,6 @@ init_atoms()
 	wm_atom[WMState] = XInternAtom(dpy, "WM_STATE", False);
 	wm_atom[WMProtocols] = XInternAtom(dpy, "WM_PROTOCOLS", False);
 	wm_atom[WMDelete] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
-
-	net_atom[NetSupported] = XInternAtom(dpy, "_NET_SUPPORTED", False);
-	net_atom[NetWMName] = XInternAtom(dpy, "_NET_WM_NAME", False);
-
-	XChangeProperty(dpy, root, net_atom[NetSupported],
-					XA_ATOM, 32, PropModeReplace, (unsigned char *)net_atom, NetLast);
-
-	UTF8_STRING = XInternAtom(dpy, "UTF8_STRING", False);
 }
 
 static void

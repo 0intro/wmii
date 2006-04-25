@@ -22,25 +22,25 @@ static void
 update_client_name(Client *c)
 {
 	XTextProperty name;
+	int n;
+	char **list = nil;
 
+	name.nitems = 0;
 	c->name[0] = 0;
-	XGetTextProperty(dpy, c->win, &name, net_atom[NetWMName]);
-	if(name.value && name.nitems && name.encoding == UTF8_STRING && name.format == 8) {
-		int n;
-		char **list = nil;
-		if(Xutf8TextPropertyToTextList(dpy, &name, &list, &n) == Success
+	XGetWMName(dpy, c->win, &name);
+	if(!name.nitems)
+		return;
+	if(name.encoding == XA_STRING)
+		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
+	else {
+		if(XmbTextPropertyToTextList(dpy, &name, &list, &n) >= Success
 				&& n > 0 && *list)
 		{
 			cext_strlcpy(c->name, *list, sizeof(c->name));
 			XFreeStringList(list);
 		}
-		XFree(name.value);
-		return;
 	}
-	if(XGetWMName(dpy, c->win, &name) && name.value) {
-		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
-		XFree(name.value);
-	}
+	XFree(name.value);
 }
 
 Client *
@@ -217,7 +217,7 @@ prop_client(Client *c, XPropertyEvent *e)
 		}
 		break;
 	}
-	if(e->atom == XA_WM_NAME || e->atom == net_atom[NetWMName]) {
+	if(e->atom == XA_WM_NAME) {
 		update_client_name(c);
 		if(c->frame.size)
 			draw_client(c);
@@ -265,7 +265,7 @@ draw_client(Client *c)
 				idx_of_frame(c->frame.data[c->sel]) + 1,
 				c->frame.data[c->sel]->area->frame.size);
 		d.align = CENTER;
-		d.rect.width = d.rect.height + XTextWidth(blitzfont.xfont, buf, strlen(buf));
+		d.rect.width = d.rect.height + blitz_textwidth(dpy, &blitzfont, buf);
 		d.data = buf;
 		blitz_drawlabel(dpy, &d);
 		blitz_drawborder(dpy, &d);
@@ -275,7 +275,7 @@ draw_client(Client *c)
 	}
 
 	/* tag bar */
-	d.rect.width = d.rect.height + XTextWidth(blitzfont.xfont, c->tags, strlen(c->tags));
+	d.rect.width = d.rect.height + blitz_textwidth(dpy, &blitzfont, c->tags);
 	d.data = c->tags;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);

@@ -5,9 +5,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <cext.h>
 
 #include "blitz.h"
+
+unsigned int
+blitz_textwidth(Display *dpy, BlitzFont *font, char *text)
+{
+	XRectangle r;
+	if(font->set) {
+		XmbTextExtents(font->set, text, strlen(text), nil, &r);
+		return r.width;
+	}
+	return XTextWidth(font->xfont, text, strlen(text));
+}
 
 void
 blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr)

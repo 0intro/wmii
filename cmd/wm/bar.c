@@ -127,7 +127,7 @@ draw_bar()
 		l->rect.y = 0;
 		l->rect.width = brect.height;
 		if(strlen(l->data))
-			l->rect.width += XTextWidth(blitzfont.xfont, l->data, strlen(l->data));
+			l->rect.width += blitz_textwidth(dpy, &blitzfont, l->data);
 		l->rect.height = brect.height;
 		w += l->rect.width;
 	}
