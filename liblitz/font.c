@@ -43,7 +43,7 @@ blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr)
 	font->set = XCreateFontSet(dpy, fontname, &missing, &nmissing, &def);
 
 	if(missing) {
-		 while(nmissing--)
+		while(nmissing--)
 			 fprintf(stderr, "liblitz: missing fontset: %s\n", missing[nmissing]);
 		XFreeStringList(missing);
 	}

@@ -142,7 +142,7 @@ select_area(Area *a, char *arg)
 	}
 	new = v->area.data[i];
 	if(new->frame.size)
-		focus_client(new->frame.data[new->sel]->client);
+		focus_client(new->frame.data[new->sel]->client, True);
 	v->sel = i;
 	for(i = 0; i < a->frame.size; i++)
 		draw_client(a->frame.data[i]->client);
@@ -154,7 +154,7 @@ send_to_area(Area *to, Area *from, Client *c)
 	c->revert = from;
 	detach_from_area(from, c);
 	attach_to_area(to, c);
-	focus_client(c);
+	focus_client(c, True);
 }
 
 void

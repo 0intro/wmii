@@ -57,10 +57,10 @@ check_x_event(IXPConn *c)
 }
 
 void
-flush_enter_events()
+flush_events(long even_mask)
 {
 	XEvent ev;
-	while(XCheckMaskEvent(dpy, EnterWindowMask, &ev));
+	while(XCheckMaskEvent(dpy, even_mask, &ev));
 }
 
 static void
@@ -97,7 +97,7 @@ handle_buttonpress(XEvent *e)
 		if(ev->state & def.mod) {
 			if((ev->button == Button1 || ev->button == Button3)
 				&& (sel_client() != c))
-				focus(c);
+				focus(c, True);
 			if(ev->button == Button1)
 				do_mouse_move(c);
 			else if (ev->button == Button3) {
@@ -110,7 +110,7 @@ handle_buttonpress(XEvent *e)
 		}
 		else if(ev->button == Button1) {
 			if(sel_client() != c)
-				focus(c);
+				focus(c, True);
 		}
 	}
 }
@@ -211,9 +211,9 @@ handle_enternotify(XEvent *e)
 	if(ev->mode != NotifyNormal || ev->detail == NotifyInferior)
 		return;
 
-	if((c = frame_of_win(ev->window))) {
+	if((c = client_of_win(ev->window))) {
 		if(c != sel_client_of_view(view.data[sel]))
-			focus(c);
+			focus(c, False);
 	}
 }
 

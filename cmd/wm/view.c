@@ -86,7 +86,7 @@ focus_view(View *v)
 
 	/* gives all(!) clients proper geometry (for use of different tags) */
 	if((c = sel_client_of_view(v)))
-		focus_client(c);
+		focus_client(c, True);
 	for(i = 0; i < client.size; i++)
 		if(client.data[i]->frame.size) {
 			Frame *f = client.data[i]->frame.data[client.data[i]->sel];
@@ -103,7 +103,7 @@ focus_view(View *v)
 	update_view_bars();
 	XSync(dpy, False);
 	XUngrabServer(dpy);
-	flush_enter_events();
+	flush_events(EnterWindowMask);
 }
 
 XRectangle *

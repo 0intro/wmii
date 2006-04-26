@@ -62,6 +62,7 @@ enum { WMII_IOUNIT = 2048 };
  * /view/1/mode		FsFmode			column mode
  * /view/1/sel/		FsDclient
  * /view/1/1/class	FsFclass		class:instance of client
+ * /view/1/1/index	FsFindex		index of client in /client
  * /view/1/1/name	FsFname			name of client
  * /view/1/1/tags	FsFtags			tag of client
  * /view/1/geom		FsFgeom			geometry of client
@@ -216,15 +217,25 @@ qid2name(Qid *qid)
 		return "tags";
 		break;
 	case FsFclass:
+	case FsFindex:
 	case FsFname:
 		if((qid->dir_type == FsDclient) && (i1 == -1 || i2 == -1 || i3 == -1))
 			return nil;
 		else if(i1 == -1)
 			return nil;
-		if(type == FsFname)
+		switch(type) {
+		case FsFname:
 			return "name";
-		else
+			break;
+		case FsFclass:
 			return "class";
+			break;
+		case FsFindex:
+			return "index";
+			break;
+		default:
+			break;
+		}
 		break;
 	case FsFmode:
 		if((qid->dir_type == FsDarea) && (i1 == -1 || i2 == -1))
@@ -237,6 +248,7 @@ qid2name(Qid *qid)
 	case FsFevent: return "event"; break;
 	default: return nil; break;
 	}
+	return nil;
 }
 
 static unsigned char
@@ -259,8 +271,10 @@ name2type(char *name, unsigned char dir_type)
 		return FsFctl;
 	if(!strncmp(name, "event", 6))
 		return FsFevent;
-	if(!strncmp(name, "class", 5))
+	if(!strncmp(name, "class", 6))
 		return FsFclass;
+	if(!strncmp(name, "index", 6))
+		return FsFindex;
 	if(!strncmp(name, "name", 5))
 		return FsFname;
 	if(!strncmp(name, "border", 7))
@@ -413,6 +427,7 @@ mkqid(Qid *dir, char *wname, Qid *new)
 		break;
 	case FsFgeom:
 	case FsFname:
+	case FsFindex:
 	case FsFclass:
 		if(dir_type == FsDroot)
 			return -1;
@@ -521,6 +536,15 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 		}
 		else
 			return mkstat(stat, dir, wname, strlen(client.data[dir_i1]->classinst), IXP_DMREAD);
+		break;
+	case FsFindex:
+		if(dir_type == FsDclient) {
+			f = view.data[dir_i1]->area.data[dir_i2]->frame.data[dir_i3];
+			snprintf(buf, sizeof(buf), "%d", idx_of_client_id(f->client->id));
+		}
+		else
+			snprintf(buf, sizeof(buf), "%d", dir_i1);
+		return mkstat(stat, dir, wname, strlen(buf), IXP_DMREAD);
 		break;
 	case FsFname:
 		if(dir_type == FsDclient) {
@@ -1046,6 +1070,8 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "name", &m->qid);
 			p = ixp_enc_stat(p, &stat);
+			fcall->count += type2stat(&stat, "index", &m->qid);
+			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "tags", &m->qid);
 			p = ixp_enc_stat(p, &stat);
 			fcall->count += type2stat(&stat, "geom", &m->qid);
@@ -1089,6 +1115,15 @@ xread(IXPConn *c, Fcall *fcall)
 				if((fcall->count = strlen(client.data[i1]->classinst)))
 					memcpy(p, client.data[i1]->classinst, fcall->count);
 			}
+			break;
+		case FsFindex:
+			if(m->qid.dir_type == FsDclient)
+				snprintf(buf, sizeof(buf), "%d",
+						idx_of_client_id(view.data[i1]->area.data[i2]->frame.data[i3]->client->id));
+			else
+				snprintf(buf, sizeof(buf), "%d", i1);
+			if((fcall->count = strlen(buf)))
+				memcpy(p, buf, fcall->count);
 			break;
 		case FsFname:
 			if(m->qid.dir_type == FsDclient) {

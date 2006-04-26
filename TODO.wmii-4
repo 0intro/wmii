@@ -6,8 +6,9 @@
 - tagbars
 - slot will be similiar to old wmi-10 slot, a separate window at the right side of the screen
 - MWM/EWMH handling to support borderless apps?
-- implement client/id file, change /client/<n> namespace to /client/<id>/
 - consider a Focus event whenever a client is focused
 - screen dimension rescaling if screen resolution changes (even with Xrandr)
 - Xinerama support
 - partly EWMH support
+- libixp: idea from PoP: implement a va_args method similiar to printf for
+		marshalling 9P messages, might reduce LOC drastically

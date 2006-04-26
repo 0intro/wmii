@@ -338,7 +338,7 @@ drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 				src->frame.data[j] = src->frame.data[i];
 				src->frame.data[i] = tmp;
 				arrange_column(src, False);
-				focus_client(f->client);
+				focus_client(f->client, True);
 			}
 		}
 	}

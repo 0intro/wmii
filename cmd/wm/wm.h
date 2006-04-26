@@ -61,6 +61,7 @@ enum {
 	FsFclass,
 	FsFmode,
 	FsFtags,
+	FsFindex,
 	FsFcolw
 };
 
@@ -220,8 +221,8 @@ void unmap_client(Client *c);
 void map_client(Client *c);
 void reparent_client(Client *c, Window w, int x, int y);
 void manage_client(Client *c);
-void focus_client(Client *c);
-void focus(Client *c);
+void focus_client(Client *c, Bool restack);
+void focus(Client *c, Bool restack);
 void resize_client(Client *c, XRectangle *r, Bool ignore_xcall);
 void select_client(Client *c, char *arg);
 void send_client_to(Client *c, char *arg);
@@ -244,7 +245,7 @@ Area *new_right_column(View *v);
 /* event.c */
 void init_x_event_handler();
 void check_x_event(IXPConn *c);
-void flush_enter_events();
+void flush_events(long even_mask);
 
 /* frame.c */
 Frame *create_frame(Area *a, Client *c);

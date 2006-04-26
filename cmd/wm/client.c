@@ -10,7 +10,7 @@
 
 #include "wm.h"
 
-#define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask)
+#define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
 
 static Vector *
 vector_of_clients(ClientVector *cv)
@@ -75,7 +75,7 @@ create_client(Window w, XWindowAttributes *wa)
 	fwa.override_redirect = 1;
 	fwa.background_pixmap = ParentRelative;
 	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask
-		| EnterWindowMask | ExposureMask | ButtonPressMask | ButtonReleaseMask;
+		| ExposureMask | ButtonPressMask | ButtonReleaseMask;
 
 	c->framewin = XCreateWindow(dpy, root, c->rect.x, c->rect.y,
 			c->rect.width + 2 * def.border,
@@ -101,24 +101,29 @@ set_client_state(Client * c, int state)
 }
 
 void
-focus_client(Client *c)
+focus_client(Client *c, Bool restack)
 {
 	Client *old = sel_client();
 	Frame *f = c->frame.data[c->sel];
 	View *v = f->area->view;
 	int i = idx_of_area(f->area);
+	static char buf[256];
 
 	v->sel = i;
 	f->area->sel = idx_of_frame(f);
 	if(old)
 		draw_client(old);
-	restack_view(v);
+	if(restack)
+		restack_view(v);
 
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	draw_client(c);
 	XSync(dpy, False);
 	if(i > 0 && f->area->mode == Colstack)
 		arrange_column(f->area, False);
+	snprintf(buf, sizeof(buf), "ClientFocus %d %s\n",
+			idx_of_client_id(c->id), c->name);
+	write_event(buf);
 }
 
 void
@@ -364,7 +369,7 @@ manage_client(Client *c)
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	update_views();
-	flush_enter_events();
+	flush_events(EnterWindowMask);
 }
 
 static int
@@ -401,7 +406,7 @@ destroy_client(Client *c)
 	XSync(dpy, False);
 	XSetErrorHandler(wmii_error_handler);
 	XUngrabServer(dpy);
-	flush_enter_events();
+	flush_events(EnterWindowMask);
 }
 
 Client *
@@ -508,8 +513,8 @@ select_client(Client *c, char *arg)
 		if(errstr)
 			return;
 	}
-	focus_client(a->frame.data[i]->client);
-	flush_enter_events();
+	focus_client(a->frame.data[i]->client, True);
+	flush_events(EnterWindowMask);
 }
 
 void
@@ -565,8 +570,8 @@ Swaparea:
 	}
 	if(idx_of_area(a))
 		arrange_column(a, False);
-	focus_client(c);
-	flush_enter_events();
+	focus_client(c, True);
+	flush_events(EnterWindowMask);
 }
 
 void
@@ -616,7 +621,7 @@ send_client_to(Client *c, char *arg)
 		to = v->area.data[i];
 	}
 	send_to_area(to, a, c);
-	flush_enter_events();
+	flush_events(EnterWindowMask);
 }
 
 void
@@ -632,12 +637,12 @@ resize_all_clients()
 				resize_client(c, &c->frame.data[c->sel]->rect, False);
 		}
 	}
-	flush_enter_events();
+	flush_events(EnterWindowMask);
 }
 
 /* convenience function */
 void
-focus(Client *c)
+focus(Client *c, Bool restack)
 {
 	Frame *f = c->frame.size ? c->frame.data[c->sel] : nil;
 	View *v;
@@ -648,7 +653,7 @@ focus(Client *c)
 	v = f->area->view;
 	if(view.data[sel] != v)
 		focus_view(v);
-	focus_client(c);
+	focus_client(c, restack);
 }
 
 int
