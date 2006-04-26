@@ -66,11 +66,19 @@ update_frame_selectors(View *v)
 {
 	unsigned int i, j;
 
+	fprintf(stderr, "%s\n", "---------------- update_frame_selectors ----------------");
 	/* select correct frames of clients */
-	for(i = 0; i < client.size; i++)
-		for(j = 0; j < client.data[i]->frame.size; j++)
-			if(client.data[i]->frame.data[j]->area->view == v)
-				client.data[i]->sel = j;
+	for(i = 0; i < client.size; i++) {
+		Client *c = client.data[i];
+		for(j = 0; j < c->frame.size; j++)
+			if(c->frame.data[j]->area->view == v) {
+				Frame *f = c->frame.data[j];
+				c->sel = j;
+				fprintf(stderr, "%d is frame for view '%s' with %d %d %d %d\n",
+						j, v->name, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+				break;
+			}
+	}
 }
 
 void
@@ -84,12 +92,17 @@ focus_view(View *v)
 
 	update_frame_selectors(v);
 
+	fprintf(stderr, "%s\n", "--------------- focus_view -------------------");
 	/* gives all(!) clients proper geometry (for use of different tags) */
 	if((c = sel_client_of_view(v)))
 		focus_client(c, True);
 	for(i = 0; i < client.size; i++)
 		if(client.data[i]->frame.size) {
 			Frame *f = client.data[i]->frame.data[client.data[i]->sel];
+			fprintf(stderr, "focus_view '%s': frame '%s (%s) %d/#%d' %d %d %d %d\n",
+					f->area->view->name, f->client->name, f->client->tags,
+					f->client->sel, f->client->frame.size,
+					f->rect.x, f->rect.y, f->rect.width, f->rect.height);
 			if(f->area->view == v) {
 				XMoveWindow(dpy, client.data[i]->framewin, f->rect.x, f->rect.y);
 				if(client.data[i]->frame.size > 1)
@@ -98,7 +111,7 @@ focus_view(View *v)
 			}
 			else
 				XMoveWindow(dpy, client.data[i]->framewin,
-						2 * rect.width + f->rect.x, f->rect.y);
+							2 * rect.width + f->rect.x, f->rect.y);
 		}
 	update_view_bars();
 	XSync(dpy, False);
@@ -369,7 +382,7 @@ update_views()
 	for(i = 0; i < client.size; i++) {
 		Client *c = client.data[i];
 		for(j = 0; j < view.size; j++) {
-			if(strstr(c->tags, "*"))
+			if(strchr(c->tags, '*'))
 				attach_to_view(view.data[j], c);
 			else if(is_view_of(c, view.data[j])) {
 				if(!is_of_view(view.data[j], c))
