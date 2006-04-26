@@ -121,8 +121,7 @@ focus_client(Client *c, Bool restack)
 	XSync(dpy, False);
 	if(i > 0 && f->area->mode == Colstack)
 		arrange_column(f->area, False);
-	snprintf(buf, sizeof(buf), "ClientFocus %d %s\n",
-			idx_of_client_id(c->id), c->name);
+	snprintf(buf, sizeof(buf), "ClientFocus %d\n", idx_of_client_id(c->id));
 	write_event(buf);
 }
 
