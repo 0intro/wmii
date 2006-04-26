@@ -35,7 +35,8 @@ column_mode_of_str(char *arg)
 static void
 relax_column(Area *a)
 {
-	unsigned int i, yoff, h, hdiff;
+	unsigned int i, yoff, h;
+	int hdiff;
 	Bool fallthrough = False;
 
 	if(!a->frame.size)
@@ -81,17 +82,20 @@ relax_column(Area *a)
 	}
 
 	/* try to add rest space to all clients if not COL_STACK mode */
-	if(a->mode != Colstack) {
-		for(i = 0; (h < a->rect.height) && (i < a->frame.size); i++) {
-			Frame *f = a->frame.data[i];
-			unsigned int tmp = f->rect.height;
-			f->rect.height += (a->rect.height - h);
-			resize_client(f->client, &f->rect, True);
-			h += (f->rect.height - tmp);
-		}
+	hdiff = a->rect.height - h;
+	if(hdiff > 0 && (a->mode != Colstack)) {
+		int hx;
+		for(hx = 1; hx < hdiff; hx++)
+			for(i = 0; (hx < hdiff) && (i < a->frame.size); i++) {
+				Frame *f = a->frame.data[i];
+				unsigned int tmp = f->rect.height;
+				f->rect.height += hx;
+				resize_client(f->client, &f->rect, True);
+				hdiff -= (f->rect.height - tmp);
+			}
 	}
 
-	hdiff = (a->rect.height - h) / a->frame.size;
+	hdiff /= a->frame.size;
 	yoff = a->rect.y + hdiff / 2;
 	for(i = 0; i < a->frame.size; i++) {
 		Frame *f = a->frame.data[i];
