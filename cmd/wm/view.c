@@ -40,7 +40,6 @@ create_view(char *name)
 void
 destroy_view(View *v)
 {
-	fprintf(stderr, "destroy_view: %s\n", v->name);
 	while(v->area.size)
 		destroy_area(v->area.data[0]);
 
@@ -66,16 +65,12 @@ update_frame_selectors(View *v)
 {
 	unsigned int i, j;
 
-	fprintf(stderr, "%s\n", "---------------- update_frame_selectors ----------------");
 	/* select correct frames of clients */
 	for(i = 0; i < client.size; i++) {
 		Client *c = client.data[i];
 		for(j = 0; j < c->frame.size; j++)
 			if(c->frame.data[j]->area->view == v) {
-				Frame *f = c->frame.data[j];
 				c->sel = j;
-				fprintf(stderr, "%d is frame for view '%s' with %d %d %d %d\n",
-						j, v->name, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
 				break;
 			}
 	}
@@ -92,17 +87,12 @@ focus_view(View *v)
 
 	update_frame_selectors(v);
 
-	fprintf(stderr, "%s\n", "--------------- focus_view -------------------");
 	/* gives all(!) clients proper geometry (for use of different tags) */
 	if((c = sel_client_of_view(v)))
 		focus_client(c, True);
 	for(i = 0; i < client.size; i++)
 		if(client.data[i]->frame.size) {
 			Frame *f = client.data[i]->frame.data[client.data[i]->sel];
-			fprintf(stderr, "focus_view '%s': frame '%s (%s) %d/#%d' %d %d %d %d\n",
-					f->area->view->name, f->client->name, f->client->tags,
-					f->client->sel, f->client->frame.size,
-					f->rect.x, f->rect.y, f->rect.width, f->rect.height);
 			if(f->area->view == v) {
 				XMoveWindow(dpy, client.data[i]->framewin, f->rect.x, f->rect.y);
 				if(client.data[i]->frame.size > 1)
@@ -228,9 +218,6 @@ attach_to_view(View *v, Client *c)
 	Area *a;
 
 	c->revert = nil;
-
-	if(is_of_view(v, c))
-		return;
 
 	if(c->trans || c->floating
 		|| (c->rect.width == rect.width && c->rect.height == rect.height))
@@ -382,12 +369,11 @@ update_views()
 	for(i = 0; i < client.size; i++)
 		update_client_views(client.data[i]);
 
+	/* *-tag size isse occures in the next loop */
 	for(i = 0; i < client.size; i++) {
 		Client *c = client.data[i];
 		for(j = 0; j < view.size; j++) {
-			if(strchr(c->tags, '*'))
-				attach_to_view(view.data[j], c);
-			else if(is_view_of(c, view.data[j])) {
+			if(is_view_of(c, view.data[j]) || strchr(c->tags, '*')) {
 				if(!is_of_view(view.data[j], c))
 					attach_to_view(view.data[j], c);
 			}
@@ -401,13 +387,15 @@ update_views()
 	for(i = 0; i < view.size; i++) {
 		Bool only_wildcards = True;
 		for(j = 0; j < client.size; j++) {
+			Client *c = client.data[i];
 			if(is_view_of(client.data[j], view.data[i]))
-			only_wildcards = False;
+				if(!strchr(c->tags, '*'))
+					only_wildcards = False;
 		}
 		if(only_wildcards && view.size > 1) {
 			for(j = 0; j < client.size; j++) {
 				if(is_of_view(view.data[i], client.data[j]))
-				detach_from_view(view.data[i], client.data[j]);
+					detach_from_view(view.data[i], client.data[j]);
 			}
 		}
 	}

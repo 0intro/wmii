@@ -232,10 +232,12 @@ void
 draw_client(Client *c)
 {
 	BlitzDraw d = { 0 };
+	Frame *f;
 
 	if(!c->frame.size)
 		return; /* might not have been attached atm */
 
+	f = c->frame.data[c->sel];
 	d.drawable = c->framewin;
 	d.font = blitzfont;
 	d.gc = c->gc;
@@ -247,7 +249,7 @@ draw_client(Client *c)
 
 	/* draw border */
 	if(def.border) {
-		d.rect = c->frame.data[c->sel]->rect;
+		d.rect = f->rect;
 		d.rect.x = d.rect.y = 0;
 		d.notch = &c->rect;
 		blitz_drawlabel(dpy, &d);
@@ -259,14 +261,12 @@ draw_client(Client *c)
 	d.notch = nil;
 
 	/* max mode bar */
-	if(c->frame.data[c->sel]->area->mode == Colmax) {
+	if(f->area->mode == Colmax) {
 		unsigned long tmp = d.color.fg;
 		char buf[256];
 		d.color.fg = d.color.bg;
 		d.color.bg = tmp;
-		snprintf(buf, sizeof(buf), "%d/%d",
-				idx_of_frame(c->frame.data[c->sel]) + 1,
-				c->frame.data[c->sel]->area->frame.size);
+		snprintf(buf, sizeof(buf), "%d/%d", idx_of_frame(f) + 1, f->area->frame.size);
 		d.align = CENTER;
 		d.rect.width = d.rect.height + blitz_textwidth(dpy, &blitzfont, buf);
 		d.data = buf;
@@ -286,7 +286,7 @@ draw_client(Client *c)
 
 	/* title bar */
 	d.align = WEST;
-	d.rect.width = c->frame.data[c->sel]->rect.width - d.rect.x;
+	d.rect.width = f->rect.width - d.rect.x;
 	d.data = c->name;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);

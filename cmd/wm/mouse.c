@@ -209,9 +209,9 @@ do_mouse_move(Client *c)
 	int snaph = (rect.height * def.snap) / 1000;
 	unsigned int num;
 	unsigned int dmask;
-	XRectangle *rects = rects_of_view(c->frame.data[c->sel]->area->view,
-			idx_of_area(c->frame.data[c->sel]->area) == 0, &num);
-	XRectangle frect = c->frame.data[c->sel]->rect;
+	Frame *f = c->frame.data[c->sel];
+	XRectangle *rects = rects_of_view(f->area->view, idx_of_area(f->area) == 0, &num);
+	XRectangle frect = f->rect;
 	XPoint pt;
 
 	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
@@ -235,7 +235,7 @@ do_mouse_move(Client *c)
 		case ButtonRelease:
 			if(!first) {
 				draw_pseudo_border(&frect);
-				if(idx_of_area(c->frame.data[c->sel]->area))
+				if(idx_of_area(f->area))
 					resize_column(c, &frect, &pt);
 				else
 					resize_client(c, &frect, False);
@@ -451,9 +451,9 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	int snaph = (rect.height * def.snap) / 1000;
 	unsigned int dmask;
 	unsigned int num;
-	XRectangle *rects = rects_of_view(c->frame.data[c->sel]->area->view,
-			idx_of_area(c->frame.data[c->sel]->area) == 0, &num);
-	XRectangle frect = c->frame.data[c->sel]->rect;
+	Frame *f = c->frame.data[c->sel];
+	XRectangle *rects = rects_of_view(f->area->view, idx_of_area(f->area) == 0, &num);
+	XRectangle frect = f->rect;
 	XRectangle origin = frect;
 
 	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
@@ -477,7 +477,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 				draw_pseudo_border(&frect);
 				pt.x = px;
 				pt.y = py;
-				if(idx_of_area(c->frame.data[c->sel]->area))
+				if(idx_of_area(f->area))
 					resize_column(c, &frect, &pt);
 				else
 					resize_client(c, &frect, False);
