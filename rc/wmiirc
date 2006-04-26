@@ -39,6 +39,7 @@ xwrite /def/normcolors $WMII_NORMCOLORS
 wmiir write /def/rules <<EOF
 /XMMS.*/ -> ~
 /Gimp.*/ -> ~
+/MPlayer.*/ -> ~
 /.*/ -> !
 /.*/ -> 1
 EOF
