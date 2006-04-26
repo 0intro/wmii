@@ -50,12 +50,11 @@ relax_column(Area *a)
 			fallthrough = True;
 		break;
 	case Colstack:
-		yoff = a->rect.y;
 		h = a->rect.height - (a->frame.size - 1) * height_of_bar();
 		if(h < 3 * height_of_bar())
 			fallthrough = True;
-		break;
 	default:
+		yoff = a->rect.y;
 		break;
 	}
 
@@ -81,9 +80,8 @@ relax_column(Area *a)
 			h += f->rect.height;
 	}
 
-	/* try to add rest space to all clients if not COL_STACK mode */
 	hdiff = a->rect.height - h;
-	if(hdiff > 0 && (a->mode != Colstack)) {
+	if((a->mode == Coldefault) && (hdiff > 0)) {
 		int hx;
 		for(hx = 1; hx < hdiff; hx++)
 			for(i = 0; (hx < hdiff) && (i < a->frame.size); i++) {
@@ -95,6 +93,8 @@ relax_column(Area *a)
 			}
 	}
 
+	if(hdiff < 0)
+		hdiff = 0;
 	hdiff /= a->frame.size;
 	yoff = a->rect.y + hdiff / 2;
 	for(i = 0; i < a->frame.size; i++) {
