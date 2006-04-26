@@ -227,6 +227,8 @@ attach_to_view(View *v, Client *c)
 {
 	Area *a;
 
+	c->revert = nil;
+
 	if(is_of_view(v, c))
 		return;
 
