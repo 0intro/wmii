@@ -388,8 +388,7 @@ update_views()
 		Bool only_wildcards = True;
 		for(j = 0; j < client.size; j++) {
 			Client *c = client.data[i];
-			if(is_view_of(client.data[j], view.data[i]))
-				if(!strchr(c->tags, '*'))
+			if(is_view_of(c, view.data[i]) && !strchr(c->tags, '*'))
 					only_wildcards = False;
 		}
 		if(only_wildcards && view.size > 1) {
