@@ -232,7 +232,8 @@ attach_to_view(View *v, Client *c)
 	if(is_of_view(v, c))
 		return;
 
-	if(c->trans || c->floating)
+	if(c->trans || c->floating
+		|| (c->rect.width == rect.width && c->rect.height == rect.height))
 		a = v->area.data[0];
 	else
 		a = v->area.data[v->sel];
