@@ -95,8 +95,7 @@ handle_buttonpress(XEvent *e)
 	if((c = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
 		if(ev->state & def.mod) {
-			if((ev->button == Button1 || ev->button == Button3)
-				&& (sel_client() != c))
+			if((ev->button == Button1 || ev->button == Button3))
 				focus(c, True);
 			if(ev->button == Button1)
 				do_mouse_move(c);
@@ -108,10 +107,8 @@ handle_buttonpress(XEvent *e)
 					do_mouse_move(c);
 			}
 		}
-		else if(ev->button == Button1) {
-			if(sel_client() != c)
-				focus(c, True);
-		}
+		else if(ev->button == Button1)
+			focus(c, True);
 	}
 }
 
