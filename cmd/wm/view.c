@@ -204,6 +204,8 @@ detach_from_view(View *v, Client *c)
 {
 	unsigned int i;
 
+	update_frame_selectors(v);
+
 	for(i = 0; i < v->area.size; i++) {
 		if(is_of_area(v->area.data[i], c)) {
 			detach_from_area(v->area.data[i], c);
