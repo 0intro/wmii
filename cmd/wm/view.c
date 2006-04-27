@@ -256,13 +256,7 @@ restack_view(View *v)
 			wins[n++] = a->frame.data[a->sel]->client->framewin;
 			for(j = a->frame.size - 1; j >= 0; j--) {
 				Client *c = a->frame.data[j]->client;
-				if((v->sel == i) && (a->sel == j)) {
-					ungrab_mouse(c->framewin, AnyModifier, AnyButton);
-					grab_mouse(c->framewin, def.mod, Button1);
-					grab_mouse(c->framewin, def.mod, Button3);
-				}
-				else
-					grab_mouse(c->framewin, AnyModifier, Button1);
+				update_client_grab(c, (v->sel == i) && (a->sel == j));
 				if(j == a->sel)
 					continue;
 				wins[n++] = c->framewin;

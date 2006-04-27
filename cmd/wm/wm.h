@@ -232,6 +232,7 @@ Client *sel_client();
 int idx_of_client_id(unsigned short id);
 Client *client_of_win(Window w);
 void draw_clients();
+void update_client_grab(Client *c, Bool is_sel);
 
 /* column.c */
 void arrange_column(Area *a, Bool dirty);

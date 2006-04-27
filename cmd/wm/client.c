@@ -100,6 +100,18 @@ set_client_state(Client * c, int state)
 }
 
 void
+update_client_grab(Client *c, Bool is_sel)
+{
+	if(is_sel) {
+		ungrab_mouse(c->framewin, AnyModifier, AnyButton);
+		grab_mouse(c->framewin, def.mod, Button1);
+		grab_mouse(c->framewin, def.mod, Button3);
+	}
+	else
+		grab_mouse(c->framewin, AnyModifier, Button1);
+}
+
+void
 focus_client(Client *c, Bool restack)
 {
 	Client *old = sel_client();
@@ -114,6 +126,11 @@ focus_client(Client *c, Bool restack)
 		draw_client(old);
 	if(restack)
 		restack_view(v);
+	else {
+		if(old)
+			update_client_grab(old, False);
+		update_client_grab(c, True);
+	}
 
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	draw_client(c);
