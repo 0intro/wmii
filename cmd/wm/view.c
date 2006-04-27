@@ -95,8 +95,7 @@ focus_view(View *v)
 			Frame *f = client.data[i]->frame.data[client.data[i]->sel];
 			if(f->area->view == v) {
 				XMoveWindow(dpy, client.data[i]->framewin, f->rect.x, f->rect.y);
-				if(client.data[i]->frame.size > 1)
-					resize_client(client.data[i], &f->rect, False);
+				resize_client(client.data[i], &f->rect, False);
 				draw_client(client.data[i]);
 			}
 			else
@@ -204,8 +203,6 @@ detach_from_view(View *v, Client *c)
 {
 	unsigned int i;
 
-	update_frame_selectors(v);
-
 	for(i = 0; i < v->area.size; i++) {
 		if(is_of_area(v->area.data[i], c)) {
 			detach_from_area(v->area.data[i], c);
@@ -226,9 +223,6 @@ attach_to_view(View *v, Client *c)
 		a = v->area.data[0];
 	else
 		a = v->area.data[v->sel];
-
-	update_frame_selectors(v);
-
 	attach_to_area(a, c);
 	v->sel = idx_of_area(a);
 	map_client(c);
@@ -376,13 +370,15 @@ update_views()
 	for(i = 0; i < client.size; i++) {
 		Client *c = client.data[i];
 		for(j = 0; j < view.size; j++) {
-			if(is_view_of(c, view.data[j]) || strchr(c->tags, '*')) {
-				if(!is_of_view(view.data[j], c))
-					attach_to_view(view.data[j], c);
+			View *vw = view.data[j];
+			update_frame_selectors(vw);
+			if(is_view_of(c, vw) || strchr(c->tags, '*')) {
+				if(!is_of_view(vw, c))
+					attach_to_view(vw, c);
 			}
 			else {
-				if(is_of_view(view.data[j], c))
-					detach_from_view(view.data[j], c);
+				if(is_of_view(vw, c))
+					detach_from_view(vw, c);
 			}
 		}
 	}
