@@ -3,7 +3,6 @@
  * See LICENSE file for license details.
  */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xatom.h>
@@ -227,7 +226,6 @@ prop_client(Client *c, XPropertyEvent *e)
 	}
 }
 
-/* speed reasoned function for client property change */
 void
 draw_client(Client *c)
 {
@@ -460,7 +458,6 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 	Frame *f = c->frame.data[c->sel];
 	f->rect = *r;
 
-	fprintf(stderr, "resize_client >>> f[%d]=%x (%s)\n", c->sel, f, f->area->view->name);
 	if((f->area->mode != Colstack) || (f->area->sel == idx_of_frame(f)))
 		match_sizehints(c);
 
@@ -633,10 +630,8 @@ resize_all_clients()
 		if(c->frame.size && c->frame.data[c->sel]->area) {
 			if(idx_of_area(c->frame.data[c->sel]->area))
 				resize_column(c, &c->frame.data[c->sel]->rect, nil);
-			else {
+			else
 				resize_client(c, &c->frame.data[c->sel]->rect, False);
-				fprintf(stderr, "resize_client: %s", "client.c:638\n");
-			}
 		}
 	}
 	flush_events(EnterWindowMask);

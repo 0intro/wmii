@@ -3,7 +3,6 @@
  * See LICENSE file for license details.
  */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -311,7 +310,6 @@ name2type(char *name, unsigned char dir_type)
 	if(err)
 		return -1;
 dyndir:
-	/*fprintf(stderr, "nametotype: dir_type = %d\n", dir_type);*/
 	switch(dir_type) {
 	case FsDbars: return FsDbar; break;
 	case FsDview: return FsDarea; break;
@@ -653,10 +651,8 @@ xwalk(IXPConn *c, Fcall *fcall)
 		for(nwqid = 0; (nwqid < fcall->nwname)
 				&& !mkqid(&dir, fcall->wname[nwqid], &fcall->wqid[nwqid]); nwqid++)
 			dir = fcall->wqid[nwqid];
-		if(!nwqid) {
-			fprintf(stderr, "xwalk: no such file '%s'\n", fcall->wname[nwqid]);
+		if(!nwqid)
 			return Enofile;
-		}
 	}
 	/* a fid will only be valid, if the walk was complete */
 	if(nwqid == fcall->nwname) {
@@ -1520,7 +1516,6 @@ do_fcall(IXPConn *c)
 	char *errstr;
 
 	if((msize = ixp_server_receive_fcall(c, &fcall))) {
-		/*fprintf(stderr, "do_fcall=%d\n", fcall.id);*/
 		switch(fcall.id) {
 		case TVERSION: errstr = xversion(c, &fcall); break;
 		case TATTACH: errstr = xattach(c, &fcall); break;
