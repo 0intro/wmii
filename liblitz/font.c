@@ -14,8 +14,8 @@ unsigned int
 blitz_textwidth(Display *dpy, BlitzFont *font, char *text)
 {
 	XRectangle r;
-	if(font->set) {
-		XmbTextExtents(font->set, text, strlen(text), nil, &r);
+	if(0&&font->set) {
+		Xutf8TextExtents(font->set, text, strlen(text), nil, &r);
 		return r.width;
 	}
 	return XTextWidth(font->xfont, text, strlen(text));
