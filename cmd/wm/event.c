@@ -122,47 +122,45 @@ handle_configurerequest(XEvent *e)
 	c = client_of_win(ev->window);
 	ev->value_mask &= ~CWSibling;
 	if(c) {
+		if(c->frame.size && !idx_of_area(c->frame.data[c->sel]->area)) {
+			gravitate_client(c, True);
 
-		if(c->frame.size && idx_of_area(c->frame.data[c->sel]->area))
-			return;
-
-		gravitate_client(c, True);
-
-		if(c->frame.size) {
-			if(ev->value_mask & CWX)
-				c->rect.x = ev->x;
-			if(ev->value_mask & CWY)
-				c->rect.y = ev->y;
-			if(ev->value_mask & CWWidth)
-				c->rect.width = ev->width;
-			if(ev->value_mask & CWHeight)
-				c->rect.height = ev->height;
-		}
-		if(ev->value_mask & CWBorderWidth)
-			c->border = ev->border_width;
-
-		gravitate_client(c, False);
-
-		if(c->frame.size) {
-			Frame *f = c->frame.data[c->sel];
-			if(c->rect.width >= rect.width && c->rect.height >= rect.height) {
-				f->rect.x = wc.x = -def.border;
-				f->rect.y = wc.y = -height_of_bar();
+			if(c->frame.size) {
+				if(ev->value_mask & CWX)
+					c->rect.x = ev->x;
+				if(ev->value_mask & CWY)
+					c->rect.y = ev->y;
+				if(ev->value_mask & CWWidth)
+					c->rect.width = ev->width;
+				if(ev->value_mask & CWHeight)
+					c->rect.height = ev->height;
 			}
-			else {
-				f->rect.x = wc.x = c->rect.x - def.border;
-				f->rect.y = wc.y = c->rect.y - height_of_bar();
+			if(ev->value_mask & CWBorderWidth)
+				c->border = ev->border_width;
+
+			gravitate_client(c, False);
+
+			if(c->frame.size) {
+				Frame *f = c->frame.data[c->sel];
+				if(c->rect.width >= rect.width && c->rect.height >= rect.height) {
+					f->rect.x = wc.x = -def.border;
+					f->rect.y = wc.y = -height_of_bar();
+				}
+				else {
+					f->rect.x = wc.x = c->rect.x - def.border;
+					f->rect.y = wc.y = c->rect.y - height_of_bar();
+				}
+				f->rect.width = wc.width = c->rect.width + 2 * def.border;
+				f->rect.height = wc.height = c->rect.height + def.border
+					+ height_of_bar();
+				wc.border_width = 1;
+				wc.sibling = None;
+				wc.stack_mode = ev->detail;
+				if(f->area->view != view.data[sel])
+					f->rect.x += 2 * rect.width;
+				XConfigureWindow(dpy, c->framewin, ev->value_mask, &wc);
+				configure_client(c);
 			}
-			f->rect.width = wc.width = c->rect.width + 2 * def.border;
-			f->rect.height = wc.height = c->rect.height + def.border
-				+ height_of_bar();
-			wc.border_width = 1;
-			wc.sibling = None;
-			wc.stack_mode = ev->detail;
-			if(f->area->view != view.data[sel])
-				f->rect.x += 2 * rect.width;
-			XConfigureWindow(dpy, c->framewin, ev->value_mask, &wc);
-			configure_client(c);
 		}
 	}
 
@@ -174,10 +172,8 @@ handle_configurerequest(XEvent *e)
 	if(c && c->frame.size) {
 		wc.x = def.border;
 		wc.y = height_of_bar();
-		if(idx_of_area(c->frame.data[c->sel]->area) > 0) {
-			wc.width = c->rect.width;
-			wc.height = c->rect.height;
-		}
+		wc.width = c->rect.width;
+		wc.height = c->rect.height;
 	}
 
 	wc.border_width = 0;
