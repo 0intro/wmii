@@ -19,7 +19,7 @@ RIGHT=l
 WMII_FONT='fixed'
 WMII_SELCOLORS='#ffffff #285577 #4c7899'
 WMII_NORMCOLORS='#222222 #eeeeee #666666'
-# uncomment if you prefer dark background
+# dark background
 #WMII_NORMCOLORS='#e0e0e0 #0a0a0a #202020'
 
 export WMII_FONT WMII_NORMCOLORS WMII_SELCOLORS
