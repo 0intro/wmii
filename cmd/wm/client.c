@@ -366,6 +366,10 @@ manage_client(Client *c)
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	update_views();
+	map_client(c);
+	XMapWindow(dpy, c->framewin);
+	if(c->frame.data[c->sel]->area->view == view.data[sel])
+		focus_client(c, False);
 	flush_events(EnterWindowMask);
 }
 
