@@ -477,9 +477,10 @@ void
 resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 {
 	Frame *f = c->frame.data[c->sel];
+	int fidx = idx_of_frame(f);
 	f->rect = *r;
 
-	if((f->area->mode != Colstack) || (f->area->sel == idx_of_frame(f)))
+	if((f->area->mode != Colstack) || (f->area->sel == fidx))
 		match_sizehints(c);
 
 	if(!ignore_xcall) {
@@ -495,15 +496,15 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 					f->rect.y, f->rect.width, f->rect.height);
 	}
 
-	if((f->area->mode != Colstack) || (f->area->sel == idx_of_frame(f))) {
-		c->rect.x = def.border;
-		c->rect.y = height_of_bar();
+	c->rect.x = def.border;
+	c->rect.y = height_of_bar();
+	if((f->area->sel == fidx) || (f->area->mode != Colstack)) {
 		c->rect.width = f->rect.width - 2 * def.border;
 		c->rect.height = f->rect.height - def.border - height_of_bar();
-		XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y,
-				c->rect.width, c->rect.height);
-		configure_client(c);
 	}
+	XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y,
+						c->rect.width, c->rect.height);
+	configure_client(c);
 }
 
 void
