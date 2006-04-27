@@ -374,12 +374,34 @@ update_views()
 		Client *c = client.data[i];
 		for(j = 0; j < view.size; j++) {
 			if(is_view_of(c, view.data[j]) || strchr(c->tags, '*')) {
-				if(!is_of_view(view.data[j], c))
+				if(!is_of_view(view.data[j], c)) {
+					unsigned int tmp = c->sel;
+					Frame *f = c->frame.size ? c->frame.data[c->sel] : nil;
+					if(f)
+						fprintf(stderr, "ABf=%x %s %d %d %d %d\n",
+								f, c->tags, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+
 					attach_to_view(view.data[j], c);
+
+					c->sel = tmp;
+					f = c->frame.data[c->sel];
+					fprintf(stderr, "AEf=%x %s %d %d %d %d\n",
+							f, c->tags, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+				}
 			}
 			else {
-				if(is_of_view(view.data[j], c))
+				if(is_of_view(view.data[j], c)) {
+					Frame *f = c->frame.data[c->sel];
+					fprintf(stderr, "DBf=%x %s %d %d %d %d\n",
+							f, c->tags, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+					
 					detach_from_view(view.data[j], c);
+
+					f = c->frame.size ? c->frame.data[c->sel] : nil;
+					if(f)
+						fprintf(stderr, "DEf=%x %s %d %d %d %d\n",
+								f, c->tags, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+				}
 			}
 		}
 	}
