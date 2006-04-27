@@ -63,6 +63,7 @@ relax_column(Area *a)
 			Frame *f = a->frame.data[i];
 			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 			f->rect.y = a->rect.y + (a->rect.height - f->rect.height) / 2;
+			fprintf(stderr, "resize_client: %s", "column.c:66 (relax_column fallthrough)\n");
 			resize_client(f->client, &f->rect, False);
 		}
 		return;
@@ -88,6 +89,7 @@ relax_column(Area *a)
 				Frame *f = a->frame.data[i];
 				unsigned int tmp = f->rect.height;
 				f->rect.height += hx;
+				fprintf(stderr, "resize_client: %s", "column.c:92 (relaxation)\n");
 				resize_client(f->client, &f->rect, True);
 				hdiff -= (f->rect.height - tmp);
 			}
@@ -103,6 +105,7 @@ relax_column(Area *a)
 		f->rect.y = yoff;
 		if(a->mode != Colmax)
 			yoff = f->rect.y + f->rect.height + hdiff;
+		fprintf(stderr, "resize_client: %s", "column.c:108 (offsets)\n");
 		resize_client(f->client, &f->rect, False);
 	}
 }
@@ -157,6 +160,7 @@ arrange_column(Area *a, Bool dirty)
 			if(i == a->frame.size - 1)
 				f->rect.height = a->rect.height - yoff;
 			yoff += f->rect.height;
+			fprintf(stderr, "resize_client: %s", "column.c:164 (arrange_column)\n");
 			resize_client(f->client, &f->rect, True);
 		}
 		break;
@@ -173,6 +177,7 @@ arrange_column(Area *a, Bool dirty)
 			else
 				f->rect.height = height_of_bar();
 			yoff += f->rect.height;
+			fprintf(stderr, "resize_client: %s", "column.c:180 (arrange_column)\n");
 			resize_client(f->client, &f->rect, True);
 		}
 		break;
@@ -181,6 +186,7 @@ Fallthrough:
 		for(i = 0; i < a->frame.size; i++) {
 			Frame *f = a->frame.data[i];
 			f->rect = a->rect;
+			fprintf(stderr, "resize_client: %s", "column.c:189 (arrange_column)\n");
 			resize_client(f->client, &f->rect, True);
 		}
 		break;
@@ -200,6 +206,7 @@ match_horiz(Area *a, XRectangle *r)
 		Frame *f = a->frame.data[i];
 		f->rect.x = r->x;
 		f->rect.width = r->width;
+		fprintf(stderr, "resize_client: %s", "column.c:209 (match_horiz)\n");
 		resize_client(f->client, &f->rect, False);
 	}
 }

@@ -95,8 +95,10 @@ focus_view(View *v)
 			Frame *f = client.data[i]->frame.data[client.data[i]->sel];
 			if(f->area->view == v) {
 				XMoveWindow(dpy, client.data[i]->framewin, f->rect.x, f->rect.y);
-				if(client.data[i]->frame.size > 1)
+				if(client.data[i]->frame.size > 1) {
+					fprintf(stderr, "resize_client: %s", "view.c:425 (focus_view)\n");
 					resize_client(client.data[i], &f->rect, False);
+				}
 				draw_client(client.data[i]);
 			}
 			else
@@ -370,39 +372,26 @@ update_views()
 		update_client_views(client.data[i]);
 
 	/* *-tag size isse occures in the next loop */
+	fprintf(stderr, "%s\n", "--------------");
 	for(i = 0; i < client.size; i++) {
 		Client *c = client.data[i];
 		for(j = 0; j < view.size; j++) {
+			Frame *f = c->frame.size ? c->frame.data[c->sel] : nil;
+			if(f)
+				fprintf(stderr, ">>> f[%d]=%x %s %d %d %d %d\n",
+						c->sel, f, c->tags, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
 			if(is_view_of(c, view.data[j]) || strchr(c->tags, '*')) {
-				if(!is_of_view(view.data[j], c)) {
-					unsigned int tmp = c->sel;
-					Frame *f = c->frame.size ? c->frame.data[c->sel] : nil;
-					if(f)
-						fprintf(stderr, "ABf=%x %s %d %d %d %d\n",
-								f, c->tags, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
-
+				if(!is_of_view(view.data[j], c))
 					attach_to_view(view.data[j], c);
-
-					c->sel = tmp;
-					f = c->frame.data[c->sel];
-					fprintf(stderr, "AEf=%x %s %d %d %d %d\n",
-							f, c->tags, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
-				}
 			}
 			else {
-				if(is_of_view(view.data[j], c)) {
-					Frame *f = c->frame.data[c->sel];
-					fprintf(stderr, "DBf=%x %s %d %d %d %d\n",
-							f, c->tags, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
-					
+				if(is_of_view(view.data[j], c))
 					detach_from_view(view.data[j], c);
-
-					f = c->frame.size ? c->frame.data[c->sel] : nil;
-					if(f)
-						fprintf(stderr, "DEf=%x %s %d %d %d %d\n",
-								f, c->tags, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
-				}
 			}
+			f = c->frame.size ? c->frame.data[c->sel] : nil;
+			if(f)
+				fprintf(stderr, "<<< f[%d]=%x %s %d %d %d %d\n",
+						c->sel, f, c->tags, f->rect.x, f->rect.y, f->rect.width, f->rect.height);
 		}
 	}
 

@@ -47,7 +47,7 @@ wmiir write /def/rules <<EOF
 EOF
 
 # MISC
-xsetroot -solid '#222222'
+xsetroot -solid '#333333'
 status &
 PROGS_FILE=/tmp/.wmiimenu.$USER.progs
 proglist `echo "$PATH" | tr : ' '` >$PROGS_FILE &
