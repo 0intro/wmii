@@ -13,7 +13,9 @@ wmiir \- window manager improved 2 remote
 .SH DESCRIPTION
 .SS Overview
 .B wmiir
-is a client to access wmii's filesystem from the command line or from shell
+is a client to access the filesystem of
+.BR wmiiwm (1)
+from the command line or from shell
 scripts. It can be used to configure
 .BR wmii (1).
 .SS Options
@@ -24,12 +26,15 @@ Lets you specify the address to which
 will establish a connection. If this option is not supplied, and the
 environment variable WMII_ADDRESS is set,
 .B wmiir
-will use this value as it's address. Currently, the address can only be a
-socket file. The syntax for
+will use this value as its address. Currently, the address can only be a
+unix socket file or a tcp socket. The syntax for
 .I address
 is taken (along with many other profound ideas) from the Plan 9 operating
 system and has the form
-.BR unix!/path/to/socket .
+.BR unix!/path/to/socket 
+for unix socket files, and
+.BR tcp!hostname!port
+for tcp sockets.
 .TP
 .B \-v
 Prints version information to stdout, then exits.
@@ -62,15 +67,15 @@ See above.
 .SH EXAMPLES
 .TP
 .B wmiir read /
-This displays the root of the wmii filesystem. For more information about the
-contents of this filesystem, see
+This prints the root directory of the wmii filesystem. For more information
+about the contents of this filesystem, see
 .BR wmiiwm (1).
 .TP
 .B echo -n quit | wmiir write /ctl
 Write 'quit' to the main control file of the wmii filesystem, effectively
 leaving wmii.
 .TP
-.B echo -n select 2 | wmiir write /ctl
+.B echo -n view 2 | wmiir write /ctl
 Bring into view all clients having a tag of '2'. To learn about clients and
 tags, see
 .BR wmiiwm (1).

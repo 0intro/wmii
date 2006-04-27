@@ -3,8 +3,6 @@
 wmii \- window manager improved 2
 .SH SYNOPSIS
 .B wmii
-.RB [ \-t
-.IR tag ]
 .SH DESCRIPTION
 .SS Overview
 .BR wmii (1)
@@ -23,11 +21,11 @@ sure that they are executable.
 .P
 Here is a list of the default actions:
 .TP 2
-extern <cmd>
-clean the environment and execute the given command
-.TP 2
 status
 periodically print date and load average to the bar
+.TP 2
+quit
+leave the window manager nicely
 .TP 2
 welcome
 display a welcome message that contains the wmii tutorial
@@ -63,8 +61,7 @@ The following variables are set and exported within
 .BR wmii (1)
 and thus can be used in actions.
 .TP
-old_path
-path as it was before
+PATH
 .BR wmii (1)
 added the local and global actions directory.
 .TP

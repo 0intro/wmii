@@ -132,11 +132,10 @@ focus_client(Client *c, Bool restack)
 		update_client_grab(c, True);
 	}
 
-	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-	draw_client(c);
-	XSync(dpy, False);
 	if(i > 0 && f->area->mode == Colstack)
 		arrange_column(f->area, False);
+	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
+	draw_client(c);
 	snprintf(buf, sizeof(buf), "ClientFocus %d\n", idx_of_client_id(c->id));
 	write_event(buf);
 }

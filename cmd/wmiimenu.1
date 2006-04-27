@@ -27,7 +27,7 @@ terminates.
 is completely controlled by the keyboard.  The following keys are recognized:
 .TP 2
 Any printable character
-append the character to the text in the input field. This works as a filter:
+appends the character to the text in the input field. This works as a filter:
 only items containing this text will be displayed.
 .TP 2
 Left/Right (Control-p/Control-n)
@@ -50,6 +50,13 @@ remove enough characters from the input field to change its filtering effect.
 .TP 2
 Control-u
 remove all characters from the input field.
+.SS Exit codes
+.B wmiimenu
+returns
+.B 0
+if Enter is pressed on termination,
+.B 1
+if Escape is pressed.
 .SH ENVIRONMENT
 .TP
 WMII_FONT
