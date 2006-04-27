@@ -178,6 +178,6 @@ apply_rules(Client *c)
 		cext_vdetach(vector_of_props(&prop), prop.data[0]);
 
 Fallback:
-	if(!strlen(c->tags) || (!view.size && !strncmp(c->tags, "*", 2)))
+	if(!strlen(c->tags))
 		cext_strlcpy(c->tags, "nil", sizeof(c->tags));
 }

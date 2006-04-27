@@ -331,11 +331,8 @@ update_client_views(Client *c)
 	while(c->view.size)
 		cext_vdetach(vector_of_views(&c->view), c->view.data[0]);
 
-	for(i = 0; i < n; i++) {
-		if(!strncmp(toks[i], "*", 2))
-			continue;
+	for(i = 0; i < n; i++)
 		cext_vattach(vector_of_views(&c->view), get_view(toks[i]));
-	}
 }
 
 static Bool
@@ -372,28 +369,13 @@ update_views()
 		for(j = 0; j < view.size; j++) {
 			View *vw = view.data[j];
 			update_frame_selectors(vw);
-			if(is_view_of(c, vw) || strchr(c->tags, '*')) {
+			if(is_view_of(c, vw)) {
 				if(!is_of_view(vw, c))
 					attach_to_view(vw, c);
 			}
 			else {
 				if(is_of_view(vw, c))
 					detach_from_view(vw, c);
-			}
-		}
-	}
-
-	for(i = 0; i < view.size; i++) {
-		Bool only_wildcards = True;
-		for(j = 0; only_wildcards && j < client.size; j++) {
-			Client *c = client.data[j];
-			if(is_view_of(c, view.data[i]) && !strchr(c->tags, '*'))
-					only_wildcards = False;
-		}
-		if(only_wildcards && view.size > 1) {
-			for(j = 0; j < client.size; j++) {
-				if(is_of_view(view.data[i], client.data[j]))
-					detach_from_view(view.data[i], client.data[j]);
 			}
 		}
 	}
