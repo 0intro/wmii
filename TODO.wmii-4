@@ -17,3 +17,33 @@
 	associated ctl devices of clients.  
 - add wmiir ls (read should have same semantic as in 9p),
   output without details, add -l for details like in ls of Plan 9
+
+ad new column mode:
+
+> > To clarify what happens on focus change imagine 6 clients with
+> > stacking set to 2 visible clients per time. The center of two
+> > visible clients is always the 1st client (2/2 == 1), thus if the
+> > first of client of the column is focused, also the second is
+> > visible, if the second is focused also the third is visible, but
+> > the first is invisible, etc. The only exception will be on
+> > boundaries, if the last client is selected, also the fifth
+> > client will be visible.
+>
+> Interesting proposal, except for the portion above.  Say I have the
+> third and fourth clients visible, with the third focused.  If I change
+> the focus to the fourth client, I don't want to hide the third - I'm
+> probably still working with it.
+>
+> I think the visible clients should only change when a formerly hidden
+> (stacked) client is made visible.  So, when the fifth client is focused
+> and made visible, the third would disappear, leaving the fourth and
+> fifth.
+>
+> It would work the same way in reverse.  With the third and fourth
+> clients visible, I can focus either without changing visiblities.  When
+> I focus the second client, it becomes visible and hides the fourth.
+>
+> This is similar to your idea, except for delaying changes to which
+> clients are visible.
+		--Doug Bell
+
