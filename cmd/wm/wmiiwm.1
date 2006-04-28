@@ -311,45 +311,130 @@ which selects the specific client from top to bottom.
 /view/X/mode
 This file defines the column mode of this column, described in detail below.
 Note, floating layer directories do not contain this file.
-
 .SS Syntax of files
-
-
-.SS Default configuration (wmiirc)
-
-.SH EXAMPLES
-.TP
-.SH FILES
-.TP
-/tmp/ns.$USER.$DISPLAY/wmii
-The wmii socket file which provides a 9P service.
-.TP
-CONFPREFIX/wmii-3
-Global action directory.
-.TP
-$HOME/.wmii-3
-User-specific action directory.  Actions are first searched here.
-.SH ENVIRONMENT
-.TP
-HOME, USER
-See the section
-.B FILES
-above.
-.P
-The following variables are set and exported within
-.BR wmii (1)
-and thus can be used in actions.
-.TP
-PATH
-.BR wmii (1)
-added the local and global actions directory.
-.TP
-WMII_ADDRESS
-Socket file of
-.BR wmii (1).
-Used by
-.BR wmiir (1).
+All files of the filesystem described above can be read, most of them can be
+written as well. Most of the only can be written using valid syntax.
+.TP 2
+colors, selcolors, normcolors
+Each of these files expects three blank-separated color values of the form
+.IR #RRGGBB
+.IR #RRGGBB
+.IR #RRGGBB .
+The order defines foreground, background, and border colors respectively.
+.TP 2
+geom
+Each of this file expects four blank-separated alphanumeric values which define the
+client's geometry in the order
+.IR <x>
+.IR <y>
+.IR <width>
+.IR <height> .
+Each value for itself can be absolute like
+.I <0..n> ,
+or an alignment value such as
+.IR north ,
+.IR west ,
+.IR south ,
+.IR east ,
+or
+.IR center .
+The alignment values address the specific screen border or center respectively.
+Thus they provide a resolution-independent way to address specific coordinates.
+Absolute values can be prepended with the
+.I +
+or
+.I -
+operators, which makes them relative, e.g.
+.I -40 .
+Alignment values can be appended with a relative value to address special positions, e.g.
+.I south-16 .
+.TP 2
+colmode, mode
+Each of this file expects a single value of the form
+.IR default ,
+.IR stack ,
+or
+.IR max ,
+defining the default, stacking, or maximized mode for columns respectively.
+.TP 2
+grabmod
+This file expects a single value of the form
+.IR Mod1 ,
+.IR Mod2 ,
+.IR Mod3 ,
+.IR Mod4 ,
+or
+.IR Mod5 .
+The specific value corelates with the specific modifier key defined in X, usually
+.IR Mod1
+is the
+.IR Alt
+key on most keyboard layouts.
+.TP 2
+keys
+This file expects a newline-separated list of shortcuts of the form
+.BI [<modifier>\-]<key> .
+As modifier a value of the form
+.IR Mod1 ,
+.IR Mod2 ,
+.IR Mod3 ,
+.IR Mod4 ,
+.IR Mod5 ,
+.IR Control ,
+.IR Shift ,
+or
+.IR Mod1\-Control\-Shift 
+are valid. You can combine one
+.IR Modn
+value with either
+.IR Control 
+or 
+.IR Shift
+or none. Also no modifier at all is valid syntax.
+The key value must correlate to the key symbol reported by the
+.BR xev (1)
+utility.
+.TP 2
+rules
+This file expects a newline-separated list of rules of the form
+.BI /regexp/
+.BI \->
+.BI <tag> .
+See the
+.BR wmiirc
+script for examples.
+The rules are matched against the
+.I class
+and 
+.I name
+file contents of a client whenever written. If the rule file is empty,
+.BR wmiiwm
+by default assigns the
+.IR nil
+tag to each client, thus there is also only a nil-view with an empty rule file.
+Clients who contain a tag already, except the
+.IR nil
+tag, are not matched. Rules are applied from top to bottom of these file
+contents, thus order matters. The special
+.IR ~
+tag has to be assigned in a separate rule, and which is matched always.
+It makes a matching client floating at creation or retag-time.
+The special
+.IR !
+tag inherits the currently viewed tag, if no tag has been matched so far,
+and should be defined before the last rule always.
+The last rule should define the default tag which overrides the
+.IR nil
+tag, if a different default is wished, e.g.
+.IR 1 .
+Usually the last rule tag, if a different default is wished, e.g.
+.IR 1 .
+Usually the last rule should be
+.BI /.*/
+.BI ->
+.BI <default\-tag> .
+The syntax for the regular expression must be POSIX compliant.
 .SH SEE ALSO
-.BR wmiiwm (1),
+.BR wmii (1),
 .BR wmiimenu (1),
 .BR wmiir (1)
