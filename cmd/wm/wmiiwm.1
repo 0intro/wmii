@@ -97,7 +97,7 @@ Alphanumeric strings which can be assigned to a client. This allows to address
 single clients or groups of clients with a single tag, e.g.
 .IR work ,
 or several tags, e.g.
-.IR work+mail .
+.IR work+mail.
 Tags are separated with the
 .I +
 character.
@@ -115,25 +115,208 @@ moved and resized between and within columns freely.
 Bar
 The bar at the bottom of the screen displays a label for each view and
 allows to create arbitrary user-defined labels.
+.TP 2
+Event
+An event is a message which can be read from a special file in the filesystem
+of
+.BR wmiiwm
+like a mouse button press, a key press, or a message written by a different
+9P-client.
 .SS Basic window management
 Running a raw
 .BR wmiiwm
 process without the
 .BR wmii (1)
-script provides basic window management capabilities already. However it is
-necessary to control the window manager remotely through its filesystem
-interface, to use it effectively. By default it is only usable with the mouse
-and you need to do
-.BR wmiir (1)
-calls to kill clients, if they don't provide a way to be closed nicely.
+script, provides basic window management capabilities already. However to use
+it effectively, remote control through its filesystem interface is necessary.
+By default it is only usable with the mouse in conjunction with the
+.I Mod1 (Alt)
+modifier key. Other interactions like customizing the style, killing or
+retagging clients, or grabbing keys cannot be achieved without accessing the
+filesystem.
+.P
+The filesystem can be accessed through connecting to the
+.I address
+of
+.BR wmiiwm
+with any 9P-capable client, like
+.BR wmiir (1).
 .SS File system
-If you feel the need to change the default configuration, then customize (as
-described above) the
-.B wmiirc
-action.  This action is executed at the end of the
-.BR wmii (1)
-script and does all the work of setting up the window manager, the key
-bindings, the bar labels, etc.
+The
+.BR wmiiwm
+filesystem is designed with simplicity and clarity in mind. It consists of
+logical namespaces which represent its internal state and data structure in a
+straight-forward way.
+.TP 2
+Root directory
+.TP
+/bar/
+This directory contains a representation of each label in the bar.
+.TP
+/client/
+This directory contains a representation of each client.
+.TP
+/ctl
+This file understands the internal commands
+.IR quit ,
+which quits the window manager, and
+.IR view
+.IR <tag> ,
+which switches to a view for the specific tag.
+.TP
+/def/
+This directory contains a representation of all default options.
+.TP
+/event
+This file reports events. Reading this file is blocking, this means that
+a 9P-client will not exit until
+.BR wmiiwm
+quits, or until the client is terminated explicitely.
+.TP
+/tags
+This file contains a list of newline-separated tags currently in use.
+.TP
+/view/
+This and all other directories contain a representation of each view. The
+.I /view/
+directory points to the currently selected view.
+.TP 2
+Bar directory
+.TP
+/bar/X/colors
+This file defines the colors as RGB-tuple of the specific label, described in detail below.
+.TP
+/bar/X/data
+This file contains the text displayed by the label, it may be empty.
+.TP 2
+Clients directory
+.TP
+/client/X/class
+This file contains the X property
+.I WM_CLASS
+in the form of
+.IR <Class>:<instance> .
+.TP
+/client/X/ctl
+This file understands the internal client-specific commands
+.IR kill ,
+which kills (closes) the specific client nicely,
+.IR sendto
+.IR prev
+|
+.IR next
+|
+.IR toggle
+|
+.IR <0..n> ,
+which sends the client to the previous, next, or explicitely addressed column, and the
+.IR swap
+.IR prev
+|
+.IR next
+|
+.IR up
+|
+.IR down 
+command,
+which swaps the client with an adjacent client in the specific direction.
+.TP
+/client/X/geom
+This file contains the current geometry of the client's frame and can be used to resize
+the client, described in detail below.
+.TP
+/client/X/index
+This file contains the index of the client in the
+.I /client/
+namespace.
+.TP
+/client/X/name
+This file contains the name of the client read by the X property
+.I WM_NAME .
+.TP
+/client/X/tags
+This file contains the tags of the client.
+.TP 2
+Defaults directory
+.TP
+/def/border
+This file defines the default border width for all clients in
+.IR <0..n>
+pixels.
+.TP
+/def/colmode
+This file defines the default column mode of newly created columns, described in detail below.
+.TP
+/def/colwidth
+This file defines the default width of newly created columns, described in detail below.
+.TP
+/def/font
+This file defines the font which should be used by its name, like that ones grabbed with the
+.BR xfontsel (1)
+utility for X.
+.TP
+/def/grabmod
+This file defines the default modifier for mouse-grabs, described in detail below.
+.TP
+/def/keys
+This file contains a newline-separated list of all shortcuts which should be grabbed by
+.BR wmiiwm
+and which are reported as events.
+.TP
+/def/normcolors
+This file defines the colors of unselected clients and bar labels,
+described in detail below.
+.TP
+/def/rules
+This file defines the rules for applying default tags to all existing and newly created clients,
+described in detail below.
+.TP
+/def/selcolors
+This file defines the colors of selected clients and bar labels,
+described in detail below.
+.TP 2
+View directory
+.TP
+/view/X/
+This directory contains a representation of a column or the floating layer.
+The
+.I /view/sel/
+directory points to the currently selected column or floating layer.
+.TP
+/view/ctl
+This file understands the internal view-specific command
+.IR select
+.IR <0..n> ,
+which selects the specific area, 0 means floating layer, all other numeric
+values address the specific column from left to right.
+.TP
+/view/name
+This file contains the view's name which corresponds to the currently viewed
+clients containing the equivalent tag.
+.TP 2
+Column and floating layer directory
+.TP
+/view/X/Y/
+This directory contains a representation of a client of this column or floating
+layer respectively. Its contents are the same as in the
+.I /client/X/
+namespace described above.
+.TP
+/view/X/ctl
+This file understands the internal column-specific command
+.IR select
+.IR <0..n> ,
+which selects the specific client from top to bottom.
+.TP
+/view/X/mode
+This file defines the column mode of this column, described in detail below.
+Note, floating layer directories do not contain this file.
+
+.SS Syntax of files
+
+
+.SS Default configuration (wmiirc)
+
 .SH EXAMPLES
 .TP
 .SH FILES
