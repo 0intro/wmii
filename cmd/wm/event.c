@@ -205,7 +205,9 @@ handle_enternotify(XEvent *e)
 		return;
 
 	if((c = client_of_win(ev->window))) {
-		if(c != sel_client_of_view(view.data[sel]))
+		Frame *f = c->frame.data[c->sel];
+		if((f->area->mode != Colmax)
+			&& (c != sel_client_of_view(view.data[sel])))
 			focus(c, False);
 	}
 }

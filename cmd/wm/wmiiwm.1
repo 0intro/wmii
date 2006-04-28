@@ -12,12 +12,11 @@ wmiiwm \- window manager improved 2 (core)
 .BR wmiiwm (1)
 is the core of the window manager improved 2.
 .BR wmii
-is a dynamic window manager for X11. It supports classic and tiled window
-management with extended keyboard, mouse, and 9P-based remote control.
-.SS Dynamic window manager
+is a dynamic window manager for X11.
+.br
 Dynamic window management states that it is the window manager's job to manage
 windows - and not the user's job to have to set up some specialized layout that
-will only work for one specific work scenario.
+will only work for specific work scenarios.
 .br
 In contrast to static window management, the user rarely has to think about how
 to organize windows, no matter what he is doing or how many applications are
@@ -31,6 +30,30 @@ fine-tuning a fixed layout that would never work well in all cases anyway. The
 number and nature of windows one works with, changes all the time, and a dynamic
 window manager lets the user adapt to that and always efficiently use its
 precious screen real estate.
+.br wmii
+supports classic and tiled window management with extended keyboard and
+mouse control.
+.br
+The classic window management provides the user to arrange his windows
+in a floating layer without much support by the window manager. Windows can be
+moved and resized on the screen freely.
+.br
+The tiled window management of
+.br wmii
+is based on columns which split up the screen horizontally. Each column
+handles arbitrary windows and arranges them vertically in a non-overlapping
+way. Each column is a stack of windows. The user can move the windows
+freely between columns and resize the height of such tiled windows.
+.br wmii
+provides a virtual filesystem which represents the internal data structure
+and states as a file hierarchy, pretty much similiar to the
+.IR procfs
+of Unix operating systems. Modifying this virtual filesystem results in
+changing the state of the window manager. The filesystem service can be
+accessed through 9P-capable client programs.to client programs like
+.br wmiir (1)
+which
+, and 9P-based remote control.
 .SS Terminology
 .TP 2
 Screen
