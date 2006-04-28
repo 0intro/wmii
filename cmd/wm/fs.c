@@ -1464,9 +1464,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(m->qid.dir_type == FsDarea) {
 			view.data[i1]->area.data[i2]->mode = i;
 			arrange_column(view.data[i1]->area.data[i2], True);
-			if(view.data[i1]->area.data[i2]->frame.size == 1) /* little hack to update the tagbar */
-				draw_client(view.data[i1]->area.data[i2]
-						->frame.data[view.data[i1]->area.data[i2]->sel]->client);
+			draw_clients();
 		}
 		else
 			def.colmode = i;

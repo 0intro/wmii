@@ -144,8 +144,7 @@ select_area(Area *a, char *arg)
 	if(new->frame.size)
 		focus_client(new->frame.data[new->sel]->client, True);
 	v->sel = i;
-	for(i = 0; i < a->frame.size; i++)
-		draw_client(a->frame.data[i]->client);
+	draw_clients();
 }
 
 void

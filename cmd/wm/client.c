@@ -122,8 +122,6 @@ focus_client(Client *c, Bool restack)
 
 	v->sel = i;
 	f->area->sel = idx_of_frame(f);
-	if(old)
-		draw_client(old);
 	if(restack)
 		restack_view(v);
 	else {
@@ -135,7 +133,10 @@ focus_client(Client *c, Bool restack)
 	if(i > 0 && f->area->mode == Colstack)
 		arrange_column(f->area, False);
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
+	if(old)
+		draw_client(old);
 	draw_client(c);
+	XSync(dpy, False);
 	snprintf(buf, sizeof(buf), "ClientFocus %d\n", idx_of_client_id(c->id));
 	write_event(buf);
 }
@@ -384,6 +385,7 @@ manage_client(Client *c)
 	update_views();
 	map_client(c);
 	XMapWindow(dpy, c->framewin);
+	XSync(dpy, False);
 	if(c->frame.data[c->sel]->area->view == view.data[sel])
 		focus_client(c, False);
 	flush_events(EnterWindowMask);
@@ -698,10 +700,11 @@ client_of_win(Window w)
 void
 draw_clients()
 {
-	unsigned int i, j;
-	for(i = 0; i < client.size; i++)
-		for(j = 0; j < client.data[i]->frame.size; j++)
-			if(client.data[i]->frame.data[j]->area->view == view.data[sel])
-				draw_client(client.data[i]);
+	unsigned int i;
+	for(i = 0; i < client.size; i++) {
+		Client *c = client.data[i];
+		if(c->frame.size && (c->frame.data[c->sel]->area->view == view.data[sel]))
+			draw_client(c);
+	}
 }
 

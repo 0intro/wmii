@@ -30,6 +30,8 @@ typedef struct {
 } Rule;
 VECTOR(RuleVector, Rule *);
 
+VECTOR(PropVector, char *);
+
 static RuleVector rule;
 
 static Vector *
@@ -37,8 +39,6 @@ vector_of_rules(RuleVector *rv)
 {
 	return (Vector *) rv;
 }
-
-VECTOR(PropVector, char *);
 
 static Vector *
 vector_of_props(PropVector *pv)
@@ -133,7 +133,6 @@ update_rules()
 		apply_rules(client.data[i]);
 	update_views();
 }
-
 
 static void
 match(Client *c, PropVector prop)

@@ -88,20 +88,20 @@ focus_view(View *v)
 	update_frame_selectors(v);
 
 	/* gives all(!) clients proper geometry (for use of different tags) */
-	if((c = sel_client_of_view(v)))
-		focus_client(c, True);
 	for(i = 0; i < client.size; i++)
 		if(client.data[i]->frame.size) {
 			Frame *f = client.data[i]->frame.data[client.data[i]->sel];
 			if(f->area->view == v) {
 				XMoveWindow(dpy, client.data[i]->framewin, f->rect.x, f->rect.y);
 				resize_client(client.data[i], &f->rect, False);
-				draw_client(client.data[i]);
 			}
 			else
 				XMoveWindow(dpy, client.data[i]->framewin,
 							2 * rect.width + f->rect.x, f->rect.y);
 		}
+	if((c = sel_client_of_view(v)))
+		focus_client(c, True);
+	draw_clients();
 	update_view_bars();
 	XSync(dpy, False);
 	XUngrabServer(dpy);
