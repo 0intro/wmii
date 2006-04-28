@@ -1277,7 +1277,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			if(!strncmp(buf, "quit", 5))
 				srv.running = 0;
 			else if(!strncmp(buf, "view ", 5))
-				select_view(&buf[6]);
+				select_view(&buf[5]);
 			else
 				return Enocommand;
 			break;
