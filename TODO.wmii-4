@@ -11,12 +11,9 @@
 - partly EWMH support
 - libixp: idea from PoP: implement a va_args method similiar to printf for
 		marshalling 9P messages, might reduce LOC drastically
-
-We also thought already about simplifying the mode concept of 
-columns, but with a quite different approach. What you describe
-is already possible in default mode (even through writing to 
-		geom files, though I plan to remove the geom syntax as it is now
-		(with the +- stuff, and only allowing explicit coordinates, 
-		 instead additionally resize +/-<w> +/-<h> and move +/-<x> +/-<y>
-		 actions are needed in the associated ctl devices of clients.
-
+- remove the geom syntax as it is now (with the +- stuff, and only
+	allowing explicit coordinates, instead additionally resize
+	+/-<w> +/-<h> and move +/-<x> +/-<y> actions are needed in the
+	associated ctl devices of clients.  
+- add wmiir ls (read should have same semantic as in 9p),
+  output without details, add -l for details like in ls of Plan 9
