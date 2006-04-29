@@ -1,70 +1,58 @@
 #!/usr/local/plan9/bin/rc
 # configure wmii
+
 fn xwrite {a=$1; shift; echo -n $* | wmiir write $a}
 
-MODKEY=Alt
+fn proglist {ls -lpL $* | awk '!/^d/ && $1 ~ /x/ {print $NF}'| sort -u}
+
+MODKEY=Mod1
+UP=k
+DOWN=j
+LEFT=h
+RIGHT=l
+
 WMII_FONT='fixed'
-WMII_NORMCOLORS='#222222 #eeeeee #666666'
 WMII_SELCOLORS='#ffffff #285577 #4c7899'
+WMII_NORMCOLORS='#222222 #eeeeee #666666'
+# dark background
+#WMII_NORMCOLORS='#e0e0e0 #0a0a0a #202020'
 
 # WM CONFIGURATION
-xwrite /def/border 3
-xwrite /def/snap 20
+xwrite /def/border 2
 xwrite /def/font $WMII_FONT
 xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
-xwrite /ws/tag 1
 
 # TAGGING RULES
 wmiir write /def/rules <<END
-/XMMS:.*/ -> ~0
-/Gimp.*:.*/ -> ~3
+/XMMS.*/ -> ~
+/Gimp.*/ -> ~
+/MPlayer.*/ -> ~
+/.*/ -> !
+/.*/ -> 1
 END
 
-# BAR CONFIGURATION
-wmiir create /bar/spare
-xwrite /bar/spare/colors $WMII_SELCOLORS
-xwrite /bar/expand spare
-
-# MENU CONFIGURATION
-fn items {ls -lpL $* | awk '!/^d/ && $1 ~ /x/ {print $NF}'| sort | uniq}
-items `{echo $OLD_PATH | sed 's/:/ /g'} >/tmp/ns.$USER.$DISPLAY/p.menu &
-
 # MISC
-xsetroot -solid '#0b1014'
+xsetroot -solid '#333333'
 status &
+PROGS_FILE=/tmp/.wmiimenu.$USER.progs
+proglist `{echo $PATH | tr : ' '} >$PROGS_FILE &
 
-# KEYS CONFIGURATION
+# SHORTCUTS
+xwrite /def/grabmod $MODKEY
 wmiir write /def/keys <<END
-$MODKEY-Control-c
-$MODKEY-Control-w,y
-$MODKEY-Control-q,y
-$MODKEY-Control-p
-$MODKEY-Control-a
-$MODKEY-Shift-Return
-$MODKEY-Shift-space
-$MODKEY-Shift-0
-$MODKEY-Shift-1
-$MODKEY-Shift-2
-$MODKEY-Shift-3
-$MODKEY-Shift-4
-$MODKEY-Shift-5
-$MODKEY-Shift-6
-$MODKEY-Shift-7
-$MODKEY-Shift-8
-$MODKEY-Shift-9
-$MODKEY-t
-$MODKEY-Return
+$MODKEY-$LEFT
+$MODKEY-$RIGHT
+$MODKEY-$DOWN
+$MODKEY-$UP
 $MODKEY-space
-$MODKEY-h
-$MODKEY-l
-$MODKEY-j
-$MODKEY-k
-$MODKEY-Tab
-$MODKEY-m
+$MODKEY-d
+$MODKEY-f
 $MODKEY-s
-$MODKEY-e
-$MODKEY-n
+$MODKEY-m
+$MODKEY-a
+$MODKEY-p
+$MODKEY-t
 $MODKEY-0
 $MODKEY-1
 $MODKEY-2
@@ -75,81 +63,87 @@ $MODKEY-6
 $MODKEY-7
 $MODKEY-8
 $MODKEY-9
+$MODKEY-Return
+$MODKEY-Shift-$LEFT
+$MODKEY-Shift-$RIGHT
+$MODKEY-Shift-space
+$MODKEY-Shift-c
+$MODKEY-Shift-t
+$MODKEY-Shift-0
+$MODKEY-Shift-1
+$MODKEY-Shift-2
+$MODKEY-Shift-3
+$MODKEY-Shift-4
+$MODKEY-Shift-5
+$MODKEY-Shift-6
+$MODKEY-Shift-7
+$MODKEY-Shift-8
+$MODKEY-Shift-9
+$MODKEY-Control-$LEFT
+$MODKEY-Control-$RIGHT
+$MODKEY-Control-$DOWN
+$MODKEY-Control-$UP
 END
 
 # EVENT LOOP
-oldt=''
-wmiir read /event| 
+wmiir read /event | 
 while(e=`{read}) {
 	switch($e(1)) {
-	case NewTag
-		t=$e(2)
-		wmiir create /bar/$t
-		if(~ $t $olt)
-			xwrite /bar/$"t/colors $WMII_NORMCOLORS
-		if not
-			xwrite /bar/$"t/colors $WMII_SELCOLORS
-		xwrite /bar/$"t/data $e(2)
-	case RemoveTag
-		wmiir remove /bar/$e(2)
-	case FocusTag
-		t=$e(2)
-		if (! ~ $#oldt 0)
-			xwrite /bar/$oldt/colors $WMII_SELCOLORS
-		xwrite /bar/$t/data $e(2)
-		xwrite /bar/$t/colors $WMII_NORMCOLORS
-		oldt=$e(2)
-	case LabelClick
-		xwrite /ctl select $e(2)
+	case Start
+		if(~ $e(2) wmiirc)
+			exit
+	case BarClick
+		xwrite /ctl view $e(2)
 	case Key
 		switch($e(2)) {
-		case $MODKEY-Control-c
-			xwrite /ws/sel/sel/ctl kill
-		case $MODKEY-Control-w,y
-			exec wmiirc
-		case $MODKEY-Control-q,y
-			xwrite /ctl quit
-		case $MODKEY-Control-p
-			extern `{wmiimenu < /tmp/ns.$USER.$DISPLAY/p.menu}&
-		case $MODKEY-Control-a
-			`{items /usr/local/etc/wmii-3 $HOME/.wmii-3 | wmiimenu}&
-		case $MODKEY-t
-			extern xterm&
-		case $MODKEY-m
-	                xwrite /ws/sel/mode max
-	        case $MODKEY-s
-                        xwrite /ws/sel/mode stack
-               	case $MODKEY-e
-	                xwrite /ws/sel/mode equal
-                case $MODKEY-n
-               	        xwrite /ws/sel/sel/ctl sendto new
-                case $MODKEY-Return
-	               xwrite /ws/sel/sel/ctl sendto prev
-		case $MODKEY-Shift-Return
-                        xwrite /ws/sel/sel/ctl sendto next
+		case $MODKEY-$LEFT
+			xwrite /view/ctl select prev
+		case $MODKEY-$RIGHT
+			xwrite /view/ctl select next
+		case $MODKEY-$DOWN
+			xwrite /view/sel/ctl select next
+		case $MODKEY-$UP
+			xwrite /view/sel/ctl select prev
 		case $MODKEY-space
-			xwrite /ws/sel/sel/ctl sendto 0
-		case $MODKEY-Shift-space
-                        xwrite /ws/sel/sel/ctl sendto 1
-	        case $MODKEY-h
-                        xwrite /ws/ctl select prev
-	        case $MODKEY-l
-			xwrite /ws/ctl select next
-		case $MODKEY-Tab
-			xwrite /ws/sel/ctl select next
-		case $MODKEY-j
-        	                xwrite /ws/sel/ctl select next
-		case $MODKEY-k
-                        xwrite /ws/sel/ctl select prev
+			xwrite /view/ctl select toggle
+		case $MODKEY-d
+			xwrite /view/sel/mode default
+		case $MODKEY-s
+			xwrite /view/sel/mode stack
+		case $MODKEY-m
+			xwrite /view/sel/mode max
+		case $MODKEY-f
+			xwrite /view/0/sel/geom 0 0 east south
+		case $MODKEY-a
+			PATH=$HOME/.wmii-3:CONFPREFIX/wmii-3:$PATH `{proglist CONFPREFIX/wmii-3 $HOME/.wmii-3 | wmiimenu} &
+		case $MODKEY-p
+			`{wmiimenu <$PROGS_FILE}&
+		case $MODKEY-t
+			xwrite /ctl view `{wmiir read /tags | wmiimenu} &
 		case $MODKEY-[0-9]
-                        xwrite /ctl `{echo $e | awk -F- '{print "select "$2}'}
-
-		case $MODKEY-Shift-Return
-			xwrite /ws/sel/sel/ctl sendto next
+			xwrite /ctl view `{echo $e(2) | sed 's/.*-//'}
+		case $MODKEY-Return
+			xterm &
+		case $MODKEY-Shift-$LEFT
+			xwrite /view/sel/sel/ctl sendto prev
+		case $MODKEY-Shift-$RIGHT
+			xwrite /view/sel/sel/ctl sendto next
 		case $MODKEY-Shift-space
-			xwrite /ws/sel/sel/ctl sendto 1
+			xwrite /view/sel/sel/ctl sendto toggle
+		case $MODKEY-Shift-c
+			xwrite /view/sel/sel/ctl kill
+		case $MODKEY-Shift-t
+			xwrite /view/sel/sel/tags `{wmiir read /tags | wmiimenu} &
 		case $MODKEY-Shift-[0-9]
-                        xwrite /ws/sel/sel/tags ' '`{echo $e | awk -F- '{print $3}'}
+			xwrite /view/sel/sel/tags `{echo $e(2) | sed 's/.*-//'}
+		case $MODKEY-Control-$LEFT
+			xwrite /view/sel/sel/ctl swap prev
+		case $MODKEY-Control-$RIGHT
+			xwrite /view/sel/sel/ctl swap next
+		case $MODKEY-Control-$DOWN
+			xwrite /view/sel/sel/ctl swap down
+		case $MODKEY-Control-$UP
+			xwrite /view/sel/sel/ctl swap up
 		}
 	}
 } &

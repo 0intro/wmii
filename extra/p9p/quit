@@ -1,0 +1,2 @@
+#!/usr/local/plan9/bin/rc
+echo -n quit | wmiir write /ctl
