@@ -272,6 +272,7 @@ main(int argc, char *argv[])
 
 	/* IXP server */
 	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);
+	root_qid.dir_type = FsDroot;
 	root_qid.type = IXP_QTDIR;
 	root_qid.version = 0;
 	root_qid.path = mkqpath(FsDroot, 0, 0, 0);

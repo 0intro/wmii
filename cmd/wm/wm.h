@@ -62,7 +62,8 @@ enum {
 	FsFmode,
 	FsFtags,
 	FsFindex,
-	FsFcolw
+	FsFcolw,
+	FsLast
 };
 
 enum { MIN_COLWIDTH = 64 };

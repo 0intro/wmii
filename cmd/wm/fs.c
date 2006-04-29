@@ -308,15 +308,19 @@ name2type(char *name, unsigned char dir_type)
 		goto dyndir;
 	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
 	if(err)
-		return -1;
+		return FsLast;
 dyndir:
 	switch(dir_type) {
 	case FsDbars: return FsDbar; break;
 	case FsDview: return FsDarea; break;
 	case FsDclients: return FsDGclient; break;
 	case FsDarea: return FsDclient; break;
+	/* HACK: needs to be fixed */
+	case FsDbar:
+	case FsDclient:
+	case FsDGclient: return dir_type; break;
 	}
-	return -1;
+	return FsLast;
 }
 
 static int
@@ -487,7 +491,7 @@ type2stat(Stat *stat, char *wname, Qid *dir)
 
 	decode_qpath(dir, &dir_type, &dir_i1, &dir_i2, &dir_i3);
 	if((dir_i1 == -1) || (dir_i2 == -1) || (dir_i3 == -1))
-		return -1;
+		return 0;
 	type = name2type(wname, dir_type);
 
 	switch (type) {

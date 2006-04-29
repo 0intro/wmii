@@ -163,10 +163,10 @@ match(Client *c, PropVector prop)
 void
 apply_rules(Client *c)
 {
+	PropVector prop = {0};
+
 	if(!def.rules)
 		goto Fallback;
-
-	PropVector prop = {0};
 
 	cext_vattach(vector_of_props(&prop), c->classinst);
 	cext_vattach(vector_of_props(&prop), c->name);
