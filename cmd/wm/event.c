@@ -206,9 +206,10 @@ handle_enternotify(XEvent *e)
 
 	if((c = client_of_win(ev->window))) {
 		Client *old = sel_client_of_view(view.data[sel]);
-		Frame *f = c->frame.data[c->sel];
-		Frame *oldf = old->frame.data[old->sel];
-		if((f->area->mode == Colmax) && (oldf->area == f->area))
+		Frame *oldf = nil, *f = c->frame.data[c->sel];
+		if(old)
+			oldf = old->frame.data[old->sel];
+		if((f->area->mode == Colmax) && oldf && (oldf->area == f->area))
 			return;
 		if(c != old)
 			focus(c, False);
