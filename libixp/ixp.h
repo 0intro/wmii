@@ -117,29 +117,29 @@ typedef struct {
 	unsigned char id;
 	unsigned short tag;
 	unsigned int fid;
-	unsigned int maxmsg;					/* Tversion, Rversion */
-	char version[IXP_MAX_VERSION];			/* Tversion, Rversion */
-	unsigned short oldtag;					/* Tflush */
-	char errstr[IXP_MAX_ERROR];				/* Rerror */
-	Qid qid;								/* Rattach, Ropen, Rcreate */
-	unsigned int iounit;					/* Ropen, Rcreate */
-	Qid aqid;								/* Rauth */
-	unsigned int afid;						/* Tauth, Tattach */
-	char uname[IXP_MAX_ULEN];				/* Tauth, Tattach */
-	char aname[IXP_MAX_FLEN];				/* Tauth, Tattach */
-	unsigned int perm;						/* Tcreate */
-	char name[IXP_MAX_FLEN];				/* Tcreate */
-	unsigned char mode;						/* Tcreate, Topen */
-	unsigned int newfid;					/* Twalk */
-	unsigned short nwname;					/* Twalk */
+	unsigned int maxmsg;			/* Tversion, Rversion */
+	char version[IXP_MAX_VERSION];		/* Tversion, Rversion */
+	unsigned short oldtag;			/* Tflush */
+	char errstr[IXP_MAX_ERROR];		/* Rerror */
+	Qid qid;				/* Rattach, Ropen, Rcreate */
+	unsigned int iounit;			/* Ropen, Rcreate */
+	Qid aqid;				/* Rauth */
+	unsigned int afid;			/* Tauth, Tattach */
+	char uname[IXP_MAX_ULEN];		/* Tauth, Tattach */
+	char aname[IXP_MAX_FLEN];		/* Tauth, Tattach */
+	unsigned int perm;			/* Tcreate */
+	char name[IXP_MAX_FLEN];		/* Tcreate */
+	unsigned char mode;			/* Tcreate, Topen */
+	unsigned int newfid;			/* Twalk */
+	unsigned short nwname;			/* Twalk */
 	char wname[IXP_MAX_WELEM][IXP_MAX_FLEN];/* Twalk */
-	unsigned short nwqid;					/* Rwalk */
-	Qid wqid[IXP_MAX_WELEM];				/* Rwalk */
-	unsigned long long offset;				/* Tread, Twrite */
-	unsigned int count;						/* Tread, Twrite, Rread */
-	Stat stat;								/* Rstat */
-	unsigned short nstat;					/* Twstat, Rstat */
-	unsigned char data[IXP_MAX_MSG];		/* Twrite, Rread, Twstat, Rstat */
+	unsigned short nwqid;			/* Rwalk */
+	Qid wqid[IXP_MAX_WELEM];		/* Rwalk */
+	unsigned long long offset;		/* Tread, Twrite */
+	unsigned int count;			/* Tread, Twrite, Rread */
+	Stat stat;				/* Rstat */
+	unsigned short nstat;			/* Twstat, Rstat */
+	unsigned char data[IXP_MAX_MSG];	/* Twrite, Rread, Twstat, Rstat */
 } Fcall;
 
 typedef struct IXPServer IXPServer;
