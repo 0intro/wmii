@@ -33,7 +33,7 @@ blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr)
 	if(font->set)
 		XFreeFontSet(dpy, font->set);
 	font->set = nil;
-	if(!loc || !strcmp(loc, "C") || !strcmp(loc, "POSIX")|| !XSupportsLocale()) {
+	if(!loc || !strncmp(loc, "C", 2) || !strncmp(loc, "POSIX", 6)|| !XSupportsLocale()) {
 		font->set = XCreateFontSet(dpy, fontname, &missing, &n, &def);
 		if(missing) {
 			while(n--)
