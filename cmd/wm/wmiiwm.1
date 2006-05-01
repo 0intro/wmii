@@ -331,7 +331,7 @@ which selects the specific client from top to bottom.
 This file defines the column mode of this column, described in detail below.
 Note, floating layer directories do not contain this file.
 .RE
-.SS Syntax of files
+.SS Syntax
 All files of the filesystem described above can be read, most of them can be
 written as well. Most of the only can be written using valid syntax.
 .TP 2
@@ -454,6 +454,58 @@ then the last rule should be defined in the following form:
 .B /.*/
 \->
 .IR <default\-tag> .
+.SS Processing events
+Running
+.B wmiiwm
+in an useful way needs to control it through reading events
+from the
+.I /event
+file described above.
+.TP 2
+BarClick <label> <button>
+This event is reported whenever a label in the bar has been clicked.
+The
+.IR <label>
+argument contains the name of the label in the
+.I /bar
+namespace. The
+.IR <button>
+argument contains the mouse button index which has been pressed during the
+click, e.g.
+.IR 1,
+if it has been the left mouse button.
+.TP 2
+ClientClick <index> <button>
+This event is reported whenever a client frame has been clicked.
+The
+.IR <index>
+argument represents this client in the
+.I /client
+namespace. The
+.IR <button>
+argument contains the mouse button index which has been pressed during the
+click, e.g.
+.IR 1,
+if it has been the left mouse button.
+.TP 2
+ClientFocus <index>
+This event is reported whenever a client is focused. The
+.IR <index>
+argument represents this client in the
+.I /client
+namespace.
+.TP 2
+Key <shortcut>
+This event is reported whenever a shortcut has been pressed, which has been
+grabbed through writing
+.I /def/keys
+file.
+.TP 2
+User defined
+Any writes to the
+.I /event
+file will be reported to all readers. This allows to implement user defined
+events.
 .SH SEE ALSO
 .BR wmii (1),
 .BR wmiimenu (1),

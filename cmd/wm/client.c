@@ -660,7 +660,7 @@ resize_all_clients()
 	flush_events(EnterWindowMask);
 }
 
-/* convenipacke function */
+/* convenience function */
 void
 focus(Client *c, Bool restack)
 {

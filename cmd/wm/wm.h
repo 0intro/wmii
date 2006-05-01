@@ -247,7 +247,7 @@ Area *new_right_column(View *v);
 /* event.c */
 void init_x_event_handler();
 void check_x_event(IXPConn *c);
-void flush_events(long even_mask);
+unsigned int flush_events(long even_mask);
 
 /* frame.c */
 Frame *create_frame(Area *a, Client *c);

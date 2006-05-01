@@ -56,11 +56,13 @@ check_x_event(IXPConn *c)
 	}
 }
 
-void
+unsigned int
 flush_events(long even_mask)
 {
 	XEvent ev;
-	while(XCheckMaskEvent(dpy, even_mask, &ev));
+	unsigned int n = 0;
+	while(XCheckMaskEvent(dpy, even_mask, &ev)) n++;
+	return n;
 }
 
 static void

@@ -219,6 +219,10 @@ do_mouse_move(Client *c)
 	pt.x = ex;
 	pt.y = ey;
 	XSync(dpy, False);
+
+	if(flush_events(ButtonReleaseMask))
+		return;
+
 	XGrabServer(dpy);
 	while(XGrabPointer(dpy, root, False, ButtonMotionMask | ButtonReleaseMask,
 				GrabModeAsync, GrabModeAsync, None, cursor[CurMove],
@@ -458,6 +462,10 @@ do_mouse_resize(Client *c, BlitzAlign align)
 
 	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
 	XSync(dpy, False);
+
+	if(flush_events(ButtonReleaseMask))
+		return;
+
 	XGrabServer(dpy);
 	while(XGrabPointer(dpy, c->framewin, False, ButtonMotionMask | ButtonReleaseMask,
 				GrabModeAsync, GrabModeAsync, None, cursor[CurResize],
