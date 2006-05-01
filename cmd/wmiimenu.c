@@ -358,7 +358,7 @@ main(int argc, char *argv[])
 		| SubstructureRedirectMask | SubstructureNotifyMask;
 
 	mrect.width = DisplayWidth(dpy, screen);
-	mrect.height = draw.font.xfont->ascent + draw.font.xfont->descent + 4;
+	mrect.height = draw.font.ascent + draw.font.descent + 4;
 	mrect.y = DisplayHeight(dpy, screen) - mrect.height;
 	mrect.x = 0;
 

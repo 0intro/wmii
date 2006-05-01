@@ -60,18 +60,27 @@ xdrawtext(Display *dpy, BlitzDraw *d)
 	unsigned int x = 0, y = 0, w = 1, h = 1, shortened = 0;
 	unsigned int len = 0;
 	static char text[2048];
+	XGCValues gcv;
 
 	if (!d->data)
 		return;
 
 	len = strlen(d->data);
 	cext_strlcpy(text, d->data, sizeof(text));
-	XSetFont(dpy, d->gc, d->font.xfont->fid);
-	h = d->font.xfont->ascent + d->font.xfont->descent;
-	y = d->rect.y + d->rect.height / 2 - h / 2 + d->font.xfont->ascent;
+	gcv.foreground = d->color.fg;
+	gcv.background = d->color.bg;
+	if(d->font.set)
+		XChangeGC(dpy, d->gc, GCForeground | GCBackground, &gcv);
+	else {
+		gcv.font = d->font.xfont->fid;
+		XChangeGC(dpy, d->gc, GCForeground | GCBackground | GCFont, &gcv);
+	}
+
+	h = d->font.ascent + d->font.descent;
+	y = d->rect.y + d->rect.height / 2 - h / 2 + d->font.ascent;
 
 	/* shorten text if necessary */
-	while (len && (w = XTextWidth(d->font.xfont, text, len)) > d->rect.width) {
+	while (len && (w = blitz_textwidth(dpy, &d->font, text)) > d->rect.width) {
 		text[len - 1] = 0;
 		len--;
 		shortened = 1;
@@ -100,8 +109,6 @@ xdrawtext(Display *dpy, BlitzDraw *d)
 		x = d->rect.x + h / 2;
 		break;
 	}
-	XSetBackground(dpy, d->gc, d->color.bg);
-	XSetForeground(dpy, d->gc, d->color.fg);
 	if(d->font.set)
 		XmbDrawString(dpy, d->drawable, d->font.set, d->gc, x, y, text, len);
 	else

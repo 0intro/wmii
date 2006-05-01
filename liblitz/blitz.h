@@ -4,6 +4,7 @@
  */
 
 #include <X11/Xlib.h>
+#include <X11/Xlocale.h>
 
 #define BLITZ_FONT		"fixed"
 #define BLITZ_SELCOLORS		"#ffffff #285577 #4c7899"
@@ -23,6 +24,8 @@ typedef struct {
 typedef struct {
 	XFontStruct *xfont;
 	XFontSet set;
+	int ascent;
+	int descent;
 } BlitzFont;
 
 typedef struct {

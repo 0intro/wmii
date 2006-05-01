@@ -65,7 +65,7 @@ unsigned int
 height_of_bar()
 {
 	enum { BAR_PADDING = 4 };
-	return blitzfont.xfont->ascent + blitzfont.xfont->descent + BAR_PADDING;
+	return blitzfont.ascent + blitzfont.descent + BAR_PADDING;
 }
 
 void
