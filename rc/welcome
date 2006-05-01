@@ -13,18 +13,19 @@ Let's go!
 
 - Start two xterms by pressing $MODKEY-Return twice.
 - Switch between the three windows: $MODKEY-j, $MODKEY-k
-  If you prefer the mouse, then just click the desired window.
+  If you prefer the mouse, then just move the pointer to the desired window.
 - Create a new column with: $MODKEY-Shift-l
+  This moves the client right-wards.
 - Tag the selected client with another tag: $MODKEY-Shift-2
   IMPORTANT: before you do next step, note that you can select the current tag
-		  with $MODKEY-1.
+  	with $MODKEY-1.
 - Select the new tag: $MODKEY-2
 - Select the floating area: $MODKEY-space
 - Open the programs menu: $MODKEY-p
   Type 'xclock' and press Enter.
-- Resize the xclock window: Press $MODKEY, left-click the window and, while holding
+- Move the xclock window: Press $MODKEY, left-click on the window and, while holding
   the button down, move the cursor around.
-- Move the xclock window: Press $MODKEY, right-click on the window and, while holding
+- Resize the xclock window: Press $MODKEY, right-click the window and, while holding
   the button down, move the cursor around.
 - Open the actions menu: $MODKEY-a
   Rerun wmiirc by selecting 'wmiirc'.
