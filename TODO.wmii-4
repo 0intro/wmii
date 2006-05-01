@@ -1,11 +1,14 @@
-- add Qid-array with WELEM entries to IXPMap and other places in fs.c, to keep track of all qids of the last walk
-of current fid (maybe do this before wmii-3, because only this will really fix all issues)
-
+- remove internal labels, now tagging seems easy and straightforward that they
+	THINK: We'll need CreateTag, DestroyTag, UnfocusTag, FocusTag and the
+		event loop in wmiirc must be before TAGGING
+can be externalized again
 - idea for column mode:
 	*: is the current default mode with fallback (shows arbitrary clients)
 	0: is the current max mode, shows only one client at the time (same bahvior as current)
-	n: shows n clients, in stacking mode, using the selected client as center, n == 1 is current stacking mode,
-		n == equal will use the center of (n/2), n == unequal has always a center element.
+	n: shows n clients, in stacking mode, using the selected client as center,
+		n == 1 is current stacking mode,
+		n == equal will use the center of (n/2),
+		n == unequal has always a center element.
 - tagbars
 - screen dimension rescaling if screen resolution changes (even with Xrandr)
 - Xinerama support
@@ -16,10 +19,10 @@ of current fid (maybe do this before wmii-3, because only this will really fix a
 	allowing explicit coordinates, instead additionally resize
 	+/-<w> +/-<h> and move +/-<x> +/-<y> actions are needed in the
 	associated ctl devices of clients.  
-- add wmiir ls (read should have same semantic as in 9p),
-  output without details, add -l for details like in ls of Plan 9
+- add wmiir ls (read should have same semantic as in 9p), output without
+details, add -l for details like in ls of Plan 9
 - liblitz: window abstraction (creation, events), can be reused in menu and bar
-		and frames
+and frames
 
 ad new column mode:
 

@@ -275,7 +275,7 @@ main(int argc, char *argv[])
 	root_qid.dir_type = FsDroot;
 	root_qid.type = IXP_QTDIR;
 	root_qid.version = 0;
-	root_qid.path = mkqpath(FsDroot, 0, 0, 0);
+	root_qid.path = pack_qpath(FsDroot, 0, 0, 0);
 
 	/* X server */
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);

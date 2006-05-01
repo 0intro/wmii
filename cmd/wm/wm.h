@@ -257,8 +257,8 @@ int idx_of_frame(Frame *f);
 Client *frame_of_win(Window w);
 
 /* fs.c */
-unsigned long long mkqpath(unsigned char type, unsigned short pg,
-		unsigned short area, unsigned short cl);
+unsigned long long pack_qpath(unsigned char type, unsigned short i1,
+		unsigned short i2, unsigned short i3);
 void write_event(char *event);
 void new_ixp_conn(IXPConn *c);
 

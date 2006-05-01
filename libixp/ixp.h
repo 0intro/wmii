@@ -148,7 +148,9 @@ typedef struct IXPMap IXPMap;
 
 struct IXPMap {
 	unsigned int fid;
-	Qid qid;
+	unsigned short sel;
+	unsigned short nwqid;
+	Qid wqid[IXP_MAX_WELEM];
 };
 
 
@@ -206,29 +208,29 @@ int ixp_client_close(IXPClient *c, unsigned int fid);
 int ixp_client_do_fcall(IXPClient * c);
 
 /* convert.c */
-void *ixp_enc_u8(unsigned char *msg, unsigned char val);
-void *ixp_dec_u8(unsigned char *msg, unsigned char *val);
-void *ixp_enc_u16(unsigned char *msg, unsigned short val);
-void *ixp_dec_u16(unsigned char *msg, unsigned short *val);
-void *ixp_enc_u32(unsigned char *msg, unsigned int val);
-void *ixp_dec_u32(unsigned char *msg, unsigned int *val);
-void *ixp_enc_u64(unsigned char *msg, unsigned long long val);
-void *ixp_dec_u64(unsigned char *msg, unsigned long long *val);
-void *ixp_enc_string(unsigned char *msg, const char *s);
-void *ixp_dec_string(unsigned char *msg, char *string,
+void *ixp_pack_u8(unsigned char *msg, unsigned char val);
+void *ixp_unpack_u8(unsigned char *msg, unsigned char *val);
+void *ixp_pack_u16(unsigned char *msg, unsigned short val);
+void *ixp_unpack_u16(unsigned char *msg, unsigned short *val);
+void *ixp_pack_u32(unsigned char *msg, unsigned int val);
+void *ixp_unpack_u32(unsigned char *msg, unsigned int *val);
+void *ixp_pack_u64(unsigned char *msg, unsigned long long val);
+void *ixp_unpack_u64(unsigned char *msg, unsigned long long *val);
+void *ixp_pack_string(unsigned char *msg, const char *s);
+void *ixp_unpack_string(unsigned char *msg, char *string,
 		unsigned short stringlen, unsigned short *len);
-void *ixp_enc_data(unsigned char *msg, unsigned char *data,
+void *ixp_pack_data(unsigned char *msg, unsigned char *data,
 		unsigned int datalen);
-void *ixp_dec_data(unsigned char *msg, unsigned char *data,
+void *ixp_unpack_data(unsigned char *msg, unsigned char *data,
 		unsigned int datalen);
-void *ixp_enc_prefix(unsigned char *msg, unsigned int size,
+void *ixp_pack_prefix(unsigned char *msg, unsigned int size,
 		unsigned char id, unsigned short tag);
-void *ixp_dec_prefix(unsigned char *msg, unsigned int *size,
+void *ixp_unpack_prefix(unsigned char *msg, unsigned int *size,
 		unsigned char *id, unsigned short *tag);
-void *ixp_enc_qid(unsigned char *msg, Qid *qid);
-void *ixp_dec_qid(unsigned char *msg, Qid *qid);
-void *ixp_enc_stat(unsigned char *msg, Stat *stat);
-void *ixp_dec_stat(unsigned char *msg, Stat *stat);
+void *ixp_pack_qid(unsigned char *msg, Qid *qid);
+void *ixp_unpack_qid(unsigned char *msg, Qid *qid);
+void *ixp_pack_stat(unsigned char *msg, Stat *stat);
+void *ixp_unpack_stat(unsigned char *msg, Stat *stat);
 
 /* message.c */
 unsigned short ixp_sizeof_stat(Stat *stat);

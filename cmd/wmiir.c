@@ -140,14 +140,14 @@ xls(void *result, unsigned int msize)
 	static Stat stat;
 
 	do {
-		p = ixp_dec_stat(p, &stat);
+		p = ixp_unpack_stat(p, &stat);
 		n++;
 	}
 	while(p - result < msize);
 	dir = (Stat *)cext_emallocz(sizeof(Stat) * n);
 	p = result;
 	do {
-		p = ixp_dec_stat(p, &dir[i++]);
+		p = ixp_unpack_stat(p, &dir[i++]);
 	}
 	while(p - result < msize);
 	qsort(dir, n, sizeof(Stat), comp_stat);
