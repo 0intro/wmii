@@ -200,19 +200,24 @@ bar_of_name(const char *name)
 	return nil;
 }
 
+static Bar *
+next_unused_bar()
+{
+	unsigned int i;
+	for(i = 0; (i < bar.size) && bar.data[i]->intern; i++)
+		if(!view_of_name(bar.data[i]->name))
+			return bar.data[i];
+	return nil;
+}
+
 void
 update_view_bars()
 {
 	unsigned int i;
 	Bar *b = nil;
 
-	for(i = 0; (i < bar.size) && bar.data[i]->intern; i++) {
-		b = bar.data[i];
-		if(!view_of_name(b->name)) {
-			destroy_bar(b);
-			i--;
-		}
-	}
+	while((b = next_unused_bar()))
+		destroy_bar(b);
 	for(i = 0; i < view.size; i++) {
 		b = create_bar(view.data[i]->name, True);
 		cext_strlcpy(b->data, view.data[i]->name, sizeof(b->data));
