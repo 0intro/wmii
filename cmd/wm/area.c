@@ -64,8 +64,10 @@ destroy_area(Area *a)
 {
 	unsigned int i;
 	View *v = a->view;
-	if(a->frame.size)
-		return;
+	if(a->frame.size) {
+		fprintf(stderr, "%s", "wmiiwm: fatal, destroying non-empty area\n");
+		exit(1);
+	}
 	if(a->frame.data)
 		free(a->frame.data);
 	if(v->revert == idx_of_area(a))

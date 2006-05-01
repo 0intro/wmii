@@ -207,7 +207,7 @@ int idx_of_bar_id(unsigned short id);
 void resize_bar();
 unsigned int height_of_bar();
 Bar *bar_of_name(const char *name);
-int idx_of_bar(Bar *l);
+int idx_of_bar(Bar *b);
 void update_view_bars();
 
 /* client.c */
