@@ -50,6 +50,7 @@ create_client(Window w, XWindowAttributes *wa)
 	XClassHint ch;
 	long msize;
 	static unsigned int id = 1;
+	static char buf[256];
 
 	c->id = id++;
 	c->win = w;
@@ -85,6 +86,8 @@ create_client(Window w, XWindowAttributes *wa)
 	c->gc = XCreateGC(dpy, c->framewin, 0, 0);
 	XSync(dpy, False);
 	cext_vattach(vector_of_clients(&client), c);
+	snprintf(buf, sizeof(buf), "CreateClient %d\n", client.size - 1);
+	write_event(buf);
 	return c;
 }
 
