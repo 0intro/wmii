@@ -22,21 +22,16 @@ Let's go!
 - Select the floating area: $MODKEY-space
 - Open the programs menu: $MODKEY-p
   Type 'xclock' and press Enter.
-- Resize the xclock window: left-click on the border and, while holding the
-  button down, move the cursor around.
-- Move the xclock window: left-click on the title bar and, while holding
+- Resize the xclock window: Press $MODKEY, left-click the window and, while holding
+  the button down, move the cursor around.
+- Move the xclock window: Press $MODKEY, right-click on the window and, while holding
   the button down, move the cursor around.
 - Open the actions menu: $MODKEY-a
   Rerun wmiirc by selecting 'wmiirc'.
-- Working with mouse efficiently:
-  selecting a window: just click the desired window
-  move a window: press $MODKEY-Button1Press
-  and resize a window: press $MODKEY-Button3Press and resize it
-  (this can also be done by clicking the titlebar of the window/borders respectively)
 - We'll now have a look at the internal filesystem used by wmii.  Executing
   	wmiir read /
   in the shell of the terminal will list all the files in the root directory.
-  Entries beginning with a d  are directories.
+  Entries beginning with a 'd' are directories.
   If you are curious, you can now dig deeper into the directory trees. For instance,
   	wmiir read /bar/
   will show you the content of the bar.
