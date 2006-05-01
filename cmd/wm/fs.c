@@ -767,12 +767,11 @@ xremove(IXPConn *c, Fcall *fcall)
 	switch(type) {
 	case FsDbar:
 		{
-			Bar *l = bar.data[i1];
-			if(l->intern)
+			Bar *b = bar.data[i1];
+			if(b->intern)
 				return Enoperm;
 			/* now detach the bar */
-			destroy_bar(l);
-			free(l);
+			destroy_bar(b);
 			draw_bar();
 		}
 		break;
