@@ -388,7 +388,7 @@ manage_client(Client *c)
 	XSync(dpy, False);
 	if(c->frame.data[c->sel]->area->view == view.data[sel])
 		focus_client(c, False);
-	flush_events(EnterWindowMask);
+	flush_masked_events(EnterWindowMask);
 }
 
 static int
@@ -425,7 +425,7 @@ destroy_client(Client *c)
 	XSync(dpy, False);
 	XSetErrorHandler(wmii_error_handler);
 	XUngrabServer(dpy);
-	flush_events(EnterWindowMask);
+	flush_masked_events(EnterWindowMask);
 }
 
 Client *
@@ -534,7 +534,7 @@ select_client(Client *c, char *arg)
 			return;
 	}
 	focus_client(a->frame.data[i]->client, True);
-	flush_events(EnterWindowMask);
+	flush_masked_events(EnterWindowMask);
 }
 
 void
@@ -591,7 +591,7 @@ Swaparea:
 	if(idx_of_area(a))
 		arrange_column(a, False);
 	focus_client(c, True);
-	flush_events(EnterWindowMask);
+	flush_masked_events(EnterWindowMask);
 }
 
 void
@@ -641,7 +641,7 @@ send_client_to(Client *c, char *arg)
 		to = v->area.data[i];
 	}
 	send_to_area(to, a, c);
-	flush_events(EnterWindowMask);
+	flush_masked_events(EnterWindowMask);
 }
 
 void
@@ -657,7 +657,7 @@ resize_all_clients()
 				resize_client(c, &c->frame.data[c->sel]->rect, False);
 		}
 	}
-	flush_events(EnterWindowMask);
+	flush_masked_events(EnterWindowMask);
 }
 
 /* convenience function */

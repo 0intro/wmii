@@ -57,7 +57,7 @@ check_x_event(IXPConn *c)
 }
 
 unsigned int
-flush_events(long even_mask)
+flush_masked_events(long even_mask)
 {
 	XEvent ev;
 	unsigned int n = 0;
@@ -100,13 +100,13 @@ handle_buttonpress(XEvent *e)
 			if((ev->button == Button1 || ev->button == Button3))
 				focus(c, True);
 			if(ev->button == Button1)
-				do_mouse_move(c);
+				do_mouse_move(c, ev);
 			else if (ev->button == Button3) {
 				BlitzAlign align = blitz_align_of_rect(&c->rect, ev->x, ev->y);
 				if(align != CENTER)
-					do_mouse_resize(c, align);
+					do_mouse_resize(c, ev, align);
 				else
-					do_mouse_move(c);
+					do_mouse_move(c, ev);
 			}
 		}
 		else if(ev->button == Button1)

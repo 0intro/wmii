@@ -247,7 +247,7 @@ Area *new_right_column(View *v);
 /* event.c */
 void init_x_event_handler();
 void check_x_event(IXPConn *c);
-unsigned int flush_events(long even_mask);
+unsigned int flush_masked_events(long even_mask);
 
 /* frame.c */
 Frame *create_frame(Area *a, Client *c);
@@ -269,8 +269,8 @@ void init_lock_keys();
 unsigned long mod_key_of_str(char *val);
 
 /* mouse.c */
-void do_mouse_resize(Client *c, BlitzAlign align);
-void do_mouse_move(Client *c);
+void do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align);
+void do_mouse_move(Client *c, XButtonPressedEvent *e);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 
