@@ -220,14 +220,14 @@ do_mouse_move(Client *c, XButtonPressedEvent *e)
 	pt.y = ey;
 	XSync(dpy, False);
 
-	if(XGrabPointer(dpy, root, False, ButtonMotionMask | ButtonReleaseMask,
+	if(XGrabPointer(dpy, root, False, PointerMotionMask | ButtonReleaseMask,
 				GrabModeAsync, GrabModeAsync, None, cursor[CurMove],
 				e->time) != GrabSuccess)
 		return;
 	XGrabServer(dpy);
 
 	for(;;) {
-		while(!XCheckMaskEvent(dpy, ButtonReleaseMask | ButtonMotionMask, &ev)) {
+		while(!XCheckMaskEvent(dpy, ButtonReleaseMask | PointerMotionMask, &ev)) {
 			usleep(1000);
 			continue;
 		}
@@ -460,14 +460,14 @@ do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align)
 	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
 	XSync(dpy, False);
 
-	if(XGrabPointer(dpy, c->framewin, False, ButtonMotionMask | ButtonReleaseMask,
+	if(XGrabPointer(dpy, c->framewin, False, PointerMotionMask | ButtonReleaseMask,
 				GrabModeAsync, GrabModeAsync, None, cursor[CurResize],
 				e->time) != GrabSuccess)
 		return;
 	XGrabServer(dpy);
 
 	for(;;) {
-		while(!XCheckMaskEvent(dpy, ButtonReleaseMask | ButtonMotionMask, &ev)) {
+		while(!XCheckMaskEvent(dpy, ButtonReleaseMask | PointerMotionMask, &ev)) {
 			usleep(1000);
 			continue;
 		}
