@@ -9,6 +9,7 @@ X11INC = /usr/X11R6/include
 X11LIB = /usr/X11R6/lib
 
 VERSION = 3-current
+#rc2-slavutych
 
 # includes and libs
 LIBS = -L${PREFIX}/lib -L/usr/lib -lc -L${X11LIB} -lX11
