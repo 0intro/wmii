@@ -15,10 +15,7 @@ In order to build wmii you need the Xlib header files.
 Installation
 ------------
 Edit config.mk to match your local setup. wmii is installed into
-the /usr/local hierarchy by default. If your system is Mac OS X,
-then remove the '-static' flag in cmd/Makefile. If your system is
-Solaris, grep recursively for 'Solaris' and uncomment all occurences
-to make wmii compile or ask Sun to make their system POSIX compliant.
+the /usr/local hierarchy by default.
 
 Afterwards enter the following command to build and install wmii (if
 necessary as root):
