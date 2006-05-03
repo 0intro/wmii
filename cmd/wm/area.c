@@ -29,6 +29,8 @@ create_area(View *v)
 	}
 	else
 		w = rect.width;
+	if(w < MIN_COLWIDTH)
+		w = MIN_COLWIDTH;
 
 	if(v->area.size >= 2 && (v->area.size - 1) * MIN_COLWIDTH + w > rect.width)
 		return nil;
