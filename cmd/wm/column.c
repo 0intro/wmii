@@ -110,8 +110,10 @@ relax_column(Area *a)
 void
 scale_column(Area *a, float h)
 {
-	unsigned int i;
+	unsigned int i, yoff = 0;
+	unsigned int min_height = 2 * height_of_bar();
 	float scale, dy = 0;
+	int hdiff;
 
 	if(!a->frame.size)
 		return;
@@ -123,6 +125,20 @@ scale_column(Area *a, float h)
 		Frame *f = a->frame.data[i];
 		f->rect.height *= scale;
 	}
+
+	/* min_height can only be respected when there is enough space; the caller should guarantee this */
+	if(a->frame.size * min_height > h)
+		return;
+	for(i = 0; i < a->frame.size; i++) {
+		Frame *f = a->frame.data[i];
+		if(f->rect.height < min_height)
+			f->rect.height = min_height;
+		else if((hdiff = yoff + f->rect.height - h + (a->frame.size - i) * min_height) > 0)
+			f->rect.height -= hdiff;
+		if(i == a->frame.size - 1)
+			f->rect.height = h - yoff;
+		yoff += f->rect.height;
+	}
 }
 
 void
@@ -130,7 +146,6 @@ arrange_column(Area *a, Bool dirty)
 {
 	unsigned int i, yoff = a->rect.y, h;
 	unsigned int min_height = 2 * height_of_bar();
-	int hdiff;
 
 	if(!a->frame.size)
 		return;
@@ -150,12 +165,6 @@ arrange_column(Area *a, Bool dirty)
 			f->rect.x = a->rect.x;
 			f->rect.y = yoff;
 			f->rect.width = a->rect.width;
-			if(f->rect.height < min_height)
-				f->rect.height = min_height;
-			else if((hdiff = yoff + f->rect.height - a->rect.height + (a->frame.size - i) * min_height) > 0)
-				f->rect.height -= hdiff;
-			if(i == a->frame.size - 1)
-				f->rect.height = a->rect.height - yoff;
 			yoff += f->rect.height;
 			resize_client(f->client, &f->rect, True);
 		}

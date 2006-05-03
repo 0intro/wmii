@@ -18,8 +18,7 @@ Area *
 create_area(View *v)
 {
 	static unsigned short id = 1;
-	unsigned int w, i, xoff = 0;
-	int wdiff;
+	unsigned int w;
 	Area *a = nil;
 
 	if(v->area.size > 1) {
@@ -36,17 +35,6 @@ create_area(View *v)
 
 	if(v->area.size > 1)
 		scale_view(v, rect.width - w);
-	for(i = 1; i < v->area.size; i++) {
-		Area *b = v->area.data[i];
-		b->rect.x = xoff;
-		b->rect.y = 0;
-		b->rect.height = rect.height - brect.height;
-		if(b->rect.width < MIN_COLWIDTH)
-			b->rect.width = MIN_COLWIDTH;
-		else if((wdiff = b->rect.x + b->rect.width - (rect.width - w) + (v->area.size - 1 - i) * MIN_COLWIDTH) > 0)
-			b->rect.width -= wdiff;
-		xoff += b->rect.width;
-	}
 	a = cext_emallocz(sizeof(Area));
 	a->view = v;
 	a->id = id++;

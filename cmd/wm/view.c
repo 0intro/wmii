@@ -271,8 +271,9 @@ restack_view(View *v)
 void
 scale_view(View *v, float w)
 {
-	unsigned int i;
+	unsigned int i, xoff = 0;
 	float scale, dx = 0;
+	int wdiff = 0;
 
 	if(v->area.size == 1)
 		return;
@@ -284,13 +285,26 @@ scale_view(View *v, float w)
 		Area *a = v->area.data[i];
 		a->rect.width *= scale;
 	}
+
+	/* MIN_COLWIDTH can only be respected when there is enough space; the caller should guarantee this */
+	if((v->area.size - 1) * MIN_COLWIDTH > w)
+		return;
+	for(i = 1; i < v->area.size; i++) {
+		Area *a = v->area.data[i];
+		if(a->rect.width < MIN_COLWIDTH)
+			a->rect.width = MIN_COLWIDTH;
+		else if((wdiff = xoff + a->rect.width - w + (v->area.size - 1 - i) * MIN_COLWIDTH) > 0)
+			a->rect.width -= wdiff;
+		if(i == v->area.size - 1)
+			a->rect.width = w - xoff;
+		xoff += a->rect.width;
+	}
 }
 
 void
 arrange_view(View *v)
 {
 	unsigned int i, xoff = 0;
-	int wdiff = 0;
 
 	if(v->area.size == 1)
 		return;
@@ -301,10 +315,6 @@ arrange_view(View *v)
 		a->rect.x = xoff;
 		a->rect.y = 0;
 		a->rect.height = rect.height - brect.height;
-		if(a->rect.width < MIN_COLWIDTH)
-			a->rect.width = MIN_COLWIDTH;
-		else if((wdiff = a->rect.x + a->rect.width - rect.width + (v->area.size - 1 - i) * MIN_COLWIDTH) > 0)
-			a->rect.width -= wdiff;
 		xoff += a->rect.width;
 		arrange_column(a, False);
 	}
