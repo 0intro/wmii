@@ -338,6 +338,12 @@ main(int argc, char *argv[])
 	}
 	screen = DefaultScreen(dpy);
 
+	/* grab as early as possible */
+	while(XGrabKeyboard
+			(dpy, RootWindow(dpy, screen), True, GrabModeAsync,
+			 GrabModeAsync, CurrentTime) != GrabSuccess)
+		usleep(1000);
+
 	/* set font and colors */
 	fontstr = getenv("WMII_FONT");
 	if (!fontstr)
@@ -383,13 +389,7 @@ main(int argc, char *argv[])
 	draw_menu();
 	XSync(dpy, False);
 
-	while(XGrabKeyboard
-			(dpy, RootWindow(dpy, screen), True, GrabModeAsync,
-			 GrabModeAsync, CurrentTime) != GrabSuccess)
-		usleep(1000);
-
 	/* main event loop */
-
 	while(!XNextEvent(dpy, &ev)) {
 		switch (ev.type) {
 			case KeyPress:
