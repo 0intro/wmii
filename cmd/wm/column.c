@@ -124,11 +124,15 @@ scale_column(Area *a, float h)
 	for(i = 0; i < a->frame.size; i++) {
 		Frame *f = a->frame.data[i];
 		f->rect.height *= scale;
+		if(i == a->frame.size - 1)
+			f->rect.height = h - yoff;
+		yoff += f->rect.height;
 	}
 
 	/* min_height can only be respected when there is enough space; the caller should guarantee this */
 	if(a->frame.size * min_height > h)
 		return;
+	yoff = 0;
 	for(i = 0; i < a->frame.size; i++) {
 		Frame *f = a->frame.data[i];
 		if(f->rect.height < min_height)

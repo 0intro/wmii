@@ -284,11 +284,15 @@ scale_view(View *v, float w)
 	for(i = 1; i < v->area.size; i++) {
 		Area *a = v->area.data[i];
 		a->rect.width *= scale;
+		if(i == v->area.size - 1)
+			a->rect.width = w - xoff;
+		xoff += a->rect.width;
 	}
 
 	/* MIN_COLWIDTH can only be respected when there is enough space; the caller should guarantee this */
 	if((v->area.size - 1) * MIN_COLWIDTH > w)
 		return;
+	xoff = 0;
 	for(i = 1; i < v->area.size; i++) {
 		Area *a = v->area.data[i];
 		if(a->rect.width < MIN_COLWIDTH)
