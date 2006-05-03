@@ -110,7 +110,7 @@ relax_column(Area *a)
 void
 scale_column(Area *a, float h)
 {
-	unsigned int i, yoff = 0;
+	unsigned int i, yoff;
 	unsigned int min_height = 2 * height_of_bar();
 	float scale, dy = 0;
 	int hdiff;
@@ -121,6 +121,7 @@ scale_column(Area *a, float h)
 	for(i = 0; i < a->frame.size; i++)
 		dy += a->frame.data[i]->rect.height;
 	scale = h / dy;
+	yoff = 0;
 	for(i = 0; i < a->frame.size; i++) {
 		Frame *f = a->frame.data[i];
 		f->rect.height *= scale;

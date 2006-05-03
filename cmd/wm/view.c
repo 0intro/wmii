@@ -271,7 +271,7 @@ restack_view(View *v)
 void
 scale_view(View *v, float w)
 {
-	unsigned int i, xoff = 0;
+	unsigned int i, xoff;
 	float scale, dx = 0;
 	int wdiff = 0;
 
@@ -281,6 +281,7 @@ scale_view(View *v, float w)
 	for(i = 1; i < v->area.size; i++)
 		dx += v->area.data[i]->rect.width;
 	scale = w / dx;
+	xoff = 0;
 	for(i = 1; i < v->area.size; i++) {
 		Area *a = v->area.data[i];
 		a->rect.width *= scale;
