@@ -189,6 +189,7 @@ Fallthrough:
 	}
 
 	relax_column(a);
+	flush_masked_events(EnterWindowMask);
 }
 
 static void
