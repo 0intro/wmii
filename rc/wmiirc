@@ -116,7 +116,7 @@ do
 			exit
 		fi;;
 	BarClick)
-		xwrite /ctl view "$1";;
+		xwrite /ctl view ''"$1"'';;
 	Key)
 		case "$1" in
 		$MODKEY-$LEFT)
@@ -160,7 +160,7 @@ do
 		$MODKEY-Shift-c)
 			xwrite /view/sel/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite /view/sel/sel/tags "`wmiir read /tags | wmiimenu`" &;;
+			xwrite /view/sel/sel/tags ''"`wmiir read /tags | wmiimenu`"'' &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /view/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Control-$LEFT)
