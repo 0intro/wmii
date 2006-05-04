@@ -1,3 +1,4 @@
+- remove swapping action, merge vertocal swapping into moving - is this a good idea?
 - remove internal labels, now tagging seems easy and straightforward that they
 	THINK: We'll need CreateTag, DestroyTag, UnfocusTag, FocusTag and the
 		event loop in wmiirc must be before TAGGING
