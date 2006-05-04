@@ -99,14 +99,24 @@ handle_buttonpress(XEvent *e)
 		if(ev->state & def.mod) {
 			if((ev->button == Button1 || ev->button == Button3))
 				focus(c, True);
-			if(ev->button == Button1)
-				do_mouse_move(c, ev);
-			else if (ev->button == Button3) {
-				BlitzAlign align = blitz_align_of_rect(&c->rect, ev->x, ev->y);
-				if(align != CENTER)
-					do_mouse_resize(c, ev, align);
-				else
-					do_mouse_move(c, ev);
+			switch(ev->button) {
+			case Button1:
+				do_mouse_move(c, ev, False);
+				break;
+			case Button2:
+				if(idx_of_area(c->frame.data[c->sel]->area))
+					do_mouse_move(c, ev, True);
+				break;
+			case Button3:
+				{
+					BlitzAlign align = blitz_align_of_rect(&c->rect, ev->x, ev->y);
+					if(align != CENTER)
+						do_mouse_resize(c, ev, align);
+					else
+						do_mouse_move(c, ev, False);
+				}
+			default:
+			break;
 			}
 		}
 		else if(ev->button == Button1)

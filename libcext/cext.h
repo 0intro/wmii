@@ -28,6 +28,9 @@ long long cext_strtonum(const char *numstr, long long minval,
 /* tokenize.c */
 unsigned int cext_tokenize(char **result, unsigned int reslen, char *str, char delim);
 
+/* trim.c */
+void cext_trim(char *str, const char *chars);
+
 /* vector.c */
 #define VECTOR(name, type) \
 typedef struct { \

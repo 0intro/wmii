@@ -108,6 +108,7 @@ update_client_grab(Client *c, Bool is_sel)
 	if(is_sel) {
 		ungrab_mouse(c->framewin, AnyModifier, AnyButton);
 		grab_mouse(c->framewin, def.mod, Button1);
+		grab_mouse(c->framewin, def.mod, Button2);
 		grab_mouse(c->framewin, def.mod, Button3);
 	}
 	else
@@ -537,6 +538,41 @@ select_client(Client *c, char *arg)
 			return;
 	}
 	focus_client(a->frame.data[i]->client, True);
+	flush_masked_events(EnterWindowMask);
+}
+
+void
+swap_clients(Client *c, XPoint *pt)
+{
+
+	unsigned int i, j;
+	Frame *f1 = c->frame.data[c->sel], *f2 = nil;
+
+	for(i = 1; i < view.data[sel]->area.size; i++) {
+		Area *a = view.data[sel]->area.data[i];
+		if(blitz_ispointinrect(pt->x, pt->y, &a->rect)) {
+			for(j = 0; j < a->frame.size; j++) {
+				if(blitz_ispointinrect(pt->x, pt->y, &a->frame.data[j]->rect)) {
+					f2 = a->frame.data[j];
+					break;
+				}
+			}
+			break;
+		}
+	}
+
+	if(!f2 || f1 == f2 || !idx_of_area(f1->area))
+		return;
+
+	f1->client = f2->client;
+	f2->client = c;
+	f1->client->frame.data[f1->client->sel] = f1;
+	f2->client->frame.data[f2->client->sel] = f2;
+
+	arrange_column(f1->area, False);
+	if(f1->area != f2->area)
+		arrange_column(f2->area, False);
+	focus_client(c, True);
 	flush_masked_events(EnterWindowMask);
 }
 

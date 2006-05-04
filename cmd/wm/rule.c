@@ -114,6 +114,7 @@ update_rules()
 					Rule *rul = cext_emallocz(sizeof(Rule));
 					rul->is_valid = !regcomp(&rul->regex, regex, 0);
 					cext_strlcpy(rul->tags, tags, sizeof(rul->tags));
+					cext_trim(rul->tags, " \t");
 					cext_vattach(vector_of_rules(&rule), rul);
 				}
 				else
@@ -122,8 +123,6 @@ update_rules()
 				mode = IGNORE;
 			}
 			else {
-				if(*p == ' ' || *p == '\t')
-					continue; /* skip whitespaces */
 				*t = *p;
 				t++;
 			}

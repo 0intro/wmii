@@ -82,6 +82,8 @@ $MODKEY-9
 $MODKEY-Return
 $MODKEY-Shift-$LEFT
 $MODKEY-Shift-$RIGHT
+$MODKEY-Shift-$UP
+$MODKEY-Shift-$DOWN
 $MODKEY-Shift-space
 $MODKEY-Shift-c
 $MODKEY-Shift-t
@@ -149,6 +151,10 @@ do
 			xwrite /view/sel/sel/ctl sendto prev;;
 		$MODKEY-Shift-$RIGHT)
 			xwrite /view/sel/sel/ctl sendto next;;
+		$MODKEY-Shift-$DOWN)
+			xwrite /view/sel/sel/ctl swap down;;
+		$MODKEY-Shift-$UP)
+			xwrite /view/sel/sel/ctl swap up;;
 		$MODKEY-Shift-space)
 			xwrite /view/sel/sel/ctl sendto toggle;;
 		$MODKEY-Shift-c)

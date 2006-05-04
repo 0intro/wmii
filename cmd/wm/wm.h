@@ -229,6 +229,7 @@ void select_client(Client *c, char *arg);
 void send_client_to(Client *c, char *arg);
 void resize_all_clients();
 void swap_client(Client *c, char *arg);
+void swap_clients(Client *c, XPoint *pt);
 Client *sel_client();
 int idx_of_client_id(unsigned short id);
 Client *client_of_win(Window w);
@@ -270,7 +271,7 @@ unsigned long mod_key_of_str(char *val);
 
 /* mouse.c */
 void do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align);
-void do_mouse_move(Client *c, XButtonPressedEvent *e);
+void do_mouse_move(Client *c, XButtonPressedEvent *e, Bool swap);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 
