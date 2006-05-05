@@ -3,7 +3,7 @@
 wmiiwm \- window manager improved 2 (core)
 .SH SYNOPSIS
 .B wmiiwm
-.R \-a
+.B \-a
 .I <address>
 .RB [ \-c ]
 .RB [ \-v ]
@@ -25,14 +25,14 @@ supports classic and tiled window management with extended keyboard and mouse
 control. The classic window management arranges windows in a floating layer
 in which windows can be moved and resized freely. The tiled window management 
 is based on columns which split up the screen horizontally. Each column handles
-arbitrary windows and arranges them vertically in a non-overlapping way. They
+arbitrary windows and arranges them vertically in a non\-overlapping way. They
 can then be moved and resized between and within columns at will.
 .P
 .B wmii
 provides a virtual filesystem which represents the internal state similar to
 the procfs of Unix operating systems. Modifying this virtual filesystem results
 in changing the state of the window manager. The virtual filesystem service can
-be accessed through 9P-capable client programs, like
+be accessed through 9P\-capable client programs, like
 .BR wmiir (1) .
 This allows simple and powerful remote control of the core window manager.
 .P
@@ -77,7 +77,7 @@ application window.
 .TP 2
 Client
 An application window surrounded by a frame window containing a border and a
-title-bar. The title-bar normally shows only two labels, one displaying the
+title\-bar. The title\-bar normally shows only two labels, one displaying the
 tags of a client and the other the client's name. However, if the containing
 column is in maximized mode, a third label is required. It shows which client
 is currently visible and more importantly, the number of clients within the
@@ -92,7 +92,7 @@ They can be resized or moved freely.
 Managed layer
 A screen layer of
 .B wmii
-behind the floating layer, where clients are arranged in a non-overlapping
+behind the floating layer, where clients are arranged in a non\-overlapping
 (managed) way.  Here, the window manager dynamically assigns each client a
 size and position. The managed layer consists of columns.
 .TP 2
@@ -100,9 +100,9 @@ Tag
 Alphanumeric strings which can be assigned to a client. This provides a
 mechanism to group clients with similar properties. Clients can have one
 tag, e.g.
-.I work ,
+.IR work ,
 or several tags, e.g.
-.I work+mail.
+.IR work+mail .
 Tags are separated with the
 .I +
 character.
@@ -113,20 +113,20 @@ other window managers.  It consists of the floating and managed layers.
 .TP 2
 Column
 A column is a screen area which arranges clients vertically in a
-non-overlapping way. Columns provide three different modes, which arrange
+non\-overlapping way. Columns provide three different modes, which arrange
 clients with equal size, stacked, or maximized respectively. Clients can be
 moved and resized between and within columns freely.
 .TP 2
 Bar
 The bar at the bottom of the screen displays a label for each view and
-allows the creation of arbitrary user-defined labels.
+allows the creation of arbitrary user\-defined labels.
 .TP 2
 Event
 An event is a message which can be read from a special file in the filesystem
 of
 .B wmiiwm
 like a mouse button press, a key press, or a message written by a different
-9P-client.
+9P\-client.
 .SS Basic window management
 Running a raw
 .B wmiiwm
@@ -144,14 +144,14 @@ The filesystem can be accessed through connecting to the
 .I address
 of
 .B wmiiwm
-with any 9P-capable client, like
+with any 9P\-capable client, like
 .BR wmiir (1).
 .SS File system
 The
 .B wmiiwm
 filesystem is designed with simplicity and clarity in mind. It consists of
 logical namespaces which represent its internal state and data structure in a
-straight-forward way. The following is a short description of each file and
+straight\-forward way. The following is a short description of each file and
 directory contained within the filesystem. For more information on the actual
 data stored in these files and the syntax recognized by each, see the
 .B Syntax
@@ -181,12 +181,12 @@ This directory contains a representation of all default options.
 .TP
 /event
 This file reports events. Reading this file is blocking, this means that
-a 9P-client will not exit until
+a 9P\-client will not exit until
 .B wmiiwm
 quits, or until the client is terminated explicitely.
 .TP
 /tags
-This file contains a list of newline-separated tags currently in use.
+This file contains a list of newline\-separated tags currently in use.
 .TP
 /view
 This and all other directories contain a representation of each view. The
@@ -199,7 +199,7 @@ Bar directory
 .RS 2
 .TP 2
 /bar/X/colors
-This file defines the colors as an RGB-tuple of the specific label.
+This file defines the colors as an RGB\-tuple of the specific label.
 .PD
 .TP
 /bar/X/data
@@ -218,7 +218,7 @@ in the form of
 .IR <Class> : <instance> .
 .TP
 /client/X/ctl
-This file understands the internal client-specific commands
+This file understands the internal client\-specific commands
 .IR kill ,
 which kills (closes) the specific client nicely,
 .I sendto
@@ -269,10 +269,10 @@ grabbed with the
 utility for X.
 .TP
 /def/grabmod
-This file defines the default modifier for mouse-grabs.
+This file defines the default modifier for mouse\-grabs.
 .TP
 /def/keys
-This file contains a newline-separated list of all shortcuts which should
+This file contains a newline\-separated list of all shortcuts which should
 be grabbed by
 .B wmiiwm
 and which are reported as events.
@@ -299,7 +299,7 @@ directory points to the currently selected column or floating layer.
 .PD
 .TP
 /view/ctl
-This file understands the internal view-specific command
+This file understands the internal view\-specific command
 .I select
 .IR <0..n> ,
 which selects the specific area, 0 means floating layer, all other numeric
@@ -322,7 +322,7 @@ namespace described above.
 .PD
 .TP
 /view/X/ctl
-This file understands the internal column-specific command
+This file understands the internal column\-specific command
 .I select
 .IR <0..n> ,
 which selects the specific client from top to bottom.
@@ -336,13 +336,13 @@ All files of the filesystem described above can be read, most of them can be
 written as well. Most of the only can be written using valid syntax.
 .TP 2
 colors, selcolors, normcolors
-Each of these files expects three blank-separated color values of the form
+Each of these files expects three blank\-separated color values of the form
 .I #RRGGBB #RRGGBB
 .IR #RRGGBB .
 The order defines foreground, background, and border colors respectively.
 .TP 2
 geom
-Each of these files expects four blank-separated alphanumeric values which define the
+Each of these files expects four blank\-separated alphanumeric values which define the
 client's geometry in the order
 .I <x>
 .I <y>
@@ -358,15 +358,15 @@ or an alignment value such as
 or
 .IR center .
 The alignment values address the specific screen border or center respectively.
-Thus they provide a resolution-independent way of addressing specific coordinates.
+Thus they provide a resolution\-independent way of addressing specific coordinates.
 Absolute values can be prepended with the
 .I +
 or
-.I -
+.I \-
 operators, which makes them relative, e.g.
-.IR -40 .
+.IR \-40 .
 Alignment values can be appended with a relative value to address special positions, e.g.
-.IR south-16 .
+.IR south\-16 .
 .TP 2
 colmode, mode
 Each of these files expects a single value of the form
@@ -391,7 +391,7 @@ is usually the
 key for most keyboard layouts.
 .TP 2
 keys
-This file expects a newline-separated list of shortcuts of the form
+This file expects a newline\-separated list of shortcuts of the form
 .BI [<modifier>\-] <key> .
 The modifier can be one or a combination of the following values:
 .IR Mod1 ,
@@ -403,7 +403,7 @@ The modifier can be one or a combination of the following values:
 or
 .IR Shift .
 For example, a valid modifier might be
-.IR Mod1-Control-Shift .
+.IR Mod1\-Control\-Shift .
 It's also possible to have no modifier at all and just a key. This is still
 valid syntax. The key and modifier values must correspond to the key symbols
 reported by the
@@ -411,7 +411,7 @@ reported by the
 utility.
 .TP 2
 rules
-This file expects a newline-separated list of rules, each taking the form
+This file expects a newline\-separated list of rules, each taking the form
 .B /regexp/
 \->
 .IR <tag> ,
@@ -434,7 +434,7 @@ If the rule file is empty,
 .B wmiiwm
 assigns the
 .I nil
-tag to each client by default, resulting in only the nil-view.
+tag to each client by default, resulting in only the nil\-view.
 Clients that contain a tag already, except the
 .I nil
 tag, are not matched.
