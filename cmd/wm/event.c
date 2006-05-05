@@ -221,8 +221,8 @@ handle_enternotify(XEvent *e)
 		Frame *oldf = nil, *f = c->frame.data[c->sel];
 		if(old)
 			oldf = old->frame.data[old->sel];
-		if((f->area->mode == Colmax) && oldf && (oldf->area == f->area))
-			return;
+		if(f->area->mode == Colmax)
+			c = f->area->frame.data[f->area->sel]->client;
 		if(c != old)
 			focus(c, False);
 	}
