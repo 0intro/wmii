@@ -1,3 +1,6 @@
+%TODO: please mention the /def/rules mechanism!
+
+
 %guide to wmii-3
 %Copyright (C) 2005, 2006 by Steffen Liebergeld, Salva Peir\'o
 
@@ -36,6 +39,7 @@ pdftitle={A Guide to wmii--3}}
 %\renewcommand{\hrefx}[1]{\htmladdnormallink{#1}{#1}}
 %\renewcommand{\verbatiminput}[1]{\input{#1}}
 \renewcommand{\familydefault}{\sfdefault}
+\newcommand{\wmii}{\emph{wmii}}
 
 \newenvironment{itemize*}
   {\begin{itemize}
@@ -79,563 +83,559 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     small memory footprint, be extremely modularised and have as
     little code as possible, thus ensuring as few bugs as possible. In
     fact, one of our official goal is to not to exceed $10 k$ lines of
-    code~\footnote{
-    the $10 k$ SLOC restriction benefits that it's easier
-    to read/understand, thus it's easier to use and get used to it.}.
+    code~\footnote{ benefits of the $10 k$ SLOC restriction are that
+    it's easier to read/understand, thus it's easier to use and get
+    used to.}.
 
-    Wmii tries to be very portable and to give the user as many
+    Wmii tries to be very portable and to give the user as much
     freedom as possible.
 
-    Wmii--3 is the third mayor release of the second generation of the
-    window manager improved~\footnote{ the ii is actually a roman
-    letter for the number 2.}.  Wmii first introduced a new paradigm
-    in version 2.5, namely the dynamic window management, that
-    overcomes the limitations imposed by the WIMP paradigm (see also
-    the companion \emph{wmii.tex}).
+    Wmii--3 is the third major release of the second generation of the
+    window manager improved~\footnote{ the ii is actually the roman
+    numeral for 2.}.  Wmii first introduced a new paradigm in version
+    2.5, namely the dynamic window management, that overcomes the
+    limitations imposed by the WIMP paradigm (see also the companion
+    \emph{wmii.tex}).
   
   \subsection{Target audience}
 
     I presume the reader already has experience with Unix, knows all
-    the basic terminology and concepts like files or editors.
+    the basic terminology and concepts like files and editors.
 
-    I hope you are open minded against new ideas, and willing to spend
-    some time learning it~\footnote{remember the refrain: ``nobody can
-    teach you what you don't want to know''.}.
+    I hope you are open minded to new ideas, and willing to spend some
+    time learning \wmii--3~\footnote{remember the refrain: ``nobody
+    can teach you what you don't want to know''.}.
 
     If you only want to know how to operate wmii-3 and are not
-    interested in the inner workings or in scripting, you may read the
-    sections \ref{sec:conf&install}, \ref{sec:terms} and subsection 
+    interested in the inner workings or in scripting, you may read
+    sections \ref{sec:conf&install}, \ref{sec:terms} and subsection
     \ref{subsec:firststeps} and skip the rest.
 
-    However, to get the most out of wmii--3 you should possibly read
+    However, to get the most out of wmii--3 you should probably read
     the whole document ``sequentially'', i.e. from beginning to end.
-    Another possibility is to read/consume the guide ``on demand''
-    as you notice you need more information or details to understand
+    Another possibility is to read/consume the guide ``on demand'' as
+    you notice you need more information or details to understand
     better some concept. We recomend you to read the introductory
     chapters first, use some time to get settled in the wmii--world
     and read the scripting chapters later on.
-  
-\section{Configuration and install}
-\label{sec:conf&install}
+    
+    \section{Configuration and install}
+    \label{sec:conf&install}
 
-  \subsection{Obtaining wmii}
+    \subsection{Obtaining wmii}
 
     Wmii is licensed under the MIT/X Consortium License, which
     basically means it is free software, and you are free to download
     from \hrefx{http://wmii.de} free of charge~\footnote{ please have
-    a look at \hrefx{http://wmii.de/repos/wmii/LICENSE}  for
-    details}.
-  
-  \subsection{Configuration and Installation}
-  
+      a look at \hrefx{http://wmii.de/repos/wmii/LICENSE}  for
+      details}.
+    
+    \subsection{Configuration and Installation}
+    
     First of all, have a look if there are binary packages of wmii in
     your distribution. Debian, Ubuntu and Gentoo should already have
     good packages. If you found a package to trust, you may now safely
-    skip this paragraph.
+    skip this section.
 
-    For all those who are still reading this, let me tell you you are
-    on the good side because if you grab the sources and compile them
+    For all those who are still reading this, let me tell you that you are
+    on the good side because if you grab the sources and compile them yourself
     you'll benefit from having everything in it's original place, so
     it'll ease your use of wmii.
     
     \begin{enumerate}
-    
+      
     \item Uninstalling a previous version:
-    \begin{verbatim}
-      cd /path/to/wmii-previous
-      make uninstall && make clean 
-    \end{verbatim}
+      \begin{verbatim}
+        cd /path/to/wmii-previous
+        make uninstall && make clean 
+      \end{verbatim}
 
-    In case you're installing a newer version of wmii, this is the
-    first thing you should do otherwise you'll end up messing
-    binaries, configuration files and manual--pages of different and
-    thus incompatible versions, to do this run the above commands.
-    
+      In case you're installing a newer version of \wmii, this is the
+      first thing you should do otherwise you'll end up mixing
+      binaries, configuration files and manual--pages of different and
+      potentially incompatible versions.
+
     \item Unpack it:
-    \begin{verbatim}
-      tar xzf wmii-3.tar.gz
-      cd wmii-3
-    \end{verbatim}
-  
+      \begin{verbatim}
+        tar xzf wmii-3.tar.gz
+        cd wmii-3
+      \end{verbatim}
+      
     \item Edit the configuration:
-    \begin{verbatim}
-      vim config.mk
-    \end{verbatim}
-    
-    The most important variable to set is the \verb+PREFIX+, which
-    states, where you want wmii--3 to be installed to.
-    
+      \begin{verbatim}
+        vim config.mk
+      \end{verbatim}
+      
+      The most important variable to set is the \verb+PREFIX+, which
+      states, where you want \wmii --3 to be installed to. If you are unsure, keep the
+      default, it won't break your system.
+      
     \item Run make and make install:
-    \begin{verbatim}
-      make && make install
-    \end{verbatim}
-    
-    \item Instruct the X--server to start wmii as your default window
-    manager. You may do that by editing the file \emph{\~{}/.xinitrc}.
+      \begin{verbatim}
+        make && make install
+      \end{verbatim}
+      
+    \item Setup the X--server to start \wmii as your default window
+      manager. You may do that by editing the file \emph{\~{}/.xinitrc}.
 
-    \begin{verbatim}
-      #!/bin/sh
-      exec wmii
-    \end{verbatim}
+      \begin{verbatim}
+        #!/bin/sh
+        exec wmii
+      \end{verbatim}
 
-    Make sure that the \emph{\~{}/.xinitrc} is executable:
-
-    \begin{verbatim}
-      chmod u+x ~/.xinitrc
-    \end{verbatim}
+      % Not necessary, .xinitrc is sourced by xinit anyways
+      %
+      %    Make sure that the \emph{\~{}/.xinitrc} is executable:
+      %
+      %    \begin{verbatim}
+      %      chmod u+x ~/.xinitrc
+      %    \end{verbatim}
 
     \end{enumerate}
     
-    And you are finished. Please note that we do not use the autoconf
-    tools for various reasons, you may read about it here~\footnote{
-    \hrefx{http://www.ohse.de/uwe/articles/aal.html} and
-    \hrefx{http://lists.cse.psu.edu/archives/9fans/2003-November/029714.html}
-    } . Please don't ask us to use autoconf, we won't do it.
+    Now you are finished. Please note that autoconf tools are not used
+    for various reasons~\footnote{ read
+      \hrefx{http://www.ohse.de/uwe/articles/aal.html} and
+      \hrefx{http://lists.cse.psu.edu/archives/9fans/2003-November/029714.html}
+      for further details} . Please don't ask the \wmii developers to use autoconf,
+    they won't listen you.
 
 
-\section{Terminology}
-\label{sec:terms}  
+    \section{Terminology}
+    \label{sec:terms}  
 
-  Before you actually start doing your first steps in wmii, we have to
-  make sure we are both talking about the same things. So here is some
-  terminology.
+    Before you actually start doing your first steps in \wmii, first the
+    terminology has to be clarified.
 
-  \subsection{Clients}
+    \subsection{Clients}
 
-    A client is a program, that draws a window to the
-    screen~\footnote{ Actually it is the program that requests the
-    X--server to draw the window. But never mind;-)}.  For example your
-    browser or your xterm is a client.
-  
-  \subsection{Focus}
+    A client is a program, that provides you a graphical user interface for
+    a special purpose, e.g. a web browser, or a terminal.
+    
+    \subsection{Focus}
 
-    In X11, exactly one client gets the user's input. If you write some
-    command in your xterm, this xterm has the focus, whereas all the
-    other windows do not receive/react on the input you
-    give~\footnote{ Actually this is not precise at all, because some
-    programs catch input before it is sent to the focused client. But
-    you do not need to care about this.}.  We will say from now on,
-    that the xterm has the focus.
-  
-  \subsection{Events}
+    The (input) focus is the client, which currently receives your input.
+    In X11 exactly one client can get your input at a time. If you input
+    some command into your terminal, the terminal window has the input focus,
+    whereas all the other windows do not receive the input you enter.
+    
+    \subsection{Events}
 
-    Events are generated by your input. For example when you click
-    into a window, that is an event. Events are used for example to
-    interact with the window manager. You will see how this works
-    later on.
-  
-  \subsection{Tags}
+    An event is a message generated by X server to notify X clients about
+    states. For instance,  X generates a button press event, if you click
+    into a window.
+    
+    \subsection{Tags}
 
-    Tags are names/labels you can give for clients. That allows you to
-    group clients.  In wmii, there are no workspaces anymore. Instead,
-    we simply show only one tag at one time. Thus, if you name a
-    client ``web-browser'' and request the wm to only show the tag
-    ``web-browser'', you will only see that one client. If you tag a
-    xterm with the same tag, it will also be shown, when your first
-    client with the tag ``web-browser'' is visible. It is also possible
-    to give clients multiple tags, but more on this later.
+    A tag is an alphanumeric string you can associate to clients,
+    which allows you to group clients in a natural way.
+    
+    In \wmii, there are no workspaces anymore. Instead, all clients matching a
+    particular tag are displayed at a time.  For instance, if you tag your
+    browser and a terminal window with the tag ``web-browser'', and you request
+    to view all clients matching this tag, \wmii will display your browser
+    and the terminal on the screen.
+    It is also possible to give clients multiple tags, which is described later.
 
-  \subsection{View}
+    \subsection{View}
 
-    The view concept refers to the tags that you want to view at a
-    given time, so when you request the window manager to only show
-    windows with one particular tag, you may call this a view. You
-    might imagine, that this somehow resembles the ``workspace'' of
-    other window managers.
+    A view is the set of displayed clients, which match a specific single tag.
+    A view is pretty similiar to the ``workspace'' metaphor in other window
+    managers, though more powerful.
 
-    You might have different views with only one of them visible at a
-    particular time. Thus, the concept of ``view'' is completely
-    virtual.
+    Only one view can be visible at a time.
 
-    Views are defined by the tags only, so if you don't have a tag of
-    a particular name, you don't have a view of that name.  Similarly,
-    if you destroy the last client with one tag, the view with the
-    same name also gets destroyed.
+    Views are related to the tags, which are currently in use. You have exactly
+    one view for each single tag, thus you can only view sets of clients which
+    match an existing tag.
 
-  \subsection{Column}
+    If you destroy the last client with a tag, the view of this tag is
+    destroyed.
 
-    In wmii, you are able to divide each view into different columns,
-    which are distinct parts of the screen, divided by an invisible
-    line between each other. You should be aware, that every column
-    holds at least one client. As soon as you close the last client of
-    a column, the column will be destroyed.
+    \subsection{Column}
 
-    Please be aware, that every view has at least one column.
+    A column is a distinct part of a view, where clients are arranged
+    automatically in a vertical direction.
 
-  \subsection{Layout}
+    In \wmii, you are able to divide each view into different columns.
+    You should be aware, that every column holds at least one client.
+    As soon as you close the last client of a column, the column is
+    destroyed automatically.
 
-    You may order clients in a column in three different ways. The
-    first, which is also the default, is to give each window equally
-    much vertical space in a column. The second is to have each client
-    maximised in the column, showing only one of them at a time, while
-    hiding the others. And last but not least you may have the clients
-    stacked, which means to have one client use as much space as
-    possible and to show only the title--bars of the other windows.
+    % no, a view might contain floating clients only as well
+    %    Please be aware, that every view has at least one column or a floating window.
 
-\section{Getting started}
+    \subsection{Layout}
 
-  It is now time to start diving into the wmii user experience. I
-  suggest you to try the things I describe yourself immediately
-  instead of first reading it, forgetting half of it and then trying
-  to start. It is very helpful if you have this document printed out
-  or have it on a different machine, since you won't be able to view
-  it during your first steps in wmii.
+    A layout is the arrangement of clients in a column.
+    There are three different ways to arrange clients in a column.
+    \paragraph{default} This layout arranges each client with
+    equally vertical space fitting into the columns height.
+    \paragraph{maximum} This layout arranges all clients with
+    the same geometry as the column, showing only one of them at a time.
+    \paragraph{stacking} This layout arranges all clients
+    like a stack, where only the focused client is completely
+    visible, and all other clients can be accessed through its title--bars.
+    This is an alternative approach to \emph{tabbing}.
 
-  On a special note, the \emph{MOD} key I am referring to may resemble
-  different keys on different platforms. It is what X knows as the
-  \emph{Mod1} or \emph{Alt} key. Probably this is the key labelled with
-  \emph{Alt} at the left of the space--bar on your keyboard.
+    \section{Getting started}
 
-  The notation \emph{MOD}--\emph{Key} means to press \emph{MOD}, hold
-  it and to press \emph{Key}.
+    Now it is time to start diving into the \wmii user experience. I suggest you
+    to try everything described by yourself immediately, instead of first reading
+    it, to avoid "memory leakage".  It is very helpful, if you print this
+    document on paper or have it available on a different screen, because you might not
+    be able to view it during your first steps in \wmii.
 
-  All key combinations may be freely configured, but for the sake of
-  simplicity I'll stick with the default bindings for this
-  introduction.  You may find out how to alter the bindings in the
-  section \ref{sec:scripting}.
+    Note, that the \emph{MOD} key I am referring to, may resemble
+    different keys on different systems. By default it the 
+    \emph{Mod1} or \emph{Alt} key in X11. Normally this is the key labelled with
+    \emph{Alt} on your keyboard.
 
-  \subsection{First steps}
-  \label{subsec:firststeps}
+    The notation \emph{MOD}--\emph{Key} means to press \emph{MOD} and 
+    \emph{Key} both at the same time.
 
-    You may now start your X session. Since it is the first time you
-    start wmii, a window with a little tutorial will show up. You are
-    free to read it, but you may also follow the beginners guide :-)
+    All key combinations can be freely configured, but for the sake of
+    simplicity I'll stick with the default key combinations for this
+    guide.  You will learn how to alter the bindings in the
+    section \ref{sec:scripting}.
+
+    The default key combinations heavily use the home row navigation keys
+    \emph{h} (left), \emph{j} (down), \emph{k} (up), and \emph{l} (right),
+    which are associated with the specific direction.
+
+    \subsection{First steps}
+    \label{subsec:firststeps}
+
+    Start your X session now. Since it is the first time you
+    start \wmii, a window with a little tutorial will show up. You are
+    free to read it, but you may also follow this guide :-)
 
     First of all, press \emph{MOD--Enter} to start an xterm. It will
-    take half of the vertical space, so you now have two equally big
+    take half of the vertical space, so you have two equally arranged
     windows. If you press \emph{MOD--Enter} again, you have three
-    windows that are equally big.
+    windows that are arranged equally.
 
-    To switch between the three windows, you may now press
+    To switch between the three windows, press
     \emph{MOD--j}, which cycles the focus between the three windows.
 
-    You may also press \emph{MOD--k} to switch to the window above or
+    You can also press \emph{MOD--k} to switch to the window above or
     \emph{MOD--j} to switch to the window below the current.
 
-    Now have a look at the title--bars of those windows. They show some
-    important information: the first term is the name of the tag of
-    the window. The following term shows the title of the window.
+    Now look at the title--bars of those windows. They display 
+    important information: the first label contains the tag of
+    the window. The second label displays the window's title.
 
-    The same information is also shown on the menu--bar. The first
-    things are names of the different tags you gave to your windows,
-    with the current view highlighted. On the right side it shows some
-    system status information like the load and the current time 
-    (see subsection~\ref{subsec:status} for details).
+    Similiar information is displayed in the status--bar at the bottom.  The
+    first labels display the tags currently in use and highlight the currently
+    selected view. On the right side some status information is displayed, by
+    default the system load and the current time (see
+    subsection~\ref{subsec:status} for details).
 
-  \subsection{Using columns}
+    \subsection{Using columns}
 
-    As you know wmii uses columns to align your windows. Even now,
-    that you didn't really see it your view already consists of one
-    maximised column. The next step is to create a new column.
+    As described earlier, \wmii uses columns to arrange your windows.
+    Your view already consists of a single column.
+    Next, you will create a new column.
 
-    In wmii columns are defined by its clients. Thus you need a client
-    to create a new column. That is why you may now focus a client of
-    your choice and press \emph{MOD--Shift--l}. As you see, wmii created
+    In \wmii columns always consists of at least a single client,
+    thus to create a new column, you need at least two clients at hand.
+
+    Now focus a client of your choice and press \emph{MOD--Shift--l},
+    which moves the client rightwards. As you see, \wmii creates
     a new column by dividing the view horizontally in two equally big
-    spaces. The last focused client has been put into the new column.
+    areas. The focused client has been moved into the new column.
 
-    If you close the last window of a column, the column will vanish
-    immediately. And when the last column is gone, the view will be
-    removed accordingly.
+    If you close the last client of a column, the column is destroyed
+    immediately. If the last client of the current view is closed,
+    the view will be removed accordingly as well.
 
-    It should be clear, that you really need at least two clients to
-    have two columns.
+    If you press \emph{MOD--j} to change focus, you will see that \wmii
+    actually cycles the focus in the current column only.
 
-    If you press \emph{MOD--j} to change focus, you will see that wmii
-    actually cycles the focus in the current column only. That is why
-    you need commands to change the current column.
+    To change the focus to a different column, you can press \emph{MOD--l}
+    (right) and \emph{MOD--h} (left) respectively.
 
-    In wmii you may use \emph{MOD--l} to change to the column on the
-    right and \emph{MOD--h} to change to the column on the left.
+    It is also possible to swap adjacent clients among columns. To swap
+    clients leftwards, press \emph{MOD--Control--h}. To swap clients
+    rightwards, press \emph{MOD--Control--l}.
 
-    It is also possible to make a client swap columns. To move a
-    client to the column on the left, press \emph{MOD--Control--h} and
-    to move it to the right column, press \emph{MOD--Control--l}.
+    \subsection{What about layouts?}
 
-  \subsection{What about layouts?}
+    Layouts arrange clients in a column. They are related to a single
+    column.  Thus it is possible to have different columns in one view, each
+    using another layout.
 
-    Layouts are different methods of how to align windows in a
-    column. They apply only to one column each. Thus it is possible to
-    have different columns in one view, each having another layout.
+    The default layout arranges each client of the column with equally
+    vertical space. You can enable this layout with \emph{MOD--d}
+    (where the ``d'' stands for default) explicitly.
 
-    The default layout is to give each client in the column equally
-    much vertical space. You may enable this layout with \emph{MOD--d}
-    (where the ``d'' stands for default).
+    The stacking layout can be enabled with \emph{MOD--s}.  As you see now,
+    there is only one client using as much space as possible, and only
+    title--bars of the other clients displayed in the column. You can 
+    switch between the clients in the column using \emph{MOD--j}.
 
-    Another layout is the stacked layout. You enable stacking by
-    \emph{MOD--s}. As you see now, there in only one client using as
-    much space as possible, whereas you only see the title--bars of the
-    other clients in the column. You may still switch between the
-    clients in the column using \emph{MOD--j}.
+    The max-layout maximizes all clients to the same geometry as the column.
+    Only the focused client is displayed at a time, all other clients
+    are behind it. You can switch between the clients with \emph{MOD--j}.
 
-    The third layout is the max-layout, which maximises all the
-    clients to use all the space in the column each. Only the focused
-    client is visible and the other are hidden behind. You may still
-    switch between those clients with \emph{MOD--j}.
+    \subsection{Floating layer}
 
-  \subsection{Float pages}
+    To handle clients in the classical way, like in conventional window
+    managers, the so-called ``floating layer'' is used. Actually there are a
+    bunch of clients which don't fit well into the tiled world, because they
+    have been designed with the conventional window management in mind,
+    for instance clients like the Gimp or xmms.
 
-    You may have asked yourself how classical clients, consisting of
-    multiple windows fit into the picture.
+    While \wmii is a dynamic window manager, which does the window arrangement
+    for you automatically, those old fashioned programs rely on the
+    conventional window managing concept, where all the clients fly around on
+    your desktop and you are forced to constantly order the mess.
 
-    Well, they don't. But wmii has a solution to make the usable
-    nevertheless. For clients like the Gimp or xmms there is a special
-    mode, which has completely different semantics.
+    To attach such broken clients to the floating layer, you can toggle the
+    focus between floating and managed layer through pressing \emph{MOD--Space}.
+    The \emph{MOD--Shift--Space} shortcut toggles the focused window between
+    floating and managed layer.
 
-    While wmii is a dynamic window manager, which really takes all the
-    work of positioning and aligning clients from you, those old
-    fashioned programs rely on the old window managing concept, where
-    all the clients fly around on the desktop and the user has to tell
-    them where to stay. We have the term floating windows for this
-    rule.
+    Note, the floating layer is addressed as the zeroth-column internally.
 
-    To come to the point: wmii also allows you to use floating
-    clients. You may toggle your focus between floating and column 
-    modes by pressing \emph{MOD--Space}. While \emph{MOD--Shift--Space}
-    toggles the focused window between floating and column modes .
+    \subsection{Tags}
 
-    As a side note, this floating mode is actually the zeroth column
-    internally. That is why there is not much special internal
-    handling needed.
+    Up to now all your clients were tagged with ``1'', and you only had
+    this single view. But a single view does not scale well, once
+    too many clients appear which are used for different unrelated tasks.
+    Thus you might want to have a view per task, e.g. a view
+    with your editor and your programming tools, another view 
+    with your browser, and a third view with your music jukebox.
 
-  \subsection{Tags}
+    The good news is, that the tagging concept provides a very dynamic way to
+    achieve such kinds of grouping.
 
-    Up to now all your clients had the tag ``1'', and you only had
-    this one view. It is obvious that having only one view might
-    become a problem if there are too many clients cluttering it and
-    making it a pure mess. Also you might want to have a view with
-    your editor and your programming tools and another with your
-    browser and a third with your music jukebox.
-
-    The good news is, that with the concept of tags and views this is
-    actually possible.
-
-    You may give the focused client another tag by pressing
+    You can give the focused client another tag by pressing
     \emph{MOD--Shift--Number}, number being one of the numbers 0 to 9.
 
-    You can then switch views by pressing \emph{MOD--Number}.
+    You can then switch views through pressing \emph{MOD--Number}.
 
-    Whenever a new client is created, it automatically gets the tag of
-    the current view.
+    Normally, whenever a new client appears, it automatically inherits the tag
+    of the currently selected view.
 
-  %% TODO: better tag handling (this is about to change in wmii till 
-  %%version 3)
+    %% TODO: better tag handling (this is about to change in \wmii till 
+    %%version 3)
 
-    For the moment I just tell you, that there are further
-    possibilities with tags, but they are mostly accessible with
-    advanced techniques, you will learn in the next chapter. You will
-    then be able to assign multiple tags to one client and to use
-    proper strings as tags.
+    Note, there are more powerful uses of tags you will learn about in the next
+    chapter. You will then be able to assign multiple tags to one client and to
+    use proper strings as tags.
 
-  \subsection{How do I close a window?}
+    \subsection{How do I close a window?}
 
-    Well, first of all every X-client should have an option to close a
-    window. But --as Murphy said-- the world isn't like it should
-    be. Thus, the window manager has to provide a fix for this. In
-    wmii, we abandoned silly title-bar buttons and created a shortcut
-    \emph{MOD--Shift--c} to close a window.
+    Most X-clients have a menu option or button to be closed. For the rare
+    cases they don't provide a mouse-driven way, like in most terminals,
+    you can press \emph{MOD--Shift--c} to close a window.
 
-  \subsection{How do I start programs?}
+    \subsection{How do I start programs?}
 
-    You may start programs out of an xterm. But in wmii, there is a
-    special program launcher, which is accessible per
-    \emph{MOD--p}. Please note, that the logic behind this program
-    launcher is mainly implemented in a shell--script.
+    You may start programs from a terminal. But \wmii contains a special
+    keyboard-driven program menu, which is accessible through pressing
+    \emph{MOD--p}. Please note, that the content of this menu is provided by a
+    simple shell--script.
 
-    You will see a list of programs. If you now start to type, the
-    launcher will cut that list to only show programs whose names
-    include the letters you typed (in that order). Whenever there is
-    only one option left, the launcher chooses it and you can start it
+    You will see a list of programs. If you start typing, the
+    menu will cut the list and only display items which match
+    the input you entered so far (in that order). Whenever there is
+    only one item left, the menu highlights it and you can start it
     by pressing \emph{Enter}. You are free to cancel any action by
     pressing \emph{ESC}.
 
     Thus, if you want to start firefox, just type ``fire'' and press
     enter~\footnote{On my system it is sufficient to type ``efo'' to
-    start firefox;-)}.
+      start firefox;-)}.
 
-  \subsection{How do I quit wmii?}
-    You may quit wmii, by using the action's menu (\emph{MOD--a})
+    \subsection{How do I quit wmii?}
+    You can quit \wmii, by using the action's menu (\emph{MOD--a})
     and selecting the action ``quit'. That's all.
     
-\section{Looking under the hood}
+    \section{Looking under the hood}
 
-  In this chapter you will learn how wmii was designed, which ideas
-  the wmii developers followed and how it was implemented.
+    In this chapter you will learn how \wmii was designed, which ideas
+    the \wmii developers followed and how it was implemented.
 
-  \subsection{Dynamic window management}
+    \subsection{Dynamic window management}
 
-    Wmii was designed around the new idea of dynamic window
-    management. Dynamic window management means, that the window
-    manager should make all the decisions about where to place a new
-    client itself, thus taking all the extra work from the user and
-    letting him concentrate on his work.
+    \wmii was designed around the new idea of dynamic window management.
+    Dynamic window management means, that the window manager should make all
+    decisions about window arrangement, thus taking most extra work away
+    from the user and letting him concentrate on his work. This can also be
+    seen as tacit window management.
 
-  \subsection{Modularity -- using distinct tools for distinct tasks}
+    \subsection{Modularity -- using distinct tools for distinct tasks}
 
-    The developers of wmii know about the most powerful ideas of
+    The developers of \wmii know about the most powerful ideas of
     Unix. One of them is the idea to use distinct tools for distinct
-    tasks. By carefully designing the window manager, we were able to
-    split the task into two smaller binaries, each with a distinct
+    tasks. By carefully designing the window manager, they were able to
+    split the task into several smaller binaries, each with a distinct
     job.
-  
-  \subsection{The glue that puts it all together -- 9P}
+    
+    \subsection{The glue that puts it all together -- 9P}
 
-    Programs in Unix have several different possibilities to exchange
-    information, the most powerful being sockets.
+    Programs in the Unix world usually communicate via buffers which are
+    addressed by (file) descriptors, one of them are sockets.
 
-    To create a lightweight but powerful communication protocol, we
-    looked closely at the design of Plan9 and chose the 9P2000
+    To create a lightweight but powerful communication protocol, the \wmii
+    developers closely looked at the design of Plan9 and chose the 9P
     protocol.
 
-    The basic ideas for configuring and running wmii were taken from
-    Plan9 too. Like in Plan9, everything configurable in wmii has a
-    file--like interface, so everything is accessed consistently Thus,
-    if you want to interact with a running wmii, you may access those
-    files either using the shipped tool \emph{wmiir} or -- if you use
-    9P2000 -- you may also mount the virtual file--system of wmii under
-    some directory in the hierarchy maintained by the OS kernel.
-
-  \subsection{Tools}
-
-    This section gives a little overview of the tools that come wmii,
-    but for more detailed explanations you should read the man page of
-    each tool, that comes with wmii.
-  
-  \begin{description}
-  
-  \item
-    \emph{wmiir} is a little tool we use to alter the files in the
-    virtual file--system of wmii. It basically has four operations:
-
-    \begin{itemize*}
-    \item read
-    \item write
-    \item remove
-    \item create
-    \end{itemize*}
-
-    Wmiir needs to know the address of the file-system to work
-    on, so on startup wmii sets the environment variable 
-    \verb+WMII_ADDRESS+ to make sure any tool wanting to
-    communicate with wmiiwm know it's file--system address.
-    This address can be:
-    \begin{itemize*}
-      \item a  local unix address given with \verb+unix!/path/to/socket+ 
-      \item a tcp address given with \verb+tcp!hostname:port+ 
-    \end{itemize*}
+    The basic ideas for configuring and running \wmii were taken from
+    the Acme user interface for programmers of Plan 9. Similiar to Acme,
+    \wmii provides a filesystem-interface, which can be accessed by
+    9P clients. This allows to interact with any different kind of
+    application through a file system interface, which might be implemented
+    in any programming language of choice. This also avoids to force
+    client programmers to a specific programming language or paradigm.
     
-    If you want to work on another file--system, you may specify it
-    manually with the switch \emph{-a  address}. A sample invocation
-    would look like the following:
-    \begin{verbatim}
-      wmiir read /
-    \end{verbatim}
-    This command actually prints the root of the virtual file-system
-    of wmii.
+    The interface of \wmii can be compared to the \emph{procfs} file
+    system of the Linux kernel.
 
-  \item
-    \emph{wmiimenu} is a generic X11 menu. It is highly adaptable,
-    efficient and supports user-defined contents. You may want to
-    learn more about it by reading the man-page.
+    If you want to interact with a running \wmii process, you can access its 9P
+    file-system service through either using the bundled tool \emph{wmiir} or
+    the 9P2000 kernel module of a Linux kernel later than 2.4.16+.  Using the
+    kernel module has the advantage to mount the filesystem of \wmii into your
+    file system hierarchy directly, though it has the drawback that this need
+    \emph{root} privileges.
 
-  \item
-    \emph{wmiiwarp} is a little tool to position the mouse pointer to
-    different places. It only takes two coordinates as arguments.
+    \subsection{Tools}
 
-  \item
-    \emph{wmiiwm} is the main window manager binary. You may interact
-    with its virtual file-system only.
+    This section provides a basic overview about the tools which are bundled
+    with \wmii. But for a more detailed description, you should read the associated
+    man page of the specific tool.
+    
+    \begin{description}
+      
+    \item
+      \emph{wmiir} is a small tool we is used to access the
+      virtual file--system service of \wmii remotely. It basically supports four
+      operations:
 
-  \item
-    \emph{wmiipsel} prints the contents of the X clipboard to
-    STDOUT. This is useful for scripts.
+      \begin{itemize*}
+      \item read
+      \item write
+      \item remove
+      \item create
+      \end{itemize*}
 
-  \end{description}
+      wmiir needs to know the address of the file-system service to work
+      with. On startup, \wmii exports the \verb+WMII_ADDRESS+ environment variable,
+      which points to the address of the file-system service of wmii.
+      This address can be:
+      \begin{itemize*}
+      \item a local unix socket address like \verb+unix!/path/to/socket+ 
+      \item a tcp-capable socket address like \verb+tcp!hostname:port+ 
+      \end{itemize*}
+      
+      If you want to work on a different file--system, you may specify it
+      manually with the \emph{-a  address} command line option.
+      A sample invocation looks like:
+      \begin{verbatim}
+        wmiir read /
+      \end{verbatim}
+      This command actually prints the contents of the root directory of the
+      virtual file-system of \wmii.
 
-  \subsection{Conclusion}
+    \item
+      \emph{wmiimenu} is a generic keyboard--driven menu, which matches items
+      through providing patterns.  You may want to learn more about it by reading
+      the man-page.
 
-    By having the virtual file-system and a lightweight protocol to
-    fit our tools together, we are now able to fully script our window
-    manager. You will see some examples in the section
+    \item
+      \emph{wmiiwarp} is a tiny tool to warp the mouse pointer at specific
+      coordinates on your screen.
+
+    \item
+      \emph{wmiiwm} is the main window manager binary. You may interact
+      with its virtual file-system only.
+
+    \item
+      \emph{wmiipsel} prints the contents of the current X selection to
+      STDOUT. This is useful for scripts.
+
+    \end{description}
+
+    \subsection{Conclusion}
+
+    The virtual file-system service of \wmii and the tools presented enable
+    you to fully control the window manager from scripts.
+    You will see some examples in the next section
     \ref{sec:scripting}.
 
-\section{Scripting wmii}
-\label{sec:scripting}
+    \section{Scripting wmii}
+    \label{sec:scripting}
 
-  In this chapter you will see how to script wmii. I will give you
-  some notes so you can start scripting on your own.
+    In this chapter you will see how to control \wmii through scripts. I will
+    give you some pointers, that you can start scripting on your own.
 
-  \subsection{Language}
+    \subsection{Language}
 
-    As you've seen the only requirement for interacting with wmii is
-    to do operations on wmii's file-system hierarchy, and the easiest
-    way to do this need is by using wmiir, so shell scripting is the
-    easiest way of adapting wmii too fit your needs.
+    As mentioned earlier, the only requirement for interacting with \wmii is to
+    access its file-system service. The easiest way to do this, is by using
+    the wmiir tool. Thus shell scripts are the easiest way of adapting \wmii
+    too fit your needs.
 
-    Given the above, you may script wmii in any programming language
-    you want. However, wmii's default scripts are written in a subset
-    of ``sh'' that is POSIX compliant so wmii is \emph{portable}.  As
-    we don't need more complexity and wanted to give examples that
-    worked everywhere without dependencies on python, tcl, ruby, \dots
-    thus the following examples will stick with the well known ``sh''.
-
-% - who doesn't have a shell?, extra! we're giving them for free this week
-
-  \subsection{Actions}
-
-    In wmii you may group certain tasks into \emph{actions}. Actions
-    are nothing more than simple scripts which are located either in
-    your local or in the default wmii configuration
-    directory~\footnote{ \texttt{\$CONFPREFIX} is set in
-    \emph{config.mk} and by default points to \texttt{/usr/local/etc}
-    or \texttt{\~{}/.wmii-3} if you have such a directory}.
-    By pressing \emph{MOD-a} you can open the actions-menu. If works
-    similar to the program launcher, but only shows actions.
-
-    You might want to add your own actions by writing shell scripts
-    and putting them into the right directory.  For this you should
-    place a copy of the default action from the default wmii
-    configuration directory to your \texttt{\~{}/.wmii-3}, this way
-    your local copy will be executed instead.
+    Hence, you can control \wmii in any programming language you want. However,
+    \wmii's default scripts are written in a subset of ``sh'' that is POSIX
+    compliant, to keep \wmii as \emph{portable} as possible.
     
-    This works because in the \emph{wmii} launcher script alters and
-    exports the variable \verb+$PATH+ as\\
-    \verb+$PATH=~/.wmii-3:$CONFPREFIX/wmii:$PATH+ before
+    To keep simplicity, the following examples will stick to ``sh'' as well,
+    and don't depend on python, tcl, ruby, \dots 
+
+    % - who doesn't have a shell?, extra! we're giving them for free this week
+
+    \subsection{Actions}
+
+    In \wmii you may group certain tasks into \emph{actions}. Actions
+    are nothing more than simple scripts which are located either in
+    your local or in the default \wmii configuration
+    directory~\footnote{ \texttt{\$CONFPREFIX} is set in
+      \emph{config.mk} which points to \texttt{/usr/local/etc}
+      or \texttt{\$HOME/.wmii-3} by default}.
+    Through pressing \emph{MOD-a} you can open the actions-menu. It works
+    similar to the program menu, but only displays actions.
+
+    You might want to add your own actions through writing shell scripts in the
+    default \wmii configuration directory or in the \texttt{\$HOME/.wmii-3}.
+    
+    This works, because in the \wmii controlling script exports the variable
+    \verb+$PATH+ as\\ \verb+$PATH=~/.wmii-3:$CONFPREFIX/wmii:$PATH+ before
     launching the wmiiwm, this way local user actions under
     \verb+~/.wmii-3+ take precedence over the defaults from
     \verb+$CONFPREFIX/wmii+ of the default actions.
     
     You may edit this file on the fly, which means you don't need to
-    stop wmii before editing. After you've finished editing, you may
-    simply run wmiirc and the changes will take effect, to do so just
-    open the actions menu (via \emph{MOD-a}) and choose the
-    \emph{action}. It's also possible launch wmii actions directly
-    from an xterm (or similar terminal emulator program), this is a nice
-    side effect that results of exporting \verb+$PATH+ in the wmii 
-    startup script.
+    stop \wmii before editing. After you've finished editing, you may
+    simply run wmiirc and the changes will take effect immediately.
+    To do so, just open the actions menu (with pressing \emph{MOD-a}) and
+    choose the \emph{wmiirc} action. It's also possible to launch \wmii actions
+    directly from a terminal, which is a neat side effect that results from
+    exporting \verb+$PATH+ in the \wmii startup script.
 
-  \subsection{wmiirc}
-  
-    \emph{wmiirc} is a special ``sh''-script which is run on startup
-    of wmii, it's name is the result of ${}wmiirc=wmii+rc$~\footnote{
-    see \hrefx{http://en.wikipedia.org/wiki/Rc}.}  , so as it's name
-    says takes care of running a set of commands for configuring
-    wmii. It does so by setting up the initial file-system, writing
-    some values to certain files and then enters the handling event
-    loop to react on events like key-presses, mouse clicks or
-    artificial events.
+    \subsection{wmiirc}
     
-    For the basic configuration of wmii, as changing the default
-    modifier key \emph{MOD=Mod1} or the navigation keys (by default
-    the \emph{hjkl} vim home row) this is probably the place to look
-    at.
+    \emph{wmiirc} is a special ``sh''-script which is launched on startup
+    of \wmii to take care of configuring and controlling \wmii.
 
-  \subsection{Changing the looks}
+    It does so through writing data to several files of the virtual \wmii
+    file-system, and through reading events reported by \wmii during runtime.
+    Events are mostly shortcut presses, mouse clicks or user-defined.
+    The events are processed in a loop in the script.
+    
+    Thus, for the basic configuration of \wmii, like changing the default
+    modifier key \emph{MOD=Mod1} or the navigation keys this script is
+    the place to look at.
 
-    The look of wmii-3 is determined by colours only. And because we
-    wanted small and unimportant things to be as unobstrusive as
-    possible, we used another virtue of unix: \emph{Environment
-    variables}.
+    The name \emph{wmiirc} means \wmii \emph{run command}, because ``rc'' is an
+    old Unix abbreviation for ``run command''.
+
+    \subsection{Changing the style}
+
+    The style of \wmii --3 is defined through font and color values, which are
+    unobstrusively exported with the following \emph{environment variables}.
 
     \begin{verbatim}
       WMII_SELCOLORS='#000000 #eaffff #8888cc'
@@ -643,26 +643,24 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
       WMII_FONT=static
     \end{verbatim}
 
-    \verb+WMII_SELCOLORS+ define the colours of the selected clients
-    window title and border, whereas \verb+WMII_NORMCOLORS+ defines
-    the colours of all the other clients. The numbers are hexadecimal
-    rgb, which you might know from HTML. You might get them with the
-    Gimps colour-chooser.
+    \verb+WMII_SELCOLORS+ defines the colors of the selected client's window
+    title and border, whereas \verb+WMII_NORMCOLORS+ defines the colors of all
+    unselected clients. The numbers are hexadecimal rgb tuple-values, which you
+    might know from HTML. You can grab them with the Gimps color-chooser for instance.
 
-    The definitions are as follows: the first is the colour of the
-    strings in bars and menus. The second is the main colour of bar
-    borders, whereas the third defines the borders and is used for the
-    3D-effects of title-bars and menus.
+    The first color defines the text color of strings in bars and menus.
+    The second color defines the background color of bars and clients, and
+    the third color defines the 1px borders surrounding bars and clients.
 
-    \verb+WMII_FONT+ accepts font names or full font strings, which
-    you might get from xfontsel. It defines the font to be used in
-    titlebars, status-bar and in wmiimenu.
+    \verb+WMII_FONT+ defines the font which should be used for drawing text.
+    in title--bars, the status--bar, and the wmiimenu.
+    You can query for different fonts using \emph{xfontsel} for instance.
 
-  \subsection{Filling the status-bar}
+    \subsection{Filling the status--bar}
     \label{subsec:status}
     
-    The status bar of wmii has it's own directory \verb+/bar+ with
-    one subdirectory for each of the labels created. So while editing
+    The status bar of \wmii has it's own \verb+/bar+ directory with
+    a subdirectory for each of the labels created. So while editing
     this document my status-bar looked like:
 
     \begin{verbatim}
@@ -671,7 +669,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
       d-r-x------ salva salva     0 Mon Apr 17 14:19:51 2006 2
       d-r-x------ salva salva     0 Mon Apr 17 14:19:51 2006 status
     \end{verbatim}
-  
+    
     At the same time each of the subdirectories contains two files,
 
     \begin{verbatim}
@@ -681,24 +679,23 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     \end{verbatim}
 
 
-    The first file contains the colour definitions that control how the
-    bar will be painted (appearance), while the second holds the data
-    to show (content).
+    The first file contains the color definitions that control how the
+    bar will be drawn, while the second contains the data
+    which is displayed.
     
-    So you can start your own experiments by creating a new label, and
+    Now you can start your own experiments by creating a new label, and
     exploring and modifying it by reading \& writing values to it's
     \verb+colors+ \& \verb+data+ files.  A nice feature of the bar
     (and clients) is that they generate events corresponding to mouse
-    clicks on them.  So you can open a terminal and launch
-    \verb+wmiir read /event+ and and see how the events are generated
-    when you click the bar, this is a mechanism that allows
-    controlling applications directly from the bar, when you've
-    finished, and don't need the \verb+foo+ label anymore, just issue
-    a \verb+wmiir remove /bar/foo+.
-  
-    If you want to know more take a look at the status script and have
-    a look at the pages at \hrefx{http://wmii.de} for good examples,
-    like the following:
+    clicks on them.  You can open a terminal and run
+    \verb+wmiir read /event+ to see how the events are generated
+    when you click onto the status--bar. This is a mechanism that allows
+    controlling applications directly from the bar. If you've
+    finished and you want to get rid of your label,
+    a \verb+wmiir remove /bar/foo+ command.
+    
+    If you want to learn more, take a look at the status script and 
+    visit \hrefx{http://wmii.de} for good examples, like the following:
 
     \begin{itemize*}
     \item \emph{status}: monitoring remaining battery, temperature, \dots on laptops
@@ -706,303 +703,303 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     \item \emph{status-load}: show the machine load
     \item \emph{status-net}: monitoring wireless network signal
     \end{itemize*}
-  
-    And last read the default status script and ask yourself: what
-    does it do?  \verbatiminput{../rc/status} The first line is a
-    \verb+xwrite+ function declaration, to save us from typing a lot
-    by issuing a write over the file named by first argument. The
-    following 3 lines take care of creating and setting up the
-    \verb+status+ label. And the last section is a \verb+while+ loop
-    that \emph{tries} to write the machine's load and date information
+    
+    Now open the default status script and try to understand yourself,
+    how it works \verbatiminput{../rc/status}. The first line is a handy
+    \verb+xwrite+ function declaration, to prevent you from several verbosity
+    when issuing a write to some file. The following 3 lines take care of
+    creating and setting up the \verb+status+ label. The last section is a
+    \verb+while+ loop
+    that \emph{tries} to write the system load and date information
     to the bar.\\
-  
-    The tricky bit here is \emph{tries}, so what could make the write
+    
+    The tricky bit is, that it \emph{tries}. So what could make the write
     fail? If \verb+xwrite+ tried to write to a non existent (removed)
     label, then it would fail, thus the condition of the loop would be
-    false, and the status script would end cleanly, which makes sense
-    because who wants a program that updates a nonexistent label.\\
+    false, and the status script exits cleanly, which makes sense
+    because nobody wants a program that updates a nonexistent label.\\
 
-    Now if we go back to the first lines of the script you can see
+    Now go back to the first lines of the script, and note 
     that there is a \verb+sleep delay+ between the removal of the
     label and it's creation.
-  
-    This ensures that the \verb+status+ label will not exist, so all
-    the writes made from a any previously running \verb+status+ script
-    to it will fail, so they will finish. This way we make sure that
-    we only run one at each time.  And thus we keep the one-to-one
-    correspondence between label and status script.\\
-  
-    Now if you think that was neat, go to a public library and pick up
-    a copy of for example: \href{http://tpop.awl.com}{The Practice of
-    Programming} (recall I don't get a cent for this).
-  
-  \subsection{Assigning new tags}
-  
-    As I told you before, you can do much more things with tags than
-    what you can do with the standard key-bindings. You might use any
-    string as a tag. You may even use more than one tag per client. To
-    do so, you have to separate the tags with a `` ''.
+    
+    This ensures that the \verb+status+ label will not exist, hence all
+    the writes made from any previously running \verb+status+ script
+    will fail, thus they will finish. This way we make sure that
+    we only run one status script at each time.  And thus we keep the
+    one-to-one correspondence between label and status script.
+    
+    \subsection{Assigning new tags}
+    
+    As mentioned before, you can achieve more poweful things with tags, than
+    with the standard key-bindings. You might use any string as a tag. You may
+    even use more than one tag per client. To do so, you have to separate the
+    tags with a ``+''.
 
     \begin{verbatim}
-      echo -n web code | wmiir write /view/sel/sel/tags
+      echo -n web+code | wmiir write /view/sel/sel/tags
     \end{verbatim}
 
     This command would give the current focused client the tags
     ``web'' and ``code''.
     
-    You may now go to the new view web by executing the following:
+    You can now view the ``web'' tag by executing the following:
 
     \begin{verbatim}
       echo -n view web | wmiir write /ctl
     \end{verbatim}
 
-    As the development of wmii-3 progressed, it became clear that this
+    As the development of \wmii --3 progressed, it became clear that this
     action is so common, that it got its own keybinding. By default
     \emph{MOD-t} brings up a menu to choose a view and
     \emph{MOD-Shift-t} brings up a menu enabling you to assign new
     tags to the focused client.
 
-% TODO:
-% I would also like to put/see a recommended readings or bibliography
-% section this will be of course biased by my use of plumber and acme
-% from p9p but i think it's worth mentioning both them here. similar to:
-% http://wmii.de/contrib/guide-es/beginnersguide/node10.html
+    % TODO:
+    % I would also like to put/see a recommended readings or bibliography
+    % section this will be of course biased by my use of plumber and acme
+    % from p9p but i think it's worth mentioning both them here. similar to:
+    % http://wmii.de/contrib/guide-es/beginnersguide/node10.html
 
-\section{The End}
-\label{sec:end}
+    \section{The End}
+    \label{sec:end}
     
-  We hope this has eased your way through wmii, because this is the
-  purpose of this document and so, if you've seen something that you
-  think is wrong, confusing or missing in this document, feel free
-  to drop us a note:
+    We hope this helps you getting used to \wmii.
+    If you've seen something that you think is wrong, confusing or missing in
+    this document, feel free to drop us a note:
 
-  Contact information is to be found here:
-  \href{http://wmii.de/index.php/BeginnersGuide}{direct mail},
-  \href{http://wmii.de/index.php/MailingList}{[wmii]} mailing-list,
-  \href{http://wmii.de/index.php/IRC}{\#wmii} irc channel or even
-  with smoke signals~\footnote{ but don't ask us for advice, here
-  you're on your own \texttt{;-P}.}.
+    Contact information is to be found here:
+    \href{http://wmii.de/index.php/BeginnersGuide}{direct mail},
+    \href{http://wmii.de/index.php/MailingList}{[wmii]} mailing-list,
+    \href{http://wmii.de/index.php/IRC}{\#wmii} irc channel or even
+    with smoke signals~\footnote{ but don't ask us for advice, here
+      you're on your own \texttt{;-P}.}.
 
-  Also remember that wmii is written by people with taste, so most
-  of the decisions made have strong reasons supporting them, so if
-  you think something doesn't make sense or doesn't fit into the
-  picture, just try to understand it by yourself first before
-  asking, probably you'll end up learning a lot and if its really
-  wrong in the end, you'll provide us with much better feedback to
-  solve the issue.
+    Also remember that \wmii is written by people with taste, so most
+    of the decisions made have strong reasons supporting them, so if
+    you think something doesn't make sense or doesn't fit into the
+    picture, just try to understand it by yourself first before
+    asking, probably you'll end up learning a lot and if its really
+    wrong in the end, you'll provide us with much better feedback to
+    solve the issue.
 
-\newpage
+    \newpage
 
-\section{Appendix}
-\label{sec:appendix}
+    \section{Appendix}
+    \label{sec:appendix}
 
-\subsection{filesystem}
+    \subsection{filesystem}
 
-\begin{description}
+    \begin{description}
 
-\item [/bar]
-\begin{itemize*}
-\item the bar namespace
-\item to add a label, create /bar/\verb+label+ (this automatically creates the
-\verb+colors+ and \verb+data+ files.
-\item to delete it, remove /bar/\verb+label+
-\end{itemize*}
+    \item [/bar]
+      \begin{itemize*}
+      \item the bar namespace
+      \item to add a label, create /bar/\verb+label+ (this automatically creates the
+        \verb+colors+ and \verb+data+ files.
+      \item to delete it, remove /bar/\verb+label+
+      \end{itemize*}
 
-\item [/bar/label]
-\begin{itemize*}
-\item each bar has it's own namespace which is named according to it's 
-label
-\item label can be any arbitrary string
-\end{itemize*}
+    \item [/bar/label]
+      \begin{itemize*}
+      \item each bar has it's own namespace which is named according to it's 
+        label
+      \item label can be any arbitrary string
+      \end{itemize*}
 
-\item [/bar/label/data]
-\begin{itemize*}
-\item the data written to the label \verb+label+
-\end{itemize*}
+    \item [/bar/label/data]
+      \begin{itemize*}
+      \item the data written to the label \verb+label+
+      \end{itemize*}
 
-\item [/bar/label/colors]
-\begin{itemize*}
-\item the colours of the bar
-\end{itemize*}
+    \item [/bar/label/colors]
+      \begin{itemize*}
+      \item the colors of the bar
+      \end{itemize*}
 
-\item [/clients]
-\begin{itemize*}
-\item the clients namespace
-\end{itemize*}
+    \item [/client]
+      \begin{itemize*}
+      \item the clients namespace
+      \end{itemize*}
 
-\item [/clients/n]
-\begin{itemize*}
-\item every client, including ones not shown in the view has a namespace here
-\item \verb+n+ is a non-negative interger and clients are numbered oldest first
-\end{itemize*}
+    \item [/client/n]
+      \begin{itemize*}
+      \item every client, including ones not shown in the view has a namespace here
+      \item \verb+n+ is a non-negative interger and clients are numbered oldest first
+      \end{itemize*}
 
-\item [/clients/n/class]
-\begin{itemize*}
-\item a file containing the class:instance information for client \verb+n+
-\end{itemize*}
+    \item [/client/n/class]
+      \begin{itemize*}
+      \item a file containing the class:instance information for client \verb+n+
+      \end{itemize*}
 
-\item [/clients/n/ctl]
-\begin{itemize*}
-\item control file for client \verb+n+
-\item accepted commands:
-\begin{itemize*}
-\item kill (removes client)
-\item sendto \verb+area|prev|next|new+
-\item swap \verb+up|down|prev|next+
-\end{itemize*}
-\end{itemize*}
+    \item [/client/n/ctl]
+      \begin{itemize*}
+      \item control file for client \verb+n+
+      \item accepted commands:
+        \begin{itemize*}
+        \item kill (removes client)
+        \item sendto \verb+area|prev|next|new+
+        \item swap \verb+up|down|prev|next+
+        \end{itemize*}
+      \end{itemize*}
 
-\item [/clients/n/geom]
-\begin{itemize*}
-\item the window geometry of client \verb+n+
-\item displayed as four blank seperated integers (x y width height?) 
-\end{itemize*}
+    \item [/client/n/geom]
+      \begin{itemize*}
+      \item the window geometry of client \verb+n+
+      \item displayed as four blank seperated integers (x y width height?) 
+      \end{itemize*}
 
-\item [/clients/n/name]
-\begin{itemize*}
-\item the name of client \verb+n+ as it's seen by wmii (displayed in the tagbar)
-\end{itemize*}
+    \item [/client/n/index] contains the client's index in the /client namespace, in this case n
 
-\item [/clients/n/tags]
-\begin{itemize*}
-\item a plus(+)-seperated list of tags to which client \verb+n+ is related 
-\end{itemize*}
+    \item [/client/n/name]
+      \begin{itemize*}
+      \item the name of client \verb+n+ as it's seen by \wmii (displayed in the tagbar)
+      \end{itemize*}
 
-\item [/ctl]
-\begin{itemize*}
-\item the wmii control file and command interface
-\item accepted commands:
-\begin{itemize*}
-\item quit
-\item retag
-\item view \verb+tag+
-\end{itemize*}
-\end{itemize*}
+    \item [/client/n/tags]
+      \begin{itemize*}
+      \item a plus(+)-seperated list of tags to which client \verb+n+ is related 
+      \end{itemize*}
 
-\item [/def]
-\item [/def/border] width of the border around clients
-\item [/def/font] the font used by wmii (an xlib font name)
-\item [/def/keys] a newline seperated list of the keys to be watched by wmii
-\item [/def/rules] 
-\begin{itemize*}
-\item a newline seperated list of rules to specify how to automatically tag clients
-\item matches against the class.instance valuas of a client
-\item syntax: \verb+/$regex/ -> $tag+ (tag might be \~{} to indicate floating mode
-\end{itemize*}
+    \item [/ctl]
+      \begin{itemize*}
+      \item the \wmii control file and command interface
+      \item accepted commands:
+        \begin{itemize*}
+        \item quit
+        \item retag
+        \item view \verb+tag+
+        \end{itemize*}
+      \end{itemize*}
 
-\item [/view]
-\begin{itemize*}
-\item a manifestation of the collection of clients associated with a specifiy 
-tag or tags
-\end{itemize*}
-
-\item [/view/area]
-\begin{itemize*}
-\item each area has its own namespace in the current view
-\item the areas are numbered starting with 0
-\item 0 is always the floating area, the others are columns
-\end{itemize*}
-
-\item [/view/area/ctl]
-\begin{itemize*}
-\item accepted commands:
-\begin{itemize*}
-\item select \verb+client|prev|next+
-\item client refers to the client number relative to the number and
-age of the clients in \verb+area+
-\end{itemize*}
-\end{itemize*}
-
-\item [/view/area/mode] the current layout for the area, equal, stack or max
-\item [/view/area/sel] the selected client of the area
-\item [/view/area/client] the namespace for each client in \verb+area+
-\item [/view/ctl] accepted commands: select \verb+area|prev|next|toggle+
-\item [/view/sel] the selected area in workspace
-\item [/view/tag] the tag which is common to all clients in the workspace
-
-\end{description}
-
-\newpage
-
-\subsection{keybindings}
-Here are the default keybindings. \verb+$MODKEY+ is a placeholder, which is
-usually mapped to Mod1 or Alt.
-\begin{table}[h]
-\begin{tabular}{|l|l|}
-\hline % Puts in a horizontal line 
-Keybinding &Action \\ %Table Headers , columns seperated by &,
-                            %rows ended by \\
-\hline 
-\hline 
-Moving Focus&\\
-\verb+$MODKEY+-h&move focus to prev column \\
-\verb+$MODKEY+-l&move focus to next column \\
-\verb+$MODKEY+-j&move focus to next client in column \\
-\verb+$MODKEY+-k&move focus to prev client in column \\
-\verb+$MODKEY+-space&toggle to/from floating column 0 \\
-\verb+$MODKEY+-[0-9]&select tag/view [0-9] \\
-Moving Clients&\\
-\verb+$MODKEY+-Control-h&swap client with last client of prev column \\
-\verb+$MODKEY+-Control-l&swap client with last client of next column \\
-\verb+$MODKEY+-Control-j&swap client down in the column \\
-\verb+$MODKEY+-Control-k&swap client up in the column \\
-\verb+$MODKEY+-Shift-h&send client to prev column \\
-\verb+$MODKEY+-Shift-l&send client to next column \\
-\verb+$MODKEY+-Shift-space&send client to/from floating column 0 \\
-\verb+$MODKEY+-Shift-[0-9]&send client to tag/view [0-9] \\
-Layouts&\\
-\verb+$MODKEY+-d&select default layout \\
-\verb+$MODKEY+-s&select stacked layout \\
-\verb+$MODKEY+-m&select max layout \\
-Menu Bar Functions&\\
-\verb+$MODKEY+-a&choose action from menu bar \\
-\verb+$MODKEY+-p&choose program from menu bar \\
-\verb+$MODKEY+-t&choose view from menu bar \\
-\verb+$MODKEY+-Shift-t&assign tag(s)  to client from menu bar \\
-Clients and Applications&\\
-\verb+$MODKEY+-Return&open terminal client \\
-\verb+$MODKEY+-Shift-c&kill client \\
-\hline 
-\end{tabular} 
-\caption{Default keybindings of wmii} 
-\end{table}
-
-\newpage
-
-\section{Credits}
-\label{sec:credits}
+    \item [/def]
+    \item [/def/border] width of the border around clients
+    \item [/def/font] the font used by \wmii (an xlib font name)
+    \item [/def/keys] a newline seperated list of the keys to be grabbed by \wmii
+    \item [/def/rules] 
+      \begin{itemize*}
+      \item a newline seperated list of rules to specify how to automatically tag clients
+      \item matches against the class.instance valuas of a client
+      \item syntax: \verb+/$regex/ -> $tag+ (tag might be \~{} to indicate floating mode
+      \end{itemize*}
+    \item [/def/colwidth] with of newly created columns (in px)
+    \item [/def/colmode] mode of newly created columns
 
 
-\begin{description}
-\item [Author] Steffen Liebergeld
-\item [Main critic and inquisitor] Salvador Peir\'o
+    \item [/view]
+      \begin{itemize*}
+      \item a manifestation of the collection of clients associated with a specific
+        tag
+      \end{itemize*}
 
-\item [Helpers]
-Anselm Garbe \\
-Denis Grelich \\
-Ross Mohn \\
-Neptun Florin \\
-Jochen Schwartz \\
-Adrian Ratnapala \\
-\end{description}
+    \item [/view/area]
+      \begin{itemize*}
+      \item each area has its own namespace in the current view
+      \item the areas are numbered starting with 0
+      \item 0 is always the floating area, the others are columns
+      \end{itemize*}
 
-\section{Copyright notice}
+    \item [/view/area/ctl]
+      \begin{itemize*}
+      \item accepted commands:
+        \begin{itemize*}
+        \item select \verb+client|prev|next+
+        \item client refers to the client number relative to the number and
+          age of the clients in \verb+area+
+        \end{itemize*}
+      \end{itemize*}
 
-guide to wmii-3\\
-Copyright (C) 2005, 2006 by Steffen Liebergeld, Salva Peir\'o
+    \item [/view/area/mode] the current layout for the area, equal, stack or max
+    \item [/view/area/sel] the selected client of the area
+    \item [/view/area/client] the namespace for each client in \verb+area+
+    \item [/view/ctl] accepted commands: select \verb+area|prev|next|toggle+
+    \item [/view/sel] the selected area in workspace
+    \item [/view/tag] the tag which is common to all clients in the workspace
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, version 2
+    \end{description}
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
+    \newpage
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-02110-1301, USA.
+    \subsection{keybindings}
+    Here are the default keybindings. \verb+$MODKEY+ is a placeholder, which is
+    usually mapped to Mod1 or Alt.
+    \begin{table}[h]
+      \begin{tabular}{|l|l|}
+        \hline % Puts in a horizontal line 
+        Keybinding &Action \\ %Table Headers , columns seperated by &,
+        %rows ended by \\
+        \hline 
+        \hline 
+        Moving Focus&\\
+        \verb+$MODKEY+-h&move focus to prev column \\
+        \verb+$MODKEY+-l&move focus to next column \\
+        \verb+$MODKEY+-j&move focus to next client in column \\
+        \verb+$MODKEY+-k&move focus to prev client in column \\
+        \verb+$MODKEY+-space&toggle to/from floating column 0 \\
+        \verb+$MODKEY+-[0-9]&select tag/view [0-9] \\
+        Moving Clients&\\
+        \verb+$MODKEY+-Control-h&swap client with last client of prev column \\
+        \verb+$MODKEY+-Control-l&swap client with last client of next column \\
+        \verb+$MODKEY+-Control-j&swap client down in the column \\
+        \verb+$MODKEY+-Control-k&swap client up in the column \\
+        \verb+$MODKEY+-Shift-h&send client to prev column \\
+        \verb+$MODKEY+-Shift-l&send client to next column \\
+        \verb+$MODKEY+-Shift-space&send client to/from floating column 0 \\
+        \verb+$MODKEY+-Shift-[0-9]&send client to tag/view [0-9] \\
+        Layouts&\\
+        \verb+$MODKEY+-d&select default layout \\
+        \verb+$MODKEY+-s&select stacked layout \\
+        \verb+$MODKEY+-m&select max layout \\
+        Menu Bar Functions&\\
+        \verb+$MODKEY+-a&choose action from menu bar \\
+        \verb+$MODKEY+-p&choose program from menu bar \\
+        \verb+$MODKEY+-t&choose view from menu bar \\
+        \verb+$MODKEY+-Shift-t&assign tag(s)  to client from menu bar \\
+        Clients and Applications&\\
+        \verb+$MODKEY+-Return&open terminal client \\
+        \verb+$MODKEY+-Shift-c&kill client \\
+        \hline 
+      \end{tabular} 
+      \caption{Default keybindings of wmii} 
+    \end{table}
+
+    \newpage
+
+    \section{Credits}
+    \label{sec:credits}
+
+
+    \begin{description}
+    \item [Author] Steffen Liebergeld
+    \item [Main critic and inquisitor] Salvador Peir\'o
+
+    \item [Helpers]
+      Anselm Garbe \\
+      Denis Grelich \\
+      Ross Mohn \\
+      Neptun Florin \\
+      Jochen Schwartz \\
+      Adrian Ratnapala \\
+    \end{description}
+
+    \section{Copyright notice}
+
+    guide to wmii-3\\
+    Copyright (C) 2005, 2006 by Steffen Liebergeld, Salva Peir\'o
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, version 2
+
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+    02110-1301, USA.
 
 \end{document}
