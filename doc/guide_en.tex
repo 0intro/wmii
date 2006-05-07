@@ -29,7 +29,7 @@ pdftitle={A Guide to wmii-3}}
 \usepackage{indentfirst,moreverb}
 % remove this if you want, it's just a matter of imposed imperialist cultures
 % so if I'm given the chance to choose I choose to indent the first paragraph
-% (I learn this way in the school, and don't want to relearn the british way)
+% (I learn this way in the school, and don't want to relearn the British way)
 
 %% welcome to the dirty tricks section
 \newcommand{\hrefx}[1]{\href{#1}{#1}} % explicit \href
@@ -116,7 +116,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     the whole document ``sequentially'', i.e. from beginning to end.
     Another possibility is to read/consume the guide ``on demand'' as
     you notice you need more information or details to understand
-    better some concept. We recomend you to read the introductory
+    better some concept. We recommend you to read the introductory
     chapters first, use some time to get settled in the \wmii-world
     and read the scripting chapters later on.
     
@@ -241,7 +241,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     \subsection{View}
 
     A view is the set of displayed clients, which match a specific single tag.
-    A view is pretty similiar to the ``workspace'' metaphor in other window
+    A view is pretty similar to the ``workspace'' metaphor in other window
     managers, though more powerful.
 
     Only one view can be visible at a time.
@@ -326,7 +326,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     important information: the first label contains the tag of
     the window. The second label displays the window's title.
 
-    Similiar information is displayed in the status-bar at the bottom.  The
+    Similar information is displayed in the status-bar at the bottom.  The
     first labels display the tags currently in use and highlight the currently
     selected view. On the right side some status information is displayed, by
     default the system load and the current time (see
@@ -375,7 +375,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     title-bars of the other clients displayed in the column. You can 
     switch between the clients in the column using \emph{MOD-j}.
 
-    The max-layout maximizes all clients to the same geometry as the column.
+    The max-layout maximises all clients to the same geometry as the column.
     Only the focused client is displayed at a time, all other clients
     are behind it. You can switch between the clients with \emph{MOD-j}.
 
@@ -485,7 +485,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     protocol.
 
     The basic ideas for configuring and running \wmii{} were taken from
-    the Acme user interface for programmers of Plan9. Similiar to Acme,
+    the Acme user interface for programmers of Plan9. Similar to Acme,
     \wmii{} provides a filesystem-interface, which can be accessed by
     9P clients. This allows to interact with any different kind of
     application through a file system interface, which might be implemented
@@ -635,8 +635,8 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \subsection{Changing the style}
 
-    The style of \wmii-3 is defined through font and color values, which are
-    unobstrusively exported with the following \emph{environment variables}.
+    The style of \wmii-3 is defined through font and colour values, which are
+    unobtrusively exported with the following \emph{environment variables}.
 
     \begin{verbatim}
       WMII_SELCOLORS='#000000 #eaffff #8888cc'
@@ -644,14 +644,14 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
       WMII_FONT=static
     \end{verbatim}
 
-    \verb+WMII_SELCOLORS+ defines the colors of the selected client's window
-    title and border, whereas \verb+WMII_NORMCOLORS+ defines the colors of all
+    \verb+WMII_SELCOLORS+ defines the colours of the selected client's window
+    title and border, whereas \verb+WMII_NORMCOLORS+ defines the colours of all
     unselected clients. The numbers are hexadecimal rgb tuple-values, which you
-    might know from HTML. You can grab them with the Gimps color-chooser for instance.
+    might know from HTML. You can grab them with the Gimps colour-chooser for instance.
 
-    The first color defines the text color of strings in bars and menus.
-    The second color defines the background color of bars and clients, and
-    the third color defines the 1px borders surrounding bars and clients.
+    The first colour defines the text colour of strings in bars and menus.
+    The second colour defines the background colour of bars and clients, and
+    the third colour defines the 1px borders surrounding bars and clients.
 
     \verb+WMII_FONT+ defines the font which should be used for drawing text.
     in title-bars, the status-bar, and the wmiimenu.
@@ -680,7 +680,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     \end{verbatim}
 
 
-    The first file contains the color definitions that control how the
+    The first file contains the colour definitions that control how the
     bar will be drawn, while the second contains the data
     which is displayed.
     
@@ -732,7 +732,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     
     \subsection{Assigning new tags}
     
-    As mentioned before, you can achieve more poweful things with tags, than
+    As mentioned before, you can achieve more powerful things with tags, than
     with the standard key-bindings. You might use any string as a tag. You may
     even use more than one tag per client. To do so, you have to separate the
     tags with a ``+''.
@@ -815,7 +815,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \item [/bar/label/colors]
       \begin{itemize*}
-      \item the colors of the bar
+      \item the colours of the bar
       \end{itemize*}
 
     \item [/client]
@@ -826,7 +826,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     \item [/client/n]
       \begin{itemize*}
       \item every client, including ones not shown in the view has a namespace here
-      \item \verb+n+ is a non-negative interger and clients are numbered oldest first
+      \item \verb+n+ is a non-negative integer and clients are numbered oldest first
       \end{itemize*}
 
     \item [/client/n/class]
@@ -848,7 +848,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     \item [/client/n/geom]
       \begin{itemize*}
       \item the window geometry of client \verb+n+
-      \item displayed as four blank seperated integers (x y width height?) 
+      \item displayed as four blank separated integers (x y width height?) 
       \end{itemize*}
 
     \item [/client/n/index] contains the client's index in the /client namespace, in this case n
@@ -860,7 +860,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \item [/client/n/tags]
       \begin{itemize*}
-      \item a plus(+)-seperated list of tags to which client \verb+n+ is related 
+      \item a plus(+)-separated list of tags to which client \verb+n+ is related 
       \end{itemize*}
 
     \item [/ctl]
@@ -877,11 +877,11 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     \item [/def]
     \item [/def/border] width of the border around clients
     \item [/def/font] the font used by \wmii{} (an xlib font name)
-    \item [/def/keys] a newline seperated list of the keys to be grabbed by \wmii
+    \item [/def/keys] a newline separated list of the keys to be grabbed by \wmii
     \item [/def/rules] 
       \begin{itemize*}
-      \item a newline seperated list of rules to specify how to automatically tag clients
-      \item matches against the class.instance valuas of a client
+      \item a newline separated list of rules to specify how to automatically tag clients
+      \item matches against the class.instance values of a client
       \item syntax: \verb+/$regex/ -> $tag+ (tag might be \~{} to indicate floating mode
       \end{itemize*}
     \item [/def/colwidth] with of newly created columns (in px)
@@ -928,7 +928,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     \begin{table}[h]
       \begin{tabular}{|l|l|}
         \hline % Puts in a horizontal line 
-        Keybinding &Action \\ %Table Headers , columns seperated by &,
+        Keybinding &Action \\ %Table Headers , columns separated by &,
         %rows ended by \\
         \hline 
         \hline 
