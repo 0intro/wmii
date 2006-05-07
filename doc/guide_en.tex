@@ -25,7 +25,7 @@
 \usepackage{hyperref} % option [dvipdfm] disables clickable refs
 \hypersetup{pdftex, colorlinks=true, linkcolor=blue, filecolor=blue,
 pagecolor=blue, urlcolor=blue, pdfauthor={Steffen Liebergeld, Salva Pei\'ro},
-pdftitle={A Guide to wmii--3}}
+pdftitle={A Guide to wmii-3}}
 \usepackage{indentfirst,moreverb}
 % remove this if you want, it's just a matter of imposed imperialist cultures
 % so if I'm given the chance to choose I choose to indent the first paragraph
@@ -40,6 +40,7 @@ pdftitle={A Guide to wmii--3}}
 %\renewcommand{\verbatiminput}[1]{\input{#1}}
 \renewcommand{\familydefault}{\sfdefault}
 \newcommand{\wmii}{\emph{wmii}}
+\newcommand{\Wmii}{\emph{Wmii}}
 
 \newenvironment{itemize*}
   {\begin{itemize}
@@ -53,7 +54,7 @@ Steffen\\Liebergeld \\\\
 Salvador\\Peir\'o
 }
 
-\title{A Guide to wmii--3%
+\title{A Guide to wmii-3%
 \thanks{Thanks to the wmii community, in particular all the 
 people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 }
@@ -72,14 +73,14 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
   \subsection{The purpose of this document}
 
     This document tries to be a good starting point for people new to
-    wmii--3.  People who have used wmi, wmii--2.5 or even ion will get
-    to know what is new and different in wmii--3, and people who have
+    \wmii-3.  People who have used wmi, \wmii-2.5 or even ion will get
+    to know what is new and different in \wmii-3, and people who have
     never used a tiling window manager before will fall in love with
     the new concept.
   
-  \subsection{Wmii --- the second generation of window manager improved}
+  \subsection{Wmii---the second generation of window manager improved}
 
-    Wmii--3 is a new kind of window manager. It is designed to have a
+    \Wmii-3 is a new kind of window manager. It is designed to have a
     small memory footprint, be extremely modularised and have as
     little code as possible, thus ensuring as few bugs as possible. In
     fact, one of our official goals is to not exceed $10 k$ lines of
@@ -87,12 +88,12 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     it's easier to read/understand, thus it's easier to use and get
     used to it}.
 
-    Wmii tries to be very portable and to give the user as much
+    \Wmii{} tries to be very portable and to give the user as much
     freedom as possible.
 
-    Wmii--3 is the third major release of the second generation of the
+    \Wmii-3 is the third major release of the second generation of the
     window manager improved~\footnote{ the ii is actually the roman
-    numeral for 2.}.  Wmii first introduced a new paradigm in version
+    numeral for 2.}.  \Wmii{} first introduced a new paradigm in version
     2.5, namely dynamic window management, that overcomes the
     limitations imposed by the WIMP paradigm (see also the companion
     \emph{wmii.tex}).
@@ -103,20 +104,20 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     the basic terminology and concepts like files and editors.
 
     I hope you are open minded towards new ideas, and willing to spend some
-    time learning \wmii--3~\footnote{remember the refrain: ``nobody
+    time learning \wmii-3~\footnote{remember the refrain: ``nobody
     can teach you what you don't want to know''.}.
 
-    If you only want to know how to operate wmii-3 and are not
+    If you only want to know how to operate \wmii-3 and are not
     interested in the inner workings or in scripting, you may read
     sections \ref{sec:conf&install}, \ref{sec:terms} and subsection
     \ref{subsec:firststeps} and skip the rest.
 
-    However, to get the most out of wmii--3 you should probably read
+    However, to get the most out of \wmii-3 you should probably read
     the whole document ``sequentially'', i.e. from beginning to end.
     Another possibility is to read/consume the guide ``on demand'' as
     you notice you need more information or details to understand
     better some concept. We recomend you to read the introductory
-    chapters first, use some time to get settled in the wmii--world
+    chapters first, use some time to get settled in the \wmii-world
     and read the scripting chapters later on.
     
     \section{Configuration and install}
@@ -124,15 +125,15 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \subsection{Obtaining wmii}
 
-    Wmii is licensed under the MIT/X Consortium License, which
+    \Wmii{} is licensed under the MIT/X Consortium License, which
     basically means it is free software, and you are free to download
     it from \hrefx{http://wmii.de} free of charge~\footnote{ please have
       a look at \hrefx{http://wmii.de/repos/wmii/LICENSE}  for
       details}.
     
-    \subsection{Configuration and Installation}
+    \subsection{Configuration and installation}
     
-    First of all, have a look if there are binary packages of wmii in
+    First of all, have a look if there are binary packages of \wmii{} in
     your distribution. Debian, Ubuntu and Gentoo should already have
     good packages. If you found a trustworthy package, you may now safely
     skip this section.
@@ -140,7 +141,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     For all those who are still reading this, let me tell you that you are
     on the good side because if you grab the sources and compile them yourself
     you'll benefit from having everything in it's original place, which will
-    ease your use of wmii.
+    ease your use of \wmii.
     
     \begin{enumerate}
       
@@ -152,7 +153,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
       In case you're installing a newer version of \wmii, this is the
       first thing you should do otherwise you'll end up mixing
-      binaries, configuration files and manual--pages of different and
+      binaries, configuration files and manual-pages of different and
       potentially incompatible versions.
 
     \item Unpack it:
@@ -167,7 +168,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
       \end{verbatim}
       
       The most important variable to set is the \verb+PREFIX+, which
-      states, where you want \wmii --3 to be installed to. If you are unsure, keep the
+      states, where you want \wmii-3 to be installed to. If you are unsure, keep the
       default, it won't break your system.
       
     \item Run make and make install:
@@ -175,7 +176,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
         make && make install
       \end{verbatim}
       
-    \item Setup the X--server to start \wmii as your default window
+    \item Setup the X-server to start \wmii{} as your default window
       manager. You may do that by editing the file \emph{\~{}/.xinitrc}.
 
       \begin{verbatim}
@@ -197,8 +198,8 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     for various reasons~\footnote{ read
       \hrefx{http://www.ohse.de/uwe/articles/aal.html} and
       \hrefx{http://lists.cse.psu.edu/archives/9fans/2003-November/029714.html}
-      for further details} . Please don't ask the \wmii developers to use autoconf,
-    they won't listen you.
+      for further details}. Please don't ask the \wmii{} developers to use autoconf,
+    they won't listen to you.
 
 
     \section{Terminology}
@@ -233,7 +234,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     In \wmii, there are no workspaces anymore. Instead, all clients matching a
     particular tag are displayed at a time.  For instance, if you tag your
     browser and a terminal window with the tag ``web-browser'', and you request
-    to view all clients matching this tag, \wmii will display your browser
+    to view all clients matching this tag, \wmii{} will display your browser
     and the terminal on the screen.
     It is also possible to give clients multiple tags, which is described later.
 
@@ -270,28 +271,28 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     A layout is the arrangement of clients in a column.
     There are three different ways to arrange clients in a column.
     \paragraph{default} This layout arranges each client with
-    equally vertical space fitting into the columns height.
+    equally vertical space fitting into the column's height.
     \paragraph{maximum} This layout arranges all clients with
     the same geometry as the column, showing only one of them at a time.
     \paragraph{stacking} This layout arranges all clients
     like a stack, where only the focused client is completely
-    visible, and all other clients can be accessed through its title--bars.
+    visible, and all other clients can be accessed through its title-bars.
     This is an alternative approach to \emph{tabbing}.
 
     \section{Getting started}
 
-    Now it is time to start diving into the \wmii user experience. I suggest you
+    Now it is time to start diving into the \wmii{} user experience. I suggest you
     to try everything described by yourself immediately, instead of first reading
     it, to avoid "memory leakage".  It is very helpful, if you print this
     document on paper or have it available on a different screen, because you might not
     be able to view it during your first steps in \wmii.
 
     Note, that the \emph{MOD} key I am referring to, may resemble
-    different keys on different systems. By default it the 
+    different keys on different systems. By default it is the 
     \emph{Mod1} or \emph{Alt} key in X11. Normally this is the key labelled with
     \emph{Alt} on your keyboard.
 
-    The notation \emph{MOD}--\emph{Key} means to press \emph{MOD} and 
+    The notation \emph{MOD}-\emph{Key} means to press \emph{MOD} and 
     \emph{Key} both at the same time.
 
     All key combinations can be freely configured, but for the sake of
@@ -310,22 +311,22 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     start \wmii, a window with a little tutorial will show up. You are
     free to read it, but you may also follow this guide :-)
 
-    First of all, press \emph{MOD--Enter} to start an xterm. It will
+    First of all, press \emph{MOD-Enter} to start an xterm. It will
     take half of the vertical space, so you have two equally arranged
-    windows. If you press \emph{MOD--Enter} again, you have three
+    windows. If you press \emph{MOD-Enter} again, you have three
     windows that are arranged equally.
 
     To switch between the three windows, press
-    \emph{MOD--j}, which cycles the focus between the three windows.
+    \emph{MOD-j}, which cycles the focus between the three windows.
 
-    You can also press \emph{MOD--k} to switch to the window above or
-    \emph{MOD--j} to switch to the window below the current.
+    You can also press \emph{MOD-k} to switch to the window above or
+    \emph{MOD-j} to switch to the window below the current.
 
-    Now look at the title--bars of those windows. They display 
+    Now look at the title-bars of those windows. They display 
     important information: the first label contains the tag of
     the window. The second label displays the window's title.
 
-    Similiar information is displayed in the status--bar at the bottom.  The
+    Similiar information is displayed in the status-bar at the bottom.  The
     first labels display the tags currently in use and highlight the currently
     selected view. On the right side some status information is displayed, by
     default the system load and the current time (see
@@ -333,15 +334,15 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \subsection{Using columns}
 
-    As described earlier, \wmii uses columns to arrange your windows.
+    As described earlier, \wmii{} uses columns to arrange your windows.
     Your view already consists of a single column.
     Next, you will create a new column.
 
-    In \wmii columns always consists of at least a single client,
+    In \wmii{} columns always consists of at least a single client,
     thus to create a new column, you need at least two clients at hand.
 
-    Now focus a client of your choice and press \emph{MOD--Shift--l},
-    which moves the client rightwards. As you see, \wmii creates
+    Now focus a client of your choice and press \emph{MOD-Shift-l},
+    which moves the client rightwards. As you see, \wmii{} creates
     a new column by dividing the view horizontally in two equally big
     areas. The focused client has been moved into the new column.
 
@@ -349,15 +350,15 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     immediately. If the last client of the current view is closed,
     the view will be removed accordingly as well.
 
-    If you press \emph{MOD--j} to change focus, you will see that \wmii
+    If you press \emph{MOD-j} to change focus, you will see that \wmii
     actually cycles the focus in the current column only.
 
-    To change the focus to a different column, you can press \emph{MOD--l}
-    (right) and \emph{MOD--h} (left) respectively.
+    To change the focus to a different column, you can press \emph{MOD-l}
+    (right) and \emph{MOD-h} (left) respectively.
 
     It is also possible to swap adjacent clients among columns. To swap
-    clients leftwards, press \emph{MOD--Control--h}. To swap clients
-    rightwards, press \emph{MOD--Control--l}.
+    clients leftwards, press \emph{MOD-Control-h}. To swap clients
+    rightwards, press \emph{MOD-Control-l}.
 
     \subsection{What about layouts?}
 
@@ -366,17 +367,17 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     using another layout.
 
     The default layout arranges each client of the column with equally
-    vertical space. You can enable this layout with \emph{MOD--d}
+    vertical space. You can enable this layout with \emph{MOD-d}
     (where the ``d'' stands for default) explicitly.
 
-    The stacking layout can be enabled with \emph{MOD--s}.  As you see now,
+    The stacking layout can be enabled with \emph{MOD-s}.  As you see now,
     there is only one client using as much space as possible, and only
-    title--bars of the other clients displayed in the column. You can 
-    switch between the clients in the column using \emph{MOD--j}.
+    title-bars of the other clients displayed in the column. You can 
+    switch between the clients in the column using \emph{MOD-j}.
 
     The max-layout maximizes all clients to the same geometry as the column.
     Only the focused client is displayed at a time, all other clients
-    are behind it. You can switch between the clients with \emph{MOD--j}.
+    are behind it. You can switch between the clients with \emph{MOD-j}.
 
     \subsection{Floating layer}
 
@@ -386,14 +387,14 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     have been designed with the conventional window management in mind,
     for instance clients like the Gimp or xmms.
 
-    While \wmii is a dynamic window manager, which does the window arrangement
+    While \wmii{} is a dynamic window manager, which does the window arrangement
     for you automatically, those old fashioned programs rely on the
     conventional window managing concept, where all the clients fly around on
     your desktop and you are forced to constantly order the mess.
 
     To attach such broken clients to the floating layer, you can toggle the
-    focus between floating and managed layer through pressing \emph{MOD--Space}.
-    The \emph{MOD--Shift--Space} shortcut toggles the focused window between
+    focus between floating and managed layer through pressing \emph{MOD-Space}.
+    The \emph{MOD-Shift-Space} shortcut toggles the focused window between
     floating and managed layer.
 
     Note, the floating layer is addressed as the zeroth-column internally.
@@ -411,14 +412,14 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     achieve such kinds of grouping.
 
     You can give the focused client another tag by pressing
-    \emph{MOD--Shift--Number}, number being one of the numbers 0 to 9.
+    \emph{MOD-Shift-Number}, number being one of the numbers 0 to 9.
 
-    You can then switch views through pressing \emph{MOD--Number}.
+    You can then switch views through pressing \emph{MOD-Number}.
 
     Normally, whenever a new client appears, it automatically inherits the tag
     of the currently selected view.
 
-    %% TODO: better tag handling (this is about to change in \wmii till 
+    %% TODO: better tag handling (this is about to change in \wmii{} till 
     %%version 3)
 
     Note, there are more powerful uses of tags you will learn about in the next
@@ -429,14 +430,14 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     Most X-clients have a menu option or button to be closed. For the rare
     cases they don't provide a mouse-driven way, like in most terminals,
-    you can press \emph{MOD--Shift--c} to close a window.
+    you can press \emph{MOD-Shift-c} to close a window.
 
     \subsection{How do I start programs?}
 
-    You may start programs from a terminal. But \wmii contains a special
+    You may start programs from a terminal. But \wmii{} contains a special
     keyboard-driven program menu, which is accessible through pressing
-    \emph{MOD--p}. Please note, that the content of this menu is provided by a
-    simple shell--script.
+    \emph{MOD-p}. Please note, that the content of this menu is provided by a
+    simple shell-script.
 
     You will see a list of programs. If you start typing, the
     menu will cut the list and only display items which match
@@ -447,34 +448,34 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     Thus, if you want to start firefox, just type ``fire'' and press
     enter~\footnote{On my system it is sufficient to type ``efo'' to
-      start firefox;-)}.
+      start firefox ;-)}.
 
     \subsection{How do I quit wmii?}
-    You can quit \wmii, by using the action's menu (\emph{MOD--a})
-    and selecting the action ``quit'. That's all.
+    You can quit \wmii, by using the action's menu (\emph{MOD-a})
+    and selecting the action ``quit''. That's all.
     
     \section{Looking under the hood}
 
-    In this chapter you will learn how \wmii was designed, which ideas
-    the \wmii developers followed and how it was implemented.
+    In this chapter you will learn how \wmii{} was designed, which ideas
+    the \wmii{} developers followed and how it was implemented.
 
     \subsection{Dynamic window management}
 
-    \wmii was designed around the new idea of dynamic window management.
+    \wmii{} was designed around the new idea of dynamic window management.
     Dynamic window management means, that the window manager should make all
     decisions about window arrangement, thus taking most extra work away
     from the user and letting him concentrate on his work. This can also be
     seen as tacit window management.
 
-    \subsection{Modularity -- using distinct tools for distinct tasks}
+    \subsection{Modularity---using distinct tools for distinct tasks}
 
-    The developers of \wmii know about the most powerful ideas of
+    The developers of \wmii{} know about the most powerful ideas of
     Unix. One of them is the idea to use distinct tools for distinct
     tasks. By carefully designing the window manager, they were able to
     split the task into several smaller binaries, each with a distinct
     job.
     
-    \subsection{The glue that puts it all together -- 9P}
+    \subsection{The glue that puts it all together---9P}
 
     Programs in the Unix world usually communicate via buffers which are
     addressed by (file) descriptors, one of them are sockets.
@@ -483,21 +484,21 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     developers closely looked at the design of Plan9 and chose the 9P
     protocol.
 
-    The basic ideas for configuring and running \wmii were taken from
-    the Acme user interface for programmers of Plan 9. Similiar to Acme,
-    \wmii provides a filesystem-interface, which can be accessed by
+    The basic ideas for configuring and running \wmii{} were taken from
+    the Acme user interface for programmers of Plan9. Similiar to Acme,
+    \wmii{} provides a filesystem-interface, which can be accessed by
     9P clients. This allows to interact with any different kind of
     application through a file system interface, which might be implemented
     in any programming language of choice. This also avoids to force
     client programmers to a specific programming language or paradigm.
     
-    The interface of \wmii can be compared to the \emph{procfs} file
+    The interface of \wmii{} can be compared to the \emph{procfs} file
     system of the Linux kernel.
 
-    If you want to interact with a running \wmii process, you can access its 9P
+    If you want to interact with a running \wmii{} process, you can access its 9P
     file-system service through either using the bundled tool \emph{wmiir} or
     the 9P2000 kernel module of a Linux kernel later than 2.4.16+.  Using the
-    kernel module has the advantage to mount the filesystem of \wmii into your
+    kernel module has the advantage to mount the filesystem of \wmii{} into your
     file system hierarchy directly, though it has the drawback that this need
     \emph{root} privileges.
 
@@ -511,7 +512,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
       
     \item
       \emph{wmiir} is a small tool we is used to access the
-      virtual file--system service of \wmii remotely. It basically supports four
+      virtual file-system service of \wmii{} remotely. It basically supports four
       operations:
 
       \begin{itemize*}
@@ -522,15 +523,15 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
       \end{itemize*}
 
       wmiir needs to know the address of the file-system service to work
-      with. On startup, \wmii exports the \verb+WMII_ADDRESS+ environment variable,
-      which points to the address of the file-system service of wmii.
+      with. On startup, \wmii{} exports the \verb+WMII_ADDRESS+ environment variable,
+      which points to the address of the file-system service of \wmii.
       This address can be:
       \begin{itemize*}
       \item a local unix socket address like \verb+unix!/path/to/socket+ 
       \item a tcp-capable socket address like \verb+tcp!hostname:port+ 
       \end{itemize*}
       
-      If you want to work on a different file--system, you may specify it
+      If you want to work on a different filesystem, you may specify it
       manually with the \emph{-a  address} command line option.
       A sample invocation looks like:
       \begin{verbatim}
@@ -540,7 +541,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
       virtual file-system of \wmii.
 
     \item
-      \emph{wmiimenu} is a generic keyboard--driven menu, which matches items
+      \emph{wmiimenu} is a generic keyboard-driven menu, which matches items
       through providing patterns.  You may want to learn more about it by reading
       the man-page.
 
@@ -560,7 +561,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \subsection{Conclusion}
 
-    The virtual file-system service of \wmii and the tools presented enable
+    The virtual file-system service of \wmii{} and the tools presented enable
     you to fully control the window manager from scripts.
     You will see some examples in the next section
     \ref{sec:scripting}.
@@ -568,19 +569,19 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     \section{Scripting wmii}
     \label{sec:scripting}
 
-    In this chapter you will see how to control \wmii through scripts. I will
+    In this chapter you will see how to control \wmii{} through scripts. I will
     give you some pointers, that you can start scripting on your own.
 
     \subsection{Language}
 
-    As mentioned earlier, the only requirement for interacting with \wmii is to
+    As mentioned earlier, the only requirement for interacting with \wmii{} is to
     access its file-system service. The easiest way to do this, is by using
     the wmiir tool. Thus shell scripts are the easiest way of adapting \wmii
     too fit your needs.
 
-    Hence, you can control \wmii in any programming language you want. However,
+    Hence, you can control \wmii{} in any programming language you want. However,
     \wmii's default scripts are written in a subset of ``sh'' that is POSIX
-    compliant, to keep \wmii as \emph{portable} as possible.
+    compliant, to keep \wmii{} as \emph{portable} as possible.
     
     To keep simplicity, the following examples will stick to ``sh'' as well,
     and don't depend on python, tcl, ruby, \dots 
@@ -589,39 +590,39 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \subsection{Actions}
 
-    In \wmii you may group certain tasks into \emph{actions}. Actions
+    In \wmii{} you may group certain tasks into \emph{actions}. Actions
     are nothing more than simple scripts which are located either in
-    your local or in the default \wmii configuration
+    your local or in the default \wmii{} configuration
     directory~\footnote{ \texttt{\$CONFPREFIX} is set in
       \emph{config.mk} which points to \texttt{/usr/local/etc}
       or \texttt{\$HOME/.wmii-3} by default}.
-    Through pressing \emph{MOD-a} you can open the actions-menu. It works
+    Through pressing \emph{MOD-a} you can open the actions menu. It works
     similar to the program menu, but only displays actions.
 
     You might want to add your own actions through writing shell scripts in the
-    default \wmii configuration directory or in the \texttt{\$HOME/.wmii-3}.
+    default \wmii{} configuration directory or in the \texttt{\$HOME/.wmii-3}.
     
-    This works, because in the \wmii controlling script exports the variable
+    This works, because in the \wmii{} controlling script exports the variable
     \verb+$PATH+ as\\ \verb+$PATH=~/.wmii-3:$CONFPREFIX/wmii:$PATH+ before
     launching the wmiiwm, this way local user actions under
     \verb+~/.wmii-3+ take precedence over the defaults from
     \verb+$CONFPREFIX/wmii+ of the default actions.
     
     You may edit this file on the fly, which means you don't need to
-    stop \wmii before editing. After you've finished editing, you may
+    stop \wmii{} before editing. After you've finished editing, you may
     simply run wmiirc and the changes will take effect immediately.
     To do so, just open the actions menu (with pressing \emph{MOD-a}) and
-    choose the \emph{wmiirc} action. It's also possible to launch \wmii actions
+    choose the \emph{wmiirc} action. It's also possible to launch \wmii{} actions
     directly from a terminal, which is a neat side effect that results from
-    exporting \verb+$PATH+ in the \wmii startup script.
+    exporting \verb+$PATH+ in the \wmii{} startup script.
 
     \subsection{wmiirc}
     
     \emph{wmiirc} is a special ``sh''-script which is launched on startup
-    of \wmii to take care of configuring and controlling \wmii.
+    of \wmii{} to take care of configuring and controlling \wmii.
 
     It does so through writing data to several files of the virtual \wmii
-    file-system, and through reading events reported by \wmii during runtime.
+    file-system, and through reading events reported by \wmii{} during runtime.
     Events are mostly shortcut presses, mouse clicks or user-defined.
     The events are processed in a loop in the script.
     
@@ -629,12 +630,12 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     modifier key \emph{MOD=Mod1} or the navigation keys this script is
     the place to look at.
 
-    The name \emph{wmiirc} means \wmii \emph{run command}, because ``rc'' is an
+    The name \emph{wmiirc} means \wmii{} \emph{run command}, because ``rc'' is an
     old Unix abbreviation for ``run command''.
 
     \subsection{Changing the style}
 
-    The style of \wmii --3 is defined through font and color values, which are
+    The style of \wmii-3 is defined through font and color values, which are
     unobstrusively exported with the following \emph{environment variables}.
 
     \begin{verbatim}
@@ -653,13 +654,13 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     the third color defines the 1px borders surrounding bars and clients.
 
     \verb+WMII_FONT+ defines the font which should be used for drawing text.
-    in title--bars, the status--bar, and the wmiimenu.
+    in title-bars, the status-bar, and the wmiimenu.
     You can query for different fonts using \emph{xfontsel} for instance.
 
-    \subsection{Filling the status--bar}
+    \subsection{Filling the status-bar}
     \label{subsec:status}
     
-    The status bar of \wmii has it's own \verb+/bar+ directory with
+    The status bar of \wmii{} has it's own \verb+/bar+ directory with
     a subdirectory for each of the labels created. So while editing
     this document my status-bar looked like:
 
@@ -689,7 +690,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     (and clients) is that they generate events corresponding to mouse
     clicks on them.  You can open a terminal and run
     \verb+wmiir read /event+ to see how the events are generated
-    when you click onto the status--bar. This is a mechanism that allows
+    when you click onto the status-bar. This is a mechanism that allows
     controlling applications directly from the bar. If you've
     finished and you want to get rid of your label,
     a \verb+wmiir remove /bar/foo+ command.
@@ -749,7 +750,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
       echo -n view web | wmiir write /ctl
     \end{verbatim}
 
-    As the development of \wmii --3 progressed, it became clear that this
+    As the development of \wmii-3 progressed, it became clear that this
     action is so common, that it got its own keybinding. By default
     \emph{MOD-t} brings up a menu to choose a view and
     \emph{MOD-Shift-t} brings up a menu enabling you to assign new
@@ -775,7 +776,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     with smoke signals~\footnote{ but don't ask us for advice, here
       you're on your own \texttt{;-P}.}.
 
-    Also remember that \wmii is written by people with taste, so most
+    Also remember that \wmii{} is written by people with taste, so most
     of the decisions made have strong reasons supporting them, so if
     you think something doesn't make sense or doesn't fit into the
     picture, just try to understand it by yourself first before
@@ -854,7 +855,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \item [/client/n/name]
       \begin{itemize*}
-      \item the name of client \verb+n+ as it's seen by \wmii (displayed in the tagbar)
+      \item the name of client \verb+n+ as it's seen by \wmii{} (displayed in the tagbar)
       \end{itemize*}
 
     \item [/client/n/tags]
@@ -864,7 +865,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \item [/ctl]
       \begin{itemize*}
-      \item the \wmii control file and command interface
+      \item the \wmii{} control file and command interface
       \item accepted commands:
         \begin{itemize*}
         \item quit
@@ -875,7 +876,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \item [/def]
     \item [/def/border] width of the border around clients
-    \item [/def/font] the font used by \wmii (an xlib font name)
+    \item [/def/font] the font used by \wmii{} (an xlib font name)
     \item [/def/keys] a newline seperated list of the keys to be grabbed by \wmii
     \item [/def/rules] 
       \begin{itemize*}
@@ -961,7 +962,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
         \verb+$MODKEY+-Shift-c&kill client \\
         \hline 
       \end{tabular} 
-      \caption{Default keybindings of wmii} 
+      \caption{Default keybindings of \wmii} 
     \end{table}
 
     \newpage
