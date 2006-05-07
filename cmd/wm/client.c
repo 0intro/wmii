@@ -252,11 +252,15 @@ draw_client(Client *c)
 {
 	BlitzDraw d = { 0 };
 	Frame *f;
+	char buf[256];
+	int fidx;
+	unsigned int w;
 
 	if(!c->frame.size)
 		return; /* might not have been attached atm */
 
 	f = c->frame.data[c->sel];
+	fidx = idx_of_frame(f);
 	d.drawable = c->framewin;
 	d.font = blitzfont;
 	d.gc = c->gc;
@@ -279,25 +283,32 @@ draw_client(Client *c)
 	d.rect.height = height_of_bar();
 	d.notch = nil;
 
-	/* max mode bar */
-	if(f->area->mode == Colmax) {
-		unsigned long tmp = d.color.fg;
-		char buf[256];
-		d.color.fg = d.color.bg;
-		d.color.bg = tmp;
-		snprintf(buf, sizeof(buf), "%d/%d", idx_of_frame(f) + 1, f->area->frame.size);
-		d.align = CENTER;
-		d.rect.width = d.rect.height + blitz_textwidth(dpy, &blitzfont, buf);
-		d.data = buf;
-		blitz_drawlabel(dpy, &d);
-		blitz_drawborder(dpy, &d);
-		d.color.bg = d.color.fg;
-		d.color.fg = tmp;
-		d.rect.x += d.rect.width;
-	}
+	/* mode bar */
+	d.align = CENTER;
+	snprintf(buf, sizeof(buf), "%s%d/%d",
+		/* if */	!idx_of_area(f->area) ? "~" : "",
+				fidx, f->area->frame.size);
+	w = d.rect.width = d.rect.height + blitz_textwidth(dpy, &blitzfont, buf);
+	d.rect.x = f->rect.width - d.rect.width; 
+	d.data = buf;
+	
+	if(f->area->sel == fidx)
+		d.color = def.sel;
+	else
+		d.color = def.norm;
+	blitz_drawlabel(dpy, &d);
+	blitz_drawborder(dpy, &d);
+	d.rect.x = 0;
+
+	if(c == sel_client())
+		d.color = def.sel;
+	else
+		d.color = def.norm;
 
 	/* tag bar */
 	d.rect.width = d.rect.height + blitz_textwidth(dpy, &blitzfont, c->tags);
+	if(d.rect.width > f->rect.width / 3)
+		d.rect.width = f->rect.width / 3;
 	d.data = c->tags;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
@@ -305,7 +316,7 @@ draw_client(Client *c)
 
 	/* title bar */
 	d.align = WEST;
-	d.rect.width = f->rect.width - d.rect.x;
+	d.rect.width = f->rect.width - (d.rect.x + w);
 	d.data = c->name;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
