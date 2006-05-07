@@ -1362,6 +1362,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
+		cext_trim(buf, " \t");
 		if(!permit_tags(buf))
 			return Ebadvalue;
 		if(dir_type == FsDclient)
@@ -1369,7 +1370,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		else
 			cl = client.data[i1];
 		cext_strlcpy(cl->tags, buf, sizeof(cl->tags));
-		cext_trim(cl->tags, " \t");
 		update_views();
 		draw_client(cl);
 		break;

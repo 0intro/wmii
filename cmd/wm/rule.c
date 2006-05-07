@@ -56,7 +56,8 @@ permit_tags(const char *tags)
 	unsigned int i, j, n;
 
 	cext_strlcpy(buf, tags, sizeof(buf));
-	n = cext_tokenize(toks, 16, buf, '+');
+	if(!(n = cext_tokenize(toks, 16, buf, '+')))
+		return False;
 	for(i = 0; i < (sizeof(exclude)/sizeof(exclude[0])); i++)
 		for(j = 0; j < n; j++) {
 			if(!strncmp(exclude[i], toks[j], strlen(toks[j])) &&
@@ -110,11 +111,11 @@ update_rules()
 		case TAGS:
 			if(*p == '\n' || *(p + 1) == 0) {
 				*t = 0;
+				cext_trim(tags, " \t");
 				if(permit_tags(tags)) {
 					Rule *rul = cext_emallocz(sizeof(Rule));
 					rul->is_valid = !regcomp(&rul->regex, regex, 0);
 					cext_strlcpy(rul->tags, tags, sizeof(rul->tags));
-					cext_trim(rul->tags, " \t");
 					cext_vattach(vector_of_rules(&rule), rul);
 				}
 				else
