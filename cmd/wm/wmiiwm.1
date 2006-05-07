@@ -77,11 +77,12 @@ application window.
 .TP 2
 Client
 An application window surrounded by a frame window containing a border and a
-title\-bar. The title\-bar normally shows only two labels, one displaying the
-tags of a client and the other the client's name. However, if the containing
-column is in maximized mode, a third label is required. It shows which client
-is currently visible and more importantly, the number of clients within the
-column.
+title\-bar. The title\-bar three labels, first one displaying the tags of a
+client, second one displaying the client's title, and the third one displaying
+the client's index and the number of overall clients within a column.
+If the client is focused within a column, the third label is highlighted.
+If the client is attached to floating layer, a ~ character is prepended in
+the third label as well.
 .TP 2
 Floating layer
 A screen layer of

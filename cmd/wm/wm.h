@@ -229,7 +229,6 @@ void select_client(Client *c, char *arg);
 void send_client_to(Client *c, char *arg);
 void resize_all_clients();
 void swap_client(Client *c, char *arg);
-void swap_clients(Client *c, XPoint *pt);
 Client *sel_client();
 int idx_of_client_id(unsigned short id);
 Client *client_of_win(Window w);
@@ -244,6 +243,7 @@ int column_mode_of_str(char *arg);
 char *str_of_column_mode(int mode);
 Area *new_left_column(View *v);
 Area *new_right_column(View *v);
+void drop_swap(Client *c, XPoint *pt);
 
 /* event.c */
 void init_x_event_handler();

@@ -327,7 +327,7 @@ AfterVertical:
 }
 
 static void
-drop_moving(Frame *f, XRectangle *new, XPoint *pt)
+drop_move(Frame *f, XRectangle *new, XPoint *pt)
 {
 	Area *tgt = nil, *src = f->area;
 	View *v = src->view;
@@ -349,8 +349,8 @@ drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 		if(tgt != src)
 			send_to_area(tgt, src, f->client);
 		else {
-			for(i = 0; (i < src->frame.size) && !blitz_ispointinrect(
-						pt->x, pt->y, &src->frame.data[i]->rect); i++);
+			for(i = 0; (i < src->frame.size) &&
+					!blitz_ispointinrect(pt->x, pt->y, &src->frame.data[i]->rect); i++);
 			if((i < src->frame.size) && (f != src->frame.data[i])) {
 				unsigned int j = idx_of_frame(f);
 				Frame *tmp = src->frame.data[j];
@@ -364,11 +364,44 @@ drop_moving(Frame *f, XRectangle *new, XPoint *pt)
 }
 
 void
+drop_swap(Client *c, XPoint *pt)
+{
+
+	unsigned int i, j;
+	Frame *f1 = c->frame.data[c->sel], *f2 = nil;
+	View *v = view.data[sel];
+
+	for(i = 1; (i < v->area.size) &&
+			!blitz_ispointinrect(pt->x, pt->y, &v->area.data[i]->rect); i++);
+	if(i < v->area.size) {
+		Area *a = v->area.data[i];
+		for(j = 0; j < a->frame.size &&
+				!blitz_ispointinrect(pt->x, pt->y, &a->frame.data[j]->rect); j++);
+		if(j < a->frame.size)
+			f2 = a->frame.data[j];
+	}
+
+	if(!f2 || f1 == f2 || !idx_of_area(f1->area))
+		return;
+
+	f1->client = f2->client;
+	f2->client = c;
+	f1->client->frame.data[f1->client->sel] = f1;
+	f2->client->frame.data[f2->client->sel] = f2;
+
+	arrange_column(f1->area, False);
+	if(f1->area != f2->area)
+		arrange_column(f2->area, False);
+	focus_client(c, True);
+	flush_masked_events(EnterWindowMask);
+}
+
+void
 resize_column(Client *c, XRectangle *r, XPoint *pt)
 {
 	Frame *f = c->frame.data[c->sel];
 	if((f->rect.width == r->width) && (f->rect.height == r->height))
-		drop_moving(f, r, pt);
+		drop_move(f, r, pt);
 	else
 		drop_resize(f, r);
 }

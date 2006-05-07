@@ -38,10 +38,7 @@ snap_move(XRectangle * r, XRectangle * rects,
 			/* check west neighbors leftwards */
 			if(!w) {
 				if(r->x - i == (rects[j].x + rects[j].width)) {
-					/*
-					 * west edge of neighbor found, check
-					 * vert match
-					 */
+					/* west edge of neighbor found, check vert match */
 					w = check_vert_match(r, &rects[j]);
 					if(w)
 						r->x = rects[j].x + rects[j].width;
@@ -50,10 +47,7 @@ snap_move(XRectangle * r, XRectangle * rects,
 			/* check west neighbors rightwards */
 			if(!w) {
 				if(r->x + i == (rects[j].x + rects[j].width)) {
-					/*
-					 * west edge of neighbor found, check
-					 * vert match
-					 */
+					/* west edge of neighbor found, check vert match */
 					w = check_vert_match(r, &rects[j]);
 					if(w)
 						r->x = rects[j].x + rects[j].width;
@@ -62,10 +56,7 @@ snap_move(XRectangle * r, XRectangle * rects,
 			/* check east neighbors leftwards */
 			if(!e) {
 				if(r->x + r->width - i == rects[j].x) {
-					/*
-					 * east edge of neighbor found, check
-					 * vert match
-					 */
+					/* east edge of neighbor found, check vert match */
 					e = check_vert_match(r, &rects[j]);
 					if(e)
 						r->x = rects[j].x - r->width;
@@ -74,10 +65,7 @@ snap_move(XRectangle * r, XRectangle * rects,
 			/* check east neighbors rightwards */
 			if(!e) {
 				if(r->x + r->width + i == rects[j].x) {
-					/*
-					 * east edge of neighbor found, check
-					 * vert match
-					 */
+					/* east edge of neighbor found, check vert match */
 					e = check_vert_match(r, &rects[j]);
 					if(e)
 						r->x = rects[j].x - r->width;
@@ -111,10 +99,7 @@ snap_move(XRectangle * r, XRectangle * rects,
 			/* check north neighbors upwards */
 			if(!n) {
 				if(r->y - i == (rects[j].y + rects[j].height)) {
-					/*
-					 * north edge of neighbor found,
-					 * check horiz match
-					 */
+					/* north edge of neighbor found, check horiz match */
 					n = check_horiz_match(r, &rects[j]);
 					if(n)
 						r->y = rects[j].y + rects[j].height;
@@ -123,10 +108,7 @@ snap_move(XRectangle * r, XRectangle * rects,
 			/* check north neighbors downwards */
 			if(!n) {
 				if(r->y + i == (rects[j].y + rects[j].height)) {
-					/*
-					 * north edge of neighbor found,
-					 * check horiz match
-					 */
+					/* north edge of neighbor found, check horiz match */
 					n = check_horiz_match(r, &rects[j]);
 					if(n)
 						r->y = rects[j].y + rects[j].height;
@@ -135,10 +117,7 @@ snap_move(XRectangle * r, XRectangle * rects,
 			/* check south neighbors upwards */
 			if(!s) {
 				if(r->y + r->height - i == rects[j].y) {
-					/*
-					 * south edge of neighbor found,
-					 * check horiz match
-					 */
+					/* south edge of neighbor found, check horiz match */
 					s = check_horiz_match(r, &rects[j]);
 					if(s)
 						r->y = rects[j].y - r->height;
@@ -147,10 +126,7 @@ snap_move(XRectangle * r, XRectangle * rects,
 			/* check south neighbors downwards */
 			if(!s) {
 				if(r->y + r->height + i == rects[j].y) {
-					/*
-					 * south edge of neighbor found,
-					 * check horiz match
-					 */
+					/* south edge of neighbor found, check horiz match */
 					s = check_horiz_match(r, &rects[j]);
 					if(s)
 						r->y = rects[j].y - r->height;
@@ -204,7 +180,6 @@ do_mouse_move(Client *c, XButtonPressedEvent *e, Bool swap)
 	int px = 0, py = 0, wex, wey, ex, ey, first = 1, i;
 	Window dummy;
 	XEvent ev;
-	/* borders */
 	int snapw = (rect.width * def.snap) / 1000;
 	int snaph = (rect.height * def.snap) / 1000;
 	unsigned int num;
@@ -238,7 +213,7 @@ do_mouse_move(Client *c, XButtonPressedEvent *e, Bool swap)
 				draw_pseudo_border(&frect);
 				if(idx_of_area(f->area)) {
 					if(swap)
-						swap_clients(c, &pt);
+						drop_swap(c, &pt);
 					else
 						resize_column(c, &frect, &pt);
 				}
@@ -451,7 +426,6 @@ do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align)
 	int px = 0, py = 0, i, ox, oy, first = 1;
 	Window dummy;
 	XEvent ev;
-	/* borders */
 	int snapw = (rect.width * def.snap) / 1000;
 	int snaph = (rect.height * def.snap) / 1000;
 	unsigned int dmask;
