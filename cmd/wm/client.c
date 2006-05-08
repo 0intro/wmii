@@ -120,6 +120,7 @@ focus_client(Client *c, Bool restack)
 {
 	Client *old = sel_client();
 	Frame *f = c->frame.data[c->sel];
+	Client *old_in_area = sel_client_of_area(f->area);
 	View *v = f->area->view;
 	int i = idx_of_area(f->area);
 	static char buf[256];
@@ -139,6 +140,8 @@ focus_client(Client *c, Bool restack)
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	if(old)
 		draw_client(old);
+	if(old_in_area != c)
+		draw_client(old_in_area);
 	draw_client(c);
 	XSync(dpy, False);
 	snprintf(buf, sizeof(buf), "ClientFocus %d\n", idx_of_client_id(c->id));

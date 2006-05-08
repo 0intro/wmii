@@ -198,6 +198,7 @@ void send_to_area(Area *to, Area *from, Client *c);
 void attach_to_area(Area *a, Client *c);
 void detach_from_area(Area *a, Client *c);
 Bool is_of_area(Area *a, Client *c);
+Client *sel_client_of_area(Area *a);
 
 /* bar.c */
 Bar *create_bar(char *name, Bool intern);
