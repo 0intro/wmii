@@ -7,7 +7,7 @@
 
 #include "wm.h"
 
-static Vector *
+Vector *
 vector_of_frames(FrameVector *fv)
 {
 	return (Vector *) fv;
@@ -77,4 +77,38 @@ frame_of_win(Window w)
 		if(client.data[i]->framewin == w)
 			return client.data[i];
 	return nil;
+}
+
+static void
+xinsert(FrameVector *fv, Frame *f, unsigned int idx, Bool before)
+{
+	FrameVector tmp = {0};
+	unsigned int i;
+
+	for(i = 0; i < fv->size; i++) {
+		if(before && (i == idx))
+			cext_vattach(vector_of_frames(&tmp), f);
+		cext_vattach(vector_of_frames(&tmp), fv->data[i]);
+		if(!before && (i == idx))
+			cext_vattach(vector_of_frames(&tmp), f);
+	}
+
+	while(fv->size)
+		cext_vdetach(vector_of_frames(fv), fv->data[0]);
+	for(i = 0; i < tmp.size; i++)
+		cext_vattach(vector_of_frames(fv), tmp.data[i]);
+	while(tmp.size)
+		cext_vdetach(vector_of_frames(&tmp), tmp.data[0]);
+}
+
+void
+insert_before_idx(FrameVector *fv, Frame *f, unsigned int idx)
+{
+	xinsert(fv, f, idx, True);
+}
+
+void
+insert_after_idx(FrameVector *fv, Frame *f, unsigned int idx)
+{
+	xinsert(fv, f, idx, False);
 }

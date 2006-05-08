@@ -326,50 +326,15 @@ AfterVertical:
 	relax_column(a);
 }
 
-static void
-drop_move(Frame *f, XRectangle *new, XPoint *pt)
+static Frame *
+frame_of_point(XPoint *pt)
 {
-	Area *tgt = nil, *src = f->area;
-	View *v = src->view;
-	unsigned int i;
-
-	if(!pt)
-		return;
-
-	for(i = 1; (i < v->area.size) &&
-			!blitz_ispointinrect(pt->x, pt->y, &v->area.data[i]->rect); i++);
-	if((tgt = ((i < v->area.size) ? v->area.data[i] : nil))) {
-		if(src->frame.size > 1 || src != tgt) {
-			int x = new->x + (new->width / 2);
-			if(x < 0)
-				tgt = new_left_column(v);
-			else if(x > rect.width)
-				tgt = new_right_column(v);
-		}
-		if(tgt != src)
-			send_to_area(tgt, src, f->client);
-		else {
-			for(i = 0; (i < src->frame.size) &&
-					!blitz_ispointinrect(pt->x, pt->y, &src->frame.data[i]->rect); i++);
-			if((i < src->frame.size) && (f != src->frame.data[i])) {
-				unsigned int j = idx_of_frame(f);
-				Frame *tmp = src->frame.data[j];
-				src->frame.data[j] = src->frame.data[i];
-				src->frame.data[i] = tmp;
-				arrange_column(src, False);
-				focus_client(f->client, True);
-			}
-		}
-	}
-}
-
-void
-drop_swap(Client *c, XPoint *pt)
-{
-
 	unsigned int i, j;
-	Frame *f1 = c->frame.data[c->sel], *f2 = nil;
-	View *v = view.data[sel];
+	Frame *f = nil;
+	View *v = view.size ? view.data[sel] : nil;
+
+	if(!v)
+		return nil;
 
 	for(i = 1; (i < v->area.size) &&
 			!blitz_ispointinrect(pt->x, pt->y, &v->area.data[i]->rect); i++);
@@ -378,8 +343,69 @@ drop_swap(Client *c, XPoint *pt)
 		for(j = 0; j < a->frame.size &&
 				!blitz_ispointinrect(pt->x, pt->y, &a->frame.data[j]->rect); j++);
 		if(j < a->frame.size)
-			f2 = a->frame.data[j];
+			f = a->frame.data[j];
 	}
+	return f;
+}
+
+static void
+drop_move(Frame *f, XRectangle *new, XPoint *pt)
+{
+	Area *tgt = nil, *src = f->area;
+	View *v = src->view;
+	unsigned int i;
+	int fidx;
+	Frame *ft;
+
+	if(!pt)
+		return;
+
+	for(i = 1; (i < v->area.size) &&
+			!blitz_ispointinrect(pt->x, pt->y, &v->area.data[i]->rect); i++);
+	if((tgt = ((i < v->area.size) ? v->area.data[i] : nil))) {
+		if(src != tgt) {
+			int x = new->x + (new->width / 2);
+			Bool new;
+			if(x < 0) {
+				tgt = new_left_column(v);
+				new = True;
+			}
+			else if(x > rect.width) {
+				tgt = new_right_column(v);
+				new = True;
+			}
+			if(new)
+				send_to_area(tgt, src, f->client);
+			else {
+				if(!(ft = frame_of_point(pt)) || (f == ft))
+					return;
+				send_to_area(tgt, src, f->client);
+				goto InsertAtPointer;
+			}
+		}
+		else {
+			if(!(ft = frame_of_point(pt)) || (f == ft))
+				return;
+InsertAtPointer:
+			cext_vdetach(vector_of_frames(&tgt->frame), f);
+			fidx = idx_of_frame(ft);
+
+			if(pt->y < (ft->rect.y + ft->rect.height / 2))
+				insert_before_idx(&tgt->frame, f, fidx);
+			else
+				insert_after_idx(&tgt->frame, f, fidx);
+
+			tgt->sel = idx_of_frame(f);
+			arrange_column(tgt, False);
+		}
+	}
+}
+
+void
+drop_swap(Client *c, XPoint *pt)
+{
+
+	Frame *f1 = c->frame.data[c->sel], *f2 = frame_of_point(pt);
 
 	if(!f2 || f1 == f2 || !idx_of_area(f1->area))
 		return;

@@ -251,11 +251,14 @@ void check_x_event(IXPConn *c);
 unsigned int flush_masked_events(long even_mask);
 
 /* frame.c */
+Vector *vector_of_frames(FrameVector *fv);
 Frame *create_frame(Area *a, Client *c);
 void destroy_frame(Frame *f);
 int idx_of_frame_id(Area *a, unsigned short id);
 int idx_of_frame(Frame *f);
 Client *frame_of_win(Window w);
+void insert_before_idx(FrameVector *fv, Frame *f, unsigned int idx);
+void insert_after_idx(FrameVector *fv, Frame *f, unsigned int idx);
 
 /* fs.c */
 unsigned long long pack_qpath(unsigned char type, unsigned short i1,

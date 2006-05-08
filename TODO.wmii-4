@@ -54,3 +54,8 @@ ad new column mode:
 > clients are visible.
 		--Doug Bell
 
+
+13:12 < Neptun> when present (like -T "Enter view name") it would create a
+label with that text on the left part of the menu. what do you think?
+
+- /def/ncol defines num of columns which should be created by default if possible.
