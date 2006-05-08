@@ -307,3 +307,12 @@ is_of_area(Area *a, Client *c)
 			return True;
 	return False;
 }
+
+Client *        
+sel_client_of_area(Area *a)
+{               
+	if(a) {
+		return (a->frame.size) ? a->frame.data[a->sel]->client : nil;
+	}
+	return nil;
+}

@@ -232,7 +232,7 @@ sel_client_of_view(View *v)
 {
 	if(v) {
 		Area *a = v->area.size ? v->area.data[v->sel] : nil;
-		return (a && a->frame.size) ? a->frame.data[a->sel]->client : nil;
+		return sel_client_of_area(a);
 	}
 	return nil;
 }
