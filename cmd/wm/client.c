@@ -567,17 +567,17 @@ swap_client(Client *c, char *arg)
 		return;
 
 	if(!strncmp(arg, "prev", 5) && i) {
-		if(i == 1)
-			o = v->area.data[v->area.size - 1];
+		if(i <= 1)
+			return;
 		else
 			o = v->area.data[i - 1];
 		goto Swaparea;
 	}
 	else if(!strncmp(arg, "next", 5) && i) {
-		if(i < v->area.size - 1)
+		if(i + 1 < v->area.size)
 			o = v->area.data[i + 1];
 		else
-			o = v->area.data[1];
+			return;
 Swaparea:
 		if(o == a)
 			return;
@@ -594,7 +594,7 @@ Swaparea:
 		if(j)
 			i = j - 1;
 		else
-			i = a->frame.size - 1;
+			return;
 		a->frame.data[j] = a->frame.data[i];
 		a->frame.data[i] = f1;
 	}
@@ -602,7 +602,7 @@ Swaparea:
 		if(j + 1 < a->frame.size)
 			i = j + 1;
 		else
-			i = 0;
+			return;
 		a->frame.data[j] = a->frame.data[i];
 		a->frame.data[i] = f1;
 	}

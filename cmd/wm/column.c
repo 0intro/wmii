@@ -362,31 +362,39 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 
 	for(i = 1; (i < v->area.size) &&
 			!blitz_ispointinrect(pt->x, pt->y, &v->area.data[i]->rect); i++);
-	if((tgt = ((i < v->area.size) ? v->area.data[i] : nil))) {
-		if(src != tgt) {
-			int x = new->x + (new->width / 2);
-			Bool new;
-			if(x < 0) {
-				tgt = new_left_column(v);
-				new = True;
-			}
-			else if(x > rect.width) {
-				tgt = new_right_column(v);
-				new = True;
-			}
-			if(new)
-				send_to_area(tgt, src, f->client);
-			else {
-				if(!(ft = frame_of_point(pt)) || (f == ft))
-					return;
-				send_to_area(tgt, src, f->client);
-				goto InsertAtPointer;
-			}
+	if(i < v->area.size) {
+		int x = new->x + (new->width / 2);
+		if(x < 0) {
+			tgt = new_left_column(v);
+			send_to_area(tgt, src, f->client);
+		}
+		else if(x > rect.width) {
+			tgt = new_right_column(v);
+			send_to_area(tgt, src, f->client);
+		}
+		else if(src != (tgt = v->area.data[i])) {
+			Client *c = f->client;
+			Bool before;
+			if(!(ft = frame_of_point(pt)) || (f == ft))
+				return;
+			fidx = idx_of_frame(ft);
+			before = pt->y < (ft->rect.y + ft->rect.height / 2);
+			send_to_area(tgt, src, c);
+
+			f = c->frame.data[c->sel];
+			cext_vdetach(vector_of_frames(&tgt->frame), f);
+
+			if(before)
+				insert_before_idx(&tgt->frame, f, fidx);
+			else
+				insert_after_idx(&tgt->frame, f, fidx);
+
+			tgt->sel = idx_of_frame(f);
+			arrange_column(tgt, False);
 		}
 		else {
 			if(!(ft = frame_of_point(pt)) || (f == ft))
 				return;
-InsertAtPointer:
 			cext_vdetach(vector_of_frames(&tgt->frame), f);
 			fidx = idx_of_frame(ft);
 

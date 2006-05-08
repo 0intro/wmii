@@ -112,19 +112,15 @@ select_area(Area *a, char *arg)
 		else
 			i = 1;
 	} else if(!strncmp(arg, "prev", 5)) {
-		if(i > 0) {
-			if(i == 1)
-				i = v->area.size - 1;
-			else
-				i--;
-		}
+		if(i <= 1)
+			return;
+		else
+			i--;
 	} else if(!strncmp(arg, "next", 5)) {
-		if(i > 0) {
-			if(i + 1 < v->area.size)
-				i++;
-			else
-				i = 1;
-		}
+		if(i + 1 < v->area.size)
+			i++;
+		else
+			return;
 	}
 	else {
 		const char *errstr;
