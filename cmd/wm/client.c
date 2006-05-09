@@ -138,9 +138,9 @@ focus_client(Client *c, Bool restack)
 	if(i > 0 && f->area->mode == Colstack)
 		arrange_column(f->area, False);
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-	if(old)
+	if(old && old != old_in_area && old != c)
 		draw_client(old);
-	if(old_in_area != c)
+	if(old_in_area && old_in_area != c)
 		draw_client(old_in_area);
 	draw_client(c);
 	XSync(dpy, False);
