@@ -27,8 +27,14 @@ create_frame(Area *a, Client *c)
 	f->rect.height += def.border + height_of_bar();
 	cext_vattach(vector_of_frames(&c->frame), f);
 	c->sel = c->frame.size - 1;
-	cext_vattach(vector_of_frames(&a->frame),f);
-	a->sel = a->frame.size - 1;
+	if(a->frame.size) {
+		insert_after_idx(&a->frame, f, a->sel);
+		a->sel++;
+	}
+	else {
+		cext_vattach(vector_of_frames(&a->frame), f);
+		a->sel = 0;
+	}
 
 	return f;
 }

@@ -292,6 +292,8 @@ draw_client(Client *c)
 		/* if */	!idx_of_area(f->area) ? "~" : "",
 				fidx + 1, f->area->frame.size);
 	w = d.rect.width = d.rect.height + blitz_textwidth(dpy, &blitzfont, buf);
+	if(w > f->rect.width)
+		return;
 	d.rect.x = f->rect.width - d.rect.width; 
 	d.data = buf;
 	
@@ -310,6 +312,8 @@ draw_client(Client *c)
 
 	/* tag bar */
 	d.rect.width = d.rect.height + blitz_textwidth(dpy, &blitzfont, c->tags);
+	if(d.rect.width + w > f->rect.width)
+		return;
 	if(d.rect.width > f->rect.width / 3)
 		d.rect.width = f->rect.width / 3;
 	d.data = c->tags;
@@ -319,6 +323,8 @@ draw_client(Client *c)
 
 	/* title bar */
 	d.align = WEST;
+	if(d.rect.x + w > f->rect.width)
+		return;
 	d.rect.width = f->rect.width - (d.rect.x + w);
 	d.data = c->name;
 	blitz_drawlabel(dpy, &d);
