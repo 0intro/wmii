@@ -117,7 +117,7 @@ select_area(Area *a, char *arg)
 		else
 			i--;
 	} else if(!strncmp(arg, "next", 5)) {
-		if(i + 1 < v->area.size)
+		if(i > 0 && (i + 1 < v->area.size))
 			i++;
 		else
 			return;
