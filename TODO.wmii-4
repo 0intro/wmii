@@ -1,3 +1,4 @@
+- UTF8 support, look into fluxbox
 - remove swapping action, merge vertocal swapping into moving - is this a good idea?
 - remove internal labels, now tagging seems easy and straightforward that they
 	THINK: We'll need CreateTag, DestroyTag, UnfocusTag, FocusTag and the
