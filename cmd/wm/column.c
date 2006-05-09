@@ -357,7 +357,7 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 	int fidx;
 	Frame *ft;
 
-	if(!pt)
+	if(!pt || v->area.size < 2)
 		return;
 
 	for(i = 1; (i < v->area.size) &&
@@ -365,12 +365,16 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 	if(i < v->area.size) {
 		int x = new->x + (new->width / 2);
 		if(x < 0) {
-			tgt = new_left_column(v);
-			send_to_area(tgt, src, f->client);
+			if(src->frame.size > 1 || src != v->area.data[1]) {
+				tgt = new_left_column(v);
+				send_to_area(tgt, src, f->client);
+			}
 		}
 		else if(x > rect.width) {
-			tgt = new_right_column(v);
-			send_to_area(tgt, src, f->client);
+			if(src->frame.size > 1 || src != v->area.data[v->area.size-1]) {
+				tgt = new_right_column(v);
+				send_to_area(tgt, src, f->client);
+			}
 		}
 		else if(src != (tgt = v->area.data[i])) {
 			Client *c = f->client;
