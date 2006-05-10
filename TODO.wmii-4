@@ -1,62 +1,34 @@
-- UTF8 support, look into fluxbox
+Ordered list of TODOs:
+
 - remove swapping action, merge vertocal swapping into moving - is this a good idea?
-- remove internal labels, now tagging seems easy and straightforward that they
-	THINK: We'll need CreateTag, DestroyTag, UnfocusTag, FocusTag and the
-		event loop in wmiirc must be before TAGGING
-can be externalized again
 - idea for column mode:
-	*: is the current default mode with fallback (shows arbitrary clients)
-	0: is the current max mode, shows only one client at the time (same bahvior as current)
-	n: shows n clients, in stacking mode, using the selected client as center,
+	100: is the current default mode with fallback (shows arbitrary clients)
+	0: is the current max mode, shows only one client at the time (same bahvior
+			as current) n: shows n clients, in stacking mode, using the
+	selected client as center,
 		n == 1 is current stacking mode,
 		n == equal will use the center of (n/2),
 		n == unequal has always a center element.
-- tagbars
-- screen dimension rescaling if screen resolution changes (even with Xrandr)
-- Xinerama support
-- partly EWMH support
-- libixp: idea from PoP: implement a va_args method similiar to printf for
-		marshalling 9P messages, might reduce LOC drastically
+	Visible clients should only change when a formerly hidden
+	(stacked) client is made visible.  So, when the fifth client is focused
+	and made visible, the third would disappear (with n=2) -- this means on
+	boundaries, like in mutt(1).
+- /def/ncol defines num of columns which should be created by default if possible.
+- wmiimenu -t <title> flag
 - remove the geom syntax as it is now (with the +- stuff, and only
 	allowing explicit coordinates, instead additionally resize
 	+/-<w> +/-<h> and move +/-<x> +/-<y> actions are needed in the
 	associated ctl devices of clients.  
 - add wmiir ls (read should have same semantic as in 9p), output without
-details, add -l for details like in ls of Plan 9
+	details, add -l for details like in ls of Plan 9
+- remove internal labels, now tagging seems easy and straightforward that they
+	THINK: We'll need CreateTag, DestroyTag, UnfocusTag, FocusTag and the
+	event loop in wmiirc must be before TAGGING can be externalized again
 - liblitz: window abstraction (creation, events), can be reused in menu and bar
-and frames
-
-ad new column mode:
-
-> > To clarify what happens on focus change imagine 6 clients with
-> > stacking set to 2 visible clients per time. The center of two
-> > visible clients is always the 1st client (2/2 == 1), thus if the
-> > first of client of the column is focused, also the second is
-> > visible, if the second is focused also the third is visible, but
-> > the first is invisible, etc. The only exception will be on
-> > boundaries, if the last client is selected, also the fifth
-> > client will be visible.
->
-> Interesting proposal, except for the portion above.  Say I have the
-> third and fourth clients visible, with the third focused.  If I change
-> the focus to the fourth client, I don't want to hide the third - I'm
-> probably still working with it.
->
-> I think the visible clients should only change when a formerly hidden
-> (stacked) client is made visible.  So, when the fifth client is focused
-> and made visible, the third would disappear, leaving the fourth and
-> fifth.
->
-> It would work the same way in reverse.  With the third and fourth
-> clients visible, I can focus either without changing visiblities.  When
-> I focus the second client, it becomes visible and hides the fourth.
->
-> This is similar to your idea, except for delaying changes to which
-> clients are visible.
-		--Doug Bell
-
-
-13:12 < Neptun> when present (like -T "Enter view name") it would create a
-label with that text on the left part of the menu. what do you think?
-
-- /def/ncol defines num of columns which should be created by default if possible.
+	and frames
+- tagbars
+- screen dimension rescaling if screen resolution changes (even with Xrandr)
+- Xinerama support
+- partial EWMH support
+- libixp: idea from PoP: implement a va_args method similiar to printf for
+	marshalling 9P messages, might reduce LOC drastically

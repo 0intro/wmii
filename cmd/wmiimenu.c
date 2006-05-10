@@ -291,10 +291,11 @@ handle_kpress(XKeyEvent * e)
 	draw_menu();
 }
 
-void
+static char *
 read_allitems()
 {
-	char *maxname = 0, *p, buf[1024];
+	static char *maxname = nil;
+    char *p, buf[1024];
 	unsigned int len = 0, max = 0;
 
 	while(fgets(buf, sizeof(buf), stdin)) {
@@ -309,10 +310,7 @@ read_allitems()
 		cext_vattach(item2vector(&allitem), p);
 	}
 
-	if(maxname)
-		cmdw = blitz_textwidth(dpy, &draw.font, maxname) + mrect.height;
-	if(cmdw > mrect.width / 3)
-		cmdw = mrect.width / 3;
+	return maxname;
 }
 
 int
@@ -320,7 +318,7 @@ main(int argc, char *argv[])
 {
 	int i;
 	XSetWindowAttributes wa;
-	char *fontstr, *selcolstr, *normcolstr;
+	char *fontstr, *selcolstr, *normcolstr, *maxname;
 	XEvent ev;
 
 	/* command line args */
@@ -343,7 +341,9 @@ main(int argc, char *argv[])
 	}
 	screen = DefaultScreen(dpy);
 
-	/* grab as early as possible */
+	maxname = read_allitems();
+
+	/* grab as early as possible, but after reading all items!!! */
 	while(XGrabKeyboard
 			(dpy, RootWindow(dpy, screen), True, GrabModeAsync,
 			 GrabModeAsync, CurrentTime) != GrabSuccess)
@@ -386,7 +386,11 @@ main(int argc, char *argv[])
 			DefaultDepth(dpy, screen));
 
 	XSync(dpy, False);
-	read_allitems();
+
+	if(maxname)
+		cmdw = blitz_textwidth(dpy, &draw.font, maxname) + mrect.height;
+	if(cmdw > mrect.width / 3)
+		cmdw = mrect.width / 3;
 
 	text[0] = 0;
 	update_items(text);
@@ -412,6 +416,7 @@ main(int argc, char *argv[])
 			break;
 	}
 
+	XUngrabKeyboard(dpy, CurrentTime);
 	XFreePixmap(dpy, draw.drawable);
 	XFreeGC(dpy, draw.gc);
 	XDestroyWindow(dpy, win);
