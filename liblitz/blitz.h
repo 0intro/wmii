@@ -10,6 +10,16 @@
 #define BLITZ_SELCOLORS		"#ffffff #285577 #4c7899"
 #define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
 
+#ifdef X_HAVE_UTF8_STRING
+#define Xi18nTextPropertyToTextList Xutf8TextPropertyToTextList
+#define Xi18nDrawString Xutf8DrawString
+#define Xi18nTextExtents Xutf8TextExtents
+#else
+#define Xi18nTextPropertyToTextList XmbTextPropertyToTextList
+#define Xi18nDrawString XmbDrawString
+#define Xi18nTextExtents XmbTextExtents
+#endif
+
 typedef enum {
 	CENTER, WEST, NWEST, NORTH, NEAST, EAST,
 	SEAST, SOUTH, SWEST

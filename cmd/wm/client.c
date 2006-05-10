@@ -34,13 +34,8 @@ update_client_name(Client *c)
 	if(name.encoding == XA_STRING)
 		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
 	else {
-#ifdef X_HAVE_UTF8_STRING
-		if(Xutf8TextPropertyToTextList(dpy, &name, &list, &n) >= Success
+		if(Xi18nTextPropertyToTextList(dpy, &name, &list, &n) >= Success
 				&& n > 0 && *list)
-#else
-		if(XmbTextPropertyToTextList(dpy, &name, &list, &n) >= Success
-				&& n > 0 && *list)
-#endif
 		{
 			cext_strlcpy(c->name, *list, sizeof(c->name));
 			XFreeStringList(list);
