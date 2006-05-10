@@ -173,4 +173,4 @@ do
 			xwrite /view/sel/sel/ctl swap up;;
 		esac;;
 	esac
-done
+done &
