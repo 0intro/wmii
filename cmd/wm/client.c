@@ -26,14 +26,21 @@ update_client_name(Client *c)
 
 	name.nitems = 0;
 	c->name[0] = 0;
-	XGetWMName(dpy, c->win, &name);
+	XGetTextProperty(dpy, c->win, &name, net_atom[NetWMName]);
+	if(!name.nitems)
+		XGetWMName(dpy, c->win, &name);
 	if(!name.nitems)
 		return;
 	if(name.encoding == XA_STRING)
 		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
 	else {
+#ifdef X_HAVE_UTF8_STRING
+		if(Xutf8TextPropertyToTextList(dpy, &name, &list, &n) >= Success
+				&& n > 0 && *list)
+#else
 		if(XmbTextPropertyToTextList(dpy, &name, &list, &n) >= Success
 				&& n > 0 && *list)
+#endif
 		{
 			cext_strlcpy(c->name, *list, sizeof(c->name));
 			XFreeStringList(list);
@@ -243,7 +250,7 @@ prop_client(Client *c, XPropertyEvent *e)
 		}
 		break;
 	}
-	if(e->atom == XA_WM_NAME) {
+	if(e->atom == XA_WM_NAME || e->atom == net_atom[NetWMName]) {
 		update_client_name(c);
 		if(c->frame.size)
 			draw_client(c);

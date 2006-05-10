@@ -110,7 +110,11 @@ xdrawtext(Display *dpy, BlitzDraw *d)
 		break;
 	}
 	if(d->font.set)
+#ifdef X_HAVE_UTF8_STRING
+		Xutf8DrawString(dpy, d->drawable, d->font.set, d->gc, x, y, text, len);
+#else
 		XmbDrawString(dpy, d->drawable, d->font.set, d->gc, x, y, text, len);
+#endif
 	else
 		XDrawString(dpy, d->drawable, d->gc, x, y, text, len);
 }
