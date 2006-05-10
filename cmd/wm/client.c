@@ -516,7 +516,10 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		match_sizehints(c);
 
 	if(!ignore_xcall) {
-		if(!idx_of_area(f->area) && c->rect.width >= rect.width && c->rect.height >= rect.height) {
+		if(!idx_of_area(f->area) &&
+				(c->rect.width >= rect.width) &&
+				(c->rect.height >= rect.height))
+		{
 			f->rect.x = -def.border;
 			f->rect.y = -height_of_bar();
 		}

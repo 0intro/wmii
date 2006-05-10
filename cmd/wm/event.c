@@ -155,8 +155,8 @@ handle_configurerequest(XEvent *e)
 			if(c->frame.size) {
 				Frame *f = c->frame.data[c->sel];
 				if(c->rect.width >= rect.width && c->rect.height >= rect.height) {
-					f->rect.x = wc.x = -def.border;
 					f->rect.y = wc.y = -height_of_bar();
+					f->rect.x = wc.x = -def.border;
 				}
 				else {
 					f->rect.x = wc.x = c->rect.x - def.border;
