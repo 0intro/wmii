@@ -1499,6 +1499,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if(dir_type == FsDarea) {
 			view.data[i1]->area.data[i2]->mode = i;
 			arrange_column(view.data[i1]->area.data[i2], True);
+			restack_view(view.data[i1]);
 			draw_clients();
 		}
 		else
