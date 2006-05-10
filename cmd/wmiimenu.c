@@ -143,8 +143,10 @@ draw_menu()
 		for(i = curroff; i < nextoff; i++) {
 			draw.data = item.data[i];
 			draw.rect.x = offx;
-			draw.rect.width = blitz_textwidth(dpy, &draw.font, draw.data) + mrect.height;
-			offx += draw.rect.width;
+			draw.rect.width = blitz_textwidth(dpy, &draw.font, draw.data);
+			if(draw.rect.width > mrect.width / 3)
+				draw.rect.width = mrect.width / 3;
+			draw.rect.width += mrect.height;
 			if(sel == i) {
 				draw.color = selcolor;
 				blitz_drawlabel(dpy, &draw);
@@ -153,6 +155,7 @@ draw_menu()
 				draw.color = normcolor;
 				blitz_drawlabel(dpy, &draw);
 			}
+			offx += draw.rect.width;
 		}
 
 		draw.color = normcolor;
@@ -308,6 +311,8 @@ read_allitems()
 
 	if(maxname)
 		cmdw = blitz_textwidth(dpy, &draw.font, maxname) + mrect.height;
+	if(cmdw > mrect.width / 3)
+		cmdw = mrect.width / 3;
 }
 
 int
