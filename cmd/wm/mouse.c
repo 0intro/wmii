@@ -9,6 +9,9 @@
 
 #include "wm.h"
 
+#define ButtonMask      (ButtonPressMask | ButtonReleaseMask)
+#define MouseMask       (ButtonMask | PointerMotionMask)
+
 static int
 check_vert_match(XRectangle *r, XRectangle *neighbor)
 {
@@ -195,19 +198,13 @@ do_mouse_move(Client *c, XButtonPressedEvent *e, Bool swap)
 	pt.y = ey;
 	XSync(dpy, False);
 
-	if(XPending(dpy) ||
-		(XGrabPointer(dpy, root, False, PointerMotionMask | ButtonReleaseMask,
-			GrabModeAsync, GrabModeAsync, None, cursor[CurMove], e->time)
-		!= GrabSuccess))
+	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+					None, cursor[CurMove], e->time) != GrabSuccess)
 		return;
 	XGrabServer(dpy);
 
 	for(;;) {
-		while(!XCheckMaskEvent(dpy, ButtonReleaseMask | PointerMotionMask, &ev)) {
-			usleep(1000);
-			continue;
-		}
-
+		XMaskEvent(dpy, MouseMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
 			if(!first) {
@@ -241,6 +238,7 @@ do_mouse_move(Client *c, XButtonPressedEvent *e, Bool swap)
 			snap_move(&frect, rects, num, snapw, snaph);
 			draw_pseudo_border(&frect);
 			break;
+		default: break;
 		}
 	}
 }
@@ -439,19 +437,13 @@ do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align)
 	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
 	XSync(dpy, False);
 
-	if(XPending(dpy) ||
-			(XGrabPointer(dpy, c->framewin, False, PointerMotionMask | ButtonReleaseMask,
-				 GrabModeAsync, GrabModeAsync, None, cursor[CurResize], e->time)
-			!= GrabSuccess))
+	if(XGrabPointer(dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
+					None, cursor[CurResize], e->time) != GrabSuccess)
 		return;
 	XGrabServer(dpy);
 
 	for(;;) {
-		while(!XCheckMaskEvent(dpy, ButtonReleaseMask | PointerMotionMask, &ev)) {
-			usleep(1000);
-			continue;
-		}
-
+		XMaskEvent(dpy, MouseMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
 			if(!first) {
@@ -481,6 +473,7 @@ do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align)
 					ox, py, oy, snapw, snaph);
 			draw_pseudo_border(&frect);
 			break;
+		default: break;
 		}
 	}
 }
