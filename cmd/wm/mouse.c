@@ -198,6 +198,7 @@ do_mouse_move(Client *c, XButtonPressedEvent *e, Bool swap)
 	pt.y = ey;
 	XSync(dpy, False);
 
+	ungrab_mouse(c->framewin, AnyModifier, AnyButton);
 	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
 					None, cursor[CurMove], e->time) != GrabSuccess)
 		return;
@@ -218,8 +219,9 @@ do_mouse_move(Client *c, XButtonPressedEvent *e, Bool swap)
 				else
 					resize_client(c, &frect, False);
 			}
+			update_client_grab(c, True);
 			free(rects);
-			XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
+			XUngrabPointer(dpy, ev.xbutton.time);
 			XUngrabServer(dpy);
 			XSync(dpy, False);
 			return;
@@ -437,6 +439,7 @@ do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align)
 	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
 	XSync(dpy, False);
 
+	ungrab_mouse(c->framewin, AnyModifier, AnyButton);
 	if(XGrabPointer(dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
 					None, cursor[CurResize], e->time) != GrabSuccess)
 		return;
@@ -456,7 +459,8 @@ do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align)
 				else
 					resize_client(c, &frect, False);
 			}
-			XUngrabPointer(dpy, CurrentTime /* ev.xbutton.time */ );
+			update_client_grab(c, True);
+			XUngrabPointer(dpy, ev.xbutton.time);
 			XUngrabServer(dpy);
 			XSync(dpy, False);
 			return;
