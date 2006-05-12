@@ -16,7 +16,7 @@ LIBS = -L${PREFIX}/lib -L/usr/lib -lc -L${X11LIB} -lX11
 # Linux/BSD
 #CFLAGS = -g -Wall -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
 #	-DVERSION=\"${VERSION}\"
-CFLAGS = -O3 -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
+CFLAGS = -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
 	-DVERSION=\"${VERSION}\"
 #LDFLAGS = -q ${LIBS}
 LDFLAGS = ${LIBS}
