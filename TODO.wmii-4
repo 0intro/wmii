@@ -1,6 +1,8 @@
 Ordered list of TODOs:
 
-- remove swapping action, merge vertocal swapping into moving - is this a good idea?
+- apply the focuscolor patch by Stefan Tibus
+- introduce a view stack to focus the previously selected view on view destruction
+- remove swapping action, merge vertical swapping into moving - is this a good idea?
 - idea for column mode:
 	100: is the current default mode with fallback (shows arbitrary clients)
 	0: is the current max mode, shows only one client at the time (same bahvior
