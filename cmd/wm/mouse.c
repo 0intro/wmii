@@ -178,9 +178,9 @@ draw_pseudo_border(XRectangle * r)
 }
 
 void
-do_mouse_move(Client *c, XButtonPressedEvent *e, Bool swap)
+do_mouse_move(Client *c, Bool swap)
 {
-	int px = 0, py = 0, wex, wey, ex, ey, first = 1, i;
+	int px = 0, py = 0, wex, wey, ex, ey, i;
 	Window dummy;
 	XEvent ev;
 	int snapw = (rect.width * def.snap) / 1000;
@@ -199,28 +199,27 @@ do_mouse_move(Client *c, XButtonPressedEvent *e, Bool swap)
 	XSync(dpy, False);
 
 	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
-					None, cursor[CurMove], e->time) != GrabSuccess)
+					None, cursor[CurMove], CurrentTime) != GrabSuccess)
 		return;
 	XGrabServer(dpy);
 
+	draw_pseudo_border(&frect);
 	for(;;) {
 		XMaskEvent(dpy, MouseMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			if(!first) {
-				draw_pseudo_border(&frect);
-				if(idx_of_area(f->area)) {
-					if(swap)
-						drop_swap(c, &pt);
-					else
-						resize_column(c, &frect, &pt);
-				}
+			draw_pseudo_border(&frect);
+			if(idx_of_area(f->area)) {
+				if(swap)
+					drop_swap(c, &pt);
 				else
-					resize_client(c, &frect, False);
+					resize_column(c, &frect, &pt);
 			}
+			else
+				resize_client(c, &frect, False);
 			free(rects);
-			XUngrabPointer(dpy, ev.xbutton.time);
 			XUngrabServer(dpy);
+			XUngrabPointer(dpy, CurrentTime);
 			XSync(dpy, False);
 			return;
 			break;
@@ -229,10 +228,7 @@ do_mouse_move(Client *c, XButtonPressedEvent *e, Bool swap)
 			pt.y = ev.xmotion.y;
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
-			if(first)
-				first = 0;
-			else
-				draw_pseudo_border(&frect);
+			draw_pseudo_border(&frect);
 			frect.x = px - ex;
 			frect.y = py - ey;
 			snap_move(&frect, rects, num, snapw, snaph);
@@ -420,9 +416,9 @@ snap_resize(XRectangle * r, XRectangle * o, BlitzAlign align,
 }
 
 void
-do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align)
+do_mouse_resize(Client *c, BlitzAlign align)
 {
-	int px = 0, py = 0, i, ox, oy, first = 1;
+	int px = 0, py = 0, i, ox, oy;
 	Window dummy;
 	XEvent ev;
 	int snapw = (rect.width * def.snap) / 1000;
@@ -433,42 +429,37 @@ do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align)
 	XRectangle *rects = rects_of_view(f->area->view, idx_of_area(f->area) == 0, &num);
 	XRectangle frect = f->rect;
 	XRectangle origin = frect;
+	XPoint pt;
 
 	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
 	XSync(dpy, False);
 
 	if(XGrabPointer(dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
-					None, cursor[CurResize], e->time) != GrabSuccess)
+					None, cursor[CurResize], CurrentTime) != GrabSuccess)
 		return;
 	XGrabServer(dpy);
 
+	draw_pseudo_border(&frect);
 	for(;;) {
 		XMaskEvent(dpy, MouseMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			if(!first) {
-				XPoint pt;
-				draw_pseudo_border(&frect);
-				pt.x = px;
-				pt.y = py;
-				if(idx_of_area(f->area))
-					resize_column(c, &frect, &pt);
-				else
-					resize_client(c, &frect, False);
-			}
-			XUngrabPointer(dpy, ev.xbutton.time);
+			draw_pseudo_border(&frect);
+			pt.x = px;
+			pt.y = py;
+			if(idx_of_area(f->area))
+				resize_column(c, &frect, &pt);
+			else
+				resize_client(c, &frect, False);
 			XUngrabServer(dpy);
+			XUngrabPointer(dpy, CurrentTime);
 			XSync(dpy, False);
 			return;
 			break;
 		case MotionNotify:
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
-			if(first)
-				first = 0;
-			else
-				draw_pseudo_border(&frect);
-
+			draw_pseudo_border(&frect);
 			snap_resize(&frect, &origin, align, rects, num, px,
 					ox, py, oy, snapw, snaph);
 			draw_pseudo_border(&frect);
@@ -481,13 +472,13 @@ do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align)
 void
 grab_mouse(Window w, unsigned long mod, unsigned int button)
 {
-	XGrabButton(dpy, button, mod, w, False, ButtonPressMask,
-			GrabModeAsync, GrabModeAsync, None, None);
+	XGrabButton(dpy, button, mod, w, False, ButtonMask,
+			GrabModeAsync, GrabModeSync, None, None);
 	if((mod != AnyModifier) && num_lock_mask) {
-		XGrabButton(dpy, button, mod | num_lock_mask, w, False, ButtonPressMask,
-				GrabModeAsync, GrabModeAsync, None, None);
+		XGrabButton(dpy, button, mod | num_lock_mask, w, False, ButtonMask,
+				GrabModeAsync, GrabModeSync, None, None);
 		XGrabButton(dpy, button, mod | num_lock_mask | LockMask, w, False,
-				ButtonPressMask, GrabModeAsync, GrabModeAsync, None, None);
+				ButtonMask, GrabModeAsync, GrabModeSync, None, None);
 	}
 }
 

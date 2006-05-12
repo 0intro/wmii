@@ -101,19 +101,19 @@ handle_buttonpress(XEvent *e)
 				focus(c, True);
 			switch(ev->button) {
 			case Button1:
-				do_mouse_move(c, ev, False);
+				do_mouse_move(c, False);
 				break;
 			case Button2:
 				if(idx_of_area(c->frame.data[c->sel]->area))
-					do_mouse_move(c, ev, True);
+					do_mouse_move(c, True);
 				break;
 			case Button3:
 				{
 					BlitzAlign align = blitz_align_of_rect(&c->rect, ev->x, ev->y);
 					if(align != CENTER)
-						do_mouse_resize(c, ev, align);
+						do_mouse_resize(c, align);
 					else
-						do_mouse_move(c, ev, False);
+						do_mouse_move(c, False);
 				}
 			default:
 			break;

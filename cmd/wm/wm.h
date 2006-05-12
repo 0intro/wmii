@@ -282,8 +282,8 @@ void init_lock_keys();
 unsigned long mod_key_of_str(char *val);
 
 /* mouse.c */
-void do_mouse_resize(Client *c, XButtonPressedEvent *e, BlitzAlign align);
-void do_mouse_move(Client *c, XButtonPressedEvent *e, Bool swap);
+void do_mouse_resize(Client *c,BlitzAlign align);
+void do_mouse_move(Client *c, Bool swap);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 
