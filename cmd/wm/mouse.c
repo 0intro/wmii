@@ -445,10 +445,8 @@ do_mouse_resize(Client *c, BlitzAlign align)
 		switch (ev.type) {
 		case ButtonRelease:
 			draw_pseudo_border(&frect);
-			pt.x = px;
-			pt.y = py;
 			if(idx_of_area(f->area))
-				resize_column(c, &frect, &pt);
+				resize_column(c, &frect, nil);
 			else
 				resize_client(c, &frect, False);
 			XUngrabServer(dpy);
