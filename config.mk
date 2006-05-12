@@ -18,7 +18,7 @@ LIBS = -L${PREFIX}/lib -L/usr/lib -lc -L${X11LIB} -lX11
 #	-DVERSION=\"${VERSION}\"
 CFLAGS = -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
 	-DVERSION=\"${VERSION}\"
-#LDFLAGS = -q ${LIBS}
+#LDFLAGS = -g ${LIBS}
 LDFLAGS = ${LIBS}
 
 
