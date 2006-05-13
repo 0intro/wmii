@@ -407,7 +407,7 @@ manage_client(Client *c)
 
 	if(c->trans && (trans = client_of_win(c->trans)))
 		cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
-	else
+	if(!strlen(c->tags))
 		apply_rules(c);
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
