@@ -1,0 +1,123 @@
+Hi there,
+
+I'm glad to announce the wmii-3 release aka 'Zur Steglitzer Bratpfanne' [1].
+Compared with earlier versions, wmii-3 is a quite different window manager.
+Many design decisions have been revised and simplified.
+
+You can download the release from:
+
+   http://wmii.net/download/wmii-3.tar.gz
+   (Fingerprint: http://wmii.net/download/wmii-3.tar.gz.sig)
+
+The most important changes and new features include:
+
+ * The new window management consists of a column-layout. It splits the
+   screen into horizontal columns, which arrange clients vertically in either
+   maximized, default, or stacked modes.  The maximized mode maximizes all
+   clients to the column size, this makes only one client visible at a time.
+   The default mode arranges all clients with arbitrary heights and makes all
+   of them visible at a time. The stacked mode displays a title-bar for each
+   unfocused client, and provides the rest of the available vertical space to
+   the focused client.  The new column-layout replaces the layout approach of
+   wmii-2.x, which provided different layouts for specific tasks. Thus, it is
+   intended to generalize all previously existing layouts into one concept.
+
+ * The classic workspace (page) paradigm of previous versions or other window
+   managers is replaced with a new tagging approach. Each client is tagged with
+   arbitrary alphanumeric tags.  A view is the set of visible clients which are
+   tagged with a specific tag. Hence, a view can be compared with classic
+   workspaces, except that the tagging approach enables a more powerful
+   relation between clients and views.  If a client is tagged more than one
+   tag, it is visible in all views representing these tags. This allows
+   fine-grain sticky-flag capabilities for clients.  Besides this, the new
+   tagging approach replaces the attach/detach concept found in earlier
+   versions. Instead of detaching a client from current view, it is tagged
+   differently. Same appears to attaching.
+
+ * The new virtual file-system can be accessed using a 9P-compliant client.
+   This enables accessing wmii-3 with existing 9P clients, like the 9p2000.ko
+   kernel module of Linux 2.6.14+, or the included 9P command line client wmiir
+   (wmii remote). The new file-system has no coupling with the internal data
+   structures and performs much better, in contrast to previous versions.
+
+ * The dependency to Plan 9 (9base) tools has been dropped.
+   wmii-3 uses a sh-based configuration sub-system again, which is similiar to
+   that one found in wmii-2.5.x.
+
+ * The separation of wmiibar, wmiikeys, and the wmiifs file-service multiplexer
+   into separate processes in earlier versions has been removed, which
+   increased the overall performance drastically and reduced a lot of code
+   overhead.
+
+
+If you're a novice and never used wmii before just read the README file shipped
+in the release tarball and follow the instructions to install and start wmii.
+
+If you're an upgrader from wmii-2.5.x, please note the following:
+
+ - wmii-3 is quite a different window manager compared to wmii-2, thus don't
+   expect much similarities, except very basic ones.
+ - You can purge the 9base installation now. You don't need the Plan 9 stuff
+   for the configuration sub-system anymore.
+ - The column layout behaves quite different to tiled or grid layout, you'll
+   need some time to get used to the new layout. Please don't use swapping,
+   because this is planned to be a temporary feature, which might make it
+   simplier for you to get the track between wmii-2 and wmii-3. Don't expect
+   swapping in the upcoming wmii-4 release.
+ - There are no pages anymore, use the powerful tagging approach instead.
+ - There is no tabbing, use stacking ($MODKEY-s) instead.
+ - There is no way to hide the title-bars anymore.
+ - There is no way to enable/disable increment handling, that is done
+   internally for you.
+
+If you're an upgrader from wmii-2, please note the following as well:
+
+ - The configuration has changed totally, you cannot re-use your configuration
+   without relearning things. However the configuration is much easier now due
+   the fact of an everything-in-one-file concept.
+
+To get used to wmii-3, my advice is to read the README, the very-short
+welcome message at startup, the beginner's guide [2] by Steffen Liebergeld,
+and finally the manual pages wmii(1), wmiiwm(1), wmiir(1), and optionally
+wmiimenu(1).
+
+This release won't have been possible, if there weren't so many people
+helping the project in various ways. I want to say thank you all for any help!
+
+I thank especially following people, which have been involved heavily in wmii-3
+development:
+
+ * Sander van Dijk
+ * Georg Neis
+ * Uriel
+ * Denis Grelich
+ * Icarus Sparry
+ * Salvador Peiro
+ * Steffen Liebergeld
+ * Anthony Martin
+ * Stefan Tibus
+ * Neptun
+
+I also thank the following donators:
+
+ * Heiko Schlichting
+ * Al Wong (aka alvin)
+ * Alexis Hildebrandt
+ * Alexandre Dulaunoy
+
+I will spend the money into the awaited multihead-setup and into several boxes
+of beer and barbequeue, if the developers and contributors will manage to meet
+each other in Berlin at 23C3 congress, to discuss about future projects (like
+sami, termi, taggi, ii, etc.).
+
+[1] The release name 'Zur Steglitzer Bratpfanne' has been choosen because of
+    the following story. Back in April 'garbeam' received a postal package from
+    Tobias 'aka tube' Walkowiak. This package contained a secret treasure - a
+    double-sized Curry Wurst from Western Berlins 'Steglitzer Bratpfanne'
+    restaurant.  'tube' sent this package with express service and the Curry
+    Wurst was still quite enjoyable after warming it up in 'garbeam's oven.
+    'garbeam' was pretty hungry, and eat those Curry Wurst completely. The
+    further development of wmii was rescued by the 'Steglitzer Bratpfanne'.
+    There'll be some photos about this story at the wmii.net site soon.
+
+[2] http://wmii.net/contrib/guide/wmii-3/guide-en/guide_en/guide_en.html
