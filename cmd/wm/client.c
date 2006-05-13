@@ -69,10 +69,13 @@ create_client(Window w, XWindowAttributes *wa)
 	XAddToSaveSet(dpy, c->win);
 	update_client_name(c);
 	if(XGetClassHint(dpy, c->win, &ch)) {
-		snprintf(c->classinst, sizeof(c->classinst), "%s:%s", ch.res_class,
-				ch.res_name);
-		XFree(ch.res_class);
-		XFree(ch.res_name);
+		snprintf(c->classinst, sizeof(c->classinst), "%s:%s",
+				ch.res_class ? ch.res_class : "",
+				ch.res_name ? ch.res_name : "");
+		if(ch.res_class)
+			XFree(ch.res_class);
+		if(ch.res_name)
+			XFree(ch.res_name);
 	}
 	fwa.override_redirect = 1;
 	fwa.background_pixmap = ParentRelative;
