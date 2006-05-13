@@ -15,6 +15,7 @@ Ordered list of TODOs:
 	(stacked) client is made visible.  So, when the fifth client is focused
 	and made visible, the third would disappear (with n=2) -- this means on
 	boundaries, like in mutt(1).
+- make /foo/ -> bar+! -alike rules working
 - /def/ncol defines num of columns which should be created by default if possible.
 - wmiimenu -t <title> flag
 - remove the geom syntax as it is now (with the +- stuff, and only
