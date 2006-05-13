@@ -62,13 +62,16 @@ static void
 update_offsets()
 {
 	unsigned int i;
-	unsigned int w = cmdw + 2 * seek;
+	unsigned int tw, w = cmdw + 2 * seek;
 
 	if(!item.size)
 		return;
 
 	for(i = curroff; i < item.size; i++) {
-		w += blitz_textwidth(dpy, &draw.font, item.data[i]) + mrect.height;
+		tw = blitz_textwidth(dpy, &draw.font, item.data[i]);
+		if(tw > mrect.width / 3)
+			tw = mrect.width / 3;
+		w += tw;
 		if(w > mrect.width)
 			break;
 	}
