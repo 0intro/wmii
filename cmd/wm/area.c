@@ -158,8 +158,8 @@ place_client(Area *a, Client *c)
 		return;
 	if(c->rect.width >= a->rect.width
 		|| c->rect.height >= a->rect.height
-		|| c->size.flags&USPosition
-		|| c->size.flags&PPosition)
+		|| c->size.flags & USPosition
+		|| c->size.flags & PPosition)
 		return;
 
 	if(!field) {

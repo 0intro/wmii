@@ -97,8 +97,7 @@ handle_buttonpress(XEvent *e)
 	if((c = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
 		if(ev->state & def.mod) {
-			if((ev->button == Button1 || ev->button == Button2 || ev->button == Button3))
-				focus(c, True);
+			focus(c, True);
 			switch(ev->button) {
 			case Button1:
 				do_mouse_move(c, False);
