@@ -3,6 +3,10 @@ Ordered list of TODOs:
 - introduce empty views
 - apply the focuscolor patch by Stefan Tibus
 - remove swapping action, merge vertical swapping into moving - is this a good idea?
+- UTF8 fixes with iconv?
+- an SDL window requests that it should not be allowed to be 
+	resized, wmii still allows the user to resize it!
+	(a good idea would be to make all windows that set that hint floating windows)
 - idea for column mode:
 	100: is the current default mode with fallback (shows arbitrary clients)
 	0: is the current max mode, shows only one client at the time (same bahvior
@@ -35,7 +39,3 @@ Ordered list of TODOs:
 - partial EWMH support
 - libixp: idea from PoP: implement a va_args method similiar to printf for
 	marshalling 9P messages, might reduce LOC drastically
-- an SDL window requests that it should not be allowed to be 
-	resized, wmii still allows the user to resize it!
-	(a good idea would be to make all windows that set that hint floating windows)
-
