@@ -1,7 +1,10 @@
 Ordered list of TODOs:
 
+- introduce wmiisetsid to prevent crashes of not-setsid'ing processes like acme
+  which send SIGHUP to the complete process group (oh dear, Uriel that is really
+  retarded behavior by p9p)
+- introduce empty views
 - apply the focuscolor patch by Stefan Tibus
-- introduce a view stack to focus the previously selected view on view destruction
 - remove swapping action, merge vertical swapping into moving - is this a good idea?
 - idea for column mode:
 	100: is the current default mode with fallback (shows arbitrary clients)
