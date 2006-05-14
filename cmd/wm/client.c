@@ -434,15 +434,15 @@ destroy_client(Client *c)
 	XGrabServer(dpy);
 	XSetErrorHandler(dummy_error_handler);
 
-	for(i = 0; i < view.size; i++)
-		detach_from_view(view.data[i], c);
-
-	unmap_client(c);
-
 	if(c->frame.size) {
 		c->rect.x = c->frame.data[c->sel]->rect.x;
 		c->rect.y = c->frame.data[c->sel]->rect.y;
 	}
+
+	for(i = 0; i < view.size; i++)
+		detach_from_view(view.data[i], c);
+
+	unmap_client(c);
 
 	reparent_client(c, root, c->rect.x, c->rect.y);
 	XFreeGC(dpy, c->gc);
@@ -645,7 +645,6 @@ send_client_to(Client *c, char *arg)
 			if(!(to = new_left_column(v)))
 				return;
 		}
-		else
 			return;
 	}
 	else if(!strncmp(arg, "next", 5) && i) {

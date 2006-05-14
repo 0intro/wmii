@@ -429,7 +429,6 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	XRectangle *rects = rects_of_view(f->area->view, idx_of_area(f->area) == 0, &num);
 	XRectangle frect = f->rect;
 	XRectangle origin = frect;
-	XPoint pt;
 
 	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
 	XSync(dpy, False);

@@ -178,7 +178,8 @@ wmii_error_handler(Display *dpy, XErrorEvent *error)
 			|| (error->request_code == X_GrabKey
 				&& error->error_code == BadMatch))
 		return 0;
-	fprintf(stderr, "%s", "wmiiwm: fatal error");
+	fprintf(stderr, "wmiiwm: fatal error: Xrequest code=%d, Xerror code=%d\n",
+			error->request_code, error->error_code);
 	return x_error_handler(dpy, error); /* calls exit() */
 }
 
