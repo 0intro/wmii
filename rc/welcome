@@ -14,8 +14,8 @@ Let's go!
 - Start two xterms by pressing $MODKEY-Return twice.
 - Switch between the three windows: $MODKEY-j, $MODKEY-k
   If you prefer the mouse, then just move the pointer to the desired window.
-- Try the other column modes: $MODKEY-s for stack mode, $MODKEY-m for max mode,
-  and $MODKEY-d to return to default mode.
+- Try the other column modes: $MODKEY-s for stack mode, $MODKEY-m for max mode
+  Press $MODKEY-d to return to default mode.
 - Create a new column with: $MODKEY-Shift-l
   This moves the client right-wards.
 - Tag the selected client with another tag: $MODKEY-Shift-2
