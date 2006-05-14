@@ -140,7 +140,7 @@ do
 		$MODKEY-a)
 			PATH=$HOME/.wmii-3:CONFPREFIX/wmii-3:$PATH `proglist CONFPREFIX/wmii-3 $HOME/.wmii-3 | wmiimenu` &;;
 		$MODKEY-p)
-			`wmiimenu <$PROGS_FILE` &;;
+			wmiisetsid `wmiimenu <$PROGS_FILE` &;;
 		$MODKEY-t)
 			xwrite /ctl view "`wmiir read /tags | wmiimenu`" &;;
 		$MODKEY-[0-9])
