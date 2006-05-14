@@ -6,7 +6,7 @@ include ../config.mk
 CFLAGS += -I../liblitz -I../libixp -I../libcext
 LDFLAGS += -L../liblitz -llitz -L../libixp -lixp -L../libcext -lcext
 
-SRC = wmiimenu.c wmiipsel.c wmiir.c wmiiwarp.c
+SRC = wmiimenu.c wmiipsel.c wmiir.c wmiisetsid.c wmiiwarp.c
 OBJ = ${SRC:.c=.o}
 
 all: ${OBJ}
