@@ -146,7 +146,7 @@ do
 		$MODKEY-[0-9])
 			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Return)
-			xterm &;;
+			wmiisetsid xterm &;;
 		$MODKEY-Shift-$LEFT)
 			xwrite /view/sel/sel/ctl sendto prev;;
 		$MODKEY-Shift-$RIGHT)
