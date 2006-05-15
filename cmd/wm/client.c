@@ -645,6 +645,7 @@ send_client_to(Client *c, char *arg)
 			if(!(to = new_left_column(v)))
 				return;
 		}
+		else
 			return;
 	}
 	else if(!strncmp(arg, "next", 5) && i) {
