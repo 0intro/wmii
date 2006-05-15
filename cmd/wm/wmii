@@ -10,5 +10,5 @@ mkdir -m 700 /tmp/ns.$USER.$DISPLAY 2>/dev/null
 wmiiwm -a $WMII_ADDRESS &
 wmiiwmpid=$!
 mkdir $HOME/.wmii-3 2>/dev/null && welcome &
-wmiirc &
+wmiisetsid wmiirc &
 wait $wmiiwmpid
