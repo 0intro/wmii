@@ -168,7 +168,7 @@ handle_configurerequest(XEvent *e)
 				wc.sibling = None;
 				wc.stack_mode = ev->detail;
 				if(f->area->view != view.data[sel])
-					f->rect.x += 2 * rect.width;
+					wc.x += 2 * rect.width;
 				XConfigureWindow(dpy, c->framewin, ev->value_mask, &wc);
 				configure_client(c);
 			}
