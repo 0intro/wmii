@@ -8,10 +8,10 @@ wmii \- window manager improved 2
 .BR wmii (1)
 is a script that launches the
 .B wmii
-window manager and its various utilities and takes care that they are
+window manager and its various utilities and makes sure that they are
 configured for use.
 .SS Actions
-An action is a shell script, but it can actually be
+An action is a shell script in the default setup, but it can actually be
 any executable file.  It is executed usually by selecting it from the
 actions menu.
 You can customize an action by copying it from the global action
@@ -52,18 +52,18 @@ $HOME/.wmii-3
 User-specific action directory.  Actions are first searched here.
 .SH ENVIRONMENT
 .TP
-HOME, USER
+HOME, USER, DISPLAY
 See the section
 .B FILES
 above.
 .P
 The following variables are set and exported within
 .BR wmii (1)
-and thus can be used in actions.
+and thus can be used in actions:
 .TP
 PATH
 .BR wmii (1)
-added the local and global actions directory.
+adds the local and global actions directory to the existing PATH.
 .TP
 WMII_ADDRESS
 Socket file of

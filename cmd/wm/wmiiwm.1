@@ -10,7 +10,7 @@ wmiiwm \- window manager improved 2 (core)
 .SH DESCRIPTION
 .SS Overview
 .BR wmiiwm (1)
-is the core of the window manager improved 2.
+is the core of window manager improved 2.
 .P
 .B wmii
 is a dynamic window manager for X11. In contrast to static window management
@@ -77,18 +77,18 @@ application window.
 .TP 2
 Client
 An application window surrounded by a frame window containing a border and a
-title\-bar. The title\-bar three labels, first one displaying the tags of a
-client, second one displaying the client's title, and the third one displaying
-the client's index and the number of overall clients within a column.
-If the client is focused within a column, the third label is highlighted.
-If the client is attached to floating layer, a ~ character is prepended in
+title\-bar. The title\-bar contains three labels. The first one displays the tags
+of a client, the second one displays the client's title, and the third one
+displays the client's index and the total number of clients within the column.
+If the client is focused within the column, the third label is highlighted.
+If the client is attached to the floating layer, a ~ character is prepended in
 the third label as well.
 .TP 2
 Floating layer
 A screen layer of
 .B wmii
-on top of all other layers, where clients are arranged in a floating way.
-They can be resized or moved freely.
+on top of all other layers, where clients are arranged in a floating (classic)
+way. They can be resized or moved freely.
 .TP 2
 Managed layer
 A screen layer of
@@ -125,15 +125,15 @@ allows the creation of arbitrary user\-defined labels.
 Event
 An event is a message which can be read from a special file in the filesystem
 of
-.B wmiiwm
-like a mouse button press, a key press, or a message written by a different
+.BR wmiiwm ,
+such as a mouse button press, a key press, or a message written by a different
 9P\-client.
 .SS Basic window management
 Running a raw
 .B wmiiwm
 process without the
 .BR wmii (1)
-script, provides basic window management capabilities already. However to use
+script provides basic window management capabilities already. However to use
 it effectively, remote control through its filesystem interface is necessary.
 By default it is only usable with the mouse in conjunction with the
 .I Mod1 (Alt)
@@ -141,7 +141,7 @@ modifier key. Other interactions like customizing the style, killing or
 retagging clients, or grabbing keys cannot be achieved without accessing the
 filesystem.
 .P
-The filesystem can be accessed through connecting to the
+The filesystem can be accessed by connecting to the
 .I address
 of
 .B wmiiwm
@@ -187,10 +187,10 @@ a 9P\-client will not exit until
 quits, or until the client is terminated explicitely.
 .TP
 /tags
-This file contains a list of newline\-separated tags currently in use.
+This file contains a newline\-separated list of all tags currently in use.
 .TP
 /view
-This and all other directories contain a representation of each view. The
+This and all other directories contain a representation of a view. The
 .I /view
 directory points to the currently selected view.
 .RE
@@ -200,11 +200,11 @@ Bar directory
 .RS 2
 .TP 2
 /bar/X/colors
-This file defines the colors as an RGB\-tuple of the specific label.
+This file defines the colors of the label as an RGB\-tuple.
 .PD
 .TP
 /bar/X/data
-This file contains the text displayed by the label, it may be empty.
+This file contains the text displayed by the label; it may be empty.
 .RE
 .TP
 Clients directory
@@ -215,23 +215,23 @@ Clients directory
 This file contains the X property
 .PD
 .I WM_CLASS
-in the form of
+of the client in the form of
 .IR <Class> : <instance> .
 .TP
 /client/X/ctl
 This file understands the internal client\-specific commands
 .IR kill ,
-which kills (closes) the specific client nicely,
+which kills (closes) the client nicely,
 .I sendto
-.IR <prev|next|toggle|0..n> ,
+.IR <prev|next|0..n|toggle> ,
 which sends the client to the previous, next, or explicitely addressed column,
-and the
-.I swap <prev|next|up|down>
-command, which swaps the client with an adjacent client in the specific
+or toggles it between the floating and managed layer, and
+.IR swap <prev|next|up|down> ,
+which swaps the client with an adjacent client in the specified
 direction.
 .TP
 /client/X/geom
-This file contains the current geometry of the client's frame and can be used
+This file contains the geometry of the client's frame and can be used
 to resize the client.
 .TP
 /client/X/index
@@ -240,8 +240,9 @@ This file contains the index of the client in the
 namespace.
 .TP
 /client/X/name
-This file contains the name of the client read by the X property
-.IR WM_NAME .
+This file contains the X property
+.IR WM_NAME ,
+the client's name.
 .TP
 /client/X/tags
 This file contains the tags of the client.
@@ -264,10 +265,9 @@ This file defines the default column mode of newly created columns.
 This file defines the default width of newly created columns.
 .TP
 /def/font
-This file defines the font which should be used by its name, like that ones
-grabbed with the
+This file defines the X11 font to be used.
 .BR xfontsel (1)
-utility for X.
+can be used to obtain valid names.
 .TP
 /def/grabmod
 This file defines the default modifier for mouse\-grabs.
@@ -275,15 +275,16 @@ This file defines the default modifier for mouse\-grabs.
 /def/keys
 This file contains a newline\-separated list of all shortcuts which should
 be grabbed by
-.B wmiiwm
-and which are reported as events.
+.BR wmiiwm .
+These are then reported as events.
 .TP
 /def/normcolors
 This file defines the colors of unselected clients and bar labels
 .TP
 /def/rules
-This file defines the rules for applying default tags to all existing and newly
-created clients.
+This file defines the rules for applying default tags to all clients with the
+.I nil
+tag and newly created clients.
 .TP
 /def/selcolors
 This file defines the colors of selected clients and bar labels.
@@ -296,18 +297,18 @@ View directory
 /view/X
 This directory contains a representation of a column or the floating layer. The
 .I /view/sel
-directory points to the currently selected column or floating layer.
+directory points to the currently selected column or the floating layer.
 .PD
 .TP
 /view/ctl
 This file understands the internal view\-specific command
 .I select
 .IR <0..n> ,
-which selects the specific area, 0 means floating layer, all other numeric
-values address the specific column from left to right.
+which selects the specified area; 0 means floating layer, all other numeric
+values address one of the columns, from left to right.
 .TP
 /view/name
-This file contains the view's name which corresponds to the currently viewed
+This file contains the view's name, which corresponds to the currently viewed
 clients containing the equivalent tag.
 .RE
 .TP
@@ -316,8 +317,8 @@ Column and floating layer directory
 .RS 2
 .TP 2
 /view/X/Y
-This directory contains a representation of a client of this column or floating
-layer respectively. Its contents are the same as in the
+This directory contains a representation of a client of this column or the
+floating layer respectively. Its contents are the same as in the
 .I /client/X
 namespace described above.
 .PD
@@ -334,16 +335,16 @@ Note, floating layer directories do not contain this file.
 .RE
 .SS Syntax
 All files of the filesystem described above can be read, most of them can be
-written as well. Most of the only can be written using valid syntax.
+written as well. Most of them only can be written using valid syntax.
 .TP 2
 colors, selcolors, normcolors
 Each of these files expects three blank\-separated color values of the form
 .I #RRGGBB #RRGGBB
 .IR #RRGGBB .
-The order defines foreground, background, and border colors respectively.
+These tupples define foreground, background, and border colors respectively.
 .TP 2
 geom
-Each of these files expects four blank\-separated alphanumeric values which define the
+This files expects four blank\-separated alphanumeric values which define the
 client's geometry in the order
 .I <x>
 .I <y>
@@ -358,19 +359,19 @@ or an alignment value such as
 .IR east ,
 or
 .IR center .
-The alignment values address the specific screen border or center respectively.
+The alignment values address the screen border or center respectively.
 Thus they provide a resolution\-independent way of addressing specific coordinates.
 Absolute values can be prepended with the
 .I +
 or
 .I \-
-operators, which makes them relative, e.g.
+operators, which makes them relative to the old value, e.g.
 .IR \-40 .
 Alignment values can be appended with a relative value to address special positions, e.g.
 .IR south\-16 .
 .TP 2
 colmode, mode
-Each of these files expects a single value of the form
+Each of these files expects one of the values
 .IR default ,
 .IR stack ,
 or
@@ -378,18 +379,19 @@ or
 defining the default, stacking, or maximized mode for columns respectively.
 .TP 2
 grabmod
-This file expects a single value of the form
+This file expects one of the values
 .IR Mod1 ,
 .IR Mod2 ,
 .IR Mod3 ,
 .IR Mod4 ,
 or
 .IR Mod5 .
-The specific value corresponds to the specific modifier key defined in X.
+The value corresponds to the modifier key defined in X.
+For most keyboard layouts,
 .IR Mod1
-is usually the
+is the
 .IR Alt
-key for most keyboard layouts.
+key.
 .TP 2
 keys
 This file expects a newline\-separated list of shortcuts of the form
@@ -401,11 +403,11 @@ The modifier can be one or a combination of the following values:
 .IR Mod4 ,
 .IR Mod5 ,
 .IR Control ,
-or
+and
 .IR Shift .
 For example, a valid modifier might be
 .IR Mod1\-Control\-Shift .
-It's also possible to have no modifier at all and just a key. This is still
+It's also possible to have no modifier at all (just a key). This is still
 valid syntax. The key and modifier values must correspond to the key symbols
 reported by the
 .BR xev (1)
@@ -427,11 +429,11 @@ The rules are matched against the
 .I class
 and 
 .I name
-file contents of a client whenever written. The order in which the rules occur
-is important since they are applied from top to bottom.
+file contents of a client whenever the rules file is written. The order in which
+the rules occur is important since they are applied from top to bottom.
 .RS 2
 .PP
-If the rule file is empty,
+If the rules file is empty,
 .B wmiiwm
 assigns the
 .I nil
@@ -445,8 +447,9 @@ The special
 tag makes the matched client floating at the time of creation or retag. It
 has to be assigned in a seperate rule and is always matched. The special
 .I !
-causes the matched client to inherit the currently viewed tag but only if no
-rule has yet matched. It should always be defined right before the last rule.
+tag causes the matched client to inherit the currently viewed tag but only if no
+rule has matched yet. It should always be defined right before the point where
+the default tag is assigned.
 If a default tag other than
 .I nil
 is desired, e.g.
@@ -456,56 +459,57 @@ then the last rule should be defined in the following form:
 \->
 .IR <default\-tag> .
 .SS Processing events
-Running
+To run
 .B wmiiwm
-in a useful way needs to control it through reading events
+in a useful way, it needs to be controlled by reading events
 from the
 .I /event
 file described above.
+.B wmiiwm reports the following events:
 .TP 2
 BarClick <label> <button>
-This event is reported whenever a label in the bar has been clicked.
+This event is reported whenever a label in the bar is clicked.
 The
 .IR <label>
 argument contains the name of the label in the
 .I /bar
 namespace. The
 .IR <button>
-argument contains the mouse button index which has been pressed during the
+argument contains the index of the mouse button that was pressed during the
 click, e.g.
 .IR 1,
-if it has been the left mouse button.
+if it was the left mouse button.
 .TP 2
 ClientClick <index> <button>
-This event is reported whenever a client frame has been clicked.
+This event is reported whenever a client frame is clicked.
 The
 .IR <index>
-argument represents this client in the
+argument is the index of this client in the
 .I /client
 namespace. The
 .IR <button>
-argument contains the mouse button index which has been pressed during the
+argument contains the index of the mouse button that was pressed during the
 click, e.g.
 .IR 1,
-if it has been the left mouse button.
+if it was the left mouse button.
 .TP 2
 ClientFocus <index>
 This event is reported whenever a client is focused. The
 .IR <index>
-argument represents this client in the
+argument is the index of this client in the
 .I /client
 namespace.
 .TP 2
 CreateClient <index>
 This event is reported whenever a client is created. The
 .IR <index>
-argument represents this client in the
+argument is the index of this client in the
 .I /client
 namespace.
 .TP 2
 Key <shortcut>
-This event is reported whenever a shortcut has been pressed, which has been
-grabbed through writing
+This event is reported whenever a shortcut is pressed that was
+grabbed through writing the
 .I /def/keys
 file.
 .TP 2
