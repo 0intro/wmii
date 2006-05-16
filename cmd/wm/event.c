@@ -49,7 +49,7 @@ void
 check_x_event(IXPConn *c)
 {
 	XEvent ev;
-	while(XPending(dpy)) { /* main evet loop */
+	while(XPending(dpy)) { /* main event loop */
 		XNextEvent(dpy, &ev);
 		if(handler[ev.type])
 			(handler[ev.type]) (&ev); /* call handler */
