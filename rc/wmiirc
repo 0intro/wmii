@@ -138,7 +138,7 @@ do
 		$MODKEY-f)
 			xwrite /view/0/sel/geom 0 0 east south;;
 		$MODKEY-a)
-			PATH=$HOME/.wmii-3:CONFPREFIX/wmii-3:$PATH wmiisetsid `proglist CONFPREFIX/wmii-3 $HOME/.wmii-3 | wmiimenu` &;;
+			PATH=$HOME/.wmii-3:CONFPREFIX/wmii-3:$PATH `proglist CONFPREFIX/wmii-3 $HOME/.wmii-3 | wmiimenu` &;;
 		$MODKEY-p)
 			wmiisetsid `wmiimenu <$PROGS_FILE` &;;
 		$MODKEY-t)
@@ -146,7 +146,7 @@ do
 		$MODKEY-[0-9])
 			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Return)
-			wmiisetsid xterm &;;
+			xterm &;;
 		$MODKEY-Shift-$LEFT)
 			xwrite /view/sel/sel/ctl sendto prev;;
 		$MODKEY-Shift-$RIGHT)
