@@ -21,7 +21,7 @@ main(int argc, char *argv[])
 	/* command line args */
 	if(argc < 2)
 		usage();
-	else if(argv[1][1] == 'v') {
+	else if(!strncmp(argv[1], "-v", 3)) {
 		fprintf(stdout, "%s", version);
 		exit(0);
 	}
