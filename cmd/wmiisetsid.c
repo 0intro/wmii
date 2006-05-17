@@ -11,7 +11,7 @@ static char version[] = "wmiisetsid - " VERSION ", (C)opyright MMVI Anselm R. Ga
 static void
 usage()
 {
-	fprintf(stderr, "%s", "usage: wmiisetsid cmd [arg ...] [-v]\n");
+	fprintf(stderr, "%s", "usage: wmiisetsid [-v] cmd [arg ...]\n");
 	exit(1);
 }
 
