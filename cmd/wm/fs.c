@@ -1541,10 +1541,11 @@ static char *
 xclunk(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
-	unsigned char type = unpack_type(m->wqid[m->sel].path);
+	unsigned char type;
 
 	if(!m)
 		return Enofile;
+	type = unpack_type(m->wqid[m->sel].path);
 	if(type == FsFkeys)
 		update_keys();
 	else if(type == FsFrules)
