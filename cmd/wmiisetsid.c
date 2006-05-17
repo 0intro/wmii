@@ -6,12 +6,24 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+static char version[] = "wmiisetsid - " VERSION ", (C)opyright MMVI Anselm R. Garbe\n";
+
+static void
+usage()
+{
+	fprintf(stderr, "%s", "usage: wmiisetsid cmd [arg ...] [-v]\n");
+	exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
-	if(argc < 2) {
-		fprintf(stderr, "usage: wmiisetsid cmd [arg ...]\n", argv[0]);
-		exit(1);
+	/* command line args */
+	if(argc < 2)
+		usage();
+	else if(argv[1][1] == 'v') {
+		fprintf(stdout, "%s", version);
+		exit(0);
 	}
 	if(getpgrp() == getpid()) {
 		switch(fork()){

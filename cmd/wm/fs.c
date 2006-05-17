@@ -22,6 +22,7 @@
 static char E9pversion[] = "9P version not supported";
 static char Enoperm[] = "permission denied";
 static char Enofile[] = "file not found";
+static char Efidinuse[] = "fid in use";
 static char Enomode[] = "mode not supported";
 static char Enofunc[] = "function not supported";
 static char Enocommand[] = "command not supported";
@@ -268,7 +269,7 @@ type_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 
 	unpack_qpath(wqid, qsel, &dir_type, &i1, &i2, &i3);
 
-	if(!name || !name[0] || !strncmp(name, "/", 2) || !strncmp(name, "..", 3))
+	if(!name || !name[0] || !strncmp(name, "/", 2))
 		return FsDroot;
 	if(!strncmp(name, "tags", 5))
 		return FsFtags;
@@ -646,13 +647,12 @@ static char *
 xattach(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *new = cext_emallocz(sizeof(IXPMap));
-	new->sel = 0;
+	cext_vattach(ixp_vector_of_maps(&c->map), new);
 	new->wqid[0] = root_qid;
 	new->nwqid = 1;
 	new->fid = fcall->fid;
-	cext_vattach(ixp_vector_of_maps(&c->map), new);
 	fcall->id = RATTACH;
-	fcall->qid = root_qid;
+	fcall->qid = new->wqid[new->sel];
 	ixp_server_respond_fcall(c, fcall);
 	return nil;
 }
@@ -661,35 +661,49 @@ static char *
 xwalk(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *m;
-	unsigned int i, nwqid;
-	Qid wqid[IXP_MAX_WELEM];
+	unsigned int qsel, nwqid;
+	Qid wqid[IXP_MAX_WELEM], *qid;
 
 	if(!(m = ixp_server_fid2map(c, fcall->fid)))
 		return Enofile;
 	if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
-		return Enofile;
+		return Efidinuse;
 
-	for(i = 0; i < m->nwqid; i++)
-		wqid[i] = m->wqid[i];
+	for(qsel = 0; qsel < m->nwqid; qsel++)
+		wqid[qsel] = m->wqid[qsel];
+	if(qsel)
+		qsel--;
 	for(nwqid = 0; nwqid < fcall->nwname; nwqid++) {
-		Qid *qid = qid_of_name(wqid, nwqid ? nwqid - 1 : 0, fcall->wname[nwqid]);
-		if(!qid)
+		if(qsel >= IXP_MAX_WELEM)
 			break;
-		fcall->wqid[nwqid] = wqid[nwqid] = *qid;
+		if(!strncmp(fcall->wname[nwqid], "..", 3)) {
+			if(qsel)
+				qsel--;
+			qid = &wqid[qsel];
+		}
+		else {
+			qid = qid_of_name(wqid, qsel, fcall->wname[nwqid]);
+			if(!qid)
+				break;
+			qsel++;
+		}
+		fcall->wqid[nwqid] = wqid[qsel] = *qid;
 	}
+
 	if(fcall->nwname && !nwqid)
 		return Enofile;
+
 	/* a fid will only be valid, if the walk was complete */
 	if(nwqid == fcall->nwname) {
+		unsigned int i;
 		if(fcall->fid != fcall->newfid) {
 			m = cext_emallocz(sizeof(IXPMap));
 			cext_vattach(ixp_vector_of_maps(&c->map), m);
 		}
-		for(i = 0; i < nwqid; i++)
+		for(i = 0; i <= qsel; i++)
 			m->wqid[i] = wqid[i];
-		m->nwqid = nwqid;
-		if(nwqid)
-			m->sel = nwqid - 1;
+		m->nwqid = qsel + 1;
+		m->sel = qsel;
 		m->fid = fcall->newfid;
 	}
 	fcall->id = RWALK;
