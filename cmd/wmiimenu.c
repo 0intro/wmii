@@ -71,7 +71,7 @@ update_offsets()
 		tw = blitz_textwidth(dpy, &draw.font, item.data[i]);
 		if(tw > mrect.width / 3)
 			tw = mrect.width / 3;
-		w += tw;
+		w += tw + mrect.height;
 		if(w > mrect.width)
 			break;
 	}
