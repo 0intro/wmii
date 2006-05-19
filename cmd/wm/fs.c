@@ -1436,7 +1436,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(def.focuscolor, fcall->data, fcall->count);
 		def.focuscolor[fcall->count] = 0;
-		blitz_loadcolor(dpy, &def.sel, screen, def.focuscolor);
+		blitz_loadcolor(dpy, &def.focus, screen, def.focuscolor);
 		draw_clients();
 		break;
 	case FsFselcolors:
