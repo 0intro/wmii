@@ -1,5 +1,3 @@
-Ordered list of TODOs:
-
 - introduce empty views
 - apply the focuscolor patch by Stefan Tibus
 - UTF8 fixes with iconv?
