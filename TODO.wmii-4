@@ -36,7 +36,7 @@ Ordered list of TODOs:
 	event loop in wmiirc must be before TAGGING can be externalized again
 - liblitz: window abstraction (creation, events), can be reused in menu and bar
 	and frames
-- tagbars
+- tagbars and grab-boxes (like in acme)
 - screen dimension rescaling if screen resolution changes (even with Xrandr)
 - Xinerama support
 - partial EWMH support
