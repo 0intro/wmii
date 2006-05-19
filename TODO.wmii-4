@@ -2,7 +2,6 @@ Ordered list of TODOs:
 
 - introduce empty views
 - apply the focuscolor patch by Stefan Tibus
-- remove swapping action, merge vertical swapping into moving - is this a good idea?
 - UTF8 fixes with iconv?
 - move /<view> to /tags/<name|sel>/
 - add /tags/sel/index (for column reverse-addressing)

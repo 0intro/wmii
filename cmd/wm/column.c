@@ -414,27 +414,6 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 }
 
 void
-drop_swap(Client *c, XPoint *pt)
-{
-
-	Frame *f1 = c->frame.data[c->sel], *f2 = frame_of_point(pt);
-
-	if(!f2 || f1 == f2 || !idx_of_area(f1->area))
-		return;
-
-	f1->client = f2->client;
-	f2->client = c;
-	f1->client->frame.data[f1->client->sel] = f1;
-	f2->client->frame.data[f2->client->sel] = f2;
-
-	arrange_column(f1->area, False);
-	if(f1->area != f2->area)
-		arrange_column(f2->area, False);
-	focus_client(c, True);
-	flush_masked_events(EnterWindowMask);
-}
-
-void
 resize_column(Client *c, XRectangle *r, XPoint *pt)
 {
 	Frame *f = c->frame.data[c->sel];

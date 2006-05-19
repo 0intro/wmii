@@ -178,7 +178,7 @@ draw_pseudo_border(XRectangle * r)
 }
 
 void
-do_mouse_move(Client *c, Bool swap)
+do_mouse_move(Client *c)
 {
 	int px = 0, py = 0, wex, wey, ex, ey, i;
 	Window dummy;
@@ -209,12 +209,8 @@ do_mouse_move(Client *c, Bool swap)
 		switch (ev.type) {
 		case ButtonRelease:
 			draw_pseudo_border(&frect);
-			if(idx_of_area(f->area)) {
-				if(swap)
-					drop_swap(c, &pt);
-				else
-					resize_column(c, &frect, &pt);
-			}
+			if(idx_of_area(f->area))
+				resize_column(c, &frect, &pt);
 			else
 				resize_client(c, &frect, False);
 			free(rects);

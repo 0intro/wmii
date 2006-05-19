@@ -1,7 +1,7 @@
 %TODO: please mention the /def/rules mechanism!
 
 
-%guide to wmii-3
+%guide to wmii-4
 %Copyright (C) 2005, 2006 by Steffen Liebergeld, Salva Peir\'o
 
 %This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 \usepackage{hyperref} % option [dvipdfm] disables clickable refs
 \hypersetup{pdftex, colorlinks=true, linkcolor=blue, filecolor=blue,
 pagecolor=blue, urlcolor=blue, pdfauthor={Steffen Liebergeld, Salva Pei\'ro},
-pdftitle={A Guide to wmii-3}}
+pdftitle={A Guide to wmii-4}}
 \usepackage{indentfirst,moreverb}
 % remove this if you want, it's just a matter of imposed imperialist cultures
 % so if I'm given the chance to choose I choose to indent the first paragraph
@@ -53,7 +53,7 @@ Steffen\\Liebergeld \\\\
 Salvador\\Peir\'o
 }
 
-\title{A Guide to wmii-3%
+\title{A Guide to wmii-4%
 \thanks{Thanks to the wmii community, in particular all the 
 people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 }
@@ -72,14 +72,14 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
   \subsection{The purpose of this document}
 
     This document tries to be a good starting point for people new to
-    \wmii-3.  People who have used wmi, \wmii-2.5 or even ion will get
-    to know what is new and different in \wmii-3, and people who have
+    \wmii-4.  People who have used wmi, \wmii-2.5 or even ion will get
+    to know what is new and different in \wmii-4, and people who have
     never used a tiling window manager before will fall in love with
     the new concept.
   
   \subsection{wmii---the second generation of window manager improved}
 
-    \wmii-3 is a new kind of window manager. It is designed to have a
+    \wmii-4 is a new kind of window manager. It is designed to have a
     small memory footprint, be extremely modularised and have as
     little code as possible, thus ensuring as few bugs as possible. In
     fact, one of our official goals is to not exceed $10 k$ lines of
@@ -90,7 +90,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     \wmii{} tries to be very portable and to give the user as much
     freedom as possible.
 
-    \wmii-3 is the third major release of the second generation of the
+    \wmii-4 is the third major release of the second generation of the
     window manager improved~\footnote{ the ii is actually the roman
     numeral for 2.}.  \wmii{} first introduced a new paradigm in version
     2.5, namely dynamic window management, that overcomes the
@@ -103,15 +103,15 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     the basic terminology and concepts like files and editors.
 
     I hope you are open minded towards new ideas, and willing to spend some
-    time learning \wmii-3~\footnote{remember the refrain: ``nobody
+    time learning \wmii-4~\footnote{remember the refrain: ``nobody
     can teach you what you don't want to know''.}.
 
-    If you only want to know how to operate \wmii-3 and are not
+    If you only want to know how to operate \wmii-4 and are not
     interested in the inner workings or in scripting, you may read
     sections \ref{sec:conf&install}, \ref{sec:terms} and subsection
     \ref{subsec:firststeps} and skip the rest.
 
-    However, to get the most out of \wmii-3 you should probably read
+    However, to get the most out of \wmii-4 you should probably read
     the whole document ``sequentially'', i.e. from beginning to end.
     Another possibility is to read/consume the guide ``on demand'' as
     you notice you need more information or details to understand
@@ -157,8 +157,8 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \item Unpack it:
       \begin{verbatim}
-        tar xzf wmii-3.tar.gz
-        cd wmii-3
+        tar xzf wmii-4.tar.gz
+        cd wmii-4
       \end{verbatim}
       
     \item Edit the configuration:
@@ -167,7 +167,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
       \end{verbatim}
       
       The most important variable to set is the \verb+PREFIX+, which
-      states, where you want \wmii-3 to be installed to. If you are unsure, keep the
+      states, where you want \wmii-4 to be installed to. If you are unsure, keep the
       default, it won't break your system.
       
     \item Run make and make install:
@@ -594,17 +594,17 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
     your local or in the default \wmii{} configuration
     directory~\footnote{ \texttt{\$CONFPREFIX} is set in
       \emph{config.mk} which points to \texttt{/usr/local/etc}
-      or \texttt{\$HOME/.wmii-3} by default}.
+      or \texttt{\$HOME/.wmii-4} by default}.
     Through pressing \emph{MOD-a} you can open the actions menu. It works
     similar to the program menu, but only displays actions.
 
     You might want to add your own actions through writing shell scripts in the
-    default \wmii{} configuration directory or in the \texttt{\$HOME/.wmii-3}.
+    default \wmii{} configuration directory or in the \texttt{\$HOME/.wmii-4}.
     
     This works, because in the \wmii{} controlling script exports the variable
-    \verb+$PATH+ as\\ \verb+$PATH=~/.wmii-3:$CONFPREFIX/wmii:$PATH+ before
+    \verb+$PATH+ as\\ \verb+$PATH=~/.wmii-4:$CONFPREFIX/wmii:$PATH+ before
     launching the wmiiwm, this way local user actions under
-    \verb+~/.wmii-3+ take precedence over the defaults from
+    \verb+~/.wmii-4+ take precedence over the defaults from
     \verb+$CONFPREFIX/wmii+ of the default actions.
     
     You may edit this file on the fly, which means you don't need to
@@ -634,7 +634,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \subsection{Changing the style}
 
-    The style of \wmii-3 is defined through font and colour values, which are
+    The style of \wmii-4 is defined through font and colour values, which are
     unobtrusively exported with the following \emph{environment variables}.
 
     \begin{verbatim}
@@ -749,7 +749,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
       echo -n view web | wmiir write /ctl
     \end{verbatim}
 
-    As the development of \wmii-3 progressed, it became clear that this
+    As the development of \wmii-4 progressed, it became clear that this
     action is so common, that it got its own keybinding. By default
     \emph{MOD-t} brings up a menu to choose a view and
     \emph{MOD-Shift-t} brings up a menu enabling you to assign new
@@ -985,7 +985,7 @@ people mentioned at \href{http://wmii.de/index.php/WMII/People}{WMII/people}.}
 
     \section{Copyright notice}
 
-    guide to wmii-3\\
+    guide to wmii-4\\
     Copyright (C) 2005, 2006 by Steffen Liebergeld, Salva Peir\'o
 
     This program is free software; you can redistribute it and/or modify

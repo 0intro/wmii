@@ -97,10 +97,6 @@ $MODKEY-Shift-6
 $MODKEY-Shift-7
 $MODKEY-Shift-8
 $MODKEY-Shift-9
-$MODKEY-Control-$LEFT
-$MODKEY-Control-$RIGHT
-$MODKEY-Control-$DOWN
-$MODKEY-Control-$UP
 EOF
 
 # EVENT LOOP
@@ -138,7 +134,7 @@ do
 		$MODKEY-f)
 			xwrite /view/0/sel/geom 0 0 east south;;
 		$MODKEY-a)
-			PATH=$HOME/.wmii-3:CONFPREFIX/wmii-3:$PATH `proglist CONFPREFIX/wmii-3 $HOME/.wmii-3 | wmiimenu` &;;
+			PATH=$HOME/.wmii-4:CONFPREFIX/wmii-4:$PATH `proglist CONFPREFIX/wmii-4 $HOME/.wmii-4 | wmiimenu` &;;
 		$MODKEY-p)
 			wmiisetsid `wmiimenu <$PROGS_FILE` &;;
 		$MODKEY-t)
@@ -152,9 +148,9 @@ do
 		$MODKEY-Shift-$RIGHT)
 			xwrite /view/sel/sel/ctl sendto next;;
 		$MODKEY-Shift-$DOWN)
-			xwrite /view/sel/sel/ctl swap down;;
+			xwrite /view/sel/sel/ctl sendto down;;
 		$MODKEY-Shift-$UP)
-			xwrite /view/sel/sel/ctl swap up;;
+			xwrite /view/sel/sel/ctl sendto up;;
 		$MODKEY-Shift-space)
 			xwrite /view/sel/sel/ctl sendto toggle;;
 		$MODKEY-Shift-c)
@@ -163,14 +159,6 @@ do
 			xwrite /view/sel/sel/tags ''"`wmiir read /tags | wmiimenu`"'' &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /view/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
-		$MODKEY-Control-$LEFT)
-			xwrite /view/sel/sel/ctl swap prev;;
-		$MODKEY-Control-$RIGHT)
-			xwrite /view/sel/sel/ctl swap next;;
-		$MODKEY-Control-$DOWN)
-			xwrite /view/sel/sel/ctl swap down;;
-		$MODKEY-Control-$UP)
-			xwrite /view/sel/sel/ctl swap up;;
 		esac;;
 	esac
 done &

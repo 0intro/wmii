@@ -41,8 +41,8 @@ Configuration
 -------------
 The configuration of wmii is done by customizing the sh script wmiirc,
 which remotely controls the window manager and handles various events.
-Copy the file from PREFIX/etc/wmii-3/ (usually /usr/local/etc/wmii-3/)
-to $HOME/.wmii-3/ and edit it to fit your needs.
+Copy the file from PREFIX/etc/wmii-4/ (usually /usr/local/etc/wmii-4/)
+to $HOME/.wmii-4/ and edit it to fit your needs.
 
 
 Credits

@@ -3,12 +3,12 @@
 
 wmiiwm -c || exit 1
 
-PATH=$PATH:$HOME/.wmii-3:CONFPREFIX/wmii-3 export PATH
+PATH=$PATH:$HOME/.wmii-4:CONFPREFIX/wmii-4 export PATH
 WMII_ADDRESS=unix!/tmp/ns.$USER.$DISPLAY/wmii export WMII_ADDRESS
 
 mkdir -m 700 /tmp/ns.$USER.$DISPLAY 2>/dev/null
 wmiiwm -a $WMII_ADDRESS &
 wmiiwmpid=$!
-mkdir $HOME/.wmii-3 2>/dev/null && welcome &
+mkdir $HOME/.wmii-4 2>/dev/null && welcome &
 wmiirc &
 wait $wmiiwmpid

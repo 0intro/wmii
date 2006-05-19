@@ -43,12 +43,12 @@ install: all
 		chmod 755 ${DESTDIR}${PREFIX}/bin/`basename $$i`; \
 	done
 	@echo installed executable files to ${DESTDIR}${PREFIX}/bin
-	@mkdir -p ${DESTDIR}${CONFPREFIX}/wmii-3
+	@mkdir -p ${DESTDIR}${CONFPREFIX}/wmii-4
 	@cd rc; for i in *; do \
-		sed 's|CONFPREFIX|${CONFPREFIX}|g' <$$i >${DESTDIR}${CONFPREFIX}/wmii-3/$$i; \
-		chmod 755 ${DESTDIR}${CONFPREFIX}/wmii-3/$$i; \
+		sed 's|CONFPREFIX|${CONFPREFIX}|g' <$$i >${DESTDIR}${CONFPREFIX}/wmii-4/$$i; \
+		chmod 755 ${DESTDIR}${CONFPREFIX}/wmii-4/$$i; \
 	done
-	@echo installed rc scripts to ${DESTDIR}${CONFPREFIX}/wmii-3
+	@echo installed rc scripts to ${DESTDIR}${CONFPREFIX}/wmii-4
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@cp -f ${MAN1} ${DESTDIR}${MANPREFIX}/man1
 	@sed 's|CONFPREFIX|${CONFPREFIX}|g' <cmd/wm/wmii.1 >${DESTDIR}${MANPREFIX}/man1/wmii.1
@@ -64,4 +64,4 @@ uninstall:
 	for i in ${MAN1}; do \
 		rm -f ${DESTDIR}${MANPREFIX}/man1/`basename $$i`; \
 	done
-	rm -rf ${DESTDIR}${CONFPREFIX}/wmii-3
+	rm -rf ${DESTDIR}${CONFPREFIX}/wmii-4

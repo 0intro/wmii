@@ -100,11 +100,7 @@ handle_buttonpress(XEvent *e)
 			focus(c, True);
 			switch(ev->button) {
 			case Button1:
-				do_mouse_move(c, False);
-				break;
-			case Button2:
-				if(idx_of_area(c->frame.data[c->sel]->area))
-					do_mouse_move(c, True);
+				do_mouse_move(c);
 				break;
 			case Button3:
 				{
@@ -112,7 +108,7 @@ handle_buttonpress(XEvent *e)
 					if(align != CENTER)
 						do_mouse_resize(c, align);
 					else
-						do_mouse_move(c, False);
+						do_mouse_move(c);
 				}
 			default:
 			break;

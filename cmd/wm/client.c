@@ -113,7 +113,6 @@ update_client_grab(Client *c, Bool is_sel)
 	if(is_sel) {
 		ungrab_mouse(c->framewin, AnyModifier, AnyButton);
 		grab_mouse(c->framewin, def.mod, Button1);
-		grab_mouse(c->framewin, def.mod, Button2);
 		grab_mouse(c->framewin, def.mod, Button3);
 	}
 	else
@@ -570,75 +569,18 @@ select_client(Client *c, char *arg)
 }
 
 void
-swap_client(Client *c, char *arg)
-{
-	Frame *f1 = c->frame.data[c->sel], *f2;
-	Area *o, *a = f1->area;
-	View *v = a->view;
-	int i = idx_of_area(a), j = idx_of_frame(f1);
-
-	if(i == -1 || j == -1)
-		return;
-
-	if(!strncmp(arg, "prev", 5) && i) {
-		if(i <= 1)
-			return;
-		else
-			o = v->area.data[i - 1];
-		goto Swaparea;
-	}
-	else if(!strncmp(arg, "next", 5) && i) {
-		if(i + 1 < v->area.size)
-			o = v->area.data[i + 1];
-		else
-			return;
-Swaparea:
-		if(o == a)
-			return;
-		f2 = o->frame.data[o->sel];
-
-		f1->client = f2->client;
-		f2->client = c;
-		f1->client->frame.data[f1->client->sel] = f1;
-		f2->client->frame.data[f2->client->sel] = f2;
-
-		arrange_column(o, False);
-	}
-	else if(!strncmp(arg, "up", 3) && i) {
-		if(j)
-			i = j - 1;
-		else
-			return;
-		a->frame.data[j] = a->frame.data[i];
-		a->frame.data[i] = f1;
-	}
-	else if(!strncmp(arg, "down", 5) && i) {
-		if(j + 1 < a->frame.size)
-			i = j + 1;
-		else
-			return;
-		a->frame.data[j] = a->frame.data[i];
-		a->frame.data[i] = f1;
-	}
-	if(idx_of_area(a))
-		arrange_column(a, False);
-	focus_client(c, True);
-	flush_masked_events(EnterWindowMask);
-}
-
-void
 send_client_to(Client *c, char *arg)
 {
 	const char *errstr;
 	Frame *f = c->frame.data[c->sel];
 	Area *to, *a = f->area;
 	View *v = a->view;
-	int i = idx_of_area(a);
+	int i = idx_of_area(a), j = idx_of_frame(f);
 
-	if(i == -1)
+	if((i == -1) || (j == -1))
 		return;
 
-	if(!strncmp(arg, "prev", 5) && i) {
+	if(i && !strncmp(arg, "prev", 5)) {
 		if(i > 1)
 			to = v->area.data[i - 1];
 		else if(a->frame.size > 1) {
@@ -647,8 +589,9 @@ send_client_to(Client *c, char *arg)
 		}
 		else
 			return;
+		send_to_area(to, a, c);
 	}
-	else if(!strncmp(arg, "next", 5) && i) {
+	else if(i && !strncmp(arg, "next", 5)) {
 		if(i < v->area.size - 1)
 			to = v->area.data[i + 1];
 		else if(a->frame.size > 1) {
@@ -657,6 +600,7 @@ send_client_to(Client *c, char *arg)
 		}
 		else
 			return;
+		send_to_area(to, a, c);
 	}
 	else if(!strncmp(arg, "toggle", 7)) {
 		if(i)
@@ -665,14 +609,37 @@ send_client_to(Client *c, char *arg)
 			to = c->revert;
 		else
 			to = v->area.data[1];
+		send_to_area(to, a, c);
 	}
-	else {
-		i = cext_strtonum(arg, 0, v->area.size - 1, &errstr);
+	else if(i && !strncmp(arg, "up", 3)) {
+		if(j)
+			i = j - 1;
+		else
+			return;
+		a->frame.data[j] = a->frame.data[i];
+		a->frame.data[i] = f;
+		arrange_column(a, False);
+		focus_client(c, True);
+	}
+	else if(i && !strncmp(arg, "down", 5)) {
+		if(j + 1 < a->frame.size)
+			i = j + 1;
+		else
+			return;
+		a->frame.data[j] = a->frame.data[i];
+		a->frame.data[i] = f;
+		arrange_column(a, False);
+		focus_client(c, True);
+	}
+	else if(i) {
+		j = cext_strtonum(arg, 0, v->area.size - 1, &errstr);
 		if(errstr)
 			return;
-		to = v->area.data[i];
+		to = v->area.data[j];
+		send_to_area(to, a, c);
 	}
-	send_to_area(to, a, c);
+	else
+		return;
 	flush_masked_events(EnterWindowMask);
 }
 
