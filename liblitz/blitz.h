@@ -7,8 +7,7 @@
 #include <X11/Xlocale.h>
 
 #define BLITZ_FONT		"fixed"
-#define BLITZ_FOCUSCOLORS		"#ffffff #335577 #447799"
-#define BLITZ_SELCOLORS		"#ffffff #112233 #224466"
+#define BLITZ_SELCOLORS		"#ffffff #335577 #447799"
 #define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
 
 /*

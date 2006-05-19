@@ -364,9 +364,9 @@ main(int argc, char *argv[])
 	if (!normcolstr || strlen(normcolstr) != 23)
 		normcolstr = strdup(BLITZ_NORMCOLORS);
 	blitz_loadcolor(dpy, &normcolor, screen, normcolstr);
-	selcolstr = getenv("WMII_FOCUSCOLORS");
+	selcolstr = getenv("WMII_SELCOLORS");
 	if (!selcolstr || strlen(selcolstr) != 23)
-		selcolstr = strdup(BLITZ_FOCUSCOLORS);
+		selcolstr = strdup(BLITZ_SELCOLORS);
 	blitz_loadcolor(dpy, &selcolor, screen, selcolstr);
 
 	wa.override_redirect = 1;

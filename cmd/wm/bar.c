@@ -46,7 +46,7 @@ create_bar(char *name, Bool intern)
 	b->id = id++;
 	b->intern = intern;
 	cext_strlcpy(b->name, name, sizeof(b->name));
-	cext_strlcpy(b->colstr, def.focuscolor, sizeof(b->colstr));
+	cext_strlcpy(b->colstr, def.selcolor, sizeof(b->colstr));
 	b->color = def.sel;
 	cext_vattach(vector_of_bars(&bar), b);
 	qsort(bar.data, bar.size, sizeof(Bar *), comp_bar_name);
@@ -120,7 +120,7 @@ draw_bar()
 		b = bar.data[i];
 		if(b->intern) {
 			if(view.size && !strncmp(b->name, view.data[sel]->name, sizeof(b->name)))
-				b->color = def.focus;
+				b->color = def.sel;
 			else
 				b->color = def.norm;
 		}

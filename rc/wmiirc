@@ -17,13 +17,12 @@ LEFT=h
 RIGHT=l
 
 WMII_FONT='fixed'
-WMII_FOCUSCOLORS='#ffffff #335577 #447799'
-WMII_SELCOLORS='#ffffff #112233 #224466'
+WMII_SELCOLORS='#ffffff #335577 #447799'
 WMII_NORMCOLORS='#222222 #eeeeee #666666'
 # dark background
 #WMII_NORMCOLORS='#eeeeee #111111 #222222'
 
-export WMII_FONT WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS 
+export WMII_FONT WMII_SELCOLORS WMII_NORMCOLORS 
 
 # give wmiiwm a chance to start
 while :
@@ -35,7 +34,6 @@ done
 # WM CONFIGURATION
 xwrite /def/border 2
 xwrite /def/font $WMII_FONT
-xwrite /def/focuscolors $WMII_FOCUSCOLORS
 xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
 xwrite /def/colmode default

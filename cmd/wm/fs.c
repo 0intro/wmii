@@ -36,7 +36,6 @@ enum { WMII_IOUNIT = 2048 };
  * /def/		FsDdef
  * /def/border		FsFborder	0..n
  * /def/font		FsFfont		xlib font name
- * /def/focuscolors	FsFfocuscolors	focused colors
  * /def/selcolors	FsFselcolors	selected colors
  * /def/normcolors	FsFnormcolors	normal colors
  * /def/rules		FsFrules	rules
@@ -197,7 +196,6 @@ name_of_qid(Qid wqid[IXP_MAX_WELEM], unsigned short qsel)
 		snprintf(buf, sizeof(buf), "%u", i3);
 		return buf;
 		break;
-	case FsFfocuscolors: return "focuscolors"; break;
 	case FsFselcolors: return "selcolors"; break;
 	case FsFnormcolors: return "normcolors"; break;
 	case FsFfont: return "font"; break;
@@ -299,8 +297,6 @@ type_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 		return FsFgeom;
 	if(!strncmp(name, "colors", 7))
 		return FsFcolors;
-	if(!strncmp(name, "focuscolors", 12))
-		return FsFfocuscolors;
 	if(!strncmp(name, "selcolors", 10))
 		return FsFselcolors;
 	if(!strncmp(name, "normcolors", 11))
@@ -461,7 +457,6 @@ qid_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 	case FsFfont:
 	case FsFcolw:
 	case FsFrules:
-	case FsFfocuscolors:
 	case FsFselcolors:
 	case FsFnormcolors:
 	case FsFkeys:
@@ -614,7 +609,6 @@ stat_of_name(Stat *stat, char *name, Qid wqid[IXP_MAX_WELEM], unsigned short qse
 		}
 		break;
 	case FsFcolors:
-	case FsFfocuscolors:
 	case FsFselcolors:
 	case FsFnormcolors:
 		return pack_stat(stat, wqid, qsel, name, 23, IXP_DMREAD | IXP_DMWRITE);
@@ -1055,8 +1049,6 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDdef:
 			fcall->count = stat_of_name(&stat, "border", m->wqid, m->sel);
 			p = ixp_pack_stat(p, &stat);
-			fcall->count += stat_of_name(&stat, "focuscolors", m->wqid, m->sel);
-			p = ixp_pack_stat(p, &stat);
 			fcall->count += stat_of_name(&stat, "selcolors", m->wqid, m->sel);
 			p = ixp_pack_stat(p, &stat);
 			fcall->count += stat_of_name(&stat, "normcolors", m->wqid, m->sel);
@@ -1225,10 +1217,6 @@ xread(IXPConn *c, Fcall *fcall)
 				return Enofile;
 			if((fcall->count = strlen(bar.data[i1]->colstr)))
 				memcpy(p, bar.data[i1]->colstr, fcall->count);
-			break;
-		case FsFfocuscolors:
-			if((fcall->count = strlen(def.focuscolor)))
-				memcpy(p, def.focuscolor, fcall->count);
 			break;
 		case FsFselcolors:
 			if((fcall->count = strlen(def.selcolor)))
@@ -1429,15 +1417,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		bar.data[i1]->colstr[fcall->count] = 0;
 		blitz_loadcolor(dpy, &bar.data[i1]->color, screen, bar.data[i1]->colstr);
 		draw_bar();
-		break;
-	case FsFfocuscolors:
-		if((fcall->count != 23) || (fcall->data[0] != '#')
-				|| (fcall->data[8] != '#') || (fcall->data[16] != '#'))
-			return Ebadvalue;
-		memcpy(def.focuscolor, fcall->data, fcall->count);
-		def.focuscolor[fcall->count] = 0;
-		blitz_loadcolor(dpy, &def.focus, screen, def.focuscolor);
-		draw_clients();
 		break;
 	case FsFselcolors:
 		if((fcall->count != 23) || (fcall->data[0] != '#')
