@@ -1,5 +1,4 @@
 - introduce empty views
-- apply the focuscolor patch by Stefan Tibus
 - UTF8 fixes with iconv?
 - move /<view> to /tags/<name|sel>/
 - add /tags/sel/index (for column reverse-addressing)

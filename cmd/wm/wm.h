@@ -54,6 +54,7 @@ enum {
 	FsFdata,
 	FsFcolors,
 	FsFfont,
+	FsFfocuscolors,
 	FsFselcolors,
 	FsFnormcolors,
 	FsFkeys,
@@ -149,9 +150,11 @@ typedef struct {
 
 /* default values */
 typedef struct {
+	char focuscolor[24];
 	char selcolor[24];
 	char normcolor[24];
 	char *font;
+	BlitzColor focus;
 	BlitzColor sel;
 	BlitzColor norm;
 	unsigned int border;

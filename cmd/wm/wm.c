@@ -143,7 +143,7 @@ init_screen()
 
 	gcv.subwindow_mode = IncludeInferiors;
 	gcv.function = GXxor;
-	gcv.foreground = def.sel.bg;
+	gcv.foreground = def.focus.bg;
 	gcv.plane_mask = AllPlanes;
 	gcv.graphics_exposures = False;
 	xorgc = XCreateGC(dpy, root, GCForeground | GCGraphicsExposures
@@ -303,6 +303,8 @@ main(int argc, char *argv[])
 	def.border = 2;
 	def.colmode = Coldefault;
 	def.colw = 0;
+	cext_strlcpy(def.focuscolor, BLITZ_FOCUSCOLORS, sizeof(def.focuscolor));
+	blitz_loadcolor(dpy, &def.focus, screen, def.focuscolor);
 	cext_strlcpy(def.selcolor, BLITZ_SELCOLORS, sizeof(def.selcolor));
 	blitz_loadcolor(dpy, &def.sel, screen, def.selcolor);
 	cext_strlcpy(def.normcolor, BLITZ_NORMCOLORS, sizeof(def.normcolor));

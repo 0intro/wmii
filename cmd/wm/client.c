@@ -273,9 +273,13 @@ draw_client(Client *c)
 	d.gc = c->gc;
 
 	if(c == sel_client())
-		d.color = def.sel;
-	else
-		d.color = def.norm;
+		d.color = def.focus;
+	else {
+		if(f->area->sel == fidx)
+			d.color = def.sel;
+		else
+			d.color = def.norm;
+	}
 
 	/* draw border */
 	if(def.border) {
@@ -301,18 +305,9 @@ draw_client(Client *c)
 	d.rect.x = f->rect.width - d.rect.width; 
 	d.data = buf;
 	
-	if(f->area->sel == fidx)
-		d.color = def.sel;
-	else
-		d.color = def.norm;
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
 	d.rect.x = 0;
-
-	if(c == sel_client())
-		d.color = def.sel;
-	else
-		d.color = def.norm;
 
 	/* tag bar */
 	d.rect.width = d.rect.height + blitz_textwidth(dpy, &blitzfont, c->tags);
