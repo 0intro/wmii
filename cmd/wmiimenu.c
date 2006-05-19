@@ -79,7 +79,10 @@ update_offsets()
 
 	w = cmdw + 2 * seek;
 	for(i = curroff; i > 0; i--) {
-		w += blitz_textwidth(dpy, &draw.font, item.data[i]) + mrect.height;
+		tw = blitz_textwidth(dpy, &draw.font, item.data[i]);
+		if(tw > mrect.width / 3)
+			tw = mrect.width / 3;
+		w += tw + mrect.height;
 		if(w > mrect.width)
 			break;
 	}
