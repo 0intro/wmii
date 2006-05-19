@@ -20,7 +20,7 @@
 	boundaries, like in mutt(1).
 - make /foo/ -> bar+! -alike rules working
 - /def/ncol defines num of columns which should be created by default if possible.
-- wmiimenu -t <title> flag
+- wmiimenu -t <title> flag (add an additional line if -t is supplied)
 - remove the geom syntax as it is now (with the +- stuff, and only
 	allowing explicit coordinates, instead additionally resize
 	+/-<w> +/-<h> and move +/-<x> +/-<y> actions are needed in the
