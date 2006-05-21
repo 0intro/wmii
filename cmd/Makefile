@@ -22,4 +22,4 @@ all: ${OBJ}
 #	@${CC} -o $* $*.o ${LDFLAGS} -lsocket
 
 clean:
-	rm -f wmiimenu wmiir wmiipsel wmiiwarp *.o
+	rm -f wmiimenu wmiir wmiipsel wmiiwarp wmiisetsid *.o
