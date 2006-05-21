@@ -26,16 +26,9 @@ create_frame(Area *a, Client *c)
 	f->rect.width += 2 * def.border;
 	f->rect.height += def.border + height_of_bar();
 	cext_vattach(vector_of_frames(&c->frame), f);
+	a->sel = a->frame.size ? a->sel + 1 : 0;
+	cext_vattachat(vector_of_frames(&a->frame), f, a->sel);
 	c->sel = c->frame.size - 1;
-	if(a->frame.size) {
-		insert_after_idx(&a->frame, f, a->sel);
-		a->sel++;
-	}
-	else {
-		cext_vattach(vector_of_frames(&a->frame), f);
-		a->sel = 0;
-	}
-
 	return f;
 }
 
@@ -83,38 +76,4 @@ frame_of_win(Window w)
 		if(client.data[i]->framewin == w)
 			return client.data[i];
 	return nil;
-}
-
-static void
-xinsert(FrameVector *fv, Frame *f, unsigned int idx, Bool before)
-{
-	FrameVector tmp = {0};
-	unsigned int i;
-
-	for(i = 0; i < fv->size; i++) {
-		if(before && (i == idx))
-			cext_vattach(vector_of_frames(&tmp), f);
-		cext_vattach(vector_of_frames(&tmp), fv->data[i]);
-		if(!before && (i == idx))
-			cext_vattach(vector_of_frames(&tmp), f);
-	}
-
-	while(fv->size)
-		cext_vdetach(vector_of_frames(fv), fv->data[0]);
-	for(i = 0; i < tmp.size; i++)
-		cext_vattach(vector_of_frames(fv), tmp.data[i]);
-	while(tmp.size)
-		cext_vdetach(vector_of_frames(&tmp), tmp.data[0]);
-}
-
-void
-insert_before_idx(FrameVector *fv, Frame *f, unsigned int idx)
-{
-	xinsert(fv, f, idx, True);
-}
-
-void
-insert_after_idx(FrameVector *fv, Frame *f, unsigned int idx)
-{
-	xinsert(fv, f, idx, False);
 }

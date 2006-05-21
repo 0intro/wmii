@@ -389,9 +389,9 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 			cext_vdetach(vector_of_frames(&tgt->frame), f);
 
 			if(before)
-				insert_before_idx(&tgt->frame, f, fidx);
+				cext_vattachat(vector_of_frames(&tgt->frame), f, fidx);
 			else
-				insert_after_idx(&tgt->frame, f, fidx);
+				cext_vattachat(vector_of_frames(&tgt->frame), f, fidx + 1);
 
 			tgt->sel = idx_of_frame(f);
 			arrange_column(tgt, False);
@@ -403,9 +403,9 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 			fidx = idx_of_frame(ft);
 
 			if(pt->y < (ft->rect.y + ft->rect.height / 2))
-				insert_before_idx(&tgt->frame, f, fidx);
+				cext_vattachat(vector_of_frames(&tgt->frame), f, fidx);
 			else
-				insert_after_idx(&tgt->frame, f, fidx);
+				cext_vattachat(vector_of_frames(&tgt->frame), f, fidx + 1);
 
 			tgt->sel = idx_of_frame(f);
 			arrange_column(tgt, False);

@@ -11,10 +11,21 @@ cext_vattach(Vector *v, void *p)
 {
 	++v->size;
 	if (!(v->data = realloc(v->data, v->size * sizeof(void *)))) {
-		fprintf(stderr, "%s\n", "Out of memory in cext_evector_attach\n");
+		fprintf(stderr, "%s\n", "Out of memory in cext_vattach\n");
 		exit(1);
 	}
 	v->data[v->size - 1] = p;
+}
+
+void
+cext_vattachat(Vector *v, void *p, unsigned int pos)
+{
+	cext_vattach(v, p);
+	if(pos >= v->size)
+		return;
+	memmove(v->data + pos + 1, v->data + pos,
+			(v->size - pos - 1) * sizeof(void *));
+	v->data[pos] = p;
 }
 
 void

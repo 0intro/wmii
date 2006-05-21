@@ -40,5 +40,5 @@ typedef struct { \
 VECTOR(Vector, void *);
 
 void cext_vattach(Vector *v, void *p);
+void cext_vattachat(Vector *v, void *p, unsigned int pos);
 void cext_vdetach(Vector *v, void *p);
-
