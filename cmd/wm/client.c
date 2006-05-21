@@ -569,7 +569,31 @@ select_client(Client *c, char *arg)
 }
 
 void
-send_client_to(Client *c, char *arg)
+newcol_client(Client *c, char *arg)
+{
+	Frame *f = c->frame.data[c->sel];
+	Area *to, *a = f->area;
+	View *v = a->view;
+	int i = idx_of_area(a);
+
+	if(i < 1)
+		return;
+
+	if(!strncmp(arg, "prev", 5)) {
+		to = new_column(v, i);
+		send_to_area(to, a, c);
+	}
+	else if(!strncmp(arg, "next", 5)) {
+		to = new_column(v, i + 1);
+		send_to_area(to, a, c);
+	}
+	else
+		return;
+	flush_masked_events(EnterWindowMask);
+}
+
+void
+move_client(Client *c, char *arg)
 {
 	const char *errstr;
 	Frame *f = c->frame.data[c->sel];
@@ -583,10 +607,8 @@ send_client_to(Client *c, char *arg)
 	if(i && !strncmp(arg, "prev", 5)) {
 		if(i > 1)
 			to = v->area.data[i - 1];
-		else if(a->frame.size > 1) {
-			if(!(to = new_left_column(v)))
-				return;
-		}
+		else if(a->frame.size > 1)
+			to = new_column(v, 1);
 		else
 			return;
 		send_to_area(to, a, c);
@@ -594,10 +616,8 @@ send_client_to(Client *c, char *arg)
 	else if(i && !strncmp(arg, "next", 5)) {
 		if(i < v->area.size - 1)
 			to = v->area.data[i + 1];
-		else if(a->frame.size > 1) {
-			if(!(to = new_right_column(v)))
-				return;
-		}
+		else if(a->frame.size > 1)
+			to = new_column(v, v->area.size);
 		else
 			return;
 		send_to_area(to, a, c);

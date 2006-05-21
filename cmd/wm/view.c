@@ -30,8 +30,8 @@ create_view(char *name)
 
 	v->id = id++;
 	cext_strlcpy(v->name, name, sizeof(v->name));
-	create_area(v);
-	create_area(v);
+	create_area(v, v->area.size);
+	create_area(v, v->area.size);
 	cext_vattach(vector_of_views(&view), v);
 	qsort(view.data, view.size, sizeof(View *), comp_view_name);
 	return v;

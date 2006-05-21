@@ -197,7 +197,7 @@ unsigned int valid_mask;
 unsigned int num_lock_mask;
 
 /* area.c */
-Area *create_area(View *t);
+Area *create_area(View *v, unsigned int pos);
 void destroy_area(Area *a);
 int idx_of_area(Area *a);
 int idx_of_area_id(View *t, unsigned short id);
@@ -235,7 +235,8 @@ void focus_client(Client *c, Bool restack);
 void focus(Client *c, Bool restack);
 void resize_client(Client *c, XRectangle *r, Bool ignore_xcall);
 void select_client(Client *c, char *arg);
-void send_client_to(Client *c, char *arg);
+void move_client(Client *c, char *arg);
+void newcol_client(Client *c, char *arg);
 void resize_all_clients();
 Client *sel_client();
 int idx_of_client_id(unsigned short id);
@@ -249,8 +250,7 @@ void scale_column(Area *a, float h);
 void resize_column(Client *c, XRectangle *r, XPoint *pt);
 int column_mode_of_str(char *arg);
 char *str_of_column_mode(int mode);
-Area *new_left_column(View *v);
-Area *new_right_column(View *v);
+Area *new_column(View *v, unsigned int pos);
 
 /* event.c */
 void init_x_event_handler();
@@ -264,8 +264,6 @@ void destroy_frame(Frame *f);
 int idx_of_frame_id(Area *a, unsigned short id);
 int idx_of_frame(Frame *f);
 Client *frame_of_win(Window w);
-void insert_before_idx(FrameVector *fv, Frame *f, unsigned int idx);
-void insert_after_idx(FrameVector *fv, Frame *f, unsigned int idx);
 
 /* fs.c */
 unsigned long long pack_qpath(unsigned char type, unsigned short i1,

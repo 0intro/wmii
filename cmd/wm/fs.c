@@ -1336,17 +1336,19 @@ xwrite(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDarea:
 			if(!strncmp(buf, "select ", 7)) {
-			   Area *a = view.data[i1]->area.data[i2];
-			   if(a->frame.size)
-				   select_client(a->frame.data[a->sel]->client, &buf[7]);
+				Area *a = view.data[i1]->area.data[i2];
+				if(a->frame.size)
+					select_client(a->frame.data[a->sel]->client, &buf[7]);
 			}
 			break;
 		case FsDclient:
 			f = view.data[i1]->area.data[i2]->frame.data[i3];
 			if(!strncmp(buf, "kill", 5))
 				kill_client(f->client);
-			else if(!strncmp(buf, "sendto ", 7))
-				send_client_to(f->client, &buf[7]);
+			else if(!strncmp(buf, "newcol ", 7))
+				newcol_client(f->client, &buf[7]);
+			else if(!strncmp(buf, "move ", 5))
+				move_client(f->client, &buf[5]);
 			break;
 		case FsDGclient:
 			if(!strncmp(buf, "kill", 5))

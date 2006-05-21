@@ -144,15 +144,15 @@ do
 		$MODKEY-Return)
 			xterm &;;
 		$MODKEY-Shift-$LEFT)
-			xwrite /view/sel/sel/ctl sendto prev;;
+			xwrite /view/sel/sel/ctl move prev;;
 		$MODKEY-Shift-$RIGHT)
-			xwrite /view/sel/sel/ctl sendto next;;
+			xwrite /view/sel/sel/ctl move next;;
 		$MODKEY-Shift-$DOWN)
-			xwrite /view/sel/sel/ctl sendto down;;
+			xwrite /view/sel/sel/ctl move down;;
 		$MODKEY-Shift-$UP)
-			xwrite /view/sel/sel/ctl sendto up;;
+			xwrite /view/sel/sel/ctl move up;;
 		$MODKEY-Shift-space)
-			xwrite /view/sel/sel/ctl sendto toggle;;
+			xwrite /view/sel/sel/ctl move toggle;;
 		$MODKEY-Shift-c)
 			xwrite /view/sel/sel/ctl kill;;
 		$MODKEY-Shift-t)

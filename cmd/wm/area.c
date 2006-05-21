@@ -15,7 +15,7 @@ vector_of_areas(AreaVector *av)
 }
 
 Area *
-create_area(View *v)
+create_area(View *v, unsigned int pos)
 {
 	static unsigned short id = 1;
 	unsigned int w;
@@ -44,8 +44,8 @@ create_area(View *v)
 	a->rect.height = rect.height - brect.height;
 	a->mode = def.colmode;
 	a->rect.width = w;
-	cext_vattach(vector_of_areas(&v->area), a);
-	v->sel = v->area.size - 1;
+	cext_vattachat(vector_of_areas(&v->area), a, pos);
+	v->sel = pos;
 	return a;
 }
 
