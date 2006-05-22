@@ -117,6 +117,7 @@ struct Client {
 	int proto;
 	unsigned int border;
 	Bool floating;
+	Bool fixedsize;
 	Window win;
 	Window trans;
 	XRectangle rect;

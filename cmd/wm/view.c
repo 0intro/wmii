@@ -218,7 +218,7 @@ attach_to_view(View *v, Client *c)
 
 	c->revert = nil;
 
-	if(c->trans || c->floating
+	if(c->trans || c->floating || c->fixedsize
 		|| (c->rect.width == rect.width && c->rect.height == rect.height))
 		a = v->area.data[0];
 	else
