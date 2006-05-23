@@ -1,9 +1,6 @@
 - UTF8 fixes with iconv?
 - move /<view> to /tags/<name|sel>/
 - add /tags/sel/index (for column reverse-addressing)
-- an SDL window requests that it should not be allowed to be 
-	resized, wmii still allows the user to resize it!
-	(a good idea would be to make all windows that set that hint floating windows)
 - re-introduce mouse based resizals (titlebar and border)
 - idea for column mode:
 	100: is the current default mode with fallback (shows arbitrary clients)
