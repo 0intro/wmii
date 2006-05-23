@@ -9,7 +9,7 @@
 #include "wm.h"
 
 static int
-comp_bar_intern(const void *b1, const void *b2)
+comp_bar(const void *b1, const void *b2)
 {
 	Bar *bb1 = *(Bar **)b1;
 	Bar *bb2 = *(Bar **)b2;
@@ -17,14 +17,6 @@ comp_bar_intern(const void *b1, const void *b2)
 		return -1;
 	if(!bb1->intern && bb2->intern)
 		return 1;
-	return 0;
-}
-
-static int
-comp_bar_name(const void *b1, const void *b2)
-{
-	Bar *bb1 = *(Bar **)b1;
-	Bar *bb2 = *(Bar **)b2;
 	return strcmp(bb1->name, bb2->name);
 }
 
@@ -49,8 +41,7 @@ create_bar(char *name, Bool intern)
 	cext_strlcpy(b->colstr, def.selcolor, sizeof(b->colstr));
 	b->color = def.sel;
 	cext_vattach(vector_of_bars(&bar), b);
-	qsort(bar.data, bar.size, sizeof(Bar *), comp_bar_name);
-	qsort(bar.data, bar.size, sizeof(Bar *), comp_bar_intern);
+	qsort(bar.data, bar.size, sizeof(Bar *), comp_bar);
 	return b;
 }
 
