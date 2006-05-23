@@ -66,12 +66,10 @@ create_client(Window w, XWindowAttributes *wa)
 	XGetTransientForHint(dpy, c->win, &c->trans);
 	if(!XGetWMNormalHints(dpy, c->win, &c->size, &msize) || !c->size.flags)
 		c->size.flags = PSize;
-	if(c->size.flags & PMinSize && c->size.flags & PMaxSize) {
-		if(c->size.min_width == c->size.max_width)
+	if(c->size.flags & PMinSize && c->size.flags & PMaxSize
+		&& c->size.min_width == c->size.max_width
+		&& c->size.min_height == c->size.max_height)
 			c->fixedsize = True;
-		if(c->size.min_height == c->size.max_height)
-			c->fixedsize = True;
-	}
 	else
 		c->fixedsize = False;
 	XAddToSaveSet(dpy, c->win);
@@ -253,12 +251,10 @@ prop_client(Client *c, XPropertyEvent *e)
 		if(!XGetWMNormalHints(dpy, c->win, &c->size, &msize) || !c->size.flags) {
 			c->size.flags = PSize;
 		}
-		if(c->size.flags & PMinSize && c->size.flags & PMaxSize) {
-			if(c->size.min_width == c->size.max_width)
+		if(c->size.flags & PMinSize && c->size.flags & PMaxSize
+			&& c->size.min_width == c->size.max_width
+			&& c->size.min_height == c->size.max_height)
 				c->fixedsize = True;
-			if(c->size.min_height == c->size.max_height)
-				c->fixedsize = True;
-		}
 		else
 			c->fixedsize = False;
 		break;
