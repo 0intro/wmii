@@ -19,7 +19,8 @@ static char version[] = "wmiir - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Ga
 static void
 usage()
 {
-	fprintf(stderr, "%s", "usage: wmiir [-a <address>] [-v] create | read | remove | write <file>\n");
+	fprintf(stderr, "%s",
+		"usage: wmiir [-a <address>] [-v] create | read | ls [-l] | remove | write <file>\n");
 	exit(1);
 }
 
@@ -69,7 +70,7 @@ xwrite(char *file, unsigned char mode)
 {
 	/* open */
 	unsigned int fid = c.root_fid << 2;
-	if(ixp_client_open(&c, fid, file, mode) == -1) {
+	if(ixp_client_walkopen(&c, fid, file, mode) == -1) {
 		fprintf(stderr, "wmiir: cannot open file '%s': %s\n", file, c.errstr);
 		return -1;
 	}
@@ -132,7 +133,21 @@ str_of_time(unsigned int val)
 }
 
 static void
-xls(void *result, unsigned int msize)
+print_stat(Stat *s, int details)
+{
+	if(details)
+		fprintf(stdout, "%s %s %s %5llu %s %s\n", str_of_mode(s->mode),
+				s->uid, s->gid, s->length, str_of_time(s->mtime), s->name);
+	else {
+		if(s->mode & IXP_DMDIR)
+			fprintf(stdout, "%s/\n", s->name);
+		else
+			fprintf(stdout, "%s\n", s->name);
+	}
+}
+
+static void
+xls(void *result, unsigned int msize, int details)
 {
 	unsigned int n = 0, i = 0;
 	void *p = result;
@@ -151,62 +166,73 @@ xls(void *result, unsigned int msize)
 	}
 	while(p - result < msize);
 	qsort(dir, n, sizeof(Stat), comp_stat);
-	for(i = 0; i < n; i++) {
-		fprintf(stdout, "%s %s %s %5llu %s %s\n", str_of_mode(dir[i].mode),
-				dir[i].uid, dir[i].gid, dir[i].length,
-				str_of_time(dir[i].mtime), dir[i].name);
-	}
+	for(i = 0; i < n; i++)
+		print_stat(&dir[i], details);
 	free(dir);
+	fflush(stdout);
+}
+
+static int
+xdir(char *file, int details)
+{
+	unsigned int fid = c.root_fid << 2;
+	int count;
+	static unsigned char result[IXP_MAX_MSG];
+	void *data = nil;
+	unsigned long long offset = 0;
+
+	if(ixp_client_stat(&c, fid, file) == -1) {
+		fprintf(stderr, "wmiir: cannot stat file '%s': %s\n", file, c.errstr);
+		return -1;
+	}
+	if(!(c.fcall.stat.mode & IXP_DMDIR)) {
+		print_stat(&c.fcall.stat, details);
+		fflush(stdout);
+		return 0;
+	}
+
+	/* directory */
+	if(ixp_client_open(&c, fid, IXP_OREAD) == -1) {
+		fprintf(stderr, "wmiir: cannot open directory '%s': %s\n", file, c.errstr);
+		return -1;
+	}
+	while((count = ixp_client_read(&c, fid, offset, result, IXP_MAX_MSG)) > 0) {
+		if(!(data = realloc(data, offset + count))) {
+			fprintf(stderr, "wmiir: %s\n", "Out of memory in xdir\n");
+			return -1;
+		}
+		memcpy(data + offset, result, count);
+		offset += count;
+	}
+	if(count == -1) {
+		fprintf(stderr, "wmiir: cannot read directory '%s': %s\n", file, c.errstr);
+		return -1;
+	}
+	xls(data, offset + count, details);
+	return ixp_client_close(&c, fid);
 }
 
 static int
 xread(char *file)
 {
 	unsigned int fid = c.root_fid << 2;
-	int count, is_directory = 0;
+	int count;
 	static unsigned char result[IXP_MAX_MSG];
-	void *dircontent = nil;
-	unsigned int dircontentsz = 0;
-	unsigned int ndircontent = 0;
 	unsigned long long offset = 0;
 
-	if(ixp_client_open(&c, fid, file, IXP_OREAD) == -1) {
+	if(ixp_client_walkopen(&c, fid, file, IXP_OREAD) == -1) {
 		fprintf(stderr, "wmiir: cannot open file '%s': %s\n", file, c.errstr);
 		return -1;
 	}
-	is_directory = !c.fcall.nwqid || (c.fcall.qid.type == IXP_QTDIR);
 
 	while((count = ixp_client_read(&c, fid, offset, result, IXP_MAX_MSG)) > 0) {
-		if(is_directory) {
-			if(ndircontent + count > dircontentsz) {
-				void *tmp = dircontent;
-				if(!dircontentsz)
-					dircontentsz = IXP_MAX_MSG;
-				else
-					dircontentsz *= 2;
-				dircontent = cext_emallocz(dircontentsz);
-				if(tmp) {
-					memcpy(dircontent, tmp, ndircontent);
-					free(tmp);
-				}
-			}
-			memcpy(dircontent + ndircontent, result, count);
-			ndircontent += count;
-		}
-		else {
-			unsigned int i;
-			for(i = 0; i < count; i++)
-				fputc(result[i], stdout);
-			fflush(stdout);
-		}
+		write(0, result, count);
 		offset += count;
 	}
 	if(count == -1) {
 		fprintf(stderr, "wmiir: cannot read file/directory '%s': %s\n", file, c.errstr);
 		return -1;
 	}
-	if(is_directory && ndircontent)
-		xls(dircontent, ndircontent);
 	return ixp_client_close(&c, fid);
 }
 
@@ -226,7 +252,7 @@ xremove(char *file)
 int
 main(int argc, char *argv[])
 {
-	int ret = 0, i = 0;
+	int ret = 0, i = 0, details = 0;
 	char *cmd, *file, *address = getenv("WMII_ADDRESS");
 
 	/* command line args */
@@ -252,6 +278,13 @@ main(int argc, char *argv[])
 	}
 	cmd = argv[argc - 2];
 	file = argv[argc - 1];
+	if((details = !strncmp(cmd, "-l", 3))) {
+		if(argc < 3)
+			usage();
+		if(strncmp(argv[argc - 3], "ls", 3))
+			usage();
+		cmd = argv[argc - 3];
+	}
 
 	if(!address) {
 		fprintf(stderr, "%s", "wmiir: error: $WMII_ADDRESS not set\n");
@@ -265,6 +298,8 @@ main(int argc, char *argv[])
 
 	if(!strncmp(cmd, "create", 7))
 		ret = xcreate(file);
+	else if(!strncmp(cmd, "ls", 3))
+		ret = xdir(file, details);
 	else if(!strncmp(cmd, "read", 5))
 		ret = xread(file);
 	else if(!strncmp(cmd, "remove", 7))

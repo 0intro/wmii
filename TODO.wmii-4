@@ -25,8 +25,6 @@
 	allowing explicit coordinates, instead additionally resize
 	+/-<w> +/-<h> and move +/-<x> +/-<y> actions are needed in the
 	associated ctl devices of clients.  
-- add wmiir ls (read should have same semantic as in 9p), output without
-	details, add -l for details like in ls of Plan 9
 - remove internal labels, now tagging seems easy and straightforward that they
 	THINK: We'll need CreateTag, DestroyTag, UnfocusTag, FocusTag and the
 	event loop in wmiirc must be before TAGGING can be externalized again

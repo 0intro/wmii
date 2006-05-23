@@ -196,8 +196,10 @@ int ixp_client_remove(IXPClient *c, unsigned int newfid, char *filepath);
 int ixp_client_create(IXPClient *c, unsigned int dirfid, char *name,
 		unsigned int perm, unsigned char mode);
 int ixp_client_walk(IXPClient *c, unsigned int newfid, char *filepath);
-int ixp_client_open(IXPClient *c, unsigned int newfid, char *filepath,
+int ixp_client_stat(IXPClient *c, unsigned int newfid, char *filepath);
+int ixp_client_walkopen(IXPClient *c, unsigned int newfid, char *filepath,
 		unsigned char mode);
+int ixp_client_open(IXPClient *c, unsigned int newfid, unsigned char mode);
 int ixp_client_read(IXPClient *c, unsigned int fid,
 		unsigned long long offset, void *result,
 		unsigned int res_len);
