@@ -226,7 +226,7 @@ xread(char *file)
 	}
 
 	while((count = ixp_client_read(&c, fid, offset, result, IXP_MAX_MSG)) > 0) {
-		write(0, result, count);
+		write(1, result, count);
 		offset += count;
 	}
 	if(count == -1) {
