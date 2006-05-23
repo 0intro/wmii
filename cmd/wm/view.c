@@ -169,23 +169,11 @@ get_view(char *name)
 	return v ? v : create_view(name);
 }
 
-static Bool
-is_empty(View *v)
-{
-	unsigned int i;
-	for(i = 0; i < v->area.size; i++)
-		if(v->area.data[i]->frame.size)
-			return False;
-	return True;
-}
-
 void
 select_view(char *arg)
 {
-	View *v = view_of_name(arg);
-	if(!v)
-		return;
-	focus_view(v);
+	sel = idx_of_view(get_view(arg));
+	update_views(); /* performs focus_view */
 }
 
 static Bool
@@ -352,12 +340,22 @@ is_view_of(Client *c, View *v)
 	return False;
 }
 
+static Bool
+is_empty(View *v)
+{
+	unsigned int i;
+	for(i = 0; i < v->area.size; i++)
+		if(v->area.data[i]->frame.size)
+			return False;
+	return True;
+}
+
 static View *
-next_empty_view()
+next_empty_view(View *ignore)
 {
 	unsigned int i;
 	for(i = 0; i < view.size; i++)
-		if(is_empty(view.data[i]))
+		if((view.data[i] != ignore) && is_empty(view.data[i]))
 			return view.data[i];
 	return nil;
 }
@@ -366,7 +364,7 @@ void
 update_views()
 {
 	unsigned int i, j;
-	View *v, *old = view.size ? view.data[sel] : nil;
+	View *v, *ign = nil, *old = view.size ? view.data[sel] : nil;
 
 	for(i = 0; i < client.size; i++)
 		update_client_views(client.data[i]);
@@ -387,11 +385,11 @@ update_views()
 		}
 	}
 
-	while((v = next_empty_view())) {
-		if(v == old)
-			old = nil;
+	ign = old;
+	if(old && !strncmp(old->name, "nil", 4))
+		ign = nil;
+	while((v = next_empty_view(ign)))
 		destroy_view(v);
-	}
 
 	if(old)
 		focus_view(old);

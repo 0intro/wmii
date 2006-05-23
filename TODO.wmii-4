@@ -1,4 +1,3 @@
-- introduce empty views
 - UTF8 fixes with iconv?
 - move /<view> to /tags/<name|sel>/
 - add /tags/sel/index (for column reverse-addressing)
