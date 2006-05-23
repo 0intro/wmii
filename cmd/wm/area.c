@@ -245,6 +245,10 @@ attach_to_area(Area *a, Client *c)
 		if(a->frame.size)
 			scale_column(a, a->rect.height - h);
 	}
+	else if(c->fixedsize) {
+		c->rect.width = c->size.min_width;
+		c->rect.height = c->size.min_height;
+	}
 
 	f = create_frame(a, c);
 
