@@ -364,7 +364,7 @@ void
 update_views()
 {
 	unsigned int i, j;
-	View *v, *ign = nil, *old = view.size ? view.data[sel] : nil;
+	View *v, *old = view.size ? view.data[sel] : nil;
 
 	for(i = 0; i < client.size; i++)
 		update_client_views(client.data[i]);
@@ -385,10 +385,9 @@ update_views()
 		}
 	}
 
-	ign = old;
 	if(old && !strncmp(old->name, "nil", 4))
-		ign = nil;
-	while((v = next_empty_view(ign)))
+		old = nil;
+	while((v = next_empty_view(old)))
 		destroy_view(v);
 
 	if(old)
