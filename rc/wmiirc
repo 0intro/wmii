@@ -138,9 +138,9 @@ do
 		$MODKEY-p)
 			wmiisetsid `wmiimenu <$PROGS_FILE` &;;
 		$MODKEY-t)
-			xwrite /ctl tag/sel "`wmiir ls /tag | sed 's/sel\///; s/\///;' | wmiimenu`" &;;
+			xwrite /ctl view "`wmiir ls /tag | sed 's/sel\///; s/\///;' | wmiimenu`" &;;
 		$MODKEY-[0-9])
-			xwrite /ctl tag/sel `echo $1 | sed 's/.*-//'`;;
+			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Return)
 			xterm &;;
 		$MODKEY-Shift-$LEFT)
