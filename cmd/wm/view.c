@@ -23,7 +23,7 @@ comp_view_name(const void *v1, const void *v2)
 }
 
 View *
-create_view(char *name)
+create_view(const char *name)
 {
 	static unsigned short id = 1;
 	View *v = cext_emallocz(sizeof(View));
@@ -151,7 +151,7 @@ idx_of_view_id(unsigned short id)
 }
 
 View *
-view_of_name(char *name)
+view_of_name(const char *name)
 {
 	unsigned int i;
 
@@ -163,15 +163,20 @@ view_of_name(char *name)
 }
 
 static View *
-get_view(char *name)
+get_view(const char *name)
 {
 	View *v = view_of_name(name);
 	return v ? v : create_view(name);
 }
 
 void
-select_view(char *arg)
+select_view(const char *arg)
 {
+	char buf[256];
+	cext_strlcpy(buf, arg, sizeof(buf));
+	cext_trim(buf, " \t+");
+	if(!strlen(buf))
+		return;
 	sel = idx_of_view(get_view(arg));
 	update_views(); /* performs focus_view */
 }

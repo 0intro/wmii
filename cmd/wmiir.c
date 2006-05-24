@@ -208,7 +208,8 @@ xdir(char *file, int details)
 		fprintf(stderr, "wmiir: cannot read directory '%s': %s\n", file, c.errstr);
 		return -1;
 	}
-	xls(data, offset + count, details);
+	if(data)
+		xls(data, offset + count, details);
 	return ixp_client_close(&c, fid);
 }
 
