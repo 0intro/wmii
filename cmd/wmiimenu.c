@@ -21,6 +21,7 @@
 #include <cext.h>
 
 VECTOR(ItemVector, char *);
+static char *title = nil;
 static Bool done = False;
 static int ret = 0;
 static char text[4096];
@@ -29,6 +30,8 @@ static BlitzColor normcolor;
 static Display *dpy;
 static Window win;
 static XRectangle mrect;
+static XRectangle trect;
+static XRectangle irect;
 static int screen;
 static ItemVector allitem = {0};
 static ItemVector item = {0};
@@ -54,7 +57,7 @@ item2vector(ItemVector *iv)
 static void
 usage()
 {
-	fprintf(stderr, "%s", "usage: wmiimenu [-v]\n");
+	fprintf(stderr, "%s", "usage: wmiimenu [-v] [-t <title>]\n");
 	exit(1);
 }
 
@@ -69,10 +72,10 @@ update_offsets()
 
 	for(i = curroff; i < item.size; i++) {
 		tw = blitz_textwidth(dpy, &draw.font, item.data[i]);
-		if(tw > mrect.width / 3)
-			tw = mrect.width / 3;
-		w += tw + mrect.height;
-		if(w > mrect.width)
+		if(tw > irect.width / 3)
+			tw = irect.width / 3;
+		w += tw + irect.height;
+		if(w > irect.width)
 			break;
 	}
 	nextoff = i;
@@ -80,10 +83,10 @@ update_offsets()
 	w = cmdw + 2 * seek;
 	for(i = curroff; i > 0; i--) {
 		tw = blitz_textwidth(dpy, &draw.font, item.data[i]);
-		if(tw > mrect.width / 3)
-			tw = mrect.width / 3;
-		w += tw + mrect.height;
-		if(w > mrect.width)
+		if(tw > irect.width / 3)
+			tw = irect.width / 3;
+		w += tw + irect.height;
+		if(w > irect.width)
 			break;
 	}
 	prevoff = i;
@@ -121,9 +124,18 @@ draw_menu()
 {
 	unsigned int i, offx = 0;
 
-	draw.rect = mrect;
+	if(title) {
+		draw.rect = trect;
+		draw.rect.x = 0;
+		draw.rect.y = 0;
+		draw.color = selcolor;
+		draw.data = title;
+		blitz_drawlabel(dpy, &draw);
+	}
+
+	draw.rect = irect;
 	draw.rect.x = 0;
-	draw.rect.y = 0;
+	draw.rect.y = trect.height;
 	draw.color = normcolor;
 	draw.data = nil;
 	blitz_drawlabel(dpy, &draw);
@@ -150,9 +162,9 @@ draw_menu()
 			draw.data = item.data[i];
 			draw.rect.x = offx;
 			draw.rect.width = blitz_textwidth(dpy, &draw.font, draw.data);
-			if(draw.rect.width > mrect.width / 3)
-				draw.rect.width = mrect.width / 3;
-			draw.rect.width += mrect.height;
+			if(draw.rect.width > irect.width / 3)
+				draw.rect.width = irect.width / 3;
+			draw.rect.width += irect.height;
 			if(sel == i) {
 				draw.color = selcolor;
 				blitz_drawlabel(dpy, &draw);
@@ -166,7 +178,7 @@ draw_menu()
 
 		draw.color = normcolor;
 		draw.data = item.size > nextoff ? ">" : nil;
-		draw.rect.x = mrect.width - seek;
+		draw.rect.x = irect.width - seek;
 		draw.rect.width = seek;
 		blitz_drawlabel(dpy, &draw);
 	}
@@ -328,16 +340,25 @@ main(int argc, char *argv[])
 	XEvent ev;
 
 	/* command line args */
-	for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
-		switch (argv[i][1]) {
-		case 'v':
-			fprintf(stdout, "%s", version);
-			exit(0);
-			break;
-		default:
+	for(i = 1; i < argc; i++) {
+		if (argv[i][0] == '-')
+			switch (argv[i][1]) {
+			case 'v':
+				fprintf(stdout, "%s", version);
+				exit(0);
+				break;
+			case 't':
+				if(++i < argc)
+					title = argv[i];
+				else
+					usage();
+				break;
+			default:
+				usage();
+				break;
+			}
+		else
 			usage();
-			break;
-		}
 	}
 
 	dpy = XOpenDisplay(0);
@@ -374,8 +395,26 @@ main(int argc, char *argv[])
 	wa.event_mask = ExposureMask | ButtonPressMask | KeyPressMask
 		| SubstructureRedirectMask | SubstructureNotifyMask;
 
+	irect.width = DisplayWidth(dpy, screen);
+	irect.height = draw.font.ascent + draw.font.descent + 4;
+	irect.y = DisplayHeight(dpy, screen) - irect.height;
+	irect.x = 0;
+
+	if(title) {
+		trect.width = DisplayWidth(dpy, screen);
+		trect.height = draw.font.ascent + draw.font.descent + 4;
+		trect.y = DisplayHeight(dpy, screen) - (irect.height + trect.height);
+		trect.x = 0;
+	}
+	else {
+		trect.width = DisplayWidth(dpy, screen);
+		trect.height = 0;
+		trect.y = irect.y;
+		trect.x = 0;
+	}
+
 	mrect.width = DisplayWidth(dpy, screen);
-	mrect.height = draw.font.ascent + draw.font.descent + 4;
+	mrect.height = irect.height + trect.height;
 	mrect.y = DisplayHeight(dpy, screen) - mrect.height;
 	mrect.x = 0;
 
@@ -394,9 +433,9 @@ main(int argc, char *argv[])
 	XSync(dpy, False);
 
 	if(maxname)
-		cmdw = blitz_textwidth(dpy, &draw.font, maxname) + mrect.height;
-	if(cmdw > mrect.width / 3)
-		cmdw = mrect.width / 3;
+		cmdw = blitz_textwidth(dpy, &draw.font, maxname) + irect.height;
+	if(cmdw > irect.width / 3)
+		cmdw = irect.width / 3;
 
 	text[0] = 0;
 	update_items(text);

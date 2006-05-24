@@ -4,6 +4,8 @@ wmiimenu \- window manager improved 2 menu
 .SH SYNOPSIS
 .B wmiimenu
 .RB [ \-v ]
+.RB [ \-t
+.IR <title> ]
 .SH DESCRIPTION
 .SS Overview
 .B wmiimenu
@@ -15,6 +17,11 @@ It supports arbitrary, user defined menu contents.
 .TP
 .B \-v
 prints version information to stdout, then exits.
+.TP
+.BI \-t\  <title>
+displays
+.I title
+above the menu.
 .SS Usage
 .B wmiimenu
 reads a list of newline-separated items from stdin and creates a menu.
