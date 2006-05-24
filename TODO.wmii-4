@@ -1,5 +1,4 @@
 - UTF8 fixes with iconv?
-- move /<view> to /tags/<name|sel>/
 - add /tags/sel/index (for column reverse-addressing)
 - re-introduce mouse based resizals (titlebar and border)
 - idea for column mode:

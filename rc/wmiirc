@@ -116,49 +116,49 @@ do
 	Key)
 		case "$1" in
 		$MODKEY-$LEFT)
-			xwrite /view/ctl select prev;;
+			xwrite /tag/sel/ctl select prev;;
 		$MODKEY-$RIGHT)
-			xwrite /view/ctl select next;;
+			xwrite /tag/sel/ctl select next;;
 		$MODKEY-$DOWN)
-			xwrite /view/sel/ctl select next;;
+			xwrite /tag/sel/sel/ctl select next;;
 		$MODKEY-$UP)
-			xwrite /view/sel/ctl select prev;;
+			xwrite /tag/sel/sel/ctl select prev;;
 		$MODKEY-space)
-			xwrite /view/ctl select toggle;;
+			xwrite /tag/sel/ctl select toggle;;
 		$MODKEY-d)
-			xwrite /view/sel/mode default;;
+			xwrite /tag/sel/sel/mode default;;
 		$MODKEY-s)
-			xwrite /view/sel/mode stack;;
+			xwrite /tag/sel/sel/mode stack;;
 		$MODKEY-m)
-			xwrite /view/sel/mode max;;
+			xwrite /tag/sel/sel/mode max;;
 		$MODKEY-f)
-			xwrite /view/0/sel/geom 0 0 east south;;
+			xwrite /tag/sel/0/sel/geom 0 0 east south;;
 		$MODKEY-a)
 			PATH=$HOME/.wmii-4:CONFPREFIX/wmii-4:$PATH `proglist CONFPREFIX/wmii-4 $HOME/.wmii-4 | wmiimenu` &;;
 		$MODKEY-p)
 			wmiisetsid `wmiimenu <$PROGS_FILE` &;;
 		$MODKEY-t)
-			xwrite /ctl view "`wmiir read /tags | wmiimenu`" &;;
+			xwrite /ctl tag/sel "`wmiir ls /tag | sed 's/sel\///; s/\///;' | wmiimenu`" &;;
 		$MODKEY-[0-9])
-			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
+			xwrite /ctl tag/sel `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Return)
 			xterm &;;
 		$MODKEY-Shift-$LEFT)
-			xwrite /view/sel/sel/ctl move prev;;
+			xwrite /tag/sel/sel/sel/ctl move prev;;
 		$MODKEY-Shift-$RIGHT)
-			xwrite /view/sel/sel/ctl move next;;
+			xwrite /tag/sel/sel/sel/ctl move next;;
 		$MODKEY-Shift-$DOWN)
-			xwrite /view/sel/sel/ctl move down;;
+			xwrite /tag/sel/sel/sel/ctl move down;;
 		$MODKEY-Shift-$UP)
-			xwrite /view/sel/sel/ctl move up;;
+			xwrite /tag/sel/sel/sel/ctl move up;;
 		$MODKEY-Shift-space)
-			xwrite /view/sel/sel/ctl move toggle;;
+			xwrite /tag/sel/sel/sel/ctl move toggle;;
 		$MODKEY-Shift-c)
-			xwrite /view/sel/sel/ctl kill;;
+			xwrite /tag/sel/sel/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite /view/sel/sel/tags ''"`wmiir read /tags | wmiimenu`"'' &;;
+			xwrite /tag/sel/sel/sel/tags ''"`wmiir ls /tag | sed 's/sel\///; s/\///;' | wmiimenu`"'' &;;
 		$MODKEY-Shift-[0-9])
-			xwrite /view/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
+			xwrite /tag/sel/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
 		esac;;
 	esac
 done &
