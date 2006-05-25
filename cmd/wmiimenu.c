@@ -135,7 +135,7 @@ draw_menu()
 
 	draw.rect = irect;
 	draw.rect.x = 0;
-	draw.rect.y = trect.height;
+	draw.rect.y = title ? trect.height : 0;
 	draw.color = normcolor;
 	draw.data = nil;
 	blitz_drawlabel(dpy, &draw);
@@ -405,18 +405,13 @@ main(int argc, char *argv[])
 		trect.height = draw.font.ascent + draw.font.descent + 4;
 		trect.y = DisplayHeight(dpy, screen) - (irect.height + trect.height);
 		trect.x = 0;
+		mrect.width = DisplayWidth(dpy, screen);
+		mrect.height = irect.height + trect.height;
+		mrect.y = DisplayHeight(dpy, screen) - mrect.height;
+		mrect.x = 0;
 	}
-	else {
-		trect.width = DisplayWidth(dpy, screen);
-		trect.height = 0;
-		trect.y = irect.y;
-		trect.x = 0;
-	}
-
-	mrect.width = DisplayWidth(dpy, screen);
-	mrect.height = irect.height + trect.height;
-	mrect.y = DisplayHeight(dpy, screen) - mrect.height;
-	mrect.x = 0;
+	else 
+		mrect = irect;
 
 	win = XCreateWindow(dpy, RootWindow(dpy, screen), mrect.x, mrect.y,
 			mrect.width, mrect.height, 0, DefaultDepth(dpy, screen),
