@@ -51,7 +51,7 @@ EOF
 # MISC
 xsetroot -solid '#333333'
 status &
-PROGS_FILE=/tmp/.wmiimenu.$USER.proglist
+PROGS_FILE=`mktemp /tmp/.wmiimenu.proglist.XXXXXX`
 proglist `echo "$PATH" | tr : ' '` >$PROGS_FILE &
 
 # SHORTCUTS
@@ -109,6 +109,7 @@ do
 	Start)
 		if test wmiirc = "$1"
 		then
+			rm -f $PROGS_FILE
 			exit
 		fi;;
 	BarClick)
