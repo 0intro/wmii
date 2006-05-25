@@ -220,6 +220,8 @@ handle_enternotify(XEvent *e)
 		if(c != old)
 			focus(c, False);
 	}
+	else if(ev->window == root)
+		XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime); 
 }
 
 static void

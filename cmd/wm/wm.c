@@ -251,7 +251,7 @@ main(int argc, char *argv[])
 	other_wm_running = 0;
 	XSetErrorHandler(startup_error_handler);
 	/* this causes an error if some other WM is running */
-	XSelectInput(dpy, root, SubstructureRedirectMask);
+	XSelectInput(dpy, root, SubstructureRedirectMask | EnterWindowMask);
 	XSync(dpy, False);
 
 	if(other_wm_running) {
