@@ -56,17 +56,18 @@ enum { WMII_IOUNIT = 2048 };
  * /tag/X/		FsDview
  * /tag/X/ctl		FsFctl		command interface (tag)
  * /tag/X/name		FsFname		current view name
+ * /tag/X/index		FsFindex		current view name
  * /tag/X/sel/		FsDarea
  * /tag/X/1/		FsDarea
  * /tag/X/1/ctl		FsFctl		command interface (area)
- * /tag/X/1/mode		FsFmode		column mode
- * /tag/X/1/sel/		FsDclient
+ * /tag/X/1/mode	FsFmode		column mode
+ * /tag/X/1/sel/	FsDclient
  * /tag/X/1/1/class	FsFclass	Class:instance of client
  * /tag/X/1/1/index	FsFindex	index of client in /client
  * /tag/X/1/1/name	FsFname		name of client
  * /tag/X/1/1/tags	FsFtags		tag of client
- * /tag/X/1/geom		FsFgeom		geometry of client
- * /tag/X/1/ctl 		FsFctl		command interface (client)
+ * /tag/X/1/geom	FsFgeom		geometry of client
+ * /tag/X/1/ctl 	FsFctl		command interface (client)
  */
 
 Qid root_qid;
@@ -442,8 +443,10 @@ qid_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 		goto Mkfile;
 		break;
 	case FsFgeom:
-	case FsFname:
 	case FsFindex:
+		if(dir_type == FsDview)
+			return nil;
+	case FsFname:
 	case FsFclass:
 		if(dir_type == FsDroot)
 			return nil;
@@ -557,12 +560,18 @@ stat_of_name(Stat *stat, char *name, Qid wqid[IXP_MAX_WELEM], unsigned short qse
 			return pack_stat(stat, wqid, qsel, name, strlen(client.data[i1]->classinst), IXP_DMREAD);
 		break;
 	case FsFindex:
-		if(dir_type == FsDclient) {
+		switch(dir_type) {
+		case FsDclient:
 			f = view.data[i1]->area.data[i2]->frame.data[i3];
 			snprintf(buf, sizeof(buf), "%d", idx_of_client_id(f->client->id));
-		}
-		else
+			break;
+		case FsDarea:
+			snprintf(buf, sizeof(buf), "%d", i2);
+			break;
+		default:
 			snprintf(buf, sizeof(buf), "%d", i1);
+			break;
+		}
 		return pack_stat(stat, wqid, qsel, name, strlen(buf), IXP_DMREAD);
 		break;
 	case FsFname:
@@ -902,6 +911,7 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDarea:
 			/* jump to offset */
 			len = stat_of_name(&stat, "ctl", m->wqid, m->sel);
+			len += stat_of_name(&stat, "index", m->wqid, m->sel);
 			if(i2)
 				len += stat_of_name(&stat, "mode", m->wqid, m->sel);
 			if(view.data[i1]->area.data[i2]->frame.size)
@@ -1063,6 +1073,8 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDarea:
 			fcall->count = stat_of_name(&stat, "ctl", m->wqid, m->sel);
 			p = ixp_pack_stat(p, &stat);
+			fcall->count += stat_of_name(&stat, "index", m->wqid, m->sel);
+			p = ixp_pack_stat(p, &stat);
 			if(i2) {
 				fcall->count += stat_of_name(&stat, "mode", m->wqid, m->sel);
 				p = ixp_pack_stat(p, &stat);
@@ -1133,11 +1145,18 @@ xread(IXPConn *c, Fcall *fcall)
 			}
 			break;
 		case FsFindex:
-			if(dir_type == FsDclient)
+			switch(dir_type) {
+			case FsDclient:
 				snprintf(buf, sizeof(buf), "%d",
 						idx_of_client_id(view.data[i1]->area.data[i2]->frame.data[i3]->client->id));
-			else
+				break;
+			case FsDarea:
+				snprintf(buf, sizeof(buf), "%d", i2);
+				break;
+			default:
 				snprintf(buf, sizeof(buf), "%d", i1);
+				break;
+			}
 			if((fcall->count = strlen(buf)))
 				memcpy(p, buf, fcall->count);
 			break;

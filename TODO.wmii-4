@@ -1,5 +1,4 @@
 - UTF8 fixes with iconv?
-- add /tags/sel/index (for column reverse-addressing)
 - re-introduce mouse based resizals (titlebar and border)
 - idea for column mode:
 	100: is the current default mode with fallback (shows arbitrary clients)
