@@ -124,6 +124,7 @@ draw_menu()
 {
 	unsigned int i, offx = 0;
 
+	draw.align = WEST;
 	if(title) {
 		draw.rect = trect;
 		draw.rect.x = 0;
@@ -141,7 +142,6 @@ draw_menu()
 	blitz_drawlabel(dpy, &draw);
 
 	/* print command */
-	draw.align = WEST;
 	draw.data = text;
 	if(cmdw && item.size)
 		draw.rect.width = cmdw;
