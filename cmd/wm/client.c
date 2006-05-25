@@ -480,30 +480,30 @@ match_sizehints(Client *c)
 	XSizeHints *s = &c->size;
 
 	if(s->flags & PMinSize) {
-		if(c->rect.width < c->size.min_width)
-			c->rect.width = c->size.min_width;
-		if(c->rect.height < c->size.min_height)
-			c->rect.height = c->size.min_height;
+		if(c->rect.width < s->min_width)
+			c->rect.width = s->min_width;
+		if(c->rect.height < s->min_height)
+			c->rect.height = s->min_height;
 	}
 	if(s->flags & PMaxSize) {
-		if(c->rect.width > c->size.max_width)
-			c->rect.width = c->size.max_width;
-		if(c->rect.height > c->size.max_height)
-			c->rect.height = c->size.max_height;
+		if(c->rect.width > s->max_width)
+			c->rect.width = s->max_width;
+		if(c->rect.height > s->max_height)
+			c->rect.height = s->max_height;
 	}
 
 	if(s->flags & PResizeInc) {
 		int w = 0, h = 0;
 
-		if(c->size.flags & PBaseSize) {
-			w = c->size.base_width;
-			h = c->size.base_height;
-		} else if(c->size.flags & PMinSize) {
+		if(s->flags & PBaseSize) {
+			w = s->base_width;
+			h = s->base_height;
+		} else if(s->flags & PMinSize) {
 			/* base_{width,height} default to min_{width,height} */
-			w = c->size.min_width;
-			h = c->size.min_height;
+			w = s->min_width;
+			h = s->min_height;
 		}
-		/* client_width = base_width + i * c->size.width_inc for an integer i */
+		/* client_width = base_width + i * s->width_inc for an integer i */
 		w = c->frame.data[c->sel]->rect.width - 2 * def.border - w;
 		if(s->width_inc > 0)
 			c->frame.data[c->sel]->rect.width -= w % s->width_inc;
