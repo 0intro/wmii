@@ -475,21 +475,24 @@ sel_client()
 }
 
 static void
-match_sizehints(Client *c)
+match_sizehints(Client *c, int aidx)
 {
 	XSizeHints *s = &c->size;
+	Frame *f = c->frame.data[c->sel];
+	unsigned int dx = 2 * def.border;
+	unsigned int dy = def.border + height_of_bar();
 
-	if(s->flags & PMinSize) {
-		if(c->rect.width < s->min_width)
-			c->rect.width = s->min_width;
-		if(c->rect.height < s->min_height)
-			c->rect.height = s->min_height;
+	if(aidx && (s->flags & PMinSize)) {
+		if(f->rect.width < s->min_width + dx)
+			f->rect.width = s->min_width + dx;
+		if(f->rect.height < s->min_height + dy)
+			f->rect.height = s->min_height + dy;
 	}
-	if(s->flags & PMaxSize) {
-		if(c->rect.width > s->max_width)
-			c->rect.width = s->max_width;
-		if(c->rect.height > s->max_height)
-			c->rect.height = s->max_height;
+	if(aidx && (s->flags & PMaxSize)) {
+		if(f->rect.width > s->max_width + dx)
+			f->rect.width = s->max_width + dx;
+		if(f->rect.height > s->max_height + dy)
+			f->rect.height = s->max_height + dy;
 	}
 
 	if(s->flags & PResizeInc) {
@@ -504,13 +507,13 @@ match_sizehints(Client *c)
 			h = s->min_height;
 		}
 		/* client_width = base_width + i * s->width_inc for an integer i */
-		w = c->frame.data[c->sel]->rect.width - 2 * def.border - w;
+		w = f->rect.width - dx - w;
 		if(s->width_inc > 0)
-			c->frame.data[c->sel]->rect.width -= w % s->width_inc;
+			f->rect.width -= w % s->width_inc;
 
-		h = c->frame.data[c->sel]->rect.height - def.border - height_of_bar() - h;
+		h = f->rect.height - dy - h;
 		if(s->height_inc > 0)
-			c->frame.data[c->sel]->rect.height -= h % s->height_inc;
+			f->rect.height -= h % s->height_inc;
 	}
 }
 
@@ -519,13 +522,14 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 {
 	Frame *f = c->frame.data[c->sel];
 	int fidx = idx_of_frame(f);
+	int aidx = idx_of_area(f->area);
 	f->rect = *r;
 
 	if((f->area->mode != Colstack) || (f->area->sel == fidx))
-		match_sizehints(c);
+		match_sizehints(c, aidx);
 
 	if(!ignore_xcall) {
-		if(!idx_of_area(f->area) &&
+		if(!aidx &&
 				(c->rect.width >= rect.width) &&
 				(c->rect.height >= rect.height))
 		{
