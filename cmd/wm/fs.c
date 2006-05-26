@@ -1296,7 +1296,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 
 	switch(type) {
 	case FsFctl:
-		if(fcall->count > sizeof(buf) - 1)
+		if(fcall->count >= sizeof(buf))
 			return Enocommand;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
@@ -1353,7 +1353,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		}
 		break;
 	case FsFborder:
-		if(fcall->count > sizeof(buf))
+		if(fcall->count >= sizeof(buf))
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
@@ -1364,7 +1364,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		resize_all_clients();
 		break;
 	case FsFtags:
-		if(!fcall->count || (fcall->count > sizeof(buf)))
+		if(!fcall->count || (fcall->count >= sizeof(buf)))
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
@@ -1443,7 +1443,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		def.rules[fcall->offset + fcall->count] = 0;
 		break;
 	case FsFgeom:
-		if(fcall->count > sizeof(buf))
+		if(fcall->count >= sizeof(buf))
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
@@ -1465,7 +1465,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 	case FsFgrabmod:
 		{
 			unsigned long mod;
-			if(fcall->count > sizeof(buf))
+			if(fcall->count >= sizeof(buf))
 				return Ebadvalue;
 			memcpy(buf, fcall->data, fcall->count);
 			buf[fcall->count] = 0;
@@ -1480,7 +1480,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		}
 		break;
 	case FsFcolw:
-		if(fcall->count > sizeof(buf))
+		if(fcall->count >= sizeof(buf))
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
@@ -1498,7 +1498,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 		resize_bar();
 		break;
 	case FsFmode:
-		if(fcall->count > sizeof(buf))
+		if(fcall->count >= sizeof(buf))
 			return Ebadvalue;
 		if(dir_type == FsDarea && !i2)
 			return Enofile;
@@ -1516,7 +1516,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			def.colmode = i;
 		break;
 	case FsFevent:
-		if(fcall->count > sizeof(buf))
+		if(fcall->count >= sizeof(buf))
 			return Ebadvalue;
 		if(fcall->count) {
 			memcpy(buf, fcall->data, fcall->count);
