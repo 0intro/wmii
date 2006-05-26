@@ -475,20 +475,20 @@ sel_client()
 }
 
 static void
-match_sizehints(Client *c, int aidx)
+match_sizehints(Client *c)
 {
 	XSizeHints *s = &c->size;
 	Frame *f = c->frame.data[c->sel];
 	unsigned int dx = 2 * def.border;
 	unsigned int dy = def.border + height_of_bar();
 
-	if(aidx && (s->flags & PMinSize)) {
+	if(c->floating && (s->flags & PMinSize)) {
 		if(f->rect.width < s->min_width + dx)
 			f->rect.width = s->min_width + dx;
 		if(f->rect.height < s->min_height + dy)
 			f->rect.height = s->min_height + dy;
 	}
-	if(aidx && (s->flags & PMaxSize)) {
+	if(c->floating && (s->flags & PMaxSize)) {
 		if(f->rect.width > s->max_width + dx)
 			f->rect.width = s->max_width + dx;
 		if(f->rect.height > s->max_height + dy)
@@ -522,14 +522,13 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 {
 	Frame *f = c->frame.data[c->sel];
 	int fidx = idx_of_frame(f);
-	int aidx = idx_of_area(f->area);
 	f->rect = *r;
 
 	if((f->area->mode != Colstack) || (f->area->sel == fidx))
-		match_sizehints(c, aidx);
+		match_sizehints(c);
 
 	if(!ignore_xcall) {
-		if(!aidx &&
+		if(c->floating &&
 				(c->rect.width >= rect.width) &&
 				(c->rect.height >= rect.height))
 		{
