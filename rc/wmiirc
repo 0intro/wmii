@@ -103,7 +103,9 @@ EOF
 wmiir read /event 2>/dev/null |
 while read event
 do
+	set -f
 	set -- $event
+	set +f
 	type="$1"; shift
 	case "$type" in
 	Start)
