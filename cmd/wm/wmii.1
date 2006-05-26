@@ -5,11 +5,9 @@ wmii \- window manager improved 2
 .B wmii
 .SH DESCRIPTION
 .SS Overview
-.BR wmii (1)
-is a script that launches the
 .B wmii
-window manager and its various utilities and makes sure that they are
-configured for use.
+is a script that launches the wmii window manager and its various utilities and
+makes sure that they are configured for use.
 .SS Actions
 An action is a shell script in the default setup, but it can actually be
 any executable file.  It is executed usually by selecting it from the
@@ -21,11 +19,11 @@ sure that they are executable.
 .P
 Here is a list of the default actions:
 .TP 2
-status
-periodically print date and load average to the bar
-.TP 2
 quit
 leave the window manager nicely
+.TP 2
+status
+periodically print date and load average to the bar
 .TP 2
 welcome
 display a welcome message that contains the wmii tutorial
@@ -37,7 +35,7 @@ If you feel the need to change the default configuration, then customize (as
 described above) the
 .B wmiirc
 action.  This action is executed at the end of the
-.BR wmii (1)
+.B wmii
 script and does all the work of setting up the window manager, the key
 bindings, the bar labels, etc.
 .SH FILES
@@ -52,22 +50,22 @@ $HOME/.wmii-4
 User-specific action directory.  Actions are first searched here.
 .SH ENVIRONMENT
 .TP
-HOME, USER, DISPLAY
+HOME, DISPLAY
 See the section
 .B FILES
 above.
 .P
 The following variables are set and exported within
-.BR wmii (1)
+.BR wmii
 and thus can be used in actions:
 .TP
 PATH
-.BR wmii (1)
+.BR wmii
 adds the local and global actions directory to the existing PATH.
 .TP
 WMII_ADDRESS
 Socket file of
-.BR wmii (1).
+.BR wmiiwm (1).
 Used by
 .BR wmiir (1).
 .SH SEE ALSO
