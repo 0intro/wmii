@@ -65,9 +65,6 @@ void blitz_drawlabel(Display *dpy, BlitzDraw *d);
 void blitz_drawborder(Display *dpy, BlitzDraw *d);
 
 /* geometry.c */
-BlitzAlign blitz_align_of_rect(XRectangle *rect, int x, int y);
-int blitz_strtoalign(BlitzAlign *result, char *val);
-int blitz_strtorect(XRectangle *root, XRectangle *r, char *val);
+int blitz_strtorect(XRectangle *r, const char *val);
+BlitzAlign blitz_quadofcoord(XRectangle *rect, int x, int y);
 Bool blitz_ispointinrect(int x, int y, XRectangle *r);
-int blitz_distance(XRectangle *origin, XRectangle *target);
-void blitz_getbasegeometry(unsigned int size, unsigned int *cols, unsigned int *rows);

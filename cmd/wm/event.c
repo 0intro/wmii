@@ -104,7 +104,7 @@ handle_buttonpress(XEvent *e)
 				break;
 			case Button3:
 				{
-					BlitzAlign align = blitz_align_of_rect(&c->rect, ev->x, ev->y);
+					BlitzAlign align = blitz_quadofcoord(&c->rect, ev->x, ev->y);
 					if(align != CENTER)
 						do_mouse_resize(c, align);
 					else

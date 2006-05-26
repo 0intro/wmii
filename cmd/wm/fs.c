@@ -71,7 +71,7 @@ enum { WMII_IOUNIT = 2048 };
  */
 
 Qid root_qid;
-const char *err;
+static const char *errstr;
 
 /* IXP stuff */
 
@@ -325,8 +325,8 @@ type_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 		return FsDview;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
-	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &err);
-	if(err)
+	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &errstr);
+	if(errstr)
 		return FsLast;
 dyndir:
 	switch(dir_type) {
@@ -385,8 +385,8 @@ qid_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 				new.path = pack_qpath(FsDarea, p->id, p->area.data[p->sel]->id, 0);
 			}
 			else {
-				i = cext_strtonum(name, 0, 0xffff, &err);
-				if(err || (i >= p->area.size))
+				i = cext_strtonum(name, 0, 0xffff, &errstr);
+				if(errstr || (i >= p->area.size))
 					return nil;
 				new.path = pack_qpath(FsDarea, p->id, p->area.data[i]->id, 0);
 			}
@@ -405,8 +405,8 @@ qid_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 				new.path = pack_qpath(FsDclient, p->id, a->id, a->frame.data[a->sel]->id);
 			}
 			else {
-				i = cext_strtonum(name, 0, 0xffff, &err);
-				if(err || (i >= a->frame.size))
+				i = cext_strtonum(name, 0, 0xffff, &errstr);
+				if(errstr || (i >= a->frame.size))
 					return nil;
 				new.path = pack_qpath(FsDclient, p->id, a->id, a->frame.data[i]->id);
 			}
@@ -415,8 +415,8 @@ qid_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 	case FsDGclient:
 		if(dir_type != FsDclients)
 			return nil;
-		i = cext_strtonum(name, 0, 0xffff, &err);
-		if(err || (i >= client.size))
+		i = cext_strtonum(name, 0, 0xffff, &errstr);
+		if(errstr || (i >= client.size))
 			return nil;
 		new.path = pack_qpath(FsDGclient, client.data[i]->id, 0, 0);
 		break;
@@ -506,6 +506,7 @@ stat_of_name(Stat *stat, char *name, Qid wqid[IXP_MAX_WELEM], unsigned short qse
 	unsigned char dir_type, type;
 	int i1 = 0, i2 = 0, i3 = 0;
 	char buf[256];
+	XRectangle fr;
 	Frame *f;
 
 	unpack_qpath(wqid, qsel, &dir_type, &i1, &i2, &i3);
@@ -539,16 +540,13 @@ stat_of_name(Stat *stat, char *name, Qid wqid[IXP_MAX_WELEM], unsigned short qse
 		return pack_stat(stat, wqid, qsel, name, strlen(buf), IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFgeom:
-		if(dir_type == FsDclient) {
-			f = view.data[i1]->area.data[i2]->frame.data[i3];
-			snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
-					f->rect.width, f->rect.height);
-		}
-		else {
-			Client *c = client.data[i1];
-			snprintf(buf, sizeof(buf), "%d %d %d %d", c->rect.x, c->rect.y,
-					c->rect.width, c->rect.height);
-		}
+		if(dir_type == FsDclient)
+			fr = view.data[i1]->area.data[i2]->frame.data[i3]->rect;
+		else if(client.data[i1]->frame.size)
+			fr = client.data[i1]->frame.data[client.data[i1]->sel]->rect;
+		else
+			fr = client.data[i1]->rect;
+		snprintf(buf, sizeof(buf), "%d %d %d %d", fr.x, fr.y, fr.width, fr.height);
 		return pack_stat(stat, wqid, qsel, name, strlen(buf), IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFclass:
@@ -812,7 +810,7 @@ xread(IXPConn *c, Fcall *fcall)
 	unsigned int i, len;
 	unsigned char dir_type, type, *p = fcall->data;
 	char buf[256];
-	Frame *f;
+	XRectangle fr;
 
 	if(!m)
 		return Enofile;
@@ -1121,16 +1119,13 @@ xread(IXPConn *c, Fcall *fcall)
 			memcpy(p, buf, fcall->count);
 			break;
 		case FsFgeom:
-			if(dir_type == FsDclient) {
-				f = view.data[i1]->area.data[i2]->frame.data[i3];
-				snprintf(buf, sizeof(buf), "%d %d %d %d", f->rect.x, f->rect.y,
-						f->rect.width, f->rect.height);
-			}
-			else {
-				Client *c =  client.data[i1];
-				snprintf(buf, sizeof(buf), "%d %d %d %d", c->rect.x, c->rect.y,
-						c->rect.width, c->rect.height);
-			}
+			if(dir_type == FsDclient)
+				fr = view.data[i1]->area.data[i2]->frame.data[i3]->rect;
+			else if(client.data[i1]->frame.size)
+				fr = client.data[i1]->frame.data[client.data[i1]->sel]->rect;
+			else
+				fr = client.data[i1]->rect;
+			snprintf(buf, sizeof(buf), "%d %d %d %d", fr.x, fr.y, fr.width, fr.height);
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -1315,9 +1310,13 @@ xwrite(IXPConn *c, Fcall *fcall)
 				return Enocommand;
 			break;
 		case FsDview:
-			if(!strncmp(buf, "select ", 7))
+			if(!strncmp(buf, "select ", 7)) {
 				if(view.size)
-					select_area(view.data[i1]->area.data[view.data[i1]->sel], &buf[7]);
+					select_area(view.data[i1]->area.data[view.data[i1]->sel],
+							&buf[7]);
+			}
+			else
+				return Enocommand;
 			break;
 		case FsDarea:
 			if(!strncmp(buf, "select ", 7)) {
@@ -1325,6 +1324,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 				if(a->frame.size)
 					select_client(a->frame.data[a->sel]->client, &buf[7]);
 			}
+			else
+				return Enocommand;
 			break;
 		case FsDclient:
 			f = view.data[i1]->area.data[i2]->frame.data[i3];
@@ -1332,12 +1333,20 @@ xwrite(IXPConn *c, Fcall *fcall)
 				kill_client(f->client);
 			else if(!strncmp(buf, "newcol ", 7))
 				newcol_client(f->client, &buf[7]);
+			else if(!strncmp(buf, "send ", 5))
+				send_client(f->client, &buf[5]);
 			else if(!strncmp(buf, "move ", 5))
 				move_client(f->client, &buf[5]);
+			else if(!strncmp(buf, "size ", 5))
+				size_client(f->client, &buf[5]);
+			else
+				return Enocommand;
 			break;
 		case FsDGclient:
 			if(!strncmp(buf, "kill", 5))
 				kill_client(client.data[i1]);
+			else
+				return Enocommand;
 			break;
 		default:
 			break;
@@ -1348,8 +1357,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 0, 0xffff, &err);
-		if(err)
+		i = cext_strtonum(buf, 0, 0xffff, &errstr);
+		if(errstr)
 			return Ebadvalue;
 		def.border = i;
 		resize_all_clients();
@@ -1369,22 +1378,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 		cext_strlcpy(cl->tags, buf, sizeof(cl->tags));
 		update_views();
 		draw_client(cl);
-		break;
-	case FsFgeom:
-		if(fcall->count > sizeof(buf))
-			return Ebadvalue;
-		memcpy(buf, fcall->data, fcall->count);
-		buf[fcall->count] = 0;
-		if(dir_type == FsDclient) {
-			XRectangle new;
-			f = view.data[i1]->area.data[i2]->frame.data[i3];
-			new = f->rect;
-			blitz_strtorect(&rect, &new, buf);
-			if(i2)
-				resize_column(f->client, &new, nil);
-			else
-				resize_client(f->client, &new, False);
-		}
 		break;
 	case FsFdata:
 		len = fcall->count;
@@ -1449,6 +1442,26 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(def.rules + fcall->offset, fcall->data, fcall->count);
 		def.rules[fcall->offset + fcall->count] = 0;
 		break;
+	case FsFgeom:
+		if(fcall->count > sizeof(buf))
+			return Ebadvalue;
+		memcpy(buf, fcall->data, fcall->count);
+		buf[fcall->count] = 0;
+		if(dir_type == FsDclient) {
+			XRectangle new;
+			f = view.data[i1]->area.data[i2]->frame.data[i3];
+			new = f->rect;
+			blitz_strtorect(&new, buf);
+			if(new.width == 0)
+				new.width = rect.width;
+			if(new.height == 0)
+				new.height = rect.height;
+			if(i2)
+				resize_column(f->client, &new, nil);
+			else
+				resize_client(f->client, &new, False);
+		}
+		break;
 	case FsFgrabmod:
 		{
 			unsigned long mod;
@@ -1471,8 +1484,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 0, rect.width - MIN_COLWIDTH, &err);
-		if(err || (i && i < MIN_COLWIDTH))
+		i = cext_strtonum(buf, 0, rect.width - MIN_COLWIDTH, &errstr);
+		if(errstr || (i && i < MIN_COLWIDTH))
 			return Ebadvalue;
 		def.colw = i;
 		break;

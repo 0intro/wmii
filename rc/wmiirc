@@ -133,7 +133,7 @@ do
 		$MODKEY-m)
 			xwrite /tag/sel/sel/mode max;;
 		$MODKEY-f)
-			xwrite /tag/sel/0/sel/geom 0 0 east south;;
+			xwrite /tag/sel/0/sel/geom 0 0 0 0;;
 		$MODKEY-a)
 			PATH=$HOME/.wmii-4:CONFPREFIX/wmii-4:$PATH `proglist CONFPREFIX/wmii-4 $HOME/.wmii-4 | wmiimenu` &;;
 		$MODKEY-p)
@@ -145,15 +145,15 @@ do
 		$MODKEY-Return)
 			xterm &;;
 		$MODKEY-Shift-$LEFT)
-			xwrite /tag/sel/sel/sel/ctl move prev;;
+			xwrite /tag/sel/sel/sel/ctl send prev;;
 		$MODKEY-Shift-$RIGHT)
-			xwrite /tag/sel/sel/sel/ctl move next;;
+			xwrite /tag/sel/sel/sel/ctl send next;;
 		$MODKEY-Shift-$DOWN)
-			xwrite /tag/sel/sel/sel/ctl move down;;
+			xwrite /tag/sel/sel/sel/ctl send down;;
 		$MODKEY-Shift-$UP)
-			xwrite /tag/sel/sel/sel/ctl move up;;
+			xwrite /tag/sel/sel/sel/ctl send up;;
 		$MODKEY-Shift-space)
-			xwrite /tag/sel/sel/sel/ctl move toggle;;
+			xwrite /tag/sel/sel/sel/ctl send toggle;;
 		$MODKEY-Shift-c)
 			xwrite /tag/sel/sel/sel/ctl kill;;
 		$MODKEY-Shift-t)
