@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <cext.h>
 
 #include "blitz.h"
@@ -28,6 +29,7 @@ blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr)
 	char **missing = nil, *def = "?";
 	int n;
 
+	setlocale(LC_ALL, "");
 	if(font->set)
 		XFreeFontSet(dpy, font->set);
 	font->set = XCreateFontSet(dpy, fontname, &missing, &n, &def);
