@@ -51,7 +51,7 @@ EOF
 # MISC
 xsetroot -solid '#333333'
 status &
-PROGS_FILE=`mktemp /tmp/.wmiimenu.proglist.XXXXXX`
+PROGS_FILE=`mktemp /tmp/.wmiimenu.proglist.XXXXXX` || exit 2
 proglist `echo "$PATH" | tr : ' '` >$PROGS_FILE &
 
 # SHORTCUTS
