@@ -22,7 +22,7 @@ WMII_NORMCOLORS='#222222 #eeeeee #666666'
 # dark background
 #WMII_NORMCOLORS='#eeeeee #111111 #222222'
 
-export WMII_FONT WMII_SELCOLORS WMII_NORMCOLORS 
+export WMII_FONT WMII_SELCOLORS WMII_NORMCOLORS
 
 # give wmiiwm a chance to start
 while :
@@ -115,7 +115,7 @@ do
 			exit
 		fi;;
 	BarClick)
-		xwrite /ctl view ''"$1"'';;
+		xwrite /ctl view "$1";;
 	Key)
 		case "$1" in
 		$MODKEY-$LEFT)
@@ -137,11 +137,11 @@ do
 		$MODKEY-f)
 			xwrite /tag/sel/0/sel/geom 0 0 0 0;;
 		$MODKEY-a)
-			PATH=$HOME/.wmii-4:CONFPREFIX/wmii-4:$PATH `proglist CONFPREFIX/wmii-4 $HOME/.wmii-4 | wmiimenu` &;;
+			`proglist $HOME/.wmii-4 CONFPREFIX/wmii-4 | wmiimenu` &;;
 		$MODKEY-p)
 			wmiisetsid `wmiimenu <$PROGS_FILE` &;;
 		$MODKEY-t)
-			xwrite /ctl view "`wmiir ls /tag | sed 's/sel\///; s/\///;' | wmiimenu`" &;;
+			xwrite /ctl view "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
 		$MODKEY-[0-9])
 			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Return)
@@ -159,7 +159,7 @@ do
 		$MODKEY-Shift-c)
 			xwrite /tag/sel/sel/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite /tag/sel/sel/sel/tags ''"`wmiir ls /tag | sed 's/sel\///; s/\///;' | wmiimenu`"'' &;;
+			xwrite /tag/sel/sel/sel/tags "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /tag/sel/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
 		esac;;
