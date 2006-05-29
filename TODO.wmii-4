@@ -14,6 +14,7 @@
 	boundaries, like in mutt(1).
 - make /foo/ -> bar+! -alike rules working
 - /def/ncol defines num of columns which should be created by default if possible.
+   maybe /tag/ -> 60+20+20 ? or only /tag/ -> tag?
 - remove internal labels, now tagging seems easy and straightforward that they
 	THINK: We'll need CreateTag, DestroyTag, UnfocusTag, FocusTag and the
 	event loop in wmiirc must be before TAGGING can be externalized again
