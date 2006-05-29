@@ -109,32 +109,18 @@ focus_view(View *v)
 }
 
 XRectangle *
-rects_of_view(View *v, Bool isfloat, unsigned int *num)
+rects_of_view(View *v, unsigned int *num)
 {
 	XRectangle *result = nil;
 	unsigned int i;
 
 	*num = 0;
-	if(isfloat)
-		*num = v->area.data[0]->frame.size + 1;
-	else {
-		for(i = 1; i < v->area.size; i++)
-			*num += v->area.data[i]->frame.size + 1;
-	}
+	*num = v->area.data[0]->frame.size + 1;
 
 	if(*num) {
 		result = cext_emallocz(*num * sizeof(XRectangle));
-		if(isfloat) {
-			for(i = 0; i < *num; i++)
-				result[i] = v->area.data[0]->frame.data[0]->rect;
-		}
-		else {
-			unsigned int j, n = 0;
-			for(i = 1; i < v->area.size; i++) {
-				for(j = 0; j < v->area.data[i]->frame.size; j++)
-					result[n++] = v->area.data[i]->frame.data[j]->rect;
-			}
-		}
+		for(i = 0; i < *num; i++)
+			result[i] = v->area.data[0]->frame.data[0]->rect;
 		result[*num - 1] = brect;
 	}
 	return result;

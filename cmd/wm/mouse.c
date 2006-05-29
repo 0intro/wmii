@@ -183,12 +183,13 @@ do_mouse_move(Client *c)
 	int px = 0, py = 0, wex, wey, ex, ey, i;
 	Window dummy;
 	XEvent ev;
-	int snapw = (rect.width * def.snap) / 1000;
-	int snaph = (rect.height * def.snap) / 1000;
-	unsigned int num;
+	unsigned int num = 0;
 	unsigned int dmask;
 	Frame *f = c->frame.data[c->sel];
-	XRectangle *rects = rects_of_view(f->area->view, idx_of_area(f->area) == 0, &num);
+	int aidx = idx_of_area(f->area);
+	int snapw = aidx ? 0 : (rect.width * def.snap) / 1000;
+	int snaph = aidx ? 0 : (rect.height * def.snap) / 1000;
+	XRectangle *rects = aidx ? nil : rects_of_view(f->area->view, &num);
 	XRectangle frect = f->rect;
 	XPoint pt;
 
@@ -209,7 +210,7 @@ do_mouse_move(Client *c)
 		switch (ev.type) {
 		case ButtonRelease:
 			draw_pseudo_border(&frect);
-			if(idx_of_area(f->area))
+			if(aidx)
 				resize_column(c, &frect, &pt);
 			else
 				resize_client(c, &frect, False);
@@ -227,7 +228,8 @@ do_mouse_move(Client *c)
 			draw_pseudo_border(&frect);
 			frect.x = px - ex;
 			frect.y = py - ey;
-			snap_move(&frect, rects, num, snapw, snaph);
+			if(!aidx)
+				snap_move(&frect, rects, num, snapw, snaph);
 			draw_pseudo_border(&frect);
 			break;
 		default: break;
@@ -417,12 +419,13 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	int px = 0, py = 0, i, ox, oy;
 	Window dummy;
 	XEvent ev;
-	int snapw = (rect.width * def.snap) / 1000;
-	int snaph = (rect.height * def.snap) / 1000;
 	unsigned int dmask;
-	unsigned int num;
+	unsigned int num = 0;
 	Frame *f = c->frame.data[c->sel];
-	XRectangle *rects = rects_of_view(f->area->view, idx_of_area(f->area) == 0, &num);
+	int aidx = idx_of_area(f->area);
+	int snapw = aidx ? 0 : (rect.width * def.snap) / 1000;
+	int snaph = aidx ? 0 : (rect.height * def.snap) / 1000;
+	XRectangle *rects = aidx ? nil : rects_of_view(f->area->view, &num);
 	XRectangle frect = f->rect;
 	XRectangle origin = frect;
 
@@ -440,7 +443,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 		switch (ev.type) {
 		case ButtonRelease:
 			draw_pseudo_border(&frect);
-			if(idx_of_area(f->area))
+			if(aidx)
 				resize_column(c, &frect, nil);
 			else
 				resize_client(c, &frect, False);
@@ -453,8 +456,9 @@ do_mouse_resize(Client *c, BlitzAlign align)
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
 			draw_pseudo_border(&frect);
-			snap_resize(&frect, &origin, align, rects, num, px,
-					ox, py, oy, snapw, snaph);
+			if(!aidx)
+				snap_resize(&frect, &origin, align, rects, num, px,
+						ox, py, oy, snapw, snaph);
 			draw_pseudo_border(&frect);
 			break;
 		default: break;

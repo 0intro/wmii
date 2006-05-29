@@ -297,7 +297,7 @@ void arrange_view(View *v);
 void scale_view(View *v, float w);
 View *create_view(const char *name);
 void focus_view(View *v);
-XRectangle *rects_of_view(View *v, Bool isfloat, unsigned int *num);
+XRectangle *rects_of_view(View *v, unsigned int *num);
 int idx_of_view_id(unsigned short id);
 void select_view(const char *arg);
 int idx_of_view(View *v);
