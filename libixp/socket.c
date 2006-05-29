@@ -107,6 +107,7 @@ create_inet_sock(char *host, char **errstr)
 {
 	int fd;
 	struct sockaddr_in addr = { 0 };
+	struct hostent *hp;
 	char *port = strrchr(host, '!');
 	unsigned int prt;
 
@@ -125,8 +126,16 @@ create_inet_sock(char *host, char **errstr)
 		return -1;
 	}
 	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	addr.sin_port = htons(prt);
+
+	if(!strncmp(host, "*", 1))
+		addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	else if((hp = gethostbyname(host)))
+		bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
+	else {
+		*errstr = "cannot translate hostname to an address";
+		return -1;
+	}
 
 	if(bind(fd, (struct sockaddr *) &addr, sizeof(struct sockaddr_in)) < 0) {
 		*errstr = "cannot bind socket";

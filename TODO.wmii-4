@@ -1,3 +1,4 @@
+- remove snap-to-border for managed windows (is pointless).
 - UTF8 fixes with iconv?
 - re-introduce mouse based resizals (titlebar and border)
 - idea for column mode:
