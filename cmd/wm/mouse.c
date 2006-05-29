@@ -421,7 +421,7 @@ void
 do_mouse_resize(Client *c, BlitzAlign align)
 {
 	int px = 0, py = 0, i, ox, oy;
-	Window dummy, opaque;
+	Window dummy;
 	XEvent ev;
 	unsigned int dmask;
 	unsigned int num = 0;
@@ -446,7 +446,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 		XMaskEvent(dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			XClearWindow(dpy, opaque);
+			draw_xor_border(&frect);
 			if(aidx)
 				resize_column(c, &frect, nil);
 			else
