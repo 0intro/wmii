@@ -30,7 +30,7 @@ check_horiz_match(XRectangle * r, XRectangle * neighbor)
 }
 
 static void
-snap_move(XRectangle * r, XRectangle * rects,
+snap_move(XRectangle *r, XRectangle *rects,
 		unsigned int num, int snapw, int snaph)
 {
 	int i, j, w = 0, n = 0, e = 0, s = 0;
@@ -238,8 +238,8 @@ do_mouse_move(Client *c)
 }
 
 static void
-snap_resize(XRectangle * r, XRectangle * o, BlitzAlign align,
-		XRectangle * rects, unsigned int num, int px, int ox, int py,
+snap_resize(XRectangle *r, XRectangle *o, BlitzAlign align,
+		XRectangle *rects, unsigned int num, int px, int ox, int py,
 		int oy, int snapw, int snaph)
 {
 	int i, j, pend = 0;
@@ -456,8 +456,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
 			draw_pseudo_border(&frect);
-			if(!aidx)
-				snap_resize(&frect, &origin, align, rects, num, px,
+			snap_resize(&frect, &origin, align, rects, num, px,
 						ox, py, oy, snapw, snaph);
 			draw_pseudo_border(&frect);
 			break;
