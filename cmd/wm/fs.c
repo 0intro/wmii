@@ -1370,7 +1370,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		cext_trim(buf, " \t");
+		cext_trim(buf, " \t/");
 		if(!permit_tags(buf))
 			return Ebadvalue;
 		if(dir_type == FsDclient)

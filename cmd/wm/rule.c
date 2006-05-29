@@ -49,8 +49,7 @@ vector_of_props(PropVector *pv)
 Bool
 permit_tags(const char *tags)
 {
-	static char *exclude[]
-		= { "bar", "client", "ctl", "def", "event", "view" };
+	static char *exclude[] = { "sel", "status" };
 	char buf[256];
 	char *toks[16];
 	unsigned int i, j, n;
@@ -111,7 +110,7 @@ update_rules()
 		case TAGS:
 			if(*p == '\n' || *(p + 1) == 0) {
 				*t = 0;
-				cext_trim(tags, " \t");
+				cext_trim(tags, " \t/");
 				if(permit_tags(tags)) {
 					Rule *rul = cext_emallocz(sizeof(Rule));
 					rul->is_valid = !regcomp(&rul->regex, regex, 0);
