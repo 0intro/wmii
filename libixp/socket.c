@@ -14,7 +14,6 @@
 #include <netdb.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <errno.h>
 
 #include "ixp.h"
 
@@ -52,9 +51,7 @@ connect_inet_sock(char *host)
 		return -1;
 	*port = 0;
 	port++;
-	prt = strtol(port, nil, 10);
-
-	if(errno)
+	if(sscanf(port, "%d", &prt) != 1)
 		return -1;
 
 	/* init */
@@ -117,8 +114,7 @@ create_inet_sock(char *host, char **errstr)
 	}
 	*port = 0;
 	port++;
-	prt = strtol(port, nil, 10);
-	if(errno) {
+	if(sscanf(port, "%d", &prt) != 1) {
 		*errstr = "invalid port number";
 		return -1;
 	}

@@ -5,7 +5,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <X11/Xatom.h>
 
 #include "wm.h"
@@ -616,8 +615,7 @@ select_client(Client *c, char *arg)
 			i = 0;
 	}
 	else {
-		i = strtol(arg, nil, 10);
-		if(errno)
+		if(sscanf(arg, "%d", &i) != 1)
 			return;
 	}
 	focus_client(a->frame.data[i]->client, True);
@@ -741,8 +739,7 @@ send_client(Client *c, char *arg)
 		focus_client(c, True);
 	}
 	else if(i) {
-		j = strtol(arg, nil, 10);
-		if(errno)
+		if(sscanf(arg, "%d", &j) != 1)
 			return;
 		to = v->area.data[j];
 		send_to_area(to, a, c);

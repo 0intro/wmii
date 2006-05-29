@@ -5,7 +5,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #include "wm.h"
 
@@ -124,8 +123,7 @@ select_area(Area *a, char *arg)
 			return;
 	}
 	else {
-		i = strtol(arg, nil, 10);
-		if(errno)
+		if(sscanf(arg, "%d", &i) != 1)
 			return;
 	}
 	new = v->area.data[i];

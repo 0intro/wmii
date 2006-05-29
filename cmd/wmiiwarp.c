@@ -38,11 +38,9 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s", "wmiiwarp: cannot open display\n");
 		exit(1);
 	}
-	x = strtol(argv[1], nil, 10);
-	if(errno)
+	if(sscanf(argv[1], "%d", &x) != 1)
 		usage();
-	y = strtol(argv[2], nil, 10);
-	if(errno)
+	if(sscanf(argv[1], "%d", &y) != 1)
 		usage();
 	XWarpPointer(dpy, None, RootWindow(dpy, DefaultScreen(dpy)), 0, 0, 0, 0, x, y);
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
