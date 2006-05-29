@@ -139,7 +139,7 @@ do
 		$MODKEY-a)
 			`proglist $HOME/.wmii-4 CONFPREFIX/wmii-4 | wmiimenu` &;;
 		$MODKEY-p)
-			wmiisetsid `wmiimenu <$PROGS_FILE` &;;
+			PATH="$OLD_PATH" wmiisetsid `wmiimenu <$PROGS_FILE` &;;
 		$MODKEY-t)
 			xwrite /ctl view "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
 		$MODKEY-[0-9])

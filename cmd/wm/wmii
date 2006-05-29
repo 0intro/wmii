@@ -4,7 +4,8 @@
 wmiiwm -c || exit 1
 
 SOCKET=`mktemp /tmp/.wmii.address.$DISPLAY.XXXXXX` || exit 2
-PATH=$PATH:$HOME/.wmii-4:CONFPREFIX/wmii-4 export PATH
+OLD_PATH="$PATH" export OLD_PATH
+PATH="$HOME/.wmii-4:CONFPREFIX/wmii-4:$PATH" export PATH
 WMII_ADDRESS=unix!$SOCKET export WMII_ADDRESS
 
 wmiiwm -a $WMII_ADDRESS &
