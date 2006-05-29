@@ -142,15 +142,18 @@ send_to_area(Area *to, Area *from, Client *c)
 	focus_client(c, True);
 }
 
-void
+static void
 place_client(Area *a, Client *c)
 {
 	static unsigned int mx, my;
 	static Bool *field = nil;
 	Bool fit = False;
-	unsigned int i, j, k, x, y, maxx, maxy, dx, dy, cx, cy, diff;
+	unsigned int i, j, k, x, y, maxx, maxy, dx, dy, cx, cy, diff, num = 0;
 	XPoint p1 = {0, 0}, p2 = {0, 0};
 	Frame *f = c->frame.data[c->sel];
+	int snapw = rect.width * def.snap / 1000;
+	int snaph = rect.height * def.snap / 1000;
+	XRectangle *rects;
 
 	if(c->trans)
 		return;
@@ -160,6 +163,7 @@ place_client(Area *a, Client *c)
 		|| c->size.flags & PPosition)
 		return;
 
+	rects = rects_of_view(a->view, &num);
 	if(!field) {
 		mx = rect.width / 8;
 		my = rect.height / 8;
@@ -229,6 +233,10 @@ place_client(Area *a, Client *c)
 		diff = a->rect.height - f->rect.height;
 		f->rect.y = a->rect.y + (random() % (diff ? diff : 1));
 	}
+
+	snap_move(&f->rect, rects, num, snapw, snaph);
+	if(rects)
+		free(rects);
 }
 
 void

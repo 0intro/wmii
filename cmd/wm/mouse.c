@@ -29,7 +29,7 @@ check_horiz_match(XRectangle * r, XRectangle * neighbor)
 				&& (r->x + r->width >= neighbor->x)));
 }
 
-static void
+void
 snap_move(XRectangle *r, XRectangle *rects,
 		unsigned int num, int snapw, int snaph)
 {
