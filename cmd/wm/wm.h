@@ -184,7 +184,6 @@ int screen;
 Window root;
 XRectangle rect;
 BlitzFont blitzfont;
-GC xorgc;
 IXPServer srv;
 Pixmap barpmap;
 Window barwin;
@@ -197,6 +196,7 @@ Atom net_atom[NetLast];
 Cursor cursor[CurLast];
 unsigned int valid_mask;
 unsigned int num_lock_mask;
+void (*handler[LASTEvent]) (XEvent *);
 
 /* area.c */
 Area *create_area(View *v, unsigned int pos);

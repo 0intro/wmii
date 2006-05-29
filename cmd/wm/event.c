@@ -23,8 +23,6 @@ static void handle_maprequest(XEvent * e);
 static void handle_propertynotify(XEvent * e);
 static void handle_unmapnotify(XEvent * e);
 
-void (*handler[LASTEvent]) (XEvent *);
-
 void
 init_x_event_handler()
 {

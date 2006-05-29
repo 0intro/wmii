@@ -158,30 +158,25 @@ snap_move(XRectangle *r, XRectangle *rects,
 	}
 }
 
-static void
-draw_pseudo_border(XRectangle * r)
+static Window
+init_opaque_win(XRectangle r)
 {
-	XRectangle pseudo = *r;
-
-	pseudo.x += 2;
-	pseudo.y += 2;
-	pseudo.width -= 4;
-	pseudo.height -= 4;
-	XSetLineAttributes(dpy, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
-	XDrawLine(dpy, root, xorgc, pseudo.x + 2, pseudo.y +  pseudo.height / 2,
-				pseudo.x + pseudo.width - 2, pseudo.y + pseudo.height / 2);
-	XDrawLine(dpy, root, xorgc, pseudo.x + pseudo.width / 2, pseudo.y + 2,
-				pseudo.x + pseudo.width / 2, pseudo.y + pseudo.height - 2);
-	XSetLineAttributes(dpy, xorgc, 4, LineSolid, CapNotLast, JoinMiter);
-	XDrawRectangles(dpy, root, xorgc, &pseudo, 1);
-	XSync(dpy, False);
+	XSetWindowAttributes wa;
+	wa.override_redirect = 1;
+	wa.border_pixel = def.sel.border;
+	wa.background_pixel = def.sel.bg;
+	return XCreateWindow(dpy, root, r.x, r.y,
+			r.width, r.height, 1,
+			DefaultDepth(dpy, screen), CopyFromParent,
+			DefaultVisual(dpy, screen),
+			CWOverrideRedirect | CWBackPixel | CWBorderPixel, &wa);
 }
 
 void
 do_mouse_move(Client *c)
 {
 	int px = 0, py = 0, wex, wey, ex, ey, i;
-	Window dummy;
+	Window dummy, opaque;
 	XEvent ev;
 	unsigned int num = 0;
 	unsigned int dmask;
@@ -202,20 +197,21 @@ do_mouse_move(Client *c)
 	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
 					None, cursor[CurMove], CurrentTime) != GrabSuccess)
 		return;
-	XGrabServer(dpy);
 
-	draw_pseudo_border(&frect);
+	opaque = init_opaque_win(frect);
+	XClearWindow(dpy, opaque);
+	XMapRaised(dpy, opaque);
 	for(;;) {
-		XMaskEvent(dpy, MouseMask, &ev);
+		XMaskEvent(dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			draw_pseudo_border(&frect);
+			XDestroyWindow(dpy, opaque);
 			if(aidx)
 				resize_column(c, &frect, &pt);
 			else
 				resize_client(c, &frect, False);
-			free(rects);
-			XUngrabServer(dpy);
+			if(rects)
+				free(rects);
 			XUngrabPointer(dpy, CurrentTime);
 			XSync(dpy, False);
 			return;
@@ -225,12 +221,15 @@ do_mouse_move(Client *c)
 			pt.y = ev.xmotion.y;
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
-			draw_pseudo_border(&frect);
 			frect.x = px - ex;
 			frect.y = py - ey;
 			if(!aidx)
 				snap_move(&frect, rects, num, snapw, snaph);
-			draw_pseudo_border(&frect);
+			XMoveResizeWindow(dpy, opaque, frect.x, frect.y, frect.width, frect.height);
+			XClearWindow(dpy, opaque);
+			break;
+		case Expose:
+			(handler[Expose])(&ev);
 			break;
 		default: break;
 		}
@@ -417,7 +416,7 @@ void
 do_mouse_resize(Client *c, BlitzAlign align)
 {
 	int px = 0, py = 0, i, ox, oy;
-	Window dummy;
+	Window dummy, opaque;
 	XEvent ev;
 	unsigned int dmask;
 	unsigned int num = 0;
@@ -435,19 +434,21 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	if(XGrabPointer(dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
 					None, cursor[CurResize], CurrentTime) != GrabSuccess)
 		return;
-	XGrabServer(dpy);
 
-	draw_pseudo_border(&frect);
+	opaque = init_opaque_win(frect);
+	XClearWindow(dpy, opaque);
+	XMapRaised(dpy, opaque);
 	for(;;) {
-		XMaskEvent(dpy, MouseMask, &ev);
+		XMaskEvent(dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			draw_pseudo_border(&frect);
+			XDestroyWindow(dpy, opaque);
 			if(aidx)
 				resize_column(c, &frect, nil);
 			else
 				resize_client(c, &frect, False);
-			XUngrabServer(dpy);
+			if(rects)
+				free(rects);
 			XUngrabPointer(dpy, CurrentTime);
 			XSync(dpy, False);
 			return;
@@ -455,10 +456,13 @@ do_mouse_resize(Client *c, BlitzAlign align)
 		case MotionNotify:
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
-			draw_pseudo_border(&frect);
 			snap_resize(&frect, &origin, align, rects, num, px,
 						ox, py, oy, snapw, snaph);
-			draw_pseudo_border(&frect);
+			XMoveResizeWindow(dpy, opaque, frect.x, frect.y, frect.width, frect.height);
+			XClearWindow(dpy, opaque);
+			break;
+		case Expose:
+			(handler[Expose])(&ev);
 			break;
 		default: break;
 		}
