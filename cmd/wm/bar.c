@@ -105,7 +105,7 @@ draw_bar()
 	blitz_drawborder(dpy, &d);
 
 	if(!bar.size)
-		return;
+		goto MapBar;
 
 	for(i = 0; (i < bar.size) && (w < brect.width); i++) {
 		b = bar.data[i];
@@ -154,6 +154,7 @@ draw_bar()
 		blitz_drawlabel(dpy, &d);
 		blitz_drawborder(dpy, &d);
 	}
+MapBar:
 	XCopyArea(dpy, barpmap, barwin, bargc, 0, 0, brect.width, brect.height, 0, 0);
 	XSync(dpy, False);
 }
