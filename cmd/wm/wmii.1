@@ -59,9 +59,10 @@ The following variables are set and exported within
 .B wmii
 and thus can be used in actions:
 .TP
-PATH
+PATH, OLD_PATH
 .B wmii
-adds the local and global actions directory to the existing PATH.
+adds the local and global actions directory to the front of the existing PATH.
+The original value is saved in OLD_PATH.
 .TP
 WMII_ADDRESS
 Socket file of
