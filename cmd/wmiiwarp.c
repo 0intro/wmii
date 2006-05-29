@@ -6,10 +6,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 #include <X11/Xlib.h>
 
-#include "cext.h"
+#include <cext.h>
 
 static char version[] = "wmiiwarp - " VERSION ", (C)opyright MMIV-MMV Anselm R. Garbe\n";
 
@@ -24,7 +25,6 @@ int
 main(int argc, char **argv)
 {
 	Display *dpy;
-	const char *err;
 	int x, y;
 
     /* command line args */
@@ -38,11 +38,11 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s", "wmiiwarp: cannot open display\n");
 		exit(1);
 	}
-	x = cext_strtonum(argv[1], 0, DisplayWidth(dpy, DefaultScreen(dpy)), &err);
-	if(err)
+	x = strtol(argv[1], nil, 10);
+	if(errno)
 		usage();
-	y = cext_strtonum(argv[2], 0, DisplayWidth(dpy, DefaultScreen(dpy)), &err);
-	if(err)
+	y = strtol(argv[2], nil, 10);
+	if(errno)
 		usage();
 	XWarpPointer(dpy, None, RootWindow(dpy, DefaultScreen(dpy)), 0, 0, 0, 0, x, y);
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);

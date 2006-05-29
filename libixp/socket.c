@@ -14,6 +14,7 @@
 #include <netdb.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "ixp.h"
 
@@ -45,16 +46,15 @@ connect_inet_sock(char *host)
 	struct sockaddr_in addr = { 0 };
 	struct hostent *hp;
 	char *port = strrchr(host, '!');
-	const char *errstr = nil;
 	unsigned int prt;
 
 	if(!port)
 		return -1;
 	*port = 0;
 	port++;
-	prt = cext_strtonum(port, 0, 65535, &errstr);
+	prt = strtol(port, nil, 10);
 
-	if(errstr)
+	if(errno)
 		return -1;
 
 	/* init */
@@ -117,9 +117,11 @@ create_inet_sock(char *host, char **errstr)
 	}
 	*port = 0;
 	port++;
-	prt = cext_strtonum(port, 1024, 65535, (const char **)errstr);
-	if(*errstr)
+	prt = strtol(port, nil, 10);
+	if(errno) {
+		*errstr = "invalid port number";
 		return -1;
+	}
 	signal(SIGPIPE, SIG_IGN);
 	if((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		*errstr = "cannot open socket";

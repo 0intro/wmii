@@ -21,10 +21,6 @@ unsigned int cext_strlcat(char *dst, const char *src, unsigned int siz);
 /* strlcpy.c */
 unsigned int cext_strlcpy(char *dst, const char *src, unsigned int siz);
 
-/* strtonum.c */
-long long cext_strtonum(const char *numstr, long long minval,
-		long long maxval, const char **errstrp);
-
 /* tokenize.c */
 unsigned int cext_tokenize(char **result, unsigned int reslen, char *str, char delim);
 

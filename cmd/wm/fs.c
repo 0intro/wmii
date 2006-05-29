@@ -3,6 +3,7 @@
  * See LICENSE file for license details.
  */
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -325,8 +326,8 @@ type_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 		return FsDview;
 	if(!strncmp(name, "sel", 4))
 		goto dyndir;
-	i = (unsigned short) cext_strtonum(name, 0, 0xffff, &errstr);
-	if(errstr)
+	i = (unsigned short) strtol(name, nil, 10);
+	if(errno)
 		return FsLast;
 dyndir:
 	switch(dir_type) {
@@ -385,8 +386,8 @@ qid_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 				new.path = pack_qpath(FsDarea, p->id, p->area.data[p->sel]->id, 0);
 			}
 			else {
-				i = cext_strtonum(name, 0, 0xffff, &errstr);
-				if(errstr || (i >= p->area.size))
+				i = strtol(name, nil, 10);
+				if(errno || (i >= p->area.size))
 					return nil;
 				new.path = pack_qpath(FsDarea, p->id, p->area.data[i]->id, 0);
 			}
@@ -405,7 +406,7 @@ qid_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 				new.path = pack_qpath(FsDclient, p->id, a->id, a->frame.data[a->sel]->id);
 			}
 			else {
-				i = cext_strtonum(name, 0, 0xffff, &errstr);
+				i = strtol(name, nil, 10);
 				if(errstr || (i >= a->frame.size))
 					return nil;
 				new.path = pack_qpath(FsDclient, p->id, a->id, a->frame.data[i]->id);
@@ -415,8 +416,8 @@ qid_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 	case FsDGclient:
 		if(dir_type != FsDclients)
 			return nil;
-		i = cext_strtonum(name, 0, 0xffff, &errstr);
-		if(errstr || (i >= client.size))
+		i = strtol(name, nil, 10);
+		if(errno || (i >= client.size))
 			return nil;
 		new.path = pack_qpath(FsDGclient, client.data[i]->id, 0, 0);
 		break;
@@ -1357,8 +1358,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 0, 0xffff, &errstr);
-		if(errstr)
+		i = strtol(buf, nil, 10);
+		if(errno)
 			return Ebadvalue;
 		def.border = i;
 		resize_all_clients();
@@ -1484,8 +1485,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
-		i = cext_strtonum(buf, 0, rect.width - MIN_COLWIDTH, &errstr);
-		if(errstr || (i && i < MIN_COLWIDTH))
+		i = strtol(buf, nil, 10);
+		if(errno || (i && i < MIN_COLWIDTH))
 			return Ebadvalue;
 		def.colw = i;
 		break;

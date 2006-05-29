@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <X11/Xatom.h>
 
 #include "wm.h"
@@ -615,9 +616,8 @@ select_client(Client *c, char *arg)
 			i = 0;
 	}
 	else {
-		const char *errstr;
-		i = cext_strtonum(arg, 0, a->frame.size - 1, &errstr);
-		if(errstr)
+		i = strtol(arg, nil, 10);
+		if(errno)
 			return;
 	}
 	focus_client(a->frame.data[i]->client, True);
@@ -685,7 +685,6 @@ size_client(Client *c, char *arg)
 void
 send_client(Client *c, char *arg)
 {
-	const char *errstr;
 	Frame *f = c->frame.data[c->sel];
 	Area *to, *a = f->area;
 	View *v = a->view;
@@ -742,8 +741,8 @@ send_client(Client *c, char *arg)
 		focus_client(c, True);
 	}
 	else if(i) {
-		j = cext_strtonum(arg, 0, v->area.size - 1, &errstr);
-		if(errstr)
+		j = strtol(arg, nil, 10);
+		if(errno)
 			return;
 		to = v->area.data[j];
 		send_to_area(to, a, c);

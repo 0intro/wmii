@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "wm.h"
 
@@ -123,9 +124,8 @@ select_area(Area *a, char *arg)
 			return;
 	}
 	else {
-		const char *errstr;
-		i = cext_strtonum(arg, 0, v->area.size - 1, &errstr);
-		if(errstr)
+		i = strtol(arg, nil, 10);
+		if(errno)
 			return;
 	}
 	new = v->area.data[i];
