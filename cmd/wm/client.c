@@ -475,7 +475,7 @@ sel_client()
 }
 
 static void
-match_sizehints(Client *c, BlitzAlign stickycorner)
+match_sizehints(Client *c, int aidx, BlitzAlign stickycorner)
 {
 	XSizeHints *s = &c->size;
 	Frame *f = c->frame.data[c->sel];
@@ -483,7 +483,7 @@ match_sizehints(Client *c, BlitzAlign stickycorner)
 	unsigned int dy = def.border + height_of_bar();
 	unsigned int hdiff, wdiff;
 
-	if(c->floating && (s->flags & PMinSize)) {
+	if(!aidx && (s->flags & PMinSize)) {
 		if(f->rect.width < s->min_width + dx) {
 			wdiff = (s->min_width + dx) - f->rect.width;
 			f->rect.width += wdiff;
@@ -497,7 +497,7 @@ match_sizehints(Client *c, BlitzAlign stickycorner)
 				f->rect.y -= hdiff;
 		}
 	}
-	if(c->floating && (s->flags & PMaxSize)) {
+	if(!aidx && (s->flags & PMaxSize)) {
 		if(f->rect.width > s->max_width + dx) {
 			wdiff = f->rect.width - (s->max_width + dx);
 			f->rect.width -= wdiff;
@@ -547,6 +547,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 {
 	Frame *f = c->frame.data[c->sel];
 	int fidx = idx_of_frame(f);
+	int aidx = idx_of_area(f->area);
 	BlitzAlign stickycorner;
 	if(f->rect.x != r->x &&
 			f->rect.x + f->rect.width == r->x + r->width) {
@@ -566,10 +567,10 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 	f->rect = *r;
 
 	if((f->area->mode != Colstack) || (f->area->sel == fidx))
-		match_sizehints(c, stickycorner);
+		match_sizehints(c, aidx, stickycorner);
 
 	if(!ignore_xcall) {
-		if(c->floating &&
+		if(!aidx &&
 				(c->rect.width >= rect.width) &&
 				(c->rect.height >= rect.height))
 		{
