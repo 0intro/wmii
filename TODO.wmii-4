@@ -1,3 +1,4 @@
+- make opaque move through a special window possible (this allows to not grab the server during move/resize)
 - UTF8 fixes with iconv?
 - re-introduce mouse based resizals (titlebar and border)
 - idea for column mode:
