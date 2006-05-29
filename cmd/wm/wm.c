@@ -139,6 +139,16 @@ init_cursors()
 static void
 init_screen()
 {
+	XGCValues gcv;
+
+	gcv.subwindow_mode = IncludeInferiors;
+	gcv.function = GXxor;
+	gcv.foreground = def.sel.bg;
+	gcv.plane_mask = AllPlanes;
+	gcv.graphics_exposures = False;
+	xorgc = XCreateGC(dpy, root, GCForeground | GCGraphicsExposures |
+						GCFunction | GCSubwindowMode | GCPlaneMask, &gcv);
+
 	rect.x = rect.y = 0;
 	rect.width = DisplayWidth(dpy, screen);
 	rect.height = DisplayHeight(dpy, screen);

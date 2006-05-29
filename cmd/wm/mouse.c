@@ -158,25 +158,30 @@ snap_move(XRectangle *r, XRectangle *rects,
 	}
 }
 
-static Window
-init_opaque_win(XRectangle r)
+static void
+draw_xor_border(XRectangle *r)
 {
-	XSetWindowAttributes wa;
-	wa.override_redirect = 1;
-	wa.border_pixel = def.sel.border;
-	wa.background_pixel = def.sel.bg;
-	return XCreateWindow(dpy, root, r.x, r.y,
-			r.width, r.height, 1,
-			DefaultDepth(dpy, screen), CopyFromParent,
-			DefaultVisual(dpy, screen),
-			CWOverrideRedirect | CWBackPixel | CWBorderPixel, &wa);
+	XRectangle xor = *r;
+
+	xor.x += 2;
+	xor.y += 2;
+	xor.width -= 4; 
+	xor.height -= 4;
+	XSetLineAttributes(dpy, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
+	XDrawLine(dpy, root, xorgc, xor.x + 2, xor.y +  xor.height / 2,
+			xor.x + xor.width - 2, xor.y + xor.height / 2);
+	XDrawLine(dpy, root, xorgc, xor.x + xor.width / 2, xor.y + 2,
+			xor.x + xor.width / 2, xor.y + xor.height - 2);
+	XSetLineAttributes(dpy, xorgc, 4, LineSolid, CapNotLast, JoinMiter);
+	XDrawRectangles(dpy, root, xorgc, &xor, 1);
+	XSync(dpy, False);
 }
 
 void
 do_mouse_move(Client *c)
 {
 	int px = 0, py = 0, wex, wey, ex, ey, i;
-	Window dummy, opaque;
+	Window dummy;
 	XEvent ev;
 	unsigned int num = 0;
 	unsigned int dmask;
@@ -198,25 +203,26 @@ do_mouse_move(Client *c)
 					None, cursor[CurMove], CurrentTime) != GrabSuccess)
 		return;
 
-	opaque = init_opaque_win(frect);
-	XClearWindow(dpy, opaque);
-	XMapRaised(dpy, opaque);
+	XGrabServer(dpy);
+	draw_xor_border(&frect);
 	for(;;) {
 		XMaskEvent(dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			XDestroyWindow(dpy, opaque);
+			draw_xor_border(&frect);
 			if(aidx)
 				resize_column(c, &frect, &pt);
 			else
 				resize_client(c, &frect, False);
 			if(rects)
 				free(rects);
+			XUngrabServer(dpy);
 			XUngrabPointer(dpy, CurrentTime);
 			XSync(dpy, False);
 			return;
 			break;
 		case MotionNotify:
+			draw_xor_border(&frect);
 			pt.x = ev.xmotion.x;
 			pt.y = ev.xmotion.y;
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
@@ -225,8 +231,7 @@ do_mouse_move(Client *c)
 			frect.y = py - ey;
 			if(!aidx)
 				snap_move(&frect, rects, num, snapw, snaph);
-			XMoveResizeWindow(dpy, opaque, frect.x, frect.y, frect.width, frect.height);
-			XClearWindow(dpy, opaque);
+			draw_xor_border(&frect);
 			break;
 		case Expose:
 			(handler[Expose])(&ev);
@@ -435,31 +440,31 @@ do_mouse_resize(Client *c, BlitzAlign align)
 					None, cursor[CurResize], CurrentTime) != GrabSuccess)
 		return;
 
-	opaque = init_opaque_win(frect);
-	XClearWindow(dpy, opaque);
-	XMapRaised(dpy, opaque);
+	XGrabServer(dpy);
+	draw_xor_border(&frect);
 	for(;;) {
 		XMaskEvent(dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			XDestroyWindow(dpy, opaque);
+			XClearWindow(dpy, opaque);
 			if(aidx)
 				resize_column(c, &frect, nil);
 			else
 				resize_client(c, &frect, False);
 			if(rects)
 				free(rects);
+			XUngrabServer(dpy);
 			XUngrabPointer(dpy, CurrentTime);
 			XSync(dpy, False);
 			return;
 			break;
 		case MotionNotify:
+			draw_xor_border(&frect);
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
 			snap_resize(&frect, &origin, align, rects, num, px,
 						ox, py, oy, snapw, snaph);
-			XMoveResizeWindow(dpy, opaque, frect.x, frect.y, frect.width, frect.height);
-			XClearWindow(dpy, opaque);
+			draw_xor_border(&frect);
 			break;
 		case Expose:
 			(handler[Expose])(&ev);

@@ -188,6 +188,7 @@ IXPServer srv;
 Pixmap barpmap;
 Window barwin;
 GC bargc;
+GC xorgc;
 XRectangle brect;
 Qid root_qid;
 Default def;
