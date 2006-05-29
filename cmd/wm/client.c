@@ -648,68 +648,17 @@ newcol_client(Client *c, char *arg)
 	flush_masked_events(EnterWindowMask);
 }
 
-static int
-parse_int_arg(int *i, const char *ival)
-{
-	int imult = 0, inum;
-	const char *errstr;
-
-	if(*ival == '-')
-		imult = -1;
-	else if(*ival == '+')
-		imult = 1;
-
-	inum = cext_strtonum(ival, -32765, 32765, &errstr);
-	if(errstr)
-		return -1;
-
-	if(inum < 0)
-		inum *= -1;
-
-	if(imult < 0)
-		*i -= inum;
-	else if(imult > 0)
-		*i += inum;
-	else
-		*i = inum;
-	return 0;
-}
-
-/* Parses "[+|-]<int> [+|-]<int>" and applies to the given vals */
-static int
-parse_mvsize_arg(int *i1, int *i2, const char *val)
-{
-	char buf[64], *p;
-	int i;
-
-	cext_strlcpy(buf, val, sizeof(buf));
-	p = strchr(buf, ' ');
-	if(!p)
-		return -1;
-	*p = 0;
-	p++;
-	i = *i1;
-	if(parse_int_arg(&i, buf) == -1)
-		return -1;
-	*i1 = i;
-	i = *i2;
-	if(parse_int_arg(&i, buf) == -1)
-		return -1;
-	*i2 = i;
-	return 0;
-}
-
 void
 move_client(Client *c, char *arg)
 {
 	Frame *f = c->frame.data[c->sel];
 	XRectangle new = f->rect;
-	int x = new.x, y = new.y;
+	int x, y;
 
-	if(parse_mvsize_arg(&x, &y, arg) == -1)
+	if(sscanf(arg, "%d %d", &x, &y) != 2)
 		return;
-	new.x = x;
-	new.y = y;
+	new.x += x;
+	new.y += y;
 	if(idx_of_area(f->area))
 		resize_column(f->client, &new, nil);
 	else
@@ -721,12 +670,12 @@ size_client(Client *c, char *arg)
 {
 	Frame *f = c->frame.data[c->sel];
 	XRectangle new = f->rect;
-	int w = new.width, h = new.height; 
+	int w, h;
 
-	if(parse_mvsize_arg(&w, &h, arg) == -1)
+	if(sscanf(arg, "%d %d", &w, &h) != 2)
 		return;
-	new.width = w;
-	new.height = h;
+	new.width += w;
+	new.height += h;
 	if(idx_of_area(f->area))
 		resize_column(f->client, &new, nil);
 	else
