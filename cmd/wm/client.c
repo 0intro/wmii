@@ -137,6 +137,7 @@ focus_client(Client *c, Bool restack)
 
 	v->sel = i;
 	f->area->sel = idx_of_frame(f);
+	c->floating = !i;
 	if(restack)
 		restack_view(v);
 	else {
