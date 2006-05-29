@@ -145,7 +145,7 @@ do
 		$MODKEY-[0-9])
 			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
 		$MODKEY-Return)
-			xterm &;;
+			PATH="$OLD_PATH" xterm &;;
 		$MODKEY-Shift-$LEFT)
 			xwrite /tag/sel/sel/sel/ctl send prev;;
 		$MODKEY-Shift-$RIGHT)
