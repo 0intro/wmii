@@ -21,6 +21,7 @@ static void
 update_client_name(Client *c)
 {
 	XTextProperty name;
+	XClassHint ch;
 	int n;
 	char **list = nil;
 
@@ -42,6 +43,16 @@ update_client_name(Client *c)
 		}
 	}
 	XFree(name.value);
+	if(XGetClassHint(dpy, c->win, &ch)) {
+		snprintf(c->props, sizeof(c->props), "%s:%s:%s",
+				ch.res_class ? ch.res_class : "",
+				ch.res_name ? ch.res_name : "",
+				c->name);
+		if(ch.res_class)
+			XFree(ch.res_class);
+		if(ch.res_name)
+			XFree(ch.res_name);
+	}
 }
 
 Client *
@@ -49,7 +60,6 @@ create_client(Window w, XWindowAttributes *wa)
 {
 	Client *c = (Client *) cext_emallocz(sizeof(Client));
 	XSetWindowAttributes fwa;
-	XClassHint ch;
 	long msize;
 	static unsigned int id = 1;
 	static char buf[256];
@@ -74,15 +84,6 @@ create_client(Window w, XWindowAttributes *wa)
 		c->fixedsize = False;
 	XAddToSaveSet(dpy, c->win);
 	update_client_name(c);
-	if(XGetClassHint(dpy, c->win, &ch)) {
-		snprintf(c->classinst, sizeof(c->classinst), "%s:%s",
-				ch.res_class ? ch.res_class : "",
-				ch.res_name ? ch.res_name : "");
-		if(ch.res_class)
-			XFree(ch.res_class);
-		if(ch.res_name)
-			XFree(ch.res_name);
-	}
 	fwa.override_redirect = 1;
 	fwa.background_pixmap = ParentRelative;
 	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask

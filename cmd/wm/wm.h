@@ -66,7 +66,7 @@ enum {
 	FsFctl,
 	FsFname,
 	FsFrules,
-	FsFclass,
+	FsFprops,
 	FsFmode,
 	FsFtags,
 	FsFindex,
@@ -114,7 +114,7 @@ struct Client {
 	char name[256];
 	char tags[256];
 	ViewVector view;
-	char classinst[256];
+	char props[512];
 	int proto;
 	unsigned int border;
 	Bool floating;
@@ -293,7 +293,7 @@ void snap_move(XRectangle *r, XRectangle *rects, unsigned int num,
 /* rule.c */
 void update_rules();
 void apply_rules(Client *c);
-Bool permit_tags(const char *tags);
+void apply_tags(Client *c, const char *tags);
 
 /* view.c */
 void arrange_view(View *v);

@@ -62,7 +62,7 @@ enum { WMII_IOUNIT = 2048 };
  * /tag/X/1/ctl		FsFctl		command interface (area)
  * /tag/X/1/mode	FsFmode		column mode
  * /tag/X/1/sel/	FsDclient
- * /tag/X/1/1/class	FsFclass	Class:instance of client
+ * /tag/X/1/1/props	FsFprops	Class:instance of client
  * /tag/X/1/1/index	FsFindex	index of client in /client
  * /tag/X/1/1/name	FsFname		name of client
  * /tag/X/1/1/tags	FsFtags		tag of client
@@ -226,7 +226,7 @@ name_of_qid(Qid wqid[IXP_MAX_WELEM], unsigned short qsel)
 			return nil;
 		return "tags";
 		break;
-	case FsFclass:
+	case FsFprops:
 	case FsFindex:
 	case FsFname:
 		if((dir_type == FsDclient) && (i1 == -1 || i2 == -1 || i3 == -1))
@@ -237,8 +237,8 @@ name_of_qid(Qid wqid[IXP_MAX_WELEM], unsigned short qsel)
 		case FsFname:
 			return "name";
 			break;
-		case FsFclass:
-			return "class";
+		case FsFprops:
+			return "props";
 			break;
 		case FsFindex:
 			return "index";
@@ -288,8 +288,8 @@ type_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 		return FsFctl;
 	if(!strncmp(name, "event", 6))
 		return FsFevent;
-	if(!strncmp(name, "class", 6))
-		return FsFclass;
+	if(!strncmp(name, "props", 6))
+		return FsFprops;
 	if(!strncmp(name, "index", 6))
 		return FsFindex;
 	if(!strncmp(name, "name", 5))
@@ -448,7 +448,7 @@ qid_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 		if(dir_type == FsDview)
 			return nil;
 	case FsFname:
-	case FsFclass:
+	case FsFprops:
 		if(dir_type == FsDroot)
 			return nil;
 	case FsFtags:
@@ -550,13 +550,13 @@ stat_of_name(Stat *stat, char *name, Qid wqid[IXP_MAX_WELEM], unsigned short qse
 		snprintf(buf, sizeof(buf), "%d %d %d %d", fr.x, fr.y, fr.width, fr.height);
 		return pack_stat(stat, wqid, qsel, name, strlen(buf), IXP_DMREAD | IXP_DMWRITE);
 		break;
-	case FsFclass:
+	case FsFprops:
 		if(dir_type == FsDclient) {
 			f = view.data[i1]->area.data[i2]->frame.data[i3];
-			return pack_stat(stat, wqid, qsel, name, strlen(f->client->classinst), IXP_DMREAD);
+			return pack_stat(stat, wqid, qsel, name, strlen(f->client->props), IXP_DMREAD);
 		}
 		else
-			return pack_stat(stat, wqid, qsel, name, strlen(client.data[i1]->classinst), IXP_DMREAD);
+			return pack_stat(stat, wqid, qsel, name, strlen(client.data[i1]->props), IXP_DMREAD);
 		break;
 	case FsFindex:
 		switch(dir_type) {
@@ -1093,7 +1093,7 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsDGclient:
 		case FsDclient:
-			fcall->count = stat_of_name(&stat, "class", m->wqid, m->sel);
+			fcall->count = stat_of_name(&stat, "props", m->wqid, m->sel);
 			p = ixp_pack_stat(p, &stat);
 			fcall->count += stat_of_name(&stat, "name", m->wqid, m->sel);
 			p = ixp_pack_stat(p, &stat);
@@ -1130,14 +1130,14 @@ xread(IXPConn *c, Fcall *fcall)
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
-		case FsFclass:
+		case FsFprops:
 			if(dir_type == FsDclient) {
-				if((fcall->count = strlen(view.data[i1]->area.data[i2]->frame.data[i3]->client->classinst)))
-					memcpy(p, view.data[i1]->area.data[i2]->frame.data[i3]->client->classinst, fcall->count);
+				if((fcall->count = strlen(view.data[i1]->area.data[i2]->frame.data[i3]->client->props)))
+					memcpy(p, view.data[i1]->area.data[i2]->frame.data[i3]->client->props, fcall->count);
 			}
 			else {
-				if((fcall->count = strlen(client.data[i1]->classinst)))
-					memcpy(p, client.data[i1]->classinst, fcall->count);
+				if((fcall->count = strlen(client.data[i1]->props)))
+					memcpy(p, client.data[i1]->props, fcall->count);
 			}
 			break;
 		case FsFindex:
@@ -1371,13 +1371,11 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(buf, fcall->data, fcall->count);
 		buf[fcall->count] = 0;
 		cext_trim(buf, " \t/");
-		if(!permit_tags(buf))
-			return Ebadvalue;
 		if(dir_type == FsDclient)
 			cl = view.data[i1]->area.data[i2]->frame.data[i3]->client;
 		else
 			cl = client.data[i1];
-		cext_strlcpy(cl->tags, buf, sizeof(cl->tags));
+		apply_tags(cl, buf);
 		update_views();
 		draw_client(cl);
 		break;

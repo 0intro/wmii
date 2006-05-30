@@ -9,14 +9,8 @@
 #include <regex.h>
 #include "wm.h"
 
-/*
- * basic rule matching language
- *
- * /regex/ -> tag [tag ...]
- *
- * regex might contain POSIX regex syntax defined in regex(3)
- */
-
+/* basic rule matching language /regex/ -> value
+ * regex might contain POSIX regex syntax defined in regex(3) */
 enum {
 	IGNORE,
 	REGEX,
@@ -25,12 +19,9 @@ enum {
 
 typedef struct {
 	regex_t regex;
-	char tags[256];
-	Bool is_valid;
+	char values[256];
 } Rule;
 VECTOR(RuleVector, Rule *);
-
-VECTOR(PropVector, char *);
 
 static RuleVector rule;
 
@@ -40,29 +31,14 @@ vector_of_rules(RuleVector *rv)
 	return (Vector *) rv;
 }
 
-static Vector *
-vector_of_props(PropVector *pv)
-{
-	return (Vector *) pv;
-}
-
-Bool
-permit_tags(const char *tags)
+static Bool
+permit_tag(const char *tag)
 {
 	static char *exclude[] = { "sel", "status" };
-	char buf[256];
-	char *toks[16];
-	unsigned int i, j, n;
-
-	cext_strlcpy(buf, tags, sizeof(buf));
-	if(!(n = cext_tokenize(toks, 16, buf, '+')))
-		return False;
-	for(i = 0; i < (sizeof(exclude)/sizeof(exclude[0])); i++)
-		for(j = 0; j < n; j++) {
-			if(!strncmp(exclude[i], toks[j], strlen(toks[j])) &&
-				!strncmp(exclude[i], toks[j], strlen(exclude[i])))
-				return False;
-		}
+	unsigned int i;
+	for(i = 0; i < (sizeof(exclude) / sizeof(exclude[0])); i++)
+		if(!strcmp(exclude[i], tag))
+			return False;
 	return True;
 }
 
@@ -71,15 +47,14 @@ update_rules()
 {
 	unsigned int i;
 	int mode = IGNORE;
-	char *p, *r = nil, *t = nil, regex[256], tags[256];
+	char *p, *r = nil, *v = nil, regex[256], values[256];
 
 	if(!def.rules || !strlen(def.rules))
 		return;
 
 	while(rule.size) {
 		Rule *r = rule.data[0];
-		if(r->is_valid)
-			regfree(&r->regex);
+		regfree(&r->regex);
 		cext_vdetach(vector_of_rules(&rule), r);
 		free(r);
 	}
@@ -93,8 +68,8 @@ update_rules()
 			}
 			else if(*p == '>') {
 				mode = TAGS;
-				tags[0] = 0;
-				t = tags;
+				values[0] = 0;
+				v = values;
 			}
 			break;
 		case REGEX:
@@ -109,22 +84,20 @@ update_rules()
 			break;
 		case TAGS:
 			if(*p == '\n' || *(p + 1) == 0) {
-				*t = 0;
-				cext_trim(tags, " \t/");
-				if(permit_tags(tags)) {
-					Rule *rul = cext_emallocz(sizeof(Rule));
-					rul->is_valid = !regcomp(&rul->regex, regex, 0);
-					cext_strlcpy(rul->tags, tags, sizeof(rul->tags));
+				Rule *rul = cext_emallocz(sizeof(Rule));
+				*v = 0;
+				cext_trim(values, " \t/");
+				if(!regcomp(&rul->regex, regex, 0)) {
+					cext_strlcpy(rul->values, values, sizeof(rul->values));
 					cext_vattach(vector_of_rules(&rule), rul);
 				}
 				else
-					fprintf(stderr, "wmiiwm: ignoring rule with tags '%s', restricted tag name\n",
-							tags);
+					free(rul);
 				mode = IGNORE;
 			}
 			else {
-				*t = *p;
-				t++;
+				*v = *p;
+				v++;
 			}
 			break;
 		}
@@ -133,49 +106,64 @@ update_rules()
 	update_views();
 }
 
-static void
-match(Client *c, PropVector prop)
+void
+apply_tags(Client *c, const char *tags)
 {
-	unsigned int i,j;
+	unsigned int i, j = 0, n;
+	char buf[256];
+	char *toks[16], *apply[16];
+
+	cext_strlcpy(buf, tags, sizeof(buf));
+	if(!(n = cext_tokenize(toks, 16, buf, '+')))
+		return;
+
+	for(i = 0; i < n; i++) {
+		if(!strncmp(toks[i], "~", 2))
+			c->floating = True;
+		else if(!strncmp(toks[i], "!", 2)) {
+			if(view.size)
+				apply[j++] = view.data[sel]->name;
+			else
+				apply[j++] = "nil";
+		}
+		else if(permit_tag(toks[i]))
+			apply[j++] = toks[i];
+	}
+
+	c->tags[0] = 0;
+	for(i = 0; i < j; i++) {
+		cext_strlcat(c->tags, apply[i], sizeof(c->tags) - strlen(c->tags) - 1);
+		if(i + 1 < j)
+			cext_strlcat(c->tags, "+", sizeof(c->tags) - strlen(c->tags) - 1);
+	}
+
+	if(!strlen(c->tags))
+		apply_tags(c, "nil");
+}
+
+static void
+match(Client *c, const char *prop)
+{
+	unsigned int i;
 	regmatch_t tmpregm;
 
 	for(i = 0; i < rule.size; i++) {
 		Rule *r = rule.data[i];
-		for(j=0; j < prop.size; j++)
-			if(r->is_valid && !regexec(&r->regex, prop.data[j], 1, &tmpregm, 0)) {
-				if(!strncmp(r->tags, "~", 2))
-					c->floating = True;
-				else if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4)) {
-					if(!strncmp(r->tags, "!", 2)) {
-						if(view.size)
-							cext_strlcpy(c->tags, view.data[sel]->name, sizeof(c->tags));
-						else
-							cext_strlcpy(c->tags, "nil", sizeof(c->tags));
-					}
-					else
-						cext_strlcpy(c->tags, r->tags, sizeof(c->tags));
-				}
-			}
+		if(!regexec(&r->regex, prop, 1, &tmpregm, 0))
+			if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4))
+				apply_tags(c, r->values);
 	}
 }
 
 void
 apply_rules(Client *c)
 {
-	PropVector prop = {0};
-
 	if(!def.rules)
 		goto Fallback;
 
-	cext_vattach(vector_of_props(&prop), c->classinst);
-	cext_vattach(vector_of_props(&prop), c->name);
-
-	match(c, prop);
-
-	while(prop.size)
-		cext_vdetach(vector_of_props(&prop), prop.data[0]);
+	match(c, c->props);
 
 Fallback:
 	if(!strlen(c->tags))
-		cext_strlcpy(c->tags, "nil", sizeof(c->tags));
+		apply_tags(c, "nil");
 }
