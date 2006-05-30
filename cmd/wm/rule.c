@@ -22,17 +22,6 @@ vector_of_rules(RuleVector *rv)
 	return (Vector *) rv;
 }
 
-static Bool
-permit_tag(const char *tag)
-{
-	static char *exclude[] = { "sel", "status" };
-	unsigned int i;
-	for(i = 0; i < (sizeof(exclude) / sizeof(exclude[0])); i++)
-		if(!strcmp(exclude[i], tag))
-			return False;
-	return True;
-}
-
 void
 update_rules(RuleVector *rule, const char *data)
 {
@@ -91,66 +80,4 @@ update_rules(RuleVector *rule, const char *data)
 			}
 			break;
 		}
-}
-
-void
-apply_tags(Client *c, const char *tags)
-{
-	unsigned int i, j = 0, n;
-	char buf[256];
-	char *toks[16], *apply[16];
-
-	cext_strlcpy(buf, tags, sizeof(buf));
-	if(!(n = cext_tokenize(toks, 16, buf, '+')))
-		return;
-
-	for(i = 0; i < n; i++) {
-		if(!strncmp(toks[i], "~", 2))
-			c->floating = True;
-		else if(!strncmp(toks[i], "!", 2)) {
-			if(view.size)
-				apply[j++] = view.data[sel]->name;
-			else
-				apply[j++] = "nil";
-		}
-		else if(permit_tag(toks[i]))
-			apply[j++] = toks[i];
-	}
-
-	c->tags[0] = 0;
-	for(i = 0; i < j; i++) {
-		cext_strlcat(c->tags, apply[i], sizeof(c->tags) - strlen(c->tags) - 1);
-		if(i + 1 < j)
-			cext_strlcat(c->tags, "+", sizeof(c->tags) - strlen(c->tags) - 1);
-	}
-
-	if(!strlen(c->tags))
-		apply_tags(c, "nil");
-}
-
-static void
-match(Client *c, const char *prop)
-{
-	unsigned int i;
-	regmatch_t tmpregm;
-
-	for(i = 0; i < crule.size; i++) {
-		Rule *r = crule.data[i];
-		if(!regexec(&r->regex, prop, 1, &tmpregm, 0))
-			if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4))
-				apply_tags(c, r->values);
-	}
-}
-
-void
-apply_rules(Client *c)
-{
-	if(!def.rules)
-		goto Fallback;
-
-	match(c, c->props);
-
-Fallback:
-	if(!strlen(c->tags))
-		apply_tags(c, "nil");
 }

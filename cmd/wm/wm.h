@@ -259,6 +259,8 @@ int idx_of_client_id(unsigned short id);
 Client *client_of_win(Window w);
 void draw_clients();
 void update_client_grab(Client *c, Bool is_sel);
+void apply_rules(Client *c);
+void apply_tags(Client *c, const char *tags);
 
 /* column.c */
 void arrange_column(Area *a, Bool dirty);
@@ -303,8 +305,6 @@ void snap_move(XRectangle *r, XRectangle *rects, unsigned int num,
 
 /* rule.c */
 void update_rules(RuleVector *rule, const char *data);
-void apply_rules(Client *c);
-void apply_tags(Client *c, const char *tags);
 
 /* view.c */
 void arrange_view(View *v);
