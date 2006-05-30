@@ -21,12 +21,8 @@ create_area(View *v, unsigned int pos)
 	unsigned int w;
 	Area *a = nil;
 
-	if(v->area.size > 1) {
-		if(def.colw)
-			w = def.colw;
-		else
-			w = rect.width / v->area.size - 1;
-	}
+	if(v->area.size > 1)
+		w = rect.width / v->area.size - 1;
 	else
 		w = rect.width;
 	if(w < MIN_COLWIDTH)

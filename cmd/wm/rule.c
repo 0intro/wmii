@@ -6,7 +6,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <regex.h>
 #include "wm.h"
 
 /* basic rule matching language /regex/ -> value
@@ -16,14 +15,6 @@ enum {
 	REGEX,
 	TAGS
 };
-
-typedef struct {
-	regex_t regex;
-	char values[256];
-} Rule;
-VECTOR(RuleVector, Rule *);
-
-static RuleVector rule;
 
 static Vector *
 vector_of_rules(RuleVector *rv)
@@ -43,20 +34,19 @@ permit_tag(const char *tag)
 }
 
 void
-update_rules()
+update_rules(RuleVector *rule, const char *data)
 {
-	unsigned int i;
 	int mode = IGNORE;
 	char *p, *r = nil, *v = nil, regex[256], values[256];
 
-	if(!def.rules || !strlen(def.rules))
+	if(!data || !strlen(data))
 		return;
 
-	while(rule.size) {
-		Rule *r = rule.data[0];
-		regfree(&r->regex);
-		cext_vdetach(vector_of_rules(&rule), r);
-		free(r);
+	while(rule->size) {
+		Rule *rul = rule->data[0];
+		regfree(&rul->regex);
+		cext_vdetach(vector_of_rules(rule), rul);
+		free(rul);
 	}
 
 	for(p = def.rules; *p; p++)
@@ -89,7 +79,7 @@ update_rules()
 				cext_trim(values, " \t/");
 				if(!regcomp(&rul->regex, regex, 0)) {
 					cext_strlcpy(rul->values, values, sizeof(rul->values));
-					cext_vattach(vector_of_rules(&rule), rul);
+					cext_vattach(vector_of_rules(rule), rul);
 				}
 				else
 					free(rul);
@@ -101,9 +91,6 @@ update_rules()
 			}
 			break;
 		}
-	for(i = 0; i < client.size; i++)
-		apply_rules(client.data[i]);
-	update_views();
 }
 
 void
@@ -147,8 +134,8 @@ match(Client *c, const char *prop)
 	unsigned int i;
 	regmatch_t tmpregm;
 
-	for(i = 0; i < rule.size; i++) {
-		Rule *r = rule.data[i];
+	for(i = 0; i < crule.size; i++) {
+		Rule *r = crule.data[i];
 		if(!regexec(&r->regex, prop, 1, &tmpregm, 0))
 			if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4))
 				apply_tags(c, r->values);

@@ -41,8 +41,7 @@ enum { WMII_IOUNIT = 2048 };
  * /def/rules		FsFrules	rules
  * /def/keys		FsFkeys		keys
  * /def/grabmod		FsFgrabmod	grab modifier
- * /def/colmode		FsFmode		column mode
- * /def/colwidth	FsFcolw		column width
+ * /def/ncol	FsFncol		column number
  * /bar/		FsDbars
  * /bar/lab/		FsDbar
  * /bar/lab/data	FsFdata		<arbitrary data which gets displayed>
@@ -200,7 +199,7 @@ name_of_qid(Qid wqid[IXP_MAX_WELEM], unsigned short qsel)
 		case FsFselcolors: return "selcolors"; break;
 		case FsFnormcolors: return "normcolors"; break;
 		case FsFfont: return "font"; break;
-		case FsFcolw: return "colwidth"; break;
+		case FsFncol: return "ncol"; break;
 		case FsFgrabmod: return "grabmod"; break;
 		case FsFrules: return "rules"; break;
 		case FsFkeys: return "keys"; break;
@@ -250,10 +249,7 @@ name_of_qid(Qid wqid[IXP_MAX_WELEM], unsigned short qsel)
 	case FsFmode:
 		if((dir_type == FsDarea) && (i1 == -1 || i2 == -1))
 			return nil;
-		if(dir_type == FsDdef)
-			return "colmode";
-		else
-			return "mode";
+		return "mode";
 		break;
 	case FsFevent: return "event"; break;
 	default: return nil; break;
@@ -306,8 +302,8 @@ type_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 		return FsFnormcolors;
 	if(!strncmp(name, "font", 5))
 		return FsFfont;
-	if(!strncmp(name, "colwidth", 9))
-		return FsFcolw;
+	if(!strncmp(name, "ncol", 5))
+		return FsFncol;
 	if(!strncmp(name, "grabmod", 8))
 		return FsFgrabmod;
 	if(!strncmp(name, "keys", 5))
@@ -316,7 +312,7 @@ type_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 		return FsFrules;
 	if(!strncmp(name, "data", 5))
 		return FsFdata;
-	if(!strncmp(name, "mode", 5) || !strncmp(name, "colmode", 8))
+	if(!strncmp(name, "mode", 5))
 		return FsFmode;
 	if((dir_type == FsDbars) && bar_of_name(name))
 		return FsDbar;
@@ -461,7 +457,7 @@ qid_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 	case FsFborder:
 	case FsFgrabmod:
 	case FsFfont:
-	case FsFcolw:
+	case FsFncol:
 	case FsFrules:
 	case FsFselcolors:
 	case FsFnormcolors:
@@ -603,15 +599,9 @@ stat_of_name(Stat *stat, char *name, Qid wqid[IXP_MAX_WELEM], unsigned short qse
 				(i1 == bar.size) ? 0 : strlen(bar.data[i1]->data), IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFmode:
-		{
-			int i;
-			if(dir_type == FsDarea)
-				i = view.data[i1]->area.data[i2]->mode;
-			else
-				i = def.colmode;
-			return pack_stat(stat, wqid, qsel, name,
-					strlen(str_of_column_mode(i)), IXP_DMREAD | IXP_DMWRITE);
-		}
+		return pack_stat(stat, wqid, qsel, name,
+					strlen(str_of_column_mode(view.data[i1]->area.data[i2]->mode)),
+					IXP_DMREAD | IXP_DMWRITE);
 		break;
 	case FsFcolors:
 	case FsFselcolors:
@@ -624,9 +614,8 @@ stat_of_name(Stat *stat, char *name, Qid wqid[IXP_MAX_WELEM], unsigned short qse
 	case FsFrules:
 		return pack_stat(stat, wqid, qsel, name, def.rules ? strlen(def.rules) : 0, IXP_DMREAD | IXP_DMWRITE);
 		break;
-	case FsFcolw:
-		snprintf(buf, sizeof(buf), "%d", def.colw);
-		return pack_stat(stat, wqid, qsel, name, strlen(buf), IXP_DMREAD | IXP_DMWRITE);
+	case FsFncol:
+		return pack_stat(stat, wqid, qsel, name, def.ncol ? strlen(def.ncol) : 0, IXP_DMREAD | IXP_DMWRITE);
 	case FsFfont:
 		return pack_stat(stat, wqid, qsel, name, strlen(def.font), IXP_DMREAD | IXP_DMWRITE);
 	case FsFgrabmod:
@@ -965,6 +954,20 @@ xread(IXPConn *c, Fcall *fcall)
 			else if(fcall->count)
 				memcpy(p, def.rules + fcall->offset, fcall->count);
 			break;
+		case FsFncol:
+			len = def.ncol ? strlen(def.ncol) : 0;
+			if(len <= fcall->offset) {
+				fcall->count = 0;
+				break;
+			}
+			fcall->count = len - fcall->offset;
+			if(fcall->count > fcall->iounit) {
+				memcpy(p, def.ncol + fcall->offset, fcall->iounit);
+				fcall->count = fcall->iounit;
+			}
+			else if(fcall->count)
+				memcpy(p, def.ncol + fcall->offset, fcall->count);
+			break;
 		default:
 			break;
 		}
@@ -1044,9 +1047,7 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_pack_stat(p, &stat);
 			fcall->count += stat_of_name(&stat, "grabmod", m->wqid, m->sel);
 			p = ixp_pack_stat(p, &stat);
-			fcall->count += stat_of_name(&stat, "colmode", m->wqid, m->sel);
-			p = ixp_pack_stat(p, &stat);
-			fcall->count += stat_of_name(&stat, "colwidth", m->wqid, m->sel);
+			fcall->count += stat_of_name(&stat, "ncol", m->wqid, m->sel);
 			p = ixp_pack_stat(p, &stat);
 			break;
 		case FsDview:
@@ -1229,24 +1230,22 @@ xread(IXPConn *c, Fcall *fcall)
 			if((fcall->count = strlen(def.grabmod)))
 				memcpy(p, def.grabmod, fcall->count);
 			break;
-		case FsFcolw:
-			snprintf(buf, sizeof(buf), "%d", def.colw);
-			if((fcall->count = strlen(buf)))
-				memcpy(p, buf, fcall->count);
+		case FsFncol:
+			fcall->count = def.ncol ? strlen(def.ncol) : 0;
+			if(fcall->count > fcall->iounit) {
+				memcpy(p, def.ncol, fcall->iounit);
+				fcall->count = fcall->iounit;
+			}
+			else if(fcall->count)
+				memcpy(p, def.ncol, fcall->count);
 			break;
 		case FsFfont:
 			if((fcall->count = strlen(def.font)))
 				memcpy(p, def.font, fcall->count);
 			break;
 		case FsFmode:
-			if(dir_type == FsDarea) {
-				if(!i2)
-					return Enofile;
-				i = view.data[i1]->area.data[i2]->mode;
-			}
-			else
-				i = def.colmode;
-			snprintf(buf, sizeof(buf), "%s", str_of_column_mode(i));
+			snprintf(buf, sizeof(buf), "%s",
+					str_of_column_mode(view.data[i1]->area.data[i2]->mode));
 			fcall->count = strlen(buf);
 			memcpy(p, buf, fcall->count);
 			break;
@@ -1442,6 +1441,20 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(def.rules + fcall->offset, fcall->data, fcall->count);
 		def.rules[fcall->offset + fcall->count] = 0;
 		break;
+	case FsFncol:
+		if(def.ncolsz < fcall->offset + fcall->count + 1) {
+			def.ncolsz = fcall->offset + fcall->count + 1;
+			tmp = cext_emallocz(def.ncolsz);
+			len = def.ncol ? strlen(def.ncol) : 0;
+			if(len) {
+				memcpy(tmp, def.ncol, len);
+				free(def.ncol);
+			}
+			def.ncol = tmp;
+		}
+		memcpy(def.ncol + fcall->offset, fcall->data, fcall->count);
+		def.ncol[fcall->offset + fcall->count] = 0;
+		break;
 	case FsFgeom:
 		if(fcall->count >= sizeof(buf))
 			return Ebadvalue;
@@ -1479,17 +1492,6 @@ xwrite(IXPConn *c, Fcall *fcall)
 				restack_view(view.data[sel]);
 		}
 		break;
-	case FsFcolw:
-		if(fcall->count >= sizeof(buf))
-			return Ebadvalue;
-		memcpy(buf, fcall->data, fcall->count);
-		buf[fcall->count] = 0;
-		if(sscanf(buf, "%d", &i) != 1)
-			return Ebadvalue;
-		if(i && i < MIN_COLWIDTH)
-			return Ebadvalue;
-		def.colw = i;
-		break;
 	case FsFfont:
 		if(def.font)
 			free(def.font);
@@ -1507,14 +1509,10 @@ xwrite(IXPConn *c, Fcall *fcall)
 		buf[fcall->count] = 0;
 		if((i = column_mode_of_str(buf)) == -1)
 			return Ebadvalue;
-		if(dir_type == FsDarea) {
-			view.data[i1]->area.data[i2]->mode = i;
-			arrange_column(view.data[i1]->area.data[i2], True);
-			restack_view(view.data[i1]);
-			draw_clients();
-		}
-		else
-			def.colmode = i;
+		view.data[i1]->area.data[i2]->mode = i;
+		arrange_column(view.data[i1]->area.data[i2], True);
+		restack_view(view.data[i1]);
+		draw_clients();
 		break;
 	case FsFevent:
 		if(fcall->count >= sizeof(buf))
@@ -1545,8 +1543,16 @@ xclunk(IXPConn *c, Fcall *fcall)
 	type = unpack_type(m->wqid[m->sel].path);
 	if(type == FsFkeys)
 		update_keys();
-	else if(type == FsFrules)
-		update_rules();
+	else if(type == FsFrules) {
+		unsigned int i;
+		update_rules(&crule, def.rules);
+		for(i = 0; i < client.size; i++)
+			apply_rules(client.data[i]);
+		update_views();
+	}
+	else if(type == FsFncol) {
+		update_rules(&vrule, def.ncol);
+	}
 	cext_vdetach(ixp_vector_of_maps(&c->map), m);
 	free(m);
 	fcall->id = RCLUNK;

@@ -295,6 +295,8 @@ main(int argc, char *argv[])
 	key.size = 0;
 	bar.data = nil;
 	bar.size = 0;
+	def.ncol = nil;
+	def.ncolsz = 0;
 	def.rules = nil;
 	def.rulessz = 0;
 	def.keys = nil;
@@ -302,7 +304,6 @@ main(int argc, char *argv[])
 	def.font = strdup(BLITZ_FONT);
 	def.border = 2;
 	def.colmode = Coldefault;
-	def.colw = 0;
 	cext_strlcpy(def.selcolor, BLITZ_SELCOLORS, sizeof(def.selcolor));
 	blitz_loadcolor(dpy, &def.sel, screen, def.selcolor);
 	cext_strlcpy(def.normcolor, BLITZ_NORMCOLORS, sizeof(def.normcolor));

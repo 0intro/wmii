@@ -4,6 +4,7 @@
  */
 
 #include <stdio.h>
+#include <regex.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -70,7 +71,7 @@ enum {
 	FsFmode,
 	FsFtags,
 	FsFindex,
-	FsFcolw,
+	FsFncol,
 	FsLast
 };
 
@@ -165,13 +166,20 @@ typedef struct {
 	char grabmod[5];
 	unsigned long mod;
 	int colmode;
-	unsigned int colw;
+	char *ncol;
+	unsigned int ncolsz;
 } Default;
 
 /* global variables */
 VECTOR(ClientVector, Client *);
 VECTOR(KeyVector, Key *);
 VECTOR(BarVector, Bar *);
+
+typedef struct {
+	regex_t regex;
+	char values[256];
+} Rule;
+VECTOR(RuleVector, Rule *);
 
 /* global variables */
 ViewVector view;
@@ -198,6 +206,9 @@ Cursor cursor[CurLast];
 unsigned int valid_mask;
 unsigned int num_lock_mask;
 void (*handler[LASTEvent]) (XEvent *);
+RuleVector crule;
+RuleVector vrule;
+
 
 /* area.c */
 Area *create_area(View *v, unsigned int pos);
@@ -291,7 +302,7 @@ void snap_move(XRectangle *r, XRectangle *rects, unsigned int num,
 		int snapw, int snaph);
 
 /* rule.c */
-void update_rules();
+void update_rules(RuleVector *rule, const char *data);
 void apply_rules(Client *c);
 void apply_tags(Client *c, const char *tags);
 
