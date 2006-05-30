@@ -38,7 +38,7 @@ update_rules(RuleVector *rule, const char *data)
 		free(rul);
 	}
 
-	for(p = def.rules; *p; p++)
+	for(p = (char *)data; *p; p++)
 		switch(mode) {
 		case IGNORE:
 			if(*p == '/') {

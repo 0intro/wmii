@@ -235,9 +235,29 @@ place_client(Area *a, Client *c)
 		free(rects);
 }
 
+static unsigned int
+ncol_of_view(View *v)
+{
+	unsigned int i, n;
+	regmatch_t tmpregm;
+
+	for(i = 0; i < vrule.size; i++) {
+		Rule *r = vrule.data[i];
+		if(!regexec(&r->regex, v->name, 1, &tmpregm, 0)) {
+			if(sscanf(r->values, "%u", &n) == 1) {
+				fprintf(stderr, "r->values=%s n=%d\n", r->values, n);
+				return n;
+			}
+			fprintf(stderr, "r->values=%s n=%d\n", r->values, n);
+		}
+	}
+	return 0;
+}
+
 void
 attach_to_area(Area *a, Client *c)
 {
+	View *v = a->view;
 	unsigned int h = 0, aidx = idx_of_area(a);
 	Frame *f;
 
@@ -246,6 +266,13 @@ attach_to_area(Area *a, Client *c)
 		h = a->rect.height / (a->frame.size + 1);
 		if(a->frame.size)
 			scale_column(a, a->rect.height - h);
+	}
+
+	if(aidx) { /* column */
+		unsigned int nc = ncol_of_view(v);
+		fprintf(stderr, "nc=%d v->area.size=%d\n", nc, v->area.size);
+		if(nc && nc > v->area.size - 1)
+			a = create_area(v, v->sel);
 	}
 
 	f = create_frame(a, c);
