@@ -55,7 +55,7 @@ PROGS_FILE=`mktemp /tmp/.wmiimenu.proglist.XXXXXX` || exit 2
 proglist `echo "$PATH" | tr : ' '` >$PROGS_FILE &
 
 # SHORTCUTS
-xwrite /def/grabmod $MODKEY
+xwrite /def/grabmod Mod1
 wmiir write /def/keys <<EOF
 $MODKEY-$LEFT
 $MODKEY-$RIGHT
