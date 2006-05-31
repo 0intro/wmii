@@ -879,7 +879,7 @@ match_tags(Client *c, const char *prop)
 void
 apply_rules(Client *c)
 {
-	if(!def.colrules)
+	if(!def.tagrules)
 		goto Fallback;
 
 	match_tags(c, c->props);

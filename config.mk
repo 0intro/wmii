@@ -8,7 +8,7 @@ MANPREFIX = ${PREFIX}/share/man
 X11INC = /usr/X11R6/include
 X11LIB = /usr/X11R6/lib
 
-VERSION = 4-current
+VERSION = 20060531
 
 # includes and libs
 LIBS = -L${PREFIX}/lib -L/usr/lib -lc -L${X11LIB} -lX11
