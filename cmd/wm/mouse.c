@@ -148,7 +148,7 @@ draw_xor_border(XRectangle *r)
 void
 do_mouse_resize(Client *c, BlitzAlign align)
 {
-	int px, py, ox, oy, i, di;
+	int px, py, ox, oy;
 	Window dummy;
 	XEvent ev;
 	unsigned int num = 0;
