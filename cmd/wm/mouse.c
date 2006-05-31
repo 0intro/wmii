@@ -127,7 +127,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	int px = 0, py = 0, i, ox, oy;
 	Window dummy;
 	XEvent ev;
-	unsigned int num = 0;
+	unsigned int num = 0, di;
 	Frame *f = c->frame.data[c->sel];
 	int aidx = idx_of_area(f->area);
 	int snap = aidx ? 0 : rect.height / 66;
@@ -136,7 +136,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	XRectangle origin = frect;
 	XPoint pt;
 
-	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &ox, &oy, &i, &i, &i);
+	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &ox, &oy, &i, &i, &di);
 	pt.x = ox; pt.y = oy;
 	XSync(dpy, False);
 

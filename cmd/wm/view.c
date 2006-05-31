@@ -387,3 +387,23 @@ update_views()
 	else
 		update_view_bars();
 }
+
+unsigned int
+ncol_of_view(View *v)
+{
+	unsigned int i, n;
+	regmatch_t tmpregm;
+
+	for(i = 0; i < vrule.size; i++) {
+		Rule *r = vrule.data[i];
+		if(!regexec(&r->regex, v->name, 1, &tmpregm, 0)) {
+			if(sscanf(r->value, "%u", &n) == 1) {
+				fprintf(stderr, "r->value=%s n=%d\n", r->value, n);
+				return n;
+			}
+			fprintf(stderr, "r->value=%s n=%d\n", r->value, n);
+		}
+	}
+	return 0;
+}
+

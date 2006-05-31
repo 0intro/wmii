@@ -13,7 +13,7 @@
 enum {
 	IGNORE,
 	REGEX,
-	TAGS
+	VALUE
 };
 
 static Vector *
@@ -26,7 +26,7 @@ void
 update_rules(RuleVector *rule, const char *data)
 {
 	int mode = IGNORE;
-	char *p, *r = nil, *v = nil, regex[256], values[256];
+	char *p, *r = nil, *v = nil, regex[256], value[256];
 
 	if(!data || !strlen(data))
 		return;
@@ -46,9 +46,9 @@ update_rules(RuleVector *rule, const char *data)
 				r = regex;
 			}
 			else if(*p == '>') {
-				mode = TAGS;
-				values[0] = 0;
-				v = values;
+				mode = VALUE;
+				value[0] = 0;
+				v = value;
 			}
 			break;
 		case REGEX:
@@ -61,13 +61,13 @@ update_rules(RuleVector *rule, const char *data)
 				r++;
 			}
 			break;
-		case TAGS:
-			if(*p == '\n' || *(p + 1) == 0) {
+		case VALUE:
+			if(*p == '\n' || *p == 0) {
 				Rule *rul = cext_emallocz(sizeof(Rule));
 				*v = 0;
-				cext_trim(values, " \t/");
+				cext_trim(value, " \t/");
 				if(!regcomp(&rul->regex, regex, 0)) {
-					cext_strlcpy(rul->values, values, sizeof(rul->values));
+					cext_strlcpy(rul->value, value, sizeof(rul->value));
 					cext_vattach(vector_of_rules(rule), rul);
 				}
 				else

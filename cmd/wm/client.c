@@ -872,7 +872,7 @@ match_tags(Client *c, const char *prop)
 		Rule *r = crule.data[i];
 		if(!regexec(&r->regex, prop, 1, &tmpregm, 0))
 			if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4))
-				apply_tags(c, r->values);
+				apply_tags(c, r->value);
 	}
 }
 

@@ -177,7 +177,7 @@ VECTOR(BarVector, Bar *);
 
 typedef struct {
 	regex_t regex;
-	char values[256];
+	char value[256];
 } Rule;
 VECTOR(RuleVector, Rule *);
 
@@ -322,6 +322,7 @@ void restack_view(View *v);
 View *view_of_name(const char *name);
 void destroy_view(View *v);
 void update_views();
+unsigned int ncol_of_view(View *v);
 
 /* wm.c */
 void scan_wins();
