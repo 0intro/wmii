@@ -148,11 +148,11 @@ draw_xor_border(XRectangle *r)
 void
 do_mouse_resize(Client *c, BlitzAlign align)
 {
-	int px, py, ox, oy, i, di;
+	int px, py, ox, oy, i;
 	float rx, ry;
 	Window dummy;
 	XEvent ev;
-	unsigned int num = 0;
+	unsigned int num = 0, di;
 	Frame *f = c->frame.data[c->sel];
 	int aidx = idx_of_area(f->area);
 	int snap = aidx ? 0 : rect.height / 66;

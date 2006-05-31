@@ -38,10 +38,10 @@ enum { WMII_IOUNIT = 2048 };
  * /def/font		FsFfont		xlib font name
  * /def/selcolors	FsFselcolors	selected colors
  * /def/normcolors	FsFnormcolors	normal colors
- * /def/rules		FsFrules	rules
+ * /def/tagrules	FsFtagrules	tagging rules
  * /def/keys		FsFkeys		keys
  * /def/grabmod		FsFgrabmod	grab modifier
- * /def/ncol	FsFncol		column number
+ * /def/colrules	FsFcolrules	column rules
  * /bar/		FsDbars
  * /bar/lab/		FsDbar
  * /bar/lab/data	FsFdata		<arbitrary data which gets displayed>
@@ -199,9 +199,9 @@ name_of_qid(Qid wqid[IXP_MAX_WELEM], unsigned short qsel)
 		case FsFselcolors: return "selcolors"; break;
 		case FsFnormcolors: return "normcolors"; break;
 		case FsFfont: return "font"; break;
-		case FsFncol: return "ncol"; break;
+		case FsFcolrules: return "colrules"; break;
 		case FsFgrabmod: return "grabmod"; break;
-		case FsFrules: return "rules"; break;
+		case FsFtagrules: return "tagrules"; break;
 		case FsFkeys: return "keys"; break;
 		case FsFcolors: return "colors"; break;
 		case FsFdata:
@@ -302,14 +302,14 @@ type_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 		return FsFnormcolors;
 	if(!strncmp(name, "font", 5))
 		return FsFfont;
-	if(!strncmp(name, "ncol", 5))
-		return FsFncol;
+	if(!strncmp(name, "colrules", 9))
+		return FsFcolrules;
 	if(!strncmp(name, "grabmod", 8))
 		return FsFgrabmod;
 	if(!strncmp(name, "keys", 5))
 		return FsFkeys;
-	if(!strncmp(name, "rules", 6))
-		return FsFrules;
+	if(!strncmp(name, "tagrules", 9))
+		return FsFtagrules;
 	if(!strncmp(name, "data", 5))
 		return FsFdata;
 	if(!strncmp(name, "mode", 5))
@@ -457,8 +457,8 @@ qid_of_name(Qid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 	case FsFborder:
 	case FsFgrabmod:
 	case FsFfont:
-	case FsFncol:
-	case FsFrules:
+	case FsFcolrules:
+	case FsFtagrules:
 	case FsFselcolors:
 	case FsFnormcolors:
 	case FsFkeys:
@@ -611,11 +611,11 @@ stat_of_name(Stat *stat, char *name, Qid wqid[IXP_MAX_WELEM], unsigned short qse
 	case FsFkeys:
 		return pack_stat(stat, wqid, qsel, name, def.keys ? strlen(def.keys) : 0, IXP_DMREAD | IXP_DMWRITE);
 		break;
-	case FsFrules:
-		return pack_stat(stat, wqid, qsel, name, def.rules ? strlen(def.rules) : 0, IXP_DMREAD | IXP_DMWRITE);
+	case FsFtagrules:
+		return pack_stat(stat, wqid, qsel, name, def.tagrules ? strlen(def.tagrules) : 0, IXP_DMREAD | IXP_DMWRITE);
 		break;
-	case FsFncol:
-		return pack_stat(stat, wqid, qsel, name, def.ncol ? strlen(def.ncol) : 0, IXP_DMREAD | IXP_DMWRITE);
+	case FsFcolrules:
+		return pack_stat(stat, wqid, qsel, name, def.colrules ? strlen(def.colrules) : 0, IXP_DMREAD | IXP_DMWRITE);
 	case FsFfont:
 		return pack_stat(stat, wqid, qsel, name, strlen(def.font), IXP_DMREAD | IXP_DMWRITE);
 	case FsFgrabmod:
@@ -940,33 +940,33 @@ xread(IXPConn *c, Fcall *fcall)
 			else if(fcall->count)
 				memcpy(p, def.keys + fcall->offset, fcall->count);
 			break;
-		case FsFrules:
-			len = def.rules ? strlen(def.rules) : 0;
+		case FsFtagrules:
+			len = def.tagrules ? strlen(def.tagrules) : 0;
 			if(len <= fcall->offset) {
 				fcall->count = 0;
 				break;
 			}
 			fcall->count = len - fcall->offset;
 			if(fcall->count > fcall->iounit) {
-				memcpy(p, def.rules + fcall->offset, fcall->iounit);
+				memcpy(p, def.tagrules + fcall->offset, fcall->iounit);
 				fcall->count = fcall->iounit;
 			}
 			else if(fcall->count)
-				memcpy(p, def.rules + fcall->offset, fcall->count);
+				memcpy(p, def.tagrules + fcall->offset, fcall->count);
 			break;
-		case FsFncol:
-			len = def.ncol ? strlen(def.ncol) : 0;
+		case FsFcolrules:
+			len = def.colrules ? strlen(def.colrules) : 0;
 			if(len <= fcall->offset) {
 				fcall->count = 0;
 				break;
 			}
 			fcall->count = len - fcall->offset;
 			if(fcall->count > fcall->iounit) {
-				memcpy(p, def.ncol + fcall->offset, fcall->iounit);
+				memcpy(p, def.colrules + fcall->offset, fcall->iounit);
 				fcall->count = fcall->iounit;
 			}
 			else if(fcall->count)
-				memcpy(p, def.ncol + fcall->offset, fcall->count);
+				memcpy(p, def.colrules + fcall->offset, fcall->count);
 			break;
 		default:
 			break;
@@ -1043,11 +1043,11 @@ xread(IXPConn *c, Fcall *fcall)
 			p = ixp_pack_stat(p, &stat);
 			fcall->count += stat_of_name(&stat, "keys", m->wqid, m->sel);
 			p = ixp_pack_stat(p, &stat);
-			fcall->count += stat_of_name(&stat, "rules", m->wqid, m->sel);
+			fcall->count += stat_of_name(&stat, "tagrules", m->wqid, m->sel);
 			p = ixp_pack_stat(p, &stat);
 			fcall->count += stat_of_name(&stat, "grabmod", m->wqid, m->sel);
 			p = ixp_pack_stat(p, &stat);
-			fcall->count += stat_of_name(&stat, "ncol", m->wqid, m->sel);
+			fcall->count += stat_of_name(&stat, "colrules", m->wqid, m->sel);
 			p = ixp_pack_stat(p, &stat);
 			break;
 		case FsDview:
@@ -1217,27 +1217,27 @@ xread(IXPConn *c, Fcall *fcall)
 			else if(fcall->count)
 				memcpy(p, def.keys, fcall->count);
 			break;
-		case FsFrules:
-			fcall->count = def.rules ? strlen(def.rules) : 0;
+		case FsFtagrules:
+			fcall->count = def.tagrules ? strlen(def.tagrules) : 0;
 			if(fcall->count > fcall->iounit) {
-				memcpy(p, def.rules, fcall->iounit);
+				memcpy(p, def.tagrules, fcall->iounit);
 				fcall->count = fcall->iounit;
 			}
 			else if(fcall->count)
-				memcpy(p, def.rules, fcall->count);
+				memcpy(p, def.tagrules, fcall->count);
 			break;
 		case FsFgrabmod:
 			if((fcall->count = strlen(def.grabmod)))
 				memcpy(p, def.grabmod, fcall->count);
 			break;
-		case FsFncol:
-			fcall->count = def.ncol ? strlen(def.ncol) : 0;
+		case FsFcolrules:
+			fcall->count = def.colrules ? strlen(def.colrules) : 0;
 			if(fcall->count > fcall->iounit) {
-				memcpy(p, def.ncol, fcall->iounit);
+				memcpy(p, def.colrules, fcall->iounit);
 				fcall->count = fcall->iounit;
 			}
 			else if(fcall->count)
-				memcpy(p, def.ncol, fcall->count);
+				memcpy(p, def.colrules, fcall->count);
 			break;
 		case FsFfont:
 			if((fcall->count = strlen(def.font)))
@@ -1427,33 +1427,33 @@ xwrite(IXPConn *c, Fcall *fcall)
 		memcpy(def.keys + fcall->offset, fcall->data, fcall->count);
 		def.keys[fcall->offset + fcall->count] = 0;
 		break;
-	case FsFrules:
-		if(def.rulessz < fcall->offset + fcall->count + 1) {
-			def.rulessz = fcall->offset + fcall->count + 1;
-			tmp = cext_emallocz(def.rulessz);
-			len = def.rules ? strlen(def.rules) : 0;
+	case FsFtagrules:
+		if(def.tagrulessz < fcall->offset + fcall->count + 1) {
+			def.tagrulessz = fcall->offset + fcall->count + 1;
+			tmp = cext_emallocz(def.tagrulessz);
+			len = def.tagrules ? strlen(def.tagrules) : 0;
 			if(len) {
-				memcpy(tmp, def.rules, len);
-				free(def.rules);
+				memcpy(tmp, def.tagrules, len);
+				free(def.tagrules);
 			}
-			def.rules = tmp;
+			def.tagrules = tmp;
 		}
-		memcpy(def.rules + fcall->offset, fcall->data, fcall->count);
-		def.rules[fcall->offset + fcall->count] = 0;
+		memcpy(def.tagrules + fcall->offset, fcall->data, fcall->count);
+		def.tagrules[fcall->offset + fcall->count] = 0;
 		break;
-	case FsFncol:
-		if(def.ncolsz < fcall->offset + fcall->count + 1) {
-			def.ncolsz = fcall->offset + fcall->count + 1;
-			tmp = cext_emallocz(def.ncolsz);
-			len = def.ncol ? strlen(def.ncol) : 0;
+	case FsFcolrules:
+		if(def.colrulessz < fcall->offset + fcall->count + 1) {
+			def.colrulessz = fcall->offset + fcall->count + 1;
+			tmp = cext_emallocz(def.colrulessz);
+			len = def.colrules ? strlen(def.colrules) : 0;
 			if(len) {
-				memcpy(tmp, def.ncol, len);
-				free(def.ncol);
+				memcpy(tmp, def.colrules, len);
+				free(def.colrules);
 			}
-			def.ncol = tmp;
+			def.colrules = tmp;
 		}
-		memcpy(def.ncol + fcall->offset, fcall->data, fcall->count);
-		def.ncol[fcall->offset + fcall->count] = 0;
+		memcpy(def.colrules + fcall->offset, fcall->data, fcall->count);
+		def.colrules[fcall->offset + fcall->count] = 0;
 		break;
 	case FsFgeom:
 		if(fcall->count >= sizeof(buf))
@@ -1543,15 +1543,15 @@ xclunk(IXPConn *c, Fcall *fcall)
 	type = unpack_type(m->wqid[m->sel].path);
 	if(type == FsFkeys)
 		update_keys();
-	else if(type == FsFrules) {
+	else if(type == FsFtagrules) {
 		unsigned int i;
-		update_rules(&crule, def.rules);
+		update_rules(&trule, def.tagrules);
 		for(i = 0; i < client.size; i++)
 			apply_rules(client.data[i]);
 		update_views();
 	}
-	else if(type == FsFncol) {
-		update_rules(&vrule, def.ncol);
+	else if(type == FsFcolrules) {
+		update_rules(&vrule, def.colrules);
 	}
 	cext_vdetach(ixp_vector_of_maps(&c->map), m);
 	free(m);

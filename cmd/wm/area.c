@@ -251,7 +251,7 @@ attach_to_area(Area *a, Client *c, Bool send)
 	}
 
 	if(!send && aidx) { /* column */
-		unsigned int w = ncol_of_view(v);
+		unsigned int w = newcolw_of_view(v);
 		if(v->area.data[1]->frame.size && w) {
 			a = new_column(v, v->area.size, w);
 			arrange_view(v);

@@ -295,10 +295,10 @@ main(int argc, char *argv[])
 	key.size = 0;
 	bar.data = nil;
 	bar.size = 0;
-	def.ncol = nil;
-	def.ncolsz = 0;
-	def.rules = nil;
-	def.rulessz = 0;
+	def.colrules = nil;
+	def.colrulessz = 0;
+	def.tagrules = nil;
+	def.tagrulessz = 0;
 	def.keys = nil;
 	def.keyssz = 0;
 	def.font = strdup(BLITZ_FONT);

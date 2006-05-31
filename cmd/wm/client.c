@@ -868,8 +868,8 @@ match_tags(Client *c, const char *prop)
 	unsigned int i;
 	regmatch_t tmpregm;
 
-	for(i = 0; i < crule.size; i++) {
-		Rule *r = crule.data[i];
+	for(i = 0; i < trule.size; i++) {
+		Rule *r = trule.data[i];
 		if(!regexec(&r->regex, prop, 1, &tmpregm, 0))
 			if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4))
 				apply_tags(c, r->value);
@@ -879,7 +879,7 @@ match_tags(Client *c, const char *prop)
 void
 apply_rules(Client *c)
 {
-	if(!def.rules)
+	if(!def.colrules)
 		goto Fallback;
 
 	match_tags(c, c->props);

@@ -66,12 +66,12 @@ enum {
 	FsFevent,
 	FsFctl,
 	FsFname,
-	FsFrules,
+	FsFtagrules,
+	FsFcolrules,
 	FsFprops,
 	FsFmode,
 	FsFtags,
 	FsFindex,
-	FsFncol,
 	FsLast
 };
 
@@ -161,13 +161,13 @@ typedef struct {
 	unsigned int snap;
 	char *keys;
 	unsigned int keyssz;
-	char *rules;
-	unsigned int rulessz;
+	char *tagrules;
+	unsigned int tagrulessz;
+	char *colrules;
+	unsigned int colrulessz;
 	char grabmod[5];
 	unsigned long mod;
 	int colmode;
-	char *ncol;
-	unsigned int ncolsz;
 } Default;
 
 /* global variables */
@@ -206,7 +206,7 @@ Cursor cursor[CurLast];
 unsigned int valid_mask;
 unsigned int num_lock_mask;
 void (*handler[LASTEvent]) (XEvent *);
-RuleVector crule;
+RuleVector trule;
 RuleVector vrule;
 
 
@@ -321,7 +321,7 @@ void restack_view(View *v);
 View *view_of_name(const char *name);
 void destroy_view(View *v);
 void update_views();
-unsigned int ncol_of_view(View *v);
+unsigned int newcolw_of_view(View *v);
 
 /* wm.c */
 void scan_wins();

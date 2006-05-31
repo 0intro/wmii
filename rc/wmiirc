@@ -36,12 +36,14 @@ xwrite /def/border 2
 xwrite /def/font $WMII_FONT
 xwrite /def/selcolors $WMII_SELCOLORS
 xwrite /def/normcolors $WMII_NORMCOLORS
-wmiir write /def/ncol <<EOF
+
+# COLUMN RULES
+wmiir write /def/colrules <<EOF
 /1/ -> 60+40
 EOF
 
 # TAGGING RULES
-wmiir write /def/rules <<EOF
+wmiir write /def/tagrules <<EOF
 /XMMS.*/ -> ~
 /Gimp.*/ -> ~
 /MPlayer.*/ -> ~

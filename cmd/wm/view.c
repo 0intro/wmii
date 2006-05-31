@@ -390,7 +390,7 @@ update_views()
 }
 
 unsigned int
-ncol_of_view(View *v)
+newcolw_of_view(View *v)
 {
 	unsigned int i, n;
 	regmatch_t tmpregm;
