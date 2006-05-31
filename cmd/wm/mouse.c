@@ -14,87 +14,86 @@
 #define MouseMask       (ButtonMask | PointerMotionMask)
 
 static void
-snap_line(XRectangle *rects, int num, int x1, int y1, int x2, int y2,
-          int snapw, BlitzAlign mask, int *delta);
+rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign mask)
+{
+	if(mask & NORTH) {
+		rect->y += dy;
+		rect->height -= dy;
+	}
+	if(mask & WEST) {
+		rect->x += dx;
+		rect->width -= dx;
+	}
+	if(mask & EAST)
+		rect->width += dx;
+	if(mask & SOUTH)
+		rect->height += dy;
+}
 
 static void
-rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign mask) {
-    if(mask & NORTH) {
-        rect->y += dy;
-        rect->height -= dy;
-    }
-    if(mask & WEST) {
-        rect->x += dx;
-        rect->width -= dx;
-    }
-    if(mask & EAST)
-        rect->width += dx;
-    if(mask & SOUTH)
-        rect->height += dy;
+snap_line(XRectangle *rects, int num, int x1, int y1, int x2, int y2,
+		int snapw, BlitzAlign mask, int *delta)
+{
+	int i, t_xy;
+
+	/* horizontal */
+	if(y1 == y2 && (mask & (NORTH|SOUTH))) {
+		for(i=0; i < num; i++) {
+			if(!((rects[i].x + rects[i].width < x1) ||
+						(rects[i].x > x2))) {
+
+				if(abs(rects[i].y - y1) <= abs(*delta))
+					*delta = rects[i].y - y1;
+
+				t_xy = rects[i].y + rects[i].height;
+				if(abs(t_xy - y1) < abs(*delta))
+					*delta = t_xy - y1;
+			}
+		}
+	}
+	else if (mask & (EAST|WEST)) {
+		/* This is the same as above, tr/xy/yx/, 
+		 *                            s/width/height/, s/height/width/ */
+		for(i=0; i < num; i++) {
+			if(!((rects[i].y + rects[i].height < y1) ||
+						(rects[i].y > y2))) {
+
+				if(abs(rects[i].x - x1) <= abs(*delta))
+					*delta = rects[i].x - x1;
+
+				t_xy = rects[i].x + rects[i].width;
+				if(abs(t_xy - x1) < abs(*delta))
+					*delta = t_xy - x1;
+			}
+		}
+	}
 }
 
 void
 snap_rect(XRectangle *rects, int num, XRectangle *current,
-          BlitzAlign mask, int snap) {
-    int dx = snap + 1, dy = snap + 1;
+          BlitzAlign mask, int snap)
+{
+	int dx = snap + 1, dy = snap + 1;
 
-    if(mask & NORTH)
-        snap_line(rects, num, current->x, current->y,
-                  current->x + current->width, current->y,
-                  snap, mask, &dy);
-    if(mask & EAST)
-        snap_line(rects, num, current->x + current->width, current->y,
-                  current->x + current->width, current->y + current->height,
-                  snap, mask, &dx);
-    if(mask & SOUTH)
-        snap_line(rects, num, current->x, current->y + current->height,
-                  current->x + current->width, current->y + current->height,
-                  snap, mask, &dy);
-    if(mask & WEST)
-        snap_line(rects, num, current->x, current->y,
-                  current->x, current->y + current->height,
-                  snap, mask, &dx);
+	if(mask & NORTH)
+		snap_line(rects, num, current->x, current->y,
+				current->x + current->width, current->y,
+				snap, mask, &dy);
+	if(mask & EAST)
+		snap_line(rects, num, current->x + current->width, current->y,
+				current->x + current->width, current->y + current->height,
+				snap, mask, &dx);
+	if(mask & SOUTH)
+		snap_line(rects, num, current->x, current->y + current->height,
+				current->x + current->width, current->y + current->height,
+				snap, mask, &dy);
+	if(mask & WEST)
+		snap_line(rects, num, current->x, current->y,
+				current->x, current->y + current->height,
+				snap, mask, &dx);
 
-    rect_morph_xy(current, abs(dx) <= snap ? dx : 0,
-                           abs(dy) <= snap ? dy : 0, mask);
-}
-
-static void
-snap_line(XRectangle *rects, int num, int x1, int y1, int x2, int y2,
-          int snapw, BlitzAlign mask, int *delta) {
-    int i, t_xy;
-
-    /* horizontal */
-    if(y1 == y2 && (mask & (NORTH|SOUTH))) {
-        for(i=0; i < num; i++) {
-            if(!((rects[i].x + rects[i].width < x1) ||
-                 (rects[i].x > x2))) {
-
-                if(abs(rects[i].y - y1) <= abs(*delta))
-                    *delta = rects[i].y - y1;
-
-                t_xy = rects[i].y + rects[i].height;
-                if(abs(t_xy - y1) < abs(*delta))
-                    *delta = t_xy - y1;
-            }
-        }
-    }
-    else if (mask & (EAST|WEST)) {
-        /* This is the same as above, tr/xy/yx/, 
-         *                            s/width/height/, s/height/width/ */
-        for(i=0; i < num; i++) {
-            if(!((rects[i].y + rects[i].height < y1) ||
-                 (rects[i].y > y2))) {
-
-                if(abs(rects[i].x - x1) <= abs(*delta))
-                    *delta = rects[i].x - x1;
-
-                t_xy = rects[i].x + rects[i].width;
-                if(abs(t_xy - x1) < abs(*delta))
-                    *delta = t_xy - x1;
-            }
-        }
-    }
+	rect_morph_xy(current, abs(dx) <= snap ? dx : 0,
+			abs(dy) <= snap ? dy : 0, mask);
 }
 
 static void
