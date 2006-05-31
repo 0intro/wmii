@@ -16,7 +16,7 @@
 static void
 rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask)
 {
-	BlitzAlign new_mask;
+	BlitzAlign new_mask = 0;
 	if(*mask & NORTH) {
 		if(rect->height - dy >= 0 || *mask & SOUTH) {
 			rect->y += dy;
@@ -148,7 +148,7 @@ draw_xor_border(XRectangle *r)
 void
 do_mouse_resize(Client *c, BlitzAlign align)
 {
-	int px, py, ox, oy;
+	int px, py, ox, oy, i, di;
 	Window dummy;
 	XEvent ev;
 	unsigned int num = 0;
@@ -167,9 +167,9 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	if(align&SOUTH)
 		oy += py;
 	if(align&EAST)
-		ox += oy;
+		ox += py;
 	if(align&WEST)
-		ox -= oy;
+		ox -= py;
 
 	XWarpPointer(dpy, None, c->framewin, 0, 0, 0, 0, ox, oy);
 	XTranslateCoordinates(dpy, c->framewin, root, ox, oy, &ox, &oy, &dummy);
