@@ -1,7 +1,7 @@
 # Customize to fit your system
 
 # paths
-PREFIX = /usr/local
+PREFIX = /usr/home/kris/wmii-dev/inst/
 CONFPREFIX = ${PREFIX}/etc
 MANPREFIX = ${PREFIX}/share/man
 

@@ -149,6 +149,7 @@ void
 do_mouse_resize(Client *c, BlitzAlign align)
 {
 	int px, py, ox, oy, i, di;
+	float rx, ry;
 	Window dummy;
 	XEvent ev;
 	unsigned int num = 0;
@@ -159,6 +160,10 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	XRectangle frect = f->rect;
 	XRectangle origin = frect;
 	XPoint pt;
+
+	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &di);
+	rx = (float)ox / frect.width;
+	ry = (float)oy / frect.height;
 
 	if (!aidx || align != CENTER) {
 		px = ox = frect.width / 2;
@@ -173,14 +178,12 @@ do_mouse_resize(Client *c, BlitzAlign align)
 			ox -= px;
 
 		XWarpPointer(dpy, None, c->framewin, 0, 0, 0, 0, ox, oy);
-		XTranslateCoordinates(dpy, c->framewin, root, ox, oy, &ox, &oy, &dummy);
 	}
-	else
-		XQueryPointer(dpy, c->framewin, &dummy, &dummy, &ox, &oy, &i, &i, &di);
 
+	XTranslateCoordinates(dpy, c->framewin, root, ox, oy, &ox, &oy, &dummy);
 	pt.x = ox; pt.y = oy;
-	XSync(dpy, False);
 
+	XSync(dpy, False);
 	if(XGrabPointer(dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
 			None, cursor[CurResize], CurrentTime) != GrabSuccess)
 		return;
@@ -201,6 +204,9 @@ do_mouse_resize(Client *c, BlitzAlign align)
 			XUngrabServer(dpy);
 			XUngrabPointer(dpy, CurrentTime);
 			XSync(dpy, False);
+
+			XWarpPointer(dpy, None, c->framewin, 0, 0, 0, 0,
+					frect.width * rx, frect.height * ry);
 			return;
 			break;
 		case MotionNotify:
