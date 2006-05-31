@@ -297,7 +297,6 @@ unsigned long mod_key_of_str(char *val);
 
 /* mouse.c */
 void do_mouse_resize(Client *c,BlitzAlign align);
-void do_mouse_move(Client *c);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 void snap_rect(XRectangle *rects, int num, XRectangle *current,

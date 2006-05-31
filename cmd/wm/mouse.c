@@ -116,12 +116,6 @@ draw_xor_border(XRectangle *r)
 }
 
 void
-do_mouse_move(Client *c)
-{
-	do_mouse_resize(c, CENTER);
-}
-
-void
 do_mouse_resize(Client *c, BlitzAlign align)
 {
 	int px = 0, py = 0, i, ox, oy;

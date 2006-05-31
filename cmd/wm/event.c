@@ -98,13 +98,10 @@ handle_buttonpress(XEvent *e)
 			focus(c, True);
 			switch(ev->button) {
 			case Button1:
-				do_mouse_move(c);
+				do_mouse_resize(c, CENTER);
 				break;
 			case Button3:
-				{
-					BlitzAlign align = blitz_quadofcoord(&c->rect, ev->x, ev->y);
-					do_mouse_resize(c, align);
-				}
+				do_mouse_resize(c, blitz_quadofcoord(&c->rect, ev->x, ev->y));
 			default:
 			break;
 			}
