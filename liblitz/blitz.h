@@ -25,8 +25,15 @@
 */
 
 typedef enum {
-	CENTER, WEST, NWEST, NORTH, NEAST, EAST,
-	SEAST, SOUTH, SWEST
+    NORTH = 0x01,
+    EAST  = 0x02,
+    SOUTH = 0x04,
+    WEST  = 0x08,
+    NEAST = NORTH | EAST,
+    NWEST = NORTH | WEST,
+    SEAST = SOUTH | EAST,
+    SWEST = SOUTH | WEST,
+    CENTER = NEAST | SWEST
 } BlitzAlign;
 
 typedef struct {

@@ -12,150 +12,88 @@
 #define ButtonMask      (ButtonPressMask | ButtonReleaseMask)
 #define MouseMask       (ButtonMask | PointerMotionMask)
 
-static int
-check_vert_match(XRectangle *r, XRectangle *neighbor)
-{
-	/* check if neighbor matches edge */
-	return (((neighbor->y <= r->y) && (neighbor->y + neighbor->height >= r->y))
-			|| ((neighbor->y >= r->y) && (r->y + r->height >= neighbor->y)));
-}
+static void
+snap_line(XRectangle *rects, int num, int x1, int y1, int x2, int y2,
+          int snapw, BlitzAlign mask, int *delta);
 
-static int
-check_horiz_match(XRectangle * r, XRectangle * neighbor)
-{
-	/* check if neighbor matches edge */
-	return (((neighbor->x <= r->x) && (neighbor->x + neighbor->width >= r->x))
-			|| ((neighbor->x >= r->x)
-				&& (r->x + r->width >= neighbor->x)));
+static void
+rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign mask) {
+    if(mask & NORTH) {
+        rect->y += dy;
+        rect->height -= dy;
+    }
+    if(mask & WEST) {
+        rect->x += dx;
+        rect->width -= dx;
+    }
+    if(mask & EAST)
+        rect->width += dx;
+    if(mask & SOUTH)
+        rect->height += dy;
 }
 
 void
-snap_move(XRectangle *r, XRectangle *rects,
-		unsigned int num, int snapw, int snaph)
-{
-	int i, j, w = 0, n = 0, e = 0, s = 0;
+snap_rect(XRectangle *rects, int num, XRectangle *current,
+          BlitzAlign mask, int snap) {
+    int dx = snap + 1, dy = snap + 1;
 
-	/* snap to other windows */
-	for(i = 0; i <= snapw && !(w && e); i++) {
-		for(j = 0; j < num && !(w && e); j++) {
-			/* check west neighbors leftwards */
-			if(!w) {
-				if(r->x - i == (rects[j].x + rects[j].width)) {
-					/* west edge of neighbor found, check vert match */
-					w = check_vert_match(r, &rects[j]);
-					if(w)
-						r->x = rects[j].x + rects[j].width;
-				}
-			}
-			/* check west neighbors rightwards */
-			if(!w) {
-				if(r->x + i == (rects[j].x + rects[j].width)) {
-					/* west edge of neighbor found, check vert match */
-					w = check_vert_match(r, &rects[j]);
-					if(w)
-						r->x = rects[j].x + rects[j].width;
-				}
-			}
-			/* check east neighbors leftwards */
-			if(!e) {
-				if(r->x + r->width - i == rects[j].x) {
-					/* east edge of neighbor found, check vert match */
-					e = check_vert_match(r, &rects[j]);
-					if(e)
-						r->x = rects[j].x - r->width;
-				}
-			}
-			/* check east neighbors rightwards */
-			if(!e) {
-				if(r->x + r->width + i == rects[j].x) {
-					/* east edge of neighbor found, check vert match */
-					e = check_vert_match(r, &rects[j]);
-					if(e)
-						r->x = rects[j].x - r->width;
-				}
-			}
-		}
+    if(mask & NORTH)
+        snap_line(rects, num, current->x, current->y,
+                  current->x + current->width, current->y,
+                  snap, mask, &dy);
+    if(mask & EAST)
+        snap_line(rects, num, current->x + current->width, current->y,
+                  current->x + current->width, current->y + current->height,
+                  snap, mask, &dx);
+    if(mask & SOUTH)
+        snap_line(rects, num, current->x, current->y + current->height,
+                  current->x + current->width, current->y + current->height,
+                  snap, mask, &dy);
+    if(mask & WEST)
+        snap_line(rects, num, current->x, current->y,
+                  current->x, current->y + current->height,
+                  snap, mask, &dx);
 
-		/* snap to west screen border */
-		if(!w && (r->x - i == rect.x)) {
-			w = 1;
-			r->x = rect.x;
-		}
-		/* snap to west screen border */
-		if(!w && (r->x + i == rect.x)) {
-			w = 1;
-			r->x = rect.x;
-		}
-		/* snap to east screen border */
-		if(!e && (r->x + r->width - i == rect.width)) {
-			e = 1;
-			r->x = rect.x + rect.width - r->width;
-		}
-		if(!e && (r->x + r->width + i == rect.width)) {
-			e = 1;
-			r->x = rect.x + rect.width - r->width;
-		}
-	}
+    rect_morph_xy(current, abs(dx) <= snap ? dx : 0,
+                           abs(dy) <= snap ? dy : 0, mask);
+}
 
-	for(i = 0; i <= snaph && !(n && s); i++) {
-		for(j = 0; j < num && !(n && s); j++) {
-			/* check north neighbors upwards */
-			if(!n) {
-				if(r->y - i == (rects[j].y + rects[j].height)) {
-					/* north edge of neighbor found, check horiz match */
-					n = check_horiz_match(r, &rects[j]);
-					if(n)
-						r->y = rects[j].y + rects[j].height;
-				}
-			}
-			/* check north neighbors downwards */
-			if(!n) {
-				if(r->y + i == (rects[j].y + rects[j].height)) {
-					/* north edge of neighbor found, check horiz match */
-					n = check_horiz_match(r, &rects[j]);
-					if(n)
-						r->y = rects[j].y + rects[j].height;
-				}
-			}
-			/* check south neighbors upwards */
-			if(!s) {
-				if(r->y + r->height - i == rects[j].y) {
-					/* south edge of neighbor found, check horiz match */
-					s = check_horiz_match(r, &rects[j]);
-					if(s)
-						r->y = rects[j].y - r->height;
-				}
-			}
-			/* check south neighbors downwards */
-			if(!s) {
-				if(r->y + r->height + i == rects[j].y) {
-					/* south edge of neighbor found, check horiz match */
-					s = check_horiz_match(r, &rects[j]);
-					if(s)
-						r->y = rects[j].y - r->height;
-				}
-			}
-		}
+static void
+snap_line(XRectangle *rects, int num, int x1, int y1, int x2, int y2,
+          int snapw, BlitzAlign mask, int *delta) {
+    int i, t_xy;
 
-		/* snap to north screen border */
-		if(!n && (r->y - i == rect.y)) {
-			n = 1;
-			r->y = rect.y;
-		}
-		if(!n && (r->y + i == rect.y)) {
-			n = 1;
-			r->y = rect.y;
-		}
-		/* snap to south screen border */
-		if(!s && (r->y + r->height - i == rect.height)) {
-			s = 1;
-			r->y = rect.y + rect.height - r->height;
-		}
-		if(!s && (r->y + r->height + i == rect.height)) {
-			s = 1;
-			r->y = rect.y + rect.height - r->height;
-		}
-	}
+    /* horizontal */
+    if(y1 == y2 && (mask & (NORTH|SOUTH))) {
+        for(i=0; i < num; i++) {
+            if(!((rects[i].x + rects[i].width < x1) ||
+                 (rects[i].x > x2))) {
+
+                if(abs(rects[i].y - y1) <= abs(*delta))
+                    *delta = rects[i].y - y1;
+
+                t_xy = rects[i].y + rects[i].height;
+                if(abs(t_xy - y1) < abs(*delta))
+                    *delta = t_xy - y1;
+            }
+        }
+    }
+    else if (mask & (EAST|WEST)) {
+        /* This is the same as above, tr/xy/yx/, 
+         *                            s/width/height/, s/height/width/ */
+        for(i=0; i < num; i++) {
+            if(!((rects[i].y + rects[i].height < y1) ||
+                 (rects[i].y > y2))) {
+
+                if(abs(rects[i].x - x1) <= abs(*delta))
+                    *delta = rects[i].x - x1;
+
+                t_xy = rects[i].x + rects[i].width;
+                if(abs(t_xy - x1) < abs(*delta))
+                    *delta = t_xy - x1;
+            }
+        }
+    }
 }
 
 static void
@@ -180,241 +118,7 @@ draw_xor_border(XRectangle *r)
 void
 do_mouse_move(Client *c)
 {
-	int px = 0, py = 0, wex, wey, ex, ey, i;
-	Window dummy;
-	XEvent ev;
-	unsigned int num = 0;
-	unsigned int dmask;
-	Frame *f = c->frame.data[c->sel];
-	int aidx = idx_of_area(f->area);
-	int snapw = aidx ? 0 : (rect.width * def.snap) / 1000;
-	int snaph = aidx ? 0 : (rect.height * def.snap) / 1000;
-	XRectangle *rects = aidx ? nil : rects_of_view(f->area->view, &num);
-	XRectangle frect = f->rect;
-	XPoint pt;
-
-	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &wex, &wey, &dmask);
-	XTranslateCoordinates(dpy, c->framewin, root, wex, wey, &ex, &ey, &dummy);
-	pt.x = ex;
-	pt.y = ey;
-	XSync(dpy, False);
-
-	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
-					None, cursor[CurMove], CurrentTime) != GrabSuccess)
-		return;
-
-	XGrabServer(dpy);
-	draw_xor_border(&frect);
-	for(;;) {
-		XMaskEvent(dpy, MouseMask | ExposureMask, &ev);
-		switch (ev.type) {
-		case ButtonRelease:
-			draw_xor_border(&frect);
-			if(aidx)
-				resize_column(c, &frect, &pt);
-			else
-				resize_client(c, &frect, False);
-			if(rects)
-				free(rects);
-			XUngrabServer(dpy);
-			XUngrabPointer(dpy, CurrentTime);
-			XSync(dpy, False);
-			return;
-			break;
-		case MotionNotify:
-			draw_xor_border(&frect);
-			pt.x = ev.xmotion.x;
-			pt.y = ev.xmotion.y;
-			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
-					ev.xmotion.y, &px, &py, &dummy);
-			frect.x = px - ex;
-			frect.y = py - ey;
-			if(!aidx)
-				snap_move(&frect, rects, num, snapw, snaph);
-			draw_xor_border(&frect);
-			break;
-		case Expose:
-			(handler[Expose])(&ev);
-			break;
-		default: break;
-		}
-	}
-}
-
-static void
-snap_resize(XRectangle *r, XRectangle *o, BlitzAlign align,
-		XRectangle *rects, unsigned int num, int px, int ox, int py,
-		int oy, int snapw, int snaph)
-{
-	int i, j, pend = 0;
-	int w, h;
-
-	/* x */
-	switch (align) {
-	case NEAST:
-	case SEAST:
-		w = px - r->x + (o->width - ox);
-		if(w < 10)
-			break;
-		r->width = w;
-		if(w <= snapw)
-			break;
-		/* snap to border */
-		for(i = 0; !pend && (i < snapw); i++) {
-			if(r->x + r->width - i == rect.x + rect.width) {
-				r->width -= i;
-				break;
-			}
-			if(r->x + r->width + i == rect.x + rect.width) {
-				r->width += i;
-				break;
-			}
-			for(j = 0; j < num; j++) {
-				if(r->x + r->width - i == rects[j].x) {
-					pend = check_vert_match(r, &rects[j]);
-					if(pend) {
-						r->width -= i;
-						break;
-					}
-				}
-				if(r->x + r->width + i == rects[j].x) {
-					pend = check_vert_match(r, &rects[j]);
-					if(pend) {
-						r->width += i;
-						break;
-					}
-				}
-			}
-		}
-		break;
-	case NWEST:
-	case SWEST:
-		w = r->width + r->x - px + ox;
-		if(w < 10)
-			break;
-		r->width = w;
-		r->x = px - ox;
-		if(w <= snapw)
-			break;
-		/* snap to border */
-		for(i = 0; !pend && (i < snapw); i++) {
-			if(r->x - i == rect.x) {
-				r->x -= i;
-				r->width += i;
-				break;
-			}
-			if(r->x + i == rect.x) {
-				r->x += i;
-				r->width -= i;
-				break;
-			}
-			for(j = 0; j < num; j++) {
-				if(r->x - i == rects[j].x + rects[j].width) {
-					pend = check_vert_match(r, &rects[j]);
-					if(pend) {
-						r->x -= i;
-						r->width += i;
-						break;
-					}
-				}
-				if(r->x + i == rects[j].x + rects[j].width) {
-					pend = check_vert_match(r, &rects[j]);
-					if(pend) {
-						r->x += i;
-						r->width -= i;
-						break;
-					}
-				}
-			}
-		}
-		break;
-	default:
-		break;
-	}
-
-	/* y */
-	pend = 0;
-	switch (align) {
-	case SWEST:
-	case SEAST:
-		h = py - r->y + (o->height - oy);
-		if(h < 10)
-			break;
-		r->height = h;
-		if(h <= snaph)
-			break;
-		/* snap to border */
-		for(i = 0; !pend && (i < snaph); i++) {
-			if(r->y + r->height - i == rect.y + rect.height) {
-				r->height -= i;
-				break;
-			}
-			if(r->y + r->height + i == rect.y + rect.height) {
-				r->height += i;
-				break;
-			}
-			for(j = 0; j < num; j++) {
-				if(r->y + r->height - i == rects[j].y) {
-					pend = check_horiz_match(r, &rects[j]);
-					if(pend) {
-						r->height -= i;
-						break;
-					}
-				}
-				if(r->y + r->height + i == rects[j].y) {
-					pend = check_horiz_match(r, &rects[j]);
-					if(pend) {
-						r->height += i;
-						break;
-					}
-				}
-			}
-		}
-		break;
-	case NWEST:
-	case NEAST:
-		h = r->height + r->y - py + oy;
-		if(h < 10)
-			break;
-		r->height = h;
-		r->y = py - oy;
-		if(h <= snaph)
-			break;
-		/* snap to border */
-		for(i = 0; !pend && (i < snaph); i++) {
-			if(r->y - i == rect.y) {
-				r->y -= i;
-				r->height += i;
-				break;
-			}
-			if(r->y + i == rect.y) {
-				r->y += i;
-				r->height -= i;
-				break;
-			}
-			for(j = 0; j < num; j++) {
-				if(r->y - i == rects[j].y + rects[j].height) {
-					pend = check_horiz_match(r, &rects[j]);
-					if(pend) {
-						r->y -= i;
-						r->height += i;
-						break;
-					}
-				}
-				if(r->y + i == rects[j].y + rects[j].height) {
-					pend = check_horiz_match(r, &rects[j]);
-					if(pend) {
-						r->y += i;
-						r->height -= i;
-						break;
-					}
-				}
-			}
-		}
-		break;
-	default:
-		break;
-	}
+	do_mouse_resize(c, CENTER);
 }
 
 void
@@ -423,23 +127,23 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	int px = 0, py = 0, i, ox, oy;
 	Window dummy;
 	XEvent ev;
-	unsigned int dmask;
 	unsigned int num = 0;
 	Frame *f = c->frame.data[c->sel];
 	int aidx = idx_of_area(f->area);
-	int snapw = aidx ? 0 : (rect.width * def.snap) / 1000;
-	int snaph = aidx ? 0 : (rect.height * def.snap) / 1000;
+	int snap = aidx ? 0 : rect.height / 66;
 	XRectangle *rects = aidx ? nil : rects_of_view(f->area->view, &num);
 	XRectangle frect = f->rect;
 	XRectangle origin = frect;
+	XPoint pt;
 
-	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &dmask);
+	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &ox, &oy, &i, &i, &i);
+	pt.x = ox; pt.y = oy;
 	XSync(dpy, False);
 
 	if(XGrabPointer(dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
-					None, cursor[CurResize], CurrentTime) != GrabSuccess)
+			None, cursor[CurResize], CurrentTime) != GrabSuccess)
 		return;
-
+	
 	XGrabServer(dpy);
 	draw_xor_border(&frect);
 	for(;;) {
@@ -448,7 +152,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 		case ButtonRelease:
 			draw_xor_border(&frect);
 			if(aidx)
-				resize_column(c, &frect, nil);
+				resize_column(c, &frect, (align == CENTER) ? &pt : nil);
 			else
 				resize_client(c, &frect, False);
 			if(rects)
@@ -460,10 +164,19 @@ do_mouse_resize(Client *c, BlitzAlign align)
 			break;
 		case MotionNotify:
 			draw_xor_border(&frect);
+
+			pt.x = ev.xmotion.x;
+			pt.y = ev.xmotion.y;
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
-			snap_resize(&frect, &origin, align, rects, num, px,
-						ox, py, oy, snapw, snaph);
+
+			rect_morph_xy(&origin, px-ox, py-oy, align);
+			frect=origin;
+			ox=px; oy=py;
+
+			if(!aidx)
+				snap_rect(rects, num, &frect, align, snap);
+
 			draw_xor_border(&frect);
 			break;
 		case Expose:

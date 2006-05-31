@@ -300,8 +300,8 @@ void do_mouse_resize(Client *c,BlitzAlign align);
 void do_mouse_move(Client *c);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
-void snap_move(XRectangle *r, XRectangle *rects, unsigned int num,
-		int snapw, int snaph);
+void snap_rect(XRectangle *rects, int num, XRectangle *current,
+               BlitzAlign mask, int snap);
 
 /* rule.c */
 void update_rules(RuleVector *rule, const char *data);
