@@ -114,13 +114,14 @@ rects_of_view(View *v, unsigned int *num)
 	XRectangle *result = nil;
 	unsigned int i;
 
-	*num = v->area.data[0]->frame.size + 1;
+	*num = v->area.data[0]->frame.size + 2;
 
 	if(*num) {
 		result = cext_emallocz(*num * sizeof(XRectangle));
 		for(i = 0; i < v->area.data[0]->frame.size; i++)
 			result[i] = v->area.data[0]->frame.data[i]->rect;
-		result[*num - 1] = brect;
+		result[*num - 1] = rect;
+		result[*num - 2] = brect;
 	}
 	return result;
 }
