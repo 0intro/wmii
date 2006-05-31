@@ -15,16 +15,17 @@ vector_of_areas(AreaVector *av)
 }
 
 Area *
-create_area(View *v, unsigned int pos)
+create_area(View *v, unsigned int pos, unsigned int w)
 {
 	static unsigned short id = 1;
-	unsigned int w;
 	Area *a = nil;
 
-	if(v->area.size > 1)
-		w = rect.width / v->area.size - 1;
-	else
-		w = rect.width;
+	if(!w) {
+		if(v->area.size > 1)
+			w = rect.width / v->area.size - 1;
+		else
+			w = rect.width;
+	}
 	if(w < MIN_COLWIDTH)
 		w = MIN_COLWIDTH;
 
@@ -250,9 +251,9 @@ attach_to_area(Area *a, Client *c, Bool send)
 	}
 
 	if(!send && aidx) { /* column */
-		unsigned int nc = ncol_of_view(v);
-		if(v->area.data[1]->frame.size && nc && nc > v->area.size - 1) {
-			a = new_column(v, v->sel + 1);
+		unsigned int w = ncol_of_view(v);
+		if(v->area.data[1]->frame.size && w) {
+			a = new_column(v, v->area.size, w);
 			arrange_view(v);
 		}
 	}

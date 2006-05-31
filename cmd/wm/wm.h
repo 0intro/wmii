@@ -211,7 +211,7 @@ RuleVector vrule;
 
 
 /* area.c */
-Area *create_area(View *v, unsigned int pos);
+Area *create_area(View *v, unsigned int pos, unsigned int w);
 void destroy_area(Area *a);
 int idx_of_area(Area *a);
 int idx_of_area_id(View *t, unsigned short id);
@@ -268,7 +268,7 @@ void scale_column(Area *a, float h);
 void resize_column(Client *c, XRectangle *r, XPoint *pt);
 int column_mode_of_str(char *arg);
 char *str_of_column_mode(int mode);
-Area *new_column(View *v, unsigned int pos);
+Area *new_column(View *v, unsigned int pos, unsigned int w);
 
 /* event.c */
 void init_x_event_handler();

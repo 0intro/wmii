@@ -637,11 +637,11 @@ newcol_client(Client *c, char *arg)
 		return;
 
 	if(!strncmp(arg, "prev", 5)) {
-		to = new_column(v, i);
+		to = new_column(v, i, 0);
 		send_to_area(to, a, c);
 	}
 	else if(!strncmp(arg, "next", 5)) {
-		to = new_column(v, i + 1);
+		to = new_column(v, i + 1, 0);
 		send_to_area(to, a, c);
 	}
 	else
@@ -698,7 +698,7 @@ send_client(Client *c, char *arg)
 		if(i > 1)
 			to = v->area.data[i - 1];
 		else if(a->frame.size > 1)
-			to = new_column(v, 1);
+			to = new_column(v, 1, 0);
 		else
 			return;
 		send_to_area(to, a, c);
@@ -707,7 +707,7 @@ send_client(Client *c, char *arg)
 		if(i < v->area.size - 1)
 			to = v->area.data[i + 1];
 		else if(a->frame.size > 1)
-			to = new_column(v, v->area.size);
+			to = new_column(v, v->area.size, 0);
 		else
 			return;
 		send_to_area(to, a, c);

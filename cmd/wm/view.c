@@ -30,8 +30,8 @@ create_view(const char *name)
 
 	v->id = id++;
 	cext_strlcpy(v->name, name, sizeof(v->name));
-	create_area(v, v->area.size);
-	create_area(v, v->area.size);
+	create_area(v, v->area.size, 0);
+	create_area(v, v->area.size, 0);
 	cext_vattach(vector_of_views(&view), v);
 	qsort(view.data, view.size, sizeof(View *), comp_view_name);
 	return v;
@@ -398,13 +398,16 @@ ncol_of_view(View *v)
 	for(i = 0; i < vrule.size; i++) {
 		Rule *r = vrule.data[i];
 		if(!regexec(&r->regex, v->name, 1, &tmpregm, 0)) {
-			if(sscanf(r->value, "%u", &n) == 1) {
-				fprintf(stderr, "r->value=%s n=%d\n", r->value, n);
-				return n;
+			char buf[256];
+			char *toks[16];
+			cext_strlcpy(buf, r->value, sizeof(buf));
+			n = cext_tokenize(toks, 16, buf, '+');
+			if(n && n > v->area.size - 1) {
+				if(sscanf(toks[v->area.size - 1], "%u", &n) == 1)
+					return (rect.width * n) / 100;
 			}
-			fprintf(stderr, "r->value=%s n=%d\n", r->value, n);
+			break;
 		}
 	}
 	return 0;
 }
-

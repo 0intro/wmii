@@ -365,13 +365,13 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 	if(i < v->area.size) {
 		if(pt->x <= 5) {
 			if(src->frame.size > 1 || idx_of_area(src) != 1) {
-				tgt = new_column(v, 0);
+				tgt = new_column(v, 0, 0);
 				send_to_area(tgt, src, f->client);
 			}
 		}
 		else if(pt->x >= rect.width - 5) {
 			if(src->frame.size > 1 || idx_of_area(src) != v->area.size - 1) {
-				tgt = new_column(v, v->area.size);
+				tgt = new_column(v, v->area.size, 0);
 				send_to_area(tgt, src, f->client);
 			}
 		}
@@ -423,9 +423,9 @@ resize_column(Client *c, XRectangle *r, XPoint *pt)
 }
 
 Area *
-new_column(View *v, unsigned int pos) {
+new_column(View *v, unsigned int pos, unsigned int w) {
 	Area *a;
-	if(!(a = create_area(v, pos)))
+	if(!(a = create_area(v, pos, w)))
 		return nil;
 	arrange_view(v);
 	return a;
