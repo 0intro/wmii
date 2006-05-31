@@ -142,6 +142,7 @@ static void
 place_client(Area *a, Client *c)
 {
 	static unsigned int mx, my;
+	static BlitzAlign align = CENTER;
 	static Bool *field = nil;
 	Bool fit = False;
 	unsigned int i, j, k, x, y, maxx, maxy, dx, dy, cx, cy, diff, num = 0;
@@ -229,7 +230,7 @@ place_client(Area *a, Client *c)
 		f->rect.y = a->rect.y + (random() % (diff ? diff : 1));
 	}
 
-	snap_rect(rects, num, &f->rect, CENTER, snap);
+	snap_rect(rects, num, &f->rect, &align, snap);
 	if(rects)
 		free(rects);
 }
