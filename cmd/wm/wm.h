@@ -217,7 +217,7 @@ int idx_of_area(Area *a);
 int idx_of_area_id(View *t, unsigned short id);
 void select_area(Area *a, char *arg);
 void send_to_area(Area *to, Area *from, Client *c);
-void attach_to_area(Area *a, Client *c);
+void attach_to_area(Area *a, Client *c, Bool send);
 void detach_from_area(Area *a, Client *c);
 Bool is_of_area(Area *a, Client *c);
 Client *sel_client_of_area(Area *a);

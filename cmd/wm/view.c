@@ -202,7 +202,7 @@ attach_to_view(View *v, Client *c)
 		a = v->area.data[0];
 	else
 		a = v->area.data[v->sel];
-	attach_to_area(a, c);
+	attach_to_area(a, c, False);
 	v->sel = idx_of_area(a);
 }
 

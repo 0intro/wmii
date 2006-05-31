@@ -134,7 +134,7 @@ send_to_area(Area *to, Area *from, Client *c)
 {
 	c->revert = from;
 	detach_from_area(from, c);
-	attach_to_area(to, c);
+	attach_to_area(to, c, True);
 	focus_client(c, True);
 }
 
@@ -235,7 +235,7 @@ place_client(Area *a, Client *c)
 }
 
 void
-attach_to_area(Area *a, Client *c)
+attach_to_area(Area *a, Client *c, Bool send)
 {
 	View *v = a->view;
 	unsigned int h = 0, aidx = idx_of_area(a);
@@ -248,7 +248,7 @@ attach_to_area(Area *a, Client *c)
 			scale_column(a, a->rect.height - h);
 	}
 
-	if(aidx) { /* column */
+	if(!send && aidx) { /* column */
 		unsigned int nc = ncol_of_view(v);
 		if(v->area.data[1]->frame.size && nc && nc > v->area.size - 1) {
 			a = create_area(v, ++v->sel);
