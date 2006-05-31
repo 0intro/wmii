@@ -14,20 +14,50 @@
 #define MouseMask       (ButtonMask | PointerMotionMask)
 
 static void
-rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign mask)
+rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask)
 {
-	if(mask & NORTH) {
-		rect->y += dy;
-		rect->height -= dy;
+	BlitzAlign new_mask;
+	if(*mask & NORTH) {
+		if(rect->height - dy >= 0 || *mask & SOUTH) {
+			rect->y += dy;
+			rect->height -= dy;
+		}
+		else {
+			rect->y -= rect->height;
+			rect->height = dy - rect->height;
+			new_mask ^= NORTH|SOUTH;
+		}
 	}
-	if(mask & WEST) {
-		rect->x += dx;
-		rect->width -= dx;
+	if(*mask & WEST) {
+		if(rect->width - dx >= 0 || *mask & EAST) {
+			rect->x += dx;
+			rect->width -= dx;
+		}
+		else {
+			rect->x -= rect->width;
+			rect->width = dx - rect->width;
+			new_mask ^= EAST|WEST;
+		}
 	}
-	if(mask & EAST)
-		rect->width += dx;
-	if(mask & SOUTH)
-		rect->height += dy;
+	if(*mask & EAST) {
+		if(rect->width + dx >= 0 || *mask & WEST)
+			rect->width += dx;
+		else {
+			rect->x -= rect->width;
+			rect->width = -dx - rect->width;
+			new_mask ^= EAST|WEST;
+		}
+	}
+	if(*mask & SOUTH) {
+		if(rect->height + dy >= 0 || *mask & WEST)
+			rect->height += dy;
+		else {
+			rect->y -= rect->height;
+			rect->height = -dy - rect->height;
+			new_mask ^= NORTH|SOUTH;
+		}
+	}
+	*mask ^= new_mask;
 }
 
 static void
@@ -35,16 +65,16 @@ snap_line(XRectangle *rects, int num, int x1, int y1, int x2, int y2,
 		int snapw, BlitzAlign mask, int *delta)
 {
 	int i, t_xy;
-
+	
 	/* horizontal */
 	if(y1 == y2 && (mask & (NORTH|SOUTH))) {
 		for(i=0; i < num; i++) {
 			if(!((rects[i].x + rects[i].width < x1) ||
-						(rects[i].x > x2))) {
-
+				(rects[i].x > x2))) {
+				
 				if(abs(rects[i].y - y1) <= abs(*delta))
 					*delta = rects[i].y - y1;
-
+				
 				t_xy = rects[i].y + rects[i].height;
 				if(abs(t_xy - y1) < abs(*delta))
 					*delta = t_xy - y1;
@@ -56,11 +86,11 @@ snap_line(XRectangle *rects, int num, int x1, int y1, int x2, int y2,
 		 *                            s/width/height/, s/height/width/ */
 		for(i=0; i < num; i++) {
 			if(!((rects[i].y + rects[i].height < y1) ||
-						(rects[i].y > y2))) {
-
+				(rects[i].y > y2))) {
+				
 				if(abs(rects[i].x - x1) <= abs(*delta))
 					*delta = rects[i].x - x1;
-
+				
 				t_xy = rects[i].x + rects[i].width;
 				if(abs(t_xy - x1) < abs(*delta))
 					*delta = t_xy - x1;
@@ -71,26 +101,26 @@ snap_line(XRectangle *rects, int num, int x1, int y1, int x2, int y2,
 
 void
 snap_rect(XRectangle *rects, int num, XRectangle *current,
-          BlitzAlign mask, int snap)
+          BlitzAlign *mask, int snap)
 {
 	int dx = snap + 1, dy = snap + 1;
 
-	if(mask & NORTH)
+	if(*mask & NORTH)
 		snap_line(rects, num, current->x, current->y,
 				current->x + current->width, current->y,
-				snap, mask, &dy);
-	if(mask & EAST)
+				snap, *mask, &dy);
+	if(*mask & EAST)
 		snap_line(rects, num, current->x + current->width, current->y,
 				current->x + current->width, current->y + current->height,
-				snap, mask, &dx);
-	if(mask & SOUTH)
+				snap, *mask, &dx);
+	if(*mask & SOUTH)
 		snap_line(rects, num, current->x, current->y + current->height,
 				current->x + current->width, current->y + current->height,
-				snap, mask, &dy);
-	if(mask & WEST)
+				snap, *mask, &dy);
+	if(*mask & WEST)
 		snap_line(rects, num, current->x, current->y,
 				current->x, current->y + current->height,
-				snap, mask, &dx);
+				snap, *mask, &dx);
 
 	rect_morph_xy(current, abs(dx) <= snap ? dx : 0,
 			abs(dy) <= snap ? dy : 0, mask);
@@ -103,8 +133,8 @@ draw_xor_border(XRectangle *r)
 
 	xor.x += 2;
 	xor.y += 2;
-	xor.width -= 4; 
-	xor.height -= 4;
+	xor.width = xor.width > 4 ? xor.width - 4 : 0;
+	xor.height = xor.height > 4 ? xor.height - 4 : 0;
 	XSetLineAttributes(dpy, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
 	XDrawLine(dpy, root, xorgc, xor.x + 2, xor.y +  xor.height / 2,
 			xor.x + xor.width - 2, xor.y + xor.height / 2);
@@ -118,10 +148,10 @@ draw_xor_border(XRectangle *r)
 void
 do_mouse_resize(Client *c, BlitzAlign align)
 {
-	int px = 0, py = 0, i, ox, oy;
+	int px, py, ox, oy;
 	Window dummy;
 	XEvent ev;
-	unsigned int num = 0, di;
+	unsigned int num = 0;
 	Frame *f = c->frame.data[c->sel];
 	int aidx = idx_of_area(f->area);
 	int snap = aidx ? 0 : rect.height / 66;
@@ -130,7 +160,19 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	XRectangle origin = frect;
 	XPoint pt;
 
-	XQueryPointer(dpy, c->framewin, &dummy, &dummy, &ox, &oy, &i, &i, &di);
+	px = ox = frect.width / 2;
+	py = oy = frect.height / 2;
+	if(align&NORTH)
+		oy -= py;
+	if(align&SOUTH)
+		oy += py;
+	if(align&EAST)
+		ox += oy;
+	if(align&WEST)
+		ox -= oy;
+
+	XWarpPointer(dpy, None, c->framewin, 0, 0, 0, 0, ox, oy);
+	XTranslateCoordinates(dpy, c->framewin, root, ox, oy, &ox, &oy, &dummy);
 	pt.x = ox; pt.y = oy;
 	XSync(dpy, False);
 
@@ -164,12 +206,12 @@ do_mouse_resize(Client *c, BlitzAlign align)
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
 
-			rect_morph_xy(&origin, px-ox, py-oy, align);
+			rect_morph_xy(&origin, px-ox, py-oy, &align);
 			frect=origin;
 			ox=px; oy=py;
 
 			if(!aidx)
-				snap_rect(rects, num, &frect, align, snap);
+				snap_rect(rects, num, &frect, &align, snap);
 
 			draw_xor_border(&frect);
 			break;

@@ -144,6 +144,7 @@ place_client(Area *a, Client *c)
 	static unsigned int mx, my;
 	static Bool *field = nil;
 	Bool fit = False;
+	BlitzAlign align = CENTER;
 	unsigned int i, j, k, x, y, maxx, maxy, dx, dy, cx, cy, diff, num = 0;
 	XPoint p1 = {0, 0}, p2 = {0, 0};
 	Frame *f = c->frame.data[c->sel];
@@ -229,7 +230,7 @@ place_client(Area *a, Client *c)
 		f->rect.y = a->rect.y + (random() % (diff ? diff : 1));
 	}
 
-	snap_rect(rects, num, &f->rect, CENTER, snap);
+	snap_rect(rects, num, &f->rect, &align, snap);
 	if(rects)
 		free(rects);
 }
