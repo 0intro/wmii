@@ -167,9 +167,9 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	if(align&SOUTH)
 		oy += py;
 	if(align&EAST)
-		ox += py;
+		ox += px;
 	if(align&WEST)
-		ox -= py;
+		ox -= px;
 
 	XWarpPointer(dpy, None, c->framewin, 0, 0, 0, 0, ox, oy);
 	XTranslateCoordinates(dpy, c->framewin, root, ox, oy, &ox, &oy, &dummy);
