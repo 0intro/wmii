@@ -23,9 +23,27 @@ rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask)
 			rect->height -= dy;
 		}
 		else {
-			rect->y -= rect->height;
+			rect->y += rect->height;
 			rect->height = dy - rect->height;
 			new_mask ^= NORTH|SOUTH;
+		}
+	}
+	if(*mask & SOUTH) {
+		if(rect->height + dy >= 0 || *mask & NORTH)
+			rect->height += dy;
+		else {
+			rect->height = -dy - rect->height;
+			rect->y -= rect->height;
+			new_mask ^= NORTH|SOUTH;
+		}
+	}
+	if(*mask & EAST) {
+		if(rect->width + dx >= 0 || *mask & WEST)
+			rect->width += dx;
+		else {
+			rect->width = -dx - rect->width;
+			rect->x -= rect->width;
+			new_mask ^= EAST|WEST;
 		}
 	}
 	if(*mask & WEST) {
@@ -34,27 +52,9 @@ rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask)
 			rect->width -= dx;
 		}
 		else {
-			rect->x -= rect->width;
+			rect->x += rect->width;
 			rect->width = dx - rect->width;
 			new_mask ^= EAST|WEST;
-		}
-	}
-	if(*mask & EAST) {
-		if(rect->width + dx >= 0 || *mask & WEST)
-			rect->width += dx;
-		else {
-			rect->x -= rect->width;
-			rect->width = -dx - rect->width;
-			new_mask ^= EAST|WEST;
-		}
-	}
-	if(*mask & SOUTH) {
-		if(rect->height + dy >= 0 || *mask & WEST)
-			rect->height += dy;
-		else {
-			rect->y -= rect->height;
-			rect->height = -dy - rect->height;
-			new_mask ^= NORTH|SOUTH;
 		}
 	}
 	*mask ^= new_mask;
@@ -148,7 +148,7 @@ draw_xor_border(XRectangle *r)
 void
 do_mouse_resize(Client *c, BlitzAlign align)
 {
-	int px, py, ox, oy;
+	int px, py, ox, oy, i, di;
 	Window dummy;
 	XEvent ev;
 	unsigned int num = 0;
@@ -160,19 +160,24 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	XRectangle origin = frect;
 	XPoint pt;
 
-	px = ox = frect.width / 2;
-	py = oy = frect.height / 2;
-	if(align&NORTH)
-		oy -= py;
-	if(align&SOUTH)
-		oy += py;
-	if(align&EAST)
-		ox += px;
-	if(align&WEST)
-		ox -= px;
+	if (!aidx || align != CENTER) {
+		px = ox = frect.width / 2;
+		py = oy = frect.height / 2;
+		if(align&NORTH)
+			oy -= py;
+		if(align&SOUTH)
+			oy += py;
+		if(align&EAST)
+			ox += px;
+		if(align&WEST)
+			ox -= px;
 
-	XWarpPointer(dpy, None, c->framewin, 0, 0, 0, 0, ox, oy);
-	XTranslateCoordinates(dpy, c->framewin, root, ox, oy, &ox, &oy, &dummy);
+		XWarpPointer(dpy, None, c->framewin, 0, 0, 0, 0, ox, oy);
+		XTranslateCoordinates(dpy, c->framewin, root, ox, oy, &ox, &oy, &dummy);
+	}
+	else
+		XQueryPointer(dpy, c->framewin, &dummy, &dummy, &ox, &oy, &i, &i, &di);
+
 	pt.x = ox; pt.y = oy;
 	XSync(dpy, False);
 
