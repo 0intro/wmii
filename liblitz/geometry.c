@@ -13,25 +13,20 @@
 BlitzAlign
 blitz_quadofcoord(XRectangle *rect, int x, int y)
 {
-	int w = x <= rect->x + rect->width / 2;
-	int n = y <= rect->y + rect->height / 2;
-	int e = x > rect->x + rect->width / 2;
-	int s = y > rect->y + rect->height / 2;
-	int nw = w && n;
-	int ne = e && n;
-	int sw = w && s;
-	int se = e && s;
+	BlitzAlign ret = 0;
+	x -= rect->x;
+	y -= rect->y;
 
-	if(nw)
-		return NWEST;
-	else if(ne)
-		return NEAST;
-	else if(se)
-		return SEAST;
-	else if(sw)
-		return SWEST;
+	if(x <= rect->width * .5)
+		ret |= EAST;
+	if(x >= rect->width * .5)
+		ret |= WEST;
+	if(y <= rect->height * .5)
+		ret |= NORTH;
+	if(y >= rect->height * .5)
+		ret |= SOUTH;
 
-	return CENTER;
+	return ret;
 }
 
 Bool blitz_ispointinrect(int x, int y, XRectangle * r)
