@@ -17,9 +17,9 @@ blitz_quadofcoord(XRectangle *rect, int x, int y)
 	x -= rect->x;
 	y -= rect->y;
 
-	if(x <= rect->width * .5)
-		ret |= EAST;
 	if(x >= rect->width * .5)
+		ret |= EAST;
+	if(x <= rect->width * .5)
 		ret |= WEST;
 	if(y <= rect->height * .5)
 		ret |= NORTH;
