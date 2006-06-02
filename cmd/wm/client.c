@@ -879,12 +879,9 @@ match_tags(Client *c, const char *prop)
 void
 apply_rules(Client *c)
 {
-	if(!def.tagrules)
-		goto Fallback;
+	if(def.tagrules)
+		match_tags(c, c->props);
 
-	match_tags(c, c->props);
-
-Fallback:
 	if(!strlen(c->tags))
 		apply_tags(c, "nil");
 }
