@@ -477,7 +477,7 @@ sel_client()
 }
 
 static void
-match_sizehints(Client *c, int aidx, BlitzAlign stickycorner)
+match_sizehints(Client *c, int aidx, BlitzAlign sticky)
 {
 	XSizeHints *s = &c->size;
 	Frame *f = c->frame.data[c->sel];
@@ -489,13 +489,13 @@ match_sizehints(Client *c, int aidx, BlitzAlign stickycorner)
 		if(f->rect.width < s->min_width + dx) {
 			wdiff = (s->min_width + dx) - f->rect.width;
 			f->rect.width += wdiff;
-			if(stickycorner == NEAST || stickycorner == SEAST)
+			if((sticky & EAST) && !(sticky & WEST))
 				f->rect.x -= wdiff;
 		}
 		if(f->rect.height < s->min_height + dy) {
 			hdiff = (s->min_height + dy) - f->rect.height;
 			f->rect.height += hdiff;
-			if(stickycorner == SEAST || stickycorner == SWEST)
+			if((sticky & SOUTH) && !(sticky & NORTH))
 				f->rect.y -= hdiff;
 		}
 	}
@@ -503,13 +503,13 @@ match_sizehints(Client *c, int aidx, BlitzAlign stickycorner)
 		if(f->rect.width > s->max_width + dx) {
 			wdiff = f->rect.width - (s->max_width + dx);
 			f->rect.width -= wdiff;
-			if(stickycorner == NEAST || stickycorner == SEAST)
+			if((sticky & EAST) && !(sticky & WEST))
 			f->rect.x += wdiff;
 		}
 		if(f->rect.height > s->max_height + dy) {
 			hdiff = f->rect.height - (s->max_height + dy);
 			f->rect.height -= hdiff;
-			if(stickycorner == SEAST || stickycorner == SWEST)
+			if((sticky & SOUTH) && !(sticky & NORTH))
 				f->rect.y += hdiff;
 		}
 	}
@@ -530,7 +530,7 @@ match_sizehints(Client *c, int aidx, BlitzAlign stickycorner)
 		if(s->width_inc > 0) {
 			wdiff = w % s->width_inc;
 			f->rect.width -= wdiff;
-			if(stickycorner == NEAST || stickycorner == SEAST)
+			if((sticky & EAST) && !(sticky & WEST))
 				f->rect.x += wdiff;
 		}
 
@@ -538,7 +538,7 @@ match_sizehints(Client *c, int aidx, BlitzAlign stickycorner)
 		if(s->height_inc > 0) {
 			hdiff = h % s->height_inc;
 			f->rect.height -= hdiff;
-			if(stickycorner == SEAST || stickycorner == SWEST)
+			if((sticky & SOUTH) && !(sticky & NORTH))
 				f->rect.y += hdiff;
 		}
 	}
@@ -550,22 +550,15 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 	Frame *f = c->frame.data[c->sel];
 	int fidx = idx_of_frame(f);
 	int aidx = idx_of_area(f->area);
-	BlitzAlign stickycorner;
-	if(f->rect.x != r->x &&
-			f->rect.x + f->rect.width == r->x + r->width) {
-		if(f->rect.y != r->y &&
-				f->rect.y + f->rect.height == r->y + r->height)
-			stickycorner = SEAST;
-		else    
-			stickycorner = NEAST;
-	}                       
-	else {  
-		if(f->rect.y != r->y &&
-				f->rect.y + f->rect.height == r->y + r->height)
-			stickycorner = SWEST;
-		else    
-			stickycorner = NWEST;
-	}
+	BlitzAlign stickycorner = 0;;
+	if(f->rect.x != r->x && f->rect.x + f->rect.width == r->x + r->width)
+		stickycorner |= EAST;
+	else
+		stickycorner |= WEST;
+	if(f->rect.y != r->y && f->rect.y + f->rect.height == r->y + r->height)
+		stickycorner |= SOUTH;
+	else    
+		stickycorner |= NORTH;
 	f->rect = *r;
 
 	if((f->area->mode != Colstack) || (f->area->sel == fidx))
