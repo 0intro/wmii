@@ -143,7 +143,7 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 	ret = *mask;
 	if(abs(dx) <= snap)
 		ret ^= EAST|WEST;
-	if(abs(dy) < snap)
+	if(abs(dy) <= snap)
 		ret ^= NORTH|SOUTH;
 	return ret ^ CENTER;
 }
