@@ -39,6 +39,7 @@ static unsigned int prevoff = 0;
 static unsigned int curroff = 0;
 static unsigned int cmdw = 0;
 static unsigned int twidth = 0;
+static unsigned int cwidth = 0;
 static BlitzDraw draw = { 0 };
 static const int seek = 30;		/* 30px */
 
@@ -136,13 +137,15 @@ draw_menu()
 	if(!title || text[0]) {
 		draw.data = text;
 		draw.color = normcolor;
+		cmdw = cwidth;
 		if(cmdw && item.size)
 			draw.rect.width = cmdw;
 	}
 	else {
-		draw.rect.width = twidth;
+		cmdw = twidth;
 		draw.data = title;
 		draw.color = selcolor;
+		draw.rect.width = cmdw;
 	}
 	offx += draw.rect.width;
 	blitz_drawlabel(dpy, &draw);
@@ -399,9 +402,6 @@ main(int argc, char *argv[])
 	irect.y = DisplayHeight(dpy, screen) - irect.height;
 	irect.x = 0;
 
-	if(title)
-		twidth = blitz_textwidth(dpy, &draw.font, title) + irect.height;
-
 	win = XCreateWindow(dpy, RootWindow(dpy, screen), irect.x, irect.y,
 			irect.width, irect.height, 0, DefaultDepth(dpy, screen),
 			CopyFromParent, DefaultVisual(dpy, screen),
@@ -417,9 +417,17 @@ main(int argc, char *argv[])
 	XSync(dpy, False);
 
 	if(maxname)
-		cmdw = blitz_textwidth(dpy, &draw.font, maxname) + irect.height;
-	if(cmdw > irect.width / 3)
-		cmdw = irect.width / 3;
+		cwidth = blitz_textwidth(dpy, &draw.font, maxname) + irect.height;
+	if(cwidth > irect.width / 3)
+		cwidth = irect.width / 3;
+
+	if(title) {
+		twidth = blitz_textwidth(dpy, &draw.font, title) + irect.height;
+		if(twidth > irect.width / 3)
+			twidth = irect.width / 3;
+	}
+
+	cmdw = title ? twidth : cwidth;
 
 	text[0] = 0;
 	update_items(text);
