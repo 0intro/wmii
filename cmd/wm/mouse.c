@@ -99,10 +99,11 @@ snap_line(XRectangle *rects, int num, int x1, int y1, int x2, int y2,
 	}
 }
 
-void
+BlitzAlign
 snap_rect(XRectangle *rects, int num, XRectangle *current,
           BlitzAlign *mask, int snap)
 {
+	BlitzAlign ret;
 	int dx = snap + 1, dy = snap + 1;
 
 	if(*mask & NORTH)
@@ -124,6 +125,12 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 
 	rect_morph_xy(current, abs(dx) <= snap ? dx : 0,
 			abs(dy) <= snap ? dy : 0, mask);
+	ret = *mask;
+	if(abs(dx) <= snap)
+		ret ^= EAST|WEST;
+	if(abs(dy) < snap)
+		ret ^= NORTH|SOUTH;
+	return ret ^ CENTER;
 }
 
 static void
@@ -148,6 +155,7 @@ draw_xor_border(XRectangle *r)
 void
 do_mouse_resize(Client *c, BlitzAlign align)
 {
+	BlitzAlign grav;
 	int px, py, ox, oy, i;
 	float rx, ry;
 	Window dummy;
@@ -157,7 +165,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	int aidx = idx_of_area(f->area);
 	int snap = aidx ? 0 : rect.height / 66;
 	XRectangle *rects = aidx ? nil : rects_of_view(f->area->view, &num);
-	XRectangle frect = f->rect;
+	XRectangle frect = f->rect, ofrect;
 	XRectangle origin = frect;
 	XPoint pt;
 
@@ -210,7 +218,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 			return;
 			break;
 		case MotionNotify:
-			draw_xor_border(&frect);
+			ofrect = frect;
 
 			pt.x = ev.xmotion.x;
 			pt.y = ev.xmotion.y;
@@ -222,8 +230,12 @@ do_mouse_resize(Client *c, BlitzAlign align)
 			ox=px; oy=py;
 
 			if(!aidx)
-				snap_rect(rects, num, &frect, &align, snap);
+				grav = snap_rect(rects, num, &frect, &align, snap);
+			else
+				grav = align ^ CENTER;
+			match_sizehints(c, &frect, aidx, grav);
 
+			draw_xor_border(&ofrect);
 			draw_xor_border(&frect);
 			break;
 		case Expose:

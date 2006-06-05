@@ -476,41 +476,40 @@ sel_client()
 	return view.size ? sel_client_of_view(view.data[sel]) : nil;
 }
 
-static void
-match_sizehints(Client *c, int aidx, BlitzAlign sticky)
+void
+match_sizehints(Client *c, XRectangle *r, int aidx, BlitzAlign sticky)
 {
 	XSizeHints *s = &c->size;
-	Frame *f = c->frame.data[c->sel];
 	unsigned int dx = 2 * def.border;
 	unsigned int dy = def.border + height_of_bar();
 	unsigned int hdiff, wdiff;
 
 	if(!aidx && (s->flags & PMinSize)) {
-		if(f->rect.width < s->min_width + dx) {
-			wdiff = (s->min_width + dx) - f->rect.width;
-			f->rect.width += wdiff;
+		if(r->width < s->min_width + dx) {
+			wdiff = (s->min_width + dx) - r->width;
+			r->width += wdiff;
 			if((sticky & EAST) && !(sticky & WEST))
-				f->rect.x -= wdiff;
+				r->x -= wdiff;
 		}
-		if(f->rect.height < s->min_height + dy) {
-			hdiff = (s->min_height + dy) - f->rect.height;
-			f->rect.height += hdiff;
+		if(r->height < s->min_height + dy) {
+			hdiff = (s->min_height + dy) - r->height;
+			r->height += hdiff;
 			if((sticky & SOUTH) && !(sticky & NORTH))
-				f->rect.y -= hdiff;
+				r->y -= hdiff;
 		}
 	}
 	if(!aidx && (s->flags & PMaxSize)) {
-		if(f->rect.width > s->max_width + dx) {
-			wdiff = f->rect.width - (s->max_width + dx);
-			f->rect.width -= wdiff;
+		if(r->width > s->max_width + dx) {
+			wdiff = r->width - (s->max_width + dx);
+			r->width -= wdiff;
 			if((sticky & EAST) && !(sticky & WEST))
-			f->rect.x += wdiff;
+			r->x += wdiff;
 		}
-		if(f->rect.height > s->max_height + dy) {
-			hdiff = f->rect.height - (s->max_height + dy);
-			f->rect.height -= hdiff;
+		if(r->height > s->max_height + dy) {
+			hdiff = r->height - (s->max_height + dy);
+			r->height -= hdiff;
 			if((sticky & SOUTH) && !(sticky & NORTH))
-				f->rect.y += hdiff;
+				r->y += hdiff;
 		}
 	}
 
@@ -526,20 +525,20 @@ match_sizehints(Client *c, int aidx, BlitzAlign sticky)
 			h = s->min_height;
 		}
 		/* client_width = base_width + i * s->width_inc for an integer i */
-		w = f->rect.width - dx - w;
+		w = r->width - dx - w;
 		if(s->width_inc > 0) {
 			wdiff = w % s->width_inc;
-			f->rect.width -= wdiff;
+			r->width -= wdiff;
 			if((sticky & EAST) && !(sticky & WEST))
-				f->rect.x += wdiff;
+				r->x += wdiff;
 		}
 
-		h = f->rect.height - dy - h;
+		h = r->height - dy - h;
 		if(s->height_inc > 0) {
 			hdiff = h % s->height_inc;
-			f->rect.height -= hdiff;
+			r->height -= hdiff;
 			if((sticky & SOUTH) && !(sticky & NORTH))
-				f->rect.y += hdiff;
+				r->y += hdiff;
 		}
 	}
 }
@@ -562,7 +561,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 	f->rect = *r;
 
 	if((f->area->mode != Colstack) || (f->area->sel == fidx))
-		match_sizehints(c, aidx, stickycorner);
+		match_sizehints(c, &c->frame.data[c->sel]->rect, aidx, stickycorner);
 
 	if(!ignore_xcall) {
 		if(!aidx &&

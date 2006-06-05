@@ -247,6 +247,7 @@ void reparent_client(Client *c, Window w, int x, int y);
 void manage_client(Client *c);
 void focus_client(Client *c, Bool restack);
 void focus(Client *c, Bool restack);
+void match_sizehints(Client *c, XRectangle *r, int aidx, BlitzAlign sticky);
 void resize_client(Client *c, XRectangle *r, Bool ignore_xcall);
 void select_client(Client *c, char *arg);
 void send_client(Client *c, char *arg);
@@ -299,8 +300,8 @@ unsigned long mod_key_of_str(char *val);
 void do_mouse_resize(Client *c,BlitzAlign align);
 void grab_mouse(Window w, unsigned long mod, unsigned int button);
 void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
-void snap_rect(XRectangle *rects, int num, XRectangle *current,
-               BlitzAlign *mask, int snap);
+BlitzAlign snap_rect(XRectangle *rects, int num, XRectangle *current,
+					 BlitzAlign *mask, int snap);
 
 /* rule.c */
 void update_rules(RuleVector *rule, const char *data);
