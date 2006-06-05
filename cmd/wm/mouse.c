@@ -60,40 +60,47 @@ rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask)
 	*mask ^= new_mask;
 }
 
+typedef struct {
+	XRectangle *rects;
+	int num;
+	int x1, y1, x2, y2;
+	BlitzAlign mask;
+	int *delta;
+} SnapArgs;
+
 static void
-snap_line(XRectangle *rects, int num, int x1, int y1, int x2, int y2,
-		int snapw, BlitzAlign mask, int *delta)
+snap_line(SnapArgs *a)
 {
 	int i, t_xy;
 	
 	/* horizontal */
-	if(y1 == y2 && (mask & (NORTH|SOUTH))) {
-		for(i=0; i < num; i++) {
-			if(!((rects[i].x + rects[i].width < x1) ||
-				(rects[i].x > x2))) {
+	if(a->y1 == a->y2 && (a->mask & (NORTH|SOUTH))) {
+		for(i=0; i < a->num; i++) {
+			if(!((a->rects[i].x + a->rects[i].width < a->x1) ||
+				(a->rects[i].x > a->x2))) {
 				
-				if(abs(rects[i].y - y1) <= abs(*delta))
-					*delta = rects[i].y - y1;
+				if(abs(a->rects[i].y - a->y1) <= abs(*a->delta))
+					*a->delta = a->rects[i].y - a->y1;
 				
-				t_xy = rects[i].y + rects[i].height;
-				if(abs(t_xy - y1) < abs(*delta))
-					*delta = t_xy - y1;
+				t_xy = a->rects[i].y + a->rects[i].height;
+				if(abs(t_xy - a->y1) < abs(*a->delta))
+					*a->delta = t_xy - a->y1;
 			}
 		}
 	}
-	else if (mask & (EAST|WEST)) {
+	else if (a->mask & (EAST|WEST)) {
 		/* This is the same as above, tr/xy/yx/, 
 		 *                            s/width/height/, s/height/width/ */
-		for(i=0; i < num; i++) {
-			if(!((rects[i].y + rects[i].height < y1) ||
-				(rects[i].y > y2))) {
+		for(i=0; i < a->num; i++) {
+			if(!((a->rects[i].y + a->rects[i].height < a->y1) ||
+				(a->rects[i].y > a->y2))) {
 				
-				if(abs(rects[i].x - x1) <= abs(*delta))
-					*delta = rects[i].x - x1;
+				if(abs(a->rects[i].x - a->x1) <= abs(*a->delta))
+					*a->delta = a->rects[i].x - a->x1;
 				
-				t_xy = rects[i].x + rects[i].width;
-				if(abs(t_xy - x1) < abs(*delta))
-					*delta = t_xy - x1;
+				t_xy = a->rects[i].x + a->rects[i].width;
+				if(abs(t_xy - a->x1) < abs(*a->delta))
+					*a->delta = t_xy - a->x1;
 			}
 		}
 	}
@@ -103,25 +110,33 @@ BlitzAlign
 snap_rect(XRectangle *rects, int num, XRectangle *current,
           BlitzAlign *mask, int snap)
 {
+	SnapArgs a = { rects, num, 0, 0, 0, 0, *mask, nil };
 	BlitzAlign ret;
 	int dx = snap + 1, dy = snap + 1;
 
-	if(*mask & NORTH)
-		snap_line(rects, num, current->x, current->y,
-				current->x + current->width, current->y,
-				snap, *mask, &dy);
-	if(*mask & EAST)
-		snap_line(rects, num, current->x + current->width, current->y,
-				current->x + current->width, current->y + current->height,
-				snap, *mask, &dx);
-	if(*mask & SOUTH)
-		snap_line(rects, num, current->x, current->y + current->height,
-				current->x + current->width, current->y + current->height,
-				snap, *mask, &dy);
-	if(*mask & WEST)
-		snap_line(rects, num, current->x, current->y,
-				current->x, current->y + current->height,
-				snap, *mask, &dx);
+	a.x1 = current->x;
+	a.x2 = current->x + current->width;
+	a.delta = &dy;
+	if(*mask & NORTH) {
+		a.y2 = a.y1 = current->y;
+		snap_line(&a);
+	}
+	if(*mask & SOUTH) {
+		a.y2 = a.y1 = current->y + current->height;
+		snap_line(&a);
+	}
+
+	a.y1 = current->y;
+	a.y2 = current->y + current->height;
+	a.delta = &dx;
+	if(*mask & EAST) {
+		a.x1 = a.x2 = current->x + current->width;
+		snap_line(&a);
+	}
+	if(*mask & WEST) {
+		a.x1 = a.x2 = current->x;
+		snap_line(&a);
+	}
 
 	rect_morph_xy(current, abs(dx) <= snap ? dx : 0,
 			abs(dy) <= snap ? dy : 0, mask);
