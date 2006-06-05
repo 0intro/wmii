@@ -29,8 +29,6 @@ static BlitzColor selcolor;
 static BlitzColor normcolor;
 static Display *dpy;
 static Window win;
-static XRectangle mrect;
-static XRectangle trect;
 static XRectangle irect;
 static int screen;
 static ItemVector allitem = {0};
@@ -40,6 +38,7 @@ static unsigned int nextoff = 0;
 static unsigned int prevoff = 0;
 static unsigned int curroff = 0;
 static unsigned int cmdw = 0;
+static unsigned int twidth = 0;
 static BlitzDraw draw = { 0 };
 static const int seek = 30;		/* 30px */
 
@@ -125,26 +124,26 @@ draw_menu()
 	unsigned int i, offx = 0;
 
 	draw.align = WEST;
-	if(title) {
-		draw.rect = trect;
-		draw.rect.x = 0;
-		draw.rect.y = 0;
-		draw.color = selcolor;
-		draw.data = title;
-		blitz_drawlabel(dpy, &draw);
-	}
 
 	draw.rect = irect;
 	draw.rect.x = 0;
-	draw.rect.y = title ? trect.height : 0;
+	draw.rect.y = 0;
 	draw.color = normcolor;
 	draw.data = nil;
 	blitz_drawlabel(dpy, &draw);
 
 	/* print command */
-	draw.data = text;
-	if(cmdw && item.size)
-		draw.rect.width = cmdw;
+	if(!title || text[0]) {
+		draw.data = text;
+		draw.color = normcolor;
+		if(cmdw && item.size)
+			draw.rect.width = cmdw;
+	}
+	else {
+		draw.rect.width = twidth;
+		draw.data = title;
+		draw.color = selcolor;
+	}
 	offx += draw.rect.width;
 	blitz_drawlabel(dpy, &draw);
 
@@ -182,8 +181,8 @@ draw_menu()
 		draw.rect.width = seek;
 		blitz_drawlabel(dpy, &draw);
 	}
-	XCopyArea(dpy, draw.drawable, win, draw.gc, 0, 0, mrect.width,
-			mrect.height, 0, 0);
+	XCopyArea(dpy, draw.drawable, win, draw.gc, 0, 0, irect.width,
+			irect.height, 0, 0);
 	XSync(dpy, False);
 }
 
@@ -400,21 +399,11 @@ main(int argc, char *argv[])
 	irect.y = DisplayHeight(dpy, screen) - irect.height;
 	irect.x = 0;
 
-	if(title) {
-		trect.width = DisplayWidth(dpy, screen);
-		trect.height = draw.font.ascent + draw.font.descent + 4;
-		trect.y = DisplayHeight(dpy, screen) - (irect.height + trect.height);
-		trect.x = 0;
-		mrect.width = DisplayWidth(dpy, screen);
-		mrect.height = irect.height + trect.height;
-		mrect.y = DisplayHeight(dpy, screen) - mrect.height;
-		mrect.x = 0;
-	}
-	else 
-		mrect = irect;
+	if(title)
+		twidth = blitz_textwidth(dpy, &draw.font, title) + irect.height;
 
-	win = XCreateWindow(dpy, RootWindow(dpy, screen), mrect.x, mrect.y,
-			mrect.width, mrect.height, 0, DefaultDepth(dpy, screen),
+	win = XCreateWindow(dpy, RootWindow(dpy, screen), irect.x, irect.y,
+			irect.width, irect.height, 0, DefaultDepth(dpy, screen),
 			CopyFromParent, DefaultVisual(dpy, screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
 	XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_xterm));
@@ -422,7 +411,7 @@ main(int argc, char *argv[])
 
 	/* pixmap */
 	draw.gc = XCreateGC(dpy, win, 0, 0);
-	draw.drawable = XCreatePixmap(dpy, win, mrect.width, mrect.height,
+	draw.drawable = XCreatePixmap(dpy, win, irect.width, irect.height,
 			DefaultDepth(dpy, screen));
 
 	XSync(dpy, False);
