@@ -26,6 +26,7 @@ View *
 create_view(const char *name)
 {
 	static unsigned short id = 1;
+	static char buf[256];
 	View *v = cext_emallocz(sizeof(View));
 
 	v->id = id++;
@@ -34,18 +35,23 @@ create_view(const char *name)
 	create_area(v, v->area.size, 0);
 	cext_vattach(vector_of_views(&view), v);
 	qsort(view.data, view.size, sizeof(View *), comp_view_name);
+	snprintf(buf, sizeof(buf), "CreateTag %s\n", name);
+	write_event(buf);
 	return v;
 }
 
 void
 destroy_view(View *v)
 {
+	static char buf[256];
 	while(v->area.size)
 		destroy_area(v->area.data[0]);
 
 	cext_vdetach(vector_of_views(&view), v);
 	if(sel >= view.size)
 		sel = 0;
+	snprintf(buf, sizeof(buf), "DestroyTag %s\n", v->name);
+	write_event(buf);
 
 	free(v);
 }
@@ -81,8 +87,14 @@ focus_view(View *v)
 {
 	Client *c;
 	unsigned int i;
+	static char buf[256];
 
 	XGrabServer(dpy);
+
+	if(sel < view.size) {
+		snprintf(buf, sizeof(buf), "UnfocusTag %s\n", view.data[sel]->name);
+		write_event(buf);
+	}
 	sel = idx_of_view(v);
 
 	update_frame_selectors(v);
@@ -102,10 +114,11 @@ focus_view(View *v)
 	if((c = sel_client_of_view(v)))
 		focus_client(c, True);
 	draw_clients();
-	update_view_bars();
 	XSync(dpy, False);
 	XUngrabServer(dpy);
 	flush_masked_events(EnterWindowMask);
+	snprintf(buf, sizeof(buf), "FocusTag %s\n", v->name);
+	write_event(buf);
 }
 
 XRectangle *
@@ -163,7 +176,7 @@ select_view(const char *arg)
 	cext_trim(buf, " \t+");
 	if(!strlen(buf))
 		return;
-	sel = idx_of_view(get_view(arg));
+	focus_view(get_view(arg));
 	update_views(); /* performs focus_view */
 }
 
@@ -385,8 +398,6 @@ update_views()
 		focus_view(old);
 	else if(view.size)
 		focus_view(view.data[sel]);
-	else
-		update_view_bars();
 }
 
 unsigned int

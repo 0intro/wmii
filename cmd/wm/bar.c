@@ -13,10 +13,6 @@ comp_bar(const void *b1, const void *b2)
 {
 	Bar *bb1 = *(Bar **)b1;
 	Bar *bb2 = *(Bar **)b2;
-	if(bb1->intern && !bb2->intern)
-		return -1;
-	if(!bb1->intern && bb2->intern)
-		return 1;
 	return strcmp(bb1->name, bb2->name);
 }
 
@@ -36,7 +32,6 @@ create_bar(char *name, Bool intern)
 		return b;
 	b = cext_emallocz(sizeof(Bar));
 	b->id = id++;
-	b->intern = intern;
 	cext_strlcpy(b->name, name, sizeof(b->name));
 	cext_strlcpy(b->colstr, def.selcolor, sizeof(b->colstr));
 	b->color = def.sel;
@@ -90,7 +85,6 @@ void
 draw_bar()
 {
 	unsigned int i = 0, w = 0;
-	int exp = -1;
 	BlitzDraw d = { 0 };
 	Bar *b = nil;
 
@@ -109,12 +103,6 @@ draw_bar()
 
 	for(i = 0; (i < bar.size) && (w < brect.width); i++) {
 		b = bar.data[i];
-		if(b->intern) {
-			if(view.size && !strncmp(b->name, view.data[sel]->name, sizeof(b->name)))
-				b->color = def.sel;
-			else
-				b->color = def.norm;
-		}
 		b->rect.x = 0;
 		b->rect.y = 0;
 		b->rect.width = brect.height;
@@ -133,11 +121,7 @@ draw_bar()
 		}
 	}
 	else { /* expand bar properly */
-		for(exp = 0; (exp < bar.size) && (bar.data[exp]->intern); exp++);
-		if(exp == bar.size)
-			exp = -1;
-		else
-			bar.data[exp]->rect.width += (brect.width - w);
+		bar.data[bar.size - 1]->rect.width += (brect.width - w);
 		for(i = 1; i < bar.size; i++)
 			bar.data[i]->rect.x = bar.data[i - 1]->rect.x + bar.data[i - 1]->rect.width;
 	}
@@ -147,7 +131,7 @@ draw_bar()
 		d.color = b->color;
 		d.rect = b->rect;
 		d.data = b->data;
-		if(i == exp)
+		if(i == bar.size - 1)
 			d.align = EAST;
 		else
 			d.align = CENTER;
@@ -190,30 +174,4 @@ bar_of_name(const char *name)
 		if(!strncmp(bar.data[i]->name, name, sizeof(bar.data[i]->name)))
 			return bar.data[i];
 	return nil;
-}
-
-static Bar *
-next_unused_bar()
-{
-	unsigned int i;
-	for(i = 0; (i < bar.size) && bar.data[i]->intern; i++)
-		if(!view_of_name(bar.data[i]->name))
-			return bar.data[i];
-	return nil;
-}
-
-void
-update_view_bars()
-{
-	unsigned int i;
-	Bar *b = nil;
-
-	while((b = next_unused_bar()))
-		destroy_bar(b);
-	for(i = 0; i < view.size; i++) {
-		b = create_bar(view.data[i]->name, True);
-		cext_strlcpy(b->data, view.data[i]->name, sizeof(b->data));
-	}
-
-	draw_bar();
 }

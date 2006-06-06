@@ -147,7 +147,6 @@ typedef struct {
 	char colstr[24];
 	BlitzColor color;
 	XRectangle rect;
-	Bool intern;
 } Bar;
 
 /* default values */
@@ -231,7 +230,6 @@ void resize_bar();
 unsigned int height_of_bar();
 Bar *bar_of_name(const char *name);
 int idx_of_bar(Bar *b);
-void update_view_bars();
 
 /* client.c */
 Client *create_client(Window w, XWindowAttributes *wa);

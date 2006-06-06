@@ -776,9 +776,6 @@ xremove(IXPConn *c, Fcall *fcall)
 	case FsDbar:
 		{
 			Bar *b = bar.data[i1];
-			if(b->intern)
-				return Enoperm;
-			/* now detach the bar */
 			destroy_bar(b);
 			draw_bar();
 		}

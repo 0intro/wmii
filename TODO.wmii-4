@@ -12,9 +12,6 @@
 	(stacked) client is made visible.  So, when the fifth client is focused
 	and made visible, the third would disappear (with n=2) -- this means on
 	boundaries, like in mutt(1).
-- remove internal labels, now tagging seems easy and straightforward that they
-	THINK: We'll need CreateTag, DestroyTag, UnfocusTag, FocusTag and the
-	event loop in wmiirc must be before TAGGING can be externalized again
 - liblitz: window abstraction (creation, events), can be reused in menu and bar
 	and frames
 - tagbars and grab-boxes (like in acme)
