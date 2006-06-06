@@ -39,7 +39,7 @@ xwrite /def/normcolors $WMII_NORMCOLORS
 
 # COLUMN RULES
 wmiir write /def/colrules <<EOF
-/1/ -> 60+40
+/1/ -> 50+50
 EOF
 
 # TAGGING RULES
