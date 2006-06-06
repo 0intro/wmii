@@ -235,10 +235,10 @@ do_mouse_resize(Client *c, BlitzAlign align)
 		case MotionNotify:
 			ofrect = frect;
 
-			pt.x = ev.xmotion.x;
-			pt.y = ev.xmotion.y;
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
+			pt.x = px;
+			pt.y = py;
 
 			rect_morph_xy(&origin, px-ox, py-oy, &align);
 			frect=origin;

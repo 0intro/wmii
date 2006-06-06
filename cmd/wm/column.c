@@ -365,7 +365,7 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 	if(i < v->area.size) {
 		if(pt->x <= 5) {
 			if(src->frame.size > 1 || idx_of_area(src) != 1) {
-				tgt = new_column(v, 0, 0);
+				tgt = new_column(v, 1, 0);
 				send_to_area(tgt, src, f->client);
 			}
 		}
