@@ -51,10 +51,8 @@ assign_sel_view(View *v)
 		snprintf(buf, sizeof(buf), "UnfocusTag %s\n", view.data[sel]->name);
 		write_event(buf);
 	}
-	if(i != sel) {
-		snprintf(buf, sizeof(buf), "FocusTag %s\n", v->name);
-		write_event(buf);
-	}
+	snprintf(buf, sizeof(buf), "FocusTag %s\n", v->name);
+	write_event(buf);
 	sel = i;
 }
 
