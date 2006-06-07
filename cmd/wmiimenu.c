@@ -98,6 +98,11 @@ update_items(char *pattern)
 	unsigned int plen = strlen(pattern);
 	int i;
 
+	if(*pattern)
+		cmdw = cwidth;
+	else
+		cmdw = twidth;
+
 	curroff = prevoff = nextoff = 0;
 	sel = -1;
 
@@ -140,15 +145,17 @@ draw_menu()
 		cmdw = cwidth;
 		if(cmdw && item.size)
 			draw.rect.width = cmdw;
+		blitz_drawlabel(dpy, &draw);
 	}
 	else {
 		cmdw = twidth;
 		draw.data = title;
 		draw.color = selcolor;
 		draw.rect.width = cmdw;
+		blitz_drawlabel(dpy, &draw);
+		blitz_drawborder(dpy, &draw);
 	}
 	offx += draw.rect.width;
-	blitz_drawlabel(dpy, &draw);
 
 	draw.align = CENTER;
 	if(item.size) {
