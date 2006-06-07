@@ -175,7 +175,7 @@ do
 		$MODKEY-Shift-c)
 			xwrite /tag/sel/sel/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite /tag/sel/sel/sel/tags "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
+			xwrite /client/`wmiir read /tag/sel/sel/sel/index`/tags "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /tag/sel/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
 		esac;;
