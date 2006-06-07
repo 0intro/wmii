@@ -125,10 +125,10 @@ do
 		wmiir remove /bar/$1
 		;;
 	FocusTag)
-		xwrite /bar/$1/name $WMII_SELCOLORS
+		xwrite /bar/$1/colors $WMII_SELCOLORS
 		;;
 	UnfocusTag)
-		xwrite /bar/$1/name $WMII_NORMCOLORS
+		xwrite /bar/$1/colors $WMII_NORMCOLORS
 		;;
 	BarClick)
 		xwrite /ctl view "$1";;
