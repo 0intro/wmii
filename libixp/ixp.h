@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <cext.h>
 
-#define IXP_VERSION		"9P2000"
+#define IXP_VERSION	"9P2000"
 #define IXP_NOTAG	(unsigned short)~0U	/*Dummy tag */
 #define IXP_NOFID	(unsigned int)~0	/*No auth */
 
@@ -60,7 +60,7 @@ enum {
 	IXP_DMTMP = 0x04000000,		/* mode bit for non-backed-up file */
 	IXP_DMREAD = 0x4<<6,		/* mode bit for read permission */
 	IXP_DMWRITE = 0x2<<6,		/* mode bit for write permission */
-	IXP_DMEXEC = 0x1<<6			/* mode bit for execute permission */
+	IXP_DMEXEC = 0x1<<6		/* mode bit for execute permission */
 };
 
 /* modes */
