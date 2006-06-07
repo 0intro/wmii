@@ -22,7 +22,7 @@ comp_view_name(const void *v1, const void *v2)
 	return strcmp(vv1->name, vv2->name);
 }
 
-View *
+static View *
 create_view(const char *name)
 {
 	static unsigned short id = 1;
@@ -40,7 +40,25 @@ create_view(const char *name)
 	return v;
 }
 
-void
+static void
+assign_sel_view(View *v)
+{
+	static char buf[256];
+	int i = idx_of_view(v);
+
+	i = idx_of_view(v);
+	if(sel < view.size && i != sel) {
+		snprintf(buf, sizeof(buf), "UnfocusTag %s\n", view.data[sel]->name);
+		write_event(buf);
+	}
+	if(i != sel) {
+		snprintf(buf, sizeof(buf), "FocusTag %s\n", v->name);
+		write_event(buf);
+	}
+	sel = i;
+}
+
+static void
 destroy_view(View *v)
 {
 	static char buf[256];
@@ -48,11 +66,10 @@ destroy_view(View *v)
 		destroy_area(v->area.data[0]);
 
 	cext_vdetach(vector_of_views(&view), v);
-	if(sel >= view.size)
-		sel = 0;
+	if(sel >= view.size && view.size)
+		assign_sel_view(view.data[0]);
 	snprintf(buf, sizeof(buf), "DestroyTag %s\n", v->name);
 	write_event(buf);
-
 	free(v);
 }
 
@@ -87,15 +104,9 @@ focus_view(View *v)
 {
 	Client *c;
 	unsigned int i;
-	static char buf[256];
 
 	XGrabServer(dpy);
-
-	if(sel < view.size) {
-		snprintf(buf, sizeof(buf), "UnfocusTag %s\n", view.data[sel]->name);
-		write_event(buf);
-	}
-	sel = idx_of_view(v);
+	assign_sel_view(v);
 
 	update_frame_selectors(v);
 
@@ -117,8 +128,6 @@ focus_view(View *v)
 	XSync(dpy, False);
 	XUngrabServer(dpy);
 	flush_masked_events(EnterWindowMask);
-	snprintf(buf, sizeof(buf), "FocusTag %s\n", v->name);
-	write_event(buf);
 }
 
 XRectangle *

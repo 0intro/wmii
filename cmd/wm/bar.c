@@ -34,7 +34,7 @@ create_bar(char *name, Bool intern)
 	b->id = id++;
 	cext_strlcpy(b->name, name, sizeof(b->name));
 	cext_strlcpy(b->colstr, def.selcolor, sizeof(b->colstr));
-	b->color = def.sel;
+	b->color = def.norm;
 	cext_vattach(vector_of_bars(&bar), b);
 	qsort(bar.data, bar.size, sizeof(Bar *), comp_bar);
 	return b;

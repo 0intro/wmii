@@ -307,7 +307,6 @@ void update_rules(RuleVector *rule, const char *data);
 /* view.c */
 void arrange_view(View *v);
 void scale_view(View *v, float w);
-View *create_view(const char *name);
 void focus_view(View *v);
 XRectangle *rects_of_view(View *v, unsigned int *num);
 int idx_of_view_id(unsigned short id);
@@ -318,7 +317,6 @@ void attach_to_view(View *v, Client *c);
 Client *sel_client_of_view(View *v);
 void restack_view(View *v);
 View *view_of_name(const char *name);
-void destroy_view(View *v);
 void update_views();
 unsigned int newcolw_of_view(View *v);
 
