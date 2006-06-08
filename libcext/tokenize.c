@@ -15,7 +15,7 @@ cext_tokenize(char **result, unsigned int reslen, char *str, char delim)
 
 	if(!str)
 		return 0;
-	for(n = str; *n == ' '; n++);
+	for(n = str; *n == delim; n++);
 	p = n;
 	for(i = 0; *n != 0;) {
 		if(i == reslen)
