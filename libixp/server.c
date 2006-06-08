@@ -35,15 +35,11 @@ void
 ixp_server_close_conn(IXPConn *c)
 {
 	IXPServer *s = c->srv;
-	IXPConn *tc;
+	IXPConn **tc;
 	IXPMap *m;
-	if(s->conn == c)
-		s->conn = c->next;
-	else {
-		for(tc=s->conn; tc && tc->next != c; tc=tc->next);
-		if(tc)
-			tc->next = c->next;
-	}
+	for(tc=&s->conn; *tc && *tc != c; tc=&(*tc)->next);
+	cext_assert(*tc == c);
+	*tc = c->next;
 	while((m = c->map)) {
 		c->map = m->next;
 		free(m);
