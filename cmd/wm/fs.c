@@ -93,6 +93,7 @@ static Bool
 unpack_qpath(PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel,
 		unsigned char *type, void **i1, void **i2, void **i3)
 {
+	*i1 = *i2 = *i3 = nil;
 	*type = wqid[qsel].ptype;
 
 	if(wqid[qsel].i1id) {
