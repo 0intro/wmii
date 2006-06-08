@@ -52,7 +52,7 @@ relax_column(Area *a)
 			fallthrough = True;
 		break;
 	case Colstack:
-		h = a->rect.height - frame_size * height_of_bar();
+		h = a->rect.height - (frame_size - 1) * height_of_bar();
 		if(h < 3 * height_of_bar())
 			fallthrough = True;
 	default:
@@ -175,7 +175,7 @@ arrange_column(Area *a, Bool dirty)
 		}
 		break;
 	case Colstack:
-		h = a->rect.height - num_frames * height_of_bar();
+		h = a->rect.height - (num_frames - 1) * height_of_bar();
 		if(h < 3 * height_of_bar())
 			goto Fallthrough;
 		for(f=a->frame; f; f=f->anext) {
