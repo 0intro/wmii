@@ -91,29 +91,29 @@ dir_of_qid(PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel)
 
 static Bool
 unpack_qpath(PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel,
-		unsigned char *type, int *i1, int *i2, int *i3)
+		unsigned char *type, void **i1, void **i2, void **i3)
 {
 	*type = wqid[qsel].ptype;
 
 	if(wqid[qsel].i1id) {
 		unsigned char dir_type = dir_of_qid(wqid, qsel);
 		if((dir_type == FsDGclient) || (dir_type == FsDclients))
-			*i1 = (int)client_of_id(wqid[qsel].i1id);
+			*i1 = (void *)client_of_id(wqid[qsel].i1id);
 		else {
 			switch(*type) {
 			case FsFdata:
 			case FsFcolors:
-			case FsDbar: *i1 = (int)bar_of_id(wqid[qsel].i1id); break;
-			default: *i1 = (int)view_of_id(wqid[qsel].i1id); break;
+			case FsDbar: *i1 = (void *)bar_of_id(wqid[qsel].i1id); break;
+			default: *i1 = (void *)view_of_id(wqid[qsel].i1id); break;
 			}
 		}
 		if(!*i1)
 			return False;
 		if(wqid[qsel].i2id) {
-			if(!(*i2 = (int)area_of_id(VIEW(*i1), wqid[qsel].i2id)))
+			if(!(*i2 = (void *)area_of_id(VIEW(*i1), wqid[qsel].i2id)))
 				return False;
 			if(wqid[qsel].i3id) 
-				if(!(*i3 = (int)frame_of_id(AREA(*i2), wqid[qsel].i3id)))
+				if(!(*i3 = (void *)frame_of_id(AREA(*i2), wqid[qsel].i3id)))
 					return False;
 		}
 	}
@@ -124,7 +124,7 @@ static char *
 name_of_qid(PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel)
 {
 	unsigned char dir_type, type;
-	int i1 = -1, i2 = -1, i3 = -1;
+	void *i1, *i2, *i3;
 	static char buf[256];
 
 	unpack_qpath(wqid, qsel, &type, &i1, &i2, &i3);
@@ -153,7 +153,7 @@ name_of_qid(PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel)
 				return nil;
 			if(VIEW(i1)->sel == AREA(i2))
 				return "sel";
-			snprintf(buf, sizeof(buf), "%u", i2);
+			snprintf(buf, sizeof(buf), "%u", idx_of_area(i2));
 			return buf;
 			break;
 		case FsDGclient:
@@ -167,7 +167,7 @@ name_of_qid(PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel)
 				return nil;
 			if(AREA(i2)->sel == FRAME(i3))
 				return "sel";
-			snprintf(buf, sizeof(buf), "%u", i3);
+			snprintf(buf, sizeof(buf), "%u", idx_of_frame(i3));
 			return buf;
 			break;
 		case FsFselcolors: return "selcolors"; break;
@@ -235,7 +235,7 @@ static unsigned char
 type_of_name(PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 {
 	unsigned char dir_type;
-	int i1 = -1, i2 = -1, i3 = -1;
+	void *i1, *i2, *i3;
 	unsigned int i;
 
 	unpack_qpath(wqid, qsel, &dir_type, &i1, &i2, &i3);
@@ -310,7 +310,8 @@ dyndir:
 static PackedQid *
 qid_of_name(PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 {
-	int i1 = -1, i2 = -1, i3 = -1, i;
+	void *i1, *i2, *i3;
+	int i;
 	unsigned char dir_type, type;
 	Client *c;
 	static PackedQid new;
@@ -487,7 +488,7 @@ static unsigned int
 stat_of_name(Stat *stat, char *name, PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel)
 {
 	unsigned char dir_type, type;
-	int i1 = 0, i2 = 0, i3 = 0;
+	void *i1, *i2, *i3;
 	char buf[256];
 	XRectangle fr;
 	Frame *f;
@@ -546,10 +547,10 @@ stat_of_name(Stat *stat, char *name, PackedQid wqid[IXP_MAX_WELEM], unsigned sho
 			snprintf(buf, sizeof(buf), "%d", idx_of_client(f->client));
 			break;
 		case FsDarea:
-			snprintf(buf, sizeof(buf), "%d", i2);
+			snprintf(buf, sizeof(buf), "%d", idx_of_area(i2));
 			break;
 		default:
-			snprintf(buf, sizeof(buf), "%d", i1);
+			return 0;
 			break;
 		}
 		return pack_stat(stat, wqid, qsel, name, strlen(buf), IXP_DMREAD);
@@ -769,7 +770,7 @@ xremove(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *t, *m = ixp_server_fid2map(c, fcall->fid);
 	unsigned char type;
-	int i1 = 0, i2 = 0, i3 = 0;
+	void *i1, *i2, *i3;
 
 	if(!m)
 		return Enofile;
@@ -813,7 +814,7 @@ xread(IXPConn *c, Fcall *fcall)
 	Area *a;
 	Client *cl;
 	Bar *b;
-	int i1 = 0, i2 = 0, i3 = 0;
+	void *i1, *i2, *i3;
 	unsigned int i, len;
 	unsigned char dir_type, type, *p = fcall->data;
 	char buf[256];
@@ -1075,7 +1076,7 @@ xread(IXPConn *c, Fcall *fcall)
 		case FsDGclient:
 		case FsDclient:
 			fcall->count = stat_of_names(&p, pwqid, m->sel, "props", "name",
-					"indes", "tags", "geom", "ctl", nil);
+					"index", "tags", "geom", "ctl", nil);
 			break;
 		case FsFctl:
 			return Enoperm;
@@ -1118,10 +1119,10 @@ xread(IXPConn *c, Fcall *fcall)
 						idx_of_client(FRAME(i3)->client));
 				break;
 			case FsDarea:
-				snprintf(buf, sizeof(buf), "%d", i2);
+				snprintf(buf, sizeof(buf), "%d", idx_of_area(i2));
 				break;
 			default:
-				snprintf(buf, sizeof(buf), "%d", i1);
+				return nil;
 				break;
 			}
 			if((fcall->count = strlen(buf)))
@@ -1251,7 +1252,8 @@ xwrite(IXPConn *c, Fcall *fcall)
 {
 	char buf[256], *tmp;
 	IXPMap *m = ixp_server_fid2map(c, fcall->fid);
-	int i, i1 = 0, i2 = 0, i3 = 0;
+	void *i1, *i2, *i3;
+	int i;
 	unsigned char dir_type, type;
 	unsigned int len;
 	Frame *f;
