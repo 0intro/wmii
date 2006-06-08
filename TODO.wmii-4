@@ -1,3 +1,4 @@
+- implement /lbar/ and /rbar/ (first label of /rbar/ should take up the rest available space)
 - UTF8 fixes with iconv?
 - re-introduce mouse based resizals (titlebar and border)
 - idea for column mode:
