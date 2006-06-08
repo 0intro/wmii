@@ -35,22 +35,24 @@ column_mode_of_str(char *arg)
 static void
 relax_column(Area *a)
 {
-	unsigned int i, yoff, h;
+	unsigned int frame_size, yoff, h;
+	Frame *f;
 	int hdiff;
 	Bool fallthrough = False;
 
-	if(!a->frame.size)
+	if(!a->frame)
 		return;
+
+	for(f=a->frame, frame_size=0; f; f=f->anext, frame_size++);
 
 	switch(a->mode) {
 	case Coldefault:
-		h = a->rect.height;
-		h /= a->frame.size;
+		h = a->rect.height / frame_size;
 		if(h < 2 * height_of_bar())
 			fallthrough = True;
 		break;
 	case Colstack:
-		h = a->rect.height - (a->frame.size - 1) * height_of_bar();
+		h = a->rect.height - frame_size * height_of_bar();
 		if(h < 3 * height_of_bar())
 			fallthrough = True;
 	default:
@@ -59,8 +61,7 @@ relax_column(Area *a)
 	}
 
 	if(fallthrough) {
-		for(i = 0; i < a->frame.size; i++) {
-			Frame *f = a->frame.data[i];
+		for(f=a->frame; f; f=f->anext) {
 			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 			f->rect.y = a->rect.y + (a->rect.height - f->rect.height) / 2;
 			resize_client(f->client, &f->rect, False);
@@ -70,8 +71,7 @@ relax_column(Area *a)
 
 	/* some relaxing from potential increment gaps */
 	h = 0;
-	for(i = 0; i < a->frame.size; i++) {
-		Frame *f = a->frame.data[i];
+	for(f=a->frame; f; f=f->anext) {
 		if(a->mode == Colmax) {
 			if(h < f->rect.height)
 				h = f->rect.height;
@@ -84,8 +84,7 @@ relax_column(Area *a)
 	if((a->mode == Coldefault) && (hdiff > 0)) {
 		int hx;
 		for(hx = 1; hx < hdiff; hx++)
-			for(i = 0; (hx < hdiff) && (i < a->frame.size); i++) {
-				Frame *f = a->frame.data[i];
+			for(f=a->frame; f && (hx < hdiff); f=f->anext) {
 				unsigned int tmp = f->rect.height;
 				f->rect.height += hx;
 				resize_client(f->client, &f->rect, True);
@@ -95,10 +94,9 @@ relax_column(Area *a)
 
 	if(hdiff < 0)
 		hdiff = 0;
-	hdiff /= a->frame.size;
+	hdiff /= frame_size;
 	yoff = a->rect.y + hdiff / 2;
-	for(i = 0; i < a->frame.size; i++) {
-		Frame *f = a->frame.data[i];
+	for(f=a->frame; f; f=f->anext) {
 		f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 		f->rect.y = yoff;
 		if(a->mode != Colmax)
@@ -110,37 +108,37 @@ relax_column(Area *a)
 void
 scale_column(Area *a, float h)
 {
-	unsigned int i, yoff;
+	unsigned int yoff, frame_size = 0;
+	Frame *f;
 	unsigned int min_height = 2 * height_of_bar();
 	float scale, dy = 0;
 	int hdiff;
 
-	if(!a->frame.size)
+	if(!a->frame)
 		return;
 
-	for(i = 0; i < a->frame.size; i++)
-		dy += a->frame.data[i]->rect.height;
+	for(f=a->frame; f; f=f->anext, frame_size++)
+		dy += f->rect.height;
+
 	scale = h / dy;
 	yoff = 0;
-	for(i = 0; i < a->frame.size; i++) {
-		Frame *f = a->frame.data[i];
+	for(f=a->frame; f; f=f->anext) {
 		f->rect.height *= scale;
-		if(i == a->frame.size - 1)
+		if(!f->anext)
 			f->rect.height = h - yoff;
 		yoff += f->rect.height;
 	}
 
 	/* min_height can only be respected when there is enough space; the caller should guarantee this */
-	if(a->frame.size * min_height > h)
+	if(frame_size * min_height > h)
 		return;
 	yoff = 0;
-	for(i = 0; i < a->frame.size; i++) {
-		Frame *f = a->frame.data[i];
+	for(f=a->frame; f; f=f->anext, frame_size--) {
 		if(f->rect.height < min_height)
 			f->rect.height = min_height;
-		else if((hdiff = yoff + f->rect.height - h + (a->frame.size - i) * min_height) > 0)
+		else if((hdiff = yoff + f->rect.height - h + frame_size * min_height) > 0)
 			f->rect.height -= hdiff;
-		if(i == a->frame.size - 1)
+		if(!f->anext)
 			f->rect.height = h - yoff;
 		yoff += f->rect.height;
 	}
@@ -149,24 +147,26 @@ scale_column(Area *a, float h)
 void
 arrange_column(Area *a, Bool dirty)
 {
-	unsigned int i, yoff = a->rect.y, h;
+	unsigned int num_frames = 0, yoff = a->rect.y, h;
+	Frame *f;
 	unsigned int min_height = 2 * height_of_bar();
 
-	if(!a->frame.size)
+	if(!a->frame)
 		return;
+
+	for(f=a->frame; f; f=f->anext, num_frames++);
 
 	switch(a->mode) {
 	case Coldefault:
-		h = a->rect.height / a->frame.size;
+		h = a->rect.height / num_frames;
 		if(h < min_height)
 			goto Fallthrough;
 		if(dirty) {
-			for(i = 0; i < a->frame.size; i++)
-				a->frame.data[i]->rect.height = h;
+			for(f=a->frame; f; f=f->anext)
+				f->rect.height = h;
 		}
 		scale_column(a, a->rect.height);
-		for(i = 0; i < a->frame.size; i++) {
-			Frame *f = a->frame.data[i];
+		for(f=a->frame; f; f=f->anext) {
 			f->rect.x = a->rect.x;
 			f->rect.y = yoff;
 			f->rect.width = a->rect.width;
@@ -175,14 +175,13 @@ arrange_column(Area *a, Bool dirty)
 		}
 		break;
 	case Colstack:
-		h = a->rect.height - (a->frame.size - 1) * height_of_bar();
+		h = a->rect.height - num_frames * height_of_bar();
 		if(h < 3 * height_of_bar())
 			goto Fallthrough;
-		for(i = 0; i < a->frame.size; i++) {
-			Frame *f = a->frame.data[i];
+		for(f=a->frame; f; f=f->anext) {
 			f->rect = a->rect;
 			f->rect.y = yoff;
-			if(i == a->sel)
+			if(f == a->sel)
 				f->rect.height = h;
 			else
 				f->rect.height = height_of_bar();
@@ -192,8 +191,7 @@ arrange_column(Area *a, Bool dirty)
 		break;
 Fallthrough:
 	case Colmax:
-		for(i = 0; i < a->frame.size; i++) {
-			Frame *f = a->frame.data[i];
+		for(f=a->frame; f; f=f->anext) {
 			f->rect = a->rect;
 			resize_client(f->client, &f->rect, True);
 		}
@@ -209,10 +207,9 @@ Fallthrough:
 static void
 match_horiz(Area *a, XRectangle *r)
 {
-	unsigned int i;
+	Frame *f;
 
-	for(i = 0; i < a->frame.size; i++) {
-		Frame *f = a->frame.data[i];
+	for(f=a->frame; f; f=f->anext) {
 		f->rect.x = r->x;
 		f->rect.width = r->width;
 		resize_client(f->client, &f->rect, False);
@@ -226,17 +223,14 @@ drop_resize(Frame *f, XRectangle *new)
 	Area *west = nil, *east = nil, *a = f->area;
 	View *v = a->view;
 	Frame *north = nil, *south = nil;
-	unsigned int i;
 	unsigned int min_height = 2 * height_of_bar();
 
-	for(i = 1; (i < v->area.size) && (v->area.data[i] != a); i++);
+	for(west=v->area->next; west && west->next != a; west=west->next);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
-	west = (i > 1) ? v->area.data[i - 1] : nil;
-	east = i + 1 < v->area.size ? v->area.data[i + 1] : nil;
+	east = (west && west->next && west->next->next) ? west->next->next : nil;
 
-	for(i = 0; (i < a->frame.size) && (a->frame.data[i] != f); i++);
-	north = i ? a->frame.data[i - 1] : nil;
-	south = i + 1 < a->frame.size ? a->frame.data[i + 1] : nil;
+	for(north=a->frame; north && north->anext != f; north=north->anext);
+	south = (north && north->anext && north->anext->anext) ? north->anext->anext : nil;
 
 	/* validate (and trim if necessary) horizontal resize */
 	if(new->width < MIN_COLWIDTH) {
@@ -329,22 +323,18 @@ AfterVertical:
 static Frame *
 frame_of_point(XPoint *pt)
 {
-	unsigned int i, j;
 	Frame *f = nil;
-	View *v = view.size ? view.data[sel] : nil;
+	Area *a;
+	View *v = sel;
 
 	if(!v)
 		return nil;
 
-	for(i = 1; (i < v->area.size) &&
-			!blitz_ispointinrect(pt->x, pt->y, &v->area.data[i]->rect); i++);
-	if(i < v->area.size) {
-		Area *a = v->area.data[i];
-		for(j = 0; j < a->frame.size &&
-				!blitz_ispointinrect(pt->x, pt->y, &a->frame.data[j]->rect); j++);
-		if(j < a->frame.size)
-			f = a->frame.data[j];
-	}
+	for(a=v->area->next; a && !blitz_ispointinrect(pt->x, pt->y, &a->rect);
+		a=a->next);
+	if(a)
+		for(f=a->frame; f && !blitz_ispointinrect(pt->x, pt->y, &f->rect);
+			f=f->anext);
 	return f;
 }
 
@@ -353,60 +343,57 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 {
 	Area *tgt = nil, *src = f->area;
 	View *v = src->view;
-	unsigned int i;
-	int fidx;
-	Frame *ft;
+	Frame *ft, *tf;
 
 	if(!pt)
 		return;
 
-	for(i = 1; (i < v->area.size) &&
-			!blitz_ispointinrect(pt->x, pt->y, &v->area.data[i]->rect); i++);
-	if(i < v->area.size) {
+	for(tgt=v->area->next; tgt && !blitz_ispointinrect(pt->x, pt->y, &tgt->rect);
+		tgt=tgt->next);
+	if(tgt) {
 		if(pt->x <= 5) {
-			if(src->frame.size > 1 || idx_of_area(src) != 1) {
-				tgt = new_column(v, 1, 0);
+			if((src->frame && src->frame->anext) || (src != v->area->next)) {
+				tgt = new_column(v, v->area->next, 0);
 				send_to_area(tgt, src, f->client);
 			}
 		}
 		else if(pt->x >= rect.width - 5) {
-			if(src->frame.size > 1 || idx_of_area(src) != v->area.size - 1) {
-				tgt = new_column(v, v->area.size, 0);
+			if((src->frame && src->frame->anext) || src->next) {
+				for(tgt=src; tgt->next; tgt=tgt->next);
+				tgt = new_column(v, tgt, 0);
 				send_to_area(tgt, src, f->client);
 			}
 		}
-		else if(src != (tgt = v->area.data[i])) {
+		else if(src != tgt) {
 			Client *c = f->client;
 			Bool before;
 			if(!(ft = frame_of_point(pt)) || (f == ft))
 				return;
-			fidx = idx_of_frame(ft);
 			before = pt->y < (ft->rect.y + ft->rect.height / 2);
 			send_to_area(tgt, src, c);
 
-			f = c->frame.data[c->sel];
-			cext_vdetach(vector_of_frames(&tgt->frame), f);
+			f = c->sel;
+			remove_frame(f);
 
 			if(before)
-				cext_vattachat(vector_of_frames(&tgt->frame), f, fidx);
+				insert_frame(tf, f, True);
 			else
-				cext_vattachat(vector_of_frames(&tgt->frame), f, fidx + 1);
+				insert_frame(ft, f, False);
 
-			tgt->sel = idx_of_frame(f);
+			tgt->sel = f;
 			arrange_column(tgt, False);
 		}
-		else {
+		else { /* !tgt */
 			if(!(ft = frame_of_point(pt)) || (f == ft))
 				return;
-			cext_vdetach(vector_of_frames(&tgt->frame), f);
-			fidx = idx_of_frame(ft);
+			remove_frame(f);
 
 			if(pt->y < (ft->rect.y + ft->rect.height / 2))
-				cext_vattachat(vector_of_frames(&tgt->frame), f, fidx);
+				insert_frame(tf, f, True);
 			else
-				cext_vattachat(vector_of_frames(&tgt->frame), f, fidx + 1);
+				insert_frame(ft, f, False);
 
-			tgt->sel = idx_of_frame(f);
+			tgt->sel = f;
 			arrange_column(tgt, False);
 		}
 	}
@@ -415,7 +402,7 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 void
 resize_column(Client *c, XRectangle *r, XPoint *pt)
 {
-	Frame *f = c->frame.data[c->sel];
+	Frame *f = c->sel;
 	if((f->rect.width == r->width) && (f->rect.height == r->height))
 		drop_move(f, r, pt);
 	else
@@ -423,9 +410,9 @@ resize_column(Client *c, XRectangle *r, XPoint *pt)
 }
 
 Area *
-new_column(View *v, unsigned int pos, unsigned int w) {
-	Area *a;
-	if(!(a = create_area(v, pos, w)))
+new_column(View *v, Area *pos, unsigned int w) {
+	Area *a = create_area(v, pos, w);
+	if(!a)
 		return nil;
 	arrange_view(v);
 	return a;

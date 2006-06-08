@@ -67,21 +67,21 @@ static void
 handle_buttonrelease(XEvent *e)
 {
 	Client *c;
+	Bar *b;
 	XButtonPressedEvent *ev = &e->xbutton;
 	static char buf[32];
 	if(ev->window == barwin) {
-		unsigned int i;
-		for(i = 0; i < bar.size; i++)
-			if(blitz_ispointinrect(ev->x, ev->y, &bar.data[i]->rect)) {
+		for(b=bar; b; b=b->next)
+			if(blitz_ispointinrect(ev->x, ev->y, &b->rect)) {
 				snprintf(buf, sizeof(buf), "BarClick %s %d\n",
-						bar.data[i]->name, ev->button);
+						b->name, ev->button);
 				write_event(buf);
 				return;
 			}
 	}
-	else if((c = frame_of_win(ev->window)) && c->frame.size) {
+	else if((c = frame_of_win(ev->window)) && c->frame) {
 		snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
-				idx_of_client_id(c->id), ev->button);
+				idx_of_client(c), ev->button);
 		write_event(buf);
 	}
 }
@@ -121,10 +121,10 @@ handle_configurerequest(XEvent *e)
 	c = client_of_win(ev->window);
 	ev->value_mask &= ~CWSibling;
 	if(c) {
-		if(c->frame.size && !idx_of_area(c->frame.data[c->sel]->area)) {
+		if(c->frame && c->sel->area == c->sel->area->view->area) {
 			gravitate_client(c, True);
 
-			if(c->frame.size) {
+			if(c->frame) {
 				if(ev->value_mask & CWX)
 					c->rect.x = ev->x;
 				if(ev->value_mask & CWY)
@@ -139,8 +139,8 @@ handle_configurerequest(XEvent *e)
 
 			gravitate_client(c, False);
 
-			if(c->frame.size) {
-				Frame *f = c->frame.data[c->sel];
+			if(c->frame) {
+				Frame *f = c->sel;
 				if(c->rect.width >= rect.width && c->rect.height >= rect.height) {
 					f->rect.y = wc.y = -height_of_bar();
 					f->rect.x = wc.x = -def.border;
@@ -155,7 +155,7 @@ handle_configurerequest(XEvent *e)
 				wc.border_width = 1;
 				wc.sibling = None;
 				wc.stack_mode = ev->detail;
-				if(f->area->view != view.data[sel])
+				if(f->area->view != sel)
 					wc.x += 2 * rect.width;
 				XConfigureWindow(dpy, c->framewin, ev->value_mask, &wc);
 				configure_client(c);
@@ -168,7 +168,7 @@ handle_configurerequest(XEvent *e)
 	wc.width = ev->width;
 	wc.height = ev->height;
 
-	if(c && c->frame.size) {
+	if(c && c->frame) {
 		wc.x = def.border;
 		wc.y = height_of_bar();
 		wc.width = c->rect.width;
@@ -204,11 +204,11 @@ handle_enternotify(XEvent *e)
 		return;
 
 	if((c = client_of_win(ev->window))) {
-		Client *old = sel_client_of_view(view.data[sel]);
-		Frame *f = c->frame.data[c->sel];
+		Client *old = selected_client();
+		Frame *f = c->sel;
 		Area *a = f->area;
 		if(a->mode == Colmax)
-			c = a->frame.data[a->sel]->client;
+			c = a->sel->client;
 		if(c != old)
 			focus(c, False);
 	}

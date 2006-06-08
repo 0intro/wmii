@@ -8,43 +8,44 @@
 
 #include "wm.h"
 
-static int
-comp_bar(const void *b1, const void *b2)
-{
-	Bar *bb1 = *(Bar **)b1;
-	Bar *bb2 = *(Bar **)b2;
-	return strcmp(bb1->name, bb2->name);
-}
-
-static Vector *
-vector_of_bars(BarVector *bv)
-{
-	return (Vector *) bv;
-}
+Bar *free_bars = nil;
 
 Bar *
-create_bar(char *name, Bool intern)
+create_bar(char *name)
 {
 	static unsigned int id = 1;
-	Bar *b = bar_of_name(name);
-
+	Bar **i, *b = bar_of_name(name);;
 	if(b)
 		return b;
-	b = cext_emallocz(sizeof(Bar));
+
+	if(free_bars) {
+		b = free_bars;
+		free_bars = b->next;
+	}
+	else
+		b = cext_emallocz(sizeof(Bar));
+
 	b->id = id++;
 	cext_strlcpy(b->name, name, sizeof(b->name));
-	cext_strlcpy(b->colstr, def.selcolor, sizeof(b->colstr));
+	cext_strlcpy(b->colstr, def.normcolor, sizeof(b->colstr));
 	b->color = def.norm;
-	cext_vattach(vector_of_bars(&bar), b);
-	qsort(bar.data, bar.size, sizeof(Bar *), comp_bar);
+
+	for(i=&bar; *i && (strcmp((*i)->name, name) < 0); i=&(*i)->next);
+	b->next = *i;
+	*i = b;
+	
 	return b;
 }
 
 void
 destroy_bar(Bar *b)
 {
-	cext_vdetach(vector_of_bars(&bar), b);
-	free(b);
+	Bar **i;
+	for(i=&bar; *i && *i != b; i=&(*i)->next);
+	*i = b->next;
+
+	b->next = free_bars;
+	free_bars = b;
 }
 
 unsigned int
@@ -57,7 +58,10 @@ height_of_bar()
 void
 resize_bar()
 {
-	unsigned int i, j;
+	View *v;
+	Area *a;
+	Frame *f;
+
 	brect = rect;
 	brect.height = height_of_bar();
 	brect.y = rect.height - brect.height;
@@ -68,14 +72,13 @@ resize_bar()
 			DefaultDepth(dpy, screen));
 	XSync(dpy, False);
 	draw_bar();
-	for(i = 0; i < view.size; i++) {
-		for(j = 1; j < view.data[i]->area.size; j++) {
-			Area *a = view.data[i]->area.data[j];
+
+	for(v=view; v; v=v->next) {
+		for(a = v->area; a; a=a->next) {
 			a->rect.height = rect.height - brect.height;
 			arrange_column(a, False);
 		}
-		for(j = 0; j < view.data[i]->area.data[0]->frame.size; j++) {
-			Frame *f = view.data[i]->area.data[0]->frame.data[j];
+		for(f=v->area->frame; f; f=f->anext) {
 			resize_client(f->client, &f->rect, False);
 		}
 	}
@@ -84,7 +87,8 @@ resize_bar()
 void
 draw_bar()
 {
-	unsigned int i = 0, w = 0;
+	unsigned int i = 0, w = 0, size = 0;
+	Bar *exp = nil;
 	BlitzDraw d = { 0 };
 	Bar *b = nil;
 
@@ -98,11 +102,10 @@ draw_bar()
 	blitz_drawlabel(dpy, &d);
 	blitz_drawborder(dpy, &d);
 
-	if(!bar.size)
+	if(!bar)
 		goto MapBar;
 
-	for(i = 0; (i < bar.size) && (w < brect.width); i++) {
-		b = bar.data[i];
+	for(b=bar; b && (w < brect.width); b=b->next, size++) {
 		b->rect.x = 0;
 		b->rect.y = 0;
 		b->rect.width = brect.height;
@@ -112,26 +115,27 @@ draw_bar()
 		w += b->rect.width;
 	}
 
-	if(i != bar.size) { /* give all bars same width */
-		w = brect.width / bar.size;
-		for(i = 0; i < bar.size; i++) {
-			b = bar.data[i];
+	if(b) { /* give all bars same width */
+		for(; b; b=b->next, size++);
+		w = brect.width / size;
+		for(b=bar; b; b=b->next) {
 			b->rect.x = i * w;
 			b->rect.width = w;
 		}
 	}
 	else { /* expand bar properly */
-		bar.data[bar.size - 1]->rect.width += (brect.width - w);
-		for(i = 1; i < bar.size; i++)
-			bar.data[i]->rect.x = bar.data[i - 1]->rect.x + bar.data[i - 1]->rect.width;
+		for(exp = bar; exp && exp->next; exp=exp->next);
+		if(exp)
+			exp->rect.width += (brect.width - w);
+		for(b=bar; b->next; b=b->next)
+			b->next->rect.x = b->rect.x + b->rect.width;
 	}
 
-	for(i = 0; i < bar.size; i++) {
-		b = bar.data[i];
+	for(b=bar; b; b=b->next) {
 		d.color = b->color;
 		d.rect = b->rect;
 		d.data = b->data;
-		if(i == bar.size - 1)
+		if(b == exp)
 			d.align = EAST;
 		else
 			d.align = CENTER;
@@ -143,35 +147,21 @@ MapBar:
 	XSync(dpy, False);
 }
 
-int
-idx_of_bar(Bar *b)
-{
-	int i;
-	for(i = 0; i < bar.size; i++)
-		if(bar.data[i] == b)
-			return i;
-	return -1;
-}
-
-int
-idx_of_bar_id(unsigned short id)
-{
-	int i;
-	for(i = 0; i < bar.size; i++)
-		if(bar.data[i]->id == id)
-			return i;
-	return -1;
-}
-
 Bar *
 bar_of_name(const char *name)
 {
 	static char buf[256];
-	unsigned int i;
+	Bar *b;
 
  	cext_strlcpy(buf, name, sizeof(buf));
-	for(i = 0; i < bar.size; i++)
-		if(!strncmp(bar.data[i]->name, name, sizeof(bar.data[i]->name)))
-			return bar.data[i];
-	return nil;
+	for(b=bar; b && strncmp(b->name, name, sizeof(b->name)); b=b->next);
+	return b;
+}
+
+Bar *
+bar_of_id(unsigned short id)
+{
+	Bar *b;
+	for(b=bar; b && b->id != id; b=b->next);
+	return b;
 }

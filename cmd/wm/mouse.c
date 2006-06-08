@@ -111,8 +111,8 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
           BlitzAlign *mask, int snap)
 {
 	SnapArgs a = { rects, num, 0, 0, 0, 0, *mask, nil };
-	BlitzAlign ret;
 	int dx = snap + 1, dy = snap + 1;
+	BlitzAlign ret;
 
 	a.x1 = current->x;
 	a.x2 = current->x + current->width;
@@ -140,11 +140,13 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 
 	rect_morph_xy(current, abs(dx) <= snap ? dx : 0,
 			abs(dy) <= snap ? dy : 0, mask);
+
 	ret = *mask;
 	if(abs(dx) <= snap)
 		ret ^= EAST|WEST;
 	if(abs(dy) <= snap)
 		ret ^= NORTH|SOUTH;
+
 	return ret ^ CENTER;
 }
 
@@ -176,10 +178,10 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	Window dummy;
 	XEvent ev;
 	unsigned int num = 0, di;
-	Frame *f = c->frame.data[c->sel];
-	int aidx = idx_of_area(f->area);
-	int snap = aidx ? 0 : rect.height / 66;
-	XRectangle *rects = aidx ? nil : rects_of_view(f->area->view, &num);
+	Frame *f = c->sel;
+	Bool floating = (f->area == f->area->view->area);
+	int snap = floating ? rect.height / 66 : 0;
+	XRectangle *rects = floating ? rects_of_view(f->area->view, &num) : nil;
 	XRectangle frect = f->rect, ofrect;
 	XRectangle origin = frect;
 	XPoint pt;
@@ -188,7 +190,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	rx = (float)ox / frect.width;
 	ry = (float)oy / frect.height;
 
-	if (!aidx || align != CENTER) {
+	if (floating || align != CENTER) {
 		px = ox = frect.width / 2;
 		py = oy = frect.height / 2;
 		if(align&NORTH)
@@ -218,7 +220,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 		switch (ev.type) {
 		case ButtonRelease:
 			draw_xor_border(&frect);
-			if(aidx)
+			if(!floating)
 				resize_column(c, &frect, (align == CENTER) ? &pt : nil);
 			else
 				resize_client(c, &frect, False);
@@ -235,20 +237,20 @@ do_mouse_resize(Client *c, BlitzAlign align)
 		case MotionNotify:
 			ofrect = frect;
 
+			pt.x = ev.xmotion.x;
+			pt.y = ev.xmotion.y;
 			XTranslateCoordinates(dpy, c->framewin, root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
-			pt.x = px;
-			pt.y = py;
 
 			rect_morph_xy(&origin, px-ox, py-oy, &align);
 			frect=origin;
 			ox=px; oy=py;
 
-			if(!aidx)
+			if(floating)
 				grav = snap_rect(rects, num, &frect, &align, snap);
 			else
 				grav = align ^ CENTER;
-			match_sizehints(c, &frect, aidx, grav);
+			match_sizehints(c, &frect, floating, grav);
 
 			draw_xor_border(&ofrect);
 			draw_xor_border(&frect);

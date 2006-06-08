@@ -16,25 +16,19 @@ enum {
 	VALUE
 };
 
-static Vector *
-vector_of_rules(RuleVector *rv)
-{
-	return (Vector *) rv;
-}
-
 void
-update_rules(RuleVector *rule, const char *data)
+update_rules(Rule **rule, const char *data)
 {
 	int mode = IGNORE;
+	Rule *rul;
 	char *p, *r = nil, *v = nil, regex[256], value[256];
 
 	if(!data || !strlen(data))
 		return;
 
-	while(rule->size) {
-		Rule *rul = rule->data[0];
+	while((rul = *rule)) {
+		*rule = rul->next;
 		regfree(&rul->regex);
-		cext_vdetach(vector_of_rules(rule), rul);
 		free(rul);
 	}
 
@@ -63,15 +57,15 @@ update_rules(RuleVector *rule, const char *data)
 			break;
 		case VALUE:
 			if(*p == '\n' || *p == 0) {
-				Rule *rul = cext_emallocz(sizeof(Rule));
+				*rule = cext_emallocz(sizeof(Rule));
 				*v = 0;
 				cext_trim(value, " \t/");
-				if(!regcomp(&rul->regex, regex, 0)) {
-					cext_strlcpy(rul->value, value, sizeof(rul->value));
-					cext_vattach(vector_of_rules(rule), rul);
+				if(!regcomp(&(*rule)->regex, regex, 0)) {
+					cext_strlcpy((*rule)->value, value, sizeof(rul->value));
+					rule = &(*rule)->next;
 				}
 				else
-					free(rul);
+					free(*rule);
 				mode = IGNORE;
 			}
 			else {

@@ -18,18 +18,6 @@
 
 static unsigned char *msg[IXP_MAX_MSG];
 
-static Vector *
-vector_of_conns(ConnVector *cv)
-{
-	return (Vector *) cv;
-}
-
-Vector *
-ixp_vector_of_maps(MapVector *mv)
-{
-	return (Vector *) mv;
-}
-
 IXPConn *ixp_server_open_conn(IXPServer *s, int fd, void (*read)(IXPConn *c),
 		void (*close)(IXPConn *c))
 {
@@ -38,7 +26,8 @@ IXPConn *ixp_server_open_conn(IXPServer *s, int fd, void (*read)(IXPConn *c),
 	c->srv = s;
 	c->read = read;
 	c->close = close;
-	cext_vattach(vector_of_conns(&s->conn), c);
+	c->next = s->conn;
+	s->conn = c;
 	return c;
 }
 
@@ -46,10 +35,17 @@ void
 ixp_server_close_conn(IXPConn *c)
 {
 	IXPServer *s = c->srv;
-	cext_vdetach(vector_of_conns(&s->conn), c);
-	while(c->map.size) {
-		IXPMap *m =  c->map.data[0];
-		cext_vdetach(ixp_vector_of_maps(&c->map), m);
+	IXPConn *tc;
+	IXPMap *m;
+	if(s->conn == c)
+		s->conn = c->next;
+	else {
+		for(tc=s->conn; tc && tc->next != c; tc=tc->next);
+		if(tc)
+			tc->next = c->next;
+	}
+	while((m = c->map)) {
+		c->map = m->next;
 		free(m);
 	}
 	shutdown(c->fd, SHUT_RDWR);
@@ -60,24 +56,24 @@ ixp_server_close_conn(IXPConn *c)
 static void
 prepare_select(IXPServer *s)
 {
-	int i;
+	IXPConn *c;
 	FD_ZERO(&s->rd);
-	for(i = 0; i < s->conn.size; i++) {
-		if(s->maxfd < s->conn.data[i]->fd)
-			s->maxfd = s->conn.data[i]->fd;
-		if(s->conn.data[i]->read)
-			FD_SET(s->conn.data[i]->fd, &s->rd);
+	for(c=s->conn; c; c=c->next) {
+		if(s->maxfd < c->fd)
+			s->maxfd = c->fd;
+		if(c->read)
+			FD_SET(c->fd, &s->rd);
 	}
 }
 
 static void
 handle_conns(IXPServer *s)
 {
-	int i;
-	for(i = 0; i < s->conn.size; i++)
-		if(FD_ISSET(s->conn.data[i]->fd, &s->rd) && s->conn.data[i]->read)
+	IXPConn *c;
+	for(c=s->conn; c; c=c->next)
+		if(FD_ISSET(c->fd, &s->rd) && c->read)
 			/* call read handler */
-			s->conn.data[i]->read(s->conn.data[i]);
+			c->read(c);
 }
 
 char *
@@ -104,11 +100,9 @@ ixp_server_loop(IXPServer *s)
 IXPMap *
 ixp_server_fid2map(IXPConn *c, unsigned int fid)
 {
-	unsigned int i;
-	for(i = 0; i < c->map.size; i++)
-		if(c->map.data[i]->fid == fid)
-			return c->map.data[i];
-	return nil;
+	IXPMap *m;
+	for(m=c->map; m && m->fid != fid; m=m->next);
+	return m;
 }
 
 unsigned int
@@ -155,8 +149,8 @@ ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr)
 void
 ixp_server_close(IXPServer *s)
 {
-	unsigned int i;
-	for(i = 0; i < s->conn.size; i++)
-		if(s->conn.data[i]->close)
-			s->conn.data[i]->close(s->conn.data[i]);
+	IXPConn *c;
+	for(c=s->conn; c; c=c->next)
+		if(c->close)
+			c->close(c);
 }

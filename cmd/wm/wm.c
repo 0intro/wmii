@@ -197,12 +197,9 @@ startup_error_handler(Display * dpy, XErrorEvent * error)
 static void
 cleanup()
 {
-	unsigned int i;
-	for(i = 0; i<client.size; i++) {
-		Client *c = client.data[i];
-		Frame *cf = c->frame.data[c->sel];
-		reparent_client(c, root, cf->rect.x, cf->rect.y);
-	}
+	Client *c;
+	for(c=client; c; c=c->next)
+		reparent_client(c, root, c->sel->rect.x, c->sel->rect.y);
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 	XSync(dpy, False);
 }
@@ -278,23 +275,21 @@ main(int argc, char *argv[])
 
 	/* IXP server */
 	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);
-	root_qid.dir_type = FsDroot;
+	root_qid.qid.dir_type = FsDroot;
 	root_qid.type = IXP_QTDIR;
 	root_qid.version = 0;
-	root_qid.path = pack_qpath(FsDroot, 0, 0, 0);
+	root_qid.ptype = FsDroot;
 
 	/* X server */
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
 	init_x_event_handler();
 
-	view.size = client.size = sel = 0;
-	view.data = nil;
-	client.data = nil;
+	view = nil;
+	client = nil;
+	sel = nil;
+	bar = nil;
+	key = nil;
 
-	key.data = nil;
-	key.size = 0;
-	bar.data = nil;
-	bar.size = 0;
 	def.colrules = nil;
 	def.colrulessz = 0;
 	def.tagrules = nil;

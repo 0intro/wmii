@@ -4,96 +4,79 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "wm.h"
 
-static Vector *
-vector_of_views(ViewVector *vv)
-{
-	return (Vector *) vv;
-}
-
-static int
-comp_view_name(const void *v1, const void *v2)
-{
-	View *vv1 = *(View **)v1;
-	View *vv2 = *(View **)v2;
-	return strcmp(vv1->name, vv2->name);
-}
-
-static View *
-create_view(const char *name)
-{
-	static unsigned short id = 1;
-	static char buf[256];
-	View *v = cext_emallocz(sizeof(View));
-
-	v->id = id++;
-	cext_strlcpy(v->name, name, sizeof(v->name));
-	create_area(v, v->area.size, 0);
-	create_area(v, v->area.size, 0);
-	cext_vattach(vector_of_views(&view), v);
-	qsort(view.data, view.size, sizeof(View *), comp_view_name);
-	snprintf(buf, sizeof(buf), "CreateTag %s\n", name);
-	write_event(buf);
-	return v;
-}
+static char buf[256];
 
 static void
 assign_sel_view(View *v)
 {
-	static char buf[256];
-	int i = idx_of_view(v);
-
-	i = idx_of_view(v);
-	if(sel < view.size && i != sel) {
-		snprintf(buf, sizeof(buf), "UnfocusTag %s\n", view.data[sel]->name);
+	if(sel && sel != v) {
+		snprintf(buf, sizeof(buf), "UnfocusTag %s\n", sel->name);
 		write_event(buf);
 	}
-	snprintf(buf, sizeof(buf), "FocusTag %s\n", v->name);
+	sel = v;
+	snprintf(buf, sizeof(buf), "FocusTag %s\n", sel->name);
 	write_event(buf);
-	sel = i;
 }
 
-static void
+View *
+create_view(const char *name)
+{
+	static unsigned short id = 1;
+	View **i, *v = cext_emallocz(sizeof(View));
+
+	v->id = id++;
+	cext_strlcpy(v->name, name, sizeof(v->name));
+	create_area(v, nil, 0);
+	create_area(v, v->area, 0);
+
+	for(i=&view; *i && (strcmp((*i)->name, name) < 0); i=&(*i)->next);
+	v->next = *i;
+	*i = v;
+
+	snprintf(buf, sizeof(buf), "CreateTag %s\n", v->name);
+	write_event(buf);
+	if(!sel)
+		assign_sel_view(v);
+
+	return v;
+}
+
+void
 destroy_view(View *v)
 {
-	static char buf[256];
-	while(v->area.size)
-		destroy_area(v->area.data[0]);
+	Area *a;
+	View **i;
 
-	cext_vdetach(vector_of_views(&view), v);
-	if(sel >= view.size && view.size)
-		assign_sel_view(view.data[0]);
+	for(a=v->area; a; a=a->next)
+		destroy_area(a);
+
+	for(i=&view; *i && *i != v; i=&(*i)->next);
+	*i = v->next;
+
+	if(sel == v)
+		for(sel=view; sel && sel->next != *i; sel=sel->next);
+
 	snprintf(buf, sizeof(buf), "DestroyTag %s\n", v->name);
 	write_event(buf);
 	free(v);
 }
 
-int
-idx_of_view(View *v)
-{
-	int i;
-	for(i = 0; i < view.size; i++)
-		if(v == view.data[i])
-			return i;
-	return -1;
-}
-
 static void
 update_frame_selectors(View *v)
 {
-	unsigned int i, j;
+	Client *c;
+	Frame *f;
 
 	/* select correct frames of clients */
-	for(i = 0; i < client.size; i++) {
-		Client *c = client.data[i];
-		for(j = 0; j < c->frame.size; j++)
-			if(c->frame.data[j]->area->view == v) {
-				c->sel = j;
-				break;
-			}
+	for(c=client; c; c=c->next) {
+		for(f=c->frame; f && f->area->view != v; f=f->cnext);
+		if(f)
+			c->sel = f;
 	}
 }
 
@@ -101,7 +84,8 @@ void
 focus_view(View *v)
 {
 	Client *c;
-	unsigned int i;
+
+	cext_assert(v);
 
 	XGrabServer(dpy);
 	assign_sel_view(v);
@@ -109,19 +93,21 @@ focus_view(View *v)
 	update_frame_selectors(v);
 
 	/* gives all(!) clients proper geometry (for use of different tags) */
-	for(i = 0; i < client.size; i++)
-		if(client.data[i]->frame.size) {
-			Frame *f = client.data[i]->frame.data[client.data[i]->sel];
-			if(f->area->view == v) {
-				XMoveWindow(dpy, client.data[i]->framewin, f->rect.x, f->rect.y);
-				resize_client(client.data[i], &f->rect, False);
+	for(c=client; c; c=c->next)
+		if(c->sel) {
+			Frame *f = c->sel;
+			if(f && f->area->view == v) {
+				XMoveWindow(dpy, c->framewin, f->rect.x, f->rect.y);
+				resize_client(c, &f->rect, False);
 			}
 			else
-				XMoveWindow(dpy, client.data[i]->framewin,
+				XMoveWindow(dpy, c->framewin,
 							2 * rect.width + f->rect.x, f->rect.y);
 		}
-	if((c = sel_client_of_view(v)))
+
+	if((c = selected_client()))
 		focus_client(c, True);
+
 	draw_clients();
 	XSync(dpy, False);
 	XUngrabServer(dpy);
@@ -132,40 +118,32 @@ XRectangle *
 rects_of_view(View *v, unsigned int *num)
 {
 	XRectangle *result = nil;
-	unsigned int i;
+	Frame *f;
 
-	*num = v->area.data[0]->frame.size + 2;
+	*num = 2;
+	for(f=v->area->frame; f; f=f->anext, (*num)++);
 
-	if(*num) {
-		result = cext_emallocz(*num * sizeof(XRectangle));
-		for(i = 0; i < v->area.data[0]->frame.size; i++)
-			result[i] = v->area.data[0]->frame.data[i]->rect;
-		result[*num - 1] = rect;
-		result[*num - 2] = brect;
-	}
-	return result;
+	result = cext_emallocz(*num * sizeof(XRectangle));
+	for(f=v->area->frame; f; f=f->anext)
+		*(result++) = f->rect;
+	*(result++) = rect;
+	*(result++) = brect;
+	return (result - *num);
 }
 
-int
-idx_of_view_id(unsigned short id)
-{
-	int i;
-	for(i = 0; i < view.size; i++)
-		if(view.data[i]->id == id)
-			return i;
-	return -1;
+View *
+view_of_id(unsigned short id) {
+	View *v;
+	for(v = view; v && v->id != id; v=v->next);
+	return v;
 }
 
 View *
 view_of_name(const char *name)
 {
-	unsigned int i;
-
-	for(i = 0; i < view.size; i++)
-		if(!strncmp(view.data[i]->name, name, strlen(name))
-			&& !strncmp(view.data[i]->name, name, strlen(view.data[i]->name)))
-			return view.data[i];
-	return nil;
+	View *v;
+	for(v = view; v && strcmp(v->name, name); v=v->next);
+	return v;
 }
 
 static View *
@@ -183,16 +161,16 @@ select_view(const char *arg)
 	cext_trim(buf, " \t+");
 	if(!strlen(buf))
 		return;
-	focus_view(get_view(arg));
+	assign_sel_view(get_view(arg));
 	update_views(); /* performs focus_view */
 }
 
 static Bool
 is_of_view(View *v, Client *c)
 {
-	unsigned int i;
-	for(i = 0; i < v->area.size; i++)
-		if(is_of_area(v->area.data[i], c))
+	Area *a;
+	for(a=v->area; a; a=a->next)
+		if(is_of_area(a, c))
 			return True;
 	return False;
 }
@@ -200,11 +178,11 @@ is_of_view(View *v, Client *c)
 void
 detach_from_view(View *v, Client *c)
 {
-	unsigned int i;
+	Area *a;
 
-	for(i = 0; i < v->area.size; i++) {
-		if(is_of_area(v->area.data[i], c)) {
-			detach_from_area(v->area.data[i], c);
+	for(a=v->area; a; a=a->next) {
+		if(is_of_area(a, c)) {
+			detach_from_area(a, c);
 			XMoveWindow(dpy, c->framewin, 2 * rect.width, 0);
 		}
 	}
@@ -219,46 +197,39 @@ attach_to_view(View *v, Client *c)
 
 	if(c->trans || c->floating || c->fixedsize
 		|| (c->rect.width == rect.width && c->rect.height == rect.height))
-		a = v->area.data[0];
+		a = v->area;
 	else
-		a = v->area.data[v->sel];
+		a = v->sel;
 	attach_to_area(a, c, False);
-	v->sel = idx_of_area(a);
-}
-
-Client *
-sel_client_of_view(View *v)
-{
-	if(v) {
-		Area *a = v->area.size ? v->area.data[v->sel] : nil;
-		return sel_client_of_area(a);
-	}
-	return nil;
+	v->sel = a;
 }
 
 void
 restack_view(View *v)
 {
-	unsigned int i, n = 0;
-	int j;
+	Area *a;
+	Frame *f;
+	Client *c;
+	unsigned int n=0, i=0;
 	static Window *wins = nil;
 	static unsigned int winssz = 0;
 
-	if(client.size > winssz) {
-		winssz = 2 * client.size;
+	for(c=client; c; c=c->next, i++);
+	if(i > winssz) {
+		winssz = 2 * i;
 		wins = realloc(wins, sizeof(Window) * winssz);
 	}
 
-	for(i = 0; i < v->area.size; i++) {
-		Area *a = v->area.data[i];
-		if(a->frame.size) {
-			wins[n++] = a->frame.data[a->sel]->client->framewin;
-			for(j = a->frame.size - 1; j >= 0; j--) {
-				Client *c = a->frame.data[j]->client;
-				update_client_grab(c, (v->sel == i) && (a->sel == j));
-				if(j == a->sel)
-					continue;
-				wins[n++] = c->framewin;
+	for(a=v->area; a; a=a->next) {
+		if(a->frame) {
+			wins[n++] = a->sel->client->framewin;
+			for(f=a->frame; f; f=f->anext, f != a->sel && n++);
+			i=n;
+			for(f=a->frame; f; f=f->anext) {
+				Client *c = f->client;
+				update_client_grab(c, (v->sel == a) && (a->sel == f));
+				if(f != a->sel)
+					wins[--i] = c->framewin;
 			}
 		}
 	}
@@ -270,36 +241,35 @@ restack_view(View *v)
 void
 scale_view(View *v, float w)
 {
-	unsigned int i, xoff;
+	unsigned int xoff, i=0;
+	Area *a;
 	float scale, dx = 0;
 	int wdiff = 0;
 
-	if(v->area.size == 1)
+	if(!v->area->next)
 		return;
 
-	for(i = 1; i < v->area.size; i++)
-		dx += v->area.data[i]->rect.width;
+	for(a=v->area->next; a; a=a->next, i++)
+		dx += a->rect.width;
 	scale = w / dx;
 	xoff = 0;
-	for(i = 1; i < v->area.size; i++) {
-		Area *a = v->area.data[i];
+	for(a=v->area->next; a; a=a->next) {
 		a->rect.width *= scale;
-		if(i == v->area.size - 1)
+		if(!a->next)
 			a->rect.width = w - xoff;
 		xoff += a->rect.width;
 	}
 
 	/* MIN_COLWIDTH can only be respected when there is enough space; the caller should guarantee this */
-	if((v->area.size - 1) * MIN_COLWIDTH > w)
+	if(i * MIN_COLWIDTH > w)
 		return;
 	xoff = 0;
-	for(i = 1; i < v->area.size; i++) {
-		Area *a = v->area.data[i];
+	for(a=v->area->next; a; a=a->next, i--) {
 		if(a->rect.width < MIN_COLWIDTH)
 			a->rect.width = MIN_COLWIDTH;
-		else if((wdiff = xoff + a->rect.width - w + (v->area.size - 1 - i) * MIN_COLWIDTH) > 0)
+		else if((wdiff = xoff + a->rect.width - w + i * MIN_COLWIDTH) > 0)
 			a->rect.width -= wdiff;
-		if(i == v->area.size - 1)
+		if(!a->next)
 			a->rect.width = w - xoff;
 		xoff += a->rect.width;
 	}
@@ -308,14 +278,14 @@ scale_view(View *v, float w)
 void
 arrange_view(View *v)
 {
-	unsigned int i, xoff = 0;
+	unsigned int xoff = 0;
+	Area *a;
 
-	if(v->area.size == 1)
+	if(!v->area->next)
 		return;
 
 	scale_view(v, rect.width);
-	for(i = 1; i < v->area.size; i++) {
-		Area *a = v->area.data[i];
+	for(a=v->area->next; a; a=a->next) {
 		a->rect.x = xoff;
 		a->rect.y = 0;
 		a->rect.height = rect.height - brect.height;
@@ -327,6 +297,8 @@ arrange_view(View *v)
 static void
 update_client_views(Client *c)
 {
+	static ViewLink *free_view_links = nil;
+	ViewLink *v;
 	char buf[256];
 	char *toks[16];
 	unsigned int i, n;
@@ -334,19 +306,32 @@ update_client_views(Client *c)
 	cext_strlcpy(buf, c->tags, sizeof(buf));
 	n = cext_tokenize(toks, 16, buf, '+');
 
-	while(c->view.size)
-		cext_vdetach(vector_of_views(&c->view), c->view.data[0]);
+	while((v = c->views)) {
+		c->views = v->next;
+		v->next = free_view_links;
+		free_view_links = v;
+	}
 
-	for(i = 0; i < n; i++)
-		cext_vattach(vector_of_views(&c->view), get_view(toks[i]));
+	for(i = 0; i < n; i++) {
+		if(free_view_links) {
+			v = free_view_links;
+			free_view_links = v->next;
+		}
+		else
+			v = cext_emallocz(sizeof(ViewLink));
+		
+		v->next = c->views;
+		c->views = v;
+		v->view = get_view(toks[i]);
+	}
 }
 
 static Bool
 is_view_of(Client *c, View *v)
 {
-	unsigned int i;
-	for(i = 0; i < c->view.size; i++)
-		if(c->view.data[i] == v)
+	ViewLink *l;
+	for(l=c->views; l; l=l->next)
+		if(l->view == v)
 			return True;
 	return False;
 }
@@ -354,74 +339,66 @@ is_view_of(Client *c, View *v)
 static Bool
 is_empty(View *v)
 {
-	unsigned int i;
-	for(i = 0; i < v->area.size; i++)
-		if(v->area.data[i]->frame.size)
+	Area *a;
+	for(a=v->area; a; a=a->next)
+		if(a->frame)
 			return False;
 	return True;
-}
-
-static View *
-next_empty_view(View *ignore)
-{
-	unsigned int i;
-	for(i = 0; i < view.size; i++)
-		if((view.data[i] != ignore) && is_empty(view.data[i]))
-			return view.data[i];
-	return nil;
 }
 
 void
 update_views()
 {
-	unsigned int i, j;
-	View *v, *old = view.size ? view.data[sel] : nil;
+	View **i, *v, *old = sel;
+	Client *c;
 
-	for(i = 0; i < client.size; i++)
-		update_client_views(client.data[i]);
+	for(c=client; c; c=c->next)
+		update_client_views(c);
 
-	for(i = 0; i < client.size; i++) {
-		Client *c = client.data[i];
-		for(j = 0; j < view.size; j++) {
-			View *vw = view.data[j];
-			update_frame_selectors(vw);
-			if(is_view_of(c, vw)) {
-				if(!is_of_view(vw, c))
-					attach_to_view(vw, c);
+	for(c=client; c; c=c->next) {
+		for(v=view; v; v=v->next) {
+			update_frame_selectors(v);
+			if(is_view_of(c, v)) {
+				if(!is_of_view(v, c))
+					attach_to_view(v, c);
 			}
 			else {
-				if(is_of_view(vw, c))
-					detach_from_view(vw, c);
+				if(is_of_view(v, c))
+					detach_from_view(v, c);
 			}
 		}
 	}
 
 	if(old && !strncmp(old->name, "nil", 4))
 		old = nil;
-	while((v = next_empty_view(old)))
-		destroy_view(v);
+
+	for(i=&view; *i; *i && (i=&(*i)->next))
+		if((*i != old) && is_empty(*i))
+			destroy_view(*i);
 
 	if(old)
 		focus_view(old);
-	else if(view.size)
-		focus_view(view.data[sel]);
+	else if(sel)
+		focus_view(sel);
 }
 
 unsigned int
 newcolw_of_view(View *v)
 {
+	Rule *r;
+	Area *a;
 	unsigned int i, n;
 	regmatch_t tmpregm;
 
-	for(i = 0; i < vrule.size; i++) {
-		Rule *r = vrule.data[i];
+	for(r=vrule; r; r=r->next) {
 		if(!regexec(&r->regex, v->name, 1, &tmpregm, 0)) {
 			char buf[256];
 			char *toks[16];
 			cext_strlcpy(buf, r->value, sizeof(buf));
 			n = cext_tokenize(toks, 16, buf, '+');
-			if(n && n > v->area.size - 1) {
-				if(sscanf(toks[v->area.size - 1], "%u", &n) == 1)
+			for(a=v->area, i=0; a; a=a->next, i--);
+			if(n && n > i - 1) {
+				if(sscanf(toks[i - 1], "%u", &n) == 1)
 					return (rect.width * n) / 100;
 			}
 			break;

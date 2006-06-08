@@ -60,7 +60,7 @@ enum {
 	IXP_DMTMP = 0x04000000,		/* mode bit for non-backed-up file */
 	IXP_DMREAD = 0x4<<6,		/* mode bit for read permission */
 	IXP_DMWRITE = 0x2<<6,		/* mode bit for write permission */
-	IXP_DMEXEC = 0x1<<6		/* mode bit for execute permission */
+	IXP_DMEXEC = 0x1<<6			/* mode bit for execute permission */
 };
 
 /* modes */
@@ -147,36 +147,27 @@ typedef struct IXPConn IXPConn;
 typedef struct IXPMap IXPMap;
 
 struct IXPMap {
+	IXPMap *next;
 	unsigned int fid;
 	unsigned short sel;
 	unsigned short nwqid;
 	Qid wqid[IXP_MAX_WELEM];
 };
 
-
-typedef struct {
-	unsigned int size;
-	IXPMap **data;
-} MapVector;
-
 struct IXPConn {
+	IXPConn *next;
 	int fd;
 	IXPServer *srv;
 	void (*read) (IXPConn *);
 	void (*close) (IXPConn *);
-	MapVector map;
+	IXPMap *map;
 	Fcall pending;
 	int is_pending;
 };
 
-typedef struct {
-	unsigned int size;
-	IXPConn **data;
-} ConnVector;
-
 struct IXPServer {
 	int running;
-	ConnVector conn;
+	IXPConn *conn;
 	int maxfd;
 	fd_set rd;
 };
@@ -249,7 +240,6 @@ unsigned int ixp_server_receive_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr);
 void ixp_server_close(IXPServer *s);
-Vector *ixp_vector_of_maps(MapVector *mv);
 
 /* socket.c */
 int ixp_connect_sock(char *address);

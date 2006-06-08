@@ -4,35 +4,33 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "wm.h"
 
-static Vector *
-vector_of_areas(AreaVector *av)
-{
-	return (Vector *) av;
-}
-
 Area *
-create_area(View *v, unsigned int pos, unsigned int w)
+create_area(View *v, Area *pos, unsigned int w)
 {
 	static unsigned short id = 1;
-	Area *a = nil;
+	unsigned int area_size;
+	Area *a, **p = pos ? &pos->next : &v->area;
+
+	for(area_size = 0, a=v->area; a; a=a->next, area_size++);
 
 	if(!w) {
-		if(v->area.size > 1)
-			w = rect.width / v->area.size - 1;
+		if(area_size > 1)
+			w = rect.width / area_size - 1;
 		else
 			w = rect.width;
 	}
 	if(w < MIN_COLWIDTH)
 		w = MIN_COLWIDTH;
 
-	if(v->area.size >= 2 && (v->area.size - 1) * MIN_COLWIDTH + w > rect.width)
+	if(area_size >= 2 && (area_size - 1) * MIN_COLWIDTH + w > rect.width)
 		return nil;
 
-	if(v->area.size > 1)
+	if(area_size > 1)
 		scale_view(v, rect.width - w);
 	a = cext_emallocz(sizeof(Area));
 	a->view = v;
@@ -41,92 +39,80 @@ create_area(View *v, unsigned int pos, unsigned int w)
 	a->rect.height = rect.height - brect.height;
 	a->mode = def.colmode;
 	a->rect.width = w;
-	cext_vattachat(vector_of_areas(&v->area), a, pos);
-	v->sel = pos;
+	a->frame = nil;
+	a->sel = nil;
+
+	a->next = *p;
+	*p = a;
+
+	v->sel = a;
 	return a;
 }
 
 void
 destroy_area(Area *a)
 {
-	unsigned int i;
+	Client *c;
+	Area *t;
 	View *v = a->view;
-	if(a->frame.size) {
+	if(a->frame) {
 		fprintf(stderr, "%s", "wmiiwm: fatal, destroying non-empty area\n");
 		exit(1);
 	}
-	if(a->frame.data)
-		free(a->frame.data);
-	if(v->revert == idx_of_area(a))
-		v->revert = 0;
-	for(i = 0; i < client.size; i++)
-		if(client.data[i]->revert == a)
-			client.data[i]->revert = 0;
-	cext_vdetach(vector_of_areas(&v->area), a);
-	if(v->sel > 1)
-		v->sel--;
+
+	if(v->revert == a)
+		v->revert = nil;
+
+	for(c=client; c; c=c->next)
+		if(c->revert == a)
+			c->revert = nil;
+
+	for(t=v->area; t && t->next != a; t=t->next);
+	if(t) {
+		t->next = a->next;
+		if(v->sel == a)
+			v->sel = t;
+	}
 	free(a);
-}
-
-int
-idx_of_area(Area *a)
-{
-	int i;
-	View *v = a->view;
-	for(i = 0; i < v->area.size; i++)
-		if(v->area.data[i] == a)
-			return i;
-	return -1;
-}
-
-int
-idx_of_area_id(View *v, unsigned short id)
-{
-	int i;
-	for(i = 0; i < v->area.size; i++)
-		if(v->area.data[i]->id == id)
-			return i;
-	return -1;
 }
 
 void
 select_area(Area *a, char *arg)
 {
 	Area *new;
+	unsigned int i;
 	View *v = a->view;
-	int i = idx_of_area(a);
 
-	if(i == -1)
-		return;
-	if(i)
-		v->revert = i;
+	v->revert = a;
 
 	if(!strncmp(arg, "toggle", 7)) {
-		if(i)
-			i = 0;
-		else if(v->revert > 0 && v->revert < v->area.size)
-			i = v->revert;
+		if(a != v->area)
+			new = v->area;
+		else if(v->revert && v->revert != v->area)
+			new = v->revert;
 		else
-			i = 1;
+			new = v->area->next;
 	} else if(!strncmp(arg, "prev", 5)) {
-		if(i <= 1)
+		if(a == v->area)
 			return;
-		else
-			i--;
+		for(new=v->area->next;
+			new && new->next != a;
+			new=new->next);
+		if(!new)
+			new=v->area->next;
 	} else if(!strncmp(arg, "next", 5)) {
-		if(i > 0 && (i + 1 < v->area.size))
-			i++;
-		else
+		if(a == v->area)
 			return;
+		new = a->next ? a->next : a;
 	}
 	else {
 		if(sscanf(arg, "%d", &i) != 1)
 			return;
+		for(new=view->area; i && new->next; new=new->next, i--);
 	}
-	new = v->area.data[i];
-	if(new->frame.size)
-		focus_client(new->frame.data[new->sel]->client, True);
-	v->sel = i;
+	if(new->sel)
+		focus_client(new->sel->client, True);
+	v->sel = new;
 	draw_clients();
 }
 
@@ -144,11 +130,12 @@ place_client(Area *a, Client *c)
 {
 	static unsigned int mx, my;
 	static Bool *field = nil;
+	Frame *fr;
 	Bool fit = False;
 	BlitzAlign align = CENTER;
-	unsigned int i, j, k, x, y, maxx, maxy, dx, dy, cx, cy, diff, num = 0;
+	unsigned int i, j, x, y, maxx, maxy, dx, dy, cx, cy, diff, num = 0;
 	XPoint p1 = {0, 0}, p2 = {0, 0};
-	Frame *f = c->frame.data[c->sel];
+	Frame *f = c->sel;
 	int snap = rect.height / 66;
 	XRectangle *rects;
 
@@ -173,8 +160,7 @@ place_client(Area *a, Client *c)
 
 	dx = rect.width / mx;
 	dy = rect.height / my;
-	for(k = 0; k < a->frame.size; k++) {
-		Frame *fr = a->frame.data[k];
+	for(fr=a->frame; fr; fr=fr->anext) {
 		if(fr == f) {
 			cx = f->rect.width / dx;
 			cy = f->rect.height / dy;
@@ -240,27 +226,28 @@ void
 attach_to_area(Area *a, Client *c, Bool send)
 {
 	View *v = a->view;
-	unsigned int h = 0, aidx = idx_of_area(a);
+	unsigned int h = 0, i;
 	Frame *f;
+	for(f=a->frame, i=1; f; f=f->anext, i++);
 
-	c->floating = !aidx;
-	if(aidx) {
-		h = a->rect.height / (a->frame.size + 1);
-		if(a->frame.size)
+	c->floating = (a == v->area);
+	if(!c->floating) {
+		h = a->rect.height / i;
+		if(a->frame)
 			scale_column(a, a->rect.height - h);
 	}
 
-	if(!send && aidx) { /* column */
+	if(!send && !c->floating) { /* column */
 		unsigned int w = newcolw_of_view(v);
-		if(v->area.data[1]->frame.size && w) {
-			a = new_column(v, v->area.size, w);
+		if(v->area->next->frame && w) {
+			a = new_column(v, a, w);
 			arrange_view(v);
 		}
 	}
 
 	f = create_frame(a, c);
 
-	if(aidx) { /* column */
+	if(!c->floating) { /* column */
 		f->rect.height = h;
 		arrange_column(a, False);
 	}
@@ -274,56 +261,67 @@ void
 detach_from_area(Area *a, Client *c)
 {
 	View *v = a->view;
-	int i;
+	Frame *f;
 
-	for(i = 0; i < c->frame.size; i++)
-		if(c->frame.data[i]->area == a) {
-			destroy_frame(c->frame.data[i]);
-			break;
-		}
+	for(f=c->frame; f && f->area != a; f=f->cnext);
+	if(f)
+		destroy_frame(f);
 
-	i = idx_of_area(a);
-	if(i && a->frame.size)
-		arrange_column(a, False);
-	else {
-		if(i) {
-		    if(v->area.size > 2)
+	if(a != a->view->area) {
+		if(a->frame)
+			arrange_column(a, False);
+		else {
+			if(v->area->next->next)
 				destroy_area(a);
-			else if(!a->frame.size && v->area.data[0]->frame.size)
-				v->sel = 0; /* focus floating area if it contains something */
+			else if(!a->frame && v->area->frame)
+				v->sel = v->area; /* focus floating area if it contains something */
 			arrange_view(v);
 		}
-		else if(!i && !a->frame.size) {
-			if(c->trans) {
-				/* focus area of transient, if possible */
-				Client *cl = client_of_win(c->trans);
-				if(cl && cl->frame.size) {
-				   a = cl->frame.data[cl->sel]->area;
-				   if(a->view == v)
-					   v->sel = idx_of_area(a);
-				}
+	}
+	else if(!a->frame) {
+		if(c->trans) {
+			/* focus area of transient, if possible */
+			Client *cl = client_of_win(c->trans);
+			if(cl && cl->frame) {
+				a = cl->sel->area;
+				if(a->view == v)
+					v->sel = a;
 			}
-			else if(v->area.data[1]->frame.size)
-				v->sel = 1; /* focus first col as fallback */
 		}
+		else if(v->area->next->frame)
+			v->sel = v->area->next; /* focus first col as fallback */
 	}
 }
 
 Bool
 is_of_area(Area *a, Client *c)
 {
-	unsigned int i;
-	for(i = 0; i < a->frame.size; i++)
-		if(a->frame.data[i]->client == c)
+	Frame *f;
+	for(f=a->frame; f; f=f->anext)
+		if(f->client == c)
 			return True;
 	return False;
+}
+
+int
+idx_of_area(Area *a)
+{
+	Area *t;
+	int i = 0;
+	for(t=a->view->area; t && t != a; t=t->next, i++);
+	return t ? i : -1;
+}
+
+Area *
+area_of_id(View *v, unsigned short id)
+{
+	Area *a;
+	for(a=v->area; a && a->id != id; a=a->next);
+	return a;
 }
 
 Client *        
 sel_client_of_area(Area *a)
 {               
-	if(a) {
-		return (a->frame.size) ? a->frame.data[a->sel]->client : nil;
-	}
-	return nil;
+	return a && a->sel ? a->sel->client : nil;
 }
