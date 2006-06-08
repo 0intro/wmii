@@ -52,27 +52,24 @@ ixp_server_close_conn(IXPConn *c)
 static void
 prepare_select(IXPServer *s)
 {
-	IXPConn *c;
+	IXPConn **c;
 	FD_ZERO(&s->rd);
-	for(c=s->conn; c; c=c->next) {
-		if(s->maxfd < c->fd)
-			s->maxfd = c->fd;
-		if(c->read)
-			FD_SET(c->fd, &s->rd);
+	for(c=&s->conn; *c; *c && (c=&(*c)->next)) {
+		if(s->maxfd < (*c)->fd)
+			s->maxfd = (*c)->fd;
+		if((*c)->read)
+			FD_SET((*c)->fd, &s->rd);
 	}
 }
 
 static void
 handle_conns(IXPServer *s)
 {
-	IXPConn *c = s->conn, *n;
-	while(c) {
-		n = c->next;
-		if(FD_ISSET(c->fd, &s->rd) && c->read)
+	IXPConn **c;
+	for(c=&s->conn; *c; *c && (c=&(*c)->next))
+		if(FD_ISSET((*c)->fd, &s->rd) && (*c)->read)
 			/* call read handler */
-			c->read(c);
-		c = n;
-	}
+			(*c)->read(*c);
 }
 
 char *
@@ -148,8 +145,10 @@ ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr)
 void
 ixp_server_close(IXPServer *s)
 {
-	IXPConn *c;
-	for(c=s->conn; c; c=c->next)
+	IXPConn *c, *next;
+	for(c=s->conn; c; c=next) {
+		next=c->next;
 		if(c->close)
 			c->close(c);
+	}
 }
