@@ -1589,7 +1589,7 @@ write_event(char *event)
 void
 new_ixp_conn(IXPConn *c)
 {
-	int fd = ixp_accept_sock(c->fd);
+	int fd = accept(c->fd, nil, nil);
 
 	if(fd >= 0)
 		ixp_server_open_conn(c->srv, fd, do_fcall, ixp_server_close_conn);

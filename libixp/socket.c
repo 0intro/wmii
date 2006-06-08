@@ -89,16 +89,6 @@ ixp_connect_sock(char *address)
 	return -1;
 }
 
-int
-ixp_accept_sock(int fd)
-{
-	socklen_t su_len;
-	struct sockaddr_un addr = { 0 };
-
-	su_len = sizeof(struct sockaddr);
-	return accept(fd, (struct sockaddr *) &addr, &su_len);
-}
-
 static int
 create_inet_sock(char *host, char **errstr)
 {

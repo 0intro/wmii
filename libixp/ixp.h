@@ -243,7 +243,6 @@ void ixp_server_close(IXPServer *s);
 
 /* socket.c */
 int ixp_connect_sock(char *address);
-int ixp_accept_sock(int fd);
 int ixp_create_sock(char *address, char **errstr);
 
 /* transport.c */
