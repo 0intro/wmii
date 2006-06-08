@@ -274,6 +274,7 @@ main(int argc, char *argv[])
 	}
 
 	/* IXP server */
+	memset(&srv, 0, sizeof(srv);
 	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);
 	root_qid.qid.dir_type = FsDroot;
 	root_qid.type = IXP_QTDIR;
