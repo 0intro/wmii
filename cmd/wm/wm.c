@@ -17,6 +17,8 @@
 
 #include "wm.h"
 
+IXPServer srv = {0};
+
 static int other_wm_running;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
@@ -274,7 +276,6 @@ main(int argc, char *argv[])
 	}
 
 	/* IXP server */
-	memset(&srv, 0, sizeof(srv);
 	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);
 	root_qid.qid.dir_type = FsDroot;
 	root_qid.type = IXP_QTDIR;
