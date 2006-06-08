@@ -13,7 +13,6 @@
 	and made visible, the third would disappear (with n=2) -- this means on
 	boundaries, like in mutt(1).
 - do better relaxation (remove /def/border and calculate borders dynamically)
-- UTF8 fixes with iconv?
 - re-introduce mouse based resizals (titlebar and border)
 - liblitz: window abstraction (creation, events), can be reused in menu and bar
 	and frames
