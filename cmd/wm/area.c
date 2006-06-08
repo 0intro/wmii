@@ -71,7 +71,7 @@ destroy_area(Area *a)
 	if(t) {
 		t->next = a->next;
 		if(v->sel == a)
-			v->sel = t;
+			v->sel = t == v->area ? t->next : t;
 	}
 	free(a);
 }
