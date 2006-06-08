@@ -397,7 +397,7 @@ newcolw_of_view(View *v)
 			cext_strlcpy(buf, r->value, sizeof(buf));
 			n = cext_tokenize(toks, 16, buf, '+');
 			for(a=v->area, i=0; a; a=a->next, i++);
-			if(n && n > i - 1) {
+			if(n && n >= i) {
 				if(sscanf(toks[i - 1], "%u", &n) == 1)
 					return (rect.width * n) / 100;
 			}
