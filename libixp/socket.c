@@ -72,31 +72,24 @@ connect_inet_sock(char *host)
 int
 ixp_connect_sock(char *address)
 {
-	char *p = strchr(address, '!');
-	char *addr, *type;
+	char *p;
+	
+	if(p = strchr(address, '!')) {
+        *p = 0;
+        p++;
 
-	if(!p)
-		return -1;
-	*p = 0;
-
-	addr = &p[1];
-	type = address; /* unix, inet */
-
-	if(!strncmp(type, "unix", 5))
-		return connect_unix_sock(addr);
-	else if(!strncmp(type, "tcp", 4))
-		return connect_inet_sock(addr);
+        if(!strncmp(address, "unix", 5))
+            return connect_unix_sock(p);
+        else if(!strncmp(address, "tcp", 4))
+            return connect_inet_sock(p);
+    }
 	return -1;
 }
 
 int
 ixp_accept_sock(int fd)
 {
-	socklen_t su_len;
-	struct sockaddr_un addr = { 0 };
-
-	su_len = sizeof(struct sockaddr);
-	return accept(fd, (struct sockaddr *) &addr, &su_len);
+	return accept(fd, nil, nil);
 }
 
 static int
