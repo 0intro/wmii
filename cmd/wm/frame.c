@@ -37,6 +37,7 @@ remove_frame(Frame *f)
 {
 	Area *a = f->area;
 	Frame **ft = &a->frame;
+
 	for(; *ft && *ft != f; ft=&(*ft)->anext);
 	cext_assert(*ft == f);
 	*ft = f->anext;

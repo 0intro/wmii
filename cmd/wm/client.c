@@ -443,7 +443,7 @@ void
 destroy_client(Client *c)
 {
 	View *v;
-	Client *tc;
+	Client **tc;
 
 	XGrabServer(dpy);
 	XSetErrorHandler(dummy_error_handler);
@@ -461,13 +461,11 @@ destroy_client(Client *c)
 	reparent_client(c, root, c->rect.x, c->rect.y);
 	XFreeGC(dpy, c->gc);
 	XDestroyWindow(dpy, c->framewin);
-	if(c==client)
-		client = c->next;
-	else {
-		for(tc=client; tc && tc->next != c; tc=tc->next);
-		if(tc)
-			tc->next = c->next;
-	}
+
+	for(tc=&client; *tc && *tc != c; tc=&(*tc)->next);
+	cext_assert(*tc == c);
+	*tc = c->next;
+
 	update_views();
 	free(c);
 
@@ -555,6 +553,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 {
 	Frame *f = c->sel;
 	Bool floating = (f->area == f->area->view->area);
+
 	BlitzAlign stickycorner = 0;;
 	if(f->rect.x != r->x && f->rect.x + f->rect.width == r->x + r->width)
 		stickycorner |= EAST;
@@ -564,6 +563,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		stickycorner |= SOUTH;
 	else    
 		stickycorner |= NORTH;
+
 	f->rect = *r;
 
 	if((f->area->mode != Colstack) || (f->area->sel == f))

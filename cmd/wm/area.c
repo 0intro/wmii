@@ -264,8 +264,8 @@ detach_from_area(Area *a, Client *c)
 	Frame *f;
 
 	for(f=c->frame; f && f->area != a; f=f->cnext);
-	if(f)
-		destroy_frame(f);
+	cext_assert(f->area == a);
+	destroy_frame(f);
 
 	if(a != a->view->area) {
 		if(a->frame)

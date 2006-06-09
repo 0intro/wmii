@@ -178,9 +178,10 @@ is_of_view(View *v, Client *c)
 void
 detach_from_view(View *v, Client *c)
 {
-	Area *a;
+	Area *a, *next;
 
-	for(a=v->area; a; a=a->next) {
+	for(a=v->area; a; a=next) {
+		next=a->next;
 		if(is_of_area(a, c)) {
 			detach_from_area(a, c);
 			XMoveWindow(dpy, c->framewin, 2 * rect.width, 0);

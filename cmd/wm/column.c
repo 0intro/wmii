@@ -227,10 +227,10 @@ drop_resize(Frame *f, XRectangle *new)
 
 	for(west=v->area->next; west && west->next != a; west=west->next);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
-	east = (west && west->next && west->next->next) ? west->next->next : nil;
+	east = a->next;
 
 	for(north=a->frame; north && north->anext != f; north=north->anext);
-	south = (north && north->anext && north->anext->anext) ? north->anext->anext : nil;
+	south = f->anext;
 
 	/* validate (and trim if necessary) horizontal resize */
 	if(new->width < MIN_COLWIDTH) {
