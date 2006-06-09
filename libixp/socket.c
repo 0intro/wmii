@@ -74,7 +74,7 @@ ixp_connect_sock(char *address)
 {
 	char *p;
 	
-	if(p = strchr(address, '!')) {
+	if((p = strchr(address, '!'))) {
 		*p = 0;
 		p++;
 
