@@ -351,13 +351,13 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 	for(tgt=v->area->next; tgt && !blitz_ispointinrect(pt->x, pt->y, &tgt->rect);
 		tgt=tgt->next);
 	if(tgt) {
-		if(pt->x <= 5) {
+		if(pt->x < 16) {
 			if((src->frame && src->frame->anext) || (src != v->area->next)) {
 				tgt = new_column(v, v->area->next, 0);
 				send_to_area(tgt, src, f->client);
 			}
 		}
-		else if(pt->x >= rect.width - 5) {
+		else if(pt->x >= rect.width - 16) {
 			if((src->frame && src->frame->anext) || src->next) {
 				for(tgt=src; tgt->next; tgt=tgt->next);
 				tgt = new_column(v, tgt, 0);
