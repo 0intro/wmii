@@ -551,7 +551,7 @@ stat_of_name(Stat *stat, char *name, PackedQid wqid[IXP_MAX_WELEM], unsigned sho
 			snprintf(buf, sizeof(buf), "%d", idx_of_area(i2));
 			break;
 		default:
-			return 0;
+			snprintf(buf, sizeof(buf), "%d", idx_of_client(i1));
 			break;
 		}
 		return pack_stat(stat, wqid, qsel, name, strlen(buf), IXP_DMREAD);
@@ -1125,7 +1125,7 @@ xread(IXPConn *c, Fcall *fcall)
 				snprintf(buf, sizeof(buf), "%d", idx_of_area(i2));
 				break;
 			default:
-				return nil;
+				snprintf(buf, sizeof(buf), "%d", idx_of_client(i1));
 				break;
 			}
 			if((fcall->count = strlen(buf)))
