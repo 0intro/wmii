@@ -386,7 +386,7 @@ qid_of_name(PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 				if(sscanf(name, "%d", &i) != 1)
 					return nil;
 				for(f=a->frame; f && i; f=f->anext, i--);
-				if(i)
+				if(!f)
 					return nil;
 				new.i3id=  f->id;
 			}
@@ -398,7 +398,7 @@ qid_of_name(PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel, char *name)
 		if(sscanf(name, "%d", &i) != 1)
 			return nil;
 		for(c=client; i && c; c=c->next, i--);
-		if(i)
+		if(!c)
 			return nil;
 		new.type=  IXP_QTDIR;
 		new.ptype= FsDGclient;
