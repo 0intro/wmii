@@ -9,11 +9,11 @@
 
 /* packode/unpackode stuff */
 
-void *
-ixp_pack_u8(unsigned char *msg, unsigned char val)
+void
+ixp_pack_u8(unsigned char **msg, int *msize, unsigned char val)
 {
-	msg[0] = val;
-	return &msg[1];
+	if((*msize -= 1) >= 0)
+		*(*msg)++ = val;
 }
 
 void *
@@ -23,12 +23,13 @@ ixp_unpack_u8(unsigned char *msg, unsigned char *val)
 	return &msg[1];
 }
 
-void *
-ixp_pack_u16(unsigned char *msg, unsigned short val)
+void
+ixp_pack_u16(unsigned char **msg, int *msize, unsigned short val)
 {
-	msg[0] = val;
-	msg[1] = val >> 8;
-	return &msg[2];
+	if((*msize -= 2) >= 0) {
+		*(*msg)++ = val;
+		*(*msg)++ = val >> 8;
+	}
 }
 
 void *
@@ -38,14 +39,15 @@ ixp_unpack_u16(unsigned char *msg, unsigned short *val)
 	return &msg[2];
 }
 
-void *
-ixp_pack_u32(unsigned char *msg, unsigned int val)
+void
+ixp_pack_u32(unsigned char **msg, int *msize, unsigned int val)
 {
-	msg[0] = val;
-	msg[1] = val >> 8;
-	msg[2] = val >> 16;
-	msg[3] = val >> 24;
-	return &msg[4];
+	if((*msize -= 4) >= 0) {
+		*(*msg)++ = val;
+		*(*msg)++ = val >> 8;
+		*(*msg)++ = val >> 16;
+		*(*msg)++ = val >> 24;
+	}
 }
 
 void *
@@ -55,18 +57,19 @@ ixp_unpack_u32(unsigned char *msg, unsigned int *val)
 	return &msg[4];
 }
 
-void *
-ixp_pack_u64(unsigned char *msg, unsigned long long val)
+void
+ixp_pack_u64(unsigned char **msg, int *msize, unsigned long long val)
 {
-	msg[0] = val;
-	msg[1] = val >> 8;
-	msg[2] = val >> 16;
-	msg[3] = val >> 24;
-	msg[4] = val >> 32;
-	msg[5] = val >> 40;
-	msg[6] = val >> 48;
-	msg[7] = val >> 56;
-	return &msg[8];
+	if((*msize -= 8) >= 0) {
+		*(*msg)++ = val;
+		*(*msg)++ = val >> 8;
+		*(*msg)++ = val >> 16;
+		*(*msg)++ = val >> 24;
+		*(*msg)++ = val >> 32;
+		*(*msg)++ = val >> 40;
+		*(*msg)++ = val >> 48;
+		*(*msg)++ = val >> 56;
+	}
 }
 
 void *
@@ -83,14 +86,13 @@ ixp_unpack_u64(unsigned char *msg, unsigned long long *val)
 	return &msg[8];
 }
 
-void *
-ixp_pack_string(unsigned char *msg, const char *s)
+void
+ixp_pack_string(unsigned char **msg, int *msize, const char *s)
 {
 	unsigned short len = s ? strlen(s) : 0;
-	msg = ixp_pack_u16(msg, len);
+	ixp_pack_u16(msg, msize, len);
 	if(s)
-		memcpy(msg, s, len);
-	return &msg[len];
+		ixp_pack_data(msg, msize, (void *)s, len);
 }
 
 void *
@@ -110,11 +112,13 @@ ixp_unpack_string(unsigned char *msg, char *string, unsigned short stringlen,
 	return &msg[*len];
 }
 
-void *
-ixp_pack_data(unsigned char *msg, unsigned char *data, unsigned int datalen)
+void
+ixp_pack_data(unsigned char **msg, int *msize, unsigned char *data, unsigned int datalen)
 {
-	memcpy(msg, data, datalen);
-	return &msg[datalen];
+	if((*msize -= datalen) >= 0) {
+		memcpy(*msg, data, datalen);
+		*msg += datalen;
+	}
 }
 
 void *
@@ -124,13 +128,15 @@ ixp_unpack_data(unsigned char *msg, unsigned char *data, unsigned int datalen)
 	return &msg[datalen];
 }
 
-void *
+void
 ixp_pack_prefix(unsigned char *msg, unsigned int size, unsigned char id,
 		unsigned short tag)
 {
-	msg = ixp_pack_u32(msg, size);
-	msg = ixp_pack_u8(msg, id);
-	return ixp_pack_u16(msg, tag);
+	unsigned int dummy = sizeof(unsigned char) +
+		sizeof(unsigned short) + sizeof(unsigned int);
+	ixp_pack_u32(&msg, &dummy, size);
+	ixp_pack_u8(&msg, &dummy, id);
+	ixp_pack_u16(&msg, &dummy, tag);
 }
 
 void *
@@ -142,12 +148,12 @@ ixp_unpack_prefix(unsigned char *msg, unsigned int *size, unsigned char *id,
 	return ixp_unpack_u16(msg, tag);
 }
 
-void *
-ixp_pack_qid(unsigned char *msg, Qid * qid)
+void
+ixp_pack_qid(unsigned char **msg, int *msize, Qid * qid)
 {
-	msg = ixp_pack_u8(msg, qid->type);
-	msg = ixp_pack_u32(msg, qid->version);
-	return ixp_pack_u64(msg, qid->path);
+	ixp_pack_u8(msg, msize, qid->type);
+	ixp_pack_u32(msg, msize, qid->version);
+	ixp_pack_u64(msg, msize, qid->path);
 }
 
 void *
@@ -158,21 +164,21 @@ ixp_unpack_qid(unsigned char *msg, Qid * qid)
 	return ixp_unpack_u64(msg, &qid->path);
 }
 
-void *
-ixp_pack_stat(unsigned char *msg, Stat * stat)
+void
+ixp_pack_stat(unsigned char **msg, int *msize, Stat * stat)
 {
-	msg = ixp_pack_u16(msg, ixp_sizeof_stat(stat) - sizeof(unsigned short));
-	msg = ixp_pack_u16(msg, stat->type);
-	msg = ixp_pack_u32(msg, stat->dev);
-	msg = ixp_pack_qid(msg, &stat->qid);
-	msg = ixp_pack_u32(msg, stat->mode);
-	msg = ixp_pack_u32(msg, stat->atime);
-	msg = ixp_pack_u32(msg, stat->mtime);
-	msg = ixp_pack_u64(msg, stat->length);
-	msg = ixp_pack_string(msg, stat->name);
-	msg = ixp_pack_string(msg, stat->uid);
-	msg = ixp_pack_string(msg, stat->gid);
-	return ixp_pack_string(msg, stat->muid);
+	ixp_pack_u16(msg, msize, ixp_sizeof_stat(stat) - sizeof(unsigned short));
+	ixp_pack_u16(msg, msize, stat->type);
+	ixp_pack_u32(msg, msize, stat->dev);
+	ixp_pack_qid(msg, msize, &stat->qid);
+	ixp_pack_u32(msg, msize, stat->mode);
+	ixp_pack_u32(msg, msize, stat->atime);
+	ixp_pack_u32(msg, msize, stat->mtime);
+	ixp_pack_u64(msg, msize, stat->length);
+	ixp_pack_string(msg, msize, stat->name);
+	ixp_pack_string(msg, msize, stat->uid);
+	ixp_pack_string(msg, msize, stat->gid);
+	ixp_pack_string(msg, msize, stat->muid);
 }
 
 void *

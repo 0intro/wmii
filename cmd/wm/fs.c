@@ -613,7 +613,7 @@ stat_of_name(Stat *stat, char *name, PackedQid wqid[IXP_MAX_WELEM], unsigned sho
 }
 
 static unsigned int
-stat_of_names(unsigned char **p, PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel, ...)
+stat_of_names(unsigned char **p, int *iounit, PackedQid wqid[IXP_MAX_WELEM], unsigned short qsel, ...)
 {
 	va_list ap;
 	char *str;
@@ -624,7 +624,7 @@ stat_of_names(unsigned char **p, PackedQid wqid[IXP_MAX_WELEM], unsigned short q
 
 	while((str = va_arg(ap, char *))) {
 			n += stat_of_name(&stat, str, wqid, qsel);
-			*p = ixp_pack_stat(*p, &stat);
+			ixp_pack_stat(p, iounit, &stat);
 	}
 
 	va_end(ap);
@@ -817,6 +817,7 @@ xread(IXPConn *c, Fcall *fcall)
 	Bar *b;
 	void *i1, *i2, *i3;
 	unsigned int i, len;
+	int iounit;
 	unsigned char dir_type, type, *p = fcall->data;
 	char buf[256];
 	XRectangle fr;
@@ -828,6 +829,7 @@ xread(IXPConn *c, Fcall *fcall)
 	dir_type = dir_of_qid(pwqid, m->sel);
 
 	fcall->count = 0;
+	iounit = fcall->iounit;
 	if(fcall->offset) {
 		switch (type) {
 		case FsDtag:
@@ -847,7 +849,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
-				p = ixp_pack_stat(p, &stat);
+				ixp_pack_stat(&p, &iounit, &stat);
 			}
 			break;
 		case FsDclients:
@@ -867,7 +869,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
-				p = ixp_pack_stat(p, &stat);
+				ixp_pack_stat(&p, &iounit, &stat);
 			}
 			break;
 		case FsDbars:
@@ -885,7 +887,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
-				p = ixp_pack_stat(p, &stat);
+				ixp_pack_stat(&p, &iounit, &stat);
 			}
 			break;
 		case FsDview:
@@ -910,7 +912,7 @@ xread(IXPConn *c, Fcall *fcall)
 					if(fcall->count + len > fcall->iounit)
 						break;
 					fcall->count += len;
-					p = ixp_pack_stat(p, &stat);
+					ixp_pack_stat(&p, &iounit, &stat);
 				}
 			}
 			break;
@@ -936,7 +938,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
-				p = ixp_pack_stat(p, &stat);
+				ixp_pack_stat(&p, &iounit, &stat);
 			}
 			break;
 		case FsFevent:
@@ -993,24 +995,24 @@ xread(IXPConn *c, Fcall *fcall)
 	else {
 		switch (type) {
 		case FsDroot:
-			fcall->count = stat_of_names(&p, pwqid, m->sel, "ctl", "event", "def", "bar", nil);
+			fcall->count = stat_of_names(&p, &iounit, pwqid, m->sel, "ctl", "event", "def", "bar", nil);
 			if(view) {
-				fcall->count += stat_of_names(&p, pwqid, m->sel, "tag", nil);
+				fcall->count += stat_of_names(&p, &iounit, pwqid, m->sel, "tag", nil);
 			}
 			if(client) {
-				fcall->count += stat_of_names(&p, pwqid, m->sel, "client", nil);
+				fcall->count += stat_of_names(&p, &iounit, pwqid, m->sel, "client", nil);
 			}
 			break;
 		case FsDtag:
 			if(view) {
-				fcall->count += stat_of_names(&p, pwqid, m->sel, "sel", nil);
+				fcall->count += stat_of_names(&p, &iounit, pwqid, m->sel, "sel", nil);
 			}
 			for(v=view; v; v=v->next) {
 				len = stat_of_name(&stat, v->name, pwqid, m->sel);
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
-				p = ixp_pack_stat(p, &stat);
+				ixp_pack_stat(&p, &iounit, &stat);
 			}
 			break;
 		case FsDclients:
@@ -1020,7 +1022,7 @@ xread(IXPConn *c, Fcall *fcall)
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
-				p = ixp_pack_stat(p, &stat);
+				ixp_pack_stat(&p, &iounit, &stat);
 			}
 			break;
 		case FsDbars:
@@ -1029,23 +1031,23 @@ xread(IXPConn *c, Fcall *fcall)
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
-				p = ixp_pack_stat(p, &stat);
+				ixp_pack_stat(&p, &iounit, &stat);
 			}
 			break;
 		case FsDbar:
 			if(!i1)
 				return Enofile;
-			fcall->count = stat_of_names(&p, pwqid, m->sel, "colors", "data", nil);
+			fcall->count = stat_of_names(&p, &iounit, pwqid, m->sel, "colors", "data", nil);
 			break;
 		case FsDdef:
-			fcall->count = stat_of_names(&p, pwqid, m->sel, "border", "selcolors",
+			fcall->count = stat_of_names(&p, &iounit, pwqid, m->sel, "border", "selcolors",
 					"normcolors", "font", "keys", "tagrules", "grabmod", "colrules", nil);
 			break;
 		case FsDview:
 			if(view) {
-				fcall->count = stat_of_names(&p, pwqid, m->sel, "name", "ctl", nil);
+				fcall->count = stat_of_names(&p, &iounit, pwqid, m->sel, "name", "ctl", nil);
 				if(VIEW(i1)->area) {
-					fcall->count += stat_of_names(&p, pwqid, m->sel, "sel", nil);
+					fcall->count += stat_of_names(&p, &iounit, pwqid, m->sel, "sel", nil);
 				}
 				for(a=VIEW(i1)->area, i=0; a; a=a->next, i++) {
 					snprintf(buf, sizeof(buf), "%u", i);
@@ -1053,17 +1055,17 @@ xread(IXPConn *c, Fcall *fcall)
 					if(fcall->count + len > fcall->iounit)
 						break;
 					fcall->count += len;
-					p = ixp_pack_stat(p, &stat);
+					ixp_pack_stat(&p, &iounit, &stat);
 				}
 			}
 			break;
 		case FsDarea:
-			fcall->count = stat_of_names(&p, pwqid, m->sel, "ctl", "index", nil);
+			fcall->count = stat_of_names(&p, &iounit, pwqid, m->sel, "ctl", "index", nil);
 			if(i2) {
-				fcall->count += stat_of_names(&p, pwqid, m->sel, "mode", nil);
+				fcall->count += stat_of_names(&p, &iounit, pwqid, m->sel, "mode", nil);
 			}
 			if(AREA(i2)->frame) {
-				fcall->count += stat_of_names(&p, pwqid, m->sel, "sel", nil);
+				fcall->count += stat_of_names(&p, &iounit, pwqid, m->sel, "sel", nil);
 			}
 			for(f=AREA(i2)->frame, i=0; f; f=f->anext, i++) {
 				snprintf(buf, sizeof(buf), "%u", i);
@@ -1071,12 +1073,12 @@ xread(IXPConn *c, Fcall *fcall)
 				if(fcall->count + len > fcall->iounit)
 					break;
 				fcall->count += len;
-				p = ixp_pack_stat(p, &stat);
+				ixp_pack_stat(&p, &iounit, &stat);
 			}
 			break;
 		case FsDGclient:
 		case FsDclient:
-			fcall->count = stat_of_names(&p, pwqid, m->sel, "props", "name",
+			fcall->count = stat_of_names(&p, &iounit, pwqid, m->sel, "props", "name",
 					"index", "tags", "geom", "ctl", nil);
 			break;
 		case FsFctl:
