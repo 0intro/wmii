@@ -1,5 +1,6 @@
 - fs2.c refactorings
 - implement /lbar/ and /rbar/ (first label of /rbar/ should take up the rest available space)
+- make frames view-specific, do not destroy them during send_to_area's within a view (allows faster checks for client_of_view etc).
 - idea for column mode: add collapsing to each Frame, add revert Xrectangle, remove column modes, add max flag to each Frame (maximizes to area until next navigation action within this area)
 - do better relaxation (remove /def/border and calculate borders dynamically)
 - re-introduce mouse based resizals (titlebar and border)
