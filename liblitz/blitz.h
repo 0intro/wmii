@@ -59,11 +59,6 @@ int blitz_loadcolor(Display *dpy, BlitzColor *c, int mon, char *colstr);
 void blitz_drawlabel(Display *dpy, BlitzDraw *d);
 void blitz_drawborder(Display *dpy, BlitzDraw *d);
 
-/* geometry.c */
-int blitz_strtorect(XRectangle *r, const char *val);
-BlitzAlign blitz_quadofcoord(XRectangle *rect, int x, int y);
-Bool blitz_ispointinrect(int x, int y, XRectangle *r);
-
 /* new stuff */
 
 typedef struct {

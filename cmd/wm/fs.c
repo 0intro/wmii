@@ -1437,7 +1437,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			XRectangle new;
 			f = FRAME(i3);
 			new = f->rect;
-			blitz_strtorect(&new, buf);
+			strtorect(&new, buf);
 			if(new.width == 0)
 				new.width = rect.width;
 			if(new.height == 0)

@@ -72,7 +72,7 @@ handle_buttonrelease(XEvent *e)
 	static char buf[32];
 	if(ev->window == barwin) {
 		for(b=bar; b; b=b->next)
-			if(blitz_ispointinrect(ev->x, ev->y, &b->rect)) {
+			if(ispointinrect(ev->x, ev->y, &b->rect)) {
 				snprintf(buf, sizeof(buf), "BarClick %s %d\n",
 						b->name, ev->button);
 				write_event(buf);
@@ -101,7 +101,7 @@ handle_buttonpress(XEvent *e)
 				do_mouse_resize(c, CENTER);
 				break;
 			case Button3:
-				do_mouse_resize(c, blitz_quadofcoord(&c->rect, ev->x, ev->y));
+				do_mouse_resize(c, quadofcoord(&c->rect, ev->x, ev->y));
 			default:
 			break;
 			}
