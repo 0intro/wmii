@@ -8,12 +8,11 @@
 
 #include "blitz.h"
 
-BlitzWindow *
-blitz_create_win(Blitz *blitz, unsigned long mask, int x, int y, int w, int h)
+void 
+blitz_create_win(Blitz *blitz, BlitzWindow *win, unsigned long mask,
+				int x, int y, int w, int h)
 {
-	BlitzWindow *win = cext_emallocz(sizeof(BlitzWindow));
 	XSetWindowAttributes wa;
-
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
 	wa.event_mask = mask;
@@ -27,8 +26,6 @@ blitz_create_win(Blitz *blitz, unsigned long mask, int x, int y, int w, int h)
 	win->rect.y = y;
 	win->rect.width = w;
 	win->rect.height = h;
-
-	return win;
 }
 
 void

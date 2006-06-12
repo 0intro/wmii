@@ -79,11 +79,11 @@ typedef struct {
 } BlitzWindow;
 
 /* blitz.c */
-Blitz *blitz_init(Display *dpy);
+void blitz_init(Blitz *blitz, Display *dpy);
 void blitz_deinit(Blitz *blitz);
 
 /* window.c */
-BlitzWindow *blitz_create_win(Blitz *blitz, unsigned long mask, 
+void blitz_create_win(Blitz *blitz, BlitzWindow *win, unsigned long mask, 
 								int x, int y, int w, int h);
 void blitz_resize_win(Blitz *blitz, BlitzWindow *win,
 						int x, int y, int w, int h);

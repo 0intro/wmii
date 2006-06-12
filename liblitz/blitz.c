@@ -3,24 +3,18 @@
  * See LICENSE file for license details.
  */
 
-#include <stdlib.h>
-#include <cext.h>
-
 #include "blitz.h"
 
 /* blitz.c */
-Blitz *
-init_blitz(Display *dpy)
+void
+blitz_init(Blitz *blitz, Display *dpy)
 {
-	Blitz *b = cext_emallocz(sizeof(Blitz));
-	b->display = dpy;
-	b->screen = DefaultScreen(dpy);
-	b->root = DefaultRootWindow(dpy);
-	return b;
+	blitz->display = dpy;
+	blitz->screen = DefaultScreen(dpy);
+	blitz->root = DefaultRootWindow(dpy);
 }
 
 void
-deinit_blitz(Blitz *blitz)
+blitz_deinit(Blitz *blitz)
 {
-	free(blitz);
 }
