@@ -678,8 +678,8 @@ xwalk(IXPConn *c, Fcall *fcall)
 		if(qsel >= IXP_MAX_WELEM)
 			break;
 		if(!strncmp(fcall->wname[nwqid], "..", 3)) {
-			if(!qsel--)
-				return Enofile;
+			if(qsel)
+				qsel--;
 			qid = &wqid[qsel];
 		}
 		else {
