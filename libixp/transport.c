@@ -64,15 +64,14 @@ ixp_recv_message(int fd, void *msg, unsigned int msglen, char **errstr)
 	if(ixp_recv_data(fd, msg, sizeof(unsigned int), errstr) !=
 			sizeof(unsigned int))
 		return 0;
-	ixp_unpack_u32(msg, &msize);
+	ixp_unpack_u32((unsigned char**)&msg, &msize);
 	if(msize > msglen) {
 		*errstr = "invalid message header";
 		return 0;
 	}
 	/* receive message */
-	if(ixp_recv_data(fd, msg + sizeof(unsigned int),
-				msize - sizeof(unsigned int), errstr)
-			!= msize - sizeof(unsigned int))
+	if(ixp_recv_data(fd, msg, msize - sizeof(unsigned int), errstr)
+       != msize - sizeof(unsigned int))
 		return 0;
 	return msize;
 }

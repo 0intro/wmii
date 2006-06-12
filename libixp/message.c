@@ -141,97 +141,98 @@ ixp_msg2fcall(Fcall *fcall, void *msg, unsigned int msglen)
 {
 	unsigned int i, msize;
 	unsigned short len;
-	void *p = ixp_unpack_prefix(msg, &msize, &fcall->id, &fcall->tag);
+	unsigned char *p = msg;
+	ixp_unpack_prefix(&p, &msize, &fcall->id, &fcall->tag);
 
 	if(msize > msglen)          /* bad message */
 		return 0;
 	switch (fcall->id) {
 	case TVERSION:
 	case RVERSION:
-		p = ixp_unpack_u32(p, &fcall->maxmsg);
-		p = ixp_unpack_string(p, fcall->version, sizeof(fcall->version), &len);
+		ixp_unpack_u32(&p, &fcall->maxmsg);
+		ixp_unpack_string(&p, fcall->version, sizeof(fcall->version), &len);
 		break;
 	case TAUTH:
-		p = ixp_unpack_u32(p, &fcall->afid);
-		p = ixp_unpack_string(p, fcall->uname, sizeof(fcall->uname), &len);
-		p = ixp_unpack_string(p, fcall->aname, sizeof(fcall->aname), &len);
+		ixp_unpack_u32(&p, &fcall->afid);
+		ixp_unpack_string(&p, fcall->uname, sizeof(fcall->uname), &len);
+		ixp_unpack_string(&p, fcall->aname, sizeof(fcall->aname), &len);
 		break;
 	case RAUTH:
-		p = ixp_unpack_qid(p, &fcall->aqid);
+		ixp_unpack_qid(&p, &fcall->aqid);
 		break;
 	case RATTACH:
-		p = ixp_unpack_qid(p, &fcall->qid);
+		ixp_unpack_qid(&p, &fcall->qid);
 		break;
 	case TATTACH:
-		p = ixp_unpack_u32(p, &fcall->fid);
-		p = ixp_unpack_u32(p, &fcall->afid);
-		p = ixp_unpack_string(p, fcall->uname, sizeof(fcall->uname), &len);
-		p = ixp_unpack_string(p, fcall->aname, sizeof(fcall->aname), &len);
+		ixp_unpack_u32(&p, &fcall->fid);
+		ixp_unpack_u32(&p, &fcall->afid);
+		ixp_unpack_string(&p, fcall->uname, sizeof(fcall->uname), &len);
+		ixp_unpack_string(&p, fcall->aname, sizeof(fcall->aname), &len);
 		break;
 	case RERROR:
-		p = ixp_unpack_string(p, fcall->errstr, sizeof(fcall->errstr), &len);
+		ixp_unpack_string(&p, fcall->errstr, sizeof(fcall->errstr), &len);
 		break;
 	case TFLUSH:
-		p = ixp_unpack_u16(p, &fcall->oldtag);
+		ixp_unpack_u16(&p, &fcall->oldtag);
 		break;
 	case TWALK:
-		p = ixp_unpack_u32(p, &fcall->fid);
-		p = ixp_unpack_u32(p, &fcall->newfid);
-		p = ixp_unpack_u16(p, &fcall->nwname);
+		ixp_unpack_u32(&p, &fcall->fid);
+		ixp_unpack_u32(&p, &fcall->newfid);
+		ixp_unpack_u16(&p, &fcall->nwname);
 		for(i = 0; i < fcall->nwname; i++)
-			p = ixp_unpack_string(p, fcall->wname[i], IXP_MAX_FLEN, &len);
+			ixp_unpack_string(&p, fcall->wname[i], IXP_MAX_FLEN, &len);
 		break;
 	case RWALK:
-		p = ixp_unpack_u16(p, &fcall->nwqid);
+		ixp_unpack_u16(&p, &fcall->nwqid);
 		for(i = 0; i < fcall->nwqid; i++)
-			p = ixp_unpack_qid(p, &fcall->wqid[i]);
+			ixp_unpack_qid(&p, &fcall->wqid[i]);
 		break;
 	case TOPEN:
-		p = ixp_unpack_u32(p, &fcall->fid);
-		p = ixp_unpack_u8(p, &fcall->mode);
+		ixp_unpack_u32(&p, &fcall->fid);
+		ixp_unpack_u8(&p, &fcall->mode);
 		break;
 	case ROPEN:
 	case RCREATE:
-		p = ixp_unpack_qid(p, &fcall->qid);
-		p = ixp_unpack_u32(p, &fcall->iounit);
+		ixp_unpack_qid(&p, &fcall->qid);
+		ixp_unpack_u32(&p, &fcall->iounit);
 		break;
 	case TCREATE:
-		p = ixp_unpack_u32(p, &fcall->fid);
-		p = ixp_unpack_string(p, fcall->name, sizeof(fcall->name), &len);
-		p = ixp_unpack_u32(p, &fcall->perm);
-		p = ixp_unpack_u8(p, &fcall->mode);
+		ixp_unpack_u32(&p, &fcall->fid);
+		ixp_unpack_string(&p, fcall->name, sizeof(fcall->name), &len);
+		ixp_unpack_u32(&p, &fcall->perm);
+		ixp_unpack_u8(&p, &fcall->mode);
 		break;
 	case TREAD:
-		p = ixp_unpack_u32(p, &fcall->fid);
-		p = ixp_unpack_u64(p, &fcall->offset);
-		p = ixp_unpack_u32(p, &fcall->count);
+		ixp_unpack_u32(&p, &fcall->fid);
+		ixp_unpack_u64(&p, &fcall->offset);
+		ixp_unpack_u32(&p, &fcall->count);
 		break;
 	case RREAD:
-		p = ixp_unpack_u32(p, &fcall->count);
-		p = ixp_unpack_data(p, fcall->data, fcall->count);
+		ixp_unpack_u32(&p, &fcall->count);
+		ixp_unpack_data(&p, fcall->data, fcall->count);
 		break;
 	case TWRITE:
-		p = ixp_unpack_u32(p, &fcall->fid);
-		p = ixp_unpack_u64(p, &fcall->offset);
-		p = ixp_unpack_u32(p, &fcall->count);
-		p = ixp_unpack_data(p, fcall->data, fcall->count);
+		ixp_unpack_u32(&p, &fcall->fid);
+		ixp_unpack_u64(&p, &fcall->offset);
+		ixp_unpack_u32(&p, &fcall->count);
+		ixp_unpack_data(&p, fcall->data, fcall->count);
 		break;
 	case RWRITE:
-		p = ixp_unpack_u32(p, &fcall->count);
+		ixp_unpack_u32(&p, &fcall->count);
 		break;
 	case TCLUNK:
 	case TREMOVE:
 	case TSTAT:
-		p = ixp_unpack_u32(p, &fcall->fid);
+		ixp_unpack_u32(&p, &fcall->fid);
 		break;
 	case RSTAT:
-		p = ixp_unpack_u16(p, &len);
-		p = ixp_unpack_stat(p, &fcall->stat);
+		ixp_unpack_u16(&p, &len);
+		ixp_unpack_stat(&p, &fcall->stat);
 		break;
 	case TWSTAT:
-		p = ixp_unpack_u32(p, &fcall->fid);
-		p = ixp_unpack_u16(p, &len);
-		p = ixp_unpack_stat(p, &fcall->stat);
+		ixp_unpack_u32(&p, &fcall->fid);
+		ixp_unpack_u16(&p, &len);
+		ixp_unpack_stat(&p, &fcall->stat);
 		break;
 	}
 

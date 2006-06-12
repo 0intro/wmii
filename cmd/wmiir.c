@@ -150,21 +150,21 @@ static void
 xls(void *result, unsigned int msize, int details)
 {
 	unsigned int n = 0, i = 0;
-	void *p = result;
+	unsigned char *p = result;
 	Stat *dir;
 	static Stat stat;
 
 	do {
-		p = ixp_unpack_stat(p, &stat);
+		ixp_unpack_stat(&p, &stat);
 		n++;
 	}
-	while(p - result < msize);
+	while(p - (unsigned char*)result < msize);
 	dir = (Stat *)cext_emallocz(sizeof(Stat) * n);
 	p = result;
 	do {
-		p = ixp_unpack_stat(p, &dir[i++]);
+		ixp_unpack_stat(&p, &dir[i++]);
 	}
-	while(p - result < msize);
+	while(p - (unsigned char*)result < msize);
 	qsort(dir, n, sizeof(Stat), comp_stat);
 	for(i = 0; i < n; i++)
 		print_stat(&dir[i], details);

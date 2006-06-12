@@ -16,11 +16,10 @@ ixp_pack_u8(unsigned char **msg, int *msize, unsigned char val)
 		*(*msg)++ = val;
 }
 
-void *
-ixp_unpack_u8(unsigned char *msg, unsigned char *val)
+void
+ixp_unpack_u8(unsigned char **msg, unsigned char *val)
 {
-	*val = msg[0];
-	return &msg[1];
+	*val = *(*msg)++;
 }
 
 void
@@ -32,11 +31,11 @@ ixp_pack_u16(unsigned char **msg, int *msize, unsigned short val)
 	}
 }
 
-void *
-ixp_unpack_u16(unsigned char *msg, unsigned short *val)
+void
+ixp_unpack_u16(unsigned char **msg, unsigned short *val)
 {
-	*val = msg[0] | (msg[1] << 8);
-	return &msg[2];
+	*val = *(*msg)++;
+	*val |= *(*msg)++ << 8;
 }
 
 void
@@ -50,11 +49,13 @@ ixp_pack_u32(unsigned char **msg, int *msize, unsigned int val)
 	}
 }
 
-void *
-ixp_unpack_u32(unsigned char *msg, unsigned int *val)
+void
+ixp_unpack_u32(unsigned char **msg, unsigned int *val)
 {
-	*val = msg[0] | (msg[1] << 8) | (msg[2] << 16) | (msg[3] << 24);
-	return &msg[4];
+	*val = *(*msg)++;
+	*val |= *(*msg)++ << 8;
+	*val |= *(*msg)++ << 16;
+	*val |= *(*msg)++ << 24;
 }
 
 void
@@ -72,18 +73,13 @@ ixp_pack_u64(unsigned char **msg, int *msize, unsigned long long val)
 	}
 }
 
-void *
-ixp_unpack_u64(unsigned char *msg, unsigned long long *val)
+void
+ixp_unpack_u64(unsigned char **msg, unsigned long long *val)
 {
-	*val =	(unsigned long long) msg[0] |
-		((unsigned long long) msg[1] << 8) |
-		((unsigned long long) msg[2] << 16) |
-		((unsigned long long) msg[3] << 24) |
-		((unsigned long long) msg[4] << 32) |
-		((unsigned long long) msg[5] << 40) |
-		((unsigned long long) msg[6] << 48) |
-		((unsigned long long) msg[7] << 56);
-	return &msg[8];
+	int i;
+	*val = 0;
+	for (i = 0; i < 8; ++i)
+		*val |= (unsigned long long) *(*msg)++ << (8 * i);
 }
 
 void
@@ -95,21 +91,21 @@ ixp_pack_string(unsigned char **msg, int *msize, const char *s)
 		ixp_pack_data(msg, msize, (void *)s, len);
 }
 
-void *
-ixp_unpack_string(unsigned char *msg, char *string, unsigned short stringlen,
+void
+ixp_unpack_string(unsigned char **msg, char *string, unsigned short stringlen,
 		unsigned short *len)
 {
-	msg = ixp_unpack_u16(msg, len);
-	if(!(*len))
-		return msg;
-	if(*len > stringlen - 1)
+	ixp_unpack_u16(msg, len);
+	if (!*len)
+		return;
+	if (*len > stringlen - 1) {
 		/* might never happen if stringlen == IXP_MAX_MSG */
 		string[0] = 0;
-	else {
-		memcpy(string, msg, *len);
+	} else {
+		memcpy(string, *msg, *len);
 		string[*len] = 0;
+		*msg += *len;
 	}
-	return &msg[*len];
 }
 
 void
@@ -121,31 +117,31 @@ ixp_pack_data(unsigned char **msg, int *msize, unsigned char *data, unsigned int
 	}
 }
 
-void *
-ixp_unpack_data(unsigned char *msg, unsigned char *data, unsigned int datalen)
+void
+ixp_unpack_data(unsigned char **msg, unsigned char *data, unsigned int datalen)
 {
-	memcpy(data, msg, datalen);
-	return &msg[datalen];
+	memcpy(data, *msg, datalen);
+	*msg += datalen;
 }
 
 void
 ixp_pack_prefix(unsigned char *msg, unsigned int size, unsigned char id,
 		unsigned short tag)
 {
-	unsigned int dummy = sizeof(unsigned char) +
+	int dummy = sizeof(unsigned char) +
 		sizeof(unsigned short) + sizeof(unsigned int);
 	ixp_pack_u32(&msg, &dummy, size);
 	ixp_pack_u8(&msg, &dummy, id);
 	ixp_pack_u16(&msg, &dummy, tag);
 }
 
-void *
-ixp_unpack_prefix(unsigned char *msg, unsigned int *size, unsigned char *id,
+void
+ixp_unpack_prefix(unsigned char **msg, unsigned int *size, unsigned char *id,
 		unsigned short *tag)
 {
-	msg = ixp_unpack_u32(msg, size);
-	msg = ixp_unpack_u8(msg, id);
-	return ixp_unpack_u16(msg, tag);
+	ixp_unpack_u32(msg, size);
+	ixp_unpack_u8(msg, id);
+	ixp_unpack_u16(msg, tag);
 }
 
 void
@@ -156,12 +152,12 @@ ixp_pack_qid(unsigned char **msg, int *msize, Qid * qid)
 	ixp_pack_u64(msg, msize, qid->path);
 }
 
-void *
-ixp_unpack_qid(unsigned char *msg, Qid * qid)
+void
+ixp_unpack_qid(unsigned char **msg, Qid * qid)
 {
-	msg = ixp_unpack_u8(msg, &qid->type);
-	msg = ixp_unpack_u32(msg, &qid->version);
-	return ixp_unpack_u64(msg, &qid->path);
+	ixp_unpack_u8(msg, &qid->type);
+	ixp_unpack_u32(msg, &qid->version);
+	ixp_unpack_u64(msg, &qid->path);
 }
 
 void
@@ -181,20 +177,20 @@ ixp_pack_stat(unsigned char **msg, int *msize, Stat * stat)
 	ixp_pack_string(msg, msize, stat->muid);
 }
 
-void *
-ixp_unpack_stat(unsigned char *msg, Stat * stat)
+void
+ixp_unpack_stat(unsigned char **msg, Stat * stat)
 {
 	unsigned short dummy;
-	msg += sizeof(unsigned short);
-	msg = ixp_unpack_u16(msg, &stat->type);
-	msg = ixp_unpack_u32(msg, &stat->dev);
-	msg = ixp_unpack_qid(msg, &stat->qid);
-	msg = ixp_unpack_u32(msg, &stat->mode);
-	msg = ixp_unpack_u32(msg, &stat->atime);
-	msg = ixp_unpack_u32(msg, &stat->mtime);
-	msg = ixp_unpack_u64(msg, &stat->length);
-	msg = ixp_unpack_string(msg, stat->name, sizeof(stat->name), &dummy);
-	msg = ixp_unpack_string(msg, stat->uid, sizeof(stat->uid), &dummy);
-	msg = ixp_unpack_string(msg, stat->gid, sizeof(stat->gid), &dummy);
-	return ixp_unpack_string(msg, stat->muid, sizeof(stat->muid), &dummy);
+	*msg += sizeof(unsigned short);
+	ixp_unpack_u16(msg, &stat->type);
+	ixp_unpack_u32(msg, &stat->dev);
+	ixp_unpack_qid(msg, &stat->qid);
+	ixp_unpack_u32(msg, &stat->mode);
+	ixp_unpack_u32(msg, &stat->atime);
+	ixp_unpack_u32(msg, &stat->mtime);
+	ixp_unpack_u64(msg, &stat->length);
+	ixp_unpack_string(msg, stat->name, sizeof(stat->name), &dummy);
+	ixp_unpack_string(msg, stat->uid, sizeof(stat->uid), &dummy);
+	ixp_unpack_string(msg, stat->gid, sizeof(stat->gid), &dummy);
+	ixp_unpack_string(msg, stat->muid, sizeof(stat->muid), &dummy);
 }
