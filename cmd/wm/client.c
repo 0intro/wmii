@@ -29,7 +29,7 @@ update_client_name(Client *c)
 	if(name.encoding == XA_STRING)
 		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
 	else {
-		if(Xi18nTextPropertyToTextList(dpy, &name, &list, &n) >= Success
+		if(XmbTextPropertyToTextList(dpy, &name, &list, &n) >= Success
 				&& n > 0 && *list)
 		{
 			cext_strlcpy(c->name, *list, sizeof(c->name));
