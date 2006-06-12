@@ -118,7 +118,9 @@ struct Frame {
 	Area *area;
 	unsigned short id;
 	XRectangle rect;
+	XRectangle revert;
 	Client *client;
+	Bool collapsed;
 };
 
 struct Client {

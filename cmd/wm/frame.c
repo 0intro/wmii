@@ -18,9 +18,10 @@ create_frame(Area *a, Client *c)
 	f->id = id++;
 	f->area = a;
 	f->client = c;
-	f->rect = c->rect;
+	f->revert = f->rect = c->rect;
 	f->rect.width += 2 * def.border;
 	f->rect.height += def.border + height_of_bar();
+	f->collapsed = False;
 	a->sel = f;
 	c->sel = f;
 
