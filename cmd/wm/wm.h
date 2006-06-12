@@ -322,6 +322,11 @@ unsigned long long pack_qpath(unsigned char type, unsigned short i1,
 void write_event(char *event);
 void new_ixp_conn(IXPConn *c);
 
+/* geom.c */
+BlitzAlign quadofcoord(XRectangle *rect, int x, int y);
+Bool ispointinrect(int x, int y, XRectangle * r);
+int strtorect(XRectangle *r, const char *val);
+
 /* key.c */
 void handle_key(Window w, unsigned long mod, KeyCode keycode);
 void update_keys();

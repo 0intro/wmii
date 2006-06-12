@@ -110,7 +110,7 @@ xdrawtext(Display *dpy, BlitzDraw *d)
 		break;
 	}
 	if(d->font.set)
-		Xi18nDrawString(dpy, d->drawable, d->font.set, d->gc, x, y, text, len);
+		XmbDrawString(dpy, d->drawable, d->font.set, d->gc, x, y, text, len);
 	else
 		XDrawString(dpy, d->drawable, d->gc, x, y, text, len);
 }

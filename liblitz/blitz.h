@@ -9,20 +9,8 @@
 #define BLITZ_FONT		"fixed"
 #define BLITZ_SELCOLORS		"#ffffff #335577 #447799"
 #define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
-
-/*
-#ifdef X_HAVE_UTF8_STRING
-#define Xi18nTextPropertyToTextList Xutf8TextPropertyToTextList
-#define Xi18nDrawString Xutf8DrawString
-#define Xi18nTextExtents Xutf8TextExtents
-#else
-*/
-#define Xi18nTextPropertyToTextList XmbTextPropertyToTextList
-#define Xi18nDrawString XmbDrawString
-#define Xi18nTextExtents XmbTextExtents
-/*
-#endif
-*/
+#define BLITZ_FRAME_MASK	SubstructureRedirectMask | SubstructureNotifyMask \
+							| ExposureMask | ButtonPressMask | ButtonReleaseMask;
 
 typedef enum {
     NORTH = 0x01,
@@ -71,7 +59,27 @@ int blitz_loadcolor(Display *dpy, BlitzColor *c, int mon, char *colstr);
 void blitz_drawlabel(Display *dpy, BlitzDraw *d);
 void blitz_drawborder(Display *dpy, BlitzDraw *d);
 
-/* geometry.c */
-int blitz_strtorect(XRectangle *r, const char *val);
-BlitzAlign blitz_quadofcoord(XRectangle *rect, int x, int y);
-Bool blitz_ispointinrect(int x, int y, XRectangle *r);
+/* new stuff */
+
+typedef struct {
+	Display *display;
+	int screen;
+	Window root;
+} Blitz;
+
+typedef struct {
+	Drawable drawable;
+	GC gc;
+	XRectangle rect;
+} BlitzWindow;
+
+/* blitz.c */
+void blitz_init(Blitz *blitz, Display *dpy);
+void blitz_deinit(Blitz *blitz);
+
+/* window.c */
+void blitz_create_win(Blitz *blitz, BlitzWindow *win, unsigned long mask, 
+								int x, int y, int w, int h);
+void blitz_resize_win(Blitz *blitz, BlitzWindow *win,
+						int x, int y, int w, int h);
+void blitz_destroy_win(Blitz *blitz, BlitzWindow *win);

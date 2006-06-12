@@ -4,14 +4,11 @@
  */
 
 #include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <cext.h>
 
-#include "blitz.h"
+#include "wm.h"
 
 BlitzAlign
-blitz_quadofcoord(XRectangle *rect, int x, int y)
+quadofcoord(XRectangle *rect, int x, int y)
 {
 	BlitzAlign ret = 0;
 	x -= rect->x;
@@ -29,15 +26,16 @@ blitz_quadofcoord(XRectangle *rect, int x, int y)
 	return ret;
 }
 
-Bool blitz_ispointinrect(int x, int y, XRectangle * r)
+Bool
+ispointinrect(int x, int y, XRectangle * r)
 {
 	return (x >= r->x) && (x <= r->x + r->width)
 		&& (y >= r->y) && (y <= r->y + r->height);
 }
 
-
 /* Syntax: <x> <y> <width> <height> */
-int blitz_strtorect(XRectangle *r, const char *val)
+int
+strtorect(XRectangle *r, const char *val)
 {
 	XRectangle new;
 	if (!val)
