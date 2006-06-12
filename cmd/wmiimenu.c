@@ -40,7 +40,6 @@ static unsigned int curroff = 0;
 static unsigned int cmdw = 0;
 static unsigned int twidth = 0;
 static unsigned int cwidth = 0;
-static Blitz blitz = { 0 };
 static BlitzDraw draw = { 0 };
 static const int seek = 30;		/* 30px */
 
@@ -72,7 +71,7 @@ update_offsets()
 		return;
 
 	for(i = curroff; i < item.size; i++) {
-		tw = blitz_textwidth(dpy, &draw.font, item.data[i]);
+		tw = blitz_textwidth(&draw.font, item.data[i]);
 		if(tw > irect.width / 3)
 			tw = irect.width / 3;
 		w += tw + irect.height;
@@ -83,7 +82,7 @@ update_offsets()
 
 	w = cmdw + 2 * seek;
 	for(i = curroff; i > 0; i--) {
-		tw = blitz_textwidth(dpy, &draw.font, item.data[i]);
+		tw = blitz_textwidth(&draw.font, item.data[i]);
 		if(tw > irect.width / 3)
 			tw = irect.width / 3;
 		w += tw + irect.height;
@@ -137,7 +136,7 @@ draw_menu()
 	draw.rect.y = 0;
 	draw.color = normcolor;
 	draw.data = nil;
-	blitz_drawlabel(dpy, &draw);
+	blitz_drawlabel(&draw);
 
 	/* print command */
 	if(!title || text[0]) {
@@ -146,15 +145,15 @@ draw_menu()
 		cmdw = cwidth;
 		if(cmdw && item.size)
 			draw.rect.width = cmdw;
-		blitz_drawlabel(dpy, &draw);
+		blitz_drawlabel(&draw);
 	}
 	else {
 		cmdw = twidth;
 		draw.data = title;
 		draw.color = selcolor;
 		draw.rect.width = cmdw;
-		blitz_drawlabel(dpy, &draw);
-		blitz_drawborder(dpy, &draw);
+		blitz_drawlabel(&draw);
+		blitz_drawborder(&draw);
 	}
 	offx += draw.rect.width;
 
@@ -165,23 +164,23 @@ draw_menu()
 		draw.rect.x = offx;
 		draw.rect.width = seek;
 		offx += draw.rect.width;
-		blitz_drawlabel(dpy, &draw);
+		blitz_drawlabel(&draw);
 
 		/* determine maximum items */
 		for(i = curroff; i < nextoff; i++) {
 			draw.data = item.data[i];
 			draw.rect.x = offx;
-			draw.rect.width = blitz_textwidth(dpy, &draw.font, draw.data);
+			draw.rect.width = blitz_textwidth(&draw.font, draw.data);
 			if(draw.rect.width > irect.width / 3)
 				draw.rect.width = irect.width / 3;
 			draw.rect.width += irect.height;
 			if(sel == i) {
 				draw.color = selcolor;
-				blitz_drawlabel(dpy, &draw);
-				blitz_drawborder(dpy, &draw);
+				blitz_drawlabel(&draw);
+				blitz_drawborder(&draw);
 			} else {
 				draw.color = normcolor;
-				blitz_drawlabel(dpy, &draw);
+				blitz_drawlabel(&draw);
 			}
 			offx += draw.rect.width;
 		}
@@ -190,7 +189,7 @@ draw_menu()
 		draw.data = item.size > nextoff ? ">" : nil;
 		draw.rect.x = irect.width - seek;
 		draw.rect.width = seek;
-		blitz_drawlabel(dpy, &draw);
+		blitz_drawlabel(&draw);
 	}
 	XCopyArea(dpy, draw.drawable, win, draw.gc, 0, 0, irect.width,
 			irect.height, 0, 0);
@@ -387,19 +386,19 @@ main(int argc, char *argv[])
 		usleep(1000);
 
 	/* set font and colors */
-	blitz_init(&blitz, dpy);
+	blitz_init(dpy);
 	fontstr = getenv("WMII_FONT");
 	if (!fontstr)
 		fontstr = strdup(BLITZ_FONT);
-	blitz_loadfont(dpy, &draw.font, fontstr);
+	blitz_loadfont(&draw.font, fontstr);
 	normcolstr = getenv("WMII_NORMCOLORS");
 	if (!normcolstr || strlen(normcolstr) != 23)
 		normcolstr = strdup(BLITZ_NORMCOLORS);
-	blitz_loadcolor(&blitz, &normcolor, normcolstr);
+	blitz_loadcolor(&normcolor, normcolstr);
 	selcolstr = getenv("WMII_SELCOLORS");
 	if (!selcolstr || strlen(selcolstr) != 23)
 		selcolstr = strdup(BLITZ_SELCOLORS);
-	blitz_loadcolor(&blitz, &selcolor, selcolstr);
+	blitz_loadcolor(&selcolor, selcolstr);
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
@@ -426,12 +425,12 @@ main(int argc, char *argv[])
 	XSync(dpy, False);
 
 	if(maxname)
-		cwidth = blitz_textwidth(dpy, &draw.font, maxname) + irect.height;
+		cwidth = blitz_textwidth(&draw.font, maxname) + irect.height;
 	if(cwidth > irect.width / 3)
 		cwidth = irect.width / 3;
 
 	if(title) {
-		twidth = blitz_textwidth(dpy, &draw.font, title) + irect.height;
+		twidth = blitz_textwidth(&draw.font, title) + irect.height;
 		if(twidth > irect.width / 3)
 			twidth = irect.width / 3;
 	}
@@ -462,7 +461,6 @@ main(int argc, char *argv[])
 			break;
 	}
 
-	blitz_deinit(&blitz);
 	XUngrabKeyboard(dpy, CurrentTime);
 	XFreePixmap(dpy, draw.drawable);
 	XFreeGC(dpy, draw.gc);

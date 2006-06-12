@@ -296,8 +296,8 @@ draw_client(Client *c)
 		d.rect = f->rect;
 		d.rect.x = d.rect.y = 0;
 		d.notch = &c->rect;
-		blitz_drawlabel(dpy, &d);
-		blitz_drawborder(dpy, &d);
+		blitz_drawlabel(&d);
+		blitz_drawborder(&d);
 	}
 	d.rect.x = 0;
 	d.rect.y = 0;
@@ -309,7 +309,7 @@ draw_client(Client *c)
 	snprintf(buf, sizeof(buf), "%s%d/%d",
 		/* if */	(f->area == f->area->view->area) ? "~" : "",
 				fidx + 1, size);
-	w = d.rect.width = d.rect.height + blitz_textwidth(dpy, &blitzfont, buf);
+	w = d.rect.width = d.rect.height + blitz_textwidth(&blitzfont, buf);
 	if(w > f->rect.width)
 		return;
 	d.rect.x = f->rect.width - d.rect.width; 
@@ -319,8 +319,8 @@ draw_client(Client *c)
 		d.color = def.sel;
 	else
 		d.color = def.norm;
-	blitz_drawlabel(dpy, &d);
-	blitz_drawborder(dpy, &d);
+	blitz_drawlabel(&d);
+	blitz_drawborder(&d);
 	d.rect.x = 0;
 
 	if(c == sel_client())
@@ -329,14 +329,14 @@ draw_client(Client *c)
 		d.color = def.norm;
 
 	/* tag bar */
-	d.rect.width = d.rect.height + blitz_textwidth(dpy, &blitzfont, c->tags);
+	d.rect.width = d.rect.height + blitz_textwidth(&blitzfont, c->tags);
 	if(d.rect.width + w > f->rect.width)
 		return;
 	if(d.rect.width > f->rect.width / 3)
 		d.rect.width = f->rect.width / 3;
 	d.data = c->tags;
-	blitz_drawlabel(dpy, &d);
-	blitz_drawborder(dpy, &d);
+	blitz_drawlabel(&d);
+	blitz_drawborder(&d);
 	d.rect.x += d.rect.width;
 
 	/* title bar */
@@ -345,8 +345,8 @@ draw_client(Client *c)
 		return;
 	d.rect.width = f->rect.width - (d.rect.x + w);
 	d.data = c->name;
-	blitz_drawlabel(dpy, &d);
-	blitz_drawborder(dpy, &d);
+	blitz_drawlabel(&d);
+	blitz_drawborder(&d);
 
 	XSync(dpy, False);
 }

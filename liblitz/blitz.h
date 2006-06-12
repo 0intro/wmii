@@ -12,6 +12,18 @@
 #define BLITZ_FRAME_MASK	SubstructureRedirectMask | SubstructureNotifyMask \
 							| ExposureMask | ButtonPressMask | ButtonReleaseMask;
 
+typedef struct {
+	Display *display;
+	int screen;
+	Window root;
+} Blitz;
+
+typedef struct {
+	Drawable drawable;
+	GC gc;
+	XRectangle rect;
+} BlitzWindow;
+
 typedef enum {
     NORTH = 0x01,
     EAST  = 0x02,
@@ -48,38 +60,25 @@ typedef struct {
 	char *data;
 } BlitzDraw;
 
-/* font.c */
-unsigned int blitz_textwidth(Display *dpy, BlitzFont *font, char *text);
-void blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr);
-
-/* draw.c */
-void blitz_drawlabel(Display *dpy, BlitzDraw *d);
-void blitz_drawborder(Display *dpy, BlitzDraw *d);
-
-/* new stuff */
-
-typedef struct {
-	Display *display;
-	int screen;
-	Window root;
-} Blitz;
-
-typedef struct {
-	Drawable drawable;
-	GC gc;
-	XRectangle rect;
-} BlitzWindow;
+Blitz __blitz;
 
 /* blitz.c */
-void blitz_init(Blitz *blitz, Display *dpy);
-void blitz_deinit(Blitz *blitz);
+void blitz_init(Display *dpy);
+
+/* draw.c */
+void blitz_drawlabel(BlitzDraw *d);
+void blitz_drawborder(BlitzDraw *d);
+
+/* font.c */
+unsigned int blitz_textwidth(BlitzFont *font, char *text);
+void blitz_loadfont(BlitzFont *font, char *fontstr);
 
 /* color.c */
-int blitz_loadcolor(Blitz *blitz, BlitzColor *c, char *colstr);
+int blitz_loadcolor(BlitzColor *c, char *colstr);
 
 /* window.c */
-void blitz_create_win(Blitz *blitz, BlitzWindow *win, unsigned long mask, 
+void blitz_create_win(BlitzWindow *win, unsigned long mask, 
 								int x, int y, int w, int h);
-void blitz_resize_win(Blitz *blitz, BlitzWindow *win,
+void blitz_resize_win(BlitzWindow *win,
 						int x, int y, int w, int h);
-void blitz_destroy_win(Blitz *blitz, BlitzWindow *win);
+void blitz_destroy_win(BlitzWindow *win);

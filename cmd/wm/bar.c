@@ -99,8 +99,8 @@ draw_bar()
 	d.font = blitzfont;
 
 	d.color = def.norm;
-	blitz_drawlabel(dpy, &d);
-	blitz_drawborder(dpy, &d);
+	blitz_drawlabel(&d);
+	blitz_drawborder(&d);
 
 	if(!bar)
 		goto MapBar;
@@ -110,7 +110,7 @@ draw_bar()
 		b->rect.y = 0;
 		b->rect.width = brect.height;
 		if(strlen(b->data))
-			b->rect.width += blitz_textwidth(dpy, &blitzfont, b->data);
+			b->rect.width += blitz_textwidth(&blitzfont, b->data);
 		b->rect.height = brect.height;
 		w += b->rect.width;
 	}
@@ -139,8 +139,8 @@ draw_bar()
 			d.align = EAST;
 		else
 			d.align = CENTER;
-		blitz_drawlabel(dpy, &d);
-		blitz_drawborder(dpy, &d);
+		blitz_drawlabel(&d);
+		blitz_drawborder(&d);
 	}
 MapBar:
 	XCopyArea(dpy, barpmap, barwin, bargc, 0, 0, brect.width, brect.height, 0, 0);

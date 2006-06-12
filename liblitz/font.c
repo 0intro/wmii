@@ -12,7 +12,7 @@
 #include "blitz.h"
 
 unsigned int
-blitz_textwidth(Display *dpy, BlitzFont *font, char *text)
+blitz_textwidth(BlitzFont *font, char *text)
 {
 	if(font->set) {
 		XRectangle r;
@@ -23,7 +23,7 @@ blitz_textwidth(Display *dpy, BlitzFont *font, char *text)
 }
 
 void
-blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr)
+blitz_loadfont(BlitzFont *font, char *fontstr)
 {
 	char *fontname = fontstr;
 	char **missing = nil, *def = "?";
@@ -31,14 +31,14 @@ blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr)
 
 	setlocale(LC_ALL, "");
 	if(font->set)
-		XFreeFontSet(dpy, font->set);
-	font->set = XCreateFontSet(dpy, fontname, &missing, &n, &def);
+		XFreeFontSet(__blitz.display, font->set);
+	font->set = XCreateFontSet(__blitz.display, fontname, &missing, &n, &def);
 	if(missing) {
 		while(n--)
 			fprintf(stderr, "liblitz: missing fontset: %s\n", missing[n]);
 		XFreeStringList(missing);
 		if(font->set) {
-			XFreeFontSet(dpy, font->set);
+			XFreeFontSet(__blitz.display, font->set);
 			font->set = nil;
 		}
 	}
@@ -61,12 +61,12 @@ blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr)
 	}
 	else {
 		if(font->xfont)
-			XFreeFont(dpy, font->xfont);
+			XFreeFont(__blitz.display, font->xfont);
 		font->xfont = nil;
-		font->xfont = XLoadQueryFont(dpy, fontname);
+		font->xfont = XLoadQueryFont(__blitz.display, fontname);
 		if (!font->xfont) {
 			fontname = "fixed";
-			font->xfont = XLoadQueryFont(dpy, fontname);
+			font->xfont = XLoadQueryFont(__blitz.display, fontname);
 		}
 		if (!font->xfont) {
 			fprintf(stderr, "%s", "liblitz: error, cannot load 'fixed' font\n");
