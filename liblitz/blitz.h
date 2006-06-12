@@ -52,9 +52,6 @@ typedef struct {
 unsigned int blitz_textwidth(Display *dpy, BlitzFont *font, char *text);
 void blitz_loadfont(Display *dpy, BlitzFont *font, char *fontstr);
 
-/* color.c */
-int blitz_loadcolor(Display *dpy, BlitzColor *c, int mon, char *colstr);
-
 /* draw.c */
 void blitz_drawlabel(Display *dpy, BlitzDraw *d);
 void blitz_drawborder(Display *dpy, BlitzDraw *d);
@@ -76,6 +73,9 @@ typedef struct {
 /* blitz.c */
 void blitz_init(Blitz *blitz, Display *dpy);
 void blitz_deinit(Blitz *blitz);
+
+/* color.c */
+int blitz_loadcolor(Blitz *blitz, BlitzColor *c, char *colstr);
 
 /* window.c */
 void blitz_create_win(Blitz *blitz, BlitzWindow *win, unsigned long mask, 

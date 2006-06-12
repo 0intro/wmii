@@ -285,6 +285,7 @@ main(int argc, char *argv[])
 	/* X server */
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
 	init_x_event_handler();
+	blitz_init(&blitz, dpy);
 
 	view = nil;
 	client = nil;
@@ -302,9 +303,9 @@ main(int argc, char *argv[])
 	def.border = 2;
 	def.colmode = Coldefault;
 	cext_strlcpy(def.selcolor, BLITZ_SELCOLORS, sizeof(def.selcolor));
-	blitz_loadcolor(dpy, &def.sel, screen, def.selcolor);
+	blitz_loadcolor(&blitz, &def.sel, def.selcolor);
 	cext_strlcpy(def.normcolor, BLITZ_NORMCOLORS, sizeof(def.normcolor));
-	blitz_loadcolor(dpy, &def.norm, screen, def.normcolor);
+	blitz_loadcolor(&blitz, &def.norm, def.normcolor);
 	cext_strlcpy(def.grabmod, "Mod1", sizeof(def.grabmod));
 	def.mod = Mod1Mask;
 
@@ -345,6 +346,7 @@ main(int argc, char *argv[])
 	if(errstr)
 		fprintf(stderr, "wmii: fatal: %s\n", errstr);
 
+	blitz_deinit(&blitz);
 	ixp_server_close(&srv);
 	cleanup();
 	XCloseDisplay(dpy);

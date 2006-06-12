@@ -40,6 +40,7 @@ static unsigned int curroff = 0;
 static unsigned int cmdw = 0;
 static unsigned int twidth = 0;
 static unsigned int cwidth = 0;
+static Blitz blitz = { 0 };
 static BlitzDraw draw = { 0 };
 static const int seek = 30;		/* 30px */
 
@@ -386,6 +387,7 @@ main(int argc, char *argv[])
 		usleep(1000);
 
 	/* set font and colors */
+	blitz_init(&blitz, dpy);
 	fontstr = getenv("WMII_FONT");
 	if (!fontstr)
 		fontstr = strdup(BLITZ_FONT);
@@ -393,11 +395,11 @@ main(int argc, char *argv[])
 	normcolstr = getenv("WMII_NORMCOLORS");
 	if (!normcolstr || strlen(normcolstr) != 23)
 		normcolstr = strdup(BLITZ_NORMCOLORS);
-	blitz_loadcolor(dpy, &normcolor, screen, normcolstr);
+	blitz_loadcolor(&blitz, &normcolor, normcolstr);
 	selcolstr = getenv("WMII_SELCOLORS");
 	if (!selcolstr || strlen(selcolstr) != 23)
 		selcolstr = strdup(BLITZ_SELCOLORS);
-	blitz_loadcolor(dpy, &selcolor, screen, selcolstr);
+	blitz_loadcolor(&blitz, &selcolor, selcolstr);
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
@@ -460,6 +462,7 @@ main(int argc, char *argv[])
 			break;
 	}
 
+	blitz_deinit(&blitz);
 	XUngrabKeyboard(dpy, CurrentTime);
 	XFreePixmap(dpy, draw.drawable);
 	XFreeGC(dpy, draw.gc);

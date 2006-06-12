@@ -1365,7 +1365,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(BAR(i1)->colstr, fcall->data, fcall->count);
 		BAR(i1)->colstr[fcall->count] = 0;
-		blitz_loadcolor(dpy, &BAR(i1)->color, screen, BAR(i1)->colstr);
+		blitz_loadcolor(&blitz, &BAR(i1)->color, BAR(i1)->colstr);
 		draw_bar();
 		break;
 	case FsFselcolors:
@@ -1374,7 +1374,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(def.selcolor, fcall->data, fcall->count);
 		def.selcolor[fcall->count] = 0;
-		blitz_loadcolor(dpy, &def.sel, screen, def.selcolor);
+		blitz_loadcolor(&blitz, &def.sel, def.selcolor);
 		draw_clients();
 		break;
 	case FsFnormcolors:
@@ -1383,7 +1383,7 @@ xwrite(IXPConn *c, Fcall *fcall)
 			return Ebadvalue;
 		memcpy(def.normcolor, fcall->data, fcall->count);
 		def.normcolor[fcall->count] = 0;
-		blitz_loadcolor(dpy, &def.norm, screen, def.normcolor);
+		blitz_loadcolor(&blitz, &def.norm, def.normcolor);
 		draw_clients();
 		break;
 	case FsFkeys:
