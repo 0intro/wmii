@@ -12,42 +12,71 @@
 #define BLITZ_FRAME_MASK	SubstructureRedirectMask | SubstructureNotifyMask \
 							| ExposureMask | ButtonPressMask | ButtonReleaseMask;
 
-typedef struct {
+enum {BLITZ_LABEL, BLITZ_LAST};
+
+typedef struct Blitz Blitz;
+typedef enum BlitzAlign BlitzAlign;
+typedef struct BlitzColor BlitzColor;
+typedef struct BlitzFont BlitzFont;
+typedef struct BlitzLabel BlitzLabel;
+typedef struct BlitzWin BlitzWin;
+typedef union BlitzWidget BlitzWidget;
+
+struct Blitz {
 	Display *display;
 	int screen;
 	Window root;
-} Blitz;
 
-typedef struct {
+};
+
+struct BlitzWin{
 	Drawable drawable;
 	GC gc;
 	XRectangle rect;
-} BlitzWin;
 
-typedef enum {
-    NORTH = 0x01,
-    EAST  = 0x02,
-    SOUTH = 0x04,
-    WEST  = 0x08,
-    NEAST = NORTH | EAST,
-    NWEST = NORTH | WEST,
-    SEAST = SOUTH | EAST,
-    SWEST = SOUTH | WEST,
-    CENTER = NEAST | SWEST
-} BlitzAlign;
+};
 
-typedef struct {
+enum BlitzAlign {
+	NORTH = 0x01,
+	EAST  = 0x02,
+	SOUTH = 0x04,
+	WEST  = 0x08,
+	NEAST = NORTH | EAST,
+	NWEST = NORTH | WEST,
+	SEAST = SOUTH | EAST,
+	SWEST = SOUTH | WEST,
+	CENTER = NEAST | SWEST
+};
+
+struct BlitzColor {
 	unsigned long bg;
 	unsigned long fg;
 	unsigned long border;
-} BlitzColor;
+};
 
-typedef struct {
+struct BlitzFont {
 	XFontStruct *xfont;
 	XFontSet set;
 	int ascent;
 	int descent;
-} BlitzFont;
+};
+
+struct BlitzLabel {
+	int type;
+	BlitzWin *win;
+	XRectangle rect;
+	BlitzColor color;
+	/* widget specific */
+	BlitzAlign align;
+	BlitzFont font;
+	char *data;
+	void (*draw)(char *text); /* also called on expose */
+};
+
+union BlitzWidget {
+	int type;
+	BlitzLabel label;
+};
 
 typedef struct {
 	BlitzAlign align;
@@ -63,11 +92,16 @@ typedef struct {
 Blitz __blitz;
 
 /* blitz.c */
-void blitz_init(Display *dpy);
+void blitz_x11_init(Display *dpy);
+void blitz_process_x11_event();
 
 /* draw.c */
 void blitz_drawlabel(BlitzDraw *d);
 void blitz_drawborder(BlitzDraw *d);
+
+/* label.c */
+BlitzWidget *blitz_create_label(BlitzWin *win);
+void blitz_destroy_label(BlitzWidget *widget);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);

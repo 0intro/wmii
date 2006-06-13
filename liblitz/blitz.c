@@ -7,9 +7,17 @@
 
 /* blitz.c */
 void
-blitz_init(Display *dpy)
+blitz_x11_init(Display *dpy)
 {
 	__blitz.display = dpy;
 	__blitz.screen = DefaultScreen(dpy);
 	__blitz.root = DefaultRootWindow(dpy);
+}
+
+void
+blitz_process_x11_event()
+{
+
+
+
 }

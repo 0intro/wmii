@@ -113,7 +113,7 @@ create_inet_sock(char *host, char **errstr)
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(prt);
 
-	if(!strncmp(host, "*", 1))
+	if(!strncmp(host, "*", 2))
 		addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	else if((hp = gethostbyname(host)))
 		bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);

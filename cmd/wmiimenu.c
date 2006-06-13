@@ -386,7 +386,7 @@ main(int argc, char *argv[])
 		usleep(1000);
 
 	/* set font and colors */
-	blitz_init(dpy);
+	blitz_x11_init(dpy);
 	fontstr = getenv("WMII_FONT");
 	if (!fontstr)
 		fontstr = strdup(BLITZ_FONT);
