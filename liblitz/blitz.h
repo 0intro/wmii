@@ -77,8 +77,8 @@ void blitz_loadfont(BlitzFont *font, char *fontstr);
 int blitz_loadcolor(BlitzColor *c, char *colstr);
 
 /* window.c */
-void blitz_create_win(BlitzWindow *win, unsigned long mask, 
-								int x, int y, int w, int h);
+BlitzWindow *blitz_create_win(unsigned long mask, 
+							int x, int y, int w, int h);
 void blitz_resize_win(BlitzWindow *win,
 						int x, int y, int w, int h);
 void blitz_destroy_win(BlitzWindow *win);
