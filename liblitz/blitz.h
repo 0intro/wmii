@@ -95,6 +95,7 @@ union BlitzWidget {
 	BlitzLayout layout;
 };
 
+/* obsolete, will be replaced soon */
 typedef struct {
 	BlitzAlign align;
 	Drawable drawable;
@@ -105,6 +106,7 @@ typedef struct {
 	XRectangle *notch;	/* relative notch rect */
 	char *data;
 } BlitzDraw;
+/***/
 
 Blitz __blitz;
 
@@ -130,8 +132,6 @@ void blitz_add_widget(BlitzWidget **l, BlitzWidget *w);
 void blitz_rm_widget(BlitzWidget **l, BlitzWidget *w);
 
 /* window.c */
-BlitzWin *blitz_create_win(unsigned long mask, 
-							int x, int y, int w, int h);
-void blitz_resize_win(BlitzWin *win,
-						int x, int y, int w, int h);
+BlitzWin *blitz_create_win(unsigned long mask, int x, int y, int w, int h);
+void blitz_resize_win(BlitzWin *win, int x, int y, int w, int h);
 void blitz_destroy_win(BlitzWin *win);
