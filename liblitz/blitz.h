@@ -95,16 +95,16 @@ Blitz __blitz;
 /* blitz.c */
 void blitz_x11_init(Display *dpy);
 
-/* draw.c */
+/* color.c */
+int blitz_loadcolor(BlitzColor *c, char *colstr);
+
+/* label.c */
 void blitz_drawlabel(BlitzDraw *d);
 void blitz_drawborder(BlitzDraw *d);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
 void blitz_loadfont(BlitzFont *font, char *fontstr);
-
-/* color.c */
-int blitz_loadcolor(BlitzColor *c, char *colstr);
 
 /* window.c */
 BlitzWin *blitz_create_win(unsigned long mask, 
