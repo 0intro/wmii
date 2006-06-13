@@ -7,7 +7,6 @@
 
 #include "blitz.h"
 
-/* blitz.c */
 void
 blitz_x11_init(Display *dpy)
 {

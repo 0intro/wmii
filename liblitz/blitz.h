@@ -10,12 +10,15 @@
 #define BLITZ_SELCOLORS		"#ffffff #335577 #447799"
 #define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
 
+enum {BLITZ_LAYOUT, BLITZ_LABEL, BLITZ_LAST};
 typedef struct Blitz Blitz;
 typedef enum BlitzAlign BlitzAlign;
 typedef struct BlitzColor BlitzColor;
 typedef struct BlitzFont BlitzFont;
 typedef struct BlitzLabel BlitzLabel;
+#define BLITZLABEL(p) ((BlitzLabel *)(p))
 typedef struct BlitzLayout BlitzLayout;
+#define BLITZLAYOUT(p) ((BlitzLayout *)(p))
 typedef union BlitzWidget BlitzWidget;
 typedef struct BlitzWin BlitzWin;
 
@@ -57,25 +60,36 @@ struct BlitzWin{
 };
 
 struct BlitzLayout {
+	int type;
+	XRectangle rect;
+	Bool expand;
+	BlitzWidget *next;
+	/* widget specific */
 	BlitzWin *win;
-	BlitzWidget *widgets;
-	void (*scale)(BlitzLayout *l);
-	void (*draw)(BlitzLayout *l);
+	BlitzWidget *rows;
+	BlitzWidget *cols;
+	void (*scale)(BlitzWidget *l);
+	void (*draw)(BlitzWidget *l);
 };
 
 struct BlitzLabel {
 	int type;
 	XRectangle rect;
+	Bool expand;
+	BlitzWidget *next;
 	/* widget specific */
 	BlitzColor color;
 	BlitzAlign align;
 	BlitzFont font;
 	char *text;
-	void (*draw)(BlitzLayout *l);
+	void (*draw)(BlitzWidget *l);
 };
 
 union BlitzWidget {
 	int type;
+	XRectangle rect;
+	Bool expand;
+	BlitzWidget *next;
 	BlitzLabel label;
 };
 
@@ -101,6 +115,12 @@ int blitz_loadcolor(BlitzColor *c, char *colstr);
 /* label.c */
 void blitz_drawlabel(BlitzDraw *d);
 void blitz_drawborder(BlitzDraw *d);
+
+/* layout.c */
+BlitzLayout *blitz_create_layout(BlitzWin *win);
+void blitz_add_widget(BlitzWidget **l, BlitzWidget *w);
+void blitz_rm_widget(BlitzWidget **l, BlitzWidget *w);
+int blitz_destroy_layout(BlitzLayout *l);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
