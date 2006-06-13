@@ -12,9 +12,6 @@
 /* emallocz.c */
 void *cext_emallocz(unsigned int size);
 
-/* estrdup.c */
-char *cext_estrdup(const char *s);
-
 /* strlcat.c */
 unsigned int cext_strlcat(char *dst, const char *src, unsigned int siz);
 
