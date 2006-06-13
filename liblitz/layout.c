@@ -45,30 +45,3 @@ blitz_create_layout(BlitzWin *win)
 	l->draw = xdraw;
 	return l;
 }
-
-void
-blitz_add_widget(BlitzWidget **l, BlitzWidget *w)
-{
-	BlitzWidget **wt;
-	for(wt = l; *wt; wt = &(*wt)->next);
-	w->next = nil;
-	*wt = w;
-}
-
-void
-blitz_rm_widget(BlitzWidget **l, BlitzWidget *w)
-{
-	BlitzWidget **wt;
-	for(wt = l; *wt && *wt != w; wt = &(*wt)->next);
-	cext_assert(*wt == w);
-	*wt = w->next;
-}
-
-int
-blitz_destroy_layout(BlitzLayout *l)
-{
-	if(l->cols || l->rows)
-		return -1;
-	free(l);
-	return 0;
-}

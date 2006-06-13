@@ -115,9 +115,6 @@ void blitz_drawborder(BlitzDraw *d);
 
 /* layout.c */
 BlitzLayout *blitz_create_layout(BlitzWin *win);
-void blitz_add_widget(BlitzWidget **l, BlitzWidget *w);
-void blitz_rm_widget(BlitzWidget **l, BlitzWidget *w);
-int blitz_destroy_layout(BlitzLayout *l);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
