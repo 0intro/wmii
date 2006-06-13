@@ -22,7 +22,7 @@ typedef struct {
 	Drawable drawable;
 	GC gc;
 	XRectangle rect;
-} BlitzWindow;
+} BlitzWin;
 
 typedef enum {
     NORTH = 0x01,
@@ -77,8 +77,8 @@ void blitz_loadfont(BlitzFont *font, char *fontstr);
 int blitz_loadcolor(BlitzColor *c, char *colstr);
 
 /* window.c */
-BlitzWindow *blitz_create_win(unsigned long mask, 
+BlitzWin *blitz_create_win(unsigned long mask, 
 							int x, int y, int w, int h);
-void blitz_resize_win(BlitzWindow *win,
+void blitz_resize_win(BlitzWin *win,
 						int x, int y, int w, int h);
-void blitz_destroy_win(BlitzWindow *win);
+void blitz_destroy_win(BlitzWin *win);

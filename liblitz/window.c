@@ -8,10 +8,10 @@
 
 #include "blitz.h"
 
-BlitzWindow *
+BlitzWin *
 blitz_create_win(unsigned long mask, int x, int y, int w, int h)
 {
-	BlitzWindow *win = cext_emallocz(sizeof(BlitzWindow));
+	BlitzWin *win = cext_emallocz(sizeof(BlitzWin));
 	XSetWindowAttributes wa;
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
@@ -30,13 +30,13 @@ blitz_create_win(unsigned long mask, int x, int y, int w, int h)
 }
 
 void
-blitz_resize_win(BlitzWindow *win, int x, int y, int w, int h)
+blitz_resize_win(BlitzWin *win, int x, int y, int w, int h)
 {
 	XMoveResizeWindow(__blitz.display, win->drawable, x, y, w, h);
 }
 
 void
-blitz_destroy_win(BlitzWindow *win)
+blitz_destroy_win(BlitzWin *win)
 {
 	XFreeGC(__blitz.display, win->gc);
 	XDestroyWindow(__blitz.display, win->drawable);
