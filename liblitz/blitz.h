@@ -12,13 +12,15 @@
 #define BLITZ_FRAME_MASK	SubstructureRedirectMask | SubstructureNotifyMask \
 							| ExposureMask | ButtonPressMask | ButtonReleaseMask;
 
-enum {BLITZ_LABEL, BLITZ_LAST};
+enum {BLITZ_LABEL, BLITZ_LAYOUT, BLITZ_LAST};
 
 typedef struct Blitz Blitz;
 typedef enum BlitzAlign BlitzAlign;
 typedef struct BlitzColor BlitzColor;
 typedef struct BlitzFont BlitzFont;
 typedef struct BlitzLabel BlitzLabel;
+typedef struct BlitzLayoutItem BlitzLayoutItem;
+typedef struct BlitzLayout BlitzLayout;
 typedef struct BlitzWin BlitzWin;
 typedef union BlitzWidget BlitzWidget;
 
@@ -26,14 +28,19 @@ struct Blitz {
 	Display *display;
 	int screen;
 	Window root;
-
+	BlitzWin *wins;
 };
 
 struct BlitzWin{
 	Drawable drawable;
 	GC gc;
 	XRectangle rect;
-
+	void (*enter)(XEvent *e);
+	void (*expose)(XEvent *e);
+	void (*kpress)(XEvent *e);
+	void (*bpress)(XEvent *e);
+	void (*brelease)(XEvent *e);
+	BlitzWin *next;
 };
 
 enum BlitzAlign {
@@ -61,15 +68,32 @@ struct BlitzFont {
 	int descent;
 };
 
+struct BlitzLayout {
+	int type;
+	BlitzWin *win;
+	XRectangle rect;
+	/* widget specific */
+	BlitzLayoutItem *items;
+	BlitzLayout *next;
+};
+
+struct BlitzLayoutItem {
+	Bool expand;
+	BlitzWidget *widget;
+	BlitzLayoutItem *next;
+};
+
 struct BlitzLabel {
 	int type;
 	BlitzWin *win;
 	XRectangle rect;
-	BlitzColor color;
 	/* widget specific */
+	BlitzColor color;
 	BlitzAlign align;
 	BlitzFont font;
 	char *data;
+	void (*bpress)(XEvent *e);
+	void (*brelease)(XEvent *e);
 	void (*draw)(char *text); /* also called on expose */
 };
 

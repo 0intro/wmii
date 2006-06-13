@@ -3,6 +3,8 @@
  * See LICENSE file for license details.
  */
 
+#include <cext.h>
+
 #include "blitz.h"
 
 /* blitz.c */
@@ -12,6 +14,7 @@ blitz_x11_init(Display *dpy)
 	__blitz.display = dpy;
 	__blitz.screen = DefaultScreen(dpy);
 	__blitz.root = DefaultRootWindow(dpy);
+	__blitz.wins = nil;
 }
 
 void
