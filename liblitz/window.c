@@ -22,13 +22,7 @@ blitz_create_win(unsigned long mask, int x, int y, int w, int h)
 			CopyFromParent, DefaultVisual(__blitz.display, __blitz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
 	win->gc = XCreateGC(__blitz.display, win->drawable, 0, 0);
-	win->rect.x = x;
-	win->rect.y = y;
-	win->rect.width = w;
-	win->rect.height = h;
-
-	win->next = __blitz.wins;
-	__blitz.wins = win;
+	blitz_resize_win(win, x, y, w, h);
 
 	return win;
 }
@@ -36,17 +30,16 @@ blitz_create_win(unsigned long mask, int x, int y, int w, int h)
 void
 blitz_resize_win(BlitzWin *win, int x, int y, int w, int h)
 {
+	win->rect.x = x;
+	win->rect.y = y;
+	win->rect.width = w;
+	win->rect.height = h;
 	XMoveResizeWindow(__blitz.display, win->drawable, x, y, w, h);
 }
 
 void
 blitz_destroy_win(BlitzWin *win)
 {
-	BlitzWin **w;
-	for(w = &__blitz.wins; *w && *w != win; w = &(*w)->next);
-	cext_assert(*w != win);
-	*w = win->next;
 	XFreeGC(__blitz.display, win->gc);
 	XDestroyWindow(__blitz.display, win->drawable);
-	free(win);
 }
