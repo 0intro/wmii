@@ -19,6 +19,7 @@ typedef struct BlitzLabel BlitzLabel;
 typedef struct BlitzLayout BlitzLayout;
 #define BLITZLAYOUT(p) ((BlitzLayout *)(p))
 typedef union BlitzWidget BlitzWidget;
+#define BLITZWIDGET(p) ((BlitzWidget *)(p))
 typedef struct BlitzWin BlitzWin;
 
 struct Blitz {
@@ -63,6 +64,7 @@ struct BlitzLayout {
 	Bool expand;
 	BlitzWidget *next;
 	void (*draw)(BlitzWidget *);
+	void (*destroy)(BlitzWidget *);
 	/* widget specific */
 	BlitzWin *win;
 	BlitzWidget *rows;
@@ -75,6 +77,7 @@ struct BlitzLabel {
 	Bool expand;
 	BlitzWidget *next;
 	void (*draw)(BlitzWidget *);
+	void (*destroy)(BlitzWidget *);
 	/* widget specific */
 	BlitzColor color;
 	BlitzAlign align;
@@ -87,7 +90,9 @@ union BlitzWidget {
 	Bool expand;
 	BlitzWidget *next;
 	void (*draw)(BlitzWidget *);
+	void (*destroy)(BlitzWidget *);
 	BlitzLabel label;
+	BlitzLayout layout;
 };
 
 typedef struct {
@@ -114,11 +119,15 @@ void blitz_drawlabel(BlitzDraw *d);
 void blitz_drawborder(BlitzDraw *d);
 
 /* layout.c */
-BlitzLayout *blitz_create_layout(BlitzWin *win);
+BlitzLayout *blitz_create_layout(BlitzWin *win, BlitzWidget **w);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
 void blitz_loadfont(BlitzFont *font, char *fontstr);
+
+/* widget.c */
+void blitz_add_widget(BlitzWidget **l, BlitzWidget *w);
+void blitz_rm_widget(BlitzWidget **l, BlitzWidget *w);
 
 /* window.c */
 BlitzWin *blitz_create_win(unsigned long mask, 

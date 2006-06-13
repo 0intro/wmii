@@ -23,25 +23,35 @@ xscale(BlitzWidget *w)
 }
 
 static void
+xdestroy(BlitzWidget *w)
+{
+	BlitzLayout *l = BLITZLAYOUT(w);
+	for(w = l->cols; w; w = w->next)
+		w->destroy(w);
+	for(w = l->rows; w; w = w->next)
+		w->destroy(w);
+}
+
+static void
 xdraw(BlitzWidget *w)
 {
 	BlitzLayout *l = BLITZLAYOUT(w);
 	for(w = l->cols; w; w = w->next)
-		if(w->draw)
-			w->draw(w);
+		w->draw(w);
 	for(w = l->rows; w; w = w->next)
-		if(w->draw)
-			w->draw(w);
+		w->draw(w);
 }
 
 BlitzLayout *
-blitz_create_layout(BlitzWin *win)
+blitz_create_layout(BlitzWin *win, BlitzWidget **w)
 {
 	BlitzLayout *l;
 	l = cext_emallocz(sizeof(BlitzLayout));
 	l->win = win;
 	l->cols = l->rows = nil;
-	l->scale = xscale;
+	l->destroy = xdestroy;
 	l->draw = xdraw;
+	l->scale = xscale;
+	blitz_add_widget(w, BLITZWIDGET(l));
 	return l;
 }
