@@ -23,26 +23,15 @@ xscale(BlitzWidget *w)
 }
 
 static void
-xdraww(BlitzWidget *w)
-{
-	switch(w->type) {
-		case BLITZ_LABEL:
-			BLITZLABEL(w)->draw(w);
-			break;
-		case BLITZ_LAYOUT:
-			BLITZLAYOUT(w)->draw(w);
-			break;
-	}
-}
-
-static void
 xdraw(BlitzWidget *w)
 {
 	BlitzLayout *l = BLITZLAYOUT(w);
 	for(w = l->cols; w; w = w->next)
-		xdraww(w);
+		if(w->draw)
+			w->draw(w);
 	for(w = l->rows; w; w = w->next)
-		xdraww(w);
+		if(w->draw)
+			w->draw(w);
 }
 
 BlitzLayout *

@@ -10,7 +10,6 @@
 #define BLITZ_SELCOLORS		"#ffffff #335577 #447799"
 #define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
 
-enum {BLITZ_LAYOUT, BLITZ_LABEL, BLITZ_LAST};
 typedef struct Blitz Blitz;
 typedef enum BlitzAlign BlitzAlign;
 typedef struct BlitzColor BlitzColor;
@@ -60,36 +59,34 @@ struct BlitzWin{
 };
 
 struct BlitzLayout {
-	int type;
 	XRectangle rect;
 	Bool expand;
 	BlitzWidget *next;
+	void (*draw)(BlitzWidget *);
 	/* widget specific */
 	BlitzWin *win;
 	BlitzWidget *rows;
 	BlitzWidget *cols;
-	void (*scale)(BlitzWidget *l);
-	void (*draw)(BlitzWidget *l);
+	void (*scale)(BlitzWidget *);
 };
 
 struct BlitzLabel {
-	int type;
 	XRectangle rect;
 	Bool expand;
 	BlitzWidget *next;
+	void (*draw)(BlitzWidget *);
 	/* widget specific */
 	BlitzColor color;
 	BlitzAlign align;
 	BlitzFont font;
 	char *text;
-	void (*draw)(BlitzWidget *l);
 };
 
 union BlitzWidget {
-	int type;
 	XRectangle rect;
 	Bool expand;
 	BlitzWidget *next;
+	void (*draw)(BlitzWidget *);
 	BlitzLabel label;
 };
 
