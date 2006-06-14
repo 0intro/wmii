@@ -14,13 +14,8 @@ typedef struct Blitz Blitz;
 typedef enum BlitzAlign BlitzAlign;
 typedef struct BlitzColor BlitzColor;
 typedef struct BlitzFont BlitzFont;
-typedef struct BlitzLabel BlitzLabel;
-#define BLITZLABEL(p) ((BlitzLabel *)(p))
-typedef struct BlitzLayout BlitzLayout;
-#define BLITZLAYOUT(p) ((BlitzLayout *)(p))
-typedef union BlitzWidget BlitzWidget;
-#define BLITZWIDGET(p) ((BlitzWidget *)(p))
-typedef struct BlitzWin BlitzWin;
+typedef struct BlitzTile BlitzTile;
+typedef struct BlitzInput BlitzInput;
 
 struct Blitz {
 	Display *display;
@@ -53,46 +48,22 @@ struct BlitzFont {
 	int descent;
 };
 
-struct BlitzWin{
+struct BlitzTile {
 	Drawable drawable;
-	GC gc;
-	XRectangle rect;
+	BlitzColor color;
+	XRectangle rect;	/* relative rect */
+	XRectangle *notch;	/* relative notch rect */
+	void (*event[LASTEvent]) (BlitzTile *, XEvent *);
 };
 
-struct BlitzLayout {
-	XRectangle rect;
-	Bool expand;
-	BlitzWidget *next;
-	void (*draw)(BlitzWidget *);
-	void (*destroy)(BlitzWidget *);
-	/* widget specific */
-	BlitzWin *win;
-	BlitzWidget *rows;
-	BlitzWidget *cols;
-	void (*scale)(BlitzWidget *);
-};
-
-struct BlitzLabel {
-	XRectangle rect;
-	Bool expand;
-	BlitzWidget *next;
-	void (*draw)(BlitzWidget *);
-	void (*destroy)(BlitzWidget *);
-	/* widget specific */
+struct BlitzInput {
+	Drawable drawable;
 	BlitzColor color;
 	BlitzAlign align;
 	BlitzFont font;
+	XRectangle rect;	/* relative rect */
 	char *text;
-};
-
-union BlitzWidget {
-	XRectangle rect;
-	Bool expand;
-	BlitzWidget *next;
-	void (*draw)(BlitzWidget *);
-	void (*destroy)(BlitzWidget *);
-	BlitzLabel label;
-	BlitzLayout layout;
+	void (*event[LASTEvent]) (BlitzInput *, XEvent *);
 };
 
 /* obsolete, will be replaced soon */
@@ -112,6 +83,7 @@ Blitz __blitz;
 
 /* blitz.c */
 void blitz_x11_init(Display *dpy);
+Bool blitz_x11_event(XEvent *ev);
 
 /* color.c */
 int blitz_loadcolor(BlitzColor *c, char *colstr);
@@ -120,18 +92,10 @@ int blitz_loadcolor(BlitzColor *c, char *colstr);
 void blitz_drawlabel(BlitzDraw *d);
 void blitz_drawborder(BlitzDraw *d);
 
-/* layout.c */
-BlitzLayout *blitz_create_layout(BlitzWin *win, BlitzWidget **w);
+/* tile.c */
+void blitz_drawlabel(BlitzDraw *d);
+void blitz_drawborder(BlitzDraw *d);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
 void blitz_loadfont(BlitzFont *font, char *fontstr);
-
-/* widget.c */
-void blitz_add_widget(BlitzWidget **l, BlitzWidget *w);
-void blitz_rm_widget(BlitzWidget **l, BlitzWidget *w);
-
-/* window.c */
-BlitzWin *blitz_create_win(unsigned long mask, int x, int y, int w, int h);
-void blitz_resize_win(BlitzWin *win, int x, int y, int w, int h);
-void blitz_destroy_win(BlitzWin *win);
