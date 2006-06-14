@@ -112,7 +112,6 @@ void blitz_drawborder(BlitzDraw *d);
 
 /* input.c */
 BlitzInput *blitz_create_input(Drawable drawable, GC gc);
-void blitz_draw_input(BlitzInput *t, char *text);
 void blitz_destroy_input(BlitzInput *t);
 
 /* tile.c */
