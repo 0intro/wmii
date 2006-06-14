@@ -16,11 +16,13 @@ typedef struct BlitzColor BlitzColor;
 typedef struct BlitzFont BlitzFont;
 typedef struct BlitzTile BlitzTile;
 typedef struct BlitzInput BlitzInput;
+typedef union BlitzWidget BlitzWidget;
 
 struct Blitz {
 	Display *display;
 	int screen;
 	Window root;
+	BlitzWidget *widgets;
 };
 
 enum BlitzAlign {
@@ -50,20 +52,35 @@ struct BlitzFont {
 
 struct BlitzTile {
 	Drawable drawable;
+	GC gc;
+	void (*event[LASTEvent]) (BlitzWidget *, XEvent *);
+	BlitzWidget *next;
+	/* widget specific */
 	BlitzColor color;
 	XRectangle rect;	/* relative rect */
 	XRectangle *notch;	/* relative notch rect */
-	void (*event[LASTEvent]) (BlitzTile *, XEvent *);
 };
 
 struct BlitzInput {
 	Drawable drawable;
+	GC gc;
+	void (*event[LASTEvent]) (BlitzWidget *, XEvent *);
+	BlitzWidget *next;
+	/* widget specific */
 	BlitzColor color;
 	BlitzAlign align;
 	BlitzFont font;
 	XRectangle rect;	/* relative rect */
 	char *text;
-	void (*event[LASTEvent]) (BlitzInput *, XEvent *);
+};
+
+union BlitzWidget {
+	Drawable drawable;
+	GC gc;
+	void (*event[LASTEvent]) (BlitzWidget *, XEvent *);
+	BlitzWidget *next;
+	BlitzTile tile;
+	BlitzInput input;
 };
 
 /* obsolete, will be replaced soon */
@@ -92,9 +109,15 @@ int blitz_loadcolor(BlitzColor *c, char *colstr);
 void blitz_drawlabel(BlitzDraw *d);
 void blitz_drawborder(BlitzDraw *d);
 
+/* input.c */
+BlitzInput *blitz_create_input(Drawable drawable, GC gc);
+void blitz_draw_input(BlitzInput *t, char *text);
+void blitz_destroy_input(BlitzInput *t);
+
 /* tile.c */
-void blitz_drawlabel(BlitzDraw *d);
-void blitz_drawborder(BlitzDraw *d);
+BlitzTile *blitz_create_tile(Drawable drawable, GC gc);
+void blitz_draw_tile(BlitzTile *t);
+void blitz_destroy_tile(BlitzTile *t);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
