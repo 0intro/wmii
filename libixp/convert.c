@@ -92,6 +92,29 @@ ixp_pack_string(unsigned char **msg, int *msize, const char *s)
 }
 
 void
+ixp_unpack_strings(unsigned char **msg, unsigned short n, char **strings) {
+	unsigned char *s = *msg;
+	unsigned int i, size = 0;
+	unsigned short len;
+	/* XXX: a specially crafted packet could make this read past the end of the buffer */
+	for(i=0; i<n; i++) {
+		ixp_unpack_u16(&s, &len);
+		s += len;
+		size += len + 1; /* for '\0' */
+	}
+	/* XXX: we don't really need mallocz here */
+	s = cext_emallocz(size);
+	for(i=0; i < n; i++) {
+		ixp_unpack_u16(msg, &len);
+		memcpy(s, *msg, len);
+		s[len] = '\0';
+		strings[i] = s;
+		*msg += len;
+		s += len + 1;
+	}
+}
+
+void
 ixp_unpack_string(unsigned char **msg, char *string, unsigned short stringlen,
 		unsigned short *len)
 {

@@ -132,7 +132,7 @@ typedef struct {
 	unsigned char mode;			/* Tcreate, Topen */
 	unsigned int newfid;			/* Twalk */
 	unsigned short nwname;			/* Twalk */
-	char wname[IXP_MAX_WELEM][IXP_MAX_FLEN];/* Twalk */
+	char *wname[IXP_MAX_WELEM];/* Twalk */
 	unsigned short nwqid;			/* Rwalk */
 	Qid wqid[IXP_MAX_WELEM];		/* Rwalk */
 	unsigned long long offset;		/* Tread, Twrite */
@@ -145,6 +145,7 @@ typedef struct {
 typedef struct IXPServer IXPServer;
 typedef struct IXPConn IXPConn;
 typedef struct IXPMap IXPMap;
+typedef struct Intmap Intmap;
 
 struct IXPMap {
 	IXPMap *next;
@@ -152,6 +153,20 @@ struct IXPMap {
 	unsigned short sel;
 	unsigned short nwqid;
 	Qid wqid[IXP_MAX_WELEM];
+};
+
+typedef struct Intlist	Intlist;
+struct Intlist
+{
+	unsigned long	id;
+	void*	aux;
+	Intlist*	link;
+};
+
+struct Intmap
+{
+	unsigned long nhash;
+	Intlist	**hash;
 };
 
 struct IXPConn {
@@ -210,6 +225,7 @@ void ixp_unpack_u32(unsigned char **msg, unsigned int *val);
 void ixp_pack_u64(unsigned char **msg, int *msize, unsigned long long val);
 void ixp_unpack_u64(unsigned char **msg, unsigned long long *val);
 void ixp_pack_string(unsigned char **msg, int *msize, const char *s);
+void ixp_unpack_strings(unsigned char **msg, unsigned short n, char **strings);
 void ixp_unpack_string(unsigned char **msg, char *string,
 		unsigned short stringlen, unsigned short *len);
 void ixp_pack_data(unsigned char **msg, int *msize, unsigned char *data,
@@ -224,6 +240,14 @@ void ixp_pack_qid(unsigned char **msg, int *msize, Qid *qid);
 void ixp_unpack_qid(unsigned char **msg, Qid *qid);
 void ixp_pack_stat(unsigned char **msg, int *msize, Stat *stat);
 void ixp_unpack_stat(unsigned char **msg, Stat *stat);
+
+/* intmap.c */
+void initmap(Intmap *m, unsigned long nhash, void *hash);
+void freemap(Intmap *map, void (*destroy)(void*));
+void* lookupkey(Intmap *map, unsigned long id);
+void* insertkey(Intmap *map, unsigned long id, void *v);
+int caninsertkey(Intmap *map, unsigned long id, void *v);
+void* deletekey(Intmap *map, unsigned long id);
 
 /* message.c */
 unsigned short ixp_sizeof_stat(Stat *stat);

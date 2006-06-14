@@ -662,13 +662,17 @@ static char *
 xwalk(IXPConn *c, Fcall *fcall)
 {
 	IXPMap *m;
+	char *err;
 	unsigned int qsel, nwqid;
 	PackedQid wqid[IXP_MAX_WELEM], *qid;
 
-	if(!(m = ixp_server_fid2map(c, fcall->fid)))
-		return Enofile;
-	if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid)))
-		return Efidinuse;
+	if(!(m = ixp_server_fid2map(c, fcall->fid))) {
+		err = Enofile;
+		goto Fail;
+	}if(fcall->fid != fcall->newfid && (ixp_server_fid2map(c, fcall->newfid))) {
+		err = Efidinuse;
+		goto Fail;
+	}
 
 	for(qsel = 0; qsel < m->nwqid; qsel++)
 		wqid[qsel].qid = m->wqid[qsel];
@@ -691,8 +695,10 @@ xwalk(IXPConn *c, Fcall *fcall)
 		fcall->wqid[nwqid] = wqid[qsel].qid = qid->qid;
 	}
 
-	if(fcall->nwname && !nwqid)
-		return Enofile;
+	if(fcall->nwname && !nwqid) {
+		err = Enofile;
+		goto Fail;
+	}
 
 	/* a fid will only be valid, if the walk was complete */
 	if(nwqid == fcall->nwname) {
@@ -708,10 +714,14 @@ xwalk(IXPConn *c, Fcall *fcall)
 		m->sel = qsel;
 		m->fid = fcall->newfid;
 	}
+	free(fcall->wname[0]);
 	fcall->id = RWALK;
 	fcall->nwqid = nwqid;
 	ixp_server_respond_fcall(c, fcall);
 	return nil;
+Fail:
+	free(fcall->wname[0]);
+	return err;
 }
 
 static char *

@@ -179,8 +179,7 @@ ixp_msg2fcall(Fcall *fcall, void *msg, unsigned int msglen)
 		ixp_unpack_u32(&p, &fcall->fid);
 		ixp_unpack_u32(&p, &fcall->newfid);
 		ixp_unpack_u16(&p, &fcall->nwname);
-		for(i = 0; i < fcall->nwname; i++)
-			ixp_unpack_string(&p, fcall->wname[i], IXP_MAX_FLEN, &len);
+		ixp_unpack_strings(&p, fcall->nwname, &fcall->wname);
 		break;
 	case RWALK:
 		ixp_unpack_u16(&p, &fcall->nwqid);
