@@ -17,6 +17,7 @@ typedef struct BlitzFont BlitzFont;
 typedef struct BlitzTile BlitzTile;
 typedef struct BlitzInput BlitzInput;
 typedef union BlitzWidget BlitzWidget;
+#define BLITZWIDGET(p) ((BlitzWidget *)(p))
 
 struct Blitz {
 	Display *display;
@@ -122,3 +123,7 @@ void blitz_destroy_tile(BlitzTile *t);
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
 void blitz_loadfont(BlitzFont *font, char *fontstr);
+
+/* widget.c */
+void blitz_add_widget(BlitzWidget *w);
+void blitz_rm_widget(BlitzWidget *w);
