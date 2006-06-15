@@ -16,6 +16,8 @@ P9Srv p9srv = {
 };
 
 #define QID(t, i) (((long long)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
+/* Will I ever need these macros?
+ *  I don't think so. */
 #define TYPE(q) ((q)>>32&0xFF)
 #define ID(q) ((q)&0xFFFFFFFF)
 
@@ -58,6 +60,8 @@ struct FileId {
 static void dostat(Stat *s, unsigned int len, FileId *f);
 FileId *free_fileid = nil;
 
+/* ad-hoc file tree. Empty names ("") indicate a dynamic entry to be filled
+ * in by lookup_file */
 static Dirtab
 dirtabroot[]=	{{".",		QTDIR,		FsRoot,		0500|DMDIR },
 		 {"rbar",	QTDIR,		FsDRBar,	0700|DMDIR },
@@ -77,7 +81,7 @@ dirtabclient[]= {{".",		QTFILE,		FsDClient,	0500|DMDIR },
 		 {"ctl",	QTAPPEND,	FsFCctl,	0200|DMAPPEND },
 		 {"props",	QTFILE,		FsFprops,	0400 },
 		 {nil}},
-dirtabsclient[]={{".",		QTDIR,		FsDClient,	0500|DMDIR },
+dirtabsclient[]={{".",		QTDIR,		FsDSClient,	0500|DMDIR },
 		 {"ctl",	QTAPPEND,	FsFCctl,	0200|DMAPPEND },
 		 {"index",	QTFILE,		FsFCindex,	0400 },
 		 {"props",	QTFILE,		FsFprops,	0400 },
@@ -95,6 +99,9 @@ dirtabtag[]=	{{".",		QTDIR,		FsDTag,		0500|DMDIR },
 		 {"ctl",	QTAPPEND,	FsFTctl,	0200|DMAPPEND },
 		 {"index",	QTFILE,		FsFTindex,	0400 },
 		 {nil}};
+/* Writing the lists separately and using an array of their references
+ * removes the need for casting and allows for C90 conformance,
+ * since otherwise we would need to use compound literals */
 static Dirtab *dirtab[] = {
 	[FsRoot]	dirtabroot,
 	[FsDRBar]	dirtabbar,
@@ -106,6 +113,9 @@ static Dirtab *dirtab[] = {
 	[FsDTag]	dirtabtag
 };
 
+/* get_file/free_file save and reuse old FileId structs
+ * since so many of them are needed for so many
+ * purposes */
 static FileId *
 get_file() {
 	FileId *temp;
@@ -129,6 +139,8 @@ free_file(FileId *f) {
 	free_fileid = f;
 }
 
+/* All lookups and directory organization should be performed through
+ * lookup_file, mostly through the dirtabs[] tree. */
 static FileId *
 lookup_file(FileId *parent, char *name)
 {
@@ -143,6 +155,89 @@ lookup_file(FileId *parent, char *name)
 	FileId *ret = nil, *temp, **last = &ret;
 
 	for(; dir->name; dir++) {
+		if(!*dir->name) { /* strlen(dir->name) == 0 */
+			switch(parent->tab.type) {
+			case FsDClients:
+				if(!name || !strncmp(name, "sel", 4)) {
+					if((c = sel_client())) {
+						temp = get_file();
+						*last = temp;
+						last = &temp->next;
+						temp->ref = c;
+						temp->id = c->id;
+						temp->index = idx_of_client(c);
+						temp->tab = *dirtab[FsDSClient];
+						temp->tab.name = strdup("sel");
+					}
+					if(name)
+						goto LastItem;
+				}
+				if(name) {
+					id = (unsigned int)strtol(name, &name, 10);
+					if(*name)
+						continue;
+				}
+
+				i=0;
+				for(c=client; c; c=c->next, i++) {
+					if(name && i != id)
+						continue;
+					temp = get_file();
+					*last = temp;
+					last = &temp->next;
+					temp->ref = c;
+					temp->id = c->id;
+					temp->tab = *dirtab[FsDClient];
+					asprintf(&temp->tab.name, "%d", i);
+					if(name)
+						goto LastItem;
+				}
+				break;
+			case FsDTags:
+				if(!name || !strncmp(name, "sel", 4)) {
+					if(sel) {
+						temp = get_file();
+						*last = temp;
+						last = &temp->next;
+						temp->ref = sel;
+						temp->id = sel->id;
+						temp->tab = *dirtab[FsDTag];
+						temp->tab.name = strdup("sel");
+					}
+					if(name)
+						goto LastItem;
+				}
+				for(v=view; v; v=v->next) {
+					if(name && strcmp(name, v->name))
+						continue;
+					temp = get_file();
+					*last = temp;
+					last = &temp->next;
+					temp->ref = v;
+					temp->id = v->id;
+					temp->tab = *dirtab[FsDTag];
+					temp->tab.name = strdup(v->name);
+					if(name)
+						goto LastItem;
+				}
+				break;
+			case FsDRBar:
+			case FsDLBar:
+				for(b=parent->ref; b; b=b->next) {
+					if(!name || strcmp(name, b->name)) {
+						temp = get_file();
+						*last = temp;
+						last = &temp->next;
+						temp->ref = b;
+						temp->id = b->id;
+						temp->tab = dirtab[FsDRBar][1];
+						temp->tab.name = strdup(b->name);
+						if(name)
+							goto LastItem;
+					}
+				}
+			}
+		}else
 		if(!name || !strcmp(name, dir->name)) {
 			temp = get_file();
 			*last = temp;
@@ -167,81 +262,6 @@ lookup_file(FileId *parent, char *name)
 			}
 			if(name)
 				break;
-		}else
-		if(!*dir->name) { /* strlen(dir->name) == 0 */
-			switch(parent->tab.type) {
-			case FsDClients:
-				if(!name || !strncmp(name, "sel", 4)) {
-					if((c = sel_client())) {
-						temp = get_file();
-						*last = temp;
-						last = &temp->next;
-						temp->ref = c;
-						temp->id = c->id;
-						temp->index = idx_of_client(c);
-						temp->tab = *dirtab[FsDSClient];
-						temp->tab.name = strdup("sel");
-					}
-				}else{
-					if(name) {
-						id = (unsigned int)strtol(name, &name, 10);
-						if(*name)
-							continue;
-					}
-
-					for(c=client; c; c=c->next) {
-						if(name && c->id != id)
-							continue;
-						temp = get_file();
-						*last = temp;
-						last = &temp->next;
-						temp->ref = c;
-						temp->id = c->id;
-						temp->tab = *dirtab[FsDClient];
-						asprintf(&temp->tab.name, "%d", i);
-						if(name)
-							goto LastItem;
-					}
-				}
-			case FsDTags:
-				if(!name || !strncmp(name, "sel", 4)) {
-					if(sel) {
-						temp = get_file();
-						*last = temp;
-						last = &temp->next;
-						temp->ref = sel;
-						temp->id = sel->id;
-						temp->tab = *dirtab[FsDTag];
-						temp->tab.name = strdup("sel");
-					}
-				}else{
-					for(v=view; v; v=v->next) {
-						if(name && strcmp(name, v->name))
-							continue;
-						temp = get_file();
-						*last = temp;
-						last = &temp->next;
-						temp->ref = v;
-						temp->id = v->id;
-						temp->tab.name = strdup(v->name);
-					}
-				}
-			case FsDRBar:
-			case FsDLBar:
-				for(b=parent->ref; b; b=b->next) {
-					if(!name || strcmp(name, b->name)) {
-						temp = get_file();
-						*last = temp;
-						last = &temp->next;
-						temp->ref = b;
-						temp->id = b->id;
-						temp->tab = dirtab[FsDRBar][1];
-						temp->tab.name = strdup(b->name);
-					}
-				}
-			}
-			if(name)
-				goto LastItem;
 		}
 	}
 LastItem:
@@ -273,7 +293,7 @@ fs_walk(Req *r) {
 			nf=f->next;
 			free_file(f);
 		}
-		respond(r, Enofile);
+		return respond(r, Enofile);
 	}
 
 	r->newfid->aux = f;
@@ -312,6 +332,10 @@ fs_stat(Req *r) {
 	respond(r, nil);
 }
 
+/* This should probably be factored out like lookup_file
+ * so we can use it to get size for stats and not write
+ * data anywhere. -KM */
+/* This is obviously not a priority, however. -KM */
 void
 fs_read(Req *r) {
 	unsigned char *buf;
@@ -327,16 +351,16 @@ fs_read(Req *r) {
 		r->ofcall.data = buf;
 
 		f = lookup_file(f, nil);
-		/* f->tab.name == "."; goto next */
+		/* Note: f->tab.name == "."; goto next */
 		for(f=f->next; f; f=f->next) {
 			dostat(&s, 0, f);
 			n = ixp_sizeof_stat(&s);
-			offset += n;
 			if(offset >= r->ifcall.offset) {
 				if(size < n)
 					break;
 				ixp_pack_stat(&buf, &size, &s);
 			}
+			offset += n;
 		}
 
 		while((tf = f)) {
@@ -347,6 +371,7 @@ fs_read(Req *r) {
 		r->ofcall.count = r->ifcall.count - size;
 		respond(r, nil);
 	}else{
+		/* Read normal files */
 	}
 }
 
@@ -362,6 +387,16 @@ fs_attach(Req *r) {
 	respond(r, nil);
 }
 
+/* fs_* functions below here are yet to be properly implemented */
+
+void
+fs_open(Req *r) {
+	if(!r->ifcall.mode == OREAD)
+		respond(r, Enoperm);
+	r->fid->omode = OREAD;
+	respond(r, nil);
+}
+
 void
 fs_remove(Req *r) {
 	respond(r, "not implemented");
@@ -373,18 +408,11 @@ fs_write(Req *r) {
 }
 
 void
-fs_open(Req *r) {
-	if(!r->ifcall.mode == OREAD)
-		respond(r, Enoperm);
-	r->fid->omode = OREAD;
-	respond(r, nil);
-}
-
-void
 fs_create(Req *r) {
 	respond(r, "not implemented");
 }
 
+/* XXX: Shuts up the linker, but is yet to be written */
 void
 write_event(char *buf) {
 	return;
