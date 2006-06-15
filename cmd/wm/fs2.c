@@ -12,7 +12,8 @@ P9Srv p9srv = {
 	.write=	fs_write,
 	.attach=fs_attach,
 	.create=fs_create,
-	.remove=fs_remove
+	.remove=fs_remove,
+	.freefid=fs_freefid
 };
 
 #define QID(t, i) (((long long)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
@@ -133,6 +134,16 @@ get_file() {
 	return temp;
 }
 
+/* Convenience func: */
+/* ugly, though... */
+FileId *
+push_file(FileId ***last) {
+	FileId *ret = get_file();
+	**last = ret;
+	*last = &ret->next;
+	return ret;
+}
+
 static void
 free_file(FileId *f) {
 	if(--f->nref)
@@ -161,117 +172,101 @@ lookup_file(FileId *parent, char *name)
 	if(!(parent->tab.perm & DMDIR))
 		return nil;
 	Dirtab *dir = dirtab[parent->tab.type];
-	FileId *ret = nil, *temp, **last = &ret;
+	FileId *ret = nil, *file, **last = &ret;
 
 	for(; dir->name; dir++) {
+		/* Dynamic dirs */
 		if(!*dir->name) { /* strlen(dir->name) == 0 */
 			switch(parent->tab.type) {
 			case FsDClients:
 				if(!name || !strncmp(name, "sel", 4)) {
 					if((c = sel_client())) {
-						temp = get_file();
-						*last = temp;
-						last = &temp->next;
-						temp->ref = c;
-						temp->id = c->id;
-						temp->index = idx_of_client(c);
-						temp->tab = *dirtab[FsDSClient];
-						temp->tab.name = strdup("sel");
-					}
-					if(name)
-						goto LastItem;
+						file = push_file(&last);
+						file->ref = c;
+						file->id = c->id;
+						file->index = idx_of_client(c);
+						file->tab = *dirtab[FsDSClient];
+						file->tab.name = strdup("sel");
+					}if(name) goto LastItem;
 				}
 				if(name) {
 					id = (unsigned int)strtol(name, &name, 10);
-					if(*name)
-						continue;
+					if(*name) goto NextItem;
 				}
 
 				i=0;
 				for(c=client; c; c=c->next, i++) {
-					if(name && i != id)
-						continue;
-					temp = get_file();
-					*last = temp;
-					last = &temp->next;
-					temp->ref = c;
-					temp->id = c->id;
-					temp->tab = *dir;
-					asprintf(&temp->tab.name, "%d", i);
-					if(name)
-						goto LastItem;
+					if(!name || i == id) {
+						file = push_file(&last);
+						file->ref = c;
+						file->id = c->id;
+						file->tab = *dir;
+						asprintf(&file->tab.name, "%d", i);
+						if(name) goto LastItem;
+					}
 				}
 				break;
 			case FsDTags:
 				if(!name || !strncmp(name, "sel", 4)) {
 					if(sel) {
-						temp = get_file();
-						*last = temp;
-						last = &temp->next;
-						temp->ref = sel;
-						temp->id = sel->id;
-						temp->tab = *dir;
-						temp->tab.name = strdup("sel");
-					}
-					if(name)
-						goto LastItem;
+						file = push_file(&last);
+						file->ref = sel;
+						file->id = sel->id;
+						file->tab = *dir;
+						file->tab.name = strdup("sel");
+					}if(name) goto LastItem;
 				}
 				for(v=view; v; v=v->next) {
-					if(name && strcmp(name, v->name))
-						continue;
-					temp = get_file();
-					*last = temp;
-					last = &temp->next;
-					temp->ref = v;
-					temp->id = v->id;
-					temp->tab = *dir;
-					temp->tab.name = strdup(v->name);
-					if(name)
-						goto LastItem;
+					if(!name || !strcmp(name, v->name)) {
+						file = push_file(&last);
+						file->ref = v;
+						file->id = v->id;
+						file->tab = *dir;
+						file->tab.name = strdup(v->name);
+						if(name) goto LastItem;
+					}
 				}
 				break;
 			case FsDRBar:
 			case FsDLBar:
 				for(b=parent->ref; b; b=b->next) {
-					if(!name || strcmp(name, b->name)) {
-						temp = get_file();
-						*last = temp;
-						last = &temp->next;
-						temp->ref = b;
-						temp->id = b->id;
-						temp->tab = *dir;
-						temp->tab.name = strdup(b->name);
-						if(name)
-							goto LastItem;
+					if(!name || !strcmp(name, b->name)) {
+						file = push_file(&last);
+						file->ref = b;
+						file->id = b->id;
+						file->tab = *dir;
+						file->tab.name = strdup(b->name);
+						if(name) goto LastItem;
 					}
 				}
+				break;
 			}
-		}else
+		}else /* Static dirs */
 		if(!name || !strcmp(name, dir->name)) {
-			temp = get_file();
-			*last = temp;
-			last = &temp->next;
-			temp->id = 0;
-			temp->ref = nil;
-			temp->tab = *dir;
+			file = push_file(&last);
+			file->id = 0;
+			file->ref = nil;
+			file->tab = *dir;
 
-			switch(temp->tab.type) {
+			/* Special considerations: */
+			switch(file->tab.type) {
 			case FsDLBar:
-				temp->ref = lbar;
+				file->ref = lbar;
 				break;
 			case FsDRBar:
-				temp->ref = rbar;
+				file->ref = rbar;
 				break;
 			case FsFColRules:
-				temp->ref = vrule;
+				file->ref = vrule;
 				break;
 			case FsFTagRules:
-				temp->ref = trule;
+				file->ref = trule;
 				break;
 			}
-			if(name)
-				break;
+			if(name) goto LastItem;
 		}
+	NextItem:
+		continue;
 	}
 LastItem:
 	*last = nil;
@@ -301,27 +296,28 @@ fs_walk(Req *r) {
 		r->ofcall.wqid[i].type = f->tab.qtype;
 		r->ofcall.wqid[i].path = QID(f->tab.type, f->id);
 	}
+	/* XXX: This will not be necessary once a free_fid
+	 * function is implemented */
 	if(i < r->ifcall.nwname) {
 		while((nf = f)) {
 			f=f->next;
 			free_file(nf);
 		}
 		return respond(r, Enofile);
-	}else
+	}
 
+	/* Remove refs for r->fid if no new fid */
+	/* If Fids were ref counted, this could be
+	 * done in their decref function */
 	if(r->ifcall.fid == r->ifcall.newfid) {
 		nf=r->fid->aux;
 		r->fid->aux = f;
 		for(; nf; nf=f) {
 			f = nf->next;
-			free(nf);
+			free_file(nf);
 		}
 	}
 
-	if(r->ifcall.nwname == 0)
-		r->newfid->qid = r->fid->qid;
-	else
-		r->newfid->qid = r->ofcall.wqid[i-1];
 	r->newfid->aux = f;
 	r->ofcall.nwqid = i;
 	respond(r, nil);
@@ -361,7 +357,7 @@ fs_read(Req *r) {
 		buf = cext_emallocz(size);
 		r->ofcall.data = buf;
 
-		f = lookup_file(f, nil);
+		tf = f = lookup_file(f, nil);
 		/* Note: f->tab.name == "."; goto next */
 		for(f=f->next; f; f=f->next) {
 			dostat(&s, 0, f);
@@ -374,9 +370,9 @@ fs_read(Req *r) {
 			offset += n;
 		}
 
-		while((tf = f)) {
-			f = f->next;
-			free_file(tf);
+		while((f = tf)) {
+			tf = tf->next;
+			free_file(f);
 		}
 
 		r->ofcall.count = r->ifcall.count - size;
@@ -406,6 +402,15 @@ fs_open(Req *r) {
 		respond(r, Enoperm);
 	r->fid->omode = OREAD;
 	respond(r, nil);
+}
+
+void
+fs_freefid(Fid *f) {
+	FileId *id = f->aux, *tid;
+	while((tid = id)) {
+		id = id->next;
+		free_file(tid);
+	}
 }
 
 void

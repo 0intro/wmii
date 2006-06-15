@@ -31,7 +31,7 @@ static char
 	Edupfid[] = "fid in use",
 	Enofunc[] = "function not implemented",
 	Ebotch[] = "9P protocol botch",
-	Enofile[] = "the requested file does not exist",
+	Enofile[] = "file does not exist",
 	Enofid[] = "fid does not exist",
 	Enotdir[] = "not a directory",
 	Eisdir[] = "cannot perform operation on a directory";
@@ -82,6 +82,7 @@ ixp_handle_req(Req *r)
 {
 	P9Conn *pc = r->conn->aux;
 	P9Srv *srv = pc->srv;
+	Fid *f;
 
 	switch(r->ifcall.type) {
 	default:
@@ -106,8 +107,11 @@ ixp_handle_req(Req *r)
 		srv->attach(r);
 		break;
 	case TCLUNK:
-		if(!destroyfid(&pc->fidmap, r->ifcall.fid))
+		if(!(f=deletekey(&pc->fidmap, r->ifcall.fid)))
 			return respond(r, Enofid);
+		if(pc->srv->freefid)
+			pc->srv->freefid(f);
+		free(f);
 		respond(r, nil);
 		break;
 	case TCREATE:
@@ -193,6 +197,7 @@ respond(Req *r, char *error) {
 		break;
 	case TVERSION:
 		cext_assert(!error);
+		free(r->ifcall.version);
 		pc->msize = (r->ofcall.msize < IXP_MAX_MSG) ? r->ofcall.msize : IXP_MAX_MSG;
 		free(pc->buf);
 		pc->buf = cext_emallocz(r->ofcall.msize);
@@ -200,6 +205,8 @@ respond(Req *r, char *error) {
 	case TATTACH:
 		if(error)
 			destroyfid(r->fid->map, r->fid->fid);
+		free(r->ifcall.uname);
+		free(r->ifcall.aname);
 		break;
 	case TOPEN:
 	case TCREATE:
@@ -207,6 +214,7 @@ respond(Req *r, char *error) {
 			r->fid->omode = r->ofcall.mode;
 			r->fid->qid = r->ofcall.qid;
 		}
+		free(r->ifcall.name);
 		r->ofcall.iounit = pc->msize - sizeof(unsigned long);
 		break;
 	case TWALK:
@@ -221,12 +229,15 @@ respond(Req *r, char *error) {
 			else
 				r->newfid->qid = r->ofcall.wqid[r->ofcall.nwqid-1];
 		}
+		free(*r->ifcall.wname);
+		break;
+	case TWRITE:
+		free(r->ifcall.data);
 		break;
 	case TCLUNK:
 	case TREAD:
 	case TREMOVE:
 	case TSTAT:
-	case TWRITE:
 		break;
 	/* Still to be implemented: flush, wstat, auth */
 	}
@@ -249,13 +260,6 @@ respond(Req *r, char *error) {
 	case RREAD:
 		free(r->ofcall.data);
 		break;
-	}
-	switch(r->ifcall.type) {
-	case TWALK:
-		free(*r->ifcall.wname);
-		break;
-	case TWRITE:
-		free(r->ifcall.data);
 	}
 
 	deletekey(&pc->tagmap, r->ifcall.tag);;
