@@ -47,7 +47,6 @@ struct Dirtab
 	unsigned int	perm;
 };
 
-
 typedef struct FileId FileId;
 struct FileId {
 	FileId		*next;
@@ -55,6 +54,7 @@ struct FileId {
 	unsigned int	id;
 	unsigned int	index;
 	Dirtab		tab;
+	unsigned short	nref;
 };
 
 static void dostat(Stat *s, unsigned int len, FileId *f);
@@ -77,7 +77,10 @@ dirtabroot[]=	{{".",		QTDIR,		FsRoot,		0500|DMDIR },
 		 {"normcolors",	QTFILE,		FsFCNorm,	0600 },
 		 {"selcolors",	QTFILE,		FsFCSel,	0600 },
 		 {nil}},
-dirtabclient[]= {{".",		QTFILE,		FsDClient,	0500|DMDIR },
+dirtabclients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
+		 {"",		QTDIR,		FsDClient,	0500|DMDIR },
+		 {nil}},
+dirtabclient[]= {{".",		QTDIR,		FsDClient,	0500|DMDIR },
 		 {"ctl",	QTAPPEND,	FsFCctl,	0200|DMAPPEND },
 		 {"props",	QTFILE,		FsFprops,	0400 },
 		 {nil}},
@@ -88,9 +91,6 @@ dirtabsclient[]={{".",		QTDIR,		FsDSClient,	0500|DMDIR },
 		 {nil}},
 dirtabbar[]=	{{".",		QTDIR,		FsDRBar,	0700|DMDIR },
 		 {"",		QTFILE,		FsFBar,		0600 },
-		 {nil}},
-dirtabclients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
-		 {"",		QTDIR,		FsDClient,	0500|DMDIR },
 		 {nil}},
 dirtabtags[]=	{{".",		QTDIR,		FsDTags,	0500|DMDIR },
 		 {"",		QTDIR,		FsDTag,		0500|DMDIR },
@@ -129,14 +129,23 @@ get_file() {
 	}
 	temp = free_fileid;
 	free_fileid = temp->next;
+	temp->nref = 1;
 	return temp;
 }
 
 static void
 free_file(FileId *f) {
+	if(--f->nref)
+		return;
 	free(f->tab.name);
 	f->next = free_fileid;
 	free_fileid = f;
+}
+
+static void
+clone_files(FileId *f) {
+	for(; f; f=f->next)
+		f->nref++;
 }
 
 /* All lookups and directory organization should be performed through
@@ -187,7 +196,7 @@ lookup_file(FileId *parent, char *name)
 					last = &temp->next;
 					temp->ref = c;
 					temp->id = c->id;
-					temp->tab = *dirtab[FsDClient];
+					temp->tab = *dir;
 					asprintf(&temp->tab.name, "%d", i);
 					if(name)
 						goto LastItem;
@@ -201,7 +210,7 @@ lookup_file(FileId *parent, char *name)
 						last = &temp->next;
 						temp->ref = sel;
 						temp->id = sel->id;
-						temp->tab = *dirtab[FsDTag];
+						temp->tab = *dir;
 						temp->tab.name = strdup("sel");
 					}
 					if(name)
@@ -215,7 +224,7 @@ lookup_file(FileId *parent, char *name)
 					last = &temp->next;
 					temp->ref = v;
 					temp->id = v->id;
-					temp->tab = *dirtab[FsDTag];
+					temp->tab = *dir;
 					temp->tab.name = strdup(v->name);
 					if(name)
 						goto LastItem;
@@ -230,7 +239,7 @@ lookup_file(FileId *parent, char *name)
 						last = &temp->next;
 						temp->ref = b;
 						temp->id = b->id;
-						temp->tab = dirtab[FsDRBar][1];
+						temp->tab = *dir;
 						temp->tab.name = strdup(b->name);
 						if(name)
 							goto LastItem;
@@ -269,15 +278,19 @@ LastItem:
 	return ret;
 }
 
-/* XXX This leaks FileIds */
 void
 fs_walk(Req *r) {
-	FileId *f = r->fid->aux, *nf, **fi;
+	FileId *f = r->fid->aux, *nf;
 	int i;
 
+	clone_files(f);
 	for(i=0; i < r->ifcall.nwname; i++) {
 		if(!strncmp(r->ifcall.wname[i], "..", 3)) {
-			if(f->next) f=f->next;
+			if(f->next) {
+				nf=f;
+				f=f->next;
+				free_file(nf);
+			}
 		}else{
 			nf = lookup_file(f, r->ifcall.wname[i]);
 			if(!nf)
@@ -289,22 +302,19 @@ fs_walk(Req *r) {
 		r->ofcall.wqid[i].path = QID(f->tab.type, f->id);
 	}
 	if(i < r->ifcall.nwname) {
-		for(; f != r->fid->aux; f=nf) {
-			nf=f->next;
-			free_file(f);
+		while((nf = f)) {
+			f=f->next;
+			free_file(nf);
 		}
 		return respond(r, Enofile);
-	}
+	}else
 
-	r->newfid->aux = f;
-	if(r->ifcall.fid != r->ifcall.newfid) {
-		for(fi=(void *)&r->newfid->aux;
-		    *fi != r->fid->aux;
-		    fi=&(*fi)->next);
-		for(; *fi; fi=&(*fi)->next) {
-			nf = get_file();
-			*nf = **fi;
-			*fi = nf;
+	if(r->ifcall.fid == r->ifcall.newfid) {
+		nf=r->fid->aux;
+		r->fid->aux = f;
+		for(; nf; nf=f) {
+			f = nf->next;
+			free(nf);
 		}
 	}
 
@@ -312,6 +322,7 @@ fs_walk(Req *r) {
 		r->newfid->qid = r->fid->qid;
 	else
 		r->newfid->qid = r->ofcall.wqid[i-1];
+	r->newfid->aux = f;
 	r->ofcall.nwqid = i;
 	respond(r, nil);
 }

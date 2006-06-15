@@ -193,7 +193,7 @@ respond(Req *r, char *error) {
 		break;
 	case TVERSION:
 		cext_assert(!error);
-		pc->msize = r->ofcall.msize;
+		pc->msize = (r->ofcall.msize < IXP_MAX_MSG) ? r->ofcall.msize : IXP_MAX_MSG;
 		free(pc->buf);
 		pc->buf = cext_emallocz(r->ofcall.msize);
 		break;
@@ -207,6 +207,7 @@ respond(Req *r, char *error) {
 			r->fid->omode = r->ofcall.mode;
 			r->fid->qid = r->ofcall.qid;
 		}
+		r->ofcall.iounit = pc->msize - sizeof(unsigned long);
 		break;
 	case TWALK:
 		if(error || r->ofcall.nwqid < r->ifcall.nwname) {
@@ -251,7 +252,7 @@ respond(Req *r, char *error) {
 	}
 	switch(r->ifcall.type) {
 	case TWALK:
-		free(r->ifcall.wname[0]);
+		free(*r->ifcall.wname);
 		break;
 	case TWRITE:
 		free(r->ifcall.data);
