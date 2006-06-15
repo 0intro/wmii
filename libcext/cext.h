@@ -37,5 +37,8 @@ void cext_vattachat(Vector *v, void *p, unsigned int pos);
 void cext_vdetach(Vector *v, void *p);
 
 /* assert.c */
-#define cext_assert(a) if(!(a)) cext_failed_assert(#a, __FILE__, __LINE__)
+#define cext_assert(a) do { \
+		if(!(a)) \
+			cext_failed_assert(#a, __FILE__, __LINE__); \
+	} while (0)
 void cext_failed_assert(char *a, char *file, int line);
