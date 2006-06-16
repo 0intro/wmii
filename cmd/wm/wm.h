@@ -237,6 +237,7 @@ Atom net_atom[NetLast];
 Cursor cursor[CurLast];
 unsigned int valid_mask;
 unsigned int num_lock_mask;
+Bool sel_screen;
 void (*handler[LASTEvent]) (XEvent *);
 
 

@@ -16,6 +16,7 @@ static void handle_buttonrelease(XEvent * e);
 static void handle_configurerequest(XEvent * e);
 static void handle_destroynotify(XEvent * e);
 static void handle_enternotify(XEvent * e);
+static void handle_leavenotify(XEvent * e);
 static void handle_expose(XEvent * e);
 static void handle_keypress(XEvent * e);
 static void handle_keymapnotify(XEvent * e);
@@ -35,6 +36,7 @@ init_x_event_handler()
 	handler[ConfigureRequest] = handle_configurerequest;
 	handler[DestroyNotify] = handle_destroynotify;
 	handler[EnterNotify] = handle_enternotify;
+	handler[LeaveNotify] = handle_leavenotify;
 	handler[Expose] = handle_expose;
 	handler[KeyPress] = handle_keypress;
 	handler[KeymapNotify] = handle_keymapnotify;
@@ -204,16 +206,27 @@ handle_enternotify(XEvent *e)
 		return;
 
 	if((c = client_of_win(ev->window))) {
-		Client *old = selected_client();
 		Frame *f = c->sel;
 		Area *a = f->area;
 		if(a->mode == Colmax)
 			c = a->sel->client;
-		if(c != old)
-			focus(c, False);
+		focus(c, False);
 	}
-	else if(ev->window == root)
-		XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime); 
+	else if(ev->window == root) {
+		sel_screen = True;
+		draw_clients();
+	}
+}
+
+static void
+handle_leavenotify(XEvent *e)
+{
+	XCrossingEvent *ev = &e->xcrossing;
+
+	if((ev->window == root) && !ev->same_screen) {
+		sel_screen = True;
+		draw_clients();
+	}
 }
 
 static void

@@ -128,12 +128,19 @@ update_client_grab(Client *c, Bool is_sel)
 void
 focus_client(Client *c, Bool restack)
 {
-	Client *old = sel_client();
-	Frame *f = c->sel;
-	Client *old_in_area = sel_client_of_area(f->area);
-	View *v = f->area->view;
+	Client *old;
+	Frame *f;
+	Client *old_in_area;
+	View *v;
 	static char buf[256];
 
+	if(!sel_screen)
+		return;
+
+	old = sel_client();
+	f = c->sel;
+	old_in_area = sel_client_of_area(f->area);
+	v = f->area->view;
 	v->sel = f->area;
 	f->area->sel = f;
 	c->floating = (f->area == v->area);
@@ -286,7 +293,7 @@ draw_client(Client *c)
 	d.font = blitzfont;
 	d.gc = c->gc;
 
-	if(c == sel_client())
+	if(sel_screen && (c == sel_client()))
 		d.color = def.sel;
 	else
 		d.color = def.norm;
@@ -323,7 +330,7 @@ draw_client(Client *c)
 	blitz_drawborder(&d);
 	d.rect.x = 0;
 
-	if(c == sel_client())
+	if(sel_screen && (c == sel_client()))
 		d.color = def.sel;
 	else
 		d.color = def.norm;
