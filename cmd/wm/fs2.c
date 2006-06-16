@@ -10,6 +10,7 @@ P9Srv p9srv = {
 	.read=	fs_read,
 	.stat=	fs_stat,
 	.write=	fs_write,
+	.clunk=	fs_clunk,
 	.attach=fs_attach,
 	.create=fs_create,
 	.remove=fs_remove,
@@ -22,26 +23,27 @@ P9Srv p9srv = {
 #define TYPE(q) ((q)>>32&0xFF)
 #define ID(q) ((q)&0xFFFFFFFF)
 
-static char Enoperm[] = "permission denied";
-static char Enofile[] = "file not found";
+static char
+	Enoperm[] = "permission denied",
+	Enofile[] = "file not found",
+	Eisdir[] = "file is a directory",
+	Ebadvalue[] = "bad value",
+	Enocommand[] = "command not supported";
 //static char Efidinuse[] = "fid in use";
 //static char Enomode[] = "mode not supported";
 //static char Enofunc[] = "function not supported";
-//static char Enocommand[] = "command not supported";
-//static char Ebadvalue[] = "bad value";
 
 enum {	FsRoot, FsDClient, FsDClients, FsDLBar,
 	FsDRBar, FsDSClient, FsDTag, FsDTags,
 
-	FsFBar, FsFCNorm, FsFCSel, FsFCctl,
-	FsFCindex, FsFColRules, FsFEvent, FsFFont,
-	FsFKeys, FsFRctl, FsFTagRules, FsFTctl,
-	FsFTindex, FsFprops, RsFFont
+	FsFBar, FsFBorder, FsFCNorm, FsFCSel,
+	FsFCctl, FsFCindex, FsFColRules, FsFEvent,
+	FsFFont, FsFKeys, FsFRctl, FsFTagRules,
+	FsFTctl, FsFTindex, FsFprops, RsFFont
 };
 
 typedef struct Dirtab Dirtab;
-struct Dirtab
-{
+struct Dirtab {
 	char		*name;
 	unsigned char	qtype;
 	unsigned int	type;
@@ -51,7 +53,14 @@ struct Dirtab
 typedef struct FileId FileId;
 struct FileId {
 	FileId		*next;
-	void		*ref;
+	union {
+		void	*ref;
+		Bar	*bar;
+		View	*view;
+		Client	*client;
+		Rules	*rule;
+		Color	*col;
+	};
 	unsigned int	id;
 	unsigned int	index;
 	Dirtab		tab;
@@ -70,13 +79,14 @@ dirtabroot[]=	{{".",		QTDIR,		FsRoot,		0500|DMDIR },
 		 {"client",	QTDIR,		FsDClients,	0500|DMDIR },
 		 {"tag",	QTDIR,		FsDTags,	0500|DMDIR },
 		 {"ctl",	QTAPPEND,	FsFRctl,	0600|DMAPPEND },
+		 {"border",	QTFILE,		FsFBorder,	0600 }, 
 		 {"colrules",	QTFILE,		FsFColRules,	0600 }, 
-		 {"tagrules",	QTFILE,		FsFTagRules,	0600 }, 
+		 {"event",	QTFILE,		FsFEvent,	0600 },
 		 {"font",	QTFILE,		FsFFont,	0600 },
 		 {"keys",	QTFILE,		FsFKeys,	0600 },
-		 {"event",	QTFILE,		FsFEvent,	0600 },
 		 {"normcolors",	QTFILE,		FsFCNorm,	0600 },
 		 {"selcolors",	QTFILE,		FsFCSel,	0600 },
+		 {"tagrules",	QTFILE,		FsFTagRules,	0600 }, 
 		 {nil}},
 dirtabclients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
 		 {"",		QTDIR,		FsDClient,	0500|DMDIR },
@@ -131,6 +141,7 @@ get_file() {
 	temp = free_fileid;
 	free_fileid = temp->next;
 	temp->nref = 1;
+	temp->next = nil;
 	return temp;
 }
 
@@ -153,10 +164,12 @@ free_file(FileId *f) {
 	free_fileid = f;
 }
 
+/* This function's name belies it's true purpose. It increases
+ * the reference count of the FileId list */
 static void
 clone_files(FileId *f) {
 	for(; f; f=f->next)
-		f->nref++;
+		cext_assert(f->nref++);
 }
 
 /* All lookups and directory organization should be performed through
@@ -164,15 +177,19 @@ clone_files(FileId *f) {
 static FileId *
 lookup_file(FileId *parent, char *name)
 {
-	unsigned int i, id;
+	FileId *ret, *file, **last;
+	Dirtab *dir;
 	Client *c;
 	View *v;
 	Bar *b;
+	unsigned int i, id;
 
 	if(!(parent->tab.perm & DMDIR))
 		return nil;
-	Dirtab *dir = dirtab[parent->tab.type];
-	FileId *ret = nil, *file, **last = &ret;
+
+	dir = dirtab[parent->tab.type];
+	last = &ret;
+	ret = nil;
 
 	for(; dir->name; dir++) {
 		/* Dynamic dirs */
@@ -245,7 +262,7 @@ lookup_file(FileId *parent, char *name)
 		if(!name || !strcmp(name, dir->name)) {
 			file = push_file(&last);
 			file->id = 0;
-			file->ref = nil;
+			file->ref = parent->ref;
 			file->tab = *dir;
 
 			/* Special considerations: */
@@ -257,10 +274,16 @@ lookup_file(FileId *parent, char *name)
 				file->ref = rbar;
 				break;
 			case FsFColRules:
-				file->ref = vrule;
+				file->ref = &def.colrules;
 				break;
 			case FsFTagRules:
-				file->ref = trule;
+				file->ref = &def.tagrules;
+				break;
+			case FsFCSel:
+				file->ref = &def.selcolor;
+				break;
+			case FsFCNorm:
+				file->ref = &def.normcolor;
 				break;
 			}
 			if(name) goto LastItem;
@@ -275,8 +298,10 @@ LastItem:
 
 void
 fs_walk(Req *r) {
-	FileId *f = r->fid->aux, *nf;
+	FileId *f, *nf;
 	int i;
+
+	f = r->fid->aux;
 
 	clone_files(f);
 	for(i=0; i < r->ifcall.nwname; i++) {
@@ -296,8 +321,7 @@ fs_walk(Req *r) {
 		r->ofcall.wqid[i].type = f->tab.qtype;
 		r->ofcall.wqid[i].path = QID(f->tab.type, f->id);
 	}
-	/* XXX: This will not be necessary once a free_fid
-	 * function is implemented */
+	/* There should be a way to do this on freefid() */
 	if(i < r->ifcall.nwname) {
 		while((nf = f)) {
 			f=f->next;
@@ -339,6 +363,20 @@ fs_stat(Req *r) {
 	respond(r, nil);
 }
 
+static void
+write_buf(Req *r, void *buf, unsigned int len) {
+	if(r->ifcall.offset >= len)
+		return;
+
+	len -= r->ifcall.offset;
+	if(len > r->ifcall.count)
+		len = r->ifcall.count;
+	/* XXX: mallocz is not really needed here */
+	r->ofcall.data = cext_emallocz(len);
+	memcpy(r->ofcall.data, buf + r->ifcall.offset, len);
+	r->ofcall.count = len;
+}
+
 /* This should probably be factored out like lookup_file
  * so we can use it to get size for stats and not write
  * data anywhere. -KM */
@@ -346,9 +384,12 @@ fs_stat(Req *r) {
 void
 fs_read(Req *r) {
 	unsigned char *buf;
-	unsigned int n, offset = 0;
+	FileId *f, *tf;
+	unsigned int n, offset;
 	int size;
-	FileId *f = r->fid->aux, *tf;
+
+	offset = 0;
+	f = r->fid->aux;
 
 	if(f->tab.perm & DMDIR) {
 		Stat s;
@@ -370,21 +411,47 @@ fs_read(Req *r) {
 			offset += n;
 		}
 
-		while((f = tf)) {
-			tf = tf->next;
+		for(; f; f = tf) {
+			tf = f->next;
 			free_file(f);
 		}
 
 		r->ofcall.count = r->ifcall.count - size;
 		respond(r, nil);
 	}else{
-		/* Read normal files */
+		switch(f->tab.type) {
+		case FsFprops:
+			write_buf(r, (void *)f->client->props, strlen(f->client->props));
+			return respond(r, nil);
+		case FsFCSel:
+		case FsFCNorm:
+			write_buf(r, (void *)f->col->string, strlen(f->col->string));
+			return respond(r, nil);
+		case FsFColRules:
+		case FsFTagRules:
+			write_buf(r, (void *)f->rule->string, f->rule->size);
+			return respond(r, nil);
+		case FsFKeys:
+			write_buf(r, (void *)def.keys, def.keyssz);
+			return respond(r, nil);
+		case FsFFont:
+			write_buf(r, (void *)def.font, strlen(def.font));
+			return respond(r, nil);
+		case FsFBorder:
+			asprintf((void *)&r->ofcall.data, "%d", def.border);
+			if(!r->ifcall.offset)
+				r->ofcall.count = strlen(r->ofcall.data);
+			return respond(r, nil);
+		}
+		/* XXX: This should be taken care of by open */
+		/* should probably be an assertion in the future */
+		respond(r, Enoperm);
 	}
 }
 
 void
 fs_attach(Req *r) {
-	FileId *f = cext_emallocz(sizeof(FileId));
+	FileId *f = get_file();
 	f->tab = dirtab[FsRoot][0];
 	f->tab.name = strdup("/");
 	r->fid->aux = f;
@@ -394,22 +461,22 @@ fs_attach(Req *r) {
 	respond(r, nil);
 }
 
-/* fs_* functions below here are yet to be properly implemented */
+/* XXX: fs_* functions below here are yet to be properly implemented */
 
 void
 fs_open(Req *r) {
-	if(!r->ifcall.mode == OREAD)
-		respond(r, Enoperm);
-	r->fid->omode = OREAD;
+	/* XXX */
+	r->ofcall.mode = r->ifcall.mode;
 	respond(r, nil);
 }
 
 void
 fs_freefid(Fid *f) {
-	FileId *id = f->aux, *tid;
-	while((tid = id)) {
-		id = id->next;
-		free_file(tid);
+	FileId *id, *tid;
+
+	for(id=f->aux; id; id = tid) {
+		tid = id->next;
+		free_file(id);
 	}
 }
 
@@ -419,8 +486,103 @@ fs_remove(Req *r) {
 }
 
 void
+fs_clunk(Req *r) {
+	Client *c;
+	FileId *f = r->fid->aux;
+
+	switch(r->ifcall.type) {
+	case FsFTagRules:
+		update_rules(&f->rule->rule, f->rule->string);
+		/* no break */
+	case FsFColRules:
+		for(c=client; c; c=c->next)
+			apply_rules(c);
+		update_views();
+		break;
+	}
+	respond(r, nil);
+}
+
+void
+write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
+	unsigned int offset, count;
+
+	offset = (r->fid->omode&OAPPEND) ? *len : r->ifcall.offset;
+	if(offset > *len || r->ifcall.count == 0) {
+		r->ofcall.count = 0;
+		return;
+	}
+
+	count = r->ifcall.count;
+	if(max && (count > max - offset))
+		count = max - offset;
+
+	if(r->fid->omode&OTRUNC || (offset + count > *len))
+		*len = offset + count;
+	
+	if(max == 0) {
+		*(void **)buf = realloc(*(void **)buf, *len);
+		cext_assert(*(void **)buf);
+		buf = *(void **)buf;
+	}
+		
+	memcpy(buf + offset, r->ifcall.data, count);
+}
+
+void
 fs_write(Req *r) {
-	respond(r, "not implemented");
+	FileId *f;
+	char *buf;
+	unsigned int i;
+
+	f = r->fid->aux;
+	if(f->tab.perm & DMDIR) {
+		respond(r, Eisdir);
+	}else{
+		switch(f->tab.type) {
+		case FsFColRules:
+		case FsFTagRules:
+			write_to_buf(r, &f->rule->string, &f->rule->size, 0);
+			return respond(r, nil);
+		case FsFKeys:
+			write_to_buf(r, &def.keys, &def.keyssz, 0);
+			return respond(r, nil);
+		case FsFFont:
+			i=strlen(def.font);
+			write_to_buf(r, &def.font, &i, 0);
+			return respond(r, nil);
+		case FsFBorder:
+			/* fix me! */
+			buf = realloc(r->ifcall.data, r->ifcall.count + 1);
+			cext_assert(buf);
+			buf[r->ifcall.count] = '\0';
+			i = (unsigned int)strtol(r->ifcall.data, &buf, 10);
+			if(*buf)
+				return respond(r, Ebadvalue);
+			def.border = i;
+			return respond(r, nil);
+		case FsFCSel:
+		case FsFCNorm:
+			if((r->ifcall.count != 23) ||
+			   (3 != sscanf(r->ifcall.data, "#%06x #%06x #%06x", &i,&i,&i)))
+				return respond(r, Ebadvalue);
+			r->ofcall.count = 23;
+			bcopy(r->ifcall.data, f->col->string, 23);
+			blitz_loadcolor(&f->col->col, f->col->string);
+			draw_clients();
+			return respond(r, nil);
+		case FsFRctl:
+			if(!strncmp(r->ifcall.data, "quit", 5))
+				srv.running = 0;
+			else if(!strncmp(buf, "view ", 5))
+				select_view(&r->ifcall.data[5]);
+			else
+				return respond(r, Enocommand);
+			r->ofcall.msize = r->ifcall.msize;
+			return respond(r, nil);
+		}
+		respond(r, Enoperm);
+	}
 }
 
 void

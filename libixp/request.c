@@ -6,26 +6,6 @@
 
 static void ixp_handle_req(Req *r);
 
-void *
-createfid(Intmap *map, int fid) {
-	Fid *f = cext_emallocz(sizeof(Fid));
-	f->fid = fid;
-	f->omode = -1;
-	f->map = map;
-	if(caninsertkey(map, fid, f))
-		return f;
-	free(f);
-	return nil;
-}
-int
-destroyfid(Intmap *map, unsigned long fid) {
-	Fid *f;
-	if(!(f = deletekey(map, fid)))
-		return 0;
-	free(f);
-	return 1;
-}
-
 static char
 	Eduptag[] = "tag in use",
 	Edupfid[] = "fid in use",
@@ -49,10 +29,33 @@ typedef struct P9Conn {
 	unsigned char	*buf;
 } P9Conn;
 
+void *
+createfid(Intmap *map, int fid) {
+	Fid *f = cext_emallocz(sizeof(Fid));
+	f->fid = fid;
+	f->omode = -1;
+	f->map = map;
+	if(caninsertkey(map, fid, f))
+		return f;
+	free(f);
+	return nil;
+}
+
+int
+destroyfid(P9Conn *pc, unsigned long fid) {
+	Fid *f;
+	if(!(f = deletekey(&pc->fidmap, fid)))
+		return 0;
+	if(pc->srv->freefid)
+		pc->srv->freefid(f);
+	free(f);
+	return 1;
+}
+
 void
 ixp_server_handle_fcall(IXPConn *c)
 {
-	Fcall fcall;
+	Fcall fcall = {0};
 	P9Conn *pc = c->aux;
 	Req *req;
 	unsigned int msize;
@@ -82,7 +85,6 @@ ixp_handle_req(Req *r)
 {
 	P9Conn *pc = r->conn->aux;
 	P9Srv *srv = pc->srv;
-	Fid *f;
 
 	switch(r->ifcall.type) {
 	default:
@@ -107,12 +109,11 @@ ixp_handle_req(Req *r)
 		srv->attach(r);
 		break;
 	case TCLUNK:
-		if(!(f=deletekey(&pc->fidmap, r->ifcall.fid)))
+		if(!(r->fid = lookupkey(&pc->fidmap, r->ifcall.fid)))
 			return respond(r, Enofid);
-		if(pc->srv->freefid)
-			pc->srv->freefid(f);
-		free(f);
-		respond(r, nil);
+		if(!srv->clunk)
+			return respond(r, nil);
+		srv->clunk(r);
 		break;
 	case TCREATE:
 		if(!(r->fid = lookupkey(&pc->fidmap, r->ifcall.fid)))
@@ -204,7 +205,7 @@ respond(Req *r, char *error) {
 		break;
 	case TATTACH:
 		if(error)
-			destroyfid(r->fid->map, r->fid->fid);
+			destroyfid(pc, r->fid->fid);
 		free(r->ifcall.uname);
 		free(r->ifcall.aname);
 		break;
@@ -220,7 +221,7 @@ respond(Req *r, char *error) {
 	case TWALK:
 		if(error || r->ofcall.nwqid < r->ifcall.nwname) {
 			if(r->ifcall.fid != r->ifcall.newfid && r->newfid)
-				destroyfid(r->newfid->map, r->newfid->fid);
+				destroyfid(pc, r->newfid->fid);
 			if(!error && r->ofcall.nwqid == 0)
 				error = Enofile;
 		}else{
@@ -235,6 +236,8 @@ respond(Req *r, char *error) {
 		free(r->ifcall.data);
 		break;
 	case TCLUNK:
+		destroyfid(pc, r->fid->fid);
+		break;
 	case TREAD:
 	case TREMOVE:
 	case TSTAT:
