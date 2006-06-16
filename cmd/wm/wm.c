@@ -141,6 +141,9 @@ init_cursors()
 static void
 init_screen()
 {
+	Window w;
+	int ret;
+	unsigned mask;
 	XGCValues gcv;
 
 	gcv.subwindow_mode = IncludeInferiors;
@@ -155,6 +158,8 @@ init_screen()
 	rect.width = DisplayWidth(dpy, screen);
 	rect.height = DisplayHeight(dpy, screen);
 	def.snap = rect.height / 63;
+
+	sel_screen = XQueryPointer(dpy, root, &w, &w, &ret, &ret, &ret, &ret, &mask);
 }
 
 /*
@@ -315,7 +320,7 @@ main(int argc, char *argv[])
 	init_lock_keys();
 	init_screen();
 
-	wa.event_mask = SubstructureRedirectMask;
+	wa.event_mask = SubstructureRedirectMask | EnterWindowMask | LeaveWindowMask;
 	wa.cursor = cursor[CurNormal];
 	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &wa);
 
