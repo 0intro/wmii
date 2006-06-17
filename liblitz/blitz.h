@@ -14,16 +14,12 @@ typedef struct Blitz Blitz;
 typedef enum BlitzAlign BlitzAlign;
 typedef struct BlitzColor BlitzColor;
 typedef struct BlitzFont BlitzFont;
-typedef struct BlitzTile BlitzTile;
-typedef struct BlitzInput BlitzInput;
-typedef union BlitzWidget BlitzWidget;
-#define BLITZWIDGET(p) ((BlitzWidget *)(p))
+typedef struct BlitzWidget BlitzWidget;
 
 struct Blitz {
 	Display *display;
 	int screen;
 	Window root;
-	BlitzWidget *widgets;
 };
 
 enum BlitzAlign {
@@ -51,37 +47,16 @@ struct BlitzFont {
 	int descent;
 };
 
-struct BlitzTile {
+struct BlitzWidget {
 	Drawable drawable;
 	GC gc;
-	void (*event[LASTEvent]) (BlitzWidget *, XEvent *);
-	BlitzWidget *next;
-	/* widget specific */
-	BlitzColor color;
-	XRectangle rect;	/* relative rect */
-	XRectangle *notch;	/* relative notch rect */
-};
-
-struct BlitzInput {
-	Drawable drawable;
-	GC gc;
-	void (*event[LASTEvent]) (BlitzWidget *, XEvent *);
-	BlitzWidget *next;
-	/* widget specific */
 	BlitzColor color;
 	BlitzAlign align;
 	BlitzFont font;
 	XRectangle rect;	/* relative rect */
+	XRectangle *notch;	/* relative notch rect */
 	char *text;
-};
-
-union BlitzWidget {
-	Drawable drawable;
-	GC gc;
-	void (*event[LASTEvent]) (BlitzWidget *, XEvent *);
-	BlitzWidget *next;
-	BlitzTile tile;
-	BlitzInput input;
+	void (*draw)(BlitzWidget *);
 };
 
 /* obsolete, will be replaced soon */
@@ -111,18 +86,15 @@ void blitz_drawlabel(BlitzDraw *d);
 void blitz_drawborder(BlitzDraw *d);
 
 /* input.c */
-BlitzInput *blitz_create_input(Drawable drawable, GC gc);
-void blitz_destroy_input(BlitzInput *t);
+BlitzWidget *blitz_create_input(Drawable drawable, GC gc);
+void blitz_draw_input(BlitzWidget *i);
+void blitz_destroy_input(BlitzWidget *i);
 
 /* tile.c */
-BlitzTile *blitz_create_tile(Drawable drawable, GC gc);
-void blitz_draw_tile(BlitzTile *t);
-void blitz_destroy_tile(BlitzTile *t);
+BlitzWidget *blitz_create_tile(Drawable drawable, GC gc);
+void blitz_draw_tile(BlitzWidget *t);
+void blitz_destroy_tile(BlitzWidget *t);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
 void blitz_loadfont(BlitzFont *font, char *fontstr);
-
-/* widget.c */
-void blitz_add_widget(BlitzWidget *w);
-void blitz_rm_widget(BlitzWidget *w);

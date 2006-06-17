@@ -4,23 +4,20 @@
  */
 
 #include <stdlib.h>
-
 #include <cext.h>
-
 #include "blitz.h"
 
-BlitzTile *
+BlitzWidget *
 blitz_create_tile(Drawable drawable, GC gc)
 {
-	BlitzTile *t = cext_emallocz(sizeof(BlitzTile));
+	BlitzWidget *t = cext_emallocz(sizeof(BlitzWidget));
 	t->drawable = drawable;
 	t->gc = gc;
-	blitz_add_widget(BLITZWIDGET(t));
 	return t;
 }
 
 void
-blitz_draw_tile(BlitzTile *t)
+blitz_draw_tile(BlitzWidget *t)
 {
 	XPoint points[5];
 	XSetForeground(__blitz.display, t->gc, t->color.bg);
@@ -41,8 +38,7 @@ blitz_draw_tile(BlitzTile *t)
 }
 
 void
-blitz_destroy_tile(BlitzTile *t)
+blitz_destroy_tile(BlitzWidget *t)
 {
-	blitz_rm_widget(BLITZWIDGET(t));
 	free(t);
 }

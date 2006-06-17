@@ -4,24 +4,27 @@
  */
 
 #include <stdlib.h>
-
 #include <cext.h>
-
 #include "blitz.h"
 
-BlitzInput *
+BlitzWidget *
 blitz_create_input(Drawable drawable, GC gc)
 {
-	BlitzInput *i = cext_emallocz(sizeof(BlitzInput));
+	BlitzWidget *i = cext_emallocz(sizeof(BlitzWidget));
 	i->drawable = drawable;
 	i->gc = gc;
-	blitz_add_widget(BLITZWIDGET(i));
 	return i;
 }
 
 void
-blitz_destroy_input(BlitzInput *i)
+blitz_draw_input(BlitzWidget *i)
 {
-	blitz_rm_widget(BLITZWIDGET(i));
+
+
+}
+
+void
+blitz_destroy_input(BlitzWidget *i)
+{
 	free(i);
 }
