@@ -5,7 +5,7 @@ include ../config.mk
 
 CFLAGS += -I ../libcext
 
-SRC = client.c convert.c message.c server.c socket.c transport.c
+SRC = client.c convert.c message.c server.c socket.c transport.c intmap.c request.c
 
 OBJ = ${SRC:.c=.o}
 
