@@ -1186,11 +1186,11 @@ xread(IXPConn *c, Fcall *fcall)
 			break;
 		case FsFselcolors:
 			if((fcall->count = strlen(def.selcolor)))
-				memcpy(p, def.selcolor, fcall->count);
+				memcpy(p, def.selcolor.string, fcall->count);
 			break;
 		case FsFnormcolors:
 			if((fcall->count = strlen(def.normcolor)))
-				memcpy(p, def.normcolor, fcall->count);
+				memcpy(p, def.normcolor.string, fcall->count);
 			break;
 		case FsFkeys:
 			fcall->count = def.keys ? strlen(def.keys) : 0;
@@ -1382,18 +1382,18 @@ xwrite(IXPConn *c, Fcall *fcall)
 		if((fcall->count != 23) || (fcall->data[0] != '#')
 				|| (fcall->data[8] != '#') || (fcall->data[16] != '#'))
 			return Ebadvalue;
-		memcpy(def.selcolor, fcall->data, fcall->count);
-		def.selcolor[fcall->count] = 0;
-		blitz_loadcolor(&def.sel, def.selcolor);
+		memcpy(def.selcolor.string, fcall->data, fcall->count);
+		def.selcolor.string[fcall->count] = 0;
+		blitz_loadcolor(&def.selcolor.col, def.selcolor.string);
 		draw_clients();
 		break;
 	case FsFnormcolors:
 		if((fcall->count != 23) || (fcall->data[0] != '#')
 				|| (fcall->data[8] != '#') || (fcall->data[16] != '#'))
 			return Ebadvalue;
-		memcpy(def.normcolor, fcall->data, fcall->count);
-		def.normcolor[fcall->count] = 0;
-		blitz_loadcolor(&def.norm, def.normcolor);
+		memcpy(def.normcolor.string, fcall->data, fcall->count);
+		def.normcolor.string[fcall->count] = 0;
+		blitz_loadcolor(&def.normcolor.col, def.normcolor.string);
 		draw_clients();
 		break;
 	case FsFkeys:
@@ -1411,9 +1411,9 @@ xwrite(IXPConn *c, Fcall *fcall)
 		def.keys[fcall->offset + fcall->count] = 0;
 		break;
 	case FsFtagrules:
-		if(def.tagrulessz < fcall->offset + fcall->count + 1) {
-			def.tagrulessz = fcall->offset + fcall->count + 1;
-			tmp = cext_emallocz(def.tagrulessz);
+		if(def.tagrules.size < fcall->offset + fcall->count + 1) {
+			def.tagrules.size = fcall->offset + fcall->count + 1;
+			tmp = cext_emallocz(def.tagrules.size);
 			len = def.tagrules ? strlen(def.tagrules) : 0;
 			if(len) {
 				memcpy(tmp, def.tagrules, len);
@@ -1425,9 +1425,9 @@ xwrite(IXPConn *c, Fcall *fcall)
 		def.tagrules[fcall->offset + fcall->count] = 0;
 		break;
 	case FsFcolrules:
-		if(def.colrulessz < fcall->offset + fcall->count + 1) {
-			def.colrulessz = fcall->offset + fcall->count + 1;
-			tmp = cext_emallocz(def.colrulessz);
+		if(def.colrules.size < fcall->offset + fcall->count + 1) {
+			def.colrules.size = fcall->offset + fcall->count + 1;
+			tmp = cext_emallocz(def.colrules.size);
 			len = def.colrules ? strlen(def.colrules) : 0;
 			if(len) {
 				memcpy(tmp, def.colrules, len);
@@ -1528,13 +1528,13 @@ xclunk(IXPConn *c, Fcall *fcall)
 	if(type == FsFkeys)
 		update_keys();
 	else if(type == FsFtagrules) {
-		update_rules(&trule, def.tagrules);
+		update_rules(&def.tagrules.rule, def.tagrules.string);
 		for(cl=client; cl; cl=cl->next)
 			apply_rules(cl);
 		update_views();
 	}
 	else if(type == FsFcolrules) {
-		update_rules(&vrule, def.colrules);
+		update_rules(&def.colrules.rule, def.colrules.string);
 	}
 	if(c->map == m)
 		c->map = m->next;
@@ -1607,5 +1607,5 @@ new_ixp_conn(IXPConn *c)
 	int fd = accept(c->fd, nil, nil);
 
 	if(fd >= 0)
-		ixp_server_open_conn(c->srv, fd, do_fcall, ixp_server_close_conn);
+		ixp_server_open_conn(c->srv, fd, do_fcall, nil);
 }

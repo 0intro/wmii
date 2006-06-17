@@ -337,6 +337,43 @@ is_view_of(Client *c, View *v)
 	return False;
 }
 
+/* XXX: This will need cleanup */
+unsigned char *
+view_index(View *v) {
+	enum { BUF_MAX = 8092 };
+	static unsigned char buf[BUF_MAX];
+	unsigned int a_i, buf_i, n;
+	int len;
+	Frame *f;
+	Area *a;
+
+	len = BUF_MAX;
+	buf_i = 0;
+	for((a = v->area), (a_i = 0); a; (a=a->next), (a_i++)) {
+		for(f=a->frame; f && len > 0; f=f->anext) {
+			XRectangle *r = &f->rect;
+			if(a_i == 0)
+				n = snprintf(&buf[buf_i], len, "~ %d %d %d %d %d %s\n",
+						idx_of_client(f->client),
+						r->x, r->y, r->width, r->height,
+						f->client->props);
+			else
+				n = snprintf(&buf[buf_i], len, "%d %d %d %s\n",
+						a_i, idx_of_client(f->client),
+						r->width, f->client->props);
+			buf_i += n;
+			len -= n;
+		}
+	}
+	return buf;
+}
+
+/* XXX: This will need cleanup too */
+int
+view_message(View *v, char *message) {
+	return 0;
+}
+
 static Bool
 is_empty(View *v)
 {
@@ -391,7 +428,7 @@ newcolw_of_view(View *v)
 	unsigned int i, n;
 	regmatch_t tmpregm;
 
-	for(r=vrule; r; r=r->next) {
+	for(r=def.colrules.rule; r; r=r->next) {
 		if(!regexec(&r->regex, v->name, 1, &tmpregm, 0)) {
 			char buf[256];
 			char *toks[16];

@@ -4,44 +4,8 @@
 #include <time.h>
 
 #include "wm.h"
-P9Srv p9srv = {
-	.open=	fs_open,
-	.walk=	fs_walk,
-	.read=	fs_read,
-	.stat=	fs_stat,
-	.write=	fs_write,
-	.clunk=	fs_clunk,
-	.attach=fs_attach,
-	.create=fs_create,
-	.remove=fs_remove,
-	.freefid=fs_freefid
-};
 
-#define QID(t, i) (((long long)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
-/* Will I ever need these macros?
- *  I don't think so. */
-#define TYPE(q) ((q)>>32&0xFF)
-#define ID(q) ((q)&0xFFFFFFFF)
-
-static char
-	Enoperm[] = "permission denied",
-	Enofile[] = "file not found",
-	Eisdir[] = "file is a directory",
-	Ebadvalue[] = "bad value",
-	Enocommand[] = "command not supported";
-//static char Efidinuse[] = "fid in use";
-//static char Enomode[] = "mode not supported";
-//static char Enofunc[] = "function not supported";
-
-enum {	FsRoot, FsDClient, FsDClients, FsDLBar,
-	FsDRBar, FsDSClient, FsDTag, FsDTags,
-
-	FsFBar, FsFBorder, FsFCNorm, FsFCSel,
-	FsFCctl, FsFCindex, FsFColRules, FsFEvent,
-	FsFFont, FsFKeys, FsFRctl, FsFTagRules,
-	FsFTctl, FsFTindex, FsFprops, RsFFont
-};
-
+/* Datatypes: */
 typedef struct Dirtab Dirtab;
 struct Dirtab {
 	char		*name;
@@ -56,6 +20,7 @@ struct FileId {
 	union {
 		void	*ref;
 		Bar	*bar;
+		Bar	**bar_p;
 		View	*view;
 		Client	*client;
 		Rules	*rule;
@@ -67,15 +32,65 @@ struct FileId {
 	unsigned short	nref;
 };
 
+/* Function prototypes */
 static void dostat(Stat *s, unsigned int len, FileId *f);
+
+/* Error messages */
+static char
+	Enoperm[] = "permission denied",
+	Enofile[] = "file not found",
+	Ebadvalue[] = "bad value",
+	Einterrupted[] = "interrupted",
+	Enocommand[] = "command not supported";
+/* Old error messages:
+	Eisdir[] = "file is a directory",
+	Efidinuse[] = "fid in use",
+	Enomode[] = "mode not supported",
+	Enofunc[] = "function not supported",
+*/
+
+/* Constants */
+enum {	/* Dirs */
+	FsRoot, FsDClient, FsDClients, FsDBar,
+	FsDSClient, FsDTag, FsDTags,
+	/* Files */
+	FsFBar, FsFBorder, FsFCNorm, FsFCSel,
+	FsFCctl, FsFCindex, FsFColRules, FsFCtags,
+	FsFEvent, FsFFont, FsFKeys, FsFRctl,
+	FsFTagRules, FsFTctl, FsFTindex, FsFprops,
+	RsFFont
+};
+
+/* QID Macros */
+#define QID(t, i) (((long long)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
+/* Will I ever need these macros?
+ *  I don't think so. */
+#define TYPE(q) ((q)>>32&0xFF)
+#define ID(q) ((q)&0xFFFFFFFF)
+
+/* Global vars */
 FileId *free_fileid = nil;
+Req *pending_event_reads = nil;
+P9Srv p9srv = {
+	.open=	fs_open,
+	.walk=	fs_walk,
+	.read=	fs_read,
+	.stat=	fs_stat,
+	.write=	fs_write,
+	.clunk=	fs_clunk,
+	.flush=	fs_flush,
+	.attach=fs_attach,
+	.create=fs_create,
+	.remove=fs_remove,
+	.freefid=fs_freefid
+};
 
 /* ad-hoc file tree. Empty names ("") indicate a dynamic entry to be filled
  * in by lookup_file */
 static Dirtab
 dirtabroot[]=	{{".",		QTDIR,		FsRoot,		0500|DMDIR },
-		 {"rbar",	QTDIR,		FsDRBar,	0700|DMDIR },
-		 {"lbar",	QTDIR,		FsDLBar,	0700|DMDIR },
+		 {"rbar",	QTDIR,		FsDBar,		0700|DMDIR },
+		 {"lbar",	QTDIR,		FsDBar,		0700|DMDIR },
 		 {"client",	QTDIR,		FsDClients,	0500|DMDIR },
 		 {"tag",	QTDIR,		FsDTags,	0500|DMDIR },
 		 {"ctl",	QTAPPEND,	FsFRctl,	0600|DMAPPEND },
@@ -93,14 +108,16 @@ dirtabclients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
 		 {nil}},
 dirtabclient[]= {{".",		QTDIR,		FsDClient,	0500|DMDIR },
 		 {"ctl",	QTAPPEND,	FsFCctl,	0200|DMAPPEND },
+		 {"tags",	QTFILE,		FsFCtags,	0600 },
 		 {"props",	QTFILE,		FsFprops,	0400 },
 		 {nil}},
 dirtabsclient[]={{".",		QTDIR,		FsDSClient,	0500|DMDIR },
 		 {"ctl",	QTAPPEND,	FsFCctl,	0200|DMAPPEND },
 		 {"index",	QTFILE,		FsFCindex,	0400 },
+		 {"tags",	QTFILE,		FsFCtags,	0600 },
 		 {"props",	QTFILE,		FsFprops,	0400 },
 		 {nil}},
-dirtabbar[]=	{{".",		QTDIR,		FsDRBar,	0700|DMDIR },
+dirtabbar[]=	{{".",		QTDIR,		FsDBar,		0700|DMDIR },
 		 {"",		QTFILE,		FsFBar,		0600 },
 		 {nil}},
 dirtabtags[]=	{{".",		QTDIR,		FsDTags,	0500|DMDIR },
@@ -115,8 +132,7 @@ dirtabtag[]=	{{".",		QTDIR,		FsDTag,		0500|DMDIR },
  * since otherwise we would need to use compound literals */
 static Dirtab *dirtab[] = {
 	[FsRoot]	dirtabroot,
-	[FsDRBar]	dirtabbar,
-	[FsDLBar]	dirtabbar,
+	[FsDBar]	dirtabbar,
 	[FsDClients]	dirtabclients,
 	[FsDClient]	dirtabclient,
 	[FsDSClient]	dirtabsclient,
@@ -198,7 +214,9 @@ lookup_file(FileId *parent, char *name)
 			case FsDClients:
 				if(!name || !strncmp(name, "sel", 4)) {
 					if((c = sel_client())) {
-						file = push_file(&last);
+						file = get_file();
+						*last = file;
+						last = &file->next;
 						file->ref = c;
 						file->id = c->id;
 						file->index = idx_of_client(c);
@@ -214,7 +232,9 @@ lookup_file(FileId *parent, char *name)
 				i=0;
 				for(c=client; c; c=c->next, i++) {
 					if(!name || i == id) {
-						file = push_file(&last);
+						file = get_file();
+						*last = file;
+						last = &file->next;
 						file->ref = c;
 						file->id = c->id;
 						file->tab = *dir;
@@ -226,7 +246,9 @@ lookup_file(FileId *parent, char *name)
 			case FsDTags:
 				if(!name || !strncmp(name, "sel", 4)) {
 					if(sel) {
-						file = push_file(&last);
+						file = get_file();
+						*last = file;
+						last = &file->next;
 						file->ref = sel;
 						file->id = sel->id;
 						file->tab = *dir;
@@ -235,7 +257,9 @@ lookup_file(FileId *parent, char *name)
 				}
 				for(v=view; v; v=v->next) {
 					if(!name || !strcmp(name, v->name)) {
-						file = push_file(&last);
+						file = get_file();
+						*last = file;
+						last = &file->next;
 						file->ref = v;
 						file->id = v->id;
 						file->tab = *dir;
@@ -244,11 +268,12 @@ lookup_file(FileId *parent, char *name)
 					}
 				}
 				break;
-			case FsDRBar:
-			case FsDLBar:
-				for(b=parent->ref; b; b=b->next) {
+			case FsDBar:
+				for(b=*parent->bar_p; b; b=b->next) {
 					if(!name || !strcmp(name, b->name)) {
-						file = push_file(&last);
+						file = get_file();
+						*last = file;
+						last = &file->next;
 						file->ref = b;
 						file->id = b->id;
 						file->tab = *dir;
@@ -260,18 +285,21 @@ lookup_file(FileId *parent, char *name)
 			}
 		}else /* Static dirs */
 		if(!name || !strcmp(name, dir->name)) {
-			file = push_file(&last);
+			file = get_file();
+			*last = file;
+			last = &file->next;
 			file->id = 0;
 			file->ref = parent->ref;
 			file->tab = *dir;
+			file->tab.name = strdup(file->tab.name);
 
 			/* Special considerations: */
 			switch(file->tab.type) {
-			case FsDLBar:
-				file->ref = lbar;
-				break;
-			case FsDRBar:
-				file->ref = rbar;
+			case FsDBar:
+				if(!strncmp(file->tab.name, "lbar", 5))
+					file->ref = &lbar;
+				else
+					file->ref = &rbar;
 				break;
 			case FsFColRules:
 				file->ref = &def.colrules;
@@ -315,6 +343,7 @@ fs_walk(Req *r) {
 			nf = lookup_file(f, r->ifcall.wname[i]);
 			if(!nf)
 				break;
+			cext_assert(!nf->next);
 			nf->next = f;
 			f = nf;
 		}
@@ -336,8 +365,8 @@ fs_walk(Req *r) {
 	if(r->ifcall.fid == r->ifcall.newfid) {
 		nf=r->fid->aux;
 		r->fid->aux = f;
-		for(; nf; nf=f) {
-			f = nf->next;
+		while((nf = f)) {
+			f=f->next;
 			free_file(nf);
 		}
 	}
@@ -347,7 +376,6 @@ fs_walk(Req *r) {
 	respond(r, nil);
 }
 
-/* All of this stat stuf is ugly. */
 void
 fs_stat(Req *r) {
 	Stat s;
@@ -363,6 +391,7 @@ fs_stat(Req *r) {
 	respond(r, nil);
 }
 
+/* This should be moved to libixp */
 static void
 write_buf(Req *r, void *buf, unsigned int len) {
 	if(r->ifcall.offset >= len)
@@ -385,7 +414,7 @@ void
 fs_read(Req *r) {
 	unsigned char *buf;
 	FileId *f, *tf;
-	unsigned int n, offset;
+	int n, offset;
 	int size;
 
 	offset = 0;
@@ -411,8 +440,8 @@ fs_read(Req *r) {
 			offset += n;
 		}
 
-		for(; f; f = tf) {
-			tf = f->next;
+		while((f = tf)) {
+			tf=tf->next;
 			free_file(f);
 		}
 
@@ -437,11 +466,32 @@ fs_read(Req *r) {
 		case FsFFont:
 			write_buf(r, (void *)def.font, strlen(def.font));
 			return respond(r, nil);
-		case FsFBorder:
-			asprintf((void *)&r->ofcall.data, "%d", def.border);
-			if(!r->ifcall.offset)
-				r->ofcall.count = strlen(r->ofcall.data);
+		case FsFCtags:
+			write_buf(r, (void *)f->client->tags, strlen(f->client->tags));
 			return respond(r, nil);
+		case FsFCindex:
+			if(r->ifcall.offset)
+				return respond(r, nil);
+			n = asprintf((char **)&r->ofcall.data, "%d", f->index);
+			cext_assert(n >= 0);
+			r->ofcall.count = n;
+			return respond(r, nil);
+		case FsFBorder:
+			if(r->ifcall.offset)
+				return respond(r, nil);
+			n = asprintf((char **)&r->ofcall.data, "%d", def.border);
+			cext_assert(n >= 0);
+			r->ofcall.count = n;
+			return respond(r, nil);
+		case FsFTindex:
+			buf = view_index(f->view);
+			n = strlen(buf);
+			write_buf(r, (void *)buf, n);
+			return respond(r, nil);
+		case FsFEvent:
+			r->aux = pending_event_reads;
+			pending_event_reads = r;
+			return;
 		}
 		/* XXX: This should be taken care of by open */
 		/* should probably be an assertion in the future */
@@ -461,8 +511,6 @@ fs_attach(Req *r) {
 	respond(r, nil);
 }
 
-/* XXX: fs_* functions below here are yet to be properly implemented */
-
 void
 fs_open(Req *r) {
 	/* XXX */
@@ -481,16 +529,11 @@ fs_freefid(Fid *f) {
 }
 
 void
-fs_remove(Req *r) {
-	respond(r, "not implemented");
-}
-
-void
 fs_clunk(Req *r) {
 	Client *c;
 	FileId *f = r->fid->aux;
 
-	switch(r->ifcall.type) {
+	switch(f->tab.type) {
 	case FsFTagRules:
 		update_rules(&f->rule->rule, f->rule->string);
 		/* no break */
@@ -499,10 +542,19 @@ fs_clunk(Req *r) {
 			apply_rules(c);
 		update_views();
 		break;
+	case FsFKeys:
+		update_keys();
+		break;
+	case FsFCtags:
+		apply_tags(f->client, f->client->tags);
+		update_views();
+		draw_client(f->client);
+		break;
 	}
 	respond(r, nil);
 }
 
+/* This should be moved to libixp */
 void
 write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
 	unsigned int offset, count;
@@ -517,8 +569,7 @@ write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
 	if(max && (count > max - offset))
 		count = max - offset;
 
-	if(r->fid->omode&OTRUNC || (offset + count > *len))
-		*len = offset + count;
+	*len = offset + count;
 	
 	if(max == 0) {
 		*(void **)buf = realloc(*(void **)buf, *len);
@@ -529,6 +580,34 @@ write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
 	memcpy(buf + offset, r->ifcall.data, count);
 }
 
+/* This should be moved to libixp */
+void
+data_to_cstring(Req *r) {
+	unsigned int i;
+	if(r->ifcall.count) {
+		for(i=0; i < r->ifcall.count; i++)
+			if(r->ifcall.data[i] == '\n')
+				break;
+		if(i == r->ifcall.count)
+			r->ifcall.data = realloc(r->ifcall.data, ++i);
+		cext_assert(r->ifcall.data);
+		r->ifcall.data[i] = '\0';
+	}
+}
+
+/* This should be moved to liblitz */
+int
+parse_colors(char **buf, int *buflen, Color *col) {
+	unsigned int i;
+	if(*buflen < 23 || 3 != sscanf(*buf, "#%06x #%06x #%06x", &i,&i,&i))
+		return 0;
+	(*buflen) -= 23;
+	bcopy(*buf, col->string, 23);
+	blitz_loadcolor(&col->col, col->string);
+	return 1;
+}
+
+/* This function needs to be seriously cleaned up */
 void
 fs_write(Req *r) {
 	FileId *f;
@@ -536,64 +615,129 @@ fs_write(Req *r) {
 	unsigned int i;
 
 	f = r->fid->aux;
-	if(f->tab.perm & DMDIR) {
-		respond(r, Eisdir);
-	}else{
-		switch(f->tab.type) {
-		case FsFColRules:
-		case FsFTagRules:
-			write_to_buf(r, &f->rule->string, &f->rule->size, 0);
-			return respond(r, nil);
-		case FsFKeys:
-			write_to_buf(r, &def.keys, &def.keyssz, 0);
-			return respond(r, nil);
-		case FsFFont:
-			i=strlen(def.font);
-			write_to_buf(r, &def.font, &i, 0);
-			return respond(r, nil);
-		case FsFBorder:
-			/* fix me! */
-			buf = realloc(r->ifcall.data, r->ifcall.count + 1);
-			cext_assert(buf);
-			buf[r->ifcall.count] = '\0';
-			i = (unsigned int)strtol(r->ifcall.data, &buf, 10);
-			if(*buf)
-				return respond(r, Ebadvalue);
-			def.border = i;
-			return respond(r, nil);
-		case FsFCSel:
-		case FsFCNorm:
-			if((r->ifcall.count != 23) ||
-			   (3 != sscanf(r->ifcall.data, "#%06x #%06x #%06x", &i,&i,&i)))
-				return respond(r, Ebadvalue);
-			r->ofcall.count = 23;
-			bcopy(r->ifcall.data, f->col->string, 23);
-			blitz_loadcolor(&f->col->col, f->col->string);
-			draw_clients();
-			return respond(r, nil);
-		case FsFRctl:
-			if(!strncmp(r->ifcall.data, "quit", 5))
-				srv.running = 0;
-			else if(!strncmp(buf, "view ", 5))
-				select_view(&r->ifcall.data[5]);
-			else
-				return respond(r, Enocommand);
-			r->ofcall.msize = r->ifcall.msize;
-			return respond(r, nil);
-		}
-		respond(r, Enoperm);
+	switch(f->tab.type) {
+	case FsFColRules:
+	case FsFTagRules:
+		write_to_buf(r, &f->rule->string, &f->rule->size, 0);
+		return respond(r, nil);
+	case FsFKeys:
+		write_to_buf(r, &def.keys, &def.keyssz, 0);
+		return respond(r, nil);
+	case FsFFont:
+		data_to_cstring(r);
+		i=strlen(def.font);
+		write_to_buf(r, &def.font, &i, 0);
+		def.font[i] = '\0';
+		r->ofcall.count = i- r->ifcall.offset;
+		return respond(r, nil);
+	case FsFCtags:
+		data_to_cstring(r);
+		i=strlen(f->client->tags);
+		write_to_buf(r, &f->client->tags, &i, 255);
+		f->client->tags[i] = '\0';
+		r->ofcall.count = i- r->ifcall.offset;
+		return respond(r, nil);
+	case FsFBorder:
+		data_to_cstring(r);
+		i = (unsigned int)strtol(r->ifcall.data, &buf, 10);
+		if(*buf)
+			return respond(r, Ebadvalue);
+		def.border = i;
+		return respond(r, nil);
+	case FsFBar:
+		/* XXX: This should validate after each write */
+		i = strlen(f->bar->buf);
+		write_to_buf(r, &f->bar->buf, &i, 279);
+		f->bar->buf[i] = '\0';
+		r->ofcall.count = i- r->ifcall.offset;
+		return respond(r, nil);
+	case FsFCSel:
+	case FsFCNorm:
+		/* XXX: This allows for junk after the color string */
+		data_to_cstring(r);
+		buf = r->ifcall.data;
+		i = r->ifcall.count;
+		if(!parse_colors((char **)&buf, &i, f->col))
+			return respond(r, Ebadvalue);
+		draw_clients();
+		r->ofcall.count = r->ifcall.count - i;
+		return respond(r, nil);
+	case FsFRctl:
+		data_to_cstring(r);
+
+		/* XXX: This needs to be moved to client_message(char *) */
+		if(!strncmp(r->ifcall.data, "quit", 5))
+			srv.running = 0;
+		else if(!strncmp(r->ifcall.data, "view ", 5))
+			select_view(&r->ifcall.data[5]);
+		else
+			return respond(r, Enocommand);
+		r->ofcall.count = r->ifcall.count;
+		return respond(r, nil);
+	case FsFEvent:
+		/* XXX: r->ifcall.count could be very large */
+		buf = cext_emallocz(r->ifcall.count + 1);
+		bcopy(r->ifcall.data, buf, r->ifcall.count);
+		write_event(buf);
+		free(buf);
+		r->ofcall.count = r->ifcall.count;
+		return respond(r, nil);
 	}
+	respond(r, Enoperm);
+}
+
+void
+fs_flush(Req *r) {
+	Req **t;
+	for(t=&pending_event_reads; *t; t=(Req **)&(*t)->aux) {
+		if(*t == r->oldreq) {
+			*t = (*t)->aux;
+			respond(r->oldreq, Einterrupted);
+			break;
+		}
+	}
+	respond(r, nil);
 }
 
 void
 fs_create(Req *r) {
+	FileId *f = r->fid->aux;
+	switch(f->tab.type) {
+	default:
+		/* XXX: This should be taken care of by the library */
+		return respond(r, Enoperm);
+	case FsDBar:
+		if(!strlen(r->ifcall.name))
+			return respond(r, Ebadvalue);
+		create_bar(r->ifcall.name);
+		f = lookup_file(f, r->ifcall.name);
+		if(!f)
+			return respond(r, Enofile);
+		r->ofcall.qid.type = f->tab.qtype;
+		r->ofcall.qid.path = QID(f->tab.type, f->id);
+		free_file(f);
+		respond(r, nil);
+		break;
+	}
+}
+
+void
+fs_remove(Req *r) {
 	respond(r, "not implemented");
 }
 
-/* XXX: Shuts up the linker, but is yet to be written */
 void
 write_event(char *buf) {
-	return;
+	Req **r;
+	unsigned int len = strlen(buf);
+	if(!len)
+		return;
+	for(r=&pending_event_reads; *r; *r=(*r)->aux) {
+		/* XXX: It would be nice if strdup wasn't necessary here */
+		(*r)->ofcall.data = strdup(buf);
+		(*r)->ofcall.count = len;
+		respond(*r, nil);
+	}
 }
 
 static void

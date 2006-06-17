@@ -10,17 +10,16 @@
 #define IXP_NOTAG	(unsigned short)~0U	/*Dummy tag */
 #define IXP_NOFID	(unsigned int)~0	/*No auth */
 
-enum { IXP_MAX_VERSION = 32 };
-enum { IXP_MAX_ERROR = 128 };
-enum { IXP_MAX_CACHE = 32 };
-enum { IXP_MAX_MSG = 8192 };
-enum { IXP_MAX_FLEN = 128 };
-enum { IXP_MAX_ULEN = 32 };
-enum { IXP_MAX_WELEM = 16 };
+enum {	IXP_MAX_VERSION = 32,
+	IXP_MAX_ERROR = 128,
+	IXP_MAX_CACHE = 32,
+	IXP_MAX_MSG = 8192,
+	IXP_MAX_FLEN = 128,
+	IXP_MAX_ULEN = 32,
+	IXP_MAX_WELEM = 16 };
 
 /* 9P message types */
-enum {
-	TVERSION = 100,
+enum {	TVERSION = 100,
 	RVERSION,
 	TAUTH = 102,
 	RAUTH,
@@ -51,8 +50,7 @@ enum {
 };
 
 /* borrowed from libc.h of Plan 9 */
-enum {
-	IXP_DMDIR = 0x80000000,		/* mode bit for directories */
+enum {	IXP_DMDIR = 0x80000000,		/* mode bit for directories */
 	IXP_DMAPPEND = 0x40000000,	/* mode bit for append only files */
 	IXP_DMEXCL = 0x20000000,	/* mode bit for exclusive use files */
 	IXP_DMMOUNT = 0x10000000,	/* mode bit for mounted channel */
@@ -64,8 +62,7 @@ enum {
 };
 
 /* modes */
-enum {
-	IXP_OREAD = 0x00,
+enum {	IXP_OREAD = 0x00,
 	IXP_OWRITE = 0x01,
 	IXP_ORDWR = 0x02,
 	IXP_OEXEC = 0x03,
@@ -77,8 +74,7 @@ enum {
 };
 
 /* qid.types */
-enum {
-	IXP_QTDIR = 0x80,
+enum {	IXP_QTDIR = 0x80,
 	IXP_QTAPPEND = 0x40,
 	IXP_QTEXCL = 0x20,
 	IXP_QTMOUNT = 0x10,
@@ -88,6 +84,52 @@ enum {
 	IXP_QTLINK = 0x01,
 	IXP_QTFILE = 0x00,
 };
+
+/* from libc.h in p9p */
+enum {	OREAD		= 0,	/* open for read */
+	OWRITE		= 1,	/* write */
+	ORDWR		= 2,	/* read and write */
+	OEXEC		= 3,	/* execute, == read but check execute permission */
+	OTRUNC		= 16,	/* or'ed in (except for exec), truncate file first */
+	OCEXEC		= 32,	/* or'ed in, close on exec */
+	ORCLOSE		= 64,	/* or'ed in, remove on close */
+	ODIRECT		= 128,	/* or'ed in, direct access */
+	ONONBLOCK	= 256,	/* or'ed in, non-blocking call */
+	OEXCL		= 0x1000,	/* or'ed in, exclusive use (create only) */
+	OLOCK		= 0x2000,	/* or'ed in, lock after opening */
+	OAPPEND		= 0x4000	/* or'ed in, append only */
+};
+
+/* bits in Qid.type */
+enum {	QTDIR		= 0x80,		/* type bit for directories */
+	QTAPPEND	= 0x40,		/* type bit for append only files */
+	QTEXCL		= 0x20,		/* type bit for exclusive use files */
+	QTMOUNT		= 0x10,		/* type bit for mounted channel */
+	QTAUTH		= 0x08,		/* type bit for authentication file */
+	QTTMP		= 0x04,		/* type bit for non-backed-up file */
+	QTSYMLINK	= 0x02,		/* type bit for symbolic link */
+	QTFILE		= 0x00		/* type bits for plain file */
+};
+
+/* bits in Dir.mode */
+enum {	DMDIR		= 0x80000000,	/* mode bit for directories */
+	DMAPPEND	= 0x40000000,	/* mode bit for append only files */
+	DMEXCL		= 0x20000000,	/* mode bit for exclusive use files */
+	DMMOUNT		= 0x10000000,	/* mode bit for mounted channel */
+	DMAUTH		= 0x08000000,	/* mode bit for authentication file */
+	DMTMP		= 0x04000000,	/* mode bit for non-backed-up file */
+	DMSYMLINK	= 0x02000000,	/* mode bit for symbolic link (Unix, 9P2000.u) */
+	DMDEVICE	= 0x00800000,	/* mode bit for device file (Unix, 9P2000.u) */
+	DMNAMEDPIPE	= 0x00200000,	/* mode bit for named pipe (Unix, 9P2000.u) */
+	DMSOCKET	= 0x00100000,	/* mode bit for socket (Unix, 9P2000.u) */
+	DMSETUID	= 0x00080000,	/* mode bit for setuid (Unix, 9P2000.u) */
+	DMSETGID	= 0x00040000,	/* mode bit for setgid (Unix, 9P2000.u) */
+	
+	DMREAD		= 0x4,		/* mode bit for read permission */
+	DMWRITE		= 0x2,		/* mode bit for write permission */
+	DMEXEC		= 0x1		/* mode bit for execute permission */
+};
+
 
 typedef struct Qid Qid;
 struct Qid {
@@ -99,7 +141,7 @@ struct Qid {
 };
 
 /* stat structure */
-typedef struct {
+typedef struct Stat {
 	unsigned short type;
 	unsigned int dev;
 	Qid qid;
@@ -107,39 +149,65 @@ typedef struct {
 	unsigned int atime;
 	unsigned int mtime;
 	unsigned long long length;
-	char name[IXP_MAX_FLEN];
-	char uid[IXP_MAX_ULEN];
-	char gid[IXP_MAX_ULEN];
-	char muid[IXP_MAX_ULEN];
+	char *name;
+	char *uid;
+	char *gid;
+	char *muid;
 } Stat;
 
-typedef struct {
-	unsigned char id;
+/* from fcall(3) in plan9port */
+typedef struct Fcall {
+	unsigned char type;
 	unsigned short tag;
 	unsigned int fid;
-	unsigned int maxmsg;			/* Tversion, Rversion */
-	char version[IXP_MAX_VERSION];		/* Tversion, Rversion */
-	unsigned short oldtag;			/* Tflush */
-	char errstr[IXP_MAX_ERROR];		/* Rerror */
-	Qid qid;				/* Rattach, Ropen, Rcreate */
-	unsigned int iounit;			/* Ropen, Rcreate */
-	Qid aqid;				/* Rauth */
-	unsigned int afid;			/* Tauth, Tattach */
-	char uname[IXP_MAX_ULEN];		/* Tauth, Tattach */
-	char aname[IXP_MAX_FLEN];		/* Tauth, Tattach */
-	unsigned int perm;			/* Tcreate */
-	char name[IXP_MAX_FLEN];		/* Tcreate */
-	unsigned char mode;			/* Tcreate, Topen */
-	unsigned int newfid;			/* Twalk */
-	unsigned short nwname;			/* Twalk */
-	char *wname[IXP_MAX_WELEM];/* Twalk */
-	unsigned short nwqid;			/* Rwalk */
-	Qid wqid[IXP_MAX_WELEM];		/* Rwalk */
-	unsigned long long offset;		/* Tread, Twrite */
-	unsigned int count;			/* Tread, Twrite, Rread */
-	Stat stat;				/* Rstat */
-	unsigned short nstat;			/* Twstat, Rstat */
-	unsigned char data[IXP_MAX_MSG];	/* Twrite, Rread, Twstat, Rstat */
+	union {
+		struct { /* Tversion, Rversion */
+			unsigned int msize;
+			char	*version;
+		};
+		struct { /* Tflush */
+			unsigned short oldtag;
+		};
+		struct { /* Rerror */
+			char *ename;
+		};
+		struct { /* Ropen, Rcreate */
+			Qid qid; /* +Rattach */
+			unsigned int iounit;
+		};
+		struct { /* Rauth */
+			Qid aqid;
+		};
+		struct { /* Tauth, Tattach */
+			unsigned int	afid;
+			char		*uname;
+			char		*aname;
+		};
+		struct { /* Tcreate */
+			unsigned int	perm;
+			char		*name;
+			unsigned char	mode; /* +Topen */
+		};
+		struct { /* Twalk */
+			unsigned int	newfid;
+			unsigned short	nwname;
+			char	*wname[IXP_MAX_WELEM];
+		};
+		struct { /* Rwalk */
+			unsigned short	nwqid;
+			Qid	wqid[IXP_MAX_WELEM];
+		};
+		struct { /* Twrite */
+			long long	offset; /* +Tread */
+			/* +Rread */
+			unsigned int	count; /* +Tread */
+			unsigned char	*data;
+		};
+		struct { /* Twstat, Rstat */
+			unsigned short	nstat;
+			unsigned char	*stat;
+		};
+	};
 } Fcall;
 
 typedef struct IXPServer IXPServer;
@@ -155,29 +223,23 @@ struct IXPMap {
 	Qid wqid[IXP_MAX_WELEM];
 };
 
-typedef struct Intlist	Intlist;
-struct Intlist
-{
-	unsigned long	id;
-	void*	aux;
-	Intlist*	link;
-};
-
-struct Intmap
-{
+typedef struct Intlist Intlist;
+struct Intmap {
 	unsigned long nhash;
 	Intlist	**hash;
 };
 
 struct IXPConn {
-	IXPConn *next;
-	int fd;
-	IXPServer *srv;
-	void (*read) (IXPConn *);
-	void (*close) (IXPConn *);
-	IXPMap *map;
-	Fcall pending;
-	int is_pending;
+	IXPServer	*srv;
+	void		*aux;
+	int		fd;
+	void		(*read) (IXPConn *);
+	void		(*close) (IXPConn *);
+	char		closed;
+
+	/* Implementation details */
+	/* do not use */
+	IXPConn		*next;
 };
 
 struct IXPServer {
@@ -187,13 +249,55 @@ struct IXPServer {
 	fd_set rd;
 };
 
-typedef struct {
+typedef struct IXPClient {
 	int fd;
 	unsigned int root_fid;
 	Qid root_qid;
 	Fcall fcall;
 	char *errstr;
 } IXPClient;
+
+typedef struct P9Conn P9Conn;
+typedef struct Fid {
+	unsigned long	fid;
+	char		omode;
+	char		*uid;
+	Qid		qid;
+	void		*aux;
+	
+	/* Implementation details */
+	/* do not use */
+	P9Conn		*conn;
+	Intmap		*map;
+} Fid;
+
+typedef struct Req Req;
+struct Req {
+	Fid	*fid;
+	Fid	*newfid;
+	Req	*oldreq;
+	Fcall	ifcall;
+	Fcall	ofcall;
+	void	*aux;
+
+	/* Implementation detail */
+	/* do not use */
+	P9Conn	*conn;
+};
+
+typedef struct P9Srv {
+	void (*attach)(Req *r);
+	void (*clunk)(Req *r);
+	void (*create)(Req *r);
+	void (*flush)(Req *r);
+	void (*open)(Req *r);
+	void (*read)(Req *r);
+	void (*remove)(Req *r);
+	void (*stat)(Req *r);
+	void (*walk)(Req *r);
+	void (*write)(Req *r);
+	void (*freefid)(Fid *f);
+} P9Srv;
 
 /* client.c */
 int ixp_client_dial(IXPClient *c, char *address, unsigned int rootfid);
@@ -226,11 +330,10 @@ void ixp_pack_u64(unsigned char **msg, int *msize, unsigned long long val);
 void ixp_unpack_u64(unsigned char **msg, unsigned long long *val);
 void ixp_pack_string(unsigned char **msg, int *msize, const char *s);
 void ixp_unpack_strings(unsigned char **msg, unsigned short n, char **strings);
-void ixp_unpack_string(unsigned char **msg, char *string,
-		unsigned short stringlen, unsigned short *len);
+void ixp_unpack_string(unsigned char **msg, char **string, unsigned short *len);
 void ixp_pack_data(unsigned char **msg, int *msize, unsigned char *data,
 		unsigned int datalen);
-void ixp_unpack_data(unsigned char **msg, unsigned char *data,
+void ixp_unpack_data(unsigned char **msg, unsigned char **data,
 		unsigned int datalen);
 void ixp_pack_prefix(unsigned char *msg, unsigned int size,
 		unsigned char id, unsigned short tag);
@@ -241,9 +344,14 @@ void ixp_unpack_qid(unsigned char **msg, Qid *qid);
 void ixp_pack_stat(unsigned char **msg, int *msize, Stat *stat);
 void ixp_unpack_stat(unsigned char **msg, Stat *stat);
 
+/* request.c */
+void respond(Req *r, char *error);
+void serve_9pcon(IXPConn *c);
+
 /* intmap.c */
 void initmap(Intmap *m, unsigned long nhash, void *hash);
 void freemap(Intmap *map, void (*destroy)(void*));
+void execmap(Intmap *map, void (*destroy)(void*));
 void* lookupkey(Intmap *map, unsigned long id);
 void* insertkey(Intmap *map, unsigned long id, void *v);
 int caninsertkey(Intmap *map, unsigned long id, void *v);
@@ -255,7 +363,7 @@ unsigned int ixp_fcall2msg(void *msg, Fcall *fcall, unsigned int msglen);
 unsigned int ixp_msg2fcall(Fcall *call, void *msg, unsigned int msglen);
 
 /* server.c */
-IXPConn *ixp_server_open_conn(IXPServer *s, int fd,
+IXPConn *ixp_server_open_conn(IXPServer *s, int fd, void *aux,
 		void (*read)(IXPConn *c), void (*close)(IXPConn *c));
 void ixp_server_close_conn(IXPConn *c);
 char *ixp_server_loop(IXPServer *s);

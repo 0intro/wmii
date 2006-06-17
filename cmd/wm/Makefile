@@ -9,7 +9,7 @@ LDFLAGS  += -L../../liblitz -llitz -L../../libixp -lixp -L../../libcext -lcext -
 # Solaris
 # LDFLAGS += -lsocket
 
-SRC      = area.c bar.c client.c column.c event.c frame.c fs.c geom.c \
+SRC      = area.c bar.c client.c column.c event.c frame.c fs2.c geom.c \
 			key.c mouse.c rule.c view.c wm.c
 OBJ      = ${SRC:.c=.o}
 

@@ -73,7 +73,7 @@ handle_buttonrelease(XEvent *e)
 	XButtonPressedEvent *ev = &e->xbutton;
 	static char buf[32];
 	if(ev->window == barwin) {
-		for(b=bar; b; b=b->next)
+		for(b=lbar; b; b=b->next)
 			if(ispointinrect(ev->x, ev->y, &b->rect)) {
 				snprintf(buf, sizeof(buf), "BarClick %s %d\n",
 						b->name, ev->button);

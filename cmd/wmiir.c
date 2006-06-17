@@ -176,6 +176,9 @@ static int
 xdir(char *file, int details)
 {
 	unsigned int fid = c.root_fid << 2;
+	/* XXX: buffer overflow */
+	Stat *s = cext_emallocz(sizeof(Stat));
+	unsigned char *buf;
 	int count;
 	static unsigned char result[IXP_MAX_MSG];
 	void *data = nil;
@@ -185,8 +188,10 @@ xdir(char *file, int details)
 		fprintf(stderr, "wmiir: cannot stat file '%s': %s\n", file, c.errstr);
 		return -1;
 	}
-	if(!(c.fcall.stat.mode & IXP_DMDIR)) {
-		print_stat(&c.fcall.stat, details);
+	buf = c.fcall.stat;
+	ixp_unpack_stat(&buf, s);
+	if(!(s->mode & IXP_DMDIR)) {
+		print_stat(s, details);
 		fflush(stdout);
 		return 0;
 	}

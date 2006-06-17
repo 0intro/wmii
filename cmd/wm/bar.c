@@ -27,10 +27,12 @@ create_bar(char *name)
 
 	b->id = id++;
 	cext_strlcpy(b->name, name, sizeof(b->name));
-	cext_strlcpy(b->colstr, def.normcolor, sizeof(b->colstr));
-	b->color = def.norm;
+	cext_strlcpy(b->color.string, def.normcolor.string, sizeof(b->color.string));
+	b->color.col = def.normcolor.col;
 
-	for(i=&bar; *i && (strcmp((*i)->name, name) < 0); i=&(*i)->next);
+	for(i=&lbar; *i; i=&(*i)->next)
+		if(strcmp((*i)->name, name) < 0)
+			break;
 	b->next = *i;
 	*i = b;
 	
@@ -41,7 +43,7 @@ void
 destroy_bar(Bar *b)
 {
 	Bar **i;
-	for(i=&bar; *i && *i != b; i=&(*i)->next);
+	for(i=&lbar; *i && *i != b; i=&(*i)->next);
 	*i = b->next;
 
 	b->next = free_bars;
@@ -98,14 +100,14 @@ draw_bar()
 	d.rect.x = d.rect.y = 0;
 	d.font = blitzfont;
 
-	d.color = def.norm;
+	d.color = def.normcolor.col;
 	blitz_drawlabel(&d);
 	blitz_drawborder(&d);
 
-	if(!bar)
+	if(!lbar)
 		goto MapBar;
 
-	for(b=bar; b && (w < brect.width); b=b->next, size++) {
+	for(b=lbar; b && (w < brect.width); b=b->next, size++) {
 		b->rect.x = 0;
 		b->rect.y = 0;
 		b->rect.width = brect.height;
@@ -118,21 +120,21 @@ draw_bar()
 	if(b) { /* give all bars same width */
 		for(; b; b=b->next, size++);
 		w = brect.width / size;
-		for(b=bar; b; b=b->next) {
+		for(b=lbar; b; b=b->next) {
 			b->rect.x = i * w;
 			b->rect.width = w;
 		}
 	}
-	else { /* expand bar properly */
-		for(exp = bar; exp && exp->next; exp=exp->next);
+	else { /* expand lbar properly */
+		for(exp = lbar; exp && exp->next; exp=exp->next);
 		if(exp)
 			exp->rect.width += (brect.width - w);
-		for(b=bar; b->next; b=b->next)
+		for(b=lbar; b->next; b=b->next)
 			b->next->rect.x = b->rect.x + b->rect.width;
 	}
 
-	for(b=bar; b; b=b->next) {
-		d.color = b->color;
+	for(b=lbar; b; b=b->next) {
+		d.color = b->color.col;
 		d.rect = b->rect;
 		d.data = b->data;
 		if(b == exp)
@@ -154,7 +156,7 @@ bar_of_name(const char *name)
 	Bar *b;
 
  	cext_strlcpy(buf, name, sizeof(buf));
-	for(b=bar; b && strncmp(b->name, name, sizeof(b->name)); b=b->next);
+	for(b=lbar; b && strncmp(b->name, name, sizeof(b->name)); b=b->next);
 	return b;
 }
 
@@ -162,6 +164,6 @@ Bar *
 bar_of_id(unsigned short id)
 {
 	Bar *b;
-	for(b=bar; b && b->id != id; b=b->next);
+	for(b=lbar; b && b->id != id; b=b->next);
 	return b;
 }

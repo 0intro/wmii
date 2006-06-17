@@ -42,6 +42,7 @@ enum {
 };
 
 /* 8-bit qid.path.type */
+/*
 enum {                          
 	FsDroot,
 	FsDdef,
@@ -74,18 +75,15 @@ enum {
 	FsFindex,
 	FsLast
 };
+*/
 
 enum { MIN_COLWIDTH = 64 };
 enum { WM_PROTOCOL_DELWIN = 1 };
 
 typedef struct View View;
-#define VIEW(p) ((View *)(p))
 typedef struct Area Area;
-#define AREA(p) ((Area *)(p))
 typedef struct Frame Frame;
-#define FRAME(p) ((Frame *)(p))
 typedef struct Client Client;
-#define CLIENT(p) ((Client *)(p))
 
 struct View {
 	View *next;
@@ -156,33 +154,46 @@ struct Key {
 	KeyCode key;
 };
 
-#define BAR(p) ((Bar *)(p))
+typedef struct Color {
+	char string[24];
+	BlitzColor col;
+} Color;
+
 typedef struct Bar Bar;
 struct Bar {
 	Bar *next;
+	char buf[280];
 	char name[256];
 	char data[256];
-	char colstr[24];
+	Color color;
 	unsigned short id;
-	BlitzColor color;
 	XRectangle rect;
 };
 
+typedef struct Rule Rule;
+struct Rule {
+	Rule *next;
+	regex_t regex;
+	char value[256];
+};
+
+typedef struct Rules {
+	Rule		*rule;
+	char		*string;
+	unsigned int	size;
+} Rules;
+
 /* default values */
 typedef struct {
-	char selcolor[24];
-	char normcolor[24];
+	Color selcolor;
+	Color normcolor;
 	char *font;
-	BlitzColor sel;
-	BlitzColor norm;
 	unsigned int border;
 	unsigned int snap;
 	char *keys;
 	unsigned int keyssz;
-	char *tagrules;
-	unsigned int tagrulessz;
-	char *colrules;
-	unsigned int colrulessz;
+	Rules	tagrules;
+	Rules	colrules;
 	char grabmod[5];
 	unsigned long mod;
 	int colmode;
@@ -203,22 +214,16 @@ typedef struct {
 } PackedQid;
 
 /* global variables */
-typedef struct Rule Rule;
-struct Rule {
-	Rule *next;
-	regex_t regex;
-	char value[256];
-};
 
 /* global variables */
 View *view;
 Client *client;
 Key *key;
-Bar *bar;
-Rule *trule;
-Rule *vrule;
+Bar *lbar;
+Bar *rbar;
 
 View *sel;
+P9Srv p9srv;
 Display *dpy;
 int screen;
 Window root;
@@ -317,6 +322,19 @@ int idx_of_frame(Frame *f);
 Frame *frame_of_id(Area *a, unsigned short id);
 Client *frame_of_win(Window w);
 
+/* fs2.c */
+void fs_attach(Req *r);
+void fs_clunk(Req *r);
+void fs_create(Req *r);
+void fs_flush(Req *r);
+void fs_freefid(Fid *f);
+void fs_open(Req *r);
+void fs_read(Req *r);
+void fs_remove(Req *r);
+void fs_stat(Req *r);
+void fs_walk(Req *r);
+void fs_write(Req *r);
+
 /* fs.c */
 unsigned long long pack_qpath(unsigned char type, unsigned short i1,
 		unsigned short i2, unsigned short i3);
@@ -357,6 +375,7 @@ void attach_to_view(View *v, Client *c);
 Client *sel_client_of_view(View *v);
 void restack_view(View *v);
 View *view_of_name(const char *name);
+unsigned char * view_index(View *v);
 void destroy_view(View *v);
 void update_views();
 unsigned int newcolw_of_view(View *v);

@@ -18,11 +18,13 @@
 
 static unsigned char *msg[IXP_MAX_MSG];
 
-IXPConn *ixp_server_open_conn(IXPServer *s, int fd, void (*read)(IXPConn *c),
-		void (*close)(IXPConn *c))
+IXPConn *
+ixp_server_open_conn(IXPServer *s, int fd, void *aux,
+		void (*read)(IXPConn *c), void (*close)(IXPConn *c))
 {
 	IXPConn *c = cext_emallocz(sizeof(IXPConn));
 	c->fd = fd;
+	c->aux = aux;
 	c->srv = s;
 	c->read = read;
 	c->close = close;
@@ -36,15 +38,14 @@ ixp_server_close_conn(IXPConn *c)
 {
 	IXPServer *s = c->srv;
 	IXPConn **tc;
-	IXPMap *m;
 	for(tc=&s->conn; *tc && *tc != c; tc=&(*tc)->next);
 	cext_assert(*tc == c);
 	*tc = c->next;
-	while((m = c->map)) {
-		c->map = m->next;
-		free(m);
-	}
-	shutdown(c->fd, SHUT_RDWR);
+	c->closed = 1;
+	if(c->close)
+		c->close(c);
+	else
+		shutdown(c->fd, SHUT_RDWR);
 	close(c->fd);
 	free(c);
 }
@@ -68,7 +69,6 @@ handle_conns(IXPServer *s)
 	IXPConn **c;
 	for(c=&s->conn; *c; *c && (c=&(*c)->next))
 		if(FD_ISSET((*c)->fd, &s->rd) && (*c)->read)
-			/* call read handler */
 			(*c)->read(*c);
 }
 
@@ -93,22 +93,13 @@ ixp_server_loop(IXPServer *s)
 	return nil;
 }
 
-IXPMap *
-ixp_server_fid2map(IXPConn *c, unsigned int fid)
-{
-	IXPMap *m;
-	for(m=c->map; m && m->fid != fid; m=m->next);
-	return m;
-}
-
 unsigned int
 ixp_server_receive_fcall(IXPConn *c, Fcall *fcall)
 {
 	unsigned int msize;
 	char *errstr = 0;
 	if(!(msize = ixp_recv_message(c->fd, msg, IXP_MAX_MSG, &errstr))) {
-		if(c->close)
-			c->close(c);
+		ixp_server_close_conn(c);
 		return 0;
 	}
 	return ixp_msg2fcall(fcall, msg, IXP_MAX_MSG);
@@ -119,24 +110,10 @@ ixp_server_respond_fcall(IXPConn *c, Fcall *fcall)
 {
 	char *errstr;
 	unsigned int msize = ixp_fcall2msg(msg, fcall, IXP_MAX_MSG);
+	if(c->closed)
+		return 0;
 	if(ixp_send_message(c->fd, msg, msize, &errstr) != msize) {
-		if(c->close)
-			c->close(c);
-		return -1;
-	}
-	return 0;
-}
-
-int
-ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr)
-{
-	unsigned int msize;
-	fcall->id = RERROR;
-	cext_strlcpy(fcall->errstr, errstr, sizeof(fcall->errstr));
-	msize = ixp_fcall2msg(msg, fcall, IXP_MAX_MSG);
-	if(ixp_send_message(c->fd, msg, msize, &errstr) != msize) {
-		if(c->close)
-			c->close(c);
+		ixp_server_close_conn(c);
 		return -1;
 	}
 	return 0;
@@ -148,7 +125,6 @@ ixp_server_close(IXPServer *s)
 	IXPConn *c, *next;
 	for(c=s->conn; c; c=next) {
 		next=c->next;
-		if(c->close)
-			c->close(c);
+		ixp_server_close_conn(c);
 	}
 }

@@ -13,28 +13,32 @@ static char
 	Ebotch[] = "9P protocol botch",
 	Enofile[] = "file does not exist",
 	Enofid[] = "fid does not exist",
+	Enotag[] = "tag does not exist",
 	Enotdir[] = "not a directory",
+	Einterrupted[] = "interrupted",
 	Eisdir[] = "cannot perform operation on a directory";
 
 enum {	TAG_BUCKETS = 64,
 	FID_BUCKETS = 64 };
 
-typedef struct P9Conn {
+struct P9Conn {
 	Intmap	tagmap;
 	void	*taghash[TAG_BUCKETS];
 	Intmap	fidmap;
 	void	*fidhash[FID_BUCKETS];
 	P9Srv	*srv;
+	IXPConn	*conn;
 	unsigned int	msize;
 	unsigned char	*buf;
-} P9Conn;
+};
 
 void *
-createfid(Intmap *map, int fid) {
+createfid(Intmap *map, int fid, P9Conn *pc) {
 	Fid *f = cext_emallocz(sizeof(Fid));
 	f->fid = fid;
 	f->omode = -1;
 	f->map = map;
+	f->conn = pc;
 	if(caninsertkey(map, fid, f))
 		return f;
 	free(f);
@@ -67,8 +71,9 @@ ixp_server_handle_fcall(IXPConn *c)
 		goto Fail;
 
 	req = cext_emallocz(sizeof(Req));
-	req->conn = c;
+	req->conn = pc;
 	req->ifcall = fcall;
+	pc->conn = c;
 
 	if(lookupkey(&pc->tagmap, fcall.tag))
 		return respond(req, Eduptag);
@@ -83,7 +88,7 @@ Fail:
 static void
 ixp_handle_req(Req *r)
 {
-	P9Conn *pc = r->conn->aux;
+	P9Conn *pc = r->conn;
 	P9Srv *srv = pc->srv;
 
 	switch(r->ifcall.type) {
@@ -103,7 +108,7 @@ ixp_handle_req(Req *r)
 		respond(r, nil);
 		break;
 	case TATTACH:
-		if(!(r->fid = createfid(&pc->fidmap, r->ifcall.fid)))
+		if(!(r->fid = createfid(&pc->fidmap, r->ifcall.fid, pc)))
 			return respond(r, Edupfid);
 		/* attach is a required function */
 		srv->attach(r);
@@ -114,6 +119,13 @@ ixp_handle_req(Req *r)
 		if(!srv->clunk)
 			return respond(r, nil);
 		srv->clunk(r);
+		break;
+	case TFLUSH:
+		if(!(r->oldreq = lookupkey(&pc->tagmap, r->ifcall.oldtag)))
+			return respond(r, Enotag);
+		if(!srv->flush)
+			return respond(r, Enofunc);
+		srv->flush(r);
 		break;
 	case TCREATE:
 		if(!(r->fid = lookupkey(&pc->fidmap, r->ifcall.fid)))
@@ -167,7 +179,7 @@ ixp_handle_req(Req *r)
 		if(r->ifcall.nwname && !(r->fid->qid.type&QTDIR))
 			return respond(r, Enotdir);
 		if((r->ifcall.fid != r->ifcall.newfid)) {
-			if(!(r->newfid = createfid(&pc->fidmap, r->ifcall.newfid)))
+			if(!(r->newfid = createfid(&pc->fidmap, r->ifcall.newfid, pc)))
 				return respond(r, Edupfid);
 		}else
 			r->newfid = r->fid;
@@ -190,7 +202,7 @@ ixp_handle_req(Req *r)
 
 void
 respond(Req *r, char *error) {
-	P9Conn *pc = r->conn->aux;
+	P9Conn *pc = r->conn;
 	switch(r->ifcall.type) {
 	default:
 		if(!error)
@@ -238,6 +250,10 @@ respond(Req *r, char *error) {
 	case TCLUNK:
 		destroyfid(pc, r->fid->fid);
 		break;
+	case TFLUSH:
+		if((r->oldreq = lookupkey(&pc->tagmap, r->ifcall.oldtag)))
+			respond(r->oldreq, Einterrupted);
+		break;
 	case TREAD:
 	case TREMOVE:
 	case TSTAT:
@@ -253,8 +269,8 @@ respond(Req *r, char *error) {
 		r->ofcall.ename = error;
 	}
 
-	/* XXX Check if conn is still open */
-	ixp_server_respond_fcall(r->conn, &r->ofcall);
+	if(pc->conn)
+		ixp_server_respond_fcall(pc->conn, &r->ofcall);
 
 	switch(r->ofcall.type) {
 	case RSTAT:
@@ -269,21 +285,55 @@ respond(Req *r, char *error) {
 	free(r);
 }
 
+/* XXX: This cleanup code *needs* to be cleaned up */
 static void
-ixp_void_request(void *r) {
-	/* generate flush request */
+ixp_void_request(void *t) {
+	unsigned int tag;
+	Req *r, *tr;
+	P9Conn *pc;
+
+	r = t;
+	pc = r->conn;
+	/* XXX: need a better way of doing this */
+	for(tag=0; lookupkey(&pc->tagmap, tag); tag++);
+
+	tr = cext_emallocz(sizeof(Req));
+	tr->conn = pc;
+	tr->ifcall.type = TFLUSH;
+	tr->ifcall.tag = tag;
+	tr->ifcall.oldtag = r->ifcall.tag;
+	ixp_handle_req(tr);
 }
 
 static void
-ixp_void_fid(void *f) {
-	/* generate clunk request */
+ixp_void_fid(void *t) {
+	unsigned int tag;
+	P9Conn *pc;
+	Req *tr;
+	Fid *f;
+
+	f = t;
+	pc = f->conn;
+	/* XXX: need a better way of doing this */
+	for(tag=0; lookupkey(&pc->tagmap, tag); tag++);
+
+	tr = cext_emallocz(sizeof(Req));
+	tr->fid = f;
+	tr->conn = pc;
+	tr->ifcall.type = TCLUNK;
+	tr->ifcall.tag = tag;
+	tr->ifcall.fid = f->fid;
+	ixp_handle_req(tr);
 }
 
 static void
 ixp_cleanup_conn(IXPConn *c) {
 	P9Conn *pc = c->aux;
-	freemap(&pc->tagmap, ixp_void_request);
-	freemap(&pc->fidmap, ixp_void_fid);
+	pc->conn = nil;
+	execmap(&pc->tagmap, ixp_void_request);
+	freemap(&pc->tagmap, nil);
+	execmap(&pc->fidmap, ixp_void_fid);
+	freemap(&pc->fidmap, nil);
 	free(pc->buf);
 	free(pc);
 }

@@ -148,7 +148,7 @@ init_screen()
 
 	gcv.subwindow_mode = IncludeInferiors;
 	gcv.function = GXxor;
-	gcv.foreground = def.sel.bg;
+	gcv.foreground = def.selcolor.col.bg;
 	gcv.plane_mask = AllPlanes;
 	gcv.graphics_exposures = False;
 	xorgc = XCreateGC(dpy, root, GCForeground | GCGraphicsExposures |
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 
 	dpy = XOpenDisplay(0);
 	if(!dpy) {
-		fprintf(stderr, "%s", "wmiiwm: cannot open display\n");
+		fputs("wmiiwm: cannot open display\n", stderr);
 		exit(1);
 	}
 	screen = DefaultScreen(dpy);
@@ -259,8 +259,7 @@ main(int argc, char *argv[])
 	XSync(dpy, False);
 
 	if(other_wm_running) {
-		fprintf(stderr,
-				"wmiiwm: another window manager is already running\n");
+		fputs("wmiiwm: another window manager is already running\n", stderr);
 		exit(1);
 	}
 	if(checkwm) {
@@ -281,36 +280,32 @@ main(int argc, char *argv[])
 	}
 
 	/* IXP server */
-	ixp_server_open_conn(&srv, i, new_ixp_conn, ixp_server_close_conn);
-	root_qid.qid.dir_type = FsDroot;
-	root_qid.type = IXP_QTDIR;
-	root_qid.version = 0;
-	root_qid.ptype = FsDroot;
+	ixp_server_open_conn(&srv, i, &p9srv, serve_9pcon, nil);
 
 	/* X server */
-	ixp_server_open_conn(&srv, ConnectionNumber(dpy), check_x_event, nil);
+	ixp_server_open_conn(&srv, ConnectionNumber(dpy), nil, check_x_event, nil);
 	init_x_event_handler();
 	blitz_x11_init(dpy);
 
 	view = nil;
 	client = nil;
 	sel = nil;
-	bar = nil;
+	lbar = nil;
 	key = nil;
 
-	def.colrules = nil;
-	def.colrulessz = 0;
-	def.tagrules = nil;
-	def.tagrulessz = 0;
+	def.colrules.string = nil;
+	def.colrules.size = 0;
+	def.tagrules.string = nil;
+	def.tagrules.size = 0;
 	def.keys = nil;
 	def.keyssz = 0;
 	def.font = strdup(BLITZ_FONT);
 	def.border = 2;
 	def.colmode = Coldefault;
-	cext_strlcpy(def.selcolor, BLITZ_SELCOLORS, sizeof(def.selcolor));
-	blitz_loadcolor(&def.sel, def.selcolor);
-	cext_strlcpy(def.normcolor, BLITZ_NORMCOLORS, sizeof(def.normcolor));
-	blitz_loadcolor(&def.norm, def.normcolor);
+	cext_strlcpy(def.selcolor.string, BLITZ_SELCOLORS, sizeof(def.selcolor.string));
+	blitz_loadcolor(&def.selcolor.col, def.selcolor.string);
+	cext_strlcpy(def.normcolor.string, BLITZ_NORMCOLORS, sizeof(def.normcolor.string));
+	blitz_loadcolor(&def.normcolor.col, def.normcolor.string);
 	cext_strlcpy(def.grabmod, "Mod1", sizeof(def.grabmod));
 	def.mod = Mod1Mask;
 

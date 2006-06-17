@@ -1,8 +1,14 @@
 /* This file is derived from src/lib9p/intmap.c from plan9port */
 /* See LICENCE.p9p for terms of use */
 #include <stdlib.h>
-#include <ixp.h>
-#define USED(v)
+#include "ixp.h"
+#define USED(v) if(v){}else{}
+
+struct Intlist {
+	unsigned long	id;
+	void*	aux;
+	Intlist*	link;
+};
 
 static unsigned long
 hashid(Intmap *map, unsigned long id)
@@ -47,6 +53,19 @@ freemap(Intmap *map, void (*destroy)(void*))
 			nlink = p->link;
 			destroy(p->aux);
 			free(p);
+		}
+	}
+}
+void
+execmap(Intmap *map, void (*run)(void*))
+{
+	int i;
+	Intlist *p, *nlink;
+
+	for(i=0; i<map->nhash; i++){
+		for(p=map->hash[i]; p; p=nlink){
+			nlink = p->link;
+			run(p->aux);
 		}
 	}
 }

@@ -102,6 +102,11 @@ ixp_unpack_strings(unsigned char **msg, unsigned short n, char **strings) {
 		s += len;
 		size += len + 1; /* for '\0' */
 	}
+	if(!size) {
+		/* So we don't try to free some random value */
+		*strings = nil;
+		return;
+	}
 	/* XXX: we don't really need mallocz here */
 	s = cext_emallocz(size);
 	for(i=0; i < n; i++) {
@@ -115,20 +120,17 @@ ixp_unpack_strings(unsigned char **msg, unsigned short n, char **strings) {
 }
 
 void
-ixp_unpack_string(unsigned char **msg, char *string, unsigned short stringlen,
-		unsigned short *len)
+ixp_unpack_string(unsigned char **msg, char **string, unsigned short *len)
 {
 	ixp_unpack_u16(msg, len);
+	*string = nil;
 	if (!*len)
 		return;
-	if (*len > stringlen - 1) {
-		/* might never happen if stringlen == IXP_MAX_MSG */
-		string[0] = 0;
-	} else {
-		memcpy(string, *msg, *len);
-		string[*len] = 0;
-		*msg += *len;
-	}
+	/* XXX we don't really need emallocz here */
+	*string = cext_emallocz(*len+1);
+	memcpy(*string, *msg, *len);
+	string[*len] = 0;
+	*msg += *len;
 }
 
 void
@@ -141,9 +143,11 @@ ixp_pack_data(unsigned char **msg, int *msize, unsigned char *data, unsigned int
 }
 
 void
-ixp_unpack_data(unsigned char **msg, unsigned char *data, unsigned int datalen)
+ixp_unpack_data(unsigned char **msg, unsigned char **data, unsigned int datalen)
 {
-	memcpy(data, *msg, datalen);
+	/* XXX: this could be too large a number */
+	*data = cext_emallocz(datalen);
+	memcpy(*data, *msg, datalen);
 	*msg += datalen;
 }
 
@@ -212,8 +216,8 @@ ixp_unpack_stat(unsigned char **msg, Stat * stat)
 	ixp_unpack_u32(msg, &stat->atime);
 	ixp_unpack_u32(msg, &stat->mtime);
 	ixp_unpack_u64(msg, &stat->length);
-	ixp_unpack_string(msg, stat->name, sizeof(stat->name), &dummy);
-	ixp_unpack_string(msg, stat->uid, sizeof(stat->uid), &dummy);
-	ixp_unpack_string(msg, stat->gid, sizeof(stat->gid), &dummy);
-	ixp_unpack_string(msg, stat->muid, sizeof(stat->muid), &dummy);
+	ixp_unpack_string(msg, &stat->name, &dummy);
+	ixp_unpack_string(msg, &stat->uid, &dummy);
+	ixp_unpack_string(msg, &stat->gid, &dummy);
+	ixp_unpack_string(msg, &stat->muid, &dummy);
 }

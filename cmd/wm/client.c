@@ -293,10 +293,10 @@ draw_client(Client *c)
 	d.font = blitzfont;
 	d.gc = c->gc;
 
-	if(sel_screen && (c == sel_client()))
-		d.color = def.sel;
+ 	if(sel_screen && (c == sel_client()))
+		d.color = def.selcolor.col;
 	else
-		d.color = def.norm;
+		d.color = def.normcolor.col;
 
 	/* draw border */
 	if(def.border) {
@@ -323,17 +323,17 @@ draw_client(Client *c)
 	d.data = buf;
 	
 	if(f->area->sel == f)
-		d.color = def.sel;
+		d.color = def.selcolor.col;
 	else
-		d.color = def.norm;
+		d.color = def.normcolor.col;
 	blitz_drawlabel(&d);
 	blitz_drawborder(&d);
 	d.rect.x = 0;
 
-	if(sel_screen && (c == sel_client()))
-		d.color = def.sel;
+ 	if(sel_screen && (c == sel_client()))
+		d.color = def.selcolor.col;
 	else
-		d.color = def.norm;
+		d.color = def.normcolor.col;
 
 	/* tag bar */
 	d.rect.width = d.rect.height + blitz_textwidth(&blitzfont, c->tags);
@@ -874,7 +874,7 @@ match_tags(Client *c, const char *prop)
 	Rule *r;
 	regmatch_t tmpregm;
 
-	for(r=trule; r; r=r->next)
+	for(r=def.tagrules.rule; r; r=r->next)
 		if(!regexec(&r->regex, prop, 1, &tmpregm, 0))
 			if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4))
 				apply_tags(c, r->value);
@@ -883,7 +883,7 @@ match_tags(Client *c, const char *prop)
 void
 apply_rules(Client *c)
 {
-	if(def.tagrules)
+	if(def.tagrules.string)
 		match_tags(c, c->props);
 
 	if(!strlen(c->tags))
