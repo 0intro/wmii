@@ -176,7 +176,7 @@ ixp_client_write(IXPClient *c, unsigned int fid,
 	c->fcall.fid = fid;
 	c->fcall.offset = offset;
 	c->fcall.count = count;
-	memcpy(c->fcall.data, data, count);
+	c->fcall.data = data;
 	if(ixp_client_do_fcall(c) == -1)
 		return -1;
 	return c->fcall.count;
