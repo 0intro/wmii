@@ -370,7 +370,23 @@ view_index(View *v) {
 
 /* XXX: This will need cleanup too */
 int
-view_message(View *v, char *message) {
+message_view(View *v, char *message) {
+	unsigned int i, n;
+	Frame *f;
+	Area *a;
+	if(!strncmp(message, "send", 5)) {
+		message += 5;
+		if(2 != sscanf(message, "%d %n", &i, &n))
+			return 0;
+		for(a=v->area; a; a=a->next)
+			for(f=a->frame; f; f=f->anext)
+				if(f->client->id == i)
+					goto found_client;
+	found_client:
+		if(!f)
+			return 0;
+		return send_client(f, &message[5]);
+	}
 	return 0;
 }
 

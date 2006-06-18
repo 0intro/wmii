@@ -129,7 +129,7 @@ ixp_unpack_string(unsigned char **msg, char **string, unsigned short *len)
 	/* XXX we don't really need emallocz here */
 	*string = cext_emallocz(*len+1);
 	memcpy(*string, *msg, *len);
-	string[*len] = 0;
+	(*string)[*len] = 0;
 	*msg += *len;
 }
 

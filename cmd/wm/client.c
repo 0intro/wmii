@@ -683,34 +683,39 @@ size_client(Client *c, char *arg)
 		resize_client(f->client, &new, False);
 }
 
-void
-send_client(Client *c, char *arg)
+int
+send_client(Frame *f, char *arg)
 {
-	Frame *f = c->sel, *tf;
-	Area *to, *a = f->area;
-	View *v = a->view;
-	int i = idx_of_area(a), j = idx_of_frame(f);
+	Area *to, *a;
+	Client *c;
+	Frame *tf;
+	View *v;
+	int i = idx_of_area(a),
+	    j = idx_of_frame(f);
+	a = f->area;
+	v = a->view;
+	c = f->client;
 
 	if((i == -1) || (j == -1))
-		return;
+		return 0;
 
 	if(i && !strncmp(arg, "prev", 5)) {
 		if(a == v->area)
-			return;
+			return 0;
 		for(to=v->area->next; to && a != to->next; to=to->next);
 		if(!to && (f->anext || f != a->frame))
 				to=new_column(v, v->area, 0);
 		if(!to)
-			return;
+			return 0;
 		send_to_area(to, a, c);
 	}
 	else if(i && !strncmp(arg, "next", 5)) {
 		if(a == v->area)
-			return;
+			return 0;
 		if(!(to = a->next) && (f->anext || f!= a->frame))
 			to = new_column(v, a, 0);
 		if(!to)
-			return;
+			return 0;
 		send_to_area(to, a, c);
 	}
 	else if(!strncmp(arg, "toggle", 7)) {
@@ -725,7 +730,7 @@ send_client(Client *c, char *arg)
 	else if(i && !strncmp(arg, "up", 3)) {
 		for(tf=a->frame; tf && tf->anext != f; tf=tf->anext);
 		if(!tf)
-			return;
+			return 0;
 		remove_frame(f);
 		insert_frame(tf, f, True);
 		arrange_column(a, False);
@@ -733,7 +738,7 @@ send_client(Client *c, char *arg)
 	}
 	else if(i && !strncmp(arg, "down", 5)) {
 		if(!f->anext)
-			return;
+			return 0;
 		remove_frame(f);
 		insert_frame(f->anext, f, False);
 		arrange_column(a, False);
@@ -741,13 +746,14 @@ send_client(Client *c, char *arg)
 	}
 	else if(i) {
 		if(sscanf(arg, "%d", &j) != 1)
-			return;
+			return 0;
 		for(to=v->area; to && j; to=to->next, j--);
 		send_to_area(to, a, c);
 	}
 	else
-		return;
+		return 0;
 	flush_masked_events(EnterWindowMask);
+	return 1;
 }
 
 void

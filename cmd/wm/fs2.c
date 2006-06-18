@@ -88,56 +88,56 @@ P9Srv p9srv = {
 /* ad-hoc file tree. Empty names ("") indicate a dynamic entry to be filled
  * in by lookup_file */
 static Dirtab
-dirtabroot[]=	{{".",		QTDIR,		FsRoot,		0500|DMDIR },
-		 {"rbar",	QTDIR,		FsDBar,		0700|DMDIR },
-		 {"lbar",	QTDIR,		FsDBar,		0700|DMDIR },
-		 {"client",	QTDIR,		FsDClients,	0500|DMDIR },
-		 {"tag",	QTDIR,		FsDTags,	0500|DMDIR },
-		 {"ctl",	QTAPPEND,	FsFRctl,	0600|DMAPPEND },
-		 {"border",	QTFILE,		FsFBorder,	0600 }, 
-		 {"colrules",	QTFILE,		FsFColRules,	0600 }, 
-		 {"event",	QTFILE,		FsFEvent,	0600 },
-		 {"font",	QTFILE,		FsFFont,	0600 },
-		 {"keys",	QTFILE,		FsFKeys,	0600 },
-		 {"normcolors",	QTFILE,		FsFCNorm,	0600 },
-		 {"selcolors",	QTFILE,		FsFCSel,	0600 },
-		 {"tagrules",	QTFILE,		FsFTagRules,	0600 }, 
-		 {nil}},
-dirtabclients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
-		 {"",		QTDIR,		FsDClient,	0500|DMDIR },
-		 {nil}},
-dirtabclient[]= {{".",		QTDIR,		FsDClient,	0500|DMDIR },
-		 {"ctl",	QTAPPEND,	FsFCctl,	0200|DMAPPEND },
-		 {"tags",	QTFILE,		FsFCtags,	0600 },
-		 {"props",	QTFILE,		FsFprops,	0400 },
-		 {nil}},
-dirtabsclient[]={{".",		QTDIR,		FsDSClient,	0500|DMDIR },
-		 {"ctl",	QTAPPEND,	FsFCctl,	0200|DMAPPEND },
-		 {"index",	QTFILE,		FsFCindex,	0400 },
-		 {"tags",	QTFILE,		FsFCtags,	0600 },
-		 {"props",	QTFILE,		FsFprops,	0400 },
-		 {nil}},
-dirtabbar[]=	{{".",		QTDIR,		FsDBar,		0700|DMDIR },
-		 {"",		QTFILE,		FsFBar,		0600 },
-		 {nil}},
-dirtabtags[]=	{{".",		QTDIR,		FsDTags,	0500|DMDIR },
-		 {"",		QTDIR,		FsDTag,		0500|DMDIR },
-		 {nil}},
-dirtabtag[]=	{{".",		QTDIR,		FsDTag,		0500|DMDIR },
-		 {"ctl",	QTAPPEND,	FsFTctl,	0200|DMAPPEND },
-		 {"index",	QTFILE,		FsFTindex,	0400 },
-		 {nil}};
+dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
+		  {"rbar",	QTDIR,		FsDBar,		0700|DMDIR },
+		  {"lbar",	QTDIR,		FsDBar,		0700|DMDIR },
+		  {"client",	QTDIR,		FsDClients,	0500|DMDIR },
+		  {"tag",	QTDIR,		FsDTags,	0500|DMDIR },
+		  {"ctl",	QTAPPEND,	FsFRctl,	0600|DMAPPEND },
+		  {"border",	QTFILE,		FsFBorder,	0600 }, 
+		  {"colrules",	QTFILE,		FsFColRules,	0600 }, 
+		  {"event",	QTFILE,		FsFEvent,	0600 },
+		  {"font",	QTFILE,		FsFFont,	0600 },
+		  {"keys",	QTFILE,		FsFKeys,	0600 },
+		  {"normcolors",	QTFILE,		FsFCNorm,	0600 },
+		  {"selcolors",	QTFILE,		FsFCSel,	0600 },
+		  {"tagrules",	QTFILE,		FsFTagRules,	0600 }, 
+		  {nil}},
+dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
+		  {"",		QTDIR,		FsDClient,	0500|DMDIR },
+		  {nil}},
+dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|DMDIR },
+		  {"ctl",	QTAPPEND,	FsFCctl,	0200|DMAPPEND },
+		  {"tags",	QTFILE,		FsFCtags,	0600 },
+		  {"props",	QTFILE,		FsFprops,	0400 },
+		  {nil}},
+dirtab_sclient[]={{".",		QTDIR,		FsDSClient,	0500|DMDIR },
+		  {"ctl",	QTAPPEND,	FsFCctl,	0200|DMAPPEND },
+		  {"index",	QTFILE,		FsFCindex,	0400 },
+		  {"tags",	QTFILE,		FsFCtags,	0600 },
+		  {"props",	QTFILE,		FsFprops,	0400 },
+		  {nil}},
+dirtab_bar[]=	 {{".",		QTDIR,		FsDBar,		0700|DMDIR },
+		  {"",		QTFILE,		FsFBar,		0600 },
+		  {nil}},
+dirtab_tags[]=	 {{".",		QTDIR,		FsDTags,	0500|DMDIR },
+		  {"",		QTDIR,		FsDTag,		0500|DMDIR },
+		  {nil}},
+dirtab_tag[]=	 {{".",		QTDIR,		FsDTag,		0500|DMDIR },
+		  {"ctl",	QTAPPEND,	FsFTctl,	0200|DMAPPEND },
+		  {"index",	QTFILE,		FsFTindex,	0400 },
+		  {nil}};
 /* Writing the lists separately and using an array of their references
  * removes the need for casting and allows for C90 conformance,
  * since otherwise we would need to use compound literals */
 static Dirtab *dirtab[] = {
-	[FsRoot]	dirtabroot,
-	[FsDBar]	dirtabbar,
-	[FsDClients]	dirtabclients,
-	[FsDClient]	dirtabclient,
-	[FsDSClient]	dirtabsclient,
-	[FsDTags]	dirtabtags,
-	[FsDTag]	dirtabtag
+	[FsRoot]	dirtab_root,
+	[FsDBar]	dirtab_bar,
+	[FsDClients]	dirtab_clients,
+	[FsDClient]	dirtab_client,
+	[FsDSClient]	dirtab_sclient,
+	[FsDTags]	dirtab_tags,
+	[FsDTag]	dirtab_tag
 };
 
 /* get_file/free_file save and reuse old FileId structs
@@ -661,6 +661,13 @@ fs_write(Req *r) {
 			return respond(r, Ebadvalue);
 		draw_clients();
 		r->ofcall.count = r->ifcall.count - i;
+		return respond(r, nil);
+	case FsFTctl:
+		data_to_cstring(r);
+
+		if(!message_view(f->view, r->ifcall.data))
+			return respond(r, Ebadvalue);
+		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	case FsFRctl:
 		data_to_cstring(r);
