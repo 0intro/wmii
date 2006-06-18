@@ -290,6 +290,7 @@ lookup_file(FileId *parent, char *name)
 			last = &file->next;
 			file->id = 0;
 			file->ref = parent->ref;
+			file->index = parent->index;
 			file->tab = *dir;
 			file->tab.name = strdup(file->tab.name);
 
@@ -543,6 +544,7 @@ fs_clunk(Req *r) {
 		update_views();
 		break;
 	case FsFKeys:
+		def.keys[def.keyssz] = '\0';
 		update_keys();
 		break;
 	case FsFCtags:
@@ -572,7 +574,7 @@ write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
 	*len = offset + count;
 	
 	if(max == 0) {
-		*(void **)buf = realloc(*(void **)buf, *len);
+		*(void **)buf = realloc(*(void **)buf, *len + 1);
 		cext_assert(*(void **)buf);
 		buf = *(void **)buf;
 	}
@@ -589,7 +591,7 @@ data_to_cstring(Req *r) {
 			if(r->ifcall.data[i] == '\n')
 				break;
 		if(i == r->ifcall.count)
-			r->ifcall.data = realloc(r->ifcall.data, ++i);
+			r->ifcall.data = realloc(r->ifcall.data, i + 1);
 		cext_assert(r->ifcall.data);
 		r->ifcall.data[i] = '\0';
 	}
@@ -664,6 +666,8 @@ fs_write(Req *r) {
 		return respond(r, nil);
 	case FsFTctl:
 		data_to_cstring(r);
+		if(r->ifcall.count == 0)
+			return respond(r, nil);
 
 		if(!message_view(f->view, r->ifcall.data))
 			return respond(r, Ebadvalue);
@@ -671,6 +675,8 @@ fs_write(Req *r) {
 		return respond(r, nil);
 	case FsFRctl:
 		data_to_cstring(r);
+		if(r->ifcall.count == 0)
+			return respond(r, nil);
 
 		/* XXX: This needs to be moved to client_message(char *) */
 		if(!strncmp(r->ifcall.data, "quit", 5))
@@ -735,15 +741,16 @@ fs_remove(Req *r) {
 
 void
 write_event(char *buf) {
-	Req **r;
-	unsigned int len = strlen(buf);
-	if(!len)
+	Req *aux;
+	unsigned int len;
+	if(!(len = strlen(buf)))
 		return;
-	for(r=&pending_event_reads; *r; *r=(*r)->aux) {
+	for(; pending_event_reads; pending_event_reads=aux) {
+		aux = pending_event_reads->aux;
 		/* XXX: It would be nice if strdup wasn't necessary here */
-		(*r)->ofcall.data = strdup(buf);
-		(*r)->ofcall.count = len;
-		respond(*r, nil);
+		pending_event_reads->ofcall.data = strdup(buf);
+		pending_event_reads->ofcall.count = len;
+		respond(pending_event_reads, nil);
 	}
 }
 

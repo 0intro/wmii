@@ -373,19 +373,20 @@ int
 message_view(View *v, char *message) {
 	unsigned int i, n;
 	Frame *f;
-	Area *a;
-	if(!strncmp(message, "send", 5)) {
+	Client *c;
+	if(!strncmp(message, "send ", 5)) {
 		message += 5;
-		if(2 != sscanf(message, "%d %n", &i, &n))
+		if(1 != sscanf(message, "%d %n", &i, &n))
 			return 0;
-		for(a=v->area; a; a=a->next)
-			for(f=a->frame; f; f=f->anext)
-				if(f->client->id == i)
-					goto found_client;
-	found_client:
+		for(c=client; i && c; c=c->next, i--);
+		if(!c)
+			return 0;
+		for(f=c->frame; f; f=f->cnext)
+			if(f->area->view == v)
+				break;
 		if(!f)
 			return 0;
-		return send_client(f, &message[5]);
+		return send_client(f, &message[n]);
 	}
 	return 0;
 }

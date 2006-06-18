@@ -690,11 +690,12 @@ send_client(Frame *f, char *arg)
 	Client *c;
 	Frame *tf;
 	View *v;
-	int i = idx_of_area(a),
-	    j = idx_of_frame(f);
+	int i, j;
 	a = f->area;
 	v = a->view;
 	c = f->client;
+	i = idx_of_area(a);
+	j = idx_of_frame(f);
 
 	if((i == -1) || (j == -1))
 		return 0;

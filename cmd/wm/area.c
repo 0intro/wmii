@@ -308,7 +308,8 @@ idx_of_area(Area *a)
 {
 	Area *t;
 	int i = 0;
-	for(t=a->view->area; t && t != a; t=t->next, i++);
+	for(t=a->view->area; t && t != a; t=t->next)
+		i++;
 	return t ? i : -1;
 }
 
