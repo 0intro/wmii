@@ -613,7 +613,7 @@ parse_colors(char **buf, int *buflen, BlitzColor *col) {
 void
 fs_write(Req *r) {
 	FileId *f;
-	char *buf;
+	char *buf, *errstr;
 	unsigned int i;
 
 	f = r->fid->aux;
@@ -670,8 +670,8 @@ fs_write(Req *r) {
 		if(r->ifcall.count == 0)
 			return respond(r, nil);
 
-		if(!message_view(f->view, r->ifcall.data))
-			return respond(r, Ebadvalue);
+		if((errstr = message_view(f->view, r->ifcall.data)))
+			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	case FsFRctl:
