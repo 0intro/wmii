@@ -83,6 +83,10 @@ struct Frame {
 	XRectangle revert;
 	Client *client;
 	Bool collapsed;
+	BlitzWidget *tile;
+	BlitzWidget *tagbar;
+	BlitzWidget *titlebar;
+	BlitzWidget *posbar;
 };
 
 struct Client {
@@ -231,7 +235,6 @@ void destroy_client(Client *c);
 void configure_client(Client *c);
 void prop_client(Client *c, XPropertyEvent *e);
 void kill_client(Client *c);
-void draw_client(Client *client);
 void gravitate_client(Client *c, Bool invert);
 void unmap_client(Client *c);
 void map_client(Client *c);
@@ -279,8 +282,9 @@ void insert_frame(Frame *pos, Frame *f, Bool before);
 int idx_of_frame(Frame *f);
 Frame *frame_of_id(Area *a, unsigned short id);
 Client *frame_of_win(Window w);
+void draw_frame(Frame *f);
 
-/* fs2.c */
+/* fs.c */
 void fs_attach(Req *r);
 void fs_clunk(Req *r);
 void fs_create(Req *r);
@@ -292,12 +296,7 @@ void fs_remove(Req *r);
 void fs_stat(Req *r);
 void fs_walk(Req *r);
 void fs_write(Req *r);
-
-/* fs.c */
-unsigned long long pack_qpath(unsigned char type, unsigned short i1,
-		unsigned short i2, unsigned short i3);
-void write_event(char *event);
-void new_ixp_conn(IXPConn *c);
+void write_event(char *buf);
 
 /* geom.c */
 BlitzAlign quadofcoord(XRectangle *rect, int x, int y);

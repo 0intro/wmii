@@ -555,7 +555,7 @@ fs_clunk(Req *r) {
 	case FsFCtags:
 		apply_tags(f->client, f->client->tags);
 		update_views();
-		draw_client(f->client);
+		draw_frame(f->client->sel);
 		break;
 	}
 	respond(r, nil);
@@ -689,7 +689,7 @@ fs_write(Req *r) {
 		return respond(r, nil);
 	case FsFRctl:
 		data_to_cstring(r);
-		if(r->ifcall.count == 0)
+		if(!r->ifcall.data || r->ifcall.count == 0)
 			return respond(r, nil);
 
 		/* XXX: This needs to be moved to client_message(char *) */

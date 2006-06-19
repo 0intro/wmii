@@ -156,10 +156,10 @@ focus_client(Client *c, Bool restack)
 		arrange_column(f->area, False);
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
 	if(old && old != old_in_area && old != c)
-		draw_client(old);
+		draw_frame(old->sel);
 	if(old_in_area && old_in_area != c)
-		draw_client(old_in_area);
-	draw_client(c);
+		draw_frame(old_in_area->sel);
+	draw_frame(c->sel);
 	XSync(dpy, False);
 	snprintf(buf, sizeof(buf), "ClientFocus %d\n", idx_of_client(c));
 	write_event(buf);
@@ -269,93 +269,8 @@ prop_client(Client *c, XPropertyEvent *e)
 	if(e->atom == XA_WM_NAME || e->atom == net_atom[NetWMName]) {
 		update_client_name(c);
 		if(c->frame)
-			draw_client(c);
+			draw_frame(c->sel);
 	}
-}
-
-void
-draw_client(Client *c)
-{
-	BlitzDraw d = { 0 };
-	Frame *f, *t;
-	char buf[256];
-	int fidx;
-	unsigned int w, size;
-
-	if(!c->frame)
-		return; /* might not have been attached atm */
-
-	f = c->sel;
-	for(fidx=0, t=f->area->frame; t && t != f; t=t->anext, fidx++);
-	for(size=fidx; t; t=t->anext, size++);
-
-	d.drawable = c->framewin;
-	d.font = def.font;
-	d.gc = c->gc;
-
- 	if(sel_screen && (c == sel_client()))
-		d.color = def.selcolor;
-	else
-		d.color = def.normcolor;
-
-	/* draw border */
-	if(def.border) {
-		d.rect = f->rect;
-		d.rect.x = d.rect.y = 0;
-		d.notch = &c->rect;
-		blitz_drawlabel(&d);
-		blitz_drawborder(&d);
-	}
-	d.rect.x = 0;
-	d.rect.y = 0;
-	d.rect.height = height_of_bar();
-	d.notch = nil;
-
-	/* mode bar */
-	d.align = CENTER;
-	snprintf(buf, sizeof(buf), "%s%d/%d",
-		/* if */	(f->area == f->area->view->area) ? "~" : "",
-				fidx + 1, size);
-	w = d.rect.width = d.rect.height + blitz_textwidth(&def.font, buf);
-	if(w > f->rect.width)
-		return;
-	d.rect.x = f->rect.width - d.rect.width; 
-	d.data = buf;
-	
-	if(f->area->sel == f)
-		d.color = def.selcolor;
-	else
-		d.color = def.normcolor;
-	blitz_drawlabel(&d);
-	blitz_drawborder(&d);
-	d.rect.x = 0;
-
- 	if(sel_screen && (c == sel_client()))
-		d.color = def.selcolor;
-	else
-		d.color = def.normcolor;
-
-	/* tag bar */
-	d.rect.width = d.rect.height + blitz_textwidth(&def.font, c->tags);
-	if(d.rect.width + w > f->rect.width)
-		return;
-	if(d.rect.width > f->rect.width / 3)
-		d.rect.width = f->rect.width / 3;
-	d.data = c->tags;
-	blitz_drawlabel(&d);
-	blitz_drawborder(&d);
-	d.rect.x += d.rect.width;
-
-	/* title bar */
-	d.align = WEST;
-	if(d.rect.x + w > f->rect.width)
-		return;
-	d.rect.width = f->rect.width - (d.rect.x + w);
-	d.data = c->name;
-	blitz_drawlabel(&d);
-	blitz_drawborder(&d);
-
-	XSync(dpy, False);
 }
 
 void
@@ -807,7 +722,7 @@ draw_clients()
 	Client *c;
 	for(c=client; c; c=c->next)
 		if(c->sel && (c->sel->area->view == sel))
-			draw_client(c);
+			draw_frame(c->sel);
 }
 
 static Bool

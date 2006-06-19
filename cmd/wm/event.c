@@ -238,7 +238,7 @@ handle_expose(XEvent *e)
 		if(ev->window == barwin)
 			draw_bar();
 		else if((c = frame_of_win(ev->window)))
-			draw_client(c);
+			draw_frame(c->sel);
 	}
 }
 

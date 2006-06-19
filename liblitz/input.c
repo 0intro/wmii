@@ -9,11 +9,12 @@
 #include "blitz.h"
 
 BlitzWidget *
-blitz_create_input(Drawable drawable, GC gc)
+blitz_create_input(Drawable drawable, GC gc, BlitzFont *font)
 {
 	BlitzWidget *i = cext_emallocz(sizeof(BlitzWidget));
 	i->drawable = drawable;
 	i->gc = gc;
+	i->font = font;
 	i->draw = blitz_draw_input;
 	return i;
 }
@@ -36,18 +37,18 @@ blitz_draw_input(BlitzWidget *i)
 	len = strlen(text);
 	gcv.foreground = i->color.fg;
 	gcv.background = i->color.bg;
-	if(i->font.set)
+	if(i->font->set)
 		XChangeGC(__blitz.display, i->gc, GCForeground | GCBackground, &gcv);
 	else {
-		gcv.font = i->font.xfont->fid;
+		gcv.font = i->font->xfont->fid;
 		XChangeGC(__blitz.display, i->gc, GCForeground | GCBackground | GCFont, &gcv);
 	}
 
-	h = i->font.ascent + i->font.descent;
-	y = i->rect.y + i->rect.height / 2 - h / 2 + i->font.ascent;
+	h = i->font->ascent + i->font->descent;
+	y = i->rect.y + i->rect.height / 2 - h / 2 + i->font->ascent;
 
 	/* shorten text if necessary */
-	while (len && (w = blitz_textwidth(&i->font, text)) > i->rect.width) {
+	while (len && (w = blitz_textwidth(i->font, text)) > i->rect.width) {
 		text[len - 1] = 0;
 		len--;
 		shortened = 1;
@@ -76,8 +77,8 @@ blitz_draw_input(BlitzWidget *i)
 		x = i->rect.x + h / 2;
 		break;
 	}
-	if(i->font.set)
-		XmbDrawString(__blitz.display, i->drawable, i->font.set, i->gc, x, y, text, len);
+	if(i->font->set)
+		XmbDrawString(__blitz.display, i->drawable, i->font->set, i->gc, x, y, text, len);
 	else
 		XDrawString(__blitz.display, i->drawable, i->gc, x, y, text, len);
 }

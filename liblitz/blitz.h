@@ -54,7 +54,7 @@ struct BlitzWidget {
 	GC gc;
 	BlitzColor color;
 	BlitzAlign align;
-	BlitzFont font;
+	BlitzFont *font;
 	XRectangle rect;	/* relative rect */
 	XRectangle *notch;	/* relative notch rect */
 	char *text;
@@ -88,7 +88,7 @@ void blitz_drawlabel(BlitzDraw *d);
 void blitz_drawborder(BlitzDraw *d);
 
 /* input.c */
-BlitzWidget *blitz_create_input(Drawable drawable, GC gc);
+BlitzWidget *blitz_create_input(Drawable drawable, GC gc, BlitzFont *font);
 void blitz_draw_input(BlitzWidget *i);
 void blitz_destroy_input(BlitzWidget *i);
 
