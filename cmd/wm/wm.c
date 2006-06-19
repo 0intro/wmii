@@ -148,7 +148,7 @@ init_screen()
 
 	gcv.subwindow_mode = IncludeInferiors;
 	gcv.function = GXxor;
-	gcv.foreground = def.selcolor.col.bg;
+	gcv.foreground = def.selcolor.bg;
 	gcv.plane_mask = AllPlanes;
 	gcv.graphics_exposures = False;
 	xorgc = XCreateGC(dpy, root, GCForeground | GCGraphicsExposures |
@@ -299,19 +299,19 @@ main(int argc, char *argv[])
 	def.tagrules.size = 0;
 	def.keys = nil;
 	def.keyssz = 0;
-	def.font = strdup(BLITZ_FONT);
+	def.font.fontstr = strdup(BLITZ_FONT);
 	def.border = 2;
 	def.colmode = Coldefault;
-	cext_strlcpy(def.selcolor.string, BLITZ_SELCOLORS, sizeof(def.selcolor.string));
-	blitz_loadcolor(&def.selcolor.col, def.selcolor.string);
-	cext_strlcpy(def.normcolor.string, BLITZ_NORMCOLORS, sizeof(def.normcolor.string));
-	blitz_loadcolor(&def.normcolor.col, def.normcolor.string);
+	cext_strlcpy(def.selcolor.colstr, BLITZ_SELCOLORS, sizeof(def.selcolor.colstr));
+	blitz_loadcolor(&def.selcolor);
+	cext_strlcpy(def.normcolor.colstr, BLITZ_NORMCOLORS, sizeof(def.normcolor.colstr));
+	blitz_loadcolor(&def.normcolor);
 	cext_strlcpy(def.grabmod, "Mod1", sizeof(def.grabmod));
 	def.mod = Mod1Mask;
 
 	init_atoms();
 	init_cursors();
-	blitz_loadfont(&blitzfont, def.font);
+	blitz_loadfont(&def.font);
 	init_lock_keys();
 	init_screen();
 

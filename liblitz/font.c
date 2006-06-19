@@ -23,9 +23,9 @@ blitz_textwidth(BlitzFont *font, char *text)
 }
 
 void
-blitz_loadfont(BlitzFont *font, char *fontstr)
+blitz_loadfont(BlitzFont *font)
 {
-	char *fontname = fontstr;
+	char *fontname = font->fontstr;
 	char **missing = nil, *def = "?";
 	int n;
 

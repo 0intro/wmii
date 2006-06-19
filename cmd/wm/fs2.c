@@ -24,7 +24,7 @@ struct FileId {
 		View	*view;
 		Client	*client;
 		Rules	*rule;
-		Color	*col;
+		BlitzColor	*col;
 	};
 	unsigned int	id;
 	unsigned int	index;
@@ -455,7 +455,7 @@ fs_read(Req *r) {
 			return respond(r, nil);
 		case FsFCSel:
 		case FsFCNorm:
-			write_buf(r, (void *)f->col->string, strlen(f->col->string));
+			write_buf(r, (void *)f->col->colstr, strlen(f->col->colstr));
 			return respond(r, nil);
 		case FsFColRules:
 		case FsFTagRules:
@@ -465,7 +465,7 @@ fs_read(Req *r) {
 			write_buf(r, (void *)def.keys, def.keyssz);
 			return respond(r, nil);
 		case FsFFont:
-			write_buf(r, (void *)def.font, strlen(def.font));
+			write_buf(r, (void *)def.font.fontstr, strlen(def.font.fontstr));
 			return respond(r, nil);
 		case FsFCtags:
 			write_buf(r, (void *)f->client->tags, strlen(f->client->tags));
@@ -486,7 +486,7 @@ fs_read(Req *r) {
 			return respond(r, nil);
 		case FsFTindex:
 			buf = view_index(f->view);
-			n = strlen(buf);
+			n = strlen((char *)buf);
 			write_buf(r, (void *)buf, n);
 			return respond(r, nil);
 		case FsFEvent:
@@ -599,13 +599,13 @@ data_to_cstring(Req *r) {
 
 /* This should be moved to liblitz */
 int
-parse_colors(char **buf, int *buflen, Color *col) {
+parse_colors(char **buf, int *buflen, BlitzColor *col) {
 	unsigned int i;
 	if(*buflen < 23 || 3 != sscanf(*buf, "#%06x #%06x #%06x", &i,&i,&i))
 		return 0;
 	(*buflen) -= 23;
-	bcopy(*buf, col->string, 23);
-	blitz_loadcolor(&col->col, col->string);
+	bcopy(*buf, col->colstr, 23);
+	blitz_loadcolor(col);
 	return 1;
 }
 
@@ -627,10 +627,10 @@ fs_write(Req *r) {
 		return respond(r, nil);
 	case FsFFont:
 		data_to_cstring(r);
-		i=strlen(def.font);
-		write_to_buf(r, &def.font, &i, 0);
-		def.font[i] = '\0';
-		blitz_loadfont(&blitzfont, def.font);
+		i=strlen(def.font.fontstr);
+		write_to_buf(r, &def.font.fontstr, &i, 0);
+		def.font.fontstr[i] = '\0';
+		blitz_loadfont(&def.font);
 		r->ofcall.count = i- r->ifcall.offset;
 		return respond(r, nil);
 	case FsFCtags:

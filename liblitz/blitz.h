@@ -38,6 +38,7 @@ struct BlitzColor {
 	unsigned long bg;
 	unsigned long fg;
 	unsigned long border;
+	char colstr[24]; /* #RRGGBB #RRGGBB #RRGGBB */
 };
 
 struct BlitzFont {
@@ -45,6 +46,7 @@ struct BlitzFont {
 	XFontSet set;
 	int ascent;
 	int descent;
+	char *fontstr;
 };
 
 struct BlitzWidget {
@@ -79,7 +81,7 @@ void blitz_x11_init(Display *dpy);
 Bool blitz_x11_event(XEvent *ev);
 
 /* color.c */
-int blitz_loadcolor(BlitzColor *c, char *colstr);
+int blitz_loadcolor(BlitzColor *c);
 
 /* label.c */
 void blitz_drawlabel(BlitzDraw *d);
@@ -97,4 +99,4 @@ void blitz_destroy_tile(BlitzWidget *t);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
-void blitz_loadfont(BlitzFont *font, char *fontstr);
+void blitz_loadfont(BlitzFont *font);

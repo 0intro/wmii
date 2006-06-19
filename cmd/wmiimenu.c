@@ -345,7 +345,7 @@ main(int argc, char *argv[])
 {
 	int i;
 	XSetWindowAttributes wa;
-	char *fontstr, *selcolstr, *normcolstr, *maxname;
+	char *maxname, *p;
 	XEvent ev;
 
 	/* command line args */
@@ -387,18 +387,22 @@ main(int argc, char *argv[])
 
 	/* set font and colors */
 	blitz_x11_init(dpy);
-	fontstr = getenv("WMII_FONT");
-	if (!fontstr)
-		fontstr = strdup(BLITZ_FONT);
-	blitz_loadfont(&draw.font, fontstr);
-	normcolstr = getenv("WMII_NORMCOLORS");
-	if (!normcolstr || strlen(normcolstr) != 23)
-		normcolstr = strdup(BLITZ_NORMCOLORS);
-	blitz_loadcolor(&normcolor, normcolstr);
-	selcolstr = getenv("WMII_SELCOLORS");
-	if (!selcolstr || strlen(selcolstr) != 23)
-		selcolstr = strdup(BLITZ_SELCOLORS);
-	blitz_loadcolor(&selcolor, selcolstr);
+	draw.font.fontstr = getenv("WMII_FONT");
+	if (!draw.font.fontstr)
+		draw.font.fontstr = strdup(BLITZ_FONT);
+	blitz_loadfont(&draw.font);
+
+	if((p = getenv("WMII_NORMCOLORS")))
+		cext_strlcpy(normcolor.colstr, p, sizeof(normcolor.colstr));
+	if(strlen(normcolor.colstr) != 23)
+		cext_strlcpy(normcolor.colstr, BLITZ_NORMCOLORS, sizeof(normcolor.colstr));
+	blitz_loadcolor(&normcolor);
+
+	if((p = getenv("WMII_SELCOLORS")))
+		cext_strlcpy(selcolor.colstr, p, sizeof(selcolor.colstr));
+	if(strlen(selcolor.colstr) != 23)
+		cext_strlcpy(selcolor.colstr, BLITZ_SELCOLORS, sizeof(selcolor.colstr));
+	blitz_loadcolor(&selcolor);
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;

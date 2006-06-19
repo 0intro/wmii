@@ -41,42 +41,6 @@ enum {
 	CurLast
 };
 
-/* 8-bit qid.path.type */
-/*
-enum {                          
-	FsDroot,
-	FsDdef,
-	FsDtag,
-	FsDview,
-	FsDarea,
-	FsDclients,
-	FsDclient,
-	FsDGclient,
-	FsDbars,
-	FsDbar,
-	FsFdata,
-	FsFcolors,
-	FsFfont,
-	FsFselcolors,
-	FsFnormcolors,
-	FsFkeys,
-	FsFgrabmod,
-	FsFborder,
-	FsFbar,
-	FsFgeom,
-	FsFevent,
-	FsFctl,
-	FsFname,
-	FsFtagrules,
-	FsFcolrules,
-	FsFprops,
-	FsFmode,
-	FsFtags,
-	FsFindex,
-	FsLast
-};
-*/
-
 enum { MIN_COLWIDTH = 64 };
 enum { WM_PROTOCOL_DELWIN = 1 };
 
@@ -154,18 +118,13 @@ struct Key {
 	KeyCode key;
 };
 
-typedef struct Color {
-	char string[24];
-	BlitzColor col;
-} Color;
-
 typedef struct Bar Bar;
 struct Bar {
 	Bar *next;
 	char buf[280];
 	char name[256];
 	char data[256];
-	Color color;
+	BlitzColor color;
 	unsigned short id;
 	XRectangle rect;
 };
@@ -185,9 +144,9 @@ typedef struct Rules {
 
 /* default values */
 typedef struct {
-	Color selcolor;
-	Color normcolor;
-	char *font;
+	BlitzColor selcolor;
+	BlitzColor normcolor;
+	BlitzFont font;
 	unsigned int border;
 	unsigned int snap;
 	char *keys;
@@ -228,7 +187,6 @@ Display *dpy;
 int screen;
 Window root;
 XRectangle rect;
-BlitzFont blitzfont;
 IXPServer srv;
 Pixmap barpmap;
 Window barwin;

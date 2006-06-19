@@ -27,8 +27,7 @@ create_bar(char *name)
 
 	b->id = id++;
 	cext_strlcpy(b->name, name, sizeof(b->name));
-	cext_strlcpy(b->color.string, def.normcolor.string, sizeof(b->color.string));
-	b->color.col = def.normcolor.col;
+	b->color = def.normcolor;
 
 	for(i=&lbar; *i; i=&(*i)->next)
 		if(strcmp((*i)->name, name) < 0)
@@ -54,7 +53,7 @@ unsigned int
 height_of_bar()
 {
 	enum { BAR_PADDING = 4 };
-	return blitzfont.ascent + blitzfont.descent + BAR_PADDING;
+	return def.font.ascent + def.font.descent + BAR_PADDING;
 }
 
 void
@@ -98,9 +97,9 @@ draw_bar()
 	d.drawable = barpmap;
 	d.rect = brect;
 	d.rect.x = d.rect.y = 0;
-	d.font = blitzfont;
+	d.font = def.font;
 
-	d.color = def.normcolor.col;
+	d.color = def.normcolor;
 	blitz_drawlabel(&d);
 	blitz_drawborder(&d);
 
@@ -112,7 +111,7 @@ draw_bar()
 		b->rect.y = 0;
 		b->rect.width = brect.height;
 		if(strlen(b->data))
-			b->rect.width += blitz_textwidth(&blitzfont, b->data);
+			b->rect.width += blitz_textwidth(&def.font, b->data);
 		b->rect.height = brect.height;
 		w += b->rect.width;
 	}
@@ -134,7 +133,7 @@ draw_bar()
 	}
 
 	for(b=lbar; b; b=b->next) {
-		d.color = b->color.col;
+		d.color = b->color;
 		d.rect = b->rect;
 		d.data = b->data;
 		if(b == exp)

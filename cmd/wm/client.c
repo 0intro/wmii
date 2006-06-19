@@ -290,13 +290,13 @@ draw_client(Client *c)
 	for(size=fidx; t; t=t->anext, size++);
 
 	d.drawable = c->framewin;
-	d.font = blitzfont;
+	d.font = def.font;
 	d.gc = c->gc;
 
  	if(sel_screen && (c == sel_client()))
-		d.color = def.selcolor.col;
+		d.color = def.selcolor;
 	else
-		d.color = def.normcolor.col;
+		d.color = def.normcolor;
 
 	/* draw border */
 	if(def.border) {
@@ -316,27 +316,27 @@ draw_client(Client *c)
 	snprintf(buf, sizeof(buf), "%s%d/%d",
 		/* if */	(f->area == f->area->view->area) ? "~" : "",
 				fidx + 1, size);
-	w = d.rect.width = d.rect.height + blitz_textwidth(&blitzfont, buf);
+	w = d.rect.width = d.rect.height + blitz_textwidth(&def.font, buf);
 	if(w > f->rect.width)
 		return;
 	d.rect.x = f->rect.width - d.rect.width; 
 	d.data = buf;
 	
 	if(f->area->sel == f)
-		d.color = def.selcolor.col;
+		d.color = def.selcolor;
 	else
-		d.color = def.normcolor.col;
+		d.color = def.normcolor;
 	blitz_drawlabel(&d);
 	blitz_drawborder(&d);
 	d.rect.x = 0;
 
  	if(sel_screen && (c == sel_client()))
-		d.color = def.selcolor.col;
+		d.color = def.selcolor;
 	else
-		d.color = def.normcolor.col;
+		d.color = def.normcolor;
 
 	/* tag bar */
-	d.rect.width = d.rect.height + blitz_textwidth(&blitzfont, c->tags);
+	d.rect.width = d.rect.height + blitz_textwidth(&def.font, c->tags);
 	if(d.rect.width + w > f->rect.width)
 		return;
 	if(d.rect.width > f->rect.width / 3)
