@@ -630,6 +630,7 @@ fs_write(Req *r) {
 		i=strlen(def.font);
 		write_to_buf(r, &def.font, &i, 0);
 		def.font[i] = '\0';
+		blitz_loadfont(&blitzfont, def.font);
 		r->ofcall.count = i- r->ifcall.offset;
 		return respond(r, nil);
 	case FsFCtags:

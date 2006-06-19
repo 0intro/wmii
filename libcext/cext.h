@@ -9,6 +9,9 @@
 #define nil (void *)0
 #endif
 
+/* asprintf.c */
+int cext_asprintf(char **str, char const *fmt, ...);
+
 /* emallocz.c */
 void *cext_emallocz(unsigned int size);
 

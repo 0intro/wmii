@@ -32,18 +32,18 @@ do
 done
 
 # WM CONFIGURATION
-xwrite /def/border 2
-xwrite /def/font $WMII_FONT
-xwrite /def/selcolors $WMII_SELCOLORS
-xwrite /def/normcolors $WMII_NORMCOLORS
+xwrite /border 2
+xwrite /font $WMII_FONT
+xwrite /selcolors $WMII_SELCOLORS
+xwrite /normcolors $WMII_NORMCOLORS
 
 # COLUMN RULES
-wmiir write /def/colrules <<EOF
+wmiir write /colrules <<EOF
 /1/ -> 50+50
 EOF
 
 # TAGGING RULES
-wmiir write /def/tagrules <<EOF
+wmiir write /tagrules <<EOF
 /XMMS.*/ -> ~
 /Gimp.*/ -> ~
 /MPlayer.*/ -> ~
@@ -58,8 +58,8 @@ PROGS_FILE=`mktemp /tmp/.wmiimenu.proglist.XXXXXX` || exit 2
 proglist `echo "$OLD_PATH" | tr : ' '` >$PROGS_FILE &
 
 # SHORTCUTS
-xwrite /def/grabmod Mod1
-wmiir write /def/keys <<EOF
+xwrite /grabmod Mod1
+wmiir write /keys <<EOF
 $MODKEY-$LEFT
 $MODKEY-$RIGHT
 $MODKEY-$DOWN
@@ -139,11 +139,11 @@ do
 		$MODKEY-$RIGHT)
 			xwrite /tag/sel/ctl select next;;
 		$MODKEY-$DOWN)
-			xwrite /tag/sel/sel/ctl select next;;
+			xwrite /client/sel/ctl select next;;
 		$MODKEY-$UP)
-			xwrite /tag/sel/sel/ctl select prev;;
+			xwrite /client/sel/ctl select prev;;
 		$MODKEY-space)
-			xwrite /tag/sel/ctl select toggle;;
+			xwrite /client/sel/ctl select toggle;;
 		$MODKEY-d)
 			xwrite /tag/sel/sel/mode default;;
 		$MODKEY-s)
@@ -163,21 +163,21 @@ do
 		$MODKEY-Return)
 			PATH="$OLD_PATH" xterm &;;
 		$MODKEY-Shift-$LEFT)
-			xwrite /tag/sel/sel/sel/ctl send prev;;
+			xwrite /tag/sel/ctl send prev;;
 		$MODKEY-Shift-$RIGHT)
-			xwrite /tag/sel/sel/sel/ctl send next;;
+			xwrite /tag/sel/ctl send next;;
 		$MODKEY-Shift-$DOWN)
-			xwrite /tag/sel/sel/sel/ctl send down;;
+			xwrite /tag/sel/ctl send down;;
 		$MODKEY-Shift-$UP)
-			xwrite /tag/sel/sel/sel/ctl send up;;
+			xwrite /tag/sel/ctl send up;;
 		$MODKEY-Shift-space)
-			xwrite /tag/sel/sel/sel/ctl send toggle;;
+			xwrite /tag/sel/ctl send toggle;;
 		$MODKEY-Shift-c)
-			xwrite /tag/sel/sel/sel/ctl kill;;
+			xwrite /client/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite /client/`wmiir read /tag/sel/sel/sel/index`/tags "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
+			xwrite /client/sel/tags "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
 		$MODKEY-Shift-[0-9])
-			xwrite /tag/sel/sel/sel/tags `echo $1 | sed 's/.*-//'`;;
+			xwrite /client/sel/tags `echo $1 | sed 's/.*-//'`;;
 		esac;;
 	esac
 done &
