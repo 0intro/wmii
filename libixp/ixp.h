@@ -212,16 +212,7 @@ typedef struct Fcall {
 
 typedef struct IXPServer IXPServer;
 typedef struct IXPConn IXPConn;
-typedef struct IXPMap IXPMap;
 typedef struct Intmap Intmap;
-
-struct IXPMap {
-	IXPMap *next;
-	unsigned int fid;
-	unsigned short sel;
-	unsigned short nwqid;
-	Qid wqid[IXP_MAX_WELEM];
-};
 
 typedef struct Intlist Intlist;
 struct Intmap {
@@ -367,7 +358,6 @@ IXPConn *ixp_server_open_conn(IXPServer *s, int fd, void *aux,
 		void (*read)(IXPConn *c), void (*close)(IXPConn *c));
 void ixp_server_close_conn(IXPConn *c);
 char *ixp_server_loop(IXPServer *s);
-IXPMap *ixp_server_fid2map(IXPConn *c, unsigned int fid);
 unsigned int ixp_server_receive_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_fcall(IXPConn *c, Fcall *fcall);
 int ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr);
