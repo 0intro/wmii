@@ -604,26 +604,6 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 }
 
 void
-select_client(Client *c, char *arg)
-{
-	unsigned int i;
-	Frame *f = c->sel, *r;
-	Area *a = f->area;
-
-	if(!strncmp(arg, "prev", 5))
-		for(r=a->frame; r->anext && r->anext != f; r=r->anext);
-	else if(!strncmp(arg, "next", 5))
-		r = f->anext ? f->anext : a->frame;
-	else {
-		if(sscanf(arg, "%d", &i) != 1)
-			return;
-		for(r=a->frame; i && r->anext; r=r->anext, i--);
-	}
-	focus_client(r->client, True);
-	flush_masked_events(EnterWindowMask);
-}
-
-void
 newcol_client(Client *c, char *arg)
 {
 	Frame *f = c->sel;
@@ -896,4 +876,16 @@ apply_rules(Client *c)
 
 	if(!strlen(c->tags))
 		apply_tags(c, "nil");
+}
+
+char *
+message_client(Client *c, char *message)
+{
+	static char Ebadcmd[] = "bad command";
+
+	if(!strncmp(message, "kill", 5)) {
+		kill_client(c);
+		return nil;
+	}
+	return Ebadcmd;
 }

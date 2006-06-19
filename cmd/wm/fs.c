@@ -670,6 +670,14 @@ fs_write(Req *r) {
 		draw_clients();
 		r->ofcall.count = r->ifcall.count - i;
 		return respond(r, nil);
+	case FsFCctl:
+		data_to_cstring(r);
+		if(r->ifcall.count == 0)
+			return respond(r, nil);
+		if((errstr = message_client(f->client, (char *)r->ifcall.data)))
+			return respond(r, errstr);
+		r->ofcall.count = r->ifcall.count;
+		return respond(r, nil);
 	case FsFTctl:
 		data_to_cstring(r);
 		if(r->ifcall.count == 0)

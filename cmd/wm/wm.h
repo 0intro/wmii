@@ -240,7 +240,6 @@ void manage_client(Client *c);
 void focus_client(Client *c, Bool restack);
 void focus(Client *c, Bool restack);
 void resize_client(Client *c, XRectangle *r, Bool ignore_xcall);
-void select_client(Client *c, char *arg);
 Client *selected_client();
 void match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky);
 char *send_client(Frame *f, char *arg);
@@ -257,6 +256,7 @@ void draw_clients();
 void update_client_grab(Client *c, Bool is_sel);
 void apply_rules(Client *c);
 void apply_tags(Client *c, const char *tags);
+char *message_client(Client *c, char *message);
 
 /* column.c */
 void arrange_column(Area *a, Bool dirty);

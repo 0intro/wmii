@@ -82,6 +82,7 @@ select_area(Area *a, char *arg)
 	Area *new;
 	unsigned int i;
 	View *v = a->view;
+	Frame *f = a->sel, *p;
 
 	v->revert = a;
 
@@ -104,6 +105,18 @@ select_area(Area *a, char *arg)
 		if(a == v->area)
 			return;
 		new = a->next ? a->next : a;
+	}
+	else if(!strncmp(arg, "up", 3)) {
+		for(p=a->frame; p->anext && p->anext != f; p=p->anext);
+		focus_client(p->client, True);
+		flush_masked_events(EnterWindowMask);
+		return;
+	}
+	else if(!strncmp(arg, "down", 5)) {
+		p = f->anext ? f->anext : a->frame;
+		focus_client(p->client, True);
+		flush_masked_events(EnterWindowMask);
+		return;
 	}
 	else {
 		if(sscanf(arg, "%d", &i) != 1)

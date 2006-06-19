@@ -139,11 +139,11 @@ do
 		$MODKEY-$RIGHT)
 			xwrite /tag/sel/ctl select next;;
 		$MODKEY-$DOWN)
-			xwrite /client/sel/ctl select next;;
+			xwrite /tag/sel/ctl select down;;
 		$MODKEY-$UP)
-			xwrite /client/sel/ctl select prev;;
+			xwrite /tag/sel/ctl select up;;
 		$MODKEY-space)
-			xwrite /client/sel/ctl select toggle;;
+			xwrite /tag/sel/ctl select 0;;
 		$MODKEY-d)
 			xwrite /tag/sel/sel/mode default;;
 		$MODKEY-s)
