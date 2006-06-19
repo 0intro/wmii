@@ -155,14 +155,14 @@ xls(void *result, unsigned int msize, int details)
 	static Stat stat;
 
 	do {
-		ixp_unpack_stat(&p, &stat);
+		ixp_unpack_stat(&p, nil, &stat);
 		n++;
 	}
 	while(p - (unsigned char*)result < msize);
 	dir = (Stat *)cext_emallocz(sizeof(Stat) * n);
 	p = result;
 	do {
-		ixp_unpack_stat(&p, &dir[i++]);
+		ixp_unpack_stat(&p, nil, &dir[i++]);
 	}
 	while(p - (unsigned char*)result < msize);
 	qsort(dir, n, sizeof(Stat), comp_stat);
@@ -189,7 +189,7 @@ xdir(char *file, int details)
 		return -1;
 	}
 	buf = c.fcall.stat;
-	ixp_unpack_stat(&buf, s);
+	ixp_unpack_stat(&buf, nil, s);
 	if(!(s->mode & IXP_DMDIR)) {
 		print_stat(s, details);
 		fflush(stdout);
