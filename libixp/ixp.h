@@ -198,7 +198,7 @@ typedef struct Fcall {
 			Qid	wqid[IXP_MAX_WELEM];
 		};
 		struct { /* Twrite */
-			long long	offset; /* +Tread */
+			unsigned long long	offset; /* +Tread */
 			/* +Rread */
 			unsigned int	count; /* +Tread */
 			unsigned char	*data;

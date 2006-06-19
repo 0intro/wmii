@@ -139,10 +139,11 @@ ixp_fcall2msg(void *msg, Fcall *fcall, unsigned int msglen)
 unsigned int
 ixp_msg2fcall(Fcall *fcall, void *msg, unsigned int msglen)
 {
-	unsigned int i, msize, tsize;
+	int msize;
+	unsigned int i, tsize;
 	unsigned short len;
 	unsigned char *p = msg;
-	ixp_unpack_prefix(&p, &msize, &fcall->type, &fcall->tag);
+	ixp_unpack_prefix(&p, (unsigned int *)&msize, &fcall->type, &fcall->tag);
 	tsize = msize;
 
 	if(msize > msglen)          /* bad message */

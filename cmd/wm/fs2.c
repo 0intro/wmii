@@ -642,7 +642,7 @@ fs_write(Req *r) {
 		return respond(r, nil);
 	case FsFBorder:
 		data_to_cstring(r);
-		i = (unsigned int)strtol(r->ifcall.data, &buf, 10);
+		i = (unsigned int)strtol((char *)r->ifcall.data, &buf, 10);
 		if(*buf)
 			return respond(r, Ebadvalue);
 		def.border = i;
@@ -658,9 +658,9 @@ fs_write(Req *r) {
 	case FsFCNorm:
 		/* XXX: This allows for junk after the color string */
 		data_to_cstring(r);
-		buf = r->ifcall.data;
+		buf = (char *)r->ifcall.data;
 		i = r->ifcall.count;
-		if(!parse_colors((char **)&buf, &i, f->col))
+		if(!parse_colors((char **)&buf, (int *)&i, f->col))
 			return respond(r, Ebadvalue);
 		draw_clients();
 		r->ofcall.count = r->ifcall.count - i;
@@ -670,7 +670,7 @@ fs_write(Req *r) {
 		if(r->ifcall.count == 0)
 			return respond(r, nil);
 
-		if((errstr = message_view(f->view, r->ifcall.data)))
+		if((errstr = message_view(f->view, (char *)r->ifcall.data)))
 			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
@@ -680,10 +680,10 @@ fs_write(Req *r) {
 			return respond(r, nil);
 
 		/* XXX: This needs to be moved to client_message(char *) */
-		if(!strncmp(r->ifcall.data, "quit", 5))
+		if(!strncmp((char *)r->ifcall.data, "quit", 5))
 			srv.running = 0;
-		else if(!strncmp(r->ifcall.data, "view ", 5))
-			select_view(&r->ifcall.data[5]);
+		else if(!strncmp((char *)r->ifcall.data, "view ", 5))
+			select_view((char *)&r->ifcall.data[5]);
 		else
 			return respond(r, Enocommand);
 		r->ofcall.count = r->ifcall.count;
@@ -749,7 +749,7 @@ write_event(char *buf) {
 	for(; pending_event_reads; pending_event_reads=aux) {
 		aux = pending_event_reads->aux;
 		/* XXX: It would be nice if strdup wasn't necessary here */
-		pending_event_reads->ofcall.data = strdup(buf);
+		pending_event_reads->ofcall.data = (void *)strdup(buf);
 		pending_event_reads->ofcall.count = len;
 		respond(pending_event_reads, nil);
 	}

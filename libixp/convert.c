@@ -126,7 +126,7 @@ ixp_unpack_strings(unsigned char **msg, int *msize, unsigned short n, char **str
 
 		memcpy(s, *msg, len);
 		s[len] = '\0';
-		strings[i] = s;
+		strings[i] = (char *)s;
 		*msg += len;
 		s += len + 1;
 	}

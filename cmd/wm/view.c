@@ -353,12 +353,12 @@ view_index(View *v) {
 		for(f=a->frame; f && len > 0; f=f->anext) {
 			XRectangle *r = &f->rect;
 			if(a_i == 0)
-				n = snprintf(&buf[buf_i], len, "~ %d %d %d %d %d %s\n",
+				n = snprintf((char *)&buf[buf_i], len, "~ %d %d %d %d %d %s\n",
 						idx_of_client(f->client),
 						r->x, r->y, r->width, r->height,
 						f->client->props);
 			else
-				n = snprintf(&buf[buf_i], len, "%d %d %d %s\n",
+				n = snprintf((char *)&buf[buf_i], len, "%d %d %d %s\n",
 						a_i, idx_of_client(f->client),
 						r->width, f->client->props);
 			buf_i += n;
