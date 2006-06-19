@@ -368,27 +368,49 @@ view_index(View *v) {
 	return buf;
 }
 
+Client *
+client_of_message(char *message, unsigned int *next)
+{
+	unsigned int i, n;
+	Client *c;
+
+	if(!strncmp(message, "sel ", 4))
+		return sel_client();
+	if((1 != sscanf(message, "%d %n", &i, &n)))
+		return nil;
+	for(c=client; i && c; c=c->next, i--);
+	return c;
+}
+
+Frame *
+clientframe_of_view(View *v, Client *c)
+{
+	Frame *f;
+	for(f=c->frame; f; f=f->cnext)
+		if(f->area->view == v)
+			break;
+	return f;
+}
+
 /* XXX: This will need cleanup too */
 char *
 message_view(View *v, char *message) {
-	unsigned int i, n;
+	unsigned int n;
 	Frame *f;
 	Client *c;
 	static char Ebadvalue[] = "bad value";
 
 	if(!strncmp(message, "send ", 5)) {
 		message += 5;
-		if(1 != sscanf(message, "%d %n", &i, &n))
+		if(!(c = client_of_message(message, &n)))
 			return Ebadvalue;
-		for(c=client; i && c; c=c->next, i--);
-		if(!c)
-			return Ebadvalue;
-		for(f=c->frame; f; f=f->cnext)
-			if(f->area->view == v)
-				break;
-		if(!f)
+		if(!(f = clientframe_of_view(v, c)))
 			return Ebadvalue;
 		return send_client(f, &message[n]);
+	}
+	else if(!strncmp(message, "select ", 7)) {
+		message += 7;
+		select_area(v->sel, message);
 	}
 	return nil;
 }

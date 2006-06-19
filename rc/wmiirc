@@ -163,15 +163,15 @@ do
 		$MODKEY-Return)
 			PATH="$OLD_PATH" xterm &;;
 		$MODKEY-Shift-$LEFT)
-			xwrite /tag/sel/ctl send prev;;
+			xwrite /tag/sel/ctl send sel prev;;
 		$MODKEY-Shift-$RIGHT)
-			xwrite /tag/sel/ctl send next;;
+			xwrite /tag/sel/ctl send sel next;;
 		$MODKEY-Shift-$DOWN)
-			xwrite /tag/sel/ctl send down;;
+			xwrite /tag/sel/ctl send sel down;;
 		$MODKEY-Shift-$UP)
-			xwrite /tag/sel/ctl send up;;
+			xwrite /tag/sel/ctl send sel up;;
 		$MODKEY-Shift-space)
-			xwrite /tag/sel/ctl send toggle;;
+			xwrite /tag/sel/ctl send sel toggle;;
 		$MODKEY-Shift-c)
 			xwrite /client/sel/ctl kill;;
 		$MODKEY-Shift-t)
