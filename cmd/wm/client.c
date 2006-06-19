@@ -587,22 +587,23 @@ size_client(Client *c, char *arg)
 char *
 send_client(Frame *f, char *arg)
 {
+	static char Ebadvalue[] = "bad value";
 	Area *to, *a;
 	Client *c;
 	Frame *tf;
 	View *v;
 	int i, j;
+
 	a = f->area;
 	v = a->view;
 	c = f->client;
 	i = idx_of_area(a);
 	j = idx_of_frame(f);
-	static char Ebadvalue[] = "bad value";
 
 	if((i == -1) || (j == -1))
 		return 0;
 
-	if(i && !strncmp(arg, "prev", 5)) {
+	if(i && !strncmp(arg, "left", 5)) {
 		if(a == v->area)
 			return Ebadvalue;
 		for(to=v->area->next; to && a != to->next; to=to->next);
@@ -612,7 +613,7 @@ send_client(Frame *f, char *arg)
 			return Ebadvalue;
 		send_to_area(to, a, c);
 	}
-	else if(i && !strncmp(arg, "next", 5)) {
+	else if(i && !strncmp(arg, "right", 5)) {
 		if(a == v->area)
 			return Ebadvalue;
 		if(!(to = a->next) && (f->anext || f!= a->frame))
@@ -714,12 +715,6 @@ client_of_win(Window w)
 
 	for(c=client; c && c->win != w; c=c->next);
 	return c;
-}
-
-Client *
-selected_client()
-{
-	return sel && sel->sel->sel ? sel->sel->sel->client : nil;
 }
 
 void

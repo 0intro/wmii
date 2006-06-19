@@ -73,11 +73,12 @@ update_frame_selectors(View *v)
 	Frame *f;
 
 	/* select correct frames of clients */
-	for(c=client; c; c=c->next) {
-		for(f=c->frame; f && f->area->view != v; f=f->cnext);
-		if(f)
-			c->sel = f;
-	}
+	for(c=client; c; c=c->next)
+		for(f=c->frame; f; f=f->cnext)
+			if(f->area->view == v) {
+				c->sel = f;
+				break;
+			}
 }
 
 void
@@ -101,11 +102,10 @@ focus_view(View *v)
 				resize_client(c, &f->rect, False);
 			}
 			else
-				XMoveWindow(dpy, c->framewin,
-							2 * rect.width + f->rect.x, f->rect.y);
+				XMoveWindow(dpy, c->framewin, 2 * rect.width + f->rect.x, f->rect.y);
 		}
 
-	if((c = selected_client()))
+	if((c = sel_client()))
 		focus_client(c, True);
 
 	draw_clients();
@@ -224,7 +224,8 @@ restack_view(View *v)
 	for(a=v->area; a; a=a->next) {
 		if(a->frame) {
 			wins[n++] = a->sel->client->framewin;
-			for(f=a->frame; f; f=f->anext, f != a->sel && n++);
+			for(f=a->frame; f; f=f->anext)
+				if(f != a->sel) n++;
 			i=n;
 			for(f=a->frame; f; f=f->anext) {
 				Client *c = f->client;
@@ -370,7 +371,7 @@ view_index(View *v) {
 
 Client *
 client_of_message(char *message, unsigned int *next)
-{
+{              
 	unsigned int i;
 	Client *c;
 
@@ -386,13 +387,13 @@ client_of_message(char *message, unsigned int *next)
 
 Frame *
 clientframe_of_view(View *v, Client *c)
-{
+{              
 	Frame *f;
 	for(f=c->frame; f; f=f->cnext)
 		if(f->area->view == v)
 			break;
 	return f;
-}
+} 
 
 /* XXX: This will need cleanup too */
 char *
@@ -410,11 +411,13 @@ message_view(View *v, char *message) {
 			return Ebadvalue;
 		return send_client(f, &message[n]);
 	}
-	else if(!strncmp(message, "select ", 7)) {
+	if(!strncmp(message, "select ", 7)) {
 		message += 7;
-		select_area(v->sel, message);
+		if(v->sel->sel)
+			return select_area(v->sel, message);
+		return Ebadvalue;
 	}
-	return nil;
+	return Ebadvalue;
 }
 
 static Bool
@@ -442,11 +445,9 @@ update_views()
 			if(is_view_of(c, v)) {
 				if(!is_of_view(v, c))
 					attach_to_view(v, c);
-			}
-			else {
+			}else
 				if(is_of_view(v, c))
 					detach_from_view(v, c);
-			}
 		}
 	}
 

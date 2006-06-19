@@ -43,7 +43,7 @@ wmiir write /colrules <<EOF
 EOF
 
 # TAGGING RULES
-wmiir write /tagrules <<EOF
+wmiir write /def/tagrules <<EOF
 /XMMS.*/ -> ~
 /Gimp.*/ -> ~
 /MPlayer.*/ -> ~
@@ -135,9 +135,9 @@ do
 	Key)
 		case "$1" in
 		$MODKEY-$LEFT)
-			xwrite /tag/sel/ctl select prev;;
+			xwrite /tag/sel/ctl select left;;
 		$MODKEY-$RIGHT)
-			xwrite /tag/sel/ctl select next;;
+			xwrite /tag/sel/ctl select right;;
 		$MODKEY-$DOWN)
 			xwrite /tag/sel/ctl select down;;
 		$MODKEY-$UP)
@@ -163,9 +163,9 @@ do
 		$MODKEY-Return)
 			PATH="$OLD_PATH" xterm &;;
 		$MODKEY-Shift-$LEFT)
-			xwrite /tag/sel/ctl send sel prev;;
+			xwrite /tag/sel/ctl send sel left;;
 		$MODKEY-Shift-$RIGHT)
-			xwrite /tag/sel/ctl send sel next;;
+			xwrite /tag/sel/ctl send sel right;;
 		$MODKEY-Shift-$DOWN)
 			xwrite /tag/sel/ctl send sel down;;
 		$MODKEY-Shift-$UP)
@@ -173,9 +173,10 @@ do
 		$MODKEY-Shift-space)
 			xwrite /tag/sel/ctl send sel toggle;;
 		$MODKEY-Shift-c)
-			xwrite /client/sel/ctl kill;;
+			xwrite /client/sel kill;;
 		$MODKEY-Shift-t)
-			xwrite /client/sel/tags "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
+			xwrite /client/`wmiir read /client/sel/index`/tags \
+				"`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /client/sel/tags `echo $1 | sed 's/.*-//'`;;
 		esac;;

@@ -76,15 +76,18 @@ destroy_area(Area *a)
 	free(a);
 }
 
-void
+char *
 select_area(Area *a, char *arg)
 {
 	Area *new;
 	unsigned int i;
-	View *v = a->view;
-	Frame *f = a->sel, *p;
+	Frame *p, *f;
+	View *v;
+	static char Ebadvalue[] = "bad value";
 
+	v = a->view;
 	v->revert = a;
+	f = a->sel;
 
 	if(!strncmp(arg, "toggle", 7)) {
 		if(a != v->area)
@@ -93,40 +96,42 @@ select_area(Area *a, char *arg)
 			new = v->revert;
 		else
 			new = v->area->next;
-	} else if(!strncmp(arg, "prev", 5)) {
+	} else if(!strncmp(arg, "left", 5)) {
 		if(a == v->area)
-			return;
+			return Ebadvalue;
 		for(new=v->area->next;
 			new && new->next != a;
 			new=new->next);
 		if(!new)
 			new=v->area->next;
-	} else if(!strncmp(arg, "next", 5)) {
+	} else if(!strncmp(arg, "right", 5)) {
 		if(a == v->area)
-			return;
+			return Ebadvalue;
 		new = a->next ? a->next : a;
 	}
 	else if(!strncmp(arg, "up", 3)) {
-		for(p=a->frame; p->anext && p->anext != f; p=p->anext);
+		for(p=a->frame; p->anext; p=p->anext)
+			if(p->anext == f) break;
 		focus_client(p->client, True);
 		flush_masked_events(EnterWindowMask);
-		return;
+		return nil;
 	}
 	else if(!strncmp(arg, "down", 5)) {
 		p = f->anext ? f->anext : a->frame;
 		focus_client(p->client, True);
 		flush_masked_events(EnterWindowMask);
-		return;
+		return nil;
 	}
 	else {
 		if(sscanf(arg, "%d", &i) != 1)
-			return;
+			return Ebadvalue;
 		for(new=view->area; i && new->next; new=new->next, i--);
 	}
 	if(new->sel)
 		focus_client(new->sel->client, True);
 	v->sel = new;
 	draw_clients();
+	return nil;
 }
 
 void

@@ -534,33 +534,6 @@ fs_freefid(Fid *f) {
 	}
 }
 
-void
-fs_clunk(Req *r) {
-	Client *c;
-	FileId *f = r->fid->aux;
-
-	switch(f->tab.type) {
-	case FsFTagRules:
-		update_rules(&f->rule->rule, f->rule->string);
-		/* no break */
-	case FsFColRules:
-		for(c=client; c; c=c->next)
-			apply_rules(c);
-		update_views();
-		break;
-	case FsFKeys:
-		def.keys[def.keyssz] = '\0';
-		update_keys();
-		break;
-	case FsFCtags:
-		apply_tags(f->client, f->client->tags);
-		update_views();
-		draw_frame(f->client->sel);
-		break;
-	}
-	respond(r, nil);
-}
-
 /* This should be moved to libixp */
 void
 write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
@@ -603,15 +576,21 @@ data_to_cstring(Req *r) {
 }
 
 /* This should be moved to liblitz */
-int
+char *
 parse_colors(char **buf, int *buflen, BlitzColor *col) {
 	unsigned int i;
 	if(*buflen < 23 || 3 != sscanf(*buf, "#%06x #%06x #%06x", &i,&i,&i))
-		return 0;
+		return Ebadvalue;
 	(*buflen) -= 23;
 	bcopy(*buf, col->colstr, 23);
 	blitz_loadcolor(col);
-	return 1;
+
+	(*buf) += 23;
+	if(**buf == '\n' || **buf == ' ') {
+		(*buf)++;
+		(*buflen)--;
+	}
+	return nil;
 }
 
 /* This function needs to be seriously cleaned up */
@@ -665,8 +644,8 @@ fs_write(Req *r) {
 		data_to_cstring(r);
 		buf = (char *)r->ifcall.data;
 		i = r->ifcall.count;
-		if(!parse_colors((char **)&buf, (int *)&i, f->col))
-			return respond(r, Ebadvalue);
+		if((errstr = parse_colors((char **)&buf, (int *)&i, f->col)))
+			return respond(r, errstr);
 		draw_clients();
 		r->ofcall.count = r->ifcall.count - i;
 		return respond(r, nil);
@@ -714,6 +693,44 @@ fs_write(Req *r) {
 }
 
 void
+fs_clunk(Req *r) {
+	Client *c;
+	char *buf;
+	int i;
+	FileId *f = r->fid->aux;
+
+	switch(f->tab.type) {
+	case FsFTagRules:
+		update_rules(&f->rule->rule, f->rule->string);
+		/* no break */
+	case FsFColRules:
+		for(c=client; c; c=c->next)
+			apply_rules(c);
+		update_views();
+		break;
+	case FsFKeys:
+		def.keys[def.keyssz] = '\0';
+		update_keys();
+		break;
+	case FsFCtags:
+		apply_tags(f->client, f->client->tags);
+		update_views();
+		draw_frame(f->client->sel);
+		break;
+	case FsFBar:
+		buf = f->bar->buf;
+		i = strlen(f->bar->buf);
+		parse_colors(&buf, &i, &f->bar->color);
+		while(buf[i - 1] == '\n')
+			buf[--i] = '\0';
+		strncpy(f->bar->data, buf, 255);
+		draw_bar();
+		break;
+	}
+	respond(r, nil);
+}
+
+void
 fs_flush(Req *r) {
 	Req **t;
 	for(t=&pending_event_reads; *t; t=(Req **)&(*t)->aux) {
@@ -750,7 +767,16 @@ fs_create(Req *r) {
 
 void
 fs_remove(Req *r) {
-	respond(r, "not implemented");
+	FileId *f = r->fid->aux;
+	switch(f->tab.type) {
+	default:
+		/* XXX: This should be taken care of by the library */
+		return respond(r, Enoperm);
+	case FsFBar:
+		destroy_bar(f->bar);
+		respond(r, nil);
+		break;
+	}
 }
 
 void

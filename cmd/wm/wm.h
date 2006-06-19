@@ -212,7 +212,7 @@ void (*handler[LASTEvent]) (XEvent *);
 Area *create_area(View *v, Area *pos, unsigned int w);
 void destroy_area(Area *a);
 Area *area_of_id(View *t, unsigned short id);
-void select_area(Area *a, char *arg);
+char *select_area(Area *a, char *arg);
 void send_to_area(Area *to, Area *from, Client *c);
 void attach_to_area(Area *a, Client *c, Bool send);
 void detach_from_area(Area *a, Client *c);
@@ -243,9 +243,9 @@ void manage_client(Client *c);
 void focus_client(Client *c, Bool restack);
 void focus(Client *c, Bool restack);
 void resize_client(Client *c, XRectangle *r, Bool ignore_xcall);
-Client *selected_client();
 void match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky);
 char *send_client(Frame *f, char *arg);
+char * message_client(Client *c, char *message);
 void move_client(Client *c, char *arg);
 void size_client(Client *c, char *arg);
 void newcol_client(Client *c, char *arg);
@@ -259,7 +259,6 @@ void draw_clients();
 void update_client_grab(Client *c, Bool is_sel);
 void apply_rules(Client *c);
 void apply_tags(Client *c, const char *tags);
-char *message_client(Client *c, char *message);
 
 /* column.c */
 void arrange_column(Area *a, Bool dirty);
