@@ -371,12 +371,14 @@ view_index(View *v) {
 Client *
 client_of_message(char *message, unsigned int *next)
 {
-	unsigned int i, n;
+	unsigned int i;
 	Client *c;
 
-	if(!strncmp(message, "sel ", 4))
+	if(!strncmp(message, "sel ", 4)) {
+		*next = 4;
 		return sel_client();
-	if((1 != sscanf(message, "%d %n", &i, &n)))
+	}
+	if((1 != sscanf(message, "%d %n", &i, next)))
 		return nil;
 	for(c=client; i && c; c=c->next, i--);
 	return c;

@@ -648,7 +648,7 @@ fs_write(Req *r) {
 	case FsFBorder:
 		data_to_cstring(r);
 		i = (unsigned int)strtol((char *)r->ifcall.data, &buf, 10);
-		if(*buf)
+		if(buf)
 			return respond(r, Ebadvalue);
 		def.border = i;
 		return respond(r, nil);
