@@ -155,10 +155,15 @@ focus_client(Client *c, Bool restack)
 	if(!c->floating && f->area->mode == Colstack)
 		arrange_column(f->area, False);
 	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
-	if(old && old != old_in_area && old != c)
+	if(old && old != old_in_area && old != c) {
+		update_frame_widget_colors(old->sel);
 		draw_frame(old->sel);
-	if(old_in_area && old_in_area != c)
+	}
+	if(old_in_area && old_in_area != c) {
+		update_frame_widget_colors(old_in_area->sel);
 		draw_frame(old_in_area->sel);
+	}
+	update_frame_widget_colors(c->sel);
 	draw_frame(c->sel);
 	XSync(dpy, False);
 	snprintf(buf, sizeof(buf), "ClientFocus %d\n", idx_of_client(c));
@@ -505,6 +510,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		else
 			XMoveResizeWindow(dpy, c->framewin, 2 * rect.width + f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);
+		resize_frame(f);
 	}
 
 	c->rect.x = def.border;
@@ -721,8 +727,10 @@ draw_clients()
 {
 	Client *c;
 	for(c=client; c; c=c->next)
-		if(c->sel && (c->sel->area->view == sel))
+		if(c->sel && (c->sel->area->view == sel)) {
+			update_frame_widget_colors(c->sel);
 			draw_frame(c->sel);
+		}
 }
 
 static Bool

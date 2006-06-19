@@ -187,10 +187,6 @@ resize_frame(Frame *f)
 void
 draw_frame(Frame *f)
 {
-	/* XXX: should be called on area change focus/attach/detach */
-	update_frame_widget_colors(f);
-	/* XXX: should be called after resize */
-	resize_frame(f);
 	f->tile->draw(f->tile);
 	f->tagbar->draw(f->tagbar);
 	f->titlebar->draw(f->titlebar);

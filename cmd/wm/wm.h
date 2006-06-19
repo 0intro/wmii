@@ -283,6 +283,8 @@ int idx_of_frame(Frame *f);
 Frame *frame_of_id(Area *a, unsigned short id);
 Client *frame_of_win(Window w);
 void draw_frame(Frame *f);
+void resize_frame(Frame *f);
+void update_frame_widget_colors(Frame *f);
 
 /* fs.c */
 void fs_attach(Req *r);
