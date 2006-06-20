@@ -155,7 +155,7 @@ do
 		$MODKEY-$UP)
 			xwrite /tag/sel/ctl select up;;
 		$MODKEY-space)
-			xwrite /tag/sel/ctl select 0;;
+			xwrite /tag/sel/ctl select toggle;;
 		$MODKEY-d)
 			xwrite /tag/sel/sel/mode default;;
 		$MODKEY-s)
@@ -185,7 +185,7 @@ do
 		$MODKEY-Shift-space)
 			xwrite /tag/sel/ctl send sel toggle;;
 		$MODKEY-Shift-c)
-			xwrite /client/sel kill;;
+			xwrite /client/sel/ctl kill;;
 		$MODKEY-Shift-t)
 			xwrite /client/`wmiir read /client/sel/index`/tags \
 				"`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
