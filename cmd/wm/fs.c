@@ -49,12 +49,12 @@ struct FileId {
 /*************/
 enum {	/* Dirs */
 	FsRoot, FsDClient, FsDClients, FsDBar,
-	FsDSClient, FsDTag, FsDTags, FsDSTag,
+	FsDTag, FsDTags,
 	/* Files */
 	FsFBar, FsFBorder, FsFCNorm, FsFCSel,
-	FsFCctl, FsFCindex, FsFColRules, FsFCtags,
+	FsFCctl, FsFColRules, FsFCtags,
 	FsFEvent, FsFFont, FsFKeys, FsFRctl,
-	FsFTagRules, FsFTctl, FsFTindex, FsFTname,
+	FsFTagRules, FsFTctl, FsFTindex,
 	FsFgrabmod, FsFprops, RsFFont
 };
 
@@ -102,7 +102,7 @@ dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
 		  {"font",	QTFILE,		FsFFont,	0600 },
 		  {"grabmod",	QTFILE,		FsFgrabmod,	0600 },
 		  {"keys",	QTFILE,		FsFKeys,	0600 },
-		  {"normcolors",	QTFILE,		FsFCNorm,	0600 },
+		  {"normcolors",QTFILE,		FsFCNorm,	0600 },
 		  {"selcolors",	QTFILE,		FsFCSel,	0600 },
 		  {"tagrules",	QTFILE,		FsFTagRules,	0600 }, 
 		  {nil}},
@@ -111,12 +111,6 @@ dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
 		  {nil}},
 dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|DMDIR },
 		  {"ctl",	QTAPPEND,	FsFCctl,	0200|DMAPPEND },
-		  {"tags",	QTFILE,		FsFCtags,	0600 },
-		  {"props",	QTFILE,		FsFprops,	0400 },
-		  {nil}},
-dirtab_sclient[]={{".",		QTDIR,		FsDSClient,	0500|DMDIR },
-		  {"ctl",	QTAPPEND,	FsFCctl,	0200|DMAPPEND },
-		  {"index",	QTFILE,		FsFCindex,	0400 },
 		  {"tags",	QTFILE,		FsFCtags,	0600 },
 		  {"props",	QTFILE,		FsFprops,	0400 },
 		  {nil}},
@@ -129,11 +123,6 @@ dirtab_tags[]=	 {{".",		QTDIR,		FsDTags,	0500|DMDIR },
 dirtab_tag[]=	 {{".",		QTDIR,		FsDTag,		0500|DMDIR },
 		  {"ctl",	QTAPPEND,	FsFTctl,	0200|DMAPPEND },
 		  {"index",	QTFILE,		FsFTindex,	0400 },
-		  {nil}},
-dirtab_stag[]=	 {{".",		QTDIR,		FsDTag,		0500|DMDIR },
-		  {"ctl",	QTAPPEND,	FsFTctl,	0200|DMAPPEND },
-		  {"index",	QTFILE,		FsFTindex,	0400 },
-		  {"name",	QTFILE,		FsFTname,	0400 },
 		  {nil}};
 /* Writing the lists separately and using an array of their references
  * removes the need for casting and allows for C90 conformance,
@@ -143,10 +132,8 @@ static Dirtab *dirtab[] = {
 	[FsDBar]	dirtab_bar,
 	[FsDClients]	dirtab_clients,
 	[FsDClient]	dirtab_client,
-	[FsDSClient]	dirtab_sclient,
 	[FsDTags]	dirtab_tags,
 	[FsDTag]	dirtab_tag,
-	[FsDSTag]	dirtab_stag
 };
 
 /* Utility Functions */
@@ -353,7 +340,7 @@ lookup_file(FileId *parent, char *name)
 						file->ref = c;
 						file->id = c->id;
 						file->index = idx_of_client(c);
-						file->tab = *dirtab[FsDSClient];
+						file->tab = *dir;
 						file->tab.name = strdup("sel");
 					}if(name) goto LastItem;
 				}
@@ -386,7 +373,6 @@ lookup_file(FileId *parent, char *name)
 						file->id = sel->id;
 						file->tab = *dir;
 						file->tab.name = strdup("sel");
-						file->tab.type = FsDSTag;
 					}if(name) goto LastItem;
 				}
 				for(v=view; v; v=v->next) {
@@ -604,7 +590,7 @@ fs_read(Req *r) {
 		case FsFCtags:
 			write_buf(r, (void *)f->client->tags, strlen(f->client->tags));
 			return respond(r, nil);
-		case FsFTname:
+		case FsFTctl:
 			write_buf(r, (void *)f->view->name, strlen(f->view->name));
 			return respond(r, nil);
 		case FsFgrabmod:
@@ -613,7 +599,7 @@ fs_read(Req *r) {
 		case FsFBar:
 			write_buf(r, (void *)f->bar->buf, strlen(f->bar->buf));
 			return respond(r, nil);
-		case FsFCindex:
+		case FsFCctl:
 			if(r->ifcall.offset)
 				return respond(r, nil);
 			n = asprintf((char **)&r->ofcall.data, "%d", f->index);

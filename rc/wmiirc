@@ -103,7 +103,7 @@ $MODKEY-Shift-9
 EOF
 
 # TAG BAR
-seltag=`wmiir read /tag/sel/name`
+seltag=`wmiir read /tag/sel/ctl`
 for tag in `wmiir ls /tag | sed -e 's,/$,,; /^sel$/d'`
 do
 	wmiir create /lbar/$tag 
@@ -187,7 +187,7 @@ do
 		$MODKEY-Shift-c)
 			xwrite /client/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite /client/`wmiir read /client/sel/index`/tags \
+			xwrite /client/`wmiir read /client/sel/ctl`/tags \
 				"`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /client/sel/tags `echo $1 | sed 's/.*-//'`;;
