@@ -1,3 +1,8 @@
+/*
+ * (C)opyright MMVI Kris Maglione <fbsdaemon at gmail dot com>
+ * See LICENSE file for license details.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

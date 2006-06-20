@@ -342,6 +342,11 @@ is_view_of(Client *c, View *v)
 	return False;
 }
 
+Client *
+sel_client_of_view(View *v) {
+	return v->sel && v->sel->sel ? v->sel->sel->client : nil;
+}
+
 /* XXX: This will need cleanup */
 unsigned char *
 view_index(View *v) {
@@ -374,19 +379,37 @@ view_index(View *v) {
 }
 
 Client *
-client_of_message(char *message, unsigned int *next)
+client_of_message(View *v, char *message, unsigned int *next)
 {              
 	unsigned int i;
 	Client *c;
 
 	if(!strncmp(message, "sel ", 4)) {
 		*next = 4;
-		return sel_client();
+		return sel_client_of_view(v);
 	}
 	if((1 != sscanf(message, "%d %n", &i, next)))
 		return nil;
 	for(c=client; i && c; c=c->next, i--);
 	return c;
+}
+
+Area *
+area_of_message(View *v, char *message, unsigned int *next) {
+	unsigned int i;
+	Area *a;
+
+	if(!strncmp(message, "sel ", 4)) {
+		*next = 4;
+		return v->sel;
+	}
+	if(!strncmp(message, "~ ", 2)) {
+		return v->area;
+	}
+	if(1 != sscanf(message, "%d %n", &i, next) || i == 0)
+		return nil;
+	for(a=v->area; i && a; a=a->next, i--);
+	return a;
 }
 
 Frame *
@@ -402,14 +425,15 @@ clientframe_of_view(View *v, Client *c)
 /* XXX: This will need cleanup too */
 char *
 message_view(View *v, char *message) {
-	unsigned int n;
-	Frame *f;
+	unsigned int n, i;
 	Client *c;
+	Frame *f;
+	Area *a;
 	static char Ebadvalue[] = "bad value";
 
 	if(!strncmp(message, "send ", 5)) {
 		message += 5;
-		if(!(c = client_of_message(message, &n)))
+		if(!(c = client_of_message(v, message, &n)))
 			return Ebadvalue;
 		if(!(f = clientframe_of_view(v, c)))
 			return Ebadvalue;
@@ -418,6 +442,18 @@ message_view(View *v, char *message) {
 	if(!strncmp(message, "select ", 7)) {
 		message += 7;
 		return select_area(v->sel, message);
+	}
+	if(!strncmp(message, "colmode ", 8)) {
+		message += 8;
+		if(!(a = area_of_message(v, message, &n)) || a == v->area)
+			return Ebadvalue;
+		if((i = column_mode_of_str(&message[n])) == -1)
+			return Ebadvalue;
+		a->mode = i;
+		arrange_column(a, True);
+		restack_view(v);
+		draw_frames();
+		return nil;
 	}
 	return Ebadvalue;
 }

@@ -1,5 +1,5 @@
 /*
- * (C)opyright MMVI Kris Maglione <bsdaemon at comcast dot net>
+ * (C)opyright MMVI Kris Maglione <fbsdaemon at gmail dot com>
  * See LICENSE file for license details.
  */
 

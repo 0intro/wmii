@@ -157,11 +157,11 @@ do
 		$MODKEY-space)
 			xwrite /tag/sel/ctl select toggle;;
 		$MODKEY-d)
-			xwrite /tag/sel/sel/mode default;;
+			xwrite /tag/sel/ctl colmode sel default;;
 		$MODKEY-s)
-			xwrite /tag/sel/sel/mode stack;;
+			xwrite /tag/sel/ctl colmode sel stack;;
 		$MODKEY-m)
-			xwrite /tag/sel/sel/mode max;;
+			xwrite /tag/sel/ctl colmode sel max;;
 		$MODKEY-f)
 			xwrite /tag/sel/0/sel/geom 0 0 0 0;;
 		$MODKEY-a)
