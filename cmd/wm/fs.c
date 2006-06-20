@@ -497,6 +497,9 @@ fs_read(Req *r) {
 		case FsFgrabmod:
 			write_buf(r, (void *)def.grabmod, strlen(def.grabmod));
 			return respond(r, nil);
+		case FsFBar:
+			write_buf(r, (void *)f->bar->buf, strlen(f->bar->buf));
+			return respond(r, nil);
 		case FsFCindex:
 			if(r->ifcall.offset)
 				return respond(r, nil);
