@@ -65,11 +65,11 @@ static char
 /* Constants */
 enum {	/* Dirs */
 	FsRoot, FsDClient, FsDClients, FsDBar,
-	FsDSClient, FsDTag, FsDTags,
+	FsDSClient, FsDTag, FsDTags, FsDSTag,
 	/* Files */
 	FsFBar, FsFBorder, FsFCNorm, FsFCSel,
 	FsFCctl, FsFCindex, FsFColRules, FsFCtags,
-	FsFEvent, FsFFont, FsFKeys, FsFRctl,
+	FsFEvent, FsFFont, FsFKeys, FsFRctl, FsFTname,
 	FsFTagRules, FsFTctl, FsFTindex, FsFprops,
 	RsFFont
 };
@@ -140,6 +140,11 @@ dirtab_tags[]=	 {{".",		QTDIR,		FsDTags,	0500|DMDIR },
 dirtab_tag[]=	 {{".",		QTDIR,		FsDTag,		0500|DMDIR },
 		  {"ctl",	QTAPPEND,	FsFTctl,	0200|DMAPPEND },
 		  {"index",	QTFILE,		FsFTindex,	0400 },
+		  {nil}},
+dirtab_stag[]=	 {{".",		QTDIR,		FsDTag,		0500|DMDIR },
+		  {"ctl",	QTAPPEND,	FsFTctl,	0200|DMAPPEND },
+		  {"index",	QTFILE,		FsFTindex,	0400 },
+		  {"name",	QTFILE,		FsFTname,	0400 },
 		  {nil}};
 /* Writing the lists separately and using an array of their references
  * removes the need for casting and allows for C90 conformance,
@@ -151,7 +156,8 @@ static Dirtab *dirtab[] = {
 	[FsDClient]	dirtab_client,
 	[FsDSClient]	dirtab_sclient,
 	[FsDTags]	dirtab_tags,
-	[FsDTag]	dirtab_tag
+	[FsDTag]	dirtab_tag,
+	[FsDSTag]	dirtab_stag
 };
 
 /* get_file/free_file save and reuse old FileId structs
@@ -267,6 +273,7 @@ lookup_file(FileId *parent, char *name)
 						file->id = sel->id;
 						file->tab = *dir;
 						file->tab.name = strdup("sel");
+						file->tab.type = FsDSTag;
 					}if(name) goto LastItem;
 				}
 				for(v=view; v; v=v->next) {
@@ -483,6 +490,9 @@ fs_read(Req *r) {
 			return respond(r, nil);
 		case FsFCtags:
 			write_buf(r, (void *)f->client->tags, strlen(f->client->tags));
+			return respond(r, nil);
+		case FsFTname:
+			write_buf(r, (void *)f->view->name, strlen(f->view->name));
 			return respond(r, nil);
 		case FsFCindex:
 			if(r->ifcall.offset)

@@ -43,7 +43,7 @@ wmiir write /colrules <<EOF
 EOF
 
 # TAGGING RULES
-wmiir write /def/tagrules <<EOF
+wmiir write /tagrules <<EOF
 /XMMS.*/ -> ~
 /Gimp.*/ -> ~
 /MPlayer.*/ -> ~
@@ -101,6 +101,18 @@ $MODKEY-Shift-7
 $MODKEY-Shift-8
 $MODKEY-Shift-9
 EOF
+
+# TAG BAR
+seltag=`wmiir read /tag/sel/name`
+for tag in `wmiir ls /tag | sed -e 's,/$,,; /^sel$/d'`
+do
+	wmiir create /lbar/$tag 
+	if [ "X$tag" = "X$seltag" ]; then
+		xwrite "/lbar/$tag" $WMII_SELCOLORS $tag
+	else
+		xwrite "/lbar/$tag" $WMII_NORMCOLORS $tag
+	fi
+done
 
 # EVENT LOOP
 wmiir read /event 2>/dev/null |

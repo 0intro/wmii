@@ -137,10 +137,11 @@ ixp_unpack_string(unsigned char **msg, int *msize, char **string, unsigned short
 {
 	ixp_unpack_u16(msg, msize, len);
 	*string = nil;
-	if (*len && (!msize || (*msize -= *len) >= 0)) {
+	if (!msize || (*msize -= *len) >= 0) {
 		/* XXX we don't really need emallocz here */
 		*string = cext_emallocz(*len+1);
-		memcpy(*string, *msg, *len);
+		if(*len)
+			memcpy(*string, *msg, *len);
 		(*string)[*len] = 0;
 		*msg += *len;
 	}
