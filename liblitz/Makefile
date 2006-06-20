@@ -6,7 +6,7 @@ include ../config.mk
 CFLAGS += -I../libixp -I../libcext
 LDFLAGS += -L../libixp -lixp -L../libcext -lcext
 
-SRC = blitz.c color.c font.c input.c label.c tile.c
+SRC = blitz.c color.c font.c input.c tile.c
 OBJ = ${SRC:.c=.o}
 
 all: liblitz.a

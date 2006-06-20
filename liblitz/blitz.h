@@ -61,19 +61,6 @@ struct BlitzWidget {
 	void (*draw)(BlitzWidget *);
 };
 
-/* obsolete, will be replaced soon */
-typedef struct {
-	BlitzAlign align;
-	Drawable drawable;
-	GC gc;
-	BlitzColor color;
-	BlitzFont font;
-	XRectangle rect;	/* relative rect */
-	XRectangle *notch;	/* relative notch rect */
-	char *data;
-} BlitzDraw;
-/***/
-
 Blitz __blitz;
 
 /* blitz.c */
@@ -82,10 +69,6 @@ Bool blitz_x11_event(XEvent *ev);
 
 /* color.c */
 int blitz_loadcolor(BlitzColor *c);
-
-/* label.c */
-void blitz_drawlabel(BlitzDraw *d);
-void blitz_drawborder(BlitzDraw *d);
 
 /* input.c */
 BlitzWidget *blitz_create_input(Drawable drawable, GC gc, BlitzFont *font);

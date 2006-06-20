@@ -40,7 +40,7 @@ static unsigned int curroff = 0;
 static unsigned int cmdw = 0;
 static unsigned int twidth = 0;
 static unsigned int cwidth = 0;
-static BlitzDraw draw = { 0 };
+static BlitzWidget *draw = nil;
 static const int seek = 30;		/* 30px */
 
 static void draw_menu(void);
@@ -71,7 +71,7 @@ update_offsets()
 		return;
 
 	for(i = curroff; i < item.size; i++) {
-		tw = blitz_textwidth(&draw.font, item.data[i]);
+		tw = blitz_textwidth(draw->font, item.data[i]);
 		if(tw > irect.width / 3)
 			tw = irect.width / 3;
 		w += tw + irect.height;
@@ -82,7 +82,7 @@ update_offsets()
 
 	w = cmdw + 2 * seek;
 	for(i = curroff; i > 0; i--) {
-		tw = blitz_textwidth(&draw.font, item.data[i]);
+		tw = blitz_textwidth(draw->font, item.data[i]);
 		if(tw > irect.width / 3)
 			tw = irect.width / 3;
 		w += tw + irect.height;
@@ -129,69 +129,67 @@ draw_menu()
 {
 	unsigned int i, offx = 0;
 
-	draw.align = WEST;
+	draw->align = WEST;
 
-	draw.rect = irect;
-	draw.rect.x = 0;
-	draw.rect.y = 0;
-	draw.color = normcolor;
-	draw.data = nil;
-	blitz_drawlabel(&draw);
+	draw->rect = irect;
+	draw->rect.x = 0;
+	draw->rect.y = 0;
+	draw->color = normcolor;
+	draw->text = nil;
+	draw->draw(draw);
 
 	/* print command */
 	if(!title || text[0]) {
-		draw.data = text;
-		draw.color = normcolor;
+		draw->text = text;
+		draw->color = normcolor;
 		cmdw = cwidth;
 		if(cmdw && item.size)
-			draw.rect.width = cmdw;
-		blitz_drawlabel(&draw);
+			draw->rect.width = cmdw;
+		draw->draw(draw);
 	}
 	else {
 		cmdw = twidth;
-		draw.data = title;
-		draw.color = selcolor;
-		draw.rect.width = cmdw;
-		blitz_drawlabel(&draw);
-		blitz_drawborder(&draw);
+		draw->text = title;
+		draw->color = selcolor;
+		draw->rect.width = cmdw;
+		draw->draw(draw);
 	}
-	offx += draw.rect.width;
+	offx += draw->rect.width;
 
-	draw.align = CENTER;
+	draw->align = CENTER;
 	if(item.size) {
-		draw.color = normcolor;
-		draw.data = prevoff < curroff ? "<" : nil;
-		draw.rect.x = offx;
-		draw.rect.width = seek;
-		offx += draw.rect.width;
-		blitz_drawlabel(&draw);
+		draw->color = normcolor;
+		draw->text = prevoff < curroff ? "<" : nil;
+		draw->rect.x = offx;
+		draw->rect.width = seek;
+		offx += draw->rect.width;
+		draw->draw(draw);
 
 		/* determine maximum items */
 		for(i = curroff; i < nextoff; i++) {
-			draw.data = item.data[i];
-			draw.rect.x = offx;
-			draw.rect.width = blitz_textwidth(&draw.font, draw.data);
-			if(draw.rect.width > irect.width / 3)
-				draw.rect.width = irect.width / 3;
-			draw.rect.width += irect.height;
+			draw->text = item.data[i];
+			draw->rect.x = offx;
+			draw->rect.width = blitz_textwidth(draw->font, draw->text);
+			if(draw->rect.width > irect.width / 3)
+				draw->rect.width = irect.width / 3;
+			draw->rect.width += irect.height;
 			if(sel == i) {
-				draw.color = selcolor;
-				blitz_drawlabel(&draw);
-				blitz_drawborder(&draw);
+				draw->color = selcolor;
+				draw->draw(draw);
 			} else {
-				draw.color = normcolor;
-				blitz_drawlabel(&draw);
+				draw->color = normcolor;
+				draw->draw(draw);
 			}
-			offx += draw.rect.width;
+			offx += draw->rect.width;
 		}
 
-		draw.color = normcolor;
-		draw.data = item.size > nextoff ? ">" : nil;
-		draw.rect.x = irect.width - seek;
-		draw.rect.width = seek;
-		blitz_drawlabel(&draw);
+		draw->color = normcolor;
+		draw->text = item.size > nextoff ? ">" : nil;
+		draw->rect.x = irect.width - seek;
+		draw->rect.width = seek;
+		draw->draw(draw);
 	}
-	XCopyArea(dpy, draw.drawable, win, draw.gc, 0, 0, irect.width,
+	XCopyArea(dpy, draw->drawable, win, draw->gc, 0, 0, irect.width,
 			irect.height, 0, 0);
 	XSync(dpy, False);
 }
@@ -346,6 +344,9 @@ main(int argc, char *argv[])
 	int i;
 	XSetWindowAttributes wa;
 	char *maxname, *p;
+	BlitzFont font;
+	GC gc;
+	Drawable pmap;
 	XEvent ev;
 
 	/* command line args */
@@ -387,10 +388,11 @@ main(int argc, char *argv[])
 
 	/* set font and colors */
 	blitz_x11_init(dpy);
-	draw.font.fontstr = getenv("WMII_FONT");
-	if (!draw.font.fontstr)
-		draw.font.fontstr = strdup(BLITZ_FONT);
-	blitz_loadfont(&draw.font);
+	
+	font.fontstr = getenv("WMII_FONT");
+	if (!font.fontstr)
+		font.fontstr = strdup(BLITZ_FONT);
+	blitz_loadfont(&font);
 
 	if((p = getenv("WMII_NORMCOLORS")))
 		cext_strlcpy(normcolor.colstr, p, sizeof(normcolor.colstr));
@@ -410,7 +412,7 @@ main(int argc, char *argv[])
 		| SubstructureRedirectMask | SubstructureNotifyMask;
 
 	irect.width = DisplayWidth(dpy, screen);
-	irect.height = draw.font.ascent + draw.font.descent + 4;
+	irect.height = font.ascent + font.descent + 4;
 	irect.y = DisplayHeight(dpy, screen) - irect.height;
 	irect.x = 0;
 
@@ -422,19 +424,20 @@ main(int argc, char *argv[])
 	XSync(dpy, False);
 
 	/* pixmap */
-	draw.gc = XCreateGC(dpy, win, 0, 0);
-	draw.drawable = XCreatePixmap(dpy, win, irect.width, irect.height,
+	gc = XCreateGC(dpy, win, 0, 0);
+	pmap = XCreatePixmap(dpy, win, irect.width, irect.height,
 			DefaultDepth(dpy, screen));
 
 	XSync(dpy, False);
 
+	draw = blitz_create_input(pmap, gc, &font);
 	if(maxname)
-		cwidth = blitz_textwidth(&draw.font, maxname) + irect.height;
+		cwidth = blitz_textwidth(draw->font, maxname) + irect.height;
 	if(cwidth > irect.width / 3)
 		cwidth = irect.width / 3;
 
 	if(title) {
-		twidth = blitz_textwidth(&draw.font, title) + irect.height;
+		twidth = blitz_textwidth(draw->font, title) + irect.height;
 		if(twidth > irect.width / 3)
 			twidth = irect.width / 3;
 	}
@@ -466,8 +469,8 @@ main(int argc, char *argv[])
 	}
 
 	XUngrabKeyboard(dpy, CurrentTime);
-	XFreePixmap(dpy, draw.drawable);
-	XFreeGC(dpy, draw.gc);
+	XFreePixmap(dpy, pmap);
+	XFreeGC(dpy, gc);
 	XDestroyWindow(dpy, win);
 	XCloseDisplay(dpy);
 
