@@ -11,6 +11,7 @@
 #include "wm.h"
 
 /* Datatypes: */
+/**************/
 typedef struct Dirtab Dirtab;
 struct Dirtab {
 	char		*name;
@@ -44,24 +45,8 @@ struct FileId {
 	unsigned short	nref;
 };
 
-/* Function prototypes */
-static void dostat(Stat *s, unsigned int len, FileId *f);
-void respond_event(Req *r);
-
-/* Error messages */
-static char
-	Enoperm[] = "permission denied",
-	Enofile[] = "file not found",
-	Ebadvalue[] = "bad value",
-	Einterrupted[] = "interrupted";
-/* Old error messages:
-	Eisdir[] = "file is a directory",
-	Efidinuse[] = "fid in use",
-	Enomode[] = "mode not supported",
-	Enofunc[] = "function not supported",
-*/
-
 /* Constants */
+/*************/
 enum {	/* Dirs */
 	FsRoot, FsDClient, FsDClients, FsDBar,
 	FsDSClient, FsDTag, FsDTags, FsDSTag,
@@ -73,14 +58,18 @@ enum {	/* Dirs */
 	RsFFont, FsFgrabmod
 };
 
-/* QID Macros */
-#define QID(t, i) (((long long)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
-/* Will I ever need these macros?
- *  I don't think so. */
-#define TYPE(q) ((q)>>32&0xFF)
-#define ID(q) ((q)&0xFFFFFFFF)
+/* Error messages */
+static char
+	Enoperm[] = "permission denied",
+	Enofile[] = "file not found",
+	Ebadvalue[] = "bad value",
+	Einterrupted[] = "interrupted";
 
-/* Global vars */
+/* Macros */
+#define QID(t, i) (((long long)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
+
+/* Global Vars */
+/***************/
 FileId *free_fileid = nil;
 Req *pending_event_reads = nil;
 FidLink *pending_event_fids;
@@ -160,6 +149,9 @@ static Dirtab *dirtab[] = {
 	[FsDSTag]	dirtab_stag
 };
 
+/* Utility Functions */
+/*********************/
+
 /* get_file/free_file save and reuse old FileId structs
  * since so many of them are needed for so many
  * purposes */
@@ -181,16 +173,6 @@ get_file() {
 	return temp;
 }
 
-/* Convenience func: */
-/* ugly, though... */
-FileId *
-push_file(FileId ***last) {
-	FileId *ret = get_file();
-	**last = ret;
-	*last = &ret->next;
-	return ret;
-}
-
 static void
 free_file(FileId *f) {
 	if(--f->nref)
@@ -206,6 +188,135 @@ static void
 clone_files(FileId *f) {
 	for(; f; f=f->next)
 		cext_assert(f->nref++);
+}
+
+/* This should be moved to libixp */
+static void
+write_buf(Req *r, void *buf, unsigned int len) {
+	if(r->ifcall.offset >= len)
+		return;
+
+	len -= r->ifcall.offset;
+	if(len > r->ifcall.count)
+		len = r->ifcall.count;
+	/* XXX: mallocz is not really needed here */
+	r->ofcall.data = cext_emallocz(len);
+	memcpy(r->ofcall.data, buf + r->ifcall.offset, len);
+	r->ofcall.count = len;
+}
+
+/* This should be moved to libixp */
+void
+write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
+	unsigned int offset, count;
+
+	offset = (r->fid->omode&OAPPEND) ? *len : r->ifcall.offset;
+	if(offset > *len || r->ifcall.count == 0) {
+		r->ofcall.count = 0;
+		return;
+	}
+
+	count = r->ifcall.count;
+	if(max && (count > max - offset))
+		count = max - offset;
+
+	*len = offset + count;
+	
+	if(max == 0) {
+		*(void **)buf = realloc(*(void **)buf, *len + 1);
+		cext_assert(*(void **)buf);
+		buf = *(void **)buf;
+	}
+		
+	memcpy(buf + offset, r->ifcall.data, count);
+	r->ofcall.count = count;
+	((char *)buf)[offset+count] = '\0'; /* shut up valgrind */
+	/* and save some lines later... we alloc for it anyway */
+}
+
+/* This should be moved to libixp */
+void
+data_to_cstring(Req *r) {
+	unsigned int i;
+	for(i=0; i < r->ifcall.count; i++)
+		if(r->ifcall.data[i] == '\n')
+			break;
+	if(i == r->ifcall.count)
+		r->ifcall.data = realloc(r->ifcall.data, i + 1);
+	cext_assert(r->ifcall.data);
+	r->ifcall.data[i] = '\0';
+}
+
+/* This should be moved to liblitz */
+char *
+parse_colors(char **buf, int *buflen, BlitzColor *col) {
+	unsigned int i;
+	if(*buflen < 23 || 3 != sscanf(*buf, "#%06x #%06x #%06x", &i,&i,&i))
+		return Ebadvalue;
+	(*buflen) -= 23;
+	bcopy(*buf, col->colstr, 23);
+	blitz_loadcolor(col);
+
+	(*buf) += 23;
+	if(**buf == '\n' || **buf == ' ') {
+		(*buf)++;
+		(*buflen)--;
+	}
+	return nil;
+}
+
+void
+write_event(char *buf) {
+	unsigned int len, slen;
+	FidLink *f;
+	FileId *fi;
+	Req *aux;
+
+	if(!(len = strlen(buf)))
+		return;
+	for(f=pending_event_fids; f; f=f->next) {
+		fi = f->fid->aux;
+		slen = fi->buf ? strlen(fi->buf) : 0;
+		fi->buf = realloc(fi->buf, slen + len + 1);
+		fi->buf[slen] = '\0'; /* shut up valgring */
+		strcat(fi->buf, buf);
+	}
+	while((aux = pending_event_reads)) {
+		pending_event_reads = pending_event_reads->aux;
+		respond_event(aux);
+	}
+}
+
+void
+respond_event(Req *r) {
+	FileId *f = r->fid->aux;
+	if(f->buf) {
+		r->ofcall.data = f->buf;
+		r->ofcall.count = strlen(f->buf);
+		respond(r, nil);
+		f->buf = nil;
+	}else{
+		r->aux = pending_event_reads;
+		pending_event_reads = r;
+	}
+}
+
+static void
+dostat(Stat *s, unsigned int len, FileId *f) {
+	s->type = 0;
+	s->dev = 0;
+	s->qid.path = QID(f->tab.type, f->id);
+	s->qid.version = 0;
+	s->qid.type = f->tab.qtype;
+	s->mode = f->tab.perm;
+	s->atime = time(nil);
+	s->mtime = time(nil);
+	s->length = len;
+	s->name = f->tab.name;
+	/* XXX This genenv should be called once */
+	s->uid = getenv("USER");
+	s->gid = getenv("USER");
+	s->muid = getenv("USER");
 }
 
 /* All lookups and directory organization should be performed through
@@ -346,6 +457,21 @@ LastItem:
 	return ret;
 }
 
+/* Service Functions */
+/*********************/
+void
+fs_attach(Req *r) {
+	FileId *f = get_file();
+	f->tab = dirtab[FsRoot][0];
+	f->tab.name = strdup("/");
+	f->ref = nil; /* shut up valgrind */
+	r->fid->aux = f;
+	r->fid->qid.type = f->tab.qtype;
+	r->fid->qid.path = QID(f->tab.type, 0);
+	r->ofcall.qid = r->fid->qid;
+	respond(r, nil);
+}
+
 void
 fs_walk(Req *r) {
 	FileId *f, *nf;
@@ -411,21 +537,6 @@ fs_stat(Req *r) {
 
 	ixp_pack_stat(&buf, &size, &s);
 	respond(r, nil);
-}
-
-/* This should be moved to libixp */
-static void
-write_buf(Req *r, void *buf, unsigned int len) {
-	if(r->ifcall.offset >= len)
-		return;
-
-	len -= r->ifcall.offset;
-	if(len > r->ifcall.count)
-		len = r->ifcall.count;
-	/* XXX: mallocz is not really needed here */
-	r->ofcall.data = cext_emallocz(len);
-	memcpy(r->ofcall.data, buf + r->ifcall.offset, len);
-	r->ofcall.count = len;
 }
 
 /* This should probably be factored out like lookup_file
@@ -527,106 +638,6 @@ fs_read(Req *r) {
 		/* should probably be an assertion in the future */
 		respond(r, Enoperm);
 	}
-}
-
-void
-fs_attach(Req *r) {
-	FileId *f = get_file();
-	f->tab = dirtab[FsRoot][0];
-	f->tab.name = strdup("/");
-	f->ref = nil; /* shut up valgrind */
-	r->fid->aux = f;
-	r->fid->qid.type = f->tab.qtype;
-	r->fid->qid.path = QID(f->tab.type, 0);
-	r->ofcall.qid = r->fid->qid;
-	respond(r, nil);
-}
-
-void
-fs_open(Req *r) {
-	FidLink *fl;
-	FileId *f = r->fid->aux;
-	switch(f->tab.type) {
-	case FsFEvent:
-		fl = cext_emallocz(sizeof(FidLink));
-		fl->fid = r->fid;
-		fl->next = pending_event_fids;
-		pending_event_fids = fl;
-		break;
-	}
-	/* XXX */
-	r->ofcall.mode = r->ifcall.mode;
-	respond(r, nil);
-}
-
-void
-fs_freefid(Fid *f) {
-	FileId *id, *tid;
-
-	for(id=f->aux; id; id = tid) {
-		tid = id->next;
-		free_file(id);
-	}
-}
-
-/* This should be moved to libixp */
-void
-write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
-	unsigned int offset, count;
-
-	offset = (r->fid->omode&OAPPEND) ? *len : r->ifcall.offset;
-	if(offset > *len || r->ifcall.count == 0) {
-		r->ofcall.count = 0;
-		return;
-	}
-
-	count = r->ifcall.count;
-	if(max && (count > max - offset))
-		count = max - offset;
-
-	*len = offset + count;
-	
-	if(max == 0) {
-		*(void **)buf = realloc(*(void **)buf, *len + 1);
-		cext_assert(*(void **)buf);
-		buf = *(void **)buf;
-	}
-		
-	memcpy(buf + offset, r->ifcall.data, count);
-	r->ofcall.count = count;
-	((char *)buf)[offset+count] = '\0'; /* shut up valgrind */
-	/* and save some lines later... we alloc for it anyway */
-}
-
-/* This should be moved to libixp */
-void
-data_to_cstring(Req *r) {
-	unsigned int i;
-	for(i=0; i < r->ifcall.count; i++)
-		if(r->ifcall.data[i] == '\n')
-			break;
-	if(i == r->ifcall.count)
-		r->ifcall.data = realloc(r->ifcall.data, i + 1);
-	cext_assert(r->ifcall.data);
-	r->ifcall.data[i] = '\0';
-}
-
-/* This should be moved to liblitz */
-char *
-parse_colors(char **buf, int *buflen, BlitzColor *col) {
-	unsigned int i;
-	if(*buflen < 23 || 3 != sscanf(*buf, "#%06x #%06x #%06x", &i,&i,&i))
-		return Ebadvalue;
-	(*buflen) -= 23;
-	bcopy(*buf, col->colstr, 23);
-	blitz_loadcolor(col);
-
-	(*buf) += 23;
-	if(**buf == '\n' || **buf == ' ') {
-		(*buf)++;
-		(*buflen)--;
-	}
-	return nil;
 }
 
 /* This function needs to be seriously cleaned up */
@@ -737,6 +748,59 @@ fs_write(Req *r) {
 }
 
 void
+fs_open(Req *r) {
+	FidLink *fl;
+	FileId *f = r->fid->aux;
+	switch(f->tab.type) {
+	case FsFEvent:
+		fl = cext_emallocz(sizeof(FidLink));
+		fl->fid = r->fid;
+		fl->next = pending_event_fids;
+		pending_event_fids = fl;
+		break;
+	}
+	/* XXX */
+	r->ofcall.mode = r->ifcall.mode;
+	respond(r, nil);
+}
+
+void
+fs_create(Req *r) {
+	FileId *f = r->fid->aux;
+	switch(f->tab.type) {
+	default:
+		/* XXX: This should be taken care of by the library */
+		return respond(r, Enoperm);
+	case FsDBar:
+		if(!strlen(r->ifcall.name))
+			return respond(r, Ebadvalue);
+		create_bar(f->bar_p, r->ifcall.name);
+		f = lookup_file(f, r->ifcall.name);
+		if(!f)
+			return respond(r, Enofile);
+		r->ofcall.qid.type = f->tab.qtype;
+		r->ofcall.qid.path = QID(f->tab.type, f->id);
+		free_file(f);
+		respond(r, nil);
+		break;
+	}
+}
+
+void
+fs_remove(Req *r) {
+	FileId *f = r->fid->aux;
+	switch(f->tab.type) {
+	default:
+		/* XXX: This should be taken care of by the library */
+		return respond(r, Enoperm);
+	case FsFBar:
+		destroy_bar(f->next->bar_p, f->bar);
+		respond(r, nil);
+		break;
+	}
+}
+
+void
 fs_clunk(Req *r) {
 	Client *c;
 	FidLink **fl, *ft;
@@ -799,91 +863,11 @@ fs_flush(Req *r) {
 }
 
 void
-fs_create(Req *r) {
-	FileId *f = r->fid->aux;
-	switch(f->tab.type) {
-	default:
-		/* XXX: This should be taken care of by the library */
-		return respond(r, Enoperm);
-	case FsDBar:
-		if(!strlen(r->ifcall.name))
-			return respond(r, Ebadvalue);
-		create_bar(f->bar_p, r->ifcall.name);
-		f = lookup_file(f, r->ifcall.name);
-		if(!f)
-			return respond(r, Enofile);
-		r->ofcall.qid.type = f->tab.qtype;
-		r->ofcall.qid.path = QID(f->tab.type, f->id);
-		free_file(f);
-		respond(r, nil);
-		break;
-	}
-}
+fs_freefid(Fid *f) {
+	FileId *id, *tid;
 
-void
-fs_remove(Req *r) {
-	FileId *f = r->fid->aux;
-	switch(f->tab.type) {
-	default:
-		/* XXX: This should be taken care of by the library */
-		return respond(r, Enoperm);
-	case FsFBar:
-		destroy_bar(f->next->bar_p, f->bar);
-		respond(r, nil);
-		break;
+	for(id=f->aux; id; id = tid) {
+		tid = id->next;
+		free_file(id);
 	}
-}
-
-void
-write_event(char *buf) {
-	unsigned int len, slen;
-	FidLink *f;
-	FileId *fi;
-	Req *aux;
-
-	if(!(len = strlen(buf)))
-		return;
-	for(f=pending_event_fids; f; f=f->next) {
-		fi = f->fid->aux;
-		slen = fi->buf ? strlen(fi->buf) : 0;
-		fi->buf = realloc(fi->buf, slen + len + 1);
-		fi->buf[slen] = '\0'; /* shut up valgring */
-		strcat(fi->buf, buf);
-	}
-	while((aux = pending_event_reads)) {
-		pending_event_reads = pending_event_reads->aux;
-		respond_event(aux);
-	}
-}
-
-void
-respond_event(Req *r) {
-	FileId *f = r->fid->aux;
-	if(f->buf) {
-		r->ofcall.data = f->buf;
-		r->ofcall.count = strlen(f->buf);
-		respond(r, nil);
-		f->buf = nil;
-	}else{
-		r->aux = pending_event_reads;
-		pending_event_reads = r;
-	}
-}
-
-static void
-dostat(Stat *s, unsigned int len, FileId *f) {
-	s->type = 0;
-	s->dev = 0;
-	s->qid.path = QID(f->tab.type, f->id);
-	s->qid.version = 0;
-	s->qid.type = f->tab.qtype;
-	s->mode = f->tab.perm;
-	s->atime = time(nil);
-	s->mtime = time(nil);
-	s->length = len;
-	s->name = f->tab.name;
-	/* XXX This genenv should be called once */
-	s->uid = getenv("USER");
-	s->gid = getenv("USER");
-	s->muid = getenv("USER");
 }
