@@ -127,10 +127,8 @@ struct Bar {
 	Bar *next;
 	char buf[280];
 	char name[256];
-	char data[256];
-	BlitzColor color;
 	unsigned short id;
-	XRectangle rect;
+	BlitzWidget *bar;
 };
 
 typedef struct Rule Rule;
@@ -196,6 +194,7 @@ Pixmap barpmap;
 Window barwin;
 GC bargc;
 GC xorgc;
+BlitzWidget *bartile;
 XRectangle brect;
 PackedQid root_qid;
 Default def;

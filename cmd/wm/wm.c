@@ -353,6 +353,10 @@ main(int argc, char *argv[])
 
 	barpmap = XCreatePixmap(dpy, barwin, brect.width, brect.height,
 			DefaultDepth(dpy, screen));
+	bartile = blitz_create_tile(barpmap, bargc);
+	bartile->rect = brect;
+	bartile->color = def.normcolor;
+
 	XMapRaised(dpy, barwin);
 	draw_bar();
 	scan_wins();
@@ -362,6 +366,7 @@ main(int argc, char *argv[])
 	if(errstr)
 		fprintf(stderr, "wmii: fatal: %s\n", errstr);
 
+	blitz_destroy_tile(bartile);
 	ixp_server_close(&srv);
 	cleanup();
 	XCloseDisplay(dpy);

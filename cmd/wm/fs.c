@@ -818,10 +818,12 @@ fs_clunk(Req *r) {
 	case FsFBar:
 		buf = f->bar->buf;
 		i = strlen(f->bar->buf);
-		parse_colors(&buf, &i, &f->bar->color);
+		parse_colors(&buf, &i, &f->bar->bar->color);
 		while(buf[i - 1] == '\n')
 			buf[--i] = '\0';
-		strncpy(f->bar->data, buf, 255);
+		if(f->bar->bar->text)
+			free(f->bar->bar->text);
+		f->bar->bar->text = strdup(buf);
 		draw_bar();
 		break;
 	case FsFEvent:
