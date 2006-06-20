@@ -53,9 +53,9 @@ enum {	/* Dirs */
 	/* Files */
 	FsFBar, FsFBorder, FsFCNorm, FsFCSel,
 	FsFCctl, FsFCindex, FsFColRules, FsFCtags,
-	FsFEvent, FsFFont, FsFKeys, FsFRctl, FsFTname,
-	FsFTagRules, FsFTctl, FsFTindex, FsFprops,
-	RsFFont, FsFgrabmod
+	FsFEvent, FsFFont, FsFKeys, FsFRctl,
+	FsFTagRules, FsFTctl, FsFTindex, FsFTname,
+	FsFgrabmod, FsFprops, RsFFont
 };
 
 /* Error messages */
@@ -292,7 +292,7 @@ write_event(char *buf) {
 		fi = f->fid->aux;
 		slen = fi->buf ? strlen(fi->buf) : 0;
 		fi->buf = realloc(fi->buf, slen + len + 1);
-		fi->buf[slen] = '\0'; /* shut up valgring */
+		fi->buf[slen] = '\0'; /* shut up valgrind */
 		strcat(fi->buf, buf);
 	}
 	while((aux = pending_event_reads)) {
@@ -811,10 +811,11 @@ fs_clunk(Req *r) {
 	FileId *f = r->fid->aux;
 
 	switch(f->tab.type) {
+	case FsFColRules:
+		update_rules(&f->rule->rule, f->rule->string);
+		break;
 	case FsFTagRules:
 		update_rules(&f->rule->rule, f->rule->string);
-		/* no break */
-	case FsFColRules:
 		for(c=client; c; c=c->next)
 			apply_rules(c);
 		update_views();

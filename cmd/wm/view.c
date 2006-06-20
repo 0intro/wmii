@@ -417,9 +417,7 @@ message_view(View *v, char *message) {
 	}
 	if(!strncmp(message, "select ", 7)) {
 		message += 7;
-		if(v->sel->sel)
-			return select_area(v->sel, message);
-		return Ebadvalue;
+		return select_area(v->sel, message);
 	}
 	return Ebadvalue;
 }

@@ -86,13 +86,12 @@ select_area(Area *a, char *arg)
 	static char Ebadvalue[] = "bad value";
 
 	v = a->view;
-	v->revert = a;
 	f = a->sel;
 
 	if(!strncmp(arg, "toggle", 7)) {
 		if(a != v->area)
 			new = v->area;
-		else if(v->revert && v->revert != v->area)
+		else if(v->revert)
 			new = v->revert;
 		else
 			new = v->area->next;
@@ -130,6 +129,8 @@ select_area(Area *a, char *arg)
 	if(new->sel)
 		focus_client(new->sel->client, True);
 	v->sel = new;
+	if(a != v->area)
+		v->revert = a;
 	draw_clients();
 	return nil;
 }
