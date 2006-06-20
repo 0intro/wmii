@@ -60,10 +60,10 @@ enum {	/* Dirs */
 
 /* Error messages */
 static char
-	Enoperm[] = "permission denied",
-	Enofile[] = "file not found",
-	Ebadvalue[] = "bad value",
-	Einterrupted[] = "interrupted";
+	*Enoperm = "permission denied",
+	*Enofile = "file not found",
+	*Ebadvalue = "bad value",
+	*Einterrupted = "interrupted";
 
 /* Macros */
 #define QID(t, i) (((long long)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
@@ -266,6 +266,20 @@ parse_colors(char **buf, int *buflen, BlitzColor *col) {
 }
 
 void
+respond_event(Req *r) {
+	FileId *f = r->fid->aux;
+	if(f->buf) {
+		r->ofcall.data = f->buf;
+		r->ofcall.count = strlen(f->buf);
+		respond(r, nil);
+		f->buf = nil;
+	}else{
+		r->aux = pending_event_reads;
+		pending_event_reads = r;
+	}
+}
+
+void
 write_event(char *buf) {
 	unsigned int len, slen;
 	FidLink *f;
@@ -287,20 +301,6 @@ write_event(char *buf) {
 	}
 }
 
-void
-respond_event(Req *r) {
-	FileId *f = r->fid->aux;
-	if(f->buf) {
-		r->ofcall.data = f->buf;
-		r->ofcall.count = strlen(f->buf);
-		respond(r, nil);
-		f->buf = nil;
-	}else{
-		r->aux = pending_event_reads;
-		pending_event_reads = r;
-	}
-}
-
 static void
 dostat(Stat *s, unsigned int len, FileId *f) {
 	s->type = 0;
@@ -319,6 +319,8 @@ dostat(Stat *s, unsigned int len, FileId *f) {
 	s->muid = getenv("USER");
 }
 
+/* lookup_file */
+/***************/
 /* All lookups and directory organization should be performed through
  * lookup_file, mostly through the dirtabs[] tree. */
 static FileId *
