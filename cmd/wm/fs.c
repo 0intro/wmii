@@ -256,7 +256,7 @@ void
 respond_event(Req *r) {
 	FileId *f = r->fid->aux;
 	if(f->buf) {
-		r->ofcall.data = f->buf;
+		r->ofcall.data = (void *)f->buf;
 		r->ofcall.count = strlen(f->buf);
 		respond(r, nil);
 		f->buf = nil;
@@ -679,7 +679,7 @@ fs_write(Req *r) {
 		i = r->ifcall.count;
 		if((errstr = parse_colors((char **)&buf, (int *)&i, f->col)))
 			return respond(r, errstr);
-		draw_clients();
+		draw_frames();
 		r->ofcall.count = r->ifcall.count - i;
 		return respond(r, nil);
 	case FsFCctl:
@@ -703,7 +703,7 @@ fs_write(Req *r) {
 		data_to_cstring(r);
 		if(!r->ifcall.data || r->ifcall.count == 0)
 			return respond(r, nil);
-		if((errstr = message_root(r->ifcall.data)))
+		if((errstr = message_root((char *)r->ifcall.data)))
 			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
@@ -720,11 +720,11 @@ fs_write(Req *r) {
 		/* XXX: This is too long/specific; it needs to be moved */
 		{
 			unsigned long mod;
-			mod = mod_key_of_str(r->ifcall.data);
+			mod = mod_key_of_str((char *)r->ifcall.data);
 			if((mod != Mod1Mask) && (mod != Mod2Mask) && (mod != Mod3Mask)
 					&& (mod != Mod4Mask) && (mod != Mod5Mask))
 				return respond(r, Ebadvalue);
-			cext_strlcpy(def.grabmod, r->ifcall.data, sizeof(def.grabmod));
+			cext_strlcpy(def.grabmod, (char *)r->ifcall.data, sizeof(def.grabmod));
 			def.mod = mod;
 			if(view)
 				restack_view(sel);

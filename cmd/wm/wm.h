@@ -257,7 +257,6 @@ Client *client_of_id(unsigned short id);
 int idx_of_client_id(unsigned short id);
 Client *client_of_win(Window w);
 int idx_of_client(Client *c);
-void draw_clients();
 void update_client_grab(Client *c, Bool is_sel);
 void apply_rules(Client *c);
 void apply_tags(Client *c, const char *tags);
@@ -284,6 +283,7 @@ int idx_of_frame(Frame *f);
 Frame *frame_of_id(Area *a, unsigned short id);
 Client *frame_of_win(Window w);
 void draw_frame(Frame *f);
+void draw_frames();
 void resize_frame(Frame *f);
 void update_frame_widget_colors(Frame *f);
 

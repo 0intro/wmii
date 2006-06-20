@@ -131,7 +131,7 @@ select_area(Area *a, char *arg)
 	v->sel = new;
 	if(a != v->area)
 		v->revert = a;
-	draw_clients();
+	draw_frames();
 	return nil;
 }
 

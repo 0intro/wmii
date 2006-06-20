@@ -214,7 +214,7 @@ handle_enternotify(XEvent *e)
 	}
 	else if(ev->window == root) {
 		sel_screen = True;
-		draw_clients();
+		draw_frames();
 	}
 }
 
@@ -225,7 +225,7 @@ handle_leavenotify(XEvent *e)
 
 	if((ev->window == root) && !ev->same_screen) {
 		sel_screen = True;
-		draw_clients();
+		draw_frames();
 	}
 }
 

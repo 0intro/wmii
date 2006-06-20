@@ -112,7 +112,7 @@ focus_view(View *v)
 	if((c = sel_client()))
 		focus_client(c, True);
 
-	draw_clients();
+	draw_frames();
 	XSync(dpy, False);
 	XUngrabServer(dpy);
 	flush_masked_events(EnterWindowMask);

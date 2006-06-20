@@ -192,3 +192,15 @@ draw_frame(Frame *f)
 	f->titlebar->draw(f->titlebar);
 	f->posbar->draw(f->posbar);
 }
+
+void
+draw_frames()
+{
+	Client *c;
+	for(c=client; c; c=c->next)
+		if(c->sel && (c->sel->area->view == sel)) {
+			update_frame_widget_colors(c->sel);
+			draw_frame(c->sel);
+		}
+}
+

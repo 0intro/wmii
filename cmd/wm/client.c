@@ -717,17 +717,6 @@ client_of_win(Window w)
 	return c;
 }
 
-void
-draw_clients()
-{
-	Client *c;
-	for(c=client; c; c=c->next)
-		if(c->sel && (c->sel->area->view == sel)) {
-			update_frame_widget_colors(c->sel);
-			draw_frame(c->sel);
-		}
-}
-
 static Bool
 permit_tag(const char *tag)
 {
