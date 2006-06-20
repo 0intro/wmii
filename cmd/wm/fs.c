@@ -19,11 +19,18 @@ struct Dirtab {
 	unsigned int	perm;
 };
 
+typedef struct FidLink FidLink;
+struct FidLink {
+	FidLink *next;
+	Fid *fid;
+};
+
 typedef struct FileId FileId;
 struct FileId {
 	FileId		*next;
 	union {
 		void	*ref;
+		char	*buf;
 		Bar	*bar;
 		Bar	**bar_p;
 		View	*view;
@@ -39,6 +46,7 @@ struct FileId {
 
 /* Function prototypes */
 static void dostat(Stat *s, unsigned int len, FileId *f);
+void respond_event(Req *r);
 
 /* Error messages */
 static char
@@ -76,6 +84,7 @@ enum {	/* Dirs */
 /* Global vars */
 FileId *free_fileid = nil;
 Req *pending_event_reads = nil;
+FidLink *pending_event_fids;
 P9Srv p9srv = {
 	.open=	fs_open,
 	.walk=	fs_walk,
@@ -495,8 +504,7 @@ fs_read(Req *r) {
 			write_buf(r, (void *)buf, n);
 			return respond(r, nil);
 		case FsFEvent:
-			r->aux = pending_event_reads;
-			pending_event_reads = r;
+			respond_event(r);
 			return;
 		}
 		/* XXX: This should be taken care of by open */
@@ -510,6 +518,7 @@ fs_attach(Req *r) {
 	FileId *f = get_file();
 	f->tab = dirtab[FsRoot][0];
 	f->tab.name = strdup("/");
+	f->ref = nil; /* shut up valgrind */
 	r->fid->aux = f;
 	r->fid->qid.type = f->tab.qtype;
 	r->fid->qid.path = QID(f->tab.type, 0);
@@ -519,6 +528,16 @@ fs_attach(Req *r) {
 
 void
 fs_open(Req *r) {
+	FidLink *fl;
+	FileId *f = r->fid->aux;
+	switch(f->tab.type) {
+	case FsFEvent:
+		fl = cext_emallocz(sizeof(FidLink));
+		fl->fid = r->fid;
+		fl->next = pending_event_fids;
+		pending_event_fids = fl;
+		break;
+	}
 	/* XXX */
 	r->ofcall.mode = r->ifcall.mode;
 	respond(r, nil);
@@ -564,15 +583,13 @@ write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
 void
 data_to_cstring(Req *r) {
 	unsigned int i;
-	if(r->ifcall.count) {
-		for(i=0; i < r->ifcall.count; i++)
-			if(r->ifcall.data[i] == '\n')
-				break;
-		if(i == r->ifcall.count)
-			r->ifcall.data = realloc(r->ifcall.data, i + 1);
-		cext_assert(r->ifcall.data);
-		r->ifcall.data[i] = '\0';
-	}
+	for(i=0; i < r->ifcall.count; i++)
+		if(r->ifcall.data[i] == '\n')
+			break;
+	if(i == r->ifcall.count)
+		r->ifcall.data = realloc(r->ifcall.data, i + 1);
+	cext_assert(r->ifcall.data);
+	r->ifcall.data[i] = '\0';
 }
 
 /* This should be moved to liblitz */
@@ -695,6 +712,7 @@ fs_write(Req *r) {
 void
 fs_clunk(Req *r) {
 	Client *c;
+	FidLink **fl;
 	char *buf;
 	int i;
 	FileId *f = r->fid->aux;
@@ -726,6 +744,13 @@ fs_clunk(Req *r) {
 		strncpy(f->bar->data, buf, 255);
 		draw_bar();
 		break;
+	case FsFEvent:
+		for(fl=&pending_event_fids; *fl; fl=&(*fl)->next)
+			if((*fl)->fid == r->fid) {
+				*fl = (*fl)->next;
+				break;
+			}
+		break;
 	}
 	respond(r, nil);
 }
@@ -733,13 +758,12 @@ fs_clunk(Req *r) {
 void
 fs_flush(Req *r) {
 	Req **t;
-	for(t=&pending_event_reads; *t; t=(Req **)&(*t)->aux) {
+	for(t=&pending_event_reads; *t; t=(Req **)&(*t)->aux)
 		if(*t == r->oldreq) {
 			*t = (*t)->aux;
 			respond(r->oldreq, Einterrupted);
 			break;
 		}
-	}
 	respond(r, nil);
 }
 
@@ -753,7 +777,7 @@ fs_create(Req *r) {
 	case FsDBar:
 		if(!strlen(r->ifcall.name))
 			return respond(r, Ebadvalue);
-		create_bar(r->ifcall.name);
+		create_bar(f->bar_p, r->ifcall.name);
 		f = lookup_file(f, r->ifcall.name);
 		if(!f)
 			return respond(r, Enofile);
@@ -773,7 +797,7 @@ fs_remove(Req *r) {
 		/* XXX: This should be taken care of by the library */
 		return respond(r, Enoperm);
 	case FsFBar:
-		destroy_bar(f->bar);
+		destroy_bar(f->next->bar_p, f->bar);
 		respond(r, nil);
 		break;
 	}
@@ -781,16 +805,37 @@ fs_remove(Req *r) {
 
 void
 write_event(char *buf) {
+	unsigned int len, slen;
+	FidLink *f;
+	FileId *fi;
 	Req *aux;
-	unsigned int len;
+
 	if(!(len = strlen(buf)))
 		return;
-	for(; pending_event_reads; pending_event_reads=aux) {
-		aux = pending_event_reads->aux;
-		/* XXX: It would be nice if strdup wasn't necessary here */
-		pending_event_reads->ofcall.data = (void *)strdup(buf);
-		pending_event_reads->ofcall.count = len;
-		respond(pending_event_reads, nil);
+	for(f=pending_event_fids; f; f=f->next) {
+		fi = f->fid->aux;
+		slen = fi->buf ? strlen(fi->buf) : 0;
+		fi->buf = realloc(fi->buf, slen + len + 1);
+		fi->buf[slen] = '\0'; /* shut up valgring */
+		strcat(fi->buf, buf);
+	}
+	while((aux = pending_event_reads)) {
+		pending_event_reads = pending_event_reads->aux;
+		respond_event(aux);
+	}
+}
+
+void
+respond_event(Req *r) {
+	FileId *f = r->fid->aux;
+	if(f->buf) {
+		r->ofcall.data = f->buf;
+		r->ofcall.count = strlen(f->buf);
+		respond(r, nil);
+		f->buf = nil;
+	}else{
+		r->aux = pending_event_reads;
+		pending_event_reads = r;
 	}
 }
 

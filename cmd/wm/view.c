@@ -52,14 +52,18 @@ destroy_view(View *v)
 	Area *a;
 	View **i;
 
-	for(a=v->area; a; a=a->next)
+	while((a = v->area)) {
+		v->area = a->next;
 		destroy_area(a);
+	};
 
-	for(i=&view; *i && *i != v; i=&(*i)->next);
+	for(i=&view; *i; i=&(*i)->next)
+		if(*i == v) break;
 	*i = v->next;
 
 	if(sel == v)
-		for(sel=view; sel && sel->next != *i; sel=sel->next);
+		for(sel=view; sel; sel=sel->next)
+			if(sel->next == *i) break;
 
 	snprintf(buf, sizeof(buf), "DestroyTag %s\n", v->name);
 	write_event(buf);

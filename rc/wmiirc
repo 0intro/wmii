@@ -118,17 +118,17 @@ do
 			exit
 		fi;;
 	CreateTag)
-		wmiir create /bar/$1
-		xwrite /bar/$1/data $1
+		wmiir create /lbar/$1
+		xwrite /lbar/$1 $WMII_SELCOLORS $1
 		;;
 	DestroyTag)
-		wmiir remove /bar/$1
+		wmiir remove /lbar/$1
 		;;
 	FocusTag)
-		xwrite /bar/$1/colors $WMII_SELCOLORS
+		xwrite /lbar/$1 $WMII_SELCOLORS $1
 		;;
 	UnfocusTag)
-		xwrite /bar/$1/colors $WMII_NORMCOLORS
+		xwrite /lbar/$1 $WMII_NORMCOLORS $1
 		;;
 	BarClick)
 		xwrite /ctl view "$1";;

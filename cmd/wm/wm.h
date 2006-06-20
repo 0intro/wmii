@@ -221,8 +221,8 @@ int idx_of_area(Area *a);
 Client *sel_client_of_area(Area *a);
 
 /* bar.c */
-Bar *create_bar(char *name);
-void destroy_bar(Bar *b);
+Bar *create_bar(Bar **b_link, char *name);
+void destroy_bar(Bar **b_link, Bar *b);
 void draw_bar();
 Bar *bar_of_id(unsigned short id);
 void resize_bar();

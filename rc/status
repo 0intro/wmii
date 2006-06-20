@@ -6,9 +6,9 @@ xwrite() {
 	echo -n "$@" | wmiir write "$file"
 }
 
-wmiir remove /lbar/status 2>/dev/null && sleep 2
-wmiir create /lbar/status
-while xwrite /lbar/status "$WMII_NORMCOLORS" `date` `uptime | sed 's/.*://; s/,//g'`
+wmiir remove /rbar/status 2>/dev/null && sleep 2
+wmiir create /rbar/status
+while xwrite /rbar/status "$WMII_NORMCOLORS" `date` `uptime | sed 's/.*://; s/,//g'`
 do
 	sleep 1
 done
