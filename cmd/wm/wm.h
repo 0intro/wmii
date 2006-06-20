@@ -207,6 +207,8 @@ unsigned int num_lock_mask;
 Bool sel_screen;
 void (*handler[LASTEvent]) (XEvent *);
 
+/* wm.c */
+char *message_root(char *message);
 
 /* area.c */
 Area *create_area(View *v, Area *pos, unsigned int w);

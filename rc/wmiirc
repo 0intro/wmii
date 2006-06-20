@@ -131,7 +131,7 @@ do
 		fi;;
 	CreateTag)
 		wmiir create /lbar/$1
-		xwrite /lbar/$1 $WMII_SELCOLORS $1
+		xwrite /lbar/$1 $WMII_NORMCOLORS $1
 		;;
 	DestroyTag)
 		wmiir remove /lbar/$1

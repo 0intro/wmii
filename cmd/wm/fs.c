@@ -53,8 +53,7 @@ static char
 	Enoperm[] = "permission denied",
 	Enofile[] = "file not found",
 	Ebadvalue[] = "bad value",
-	Einterrupted[] = "interrupted",
-	Enocommand[] = "command not supported";
+	Einterrupted[] = "interrupted";
 /* Old error messages:
 	Eisdir[] = "file is a directory",
 	Efidinuse[] = "fid in use",
@@ -71,7 +70,7 @@ enum {	/* Dirs */
 	FsFCctl, FsFCindex, FsFColRules, FsFCtags,
 	FsFEvent, FsFFont, FsFKeys, FsFRctl, FsFTname,
 	FsFTagRules, FsFTctl, FsFTindex, FsFprops,
-	RsFFont
+	RsFFont, FsFgrabmod
 };
 
 /* QID Macros */
@@ -112,6 +111,7 @@ dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
 		  {"colrules",	QTFILE,		FsFColRules,	0600 }, 
 		  {"event",	QTFILE,		FsFEvent,	0600 },
 		  {"font",	QTFILE,		FsFFont,	0600 },
+		  {"grabmod",	QTFILE,		FsFgrabmod,	0600 },
 		  {"keys",	QTFILE,		FsFKeys,	0600 },
 		  {"normcolors",	QTFILE,		FsFCNorm,	0600 },
 		  {"selcolors",	QTFILE,		FsFCSel,	0600 },
@@ -494,6 +494,9 @@ fs_read(Req *r) {
 		case FsFTname:
 			write_buf(r, (void *)f->view->name, strlen(f->view->name));
 			return respond(r, nil);
+		case FsFgrabmod:
+			write_buf(r, (void *)def.grabmod, strlen(def.grabmod));
+			return respond(r, nil);
 		case FsFCindex:
 			if(r->ifcall.offset)
 				return respond(r, nil);
@@ -587,6 +590,9 @@ write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
 	}
 		
 	memcpy(buf + offset, r->ifcall.data, count);
+	r->ofcall.count = count;
+	((char *)buf)[offset+count] = '\0'; /* shut up valgrind */
+	/* and save some lines later... we alloc for it anyway */
 }
 
 /* This should be moved to libixp */
@@ -640,7 +646,6 @@ fs_write(Req *r) {
 		data_to_cstring(r);
 		i=strlen(def.font.fontstr);
 		write_to_buf(r, &def.font.fontstr, &i, 0);
-		def.font.fontstr[i] = '\0';
 		blitz_loadfont(&def.font);
 		r->ofcall.count = i- r->ifcall.offset;
 		return respond(r, nil);
@@ -648,21 +653,20 @@ fs_write(Req *r) {
 		data_to_cstring(r);
 		i=strlen(f->client->tags);
 		write_to_buf(r, &f->client->tags, &i, 255);
-		f->client->tags[i] = '\0';
 		r->ofcall.count = i- r->ifcall.offset;
 		return respond(r, nil);
 	case FsFBorder:
 		data_to_cstring(r);
 		i = (unsigned int)strtol((char *)r->ifcall.data, &buf, 10);
-		if(buf)
+		if(*buf)
 			return respond(r, Ebadvalue);
 		def.border = i;
+		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	case FsFBar:
 		/* XXX: This should validate after each write */
 		i = strlen(f->bar->buf);
 		write_to_buf(r, &f->bar->buf, &i, 279);
-		f->bar->buf[i] = '\0';
 		r->ofcall.count = i- r->ifcall.offset;
 		return respond(r, nil);
 	case FsFCSel:
@@ -697,14 +701,8 @@ fs_write(Req *r) {
 		data_to_cstring(r);
 		if(!r->ifcall.data || r->ifcall.count == 0)
 			return respond(r, nil);
-
-		/* XXX: This needs to be moved to client_message(char *) */
-		if(!strncmp((char *)r->ifcall.data, "quit", 5))
-			srv.running = 0;
-		else if(!strncmp((char *)r->ifcall.data, "view ", 5))
-			select_view((char *)&r->ifcall.data[5]);
-		else
-			return respond(r, Enocommand);
+		if((errstr = message_root(r->ifcall.data)))
+			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	case FsFEvent:
@@ -715,6 +713,22 @@ fs_write(Req *r) {
 		free(buf);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
+	case FsFgrabmod:
+		data_to_cstring(r);
+		/* XXX: This is too long/specific; it needs to be moved */
+		{
+			unsigned long mod;
+			mod = mod_key_of_str(r->ifcall.data);
+			if((mod != Mod1Mask) && (mod != Mod2Mask) && (mod != Mod3Mask)
+					&& (mod != Mod4Mask) && (mod != Mod5Mask))
+				return respond(r, Ebadvalue);
+			cext_strlcpy(def.grabmod, r->ifcall.data, sizeof(def.grabmod));
+			def.mod = mod;
+			if(view)
+				restack_view(sel);
+			r->ofcall.count = r->ifcall.count;
+			return respond(r, nil);
+		}
 	}
 	respond(r, Enoperm);
 }
@@ -722,7 +736,7 @@ fs_write(Req *r) {
 void
 fs_clunk(Req *r) {
 	Client *c;
-	FidLink **fl;
+	FidLink **fl, *ft;
 	char *buf;
 	int i;
 	FileId *f = r->fid->aux;
@@ -757,7 +771,11 @@ fs_clunk(Req *r) {
 	case FsFEvent:
 		for(fl=&pending_event_fids; *fl; fl=&(*fl)->next)
 			if((*fl)->fid == r->fid) {
+				ft = *fl;
 				*fl = (*fl)->next;
+				f = ft->fid->aux;
+				free(f->buf);
+				free(ft);
 				break;
 			}
 		break;

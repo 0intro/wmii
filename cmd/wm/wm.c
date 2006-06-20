@@ -211,6 +211,22 @@ cleanup()
 	XSync(dpy, False);
 }
 
+char *
+message_root(char *message)
+{
+	static char Ebadcmd[] = "bad command";
+
+	if(!strncmp(message, "quit", 5)) {
+		srv.running = 0;
+		return nil;
+	}
+	else if(!strncmp(message, "view ", 5)) {
+		select_view(&message[5]);
+		return nil;
+	}
+	return Ebadcmd;
+}
+
 int
 main(int argc, char *argv[])
 {
