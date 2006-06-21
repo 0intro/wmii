@@ -301,6 +301,8 @@ read_root_ctl()
 	enum { BUF_SIZE = 2048 };
 	static char buf[BUF_SIZE];
 	unsigned int i = 0;
+	if(sel)
+		i += snprintf(&buf[i], (BUF_SIZE - i), "view %s\n", sel->name);
 	i += snprintf(&buf[i], (BUF_SIZE - i), "selcolors %s\n", def.selcolor.colstr);
 	i += snprintf(&buf[i], (BUF_SIZE - i), "normcolors %s\n", def.normcolor.colstr);
 	i += snprintf(&buf[i], (BUF_SIZE - i), "font %s\n", def.font.fontstr);
