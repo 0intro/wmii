@@ -201,7 +201,7 @@ typedef struct Fcall {
 			unsigned long long	offset; /* +Tread */
 			/* +Rread */
 			unsigned int	count; /* +Tread */
-			unsigned char	*data;
+			char		*data;
 		};
 		struct { /* Twstat, Rstat */
 			unsigned short	nstat;

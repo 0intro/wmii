@@ -51,7 +51,7 @@ enum {	/* Dirs */
 	FsRoot, FsDClient, FsDClients, FsDBars,
 	FsDTag, FsDTags,
 	/* Files */
-	FsFBar, FsFBorder, FsFCctl, FsFColRules,
+	FsFBar, FsFCctl, FsFColRules,
 	FsFCtags, FsFEvent, FsFKeys, FsFRctl,
 	FsFTagRules, FsFTctl, FsFTindex,
 	FsFprops
@@ -96,7 +96,6 @@ dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
 		  {"client",	QTDIR,		FsDClients,	0500|DMDIR },
 		  {"tag",	QTDIR,		FsDTags,	0500|DMDIR },
 		  {"ctl",	QTAPPEND,	FsFRctl,	0600|DMAPPEND },
-		  {"border",	QTFILE,		FsFBorder,	0600 }, 
 		  {"colrules",	QTFILE,		FsFColRules,	0600 }, 
 		  {"event",	QTFILE,		FsFEvent,	0600 },
 		  {"keys",	QTFILE,		FsFKeys,	0600 },
@@ -282,6 +281,13 @@ message_root(char *message)
 		if(view)
 			restack_view(sel);
 		return nil;
+	}if(!strncmp(message, "border ", 7)) {
+		message += 7;
+		n = (unsigned int)strtol(message, &message, 10);
+		if(*message)
+			return Ebadvalue;
+		def.border = n;
+		return nil;
 	}
 	return Ebadcmd;
 }
@@ -299,6 +305,7 @@ read_root_ctl()
 	i += snprintf(&buf[i], (BUF_SIZE - i), "normcolors %s\n", def.normcolor.colstr);
 	i += snprintf(&buf[i], (BUF_SIZE - i), "font %s\n", def.font.fontstr);
 	i += snprintf(&buf[i], (BUF_SIZE - i), "grabmod %s\n", def.grabmod);
+	i += snprintf(&buf[i], (BUF_SIZE - i), "border %d\n", def.border);
 	return buf;
 }
 
@@ -409,7 +416,8 @@ lookup_file(FileId *parent, char *name)
 						file->ref = c;
 						file->id = c->id;
 						file->tab = *dir;
-						asprintf(&file->tab.name, "%d", i);
+						file->tab.name = cext_emallocz(16);
+						snprintf(file->tab.name, 16, "%d", i);
 						if(name) goto LastItem;
 					}
 				}
@@ -578,7 +586,7 @@ fs_stat(Req *r) {
 /* This is obviously not a priority, however. -KM */
 void
 fs_read(Req *r) {
-	unsigned char *buf;
+	char *buf;
 	FileId *f, *tf;
 	int n, offset;
 	int size;
@@ -601,7 +609,7 @@ fs_read(Req *r) {
 			if(offset >= r->ifcall.offset) {
 				if(size < n)
 					break;
-				ixp_pack_stat(&buf, &size, &s);
+				ixp_pack_stat((unsigned char **)&buf, &size, &s);
 			}
 			offset += n;
 		}
@@ -641,20 +649,14 @@ fs_read(Req *r) {
 		case FsFCctl:
 			if(r->ifcall.offset)
 				return respond(r, nil);
-			n = asprintf((char **)&r->ofcall.data, "%d", f->index);
-			cext_assert(n >= 0);
-			r->ofcall.count = n;
-			return respond(r, nil);
-		case FsFBorder:
-			if(r->ifcall.offset)
-				return respond(r, nil);
-			n = asprintf((char **)&r->ofcall.data, "%d", def.border);
+			r->ofcall.data = cext_emallocz(16);
+			n = snprintf(r->ofcall.data, 16, "%d", f->index);
 			cext_assert(n >= 0);
 			r->ofcall.count = n;
 			return respond(r, nil);
 		case FsFTindex:
 			buf = view_index(f->view);
-			n = strlen((char *)buf);
+			n = strlen(buf);
 			write_buf(r, (void *)buf, n);
 			return respond(r, nil);
 		case FsFEvent:
@@ -689,14 +691,6 @@ fs_write(Req *r) {
 		write_to_buf(r, &f->client->tags, &i, 255);
 		r->ofcall.count = i- r->ifcall.offset;
 		return respond(r, nil);
-	case FsFBorder:
-		data_to_cstring(r);
-		i = (unsigned int)strtol((char *)r->ifcall.data, &buf, 10);
-		if(*buf)
-			return respond(r, Ebadvalue);
-		def.border = i;
-		r->ofcall.count = r->ifcall.count;
-		return respond(r, nil);
 	case FsFBar:
 		/* XXX: This should validate after each write */
 		i = strlen(f->bar->buf);
@@ -707,7 +701,7 @@ fs_write(Req *r) {
 		data_to_cstring(r);
 		if(r->ifcall.count == 0)
 			return respond(r, nil);
-		if((errstr = message_client(f->client, (char *)r->ifcall.data)))
+		if((errstr = message_client(f->client, r->ifcall.data)))
 			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
@@ -716,7 +710,7 @@ fs_write(Req *r) {
 		if(r->ifcall.count == 0)
 			return respond(r, nil);
 
-		if((errstr = message_view(f->view, (char *)r->ifcall.data)))
+		if((errstr = message_view(f->view, r->ifcall.data)))
 			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
