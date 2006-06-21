@@ -96,7 +96,7 @@ handle_buttonpress(XEvent *e)
 
 	if((c = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
-		if(ev->state & def.mod) {
+		if((ev->state & def.mod) == def.mod) {
 			focus(c, True);
 			switch(ev->button) {
 			case Button1:

@@ -37,7 +37,7 @@ wmiir write /ctl << EOF
 font $WMII_FONT
 selcolors $WMII_SELCOLORS
 normcolors $WMII_NORMCOLORS
-grabmod Mod1
+grabmod $MODKEY
 EOF
 
 # COLUMN RULES

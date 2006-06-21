@@ -250,7 +250,6 @@ char *
 message_root(char *message)
 {
 	unsigned int n;
-	char *errstr;
 
 	if(!strncmp(message, "quit", 5)) {
 		srv.running = 0;
@@ -261,17 +260,11 @@ message_root(char *message)
 	}if(!strncmp(message, "selcolors ", 10)) {
 		message += 10;
 		n = strlen(message);
-		if((errstr = parse_colors(&message, &n, &def.selcolor)))
-			return errstr;
-		if(n) return Ebadvalue;
-		return nil;
+		return parse_colors(&message, &n, &def.selcolor);
 	}if(!strncmp(message, "normcolors ", 11)) {
 		message += 11;
 		n = strlen(message);
-		if((errstr = parse_colors(&message, &n, &def.normcolor)))
-			return errstr;
-		if(n) return Ebadvalue;
-		return nil;
+		return parse_colors(&message, &n, &def.normcolor);
 	}if(!strncmp(message, "font ", 5)) {
 		message += 5;
 		free(def.font.fontstr);
@@ -282,8 +275,7 @@ message_root(char *message)
 		message += 8;
 		unsigned long mod;
 		mod = mod_key_of_str(message);
-		if((mod != Mod1Mask) && (mod != Mod2Mask) && (mod != Mod3Mask)
-				&& (mod != Mod4Mask) && (mod != Mod5Mask))
+		if(!(mod & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)))
 			return Ebadvalue;
 		cext_strlcpy(def.grabmod, message, sizeof(def.grabmod));
 		def.mod = mod;
