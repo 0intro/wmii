@@ -300,7 +300,7 @@ arrange_view(View *v)
 	}
 }
 
-static void
+void
 update_client_views(Client *c)
 {
 	static ViewLink *free_view_links = nil;

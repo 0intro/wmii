@@ -382,6 +382,8 @@ destroy_client(Client *c)
 
 	for(v=view; v; v=v->next)
 		detach_from_view(v, c);
+	*c->tags = '\0';
+	update_client_views(c);
 
 	unmap_client(c);
 

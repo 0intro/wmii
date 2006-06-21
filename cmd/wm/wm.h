@@ -326,6 +326,7 @@ void arrange_view(View *v);
 void scale_view(View *v, float w);
 View *create_view(const char *name);
 void focus_view(View *v);
+void update_client_views(Client *c);
 XRectangle *rects_of_view(View *v, unsigned int *num);
 View *view_of_id(unsigned short id);
 void select_view(const char *arg);
