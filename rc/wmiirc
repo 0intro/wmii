@@ -105,16 +105,25 @@ $MODKEY-Shift-9
 EOF
 
 # TAG BAR
+IFS='
+'
+for bar in `wmiir ls /lbar`
+do
+	wmiir rm /lbar/$bar
+done
+
 seltag=`wmiir read /tag/sel/ctl`
 for tag in `wmiir ls /tag | sed -e 's,/$,,; /^sel$/d'`
 do
 	wmiir create /lbar/$tag 
 	if [ "X$tag" = "X$seltag" ]; then
-		xwrite "/lbar/$tag" $WMII_SELCOLORS $tag
+		xwrite /lbar/$tag $WMII_SELCOLORS $tag
 	else
-		xwrite "/lbar/$tag" $WMII_NORMCOLORS $tag
+		xwrite /lbar/$tag $WMII_NORMCOLORS $tag
 	fi
 done
+IFS=
+
 
 # EVENT LOOP
 wmiir read /event 2>/dev/null |
@@ -144,7 +153,7 @@ do
 	UnfocusTag)
 		xwrite /lbar/$1 $WMII_NORMCOLORS $1
 		;;
-	BarClick)
+	LeftBarClick)
 		xwrite /ctl view "$1";;
 	Key)
 		case "$1" in
