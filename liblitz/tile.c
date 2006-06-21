@@ -13,7 +13,6 @@ blitz_create_tile(Drawable drawable, GC gc)
 	BlitzWidget *t = cext_emallocz(sizeof(BlitzWidget));
 	t->drawable = drawable;
 	t->gc = gc;
-	t->draw = blitz_draw_tile;
 	return t;
 }
 

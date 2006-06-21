@@ -187,10 +187,10 @@ resize_frame(Frame *f)
 void
 draw_frame(Frame *f)
 {
-	f->tile->draw(f->tile);
-	f->tagbar->draw(f->tagbar);
-	f->titlebar->draw(f->titlebar);
-	f->posbar->draw(f->posbar);
+	blitz_draw_input(f->tile);
+	blitz_draw_input(f->tagbar);
+	blitz_draw_input(f->titlebar);
+	blitz_draw_input(f->posbar);
 }
 
 void

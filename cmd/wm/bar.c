@@ -95,8 +95,8 @@ draw_bar()
 {
 	unsigned int i = 0, w = 0, nb, size = 0;
 	Bar *b = nil, *prev = nil;
+	blitz_draw_tile(bartile);
 
-	bartile->draw(bartile);
 	if(!lbar && !rbar)
 		goto MapBar;
 
@@ -136,7 +136,7 @@ draw_bar()
 		for(; b; b=b->next) {
 			if(b == rbar)
 				b->bar->align = EAST;
-			b->bar->draw(b->bar);
+			blitz_draw_input(b->bar);
 		}
 MapBar:
 	XCopyArea(dpy, barpmap, barwin, bargc, 0, 0, brect.width, brect.height, 0, 0);

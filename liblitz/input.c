@@ -15,7 +15,6 @@ blitz_create_input(Drawable drawable, GC gc, BlitzFont *font)
 	i->drawable = drawable;
 	i->gc = gc;
 	i->font = font;
-	i->draw = blitz_draw_input;
 	return i;
 }
 

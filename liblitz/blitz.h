@@ -58,7 +58,6 @@ struct BlitzWidget {
 	XRectangle rect;	/* relative rect */
 	XRectangle *notch;	/* relative notch rect */
 	char *text;
-	void (*draw)(BlitzWidget *);
 };
 
 Blitz __blitz;
