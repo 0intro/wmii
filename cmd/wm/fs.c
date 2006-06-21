@@ -106,7 +106,7 @@ dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
 		  {"",		QTDIR,		FsDClient,	0500|DMDIR },
 		  {nil}},
 dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|DMDIR },
-		  {"ctl",	QTAPPEND,	FsFCctl,	0400|DMAPPEND },
+		  {"ctl",	QTAPPEND,	FsFCctl,	0600|DMAPPEND },
 		  {"tags",	QTFILE,		FsFCtags,	0600 },
 		  {"props",	QTFILE,		FsFprops,	0400 },
 		  {nil}},
@@ -117,7 +117,7 @@ dirtab_tags[]=	 {{".",		QTDIR,		FsDTags,	0500|DMDIR },
 		  {"",		QTDIR,		FsDTag,		0500|DMDIR },
 		  {nil}},
 dirtab_tag[]=	 {{".",		QTDIR,		FsDTag,		0500|DMDIR },
-		  {"ctl",	QTAPPEND,	FsFTctl,	0400|DMAPPEND },
+		  {"ctl",	QTAPPEND,	FsFTctl,	0600|DMAPPEND },
 		  {"index",	QTFILE,		FsFTindex,	0400 },
 		  {nil}};
 /* Writing the lists separately and using an array of their references
@@ -268,7 +268,7 @@ message_root(char *message)
 	}if(!strncmp(message, "normcolors ", 11)) {
 		message += 11;
 		n = strlen(message);
-		if((errstr = parse_colors(&message, &n, &def.selcolor)))
+		if((errstr = parse_colors(&message, &n, &def.normcolor)))
 			return errstr;
 		if(n) return Ebadvalue;
 		return nil;
@@ -292,6 +292,20 @@ message_root(char *message)
 		return nil;
 	}
 	return Ebadcmd;
+}
+
+char *
+read_root_ctl()
+{
+	/* XXX: There should be 1 global buffer for this */
+	enum { BUF_SIZE = 2048 };
+	static char buf[BUF_SIZE];
+	unsigned int i = 0;
+	i += snprintf(&buf[i], (BUF_SIZE - i), "selcolors %s\n", def.selcolor.colstr);
+	i += snprintf(&buf[i], (BUF_SIZE - i), "normcolors %s\n", def.normcolor.colstr);
+	i += snprintf(&buf[i], (BUF_SIZE - i), "font %s\n", def.font.fontstr);
+	i += snprintf(&buf[i], (BUF_SIZE - i), "grabmod %s\n", def.grabmod);
+	return buf;
 }
 
 
@@ -625,6 +639,10 @@ fs_read(Req *r) {
 			return respond(r, nil);
 		case FsFBar:
 			write_buf(r, (void *)f->bar->buf, strlen(f->bar->buf));
+			return respond(r, nil);
+		case FsFRctl:
+			buf = read_root_ctl();
+			write_buf(r, buf, strlen(buf));
 			return respond(r, nil);
 		case FsFCctl:
 			if(r->ifcall.offset)
