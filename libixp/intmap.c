@@ -6,8 +6,9 @@
 
 struct Intlist {
 	unsigned long	id;
-	void*	aux;
+	void*		aux;
 	Intlist*	link;
+	unsigned int	ref;
 };
 
 static unsigned long

@@ -11,17 +11,19 @@
 
 static void ixp_handle_req(Req *r);
 
+/* We use string literals rather than arrays here because
+ * they're allocated in a readonly section */
 static char
-	Eduptag[] = "tag in use",
-	Edupfid[] = "fid in use",
-	Enofunc[] = "function not implemented",
-	Ebotch[] = "9P protocol botch",
-	Enofile[] = "file does not exist",
-	Enofid[] = "fid does not exist",
-	Enotag[] = "tag does not exist",
-	Enotdir[] = "not a directory",
-	Einterrupted[] = "interrupted",
-	Eisdir[] = "cannot perform operation on a directory";
+	*Eduptag = "tag in use",
+	*Edupfid = "fid in use",
+	*Enofunc = "function not implemented",
+	*Ebotch = "9P protocol botch",
+	*Enofile = "file does not exist",
+	*Enofid = "fid does not exist",
+	*Enotag = "tag does not exist",
+	*Enotdir = "not a directory",
+	*Einterrupted = "interrupted",
+	*Eisdir = "cannot perform operation on a directory";
 
 enum {	TAG_BUCKETS = 64,
 	FID_BUCKETS = 64 };
@@ -35,7 +37,14 @@ struct P9Conn {
 	IXPConn	*conn;
 	unsigned int	msize;
 	unsigned char	*buf;
+	unsigned int ref;
 };
+
+static void
+free_p9conn(P9Conn *pc) {
+	free(pc->buf);
+	free(pc);
+}
 
 void *
 createfid(Intmap *map, int fid, P9Conn *pc) {
@@ -253,12 +262,18 @@ respond(Req *r, char *error) {
 		free(r->ifcall.data);
 		break;
 	case TREMOVE:
+		destroyfid(pc, r->fid->fid);
+		break;
 	case TCLUNK:
 		destroyfid(pc, r->fid->fid);
+		if(!pc->conn && r->ifcall.tag == IXP_NOTAG)
+			pc->ref--;
 		break;
 	case TFLUSH:
 		if((r->oldreq = lookupkey(&pc->tagmap, r->ifcall.oldtag)))
 			respond(r->oldreq, Einterrupted);
+		if(!pc->conn && r->ifcall.tag == IXP_NOTAG)
+			pc->ref--;
 		break;
 	case TREAD:
 	case TSTAT:
@@ -288,61 +303,75 @@ respond(Req *r, char *error) {
 
 	deletekey(&pc->tagmap, r->ifcall.tag);;
 	free(r);
+
+	if(!pc->conn && pc->ref == 0)
+		free_p9conn(pc);
 }
 
-/* XXX: This cleanup code *needs* to be cleaned up */
+/* Pending request cleanup */
 static void
 ixp_void_request(void *t) {
-	unsigned int tag;
 	Req *r, *tr;
 	P9Conn *pc;
 
 	r = t;
 	pc = r->conn;
-	/* XXX: need a better way of doing this */
-	for(tag=0; lookupkey(&pc->tagmap, tag); tag++);
 
 	tr = cext_emallocz(sizeof(Req));
 	tr->conn = pc;
 	tr->ifcall.type = TFLUSH;
-	tr->ifcall.tag = tag;
+	tr->ifcall.tag = IXP_NOTAG;
 	tr->ifcall.oldtag = r->ifcall.tag;
 	ixp_handle_req(tr);
 }
 
+/* Open FID cleanup */
 static void
 ixp_void_fid(void *t) {
-	unsigned int tag;
 	P9Conn *pc;
 	Req *tr;
 	Fid *f;
 
 	f = t;
 	pc = f->conn;
-	/* XXX: need a better way of doing this */
-	for(tag=0; lookupkey(&pc->tagmap, tag); tag++);
 
 	tr = cext_emallocz(sizeof(Req));
 	tr->fid = f;
 	tr->conn = pc;
 	tr->ifcall.type = TCLUNK;
-	tr->ifcall.tag = tag;
+	tr->ifcall.tag = IXP_NOTAG;
 	tr->ifcall.fid = f->fid;
 	ixp_handle_req(tr);
 }
 
 static void
+ixp_p9conn_incref(void *r) {
+	P9Conn *pc = *(P9Conn **)r;
+	pc->ref++;
+}
+
+/* To cleanup a connction, we increase the ref count for
+ * each open FID and pending request and generate clunk and
+ * flush requests. As each request is responded to and each
+ * FID is clunked, we decrease the ref count. When the ref
+ * count is 0, we free the P9Conn and its buf. The IXPConn
+ * is taken care of in server.c */
+static void
 ixp_cleanup_conn(IXPConn *c) {
 	P9Conn *pc = c->aux;
 	pc->conn = nil;
-	execmap(&pc->tagmap, ixp_void_request);
-	freemap(&pc->tagmap, nil);
-	execmap(&pc->fidmap, ixp_void_fid);
-	freemap(&pc->fidmap, nil);
-	free(pc->buf);
-	free(pc);
+	pc->ref = 1;
+	execmap(&pc->tagmap, ixp_p9conn_incref);
+	execmap(&pc->fidmap, ixp_p9conn_incref);
+	if(pc->ref > 1) {
+		execmap(&pc->tagmap, ixp_void_request);
+		execmap(&pc->fidmap, ixp_void_fid);
+	}
+	if(--pc->ref == 0)
+		free_p9conn(pc);
 }
 
+/* Handle incoming 9P connections */
 void
 serve_9pcon(IXPConn *c) {
 	int fd = accept(c->fd, nil, nil);

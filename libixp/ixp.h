@@ -250,6 +250,7 @@ typedef struct IXPClient {
 
 typedef struct P9Conn P9Conn;
 typedef struct Fid {
+	P9Conn		*conn;
 	unsigned long	fid;
 	char		omode;
 	char		*uid;
@@ -258,22 +259,18 @@ typedef struct Fid {
 	
 	/* Implementation details */
 	/* do not use */
-	P9Conn		*conn;
 	Intmap		*map;
 } Fid;
 
 typedef struct Req Req;
 struct Req {
+	P9Conn	*conn;
 	Fid	*fid;
 	Fid	*newfid;
 	Req	*oldreq;
 	Fcall	ifcall;
 	Fcall	ofcall;
 	void	*aux;
-
-	/* Implementation detail */
-	/* do not use */
-	P9Conn	*conn;
 };
 
 typedef struct P9Srv {
@@ -341,6 +338,8 @@ void serve_9pcon(IXPConn *c);
 
 /* intmap.c */
 void initmap(Intmap *m, unsigned long nhash, void *hash);
+void incref_map(Intmap *m);
+void decref_map(Intmap *m);
 void freemap(Intmap *map, void (*destroy)(void*));
 void execmap(Intmap *map, void (*destroy)(void*));
 void* lookupkey(Intmap *map, unsigned long id);
