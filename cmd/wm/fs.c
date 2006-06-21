@@ -48,7 +48,7 @@ struct FileId {
 /* Constants */
 /*************/
 enum {	/* Dirs */
-	FsRoot, FsDClient, FsDClients, FsDBar,
+	FsRoot, FsDClient, FsDClients, FsDBars,
 	FsDTag, FsDTags,
 	/* Files */
 	FsFBar, FsFBorder, FsFCctl, FsFColRules,
@@ -91,8 +91,8 @@ P9Srv p9srv = {
  * in by lookup_file */
 static Dirtab
 dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
-		  {"rbar",	QTDIR,		FsDBar,		0700|DMDIR },
-		  {"lbar",	QTDIR,		FsDBar,		0700|DMDIR },
+		  {"rbar",	QTDIR,		FsDBars,	0700|DMDIR },
+		  {"lbar",	QTDIR,		FsDBars,	0700|DMDIR },
 		  {"client",	QTDIR,		FsDClients,	0500|DMDIR },
 		  {"tag",	QTDIR,		FsDTags,	0500|DMDIR },
 		  {"ctl",	QTAPPEND,	FsFRctl,	0600|DMAPPEND },
@@ -110,7 +110,7 @@ dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|DMDIR },
 		  {"tags",	QTFILE,		FsFCtags,	0600 },
 		  {"props",	QTFILE,		FsFprops,	0400 },
 		  {nil}},
-dirtab_bar[]=	 {{".",		QTDIR,		FsDBar,		0700|DMDIR },
+dirtab_bars[]=	 {{".",		QTDIR,		FsDBars,	0700|DMDIR },
 		  {"",		QTFILE,		FsFBar,		0600 },
 		  {nil}},
 dirtab_tags[]=	 {{".",		QTDIR,		FsDTags,	0500|DMDIR },
@@ -125,7 +125,7 @@ dirtab_tag[]=	 {{".",		QTDIR,		FsDTag,		0500|DMDIR },
  * since otherwise we would need to use compound literals */
 static Dirtab *dirtab[] = {
 	[FsRoot]	dirtab_root,
-	[FsDBar]	dirtab_bar,
+	[FsDBars]	dirtab_bars,
 	[FsDClients]	dirtab_clients,
 	[FsDClient]	dirtab_client,
 	[FsDTags]	dirtab_tags,
@@ -221,11 +221,11 @@ write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
 void
 data_to_cstring(Req *r) {
 	unsigned int i;
-	i = r->ifcall.count - 1;
-	if(r->ifcall.data[i] != '\n')
-		r->ifcall.data = realloc(r->ifcall.data, ++i + 1);
+	i = r->ifcall.count;
+	if(!i || r->ifcall.data[i - 1] != '\n')
+		r->ifcall.data = realloc(r->ifcall.data, ++i);
 	cext_assert(r->ifcall.data);
-	r->ifcall.data[i] = '\0';
+	r->ifcall.data[i - 1] = '\0';
 }
 
 /* This should be moved to liblitz */
@@ -439,7 +439,7 @@ lookup_file(FileId *parent, char *name)
 					}
 				}
 				break;
-			case FsDBar:
+			case FsDBars:
 				for(b=*parent->bar_p; b; b=b->next) {
 					if(!name || !strcmp(name, b->name)) {
 						file = get_file();
@@ -467,7 +467,7 @@ lookup_file(FileId *parent, char *name)
 
 			/* Special considerations: */
 			switch(file->tab.type) {
-			case FsDBar:
+			case FsDBars:
 				if(!strncmp(file->tab.name, "lbar", 5))
 					file->ref = &lbar;
 				else
@@ -737,7 +737,7 @@ fs_write(Req *r) {
 					errstr = message_root(toks[i]);
 			}
 			if(errstr)
-				respond(r, errstr);
+				return respond(r, errstr);
 		}
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
@@ -777,7 +777,7 @@ fs_create(Req *r) {
 	default:
 		/* XXX: This should be taken care of by the library */
 		return respond(r, Enoperm);
-	case FsDBar:
+	case FsDBars:
 		if(!strlen(r->ifcall.name))
 			return respond(r, Ebadvalue);
 		create_bar(f->bar_p, r->ifcall.name);
