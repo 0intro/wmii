@@ -32,12 +32,12 @@ do
 done
 
 # WM CONFIGURATION
-xwrite /border 2
 wmiir write /ctl << EOF
 font $WMII_FONT
 selcolors $WMII_SELCOLORS
 normcolors $WMII_NORMCOLORS
 grabmod $MODKEY
+border 2
 EOF
 
 # COLUMN RULES
