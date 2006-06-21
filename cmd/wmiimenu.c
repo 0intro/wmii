@@ -344,7 +344,7 @@ main(int argc, char *argv[])
 	int i;
 	XSetWindowAttributes wa;
 	char *maxname, *p;
-	BlitzFont font;
+	BlitzFont font = {0};
 	GC gc;
 	Drawable pmap;
 	XEvent ev;
