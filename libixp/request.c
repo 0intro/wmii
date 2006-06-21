@@ -252,6 +252,7 @@ respond(Req *r, char *error) {
 	case TWRITE:
 		free(r->ifcall.data);
 		break;
+	case TREMOVE:
 	case TCLUNK:
 		destroyfid(pc, r->fid->fid);
 		break;
@@ -260,7 +261,6 @@ respond(Req *r, char *error) {
 			respond(r->oldreq, Einterrupted);
 		break;
 	case TREAD:
-	case TREMOVE:
 	case TSTAT:
 		break;
 	/* Still to be implemented: flush, wstat, auth */
