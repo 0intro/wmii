@@ -33,9 +33,12 @@ done
 
 # WM CONFIGURATION
 xwrite /border 2
-xwrite /font $WMII_FONT
-xwrite /selcolors $WMII_SELCOLORS
-xwrite /normcolors $WMII_NORMCOLORS
+wmiir write /ctl << EOF
+font $WMII_FONT
+selcolors $WMII_SELCOLORS
+normcolors $WMII_NORMCOLORS
+grabmod Mod1
+EOF
 
 # COLUMN RULES
 wmiir write /colrules <<EOF
@@ -58,7 +61,6 @@ PROGS_FILE=`mktemp /tmp/.wmiimenu.proglist.XXXXXX` || exit 2
 proglist `echo "$OLD_PATH" | tr : ' '` >$PROGS_FILE &
 
 # SHORTCUTS
-xwrite /grabmod Mod1
 wmiir write /keys <<EOF
 $MODKEY-$LEFT
 $MODKEY-$RIGHT

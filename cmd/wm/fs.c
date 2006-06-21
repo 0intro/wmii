@@ -51,11 +51,10 @@ enum {	/* Dirs */
 	FsRoot, FsDClient, FsDClients, FsDBar,
 	FsDTag, FsDTags,
 	/* Files */
-	FsFBar, FsFBorder, FsFCNorm, FsFCSel,
-	FsFCctl, FsFColRules, FsFCtags,
-	FsFEvent, FsFFont, FsFKeys, FsFRctl,
+	FsFBar, FsFBorder, FsFCctl, FsFColRules,
+	FsFCtags, FsFEvent, FsFKeys, FsFRctl,
 	FsFTagRules, FsFTctl, FsFTindex,
-	FsFgrabmod, FsFprops, RsFFont
+	FsFprops
 };
 
 /* Error messages */
@@ -63,7 +62,8 @@ static char
 	*Enoperm = "permission denied",
 	*Enofile = "file not found",
 	*Ebadvalue = "bad value",
-	*Einterrupted = "interrupted";
+	*Einterrupted = "interrupted",
+	*Ebadcmd = "bad command";
 
 /* Macros */
 #define QID(t, i) (((long long)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
@@ -99,11 +99,7 @@ dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
 		  {"border",	QTFILE,		FsFBorder,	0600 }, 
 		  {"colrules",	QTFILE,		FsFColRules,	0600 }, 
 		  {"event",	QTFILE,		FsFEvent,	0600 },
-		  {"font",	QTFILE,		FsFFont,	0600 },
-		  {"grabmod",	QTFILE,		FsFgrabmod,	0600 },
 		  {"keys",	QTFILE,		FsFKeys,	0600 },
-		  {"normcolors",QTFILE,		FsFCNorm,	0600 },
-		  {"selcolors",	QTFILE,		FsFCSel,	0600 },
 		  {"tagrules",	QTFILE,		FsFTagRules,	0600 }, 
 		  {nil}},
 dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
@@ -225,11 +221,9 @@ write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
 void
 data_to_cstring(Req *r) {
 	unsigned int i;
-	for(i=0; i < r->ifcall.count; i++)
-		if(r->ifcall.data[i] == '\n')
-			break;
-	if(i == r->ifcall.count)
-		r->ifcall.data = realloc(r->ifcall.data, i + 1);
+	i = r->ifcall.count - 1;
+	if(r->ifcall.data[i] != '\n')
+		r->ifcall.data = realloc(r->ifcall.data, ++i + 1);
 	cext_assert(r->ifcall.data);
 	r->ifcall.data[i] = '\0';
 }
@@ -251,6 +245,55 @@ parse_colors(char **buf, int *buflen, BlitzColor *col) {
 	}
 	return nil;
 }
+
+char *
+message_root(char *message)
+{
+	unsigned int n;
+	char *errstr;
+
+	if(!strncmp(message, "quit", 5)) {
+		srv.running = 0;
+		return nil;
+	}if(!strncmp(message, "view ", 5)) {
+		select_view(&message[5]);
+		return nil;
+	}if(!strncmp(message, "selcolors ", 10)) {
+		message += 10;
+		n = strlen(message);
+		if((errstr = parse_colors(&message, &n, &def.selcolor)))
+			return errstr;
+		if(n) return Ebadvalue;
+		return nil;
+	}if(!strncmp(message, "normcolors ", 11)) {
+		message += 11;
+		n = strlen(message);
+		if((errstr = parse_colors(&message, &n, &def.selcolor)))
+			return errstr;
+		if(n) return Ebadvalue;
+		return nil;
+	}if(!strncmp(message, "font ", 5)) {
+		message += 5;
+		free(def.font.fontstr);
+		def.font.fontstr = strdup(message);
+		blitz_loadfont(&def.font);
+		return nil;
+	}if(!strncmp(message, "grabmod ", 8)) {
+		message += 8;
+		unsigned long mod;
+		mod = mod_key_of_str(message);
+		if((mod != Mod1Mask) && (mod != Mod2Mask) && (mod != Mod3Mask)
+				&& (mod != Mod4Mask) && (mod != Mod5Mask))
+			return Ebadvalue;
+		cext_strlcpy(def.grabmod, message, sizeof(def.grabmod));
+		def.mod = mod;
+		if(view)
+			restack_view(sel);
+		return nil;
+	}
+	return Ebadcmd;
+}
+
 
 void
 respond_event(Req *r) {
@@ -428,12 +471,6 @@ lookup_file(FileId *parent, char *name)
 			case FsFTagRules:
 				file->ref = &def.tagrules;
 				break;
-			case FsFCSel:
-				file->ref = &def.selcolor;
-				break;
-			case FsFCNorm:
-				file->ref = &def.normcolor;
-				break;
 			}
 			if(name) goto LastItem;
 		}
@@ -573,10 +610,6 @@ fs_read(Req *r) {
 		case FsFprops:
 			write_buf(r, (void *)f->client->props, strlen(f->client->props));
 			return respond(r, nil);
-		case FsFCSel:
-		case FsFCNorm:
-			write_buf(r, (void *)f->col->colstr, strlen(f->col->colstr));
-			return respond(r, nil);
 		case FsFColRules:
 		case FsFTagRules:
 			write_buf(r, (void *)f->rule->string, f->rule->size);
@@ -584,17 +617,11 @@ fs_read(Req *r) {
 		case FsFKeys:
 			write_buf(r, (void *)def.keys, def.keyssz);
 			return respond(r, nil);
-		case FsFFont:
-			write_buf(r, (void *)def.font.fontstr, strlen(def.font.fontstr));
-			return respond(r, nil);
 		case FsFCtags:
 			write_buf(r, (void *)f->client->tags, strlen(f->client->tags));
 			return respond(r, nil);
 		case FsFTctl:
 			write_buf(r, (void *)f->view->name, strlen(f->view->name));
-			return respond(r, nil);
-		case FsFgrabmod:
-			write_buf(r, (void *)def.grabmod, strlen(def.grabmod));
 			return respond(r, nil);
 		case FsFBar:
 			write_buf(r, (void *)f->bar->buf, strlen(f->bar->buf));
@@ -632,7 +659,7 @@ fs_read(Req *r) {
 void
 fs_write(Req *r) {
 	FileId *f;
-	char *buf, *errstr;
+	char *buf, *errstr = nil;
 	unsigned int i;
 
 	f = r->fid->aux;
@@ -643,13 +670,6 @@ fs_write(Req *r) {
 		return respond(r, nil);
 	case FsFKeys:
 		write_to_buf(r, &def.keys, &def.keyssz, 0);
-		return respond(r, nil);
-	case FsFFont:
-		data_to_cstring(r);
-		i=strlen(def.font.fontstr);
-		write_to_buf(r, &def.font.fontstr, &i, 0);
-		blitz_loadfont(&def.font);
-		r->ofcall.count = i- r->ifcall.offset;
 		return respond(r, nil);
 	case FsFCtags:
 		data_to_cstring(r);
@@ -670,17 +690,6 @@ fs_write(Req *r) {
 		i = strlen(f->bar->buf);
 		write_to_buf(r, &f->bar->buf, &i, 279);
 		r->ofcall.count = i- r->ifcall.offset;
-		return respond(r, nil);
-	case FsFCSel:
-	case FsFCNorm:
-		/* XXX: This allows for junk after the color string */
-		data_to_cstring(r);
-		buf = (char *)r->ifcall.data;
-		i = r->ifcall.count;
-		if((errstr = parse_colors((char **)&buf, (int *)&i, f->col)))
-			return respond(r, errstr);
-		draw_frames();
-		r->ofcall.count = r->ifcall.count - i;
 		return respond(r, nil);
 	case FsFCctl:
 		data_to_cstring(r);
@@ -703,8 +712,21 @@ fs_write(Req *r) {
 		data_to_cstring(r);
 		if(!r->ifcall.data || r->ifcall.count == 0)
 			return respond(r, nil);
-		if((errstr = message_root((char *)r->ifcall.data)))
-			return respond(r, errstr);
+		{
+			/* I'm not happy with this error handling */
+			/* or with the assumption that lines will come whole */
+			unsigned int n;
+			char *toks[32];
+			n = cext_tokenize(toks, 32, r->ifcall.data, '\n');
+			for(i = 0; i < n; i++) {
+				if(errstr)
+					message_root(toks[i]);
+				else
+					errstr = message_root(toks[i]);
+			}
+			if(errstr)
+				respond(r, errstr);
+		}
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	case FsFEvent:
@@ -715,22 +737,6 @@ fs_write(Req *r) {
 		free(buf);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
-	case FsFgrabmod:
-		data_to_cstring(r);
-		/* XXX: This is too long/specific; it needs to be moved */
-		{
-			unsigned long mod;
-			mod = mod_key_of_str((char *)r->ifcall.data);
-			if((mod != Mod1Mask) && (mod != Mod2Mask) && (mod != Mod3Mask)
-					&& (mod != Mod4Mask) && (mod != Mod5Mask))
-				return respond(r, Ebadvalue);
-			cext_strlcpy(def.grabmod, (char *)r->ifcall.data, sizeof(def.grabmod));
-			def.mod = mod;
-			if(view)
-				restack_view(sel);
-			r->ofcall.count = r->ifcall.count;
-			return respond(r, nil);
-		}
 	}
 	respond(r, Enoperm);
 }
