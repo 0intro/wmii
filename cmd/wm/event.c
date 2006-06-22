@@ -11,18 +11,19 @@
 #include "wm.h"
 
 /* local functions */
-static void handle_buttonpress(XEvent * e);
-static void handle_buttonrelease(XEvent * e);
-static void handle_configurerequest(XEvent * e);
-static void handle_destroynotify(XEvent * e);
-static void handle_enternotify(XEvent * e);
-static void handle_leavenotify(XEvent * e);
-static void handle_expose(XEvent * e);
-static void handle_keypress(XEvent * e);
-static void handle_keymapnotify(XEvent * e);
-static void handle_maprequest(XEvent * e);
-static void handle_propertynotify(XEvent * e);
-static void handle_unmapnotify(XEvent * e);
+static void handle_buttonpress(XEvent *e);
+static void handle_buttonrelease(XEvent *e);
+static void handle_configurerequest(XEvent *e);
+static void handle_destroynotify(XEvent *e);
+static void handle_enternotify(XEvent *e);
+static void handle_leavenotify(XEvent *e);
+static void handle_expose(XEvent *e);
+static void handle_keypress(XEvent *e);
+static void handle_keymapnotify(XEvent *e);
+static void handle_maprequest(XEvent *e);
+static void handle_motionnotify(XEvent *e);
+static void handle_propertynotify(XEvent *e);
+static void handle_unmapnotify(XEvent *e);
 
 void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress]	= handle_buttonpress,
@@ -34,6 +35,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
 	[Expose]	= handle_expose,
 	[KeyPress]	= handle_keypress,
 	[KeymapNotify]	= handle_keymapnotify,
+	[MotionNotify]	= handle_motionnotify,
 	[MapRequest]	= handle_maprequest,
 	[PropertyNotify]= handle_propertynotify,
 	[UnmapNotify]	= handle_unmapnotify
@@ -59,6 +61,8 @@ flush_masked_events(long even_mask)
 	return n;
 }
 
+static Bool drag = False;
+
 static void
 handle_buttonrelease(XEvent *e)
 {
@@ -83,9 +87,37 @@ handle_buttonrelease(XEvent *e)
 			}
 	}
 	else if((c = frame_of_win(ev->window)) && c->frame) {
+		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
+			c->sel->tagbar.cursor = c->sel->tagbar.selend
+				= blitz_charof(&c->sel->tagbar, ev->x, ev->y);
+			draw_frame(c->sel);
+		}
 		snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
 				idx_of_client(c), ev->button);
 		write_event(buf);
+		drag = False;
+	}
+}
+
+static void
+handle_motionnotify(XEvent *e)
+{
+	Client *c;
+	XMotionEvent *ev = &e->xmotion;
+
+	if(!drag)
+		return;
+
+	if((c = frame_of_win(ev->window))) {
+		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
+			c->sel->tagbar.selend = blitz_charof(&c->sel->tagbar, ev->x, ev->y);
+			if(c->sel->tagbar.selend < c->sel->tagbar.selstart) {
+				char *tmp = c->sel->tagbar.selend;
+				c->sel->tagbar.selend = c->sel->tagbar.selstart;
+				c->sel->tagbar.selstart = tmp;
+			}
+			draw_frame(c->sel);
+		}
 	}
 }
 
@@ -98,8 +130,11 @@ handle_buttonpress(XEvent *e)
 	if((c = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
 		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
-			c->sel->tagbar.cursor = blitz_cursorof(&c->sel->tagbar, ev->x, ev->y);
+			c->sel->tagbar.cursor = c->sel->tagbar.selstart
+				= c->sel->tagbar.selend
+				= blitz_charof(&c->sel->tagbar, ev->x, ev->y);
 			draw_frame(c->sel);
+			drag = True;
 		}
 		if((ev->state & def.mod) == def.mod) {
 			focus(c, True);

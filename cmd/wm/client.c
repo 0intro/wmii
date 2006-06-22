@@ -81,8 +81,9 @@ create_client(Window w, XWindowAttributes *wa)
 	update_client_name(c);
 	fwa.override_redirect = 1;
 	fwa.background_pixmap = ParentRelative;
-	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask
-		| ExposureMask | ButtonPressMask | ButtonReleaseMask;
+	fwa.event_mask =
+		SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask
+		| ButtonPressMask | PointerMotionMask | ButtonReleaseMask;
 
 	c->framewin = XCreateWindow(blz.display, blz.root, c->rect.x, c->rect.y,
 			c->rect.width + 2 * def.border,

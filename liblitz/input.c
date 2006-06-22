@@ -86,7 +86,7 @@ blitz_draw_input(BlitzInput *i)
 }
 
 char *
-blitz_cursorof(BlitzInput *i, int x, int y)
+blitz_charof(BlitzInput *i, int x, int y)
 {
 	int xoff, yoff;
 	unsigned int boxw, boxh, nbox, cbox, l;

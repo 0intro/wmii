@@ -93,4 +93,4 @@ void blitz_loadfont(Blitz *blitz, BlitzFont *font);
 
 /* input.c */
 void blitz_draw_input(BlitzInput *i);
-char *blitz_cursorof(BlitzInput *i, int x, int y);
+char *blitz_charof(BlitzInput *i, int x, int y);
