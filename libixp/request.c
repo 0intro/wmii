@@ -262,10 +262,12 @@ respond(Req *r, char *error) {
 		free(r->ifcall.data);
 		break;
 	case TREMOVE:
-		destroyfid(pc, r->fid->fid);
+		if(r->fid)
+			destroyfid(pc, r->fid->fid);
 		break;
 	case TCLUNK:
-		destroyfid(pc, r->fid->fid);
+		if(r->fid)
+			destroyfid(pc, r->fid->fid);
 		if(!pc->conn && r->ifcall.tag == IXP_NOTAG)
 			pc->ref--;
 		break;
