@@ -22,8 +22,8 @@ init_lock_keys()
 	int i;
 
 	num_lock_mask = 0;
-	modmap = XGetModifierMapping(dpy);
-	num_lock = XKeysymToKeycode(dpy, XStringToKeysym("Num_Lock"));
+	modmap = XGetModifierMapping(blz.display);
+	num_lock = XKeysymToKeycode(blz.display, XStringToKeysym("Num_Lock"));
 
 	if(modmap && modmap->max_keypermod > 0) {
 		int max = (sizeof(masks) / sizeof(int)) * modmap->max_keypermod;
@@ -60,26 +60,26 @@ mod_key_of_str(char *val)
 static void
 grab_key(Key *k)
 {
-	XGrabKey(dpy, k->key, k->mod, root,
+	XGrabKey(blz.display, k->key, k->mod, blz.root,
 			True, GrabModeAsync, GrabModeAsync);
 	if(num_lock_mask) {
-		XGrabKey(dpy, k->key, k->mod | num_lock_mask, root,
+		XGrabKey(blz.display, k->key, k->mod | num_lock_mask, blz.root,
 				True, GrabModeAsync, GrabModeAsync);
-		XGrabKey(dpy, k->key, k->mod | num_lock_mask | LockMask, root,
+		XGrabKey(blz.display, k->key, k->mod | num_lock_mask | LockMask, blz.root,
 				True, GrabModeAsync, GrabModeAsync);
 	}
-	XSync(dpy, False);
+	XSync(blz.display, False);
 }
 
 static void
 ungrab_key(Key *k)
 {
-	XUngrabKey(dpy, k->key, k->mod, root);
+	XUngrabKey(blz.display, k->key, k->mod, blz.root);
 	if(num_lock_mask) {
-		XUngrabKey(dpy, k->key, k->mod | num_lock_mask, root);
-		XUngrabKey(dpy, k->key, k->mod | num_lock_mask | LockMask, root);
+		XUngrabKey(blz.display, k->key, k->mod | num_lock_mask, blz.root);
+		XUngrabKey(blz.display, k->key, k->mod | num_lock_mask | LockMask, blz.root);
 	}
-	XSync(dpy, False);
+	XSync(blz.display, False);
 }
 
 static Key *
@@ -121,7 +121,7 @@ get_key(const char *name)
 			kstr++;
 		else
 			kstr = seq[i];
-		k->key = XKeysymToKeycode(dpy, XStringToKeysym(kstr));
+		k->key = XKeysymToKeycode(blz.display, XStringToKeysym(kstr));
 		k->mod = mod_key_of_str(seq[i]);
 	}
 	if(r) {
@@ -140,10 +140,10 @@ next_keystroke(unsigned long *mod, KeyCode *keyCode)
 	KeySym sym;
 	*mod = 0;
 	do {
-		XMaskEvent(dpy, KeyPressMask, &e);
+		XMaskEvent(blz.display, KeyPressMask, &e);
 		*mod |= e.xkey.state & valid_mask;
 		*keyCode = (KeyCode) e.xkey.keycode;
-		sym = XKeycodeToKeysym(dpy, e.xkey.keycode, 0);
+		sym = XKeycodeToKeysym(blz.display, e.xkey.keycode, 0);
 	} while(IsModifierKey(sym));
 }
 
@@ -154,18 +154,18 @@ emulate_key_press(unsigned long mod, KeyCode key)
 	Window client_win;
 	int revert;
 
-	XGetInputFocus(dpy, &client_win, &revert);
+	XGetInputFocus(blz.display, &client_win, &revert);
 
 	e.xkey.type = KeyPress;
 	e.xkey.time = CurrentTime;
 	e.xkey.window = client_win;
-	e.xkey.display = dpy;
+	e.xkey.display = blz.display;
 	e.xkey.state = mod;
 	e.xkey.keycode = key;
-	XSendEvent(dpy, client_win, True, KeyPressMask, &e);
+	XSendEvent(blz.display, client_win, True, KeyPressMask, &e);
 	e.xkey.type = KeyRelease;
-	XSendEvent(dpy, client_win, True, KeyReleaseMask, &e);
-	XSync(dpy, False);
+	XSendEvent(blz.display, client_win, True, KeyReleaseMask, &e);
+	XSync(blz.display, False);
 }
 
 static Key *
@@ -198,7 +198,7 @@ handle_key_seq(Window w, Key *done)
 		emulate_key_press(mod, key); /* double key */
 	else {
 		if(!found) {
-			XBell(dpy, 0);
+			XBell(blz.display, 0);
 		} /* grabbed but not found */
 		else if(!found->tnext && !found->next) {
 			snprintf(buf, sizeof(buf), "Key %s\n", found->name);
@@ -219,17 +219,17 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 	Key *found = match_keys(key, mod, keycode, False);
 
 	if(!found) {
-		XBell(dpy, 0);
+		XBell(blz.display, 0);
 	} /* grabbed but not found */
 	else if(!found->tnext && !found->next) {
 		snprintf(buf, sizeof(buf), "Key %s\n", found->name);
 		write_event(buf);
 	}
 	else {
-		XGrabKeyboard(dpy, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+		XGrabKeyboard(blz.display, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
 		handle_key_seq(w, found);
-		XUngrabKeyboard(dpy, CurrentTime);
-		XSync(dpy, False);
+		XUngrabKeyboard(blz.display, CurrentTime);
+		XSync(blz.display, False);
 	}
 }
 
@@ -267,5 +267,5 @@ update_keys()
 			grab_key(k);
 	}
 
-	XSync(dpy, False);
+	XSync(blz.display, False);
 }

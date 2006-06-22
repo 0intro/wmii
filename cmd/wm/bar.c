@@ -27,9 +27,9 @@ create_bar(Bar **b_link, char *name)
 
 	b->id = id++;
 	cext_strlcpy(b->name, name, sizeof(b->name));
-	b->widget = blitz_create_input(barpmap, bargc, &def.font);
-	b->widget->color = def.normcolor;
-	b->widget->align = CENTER;
+	b->brush = bbrush;
+	b->brush.color = def.normcolor;
+	b->brush.align = CENTER;
 
 	for(i=b_link; *i; i=&(*i)->next)
 		if(strcmp((*i)->name, name) >= 0)
@@ -48,9 +48,8 @@ destroy_bar(Bar **b_link, Bar *b)
 	*p = b->next;
 
 	b->next = free_bars;
-	if(b->widget->text)
-		free(b->widget->text);
-	blitz_destroy_input(b->widget);
+	if(b->brush.text)
+		free(b->brush.text);
 	free_bars = b;
 }
 
@@ -71,12 +70,12 @@ resize_bar()
 	brect = rect;
 	brect.height = height_of_bar();
 	brect.y = rect.height - brect.height;
-	XMoveResizeWindow(dpy, barwin, brect.x, brect.y, brect.width, brect.height);
-	XSync(dpy, False);
-	XFreePixmap(dpy, barpmap);
-	barpmap = XCreatePixmap(dpy, barwin, brect.width, brect.height,
-			DefaultDepth(dpy, screen));
-	XSync(dpy, False);
+	XMoveResizeWindow(blz.display, barwin, brect.x, brect.y, brect.width, brect.height);
+	XSync(blz.display, False);
+	XFreePixmap(blz.display, bbrush.drawable);
+	bbrush.drawable = XCreatePixmap(blz.display, barwin, brect.width, brect.height,
+			DefaultDepth(blz.display, blz.screen));
+	XSync(blz.display, False);
 	draw_bar();
 
 	for(v=view; v; v=v->next) {
@@ -95,20 +94,21 @@ draw_bar()
 {
 	unsigned int i = 0, w = 0, nb, size = 0;
 	Bar *b = nil, *prev = nil;
-	blitz_draw_tile(bartile);
+
+	blitz_draw_tile(&bbrush);
 
 	if(!lbar && !rbar)
 		goto MapBar;
 
 	for(b=lbar, nb=2 ;nb; --nb && (b = rbar))
 		for(; b && (w < brect.width); b=b->next, size++) {
-			b->widget->rect.x = 0;
-			b->widget->rect.y = 0;
-			b->widget->rect.width = brect.height;
-			if(b->widget->text && strlen(b->widget->text))
-				b->widget->rect.width += blitz_textwidth(b->widget->font, b->widget->text);
-			b->widget->rect.height = brect.height;
-			w += b->widget->rect.width;
+			b->brush.rect.x = 0;
+			b->brush.rect.y = 0;
+			b->brush.rect.width = brect.height;
+			if(b->brush.text && strlen(b->brush.text))
+				b->brush.rect.width += blitz_textwidth(b->brush.font, b->brush.text);
+			b->brush.rect.height = brect.height;
+			w += b->brush.rect.width;
 		}
 
 	if(b) { /* give all bars same width */
@@ -119,28 +119,29 @@ draw_bar()
 		w = brect.width / size;
 		for(b = lbar, nb=2 ;nb; b = rbar, nb--) {
 			for(; b; b=b->next) {
-				b->widget->rect.x = i * w;
-				b->widget->rect.width = w;
+				b->brush.rect.x = i * w;
+				b->brush.rect.width = w;
 			}
 		}
 	}
 	else { /* expand rbar properly */
 		if(rbar)
-			rbar->widget->rect.width += (brect.width - w);
+			rbar->brush.rect.width += (brect.width - w);
 		for(b=lbar, nb=2 ;nb--; b = rbar)
 			for(; b; prev = b, b=b->next)
-				if(prev) b->widget->rect.x = prev->widget->rect.x + prev->widget->rect.width;
+				if(prev) b->brush.rect.x = prev->brush.rect.x + prev->brush.rect.width;
 	}
 
 	for(b=lbar, nb=2 ;nb; b=rbar, nb--)
 		for(; b; b=b->next) {
 			if(b == rbar)
-				b->widget->align = EAST;
-			blitz_draw_input(b->widget);
+				b->brush.align = EAST;
+			blitz_draw_input(&b->brush);
 		}
 MapBar:
-	XCopyArea(dpy, barpmap, barwin, bargc, 0, 0, brect.width, brect.height, 0, 0);
-	XSync(dpy, False);
+	XCopyArea(blz.display, bbrush.drawable, barwin, bbrush.gc, 0, 0,
+			brect.width, brect.height, 0, 0);
+	XSync(blz.display, False);
 }
 
 Bar *

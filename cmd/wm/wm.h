@@ -83,10 +83,10 @@ struct Frame {
 	XRectangle revert;
 	Client *client;
 	Bool collapsed;
-	BlitzWidget *tile;
-	BlitzWidget *tagbar;
-	BlitzWidget *titlebar;
-	BlitzWidget *posbar;
+	BlitzBrush tile;
+	BlitzBrush tagbar;
+	BlitzBrush titlebar;
+	BlitzBrush posbar;
 };
 
 struct Client {
@@ -128,7 +128,7 @@ struct Bar {
 	char buf[280];
 	char name[256];
 	unsigned short id;
-	BlitzWidget *widget;
+	BlitzBrush brush;
 };
 
 typedef struct Rule Rule;
@@ -169,16 +169,12 @@ Bar *rbar;
 
 View *sel;
 P9Srv p9srv;
-Display *dpy;
-int screen;
-Window root;
+Blitz blz;
 XRectangle rect;
 IXPServer srv;
-Pixmap barpmap;
 Window barwin;
-GC bargc;
 GC xorgc;
-BlitzWidget *bartile;
+BlitzBrush bbrush;
 XRectangle brect;
 char *user;
 Default def;
@@ -325,7 +321,6 @@ void update_views();
 unsigned int newcolw_of_view(View *v);
 
 /* wm.c */
-void scan_wins();
 int win_proto(Window w);
 int win_state(Window w);
 int wmii_error_handler(Display *dpy, XErrorEvent *error);

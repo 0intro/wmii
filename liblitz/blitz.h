@@ -14,7 +14,7 @@ typedef struct Blitz Blitz;
 typedef enum BlitzAlign BlitzAlign;
 typedef struct BlitzColor BlitzColor;
 typedef struct BlitzFont BlitzFont;
-typedef struct BlitzWidget BlitzWidget;
+typedef struct BlitzBrush BlitzBrush;
 
 struct Blitz {
 	Display *display;
@@ -49,7 +49,8 @@ struct BlitzFont {
 	char *fontstr;
 };
 
-struct BlitzWidget {
+struct BlitzBrush {
+	Blitz *blitz;
 	Drawable drawable;
 	GC gc;
 	BlitzColor color;
@@ -60,25 +61,13 @@ struct BlitzWidget {
 	char *text;
 };
 
-Blitz __blitz;
-
-/* blitz.c */
-void blitz_x11_init(Display *dpy);
-Bool blitz_x11_event(XEvent *ev);
-
 /* color.c */
-int blitz_loadcolor(BlitzColor *c);
+int blitz_loadcolor(Blitz *blitz, BlitzColor *c);
 
-/* input.c */
-BlitzWidget *blitz_create_input(Drawable drawable, GC gc, BlitzFont *font);
-void blitz_draw_input(BlitzWidget *i);
-void blitz_destroy_input(BlitzWidget *i);
-
-/* tile.c */
-BlitzWidget *blitz_create_tile(Drawable drawable, GC gc);
-void blitz_draw_tile(BlitzWidget *t);
-void blitz_destroy_tile(BlitzWidget *t);
+/* brush.c */
+void blitz_draw_input(BlitzBrush *b);
+void blitz_draw_tile(BlitzBrush *b);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
-void blitz_loadfont(BlitzFont *font);
+void blitz_loadfont(Blitz *blitz, BlitzFont *font);

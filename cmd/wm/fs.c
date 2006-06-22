@@ -235,7 +235,7 @@ parse_colors(char **buf, int *buflen, BlitzColor *col) {
 		return Ebadvalue;
 	(*buflen) -= 23;
 	bcopy(*buf, col->colstr, 23);
-	blitz_loadcolor(col);
+	blitz_loadcolor(&blz, col);
 
 	(*buf) += 23;
 	if(**buf == '\n' || **buf == ' ') {
@@ -268,7 +268,7 @@ message_root(char *message)
 		message += 5;
 		free(def.font.fontstr);
 		def.font.fontstr = strdup(message);
-		blitz_loadfont(&def.font);
+		blitz_loadfont(&blz, &def.font);
 		return nil;
 	}if(!strncmp(message, "grabmod ", 8)) {
 		message += 8;
@@ -825,12 +825,12 @@ fs_clunk(Req *r) {
 	case FsFBar:
 		buf = f->bar->buf;
 		i = strlen(f->bar->buf);
-		parse_colors(&buf, &i, &f->bar->widget->color);
+		parse_colors(&buf, &i, &f->bar->brush.color);
 		while(buf[i - 1] == '\n')
 			buf[--i] = '\0';
-		if(f->bar->widget->text)
-			free(f->bar->widget->text);
-		f->bar->widget->text = strdup(buf);
+		if(f->bar->brush.text)
+			free(f->bar->brush.text);
+		f->bar->brush.text = strdup(buf);
 		draw_bar();
 		break;
 	case FsFEvent:
