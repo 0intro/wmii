@@ -165,7 +165,7 @@ ixp_handle_req(Req *r)
 	case TREAD:
 		if(!(r->fid = lookupkey(&pc->fidmap, r->ifcall.fid)))
 			return respond(r, Enofid);
-		if(r->fid->omode == -1)
+		if(r->fid->omode == -1 || r->fid->omode == OWRITE)
 			return respond(r, Ebotch);
 		if(!pc->srv->read)
 			return respond(r, Enofunc);

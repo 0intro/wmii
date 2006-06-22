@@ -580,10 +580,6 @@ fs_stat(Req *r) {
 	respond(r, nil);
 }
 
-/* This should probably be factored out like lookup_file
- * so we can use it to get size for stats and not write
- * data anywhere. -KM */
-/* This is obviously not a priority, however. -KM */
 void
 fs_read(Req *r) {
 	char *buf;
@@ -594,7 +590,7 @@ fs_read(Req *r) {
 	offset = 0;
 	f = r->fid->aux;
 
-	if(f->tab.perm & DMDIR) {
+	if(f->tab.perm & DMDIR && f->tab.perm & 0400) {
 		Stat s;
 		offset = 0;
 		size = r->ifcall.count;
@@ -620,7 +616,7 @@ fs_read(Req *r) {
 		}
 
 		r->ofcall.count = r->ifcall.count - size;
-		respond(r, nil);
+		return respond(r, nil);
 	}else{
 		switch(f->tab.type) {
 		case FsFprops:
@@ -663,10 +659,8 @@ fs_read(Req *r) {
 			respond_event(r);
 			return;
 		}
-		/* XXX: This should be taken care of by open */
-		/* should probably be an assertion in the future */
-		respond(r, Enoperm);
 	}
+	cext_assert(!"Read called on an unreadable file");
 }
 
 /* This function needs to be seriously cleaned up */
@@ -675,6 +669,9 @@ fs_write(Req *r) {
 	FileId *f;
 	char *buf, *errstr = nil;
 	unsigned int i;
+
+	if(r->ifcall.count == 0)
+		return respond(r, nil);
 
 	f = r->fid->aux;
 	switch(f->tab.type) {
@@ -699,25 +696,18 @@ fs_write(Req *r) {
 		return respond(r, nil);
 	case FsFCctl:
 		data_to_cstring(r);
-		if(r->ifcall.count == 0)
-			return respond(r, nil);
 		if((errstr = message_client(f->client, r->ifcall.data)))
 			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	case FsFTctl:
 		data_to_cstring(r);
-		if(r->ifcall.count == 0)
-			return respond(r, nil);
-
 		if((errstr = message_view(f->view, r->ifcall.data)))
 			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	case FsFRctl:
 		data_to_cstring(r);
-		if(!r->ifcall.data || r->ifcall.count == 0)
-			return respond(r, nil);
 		{
 			/* I'm not happy with this error handling */
 			/* or with the assumption that lines will come whole */
@@ -736,7 +726,6 @@ fs_write(Req *r) {
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	case FsFEvent:
-		/* XXX: r->ifcall.count could be very large */
 		buf = cext_emallocz(r->ifcall.count + 1);
 		bcopy(r->ifcall.data, buf, r->ifcall.count);
 		write_event(buf);
@@ -744,7 +733,7 @@ fs_write(Req *r) {
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	}
-	respond(r, Enoperm);
+	cext_assert(!"Write called on an unwritable file");
 }
 
 void
@@ -759,7 +748,14 @@ fs_open(Req *r) {
 		pending_event_fids = fl;
 		break;
 	}
-	/* XXX */
+	if((r->ifcall.mode&3) == OEXEC)
+		return respond(r, Enoperm);
+	if((r->ifcall.mode&3) != OREAD && !(f->tab.perm & 0200))
+		return respond(r, Enoperm);
+	if((r->ifcall.mode&3) != OWRITE && !(f->tab.perm & 0400))
+		return respond(r, Enoperm);
+	if((r->ifcall.mode&~(3|OAPPEND)))
+		return respond(r, Enoperm);
 	r->ofcall.mode = r->ifcall.mode;
 	respond(r, nil);
 }
