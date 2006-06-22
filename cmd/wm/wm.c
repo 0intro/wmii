@@ -293,6 +293,8 @@ main(int argc, char *argv[])
 	lbar = nil;
 	key = nil;
 
+	user = getenv("USER");
+
 	def.colrules.string = nil;
 	def.colrules.size = 0;
 	def.tagrules.string = nil;

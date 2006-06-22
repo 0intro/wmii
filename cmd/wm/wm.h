@@ -160,22 +160,6 @@ typedef struct {
 	int colmode;
 } Default;
 
-typedef struct {
-	union {
-		Qid qid;
-		struct {
-			unsigned char type;
-			unsigned int version;
-			unsigned char ptype;
-			unsigned short i1id;
-			unsigned short i2id;
-			unsigned short i3id;
-		};
-	};
-} PackedQid;
-
-/* global variables */
-
 /* global variables */
 View *view;
 Client *client;
@@ -196,7 +180,7 @@ GC bargc;
 GC xorgc;
 BlitzWidget *bartile;
 XRectangle brect;
-PackedQid root_qid;
+char *user;
 Default def;
 Atom wm_atom[WMLast];
 Atom net_atom[NetLast];

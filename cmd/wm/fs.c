@@ -358,10 +358,9 @@ dostat(Stat *s, unsigned int len, FileId *f) {
 	s->mtime = time(nil);
 	s->length = len;
 	s->name = f->tab.name;
-	/* XXX This genenv should be called once */
-	s->uid = getenv("USER");
-	s->gid = getenv("USER");
-	s->muid = getenv("USER");
+	s->uid = user;
+	s->gid = user;
+	s->muid = user;
 }
 
 /* lookup_file */
