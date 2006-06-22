@@ -57,15 +57,13 @@ struct BlitzBrush {
 	BlitzAlign align;
 	BlitzFont *font;
 	XRectangle rect;	/* relative rect */
-	XRectangle *notch;	/* relative notch rect */
-	char *text;
 };
 
 /* color.c */
 int blitz_loadcolor(Blitz *blitz, BlitzColor *c);
 
 /* brush.c */
-void blitz_draw_input(BlitzBrush *b);
+void blitz_draw_input(BlitzBrush *b, char *text);
 void blitz_draw_tile(BlitzBrush *b);
 
 /* font.c */

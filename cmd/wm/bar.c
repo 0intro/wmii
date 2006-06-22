@@ -48,8 +48,6 @@ destroy_bar(Bar **b_link, Bar *b)
 	*p = b->next;
 
 	b->next = free_bars;
-	if(b->brush.text)
-		free(b->brush.text);
 	free_bars = b;
 }
 
@@ -105,8 +103,8 @@ draw_bar()
 			b->brush.rect.x = 0;
 			b->brush.rect.y = 0;
 			b->brush.rect.width = brect.height;
-			if(b->brush.text && strlen(b->brush.text))
-				b->brush.rect.width += blitz_textwidth(b->brush.font, b->brush.text);
+			if(b->text && strlen(b->text))
+				b->brush.rect.width += blitz_textwidth(b->brush.font, b->text);
 			b->brush.rect.height = brect.height;
 			w += b->brush.rect.width;
 		}
@@ -136,7 +134,7 @@ draw_bar()
 		for(; b; b=b->next) {
 			if(b == rbar)
 				b->brush.align = EAST;
-			blitz_draw_input(&b->brush);
+			blitz_draw_input(&b->brush, b->text);
 		}
 MapBar:
 	XCopyArea(blz.display, bbrush.drawable, barwin, bbrush.gc, 0, 0,

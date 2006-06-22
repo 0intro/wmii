@@ -134,40 +134,36 @@ draw_menu()
 	brush.rect.x = 0;
 	brush.rect.y = 0;
 	brush.color = normcolor;
-	brush.text = nil;
 	blitz_draw_tile(&brush);
 
 	/* print command */
 	if(!title || text[0]) {
-		brush.text = text;
 		brush.color = normcolor;
 		cmdw = cwidth;
 		if(cmdw && item.size)
 			brush.rect.width = cmdw;
+		blitz_draw_input(&brush, text);
 	}
 	else {
 		cmdw = twidth;
-		brush.text = title;
 		brush.color = selcolor;
 		brush.rect.width = cmdw;
+		blitz_draw_input(&brush, title);
 	}
-	blitz_draw_input(&brush);
 	offx += brush.rect.width;
 
 	brush.align = CENTER;
 	if(item.size) {
 		brush.color = normcolor;
-		brush.text = prevoff < curroff ? "<" : nil;
 		brush.rect.x = offx;
 		brush.rect.width = seek;
 		offx += brush.rect.width;
-		blitz_draw_input(&brush);
+		blitz_draw_input(&brush, prevoff < curroff ? "<" : nil);
 
 		/* determine maximum items */
 		for(i = curroff; i < nextoff; i++) {
-			brush.text = item.data[i];
 			brush.rect.x = offx;
-			brush.rect.width = blitz_textwidth(brush.font, brush.text);
+			brush.rect.width = blitz_textwidth(brush.font, item.data[i]);
 			if(brush.rect.width > irect.width / 3)
 				brush.rect.width = irect.width / 3;
 			brush.rect.width += irect.height;
@@ -175,15 +171,14 @@ draw_menu()
 				brush.color = selcolor;
 			else
 				brush.color = normcolor;
-			blitz_draw_input(&brush);
+			blitz_draw_input(&brush, item.data[i]);
 			offx += brush.rect.width;
 		}
 
 		brush.color = normcolor;
-		brush.text = item.size > nextoff ? ">" : nil;
 		brush.rect.x = irect.width - seek;
 		brush.rect.width = seek;
-		blitz_draw_input(&brush);
+		blitz_draw_input(&brush, item.size > nextoff ? ">" : nil);
 	}
 	XCopyArea(blz.display, brush.drawable, win, brush.gc, 0, 0, irect.width,
 			irect.height, 0, 0);

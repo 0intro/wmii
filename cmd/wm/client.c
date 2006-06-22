@@ -512,7 +512,6 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		else
 			XMoveResizeWindow(blz.display, c->framewin, 2 * rect.width + f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);
-		resize_frame(f);
 	}
 
 	c->rect.x = def.border;

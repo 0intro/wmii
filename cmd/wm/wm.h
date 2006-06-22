@@ -126,6 +126,7 @@ typedef struct Bar Bar;
 struct Bar {
 	Bar *next;
 	char buf[280];
+	char text[256];
 	char name[256];
 	unsigned short id;
 	BlitzBrush brush;

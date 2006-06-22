@@ -30,9 +30,6 @@ create_frame(Area *a, Client *c)
 	f->tile.font = &def.font;
 	f->tile.color = def.normcolor;
 	f->tagbar = f->titlebar = f->posbar = f->tile;
-	f->tile.notch = &c->rect;
-	f->tagbar.text = c->tags;
-	f->titlebar.text = c->name;
 	f->titlebar.align = WEST;
 	f->tagbar.align = f->posbar.align = CENTER;
 
@@ -79,8 +76,6 @@ destroy_frame(Frame *f)
 	Area *a = f->area;
 	Frame **ft, *pr = nil;
 
-	if(f->posbar.text)
-		free(f->posbar.text);
 	for(ft=&c->frame; *ft && *ft != f; pr = *ft, ft=&(*ft)->cnext);
 	cext_assert(*ft == f);
 	*ft = f->cnext;
@@ -138,7 +133,7 @@ update_frame_widget_colors(Frame *f)
 }
 
 void
-resize_frame(Frame *f)
+draw_frame(Frame *f)
 {
 
 	Frame *p;
@@ -158,12 +153,9 @@ resize_frame(Frame *f)
 
 	snprintf(buf, sizeof(buf), "%s%d/%d",
 		(f->area == f->area->view->area) ? "~" : "", fidx + 1, size);
-	if(f->posbar.text)
-		free(f->posbar.text);
-	f->posbar.text = strdup(buf);
 
 	w = f->posbar.rect.width =
-		f->posbar.rect.height + blitz_textwidth(&def.font, f->posbar.text);
+		f->posbar.rect.height + blitz_textwidth(&def.font, buf);
 
 	f->posbar.rect.x = f->rect.width - f->posbar.rect.width; 
 	
@@ -171,7 +163,7 @@ resize_frame(Frame *f)
 	f->tagbar.rect = f->posbar.rect;
 	f->tagbar.rect.x = 0;
 	f->tagbar.rect.width =
-		f->tagbar.rect.height + blitz_textwidth(&def.font, f->tagbar.text);
+		f->tagbar.rect.height + blitz_textwidth(&def.font, f->client->tags);
 
 	if(f->tagbar.rect.width > f->rect.width / 3)
 		f->tagbar.rect.width = f->rect.width / 3;
@@ -179,15 +171,11 @@ resize_frame(Frame *f)
 	f->titlebar.rect = f->tagbar.rect;
 	f->titlebar.rect.x = f->tagbar.rect.x + f->tagbar.rect.width;
 	f->titlebar.rect.width = f->rect.width - (f->tagbar.rect.width + f->posbar.rect.width);
-}
 
-void
-draw_frame(Frame *f)
-{
-	blitz_draw_input(&f->tile);
-	blitz_draw_input(&f->tagbar);
-	blitz_draw_input(&f->titlebar);
-	blitz_draw_input(&f->posbar);
+	blitz_draw_tile(&f->tile);
+	blitz_draw_input(&f->tagbar, f->client->tags);
+	blitz_draw_input(&f->titlebar, f->client->name);
+	blitz_draw_input(&f->posbar, buf);
 }
 
 void

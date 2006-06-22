@@ -828,9 +828,7 @@ fs_clunk(Req *r) {
 		parse_colors(&buf, &i, &f->bar->brush.color);
 		while(buf[i - 1] == '\n')
 			buf[--i] = '\0';
-		if(f->bar->brush.text)
-			free(f->bar->brush.text);
-		f->bar->brush.text = strdup(buf);
+		cext_strlcpy(f->bar->text, buf, sizeof(f->bar->text));
 		draw_bar();
 		break;
 	case FsFEvent:
