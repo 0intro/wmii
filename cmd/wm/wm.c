@@ -284,7 +284,6 @@ main(int argc, char *argv[])
 
 	/* X server */
 	ixp_server_open_conn(&srv, ConnectionNumber(dpy), nil, check_x_event, nil);
-	init_x_event_handler();
 	blitz_x11_init(dpy);
 
 	view = nil;

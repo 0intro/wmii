@@ -24,26 +24,20 @@ static void handle_maprequest(XEvent * e);
 static void handle_propertynotify(XEvent * e);
 static void handle_unmapnotify(XEvent * e);
 
-void
-init_x_event_handler()
-{
-	int i;
-	/* init event handler */
-	for(i = 0; i < LASTEvent; i++)
-		handler[i] = nil;
-	handler[ButtonPress] = handle_buttonpress;
-	handler[ButtonRelease] = handle_buttonrelease;
-	handler[ConfigureRequest] = handle_configurerequest;
-	handler[DestroyNotify] = handle_destroynotify;
-	handler[EnterNotify] = handle_enternotify;
-	handler[LeaveNotify] = handle_leavenotify;
-	handler[Expose] = handle_expose;
-	handler[KeyPress] = handle_keypress;
-	handler[KeymapNotify] = handle_keymapnotify;
-	handler[MapRequest] = handle_maprequest;
-	handler[PropertyNotify] = handle_propertynotify;
-	handler[UnmapNotify] = handle_unmapnotify;
-}
+void (*handler[LASTEvent]) (XEvent *) = {
+	[ButtonPress]	= handle_buttonpress,
+	[ButtonRelease]	= handle_buttonrelease,
+	[ConfigureRequest]= handle_configurerequest,
+	[DestroyNotify]	= handle_destroynotify,
+	[EnterNotify]	= handle_enternotify,
+	[LeaveNotify]	= handle_leavenotify,
+	[Expose]	= handle_expose,
+	[KeyPress]	= handle_keypress,
+	[KeymapNotify]	= handle_keymapnotify,
+	[MapRequest]	= handle_maprequest,
+	[PropertyNotify]= handle_propertynotify,
+	[UnmapNotify]	= handle_unmapnotify
+};
 
 void
 check_x_event(IXPConn *c)

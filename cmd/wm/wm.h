@@ -253,7 +253,6 @@ char *str_of_column_mode(int mode);
 Area *new_column(View *v, Area *pos, unsigned int w);
 
 /* event.c */
-void init_x_event_handler();
 void check_x_event(IXPConn *c);
 unsigned int flush_masked_events(long even_mask);
 
