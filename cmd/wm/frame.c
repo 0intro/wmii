@@ -185,9 +185,7 @@ draw_frame(Frame *f)
 	blitz_draw_label(&f->titlebar, f->client->name);
 	blitz_draw_label(&f->posbar, buf);
 	XCopyArea(blz.display, pmap, f->client->framewin, f->tagbar.gc,
-			f->rect.x, f->rect.y,
-			f->rect.width, f->rect.height,
-			f->rect.x, f->rect.y);
+			0, 0, f->rect.width, f->rect.height, 0, 0);
 	XSync(blz.display, False);
 }
 
