@@ -47,6 +47,8 @@ struct BlitzFont {
 	XFontSet set;
 	int ascent;
 	int descent;
+	int rbearing;
+	int lbearing;
 	char *fontstr;
 };
 
@@ -61,11 +63,19 @@ struct BlitzBrush {
 };
 
 struct BlitzInput {
+	Blitz *blitz;
 	char *text;
 	char *selstart;
 	char *selend;
 	char *cursor;
 	unsigned int size;
+	BlitzBrush bg;
+	Drawable drawable;
+	GC gc;
+	BlitzColor sel;
+	BlitzColor norm;
+	BlitzFont *font;
+	XRectangle rect;	/* relative rect */
 };
 
 /* color.c */
@@ -73,7 +83,7 @@ int blitz_loadcolor(Blitz *blitz, BlitzColor *c);
 
 /* brush.c */
 void blitz_draw_label(BlitzBrush *b, char *text);
-void blitz_draw_input(BlitzBrush *b, BlitzInput *input);
+void blitz_draw_input(BlitzInput *i);
 void blitz_draw_tile(BlitzBrush *b);
 
 /* font.c */
