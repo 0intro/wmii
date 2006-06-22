@@ -173,9 +173,9 @@ draw_frame(Frame *f)
 	f->titlebar.rect.width = f->rect.width - (f->tagbar.rect.width + f->posbar.rect.width);
 
 	blitz_draw_tile(&f->tile);
-	blitz_draw_input(&f->tagbar, f->client->tags);
-	blitz_draw_input(&f->titlebar, f->client->name);
-	blitz_draw_input(&f->posbar, buf);
+	blitz_draw_label(&f->tagbar, f->client->tags);
+	blitz_draw_label(&f->titlebar, f->client->name);
+	blitz_draw_label(&f->posbar, buf);
 }
 
 void

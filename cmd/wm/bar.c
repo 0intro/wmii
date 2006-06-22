@@ -134,7 +134,7 @@ draw_bar()
 		for(; b; b=b->next) {
 			if(b == rbar)
 				b->brush.align = EAST;
-			blitz_draw_input(&b->brush, b->text);
+			blitz_draw_label(&b->brush, b->text);
 		}
 MapBar:
 	XCopyArea(blz.display, bbrush.drawable, barwin, bbrush.gc, 0, 0,

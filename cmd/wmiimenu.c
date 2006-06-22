@@ -142,13 +142,13 @@ draw_menu()
 		cmdw = cwidth;
 		if(cmdw && item.size)
 			brush.rect.width = cmdw;
-		blitz_draw_input(&brush, text);
+		blitz_draw_label(&brush, text);
 	}
 	else {
 		cmdw = twidth;
 		brush.color = selcolor;
 		brush.rect.width = cmdw;
-		blitz_draw_input(&brush, title);
+		blitz_draw_label(&brush, title);
 	}
 	offx += brush.rect.width;
 
@@ -158,7 +158,7 @@ draw_menu()
 		brush.rect.x = offx;
 		brush.rect.width = seek;
 		offx += brush.rect.width;
-		blitz_draw_input(&brush, prevoff < curroff ? "<" : nil);
+		blitz_draw_label(&brush, prevoff < curroff ? "<" : nil);
 
 		/* determine maximum items */
 		for(i = curroff; i < nextoff; i++) {
@@ -171,14 +171,14 @@ draw_menu()
 				brush.color = selcolor;
 			else
 				brush.color = normcolor;
-			blitz_draw_input(&brush, item.data[i]);
+			blitz_draw_label(&brush, item.data[i]);
 			offx += brush.rect.width;
 		}
 
 		brush.color = normcolor;
 		brush.rect.x = irect.width - seek;
 		brush.rect.width = seek;
-		blitz_draw_input(&brush, item.size > nextoff ? ">" : nil);
+		blitz_draw_label(&brush, item.size > nextoff ? ">" : nil);
 	}
 	XCopyArea(blz.display, brush.drawable, win, brush.gc, 0, 0, irect.width,
 			irect.height, 0, 0);
