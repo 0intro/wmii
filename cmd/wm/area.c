@@ -109,6 +109,8 @@ select_area(Area *a, char *arg)
 		new = a->next ? a->next : a;
 	}
 	else if(!strncmp(arg, "up", 3)) {
+		if(!f)
+			return Ebadvalue;
 		for(p=a->frame; p->anext; p=p->anext)
 			if(p->anext == f) break;
 		focus_client(p->client, True);
@@ -116,6 +118,8 @@ select_area(Area *a, char *arg)
 		return nil;
 	}
 	else if(!strncmp(arg, "down", 5)) {
+		if(!f)
+			return Ebadvalue;
 		p = f->anext ? f->anext : a->frame;
 		focus_client(p->client, True);
 		flush_masked_events(EnterWindowMask);
