@@ -69,7 +69,6 @@ struct BlitzInput {
 	char *selend;
 	char *cursor;
 	unsigned int size;
-	BlitzBrush bg;
 	Drawable drawable;
 	GC gc;
 	BlitzColor sel;
