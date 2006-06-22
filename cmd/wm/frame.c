@@ -25,7 +25,7 @@ create_frame(Area *a, Client *c)
 	f->collapsed = False;
 
 	f->tile.blitz = &blz;
-	f->tile.drawable = c->framewin;
+	f->tile.drawable = pmap;
 	f->tile.gc = c->gc;
 	f->tile.font = &def.font;
 	f->tile.color = def.normcolor;
@@ -34,7 +34,7 @@ create_frame(Area *a, Client *c)
 	f->posbar.align = CENTER;
 
 	f->tagbar.blitz = &blz;
-	f->tagbar.drawable = c->framewin;
+	f->tagbar.drawable = pmap;
 	f->tagbar.gc = c->gc;
 	f->tagbar.font = &def.font;
 	f->tagbar.norm = def.normcolor;
@@ -184,6 +184,11 @@ draw_frame(Frame *f)
 	blitz_draw_input(&f->tagbar);
 	blitz_draw_label(&f->titlebar, f->client->name);
 	blitz_draw_label(&f->posbar, buf);
+	XCopyArea(blz.display, pmap, f->client->framewin, f->tagbar.gc,
+			f->rect.x, f->rect.y,
+			f->rect.width, f->rect.height,
+			f->rect.x, f->rect.y);
+	XSync(blz.display, False);
 }
 
 void

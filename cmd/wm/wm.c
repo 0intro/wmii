@@ -338,6 +338,9 @@ main(int argc, char *argv[])
 	bbrush.color = def.normcolor;
 	bbrush.font = &def.font;
 
+	pmap = XCreatePixmap(blz.display, blz.root, rect.width, rect.height,
+			DefaultDepth(blz.display, blz.screen));
+
 	XMapRaised(blz.display, barwin);
 	draw_bar();
 	scan_wins();
