@@ -756,7 +756,6 @@ fs_open(Req *r) {
 		return respond(r, Enoperm);
 	if((r->ifcall.mode&~(3|OAPPEND)))
 		return respond(r, Enoperm);
-	r->ofcall.mode = r->ifcall.mode;
 	respond(r, nil);
 }
 
@@ -776,7 +775,8 @@ fs_create(Req *r) {
 			return respond(r, Enofile);
 		r->ofcall.qid.type = f->tab.qtype;
 		r->ofcall.qid.path = QID(f->tab.type, f->id);
-		free_file(f);
+		f->next = r->fid->aux;
+		r->fid->aux = f;
 		respond(r, nil);
 		break;
 	}

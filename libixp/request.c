@@ -238,7 +238,7 @@ respond(Req *r, char *error) {
 	case TOPEN:
 	case TCREATE:
 		if(!error) {
-			r->fid->omode = r->ofcall.mode;
+			r->fid->omode = r->ifcall.mode;
 			r->fid->qid = r->ofcall.qid;
 		}
 		free(r->ifcall.name);
