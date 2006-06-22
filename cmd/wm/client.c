@@ -21,15 +21,15 @@ update_client_name(Client *c)
 
 	name.nitems = 0;
 	c->name[0] = 0;
-	XGetTextProperty(dpy, c->win, &name, net_atom[NetWMName]);
+	XGetTextProperty(blz.display, c->win, &name, net_atom[NetWMName]);
 	if(!name.nitems)
-		XGetWMName(dpy, c->win, &name);
+		XGetWMName(blz.display, c->win, &name);
 	if(!name.nitems)
 		return;
 	if(name.encoding == XA_STRING)
 		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
 	else {
-		if(XmbTextPropertyToTextList(dpy, &name, &list, &n) >= Success
+		if(XmbTextPropertyToTextList(blz.display, &name, &list, &n) >= Success
 				&& n > 0 && *list)
 		{
 			cext_strlcpy(c->name, *list, sizeof(c->name));
@@ -37,7 +37,7 @@ update_client_name(Client *c)
 		}
 	}
 	XFree(name.value);
-	if(XGetClassHint(dpy, c->win, &ch)) {
+	if(XGetClassHint(blz.display, c->win, &ch)) {
 		snprintf(c->props, sizeof(c->props), "%s:%s:%s",
 				ch.res_class ? ch.res_class : "",
 				ch.res_name ? ch.res_name : "",
@@ -66,10 +66,10 @@ create_client(Window w, XWindowAttributes *wa)
 	c->border = wa->border_width;
 	c->rect.width = wa->width + 2 * c->border;
 	c->rect.height = wa->height + 2 * c->border;
-	XSetWindowBorderWidth(dpy, c->win, 0);
+	XSetWindowBorderWidth(blz.display, c->win, 0);
 	c->proto = win_proto(c->win);
-	XGetTransientForHint(dpy, c->win, &c->trans);
-	if(!XGetWMNormalHints(dpy, c->win, &c->size, &msize) || !c->size.flags)
+	XGetTransientForHint(blz.display, c->win, &c->trans);
+	if(!XGetWMNormalHints(blz.display, c->win, &c->size, &msize) || !c->size.flags)
 		c->size.flags = PSize;
 	if(c->size.flags & PMinSize && c->size.flags & PMaxSize
 		&& c->size.min_width == c->size.max_width
@@ -77,21 +77,22 @@ create_client(Window w, XWindowAttributes *wa)
 			c->fixedsize = True;
 	else
 		c->fixedsize = False;
-	XAddToSaveSet(dpy, c->win);
+	XAddToSaveSet(blz.display, c->win);
 	update_client_name(c);
 	fwa.override_redirect = 1;
 	fwa.background_pixmap = ParentRelative;
-	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask
-		| ExposureMask | ButtonPressMask | ButtonReleaseMask;
+	fwa.event_mask =
+		SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask
+		| ButtonPressMask | PointerMotionMask | ButtonReleaseMask;
 
-	c->framewin = XCreateWindow(dpy, root, c->rect.x, c->rect.y,
+	c->framewin = XCreateWindow(blz.display, blz.root, c->rect.x, c->rect.y,
 			c->rect.width + 2 * def.border,
 			c->rect.height + def.border + height_of_bar(), 0,
-			DefaultDepth(dpy, screen), CopyFromParent,
-			DefaultVisual(dpy, screen),
+			DefaultDepth(blz.display, blz.screen), CopyFromParent,
+			DefaultVisual(blz.display, blz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
-	c->gc = XCreateGC(dpy, c->framewin, 0, 0);
-	XSync(dpy, False);
+	c->gc = XCreateGC(blz.display, c->framewin, 0, 0);
+	XSync(blz.display, False);
 
 	for(t=&client, i=0; *t; t=&(*t)->next, i++);
 	c->next = *t; /* *t == nil */
@@ -109,7 +110,7 @@ set_client_state(Client * c, int state)
 
 	data[0] = (long) state;
 	data[1] = (long) None;
-	XChangeProperty(dpy, c->win, wm_atom[WMState], wm_atom[WMState], 32,
+	XChangeProperty(blz.display, c->win, wm_atom[WMState], wm_atom[WMState], 32,
 			PropModeReplace, (unsigned char *) data, 2);
 }
 
@@ -154,7 +155,7 @@ focus_client(Client *c, Bool restack)
 
 	if(!c->floating && f->area->mode == Colstack)
 		arrange_column(f->area, False);
-	XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
+	XSetInputFocus(blz.display, c->win, RevertToPointerRoot, CurrentTime);
 	if(old && old != old_in_area && old != c) {
 		update_frame_widget_colors(old->sel);
 		draw_frame(old->sel);
@@ -165,7 +166,7 @@ focus_client(Client *c, Bool restack)
 	}
 	update_frame_widget_colors(c->sel);
 	draw_frame(c->sel);
-	XSync(dpy, False);
+	XSync(blz.display, False);
 	snprintf(buf, sizeof(buf), "ClientFocus %d\n", idx_of_client(c));
 	write_event(buf);
 }
@@ -173,27 +174,27 @@ focus_client(Client *c, Bool restack)
 void
 map_client(Client *c)
 {
-	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XMapWindow(dpy, c->win);
-	XSelectInput(dpy, c->win, CLIENT_MASK);
+	XSelectInput(blz.display, c->win, CLIENT_MASK & ~StructureNotifyMask);
+	XMapWindow(blz.display, c->win);
+	XSelectInput(blz.display, c->win, CLIENT_MASK);
 	set_client_state(c, NormalState);
 }
 
 void
 unmap_client(Client *c)
 {
-	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XUnmapWindow(dpy, c->win);
-	XSelectInput(dpy, c->win, CLIENT_MASK);
+	XSelectInput(blz.display, c->win, CLIENT_MASK & ~StructureNotifyMask);
+	XUnmapWindow(blz.display, c->win);
+	XSelectInput(blz.display, c->win, CLIENT_MASK);
 	set_client_state(c, WithdrawnState);
 }
 
 void
 reparent_client(Client *c, Window w, int x, int y)
 {
-	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XReparentWindow(dpy, c->win, w, x, y);
-	XSelectInput(dpy, c->win, CLIENT_MASK);
+	XSelectInput(blz.display, c->win, CLIENT_MASK & ~StructureNotifyMask);
+	XReparentWindow(blz.display, c->win, w, x, y);
+	XSelectInput(blz.display, c->win, CLIENT_MASK);
 }
 
 void
@@ -215,10 +216,10 @@ configure_client(Client *c)
 	e.border_width = c->border;
 	e.above = None;
 	e.override_redirect = False;
-	XSelectInput(dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *) & e);
-	XSelectInput(dpy, c->win, CLIENT_MASK);
-	XSync(dpy, False);
+	XSelectInput(blz.display, c->win, CLIENT_MASK & ~StructureNotifyMask);
+	XSendEvent(blz.display, c->win, False, StructureNotifyMask, (XEvent *) & e);
+	XSelectInput(blz.display, c->win, CLIENT_MASK);
+	XSync(blz.display, False);
 }
 
 static void
@@ -232,8 +233,8 @@ send_client_message(Window w, Atom a, long value)
 	e.xclient.data.l[0] = value;
 	e.xclient.data.l[1] = CurrentTime;
 
-	XSendEvent(dpy, w, False, NoEventMask, &e);
-	XSync(dpy, False);
+	XSendEvent(blz.display, w, False, NoEventMask, &e);
+	XSync(blz.display, False);
 }
 
 void
@@ -242,7 +243,7 @@ kill_client(Client * c)
 	if(c->proto & WM_PROTOCOL_DELWIN)
 		send_client_message(c->win, wm_atom[WMProtocols], wm_atom[WMDelete]);
 	else
-		XKillClient(dpy, c->win);
+		XKillClient(blz.display, c->win);
 }
 
 void
@@ -257,10 +258,10 @@ prop_client(Client *c, XPropertyEvent *e)
 	}
 	switch (e->atom) {
 	case XA_WM_TRANSIENT_FOR:
-		XGetTransientForHint(dpy, c->win, &c->trans);
+		XGetTransientForHint(blz.display, c->win, &c->trans);
 		break;
 	case XA_WM_NORMAL_HINTS:
-		if(!XGetWMNormalHints(dpy, c->win, &c->size, &msize) || !c->size.flags) {
+		if(!XGetWMNormalHints(blz.display, c->win, &c->size, &msize) || !c->size.flags) {
 			c->size.flags = PSize;
 		}
 		if(c->size.flags & PMinSize && c->size.flags & PMaxSize
@@ -353,8 +354,8 @@ manage_client(Client *c)
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	update_views();
 	map_client(c);
-	XMapWindow(dpy, c->framewin);
-	XSync(dpy, False);
+	XMapWindow(blz.display, c->framewin);
+	XSync(blz.display, False);
 	if(c->sel->area->view == sel)
 		focus_client(c, False);
 	flush_masked_events(EnterWindowMask);
@@ -372,7 +373,7 @@ destroy_client(Client *c)
 	View *v;
 	Client **tc;
 
-	XGrabServer(dpy);
+	XGrabServer(blz.display);
 	XSetErrorHandler(dummy_error_handler);
 
 	if(c->frame) {
@@ -387,9 +388,9 @@ destroy_client(Client *c)
 
 	unmap_client(c);
 
-	reparent_client(c, root, c->rect.x, c->rect.y);
-	XFreeGC(dpy, c->gc);
-	XDestroyWindow(dpy, c->framewin);
+	reparent_client(c, blz.root, c->rect.x, c->rect.y);
+	XFreeGC(blz.display, c->gc);
+	XDestroyWindow(blz.display, c->framewin);
 
 	for(tc=&client; *tc && *tc != c; tc=&(*tc)->next);
 	cext_assert(*tc == c);
@@ -398,9 +399,9 @@ destroy_client(Client *c)
 	update_views();
 	free(c);
 
-	XSync(dpy, False);
+	XSync(blz.display, False);
 	XSetErrorHandler(wmii_error_handler);
-	XUngrabServer(dpy);
+	XUngrabServer(blz.display);
 	flush_masked_events(EnterWindowMask);
 }
 
@@ -507,12 +508,11 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 			f->rect.y = -height_of_bar();
 		}
 		if(f->area->view == sel)
-			XMoveResizeWindow(dpy, c->framewin, f->rect.x,
+			XMoveResizeWindow(blz.display, c->framewin, f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);
 		else
-			XMoveResizeWindow(dpy, c->framewin, 2 * rect.width + f->rect.x,
+			XMoveResizeWindow(blz.display, c->framewin, 2 * rect.width + f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);
-		resize_frame(f);
 	}
 
 	c->rect.x = def.border;
@@ -521,7 +521,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		c->rect.width = f->rect.width - 2 * def.border;
 		c->rect.height = f->rect.height - def.border - height_of_bar();
 	}
-	XMoveResizeWindow(dpy, c->win, c->rect.x, c->rect.y,
+	XMoveResizeWindow(blz.display, c->win, c->rect.x, c->rect.y,
 						c->rect.width, c->rect.height);
 	configure_client(c);
 }

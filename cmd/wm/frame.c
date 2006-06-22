@@ -24,15 +24,21 @@ create_frame(Area *a, Client *c)
 	f->rect.height += def.border + height_of_bar();
 	f->collapsed = False;
 
-	f->tile = blitz_create_tile(c->framewin, c->gc);
-	f->tagbar = blitz_create_input(c->framewin, c->gc, &def.font);
-	f->titlebar = blitz_create_input(c->framewin, c->gc, &def.font);
-	f->posbar = blitz_create_input(c->framewin, c->gc, &def.font);
-	f->tile->notch = &c->rect;
-	f->tagbar->text = c->tags;
-	f->titlebar->text = c->name;
-	f->titlebar->align = WEST;
-	f->tagbar->align = f->posbar->align = CENTER;
+	f->tile.blitz = &blz;
+	f->tile.drawable = pmap;
+	f->tile.gc = c->gc;
+	f->tile.font = &def.font;
+	f->tile.color = def.normcolor;
+	f->titlebar = f->posbar = f->tile;
+	f->titlebar.align = WEST;
+	f->posbar.align = CENTER;
+
+	f->tagbar.blitz = &blz;
+	f->tagbar.drawable = pmap;
+	f->tagbar.gc = c->gc;
+	f->tagbar.font = &def.font;
+	f->tagbar.norm = def.normcolor;
+	f->tagbar.sel = def.selcolor;
 
 	a->sel = f;
 	c->sel = f;
@@ -76,13 +82,6 @@ destroy_frame(Frame *f)
 	Client *c = f->client;
 	Area *a = f->area;
 	Frame **ft, *pr = nil;
-
-	blitz_destroy_tile(f->tile);
-	blitz_destroy_input(f->tagbar);
-	blitz_destroy_input(f->titlebar);
-	if(f->posbar->text)
-		free(f->posbar->text);
-	blitz_destroy_input(f->posbar);
 
 	for(ft=&c->frame; *ft && *ft != f; pr = *ft, ft=&(*ft)->cnext);
 	cext_assert(*ft == f);
@@ -128,69 +127,66 @@ void
 update_frame_widget_colors(Frame *f)
 {
  	if(sel_screen && (f->client == sel_client()))
-		f->tile->color = f->tagbar->color = f->titlebar->color
-			= def.selcolor;
+		f->tile.color = f->titlebar.color = def.selcolor;
 	else
-		f->tile->color = f->tagbar->color = f->titlebar->color
-			= def.normcolor;
+		f->tile.color = f->titlebar.color = def.normcolor;
 
 	if(f->area->sel == f)
-		f->posbar->color = def.selcolor;
+		f->posbar.color = def.selcolor;
 	else
-		f->posbar->color = def.normcolor;
-}
-
-void
-resize_frame(Frame *f)
-{
-
-	Frame *p;
-	unsigned int fidx, size, w;
-	char buf[256];
-
-	for(fidx=0, p=f->area->frame; p && p != f; p=p->anext, fidx++);
-	for(size=fidx; p; p=p->anext, size++);
-
-	if(def.border) {
-		f->tile->rect = f->rect;
-		f->tile->rect.x = f->tile->rect.y = 0;
-	}
-
-	f->posbar->rect = f->tile->rect;
-	f->posbar->rect.height = height_of_bar();
-
-	snprintf(buf, sizeof(buf), "%s%d/%d",
-		(f->area == f->area->view->area) ? "~" : "", fidx + 1, size);
-	if(f->posbar->text)
-		free(f->posbar->text);
-	f->posbar->text = strdup(buf);
-
-	w = f->posbar->rect.width =
-		f->posbar->rect.height + blitz_textwidth(&def.font, f->posbar->text);
-
-	f->posbar->rect.x = f->rect.width - f->posbar->rect.width; 
-	
-	/* tag bar */
-	f->tagbar->rect = f->posbar->rect;
-	f->tagbar->rect.x = 0;
-	f->tagbar->rect.width =
-		f->tagbar->rect.height + blitz_textwidth(&def.font, f->tagbar->text);
-
-	if(f->tagbar->rect.width > f->rect.width / 3)
-		f->tagbar->rect.width = f->rect.width / 3;
-
-	f->titlebar->rect = f->tagbar->rect;
-	f->titlebar->rect.x = f->tagbar->rect.x + f->tagbar->rect.width;
-	f->titlebar->rect.width = f->rect.width - (f->tagbar->rect.width + f->posbar->rect.width);
+		f->posbar.color = def.normcolor;
 }
 
 void
 draw_frame(Frame *f)
 {
-	blitz_draw_input(f->tile);
-	blitz_draw_input(f->tagbar);
-	blitz_draw_input(f->titlebar);
-	blitz_draw_input(f->posbar);
+
+	Frame *p;
+	unsigned int fidx, size, w;
+	char buf[256];
+	char *test = "tag1 tag2 tag3 tag4 | xterm";
+
+	for(fidx=0, p=f->area->frame; p && p != f; p=p->anext, fidx++);
+	for(size=fidx; p; p=p->anext, size++);
+
+	if(def.border) {
+		f->tile.rect = f->rect;
+		f->tile.rect.x = f->tile.rect.y = 0;
+	}
+
+	f->posbar.rect = f->tile.rect;
+	f->posbar.rect.height = height_of_bar();
+
+	snprintf(buf, sizeof(buf), "%s%d/%d",
+		(f->area == f->area->view->area) ? "~" : "", fidx + 1, size);
+
+	w = f->posbar.rect.width =
+		f->posbar.rect.height + blitz_textwidth(&def.font, buf);
+
+	f->posbar.rect.x = f->rect.width - f->posbar.rect.width; 
+	
+	/* tag bar */
+	f->tagbar.rect = f->posbar.rect;
+	f->tagbar.rect.x = 0;
+	f->tagbar.rect.width =
+/*		f->tagbar.rect.height + blitz_textwidth(&def.font, f->client->tags);*/
+		f->tagbar.rect.height + blitz_textwidth(&def.font, test);
+
+	if(f->tagbar.rect.width > f->rect.width / 3)
+		f->tagbar.rect.width = f->rect.width / 3;
+
+	f->titlebar.rect = f->tagbar.rect;
+	f->titlebar.rect.x = f->tagbar.rect.x + f->tagbar.rect.width;
+	f->titlebar.rect.width = f->rect.width - (f->tagbar.rect.width + f->posbar.rect.width);
+
+	blitz_draw_tile(&f->tile);
+	f->tagbar.text = test;/*f->client->tags;*/
+	blitz_draw_input(&f->tagbar);
+	blitz_draw_label(&f->titlebar, f->client->name);
+	blitz_draw_label(&f->posbar, buf);
+	XCopyArea(blz.display, pmap, f->client->framewin, f->tagbar.gc,
+			0, 0, f->rect.width, f->rect.height, 0, 0);
+	XSync(blz.display, False);
 }
 
 void

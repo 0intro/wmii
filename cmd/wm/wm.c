@@ -17,8 +17,6 @@
 
 #include "wm.h"
 
-IXPServer srv = {0};
-
 static int other_wm_running;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
@@ -30,7 +28,7 @@ usage()
 	exit(1);
 }
 
-void
+static void
 scan_wins()
 {
 	int i;
@@ -39,11 +37,11 @@ scan_wins()
 	XWindowAttributes wa;
 	Window d1, d2;
 
-	if(XQueryTree(dpy, root, &d1, &d2, &wins, &num)) {
+	if(XQueryTree(blz.display, blz.root, &d1, &d2, &wins, &num)) {
 		for(i = 0; i < num; i++) {
-			if(!XGetWindowAttributes(dpy, wins[i], &wa))
+			if(!XGetWindowAttributes(blz.display, wins[i], &wa))
 				continue;
-			if(wa.override_redirect || XGetTransientForHint(dpy, wins[i], &d1))
+			if(wa.override_redirect || XGetTransientForHint(blz.display, wins[i], &d1))
 				continue;
 			if(wa.map_state == IsViewable)
 				manage_client(create_client(wins[i], &wa));
@@ -61,7 +59,7 @@ win_property(Window w, Atom a, Atom t, long l, unsigned char **prop)
 	unsigned long res, extra;
 	int status;
 
-	status = XGetWindowProperty(dpy, w, a, 0L, l, False, t, &real, &format,
+	status = XGetWindowProperty(blz.display, w, a, 0L, l, False, t, &real, &format,
 			&res, &extra, prop);
 
 	if(status != Success || *prop == 0) {
@@ -98,7 +96,7 @@ int
 win_state(Window w)
 {
 	/* state hints */
-	XWMHints *hints = XGetWMHints(dpy, w);
+	XWMHints *hints = XGetWMHints(blz.display, w);
 	int res;
 
 	long *prop = 0;
@@ -120,22 +118,22 @@ win_state(Window w)
 static void
 init_atoms()
 {
-	wm_atom[WMState] = XInternAtom(dpy, "WM_STATE", False);
-	wm_atom[WMProtocols] = XInternAtom(dpy, "WM_PROTOCOLS", False);
-	wm_atom[WMDelete] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
-	net_atom[NetSupported] = XInternAtom(dpy, "_NET_SUPPORTED", False);
-	net_atom[NetWMName] = XInternAtom(dpy, "_NET_WM_NAME", False);
+	wm_atom[WMState] = XInternAtom(blz.display, "WM_STATE", False);
+	wm_atom[WMProtocols] = XInternAtom(blz.display, "WM_PROTOCOLS", False);
+	wm_atom[WMDelete] = XInternAtom(blz.display, "WM_DELETE_WINDOW", False);
+	net_atom[NetSupported] = XInternAtom(blz.display, "_NET_SUPPORTED", False);
+	net_atom[NetWMName] = XInternAtom(blz.display, "_NET_WM_NAME", False);
 
-	XChangeProperty(dpy, root, net_atom[NetSupported], XA_ATOM, 32,
+	XChangeProperty(blz.display, blz.root, net_atom[NetSupported], XA_ATOM, 32,
 			PropModeReplace, (unsigned char *) net_atom, NetLast);
 }
 
 static void
 init_cursors()
 {
-	cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
-	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
-	cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
+	cursor[CurNormal] = XCreateFontCursor(blz.display, XC_left_ptr);
+	cursor[CurResize] = XCreateFontCursor(blz.display, XC_sizing);
+	cursor[CurMove] = XCreateFontCursor(blz.display, XC_fleur);
 }
 
 static void
@@ -151,15 +149,15 @@ init_screen()
 	gcv.foreground = def.selcolor.bg;
 	gcv.plane_mask = AllPlanes;
 	gcv.graphics_exposures = False;
-	xorgc = XCreateGC(dpy, root, GCForeground | GCGraphicsExposures |
+	xorgc = XCreateGC(blz.display, blz.root, GCForeground | GCGraphicsExposures |
 						GCFunction | GCSubwindowMode | GCPlaneMask, &gcv);
 
 	rect.x = rect.y = 0;
-	rect.width = DisplayWidth(dpy, screen);
-	rect.height = DisplayHeight(dpy, screen);
+	rect.width = DisplayWidth(blz.display, blz.screen);
+	rect.height = DisplayHeight(blz.display, blz.screen);
 	def.snap = rect.height / 63;
 
-	sel_screen = XQueryPointer(dpy, root, &w, &w, &ret, &ret, &ret, &ret, &mask);
+	sel_screen = XQueryPointer(blz.display, blz.root, &w, &w, &ret, &ret, &ret, &ret, &mask);
 }
 
 /*
@@ -187,7 +185,7 @@ wmii_error_handler(Display *dpy, XErrorEvent *error)
 		return 0;
 	fprintf(stderr, "wmiiwm: fatal error: Xrequest code=%d, Xerror code=%d\n",
 			error->request_code, error->error_code);
-	return x_error_handler(dpy, error); /* calls exit() */
+	return x_error_handler(blz.display, error); /* calls exit() */
 }
 
 /*
@@ -206,9 +204,9 @@ cleanup()
 {
 	Client *c;
 	for(c=client; c; c=c->next)
-		reparent_client(c, root, c->sel->rect.x, c->sel->rect.y);
-	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
-	XSync(dpy, False);
+		reparent_client(c, blz.root, c->sel->rect.x, c->sel->rect.y);
+	XSetInputFocus(blz.display, PointerRoot, RevertToPointerRoot, CurrentTime);
+	XSync(blz.display, False);
 }
 
 int
@@ -243,27 +241,27 @@ main(int argc, char *argv[])
 		}
 	}
 
-	dpy = XOpenDisplay(0);
-	if(!dpy) {
+	blz.display = XOpenDisplay(0);
+	if(!blz.display) {
 		fputs("wmiiwm: cannot open display\n", stderr);
 		exit(1);
 	}
-	screen = DefaultScreen(dpy);
-	root = RootWindow(dpy, screen);
+	blz.screen = DefaultScreen(blz.display);
+	blz.root = RootWindow(blz.display, blz.screen);
 
 	/* check if another WM is already running */
 	other_wm_running = 0;
 	XSetErrorHandler(startup_error_handler);
 	/* this causes an error if some other WM is running */
-	XSelectInput(dpy, root, SubstructureRedirectMask | EnterWindowMask);
-	XSync(dpy, False);
+	XSelectInput(blz.display, blz.root, SubstructureRedirectMask | EnterWindowMask);
+	XSync(blz.display, False);
 
 	if(other_wm_running) {
 		fputs("wmiiwm: another window manager is already running\n", stderr);
 		exit(1);
 	}
 	if(checkwm) {
-		XCloseDisplay(dpy);
+		XCloseDisplay(blz.display);
 		exit(0);
 	}
 	/* above -c is checked */
@@ -283,9 +281,7 @@ main(int argc, char *argv[])
 	ixp_server_open_conn(&srv, i, &p9srv, serve_9pcon, nil);
 
 	/* X server */
-	ixp_server_open_conn(&srv, ConnectionNumber(dpy), nil, check_x_event, nil);
-	blitz_x11_init(dpy);
-
+	ixp_server_open_conn(&srv, ConnectionNumber(blz.display), nil, check_x_event, nil);
 	view = nil;
 	client = nil;
 	sel = nil;
@@ -304,21 +300,21 @@ main(int argc, char *argv[])
 	def.border = 2;
 	def.colmode = Coldefault;
 	cext_strlcpy(def.selcolor.colstr, BLITZ_SELCOLORS, sizeof(def.selcolor.colstr));
-	blitz_loadcolor(&def.selcolor);
+	blitz_loadcolor(&blz, &def.selcolor);
 	cext_strlcpy(def.normcolor.colstr, BLITZ_NORMCOLORS, sizeof(def.normcolor.colstr));
-	blitz_loadcolor(&def.normcolor);
+	blitz_loadcolor(&blz, &def.normcolor);
 	cext_strlcpy(def.grabmod, "Mod1", sizeof(def.grabmod));
 	def.mod = Mod1Mask;
 
 	init_atoms();
 	init_cursors();
-	blitz_loadfont(&def.font);
+	blitz_loadfont(&blz, &def.font);
 	init_lock_keys();
 	init_screen();
 
 	wa.event_mask = SubstructureRedirectMask | EnterWindowMask | LeaveWindowMask;
 	wa.cursor = cursor[CurNormal];
-	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &wa);
+	XChangeWindowAttributes(blz.display, blz.root, CWEventMask | CWCursor, &wa);
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
@@ -328,21 +324,24 @@ main(int argc, char *argv[])
 	brect = rect;
 	brect.height = height_of_bar();
 	brect.y = rect.height - brect.height;
-	barwin = XCreateWindow(dpy, RootWindow(dpy, screen), brect.x, brect.y,
-			brect.width, brect.height, 0, DefaultDepth(dpy, screen),
-			CopyFromParent, DefaultVisual(dpy, screen),
+	barwin = XCreateWindow(blz.display, RootWindow(blz.display, blz.screen), brect.x, brect.y,
+			brect.width, brect.height, 0, DefaultDepth(blz.display, blz.screen),
+			CopyFromParent, DefaultVisual(blz.display, blz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
-	XSync(dpy, False);
+	XSync(blz.display, False);
 
-	bargc = XCreateGC(dpy, barwin, 0, 0);
+	bbrush.blitz = &blz;
+	bbrush.gc = XCreateGC(blz.display, barwin, 0, 0);
+	bbrush.drawable = XCreatePixmap(blz.display, barwin, brect.width, brect.height,
+			DefaultDepth(blz.display, blz.screen));
+	bbrush.rect = brect;
+	bbrush.color = def.normcolor;
+	bbrush.font = &def.font;
 
-	barpmap = XCreatePixmap(dpy, barwin, brect.width, brect.height,
-			DefaultDepth(dpy, screen));
-	bartile = blitz_create_tile(barpmap, bargc);
-	bartile->rect = brect;
-	bartile->color = def.normcolor;
+	pmap = XCreatePixmap(blz.display, blz.root, rect.width, rect.height,
+			DefaultDepth(blz.display, blz.screen));
 
-	XMapRaised(dpy, barwin);
+	XMapRaised(blz.display, barwin);
 	draw_bar();
 	scan_wins();
 
@@ -351,10 +350,9 @@ main(int argc, char *argv[])
 	if(errstr)
 		fprintf(stderr, "wmii: fatal: %s\n", errstr);
 
-	blitz_destroy_tile(bartile);
 	ixp_server_close(&srv);
 	cleanup();
-	XCloseDisplay(dpy);
+	XCloseDisplay(blz.display);
 
 	return errstr ? 1 : 0;
 }

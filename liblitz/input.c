@@ -3,87 +3,105 @@
  * See LICENSE file for license details.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <cext.h>
 #include "blitz.h"
 
-BlitzWidget *
-blitz_create_input(Drawable drawable, GC gc, BlitzFont *font)
+static void
+xchangegc(BlitzInput *i, BlitzColor *c, Bool invert)
 {
-	BlitzWidget *i = cext_emallocz(sizeof(BlitzWidget));
-	i->drawable = drawable;
-	i->gc = gc;
-	i->font = font;
-	return i;
-}
-
-void
-blitz_draw_input(BlitzWidget *i)
-{
-	unsigned int x, y, w, h, shortened, len;
-	static char text[2048];
 	XGCValues gcv;
-	blitz_draw_tile(i);
 
-
-	if (!i->text)
-		return;
-
-	x = y = shortened = 0;
-	w = h = 1;
-	cext_strlcpy(text, i->text, sizeof(text));
-	len = strlen(text);
-	gcv.foreground = i->color.fg;
-	gcv.background = i->color.bg;
+	if(invert) {
+		gcv.foreground = c->bg;
+		gcv.background = c->fg;
+	}
+	else {
+		gcv.foreground = c->fg;
+		gcv.background = c->bg;
+	}
 	if(i->font->set)
-		XChangeGC(__blitz.display, i->gc, GCForeground | GCBackground, &gcv);
+		XChangeGC(i->blitz->display, i->gc, GCForeground | GCBackground, &gcv);
 	else {
 		gcv.font = i->font->xfont->fid;
-		XChangeGC(__blitz.display, i->gc, GCForeground | GCBackground | GCFont, &gcv);
+		XChangeGC(i->blitz->display, i->gc, GCForeground | GCBackground | GCFont, &gcv);
 	}
+}
 
-	h = i->font->ascent + i->font->descent;
-	y = i->rect.y + i->rect.height / 2 - h / 2 + i->font->ascent;
+static void
+xdrawtextpart(BlitzInput *i, BlitzColor *c, char *start, char *end,
+				int *xoff, int yoff, unsigned int boxw)
+{
+	char *p, buf[2];
 
-	/* shorten text if necessary */
-	while (len && (w = blitz_textwidth(i->font, text)) > i->rect.width) {
-		text[len - 1] = 0;
-		len--;
-		shortened = 1;
+	xchangegc(i, c, False);
+	buf[1] = 0;
+	for(p = start; p && *p && p != end; p++) {
+		*buf = *p;
+		if(p == i->cursor)
+			xchangegc(i, c, True);
+		if(i->font->set)
+			XmbDrawImageString(i->blitz->display, i->drawable, i->font->set, i->gc,
+					*xoff, yoff, buf, 1);
+		else
+			XDrawImageString(i->blitz->display, i->drawable, i->gc, *xoff, yoff,
+					buf, 1);
+		*xoff += boxw;
+		if(p == i->cursor)
+			xchangegc(i, c, False);
 	}
+}
 
-	if (w > i->rect.width)
-		return;
 
-	/* mark shortened info in the string */
-	if (shortened) {
-		if (len > 3)
-			text[len - 3] = '.';
-		if (len > 2)
-			text[len - 2] = '.';
-		if (len > 1)
-			text[len - 1] = '.';
-	}
-	switch (i->align) {
-	case EAST:
-		x = i->rect.x + i->rect.width - (h / 2 + w);
-		break;
-	case CENTER:
-		x = i->rect.x + (i->rect.width - w) / 2;
-		break;
-	default:
-		x = i->rect.x + h / 2;
-		break;
-	}
-	if(i->font->set)
-		XmbDrawString(__blitz.display, i->drawable, i->font->set, i->gc, x, y, text, len);
-	else
-		XDrawString(__blitz.display, i->drawable, i->gc, x, y, text, len);
+void
+xget_fontmetric(BlitzInput *i, int *x, int *y, unsigned int *w, unsigned int *h)
+{
+	*w = i->font->rbearing - i->font->lbearing;
+	*h = i->font->ascent + i->font->descent;
+	*x = i->rect.x;
+	*y = i->rect.y + i->rect.height / 2 - *h / 2 + i->font->ascent;
 }
 
 void
-blitz_destroy_input(BlitzWidget *i)
+blitz_draw_input(BlitzInput *i)
 {
-	free(i);
+	int xoff, yoff;
+	unsigned int boxw, boxh, nbox;
+
+	if (!i)
+		return;
+
+	blitz_drawbg(i->blitz->display, i->drawable, i->gc, i->rect, i->norm);
+	xget_fontmetric(i, &xoff, &yoff, &boxw, &boxh);
+	nbox = i->rect.width / boxw;
+
+	/* draw normal text */
+	xdrawtextpart(i, &i->norm, i->text, i->selstart, &xoff, yoff, boxw);
+	/* draw sel text */
+	xdrawtextpart(i, &i->sel, i->selstart, i->selend, &xoff, yoff, boxw);
+	/* draw remaining normal text */
+	xdrawtextpart(i, &i->norm, i->selend, nil, &xoff, yoff, boxw);
+}
+
+char *
+blitz_charof(BlitzInput *i, int x, int y)
+{
+	int xoff, yoff;
+	unsigned int boxw, boxh, nbox, cbox, l;
+
+	if(!i->text || (y < i->rect.y) || (y > i->rect.y + i->rect.height))
+		return nil;
+	xget_fontmetric(i, &xoff, &yoff, &boxw, &boxh);
+	nbox = i->rect.width / boxw;
+	cbox = (x - i->rect.x) / boxw;
+
+	if(cbox > nbox)
+		return nil;
+
+	if((l = strlen(i->text)) > cbox)
+		return i->text + cbox;
+	else
+		return i->text + l;
 }

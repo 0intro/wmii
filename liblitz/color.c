@@ -9,26 +9,26 @@
 #include "blitz.h"
 
 static unsigned long
-xloadcolor(char *colstr)
+xloadcolor(Blitz *blitz, char *colstr)
 {
 	XColor color;
 	char col[8];
 
 	cext_strlcpy(col, colstr, sizeof(col));
 	col[7] = 0;
-	XAllocNamedColor(__blitz.display,
-			DefaultColormap(__blitz.display, __blitz.screen), col, &color, &color);
+	XAllocNamedColor(blitz->display,
+			DefaultColormap(blitz->display, blitz->screen), col, &color, &color);
 	return color.pixel;
 }
 
 int
-blitz_loadcolor(BlitzColor *c)
+blitz_loadcolor(Blitz *blitz, BlitzColor *c)
 {
 	if(!c->colstr || strlen(c->colstr) != 23)
 		return -1;
-	c->fg = xloadcolor(&c->colstr[0]);
-	c->bg = xloadcolor(&c->colstr[8]);
-	c->border = xloadcolor(&c->colstr[16]);
+	c->fg = xloadcolor(blitz, &c->colstr[0]);
+	c->bg = xloadcolor(blitz, &c->colstr[8]);
+	c->border = xloadcolor(blitz, &c->colstr[16]);
 	return 0;
 }
 

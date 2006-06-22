@@ -27,10 +27,8 @@ static int ret = 0;
 static char text[4096];
 static BlitzColor selcolor;
 static BlitzColor normcolor;
-static Display *dpy;
 static Window win;
 static XRectangle irect;
-static int screen;
 static ItemVector allitem = {0};
 static ItemVector item = {0};
 static int sel = -1;
@@ -40,7 +38,8 @@ static unsigned int curroff = 0;
 static unsigned int cmdw = 0;
 static unsigned int twidth = 0;
 static unsigned int cwidth = 0;
-static BlitzWidget *menu = nil;
+static Blitz blz = {0};
+static BlitzBrush brush = {0};
 static const int seek = 30;		/* 30px */
 
 static void draw_menu(void);
@@ -71,7 +70,7 @@ update_offsets()
 		return;
 
 	for(i = curroff; i < item.size; i++) {
-		tw = blitz_textwidth(menu->font, item.data[i]);
+		tw = blitz_textwidth(brush.font, item.data[i]);
 		if(tw > irect.width / 3)
 			tw = irect.width / 3;
 		w += tw + irect.height;
@@ -82,7 +81,7 @@ update_offsets()
 
 	w = cmdw + 2 * seek;
 	for(i = curroff; i > 0; i--) {
-		tw = blitz_textwidth(menu->font, item.data[i]);
+		tw = blitz_textwidth(brush.font, item.data[i]);
 		if(tw > irect.width / 3)
 			tw = irect.width / 3;
 		w += tw + irect.height;
@@ -123,72 +122,67 @@ update_items(char *pattern)
 	return item.size;
 }
 
-/* creates menu structs for menu mode drawing */
+/* creates brush structs for brush mode drawing */
 static void
 draw_menu()
 {
 	unsigned int i, offx = 0;
 
-	menu->align = WEST;
+	brush.align = WEST;
 
-	menu->rect = irect;
-	menu->rect.x = 0;
-	menu->rect.y = 0;
-	menu->color = normcolor;
-	menu->text = nil;
-	blitz_draw_tile(menu);
+	brush.rect = irect;
+	brush.rect.x = 0;
+	brush.rect.y = 0;
+	brush.color = normcolor;
+	blitz_draw_tile(&brush);
 
 	/* print command */
 	if(!title || text[0]) {
-		menu->text = text;
-		menu->color = normcolor;
+		brush.color = normcolor;
 		cmdw = cwidth;
 		if(cmdw && item.size)
-			menu->rect.width = cmdw;
+			brush.rect.width = cmdw;
+		blitz_draw_label(&brush, text);
 	}
 	else {
 		cmdw = twidth;
-		menu->text = title;
-		menu->color = selcolor;
-		menu->rect.width = cmdw;
+		brush.color = selcolor;
+		brush.rect.width = cmdw;
+		blitz_draw_label(&brush, title);
 	}
-	blitz_draw_input(menu);
-	offx += menu->rect.width;
+	offx += brush.rect.width;
 
-	menu->align = CENTER;
+	brush.align = CENTER;
 	if(item.size) {
-		menu->color = normcolor;
-		menu->text = prevoff < curroff ? "<" : nil;
-		menu->rect.x = offx;
-		menu->rect.width = seek;
-		offx += menu->rect.width;
-		blitz_draw_input(menu);
+		brush.color = normcolor;
+		brush.rect.x = offx;
+		brush.rect.width = seek;
+		offx += brush.rect.width;
+		blitz_draw_label(&brush, prevoff < curroff ? "<" : nil);
 
 		/* determine maximum items */
 		for(i = curroff; i < nextoff; i++) {
-			menu->text = item.data[i];
-			menu->rect.x = offx;
-			menu->rect.width = blitz_textwidth(menu->font, menu->text);
-			if(menu->rect.width > irect.width / 3)
-				menu->rect.width = irect.width / 3;
-			menu->rect.width += irect.height;
+			brush.rect.x = offx;
+			brush.rect.width = blitz_textwidth(brush.font, item.data[i]);
+			if(brush.rect.width > irect.width / 3)
+				brush.rect.width = irect.width / 3;
+			brush.rect.width += irect.height;
 			if(sel == i)
-				menu->color = selcolor;
+				brush.color = selcolor;
 			else
-				menu->color = normcolor;
-			blitz_draw_input(menu);
-			offx += menu->rect.width;
+				brush.color = normcolor;
+			blitz_draw_label(&brush, item.data[i]);
+			offx += brush.rect.width;
 		}
 
-		menu->color = normcolor;
-		menu->text = item.size > nextoff ? ">" : nil;
-		menu->rect.x = irect.width - seek;
-		menu->rect.width = seek;
-		blitz_draw_input(menu);
+		brush.color = normcolor;
+		brush.rect.x = irect.width - seek;
+		brush.rect.width = seek;
+		blitz_draw_label(&brush, item.size > nextoff ? ">" : nil);
 	}
-	XCopyArea(dpy, menu->drawable, win, menu->gc, 0, 0, irect.width,
+	XCopyArea(blz.display, brush.drawable, win, brush.gc, 0, 0, irect.width,
 			irect.height, 0, 0);
-	XSync(dpy, False);
+	XSync(blz.display, False);
 }
 
 static void
@@ -368,73 +362,76 @@ main(int argc, char *argv[])
 			usage();
 	}
 
-	dpy = XOpenDisplay(0);
-	if(!dpy) {
+	blz.display = XOpenDisplay(0);
+	if(!blz.display) {
 		fprintf(stderr, "%s", "wmiimenu: cannot open display\n");
 		exit(1);
 	}
-	screen = DefaultScreen(dpy);
+	blz.screen = DefaultScreen(blz.display);
+	blz.root = RootWindow(blz.display, blz.screen);
 
 	maxname = read_allitems();
 
 	/* grab as early as possible, but after reading all items!!! */
 	while(XGrabKeyboard
-			(dpy, RootWindow(dpy, screen), True, GrabModeAsync,
+			(blz.display, blz.root, True, GrabModeAsync,
 			 GrabModeAsync, CurrentTime) != GrabSuccess)
 		usleep(1000);
 
-	/* set font and colors */
-	blitz_x11_init(dpy);
-	
 	font.fontstr = getenv("WMII_FONT");
 	if (!font.fontstr)
 		font.fontstr = strdup(BLITZ_FONT);
-	blitz_loadfont(&font);
+	blitz_loadfont(&blz, &font);
 
 	if((p = getenv("WMII_NORMCOLORS")))
 		cext_strlcpy(normcolor.colstr, p, sizeof(normcolor.colstr));
 	if(strlen(normcolor.colstr) != 23)
 		cext_strlcpy(normcolor.colstr, BLITZ_NORMCOLORS, sizeof(normcolor.colstr));
-	blitz_loadcolor(&normcolor);
+	blitz_loadcolor(&blz, &normcolor);
 
 	if((p = getenv("WMII_SELCOLORS")))
 		cext_strlcpy(selcolor.colstr, p, sizeof(selcolor.colstr));
 	if(strlen(selcolor.colstr) != 23)
 		cext_strlcpy(selcolor.colstr, BLITZ_SELCOLORS, sizeof(selcolor.colstr));
-	blitz_loadcolor(&selcolor);
+	blitz_loadcolor(&blz, &selcolor);
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
 	wa.event_mask = ExposureMask | ButtonPressMask | KeyPressMask
 		| SubstructureRedirectMask | SubstructureNotifyMask;
 
-	irect.width = DisplayWidth(dpy, screen);
+	irect.width = DisplayWidth(blz.display, blz.screen);
 	irect.height = font.ascent + font.descent + 4;
-	irect.y = DisplayHeight(dpy, screen) - irect.height;
+	irect.y = DisplayHeight(blz.display, blz.screen) - irect.height;
 	irect.x = 0;
 
-	win = XCreateWindow(dpy, RootWindow(dpy, screen), irect.x, irect.y,
-			irect.width, irect.height, 0, DefaultDepth(dpy, screen),
-			CopyFromParent, DefaultVisual(dpy, screen),
+	win = XCreateWindow(blz.display, blz.root, irect.x, irect.y,
+			irect.width, irect.height, 0, DefaultDepth(blz.display, blz.screen),
+			CopyFromParent, DefaultVisual(blz.display, blz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
-	XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_xterm));
-	XSync(dpy, False);
+	XDefineCursor(blz.display, win, XCreateFontCursor(blz.display, XC_xterm));
+	XSync(blz.display, False);
 
 	/* pixmap */
-	gc = XCreateGC(dpy, win, 0, 0);
-	pmap = XCreatePixmap(dpy, win, irect.width, irect.height,
-			DefaultDepth(dpy, screen));
+	gc = XCreateGC(blz.display, win, 0, 0);
+	pmap = XCreatePixmap(blz.display, win, irect.width, irect.height,
+			DefaultDepth(blz.display, blz.screen));
 
-	XSync(dpy, False);
+	XSync(blz.display, False);
 
-	menu = blitz_create_input(pmap, gc, &font);
+	brush.blitz = &blz;
+	brush.color = normcolor;
+	brush.drawable = pmap;
+	brush.gc = gc;
+	brush.font = &font;
+
 	if(maxname)
-		cwidth = blitz_textwidth(menu->font, maxname) + irect.height;
+		cwidth = blitz_textwidth(brush.font, maxname) + irect.height;
 	if(cwidth > irect.width / 3)
 		cwidth = irect.width / 3;
 
 	if(title) {
-		twidth = blitz_textwidth(menu->font, title) + irect.height;
+		twidth = blitz_textwidth(brush.font, title) + irect.height;
 		if(twidth > irect.width / 3)
 			twidth = irect.width / 3;
 	}
@@ -443,12 +440,12 @@ main(int argc, char *argv[])
 
 	text[0] = 0;
 	update_items(text);
-	XMapRaised(dpy, win);
+	XMapRaised(blz.display, win);
 	draw_menu();
-	XSync(dpy, False);
+	XSync(blz.display, False);
 
 	/* main event loop */
-	while(!XNextEvent(dpy, &ev)) {
+	while(!XNextEvent(blz.display, &ev)) {
 		switch (ev.type) {
 			case KeyPress:
 				handle_kpress(&ev.xkey);
@@ -465,11 +462,11 @@ main(int argc, char *argv[])
 			break;
 	}
 
-	XUngrabKeyboard(dpy, CurrentTime);
-	XFreePixmap(dpy, pmap);
-	XFreeGC(dpy, gc);
-	XDestroyWindow(dpy, win);
-	XCloseDisplay(dpy);
+	XUngrabKeyboard(blz.display, CurrentTime);
+	XFreePixmap(blz.display, pmap);
+	XFreeGC(blz.display, gc);
+	XDestroyWindow(blz.display, win);
+	XCloseDisplay(blz.display);
 
 	return ret;
 }

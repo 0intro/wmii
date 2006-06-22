@@ -14,7 +14,8 @@ typedef struct Blitz Blitz;
 typedef enum BlitzAlign BlitzAlign;
 typedef struct BlitzColor BlitzColor;
 typedef struct BlitzFont BlitzFont;
-typedef struct BlitzWidget BlitzWidget;
+typedef struct BlitzBrush BlitzBrush;
+typedef struct BlitzInput BlitzInput;
 
 struct Blitz {
 	Display *display;
@@ -46,39 +47,50 @@ struct BlitzFont {
 	XFontSet set;
 	int ascent;
 	int descent;
+	int rbearing;
+	int lbearing;
 	char *fontstr;
 };
 
-struct BlitzWidget {
+struct BlitzBrush {
+	Blitz *blitz;
 	Drawable drawable;
 	GC gc;
 	BlitzColor color;
 	BlitzAlign align;
 	BlitzFont *font;
 	XRectangle rect;	/* relative rect */
-	XRectangle *notch;	/* relative notch rect */
-	char *text;
 };
 
-Blitz __blitz;
+struct BlitzInput {
+	Blitz *blitz;
+	char *text;
+	char *selstart;
+	char *selend;
+	char *cursor;
+	unsigned int size;
+	Drawable drawable;
+	GC gc;
+	BlitzColor sel;
+	BlitzColor norm;
+	BlitzFont *font;
+	XRectangle rect;	/* relative rect */
+};
 
-/* blitz.c */
-void blitz_x11_init(Display *dpy);
-Bool blitz_x11_event(XEvent *ev);
+/* brush.c */
+void blitz_draw_label(BlitzBrush *b, char *text);
+void blitz_draw_tile(BlitzBrush *b);
 
 /* color.c */
-int blitz_loadcolor(BlitzColor *c);
+int blitz_loadcolor(Blitz *blitz, BlitzColor *c);
 
-/* input.c */
-BlitzWidget *blitz_create_input(Drawable drawable, GC gc, BlitzFont *font);
-void blitz_draw_input(BlitzWidget *i);
-void blitz_destroy_input(BlitzWidget *i);
-
-/* tile.c */
-BlitzWidget *blitz_create_tile(Drawable drawable, GC gc);
-void blitz_draw_tile(BlitzWidget *t);
-void blitz_destroy_tile(BlitzWidget *t);
+void blitz_drawbg(Display *dpy, Drawable drawable, GC gc,
+					XRectangle rect, BlitzColor c);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
-void blitz_loadfont(BlitzFont *font);
+void blitz_loadfont(Blitz *blitz, BlitzFont *font);
+
+/* input.c */
+void blitz_draw_input(BlitzInput *i);
+char *blitz_charof(BlitzInput *i, int x, int y);

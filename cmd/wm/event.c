@@ -11,18 +11,19 @@
 #include "wm.h"
 
 /* local functions */
-static void handle_buttonpress(XEvent * e);
-static void handle_buttonrelease(XEvent * e);
-static void handle_configurerequest(XEvent * e);
-static void handle_destroynotify(XEvent * e);
-static void handle_enternotify(XEvent * e);
-static void handle_leavenotify(XEvent * e);
-static void handle_expose(XEvent * e);
-static void handle_keypress(XEvent * e);
-static void handle_keymapnotify(XEvent * e);
-static void handle_maprequest(XEvent * e);
-static void handle_propertynotify(XEvent * e);
-static void handle_unmapnotify(XEvent * e);
+static void handle_buttonpress(XEvent *e);
+static void handle_buttonrelease(XEvent *e);
+static void handle_configurerequest(XEvent *e);
+static void handle_destroynotify(XEvent *e);
+static void handle_enternotify(XEvent *e);
+static void handle_leavenotify(XEvent *e);
+static void handle_expose(XEvent *e);
+static void handle_keypress(XEvent *e);
+static void handle_keymapnotify(XEvent *e);
+static void handle_maprequest(XEvent *e);
+static void handle_motionnotify(XEvent *e);
+static void handle_propertynotify(XEvent *e);
+static void handle_unmapnotify(XEvent *e);
 
 void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress]	= handle_buttonpress,
@@ -34,6 +35,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
 	[Expose]	= handle_expose,
 	[KeyPress]	= handle_keypress,
 	[KeymapNotify]	= handle_keymapnotify,
+	[MotionNotify]	= handle_motionnotify,
 	[MapRequest]	= handle_maprequest,
 	[PropertyNotify]= handle_propertynotify,
 	[UnmapNotify]	= handle_unmapnotify
@@ -43,8 +45,8 @@ void
 check_x_event(IXPConn *c)
 {
 	XEvent ev;
-	while(XPending(dpy)) { /* main event loop */
-		XNextEvent(dpy, &ev);
+	while(XPending(blz.display)) { /* main event loop */
+		XNextEvent(blz.display, &ev);
 		if(handler[ev.type])
 			(handler[ev.type]) (&ev); /* call handler */
 	}
@@ -55,9 +57,11 @@ flush_masked_events(long even_mask)
 {
 	XEvent ev;
 	unsigned int n = 0;
-	while(XCheckMaskEvent(dpy, even_mask, &ev)) n++;
+	while(XCheckMaskEvent(blz.display, even_mask, &ev)) n++;
 	return n;
 }
+
+static Bool drag = False;
 
 static void
 handle_buttonrelease(XEvent *e)
@@ -68,14 +72,14 @@ handle_buttonrelease(XEvent *e)
 	static char buf[32];
 	if(ev->window == barwin) {
 		for(b=lbar; b; b=b->next)
-			if(ispointinrect(ev->x, ev->y, &b->widget->rect)) {
+			if(ispointinrect(ev->x, ev->y, &b->brush.rect)) {
 				snprintf(buf, sizeof(buf), "LeftBarClick %s %d\n",
 						b->name, ev->button);
 				write_event(buf);
 				return;
 			}
 		for(b=rbar; b; b=b->next)
-			if(ispointinrect(ev->x, ev->y, &b->widget->rect)) {
+			if(ispointinrect(ev->x, ev->y, &b->brush.rect)) {
 				snprintf(buf, sizeof(buf), "RightBarClick %s %d\n",
 						b->name, ev->button);
 				write_event(buf);
@@ -83,9 +87,37 @@ handle_buttonrelease(XEvent *e)
 			}
 	}
 	else if((c = frame_of_win(ev->window)) && c->frame) {
+		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
+			c->sel->tagbar.cursor = c->sel->tagbar.selend
+				= blitz_charof(&c->sel->tagbar, ev->x, ev->y);
+			draw_frame(c->sel);
+		}
 		snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
 				idx_of_client(c), ev->button);
 		write_event(buf);
+		drag = False;
+	}
+}
+
+static void
+handle_motionnotify(XEvent *e)
+{
+	Client *c;
+	XMotionEvent *ev = &e->xmotion;
+
+	if(!drag)
+		return;
+
+	if((c = frame_of_win(ev->window))) {
+		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
+			c->sel->tagbar.selend = blitz_charof(&c->sel->tagbar, ev->x, ev->y);
+			if(c->sel->tagbar.selend < c->sel->tagbar.selstart) {
+				char *tmp = c->sel->tagbar.selend;
+				c->sel->tagbar.selend = c->sel->tagbar.selstart;
+				c->sel->tagbar.selstart = tmp;
+			}
+			draw_frame(c->sel);
+		}
 	}
 }
 
@@ -97,6 +129,13 @@ handle_buttonpress(XEvent *e)
 
 	if((c = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
+		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
+			c->sel->tagbar.cursor = c->sel->tagbar.selstart
+				= c->sel->tagbar.selend
+				= blitz_charof(&c->sel->tagbar, ev->x, ev->y);
+			draw_frame(c->sel);
+			drag = True;
+		}
 		if((ev->state & def.mod) == def.mod) {
 			focus(c, True);
 			switch(ev->button) {
@@ -160,7 +199,7 @@ handle_configurerequest(XEvent *e)
 				wc.stack_mode = ev->detail;
 				if(f->area->view != sel)
 					wc.x += 2 * rect.width;
-				XConfigureWindow(dpy, c->framewin, ev->value_mask, &wc);
+				XConfigureWindow(blz.display, c->framewin, ev->value_mask, &wc);
 				configure_client(c);
 			}
 		}
@@ -183,8 +222,8 @@ handle_configurerequest(XEvent *e)
 	wc.stack_mode = Above;
 	ev->value_mask &= ~CWStackMode;
 	ev->value_mask |= CWBorderWidth;
-	XConfigureWindow(dpy, ev->window, ev->value_mask, &wc);
-	XSync(dpy, False);
+	XConfigureWindow(blz.display, ev->window, ev->value_mask, &wc);
+	XSync(blz.display, False);
 }
 
 static void
@@ -213,7 +252,7 @@ handle_enternotify(XEvent *e)
 			c = a->sel->client;
 		focus(c, False);
 	}
-	else if(ev->window == root) {
+	else if(ev->window == blz.root) {
 		sel_screen = True;
 		draw_frames();
 	}
@@ -224,7 +263,7 @@ handle_leavenotify(XEvent *e)
 {
 	XCrossingEvent *ev = &e->xcrossing;
 
-	if((ev->window == root) && !ev->same_screen) {
+	if((ev->window == blz.root) && !ev->same_screen) {
 		sel_screen = True;
 		draw_frames();
 	}
@@ -248,7 +287,7 @@ handle_keypress(XEvent *e)
 {
 	XKeyEvent *ev = &e->xkey;
 	ev->state &= valid_mask;
-	handle_key(root, ev->state, (KeyCode) ev->keycode);
+	handle_key(blz.root, ev->state, (KeyCode) ev->keycode);
 }
 
 static void
@@ -263,11 +302,11 @@ handle_maprequest(XEvent *e)
 	XMapRequestEvent *ev = &e->xmaprequest;
 	static XWindowAttributes wa;
 
-	if(!XGetWindowAttributes(dpy, ev->window, &wa))
+	if(!XGetWindowAttributes(blz.display, ev->window, &wa))
 		return;
 
 	if(wa.override_redirect) {
-		XSelectInput(dpy, ev->window,
+		XSelectInput(blz.display, ev->window,
 				(StructureNotifyMask | PropertyChangeMask));
 		return;
 	}

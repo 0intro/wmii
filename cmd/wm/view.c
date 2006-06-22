@@ -92,7 +92,7 @@ focus_view(View *v)
 
 	cext_assert(v);
 
-	XGrabServer(dpy);
+	XGrabServer(blz.display);
 	assign_sel_view(v);
 
 	update_frame_selectors(v);
@@ -102,19 +102,19 @@ focus_view(View *v)
 		if(c->sel) {
 			Frame *f = c->sel;
 			if(f && f->area->view == v) {
-				XMoveWindow(dpy, c->framewin, f->rect.x, f->rect.y);
+				XMoveWindow(blz.display, c->framewin, f->rect.x, f->rect.y);
 				resize_client(c, &f->rect, False);
 			}
 			else
-				XMoveWindow(dpy, c->framewin, 2 * rect.width + f->rect.x, f->rect.y);
+				XMoveWindow(blz.display, c->framewin, 2 * rect.width + f->rect.x, f->rect.y);
 		}
 
 	if((c = sel_client()))
 		focus_client(c, True);
 
 	draw_frames();
-	XSync(dpy, False);
-	XUngrabServer(dpy);
+	XSync(blz.display, False);
+	XUngrabServer(blz.display);
 	flush_masked_events(EnterWindowMask);
 }
 
@@ -188,7 +188,7 @@ detach_from_view(View *v, Client *c)
 		next=a->next;
 		if(is_of_area(a, c)) {
 			detach_from_area(a, c);
-			XMoveWindow(dpy, c->framewin, 2 * rect.width, 0);
+			XMoveWindow(blz.display, c->framewin, 2 * rect.width, 0);
 		}
 	}
 }
@@ -241,7 +241,7 @@ restack_view(View *v)
 	}
 
 	if(n)
-		XRestackWindows(dpy, wins, n);
+		XRestackWindows(blz.display, wins, n);
 }
 
 void
