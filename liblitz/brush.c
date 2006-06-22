@@ -74,8 +74,8 @@ blitz_draw_label(BlitzBrush *b, char *text)
 		break;
 	}
 	if(b->font->set)
-		XmbDrawString(b->blitz->display, b->drawable, b->font->set, b->gc,
+		XmbDrawImageString(b->blitz->display, b->drawable, b->font->set, b->gc,
 				x, y, buf, len);
 	else
-		XDrawString(b->blitz->display, b->drawable, b->gc, x, y, buf, len);
+		XDrawImageString(b->blitz->display, b->drawable, b->gc, x, y, buf, len);
 }
