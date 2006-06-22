@@ -109,7 +109,7 @@ IFS='
 '
 for bar in `wmiir ls /lbar`
 do
-	wmiir rm /lbar/$bar
+	wmiir remove /lbar/$bar
 done
 
 seltag=`wmiir read /tag/sel/ctl`
@@ -122,7 +122,7 @@ do
 		xwrite /lbar/$tag $WMII_NORMCOLORS $tag
 	fi
 done
-IFS=
+unset IFS
 
 
 # EVENT LOOP
