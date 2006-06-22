@@ -9,31 +9,10 @@
 #include <cext.h>
 #include "blitz.h"
 
-static void
-xdrawbg(Display *dpy, Drawable drawable, GC gc, XRectangle rect, BlitzColor c)
-{
-	XPoint points[5];
-	XSetForeground(dpy, gc, c.bg);
-	XFillRectangles(dpy, drawable, gc, &rect, 1);
-	XSetLineAttributes(dpy, gc, 1, LineSolid, CapButt, JoinMiter);
-	XSetForeground(dpy, gc, c.border);
-	points[0].x = rect.x;
-	points[0].y = rect.y;
-	points[1].x = rect.width - 1;
-	points[1].y = 0;
-	points[2].x = 0;
-	points[2].y = rect.height - 1;
-	points[3].x = -(rect.width - 1);
-	points[3].y = 0;
-	points[4].x = 0;
-	points[4].y = -(rect.height - 1);
-	XDrawLines(dpy, drawable, gc, points, 5, CoordModePrevious);
-}
-
 void
 blitz_draw_tile(BlitzBrush *b)
 {
-	xdrawbg(b->blitz->display, b->drawable, b->gc, b->rect, b->color);
+	blitz_drawbg(b->blitz->display, b->drawable, b->gc, b->rect, b->color);
 }
 
 void
@@ -99,75 +78,4 @@ blitz_draw_label(BlitzBrush *b, char *text)
 				x, y, buf, len);
 	else
 		XDrawString(b->blitz->display, b->drawable, b->gc, x, y, buf, len);
-}
-
-static void
-xchangegc(BlitzInput *i, BlitzColor *c, Bool invert)
-{
-	XGCValues gcv;
-
-	if(invert) {
-		gcv.foreground = c->bg;
-		gcv.background = c->fg;
-	}
-	else {
-		gcv.foreground = c->fg;
-		gcv.background = c->bg;
-	}
-	if(i->font->set)
-		XChangeGC(i->blitz->display, i->gc, GCForeground | GCBackground, &gcv);
-	else {
-		gcv.font = i->font->xfont->fid;
-		XChangeGC(i->blitz->display, i->gc, GCForeground | GCBackground | GCFont, &gcv);
-	}
-}
-
-static void
-xdrawtextpart(BlitzInput *i, BlitzColor *c, char *start, char *end,
-				int *xoff, int yoff, unsigned int boxw)
-{
-	char *p, buf[2];
-
-	xchangegc(i, c, False);
-	buf[1] = 0;
-	for(p = start; p && *p && p != end; p++) {
-		*buf = *p;
-		if(p == i->cursor)
-			xchangegc(i, c, True);
-		if(i->font->set)
-			XmbDrawImageString(i->blitz->display, i->drawable, i->font->set, i->gc,
-					*xoff, yoff, buf, 1);
-		else
-			XDrawImageString(i->blitz->display, i->drawable, i->gc, *xoff, yoff,
-					buf, 1);
-		*xoff += boxw;
-		if(p == i->cursor)
-			xchangegc(i, c, False);
-	}
-}
-
-
-void
-blitz_draw_input(BlitzInput *i)
-{
-	int xoff, yoff;
-	unsigned int boxw, boxh, nbox;
-
-	if (!i)
-		return;
-
-	xdrawbg(i->blitz->display, i->drawable, i->gc, i->rect, i->norm);
-
-	boxw = i->font->rbearing - i->font->lbearing;
-	boxh = i->font->ascent + i->font->descent;
-	nbox = i->rect.width / boxw;
-	xoff = boxh / 2 + i->rect.x;
-	yoff = i->rect.y + i->rect.height / 2 - boxh / 2 + i->font->ascent;
-
-	/* draw normal text */
-	xdrawtextpart(i, &i->norm, i->text, i->selstart, &xoff, yoff, boxw);
-	/* draw sel text */
-	xdrawtextpart(i, &i->sel, i->selstart, i->selend, &xoff, yoff, boxw);
-	/* draw remaining normal text */
-	xdrawtextpart(i, &i->norm, i->selend, nil, &xoff, yoff, boxw);
 }

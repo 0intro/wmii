@@ -77,14 +77,20 @@ struct BlitzInput {
 	XRectangle rect;	/* relative rect */
 };
 
+/* brush.c */
+void blitz_draw_label(BlitzBrush *b, char *text);
+void blitz_draw_tile(BlitzBrush *b);
+
 /* color.c */
 int blitz_loadcolor(Blitz *blitz, BlitzColor *c);
 
-/* brush.c */
-void blitz_draw_label(BlitzBrush *b, char *text);
-void blitz_draw_input(BlitzInput *i);
-void blitz_draw_tile(BlitzBrush *b);
+void blitz_drawbg(Display *dpy, Drawable drawable, GC gc,
+					XRectangle rect, BlitzColor c);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
 void blitz_loadfont(Blitz *blitz, BlitzFont *font);
+
+/* input.c */
+void blitz_draw_input(BlitzInput *i);
+char *blitz_cursorof(BlitzInput *i, int x, int y);

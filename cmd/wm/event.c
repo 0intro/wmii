@@ -97,6 +97,10 @@ handle_buttonpress(XEvent *e)
 
 	if((c = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
+		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
+			c->sel->tagbar.cursor = blitz_cursorof(&c->sel->tagbar, ev->x, ev->y);
+			draw_frame(c->sel);
+		}
 		if((ev->state & def.mod) == def.mod) {
 			focus(c, True);
 			switch(ev->button) {
