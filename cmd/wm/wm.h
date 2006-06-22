@@ -128,7 +128,7 @@ struct Bar {
 	char buf[280];
 	char name[256];
 	unsigned short id;
-	BlitzWidget *bar;
+	BlitzWidget *widget;
 };
 
 typedef struct Rule Rule;

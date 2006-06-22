@@ -27,9 +27,9 @@ create_bar(Bar **b_link, char *name)
 
 	b->id = id++;
 	cext_strlcpy(b->name, name, sizeof(b->name));
-	b->bar = blitz_create_input(barpmap, bargc, &def.font);
-	b->bar->color = def.normcolor;
-	b->bar->align = CENTER;
+	b->widget = blitz_create_input(barpmap, bargc, &def.font);
+	b->widget->color = def.normcolor;
+	b->widget->align = CENTER;
 
 	for(i=b_link; *i; i=&(*i)->next)
 		if(strcmp((*i)->name, name) >= 0)
@@ -48,9 +48,9 @@ destroy_bar(Bar **b_link, Bar *b)
 	*p = b->next;
 
 	b->next = free_bars;
-	if(b->bar->text)
-		free(b->bar->text);
-	blitz_destroy_input(b->bar);
+	if(b->widget->text)
+		free(b->widget->text);
+	blitz_destroy_input(b->widget);
 	free_bars = b;
 }
 
@@ -102,13 +102,13 @@ draw_bar()
 
 	for(b=lbar, nb=2 ;nb; --nb && (b = rbar))
 		for(; b && (w < brect.width); b=b->next, size++) {
-			b->bar->rect.x = 0;
-			b->bar->rect.y = 0;
-			b->bar->rect.width = brect.height;
-			if(b->bar->text && strlen(b->bar->text))
-				b->bar->rect.width += blitz_textwidth(b->bar->font, b->bar->text);
-			b->bar->rect.height = brect.height;
-			w += b->bar->rect.width;
+			b->widget->rect.x = 0;
+			b->widget->rect.y = 0;
+			b->widget->rect.width = brect.height;
+			if(b->widget->text && strlen(b->widget->text))
+				b->widget->rect.width += blitz_textwidth(b->widget->font, b->widget->text);
+			b->widget->rect.height = brect.height;
+			w += b->widget->rect.width;
 		}
 
 	if(b) { /* give all bars same width */
@@ -119,24 +119,24 @@ draw_bar()
 		w = brect.width / size;
 		for(b = lbar, nb=2 ;nb; b = rbar, nb--) {
 			for(; b; b=b->next) {
-				b->bar->rect.x = i * w;
-				b->bar->rect.width = w;
+				b->widget->rect.x = i * w;
+				b->widget->rect.width = w;
 			}
 		}
 	}
 	else { /* expand rbar properly */
 		if(rbar)
-			rbar->bar->rect.width += (brect.width - w);
+			rbar->widget->rect.width += (brect.width - w);
 		for(b=lbar, nb=2 ;nb--; b = rbar)
 			for(; b; prev = b, b=b->next)
-				if(prev) b->bar->rect.x = prev->bar->rect.x + prev->bar->rect.width;
+				if(prev) b->widget->rect.x = prev->widget->rect.x + prev->widget->rect.width;
 	}
 
 	for(b=lbar, nb=2 ;nb; b=rbar, nb--)
 		for(; b; b=b->next) {
 			if(b == rbar)
-				b->bar->align = EAST;
-			blitz_draw_input(b->bar);
+				b->widget->align = EAST;
+			blitz_draw_input(b->widget);
 		}
 MapBar:
 	XCopyArea(dpy, barpmap, barwin, bargc, 0, 0, brect.width, brect.height, 0, 0);
