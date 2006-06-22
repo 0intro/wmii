@@ -84,7 +84,7 @@ struct Frame {
 	Client *client;
 	Bool collapsed;
 	BlitzBrush tile;
-	BlitzBrush tagbar;
+	BlitzInput tagbar;
 	BlitzBrush titlebar;
 	BlitzBrush posbar;
 };

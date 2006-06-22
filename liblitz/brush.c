@@ -100,11 +100,57 @@ blitz_draw_label(BlitzBrush *b, char *text)
 		XDrawString(b->blitz->display, b->drawable, b->gc, x, y, buf, len);
 }
 
+static void
+xdrawtextpart(BlitzInput *i, BlitzColor *c, char *start, char *end,
+				int *xoff, int yoff, unsigned int boxw)
+{
+	char *p, buf[2];
+	XGCValues gcv;
+
+	gcv.foreground = c->fg;
+	gcv.background = c->bg;
+	if(i->font->set)
+		XChangeGC(i->blitz->display, i->gc, GCForeground | GCBackground, &gcv);
+	else {
+		gcv.font = i->font->xfont->fid;
+		XChangeGC(i->blitz->display, i->gc, GCForeground | GCBackground | GCFont, &gcv);
+	}
+
+	buf[1] = 0;
+	for(p = start; p && *p && p != end; p++) {
+		*buf = *p;
+		if(i->font->set)
+			XmbDrawString(i->blitz->display, i->drawable, i->font->set, i->gc,
+					*xoff, yoff, buf, 1);
+		else
+			XDrawString(i->blitz->display, i->drawable, i->gc, *xoff, yoff,
+					buf, 1);
+		*xoff += boxw;
+	}
+}
+
+
 void
 blitz_draw_input(BlitzInput *i)
 {
-	xdrawbg(i->blitz->display, i->drawable, i->gc, i->rect, i->norm);
+	int xoff, yoff;
+	unsigned int boxw, boxh, nbox;
 
 	if (!i)
 		return;
+
+	xdrawbg(i->blitz->display, i->drawable, i->gc, i->rect, i->norm);
+
+	boxw = i->font->rbearing - i->font->lbearing;
+	boxh = i->font->ascent + i->font->descent;
+	nbox = i->rect.width / boxw;
+	xoff = boxh / 2 + i->rect.x;
+	yoff = i->rect.y + i->rect.height / 2 - boxh / 2 + i->font->ascent;
+
+	/* draw normal text */
+	xdrawtextpart(i, &i->norm, i->text, i->selstart, &xoff, yoff, boxw);
+	/* draw sel text */
+	xdrawtextpart(i, &i->sel, i->selstart, i->selend, &xoff, yoff, boxw);
+	/* draw remaining normal text */
+	xdrawtextpart(i, &i->norm, i->selend, nil, &xoff, yoff, boxw);
 }

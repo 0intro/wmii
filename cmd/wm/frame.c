@@ -29,9 +29,16 @@ create_frame(Area *a, Client *c)
 	f->tile.gc = c->gc;
 	f->tile.font = &def.font;
 	f->tile.color = def.normcolor;
-	f->tagbar = f->titlebar = f->posbar = f->tile;
+	f->titlebar = f->posbar = f->tile;
 	f->titlebar.align = WEST;
-	f->tagbar.align = f->posbar.align = CENTER;
+	f->posbar.align = CENTER;
+
+	f->tagbar.blitz = &blz;
+	f->tagbar.drawable = c->framewin;
+	f->tagbar.gc = c->gc;
+	f->tagbar.font = &def.font;
+	f->tagbar.norm = def.normcolor;
+	f->tagbar.sel = def.selcolor;
 
 	a->sel = f;
 	c->sel = f;
@@ -120,11 +127,9 @@ void
 update_frame_widget_colors(Frame *f)
 {
  	if(sel_screen && (f->client == sel_client()))
-		f->tile.color = f->tagbar.color = f->titlebar.color
-			= def.selcolor;
+		f->tile.color = f->titlebar.color = def.selcolor;
 	else
-		f->tile.color = f->tagbar.color = f->titlebar.color
-			= def.normcolor;
+		f->tile.color = f->titlebar.color = def.normcolor;
 
 	if(f->area->sel == f)
 		f->posbar.color = def.selcolor;
@@ -173,7 +178,8 @@ draw_frame(Frame *f)
 	f->titlebar.rect.width = f->rect.width - (f->tagbar.rect.width + f->posbar.rect.width);
 
 	blitz_draw_tile(&f->tile);
-	blitz_draw_label(&f->tagbar, f->client->tags);
+	f->tagbar.text = f->client->tags;
+	blitz_draw_input(&f->tagbar);
 	blitz_draw_label(&f->titlebar, f->client->name);
 	blitz_draw_label(&f->posbar, buf);
 }
