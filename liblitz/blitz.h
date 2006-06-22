@@ -15,6 +15,7 @@ typedef enum BlitzAlign BlitzAlign;
 typedef struct BlitzColor BlitzColor;
 typedef struct BlitzFont BlitzFont;
 typedef struct BlitzBrush BlitzBrush;
+typedef struct BlitzInput BlitzInput;
 
 struct Blitz {
 	Display *display;
@@ -57,6 +58,16 @@ struct BlitzBrush {
 	BlitzAlign align;
 	BlitzFont *font;
 	XRectangle rect;	/* relative rect */
+};
+
+struct BlitzInput {
+	char *text;
+	char *selstart;
+	char *selend;
+	char *cursor;
+	unsigned int size;
+	BlitzBrush norm;
+	BlitzBrush sel;
 };
 
 /* color.c */
