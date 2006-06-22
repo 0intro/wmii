@@ -3,6 +3,7 @@
  * See LICENSE file for license details.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <cext.h>
@@ -120,10 +121,10 @@ xdrawtextpart(BlitzInput *i, BlitzColor *c, char *start, char *end,
 	for(p = start; p && *p && p != end; p++) {
 		*buf = *p;
 		if(i->font->set)
-			XmbDrawString(i->blitz->display, i->drawable, i->font->set, i->gc,
+			XmbDrawImageString(i->blitz->display, i->drawable, i->font->set, i->gc,
 					*xoff, yoff, buf, 1);
 		else
-			XDrawString(i->blitz->display, i->drawable, i->gc, *xoff, yoff,
+			XDrawImageString(i->blitz->display, i->drawable, i->gc, *xoff, yoff,
 					buf, 1);
 		*xoff += boxw;
 	}

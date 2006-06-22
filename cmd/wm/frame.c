@@ -144,6 +144,9 @@ draw_frame(Frame *f)
 	Frame *p;
 	unsigned int fidx, size, w;
 	char buf[256];
+	char *test = "tag1 tag2 tag3 tag4 | xterm";
+	char *testselstart = test+5;
+	char *testselend = test+9;
 
 	for(fidx=0, p=f->area->frame; p && p != f; p=p->anext, fidx++);
 	for(size=fidx; p; p=p->anext, size++);
@@ -168,7 +171,8 @@ draw_frame(Frame *f)
 	f->tagbar.rect = f->posbar.rect;
 	f->tagbar.rect.x = 0;
 	f->tagbar.rect.width =
-		f->tagbar.rect.height + blitz_textwidth(&def.font, f->client->tags);
+/*		f->tagbar.rect.height + blitz_textwidth(&def.font, f->client->tags);*/
+		f->tagbar.rect.height + blitz_textwidth(&def.font, test);
 
 	if(f->tagbar.rect.width > f->rect.width / 3)
 		f->tagbar.rect.width = f->rect.width / 3;
@@ -178,7 +182,9 @@ draw_frame(Frame *f)
 	f->titlebar.rect.width = f->rect.width - (f->tagbar.rect.width + f->posbar.rect.width);
 
 	blitz_draw_tile(&f->tile);
-	f->tagbar.text = f->client->tags;
+	f->tagbar.text = test;/*f->client->tags;*/
+	f->tagbar.selstart = testselstart;
+	f->tagbar.selend = testselend;
 	blitz_draw_input(&f->tagbar);
 	blitz_draw_label(&f->titlebar, f->client->name);
 	blitz_draw_label(&f->posbar, buf);
