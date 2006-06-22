@@ -102,24 +102,38 @@ blitz_draw_label(BlitzBrush *b, char *text)
 }
 
 static void
-xdrawtextpart(BlitzInput *i, BlitzColor *c, char *start, char *end,
-				int *xoff, int yoff, unsigned int boxw)
+xchangegc(BlitzInput *i, BlitzColor *c, Bool invert)
 {
-	char *p, buf[2];
 	XGCValues gcv;
 
-	gcv.foreground = c->fg;
-	gcv.background = c->bg;
+	if(invert) {
+		gcv.foreground = c->bg;
+		gcv.background = c->fg;
+	}
+	else {
+		gcv.foreground = c->fg;
+		gcv.background = c->bg;
+	}
 	if(i->font->set)
 		XChangeGC(i->blitz->display, i->gc, GCForeground | GCBackground, &gcv);
 	else {
 		gcv.font = i->font->xfont->fid;
 		XChangeGC(i->blitz->display, i->gc, GCForeground | GCBackground | GCFont, &gcv);
 	}
+}
 
+static void
+xdrawtextpart(BlitzInput *i, BlitzColor *c, char *start, char *end,
+				int *xoff, int yoff, unsigned int boxw)
+{
+	char *p, buf[2];
+
+	xchangegc(i, c, False);
 	buf[1] = 0;
 	for(p = start; p && *p && p != end; p++) {
 		*buf = *p;
+		if(p == i->cursor)
+			xchangegc(i, c, True);
 		if(i->font->set)
 			XmbDrawImageString(i->blitz->display, i->drawable, i->font->set, i->gc,
 					*xoff, yoff, buf, 1);
@@ -127,6 +141,8 @@ xdrawtextpart(BlitzInput *i, BlitzColor *c, char *start, char *end,
 			XDrawImageString(i->blitz->display, i->drawable, i->gc, *xoff, yoff,
 					buf, 1);
 		*xoff += boxw;
+		if(p == i->cursor)
+			xchangegc(i, c, False);
 	}
 }
 
