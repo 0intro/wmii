@@ -291,8 +291,9 @@ message_root(char *message)
 	}if(!strncmp(message, "testtags ", 9)) {
 		message += 9;
 		free(def.testtags);
-		def.testtags = strdup(message);
+		def.testtags = strlen(message) ? strdup(message) : nil;
 		draw_frames();
+		return nil;
 	}
 	return Ebadcmd;
 }

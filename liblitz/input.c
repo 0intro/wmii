@@ -60,7 +60,8 @@ xget_fontmetric(BlitzInput *i, int *x, int *y, unsigned int *w, unsigned int *h)
 {
 	*w = i->font->rbearing - i->font->lbearing;
 	*h = i->font->ascent + i->font->descent;
-	*x = i->rect.x + (i->rect.width - *w) / 2;;
+	/* XXX: This is a temporary hack */
+	*x = i->rect.x + (i->rect.height - *h) / 2 + i->font->rbearing;
 	*y = i->rect.y + (i->rect.height - *h) / 2 + i->font->ascent;
 }
 
