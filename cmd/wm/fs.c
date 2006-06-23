@@ -246,19 +246,14 @@ parse_colors(char **buf, int *buflen, BlitzColor *col) {
 }
 
 char *
-message_root(char *message)
+message_root(char **data)
 {
 	unsigned int n;
 
 	if(!strncmp(message, "quit", 5)) {
 		srv.running = 0;
 		return nil;
-	}
-	if(!strchr(message, ' ')) {
-		message = realloc(message, strlen(message) + 2);
-		strcat(message, " ");
-	}
-	if(!strncmp(message, "view ", 5)) {
+	}if(!strncmp(message, "view ", 5)) {
 		select_view(&message[5]);
 		return nil;
 	}if(!strncmp(message, "selcolors ", 10)) {
