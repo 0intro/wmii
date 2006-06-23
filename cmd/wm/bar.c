@@ -110,22 +110,20 @@ draw_bar()
 		}
 
 	if(b) { /* give all bars same width */
-		/* finish counting */
-		for( ;nb; b = rbar, nb--)
+		for( ;nb; b = rbar, nb--) /* finish counting */
 			for(; b; b=b->next, size++);
 
 		w = brect.width / size;
-		for(b = lbar, nb=2 ;nb; b = rbar, nb--) {
-			for(; b; b=b->next) {
+		for(b = lbar, nb=2 ;nb; b = rbar, nb--)
+			for(; b; b=b->next, i++) {
 				b->brush.rect.x = i * w;
 				b->brush.rect.width = w;
 			}
-		}
 	}
 	else { /* expand rbar properly */
 		if(rbar)
 			rbar->brush.rect.width += (brect.width - w);
-		for(b=lbar, nb=2 ;nb--; b = rbar)
+		for(b=lbar, nb=2 ;nb; b = rbar, nb--)
 			for(; b; prev = b, b=b->next)
 				if(prev) b->brush.rect.x = prev->brush.rect.x + prev->brush.rect.width;
 	}

@@ -288,6 +288,11 @@ message_root(char *message)
 			return Ebadvalue;
 		def.border = n;
 		return nil;
+	}if(!strncmp(message, "testtags ", 9)) {
+		message += 9;
+		free(def.testtags);
+		def.testtags = strdup(message);
+		draw_frames();
 	}
 	return Ebadcmd;
 }
@@ -306,6 +311,8 @@ read_root_ctl()
 	i += snprintf(&buf[i], (BUF_SIZE - i), "font %s\n", def.font.fontstr);
 	i += snprintf(&buf[i], (BUF_SIZE - i), "grabmod %s\n", def.grabmod);
 	i += snprintf(&buf[i], (BUF_SIZE - i), "border %d\n", def.border);
+	if(def.testtags)
+		i += snprintf(&buf[i], (BUF_SIZE - i), "testtags %s\n", def.testtags);
 	return buf;
 }
 

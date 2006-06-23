@@ -153,6 +153,7 @@ typedef struct {
 	unsigned int border;
 	unsigned int snap;
 	char *keys;
+	char *testtags;
 	unsigned int keyssz;
 	Rules	tagrules;
 	Rules	colrules;
