@@ -311,7 +311,7 @@ static char *
 read_allitems()
 {
 	static char *maxname = nil;
-    char *p, buf[1024];
+	char *p, buf[1024];
 	unsigned int len = 0, max = 0;
 
 	while(fgets(buf, sizeof(buf), stdin)) {

@@ -253,7 +253,12 @@ message_root(char *message)
 	if(!strncmp(message, "quit", 5)) {
 		srv.running = 0;
 		return nil;
-	}if(!strncmp(message, "view ", 5)) {
+	}
+	if(!strchr(message, ' ')) {
+		message = realloc(message, strlen(message) + 2);
+		strcat(message, " ");
+	}
+	if(!strncmp(message, "view ", 5)) {
 		select_view(&message[5]);
 		return nil;
 	}if(!strncmp(message, "selcolors ", 10)) {
@@ -574,13 +579,30 @@ fs_walk(P9Req *r) {
 	respond(r, nil);
 }
 
+unsigned int
+fs_size(FileId *f) {
+	switch(f->tab.type) {
+	default:
+		return 0;
+	case FsFColRules:
+	case FsFTagRules:
+		return f->rule->size;
+	case FsFKeys:
+		return def.keyssz;
+	case FsFCtags:
+		return strlen(f->client->tags);
+	case FsFprops:
+		return strlen(f->client->props);
+	}
+}
+
 void
 fs_stat(P9Req *r) {
 	Stat s;
 	int size;
 	unsigned char *buf;
 
-	dostat(&s, 0, r->fid->aux);
+	dostat(&s, fs_size(r->fid->aux), r->fid->aux);
 	r->ofcall.nstat = size = ixp_sizeof_stat(&s);
 	buf = cext_emallocz(size);
 	r->ofcall.stat = buf;
@@ -609,7 +631,7 @@ fs_read(P9Req *r) {
 		tf = f = lookup_file(f, nil);
 		/* Note: f->tab.name == "."; goto next */
 		for(f=f->next; f; f=f->next) {
-			dostat(&s, 0, f);
+			dostat(&s, fs_size(f), f);
 			n = ixp_sizeof_stat(&s);
 			if(offset >= r->ifcall.offset) {
 				if(size < n)
