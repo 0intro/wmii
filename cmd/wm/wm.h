@@ -186,6 +186,7 @@ Cursor cursor[CurLast];
 unsigned int valid_mask;
 unsigned int num_lock_mask;
 Bool sel_screen;
+Bool starting;
 Pixmap pmap;
 void (*handler[LASTEvent]) (XEvent *);
 

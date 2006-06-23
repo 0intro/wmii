@@ -203,6 +203,8 @@ attach_to_view(View *v, Client *c)
 	if(c->trans || c->floating || c->fixedsize
 		|| (c->rect.width == rect.width && c->rect.height == rect.height))
 		a = v->area;
+	else if(starting && v->sel == v->area)
+		a = v->area->next;
 	else
 		a = v->sel;
 	attach_to_area(a, c, False);

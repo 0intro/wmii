@@ -242,6 +242,8 @@ main(int argc, char *argv[])
 		}
 	}
 
+	starting = True;
+
 	blz.display = XOpenDisplay(0);
 	if(!blz.display) {
 		fputs("wmiiwm: cannot open display\n", stderr);
@@ -345,6 +347,8 @@ main(int argc, char *argv[])
 	XMapRaised(blz.display, barwin);
 	draw_bar();
 	scan_wins();
+
+	starting = False;
 
 	/* main event loop */
 	errstr = ixp_server_loop(&srv);
