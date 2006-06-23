@@ -134,7 +134,9 @@ draw_menu()
 	brush.rect.x = 0;
 	brush.rect.y = 0;
 	brush.color = normcolor;
+	brush.border = True;
 	blitz_draw_tile(&brush);
+	brush.border = False;
 
 	/* print command */
 	if(!title || text[0]) {
@@ -162,13 +164,16 @@ draw_menu()
 
 		/* determine maximum items */
 		for(i = curroff; i < nextoff; i++) {
+			brush.border = False;
 			brush.rect.x = offx;
 			brush.rect.width = blitz_textwidth(brush.font, item.data[i]);
 			if(brush.rect.width > irect.width / 3)
 				brush.rect.width = irect.width / 3;
 			brush.rect.width += irect.height;
-			if(sel == i)
+			if(sel == i) {
 				brush.color = selcolor;
+				brush.border = True;
+			}
 			else
 				brush.color = normcolor;
 			blitz_draw_label(&brush, item.data[i]);
@@ -176,6 +181,7 @@ draw_menu()
 		}
 
 		brush.color = normcolor;
+		brush.border = False;
 		brush.rect.x = irect.width - seek;
 		brush.rect.width = seek;
 		blitz_draw_label(&brush, item.size > nextoff ? ">" : nil);

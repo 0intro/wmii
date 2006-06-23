@@ -69,7 +69,7 @@ blitz_draw_input(BlitzInput *i)
 	if (!i)
 		return;
 
-	blitz_drawbg(i->blitz->display, i->drawable, i->gc, i->rect, i->color);
+	blitz_drawbg(i->blitz->display, i->drawable, i->gc, i->rect, i->color, True);
 	xget_fontmetric(i, &xoff, &yoff, &boxw, &boxh);
 	nbox = i->rect.width / boxw;
 

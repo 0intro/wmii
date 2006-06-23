@@ -344,6 +344,7 @@ main(int argc, char *argv[])
 	bbrush.rect.y = 0;
 	bbrush.color = def.normcolor;
 	bbrush.font = &def.font;
+	bbrush.border = True;
 
 
 	XMapRaised(blz.display, barwin);

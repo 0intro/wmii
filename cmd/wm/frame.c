@@ -29,6 +29,7 @@ create_frame(Area *a, Client *c)
 	f->tile.gc = c->gc;
 	f->tile.font = &def.font;
 	f->tile.color = def.normcolor;
+	f->tile.border = True;
 	f->titlebar = f->posbar = f->tile;
 	f->titlebar.align = WEST;
 	f->posbar.align = CENTER;
