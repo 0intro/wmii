@@ -112,18 +112,18 @@ enum {	QTDIR		= 0x80,		/* type bit for directories */
 };
 
 /* bits in Dir.mode */
-#define DMDIR		0x80000000,	/* mode bit for directories */
-#define DMAPPEND	0x40000000,	/* mode bit for append only files */
-#define DMEXCL		0x20000000,	/* mode bit for exclusive use files */
-#define DMMOUNT		0x10000000,	/* mode bit for mounted channel */
-#define DMAUTH		0x08000000,	/* mode bit for authentication file */
-#define DMTMP		0x04000000,	/* mode bit for non-backed-up file */
-#define DMSYMLINK	0x02000000,	/* mode bit for symbolic link (Unix, 9P2000.u) */
-#define DMDEVICE	0x00800000,	/* mode bit for device file (Unix, 9P2000.u) */
-#define DMNAMEDPIPE	0x00200000,	/* mode bit for named pipe (Unix, 9P2000.u) */
-#define DMSOCKET	0x00100000,	/* mode bit for socket (Unix, 9P2000.u) */
-#define DMSETUID	0x00080000,	/* mode bit for setuid (Unix, 9P2000.u) */
-#define DMSETGID	0x00040000,	/* mode bit for setgid (Unix, 9P2000.u) */
+#define DMDIR		0x80000000	/* mode bit for directories */
+#define DMAPPEND	0x40000000	/* mode bit for append only files */
+#define DMEXCL		0x20000000	/* mode bit for exclusive use files */
+#define DMMOUNT		0x10000000	/* mode bit for mounted channel */
+#define DMAUTH		0x08000000	/* mode bit for authentication file */
+#define DMTMP		0x04000000	/* mode bit for non-backed-up file */
+#define DMSYMLINK	0x02000000	/* mode bit for symbolic link (Unix, 9P2000.u) */
+#define DMDEVICE	0x00800000	/* mode bit for device file (Unix, 9P2000.u) */
+#define DMNAMEDPIPE	0x00200000	/* mode bit for named pipe (Unix, 9P2000.u) */
+#define DMSOCKET	0x00100000	/* mode bit for socket (Unix, 9P2000.u) */
+#define DMSETUID	0x00080000	/* mode bit for setuid (Unix, 9P2000.u) */
+#define DMSETGID	0x00040000	/* mode bit for setgid (Unix, 9P2000.u) */
 	
 enum {	DMREAD		= 0x4,		/* mode bit for read permission */
 	DMWRITE		= 0x2,		/* mode bit for write permission */
