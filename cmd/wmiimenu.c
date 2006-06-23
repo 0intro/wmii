@@ -134,6 +134,7 @@ draw_menu()
 	brush.rect.x = 0;
 	brush.rect.y = 0;
 	brush.color = normcolor;
+	brush.border = True;
 	blitz_draw_tile(&brush);
 
 	/* print command */
@@ -162,13 +163,16 @@ draw_menu()
 
 		/* determine maximum items */
 		for(i = curroff; i < nextoff; i++) {
+			brush.border = False;
 			brush.rect.x = offx;
 			brush.rect.width = blitz_textwidth(brush.font, item.data[i]);
 			if(brush.rect.width > irect.width / 3)
 				brush.rect.width = irect.width / 3;
 			brush.rect.width += irect.height;
-			if(sel == i)
+			if(sel == i) {
 				brush.color = selcolor;
+				brush.border = True;
+			}
 			else
 				brush.color = normcolor;
 			blitz_draw_label(&brush, item.data[i]);
@@ -176,6 +180,7 @@ draw_menu()
 		}
 
 		brush.color = normcolor;
+		brush.border = False;
 		brush.rect.x = irect.width - seek;
 		brush.rect.width = seek;
 		blitz_draw_label(&brush, item.size > nextoff ? ">" : nil);
@@ -311,7 +316,7 @@ static char *
 read_allitems()
 {
 	static char *maxname = nil;
-	char *p, buf[1024];
+    char *p, buf[1024];
 	unsigned int len = 0, max = 0;
 
 	while(fgets(buf, sizeof(buf), stdin)) {

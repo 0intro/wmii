@@ -56,6 +56,7 @@ struct BlitzBrush {
 	Blitz *blitz;
 	Drawable drawable;
 	GC gc;
+	Bool border;
 	BlitzColor color;
 	BlitzAlign align;
 	BlitzFont *font;
@@ -65,14 +66,12 @@ struct BlitzBrush {
 struct BlitzInput {
 	Blitz *blitz;
 	char *text;
-	char *selstart;
-	char *selend;
-	char *cursor;
+	char *curstart;
+	char *curend;
 	unsigned int size;
 	Drawable drawable;
 	GC gc;
-	BlitzColor sel;
-	BlitzColor norm;
+	BlitzColor color;
 	BlitzFont *font;
 	XRectangle rect;	/* relative rect */
 };
@@ -84,8 +83,9 @@ void blitz_draw_tile(BlitzBrush *b);
 /* color.c */
 int blitz_loadcolor(Blitz *blitz, BlitzColor *c);
 
+/* draw.c */
 void blitz_drawbg(Display *dpy, Drawable drawable, GC gc,
-					XRectangle rect, BlitzColor c);
+		XRectangle rect, BlitzColor c, Bool border);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);

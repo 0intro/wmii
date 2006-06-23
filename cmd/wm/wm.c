@@ -315,6 +315,9 @@ main(int argc, char *argv[])
 	init_lock_keys();
 	init_screen();
 
+	pmap = XCreatePixmap(blz.display, blz.root, rect.width, rect.height,
+			DefaultDepth(blz.display, blz.screen));
+
 	wa.event_mask = SubstructureRedirectMask | EnterWindowMask | LeaveWindowMask;
 	wa.cursor = cursor[CurNormal];
 	XChangeWindowAttributes(blz.display, blz.root, CWEventMask | CWCursor, &wa);
@@ -335,16 +338,14 @@ main(int argc, char *argv[])
 
 	bbrush.blitz = &blz;
 	bbrush.gc = XCreateGC(blz.display, barwin, 0, 0);
-	bbrush.drawable = XCreatePixmap(blz.display, barwin, brect.width, brect.height,
-			DefaultDepth(blz.display, blz.screen));
+	bbrush.drawable = pmap;
 	bbrush.rect = brect;
 	bbrush.rect.x = 0;
 	bbrush.rect.y = 0;
 	bbrush.color = def.normcolor;
 	bbrush.font = &def.font;
+	bbrush.border = True;
 
-	pmap = XCreatePixmap(blz.display, blz.root, rect.width, rect.height,
-			DefaultDepth(blz.display, blz.screen));
 
 	XMapRaised(blz.display, barwin);
 	draw_bar();

@@ -12,7 +12,8 @@
 void
 blitz_draw_tile(BlitzBrush *b)
 {
-	blitz_drawbg(b->blitz->display, b->drawable, b->gc, b->rect, b->color);
+	blitz_drawbg(b->blitz->display, b->drawable, b->gc, b->rect,
+			b->color, b->border);
 }
 
 void

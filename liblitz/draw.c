@@ -6,11 +6,14 @@
 #include "blitz.h"
 
 void
-blitz_drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle rect, BlitzColor c)
+blitz_drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle rect,
+			BlitzColor c, Bool border)
 {
 	XPoint points[5];
 	XSetForeground(dpy, gc, c.bg);
 	XFillRectangles(dpy, drawable, gc, &rect, 1);
+	if(!border)
+		return;
 	XSetLineAttributes(dpy, gc, 1, LineSolid, CapButt, JoinMiter);
 	XSetForeground(dpy, gc, c.border);
 	points[0].x = rect.x;

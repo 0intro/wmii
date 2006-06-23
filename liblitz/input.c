@@ -31,17 +31,14 @@ xchangegc(BlitzInput *i, BlitzColor *c, Bool invert)
 }
 
 static void
-xdrawtextpart(BlitzInput *i, BlitzColor *c, char *start, char *end,
+xdrawtextpart(BlitzInput *i, char *start, char *end,
 				int *xoff, int yoff, unsigned int boxw)
 {
 	char *p, buf[2];
 
-	xchangegc(i, c, False);
 	buf[1] = 0;
 	for(p = start; p && *p && p != end; p++) {
 		*buf = *p;
-		if(p == i->cursor)
-			xchangegc(i, c, True);
 		if(i->font->set)
 			XmbDrawImageString(i->blitz->display, i->drawable, i->font->set, i->gc,
 					*xoff, yoff, buf, 1);
@@ -49,8 +46,6 @@ xdrawtextpart(BlitzInput *i, BlitzColor *c, char *start, char *end,
 			XDrawImageString(i->blitz->display, i->drawable, i->gc, *xoff, yoff,
 					buf, 1);
 		*xoff += boxw;
-		if(p == i->cursor)
-			xchangegc(i, c, False);
 	}
 }
 
@@ -74,16 +69,19 @@ blitz_draw_input(BlitzInput *i)
 	if (!i)
 		return;
 
-	blitz_drawbg(i->blitz->display, i->drawable, i->gc, i->rect, i->norm);
+	blitz_drawbg(i->blitz->display, i->drawable, i->gc, i->rect, i->color, True);
 	xget_fontmetric(i, &xoff, &yoff, &boxw, &boxh);
 	nbox = i->rect.width / boxw;
 
 	/* draw normal text */
-	xdrawtextpart(i, &i->norm, i->text, i->selstart, &xoff, yoff, boxw);
+	xchangegc(i, &i->color, False);
+	xdrawtextpart(i, i->text, i->curstart, &xoff, yoff, boxw);
 	/* draw sel text */
-	xdrawtextpart(i, &i->sel, i->selstart, i->selend, &xoff, yoff, boxw);
+	xchangegc(i, &i->color, True);
+	xdrawtextpart(i, i->curstart, i->curend, &xoff, yoff, boxw);
 	/* draw remaining normal text */
-	xdrawtextpart(i, &i->norm, i->selend, nil, &xoff, yoff, boxw);
+	xchangegc(i, &i->color, False);
+	xdrawtextpart(i, i->curend, nil, &xoff, yoff, boxw);
 }
 
 char *

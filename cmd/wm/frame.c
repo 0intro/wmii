@@ -29,6 +29,7 @@ create_frame(Area *a, Client *c)
 	f->tile.gc = c->gc;
 	f->tile.font = &def.font;
 	f->tile.color = def.normcolor;
+	f->tile.border = True;
 	f->titlebar = f->posbar = f->tile;
 	f->titlebar.align = WEST;
 	f->posbar.align = CENTER;
@@ -37,8 +38,7 @@ create_frame(Area *a, Client *c)
 	f->tagbar.drawable = pmap;
 	f->tagbar.gc = c->gc;
 	f->tagbar.font = &def.font;
-	f->tagbar.norm = def.normcolor;
-	f->tagbar.sel = def.selcolor;
+	f->tagbar.color = def.normcolor;
 
 	a->sel = f;
 	c->sel = f;
@@ -127,9 +127,9 @@ void
 update_frame_widget_colors(Frame *f)
 {
  	if(sel_screen && (f->client == sel_client()))
-		f->tile.color = f->titlebar.color = def.selcolor;
+		f->tagbar.color = f->tile.color = f->titlebar.color = def.selcolor;
 	else
-		f->tile.color = f->titlebar.color = def.normcolor;
+		f->tagbar.color = f->tile.color = f->titlebar.color = def.normcolor;
 
 	if(f->area->sel == f)
 		f->posbar.color = def.selcolor;
