@@ -141,7 +141,7 @@ do
 			exit
 		fi;;
 	CreateTag)
-		echo "/lbar/$@" $WMII_NORMCOLORS $@ | wmiir create /lbar/$1
+		echo $WMII_NORMCOLORS $@ | wmiir create "/lbar/$@"
 		;;
 	DestroyTag)
 		wmiir remove "/lbar/$@"
