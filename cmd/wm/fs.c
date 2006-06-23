@@ -246,7 +246,7 @@ parse_colors(char **buf, int *buflen, BlitzColor *col) {
 }
 
 char *
-message_root(char **data)
+message_root(char *message)
 {
 	unsigned int n;
 
