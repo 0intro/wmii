@@ -532,8 +532,10 @@ fs_walk(Req *r) {
 			if(!nf)
 				break;
 			cext_assert(!nf->next);
-			nf->next = f;
-			f = nf;
+			if(strncmp(r->ifcall.wname[i], ".", 2)) {
+				nf->next = f;
+				f = nf;
+			}
 		}
 		r->ofcall.wqid[i].type = f->tab.qtype;
 		r->ofcall.wqid[i].path = QID(f->tab.type, f->id);
