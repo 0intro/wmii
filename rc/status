@@ -7,7 +7,7 @@ xwrite() {
 }
 
 wmiir remove /rbar/status 2>/dev/null && sleep 2
-wmiir create /rbar/status
+echo $WMII_SELCOLORS | wmiir create /rbar/status
 while xwrite /rbar/status "$WMII_NORMCOLORS" `date` `uptime | sed 's/.*://; s/,//g'`
 do
 	sleep 1

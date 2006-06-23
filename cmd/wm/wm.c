@@ -338,6 +338,8 @@ main(int argc, char *argv[])
 	bbrush.drawable = XCreatePixmap(blz.display, barwin, brect.width, brect.height,
 			DefaultDepth(blz.display, blz.screen));
 	bbrush.rect = brect;
+	bbrush.rect.x = 0;
+	bbrush.rect.y = 0;
 	bbrush.color = def.normcolor;
 	bbrush.font = &def.font;
 
