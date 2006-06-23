@@ -181,6 +181,7 @@ char *user;
 Default def;
 Atom wm_atom[WMLast];
 Atom net_atom[NetLast];
+Atom tags_atom;
 Cursor cursor[CurLast];
 unsigned int valid_mask;
 unsigned int num_lock_mask;

@@ -106,10 +106,7 @@ create_client(Window w, XWindowAttributes *wa)
 void
 set_client_state(Client * c, int state)
 {
-	long data[2];
-
-	data[0] = (long) state;
-	data[1] = (long) None;
+	long data[] = { state, None };
 	XChangeProperty(blz.display, c->win, wm_atom[WMState], wm_atom[WMState], 32,
 			PropModeReplace, (unsigned char *) data, 2);
 }
@@ -344,10 +341,19 @@ gravitate_client(Client *c, Bool invert)
 void
 manage_client(Client *c)
 {
+	XTextProperty tags;
 	Client *trans;
+
+	tags.nitems = 0;
+	XGetTextProperty(blz.display, c->win, &tags, tags_atom);
 
 	if(c->trans && (trans = client_of_win(c->trans)))
 		cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
+	else if(tags.nitems)
+		cext_strlcpy(c->tags, (char *)tags.value, sizeof(c->tags));
+
+	XFree(tags.value);
+
 	if(!strlen(c->tags))
 		apply_rules(c);
 
@@ -763,6 +769,9 @@ apply_tags(Client *c, const char *tags)
 
 	if(!strlen(c->tags))
 		apply_tags(c, "nil");
+
+	XChangeProperty(blz.display, c->win, tags_atom, XA_STRING, 8,
+			PropModeReplace, c->tags, strlen(c->tags));
 }
 
 static void

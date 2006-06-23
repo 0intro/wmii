@@ -123,6 +123,7 @@ init_atoms()
 	wm_atom[WMDelete] = XInternAtom(blz.display, "WM_DELETE_WINDOW", False);
 	net_atom[NetSupported] = XInternAtom(blz.display, "_NET_SUPPORTED", False);
 	net_atom[NetWMName] = XInternAtom(blz.display, "_NET_WM_NAME", False);
+	tags_atom = XInternAtom(blz.display, "_WIN_TAGS", False);
 
 	XChangeProperty(blz.display, blz.root, net_atom[NetSupported], XA_ATOM, 32,
 			PropModeReplace, (unsigned char *) net_atom, NetLast);

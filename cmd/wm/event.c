@@ -73,15 +73,15 @@ handle_buttonrelease(XEvent *e)
 	if(ev->window == barwin) {
 		for(b=lbar; b; b=b->next)
 			if(ispointinrect(ev->x, ev->y, &b->brush.rect)) {
-				snprintf(buf, sizeof(buf), "LeftBarClick %s %d\n",
-						b->name, ev->button);
+				snprintf(buf, sizeof(buf), "LeftBarClick %d %s\n",
+						ev->button, b->name);
 				write_event(buf);
 				return;
 			}
 		for(b=rbar; b; b=b->next)
 			if(ispointinrect(ev->x, ev->y, &b->brush.rect)) {
-				snprintf(buf, sizeof(buf), "RightBarClick %s %d\n",
-						b->name, ev->button);
+				snprintf(buf, sizeof(buf), "RightBarClick %d %s\n",
+						ev->button, b->name);
 				write_event(buf);
 				return;
 			}

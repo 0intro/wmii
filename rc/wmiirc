@@ -154,7 +154,8 @@ do
 		xwrite /lbar/$1 $WMII_NORMCOLORS $1
 		;;
 	LeftBarClick)
-		xwrite /ctl view "$1";;
+		shift
+		xwrite /ctl view "$@";;
 	Key)
 		case "$1" in
 		$MODKEY-$LEFT)
