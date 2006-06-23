@@ -65,14 +65,12 @@ struct BlitzBrush {
 struct BlitzInput {
 	Blitz *blitz;
 	char *text;
-	char *selstart;
-	char *selend;
-	char *cursor;
+	char *curstart;
+	char *curend;
 	unsigned int size;
 	Drawable drawable;
 	GC gc;
-	BlitzColor sel;
-	BlitzColor norm;
+	BlitzColor color;
 	BlitzFont *font;
 	XRectangle rect;	/* relative rect */
 };

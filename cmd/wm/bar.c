@@ -70,10 +70,6 @@ resize_bar()
 	brect.y = rect.height - brect.height;
 	XMoveResizeWindow(blz.display, barwin, brect.x, brect.y, brect.width, brect.height);
 	XSync(blz.display, False);
-	XFreePixmap(blz.display, bbrush.drawable);
-	bbrush.drawable = XCreatePixmap(blz.display, barwin, brect.width, brect.height,
-			DefaultDepth(blz.display, blz.screen));
-	XSync(blz.display, False);
 	draw_bar();
 
 	for(v=view; v; v=v->next) {

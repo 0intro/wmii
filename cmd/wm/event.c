@@ -88,8 +88,7 @@ handle_buttonrelease(XEvent *e)
 	}
 	else if((c = frame_of_win(ev->window)) && c->frame) {
 		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
-			c->sel->tagbar.cursor = c->sel->tagbar.selend
-				= blitz_charof(&c->sel->tagbar, ev->x, ev->y);
+			c->sel->tagbar.curend = blitz_charof(&c->sel->tagbar, ev->x, ev->y);
 			draw_frame(c->sel);
 		}
 		snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
@@ -110,11 +109,11 @@ handle_motionnotify(XEvent *e)
 
 	if((c = frame_of_win(ev->window))) {
 		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
-			c->sel->tagbar.selend = blitz_charof(&c->sel->tagbar, ev->x, ev->y);
-			if(c->sel->tagbar.selend < c->sel->tagbar.selstart) {
-				char *tmp = c->sel->tagbar.selend;
-				c->sel->tagbar.selend = c->sel->tagbar.selstart;
-				c->sel->tagbar.selstart = tmp;
+			c->sel->tagbar.curend = blitz_charof(&c->sel->tagbar, ev->x, ev->y);
+			if(c->sel->tagbar.curend < c->sel->tagbar.curstart) {
+				char *tmp = c->sel->tagbar.curend;
+				c->sel->tagbar.curend = c->sel->tagbar.curstart;
+				c->sel->tagbar.curstart = tmp;
 			}
 			draw_frame(c->sel);
 		}
@@ -130,8 +129,7 @@ handle_buttonpress(XEvent *e)
 	if((c = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
 		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
-			c->sel->tagbar.cursor = c->sel->tagbar.selstart
-				= c->sel->tagbar.selend
+			c->sel->tagbar.curstart = c->sel->tagbar.curend
 				= blitz_charof(&c->sel->tagbar, ev->x, ev->y);
 			draw_frame(c->sel);
 			drag = True;
