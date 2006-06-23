@@ -14,13 +14,15 @@ static char buf[256];
 static void
 assign_sel_view(View *v)
 {
-	if(sel && sel != v) {
-		snprintf(buf, sizeof(buf), "UnfocusTag %s\n", sel->name);
+	if(sel != v) {
+		if(sel) {
+			snprintf(buf, sizeof(buf), "UnfocusTag %s\n", sel->name);
+			write_event(buf);
+		}
+		sel = v;
+		snprintf(buf, sizeof(buf), "FocusTag %s\n", sel->name);
 		write_event(buf);
 	}
-	sel = v;
-	snprintf(buf, sizeof(buf), "FocusTag %s\n", sel->name);
-	write_event(buf);
 }
 
 View *
