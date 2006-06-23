@@ -62,6 +62,7 @@ xcreate(char *file)
 		fprintf(stderr, "wmiir: cannot create file '%s': %s\n", p, c.errstr);
 		return -1;
 	}
+	write_data(fid);
 	return ixp_client_close(&c, fid);
 }
 
