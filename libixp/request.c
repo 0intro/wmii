@@ -9,7 +9,7 @@
 #include <sys/socket.h>
 #include "ixp.h"
 
-static void ixp_handle_req(Req *r);
+static void ixp_handle_req(P9Req *r);
 
 /* We use string literals rather than arrays here because
  * they're allocated in a readonly section */
@@ -75,7 +75,7 @@ ixp_server_handle_fcall(IXPConn *c)
 {
 	Fcall fcall = {0};
 	P9Conn *pc = c->aux;
-	Req *req;
+	P9Req *req;
 	unsigned int msize;
 	char *errstr = nil;
 
@@ -84,7 +84,7 @@ ixp_server_handle_fcall(IXPConn *c)
 	if(!(msize = ixp_msg2fcall(&fcall, pc->buf, IXP_MAX_MSG)))
 		goto Fail;
 
-	req = cext_emallocz(sizeof(Req));
+	req = cext_emallocz(sizeof(P9Req));
 	req->conn = pc;
 	req->ifcall = fcall;
 	pc->conn = c;
@@ -100,7 +100,7 @@ Fail:
 }
 
 static void
-ixp_handle_req(Req *r)
+ixp_handle_req(P9Req *r)
 {
 	P9Conn *pc = r->conn;
 	P9Srv *srv = pc->srv;
@@ -146,7 +146,7 @@ ixp_handle_req(Req *r)
 			return respond(r, Enofid);
 		if(r->fid->omode != -1)
 			return respond(r, Ebotch);
-		if(!(r->fid->qid.type&QTDIR))
+		if(!(r->fid->qid.type&P9QTDIR))
 			return respond(r, Enotdir);
 		if(!pc->srv->create)
 			return respond(r, Enofunc);
@@ -155,7 +155,7 @@ ixp_handle_req(Req *r)
 	case TOPEN:
 		if(!(r->fid = lookupkey(&pc->fidmap, r->ifcall.fid)))
 			return respond(r, Enofid);
-		if((r->fid->qid.type&QTDIR) && (r->ifcall.mode|ORCLOSE) != (OREAD|ORCLOSE))
+		if((r->fid->qid.type&P9QTDIR) && (r->ifcall.mode|P9ORCLOSE) != (P9OREAD|P9ORCLOSE))
 			return respond(r, Eisdir);
 		r->ofcall.qid = r->fid->qid;
 		if(!pc->srv->open)
@@ -165,7 +165,7 @@ ixp_handle_req(Req *r)
 	case TREAD:
 		if(!(r->fid = lookupkey(&pc->fidmap, r->ifcall.fid)))
 			return respond(r, Enofid);
-		if(r->fid->omode == -1 || r->fid->omode == OWRITE)
+		if(r->fid->omode == -1 || r->fid->omode == P9OWRITE)
 			return respond(r, Ebotch);
 		if(!pc->srv->read)
 			return respond(r, Enofunc);
@@ -190,7 +190,7 @@ ixp_handle_req(Req *r)
 			return respond(r, Enofid);
 		if(r->fid->omode != -1)
 			return respond(r, "cannot walk from an open fid");
-		if(r->ifcall.nwname && !(r->fid->qid.type&QTDIR))
+		if(r->ifcall.nwname && !(r->fid->qid.type&P9QTDIR))
 			return respond(r, Enotdir);
 		if((r->ifcall.fid != r->ifcall.newfid)) {
 			if(!(r->newfid = createfid(&pc->fidmap, r->ifcall.newfid, pc)))
@@ -204,7 +204,7 @@ ixp_handle_req(Req *r)
 	case TWRITE:
 		if(!(r->fid = lookupkey(&pc->fidmap, r->ifcall.fid)))
 			return respond(r, Enofid);
-		if((r->fid->omode&3) != OWRITE && (r->fid->omode&3) != ORDWR)
+		if((r->fid->omode&3) != P9OWRITE && (r->fid->omode&3) != P9ORDWR)
 			return respond(r, "write on fid not opened for writing");
 		if(!pc->srv->write)
 			return respond(r, Enofunc);
@@ -215,7 +215,7 @@ ixp_handle_req(Req *r)
 }
 
 void
-respond(Req *r, char *error) {
+respond(P9Req *r, char *error) {
 	P9Conn *pc = r->conn;
 	switch(r->ifcall.type) {
 	default:
@@ -313,13 +313,13 @@ respond(Req *r, char *error) {
 /* Pending request cleanup */
 static void
 ixp_void_request(void *t) {
-	Req *r, *tr;
+	P9Req *r, *tr;
 	P9Conn *pc;
 
 	r = t;
 	pc = r->conn;
 
-	tr = cext_emallocz(sizeof(Req));
+	tr = cext_emallocz(sizeof(P9Req));
 	tr->conn = pc;
 	tr->ifcall.type = TFLUSH;
 	tr->ifcall.tag = IXP_NOTAG;
@@ -331,13 +331,13 @@ ixp_void_request(void *t) {
 static void
 ixp_void_fid(void *t) {
 	P9Conn *pc;
-	Req *tr;
+	P9Req *tr;
 	Fid *f;
 
 	f = t;
 	pc = f->conn;
 
-	tr = cext_emallocz(sizeof(Req));
+	tr = cext_emallocz(sizeof(P9Req));
 	tr->fid = f;
 	tr->conn = pc;
 	tr->ifcall.type = TCLUNK;

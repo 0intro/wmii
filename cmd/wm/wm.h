@@ -268,17 +268,17 @@ void resize_frame(Frame *f);
 void update_frame_widget_colors(Frame *f);
 
 /* fs.c */
-void fs_attach(Req *r);
-void fs_clunk(Req *r);
-void fs_create(Req *r);
-void fs_flush(Req *r);
+void fs_attach(P9Req *r);
+void fs_clunk(P9Req *r);
+void fs_create(P9Req *r);
+void fs_flush(P9Req *r);
 void fs_freefid(Fid *f);
-void fs_open(Req *r);
-void fs_read(Req *r);
-void fs_remove(Req *r);
-void fs_stat(Req *r);
-void fs_walk(Req *r);
-void fs_write(Req *r);
+void fs_open(P9Req *r);
+void fs_read(P9Req *r);
+void fs_remove(P9Req *r);
+void fs_stat(P9Req *r);
+void fs_walk(P9Req *r);
+void fs_write(P9Req *r);
 void write_event(char *buf);
 
 /* geom.c */

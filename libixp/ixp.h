@@ -58,7 +58,7 @@ enum {	IXP_DMDIR = 0x80000000,		/* mode bit for directories */
 	IXP_DMTMP = 0x04000000,		/* mode bit for non-backed-up file */
 	IXP_DMREAD = 0x4<<6,		/* mode bit for read permission */
 	IXP_DMWRITE = 0x2<<6,		/* mode bit for write permission */
-	IXP_DMEXEC = 0x1<<6			/* mode bit for execute permission */
+	IXP_DMEXEC = 0x1<<6		/* mode bit for execute permission */
 };
 
 /* modes */
@@ -86,48 +86,48 @@ enum {	IXP_QTDIR = 0x80,
 };
 
 /* from libc.h in p9p */
-enum {	OREAD		= 0,	/* open for read */
-	OWRITE		= 1,	/* write */
-	ORDWR		= 2,	/* read and write */
-	OEXEC		= 3,	/* execute, == read but check execute permission */
-	OTRUNC		= 16,	/* or'ed in (except for exec), truncate file first */
-	OCEXEC		= 32,	/* or'ed in, close on exec */
-	ORCLOSE		= 64,	/* or'ed in, remove on close */
-	ODIRECT		= 128,	/* or'ed in, direct access */
-	ONONBLOCK	= 256,	/* or'ed in, non-blocking call */
-	OEXCL		= 0x1000,	/* or'ed in, exclusive use (create only) */
-	OLOCK		= 0x2000,	/* or'ed in, lock after opening */
-	OAPPEND		= 0x4000	/* or'ed in, append only */
+enum {	P9OREAD		= 0,	/* open for read */
+	P9OWRITE	= 1,	/* write */
+	P9ORDWR		= 2,	/* read and write */
+	P9OEXEC		= 3,	/* execute, == read but check execute permission */
+	P9OTRUNC	= 16,	/* or'ed in (except for exec), truncate file first */
+	P9OCEXEC	= 32,	/* or'ed in, close on exec */
+	P9ORCLOSE	= 64,	/* or'ed in, remove on close */
+	P9ODIRECT	= 128,	/* or'ed in, direct access */
+	P9ONONBLOCK	= 256,	/* or'ed in, non-blocking call */
+	P9OEXCL		= 0x1000,	/* or'ed in, exclusive use (create only) */
+	P9OLOCK		= 0x2000,	/* or'ed in, lock after opening */
+	P9OAPPEND		= 0x4000	/* or'ed in, append only */
 };
 
 /* bits in Qid.type */
-enum {	QTDIR		= 0x80,		/* type bit for directories */
-	QTAPPEND	= 0x40,		/* type bit for append only files */
-	QTEXCL		= 0x20,		/* type bit for exclusive use files */
-	QTMOUNT		= 0x10,		/* type bit for mounted channel */
-	QTAUTH		= 0x08,		/* type bit for authentication file */
-	QTTMP		= 0x04,		/* type bit for non-backed-up file */
-	QTSYMLINK	= 0x02,		/* type bit for symbolic link */
-	QTFILE		= 0x00		/* type bits for plain file */
+enum {	P9QTDIR		= 0x80,		/* type bit for directories */
+	P9QTAPPEND	= 0x40,		/* type bit for append only files */
+	P9QTEXCL	= 0x20,		/* type bit for exclusive use files */
+	P9QTMOUNT	= 0x10,		/* type bit for mounted channel */
+	P9QTAUTH	= 0x08,		/* type bit for authentication file */
+	P9QTTMP		= 0x04,		/* type bit for non-backed-up file */
+	P9QTSYMLINK	= 0x02,		/* type bit for symbolic link */
+	P9QTFILE	= 0x00		/* type bits for plain file */
 };
 
 /* bits in Dir.mode */
-#define DMDIR		0x80000000	/* mode bit for directories */
-#define DMAPPEND	0x40000000	/* mode bit for append only files */
-#define DMEXCL		0x20000000	/* mode bit for exclusive use files */
-#define DMMOUNT		0x10000000	/* mode bit for mounted channel */
-#define DMAUTH		0x08000000	/* mode bit for authentication file */
-#define DMTMP		0x04000000	/* mode bit for non-backed-up file */
-#define DMSYMLINK	0x02000000	/* mode bit for symbolic link (Unix, 9P2000.u) */
-#define DMDEVICE	0x00800000	/* mode bit for device file (Unix, 9P2000.u) */
-#define DMNAMEDPIPE	0x00200000	/* mode bit for named pipe (Unix, 9P2000.u) */
-#define DMSOCKET	0x00100000	/* mode bit for socket (Unix, 9P2000.u) */
-#define DMSETUID	0x00080000	/* mode bit for setuid (Unix, 9P2000.u) */
-#define DMSETGID	0x00040000	/* mode bit for setgid (Unix, 9P2000.u) */
+#define P9DMDIR		0x80000000	/* mode bit for directories */
+#define P9DMAPPEND	0x40000000	/* mode bit for append only files */
+#define P9DMEXCL	0x20000000	/* mode bit for exclusive use files */
+#define P9DMMOUNT	0x10000000	/* mode bit for mounted channel */
+#define P9DMAUTH	0x08000000	/* mode bit for authentication file */
+#define P9DMTMP		0x04000000	/* mode bit for non-backed-up file */
+#define P9DMSYMLINK	0x02000000	/* mode bit for symbolic link (Unix, 9P2000.u) */
+#define P9DMDEVICE	0x00800000	/* mode bit for device file (Unix, 9P2000.u) */
+#define P9DMNAMEDPIPE	0x00200000	/* mode bit for named pipe (Unix, 9P2000.u) */
+#define P9DMSOCKET	0x00100000	/* mode bit for socket (Unix, 9P2000.u) */
+#define P9DMSETUID	0x00080000	/* mode bit for setuid (Unix, 9P2000.u) */
+#define P9DMSETGID	0x00040000	/* mode bit for setgid (Unix, 9P2000.u) */
 	
-enum {	DMREAD		= 0x4,		/* mode bit for read permission */
-	DMWRITE		= 0x2,		/* mode bit for write permission */
-	DMEXEC		= 0x1		/* mode bit for execute permission */
+enum {	P9DMREAD		= 0x4,		/* mode bit for read permission */
+	P9DMWRITE		= 0x2,		/* mode bit for write permission */
+	P9DMEXEC		= 0x1		/* mode bit for execute permission */
 };
 
 
@@ -262,28 +262,28 @@ typedef struct Fid {
 	Intmap		*map;
 } Fid;
 
-typedef struct Req Req;
-struct Req {
+typedef struct P9Req P9Req;
+struct P9Req {
 	P9Conn	*conn;
 	Fid	*fid;
 	Fid	*newfid;
-	Req	*oldreq;
+	P9Req	*oldreq;
 	Fcall	ifcall;
 	Fcall	ofcall;
 	void	*aux;
 };
 
 typedef struct P9Srv {
-	void (*attach)(Req *r);
-	void (*clunk)(Req *r);
-	void (*create)(Req *r);
-	void (*flush)(Req *r);
-	void (*open)(Req *r);
-	void (*read)(Req *r);
-	void (*remove)(Req *r);
-	void (*stat)(Req *r);
-	void (*walk)(Req *r);
-	void (*write)(Req *r);
+	void (*attach)(P9Req *r);
+	void (*clunk)(P9Req *r);
+	void (*create)(P9Req *r);
+	void (*flush)(P9Req *r);
+	void (*open)(P9Req *r);
+	void (*read)(P9Req *r);
+	void (*remove)(P9Req *r);
+	void (*stat)(P9Req *r);
+	void (*walk)(P9Req *r);
+	void (*write)(P9Req *r);
 	void (*freefid)(Fid *f);
 } P9Srv;
 
@@ -333,7 +333,7 @@ void ixp_pack_stat(unsigned char **msg, int *msize, Stat *stat);
 void ixp_unpack_stat(unsigned char **msg, int *msize, Stat *stat);
 
 /* request.c */
-void respond(Req *r, char *error);
+void respond(P9Req *r, char *error);
 void serve_9pcon(IXPConn *c);
 
 /* intmap.c */

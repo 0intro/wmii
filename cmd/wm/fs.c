@@ -71,7 +71,7 @@ static char
 /* Global Vars */
 /***************/
 FileId *free_fileid = nil;
-Req *pending_event_reads = nil;
+P9Req *pending_event_reads = nil;
 FidLink *pending_event_fids;
 P9Srv p9srv = {
 	.open=	fs_open,
@@ -90,34 +90,34 @@ P9Srv p9srv = {
 /* ad-hoc file tree. Empty names ("") indicate a dynamic entry to be filled
  * in by lookup_file */
 static Dirtab
-dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
-		  {"rbar",	QTDIR,		FsDBars,	0700|DMDIR },
-		  {"lbar",	QTDIR,		FsDBars,	0700|DMDIR },
-		  {"client",	QTDIR,		FsDClients,	0500|DMDIR },
-		  {"tag",	QTDIR,		FsDTags,	0500|DMDIR },
-		  {"ctl",	QTAPPEND,	FsFRctl,	0600|DMAPPEND },
-		  {"colrules",	QTFILE,		FsFColRules,	0600 }, 
-		  {"event",	QTFILE,		FsFEvent,	0600 },
-		  {"keys",	QTFILE,		FsFKeys,	0600 },
-		  {"tagrules",	QTFILE,		FsFTagRules,	0600 }, 
+dirtab_root[]=	 {{".",		P9QTDIR,	FsRoot,		0500|P9DMDIR },
+		  {"rbar",	P9QTDIR,	FsDBars,	0700|P9DMDIR },
+		  {"lbar",	P9QTDIR,	FsDBars,	0700|P9DMDIR },
+		  {"client",	P9QTDIR,	FsDClients,	0500|P9DMDIR },
+		  {"tag",	P9QTDIR,	FsDTags,	0500|P9DMDIR },
+		  {"ctl",	P9QTAPPEND,	FsFRctl,	0600|P9DMAPPEND },
+		  {"colrules",	P9QTFILE,	FsFColRules,	0600 }, 
+		  {"event",	P9QTFILE,	FsFEvent,	0600 },
+		  {"keys",	P9QTFILE,	FsFKeys,	0600 },
+		  {"tagrules",	P9QTFILE,	FsFTagRules,	0600 }, 
 		  {nil}},
-dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
-		  {"",		QTDIR,		FsDClient,	0500|DMDIR },
+dirtab_clients[]={{".",		P9QTDIR,	FsDClients,	0500|P9DMDIR },
+		  {"",		P9QTDIR,	FsDClient,	0500|P9DMDIR },
 		  {nil}},
-dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|DMDIR },
-		  {"ctl",	QTAPPEND,	FsFCctl,	0600|DMAPPEND },
-		  {"tags",	QTFILE,		FsFCtags,	0600 },
-		  {"props",	QTFILE,		FsFprops,	0400 },
+dirtab_client[]= {{".",		P9QTDIR,	FsDClient,	0500|P9DMDIR },
+		  {"ctl",	P9QTAPPEND,	FsFCctl,	0600|P9DMAPPEND },
+		  {"tags",	P9QTFILE,	FsFCtags,	0600 },
+		  {"props",	P9QTFILE,	FsFprops,	0400 },
 		  {nil}},
-dirtab_bars[]=	 {{".",		QTDIR,		FsDBars,	0700|DMDIR },
-		  {"",		QTFILE,		FsFBar,		0600 },
+dirtab_bars[]=	 {{".",		P9QTDIR,	FsDBars,	0700|P9DMDIR },
+		  {"",		P9QTFILE,	FsFBar,		0600 },
 		  {nil}},
-dirtab_tags[]=	 {{".",		QTDIR,		FsDTags,	0500|DMDIR },
-		  {"",		QTDIR,		FsDTag,		0500|DMDIR },
+dirtab_tags[]=	 {{".",		P9QTDIR,	FsDTags,	0500|P9DMDIR },
+		  {"",		P9QTDIR,	FsDTag,		0500|P9DMDIR },
 		  {nil}},
-dirtab_tag[]=	 {{".",		QTDIR,		FsDTag,		0500|DMDIR },
-		  {"ctl",	QTAPPEND,	FsFTctl,	0600|DMAPPEND },
-		  {"index",	QTFILE,		FsFTindex,	0400 },
+dirtab_tag[]=	 {{".",		P9QTDIR,	FsDTag,		0500|P9DMDIR },
+		  {"ctl",	P9QTAPPEND,	FsFTctl,	0600|P9DMAPPEND },
+		  {"index",	P9QTFILE,	FsFTindex,	0400 },
 		  {nil}};
 /* Writing the lists separately and using an array of their references
  * removes the need for casting and allows for C90 conformance,
@@ -174,7 +174,7 @@ clone_files(FileId *f) {
 
 /* This should be moved to libixp */
 static void
-write_buf(Req *r, void *buf, unsigned int len) {
+write_buf(P9Req *r, void *buf, unsigned int len) {
 	if(r->ifcall.offset >= len)
 		return;
 
@@ -189,10 +189,10 @@ write_buf(Req *r, void *buf, unsigned int len) {
 
 /* This should be moved to libixp */
 void
-write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
+write_to_buf(P9Req *r, void *buf, unsigned int *len, unsigned int max) {
 	unsigned int offset, count;
 
-	offset = (r->fid->omode&OAPPEND) ? *len : r->ifcall.offset;
+	offset = (r->fid->omode&P9OAPPEND) ? *len : r->ifcall.offset;
 	if(offset > *len || r->ifcall.count == 0) {
 		r->ofcall.count = 0;
 		return;
@@ -218,7 +218,7 @@ write_to_buf(Req *r, void *buf, unsigned int *len, unsigned int max) {
 
 /* This should be moved to libixp */
 void
-data_to_cstring(Req *r) {
+data_to_cstring(P9Req *r) {
 	unsigned int i;
 	i = r->ifcall.count;
 	if(!i || r->ifcall.data[i - 1] != '\n')
@@ -311,7 +311,7 @@ read_root_ctl()
 
 
 void
-respond_event(Req *r) {
+respond_event(P9Req *r) {
 	FileId *f = r->fid->aux;
 	if(f->buf) {
 		r->ofcall.data = (void *)f->buf;
@@ -329,7 +329,7 @@ write_event(char *buf) {
 	unsigned int len, slen;
 	FidLink *f;
 	FileId *fi;
-	Req *aux;
+	P9Req *aux;
 
 	if(!(len = strlen(buf)))
 		return;
@@ -377,7 +377,7 @@ lookup_file(FileId *parent, char *name)
 	Bar *b;
 	unsigned int i, id;
 
-	if(!(parent->tab.perm & DMDIR))
+	if(!(parent->tab.perm & P9DMDIR))
 		return nil;
 
 	dir = dirtab[parent->tab.type];
@@ -500,7 +500,7 @@ LastItem:
 /* Service Functions */
 /*********************/
 void
-fs_attach(Req *r) {
+fs_attach(P9Req *r) {
 	FileId *f = get_file();
 	f->tab = dirtab[FsRoot][0];
 	f->tab.name = strdup("/");
@@ -513,7 +513,7 @@ fs_attach(Req *r) {
 }
 
 void
-fs_walk(Req *r) {
+fs_walk(P9Req *r) {
 	FileId *f, *nf;
 	int i;
 
@@ -567,7 +567,7 @@ fs_walk(Req *r) {
 }
 
 void
-fs_stat(Req *r) {
+fs_stat(P9Req *r) {
 	Stat s;
 	int size;
 	unsigned char *buf;
@@ -582,7 +582,7 @@ fs_stat(Req *r) {
 }
 
 void
-fs_read(Req *r) {
+fs_read(P9Req *r) {
 	char *buf;
 	FileId *f, *tf;
 	int n, offset;
@@ -591,7 +591,7 @@ fs_read(Req *r) {
 	offset = 0;
 	f = r->fid->aux;
 
-	if(f->tab.perm & DMDIR && f->tab.perm & 0400) {
+	if(f->tab.perm & P9DMDIR && f->tab.perm & 0400) {
 		Stat s;
 		offset = 0;
 		size = r->ifcall.count;
@@ -666,7 +666,7 @@ fs_read(Req *r) {
 
 /* This function needs to be seriously cleaned up */
 void
-fs_write(Req *r) {
+fs_write(P9Req *r) {
 	FileId *f;
 	char *buf, *errstr = nil;
 	unsigned int i;
@@ -738,7 +738,7 @@ fs_write(Req *r) {
 }
 
 void
-fs_open(Req *r) {
+fs_open(P9Req *r) {
 	FidLink *fl;
 	FileId *f = r->fid->aux;
 	switch(f->tab.type) {
@@ -749,19 +749,19 @@ fs_open(Req *r) {
 		pending_event_fids = fl;
 		break;
 	}
-	if((r->ifcall.mode&3) == OEXEC)
+	if((r->ifcall.mode&3) == P9OEXEC)
 		return respond(r, Enoperm);
-	if((r->ifcall.mode&3) != OREAD && !(f->tab.perm & 0200))
+	if((r->ifcall.mode&3) != P9OREAD && !(f->tab.perm & 0200))
 		return respond(r, Enoperm);
-	if((r->ifcall.mode&3) != OWRITE && !(f->tab.perm & 0400))
+	if((r->ifcall.mode&3) != P9OWRITE && !(f->tab.perm & 0400))
 		return respond(r, Enoperm);
-	if((r->ifcall.mode&~(3|OAPPEND)))
+	if((r->ifcall.mode&~(3|P9OAPPEND)))
 		return respond(r, Enoperm);
 	respond(r, nil);
 }
 
 void
-fs_create(Req *r) {
+fs_create(P9Req *r) {
 	FileId *f = r->fid->aux;
 	switch(f->tab.type) {
 	default:
@@ -784,7 +784,7 @@ fs_create(Req *r) {
 }
 
 void
-fs_remove(Req *r) {
+fs_remove(P9Req *r) {
 	FileId *f = r->fid->aux;
 	switch(f->tab.type) {
 	default:
@@ -798,7 +798,7 @@ fs_remove(Req *r) {
 }
 
 void
-fs_clunk(Req *r) {
+fs_clunk(P9Req *r) {
 	Client *c;
 	FidLink **fl, *ft;
 	char *buf;
@@ -849,9 +849,9 @@ fs_clunk(Req *r) {
 }
 
 void
-fs_flush(Req *r) {
-	Req **t;
-	for(t=&pending_event_reads; *t; t=(Req **)&(*t)->aux)
+fs_flush(P9Req *r) {
+	P9Req **t;
+	for(t=&pending_event_reads; *t; t=(P9Req **)&(*t)->aux)
 		if(*t == r->oldreq) {
 			*t = (*t)->aux;
 			respond(r->oldreq, Einterrupted);
