@@ -28,5 +28,5 @@ fi
 wmiiwm -a $WMII_ADDRESS &
 wmiiwmpid=$!
 mkdir $HOME/.wmii-4 2>/dev/null && welcome &
-`PATH="$CONFPATH:$PATH" which wmiirc` &
+`PATH="$WMII_CONFPATH:$PATH" which wmiirc` &
 wait $wmiiwmpid
