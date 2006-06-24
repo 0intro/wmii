@@ -62,7 +62,7 @@ EOF
 # MISC
 xsetroot -solid '#333333'
 `conf_which status` &
-PROGS_FILE="$WMII_NS_DIR/.wmiimenu.proglist" || exit 2
+PROGS_FILE="$WMII_NS_DIR/.wmiimenu.proglist"
 ACTIONS_DIRS=`echo "$WMII_CONFPATH" | tr : ' '`
 proglist `echo "$PATH" | tr : ' '` >$PROGS_FILE &
 
