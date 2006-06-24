@@ -4,25 +4,20 @@
 wmiiwm -c || exit 1
 
 WMII_CONFPATH="$HOME/.wmii-4:CONFPREFIX/wmii-4" export WMII_CONFPATH
-WMII_NS_DIR="/tmp/ns.$USER.${DISPLAY%.0}"
+WMII_NS_DIR="/tmp/ns.$USER.${DISPLAY%.0}" export WMII_NS_DIR
 WMII_ADDRESS="unix!$WMII_NS_DIR/wmii" export WMII_ADDRESS
 
-error() {
-  echo "There was an error starting wmii."
-  echo "$@"
-  exit 1
-}
-
-if [ -d "$WMII_NS_DIR" ]; then
-	if [ -O "$WMII_NS_DIR" ]; then
-		if ls -ld "$WMII_NS_DIR" | grep -v '^drwx------' >/dev/null 2>&1; then
-			error "Your namespace directory ($WMII_NS_DIR) exists but is group or world readable or writable"
-		fi
-	else
-		error "Your namespace directory ($WMII_NS_DIR) exists but is not owned by you."
-	fi
-else
-	mkdir -m 700 "$WMII_NS_DIR" || error "Your namespace directory ($WMII_NS_DIR) doesn't exist and I can't create it"
+# Make sure that the namespace directory exists and has correct permissions
+mkdir -m 700 "$WMII_NS_DIR" 2>/dev/null ||
+if ls -ld "$WMII_NS_DIR" |
+   awk -v "user=`id -un`" \
+        '{ if ($3 == user && match($1,"^drwx-----"))
+              exit 1 }'
+then
+	echo "The socket directory \"$WMII_NS_DIR\" " \
+	     "is group or world writable " \
+	     "or is not owned by you" 1>&2
+	exit 1
 fi
 
 wmiiwm -a $WMII_ADDRESS &

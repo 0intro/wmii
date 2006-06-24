@@ -62,8 +62,9 @@ EOF
 # MISC
 xsetroot -solid '#333333'
 `conf_which status` &
-PROGS_FILE=`mktemp /tmp/.wmiimenu.proglist.XXXXXX` || exit 2
-proglist `echo "$OLD_PATH" | tr : ' '` >$PROGS_FILE &
+PROGS_FILE="$WMII_NS_DIR/.wmiimenu.proglist" || exit 2
+ACTIONS_DIRS=`echo "$WMII_CONFPATH" | tr : ' '`
+proglist `echo "$PATH" | tr : ' '` >$PROGS_FILE &
 
 # SHORTCUTS
 wmiir write /keys <<EOF
@@ -141,7 +142,6 @@ do
 	Start)
 		if test wmiirc = "$1"
 		then
-			rm -f $PROGS_FILE
 			exit
 		fi;;
 	CreateTag)
@@ -180,7 +180,7 @@ do
 		$MODKEY-f)
 			xwrite /tag/sel/0/sel/geom 0 0 0 0;;
 		$MODKEY-a)
-			`conf_which \`proglist $HOME/.wmii-4 CONFPREFIX/wmii-4 | wmiimenu\`` &;;
+			`conf_which \`proglist $ACTIONS_DIRS | wmiimenu\`` &;;
 		$MODKEY-p)
 			wmiisetsid sh -c "`wmiimenu <$PROGS_FILE`" &;;
 		$MODKEY-t)
