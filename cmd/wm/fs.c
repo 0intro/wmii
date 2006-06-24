@@ -254,27 +254,35 @@ message_root(char *message)
 {
 	unsigned int n;
 
-	if(!strncmp(message, "quit", 5)) {
+	if(!strchr(message, ' ')) {
+		snprintf(buf, BUF_SIZE, "%s ", message);
+		message = buf;
+	}
+
+	if(!strncmp(message, "quit ", 5))
 		srv.running = 0;
-		return nil;
-	}if(!strncmp(message, "view ", 5)) {
+	else if(!strncmp(message, "view ", 5))
 		select_view(&message[5]);
-		return nil;
-	}if(!strncmp(message, "selcolors ", 10)) {
+	else if(!strncmp(message, "selcolors ", 10)) {
 		message += 10;
 		n = strlen(message);
 		return parse_colors(&message, &n, &def.selcolor);
-	}if(!strncmp(message, "normcolors ", 11)) {
+	}else if(!strncmp(message, "normcolors ", 11)) {
 		message += 11;
 		n = strlen(message);
 		return parse_colors(&message, &n, &def.normcolor);
-	}if(!strncmp(message, "font ", 5)) {
+	}else if(!strncmp(message, "font ", 5)) {
 		message += 5;
 		free(def.font.fontstr);
 		def.font.fontstr = strdup(message);
 		blitz_loadfont(&blz, &def.font);
-		return nil;
-	}if(!strncmp(message, "grabmod ", 8)) {
+	}else if(!strncmp(message, "border ", 7)) {
+		message += 7;
+		n = (unsigned int)strtol(message, &message, 10);
+		if(*message)
+			return Ebadvalue;
+		def.border = n;
+	}else if(!strncmp(message, "grabmod ", 8)) {
 		message += 8;
 		unsigned long mod;
 		mod = mod_key_of_str(message);
@@ -284,22 +292,15 @@ message_root(char *message)
 		def.mod = mod;
 		if(view)
 			restack_view(sel);
-		return nil;
-	}if(!strncmp(message, "border ", 7)) {
-		message += 7;
-		n = (unsigned int)strtol(message, &message, 10);
-		if(*message)
-			return Ebadvalue;
-		def.border = n;
-		return nil;
-	}if(!strncmp(message, "testtags ", 9)) {
+	}else if(!strncmp(message, "testtags ", 9)) {
 		message += 9;
 		free(def.testtags);
 		def.testtags = strlen(message) ? strdup(message) : nil;
 		draw_frames();
-		return nil;
-	}
-	return Ebadcmd;
+	}else
+		return Ebadcmd;
+
+	return nil;
 }
 
 char *
@@ -343,22 +344,21 @@ write_event(char *format, ...) {
 
 	va_start(ap, format);
 	vsnprintf(buf, BUF_SIZE, format, ap);
+	va_end(ap);
 
 	if(!(len = strlen(buf)))
-		goto end;
+		return;
 	for(f=pending_event_fids; f; f=f->next) {
 		fi = f->fid->aux;
 		slen = fi->buf ? strlen(fi->buf) : 0;
 		fi->buf = realloc(fi->buf, slen + len + 1);
-		fi->buf[slen] = '\0'; /* shut up valgrind */
+		fi->buf[slen] = '\0';
 		strcat(fi->buf, buf);
 	}
 	while((aux = pending_event_reads)) {
 		pending_event_reads = pending_event_reads->aux;
 		respond_event(aux);
 	}
-end:
-	va_end(ap);
 }
 
 static void
@@ -743,10 +743,7 @@ fs_write(P9Req *r) {
 		return respond(r, nil);
 	case FsFRctl:
 		data_to_cstring(r);
-		{
-			/* I'm not happy with this error handling */
-			/* or with the assumption that lines will come whole */
-			unsigned int n;
+		{	unsigned int n;
 			char *toks[32];
 			n = cext_tokenize(toks, 32, r->ifcall.data, '\n');
 			for(i = 0; i < n; i++) {
@@ -755,21 +752,16 @@ fs_write(P9Req *r) {
 				else
 					errstr = message_root(toks[i]);
 			}
-			if(errstr)
-				return respond(r, errstr);
 		}
+		if(errstr)
+			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	case FsFEvent:
-		if(r->ifcall.data[r->ifcall.count-1] == '\n') {
-			r->ifcall.data = realloc(r->ifcall.data, r->ifcall.count + 1);
-			r->ifcall.data[r->ifcall.count] = '\0';
-		}else{
-			r->ifcall.data = realloc(r->ifcall.data, r->ifcall.count + 2);
-			r->ifcall.data[r->ifcall.count] = '\n';
-			r->ifcall.data[r->ifcall.count + 1] = '\0';
-		}
-		write_event("%s", (char *)r->ifcall.data);
+		if(r->ifcall.data[r->ifcall.count-1] == '\n')
+			write_event("%.*s", r->ifcall.count, r->ifcall.data);
+		else
+			write_event("%.*s\n", r->ifcall.count, r->ifcall.data);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	}

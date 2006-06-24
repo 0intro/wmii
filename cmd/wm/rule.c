@@ -64,8 +64,7 @@ update_rules(Rule **rule, const char *data)
 					cext_strlcpy((*rule)->value, value, sizeof(rul->value));
 					rule = &(*rule)->next;
 				}
-				else
-					free(*rule);
+				else free(*rule);
 				mode = IGNORE;
 			}
 			else {

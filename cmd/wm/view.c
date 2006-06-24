@@ -180,10 +180,11 @@ rects_of_view(View *v, unsigned int *num)
 
 	result = cext_emallocz(*num * sizeof(XRectangle));
 	for(f=v->area->frame; f; f=f->anext)
-		*(result++) = f->rect;
-	*(result++) = rect;
-	*(result++) = brect;
-	return (result - *num);
+		*result++ = f->rect;
+	*result++ = rect;
+	*result++ = brect;
+
+	return &result[-*num];
 }
 
 void

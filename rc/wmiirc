@@ -7,7 +7,12 @@ xwrite() {
 }
 
 proglist() {
-	ls -lL "$@" 2>/dev/null | awk 'NF>2 && $1 ~ /^[^d].*x/ {print $NF}' | sort -u
+	ls -lL "$@" 2>/dev/null | awk 'NF>2 && $1 ~ /^[^d].*x/ {print $NF}' | sort | uniq
+}
+
+conf_which () {
+	prog=$1; shift
+	echo `PATH="$WMII_CONFPATH:$PATH" which $prog` $@
 }
 
 MODKEY=Mod1
@@ -56,7 +61,7 @@ EOF
 
 # MISC
 xsetroot -solid '#333333'
-status &
+`conf_which status` &
 PROGS_FILE=`mktemp /tmp/.wmiimenu.proglist.XXXXXX` || exit 2
 proglist `echo "$OLD_PATH" | tr : ' '` >$PROGS_FILE &
 
@@ -115,11 +120,10 @@ done
 seltag=`wmiir read /tag/sel/ctl`
 for tag in `wmiir ls /tag | sed -e 's,/$,,; /^sel$/d'`
 do
-	wmiir create /lbar/$tag 
 	if [ "X$tag" = "X$seltag" ]; then
-		xwrite /lbar/$tag $WMII_SELCOLORS $tag
+		echo $WMII_SELCOLORS $tag | wmiir create /lbar/$tag 
 	else
-		xwrite /lbar/$tag $WMII_NORMCOLORS $tag
+		echo $WMII_NORMCOLORS $tag | wmiir create /lbar/$tag 
 	fi
 done
 unset IFS
@@ -176,9 +180,9 @@ do
 		$MODKEY-f)
 			xwrite /tag/sel/0/sel/geom 0 0 0 0;;
 		$MODKEY-a)
-			`proglist $HOME/.wmii-4 CONFPREFIX/wmii-4 | wmiimenu` &;;
+			`conf_which \`proglist $HOME/.wmii-4 CONFPREFIX/wmii-4 | wmiimenu\`` &;;
 		$MODKEY-p)
-			PATH="$OLD_PATH" wmiisetsid `wmiimenu <$PROGS_FILE` &;;
+			wmiisetsid sh -c "`wmiimenu <$PROGS_FILE`" &;;
 		$MODKEY-t)
 			xwrite /ctl view "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
 		$MODKEY-[0-9])

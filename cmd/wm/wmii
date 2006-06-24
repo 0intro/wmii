@@ -3,13 +3,30 @@
 
 wmiiwm -c || exit 1
 
-OLD_PATH="$PATH" export OLD_PATH
-PATH="$HOME/.wmii-4:CONFPREFIX/wmii-4:$PATH" export PATH
-WMII_ADDRESS=unix!/tmp/ns.$USER.${DISPLAY%.0}/wmii export WMII_ADDRESS
+WMII_CONFPATH="$HOME/.wmii-4:CONFPREFIX/wmii-4" export WMII_CONFPATH
+WMII_NS_DIR="/tmp/ns.$USER.${DISPLAY%.0}"
+WMII_ADDRESS="unix!$WMII_NS_DIR/wmii" export WMII_ADDRESS
 
-mkdir -m 700 /tmp/ns.$USER.${DISPLAY%.0} 2>/dev/null
+error() {
+  echo "There was an error starting wmii."
+  echo "$@"
+  exit 1
+}
+
+if [ -d "$WMII_NS_DIR" ]; then
+	if [ -O "$WMII_NS_DIR" ]; then
+		if ls -ld "$WMII_NS_DIR" | grep -v '^drwx------' >/dev/null 2>&1; then
+			error "Your namespace directory ($WMII_NS_DIR) exists but is group or world readable or writable"
+		fi
+	else
+		error "Your namespace directory ($WMII_NS_DIR) exists but is not owned by you."
+	fi
+else
+	mkdir -m 700 "$WMII_NS_DIR" || error "Your namespace directory ($WMII_NS_DIR) doesn't exist and I can't create it"
+fi
+
 wmiiwm -a $WMII_ADDRESS &
 wmiiwmpid=$!
 mkdir $HOME/.wmii-4 2>/dev/null && welcome &
-wmiirc &
+`PATH="$CONFPATH:$PATH" which wmiirc` &
 wait $wmiiwmpid
