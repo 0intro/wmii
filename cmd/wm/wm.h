@@ -282,7 +282,7 @@ void fs_remove(P9Req *r);
 void fs_stat(P9Req *r);
 void fs_walk(P9Req *r);
 void fs_write(P9Req *r);
-void write_event(char *buf);
+void write_event(char *format, ...);
 
 /* geom.c */
 BlitzAlign quadofcoord(XRectangle *rect, int x, int y);

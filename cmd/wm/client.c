@@ -57,7 +57,6 @@ create_client(Window w, XWindowAttributes *wa)
 	long msize;
 	unsigned int i;
 	static unsigned int id = 1;
-	static char buf[256];
 
 	c->id = id++;
 	c->win = w;
@@ -98,8 +97,7 @@ create_client(Window w, XWindowAttributes *wa)
 	c->next = *t; /* *t == nil */
 	*t = c;
 
-	snprintf(buf, sizeof(buf), "CreateClient %d\n", i);
-	write_event(buf);
+	write_event("CreateClient %d\n", i);
 	return c;
 }
 
@@ -130,7 +128,6 @@ focus_client(Client *c, Bool restack)
 	Frame *f;
 	Client *old_in_area;
 	View *v;
-	static char buf[256];
 
 	if(!sel_screen)
 		return;
@@ -164,8 +161,7 @@ focus_client(Client *c, Bool restack)
 	update_frame_widget_colors(c->sel);
 	draw_frame(c->sel);
 	XSync(blz.display, False);
-	snprintf(buf, sizeof(buf), "ClientFocus %d\n", idx_of_client(c));
-	write_event(buf);
+	write_event("ClientFocus %d\n", idx_of_client(c));
 }
 
 void

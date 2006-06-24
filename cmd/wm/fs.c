@@ -3,6 +3,7 @@
  * See LICENSE file for license details.
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,6 +71,9 @@ static char
 
 /* Global Vars */
 /***************/
+enum { BUF_SIZE = 2048 };
+static char buf[BUF_SIZE];
+
 FileId *free_fileid = nil;
 P9Req *pending_event_reads = nil;
 FidLink *pending_event_fids;
@@ -301,9 +305,6 @@ message_root(char *message)
 char *
 read_root_ctl()
 {
-	/* XXX: There should be 1 global buffer for this */
-	enum { BUF_SIZE = 2048 };
-	static char buf[BUF_SIZE];
 	unsigned int i = 0;
 	if(sel)
 		i += snprintf(&buf[i], (BUF_SIZE - i), "view %s\n", sel->name);
@@ -333,14 +334,18 @@ respond_event(P9Req *r) {
 }
 
 void
-write_event(char *buf) {
+write_event(char *format, ...) {
 	unsigned int len, slen;
+	va_list ap;
 	FidLink *f;
 	FileId *fi;
 	P9Req *aux;
 
+	va_start(ap, format);
+	vsnprintf(buf, BUF_SIZE, format, ap);
+
 	if(!(len = strlen(buf)))
-		return;
+		goto end;
 	for(f=pending_event_fids; f; f=f->next) {
 		fi = f->fid->aux;
 		slen = fi->buf ? strlen(fi->buf) : 0;
@@ -352,6 +357,8 @@ write_event(char *buf) {
 		pending_event_reads = pending_event_reads->aux;
 		respond_event(aux);
 	}
+end:
+	va_end(ap);
 }
 
 static void
@@ -754,7 +761,7 @@ fs_write(P9Req *r) {
 	case FsFEvent:
 		buf = cext_emallocz(r->ifcall.count + 1);
 		bcopy(r->ifcall.data, buf, r->ifcall.count);
-		write_event(buf);
+		write_event("%s", buf);
 		free(buf);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);

@@ -69,31 +69,22 @@ handle_buttonrelease(XEvent *e)
 	Client *c;
 	Bar *b;
 	XButtonPressedEvent *ev = &e->xbutton;
-	static char buf[32];
 	if(ev->window == barwin) {
 		for(b=lbar; b; b=b->next)
-			if(ispointinrect(ev->x, ev->y, &b->brush.rect)) {
-				snprintf(buf, sizeof(buf), "LeftBarClick %d %s\n",
+			if(ispointinrect(ev->x, ev->y, &b->brush.rect))
+				return write_event("LeftBarClick %d %s\n",
 						ev->button, b->name);
-				write_event(buf);
-				return;
-			}
 		for(b=rbar; b; b=b->next)
-			if(ispointinrect(ev->x, ev->y, &b->brush.rect)) {
-				snprintf(buf, sizeof(buf), "RightBarClick %d %s\n",
+			if(ispointinrect(ev->x, ev->y, &b->brush.rect))
+				return write_event("RightBarClick %d %s\n",
 						ev->button, b->name);
-				write_event(buf);
-				return;
-			}
 	}
 	else if((c = frame_of_win(ev->window)) && c->frame) {
 		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
 			c->sel->tagbar.curend = blitz_charof(&c->sel->tagbar, ev->x, ev->y);
 			draw_frame(c->sel);
 		}
-		snprintf(buf, sizeof(buf), "ClientClick %d %d\n",
-				idx_of_client(c), ev->button);
-		write_event(buf);
+		write_event("ClientClick %d %d\n", idx_of_client(c), ev->button);
 		drag = False;
 	}
 }

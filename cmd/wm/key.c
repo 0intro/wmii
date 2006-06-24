@@ -189,7 +189,6 @@ handle_key_seq(Window w, Key *done)
 	unsigned long mod;
 	KeyCode key;
 	Key *found;
-	char buf[128];
 
 	next_keystroke(&mod, &key);
 
@@ -200,10 +199,8 @@ handle_key_seq(Window w, Key *done)
 		if(!found) {
 			XBell(blz.display, 0);
 		} /* grabbed but not found */
-		else if(!found->tnext && !found->next) {
-			snprintf(buf, sizeof(buf), "Key %s\n", found->name);
-			write_event(buf);
-		}
+		else if(!found->tnext && !found->next)
+			write_event("Key %s\n", found->name);
 		else
 			handle_key_seq(w, found);
 	}
@@ -221,10 +218,8 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 	if(!found) {
 		XBell(blz.display, 0);
 	} /* grabbed but not found */
-	else if(!found->tnext && !found->next) {
-		snprintf(buf, sizeof(buf), "Key %s\n", found->name);
-		write_event(buf);
-	}
+	else if(!found->tnext && !found->next)
+		write_event("Key %s\n", found->name);
 	else {
 		XGrabKeyboard(blz.display, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
 		handle_key_seq(w, found);

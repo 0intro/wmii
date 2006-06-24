@@ -9,19 +9,14 @@
 
 #include "wm.h"
 
-static char buf[256];
-
 static void
 assign_sel_view(View *v)
 {
 	if(sel != v) {
-		if(sel) {
-			snprintf(buf, sizeof(buf), "UnfocusTag %s\n", sel->name);
-			write_event(buf);
-		}
+		if(sel)
+			write_event("UnfocusTag %s\n", sel->name);
 		sel = v;
-		snprintf(buf, sizeof(buf), "FocusTag %s\n", sel->name);
-		write_event(buf);
+		write_event("FocusTag %s\n", sel->name);
 	}
 }
 
@@ -40,8 +35,7 @@ create_view(const char *name)
 	v->next = *i;
 	*i = v;
 
-	snprintf(buf, sizeof(buf), "CreateTag %s\n", v->name);
-	write_event(buf);
+	write_event("CreateTag %s\n", v->name);
 	if(!sel)
 		assign_sel_view(v);
 
@@ -67,8 +61,7 @@ destroy_view(View *v)
 		for(sel=view; sel; sel=sel->next)
 			if(sel->next == *i) break;
 
-	snprintf(buf, sizeof(buf), "DestroyTag %s\n", v->name);
-	write_event(buf);
+	write_event("DestroyTag %s\n", v->name);
 	free(v);
 }
 
