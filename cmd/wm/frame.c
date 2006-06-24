@@ -157,7 +157,7 @@ draw_frame(Frame *f)
 	f->posbar.rect.height = height_of_bar();
 
 	snprintf(buf, sizeof(buf), "%s%d/%d",
-		(f->area == f->area->view->area) ? "~" : "", fidx + 1, size);
+		f->area->floating ? "~" : "", fidx + 1, size);
 
 	w = f->posbar.rect.width =
 		f->posbar.rect.height + blitz_textwidth(&def.font, buf);

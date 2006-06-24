@@ -152,7 +152,7 @@ handle_configurerequest(XEvent *e)
 	c = client_of_win(ev->window);
 	ev->value_mask &= ~CWSibling;
 	if(c) {
-		if(c->frame && c->sel->area == c->sel->area->view->area) {
+		if(c->frame && c->sel->area->floating) {
 			gravitate_client(c, True);
 
 			if(c->frame) {

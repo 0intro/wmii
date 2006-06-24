@@ -9,6 +9,60 @@
 
 #include "wm.h"
 
+static Bool
+is_of_view(View *v, Client *c)
+{
+	Area *a;
+	for(a=v->area; a; a=a->next)
+		if(is_of_area(a, c))
+			return True;
+	return False;
+}
+
+static Bool
+is_view_of(Client *c, View *v)
+{
+	ViewLink *l;
+	for(l=c->views; l; l=l->next)
+		if(l->view == v)
+			return True;
+	return False;
+}
+
+static Bool
+is_empty(View *v)
+{
+	Area *a;
+	for(a=v->area; a; a=a->next)
+		if(a->frame)
+			return False;
+	return True;
+}
+
+View *
+view_of_id(unsigned short id) {
+	View *v;
+	for(v = view; v; v=v->next)
+		if(v->id == id) break;
+	return v;
+}
+
+View *
+view_of_name(const char *name)
+{
+	View *v;
+	for(v = view; v; v=v->next)
+		if(!strcmp(v->name, name)) break;
+	return v;
+}
+
+static View *
+get_view(const char *name)
+{
+	View *v = view_of_name(name);
+	return v ? v : create_view(name);
+}
+
 static void
 assign_sel_view(View *v)
 {
@@ -30,8 +84,10 @@ create_view(const char *name)
 	cext_strlcpy(v->name, name, sizeof(v->name));
 	create_area(v, nil, 0);
 	create_area(v, v->area, 0);
+	v->area->floating = True;
 
-	for(i=&view; *i && (strcmp((*i)->name, name) < 0); i=&(*i)->next);
+	for(i=&view; *i; i=&(*i)->next)
+		if(strcmp((*i)->name, name) < 0) break;
 	v->next = *i;
 	*i = v;
 
@@ -130,28 +186,6 @@ rects_of_view(View *v, unsigned int *num)
 	return (result - *num);
 }
 
-View *
-view_of_id(unsigned short id) {
-	View *v;
-	for(v = view; v && v->id != id; v=v->next);
-	return v;
-}
-
-View *
-view_of_name(const char *name)
-{
-	View *v;
-	for(v = view; v && strcmp(v->name, name); v=v->next);
-	return v;
-}
-
-static View *
-get_view(const char *name)
-{
-	View *v = view_of_name(name);
-	return v ? v : create_view(name);
-}
-
 void
 select_view(const char *arg)
 {
@@ -162,16 +196,6 @@ select_view(const char *arg)
 		return;
 	assign_sel_view(get_view(arg));
 	update_views(); /* performs focus_view */
-}
-
-static Bool
-is_of_view(View *v, Client *c)
-{
-	Area *a;
-	for(a=v->area; a; a=a->next)
-		if(is_of_area(a, c))
-			return True;
-	return False;
 }
 
 void
@@ -198,7 +222,7 @@ attach_to_view(View *v, Client *c)
 	if(c->trans || c->floating || c->fixedsize
 		|| (c->rect.width == rect.width && c->rect.height == rect.height))
 		a = v->area;
-	else if(starting && v->sel == v->area)
+	else if(starting && v->sel->floating)
 		a = v->area->next;
 	else
 		a = v->sel;
@@ -329,16 +353,6 @@ update_client_views(Client *c)
 	}
 }
 
-static Bool
-is_view_of(Client *c, View *v)
-{
-	ViewLink *l;
-	for(l=c->views; l; l=l->next)
-		if(l->view == v)
-			return True;
-	return False;
-}
-
 Client *
 sel_client_of_view(View *v) {
 	return v->sel && v->sel->sel ? v->sel->sel->client : nil;
@@ -419,7 +433,6 @@ clientframe_of_view(View *v, Client *c)
 	return f;
 } 
 
-/* XXX: This will need cleanup too */
 char *
 message_view(View *v, char *message) {
 	unsigned int n, i;
@@ -453,16 +466,6 @@ message_view(View *v, char *message) {
 		return nil;
 	}
 	return Ebadvalue;
-}
-
-static Bool
-is_empty(View *v)
-{
-	Area *a;
-	for(a=v->area; a; a=a->next)
-		if(a->frame)
-			return False;
-	return True;
 }
 
 void

@@ -631,7 +631,7 @@ fs_read(P9Req *r) {
 		r->ofcall.data = buf;
 
 		tf = f = lookup_file(f, nil);
-		/* Note: f->tab.name == "."; goto next */
+		/* Note: f->tab.name == "." so we skip it */
 		for(f=f->next; f; f=f->next) {
 			dostat(&s, fs_size(f), f);
 			n = ixp_sizeof_stat(&s);
@@ -693,6 +693,8 @@ fs_read(P9Req *r) {
 			return;
 		}
 	}
+	/* This is an assert because it should this should not be called if
+	 * the file is not open for reading. */
 	cext_assert(!"Read called on an unreadable file");
 }
 
@@ -700,7 +702,7 @@ fs_read(P9Req *r) {
 void
 fs_write(P9Req *r) {
 	FileId *f;
-	char *buf, *errstr = nil;
+	char *errstr = nil;
 	unsigned int i;
 
 	if(r->ifcall.count == 0)
@@ -759,13 +761,20 @@ fs_write(P9Req *r) {
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	case FsFEvent:
-		buf = cext_emallocz(r->ifcall.count + 1);
-		bcopy(r->ifcall.data, buf, r->ifcall.count);
-		write_event("%s", buf);
-		free(buf);
+		if(r->ifcall.data[r->ifcall.count-1] == '\n') {
+			r->ifcall.data = realloc(r->ifcall.data, r->ifcall.count + 1);
+			r->ifcall.data[r->ifcall.count] = '\0';
+		}else{
+			r->ifcall.data = realloc(r->ifcall.data, r->ifcall.count + 2);
+			r->ifcall.data[r->ifcall.count] = '\n';
+			r->ifcall.data[r->ifcall.count + 1] = '\0';
+		}
+		write_event("%s", (char *)r->ifcall.data);
 		r->ofcall.count = r->ifcall.count;
 		return respond(r, nil);
 	}
+	/* This is an assert because it should this should not be called if
+	 * the file is not open for writing. */
 	cext_assert(!"Write called on an unwritable file");
 }
 

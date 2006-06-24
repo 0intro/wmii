@@ -69,6 +69,7 @@ struct Area {
 	Frame *frame;
 	Frame *sel;
 	View *view;
+	Bool floating;
 	unsigned short id;
 	int mode;
 	XRectangle rect;

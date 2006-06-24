@@ -96,7 +96,7 @@ select_area(Area *a, char *arg)
 		else
 			new = v->area->next;
 	} else if(!strncmp(arg, "left", 5)) {
-		if(a == v->area)
+		if(a->floating)
 			return Ebadvalue;
 		for(new=v->area->next;
 			new && new->next != a;
@@ -104,7 +104,7 @@ select_area(Area *a, char *arg)
 		if(!new)
 			new=v->area->next;
 	} else if(!strncmp(arg, "right", 5)) {
-		if(a == v->area)
+		if(a->floating)
 			return Ebadvalue;
 		new = a->next ? a->next : a;
 	}
@@ -133,7 +133,7 @@ select_area(Area *a, char *arg)
 	if(new->sel)
 		focus_client(new->sel->client, True);
 	v->sel = new;
-	if(a != v->area)
+	if(!a->floating)
 		v->revert = a;
 	draw_frames();
 	return nil;
@@ -253,7 +253,7 @@ attach_to_area(Area *a, Client *c, Bool send)
 	Frame *f;
 	for(f=a->frame, i=1; f; f=f->anext, i++);
 
-	c->floating = (a == v->area);
+	c->floating = a->floating;
 	if(!c->floating) {
 		h = a->rect.height / i;
 		if(a->frame)
@@ -290,7 +290,7 @@ detach_from_area(Area *a, Client *c)
 	cext_assert(f->area == a);
 	destroy_frame(f);
 
-	if(a != a->view->area) {
+	if(!a->floating) {
 		if(a->frame)
 			arrange_column(a, False);
 		else {

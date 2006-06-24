@@ -210,7 +210,6 @@ void
 handle_key(Window w, unsigned long mod, KeyCode keycode)
 {
 	Key *k;
-	char buf[128];
 
 	for(k=key; k; k->tnext=k->lnext, k=k->lnext);
 	Key *found = match_keys(key, mod, keycode, False);

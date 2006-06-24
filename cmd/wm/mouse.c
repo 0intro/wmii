@@ -179,7 +179,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	XEvent ev;
 	unsigned int num = 0, di;
 	Frame *f = c->sel;
-	Bool floating = (f->area == f->area->view->area);
+	Bool floating = f->area->floating;
 	int snap = floating ? rect.height / 66 : 0;
 	XRectangle *rects = floating ? rects_of_view(f->area->view, &num) : nil;
 	XRectangle frect = f->rect, ofrect;

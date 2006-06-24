@@ -138,7 +138,7 @@ focus_client(Client *c, Bool restack)
 	v = f->area->view;
 	v->sel = f->area;
 	f->area->sel = f;
-	c->floating = (f->area == v->area);
+	c->floating = f->area->floating;
 	if(restack)
 		restack_view(v);
 	else {
@@ -484,7 +484,7 @@ void
 resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 {
 	Frame *f = c->sel;
-	Bool floating = (f->area == f->area->view->area);
+	Bool floating = f->area->floating;
 
 	BlitzAlign stickycorner = 0;;
 	if(f->rect.x != r->x && f->rect.x + f->rect.width == r->x + r->width)
@@ -535,7 +535,7 @@ newcol_client(Client *c, char *arg)
 	Area *to, *a = f->area;
 	View *v = a->view;
 
-	if(a == v->area)
+	if(a->floating)
 		return;
 	if(!f->anext && f == a->frame)
 		return;
@@ -582,7 +582,7 @@ size_client(Client *c, char *arg)
 		return;
 	new.width += w;
 	new.height += h;
-	if(f->area != f->area->view->area)
+	if(!f->area->floating)
 		resize_column(f->client, &new, nil);
 	else
 		resize_client(f->client, &new, False);
@@ -608,7 +608,7 @@ send_client(Frame *f, char *arg)
 		return 0;
 
 	if(i && !strncmp(arg, "left", 5)) {
-		if(a == v->area)
+		if(a->floating)
 			return Ebadvalue;
 		for(to=v->area->next; to && a != to->next; to=to->next);
 		if(!to && (f->anext || f != a->frame))
@@ -618,7 +618,7 @@ send_client(Frame *f, char *arg)
 		send_to_area(to, a, c);
 	}
 	else if(i && !strncmp(arg, "right", 5)) {
-		if(a == v->area)
+		if(a->floating)
 			return Ebadvalue;
 		if(!(to = a->next) && (f->anext || f!= a->frame))
 			to = new_column(v, a, 0);
@@ -627,9 +627,9 @@ send_client(Frame *f, char *arg)
 		send_to_area(to, a, c);
 	}
 	else if(!strncmp(arg, "toggle", 7)) {
-		if(a != v->area)
+		if(!a->floating)
 			to = v->area;
-		else if(c->revert && c->revert != v->area)
+		else if(c->revert && !c->revert->floating)
 			to = c->revert;
 		else
 			to = v->area->next;
