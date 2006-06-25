@@ -312,6 +312,8 @@ view_index(View *v) {
 				n = snprintf(&buffer[buf_i], len, "%d %d %d %s\n",
 						a_i, idx_of_client(f->client),
 						r->width, f->client->props);
+			if(len - n < 0)
+				return buffer;
 			buf_i += n;
 			len -= n;
 		}
