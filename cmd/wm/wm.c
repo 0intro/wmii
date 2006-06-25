@@ -350,6 +350,7 @@ main(int argc, char *argv[])
 	XMapRaised(blz.display, barwin);
 	draw_bar();
 	scan_wins();
+	update_views();
 
 	starting = False;
 

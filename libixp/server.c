@@ -66,10 +66,10 @@ prepare_select(IXPServer *s)
 static void
 handle_conns(IXPServer *s)
 {
-	IXPConn **c;
-	for(c=&s->conn; *c; *c && (c=&(*c)->next))
-		if(FD_ISSET((*c)->fd, &s->rd) && (*c)->read)
-			(*c)->read(*c);
+	IXPConn *c, *n;
+	for((c=s->conn) && (n=c->next); c; (c=n) && (n=c->next))
+		if(FD_ISSET(c->fd, &s->rd) && c->read)
+			c->read(c);
 }
 
 char *

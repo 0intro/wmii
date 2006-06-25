@@ -71,9 +71,6 @@ static char
 
 /* Global Vars */
 /***************/
-enum { BUF_SIZE = 2048 };
-static char buf[BUF_SIZE];
-
 FileId *free_fileid = nil;
 P9Req *pending_event_reads = nil;
 FidLink *pending_event_fids;
@@ -255,8 +252,8 @@ message_root(char *message)
 	unsigned int n;
 
 	if(!strchr(message, ' ')) {
-		snprintf(buf, BUF_SIZE, "%s ", message);
-		message = buf;
+		snprintf(buffer, BUFFER_SIZE, "%s ", message);
+		message = buffer;
 	}
 
 	if(!strncmp(message, "quit ", 5))
@@ -308,15 +305,15 @@ read_root_ctl()
 {
 	unsigned int i = 0;
 	if(sel)
-		i += snprintf(&buf[i], (BUF_SIZE - i), "view %s\n", sel->name);
-	i += snprintf(&buf[i], (BUF_SIZE - i), "selcolors %s\n", def.selcolor.colstr);
-	i += snprintf(&buf[i], (BUF_SIZE - i), "normcolors %s\n", def.normcolor.colstr);
-	i += snprintf(&buf[i], (BUF_SIZE - i), "font %s\n", def.font.fontstr);
-	i += snprintf(&buf[i], (BUF_SIZE - i), "grabmod %s\n", def.grabmod);
-	i += snprintf(&buf[i], (BUF_SIZE - i), "border %d\n", def.border);
+		i += snprintf(&buffer[i], (BUFFER_SIZE - i), "view %s\n", sel->name);
+	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "selcolors %s\n", def.selcolor.colstr);
+	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "normcolors %s\n", def.normcolor.colstr);
+	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "font %s\n", def.font.fontstr);
+	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "grabmod %s\n", def.grabmod);
+	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "border %d\n", def.border);
 	if(def.testtags)
-		i += snprintf(&buf[i], (BUF_SIZE - i), "testtags %s\n", def.testtags);
-	return buf;
+		i += snprintf(&buffer[i], (BUFFER_SIZE - i), "testtags %s\n", def.testtags);
+	return buffer;
 }
 
 
@@ -343,17 +340,17 @@ write_event(char *format, ...) {
 	P9Req *aux;
 
 	va_start(ap, format);
-	vsnprintf(buf, BUF_SIZE, format, ap);
+	vsnprintf(buffer, BUFFER_SIZE, format, ap);
 	va_end(ap);
 
-	if(!(len = strlen(buf)))
+	if(!(len = strlen(buffer)))
 		return;
 	for(f=pending_event_fids; f; f=f->next) {
 		fi = f->fid->aux;
 		slen = fi->buf ? strlen(fi->buf) : 0;
 		fi->buf = realloc(fi->buf, slen + len + 1);
 		fi->buf[slen] = '\0';
-		strcat(fi->buf, buf);
+		strcat(fi->buf, buffer);
 	}
 	while((aux = pending_event_reads)) {
 		pending_event_reads = pending_event_reads->aux;

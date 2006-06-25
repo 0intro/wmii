@@ -347,14 +347,16 @@ manage_client(Client *c)
 		cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
 	else if(tags.nitems)
 		cext_strlcpy(c->tags, (char *)tags.value, sizeof(c->tags));
-
 	XFree(tags.value);
 
 	if(!strlen(c->tags))
 		apply_rules(c);
 
+	apply_tags(c, c->tags);
+
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
-	update_views();
+	if(!starting)
+		update_views();
 	map_client(c);
 	XMapWindow(blz.display, c->framewin);
 	XSync(blz.display, False);
@@ -372,7 +374,7 @@ dummy_error_handler(Display *dpy, XErrorEvent *error)
 void
 destroy_client(Client *c)
 {
-	View *v;
+	char *dummy = nil;
 	Client **tc;
 
 	XGrabServer(blz.display);
@@ -383,10 +385,7 @@ destroy_client(Client *c)
 		c->rect.y = c->sel->rect.y;
 	}
 
-	for(v=view; v; v=v->next)
-		detach_from_view(v, c);
-	*c->tags = '\0';
-	update_client_views(c);
+	update_client_views(c, &dummy);
 
 	unmap_client(c);
 
@@ -523,9 +522,11 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		c->rect.width = f->rect.width - 2 * def.border;
 		c->rect.height = f->rect.height - def.border - height_of_bar();
 	}
-	XMoveResizeWindow(blz.display, c->win, c->rect.x, c->rect.y,
+	if(!ignore_xcall) {
+		XMoveResizeWindow(blz.display, c->win, c->rect.x, c->rect.y,
 						c->rect.width, c->rect.height);
-	configure_client(c);
+		configure_client(c);
+	}
 }
 
 void
@@ -543,11 +544,11 @@ newcol_client(Client *c, char *arg)
 	if(!strncmp(arg, "prev", 5)) {
 		for(to=v->area; to && to->next != a; to=to->next);
 		to = new_column(v, to, 0);
-		send_to_area(to, a, c);
+		send_to_area(to, a, f);
 	}
 	else if(!strncmp(arg, "next", 5)) {
 		to = new_column(v, a, 0);
-		send_to_area(to, a, c);
+		send_to_area(to, a, f);
 	}
 	else
 		return;
@@ -615,7 +616,7 @@ send_client(Frame *f, char *arg)
 				to=new_column(v, v->area, 0);
 		if(!to)
 			return Ebadvalue;
-		send_to_area(to, a, c);
+		send_to_area(to, a, f);
 	}
 	else if(i && !strncmp(arg, "right", 5)) {
 		if(a->floating)
@@ -624,7 +625,7 @@ send_client(Frame *f, char *arg)
 			to = new_column(v, a, 0);
 		if(!to)
 			return Ebadvalue;
-		send_to_area(to, a, c);
+		send_to_area(to, a, f);
 	}
 	else if(!strncmp(arg, "toggle", 7)) {
 		if(!a->floating)
@@ -633,7 +634,7 @@ send_client(Frame *f, char *arg)
 			to = c->revert;
 		else
 			to = v->area->next;
-		send_to_area(to, a, c);
+		send_to_area(to, a, f);
 	}
 	else if(i && !strncmp(arg, "up", 3)) {
 		for(tf=a->frame; tf && tf->anext != f; tf=tf->anext);
@@ -656,27 +657,13 @@ send_client(Frame *f, char *arg)
 		if(sscanf(arg, "%d", &j) != 1)
 			return Ebadvalue;
 		for(to=v->area; to && j; to=to->next, j--);
-		send_to_area(to, a, c);
+		send_to_area(to, a, f);
 	}
 	else
 		return Ebadvalue;
 	flush_masked_events(EnterWindowMask);
+	update_views();
 	return nil;
-}
-
-void
-resize_all_clients()
-{
-	Client *c;
-	for(c = client; c; c=c->next) {
-		if(c->frame && c->sel->area) {
-			if(idx_of_area(c->sel->area))
-				resize_column(c, &c->sel->rect, nil);
-			else
-				resize_client(c, &c->sel->rect, False);
-		}
-	}
-	flush_masked_events(EnterWindowMask);
 }
 
 /* convenience function */
@@ -716,20 +703,44 @@ Client *
 client_of_win(Window w)
 {
 	Client *c;
-
 	for(c=client; c && c->win != w; c=c->next);
 	return c;
 }
 
-static Bool
-permit_tag(const char *tag)
+static int
+compare_tags(const void **a, const void **b) {
+	return strcmp(*a, *b);
+}
+
+void
+update_client_views(Client *c, char **tags)
 {
-	static char *exclude[] = { "sel", "status" };
-	unsigned int i;
-	for(i = 0; i < (sizeof(exclude) / sizeof(exclude[0])); i++)
-		if(!strcmp(exclude[i], tag))
-			return False;
-	return True;
+	int cmp;
+	Frame *f;
+	Frame **fp = &c->frame;
+	while(*fp || *tags) {
+		while(*fp && (!*tags || (cmp=strcmp((*fp)->view->name, *tags)) < 0)) {
+			f = *fp;
+			detach_from_area(f->area, f);
+			*fp = f->cnext;
+			free(f);
+			if(c->sel == f)
+				c->sel = *fp;
+		}
+
+		if(*tags) {
+			if(!*fp || cmp > 0) {
+				f = create_frame(c, get_view(*tags));
+				if(f->view == sel || !c->sel)
+					c->sel = f;
+				attach_to_view(f->view, f);
+				f->cnext = *fp;
+				*fp = f;
+			}
+			if(*fp) fp=&(*fp)->cnext;
+			tags++;
+		}
+	}
 }
 
 void
@@ -737,31 +748,33 @@ apply_tags(Client *c, const char *tags)
 {
 	unsigned int i, j = 0, n;
 	char buf[256];
-	char *toks[16], *apply[16];
+	char *toks[32];
 
 	cext_strlcpy(buf, tags, sizeof(buf));
-	if(!(n = cext_tokenize(toks, 16, buf, '+')))
+	if(!(n = cext_tokenize(toks, 31, buf, '+')))
 		return;
 
 	for(i = 0; i < n; i++) {
 		if(!strncmp(toks[i], "~", 2))
 			c->floating = True;
-		else if(!strncmp(toks[i], "!", 2)) {
-			if(view)
-				apply[j++] = sel->name;
-			else
-				apply[j++] = "nil";
-		}
-		else if(permit_tag(toks[i]))
-			apply[j++] = toks[i];
+		else if(!strncmp(toks[i], "!", 2))
+			toks[j++] = view ? sel->name : "nil";
+		else if(strncmp(toks[i], "sel", 4))
+			toks[j++] = toks[i];
 	}
 
-	c->tags[0] = 0;
-	for(i = 0; i < j; i++) {
-		cext_strlcat(c->tags, apply[i], sizeof(c->tags) - strlen(c->tags) - 1);
-		if(i + 1 < j)
-			cext_strlcat(c->tags, "+", sizeof(c->tags) - strlen(c->tags) - 1);
+	c->tags[0] = '\0';
+	qsort(toks, j, sizeof(char *), (void *)compare_tags);
+	for(i=0, n=0; i < j; i++) {
+		if(!n || strcmp(toks[i], toks[n-1])) {
+			if(n)
+				cext_strlcat(c->tags, "+", sizeof(c->tags) - strlen(c->tags) - 1);
+			cext_strlcat(c->tags, toks[i], sizeof(c->tags) - strlen(c->tags) - 1);
+			toks[n++] = toks[i];
+		}
 	}
+	toks[i] = nil;
+	update_client_views(c, toks);
 
 	if(!strlen(c->tags))
 		apply_tags(c, "nil");

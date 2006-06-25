@@ -9,16 +9,14 @@
 #include "wm.h"
 
 Frame *
-create_frame(Area *a, Client *c)
+create_frame(Client *c, View *v)
 {
 	static unsigned short id = 1;
 	Frame *f = cext_emallocz(sizeof(Frame));
-	Frame **fa = a->sel ? &a->sel->anext : &a->frame;
-	Frame **fc = c->sel ? &c->sel->cnext : &c->frame;
 
 	f->id = id++;
-	f->area = a;
 	f->client = c;
+	f->view = v;
 	f->revert = f->rect = c->rect;
 	f->rect.width += 2 * def.border;
 	f->rect.height += def.border + height_of_bar();
@@ -39,14 +37,6 @@ create_frame(Area *a, Client *c)
 	f->tagbar.gc = c->gc;
 	f->tagbar.font = &def.font;
 	f->tagbar.color = def.normcolor;
-
-	a->sel = f;
-	c->sel = f;
-
-	f->anext = *fa;
-	*fa = f;
-	f->cnext = *fc;
-	*fc = f;
 
 	return f;
 }
@@ -74,28 +64,6 @@ insert_frame(Frame *pos, Frame *f, Bool before)
 	Frame **p = pos ? &pos->anext : &a->frame;
 	f->anext = *p;
 	*p = f;
-}
-
-void
-destroy_frame(Frame *f)
-{
-	Client *c = f->client;
-	Area *a = f->area;
-	Frame **ft, *pr = nil;
-
-	for(ft=&c->frame; *ft && *ft != f; pr = *ft, ft=&(*ft)->cnext);
-	cext_assert(*ft == f);
-	*ft = f->cnext;
-	if(c->sel == f)
-		c->sel = pr ? pr : *ft;
-
-	for(ft=&a->frame; *ft && *ft != f; pr = *ft, ft=&(*ft)->anext);
-	cext_assert(*ft == f);
-	*ft = f->anext;
-	if(a->sel == f)
-		a->sel = pr ? pr : *ft;
-
-	free(f);
 }
 
 Frame *
@@ -140,10 +108,8 @@ update_frame_widget_colors(Frame *f)
 void
 draw_frame(Frame *f)
 {
-
 	Frame *p;
 	unsigned int fidx, size, w;
-	char buf[256];
 
 	for(fidx=0, p=f->area->frame; p && p != f; p=p->anext, fidx++);
 	for(size=fidx; p; p=p->anext, size++);
@@ -156,11 +122,11 @@ draw_frame(Frame *f)
 	f->posbar.rect = f->tile.rect;
 	f->posbar.rect.height = height_of_bar();
 
-	snprintf(buf, sizeof(buf), "%s%d/%d",
+	snprintf(buffer, BUFFER_SIZE, "%s%d/%d",
 		f->area->floating ? "~" : "", fidx + 1, size);
 
 	w = f->posbar.rect.width =
-		f->posbar.rect.height + blitz_textwidth(&def.font, buf);
+		f->posbar.rect.height + blitz_textwidth(&def.font, buffer);
 
 	f->posbar.rect.x = f->rect.width - f->posbar.rect.width; 
 	
@@ -182,7 +148,7 @@ draw_frame(Frame *f)
 	f->tagbar.text = def.testtags ? def.testtags : f->client->tags;
 	blitz_draw_input(&f->tagbar);
 	blitz_draw_label(&f->titlebar, f->client->name);
-	blitz_draw_label(&f->posbar, buf);
+	blitz_draw_label(&f->posbar, buffer);
 	XCopyArea(blz.display, pmap, f->client->framewin, f->tagbar.gc,
 			0, 0, f->rect.width, f->rect.height, 0, 0);
 	XSync(blz.display, False);

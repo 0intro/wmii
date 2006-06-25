@@ -64,7 +64,7 @@ relax_column(Area *a)
 		for(f=a->frame; f; f=f->anext) {
 			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 			f->rect.y = a->rect.y + (a->rect.height - f->rect.height) / 2;
-			resize_client(f->client, &f->rect, False);
+ 			resize_client(f->client, &f->rect, True);
 		}
 		return;
 	}
@@ -101,7 +101,7 @@ relax_column(Area *a)
 		f->rect.y = yoff;
 		if(a->mode != Colmax)
 			yoff = f->rect.y + f->rect.height + hdiff;
-		resize_client(f->client, &f->rect, False);
+		resize_client(f->client, &f->rect, True);
 	}
 }
 
@@ -212,10 +212,9 @@ match_horiz(Area *a, XRectangle *r)
 	for(f=a->frame; f; f=f->anext) {
 		f->rect.x = r->x;
 		f->rect.width = r->width;
-		resize_client(f->client, &f->rect, False);
+		resize_client(f->client, &f->rect, True);
 	}
 }
-
 
 static void
 drop_resize(Frame *f, XRectangle *new)
@@ -304,8 +303,8 @@ AfterHorizontal:
 		north->rect.height = new->y - north->rect.y;
 		f->rect.height += f->rect.y - new->y;
 		f->rect.y = new->y;
-		resize_client(north->client, &north->rect, False);
-		resize_client(f->client, &f->rect, False);
+ 		resize_client(north->client, &north->rect, True);
+ 		resize_client(f->client, &f->rect, True);
 	}
 	if(south && (new->y + new->height != f->rect.y + f->rect.height)) {
 		south->rect.height -= new->y + new->height - south->rect.y;
@@ -313,11 +312,12 @@ AfterHorizontal:
 		f->rect.y = new->y;
 		f->rect.height = new->height;
 		resize_client(f->client, &f->rect, False);
-		resize_client(south->client, &south->rect, False);
+		resize_client(south->client, &south->rect, True);
 	}
 AfterVertical:
 
 	relax_column(a);
+	focus_view(v);
 }
 
 static Frame *
@@ -354,14 +354,14 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 		if(pt->x < 16) {
 			if((src->frame && src->frame->anext) || (src != v->area->next)) {
 				tgt = new_column(v, v->area->next, 0);
-				send_to_area(tgt, src, f->client);
+				send_to_area(tgt, src, f);
 			}
 		}
 		else if(pt->x >= rect.width - 16) {
 			if((src->frame && src->frame->anext) || src->next) {
 				for(tgt=src; tgt->next; tgt=tgt->next);
 				tgt = new_column(v, tgt, 0);
-				send_to_area(tgt, src, f->client);
+				send_to_area(tgt, src, f);
 			}
 		}
 		else if(src != tgt) {
@@ -370,7 +370,7 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 			if(!(ft = frame_of_point(pt)) || (f == ft))
 				return;
 			before = pt->y < (ft->rect.y + ft->rect.height / 2);
-			send_to_area(tgt, src, c);
+			send_to_area(tgt, src, f);
 
 			f = c->sel;
 			remove_frame(f);

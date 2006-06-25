@@ -9,6 +9,40 @@
 
 #include "wm.h"
 
+Bool
+is_of_area(Area *a, Client *c)
+{
+	Frame *f;
+	for(f=a->frame; f; f=f->anext)
+		if(f->client == c)
+			return True;
+	return False;
+}
+
+int
+idx_of_area(Area *a)
+{
+	Area *t;
+	int i = 0;
+	for(t=a->view->area; t && t != a; t=t->next)
+		i++;
+	return t ? i : -1;
+}
+
+Area *
+area_of_id(View *v, unsigned short id)
+{
+	Area *a;
+	for(a=v->area; a && a->id != id; a=a->next);
+	return a;
+}
+
+Client *        
+sel_client_of_area(Area *a)
+{               
+	return a && a->sel ? a->sel->client : nil;
+}
+
 Area *
 create_area(View *v, Area *pos, unsigned int w)
 {
@@ -76,6 +110,101 @@ destroy_area(Area *a)
 	free(a);
 }
 
+void
+send_to_area(Area *to, Area *from, Frame *f)
+{
+	f->client->revert = from;
+	detach_from_area(from, f);
+	attach_to_area(to, f, True);
+	focus_client(f->client, True);
+}
+
+void
+attach_to_area(Area *a, Frame *f, Bool send)
+{
+	unsigned int h, n_frame;
+	Frame **fa, *ft;
+	View *v = a->view;
+	Client *c = f->client;
+
+	for(ft=a->frame, n_frame=1; ft; ft=ft->anext, n_frame++);
+
+	h = 0;
+	c->floating = a->floating;
+	if(!c->floating) {
+		h = a->rect.height / n_frame;
+		if(a->frame)
+			scale_column(a, a->rect.height - h);
+	}
+
+	if(!send && !c->floating) { /* column */
+		unsigned int w = newcolw_of_view(v);
+		if(v->area->next->frame && w) {
+			a = new_column(v, a, w);
+			arrange_view(v);
+		}
+	}
+
+	fa = a->sel ? &a->sel->anext : &a->frame;
+	f->anext = *fa;
+	*fa = f;
+
+	f->area = a;
+	a->sel = f;
+
+	if(!c->floating) { /* column */
+		f->rect.height = h;
+		arrange_column(a, False);
+	}
+	else { /* floating */
+		place_client(a, c);
+		resize_client(c, &f->rect,  True);
+	}
+}
+
+void
+detach_from_area(Area *a, Frame *f)
+{
+	Frame **ft, *pr = nil;
+	Client *c = f->client;
+	View *v = a->view;
+
+	for(ft=&a->frame; *ft; ft=&(*ft)->anext) {
+		if(*ft == f) break;
+		pr = *ft;
+	}
+	cext_assert(*ft == f);
+	*ft = f->anext;
+
+	if(a->sel == f)
+		a->sel = pr ? pr : *ft;
+
+	if(!a->floating) {
+		if(a->frame)
+			arrange_column(a, False);
+		else {
+			if(v->area->next->next)
+				destroy_area(a);
+			else if(!a->frame && v->area->frame)
+				v->sel = v->area; /* focus floating area if it contains something */
+			arrange_view(v);
+		}
+	}
+	else if(!a->frame) {
+		if(c->trans) {
+			/* focus area of transient, if possible */
+			Client *cl = client_of_win(c->trans);
+			if(cl && cl->frame) {
+				a = cl->sel->area;
+				if(a->view == v)
+					v->sel = a;
+			}
+		}
+		else if(v->area->next->frame)
+			v->sel = v->area->next; /* focus first col as fallback */
+	}
+}
+
 char *
 select_area(Area *a, char *arg)
 {
@@ -137,15 +266,6 @@ select_area(Area *a, char *arg)
 		v->revert = a;
 	draw_frames();
 	return nil;
-}
-
-void
-send_to_area(Area *to, Area *from, Client *c)
-{
-	c->revert = from;
-	detach_from_area(from, c);
-	attach_to_area(to, c, True);
-	focus_client(c, True);
 }
 
 static void
@@ -243,109 +363,4 @@ place_client(Area *a, Client *c)
 	snap_rect(rects, num, &f->rect, &align, snap);
 	if(rects)
 		free(rects);
-}
-
-void
-attach_to_area(Area *a, Client *c, Bool send)
-{
-	View *v = a->view;
-	unsigned int h = 0, i;
-	Frame *f;
-	for(f=a->frame, i=1; f; f=f->anext, i++);
-
-	c->floating = a->floating;
-	if(!c->floating) {
-		h = a->rect.height / i;
-		if(a->frame)
-			scale_column(a, a->rect.height - h);
-	}
-
-	if(!send && !c->floating) { /* column */
-		unsigned int w = newcolw_of_view(v);
-		if(v->area->next->frame && w) {
-			a = new_column(v, a, w);
-			arrange_view(v);
-		}
-	}
-
-	f = create_frame(a, c);
-
-	if(!c->floating) { /* column */
-		f->rect.height = h;
-		arrange_column(a, False);
-	}
-	else { /* floating */
-		place_client(a, c);
-		resize_client(c, &f->rect,  False);
-	}
-}
-
-void
-detach_from_area(Area *a, Client *c)
-{
-	View *v = a->view;
-	Frame *f;
-
-	for(f=c->frame; f && f->area != a; f=f->cnext);
-	cext_assert(f->area == a);
-	destroy_frame(f);
-
-	if(!a->floating) {
-		if(a->frame)
-			arrange_column(a, False);
-		else {
-			if(v->area->next->next)
-				destroy_area(a);
-			else if(!a->frame && v->area->frame)
-				v->sel = v->area; /* focus floating area if it contains something */
-			arrange_view(v);
-		}
-	}
-	else if(!a->frame) {
-		if(c->trans) {
-			/* focus area of transient, if possible */
-			Client *cl = client_of_win(c->trans);
-			if(cl && cl->frame) {
-				a = cl->sel->area;
-				if(a->view == v)
-					v->sel = a;
-			}
-		}
-		else if(v->area->next->frame)
-			v->sel = v->area->next; /* focus first col as fallback */
-	}
-}
-
-Bool
-is_of_area(Area *a, Client *c)
-{
-	Frame *f;
-	for(f=a->frame; f; f=f->anext)
-		if(f->client == c)
-			return True;
-	return False;
-}
-
-int
-idx_of_area(Area *a)
-{
-	Area *t;
-	int i = 0;
-	for(t=a->view->area; t && t != a; t=t->next)
-		i++;
-	return t ? i : -1;
-}
-
-Area *
-area_of_id(View *v, unsigned short id)
-{
-	Area *a;
-	for(a=v->area; a && a->id != id; a=a->next);
-	return a;
-}
-
-Client *        
-sel_client_of_area(Area *a)
-{               
-	return a && a->sel ? a->sel->client : nil;
 }

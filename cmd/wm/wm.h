@@ -49,6 +49,12 @@ typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
 
+typedef struct ViewLink ViewLink;
+struct ViewLink {
+	ViewLink *next;
+	View *view;
+};
+
 struct View {
 	View *next;
 	char name[256];
@@ -56,12 +62,6 @@ struct View {
 	Area *area;
 	Area *sel;
 	Area *revert;
-};
-
-typedef struct ViewLink ViewLink;
-struct ViewLink {
-	ViewLink *next;
-	View *view;
 };
 
 struct Area {
@@ -78,6 +78,7 @@ struct Area {
 struct Frame {
 	Frame *cnext;
 	Frame *anext;
+	View *view;
 	Area *area;
 	unsigned short id;
 	XRectangle rect;
@@ -170,6 +171,9 @@ Key *key;
 Bar *lbar;
 Bar *rbar;
 
+enum { BUFFER_SIZE = 8092 };
+char buffer[BUFFER_SIZE];
+
 View *sel;
 P9Srv p9srv;
 Blitz blz;
@@ -200,9 +204,9 @@ Area *create_area(View *v, Area *pos, unsigned int w);
 void destroy_area(Area *a);
 Area *area_of_id(View *t, unsigned short id);
 char *select_area(Area *a, char *arg);
-void send_to_area(Area *to, Area *from, Client *c);
-void attach_to_area(Area *a, Client *c, Bool send);
-void detach_from_area(Area *a, Client *c);
+void send_to_area(Area *to, Area *from, Frame *f);
+void attach_to_area(Area *a, Frame *f, Bool send);
+void detach_from_area(Area *a, Frame *f);
 Bool is_of_area(Area *a, Client *c);
 int idx_of_area(Area *a);
 Client *sel_client_of_area(Area *a);
@@ -259,8 +263,8 @@ void check_x_event(IXPConn *c);
 unsigned int flush_masked_events(long even_mask);
 
 /* frame.c */
-Frame *create_frame(Area *a, Client *c);
-void destroy_frame(Frame *f);
+Frame *create_frame(Client *c, View *v);
+void destroy_frame(Frame **f);
 void remove_frame(Frame *f);
 void insert_frame(Frame *pos, Frame *f, Bool before);
 int idx_of_frame(Frame *f);
@@ -309,14 +313,15 @@ void update_rules(Rule **rule, const char *data);
 /* view.c */
 void arrange_view(View *v);
 void scale_view(View *v, float w);
+View *get_view(const char *name);
 View *create_view(const char *name);
 void focus_view(View *v);
-void update_client_views(Client *c);
+void update_client_views(Client *c, char **tags);
 XRectangle *rects_of_view(View *v, unsigned int *num);
 View *view_of_id(unsigned short id);
 void select_view(const char *arg);
 void detach_from_view(View *v, Client *c);
-void attach_to_view(View *v, Client *c);
+void attach_to_view(View *v, Frame *f);
 Client *sel_client_of_view(View *v);
 char *message_view(View *v, char *message);
 void restack_view(View *v);
