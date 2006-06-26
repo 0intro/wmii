@@ -97,10 +97,11 @@ relax_column(Area *a)
 	hdiff /= frame_size;
 	yoff = a->rect.y + hdiff / 2;
 	for(f=a->frame; f; f=f->anext) {
-		f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 		f->rect.y = yoff;
-		if(a->mode != Colmax)
+		if(a->mode != Colmax || f == a->sel) {
+			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 			yoff = f->rect.y + f->rect.height + hdiff;
+		}
 		resize_client(f->client, &f->rect, True);
 	}
 }
@@ -193,6 +194,7 @@ Fallthrough:
 	case Colmax:
 		for(f=a->frame; f; f=f->anext) {
 			f->rect = a->rect;
+			if(f != a->sel) f->rect.x = rect.width * 2;
 			resize_client(f->client, &f->rect, True);
 		}
 		break;
