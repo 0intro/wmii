@@ -28,23 +28,16 @@ view_of_id(unsigned short id) {
 }
 
 View *
-view_of_name(const char *name)
+get_view(const char *name)
 {
 	View *v;
 	int cmp;
 	for(v = view; v; v=v->next)
-		if(!(cmp=strcmp(name, v->name)))
+		if((cmp=strcmp(name, v->name)) >= 0)
 			break;
-		else if(cmp > 0)
-			return nil;
+	if(!v || cmp != 0)
+		v = create_view(name);
 	return v;
-}
-
-View *
-get_view(const char *name)
-{
-	View *v = view_of_name(name);
-	return v ? v : create_view(name);
 }
 
 static void
@@ -393,6 +386,8 @@ message_view(View *v, char *message) {
 		a->mode = i;
 		arrange_column(a, True);
 		restack_view(v);
+		if(v == sel)
+			focus_view(v);
 		draw_frames();
 		return nil;
 	}

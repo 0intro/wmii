@@ -45,12 +45,12 @@ ixp_client_dial(IXPClient *c, char *sockfile, unsigned int rootfid)
 	c->fcall.msize = IXP_MAX_MSG;
 	c->fcall.version = strdup(IXP_VERSION);
 	if(ixp_client_do_fcall(c) == -1) {
-		fprintf(stderr, "error: %s\n", c->fcall.ename);
+		fprintf(stderr, "error: %s\n", c->errstr);
 		ixp_client_hangup(c);
 		return -1;
 	}
 	if(strncmp(c->fcall.version, IXP_VERSION, strlen(IXP_VERSION))) {
-		fprintf(stderr, "error: %s\n", c->fcall.ename);
+		fprintf(stderr, "error: %s\n", c->errstr);
 		c->errstr = "9P versions differ";
 		ixp_client_hangup(c);
 		return -1;	/* we cannot handle this version */
@@ -64,7 +64,7 @@ ixp_client_dial(IXPClient *c, char *sockfile, unsigned int rootfid)
 	c->fcall.uname = strdup(getenv("USER"));
 	c->fcall.aname = strdup("");
 	if(ixp_client_do_fcall(c) == -1) {
-		fprintf(stderr, "error: %s\n", c->fcall.ename);
+		fprintf(stderr, "error: %s\n", c->errstr);
 		ixp_client_hangup(c);
 		return -1;
 	}

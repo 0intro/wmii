@@ -486,7 +486,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 	Frame *f = c->sel;
 	Bool floating = f->area->floating;
 
-	BlitzAlign stickycorner = 0;;
+	BlitzAlign stickycorner = 0;
 	if(f->rect.x != r->x && f->rect.x + f->rect.width == r->x + r->width)
 		stickycorner |= EAST;
 	else
@@ -709,8 +709,8 @@ client_of_win(Window w)
 }
 
 static int
-compare_tags(const void **a, const void **b) {
-	return strcmp(*a, *b);
+compare_tags(const void *a, const void *b) {
+	return strcmp(*(char **)a, *(char **)b);
 }
 
 void
@@ -765,15 +765,15 @@ apply_tags(Client *c, const char *tags)
 	}
 
 	c->tags[0] = '\0';
-	qsort(toks, j, sizeof(char *), (void *)compare_tags);
-	for(i=0, n=0; i < j; i++) {
+	qsort(toks, j, sizeof(char *), compare_tags);
+
+	for(i=0, n=0; i < j; i++)
 		if(!n || strcmp(toks[i], toks[n-1])) {
 			if(n)
 				cext_strlcat(c->tags, "+", sizeof(c->tags) - strlen(c->tags) - 1);
 			cext_strlcat(c->tags, toks[i], sizeof(c->tags) - strlen(c->tags) - 1);
 			toks[n++] = toks[i];
 		}
-	}
 	toks[i] = nil;
 	update_client_views(c, toks);
 

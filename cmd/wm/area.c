@@ -33,7 +33,8 @@ Area *
 area_of_id(View *v, unsigned short id)
 {
 	Area *a;
-	for(a=v->area; a && a->id != id; a=a->next);
+	for(a=v->area; a; a=a->next)
+		if(a->id == id) break;
 	return a;
 }
 
@@ -87,12 +88,10 @@ void
 destroy_area(Area *a)
 {
 	Client *c;
-	Area *t;
+	Area *ta;
 	View *v = a->view;
-	if(a->frame) {
-		fprintf(stderr, "%s", "wmiiwm: fatal, destroying non-empty area\n");
-		exit(1);
-	}
+	
+	cext_assert(!a->frame && "wmiiwm: fatal, destroying non-empty area");
 
 	if(v->revert == a)
 		v->revert = nil;
@@ -101,11 +100,11 @@ destroy_area(Area *a)
 		if(c->revert == a)
 			c->revert = nil;
 
-	for(t=v->area; t && t->next != a; t=t->next);
-	if(t) {
-		t->next = a->next;
+	for(ta=v->area; ta && ta->next != a; ta=ta->next);
+	if(ta) {
+		ta->next = a->next;
 		if(v->sel == a)
-			v->sel = t == v->area ? t->next : t;
+			v->sel = ta->floating ? ta->next : ta;
 	}
 	free(a);
 }
@@ -346,7 +345,10 @@ select_area(Area *a, char *arg)
 			return Ebadvalue;
 		for(p=a->frame; p->anext; p=p->anext)
 			if(p->anext == f) break;
-		focus_client(p->client, True);
+		a->sel = p;
+		arrange_column(a, False);
+		if(v == sel)
+			focus_view(v);
 		flush_masked_events(EnterWindowMask);
 		return nil;
 	}
@@ -354,7 +356,10 @@ select_area(Area *a, char *arg)
 		if(!f)
 			return Ebadvalue;
 		p = f->anext ? f->anext : a->frame;
-		focus_client(p->client, True);
+		a->sel = p;
+		arrange_column(a, False);
+		if(v == sel)
+			focus_view(v);
 		flush_masked_events(EnterWindowMask);
 		return nil;
 	}
@@ -366,7 +371,7 @@ select_area(Area *a, char *arg)
 	if(new->sel)
 		focus_client(new->sel->client, True);
 	v->sel = new;
-	if(!a->floating)
+	if(a->floating != new->floating)
 		v->revert = a;
 	draw_frames();
 	return nil;

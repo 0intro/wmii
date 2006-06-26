@@ -118,7 +118,7 @@ do
 	wmiir remove /lbar/$bar
 done
 
-seltag=`wmiir read /tag/sel/ctl`
+seltag=`wmiir read /tag/sel/ctl 2>/dev/null`
 for tag in `wmiir ls /tag | sed -e 's,/$,,; /^sel$/d'`
 do
 	if [ "X$tag" = "X$seltag" ]; then
