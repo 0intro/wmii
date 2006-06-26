@@ -37,6 +37,8 @@ get_view(const char *name)
 			break;
 	if(!v || cmp != 0)
 		v = create_view(name);
+	if(!sel)
+		sel = v;
 	return v;
 }
 

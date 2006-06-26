@@ -285,9 +285,9 @@ main(int argc, char *argv[])
 
 	/* X server */
 	ixp_server_open_conn(&srv, ConnectionNumber(blz.display), nil, check_x_event, nil);
-	view = nil;
+
+	sel = view = nil;
 	client = nil;
-	sel = nil;
 	lbar = nil;
 	key = nil;
 
