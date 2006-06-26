@@ -151,7 +151,7 @@ arrange_column(Area *a, Bool dirty)
 	Frame *f;
 	unsigned int min_height = 2 * height_of_bar();
 
-	if(!a->frame)
+	if(!a->frame || a->floating)
 		return;
 
 	for(f=a->frame; f; f=f->anext, num_frames++);
