@@ -785,7 +785,7 @@ fs_open(P9Req *r) {
 		return respond(r, Enoperm);
 	if((r->ifcall.mode&3) != P9OWRITE && !(f->tab.perm & 0400))
 		return respond(r, Enoperm);
-	if((r->ifcall.mode&~(3|P9OAPPEND)))
+	if((r->ifcall.mode&~(3|P9OAPPEND|P9OTRUNC)))
 		return respond(r, Enoperm);
 	respond(r, nil);
 }
