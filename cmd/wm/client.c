@@ -671,16 +671,15 @@ send_client(Frame *f, char *arg)
 void
 focus(Client *c, Bool restack)
 {
-	Frame *f = c->sel;
 	View *v;
+	Frame *f;
 
-	if(!f)
-		return;
-
+	if(!(f = c->sel)) return;
 	v = f->area->view;
-	if(sel != v)
-		focus_view(v);
+
+	arrange_column(f->area, False);
 	focus_client(c, restack);
+	focus_view(v);
 }
 
 Client *

@@ -37,8 +37,6 @@ get_view(const char *name)
 			break;
 	if(!v || cmp != 0)
 		v = create_view(name);
-	if(!sel)
-		sel = v;
 	return v;
 }
 
@@ -93,7 +91,7 @@ destroy_view(View *v)
 	*i = v->next;
 
 	if(sel == v)
-		for(sel=view; sel; sel=sel->next)
+		for(sel=view; sel && sel->next; sel=sel->next)
 			if(sel->next == *i) break;
 
 	write_event("DestroyTag %s\n", v->name);
