@@ -210,6 +210,13 @@ place_client(Area *a, Client *c)
 void
 send_to_area(Area *to, Area *from, Frame *f)
 {
+	cext_assert(to->view == f->view);
+
+	if(to->floating != from->floating) {
+		XRectangle temp = f->revert;
+		f->revert = f->rect;
+		f->rect = temp;
+	}
 	f->client->revert = from;
 	detach_from_area(from, f);
 	attach_to_area(to, f, True);

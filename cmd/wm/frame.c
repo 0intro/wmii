@@ -17,9 +17,15 @@ create_frame(Client *c, View *v)
 	f->id = id++;
 	f->client = c;
 	f->view = v;
-	f->revert = f->rect = c->rect;
-	f->rect.width += 2 * def.border;
-	f->rect.height += def.border + height_of_bar();
+
+	if(c->frame) {
+		f->revert = c->sel->revert;
+		f->rect = c->sel->rect;
+	}else{
+		f->revert = f->rect = c->rect;
+		f->revert.width = f->rect.width += 2 * def.border;
+		f->revert.height = f->rect.height += def.border + height_of_bar();
+	}
 	f->collapsed = False;
 
 	f->tile.blitz = &blz;

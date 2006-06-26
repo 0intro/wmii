@@ -63,8 +63,8 @@ create_client(Window w, XWindowAttributes *wa)
 	c->rect.x = wa->x;
 	c->rect.y = wa->y;
 	c->border = wa->border_width;
-	c->rect.width = wa->width + 2 * c->border;
-	c->rect.height = wa->height + 2 * c->border;
+	c->rect.width = wa->width;
+	c->rect.height = wa->height;
 	XSetWindowBorderWidth(blz.display, c->win, 0);
 	c->proto = win_proto(c->win);
 	XGetTransientForHint(blz.display, c->win, &c->trans);
@@ -355,6 +355,7 @@ manage_client(Client *c)
 	apply_tags(c, c->tags);
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
+
 	if(!starting)
 		update_views();
 	map_client(c);

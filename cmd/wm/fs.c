@@ -213,7 +213,7 @@ write_to_buf(P9Req *r, void *buf, unsigned int *len, unsigned int max) {
 		
 	memcpy(buf + offset, r->ifcall.data, count);
 	r->ofcall.count = count;
-	((char *)buf)[offset+count] = '\0'; /* shut up valgrind */
+	((char *)buf)[offset+count] = '\0';
 	/* and save some lines later... we alloc for it anyway */
 }
 
@@ -846,7 +846,6 @@ fs_clunk(P9Req *r) {
 		update_views();
 		break;
 	case FsFKeys:
-		def.keys[def.keyssz] = '\0';
 		update_keys();
 		break;
 	case FsFCtags:
@@ -858,7 +857,7 @@ fs_clunk(P9Req *r) {
 		buf = f->bar->buf;
 		i = strlen(f->bar->buf);
 		parse_colors(&buf, &i, &f->bar->brush.color);
-		while(buf[i - 1] == '\n')
+		while(i > 0 && buf[i - 1] == '\n')
 			buf[--i] = '\0';
 		cext_strlcpy(f->bar->text, buf, sizeof(f->bar->text));
 		draw_bar();
