@@ -3,7 +3,10 @@
  * See LICENSE file for license details.
  */
 
+#include <errno.h>
 #include <fcntl.h>
+#include <pwd.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -24,7 +27,16 @@ static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. G
 static void
 usage()
 {
-	fprintf(stderr, "%s", "usage: wmiiwm -a <address> [-c] [-v]\n");
+	fprintf(stderr, "%s", "usage: wmiiwm -a <address> [-r <wmiirc>] [-c] [-v]\n");
+	exit(1);
+}
+
+static void
+error(char *errstr, ...) {
+	va_list ap;
+	va_start(ap, errstr);
+	vfprintf(stderr, errstr, ap);
+	va_end(ap);
 	exit(1);
 }
 
@@ -213,9 +225,9 @@ cleanup()
 int
 main(int argc, char *argv[])
 {
-	int i;
+	int i, j;
 	int checkwm = 0;
-	char *address = nil, *errstr;
+	char *address = nil, *wmiirc = nil, *namespace, *errstr;
 	XSetWindowAttributes wa;
 
 	/* command line args */
@@ -232,6 +244,12 @@ main(int argc, char *argv[])
 			case 'a':
 				if(i + 1 < argc)
 					address = argv[++i];
+				else
+					usage();
+				break;
+			case 'r':
+				if(i + 1 < argc)
+					wmiirc = argv[++i];
 				else
 					usage();
 				break;
@@ -259,10 +277,8 @@ main(int argc, char *argv[])
 	XSelectInput(blz.display, blz.root, SubstructureRedirectMask | EnterWindowMask);
 	XSync(blz.display, False);
 
-	if(other_wm_running) {
-		fputs("wmiiwm: another window manager is already running\n", stderr);
-		exit(1);
-	}
+	if(other_wm_running)
+		error("wmiiwm: another window manager is already running\n");
 	if(checkwm) {
 		XCloseDisplay(blz.display);
 		exit(0);
@@ -271,13 +287,55 @@ main(int argc, char *argv[])
 	if(!address)
 		usage();
 
+	/* Check namespace permissions */
+	if(!strncmp(address, "unix!", 5)) {
+		struct stat st;
+		namespace = strdup(&address[5]);
+
+		for(i = strlen(namespace) - 1; i >= 0; i--)
+			if(namespace[i] == '/') break;
+		namespace[i+1] = '\0';
+		if(stat(namespace, &st))
+			error("wmiiwm: can't stat namespace directory \"%s\": %s\n",
+					namespace, strerror(errno));
+		if(getuid() != st.st_uid)
+			error("wmiiwm: namespace directory \"%s\" exists, but is not owned by you",
+				namespace);
+		if(st.st_mode & 077)
+			error("wmiiwm: namespace directory \"%s\" exists, "
+				"but has group or world permissions",
+				namespace);
+		free(namespace);
+	}
+
 	XSetErrorHandler(0);
 	x_error_handler = XSetErrorHandler(wmii_error_handler);
 	errstr = nil;
 	i = ixp_create_sock(address, &errstr);
-	if(i < 0) {
-		fprintf(stderr, "wmii: fatal: %s\n", errstr);
-		exit(1);
+	if(i < 0)
+		error("wmii: fatal: %s\n", errstr);
+
+	/* start wmiirc */
+	if(wmiirc) {
+		int name_len = strlen(wmiirc) + 6;
+		switch(fork()) {
+		case 0:
+			if(setsid() == -1)
+				error("wmiim: can't setsid: %s\n", strerror(errno));
+			j = getdtablesize();
+			for(i = 3; i < j; i++)
+				close(i);
+			{
+				char execstr[name_len];
+				snprintf(execstr, name_len, "exec %s", wmiirc);
+				execl("/bin/sh", "sh", "-c", execstr, nil);
+			}
+			error("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
+		case -1:
+			perror("wmiiwm: cannot fork wmiirc");
+		default:
+			break;
+		}
 	}
 
 	/* IXP server */
@@ -291,7 +349,7 @@ main(int argc, char *argv[])
 	lbar = nil;
 	key = nil;
 
-	user = getenv("USER");
+	user = getlogin();
 
 	def.colrules.string = nil;
 	def.colrules.size = 0;

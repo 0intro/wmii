@@ -29,12 +29,8 @@ WMII_NORMCOLORS='#222222 #eeeeee #666666'
 
 export WMII_FONT WMII_SELCOLORS WMII_NORMCOLORS
 
-# give wmiiwm a chance to start
-while :
-do
-	echo Start wmiirc | wmiir write /event >/dev/null 2>&1 && break
-	sleep 1
-done
+# stop any running instances or wmiirc
+echo Start wmiirc | wmiir write /event || exit 1
 
 # WM CONFIGURATION
 wmiir write /ctl << EOF
