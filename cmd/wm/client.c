@@ -9,6 +9,9 @@
 
 #include "wm.h"
 
+static char *Ebadcmd = "bad command",
+	    *Ebadvalue = "bad value";
+
 #define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
 
 static void
@@ -593,7 +596,6 @@ size_client(Client *c, char *arg)
 char *
 send_client(Frame *f, char *arg)
 {
-	static char Ebadvalue[] = "bad value";
 	Area *to, *a;
 	Client *c;
 	Frame *tf;
@@ -682,14 +684,6 @@ focus(Client *c, Bool restack)
 	focus_view(v);
 }
 
-Client *
-client_of_id(unsigned short id)
-{
-	Client *c;
-	for(c=client; c && c->id != id; c=c->next);
-	return c;
-}
-
 int
 idx_of_client(Client *c)
 {
@@ -705,11 +699,6 @@ client_of_win(Window w)
 	Client *c;
 	for(c=client; c && c->win != w; c=c->next);
 	return c;
-}
-
-static int
-compare_tags(const void *a, const void *b) {
-	return strcmp(*(char **)a, *(char **)b);
 }
 
 void
@@ -743,6 +732,11 @@ update_client_views(Client *c, char **tags)
 	}
 }
 
+static int
+compare_tags(const void *a, const void *b) {
+	return strcmp(*(char **)a, *(char **)b);
+}
+
 void
 apply_tags(Client *c, const char *tags)
 {
@@ -766,6 +760,7 @@ apply_tags(Client *c, const char *tags)
 	c->tags[0] = '\0';
 	qsort(toks, j, sizeof(char *), compare_tags);
 
+	if(!j) toks[j++] = "nil";
 	for(i=0, n=0; i < j; i++)
 		if(!n || strcmp(toks[i], toks[n-1])) {
 			if(n)
@@ -773,11 +768,8 @@ apply_tags(Client *c, const char *tags)
 			cext_strlcat(c->tags, toks[i], sizeof(c->tags) - strlen(c->tags) - 1);
 			toks[n++] = toks[i];
 		}
-	toks[i] = nil;
+	toks[n] = nil;
 	update_client_views(c, toks);
-
-	if(!strlen(c->tags))
-		apply_tags(c, "nil");
 
 	XChangeProperty(blz.display, c->win, tags_atom, XA_STRING, 8,
 			PropModeReplace, c->tags, strlen(c->tags));
@@ -808,8 +800,6 @@ apply_rules(Client *c)
 char *
 message_client(Client *c, char *message)
 {
-	static char Ebadcmd[] = "bad command";
-
 	if(!strncmp(message, "kill", 5)) {
 		kill_client(c);
 		return nil;

@@ -101,8 +101,7 @@ draw_bar()
 
 	for(b=lbar, nb=2 ;nb; --nb && (b = rbar))
 		for(; b; b=b->next) {
-			b->brush.rect.x = 0;
-			b->brush.rect.y = 0;
+			b->brush.rect.x = b->brush.rect.y = 0;
 			b->brush.rect.width = brect.height;
 			if(b->text && strlen(b->text))
 				b->brush.rect.width += blitz_textwidth(b->brush.font, b->text);
@@ -123,6 +122,7 @@ draw_bar()
 			width -= tb->brush.rect.width;
 			tw += tb->brush.rect.width;
 			shrink = (brect.width - width) / (float)tw;
+			if(tb->smaller)
 			if(tb->brush.rect.width * shrink >= tb->smaller->brush.rect.width)
 				break;
 		}
