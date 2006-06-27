@@ -6,6 +6,7 @@ wmiiwm -c || exit 1
 WMII_CONFPATH="$HOME/.wmii-4:CONFPREFIX/wmii-4" export WMII_CONFPATH
 WMII_NS_DIR="/tmp/ns.$USER.${DISPLAY%.0}" export WMII_NS_DIR
 WMII_ADDRESS="unix!$WMII_NS_DIR/wmii" export WMII_ADDRESS
+mkdir -m 700 "$WMII_NS_DIR" 2>/dev/null
 
 mkdir $HOME/.wmii-4 2>/dev/null && welcome &
 wmiiwm -a $WMII_ADDRESS -r `PATH="$WMII_CONFPATH:$PATH" which wmiirc` &
