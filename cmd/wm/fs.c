@@ -804,6 +804,7 @@ fs_create(P9Req *r) {
 		f = lookup_file(f, r->ifcall.name);
 		if(!f)
 			return respond(r, Enofile);
+
 		r->ofcall.qid.type = f->tab.qtype;
 		r->ofcall.qid.path = QID(f->tab.type, f->id);
 		f->next = r->fid->aux;
@@ -822,6 +823,7 @@ fs_remove(P9Req *r) {
 		return respond(r, Enoperm);
 	case FsFBar:
 		destroy_bar(f->next->bar_p, f->bar);
+		draw_bar();
 		respond(r, nil);
 		break;
 	}
