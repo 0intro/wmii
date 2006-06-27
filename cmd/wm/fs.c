@@ -214,7 +214,6 @@ write_to_buf(P9Req *r, void *buf, unsigned int *len, unsigned int max) {
 	memcpy(buf + offset, r->ifcall.data, count);
 	r->ofcall.count = count;
 	((char *)buf)[offset+count] = '\0';
-	/* and save some lines later... we alloc for it anyway */
 }
 
 /* This should be moved to libixp */
@@ -724,7 +723,7 @@ fs_write(P9Req *r) {
 		/* XXX: This should validate after each write */
 		i = strlen(f->bar->buf);
 		write_to_buf(r, &f->bar->buf, &i, 279);
-		r->ofcall.count = i- r->ifcall.offset;
+		r->ofcall.count = i - r->ifcall.offset;
 		return respond(r, nil);
 	case FsFCctl:
 		data_to_cstring(r);
@@ -787,6 +786,7 @@ fs_open(P9Req *r) {
 		return respond(r, Enoperm);
 	if((r->ifcall.mode&~(3|P9OAPPEND|P9OTRUNC)))
 		return respond(r, Enoperm);
+
 	respond(r, nil);
 }
 

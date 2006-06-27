@@ -46,7 +46,7 @@ free_p9conn(P9Conn *pc) {
 	free(pc);
 }
 
-void *
+static void *
 createfid(Intmap *map, int fid, P9Conn *pc) {
 	Fid *f = cext_emallocz(sizeof(Fid));
 	f->fid = fid;
@@ -59,7 +59,7 @@ createfid(Intmap *map, int fid, P9Conn *pc) {
 	return nil;
 }
 
-int
+static int
 destroyfid(P9Conn *pc, unsigned long fid) {
 	Fid *f;
 	if(!(f = deletekey(&pc->fidmap, fid)))

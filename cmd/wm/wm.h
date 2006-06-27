@@ -127,6 +127,7 @@ struct Key {
 typedef struct Bar Bar;
 struct Bar {
 	Bar *next;
+	Bar *smaller;
 	char buf[280];
 	char text[256];
 	char name[256];
@@ -215,10 +216,9 @@ Client *sel_client_of_area(Area *a);
 Bar *create_bar(Bar **b_link, char *name);
 void destroy_bar(Bar **b_link, Bar *b);
 void draw_bar();
-Bar *bar_of_id(unsigned short id);
 void resize_bar();
 unsigned int height_of_bar();
-Bar *bar_of_name(const char *name);
+Bar *bar_of_name(Bar *b_link, const char *name);
 
 /* client.c */
 Client *create_client(Window w, XWindowAttributes *wa);

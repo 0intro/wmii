@@ -3,6 +3,7 @@
  * See LICENSE file for license details.
  */
 
+#include <math.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -14,7 +15,7 @@ Bar *
 create_bar(Bar **b_link, char *name)
 {
 	static unsigned int id = 1;
-	Bar **i, *b = bar_of_name(name);;
+	Bar **i, *b = bar_of_name(*b_link, name);;
 	if(b)
 		return b;
 
@@ -86,48 +87,60 @@ resize_bar()
 void
 draw_bar()
 {
-	unsigned int i = 0, w = 0, nb, size = 0;
-	Bar *b = nil, *prev = nil;
+	unsigned int width, tw, nb, size;
+	float shrink;
+	Bar *b, *tb, *largest, **pb;
 
 	blitz_draw_tile(&bbrush);
 
 	if(!lbar && !rbar)
 		goto MapBar;
 
+	largest = b = tb = nil;
+	tw = width = nb = size = 0;
+
 	for(b=lbar, nb=2 ;nb; --nb && (b = rbar))
-		for(; b && (w < brect.width); b=b->next, size++) {
+		for(; b; b=b->next) {
 			b->brush.rect.x = 0;
 			b->brush.rect.y = 0;
 			b->brush.rect.width = brect.height;
 			if(b->text && strlen(b->text))
 				b->brush.rect.width += blitz_textwidth(b->brush.font, b->text);
 			b->brush.rect.height = brect.height;
-			w += b->brush.rect.width;
+			width += b->brush.rect.width;
 		}
 
-	if(b) { /* give all bars same width */
-		for( ;nb; b = rbar, nb--) /* finish counting */
-			for(; b; b=b->next, size++);
-
-		w = brect.width / size;
-		for(b = lbar, nb=2 ;nb; b = rbar, nb--)
-			for(; b; b=b->next, i++) {
-				b->brush.rect.x = i * w;
-				b->brush.rect.width = w;
+	/* Not enough room. Shrink bars until they all fit */
+	if(width > brect.width) {
+		for(b=lbar, nb=2 ;nb; --nb && (b = rbar))
+			for(; b; b=b->next) {
+				for(pb=&largest; *pb; pb=&(*pb)->smaller)
+					if((*pb)->brush.rect.width < b->brush.rect.width) break; 
+				b->smaller = *pb;
+				*pb = b;
 			}
-	}
-	else { /* expand rbar properly */
-		if(rbar)
-			rbar->brush.rect.width += (brect.width - w);
-		for(b=lbar, nb=2 ;nb; b = rbar, nb--)
-			for(; b; prev = b, b=b->next)
-				if(prev) b->brush.rect.x = prev->brush.rect.x + prev->brush.rect.width;
+		for(tb=largest; tb; tb=tb->smaller) {
+			width -= tb->brush.rect.width;
+			tw += tb->brush.rect.width;
+			shrink = (brect.width - width) / (float)tw;
+			if(tb->brush.rect.width * shrink >= tb->smaller->brush.rect.width)
+				break;
+		}
+		for(b=largest; b != tb->smaller; b=b->smaller)
+			b->brush.rect.width = floor(b->brush.rect.width * shrink);
+		width += tw * shrink;
+		tb=nil;
 	}
 
 	for(b=lbar, nb=2 ;nb; b=rbar, nb--)
-		for(; b; b=b->next) {
-			if(b == rbar)
+		for(; b; tb = b, b=b->next) {
+			if(b == rbar) {
 				b->brush.align = EAST;
+				rbar->brush.rect.width += (brect.width - width);
+			}else
+				b->brush.align = CENTER;
+			if(tb)
+				b->brush.rect.x = tb->brush.rect.x + tb->brush.rect.width;
 			blitz_draw_label(&b->brush, b->text);
 		}
 MapBar:
@@ -137,20 +150,13 @@ MapBar:
 }
 
 Bar *
-bar_of_name(const char *name)
+bar_of_name(Bar *b_link, const char *name)
 {
 	static char buf[256];
 	Bar *b;
 
  	cext_strlcpy(buf, name, sizeof(buf));
-	for(b=lbar; b && strncmp(b->name, name, sizeof(b->name)); b=b->next);
-	return b;
-}
-
-Bar *
-bar_of_id(unsigned short id)
-{
-	Bar *b;
-	for(b=lbar; b && b->id != id; b=b->next);
+	for(b=b_link; b; b=b->next)
+		if(!strncmp(b->name, name, sizeof(b->name))) break;
 	return b;
 }
