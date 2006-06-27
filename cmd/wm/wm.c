@@ -419,6 +419,7 @@ main(int argc, char *argv[])
 	if(errstr)
 		fprintf(stderr, "wmii: fatal: %s\n", errstr);
 
+	free(client); /* shut up leak detector */
 	ixp_server_close(&srv);
 	cleanup();
 	XCloseDisplay(blz.display);
