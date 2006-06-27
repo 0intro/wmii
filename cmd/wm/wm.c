@@ -228,6 +228,7 @@ main(int argc, char *argv[])
 	int i, j;
 	int checkwm = 0;
 	char *address = nil, *wmiirc = nil, *namespace, *errstr;
+	struct passwd *passwd;
 	XSetWindowAttributes wa;
 
 	/* command line args */
@@ -349,7 +350,8 @@ main(int argc, char *argv[])
 	lbar = nil;
 	key = nil;
 
-	user = getlogin();
+	passwd = getpwuid(getuid());
+	user = strdup(passwd->pw_name);
 
 	def.colrules.string = nil;
 	def.colrules.size = 0;
