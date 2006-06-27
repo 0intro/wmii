@@ -264,7 +264,6 @@ unsigned int flush_masked_events(long even_mask);
 
 /* frame.c */
 Frame *create_frame(Client *c, View *v);
-void destroy_frame(Frame **f);
 void remove_frame(Frame *f);
 void insert_frame(Frame *pos, Frame *f, Bool before);
 int idx_of_frame(Frame *f);
