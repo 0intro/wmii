@@ -30,7 +30,6 @@ create_bar(Bar **b_link, char *name)
 	cext_strlcpy(b->name, name, sizeof(b->name));
 	b->brush = bbrush;
 	b->brush.color = def.normcolor;
-	b->brush.align = CENTER;
 
 	for(i=b_link; *i; i=&(*i)->next)
 		if(strcmp((*i)->name, name) >= 0)

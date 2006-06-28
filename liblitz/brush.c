@@ -45,9 +45,8 @@ blitz_draw_label(BlitzBrush *b, char *text)
 	y = b->rect.y + b->rect.height / 2 - h / 2 + b->font->ascent;
 
 	/* shorten text if necessary */
-	while (len && (w = blitz_textwidth(b->font, buf)) > b->rect.width) {
-		buf[len - 1] = 0;
-		len--;
+	while (len && (w = blitz_textwidth(b->font, buf)) > b->rect.width - h) {
+		buf[--len] = 0;
 		shortened = 1;
 	}
 
@@ -63,12 +62,16 @@ blitz_draw_label(BlitzBrush *b, char *text)
 		if (len > 1)
 			buf[len - 1] = '.';
 	}
+	/* shorten text more if necessary */
+	while (len && (w = blitz_textwidth(b->font, buf)) > b->rect.width - h)
+		buf[--len] = 0;
+
 	switch (b->align) {
 	case EAST:
 		x = b->rect.x + b->rect.width - (h / 2 + w);
 		break;
 	case CENTER:
-		x = b->rect.x + (b->rect.width - w) / 2;
+		x = b->rect.x + h / 2 + (b->rect.width - h - w) / 2;
 		break;
 	default:
 		x = b->rect.x + h / 2;
