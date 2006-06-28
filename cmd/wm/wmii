@@ -7,4 +7,4 @@ WMII_ADDRESS="unix!$WMII_NS_DIR/wmii" export WMII_ADDRESS
 mkdir -m 700 "$WMII_NS_DIR" 2>/dev/null
 
 mkdir $HOME/.wmii-4 2>/dev/null && CONFPREFIX/wmii-4/welcome &
-wmiiwm -a $WMII_ADDRESS -r `PATH="$WMII_CONFPATH:$PATH" which wmiirc`
+exec wmiiwm -a $WMII_ADDRESS -r `PATH="$WMII_CONFPATH:$PATH" which wmiirc`
