@@ -72,31 +72,6 @@ insert_frame(Frame *pos, Frame *f, Bool before)
 	*p = f;
 }
 
-Frame *
-frame_of_id(Area *a, unsigned short id)
-{
-	Frame *f;
-	for(f=a->frame; f && f->id != id; f=f->anext);
-	return f;
-}
-
-int
-idx_of_frame(Frame *f)
-{
-	Frame *t;
-	int i = 0;
-	for(t=f->area->frame; t && t != f; t=t->anext);
-	return t ? i : -1;
-}
-
-Client *
-frame_of_win(Window w)
-{
-	Client *c;
-	for(c=client; c && c->framewin != w; c=c->next);
-	return c;
-}
-
 void
 update_frame_widget_colors(Frame *f)
 {

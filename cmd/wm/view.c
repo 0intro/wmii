@@ -19,12 +19,30 @@ is_empty(View *v)
 	return True;
 }
 
-View *
-view_of_id(unsigned short id) {
-	View *v;
-	for(v = view; v; v=v->next)
-		if(v->id == id) break;
-	return v;
+Frame *
+clientframe_of_view(View *v, Client *c)
+{              
+	Frame *f;
+	for(f=c->frame; f; f=f->cnext)
+		if(f->area->view == v)
+			break;
+	return f;
+} 
+
+static void
+assign_sel_view(View *v)
+{
+	if(sel != v) {
+		if(sel)
+			write_event("UnfocusTag %s\n", sel->name);
+		sel = v;
+		write_event("FocusTag %s\n", sel->name);
+	}
+}
+
+Client *
+sel_client_of_view(View *v) {
+	return v->sel && v->sel->sel ? v->sel->sel->client : nil;
 }
 
 View *
@@ -38,17 +56,6 @@ get_view(const char *name)
 	if(!v || cmp != 0)
 		v = create_view(name);
 	return v;
-}
-
-static void
-assign_sel_view(View *v)
-{
-	if(sel != v) {
-		if(sel)
-			write_event("UnfocusTag %s\n", sel->name);
-		sel = v;
-		write_event("FocusTag %s\n", sel->name);
-	}
 }
 
 View *
@@ -260,11 +267,6 @@ arrange_view(View *v)
 	}
 }
 
-Client *
-sel_client_of_view(View *v) {
-	return v->sel && v->sel->sel ? v->sel->sel->client : nil;
-}
-
 XRectangle *
 rects_of_view(View *v, unsigned int *num)
 {
@@ -346,16 +348,6 @@ area_of_message(View *v, char *message, unsigned int *next) {
 	for(a=v->area; i && a; a=a->next, i--);
 	return a;
 }
-
-Frame *
-clientframe_of_view(View *v, Client *c)
-{              
-	Frame *f;
-	for(f=c->frame; f; f=f->cnext)
-		if(f->area->view == v)
-			break;
-	return f;
-} 
 
 char *
 message_view(View *v, char *message) {

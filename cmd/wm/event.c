@@ -79,7 +79,7 @@ handle_buttonrelease(XEvent *e)
 				return write_event("RightBarClick %d %s\n",
 						ev->button, b->name);
 	}
-	else if((c = frame_of_win(ev->window)) && c->frame) {
+	else if((c = client_of_win(ev->window)) && c->frame) {
 		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
 			c->sel->tagbar.curend = blitz_charof(&c->sel->tagbar, ev->x, ev->y);
 			draw_frame(c->sel);
@@ -98,7 +98,7 @@ handle_motionnotify(XEvent *e)
 	if(!drag)
 		return;
 
-	if((c = frame_of_win(ev->window))) {
+	if((c = client_of_win(ev->window))) {
 		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
 			c->sel->tagbar.curend = blitz_charof(&c->sel->tagbar, ev->x, ev->y);
 			if(c->sel->tagbar.curend < c->sel->tagbar.curstart) {
@@ -117,7 +117,7 @@ handle_buttonpress(XEvent *e)
 	Client *c;
 	XButtonPressedEvent *ev = &e->xbutton;
 
-	if((c = frame_of_win(ev->window))) {
+	if((c = client_of_win(ev->window))) {
 		ev->state &= valid_mask;
 		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
 			c->sel->tagbar.curstart = c->sel->tagbar.curend
@@ -270,7 +270,7 @@ handle_expose(XEvent *e)
 	if(ev->count == 0) {
 		if(ev->window == barwin)
 			draw_bar();
-		else if((c = frame_of_win(ev->window)))
+		else if((c = client_of_win(ev->window)))
 			draw_frame(c->sel);
 	}
 }

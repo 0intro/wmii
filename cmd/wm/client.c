@@ -14,6 +14,29 @@ static char *Ebadcmd = "bad command",
 
 #define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
 
+Client *
+sel_client()
+{
+	return sel && sel->sel->sel ? sel->sel->sel->client : nil;
+}
+
+int
+idx_of_client(Client *c)
+{
+	Client *cl;
+	int i = 0;
+	for(cl=client; cl && cl != c; cl=cl->next, i++);
+	return cl ? i : -1;
+}
+
+Client *
+client_of_win(Window w)
+{
+	Client *c;
+	for(c=client; c && c->win != w; c=c->next);
+	return c;
+}
+
 static void
 update_client_name(Client *c)
 {
@@ -410,12 +433,6 @@ destroy_client(Client *c)
 	flush_masked_events(EnterWindowMask);
 }
 
-Client *
-sel_client()
-{
-	return sel && sel->sel->sel ? sel->sel->sel->client : nil;
-}
-
 void
 match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky)
 {
@@ -570,7 +587,7 @@ move_client(Client *c, char *arg)
 		return;
 	new.x += x;
 	new.y += y;
-	if(idx_of_area(f->area))
+	if(!f->area->floating)
 		resize_column(f->client, &new, nil);
 	else
 		resize_client(f->client, &new, False);
@@ -600,37 +617,13 @@ send_client(Frame *f, char *arg)
 	Client *c;
 	Frame *tf;
 	View *v;
-	int i, j;
+	int j;
 
 	a = f->area;
 	v = a->view;
 	c = f->client;
-	i = idx_of_area(a);
-	j = idx_of_frame(f);
 
-	if((i == -1) || (j == -1))
-		return 0;
-
-	if(i && !strncmp(arg, "left", 5)) {
-		if(a->floating)
-			return Ebadvalue;
-		for(to=v->area->next; to && a != to->next; to=to->next);
-		if(!to && (f->anext || f != a->frame))
-				to=new_column(v, v->area, 0);
-		if(!to)
-			return Ebadvalue;
-		send_to_area(to, a, f);
-	}
-	else if(i && !strncmp(arg, "right", 5)) {
-		if(a->floating)
-			return Ebadvalue;
-		if(!(to = a->next) && (f->anext || f!= a->frame))
-			to = new_column(v, a, 0);
-		if(!to)
-			return Ebadvalue;
-		send_to_area(to, a, f);
-	}
-	else if(!strncmp(arg, "toggle", 7)) {
+	if(!strncmp(arg, "toggle", 7)) {
 		if(!a->floating)
 			to = v->area;
 		else if(c->revert && !c->revert->floating)
@@ -638,31 +631,50 @@ send_client(Frame *f, char *arg)
 		else
 			to = v->area->next;
 		send_to_area(to, a, f);
-	}
-	else if(i && !strncmp(arg, "up", 3)) {
-		for(tf=a->frame; tf && tf->anext != f; tf=tf->anext);
-		if(!tf)
-			return Ebadvalue;
-		remove_frame(f);
-		insert_frame(tf, f, True);
-		arrange_column(a, False);
-		focus_client(c, True);
-	}
-	else if(i && !strncmp(arg, "down", 5)) {
-		if(!f->anext)
-			return Ebadvalue;
-		remove_frame(f);
-		insert_frame(f->anext, f, False);
-		arrange_column(a, False);
-		focus_client(c, True);
-	}
-	else if(i) {
-		if(sscanf(arg, "%d", &j) != 1)
-			return Ebadvalue;
-		for(to=v->area; to && j; to=to->next, j--);
-		send_to_area(to, a, f);
-	}
-	else
+	}else if(!a->floating) {
+		if(!strncmp(arg, "left", 5)) {
+			if(a->floating)
+				return Ebadvalue;
+			for(to=v->area->next; to && a != to->next; to=to->next);
+			if(!to && (f->anext || f != a->frame))
+					to=new_column(v, v->area, 0);
+			if(!to)
+				return Ebadvalue;
+			send_to_area(to, a, f);
+		}
+		else if(!strncmp(arg, "right", 5)) {
+			if(a->floating)
+				return Ebadvalue;
+			if(!(to = a->next) && (f->anext || f!= a->frame))
+				to = new_column(v, a, 0);
+			if(!to)
+				return Ebadvalue;
+			send_to_area(to, a, f);
+		}
+		else if(!strncmp(arg, "up", 3)) {
+			for(tf=a->frame; tf && tf->anext != f; tf=tf->anext);
+			if(!tf)
+				return Ebadvalue;
+			remove_frame(f);
+			insert_frame(tf, f, True);
+			arrange_column(a, False);
+			focus_client(c, True);
+		}
+		else if(!strncmp(arg, "down", 5)) {
+			if(!f->anext)
+				return Ebadvalue;
+			remove_frame(f);
+			insert_frame(f->anext, f, False);
+			arrange_column(a, False);
+			focus_client(c, True);
+		}
+		else {
+			if(sscanf(arg, "%d", &j) != 1)
+				return Ebadvalue;
+			for(to=v->area; to && j; to=to->next, j--);
+			send_to_area(to, a, f);
+		}
+	}else
 		return Ebadvalue;
 	flush_masked_events(EnterWindowMask);
 	update_views();
@@ -682,23 +694,6 @@ focus(Client *c, Bool restack)
 	arrange_column(f->area, False);
 	focus_client(c, restack);
 	focus_view(v);
-}
-
-int
-idx_of_client(Client *c)
-{
-	Client *cl;
-	int i = 0;
-	for(cl=client; cl && cl != c; cl=cl->next, i++);
-	return cl ? i : -1;
-}
-
-Client *
-client_of_win(Window w)
-{
-	Client *c;
-	for(c=client; c && c->win != w; c=c->next);
-	return c;
 }
 
 void

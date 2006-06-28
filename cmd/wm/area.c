@@ -9,35 +9,6 @@
 
 #include "wm.h"
 
-Bool
-is_of_area(Area *a, Client *c)
-{
-	Frame *f;
-	for(f=a->frame; f; f=f->anext)
-		if(f->client == c)
-			return True;
-	return False;
-}
-
-int
-idx_of_area(Area *a)
-{
-	Area *t;
-	int i = 0;
-	for(t=a->view->area; t && t != a; t=t->next)
-		i++;
-	return t ? i : -1;
-}
-
-Area *
-area_of_id(View *v, unsigned short id)
-{
-	Area *a;
-	for(a=v->area; a; a=a->next)
-		if(a->id == id) break;
-	return a;
-}
-
 Client *        
 sel_client_of_area(Area *a)
 {               

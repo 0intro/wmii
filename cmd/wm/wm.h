@@ -208,8 +208,6 @@ char *select_area(Area *a, char *arg);
 void send_to_area(Area *to, Area *from, Frame *f);
 void attach_to_area(Area *a, Frame *f, Bool send);
 void detach_from_area(Area *a, Frame *f);
-Bool is_of_area(Area *a, Client *c);
-int idx_of_area(Area *a);
 Client *sel_client_of_area(Area *a);
 
 /* bar.c */
@@ -263,9 +261,6 @@ unsigned int flush_masked_events(long even_mask);
 Frame *create_frame(Client *c, View *v);
 void remove_frame(Frame *f);
 void insert_frame(Frame *pos, Frame *f, Bool before);
-int idx_of_frame(Frame *f);
-Frame *frame_of_id(Area *a, unsigned short id);
-Client *frame_of_win(Window w);
 void draw_frame(Frame *f);
 void draw_frames();
 void update_frame_widget_colors(Frame *f);

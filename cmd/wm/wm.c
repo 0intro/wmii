@@ -27,7 +27,7 @@ static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. G
 static void
 usage()
 {
-	fprintf(stderr, "%s", "usage: wmiiwm -a <address> [-r <wmiirc>] [-c] [-v]\n");
+	fputs("usage: wmiiwm -a <address> [-r <wmiirc>] [-c] [-v]\n", stderr);
 	exit(1);
 }
 
@@ -232,42 +232,38 @@ main(int argc, char *argv[])
 	XSetWindowAttributes wa;
 
 	/* command line args */
-	if(argc > 1) {
-		for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
-			switch (argv[i][1]) {
-			case 'v':
-				fprintf(stdout, "%s", version);
-				exit(0);
-				break;
-			case 'c':
-				checkwm = 1;
-				break;
-			case 'a':
-				if(i + 1 < argc)
-					address = argv[++i];
-				else
-					usage();
-				break;
-			case 'r':
-				if(i + 1 < argc)
-					wmiirc = argv[++i];
-				else
-					usage();
-				break;
-			default:
+	for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
+		switch (argv[i][1]) {
+		case 'v':
+			fprintf(stdout, "%s", version);
+			exit(0);
+			break;
+		case 'c':
+			checkwm = 1;
+			break;
+		case 'a':
+			if(i + 1 < argc)
+				address = argv[++i];
+			else
 				usage();
-				break;
-			}
+			break;
+		case 'r':
+			if(i + 1 < argc)
+				wmiirc = argv[++i];
+			else
+				usage();
+			break;
+		default:
+			usage();
+			break;
 		}
 	}
 
 	starting = True;
 
 	blz.display = XOpenDisplay(0);
-	if(!blz.display) {
-		fputs("wmiiwm: cannot open display\n", stderr);
-		exit(1);
-	}
+	if(!blz.display)
+		error("wmiiwm: cannot open display\n");
 	blz.screen = DefaultScreen(blz.display);
 	blz.root = RootWindow(blz.display, blz.screen);
 
@@ -314,23 +310,23 @@ main(int argc, char *argv[])
 	errstr = nil;
 	i = ixp_create_sock(address, &errstr);
 	if(i < 0)
-		error("wmii: fatal: %s\n", errstr);
+		error("wmiiwm: fatal: %s\n", errstr);
 
 	/* start wmiirc */
 	if(wmiirc) {
 		int name_len = strlen(wmiirc) + 6;
+		char execstr[name_len];
 		switch(fork()) {
 		case 0:
 			if(setsid() == -1)
 				error("wmiim: can't setsid: %s\n", strerror(errno));
+			/* This is only necessary because I can't get the fileno of
+			 * the X socket */
 			j = getdtablesize();
 			for(i = 3; i < j; i++)
 				close(i);
-			{
-				char execstr[name_len];
-				snprintf(execstr, name_len, "exec %s", wmiirc);
-				execl("/bin/sh", "sh", "-c", execstr, nil);
-			}
+			snprintf(execstr, name_len, "exec %s", wmiirc);
+			execl("/bin/sh", "sh", "-c", execstr, nil);
 			error("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
 		case -1:
 			perror("wmiiwm: cannot fork wmiirc");
@@ -406,7 +402,6 @@ main(int argc, char *argv[])
 	bbrush.font = &def.font;
 	bbrush.border = True;
 
-
 	XMapRaised(blz.display, barwin);
 	draw_bar();
 	scan_wins();
@@ -419,7 +414,7 @@ main(int argc, char *argv[])
 	if(errstr)
 		fprintf(stderr, "wmii: fatal: %s\n", errstr);
 
-	free(client); /* shut up leak detector */
+	free(user); /* shut up leak detector */
 	ixp_server_close(&srv);
 	cleanup();
 	XCloseDisplay(blz.display);
