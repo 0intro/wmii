@@ -26,13 +26,6 @@ quadofcoord(XRectangle *rect, int x, int y)
 	return ret;
 }
 
-Bool
-ispointinrect(int x, int y, XRectangle * r)
-{
-	return (x >= r->x) && (x <= r->x + r->width)
-		&& (y >= r->y) && (y <= r->y + r->height);
-}
-
 /* Syntax: <x> <y> <width> <height> */
 int
 strtorect(XRectangle *r, const char *val)

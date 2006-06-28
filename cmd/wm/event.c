@@ -61,8 +61,6 @@ flush_masked_events(long even_mask)
 	return n;
 }
 
-static Bool drag = False;
-
 static void
 handle_buttonrelease(XEvent *e)
 {
@@ -71,21 +69,18 @@ handle_buttonrelease(XEvent *e)
 	XButtonPressedEvent *ev = &e->xbutton;
 	if(ev->window == barwin) {
 		for(b=lbar; b; b=b->next)
-			if(ispointinrect(ev->x, ev->y, &b->brush.rect))
+			if(blitz_ispointinrect(ev->x, ev->y, &b->brush.rect))
 				return write_event("LeftBarClick %d %s\n",
 						ev->button, b->name);
 		for(b=rbar; b; b=b->next)
-			if(ispointinrect(ev->x, ev->y, &b->brush.rect))
+			if(blitz_ispointinrect(ev->x, ev->y, &b->brush.rect))
 				return write_event("RightBarClick %d %s\n",
 						ev->button, b->name);
 	}
 	else if((f = frame_of_win(ev->window))) {
-		if(ispointinrect(ev->x, ev->y, &f->tagbar.rect)) {
-			f->tagbar.curend = blitz_charof(&f->tagbar, ev->x, ev->y);
-			draw_frame(f);
-		}
+		if(blitz_brelease_input(&f->tagbar, ev->x, ev->y))
+			map_frame(f, &f->tagbar.rect);
 		write_event("ClientClick %d %d\n", idx_of_client(f->client), ev->button);
-		drag = False;
 	}
 }
 
@@ -95,19 +90,9 @@ handle_motionnotify(XEvent *e)
 	Frame *f;
 	XMotionEvent *ev = &e->xmotion;
 
-	if(!drag)
-		return;
-
 	if((f = frame_of_win(ev->window))) {
-		if(ispointinrect(ev->x, ev->y, &f->tagbar.rect)) {
-			f->tagbar.curend = blitz_charof(&f->tagbar, ev->x, ev->y);
-			if(f->tagbar.curend < f->tagbar.curstart) {
-				char *tmp = f->tagbar.curend;
-				f->tagbar.curend = f->tagbar.curstart;
-				f->tagbar.curstart = tmp;
-			}
-			draw_frame(f);
-		}
+		if(blitz_bmotion_input(&f->tagbar, ev->x, ev->y))
+			map_frame(f, &f->tagbar.rect);
 	}
 }
 
@@ -119,12 +104,8 @@ handle_buttonpress(XEvent *e)
 
 	if((f = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
-		if(ispointinrect(ev->x, ev->y, &f->tagbar.rect)) {
-			f->tagbar.curstart = f->tagbar.curend
-				= blitz_charof(&f->tagbar, ev->x, ev->y);
-			draw_frame(f);
-			drag = True;
-		}
+		if(blitz_bpress_input(&f->tagbar, ev->x, ev->y))
+			map_frame(f, &f->tagbar.rect);
 		if((ev->state & def.mod) == def.mod) {
 			focus(f->client, True);
 			switch(ev->button) {

@@ -68,6 +68,7 @@ struct BlitzInput {
 	char *text;
 	char *curstart;
 	char *curend;
+	Bool drag;
 	unsigned int size;
 	Drawable drawable;
 	GC gc;
@@ -93,4 +94,8 @@ void blitz_loadfont(Blitz *blitz, BlitzFont *font);
 
 /* input.c */
 void blitz_draw_input(BlitzInput *i);
-char *blitz_charof(BlitzInput *i, int x, int y);
+/* blitz_b* functions return True on expose */
+Bool blitz_bpress_input(BlitzInput *i, int x, int y);
+Bool blitz_brelease_input(BlitzInput *i, int x, int y);
+Bool blitz_bmotion_input(BlitzInput *i, int x, int y);
+Bool blitz_ispointinrect(int x, int y, XRectangle * r);

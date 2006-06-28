@@ -87,10 +87,19 @@ update_frame_widget_colors(Frame *f)
 }
 
 void
+map_frame(Frame *f, XRectangle *r)
+{
+	XCopyArea(blz.display, pmap, f->client->framewin, f->client->gc,
+			r->x, r->y, r->width, r->height, r->x, r->y);
+	XSync(blz.display, False);
+}
+
+void
 draw_frame(Frame *f)
 {
 	Frame *p;
 	unsigned int fidx, size, w;
+	XRectangle r = f->rect;
 
 	for(fidx=0, p=f->area->frame; p && p != f; p=p->anext, fidx++);
 	for(size=fidx; p; p=p->anext, size++);
@@ -130,9 +139,8 @@ draw_frame(Frame *f)
 	blitz_draw_input(&f->tagbar);
 	blitz_draw_label(&f->titlebar, f->client->name);
 	blitz_draw_label(&f->posbar, buffer);
-	XCopyArea(blz.display, pmap, f->client->framewin, f->tagbar.gc,
-			0, 0, f->rect.width, f->rect.height, 0, 0);
-	XSync(blz.display, False);
+	r.x = r.y = 0;
+	map_frame(f, &r);
 }
 
 void

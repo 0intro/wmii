@@ -265,6 +265,7 @@ void insert_frame(Frame *pos, Frame *f, Bool before);
 void draw_frame(Frame *f);
 void draw_frames();
 void update_frame_widget_colors(Frame *f);
+void map_frame(Frame *f, XRectangle *r);
 
 /* fs.c */
 void fs_attach(P9Req *r);
@@ -282,7 +283,6 @@ void write_event(char *format, ...);
 
 /* geom.c */
 BlitzAlign quadofcoord(XRectangle *rect, int x, int y);
-Bool ispointinrect(int x, int y, XRectangle * r);
 int strtorect(XRectangle *r, const char *val);
 
 /* key.c */
