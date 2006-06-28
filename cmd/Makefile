@@ -24,7 +24,7 @@ ${SRC:.c=}: ${SRC:.c=.o}
 
 ${X11SRC:.c=}: ${X11SRC:.c=.o}
 	@echo LD $*
-	@${CC} -o $* $*.o ${LDFLAGS} ${X11LDFLAGS}
+	@${CC} -o $* $*.o ${X11LDFLAGS}
 
 # Solaris
 #	@${CC} -o $* $*.o ${LDFLAGS} -lsocket
