@@ -268,7 +268,7 @@ sel_client_of_view(View *v) {
 XRectangle *
 rects_of_view(View *v, unsigned int *num)
 {
-	XRectangle *result = nil;
+	XRectangle *result;
 	Frame *f;
 
 	*num = 2;
@@ -280,7 +280,7 @@ rects_of_view(View *v, unsigned int *num)
 	*result++ = rect;
 	*result++ = brect;
 
-	return &result[-*num];
+	return result - *num;
 }
 
 /* XXX: This will need cleanup */
