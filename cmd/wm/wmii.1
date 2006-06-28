@@ -30,6 +30,140 @@ display a welcome message that contains the wmii tutorial
 .TP 2
 wmiirc
 configure wmii
+.SS Default Key Bindings
+.PD 0
+.B Moving Around
+.RS 2
+.TP 15
+.I Key	
+.I Action
+.TP 15
+.B Mod-h
+Move to a
+.B window
+to the 
+.B left
+of the one currently focused
+.TP
+.B Mod-l
+Move to a
+.B window
+to the
+.B right
+of the one currently focused
+.TP
+.B Mod-j
+Move to a
+.B window below
+the one currently focused
+.TP
+.B Mod-k
+Move to a
+.B window above
+the one currently focused
+.TP
+.B Mod-space
+.B Toggle
+between the managed and floating
+.B layer
+.TP
+.BI Mod-t \ tag
+Move to the
+.B view
+of the given
+.I tag
+.TP
+.B Mod-[0-9]
+Move to the
+.B view
+with the given number
+.PD 1
+.P
+.RE
+.B Moving Things Around
+.RS 2
+.PD 0
+.TP 16
+.I Key
+.I Action
+.TP
+.B Mod-Shift-h
+Move the current window
+.B window
+to a column on the
+.B left
+.TP
+.B Mod-Shift-l
+Move the current window
+.B window
+to a column on the
+.B right
+.TP
+.B Mod-Shift-j
+Move the current
+.B window below
+the one beneath it
+.TP
+.B Mod-Shift-k
+Move the current
+.B window above
+the one above it
+.TP
+.B Mod-Shift-space
+.B Toggle
+the current
+.B window
+between the managed and floating
+.B layer
+.TP
+.BI Mod-Shift-t \ tag
+Move the current window to the
+.B view
+of the given
+.I tag
+.TP
+.B Mod-Shift-[0-9]
+Move to the current window to the
+.B view
+with the given number
+.PD 1
+.P
+.RE
+.B Miscellaneous
+.RS 2
+.PD 0
+.TP 16
+.I Key
+.I Action
+.TP
+.B Mod-m
+Switch the current column to
+.B max mode
+.TP
+.B Mod-s
+Switch the current column to
+.B stack mode
+.TP
+.B Mod-d
+Switch the current column to
+.B default mode
+.TP
+.B Mod-Shift-c
+.B Kill
+the selected client
+.TP
+.BI Mod-p \ program
+.B Execute
+.I program
+.TP
+.BI Mod-a \ action
+Execute the
+.B named action
+.TP
+.B Mod-Enter
+Start an
+.B xterm
+
 .SS Configuration
 If you feel the need to change the default configuration, then customize (as
 described above) the
