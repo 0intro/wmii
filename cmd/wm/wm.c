@@ -27,7 +27,7 @@ static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. G
 static void
 usage()
 {
-	fputs("usage: wmiiwm -a <address> [-r <wmiirc>] [-c] [-v]\n", stderr);
+	fputs("usage: wmiiwm -a <address> [-r <wmiirc>] [-v]\n", stderr);
 	exit(1);
 }
 
@@ -226,7 +226,6 @@ int
 main(int argc, char *argv[])
 {
 	int i, j;
-	int checkwm = 0;
 	char *address = nil, *wmiirc = nil, *namespace, *errstr;
 	struct passwd *passwd;
 	XSetWindowAttributes wa;
@@ -237,9 +236,6 @@ main(int argc, char *argv[])
 		case 'v':
 			fprintf(stdout, "%s", version);
 			exit(0);
-			break;
-		case 'c':
-			checkwm = 1;
 			break;
 		case 'a':
 			if(i + 1 < argc)
@@ -276,11 +272,7 @@ main(int argc, char *argv[])
 
 	if(other_wm_running)
 		error("wmiiwm: another window manager is already running\n");
-	if(checkwm) {
-		XCloseDisplay(blz.display);
-		exit(0);
-	}
-	/* above -c is checked */
+
 	if(!address)
 		usage();
 
@@ -414,7 +406,6 @@ main(int argc, char *argv[])
 	if(errstr)
 		fprintf(stderr, "wmii: fatal: %s\n", errstr);
 
-	free(user); /* shut up leak detector */
 	ixp_server_close(&srv);
 	cleanup();
 	XCloseDisplay(blz.display);

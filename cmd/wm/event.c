@@ -66,7 +66,7 @@ static Bool drag = False;
 static void
 handle_buttonrelease(XEvent *e)
 {
-	Client *c;
+	Frame *f;
 	Bar *b;
 	XButtonPressedEvent *ev = &e->xbutton;
 	if(ev->window == barwin) {
@@ -79,12 +79,12 @@ handle_buttonrelease(XEvent *e)
 				return write_event("RightBarClick %d %s\n",
 						ev->button, b->name);
 	}
-	else if((c = client_of_win(ev->window)) && c->frame) {
-		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
-			c->sel->tagbar.curend = blitz_charof(&c->sel->tagbar, ev->x, ev->y);
-			draw_frame(c->sel);
+	else if((f = frame_of_win(ev->window))) {
+		if(ispointinrect(ev->x, ev->y, &f->tagbar.rect)) {
+			f->tagbar.curend = blitz_charof(&f->tagbar, ev->x, ev->y);
+			draw_frame(f);
 		}
-		write_event("ClientClick %d %d\n", idx_of_client(c), ev->button);
+		write_event("ClientClick %d %d\n", idx_of_client(f->client), ev->button);
 		drag = False;
 	}
 }
@@ -92,21 +92,21 @@ handle_buttonrelease(XEvent *e)
 static void
 handle_motionnotify(XEvent *e)
 {
-	Client *c;
+	Frame *f;
 	XMotionEvent *ev = &e->xmotion;
 
 	if(!drag)
 		return;
 
-	if((c = client_of_win(ev->window))) {
-		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
-			c->sel->tagbar.curend = blitz_charof(&c->sel->tagbar, ev->x, ev->y);
-			if(c->sel->tagbar.curend < c->sel->tagbar.curstart) {
-				char *tmp = c->sel->tagbar.curend;
-				c->sel->tagbar.curend = c->sel->tagbar.curstart;
-				c->sel->tagbar.curstart = tmp;
+	if((f = frame_of_win(ev->window))) {
+		if(ispointinrect(ev->x, ev->y, &f->tagbar.rect)) {
+			f->tagbar.curend = blitz_charof(&f->tagbar, ev->x, ev->y);
+			if(f->tagbar.curend < f->tagbar.curstart) {
+				char *tmp = f->tagbar.curend;
+				f->tagbar.curend = f->tagbar.curstart;
+				f->tagbar.curstart = tmp;
 			}
-			draw_frame(c->sel);
+			draw_frame(f);
 		}
 	}
 }
@@ -114,31 +114,31 @@ handle_motionnotify(XEvent *e)
 static void
 handle_buttonpress(XEvent *e)
 {
-	Client *c;
+	Frame *f;
 	XButtonPressedEvent *ev = &e->xbutton;
 
-	if((c = client_of_win(ev->window))) {
+	if((f = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
-		if(ispointinrect(ev->x, ev->y, &c->sel->tagbar.rect)) {
-			c->sel->tagbar.curstart = c->sel->tagbar.curend
-				= blitz_charof(&c->sel->tagbar, ev->x, ev->y);
-			draw_frame(c->sel);
+		if(ispointinrect(ev->x, ev->y, &f->tagbar.rect)) {
+			f->tagbar.curstart = f->tagbar.curend
+				= blitz_charof(&f->tagbar, ev->x, ev->y);
+			draw_frame(f);
 			drag = True;
 		}
 		if((ev->state & def.mod) == def.mod) {
-			focus(c, True);
+			focus(f->client, True);
 			switch(ev->button) {
 			case Button1:
-				do_mouse_resize(c, CENTER);
+				do_mouse_resize(f->client, CENTER);
 				break;
 			case Button3:
-				do_mouse_resize(c, quadofcoord(&c->rect, ev->x, ev->y));
+				do_mouse_resize(f->client, quadofcoord(&f->client->rect, ev->x, ev->y));
 			default:
 			break;
 			}
 		}
 		else if(ev->button == Button1)
-			focus(c, True);
+			focus(f->client, True);
 	}
 }
 
@@ -266,12 +266,12 @@ static void
 handle_expose(XEvent *e)
 {
 	XExposeEvent *ev = &e->xexpose;
-	static Client *c;
+	static Frame *f;
 	if(ev->count == 0) {
 		if(ev->window == barwin)
 			draw_bar();
-		else if((c = client_of_win(ev->window)))
-			draw_frame(c->sel);
+		else if((f = frame_of_win(ev->window)))
+			draw_frame(f);
 	}
 }
 

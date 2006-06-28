@@ -239,6 +239,7 @@ void move_client(Client *c, char *arg);
 void size_client(Client *c, char *arg);
 void newcol_client(Client *c, char *arg);
 Client *sel_client();
+Frame *frame_of_win(Window w);
 Client *client_of_win(Window w);
 int idx_of_client(Client *c);
 void update_client_grab(Client *c, Bool is_sel);

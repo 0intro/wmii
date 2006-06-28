@@ -37,6 +37,14 @@ client_of_win(Window w)
 	return c;
 }
 
+Frame *
+frame_of_win(Window w)
+{
+	Client *c;
+	for(c=client; c && c->framewin != w; c=c->next);
+	return c ? c->frame : nil;
+}
+
 static void
 update_client_name(Client *c)
 {
@@ -735,8 +743,8 @@ compare_tags(const void *a, const void *b) {
 void
 apply_tags(Client *c, const char *tags)
 {
-	unsigned int i, j = 0, n;
-	int len = sizeof(c->tags);
+	unsigned int i, j, n;
+	int len;
 	char buf[256];
 	char *toks[32];
 
@@ -744,7 +752,7 @@ apply_tags(Client *c, const char *tags)
 	if(!(n = cext_tokenize(toks, 31, buf, '+')))
 		return;
 
-	for(i = 0; i < n; i++) {
+	for(i=0, j=0; i < n; i++) {
 		if(!strncmp(toks[i], "~", 2))
 			c->floating = True;
 		else if(!strncmp(toks[i], "!", 2))
@@ -756,6 +764,7 @@ apply_tags(Client *c, const char *tags)
 	c->tags[0] = '\0';
 	qsort(toks, j, sizeof(char *), compare_tags);
 
+	len = sizeof(c->tags);
 	if(!j) toks[j++] = "nil";
 	for(i=0, n=0; i < j && len > 1; i++)
 		if(!n || strcmp(toks[i], toks[n-1])) {
