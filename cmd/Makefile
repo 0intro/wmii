@@ -19,15 +19,15 @@ all: ${ALLSRC:.c=}
 	@${CC} -c ${CFLAGS} $<
 
 ${SRC:.c=}: ${SRC:.c=.o}
-	@echo LD $*
-	@${CC} -o $* $*.o ${LDFLAGS}
+	@echo LD $@
+	@${CC} -o $@ $@.o ${LDFLAGS}
 
 ${X11SRC:.c=}: ${X11SRC:.c=.o}
-	@echo LD $*
-	@${CC} -o $* $*.o ${X11LDFLAGS}
+	@echo LD $@
+	@${CC} -o $@ $@.o ${X11LDFLAGS}
 
 # Solaris
 #	@${CC} -o $* $*.o ${LDFLAGS} -lsocket
 
 clean:
-	rm -f ${SRC:.c=} *.o
+	rm -f ${ALLSRC:.c=} *.o
