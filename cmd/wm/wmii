@@ -1,8 +1,6 @@
 #!/bin/sh
 # start wmiiwm and wait for its termination
 
-wmiiwm -c || exit 1
-
 WMII_CONFPATH="$HOME/.wmii-4:CONFPREFIX/wmii-4" export WMII_CONFPATH
 WMII_NS_DIR="/tmp/ns.$USER.${DISPLAY%.0}" export WMII_NS_DIR
 WMII_ADDRESS="unix!$WMII_NS_DIR/wmii" export WMII_ADDRESS

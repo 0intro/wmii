@@ -4,22 +4,30 @@
 include ../config.mk
 
 CFLAGS += -I../liblitz -I../libixp -I../libcext
-LDFLAGS += -L../liblitz -llitz -L../libixp -lixp -L../libcext -lcext
+LDFLAGS += -L../libixp -lixp -L../libcext -lcext
+X11LDFLAGS += -L../liblitz -llitz
 
-SRC = wmiimenu.c wmiipsel.c wmiir.c wmiisetsid.c wmiiwarp.c
-OBJ = ${SRC:.c=.o}
+X11SRC = wmiimenu.c wmiipsel.c wmiiwarp.c
+SRC = wmiir.c wmiisetsid.c
+ALLSRC = ${SRC} ${X11SRC}
 
-all: ${OBJ}
+all: ${ALLSRC:.c=}
 	@echo built wmii commands
 
 .c.o:
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<
+
+${SRC:.c=}: ${SRC:.c=.o}
 	@echo LD $*
 	@${CC} -o $* $*.o ${LDFLAGS}
+
+${X11SRC:.c=}: ${X11SRC:.c=.o}
+	@echo LD $*
+	@${CC} -o $* $*.o ${LDFLAGS} ${X11LDFLAGS}
 
 # Solaris
 #	@${CC} -o $* $*.o ${LDFLAGS} -lsocket
 
 clean:
-	rm -f wmiimenu wmiir wmiipsel wmiiwarp wmiisetsid *.o
+	rm -f ${SRC:.c=} *.o

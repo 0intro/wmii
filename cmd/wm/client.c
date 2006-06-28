@@ -741,6 +741,7 @@ void
 apply_tags(Client *c, const char *tags)
 {
 	unsigned int i, j = 0, n;
+	int len = sizeof(c->tags);
 	char buf[256];
 	char *toks[32];
 
@@ -761,11 +762,11 @@ apply_tags(Client *c, const char *tags)
 	qsort(toks, j, sizeof(char *), compare_tags);
 
 	if(!j) toks[j++] = "nil";
-	for(i=0, n=0; i < j; i++)
+	for(i=0, n=0; i < j && len > 1; i++)
 		if(!n || strcmp(toks[i], toks[n-1])) {
 			if(n)
-				cext_strlcat(c->tags, "+", sizeof(c->tags) - strlen(c->tags) - 1);
-			cext_strlcat(c->tags, toks[i], sizeof(c->tags) - strlen(c->tags) - 1);
+				len -= cext_strlcat(c->tags, "+", len);
+			len -= cext_strlcat(c->tags, toks[i], len);
 			toks[n++] = toks[i];
 		}
 	toks[n] = nil;

@@ -4,7 +4,7 @@
 include ../../config.mk
 
 CFLAGS   += -I../../liblitz -I../../libixp -I../../libcext
-LDFLAGS  += -L../../liblitz -llitz -L../../libixp -lixp -L../../libcext -lcext -lm
+X11LDFLAGS  += -L../../liblitz -llitz -L../../libixp -lixp -L../../libcext -lcext -lm
 
 # Solaris
 # LDFLAGS += -lsocket
@@ -24,7 +24,7 @@ ${OBJ}: wm.h
 
 wmiiwm: ${OBJ}
 	@echo LD $@
-	@${CC} -o $@ ${OBJ} ${LDFLAGS}
+	@${CC} -o $@ ${OBJ} ${X11LDFLAGS}
 
 clean:
 	rm -f wmiiwm *.o
