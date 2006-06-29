@@ -12,14 +12,20 @@
 #include "blitz.h"
 
 unsigned int
-blitz_textwidth(BlitzFont *font, char *text)
+blitz_textwidth_l(BlitzFont *font, char *text, unsigned int len)
 {
 	if(font->set) {
 		XRectangle r;
-		XmbTextExtents(font->set, text, strlen(text), nil, &r);
+		XmbTextExtents(font->set, text, len, nil, &r);
 		return r.width;
 	}
-	return XTextWidth(font->xfont, text, strlen(text));
+	return XTextWidth(font->xfont, text, len);
+}
+
+unsigned int
+blitz_textwidth(BlitzFont *font, char *text)
+{
+	return blitz_textwidth_l(font, text, strlen(text));
 }
 
 void
@@ -56,10 +62,6 @@ blitz_loadfont(Blitz *blitz, BlitzFont *font)
 				font->ascent = (*xfonts)->ascent;
 			if(font->descent < (*xfonts)->descent)
 				font->descent = (*xfonts)->descent;
-			if(font->rbearing < (*xfonts)->max_bounds.rbearing)
-				font->rbearing = (*xfonts)->max_bounds.rbearing;
-			if(font->lbearing < (*xfonts)->min_bounds.lbearing)
-				font->lbearing = (*xfonts)->min_bounds.lbearing;
 			xfonts++;
 		}
 	}
@@ -78,7 +80,5 @@ blitz_loadfont(Blitz *blitz, BlitzFont *font)
 		}
 		font->ascent = font->xfont->ascent;
 		font->descent = font->xfont->descent;
-		font->rbearing = font->xfont->max_bounds.rbearing;
-		font->lbearing = font->xfont->min_bounds.lbearing;
 	}
 }

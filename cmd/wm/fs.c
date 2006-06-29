@@ -288,11 +288,6 @@ message_root(char *message)
 		def.mod = mod;
 		if(view)
 			restack_view(sel);
-	}else if(!strncmp(message, "testtags ", 9)) {
-		message += 9;
-		free(def.testtags);
-		def.testtags = strlen(message) ? strdup(message) : nil;
-		draw_frames();
 	}else
 		return Ebadcmd;
 
@@ -310,8 +305,6 @@ read_root_ctl()
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "font %s\n", def.font.fontstr);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "grabmod %s\n", def.grabmod);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "border %d\n", def.border);
-	if(def.testtags)
-		i += snprintf(&buffer[i], (BUFFER_SIZE - i), "testtags %s\n", def.testtags);
 	return buffer;
 }
 
