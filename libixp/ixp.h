@@ -25,7 +25,7 @@ enum {	TVERSION = 100,
 	RAUTH,
 	TATTACH = 104,
 	RATTACH,
-	TERROR = 106,
+	TERROR = 106, /* illegal */
 	RERROR,
 	TFLUSH = 108,
 	RFLUSH,

@@ -111,16 +111,16 @@ IFS='
 '
 for bar in `wmiir ls /lbar`
 do
-	wmiir remove /lbar/$bar
+	wmiir remove "/lbar/$bar"
 done
 
 seltag=`wmiir read /tag/sel/ctl 2>/dev/null`
 for tag in `wmiir ls /tag | sed -e 's,/$,,; /^sel$/d'`
 do
 	if [ "X$tag" = "X$seltag" ]; then
-		echo $WMII_SELCOLORS $tag | wmiir create /lbar/$tag 
+		echo "$WMII_SELCOLORS" "$tag" | wmiir create "/lbar/$tag" 
 	else
-		echo $WMII_NORMCOLORS $tag | wmiir create /lbar/$tag 
+		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag "
 	fi
 done
 unset IFS
@@ -141,16 +141,16 @@ do
 			exit
 		fi;;
 	CreateTag)
-		echo $WMII_NORMCOLORS $@ | wmiir create "/lbar/$@"
+		echo "$WMII_NORMCOLORS" "$@" | wmiir create "/lbar/$@"
 		;;
 	DestroyTag)
 		wmiir remove "/lbar/$@"
 		;;
 	FocusTag)
-		xwrite "/lbar/$@" $WMII_SELCOLORS $@
+		xwrite "/lbar/$@" "$WMII_SELCOLORS" "$@"
 		;;
 	UnfocusTag)
-		xwrite "/lbar/$@" $WMII_NORMCOLORS $@
+		xwrite "/lbar/$@" "$WMII_NORMCOLORS" "$@"
 		;;
 	LeftBarClick)
 		shift
@@ -182,7 +182,7 @@ do
 		$MODKEY-t)
 			xwrite /ctl view "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
 		$MODKEY-[0-9])
-			xwrite /ctl view `echo $1 | sed 's/.*-//'`;;
+			xwrite /ctl view "`echo $1 | sed 's/.*-//'`";;
 		$MODKEY-Return)
 			xterm &;;
 		$MODKEY-Shift-$LEFT)
@@ -198,7 +198,7 @@ do
 		$MODKEY-Shift-c)
 			xwrite /client/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite /client/`wmiir read /client/sel/ctl`/tags \
+			xwrite "/client/`wmiir read /client/sel/ctl`/tags" \
 				"`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /client/sel/tags `echo $1 | sed 's/.*-//'`;;
