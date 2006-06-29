@@ -156,7 +156,6 @@ typedef struct {
 	unsigned int border;
 	unsigned int snap;
 	char *keys;
-	char *testtags;
 	unsigned int keyssz;
 	Rules	tagrules;
 	Rules	colrules;
@@ -265,7 +264,6 @@ void insert_frame(Frame *pos, Frame *f, Bool before);
 void draw_frame(Frame *f);
 void draw_frames();
 void update_frame_widget_colors(Frame *f);
-void map_frame(Frame *f, XRectangle *r);
 
 /* fs.c */
 void fs_attach(P9Req *r);

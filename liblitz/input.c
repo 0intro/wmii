@@ -117,16 +117,12 @@ blitz_bpress_input(BlitzInput *i, int x, int y)
 {
 	char *ostart, *oend;
 
-	if(!blitz_ispointinrect(x, y, &i->rect))
+	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)))
 		return False;
 	ostart = i->curstart;
 	oend = i->curend;
 	i->curstart = i->curend = charof(i, x, y);
-	i->drag = True;
-	if((i->curstart == ostart) && (i->curend == oend))
-		return False;
-	blitz_draw_input(i);
-	return True;
+	return (i->curstart == ostart) && (i->curend == oend);
 }
 
 Bool
@@ -134,15 +130,12 @@ blitz_brelease_input(BlitzInput *i, int x, int y)
 {
 	char *oend;
 
-	if(!blitz_ispointinrect(x, y, &i->rect))
+	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)))
 		return False;
 	oend = i->curend;
 	i->curend = charof(i, x, y);
 	i->drag = False;
-	if(i->curend == oend)
-		return False;
-	blitz_draw_input(i);
-	return True;
+	return i->curend == oend;
 }
 
 Bool
@@ -150,17 +143,15 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 {
 	char *oend;
 
-	if(!i->drag || !blitz_ispointinrect(x, y, &i->rect))
+	if(!i->drag || !(i->drag = blitz_ispointinrect(x, y, &i->rect)))
 		return False;
 
 	oend = i->curend;
 	i->curend = charof(i, x, y);
-	if(i->curend == oend)
-		return False;
 	if(i->curstart > i->curend) {
 		char *tmp = i->curend;
 		i->curend = i->curstart;
 		i->curstart = tmp;
 	}
-	return True;
+	return i->curend == oend;
 }

@@ -79,7 +79,7 @@ handle_buttonrelease(XEvent *e)
 	}
 	else if((f = frame_of_win(ev->window))) {
 		if(blitz_brelease_input(&f->tagbar, ev->x, ev->y))
-			map_frame(f, &f->tagbar.rect);
+			draw_frame(f);
 		write_event("ClientClick %d %d\n", idx_of_client(f->client), ev->button);
 	}
 }
@@ -92,7 +92,7 @@ handle_motionnotify(XEvent *e)
 
 	if((f = frame_of_win(ev->window))) {
 		if(blitz_bmotion_input(&f->tagbar, ev->x, ev->y))
-			map_frame(f, &f->tagbar.rect);
+			draw_frame(f);
 	}
 }
 
@@ -105,7 +105,7 @@ handle_buttonpress(XEvent *e)
 	if((f = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
 		if(blitz_bpress_input(&f->tagbar, ev->x, ev->y))
-			map_frame(f, &f->tagbar.rect);
+			draw_frame(f);
 		if((ev->state & def.mod) == def.mod) {
 			focus(f->client, True);
 			switch(ev->button) {

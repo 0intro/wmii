@@ -777,7 +777,7 @@ apply_tags(Client *c, const char *tags)
 	update_client_views(c, toks);
 
 	XChangeProperty(blz.display, c->win, tags_atom, XA_STRING, 8,
-			PropModeReplace, c->tags, strlen(c->tags));
+			PropModeReplace, (unsigned char *)c->tags, strlen(c->tags));
 }
 
 static void
