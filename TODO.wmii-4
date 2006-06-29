@@ -1,14 +1,15 @@
-- fs2.c refactorings
-- implement /lbar/ and /rbar/ (first label of /rbar/ should take up the rest available space)
-- make frames view-specific, do not destroy them during send_to_area's within a view (allows faster checks for client_of_view etc).
-- idea for column mode: add collapsing to each Frame, add revert Xrectangle, remove column modes, add max flag to each Frame (maximizes to area until next navigation action within this area)
-- do better relaxation (remove /def/border and calculate borders dynamically)
-- re-introduce mouse based resizals (titlebar and border)
-- liblitz: window abstraction (creation, events), can be reused in menu and bar
-	and frames
-- tagbars and grab-boxes (like in acme)
-- screen dimension rescaling if screen resolution changes (even with Xrandr)
-- Xinerama support
-- partial EWMH support
-- libixp: idea from PoP: implement a va_args method similiar to printf for
-	marshalling 9P messages, might reduce LOC drastically
+- Make frames view-specific, do not destroy them during send_to_area's within a view (allows faster checks for client_of_view etc).
+- Add collapsing to each Frame, add revert Xrectangle, remove column modes, add max flag to each Frame (maximizes to area until next navigation action within this area)
+- Editable tag bars
+- Grab boxes
+- New events file system interface
+- "Sticky" floating windows (scratchpad layer)
+- Do better relaxation (remove /def/border and calculate borders dynamically)
+- Resizable managed area
+- Proper managed mode resizing and movement  (ie., col based based rather than arbitrary)
+- Xinerama support(?)
+- Screen dimension rescaling if screen resolution changes (even with Xrandr)
+- Partial EWMH support
+- Workaround for apps that miss resize events
+- wmiisystray
+- Plumbing for tag bar
