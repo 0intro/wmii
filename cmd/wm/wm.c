@@ -406,9 +406,9 @@ main(int argc, char *argv[])
 	if(errstr)
 		fprintf(stderr, "wmii: fatal: %s\n", errstr);
 
-	ixp_server_close(&srv);
 	cleanup();
 	XCloseDisplay(blz.display);
+	ixp_server_close(&srv);
 
 	return errstr ? 1 : 0;
 }
