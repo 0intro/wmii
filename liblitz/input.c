@@ -136,7 +136,8 @@ blitz_brelease_input(BlitzInput *i, int x, int y)
 {
 	char *oend;
 
-	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)))
+	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)) ||
+			!i->curstart)
 		return False;
 	oend = i->curend;
 	i->curend = charof(i, x, y);
@@ -151,7 +152,8 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 {
 	char *oend;
 
-	if(!i->drag || !(i->drag = blitz_ispointinrect(x, y, &i->rect)))
+	if(!i->drag || !(i->drag = blitz_ispointinrect(x, y, &i->rect))
+			|| !i->curstart)
 		return False;
 
 	oend = i->curend;
