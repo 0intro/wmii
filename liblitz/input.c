@@ -59,6 +59,8 @@ void
 blitz_draw_input(BlitzInput *i)
 {
 	unsigned int xoff, yoff;
+	char *start, *end;
+
 	if (!i)
 		return;
 
@@ -68,15 +70,27 @@ blitz_draw_input(BlitzInput *i)
 			/ 2 + i->font->ascent;
 	xoff = i->rect.x + i->rect.height / 2;
 
+	start = end = nil;
+	if(i->curstart && i->curend && i->curstart < i->curend) {
+		start = i->curstart;
+		end = i->curend;
+	}
+	else {
+		start = i->curend;
+		end = i->curstart;
+	}
+	if(end)
+		end++;
+
 	/* draw normal text */
 	xchangegc(i, &i->color, False);
-	xdrawtextpart(i, i->text, i->curstart, &xoff, yoff);
+	xdrawtextpart(i, i->text, start, &xoff, yoff);
 	/* draw sel text */
 	xchangegc(i, &i->color, True);
-	xdrawtextpart(i, i->curstart, i->curend, &xoff, yoff);
+	xdrawtextpart(i, start, end, &xoff, yoff);
 	/* draw remaining normal text */
 	xchangegc(i, &i->color, False);
-	xdrawtextpart(i, i->curend, nil, &xoff, yoff);
+	xdrawtextpart(i, end, nil, &xoff, yoff);
 }
 
 Bool
@@ -126,8 +140,6 @@ blitz_bpress_input(BlitzInput *i, int x, int y)
 	ostart = i->curstart;
 	oend = i->curend;
 	i->curstart = i->curend = charof(i, x, y);
-	if(i->curend && *i->curend)
-		i->curend++;
 	return (i->curstart == ostart) && (i->curend == oend);
 }
 
@@ -141,8 +153,6 @@ blitz_brelease_input(BlitzInput *i, int x, int y)
 		return False;
 	oend = i->curend;
 	i->curend = charof(i, x, y);
-	if(i->curend && *i->curend)
-		i->curend++;
 	i->drag = False;
 	return i->curend == oend;
 }
@@ -158,12 +168,5 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 
 	oend = i->curend;
 	i->curend = charof(i, x, y);
-	if(i->curstart > i->curend) {
-		char *tmp = i->curend;
-		i->curend = i->curstart;
-		i->curstart = tmp;
-	}
-	if(i->curend && *i->curend)
-		i->curend++;
 	return i->curend == oend;
 }
