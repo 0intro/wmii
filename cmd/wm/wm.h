@@ -44,16 +44,16 @@ enum {
 enum { MIN_COLWIDTH = 64 };
 enum { WM_PROTOCOL_DELWIN = 1 };
 
+/* Data Structures */
 typedef struct View View;
 typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
-
-typedef struct ViewLink ViewLink;
-struct ViewLink {
-	ViewLink *next;
-	View *view;
-};
+typedef struct Key Key;
+typedef struct Bar Bar;
+typedef struct Rule Rule;
+typedef struct Ruleset Ruleset;
+typedef struct WMScreen WMScreen;
 
 struct View {
 	View *next;
@@ -93,7 +93,6 @@ struct Frame {
 
 struct Client {
 	Client *next;
-	ViewLink *views;
 	Area *revert;
 	Frame *frame;
 	Frame *sel;
@@ -113,7 +112,6 @@ struct Client {
 	GC gc;
 };
 
-typedef struct Key Key;
 struct Key {
 	Key *next;
 	Key *lnext;
@@ -124,7 +122,6 @@ struct Key {
 	KeyCode key;
 };
 
-typedef struct Bar Bar;
 struct Bar {
 	Bar *next;
 	Bar *smaller;
@@ -135,20 +132,19 @@ struct Bar {
 	BlitzBrush brush;
 };
 
-typedef struct Rule Rule;
 struct Rule {
 	Rule *next;
 	regex_t regex;
 	char value[256];
 };
 
-typedef struct Rules {
+struct Ruleset {
 	Rule		*rule;
 	char		*string;
 	unsigned int	size;
-} Rules;
+};
 
-/* default values */
+/* global variables */
 struct {
 	BlitzColor selcolor;
 	BlitzColor normcolor;
@@ -157,45 +153,47 @@ struct {
 	unsigned int snap;
 	char *keys;
 	unsigned int keyssz;
-	Rules	tagrules;
-	Rules	colrules;
+	Ruleset	tagrules;
+	Ruleset	colrules;
 	char grabmod[5];
 	unsigned long mod;
 	int colmode;
 } def;
 
-typedef struct WMScreen WMScreen;
 struct WMScreen {
 	Bar *lbar;
 	Bar *rbar;
 	View *sel;
+	Window barwin;
 
 	XRectangle rect;
 	XRectangle brect;
-	Window barwin;
 	BlitzBrush bbrush;
 } *screens;
 /* to be removed */
 	Bar *lbar;
 	Bar *rbar;
 	View *sel;
+	Window barwin;
 
 	XRectangle rect;
 	XRectangle brect;
-	Window barwin;
 	BlitzBrush bbrush;
 
-/* global variables */
-View *view;
 Client *client;
+View *view;
 Key *key;
 
 enum { BUFFER_SIZE = 8092 };
 char buffer[BUFFER_SIZE];
 
-P9Srv p9srv;
-Blitz blz;
+/* IXP */
 IXPServer srv;
+P9Srv p9srv;
+
+/* X11 */
+unsigned int num_screens;
+Blitz blz;
 GC xorgc;
 char *user;
 Atom wm_atom[WMLast];
@@ -205,9 +203,11 @@ Cursor cursor[CurLast];
 unsigned int valid_mask;
 unsigned int num_lock_mask;
 Bool sel_screen;
-Bool starting;
 Pixmap pmap;
 void (*handler[LASTEvent]) (XEvent *);
+
+/* Misc */
+Bool starting;
 
 /* wm.c */
 char *message_root(char *message);

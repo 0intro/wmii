@@ -37,7 +37,7 @@ struct FileId {
 		Bar	**bar_p;
 		View	*view;
 		Client	*client;
-		Rules	*rule;
+		Ruleset	*rule;
 		BlitzColor	*col;
 	};
 	unsigned int	id;
