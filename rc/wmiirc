@@ -12,7 +12,7 @@ proglist() {
 
 conf_which () {
 	prog=$1; shift
-	echo `PATH="$WMII_CONFPATH:$PATH" which $prog` $@
+	echo `PATH="$WMII_CONFPATH:$PATH" which $prog` "$@"
 }
 
 MODKEY=Mod1
@@ -109,13 +109,15 @@ EOF
 # TAG BAR
 IFS='
 '
-for bar in `wmiir ls /lbar`
+wmiir ls /lbar |
+while read bar
 do
 	wmiir remove "/lbar/$bar"
 done
 
-seltag=`wmiir read /tag/sel/ctl 2>/dev/null`
-for tag in `wmiir ls /tag | sed -e 's,/$,,; /^sel$/d'`
+seltag="`wmiir read /tag/sel/ctl 2>/dev/null`"
+wmiir ls /tag | sed -e 's,/$,,; /^sel$/d' |
+while read tag
 do
 	if [ "X$tag" = "X$seltag" ]; then
 		echo "$WMII_SELCOLORS" "$tag" | wmiir create "/lbar/$tag" 
@@ -176,7 +178,7 @@ do
 		$MODKEY-f)
 			xwrite /tag/sel/0/sel/geom 0 0 0 0;;
 		$MODKEY-a)
-			`conf_which \`proglist $ACTIONS_DIRS | wmiimenu\`` &;;
+			`conf_which "\`proglist $ACTIONS_DIRS | wmiimenu\`"` &;;
 		$MODKEY-p)
 			wmiisetsid sh -c "`wmiimenu <$PROGS_FILE`" &;;
 		$MODKEY-t)
