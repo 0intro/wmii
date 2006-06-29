@@ -32,77 +32,51 @@ xchangegc(BlitzInput *i, BlitzColor *c, Bool invert)
 
 static void
 xdrawtextpart(BlitzInput *i, char *start, char *end,
-				int *xoff, int yoff, unsigned int boxw)
+				unsigned int *xoff, unsigned int yoff)
 {
-	char *p, buf[2];
+	char c;
 
-	buf[1] = 0;
-	for(p = start; p && *p && p != end; p++) {
-		*buf = *p;
-		if(i->font->set)
-			XmbDrawImageString(i->blitz->display, i->drawable, i->font->set, i->gc,
-					*xoff, yoff, buf, 1);
-		else
-			XDrawImageString(i->blitz->display, i->drawable, i->gc, *xoff, yoff,
-					buf, 1);
-		*xoff += boxw;
+	if(!start)
+		return;
+	if(end) {
+		c = *end;
+		*end = 0;
 	}
+	if(i->font->set)
+		XmbDrawImageString(i->blitz->display, i->drawable, i->font->set, i->gc,
+				*xoff, yoff, start, strlen(start));
+	else
+		XDrawImageString(i->blitz->display, i->drawable, i->gc, *xoff, yoff,
+				start, strlen(start));
+
+	*xoff += blitz_textwidth(i->font, start);
+	if(end)
+		*end = c;
 }
 
-
-void
-xget_fontmetric(BlitzInput *i, int *x, int *y, unsigned int *w, unsigned int *h)
-{
-	*w = i->font->rbearing - i->font->lbearing;
-	*h = i->font->ascent + i->font->descent;
-	/* XXX: This is a temporary hack */
-	*x = i->rect.x + (i->rect.height - *h) / 2 + i->font->rbearing;
-	*y = i->rect.y + (i->rect.height - *h) / 2 + i->font->ascent;
-}
 
 void
 blitz_draw_input(BlitzInput *i)
 {
-	int xoff, yoff;
-	unsigned int boxw, boxh, nbox;
-
+	unsigned int xoff, yoff;
 	if (!i)
 		return;
 
 	blitz_drawbg(i->blitz->display, i->drawable, i->gc, i->rect, i->color, True);
-	xget_fontmetric(i, &xoff, &yoff, &boxw, &boxh);
-	nbox = i->rect.width / boxw;
+
+	yoff = i->rect.y + (i->rect.height - (i->font->ascent + i->font->descent))
+			/ 2 + i->font->ascent;
+	xoff = i->rect.x + i->rect.height / 2;
 
 	/* draw normal text */
 	xchangegc(i, &i->color, False);
-	xdrawtextpart(i, i->text, i->curstart, &xoff, yoff, boxw);
+	xdrawtextpart(i, i->text, i->curstart, &xoff, yoff);
 	/* draw sel text */
 	xchangegc(i, &i->color, True);
-	xdrawtextpart(i, i->curstart, i->curend, &xoff, yoff, boxw);
+	xdrawtextpart(i, i->curstart, i->curend, &xoff, yoff);
 	/* draw remaining normal text */
 	xchangegc(i, &i->color, False);
-	xdrawtextpart(i, i->curend, nil, &xoff, yoff, boxw);
-}
-
-static char *
-charof(BlitzInput *i, int x, int y)
-{
-	int xoff, yoff;
-	unsigned int boxw, boxh, nbox, cbox, l;
-
-	if(!i->text || (y < i->rect.y) || (y > i->rect.y + i->rect.height))
-		return nil;
-	xget_fontmetric(i, &xoff, &yoff, &boxw, &boxh);
-	nbox = i->rect.width / boxw;
-	cbox = (x - i->rect.x) / boxw;
-
-	if(cbox > nbox)
-		return nil;
-
-	if((l = strlen(i->text)) > cbox)
-		return i->text + cbox;
-	else
-		return i->text + l;
+	xdrawtextpart(i, i->curend, nil, &xoff, yoff);
 }
 
 Bool
@@ -110,6 +84,34 @@ blitz_ispointinrect(int x, int y, XRectangle * r)
 {
 	return (x >= r->x) && (x <= r->x + r->width)
 		&& (y >= r->y) && (y <= r->y + r->height);
+}
+
+static char *
+charof(BlitzInput *i, int x, int y)
+{
+	char *p, c;
+	unsigned int avg;
+
+	if(!i->text || !blitz_ispointinrect(x, y, &i->rect))
+		return nil;
+
+	/* normalize x */
+	x -= i->rect.x;
+	if(x < i->rect.height / 2)
+		return nil;
+	x -= i->rect.height / 2;
+
+	avg = blitz_textwidth(i->font, i->text) / strlen(i->text);
+	for(p=i->text; *p; p++) {
+		c = *p;
+		*p = 0;
+		if(x <= blitz_textwidth(i->font, i->text) + avg) {
+			*p = c;
+			return p;
+		}
+		*p = c;
+	}
+	return nil;
 }
 
 Bool
@@ -122,6 +124,8 @@ blitz_bpress_input(BlitzInput *i, int x, int y)
 	ostart = i->curstart;
 	oend = i->curend;
 	i->curstart = i->curend = charof(i, x, y);
+	if(i->curend && *i->curend)
+		i->curend++;
 	return (i->curstart == ostart) && (i->curend == oend);
 }
 
@@ -134,6 +138,8 @@ blitz_brelease_input(BlitzInput *i, int x, int y)
 		return False;
 	oend = i->curend;
 	i->curend = charof(i, x, y);
+	if(i->curend && *i->curend)
+		i->curend++;
 	i->drag = False;
 	return i->curend == oend;
 }
@@ -153,5 +159,7 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 		i->curend = i->curstart;
 		i->curstart = tmp;
 	}
+	if(i->curend && *i->curend)
+		i->curend++;
 	return i->curend == oend;
 }

@@ -56,10 +56,6 @@ blitz_loadfont(Blitz *blitz, BlitzFont *font)
 				font->ascent = (*xfonts)->ascent;
 			if(font->descent < (*xfonts)->descent)
 				font->descent = (*xfonts)->descent;
-			if(font->rbearing < (*xfonts)->max_bounds.rbearing)
-				font->rbearing = (*xfonts)->max_bounds.rbearing;
-			if(font->lbearing < (*xfonts)->min_bounds.lbearing)
-				font->lbearing = (*xfonts)->min_bounds.lbearing;
 			xfonts++;
 		}
 	}
@@ -78,7 +74,5 @@ blitz_loadfont(Blitz *blitz, BlitzFont *font)
 		}
 		font->ascent = font->xfont->ascent;
 		font->descent = font->xfont->descent;
-		font->rbearing = font->xfont->max_bounds.rbearing;
-		font->lbearing = font->xfont->min_bounds.lbearing;
 	}
 }

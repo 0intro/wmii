@@ -47,8 +47,6 @@ struct BlitzFont {
 	XFontSet set;
 	int ascent;
 	int descent;
-	int rbearing;
-	int lbearing;
 	char *fontstr;
 };
 
