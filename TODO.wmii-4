@@ -2,6 +2,7 @@
 - Add collapsing to each Frame, add revert Xrectangle, remove column modes, add max flag to each Frame (maximizes to area until next navigation action within this area)
 - Editable tag bars
 - Grab boxes
+- Enable border based resizals (think about removal of /def/grabmode then)
 - New events file system interface
 - "Sticky" floating windows (scratchpad layer)
 - Do better relaxation (remove /def/border and calculate borders dynamically)
