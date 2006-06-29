@@ -12,14 +12,20 @@
 #include "blitz.h"
 
 unsigned int
-blitz_textwidth(BlitzFont *font, char *text)
+blitz_textwidth_l(BlitzFont *font, char *text, unsigned int len)
 {
 	if(font->set) {
 		XRectangle r;
-		XmbTextExtents(font->set, text, strlen(text), nil, &r);
+		XmbTextExtents(font->set, text, len, nil, &r);
 		return r.width;
 	}
-	return XTextWidth(font->xfont, text, strlen(text));
+	return XTextWidth(font->xfont, text, len);
+}
+
+unsigned int
+blitz_textwidth(BlitzFont *font, char *text)
+{
+	return blitz_textwidth_l(font, text, strlen(text));
 }
 
 void

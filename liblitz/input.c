@@ -87,11 +87,24 @@ blitz_ispointinrect(int x, int y, XRectangle * r)
 }
 
 static char *
+xcharof(BlitzInput *i, int x, char *start, unsigned int len)
+{
+	unsigned int piv, tw;
+
+	if(!(piv = len / 2))
+		return start; /* found */
+
+	tw = blitz_textwidth_l(i->font, start, piv);
+
+	if(x < tw)
+		return xcharof(i, x, start, piv);
+	else
+		return xcharof(i, x - tw, start + piv, strlen(start + piv));
+}
+
+static char *
 charof(BlitzInput *i, int x, int y)
 {
-	char *p, c;
-	unsigned int avg;
-
 	if(!i->text || !blitz_ispointinrect(x, y, &i->rect))
 		return nil;
 
@@ -99,19 +112,8 @@ charof(BlitzInput *i, int x, int y)
 	x -= i->rect.x;
 	if(x < i->rect.height / 2)
 		return nil;
-	x -= i->rect.height / 2;
 
-	avg = blitz_textwidth(i->font, i->text) / strlen(i->text);
-	for(p=i->text; *p; p++) {
-		c = *p;
-		*p = 0;
-		if(x <= blitz_textwidth(i->font, i->text) + avg) {
-			*p = c;
-			return p;
-		}
-		*p = c;
-	}
-	return nil;
+	return xcharof(i, x - i->rect.height / 2, i->text, strlen(i->text));
 }
 
 Bool
