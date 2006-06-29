@@ -123,11 +123,10 @@ charof(BlitzInput *i, int x, int y)
 		return nil;
 
 	/* normalize x */
-	x -= i->rect.x;
-	if(x < i->rect.height / 2)
+	if((x -= (i->rect.x + i->rect.height / 2)) < 0)
 		return nil;
 
-	return xcharof(i, x - i->rect.height / 2, i->text, strlen(i->text));
+	return xcharof(i, x, i->text, strlen(i->text));
 }
 
 Bool
