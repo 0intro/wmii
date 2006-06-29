@@ -122,7 +122,7 @@ do
 	if [ "X$tag" = "X$seltag" ]; then
 		echo "$WMII_SELCOLORS" "$tag" | wmiir create "/lbar/$tag" 
 	else
-		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag "
+		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag"
 	fi
 done
 unset IFS
@@ -136,6 +136,7 @@ do
 	set -- $event
 	set +f
 	type="$1"; shift
+	parms="$@"
 	case "$type" in
 	Start)
 		if test wmiirc = "$1"
@@ -143,16 +144,16 @@ do
 			exit
 		fi;;
 	CreateTag)
-		echo "$WMII_NORMCOLORS" "$@" | wmiir create "/lbar/$@"
+		echo "$WMII_NORMCOLORS" "$parms" | wmiir create "/lbar/$parms"
 		;;
 	DestroyTag)
-		wmiir remove "/lbar/$@"
+		wmiir remove "/lbar/$parms"
 		;;
 	FocusTag)
-		xwrite "/lbar/$@" "$WMII_SELCOLORS" "$@"
+		xwrite "/lbar/$parms" "$WMII_SELCOLORS" "$parms"
 		;;
 	UnfocusTag)
-		xwrite "/lbar/$@" "$WMII_NORMCOLORS" "$@"
+		xwrite "/lbar/$parms" "$WMII_NORMCOLORS" "$parms"
 		;;
 	LeftBarClick)
 		shift
@@ -203,7 +204,7 @@ do
 			xwrite "/client/`wmiir read /client/sel/ctl`/tags" \
 				"`wmiir ls /tag | sed 's,/,,; /^sel$/d' | wmiimenu`" &;;
 		$MODKEY-Shift-[0-9])
-			xwrite /client/sel/tags `echo $1 | sed 's/.*-//'`;;
+			xwrite /client/sel/tags "`echo $1 | sed 's/.*-//'`";;
 		esac;;
 	esac
 done &

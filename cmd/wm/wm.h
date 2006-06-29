@@ -149,7 +149,7 @@ typedef struct Rules {
 } Rules;
 
 /* default values */
-typedef struct {
+struct {
 	BlitzColor selcolor;
 	BlitzColor normcolor;
 	BlitzFont font;
@@ -162,29 +162,42 @@ typedef struct {
 	char grabmod[5];
 	unsigned long mod;
 	int colmode;
-} Default;
+} def;
+
+typedef struct WMScreen WMScreen;
+struct WMScreen {
+	Bar *lbar;
+	Bar *rbar;
+	View *sel;
+
+	XRectangle rect;
+	XRectangle brect;
+	Window barwin;
+	BlitzBrush bbrush;
+} *screens;
+/* to be removed */
+	Bar *lbar;
+	Bar *rbar;
+	View *sel;
+
+	XRectangle rect;
+	XRectangle brect;
+	Window barwin;
+	BlitzBrush bbrush;
 
 /* global variables */
 View *view;
 Client *client;
 Key *key;
-Bar *lbar;
-Bar *rbar;
 
 enum { BUFFER_SIZE = 8092 };
 char buffer[BUFFER_SIZE];
 
-View *sel;
 P9Srv p9srv;
 Blitz blz;
-XRectangle rect;
 IXPServer srv;
-Window barwin;
 GC xorgc;
-BlitzBrush bbrush;
-XRectangle brect;
 char *user;
-Default def;
 Atom wm_atom[WMLast];
 Atom net_atom[NetLast];
 Atom tags_atom;
