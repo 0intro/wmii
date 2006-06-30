@@ -125,6 +125,7 @@ draw_bar(WMScreen *s)
 			if(tb->brush.rect.width * shrink >= tb->smaller->brush.rect.width)
 				break;
 		}
+		if(tb)
 		for(b=largest; b != tb->smaller; b=b->smaller)
 			b->brush.rect.width = floor(b->brush.rect.width * shrink);
 		width += tw * shrink;
