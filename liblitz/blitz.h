@@ -100,3 +100,5 @@ Bool blitz_bpress_input(BlitzInput *i, int x, int y);
 Bool blitz_brelease_input(BlitzInput *i, int x, int y);
 Bool blitz_bmotion_input(BlitzInput *i, int x, int y);
 Bool blitz_ispointinrect(int x, int y, XRectangle * r);
+void blitz_focusin_input(BlitzInput *i);
+void blitz_focusout_input(BlitzInput *i);

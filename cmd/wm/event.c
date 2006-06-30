@@ -16,6 +16,8 @@ static void handle_buttonrelease(XEvent *e);
 static void handle_configurerequest(XEvent *e);
 static void handle_destroynotify(XEvent *e);
 static void handle_enternotify(XEvent *e);
+static void handle_focusin(XEvent *e);
+static void handle_focusout(XEvent *e);
 static void handle_leavenotify(XEvent *e);
 static void handle_expose(XEvent *e);
 static void handle_keypress(XEvent *e);
@@ -31,6 +33,8 @@ void (*handler[LASTEvent]) (XEvent *) = {
 	[ConfigureRequest]= handle_configurerequest,
 	[DestroyNotify]	= handle_destroynotify,
 	[EnterNotify]	= handle_enternotify,
+	[FocusIn]		= handle_focusin,
+	[FocusOut]		= handle_focusout,
 	[LeaveNotify]	= handle_leavenotify,
 	[Expose]	= handle_expose,
 	[KeyPress]	= handle_keypress,
@@ -82,6 +86,24 @@ handle_buttonrelease(XEvent *e)
 			draw_frame(f);
 		write_event("ClientClick %d %d\n", idx_of_client(f->client), ev->button);
 	}
+}
+
+static void
+handle_focusin(XEvent *e)
+{
+	Frame *f;
+	XFocusChangeEvent *ev = &e->xfocus;
+	if((f = frame_of_win(ev->window)))
+		blitz_focusin_input(&f->tagbar);
+}
+
+static void
+handle_focusout(XEvent *e)
+{
+	Frame *f;
+	XFocusChangeEvent *ev = &e->xfocus;
+	if((f = frame_of_win(ev->window)))
+		blitz_focusout_input(&f->tagbar);
 }
 
 static void

@@ -143,6 +143,16 @@ charof(BlitzInput *i, int x, int y)
 	return xcharof(i, x, i->text, strlen(i->text));
 }
 
+void
+blitz_focusin_input(BlitzInput *i)
+{
+}
+
+void
+blitz_focusout_input(BlitzInput *i)
+{
+}
+
 Bool
 blitz_bpress_input(BlitzInput *i, int x, int y)
 {
