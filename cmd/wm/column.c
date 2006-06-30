@@ -150,8 +150,8 @@ scale_column(Area *a, float h)
 void
 arrange_column(Area *a, Bool dirty)
 {
-	unsigned int num_frames = 0, yoff = a->rect.y, h;
 	Frame *f;
+	unsigned int num_frames = 0, yoff = a->rect.y, h;
 	unsigned int min_height = 2 * height_of_bar();
 
 	if(a->floating || !a->frame)
@@ -206,7 +206,7 @@ Fallthrough:
 	}
 
 	relax_column(a);
-	focus_view(screen, v);
+	focus_view(screen, a->view);
 	flush_masked_events(EnterWindowMask);
 }
 

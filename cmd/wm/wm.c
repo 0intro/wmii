@@ -194,7 +194,7 @@ wmii_error_handler(Display *dpy, XErrorEvent *error)
 			|| (error->request_code == X_ConfigureWindow
 				&& error->error_code == BadMatch)
 			|| (error->request_code == X_GrabKey
-				&& error->error_code == BadMatch))
+				&& error->error_code == BadAccess))
 		return 0;
 	fprintf(stderr, "wmiiwm: fatal error: Xrequest code=%d, Xerror code=%d\n",
 			error->request_code, error->error_code);
