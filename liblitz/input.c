@@ -82,6 +82,10 @@ blitz_draw_input(BlitzInput *i)
 			end = i->curstart;
 		}
 	}
+	else if(i->curend) { /* && !i->curstart */
+		start = i->curend;
+		end = nil;
+	}
 
 	/* draw normal text */
 	xchangegc(i, &i->color, False);
@@ -171,8 +175,7 @@ blitz_brelease_input(BlitzInput *i, int x, int y)
 {
 	char *oend;
 
-	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)) ||
-			!i->curstart)
+	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)))
 		return False;
 	oend = i->curend;
 	i->curend = charof(i, x, y);
@@ -185,8 +188,7 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 {
 	char *oend;
 
-	if(!i->drag || !(i->drag = blitz_ispointinrect(x, y, &i->rect))
-			|| !i->curstart)
+	if(!i->drag || !(i->drag = blitz_ispointinrect(x, y, &i->rect)))
 		return False;
 
 	oend = i->curend;
