@@ -347,7 +347,7 @@ static void
 drop_move(Frame *f, XRectangle *new, XPoint *pt)
 {
 	Area *tgt, *src;
-	Frame *ft, *tf;
+	Frame *ft;
 	View *v;
 
 	tgt = nil;
@@ -385,7 +385,7 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 			remove_frame(f);
 
 			if(before)
-				insert_frame(tf, f, True);
+				insert_frame(ft, f, True);
 			else
 				insert_frame(ft, f, False);
 
@@ -398,7 +398,7 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 			remove_frame(f);
 
 			if(pt->y < (ft->rect.y + ft->rect.height / 2))
-				insert_frame(tf, f, True);
+				insert_frame(ft, f, True);
 			else
 				insert_frame(ft, f, False);
 
