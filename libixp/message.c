@@ -101,13 +101,13 @@ ixp_fcall2msg(void *msg, Fcall *fcall, unsigned int msglen)
 		break;
 	case RREAD:
 		ixp_pack_u32(&p, &msize, fcall->count);
-		ixp_pack_data(&p, &msize, fcall->data, fcall->count);
+		ixp_pack_data(&p, &msize, (unsigned char *)fcall->data, fcall->count);
 		break;
 	case TWRITE:
 		ixp_pack_u32(&p, &msize, fcall->fid);
 		ixp_pack_u64(&p, &msize, fcall->offset);
 		ixp_pack_u32(&p, &msize, fcall->count);
-		ixp_pack_data(&p, &msize, fcall->data, fcall->count);
+		ixp_pack_data(&p, &msize, (unsigned char *)fcall->data, fcall->count);
 		break;
 	case RWRITE:
 		ixp_pack_u32(&p, &msize, fcall->count);

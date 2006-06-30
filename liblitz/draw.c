@@ -3,6 +3,7 @@
  * See LICENSE file for license details.
  */
 
+#include <stdio.h>
 #include "blitz.h"
 
 void
@@ -27,4 +28,24 @@ blitz_drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle rect,
 	points[4].x = 0;
 	points[4].y = -(rect.height - 1);
 	XDrawLines(dpy, drawable, gc, points, 5, CoordModePrevious);
+}
+
+void
+blitz_drawcursor(Display *dpy, Drawable drawable, GC gc,
+				int x, int y, unsigned int h, BlitzColor c)
+{
+	XSegment s[3];
+
+	XSetForeground(dpy, gc, c.fg);
+	XSetLineAttributes(dpy, gc, 1, LineSolid, CapButt, JoinMiter);
+	s[0].x1 = x - 2;
+	s[0].y1 = s[0].y2 = y;
+	s[0].x2 = x + 3;
+	s[1].x1 = s[1].x2 = x;
+	s[1].y1 = y;
+	s[1].y2 = y + h;
+	s[2].x1 = x - 2;
+	s[2].y1 = s[2].y2 = y + h;
+	s[2].x2 = x + 3;
+	XDrawSegments(dpy, drawable, gc, s, 3);
 }

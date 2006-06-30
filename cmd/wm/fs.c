@@ -262,11 +262,11 @@ message_root(char *message)
 	else if(!strncmp(message, "selcolors ", 10)) {
 		message += 10;
 		n = strlen(message);
-		return parse_colors(&message, &n, &def.selcolor);
+		return parse_colors(&message, (int *)&n, &def.selcolor);
 	}else if(!strncmp(message, "normcolors ", 11)) {
 		message += 11;
 		n = strlen(message);
-		return parse_colors(&message, &n, &def.normcolor);
+		return parse_colors(&message, (int *)&n, &def.normcolor);
 	}else if(!strncmp(message, "font ", 5)) {
 		message += 5;
 		free(def.font.fontstr);
@@ -673,7 +673,7 @@ fs_read(P9Req *r) {
 			r->ofcall.count = n;
 			return respond(r, nil);
 		case FsFTindex:
-			buf = view_index(f->view);
+			buf = (char *)view_index(f->view);
 			n = strlen(buf);
 			write_buf(r, (void *)buf, n);
 			return respond(r, nil);

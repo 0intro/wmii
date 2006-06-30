@@ -85,6 +85,8 @@ int blitz_loadcolor(Blitz *blitz, BlitzColor *c);
 /* draw.c */
 void blitz_drawbg(Display *dpy, Drawable drawable, GC gc,
 		XRectangle rect, BlitzColor c, Bool border);
+void blitz_drawcursor(Display *dpy, Drawable drawable, GC gc,
+				int x, int y, unsigned int h, BlitzColor c);
 
 /* font.c */
 unsigned int blitz_textwidth(BlitzFont *font, char *text);

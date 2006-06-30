@@ -309,12 +309,12 @@ view_index(View *v) {
 						a_i, idx_of_client(f->client),
 						r->width, f->client->props);
 			if(len - n < 0)
-				return buffer;
+				return (unsigned char *)buffer;
 			buf_i += n;
 			len -= n;
 		}
 	}
-	return buffer;
+	return (unsigned char *)buffer;
 }
 
 Client *

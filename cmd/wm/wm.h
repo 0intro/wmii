@@ -317,7 +317,7 @@ void attach_to_view(View *v, Frame *f);
 Client *sel_client_of_view(View *v);
 char *message_view(View *v, char *message);
 void restack_view(View *v);
-unsigned char * view_index(View *v);
+unsigned char *view_index(View *v);
 void destroy_view(View *v);
 void update_views();
 unsigned int newcolw_of_view(View *v);

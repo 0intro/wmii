@@ -58,7 +58,7 @@ xdrawtextpart(BlitzInput *i, char *start, char *end,
 void
 blitz_draw_input(BlitzInput *i)
 {
-	unsigned int xoff, yoff;
+	unsigned int xoff, yoff, xcursor, h;
 	char *start, *end;
 
 	if (!i)
@@ -66,9 +66,9 @@ blitz_draw_input(BlitzInput *i)
 
 	blitz_drawbg(i->blitz->display, i->drawable, i->gc, i->rect, i->color, True);
 
-	yoff = i->rect.y + (i->rect.height - (i->font->ascent + i->font->descent))
-			/ 2 + i->font->ascent;
-	xoff = i->rect.x + i->rect.height / 2;
+	h = (i->font->ascent + i->font->descent);
+	yoff = i->rect.y + (i->rect.height - h) / 2 + i->font->ascent;
+	xcursor = xoff = i->rect.x + i->rect.height / 2;
 
 	start = end = nil;
 	if(i->curstart && i->curend && i->curstart < i->curend) {
@@ -79,18 +79,24 @@ blitz_draw_input(BlitzInput *i)
 		start = i->curend;
 		end = i->curstart;
 	}
-	if(end)
-		end++;
 
 	/* draw normal text */
 	xchangegc(i, &i->color, False);
 	xdrawtextpart(i, i->text, start, &xoff, yoff);
+	xcursor = xoff;
 	/* draw sel text */
 	xchangegc(i, &i->color, True);
 	xdrawtextpart(i, start, end, &xoff, yoff);
 	/* draw remaining normal text */
 	xchangegc(i, &i->color, False);
 	xdrawtextpart(i, end, nil, &xoff, yoff);
+
+	/* draw cursor */
+	if(!start && !end)
+		xcursor = xoff;
+	if(start == end)
+		blitz_drawcursor(i->blitz->display, i->drawable, i->gc,
+				xcursor, yoff - h + 2, h - 1, i->color);
 }
 
 Bool
@@ -119,11 +125,16 @@ xcharof(BlitzInput *i, int x, char *start, unsigned int len)
 static char *
 charof(BlitzInput *i, int x, int y)
 {
+	unsigned int len;
+
 	if(!i->text || !blitz_ispointinrect(x, y, &i->rect))
 		return nil;
 
-	/* normalize x */
+	len = strlen(i->text);
+	/* normalize and check x */
 	if((x -= (i->rect.x + i->rect.height / 2)) < 0)
+		return i->text;
+	else if(x > blitz_textwidth_l(i->font, i->text, len))
 		return nil;
 
 	return xcharof(i, x, i->text, strlen(i->text));
