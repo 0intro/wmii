@@ -70,14 +70,17 @@ blitz_draw_input(BlitzInput *i)
 	yoff = i->rect.y + (i->rect.height - h) / 2 + i->font->ascent;
 	xcursor = xoff = i->rect.x + i->rect.height / 2;
 
-	start = end = nil;
-	if(i->curstart && i->curend && i->curstart < i->curend) {
-		start = i->curstart;
-		end = i->curend;
-	}
-	else {
-		start = i->curend;
-		end = i->curstart;
+	start = i->curstart;
+	end = i->curend;
+	if(i->curstart && i->curend) {
+		if(i->curstart < i->curend) {
+			start = i->curstart;
+			end = i->curend;
+		}
+		else {
+			start = i->curend;
+			end = i->curstart;
+		}
 	}
 
 	/* draw normal text */
