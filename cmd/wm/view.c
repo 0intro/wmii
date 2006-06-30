@@ -313,8 +313,8 @@ view_index(View *v) {
 						r->x, r->y, r->width, r->height,
 						f->client->props);
 			else
-				n = snprintf(&buffer[buf_i], len, "%d %d %d %s\n",
-						a_i, idx_of_client(f->client),
+				n = snprintf(&buffer[buf_i], len, "%d %d %d %d %s\n",
+						a_i, idx_of_client(f->client), r->y,
 						r->height, f->client->props);
 			if(len - n < 0)
 				return (unsigned char *)buffer;
