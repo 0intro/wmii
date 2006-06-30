@@ -14,3 +14,4 @@
 - Workaround for apps that miss resize events
 - wmiisystray
 - Plumbing for tag bar
+- UTF-8 support
