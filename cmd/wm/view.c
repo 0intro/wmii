@@ -297,9 +297,15 @@ view_index(View *v) {
 	len = BUFFER_SIZE;
 	buf_i = 0;
 	for((a = v->area), (a_i = 0); a; (a=a->next), (a_i++)) {
+		if(a->floating)
+			n = snprintf(&buffer[buf_i], len, "# ~ %d\n", a->rect.width);
+		else
+			n = snprintf(&buffer[buf_i], len, "# %d %d\n", a_i, a->rect.width);
+		buf_i += n;
+		len -= n;
 		for(f=a->frame; f && len > 0; f=f->anext) {
 			XRectangle *r = &f->rect;
-			if(a_i == 0)
+			if(a->floating)
 				n = snprintf(&buffer[buf_i], len, "~ %d %d %d %d %d %s\n",
 						idx_of_client(f->client),
 						r->x, r->y, r->width, r->height,
@@ -307,7 +313,7 @@ view_index(View *v) {
 			else
 				n = snprintf(&buffer[buf_i], len, "%d %d %d %s\n",
 						a_i, idx_of_client(f->client),
-						r->width, f->client->props);
+						r->height, f->client->props);
 			if(len - n < 0)
 				return (unsigned char *)buffer;
 			buf_i += n;
