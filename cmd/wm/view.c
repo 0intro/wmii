@@ -298,9 +298,11 @@ view_index(View *v) {
 	buf_i = 0;
 	for((a = v->area), (a_i = 0); a; (a=a->next), (a_i++)) {
 		if(a->floating)
-			n = snprintf(&buffer[buf_i], len, "# ~ %d\n", a->rect.width);
+			n = snprintf(&buffer[buf_i], len, "# ~ %d %d\n",
+					a->rect.width, a->rect.height);
 		else
-			n = snprintf(&buffer[buf_i], len, "# %d %d\n", a_i, a->rect.width);
+			n = snprintf(&buffer[buf_i], len, "# %d %d %d\n",
+					a_i, a->rect.x, a->rect.width);
 		buf_i += n;
 		len -= n;
 		for(f=a->frame; f && len > 0; f=f->anext) {
