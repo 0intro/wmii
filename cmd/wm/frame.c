@@ -139,7 +139,7 @@ draw_frames()
 {
 	Client *c;
 	for(c=client; c; c=c->next)
-		if(c->sel && (c->sel->area->view == sel)) {
+		if(c->sel && (c->sel->area->view == screen->sel)) {
 			update_frame_widget_colors(c->sel);
 			draw_frame(c->sel);
 		}

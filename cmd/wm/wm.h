@@ -169,16 +169,7 @@ struct WMScreen {
 	XRectangle rect;
 	XRectangle brect;
 	BlitzBrush bbrush;
-} *screens;
-/* to be removed */
-	Bar *lbar;
-	Bar *rbar;
-	View *sel;
-	Window barwin;
-
-	XRectangle rect;
-	XRectangle brect;
-	BlitzBrush bbrush;
+} *screens, *screen;
 
 Client *client;
 View *view;
@@ -225,7 +216,7 @@ Client *sel_client_of_area(Area *a);
 /* bar.c */
 Bar *create_bar(Bar **b_link, char *name);
 void destroy_bar(Bar **b_link, Bar *b);
-void draw_bar();
+void draw_bar(WMScreen *s);
 void resize_bar();
 unsigned int height_of_bar();
 Bar *bar_of_name(Bar *b_link, const char *name);
@@ -317,7 +308,7 @@ void arrange_view(View *v);
 void scale_view(View *v, float w);
 View *get_view(const char *name);
 View *create_view(const char *name);
-void focus_view(View *v);
+void focus_view(WMScreen *s, View *v);
 void update_client_views(Client *c, char **tags);
 XRectangle *rects_of_view(View *v, unsigned int *num);
 View *view_of_id(unsigned short id);

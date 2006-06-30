@@ -88,7 +88,7 @@ P9Srv p9srv = {
 	.freefid=fs_freefid
 };
 
-/* ad-hoc file tree. Empty names ("") indicate a dynamic entry to be filled
+/* ad-hoc file tree. Empty names ("") indicate dynamic entries to be filled
  * in by lookup_file */
 static Dirtab
 dirtab_root[]=	 {{".",		P9QTDIR,	FsRoot,		0500|P9DMDIR },
@@ -166,7 +166,7 @@ free_file(FileId *f) {
 }
 
 /* This function's name belies it's true purpose. It increases
- * the reference count of the FileId list */
+ * the reference counts of the FileId list */
 static void
 clone_files(FileId *f) {
 	for(; f; f=f->next)
@@ -287,7 +287,7 @@ message_root(char *message)
 		cext_strlcpy(def.grabmod, message, sizeof(def.grabmod));
 		def.mod = mod;
 		if(view)
-			restack_view(sel);
+			restack_view(screen->sel);
 	}else
 		return Ebadcmd;
 
@@ -298,8 +298,8 @@ char *
 read_root_ctl()
 {
 	unsigned int i = 0;
-	if(sel)
-		i += snprintf(&buffer[i], (BUFFER_SIZE - i), "view %s\n", sel->name);
+	if(screen->sel)
+		i += snprintf(&buffer[i], (BUFFER_SIZE - i), "view %s\n", screen->sel->name);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "selcolors %s\n", def.selcolor.colstr);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "normcolors %s\n", def.normcolor.colstr);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "font %s\n", def.font.fontstr);
@@ -427,12 +427,12 @@ lookup_file(FileId *parent, char *name)
 				break;
 			case FsDTags:
 				if(!name || !strncmp(name, "sel", 4)) {
-					if(sel) {
+					if(screen->sel) {
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->ref = sel;
-						file->id = sel->id;
+						file->ref = screen->sel;
+						file->id = screen->sel->id;
 						file->tab = *dir;
 						file->tab.name = strdup("sel");
 					}if(name) goto LastItem;
@@ -480,9 +480,9 @@ lookup_file(FileId *parent, char *name)
 			switch(file->tab.type) {
 			case FsDBars:
 				if(!strncmp(file->tab.name, "lbar", 5))
-					file->ref = &lbar;
+					file->ref = &screen[0].lbar;
 				else
-					file->ref = &rbar;
+					file->ref = &screen[0].rbar;
 				break;
 			case FsFColRules:
 				file->ref = &def.colrules;
@@ -816,7 +816,7 @@ fs_remove(P9Req *r) {
 		return respond(r, Enoperm);
 	case FsFBar:
 		destroy_bar(f->next->bar_p, f->bar);
-		draw_bar();
+		draw_bar(screen);
 		respond(r, nil);
 		break;
 	}
@@ -855,7 +855,7 @@ fs_clunk(P9Req *r) {
 		while(i > 0 && buf[i - 1] == '\n')
 			buf[--i] = '\0';
 		cext_strlcpy(f->bar->text, buf, sizeof(f->bar->text));
-		draw_bar();
+		draw_bar(screen);
 		break;
 	case FsFEvent:
 		for(fl=&pending_event_fids; *fl; fl=&(*fl)->next)

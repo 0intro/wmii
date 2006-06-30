@@ -194,7 +194,7 @@ Fallthrough:
 	case Colmax:
 		for(f=a->frame; f; f=f->anext) {
 			f->rect = a->rect;
-			if(f != a->sel) f->rect.x = rect.width * 2;
+			if(f != a->sel) f->rect.x = screen->rect.width * 2;
 			resize_client(f->client, &f->rect, True);
 		}
 		break;
@@ -203,6 +203,7 @@ Fallthrough:
 	}
 
 	relax_column(a);
+	focus_view(screen, v);
 	flush_masked_events(EnterWindowMask);
 }
 
@@ -319,15 +320,15 @@ AfterHorizontal:
 AfterVertical:
 
 	relax_column(a);
-	focus_view(v);
+	focus_view(screen, v);
 }
 
 static Frame *
 frame_of_point(XPoint *pt)
 {
-	Frame *f = nil;
 	Area *a;
-	View *v = sel;
+	View *v = screen->sel;
+	Frame *f = nil;
 
 	if(!v)
 		return nil;
@@ -343,9 +344,13 @@ frame_of_point(XPoint *pt)
 static void
 drop_move(Frame *f, XRectangle *new, XPoint *pt)
 {
-	Area *tgt = nil, *src = f->area;
-	View *v = src->view;
+	Area *tgt, *src;
 	Frame *ft, *tf;
+	View *v;
+
+	tgt = nil;
+	src = f->area;
+	v = src->view;
 
 	if(!pt)
 		return;
@@ -359,7 +364,7 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 				send_to_area(tgt, src, f);
 			}
 		}
-		else if(pt->x >= rect.width - 16) {
+		else if(pt->x >= screen->rect.width - 16) {
 			if((src->frame && src->frame->anext) || src->next) {
 				for(tgt=src; tgt->next; tgt=tgt->next);
 				tgt = new_column(v, tgt, 0);

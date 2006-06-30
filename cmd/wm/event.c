@@ -67,12 +67,12 @@ handle_buttonrelease(XEvent *e)
 	Frame *f;
 	Bar *b;
 	XButtonPressedEvent *ev = &e->xbutton;
-	if(ev->window == barwin) {
-		for(b=lbar; b; b=b->next)
+	if(ev->window == screen->barwin) {
+		for(b=screen->lbar; b; b=b->next)
 			if(blitz_ispointinrect(ev->x, ev->y, &b->brush.rect))
 				return write_event("LeftBarClick %d %s\n",
 						ev->button, b->name);
-		for(b=rbar; b; b=b->next)
+		for(b=screen->rbar; b; b=b->next)
 			if(blitz_ispointinrect(ev->x, ev->y, &b->brush.rect))
 				return write_event("RightBarClick %d %s\n",
 						ev->button, b->name);
@@ -155,7 +155,7 @@ handle_configurerequest(XEvent *e)
 			else
 				frect=&c->sel->revert;
 
-			if(c->rect.width >= rect.width && c->rect.height >= rect.height) {
+			if(c->rect.width >= screen->rect.width && c->rect.height >= screen->rect.height) {
 				frect->y = wc.y = -height_of_bar();
 				frect->x = wc.x = -def.border;
 			}
@@ -169,8 +169,8 @@ handle_configurerequest(XEvent *e)
 			wc.border_width = 1;
 			wc.sibling = None;
 			wc.stack_mode = ev->detail;
-			if(c->sel->area->view != sel)
-				wc.x += 2 * rect.width;
+			if(c->sel->area->view != screen->sel)
+				wc.x += 2 * screen->rect.width;
 			if(c->sel->area->floating) {
 				XConfigureWindow(blz.display, c->framewin, ev->value_mask, &wc);
 				configure_client(c);
@@ -249,8 +249,8 @@ handle_expose(XEvent *e)
 	XExposeEvent *ev = &e->xexpose;
 	static Frame *f;
 	if(ev->count == 0) {
-		if(ev->window == barwin)
-			draw_bar();
+		if(ev->window == screen->barwin)
+			draw_bar(screen);
 		else if((f = frame_of_win(ev->window)))
 			draw_frame(f);
 	}

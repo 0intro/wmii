@@ -32,11 +32,11 @@ clientframe_of_view(View *v, Client *c)
 static void
 assign_sel_view(View *v)
 {
-	if(sel != v) {
-		if(sel)
-			write_event("UnfocusTag %s\n", sel->name);
-		sel = v;
-		write_event("FocusTag %s\n", sel->name);
+	if(screen->sel != v) {
+		if(screen->sel)
+			write_event("UnfocusTag %s\n",screen->sel->name);
+		screen->sel = v;
+		write_event("FocusTag %s\n", screen->sel->name);
 	}
 }
 
@@ -76,7 +76,7 @@ create_view(const char *name)
 	*i = v;
 
 	write_event("CreateTag %s\n", v->name);
-	if(!sel)
+	if(!screen->sel)
 		assign_sel_view(v);
 
 	return v;
@@ -97,9 +97,9 @@ destroy_view(View *v)
 		if(*i == v) break;
 	*i = v->next;
 
-	if(sel == v)
-		for(sel=view; sel && sel->next; sel=sel->next)
-			if(sel->next == *i) break;
+	if(screen->sel == v)
+		for(screen->sel=view; screen->sel && screen->sel->next; screen->sel=screen->sel->next)
+			if(screen->sel->next == *i) break;
 
 	write_event("DestroyTag %s\n", v->name);
 	free(v);
@@ -116,7 +116,7 @@ update_frame_selectors(View *v)
 }
 
 void
-focus_view(View *v)
+focus_view(WMScreen *s, View *v)
 {
 	Frame *f;
 	Client *c;
@@ -133,7 +133,8 @@ focus_view(View *v)
 				XMoveWindow(blz.display, c->framewin, f->rect.x, f->rect.y);
 				resize_client(c, &f->rect, False);
 			}else
-				XMoveWindow(blz.display, c->framewin, 2 * rect.width + f->rect.x, f->rect.y);
+				XMoveWindow(blz.display, c->framewin, 2 * s->rect.width + f->rect.x,
+						f->rect.y);
 		}
 
 	if((c = sel_client()))
@@ -166,7 +167,7 @@ attach_to_view(View *v, Frame *f)
 	c->revert = nil;
 
 	if(c->trans || c->floating || c->fixedsize
-		|| (c->rect.width == rect.width && c->rect.height == rect.height))
+		|| (c->rect.width == screen->rect.width && c->rect.height == screen->rect.height))
 		a = v->area;
 	else if(starting && v->sel->floating)
 		a = v->area->next;
@@ -257,11 +258,11 @@ arrange_view(View *v)
 	if(!v->area->next)
 		return;
 
-	scale_view(v, rect.width);
+	scale_view(v, screen->rect.width);
 	for(a=v->area->next; a; a=a->next) {
 		a->rect.x = xoff;
 		a->rect.y = 0;
-		a->rect.height = rect.height - brect.height;
+		a->rect.height = screen->rect.height - screen->brect.height;
 		xoff += a->rect.width;
 		arrange_column(a, False);
 	}
@@ -279,8 +280,8 @@ rects_of_view(View *v, unsigned int *num)
 	result = cext_emallocz(*num * sizeof(XRectangle));
 	for(f=v->area->frame; f; f=f->anext)
 		*result++ = f->rect;
-	*result++ = rect;
-	*result++ = brect;
+	*result++ = screen->rect;
+	*result++ = screen->brect;
 
 	return result - *num;
 }
@@ -378,8 +379,8 @@ message_view(View *v, char *message) {
 		a->mode = i;
 		arrange_column(a, True);
 		restack_view(v);
-		if(v == sel)
-			focus_view(v);
+		if(v == screen->sel)
+			focus_view(screen, v);
 		draw_frames();
 		return nil;
 	}
@@ -390,7 +391,7 @@ void
 update_views()
 {
 	View *n, *v;
-	View *old = sel;
+	View *old = screen->sel;
 
 	for(v=view; v; v=v->next)
 		update_frame_selectors(v);
@@ -403,9 +404,9 @@ update_views()
 			destroy_view(v);
 
 	if(old)
-		focus_view(old);
-	else if(sel)
-		focus_view(sel);
+		focus_view(screen, old);
+	else if(screen->sel)
+		focus_view(screen, screen->sel);
 }
 
 unsigned int
@@ -425,7 +426,7 @@ newcolw_of_view(View *v)
 			for(a=v->area, i=0; a; a=a->next, i++);
 			if(n && n >= i) {
 				if(sscanf(toks[i - 1], "%u", &n) == 1)
-					return (rect.width * n) / 100;
+					return (screen->rect.width * n) / 100;
 			}
 			break;
 		}

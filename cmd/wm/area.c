@@ -26,23 +26,23 @@ create_area(View *v, Area *pos, unsigned int w)
 
 	if(!w) {
 		if(area_size > 1)
-			w = rect.width / area_size - 1;
+			w = screen->rect.width / area_size - 1;
 		else
-			w = rect.width;
+			w = screen->rect.width;
 	}
 	if(w < MIN_COLWIDTH)
 		w = MIN_COLWIDTH;
 
-	if(area_size >= 2 && (area_size - 1) * MIN_COLWIDTH + w > rect.width)
+	if(area_size >= 2 && (area_size - 1) * MIN_COLWIDTH + w > screen->rect.width)
 		return nil;
 
 	if(area_size > 1)
-		scale_view(v, rect.width - w);
+		scale_view(v, screen->rect.width - w);
 	a = cext_emallocz(sizeof(Area));
 	a->view = v;
 	a->id = id++;
-	a->rect = rect;
-	a->rect.height = rect.height - brect.height;
+	a->rect = screen->rect;
+	a->rect.height = screen->rect.height - screen->brect.height;
 	a->mode = def.colmode;
 	a->rect.width = w;
 	a->frame = nil;
@@ -91,7 +91,7 @@ place_client(Area *a, Client *c)
 	unsigned int i, j, x, y, maxx, maxy, dx, dy, cx, cy, diff, num = 0;
 	XPoint p1 = {0, 0}, p2 = {0, 0};
 	Frame *f = c->sel;
-	int snap = rect.height / 66;
+	int snap = screen->rect.height / 66;
 	XRectangle *rects;
 
 	if(c->trans)
@@ -104,8 +104,8 @@ place_client(Area *a, Client *c)
 
 	rects = rects_of_view(a->view, &num);
 	if(!field) {
-		mx = rect.width / 8;
-		my = rect.height / 8;
+		mx = screen->rect.width / 8;
+		my = screen->rect.height / 8;
 		field = cext_emallocz(my * mx * sizeof(Bool));
 	}
 
@@ -113,8 +113,8 @@ place_client(Area *a, Client *c)
 		for(x = 0; x < mx; x++)
 			field[y*mx + x] = True;
 
-	dx = rect.width / mx;
-	dy = rect.height / my;
+	dx = screen->rect.width / mx;
+	dy = screen->rect.height / my;
 	for(fr=a->frame; fr; fr=fr->anext) {
 		if(fr == f) {
 			cx = f->rect.width / dx;
@@ -318,8 +318,8 @@ select_area(Area *a, char *arg)
 			if(p->anext == f) break;
 		a->sel = p;
 		arrange_column(a, False);
-		if(v == sel)
-			focus_view(v);
+		if(v == screen->sel)
+			focus_view(screen, v);
 		flush_masked_events(EnterWindowMask);
 		return nil;
 	}
@@ -329,8 +329,8 @@ select_area(Area *a, char *arg)
 		p = f->anext ? f->anext : a->frame;
 		a->sel = p;
 		arrange_column(a, False);
-		if(v == sel)
-			focus_view(v);
+		if(v == screen->sel)
+			focus_view(screen, v);
 		flush_masked_events(EnterWindowMask);
 		return nil;
 	}

@@ -17,7 +17,7 @@ static char *Ebadcmd = "bad command",
 Client *
 sel_client()
 {
-	return sel && sel->sel->sel ? sel->sel->sel->client : nil;
+	return screen->sel && screen->sel->sel->sel ? screen->sel->sel->sel->client : nil;
 }
 
 int
@@ -395,7 +395,7 @@ manage_client(Client *c)
 	map_client(c);
 	XMapWindow(blz.display, c->framewin);
 	XSync(blz.display, False);
-	if(c->sel->area->view == sel)
+	if(c->sel->area->view == screen->sel)
 		focus_client(c, False);
 	flush_masked_events(EnterWindowMask);
 }
@@ -531,17 +531,17 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 
 	if(!ignore_xcall) {
 		if(floating &&
-				(c->rect.width >= rect.width) &&
-				(c->rect.height >= rect.height))
+				(c->rect.width >= screen->rect.width) &&
+				(c->rect.height >= screen->rect.height))
 		{
 			f->rect.x = -def.border;
 			f->rect.y = -height_of_bar();
 		}
-		if(f->area->view == sel)
+		if(f->area->view == screen->sel)
 			XMoveResizeWindow(blz.display, c->framewin, f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);
 		else
-			XMoveResizeWindow(blz.display, c->framewin, 2 * rect.width + f->rect.x,
+			XMoveResizeWindow(blz.display, c->framewin, 2 * screen->rect.width + f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);
 	}
 
@@ -701,7 +701,7 @@ focus(Client *c, Bool restack)
 
 	arrange_column(f->area, False);
 	focus_client(c, restack);
-	focus_view(v);
+	focus_view(screen, v);
 }
 
 void
@@ -723,7 +723,7 @@ update_client_views(Client *c, char **tags)
 		if(*tags) {
 			if(!*fp || cmp > 0) {
 				f = create_frame(c, get_view(*tags));
-				if(f->view == sel || !c->sel)
+				if(f->view == screen->sel || !c->sel)
 					c->sel = f;
 				attach_to_view(f->view, f);
 				f->cnext = *fp;
@@ -756,7 +756,7 @@ apply_tags(Client *c, const char *tags)
 		if(!strncmp(toks[i], "~", 2))
 			c->floating = True;
 		else if(!strncmp(toks[i], "!", 2))
-			toks[j++] = view ? sel->name : "nil";
+			toks[j++] = view ? screen->sel->name : "nil";
 		else if(strncmp(toks[i], "sel", 4))
 			toks[j++] = toks[i];
 	}

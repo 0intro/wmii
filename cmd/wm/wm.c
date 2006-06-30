@@ -150,7 +150,7 @@ init_cursors()
 }
 
 static void
-init_screen()
+init_screen(WMScreen *screen)
 {
 	Window w;
 	int ret;
@@ -165,10 +165,10 @@ init_screen()
 	xorgc = XCreateGC(blz.display, blz.root, GCForeground | GCGraphicsExposures |
 						GCFunction | GCSubwindowMode | GCPlaneMask, &gcv);
 
-	rect.x = rect.y = 0;
-	rect.width = DisplayWidth(blz.display, blz.screen);
-	rect.height = DisplayHeight(blz.display, blz.screen);
-	def.snap = rect.height / 63;
+	screen->rect.x = screen->rect.y = 0;
+	screen->rect.width = DisplayWidth(blz.display, blz.screen);
+	screen->rect.height = DisplayHeight(blz.display, blz.screen);
+	def.snap = screen->rect.height / 63;
 
 	sel_screen = XQueryPointer(blz.display, blz.root, &w, &w, &ret, &ret, &ret, &ret, &mask);
 }
@@ -225,8 +225,9 @@ cleanup()
 int
 main(int argc, char *argv[])
 {
-	int i, j;
+	int i;
 	char *address = nil, *wmiirc = nil, *namespace, *errstr;
+	WMScreen *s;
 	struct passwd *passwd;
 	XSetWindowAttributes wa;
 
@@ -312,11 +313,8 @@ main(int argc, char *argv[])
 		case 0:
 			if(setsid() == -1)
 				error("wmiim: can't setsid: %s\n", strerror(errno));
-			/* This is only necessary because I can't get the fileno of
-			 * the X socket */
-			j = getdtablesize();
-			for(i = 3; i < j; i++)
-				close(i);
+			close(i);
+			close(ConnectionNumber(blz.display));
 			snprintf(execstr, name_len, "exec %s", wmiirc);
 			execl("/bin/sh", "sh", "-c", execstr, nil);
 			error("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
@@ -333,9 +331,8 @@ main(int argc, char *argv[])
 	/* X server */
 	ixp_server_open_conn(&srv, ConnectionNumber(blz.display), nil, check_x_event, nil);
 
-	sel = view = nil;
+	view = nil;
 	client = nil;
-	lbar = nil;
 	key = nil;
 
 	passwd = getpwuid(getuid());
@@ -361,41 +358,56 @@ main(int argc, char *argv[])
 	init_cursors();
 	blitz_loadfont(&blz, &def.font);
 	init_lock_keys();
-	init_screen();
 
-	pmap = XCreatePixmap(blz.display, blz.root, rect.width, rect.height,
-			DefaultDepth(blz.display, blz.screen));
+	num_screens = 1;
+	screens = cext_emallocz(num_screens * sizeof(*screens));
 
-	wa.event_mask = SubstructureRedirectMask | EnterWindowMask | LeaveWindowMask;
-	wa.cursor = cursor[CurNormal];
-	XChangeWindowAttributes(blz.display, blz.root, CWEventMask | CWCursor, &wa);
+	for(i = 0; i < num_screens; i++) {
+		s = &screens[i];
+		s->lbar = nil;
+		s->rbar = nil;
+		s->sel = nil;
 
-	wa.override_redirect = 1;
-	wa.background_pixmap = ParentRelative;
-	wa.event_mask = ExposureMask | ButtonReleaseMask
-		| SubstructureRedirectMask | SubstructureNotifyMask;
+		init_screen(s);
 
-	brect = rect;
-	brect.height = height_of_bar();
-	brect.y = rect.height - brect.height;
-	barwin = XCreateWindow(blz.display, RootWindow(blz.display, blz.screen), brect.x, brect.y,
-			brect.width, brect.height, 0, DefaultDepth(blz.display, blz.screen),
-			CopyFromParent, DefaultVisual(blz.display, blz.screen),
-			CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
-	XSync(blz.display, False);
+		pmap = XCreatePixmap(blz.display, blz.root, s->rect.width, s->rect.height,
+				DefaultDepth(blz.display, blz.screen));
 
-	bbrush.blitz = &blz;
-	bbrush.gc = XCreateGC(blz.display, barwin, 0, 0);
-	bbrush.drawable = pmap;
-	bbrush.rect = brect;
-	bbrush.rect.x = 0;
-	bbrush.rect.y = 0;
-	bbrush.color = def.normcolor;
-	bbrush.font = &def.font;
-	bbrush.border = True;
+		wa.event_mask = SubstructureRedirectMask | EnterWindowMask | LeaveWindowMask;
+		wa.cursor = cursor[CurNormal];
+		XChangeWindowAttributes(blz.display, blz.root, CWEventMask | CWCursor, &wa);
 
-	XMapRaised(blz.display, barwin);
-	draw_bar();
+		wa.override_redirect = 1;
+		wa.background_pixmap = ParentRelative;
+		wa.event_mask = ExposureMask | ButtonReleaseMask
+			| SubstructureRedirectMask | SubstructureNotifyMask;
+
+		s->brect = s->rect;
+		s->brect.height = height_of_bar();
+		s->brect.y = s->rect.height - s->brect.height;
+		s->barwin = XCreateWindow(blz.display, RootWindow(blz.display, blz.screen),
+				s->brect.x, s->brect.y,
+				s->brect.width, s->brect.height, 0,
+				DefaultDepth(blz.display, blz.screen),
+				CopyFromParent, DefaultVisual(blz.display, blz.screen),
+				CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
+		XSync(blz.display, False);
+
+		s->bbrush.blitz = &blz;
+		s->bbrush.gc = XCreateGC(blz.display, s->barwin, 0, 0);
+		s->bbrush.drawable = pmap;
+		s->bbrush.rect = s->brect;
+		s->bbrush.rect.x = 0;
+		s->bbrush.rect.y = 0;
+		s->bbrush.color = def.normcolor;
+		s->bbrush.font = &def.font;
+		s->bbrush.border = True;
+
+		draw_bar(s);
+		XMapRaised(blz.display, s->barwin);
+	}
+
+	screen = &screens[0];
 	scan_wins();
 	update_views();
 

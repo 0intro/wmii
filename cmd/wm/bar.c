@@ -28,7 +28,7 @@ create_bar(Bar **b_link, char *name)
 
 	b->id = id++;
 	cext_strlcpy(b->name, name, sizeof(b->name));
-	b->brush = bbrush;
+	b->brush = screen->bbrush;
 	b->brush.color = def.normcolor;
 
 	for(i=b_link; *i; i=&(*i)->next)
@@ -59,22 +59,22 @@ height_of_bar()
 }
 
 void
-resize_bar()
+resize_bar(WMScreen *s)
 {
 	View *v;
 	Area *a;
 	Frame *f;
 
-	brect = rect;
-	brect.height = height_of_bar();
-	brect.y = rect.height - brect.height;
-	XMoveResizeWindow(blz.display, barwin, brect.x, brect.y, brect.width, brect.height);
+	s->brect = s->rect;
+	s->brect.height = height_of_bar();
+	s->brect.y = s->rect.height - s->brect.height;
+	XMoveResizeWindow(blz.display, s->barwin, s->brect.x, s->brect.y, s->brect.width, s->brect.height);
 	XSync(blz.display, False);
-	draw_bar();
+	draw_bar(s);
 
 	for(v=view; v; v=v->next) {
 		for(a = v->area; a; a=a->next) {
-			a->rect.height = rect.height - brect.height;
+			a->rect.height = s->rect.height - s->brect.height;
 			arrange_column(a, False);
 		}
 		for(f=v->area->frame; f; f=f->anext) {
@@ -84,33 +84,33 @@ resize_bar()
 }
 
 void
-draw_bar()
+draw_bar(WMScreen *s)
 {
 	unsigned int width, tw, nb, size;
 	float shrink;
 	Bar *b, *tb, *largest, **pb;
 
-	blitz_draw_tile(&bbrush);
+	blitz_draw_tile(&s->bbrush);
 
-	if(!lbar && !rbar)
+	if(!s->lbar && !s->rbar)
 		goto MapBar;
 
 	largest = b = tb = nil;
 	tw = width = nb = size = 0;
 
-	for(b=lbar, nb=2 ;nb; --nb && (b = rbar))
+	for(b=s->lbar, nb=2 ;nb; --nb && (b = s->rbar))
 		for(; b; b=b->next) {
 			b->brush.rect.x = b->brush.rect.y = 0;
-			b->brush.rect.width = brect.height;
+			b->brush.rect.width = s->brect.height;
 			if(b->text && strlen(b->text))
 				b->brush.rect.width += blitz_textwidth(b->brush.font, b->text);
-			b->brush.rect.height = brect.height;
+			b->brush.rect.height = s->brect.height;
 			width += b->brush.rect.width;
 		}
 
 	/* Not enough room. Shrink bars until they all fit */
-	if(width > brect.width) {
-		for(b=lbar, nb=2 ;nb; --nb && (b = rbar))
+	if(width > s->brect.width) {
+		for(b=s->lbar, nb=2 ;nb; --nb && (b = s->rbar))
 			for(; b; b=b->next) {
 				for(pb=&largest; *pb; pb=&(*pb)->smaller)
 					if((*pb)->brush.rect.width < b->brush.rect.width) break; 
@@ -120,7 +120,7 @@ draw_bar()
 		for(tb=largest; tb; tb=tb->smaller) {
 			width -= tb->brush.rect.width;
 			tw += tb->brush.rect.width;
-			shrink = (brect.width - width) / (float)tw;
+			shrink = (s->brect.width - width) / (float)tw;
 			if(tb->smaller)
 			if(tb->brush.rect.width * shrink >= tb->smaller->brush.rect.width)
 				break;
@@ -131,11 +131,11 @@ draw_bar()
 		tb=nil;
 	}
 
-	for(b=lbar, nb=2 ;nb; b=rbar, nb--)
+	for(b=s->lbar, nb=2 ;nb; b=s->rbar, nb--)
 		for(; b; tb = b, b=b->next) {
-			if(b == rbar) {
+			if(b == s->rbar) {
 				b->brush.align = EAST;
-				rbar->brush.rect.width += (brect.width - width);
+				s->rbar->brush.rect.width += (s->brect.width - width);
 			}else
 				b->brush.align = CENTER;
 			if(tb)
@@ -143,8 +143,8 @@ draw_bar()
 			blitz_draw_label(&b->brush, b->text);
 		}
 MapBar:
-	XCopyArea(blz.display, bbrush.drawable, barwin, bbrush.gc, 0, 0,
-			brect.width, brect.height, 0, 0);
+	XCopyArea(blz.display, s->bbrush.drawable, s->barwin, s->bbrush.gc, 0, 0,
+			s->brect.width, s->brect.height, 0, 0);
 	XSync(blz.display, False);
 }
 
