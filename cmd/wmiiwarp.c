@@ -40,7 +40,7 @@ main(int argc, char **argv)
 	}
 	if(sscanf(argv[1], "%d", &x) != 1)
 		usage();
-	if(sscanf(argv[1], "%d", &y) != 1)
+	if(sscanf(argv[2], "%d", &y) != 1)
 		usage();
 	XWarpPointer(dpy, None, RootWindow(dpy, DefaultScreen(dpy)), 0, 0, 0, 0, x, y);
 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
