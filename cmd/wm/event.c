@@ -89,7 +89,6 @@ handle_motionnotify(XEvent *e)
 {
 	Frame *f;
 	XMotionEvent *ev = &e->xmotion;
-
 	if((f = frame_of_win(ev->window))) {
 		if(blitz_bmotion_input(&f->tagbar, ev->x, ev->y))
 			draw_frame(f);
@@ -248,10 +247,11 @@ handle_expose(XEvent *e)
 {
 	XExposeEvent *ev = &e->xexpose;
 	static Frame *f;
+
 	if(ev->count == 0) {
 		if(ev->window == screen->barwin)
 			draw_bar(screen);
-		else if((f = frame_of_win(ev->window)))
+		else if((f = frame_of_win(ev->window)) && f->view == screen->sel)
 			draw_frame(f);
 	}
 }

@@ -158,21 +158,23 @@ update_client_grab(Client *c, Bool is_sel)
 void
 focus_client(Client *c, Bool restack)
 {
+	Client *old_in_area;
 	Client *old;
 	Frame *f;
-	Client *old_in_area;
 	View *v;
 
 	if(!sel_screen)
 		return;
 
-	old = sel_client();
 	f = c->sel;
-	old_in_area = sel_client_of_area(f->area);
 	v = f->area->view;
+	old = sel_client();
+	old_in_area = sel_client_of_area(f->area);
+
 	v->sel = f->area;
 	f->area->sel = f;
 	c->floating = f->area->floating;
+
 	if(restack)
 		restack_view(v);
 	else {
@@ -555,6 +557,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		XMoveResizeWindow(blz.display, c->win, c->rect.x, c->rect.y,
 						c->rect.width, c->rect.height);
 		configure_client(c);
+		draw_frame(c->sel);
 	}
 }
 
@@ -686,6 +689,10 @@ send_client(Frame *f, char *arg)
 		return Ebadvalue;
 	flush_masked_events(EnterWindowMask);
 	update_views();
+	if(f->view == screen->sel) {
+		focus_client(f->client, False);
+		focus_view(screen, f->view);
+	}
 	return nil;
 }
 
@@ -733,6 +740,7 @@ update_client_views(Client *c, char **tags)
 			tags++;
 		}
 	}
+	focus_view(screen, screen->sel);
 }
 
 static int

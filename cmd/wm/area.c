@@ -229,11 +229,8 @@ attach_to_area(Area *a, Frame *f, Bool send)
 	if(!c->floating) { /* column */
 		f->rect.height = h;
 		arrange_column(a, False);
-	}
-	else { /* floating */
+	}else /* floating */
 		place_client(a, c);
-		resize_client(c, &f->rect,  True);
-	}
 }
 
 void
@@ -344,6 +341,5 @@ select_area(Area *a, char *arg)
 	v->sel = new;
 	if(a->floating != new->floating)
 		v->revert = a;
-	draw_frames();
 	return nil;
 }

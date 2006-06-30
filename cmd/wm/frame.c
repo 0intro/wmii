@@ -94,7 +94,9 @@ draw_frame(Frame *f)
 	Frame *p;
 	unsigned int fidx, size, w;
 
-	for(fidx=0, p=f->area->frame; p && p != f; p=p->anext, fidx++);
+	fidx = 0;
+	for(p=f->area->frame; p != f; p=p->anext)
+		fidx++;
 	for(size=fidx; p; p=p->anext, size++);
 
 	if(def.border) {
@@ -139,7 +141,7 @@ draw_frames()
 {
 	Client *c;
 	for(c=client; c; c=c->next)
-		if(c->sel && (c->sel->area->view == screen->sel)) {
+		if(c->sel && c->sel->view == screen->sel) {
 			update_frame_widget_colors(c->sel);
 			draw_frame(c->sel);
 		}

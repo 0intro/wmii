@@ -62,8 +62,6 @@ void
 resize_bar(WMScreen *s)
 {
 	View *v;
-	Area *a;
-	Frame *f;
 
 	s->brect = s->rect;
 	s->brect.height = height_of_bar();
@@ -72,15 +70,8 @@ resize_bar(WMScreen *s)
 	XSync(blz.display, False);
 	draw_bar(s);
 
-	for(v=view; v; v=v->next) {
-		for(a = v->area; a; a=a->next) {
-			a->rect.height = s->rect.height - s->brect.height;
-			arrange_column(a, False);
-		}
-		for(f=v->area->frame; f; f=f->anext) {
-			resize_client(f->client, &f->rect, False);
-		}
-	}
+	for(v=view; v; v=v->next)
+		arrange_view(v);
 }
 
 void
