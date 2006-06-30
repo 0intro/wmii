@@ -43,7 +43,9 @@ relax_column(Area *a)
 	if(!a->frame)
 		return;
 
-	for(f=a->frame, frame_size=0; f; f=f->anext, frame_size++);
+	frame_size = 0;
+	for(f=a->frame; f; f=f->anext)
+		frame_size++;
 
 	switch(a->mode) {
 	case Coldefault:
@@ -152,10 +154,11 @@ arrange_column(Area *a, Bool dirty)
 	Frame *f;
 	unsigned int min_height = 2 * height_of_bar();
 
-	if(!a->frame || a->floating)
+	if(a->floating || !a->frame)
 		return;
 
-	for(f=a->frame; f; f=f->anext, num_frames++);
+	for(f=a->frame; f; f=f->anext)
+		num_frames++;
 
 	switch(a->mode) {
 	case Coldefault:
