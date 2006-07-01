@@ -116,17 +116,18 @@ blitz_ispointinrect(int x, int y, XRectangle * r)
 static char *
 xcharof(BlitzInput *i, int x, char *start, unsigned int len)
 {
-	unsigned int piv, tw;
+	unsigned int tw;
 
-	if(!(piv = len / 2))
-		return start; /* found */
+	while((len /= 2)) {
+		tw = blitz_textwidth_l(i->font, start, len);
 
-	tw = blitz_textwidth_l(i->font, start, piv);
-
-	if(x < tw)
-		return xcharof(i, x, start, piv);
-	else
-		return xcharof(i, x - tw, start + piv, strlen(start + piv));
+		if(x >= tw) {
+			x -= tw;
+			start += len;
+			len = strlen(start);
+		}
+	}
+	return start; /* found */
 }
 
 static char *
