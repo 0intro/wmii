@@ -516,6 +516,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 {
 	Frame *f = c->sel;
 	Bool floating = f->area->floating;
+	unsigned int max_height;
 
 	BlitzAlign stickycorner = 0;
 	if(f->rect.x != r->x && f->rect.x + f->rect.width == r->x + r->width)
@@ -532,13 +533,27 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 	if((f->area->mode != Colstack) || (f->area->sel == f))
 		match_sizehints(c, &c->sel->rect, floating, stickycorner);
 
+	max_height = screen->rect.height - height_of_bar();
 	if(!ignore_xcall) {
-		if(floating &&
-				(c->rect.width >= screen->rect.width) &&
-				(c->rect.height >= screen->rect.height))
-		{
-			f->rect.x = -def.border;
-			f->rect.y = -height_of_bar();
+		if(floating) {
+			if((c->rect.width == screen->rect.width) &&
+			   (c->rect.height == screen->rect.height)) {
+				f->rect.x = -def.border;
+				f->rect.y = -height_of_bar();
+			}else{
+				if(f->rect.height > max_height)
+					f->rect.height = max_height;
+				if(f->rect.width > screen->rect.width)
+					f->rect.width = screen->rect.width;
+				if(f->rect.x + f->rect.width > screen->rect.width)
+					f->rect.x = screen->rect.width - f->rect.width;
+				if(f->rect.y + f->rect.height > max_height)
+					f->rect.y = max_height - f->rect.height;
+				if(f->rect.x < 0)
+					f->rect.x = 0;
+				if(f->rect.y < 0)
+					f->rect.y = 0;
+			}
 		}
 		if(f->area->view == screen->sel)
 			XMoveResizeWindow(blz.display, c->framewin, f->rect.x,

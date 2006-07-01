@@ -296,7 +296,7 @@ view_index(View *v) {
 
 	len = BUFFER_SIZE;
 	buf_i = 0;
-	for((a = v->area), (a_i = 0); a; (a=a->next), (a_i++)) {
+	for((a = v->area), (a_i = 0); a && len > 0; (a=a->next), (a_i++)) {
 		if(a->floating)
 			n = snprintf(&buffer[buf_i], len, "# ~ %d %d\n",
 					a->rect.width, a->rect.height);
