@@ -251,15 +251,12 @@ typedef struct IXPClient {
 typedef struct P9Conn P9Conn;
 typedef struct Fid {
 	P9Conn		*conn;
-	unsigned long	fid;
-	char		omode;
-	char		*uid;
-	Qid		qid;
-	void		*aux;
-	
-	/* Implementation details */
-	/* do not use */
 	Intmap		*map;
+	char		*uid;
+	void		*aux;
+	unsigned long	fid;
+	Qid		qid;
+	signed char	omode;
 } Fid;
 
 typedef struct P9Req P9Req;
