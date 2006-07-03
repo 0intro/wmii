@@ -40,11 +40,11 @@ create_frame(Client *c, View *v)
 
 	f->tagbar.blitz = &blz;
 	f->tagbar.drawable = pmap;
+	f->tagbar.window = c->framewin;
 	f->tagbar.gc = c->gc;
 	f->tagbar.font = &def.font;
 	f->tagbar.color = def.normcolor;
-	f->tagbar.text = c->tags;
-	f->tagbar.size = sizeof(c->tags);
+	blitz_settext_input(&f->tagbar, c->tags);
 
 	return f;
 }
@@ -118,7 +118,8 @@ draw_frame(Frame *f)
 	/* tag bar */
 	f->tagbar.rect = f->posbar.rect;
 	f->tagbar.rect.x = 0;
-	f->tagbar.rect.width = f->tagbar.rect.height + blitz_textwidth(&def.font, f->tagbar.text);
+	f->tagbar.rect.width =
+		f->tagbar.rect.height + blitz_textwidth(&def.font, f->tagbar.text);
 
 	if(f->tagbar.rect.width > f->rect.width / 3)
 		f->tagbar.rect.width = f->rect.width / 3;

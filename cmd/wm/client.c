@@ -116,8 +116,7 @@ create_client(Window w, XWindowAttributes *wa)
 	fwa.background_pixmap = ParentRelative;
 	fwa.event_mask =
 		SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask
-		| ButtonPressMask | PointerMotionMask | FocusChangeMask
-		| ButtonReleaseMask | KeyPressMask;
+		| ButtonPressMask | PointerMotionMask | ButtonReleaseMask | KeyPressMask;
 
 	c->framewin = XCreateWindow(blz.display, blz.root, c->rect.x, c->rect.y,
 			c->rect.width + 2 * def.border,
@@ -770,6 +769,7 @@ apply_tags(Client *c, const char *tags)
 	int len;
 	char buf[256];
 	char *toks[32];
+	Frame *f;
 
 	cext_strlcpy(buf, tags, sizeof(buf));
 	if(!(n = cext_tokenize(toks, 31, buf, '+')))
@@ -801,6 +801,9 @@ apply_tags(Client *c, const char *tags)
 
 	XChangeProperty(blz.display, c->win, tags_atom, XA_STRING, 8,
 			PropModeReplace, (unsigned char *)c->tags, strlen(c->tags));
+
+	for(f = c->frame; f; f = f->cnext)
+		blitz_settext_input(&f->tagbar, c->tags);
 }
 
 static void

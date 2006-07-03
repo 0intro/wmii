@@ -69,6 +69,7 @@ struct BlitzInput {
 	Bool drag;
 	unsigned int size;
 	Drawable drawable;
+	Window window;
 	GC gc;
 	BlitzColor color;
 	BlitzFont *font;
@@ -100,5 +101,5 @@ Bool blitz_bpress_input(BlitzInput *i, int x, int y);
 Bool blitz_brelease_input(BlitzInput *i, int x, int y);
 Bool blitz_bmotion_input(BlitzInput *i, int x, int y);
 Bool blitz_ispointinrect(int x, int y, XRectangle * r);
-void blitz_focusin_input(BlitzInput *i);
-void blitz_focusout_input(BlitzInput *i);
+void blitz_settext_input(BlitzInput *i, const char *text);
+Bool blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, const char *ks);
