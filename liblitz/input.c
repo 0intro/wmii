@@ -214,30 +214,33 @@ Bool
 blitz_kpress_input(BlitzInput *i, KeySym k, char *ks)
 {
 
-	/*
 	char *start, *end;
+
 	if(IsCursorKey(k)) {
 		start = curstart(i);
 		end = curend(i);
 		switch(k) {
 		case XK_Left:
+			fputs("cursor left\n", stderr);
 			if(start != end)
 				i->curstart = i->curend = start;
-			else if(start > i->start)
+			else if(start > i->text)
 				i->curstart = i->curend = start--;
 			else
-				i->curstart = i->curend = i->start;
+				i->curstart = i->curend = i->text;
 			return True;
 		case XK_Right:
+			fputs("cursor right\n", stderr);
 			if(start != end)
 				i->curstart = i->curend = end;
-			else if(start < i->end)
+			else if(start < i->text + i->len)
 				i->curstart = i->curend = start++;
 			else
-				i->curstart = i->curend = i->end;
+				i->curstart = i->curend = i->text + i->len;
 			return True;
 		}
 	}
+	/*
 	else {
 		switch(k) {
 		case XK_BackSpace:
