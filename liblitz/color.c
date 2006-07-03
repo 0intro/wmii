@@ -16,8 +16,8 @@ xloadcolor(Blitz *blitz, char *colstr)
 
 	cext_strlcpy(col, colstr, sizeof(col));
 	col[7] = 0;
-	XAllocNamedColor(blitz->display,
-			DefaultColormap(blitz->display, blitz->screen), col, &color, &color);
+	XAllocNamedColor(blitz->dpy,
+			DefaultColormap(blitz->dpy, blitz->screen), col, &color, &color);
 	return color.pixel;
 }
 

@@ -12,7 +12,7 @@
 void
 blitz_draw_tile(BlitzBrush *b)
 {
-	blitz_drawbg(b->blitz->display, b->drawable, b->gc, b->rect,
+	blitz_drawbg(b->blitz->dpy, b->drawable, b->gc, b->rect,
 			b->color, b->border);
 }
 
@@ -35,10 +35,10 @@ blitz_draw_label(BlitzBrush *b, char *text)
 	gcv.foreground = b->color.fg;
 	gcv.background = b->color.bg;
 	if(b->font->set)
-		XChangeGC(b->blitz->display, b->gc, GCForeground | GCBackground, &gcv);
+		XChangeGC(b->blitz->dpy, b->gc, GCForeground | GCBackground, &gcv);
 	else {
 		gcv.font = b->font->xfont->fid;
-		XChangeGC(b->blitz->display, b->gc, GCForeground | GCBackground | GCFont, &gcv);
+		XChangeGC(b->blitz->dpy, b->gc, GCForeground | GCBackground | GCFont, &gcv);
 	}
 
 	h = b->font->ascent + b->font->descent;
@@ -78,8 +78,8 @@ blitz_draw_label(BlitzBrush *b, char *text)
 		break;
 	}
 	if(b->font->set)
-		XmbDrawImageString(b->blitz->display, b->drawable, b->font->set, b->gc,
+		XmbDrawImageString(b->blitz->dpy, b->drawable, b->font->set, b->gc,
 				x, y, buf, len);
 	else
-		XDrawImageString(b->blitz->display, b->drawable, b->gc, x, y, buf, len);
+		XDrawImageString(b->blitz->dpy, b->drawable, b->gc, x, y, buf, len);
 }

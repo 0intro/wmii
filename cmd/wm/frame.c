@@ -21,7 +21,8 @@ create_frame(Client *c, View *v)
 	if(c->frame) {
 		f->revert = c->sel->revert;
 		f->rect = c->sel->rect;
-	}else{
+	}
+	else{
 		f->revert = f->rect = c->rect;
 		f->revert.width = f->rect.width += 2 * def.border;
 		f->revert.height = f->rect.height += def.border + height_of_bar();
@@ -40,11 +41,11 @@ create_frame(Client *c, View *v)
 
 	f->tagbar.blitz = &blz;
 	f->tagbar.drawable = pmap;
-	f->tagbar.window = c->framewin;
+	f->tagbar.win = c->framewin;
 	f->tagbar.gc = c->gc;
 	f->tagbar.font = &def.font;
 	f->tagbar.color = def.normcolor;
-	blitz_settext_input(&f->tagbar, c->tags);
+	blitz_setinput(&f->tagbar, c->tags);
 
 	return f;
 }
@@ -132,9 +133,9 @@ draw_frame(Frame *f)
 	blitz_draw_input(&f->tagbar);
 	blitz_draw_label(&f->titlebar, f->client->name);
 	blitz_draw_label(&f->posbar, buffer);
-	XCopyArea(blz.display, pmap, f->client->framewin, f->client->gc,
+	XCopyArea(blz.dpy, pmap, f->client->framewin, f->client->gc,
 			0, 0, f->rect.width, f->rect.height, 0, 0);
-	XSync(blz.display, False);
+	XSync(blz.dpy, False);
 }
 
 void

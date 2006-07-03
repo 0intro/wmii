@@ -55,15 +55,15 @@ update_client_name(Client *c)
 
 	name.nitems = 0;
 	c->name[0] = 0;
-	XGetTextProperty(blz.display, c->win, &name, net_atom[NetWMName]);
+	XGetTextProperty(blz.dpy, c->win, &name, net_atom[NetWMName]);
 	if(!name.nitems)
-		XGetWMName(blz.display, c->win, &name);
+		XGetWMName(blz.dpy, c->win, &name);
 	if(!name.nitems)
 		return;
 	if(name.encoding == XA_STRING)
 		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
 	else {
-		if(XmbTextPropertyToTextList(blz.display, &name, &list, &n) >= Success
+		if(XmbTextPropertyToTextList(blz.dpy, &name, &list, &n) >= Success
 				&& n > 0 && *list)
 		{
 			cext_strlcpy(c->name, *list, sizeof(c->name));
@@ -71,7 +71,7 @@ update_client_name(Client *c)
 		}
 	}
 	XFree(name.value);
-	if(XGetClassHint(blz.display, c->win, &ch)) {
+	if(XGetClassHint(blz.dpy, c->win, &ch)) {
 		snprintf(c->props, sizeof(c->props), "%s:%s:%s",
 				ch.res_class ? ch.res_class : "",
 				ch.res_name ? ch.res_name : "",
@@ -99,10 +99,10 @@ create_client(Window w, XWindowAttributes *wa)
 	c->border = wa->border_width;
 	c->rect.width = wa->width;
 	c->rect.height = wa->height;
-	XSetWindowBorderWidth(blz.display, c->win, 0);
+	XSetWindowBorderWidth(blz.dpy, c->win, 0);
 	c->proto = win_proto(c->win);
-	XGetTransientForHint(blz.display, c->win, &c->trans);
-	if(!XGetWMNormalHints(blz.display, c->win, &c->size, &msize) || !c->size.flags)
+	XGetTransientForHint(blz.dpy, c->win, &c->trans);
+	if(!XGetWMNormalHints(blz.dpy, c->win, &c->size, &msize) || !c->size.flags)
 		c->size.flags = PSize;
 	if(c->size.flags & PMinSize && c->size.flags & PMaxSize
 		&& c->size.min_width == c->size.max_width
@@ -110,7 +110,7 @@ create_client(Window w, XWindowAttributes *wa)
 			c->fixedsize = True;
 	else
 		c->fixedsize = False;
-	XAddToSaveSet(blz.display, c->win);
+	XAddToSaveSet(blz.dpy, c->win);
 	update_client_name(c);
 	fwa.override_redirect = 1;
 	fwa.background_pixmap = ParentRelative;
@@ -118,14 +118,14 @@ create_client(Window w, XWindowAttributes *wa)
 		SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask
 		| ButtonPressMask | PointerMotionMask | ButtonReleaseMask | KeyPressMask;
 
-	c->framewin = XCreateWindow(blz.display, blz.root, c->rect.x, c->rect.y,
+	c->framewin = XCreateWindow(blz.dpy, blz.root, c->rect.x, c->rect.y,
 			c->rect.width + 2 * def.border,
 			c->rect.height + def.border + height_of_bar(), 0,
-			DefaultDepth(blz.display, blz.screen), CopyFromParent,
-			DefaultVisual(blz.display, blz.screen),
+			DefaultDepth(blz.dpy, blz.screen), CopyFromParent,
+			DefaultVisual(blz.dpy, blz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
-	c->gc = XCreateGC(blz.display, c->framewin, 0, 0);
-	XSync(blz.display, False);
+	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
+	XSync(blz.dpy, False);
 
 	for(t=&client, i=0; *t; t=&(*t)->next, i++);
 	c->next = *t; /* *t == nil */
@@ -139,7 +139,7 @@ void
 set_client_state(Client * c, int state)
 {
 	long data[] = { state, None };
-	XChangeProperty(blz.display, c->win, wm_atom[WMState], wm_atom[WMState], 32,
+	XChangeProperty(blz.dpy, c->win, wm_atom[WMState], wm_atom[WMState], 32,
 			PropModeReplace, (unsigned char *) data, 2);
 }
 
@@ -185,7 +185,7 @@ focus_client(Client *c, Bool restack)
 
 	if(!c->floating && f->area->mode == Colstack)
 		arrange_column(f->area, False);
-	XSetInputFocus(blz.display, c->win, RevertToPointerRoot, CurrentTime);
+	XSetInputFocus(blz.dpy, c->win, RevertToPointerRoot, CurrentTime);
 	if(old && old != old_in_area && old != c) {
 		update_frame_widget_colors(old->sel);
 		draw_frame(old->sel);
@@ -196,34 +196,34 @@ focus_client(Client *c, Bool restack)
 	}
 	update_frame_widget_colors(c->sel);
 	draw_frame(c->sel);
-	XSync(blz.display, False);
+	XSync(blz.dpy, False);
 	write_event("ClientFocus %d\n", idx_of_client(c));
 }
 
 void
 map_client(Client *c)
 {
-	XSelectInput(blz.display, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XMapWindow(blz.display, c->win);
-	XSelectInput(blz.display, c->win, CLIENT_MASK);
+	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+	XMapWindow(blz.dpy, c->win);
+	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
 	set_client_state(c, NormalState);
 }
 
 void
 unmap_client(Client *c)
 {
-	XSelectInput(blz.display, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XUnmapWindow(blz.display, c->win);
-	XSelectInput(blz.display, c->win, CLIENT_MASK);
+	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+	XUnmapWindow(blz.dpy, c->win);
+	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
 	set_client_state(c, WithdrawnState);
 }
 
 void
 reparent_client(Client *c, Window w, int x, int y)
 {
-	XSelectInput(blz.display, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XReparentWindow(blz.display, c->win, w, x, y);
-	XSelectInput(blz.display, c->win, CLIENT_MASK);
+	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+	XReparentWindow(blz.dpy, c->win, w, x, y);
+	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
 }
 
 void
@@ -245,10 +245,10 @@ configure_client(Client *c)
 	e.border_width = c->border;
 	e.above = None;
 	e.override_redirect = False;
-	XSelectInput(blz.display, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XSendEvent(blz.display, c->win, False, StructureNotifyMask, (XEvent *) & e);
-	XSelectInput(blz.display, c->win, CLIENT_MASK);
-	XSync(blz.display, False);
+	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+	XSendEvent(blz.dpy, c->win, False, StructureNotifyMask, (XEvent *) & e);
+	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+	XSync(blz.dpy, False);
 }
 
 static void
@@ -262,8 +262,8 @@ send_client_message(Window w, Atom a, long value)
 	e.xclient.data.l[0] = value;
 	e.xclient.data.l[1] = CurrentTime;
 
-	XSendEvent(blz.display, w, False, NoEventMask, &e);
-	XSync(blz.display, False);
+	XSendEvent(blz.dpy, w, False, NoEventMask, &e);
+	XSync(blz.dpy, False);
 }
 
 void
@@ -272,7 +272,7 @@ kill_client(Client * c)
 	if(c->proto & WM_PROTOCOL_DELWIN)
 		send_client_message(c->win, wm_atom[WMProtocols], wm_atom[WMDelete]);
 	else
-		XKillClient(blz.display, c->win);
+		XKillClient(blz.dpy, c->win);
 }
 
 void
@@ -287,10 +287,10 @@ prop_client(Client *c, XPropertyEvent *e)
 	}
 	switch (e->atom) {
 	case XA_WM_TRANSIENT_FOR:
-		XGetTransientForHint(blz.display, c->win, &c->trans);
+		XGetTransientForHint(blz.dpy, c->win, &c->trans);
 		break;
 	case XA_WM_NORMAL_HINTS:
-		if(!XGetWMNormalHints(blz.display, c->win, &c->size, &msize) || !c->size.flags) {
+		if(!XGetWMNormalHints(blz.dpy, c->win, &c->size, &msize) || !c->size.flags) {
 			c->size.flags = PSize;
 		}
 		if(c->size.flags & PMinSize && c->size.flags & PMaxSize
@@ -377,7 +377,7 @@ manage_client(Client *c)
 	Client *trans;
 
 	tags.nitems = 0;
-	XGetTextProperty(blz.display, c->win, &tags, tags_atom);
+	XGetTextProperty(blz.dpy, c->win, &tags, tags_atom);
 
 	if(c->trans && (trans = client_of_win(c->trans)))
 		cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
@@ -395,8 +395,8 @@ manage_client(Client *c)
 	if(!starting)
 		update_views();
 	map_client(c);
-	XMapWindow(blz.display, c->framewin);
-	XSync(blz.display, False);
+	XMapWindow(blz.dpy, c->framewin);
+	XSync(blz.dpy, False);
 	if(c->sel->area->view == screen->sel)
 		focus_client(c, False);
 	flush_masked_events(EnterWindowMask);
@@ -414,7 +414,7 @@ destroy_client(Client *c)
 	char *dummy = nil;
 	Client **tc;
 
-	XGrabServer(blz.display);
+	XGrabServer(blz.dpy);
 	XSetErrorHandler(dummy_error_handler);
 
 	if(c->frame) {
@@ -427,8 +427,8 @@ destroy_client(Client *c)
 	unmap_client(c);
 
 	reparent_client(c, blz.root, c->rect.x, c->rect.y);
-	XFreeGC(blz.display, c->gc);
-	XDestroyWindow(blz.display, c->framewin);
+	XFreeGC(blz.dpy, c->gc);
+	XDestroyWindow(blz.dpy, c->framewin);
 
 	for(tc=&client; *tc && *tc != c; tc=&(*tc)->next);
 	cext_assert(*tc == c);
@@ -437,9 +437,9 @@ destroy_client(Client *c)
 	update_views();
 	free(c);
 
-	XSync(blz.display, False);
+	XSync(blz.dpy, False);
 	XSetErrorHandler(wmii_error_handler);
-	XUngrabServer(blz.display);
+	XUngrabServer(blz.dpy);
 	flush_masked_events(EnterWindowMask);
 }
 
@@ -555,10 +555,10 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 			}
 		}
 		if(f->area->view == screen->sel)
-			XMoveResizeWindow(blz.display, c->framewin, f->rect.x,
+			XMoveResizeWindow(blz.dpy, c->framewin, f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);
 		else
-			XMoveResizeWindow(blz.display, c->framewin, 2 * screen->rect.width + f->rect.x,
+			XMoveResizeWindow(blz.dpy, c->framewin, 2 * screen->rect.width + f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);
 	}
 
@@ -569,7 +569,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		c->rect.height = f->rect.height - def.border - height_of_bar();
 	}
 	if(!ignore_xcall) {
-		XMoveResizeWindow(blz.display, c->win, c->rect.x, c->rect.y,
+		XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
 						c->rect.width, c->rect.height);
 		configure_client(c);
 	}
@@ -799,11 +799,11 @@ apply_tags(Client *c, const char *tags)
 	toks[n] = nil;
 	update_client_views(c, toks);
 
-	XChangeProperty(blz.display, c->win, tags_atom, XA_STRING, 8,
+	XChangeProperty(blz.dpy, c->win, tags_atom, XA_STRING, 8,
 			PropModeReplace, (unsigned char *)c->tags, strlen(c->tags));
 
 	for(f = c->frame; f; f = f->cnext)
-		blitz_settext_input(&f->tagbar, c->tags);
+		blitz_setinput(&f->tagbar, c->tags);
 }
 
 static void

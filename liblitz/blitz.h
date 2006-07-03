@@ -18,7 +18,7 @@ typedef struct BlitzBrush BlitzBrush;
 typedef struct BlitzInput BlitzInput;
 
 struct Blitz {
-	Display *display;
+	Display *dpy;
 	int screen;
 	Window root;
 };
@@ -66,10 +66,11 @@ struct BlitzInput {
 	char *text;
 	char *curstart;
 	char *curend;
-	Bool drag;
 	unsigned int size;
+	unsigned int len;
+	Bool drag;
 	Drawable drawable;
-	Window window;
+	Window win;
 	GC gc;
 	BlitzColor color;
 	BlitzFont *font;
@@ -101,5 +102,5 @@ Bool blitz_bpress_input(BlitzInput *i, int x, int y);
 Bool blitz_brelease_input(BlitzInput *i, int x, int y);
 Bool blitz_bmotion_input(BlitzInput *i, int x, int y);
 Bool blitz_ispointinrect(int x, int y, XRectangle * r);
-void blitz_settext_input(BlitzInput *i, const char *text);
-Bool blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, const char *ks);
+void blitz_setinput(BlitzInput *i, char *text);
+Bool blitz_kpress_input(BlitzInput *i, KeySym k, char *ks);

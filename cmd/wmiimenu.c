@@ -185,9 +185,9 @@ draw_menu()
 		brush.rect.width = seek;
 		blitz_draw_label(&brush, item.size > nextoff ? ">" : nil);
 	}
-	XCopyArea(blz.display, brush.drawable, win, brush.gc, 0, 0, irect.width,
+	XCopyArea(blz.dpy, brush.drawable, win, brush.gc, 0, 0, irect.width,
 			irect.height, 0, 0);
-	XSync(blz.display, False);
+	XSync(blz.dpy, False);
 }
 
 static void
@@ -367,19 +367,19 @@ main(int argc, char *argv[])
 			usage();
 	}
 
-	blz.display = XOpenDisplay(0);
-	if(!blz.display) {
-		fprintf(stderr, "%s", "wmiimenu: cannot open display\n");
+	blz.dpy = XOpenDisplay(0);
+	if(!blz.dpy) {
+		fprintf(stderr, "%s", "wmiimenu: cannot open dpy\n");
 		exit(1);
 	}
-	blz.screen = DefaultScreen(blz.display);
-	blz.root = RootWindow(blz.display, blz.screen);
+	blz.screen = DefaultScreen(blz.dpy);
+	blz.root = RootWindow(blz.dpy, blz.screen);
 
 	maxname = read_allitems();
 
 	/* grab as early as possible, but after reading all items!!! */
 	while(XGrabKeyboard
-			(blz.display, blz.root, True, GrabModeAsync,
+			(blz.dpy, blz.root, True, GrabModeAsync,
 			 GrabModeAsync, CurrentTime) != GrabSuccess)
 		usleep(1000);
 
@@ -405,24 +405,24 @@ main(int argc, char *argv[])
 	wa.event_mask = ExposureMask | ButtonPressMask | KeyPressMask
 		| SubstructureRedirectMask | SubstructureNotifyMask;
 
-	irect.width = DisplayWidth(blz.display, blz.screen);
+	irect.width = DisplayWidth(blz.dpy, blz.screen);
 	irect.height = font.ascent + font.descent + 4;
-	irect.y = DisplayHeight(blz.display, blz.screen) - irect.height;
+	irect.y = DisplayHeight(blz.dpy, blz.screen) - irect.height;
 	irect.x = 0;
 
-	win = XCreateWindow(blz.display, blz.root, irect.x, irect.y,
-			irect.width, irect.height, 0, DefaultDepth(blz.display, blz.screen),
-			CopyFromParent, DefaultVisual(blz.display, blz.screen),
+	win = XCreateWindow(blz.dpy, blz.root, irect.x, irect.y,
+			irect.width, irect.height, 0, DefaultDepth(blz.dpy, blz.screen),
+			CopyFromParent, DefaultVisual(blz.dpy, blz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
-	XDefineCursor(blz.display, win, XCreateFontCursor(blz.display, XC_xterm));
-	XSync(blz.display, False);
+	XDefineCursor(blz.dpy, win, XCreateFontCursor(blz.dpy, XC_xterm));
+	XSync(blz.dpy, False);
 
 	/* pixmap */
-	gc = XCreateGC(blz.display, win, 0, 0);
-	pmap = XCreatePixmap(blz.display, win, irect.width, irect.height,
-			DefaultDepth(blz.display, blz.screen));
+	gc = XCreateGC(blz.dpy, win, 0, 0);
+	pmap = XCreatePixmap(blz.dpy, win, irect.width, irect.height,
+			DefaultDepth(blz.dpy, blz.screen));
 
-	XSync(blz.display, False);
+	XSync(blz.dpy, False);
 
 	brush.blitz = &blz;
 	brush.color = normcolor;
@@ -445,12 +445,12 @@ main(int argc, char *argv[])
 
 	text[0] = 0;
 	update_items(text);
-	XMapRaised(blz.display, win);
+	XMapRaised(blz.dpy, win);
 	draw_menu();
-	XSync(blz.display, False);
+	XSync(blz.dpy, False);
 
 	/* main event loop */
-	while(!XNextEvent(blz.display, &ev)) {
+	while(!XNextEvent(blz.dpy, &ev)) {
 		switch (ev.type) {
 			case KeyPress:
 				handle_kpress(&ev.xkey);
@@ -467,11 +467,11 @@ main(int argc, char *argv[])
 			break;
 	}
 
-	XUngrabKeyboard(blz.display, CurrentTime);
-	XFreePixmap(blz.display, pmap);
-	XFreeGC(blz.display, gc);
-	XDestroyWindow(blz.display, win);
-	XCloseDisplay(blz.display);
+	XUngrabKeyboard(blz.dpy, CurrentTime);
+	XFreePixmap(blz.dpy, pmap);
+	XFreeGC(blz.dpy, gc);
+	XDestroyWindow(blz.dpy, win);
+	XCloseDisplay(blz.dpy);
 
 	return ret;
 }

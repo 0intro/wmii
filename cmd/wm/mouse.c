@@ -159,14 +159,14 @@ draw_xor_border(XRectangle *r)
 	xor.y += 2;
 	xor.width = xor.width > 4 ? xor.width - 4 : 0;
 	xor.height = xor.height > 4 ? xor.height - 4 : 0;
-	XSetLineAttributes(blz.display, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
-	XDrawLine(blz.display, blz.root, xorgc, xor.x + 2, xor.y +  xor.height / 2,
+	XSetLineAttributes(blz.dpy, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
+	XDrawLine(blz.dpy, blz.root, xorgc, xor.x + 2, xor.y +  xor.height / 2,
 			xor.x + xor.width - 2, xor.y + xor.height / 2);
-	XDrawLine(blz.display, blz.root, xorgc, xor.x + xor.width / 2, xor.y + 2,
+	XDrawLine(blz.dpy, blz.root, xorgc, xor.x + xor.width / 2, xor.y + 2,
 			xor.x + xor.width / 2, xor.y + xor.height - 2);
-	XSetLineAttributes(blz.display, xorgc, 4, LineSolid, CapNotLast, JoinMiter);
-	XDrawRectangles(blz.display, blz.root, xorgc, &xor, 1);
-	XSync(blz.display, False);
+	XSetLineAttributes(blz.dpy, xorgc, 4, LineSolid, CapNotLast, JoinMiter);
+	XDrawRectangles(blz.dpy, blz.root, xorgc, &xor, 1);
+	XSync(blz.dpy, False);
 }
 
 void
@@ -186,7 +186,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	XRectangle origin = frect;
 	XPoint pt;
 
-	XQueryPointer(blz.display, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &di);
+	XQueryPointer(blz.dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &di);
 	rx = (float)ox / frect.width;
 	ry = (float)oy / frect.height;
 
@@ -202,21 +202,21 @@ do_mouse_resize(Client *c, BlitzAlign align)
 		if(align&WEST)
 			ox -= px;
 
-		XWarpPointer(blz.display, None, c->framewin, 0, 0, 0, 0, ox, oy);
+		XWarpPointer(blz.dpy, None, c->framewin, 0, 0, 0, 0, ox, oy);
 	}
 
-	XTranslateCoordinates(blz.display, c->framewin, blz.root, ox, oy, &ox, &oy, &dummy);
+	XTranslateCoordinates(blz.dpy, c->framewin, blz.root, ox, oy, &ox, &oy, &dummy);
 	pt.x = ox; pt.y = oy;
 
-	XSync(blz.display, False);
-	if(XGrabPointer(blz.display, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
+	XSync(blz.dpy, False);
+	if(XGrabPointer(blz.dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
 			None, cursor[CurResize], CurrentTime) != GrabSuccess)
 		return;
 	
-	XGrabServer(blz.display);
+	XGrabServer(blz.dpy);
 	draw_xor_border(&frect);
 	for(;;) {
-		XMaskEvent(blz.display, MouseMask | ExposureMask, &ev);
+		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
 			draw_xor_border(&frect);
@@ -226,11 +226,11 @@ do_mouse_resize(Client *c, BlitzAlign align)
 				resize_client(c, &frect, False);
 			if(rects)
 				free(rects);
-			XUngrabServer(blz.display);
-			XUngrabPointer(blz.display, CurrentTime);
-			XSync(blz.display, False);
+			XUngrabServer(blz.dpy);
+			XUngrabPointer(blz.dpy, CurrentTime);
+			XSync(blz.dpy, False);
 
-			XWarpPointer(blz.display, None, c->framewin, 0, 0, 0, 0,
+			XWarpPointer(blz.dpy, None, c->framewin, 0, 0, 0, 0,
 					frect.width * rx, frect.height * ry);
 			return;
 			break;
@@ -239,7 +239,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 
 			pt.x = ev.xmotion.x;
 			pt.y = ev.xmotion.y;
-			XTranslateCoordinates(blz.display, c->framewin, blz.root, ev.xmotion.x,
+			XTranslateCoordinates(blz.dpy, c->framewin, blz.root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
 
 			rect_morph_xy(&origin, px-ox, py-oy, &align);
@@ -266,12 +266,12 @@ do_mouse_resize(Client *c, BlitzAlign align)
 void
 grab_mouse(Window w, unsigned long mod, unsigned int button)
 {
-	XGrabButton(blz.display, button, mod, w, False, ButtonMask,
+	XGrabButton(blz.dpy, button, mod, w, False, ButtonMask,
 			GrabModeAsync, GrabModeSync, None, None);
 	if((mod != AnyModifier) && num_lock_mask) {
-		XGrabButton(blz.display, button, mod | num_lock_mask, w, False, ButtonMask,
+		XGrabButton(blz.dpy, button, mod | num_lock_mask, w, False, ButtonMask,
 				GrabModeAsync, GrabModeSync, None, None);
-		XGrabButton(blz.display, button, mod | num_lock_mask | LockMask, w, False,
+		XGrabButton(blz.dpy, button, mod | num_lock_mask | LockMask, w, False,
 				ButtonMask, GrabModeAsync, GrabModeSync, None, None);
 	}
 }
@@ -279,9 +279,9 @@ grab_mouse(Window w, unsigned long mod, unsigned int button)
 void
 ungrab_mouse(Window w, unsigned long mod, unsigned int button)
 {
-	XUngrabButton(blz.display, button, mod, w);
+	XUngrabButton(blz.dpy, button, mod, w);
 	if(mod != AnyModifier && num_lock_mask) {
-		XUngrabButton(blz.display, button, mod | num_lock_mask, w);
-		XUngrabButton(blz.display, button, mod | num_lock_mask | LockMask, w);
+		XUngrabButton(blz.dpy, button, mod | num_lock_mask, w);
+		XUngrabButton(blz.dpy, button, mod | num_lock_mask | LockMask, w);
 	}
 }

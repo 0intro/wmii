@@ -66,8 +66,8 @@ resize_bar(WMScreen *s)
 	s->brect = s->rect;
 	s->brect.height = height_of_bar();
 	s->brect.y = s->rect.height - s->brect.height;
-	XMoveResizeWindow(blz.display, s->barwin, s->brect.x, s->brect.y, s->brect.width, s->brect.height);
-	XSync(blz.display, False);
+	XMoveResizeWindow(blz.dpy, s->barwin, s->brect.x, s->brect.y, s->brect.width, s->brect.height);
+	XSync(blz.dpy, False);
 	draw_bar(s);
 
 	for(v=view; v; v=v->next)
@@ -135,9 +135,9 @@ draw_bar(WMScreen *s)
 			blitz_draw_label(&b->brush, b->text);
 		}
 MapBar:
-	XCopyArea(blz.display, s->bbrush.drawable, s->barwin, s->bbrush.gc, 0, 0,
+	XCopyArea(blz.dpy, s->bbrush.drawable, s->barwin, s->bbrush.gc, 0, 0,
 			s->brect.width, s->brect.height, 0, 0);
-	XSync(blz.display, False);
+	XSync(blz.dpy, False);
 }
 
 Bar *

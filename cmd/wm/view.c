@@ -121,7 +121,7 @@ focus_view(WMScreen *s, View *v)
 	Frame *f;
 	Client *c;
 
-	XGrabServer(blz.display);
+	XGrabServer(blz.dpy);
 	assign_sel_view(v);
 
 	update_frame_selectors(v);
@@ -131,9 +131,9 @@ focus_view(WMScreen *s, View *v)
 		if((f = c->sel)) {
 			if(f->view == v) {
 				resize_client(c, &f->rect, False);
-				//XMoveWindow(blz.display, c->framewin, f->rect.x, f->rect.y);
+				//XMoveWindow(blz.dpy, c->framewin, f->rect.x, f->rect.y);
 			}else
-				XMoveWindow(blz.display, c->framewin, 2 * s->rect.width + f->rect.x,
+				XMoveWindow(blz.dpy, c->framewin, 2 * s->rect.width + f->rect.x,
 						f->rect.y);
 		}
 
@@ -141,8 +141,8 @@ focus_view(WMScreen *s, View *v)
 		focus_client(c, True);
 
 	draw_frames();
-	XSync(blz.display, False);
-	XUngrabServer(blz.display);
+	XSync(blz.dpy, False);
+	XUngrabServer(blz.dpy);
 	flush_masked_events(EnterWindowMask);
 }
 
@@ -209,7 +209,7 @@ restack_view(View *v)
 	}
 
 	if(n)
-		XRestackWindows(blz.display, wins, n);
+		XRestackWindows(blz.dpy, wins, n);
 }
 
 void

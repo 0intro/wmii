@@ -45,8 +45,8 @@ void
 check_x_event(IXPConn *c)
 {
 	XEvent ev;
-	while(XPending(blz.display)) { /* main event loop */
-		XNextEvent(blz.display, &ev);
+	while(XPending(blz.dpy)) { /* main event loop */
+		XNextEvent(blz.dpy, &ev);
 		if(handler[ev.type])
 			(handler[ev.type]) (&ev); /* call handler */
 	}
@@ -57,7 +57,7 @@ flush_masked_events(long even_mask)
 {
 	XEvent ev;
 	unsigned int n = 0;
-	while(XCheckMaskEvent(blz.display, even_mask, &ev)) n++;
+	while(XCheckMaskEvent(blz.dpy, even_mask, &ev)) n++;
 	return n;
 }
 
@@ -171,7 +171,7 @@ handle_configurerequest(XEvent *e)
 			if(c->sel->area->view != screen->sel)
 				wc.x += 2 * screen->rect.width;
 			if(c->sel->area->floating) {
-				XConfigureWindow(blz.display, c->framewin, ev->value_mask, &wc);
+				XConfigureWindow(blz.dpy, c->framewin, ev->value_mask, &wc);
 				configure_client(c);
 			}
 		}
@@ -194,9 +194,9 @@ handle_configurerequest(XEvent *e)
 	wc.stack_mode = Above;
 	ev->value_mask &= ~CWStackMode;
 	ev->value_mask |= CWBorderWidth;
-	XConfigureWindow(blz.display, ev->window, ev->value_mask, &wc);
+	XConfigureWindow(blz.dpy, ev->window, ev->value_mask, &wc);
 
-	XSync(blz.display, False);
+	XSync(blz.dpy, False);
 }
 
 static void
@@ -275,7 +275,7 @@ handle_keypress(XEvent *e)
 			return;
 		buf[n] = 0;
 
-		if(blitz_kpress_input(&f->tagbar, ev->state, k, buf))
+		if(blitz_kpress_input(&f->tagbar, k, buf))
 			draw_frame(f);
 	}
 	else
@@ -294,11 +294,11 @@ handle_maprequest(XEvent *e)
 	XMapRequestEvent *ev = &e->xmaprequest;
 	static XWindowAttributes wa;
 
-	if(!XGetWindowAttributes(blz.display, ev->window, &wa))
+	if(!XGetWindowAttributes(blz.dpy, ev->window, &wa))
 		return;
 
 	if(wa.override_redirect) {
-		XSelectInput(blz.display, ev->window,
+		XSelectInput(blz.dpy, ev->window,
 				(StructureNotifyMask | PropertyChangeMask));
 		return;
 	}
