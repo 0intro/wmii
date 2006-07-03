@@ -269,8 +269,7 @@ handle_keypress(XEvent *e)
 	ev->state &= valid_mask;
 	if((f = frame_of_win(ev->window))) {
 		buf[0] = 0;
-		if((n = XLookupString(ev, buf, sizeof(buf), &k, 0) != 1))
-			return;
+		n = XLookupString(ev, buf, sizeof(buf), &k, 0);
 		if(IsFunctionKey(k) || IsKeypadKey(k) || IsMiscFunctionKey(k)
 				|| IsPFKey(k) || IsPrivateKeypadKey(k))
 			return;

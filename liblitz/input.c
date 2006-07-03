@@ -254,12 +254,6 @@ blitz_settext_input(BlitzInput *i, const char *text)
 	memcpy(i->text, text, i->size);
 }
 
-static void
-escape(BlitzInput *i)
-{
-	XUngrabKeyboard(i->blitz->display, i->window);
-}
-
 Bool
 blitz_bpress_input(BlitzInput *i, int x, int y)
 {
@@ -280,8 +274,8 @@ blitz_brelease_input(BlitzInput *i, int x, int y)
 
 	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)))
 		return False;
-	XGrabKeyboard(i->blitz->display, i->window, True,
-					GrabModeAsync, GrabModeAsync, CurrentTime);
+	/*XGrabKeyboard(i->blitz->display, i->window, True,
+					GrabModeAsync, GrabModeAsync, CurrentTime);*/
 	oend = i->curend;
 	i->curend = charof(i, x, y);
 	i->drag = False;
@@ -293,10 +287,8 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 {
 	char *oend;
 
-	if(!i->drag || !(i->drag = blitz_ispointinrect(x, y, &i->rect))) {
-		escape(i);
+	if(!i->drag || !(i->drag = blitz_ispointinrect(x, y, &i->rect)))
 		return False;
-	}
 
 	oend = i->curend;
 	i->curend = charof(i, x, y);
@@ -306,7 +298,7 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 Bool
 blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, const char *ks)
 {
-	if (mod & ControlMask) {
+	if(mod & ControlMask) {
 		switch (k) {
 		case XK_a:
 			k = XK_Begin;
@@ -360,9 +352,6 @@ blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, const char *ks)
 		case XK_Num_Lock:
 		case XK_Return:
 			break;
-		case XK_Escape:
-			escape(i);
-			return False;
 		case XK_Delete:
 		case XK_BackSpace:
 			return delete(i);
