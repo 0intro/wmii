@@ -225,7 +225,7 @@ blitz_kpress_input(BlitzInput *i, KeySym k, char *ks)
 			if(start != end)
 				i->curstart = i->curend = start;
 			else if(start > i->text)
-				i->curstart = i->curend = start--;
+				i->curstart = i->curend = --start;
 			else
 				i->curstart = i->curend = i->text;
 			return True;
@@ -234,7 +234,7 @@ blitz_kpress_input(BlitzInput *i, KeySym k, char *ks)
 			if(start != end)
 				i->curstart = i->curend = end;
 			else if(start < i->text + i->len)
-				i->curstart = i->curend = start++;
+				i->curstart = i->curend = ++start;
 			else
 				i->curstart = i->curend = i->text + i->len;
 			return True;
