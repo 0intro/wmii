@@ -573,7 +573,6 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		XMoveResizeWindow(blz.display, c->win, c->rect.x, c->rect.y,
 						c->rect.width, c->rect.height);
 		configure_client(c);
-		draw_frame(c->sel);
 	}
 }
 
