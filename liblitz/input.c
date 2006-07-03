@@ -56,18 +56,20 @@ blitz_setinput(BlitzInput *i, char *text)
 {
 	if(!text) {
 		if(i->size) {
-			i->text[0] = 0;
 			i->len = 0;
+			i->text[i->len] = 0;
+			i->curstart = i->curend = i->text;
 		}
 		return;
 	}
 
 	i->len = strlen(text);
-	if(i->len > i->size) {
-		i->size = 2 * i->len;
+	if(i->len + 1 > i->size) {
+		i->size = 2 * i->len + 1;
 		i->text = realloc(i->text, i->size);
 	}
-	memcpy(i->text, text, i->len + 1);
+	memcpy(i->text, text, i->len);
+	i->text[i->len] = 0;
 	i->curstart = i->curend = i->text + i->len;
 }
 
@@ -213,15 +215,15 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 Bool
 blitz_kpress_input(BlitzInput *i, KeySym k, char *ks)
 {
-
 	char *start, *end;
+	unsigned int len;
+	int s, e;
 
+	start = curstart(i);
+	end = curend(i);
 	if(IsCursorKey(k)) {
-		start = curstart(i);
-		end = curend(i);
 		switch(k) {
 		case XK_Left:
-			fputs("cursor left\n", stderr);
 			if(start != end)
 				i->curstart = i->curend = start;
 			else if(start > i->text)
@@ -230,7 +232,6 @@ blitz_kpress_input(BlitzInput *i, KeySym k, char *ks)
 				i->curstart = i->curend = i->text;
 			return True;
 		case XK_Right:
-			fputs("cursor right\n", stderr);
 			if(start != end)
 				i->curstart = i->curend = end;
 			else if(start < i->text + i->len)
@@ -240,15 +241,44 @@ blitz_kpress_input(BlitzInput *i, KeySym k, char *ks)
 			return True;
 		}
 	}
-	/*
 	else {
 		switch(k) {
 		case XK_BackSpace:
-			return delete(i);
+			if(!start)
+				return False;
+			else if((start == end) && (start != i->text)) {
+				i->curstart = i->curend = --start;
+				memmove(start, start + 1, strlen(start + 1));
+				i->len--;
+			}
+			else {
+				i->curstart = i->curend = start;
+				memmove(start, end, strlen(end));
+				i->len -= (end - start);
+			}
+			i->text[i->len] = 0;
+			return True;
 		default:
-			return insert(i, ks);
+			len = strlen(ks);
+			if(!start) {
+				blitz_setinput(i, ks);
+				return True;
+			}
+			i->len = i->len - (end - start) + len;
+			if(i->len + 1 > i->size) {
+				s = start - i->text;
+				e = end - i->text;
+				i->size = 2 * i->len + 1;
+				i->text = realloc(i->text, i->size);
+				start = i->text + s;
+				end = i->text + e;
+			}
+			memmove(start + len, end, strlen(end));
+			memcpy(start, ks, len);
+			i->curstart = i->curend = start + len;
+			i->text[i->len] = 0;
+			return True;
 		}
 	}
-	*/
 	return False;
 }
