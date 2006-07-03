@@ -34,18 +34,24 @@ void
 blitz_drawcursor(Display *dpy, Drawable drawable, GC gc,
 				int x, int y, unsigned int h, BlitzColor c)
 {
-	XSegment s[3];
+	XSegment s[5];
 
 	XSetForeground(dpy, gc, c.fg);
 	XSetLineAttributes(dpy, gc, 1, LineSolid, CapButt, JoinMiter);
-	s[0].x1 = x - 2;
+	s[0].x1 = x - 1;
 	s[0].y1 = s[0].y2 = y;
-	s[0].x2 = x + 3;
-	s[1].x1 = s[1].x2 = x;
-	s[1].y1 = y;
-	s[1].y2 = y + h;
-	s[2].x1 = x - 2;
-	s[2].y1 = s[2].y2 = y + h;
-	s[2].x2 = x + 3;
-	XDrawSegments(dpy, drawable, gc, s, 3);
+	s[0].x2 = x + 2;
+	s[1].x1 = x - 1;
+	s[1].y1 = s[1].y2 = y + 1;
+	s[1].x2 = x + 2;
+	s[2].x1 = s[2].x2 = x;
+	s[2].y1 = y;
+	s[2].y2 = y + h;
+	s[3].x1 = x - 1;
+	s[3].y1 = s[3].y2 = y + h;
+	s[3].x2 = x + 2;
+	s[4].x1 = x - 1;
+	s[4].y1 = s[4].y2 = y + h - 1;
+	s[4].x2 = x + 2;
+	XDrawSegments(dpy, drawable, gc, s, 5);
 }
