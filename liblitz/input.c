@@ -174,6 +174,8 @@ blitz_bpress_input(BlitzInput *i, int x, int y)
 
 	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)))
 		return False;
+	XSetInputFocus(i->blitz->dpy, i->win,
+			RevertToPointerRoot, CurrentTime);
 	ostart = i->curstart;
 	oend = i->curend;
 	i->curstart = i->curend = charof(i, x, y);
@@ -187,6 +189,8 @@ blitz_brelease_input(BlitzInput *i, int x, int y)
 
 	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)))
 		return False;
+	XSetInputFocus(i->blitz->dpy, i->win,
+			RevertToPointerRoot, CurrentTime);
 	oend = i->curend;
 	i->curend = charof(i, x, y);
 	i->drag = False;

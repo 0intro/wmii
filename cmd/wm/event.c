@@ -103,9 +103,10 @@ handle_buttonpress(XEvent *e)
 
 	if((f = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
-		if(blitz_bpress_input(&f->tagbar, ev->x, ev->y))
+		if(blitz_bpress_input(&f->tagbar, ev->x, ev->y)) {
 			draw_frame(f);
-		if((ev->state & def.mod) == def.mod) {
+		}
+		else if((ev->state & def.mod) == def.mod) {
 			focus(f->client, True);
 			switch(ev->button) {
 			case Button1:
