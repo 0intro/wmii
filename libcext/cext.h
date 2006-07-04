@@ -12,8 +12,11 @@
 /* asprintf.c */
 int cext_asprintf(char **str, char const *fmt, ...);
 
-/* emallocz.c */
+/* malloc.c */
 void *cext_emallocz(unsigned int size);
+void *cext_emalloc(unsigned int size);
+void *cext_erealloc(void *ptr, unsigned int size);
+char *cext_estrdup(const char *str);
 
 /* strlcat.c */
 unsigned int cext_strlcat(char *dst, const char *src, unsigned int siz);
@@ -26,18 +29,6 @@ unsigned int cext_tokenize(char **result, unsigned int reslen, char *str, char d
 
 /* trim.c */
 void cext_trim(char *str, const char *chars);
-
-/* vector.c */
-#define VECTOR(name, type) \
-typedef struct { \
-	unsigned int size; \
-	type *data; \
-} name
-VECTOR(Vector, void *);
-
-void cext_vattach(Vector *v, void *p);
-void cext_vattachat(Vector *v, void *p, unsigned int pos);
-void cext_vdetach(Vector *v, void *p);
 
 /* assert.c */
 #define cext_assert(a) do { \

@@ -3,8 +3,8 @@
 
 include ../config.mk
 
-SRC = assert.c emallocz.c strlcat.c strlcpy.c tokenize.c \
-	  trim.c vector.c
+SRC = assert.c malloc.c strlcat.c strlcpy.c tokenize.c \
+	  trim.c
 
 OBJ = ${SRC:.c=.o}
 
