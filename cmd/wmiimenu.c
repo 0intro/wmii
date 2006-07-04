@@ -298,7 +298,7 @@ handle_kpress(XKeyEvent * e)
 			do {
 				text[--i] = 0;
 				update_items(text);
-			} while(i && prev_nitem == nitem);
+			} while(i && nitem && prev_nitem == nitem);
 			update_items(text);
 		}
 		break;
