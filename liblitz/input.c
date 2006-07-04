@@ -225,14 +225,17 @@ blitz_brelease_input(BlitzInput *i, int x, int y, unsigned long time)
 			RevertToPointerRoot, CurrentTime);
 	oend = i->curend;
 
-	if(time - i->tdbclk < 1000) {
+	if((time - i->tdbclk < 1000) && (x == i->xdbclk && y == i->ydbclk)) {
 		mark_word(i, x, y);
 		i->drag = False;
 		i->tdbclk = 0;
+		i->xdbclk = i->ydbclk = 0;
 		return True;
 	}
 	i->curend = charof(i, x, y);
 	i->tdbclk = time;
+	i->xdbclk = x;
+	i->ydbclk = y;
 	i->drag = False;
 
 	return i->curend == oend;

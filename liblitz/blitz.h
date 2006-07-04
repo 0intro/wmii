@@ -69,6 +69,7 @@ struct BlitzInput {
 	unsigned int size;
 	unsigned int len;
 	unsigned long tdbclk;
+	int xdbclk, ydbclk;
 	Bool drag;
 	Drawable drawable;
 	Window win;
