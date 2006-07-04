@@ -8,6 +8,7 @@
 #include <string.h>
 #include <cext.h>
 
+#include <X11/extensions/XTest.h>
 #include <X11/keysym.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -28,25 +29,17 @@ static void
 next_keystroke(unsigned long *mod, KeyCode *code)
 {
 	XEvent e;
-	KeySym sym;
-	Window win;
-	int revert;
 
+	while(XGrabKeyboard(dpy, root, True,
+				GrabModeAsync, GrabModeAsync, CurrentTime) != Success);
 	*mod = 0;
-	XGetInputFocus(dpy, &win, &revert);
-	XGrabKeyboard(dpy, win, True, GrabModeAsync, GrabModeAsync, CurrentTime);
-/*	do {*/
-		XMaskEvent(dpy, KeyPressMask, &e);
-		XSendEvent(dpy, win, True, KeyPressMask, &e);
-		*mod |= e.xkey.state;/* & valid_mask;*/
-		*code = (KeyCode) e.xkey.keycode;
-		sym = XKeycodeToKeysym(dpy, e.xkey.keycode, 0);
-/*	} while(IsModifierKey(sym));*/
+	XMaskEvent(dpy, KeyPressMask, &e);
+	*mod |= e.xkey.state;/* & valid_mask;*/
+	*code = (KeyCode) e.xkey.keycode;
 	XUngrabKeyboard(dpy, CurrentTime);
-	XAllowEvents(dpy, AsyncKeyboard, CurrentTime);
 }
 
-static Bool
+static void
 print_key(unsigned long mod, KeyCode code)
 {
 	char buf[256], *k;
@@ -71,8 +64,6 @@ print_key(unsigned long mod, KeyCode code)
 	cext_strlcat(buf, k, sizeof(buf));
 
 	fprintf(stdout, "EventType=Key;EventValue='%s'\n", buf);
-
-	return strncmp(buf, "Escape", 7);
 }
 
 int
@@ -96,11 +87,11 @@ main(int argc, char **argv)
 	}
 	root = DefaultRootWindow(dpy);
 
-	do {
+	for(;;) {
 		next_keystroke(&mod, &code);
-		XAllowEvents(dpy, AsyncKeyboard, CurrentTime);
-	} while (print_key(mod, code));
-	XSync(dpy, False);
+		print_key(mod, code);
+		XTestFakeKeyEvent(dpy, code, True, CurrentTime);
+	}
 
 	return 0;
 }
