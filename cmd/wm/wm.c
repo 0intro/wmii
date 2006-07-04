@@ -280,7 +280,7 @@ main(int argc, char *argv[])
 	/* Check namespace permissions */
 	if(!strncmp(address, "unix!", 5)) {
 		struct stat st;
-		namespace = strdup(&address[5]);
+		namespace = cext_estrdup(&address[5]);
 
 		for(i = strlen(namespace) - 1; i >= 0; i--)
 			if(namespace[i] == '/') break;
@@ -336,7 +336,7 @@ main(int argc, char *argv[])
 	key = nil;
 
 	passwd = getpwuid(getuid());
-	user = strdup(passwd->pw_name);
+	user = cext_estrdup(passwd->pw_name);
 
 	def.colrules.string = nil;
 	def.colrules.size = 0;
@@ -344,7 +344,7 @@ main(int argc, char *argv[])
 	def.tagrules.size = 0;
 	def.keys = nil;
 	def.keyssz = 0;
-	def.font.fontstr = strdup(BLITZ_FONT);
+	def.font.fontstr = cext_estrdup(BLITZ_FONT);
 	def.border = 2;
 	def.colmode = Coldefault;
 	cext_strlcpy(def.selcolor.colstr, BLITZ_SELCOLORS, sizeof(def.selcolor.colstr));

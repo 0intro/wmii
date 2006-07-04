@@ -43,7 +43,7 @@ ixp_client_dial(IXPClient *c, char *sockfile, unsigned int rootfid)
 	c->fcall.type = TVERSION;
 	c->fcall.tag = IXP_NOTAG;
 	c->fcall.msize = IXP_MAX_MSG;
-	c->fcall.version = strdup(IXP_VERSION);
+	c->fcall.version = cext_estrdup(IXP_VERSION);
 	if(ixp_client_do_fcall(c) == -1) {
 		fprintf(stderr, "error: %s\n", c->errstr);
 		ixp_client_hangup(c);
@@ -61,8 +61,8 @@ ixp_client_dial(IXPClient *c, char *sockfile, unsigned int rootfid)
 	c->fcall.tag = IXP_NOTAG;
 	c->fcall.fid = c->root_fid;
 	c->fcall.afid = IXP_NOFID;
-	c->fcall.uname = strdup(getenv("USER"));
-	c->fcall.aname = strdup("");
+	c->fcall.uname = cext_estrdup(getenv("USER"));
+	c->fcall.aname = cext_estrdup("");
 	if(ixp_client_do_fcall(c) == -1) {
 		fprintf(stderr, "error: %s\n", c->errstr);
 		ixp_client_hangup(c);
@@ -90,7 +90,7 @@ ixp_client_create(IXPClient *c, unsigned int dirfid, char *name,
 	c->fcall.type = TCREATE;
 	c->fcall.tag = IXP_NOTAG;
 	c->fcall.fid = dirfid;
-	c->fcall.name = strdup(name);
+	c->fcall.name = cext_estrdup(name);
 	c->fcall.perm = perm;
 	c->fcall.mode = mode;
 	return ixp_client_do_fcall(c);
@@ -105,11 +105,11 @@ ixp_client_walk(IXPClient *c, unsigned int newfid, char *filepath)
 	c->fcall.fid = c->root_fid;
 	c->fcall.newfid = newfid;
 	if(filepath) {
-		c->fcall.name = strdup(filepath);
+		c->fcall.name = cext_estrdup(filepath);
 		c->fcall.nwname =
 			cext_tokenize(wname, IXP_MAX_WELEM, c->fcall.name, '/');
 		for(i = 0; i < c->fcall.nwname; i++)
-			c->fcall.wname[i] = strdup(wname[i]);
+			c->fcall.wname[i] = cext_estrdup(wname[i]);
 	}
 	return ixp_client_do_fcall(c);
 }

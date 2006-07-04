@@ -204,10 +204,7 @@ xdir(char *file, int details)
 		return -1;
 	}
 	while((count = ixp_client_read(&c, fid, offset, result, IXP_MAX_MSG)) > 0) {
-		if(!(data = realloc(data, offset + count))) {
-			fprintf(stderr, "wmiir: %s\n", "Out of memory in xdir\n");
-			return -1;
-		}
+		data = cext_erealloc(data, offset + count);
 		memcpy(data + offset, result, count);
 		offset += count;
 	}

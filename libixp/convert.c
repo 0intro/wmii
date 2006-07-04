@@ -117,8 +117,7 @@ ixp_unpack_strings(unsigned char **msg, int *msize, unsigned short n, char **str
 		*strings = nil;
 		return;
 	}
-	/* XXX: we don't really need mallocz here */
-	s = cext_emallocz(size);
+	s = cext_emalloc(size);
 	for(i=0; i < n; i++) {
 		ixp_unpack_u16(msg, msize, &len);
 		if(!msize || (*msize -= len) < 0)
@@ -138,8 +137,7 @@ ixp_unpack_string(unsigned char **msg, int *msize, char **string, unsigned short
 	ixp_unpack_u16(msg, msize, len);
 	*string = nil;
 	if (!msize || (*msize -= *len) >= 0) {
-		/* XXX we don't really need emallocz here */
-		*string = cext_emallocz(*len+1);
+		*string = cext_emalloc(*len+1);
 		if(*len)
 			memcpy(*string, *msg, *len);
 		(*string)[*len] = 0;

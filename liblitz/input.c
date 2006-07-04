@@ -66,7 +66,7 @@ blitz_setinput(BlitzInput *i, char *text)
 	i->len = strlen(text);
 	if(i->len + 1 > i->size) {
 		i->size = 2 * i->len + 1;
-		i->text = realloc(i->text, i->size);
+		i->text = cext_erealloc(i->text, i->size);
 	}
 	memcpy(i->text, text, i->len);
 	i->text[i->len] = 0;
@@ -355,7 +355,7 @@ blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 				s = start - i->text;
 				e = end - i->text;
 				i->size = 2 * i->len + 1;
-				i->text = realloc(i->text, i->size);
+				i->text = cext_erealloc(i->text, i->size);
 				start = i->text + s;
 				end = i->text + e;
 			}

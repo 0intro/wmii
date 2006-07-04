@@ -182,8 +182,7 @@ write_buf(P9Req *r, void *buf, unsigned int len) {
 	len -= r->ifcall.offset;
 	if(len > r->ifcall.count)
 		len = r->ifcall.count;
-	/* XXX: mallocz is not really needed here */
-	r->ofcall.data = cext_emallocz(len);
+	r->ofcall.data = cext_emalloc(len);
 	memcpy(r->ofcall.data, buf + r->ifcall.offset, len);
 	r->ofcall.count = len;
 }
@@ -206,8 +205,7 @@ write_to_buf(P9Req *r, void *buf, unsigned int *len, unsigned int max) {
 	*len = offset + count;
 	
 	if(max == 0) {
-		*(void **)buf = realloc(*(void **)buf, *len + 1);
-		cext_assert(*(void **)buf);
+		*(void **)buf = cext_erealloc(*(void **)buf, *len + 1);
 		buf = *(void **)buf;
 	}
 		
@@ -222,7 +220,7 @@ data_to_cstring(P9Req *r) {
 	unsigned int i;
 	i = r->ifcall.count;
 	if(!i || r->ifcall.data[i - 1] != '\n')
-		r->ifcall.data = realloc(r->ifcall.data, ++i);
+		r->ifcall.data = cext_erealloc(r->ifcall.data, ++i);
 	cext_assert(r->ifcall.data);
 	r->ifcall.data[i - 1] = '\0';
 }
@@ -270,7 +268,7 @@ message_root(char *message)
 	}else if(!strncmp(message, "font ", 5)) {
 		message += 5;
 		free(def.font.fontstr);
-		def.font.fontstr = strdup(message);
+		def.font.fontstr = cext_estrdup(message);
 		blitz_loadfont(&blz, &def.font);
 	}else if(!strncmp(message, "border ", 7)) {
 		message += 7;
@@ -340,7 +338,7 @@ write_event(char *format, ...) {
 	for(f=pending_event_fids; f; f=f->next) {
 		fi = f->fid->aux;
 		slen = fi->buf ? strlen(fi->buf) : 0;
-		fi->buf = realloc(fi->buf, slen + len + 1);
+		fi->buf = cext_erealloc(fi->buf, slen + len + 1);
 		fi->buf[slen] = '\0';
 		strcat(fi->buf, buffer);
 	}
@@ -402,7 +400,7 @@ lookup_file(FileId *parent, char *name)
 						file->id = c->id;
 						file->index = idx_of_client(c);
 						file->tab = *dir;
-						file->tab.name = strdup("sel");
+						file->tab.name = cext_estrdup("sel");
 					}if(name) goto LastItem;
 				}
 				if(name) {
@@ -434,7 +432,7 @@ lookup_file(FileId *parent, char *name)
 						file->ref = screen->sel;
 						file->id = screen->sel->id;
 						file->tab = *dir;
-						file->tab.name = strdup("sel");
+						file->tab.name = cext_estrdup("sel");
 					}if(name) goto LastItem;
 				}
 				for(v=view; v; v=v->next) {
@@ -445,7 +443,7 @@ lookup_file(FileId *parent, char *name)
 						file->ref = v;
 						file->id = v->id;
 						file->tab = *dir;
-						file->tab.name = strdup(v->name);
+						file->tab.name = cext_estrdup(v->name);
 						if(name) goto LastItem;
 					}
 				}
@@ -459,7 +457,7 @@ lookup_file(FileId *parent, char *name)
 						file->ref = b;
 						file->id = b->id;
 						file->tab = *dir;
-						file->tab.name = strdup(b->name);
+						file->tab.name = cext_estrdup(b->name);
 						if(name) goto LastItem;
 					}
 				}
@@ -474,7 +472,7 @@ lookup_file(FileId *parent, char *name)
 			file->ref = parent->ref;
 			file->index = parent->index;
 			file->tab = *dir;
-			file->tab.name = strdup(file->tab.name);
+			file->tab.name = cext_estrdup(file->tab.name);
 
 			/* Special considerations: */
 			switch(file->tab.type) {
@@ -507,7 +505,7 @@ void
 fs_attach(P9Req *r) {
 	FileId *f = get_file();
 	f->tab = dirtab[FsRoot][0];
-	f->tab.name = strdup("/");
+	f->tab.name = cext_estrdup("/");
 	f->ref = nil; /* shut up valgrind */
 	r->fid->aux = f;
 	r->fid->qid.type = f->tab.qtype;

@@ -337,13 +337,13 @@ read_allitems()
 		len = strlen(buf);
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = 0;
-		p = strdup(buf);
+		p = cext_estrdup(buf);
 		if(max < len) {
 			maxname = p;
 			max = len;
 		}
 
-		new = cext_emallocz(sizeof(Item));
+		new = cext_emalloc(sizeof(Item));
 		new->next = new->left = new->right = nil;
 		new->text = p;
 		if(!allitem)
@@ -408,7 +408,7 @@ main(int argc, char *argv[])
 
 	font.fontstr = getenv("WMII_FONT");
 	if (!font.fontstr)
-		font.fontstr = strdup(BLITZ_FONT);
+		font.fontstr = cext_estrdup(BLITZ_FONT);
 	blitz_loadfont(&blz, &font);
 
 	if((p = getenv("WMII_NORMCOLORS")))

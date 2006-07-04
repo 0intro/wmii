@@ -190,7 +190,7 @@ restack_view(View *v)
 	for(c=client; c; c=c->next, i++);
 	if(i > winssz) {
 		winssz = 2 * i;
-		wins = realloc(wins, sizeof(Window) * winssz);
+		wins = cext_erealloc(wins, sizeof(Window) * winssz);
 	}
 
 	for(a=v->area; a; a=a->next) {
