@@ -109,7 +109,7 @@ update_items(char *pattern)
 
 	for(i = allitem; i; i=i->next)
 		if(!plen || !strncmp(pattern, i->text, plen)) {
-			if(!item)
+			if(!j)
 				item = i;
 			else
 				j->right = i;
@@ -121,7 +121,7 @@ update_items(char *pattern)
 	for(i = allitem; i; i=i->next)
 		if(plen && strncmp(pattern, i->text, plen)
 				&& strstr(i->text, pattern)) {
-			if(!item)
+			if(!j)
 				item = i;
 			else
 				j->right = i;
@@ -198,7 +198,7 @@ draw_menu()
 		brush.border = False;
 		brush.rect.x = mrect.width - seek;
 		brush.rect.width = seek;
-		blitz_draw_label(&brush, (nextoff && nextoff->right) ? ">" : nil);
+		blitz_draw_label(&brush, nextoff ? ">" : nil);
 	}
 	XCopyArea(blz.dpy, brush.drawable, win, brush.gc, 0, 0, mrect.width,
 			mrect.height, 0, 0);
@@ -316,7 +316,7 @@ handle_kpress(XKeyEvent * e)
 		if(curroff && sel == curroff->left) {
 			curroff = prevoff;
 			update_offsets();
-		} else if(sel == nextoff && nextoff->right) {
+		} else if(sel == nextoff) {
 			curroff = nextoff;
 			update_offsets();
 		}
