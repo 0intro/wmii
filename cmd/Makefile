@@ -7,7 +7,7 @@ CFLAGS += -I../liblitz -I../libixp -I../libcext
 LDFLAGS += -L../libixp -lixp -L../libcext -lcext
 X11LDFLAGS += -L../liblitz -llitz
 
-X11SRC = wmiimenu.c wmiipsel.c wmiiwarp.c
+X11SRC = wmiimenu.c wmiipsel.c wmiiwarp.c wmiikgrab.c
 SRC = wmiir.c wmiisetsid.c
 ALLSRC = ${SRC} ${X11SRC}
 

@@ -134,7 +134,7 @@ get_key(const char *name)
 }
 
 static void
-next_keystroke(unsigned long *mod, KeyCode *keyCode)
+next_keystroke(unsigned long *mod, KeyCode *code)
 {
 	XEvent e;
 	KeySym sym;
@@ -142,7 +142,7 @@ next_keystroke(unsigned long *mod, KeyCode *keyCode)
 	do {
 		XMaskEvent(blz.dpy, KeyPressMask, &e);
 		*mod |= e.xkey.state & valid_mask;
-		*keyCode = (KeyCode) e.xkey.keycode;
+		*code = (KeyCode) e.xkey.keycode;
 		sym = XKeycodeToKeysym(blz.dpy, e.xkey.keycode, 0);
 	} while(IsModifierKey(sym));
 }
