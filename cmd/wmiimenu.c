@@ -20,7 +20,14 @@
 #include <blitz.h>
 #include <cext.h>
 
-VECTOR(ItemVector, char *);
+typedef struct Item Item;
+
+struct Item {
+	Item *next;		/* traverses all items */
+	Item *left, *right;	/* traverses items matching current search pattern */
+	char *text;
+};
+
 static char *title = nil;
 static Bool done = False;
 static int ret = 0;
@@ -28,13 +35,14 @@ static char text[4096];
 static BlitzColor selcolor;
 static BlitzColor normcolor;
 static Window win;
-static XRectangle irect;
-static ItemVector allitem = {0};
-static ItemVector item = {0};
-static int sel = -1;
-static unsigned int nextoff = 0;
-static unsigned int prevoff = 0;
-static unsigned int curroff = 0;
+static XRectangle mrect;
+static Item *allitem = nil;	/* first of all items */
+static Item *item = nil;	/* first of pattern matching items */
+static Item *sel = nil;
+static Item *nextoff = nil;
+static Item *prevoff = nil;
+static Item *curroff = nil;
+static int nitem = 0;
 static unsigned int cmdw = 0;
 static unsigned int twidth = 0;
 static unsigned int cwidth = 0;
@@ -47,12 +55,6 @@ static void handle_kpress(XKeyEvent * e);
 
 static char version[] = "wmiimenu - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
-static Vector *
-item2vector(ItemVector *iv)
-{
-	return (Vector *) iv;
-}
-
 static void
 usage()
 {
@@ -63,85 +65,99 @@ usage()
 static void
 update_offsets()
 {
-	unsigned int i;
 	unsigned int tw, w = cmdw + 2 * seek;
 
-	if(!item.size)
+	if(!curroff)
 		return;
 
-	for(i = curroff; i < item.size; i++) {
-		tw = blitz_textwidth(brush.font, item.data[i]);
-		if(tw > irect.width / 3)
-			tw = irect.width / 3;
-		w += tw + irect.height;
-		if(w > irect.width)
+	for(nextoff = curroff; nextoff; nextoff=nextoff->right) {
+		tw = blitz_textwidth(brush.font, nextoff->text);
+		if(tw > mrect.width / 3)
+			tw = mrect.width / 3;
+		w += tw + mrect.height;
+		if(w > mrect.width)
 			break;
 	}
-	nextoff = i;
 
 	w = cmdw + 2 * seek;
-	for(i = curroff; i > 0; i--) {
-		tw = blitz_textwidth(brush.font, item.data[i]);
-		if(tw > irect.width / 3)
-			tw = irect.width / 3;
-		w += tw + irect.height;
-		if(w > irect.width)
+	for(prevoff = curroff; prevoff && prevoff->left; prevoff=prevoff->left) {
+		tw = blitz_textwidth(brush.font, prevoff->left->text);
+		if(tw > mrect.width / 3)
+			tw = mrect.width / 3;
+		w += tw + mrect.height;
+		if(w > mrect.width)
 			break;
 	}
-	prevoff = i;
 }
 
-static unsigned int
+static void
 update_items(char *pattern)
 {
 	unsigned int plen = strlen(pattern);
-	int i;
+	Item *i, *j;
 
-	if(*pattern)
+	if(!pattern)
+		return;
+
+	if(!title || *pattern)
 		cmdw = cwidth;
 	else
 		cmdw = twidth;
 
-	curroff = prevoff = nextoff = 0;
-	sel = -1;
+	item = j = nil;
+	nitem = 0;
 
-	while(item.size)
-		cext_vdetach(item2vector(&item), item.data[0]);
+	for(i = allitem; i; i=i->next)
+		if(!plen || !strncmp(pattern, i->text, plen)) {
+			if(!item)
+				item = i;
+			else
+				j->right = i;
+			i->left = j;
+			i->right = nil;
+			j = i;
+			nitem++;
+		}
+	for(i = allitem; i; i=i->next)
+		if(plen && strncmp(pattern, i->text, plen)
+				&& strstr(i->text, pattern)) {
+			if(!item)
+				item = i;
+			else
+				j->right = i;
+			i->left = j;
+			i->right = nil;
+			j = i;
+			nitem++;
+		}
 
-	for(i = 0; i < allitem.size; i++)
-		if(!plen || !strncmp(pattern, allitem.data[i], plen)) 
-			cext_vattach(item2vector(&item), allitem.data[i]);
-	for(i = 0; i < allitem.size; i++)
-		if(plen && strncmp(pattern, allitem.data[i], plen)
-				&& strstr(allitem.data[i], pattern))
-			cext_vattach(item2vector(&item), allitem.data[i]);
-	if(item.size)
-		sel = 0;
+	curroff = prevoff = nextoff = sel = item;
 
 	update_offsets();
-	return item.size;
 }
 
 /* creates brush structs for brush mode drawing */
 static void
 draw_menu()
 {
-	unsigned int i, offx = 0;
+	unsigned int offx = 0;
+
+	Item *i;
 
 	brush.align = WEST;
 
-	brush.rect = irect;
+	brush.rect = mrect;
 	brush.rect.x = 0;
 	brush.rect.y = 0;
 	brush.color = normcolor;
-	brush.border = True;
+	brush.border = False;
 	blitz_draw_tile(&brush);
 
 	/* print command */
 	if(!title || text[0]) {
 		brush.color = normcolor;
 		cmdw = cwidth;
-		if(cmdw && item.size)
+		if(cmdw && item)
 			brush.rect.width = cmdw;
 		blitz_draw_label(&brush, text);
 	}
@@ -154,39 +170,38 @@ draw_menu()
 	offx += brush.rect.width;
 
 	brush.align = CENTER;
-	if(item.size) {
+	if(curroff) {
 		brush.color = normcolor;
 		brush.rect.x = offx;
 		brush.rect.width = seek;
 		offx += brush.rect.width;
-		blitz_draw_label(&brush, prevoff < curroff ? "<" : nil);
+		blitz_draw_label(&brush, (curroff && curroff->left) ? "<" : nil);
 
 		/* determine maximum items */
-		for(i = curroff; i < nextoff; i++) {
+		for(i = curroff; i != nextoff; i=i->right) {
+			brush.color = normcolor;
 			brush.border = False;
 			brush.rect.x = offx;
-			brush.rect.width = blitz_textwidth(brush.font, item.data[i]);
-			if(brush.rect.width > irect.width / 3)
-				brush.rect.width = irect.width / 3;
-			brush.rect.width += irect.height;
+			brush.rect.width = blitz_textwidth(brush.font, i->text);
+			if(brush.rect.width > mrect.width / 3)
+				brush.rect.width = mrect.width / 3;
+			brush.rect.width += mrect.height;
 			if(sel == i) {
 				brush.color = selcolor;
 				brush.border = True;
 			}
-			else
-				brush.color = normcolor;
-			blitz_draw_label(&brush, item.data[i]);
+			blitz_draw_label(&brush, i->text);
 			offx += brush.rect.width;
 		}
 
 		brush.color = normcolor;
 		brush.border = False;
-		brush.rect.x = irect.width - seek;
+		brush.rect.x = mrect.width - seek;
 		brush.rect.width = seek;
-		blitz_draw_label(&brush, item.size > nextoff ? ">" : nil);
+		blitz_draw_label(&brush, (nextoff && nextoff->right) ? ">" : nil);
 	}
-	XCopyArea(blz.dpy, brush.drawable, win, brush.gc, 0, 0, irect.width,
-			irect.height, 0, 0);
+	XCopyArea(blz.dpy, brush.drawable, win, brush.gc, 0, 0, mrect.width,
+			mrect.height, 0, 0);
 	XSync(blz.dpy, False);
 }
 
@@ -195,8 +210,8 @@ handle_kpress(XKeyEvent * e)
 {
 	KeySym ksym;
 	char buf[32];
-	int num;
-	unsigned int len = strlen(text);
+	int num, prev_nitem;
+	unsigned int i, len = strlen(text);
 
 	buf[0] = 0;
 	num = XLookupString(e, buf, sizeof(buf), &ksym, 0);
@@ -246,28 +261,28 @@ handle_kpress(XKeyEvent * e)
 	}
 	switch (ksym) {
 	case XK_Left:
-		if(sel <= 0)
+		if(!(sel && sel->left))
 			return;
-		sel--;
+		sel=sel->left;
 		break;
 	case XK_Tab:
-		if(!item.size)
+		if(!sel)
 			return;
-		cext_strlcpy(text, item.data[sel], sizeof(text));
+		cext_strlcpy(text, sel->text, sizeof(text));
 		update_items(text);
 		break;
 	case XK_Right:
-		if(sel < 0 || (sel + 1 == item.size))
+		if(!(sel && sel->right))
 			return;
-		sel++;
+		sel=sel->right;
 		break;
 	case XK_Return:
 		if(e->state & ShiftMask) {
 			if(text)
 				fprintf(stdout, "%s", text);
 		}
-		else if(sel >= 0)
-			fprintf(stdout, "%s", item.data[sel]);
+		else if(sel)
+			fprintf(stdout, "%s", sel->text);
 		else if(text)
 			fprintf(stdout, "%s", text);
 		fflush(stdout);
@@ -278,15 +293,12 @@ handle_kpress(XKeyEvent * e)
 		done = True;
 		break;
 	case XK_BackSpace:
-		if(len) {
-			unsigned int i = len;
-			if(i) {
-				int prev_nitem;
-				do
-					text[--i] = 0;
-				while((prev_nitem = item.size) && i &&
-						prev_nitem == update_items(text));
-			}
+		if((i = len)) {
+			prev_nitem = nitem;
+			do {
+				text[--i] = 0;
+				update_items(text);
+			} while(i && prev_nitem == nitem);
 			update_items(text);
 		}
 		break;
@@ -300,11 +312,11 @@ handle_kpress(XKeyEvent * e)
 			update_items(text);
 		}
 	}
-	if(sel >= 0) {
-		if(sel == curroff - 1) {
+	if(sel) {
+		if(curroff && sel == curroff->left) {
 			curroff = prevoff;
 			update_offsets();
-		} else if((sel == nextoff) && (item.size > nextoff)) {
+		} else if(sel == nextoff && nextoff->right) {
 			curroff = nextoff;
 			update_offsets();
 		}
@@ -316,19 +328,30 @@ static char *
 read_allitems()
 {
 	static char *maxname = nil;
-    char *p, buf[1024];
+	char *p, buf[1024];
 	unsigned int len = 0, max = 0;
+	Item *i, *new;
 
+	i = nil;
 	while(fgets(buf, sizeof(buf), stdin)) {
 		len = strlen(buf);
-		if (buf[len - 1] == '\n') /* there might be no \n after the last item */
-			buf[len - 1] = 0; /* removing \n */
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = 0;
 		p = strdup(buf);
 		if(max < len) {
 			maxname = p;
 			max = len;
 		}
-		cext_vattach(item2vector(&allitem), p);
+
+		new = (Item*)malloc(sizeof(Item));
+		new->next = new->left = new->right = nil;
+		new->text = p;
+		if(!allitem)
+			allitem = i = new;
+		else {
+			i->next = new;
+			i = new;
+		}
 	}
 
 	return maxname;
@@ -405,13 +428,13 @@ main(int argc, char *argv[])
 	wa.event_mask = ExposureMask | ButtonPressMask | KeyPressMask
 		| SubstructureRedirectMask | SubstructureNotifyMask;
 
-	irect.width = DisplayWidth(blz.dpy, blz.screen);
-	irect.height = font.ascent + font.descent + 4;
-	irect.y = DisplayHeight(blz.dpy, blz.screen) - irect.height;
-	irect.x = 0;
+	mrect.width = DisplayWidth(blz.dpy, blz.screen);
+	mrect.height = font.ascent + font.descent + 4;
+	mrect.y = DisplayHeight(blz.dpy, blz.screen) - mrect.height;
+	mrect.x = 0;
 
-	win = XCreateWindow(blz.dpy, blz.root, irect.x, irect.y,
-			irect.width, irect.height, 0, DefaultDepth(blz.dpy, blz.screen),
+	win = XCreateWindow(blz.dpy, blz.root, mrect.x, mrect.y,
+			mrect.width, mrect.height, 0, DefaultDepth(blz.dpy, blz.screen),
 			CopyFromParent, DefaultVisual(blz.dpy, blz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
 	XDefineCursor(blz.dpy, win, XCreateFontCursor(blz.dpy, XC_xterm));
@@ -419,7 +442,7 @@ main(int argc, char *argv[])
 
 	/* pixmap */
 	gc = XCreateGC(blz.dpy, win, 0, 0);
-	pmap = XCreatePixmap(blz.dpy, win, irect.width, irect.height,
+	pmap = XCreatePixmap(blz.dpy, win, mrect.width, mrect.height,
 			DefaultDepth(blz.dpy, blz.screen));
 
 	XSync(blz.dpy, False);
@@ -431,14 +454,14 @@ main(int argc, char *argv[])
 	brush.font = &font;
 
 	if(maxname)
-		cwidth = blitz_textwidth(brush.font, maxname) + irect.height;
-	if(cwidth > irect.width / 3)
-		cwidth = irect.width / 3;
+		cwidth = blitz_textwidth(brush.font, maxname) + mrect.height;
+	if(cwidth > mrect.width / 3)
+		cwidth = mrect.width / 3;
 
 	if(title) {
-		twidth = blitz_textwidth(brush.font, title) + irect.height;
-		if(twidth > irect.width / 3)
-			twidth = irect.width / 3;
+		twidth = blitz_textwidth(brush.font, title) + mrect.height;
+		if(twidth > mrect.width / 3)
+			twidth = mrect.width / 3;
 	}
 
 	cmdw = title ? twidth : cwidth;
