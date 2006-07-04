@@ -182,8 +182,40 @@ blitz_bpress_input(BlitzInput *i, int x, int y)
 	return (i->curstart == ostart) && (i->curend == oend);
 }
 
+static void
+mark_word(BlitzInput *i, int x, int y)
+{
+	char *start, *end, *ps, *pe, *p;
+
+	start = curstart(i);
+	end = curend(i);
+
+	if(!start)
+		return;
+
+	if(start != end) {
+		i->curstart = i->curend = charof(i, x, y);
+		return;
+	}
+
+	for(ps = start; (ps > i->text) && (*ps == ' '); ps--);
+	for(pe = start; *pe && (*pe == ' '); pe++);
+
+	if(start - ps > pe - start)
+		p = pe;
+	else
+		p = ps;
+
+	while((p > i->text) && (*(p - 1) != ' '))
+		*p--;
+	i->curstart = p;
+	while(*p && (*p != ' '))
+		p++;
+	i->curend = p;
+}
+
 Bool
-blitz_brelease_input(BlitzInput *i, int x, int y)
+blitz_brelease_input(BlitzInput *i, int x, int y, unsigned long time)
 {
 	char *oend;
 
@@ -192,8 +224,17 @@ blitz_brelease_input(BlitzInput *i, int x, int y)
 	XSetInputFocus(i->blitz->dpy, i->win,
 			RevertToPointerRoot, CurrentTime);
 	oend = i->curend;
+
+	if(time - i->tdbclk < 1000) {
+		mark_word(i, x, y);
+		i->drag = False;
+		i->tdbclk = 0;
+		return True;
+	}
 	i->curend = charof(i, x, y);
+	i->tdbclk = time;
 	i->drag = False;
+
 	return i->curend == oend;
 }
 
@@ -217,7 +258,7 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 }
 
 Bool
-blitz_kpress_input(BlitzInput *i, KeySym k, char *ks)
+blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 {
 	char *start, *end;
 	unsigned int len;
@@ -225,8 +266,45 @@ blitz_kpress_input(BlitzInput *i, KeySym k, char *ks)
 
 	start = curstart(i);
 	end = curend(i);
+	if(mod & ControlMask) {
+		switch (k) {
+		case XK_A:
+		case XK_a:
+			k = XK_Begin;
+			break;
+		case XK_E:
+		case XK_e:
+			k = XK_End;
+			break;
+		case XK_H:
+		case XK_h:
+			k = XK_BackSpace;
+			break;
+		case XK_U:
+		case XK_u:
+			k = XK_BackSpace;
+			start = i->text;
+			break;
+		case XK_W:
+		case XK_w:
+			k = XK_BackSpace;
+			while(start > i->text && (*(--start) == ' '));
+			while(start > i->text && (*(start - 1) != ' '))
+				--start;
+			break;
+		default: /* ignore other control sequences */
+			return False;
+		}
+	}
+
 	if(IsCursorKey(k)) {
 		switch(k) {
+		case XK_Begin:
+			i->curstart = i->curend = i->text;
+			return True;
+		case XK_End:
+			i->curstart = i->curend = i->text + i->len;
+			return True;
 		case XK_Left:
 			if(start != end)
 				i->curstart = i->curend = start;
@@ -262,6 +340,7 @@ blitz_kpress_input(BlitzInput *i, KeySym k, char *ks)
 			}
 			i->text[i->len] = 0;
 			return True;
+
 		default:
 			len = strlen(ks);
 			if(!start) {

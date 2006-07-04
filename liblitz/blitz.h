@@ -68,6 +68,7 @@ struct BlitzInput {
 	char *curend;
 	unsigned int size;
 	unsigned int len;
+	unsigned long tdbclk;
 	Bool drag;
 	Drawable drawable;
 	Window win;
@@ -99,8 +100,8 @@ void blitz_loadfont(Blitz *blitz, BlitzFont *font);
 void blitz_draw_input(BlitzInput *i);
 /* blitz_b* functions return True on expose */
 Bool blitz_bpress_input(BlitzInput *i, int x, int y);
-Bool blitz_brelease_input(BlitzInput *i, int x, int y);
+Bool blitz_brelease_input(BlitzInput *i, int x, int y, unsigned long time);
 Bool blitz_bmotion_input(BlitzInput *i, int x, int y);
 Bool blitz_ispointinrect(int x, int y, XRectangle * r);
 void blitz_setinput(BlitzInput *i, char *text);
-Bool blitz_kpress_input(BlitzInput *i, KeySym k, char *ks);
+Bool blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks);

@@ -78,7 +78,7 @@ handle_buttonrelease(XEvent *e)
 						ev->button, b->name);
 	}
 	else if((f = frame_of_win(ev->window))) {
-		if(blitz_brelease_input(&f->tagbar, ev->x, ev->y))
+		if(blitz_brelease_input(&f->tagbar, ev->x, ev->y, ev->time))
 			draw_frame(f);
 		write_event("ClientClick %d %d\n", idx_of_client(f->client), ev->button);
 	}
@@ -261,7 +261,7 @@ static void
 handle_keypress(XEvent *e)
 {
 	XKeyEvent *ev = &e->xkey;
-	KeySym k;
+	KeySym k = 0;
 	char buf[32];
 	int n;
 	static Frame *f;
@@ -276,7 +276,7 @@ handle_keypress(XEvent *e)
 			return;
 		buf[n] = 0;
 
-		if(blitz_kpress_input(&f->tagbar, k, buf))
+		if(blitz_kpress_input(&f->tagbar, ev->state, k, buf))
 			draw_frame(f);
 	}
 	else
