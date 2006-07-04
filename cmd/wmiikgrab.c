@@ -25,44 +25,31 @@ usage()
 }
 
 static void
-emulate_key_press(unsigned long mod, KeyCode key)
-{
-	XEvent e;
-	Window win;
-	int revert;
-
-	XGetInputFocus(dpy, &win, &revert);
-
-	e.xkey.type = KeyPress;
-	e.xkey.time = CurrentTime;
-	e.xkey.window = win;
-	e.xkey.display = dpy;
-	e.xkey.state = mod;
-	e.xkey.keycode = key;
-	XSendEvent(dpy, win, True, KeyPressMask, &e);
-	e.xkey.type = KeyRelease;
-	XSendEvent(dpy, win, True, KeyReleaseMask, &e);
-	XSync(dpy, False);
-}
-
-static void
 next_keystroke(unsigned long *mod, KeyCode *code)
 {
 	XEvent e;
 	KeySym sym;
+	Window win;
+	int revert;
+
 	*mod = 0;
-	do {
+	XGetInputFocus(dpy, &win, &revert);
+	XGrabKeyboard(dpy, win, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+/*	do {*/
 		XMaskEvent(dpy, KeyPressMask, &e);
-		*mod |= e.xkey.state;
+		XSendEvent(dpy, win, True, KeyPressMask, &e);
+		*mod |= e.xkey.state;/* & valid_mask;*/
 		*code = (KeyCode) e.xkey.keycode;
 		sym = XKeycodeToKeysym(dpy, e.xkey.keycode, 0);
-	} while(IsModifierKey(sym));
+/*	} while(IsModifierKey(sym));*/
+	XUngrabKeyboard(dpy, CurrentTime);
+	XAllowEvents(dpy, AsyncKeyboard, CurrentTime);
 }
 
-static void
+static Bool
 print_key(unsigned long mod, KeyCode code)
 {
-	char buf[256];
+	char buf[256], *k;
 
 	buf[0] = 0;
 	if(mod & ShiftMask)
@@ -80,17 +67,19 @@ print_key(unsigned long mod, KeyCode code)
 	if(mod & Mod5Mask)
 		cext_strlcat(buf, "Mod5-", sizeof(buf));
 
-	cext_strlcat(buf,
-			XKeysymToString(XKeycodeToKeysym(dpy, code, 0)), sizeof(buf));
+	if((k = XKeysymToString(XKeycodeToKeysym(dpy, code, 0))))
+	cext_strlcat(buf, k, sizeof(buf));
 
 	fprintf(stdout, "EventType=Key;EventValue='%s'\n", buf);
+
+	return strncmp(buf, "Escape", 7);
 }
 
 int
 main(int argc, char **argv)
 {
-	unsigned long mod;
-	KeyCode code;
+	unsigned long mod = 0;
+	KeyCode code = 0;
 
 	/* command line args */
 	if(argc > 1) {
@@ -107,13 +96,10 @@ main(int argc, char **argv)
 	}
 	root = DefaultRootWindow(dpy);
 
-	XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime);
-	for(;;) {
+	do {
 		next_keystroke(&mod, &code);
-		print_key(mod, code);
-		emulate_key_press(mod, code);
-	}
-	XUngrabKeyboard(dpy, CurrentTime);
+		XAllowEvents(dpy, AsyncKeyboard, CurrentTime);
+	} while (print_key(mod, code));
 	XSync(dpy, False);
 
 	return 0;
