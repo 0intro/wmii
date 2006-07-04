@@ -343,7 +343,7 @@ read_allitems()
 			max = len;
 		}
 
-		new = (Item*)malloc(sizeof(Item));
+		new = cext_emallocz(sizeof(Item));
 		new->next = new->left = new->right = nil;
 		new->text = p;
 		if(!allitem)
