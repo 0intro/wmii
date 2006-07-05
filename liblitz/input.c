@@ -259,12 +259,11 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 	if(focus)
 		XSetInputFocus(i->blitz->dpy, i->win,
 				RevertToPointerRoot, CurrentTime);
+	else
+		return False;
 
-	if(!i->drag || !(i->drag = focus)) {
-		if(i->button)
-			i->curstart = i->curend;
-		return i->button > 0;
-	}
+	if(!i->drag)
+		return False;
 	oend = i->curend;
 	i->curend = charof(i, x, y);
 	return i->curend == oend;
