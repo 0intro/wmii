@@ -259,8 +259,11 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 		XSetInputFocus(i->blitz->dpy, i->win,
 				RevertToPointerRoot, CurrentTime);
 
-	if(!i->drag || !(i->drag = focus))
-		return False;
+	if(!i->drag || !(i->drag = focus)) {
+		if(i->button)
+			i->curstart = i->curend;
+		return i->button > 0;
+	}
 	oend = i->curend;
 	i->curend = charof(i, x, y);
 	return i->curend == oend;
@@ -349,9 +352,9 @@ blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 			}
 			i->text[i->len] = 0;
 			return True;
-
 		default:
-			len = strlen(ks);
+			if(!(len = strlen(ks)))
+				return False;
 			if(!start) {
 				blitz_setinput(i, ks);
 				return True;
