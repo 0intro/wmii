@@ -351,6 +351,12 @@ main(int argc, char *argv[])
 	blitz_loadcolor(&blz, &def.selcolor);
 	cext_strlcpy(def.normcolor.colstr, BLITZ_NORMCOLORS, sizeof(def.normcolor.colstr));
 	blitz_loadcolor(&blz, &def.normcolor);
+	cext_strlcpy(def.bcolor[0].colstr, BLITZ_B1COLORS, sizeof(def.bcolor[0].colstr));
+	cext_strlcpy(def.bcolor[1].colstr, BLITZ_B2COLORS, sizeof(def.bcolor[1].colstr));
+	cext_strlcpy(def.bcolor[2].colstr, BLITZ_B3COLORS, sizeof(def.bcolor[2].colstr));
+	blitz_loadcolor(&blz, &def.bcolor[0]);
+	blitz_loadcolor(&blz, &def.bcolor[1]);
+	blitz_loadcolor(&blz, &def.bcolor[2]);
 	cext_strlcpy(def.grabmod, "Mod1", sizeof(def.grabmod));
 	def.mod = Mod1Mask;
 

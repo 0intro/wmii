@@ -9,6 +9,9 @@
 #define BLITZ_FONT		"fixed"
 #define BLITZ_SELCOLORS		"#ffffff #335577 #447799"
 #define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
+#define BLITZ_B1COLORS		"#000000 #00ffff #000000"
+#define BLITZ_B2COLORS		"#000000 #ff0000 #000000"
+#define BLITZ_B3COLORS		"#000000 #00ff00 #000000"
 
 typedef struct Blitz Blitz;
 typedef enum BlitzAlign BlitzAlign;
@@ -70,11 +73,13 @@ struct BlitzInput {
 	unsigned int len;
 	unsigned long tdbclk;
 	int xdbclk, ydbclk;
+	int button;
 	Bool drag;
 	Drawable drawable;
 	Window win;
 	GC gc;
 	BlitzColor color;
+	BlitzColor bcolor[3];
 	BlitzFont *font;
 	XRectangle rect;	/* relative rect */
 };
@@ -100,8 +105,8 @@ void blitz_loadfont(Blitz *blitz, BlitzFont *font);
 /* input.c */
 void blitz_draw_input(BlitzInput *i);
 /* blitz_b* functions return True on expose */
-Bool blitz_bpress_input(BlitzInput *i, int x, int y);
-Bool blitz_brelease_input(BlitzInput *i, int x, int y, unsigned long time);
+Bool blitz_bpress_input(BlitzInput *i, int button, int x, int y);
+Bool blitz_brelease_input(BlitzInput *i, int button, int x, int y, unsigned long time);
 Bool blitz_bmotion_input(BlitzInput *i, int x, int y);
 Bool blitz_ispointinrect(int x, int y, XRectangle * r);
 void blitz_setinput(BlitzInput *i, char *text);

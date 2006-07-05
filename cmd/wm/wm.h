@@ -148,6 +148,7 @@ struct Ruleset {
 struct {
 	BlitzColor selcolor;
 	BlitzColor normcolor;
+	BlitzColor bcolor[3];
 	BlitzFont font;
 	unsigned int border;
 	unsigned int snap;

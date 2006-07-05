@@ -265,6 +265,18 @@ message_root(char *message)
 		message += 11;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.normcolor);
+	}else if(!strncmp(message, "b1colors ", 9)) {
+		message += 9;
+		n = strlen(message);
+		return parse_colors(&message, (int *)&n, &def.bcolor[0]);
+	}else if(!strncmp(message, "b2colors ", 9)) {
+		message += 9;
+		n = strlen(message);
+		return parse_colors(&message, (int *)&n, &def.bcolor[1]);
+	}else if(!strncmp(message, "b3colors ", 9)) {
+		message += 9;
+		n = strlen(message);
+		return parse_colors(&message, (int *)&n, &def.bcolor[2]);
 	}else if(!strncmp(message, "font ", 5)) {
 		message += 5;
 		free(def.font.fontstr);

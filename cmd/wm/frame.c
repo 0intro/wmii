@@ -45,6 +45,9 @@ create_frame(Client *c, View *v)
 	f->tagbar.gc = c->gc;
 	f->tagbar.font = &def.font;
 	f->tagbar.color = def.normcolor;
+	f->tagbar.bcolor[0] = def.bcolor[0];
+	f->tagbar.bcolor[1] = def.bcolor[1];
+	f->tagbar.bcolor[2] = def.bcolor[2];
 	blitz_setinput(&f->tagbar, c->tags);
 
 	return f;
@@ -78,6 +81,9 @@ insert_frame(Frame *pos, Frame *f, Bool before)
 void
 update_frame_widget_colors(Frame *f)
 {
+	f->tagbar.bcolor[0] = def.bcolor[0];
+	f->tagbar.bcolor[1] = def.bcolor[1];
+	f->tagbar.bcolor[2] = def.bcolor[2];
  	if(sel_screen && (f->client == sel_client()))
 		f->tagbar.color = f->tile.color = f->titlebar.color = def.selcolor;
 	else

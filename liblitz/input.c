@@ -12,18 +12,12 @@
 #include "blitz.h"
 
 static void
-xchangegc(BlitzInput *i, BlitzColor *c, Bool invert)
+xchangegc(BlitzInput *i, BlitzColor c)
 {
 	XGCValues gcv;
 
-	if(invert) {
-		gcv.foreground = c->bg;
-		gcv.background = c->fg;
-	}
-	else {
-		gcv.foreground = c->fg;
-		gcv.background = c->bg;
-	}
+	gcv.foreground = c.fg;
+	gcv.background = c.bg;
 	if(i->font->set)
 		XChangeGC(i->blitz->dpy, i->gc, GCForeground | GCBackground, &gcv);
 	else {
@@ -110,14 +104,14 @@ blitz_draw_input(BlitzInput *i)
 	end = curend(i);
 
 	/* draw normal text */
-	xchangegc(i, &i->color, False);
+	xchangegc(i, i->color);
 	xdrawtextpart(i, i->text, start, &xoff, yoff);
 	xcursor = xoff;
 	/* draw sel text */
-	xchangegc(i, &i->color, True);
+	xchangegc(i, i->bcolor[i->button]);
 	xdrawtextpart(i, start, end, &xoff, yoff);
 	/* draw remaining normal text */
-	xchangegc(i, &i->color, False);
+	xchangegc(i, i->color);
 	xdrawtextpart(i, end, i->text + i->len, &xoff, yoff);
 
 	/* draw cursor */
@@ -168,7 +162,7 @@ charof(BlitzInput *i, int x, int y)
 }
 
 Bool
-blitz_bpress_input(BlitzInput *i, int x, int y)
+blitz_bpress_input(BlitzInput *i, int button, int x, int y)
 {
 	char *ostart, *oend;
 
@@ -179,6 +173,8 @@ blitz_bpress_input(BlitzInput *i, int x, int y)
 	ostart = i->curstart;
 	oend = i->curend;
 	i->curstart = i->curend = charof(i, x, y);
+	if((i->button = button - Button1) > 2)
+		i->button = 0;
 	return (i->curstart == ostart) && (i->curend == oend);
 }
 
@@ -218,7 +214,7 @@ mark(BlitzInput *i, int x, int y)
 }
 
 Bool
-blitz_brelease_input(BlitzInput *i, int x, int y, unsigned long time)
+blitz_brelease_input(BlitzInput *i, int button, int x, int y, unsigned long time)
 {
 	char *oend;
 
@@ -228,6 +224,8 @@ blitz_brelease_input(BlitzInput *i, int x, int y, unsigned long time)
 			RevertToPointerRoot, CurrentTime);
 	oend = i->curend;
 
+	if((i->button = button - Button1) > 2)
+		i->button = 0;
 	if((time - i->tdbclk < 1000) && (x == i->xdbclk && y == i->ydbclk)) {
 		mark(i, x, y);
 		i->drag = False;
