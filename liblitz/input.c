@@ -226,14 +226,19 @@ blitz_brelease_input(BlitzInput *i, int button, int x, int y, unsigned long time
 
 	if((i->button = button - Button1) > 2)
 		i->button = 0;
-	if((time - i->tdbclk < 1000) && (x == i->xdbclk && y == i->ydbclk)) {
+	if(!i->button && (time - i->tdbclk < 1000)
+			&& (x == i->xdbclk && y == i->ydbclk))
+	{
 		mark(i, x, y);
 		i->drag = False;
 		i->tdbclk = 0;
 		i->xdbclk = i->ydbclk = 0;
 		return True;
 	}
+
 	i->curend = charof(i, x, y);
+	if(i->button)
+		i->curstart = i->curend;
 	i->tdbclk = time;
 	i->xdbclk = x;
 	i->ydbclk = y;
