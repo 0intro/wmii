@@ -22,6 +22,7 @@ create_bar(Bar **b_link, char *name)
 	if(free_bars) {
 		b = free_bars;
 		free_bars = b->next;
+		memset(b, 0, sizeof(*b));
 	}
 	else
 		b = cext_emallocz(sizeof(Bar));
