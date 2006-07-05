@@ -226,6 +226,7 @@ blitz_brelease_input(BlitzInput *i, int button, int x, int y, unsigned long time
 
 	if((i->button = button - Button1) > 2)
 		i->button = 0;
+
 	if(!i->button && (time - i->tdbclk < 1000)
 			&& (x == i->xdbclk && y == i->ydbclk))
 	{
