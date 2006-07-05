@@ -122,8 +122,6 @@ draw_frame(Frame *f)
 	f->tagbar.rect.width =
 		f->tagbar.rect.height + blitz_textwidth(&def.font, f->tagbar.text);
 
-	fprintf(stderr, "draw_frame '%s'\n", f->tagbar.text);
-
 	if(f->tagbar.rect.width > f->rect.width / 3)
 		f->tagbar.rect.width = f->rect.width / 3;
 
