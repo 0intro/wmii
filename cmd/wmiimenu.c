@@ -264,6 +264,10 @@ handle_kpress(XKeyEvent * e)
 		if(!(sel && sel->left))
 			return;
 		sel=sel->left;
+		if(sel->right == curroff) {
+			curroff = prevoff;
+			update_offsets();
+		}
 		break;
 	case XK_Tab:
 		if(!sel)
@@ -275,6 +279,10 @@ handle_kpress(XKeyEvent * e)
 		if(!(sel && sel->right))
 			return;
 		sel=sel->right;
+		if(sel == nextoff) {
+			curroff = nextoff;
+			update_offsets();
+		}
 		break;
 	case XK_Return:
 		if(e->state & ShiftMask) {
@@ -312,15 +320,6 @@ handle_kpress(XKeyEvent * e)
 			update_items(text);
 		}
 	}
-	if(sel) {
-		if(curroff && sel == curroff->left) {
-			curroff = prevoff;
-			update_offsets();
-		} else if(sel == nextoff) {
-			curroff = nextoff;
-			update_offsets();
-		}
-	}
 	draw_menu();
 }
 
@@ -346,12 +345,11 @@ read_allitems()
 		new = cext_emalloc(sizeof(Item));
 		new->next = new->left = new->right = nil;
 		new->text = p;
-		if(!allitem)
-			allitem = i = new;
-		else {
+		if(!i)
+			allitem = new;
+		else 
 			i->next = new;
-			i = new;
-		}
+		i = new;
 	}
 
 	return maxname;
