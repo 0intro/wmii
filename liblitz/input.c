@@ -183,9 +183,9 @@ blitz_bpress_input(BlitzInput *i, int x, int y)
 }
 
 static void
-mark_word(BlitzInput *i, int x, int y)
+mark(BlitzInput *i, int x, int y)
 {
-	char *start, *end, *ps, *pe, *p;
+	char *start, *end;
 
 	start = curstart(i);
 	end = curend(i);
@@ -198,20 +198,23 @@ mark_word(BlitzInput *i, int x, int y)
 		return;
 	}
 
-	for(ps = start; (ps > i->text) && (*ps == ' '); ps--);
-	for(pe = start; *pe && (*pe == ' '); pe++);
+	if(start == i->text + i->len) {
+		/* mark everything */
+		i->curstart = i->text;
+		i->curend = i->text + i->len;
+		return;
+	}
 
-	if(start - ps > pe - start)
-		p = pe;
-	else
-		p = ps;
+	if(*start == ' ' && start > i->text && *(start - 1) != ' ')
+		start = --end;
 
-	while((p > i->text) && (*(p - 1) != ' '))
-		*p--;
-	i->curstart = p;
-	while(*p && (*p != ' '))
-		p++;
-	i->curend = p;
+	while(start > i->text && *(start - 1) != ' ')
+		start--;
+	while(*end && *end != ' ')
+		end++;
+
+	i->curstart = start;
+	i->curend = end;
 }
 
 Bool
@@ -226,7 +229,7 @@ blitz_brelease_input(BlitzInput *i, int x, int y, unsigned long time)
 	oend = i->curend;
 
 	if((time - i->tdbclk < 1000) && (x == i->xdbclk && y == i->ydbclk)) {
-		mark_word(i, x, y);
+		mark(i, x, y);
 		i->drag = False;
 		i->tdbclk = 0;
 		i->xdbclk = i->ydbclk = 0;
