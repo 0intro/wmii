@@ -7,8 +7,43 @@
 #include <cext.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/Xutil.h>
 
 #include "blitz.h"
+
+void
+blitz_selrequest(Blitz *blitz, XSelectionRequestEvent *rq, char *text)
+{
+	/* 
+	 * PRECONDITION:
+	 * 1. XSetSelectionOwner(blitz->dpy, XA_PRIMARY, w, CurrentTime);
+	 * 2. Received SelectionRequest rq
+	 */
+	XEvent ev;
+	Atom target;
+	XTextProperty ct;
+	XICCEncodingStyle style;
+	char *cl[1];
+
+	ev.xselection.type = SelectionNotify;
+	ev.xselection.property = None;
+	ev.xselection.display = rq->display;
+	ev.xselection.requestor = rq->requestor;
+	ev.xselection.selection = rq->selection;
+	ev.xselection.target = rq->target;
+	ev.xselection.time = rq->time;
+
+	if (rq->target == XA_STRING) {
+		style = XStringStyle;
+		target = XA_STRING;
+	}
+	cl[0] = text;
+	XmbTextListToTextProperty(blitz->dpy, cl, 1, style, &ct);
+	XChangeProperty(blitz->dpy, rq->requestor, rq->property,
+			target, 8, PropModeReplace, ct.value, ct.nitems);
+	ev.xselection.property = rq->property;
+	XSendEvent(blitz->dpy, rq->requestor, False, 0, &ev);
+}
 
 unsigned char *
 blitz_getselection(unsigned long offset, unsigned long *len, unsigned long *remain)

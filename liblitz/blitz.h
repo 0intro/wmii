@@ -92,6 +92,7 @@ struct BlitzInput {
 /* blitz.c */
 unsigned char *blitz_getselection(unsigned long offset,
 		unsigned long *len, unsigned long *remain);
+void blitz_selrequest(Blitz *blitz, XSelectionRequestEvent *rq, char *text);
 
 /* brush.c */
 void blitz_draw_label(BlitzBrush *b, char *text);
