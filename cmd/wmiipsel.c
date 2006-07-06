@@ -19,34 +19,11 @@ usage()
 	exit(1);
 }
 
-static void
-print_sel(Display *dpy, Window w, XSelectionEvent * e)
-{
-	Atom typeret;
-	int format;
-	unsigned long nitems, bytesleft;
-	unsigned char *data;
-
-	XGetWindowProperty(dpy, w, e->property, 0L, 4096L, False,
-			AnyPropertyType, &typeret, &format,
-			&nitems, &bytesleft, &data);
-	if(format == 8) {
-		int i;
-		for(i = 0; i < nitems; i++)
-			putchar(data[i]);
-		putchar('\n');
-	}
-	XDeleteProperty(dpy, w, e->property);
-}
-
 int
 main(int argc, char **argv)
 {
-	Display *dpy;
-	Atom xa_clip_string;
-	Window w;
-	XEvent ev;
-	int pdone = 0;
+	char buf[4096];
+	unsigned int i, len;
 
 	/* command line args */
 	if(argc > 1) {
@@ -56,32 +33,10 @@ main(int argc, char **argv)
 		} else
 			usage();
 	}
-	dpy = XOpenDisplay(0);
-	if(!dpy) {
-		fprintf(stderr, "%s", "wmiipsel: cannot open display\n");
-		exit(1);
-	}
-	xa_clip_string = XInternAtom(dpy, "WMII_PSEL_STRING", False);
-	w = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 10, 10, 200, 200,
-			1, CopyFromParent, CopyFromParent);
-	while(!pdone) {
-		XConvertSelection(dpy, XA_PRIMARY, XA_STRING, xa_clip_string,
-				w, CurrentTime);
-		XFlush(dpy);
-		XNextEvent(dpy, &ev);
-		switch (ev.type) {
-		case SelectionNotify:
-			if(ev.xselection.property != None)
-				print_sel(dpy, w, &ev.xselection);
-			else
-				putchar('\n');
-			XDestroyWindow(dpy, w);
-			XCloseDisplay(dpy);
-			pdone = 1;
-			break;
-		default:
-			break;
-		}
+	if((len = blitz_getselection(buf, sizeof(buf)))) {
+		for(i = 0; i < len; i++)
+			putchar(buf[i]);
+		putchar('\n');
 	}
 	return 0;
 }

@@ -5,7 +5,7 @@ include ../config.mk
 
 CFLAGS += -I../liblitz -I../libixp -I../libcext
 LDFLAGS += -L../libixp -lixp -L../libcext -lcext
-X11LDFLAGS += -L../liblitz -llitz
+X11LDFLAGS += -L../liblitz -llitz -L../libcext -lcext
 
 X11SRC = wmiimenu.c wmiipsel.c wmiiwarp.c
 SRC = wmiir.c wmiisetsid.c
