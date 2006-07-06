@@ -303,12 +303,55 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 		xdraw(i);
 }
 
-void
-blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
+static void
+delete(BlitzInput *i, char *start, char *end)
 {
-	char *start, *end;
+	if(!start)
+		return;
+	else if((start == end) && (start != i->text)) {
+		i->curstart = i->curend = --start;
+		memmove(start, start + 1, strlen(start + 1));
+		i->len--;
+	}
+	else {
+		i->curstart = i->curend = start;
+		memmove(start, end, strlen(end));
+		i->len -= (end - start);
+	}
+	i->text[i->len] = 0;
+}
+
+static void
+insert(BlitzInput *i, char *start, char *end, char *text)
+{
 	unsigned int len;
 	int s, e;
+
+	if(!(len = strlen(text)))
+		return;
+	if(!start) {
+		blitz_setinput(i, text);
+		return;
+	}
+	i->len = i->len - (end - start) + len;
+	if(i->len + 1 > i->size) {
+		s = start - i->text;
+		e = end - i->text;
+		i->size = 2 * i->len + 1;
+		i->text = cext_erealloc(i->text, i->size);
+		start = i->text + s;
+		end = i->text + e;
+	}
+	memmove(start + len, end, strlen(end));
+	memcpy(start, text, len);
+	i->curstart = i->curend = start + len;
+	i->text[i->len] = 0;
+}
+
+void
+blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *text)
+{
+	char *start, *end;
 
 	start = curstart(i);
 	end = curend(i);
@@ -371,41 +414,11 @@ blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 	}
 	else {
 		switch(k) {
-		case XK_BackSpace:
-			if(!start)
-				return;
-			else if((start == end) && (start != i->text)) {
-				i->curstart = i->curend = --start;
-				memmove(start, start + 1, strlen(start + 1));
-				i->len--;
-			}
-			else {
-				i->curstart = i->curend = start;
-				memmove(start, end, strlen(end));
-				i->len -= (end - start);
-			}
-			i->text[i->len] = 0;
-			goto Draw;
 		default:
-			if(!(len = strlen(ks)))
-				return;
-			if(!start) {
-				blitz_setinput(i, ks);
-				goto Draw;
-			}
-			i->len = i->len - (end - start) + len;
-			if(i->len + 1 > i->size) {
-				s = start - i->text;
-				e = end - i->text;
-				i->size = 2 * i->len + 1;
-				i->text = cext_erealloc(i->text, i->size);
-				start = i->text + s;
-				end = i->text + e;
-			}
-			memmove(start + len, end, strlen(end));
-			memcpy(start, ks, len);
-			i->curstart = i->curend = start + len;
-			i->text[i->len] = 0;
+			insert(i, start, end, text);
+			break;
+		case XK_BackSpace:
+			delete(i, start, end);
 		}
 	}
 Draw:

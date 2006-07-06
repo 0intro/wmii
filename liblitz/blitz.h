@@ -115,4 +115,4 @@ void blitz_brelease_input(BlitzInput *i, int button, int x, int y, unsigned long
 void blitz_bmotion_input(BlitzInput *i, int x, int y);
 Bool blitz_ispointinrect(int x, int y, XRectangle * r);
 void blitz_setinput(BlitzInput *i, char *text);
-void blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks);
+void blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *text);
