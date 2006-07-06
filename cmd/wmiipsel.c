@@ -7,8 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <X11/Xlib.h>
-#include <X11/Xatom.h>
+#include <blitz.h>
 
 static char version[] = "wmiipsel - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
@@ -22,8 +21,8 @@ usage()
 int
 main(int argc, char **argv)
 {
-	char buf[4096];
-	unsigned int i, len;
+	unsigned char *data;
+	unsigned long i, offset, len, remain;
 
 	/* command line args */
 	if(argc > 1) {
@@ -33,10 +32,15 @@ main(int argc, char **argv)
 		} else
 			usage();
 	}
-	if((len = blitz_getselection(buf, sizeof(buf)))) {
+	len = offset = 0;
+	do {
+		data = blitz_getselection(offset, &len, &remain);
 		for(i = 0; i < len; i++)
-			putchar(buf[i]);
-		putchar('\n');
+			putchar(data[i]);
+		offset += len;
+		free(data);
 	}
+	while(remain);
+	putchar('\n');
 	return 0;
 }

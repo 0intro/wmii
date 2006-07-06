@@ -89,6 +89,10 @@ struct BlitzInput {
 	void (*draw)(void *aux);
 };
 
+/* blitz.c */
+unsigned char *blitz_getselection(unsigned long offset,
+		unsigned long *len, unsigned long *remain);
+
 /* brush.c */
 void blitz_draw_label(BlitzBrush *b, char *text);
 void blitz_draw_tile(BlitzBrush *b);

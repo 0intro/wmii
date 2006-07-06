@@ -3,14 +3,15 @@
  * See LICENSE file for license details.
  */
 
+#include <string.h>
 #include <cext.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
 #include "blitz.h"
 
-unsigned int
-blitz_getselection(char *buf, unsigned int len)
+unsigned char *
+blitz_getselection(unsigned long offset, unsigned long *len, unsigned long *remain)
 {
 	Display *dpy;
 	Atom xa_clip_string;
@@ -18,17 +19,12 @@ blitz_getselection(char *buf, unsigned int len)
 	XEvent ev;
 	Atom typeret;
 	int format;
-	unsigned long nitems, bytesleft;
 	unsigned char *data;
-	unsigned int ret;
+	unsigned char *result = nil;
 
-	ret = 0;
-	if(!buf || !len)
-		return ret;
-	buf[0] = 0;
 	dpy = XOpenDisplay(nil);
 	if(!dpy)
-		return ret;
+		return nil;
 	xa_clip_string = XInternAtom(dpy, "BLITZ_SEL_STRING", False);
 	w = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 10, 10, 200, 200,
 			1, CopyFromParent, CopyFromParent);
@@ -37,15 +33,16 @@ blitz_getselection(char *buf, unsigned int len)
 	XFlush(dpy);
 	XNextEvent(dpy, &ev);
 	if(ev.type == SelectionNotify && ev.xselection.property != None) {
-		XGetWindowProperty(dpy, w, ev.xselection.property, 0L, len, False,
-				AnyPropertyType, &typeret, &format, &nitems, &bytesleft, &data);
-		if(format == 8)
-			cext_strlcpy(buf, (const char *)data, len);
-		ret = nitems < len ? nitems : len - 1;
-		buf[ret] = 0;
+		XGetWindowProperty(dpy, w, ev.xselection.property, offset, 4096L, False,
+				AnyPropertyType, &typeret, &format, len, remain, &data);
+		if(*len) {
+			result = cext_emallocz(sizeof(unsigned char) * *len);
+			memcpy(result, data, *len);
+			result[*len - 1] = 0;
+		}
 		XDeleteProperty(dpy, w, ev.xselection.property);
 	}
 	XDestroyWindow(dpy, w);
 	XCloseDisplay(dpy);
-	return ret;
+	return result;
 }
