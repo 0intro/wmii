@@ -38,7 +38,6 @@ blitz_getselection(unsigned long offset, unsigned long *len, unsigned long *rema
 		if(*len) {
 			result = cext_emallocz(sizeof(unsigned char) * *len);
 			memcpy(result, data, *len);
-			result[*len - 1] = 0;
 		}
 		XDeleteProperty(dpy, w, ev.xselection.property);
 	}
