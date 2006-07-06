@@ -178,7 +178,6 @@ xdraw(BlitzInput *i)
 void
 blitz_bpress_input(BlitzInput *i, int button, int x, int y)
 {
-	XEvent ev;
 	char *ostart, *oend;
 
 	if(blitz_ispointinrect(x, y, &i->rect)) {
@@ -205,23 +204,6 @@ blitz_bpress_input(BlitzInput *i, int button, int x, int y)
 			GrabModeAsync, GrabModeAsync, None, 
 			i->cursor, CurrentTime) != GrabSuccess)
 		return;
-	
-	for(;;) {
-		XMaskEvent(i->blitz->dpy,
-				ButtonPressMask | ButtonReleaseMask | PointerMotionMask, &ev);
-		switch (ev.type) {
-		default: break;
-		case ButtonRelease:
-			XUngrabPointer(i->blitz->dpy, CurrentTime);
-			blitz_brelease_input(i, ev.xbutton.button,
-					ev.xbutton.x, ev.xbutton.y, ev.xbutton.time);
-			return;
-			break;
-		case MotionNotify:
-			blitz_bmotion_input(i, ev.xbutton.x, ev.xbutton.y);
-			break;
-		}
-	}
 }
 
 static void
@@ -288,6 +270,7 @@ blitz_brelease_input(BlitzInput *i, int button, int x, int y, unsigned long time
 	i->ydbclk = y;
 
 Drop:
+	XUngrabPointer(i->blitz->dpy, CurrentTime);
 	i->drag = False;
 	if(i->button)
 		i->curstart = i->curend;

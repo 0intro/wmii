@@ -50,6 +50,9 @@ xcreate(char *file)
 	unsigned int fid;
 	char *p = strrchr(file, '/');
 
+	if(!p)
+		p = file;
+
 	fid = c.root_fid << 2;
 	/* walk to bottom-most directory */
 	*p = 0;
