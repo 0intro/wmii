@@ -69,6 +69,7 @@ struct BlitzInput {
 	char *text;
 	char *curstart;
 	char *curend;
+	Cursor cursor;
 	unsigned int size;
 	unsigned int len;
 	unsigned long tdbclk;
@@ -82,6 +83,8 @@ struct BlitzInput {
 	BlitzColor bcolor[3];
 	BlitzFont *font;
 	XRectangle rect;	/* relative rect */
+	void *aux;
+	void (*draw)(void *aux);
 };
 
 /* brush.c */
@@ -105,9 +108,9 @@ void blitz_loadfont(Blitz *blitz, BlitzFont *font);
 /* input.c */
 void blitz_draw_input(BlitzInput *i);
 /* blitz_b* functions return True on expose */
-Bool blitz_bpress_input(BlitzInput *i, int button, int x, int y);
-Bool blitz_brelease_input(BlitzInput *i, int button, int x, int y, unsigned long time);
-Bool blitz_bmotion_input(BlitzInput *i, int x, int y);
+void blitz_bpress_input(BlitzInput *i, int button, int x, int y);
+void blitz_brelease_input(BlitzInput *i, int button, int x, int y, unsigned long time);
+void blitz_bmotion_input(BlitzInput *i, int x, int y);
 Bool blitz_ispointinrect(int x, int y, XRectangle * r);
 void blitz_setinput(BlitzInput *i, char *text);
-Bool blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks);
+void blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks);

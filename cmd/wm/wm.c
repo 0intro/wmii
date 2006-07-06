@@ -147,6 +147,7 @@ init_cursors()
 	cursor[CurNormal] = XCreateFontCursor(blz.dpy, XC_left_ptr);
 	cursor[CurResize] = XCreateFontCursor(blz.dpy, XC_sizing);
 	cursor[CurMove] = XCreateFontCursor(blz.dpy, XC_fleur);
+	cursor[CurInput] = XCreateFontCursor(blz.dpy, XC_xterm);
 }
 
 static void

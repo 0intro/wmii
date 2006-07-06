@@ -161,13 +161,21 @@ charof(BlitzInput *i, int x, int y)
 	return xcharof(i, x, i->text, i->len);
 }
 
-Bool
+void
+xdraw(BlitzInput *i)
+{
+	if(i->aux && i->draw)
+		i->draw(i->aux);
+}
+
+void
 blitz_bpress_input(BlitzInput *i, int button, int x, int y)
 {
+	XEvent ev;
 	char *ostart, *oend;
 
 	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)))
-		return False;
+		return;
 	XSetInputFocus(i->blitz->dpy, i->win,
 			RevertToPointerRoot, CurrentTime);
 	ostart = i->curstart;
@@ -175,7 +183,32 @@ blitz_bpress_input(BlitzInput *i, int button, int x, int y)
 	i->curstart = i->curend = charof(i, x, y);
 	if((i->button = button - Button1) > 2)
 		i->button = 0;
-	return (i->curstart == ostart) && (i->curend == oend);
+
+	if((i->curstart != ostart) || (i->curend != oend))
+		xdraw(i);
+
+	if(XGrabPointer(i->blitz->dpy, i->win, False,
+			ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+			GrabModeAsync, GrabModeAsync, None, 
+			i->cursor, CurrentTime) != GrabSuccess)
+		return;
+	
+	for(;;) {
+		XMaskEvent(i->blitz->dpy,
+				ButtonPressMask | ButtonReleaseMask | PointerMotionMask, &ev);
+		switch (ev.type) {
+		default: break;
+		case ButtonRelease:
+			XUngrabPointer(i->blitz->dpy, CurrentTime);
+			blitz_brelease_input(i, ev.xbutton.button,
+					ev.xbutton.x, ev.xbutton.y, ev.xbutton.time);
+			return;
+			break;
+		case MotionNotify:
+			blitz_bmotion_input(i, ev.xbutton.x, ev.xbutton.y);
+			break;
+		}
+	}
 }
 
 static void
@@ -213,13 +246,13 @@ mark(BlitzInput *i, int x, int y)
 	i->curend = end;
 }
 
-Bool
+void
 blitz_brelease_input(BlitzInput *i, int button, int x, int y, unsigned long time)
 {
 	char *oend;
 
-	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)))
-		return False;
+	if(!blitz_ispointinrect(x, y, &i->rect))
+		goto Drop;
 	XSetInputFocus(i->blitz->dpy, i->win,
 			RevertToPointerRoot, CurrentTime);
 	oend = i->curend;
@@ -231,24 +264,24 @@ blitz_brelease_input(BlitzInput *i, int button, int x, int y, unsigned long time
 			&& (x == i->xdbclk && y == i->ydbclk))
 	{
 		mark(i, x, y);
-		i->drag = False;
 		i->tdbclk = 0;
 		i->xdbclk = i->ydbclk = 0;
-		return True;
+		goto Drop;
 	}
 
 	i->curend = charof(i, x, y);
-	if(i->button)
-		i->curstart = i->curend;
 	i->tdbclk = time;
 	i->xdbclk = x;
 	i->ydbclk = y;
-	i->drag = False;
 
-	return i->curend == oend;
+Drop:
+	if(i->button)
+		i->curstart = i->curend;
+	i->drag = False;
+	xdraw(i);
 }
 
-Bool
+void
 blitz_bmotion_input(BlitzInput *i, int x, int y)
 {
 	char *oend;
@@ -260,16 +293,18 @@ blitz_bmotion_input(BlitzInput *i, int x, int y)
 		XSetInputFocus(i->blitz->dpy, i->win,
 				RevertToPointerRoot, CurrentTime);
 	else
-		return False;
+		return;
 
 	if(!i->drag)
-		return False;
+		return;
 	oend = i->curend;
 	i->curend = charof(i, x, y);
-	return i->curend == oend;
+
+	if(i->curend != oend)
+		xdraw(i);
 }
 
-Bool
+void
 blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 {
 	char *start, *end;
@@ -280,6 +315,8 @@ blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 	end = curend(i);
 	if(mod & ControlMask) {
 		switch (k) {
+		default: /* ignore other control sequences */
+			return;
 		case XK_A:
 		case XK_a:
 			k = XK_Begin;
@@ -304,8 +341,6 @@ blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 			while(start > i->text && (*(start - 1) != ' '))
 				--start;
 			break;
-		default: /* ignore other control sequences */
-			return False;
 		}
 	}
 
@@ -313,10 +348,10 @@ blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 		switch(k) {
 		case XK_Begin:
 			i->curstart = i->curend = i->text;
-			return True;
+			goto Draw;
 		case XK_End:
 			i->curstart = i->curend = i->text + i->len;
-			return True;
+			goto Draw;
 		case XK_Left:
 			if(start != end)
 				i->curstart = i->curend = start;
@@ -324,7 +359,7 @@ blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 				i->curstart = i->curend = --start;
 			else
 				i->curstart = i->curend = i->text;
-			return True;
+			goto Draw;
 		case XK_Right:
 			if(start != end)
 				i->curstart = i->curend = end;
@@ -332,14 +367,14 @@ blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 				i->curstart = i->curend = ++start;
 			else
 				i->curstart = i->curend = i->text + i->len;
-			return True;
+			goto Draw;
 		}
 	}
 	else {
 		switch(k) {
 		case XK_BackSpace:
 			if(!start)
-				return False;
+				return;
 			else if((start == end) && (start != i->text)) {
 				i->curstart = i->curend = --start;
 				memmove(start, start + 1, strlen(start + 1));
@@ -351,13 +386,13 @@ blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 				i->len -= (end - start);
 			}
 			i->text[i->len] = 0;
-			return True;
+			goto Draw;
 		default:
 			if(!(len = strlen(ks)))
-				return False;
+				return;
 			if(!start) {
 				blitz_setinput(i, ks);
-				return True;
+				goto Draw;
 			}
 			i->len = i->len - (end - start) + len;
 			if(i->len + 1 > i->size) {
@@ -372,8 +407,8 @@ blitz_kpress_input(BlitzInput *i, unsigned long mod, KeySym k, char *ks)
 			memcpy(start, ks, len);
 			i->curstart = i->curend = start + len;
 			i->text[i->len] = 0;
-			return True;
 		}
 	}
-	return False;
+Draw:
+	xdraw(i);
 }

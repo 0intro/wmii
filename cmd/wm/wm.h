@@ -38,6 +38,7 @@ enum {
 	CurNormal,
 	CurResize,
 	CurMove,
+	CurInput,
 	CurLast
 };
 

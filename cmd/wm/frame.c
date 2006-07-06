@@ -44,10 +44,13 @@ create_frame(Client *c, View *v)
 	f->tagbar.win = c->framewin;
 	f->tagbar.gc = c->gc;
 	f->tagbar.font = &def.font;
+	f->tagbar.cursor = cursor[CurInput];
 	f->tagbar.color = def.normcolor;
 	f->tagbar.bcolor[0] = def.bcolor[0];
 	f->tagbar.bcolor[1] = def.bcolor[1];
 	f->tagbar.bcolor[2] = def.bcolor[2];
+	f->tagbar.aux = f;
+	f->tagbar.draw = (void (*)(void *))draw_frame;
 	blitz_setinput(&f->tagbar, c->tags);
 
 	return f;

@@ -78,8 +78,7 @@ handle_buttonrelease(XEvent *e)
 						ev->button, b->name);
 	}
 	else if((f = frame_of_win(ev->window))) {
-		if(blitz_brelease_input(&f->tagbar, ev->button, ev->x, ev->y, ev->time))
-			draw_frame(f);
+		blitz_brelease_input(&f->tagbar, ev->button, ev->x, ev->y, ev->time);
 		write_event("ClientClick %d %d\n", idx_of_client(f->client), ev->button);
 	}
 }
@@ -89,10 +88,8 @@ handle_motionnotify(XEvent *e)
 {
 	Frame *f;
 	XMotionEvent *ev = &e->xmotion;
-	if((f = frame_of_win(ev->window))) {
-		if(blitz_bmotion_input(&f->tagbar, ev->x, ev->y))
-			draw_frame(f);
-	}
+	if((f = frame_of_win(ev->window)))
+		blitz_bmotion_input(&f->tagbar, ev->x, ev->y);
 }
 
 static void
@@ -103,10 +100,8 @@ handle_buttonpress(XEvent *e)
 
 	if((f = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
-		if(blitz_bpress_input(&f->tagbar, ev->button, ev->x, ev->y)) {
-			draw_frame(f);
-		}
-		else if((ev->state & def.mod) == def.mod) {
+		blitz_bpress_input(&f->tagbar, ev->button, ev->x, ev->y);
+		if((ev->state & def.mod) == def.mod) {
 			focus(f->client, True);
 			switch(ev->button) {
 			case Button1:
@@ -275,9 +270,7 @@ handle_keypress(XEvent *e)
 				|| IsPFKey(k) || IsPrivateKeypadKey(k))
 			return;
 		buf[n] = 0;
-
-		if(blitz_kpress_input(&f->tagbar, ev->state, k, buf))
-			draw_frame(f);
+		blitz_kpress_input(&f->tagbar, ev->state, k, buf);
 	}
 	else
 		handle_key(blz.root, ev->state, (KeyCode) ev->keycode);
