@@ -45,6 +45,13 @@ xdrawtextpart(BlitzInput *i, char *start, char *end,
 	*xoff += blitz_textwidth_l(i->font, start, len);
 }
 
+static void
+setcursor(BlitzInput *i, Cursor cur)
+{
+	XDefineCursor(i->blitz->dpy, i->win, cur);
+	i->cursor = cur;
+}
+
 void
 blitz_setinput(BlitzInput *i, char *text)
 {
@@ -174,8 +181,14 @@ blitz_bpress_input(BlitzInput *i, int button, int x, int y)
 	XEvent ev;
 	char *ostart, *oend;
 
-	if(!(i->drag = blitz_ispointinrect(x, y, &i->rect)))
+	if(blitz_ispointinrect(x, y, &i->rect)) {
+		i->drag = True;
+		setcursor(i, i->input);
+	}
+	else {
+		setcursor(i, i->def);
 		return;
+	}
 	XSetInputFocus(i->blitz->dpy, i->win,
 			RevertToPointerRoot, CurrentTime);
 	ostart = i->curstart;
@@ -275,9 +288,10 @@ blitz_brelease_input(BlitzInput *i, int button, int x, int y, unsigned long time
 	i->ydbclk = y;
 
 Drop:
+	i->drag = False;
 	if(i->button)
 		i->curstart = i->curend;
-	i->drag = False;
+	setcursor(i, i->def);
 	xdraw(i);
 }
 
@@ -285,18 +299,20 @@ void
 blitz_bmotion_input(BlitzInput *i, int x, int y)
 {
 	char *oend;
-	Bool focus;
 
-	focus = blitz_ispointinrect(x, y, &i->rect);
-
-	if(focus)
+	if(blitz_ispointinrect(x, y, &i->rect)) {
+		setcursor(i, i->input);
 		XSetInputFocus(i->blitz->dpy, i->win,
 				RevertToPointerRoot, CurrentTime);
-	else
+	}
+	else {
+		setcursor(i, i->def);
 		return;
+	}
 
 	if(!i->drag)
 		return;
+
 	oend = i->curend;
 	i->curend = charof(i, x, y);
 

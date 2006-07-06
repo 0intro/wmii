@@ -44,7 +44,8 @@ create_frame(Client *c, View *v)
 	f->tagbar.win = c->framewin;
 	f->tagbar.gc = c->gc;
 	f->tagbar.font = &def.font;
-	f->tagbar.cursor = cursor[CurInput];
+	f->tagbar.cursor = f->tagbar.def = cursor[CurNormal];
+	f->tagbar.input = cursor[CurInput];
 	f->tagbar.color = def.normcolor;
 	f->tagbar.bcolor[0] = def.bcolor[0];
 	f->tagbar.bcolor[1] = def.bcolor[1];

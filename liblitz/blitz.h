@@ -70,12 +70,14 @@ struct BlitzInput {
 	char *curstart;
 	char *curend;
 	Cursor cursor;
+	Cursor input;
+	Cursor def;
+	Bool drag;
 	unsigned int size;
 	unsigned int len;
 	unsigned long tdbclk;
 	int xdbclk, ydbclk;
 	int button;
-	Bool drag;
 	Drawable drawable;
 	Window win;
 	GC gc;
