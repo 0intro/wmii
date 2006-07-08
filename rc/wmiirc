@@ -107,8 +107,6 @@ $MODKEY-Shift-9
 EOF
 
 # TAG BAR
-IFS='
-'
 wmiir ls /lbar |
 while read bar
 do
@@ -125,8 +123,6 @@ do
 		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag"
 	fi
 done
-unset IFS
-
 
 # EVENT LOOP
 wmiir read /event 2>/dev/null |
