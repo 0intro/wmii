@@ -32,7 +32,7 @@ main(int argc, char **argv)
 		} else
 			usage();
 	}
-	len = offset = 0;
+	len = offset = remain = 0;
 	do {
 		data = blitz_getselection(offset, &len, &remain);
 		for(i = 0; i < len; i++)
@@ -41,6 +41,7 @@ main(int argc, char **argv)
 		free(data);
 	}
 	while(remain);
-	putchar('\n');
+	if(offset)
+		putchar('\n');
 	return 0;
 }
