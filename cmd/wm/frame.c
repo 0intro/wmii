@@ -35,9 +35,8 @@ create_frame(Client *c, View *v)
 	f->tile.font = &def.font;
 	f->tile.color = def.normcolor;
 	f->tile.border = True;
-	f->titlebar = f->posbar = f->tile;
+	f->grabbox = f->titlebar = f->tile;
 	f->titlebar.align = WEST;
-	f->posbar.align = CENTER;
 
 	f->tagbar.blitz = &blz;
 	f->tagbar.drawable = pmap;
@@ -94,55 +93,36 @@ update_frame_widget_colors(Frame *f)
 		f->tagbar.color = f->tile.color = f->titlebar.color = def.normcolor;
 
 	if(f->area->sel == f)
-		f->posbar.color = def.selcolor;
+		f->grabbox.color = def.selcolor;
 	else
-		f->posbar.color = def.normcolor;
+		f->grabbox.color = def.normcolor;
 }
 
 void
 draw_frame(Frame *f)
 {
-	Frame *p;
-	unsigned int fidx, size, w;
-
-	fidx = 0;
-	for(p=f->area->frame; p != f; p=p->anext)
-		fidx++;
-	for(size=fidx; p; p=p->anext, size++);
-
 	if(def.border) {
 		f->tile.rect = f->rect;
 		f->tile.rect.x = f->tile.rect.y = 0;
 	}
 
-	f->posbar.rect = f->tile.rect;
-	f->posbar.rect.height = height_of_bar();
+	f->grabbox.rect = f->tile.rect;
+	f->grabbox.rect.height = f->grabbox.rect.width = height_of_bar();
 
-	snprintf(buffer, BUFFER_SIZE, "%s%d/%d",
-		f->area->floating ? "~" : "", fidx + 1, size);
+	f->titlebar.rect = f->grabbox.rect;
+	f->titlebar.rect.x = f->grabbox.rect.x + f->grabbox.rect.width;
+	f->titlebar.rect.width = f->rect.width / 2;
 
-	w = f->posbar.rect.width =
-		f->posbar.rect.height + blitz_textwidth(&def.font, buffer);
-
-	f->posbar.rect.x = f->rect.width - f->posbar.rect.width; 
-	
 	/* tag bar */
-	f->tagbar.rect = f->posbar.rect;
-	f->tagbar.rect.x = 0;
+	f->tagbar.rect = f->grabbox.rect;
+	f->tagbar.rect.x = f->titlebar.rect.x + f->titlebar.rect.width;
 	f->tagbar.rect.width =
-		f->tagbar.rect.height + blitz_textwidth(&def.font, f->tagbar.text);
-
-	if(f->tagbar.rect.width > f->rect.width / 3)
-		f->tagbar.rect.width = f->rect.width / 3;
-
-	f->titlebar.rect = f->tagbar.rect;
-	f->titlebar.rect.x = f->tagbar.rect.x + f->tagbar.rect.width;
-	f->titlebar.rect.width = f->rect.width - (f->tagbar.rect.width + f->posbar.rect.width);
+		f->rect.width - (f->grabbox.rect.width + f->titlebar.rect.width);
 
 	blitz_draw_tile(&f->tile);
+	blitz_draw_tile(&f->grabbox);
 	blitz_draw_input(&f->tagbar);
 	blitz_draw_label(&f->titlebar, f->client->name);
-	blitz_draw_label(&f->posbar, buffer);
 	XCopyArea(blz.dpy, pmap, f->client->framewin, f->client->gc,
 			0, 0, f->rect.width, f->rect.height, 0, 0);
 	XSync(blz.dpy, False);
