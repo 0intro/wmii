@@ -326,5 +326,4 @@ unsigned int newcolw_of_view(View *v);
 
 /* wm.c */
 int win_proto(Window w);
-int win_state(Window w);
 int wmii_error_handler(Display *dpy, XErrorEvent *error);

@@ -104,29 +104,6 @@ win_proto(Window w)
 	return protos;
 }
 
-int
-win_state(Window w)
-{
-	/* state hints */
-	XWMHints *hints = XGetWMHints(blz.dpy, w);
-	int res;
-
-	long *prop = 0;
-	if(win_property(w, wm_atom[WMState], wm_atom[WMState], 2L,
-				((unsigned char **) &prop)) > 0)
-	{
-		res = (int) *prop;
-		free((long *) prop);
-	} else {
-		res = hints ? hints->initial_state : NormalState;
-	}
-
-	if(hints) {
-		free(hints);
-	}
-	return res;
-}
-
 static void
 init_atoms()
 {
