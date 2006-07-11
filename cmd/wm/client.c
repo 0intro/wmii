@@ -100,6 +100,7 @@ create_client(Window w, XWindowAttributes *wa)
 	c->rect.width = wa->width;
 	c->rect.height = wa->height;
 	XSetWindowBorderWidth(blz.dpy, c->win, 0);
+	c->proto = win_proto(c->win);
 	XGetTransientForHint(blz.dpy, c->win, &c->trans);
 	if(!XGetWMNormalHints(blz.dpy, c->win, &c->size, &msize) || !c->size.flags)
 		c->size.flags = PSize;
@@ -240,10 +241,28 @@ configure_client(Client *c)
 	XSync(blz.dpy, False);
 }
 
+static void
+send_client_message(Window w, Atom a, long value)
+{
+	XEvent e;
+	e.type = ClientMessage;
+	e.xclient.window = w;
+	e.xclient.message_type = a;
+	e.xclient.format = 32;
+	e.xclient.data.l[0] = value;
+	e.xclient.data.l[1] = CurrentTime;
+
+	XSendEvent(blz.dpy, w, False, NoEventMask, &e);
+	XSync(blz.dpy, False);
+}
+
 void
 kill_client(Client * c)
 {
-	XKillClient(blz.dpy, c->win);
+	if(c->proto & WM_PROTOCOL_DELWIN)
+		send_client_message(c->win, wm_atom[WMProtocols], wm_atom[WMDelete]);
+	else
+		XKillClient(blz.dpy, c->win);
 }
 
 void
@@ -251,6 +270,10 @@ prop_client(Client *c, XPropertyEvent *e)
 {
 	long msize;
 
+	if(e->atom == wm_atom[WMProtocols]) {
+		c->proto = win_proto(c->win);
+		return;
+	}
 	switch (e->atom) {
 	case XA_WM_TRANSIENT_FOR:
 		XGetTransientForHint(blz.dpy, c->win, &c->trans);
