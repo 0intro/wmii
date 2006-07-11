@@ -244,7 +244,8 @@ typedef struct IXPClient {
 	int fd;
 	unsigned int root_fid;
 	Qid root_qid;
-	Fcall fcall;
+	Fcall ifcall;
+	Fcall ofcall;
 	char *errstr;
 } IXPClient;
 

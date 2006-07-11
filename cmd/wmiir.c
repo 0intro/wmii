@@ -27,11 +27,11 @@ usage()
 static void
 write_data(unsigned int fid)
 {
-	void *data = cext_emallocz(c.fcall.iounit);
+	void *data = cext_emallocz(c.ofcall.iounit);
 	unsigned long long offset = 0;
 	unsigned int len = 0;
 
-	while((len = read(0, data, c.fcall.iounit)) > 0) {
+	while((len = read(0, data, c.ofcall.iounit)) > 0) {
 		if(ixp_client_write(&c, fid, offset, len, data) != len) {
 			fprintf(stderr, "wmiir: cannot write file: %s\n", c.errstr);
 			break;
@@ -65,7 +65,7 @@ xcreate(char *file)
 		fprintf(stderr, "wmiir: cannot create file '%s': %s\n", p, c.errstr);
 		return -1;
 	}
-	if(!(c.fcall.qid.type&P9DMDIR))
+	if(!(c.ofcall.qid.type&P9DMDIR))
 		write_data(fid);
 	return ixp_client_close(&c, fid);
 }
@@ -193,7 +193,7 @@ xdir(char *file, int details)
 		fprintf(stderr, "wmiir: cannot stat file '%s': %s\n", file, c.errstr);
 		return -1;
 	}
-	buf = c.fcall.stat;
+	buf = c.ofcall.stat;
 	ixp_unpack_stat(&buf, nil, s);
 	if(!(s->mode & IXP_DMDIR)) {
 		print_stat(s, details);
