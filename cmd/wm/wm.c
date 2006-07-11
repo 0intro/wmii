@@ -367,7 +367,7 @@ main(int argc, char *argv[])
 			| SubstructureRedirectMask | SubstructureNotifyMask;
 
 		s->brect = s->rect;
-		s->brect.height = height_of_bar();
+		s->brect.height = blitz_labelh(&def.font);
 		s->brect.y = s->rect.height - s->brect.height;
 		s->barwin = XCreateWindow(blz.dpy, RootWindow(blz.dpy, blz.screen),
 				s->brect.x, s->brect.y,

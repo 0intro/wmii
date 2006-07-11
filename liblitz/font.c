@@ -81,4 +81,11 @@ blitz_loadfont(Blitz *blitz, BlitzFont *font)
 		font->ascent = font->xfont->ascent;
 		font->descent = font->xfont->descent;
 	}
+	font->height = font->ascent + font->descent;
+}
+
+unsigned int
+blitz_labelh(BlitzFont *font)
+{
+	return font->height + 4;
 }

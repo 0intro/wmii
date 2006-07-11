@@ -50,6 +50,7 @@ struct BlitzFont {
 	XFontSet set;
 	int ascent;
 	int descent;
+	unsigned int height;
 	char *fontstr;
 };
 
@@ -111,6 +112,7 @@ void blitz_drawcursor(Display *dpy, Drawable drawable, GC gc,
 unsigned int blitz_textwidth(BlitzFont *font, char *text);
 unsigned int blitz_textwidth_l(BlitzFont *font, char *text, unsigned int len);
 void blitz_loadfont(Blitz *blitz, BlitzFont *font);
+unsigned int blitz_labelh(BlitzFont *font);
 
 /* input.c */
 void blitz_draw_input(BlitzInput *i);

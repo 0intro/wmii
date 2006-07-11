@@ -25,7 +25,7 @@ create_frame(Client *c, View *v)
 	else{
 		f->revert = f->rect = c->rect;
 		f->revert.width = f->rect.width += 2 * def.border;
-		f->revert.height = f->rect.height += def.border + height_of_bar();
+		f->revert.height = f->rect.height += def.border + blitz_labelh(&def.font);
 	}
 	f->collapsed = False;
 
@@ -107,7 +107,8 @@ draw_frame(Frame *f)
 	}
 
 	f->grabbox.rect = f->tile.rect;
-	f->grabbox.rect.height = f->grabbox.rect.width = height_of_bar();
+	f->grabbox.rect.height = blitz_labelh(&def.font);
+	f->grabbox.rect.width = def.font.height;
 
 	f->titlebar.rect = f->grabbox.rect;
 	f->titlebar.rect.x = f->grabbox.rect.x + f->grabbox.rect.width;

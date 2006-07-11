@@ -11,34 +11,34 @@
 #include "wm.h"
 
 /* local functions */
-static void handle_buttonpress(XEvent *e);
-static void handle_buttonrelease(XEvent *e);
-static void handle_configurerequest(XEvent *e);
-static void handle_destroynotify(XEvent *e);
-static void handle_enternotify(XEvent *e);
-static void handle_leavenotify(XEvent *e);
-static void handle_expose(XEvent *e);
-static void handle_keypress(XEvent *e);
-static void handle_keymapnotify(XEvent *e);
-static void handle_maprequest(XEvent *e);
-static void handle_motionnotify(XEvent *e);
-static void handle_propertynotify(XEvent *e);
-static void handle_unmapnotify(XEvent *e);
+static void buttonpress(XEvent *e);
+static void buttonrelease(XEvent *e);
+static void configurerequest(XEvent *e);
+static void destroynotify(XEvent *e);
+static void enternotify(XEvent *e);
+static void leavenotify(XEvent *e);
+static void expose(XEvent *e);
+static void keypress(XEvent *e);
+static void keymapnotify(XEvent *e);
+static void maprequest(XEvent *e);
+static void motionnotify(XEvent *e);
+static void propertynotify(XEvent *e);
+static void unmapnotify(XEvent *e);
 
 void (*handler[LASTEvent]) (XEvent *) = {
-	[ButtonPress]	= handle_buttonpress,
-	[ButtonRelease]	= handle_buttonrelease,
-	[ConfigureRequest]= handle_configurerequest,
-	[DestroyNotify]	= handle_destroynotify,
-	[EnterNotify]	= handle_enternotify,
-	[LeaveNotify]	= handle_leavenotify,
-	[Expose]	= handle_expose,
-	[KeyPress]	= handle_keypress,
-	[KeymapNotify]	= handle_keymapnotify,
-	[MotionNotify]	= handle_motionnotify,
-	[MapRequest]	= handle_maprequest,
-	[PropertyNotify]= handle_propertynotify,
-	[UnmapNotify]	= handle_unmapnotify
+	[ButtonPress]	= buttonpress,
+	[ButtonRelease]	= buttonrelease,
+	[ConfigureRequest]= configurerequest,
+	[DestroyNotify]	= destroynotify,
+	[EnterNotify]	= enternotify,
+	[LeaveNotify]	= leavenotify,
+	[Expose]	= expose,
+	[KeyPress]	= keypress,
+	[KeymapNotify]	= keymapnotify,
+	[MotionNotify]	= motionnotify,
+	[MapRequest]	= maprequest,
+	[PropertyNotify]= propertynotify,
+	[UnmapNotify]	= unmapnotify
 };
 
 void
@@ -62,7 +62,7 @@ flush_masked_events(long even_mask)
 }
 
 static void
-handle_buttonrelease(XEvent *e)
+buttonrelease(XEvent *e)
 {
 	Frame *f;
 	Bar *b;
@@ -84,7 +84,7 @@ handle_buttonrelease(XEvent *e)
 }
 
 static void
-handle_motionnotify(XEvent *e)
+motionnotify(XEvent *e)
 {
 	Frame *f;
 	XMotionEvent *ev = &e->xmotion;
@@ -93,7 +93,7 @@ handle_motionnotify(XEvent *e)
 }
 
 static void
-handle_buttonpress(XEvent *e)
+buttonpress(XEvent *e)
 {
 	Frame *f;
 	XButtonPressedEvent *ev = &e->xbutton;
@@ -119,7 +119,7 @@ handle_buttonpress(XEvent *e)
 }
 
 static void
-handle_configurerequest(XEvent *e)
+configurerequest(XEvent *e)
 {
 	XConfigureRequestEvent *ev = &e->xconfigurerequest;
 	XWindowChanges wc;
@@ -151,16 +151,16 @@ handle_configurerequest(XEvent *e)
 				frect=&c->sel->revert;
 
 			if(c->rect.width >= screen->rect.width && c->rect.height >= screen->rect.height) {
-				frect->y = wc.y = -height_of_bar();
+				frect->y = wc.y = -blitz_labelh(&def.font);
 				frect->x = wc.x = -def.border;
 			}
 			else {
-				frect->y = wc.y = c->rect.y - height_of_bar();
+				frect->y = wc.y = c->rect.y - blitz_labelh(&def.font);
 				frect->x = wc.x = c->rect.x - def.border;
 			}
 			frect->width = wc.width = c->rect.width + 2 * def.border;
 			frect->height = wc.height = c->rect.height + def.border
-				+ height_of_bar();
+				+ blitz_labelh(&def.font);
 			wc.border_width = 1;
 			wc.sibling = None;
 			wc.stack_mode = ev->detail;
@@ -180,9 +180,9 @@ handle_configurerequest(XEvent *e)
 
 	if(c && c->frame) {
 		wc.x = def.border;
-		wc.y = height_of_bar();
+		wc.y = blitz_labelh(&def.font);
 		wc.width = c->sel->rect.width - 2 * def.border;
-		wc.height = c->sel->rect.height - def.border - height_of_bar();
+		wc.height = c->sel->rect.height - def.border - blitz_labelh(&def.font);
 	}
 
 	wc.border_width = 0;
@@ -196,7 +196,7 @@ handle_configurerequest(XEvent *e)
 }
 
 static void
-handle_destroynotify(XEvent *e)
+destroynotify(XEvent *e)
 {
 	Client *c;
 	XDestroyWindowEvent *ev = &e->xdestroywindow;
@@ -206,7 +206,7 @@ handle_destroynotify(XEvent *e)
 }
 
 static void
-handle_enternotify(XEvent *e)
+enternotify(XEvent *e)
 {
 	XCrossingEvent *ev = &e->xcrossing;
 	Client *c;
@@ -228,7 +228,7 @@ handle_enternotify(XEvent *e)
 }
 
 static void
-handle_leavenotify(XEvent *e)
+leavenotify(XEvent *e)
 {
 	XCrossingEvent *ev = &e->xcrossing;
 
@@ -239,7 +239,7 @@ handle_leavenotify(XEvent *e)
 }
 
 static void
-handle_expose(XEvent *e)
+expose(XEvent *e)
 {
 	XExposeEvent *ev = &e->xexpose;
 	static Frame *f;
@@ -253,7 +253,7 @@ handle_expose(XEvent *e)
 }
 
 static void
-handle_keypress(XEvent *e)
+keypress(XEvent *e)
 {
 	XKeyEvent *ev = &e->xkey;
 	KeySym k = 0;
@@ -273,17 +273,17 @@ handle_keypress(XEvent *e)
 		blitz_kpress_input(&f->tagbar, ev->state, k, buf);
 	}
 	else
-		handle_key(blz.root, ev->state, (KeyCode) ev->keycode);
+		kpress(blz.root, ev->state, (KeyCode) ev->keycode);
 }
 
 static void
-handle_keymapnotify(XEvent *e)
+keymapnotify(XEvent *e)
 {
 	update_keys();
 }
 
 static void
-handle_maprequest(XEvent *e)
+maprequest(XEvent *e)
 {
 	XMapRequestEvent *ev = &e->xmaprequest;
 	static XWindowAttributes wa;
@@ -302,7 +302,7 @@ handle_maprequest(XEvent *e)
 }
 
 static void
-handle_propertynotify(XEvent *e)
+propertynotify(XEvent *e)
 {
 	XPropertyEvent *ev = &e->xproperty;
 	Client *c;
@@ -315,7 +315,7 @@ handle_propertynotify(XEvent *e)
 }
 
 static void
-handle_unmapnotify(XEvent *e)
+unmapnotify(XEvent *e)
 {
 	Client *c;
 	XUnmapEvent *ev = &e->xunmap;

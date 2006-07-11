@@ -184,7 +184,7 @@ match_keys(Key *k, unsigned long mod, KeyCode keycode, Bool seq)
 }
 
 static void
-handle_key_seq(Window w, Key *done)
+kpress_seq(Window w, Key *done)
 {
 	unsigned long mod;
 	KeyCode key;
@@ -202,12 +202,12 @@ handle_key_seq(Window w, Key *done)
 		else if(!found->tnext && !found->next)
 			write_event("Key %s\n", found->name);
 		else
-			handle_key_seq(w, found);
+			kpress_seq(w, found);
 	}
 }
 
 void
-handle_key(Window w, unsigned long mod, KeyCode keycode)
+kpress(Window w, unsigned long mod, KeyCode keycode)
 {
 	Key *k;
 
@@ -221,7 +221,7 @@ handle_key(Window w, unsigned long mod, KeyCode keycode)
 		write_event("Key %s\n", found->name);
 	else {
 		XGrabKeyboard(blz.dpy, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
-		handle_key_seq(w, found);
+		kpress_seq(w, found);
 		XUngrabKeyboard(blz.dpy, CurrentTime);
 		XSync(blz.dpy, False);
 	}

@@ -50,12 +50,12 @@ relax_column(Area *a)
 	switch(a->mode) {
 	case Coldefault:
 		h = a->rect.height / frame_size;
-		if(h < 2 * height_of_bar())
+		if(h < 2 * blitz_labelh(&def.font))
 			fallthrough = True;
 		break;
 	case Colstack:
-		h = a->rect.height - (frame_size - 1) * height_of_bar();
-		if(h < 3 * height_of_bar())
+		h = a->rect.height - (frame_size - 1) * blitz_labelh(&def.font);
+		if(h < 3 * blitz_labelh(&def.font))
 			fallthrough = True;
 	default:
 		yoff = a->rect.y;
@@ -113,7 +113,7 @@ scale_column(Area *a, float h)
 {
 	unsigned int yoff, frame_size = 0;
 	Frame *f;
-	unsigned int min_height = 2 * height_of_bar();
+	unsigned int min_height = 2 * blitz_labelh(&def.font);
 	float scale, dy = 0;
 	int hdiff;
 
@@ -152,7 +152,7 @@ arrange_column(Area *a, Bool dirty)
 {
 	Frame *f;
 	unsigned int num_frames = 0, yoff = a->rect.y, h;
-	unsigned int min_height = 2 * height_of_bar();
+	unsigned int min_height = 2 * blitz_labelh(&def.font);
 
 	if(a->floating || !a->frame)
 		return;
@@ -179,8 +179,8 @@ arrange_column(Area *a, Bool dirty)
 		}
 		break;
 	case Colstack:
-		h = a->rect.height - (num_frames - 1) * height_of_bar();
-		if(h < 3 * height_of_bar())
+		h = a->rect.height - (num_frames - 1) * blitz_labelh(&def.font);
+		if(h < 3 * blitz_labelh(&def.font))
 			goto Fallthrough;
 		for(f=a->frame; f; f=f->anext) {
 			f->rect = a->rect;
@@ -188,7 +188,7 @@ arrange_column(Area *a, Bool dirty)
 			if(f == a->sel)
 				f->rect.height = h;
 			else
-				f->rect.height = height_of_bar();
+				f->rect.height = blitz_labelh(&def.font);
 			yoff += f->rect.height;
 			//resize_client(f->client, &f->rect, True);
 		}
@@ -227,7 +227,7 @@ drop_resize(Frame *f, XRectangle *new)
 	Area *west = nil, *east = nil, *a = f->area;
 	View *v = a->view;
 	Frame *north = nil, *south = nil;
-	unsigned int min_height = 2 * height_of_bar();
+	unsigned int min_height = 2 * blitz_labelh(&def.font);
 
 	for(west=v->area->next; west && west->next != a; west=west->next);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */

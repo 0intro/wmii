@@ -50,8 +50,8 @@ static Blitz blz = {0};
 static BlitzBrush brush = {0};
 static const int seek = 30;		/* 30px */
 
-static void draw_menu(void);
-static void handle_kpress(XKeyEvent * e);
+static void draw_menu();
+static void kpress(XKeyEvent * e);
 
 static char version[] = "wmiimenu - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
@@ -74,7 +74,7 @@ update_offsets()
 		tw = blitz_textwidth(brush.font, nextoff->text);
 		if(tw > mrect.width / 3)
 			tw = mrect.width / 3;
-		w += tw + mrect.height;
+		w += tw + brush.font->height;
 		if(w > mrect.width)
 			break;
 	}
@@ -84,7 +84,7 @@ update_offsets()
 		tw = blitz_textwidth(brush.font, prevoff->left->text);
 		if(tw > mrect.width / 3)
 			tw = mrect.width / 3;
-		w += tw + mrect.height;
+		w += tw + brush.font->height;
 		if(w > mrect.width)
 			break;
 	}
@@ -145,7 +145,6 @@ draw_menu()
 	Item *i;
 
 	brush.align = WEST;
-
 	brush.rect = mrect;
 	brush.rect.x = 0;
 	brush.rect.y = 0;
@@ -169,7 +168,6 @@ draw_menu()
 	}
 	offx += brush.rect.width;
 
-	brush.align = CENTER;
 	if(curroff) {
 		brush.color = normcolor;
 		brush.rect.x = offx;
@@ -185,7 +183,7 @@ draw_menu()
 			brush.rect.width = blitz_textwidth(brush.font, i->text);
 			if(brush.rect.width > mrect.width / 3)
 				brush.rect.width = mrect.width / 3;
-			brush.rect.width += mrect.height;
+			brush.rect.width += brush.font->height;
 			if(sel == i) {
 				brush.color = selcolor;
 				brush.border = True;
@@ -206,7 +204,7 @@ draw_menu()
 }
 
 static void
-handle_kpress(XKeyEvent * e)
+kpress(XKeyEvent * e)
 {
 	KeySym ksym;
 	char buf[32];
@@ -423,11 +421,10 @@ main(int argc, char *argv[])
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
-	wa.event_mask = ExposureMask | ButtonPressMask | KeyPressMask
-		| SubstructureRedirectMask | SubstructureNotifyMask;
+	wa.event_mask = ExposureMask | ButtonPressMask | KeyPressMask;
 
 	mrect.width = DisplayWidth(blz.dpy, blz.screen);
-	mrect.height = font.ascent + font.descent + 4;
+	mrect.height = blitz_labelh(&font);
 	mrect.y = DisplayHeight(blz.dpy, blz.screen) - mrect.height;
 	mrect.x = 0;
 
@@ -452,12 +449,12 @@ main(int argc, char *argv[])
 	brush.font = &font;
 
 	if(maxname)
-		cwidth = blitz_textwidth(brush.font, maxname) + mrect.height;
+		cwidth = blitz_textwidth(brush.font, maxname) + brush.font->height;
 	if(cwidth > mrect.width / 3)
 		cwidth = mrect.width / 3;
 
 	if(title) {
-		twidth = blitz_textwidth(brush.font, title) + mrect.height;
+		twidth = blitz_textwidth(brush.font, title) + brush.font->height;
 		if(twidth > mrect.width / 3)
 			twidth = mrect.width / 3;
 	}
@@ -474,7 +471,7 @@ main(int argc, char *argv[])
 	while(!XNextEvent(blz.dpy, &ev)) {
 		switch (ev.type) {
 			case KeyPress:
-				handle_kpress(&ev.xkey);
+				kpress(&ev.xkey);
 				break;
 			case Expose:
 				if(ev.xexpose.count == 0) {

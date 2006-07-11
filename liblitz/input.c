@@ -105,7 +105,7 @@ blitz_draw_input(BlitzInput *i)
 
 	h = (i->font->ascent + i->font->descent);
 	yoff = i->rect.y + (i->rect.height - h) / 2 + i->font->ascent;
-	xcursor = xoff = i->rect.x + i->rect.height / 2;
+	xcursor = xoff = i->rect.x + i->font->height / 2;
 
 	start = curstart(i);
 	end = curend(i);
@@ -160,7 +160,7 @@ charof(BlitzInput *i, int x, int y)
 		return nil;
 
 	/* normalize and check x */
-	if((x -= (i->rect.x + i->rect.height / 2)) < 0)
+	if((x -= (i->rect.x + i->font->height / 2)) < 0)
 		return i->text;
 	else if(x > blitz_textwidth_l(i->font, i->text, i->len))
 		return i->text + i->len;

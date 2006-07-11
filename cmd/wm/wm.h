@@ -220,7 +220,6 @@ Bar *create_bar(Bar **b_link, char *name);
 void destroy_bar(Bar **b_link, Bar *b);
 void draw_bar(WMScreen *s);
 void resize_bar();
-unsigned int height_of_bar();
 Bar *bar_of_name(Bar *b_link, const char *name);
 
 /* client.c */
@@ -290,7 +289,7 @@ BlitzAlign quadofcoord(XRectangle *rect, int x, int y);
 int strtorect(XRectangle *r, const char *val);
 
 /* key.c */
-void handle_key(Window w, unsigned long mod, KeyCode keycode);
+void kpress(Window w, unsigned long mod, KeyCode keycode);
 void update_keys();
 void init_lock_keys();
 unsigned long mod_key_of_str(char *val);

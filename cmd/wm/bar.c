@@ -52,20 +52,13 @@ destroy_bar(Bar **b_link, Bar *b)
 	free_bars = b;
 }
 
-unsigned int
-height_of_bar()
-{
-	enum { BAR_PADDING = 4 };
-	return def.font.ascent + def.font.descent + BAR_PADDING;
-}
-
 void
 resize_bar(WMScreen *s)
 {
 	View *v;
 
 	s->brect = s->rect;
-	s->brect.height = height_of_bar();
+	s->brect.height = blitz_labelh(&def.font);
 	s->brect.y = s->rect.height - s->brect.height;
 	XMoveResizeWindow(blz.dpy, s->barwin, s->brect.x, s->brect.y, s->brect.width, s->brect.height);
 	XSync(blz.dpy, False);
@@ -93,7 +86,7 @@ draw_bar(WMScreen *s)
 	for(b=s->lbar, nb=2 ;nb; --nb && (b = s->rbar))
 		for(; b; b=b->next) {
 			b->brush.rect.x = b->brush.rect.y = 0;
-			b->brush.rect.width = s->brect.height;
+			b->brush.rect.width = def.font.height;
 			if(b->text && strlen(b->text))
 				b->brush.rect.width += blitz_textwidth(b->brush.font, b->text);
 			b->brush.rect.height = s->brect.height;
