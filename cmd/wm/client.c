@@ -100,7 +100,6 @@ create_client(Window w, XWindowAttributes *wa)
 	c->rect.width = wa->width;
 	c->rect.height = wa->height;
 	XSetWindowBorderWidth(blz.dpy, c->win, 0);
-	c->proto = win_proto(c->win);
 	XGetTransientForHint(blz.dpy, c->win, &c->trans);
 	if(!XGetWMNormalHints(blz.dpy, c->win, &c->size, &msize) || !c->size.flags)
 		c->size.flags = PSize;
@@ -133,14 +132,6 @@ create_client(Window w, XWindowAttributes *wa)
 
 	write_event("CreateClient %d\n", i);
 	return c;
-}
-
-void
-set_client_state(Client * c, int state)
-{
-	long data[] = { state, None };
-	XChangeProperty(blz.dpy, c->win, wm_atom[WMState], wm_atom[WMState], 32,
-			PropModeReplace, (unsigned char *) data, 2);
 }
 
 void
@@ -206,7 +197,6 @@ map_client(Client *c)
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XMapWindow(blz.dpy, c->win);
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
-	set_client_state(c, NormalState);
 }
 
 void
@@ -215,7 +205,6 @@ unmap_client(Client *c)
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XUnmapWindow(blz.dpy, c->win);
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
-	set_client_state(c, WithdrawnState);
 }
 
 void
@@ -251,28 +240,10 @@ configure_client(Client *c)
 	XSync(blz.dpy, False);
 }
 
-static void
-send_client_message(Window w, Atom a, long value)
-{
-	XEvent e;
-	e.type = ClientMessage;
-	e.xclient.window = w;
-	e.xclient.message_type = a;
-	e.xclient.format = 32;
-	e.xclient.data.l[0] = value;
-	e.xclient.data.l[1] = CurrentTime;
-
-	XSendEvent(blz.dpy, w, False, NoEventMask, &e);
-	XSync(blz.dpy, False);
-}
-
 void
 kill_client(Client * c)
 {
-	if(c->proto & WM_PROTOCOL_DELWIN)
-		send_client_message(c->win, wm_atom[WMProtocols], wm_atom[WMDelete]);
-	else
-		XKillClient(blz.dpy, c->win);
+	XKillClient(blz.dpy, c->win);
 }
 
 void
@@ -280,11 +251,6 @@ prop_client(Client *c, XPropertyEvent *e)
 {
 	long msize;
 
-	if(e->atom == wm_atom[WMProtocols]) {
-		/* update */
-		c->proto = win_proto(c->win);
-		return;
-	}
 	switch (e->atom) {
 	case XA_WM_TRANSIENT_FOR:
 		XGetTransientForHint(blz.dpy, c->win, &c->trans);

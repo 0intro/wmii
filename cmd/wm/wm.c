@@ -63,53 +63,9 @@ scan_wins()
 		XFree(wins);
 }
 
-static int
-win_property(Window w, Atom a, Atom t, long l, unsigned char **prop)
-{
-	Atom real;
-	int format;
-	unsigned long res, extra;
-	int status;
-
-	status = XGetWindowProperty(blz.dpy, w, a, 0L, l, False, t, &real, &format,
-			&res, &extra, prop);
-
-	if(status != Success || *prop == 0) {
-		return 0;
-	}
-	if(res == 0) {
-		free((void *) *prop);
-	}
-	return res;
-}
-
-int
-win_proto(Window w)
-{
-	Atom *protocols;
-	long res;
-	int protos = 0;
-	int i;
-
-	res = win_property(w, wm_atom[WMProtocols], XA_ATOM, 20L,
-			((unsigned char **) &protocols));
-	if(res <= 0) {
-		return protos;
-	}
-	for(i = 0; i < res; i++) {
-		if(protocols[i] == wm_atom[WMDelete])
-			protos |= WM_PROTOCOL_DELWIN;
-	}
-	free((char *) protocols);
-	return protos;
-}
-
 static void
 init_atoms()
 {
-	wm_atom[WMState] = XInternAtom(blz.dpy, "WM_STATE", False);
-	wm_atom[WMProtocols] = XInternAtom(blz.dpy, "WM_PROTOCOLS", False);
-	wm_atom[WMDelete] = XInternAtom(blz.dpy, "WM_DELETE_WINDOW", False);
 	net_atom[NetSupported] = XInternAtom(blz.dpy, "_NET_SUPPORTED", False);
 	net_atom[NetWMName] = XInternAtom(blz.dpy, "_NET_WM_NAME", False);
 	tags_atom = XInternAtom(blz.dpy, "_WIN_TAGS", False);

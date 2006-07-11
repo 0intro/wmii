@@ -11,14 +11,6 @@
 #include <ixp.h>
 #include <blitz.h>
 
-/* WM atoms */
-enum {
-	WMState,
-	WMProtocols,
-	WMDelete,
-	WMLast
-};
-
 /* NET atoms */
 enum {
 	NetSupported,
@@ -102,7 +94,6 @@ struct Client {
 	char props[512];
 	unsigned short id;
 	unsigned int border;
-	int proto;
 	Bool floating;
 	Bool fixedsize;
 	Window win;
@@ -189,7 +180,6 @@ unsigned int num_screens;
 Blitz blz;
 GC xorgc;
 char *user;
-Atom wm_atom[WMLast];
 Atom net_atom[NetLast];
 Atom tags_atom;
 Cursor cursor[CurLast];
@@ -324,5 +314,4 @@ void update_views();
 unsigned int newcolw_of_view(View *v);
 
 /* wm.c */
-int win_proto(Window w);
 int wmii_error_handler(Display *dpy, XErrorEvent *error);
