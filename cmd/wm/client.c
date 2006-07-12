@@ -235,9 +235,8 @@ configure_client(Client *c)
 	e.border_width = c->border;
 	e.above = None;
 	e.override_redirect = False;
-	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XSendEvent(blz.dpy, c->win, False, StructureNotifyMask, (XEvent *) & e);
-	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+	XSendEvent(blz.dpy, c->win, False,
+			StructureNotifyMask, (XEvent *) & e);
 	XSync(blz.dpy, False);
 }
 
