@@ -215,7 +215,8 @@ restack_view(View *v)
 void
 scale_view(View *v, float w)
 {
-	unsigned int xoff, i=0;
+	unsigned int xoff, col_size = 0;
+	unsigned int min_width = screen->rect.width/NCOL;
 	Area *a;
 	float scale, dx = 0;
 	int wdiff = 0;
@@ -223,7 +224,7 @@ scale_view(View *v, float w)
 	if(!v->area->next)
 		return;
 
-	for(a=v->area->next; a; a=a->next, i++)
+	for(a=v->area->next; a; a=a->next, col_size++)
 		dx += a->rect.width;
 	scale = w / dx;
 	xoff = 0;
@@ -234,14 +235,14 @@ scale_view(View *v, float w)
 		xoff += a->rect.width;
 	}
 
-	/* MIN_COLWIDTH can only be respected when there is enough space; the caller should guarantee this */
-	if(i * MIN_COLWIDTH > w)
+	/* min_width can only be respected when there is enough space; the caller should guarantee this */
+	if(col_size * min_width > w)
 		return;
 	xoff = 0;
-	for(a=v->area->next; a; a=a->next, i--) {
-		if(a->rect.width < MIN_COLWIDTH)
-			a->rect.width = MIN_COLWIDTH;
-		else if((wdiff = xoff + a->rect.width - w + i * MIN_COLWIDTH) > 0)
+	for(a=v->area->next, col_size--; a; a=a->next, col_size--) {
+		if(a->rect.width < min_width)
+			a->rect.width = min_width;
+		else if((wdiff = xoff + a->rect.width - w + col_size * min_width) > 0)
 			a->rect.width -= wdiff;
 		if(!a->next)
 			a->rect.width = w - xoff;

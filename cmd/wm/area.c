@@ -19,21 +19,24 @@ Area *
 create_area(View *v, Area *pos, unsigned int w)
 {
 	static unsigned short id = 1;
-	unsigned int area_size;
+	unsigned int area_size, col_size;
+	unsigned int min_width = screen->rect.width/NCOL;
 	Area *a, **p = pos ? &pos->next : &v->area;
 
 	for(area_size = 0, a=v->area; a; a=a->next, area_size++);
 
+	col_size = area_size ? area_size - 1 : 0;
+
 	if(!w) {
-		if(area_size > 1)
-			w = screen->rect.width / area_size - 1;
+		if(col_size)
+			w = screen->rect.width / (col_size + 1);
 		else
 			w = screen->rect.width;
 	}
-	if(w < MIN_COLWIDTH)
-		w = MIN_COLWIDTH;
+	if(w < min_width)
+		w = min_width;
 
-	if(area_size >= 2 && (area_size - 1) * MIN_COLWIDTH + w > screen->rect.width)
+	if(col_size && col_size * min_width + w > screen->rect.width)
 		return nil;
 
 	if(area_size > 1)

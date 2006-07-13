@@ -136,7 +136,7 @@ scale_column(Area *a, float h)
 	if(frame_size * min_height > h)
 		return;
 	yoff = 0;
-	for(f=a->frame; f; f=f->anext, frame_size--) {
+	for(f=a->frame, frame_size--; f; f=f->anext, frame_size--) {
 		if(f->rect.height < min_height)
 			f->rect.height = min_height;
 		else if((hdiff = yoff + f->rect.height - h + frame_size * min_height) > 0)
@@ -228,6 +228,7 @@ drop_resize(Frame *f, XRectangle *new)
 	View *v = a->view;
 	Frame *north = nil, *south = nil;
 	unsigned int min_height = 2 * blitz_labelh(&def.font);
+	unsigned int min_width = screen->rect.width/NCOL;
 
 	for(west=v->area->next; west && west->next != a; west=west->next);
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
@@ -237,26 +238,26 @@ drop_resize(Frame *f, XRectangle *new)
 	south = f->anext;
 
 	/* validate (and trim if necessary) horizontal resize */
-	if(new->width < MIN_COLWIDTH) {
+	if(new->width < min_width) {
 		if(new->x + new->width == f->rect.x + f->rect.width)
-			new->x = a->rect.x + a->rect.width - MIN_COLWIDTH;
-		new->width = MIN_COLWIDTH;
+			new->x = a->rect.x + a->rect.width - min_width;
+		new->width = min_width;
 	}
 	if(west && (new->x != f->rect.x)) {
-		if(new->x < 0 || new->x < (west->rect.x + MIN_COLWIDTH)) {
-			new->width -= (west->rect.x + MIN_COLWIDTH) - new->x;
-			new->x = west->rect.x + MIN_COLWIDTH;
+		if(new->x < 0 || new->x < (west->rect.x + min_width)) {
+			new->width -= (west->rect.x + min_width) - new->x;
+			new->x = west->rect.x + min_width;
 		}
 	} else {
 		new->width += new->x - a->rect.x;
 		new->x = a->rect.x;
 	}
 	if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
-		if((new->x + new->width) > (east->rect.x + east->rect.width - MIN_COLWIDTH))
-			new->width = (east->rect.x + east->rect.width - MIN_COLWIDTH) - new->x;
+		if((new->x + new->width) > (east->rect.x + east->rect.width - min_width))
+			new->width = (east->rect.x + east->rect.width - min_width) - new->x;
 	} else
 		new->width = (a->rect.x + a->rect.width) - new->x;
-	if(new->width < MIN_COLWIDTH)
+	if(new->width < min_width)
 		goto AfterHorizontal;
 
 	/* horizontal resize */

@@ -41,7 +41,7 @@ enum {
 	CurLast
 };
 
-enum { MIN_COLWIDTH = 64 };
+enum { NCOL = 16 };
 enum { WM_PROTOCOL_DELWIN = 1 };
 
 /* Data Structures */
