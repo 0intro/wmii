@@ -217,8 +217,11 @@ attach_to_area(Area *a, Frame *f, Bool send)
 	if(!send && !c->floating) { /* column */
 		unsigned int w = newcolw_of_view(v);
 		if(v->area->next->frame && w) {
-			a = new_column(v, a, w);
-			arrange_view(v);
+			Area *new;
+			if((new = new_column(v, a, w))) {
+				a = new;
+				arrange_view(v);
+			}
 		}
 	}
 
