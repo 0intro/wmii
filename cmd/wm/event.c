@@ -19,7 +19,7 @@ static void enternotify(XEvent *e);
 static void leavenotify(XEvent *e);
 static void expose(XEvent *e);
 static void keypress(XEvent *e);
-static void keymapnotify(XEvent *e);
+static void mappingnotify(XEvent *e);
 static void maprequest(XEvent *e);
 static void motionnotify(XEvent *e);
 static void propertynotify(XEvent *e);
@@ -34,8 +34,8 @@ void (*handler[LASTEvent]) (XEvent *) = {
 	[LeaveNotify]	= leavenotify,
 	[Expose]	= expose,
 	[KeyPress]	= keypress,
-	[KeymapNotify]	= keymapnotify,
 	[MotionNotify]	= motionnotify,
+	[MappingNotify]	= mappingnotify,
 	[MapRequest]	= maprequest,
 	[PropertyNotify]= propertynotify,
 	[UnmapNotify]	= unmapnotify
@@ -277,9 +277,13 @@ keypress(XEvent *e)
 }
 
 static void
-keymapnotify(XEvent *e)
+mappingnotify(XEvent *e)
 {
-	update_keys();
+	XMappingEvent *ev = &e->xmapping;
+
+	XRefreshKeyboardMapping(ev);
+	if(ev->request == MappingKeyboard)
+		update_keys();
 }
 
 static void
