@@ -5,11 +5,10 @@ include config.mk
 
 SUBDIRS = libcext liblitz libixp cmd
 
-BIN = cmd/wm/wmii cmd/wm/wmiiwm cmd/wmiimenu cmd/wmiipsel \
+BIN = cmd/wm/wmii cmd/wm/wmiiwm cmd/wmiipsel \
 	cmd/wmiir cmd/wmiisetsid cmd/wmiiwarp
 
-MAN1 = cmd/wm/wmii.1 cmd/wm/wmiiwm.1 \
-	cmd/wmiimenu.1 cmd/wmiir.1
+MAN1 = cmd/wm/wmii.1 cmd/wm/wmiiwm.1 cmd/wmiir.1
 
 all:
 	@echo wmii build options:

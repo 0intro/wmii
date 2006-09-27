@@ -286,84 +286,84 @@ typedef struct P9Srv {
 } P9Srv;
 
 /* client.c */
-int ixp_client_dial(IXPClient *c, char *address, unsigned int rootfid);
-void ixp_client_hangup(IXPClient *c);
-int ixp_client_remove(IXPClient *c, unsigned int newfid, char *filepath);
-int ixp_client_create(IXPClient *c, unsigned int dirfid, char *name,
+extern int ixp_client_dial(IXPClient *c, char *address, unsigned int rootfid);
+extern void ixp_client_hangup(IXPClient *c);
+extern int ixp_client_remove(IXPClient *c, unsigned int newfid, char *filepath);
+extern int ixp_client_create(IXPClient *c, unsigned int dirfid, char *name,
 		unsigned int perm, unsigned char mode);
-int ixp_client_walk(IXPClient *c, unsigned int newfid, char *filepath);
-int ixp_client_stat(IXPClient *c, unsigned int newfid, char *filepath);
-int ixp_client_walkopen(IXPClient *c, unsigned int newfid, char *filepath,
+extern int ixp_client_walk(IXPClient *c, unsigned int newfid, char *filepath);
+extern int ixp_client_stat(IXPClient *c, unsigned int newfid, char *filepath);
+extern int ixp_client_walkopen(IXPClient *c, unsigned int newfid, char *filepath,
 		unsigned char mode);
-int ixp_client_open(IXPClient *c, unsigned int newfid, unsigned char mode);
-int ixp_client_read(IXPClient *c, unsigned int fid,
+extern int ixp_client_open(IXPClient *c, unsigned int newfid, unsigned char mode);
+extern int ixp_client_read(IXPClient *c, unsigned int fid,
 		unsigned long long offset, void *result,
 		unsigned int res_len);
-int ixp_client_write(IXPClient *c, unsigned int fid,
+extern int ixp_client_write(IXPClient *c, unsigned int fid,
 		unsigned long long offset,
 		unsigned int count, unsigned char *data);
-int ixp_client_close(IXPClient *c, unsigned int fid);
-int ixp_client_do_fcall(IXPClient * c);
+extern int ixp_client_close(IXPClient *c, unsigned int fid);
+extern int ixp_client_do_fcall(IXPClient * c);
 
 /* convert.c */
-void ixp_pack_u8(unsigned char **msg, int *msize, unsigned char val);
-void ixp_unpack_u8(unsigned char **msg, int *msize, unsigned char *val);
-void ixp_pack_u16(unsigned char **msg, int *msize, unsigned short val);
-void ixp_unpack_u16(unsigned char **msg, int *msize, unsigned short *val);
-void ixp_pack_u32(unsigned char **msg, int *msize, unsigned int val);
-void ixp_unpack_u32(unsigned char **msg, int *msize, unsigned int *val);
-void ixp_pack_u64(unsigned char **msg, int *msize, unsigned long long val);
-void ixp_unpack_u64(unsigned char **msg, int *msize, unsigned long long *val);
-void ixp_pack_string(unsigned char **msg, int *msize, const char *s);
-void ixp_unpack_strings(unsigned char **msg, int *msize, unsigned short n, char **strings);
-void ixp_unpack_string(unsigned char **msg, int *msize, char **string, unsigned short *len);
-void ixp_pack_data(unsigned char **msg, int *msize, unsigned char *data,
+extern void ixp_pack_u8(unsigned char **msg, int *msize, unsigned char val);
+extern void ixp_unpack_u8(unsigned char **msg, int *msize, unsigned char *val);
+extern void ixp_pack_u16(unsigned char **msg, int *msize, unsigned short val);
+extern void ixp_unpack_u16(unsigned char **msg, int *msize, unsigned short *val);
+extern void ixp_pack_u32(unsigned char **msg, int *msize, unsigned int val);
+extern void ixp_unpack_u32(unsigned char **msg, int *msize, unsigned int *val);
+extern void ixp_pack_u64(unsigned char **msg, int *msize, unsigned long long val);
+extern void ixp_unpack_u64(unsigned char **msg, int *msize, unsigned long long *val);
+extern void ixp_pack_string(unsigned char **msg, int *msize, const char *s);
+extern void ixp_unpack_strings(unsigned char **msg, int *msize, unsigned short n, char **strings);
+extern void ixp_unpack_string(unsigned char **msg, int *msize, char **string, unsigned short *len);
+extern void ixp_pack_data(unsigned char **msg, int *msize, unsigned char *data,
 		unsigned int datalen);
-void ixp_unpack_data(unsigned char **msg, int *msize, unsigned char **data,
+extern void ixp_unpack_data(unsigned char **msg, int *msize, unsigned char **data,
 		unsigned int datalen);
-void ixp_pack_prefix(unsigned char *msg, unsigned int size,
+extern void ixp_pack_prefix(unsigned char *msg, unsigned int size,
 		unsigned char id, unsigned short tag);
-void ixp_unpack_prefix(unsigned char **msg, unsigned int *size,
+extern void ixp_unpack_prefix(unsigned char **msg, unsigned int *size,
 		unsigned char *id, unsigned short *tag);
-void ixp_pack_qid(unsigned char **msg, int *msize, Qid *qid);
-void ixp_unpack_qid(unsigned char **msg, int *msize, Qid *qid);
-void ixp_pack_stat(unsigned char **msg, int *msize, Stat *stat);
-void ixp_unpack_stat(unsigned char **msg, int *msize, Stat *stat);
+extern void ixp_pack_qid(unsigned char **msg, int *msize, Qid *qid);
+extern void ixp_unpack_qid(unsigned char **msg, int *msize, Qid *qid);
+extern void ixp_pack_stat(unsigned char **msg, int *msize, Stat *stat);
+extern void ixp_unpack_stat(unsigned char **msg, int *msize, Stat *stat);
 
 /* request.c */
-void respond(P9Req *r, char *error);
-void serve_9pcon(IXPConn *c);
+extern void respond(P9Req *r, char *error);
+extern void serve_9pcon(IXPConn *c);
 
 /* intmap.c */
-void initmap(Intmap *m, unsigned long nhash, void *hash);
-void incref_map(Intmap *m);
-void decref_map(Intmap *m);
-void freemap(Intmap *map, void (*destroy)(void*));
-void execmap(Intmap *map, void (*destroy)(void*));
-void* lookupkey(Intmap *map, unsigned long id);
-void* insertkey(Intmap *map, unsigned long id, void *v);
-int caninsertkey(Intmap *map, unsigned long id, void *v);
-void* deletekey(Intmap *map, unsigned long id);
+extern void initmap(Intmap *m, unsigned long nhash, void *hash);
+extern void incref_map(Intmap *m);
+extern void decref_map(Intmap *m);
+extern void freemap(Intmap *map, void (*destroy)(void*));
+extern void execmap(Intmap *map, void (*destroy)(void*));
+extern void* lookupkey(Intmap *map, unsigned long id);
+extern void* insertkey(Intmap *map, unsigned long id, void *v);
+extern int caninsertkey(Intmap *map, unsigned long id, void *v);
+extern void* deletekey(Intmap *map, unsigned long id);
 
 /* message.c */
-unsigned short ixp_sizeof_stat(Stat *stat);
-unsigned int ixp_fcall2msg(void *msg, Fcall *fcall, unsigned int msglen);
-unsigned int ixp_msg2fcall(Fcall *call, void *msg, unsigned int msglen);
+extern unsigned short ixp_sizeof_stat(Stat *stat);
+extern unsigned int ixp_fcall2msg(void *msg, Fcall *fcall, unsigned int msglen);
+extern unsigned int ixp_msg2fcall(Fcall *call, void *msg, unsigned int msglen);
 
 /* server.c */
-IXPConn *ixp_server_open_conn(IXPServer *s, int fd, void *aux,
+extern IXPConn *ixp_server_open_conn(IXPServer *s, int fd, void *aux,
 		void (*read)(IXPConn *c), void (*close)(IXPConn *c));
-void ixp_server_close_conn(IXPConn *c);
-char *ixp_server_loop(IXPServer *s);
-unsigned int ixp_server_receive_fcall(IXPConn *c, Fcall *fcall);
-int ixp_server_respond_fcall(IXPConn *c, Fcall *fcall);
-int ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr);
-void ixp_server_close(IXPServer *s);
+extern void ixp_server_close_conn(IXPConn *c);
+extern char *ixp_server_loop(IXPServer *s);
+extern unsigned int ixp_server_receive_fcall(IXPConn *c, Fcall *fcall);
+extern int ixp_server_respond_fcall(IXPConn *c, Fcall *fcall);
+extern int ixp_server_respond_error(IXPConn *c, Fcall *fcall, char *errstr);
+extern void ixp_server_close(IXPServer *s);
 
 /* socket.c */
-int ixp_connect_sock(char *address);
-int ixp_create_sock(char *address, char **errstr);
+extern int ixp_connect_sock(char *address);
+extern int ixp_create_sock(char *address, char **errstr);
 
 /* transport.c */
-unsigned int ixp_send_message(int fd, void *msg, unsigned int msize, char **errstr);
-unsigned int ixp_recv_message(int fd, void *msg, unsigned int msglen, char **errstr);
+extern unsigned int ixp_send_message(int fd, void *msg, unsigned int msize, char **errstr);
+extern unsigned int ixp_recv_message(int fd, void *msg, unsigned int msglen, char **errstr);

@@ -38,21 +38,6 @@ create_frame(Client *c, View *v)
 	f->grabbox = f->titlebar = f->tile;
 	f->titlebar.align = WEST;
 
-	f->tagbar.blitz = &blz;
-	f->tagbar.drawable = pmap;
-	f->tagbar.win = c->framewin;
-	f->tagbar.gc = c->gc;
-	f->tagbar.font = &def.font;
-	f->tagbar.cursor = f->tagbar.def = cursor[CurNormal];
-	f->tagbar.input = cursor[CurInput];
-	f->tagbar.color = def.normcolor;
-	f->tagbar.bcolor[0] = def.bcolor[0];
-	f->tagbar.bcolor[1] = def.bcolor[1];
-	f->tagbar.bcolor[2] = def.bcolor[2];
-	f->tagbar.aux = f;
-	f->tagbar.draw = (void (*)(void *))draw_frame;
-	blitz_setinput(&f->tagbar, c->tags);
-
 	return f;
 }
 
@@ -84,13 +69,10 @@ insert_frame(Frame *pos, Frame *f, Bool before)
 void
 update_frame_widget_colors(Frame *f)
 {
-	f->tagbar.bcolor[0] = def.bcolor[0];
-	f->tagbar.bcolor[1] = def.bcolor[1];
-	f->tagbar.bcolor[2] = def.bcolor[2];
  	if(sel_screen && (f->client == sel_client()))
-		f->tagbar.color = f->tile.color = f->titlebar.color = def.selcolor;
+		f->tile.color = f->titlebar.color = def.selcolor;
 	else
-		f->tagbar.color = f->tile.color = f->titlebar.color = def.normcolor;
+		f->tile.color = f->titlebar.color = def.normcolor;
 
 	if(f->area->sel == f)
 		f->grabbox.color = def.selcolor;
@@ -112,17 +94,10 @@ draw_frame(Frame *f)
 
 	f->titlebar.rect = f->grabbox.rect;
 	f->titlebar.rect.x = f->grabbox.rect.x + f->grabbox.rect.width;
-	f->titlebar.rect.width = f->rect.width / 2;
-
-	/* tag bar */
-	f->tagbar.rect = f->grabbox.rect;
-	f->tagbar.rect.x = f->titlebar.rect.x + f->titlebar.rect.width;
-	f->tagbar.rect.width =
-		f->rect.width - (f->grabbox.rect.width + f->titlebar.rect.width);
+	f->titlebar.rect.width = f->rect.width -  f->titlebar.rect.x;
 
 	blitz_draw_tile(&f->tile);
 	blitz_draw_tile(&f->grabbox);
-	blitz_draw_input(&f->tagbar);
 	blitz_draw_label(&f->titlebar, f->client->name);
 	XCopyArea(blz.dpy, pmap, f->client->framewin, f->client->gc,
 			0, 0, f->rect.width, f->rect.height, 0, 0);

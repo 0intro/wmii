@@ -12,34 +12,16 @@
 #include <blitz.h>
 
 /* WM atoms */
-enum {
-	WMProtocols,
-	WMDelete,
-	WMLast
-};
+enum { WMProtocols, WMDelete, WMLast };
 
 /* NET atoms */
-enum {
-	NetSupported,
-	NetWMName,
-	NetLast
-};
+enum { NetSupported, NetWMName, NetLast };
 
 /* Column modes */
-enum {
-	Coldefault,
-	Colstack,
-	Colmax
-};
+enum { Coldefault, Colstack, Colmax };
 
 /* Cursor */
-enum {
-	CurNormal,
-	CurResize,
-	CurMove,
-	CurInput,
-	CurLast
-};
+enum { CurNormal, CurResize, CurMove, CurInput, CurLast };
 
 enum { NCOL = 16 };
 enum { WM_PROTOCOL_DELWIN = 1 };
@@ -87,7 +69,6 @@ struct Frame {
 	Bool collapsed;
 	BlitzBrush tile;
 	BlitzBrush grabbox;
-	BlitzInput tagbar;
 	BlitzBrush titlebar;
 };
 
@@ -202,126 +183,127 @@ void (*handler[LASTEvent]) (XEvent *);
 Bool starting;
 
 /* wm.c */
-char *message_root(char *message);
+extern char *message_root(char *message);
 
 /* area.c */
-Area *create_area(View *v, Area *pos, unsigned int w);
-void destroy_area(Area *a);
-Area *area_of_id(View *t, unsigned short id);
-char *select_area(Area *a, char *arg);
-void send_to_area(Area *to, Area *from, Frame *f);
-void attach_to_area(Area *a, Frame *f, Bool send);
-void detach_from_area(Area *a, Frame *f);
-Client *sel_client_of_area(Area *a);
+extern Area *create_area(View *v, Area *pos, unsigned int w);
+extern void destroy_area(Area *a);
+extern Area *area_of_id(View *t, unsigned short id);
+extern char *select_area(Area *a, char *arg);
+extern void send_to_area(Area *to, Area *from, Frame *f);
+extern void attach_to_area(Area *a, Frame *f, Bool send);
+extern void detach_from_area(Area *a, Frame *f);
+extern Client *sel_client_of_area(Area *a);
 
 /* bar.c */
-Bar *create_bar(Bar **b_link, char *name);
-void destroy_bar(Bar **b_link, Bar *b);
-void draw_bar(WMScreen *s);
-void resize_bar();
-Bar *bar_of_name(Bar *b_link, const char *name);
+extern Bar *create_bar(Bar **b_link, char *name);
+extern void destroy_bar(Bar **b_link, Bar *b);
+extern void draw_bar(WMScreen *s);
+extern void resize_bar();
+extern Bar *bar_of_name(Bar *b_link, const char *name);
 
 /* client.c */
-Client *create_client(Window w, XWindowAttributes *wa);
-void destroy_client(Client *c);
-void configure_client(Client *c);
-void prop_client(Client *c, XPropertyEvent *e);
-void kill_client(Client *c);
-void gravitate_client(Client *c, Bool invert);
-void unmap_client(Client *c);
-void map_client(Client *c);
-void reparent_client(Client *c, Window w, int x, int y);
-void manage_client(Client *c);
-void focus_client(Client *c, Bool restack);
-void focus(Client *c, Bool restack);
-void resize_client(Client *c, XRectangle *r, Bool ignore_xcall);
-void match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky);
-char *send_client(Frame *f, char *arg);
-char * message_client(Client *c, char *message);
-void move_client(Client *c, char *arg);
-void size_client(Client *c, char *arg);
-void newcol_client(Client *c, char *arg);
-Client *sel_client();
-Frame *frame_of_win(Window w);
-Client *client_of_win(Window w);
-int idx_of_client(Client *c);
-void update_client_grab(Client *c, Bool is_sel);
-void apply_rules(Client *c);
-void apply_tags(Client *c, const char *tags);
+extern Client *create_client(Window w, XWindowAttributes *wa);
+extern void destroy_client(Client *c);
+extern void configure_client(Client *c);
+extern void prop_client(Client *c, XPropertyEvent *e);
+extern void kill_client(Client *c);
+extern void gravitate_client(Client *c, Bool invert);
+extern void unmap_client(Client *c);
+extern void map_client(Client *c);
+extern void reparent_client(Client *c, Window w, int x, int y);
+extern void manage_client(Client *c);
+extern void focus_client(Client *c, Bool restack);
+extern void focus(Client *c, Bool restack);
+extern void resize_client(Client *c, XRectangle *r, Bool ignore_xcall);
+extern void match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky);
+extern char *send_client(Frame *f, char *arg);
+extern char * message_client(Client *c, char *message);
+extern void swap_client(Client *c, char *arg);
+extern void move_client(Client *c, char *arg);
+extern void size_client(Client *c, char *arg);
+extern void newcol_client(Client *c, char *arg);
+extern Client *sel_client();
+extern Frame *frame_of_win(Window w);
+extern Client *client_of_win(Window w);
+extern int idx_of_client(Client *c);
+extern void update_client_grab(Client *c, Bool is_sel);
+extern void apply_rules(Client *c);
+extern void apply_tags(Client *c, const char *tags);
 
 /* column.c */
-void arrange_column(Area *a, Bool dirty);
-void scale_column(Area *a, float h);
-void resize_column(Client *c, XRectangle *r, XPoint *pt);
-int column_mode_of_str(char *arg);
-char *str_of_column_mode(int mode);
-Area *new_column(View *v, Area *pos, unsigned int w);
+extern void arrange_column(Area *a, Bool dirty);
+extern void scale_column(Area *a, float h);
+extern void resize_column(Client *c, XRectangle *r, XPoint *pt);
+extern int column_mode_of_str(char *arg);
+extern char *str_of_column_mode(int mode);
+extern Area *new_column(View *v, Area *pos, unsigned int w);
 
 /* event.c */
-void check_x_event(IXPConn *c);
-unsigned int flush_masked_events(long even_mask);
+extern void check_x_event(IXPConn *c);
+extern unsigned int flush_masked_events(long even_mask);
 
 /* frame.c */
-Frame *create_frame(Client *c, View *v);
-void remove_frame(Frame *f);
-void insert_frame(Frame *pos, Frame *f, Bool before);
-void draw_frame(Frame *f);
-void draw_frames();
-void update_frame_widget_colors(Frame *f);
+extern Frame *create_frame(Client *c, View *v);
+extern void remove_frame(Frame *f);
+extern void insert_frame(Frame *pos, Frame *f, Bool before);
+extern void draw_frame(Frame *f);
+extern void draw_frames();
+extern void update_frame_widget_colors(Frame *f);
 
 /* fs.c */
-void fs_attach(P9Req *r);
-void fs_clunk(P9Req *r);
-void fs_create(P9Req *r);
-void fs_flush(P9Req *r);
-void fs_freefid(Fid *f);
-void fs_open(P9Req *r);
-void fs_read(P9Req *r);
-void fs_remove(P9Req *r);
-void fs_stat(P9Req *r);
-void fs_walk(P9Req *r);
-void fs_write(P9Req *r);
-void write_event(char *format, ...);
+extern void fs_attach(P9Req *r);
+extern void fs_clunk(P9Req *r);
+extern void fs_create(P9Req *r);
+extern void fs_flush(P9Req *r);
+extern void fs_freefid(Fid *f);
+extern void fs_open(P9Req *r);
+extern void fs_read(P9Req *r);
+extern void fs_remove(P9Req *r);
+extern void fs_stat(P9Req *r);
+extern void fs_walk(P9Req *r);
+extern void fs_write(P9Req *r);
+extern void write_event(char *format, ...);
 
 /* geom.c */
-BlitzAlign quadofcoord(XRectangle *rect, int x, int y);
-int strtorect(XRectangle *r, const char *val);
+extern BlitzAlign quadofcoord(XRectangle *rect, int x, int y);
+extern int strtorect(XRectangle *r, const char *val);
 
 /* key.c */
-void kpress(Window w, unsigned long mod, KeyCode keycode);
-void update_keys();
-void init_lock_keys();
-unsigned long mod_key_of_str(char *val);
+extern void kpress(Window w, unsigned long mod, KeyCode keycode);
+extern void update_keys();
+extern void init_lock_keys();
+extern unsigned long mod_key_of_str(char *val);
 
 /* mouse.c */
-void do_mouse_resize(Client *c,BlitzAlign align);
-void grab_mouse(Window w, unsigned long mod, unsigned int button);
-void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
-BlitzAlign snap_rect(XRectangle *rects, int num, XRectangle *current,
+extern void do_mouse_resize(Client *c,BlitzAlign align);
+extern void grab_mouse(Window w, unsigned long mod, unsigned int button);
+extern void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
+extern BlitzAlign snap_rect(XRectangle *rects, int num, XRectangle *current,
 					 BlitzAlign *mask, int snap);
 
 /* rule.c */
-void update_rules(Rule **rule, const char *data);
+extern void update_rules(Rule **rule, const char *data);
 
 /* view.c */
-void arrange_view(View *v);
-void scale_view(View *v, float w);
-View *get_view(const char *name);
-View *create_view(const char *name);
-void focus_view(WMScreen *s, View *v);
-void update_client_views(Client *c, char **tags);
-XRectangle *rects_of_view(View *v, unsigned int *num);
-View *view_of_id(unsigned short id);
-void select_view(const char *arg);
-void attach_to_view(View *v, Frame *f);
-Client *sel_client_of_view(View *v);
-char *message_view(View *v, char *message);
-void restack_view(View *v);
-unsigned char *view_index(View *v);
-void destroy_view(View *v);
-void update_views();
-unsigned int newcolw_of_view(View *v);
+extern void arrange_view(View *v);
+extern void scale_view(View *v, float w);
+extern View *get_view(const char *name);
+extern View *create_view(const char *name);
+extern void focus_view(WMScreen *s, View *v);
+extern void update_client_views(Client *c, char **tags);
+extern XRectangle *rects_of_view(View *v, unsigned int *num);
+extern View *view_of_id(unsigned short id);
+extern void select_view(const char *arg);
+extern void attach_to_view(View *v, Frame *f);
+extern Client *sel_client_of_view(View *v);
+extern char *message_view(View *v, char *message);
+extern void restack_view(View *v);
+extern unsigned char *view_index(View *v);
+extern void destroy_view(View *v);
+extern void update_views();
+extern unsigned int newcolw_of_view(View *v);
 
 /* wm.c */
-int wmii_error_handler(Display *dpy, XErrorEvent *error);
-int win_proto(Window w);
+extern int wmii_error_handler(Display *dpy, XErrorEvent *error);
+extern int win_proto(Window w);

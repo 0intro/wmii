@@ -589,6 +589,14 @@ newcol_client(Client *c, char *arg)
 	flush_masked_events(EnterWindowMask);
 }
 
+
+void
+swap_client(Client *c, char *arg)
+{
+	/* TODO: */
+}
+
+
 void
 move_client(Client *c, char *arg)
 {
@@ -757,7 +765,6 @@ apply_tags(Client *c, const char *tags)
 	int len;
 	char buf[256];
 	char *toks[32];
-	Frame *f;
 
 	cext_strlcpy(buf, tags, sizeof(buf));
 	if(!(n = cext_tokenize(toks, 31, buf, '+')))
@@ -789,9 +796,6 @@ apply_tags(Client *c, const char *tags)
 
 	XChangeProperty(blz.dpy, c->win, tags_atom, XA_STRING, 8,
 			PropModeReplace, (unsigned char *)c->tags, strlen(c->tags));
-
-	for(f = c->frame; f; f = f->cnext)
-		blitz_setinput(&f->tagbar, c->tags);
 }
 
 static void

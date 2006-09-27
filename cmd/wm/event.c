@@ -21,7 +21,6 @@ static void expose(XEvent *e);
 static void keypress(XEvent *e);
 static void mappingnotify(XEvent *e);
 static void maprequest(XEvent *e);
-static void motionnotify(XEvent *e);
 static void propertynotify(XEvent *e);
 static void unmapnotify(XEvent *e);
 
@@ -34,7 +33,6 @@ void (*handler[LASTEvent]) (XEvent *) = {
 	[LeaveNotify]	= leavenotify,
 	[Expose]	= expose,
 	[KeyPress]	= keypress,
-	[MotionNotify]	= motionnotify,
 	[MappingNotify]	= mappingnotify,
 	[MapRequest]	= maprequest,
 	[PropertyNotify]= propertynotify,
@@ -77,19 +75,8 @@ buttonrelease(XEvent *e)
 				return write_event("RightBarClick %d %s\n",
 						ev->button, b->name);
 	}
-	else if((f = frame_of_win(ev->window))) {
-		blitz_brelease_input(&f->tagbar, ev->button, ev->x, ev->y, ev->time);
+	else if((f = frame_of_win(ev->window))) 
 		write_event("ClientClick %d %d\n", idx_of_client(f->client), ev->button);
-	}
-}
-
-static void
-motionnotify(XEvent *e)
-{
-	Frame *f;
-	XMotionEvent *ev = &e->xmotion;
-	if((f = frame_of_win(ev->window)))
-		blitz_bmotion_input(&f->tagbar, ev->x, ev->y);
 }
 
 static void
@@ -100,7 +87,6 @@ buttonpress(XEvent *e)
 
 	if((f = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
-		blitz_bpress_input(&f->tagbar, ev->button, ev->x, ev->y);
 		if((ev->state & def.mod) == def.mod) {
 			focus(f->client, True);
 			switch(ev->button) {
@@ -270,7 +256,6 @@ keypress(XEvent *e)
 				|| IsPFKey(k) || IsPrivateKeypadKey(k))
 			return;
 		buf[n] = 0;
-		blitz_kpress_input(&f->tagbar, ev->state, k, buf);
 	}
 	else
 		kpress(blz.root, ev->state, (KeyCode) ev->keycode);
