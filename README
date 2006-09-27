@@ -3,8 +3,10 @@ Abstract
 window manager improved 2 is a dynamic window manager for X11.
 It supports classic and tiled window management with extended
 keyboard, mouse, and 9P-based [2] remote control.
-It consists of the wmiiwm(1) window manager, the wmiir(1)
-remote access utility, and a tiny wmiimenu(1).
+It consists of the wmiiwm(1) window manager and the wmiir(1)
+the remote access utility.
+
+Optionally wmii depends on dmenu(1).
 
 
 Requirements
