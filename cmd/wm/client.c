@@ -589,14 +589,6 @@ newcol_client(Client *c, char *arg)
 	flush_masked_events(EnterWindowMask);
 }
 
-
-void
-swap_client(Client *c, char *arg)
-{
-	/* TODO: */
-}
-
-
 void
 move_client(Client *c, char *arg)
 {

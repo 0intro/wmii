@@ -219,7 +219,6 @@ extern void resize_client(Client *c, XRectangle *r, Bool ignore_xcall);
 extern void match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky);
 extern char *send_client(Frame *f, char *arg);
 extern char * message_client(Client *c, char *message);
-extern void swap_client(Client *c, char *arg);
 extern void move_client(Client *c, char *arg);
 extern void size_client(Client *c, char *arg);
 extern void newcol_client(Client *c, char *arg);
