@@ -21,14 +21,14 @@ DOWN=j
 LEFT=h
 RIGHT=l
 
-DMENU_ARGS="-font fixed -normbg '#eeeeee' -normfg '#222222' -selbg '#335577' -selfg '#ffffff'"
+DMENU='dmenu -font fixed -normbg #eeeeee -normfg #222222 -selbg #335577 -selfg #ffffff'
 WMII_FONT='fixed'
 WMII_NORMCOLORS='#222222 #eeeeee #666666'
 WMII_SELCOLORS='#ffffff #335577 #447799'
 # dark background
 #WMII_NORMCOLORS='#eeeeee #111111 #222222'
 
-export WMII_FONT WMII_SELCOLORS WMII_NORMCOLORS
+export DMENU WMII_FONT WMII_SELCOLORS WMII_NORMCOLORS
 
 # stop any running instances or wmiirc
 echo Start wmiirc | wmiir write /event || exit 1
@@ -176,11 +176,11 @@ do
 		$MODKEY-f)
 			xwrite /tag/sel/0/sel/geom 0 0 0 0;;
 		$MODKEY-a)
-			`conf_which "\`proglist $ACTIONS_DIRS | dmenu $DMENU_ARGS`"` &;;
+			`conf_which "\`proglist $ACTIONS_DIRS | $DMENU\`"` &;;
 		$MODKEY-p)
-			wmiisetsid sh -c "`dmenu $DMENU_ARGS <$PROGS_FILE`" &;;
+			wmiisetsid sh -c "`$DMENU <$PROGS_FILE`" &;;
 		$MODKEY-t)
-			xwrite /ctl view "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | dmenu $DMENU_ARGS`" &;;
+			xwrite /ctl view "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | $DMENU`" &;;
 		$MODKEY-[0-9])
 			xwrite /ctl view "`echo $1 | sed 's/.*-//'`";;
 		$MODKEY-Return)
@@ -199,7 +199,7 @@ do
 			xwrite /client/sel/ctl kill;;
 		$MODKEY-Shift-t)
 			xwrite "/client/`wmiir read /client/sel/ctl`/tags" \
-				"`wmiir ls /tag | sed 's,/,,; /^sel$/d' | dmenu $DMENU_ARGS`" &;;
+				"`wmiir ls /tag | sed 's,/,,; /^sel$/d' | $DMENU`" &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /client/sel/tags "`echo $1 | sed 's/.*-//'`";;
 		esac;;
