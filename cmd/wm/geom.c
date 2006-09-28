@@ -7,13 +7,6 @@
 
 #include "wm.h"
 
-Bool
-ispointinrect(int x, int y, XRectangle * r)
-{
-	return (x >= r->x) && (x <= r->x + r->width)
-		&& (y >= r->y) && (y <= r->y + r->height);
-}
-
 BlitzAlign
 quadofcoord(XRectangle *rect, int x, int y)
 {

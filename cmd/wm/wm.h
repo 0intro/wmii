@@ -13,10 +13,15 @@
 
 /* WM atoms */
 enum { WMProtocols, WMDelete, WMLast };
-enum { NetSupported, NetWMName, NetLast };			/* NET atoms */
-enum { Coldefault, Colstack, Colmax };				/* Column modes */
-enum { ColFG, ColBG, ColLast };					/* color */
-enum { CurNormal, CurResize, CurMove, CurInput, CurLast };	/* Cursor */
+
+/* NET atoms */
+enum { NetSupported, NetWMName, NetLast };
+
+/* Column modes */
+enum { Coldefault, Colstack, Colmax };
+
+/* Cursor */
+enum { CurNormal, CurResize, CurMove, CurInput, CurLast };
 
 enum { NCOL = 16 };
 enum { WM_PROTOCOL_DELWIN = 1 };
@@ -31,24 +36,6 @@ typedef struct Bar Bar;
 typedef struct Rule Rule;
 typedef struct Ruleset Ruleset;
 typedef struct WMScreen WMScreen;
-
-typedef struct {
-	int ascent;
-	int descent;
-	int height;
-	XFontSet set;
-	XFontStruct *xfont;
-} Fnt;
-
-typedef struct {
-	int x, y, w, h;
-	unsigned long norm[ColLast];
-	unsigned long sel[ColLast];
-	unsigned long status[ColLast];
-	Drawable drawable;
-	Fnt font;
-	GC gc;
-} DC; /* draw context */
 
 struct View {
 	View *next;
@@ -251,14 +238,6 @@ extern int column_mode_of_str(char *arg);
 extern char *str_of_column_mode(int mode);
 extern Area *new_column(View *v, Area *pos, unsigned int w);
 
-/* draw.c */
-extern void drawall(void);			/* draw all visible client titles and the bar */
-extern void drawstatus(void);			/* draw the bar */
-extern void drawtitle(Client *c);		/* draw title of c */
-extern unsigned long getcolor(const char *colstr);	/* return color of colstr */
-extern void setfont(const char *fontstr);	/* set the font for DC */
-extern unsigned int textw(const char *text);	/* return the width of text in px*/
-
 /* event.c */
 extern void check_x_event(IXPConn *c);
 extern unsigned int flush_masked_events(long even_mask);
@@ -286,7 +265,6 @@ extern void fs_write(P9Req *r);
 extern void write_event(char *format, ...);
 
 /* geom.c */
-extern Bool ispointinrect(int x, int y, XRectangle * r);
 extern BlitzAlign quadofcoord(XRectangle *rect, int x, int y);
 extern int strtorect(XRectangle *r, const char *val);
 
