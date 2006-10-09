@@ -1,5 +1,5 @@
 /*
- * Copyright (c) MMVI Anselm R. Garbe <garbeam@wmii.de>
+ * Copyright (c) MMVI Anselm R. Garbe <arg@suckless.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
