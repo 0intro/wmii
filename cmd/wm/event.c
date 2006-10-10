@@ -67,11 +67,11 @@ buttonrelease(XEvent *e)
 	XButtonPressedEvent *ev = &e->xbutton;
 	if(ev->window == screen->barwin) {
 		for(b=screen->lbar; b; b=b->next)
-			if(blitz_ispointinrect(ev->x, ev->y, &b->brush.rect))
+			if(ispointinrect(ev->x, ev->y, &b->brush.rect))
 				return write_event("LeftBarClick %d %s\n",
 						ev->button, b->name);
 		for(b=screen->rbar; b; b=b->next)
-			if(blitz_ispointinrect(ev->x, ev->y, &b->brush.rect))
+			if(ispointinrect(ev->x, ev->y, &b->brush.rect))
 				return write_event("RightBarClick %d %s\n",
 						ev->button, b->name);
 	}

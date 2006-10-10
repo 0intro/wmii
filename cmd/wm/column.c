@@ -336,10 +336,10 @@ frame_of_point(XPoint *pt)
 	if(!v)
 		return nil;
 
-	for(a=v->area->next; a && !blitz_ispointinrect(pt->x, pt->y, &a->rect);
+	for(a=v->area->next; a && !ispointinrect(pt->x, pt->y, &a->rect);
 		a=a->next);
 	if(a)
-		for(f=a->frame; f && !blitz_ispointinrect(pt->x, pt->y, &f->rect);
+		for(f=a->frame; f && !ispointinrect(pt->x, pt->y, &f->rect);
 			f=f->anext);
 	return f;
 }
@@ -358,7 +358,7 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt)
 	if(!pt)
 		return;
 
-	for(tgt=v->area->next; tgt && !blitz_ispointinrect(pt->x, pt->y, &tgt->rect);
+	for(tgt=v->area->next; tgt && !ispointinrect(pt->x, pt->y, &tgt->rect);
 		tgt=tgt->next);
 	if(tgt) {
 		if(pt->x < 16) {

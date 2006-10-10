@@ -7,9 +7,8 @@ CFLAGS += -I../liblitz -I../libixp -I../libcext
 LDFLAGS += -L../libixp -lixp -L../libcext -lcext
 X11LDFLAGS += -L../liblitz -llitz -L../libcext -lcext
 
-X11SRC = wmiipsel.c wmiiwarp.c
-SRC = wmiir.c wmiisetsid.c
-ALLSRC = ${SRC} ${X11SRC}
+SRC = wmiir.c
+ALLSRC = ${SRC}
 
 all: ${ALLSRC:.c=}
 	@echo built wmii commands
@@ -21,10 +20,6 @@ all: ${ALLSRC:.c=}
 ${SRC:.c=}: ${SRC:.c=.o}
 	@echo LD $@
 	@${CC} -o $@ $@.o ${LDFLAGS}
-
-${X11SRC:.c=}: ${X11SRC:.c=.o}
-	@echo LD $@
-	@${CC} -o $@ $@.o ${X11LDFLAGS}
 
 # Solaris
 #	@${CC} -o $* $*.o ${LDFLAGS} -lsocket

@@ -265,6 +265,7 @@ extern void fs_write(P9Req *r);
 extern void write_event(char *format, ...);
 
 /* geom.c */
+extern Bool ispointinrect(int x, int y, XRectangle * r);
 extern BlitzAlign quadofcoord(XRectangle *rect, int x, int y);
 extern int strtorect(XRectangle *r, const char *val);
 

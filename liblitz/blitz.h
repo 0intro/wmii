@@ -65,11 +65,6 @@ struct BlitzBrush {
 	XRectangle rect;	/* relative rect */
 };
 
-/* blitz.c */
-extern unsigned char *blitz_getselection(unsigned long offset,
-		unsigned long *len, unsigned long *remain);
-extern void blitz_selrequest(Blitz *blitz, XSelectionRequestEvent *rq, char *text);
-
 /* brush.c */
 extern void blitz_draw_label(BlitzBrush *b, char *text);
 extern void blitz_draw_tile(BlitzBrush *b);
