@@ -178,7 +178,7 @@ do
 		$MODKEY-a)
 			`conf_which "\`proglist $ACTIONS_DIRS | $DMENU\`"` &;;
 		$MODKEY-p)
-			wmiisetsid sh -c "`$DMENU <$PROGS_FILE`" &;;
+			sh -c "`$DMENU <$PROGS_FILE`" &;;
 		$MODKEY-t)
 			xwrite /ctl view "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | $DMENU`" &;;
 		$MODKEY-[0-9])
