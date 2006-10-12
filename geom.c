@@ -1,22 +1,17 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-
+#include "wm.h"
 #include <math.h>
 
-#include "wm.h"
-
 Bool
-ispointinrect(int x, int y, XRectangle * r)
-{
+ispointinrect(int x, int y, XRectangle * r) {
 	return (x >= r->x) && (x <= r->x + r->width)
 		&& (y >= r->y) && (y <= r->y + r->height);
 }
 
 BlitzAlign
-quadofcoord(XRectangle *rect, int x, int y)
-{
+quadofcoord(XRectangle *rect, int x, int y) {
 	BlitzAlign ret = 0;
 	x -= rect->x;
 	y -= rect->y;
@@ -35,8 +30,7 @@ quadofcoord(XRectangle *rect, int x, int y)
 
 /* Syntax: <x> <y> <width> <height> */
 int
-strtorect(XRectangle *r, const char *val)
-{
+strtorect(XRectangle *r, const char *val) {
 	XRectangle new;
 	if (!val)
 		return -1;

@@ -17,21 +17,32 @@ enum {
 };
 
 void
-update_rules(Rule **rule, const char *data)
-{
+trim(char *str, const char *chars) {
+	const char *cp;
+	char *sp, *sn;
+   
+	for(cp = chars; *cp; cp++) {
+		for(sp = sn = str; *sn; sn++) {
+			if(*sn != *cp)
+				*(sp++) = *sn;
+		}
+		*sp = 0;
+	}
+}
+
+void
+update_rules(Rule **rule, const char *data) {
 	int mode = IGNORE;
 	Rule *rul;
-	char *p, *r = nil, *v = nil, regex[256], value[256];
+	char *p, *r = NULL, *v = NULL, regex[256], value[256];
 
 	if(!data || !strlen(data))
 		return;
-
 	while((rul = *rule)) {
 		*rule = rul->next;
 		regfree(&rul->regex);
 		free(rul);
 	}
-
 	for(p = (char *)data; *p; p++)
 		switch(mode) {
 		case IGNORE:
@@ -57,11 +68,11 @@ update_rules(Rule **rule, const char *data)
 			break;
 		case VALUE:
 			if(*p == '\n' || *p == 0) {
-				*rule = cext_emallocz(sizeof(Rule));
+				*rule = ixp_emallocz(sizeof(Rule));
 				*v = 0;
-				cext_trim(value, " \t/");
+				trim(value, " \t/");
 				if(!regcomp(&(*rule)->regex, regex, 0)) {
-					cext_strlcpy((*rule)->value, value, sizeof(rul->value));
+					strncpy((*rule)->value, value, sizeof(rul->value));
 					rule = &(*rule)->next;
 				}
 				else free(*rule);

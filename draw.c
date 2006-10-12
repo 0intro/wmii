@@ -1,10 +1,7 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-
-#include <stdio.h>
-#include "blitz.h"
+#include "wm.h"
 
 void
 blitz_drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle rect,

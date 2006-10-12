@@ -1,18 +1,14 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-
+#include "wm.h"
 #include <string.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 
-#include "wm.h"
-
 void
-init_lock_keys()
-{
+init_lock_keys() {
 	XModifierKeymap *modmap;
 	KeyCode num_lock;
 	static int masks[] = {
@@ -24,7 +20,6 @@ init_lock_keys()
 	num_lock_mask = 0;
 	modmap = XGetModifierMapping(blz.dpy);
 	num_lock = XKeysymToKeycode(blz.dpy, XStringToKeysym("Num_Lock"));
-
 	if(modmap && modmap->max_keypermod > 0) {
 		int max = (sizeof(masks) / sizeof(int)) * modmap->max_keypermod;
 		for(i = 0; i < max; i++)
@@ -32,14 +27,13 @@ init_lock_keys()
 				num_lock_mask = masks[i / modmap->max_keypermod];
 	}
 	XFreeModifiermap(modmap);
-
 	valid_mask = 255 & ~(num_lock_mask | LockMask);
 }
 
 unsigned long
-mod_key_of_str(char *val)
-{
+mod_key_of_str(char *val) {
 	unsigned long mod = 0;
+
 	if (strstr(val, "Shift"))
 		mod |= ShiftMask;
 	if (strstr(val, "Control"))
@@ -58,8 +52,7 @@ mod_key_of_str(char *val)
 }
 
 static void
-grab_key(Key *k)
-{
+grab_key(Key *k) {
 	XGrabKey(blz.dpy, k->key, k->mod, blz.root,
 			True, GrabModeAsync, GrabModeAsync);
 	if(num_lock_mask) {
@@ -72,8 +65,7 @@ grab_key(Key *k)
 }
 
 static void
-ungrab_key(Key *k)
-{
+ungrab_key(Key *k) {
 	XUngrabKey(blz.dpy, k->key, k->mod, blz.root);
 	if(num_lock_mask) {
 		XUngrabKey(blz.dpy, k->key, k->mod | num_lock_mask, blz.root);
@@ -83,16 +75,14 @@ ungrab_key(Key *k)
 }
 
 static Key *
-name2key(const char *name)
-{
+name2key(const char *name) {
 	Key *k;
 	for(k=key; k && strncmp(k->name, name, sizeof(k->name)); k=k->lnext);
 	return k;
 }
 
 static Key *
-get_key(const char *name)
-{
+get_key(const char *name) {
 	char buf[128];
 	char *seq[8];
 	char *kstr;
@@ -104,18 +94,16 @@ get_key(const char *name)
 		ungrab_key(k);
 		return k;
 	}
-
-	cext_strlcpy(buf, name, sizeof(buf));
-	toks = cext_tokenize(seq, 8, buf, ',');
-
+	strncpy(buf, name, sizeof(buf));
+	toks = ixp_tokenize(seq, 8, buf, ',');
 	for(i = 0; i < toks; i++) {
 		if(!k)
-			r = k = cext_emallocz(sizeof(Key));
+			r = k = ixp_emallocz(sizeof(Key));
 		else {
-			k->next = cext_emallocz(sizeof(Key));
+			k->next = ixp_emallocz(sizeof(Key));
 			k = k->next;
 		}
-		cext_strlcpy(k->name, name, sizeof(k->name));
+		strncpy(k->name, name, sizeof(k->name));
 		kstr = strrchr(seq[i], '-');
 		if(kstr)
 			kstr++;
@@ -134,11 +122,11 @@ get_key(const char *name)
 }
 
 static void
-next_keystroke(unsigned long *mod, KeyCode *code)
-{
+next_keystroke(unsigned long *mod, KeyCode *code) {
 	XEvent e;
 	KeySym sym;
 	*mod = 0;
+
 	do {
 		XMaskEvent(blz.dpy, KeyPressMask, &e);
 		*mod |= e.xkey.state & valid_mask;
@@ -148,14 +136,12 @@ next_keystroke(unsigned long *mod, KeyCode *code)
 }
 
 static void
-emulate_key_press(unsigned long mod, KeyCode key)
-{
+emulate_key_press(unsigned long mod, KeyCode key) {
 	XEvent e;
 	Window client_win;
 	int revert;
 
 	XGetInputFocus(blz.dpy, &client_win, &revert);
-
 	e.xkey.type = KeyPress;
 	e.xkey.time = CurrentTime;
 	e.xkey.window = client_win;
@@ -169,9 +155,9 @@ emulate_key_press(unsigned long mod, KeyCode key)
 }
 
 static Key *
-match_keys(Key *k, unsigned long mod, KeyCode keycode, Bool seq)
-{
-	Key *ret = nil, *next;
+match_keys(Key *k, unsigned long mod, KeyCode keycode, Bool seq) {
+	Key *ret = NULL, *next;
+
 	for(next = k->tnext; k; (k=next) && (next=k->tnext)) {
 		if(seq)
 			k = k->next;
@@ -184,14 +170,12 @@ match_keys(Key *k, unsigned long mod, KeyCode keycode, Bool seq)
 }
 
 static void
-kpress_seq(Window w, Key *done)
-{
+kpress_seq(Window w, Key *done) {
 	unsigned long mod;
 	KeyCode key;
 	Key *found;
 
 	next_keystroke(&mod, &key);
-
 	found = match_keys(done, mod, key, True);
 	if((done->mod == mod) && (done->key == key))
 		emulate_key_press(mod, key); /* double key */
@@ -207,13 +191,11 @@ kpress_seq(Window w, Key *done)
 }
 
 void
-kpress(Window w, unsigned long mod, KeyCode keycode)
-{
-	Key *k;
+kpress(Window w, unsigned long mod, KeyCode keycode) {
+	Key *k, *found;
 
 	for(k=key; k; k->tnext=k->lnext, k=k->lnext);
-	Key *found = match_keys(key, mod, keycode, False);
-
+	found = match_keys(key, mod, keycode, False);
 	if(!found) {
 		XBell(blz.dpy, 0);
 	} /* grabbed but not found */
@@ -228,23 +210,19 @@ kpress(Window w, unsigned long mod, KeyCode keycode)
 }
 
 void
-update_keys()
-{
+update_keys() {
 	Key *k, *n;
 	char *l, *p;
 
 	init_lock_keys();
-
 	while((k = key)) {
 		key = key->lnext;
 		ungrab_key(k);
-
 		while((n = k)) {
 			k = k->next;
 			free(n);
 		}
 	}
-
 	for(l = p = def.keys; p && *p;) {
 		if(*p == '\n') {
 			*p = 0;
@@ -260,6 +238,5 @@ update_keys()
 		if((k = get_key(l)))
 			grab_key(k);
 	}
-
 	XSync(blz.dpy, False);
 }

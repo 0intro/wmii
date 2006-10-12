@@ -1,13 +1,11 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-
+#include "wm.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xatom.h>
-
-#include "wm.h"
 
 static char *Ebadcmd = "bad command",
 	    *Ebadvalue = "bad value";
@@ -15,14 +13,12 @@ static char *Ebadcmd = "bad command",
 #define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
 
 Client *
-sel_client()
-{
-	return screen->sel && screen->sel->sel->sel ? screen->sel->sel->sel->client : nil;
+sel_client() {
+	return screen->sel && screen->sel->sel->sel ? screen->sel->sel->sel->client : NULL;
 }
 
 int
-idx_of_client(Client *c)
-{
+idx_of_client(Client *c) {
 	Client *cl;
 	int i = 0;
 	for(cl=client; cl && cl != c; cl=cl->next, i++);
@@ -30,28 +26,25 @@ idx_of_client(Client *c)
 }
 
 Client *
-client_of_win(Window w)
-{
+client_of_win(Window w) {
 	Client *c;
 	for(c=client; c && c->win != w; c=c->next);
 	return c;
 }
 
 Frame *
-frame_of_win(Window w)
-{
+frame_of_win(Window w) {
 	Client *c;
 	for(c=client; c && c->framewin != w; c=c->next);
-	return c ? c->frame : nil;
+	return c ? c->frame : NULL;
 }
 
 static void
-update_client_name(Client *c)
-{
+update_client_name(Client *c) {
 	XTextProperty name;
 	XClassHint ch;
 	int n;
-	char **list = nil;
+	char **list = NULL;
 
 	name.nitems = 0;
 	c->name[0] = 0;
@@ -61,12 +54,12 @@ update_client_name(Client *c)
 	if(!name.nitems)
 		return;
 	if(name.encoding == XA_STRING)
-		cext_strlcpy(c->name, (char *)name.value, sizeof(c->name));
+		strncpy(c->name, (char *)name.value, sizeof(c->name));
 	else {
 		if(XmbTextPropertyToTextList(blz.dpy, &name, &list, &n) >= Success
 				&& n > 0 && *list)
 		{
-			cext_strlcpy(c->name, *list, sizeof(c->name));
+			strncpy(c->name, *list, sizeof(c->name));
 			XFreeStringList(list);
 		}
 	}
@@ -84,9 +77,8 @@ update_client_name(Client *c)
 }
 
 Client *
-create_client(Window w, XWindowAttributes *wa)
-{
-	Client **t, *c = (Client *) cext_emallocz(sizeof(Client));
+create_client(Window w, XWindowAttributes *wa) {
+	Client **t, *c = (Client *) ixp_emallocz(sizeof(Client));
 	XSetWindowAttributes fwa;
 	long msize;
 	unsigned int i;
@@ -117,7 +109,6 @@ create_client(Window w, XWindowAttributes *wa)
 	fwa.event_mask =
 		SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask
 		| ButtonPressMask | PointerMotionMask | ButtonReleaseMask | KeyPressMask;
-
 	c->framewin = XCreateWindow(blz.dpy, blz.root, c->rect.x, c->rect.y,
 			c->rect.width + 2 * def.border,
 			c->rect.height + def.border + blitz_labelh(&def.font), 0,
@@ -126,18 +117,15 @@ create_client(Window w, XWindowAttributes *wa)
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
 	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
 	XSync(blz.dpy, False);
-
 	for(t=&client, i=0; *t; t=&(*t)->next, i++);
-	c->next = *t; /* *t == nil */
+	c->next = *t; /* *t == NULL */
 	*t = c;
-
 	write_event("CreateClient %d\n", i);
 	return c;
 }
 
 void
-update_client_grab(Client *c, Bool is_sel)
-{
+update_client_grab(Client *c, Bool is_sel) {
 	if(is_sel) {
 		ungrab_mouse(c->framewin, AnyModifier, AnyButton);
 		grab_mouse(c->framewin, def.mod, Button1);
@@ -148,8 +136,7 @@ update_client_grab(Client *c, Bool is_sel)
 }
 
 void
-focus_client(Client *c, Bool restack)
-{
+focus_client(Client *c, Bool restack) {
 	Client *old_in_area;
 	Client *old;
 	Frame *f;
@@ -157,16 +144,13 @@ focus_client(Client *c, Bool restack)
 
 	if(!sel_screen)
 		return;
-
 	f = c->sel;
 	v = f->area->view;
 	old = sel_client();
 	old_in_area = sel_client_of_area(f->area);
-
 	v->sel = f->area;
 	f->area->sel = f;
 	c->floating = f->area->floating;
-
 	if(restack)
 		restack_view(v);
 	else {
@@ -174,7 +158,6 @@ focus_client(Client *c, Bool restack)
 			update_client_grab(old, False);
 		update_client_grab(c, True);
 	}
-
 	if(!c->floating && f->area->mode == Colstack)
 		arrange_column(f->area, False);
 	XSetInputFocus(blz.dpy, c->win, RevertToPointerRoot, CurrentTime);
@@ -193,34 +176,31 @@ focus_client(Client *c, Bool restack)
 }
 
 void
-map_client(Client *c)
-{
+map_client(Client *c) {
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XMapWindow(blz.dpy, c->win);
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
 }
 
 void
-unmap_client(Client *c)
-{
+unmap_client(Client *c) {
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XUnmapWindow(blz.dpy, c->win);
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
 }
 
 void
-reparent_client(Client *c, Window w, int x, int y)
-{
+reparent_client(Client *c, Window w, int x, int y) {
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XReparentWindow(blz.dpy, c->win, w, x, y);
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
 }
 
 void
-configure_client(Client *c)
-{
+configure_client(Client *c) {
 	XConfigureEvent e;
 	Frame *f = c->sel;
+
 	e.type = ConfigureNotify;
 	e.event = c->win;
 	e.window = c->win;
@@ -241,23 +221,21 @@ configure_client(Client *c)
 }
 
 static void
-send_client_message(Window w, Atom a, long value)
-{
+send_client_message(Window w, Atom a, long value) {
 	XEvent e;
+
 	e.type = ClientMessage;
 	e.xclient.window = w;
 	e.xclient.message_type = a;
 	e.xclient.format = 32;
 	e.xclient.data.l[0] = value;
 	e.xclient.data.l[1] = CurrentTime;
-
 	XSendEvent(blz.dpy, w, False, NoEventMask, &e);
 	XSync(blz.dpy, False);
 }
 
 void
-kill_client(Client * c)
-{
+kill_client(Client * c) {
 	if(c->proto & WM_PROTOCOL_DELWIN)
 		send_client_message(c->win, wm_atom[WMProtocols], wm_atom[WMDelete]);
 	else
@@ -265,8 +243,7 @@ kill_client(Client * c)
 }
 
 void
-prop_client(Client *c, XPropertyEvent *e)
-{
+prop_client(Client *c, XPropertyEvent *e) {
 	long msize;
 
 	if(e->atom == wm_atom[WMProtocols]) {
@@ -297,15 +274,13 @@ prop_client(Client *c, XPropertyEvent *e)
 }
 
 void
-gravitate_client(Client *c, Bool invert)
-{
+gravitate_client(Client *c, Bool invert) {
 	int dx = 0, dy = 0;
 	int gravity = NorthWestGravity;
 
 	if(c->size.flags & PWinGravity) {
 		gravity = c->size.win_gravity;
 	}
-
 	/* y */
 	switch (gravity) {
 	case StaticGravity:
@@ -327,7 +302,6 @@ gravitate_client(Client *c, Bool invert)
 	default:
 		break;
 	}
-
 	/* x */
 	switch (gravity) {
 	case StaticGravity:
@@ -359,27 +333,21 @@ gravitate_client(Client *c, Bool invert)
 }
 
 void
-manage_client(Client *c)
-{
+manage_client(Client *c) {
 	XTextProperty tags;
 	Client *trans;
 
 	tags.nitems = 0;
 	XGetTextProperty(blz.dpy, c->win, &tags, tags_atom);
-
 	if(c->trans && (trans = client_of_win(c->trans)))
-		cext_strlcpy(c->tags, trans->tags, sizeof(c->tags));
+		strncpy(c->tags, trans->tags, sizeof(c->tags));
 	else if(tags.nitems)
-		cext_strlcpy(c->tags, (char *)tags.value, sizeof(c->tags));
+		strncpy(c->tags, (char *)tags.value, sizeof(c->tags));
 	XFree(tags.value);
-
 	if(!strlen(c->tags))
 		apply_rules(c);
-
 	apply_tags(c, c->tags);
-
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
-
 	if(!starting)
 		update_views();
 	map_client(c);
@@ -391,40 +359,31 @@ manage_client(Client *c)
 }
 
 static int
-dummy_error_handler(Display *dpy, XErrorEvent *error)
-{
+dummy_error_handler(Display *dpy, XErrorEvent *error) {
 	return 0;
 }
 
 void
-destroy_client(Client *c)
-{
-	char *dummy = nil;
+destroy_client(Client *c) {
+	char *dummy = NULL;
 	Client **tc;
 
 	XGrabServer(blz.dpy);
 	XSetErrorHandler(dummy_error_handler);
-
 	if(c->frame) {
 		c->rect.x = c->sel->rect.x;
 		c->rect.y = c->sel->rect.y;
 	}
-
 	update_client_views(c, &dummy);
-
 	unmap_client(c);
-
 	reparent_client(c, blz.root, c->rect.x, c->rect.y);
 	XFreeGC(blz.dpy, c->gc);
 	XDestroyWindow(blz.dpy, c->framewin);
-
 	for(tc=&client; *tc && *tc != c; tc=&(*tc)->next);
-	cext_assert(*tc == c);
+	assert(*tc == c);
 	*tc = c->next;
-
 	update_views();
 	free(c);
-
 	XSync(blz.dpy, False);
 	XSetErrorHandler(wmii_error_handler);
 	XUngrabServer(blz.dpy);
@@ -432,8 +391,7 @@ destroy_client(Client *c)
 }
 
 void
-match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky)
-{
+match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky) {
 	XSizeHints *s = &c->size;
 	unsigned int dx = 2 * def.border;
 	unsigned int dy = def.border + blitz_labelh(&def.font);
@@ -467,10 +425,8 @@ match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky)
 				r->y += hdiff;
 		}
 	}
-
 	if(s->flags & PResizeInc) {
 		int w = 0, h = 0;
-
 		if(s->flags & PBaseSize) {
 			w = s->base_width;
 			h = s->base_height;
@@ -487,7 +443,6 @@ match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky)
 			if((sticky & EAST) && !(sticky & WEST))
 				r->x += wdiff;
 		}
-
 		h = r->height - dy - h;
 		if(s->height_inc > 0) {
 			hdiff = h % s->height_inc;
@@ -499,8 +454,7 @@ match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky)
 }
 
 void
-resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
-{
+resize_client(Client *c, XRectangle *r, Bool ignore_xcall) {
 	Frame *f = c->sel;
 	Bool floating = f->area->floating;
 	unsigned int max_height;
@@ -514,12 +468,9 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 		stickycorner |= SOUTH;
 	else    
 		stickycorner |= NORTH;
-
 	f->rect = *r;
-
 	if((f->area->mode != Colstack) || (f->area->sel == f))
 		match_sizehints(c, &c->sel->rect, floating, stickycorner);
-
 	max_height = screen->rect.height - blitz_labelh(&def.font);
 	if(!ignore_xcall) {
 		if(floating) {
@@ -549,7 +500,6 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 			XMoveResizeWindow(blz.dpy, c->framewin, 2 * screen->rect.width + f->rect.x,
 					f->rect.y, f->rect.width, f->rect.height);
 	}
-
 	c->rect.x = def.border;
 	c->rect.y = blitz_labelh(&def.font);
 	if((f->area->sel == f) || (f->area->mode != Colstack)) {
@@ -564,8 +514,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall)
 }
 
 void
-newcol_client(Client *c, char *arg)
-{
+newcol_client(Client *c, char *arg) {
 	Frame *f = c->sel;
 	Area *to, *a = f->area;
 	View *v = a->view;
@@ -574,7 +523,6 @@ newcol_client(Client *c, char *arg)
 		return;
 	if(!f->anext && f == a->frame)
 		return;
-
 	if(!strncmp(arg, "prev", 5)) {
 		for(to=v->area; to && to->next != a; to=to->next);
 		to = new_column(v, to, 0);
@@ -590,8 +538,7 @@ newcol_client(Client *c, char *arg)
 }
 
 void
-move_client(Client *c, char *arg)
-{
+move_client(Client *c, char *arg) {
 	Frame *f = c->sel;
 	XRectangle new = f->rect;
 	int x, y;
@@ -601,14 +548,13 @@ move_client(Client *c, char *arg)
 	new.x += x;
 	new.y += y;
 	if(!f->area->floating)
-		resize_column(f->client, &new, nil);
+		resize_column(f->client, &new, NULL);
 	else
 		resize_client(f->client, &new, False);
 }
 
 void
-size_client(Client *c, char *arg)
-{
+size_client(Client *c, char *arg) {
 	Frame *f = c->sel;
 	XRectangle new = f->rect;
 	int w, h;
@@ -618,14 +564,13 @@ size_client(Client *c, char *arg)
 	new.width += w;
 	new.height += h;
 	if(!f->area->floating)
-		resize_column(f->client, &new, nil);
+		resize_column(f->client, &new, NULL);
 	else
 		resize_client(f->client, &new, False);
 }
 
 char *
-send_client(Frame *f, char *arg)
-{
+send_client(Frame *f, char *arg) {
 	Area *to, *a;
 	Client *c;
 	Frame *tf;
@@ -635,7 +580,6 @@ send_client(Frame *f, char *arg)
 	a = f->area;
 	v = a->view;
 	c = f->client;
-
 	if(!strncmp(arg, "toggle", 7)) {
 		if(!a->floating)
 			to = v->area;
@@ -695,30 +639,28 @@ send_client(Frame *f, char *arg)
 		focus_client(f->client, False);
 		focus_view(screen, f->view);
 	}
-	return nil;
+	return NULL;
 }
 
 /* convenience function */
 void
-focus(Client *c, Bool restack)
-{
+focus(Client *c, Bool restack) {
 	View *v;
 	Frame *f;
 
 	if(!(f = c->sel)) return;
 	v = f->area->view;
-
 	arrange_column(f->area, False);
 	focus_client(c, restack);
 	focus_view(screen, v);
 }
 
 void
-update_client_views(Client *c, char **tags)
-{
+update_client_views(Client *c, char **tags) {
 	int cmp;
 	Frame *f;
 	Frame **fp = &c->frame;
+
 	while(*fp || *tags) {
 		while(*fp && (!*tags || (cmp=strcmp((*fp)->view->name, *tags)) < 0)) {
 			f = *fp;
@@ -728,7 +670,6 @@ update_client_views(Client *c, char **tags)
 			if(c->sel == f)
 				c->sel = *fp;
 		}
-
 		if(*tags) {
 			if(!*fp || cmp > 0) {
 				f = create_frame(c, get_view(*tags));
@@ -751,73 +692,65 @@ compare_tags(const void *a, const void *b) {
 }
 
 void
-apply_tags(Client *c, const char *tags)
-{
+apply_tags(Client *c, const char *tags) {
 	unsigned int i, j, n;
 	int len;
 	char buf[256];
 	char *toks[32];
 
-	cext_strlcpy(buf, tags, sizeof(buf));
-	if(!(n = cext_tokenize(toks, 31, buf, '+')))
+	strncpy(buf, tags, sizeof(buf));
+	if(!(n = ixp_tokenize(toks, 31, buf, '+')))
 		return;
-
 	for(i=0, j=0; i < n; i++) {
 		if(!strncmp(toks[i], "~", 2))
 			c->floating = True;
 		else if(!strncmp(toks[i], "!", 2))
-			toks[j++] = view ? screen->sel->name : "nil";
+			toks[j++] = view ? screen->sel->name : "NULL";
 		else if(strncmp(toks[i], "sel", 4))
 			toks[j++] = toks[i];
 	}
-
 	c->tags[0] = '\0';
 	qsort(toks, j, sizeof(char *), compare_tags);
-
 	len = sizeof(c->tags);
-	if(!j) toks[j++] = "nil";
+	if(!j) toks[j++] = "NULL";
 	for(i=0, n=0; i < j && len > 1; i++)
 		if(!n || strcmp(toks[i], toks[n-1])) {
-			if(n)
-				len -= cext_strlcat(c->tags, "+", len);
-			len -= cext_strlcat(c->tags, toks[i], len);
+			strncat(c->tags, "+", len);
+			len -= strlen(c->tags);
+			strncat(c->tags, toks[i], len);
+			len -= strlen(c->tags);
 			toks[n++] = toks[i];
 		}
-	toks[n] = nil;
+	toks[n] = NULL;
 	update_client_views(c, toks);
-
 	XChangeProperty(blz.dpy, c->win, tags_atom, XA_STRING, 8,
 			PropModeReplace, (unsigned char *)c->tags, strlen(c->tags));
 }
 
 static void
-match_tags(Client *c, const char *prop)
-{
+match_tags(Client *c, const char *prop) {
 	Rule *r;
 	regmatch_t tmpregm;
 
 	for(r=def.tagrules.rule; r; r=r->next)
 		if(!regexec(&r->regex, prop, 1, &tmpregm, 0))
-			if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4))
+			if(!strlen(c->tags) || !strncmp(c->tags, "NULL", 4))
 				apply_tags(c, r->value);
 }
 
 void
-apply_rules(Client *c)
-{
+apply_rules(Client *c) {
 	if(def.tagrules.string)
 		match_tags(c, c->props);
-
 	if(!strlen(c->tags))
-		apply_tags(c, "nil");
+		apply_tags(c, "NULL");
 }
 
 char *
-message_client(Client *c, char *message)
-{
+message_client(Client *c, char *message) {
 	if(!strncmp(message, "kill", 5)) {
 		kill_client(c);
-		return nil;
+		return NULL;
 	}
 	return Ebadcmd;
 }

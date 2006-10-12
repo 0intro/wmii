@@ -1,15 +1,14 @@
-/*
- * (C)opyright MMVI Kris Maglione <fbsdaemon at gmail dot com>
+/* (C)opyright MMVI Kris Maglione <fbsdaemon at gmail dot com>
  * See LICENSE file for license details.
  */
-
+#include "wm.h"
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-#include "wm.h"
 
 /* Datatypes: */
 /**************/
@@ -71,8 +70,8 @@ static char
 
 /* Global Vars */
 /***************/
-FileId *free_fileid = nil;
-P9Req *pending_event_reads = nil;
+FileId *free_fileid = NULL;
+P9Req *pending_event_reads = NULL;
 FidLink *pending_event_fids;
 P9Srv p9srv = {
 	.open=	fs_open,
@@ -101,25 +100,25 @@ dirtab_root[]=	 {{".",		P9QTDIR,	FsRoot,		0500|P9DMDIR },
 		  {"event",	P9QTFILE,	FsFEvent,	0600 },
 		  {"keys",	P9QTFILE,	FsFKeys,	0600 },
 		  {"tagrules",	P9QTFILE,	FsFTagRules,	0600 }, 
-		  {nil}},
+		  {NULL}},
 dirtab_clients[]={{".",		P9QTDIR,	FsDClients,	0500|P9DMDIR },
 		  {"",		P9QTDIR,	FsDClient,	0500|P9DMDIR },
-		  {nil}},
+		  {NULL}},
 dirtab_client[]= {{".",		P9QTDIR,	FsDClient,	0500|P9DMDIR },
 		  {"ctl",	P9QTAPPEND,	FsFCctl,	0600|P9DMAPPEND },
 		  {"tags",	P9QTFILE,	FsFCtags,	0600 },
 		  {"props",	P9QTFILE,	FsFprops,	0400 },
-		  {nil}},
+		  {NULL}},
 dirtab_bars[]=	 {{".",		P9QTDIR,	FsDBars,	0700|P9DMDIR },
 		  {"",		P9QTFILE,	FsFBar,		0600 },
-		  {nil}},
+		  {NULL}},
 dirtab_tags[]=	 {{".",		P9QTDIR,	FsDTags,	0500|P9DMDIR },
 		  {"",		P9QTDIR,	FsDTag,		0500|P9DMDIR },
-		  {nil}},
+		  {NULL}},
 dirtab_tag[]=	 {{".",		P9QTDIR,	FsDTag,		0500|P9DMDIR },
 		  {"ctl",	P9QTAPPEND,	FsFTctl,	0600|P9DMAPPEND },
 		  {"index",	P9QTFILE,	FsFTindex,	0400 },
-		  {nil}};
+		  {NULL}};
 /* Writing the lists separately and using an array of their references
  * removes the need for casting and allows for C90 conformance,
  * since otherwise we would need to use compound literals */
@@ -143,7 +142,7 @@ get_file() {
 	FileId *temp;
 	if(!free_fileid) {
 		unsigned int i = 15;
-		temp = cext_emallocz(sizeof(FileId) * i);
+		temp = ixp_emallocz(sizeof(FileId) * i);
 		for(; i; i--) {
 			temp->next = free_fileid;
 			free_fileid = temp++;
@@ -152,7 +151,7 @@ get_file() {
 	temp = free_fileid;
 	free_fileid = temp->next;
 	temp->nref = 1;
-	temp->next = nil;
+	temp->next = NULL;
 	return temp;
 }
 
@@ -170,7 +169,7 @@ free_file(FileId *f) {
 static void
 clone_files(FileId *f) {
 	for(; f; f=f->next)
-		cext_assert(f->nref++);
+		assert(f->nref++);
 }
 
 /* This should be moved to libixp */
@@ -182,7 +181,7 @@ write_buf(P9Req *r, void *buf, unsigned int len) {
 	len -= r->ifcall.offset;
 	if(len > r->ifcall.count)
 		len = r->ifcall.count;
-	r->ofcall.data = cext_emalloc(len);
+	r->ofcall.data = ixp_emalloc(len);
 	memcpy(r->ofcall.data, buf + r->ifcall.offset, len);
 	r->ofcall.count = len;
 }
@@ -205,7 +204,7 @@ write_to_buf(P9Req *r, void *buf, unsigned int *len, unsigned int max) {
 	*len = offset + count;
 	
 	if(max == 0) {
-		*(void **)buf = cext_erealloc(*(void **)buf, *len + 1);
+		*(void **)buf = ixp_erealloc(*(void **)buf, *len + 1);
 		buf = *(void **)buf;
 	}
 		
@@ -220,8 +219,8 @@ data_to_cstring(P9Req *r) {
 	unsigned int i;
 	i = r->ifcall.count;
 	if(!i || r->ifcall.data[i - 1] != '\n')
-		r->ifcall.data = cext_erealloc(r->ifcall.data, ++i);
-	cext_assert(r->ifcall.data);
+		r->ifcall.data = ixp_erealloc(r->ifcall.data, ++i);
+	assert(r->ifcall.data);
 	r->ifcall.data[i - 1] = '\0';
 }
 
@@ -240,7 +239,7 @@ parse_colors(char **buf, int *buflen, BlitzColor *col) {
 		(*buf)++;
 		(*buflen)--;
 	}
-	return nil;
+	return NULL;
 }
 
 char *
@@ -252,7 +251,6 @@ message_root(char *message)
 		snprintf(buffer, BUFFER_SIZE, "%s ", message);
 		message = buffer;
 	}
-
 	if(!strncmp(message, "quit ", 5))
 		srv.running = 0;
 	else if(!strncmp(message, "view ", 5))
@@ -261,52 +259,58 @@ message_root(char *message)
 		message += 10;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.selcolor);
-	}else if(!strncmp(message, "normcolors ", 11)) {
+	}
+	else if(!strncmp(message, "normcolors ", 11)) {
 		message += 11;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.normcolor);
-	}else if(!strncmp(message, "b1colors ", 9)) {
+	}
+	else if(!strncmp(message, "b1colors ", 9)) {
 		message += 9;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.bcolor[0]);
-	}else if(!strncmp(message, "b2colors ", 9)) {
+	}
+	else if(!strncmp(message, "b2colors ", 9)) {
 		message += 9;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.bcolor[1]);
-	}else if(!strncmp(message, "b3colors ", 9)) {
+	}
+	else if(!strncmp(message, "b3colors ", 9)) {
 		message += 9;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.bcolor[2]);
-	}else if(!strncmp(message, "font ", 5)) {
+	}
+	else if(!strncmp(message, "font ", 5)) {
 		message += 5;
 		free(def.font.fontstr);
-		def.font.fontstr = cext_estrdup(message);
+		def.font.fontstr = ixp_estrdup(message);
 		blitz_loadfont(&blz, &def.font);
-	}else if(!strncmp(message, "border ", 7)) {
+	}
+	else if(!strncmp(message, "border ", 7)) {
 		message += 7;
 		n = (unsigned int)strtol(message, &message, 10);
 		if(*message)
 			return Ebadvalue;
 		def.border = n;
-	}else if(!strncmp(message, "grabmod ", 8)) {
+	}
+	else if(!strncmp(message, "grabmod ", 8)) {
 		message += 8;
 		unsigned long mod;
 		mod = mod_key_of_str(message);
 		if(!(mod & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)))
 			return Ebadvalue;
-		cext_strlcpy(def.grabmod, message, sizeof(def.grabmod));
+		strncpy(def.grabmod, message, sizeof(def.grabmod));
 		def.mod = mod;
 		if(view)
 			restack_view(screen->sel);
-	}else
+	}
+	else
 		return Ebadcmd;
-
-	return nil;
+	return NULL;
 }
 
 char *
-read_root_ctl()
-{
+read_root_ctl() {
 	unsigned int i = 0;
 	if(screen->sel)
 		i += snprintf(&buffer[i], (BUFFER_SIZE - i), "view %s\n", screen->sel->name);
@@ -325,8 +329,8 @@ respond_event(P9Req *r) {
 	if(f->buf) {
 		r->ofcall.data = (void *)f->buf;
 		r->ofcall.count = strlen(f->buf);
-		respond(r, nil);
-		f->buf = nil;
+		respond(r, NULL);
+		f->buf = NULL;
 	}else{
 		r->aux = pending_event_reads;
 		pending_event_reads = r;
@@ -344,13 +348,12 @@ write_event(char *format, ...) {
 	va_start(ap, format);
 	vsnprintf(buffer, BUFFER_SIZE, format, ap);
 	va_end(ap);
-
 	if(!(len = strlen(buffer)))
 		return;
 	for(f=pending_event_fids; f; f=f->next) {
 		fi = f->fid->aux;
 		slen = fi->buf ? strlen(fi->buf) : 0;
-		fi->buf = cext_erealloc(fi->buf, slen + len + 1);
+		fi->buf = ixp_erealloc(fi->buf, slen + len + 1);
 		fi->buf[slen] = '\0';
 		strcat(fi->buf, buffer);
 	}
@@ -368,8 +371,8 @@ dostat(Stat *s, unsigned int len, FileId *f) {
 	s->qid.version = 0;
 	s->qid.type = f->tab.qtype;
 	s->mode = f->tab.perm;
-	s->atime = time(nil);
-	s->mtime = time(nil);
+	s->atime = time(NULL);
+	s->mtime = time(NULL);
 	s->length = len;
 	s->name = f->tab.name;
 	s->uid = user;
@@ -392,12 +395,10 @@ lookup_file(FileId *parent, char *name)
 	unsigned int i, id;
 
 	if(!(parent->tab.perm & P9DMDIR))
-		return nil;
-
+		return NULL;
 	dir = dirtab[parent->tab.type];
 	last = &ret;
-	ret = nil;
-
+	ret = NULL;
 	for(; dir->name; dir++) {
 		/* Dynamic dirs */
 		if(!*dir->name) { /* strlen(dir->name) == 0 */
@@ -412,14 +413,13 @@ lookup_file(FileId *parent, char *name)
 						file->id = c->id;
 						file->index = idx_of_client(c);
 						file->tab = *dir;
-						file->tab.name = cext_estrdup("sel");
+						file->tab.name = ixp_estrdup("sel");
 					}if(name) goto LastItem;
 				}
 				if(name) {
 					id = (unsigned int)strtol(name, &name, 10);
 					if(*name) goto NextItem;
 				}
-
 				i=0;
 				for(c=client; c; c=c->next, i++) {
 					if(!name || i == id) {
@@ -429,7 +429,7 @@ lookup_file(FileId *parent, char *name)
 						file->ref = c;
 						file->id = c->id;
 						file->tab = *dir;
-						file->tab.name = cext_emallocz(16);
+						file->tab.name = ixp_emallocz(16);
 						snprintf(file->tab.name, 16, "%d", i);
 						if(name) goto LastItem;
 					}
@@ -444,7 +444,7 @@ lookup_file(FileId *parent, char *name)
 						file->ref = screen->sel;
 						file->id = screen->sel->id;
 						file->tab = *dir;
-						file->tab.name = cext_estrdup("sel");
+						file->tab.name = ixp_estrdup("sel");
 					}if(name) goto LastItem;
 				}
 				for(v=view; v; v=v->next) {
@@ -455,7 +455,7 @@ lookup_file(FileId *parent, char *name)
 						file->ref = v;
 						file->id = v->id;
 						file->tab = *dir;
-						file->tab.name = cext_estrdup(v->name);
+						file->tab.name = ixp_estrdup(v->name);
 						if(name) goto LastItem;
 					}
 				}
@@ -469,7 +469,7 @@ lookup_file(FileId *parent, char *name)
 						file->ref = b;
 						file->id = b->id;
 						file->tab = *dir;
-						file->tab.name = cext_estrdup(b->name);
+						file->tab.name = ixp_estrdup(b->name);
 						if(name) goto LastItem;
 					}
 				}
@@ -484,8 +484,7 @@ lookup_file(FileId *parent, char *name)
 			file->ref = parent->ref;
 			file->index = parent->index;
 			file->tab = *dir;
-			file->tab.name = cext_estrdup(file->tab.name);
-
+			file->tab.name = ixp_estrdup(file->tab.name);
 			/* Special considerations: */
 			switch(file->tab.type) {
 			case FsDBars:
@@ -507,7 +506,7 @@ lookup_file(FileId *parent, char *name)
 		continue;
 	}
 LastItem:
-	*last = nil;
+	*last = NULL;
 	return ret;
 }
 
@@ -517,13 +516,13 @@ void
 fs_attach(P9Req *r) {
 	FileId *f = get_file();
 	f->tab = dirtab[FsRoot][0];
-	f->tab.name = cext_estrdup("/");
-	f->ref = nil; /* shut up valgrind */
+	f->tab.name = ixp_estrdup("/");
+	f->ref = NULL; /* shut up valgrind */
 	r->fid->aux = f;
 	r->fid->qid.type = f->tab.qtype;
 	r->fid->qid.path = QID(f->tab.type, 0);
 	r->ofcall.qid = r->fid->qid;
-	respond(r, nil);
+	respond(r, NULL);
 }
 
 void
@@ -532,7 +531,6 @@ fs_walk(P9Req *r) {
 	int i;
 
 	f = r->fid->aux;
-
 	clone_files(f);
 	for(i=0; i < r->ifcall.nwname; i++) {
 		if(!strncmp(r->ifcall.wname[i], "..", 3)) {
@@ -545,7 +543,7 @@ fs_walk(P9Req *r) {
 			nf = lookup_file(f, r->ifcall.wname[i]);
 			if(!nf)
 				break;
-			cext_assert(!nf->next);
+			assert(!nf->next);
 			if(strncmp(r->ifcall.wname[i], ".", 2)) {
 				nf->next = f;
 				f = nf;
@@ -562,7 +560,6 @@ fs_walk(P9Req *r) {
 		}
 		return respond(r, Enofile);
 	}
-
 	/* Remove refs for r->fid if no new fid */
 	/* If Fids were ref counted, this could be
 	 * done in their decref function */
@@ -574,10 +571,9 @@ fs_walk(P9Req *r) {
 			free_file(nf);
 		}
 	}
-
 	r->newfid->aux = f;
 	r->ofcall.nwqid = i;
-	respond(r, nil);
+	respond(r, NULL);
 }
 
 unsigned int
@@ -605,11 +601,10 @@ fs_stat(P9Req *r) {
 
 	dostat(&s, fs_size(r->fid->aux), r->fid->aux);
 	r->ofcall.nstat = size = ixp_sizeof_stat(&s);
-	buf = cext_emallocz(size);
+	buf = ixp_emallocz(size);
 	r->ofcall.stat = buf;
-
 	ixp_pack_stat(&buf, &size, &s);
-	respond(r, nil);
+	respond(r, NULL);
 }
 
 void
@@ -621,15 +616,13 @@ fs_read(P9Req *r) {
 
 	offset = 0;
 	f = r->fid->aux;
-
 	if(f->tab.perm & P9DMDIR && f->tab.perm & 0400) {
 		Stat s;
 		offset = 0;
 		size = r->ifcall.count;
-		buf = cext_emallocz(size);
+		buf = ixp_emallocz(size);
 		r->ofcall.data = buf;
-
-		tf = f = lookup_file(f, nil);
+		tf = f = lookup_file(f, NULL);
 		/* Note: f->tab.name == "." so we skip it */
 		for(f=f->next; f; f=f->next) {
 			dostat(&s, fs_size(f), f);
@@ -641,52 +634,51 @@ fs_read(P9Req *r) {
 			}
 			offset += n;
 		}
-
 		while((f = tf)) {
 			tf=tf->next;
 			free_file(f);
 		}
-
 		r->ofcall.count = r->ifcall.count - size;
-		return respond(r, nil);
-	}else{
+		return respond(r, NULL);
+	}
+	else{
 		switch(f->tab.type) {
 		case FsFprops:
 			write_buf(r, (void *)f->client->props, strlen(f->client->props));
-			return respond(r, nil);
+			return respond(r, NULL);
 		case FsFColRules:
 		case FsFTagRules:
 			write_buf(r, (void *)f->rule->string, f->rule->size);
-			return respond(r, nil);
+			return respond(r, NULL);
 		case FsFKeys:
 			write_buf(r, (void *)def.keys, def.keyssz);
-			return respond(r, nil);
+			return respond(r, NULL);
 		case FsFCtags:
 			write_buf(r, (void *)f->client->tags, strlen(f->client->tags));
-			return respond(r, nil);
+			return respond(r, NULL);
 		case FsFTctl:
 			write_buf(r, (void *)f->view->name, strlen(f->view->name));
-			return respond(r, nil);
+			return respond(r, NULL);
 		case FsFBar:
 			write_buf(r, (void *)f->bar->buf, strlen(f->bar->buf));
-			return respond(r, nil);
+			return respond(r, NULL);
 		case FsFRctl:
 			buf = read_root_ctl();
 			write_buf(r, buf, strlen(buf));
-			return respond(r, nil);
+			return respond(r, NULL);
 		case FsFCctl:
 			if(r->ifcall.offset)
-				return respond(r, nil);
-			r->ofcall.data = cext_emallocz(16);
+				return respond(r, NULL);
+			r->ofcall.data = ixp_emallocz(16);
 			n = snprintf(r->ofcall.data, 16, "%d", f->index);
-			cext_assert(n >= 0);
+			assert(n >= 0);
 			r->ofcall.count = n;
-			return respond(r, nil);
+			return respond(r, NULL);
 		case FsFTindex:
 			buf = (char *)view_index(f->view);
 			n = strlen(buf);
 			write_buf(r, (void *)buf, n);
-			return respond(r, nil);
+			return respond(r, NULL);
 		case FsFEvent:
 			respond_event(r);
 			return;
@@ -694,57 +686,56 @@ fs_read(P9Req *r) {
 	}
 	/* This is an assert because it should this should not be called if
 	 * the file is not open for reading. */
-	cext_assert(!"Read called on an unreadable file");
+	assert(!"Read called on an unreadable file");
 }
 
 /* This function needs to be seriously cleaned up */
 void
 fs_write(P9Req *r) {
 	FileId *f;
-	char *errstr = nil;
+	char *errstr = NULL;
 	unsigned int i;
 
 	if(r->ifcall.count == 0)
-		return respond(r, nil);
-
+		return respond(r, NULL);
 	f = r->fid->aux;
 	switch(f->tab.type) {
 	case FsFColRules:
 	case FsFTagRules:
 		write_to_buf(r, &f->rule->string, &f->rule->size, 0);
-		return respond(r, nil);
+		return respond(r, NULL);
 	case FsFKeys:
 		write_to_buf(r, &def.keys, &def.keyssz, 0);
-		return respond(r, nil);
+		return respond(r, NULL);
 	case FsFCtags:
 		data_to_cstring(r);
 		i=strlen(f->client->tags);
 		write_to_buf(r, &f->client->tags, &i, 255);
 		r->ofcall.count = i- r->ifcall.offset;
-		return respond(r, nil);
+		return respond(r, NULL);
 	case FsFBar:
 		/* XXX: This should validate after each write */
 		i = strlen(f->bar->buf);
 		write_to_buf(r, &f->bar->buf, &i, 279);
 		r->ofcall.count = i - r->ifcall.offset;
-		return respond(r, nil);
+		return respond(r, NULL);
 	case FsFCctl:
 		data_to_cstring(r);
 		if((errstr = message_client(f->client, r->ifcall.data)))
 			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
-		return respond(r, nil);
+		return respond(r, NULL);
 	case FsFTctl:
 		data_to_cstring(r);
 		if((errstr = message_view(f->view, r->ifcall.data)))
 			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
-		return respond(r, nil);
+		return respond(r, NULL);
 	case FsFRctl:
 		data_to_cstring(r);
 		{	unsigned int n;
 			char *toks[32];
-			n = cext_tokenize(toks, 32, r->ifcall.data, '\n');
+			n = ixp_tokenize(toks, 32, r->ifcall.data, '\n');
 			for(i = 0; i < n; i++) {
 				if(errstr)
 					message_root(toks[i]);
@@ -755,27 +746,28 @@ fs_write(P9Req *r) {
 		if(errstr)
 			return respond(r, errstr);
 		r->ofcall.count = r->ifcall.count;
-		return respond(r, nil);
+		return respond(r, NULL);
 	case FsFEvent:
 		if(r->ifcall.data[r->ifcall.count-1] == '\n')
 			write_event("%.*s", r->ifcall.count, r->ifcall.data);
 		else
 			write_event("%.*s\n", r->ifcall.count, r->ifcall.data);
 		r->ofcall.count = r->ifcall.count;
-		return respond(r, nil);
+		return respond(r, NULL);
 	}
 	/* This is an assert because it should this should not be called if
 	 * the file is not open for writing. */
-	cext_assert(!"Write called on an unwritable file");
+	assert(!"Write called on an unwritable file");
 }
 
 void
 fs_open(P9Req *r) {
 	FidLink *fl;
 	FileId *f = r->fid->aux;
+
 	switch(f->tab.type) {
 	case FsFEvent:
-		fl = cext_emallocz(sizeof(FidLink));
+		fl = ixp_emallocz(sizeof(FidLink));
 		fl->fid = r->fid;
 		fl->next = pending_event_fids;
 		pending_event_fids = fl;
@@ -789,13 +781,13 @@ fs_open(P9Req *r) {
 		return respond(r, Enoperm);
 	if((r->ifcall.mode&~(3|P9OAPPEND|P9OTRUNC)))
 		return respond(r, Enoperm);
-
-	respond(r, nil);
+	respond(r, NULL);
 }
 
 void
 fs_create(P9Req *r) {
 	FileId *f = r->fid->aux;
+
 	switch(f->tab.type) {
 	default:
 		/* XXX: This should be taken care of by the library */
@@ -807,12 +799,11 @@ fs_create(P9Req *r) {
 		f = lookup_file(f, r->ifcall.name);
 		if(!f)
 			return respond(r, Enofile);
-
 		r->ofcall.qid.type = f->tab.qtype;
 		r->ofcall.qid.path = QID(f->tab.type, f->id);
 		f->next = r->fid->aux;
 		r->fid->aux = f;
-		respond(r, nil);
+		respond(r, NULL);
 		break;
 	}
 }
@@ -820,6 +811,7 @@ fs_create(P9Req *r) {
 void
 fs_remove(P9Req *r) {
 	FileId *f = r->fid->aux;
+
 	switch(f->tab.type) {
 	default:
 		/* XXX: This should be taken care of by the library */
@@ -827,7 +819,7 @@ fs_remove(P9Req *r) {
 	case FsFBar:
 		destroy_bar(f->next->bar_p, f->bar);
 		draw_bar(screen);
-		respond(r, nil);
+		respond(r, NULL);
 		break;
 	}
 }
@@ -864,7 +856,7 @@ fs_clunk(P9Req *r) {
 		parse_colors(&buf, &i, &f->bar->brush.color);
 		while(i > 0 && buf[i - 1] == '\n')
 			buf[--i] = '\0';
-		cext_strlcpy(f->bar->text, buf, sizeof(f->bar->text));
+		strncpy(f->bar->text, buf, sizeof(f->bar->text));
 		draw_bar(screen);
 		break;
 	case FsFEvent:
@@ -879,19 +871,20 @@ fs_clunk(P9Req *r) {
 			}
 		break;
 	}
-	respond(r, nil);
+	respond(r, NULL);
 }
 
 void
 fs_flush(P9Req *r) {
 	P9Req **t;
+
 	for(t=&pending_event_reads; *t; t=(P9Req **)&(*t)->aux)
 		if(*t == r->oldreq) {
 			*t = (*t)->aux;
 			respond(r->oldreq, Einterrupted);
 			break;
 		}
-	respond(r, nil);
+	respond(r, NULL);
 }
 
 void

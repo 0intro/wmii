@@ -1,14 +1,11 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-
+#include "wm.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <X11/keysym.h>
-
-#include "wm.h"
 
 /* local functions */
 static void buttonpress(XEvent *e);
@@ -40,8 +37,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
 };
 
 void
-check_x_event(IXPConn *c)
-{
+check_x_event(IXPConn *c) {
 	XEvent ev;
 	while(XPending(blz.dpy)) { /* main event loop */
 		XNextEvent(blz.dpy, &ev);
@@ -51,8 +47,7 @@ check_x_event(IXPConn *c)
 }
 
 unsigned int
-flush_masked_events(long even_mask)
-{
+flush_masked_events(long even_mask) {
 	XEvent ev;
 	unsigned int n = 0;
 	while(XCheckMaskEvent(blz.dpy, even_mask, &ev)) n++;
@@ -60,8 +55,7 @@ flush_masked_events(long even_mask)
 }
 
 static void
-buttonrelease(XEvent *e)
-{
+buttonrelease(XEvent *e) {
 	Frame *f;
 	Bar *b;
 	XButtonPressedEvent *ev = &e->xbutton;
@@ -80,8 +74,7 @@ buttonrelease(XEvent *e)
 }
 
 static void
-buttonpress(XEvent *e)
-{
+buttonpress(XEvent *e) {
 	Frame *f;
 	XButtonPressedEvent *ev = &e->xbutton;
 
@@ -105,8 +98,7 @@ buttonpress(XEvent *e)
 }
 
 static void
-configurerequest(XEvent *e)
-{
+configurerequest(XEvent *e) {
 	XConfigureRequestEvent *ev = &e->xconfigurerequest;
 	XWindowChanges wc;
 	XRectangle *frect;
@@ -116,7 +108,6 @@ configurerequest(XEvent *e)
 	ev->value_mask &= ~CWSibling;
 	if(c) {
 		gravitate_client(c, True);
-
 		if(ev->value_mask & CWX)
 			c->rect.x = ev->x;
 		if(ev->value_mask & CWY)
@@ -127,15 +118,12 @@ configurerequest(XEvent *e)
 			c->rect.height = ev->height;
 		if(ev->value_mask & CWBorderWidth)
 			c->border = ev->border_width;
-
 		gravitate_client(c, False);
-
 		if(c->frame) {
 			if(c->sel->area->floating)
 				frect=&c->sel->rect;
 			else
 				frect=&c->sel->revert;
-
 			if(c->rect.width >= screen->rect.width && c->rect.height >= screen->rect.height) {
 				frect->y = wc.y = -blitz_labelh(&def.font);
 				frect->x = wc.x = -def.border;
@@ -158,32 +146,27 @@ configurerequest(XEvent *e)
 			}
 		}
 	}
-
 	wc.x = ev->x;
 	wc.y = ev->y;
 	wc.width = ev->width;
 	wc.height = ev->height;
-
 	if(c && c->frame) {
 		wc.x = def.border;
 		wc.y = blitz_labelh(&def.font);
 		wc.width = c->sel->rect.width - 2 * def.border;
 		wc.height = c->sel->rect.height - def.border - blitz_labelh(&def.font);
 	}
-
 	wc.border_width = 0;
 	wc.sibling = None;
 	wc.stack_mode = Above;
 	ev->value_mask &= ~CWStackMode;
 	ev->value_mask |= CWBorderWidth;
 	XConfigureWindow(blz.dpy, ev->window, ev->value_mask, &wc);
-
 	XSync(blz.dpy, False);
 }
 
 static void
-destroynotify(XEvent *e)
-{
+destroynotify(XEvent *e) {
 	Client *c;
 	XDestroyWindowEvent *ev = &e->xdestroywindow;
 
@@ -192,14 +175,12 @@ destroynotify(XEvent *e)
 }
 
 static void
-enternotify(XEvent *e)
-{
+enternotify(XEvent *e) {
 	XCrossingEvent *ev = &e->xcrossing;
 	Client *c;
 
 	if(ev->mode != NotifyNormal || ev->detail == NotifyInferior)
 		return;
-
 	if((c = client_of_win(ev->window))) {
 		Frame *f = c->sel;
 		Area *a = f->area;
@@ -214,8 +195,7 @@ enternotify(XEvent *e)
 }
 
 static void
-leavenotify(XEvent *e)
-{
+leavenotify(XEvent *e) {
 	XCrossingEvent *ev = &e->xcrossing;
 
 	if((ev->window == blz.root) && !ev->same_screen) {
@@ -225,8 +205,7 @@ leavenotify(XEvent *e)
 }
 
 static void
-expose(XEvent *e)
-{
+expose(XEvent *e) {
 	XExposeEvent *ev = &e->xexpose;
 	static Frame *f;
 
@@ -239,8 +218,7 @@ expose(XEvent *e)
 }
 
 static void
-keypress(XEvent *e)
-{
+keypress(XEvent *e) {
 	XKeyEvent *ev = &e->xkey;
 	KeySym k = 0;
 	char buf[32];
@@ -262,8 +240,7 @@ keypress(XEvent *e)
 }
 
 static void
-mappingnotify(XEvent *e)
-{
+mappingnotify(XEvent *e) {
 	XMappingEvent *ev = &e->xmapping;
 
 	XRefreshKeyboardMapping(ev);
@@ -272,40 +249,34 @@ mappingnotify(XEvent *e)
 }
 
 static void
-maprequest(XEvent *e)
-{
+maprequest(XEvent *e) {
 	XMapRequestEvent *ev = &e->xmaprequest;
 	static XWindowAttributes wa;
 
 	if(!XGetWindowAttributes(blz.dpy, ev->window, &wa))
 		return;
-
 	if(wa.override_redirect) {
 		XSelectInput(blz.dpy, ev->window,
 				(StructureNotifyMask | PropertyChangeMask));
 		return;
 	}
-
 	if(!client_of_win(ev->window))
 		manage_client(create_client(ev->window, &wa));
 }
 
 static void
-propertynotify(XEvent *e)
-{
+propertynotify(XEvent *e) {
 	XPropertyEvent *ev = &e->xproperty;
 	Client *c;
 
 	if(ev->state == PropertyDelete)
 		return; /* ignore */
-
 	if((c = client_of_win(ev->window)))
 		prop_client(c, ev);
 }
 
 static void
-unmapnotify(XEvent *e)
-{
+unmapnotify(XEvent *e) {
 	Client *c;
 	XUnmapEvent *ev = &e->xunmap;
 

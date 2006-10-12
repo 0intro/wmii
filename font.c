@@ -1,17 +1,14 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-
+#include "wm.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
-#include "blitz.h"
 
 unsigned int
-blitz_textwidth_l(BlitzFont *font, char *text, unsigned int len)
-{
+blitz_textwidth_l(BlitzFont *font, char *text, unsigned int len) {
 	if(font->set) {
 		XRectangle r;
 		XmbTextExtents(font->set, text, len, NULL, &r);
@@ -21,14 +18,12 @@ blitz_textwidth_l(BlitzFont *font, char *text, unsigned int len)
 }
 
 unsigned int
-blitz_textwidth(BlitzFont *font, char *text)
-{
+blitz_textwidth(BlitzFont *font, char *text) {
 	return blitz_textwidth_l(font, text, strlen(text));
 }
 
 void
-blitz_loadfont(Blitz *blitz, BlitzFont *font)
-{
+blitz_loadfont(Blitz *blitz, BlitzFont *font) {
 	char *fontname = font->fontstr;
 	char **missing = NULL, *def = "?";
 	int n;
@@ -51,7 +46,6 @@ blitz_loadfont(Blitz *blitz, BlitzFont *font)
 		XFontStruct **xfonts;
 		char **font_names;
 		unsigned int i;
-
 		font->ascent = font->descent = 0;
 		font_extents = XExtentsOfFontSet(font->set);
 		n = XFontsOfFontSet(font->set, &xfonts, &font_names);
@@ -83,7 +77,6 @@ blitz_loadfont(Blitz *blitz, BlitzFont *font)
 }
 
 unsigned int
-blitz_labelh(BlitzFont *font)
-{
+blitz_labelh(BlitzFont *font) {
 	return font->height + 4;
 }

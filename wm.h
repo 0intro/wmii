@@ -7,9 +7,68 @@
 #include <regex.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/Xlocale.h>
 
 #include <ixp.h>
-#include <blitz.h>
+
+#define BLITZ_FONT		"fixed"
+#define BLITZ_SELCOLORS		"#ffffff #335577 #447799"
+#define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
+#define BLITZ_B1COLORS		"#000000 #00ffff #000000"
+#define BLITZ_B2COLORS		"#000000 #ff0000 #000000"
+#define BLITZ_B3COLORS		"#000000 #00ff00 #000000"
+
+typedef struct Blitz Blitz;
+typedef enum BlitzAlign BlitzAlign;
+typedef struct BlitzColor BlitzColor;
+typedef struct BlitzFont BlitzFont;
+typedef struct BlitzBrush BlitzBrush;
+typedef struct BlitzInput BlitzInput;
+
+struct Blitz {
+	Display *dpy;
+	int screen;
+	Window root;
+};
+
+enum BlitzAlign {
+	NORTH = 0x01,
+	EAST  = 0x02,
+	SOUTH = 0x04,
+	WEST  = 0x08,
+	NEAST = NORTH | EAST,
+	NWEST = NORTH | WEST,
+	SEAST = SOUTH | EAST,
+	SWEST = SOUTH | WEST,
+	CENTER = NEAST | SWEST
+};
+
+struct BlitzColor {
+	unsigned long bg;
+	unsigned long fg;
+	unsigned long border;
+	char colstr[24]; /* #RRGGBB #RRGGBB #RRGGBB */
+};
+
+struct BlitzFont {
+	XFontStruct *xfont;
+	XFontSet set;
+	int ascent;
+	int descent;
+	unsigned int height;
+	char *fontstr;
+};
+
+struct BlitzBrush {
+	Blitz *blitz;
+	Drawable drawable;
+	GC gc;
+	Bool border;
+	BlitzColor color;
+	BlitzAlign align;
+	BlitzFont *font;
+	XRectangle rect;	/* relative rect */
+};
 
 /* WM atoms */
 enum { WMProtocols, WMDelete, WMLast };
@@ -202,6 +261,10 @@ extern void draw_bar(WMScreen *s);
 extern void resize_bar();
 extern Bar *bar_of_name(Bar *b_link, const char *name);
 
+/* brush.c */
+extern void blitz_draw_label(BlitzBrush *b, char *text);
+extern void blitz_draw_tile(BlitzBrush *b);
+
 /* client.c */
 extern Client *create_client(Window w, XWindowAttributes *wa);
 extern void destroy_client(Client *c);
@@ -230,6 +293,9 @@ extern void update_client_grab(Client *c, Bool is_sel);
 extern void apply_rules(Client *c);
 extern void apply_tags(Client *c, const char *tags);
 
+/* color.c */
+extern int blitz_loadcolor(Blitz *blitz, BlitzColor *c);
+
 /* column.c */
 extern void arrange_column(Area *a, Bool dirty);
 extern void scale_column(Area *a, float h);
@@ -237,6 +303,12 @@ extern void resize_column(Client *c, XRectangle *r, XPoint *pt);
 extern int column_mode_of_str(char *arg);
 extern char *str_of_column_mode(int mode);
 extern Area *new_column(View *v, Area *pos, unsigned int w);
+
+/* draw.c */
+extern void blitz_drawbg(Display *dpy, Drawable drawable, GC gc,
+		XRectangle rect, BlitzColor c, Bool border);
+extern void blitz_drawcursor(Display *dpy, Drawable drawable, GC gc,
+				int x, int y, unsigned int h, BlitzColor c);
 
 /* event.c */
 extern void check_x_event(IXPConn *c);
@@ -249,6 +321,12 @@ extern void insert_frame(Frame *pos, Frame *f, Bool before);
 extern void draw_frame(Frame *f);
 extern void draw_frames();
 extern void update_frame_widget_colors(Frame *f);
+
+/* font.c */
+extern unsigned int blitz_textwidth(BlitzFont *font, char *text);
+extern unsigned int blitz_textwidth_l(BlitzFont *font, char *text, unsigned int len);
+extern void blitz_loadfont(Blitz *blitz, BlitzFont *font);
+extern unsigned int blitz_labelh(BlitzFont *font);
 
 /* fs.c */
 extern void fs_attach(P9Req *r);
@@ -284,6 +362,7 @@ extern BlitzAlign snap_rect(XRectangle *rects, int num, XRectangle *current,
 
 /* rule.c */
 extern void update_rules(Rule **rule, const char *data);
+extern void trim(char *str, const char *chars);
 
 /* view.c */
 extern void arrange_view(View *v);

@@ -1,21 +1,17 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * (C)opyright MMVI Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-
+#include "wm.h"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "wm.h"
 
 #define ButtonMask      (ButtonPressMask | ButtonReleaseMask)
 #define MouseMask       (ButtonMask | PointerMotionMask)
 
 static void
-rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask)
-{
+rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask) {
 	BlitzAlign new_mask = 0;
 	if(*mask & NORTH) {
 		if(rect->height - dy >= 0 || *mask & SOUTH) {
@@ -69,8 +65,7 @@ typedef struct {
 } SnapArgs;
 
 static void
-snap_line(SnapArgs *a)
-{
+snap_line(SnapArgs *a) {
 	int i, t_xy;
 	
 	/* horizontal */
@@ -110,7 +105,7 @@ BlitzAlign
 snap_rect(XRectangle *rects, int num, XRectangle *current,
           BlitzAlign *mask, int snap)
 {
-	SnapArgs a = { rects, num, 0, 0, 0, 0, *mask, nil };
+	SnapArgs a = { rects, num, 0, 0, 0, 0, *mask, NULL };
 	int dx = snap + 1, dy = snap + 1;
 	BlitzAlign ret;
 
@@ -125,7 +120,6 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 		a.y2 = a.y1 = current->y + current->height;
 		snap_line(&a);
 	}
-
 	a.y1 = current->y;
 	a.y2 = current->y + current->height;
 	a.delta = &dx;
@@ -137,22 +131,18 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 		a.x1 = a.x2 = current->x;
 		snap_line(&a);
 	}
-
 	rect_morph_xy(current, abs(dx) <= snap ? dx : 0,
 			abs(dy) <= snap ? dy : 0, mask);
-
 	ret = *mask;
 	if(abs(dx) <= snap)
 		ret ^= EAST|WEST;
 	if(abs(dy) <= snap)
 		ret ^= NORTH|SOUTH;
-
 	return ret ^ CENTER;
 }
 
 static void
-draw_xor_border(XRectangle *r)
-{
+draw_xor_border(XRectangle *r) {
 	XRectangle xor = *r;
 
 	xor.x += 2;
@@ -170,8 +160,7 @@ draw_xor_border(XRectangle *r)
 }
 
 void
-do_mouse_resize(Client *c, BlitzAlign align)
-{
+do_mouse_resize(Client *c, BlitzAlign align) {
 	BlitzAlign grav;
 	int px, py, ox, oy, i;
 	float rx, ry;
@@ -181,7 +170,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	Frame *f = c->sel;
 	Bool floating = f->area->floating;
 	int snap = floating ? screen->rect.height / 66 : 0;
-	XRectangle *rects = floating ? rects_of_view(f->area->view, &num) : nil;
+	XRectangle *rects = floating ? rects_of_view(f->area->view, &num) : NULL;
 	XRectangle frect = f->rect, ofrect;
 	XRectangle origin = frect;
 	XPoint pt;
@@ -189,7 +178,6 @@ do_mouse_resize(Client *c, BlitzAlign align)
 	XQueryPointer(blz.dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &di);
 	rx = (float)ox / frect.width;
 	ry = (float)oy / frect.height;
-
 	if (floating || align != CENTER) {
 		px = ox = frect.width / 2;
 		py = oy = frect.height / 2;
@@ -201,18 +189,14 @@ do_mouse_resize(Client *c, BlitzAlign align)
 			ox += px;
 		if(align&WEST)
 			ox -= px;
-
 		XWarpPointer(blz.dpy, None, c->framewin, 0, 0, 0, 0, ox, oy);
 	}
-
 	XTranslateCoordinates(blz.dpy, c->framewin, blz.root, ox, oy, &ox, &oy, &dummy);
 	pt.x = ox; pt.y = oy;
-
 	XSync(blz.dpy, False);
 	if(XGrabPointer(blz.dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
 			None, cursor[CurResize], CurrentTime) != GrabSuccess)
 		return;
-	
 	XGrabServer(blz.dpy);
 	draw_xor_border(&frect);
 	for(;;) {
@@ -221,7 +205,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 		case ButtonRelease:
 			draw_xor_border(&frect);
 			if(!floating)
-				resize_column(c, &frect, (align == CENTER) ? &pt : nil);
+				resize_column(c, &frect, (align == CENTER) ? &pt : NULL);
 			else
 				resize_client(c, &frect, False);
 			if(rects)
@@ -229,29 +213,24 @@ do_mouse_resize(Client *c, BlitzAlign align)
 			XUngrabServer(blz.dpy);
 			XUngrabPointer(blz.dpy, CurrentTime);
 			XSync(blz.dpy, False);
-
 			XWarpPointer(blz.dpy, None, c->framewin, 0, 0, 0, 0,
 					frect.width * rx, frect.height * ry);
 			return;
 			break;
 		case MotionNotify:
 			ofrect = frect;
-
 			pt.x = ev.xmotion.x;
 			pt.y = ev.xmotion.y;
 			XTranslateCoordinates(blz.dpy, c->framewin, blz.root, ev.xmotion.x,
 					ev.xmotion.y, &px, &py, &dummy);
-
 			rect_morph_xy(&origin, px-ox, py-oy, &align);
 			frect=origin;
 			ox=px; oy=py;
-
 			if(floating)
 				grav = snap_rect(rects, num, &frect, &align, snap);
 			else
 				grav = align ^ CENTER;
 			match_sizehints(c, &frect, floating, grav);
-
 			draw_xor_border(&ofrect);
 			draw_xor_border(&frect);
 			break;
@@ -264,8 +243,7 @@ do_mouse_resize(Client *c, BlitzAlign align)
 }
 
 void
-grab_mouse(Window w, unsigned long mod, unsigned int button)
-{
+grab_mouse(Window w, unsigned long mod, unsigned int button) {
 	XGrabButton(blz.dpy, button, mod, w, False, ButtonMask,
 			GrabModeAsync, GrabModeSync, None, None);
 	if((mod != AnyModifier) && num_lock_mask) {
@@ -277,8 +255,7 @@ grab_mouse(Window w, unsigned long mod, unsigned int button)
 }
 
 void
-ungrab_mouse(Window w, unsigned long mod, unsigned int button)
-{
+ungrab_mouse(Window w, unsigned long mod, unsigned int button) {
 	XUngrabButton(blz.dpy, button, mod, w);
 	if(mod != AnyModifier && num_lock_mask) {
 		XUngrabButton(blz.dpy, button, mod | num_lock_mask, w);

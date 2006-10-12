@@ -1,37 +1,31 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-
+#include "wm.h"
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "wm.h"
-
-Bar *free_bars = nil;
+Bar *free_bars = NULL;
 
 Bar *
-create_bar(Bar **b_link, char *name)
-{
+create_bar(Bar **b_link, char *name) {
 	static unsigned int id = 1;
 	Bar **i, *b = bar_of_name(*b_link, name);;
+
 	if(b)
 		return b;
-
 	if(free_bars) {
 		b = free_bars;
 		free_bars = b->next;
 		memset(b, 0, sizeof(*b));
 	}
 	else
-		b = cext_emallocz(sizeof(Bar));
-
+		b = ixp_emallocz(sizeof(Bar));
 	b->id = id++;
-	cext_strlcpy(b->name, name, sizeof(b->name));
+	strncpy(b->name, name, sizeof(b->name));
 	b->brush = screen->bbrush;
 	b->brush.color = def.normcolor;
-
 	for(i=b_link; *i; i=&(*i)->next)
 		if(strcmp((*i)->name, name) >= 0)
 			break;
@@ -42,19 +36,17 @@ create_bar(Bar **b_link, char *name)
 }
 
 void
-destroy_bar(Bar **b_link, Bar *b)
-{
+destroy_bar(Bar **b_link, Bar *b) {
 	Bar **p;
+
 	for(p=b_link; *p && *p != b; p=&(*p)->next);
 	*p = b->next;
-
 	b->next = free_bars;
 	free_bars = b;
 }
 
 void
-resize_bar(WMScreen *s)
-{
+resize_bar(WMScreen *s) {
 	View *v;
 
 	s->brect = s->rect;
@@ -63,26 +55,21 @@ resize_bar(WMScreen *s)
 	XMoveResizeWindow(blz.dpy, s->barwin, s->brect.x, s->brect.y, s->brect.width, s->brect.height);
 	XSync(blz.dpy, False);
 	draw_bar(s);
-
 	for(v=view; v; v=v->next)
 		arrange_view(v);
 }
 
 void
-draw_bar(WMScreen *s)
-{
+draw_bar(WMScreen *s) {
 	unsigned int width, tw, nb, size;
 	float shrink;
 	Bar *b, *tb, *largest, **pb;
 
 	blitz_draw_tile(&s->bbrush);
-
 	if(!s->lbar && !s->rbar)
 		goto MapBar;
-
-	largest = b = tb = nil;
+	largest = b = tb = NULL;
 	tw = width = nb = size = 0;
-
 	for(b=s->lbar, nb=2 ;nb; --nb && (b = s->rbar))
 		for(; b; b=b->next) {
 			b->brush.rect.x = b->brush.rect.y = 0;
@@ -92,7 +79,6 @@ draw_bar(WMScreen *s)
 			b->brush.rect.height = s->brect.height;
 			width += b->brush.rect.width;
 		}
-
 	/* Not enough room. Shrink bars until they all fit */
 	if(width > s->brect.width) {
 		for(b=s->lbar, nb=2 ;nb; --nb && (b = s->rbar))
@@ -114,9 +100,8 @@ draw_bar(WMScreen *s)
 		for(b=largest; b != tb->smaller; b=b->smaller)
 			b->brush.rect.width = floor(b->brush.rect.width * shrink);
 		width += tw * shrink;
-		tb=nil;
+		tb=NULL;
 	}
-
 	for(b=s->lbar, nb=2 ;nb; b=s->rbar, nb--)
 		for(; b; tb = b, b=b->next) {
 			if(b == s->rbar) {
@@ -135,12 +120,11 @@ MapBar:
 }
 
 Bar *
-bar_of_name(Bar *b_link, const char *name)
-{
+bar_of_name(Bar *b_link, const char *name) {
 	static char buf[256];
 	Bar *b;
 
- 	cext_strlcpy(buf, name, sizeof(buf));
+	strncpy(buf, name, sizeof(buf));
 	for(b=b_link; b; b=b->next)
 		if(!strncmp(b->name, name, sizeof(b->name))) break;
 	return b;

@@ -1,32 +1,26 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-
+#include "wm.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "wm.h"
-
 Client *        
-sel_client_of_area(Area *a)
-{               
-	return a && a->sel ? a->sel->client : nil;
+sel_client_of_area(Area *a) {               
+	return a && a->sel ? a->sel->client : NULL;
 }
 
 Area *
-create_area(View *v, Area *pos, unsigned int w)
-{
+create_area(View *v, Area *pos, unsigned int w) {
 	static unsigned short id = 1;
 	unsigned int area_size, col_size;
 	unsigned int min_width = screen->rect.width/NCOL;
 	Area *a, **p = pos ? &pos->next : &v->area;
 
 	for(area_size = 0, a=v->area; a; a=a->next, area_size++);
-
 	col_size = area_size ? area_size - 1 : 0;
-
 	if(!w) {
 		if(col_size)
 			w = screen->rect.width / (col_size + 1);
@@ -35,45 +29,36 @@ create_area(View *v, Area *pos, unsigned int w)
 	}
 	if(w < min_width)
 		w = min_width;
-
 	if(col_size && col_size * min_width + w > screen->rect.width)
-		return nil;
-
+		return NULL;
 	if(area_size > 1)
 		scale_view(v, screen->rect.width - w);
-	a = cext_emallocz(sizeof(Area));
+	a = ixp_emallocz(sizeof(Area));
 	a->view = v;
 	a->id = id++;
 	a->rect = screen->rect;
 	a->rect.height = screen->rect.height - screen->brect.height;
 	a->mode = def.colmode;
 	a->rect.width = w;
-	a->frame = nil;
-	a->sel = nil;
-
+	a->frame = NULL;
+	a->sel = NULL;
 	a->next = *p;
 	*p = a;
-
 	v->sel = a;
 	return a;
 }
 
 void
-destroy_area(Area *a)
-{
+destroy_area(Area *a) {
 	Client *c;
 	Area *ta;
 	View *v = a->view;
-	
-	cext_assert(!a->frame && "wmiiwm: fatal, destroying non-empty area");
-
+	assert(!a->frame && "wmiiwm: fatal, destroying non-empty area");
 	if(v->revert == a)
-		v->revert = nil;
-
+		v->revert = NULL;
 	for(c=client; c; c=c->next)
 		if(c->revert == a)
-			c->revert = nil;
-
+			c->revert = NULL;
 	for(ta=v->area; ta && ta->next != a; ta=ta->next);
 	if(ta) {
 		ta->next = a->next;
@@ -84,10 +69,9 @@ destroy_area(Area *a)
 }
 
 static void
-place_client(Area *a, Client *c)
-{
+place_client(Area *a, Client *c) {
 	static unsigned int mx, my;
-	static Bool *field = nil;
+	static Bool *field = NULL;
 	Frame *fr;
 	Bool fit = False;
 	BlitzAlign align = CENTER;
@@ -104,18 +88,15 @@ place_client(Area *a, Client *c)
 		|| c->size.flags & USPosition
 		|| c->size.flags & PPosition)
 		return;
-
 	rects = rects_of_view(a->view, &num);
 	if(!field) {
 		mx = screen->rect.width / 8;
 		my = screen->rect.height / 8;
-		field = cext_emallocz(my * mx * sizeof(Bool));
+		field = ixp_emallocz(my * mx * sizeof(Bool));
 	}
-
 	for(y = 0; y < my; y++)
 		for(x = 0; x < mx; x++)
 			field[y*mx + x] = True;
-
 	dx = screen->rect.width / mx;
 	dy = screen->rect.height / my;
 	for(fr=a->frame; fr; fr=fr->anext) {
@@ -138,7 +119,6 @@ place_client(Area *a, Client *c)
 			for(i = x; i < mx && i < maxx; i++)
 				field[j*mx + i] = False;
 	}
-
 	for(y = 0; y < my; y++)
 		for(x = 0; x < mx; x++) {
 			if(field[y*mx + x]) {
@@ -155,36 +135,30 @@ place_client(Area *a, Client *c)
 				}
 			}
 		}
-
 	if(fit) {
 		p1.x *= dx;
 		p1.y *= dy;
 	}
-
 	if(fit && (p1.x + f->rect.width < a->rect.x + a->rect.width))
 		f->rect.x = p1.x;
 	else {
 		diff = a->rect.width - f->rect.width;
 		f->rect.x = a->rect.x + (random() % (diff ? diff : 1));
 	}
-
 	if(fit && (p1.y + f->rect.height < a->rect.y + a->rect.height))
 		f->rect.y = p1.y;
 	else {
 		diff = a->rect.height - f->rect.height;
 		f->rect.y = a->rect.y + (random() % (diff ? diff : 1));
 	}
-
 	snap_rect(rects, num, &f->rect, &align, snap);
 	if(rects)
 		free(rects);
 }
 
 void
-send_to_area(Area *to, Area *from, Frame *f)
-{
-	cext_assert(to->view == f->view);
-
+send_to_area(Area *to, Area *from, Frame *f) {
+	assert(to->view == f->view);
 	if(to->floating != from->floating) {
 		XRectangle temp = f->revert;
 		f->revert = f->rect;
@@ -197,15 +171,13 @@ send_to_area(Area *to, Area *from, Frame *f)
 }
 
 void
-attach_to_area(Area *a, Frame *f, Bool send)
-{
+attach_to_area(Area *a, Frame *f, Bool send) {
 	unsigned int h, n_frame;
 	Frame **fa, *ft;
 	View *v = a->view;
 	Client *c = f->client;
 
 	for(ft=a->frame, n_frame=1; ft; ft=ft->anext, n_frame++);
-
 	h = 0;
 	c->floating = a->floating;
 	if(!c->floating) {
@@ -213,7 +185,6 @@ attach_to_area(Area *a, Frame *f, Bool send)
 		if(a->frame)
 			scale_column(a, a->rect.height - h);
 	}
-
 	if(!send && !c->floating) { /* column */
 		unsigned int w = newcolw_of_view(v);
 		if(v->area->next->frame && w) {
@@ -221,14 +192,11 @@ attach_to_area(Area *a, Frame *f, Bool send)
 			arrange_view(v);
 		}
 	}
-
 	fa = a->sel ? &a->sel->anext : &a->frame;
 	f->anext = *fa;
 	*fa = f;
-
 	f->area = a;
 	a->sel = f;
-
 	if(!c->floating) { /* column */
 		f->rect.height = h;
 		arrange_column(a, False);
@@ -237,9 +205,8 @@ attach_to_area(Area *a, Frame *f, Bool send)
 }
 
 void
-detach_from_area(Area *a, Frame *f)
-{
-	Frame **ft, *pr = nil;
+detach_from_area(Area *a, Frame *f) {
+	Frame **ft, *pr = NULL;
 	Client *c = f->client;
 	View *v = a->view;
 
@@ -247,12 +214,10 @@ detach_from_area(Area *a, Frame *f)
 		if(*ft == f) break;
 		pr = *ft;
 	}
-	cext_assert(*ft == f);
+	assert(*ft == f);
 	*ft = f->anext;
-
 	if(a->sel == f)
 		a->sel = pr ? pr : *ft;
-
 	if(!a->floating) {
 		if(a->frame)
 			arrange_column(a, False);
@@ -280,8 +245,7 @@ detach_from_area(Area *a, Frame *f)
 }
 
 char *
-select_area(Area *a, char *arg)
-{
+select_area(Area *a, char *arg) {
 	Area *new;
 	unsigned int i;
 	Frame *p, *f;
@@ -290,7 +254,6 @@ select_area(Area *a, char *arg)
 
 	v = a->view;
 	f = a->sel;
-
 	if(!strncmp(arg, "toggle", 7)) {
 		if(a != v->area)
 			new = v->area;
@@ -321,7 +284,7 @@ select_area(Area *a, char *arg)
 		if(v == screen->sel)
 			focus_view(screen, v);
 		flush_masked_events(EnterWindowMask);
-		return nil;
+		return NULL;
 	}
 	else if(!strncmp(arg, "down", 5)) {
 		if(!f)
@@ -332,7 +295,7 @@ select_area(Area *a, char *arg)
 		if(v == screen->sel)
 			focus_view(screen, v);
 		flush_masked_events(EnterWindowMask);
-		return nil;
+		return NULL;
 	}
 	else {
 		if(sscanf(arg, "%d", &i) != 1)
@@ -344,5 +307,5 @@ select_area(Area *a, char *arg)
 	v->sel = new;
 	if(a->floating != new->floating)
 		v->revert = a;
-	return nil;
+	return NULL;
 }

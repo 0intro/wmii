@@ -1,15 +1,11 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-
+#include "wm.h"
 #include <string.h>
 
-#include "blitz.h"
-
 static unsigned long
-xloadcolor(Blitz *blitz, char *colstr)
-{
+xloadcolor(Blitz *blitz, char *colstr) {
 	XColor color;
 	char col[8];
 
@@ -21,8 +17,7 @@ xloadcolor(Blitz *blitz, char *colstr)
 }
 
 int
-blitz_loadcolor(Blitz *blitz, BlitzColor *c)
-{
+blitz_loadcolor(Blitz *blitz, BlitzColor *c) {
 	if(!c->colstr || strlen(c->colstr) != 23)
 		return -1;
 	c->fg = xloadcolor(blitz, &c->colstr[0]);
@@ -30,4 +25,3 @@ blitz_loadcolor(Blitz *blitz, BlitzColor *c)
 	c->border = xloadcolor(blitz, &c->colstr[16]);
 	return 0;
 }
-

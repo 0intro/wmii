@@ -1,23 +1,18 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-
+#include "wm.h"
 #include <stdlib.h>
 #include <string.h>
 
-#include "wm.h"
-
 Frame *
-create_frame(Client *c, View *v)
-{
+create_frame(Client *c, View *v) {
 	static unsigned short id = 1;
-	Frame *f = cext_emallocz(sizeof(Frame));
+	Frame *f = ixp_emallocz(sizeof(Frame));
 
 	f->id = id++;
 	f->client = c;
 	f->view = v;
-
 	if(c->frame) {
 		f->revert = c->sel->revert;
 		f->rect = c->sel->rect;
@@ -28,7 +23,6 @@ create_frame(Client *c, View *v)
 		f->revert.height = f->rect.height += def.border + blitz_labelh(&def.font);
 	}
 	f->collapsed = False;
-
 	f->tile.blitz = &blz;
 	f->tile.drawable = pmap;
 	f->tile.gc = c->gc;
@@ -42,20 +36,18 @@ create_frame(Client *c, View *v)
 }
 
 void
-remove_frame(Frame *f)
-{
+remove_frame(Frame *f) {
 	Area *a = f->area;
 	Frame **ft = &a->frame;
 
 	for(; *ft && *ft != f; ft=&(*ft)->anext);
-	cext_assert(*ft == f);
 	*ft = f->anext;
 }
 
 void
-insert_frame(Frame *pos, Frame *f, Bool before)
-{
+insert_frame(Frame *pos, Frame *f, Bool before) {
 	Area *a = f->area;
+
 	if(before) {
 		Frame *ft;
 		for(ft=a->frame; ft && ft->anext != pos; ft=ft->anext);
@@ -67,13 +59,11 @@ insert_frame(Frame *pos, Frame *f, Bool before)
 }
 
 void
-update_frame_widget_colors(Frame *f)
-{
- 	if(sel_screen && (f->client == sel_client()))
+update_frame_widget_colors(Frame *f) {
+	if(sel_screen && (f->client == sel_client()))
 		f->tile.color = f->titlebar.color = def.selcolor;
 	else
 		f->tile.color = f->titlebar.color = def.normcolor;
-
 	if(f->area->sel == f)
 		f->grabbox.color = def.selcolor;
 	else
@@ -81,21 +71,17 @@ update_frame_widget_colors(Frame *f)
 }
 
 void
-draw_frame(Frame *f)
-{
+draw_frame(Frame *f) {
 	if(def.border) {
 		f->tile.rect = f->rect;
 		f->tile.rect.x = f->tile.rect.y = 0;
 	}
-
 	f->grabbox.rect = f->tile.rect;
 	f->grabbox.rect.height = blitz_labelh(&def.font);
 	f->grabbox.rect.width = def.font.height;
-
 	f->titlebar.rect = f->grabbox.rect;
 	f->titlebar.rect.x = f->grabbox.rect.x + f->grabbox.rect.width;
 	f->titlebar.rect.width = f->rect.width -  f->titlebar.rect.x;
-
 	blitz_draw_tile(&f->tile);
 	blitz_draw_tile(&f->grabbox);
 	blitz_draw_label(&f->titlebar, f->client->name);
@@ -105,13 +91,12 @@ draw_frame(Frame *f)
 }
 
 void
-draw_frames()
-{
+draw_frames() {
 	Client *c;
+
 	for(c=client; c; c=c->next)
 		if(c->sel && c->sel->view == screen->sel) {
 			update_frame_widget_colors(c->sel);
 			draw_frame(c->sel);
 		}
 }
-
