@@ -4,7 +4,6 @@
  */
 
 #include <string.h>
-#include <cext.h>
 
 #include "blitz.h"
 
@@ -14,7 +13,7 @@ xloadcolor(Blitz *blitz, char *colstr)
 	XColor color;
 	char col[8];
 
-	cext_strlcpy(col, colstr, sizeof(col));
+	strncpy(col, colstr, sizeof(col));
 	col[7] = 0;
 	XAllocNamedColor(blitz->dpy,
 			DefaultColormap(blitz->dpy, blitz->screen), col, &color, &color);

@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cext.h>
 #include "blitz.h"
 
 void
@@ -30,7 +29,7 @@ blitz_draw_label(BlitzBrush *b, char *text)
 		return;
 
 	shortened = 0;
-	cext_strlcpy(buf, text, sizeof(buf));
+	strncpy(buf, text, sizeof(buf));
 	len = strlen(buf);
 	gcv.foreground = b->color.fg;
 	gcv.background = b->color.bg;

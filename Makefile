@@ -3,7 +3,7 @@
 
 include config.mk
 
-SUBDIRS = libcext liblitz libixp cmd
+SUBDIRS = liblitz
 
 BIN = cmd/wm/wmii cmd/wm/wmiiwm cmd/wmiir
 

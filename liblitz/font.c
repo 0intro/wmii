@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
-#include <cext.h>
-
 #include "blitz.h"
 
 unsigned int
@@ -16,7 +14,7 @@ blitz_textwidth_l(BlitzFont *font, char *text, unsigned int len)
 {
 	if(font->set) {
 		XRectangle r;
-		XmbTextExtents(font->set, text, len, nil, &r);
+		XmbTextExtents(font->set, text, len, NULL, &r);
 		return r.width;
 	}
 	return XTextWidth(font->xfont, text, len);
@@ -32,7 +30,7 @@ void
 blitz_loadfont(Blitz *blitz, BlitzFont *font)
 {
 	char *fontname = font->fontstr;
-	char **missing = nil, *def = "?";
+	char **missing = NULL, *def = "?";
 	int n;
 
 	setlocale(LC_ALL, "");
@@ -45,7 +43,7 @@ blitz_loadfont(Blitz *blitz, BlitzFont *font)
 		XFreeStringList(missing);
 		if(font->set) {
 			XFreeFontSet(blitz->dpy, font->set);
-			font->set = nil;
+			font->set = NULL;
 		}
 	}
 	if(font->set) {
@@ -68,7 +66,7 @@ blitz_loadfont(Blitz *blitz, BlitzFont *font)
 	else {
 		if(font->xfont)
 			XFreeFont(blitz->dpy, font->xfont);
-		font->xfont = nil;
+		font->xfont = NULL;
 		font->xfont = XLoadQueryFont(blitz->dpy, fontname);
 		if (!font->xfont) {
 			fontname = "fixed";
