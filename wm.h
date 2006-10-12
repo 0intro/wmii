@@ -261,10 +261,6 @@ extern void draw_bar(WMScreen *s);
 extern void resize_bar();
 extern Bar *bar_of_name(Bar *b_link, const char *name);
 
-/* brush.c */
-extern void draw_label(BlitzBrush *b, char *text);
-extern void draw_tile(BlitzBrush *b);
-
 /* client.c */
 extern Client *create_client(Window w, XWindowAttributes *wa);
 extern void destroy_client(Client *c);
@@ -293,9 +289,6 @@ extern void update_client_grab(Client *c, Bool is_sel);
 extern void apply_rules(Client *c);
 extern void apply_tags(Client *c, const char *tags);
 
-/* color.c */
-extern int loadcolor(Blitz *blitz, BlitzColor *c);
-
 /* column.c */
 extern void arrange_column(Area *a, Bool dirty);
 extern void scale_column(Area *a, float h);
@@ -305,10 +298,18 @@ extern char *str_of_column_mode(int mode);
 extern Area *new_column(View *v, Area *pos, unsigned int w);
 
 /* draw.c */
+extern int loadcolor(Blitz *blitz, BlitzColor *c);
+extern void draw_label(BlitzBrush *b, char *text);
+extern void draw_tile(BlitzBrush *b);
+
 extern void drawbg(Display *dpy, Drawable drawable, GC gc,
 		XRectangle rect, BlitzColor c, Bool border);
 extern void drawcursor(Display *dpy, Drawable drawable, GC gc,
 				int x, int y, unsigned int h, BlitzColor c);
+extern unsigned int textwidth(BlitzFont *font, char *text);
+extern unsigned int textwidth_l(BlitzFont *font, char *text, unsigned int len);
+extern void loadfont(Blitz *blitz, BlitzFont *font);
+extern unsigned int labelh(BlitzFont *font);
 
 /* event.c */
 extern void check_x_event(IXPConn *c);
@@ -321,12 +322,6 @@ extern void insert_frame(Frame *pos, Frame *f, Bool before);
 extern void draw_frame(Frame *f);
 extern void draw_frames();
 extern void update_frame_widget_colors(Frame *f);
-
-/* font.c */
-extern unsigned int textwidth(BlitzFont *font, char *text);
-extern unsigned int textwidth_l(BlitzFont *font, char *text, unsigned int len);
-extern void loadfont(Blitz *blitz, BlitzFont *font);
-extern unsigned int labelh(BlitzFont *font);
 
 /* fs.c */
 extern void fs_attach(P9Req *r);

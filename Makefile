@@ -3,8 +3,8 @@
 
 include config.mk
 
-SRC = area.c bar.c brush.c client.c color.c column.c draw.c event.c \
-	font.c frame.c fs.c geom.c key.c mouse.c rule.c view.c wm.c
+SRC = area.c bar.c client.c column.c draw.c event.c \
+	frame.c fs.c geom.c key.c mouse.c rule.c view.c wm.c
 OBJ = ${SRC:.c=.o}
 
 all: options wmiiwm
