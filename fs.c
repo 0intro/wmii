@@ -232,7 +232,7 @@ parse_colors(char **buf, int *buflen, BlitzColor *col) {
 		return Ebadvalue;
 	(*buflen) -= 23;
 	bcopy(*buf, col->colstr, 23);
-	blitz_loadcolor(&blz, col);
+	loadcolor(&blz, col);
 
 	(*buf) += 23;
 	if(**buf == '\n' || **buf == ' ') {
@@ -284,7 +284,7 @@ message_root(char *message)
 		message += 5;
 		free(def.font.fontstr);
 		def.font.fontstr = ixp_estrdup(message);
-		blitz_loadfont(&blz, &def.font);
+		loadfont(&blz, &def.font);
 	}
 	else if(!strncmp(message, "border ", 7)) {
 		message += 7;

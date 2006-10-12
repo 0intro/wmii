@@ -7,19 +7,19 @@
 #include <string.h>
 
 void
-blitz_draw_tile(BlitzBrush *b) {
-	blitz_drawbg(b->blitz->dpy, b->drawable, b->gc, b->rect,
+draw_tile(BlitzBrush *b) {
+	drawbg(b->blitz->dpy, b->drawable, b->gc, b->rect,
 			b->color, b->border);
 }
 
 void
-blitz_draw_label(BlitzBrush *b, char *text) {
+draw_label(BlitzBrush *b, char *text) {
 	unsigned int x, y, w, h, len;
 	Bool shortened = False;
 	static char buf[2048];
 	XGCValues gcv;
 
-	blitz_draw_tile(b);
+	draw_tile(b);
 	if(!text)
 		return;
 	shortened = 0;
@@ -30,7 +30,7 @@ blitz_draw_label(BlitzBrush *b, char *text) {
 	h = b->font->ascent + b->font->descent;
 	y = b->rect.y + b->rect.height / 2 - h / 2 + b->font->ascent;
 	/* shorten text if necessary */
-	while(len && (w = blitz_textwidth(b->font, buf)) > b->rect.width - h) {
+	while(len && (w = textwidth(b->font, buf)) > b->rect.width - h) {
 		buf[--len] = 0;
 		shortened = True;
 	}

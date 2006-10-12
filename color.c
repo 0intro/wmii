@@ -17,7 +17,7 @@ xloadcolor(Blitz *blitz, char *colstr) {
 }
 
 int
-blitz_loadcolor(Blitz *blitz, BlitzColor *c) {
+loadcolor(Blitz *blitz, BlitzColor *c) {
 	if(!c->colstr || strlen(c->colstr) != 23)
 		return -1;
 	c->fg = xloadcolor(blitz, &c->colstr[0]);

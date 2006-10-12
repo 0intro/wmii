@@ -43,12 +43,12 @@ relax_column(Area *a) {
 	switch(a->mode) {
 	case Coldefault:
 		h = a->rect.height / frame_size;
-		if(h < 2 * blitz_labelh(&def.font))
+		if(h < 2 * labelh(&def.font))
 			fallthrough = True;
 		break;
 	case Colstack:
-		h = a->rect.height - (frame_size - 1) * blitz_labelh(&def.font);
-		if(h < 3 * blitz_labelh(&def.font))
+		h = a->rect.height - (frame_size - 1) * labelh(&def.font);
+		if(h < 3 * labelh(&def.font))
 			fallthrough = True;
 	default:
 		yoff = a->rect.y;
@@ -101,7 +101,7 @@ void
 scale_column(Area *a, float h) {
 	unsigned int yoff, frame_size = 0;
 	Frame *f;
-	unsigned int min_height = 2 * blitz_labelh(&def.font);
+	unsigned int min_height = 2 * labelh(&def.font);
 	float scale, dy = 0;
 	int hdiff;
 
@@ -136,7 +136,7 @@ void
 arrange_column(Area *a, Bool dirty) {
 	Frame *f;
 	unsigned int num_frames = 0, yoff = a->rect.y, h;
-	unsigned int min_height = 2 * blitz_labelh(&def.font);
+	unsigned int min_height = 2 * labelh(&def.font);
 
 	if(a->floating || !a->frame)
 		return;
@@ -161,8 +161,8 @@ arrange_column(Area *a, Bool dirty) {
 		}
 		break;
 	case Colstack:
-		h = a->rect.height - (num_frames - 1) * blitz_labelh(&def.font);
-		if(h < 3 * blitz_labelh(&def.font))
+		h = a->rect.height - (num_frames - 1) * labelh(&def.font);
+		if(h < 3 * labelh(&def.font))
 			goto Fallthrough;
 		for(f=a->frame; f; f=f->anext) {
 			f->rect = a->rect;
@@ -170,7 +170,7 @@ arrange_column(Area *a, Bool dirty) {
 			if(f == a->sel)
 				f->rect.height = h;
 			else
-				f->rect.height = blitz_labelh(&def.font);
+				f->rect.height = labelh(&def.font);
 			yoff += f->rect.height;
 			//resize_client(f->client, &f->rect, True);
 		}
@@ -206,7 +206,7 @@ drop_resize(Frame *f, XRectangle *new) {
 	Area *west = NULL, *east = NULL, *a = f->area;
 	View *v = a->view;
 	Frame *north = NULL, *south = NULL;
-	unsigned int min_height = 2 * blitz_labelh(&def.font);
+	unsigned int min_height = 2 * labelh(&def.font);
 	unsigned int min_width = screen->rect.width/NCOL;
 
 	for(west=v->area->next; west && west->next != a; west=west->next);

@@ -8,7 +8,7 @@
 #include <locale.h>
 
 unsigned int
-blitz_textwidth_l(BlitzFont *font, char *text, unsigned int len) {
+textwidth_l(BlitzFont *font, char *text, unsigned int len) {
 	if(font->set) {
 		XRectangle r;
 		XmbTextExtents(font->set, text, len, NULL, &r);
@@ -18,12 +18,12 @@ blitz_textwidth_l(BlitzFont *font, char *text, unsigned int len) {
 }
 
 unsigned int
-blitz_textwidth(BlitzFont *font, char *text) {
-	return blitz_textwidth_l(font, text, strlen(text));
+textwidth(BlitzFont *font, char *text) {
+	return textwidth_l(font, text, strlen(text));
 }
 
 void
-blitz_loadfont(Blitz *blitz, BlitzFont *font) {
+loadfont(Blitz *blitz, BlitzFont *font) {
 	char *fontname = font->fontstr;
 	char **missing = NULL, *def = "?";
 	int n;
@@ -77,6 +77,6 @@ blitz_loadfont(Blitz *blitz, BlitzFont *font) {
 }
 
 unsigned int
-blitz_labelh(BlitzFont *font) {
+labelh(BlitzFont *font) {
 	return font->height + 4;
 }

@@ -288,20 +288,20 @@ main(int argc, char *argv[]) {
 	def.border = 2;
 	def.colmode = Coldefault;
 	strncpy(def.selcolor.colstr, BLITZ_SELCOLORS, sizeof(def.selcolor.colstr));
-	blitz_loadcolor(&blz, &def.selcolor);
+	loadcolor(&blz, &def.selcolor);
 	strncpy(def.normcolor.colstr, BLITZ_NORMCOLORS, sizeof(def.normcolor.colstr));
-	blitz_loadcolor(&blz, &def.normcolor);
+	loadcolor(&blz, &def.normcolor);
 	strncpy(def.bcolor[0].colstr, BLITZ_B1COLORS, sizeof(def.bcolor[0].colstr));
 	strncpy(def.bcolor[1].colstr, BLITZ_B2COLORS, sizeof(def.bcolor[1].colstr));
 	strncpy(def.bcolor[2].colstr, BLITZ_B3COLORS, sizeof(def.bcolor[2].colstr));
-	blitz_loadcolor(&blz, &def.bcolor[0]);
-	blitz_loadcolor(&blz, &def.bcolor[1]);
-	blitz_loadcolor(&blz, &def.bcolor[2]);
+	loadcolor(&blz, &def.bcolor[0]);
+	loadcolor(&blz, &def.bcolor[1]);
+	loadcolor(&blz, &def.bcolor[2]);
 	strncpy(def.grabmod, "Mod1", sizeof(def.grabmod));
 	def.mod = Mod1Mask;
 	init_atoms();
 	init_cursors();
-	blitz_loadfont(&blz, &def.font);
+	loadfont(&blz, &def.font);
 	init_lock_keys();
 	num_screens = 1;
 	screens = ixp_emallocz(num_screens * sizeof(*screens));
@@ -321,7 +321,7 @@ main(int argc, char *argv[]) {
 		wa.event_mask = ExposureMask | ButtonReleaseMask
 			| SubstructureRedirectMask | SubstructureNotifyMask;
 		s->brect = s->rect;
-		s->brect.height = blitz_labelh(&def.font);
+		s->brect.height = labelh(&def.font);
 		s->brect.y = s->rect.height - s->brect.height;
 		s->barwin = XCreateWindow(blz.dpy, RootWindow(blz.dpy, blz.screen),
 				s->brect.x, s->brect.y,

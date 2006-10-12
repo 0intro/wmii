@@ -4,7 +4,7 @@
 #include "wm.h"
 
 void
-blitz_drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle rect,
+drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle rect,
 			BlitzColor c, Bool border)
 {
 	XPoint points[5];
@@ -28,7 +28,7 @@ blitz_drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle rect,
 }
 
 void
-blitz_drawcursor(Display *dpy, Drawable drawable, GC gc,
+drawcursor(Display *dpy, Drawable drawable, GC gc,
 				int x, int y, unsigned int h, BlitzColor c)
 {
 	XSegment s[5];

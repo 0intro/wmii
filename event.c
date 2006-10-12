@@ -125,16 +125,16 @@ configurerequest(XEvent *e) {
 			else
 				frect=&c->sel->revert;
 			if(c->rect.width >= screen->rect.width && c->rect.height >= screen->rect.height) {
-				frect->y = wc.y = -blitz_labelh(&def.font);
+				frect->y = wc.y = -labelh(&def.font);
 				frect->x = wc.x = -def.border;
 			}
 			else {
-				frect->y = wc.y = c->rect.y - blitz_labelh(&def.font);
+				frect->y = wc.y = c->rect.y - labelh(&def.font);
 				frect->x = wc.x = c->rect.x - def.border;
 			}
 			frect->width = wc.width = c->rect.width + 2 * def.border;
 			frect->height = wc.height = c->rect.height + def.border
-				+ blitz_labelh(&def.font);
+				+ labelh(&def.font);
 			wc.border_width = 1;
 			wc.sibling = None;
 			wc.stack_mode = ev->detail;
@@ -152,9 +152,9 @@ configurerequest(XEvent *e) {
 	wc.height = ev->height;
 	if(c && c->frame) {
 		wc.x = def.border;
-		wc.y = blitz_labelh(&def.font);
+		wc.y = labelh(&def.font);
 		wc.width = c->sel->rect.width - 2 * def.border;
-		wc.height = c->sel->rect.height - def.border - blitz_labelh(&def.font);
+		wc.height = c->sel->rect.height - def.border - labelh(&def.font);
 	}
 	wc.border_width = 0;
 	wc.sibling = None;

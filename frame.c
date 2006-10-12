@@ -20,7 +20,7 @@ create_frame(Client *c, View *v) {
 	else{
 		f->revert = f->rect = c->rect;
 		f->revert.width = f->rect.width += 2 * def.border;
-		f->revert.height = f->rect.height += def.border + blitz_labelh(&def.font);
+		f->revert.height = f->rect.height += def.border + labelh(&def.font);
 	}
 	f->collapsed = False;
 	f->tile.blitz = &blz;
@@ -77,14 +77,14 @@ draw_frame(Frame *f) {
 		f->tile.rect.x = f->tile.rect.y = 0;
 	}
 	f->grabbox.rect = f->tile.rect;
-	f->grabbox.rect.height = blitz_labelh(&def.font);
+	f->grabbox.rect.height = labelh(&def.font);
 	f->grabbox.rect.width = def.font.height;
 	f->titlebar.rect = f->grabbox.rect;
 	f->titlebar.rect.x = f->grabbox.rect.x + f->grabbox.rect.width;
 	f->titlebar.rect.width = f->rect.width -  f->titlebar.rect.x;
-	blitz_draw_tile(&f->tile);
-	blitz_draw_tile(&f->grabbox);
-	blitz_draw_label(&f->titlebar, f->client->name);
+	draw_tile(&f->tile);
+	draw_tile(&f->grabbox);
+	draw_label(&f->titlebar, f->client->name);
 	XCopyArea(blz.dpy, pmap, f->client->framewin, f->client->gc,
 			0, 0, f->rect.width, f->rect.height, 0, 0);
 	XSync(blz.dpy, False);

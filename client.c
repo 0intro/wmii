@@ -111,7 +111,7 @@ create_client(Window w, XWindowAttributes *wa) {
 		| ButtonPressMask | PointerMotionMask | ButtonReleaseMask | KeyPressMask;
 	c->framewin = XCreateWindow(blz.dpy, blz.root, c->rect.x, c->rect.y,
 			c->rect.width + 2 * def.border,
-			c->rect.height + def.border + blitz_labelh(&def.font), 0,
+			c->rect.height + def.border + labelh(&def.font), 0,
 			DefaultDepth(blz.dpy, blz.screen), CopyFromParent,
 			DefaultVisual(blz.dpy, blz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
@@ -287,12 +287,12 @@ gravitate_client(Client *c, Bool invert) {
 	case NorthWestGravity:
 	case NorthGravity:
 	case NorthEastGravity:
-		dy = blitz_labelh(&def.font);
+		dy = labelh(&def.font);
 		break;
 	case EastGravity:
 	case CenterGravity:
 	case WestGravity:
-		dy = -(c->rect.height / 2) + blitz_labelh(&def.font);
+		dy = -(c->rect.height / 2) + labelh(&def.font);
 		break;
 	case SouthEastGravity:
 	case SouthGravity:
@@ -394,7 +394,7 @@ void
 match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky) {
 	XSizeHints *s = &c->size;
 	unsigned int dx = 2 * def.border;
-	unsigned int dy = def.border + blitz_labelh(&def.font);
+	unsigned int dy = def.border + labelh(&def.font);
 	unsigned int hdiff, wdiff;
 
 	if(floating && (s->flags & PMinSize)) {
@@ -471,13 +471,13 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall) {
 	f->rect = *r;
 	if((f->area->mode != Colstack) || (f->area->sel == f))
 		match_sizehints(c, &c->sel->rect, floating, stickycorner);
-	max_height = screen->rect.height - blitz_labelh(&def.font);
+	max_height = screen->rect.height - labelh(&def.font);
 	if(!ignore_xcall) {
 		if(floating) {
 			if((c->rect.width == screen->rect.width) &&
 			   (c->rect.height == screen->rect.height)) {
 				f->rect.x = -def.border;
-				f->rect.y = -blitz_labelh(&def.font);
+				f->rect.y = -labelh(&def.font);
 			}else{
 				if(f->rect.height > max_height)
 					f->rect.height = max_height;
@@ -501,10 +501,10 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall) {
 					f->rect.y, f->rect.width, f->rect.height);
 	}
 	c->rect.x = def.border;
-	c->rect.y = blitz_labelh(&def.font);
+	c->rect.y = labelh(&def.font);
 	if((f->area->sel == f) || (f->area->mode != Colstack)) {
 		c->rect.width = f->rect.width - 2 * def.border;
-		c->rect.height = f->rect.height - def.border - blitz_labelh(&def.font);
+		c->rect.height = f->rect.height - def.border - labelh(&def.font);
 	}
 	if(!ignore_xcall) {
 		XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
