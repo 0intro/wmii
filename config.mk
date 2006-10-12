@@ -5,6 +5,7 @@ VERSION = 3.5
 
 # paths
 PREFIX = /usr/local
+CONFPREFIX = ${PREFIX}/etc
 MANPREFIX = ${PREFIX}/share/man
 
 X11INC = /usr/X11R6/include

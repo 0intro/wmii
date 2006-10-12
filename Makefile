@@ -34,7 +34,7 @@ clean:
 dist: clean
 	@echo creating dist tarball
 	@mkdir -p wmii-${VERSION}
-	@cp -R LICENSE Makefile README wmii config.mk \
+	@cp -R LICENSE Makefile README wmii config.mk rc \
 		wmii.1 wmiiwm.1 wm.h ${SRC} wmii-${VERSION}
 	@tar -cf wmii-${VERSION}.tar wmii-${VERSION}
 	@gzip wmii-${VERSION}.tar
@@ -43,10 +43,16 @@ dist: clean
 install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
-	@cp -f wmii ${DESTDIR}${PREFIX}/bin
+	@sed 's|CONFPREFIX|${CONFPREFIX}|g' <wmii >${DESTDIR}${PREFIX}/bin/wmii
 	@cp -f wmiiwm ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/wmii
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/wmiiwm
+	@echo installing scripts to ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
+	@mkdir -p ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
+	@cd rc; for i in *; do \
+		sed 's|CONFPREFIX|${CONFPREFIX}|g' <$$i >${DESTDIR}${CONFPREFIX}/wmii-${VERSION}/$$i; \
+		chmod 755 ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}/$$i; \
+	done
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	@sed 's/VERSION/${VERSION}/g' < wmii.1 > ${DESTDIR}${MANPREFIX}/man1/wmii.1
@@ -58,6 +64,8 @@ uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
 	@rm -f ${DESTDIR}${PREFIX}/bin/wmii
 	@rm -f ${DESTDIR}${PREFIX}/bin/wmiiwm
+	@echo removing scripts from ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
+	@rm -rf ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/wmii.1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/wmiiwm.1
