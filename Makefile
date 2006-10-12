@@ -43,7 +43,7 @@ dist: clean
 install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
-	@sed 's|CONFPREFIX|${CONFPREFIX}|g' <wmii >${DESTDIR}${PREFIX}/bin/wmii
+	@sed 's|CONFPREFIX|${CONFPREFIX}|g; s|VERSION|${VERSION}|g' <wmii >${DESTDIR}${PREFIX}/bin/wmii
 	@cp -f wmiiwm ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/wmii
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/wmiiwm
