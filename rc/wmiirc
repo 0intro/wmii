@@ -3,7 +3,7 @@
 
 xwrite() {
 	file="$1"; shift
-	echo -n "$@" | wmiir write "$file"
+	echo -n "$@" | ixpc write "$file"
 }
 
 proglist() {
@@ -30,11 +30,11 @@ WMII_SELCOLORS='#ffffff #335577 #447799'
 
 export DMENU WMII_FONT WMII_SELCOLORS WMII_NORMCOLORS
 
-# stop any running instances or wmiirc
-echo Start wmiirc | wmiir write /event || exit 1
+# stop any running instances or ixpcc
+echo Start ixpcc | ixpc write /event || exit 1
 
 # WM CONFIGURATION
-wmiir write /ctl << EOF
+ixpc write /ctl << EOF
 font $WMII_FONT
 selcolors $WMII_SELCOLORS
 normcolors $WMII_NORMCOLORS
@@ -43,12 +43,12 @@ border 2
 EOF
 
 # COLUMN RULES
-wmiir write /colrules <<EOF
+ixpc write /colrules <<EOF
 /1/ -> 50+50
 EOF
 
 # TAGGING RULES
-wmiir write /tagrules <<EOF
+ixpc write /tagrules <<EOF
 /XMMS.*/ -> ~
 /Gimp.*/ -> ~
 /MPlayer.*/ -> ~
@@ -64,7 +64,7 @@ ACTIONS_DIRS=`echo "$WMII_CONFPATH" | tr : ' '`
 proglist `echo "$PATH" | tr : ' '` >$PROGS_FILE &
 
 # SHORTCUTS
-wmiir write /keys <<EOF
+ixpc write /keys <<EOF
 $MODKEY-$LEFT
 $MODKEY-$RIGHT
 $MODKEY-$DOWN
@@ -108,25 +108,25 @@ $MODKEY-Shift-9
 EOF
 
 # TAG BAR
-wmiir ls /lbar |
+ixpc ls /lbar |
 while read bar
 do
-	wmiir remove "/lbar/$bar"
+	ixpc remove "/lbar/$bar"
 done
 
-seltag="`wmiir read /tag/sel/ctl 2>/dev/null`"
-wmiir ls /tag | sed -e 's,/$,,; /^sel$/d' |
+seltag="`ixpc read /tag/sel/ctl 2>/dev/null`"
+ixpc ls /tag | sed -e 's,/$,,; /^sel$/d' |
 while read tag
 do
 	if [ "X$tag" = "X$seltag" ]; then
-		echo "$WMII_SELCOLORS" "$tag" | wmiir create "/lbar/$tag" 
+		echo "$WMII_SELCOLORS" "$tag" | ixpc create "/lbar/$tag" 
 	else
-		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag"
+		echo "$WMII_NORMCOLORS" "$tag" | ixpc create "/lbar/$tag"
 	fi
 done
 
 # EVENT LOOP
-wmiir read /event 2>/dev/null |
+ixpc read /event 2>/dev/null |
 while read event
 do
 	set -f
@@ -136,15 +136,15 @@ do
 	parms="$@"
 	case "$type" in
 	Start)
-		if test wmiirc = "$1"
+		if test ixpcc = "$1"
 		then
 			exit
 		fi;;
 	CreateTag)
-		echo "$WMII_NORMCOLORS" "$parms" | wmiir create "/lbar/$parms"
+		echo "$WMII_NORMCOLORS" "$parms" | ixpc create "/lbar/$parms"
 		;;
 	DestroyTag)
-		wmiir remove "/lbar/$parms"
+		ixpc remove "/lbar/$parms"
 		;;
 	FocusTag)
 		xwrite "/lbar/$parms" "$WMII_SELCOLORS" "$parms"
@@ -180,7 +180,7 @@ do
 		$MODKEY-p)
 			sh -c "`$DMENU <$PROGS_FILE`" &;;
 		$MODKEY-t)
-			xwrite /ctl view "`wmiir ls /tag | sed 's,/,,; /^sel$/d' | $DMENU`" &;;
+			xwrite /ctl view "`ixpc ls /tag | sed 's,/,,; /^sel$/d' | $DMENU`" &;;
 		$MODKEY-[0-9])
 			xwrite /ctl view "`echo $1 | sed 's/.*-//'`";;
 		$MODKEY-Return)
@@ -198,8 +198,8 @@ do
 		$MODKEY-Shift-c)
 			xwrite /client/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite "/client/`wmiir read /client/sel/ctl`/tags" \
-				"`wmiir ls /tag | sed 's,/,,; /^sel$/d' | $DMENU`" &;;
+			xwrite "/client/`ixpc read /client/sel/ctl`/tags" \
+				"`ixpc ls /tag | sed 's,/,,; /^sel$/d' | $DMENU`" &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /client/sel/tags "`echo $1 | sed 's/.*-//'`";;
 		esac;;

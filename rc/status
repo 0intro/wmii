@@ -3,11 +3,11 @@
 
 xwrite() {
 	file="$1"; shift
-	echo -n "$@" | wmiir write "$file"
+	echo -n "$@" | ixpc write "$file"
 }
 
-wmiir remove /rbar/status 2>/dev/null && sleep 2
-echo $WMII_SELCOLORS | wmiir create /rbar/status
+ixpc remove /rbar/status 2>/dev/null && sleep 2
+echo $WMII_SELCOLORS | ixpc create /rbar/status
 while xwrite /rbar/status "$WMII_NORMCOLORS" `date` `uptime | sed 's/.*://; s/,//g'`
 do
 	sleep 1

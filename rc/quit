@@ -1,2 +1,2 @@
 #!/bin/sh
-echo -n quit | wmiir write /ctl
+echo -n quit | ixpc write /ctl

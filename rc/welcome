@@ -30,13 +30,13 @@ Let's go!
 - Resize the xclock window: Press $MODKEY, right-click the window and, while holding
   the button down, move the cursor around.
 - Open the actions menu: $MODKEY-a
-  Rerun wmiirc by selecting 'wmiirc'.
+  Rerun ixpcc by selecting 'ixpcc'.
 - We'll now have a look at the internal filesystem used by wmii.  Executing
-  	wmiir read /
+  	ixpc read /
   in the shell of the terminal will list all the files in the root directory.
   Entries beginning with a 'd' are directories.
   If you are curious, you can now dig deeper into the directory trees. For instance,
-  	wmiir read /bar/
+  	ixpc read /bar/
   will show you the content of the bar.
 
 We hope that these steps gave you an idea of how wmii works.  You can reread
