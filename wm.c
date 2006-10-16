@@ -210,7 +210,7 @@ main(int argc, char *argv[]) {
 	starting = True;
 	blz.dpy = XOpenDisplay(0);
 	if(!blz.dpy)
-		error("wmiiwm: cannot open dpy\n");
+		ixp_eprint("wmiiwm: cannot open dpy\n");
 	blz.screen = DefaultScreen(blz.dpy);
 	blz.root = RootWindow(blz.dpy, blz.screen);
 	/* check if another WM is already running */
@@ -220,7 +220,7 @@ main(int argc, char *argv[]) {
 	XSelectInput(blz.dpy, blz.root, SubstructureRedirectMask | EnterWindowMask);
 	XSync(blz.dpy, False);
 	if(other_wm_running)
-		error("wmiiwm: another window manager is already running\n");
+		ixp_eprint("wmiiwm: another window manager is already running\n");
 	if(!address)
 		usage();
 	/* Check namespace permissions */
@@ -231,10 +231,10 @@ main(int argc, char *argv[]) {
 			if(namespace[i] == '/') break;
 		namespace[i+1] = '\0';
 		if(stat(namespace, &st))
-			error("wmiiwm: can't stat namespace directory \"%s\": %s\n",
+			ixp_eprint("wmiiwm: can't stat namespace directory \"%s\": %s\n",
 					namespace, strerror(errno));
 		if(getuid() != st.st_uid)
-			error("wmiiwm: namespace directory \"%s\" exists, but is not owned by you",
+			ixp_eprint("wmiiwm: namespace directory \"%s\" exists, but is not owned by you",
 				namespace);
 		if(st.st_mode & 077)
 			error("wmiiwm: namespace directory \"%s\" exists, "
@@ -247,7 +247,7 @@ main(int argc, char *argv[]) {
 	errstr = NULL;
 	i = ixp_create_sock(address, &errstr);
 	if(i < 0)
-		error("wmiiwm: fatal: %s\n", errstr);
+		ixp_eprint("wmiiwm: fatal: %s\n", errstr);
 
 	/* start wmiirc */
 	if(wmiirc) {
@@ -256,12 +256,12 @@ main(int argc, char *argv[]) {
 		switch(fork()) {
 		case 0:
 			if(setsid() == -1)
-				error("wmiim: can't setsid: %s\n", strerror(errno));
+				ixp_eprint("wmiim: can't setsid: %s\n", strerror(errno));
 			close(i);
 			close(ConnectionNumber(blz.dpy));
 			snprintf(execstr, name_len, "exec %s", wmiirc);
 			execl("/bin/sh", "sh", "-c", execstr, NULL);
-			error("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
+			ixp_eprint("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
 		case -1:
 			perror("wmiiwm: cannot fork wmiirc");
 		default:
