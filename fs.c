@@ -558,7 +558,8 @@ fs_walk(P9Req *r) {
 			f=f->next;
 			free_file(nf);
 		}
-		return respond(r, Enofile);
+		respond(r, Enofile);
+		return;
 	}
 	/* Remove refs for r->fid if no new fid */
 	/* If Fids were ref counted, this could be
@@ -639,46 +640,58 @@ fs_read(P9Req *r) {
 			free_file(f);
 		}
 		r->ofcall.count = r->ifcall.count - size;
-		return respond(r, NULL);
+		respond(r, NULL);
+		return;
 	}
 	else{
 		switch(f->tab.type) {
 		case FsFprops:
 			write_buf(r, (void *)f->client->props, strlen(f->client->props));
-			return respond(r, NULL);
+			respond(r, NULL);
+			return;
 		case FsFColRules:
 		case FsFTagRules:
 			write_buf(r, (void *)f->rule->string, f->rule->size);
-			return respond(r, NULL);
+			respond(r, NULL);
+			return;
 		case FsFKeys:
 			write_buf(r, (void *)def.keys, def.keyssz);
-			return respond(r, NULL);
+			respond(r, NULL);
+			return;
 		case FsFCtags:
 			write_buf(r, (void *)f->client->tags, strlen(f->client->tags));
-			return respond(r, NULL);
+			respond(r, NULL);
+			return;
 		case FsFTctl:
 			write_buf(r, (void *)f->view->name, strlen(f->view->name));
-			return respond(r, NULL);
+			respond(r, NULL);
+			return;
 		case FsFBar:
 			write_buf(r, (void *)f->bar->buf, strlen(f->bar->buf));
-			return respond(r, NULL);
+			respond(r, NULL);
+			return;
 		case FsFRctl:
 			buf = read_root_ctl();
 			write_buf(r, buf, strlen(buf));
-			return respond(r, NULL);
+			respond(r, NULL);
+			return;
 		case FsFCctl:
-			if(r->ifcall.offset)
-				return respond(r, NULL);
+			if(r->ifcall.offset) {
+				respond(r, NULL);
+				return;
+			}
 			r->ofcall.data = ixp_emallocz(16);
 			n = snprintf(r->ofcall.data, 16, "%d", f->index);
 			assert(n >= 0);
 			r->ofcall.count = n;
-			return respond(r, NULL);
+			respond(r, NULL);
+			return;
 		case FsFTindex:
 			buf = (char *)view_index(f->view);
 			n = strlen(buf);
 			write_buf(r, (void *)buf, n);
-			return respond(r, NULL);
+			respond(r, NULL);
+			return;
 		case FsFEvent:
 			respond_event(r);
 			return;
@@ -696,41 +709,53 @@ fs_write(P9Req *r) {
 	char *errstr = NULL;
 	unsigned int i;
 
-	if(r->ifcall.count == 0)
-		return respond(r, NULL);
+	if(r->ifcall.count == 0) {
+		respond(r, NULL);
+		return;
+	}
 	f = r->fid->aux;
 	switch(f->tab.type) {
 	case FsFColRules:
 	case FsFTagRules:
 		write_to_buf(r, &f->rule->string, &f->rule->size, 0);
-		return respond(r, NULL);
+		respond(r, NULL);
+		return;
 	case FsFKeys:
 		write_to_buf(r, &def.keys, &def.keyssz, 0);
-		return respond(r, NULL);
+		respond(r, NULL);
+		return;
 	case FsFCtags:
 		data_to_cstring(r);
 		i=strlen(f->client->tags);
 		write_to_buf(r, &f->client->tags, &i, 255);
 		r->ofcall.count = i- r->ifcall.offset;
-		return respond(r, NULL);
+		respond(r, NULL);
+		return;
 	case FsFBar:
 		/* XXX: This should validate after each write */
 		i = strlen(f->bar->buf);
 		write_to_buf(r, &f->bar->buf, &i, 279);
 		r->ofcall.count = i - r->ifcall.offset;
-		return respond(r, NULL);
+		respond(r, NULL);
+		return;
 	case FsFCctl:
 		data_to_cstring(r);
-		if((errstr = message_client(f->client, r->ifcall.data)))
-			return respond(r, errstr);
+		if((errstr = message_client(f->client, r->ifcall.data))) {
+			respond(r, errstr);
+			return;
+		}
 		r->ofcall.count = r->ifcall.count;
-		return respond(r, NULL);
+		respond(r, NULL);
+		return;
 	case FsFTctl:
 		data_to_cstring(r);
-		if((errstr = message_view(f->view, r->ifcall.data)))
-			return respond(r, errstr);
+		if((errstr = message_view(f->view, r->ifcall.data))) {
+			respond(r, errstr);
+			return;
+		}
 		r->ofcall.count = r->ifcall.count;
-		return respond(r, NULL);
+		respond(r, NULL);
+		return;
 	case FsFRctl:
 		data_to_cstring(r);
 		{	unsigned int n;
@@ -743,17 +768,21 @@ fs_write(P9Req *r) {
 					errstr = message_root(toks[i]);
 			}
 		}
-		if(errstr)
-			return respond(r, errstr);
+		if(errstr) {
+			respond(r, errstr);
+			return;
+		}
 		r->ofcall.count = r->ifcall.count;
-		return respond(r, NULL);
+		respond(r, NULL);
+		return;
 	case FsFEvent:
 		if(r->ifcall.data[r->ifcall.count-1] == '\n')
 			write_event("%.*s", r->ifcall.count, r->ifcall.data);
 		else
 			write_event("%.*s\n", r->ifcall.count, r->ifcall.data);
 		r->ofcall.count = r->ifcall.count;
-		return respond(r, NULL);
+		respond(r, NULL);
+		return;
 	}
 	/* This is an assert because it should this should not be called if
 	 * the file is not open for writing. */
@@ -773,14 +802,22 @@ fs_open(P9Req *r) {
 		pending_event_fids = fl;
 		break;
 	}
-	if((r->ifcall.mode&3) == P9OEXEC)
-		return respond(r, Enoperm);
-	if((r->ifcall.mode&3) != P9OREAD && !(f->tab.perm & 0200))
-		return respond(r, Enoperm);
-	if((r->ifcall.mode&3) != P9OWRITE && !(f->tab.perm & 0400))
-		return respond(r, Enoperm);
-	if((r->ifcall.mode&~(3|P9OAPPEND|P9OTRUNC)))
-		return respond(r, Enoperm);
+	if((r->ifcall.mode&3) == P9OEXEC) {
+		respond(r, Enoperm);
+		return;
+	}
+	if((r->ifcall.mode&3) != P9OREAD && !(f->tab.perm & 0200)) {
+		respond(r, Enoperm);
+		return;
+	}
+	if((r->ifcall.mode&3) != P9OWRITE && !(f->tab.perm & 0400)) {
+		respond(r, Enoperm);
+		return;
+	}
+	if((r->ifcall.mode&~(3|P9OAPPEND|P9OTRUNC))) {
+		respond(r, Enoperm);
+		return;
+	}
 	respond(r, NULL);
 }
 
@@ -791,14 +828,19 @@ fs_create(P9Req *r) {
 	switch(f->tab.type) {
 	default:
 		/* XXX: This should be taken care of by the library */
-		return respond(r, Enoperm);
+		respond(r, Enoperm);
+		return;
 	case FsDBars:
-		if(!strlen(r->ifcall.name))
-			return respond(r, Ebadvalue);
+		if(!strlen(r->ifcall.name)) {
+			respond(r, Ebadvalue);
+			return;
+		}
 		create_bar(f->bar_p, r->ifcall.name);
 		f = lookup_file(f, r->ifcall.name);
-		if(!f)
-			return respond(r, Enofile);
+		if(!f) {
+			respond(r, Enofile);
+			return;
+		}
 		r->ofcall.qid.type = f->tab.qtype;
 		r->ofcall.qid.path = QID(f->tab.type, f->id);
 		f->next = r->fid->aux;
@@ -815,7 +857,8 @@ fs_remove(P9Req *r) {
 	switch(f->tab.type) {
 	default:
 		/* XXX: This should be taken care of by the library */
-		return respond(r, Enoperm);
+		respond(r, Enoperm);
+		return;
 	case FsFBar:
 		destroy_bar(f->next->bar_p, f->bar);
 		draw_bar(screen);
