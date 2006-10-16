@@ -237,7 +237,7 @@ main(int argc, char *argv[]) {
 			ixp_eprint("wmiiwm: namespace directory \"%s\" exists, but is not owned by you",
 				namespace);
 		if(st.st_mode & 077)
-			error("wmiiwm: namespace directory \"%s\" exists, "
+			ixp_eprint("wmiiwm: namespace directory \"%s\" exists, "
 				"but has group or world permissions",
 				namespace);
 		free(namespace);
