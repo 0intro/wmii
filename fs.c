@@ -123,12 +123,12 @@ dirtab_tag[]=	 {{".",		P9QTDIR,	FsDTag,		0500|P9DMDIR },
  * removes the need for casting and allows for C90 conformance,
  * since otherwise we would need to use compound literals */
 static Dirtab *dirtab[] = {
-	[FsRoot]	dirtab_root,
-	[FsDBars]	dirtab_bars,
-	[FsDClients]	dirtab_clients,
-	[FsDClient]	dirtab_client,
-	[FsDTags]	dirtab_tags,
-	[FsDTag]	dirtab_tag,
+	[FsRoot] = dirtab_root,
+	[FsDBars] = dirtab_bars,
+	[FsDClients] = dirtab_clients,
+	[FsDClient] = dirtab_client,
+	[FsDTags] = dirtab_tags,
+	[FsDTag] = dirtab_tag,
 };
 
 /* Utility Functions */
