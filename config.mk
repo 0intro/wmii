@@ -13,7 +13,7 @@ X11LIB = /usr/X11R6/lib
 
 # includes and libs
 INCS = -I. -I${PREFIX}/include -I/usr/include -I${X11INC}
-LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -L${PREFIX} -lixp -lm
+LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -L${PREFIX}/lib -lixp -lm
 
 # flags
 CFLAGS = -Os ${INCS} -DVERSION=\"${VERSION}\"
