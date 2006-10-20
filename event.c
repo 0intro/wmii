@@ -1,7 +1,7 @@
 /* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-#include "wm.h"
+#include "wmii.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>

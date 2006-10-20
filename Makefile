@@ -4,7 +4,7 @@
 include config.mk
 
 SRC = area.c bar.c client.c column.c draw.c event.c \
-	frame.c fs.c geom.c key.c mouse.c rule.c view.c wm.c
+	frame.c fs.c geom.c key.c mouse.c rule.c view.c wmii.c
 OBJ = ${SRC:.c=.o}
 
 all: options wmiiwm
@@ -20,7 +20,7 @@ options:
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<
 
-${OBJ}: wm.h config.mk
+${OBJ}: wmii.h config.mk
 
 wmiiwm: ${OBJ}
 	@echo LD $@
@@ -35,7 +35,7 @@ dist: clean
 	@echo creating dist tarball
 	@mkdir -p wmii-${VERSION}
 	@cp -R LICENSE Makefile README wmii config.mk rc \
-		wmii.1 wmiiwm.1 wm.h ${SRC} wmii-${VERSION}
+		wmii.1 wmiiwm.1 wmii.h ${SRC} wmii-${VERSION}
 	@tar -cf wmii-${VERSION}.tar wmii-${VERSION}
 	@gzip wmii-${VERSION}.tar
 	@rm -rf wmii-${VERSION}

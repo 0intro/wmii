@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "wm.h"
+#include "wmii.h"
 
 static Bool
 is_empty(View *v) {

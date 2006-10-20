@@ -2,7 +2,7 @@
  * (C)opyright MMVI Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include "wm.h"
+#include "wmii.h"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
