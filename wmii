@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # start wmiiwm and wait for its termination
 
 WMII_CONFPATH="$HOME/.wmii-VERSION:CONFPREFIX/wmii-VERSION" export WMII_CONFPATH

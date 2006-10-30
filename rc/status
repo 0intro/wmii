@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # periodically print date and load average to the bar
 
 xwrite() {

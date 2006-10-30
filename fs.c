@@ -29,16 +29,16 @@ struct FidLink {
 typedef struct FileId FileId;
 struct FileId {
 	FileId		*next;
-	union {
+//	union {
 		void	*ref;
-		char	*buf;
-		Bar	*bar;
-		Bar	**bar_p;
-		View	*view;
-		Client	*client;
-		Ruleset	*rule;
-		BlitzColor	*col;
-	};
+//		char	*buf;
+//		Bar	*bar;
+//		Bar	**bar_p;
+//		View	*view;
+//		Client	*client;
+//		Ruleset	*rule;
+//		BlitzColor	*col;
+//	};
 	unsigned int	id;
 	unsigned int	index;
 	Dirtab		tab;
@@ -326,11 +326,11 @@ read_root_ctl() {
 void
 respond_event(P9Req *r) {
 	FileId *f = r->fid->aux;
-	if(f->buf) {
-		r->ofcall.data = (void *)f->buf;
-		r->ofcall.count = strlen(f->buf);
+	if((char*)f->ref) {
+		r->ofcall.data = f->ref;
+		r->ofcall.count = strlen((char*)f->ref);
 		respond(r, NULL);
-		f->buf = NULL;
+		f->ref = NULL;
 	}else{
 		r->aux = pending_event_reads;
 		pending_event_reads = r;
@@ -352,10 +352,10 @@ write_event(char *format, ...) {
 		return;
 	for(f=pending_event_fids; f; f=f->next) {
 		fi = f->fid->aux;
-		slen = fi->buf ? strlen(fi->buf) : 0;
-		fi->buf = ixp_erealloc(fi->buf, slen + len + 1);
-		fi->buf[slen] = '\0';
-		strcat(fi->buf, buffer);
+		slen = fi->ref ? strlen((char*)fi->ref) : 0;
+		fi->ref = ixp_erealloc(fi->ref, slen + len + 1);
+		((char*)fi->ref)[slen] = '\0';
+		strcat((char*)fi->ref, buffer);
 	}
 	while((aux = pending_event_reads)) {
 		pending_event_reads = pending_event_reads->aux;
@@ -461,7 +461,7 @@ lookup_file(FileId *parent, char *name)
 				}
 				break;
 			case FsDBars:
-				for(b=*parent->bar_p; b; b=b->next) {
+				for(b=*(Bar**)parent->ref; b; b=b->next) {
 					if(!name || !strcmp(name, b->name)) {
 						file = get_file();
 						*last = file;
@@ -584,13 +584,13 @@ fs_size(FileId *f) {
 		return 0;
 	case FsFColRules:
 	case FsFTagRules:
-		return f->rule->size;
+		return ((Ruleset*)f->ref)->size;
 	case FsFKeys:
 		return def.keyssz;
 	case FsFCtags:
-		return strlen(f->client->tags);
+		return strlen(((Client*)f->ref)->tags);
 	case FsFprops:
-		return strlen(f->client->props);
+		return strlen(((Client*)f->ref)->props);
 	}
 }
 
@@ -646,12 +646,12 @@ fs_read(P9Req *r) {
 	else{
 		switch(f->tab.type) {
 		case FsFprops:
-			write_buf(r, (void *)f->client->props, strlen(f->client->props));
+			write_buf(r, (void *)((Client*)f->ref)->props, strlen(((Client*)f->ref)->props));
 			respond(r, NULL);
 			return;
 		case FsFColRules:
 		case FsFTagRules:
-			write_buf(r, (void *)f->rule->string, f->rule->size);
+			write_buf(r, (void *)((Ruleset*)f->ref)->string, ((Ruleset*)f->ref)->size);
 			respond(r, NULL);
 			return;
 		case FsFKeys:
@@ -659,15 +659,15 @@ fs_read(P9Req *r) {
 			respond(r, NULL);
 			return;
 		case FsFCtags:
-			write_buf(r, (void *)f->client->tags, strlen(f->client->tags));
+			write_buf(r, (void *)((Client*)f->ref)->tags, strlen(((Client*)f->ref)->tags));
 			respond(r, NULL);
 			return;
 		case FsFTctl:
-			write_buf(r, (void *)f->view->name, strlen(f->view->name));
+			write_buf(r, (void *)((View*)f->ref)->name, strlen(((View*)f->ref)->name));
 			respond(r, NULL);
 			return;
 		case FsFBar:
-			write_buf(r, (void *)f->bar->buf, strlen(f->bar->buf));
+			write_buf(r, (void *)((Bar*)f->ref)->buf, strlen(((Bar*)f->ref)->buf));
 			respond(r, NULL);
 			return;
 		case FsFRctl:
@@ -687,7 +687,7 @@ fs_read(P9Req *r) {
 			respond(r, NULL);
 			return;
 		case FsFTindex:
-			buf = (char *)view_index(f->view);
+			buf = (char *)view_index((View*)f->ref);
 			n = strlen(buf);
 			write_buf(r, (void *)buf, n);
 			respond(r, NULL);
@@ -717,7 +717,7 @@ fs_write(P9Req *r) {
 	switch(f->tab.type) {
 	case FsFColRules:
 	case FsFTagRules:
-		write_to_buf(r, &f->rule->string, &f->rule->size, 0);
+		write_to_buf(r, &((Ruleset*)f->ref)->string, &((Ruleset*)f->ref)->size, 0);
 		respond(r, NULL);
 		return;
 	case FsFKeys:
@@ -726,21 +726,21 @@ fs_write(P9Req *r) {
 		return;
 	case FsFCtags:
 		data_to_cstring(r);
-		i=strlen(f->client->tags);
-		write_to_buf(r, &f->client->tags, &i, 255);
+		i=strlen(((Client*)f->ref)->tags);
+		write_to_buf(r, &((Client*)f->ref)->tags, &i, 255);
 		r->ofcall.count = i- r->ifcall.offset;
 		respond(r, NULL);
 		return;
 	case FsFBar:
 		/* XXX: This should validate after each write */
-		i = strlen(f->bar->buf);
-		write_to_buf(r, &f->bar->buf, &i, 279);
+		i = strlen(((Bar*)f->ref)->buf);
+		write_to_buf(r, &((Bar*)f->ref)->buf, &i, 279);
 		r->ofcall.count = i - r->ifcall.offset;
 		respond(r, NULL);
 		return;
 	case FsFCctl:
 		data_to_cstring(r);
-		if((errstr = message_client(f->client, r->ifcall.data))) {
+		if((errstr = message_client((Client*)f->ref, r->ifcall.data))) {
 			respond(r, errstr);
 			return;
 		}
@@ -749,7 +749,7 @@ fs_write(P9Req *r) {
 		return;
 	case FsFTctl:
 		data_to_cstring(r);
-		if((errstr = message_view(f->view, r->ifcall.data))) {
+		if((errstr = message_view((View*)f->ref, r->ifcall.data))) {
 			respond(r, errstr);
 			return;
 		}
@@ -835,7 +835,7 @@ fs_create(P9Req *r) {
 			respond(r, Ebadvalue);
 			return;
 		}
-		create_bar(f->bar_p, r->ifcall.name);
+		create_bar((Bar**)f->ref, r->ifcall.name);
 		f = lookup_file(f, r->ifcall.name);
 		if(!f) {
 			respond(r, Enofile);
@@ -860,7 +860,7 @@ fs_remove(P9Req *r) {
 		respond(r, Enoperm);
 		return;
 	case FsFBar:
-		destroy_bar(f->next->bar_p, f->bar);
+		destroy_bar((Bar**)f->next->ref, (Bar*)f->ref);
 		draw_bar(screen);
 		respond(r, NULL);
 		break;
@@ -877,10 +877,10 @@ fs_clunk(P9Req *r) {
 
 	switch(f->tab.type) {
 	case FsFColRules:
-		update_rules(&f->rule->rule, f->rule->string);
+		update_rules(&((Ruleset*)f->ref)->rule, ((Ruleset*)f->ref)->string);
 		break;
 	case FsFTagRules:
-		update_rules(&f->rule->rule, f->rule->string);
+		update_rules(&((Ruleset*)f->ref)->rule, ((Ruleset*)f->ref)->string);
 		for(c=client; c; c=c->next)
 			apply_rules(c);
 		update_views();
@@ -889,17 +889,17 @@ fs_clunk(P9Req *r) {
 		update_keys();
 		break;
 	case FsFCtags:
-		apply_tags(f->client, f->client->tags);
+		apply_tags((Client*)f->ref, ((Client*)f->ref)->tags);
 		update_views();
-		draw_frame(f->client->sel);
+		draw_frame(((Client*)f->ref)->sel);
 		break;
 	case FsFBar:
-		buf = f->bar->buf;
-		i = strlen(f->bar->buf);
-		parse_colors(&buf, &i, &f->bar->brush.color);
+		buf = ((Bar*)f->ref)->buf;
+		i = strlen(((Bar*)f->ref)->buf);
+		parse_colors(&buf, &i, &((Bar*)f->ref)->brush.color);
 		while(i > 0 && buf[i - 1] == '\n')
 			buf[--i] = '\0';
-		strncpy(f->bar->text, buf, sizeof(f->bar->text));
+		strncpy(((Bar*)f->ref)->text, buf, sizeof(((Bar*)f->ref)->text));
 		draw_bar(screen);
 		break;
 	case FsFEvent:
@@ -908,7 +908,7 @@ fs_clunk(P9Req *r) {
 				ft = *fl;
 				*fl = (*fl)->next;
 				f = ft->fid->aux;
-				free(f->buf);
+				free(f->ref);
 				free(ft);
 				break;
 			}
