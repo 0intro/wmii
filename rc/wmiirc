@@ -22,7 +22,7 @@ LEFT=h
 RIGHT=l
 
 DMENU='dmenu -font fixed -normbg #eeeeee -normfg #222222 -selbg #335577 -selfg #ffffff'
-WMII_FONT='fixed'
+WMII_FONT='-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*'
 WMII_NORMCOLORS='#222222 #eeeeee #666666'
 WMII_SELCOLORS='#ffffff #335577 #447799'
 # dark background

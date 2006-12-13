@@ -10,7 +10,7 @@
 
 #include <ixp.h>
 
-#define BLITZ_FONT		"fixed"
+#define BLITZ_FONT		"-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*"
 #define BLITZ_SELCOLORS		"#ffffff #335577 #447799"
 #define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
 #define BLITZ_B1COLORS		"#000000 #00ffff #000000"
