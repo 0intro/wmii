@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
 
 unsigned int
 textwidth_l(BlitzFont *font, char *text, unsigned int len) {
@@ -28,18 +27,13 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 	char **missing = NULL, *def = "?";
 	int n;
 
-	setlocale(LC_ALL, "");
 	if(font->set)
 		XFreeFontSet(blitz->dpy, font->set);
 	font->set = XCreateFontSet(blitz->dpy, fontname, &missing, &n, &def);
 	if(missing) {
 		while(n--)
-			fprintf(stderr, "liblitz: missing fontset: %s\n", missing[n]);
+			fprintf(stderr, "wmii: missing fontset: %s\n", missing[n]);
 		XFreeStringList(missing);
-/*		if(font->set) {
-			XFreeFontSet(blitz->dpy, font->set);
-			font->set = NULL;
-		}*/
 	}
 	if(font->set) {
 		XFontSetExtents *font_extents;
@@ -63,11 +57,7 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 		font->xfont = NULL;
 		font->xfont = XLoadQueryFont(blitz->dpy, fontname);
 		if (!font->xfont) {
-			fontname = "fixed";
-			font->xfont = XLoadQueryFont(blitz->dpy, fontname);
-		}
-		if (!font->xfont) {
-			fprintf(stderr, "%s", "liblitz: error, cannot load 'fixed' font\n");
+			fprintf(stderr, "%s", "wmii: error, cannot load 'fixed' font\n");
 			exit(1);
 		}
 		font->ascent = font->xfont->ascent;
@@ -210,4 +200,21 @@ loadcolor(Blitz *blitz, BlitzColor *c) {
 	c->bg = xloadcolor(blitz, &c->colstr[8]);
 	c->border = xloadcolor(blitz, &c->colstr[16]);
 	return 0;
+}
+
+char *
+parse_colors(char **buf, int *buflen, BlitzColor *col) {
+	unsigned int i;
+	if(*buflen < 23 || 3 != sscanf(*buf, "#%06x #%06x #%06x", &i,&i,&i))
+		return "bad value";
+	(*buflen) -= 23;
+	bcopy(*buf, col->colstr, 23);
+	loadcolor(&blz, col);
+
+	(*buf) += 23;
+	if(**buf == '\n' || **buf == ' ') {
+		(*buf)++;
+		(*buflen)--;
+	}
+	return NULL;
 }

@@ -4,6 +4,7 @@
 #include "wmii.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <pwd.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -208,6 +209,7 @@ main(int argc, char *argv[]) {
 		}
 	}
 	starting = True;
+	setlocale(LC_CTYPE, "");
 	blz.dpy = XOpenDisplay(0);
 	if(!blz.dpy)
 		ixp_eprint("wmiiwm: cannot open dpy\n");

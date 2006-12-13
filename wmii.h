@@ -7,7 +7,6 @@
 #include <regex.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xlocale.h>
 
 #include <ixp.h>
 
@@ -310,6 +309,7 @@ extern unsigned int textwidth(BlitzFont *font, char *text);
 extern unsigned int textwidth_l(BlitzFont *font, char *text, unsigned int len);
 extern void loadfont(Blitz *blitz, BlitzFont *font);
 extern unsigned int labelh(BlitzFont *font);
+extern char *parse_colors(char **buf, int *buflen, BlitzColor *col);
 
 /* event.c */
 extern void check_x_event(IXPConn *c);

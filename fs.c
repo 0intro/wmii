@@ -224,24 +224,6 @@ data_to_cstring(P9Req *r) {
 	r->ifcall.data[i - 1] = '\0';
 }
 
-/* This should be moved to liblitz */
-char *
-parse_colors(char **buf, int *buflen, BlitzColor *col) {
-	unsigned int i;
-	if(*buflen < 23 || 3 != sscanf(*buf, "#%06x #%06x #%06x", &i,&i,&i))
-		return Ebadvalue;
-	(*buflen) -= 23;
-	bcopy(*buf, col->colstr, 23);
-	loadcolor(&blz, col);
-
-	(*buf) += 23;
-	if(**buf == '\n' || **buf == ' ') {
-		(*buf)++;
-		(*buflen)--;
-	}
-	return NULL;
-}
-
 char *
 message_root(char *message)
 {
