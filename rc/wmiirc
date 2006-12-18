@@ -15,23 +15,31 @@ conf_which () {
 	echo `PATH="$WMII_CONFPATH:$PATH" which $prog` "$@"
 }
 
+tagsmenu() {
+	tag=`ixpc read /tag/sel/ctl`
+        tags=`ixpc ls /tag | sed 's,/,,; /^sel$/d' | awk "BEGIN{print \"$tag\"} !/^$tag\$/" | $DMENU`
+        test -n "$tags" && xwrite $@ "$tags"
+}
+
 MODKEY=Mod1
 UP=k
 DOWN=j
 LEFT=h
 RIGHT=l
 
-DMENU='dmenu -font fixed -normbg #eeeeee -normfg #222222 -selbg #335577 -selfg #ffffff'
 WMII_FONT='-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*'
+# colors are text, bg, border
 WMII_NORMCOLORS='#222222 #eeeeee #666666'
 WMII_SELCOLORS='#ffffff #335577 #447799'
-# dark background
-#WMII_NORMCOLORS='#eeeeee #111111 #222222'
+WMII_BACKGROUND='#333333'
 
-export DMENU WMII_FONT WMII_SELCOLORS WMII_NORMCOLORS
+DMENU='dmenu -font fixed -normbg #eeeeee -normfg #222222 -selbg #335577 -selfg #ffffff'
+WMII_TERM="xterm"
 
-# stop any running instances or ixpcc
-echo Start ixpcc | ixpc write /event || exit 1
+export DMENU WMII_FONT WMII_SELCOLORS WMII_NORMCOLORS WMII_TERM
+
+# stop any running instances of wmiirc
+echo Start wmiirc | ixpc write /event || exit 1
 
 # WM CONFIGURATION
 ixpc write /ctl << EOF
@@ -57,7 +65,7 @@ ixpc write /tagrules <<EOF
 EOF
 
 # MISC
-xsetroot -solid '#333333'
+xsetroot -solid $WMII_BACKGROUND
 `conf_which status` &
 PROGS_FILE="$WMII_NS_DIR/.dmenu.proglist"
 ACTIONS_DIRS=`echo "$WMII_CONFPATH" | tr : ' '`
@@ -136,7 +144,7 @@ do
 	parms="$@"
 	case "$type" in
 	Start)
-		if test ixpcc = "$1"
+		if test $1 == "wmiirc"
 		then
 			exit
 		fi;;
@@ -180,11 +188,11 @@ do
 		$MODKEY-p)
 			sh -c "`$DMENU <$PROGS_FILE`" &;;
 		$MODKEY-t)
-			xwrite /ctl view "`ixpc ls /tag | sed 's,/,,; /^sel$/d' | $DMENU`" &;;
+			tagsmenu /ctl view &;;
 		$MODKEY-[0-9])
 			xwrite /ctl view "`echo $1 | sed 's/.*-//'`";;
 		$MODKEY-Return)
-			xterm &;;
+			$WMII_TERM &;;
 		$MODKEY-Shift-$LEFT)
 			xwrite /tag/sel/ctl send sel left;;
 		$MODKEY-Shift-$RIGHT)
@@ -198,8 +206,7 @@ do
 		$MODKEY-Shift-c)
 			xwrite /client/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite "/client/`ixpc read /client/sel/ctl`/tags" \
-				"`ixpc ls /tag | sed 's,/,,; /^sel$/d' | $DMENU`" &;;
+			tagsmenu "/client/`ixpc read /client/sel/ctl`/tags" &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /client/sel/tags "`echo $1 | sed 's/.*-//'`";;
 		esac;;
