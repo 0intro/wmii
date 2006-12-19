@@ -33,7 +33,7 @@ WMII_NORMCOLORS='#222222 #eeeeee #666666'
 WMII_SELCOLORS='#ffffff #335577 #447799'
 WMII_BACKGROUND='#333333'
 
-DMENU='dmenu -font fixed -normbg #eeeeee -normfg #222222 -selbg #335577 -selfg #ffffff'
+DMENU="dmenu -b -fn '$WMII_FONT' -nb '#eeeeee' -nf '#222222' -sb '#335577' -sf '#ffffff'"
 WMII_TERM="xterm"
 
 export DMENU WMII_FONT WMII_SELCOLORS WMII_NORMCOLORS WMII_TERM
