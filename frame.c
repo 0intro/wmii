@@ -28,7 +28,7 @@ create_frame(Client *c, View *v) {
 	f->tile.gc = c->gc;
 	f->tile.font = &def.font;
 	f->tile.color = def.normcolor;
-	f->tile.border = True;
+	f->tile.border = false;
 	f->grabbox = f->titlebar = f->tile;
 	f->titlebar.align = WEST;
 

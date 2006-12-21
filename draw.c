@@ -68,7 +68,7 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 
 unsigned int
 labelh(BlitzFont *font) {
-	return font->height + 4;
+	return font->height + 2;
 }
 
 void
