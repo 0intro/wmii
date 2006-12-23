@@ -3,8 +3,8 @@
 
 WMII_CONFPATH="$HOME/.wmii-VERSION:CONFPREFIX/wmii-VERSION" export WMII_CONFPATH
 WMII_NS_DIR="/tmp/ns.$USER.${DISPLAY%.0}" export WMII_NS_DIR
-IXP_ADDRESS="unix!$WMII_NS_DIR/wmii" export IXP_ADDRESS
+WMII_ADDRESS="unix!$WMII_NS_DIR/wmii" export WMII_ADDRESS
 mkdir -m 700 "$WMII_NS_DIR" 2>/dev/null
 
 mkdir $HOME/.wmii-VERSION 2>/dev/null && CONFPREFIX/wmii-VERSION/welcome &
-exec wmiiwm -a $IXP_ADDRESS -r `PATH="$WMII_CONFPATH:$PATH" which wmiirc`
+exec wmiiwm -a $WMII_ADDRESS -r `PATH="$WMII_CONFPATH:$PATH" which wmiirc`

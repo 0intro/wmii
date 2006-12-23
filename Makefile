@@ -44,8 +44,10 @@ install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
 	@sed 's|CONFPREFIX|${CONFPREFIX}|g; s|VERSION|${VERSION}|g' <wmii >${DESTDIR}${PREFIX}/bin/wmii
+	@cp -f wmiir ${DESTDIR}${PREFIX}/bin
 	@cp -f wmiiwm ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/wmii
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/wmiir
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/wmiiwm
 	@echo installing scripts to ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
 	@mkdir -p ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
@@ -55,19 +57,23 @@ install: all
 	done
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
-	@sed 's/VERSION/${VERSION}/g; s/CONFPREFIX/${CONFPREFIX}/g' < wmii.1 > ${DESTDIR}${MANPREFIX}/man1/wmii.1
+	@sed 's/VERSION/${VERSION}/g ; s,CONFPREFIX,${CONFPREFIX},g' < wmii.1 > ${DESTDIR}${MANPREFIX}/man1/wmii.1
+	@sed 's/VERSION/${VERSION}/g' < wmiir.1 > ${DESTDIR}${MANPREFIX}/man1/wmiir.1
 	@sed 's/VERSION/${VERSION}/g' < wmiiwm.1 > ${DESTDIR}${MANPREFIX}/man1/wmiiwm.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/wmii.1
+	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/wmiir.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/wmiiwm.1
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
 	@rm -f ${DESTDIR}${PREFIX}/bin/wmii
+	@rm -f ${DESTDIR}${PREFIX}/bin/wmiir
 	@rm -f ${DESTDIR}${PREFIX}/bin/wmiiwm
 	@echo removing scripts from ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
 	@rm -rf ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/wmii.1
+	@rm -f ${DESTDIR}${MANPREFIX}/man1/wmiir.1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/wmiiwm.1
 
 .PHONY: all options clean dist install uninstall
