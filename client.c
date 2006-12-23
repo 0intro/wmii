@@ -715,7 +715,8 @@ apply_tags(Client *c, const char *tags) {
 	if(!j) toks[j++] = "NULL";
 	for(i=0, n=0; i < j && len > 1; i++)
 		if(!n || strcmp(toks[i], toks[n-1])) {
-			strncat(c->tags, "+", len);
+			if(i)
+				strncat(c->tags, "+", len);
 			len -= strlen(c->tags);
 			strncat(c->tags, toks[i], len);
 			len -= strlen(c->tags);
