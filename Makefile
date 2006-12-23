@@ -55,7 +55,7 @@ install: all
 	done
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
-	@sed 's/VERSION/${VERSION}/g' < wmii.1 > ${DESTDIR}${MANPREFIX}/man1/wmii.1
+	@sed 's/VERSION/${VERSION}/g; s/CONFPREFIX/${CONFPREFIX}/g' < wmii.1 > ${DESTDIR}${MANPREFIX}/man1/wmii.1
 	@sed 's/VERSION/${VERSION}/g' < wmiiwm.1 > ${DESTDIR}${MANPREFIX}/man1/wmiiwm.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/wmii.1
 	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/wmiiwm.1
