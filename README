@@ -6,12 +6,12 @@ keyboard, mouse, and 9P-based [2] remote control.
 It consists of the wmiiwm(1) window manager and the wmiir(1)
 the remote access utility.
 
-Optionally wmii depends on dmenu(1).
-
 
 Requirements
 ------------
-In order to build wmii you need the Xlib header files.
+In order to build wmii you need the Xlib header files and libixp. Further
+dependencies are xmessage and dmenu. libixp and dmenu can be obtained from
+[1].
 
 
 Installation
@@ -43,8 +43,8 @@ Configuration
 -------------
 The configuration of wmii is done by customizing the sh script wmiirc,
 which remotely controls the window manager and handles various events.
-Copy the file from PREFIX/etc/wmii-4/ (usually /usr/local/etc/wmii-4/)
-to $HOME/.wmii-4/ and edit it to fit your needs.
+Copy the file from PREFIX/etc/wmii-3.5/ (usually /usr/local/etc/wmii-3.5/)
+to $HOME/.wmii-3.5/ and edit it to fit your needs.
 
 
 Credits
@@ -68,7 +68,6 @@ The following people have contributed especially to wmii in various ways:
 - Steffen Liebergeld <perl at gmx dot org>
 - Tobias Walkowiak <wal at ivu dot de>
 - Sander van Dijk <a dot h dot vandijk at gmail dot com>
-- Denis Grelich <denisg at ueberl33t dot info> 
 - Salvador Peiro <saoret dot one at gmail dot com>
 - Anthony Martin <ality at pbrane dot org>
 - Icarus Sparry <wmii at icarus dot freeuk dot com>

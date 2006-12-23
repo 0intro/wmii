@@ -43,5 +43,5 @@ We hope that these steps gave you an idea of how wmii works.  You can reread
 them at any time by pressing $MODKEY-a and selecting 'welcome'.
 
 You should now take a look at the wmii(1) man page.  A FAQ is available on
-<http://wmii.de>.
+<http://wmii.suckless.org>.
 EOF
