@@ -20,7 +20,6 @@ typedef enum BlitzAlign BlitzAlign;
 typedef struct BlitzColor BlitzColor;
 typedef struct BlitzFont BlitzFont;
 typedef struct BlitzBrush BlitzBrush;
-typedef struct BlitzInput BlitzInput;
 
 struct Blitz {
 	Display *dpy;
