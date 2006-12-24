@@ -60,14 +60,14 @@ insert_frame(Frame *pos, Frame *f, Bool before) {
 
 void
 update_frame_widget_colors(Frame *f) {
-	if(sel_screen && (f->client == sel_client()))
-		f->tile.color = f->titlebar.color = def.selcolor;
+	if(f->area->sel == f) {
+		if(sel_screen && (f->client == sel_client()))
+			f->grabbox.color = f->tile.color = f->titlebar.color = def.focuscolor;
+		else
+			f->grabbox.color = f->tile.color = f->titlebar.color = def.selcolor;
+	}
 	else
-		f->tile.color = f->titlebar.color = def.normcolor;
-	if(f->area->sel == f)
-		f->grabbox.color = def.selcolor;
-	else
-		f->grabbox.color = def.normcolor;
+		f->grabbox.color = f->tile.color = f->titlebar.color = def.normcolor;
 }
 
 void

@@ -237,6 +237,11 @@ message_root(char *message)
 		srv.running = 0;
 	else if(!strncmp(message, "view ", 5))
 		select_view(&message[5]);
+	else if(!strncmp(message, "focuscolors ", 12)) {
+		message += 12;
+		n = strlen(message);
+		return parse_colors(&message, (int *)&n, &def.focuscolor);
+	}
 	else if(!strncmp(message, "selcolors ", 10)) {
 		message += 10;
 		n = strlen(message);
@@ -281,6 +286,7 @@ read_root_ctl() {
 	unsigned int i = 0;
 	if(screen->sel)
 		i += snprintf(&buffer[i], (BUFFER_SIZE - i), "view %s\n", screen->sel->name);
+	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "focuscolors %s\n", def.focuscolor.colstr);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "selcolors %s\n", def.selcolor.colstr);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "normcolors %s\n", def.normcolor.colstr);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "font %s\n", def.font.fontstr);
