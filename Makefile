@@ -35,7 +35,7 @@ dist: clean
 	@echo creating dist tarball
 	@mkdir -p wmii-${VERSION}
 	@cp -R LICENSE Makefile README wmii wmiir config.mk rc \
-		wmii.1 wmiiwm.1 wmii.h ${SRC} wmii-${VERSION}
+		wmii.1 wmiir.1 wmiiwm.1 wmii.h ${SRC} wmii-${VERSION}
 	@tar -cf wmii-${VERSION}.tar wmii-${VERSION}
 	@gzip wmii-${VERSION}.tar
 	@rm -rf wmii-${VERSION}
