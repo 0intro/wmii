@@ -13,9 +13,6 @@
 #define BLITZ_FONT		"-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*"
 #define BLITZ_SELCOLORS		"#ffffff #335577 #447799"
 #define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
-#define BLITZ_B1COLORS		"#000000 #00ffff #000000"
-#define BLITZ_B2COLORS		"#000000 #ff0000 #000000"
-#define BLITZ_B3COLORS		"#000000 #00ff00 #000000"
 
 typedef struct Blitz Blitz;
 typedef enum BlitzAlign BlitzAlign;
@@ -187,7 +184,6 @@ struct Ruleset {
 struct {
 	BlitzColor selcolor;
 	BlitzColor normcolor;
-	BlitzColor bcolor[3];
 	BlitzFont font;
 	unsigned int border;
 	unsigned int snap;

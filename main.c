@@ -293,12 +293,6 @@ main(int argc, char *argv[]) {
 	loadcolor(&blz, &def.selcolor);
 	strncpy(def.normcolor.colstr, BLITZ_NORMCOLORS, sizeof(def.normcolor.colstr));
 	loadcolor(&blz, &def.normcolor);
-	strncpy(def.bcolor[0].colstr, BLITZ_B1COLORS, sizeof(def.bcolor[0].colstr));
-	strncpy(def.bcolor[1].colstr, BLITZ_B2COLORS, sizeof(def.bcolor[1].colstr));
-	strncpy(def.bcolor[2].colstr, BLITZ_B3COLORS, sizeof(def.bcolor[2].colstr));
-	loadcolor(&blz, &def.bcolor[0]);
-	loadcolor(&blz, &def.bcolor[1]);
-	loadcolor(&blz, &def.bcolor[2]);
 	strncpy(def.grabmod, "Mod1", sizeof(def.grabmod));
 	def.mod = Mod1Mask;
 	init_atoms();
