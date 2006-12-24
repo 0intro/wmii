@@ -74,7 +74,13 @@ labelh(BlitzFont *font) {
 void
 draw_tile(BlitzBrush *b) {
 	drawbg(b->blitz->dpy, b->drawable, b->gc, b->rect,
-			b->color, b->border);
+			b->color, True, b->border);
+}
+
+void
+draw_border(BlitzBrush *b) {
+	drawbg(b->blitz->dpy, b->drawable, b->gc, b->rect,
+			b->color, False, True);
 }
 
 void
@@ -132,11 +138,13 @@ draw_label(BlitzBrush *b, char *text) {
 
 void
 drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle rect,
-			BlitzColor c, Bool border)
+			BlitzColor c, Bool fill, Bool border)
 {
 	XPoint points[5];
-	XSetForeground(dpy, gc, c.bg);
-	XFillRectangles(dpy, drawable, gc, &rect, 1);
+	if(fill) {
+		XSetForeground(dpy, gc, c.bg);
+		XFillRectangles(dpy, drawable, gc, &rect, 1);
+	}
 	if(!border)
 		return;
 	XSetLineAttributes(dpy, gc, 1, LineSolid, CapButt, JoinMiter);
