@@ -20,7 +20,7 @@ conf_which () {
 
 tagsmenu() {
 	tag=`wmiir read /tag/sel/ctl`
-        tags=`wmiir ls /tag | sed 's,/,,; /^sel$/d' | awk "BEGIN{print \"$tag\"} !/^$tag\$/" | $DMENU \
+        tags=`wmiir ls /tag | sed 's|/||; /^sel$/d' | awk "BEGIN{print \"$tag\"} !/^$tag\$/" | $DMENU \
 			| sed 's/^\.\.\?$//; s/^\.\.\?+//g; s/+\.\.\?$//g; s/+\.\.\?+/+/g; s/\W//'`
         test -n "$tags" && xwrite $@ "$tags"
 }
@@ -129,7 +129,7 @@ do
 done
 
 seltag="`wmiir read /tag/sel/ctl 2>/dev/null`"
-wmiir ls /tag | sed -e 's,/$,,; /^sel$/d' |
+wmiir ls /tag | sed -e 's|/$||; /^sel$/d' |
 while read tag
 do
 	if [ "X$tag" = "X$seltag" ]; then
