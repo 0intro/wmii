@@ -43,17 +43,17 @@ dist: clean
 install: all
 	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
-	@sed 's|CONFPREFIX|${CONFPREFIX}|g; s|VERSION|${VERSION}|g' <wmii >${DESTDIR}${PREFIX}/bin/wmii
+	@sed 's|CONFPREFIX|${CONFPREFIX}|g; s|CONFVERSION|${CONFVERSION}|g' <wmii >${DESTDIR}${PREFIX}/bin/wmii
 	@cp -f wmiir ${DESTDIR}${PREFIX}/bin
 	@cp -f wmiiwm ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/wmii
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/wmiir
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/wmiiwm
-	@echo installing scripts to ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
-	@mkdir -p ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
+	@echo installing scripts to ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}
+	@mkdir -p ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}
 	@cd rc; for i in *; do \
-		sed 's|CONFPREFIX|${CONFPREFIX}|g' <$$i >${DESTDIR}${CONFPREFIX}/wmii-${VERSION}/$$i; \
-		chmod 755 ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}/$$i; \
+		sed 's|CONFPREFIX|${CONFPREFIX}|g' <$$i >${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}/$$i; \
+		chmod 755 ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}/$$i; \
 	done
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
@@ -69,8 +69,8 @@ uninstall:
 	@rm -f ${DESTDIR}${PREFIX}/bin/wmii
 	@rm -f ${DESTDIR}${PREFIX}/bin/wmiir
 	@rm -f ${DESTDIR}${PREFIX}/bin/wmiiwm
-	@echo removing scripts from ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
-	@rm -rf ${DESTDIR}${CONFPREFIX}/wmii-${VERSION}
+	@echo removing scripts from ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}
+	@rm -rf ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/wmii.1
 	@rm -f ${DESTDIR}${MANPREFIX}/man1/wmiir.1
