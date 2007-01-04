@@ -135,10 +135,12 @@ select_view(const char *arg) {
 	char buf[256];
 
 	strncpy(buf, arg, sizeof(buf));
-	trim(buf, " \t+");
+	trim(buf, " \t+/");
 	if(!strlen(buf))
 		return;
-	assign_sel_view(get_view(arg));
+	if(!strncmp(buf, ".", 2) || !strncmp(buf, "..", 3))
+		return;
+	assign_sel_view(get_view(buf));
 	update_views(); /* performs focus_view */
 }
 

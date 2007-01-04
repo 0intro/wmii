@@ -699,6 +699,7 @@ apply_tags(Client *c, const char *tags) {
 	char *toks[32];
 
 	strncpy(buf, tags, sizeof(buf));
+	trim(buf, " \t/");
 	if(!(n = ixp_tokenize(toks, 31, buf, '+')))
 		return;
 	for(i=0, j=0; i < n; i++) {
@@ -706,13 +707,15 @@ apply_tags(Client *c, const char *tags) {
 			c->floating = True;
 		else if(!strncmp(toks[i], "!", 2))
 			toks[j++] = view ? screen->sel->name : "NULL";
-		else if(strncmp(toks[i], "sel", 4))
+		else if(strncmp(toks[i], "sel", 4)
+				&& strncmp(toks[i], ".", 2)
+				&& strncmp(toks[i], "..", 3))
 			toks[j++] = toks[i];
 	}
 	c->tags[0] = '\0';
 	qsort(toks, j, sizeof(char *), compare_tags);
 	len = sizeof(c->tags);
-	if(!j) toks[j++] = "NULL";
+	if(!j) return;
 	for(i=0, n=0; i < j && len > 1; i++)
 		if(!n || strcmp(toks[i], toks[n-1])) {
 			if(i)
