@@ -15,11 +15,11 @@ sel_client_of_area(Area *a) {
 Area *
 create_area(View *v, Area *pos, unsigned int w) {
 	static unsigned short id = 1;
-	unsigned int area_size, col_size;
+	unsigned int area_size, col_size, i;
 	unsigned int min_width = screen->rect.width/NCOL;
-	Area *a, **p = pos ? &pos->next : &v->area;
+	Area *ta, *a, **p = pos ? &pos->next : &v->area;
 
-	for(area_size = 0, a=v->area; a; a=a->next, area_size++);
+	for(i = 0, area_size = 0, a=v->area; a && a != *p; a=a->next, area_size++, i++);
 	col_size = area_size ? area_size - 1 : 0;
 	if(!w) {
 		if(col_size)
@@ -45,6 +45,10 @@ create_area(View *v, Area *pos, unsigned int w) {
 	a->next = *p;
 	*p = a;
 	v->sel = a;
+	if(i) write_event("CreateColumn %d\n", i);
+	for(ta=v->area, i = 0; ta && ta != v->sel; ta=ta->next, i++);
+	if(i) write_event("ColumnFocus %d\n", i);
+	else write_event("FocusFloating\n");
 	return a;
 }
 
@@ -53,17 +57,21 @@ destroy_area(Area *a) {
 	Client *c;
 	Area *ta;
 	View *v = a->view;
+	unsigned int i;
 	assert(!a->frame && "wmiiwm: fatal, destroying non-empty area");
 	if(v->revert == a)
 		v->revert = NULL;
 	for(c=client; c; c=c->next)
 		if(c->revert == a)
 			c->revert = NULL;
-	for(ta=v->area; ta && ta->next != a; ta=ta->next);
+	for(ta=v->area, i = 0; ta && ta->next != a; ta=ta->next, i++);
 	if(ta) {
 		ta->next = a->next;
-		if(v->sel == a)
+		if(v->sel == a) {
 			v->sel = ta->floating ? ta->next : ta;
+			if(i) write_event("ColumnFocus %d\n", i + 1);
+			else write_event("FocusFloating\n");
+		}
 	}
 	free(a);
 }
@@ -209,6 +217,8 @@ detach_from_area(Area *a, Frame *f) {
 	Frame **ft, *pr = NULL;
 	Client *c = f->client;
 	View *v = a->view;
+	Area *ta;
+	unsigned int i;
 
 	for(ft=&a->frame; *ft; ft=&(*ft)->anext) {
 		if(*ft == f) break;
@@ -222,11 +232,15 @@ detach_from_area(Area *a, Frame *f) {
 		if(a->frame)
 			arrange_column(a, False);
 		else {
+			for(ta=v->area, i = 0; ta && ta != a; ta=ta->next, i++);
 			if(v->area->next->next)
 				destroy_area(a);
-			else if(!a->frame && v->area->frame)
+			else if(!a->frame && v->area->frame) {
 				v->sel = v->area; /* focus floating area if it contains something */
+				write_event("FocusFloating\n");
+			}
 			arrange_view(v);
+			if(i) write_event("DestroyColumn %d\n", i);
 		}
 	}
 	else if(!a->frame) {
@@ -241,12 +255,15 @@ detach_from_area(Area *a, Frame *f) {
 		}
 		else if(v->area->next->frame)
 			v->sel = v->area->next; /* focus first col as fallback */
+		for(ta=v->area, i = 0; ta && ta != v->sel; ta=ta->next, i++);
+		if(i) write_event("ColumnFocus %d\n", i);
+		else write_event("FocusFloating\n");
 	}
 }
 
 char *
 select_area(Area *a, char *arg) {
-	Area *new;
+	Area *new, *ta;
 	unsigned int i;
 	Frame *p, *f;
 	View *v;
@@ -304,7 +321,12 @@ select_area(Area *a, char *arg) {
 	}
 	if(new->sel)
 		focus_client(new->sel->client, True);
-	v->sel = new;
+	if(v->sel != new) {
+		for(ta=v->area, i = 0; ta && ta != new; ta=ta->next, i++);
+		if(i) write_event("ColumnFocus %d\n", i);
+		else write_event("FocusFloating\n");
+		v->sel = new;
+	}
 	if(a->floating != new->floating)
 		v->revert = a;
 	return NULL;

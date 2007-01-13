@@ -141,6 +141,8 @@ focus_client(Client *c, Bool restack) {
 	Client *old;
 	Frame *f;
 	View *v;
+	unsigned int a_i;
+	Area *a, *old_a;
 
 	if(!sel_screen)
 		return;
@@ -148,6 +150,7 @@ focus_client(Client *c, Bool restack) {
 	v = f->area->view;
 	old = sel_client();
 	old_in_area = sel_client_of_area(f->area);
+	old_a = v->sel;
 	v->sel = f->area;
 	f->area->sel = f;
 	c->floating = f->area->floating;
@@ -172,6 +175,11 @@ focus_client(Client *c, Bool restack) {
 	update_frame_widget_colors(c->sel);
 	draw_frame(c->sel);
 	XSync(blz.dpy, False);
+	if(old_a != v->sel) {
+		for(a = v->area, a_i = 0; a && a != v->sel; a = a->next, a_i++);
+		if(a_i) write_event("ColumnFocus %d\n", a_i);
+		else write_event("FocusFloating\n");
+	}
 	write_event("ClientFocus %d\n", idx_of_client(c));
 }
 
@@ -367,6 +375,7 @@ void
 destroy_client(Client *c) {
 	char *dummy = NULL;
 	Client **tc;
+	uint i = idx_of_client(c);
 
 	XGrabServer(blz.dpy);
 	XSetErrorHandler(dummy_error_handler);
@@ -388,6 +397,7 @@ destroy_client(Client *c) {
 	XSetErrorHandler(wmii_error_handler);
 	XUngrabServer(blz.dpy);
 	flush_masked_events(EnterWindowMask);
+	write_event("DestroyClient %d\n", i);
 }
 
 void
