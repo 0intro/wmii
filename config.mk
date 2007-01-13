@@ -24,7 +24,7 @@ LDFLAGS = ${LIBS}
 
 # Solaris
 #CFLAGS = -fast ${INCS} -DVERSION=\"${VERSION}\"
-#LDFLAGS = ${LIBS}
+#LDFLAGS = ${LIBS} -R${PREFIX}/lib
 #LDFLAGS += -lsocket -lnsl
 #CFLAGS += -xtarget=ultra
 
