@@ -13,7 +13,7 @@ create_frame(Client *c, View *v) {
 	f->id = id++;
 	f->client = c;
 	f->view = v;
-	if(c->frame) {
+	if(c->sel) {
 		f->revert = c->sel->revert;
 		f->rect = c->sel->rect;
 	}
