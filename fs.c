@@ -257,6 +257,7 @@ message_root(char *message)
 		free(def.font.fontstr);
 		def.font.fontstr = ixp_estrdup(message);
 		loadfont(&blz, &def.font);
+		resize_bar(screen);
 	}
 	else if(!strncmp(message, "border ", 7)) {
 		message += 7;
