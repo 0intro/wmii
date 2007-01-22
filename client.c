@@ -17,14 +17,6 @@ sel_client() {
 	return screen->sel && screen->sel->sel->sel ? screen->sel->sel->sel->client : NULL;
 }
 
-int
-idx_of_client(Client *c) {
-	Client *cl;
-	int i = 0;
-	for(cl=client; cl && cl != c; cl=cl->next, i++);
-	return cl ? i : -1;
-}
-
 Client *
 client_of_win(Window w) {
 	Client *c;
@@ -81,10 +73,7 @@ create_client(Window w, XWindowAttributes *wa) {
 	Client **t, *c = (Client *) ixp_emallocz(sizeof(Client));
 	XSetWindowAttributes fwa;
 	long msize;
-	unsigned int i;
-	static unsigned int id = 1;
 
-	c->id = id++;
 	c->win = w;
 	c->rect.x = wa->x;
 	c->rect.y = wa->y;
@@ -117,10 +106,10 @@ create_client(Window w, XWindowAttributes *wa) {
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
 	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
 	XSync(blz.dpy, False);
-	for(t=&client, i=0; *t; t=&(*t)->next, i++);
+	for(t=&client; *t; t=&(*t)->next);
 	c->next = *t; /* *t == NULL */
 	*t = c;
-	write_event("CreateClient %d\n", i);
+	write_event("CreateClient %d\n", c->win);
 	return c;
 }
 
@@ -180,7 +169,7 @@ focus_client(Client *c, Bool restack) {
 		if(a_i) write_event("ColumnFocus %d\n", a_i);
 		else write_event("FocusFloating\n");
 	}
-	write_event("ClientFocus %d\n", idx_of_client(c));
+	write_event("ClientFocus %d\n", c->win);
 }
 
 void
@@ -375,7 +364,6 @@ void
 destroy_client(Client *c) {
 	char *dummy = NULL;
 	Client **tc;
-	uint i = idx_of_client(c);
 
 	XGrabServer(blz.dpy);
 	XSetErrorHandler(dummy_error_handler);
@@ -397,7 +385,7 @@ destroy_client(Client *c) {
 	XSetErrorHandler(wmii_error_handler);
 	XUngrabServer(blz.dpy);
 	flush_masked_events(EnterWindowMask);
-	write_event("DestroyClient %d\n", i);
+	write_event("DestroyClient %d\n", c->win);
 }
 
 void

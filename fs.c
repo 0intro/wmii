@@ -366,7 +366,7 @@ lookup_file(FileId *parent, char *name)
 	Client *c;
 	View *v;
 	Bar *b;
-	unsigned int i, id;
+	unsigned int id;
 
 	if(!(parent->tab.perm & P9DMDIR))
 		return NULL;
@@ -384,8 +384,8 @@ lookup_file(FileId *parent, char *name)
 						*last = file;
 						last = &file->next;
 						file->content.client = c;
-						file->id = c->id;
-						file->index = idx_of_client(c);
+						file->id = c->win;
+						file->index = c->win;
 						file->tab = *dir;
 						file->tab.name = ixp_estrdup("sel");
 					}if(name) goto LastItem;
@@ -394,17 +394,16 @@ lookup_file(FileId *parent, char *name)
 					id = (unsigned int)strtol(name, &name, 10);
 					if(*name) goto NextItem;
 				}
-				i=0;
-				for(c=client; c; c=c->next, i++) {
-					if(!name || i == id) {
+				for(c=client; c; c=c->next) {
+					if(!name || c->win == id) {
 						file = get_file();
 						*last = file;
 						last = &file->next;
 						file->content.client = c;
-						file->id = c->id;
+						file->id = c->win;
 						file->tab = *dir;
 						file->tab.name = ixp_emallocz(16);
-						snprintf(file->tab.name, 16, "%d", i);
+						snprintf(file->tab.name, 16, "%d", c->win);
 						if(name) goto LastItem;
 					}
 				}

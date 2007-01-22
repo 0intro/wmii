@@ -287,12 +287,12 @@ view_index(View *v) {
 			XRectangle *r = &f->rect;
 			if(a->floating)
 				n = snprintf(&buffer[buf_i], len, "~ %d %d %d %d %d %s\n",
-						idx_of_client(f->client),
+						f->client->win,
 						r->x, r->y, r->width, r->height,
 						f->client->props);
 			else
 				n = snprintf(&buffer[buf_i], len, "%d %d %d %d %s\n",
-						a_i, idx_of_client(f->client), r->y,
+						a_i, f->client->win, r->y,
 						r->height, f->client->props);
 			if(len - n < 0)
 				return (unsigned char *)buffer;
@@ -305,16 +305,16 @@ view_index(View *v) {
 
 Client *
 client_of_message(View *v, char *message, unsigned int *next) {              
-	unsigned int i;
+	unsigned int id;
 	Client *c;
 
 	if(!strncmp(message, "sel ", 4)) {
 		*next = 4;
 		return sel_client_of_view(v);
 	}
-	if((1 != sscanf(message, "%d %n", &i, next)))
+	if((1 != sscanf(message, "%d %n", &id, next)))
 		return NULL;
-	for(c=client; i && c; c=c->next, i--);
+    for(c=client; c && c->win!=id; c=c->next);
 	return c;
 }
 

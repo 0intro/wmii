@@ -135,7 +135,6 @@ struct Client {
 	char name[256];
 	char tags[256];
 	char props[512];
-	unsigned short id;
 	unsigned int border;
 	int proto;
 	Bool floating;
@@ -280,7 +279,6 @@ extern void newcol_client(Client *c, char *arg);
 extern Client *sel_client();
 extern Frame *frame_of_win(Window w);
 extern Client *client_of_win(Window w);
-extern int idx_of_client(Client *c);
 extern void update_client_grab(Client *c, Bool is_sel);
 extern void apply_rules(Client *c);
 extern void apply_tags(Client *c, const char *tags);
