@@ -67,7 +67,7 @@ struct BlitzBrush {
 };
 
 /* WM atoms */
-enum { WMProtocols, WMDelete, WMLast };
+enum { WMState, WMProtocols, WMDelete, WMLast };
 
 /* NET atoms */
 enum { NetSupported, NetWMName, NetLast };

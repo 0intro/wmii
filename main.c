@@ -91,6 +91,7 @@ win_proto(Window w) {
 
 static void
 init_atoms() {
+	wm_atom[WMState] = XInternAtom(blz.dpy, "WM_STATE", False);
 	wm_atom[WMProtocols] = XInternAtom(blz.dpy, "WM_PROTOCOLS", False);
 	wm_atom[WMDelete] = XInternAtom(blz.dpy, "WM_DELETE_WINDOW", False);
 	net_atom[NetSupported] = XInternAtom(blz.dpy, "_NET_SUPPORTED", False);

@@ -114,6 +114,14 @@ create_client(Window w, XWindowAttributes *wa) {
 }
 
 void
+set_client_state(Client * c, int state)
+{
+	long data[] = { state, None };
+	XChangeProperty(blz.dpy, c->win, wm_atom[WMState], wm_atom[WMState], 32,
+			PropModeReplace, (unsigned char *) data, 2);
+}
+
+void
 update_client_grab(Client *c, Bool is_sel) {
 	if(is_sel) {
 		ungrab_mouse(c->framewin, AnyModifier, AnyButton);
@@ -176,7 +184,8 @@ void
 map_client(Client *c) {
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XMapWindow(blz.dpy, c->win);
-	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+    XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+	set_client_state(c, NormalState);
 }
 
 void
@@ -184,6 +193,7 @@ unmap_client(Client *c) {
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XUnmapWindow(blz.dpy, c->win);
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+	set_client_state(c, WithdrawnState);
 }
 
 void
