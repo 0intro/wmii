@@ -25,7 +25,7 @@ ${OBJ}: wmii.h config.mk
 wmiiwm: ${OBJ}
 	@echo LD $@
 	@${LD} -o $@ ${OBJ} ${LDFLAGS}
-	@strip $@
+#	@strip $@
 
 clean:
 	@echo cleaning
