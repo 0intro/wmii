@@ -74,7 +74,7 @@ buttonrelease(XEvent *e) {
 			}
 	}
 	else if((f = frame_of_win(ev->window))) 
-		write_event("ClientClick %d %d\n", f->client->win, ev->button);
+		write_event("ClientClick 0x%x %d\n", f->client->win, ev->button);
 }
 
 static void

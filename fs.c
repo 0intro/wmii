@@ -391,7 +391,7 @@ lookup_file(FileId *parent, char *name)
 					}if(name) goto LastItem;
 				}
 				if(name) {
-					id = (unsigned int)strtol(name, &name, 10);
+					id = (unsigned int)strtol(name, &name, 16);
 					if(*name) goto NextItem;
 				}
 				for(c=client; c; c=c->next) {
@@ -403,7 +403,7 @@ lookup_file(FileId *parent, char *name)
 						file->id = c->win;
 						file->tab = *dir;
 						file->tab.name = ixp_emallocz(16);
-						snprintf(file->tab.name, 16, "%d", c->win);
+						snprintf(file->tab.name, 16, "0x%x", (unsigned int)c->win);
 						if(name) goto LastItem;
 					}
 				}
@@ -654,7 +654,7 @@ fs_read(P9Req *r) {
 				return;
 			}
 			r->ofcall.data.rread.data = ixp_emallocz(16);
-			n = snprintf(r->ofcall.data.rread.data, 16, "%d", f->index);
+			n = snprintf(r->ofcall.data.rread.data, 16, "0x%x", (unsigned int)f->index);
 			assert(n >= 0);
 			r->ofcall.data.rread.count = n;
 			respond(r, NULL);

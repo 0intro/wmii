@@ -109,7 +109,7 @@ create_client(Window w, XWindowAttributes *wa) {
 	for(t=&client; *t; t=&(*t)->next);
 	c->next = *t; /* *t == NULL */
 	*t = c;
-	write_event("CreateClient %d\n", c->win);
+	write_event("CreateClient 0x%x\n", c->win);
 	return c;
 }
 
@@ -177,7 +177,7 @@ focus_client(Client *c, Bool restack) {
 		if(a_i) write_event("ColumnFocus %d\n", a_i);
 		else write_event("FocusFloating\n");
 	}
-	write_event("ClientFocus %d\n", c->win);
+	write_event("ClientFocus 0x%x\n", c->win);
 }
 
 void
@@ -395,7 +395,7 @@ destroy_client(Client *c) {
 	XSetErrorHandler(wmii_error_handler);
 	XUngrabServer(blz.dpy);
 	flush_masked_events(EnterWindowMask);
-	write_event("DestroyClient %d\n", c->win);
+	write_event("DestroyClient 0x%x\n", c->win);
 }
 
 void
