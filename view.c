@@ -170,12 +170,20 @@ restack_view(View *v) {
 	Area *a;
 	Frame *f;
 	Client *c;
-	unsigned int n=0, i=0;
+	unsigned int n, i;
 	static Window *wins = NULL;
+	static unsigned int winssz = 0;
+
+	i = 0;
+	n = 1;
 
 	for(c=client; c; c=c->next, i++);
-	wins = ixp_erealloc(wins, sizeof(Window) * i);
+	if(i >= winssz) {
+		winssz = 2 * i;
+		wins = ixp_erealloc(wins, sizeof(Window) * winssz);
+	}
 
+	wins[0] = screen->barwin;
 	for(a=v->area; a; a=a->next) {
 		if(a->frame) {
 			if(a == v->area) {
