@@ -123,7 +123,7 @@ focus_view(WMScreen *s, View *v) {
 						f->rect.y);
 		}
 	if((c = sel_client()))
-		focus_client(c, True);
+		focus_client(c, False);
 	draw_frames();
 	XSync(blz.dpy, False);
 	XUngrabServer(blz.dpy);
@@ -181,15 +181,20 @@ restack_view(View *v) {
 	}
 	for(a=v->area; a; a=a->next) {
 		if(a->frame) {
+			if(a == v->area) {
+				Frame **tf;
+				for(tf=&a->frame; *tf; tf=&(*tf)->anext)
+					if(*tf == a->sel) break;
+				*tf = a->sel->anext;
+				a->sel->anext = a->frame;
+				a->frame = a->sel;
+			}
 			wins[n++] = a->sel->client->framewin;
-			for(f=a->frame; f; f=f->anext)
-				if(f != a->sel) n++;
-			i=n;
 			for(f=a->frame; f; f=f->anext) {
 				Client *c = f->client;
 				update_client_grab(c, (v->sel == a) && (a->sel == f));
 				if(f != a->sel)
-					wins[--i] = c->framewin;
+					wins[n++] = c->framewin;
 			}
 		}
 	}
