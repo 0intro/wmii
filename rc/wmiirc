@@ -1,6 +1,7 @@
 #!/bin/sh
-# configure wmii
+# Configure wmii
 
+# FUNCTIONS
 xwrite() {
 	file="$1"; shift
 	echo -n "$@" | wmiir write "$file"
@@ -11,19 +12,19 @@ proglist() {
 }
 
 conf_which () {
-	if [ -n "$1" ]
+	prog=$1; shift
+	if [ -n "$prog" ]
 	then
-		prog=$1; shift
 		echo `PATH="$WMII_CONFPATH:$PATH" which $prog` "$@"
 	fi
 }
 
 tagsmenu() {
 	tag=`wmiir read /tag/sel/ctl`
-        tags=`wmiir ls /tag | sed 's|/||; /^sel$/d' | awk "BEGIN{print \"$tag\"} !/^$tag\$/" | $DMENU`
-        test -n "$tags" && xwrite $@ "$tags"
+        wmiir ls /tag | { echo $tag; sed "s|/||; /^\(sel|$tag\)\$/d";} | $DMENU
 }
 
+# CONFIGURATION VARIABLES
 MODKEY=Mod1
 UP=k
 DOWN=j
@@ -31,7 +32,7 @@ LEFT=h
 RIGHT=l
 
 WMII_FONT='-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*'
-# colors are text, bg, border
+# Colors tuples are "<text> <background> <border>"
 WMII_NORMCOLORS='#222222 #eeeeee #666666'
 WMII_SELCOLORS='#444444 #bbbbbb #556088'
 WMII_FOCUSCOLORS='#ffffff #335577 #447799'
@@ -41,9 +42,6 @@ DMENU="dmenu -b -fn $WMII_FONT -nb #eeeeee -nf #222222 -sb #335577 -sf #ffffff"
 WMII_TERM="xterm"
 
 export DMENU WMII_FONT WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS WMII_TERM
-
-# stop any running instances of wmiirc
-echo Start wmiirc | wmiir write /event || exit 1
 
 # WM CONFIGURATION
 wmiir write /ctl << EOF
@@ -70,13 +68,17 @@ wmiir write /tagrules <<EOF
 EOF
 
 # MISC
-xsetroot -solid $WMII_BACKGROUND
-`conf_which status` &
 PROGS_FILE="$WMII_NS_DIR/.dmenu.proglist"
 ACTIONS_DIRS=`echo "$WMII_CONFPATH" | tr : ' '`
+
+`conf_which status` &
+xsetroot -solid $WMII_BACKGROUND
 proglist `echo "$PATH" | tr : ' '` >$PROGS_FILE &
 
-# SHORTCUTS
+# Stop any running instances of wmiirc
+echo Start wmiirc | wmiir write /event || exit 1
+
+# BOUND KEYS
 wmiir write /keys <<EOF
 $MODKEY-$LEFT
 $MODKEY-$RIGHT
@@ -120,7 +122,7 @@ $MODKEY-Shift-8
 $MODKEY-Shift-9
 EOF
 
-# TAG BAR
+# SETUP TAG BAR
 wmiir ls /lbar |
 while read bar
 do
@@ -128,7 +130,7 @@ do
 done
 
 seltag="`wmiir read /tag/sel/ctl 2>/dev/null`"
-wmiir ls /tag | sed -e 's|/$||; /^sel$/d' |
+wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
 while read tag
 do
 	if [ "X$tag" = "X$seltag" ]; then
@@ -169,7 +171,8 @@ do
 		shift
 		xwrite /ctl view "$@";;
 	Key)
-		case "$1" in
+		key="$1"
+		case "$key" in
 		$MODKEY-$LEFT)
 			xwrite /tag/sel/ctl select left;;
 		$MODKEY-$RIGHT)
@@ -189,13 +192,13 @@ do
 		$MODKEY-f)
 			xwrite /tag/sel/0/sel/geom 0 0 0 0;;
 		$MODKEY-a)
-			`conf_which "\`proglist $ACTIONS_DIRS | $DMENU\`"` &;;
+			`conf_which "$(proglist $ACTIONS_DIRS | $DMENU)"` &;;
 		$MODKEY-p)
 			sh -c "`$DMENU <$PROGS_FILE`" &;;
 		$MODKEY-t)
-			tagsmenu /ctl view &;;
+			xwrite /ctl "view `tagsmenu`" &;;
 		$MODKEY-[0-9])
-			xwrite /ctl view "`echo $1 | sed 's/.*-//'`";;
+			xwrite /ctl view "`echo $key | sed 's/.*-//'`";;
 		$MODKEY-Return)
 			$WMII_TERM &;;
 		$MODKEY-Shift-$LEFT)
@@ -211,9 +214,9 @@ do
 		$MODKEY-Shift-c)
 			xwrite /client/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			tagsmenu "/client/`wmiir read /client/sel/ctl`/tags" &;;
+			xwrite "/client/`wmiir read /client/sel/ctl`/tags" `tagsmenu` &;;
 		$MODKEY-Shift-[0-9])
-			xwrite /client/sel/tags "`echo $1 | sed 's/.*-//'`";;
+			xwrite /client/sel/tags "`echo $key | sed 's/.*-//'`";;
 		esac;;
 	esac
 done &
