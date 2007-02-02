@@ -465,7 +465,7 @@ void
 resize_client(Client *c, XRectangle *r, Bool ignore_xcall) {
 	Frame *f = c->sel;
 	Bool floating = f->area->floating;
-	unsigned int max_height;
+	int max_height;
 
 	BlitzAlign stickycorner = 0;
 	if(f->rect.x != r->x && f->rect.x + f->rect.width == r->x + r->width)
@@ -491,14 +491,14 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall) {
 					f->rect.height = max_height;
 				if(f->rect.width > screen->rect.width)
 					f->rect.width = screen->rect.width;
-				if(f->rect.x + f->rect.width > screen->rect.width)
-					f->rect.x = screen->rect.width - f->rect.width;
-				if(f->rect.y + f->rect.height > max_height)
-					f->rect.y = max_height - f->rect.height;
-				if(f->rect.x < 0)
-					f->rect.x = 0;
-				if(f->rect.y < 0)
-					f->rect.y = 0;
+				if(f->rect.x + screen->brect.height > screen->rect.width)
+					f->rect.x = screen->rect.width - screen->brect.height;
+				if(f->rect.y + screen->brect.height > max_height)
+					f->rect.y = max_height - screen->brect.height;
+				if(f->rect.x + f->rect.width < screen->brect.height)
+					f->rect.x = screen->brect.height - f->rect.width;
+				if(f->rect.y + f->rect.height < screen->brect.height)
+					f->rect.y = screen->brect.height - f->rect.height;
 			}
 		}
 		if(f->area->view == screen->sel)
