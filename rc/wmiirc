@@ -151,7 +151,7 @@ do
 	parms="$@"
 	case "$type" in
 	Start)
-		if test $1 == "wmiirc"
+		if test "$1" = "wmiirc"
 		then
 			exit
 		fi;;
