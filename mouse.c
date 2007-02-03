@@ -247,7 +247,7 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 			pt.y = py;
 
 			rect_morph_xy(&origin, px-ox, py-oy, &align);
-			if(floating);
+			if(floating)
 				check_frame_constraints(&origin);
 			frect=origin;
 			ox=px;
