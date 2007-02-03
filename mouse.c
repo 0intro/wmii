@@ -162,7 +162,8 @@ draw_xor_border(XRectangle *r) {
 void
 do_mouse_resize(Client *c, BlitzAlign align) {
 	BlitzAlign grav;
-	int px, py, ox, oy, i;
+	Cursor cur;
+	int px, py, ox, oy, hr_x, hr_y, i;
 	float rx, ry;
 	Window dummy;
 	XEvent ev;
@@ -178,7 +179,9 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 	XQueryPointer(blz.dpy, c->framewin, &dummy, &dummy, &i, &i, &ox, &oy, &di);
 	rx = (float)ox / frect.width;
 	ry = (float)oy / frect.height;
-	if (floating || align != CENTER) {
+	cur = cursor[CurResize];
+
+	if (align != CENTER) {
 		px = ox = frect.width / 2;
 		py = oy = frect.height / 2;
 		if(align&NORTH)
@@ -190,12 +193,18 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 		if(align&WEST)
 			ox -= px;
 		XWarpPointer(blz.dpy, None, c->framewin, 0, 0, 0, 0, ox, oy);
+	} else if(floating) {
+		hr_x = screen->rect.width / 2;
+		hr_y = screen->rect.height / 2;
+		XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, hr_x, hr_y);
+		cur = cursor[CurInvisible];
 	}
+
 	XTranslateCoordinates(blz.dpy, c->framewin, blz.root, ox, oy, &ox, &oy, &dummy);
 	pt.x = ox; pt.y = oy;
 	XSync(blz.dpy, False);
 	if(XGrabPointer(blz.dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
-			None, cursor[CurResize], CurrentTime) != GrabSuccess)
+			None, cur, CurrentTime) != GrabSuccess)
 		return;
 	XGrabServer(blz.dpy);
 	draw_xor_border(&frect);
@@ -213,24 +222,43 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 			XUngrabServer(blz.dpy);
 			XUngrabPointer(blz.dpy, CurrentTime);
 			XSync(blz.dpy, False);
-			XWarpPointer(blz.dpy, None, c->framewin, 0, 0, 0, 0,
-					frect.width * rx, frect.height * ry);
+			XTranslateCoordinates(blz.dpy, c->framewin, blz.root,
+					frect.width * rx, frect.height * ry,
+					&px, &py, &dummy);
+			if(py > screen->brect.y)
+				py = screen->brect.y - 1;
+			XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, px, py);
 			return;
 			break;
 		case MotionNotify:
 			ofrect = frect;
-			pt.x = ev.xmotion.x;
-			pt.y = ev.xmotion.y;
-			XTranslateCoordinates(blz.dpy, c->framewin, blz.root, ev.xmotion.x,
-					ev.xmotion.y, &px, &py, &dummy);
+			px = ev.xmotion.x_root;
+			py = ev.xmotion.y_root;
+
+			if(floating && align == CENTER) {
+				if(px == hr_x && py == hr_y)
+					continue;
+				XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, hr_x, hr_y);
+				px = px - hr_x + ox;
+				py = py - hr_y + oy;
+			}
+
+			pt.x = px;
+			pt.y = py;
+
 			rect_morph_xy(&origin, px-ox, py-oy, &align);
+			if(floating);
+				check_frame_constraints(&origin);
 			frect=origin;
-			ox=px; oy=py;
+			ox=px;
+			oy=py;
+
 			if(floating)
 				grav = snap_rect(rects, num, &frect, &align, snap);
 			else
 				grav = align ^ CENTER;
 			match_sizehints(c, &frect, floating, grav);
+
 			draw_xor_border(&ofrect);
 			draw_xor_border(&frect);
 			break;

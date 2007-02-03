@@ -465,7 +465,6 @@ void
 resize_client(Client *c, XRectangle *r, Bool ignore_xcall) {
 	Frame *f = c->sel;
 	Bool floating = f->area->floating;
-	int max_height;
 
 	BlitzAlign stickycorner = 0;
 	if(f->rect.x != r->x && f->rect.x + f->rect.width == r->x + r->width)
@@ -479,7 +478,6 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall) {
 	f->rect = *r;
 	if((f->area->mode != Colstack) || (f->area->sel == f))
 		match_sizehints(c, &c->sel->rect, floating, stickycorner);
-	max_height = screen->rect.height - labelh(&def.font);
 	if(!ignore_xcall) {
 		if(floating) {
 			if((c->rect.width == screen->rect.width) &&
@@ -487,18 +485,7 @@ resize_client(Client *c, XRectangle *r, Bool ignore_xcall) {
 				f->rect.x = -def.border;
 				f->rect.y = -labelh(&def.font);
 			}else{
-				if(f->rect.height > max_height)
-					f->rect.height = max_height;
-				if(f->rect.width > screen->rect.width)
-					f->rect.width = screen->rect.width;
-				if(f->rect.x + screen->brect.height > screen->rect.width)
-					f->rect.x = screen->rect.width - screen->brect.height;
-				if(f->rect.y + screen->brect.height > max_height)
-					f->rect.y = max_height - screen->brect.height;
-				if(f->rect.x + f->rect.width < screen->brect.height)
-					f->rect.x = screen->brect.height - f->rect.width;
-				if(f->rect.y + f->rect.height < screen->brect.height)
-					f->rect.y = screen->brect.height - f->rect.height;
+				check_frame_constraints(&f->rect);
 			}
 		}
 		if(f->area->view == screen->sel)

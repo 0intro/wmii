@@ -101,3 +101,22 @@ draw_frames() {
 			draw_frame(c->sel);
 		}
 }
+
+void
+check_frame_constraints(XRectangle *rect) {
+	int max_height;
+	max_height = screen->rect.height - labelh(&def.font);
+
+	if(rect->height > max_height)
+		rect->height = max_height;
+	if(rect->width > screen->rect.width)
+		rect->width = screen->rect.width;
+	if(rect->x + screen->brect.height > screen->rect.width)
+		rect->x = screen->rect.width - screen->brect.height;
+	if(rect->y + screen->brect.height > max_height)
+		rect->y = max_height - screen->brect.height;
+	if(rect->x + rect->width < screen->brect.height)
+		rect->x = screen->brect.height - rect->width;
+	if(rect->y + rect->height < screen->brect.height)
+		rect->y = screen->brect.height - rect->height;
+}

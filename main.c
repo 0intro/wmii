@@ -103,10 +103,19 @@ init_atoms() {
 
 static void
 init_cursors() {
+	Pixmap pix;
+	XColor black, dummy;
+
+	XAllocNamedColor(blz.dpy, DefaultColormap(blz.dpy, blz.screen), "black", &black, &dummy);
+	pix = XCreateBitmapFromData(blz.dpy, blz.root, (char[]){0}, 1, 1);
+
 	cursor[CurNormal] = XCreateFontCursor(blz.dpy, XC_left_ptr);
 	cursor[CurResize] = XCreateFontCursor(blz.dpy, XC_sizing);
 	cursor[CurMove] = XCreateFontCursor(blz.dpy, XC_fleur);
 	cursor[CurInput] = XCreateFontCursor(blz.dpy, XC_xterm);
+	cursor[CurInvisible] = XCreatePixmapCursor(blz.dpy, pix, pix, &black, &black, 0, 0);
+
+	XFreePixmap(blz.dpy, pix);
 }
 
 static void

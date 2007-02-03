@@ -76,7 +76,7 @@ enum { NetSupported, NetWMName, NetLast };
 enum { Coldefault, Colstack, Colmax };
 
 /* Cursor */
-enum { CurNormal, CurResize, CurMove, CurInput, CurLast };
+enum { CurNormal, CurResize, CurMove, CurInput, CurInvisible, CurLast };
 
 enum { NCOL = 16 };
 enum { WM_PROTOCOL_DELWIN = 1 };
@@ -253,6 +253,7 @@ extern Client *sel_client_of_area(Area *a);
 extern Bar *create_bar(Bar **b_link, char *name);
 extern void destroy_bar(Bar **b_link, Bar *b);
 extern void draw_bar(WMScreen *s);
+void draw_border(BlitzBrush *b);
 extern void resize_bar();
 extern Bar *bar_of_name(Bar *b_link, const char *name);
 
@@ -318,6 +319,7 @@ extern void insert_frame(Frame *pos, Frame *f, Bool before);
 extern void draw_frame(Frame *f);
 extern void draw_frames();
 extern void update_frame_widget_colors(Frame *f);
+void check_frame_constraints(XRectangle *rect);
 
 /* fs.c */
 extern void fs_attach(P9Req *r);
