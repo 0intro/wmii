@@ -21,7 +21,7 @@ conf_which () {
 
 tagsmenu() {
 	tag=`wmiir read /tag/sel/ctl`
-        wmiir ls /tag | { echo $tag; sed "s|/||; /^\(sel|$tag\)\$/d";} | $DMENU
+        wmiir ls /tag | { echo $tag; sed -E "s|/||; /^(sel|$tag)\$/d";} | $DMENU
 }
 
 # CONFIGURATION VARIABLES
