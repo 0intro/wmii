@@ -30,4 +30,3 @@ LDFLAGS = -g ${LIBS}
 
 # compiler and linker
 CC = cc
-LD = ${CC}

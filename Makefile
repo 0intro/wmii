@@ -14,7 +14,6 @@ options:
 	@echo "CFLAGS   = ${CFLAGS}"
 	@echo "LDFLAGS  = ${LDFLAGS}"
 	@echo "CC       = ${CC}"
-	@echo "LD       = ${LD}"
 
 .c.o:
 	@echo CC $<
@@ -24,7 +23,7 @@ ${OBJ}: wmii.h config.mk
 
 wmiiwm: ${OBJ}
 	@echo LD $@
-	@${LD} -o $@ ${OBJ} ${LDFLAGS}
+	@${CC} -o $@ ${OBJ} ${LDFLAGS}
 #	@strip $@
 
 clean:
