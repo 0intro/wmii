@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <locale.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +27,13 @@ static void
 usage() {
 	fputs("usage: wmiiwm -a <address> [-r <wmiirc>] [-v]\n", stderr);
 	exit(1);
+}
+
+static void
+sigchld_handler(int sig) {
+	int ret;
+	/* We only spawn one child */
+	wait(&ret);
 }
 
 static void
@@ -265,6 +273,7 @@ main(int argc, char *argv[]) {
 	if(wmiirc) {
 		int name_len = strlen(wmiirc) + 6;
 		char execstr[name_len];
+		signal(SIGCHLD, sigchld_handler);
 		switch(fork()) {
 		case 0:
 			if(setsid() == -1)
