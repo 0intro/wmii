@@ -309,27 +309,29 @@ do_managed_move(Client *c) {
 void
 do_mouse_resize(Client *c, BlitzAlign align) {
 	BlitzAlign grav;
-	Cursor cur;
-	int dx, dy, pt_x, pt_y, hr_x, hr_y, i;
-	float rx, ry;
 	Window dummy;
+	Cursor cur;
 	XEvent ev;
-	unsigned int num = 0, di;
-	Frame *f = c->sel;
-	Bool floating = f->area->floating;
-	int snap = floating ? screen->rect.height / 66 : 0;
-	XRectangle *rects = floating ? rects_of_view(f->area->view, &num) : nil;
-	XRectangle frect = f->rect, ofrect;
-	XRectangle origin = frect;
-	XPoint pt;
+	XRectangle *rects, ofrect, frect, origin;
+	int snap, dx, dy, pt_x, pt_y, hr_x, hr_y, i;
+	unsigned int num, di;
+	Bool floating;
+	float rx, ry;
+	Frame *f;
 
-	if(align == CENTER && !floating)
+	floating = f->area->floating;
+	origin = frect = f->rect;
+	rects = floating ? rects_of_view(f->area->view, &num) : nil;
+	snap = floating ? screen->rect.height / 66 : 0;
+	cur = cursor[CurResize];
+	f = c->sel;
+	
+	if(!floating && (align == CENTER))
 		return do_managed_move(c);
 
 	XQueryPointer(blz.dpy, c->framewin, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
 	rx = (float)pt_x / frect.width;
 	ry = (float)pt_y / frect.height;
-	cur = cursor[CurResize];
 
 	if (align != CENTER) {
 		pt_x = dx = frect.width / 2;
@@ -362,10 +364,8 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 		case ButtonRelease:
 			draw_xor_border(&frect);
 
-			pt.x = pt_x;
-			pt.y = pt_y;
 			if(!floating)
-				resize_column(c, &frect, (align == CENTER) ? &pt : nil);
+				resize_column(c, &frect);
 			else
 				resize_client(c, &frect, False);
 
@@ -398,19 +398,18 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 				dx -= pt_x;
 				dy -= pt_y;
 			}
-
 			pt_x += dx;
 			pt_y += dy;
 
 			rect_morph_xy(&origin, dx, dy, &align);
-			if(align != CENTER)
-				check_frame_constraints(&origin);
+			if(align != CENTER) check_frame_constraints(&origin);
 			frect = origin;
 
 			if(floating)
 				grav = snap_rect(rects, num, &frect, &align, snap);
 			else
 				grav = align ^ CENTER;
+
 			match_sizehints(c, &frect, floating, grav);
 
 			draw_xor_border(&ofrect);

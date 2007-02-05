@@ -289,7 +289,7 @@ extern void apply_tags(Client *c, const char *tags);
 /* column.c */
 extern void arrange_column(Area *a, Bool dirty);
 extern void scale_column(Area *a, float h);
-extern void resize_column(Client *c, XRectangle *r, XPoint *pt);
+extern void resize_column(Client *c, XRectangle *r);
 extern int column_mode_of_str(char *arg);
 extern char *str_of_column_mode(int mode);
 extern Area *new_column(View *v, Area *pos, unsigned int w);

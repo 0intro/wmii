@@ -543,7 +543,7 @@ move_client(Client *c, char *arg) {
 	new.x += x;
 	new.y += y;
 	if(!f->area->floating)
-		resize_column(f->client, &new, nil);
+		resize_column(f->client, &new);
 	else
 		resize_client(f->client, &new, False);
 }
@@ -559,7 +559,7 @@ size_client(Client *c, char *arg) {
 	new.width += w;
 	new.height += h;
 	if(!f->area->floating)
-		resize_column(f->client, &new, nil);
+		resize_column(f->client, &new);
 	else
 		resize_client(f->client, &new, False);
 }
