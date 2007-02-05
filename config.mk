@@ -1,5 +1,5 @@
 # wmii version
-VERSION = 3.5.1
+VERSION = 3.6-rc1
 CONFVERSION = 3.5
 
 # Customize below to fit your system
