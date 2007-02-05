@@ -223,6 +223,8 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 			rect->height = f->rect.y - rect->y;
 		}
 		if(do_move) {
+			if(frame == f)
+				return;
 			if(a != frame->area)
 				send_to_area(a, frame->area, frame);
 			remove_frame(frame);
@@ -237,6 +239,8 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 		if(f->anext)
 			rect->height = (f->anext->rect.y - rect->y);
 		if(do_move) {
+			if(frame == f)
+				return;
 			if(a != frame->area)
 				send_to_area(a, frame->area, frame);
 			remove_frame(frame);
