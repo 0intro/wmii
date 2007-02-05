@@ -319,12 +319,12 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 	float rx, ry;
 	Frame *f;
 
+	f = c->sel;
 	floating = f->area->floating;
 	origin = frect = f->rect;
 	rects = floating ? rects_of_view(f->area->view, &num) : nil;
 	snap = floating ? screen->rect.height / 66 : 0;
 	cur = cursor[CurResize];
-	f = c->sel;
 	
 	if(!floating && (align == CENTER))
 		return do_managed_move(c);
@@ -349,7 +349,7 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 		cur = cursor[CurInvisible];
 	}
 
-	XQueryPointer(blz.dpy, c->framewin, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
+	XQueryPointer(blz.dpy, blz.root, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
 
 	XSync(blz.dpy, False);
 	if(XGrabPointer(blz.dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
