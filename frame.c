@@ -91,6 +91,11 @@ swap_frames(Frame *fa, Frame *fb) {
 		fa->anext = ft;
 	}
 
+	if(fb->area->sel == fb)
+		fb->area->sel = fa;
+	if(fa->area->sel == fa)
+		fa->area->sel = fb;
+
 	fb->area = fa->area;
 	fa->area = a;
 
