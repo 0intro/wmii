@@ -67,6 +67,7 @@ swap_frames(Frame *fa, Frame *fb) {
 	Frame **fp_a, **fp_b, *ft;
 
 	if(fa == fb) return;
+
 	a = fa->area;
 	for(fp_a = &a->frame; *fp_a; fp_a=&(*fp_a)->anext)
 		if(*fp_a == fa) break;
@@ -74,15 +75,15 @@ swap_frames(Frame *fa, Frame *fb) {
 	for(fp_b = &a->frame; *fp_b; fp_b=&(*fp_b)->anext)
 		if(*fp_b == fb) break;
 
+	ft = fa->anext;
+	fa->anext = fb->anext;
+	fb->anext = ft;
+
 	*fp_a = fb;
 	*fp_b = fa;
 
 	fb->area = fa->area;
 	fa->area = a;
-
-	ft = fa->anext;
-	fa->anext = fb->anext;
-	fb->anext = ft;
 
 	trect = fa->rect;
 	fa->rect = fb->rect;

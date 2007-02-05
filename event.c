@@ -91,7 +91,8 @@ buttonpress(XEvent *e) {
 				do_mouse_resize(f->client, CENTER);
 				break;
 			case Button3:
-				do_mouse_resize(f->client, quadofcoord(&f->client->rect, ev->x, ev->y));
+				do_mouse_resize(f->client,
+						quadofcoord(&f->client->rect, ev->x, ev->y));
 			default:
 			break;
 			}
