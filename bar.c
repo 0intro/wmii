@@ -112,6 +112,7 @@ draw_bar(WMScreen *s) {
 			if(tb)
 				b->brush.rect.x = tb->brush.rect.x + tb->brush.rect.width;
 			draw_label(&b->brush, b->text);
+			draw_border(&b->brush);
 		}
 MapBar:
 	XCopyArea(blz.dpy, s->bbrush.drawable, s->barwin, s->bbrush.gc, 0, 0,
