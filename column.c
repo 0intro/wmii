@@ -57,7 +57,7 @@ relax_column(Area *a) {
 		for(f=a->frame; f; f=f->anext) {
 			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 			f->rect.y = a->rect.y + (a->rect.height - f->rect.height) / 2;
-			//resize_client(f->client, &f->rect, True);
+			resize_client(f->client, &f->rect, True);
 		}
 		return;
 	}
@@ -78,7 +78,7 @@ relax_column(Area *a) {
 			for(f=a->frame; f && (hx < hdiff); f=f->anext) {
 				unsigned int tmp = f->rect.height;
 				f->rect.height += hx;
-				//resize_client(f->client, &f->rect, True);
+				resize_client(f->client, &f->rect, True);
 				hdiff -= (f->rect.height - tmp);
 			}
 	}
@@ -92,7 +92,7 @@ relax_column(Area *a) {
 			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 			yoff = f->rect.y + f->rect.height + hdiff;
 		}
-		//resize_client(f->client, &f->rect, True);
+		resize_client(f->client, &f->rect, True);
 	}
 }
 
