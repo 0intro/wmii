@@ -34,7 +34,7 @@ void
 update_rules(Rule **rule, const char *data) {
 	int mode = IGNORE;
 	Rule *rul;
-	char *p, *r = NULL, *v = NULL, regex[256], value[256];
+	char *p, *r = nil, *v = nil, regex[256], value[256];
 
 	if(!data || !strlen(data))
 		return;

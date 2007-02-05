@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-Bar *free_bars = NULL;
+Bar *free_bars = nil;
 
 Bar *
 create_bar(Bar **b_link, char *name) {
@@ -68,7 +68,7 @@ draw_bar(WMScreen *s) {
 	draw_tile(&s->bbrush);
 	if(!s->lbar && !s->rbar)
 		goto MapBar;
-	largest = b = tb = NULL;
+	largest = b = tb = nil;
 	tw = width = nb = size = 0;
 	for(b=s->lbar, nb=2 ;nb; --nb && (b = s->rbar))
 		for(; b; b=b->next) {
@@ -100,7 +100,7 @@ draw_bar(WMScreen *s) {
 		for(b=largest; b != tb->smaller; b=b->smaller)
 			b->brush.rect.width = floor(b->brush.rect.width * shrink);
 		width += tw * shrink;
-		tb=NULL;
+		tb=nil;
 	}
 	for(b=s->lbar, nb=2 ;nb; b=s->rbar, nb--)
 		for(; b; tb = b, b=b->next) {

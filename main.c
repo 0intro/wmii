@@ -197,7 +197,7 @@ cleanup() {
 int
 main(int argc, char *argv[]) {
 	int i;
-	char *address = NULL, *wmiirc = NULL, *namespace, *errstr;
+	char *address = nil, *wmiirc = nil, *namespace, *errstr;
 	WMScreen *s;
 	struct passwd *passwd;
 	XSetWindowAttributes wa;
@@ -264,7 +264,7 @@ main(int argc, char *argv[]) {
 	}
 	XSetErrorHandler(0);
 	x_error_handler = XSetErrorHandler(wmii_error_handler);
-	errstr = NULL;
+	errstr = nil;
 	i = ixp_create_sock(address, &errstr);
 	if(i < 0)
 		ixp_eprint("wmiiwm: fatal: %s\n", errstr);
@@ -281,7 +281,7 @@ main(int argc, char *argv[]) {
 			close(i);
 			close(ConnectionNumber(blz.dpy));
 			snprintf(execstr, name_len, "exec %s", wmiirc);
-			execl("/bin/sh", "sh", "-c", execstr, NULL);
+			execl("/bin/sh", "sh", "-c", execstr, nil);
 			ixp_eprint("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
 		case -1:
 			perror("wmiiwm: cannot fork wmiirc");
@@ -291,19 +291,19 @@ main(int argc, char *argv[]) {
 	}
 
 	/* IXP server */
-	ixp_server_open_conn(&srv, i, &p9srv, serve_9pcon, NULL);
+	ixp_server_open_conn(&srv, i, &p9srv, serve_9pcon, nil);
 	/* X server */
-	ixp_server_open_conn(&srv, ConnectionNumber(blz.dpy), NULL, check_x_event, NULL);
-	view = NULL;
-	client = NULL;
-	key = NULL;
+	ixp_server_open_conn(&srv, ConnectionNumber(blz.dpy), nil, check_x_event, nil);
+	view = nil;
+	client = nil;
+	key = nil;
 	passwd = getpwuid(getuid());
 	user = ixp_estrdup(passwd->pw_name);
-	def.colrules.string = NULL;
+	def.colrules.string = nil;
 	def.colrules.size = 0;
-	def.tagrules.string = NULL;
+	def.tagrules.string = nil;
 	def.tagrules.size = 0;
-	def.keys = NULL;
+	def.keys = nil;
 	def.keyssz = 0;
 	def.font.fontstr = ixp_estrdup(BLITZ_FONT);
 	def.border = 2;
@@ -322,9 +322,9 @@ main(int argc, char *argv[]) {
 	screens = ixp_emallocz(num_screens * sizeof(*screens));
 	for(i = 0; i < num_screens; i++) {
 		s = &screens[i];
-		s->lbar = NULL;
-		s->rbar = NULL;
-		s->sel = NULL;
+		s->lbar = nil;
+		s->rbar = nil;
+		s->sel = nil;
 		init_screen(s);
 		pmap = XCreatePixmap(blz.dpy, blz.root, s->rect.width, s->rect.height,
 				DefaultDepth(blz.dpy, blz.screen));

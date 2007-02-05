@@ -14,7 +14,7 @@ static char *Ebadcmd = "bad command",
 
 Client *
 sel_client() {
-	return screen->sel && screen->sel->sel->sel ? screen->sel->sel->sel->client : NULL;
+	return screen->sel && screen->sel->sel->sel ? screen->sel->sel->sel->client : nil;
 }
 
 Client *
@@ -28,7 +28,7 @@ Frame *
 frame_of_win(Window w) {
 	Client *c;
 	for(c=client; c && c->framewin != w; c=c->next);
-	return c ? c->frame : NULL;
+	return c ? c->frame : nil;
 }
 
 static void
@@ -36,7 +36,7 @@ update_client_name(Client *c) {
 	XTextProperty name;
 	XClassHint ch;
 	int n;
-	char **list = NULL;
+	char **list = nil;
 
 	name.nitems = 0;
 	c->name[0] = 0;
@@ -107,7 +107,7 @@ create_client(Window w, XWindowAttributes *wa) {
 	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
 	XSync(blz.dpy, False);
 	for(t=&client; *t; t=&(*t)->next);
-	c->next = *t; /* *t == NULL */
+	c->next = *t; /* *t == nil */
 	*t = c;
 	write_event("CreateClient 0x%x\n", c->win);
 	return c;
@@ -372,7 +372,7 @@ dummy_error_handler(Display *dpy, XErrorEvent *error) {
 
 void
 destroy_client(Client *c) {
-	char *dummy = NULL;
+	char *dummy = nil;
 	Client **tc;
 
 	XGrabServer(blz.dpy);
@@ -543,7 +543,7 @@ move_client(Client *c, char *arg) {
 	new.x += x;
 	new.y += y;
 	if(!f->area->floating)
-		resize_column(f->client, &new, NULL);
+		resize_column(f->client, &new, nil);
 	else
 		resize_client(f->client, &new, False);
 }
@@ -559,7 +559,7 @@ size_client(Client *c, char *arg) {
 	new.width += w;
 	new.height += h;
 	if(!f->area->floating)
-		resize_column(f->client, &new, NULL);
+		resize_column(f->client, &new, nil);
 	else
 		resize_client(f->client, &new, False);
 }
@@ -634,7 +634,7 @@ send_client(Frame *f, char *arg) {
 		focus_client(f->client, False);
 		focus_view(screen, f->view);
 	}
-	return NULL;
+	return nil;
 }
 
 /* convenience function */
@@ -701,7 +701,7 @@ apply_tags(Client *c, const char *tags) {
 		if(!strncmp(toks[i], "~", 2))
 			c->floating = True;
 		else if(!strncmp(toks[i], "!", 2))
-			toks[j++] = view ? screen->sel->name : "NULL";
+			toks[j++] = view ? screen->sel->name : "nil";
 		else if(strncmp(toks[i], "sel", 4)
 				&& strncmp(toks[i], ".", 2)
 				&& strncmp(toks[i], "..", 3))
@@ -720,7 +720,7 @@ apply_tags(Client *c, const char *tags) {
 			len -= strlen(c->tags);
 			toks[n++] = toks[i];
 		}
-	toks[n] = NULL;
+	toks[n] = nil;
 	update_client_views(c, toks);
 	XChangeProperty(blz.dpy, c->win, tags_atom, XA_STRING, 8,
 			PropModeReplace, (unsigned char *)c->tags, strlen(c->tags));
@@ -733,7 +733,7 @@ match_tags(Client *c, const char *prop) {
 
 	for(r=def.tagrules.rule; r; r=r->next)
 		if(!regexec(&r->regex, prop, 1, &tmpregm, 0))
-			if(!strlen(c->tags) || !strncmp(c->tags, "NULL", 4))
+			if(!strlen(c->tags) || !strncmp(c->tags, "nil", 4))
 				apply_tags(c, r->value);
 }
 
@@ -742,14 +742,14 @@ apply_rules(Client *c) {
 	if(def.tagrules.string)
 		match_tags(c, c->props);
 	if(!strlen(c->tags))
-		apply_tags(c, "NULL");
+		apply_tags(c, "nil");
 }
 
 char *
 message_client(Client *c, char *message) {
 	if(!strncmp(message, "kill", 5)) {
 		kill_client(c);
-		return NULL;
+		return nil;
 	}
 	return Ebadcmd;
 }

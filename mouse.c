@@ -105,7 +105,7 @@ BlitzAlign
 snap_rect(XRectangle *rects, int num, XRectangle *current,
           BlitzAlign *mask, int snap)
 {
-	SnapArgs a = { rects, num, 0, 0, 0, 0, *mask, NULL };
+	SnapArgs a = { rects, num, 0, 0, 0, 0, *mask, nil };
 	int dx = snap + 1, dy = snap + 1;
 	BlitzAlign ret;
 
@@ -171,7 +171,7 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 	Frame *f = c->sel;
 	Bool floating = f->area->floating;
 	int snap = floating ? screen->rect.height / 66 : 0;
-	XRectangle *rects = floating ? rects_of_view(f->area->view, &num) : NULL;
+	XRectangle *rects = floating ? rects_of_view(f->area->view, &num) : nil;
 	XRectangle frect = f->rect, ofrect;
 	XRectangle origin = frect;
 	XPoint pt;
@@ -215,7 +215,7 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 			pt.x = pt_x;
 			pt.y = pt_y;
 			if(!floating)
-				resize_column(c, &frect, (align == CENTER) ? &pt : NULL);
+				resize_column(c, &frect, (align == CENTER) ? &pt : nil);
 			else
 				resize_client(c, &frect, False);
 

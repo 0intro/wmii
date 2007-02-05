@@ -9,7 +9,7 @@
 
 Client *        
 sel_client_of_area(Area *a) {               
-	return a && a->sel ? a->sel->client : NULL;
+	return a && a->sel ? a->sel->client : nil;
 }
 
 Area *
@@ -32,7 +32,7 @@ create_area(View *v, Area *pos, unsigned int w) {
 	if(w < min_width)
 		w = min_width;
 	if(col_num && col_num * min_width + w > screen->rect.width)
-		return NULL;
+		return nil;
 	if(area_num > 1)
 		scale_view(v, screen->rect.width - w);
 	a = ixp_emallocz(sizeof(Area));
@@ -42,8 +42,8 @@ create_area(View *v, Area *pos, unsigned int w) {
 	a->rect.height = screen->rect.height - screen->brect.height;
 	a->mode = def.colmode;
 	a->rect.width = w;
-	a->frame = NULL;
-	a->sel = NULL;
+	a->frame = nil;
+	a->sel = nil;
 	a->next = *p;
 	*p = a;
 	v->sel = a;
@@ -64,10 +64,10 @@ destroy_area(Area *a) {
 	unsigned int i;
 	assert(!a->frame && "wmiiwm: fatal, destroying non-empty area");
 	if(v->revert == a)
-		v->revert = NULL;
+		v->revert = nil;
 	for(c=client; c; c=c->next)
 		if(c->revert == a)
-			c->revert = NULL;
+			c->revert = nil;
 	for(ta=v->area, i = 0; ta && ta->next != a; ta=ta->next, i++);
 	if(ta) {
 		ta->next = a->next;
@@ -83,7 +83,7 @@ destroy_area(Area *a) {
 static void
 place_client(Area *a, Client *c) {
 	static unsigned int mx, my;
-	static Bool *field = NULL;
+	static Bool *field = nil;
 	Frame *fr;
 	Bool fit = False;
 	BlitzAlign align = CENTER;
@@ -218,7 +218,7 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 
 void
 detach_from_area(Area *a, Frame *f) {
-	Frame **ft, *pr = NULL;
+	Frame **ft, *pr = nil;
 	Client *c = f->client;
 	View *v = a->view;
 	Area *ta;
@@ -305,7 +305,7 @@ select_area(Area *a, char *arg) {
 		if(v == screen->sel)
 			focus_view(screen, v);
 		flush_masked_events(EnterWindowMask);
-		return NULL;
+		return nil;
 	}
 	else if(!strncmp(arg, "down", 5)) {
 		if(!f)
@@ -316,7 +316,7 @@ select_area(Area *a, char *arg) {
 		if(v == screen->sel)
 			focus_view(screen, v);
 		flush_masked_events(EnterWindowMask);
-		return NULL;
+		return nil;
 	}
 	else {
 		if(sscanf(arg, "%d", &i) != 1)
@@ -333,5 +333,5 @@ select_area(Area *a, char *arg) {
 	}
 	if(a->floating != new->floating)
 		v->revert = a;
-	return NULL;
+	return nil;
 }

@@ -27,7 +27,7 @@ str_of_column_mode(int mode) {
 	case Colmax: return "max"; break;
 	default: break;
 	}
-	return NULL;
+	return nil;
 }
 
 int
@@ -216,9 +216,9 @@ match_horiz(Area *a, XRectangle *r) {
 
 static void
 drop_resize(Frame *f, XRectangle *new) {
-	Area *west = NULL, *east = NULL, *a = f->area;
+	Area *west = nil, *east = nil, *a = f->area;
 	View *v = a->view;
-	Frame *north = NULL, *south = NULL;
+	Frame *north = nil, *south = nil;
 	unsigned int min_height = 2 * labelh(&def.font);
 	unsigned int min_width = screen->rect.width/NCOL;
 
@@ -317,10 +317,10 @@ static Frame *
 frame_of_point(XPoint *pt) {
 	Area *a;
 	View *v = screen->sel;
-	Frame *f = NULL;
+	Frame *f = nil;
 
 	if(!v)
-		return NULL;
+		return nil;
 	for(a=v->area->next; a && !ispointinrect(pt->x, pt->y, &a->rect);
 		a=a->next);
 	if(a)
@@ -340,7 +340,7 @@ drop_move(Frame *f, XRectangle *nrect) {
 
 	v = f->view;
 	high = 0;
-	a_high = NULL;
+	a_high = nil;
 
 	for(a = v->area->next; a; a = a->next) {
 		arect = &a->rect;
@@ -414,7 +414,7 @@ drop_move_old(Frame *f, XRectangle *new, XPoint *pt) {
 	Frame *ft;
 	View *v;
 
-	tgt = NULL;
+	tgt = nil;
 	src = f->area;
 	v = src->view;
 	if(!pt)
@@ -479,7 +479,7 @@ Area *
 new_column(View *v, Area *pos, unsigned int w) {
 	Area *a = create_area(v, pos, w);
 	if(!a)
-		return NULL;
+		return nil;
 	arrange_view(v);
 	return a;
 }

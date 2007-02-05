@@ -156,7 +156,7 @@ emulate_key_press(unsigned long mod, KeyCode key) {
 
 static Key *
 match_keys(Key *k, unsigned long mod, KeyCode keycode, Bool seq) {
-	Key *ret = NULL, *next;
+	Key *ret = nil, *next;
 
 	for(next = k->tnext; k; (k=next) && (next=k->tnext)) {
 		if(seq)

@@ -39,7 +39,7 @@ assign_sel_view(View *v) {
 
 Client *
 sel_client_of_view(View *v) {
-	return v->sel && v->sel->sel ? v->sel->sel->client : NULL;
+	return v->sel && v->sel->sel ? v->sel->sel->client : nil;
 }
 
 View *
@@ -62,7 +62,7 @@ create_view(const char *name) {
 
 	v->id = id++;
 	strncpy(v->name, name, sizeof(v->name));
-	create_area(v, NULL, 0);
+	create_area(v, nil, 0);
 	create_area(v, v->area, 0);
 	v->area->floating = True;
 	for(i=&view; *i; i=&(*i)->next)
@@ -150,7 +150,7 @@ attach_to_view(View *v, Frame *f) {
 	Client *c = f->client;
 	unsigned int i;
 
-	c->revert = NULL;
+	c->revert = nil;
 	a = v->sel;
 	if(c->trans || c->floating || c->fixedsize
 		|| (c->rect.width == screen->rect.width && c->rect.height == screen->rect.height))
@@ -171,7 +171,7 @@ restack_view(View *v) {
 	Frame *f;
 	Client *c;
 	unsigned int n, i;
-	static Window *wins = NULL;
+	static Window *wins = nil;
 	static unsigned int winssz = 0;
 
 	i = 0;
@@ -326,7 +326,7 @@ client_of_message(View *v, char *message, unsigned int *next) {
 	if(!id)
 		sscanf(message, "%lu %n", &id, next);
 	if(!id)
-		return NULL;
+		return nil;
     for(c=client; c && c->win!=id; c=c->next);
 	return c;
 }
@@ -343,7 +343,7 @@ area_of_message(View *v, char *message, unsigned int *next) {
 	if(!strncmp(message, "~ ", 2))
 		return v->area;
 	if(1 != sscanf(message, "%d %n", &i, next) || i == 0)
-		return NULL;
+		return nil;
 	for(a=v->area; i && a; a=a->next, i--);
 	return a;
 }
@@ -380,7 +380,7 @@ message_view(View *v, char *message) {
 		if(v == screen->sel)
 			focus_view(screen, v);
 		draw_frames();
-		return NULL;
+		return nil;
 	}
 	return Ebadvalue;
 }
@@ -392,8 +392,8 @@ update_views() {
 
 	for(v=view; v; v=v->next)
 		update_frame_selectors(v);
-	if(old && !strncmp(old->name, "NULL", 4))
-		old = NULL;
+	if(old && !strncmp(old->name, "nil", 4))
+		old = nil;
 	for((v=view) && (n=v->next); v; (v=n) && (n=v->next))
 		if((v != old) && is_empty(v))
 			destroy_view(v);

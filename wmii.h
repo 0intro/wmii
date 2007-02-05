@@ -10,6 +10,8 @@
 
 #include <ixp.h>
 
+#define nil	((void*)0)
+
 #define BLITZ_FONT		"-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*"
 #define BLITZ_FOCUSCOLORS		"#ffffff #335577 #447799"
 #define BLITZ_SELCOLORS		"#444444 #bbbbbb #556088"

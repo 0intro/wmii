@@ -10,7 +10,7 @@ unsigned int
 textwidth_l(BlitzFont *font, char *text, unsigned int len) {
 	if(font->set) {
 		XRectangle r;
-		XmbTextExtents(font->set, text, len, NULL, &r);
+		XmbTextExtents(font->set, text, len, nil, &r);
 		return r.width;
 	}
 	return XTextWidth(font->xfont, text, len);
@@ -24,7 +24,7 @@ textwidth(BlitzFont *font, char *text) {
 void
 loadfont(Blitz *blitz, BlitzFont *font) {
 	char *fontname = font->fontstr;
-	char **missing = NULL, *def = "?";
+	char **missing = nil, *def = "?";
 	int n;
 
 	if(font->set)
@@ -54,7 +54,7 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 	else {
 		if(font->xfont)
 			XFreeFont(blitz->dpy, font->xfont);
-		font->xfont = NULL;
+		font->xfont = nil;
 		font->xfont = XLoadQueryFont(blitz->dpy, fontname);
 		if (!font->xfont) {
 			fprintf(stderr, "%s", "wmii: error, cannot load 'fixed' font\n");
@@ -224,5 +224,5 @@ parse_colors(char **buf, int *buflen, BlitzColor *col) {
 		(*buf)++;
 		(*buflen)--;
 	}
-	return NULL;
+	return nil;
 }

@@ -70,8 +70,8 @@ static char
 
 /* Global Vars */
 /***************/
-FileId *free_fileid = NULL;
-P9Req *pending_event_reads = NULL;
+FileId *free_fileid = nil;
+P9Req *pending_event_reads = nil;
 FidLink *pending_event_fids;
 P9Srv p9srv = {
 	.open=	fs_open,
@@ -100,25 +100,25 @@ dirtab_root[]=	 {{".",		P9QTDIR,	FsRoot,		0500|P9DMDIR },
 		  {"event",	P9QTFILE,	FsFEvent,	0600 },
 		  {"keys",	P9QTFILE,	FsFKeys,	0600 },
 		  {"tagrules",	P9QTFILE,	FsFTagRules,	0600 }, 
-		  {NULL}},
+		  {nil}},
 dirtab_clients[]={{".",		P9QTDIR,	FsDClients,	0500|P9DMDIR },
 		  {"",		P9QTDIR,	FsDClient,	0500|P9DMDIR },
-		  {NULL}},
+		  {nil}},
 dirtab_client[]= {{".",		P9QTDIR,	FsDClient,	0500|P9DMDIR },
 		  {"ctl",	P9QTAPPEND,	FsFCctl,	0600|P9DMAPPEND },
 		  {"tags",	P9QTFILE,	FsFCtags,	0600 },
 		  {"props",	P9QTFILE,	FsFprops,	0400 },
-		  {NULL}},
+		  {nil}},
 dirtab_bars[]=	 {{".",		P9QTDIR,	FsDBars,	0700|P9DMDIR },
 		  {"",		P9QTFILE,	FsFBar,		0600 },
-		  {NULL}},
+		  {nil}},
 dirtab_tags[]=	 {{".",		P9QTDIR,	FsDTags,	0500|P9DMDIR },
 		  {"",		P9QTDIR,	FsDTag,		0500|P9DMDIR },
-		  {NULL}},
+		  {nil}},
 dirtab_tag[]=	 {{".",		P9QTDIR,	FsDTag,		0500|P9DMDIR },
 		  {"ctl",	P9QTAPPEND,	FsFTctl,	0600|P9DMAPPEND },
 		  {"index",	P9QTFILE,	FsFTindex,	0400 },
-		  {NULL}};
+		  {nil}};
 /* Writing the lists separately and using an array of their references
  * removes the need for casting and allows for C90 conformance,
  * since otherwise we would need to use compound literals */
@@ -151,7 +151,7 @@ get_file() {
 	temp = free_fileid;
 	free_fileid = temp->next;
 	temp->nref = 1;
-	temp->next = NULL;
+	temp->next = nil;
 	return temp;
 }
 
@@ -279,7 +279,7 @@ message_root(char *message)
 	}
 	else
 		return Ebadcmd;
-	return NULL;
+	return nil;
 }
 
 char *
@@ -303,8 +303,8 @@ respond_event(P9Req *r) {
 	if(f->content.buf) {
 		r->ofcall.data.rread.data = (void *)f->content.buf;
 		r->ofcall.data.rread.count = strlen(f->content.buf);
-		respond(r, NULL);
-		f->content.buf = NULL;
+		respond(r, nil);
+		f->content.buf = nil;
 	}else{
 		r->aux = pending_event_reads;
 		pending_event_reads = r;
@@ -345,8 +345,8 @@ dostat(Stat *s, unsigned int len, FileId *f) {
 	s->qid.version = 0;
 	s->qid.type = f->tab.qtype;
 	s->mode = f->tab.perm;
-	s->atime = time(NULL);
-	s->mtime = time(NULL);
+	s->atime = time(nil);
+	s->mtime = time(nil);
 	s->length = len;
 	s->name = f->tab.name;
 	s->uid = user;
@@ -369,10 +369,10 @@ lookup_file(FileId *parent, char *name)
 	unsigned int id;
 
 	if(!(parent->tab.perm & P9DMDIR))
-		return NULL;
+		return nil;
 	dir = dirtab[parent->tab.type];
 	last = &ret;
-	ret = NULL;
+	ret = nil;
 	for(; dir->name; dir++) {
 		/* Dynamic dirs */
 		if(!*dir->name) { /* strlen(dir->name) == 0 */
@@ -479,7 +479,7 @@ lookup_file(FileId *parent, char *name)
 		continue;
 	}
 LastItem:
-	*last = NULL;
+	*last = nil;
 	return ret;
 }
 
@@ -490,12 +490,12 @@ fs_attach(P9Req *r) {
 	FileId *f = get_file();
 	f->tab = dirtab[FsRoot][0];
 	f->tab.name = ixp_estrdup("/");
-	f->content.ref = NULL; /* shut up valgrind */
+	f->content.ref = nil; /* shut up valgrind */
 	r->fid->aux = f;
 	r->fid->qid.type = f->tab.qtype;
 	r->fid->qid.path = QID(f->tab.type, 0);
 	r->ofcall.data.rattach.qid = r->fid->qid;
-	respond(r, NULL);
+	respond(r, nil);
 }
 
 void
@@ -547,7 +547,7 @@ fs_walk(P9Req *r) {
 	}
 	r->newfid->aux = f;
 	r->ofcall.data.rwalk.nwqid = i;
-	respond(r, NULL);
+	respond(r, nil);
 }
 
 unsigned int
@@ -578,7 +578,7 @@ fs_stat(P9Req *r) {
 	buf = ixp_emallocz(size);
 	r->ofcall.data.rstat.stat = buf;
 	ixp_pack_stat(&buf, &size, &s);
-	respond(r, NULL);
+	respond(r, nil);
 }
 
 void
@@ -596,7 +596,7 @@ fs_read(P9Req *r) {
 		size = r->ifcall.data.tread.count;
 		buf = ixp_emallocz(size);
 		r->ofcall.data.rread.data = buf;
-		tf = f = lookup_file(f, NULL);
+		tf = f = lookup_file(f, nil);
 		/* Note: f->tab.name == "." so we skip it */
 		for(f=f->next; f; f=f->next) {
 			dostat(&s, fs_size(f), f);
@@ -613,57 +613,57 @@ fs_read(P9Req *r) {
 			free_file(f);
 		}
 		r->ofcall.data.rread.count = r->ifcall.data.tread.count - size;
-		respond(r, NULL);
+		respond(r, nil);
 		return;
 	}
 	else{
 		switch(f->tab.type) {
 		case FsFprops:
 			write_buf(r, (void *)f->content.client->props, strlen(f->content.client->props));
-			respond(r, NULL);
+			respond(r, nil);
 			return;
 		case FsFColRules:
 		case FsFTagRules:
 			write_buf(r, (void *)f->content.rule->string, f->content.rule->size);
-			respond(r, NULL);
+			respond(r, nil);
 			return;
 		case FsFKeys:
 			write_buf(r, (void *)def.keys, def.keyssz);
-			respond(r, NULL);
+			respond(r, nil);
 			return;
 		case FsFCtags:
 			write_buf(r, (void *)f->content.client->tags, strlen(f->content.client->tags));
-			respond(r, NULL);
+			respond(r, nil);
 			return;
 		case FsFTctl:
 			write_buf(r, (void *)f->content.view->name, strlen(f->content.view->name));
-			respond(r, NULL);
+			respond(r, nil);
 			return;
 		case FsFBar:
 			write_buf(r, (void *)f->content.bar->buf, strlen(f->content.bar->buf));
-			respond(r, NULL);
+			respond(r, nil);
 			return;
 		case FsFRctl:
 			buf = read_root_ctl();
 			write_buf(r, buf, strlen(buf));
-			respond(r, NULL);
+			respond(r, nil);
 			return;
 		case FsFCctl:
 			if(r->ifcall.data.tread.offset) {
-				respond(r, NULL);
+				respond(r, nil);
 				return;
 			}
 			r->ofcall.data.rread.data = ixp_emallocz(16);
 			n = snprintf(r->ofcall.data.rread.data, 16, "0x%x", (unsigned int)f->index);
 			assert(n >= 0);
 			r->ofcall.data.rread.count = n;
-			respond(r, NULL);
+			respond(r, nil);
 			return;
 		case FsFTindex:
 			buf = (char *)view_index(f->content.view);
 			n = strlen(buf);
 			write_buf(r, (void *)buf, n);
-			respond(r, NULL);
+			respond(r, nil);
 			return;
 		case FsFEvent:
 			respond_event(r);
@@ -679,11 +679,11 @@ fs_read(P9Req *r) {
 void
 fs_write(P9Req *r) {
 	FileId *f;
-	char *errstr = NULL;
+	char *errstr = nil;
 	unsigned int i;
 
 	if(r->ifcall.data.twrite.count == 0) {
-		respond(r, NULL);
+		respond(r, nil);
 		return;
 	}
 	f = r->fid->aux;
@@ -691,25 +691,25 @@ fs_write(P9Req *r) {
 	case FsFColRules:
 	case FsFTagRules:
 		write_to_buf(r, &f->content.rule->string, &f->content.rule->size, 0);
-		respond(r, NULL);
+		respond(r, nil);
 		return;
 	case FsFKeys:
 		write_to_buf(r, &def.keys, &def.keyssz, 0);
-		respond(r, NULL);
+		respond(r, nil);
 		return;
 	case FsFCtags:
 		data_to_cstring(r);
 		i=strlen(f->content.client->tags);
 		write_to_buf(r, &f->content.client->tags, &i, 255);
 		r->ofcall.data.rwrite.count = i- r->ifcall.data.twrite.offset;
-		respond(r, NULL);
+		respond(r, nil);
 		return;
 	case FsFBar:
 		/* XXX: This should validate after each write */
 		i = strlen(f->content.bar->buf);
 		write_to_buf(r, &f->content.bar->buf, &i, 279);
 		r->ofcall.data.rwrite.count = i - r->ifcall.data.twrite.offset;
-		respond(r, NULL);
+		respond(r, nil);
 		return;
 	case FsFCctl:
 		data_to_cstring(r);
@@ -718,7 +718,7 @@ fs_write(P9Req *r) {
 			return;
 		}
 		r->ofcall.data.rwrite.count = r->ifcall.data.twrite.count;
-		respond(r, NULL);
+		respond(r, nil);
 		return;
 	case FsFTctl:
 		data_to_cstring(r);
@@ -727,7 +727,7 @@ fs_write(P9Req *r) {
 			return;
 		}
 		r->ofcall.data.rwrite.count = r->ifcall.data.twrite.count;
-		respond(r, NULL);
+		respond(r, nil);
 		return;
 	case FsFRctl:
 		data_to_cstring(r);
@@ -746,7 +746,7 @@ fs_write(P9Req *r) {
 			return;
 		}
 		r->ofcall.data.rwrite.count = r->ifcall.data.twrite.count;
-		respond(r, NULL);
+		respond(r, nil);
 		return;
 	case FsFEvent:
 		if(r->ifcall.data.twrite.data[r->ifcall.data.twrite.count-1] == '\n')
@@ -754,7 +754,7 @@ fs_write(P9Req *r) {
 		else
 			write_event("%.*s\n", r->ifcall.data.twrite.count, r->ifcall.data.twrite.data);
 		r->ofcall.data.rwrite.count = r->ifcall.data.twrite.count;
-		respond(r, NULL);
+		respond(r, nil);
 		return;
 	}
 	/* This is an assert because it should this should not be called if
@@ -791,7 +791,7 @@ fs_open(P9Req *r) {
 		respond(r, Enoperm);
 		return;
 	}
-	respond(r, NULL);
+	respond(r, nil);
 }
 
 void
@@ -818,7 +818,7 @@ fs_create(P9Req *r) {
 		r->ofcall.data.rcreate.qid.path = QID(f->tab.type, f->id);
 		f->next = r->fid->aux;
 		r->fid->aux = f;
-		respond(r, NULL);
+		respond(r, nil);
 		break;
 	}
 }
@@ -835,7 +835,7 @@ fs_remove(P9Req *r) {
 	case FsFBar:
 		destroy_bar(f->next->content.bar_p, f->content.bar);
 		draw_bar(screen);
-		respond(r, NULL);
+		respond(r, nil);
 		break;
 	}
 }
@@ -887,7 +887,7 @@ fs_clunk(P9Req *r) {
 			}
 		break;
 	}
-	respond(r, NULL);
+	respond(r, nil);
 }
 
 void
@@ -900,7 +900,7 @@ fs_flush(P9Req *r) {
 			respond(r->oldreq, Einterrupted);
 			break;
 		}
-	respond(r, NULL);
+	respond(r, nil);
 }
 
 void
