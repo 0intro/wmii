@@ -301,7 +301,7 @@ extern void draw_tile(BlitzBrush *b);
 extern void draw_rect(BlitzBrush *b);
 
 extern void drawbg(Display *dpy, Drawable drawable, GC gc,
-		XRectangle rect, BlitzColor c, Bool fill, Bool border);
+		XRectangle *rect, BlitzColor c, Bool fill, Bool border);
 extern void drawcursor(Display *dpy, Drawable drawable, GC gc,
 				int x, int y, unsigned int h, BlitzColor c);
 extern unsigned int textwidth(BlitzFont *font, char *text);

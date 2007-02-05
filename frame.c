@@ -69,10 +69,10 @@ swap_frames(Frame *fa, Frame *fb) {
 	if(fa == fb) return;
 
 	a = fa->area;
-	for(fp_a = &a->frame; *fp_a; fp_a=&(*fp_a)->anext)
+	for(fp_a = &a->frame; *fp_a; fp_a = &(*fp_a)->anext)
 		if(*fp_a == fa) break;
 	a = fb->area;
-	for(fp_b = &a->frame; *fp_b; fp_b=&(*fp_b)->anext)
+	for(fp_b = &a->frame; *fp_b; fp_b = &(*fp_b)->anext)
 		if(*fp_b == fb) break;
 
 	if(fa->anext == fb) {
@@ -146,18 +146,21 @@ draw_frames() {
 void
 check_frame_constraints(XRectangle *rect) {
 	int max_height;
-	max_height = screen->rect.height - labelh(&def.font);
+	int barheight;
+
+	barheight = screen->brect.height;
+	max_height = screen->rect.height - barheight;
 
 	if(rect->height > max_height)
 		rect->height = max_height;
 	if(rect->width > screen->rect.width)
 		rect->width = screen->rect.width;
-	if(rect->x + screen->brect.height > screen->rect.width)
-		rect->x = screen->rect.width - screen->brect.height;
-	if(rect->y + screen->brect.height > max_height)
-		rect->y = max_height - screen->brect.height;
-	if(rect->x + rect->width < screen->brect.height)
-		rect->x = screen->brect.height - rect->width;
-	if(rect->y + rect->height < screen->brect.height)
-		rect->y = screen->brect.height - rect->height;
+	if(rect->x + barheight > screen->rect.width)
+		rect->x = screen->rect.width - barheight;
+	if(rect->y + barheight > max_height)
+		rect->y = max_height - barheight;
+	if(rect->x + rect->width < barheight)
+		rect->x = barheight - rect->width;
+	if(rect->y + rect->height < barheight)
+		rect->y = barheight - rect->height;
 }
