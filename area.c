@@ -7,7 +7,14 @@
 #include <stdio.h>
 #include <string.h>
 
-Client *        
+static int
+max(int a, int b) {
+	if(a > b)
+		return a;
+	return b;
+}
+
+Client *
 sel_client_of_area(Area *a) {               
 	return a && a->sel ? a->sel->client : nil;
 }
@@ -28,7 +35,7 @@ create_area(View *v, Area *pos, unsigned int w) {
 		area_num++, i++;
 	for(; a; a = a->next) area_num++;
 
-	col_num = area_num ? area_num - 1 : 0;
+	col_num = max((area_num - 1), 0);
 	if(!w) {
 		if(area_num)
 			w = screen->rect.width / (col_num + 1);
@@ -39,7 +46,7 @@ create_area(View *v, Area *pos, unsigned int w) {
 		w = min_width;
 	if(col_num && col_num * min_width + w > screen->rect.width)
 		return nil;
-	if(i > 1)
+	if(i)
 		scale_view(v, screen->rect.width - w);
 
 	a = ixp_emallocz(sizeof(Area));
