@@ -143,20 +143,167 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 
 static void
 draw_xor_border(XRectangle *r) {
-	XRectangle xor = *r;
+	XRectangle xor;
 
+	xor = *r;
 	xor.x += 2;
 	xor.y += 2;
 	xor.width = xor.width > 4 ? xor.width - 4 : 0;
 	xor.height = xor.height > 4 ? xor.height - 4 : 0;
+
 	XSetLineAttributes(blz.dpy, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
-	XDrawLine(blz.dpy, blz.root, xorgc, xor.x + 2, xor.y +  xor.height / 2,
+	if(xor.height > 4 && xor.width > 2)
+		XDrawLine(blz.dpy, blz.root, xorgc, xor.x + 2, xor.y +  xor.height / 2,
 			xor.x + xor.width - 2, xor.y + xor.height / 2);
-	XDrawLine(blz.dpy, blz.root, xorgc, xor.x + xor.width / 2, xor.y + 2,
+	if(xor.width > 4 && xor.height > 2)
+		XDrawLine(blz.dpy, blz.root, xorgc, xor.x + xor.width / 2, xor.y + 2,
 			xor.x + xor.width / 2, xor.y + xor.height - 2);
 	XSetLineAttributes(blz.dpy, xorgc, 4, LineSolid, CapNotLast, JoinMiter);
 	XDrawRectangles(blz.dpy, blz.root, xorgc, &xor, 1);
 	XSync(blz.dpy, False);
+}
+
+static void
+find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
+	View *v;
+	Area *a, *a_prev;
+	Frame *f, *f_close;
+
+	v = frame->view;
+	rect->y = 0;
+	rect->height = screen->rect.height - screen->brect.height;
+
+	a_prev = v->area;
+	for(a = a_prev->next; a && a->next; a = a->next) {
+		if(x < (a->rect.x + a->rect.width))
+			break;
+		a_prev = a;
+	}
+	if(x < (a->rect.x + labelh(&def.font))) {
+		rect->x = a->rect.x - 4;
+		rect->width = 8;
+
+		if(do_move) {
+			a = new_column(v, a_prev, 0);
+			send_to_area(a, frame->area, frame);
+			focus(frame->client, False);
+		}
+		return;
+	}
+	if(x > (a->rect.x + a->rect.width - labelh(&def.font))) {
+		rect->x = a->rect.x + a->rect.width - 4;
+		rect->width = 8;
+
+		if(do_move) {
+			a = new_column(v, a, 0);
+			send_to_area(a, frame->area, frame);
+			focus(frame->client, False);
+		}
+		return;
+	}
+
+	rect->x = a->rect.x;
+	rect->width = a->rect.width;
+
+	f_close = nil;
+	for(f = a->frame; f; f = f->anext) {
+		if(y < f->rect.y)
+			break;
+		if(y < (f->rect.y + f->rect.height))
+			break;
+		f_close = f;
+	}
+	if(f == nil)
+		f = f_close;
+	if(y < (f->rect.y + labelh(&def.font))) {
+		rect->y = f->rect.y;
+		rect->height = 2;
+		if(f_close) {
+			rect->y = (f_close->rect.y + f_close->rect.height);
+			rect->height = f->rect.y - rect->y;
+		}
+		if(do_move) {
+			if(a != frame->area)
+				send_to_area(a, frame->area, frame);
+			remove_frame(frame);
+			insert_frame(f, frame, True);
+			focus(frame->client, True);
+		}
+		return;
+	}
+	if(y > (f->rect.y + f->rect.height - labelh(&def.font))) {
+		rect->y = f->rect.y + f->rect.height;
+		rect->height = (screen->rect.height - labelh(&def.font) - rect->y);
+		if(f->anext)
+			rect->height = (f->anext->rect.y - rect->y);
+		if(do_move) {
+			if(a != frame->area)
+				send_to_area(a, frame->area, frame);
+			remove_frame(frame);
+			insert_frame(f, frame, False);
+			focus(frame->client, True);
+		}
+		return;
+	}
+	*rect = f->rect;
+	if(do_move) {
+		swap_frames(frame, f);
+		focus(frame->client, False);
+	}
+}
+
+static void
+do_managed_move(Client *c) {
+	XRectangle frect, ofrect;
+	Window dummy;
+	XEvent ev;
+	Frame *f;
+	unsigned int di;
+	int x, y, i;
+
+	focus(c, False);
+	f = c->frame;
+
+	XSync(blz.dpy, False);
+	if(XGrabPointer(blz.dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
+			None, cursor[CurMove], CurrentTime) != GrabSuccess)
+		return;
+	XGrabServer(blz.dpy);
+
+	XQueryPointer(blz.dpy, blz.root, &dummy, &dummy, &i, &i, &x, &y, &di);
+
+	find_droppoint(f, x, y, &frect, False);
+	draw_xor_border(&frect);
+	for(;;) {
+		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
+		switch (ev.type) {
+		case ButtonRelease:
+			draw_xor_border(&frect);
+
+			find_droppoint(f, x, y, &frect, True);
+
+			XUngrabServer(blz.dpy);
+			XUngrabPointer(blz.dpy, CurrentTime);
+			XSync(blz.dpy, False);
+			return;
+		case MotionNotify:
+			ofrect = frect;
+			x = ev.xmotion.x_root;
+			y = ev.xmotion.y_root;
+
+			find_droppoint(f, x, y, &frect, False);
+
+			if(memcmp(&frect, &ofrect, sizeof(frect))) {
+				draw_xor_border(&ofrect);
+				draw_xor_border(&frect);
+			}
+			break;
+		case Expose:
+			(handler[Expose])(&ev);
+			break;
+		default: break;
+		}
+	}
 }
 
 void
@@ -175,6 +322,9 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 	XRectangle frect = f->rect, ofrect;
 	XRectangle origin = frect;
 	XPoint pt;
+
+	if(align == CENTER && !floating)
+		return do_managed_move(c);
 
 	XQueryPointer(blz.dpy, c->framewin, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
 	rx = (float)pt_x / frect.width;

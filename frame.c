@@ -61,6 +61,35 @@ insert_frame(Frame *pos, Frame *f, Bool before) {
 }
 
 void
+swap_frames(Frame *fa, Frame *fb) {
+	XRectangle trect;
+	Area *a;
+	Frame **fp_a, **fp_b, *ft;
+
+	if(fa == fb) return;
+	a = fa->area;
+	for(fp_a = &a->frame; *fp_a; fp_a=&(*fp_a)->anext)
+		if(*fp_a == fa) break;
+	a = fb->area;
+	for(fp_b = &a->frame; *fp_b; fp_b=&(*fp_b)->anext)
+		if(*fp_b == fb) break;
+
+	*fp_a = fb;
+	*fp_b = fa;
+
+	fb->area = fa->area;
+	fa->area = a;
+
+	ft = fa->anext;
+	fa->anext = fb->anext;
+	fb->anext = ft;
+
+	trect = fa->rect;
+	fa->rect = fb->rect;
+	fb->rect = trect;
+}
+
+void
 update_frame_widget_colors(Frame *f) {
 	if(f->area->sel == f) {
 		if(sel_screen && (f->client == sel_client()))

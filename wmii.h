@@ -318,6 +318,7 @@ extern unsigned int flush_masked_events(long even_mask);
 extern Frame *create_frame(Client *c, View *v);
 extern void remove_frame(Frame *f);
 extern void insert_frame(Frame *pos, Frame *f, Bool before);
+void swap_frames(Frame *fa, Frame *fb);
 extern void draw_frame(Frame *f);
 extern void draw_frames();
 extern void update_frame_widget_colors(Frame *f);
