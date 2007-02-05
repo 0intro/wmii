@@ -16,12 +16,18 @@ Area *
 create_area(View *v, Area *pos, unsigned int w) {
 	static unsigned short id = 1;
 	unsigned int area_num, col_num, i;
-	unsigned int min_width = screen->rect.width/NCOL;
-	Area *ta, *a, **p = pos ? &pos->next : &v->area;
+	unsigned int min_width;
+	Area *ta, *a, **p;
+
+	min_width = screen->rect.width/NCOL;
+	p = pos ? &pos->next : &v->area;
 
 	area_num = 0;
-	for(a = v->area; a && a != *p; a=a->next)
-		area_num++;
+	i = 0;
+	for(a = v->area; a && a != *p; a = a->next)
+		area_num++, i++;
+	for(; a; a = a->next) area_num++;
+
 	col_num = area_num ? area_num - 1 : 0;
 	if(!w) {
 		if(area_num)
@@ -33,8 +39,9 @@ create_area(View *v, Area *pos, unsigned int w) {
 		w = min_width;
 	if(col_num && col_num * min_width + w > screen->rect.width)
 		return nil;
-	if(area_num > 1)
+	if(i > 1)
 		scale_view(v, screen->rect.width - w);
+
 	a = ixp_emallocz(sizeof(Area));
 	a->view = v;
 	a->id = id++;
@@ -47,7 +54,8 @@ create_area(View *v, Area *pos, unsigned int w) {
 	a->next = *p;
 	*p = a;
 	v->sel = a;
-	if(area_num) write_event("CreateColumn %d\n", area_num);
+
+	if(i) write_event("CreateColumn %d\n", i);
 
 	i = 0;
 	for(ta=v->area; ta && ta != v->sel; ta=ta->next) i++;
