@@ -222,16 +222,16 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 			if(rects)
 				free(rects);
 
-			XUngrabServer(blz.dpy);
-			XUngrabPointer(blz.dpy, CurrentTime);
-			XSync(blz.dpy, False);
-
 			XTranslateCoordinates(blz.dpy, c->framewin, blz.root,
 					frect.width * rx, frect.height * ry,
 					&dx, &dy, &dummy);
 			if(dy > screen->brect.y)
 				dy = screen->brect.y - 1;
 			XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, dx, dy);
+
+			XUngrabServer(blz.dpy);
+			XUngrabPointer(blz.dpy, CurrentTime);
+			XSync(blz.dpy, False);
 			return;
 		case MotionNotify:
 			ofrect = frect;

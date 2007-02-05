@@ -5,6 +5,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int
+max(int a, int b) {
+	if(a > b)
+		return a;
+	return b;
+}
+
+static int
+min(int a, int b) {
+	if(a < b)
+		return a;
+	return b;
+}
 
 char *
 str_of_column_mode(int mode) {
@@ -298,6 +311,8 @@ AfterVertical:
 	focus_view(screen, v);
 }
 
+#if 0
+/* I think this will go later */
 static Frame *
 frame_of_point(XPoint *pt) {
 	Area *a;
@@ -313,9 +328,88 @@ frame_of_point(XPoint *pt) {
 			f=f->anext);
 	return f;
 }
+#endif
 
 static void
-drop_move(Frame *f, XRectangle *new, XPoint *pt) {
+drop_move(Frame *f, XRectangle *nrect) {
+	XRectangle *arect, *frect;
+	Frame *ft, *f_high;
+	Area *a, *a_high;
+	View *v;
+	int high, over, before;
+
+	v = f->view;
+	high = 0;
+	a_high = NULL;
+
+	for(a = v->area->next; a; a = a->next) {
+		arect = &a->rect;
+		over = min(arect->x + arect->width, nrect->x + nrect->width) -
+			max(arect->x, nrect->x);
+		if(over > high) {
+			high = over;
+			a_high = a;
+		}
+	}
+	
+	over = (nrect->x + nrect->width) - screen->rect.width;
+	if(over > high) {
+		for(a_high = f->area; a_high->next; a_high = a_high->next);
+		a_high = new_column(v, a_high, 0);
+		send_to_area(a_high, f->area, f);
+		arrange_column(a_high, False);
+		return;
+	}else if(-(nrect->x) > high) {
+		a_high = new_column(v, v->area, 0);
+		send_to_area(a_high, f->area, f);
+		arrange_column(a_high, False);
+		return;
+	}
+
+	if(f->area != a_high)
+		send_to_area(a_high, f->area, f);
+	
+	high = 0;
+	for(ft = f->area->frame; ft; ft = ft->anext) {
+		frect = &ft->rect;
+		over = min(frect->y + frect->height, nrect->y + nrect->height) -
+			max(frect->y, nrect->y);
+		if(over > high) {
+			high = over;
+			f_high = ft;
+		}
+	}
+
+
+	over = (nrect->y + nrect->height) - (screen->rect.height - screen->brect.height);
+	if(over > high) {
+		remove_frame(f);
+		for(ft = f->area->frame; ft->anext; ft = ft->anext);
+		insert_frame(ft, f, False);
+		focus(f->client, False);
+		return;
+	}else if(-(nrect->y) > high) {
+		remove_frame(f);
+		insert_frame(f->area->frame, f, True);
+		focus(f->client, False);
+		return;
+	}
+
+	if(f_high != f) {
+		remove_frame(f);
+		frect = &f_high->rect;
+		before = (frect->y - nrect->y) >
+			((nrect->y + nrect->height) - (frect->y + frect->height)) ?
+			True : False;
+		insert_frame(f_high, f, before);
+		focus(f->client, False);
+	}
+}
+
+#if 0
+/* I'm keeping this around for the moment. Rather than digging through hg later */
+static void
+drop_move_old(Frame *f, XRectangle *new, XPoint *pt) {
 	Area *tgt, *src;
 	Frame *ft;
 	View *v;
@@ -370,12 +464,13 @@ drop_move(Frame *f, XRectangle *new, XPoint *pt) {
 		}
 	}
 }
+#endif
 
 void
 resize_column(Client *c, XRectangle *r, XPoint *pt) {
 	Frame *f = c->sel;
 	if((f->rect.width == r->width) && (f->rect.height == r->height))
-		drop_move(f, r, pt);
+		drop_move(f, r);
 	else
 		drop_resize(f, r);
 }

@@ -15,23 +15,25 @@ sel_client_of_area(Area *a) {
 Area *
 create_area(View *v, Area *pos, unsigned int w) {
 	static unsigned short id = 1;
-	unsigned int area_size, col_size, i;
+	unsigned int area_num, col_num, i;
 	unsigned int min_width = screen->rect.width/NCOL;
 	Area *ta, *a, **p = pos ? &pos->next : &v->area;
 
-	for(i = 0, area_size = 0, a=v->area; a && a != *p; a=a->next, area_size++, i++);
-	col_size = area_size ? area_size - 1 : 0;
+	area_num = 0;
+	for(a = v->area; a && a != *p; a=a->next)
+		area_num++;
+	col_num = area_num ? area_num - 1 : 0;
 	if(!w) {
-		if(col_size)
-			w = screen->rect.width / (col_size + 1);
+		if(area_num)
+			w = screen->rect.width / (col_num + 1);
 		else
 			w = screen->rect.width;
 	}
 	if(w < min_width)
 		w = min_width;
-	if(col_size && col_size * min_width + w > screen->rect.width)
+	if(col_num && col_num * min_width + w > screen->rect.width)
 		return NULL;
-	if(area_size > 1)
+	if(area_num > 1)
 		scale_view(v, screen->rect.width - w);
 	a = ixp_emallocz(sizeof(Area));
 	a->view = v;
@@ -45,8 +47,10 @@ create_area(View *v, Area *pos, unsigned int w) {
 	a->next = *p;
 	*p = a;
 	v->sel = a;
-	if(i) write_event("CreateColumn %d\n", i);
-	for(ta=v->area, i = 0; ta && ta != v->sel; ta=ta->next, i++);
+	if(area_num) write_event("CreateColumn %d\n", area_num);
+
+	i = 0;
+	for(ta=v->area; ta && ta != v->sel; ta=ta->next) i++;
 	if(i) write_event("ColumnFocus %d\n", i);
 	else write_event("FocusFloating\n");
 	return a;

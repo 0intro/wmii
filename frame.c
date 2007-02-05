@@ -37,10 +37,12 @@ create_frame(Client *c, View *v) {
 
 void
 remove_frame(Frame *f) {
-	Area *a = f->area;
-	Frame **ft = &a->frame;
+	Area *a;
+	Frame **ft;
 
-	for(; *ft && *ft != f; ft=&(*ft)->anext);
+	a = f->area;
+	for(ft = &a->frame; *ft; ft=&(*ft)->anext)
+		if(*ft == f) break;
 	*ft = f->anext;
 }
 
