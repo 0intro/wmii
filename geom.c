@@ -2,7 +2,6 @@
  * See LICENSE file for license details.
  */
 #include "wmii.h"
-#include <math.h>
 
 Bool
 ispointinrect(int x, int y, XRectangle * r) {
