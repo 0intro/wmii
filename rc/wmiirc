@@ -55,7 +55,7 @@ EOF
 
 # COLUMN RULES
 wmiir write /colrules <<EOF
-/1/ -> 50+50
+/.*/ -> 58+42
 EOF
 
 # TAGGING RULES
