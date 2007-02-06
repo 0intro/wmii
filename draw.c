@@ -32,7 +32,8 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 	font->set = XCreateFontSet(blitz->dpy, fontname, &missing, &n, &def);
 	if(missing) {
 		while(n--)
-			fprintf(stderr, "wmiiwm: missing fontset: %s\n", missing[n]);
+			fprintf(stderr, "wmiiwm: missing fontset for '%s': %s\n",
+					fontname, missing[n]);
 		XFreeStringList(missing);
 	}
 	if(font->set) {
