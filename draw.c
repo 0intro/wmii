@@ -56,11 +56,15 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 			XFreeFont(blitz->dpy, font->xfont);
 		font->xfont = nil;
 		font->xfont = XLoadQueryFont(blitz->dpy, fontname);
-		if (!font->xfont)
-			font->xfont = XLoadQueryFont(blitz->dpy, "fixed");
 		if (!font->xfont) {
-			fprintf(stderr, "wmii: error, cannot load 'fixed' font\n");
-			exit(1);
+			if(!strncmp(fontname, BLITZ_FONT, sizeof(BLITZ_FONT))) {
+				fprintf(stderr, "wmii: error, cannot load '%s' font\n",
+						BLITZ_FONT);
+				exit(1);
+			}
+			free(font->fontstr);
+			font->fontstr = ixp_estrdup(BLITZ_FONT);
+			return loadfont(blitz, font);
 		}
 		font->ascent = font->xfont->ascent;
 		font->descent = font->xfont->descent;
