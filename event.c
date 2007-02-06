@@ -187,10 +187,8 @@ enternotify(XEvent *e) {
 	if(ev->mode != NotifyNormal || ev->detail == NotifyInferior)
 		return;
 	if((c = client_of_win(ev->window))) {
-		Frame *f = c->sel;
-		Area *a = f->area;
-		if(a->mode == Colmax)
-			c = a->sel->client;
+		if(c->sel->area->mode == Colmax)
+			c = c->sel->area->sel->client;
 		focus(c, False);
 	}
 	else if(ev->window == blz.root) {
