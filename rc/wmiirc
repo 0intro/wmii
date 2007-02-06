@@ -189,8 +189,6 @@ do
 			xwrite /tag/sel/ctl colmode sel stack;;
 		$MODKEY-m)
 			xwrite /tag/sel/ctl colmode sel max;;
-		$MODKEY-f)
-			xwrite /tag/sel/0/sel/geom 0 0 0 0;;
 		$MODKEY-a)
 			`conf_which "$(proglist $ACTIONS_DIRS | $DMENU)"` &;;
 		$MODKEY-p)
