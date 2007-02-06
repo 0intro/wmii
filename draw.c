@@ -40,17 +40,12 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 		XFontSetExtents *font_extents;
 		XFontStruct **xfonts;
 		char **font_names;
-		unsigned int i;
+
 		font->ascent = font->descent = 0;
 		font_extents = XExtentsOfFontSet(font->set);
-		n = XFontsOfFontSet(font->set, &xfonts, &font_names);
-		for(i = 0, font->ascent = 0, font->descent = 0; i < n; i++) {
-			if(font->ascent < (*xfonts)->ascent)
-				font->ascent = (*xfonts)->ascent;
-			if(font->descent < (*xfonts)->descent)
-				font->descent = (*xfonts)->descent;
-			xfonts++;
-		}
+		XFontsOfFontSet(font->set, &xfonts, &font_names);
+		font->ascent = xfonts[0]->ascent;
+		font->descent = xfonts[0]->descent;
 	}
 	else {
 		if(font->xfont)
