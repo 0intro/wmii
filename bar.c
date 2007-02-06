@@ -73,7 +73,7 @@ draw_bar(WMScreen *s) {
 	for(b=s->lbar, nb=2 ;nb; --nb && (b = s->rbar))
 		for(; b; b=b->next) {
 			b->brush.rect.x = b->brush.rect.y = 0;
-			b->brush.rect.width = def.font.height;
+			b->brush.rect.width = def.font.height & ~1;
 			if(b->text && strlen(b->text))
 				b->brush.rect.width += textwidth(b->brush.font, b->text);
 			b->brush.rect.height = s->brect.height;
