@@ -212,7 +212,7 @@ do
 		$MODKEY-Shift-c)
 			xwrite /client/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			xwrite "/client/`wmiir read /client/sel/ctl`/tags" `tagsmenu` &;;
+			xwrite "/client/`wmiir read /client/sel/ctl`/tags" "`tagsmenu`" &;;
 		$MODKEY-Shift-[0-9])
 			xwrite /client/sel/tags "`echo $key | sed 's/.*-//'`";;
 		esac;;
