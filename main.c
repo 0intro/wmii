@@ -25,8 +25,7 @@ static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. G
 
 static void
 usage() {
-	fputs("usage: wmiiwm -a <address> [-r <wmiirc>] [-v]\n", stderr);
-	exit(1);
+	ixp_eprint("usage: wmiiwm -a <address> [-r <wmiirc>] [-v]\n");
 }
 
 static void
@@ -226,13 +225,18 @@ main(int argc, char *argv[]) {
 			break;
 		}
 	}
-	starting = True;
+
+	if(!address)
+		usage();
+
 	setlocale(LC_CTYPE, "");
+
 	blz.dpy = XOpenDisplay(0);
 	if(!blz.dpy)
 		ixp_eprint("wmiiwm: cannot open dpy\n");
 	blz.screen = DefaultScreen(blz.dpy);
 	blz.root = RootWindow(blz.dpy, blz.screen);
+
 	/* check if another WM is already running */
 	other_wm_running = 0;
 	XSetErrorHandler(startup_error_handler);
@@ -241,8 +245,7 @@ main(int argc, char *argv[]) {
 	XSync(blz.dpy, False);
 	if(other_wm_running)
 		ixp_eprint("wmiiwm: another window manager is already running\n");
-	if(!address)
-		usage();
+
 	/* Check namespace permissions */
 	if(!strncmp(address, "unix!", 5)) {
 		struct stat st;
@@ -254,7 +257,8 @@ main(int argc, char *argv[]) {
 			ixp_eprint("wmiiwm: can't stat namespace directory \"%s\": %s\n",
 					namespace, strerror(errno));
 		if(getuid() != st.st_uid)
-			ixp_eprint("wmiiwm: namespace directory \"%s\" exists, but is not owned by you",
+			ixp_eprint("wmiiwm: namespace directory \"%s\" exists, "
+				"but is not owned by you",
 				namespace);
 		if(st.st_mode & 077)
 			ixp_eprint("wmiiwm: namespace directory \"%s\" exists, "
@@ -262,6 +266,7 @@ main(int argc, char *argv[]) {
 				namespace);
 		free(namespace);
 	}
+
 	XSetErrorHandler(0);
 	x_error_handler = XSetErrorHandler(wmii_error_handler);
 	errstr = nil;
@@ -277,7 +282,7 @@ main(int argc, char *argv[]) {
 		switch(fork()) {
 		case 0:
 			if(setsid() == -1)
-				ixp_eprint("wmiim: can't setsid: %s\n", strerror(errno));
+				ixp_eprint("wmiiwm: can't setsid: %s\n", strerror(errno));
 			close(i);
 			close(ConnectionNumber(blz.dpy));
 			snprintf(execstr, name_len, "exec %s", wmiirc);
@@ -294,6 +299,7 @@ main(int argc, char *argv[]) {
 	ixp_server_open_conn(&srv, i, &p9srv, serve_9pcon, nil);
 	/* X server */
 	ixp_server_open_conn(&srv, ConnectionNumber(blz.dpy), nil, check_x_event, nil);
+
 	view = nil;
 	client = nil;
 	key = nil;
@@ -359,6 +365,8 @@ main(int argc, char *argv[]) {
 	}
 
 	screen = &screens[0];
+
+	starting = True;
 	scan_wins();
 	update_views();
 	starting = False;
@@ -366,9 +374,12 @@ main(int argc, char *argv[]) {
 	/* main event loop */
 	errstr = ixp_server_loop(&srv);
 	if(errstr)
-		fprintf(stderr, "wmii: fatal: %s\n", errstr);
+		fprintf(stderr, "wmiiwm: fatal: %s\n", errstr);
+
 	cleanup();
 	XCloseDisplay(blz.dpy);
 	ixp_server_close(&srv);
-	return errstr ? 1 : 0;
+	if(errstr)
+		return 1;
+	return 0;
 }

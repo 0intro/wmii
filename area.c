@@ -16,7 +16,9 @@ max(int a, int b) {
 
 Client *
 sel_client_of_area(Area *a) {               
-	return a && a->sel ? a->sel->client : nil;
+	if(a && a->sel)
+		return a->sel->client;
+	return nil;
 }
 
 Area *
@@ -31,7 +33,7 @@ create_area(View *v, Area *pos, unsigned int w) {
 
 	area_num = 0;
 	i = 0;
-	for(a = v->area; a && a != *p; a = a->next)
+	for(a = v->area; a != *p; a = a->next)
 		area_num++, i++;
 	for(; a; a = a->next) area_num++;
 
@@ -255,7 +257,8 @@ detach_from_area(Area *a, Frame *f) {
 			if(v->area->next->next)
 				destroy_area(a);
 			else if(!a->frame && v->area->frame) {
-				v->sel = v->area; /* focus floating area if it contains something */
+				/* focus floating area if it contains something */
+				v->sel = v->area;
 				write_event("FocusFloating\n");
 			}
 			arrange_view(v);

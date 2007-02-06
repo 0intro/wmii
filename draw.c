@@ -32,7 +32,7 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 	font->set = XCreateFontSet(blitz->dpy, fontname, &missing, &n, &def);
 	if(missing) {
 		while(n--)
-			fprintf(stderr, "wmii: missing fontset: %s\n", missing[n]);
+			fprintf(stderr, "wmiiwm: missing fontset: %s\n", missing[n]);
 		XFreeStringList(missing);
 	}
 	if(font->set) {
@@ -57,11 +57,9 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 		font->xfont = nil;
 		font->xfont = XLoadQueryFont(blitz->dpy, fontname);
 		if (!font->xfont) {
-			if(!strncmp(fontname, BLITZ_FONT, sizeof(BLITZ_FONT))) {
-				fprintf(stderr, "wmii: error, cannot load '%s' font\n",
+			if(!strncmp(fontname, BLITZ_FONT, sizeof(BLITZ_FONT)))
+				ixp_eprint("wmiiwm: error, cannot load '%s' font\n",
 						BLITZ_FONT);
-				exit(1);
-			}
 			free(font->fontstr);
 			font->fontstr = ixp_estrdup(BLITZ_FONT);
 			return loadfont(blitz, font);

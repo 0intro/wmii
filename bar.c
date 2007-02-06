@@ -26,7 +26,7 @@ create_bar(Bar **b_link, char *name) {
 	strncpy(b->name, name, sizeof(b->name));
 	b->brush = screen->bbrush;
 	b->brush.color = def.normcolor;
-	for(i=b_link; *i; i=&(*i)->next)
+	for(i = b_link; *i; i = &(*i)->next)
 		if(strcmp((*i)->name, name) >= 0)
 			break;
 	b->next = *i;
@@ -39,7 +39,8 @@ void
 destroy_bar(Bar **b_link, Bar *b) {
 	Bar **p;
 
-	for(p=b_link; *p && *p != b; p=&(*p)->next);
+	for(p = b_link; *p; p = &(*p)->next)
+		if(*p == b) break;
 	*p = b->next;
 	b->next = free_bars;
 	free_bars = b;
@@ -55,7 +56,7 @@ resize_bar(WMScreen *s) {
 	XMoveResizeWindow(blz.dpy, s->barwin, s->brect.x, s->brect.y, s->brect.width, s->brect.height);
 	XSync(blz.dpy, False);
 	draw_bar(s);
-	for(v=view; v; v=v->next)
+	for(v = view; v; v = v->next)
 		arrange_view(v);
 }
 
@@ -70,7 +71,7 @@ draw_bar(WMScreen *s) {
 		goto MapBar;
 	largest = b = tb = nil;
 	tw = width = nb = size = 0;
-	for(b=s->lbar, nb=2 ;nb; --nb && (b = s->rbar))
+	for(b = s->lbar, nb = 2 ;nb; --nb && (b = s->rbar))
 		for(; b; b=b->next) {
 			b->brush.rect.x = b->brush.rect.y = 0;
 			b->brush.rect.width = def.font.height & ~1;
@@ -81,14 +82,15 @@ draw_bar(WMScreen *s) {
 		}
 	/* Not enough room. Shrink bars until they all fit */
 	if(width > s->brect.width) {
-		for(b=s->lbar, nb=2 ;nb; --nb && (b = s->rbar))
-			for(; b; b=b->next) {
-				for(pb=&largest; *pb; pb=&(*pb)->smaller)
-					if((*pb)->brush.rect.width < b->brush.rect.width) break; 
+		for(b = s->lbar, nb = 2 ;nb; --nb && (b = s->rbar))
+			for(; b; b = b->next) {
+				for(pb = &largest; *pb; pb = &(*pb)->smaller)
+					if((*pb)->brush.rect.width < b->brush.rect.width)
+						break; 
 				b->smaller = *pb;
 				*pb = b;
 			}
-		for(tb=largest; tb; tb=tb->smaller) {
+		for(tb = largest; tb; tb = tb->smaller) {
 			width -= tb->brush.rect.width;
 			tw += tb->brush.rect.width;
 			shrink = (s->brect.width - width) / (float)tw;
@@ -97,13 +99,13 @@ draw_bar(WMScreen *s) {
 				break;
 		}
 		if(tb)
-		for(b=largest; b != tb->smaller; b=b->smaller)
+		for(b = largest; b != tb->smaller; b = b->smaller)
 			b->brush.rect.width = floor(b->brush.rect.width * shrink);
 		width += tw * shrink;
-		tb=nil;
+		tb = nil;
 	}
-	for(b=s->lbar, nb=2 ;nb; b=s->rbar, nb--)
-		for(; b; tb = b, b=b->next) {
+	for(b = s->lbar, nb = 2 ;nb; b = s->rbar, nb--)
+		for(; b; tb = b, b = b->next) {
 			if(b == s->rbar) {
 				b->brush.align = EAST;
 				s->rbar->brush.rect.width += (s->brect.width - width);
@@ -126,7 +128,7 @@ bar_of_name(Bar *b_link, const char *name) {
 	Bar *b;
 
 	strncpy(buf, name, sizeof(buf));
-	for(b=b_link; b; b=b->next)
+	for(b = b_link; b; b = b->next)
 		if(!strncmp(b->name, name, sizeof(b->name))) break;
 	return b;
 }
