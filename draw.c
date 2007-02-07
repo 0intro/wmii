@@ -58,7 +58,8 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 						BLITZ_FONT);
 			free(font->fontstr);
 			font->fontstr = ixp_estrdup(BLITZ_FONT);
-			return loadfont(blitz, font);
+			loadfont(blitz, font);
+			return;
 		}
 		font->ascent = font->xfont->ascent;
 		font->descent = font->xfont->descent;

@@ -330,8 +330,10 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 	snap = floating ? screen->rect.height / 66 : 0;
 	cur = cursor[CurResize];
 	
-	if(!floating && (align == CENTER))
-		return do_managed_move(c);
+	if(!floating && (align == CENTER)) {
+		do_managed_move(c);
+		return;
+	}
 
 	XQueryPointer(blz.dpy, c->framewin, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
 	rx = (float)pt_x / frect.width;
