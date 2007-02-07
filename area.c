@@ -46,7 +46,7 @@ create_area(View *v, Area *pos, unsigned int w) {
 	}
 	if(w < min_width)
 		w = min_width;
-	if(col_num && col_num * min_width + w > screen->rect.width)
+	if(col_num && (col_num * min_width + w) > screen->rect.width)
 		return nil;
 	if(i)
 		scale_view(v, screen->rect.width - w);
@@ -67,7 +67,8 @@ create_area(View *v, Area *pos, unsigned int w) {
 	if(i) write_event("CreateColumn %d\n", i);
 
 	i = 0;
-	for(ta=v->area; ta && ta != v->sel; ta=ta->next) i++;
+	for(ta=v->area; ta != v->sel; ta=ta->next)
+		i++;
 	if(i) write_event("ColumnFocus %d\n", i);
 	else write_event("FocusFloating\n");
 	return a;
@@ -77,15 +78,21 @@ void
 destroy_area(Area *a) {
 	Client *c;
 	Area *ta;
-	View *v = a->view;
+	View *v;
 	unsigned int i;
+
+	v = a->view;
+
 	assert(!a->frame && "wmiiwm: fatal, destroying non-empty area");
 	if(v->revert == a)
 		v->revert = nil;
 	for(c=client; c; c=c->next)
 		if(c->revert == a)
 			c->revert = nil;
-	for(ta=v->area, i = 0; ta && ta->next != a; ta=ta->next, i++);
+
+	i = 0;
+	for(ta=v->area; ta->next != a; ta=ta->next)
+		i++;
 	if(ta) {
 		ta->next = a->next;
 		if(v->sel == a) {
@@ -100,15 +107,23 @@ destroy_area(Area *a) {
 static void
 place_client(Area *a, Client *c) {
 	static unsigned int mx, my;
-	static Bool *field = nil;
-	Frame *fr;
-	Bool fit = False;
-	BlitzAlign align = CENTER;
-	unsigned int i, j, x, y, maxx, maxy, dx, dy, cx, cy, diff, num = 0;
-	XPoint p1 = {0, 0}, p2 = {0, 0};
-	Frame *f = c->sel;
-	int snap = screen->rect.height / 66;
+	static Bool *field;
+	BlitzAlign align;
+	XPoint p1, p2;
 	XRectangle *rects;
+	Frame *f, *fr;
+	Bool fit;
+	unsigned int i, j, x, y, dx, dy, cx, cy, maxx, maxy, diff, num;
+	int snap;
+
+	snap = screen->rect.height / 66;
+	p1 = p2 = {0, 0};
+	num = 0;
+	fit = False;
+	align = CENTER
+	field = nil
+
+	f = c->sel;
 
 	if(c->trans)
 		return;
@@ -203,11 +218,17 @@ void
 attach_to_area(Area *a, Frame *f, Bool send) {
 	unsigned int h, n_frame;
 	Frame **fa, *ft;
-	View *v = a->view;
-	Client *c = f->client;
+	Client *c;
+	View *v;
 
-	for(ft=a->frame, n_frame=1; ft; ft=ft->anext, n_frame++);
+	v = a->view;
+	c = f->client;
 	h = 0;
+
+	n_frame = 1;
+	for(ft=a->frame; ft; ft=ft->anext)
+		n_frame++;
+
 	c->floating = a->floating;
 	if(!c->floating) {
 		h = a->rect.height / n_frame;
@@ -235,11 +256,15 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 
 void
 detach_from_area(Area *a, Frame *f) {
-	Frame **ft, *pr = nil;
-	Client *c = f->client;
-	View *v = a->view;
+	Frame **ft, *pr;
+	Client *c;
+	View *v;
 	Area *ta;
 	unsigned int i;
+
+	v = a->view;
+	c = f->client;
+	pr = nil
 
 	for(ft=&a->frame; *ft; ft=&(*ft)->anext) {
 		if(*ft == f) break;
@@ -253,7 +278,9 @@ detach_from_area(Area *a, Frame *f) {
 		if(a->frame)
 			arrange_column(a, False);
 		else {
-			for(ta=v->area, i = 0; ta && ta != a; ta=ta->next, i++);
+			i = 0;
+			for(ta=v->area; ta && ta != a; ta=ta->next)
+				i++;
 			if(v->area->next->next)
 				destroy_area(a);
 			else if(!a->frame && v->area->frame) {
@@ -277,7 +304,9 @@ detach_from_area(Area *a, Frame *f) {
 		}
 		else if(v->area->next->frame)
 			v->sel = v->area->next; /* focus first col as fallback */
-		for(ta=v->area, i = 0; ta && ta != v->sel; ta=ta->next, i++);
+		i = 0;
+		for(ta=v->area; ta && ta != v->sel; ta=ta->next)
+			i++;
 		if(i) write_event("ColumnFocus %d\n", i);
 		else write_event("FocusFloating\n");
 	}
@@ -339,12 +368,15 @@ select_area(Area *a, char *arg) {
 	else {
 		if(sscanf(arg, "%d", &i) != 1)
 			return Ebadvalue;
-		for(new=view->area; i && new->next; new=new->next, i--);
+		for(new=view->area; i && new->next; new=new->next)
+			i--;
 	}
 	if(new->sel)
 		focus_client(new->sel->client, True);
 	if(v->sel != new) {
-		for(ta=v->area, i = 0; ta && ta != new; ta=ta->next, i++);
+		i = 0;
+		for(ta=v->area; ta && ta != new; ta=ta->next)
+			i++;
 		if(i) write_event("ColumnFocus %d\n", i);
 		else write_event("FocusFloating\n");
 		v->sel = new;
