@@ -57,7 +57,6 @@ relax_column(Area *a) {
 		for(f=a->frame; f; f=f->anext) {
 			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 			f->rect.y = a->rect.y + (a->rect.height - f->rect.height) / 2;
-			resize_client(f->client, &f->rect, True);
 		}
 		return;
 	}
@@ -78,7 +77,7 @@ relax_column(Area *a) {
 			for(f=a->frame; f && (hx < hdiff); f=f->anext) {
 				unsigned int tmp = f->rect.height;
 				f->rect.height += hx;
-				resize_client(f->client, &f->rect, True);
+				match_sizehints(f->client, &f->rect, f->area->floating, NORTH|EAST);
 				hdiff -= (f->rect.height - tmp);
 			}
 	}
@@ -92,7 +91,8 @@ relax_column(Area *a) {
 			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 			yoff = f->rect.y + f->rect.height + hdiff;
 		}
-		resize_client(f->client, &f->rect, True);
+		if(a->mode != Colstack || f == a->sel)
+			match_sizehints(f->client, &f->rect, f->area->floating, NORTH|EAST);
 	}
 }
 
@@ -156,7 +156,7 @@ arrange_column(Area *a, Bool dirty) {
 			f->rect.y = yoff;
 			f->rect.width = a->rect.width;
 			yoff += f->rect.height;
-			//resize_client(f->client, &f->rect, True);
+			match_sizehints(f->client, &f->rect, f->area->floating, NORTH|EAST);
 		}
 		break;
 	case Colstack:
@@ -171,7 +171,6 @@ arrange_column(Area *a, Bool dirty) {
 			else
 				f->rect.height = labelh(&def.font);
 			yoff += f->rect.height;
-			//resize_client(f->client, &f->rect, True);
 		}
 		break;
 Fallthrough:
@@ -179,7 +178,7 @@ Fallthrough:
 		for(f=a->frame; f; f=f->anext) {
 			f->rect = a->rect;
 			if(f != a->sel) f->rect.x = screen->rect.width * 2;
-			//resize_client(f->client, &f->rect, True);
+			match_sizehints(f->client, &f->rect, f->area->floating, NORTH|EAST);
 		}
 		break;
 	default:
@@ -196,7 +195,7 @@ match_horiz(Area *a, XRectangle *r) {
 	for(f=a->frame; f; f=f->anext) {
 		f->rect.x = r->x;
 		f->rect.width = r->width;
-		//resize_client(f->client, &f->rect, True);
+		resize_frame(f, &f->rect);
 	}
 }
 
@@ -281,16 +280,16 @@ AfterHorizontal:
 		north->rect.height = new->y - north->rect.y;
 		f->rect.height += f->rect.y - new->y;
 		f->rect.y = new->y;
-		//resize_client(north->client, &north->rect, True);
-		//resize_client(f->client, &f->rect, True);
+		resize_frame(north, &north->rect);
+		resize_frame(f, &f->rect);
 	}
 	if(south && (new->y + new->height != f->rect.y + f->rect.height)) {
 		south->rect.height -= new->y + new->height - south->rect.y;
 		south->rect.y = new->y + new->height;
 		f->rect.y = new->y;
 		f->rect.height = new->height;
-		//resize_client(f->client, &f->rect, False);
-		//resize_client(south->client, &south->rect, True);
+		resize_frame(f, &f->rect);
+		resize_frame(south, &south->rect);
 	}
 AfterVertical:
 	relax_column(a);

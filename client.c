@@ -462,50 +462,42 @@ match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky) {
 }
 
 void
-resize_client(Client *c, XRectangle *r, Bool ignore_xcall) {
-	Frame *f = c->sel;
-	Bool floating = f->area->floating;
+resize_client(Client *c, XRectangle *r) {
+	Frame *f;
+	Bool floating;
 
-	BlitzAlign stickycorner = 0;
-	if(f->rect.x != r->x && f->rect.x + f->rect.width == r->x + r->width)
-		stickycorner |= EAST;
-	else
-		stickycorner |= WEST;
-	if(f->rect.y != r->y && f->rect.y + f->rect.height == r->y + r->height)
-		stickycorner |= SOUTH;
-	else    
-		stickycorner |= NORTH;
-	f->rect = *r;
-	if((f->area->mode != Colstack) || (f->area->sel == f))
-		match_sizehints(c, &c->sel->rect, floating, stickycorner);
-	if(!ignore_xcall) {
-		if(floating) {
-			if((c->rect.width == screen->rect.width) &&
-			   (c->rect.height == screen->rect.height)) {
-				f->rect.x = -def.border;
-				f->rect.y = -labelh(&def.font);
-			}else{
-				check_frame_constraints(&f->rect);
-			}
+	f = c->sel;
+	floating = f->area->floating;
+
+	resize_frame(f, r);
+
+	if(floating) {
+		if((c->rect.width == screen->rect.width) &&
+		   (c->rect.height == screen->rect.height)) {
+			f->rect.x = -def.border;
+			f->rect.y = -labelh(&def.font);
+		}else{
+			check_frame_constraints(&f->rect);
 		}
-		if(f->area->view == screen->sel)
-			XMoveResizeWindow(blz.dpy, c->framewin, f->rect.x,
-					f->rect.y, f->rect.width, f->rect.height);
-		else
-			XMoveResizeWindow(blz.dpy, c->framewin, 2 * screen->rect.width + f->rect.x,
-					f->rect.y, f->rect.width, f->rect.height);
 	}
+
+	if(f->area->view == screen->sel)
+		XMoveResizeWindow(blz.dpy, c->framewin, f->rect.x,
+				f->rect.y, f->rect.width, f->rect.height);
+	else
+		XMoveResizeWindow(blz.dpy, c->framewin, 2 * screen->rect.width + f->rect.x,
+				f->rect.y, f->rect.width, f->rect.height);
+
 	c->rect.x = def.border;
 	c->rect.y = labelh(&def.font);
 	if((f->area->sel == f) || (f->area->mode != Colstack)) {
 		c->rect.width = f->rect.width - 2 * def.border;
 		c->rect.height = f->rect.height - def.border - labelh(&def.font);
 	}
-	if(!ignore_xcall) {
-		XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
-						c->rect.width, c->rect.height);
-		configure_client(c);
-	}
+
+	XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
+					c->rect.width, c->rect.height);
+	configure_client(c);
 }
 
 void
@@ -545,7 +537,7 @@ move_client(Client *c, char *arg) {
 	if(!f->area->floating)
 		resize_column(f->client, &new);
 	else
-		resize_client(f->client, &new, False);
+		resize_client(f->client, &new);
 }
 
 void
@@ -561,7 +553,7 @@ size_client(Client *c, char *arg) {
 	if(!f->area->floating)
 		resize_column(f->client, &new);
 	else
-		resize_client(f->client, &new, False);
+		resize_client(f->client, &new);
 }
 
 char *

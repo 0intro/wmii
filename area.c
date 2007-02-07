@@ -91,7 +91,7 @@ destroy_area(Area *a) {
 			c->revert = nil;
 
 	i = 0;
-	for(ta=v->area; ta->next != a; ta=ta->next)
+	for(ta=v->area; ta && ta->next != a; ta=ta->next)
 		i++;
 	if(ta) {
 		ta->next = a->next;
@@ -109,7 +109,8 @@ place_client(Area *a, Client *c) {
 	static unsigned int mx, my;
 	static Bool *field;
 	BlitzAlign align;
-	XPoint p1, p2;
+	XPoint p1 = {0, 0};
+	XPoint p2 = {0, 0};
 	XRectangle *rects;
 	Frame *f, *fr;
 	Bool fit;
@@ -117,11 +118,10 @@ place_client(Area *a, Client *c) {
 	int snap;
 
 	snap = screen->rect.height / 66;
-	p1 = p2 = {0, 0};
 	num = 0;
 	fit = False;
-	align = CENTER
-	field = nil
+	align = CENTER;
+	field = nil;
 
 	f = c->sel;
 
@@ -264,7 +264,7 @@ detach_from_area(Area *a, Frame *f) {
 
 	v = a->view;
 	c = f->client;
-	pr = nil
+	pr = nil;
 
 	for(ft=&a->frame; *ft; ft=&(*ft)->anext) {
 		if(*ft == f) break;

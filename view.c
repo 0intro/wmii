@@ -116,7 +116,7 @@ focus_view(WMScreen *s, View *v) {
 	for(c=client; c; c=c->next)
 		if((f = c->sel)) {
 			if(f->view == v) {
-				resize_client(c, &f->rect, False);
+				resize_client(c, &f->rect);
 				//XMoveWindow(blz.dpy, c->framewin, f->rect.x, f->rect.y);
 			}else
 				XMoveWindow(blz.dpy, c->framewin, 2 * s->rect.width + f->rect.x,

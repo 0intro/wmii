@@ -371,7 +371,7 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 			if(!floating)
 				resize_column(c, &frect);
 			else
-				resize_client(c, &frect, False);
+				resize_client(c, &frect);
 
 			if(rects)
 				free(rects);
