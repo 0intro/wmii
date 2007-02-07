@@ -332,15 +332,12 @@ select_area(Area *a, char *arg) {
 	} else if(!strncmp(arg, "left", 5)) {
 		if(a->floating)
 			return Ebadvalue;
-		for(new=v->area->next;
-			new && new->next != a;
-			new=new->next);
-		if(!new)
-			new=v->area->next;
+		for(new=v->area->next; new->next; new=new->next)
+			if(new->next == a) break;
 	} else if(!strncmp(arg, "right", 5)) {
 		if(a->floating)
 			return Ebadvalue;
-		new = a->next ? a->next : a;
+		new = a->next ? a->next : v->area->next;
 	}
 	else if(!strncmp(arg, "up", 3)) {
 		if(!f)
