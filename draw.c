@@ -11,7 +11,7 @@ textwidth_l(BlitzFont *font, char *text, unsigned int len) {
 	if(font->set) {
 		XRectangle r;
 		XmbTextExtents(font->set, text, len, &r, nil);
-		return r.width - 1;
+		return r.width;
 	}
 	return XTextWidth(font->xfont, text, len);
 }
