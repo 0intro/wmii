@@ -71,7 +71,7 @@ draw_bar(WMScreen *s) {
 		goto MapBar;
 	largest = b = tb = nil;
 	tw = width = nb = size = 0;
-	for(b = s->lbar, nb = 2 ;nb; --nb && (b = s->rbar))
+	for(b = s->lbar, nb = 2; nb; --nb && (b = s->rbar))
 		for(; b; b=b->next) {
 			b->brush.rect.x = b->brush.rect.y = 0;
 			b->brush.rect.width = def.font.height & ~1;
@@ -82,7 +82,7 @@ draw_bar(WMScreen *s) {
 		}
 	/* Not enough room. Shrink bars until they all fit */
 	if(width > s->brect.width) {
-		for(b = s->lbar, nb = 2 ;nb; --nb && (b = s->rbar))
+		for(b = s->lbar, nb = 2; nb; --nb && (b = s->rbar))
 			for(; b; b = b->next) {
 				for(pb = &largest; *pb; pb = &(*pb)->smaller)
 					if((*pb)->brush.rect.width < b->brush.rect.width)
@@ -104,7 +104,7 @@ draw_bar(WMScreen *s) {
 		width += tw * shrink;
 		tb = nil;
 	}
-	for(b = s->lbar, nb = 2 ;nb; b = s->rbar, nb--)
+	for(b = s->lbar, nb = 2; nb; b = s->rbar, nb--)
 		for(; b; tb = b, b = b->next) {
 			if(b == s->rbar) {
 				b->brush.align = EAST;
