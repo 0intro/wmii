@@ -207,14 +207,16 @@ drop_resize(Frame *f, XRectangle *new) {
 	unsigned int min_height = 2 * labelh(&def.font);
 	unsigned int min_width = screen->rect.width/NCOL;
 
-	for(west=v->area->next; west && west->next != a; west=west->next);
+	for(west=v->area->next; west; west=west->next)
+		if(west->next == a) break;
 	/* first managed area is indexed 1, thus (i > 1) ? ... */
 	east = a->next;
-	for(north=a->frame; north && north->anext != f; north=north->anext);
+	for(north=a->frame; north; north=north->anext)
+		if(north->anext == f) break;
 	south = f->anext;
 	/* validate (and trim if necessary) horizontal resize */
 	if(new->width < min_width) {
-		if(new->x + new->width == f->rect.x + f->rect.width)
+		if((new->x + new->width) == (f->rect.x + f->rect.width))
 			new->x = a->rect.x + a->rect.width - min_width;
 		new->width = min_width;
 	}
@@ -227,11 +229,11 @@ drop_resize(Frame *f, XRectangle *new) {
 		new->width += new->x - a->rect.x;
 		new->x = a->rect.x;
 	}
-	if(east && (new->x + new->width != f->rect.x + f->rect.width)) {
+	if(east && (new->x + new->width) != (f->rect.x + f->rect.width)) {
 		if((new->x + new->width) > (east->rect.x + east->rect.width - min_width))
-			new->width = (east->rect.x + east->rect.width - min_width) - new->x;
+			new->width = east->rect.x + east->rect.width - min_width - new->x;
 	} else
-		new->width = (a->rect.x + a->rect.width) - new->x;
+		new->width = a->rect.x + a->rect.width - new->x;
 	if(new->width < min_width)
 		goto AfterHorizontal;
 	/* horizontal resize */
@@ -243,10 +245,10 @@ drop_resize(Frame *f, XRectangle *new) {
 		match_horiz(west, &west->rect);
 		relax_column(west);
 	}
-	if(east && (new->x + new->width != a->rect.x + a->rect.width)) {
+	if(east && (new->x + new->width) != (a->rect.x + a->rect.width)) {
 		east->rect.width -= new->x + new->width - east->rect.x;
 		east->rect.x = new->x + new->width;
-		a->rect.width = (new->x + new->width) - a->rect.x;
+		a->rect.width = new->x + new->width - a->rect.x;
 		match_horiz(a, &a->rect);
 		match_horiz(east, &east->rect);
 		relax_column(east);
@@ -258,9 +260,9 @@ AfterHorizontal:
 	/* validate (and trim if necessary) vertical resize */
 	if(new->height < min_height) {
 		if(f->rect.height < min_height
-			&& (new->y == f->rect.y || new->y + new->height == f->rect.y + f->rect.height))
+			&& (new->y == f->rect.y || (new->y + new->height) == (f->rect.y + f->rect.height)))
 			goto AfterVertical;
-		if(new->y + new->height == f->rect.y + f->rect.height)
+		if((new->y + new->height) == (f->rect.y + f->rect.height))
 			new->y = f->rect.y + f->rect.height - min_height;
 		new->height = min_height;
 	}
@@ -269,7 +271,7 @@ AfterHorizontal:
 			new->height -= (north->rect.y + min_height) - new->y;
 			new->y = north->rect.y + min_height;
 		}
-	if(south && (new->y + new->height != f->rect.y + f->rect.height)) {
+	if(south && (new->y + new->height) != (f->rect.y + f->rect.height)) {
 		if((new->y + new->height) > (south->rect.y + south->rect.height - min_height))
 			new->height = (south->rect.y + south->rect.height - min_height) - new->y;
 	}
