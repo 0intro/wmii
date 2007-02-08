@@ -380,7 +380,5 @@ select_area(Area *a, char *arg) {
 		else write_event("FocusFloating\n");
 		v->sel = new;
 	}
-	if(a->floating != new->floating)
-		v->revert = a;
 	return nil;
 }

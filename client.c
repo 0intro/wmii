@@ -136,10 +136,13 @@ focus_client(Client *c, Bool restack) {
 	if(!sel_screen)
 		return;
 	f = c->sel;
-	v = f->area->view;
+	v = f->view;
 	old = sel_client();
 	old_in_area = sel_client_of_area(f->area);
 	old_a = v->sel;
+
+	if(old_a->floating != f->area->floating)
+		v->revert = old_a;
 	v->sel = f->area;
 	f->area->sel = f;
 	c->floating = f->area->floating;
@@ -160,9 +163,12 @@ focus_client(Client *c, Bool restack) {
 	draw_frame(c->sel);
 	XSync(blz.dpy, False);
 	if(old_a != v->sel) {
-		for(a = v->area, a_i = 0; a && a != v->sel; a = a->next, a_i++);
-		if(a_i) write_event("ColumnFocus %d\n", a_i);
-		else write_event("FocusFloating\n");
+		for(a = v->area, a_i = 0; a; a = a->next, a_i++)
+			if(a == v->sel) break;
+		if(a_i)
+			write_event("ColumnFocus %d\n", a_i);
+		else
+			write_event("FocusFloating\n");
 	}
 	write_event("ClientFocus 0x%x\n", c->win);
 }
