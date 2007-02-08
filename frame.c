@@ -83,6 +83,21 @@ resize_frame(Frame *f, XRectangle *r) {
 }
 
 void
+frame_to_top(Frame *f) {
+	Frame **tf;
+	Area *a;
+
+	a = f->area;
+	if(!a->floating)
+		return;
+	for(tf=&a->frame; *tf; tf=&(*tf)->anext)
+		if(*tf == f) break;
+	*tf = f->anext;
+	f->anext = a->frame;
+	a->frame = f;
+}
+
+void
 swap_frames(Frame *fa, Frame *fb) {
 	XRectangle trect;
 	Area *a;

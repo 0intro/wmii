@@ -97,8 +97,10 @@ buttonpress(XEvent *e) {
 			break;
 			}
 		}else{
-			if(ev->button == Button1)
-				focus(f->client, True);
+			if(ev->button == Button1) {
+				frame_to_top(f);
+				restack_view(f->view);
+			}
 			XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 		}
 	}

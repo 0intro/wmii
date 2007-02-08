@@ -346,8 +346,9 @@ select_area(Area *a, char *arg) {
 			if(p->anext == f) break;
 		a->sel = p;
 		arrange_column(a, False);
+		frame_to_top(p);
 		if(v == screen->sel)
-			focus_view(screen, v);
+			restack_view(v);
 		flush_masked_events(EnterWindowMask);
 		return nil;
 	}
@@ -357,8 +358,9 @@ select_area(Area *a, char *arg) {
 		p = f->anext ? f->anext : a->frame;
 		a->sel = p;
 		arrange_column(a, False);
+		frame_to_top(p);
 		if(v == screen->sel)
-			focus_view(screen, v);
+			restack_view(v);
 		flush_masked_events(EnterWindowMask);
 		return nil;
 	}

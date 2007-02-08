@@ -319,6 +319,7 @@ extern Frame *create_frame(Client *c, View *v);
 extern void remove_frame(Frame *f);
 extern void insert_frame(Frame *pos, Frame *f, Bool before);
 extern void resize_frame(Frame *f, XRectangle *r);
+extern void frame_to_top(Frame *f);
 extern void swap_frames(Frame *fa, Frame *fb);
 extern void draw_frame(Frame *f);
 extern void draw_frames();
