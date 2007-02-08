@@ -99,7 +99,7 @@ buttonpress(XEvent *e) {
 		}else{
 			if(ev->button == Button1) {
 				frame_to_top(f);
-				restack_view(f->view);
+				focus(f->client, True);
 			}
 			XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 		}
