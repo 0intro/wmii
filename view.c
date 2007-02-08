@@ -87,11 +87,9 @@ destroy_view(View *v) {
 	for(i=&view; *i; i=&(*i)->next)
 		if(*i == v) break;
 	*i = v->next;
-	if(screen->sel == v) {
-		for(v = view; v && v->next; v = v->next)
-			if(v->next == *i) break;
-		screen->sel = v;
-	}
+	if(screen->sel == v)
+		for(screen->sel=view; screen->sel && screen->sel->next; screen->sel=screen->sel->next)
+			if(screen->sel->next == *i) break;
 	write_event("DestroyTag %s\n", v->name);
 	free(v);
 }
