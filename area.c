@@ -345,8 +345,8 @@ select_area(Area *a, char *arg) {
 		for(p=a->frame; p->anext; p=p->anext)
 			if(p->anext == f) break;
 		a->sel = p;
-		arrange_column(a, False);
 		frame_to_top(p);
+		focus(p->client, True);
 		if(v == screen->sel)
 			restack_view(v);
 		flush_masked_events(EnterWindowMask);
@@ -357,8 +357,8 @@ select_area(Area *a, char *arg) {
 			return Ebadvalue;
 		p = f->anext ? f->anext : a->frame;
 		a->sel = p;
-		arrange_column(a, False);
 		frame_to_top(p);
+		focus(p->client, True);
 		if(v == screen->sel)
 			restack_view(v);
 		flush_masked_events(EnterWindowMask);
