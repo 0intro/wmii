@@ -87,9 +87,11 @@ destroy_view(View *v) {
 	for(i=&view; *i; i=&(*i)->next)
 		if(*i == v) break;
 	*i = v->next;
-	if(screen->sel == v)
-		for(screen->sel=view; screen->sel && screen->sel->next; screen->sel=screen->sel->next)
-			if(screen->sel->next == *i) break;
+	if(screen->sel == v) {
+		for(v = view; v && v->next; v = v->next)
+			if(v->next == *i) break;
+		screen->sel = *i;
+	}
 	write_event("DestroyTag %s\n", v->name);
 	free(v);
 }
@@ -115,10 +117,9 @@ focus_view(WMScreen *s, View *v) {
 	/* gives all(!) clients proper geometry (for use of different tags) */
 	for(c=client; c; c=c->next)
 		if((f = c->sel)) {
-			if(f->view == v) {
+			if(f->view == v)
 				resize_client(c, &f->rect);
-				//XMoveWindow(blz.dpy, c->framewin, f->rect.x, f->rect.y);
-			}else
+			else
 				XMoveWindow(blz.dpy, c->framewin, 2 * s->rect.width + f->rect.x,
 						f->rect.y);
 		}
