@@ -358,6 +358,7 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 		hr_x = screen->rect.width / 2;
 		hr_y = screen->rect.height / 2;
 		XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, hr_x, hr_y);
+		while(XCheckMaskEvent(blz.dpy, MouseMask, &ev));
 	}
 
 	XQueryPointer(blz.dpy, blz.root, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
