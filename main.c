@@ -19,6 +19,7 @@
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
 
+Bool check_other_wm;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
@@ -153,7 +154,7 @@ init_screen(WMScreen *screen) {
  */
 int
 wmii_error_handler(Display *dpy, XErrorEvent *error) {
-	if(starting)
+	if(check_other_wm)
 		ixp_eprint("wmiiwm: another window manager is already running\n");
 	if(error->error_code == BadWindow
 			|| (error->request_code == X_SetInputFocus
@@ -229,9 +230,11 @@ main(int argc, char *argv[]) {
 	blz.screen = DefaultScreen(blz.dpy);
 	blz.root = RootWindow(blz.dpy, blz.screen);
 
+	check_other_wm = True;
 	x_error_handler = XSetErrorHandler(wmii_error_handler);
 	XSelectInput(blz.dpy, blz.root, SubstructureRedirectMask | EnterWindowMask);
 	XSync(blz.dpy, False);
+	check_other_wm = False;
 
 	/* Check namespace permissions */
 	if(!strncmp(address, "unix!", 5)) {
