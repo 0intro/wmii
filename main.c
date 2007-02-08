@@ -19,7 +19,6 @@
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
 
-static int other_wm_running;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
@@ -154,6 +153,8 @@ init_screen(WMScreen *screen) {
  */
 int
 wmii_error_handler(Display *dpy, XErrorEvent *error) {
+	if(starting)
+		ixp_eprint("wmiiwm: another window manager is already running\n");
 	if(error->error_code == BadWindow
 			|| (error->request_code == X_SetInputFocus
 				&& error->error_code == BadMatch)
@@ -171,16 +172,6 @@ wmii_error_handler(Display *dpy, XErrorEvent *error) {
 	fprintf(stderr, "wmiiwm: fatal error: Xrequest code=%d, Xerror code=%d\n",
 			error->request_code, error->error_code);
 	return x_error_handler(blz.dpy, error); /* calls exit() */
-}
-
-/*
- * Startup Error handler to check if another window manager
- * is already running.
- */
-static int
-startup_error_handler(Display * dpy, XErrorEvent * error) {
-	other_wm_running = 1;
-	return -1;
 }
 
 static void
@@ -230,6 +221,7 @@ main(int argc, char *argv[]) {
 		usage();
 
 	setlocale(LC_CTYPE, "");
+	starting = True;
 
 	blz.dpy = XOpenDisplay(0);
 	if(!blz.dpy)
@@ -237,14 +229,9 @@ main(int argc, char *argv[]) {
 	blz.screen = DefaultScreen(blz.dpy);
 	blz.root = RootWindow(blz.dpy, blz.screen);
 
-	/* check if another WM is already running */
-	other_wm_running = 0;
-	XSetErrorHandler(startup_error_handler);
-	/* this causes an error if some other WM is running */
+	x_error_handler = XSetErrorHandler(wmii_error_handler);
 	XSelectInput(blz.dpy, blz.root, SubstructureRedirectMask | EnterWindowMask);
 	XSync(blz.dpy, False);
-	if(other_wm_running)
-		ixp_eprint("wmiiwm: another window manager is already running\n");
 
 	/* Check namespace permissions */
 	if(!strncmp(address, "unix!", 5)) {
@@ -267,8 +254,6 @@ main(int argc, char *argv[]) {
 		free(namespace);
 	}
 
-	XSetErrorHandler(0);
-	x_error_handler = XSetErrorHandler(wmii_error_handler);
 	errstr = nil;
 	i = ixp_create_sock(address, &errstr);
 	if(i < 0)
@@ -366,7 +351,6 @@ main(int argc, char *argv[]) {
 
 	screen = &screens[0];
 
-	starting = True;
 	scan_wins();
 	update_views();
 	starting = False;
