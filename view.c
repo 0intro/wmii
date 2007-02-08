@@ -90,7 +90,7 @@ destroy_view(View *v) {
 	if(screen->sel == v) {
 		for(v = view; v && v->next; v = v->next)
 			if(v->next == *i) break;
-		screen->sel = *i;
+		screen->sel = v;
 	}
 	write_event("DestroyTag %s\n", v->name);
 	free(v);
