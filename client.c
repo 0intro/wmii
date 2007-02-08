@@ -11,6 +11,7 @@ static char *Ebadcmd = "bad command",
 	    *Ebadvalue = "bad value";
 
 #define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
+#define ButtonMask		(ButtonPressMask | ButtonReleaseMask)
 
 Client *
 sel_client() {
@@ -104,6 +105,8 @@ create_client(Window w, XWindowAttributes *wa) {
 			DefaultDepth(blz.dpy, blz.screen), CopyFromParent,
 			DefaultVisual(blz.dpy, blz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
+	XGrabButton(blz.dpy, AnyButton, AnyModifier, c->framewin, False, ButtonMask,
+			GrabModeSync, GrabModeSync, None, None);
 	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
 	XSync(blz.dpy, False);
 	for(t=&client; *t; t=&(*t)->next);
@@ -119,17 +122,6 @@ set_client_state(Client * c, int state)
 	long data[] = { state, None };
 	XChangeProperty(blz.dpy, c->win, wm_atom[WMState], wm_atom[WMState], 32,
 			PropModeReplace, (unsigned char *) data, 2);
-}
-
-void
-update_client_grab(Client *c, Bool is_sel) {
-	if(is_sel) {
-		ungrab_mouse(c->framewin, AnyModifier, AnyButton);
-		grab_mouse(c->framewin, def.mod, Button1);
-		grab_mouse(c->framewin, def.mod, Button3);
-	}
-	else
-		grab_mouse(c->framewin, AnyModifier, Button1);
 }
 
 void
@@ -153,11 +145,6 @@ focus_client(Client *c, Bool restack) {
 	c->floating = f->area->floating;
 	if(restack)
 		restack_view(v);
-	else {
-		if(old)
-			update_client_grab(old, False);
-		update_client_grab(c, True);
-	}
 	if(!c->floating && f->area->mode == Colstack)
 		arrange_column(f->area, False);
 	XSetInputFocus(blz.dpy, c->win, RevertToPointerRoot, CurrentTime);
@@ -184,7 +171,7 @@ void
 map_client(Client *c) {
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XMapWindow(blz.dpy, c->win);
-    XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
 	set_client_state(c, NormalState);
 }
 

@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define ButtonMask      (ButtonPressMask | ButtonReleaseMask)
+#define ButtonMask	(ButtonPressMask | ButtonReleaseMask)
 #define MouseMask       (ButtonMask | PointerMotionMask)
 
 static void
@@ -329,6 +329,8 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 	rects = floating ? rects_of_view(f->area->view, &num) : nil;
 	snap = floating ? screen->rect.height / 66 : 0;
 	cur = cursor[CurResize];
+	if(align == CENTER)
+		cur = cursor[CurInvisible];
 	
 	if(!floating && (align == CENTER)) {
 		do_managed_move(c);
@@ -338,6 +340,10 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 	XQueryPointer(blz.dpy, c->framewin, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
 	rx = (float)pt_x / frect.width;
 	ry = (float)pt_y / frect.height;
+
+	if(XGrabPointer(blz.dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
+			None, cur, CurrentTime) != GrabSuccess)
+		return;
 
 	if (align != CENTER) {
 		pt_x = dx = frect.width / 2;
@@ -352,15 +358,11 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 		hr_x = screen->rect.width / 2;
 		hr_y = screen->rect.height / 2;
 		XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, hr_x, hr_y);
-		cur = cursor[CurInvisible];
 	}
 
 	XQueryPointer(blz.dpy, blz.root, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
 
 	XSync(blz.dpy, False);
-	if(XGrabPointer(blz.dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
-			None, cur, CurrentTime) != GrabSuccess)
-		return;
 	XGrabServer(blz.dpy);
 
 	draw_xor_border(&frect);
@@ -426,26 +428,5 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 			break;
 		default: break;
 		}
-	}
-}
-
-void
-grab_mouse(Window w, unsigned long mod, unsigned int button) {
-	XGrabButton(blz.dpy, button, mod, w, False, ButtonMask,
-			GrabModeAsync, GrabModeSync, None, None);
-	if((mod != AnyModifier) && num_lock_mask) {
-		XGrabButton(blz.dpy, button, mod | num_lock_mask, w, False, ButtonMask,
-				GrabModeAsync, GrabModeSync, None, None);
-		XGrabButton(blz.dpy, button, mod | num_lock_mask | LockMask, w, False,
-				ButtonMask, GrabModeAsync, GrabModeSync, None, None);
-	}
-}
-
-void
-ungrab_mouse(Window w, unsigned long mod, unsigned int button) {
-	XUngrabButton(blz.dpy, button, mod, w);
-	if(mod != AnyModifier && num_lock_mask) {
-		XUngrabButton(blz.dpy, button, mod | num_lock_mask, w);
-		XUngrabButton(blz.dpy, button, mod | num_lock_mask | LockMask, w);
 	}
 }

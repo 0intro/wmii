@@ -85,7 +85,6 @@ buttonpress(XEvent *e) {
 	if((f = frame_of_win(ev->window))) {
 		ev->state &= valid_mask;
 		if((ev->state & def.mod) == def.mod) {
-			focus(f->client, True);
 			switch(ev->button) {
 			case Button1:
 				do_mouse_resize(f->client, CENTER);
@@ -94,11 +93,14 @@ buttonpress(XEvent *e) {
 				do_mouse_resize(f->client,
 						quadofcoord(&f->client->rect, ev->x, ev->y));
 			default:
+				XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 			break;
 			}
+		}else{
+			if(ev->button == Button1)
+				focus(f->client, True);
+			XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 		}
-		else if(ev->button == Button1)
-			focus(f->client, True);
 	}
 }
 

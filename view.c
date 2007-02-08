@@ -197,7 +197,6 @@ restack_view(View *v) {
 			wins[n++] = a->sel->client->framewin;
 			for(f=a->frame; f; f=f->anext) {
 				Client *c = f->client;
-				update_client_grab(c, (v->sel == a) && (a->sel == f));
 				if(f != a->sel)
 					wins[n++] = c->framewin;
 			}
