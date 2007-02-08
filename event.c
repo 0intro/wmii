@@ -194,7 +194,6 @@ enternotify(XEvent *e) {
 		if(c->sel->area->mode == Colmax)
 			c = c->sel->area->sel->client;
 		focus(c, False);
-		XSync(blz.dpy, False);
 	}
 	else if(ev->window == blz.root) {
 		sel_screen = True;
