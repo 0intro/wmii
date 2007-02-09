@@ -7,45 +7,6 @@
 #include <string.h>
 #include <X11/keysym.h>
 
-/* local functions */
-static void buttonpress(XEvent *e);
-static void buttonrelease(XEvent *e);
-static void configurerequest(XEvent *e);
-static void destroynotify(XEvent *e);
-static void enternotify(XEvent *e);
-static void leavenotify(XEvent *e);
-static void expose(XEvent *e);
-static void keypress(XEvent *e);
-static void mappingnotify(XEvent *e);
-static void maprequest(XEvent *e);
-static void propertynotify(XEvent *e);
-static void unmapnotify(XEvent *e);
-
-void (*handler[LASTEvent]) (XEvent *) = {
-	[ButtonPress]	= buttonpress,
-	[ButtonRelease]	= buttonrelease,
-	[ConfigureRequest]= configurerequest,
-	[DestroyNotify]	= destroynotify,
-	[EnterNotify]	= enternotify,
-	[LeaveNotify]	= leavenotify,
-	[Expose]	= expose,
-	[KeyPress]	= keypress,
-	[MappingNotify]	= mappingnotify,
-	[MapRequest]	= maprequest,
-	[PropertyNotify]= propertynotify,
-	[UnmapNotify]	= unmapnotify
-};
-
-void
-check_x_event(IXPConn *c) {
-	XEvent ev;
-	while(XPending(blz.dpy)) { /* main event loop */
-		XNextEvent(blz.dpy, &ev);
-		if(handler[ev.type])
-			(handler[ev.type]) (&ev); /* call handler */
-	}
-}
-
 unsigned int
 flush_masked_events(long even_mask) {
 	XEvent ev;
@@ -297,4 +258,29 @@ unmapnotify(XEvent *e) {
 
 	if((c = client_of_win(ev->window)))
 		destroy_client(c);
+}
+
+void (*handler[LASTEvent]) (XEvent *) = {
+	[ButtonPress]	= buttonpress,
+	[ButtonRelease]	= buttonrelease,
+	[ConfigureRequest]= configurerequest,
+	[DestroyNotify]	= destroynotify,
+	[EnterNotify]	= enternotify,
+	[LeaveNotify]	= leavenotify,
+	[Expose]	= expose,
+	[KeyPress]	= keypress,
+	[MappingNotify]	= mappingnotify,
+	[MapRequest]	= maprequest,
+	[PropertyNotify]= propertynotify,
+	[UnmapNotify]	= unmapnotify
+};
+
+void
+check_x_event(IXPConn *c) {
+	XEvent ev;
+	while(XPending(blz.dpy)) { /* main event loop */
+		XNextEvent(blz.dpy, &ev);
+		if(handler[ev.type])
+			(handler[ev.type]) (&ev); /* call handler */
+	}
 }
