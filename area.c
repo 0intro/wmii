@@ -267,13 +267,10 @@ detach_from_area(Area *a, Frame *f) {
 	c = f->client;
 
 	for(pr = a->frame; pr; pr = pr->anext)
-		if(pr->next == f) break;
+		if(pr->anext == f) break;
 	remove_frame(f);
-	if(a->sel == f) {
+	if(a->sel == f)
 		a->sel = pr;
-		if(f->anext)
-			a->sel = f->anext;
-	}
 
 	if(!a->floating) {
 		if(a->frame)
