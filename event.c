@@ -72,7 +72,8 @@ buttonpress(XEvent *e) {
 			}
 			XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 		}
-	}
+	}else
+		XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 }
 
 static void
