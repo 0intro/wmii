@@ -95,19 +95,20 @@ resize_frame(Frame *f, XRectangle *r) {
 		match_sizehints(c, &f->rect, f->area->floating, stickycorner);
 }
 
-void
+Bool
 frame_to_top(Frame *f) {
 	Frame **tf;
 	Area *a;
 
 	a = f->area;
-	if(!a->floating)
-		return;
+	if(!a->floating || f == a->stack)
+		return False;
 	for(tf=&a->stack; *tf; tf=&(*tf)->snext)
 		if(*tf == f) break;
 	*tf = f->snext;
 	f->snext = a->stack;
 	a->stack = f;
+	return True;
 }
 
 void
