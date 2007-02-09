@@ -143,6 +143,7 @@ struct Client {
 	int proto;
 	Bool floating;
 	Bool fixedsize;
+	Bool urgent;
 	Window win;
 	Window trans;
 	Window framewin;

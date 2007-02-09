@@ -244,6 +244,7 @@ kill_client(Client * c) {
 
 void
 prop_client(Client *c, XPropertyEvent *e) {
+	XWMHints *wmh;
 	long msize;
 
 	if(e->atom == wm_atom[WMProtocols]) {
@@ -264,6 +265,17 @@ prop_client(Client *c, XPropertyEvent *e) {
 				c->fixedsize = True;
 		else
 			c->fixedsize = False;
+		break;
+	case XA_WM_HINTS:
+		wmh = XGetWMHints(blz.dpy, c->win);
+		if(wmh->flags&XUrgencyHint && !client->urgent) {
+			write_event("Urgent 0x%x\n", client->win);;
+			client->urgent = True;
+		}
+		else if(!(wmh->flags&XUrgencyHint) && client->urgent) {
+			write_event("NotUrgent 0x%x\n", client->win);;
+			client->urgent = False;
+		}
 		break;
 	}
 	if(e->atom == XA_WM_NAME || e->atom == net_atom[NetWMName]) {
