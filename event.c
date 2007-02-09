@@ -35,10 +35,8 @@ buttonrelease(XEvent *e) {
 				return;
 			}
 	}
-	else if((f = frame_of_win(ev->window))) {
+	else if((f = frame_of_win(ev->window)))
 		write_event("ClientClick 0x%x %d\n", f->client->win, ev->button);
-		XAllowEvents(blz.dpy, ReplayPointer, ev->time);
-	}
 }
 
 static void
@@ -49,7 +47,7 @@ buttonpress(XEvent *e) {
 	
 	ev = &e->xbutton;
 	if((f = frame_of_win(ev->window))) {
-		inclient = ispointinrect(ev->x, ev->y, &f->client->rect);
+		inclient = (ev->subwindow == f->client->win);
 		ev->state &= valid_mask;
 		if((ev->state & def.mod) == def.mod) {
 			switch(ev->button) {
@@ -65,7 +63,7 @@ buttonpress(XEvent *e) {
 				frame_to_top(f);
 				focus(f->client, True);
 			default:
-				XAllowEvents(blz.dpy, ReplayPointer, ev->time);
+				XAllowEvents(blz.dpy, AsyncPointer, ev->time);
 			break;
 			}
 		}else{
