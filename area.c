@@ -271,6 +271,8 @@ detach_from_area(Area *a, Frame *f) {
 	remove_frame(f);
 	if(a->sel == f)
 		a->sel = pr;
+	if(a->sel == nil)
+		a->sel = a->frame;
 
 	if(!a->floating) {
 		if(a->frame)
