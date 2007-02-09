@@ -88,10 +88,15 @@ buttonpress(XEvent *e) {
 			switch(ev->button) {
 			case Button1:
 				do_mouse_resize(f->client, CENTER);
+				focus(f->client, True);
+				frame_to_top(f);
+				focus(f->client, True);
 				break;
 			case Button3:
 				do_mouse_resize(f->client,
 						quadofcoord(&f->client->rect, ev->x, ev->y));
+				frame_to_top(f);
+				focus(f->client, True);
 			default:
 				XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 			break;
