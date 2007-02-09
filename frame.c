@@ -184,6 +184,10 @@ draw_frame(Frame *f) {
 	draw_tile(&f->grabbox);
 	draw_label(&f->titlebar, f->client->name);
 	draw_border(&f->tile);
+	/* XXX: Hack */
+	f->tile.rect.height = labelh(&def.font);
+	f->tile.border = 1;
+	draw_border(&f->tile);
 	XCopyArea(blz.dpy, pmap, f->client->framewin, f->client->gc,
 			0, 0, f->rect.width, f->rect.height, 0, 0);
 	XSync(blz.dpy, False);

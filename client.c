@@ -7,6 +7,8 @@
 #include <string.h>
 #include <X11/Xatom.h>
 
+static void update_client_name(Client *c);
+
 static char *Ebadcmd = "bad command",
 	    *Ebadvalue = "bad value";
 

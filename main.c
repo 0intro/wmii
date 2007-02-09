@@ -347,7 +347,7 @@ main(int argc, char *argv[]) {
 		s->bbrush.rect.y = 0;
 		s->bbrush.color = def.normcolor;
 		s->bbrush.font = &def.font;
-		s->bbrush.border = False;
+		s->bbrush.border = 1;
 		draw_bar(s);
 		XMapRaised(blz.dpy, s->barwin);
 	}

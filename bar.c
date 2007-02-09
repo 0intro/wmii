@@ -66,7 +66,6 @@ draw_bar(WMScreen *s) {
 	float shrink;
 	Bar *b, *tb, *largest, **pb;
 
-	s->bbrush.border = def.border;
 	draw_tile(&s->bbrush);
 	if(!s->lbar && !s->rbar)
 		goto MapBar;
