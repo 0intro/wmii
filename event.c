@@ -35,8 +35,10 @@ buttonrelease(XEvent *e) {
 				return;
 			}
 	}
-	else if((f = frame_of_win(ev->window))) 
+	else if((f = frame_of_win(ev->window))) {
 		write_event("ClientClick 0x%x %d\n", f->client->win, ev->button);
+		XAllowEvents(blz.dpy, ReplayPointer, ev->time);
+	}
 }
 
 static void
@@ -73,8 +75,7 @@ buttonpress(XEvent *e) {
 			}
 			XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 		}
-	}else
-		XAllowEvents(blz.dpy, ReplayPointer, ev->time);
+	}
 	XSync(blz.dpy, False);
 }
 

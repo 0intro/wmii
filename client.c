@@ -51,7 +51,9 @@ create_client(Window w, XWindowAttributes *wa) {
 			DefaultDepth(blz.dpy, blz.screen), CopyFromParent,
 			DefaultVisual(blz.dpy, blz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
-	XGrabButton(blz.dpy, AnyButton, AnyModifier, c->framewin, False, ButtonMask,
+	XGrabButton(blz.dpy, Button1, AnyModifier, c->framewin, False, ButtonMask,
+			GrabModeSync, GrabModeSync, None, None);
+	XGrabButton(blz.dpy, Button3, AnyModifier, c->framewin, False, ButtonMask,
 			GrabModeSync, GrabModeSync, None, None);
 	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
 	XSync(blz.dpy, False);
