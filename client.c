@@ -170,7 +170,8 @@ focus_client(Client *c, Bool restack) {
 		else
 			write_event("FocusFloating\n");
 	}
-	write_event("ClientFocus 0x%x\n", c->win);
+	if(c != old)
+		write_event("ClientFocus 0x%x\n", c->win);
 }
 
 void
