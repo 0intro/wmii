@@ -614,11 +614,9 @@ send_client(Frame *f, char *arg) {
 	}else
 		return Ebadvalue;
 	flush_masked_events(EnterWindowMask);
+	if(f->view == screen->sel)
+		focus(f->client, True);
 	update_views();
-	if(f->view == screen->sel) {
-		focus_client(f->client, False);
-		focus_view(screen, f->view);
-	}
 	return nil;
 }
 

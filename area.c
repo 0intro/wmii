@@ -217,7 +217,7 @@ send_to_area(Area *to, Area *from, Frame *f) {
 void
 attach_to_area(Area *a, Frame *f, Bool send) {
 	unsigned int h, n_frame;
-	Frame **fa, *ft;
+	Frame *ft;
 	Client *c;
 	View *v;
 
@@ -242,10 +242,11 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 			arrange_view(v);
 		}
 	}
-	fa = a->sel ? &a->sel->anext : &a->frame;
-	f->anext = *fa;
-	*fa = f;
 	f->area = a;
+	if(a->sel)
+		insert_frame(nil, f, False);
+	else
+		insert_frame(a->sel, f, False);
 	a->sel = f;
 	if(!c->floating) { /* column */
 		f->rect.height = h;
@@ -256,7 +257,7 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 
 void
 detach_from_area(Area *a, Frame *f) {
-	Frame **ft, *pr;
+	Frame *pr;
 	Client *c;
 	View *v;
 	Area *ta;
@@ -264,16 +265,16 @@ detach_from_area(Area *a, Frame *f) {
 
 	v = a->view;
 	c = f->client;
-	pr = nil;
 
-	for(ft=&a->frame; *ft; ft=&(*ft)->anext) {
-		if(*ft == f) break;
-		pr = *ft;
+	for(pr = a->frame; pr; pr = pr->anext)
+		if(pr == f) break;
+	remove_frame(f);
+	if(a->sel == f) {
+		a->sel = pr;
+		if(f->anext)
+			a->sel = f->anext;
 	}
-	assert(*ft == f);
-	*ft = f->anext;
-	if(a->sel == f)
-		a->sel = pr ? pr : *ft;
+
 	if(!a->floating) {
 		if(a->frame)
 			arrange_column(a, False);
@@ -285,7 +286,7 @@ detach_from_area(Area *a, Frame *f) {
 				destroy_area(a);
 			else if(!a->frame && v->area->frame) {
 				/* focus floating area if it contains something */
-				v->sel = v->area;
+				focus(v->area->sel->client, False);
 				write_event("FocusFloating\n");
 			}
 			arrange_view(v);
@@ -299,11 +300,11 @@ detach_from_area(Area *a, Frame *f) {
 			if(cl && cl->frame) {
 				a = cl->sel->area;
 				if(a->view == v)
-					v->sel = a;
+					focus(a->sel->client, False);
 			}
 		}
 		else if(v->area->next->frame)
-			v->sel = v->area->next; /* focus first col as fallback */
+			focus(v->area->next->sel->client, False); /* focus first col as fallback */
 		i = 0;
 		for(ta=v->area; ta && ta != v->sel; ta=ta->next)
 			i++;
@@ -323,7 +324,7 @@ select_area(Area *a, char *arg) {
 	v = a->view;
 	f = a->sel;
 	if(!strncmp(arg, "toggle", 7)) {
-		if(a != v->area)
+		if(!a->floating)
 			new = v->area;
 		else if(v->revert)
 			new = v->revert;

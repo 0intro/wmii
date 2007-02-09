@@ -44,21 +44,34 @@ remove_frame(Frame *f) {
 	for(ft = &a->frame; *ft; ft=&(*ft)->anext)
 		if(*ft == f) break;
 	*ft = f->anext;
+
+	if(a->floating) {
+		for(ft = &a->stack; *ft; ft=&(*ft)->snext)
+			if(*ft == f) break;
+		*ft = f->snext;
+	}
 }
 
 void
 insert_frame(Frame *pos, Frame *f, Bool before) {
+	Frame *ft, **p;
 	Area *a = f->area;
 
 	if(before) {
-		Frame *ft;
 		for(ft=a->frame; ft; ft=ft->anext)
 			if(ft->anext == pos) break;
 		pos=ft;
 	}
-	Frame **p = pos ? &pos->anext : &a->frame;
+	p = &a->frame;
+	if(pos)
+		p = &pos->anext;
 	f->anext = *p;
 	*p = f;
+
+	if(a->floating) {
+		f->snext = a->stack;
+		a->stack = f;
+	}
 }
 
 void
@@ -90,11 +103,11 @@ frame_to_top(Frame *f) {
 	a = f->area;
 	if(!a->floating)
 		return;
-	for(tf=&a->frame; *tf; tf=&(*tf)->anext)
+	for(tf=&a->stack; *tf; tf=&(*tf)->snext)
 		if(*tf == f) break;
-	*tf = f->anext;
-	f->anext = a->frame;
-	a->frame = f;
+	*tf = f->snext;
+	f->snext = a->stack;
+	a->stack = f;
 }
 
 void

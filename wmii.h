@@ -106,6 +106,7 @@ struct View {
 struct Area {
 	Area *next;
 	Frame *frame;
+	Frame *stack;
 	Frame *sel;
 	View *view;
 	Bool floating;
@@ -117,6 +118,7 @@ struct Area {
 struct Frame {
 	Frame *cnext;
 	Frame *anext;
+	Frame *snext;
 	View *view;
 	Area *area;
 	unsigned short id;

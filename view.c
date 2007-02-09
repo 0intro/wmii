@@ -183,14 +183,14 @@ restack_view(View *v) {
 	}
 
 	wins[0] = screen->barwin;
-	for(a=v->area; a; a=a->next) {
+	for(f=v->area->stack; f; f=f->snext)
+		wins[n++] = f->client->framewin;;
+	for(a=v->area->next; a; a=a->next) {
 		if(a->frame) {
 			wins[n++] = a->sel->client->framewin;
-			for(f=a->frame; f; f=f->anext) {
-				Client *c = f->client;
+			for(f=a->frame; f; f=f->anext)
 				if(f != a->sel)
-					wins[n++] = c->framewin;
-			}
+					wins[n++] = f->client->framewin;;
 		}
 	}
 	if(n)
