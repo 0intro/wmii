@@ -48,7 +48,6 @@ buttonpress(XEvent *e) {
 	ev = &e->xbutton;
 	if((f = frame_of_win(ev->window))) {
 		inclient = (ev->subwindow == f->client->win);
-		ev->state &= valid_mask;
 		if((ev->state & def.mod) == def.mod) {
 			switch(ev->button) {
 			case Button1:
@@ -62,15 +61,12 @@ buttonpress(XEvent *e) {
 						quadofcoord(&f->client->rect, ev->x, ev->y));
 				frame_to_top(f);
 				focus(f->client, True);
-			default:
-				XAllowEvents(blz.dpy, AsyncPointer, ev->time);
-			break;
+				break;
+			default: break;
+				XAllowEvents(blz.dpy, ReplayPointer, CurrentTime);
 			}
 		}else{
-			if(inclient)
-				XAllowEvents(blz.dpy, ReplayPointer, ev->time);
-			else
-				XAllowEvents(blz.dpy, AsyncPointer, ev->time);
+			XAllowEvents(blz.dpy, ReplayPointer, CurrentTime);
 			if(ev->button == Button1) {
 				if(frame_to_top(f) || f->client != sel_client())
 					focus(f->client, True);
@@ -79,7 +75,7 @@ buttonpress(XEvent *e) {
 			}
 		}
 	}else
-		XAllowEvents(blz.dpy, AsyncPointer, ev->time);
+		XAllowEvents(blz.dpy, ReplayPointer, CurrentTime);
 }
 
 static void
