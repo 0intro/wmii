@@ -1,2 +1,2 @@
 #!/bin/sh
-IXP_ADDRESS="$WMII_ADDRESS" ixpc $@
+exec ixpc -a "$WMII_ADDRESS" $@
