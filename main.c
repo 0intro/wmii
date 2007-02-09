@@ -19,7 +19,9 @@
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
 
-Bool check_other_wm;
+Bool verbose;
+Bool starting;
+static Bool check_other_wm;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
 
@@ -199,6 +201,9 @@ main(int argc, char *argv[]) {
 		case 'v':
 			fprintf(stdout, "%s", version);
 			exit(0);
+			break;
+		case 'V':
+			verbose = True;
 			break;
 		case 'a':
 			if(i + 1 < argc)

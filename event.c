@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <X11/keysym.h>
+#include "printevent.h"
 
 unsigned int
 flush_masked_events(long even_mask) {
@@ -282,6 +283,8 @@ check_x_event(IXPConn *c) {
 	XEvent ev;
 	while(XPending(blz.dpy)) { /* main event loop */
 		XNextEvent(blz.dpy, &ev);
+		if(verbose)
+			printevent(&ev);
 		if(handler[ev.type])
 			(handler[ev.type]) (&ev); /* call handler */
 	}

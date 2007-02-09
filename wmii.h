@@ -239,7 +239,8 @@ Pixmap pmap;
 void (*handler[LASTEvent]) (XEvent *);
 
 /* Misc */
-Bool starting;
+extern Bool starting;
+extern Bool verbose;
 
 /* wm.c */
 extern char *message_root(char *message);
