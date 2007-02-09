@@ -44,17 +44,17 @@ create_client(Window w, XWindowAttributes *wa) {
 	fwa.background_pixmap = ParentRelative;
 	fwa.event_mask =
 		SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask
-		| ButtonPressMask | PointerMotionMask | ButtonReleaseMask | KeyPressMask;
+		| PointerMotionMask | KeyPressMask | ButtonPressMask | ButtonReleaseMask;
 	c->framewin = XCreateWindow(blz.dpy, blz.root, c->rect.x, c->rect.y,
 			c->rect.width + 2 * def.border,
 			c->rect.height + def.border + labelh(&def.font), 0,
 			DefaultDepth(blz.dpy, blz.screen), CopyFromParent,
 			DefaultVisual(blz.dpy, blz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
-	XGrabButton(blz.dpy, Button1, AnyModifier, c->framewin, False, ButtonMask,
-			GrabModeSync, GrabModeSync, None, None);
-	XGrabButton(blz.dpy, Button3, AnyModifier, c->framewin, False, ButtonMask,
-			GrabModeSync, GrabModeSync, None, None);
+	XGrabButton(blz.dpy, Button1, AnyModifier, c->framewin, True, ButtonPressMask,
+			GrabModeSync, GrabModeAsync, None, None);
+	XGrabButton(blz.dpy, Button3, AnyModifier, c->framewin, True, ButtonPressMask,
+			GrabModeSync, GrabModeAsync, None, None);
 	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
 	XSync(blz.dpy, False);
 	for(t=&client; *t; t=&(*t)->next);

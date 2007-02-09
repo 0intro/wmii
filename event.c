@@ -44,9 +44,12 @@ buttonrelease(XEvent *e) {
 static void
 buttonpress(XEvent *e) {
 	Frame *f;
-	XButtonPressedEvent *ev = &e->xbutton;
-
+	Bool inclient;
+	XButtonPressedEvent *ev;
+	
+	ev = &e->xbutton;
 	if((f = frame_of_win(ev->window))) {
+		inclient = ispointinrect(ev->x, ev->y, &f->client->rect);
 		ev->state &= valid_mask;
 		if((ev->state & def.mod) == def.mod) {
 			switch(ev->button) {
@@ -66,17 +69,19 @@ buttonpress(XEvent *e) {
 			break;
 			}
 		}else{
+			if(inclient)
+				XAllowEvents(blz.dpy, ReplayPointer, ev->time);
+			else
+				XAllowEvents(blz.dpy, AsyncPointer, ev->time);
 			if(ev->button == Button1) {
 				if(frame_to_top(f) || f->client != sel_client())
 					focus(f->client, True);
-				if(ispointinrect(ev->x, ev->y, &f->titlebar.rect)
-				 ||ispointinrect(ev->x, ev->y, &f->grabbox.rect))
+				if(!inclient)
 					do_mouse_resize(f->client, CENTER);
 			}
-			XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 		}
-	}
-	XSync(blz.dpy, False);
+	}else
+		XAllowEvents(blz.dpy, AsyncPointer, ev->time);
 }
 
 static void
