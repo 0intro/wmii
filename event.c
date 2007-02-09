@@ -100,6 +100,9 @@ buttonpress(XEvent *e) {
 			if(ev->button == Button1) {
 				frame_to_top(f);
 				focus(f->client, True);
+				if(ispointinrect(ev->x, ev->y, &f->titlebar.rect)
+				 ||ispointinrect(ev->x, ev->y, &f->grabbox.rect))
+					do_mouse_resize(f->client, CENTER);
 			}
 			XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 		}
