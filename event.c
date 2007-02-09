@@ -66,13 +66,13 @@ buttonpress(XEvent *e) {
 				XAllowEvents(blz.dpy, ReplayPointer, CurrentTime);
 			}
 		}else{
-			XAllowEvents(blz.dpy, ReplayPointer, CurrentTime);
 			if(ev->button == Button1) {
 				if(frame_to_top(f) || f->client != sel_client())
 					focus(f->client, True);
 				if(!inclient)
 					do_mouse_resize(f->client, CENTER);
 			}
+			XAllowEvents(blz.dpy, ReplayPointer, CurrentTime);
 		}
 	}else
 		XAllowEvents(blz.dpy, ReplayPointer, CurrentTime);
