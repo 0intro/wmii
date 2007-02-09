@@ -170,6 +170,7 @@ update_frame_widget_colors(Frame *f) {
 void
 draw_frame(Frame *f) {
 	if(def.border) {
+		f->tile.border = def.border;
 		f->tile.rect = f->rect;
 		f->tile.rect.x = f->tile.rect.y = 0;
 	}

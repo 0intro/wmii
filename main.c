@@ -300,7 +300,7 @@ main(int argc, char *argv[]) {
 	def.keys = nil;
 	def.keyssz = 0;
 	def.font.fontstr = ixp_estrdup(BLITZ_FONT);
-	def.border = 2;
+	def.border = 1;
 	def.colmode = Coldefault;
 	strncpy(def.selcolor.colstr, BLITZ_SELCOLORS, sizeof(def.selcolor.colstr));
 	loadcolor(&blz, &def.selcolor);

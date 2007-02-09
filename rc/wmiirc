@@ -50,7 +50,7 @@ focuscolors $WMII_FOCUSCOLORS
 selcolors $WMII_SELCOLORS
 normcolors $WMII_NORMCOLORS
 grabmod $MODKEY
-border 2
+border 1
 EOF
 
 # COLUMN RULES

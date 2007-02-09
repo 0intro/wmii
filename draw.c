@@ -81,7 +81,7 @@ draw_tile(BlitzBrush *b) {
 void
 draw_border(BlitzBrush *b) {
 	drawbg(b->blitz->dpy, b->drawable, b->gc, &b->rect,
-			b->color, False, True);
+			b->color, False, b->border);
 }
 
 void
@@ -146,17 +146,17 @@ draw_label(BlitzBrush *b, char *text) {
 
 void
 drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle *rect,
-			BlitzColor c, Bool fill, Bool border)
+			BlitzColor c, Bool fill, int border)
 {
 	if(fill) {
 		XSetForeground(dpy, gc, c.bg);
 		XFillRectangles(dpy, drawable, gc, rect, 1);
 	}
-	if(!border)
-		return;
-	XSetLineAttributes(dpy, gc, 0, LineSolid, CapButt, JoinMiter);
-	XSetForeground(dpy, gc, c.border);
-	XDrawRectangle(dpy, drawable, gc, rect->x, rect->y, rect->width - 1, rect->height - 1);
+	if(border) {
+		XSetLineAttributes(dpy, gc, border, LineSolid, CapButt, JoinMiter);
+		XSetForeground(dpy, gc, c.border);
+		XDrawRectangle(dpy, drawable, gc, rect->x, rect->y, rect->width - 1, rect->height - 1);
+	}
 }
 
 void

@@ -61,7 +61,7 @@ struct BlitzBrush {
 	Blitz *blitz;
 	Drawable drawable;
 	GC gc;
-	Bool border;
+	int border;
 	BlitzColor color;
 	BlitzAlign align;
 	BlitzFont *font;
