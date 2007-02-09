@@ -173,6 +173,7 @@ draw_frame(Frame *f) {
 		f->tile.border = def.border;
 		f->tile.rect = f->rect;
 		f->tile.rect.x = f->tile.rect.y = 0;
+		draw_border(&f->tile);
 	}
 	f->grabbox.rect = f->tile.rect;
 	f->grabbox.rect.height = labelh(&def.font);
@@ -180,14 +181,15 @@ draw_frame(Frame *f) {
 	f->titlebar.rect = f->grabbox.rect;
 	f->titlebar.rect.x = f->grabbox.rect.x + f->grabbox.rect.width;
 	f->titlebar.rect.width = f->rect.width -  f->titlebar.rect.x;
+	f->titlebar.border = 0;
 	draw_tile(&f->tile);
 	draw_tile(&f->grabbox);
 	draw_label(&f->titlebar, f->client->name);
-	draw_border(&f->tile);
 	/* XXX: Hack */
-	f->tile.rect.height = labelh(&def.font);
-	f->tile.border = 1;
-	draw_border(&f->tile);
+	f->titlebar.rect.x = 0;
+	f->titlebar.rect.width += f->grabbox.rect.width;
+	f->titlebar.border = 1;
+	draw_border(&f->titlebar);
 	XCopyArea(blz.dpy, pmap, f->client->framewin, f->client->gc,
 			0, 0, f->rect.width, f->rect.height, 0, 0);
 	XSync(blz.dpy, False);

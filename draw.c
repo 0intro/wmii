@@ -155,7 +155,8 @@ drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle *rect,
 	if(border) {
 		XSetLineAttributes(dpy, gc, border, LineSolid, CapButt, JoinMiter);
 		XSetForeground(dpy, gc, c.border);
-		XDrawRectangle(dpy, drawable, gc, rect->x, rect->y, rect->width - 1, rect->height - 1);
+		XDrawRectangle(dpy, drawable, gc, rect->x + border / 2, rect->y + border / 2,
+				rect->width - border, rect->height - border);
 	}
 }
 
