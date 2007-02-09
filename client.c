@@ -14,6 +14,79 @@ static char *Ebadcmd = "bad command",
 #define ButtonMask		(ButtonPressMask | ButtonReleaseMask)
 
 Client *
+create_client(Window w, XWindowAttributes *wa) {
+	Client **t, *c = (Client *) ixp_emallocz(sizeof(Client));
+	XSetWindowAttributes fwa;
+	long msize;
+
+	c->win = w;
+	c->rect.x = wa->x;
+	c->rect.y = wa->y;
+	c->border = wa->border_width;
+	c->rect.width = wa->width;
+	c->rect.height = wa->height;
+	XSetWindowBorderWidth(blz.dpy, c->win, 0);
+	c->proto = win_proto(c->win);
+	XGetTransientForHint(blz.dpy, c->win, &c->trans);
+	if(!XGetWMNormalHints(blz.dpy, c->win, &c->size, &msize) || !c->size.flags)
+		c->size.flags = PSize;
+	if(c->size.flags & PMinSize && c->size.flags & PMaxSize
+		&& c->size.min_width == c->size.max_width
+		&& c->size.min_height == c->size.max_height)
+			c->fixedsize = True;
+	else
+		c->fixedsize = False;
+	XAddToSaveSet(blz.dpy, c->win);
+	update_client_name(c);
+	fwa.override_redirect = 1;
+	fwa.background_pixmap = ParentRelative;
+	fwa.event_mask =
+		SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask
+		| ButtonPressMask | PointerMotionMask | ButtonReleaseMask | KeyPressMask;
+	c->framewin = XCreateWindow(blz.dpy, blz.root, c->rect.x, c->rect.y,
+			c->rect.width + 2 * def.border,
+			c->rect.height + def.border + labelh(&def.font), 0,
+			DefaultDepth(blz.dpy, blz.screen), CopyFromParent,
+			DefaultVisual(blz.dpy, blz.screen),
+			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
+	XGrabButton(blz.dpy, AnyButton, AnyModifier, c->framewin, False, ButtonMask,
+			GrabModeSync, GrabModeSync, None, None);
+	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
+	XSync(blz.dpy, False);
+	for(t=&client; *t; t=&(*t)->next);
+	c->next = *t; /* *t == nil */
+	*t = c;
+	write_event("CreateClient 0x%x\n", c->win);
+	return c;
+}
+
+void
+manage_client(Client *c) {
+	XTextProperty tags;
+	Client *trans;
+
+	tags.nitems = 0;
+	XGetTextProperty(blz.dpy, c->win, &tags, tags_atom);
+	if(c->trans && (trans = client_of_win(c->trans)))
+		strncpy(c->tags, trans->tags, sizeof(c->tags));
+	else if(tags.nitems)
+		strncpy(c->tags, (char *)tags.value, sizeof(c->tags));
+	XFree(tags.value);
+	if(!strlen(c->tags))
+		apply_rules(c);
+	apply_tags(c, c->tags);
+	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
+	if(!starting)
+		update_views();
+	map_client(c);
+	XMapWindow(blz.dpy, c->framewin);
+	XSync(blz.dpy, False);
+	if(c->sel->area->view == screen->sel)
+		focus_client(c, False);
+	flush_masked_events(EnterWindowMask);
+}
+
+Client *
 sel_client() {
 	return screen->sel && screen->sel->sel->sel ? screen->sel->sel->sel->client : nil;
 }
@@ -67,53 +140,6 @@ update_client_name(Client *c) {
 		if(ch.res_name)
 			XFree(ch.res_name);
 	}
-}
-
-Client *
-create_client(Window w, XWindowAttributes *wa) {
-	Client **t, *c = (Client *) ixp_emallocz(sizeof(Client));
-	XSetWindowAttributes fwa;
-	long msize;
-
-	c->win = w;
-	c->rect.x = wa->x;
-	c->rect.y = wa->y;
-	c->border = wa->border_width;
-	c->rect.width = wa->width;
-	c->rect.height = wa->height;
-	XSetWindowBorderWidth(blz.dpy, c->win, 0);
-	c->proto = win_proto(c->win);
-	XGetTransientForHint(blz.dpy, c->win, &c->trans);
-	if(!XGetWMNormalHints(blz.dpy, c->win, &c->size, &msize) || !c->size.flags)
-		c->size.flags = PSize;
-	if(c->size.flags & PMinSize && c->size.flags & PMaxSize
-		&& c->size.min_width == c->size.max_width
-		&& c->size.min_height == c->size.max_height)
-			c->fixedsize = True;
-	else
-		c->fixedsize = False;
-	XAddToSaveSet(blz.dpy, c->win);
-	update_client_name(c);
-	fwa.override_redirect = 1;
-	fwa.background_pixmap = ParentRelative;
-	fwa.event_mask =
-		SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask
-		| ButtonPressMask | PointerMotionMask | ButtonReleaseMask | KeyPressMask;
-	c->framewin = XCreateWindow(blz.dpy, blz.root, c->rect.x, c->rect.y,
-			c->rect.width + 2 * def.border,
-			c->rect.height + def.border + labelh(&def.font), 0,
-			DefaultDepth(blz.dpy, blz.screen), CopyFromParent,
-			DefaultVisual(blz.dpy, blz.screen),
-			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
-	XGrabButton(blz.dpy, AnyButton, AnyModifier, c->framewin, False, ButtonMask,
-			GrabModeSync, GrabModeSync, None, None);
-	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
-	XSync(blz.dpy, False);
-	for(t=&client; *t; t=&(*t)->next);
-	c->next = *t; /* *t == nil */
-	*t = c;
-	write_event("CreateClient 0x%x\n", c->win);
-	return c;
 }
 
 void
@@ -343,32 +369,6 @@ gravitate_client(Client *c, Bool invert) {
 	}
 	c->rect.x += dx;
 	c->rect.y += dy;
-}
-
-void
-manage_client(Client *c) {
-	XTextProperty tags;
-	Client *trans;
-
-	tags.nitems = 0;
-	XGetTextProperty(blz.dpy, c->win, &tags, tags_atom);
-	if(c->trans && (trans = client_of_win(c->trans)))
-		strncpy(c->tags, trans->tags, sizeof(c->tags));
-	else if(tags.nitems)
-		strncpy(c->tags, (char *)tags.value, sizeof(c->tags));
-	XFree(tags.value);
-	if(!strlen(c->tags))
-		apply_rules(c);
-	apply_tags(c, c->tags);
-	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
-	if(!starting)
-		update_views();
-	map_client(c);
-	XMapWindow(blz.dpy, c->framewin);
-	XSync(blz.dpy, False);
-	if(c->sel->area->view == screen->sel)
-		focus_client(c, False);
-	flush_masked_events(EnterWindowMask);
 }
 
 static int

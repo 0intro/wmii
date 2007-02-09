@@ -122,7 +122,7 @@ focus_view(WMScreen *s, View *v) {
 						f->rect.y);
 		}
 	if((c = sel_client()))
-		focus_client(c, False);
+		focus_client(c, True);
 	draw_frames();
 	XSync(blz.dpy, False);
 	XUngrabServer(blz.dpy);
