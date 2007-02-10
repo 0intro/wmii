@@ -311,7 +311,7 @@ do_managed_move(Client *c) {
 }
 
 void
-do_mouse_resize(Client *c, BlitzAlign align) {
+do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 	BlitzAlign grav;
 	Window dummy;
 	Cursor cur;
@@ -329,8 +329,13 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 	rects = floating ? rects_of_view(f->area->view, &num) : nil;
 	snap = floating ? screen->rect.height / 66 : 0;
 	cur = cursor[CurResize];
-	if(align == CENTER)
-		cur = cursor[CurInvisible];
+
+	if(align == CENTER) {
+		if(grabbox)
+			cur = cursor[CurMove];
+		else
+			cur = cursor[CurInvisible];
+	}
 	
 	if(!floating && (align == CENTER)) {
 		do_managed_move(c);
@@ -354,7 +359,7 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 		if(align&WEST) dx -= pt_x;
 		XWarpPointer(blz.dpy, None, c->framewin, 0, 0, 0, 0, dx, dy);
 	}
-	else {
+	else if(!grabbox) {
 		hr_x = screen->rect.width / 2;
 		hr_y = screen->rect.height / 2;
 		XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, hr_x, hr_y);
@@ -367,14 +372,25 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 	XQueryPointer(blz.dpy, blz.root, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
 
 	XSync(blz.dpy, False);
-	XGrabServer(blz.dpy);
-
-	draw_xor_border(&frect);
+	if(!grabbox) {
+		XGrabServer(blz.dpy);
+		draw_xor_border(&frect);
+	}
 	for(;;) {
 		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			draw_xor_border(&frect);
+			if(!grabbox) {
+				draw_xor_border(&frect);
+
+				XTranslateCoordinates(blz.dpy, c->framewin, blz.root,
+						frect.width * rx, frect.height * ry,
+						&dx, &dy, &dummy);
+				if(dy > screen->brect.y)
+					dy = screen->brect.y - 1;
+				XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, dx, dy);
+				XUngrabServer(blz.dpy);
+			}
 
 			if(!floating)
 				resize_column(c, &frect);
@@ -384,14 +400,6 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 			if(rects)
 				free(rects);
 
-			XTranslateCoordinates(blz.dpy, c->framewin, blz.root,
-					frect.width * rx, frect.height * ry,
-					&dx, &dy, &dummy);
-			if(dy > screen->brect.y)
-				dy = screen->brect.y - 1;
-			XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, dx, dy);
-
-			XUngrabServer(blz.dpy);
 			XUngrabPointer(blz.dpy, CurrentTime);
 			XSync(blz.dpy, False);
 			return;
@@ -400,7 +408,7 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 			dx = ev.xmotion.x_root;
 			dy = ev.xmotion.y_root;
 
-			if(align == CENTER) {
+			if(align == CENTER && !grabbox) {
 				if(dx == hr_x && dy == hr_y)
 					continue;
 				XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, hr_x, hr_y);
@@ -424,8 +432,12 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 
 			match_sizehints(c, &frect, floating, grav);
 
-			draw_xor_border(&ofrect);
-			draw_xor_border(&frect);
+			if(grabbox)
+				resize_client(c, &frect);
+			else {
+				draw_xor_border(&ofrect);
+				draw_xor_border(&frect);
+			}
 			break;
 		case Expose:
 			(handler[Expose])(&ev);

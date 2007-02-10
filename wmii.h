@@ -358,7 +358,7 @@ extern void init_lock_keys();
 extern unsigned long mod_key_of_str(char *val);
 
 /* mouse.c */
-extern void do_mouse_resize(Client *c,BlitzAlign align);
+extern void do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align);
 extern void grab_mouse(Window w, unsigned long mod, unsigned int button);
 extern void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 extern BlitzAlign snap_rect(XRectangle *rects, int num, XRectangle *current,

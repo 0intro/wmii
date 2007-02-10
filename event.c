@@ -51,13 +51,13 @@ buttonpress(XEvent *e) {
 		if((ev->state & def.mod) == def.mod) {
 			switch(ev->button) {
 			case Button1:
-				do_mouse_resize(f->client, CENTER);
+				do_mouse_resize(f->client, False, CENTER);
 				focus(f->client, True);
 				frame_to_top(f);
 				focus(f->client, True);
 				break;
 			case Button3:
-				do_mouse_resize(f->client,
+				do_mouse_resize(f->client, False,
 						quadofcoord(&f->client->rect, ev->x, ev->y));
 				frame_to_top(f);
 				focus(f->client, True);
@@ -70,9 +70,9 @@ buttonpress(XEvent *e) {
 				if(frame_to_top(f))
 					restack_view(f->view);
 				if(ispointinrect(ev->x, ev->y, &f->grabbox.rect))
-					do_mouse_resize(f->client, CENTER);
+					do_mouse_resize(f->client, True, CENTER);
 				else if(!ispointinrect(ev->x, ev->y, &f->titlebar.rect))
-					do_mouse_resize(f->client,
+					do_mouse_resize(f->client, False,
 						quadofcoord(&f->client->rect, ev->x, ev->y));
 				if(f->client != sel_client())
 					focus(f->client, True);
