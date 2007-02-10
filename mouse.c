@@ -266,7 +266,7 @@ do_managed_move(Client *c) {
 	int x, y, i;
 
 	focus(c, False);
-	f = c->frame;
+	f = c->sel;
 
 	XSync(blz.dpy, False);
 	if(XGrabPointer(blz.dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
