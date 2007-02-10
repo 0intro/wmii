@@ -78,8 +78,6 @@ manage_client(Client *c) {
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	if(!starting)
 		update_views();
-	map_client(c);
-	XMapWindow(blz.dpy, c->framewin);
 	XSync(blz.dpy, False);
 	if(c->sel->area->view == screen->sel)
 		focus_client(c, False);
