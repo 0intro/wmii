@@ -108,6 +108,7 @@ frame_to_top(Frame *f) {
 	*tf = f->snext;
 	f->snext = a->stack;
 	a->stack = f;
+	update_client_grab(f->client);
 	return True;
 }
 

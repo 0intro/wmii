@@ -253,6 +253,8 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 		arrange_column(a, False);
 	}else /* floating */
 		place_client(a, c);
+
+	update_client_grab(f->client);
 }
 
 void
