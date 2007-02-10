@@ -127,6 +127,8 @@ focus_view(WMScreen *s, View *v) {
 		}
 	if((c = sel_client()))
 		focus_client(c, True);
+	else
+		XSetInputFocus(blz.dpy, blz.root, RevertToPointerRoot, CurrentTime);
 	draw_frames();
 	XSync(blz.dpy, False);
 	XUngrabServer(blz.dpy);
