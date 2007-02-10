@@ -184,6 +184,7 @@ draw_frame(Frame *f) {
 	f->titlebar.rect.width = f->rect.width -  f->titlebar.rect.x;
 	f->titlebar.border = 0;
 	draw_tile(&f->tile);
+	f->grabbox.border = 3;
 	draw_tile(&f->grabbox);
 	draw_label(&f->titlebar, f->client->name);
 	/* XXX: Hack */
