@@ -386,23 +386,13 @@ select_area(Area *a, char *arg) {
 			return Ebadvalue;
 		for(p=a->frame; p->anext; p=p->anext)
 			if(p->anext == f) break;
-		frame_to_top(p);
-		focus(p->client, True);
-		if(v == screen->sel)
-			restack_view(v);
-		flush_masked_events(EnterWindowMask);
-		return nil;
+		goto focus_client;
 	}
 	else if(!strncmp(arg, "down", 5)) {
 		if(!f)
 			return Ebadvalue;
 		p = f->anext ? f->anext : a->frame;
-		frame_to_top(p);
-		focus(p->client, True);
-		if(v == screen->sel)
-			restack_view(v);
-		flush_masked_events(EnterWindowMask);
-		return nil;
+		goto focus_client;
 	}
 	else {
 		if(sscanf(arg, "%d", &i) != 1)
@@ -411,5 +401,13 @@ select_area(Area *a, char *arg) {
 			i--;
 	}
 	focus_area(new);
+	return nil;
+
+focus_client:
+	frame_to_top(p);
+	focus_client(p->client, True);
+	if(v == screen->sel)
+		restack_view(v);
+	flush_masked_events(EnterWindowMask);
 	return nil;
 }
