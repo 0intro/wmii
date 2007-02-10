@@ -18,6 +18,7 @@ create_frame(Client *c, View *v) {
 		f->rect = c->sel->rect;
 	}
 	else{
+		c->sel = f;
 		f->revert = f->rect = c->rect;
 		f->revert.width = f->rect.width += 2 * def.border;
 		f->revert.height = f->rect.height += def.border + labelh(&def.font);
