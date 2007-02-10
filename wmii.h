@@ -251,6 +251,7 @@ extern char *message_root(char *message);
 extern Area *create_area(View *v, Area *pos, unsigned int w);
 extern void destroy_area(Area *a);
 extern Area *area_of_id(View *t, unsigned short id);
+extern void focus_area(Area *a);
 extern char *select_area(Area *a, char *arg);
 extern void send_to_area(Area *to, Area *from, Frame *f);
 extern void attach_to_area(Area *a, Frame *f, Bool send);
