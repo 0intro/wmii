@@ -133,12 +133,12 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 		n_frame++;
 
 	c->floating = a->floating;
-	if(!c->floating) {
+	if(!a->floating) {
 		h = a->rect.height / n_frame;
 		if(a->frame)
 			scale_column(a, a->rect.height - h);
 	}
-	if(!send && !c->floating) { /* column */
+	if(!send && !a->floating) { /* column */
 		unsigned int w = newcolw_of_view(v);
 		if(v->area->next->frame && w) {
 			a = new_column(v, a, w);
@@ -155,7 +155,8 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 	else /* floating */
 		place_client(a, c);
 
-	arrange_column(a, False);
+	if(!a->floating)
+		arrange_column(a, False);
 	focus_client(f->client, False);
 
 	update_client_grab(f->client);
