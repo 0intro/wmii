@@ -144,6 +144,8 @@ struct Client {
 	Bool floating;
 	Bool fixedsize;
 	Bool urgent;
+	Bool mapped;
+	int unmapped;
 	Window win;
 	Window trans;
 	Window framewin;
@@ -270,7 +272,7 @@ extern void configure_client(Client *c);
 extern void prop_client(Client *c, XPropertyEvent *e);
 extern void kill_client(Client *c);
 extern void gravitate_client(Client *c, Bool invert);
-extern void unmap_client(Client *c);
+extern void unmap_client(Client *c, int state);
 extern void map_client(Client *c);
 extern void reparent_client(Client *c, Window w, int x, int y);
 extern void manage_client(Client *c);

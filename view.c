@@ -116,11 +116,14 @@ focus_view(WMScreen *s, View *v) {
 	for(c=client; c; c=c->next)
 		if((f = c->sel)) {
 			if(f->view == v) {
+				map_client(c);
+				XMapWindow(blz.dpy, c->framewin);
 				resize_client(c, &f->rect);
 				update_client_grab(c);
-			}else
-				XMoveWindow(blz.dpy, c->framewin, 2 * s->rect.width + f->rect.x,
-						f->rect.y);
+			} else {
+				XUnmapWindow(blz.dpy, c->framewin);
+				unmap_client(c, IconicState);
+			}
 		}
 	if((c = sel_client()))
 		focus_client(c, True);

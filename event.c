@@ -262,7 +262,8 @@ unmapnotify(XEvent *e) {
 	XUnmapEvent *ev = &e->xunmap;
 
 	if((c = client_of_win(ev->window)))
-		destroy_client(c);
+		if(!c->unmapped--)
+			destroy_client(c);
 }
 
 void (*handler[LASTEvent]) (XEvent *) = {

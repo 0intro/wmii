@@ -155,14 +155,6 @@ update_client_grab(Client *c) {
 }
 
 void
-set_client_state(Client * c, int state)
-{
-	long data[] = { state, None };
-	XChangeProperty(blz.dpy, c->win, wm_atom[WMState], wm_atom[WMState], 32,
-			PropModeReplace, (unsigned char *) data, 2);
-}
-
-void
 focus_client(Client *c, Bool restack) {
 	Client *old_in_area;
 	Client *old;
@@ -213,19 +205,31 @@ focus_client(Client *c, Bool restack) {
 }
 
 void
+set_client_state(Client * c, int state)
+{
+	long data[] = { state, None };
+	XChangeProperty(blz.dpy, c->win, wm_atom[WMState], wm_atom[WMState], 32,
+			PropModeReplace, (unsigned char *) data, 2);
+}
+
+void
 map_client(Client *c) {
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XMapWindow(blz.dpy, c->win);
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
 	set_client_state(c, NormalState);
+	c->mapped = 1;
 }
 
 void
-unmap_client(Client *c) {
+unmap_client(Client *c, int state) {
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XUnmapWindow(blz.dpy, c->win);
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
-	set_client_state(c, WithdrawnState);
+	set_client_state(c, state);
+	c->mapped = 0;
+	/* Always set this, since we don't care anymore once it's been destroyed */
+	c->unmapped++;
 }
 
 void
@@ -399,14 +403,15 @@ destroy_client(Client *c) {
 		c->rect.x = c->sel->rect.x;
 		c->rect.y = c->sel->rect.y;
 	}
+	for(tc=&client; *tc && *tc != c; tc=&(*tc)->next)
+		if(*tc == c) break;
+	assert(*tc == c);
+	*tc = c->next;
 	update_client_views(c, &dummy);
-	unmap_client(c);
+	unmap_client(c, WithdrawnState);
 	reparent_client(c, blz.root, c->rect.x, c->rect.y);
 	XFreeGC(blz.dpy, c->gc);
 	XDestroyWindow(blz.dpy, c->framewin);
-	for(tc=&client; *tc && *tc != c; tc=&(*tc)->next);
-	assert(*tc == c);
-	*tc = c->next;
 	update_views();
 	free(c);
 	XSync(blz.dpy, False);
@@ -502,19 +507,22 @@ resize_client(Client *c, XRectangle *r) {
 	if(f->area->view == screen->sel)
 		XMoveResizeWindow(blz.dpy, c->framewin, f->rect.x,
 				f->rect.y, f->rect.width, f->rect.height);
-	else
-		XMoveResizeWindow(blz.dpy, c->framewin, 2 * screen->rect.width + f->rect.x,
-				f->rect.y, f->rect.width, f->rect.height);
+	else {
+		unmap_client(c, IconicState);
+		XUnmapWindow(blz.dpy, c->framewin);
+	}
 
 	c->rect.x = def.border;
 	c->rect.y = labelh(&def.font);
 	if((f->area->sel == f) || (f->area->mode != Colstack)) {
+		if(!c->mapped)
+			map_client(c);
 		c->rect.width = f->rect.width - 2 * def.border;
 		c->rect.height = f->rect.height - def.border - labelh(&def.font);
-	}
-
-	XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
+		XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
 					c->rect.width, c->rect.height);
+	}else
+		unmap_client(c, IconicState);
 	configure_client(c);
 }
 
