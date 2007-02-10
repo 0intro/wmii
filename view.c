@@ -153,7 +153,6 @@ void
 attach_to_view(View *v, Frame *f) {
 	Area *a;
 	Client *c = f->client;
-	unsigned int i;
 
 	c->revert = nil;
 	a = v->sel;
@@ -163,11 +162,6 @@ attach_to_view(View *v, Frame *f) {
 	else if(starting && v->sel->floating)
 		v->sel = v->area->next;
 	attach_to_area(v->sel, f, False);
-	if(a != v->sel) {
-		for(a=v->area, i = 0; a && a != v->sel; a=a->next, i++);
-		if(i) write_event("ColumnFocus %d\n", i);
-		else write_event("FocusFloating\n");
-	}
 }
 
 void

@@ -220,22 +220,26 @@ set_client_state(Client * c, int state)
 
 void
 map_client(Client *c) {
-	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XMapWindow(blz.dpy, c->win);
-	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+	if(!c->mapped) {
+		XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+		XMapWindow(blz.dpy, c->win);
+		XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+	}
 	set_client_state(c, NormalState);
 	c->mapped = 1;
 }
 
 void
 unmap_client(Client *c, int state) {
-	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
-	XUnmapWindow(blz.dpy, c->win);
-	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+	if(c->mapped) {
+		XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+		XUnmapWindow(blz.dpy, c->win);
+		XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+	/* Always set this, since we don't care anymore once it's been destroyed */
+		c->unmapped++;
+	}
 	set_client_state(c, state);
 	c->mapped = 0;
-	/* Always set this, since we don't care anymore once it's been destroyed */
-	c->unmapped++;
 }
 
 void
