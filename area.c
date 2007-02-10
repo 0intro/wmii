@@ -399,15 +399,15 @@ select_area(Area *a, char *arg) {
 	else {
 		if(sscanf(arg, "%d", &i) != 1)
 			return Ebadvalue;
-		for(new=view->area; i && new->next; new=new->next)
-			i--;
+		for(new=view->area; new->next; new=new->next)
+			if(!--i) break;;
 	}
 	focus_area(new);
 	return nil;
 
 focus_client:
 	frame_to_top(p);
-	focus_client(p->client, True);
+	focus_client(p->client, False);
 	if(v == screen->sel)
 		restack_view(v);
 	flush_masked_events(EnterWindowMask);

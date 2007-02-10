@@ -285,7 +285,6 @@ extern char *send_client(Frame *f, char *arg);
 extern char * message_client(Client *c, char *message);
 extern void move_client(Client *c, char *arg);
 extern void size_client(Client *c, char *arg);
-extern void newcol_client(Client *c, char *arg);
 extern Client *sel_client();
 extern Frame *frame_of_win(Window w);
 extern Client *client_of_win(Window w);

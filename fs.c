@@ -59,11 +59,11 @@ enum {	/* Dirs */
 
 /* Error messages */
 static char
-	*Enoperm = "permission denied",
-	*Enofile = "file not found",
-	*Ebadvalue = "bad value",
-	*Einterrupted = "interrupted",
-	*Ebadcmd = "bad command";
+	Enoperm[] = "permission denied",
+	Enofile[] = "file not found",
+	Ebadvalue[] = "bad value",
+	Einterrupted[] = "interrupted",
+	Ebadcmd[] = "bad command";
 
 /* Macros */
 #define QID(t, i) (((long long)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))

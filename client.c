@@ -9,8 +9,8 @@
 
 static void update_client_name(Client *c);
 
-static char *Ebadcmd = "bad command",
-	    *Ebadvalue = "bad value";
+static char Ebadcmd[] = "bad command",
+	    Ebadvalue[] = "bad value";
 
 #define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
 #define ButtonMask		(ButtonPressMask | ButtonReleaseMask)
@@ -322,11 +322,11 @@ prop_client(Client *c, XPropertyEvent *e) {
 	case XA_WM_HINTS:
 		wmh = XGetWMHints(blz.dpy, c->win);
 		if(wmh->flags&XUrgencyHint && !client->urgent) {
-			write_event("Urgent 0x%x\n", client->win);;
+			write_event("Urgent 0x%x\n", client->win);
 			client->urgent = True;
 		}
 		else if(!(wmh->flags&XUrgencyHint) && client->urgent) {
-			write_event("NotUrgent 0x%x\n", client->win);;
+			write_event("NotUrgent 0x%x\n", client->win);
 			client->urgent = False;
 		}
 		break;
@@ -638,7 +638,6 @@ send_client(Frame *f, char *arg) {
 			remove_frame(f);
 			insert_frame(tf, f, True);
 			arrange_column(a, False);
-			focus_client(c, True);
 		}
 		else if(!strncmp(arg, "down", 5)) {
 			if(!f->anext)
@@ -646,19 +645,18 @@ send_client(Frame *f, char *arg) {
 			remove_frame(f);
 			insert_frame(f->anext, f, False);
 			arrange_column(a, False);
-			focus_client(c, True);
 		}
 		else {
 			if(sscanf(arg, "%d", &j) != 1)
 				return Ebadvalue;
-			for(to=v->area; to && j; to=to->next, j--);
+			for(to=v->area; to; to=to->next)
+				if(!--j) break;
 			send_to_area(to, a, f);
 		}
 	}else
 		return Ebadvalue;
 	flush_masked_events(EnterWindowMask);
-	if(f->view == screen->sel)
-		focus(f->client, True);
+	focus_client(f->client, True);
 	update_views();
 	return nil;
 }
