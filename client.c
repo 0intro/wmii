@@ -51,9 +51,8 @@ create_client(Window w, XWindowAttributes *wa) {
 			DefaultDepth(blz.dpy, blz.screen), CopyFromParent,
 			DefaultVisual(blz.dpy, blz.screen),
 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
-	XGrabButton(blz.dpy, AnyButton, AnyModifier, c->framewin, False, ButtonMask,
-			GrabModeSync, GrabModeSync, None, None);
 	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
+	update_client_grab(c);
 	XSync(blz.dpy, False);
 	for(t=&client; *t; t=&(*t)->next);
 	c->next = *t; /* *t == nil */
@@ -143,6 +142,16 @@ update_client_name(Client *c) {
 			XFree(ch.res_name);
 	}
 }
+void
+update_client_grab(Client *c) {
+	if(c == sel_client()) {
+		XUngrabButton(blz.dpy, AnyButton, AnyModifier, c->framewin);
+		grab_button(c->framewin, Button1, def.mod);
+		grab_button(c->framewin, Button3, def.mod);
+	}
+	else
+		grab_button(c->framewin, AnyButton, AnyModifier);
+}
 
 void
 set_client_state(Client * c, int state)
@@ -198,8 +207,11 @@ focus_client(Client *c, Bool restack) {
 		else
 			write_event("FocusFloating\n");
 	}
-	if(c != old)
+	if(c != old) {
+		update_client_grab(c);
+		update_client_grab(old);
 		write_event("ClientFocus 0x%x\n", c->win);
+	}
 }
 
 void

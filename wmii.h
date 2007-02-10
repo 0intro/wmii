@@ -286,7 +286,7 @@ extern void newcol_client(Client *c, char *arg);
 extern Client *sel_client();
 extern Frame *frame_of_win(Window w);
 extern Client *client_of_win(Window w);
-extern void update_client_grab(Client *c, Bool is_sel);
+extern void update_client_grab(Client *c);
 extern void apply_rules(Client *c);
 extern void apply_tags(Client *c, const char *tags);
 
@@ -361,6 +361,7 @@ extern void grab_mouse(Window w, unsigned long mod, unsigned int button);
 extern void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
 extern BlitzAlign snap_rect(XRectangle *rects, int num, XRectangle *current,
 					 BlitzAlign *mask, int snap);
+extern void grab_button(Window w, unsigned int button, unsigned long mod);
 
 /* rule.c */
 extern void update_rules(Rule **rule, const char *data);

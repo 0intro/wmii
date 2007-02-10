@@ -434,3 +434,15 @@ do_mouse_resize(Client *c, BlitzAlign align) {
 		}
 	}
 }
+
+void
+grab_button(Window w, unsigned int button, unsigned long mod) {
+	XGrabButton(blz.dpy, button, mod, w, False, ButtonMask,
+			GrabModeSync, GrabModeSync, None, None);
+	if((mod != AnyModifier) && num_lock_mask) {
+		XGrabButton(blz.dpy, button, mod | num_lock_mask, w, False, ButtonMask,
+			GrabModeSync, GrabModeSync, None, None);
+		XGrabButton(blz.dpy, button, mod | num_lock_mask | LockMask, w, False,
+			ButtonMask, GrabModeSync, GrabModeSync, None, None);
+	}
+}
