@@ -350,26 +350,26 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 			None, cur, CurrentTime) != GrabSuccess)
 		return;
 
-	if (align != CENTER) {
-		pt_x = dx = frect.width / 2;
-		pt_y = dy = frect.height / 2;
-		if(align&NORTH) dy -= pt_y;
-		if(align&SOUTH) dy += pt_y;
-		if(align&EAST) dx += pt_x;
-		if(align&WEST) dx -= pt_x;
-		XWarpPointer(blz.dpy, None, c->framewin, 0, 0, 0, 0, dx, dy);
+	XQueryPointer(blz.dpy, blz.root, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
+
+	if(align != CENTER) {
+		hr_x = dx = frect.width / 2;
+		hr_y = dy = frect.height / 2;
+		if(align&NORTH) dy -= hr_y;
+		if(align&SOUTH) dy += hr_y;
+		if(align&EAST) dx += hr_x;
+		if(align&WEST) dx -= hr_x;
+		XTranslateCoordinates(blz.dpy, c->framewin, blz.root, dx, dy,
+				&pt_x, &pt_y, &dummy);
+		XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, pt_x, pt_y);
 	}
 	else if(!grabbox) {
 		hr_x = screen->rect.width / 2;
 		hr_y = screen->rect.height / 2;
 		XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, hr_x, hr_y);
-		while(XCheckMaskEvent(blz.dpy, MouseMask, &ev)) {
-			pt_x = ev.xmotion.x;
-			pt_y = ev.xmotion.y;
-		}
+		while(XCheckMaskEvent(blz.dpy, MouseMask, &ev));
 	}
 
-	XQueryPointer(blz.dpy, blz.root, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
 
 	XSync(blz.dpy, False);
 	if(!grabbox) {
@@ -380,22 +380,24 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			if(!grabbox) {
+			if(!grabbox)
 				draw_xor_border(&frect);
-
-				XTranslateCoordinates(blz.dpy, c->framewin, blz.root,
-						frect.width * rx, frect.height * ry,
-						&dx, &dy, &dummy);
-				if(dy > screen->brect.y)
-					dy = screen->brect.y - 1;
-				XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, dx, dy);
-				XUngrabServer(blz.dpy);
-			}
 
 			if(!floating)
 				resize_column(c, &frect);
 			else
 				resize_client(c, &frect);
+
+			if(!grabbox) {
+				if(align != CENTER)
+					XTranslateCoordinates(blz.dpy, c->framewin, blz.root,
+						(frect.width * rx), (frect.height * ry),
+						&pt_x, &pt_y, &dummy);
+				if(pt_y > screen->brect.y)
+					pt_y = screen->brect.y - 1;
+				XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, pt_x, pt_y);
+				XUngrabServer(blz.dpy);
+			}
 
 			if(rects)
 				free(rects);
