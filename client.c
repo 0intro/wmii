@@ -781,9 +781,9 @@ char *
 message_client(Client *c, char *message) {
 	if(!strncmp(message, "kill", 5))
 		kill_client(c);
-	if(!strncmp(message, "Urgent", 7))
+	else if(!strncmp(message, "Urgent", 7))
 		set_urgent(c, True, True);
-	if(!strncmp(message, "NotUrgent", 10))
+	else if(!strncmp(message, "NotUrgent", 10))
 		set_urgent(c, False, True);
 	else
 		return Ebadcmd;
