@@ -40,11 +40,13 @@ create_area(View *v, Area *pos, unsigned int w) {
 	for(; a; a = a->next) area_num++;
 
 	col_num = max((area_num - 1), 0);
-	if(!w) {
-		if(area_num)
-			w = screen->rect.width / (col_num + 1);
-		else
-			w = screen->rect.width;
+	if(w == 0) {
+		if(area_num) {
+			w = newcolw_of_view(v);
+			if (w == 0)
+				w = screen->rect.width / (col_num + 1);
+		}
+		else w = screen->rect.width;
 	}
 	if(w < min_width)
 		w = min_width;
@@ -119,7 +121,7 @@ send_to_area(Area *to, Area *from, Frame *f) {
 
 void
 attach_to_area(Area *a, Frame *f, Bool send) {
-	unsigned int w, h, n_frame;
+	unsigned int h, n_frame;
 	Frame *ft;
 	Client *c;
 	View *v;
@@ -128,13 +130,6 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 	c = f->client;
 	h = 0;
 
-	if(!a->floating && !send) {
-		w = newcolw_of_view(v);
-		if(w && v->area->next->frame) {
-			a = new_column(v, a, w);
-			arrange_view(v);
-		}
-	}
 	f->area = a;
 
 	n_frame = 1;
