@@ -375,7 +375,9 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 	if(!grabbox) {
 		XGrabServer(blz.dpy);
 		draw_xor_border(&frect);
-	}
+	}else
+		unmap_client(c, IconicState);
+
 	for(;;) {
 		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
@@ -397,7 +399,8 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 					pt_y = screen->brect.y - 1;
 				XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, pt_x, pt_y);
 				XUngrabServer(blz.dpy);
-			}
+			}else
+				map_client(c);
 
 			if(rects)
 				free(rects);
@@ -435,7 +438,7 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 			match_sizehints(c, &frect, floating, grav);
 
 			if(grabbox) {
-				resize_client(c, &frect);
+				XMoveWindow(blz.dpy, c->framewin, frect.x, frect.y);
 				XSync(blz.dpy, False);
 			} else {
 				draw_xor_border(&ofrect);

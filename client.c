@@ -51,7 +51,7 @@ create_client(Window w, XWindowAttributes *wa) {
 			c->rect.height + def.border + labelh(&def.font), 0,
 			DefaultDepth(blz.dpy, blz.screen), CopyFromParent,
 			DefaultVisual(blz.dpy, blz.screen),
-			CWOverrideRedirect | CWBackPixmap | CWEventMask, &fwa);
+			CWOverrideRedirect | CWEventMask, &fwa);
 	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
 	XSync(blz.dpy, False);
 	for(t=&client; *t; t=&(*t)->next);
