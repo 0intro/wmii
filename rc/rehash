@@ -1,0 +1,8 @@
+#!/bin/sh
+proglist() {
+	ls -lL "$@" 2>/dev/null | awk 'NF>2 && $1 ~ /^[^d].*x/ {print $NF}' | sort | uniq
+}
+
+proglist `echo "$PATH" | sed 'y/:/ /'` >$PROGS_FILE.new
+
+mv $PROGS_FILE.new $PROGS_FILE

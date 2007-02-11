@@ -1,28 +1,15 @@
 #!/bin/sh
 # Configure wmii
 
-# FUNCTIONS
-xwrite() {
-	file="$1"; shift
-	echo -n "$@" | wmiir write "$file"
-}
-
-proglist() {
-	ls -lL "$@" 2>/dev/null | awk 'NF>2 && $1 ~ /^[^d].*x/ {print $NF}' | sort | uniq
-}
-
-conf_which () {
-	prog=$1; shift
-	if [ -n "$prog" ]
-	then
-		echo `PATH="$WMII_CONFPATH:$PATH" which $prog` "$@"
-	fi
-}
-
-tagsmenu() {
-	tag=`wmiir read /tag/sel/ctl`
-        wmiir ls /tag | sed "s|/||; /^sel\$/d" | $DMENU
-}
+# Contents
+#  Configuration Variables
+#  WM Configuration
+#  Column Rules
+#  Tagging Rules
+#  Utility Functions
+#  Tag Bar Setup
+#  List of Bound Keys
+#  Event Processing Loop
 
 # CONFIGURATION VARIABLES
 MODKEY=Mod1
@@ -67,16 +54,57 @@ wmiir write /tagrules <<EOF
 /.*/ -> 1
 EOF
 
+# FUNCTIONS
+xwrite() {
+	file="$1"; shift
+	echo -n "$@" | wmiir write "$file"
+}
+
+proglist() {
+	ls -lL "$@" 2>/dev/null | awk 'NF>2 && $1 ~ /^[^d].*x/ {print $NF}' | sort | uniq
+}
+
+conf_which () {
+	prog=$1; shift
+	if [ -n "$prog" ]; then
+		echo `PATH="$WMII_CONFPATH:$PATH" which $prog` "$@"
+	fi
+}
+
+tagsmenu() {
+	tag=`wmiir read /tag/sel/ctl`
+        wmiir ls /tag | sed "s|/||; /^sel\$/d" | $DMENU
+}
+
+
 # MISC
 PROGS_FILE="$WMII_NS_DIR/.dmenu.proglist"
 ACTIONS_DIRS=`echo "$WMII_CONFPATH" | tr : ' '`
 
 `conf_which status` &
-xsetroot -solid $WMII_BACKGROUND
-proglist `echo "$PATH" | tr : ' '` >$PROGS_FILE &
+xsetroot -solid $WMII_BACKGROUND &
+proglist `echo "$PATH" | sed 'y/:/ /'` >$PROGS_FILE &
 
 # Stop any running instances of wmiirc
 echo Start wmiirc | wmiir write /event || exit 1
+
+# SETUP TAG BAR
+wmiir ls /lbar |
+while read bar
+do
+	wmiir remove "/lbar/$bar"
+done
+
+seltag="`wmiir read /tag/sel/ctl 2>/dev/null`"
+wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
+while read tag
+do
+	if [ "X$tag" = "X$seltag" ]; then
+		echo "$WMII_FOCUSCOLORS" "$tag" | wmiir create "/lbar/$tag" 
+	else
+		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag"
+	fi
+done
 
 # BOUND KEYS
 wmiir write /keys <<EOF
@@ -120,24 +148,6 @@ $MODKEY-Shift-7
 $MODKEY-Shift-8
 $MODKEY-Shift-9
 EOF
-
-# SETUP TAG BAR
-wmiir ls /lbar |
-while read bar
-do
-	wmiir remove "/lbar/$bar"
-done
-
-seltag="`wmiir read /tag/sel/ctl 2>/dev/null`"
-wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
-while read tag
-do
-	if [ "X$tag" = "X$seltag" ]; then
-		echo "$WMII_FOCUSCOLORS" "$tag" | wmiir create "/lbar/$tag" 
-	else
-		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag"
-	fi
-done
 
 # EVENT LOOP
 wmiir read /event 2>/dev/null |
