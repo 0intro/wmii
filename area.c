@@ -148,9 +148,9 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 			scale_column(a, a->rect.height - h);
 	}
 	if(a->sel)
-		insert_frame(nil, f, False);
-	else
 		insert_frame(a->sel, f, False);
+	else
+		insert_frame(nil, f, False);
 
 	if(!a->floating)
 		f->rect.height = h;
