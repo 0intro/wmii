@@ -40,3 +40,29 @@ strtorect(XRectangle *r, const char *val) {
 	*r = new;
 	return 0;
 }
+
+int
+r_east(XRectangle *r) {
+	return r->x + r->width;
+}
+
+int
+r_south(XRectangle *r) {
+	return r->y + r->height;
+}
+
+BlitzAlign
+get_sticky(XRectangle *src, XRectangle *dst) {
+	BlitzAlign stickycorner = 0;
+
+	if(src->x != dst->x && r_east(src) == r_east(dst))
+		stickycorner |= EAST;
+	else
+		stickycorner |= WEST;
+	if(src->y != dst->y && r_south(src) == r_south(dst))
+		stickycorner |= SOUTH;
+	else    
+		stickycorner |= NORTH;
+
+	return stickycorner;
+}

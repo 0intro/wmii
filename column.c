@@ -199,28 +199,35 @@ match_horiz(Area *a, XRectangle *r) {
 	}
 }
 
-static void
-drop_resize(Frame *f, XRectangle *new) {
-	Area *west = nil, *east = nil, *a = f->area;
-	View *v = a->view;
-	Frame *north = nil, *south = nil;
-	unsigned int min_height = 2 * labelh(&def.font);
-	unsigned int min_width = screen->rect.width/NCOL;
+void
+resize_column(Client *c, XRectangle *new) {
+	Area *west, *east, *a;
+	Frame *north, *south, *f;
+	View *v;
+	BlitzAlign sticky;
+	unsigned int min_height;
+	unsigned int min_width;
+
+	f = c->sel;
+	a = f->area;
+	v = a->view;
+	min_height = 2 * labelh(&def.font);
+	min_width = screen->rect.width/NCOL;
 
 	for(west=v->area->next; west; west=west->next)
 		if(west->next == a) break;
-	/* first managed area is indexed 1, thus (i > 1) ? ... */
 	east = a->next;
 	for(north=a->frame; north; north=north->anext)
 		if(north->anext == f) break;
 	south = f->anext;
 	/* validate (and trim if necessary) horizontal resize */
+	sticky = get_sticky(&f->rect, new);
 	if(new->width < min_width) {
-		if((new->x + new->width) == (f->rect.x + f->rect.width))
-			new->x = a->rect.x + a->rect.width - min_width;
+		if(sticky & EAST)
+			new->x = r_east(&a->rect) - min_width;
 		new->width = min_width;
 	}
-	if(west && (new->x != f->rect.x)) {
+	if(west && !(sticky & WEST)) {
 		if(new->x < 0 || new->x < (west->rect.x + min_width)) {
 			new->width -= (west->rect.x + min_width) - new->x;
 			new->x = west->rect.x + min_width;
@@ -229,15 +236,16 @@ drop_resize(Frame *f, XRectangle *new) {
 		new->width += new->x - a->rect.x;
 		new->x = a->rect.x;
 	}
-	if(east && (new->x + new->width) != (f->rect.x + f->rect.width)) {
-		if((new->x + new->width) > (east->rect.x + east->rect.width - min_width))
-			new->width = east->rect.x + east->rect.width - min_width - new->x;
+	if(east && !(sticky & EAST)) {
+		if(r_east(new) > r_east(&east->rect) - min_width)
+			new->width = r_east(&east->rect) - min_width - new->x;
 	} else
-		new->width = a->rect.x + a->rect.width - new->x;
+		new->width = r_east(&a->rect) - new->x;
 	if(new->width < min_width)
 		goto AfterHorizontal;
 	/* horizontal resize */
-	if(west && (new->x != a->rect.x)) {
+	sticky = get_sticky(&a->rect, new);
+	if(west && !(sticky & WEST)) {
 		west->rect.width = new->x - west->rect.x;
 		a->rect.width += a->rect.x - new->x;
 		a->rect.x = new->x;
@@ -245,10 +253,10 @@ drop_resize(Frame *f, XRectangle *new) {
 		match_horiz(west, &west->rect);
 		relax_column(west);
 	}
-	if(east && (new->x + new->width) != (a->rect.x + a->rect.width)) {
-		east->rect.width -= new->x + new->width - east->rect.x;
-		east->rect.x = new->x + new->width;
-		a->rect.width = new->x + new->width - a->rect.x;
+	if(east && !(sticky & EAST)) {
+		east->rect.width -= r_east(new) - east->rect.x;
+		east->rect.x = r_east(new);
+		a->rect.width = r_east(new) - a->rect.x;
 		match_horiz(a, &a->rect);
 		match_horiz(east, &east->rect);
 		relax_column(east);
@@ -258,36 +266,36 @@ AfterHorizontal:
 	if(a->mode != Coldefault)
 		goto AfterVertical;
 	/* validate (and trim if necessary) vertical resize */
+	sticky = get_sticky(&f->rect, new);
 	if(new->height < min_height) {
-		if(f->rect.height < min_height
-			&& (new->y == f->rect.y || (new->y + new->height) == (f->rect.y + f->rect.height)))
+		if((f->rect.height < min_height) && sticky & (NORTH|SOUTH))
 			goto AfterVertical;
-		if((new->y + new->height) == (f->rect.y + f->rect.height))
-			new->y = f->rect.y + f->rect.height - min_height;
+		if(sticky & SOUTH)
+			new->y = r_south(&f->rect) - min_height;
 		new->height = min_height;
 	}
-	if(north && (new->y != f->rect.y))
+	if(north && !(sticky & NORTH))
 		if(new->y < 0 || new->y < (north->rect.y + min_height)) {
 			new->height -= (north->rect.y + min_height) - new->y;
 			new->y = north->rect.y + min_height;
 		}
-	if(south && (new->y + new->height) != (f->rect.y + f->rect.height)) {
-		if((new->y + new->height) > (south->rect.y + south->rect.height - min_height))
-			new->height = (south->rect.y + south->rect.height - min_height) - new->y;
+	if(south && !(sticky & SOUTH)) {
+		if(r_south(new) > r_south(&south->rect) - min_height)
+			new->height = r_south(&south->rect) - min_height - new->y;
 	}
 	if(new->height < min_height)
 		goto AfterVertical;
 	/* vertical resize */
-	if(north && (new->y != f->rect.y)) {
+	if(north && !(sticky & NORTH)) {
 		north->rect.height = new->y - north->rect.y;
 		f->rect.height += f->rect.y - new->y;
 		f->rect.y = new->y;
 		resize_frame(north, &north->rect);
 		resize_frame(f, &f->rect);
 	}
-	if(south && (new->y + new->height != f->rect.y + f->rect.height)) {
-		south->rect.height -= new->y + new->height - south->rect.y;
-		south->rect.y = new->y + new->height;
+	if(south && !(sticky & SOUTH)) {
+		south->rect.height -= r_south(new) - south->rect.y;
+		south->rect.y = r_south(new);
 		f->rect.y = new->y;
 		f->rect.height = new->height;
 		resize_frame(f, &f->rect);
@@ -296,11 +304,6 @@ AfterHorizontal:
 AfterVertical:
 	relax_column(a);
 	focus_view(screen, v);
-}
-
-void
-resize_column(Client *c, XRectangle *r) {
-	drop_resize(c->sel, r);
 }
 
 Area *

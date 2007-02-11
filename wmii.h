@@ -350,6 +350,9 @@ extern void write_event(char *format, ...);
 extern Bool ispointinrect(int x, int y, XRectangle * r);
 extern BlitzAlign quadofcoord(XRectangle *rect, int x, int y);
 extern int strtorect(XRectangle *r, const char *val);
+extern BlitzAlign get_sticky(XRectangle *src, XRectangle *dst);
+extern int r_east(XRectangle *r);
+extern int r_south(XRectangle *r);
 
 /* key.c */
 extern void kpress(Window w, unsigned long mod, KeyCode keycode);
