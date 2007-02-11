@@ -250,6 +250,41 @@ kill_client(Client * c) {
 		XKillClient(blz.dpy, c->win);
 }
 
+static void
+set_urgent(Client *c, Bool urgent, Bool write) {
+	XWMHints *wmh;
+	char *cwrite;
+
+	if(write)
+		cwrite = "Client";
+	else
+		cwrite = "Manager";
+
+	if(urgent != c->urgent) {
+		if(urgent)
+			write_event("Urgent 0x%x %s\n", client->win, cwrite);
+		else
+			write_event("NotUrgent 0x%x %s\n", client->win, cwrite);
+		c->urgent = urgent;
+		if(c->sel && c->sel->view == screen->sel) {
+			update_frame_widget_colors(c->sel);
+			draw_frame(c->sel);
+		}
+	}
+
+	if(write) {
+		wmh = XGetWMHints(blz.dpy, c->win);
+		if(!wmh)
+			return;
+		if(urgent)
+			wmh->flags |= XUrgencyHint;
+		else
+			wmh->flags &= ~XUrgencyHint;
+		XSetWMHints(blz.dpy, c->win, wmh);
+		XFree(wmh);
+	}
+}
+
 void
 prop_client(Client *c, XPropertyEvent *e) {
 	XWMHints *wmh;
@@ -276,14 +311,8 @@ prop_client(Client *c, XPropertyEvent *e) {
 		break;
 	case XA_WM_HINTS:
 		wmh = XGetWMHints(blz.dpy, c->win);
-		if(wmh->flags&XUrgencyHint && !client->urgent) {
-			write_event("Urgent 0x%x\n", client->win);
-			client->urgent = True;
-		}
-		else if(!(wmh->flags&XUrgencyHint) && client->urgent) {
-			write_event("NotUrgent 0x%x\n", client->win);
-			client->urgent = False;
-		}
+		set_urgent(c, (wmh->flags & XUrgencyHint), False);
+		XFree(wmh);
 		break;
 	}
 	if(e->atom == XA_WM_NAME || e->atom == net_atom[NetWMName]) {
@@ -713,9 +742,13 @@ apply_rules(Client *c) {
 
 char *
 message_client(Client *c, char *message) {
-	if(!strncmp(message, "kill", 5)) {
+	if(!strncmp(message, "kill", 5))
 		kill_client(c);
-		return nil;
-	}
-	return Ebadcmd;
+	if(!strncmp(message, "Urgent", 7))
+		set_urgent(c, True, True);
+	if(!strncmp(message, "NotUrgent", 10))
+		set_urgent(c, False, True);
+	else
+		return Ebadcmd;
+	return nil;
 }

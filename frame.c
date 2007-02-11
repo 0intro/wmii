@@ -206,6 +206,8 @@ update_frame_widget_colors(Frame *f) {
 	}
 	else
 		f->grabbox.color = f->tile.color = f->titlebar.color = def.normcolor;
+	if(f->client->urgent)
+		f->grabbox.color.bg = f->grabbox.color.fg;
 }
 
 void
