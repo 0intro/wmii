@@ -52,7 +52,7 @@ create_area(View *v, Area *pos, unsigned int w) {
 		w = min_width;
 	if(col_num && (col_num * min_width + w) > screen->rect.width)
 		return nil;
-	if(i)
+	if(pos)
 		scale_view(v, screen->rect.width - w);
 
 	a = ixp_emallocz(sizeof(Area));
