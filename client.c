@@ -80,7 +80,7 @@ manage_client(Client *c) {
 		update_views();
 	XSync(blz.dpy, False);
 	if(c->sel->area->view == screen->sel)
-		focus_client(c, False);
+		focus(c, True);
 	flush_masked_events(EnterWindowMask);
 }
 
@@ -161,51 +161,8 @@ focus(Client *c, Bool restack) {
 	if(!(f = c->sel)) return;
 	v = f->area->view;
 	arrange_column(f->area, False);
-	focus_client(c, restack);
 	focus_view(screen, v);
-}
-
-void
-focus_client(Client *c, Bool restack) {
-	Client *old;
-	Frame *f, *old_f;
-	View *v;
-	Area *a, *old_a;
-
-	f = c->sel;
-	a = f->area;
-	v = f->view;
-	old = sel_client();
-	old_a = nil;
-	if(old) {
-		old_f = old->sel;
-		old_a = old_f->area;
-	}
-
-	a->sel = f;
-	if(!a->floating && (a->mode == Colstack))
-		arrange_column(a, False);
-
-	if(v != screen->sel)
-		return;
-
-	if(f->area != old_a)
-		focus_area(f->area);
-	else {
-		XSetInputFocus(blz.dpy, f->client->win, RevertToPointerRoot, CurrentTime);
-		update_frame_widget_colors(f);
-		draw_frame(f);
-		if(old) {
-			update_frame_widget_colors(old_f);
-			draw_frame(old_f);
-		}
-	}
-
-	if(c != old)
-		write_event("ClientFocus 0x%x\n", c->win);
-
-	if(restack)
-		restack_view(v);
+	focus_frame(c->sel, restack);
 }
 
 void
@@ -654,7 +611,7 @@ send_client(Frame *f, char *arg) {
 	}else
 		return Ebadvalue;
 	flush_masked_events(EnterWindowMask);
-	focus_client(f->client, True);
+	focus_frame(f, True);
 	update_views();
 	return nil;
 }

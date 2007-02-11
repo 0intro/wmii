@@ -125,10 +125,7 @@ focus_view(WMScreen *s, View *v) {
 				unmap_client(c, IconicState);
 			}
 		}
-	if((c = sel_client()))
-		focus_client(c, True);
-	else
-		XSetInputFocus(blz.dpy, blz.root, RevertToPointerRoot, CurrentTime);
+	focus_area(v->sel);
 	draw_frames();
 	XSync(blz.dpy, False);
 	XUngrabServer(blz.dpy);
@@ -412,7 +409,8 @@ newcolw_of_view(View *v) {
 			char *toks[16];
 			strncpy(buf, r->value, sizeof(buf));
 			n = ixp_tokenize(toks, 16, buf, '+');
-			for(a=v->area, i=0; a; a=a->next, i++);
+			for(a=v->area, i=0; a; a=a->next)
+				i++;
 			if(n && n >= i) {
 				if(sscanf(toks[i - 1], "%u", &n) == 1)
 					return (screen->rect.width * n) / 100;

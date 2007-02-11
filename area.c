@@ -65,11 +65,11 @@ create_area(View *v, Area *pos, unsigned int w) {
 	a->next = *p;
 	*p = a;
 
+	if(!v->sel || (v->sel->floating && v->area->next == a && a->next == nil))
+		focus_area(a);
+
 	if(i)
 		write_event("CreateColumn %d\n", i);
-
-	focus_area(a);
-
 	return a;
 }
 
@@ -119,7 +119,7 @@ send_to_area(Area *to, Area *from, Frame *f) {
 
 void
 attach_to_area(Area *a, Frame *f, Bool send) {
-	unsigned int h, n_frame;
+	unsigned int w, h, n_frame;
 	Frame *ft;
 	Client *c;
 	View *v;
@@ -127,6 +127,15 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 	v = a->view;
 	c = f->client;
 	h = 0;
+
+	if(!a->floating && !send) {
+		w = newcolw_of_view(v);
+		if(w && v->area->next->frame) {
+			a = new_column(v, a, w);
+			arrange_view(v);
+		}
+	}
+	f->area = a;
 
 	n_frame = 1;
 	for(ft=a->frame; ft; ft=ft->anext)
@@ -138,28 +147,22 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 		if(a->frame)
 			scale_column(a, a->rect.height - h);
 	}
-	if(!send && !a->floating) { /* column */
-		unsigned int w = newcolw_of_view(v);
-		if(v->area->next->frame && w) {
-			a = new_column(v, a, w);
-			arrange_view(v);
-		}
-	}
-	f->area = a;
 	if(a->sel)
 		insert_frame(nil, f, False);
 	else
 		insert_frame(a->sel, f, False);
-	if(!c->floating) /* column */
+
+	if(!a->floating)
 		f->rect.height = h;
-	else /* floating */
+	else
 		place_client(a, c);
 
-	focus_client(f->client, False);
+	focus_frame(f, False);
 	if(!a->floating)
 		arrange_column(a, False);
 
 	update_client_grab(f->client);
+	assert(a->sel);
 }
 
 void
@@ -208,7 +211,8 @@ detach_from_area(Area *a, Frame *f) {
 		}
 		else if(v->area->next->frame)
 			focus_area(v->area->next);
-	}
+	}else
+		assert(a->sel);
 }
 
 static void
@@ -323,27 +327,27 @@ focus_area(Area *a) {
 		return;
 
 	v->sel = a;
-	if(v != screen->sel)
-		return;
 
 	if(f)
-		XSetInputFocus(blz.dpy, f->client->win, RevertToPointerRoot, CurrentTime);
-	else
-		XSetInputFocus(blz.dpy, blz.root, RevertToPointerRoot, CurrentTime);
-
-	if(f) {
 		update_frame_widget_colors(f);
-		draw_frame(f);
-	}
 	if(old_a) {
-		if(old_a->sel) {
+		if(old_a->sel)
 			update_frame_widget_colors(old_a->sel);
-			draw_frame(old_a->sel);
-		}
 		if(a->floating != old_a->floating)
 			v->revert = old_a;
 	}
 
+	if(v != screen->sel)
+		return;
+
+	if(f) {
+		draw_frame(f);
+		XSetInputFocus(blz.dpy, f->client->win, RevertToPointerRoot, CurrentTime);
+	}else
+		XSetInputFocus(blz.dpy, blz.root, RevertToPointerRoot, CurrentTime);
+
+	if(old_a && old_a->sel)
+		draw_frame(old_a->sel);
 
 	if(a != old_a) {
 		i = 0;
@@ -388,13 +392,13 @@ select_area(Area *a, char *arg) {
 			return Ebadvalue;
 		for(p=a->frame; p->anext; p=p->anext)
 			if(p->anext == f) break;
-		goto focus_client;
+		goto focus_frame;
 	}
 	else if(!strncmp(arg, "down", 5)) {
 		if(!f)
 			return Ebadvalue;
 		p = f->anext ? f->anext : a->frame;
-		goto focus_client;
+		goto focus_frame;
 	}
 	else {
 		if(sscanf(arg, "%d", &i) != 1)
@@ -405,9 +409,9 @@ select_area(Area *a, char *arg) {
 	focus_area(new);
 	return nil;
 
-focus_client:
+focus_frame:
 	frame_to_top(p);
-	focus_client(p->client, False);
+	focus_frame(p, False);
 	if(v == screen->sel)
 		restack_view(v);
 	flush_masked_events(EnterWindowMask);

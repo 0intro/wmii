@@ -158,6 +158,53 @@ swap_frames(Frame *fa, Frame *fb) {
 }
 
 void
+focus_frame(Frame *f, Bool restack) {
+	Frame *old, *old_in_a;
+	View *v;
+	Area *a, *old_a;
+
+	a = f->area;
+	v = f->view;
+	old = v->sel->sel;
+	old_a = v->sel;
+	old_in_a = a->sel;
+
+	a->sel = f;
+	if(!a->floating && (a->mode == Colstack))
+		arrange_column(a, False);
+
+	if(a != old_a)
+		focus_area(f->area);
+	else {
+		update_frame_widget_colors(f);
+		if(old)
+			update_frame_widget_colors(old);
+	}
+
+	if(old_in_a)
+		update_frame_widget_colors(old_in_a);
+
+	if(v != screen->sel)
+		return;
+
+	if(a == old_a) {
+		XSetInputFocus(blz.dpy, f->client->win, RevertToPointerRoot, CurrentTime);
+		draw_frame(f);
+	}
+	else if(old_in_a)
+		draw_frame(old_in_a);
+
+	if(f != old) {
+		if(old)
+			draw_frame(old);
+		write_event("ClientFocus 0x%x\n", f->client->win);
+	}
+
+	if(restack)
+		restack_view(v);
+}
+
+void
 update_frame_widget_colors(Frame *f) {
 	if(f->area->sel == f) {
 		if(sel_screen && (f->client == sel_client()))

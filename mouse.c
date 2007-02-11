@@ -432,9 +432,10 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 
 			match_sizehints(c, &frect, floating, grav);
 
-			if(grabbox)
+			if(grabbox) {
 				resize_client(c, &frect);
-			else {
+				XSync(blz.dpy, False);
+			} else {
 				draw_xor_border(&ofrect);
 				draw_xor_border(&frect);
 			}
