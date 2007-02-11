@@ -91,8 +91,6 @@ relax_column(Area *a) {
 			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
 			yoff = f->rect.y + f->rect.height + hdiff;
 		}
-		if(a->mode != Colstack || f == a->sel)
-			match_sizehints(f->client, &f->rect, f->area->floating, NORTH|EAST);
 	}
 }
 
@@ -185,6 +183,8 @@ Fallthrough:
 		break;
 	}
 	relax_column(a);
+	for(f=a->frame; f; f=f->anext)
+		resize_client(f->client, &f->rect);
 	flush_masked_events(EnterWindowMask);
 }
 

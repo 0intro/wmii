@@ -198,6 +198,22 @@ unmap_client(Client *c, int state) {
 }
 
 void
+map_frame(Client *c) {
+	if(!c->frame_mapped) {
+		XMapWindow(blz.dpy, c->framewin);
+		c->frame_mapped = True;
+	}
+}
+
+void
+unmap_frame(Client *c) {
+	if(c->frame_mapped) {
+		XUnmapWindow(blz.dpy, c->framewin);
+		c->frame_mapped = False;
+	}
+}
+
+void
 reparent_client(Client *c, Window w, int x, int y) {
 	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 	XReparentWindow(blz.dpy, c->win, w, x, y);
@@ -493,30 +509,47 @@ resize_client(Client *c, XRectangle *r) {
 		   (c->rect.height == screen->rect.height)) {
 			f->rect.x = -def.border;
 			f->rect.y = -labelh(&def.font);
-		}else{
+		}else
 			check_frame_constraints(&f->rect);
-		}
 	}
 
-	if(f->area->view == screen->sel)
+	if(f->area->view == screen->sel) 
 		XMoveResizeWindow(blz.dpy, c->framewin, f->rect.x,
 				f->rect.y, f->rect.width, f->rect.height);
 	else {
 		unmap_client(c, IconicState);
-		XUnmapWindow(blz.dpy, c->framewin);
+		unmap_frame(c);
+		return;
 	}
 
 	c->rect.x = def.border;
 	c->rect.y = labelh(&def.font);
-	if((f->area->sel == f) || (f->area->mode != Colstack)) {
-		if(!c->mapped)
-			map_client(c);
-		c->rect.width = f->rect.width - 2 * def.border;
-		c->rect.height = f->rect.height - def.border - labelh(&def.font);
-		XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
+	c->rect.width = f->rect.width - 2 * def.border;
+	c->rect.height = f->rect.height - def.border - labelh(&def.font);
+
+	if(f->area->sel != f)
+		switch(f->area->mode) {
+		case Colmax:
+			unmap_frame(c);
+			unmap_client(c, IconicState);
+			break;
+		case Colstack:
+			XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
 					c->rect.width, c->rect.height);
-	}else
-		unmap_client(c, IconicState);
+			map_frame(c);
+			unmap_client(c, IconicState);
+			break;
+		default:
+			goto ShowWindow;
+		}
+	else {
+	ShowWindow:
+		XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
+				c->rect.width, c->rect.height);
+		map_client(c);
+		map_frame(c);
+
+	}
 	configure_client(c);
 }
 
