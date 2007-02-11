@@ -73,10 +73,13 @@ manage_client(Client *c) {
 	else if(tags.nitems)
 		strncpy(c->tags, (char *)tags.value, sizeof(c->tags));
 	XFree(tags.value);
+
+	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
 	if(!strlen(c->tags))
 		apply_rules(c);
-	apply_tags(c, c->tags);
-	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
+	else
+		apply_tags(c, c->tags);
+
 	if(!starting)
 		update_views();
 	XSync(blz.dpy, False);

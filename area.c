@@ -152,9 +152,9 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 	else
 		place_client(a, c);
 
-	focus_frame(f, False);
 	if(!a->floating)
 		arrange_column(a, False);
+	focus_frame(f, False);
 
 	update_client_grab(f->client);
 	assert(a->sel);
