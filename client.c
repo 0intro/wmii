@@ -526,9 +526,6 @@ resize_client(Client *c, XRectangle *r) {
 		return;
 	}
 
-	c->rect.x = def.border;
-	c->rect.y = labelh(&def.font);
-
 	if(f->area->sel != f)
 		switch(f->area->mode) {
 		case Colmax:
@@ -546,8 +543,13 @@ resize_client(Client *c, XRectangle *r) {
 		}
 	else {
 	ShowWindow:
-		c->rect.width = f->rect.width - 2 * def.border;
-		c->rect.height = f->rect.height - def.border - labelh(&def.font);
+		c->rect.y = labelh(&def.font);
+		c->rect.width = f->rect.width;
+		c->rect.height = f->rect.height;
+		match_sizehints(c, &c->rect, False, NORTH|EAST);
+		c->rect.width -= def.border * 2;
+		c->rect.height -= labelh(&def.font) + def.border;
+		c->rect.x = (f->rect.width - c->rect.width) / 2;
 		XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
 				c->rect.width, c->rect.height);
 		map_client(c);

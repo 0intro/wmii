@@ -84,7 +84,7 @@ resize_frame(Frame *f, XRectangle *r) {
 	stickycorner = get_sticky(&f->rect, r);
 
 	f->rect = *r;
-	if((f->area->mode != Colstack) || (f->area->sel == f))
+	if(f->area->floating)
 		match_sizehints(c, &f->rect, f->area->floating, stickycorner);
 }
 

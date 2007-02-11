@@ -77,7 +77,6 @@ relax_column(Area *a) {
 			for(f=a->frame; f && (hx < hdiff); f=f->anext) {
 				unsigned int tmp = f->rect.height;
 				f->rect.height += hx;
-				match_sizehints(f->client, &f->rect, f->area->floating, NORTH|EAST);
 				hdiff -= (f->rect.height - tmp);
 			}
 	}
@@ -87,10 +86,8 @@ relax_column(Area *a) {
 	yoff = a->rect.y + hdiff / 2;
 	for(f=a->frame; f; f=f->anext) {
 		f->rect.y = yoff;
-		if(a->mode != Colmax || f == a->sel) {
-			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
-			yoff = f->rect.y + f->rect.height + hdiff;
-		}
+		if(a->mode != Colmax || f == a->sel)
+			yoff = r_south(&f->rect) + hdiff;
 	}
 }
 
@@ -154,7 +151,6 @@ arrange_column(Area *a, Bool dirty) {
 			f->rect.y = yoff;
 			f->rect.width = a->rect.width;
 			yoff += f->rect.height;
-			match_sizehints(f->client, &f->rect, f->area->floating, NORTH|EAST);
 		}
 		break;
 	case Colstack:
@@ -175,8 +171,6 @@ Fallthrough:
 	case Colmax:
 		for(f=a->frame; f; f=f->anext) {
 			f->rect = a->rect;
-			if(f == a->sel)
-				match_sizehints(f->client, &f->rect, f->area->floating, NORTH|EAST);
 		}
 		break;
 	default:
