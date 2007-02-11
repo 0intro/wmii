@@ -162,7 +162,8 @@ focus_frame(Frame *f, Bool restack) {
 	old_in_a = a->sel;
 
 	a->sel = f;
-	if(!a->floating && (a->mode == Colstack))
+	if(!a->floating && ((a->mode == Colstack)
+		|| (a->mode == Colmax)))
 		arrange_column(a, False);
 
 	if(a != old_a)
@@ -216,7 +217,6 @@ draw_frame(Frame *f) {
 		f->tile.border = def.border;
 		f->tile.rect = f->rect;
 		f->tile.rect.x = f->tile.rect.y = 0;
-		draw_border(&f->tile);
 	}
 	f->grabbox.rect = f->tile.rect;
 	f->grabbox.rect.height = labelh(&def.font);
@@ -226,9 +226,9 @@ draw_frame(Frame *f) {
 	f->titlebar.rect.width = f->rect.width -  f->titlebar.rect.x;
 	f->titlebar.border = 0;
 	draw_tile(&f->tile);
+	draw_label(&f->titlebar, f->client->name);
 	f->grabbox.border = 3;
 	draw_tile(&f->grabbox);
-	draw_label(&f->titlebar, f->client->name);
 	/* XXX: Hack */
 	f->titlebar.rect.x = 0;
 	f->titlebar.rect.width += f->grabbox.rect.width;

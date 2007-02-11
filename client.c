@@ -45,6 +45,7 @@ create_client(Window w, XWindowAttributes *wa) {
 	fwa.event_mask =
 		SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask
 		| PointerMotionMask | KeyPressMask | ButtonPressMask | ButtonReleaseMask;
+	fwa.backing_store = Always;
 	c->framewin = XCreateWindow(blz.dpy, blz.root, c->rect.x, c->rect.y,
 			c->rect.width + 2 * def.border,
 			c->rect.height + def.border + labelh(&def.font), 0,
@@ -524,8 +525,6 @@ resize_client(Client *c, XRectangle *r) {
 
 	c->rect.x = def.border;
 	c->rect.y = labelh(&def.font);
-	c->rect.width = f->rect.width - 2 * def.border;
-	c->rect.height = f->rect.height - def.border - labelh(&def.font);
 
 	if(f->area->sel != f)
 		switch(f->area->mode) {
@@ -544,6 +543,8 @@ resize_client(Client *c, XRectangle *r) {
 		}
 	else {
 	ShowWindow:
+		c->rect.width = f->rect.width - 2 * def.border;
+		c->rect.height = f->rect.height - def.border - labelh(&def.font);
 		XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
 				c->rect.width, c->rect.height);
 		map_client(c);

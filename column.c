@@ -175,8 +175,8 @@ Fallthrough:
 	case Colmax:
 		for(f=a->frame; f; f=f->anext) {
 			f->rect = a->rect;
-			if(f != a->sel) f->rect.x = screen->rect.width * 2;
-			match_sizehints(f->client, &f->rect, f->area->floating, NORTH|EAST);
+			if(f == a->sel)
+				match_sizehints(f->client, &f->rect, f->area->floating, NORTH|EAST);
 		}
 		break;
 	default:

@@ -407,8 +407,6 @@ select_area(Area *a, char *arg) {
 focus_frame:
 	frame_to_top(p);
 	focus_frame(p, False);
-	if(!p->area->floating)
-		arrange_column(p->area, False);
 	if(v == screen->sel)
 		restack_view(v);
 	flush_masked_events(EnterWindowMask);
