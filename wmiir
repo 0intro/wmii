@@ -1,2 +1,13 @@
 #!/bin/sh
-exec ixpc -a "$WMII_ADDRESS" $@
+export IXP_ADDRESS="$WMII_ADDRESS"
+if [ "$1" = -v ]; then
+	flag=-v;
+	shift
+fi
+if [ "$1" = echo ]; then
+	shift
+	file="$1"; shift
+	echo "$@" | ixpc $flag write $file
+else
+	exec ixpc $flag $@
+fi
