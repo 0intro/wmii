@@ -465,8 +465,8 @@ grab_button(Window w, uint button, ulong mod) {
 			GrabModeSync, GrabModeSync, None, None);
 	if((mod != AnyModifier) && num_lock_mask) {
 		XGrabButton(blz.dpy, button, mod | num_lock_mask, w, False, ButtonMask,
-			GrabModeSync, GrabModeSync, None, None);
+			GrabModeSync, GrabModeAsync, None, None);
 		XGrabButton(blz.dpy, button, mod | num_lock_mask | LockMask, w, False,
-			ButtonMask, GrabModeSync, GrabModeSync, None, None);
+			ButtonMask, GrabModeSync, GrabModeAsync, None, None);
 	}
 }
