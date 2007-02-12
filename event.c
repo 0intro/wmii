@@ -91,6 +91,14 @@ configurerequest(XEvent *e) {
 	Client *c;
 
 	c = client_of_win(ev->window);
+	wc.x = ev->x;
+	wc.y = ev->y;
+	wc.width = ev->width;
+	wc.height = ev->height;
+	wc.border_width = 0;
+	wc.sibling = None;
+	wc.stack_mode = Above;
+
 	ev->value_mask &= ~CWSibling;
 	if(c) {
 		gravitate_client(c, True);
@@ -110,41 +118,23 @@ configurerequest(XEvent *e) {
 				frect=&c->sel->rect;
 			else
 				frect=&c->sel->revert;
-			if(c->rect.width >= screen->rect.width && c->rect.height >= screen->rect.height) {
-				frect->y = wc.y = -labelh(&def.font);
-				frect->x = wc.x = -def.border;
-			}
-			else {
-				frect->y = wc.y = c->rect.y - labelh(&def.font);
-				frect->x = wc.x = c->rect.x - def.border;
-			}
-			frect->width = wc.width = c->rect.width + 2 * def.border;
-			frect->height = wc.height = c->rect.height + def.border
-				+ labelh(&def.font);
+
+			frect->y = -labelh(&def.font);
+			frect->x = -def.border;
+			frect->width = c->rect.width + 2 * def.border;
+			frect->height = c->rect.height + def.border + labelh(&def.font);
+
 			wc.border_width = 1;
-			wc.sibling = None;
 			wc.stack_mode = ev->detail;
-			if(c->sel->area->view != screen->sel)
-				wc.x += 2 * screen->rect.width;
-			if(c->sel->area->floating) {
-				XConfigureWindow(blz.dpy, c->framewin, ev->value_mask, &wc);
-				configure_client(c);
-			}
+			if(c->sel->area->floating)
+				resize_client(c, frect);
+			wc.x = frect->x + labelh(&def.font);
+			wc.y = frect->y + def.border;
+			wc.width = frect->width - 2 * def.border;
+			wc.height = frect->height - def.border - labelh(&def.font);
 		}
 	}
-	wc.x = ev->x;
-	wc.y = ev->y;
-	wc.width = ev->width;
-	wc.height = ev->height;
-	if(c && c->frame) {
-		wc.x = def.border;
-		wc.y = labelh(&def.font);
-		wc.width = c->sel->rect.width - 2 * def.border;
-		wc.height = c->sel->rect.height - def.border - labelh(&def.font);
-	}
-	wc.border_width = 0;
-	wc.sibling = None;
-	wc.stack_mode = Above;
+
 	ev->value_mask &= ~CWStackMode;
 	ev->value_mask |= CWBorderWidth;
 	XConfigureWindow(blz.dpy, ev->window, ev->value_mask, &wc);
