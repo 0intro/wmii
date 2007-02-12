@@ -349,6 +349,8 @@ focus_area(Area *a) {
 			write_event("ColumnFocus %d\n", i);
 		else
 			write_event("FocusFloating\n");
+		if(a->frame)
+			write_event("ClientFocus 0x%x\n", a->sel->client->win);
 	}
 }
 

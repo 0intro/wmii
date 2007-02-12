@@ -190,7 +190,8 @@ focus_frame(Frame *f, Bool restack) {
 	if(f != old) {
 		if(old)
 			draw_frame(old);
-		write_event("ClientFocus 0x%x\n", f->client->win);
+		if(f->area == old_a)
+			write_event("ClientFocus 0x%x\n", f->client->win);
 	}
 
 	if(restack)
