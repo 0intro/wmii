@@ -336,7 +336,7 @@ focus_area(Area *a) {
 		draw_frame(f);
 		XSetInputFocus(blz.dpy, f->client->win, RevertToPointerRoot, CurrentTime);
 	}else
-		XSetInputFocus(blz.dpy, blz.root, RevertToPointerRoot, CurrentTime);
+		XSetInputFocus(blz.dpy, screen->barwin, RevertToPointerRoot, CurrentTime);
 
 	if(old_a && old_a->sel)
 		draw_frame(old_a->sel);
