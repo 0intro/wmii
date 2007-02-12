@@ -64,7 +64,6 @@ create_view(const char *name) {
 	strncpy(v->name, name, sizeof(v->name));
 	create_area(v, nil, 0);
 	create_area(v, v->area, 0);
-	v->area->floating = True;
 	for(i=&view; *i; i=&(*i)->next)
 		if(strcmp((*i)->name, name) < 0) break;
 	v->next = *i;
@@ -146,11 +145,9 @@ select_view(const char *arg) {
 
 void
 attach_to_view(View *v, Frame *f) {
-	Area *a;
 	Client *c = f->client;
 
 	c->revert = nil;
-	a = v->sel;
 	if(c->trans || c->floating || c->fixedsize
 		|| (c->rect.width == screen->rect.width && c->rect.height == screen->rect.height))
 		v->sel = v->area;

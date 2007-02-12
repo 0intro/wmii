@@ -360,8 +360,8 @@ main(int argc, char *argv[]) {
 	screen = &screens[0];
 
 	scan_wins();
-	update_views();
 	starting = False;
+	update_views();
 
 	/* main event loop */
 	errstr = ixp_server_loop(&srv);

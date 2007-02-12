@@ -375,6 +375,10 @@ extern void grab_button(Window w, unsigned int button, unsigned long mod);
 extern void update_rules(Rule **rule, const char *data);
 extern void trim(char *str, const char *chars);
 
+/* util.c */
+extern int max(int a, int b);
+extern char *str_nil(char *s);
+
 /* view.c */
 extern void arrange_view(View *v);
 extern void scale_view(View *v, float w);

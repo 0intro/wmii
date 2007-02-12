@@ -9,13 +9,6 @@
 
 static void place_client(Area *a, Client *c);
 
-static int
-max(int a, int b) {
-	if(a > b)
-		return a;
-	return b;
-}
-
 Client *
 sel_client_of_area(Area *a) {               
 	if(a && a->sel)
@@ -52,8 +45,6 @@ create_area(View *v, Area *pos, unsigned int w) {
 		w = min_width;
 	if(col_num && (col_num * min_width + w) > screen->rect.width)
 		return nil;
-	if(pos)
-		scale_view(v, screen->rect.width - w);
 
 	a = ixp_emallocz(sizeof(Area));
 	a->view = v;
@@ -67,7 +58,13 @@ create_area(View *v, Area *pos, unsigned int w) {
 	a->next = *p;
 	*p = a;
 
-	if(!v->sel || (v->sel->floating && v->area->next == a && a->next == nil))
+	if(pos)
+		scale_view(v, screen->rect.width);
+
+	if(a == v->area)
+		a->floating = True;
+	if((!v->sel) ||
+	   (v->sel->floating && v->area->next == a && a->next == nil))
 		focus_area(a);
 
 	if(i)

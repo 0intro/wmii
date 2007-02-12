@@ -699,9 +699,8 @@ fs_write(P9Req *r) {
 		return;
 	case FsFCtags:
 		data_to_cstring(r);
-		i=strlen(f->content.client->tags);
-		write_to_buf(r, &f->content.client->tags, &i, 255);
-		r->ofcall.count = i- r->ifcall.offset;
+		apply_tags(f->content.client, r->ifcall.data);
+		r->ofcall.count = r->ifcall.count;
 		respond(r, nil);
 		return;
 	case FsFBar:

@@ -17,18 +17,21 @@ static char Ebadcmd[] = "bad command",
 
 Client *
 create_client(Window w, XWindowAttributes *wa) {
-	Client **t, *c = (Client *) ixp_emallocz(sizeof(Client));
+	Client **t, *c;
 	XSetWindowAttributes fwa;
 	long msize;
 
+	c = ixp_emallocz(sizeof(Client));
 	c->win = w;
 	c->rect.x = wa->x;
 	c->rect.y = wa->y;
 	c->border = wa->border_width;
 	c->rect.width = wa->width;
 	c->rect.height = wa->height;
-	XSetWindowBorderWidth(blz.dpy, c->win, 0);
 	c->proto = win_proto(c->win);
+	update_client_name(c);
+
+	c->fixedsize = False;
 	XGetTransientForHint(blz.dpy, c->win, &c->trans);
 	if(!XGetWMNormalHints(blz.dpy, c->win, &c->size, &msize) || !c->size.flags)
 		c->size.flags = PSize;
@@ -36,27 +39,38 @@ create_client(Window w, XWindowAttributes *wa) {
 		&& c->size.min_width == c->size.max_width
 		&& c->size.min_height == c->size.max_height)
 			c->fixedsize = True;
-	else
-		c->fixedsize = False;
+
+	XSetWindowBorderWidth(blz.dpy, c->win, 0);
 	XAddToSaveSet(blz.dpy, c->win);
-	update_client_name(c);
 	fwa.override_redirect = 1;
 	fwa.background_pixmap = ParentRelative;
-	fwa.event_mask =
-		SubstructureRedirectMask | SubstructureNotifyMask | ExposureMask
-		| PointerMotionMask | KeyPressMask | ButtonPressMask | ButtonReleaseMask;
-	fwa.backing_store = Always;
-	c->framewin = XCreateWindow(blz.dpy, blz.root, c->rect.x, c->rect.y,
-			c->rect.width + 2 * def.border,
-			c->rect.height + def.border + labelh(&def.font), 0,
-			DefaultDepth(blz.dpy, blz.screen), CopyFromParent,
-			DefaultVisual(blz.dpy, blz.screen),
-			CWOverrideRedirect | CWEventMask, &fwa);
+	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask
+		| ExposureMask | PointerMotionMask | KeyPressMask
+		| ButtonPressMask | ButtonReleaseMask;
+	c->framewin = XCreateWindow(
+		/* display */	blz.dpy,
+		/* parent */	blz.root,
+		/* x */		c->rect.x,
+		/* y */		c->rect.y,
+		/* width */	c->rect.width + 2 * def.border,
+		/* height */	c->rect.height + def.border + labelh(&def.font),
+		/* border */	0,
+		/* depth */	DefaultDepth(blz.dpy, blz.screen),
+		/* class */	CopyFromParent,
+		/* visual */	DefaultVisual(blz.dpy, blz.screen),
+		/* valuemask */	CWOverrideRedirect | CWEventMask,
+		/* attributes */&fwa
+		);
 	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
 	XSync(blz.dpy, False);
-	for(t=&client; *t; t=&(*t)->next);
-	c->next = *t; /* *t == nil */
-	*t = c;
+
+	for(t=&client ;; t=&(*t)->next)
+		if(!*t) {
+			c->next = *t;
+			*t = c;
+			break;
+		}
+
 	write_event("CreateClient 0x%x\n", c->win);
 	return c;
 }
@@ -68,13 +82,14 @@ manage_client(Client *c) {
 
 	tags.nitems = 0;
 	XGetTextProperty(blz.dpy, c->win, &tags, tags_atom);
-	if(c->trans && (trans = client_of_win(c->trans)))
+	if((c->trans) && (trans = client_of_win(c->trans)))
 		strncpy(c->tags, trans->tags, sizeof(c->tags));
 	else if(tags.nitems)
 		strncpy(c->tags, (char *)tags.value, sizeof(c->tags));
 	XFree(tags.value);
 
 	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
+
 	if(!strlen(c->tags))
 		apply_rules(c);
 	else
@@ -83,6 +98,7 @@ manage_client(Client *c) {
 	if(!starting)
 		update_views();
 	XSync(blz.dpy, False);
+
 	if(c->sel->area->view == screen->sel)
 		focus(c, True);
 	flush_masked_events(EnterWindowMask);
@@ -90,21 +106,27 @@ manage_client(Client *c) {
 
 Client *
 sel_client() {
-	return screen->sel && screen->sel->sel->sel ? screen->sel->sel->sel->client : nil;
+	if(screen->sel && screen->sel->sel->sel)
+		return screen->sel->sel->sel->client;
+	return nil;
 }
 
 Client *
 client_of_win(Window w) {
 	Client *c;
-	for(c=client; c && c->win != w; c=c->next);
+	for(c=client; c; c=c->next)
+		if(c->win == w) break;
 	return c;
 }
 
 Frame *
 frame_of_win(Window w) {
 	Client *c;
-	for(c=client; c && c->framewin != w; c=c->next);
-	return c ? c->frame : nil;
+	for(c=client; c; c=c->next)
+		if(c->framewin == w) break;
+	if(c)
+		return c->frame;
+	return nil;
 }
 
 static void
@@ -133,9 +155,10 @@ update_client_name(Client *c) {
 	}
 	XFree(name.value);
 	if(XGetClassHint(blz.dpy, c->win, &ch)) {
-		snprintf(c->props, sizeof(c->props), "%s:%s:%s",
-				ch.res_class ? ch.res_class : "",
-				ch.res_name ? ch.res_name : "",
+		snprintf(c->props, sizeof(c->props),
+				"%s:%s:%s",
+				str_nil(ch.res_class),
+				str_nil(ch.res_name),
 				c->name);
 		if(ch.res_class)
 			XFree(ch.res_class);
@@ -143,6 +166,7 @@ update_client_name(Client *c) {
 			XFree(ch.res_name);
 	}
 }
+
 void
 update_client_grab(Client *c) {
 	Frame *f;
@@ -173,8 +197,16 @@ void
 set_client_state(Client * c, int state)
 {
 	long data[] = { state, None };
-	XChangeProperty(blz.dpy, c->win, wm_atom[WMState], wm_atom[WMState], 32,
-			PropModeReplace, (unsigned char *) data, 2);
+	XChangeProperty(
+		/* display */	blz.dpy,
+		/* parent */	c->win,
+		/* property */	wm_atom[WMState],
+		/* type */	wm_atom[WMState],
+		/* format */	32,
+		/* mode */	PropModeReplace,
+		/* data */	(unsigned char *) data,
+		/* npositions */2
+		);
 }
 
 void
@@ -275,10 +307,9 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 	XWMHints *wmh;
 	char *cwrite;
 
+	cwrite = "Manager";
 	if(write)
 		cwrite = "Client";
-	else
-		cwrite = "Manager";
 
 	if(urgent != c->urgent) {
 		if(urgent)
@@ -294,14 +325,14 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 
 	if(write) {
 		wmh = XGetWMHints(blz.dpy, c->win);
-		if(!wmh)
-			return;
-		if(urgent)
-			wmh->flags |= XUrgencyHint;
-		else
-			wmh->flags &= ~XUrgencyHint;
-		XSetWMHints(blz.dpy, c->win, wmh);
-		XFree(wmh);
+		if(wmh) {
+			if(urgent)
+				wmh->flags |= XUrgencyHint;
+			else
+				wmh->flags &= ~XUrgencyHint;
+			XSetWMHints(blz.dpy, c->win, wmh);
+			XFree(wmh);
+		}
 	}
 }
 
@@ -322,12 +353,11 @@ prop_client(Client *c, XPropertyEvent *e) {
 		if(!XGetWMNormalHints(blz.dpy, c->win, &c->size, &msize) || !c->size.flags) {
 			c->size.flags = PSize;
 		}
+		c->fixedsize = False;
 		if(c->size.flags & PMinSize && c->size.flags & PMaxSize
 			&& c->size.min_width == c->size.max_width
 			&& c->size.min_height == c->size.max_height)
 				c->fixedsize = True;
-		else
-			c->fixedsize = False;
 		break;
 	case XA_WM_HINTS:
 		wmh = XGetWMHints(blz.dpy, c->win);
@@ -417,21 +447,26 @@ destroy_client(Client *c) {
 		c->rect.x = c->sel->rect.x;
 		c->rect.y = c->sel->rect.y;
 	}
-	for(tc=&client; *tc && *tc != c; tc=&(*tc)->next)
-		if(*tc == c) break;
-	assert(*tc == c);
-	*tc = c->next;
+	for(tc=&client; *tc; tc=&(*tc)->next)
+		if(*tc == c) {
+			*tc = c->next;
+			break;
+		}
+
 	update_client_views(c, &dummy);
+	update_views();
+
 	unmap_client(c, WithdrawnState);
 	reparent_client(c, blz.root, c->rect.x, c->rect.y);
 	XFreeGC(blz.dpy, c->gc);
 	XDestroyWindow(blz.dpy, c->framewin);
-	update_views();
-	free(c);
 	XSync(blz.dpy, False);
+
 	XSetErrorHandler(wmii_error_handler);
 	XUngrabServer(blz.dpy);
 	flush_masked_events(EnterWindowMask);
+
+	free(c);
 	write_event("DestroyClient 0x%x\n", c->win);
 }
 
@@ -518,8 +553,9 @@ resize_client(Client *c, XRectangle *r) {
 	}
 
 	if(f->area->view == screen->sel) 
-		XMoveResizeWindow(blz.dpy, c->framewin, f->rect.x,
-				f->rect.y, f->rect.width, f->rect.height);
+		XMoveResizeWindow(blz.dpy, c->framewin,
+				f->rect.x, f->rect.y,
+				f->rect.width, f->rect.height);
 	else {
 		unmap_client(c, IconicState);
 		unmap_frame(c);
@@ -533,7 +569,8 @@ resize_client(Client *c, XRectangle *r) {
 			unmap_client(c, IconicState);
 			break;
 		case Colstack:
-			XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
+			XMoveResizeWindow(blz.dpy, c->win,
+					c->rect.x, c->rect.y,
 					c->rect.width, c->rect.height);
 			map_frame(c);
 			unmap_client(c, IconicState);
@@ -543,18 +580,17 @@ resize_client(Client *c, XRectangle *r) {
 		}
 	else {
 	ShowWindow:
+		c->rect = f->rect;
 		c->rect.y = labelh(&def.font);
-		c->rect.width = f->rect.width;
-		c->rect.height = f->rect.height;
 		match_sizehints(c, &c->rect, False, NORTH|EAST);
 		c->rect.width -= def.border * 2;
 		c->rect.height -= labelh(&def.font) + def.border;
 		c->rect.x = (f->rect.width - c->rect.width) / 2;
-		XMoveResizeWindow(blz.dpy, c->win, c->rect.x, c->rect.y,
+		XMoveResizeWindow(blz.dpy, c->win,
+				c->rect.x, c->rect.y,
 				c->rect.width, c->rect.height);
 		map_client(c);
 		map_frame(c);
-
 	}
 	configure_client(c);
 }
@@ -570,7 +606,8 @@ newcol_client(Client *c, char *arg) {
 	if(!f->anext && f == a->frame)
 		return;
 	if(!strncmp(arg, "prev", 5)) {
-		for(to=v->area; to && to->next != a; to=to->next);
+		for(to=v->area; to; to=to->next)
+			if(to->next == a) break;
 		to = new_column(v, to, 0);
 		send_to_area(to, a, f);
 	}
@@ -638,9 +675,10 @@ send_client(Frame *f, char *arg) {
 		if(!strncmp(arg, "left", 5)) {
 			if(a->floating)
 				return Ebadvalue;
-			for(to=v->area->next; to && a != to->next; to=to->next);
+			for(to=v->area->next; to; to=to->next)
+				if(a == to->next) break;
 			if(!to && (f->anext || f != a->frame))
-					to=new_column(v, v->area, 0);
+				to=new_column(v, v->area, 0);
 			if(!to)
 				return Ebadvalue;
 			send_to_area(to, a, f);
@@ -648,14 +686,15 @@ send_client(Frame *f, char *arg) {
 		else if(!strncmp(arg, "right", 5)) {
 			if(a->floating)
 				return Ebadvalue;
-			if(!(to = a->next) && (f->anext || f!= a->frame))
+			if(!(to = a->next) && (f->anext || f != a->frame))
 				to = new_column(v, a, 0);
 			if(!to)
 				return Ebadvalue;
 			send_to_area(to, a, f);
 		}
 		else if(!strncmp(arg, "up", 3)) {
-			for(tf=a->frame; tf && tf->anext != f; tf=tf->anext);
+			for(tf=a->frame; tf; tf=tf->anext)
+				if(tf->anext == f) break;
 			if(!tf)
 				return Ebadvalue;
 			remove_frame(f);
@@ -691,7 +730,12 @@ update_client_views(Client *c, char **tags) {
 	Frame **fp = &c->frame;
 
 	while(*fp || *tags) {
-		while(*fp && (!*tags || (cmp=strcmp((*fp)->view->name, *tags)) < 0)) {
+		while(*fp) {
+			if(*tags) {
+				cmp = strcmp((*fp)->view->name, *tags);
+				if(cmp >= 0)
+					break;
+			}
 			f = *fp;
 			detach_from_area(f->area, f);
 			*fp = f->cnext;
@@ -712,7 +756,7 @@ update_client_views(Client *c, char **tags) {
 			tags++;
 		}
 	}
-	focus_view(screen, screen->sel);
+	update_views();
 }
 
 static int
@@ -722,24 +766,71 @@ compare_tags(const void *a, const void *b) {
 
 void
 apply_tags(Client *c, const char *tags) {
-	unsigned int i, j, n;
+	unsigned int i, j, k, n;
 	int len;
-	char buf[256];
-	char *toks[32];
+	Bool add;
+	char buf[512], last;
+	char *toks[32], *cur;
 
-	strncpy(buf, tags, sizeof(buf));
+	buf[0] = 0;
+	for(n = 0; tags[n]; n++)
+		if(tags[n] != ' ' && tags[n] != '\t') break;
+	if(tags[n] == '+' || tags[n] == '-')
+		strncpy(buf, c->tags, sizeof(c->tags));
+	strncat(buf, &tags[n], sizeof(buf) - strlen(buf));
 	trim(buf, " \t/");
-	if(!(n = ixp_tokenize(toks, 31, buf, '+')))
-		return;
-	for(i=0, j=0; i < n; i++) {
-		if(!strncmp(toks[i], "~", 2))
-			c->floating = True;
-		else if(!strncmp(toks[i], "!", 2))
-			toks[j++] = view ? screen->sel->name : "nil";
-		else if(strncmp(toks[i], "sel", 4)
-				&& strncmp(toks[i], ".", 2)
-				&& strncmp(toks[i], "..", 3))
-			toks[j++] = toks[i];
+
+	n = 0;
+	j = 0;
+	add = True;
+	if(buf[0] == '+')
+		n++;
+	else if(buf[0] == '-') {
+		n++;
+		add = False;
+	}
+	while(buf[n] && n < sizeof(buf) && j < 32) { 
+		for(i = n; i < sizeof(buf) - 1; i++)
+			if(buf[i] == '+'
+			|| buf[i] == '-'
+			|| buf[i] == '\0')
+				break;
+		last = buf[i];
+		buf[i] = '\0';
+
+		cur = nil;
+		if(!strncmp(&buf[n], "~", 2))
+			c->floating = add;
+		else if(!strncmp(&buf[n], "!", 2))
+			cur = view ? screen->sel->name : "nil";
+		else if(strncmp(&buf[n], "sel", 4)
+		     && strncmp(&buf[n], ".", 2)
+		     && strncmp(&buf[n], "..", 3))
+			cur = &buf[n];
+
+		n = i + 1;
+		if(cur) {
+			if(add)
+				toks[j++] = cur;
+			else {
+				for(i = 0, k = 0; i < j; i++)
+					if(strcmp(toks[i], cur))
+						toks[k++] = toks[i];
+				j = k;
+			}
+		}
+
+		switch(last) {
+		case '+':
+			add = True;
+			break;
+		case '-':
+			add = False;
+			break;
+		case '\0':
+			buf[n] = '\0';
+			break;
+		}
 	}
 	c->tags[0] = '\0';
 	qsort(toks, j, sizeof(char *), compare_tags);
