@@ -362,6 +362,8 @@ main(int argc, char *argv[]) {
 	scan_wins();
 	starting = False;
 	update_views();
+	if(view)
+		write_event("FocusTag %s\n", screen->sel->name);
 
 	/* main event loop */
 	errstr = ixp_server_loop(&srv);
