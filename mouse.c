@@ -268,7 +268,7 @@ do_managed_move(Client *c) {
 	Window dummy;
 	XEvent ev;
 	Frame *f;
-	unsigned int di;
+	uint di;
 	int x, y, i;
 
 	focus(c, False);
@@ -324,7 +324,7 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 	XEvent ev;
 	XRectangle *rects, ofrect, frect, origin;
 	int snap, dx, dy, pt_x, pt_y, hr_x, hr_y, i;
-	unsigned int num, di;
+	uint num, di;
 	Bool floating;
 	float rx, ry;
 	Frame *f;
@@ -460,7 +460,7 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 }
 
 void
-grab_button(Window w, unsigned int button, unsigned long mod) {
+grab_button(Window w, uint button, ulong mod) {
 	XGrabButton(blz.dpy, button, mod, w, False, ButtonMask,
 			GrabModeSync, GrabModeSync, None, None);
 	if((mod != AnyModifier) && num_lock_mask) {

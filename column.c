@@ -29,7 +29,7 @@ column_mode_of_str(char *arg) {
 
 static void
 relax_column(Area *a) {
-	unsigned int frame_size, yoff, h;
+	uint frame_size, yoff, h;
 	Frame *f;
 	int hdiff;
 	Bool fallthrough = False;
@@ -75,7 +75,7 @@ relax_column(Area *a) {
 		int hx;
 		for(hx = 1; hx < hdiff; hx++)
 			for(f=a->frame; f && (hx < hdiff); f=f->anext) {
-				unsigned int tmp = f->rect.height;
+				uint tmp = f->rect.height;
 				f->rect.height += hx;
 				hdiff -= (f->rect.height - tmp);
 			}
@@ -93,9 +93,9 @@ relax_column(Area *a) {
 
 void
 scale_column(Area *a, float h) {
-	unsigned int yoff, frame_size = 0;
+	uint yoff, frame_size = 0;
 	Frame *f;
-	unsigned int min_height = 2 * labelh(&def.font);
+	uint min_height = 2 * labelh(&def.font);
 	float scale, dy = 0;
 	int hdiff;
 
@@ -129,8 +129,8 @@ scale_column(Area *a, float h) {
 void
 arrange_column(Area *a, Bool dirty) {
 	Frame *f;
-	unsigned int num_frames = 0, yoff = a->rect.y, h;
-	unsigned int min_height = 2 * labelh(&def.font);
+	uint num_frames = 0, yoff = a->rect.y, h;
+	uint min_height = 2 * labelh(&def.font);
 
 	if(a->floating || !a->frame)
 		return;
@@ -199,8 +199,8 @@ resize_column(Client *c, XRectangle *new) {
 	Frame *north, *south, *f;
 	View *v;
 	BlitzAlign sticky;
-	unsigned int min_height;
-	unsigned int min_width;
+	uint min_height;
+	uint min_width;
 
 	f = c->sel;
 	a = f->area;
@@ -301,7 +301,7 @@ AfterVertical:
 }
 
 Area *
-new_column(View *v, Area *pos, unsigned int w) {
+new_column(View *v, Area *pos, uint w) {
 	Area *a = create_area(v, pos, w);
 	if(!a)
 		return nil;

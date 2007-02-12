@@ -204,7 +204,7 @@ set_client_state(Client * c, int state)
 		/* type */	wm_atom[WMState],
 		/* format */	32,
 		/* mode */	PropModeReplace,
-		/* data */	(unsigned char *) data,
+		/* data */	(uchar *) data,
 		/* npositions */2
 		);
 }
@@ -473,9 +473,9 @@ destroy_client(Client *c) {
 void
 match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky) {
 	XSizeHints *s = &c->size;
-	unsigned int dx = 2 * def.border;
-	unsigned int dy = def.border + labelh(&def.font);
-	unsigned int hdiff, wdiff;
+	uint dx = 2 * def.border;
+	uint dy = def.border + labelh(&def.font);
+	uint hdiff, wdiff;
 
 	if(floating && (s->flags & PMinSize)) {
 		if(r->width < s->min_width + dx) {
@@ -766,7 +766,7 @@ compare_tags(const void *a, const void *b) {
 
 void
 apply_tags(Client *c, const char *tags) {
-	unsigned int i, j, k, n;
+	uint i, j, k, n;
 	int len;
 	Bool add;
 	char buf[512], last;
@@ -848,7 +848,7 @@ apply_tags(Client *c, const char *tags) {
 	toks[n] = nil;
 	update_client_views(c, toks);
 	XChangeProperty(blz.dpy, c->win, tags_atom, XA_STRING, 8,
-			PropModeReplace, (unsigned char *)c->tags, strlen(c->tags));
+			PropModeReplace, (uchar *)c->tags, strlen(c->tags));
 }
 
 static void

@@ -109,11 +109,11 @@ VisibilityState(int state)
 static char*
 ServerTime(Time time)
 {
-    unsigned long msec;
-    unsigned long sec;
-    unsigned long min;
-    unsigned long hr;
-    unsigned long day;
+    ulong msec;
+    ulong sec;
+    ulong min;
+    ulong hr;
+    ulong day;
     static char buffer[32];
 
     msec = time % 1000;
@@ -138,13 +138,13 @@ if(0)
 typedef struct MaskType MaskType;
 struct MaskType
 {
-    unsigned int value;
+    uint value;
     char *string;
 };
 
 /* Returns the string equivalent of a mask of buttons and/or modifier keys */
 static char*
-ButtonAndOrModifierState(unsigned int state)
+ButtonAndOrModifierState(uint state)
 {
     static char buffer[256];
     static MaskType masks[] = {
@@ -183,7 +183,7 @@ ButtonAndOrModifierState(unsigned int state)
 
 /* Returns the string equivalent of a mask of configure window values */
 static char*
-ConfigureValueMask(unsigned int valuemask)
+ConfigureValueMask(uint valuemask)
 {
     static char buffer[256];
     static MaskType masks[] = {

@@ -40,7 +40,7 @@ sigchld_handler(int sig) {
 static void
 scan_wins() {
 	int i;
-	unsigned int num;
+	uint num;
 	Window *wins;
 	XWindowAttributes wa;
 	Window d1, d2;
@@ -60,10 +60,10 @@ scan_wins() {
 }
 
 static int
-win_property(Window w, Atom a, Atom t, long l, unsigned char **prop) {
+win_property(Window w, Atom a, Atom t, long l, uchar **prop) {
 	Atom real;
 	int format;
-	unsigned long res, extra;
+	ulong res, extra;
 	int status;
 
 	status = XGetWindowProperty(blz.dpy, w, a, 0L, l, False, t, &real, &format,
@@ -85,7 +85,7 @@ win_proto(Window w) {
 	int i;
 
 	res = win_property(w, wm_atom[WMProtocols], XA_ATOM, 20L,
-			((unsigned char **) &protocols));
+			((uchar **) &protocols));
 	if(res <= 0) {
 		return protos;
 	}
@@ -107,7 +107,7 @@ init_atoms() {
 	net_atom[NetWMName] = XInternAtom(blz.dpy, "_NET_WM_NAME", False);
 	tags_atom = XInternAtom(blz.dpy, "_WIN_TAGS", False);
 	XChangeProperty(blz.dpy, blz.root, net_atom[NetSupported], XA_ATOM, 32,
-			PropModeReplace, (unsigned char *) net_atom, NetLast);
+			PropModeReplace, (uchar *) net_atom, NetLast);
 }
 
 static void

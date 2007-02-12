@@ -7,7 +7,7 @@
 
 Frame *
 create_frame(Client *c, View *v) {
-	static unsigned short id = 1;
+	static ushort id = 1;
 	Frame *f = ixp_emallocz(sizeof(Frame));
 
 	f->id = id++;

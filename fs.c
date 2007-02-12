@@ -15,9 +15,9 @@
 typedef struct Dirtab Dirtab;
 struct Dirtab {
 	char		*name;
-	unsigned char	qtype;
-	unsigned int	type;
-	unsigned int	perm;
+	uchar	qtype;
+	uint	type;
+	uint	perm;
 };
 
 typedef struct FidLink FidLink;
@@ -39,10 +39,10 @@ struct FileId {
 		Ruleset	*rule;
 		BlitzColor	*col;
 	} content;
-	unsigned int	id;
-	unsigned int	index;
+	uint	id;
+	uint	index;
 	Dirtab		tab;
-	unsigned short	nref;
+	ushort	nref;
 };
 
 /* Constants */
@@ -66,7 +66,7 @@ static char
 	Ebadcmd[] = "bad command";
 
 /* Macros */
-#define QID(t, i) (((long long)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
+#define QID(t, i) (((vlong)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
 
 /* Global Vars */
 /***************/
@@ -141,7 +141,7 @@ static FileId *
 get_file() {
 	FileId *temp;
 	if(!free_fileid) {
-		unsigned int i = 15;
+		uint i = 15;
 		temp = ixp_emallocz(sizeof(FileId) * i);
 		for(; i; i--) {
 			temp->next = free_fileid;
@@ -174,7 +174,7 @@ clone_files(FileId *f) {
 
 /* This should be moved to libixp */
 static void
-write_buf(P9Req *r, void *buf, unsigned int len) {
+write_buf(P9Req *r, void *buf, uint len) {
 	if(r->ifcall.offset >= len)
 		return;
 
@@ -188,8 +188,8 @@ write_buf(P9Req *r, void *buf, unsigned int len) {
 
 /* This should be moved to libixp */
 void
-write_to_buf(P9Req *r, void *buf, unsigned int *len, unsigned int max) {
-	unsigned int offset, count;
+write_to_buf(P9Req *r, void *buf, uint *len, uint max) {
+	uint offset, count;
 
 	offset = (r->fid->omode&P9OAPPEND) ? *len : r->ifcall.offset;
 	if(offset > *len || r->ifcall.count == 0) {
@@ -216,7 +216,7 @@ write_to_buf(P9Req *r, void *buf, unsigned int *len, unsigned int max) {
 /* This should be moved to libixp */
 void
 data_to_cstring(P9Req *r) {
-	unsigned int i;
+	uint i;
 	i = r->ifcall.count;
 	if(!i || r->ifcall.data[i - 1] != '\n')
 		r->ifcall.data = ixp_erealloc(r->ifcall.data, ++i);
@@ -227,7 +227,7 @@ data_to_cstring(P9Req *r) {
 char *
 message_root(char *message)
 {
-	unsigned int n;
+	uint n;
 
 	if(!strchr(message, ' ')) {
 		snprintf(buffer, BUFFER_SIZE, "%s ", message);
@@ -261,14 +261,14 @@ message_root(char *message)
 	}
 	else if(!strncmp(message, "border ", 7)) {
 		message += 7;
-		n = (unsigned int)strtol(message, &message, 10);
+		n = (uint)strtol(message, &message, 10);
 		if(*message)
 			return Ebadvalue;
 		def.border = n;
 	}
 	else if(!strncmp(message, "grabmod ", 8)) {
 		message += 8;
-		unsigned long mod;
+		ulong mod;
 		mod = mod_key_of_str(message);
 		if(!(mod & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)))
 			return Ebadvalue;
@@ -284,7 +284,7 @@ message_root(char *message)
 
 char *
 read_root_ctl() {
-	unsigned int i = 0;
+	uint i = 0;
 	if(screen->sel)
 		i += snprintf(&buffer[i], (BUFFER_SIZE - i), "view %s\n", screen->sel->name);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "focuscolors %s\n", def.focuscolor.colstr);
@@ -313,7 +313,7 @@ respond_event(P9Req *r) {
 
 void
 write_event(char *format, ...) {
-	unsigned int len, slen;
+	uint len, slen;
 	va_list ap;
 	FidLink *f;
 	FileId *fi;
@@ -338,7 +338,7 @@ write_event(char *format, ...) {
 }
 
 static void
-dostat(Stat *s, unsigned int len, FileId *f) {
+dostat(Stat *s, uint len, FileId *f) {
 	s->type = 0;
 	s->dev = 0;
 	s->qid.path = QID(f->tab.type, f->id);
@@ -366,7 +366,7 @@ lookup_file(FileId *parent, char *name)
 	Client *c;
 	View *v;
 	Bar *b;
-	unsigned int id;
+	uint id;
 
 	if(!(parent->tab.perm & P9DMDIR))
 		return nil;
@@ -391,7 +391,7 @@ lookup_file(FileId *parent, char *name)
 					}if(name) goto LastItem;
 				}
 				if(name) {
-					id = (unsigned int)strtol(name, &name, 16);
+					id = (uint)strtol(name, &name, 16);
 					if(*name) goto NextItem;
 				}
 				for(c=client; c; c=c->next) {
@@ -403,7 +403,7 @@ lookup_file(FileId *parent, char *name)
 						file->id = c->win;
 						file->tab = *dir;
 						file->tab.name = ixp_emallocz(16);
-						snprintf(file->tab.name, 16, "0x%x", (unsigned int)c->win);
+						snprintf(file->tab.name, 16, "0x%x", (uint)c->win);
 						if(name) goto LastItem;
 					}
 				}
@@ -550,7 +550,7 @@ fs_walk(P9Req *r) {
 	respond(r, nil);
 }
 
-unsigned int
+uint
 fs_size(FileId *f) {
 	switch(f->tab.type) {
 	default:
@@ -571,7 +571,7 @@ void
 fs_stat(P9Req *r) {
 	Stat s;
 	int size;
-	unsigned char *buf;
+	uchar *buf;
 
 	dostat(&s, fs_size(r->fid->aux), r->fid->aux);
 	r->ofcall.nstat = size = ixp_sizeof_stat(&s);
@@ -604,7 +604,7 @@ fs_read(P9Req *r) {
 			if(offset >= r->ifcall.offset) {
 				if(size < n)
 					break;
-				ixp_pack_stat((unsigned char **)&buf, &size, &s);
+				ixp_pack_stat((uchar **)&buf, &size, &s);
 			}
 			offset += n;
 		}
@@ -654,7 +654,7 @@ fs_read(P9Req *r) {
 				return;
 			}
 			r->ofcall.data = ixp_emallocz(16);
-			n = snprintf(r->ofcall.data, 16, "0x%x", (unsigned int)f->index);
+			n = snprintf(r->ofcall.data, 16, "0x%x", (uint)f->index);
 			assert(n >= 0);
 			r->ofcall.count = n;
 			respond(r, nil);
@@ -680,7 +680,7 @@ void
 fs_write(P9Req *r) {
 	FileId *f;
 	char *errstr = nil;
-	unsigned int i;
+	uint i;
 
 	if(r->ifcall.count == 0) {
 		respond(r, nil);
@@ -730,7 +730,7 @@ fs_write(P9Req *r) {
 		return;
 	case FsFRctl:
 		data_to_cstring(r);
-		{	unsigned int n;
+		{	uint n;
 			char *toks[32];
 			n = ixp_tokenize(toks, 32, r->ifcall.data, '\n');
 			for(i = 0; i < n; i++) {

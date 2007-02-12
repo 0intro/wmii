@@ -57,7 +57,7 @@ get_view(const char *name) {
 
 View *
 create_view(const char *name) {
-	static unsigned short id = 1;
+	static ushort id = 1;
 	View **i, *v = ixp_emallocz(sizeof(View));
 
 	v->id = id++;
@@ -161,9 +161,9 @@ restack_view(View *v) {
 	Area *a;
 	Frame *f;
 	Client *c;
-	unsigned int n, i;
+	uint n, i;
 	static Window *wins = nil;
-	static unsigned int winssz = 0;
+	static uint winssz = 0;
 
 	i = 0;
 	n = 1;
@@ -191,8 +191,8 @@ restack_view(View *v) {
 
 void
 scale_view(View *v, float w) {
-	unsigned int xoff, num_col;
-	unsigned int min_width;
+	uint xoff, num_col;
+	uint min_width;
 	Area *a;
 	float scale, dx = 0;
 	int wdiff = 0;
@@ -232,7 +232,7 @@ scale_view(View *v, float w) {
 
 void
 arrange_view(View *v) {
-	unsigned int xoff = 0;
+	uint xoff = 0;
 	Area *a;
 
 	if(!v->area->next)
@@ -248,7 +248,7 @@ arrange_view(View *v) {
 }
 
 XRectangle *
-rects_of_view(View *v, unsigned int *num) {
+rects_of_view(View *v, uint *num) {
 	XRectangle *result;
 	Frame *f;
 
@@ -263,9 +263,9 @@ rects_of_view(View *v, unsigned int *num) {
 }
 
 /* XXX: This will need cleanup */
-unsigned char *
+uchar *
 view_index(View *v) {
-	unsigned int a_i, buf_i, n;
+	uint a_i, buf_i, n;
 	int len;
 	Frame *f;
 	Area *a;
@@ -285,25 +285,25 @@ view_index(View *v) {
 			XRectangle *r = &f->rect;
 			if(a->floating)
 				n = snprintf(&buffer[buf_i], len, "~ 0x%x %d %d %d %d %s\n",
-						(unsigned int)f->client->win,
+						(uint)f->client->win,
 						r->x, r->y, r->width, r->height,
 						f->client->props);
 			else
 				n = snprintf(&buffer[buf_i], len, "%d 0x%x %d %d %s\n",
-						a_i, (unsigned int)f->client->win, r->y,
+						a_i, (uint)f->client->win, r->y,
 						r->height, f->client->props);
 			if(len - n < 0)
-				return (unsigned char *)buffer;
+				return (uchar *)buffer;
 			buf_i += n;
 			len -= n;
 		}
 	}
-	return (unsigned char *)buffer;
+	return (uchar *)buffer;
 }
 
 Client *
-client_of_message(View *v, char *message, unsigned int *next) {              
-	unsigned long id = 0;
+client_of_message(View *v, char *message, uint *next) {              
+	ulong id = 0;
 	Client *c;
 
 	if(!strncmp(message, "sel ", 4)) {
@@ -320,8 +320,8 @@ client_of_message(View *v, char *message, unsigned int *next) {
 }
 
 Area *
-area_of_message(View *v, char *message, unsigned int *next) {
-	unsigned int i;
+area_of_message(View *v, char *message, uint *next) {
+	uint i;
 	Area *a;
 
 	if(!strncmp(message, "sel ", 4)) {
@@ -338,7 +338,7 @@ area_of_message(View *v, char *message, unsigned int *next) {
 
 char *
 message_view(View *v, char *message) {
-	unsigned int n, i;
+	uint n, i;
 	Client *c;
 	Frame *f;
 	Area *a;
@@ -391,11 +391,11 @@ update_views() {
 		focus_view(screen, screen->sel);
 }
 
-unsigned int
+uint
 newcolw_of_view(View *v) {
 	Rule *r;
 	Area *a;
-	unsigned int i, n;
+	uint i, n;
 	regmatch_t tmpregm;
 
 	for(r=def.colrules.rule; r; r=r->next) {

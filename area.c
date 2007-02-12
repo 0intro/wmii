@@ -17,10 +17,10 @@ sel_client_of_area(Area *a) {
 }
 
 Area *
-create_area(View *v, Area *pos, unsigned int w) {
-	static unsigned short id = 1;
-	unsigned int area_num, col_num, i;
-	unsigned int min_width;
+create_area(View *v, Area *pos, uint w) {
+	static ushort id = 1;
+	uint area_num, col_num, i;
+	uint min_width;
 	Area *a, **p;
 
 	min_width = screen->rect.width/NCOL;
@@ -77,7 +77,7 @@ destroy_area(Area *a) {
 	Client *c;
 	Area *ta;
 	View *v;
-	unsigned int i;
+	uint i;
 
 	v = a->view;
 
@@ -118,7 +118,7 @@ send_to_area(Area *to, Area *from, Frame *f) {
 
 void
 attach_to_area(Area *a, Frame *f, Bool send) {
-	unsigned int h, n_frame;
+	uint h, n_frame;
 	Frame *ft;
 	Client *c;
 	View *v;
@@ -163,7 +163,7 @@ detach_from_area(Area *a, Frame *f) {
 	Client *c;
 	View *v;
 	Area *ta;
-	unsigned int i;
+	uint i;
 
 	v = a->view;
 	c = f->client;
@@ -209,7 +209,7 @@ detach_from_area(Area *a, Frame *f) {
 
 static void
 place_client(Area *a, Client *c) {
-	static unsigned int mx, my;
+	static uint mx, my;
 	static Bool *field;
 	BlitzAlign align;
 	XPoint p1 = {0, 0};
@@ -217,7 +217,7 @@ place_client(Area *a, Client *c) {
 	XRectangle *rects;
 	Frame *f, *fr;
 	Bool fit;
-	unsigned int i, j, x, y, dx, dy, cx, cy, maxx, maxy, diff, num;
+	uint i, j, x, y, dx, dy, cx, cy, maxx, maxy, diff, num;
 	int snap;
 
 	snap = screen->rect.height / 66;
@@ -355,7 +355,7 @@ focus_area(Area *a) {
 char *
 select_area(Area *a, char *arg) {
 	Area *new;
-	unsigned int i;
+	uint i;
 	Frame *p, *f;
 	View *v;
 	static char Ebadvalue[] = "bad value";

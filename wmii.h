@@ -12,6 +12,20 @@
 
 #define nil	((void*)0)
 
+/* Types */
+#define uchar	_wmiiuchar
+#define ushort	_wmiiushort
+#define uint	_wmiiuint
+#define ulong	_wmiiulong
+#define vlong	_wmiivlong
+#define uvlong	_wmiiuvlong
+typedef unsigned char		uchar;
+typedef unsigned short		ushort;
+typedef unsigned int		uint;
+typedef unsigned long		ulong;
+typedef unsigned long long	uvlong;
+typedef long long		vlong;
+
 #define BLITZ_FONT		"-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*"
 #define BLITZ_FOCUSCOLORS		"#ffffff #335577 #447799"
 #define BLITZ_SELCOLORS		"#444444 #bbbbbb #556088"
@@ -42,9 +56,9 @@ enum BlitzAlign {
 };
 
 struct BlitzColor {
-	unsigned long bg;
-	unsigned long fg;
-	unsigned long border;
+	vlong bg;
+	vlong fg;
+	vlong border;
 	char colstr[24]; /* #RRGGBB #RRGGBB #RRGGBB */
 };
 
@@ -53,7 +67,7 @@ struct BlitzFont {
 	XFontSet set;
 	int ascent;
 	int descent;
-	unsigned int height;
+	uint height;
 	char *fontstr;
 };
 
@@ -97,7 +111,7 @@ typedef struct WMScreen WMScreen;
 struct View {
 	View *next;
 	char name[256];
-	unsigned short id;
+	ushort id;
 	Area *area;
 	Area *sel;
 	Area *revert;
@@ -110,7 +124,7 @@ struct Area {
 	Frame *sel;
 	View *view;
 	Bool floating;
-	unsigned short id;
+	ushort id;
 	int mode;
 	XRectangle rect;
 };
@@ -121,7 +135,7 @@ struct Frame {
 	Frame *snext;
 	View *view;
 	Area *area;
-	unsigned short id;
+	ushort id;
 	XRectangle rect;
 	XRectangle revert;
 	Client *client;
@@ -139,7 +153,7 @@ struct Client {
 	char name[256];
 	char tags[256];
 	char props[512];
-	unsigned int border;
+	uint border;
 	int proto;
 	Bool floating;
 	Bool fixedsize;
@@ -159,9 +173,9 @@ struct Key {
 	Key *next;
 	Key *lnext;
 	Key *tnext;
-	unsigned short id;
+	ushort id;
 	char name[128];
-	unsigned long mod;
+	ulong mod;
 	KeyCode key;
 };
 
@@ -171,7 +185,7 @@ struct Bar {
 	char buf[280];
 	char text[256];
 	char name[256];
-	unsigned short id;
+	ushort id;
 	BlitzBrush brush;
 };
 
@@ -184,7 +198,7 @@ struct Rule {
 struct Ruleset {
 	Rule		*rule;
 	char		*string;
-	unsigned int	size;
+	uint		size;
 };
 
 /* global variables */
@@ -193,14 +207,14 @@ struct {
 	BlitzColor selcolor;
 	BlitzColor normcolor;
 	BlitzFont font;
-	unsigned int border;
-	unsigned int snap;
+	uint	 border;
+	uint	 snap;
 	char *keys;
-	unsigned int keyssz;
+	uint	 keyssz;
 	Ruleset	tagrules;
 	Ruleset	colrules;
 	char grabmod[5];
-	unsigned long mod;
+	ulong mod;
 	int colmode;
 } def;
 
@@ -227,7 +241,7 @@ IXPServer srv;
 P9Srv p9srv;
 
 /* X11 */
-unsigned int num_screens;
+uint num_screens;
 Blitz blz;
 GC xorgc;
 char *user;
@@ -235,8 +249,8 @@ Atom wm_atom[WMLast];
 Atom net_atom[NetLast];
 Atom tags_atom;
 Cursor cursor[CurLast];
-unsigned int valid_mask;
-unsigned int num_lock_mask;
+uint valid_mask;
+uint num_lock_mask;
 Bool sel_screen;
 Pixmap pmap;
 void (*handler[LASTEvent]) (XEvent *);
@@ -249,9 +263,9 @@ extern Bool verbose;
 extern char *message_root(char *message);
 
 /* area.c */
-extern Area *create_area(View *v, Area *pos, unsigned int w);
+extern Area *create_area(View *v, Area *pos, uint w);
 extern void destroy_area(Area *a);
-extern Area *area_of_id(View *t, unsigned short id);
+extern Area *area_of_id(View *t, ushort id);
 extern void focus_area(Area *a);
 extern char *select_area(Area *a, char *arg);
 extern void send_to_area(Area *to, Area *from, Frame *f);
@@ -301,7 +315,7 @@ extern void scale_column(Area *a, float h);
 extern void resize_column(Client *c, XRectangle *r);
 extern int column_mode_of_str(char *arg);
 extern char *str_of_column_mode(int mode);
-extern Area *new_column(View *v, Area *pos, unsigned int w);
+extern Area *new_column(View *v, Area *pos, uint w);
 
 /* draw.c */
 extern int loadcolor(Blitz *blitz, BlitzColor *c);
@@ -312,16 +326,16 @@ extern void draw_rect(BlitzBrush *b);
 extern void drawbg(Display *dpy, Drawable drawable, GC gc,
 		XRectangle *rect, BlitzColor c, Bool fill, Bool border);
 extern void drawcursor(Display *dpy, Drawable drawable, GC gc,
-				int x, int y, unsigned int h, BlitzColor c);
-extern unsigned int textwidth(BlitzFont *font, char *text);
-extern unsigned int textwidth_l(BlitzFont *font, char *text, unsigned int len);
+				int x, int y, uint h, BlitzColor c);
+extern uint textwidth(BlitzFont *font, char *text);
+extern uint textwidth_l(BlitzFont *font, char *text, uint len);
 extern void loadfont(Blitz *blitz, BlitzFont *font);
-extern unsigned int labelh(BlitzFont *font);
+extern uint labelh(BlitzFont *font);
 extern char *parse_colors(char **buf, int *buflen, BlitzColor *col);
 
 /* event.c */
 extern void check_x_event(IXPConn *c);
-extern unsigned int flush_masked_events(long even_mask);
+extern uint flush_masked_events(long even_mask);
 
 /* frame.c */
 extern Frame *create_frame(Client *c, View *v);
@@ -358,18 +372,18 @@ extern int r_east(XRectangle *r);
 extern int r_south(XRectangle *r);
 
 /* key.c */
-extern void kpress(Window w, unsigned long mod, KeyCode keycode);
+extern void kpress(Window w, ulong mod, KeyCode keycode);
 extern void update_keys();
 extern void init_lock_keys();
-extern unsigned long mod_key_of_str(char *val);
+extern ulong mod_key_of_str(char *val);
 
 /* mouse.c */
 extern void do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align);
-extern void grab_mouse(Window w, unsigned long mod, unsigned int button);
-extern void ungrab_mouse(Window w, unsigned long mod, unsigned int button);
+extern void grab_mouse(Window w, ulong mod, ulong button);
+extern void ungrab_mouse(Window w, ulong mod, uint button);
 extern BlitzAlign snap_rect(XRectangle *rects, int num, XRectangle *current,
 					 BlitzAlign *mask, int snap);
-extern void grab_button(Window w, unsigned int button, unsigned long mod);
+extern void grab_button(Window w, uint button, ulong mod);
 
 /* rule.c */
 extern void update_rules(Rule **rule, const char *data);
@@ -386,17 +400,17 @@ extern View *get_view(const char *name);
 extern View *create_view(const char *name);
 extern void focus_view(WMScreen *s, View *v);
 extern void update_client_views(Client *c, char **tags);
-extern XRectangle *rects_of_view(View *v, unsigned int *num);
-extern View *view_of_id(unsigned short id);
+extern XRectangle *rects_of_view(View *v, uint *num);
+extern View *view_of_id(ushort id);
 extern void select_view(const char *arg);
 extern void attach_to_view(View *v, Frame *f);
 extern Client *sel_client_of_view(View *v);
 extern char *message_view(View *v, char *message);
 extern void restack_view(View *v);
-extern unsigned char *view_index(View *v);
+extern uchar *view_index(View *v);
 extern void destroy_view(View *v);
 extern void update_views();
-extern unsigned int newcolw_of_view(View *v);
+extern uint newcolw_of_view(View *v);
 
 /* wm.c */
 extern int wmii_error_handler(Display *dpy, XErrorEvent *error);

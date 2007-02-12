@@ -8,10 +8,10 @@
 #include <X11/keysym.h>
 #include "printevent.h"
 
-unsigned int
+uint
 flush_masked_events(long even_mask) {
 	XEvent ev;
-	unsigned int n = 0;
+	uint n = 0;
 	while(XCheckMaskEvent(blz.dpy, even_mask, &ev)) n++;
 	return n;
 }

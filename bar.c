@@ -10,7 +10,7 @@ Bar *free_bars = nil;
 
 Bar *
 create_bar(Bar **b_link, char *name) {
-	static unsigned int id = 1;
+	static uint id = 1;
 	Bar **i, *b = bar_of_name(*b_link, name);;
 
 	if(b)
@@ -62,7 +62,7 @@ resize_bar(WMScreen *s) {
 
 void
 draw_bar(WMScreen *s) {
-	unsigned int width, tw, nb, size;
+	uint width, tw, nb, size;
 	float shrink;
 	Bar *b, *tb, *largest, **pb;
 

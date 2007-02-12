@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-unsigned int
-textwidth_l(BlitzFont *font, char *text, unsigned int len) {
+uint
+textwidth_l(BlitzFont *font, char *text, uint len) {
 	if(font->set) {
 		XRectangle r;
 		XmbTextExtents(font->set, text, len, &r, nil);
@@ -16,7 +16,7 @@ textwidth_l(BlitzFont *font, char *text, unsigned int len) {
 	return XTextWidth(font->xfont, text, len);
 }
 
-unsigned int
+uint
 textwidth(BlitzFont *font, char *text) {
 	return textwidth_l(font, text, strlen(text));
 }
@@ -67,7 +67,7 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 	font->height = font->ascent + font->descent;
 }
 
-unsigned int
+uint
 labelh(BlitzFont *font) {
 	return font->height + 2;
 }
@@ -86,7 +86,7 @@ draw_border(BlitzBrush *b) {
 
 void
 draw_label(BlitzBrush *b, char *text) {
-	unsigned int x, y, w, h, len;
+	uint x, y, w, h, len;
 	Bool shortened = False;
 	static char buf[2048];
 	XRectangle r = {0};
@@ -162,7 +162,7 @@ drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle *rect,
 
 void
 drawcursor(Display *dpy, Drawable drawable, GC gc,
-				int x, int y, unsigned int h, BlitzColor c)
+				int x, int y, uint h, BlitzColor c)
 {
 	XSegment s[5];
 
@@ -186,7 +186,7 @@ drawcursor(Display *dpy, Drawable drawable, GC gc,
 	XDrawSegments(dpy, drawable, gc, s, 5);
 }
 
-static unsigned long
+static ulong
 xloadcolor(Blitz *blitz, char *colstr) {
 	XColor color;
 	char col[8];
@@ -210,7 +210,7 @@ loadcolor(Blitz *blitz, BlitzColor *c) {
 
 char *
 parse_colors(char **buf, int *buflen, BlitzColor *col) {
-	unsigned int i;
+	uint i;
 	if(*buflen < 23 || 3 != sscanf(*buf, "#%06x #%06x #%06x", &i,&i,&i))
 		return "bad value";
 	(*buflen) -= 23;

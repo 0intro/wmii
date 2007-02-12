@@ -30,9 +30,9 @@ init_lock_keys() {
 	valid_mask = 255 & ~(num_lock_mask | LockMask);
 }
 
-unsigned long
+ulong
 mod_key_of_str(char *val) {
-	unsigned long mod = 0;
+	ulong mod = 0;
 
 	if (strstr(val, "Shift"))
 		mod |= ShiftMask;
@@ -86,8 +86,8 @@ get_key(const char *name) {
 	char buf[128];
 	char *seq[8];
 	char *kstr;
-	unsigned int i, toks;
-	static unsigned short id = 1;
+	uint i, toks;
+	static ushort id = 1;
 	Key *k = 0, *r = 0;
 
 	if((k = name2key(name))) {
@@ -122,7 +122,7 @@ get_key(const char *name) {
 }
 
 static void
-next_keystroke(unsigned long *mod, KeyCode *code) {
+next_keystroke(ulong *mod, KeyCode *code) {
 	XEvent e;
 	KeySym sym;
 	*mod = 0;
@@ -136,7 +136,7 @@ next_keystroke(unsigned long *mod, KeyCode *code) {
 }
 
 static void
-emulate_key_press(unsigned long mod, KeyCode key) {
+emulate_key_press(ulong mod, KeyCode key) {
 	XEvent e;
 	Window client_win;
 	int revert;
@@ -155,7 +155,7 @@ emulate_key_press(unsigned long mod, KeyCode key) {
 }
 
 static Key *
-match_keys(Key *k, unsigned long mod, KeyCode keycode, Bool seq) {
+match_keys(Key *k, ulong mod, KeyCode keycode, Bool seq) {
 	Key *ret = nil, *next;
 
 	for(next = k->tnext; k; (k=next) && (next=k->tnext)) {
@@ -171,7 +171,7 @@ match_keys(Key *k, unsigned long mod, KeyCode keycode, Bool seq) {
 
 static void
 kpress_seq(Window w, Key *done) {
-	unsigned long mod;
+	ulong mod;
 	KeyCode key;
 	Key *found;
 
@@ -191,7 +191,7 @@ kpress_seq(Window w, Key *done) {
 }
 
 void
-kpress(Window w, unsigned long mod, KeyCode keycode) {
+kpress(Window w, ulong mod, KeyCode keycode) {
 	Key *k, *found;
 
 	for(k=key; k; k->tnext=k->lnext, k=k->lnext);
