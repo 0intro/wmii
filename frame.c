@@ -214,28 +214,41 @@ update_frame_widget_colors(Frame *f) {
 void
 draw_frame(Frame *f) {
 	if(def.border) {
-		f->tile.border = def.border;
+		f->tile.border = 1;
 		f->tile.rect = f->rect;
 		f->tile.rect.x = f->tile.rect.y = 0;
 	}
 	f->grabbox.rect = f->tile.rect;
-	f->grabbox.rect.height = labelh(&def.font);
-	f->grabbox.rect.width = def.font.height;
-	f->titlebar.rect = f->grabbox.rect;
+	f->grabbox.rect.x += 2;
+	f->grabbox.rect.y += 2;
+	f->grabbox.rect.height = labelh(&def.font) - 4;
+	f->grabbox.rect.width = def.font.height - 3;
+	f->grabbox.border = 1;
 	f->titlebar.rect.x = f->grabbox.rect.x + f->grabbox.rect.width;
-	f->titlebar.rect.width = f->rect.width -  f->titlebar.rect.x;
+	f->titlebar.rect.y = f->tile.rect.y;
+	f->titlebar.rect.width = f->rect.width - f->titlebar.rect.x;
+	f->titlebar.rect.height = labelh(&def.font);
 	f->titlebar.border = 0;
 	draw_tile(&f->tile);
 	draw_label(&f->titlebar, f->client->name);
-	f->grabbox.border = 3;
-	draw_tile(&f->grabbox);
+	draw_border(&f->tile);
 	/* XXX: Hack */
 	f->titlebar.rect.x = 0;
-	f->titlebar.rect.width += f->grabbox.rect.width;
+	f->titlebar.rect.width = f->rect.width;
 	f->titlebar.border = 1;
 	draw_border(&f->titlebar);
-	XCopyArea(blz.dpy, pmap, f->client->framewin, f->client->gc,
-			0, 0, f->rect.width, f->rect.height, 0, 0);
+	draw_tile(&f->grabbox);
+	XCopyArea(
+		/* display */	blz.dpy,
+		/* src */	pmap,
+		/* dest */	f->client->framewin,
+		/* gc */	f->client->gc,
+		/* x, y */	0, 0,
+		/* width */	f->rect.width,
+		/* height */	f->rect.height,
+		/* dest_x */	0,
+		/* dest_y */	0
+		);
 	XSync(blz.dpy, False);
 }
 

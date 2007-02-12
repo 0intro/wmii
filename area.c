@@ -260,8 +260,8 @@ place_client(Area *a, Client *c) {
 			y = 0;
 		else
 			y = fr->rect.y / dy;
-		maxx = (fr->rect.x + fr->rect.width) / dx;
-		maxy = (fr->rect.y + fr->rect.height) / dy;
+		maxx = r_east(&fr->rect) / dx;
+		maxy = r_south(&fr->rect) / dy;
 		for(j = y; j < my && j < maxy; j++)
 			for(i = x; i < mx && i < maxx; i++)
 				field[j*mx + i] = False;
@@ -286,13 +286,13 @@ place_client(Area *a, Client *c) {
 		p1.x *= dx;
 		p1.y *= dy;
 	}
-	if(fit && (p1.x + f->rect.width < a->rect.x + a->rect.width))
+	if(fit && (p1.x + f->rect.width < r_south(&a->rect)))
 		f->rect.x = p1.x;
 	else {
 		diff = a->rect.width - f->rect.width;
 		f->rect.x = a->rect.x + (random() % (diff ? diff : 1));
 	}
-	if(fit && (p1.y + f->rect.height < a->rect.y + a->rect.height))
+	if(fit && (p1.y + f->rect.height < (r_south(&a->rect))))
 		f->rect.y = p1.y;
 	else {
 		diff = a->rect.height - f->rect.height;

@@ -71,13 +71,13 @@ snap_line(SnapArgs *a) {
 	/* horizontal */
 	if(a->y1 == a->y2 && (a->mask & (NORTH|SOUTH))) {
 		for(i=0; i < a->num; i++) {
-			if(!((a->rects[i].x + a->rects[i].width < a->x1) ||
-				(a->rects[i].x > a->x2))) {
+			if(!(r_east(&a->rects[i]) < a->x1) ||
+				(a->rects[i].x > a->x2)) {
 				
 				if(abs(a->rects[i].y - a->y1) <= abs(*a->delta))
 					*a->delta = a->rects[i].y - a->y1;
 				
-				t_xy = a->rects[i].y + a->rects[i].height;
+				t_xy = r_south(&a->rects[i]);
 				if(abs(t_xy - a->y1) < abs(*a->delta))
 					*a->delta = t_xy - a->y1;
 			}
@@ -87,13 +87,13 @@ snap_line(SnapArgs *a) {
 		/* This is the same as above, tr/xy/yx/, 
 		 *                            s/width/height/, s/height/width/ */
 		for(i=0; i < a->num; i++) {
-			if(!((a->rects[i].y + a->rects[i].height < a->y1) ||
-				(a->rects[i].y > a->y2))) {
+			if(!(r_south(&a->rects[i]) < a->y1) ||
+				(a->rects[i].y > a->y2)) {
 				
 				if(abs(a->rects[i].x - a->x1) <= abs(*a->delta))
 					*a->delta = a->rects[i].x - a->x1;
 				
-				t_xy = a->rects[i].x + a->rects[i].width;
+				t_xy = r_east(&a->rects[i]);
 				if(abs(t_xy - a->x1) < abs(*a->delta))
 					*a->delta = t_xy - a->x1;
 			}
@@ -110,21 +110,21 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 	BlitzAlign ret;
 
 	a.x1 = current->x;
-	a.x2 = current->x + current->width;
+	a.x2 = r_east(current);
 	a.delta = &dy;
 	if(*mask & NORTH) {
 		a.y2 = a.y1 = current->y;
 		snap_line(&a);
 	}
 	if(*mask & SOUTH) {
-		a.y2 = a.y1 = current->y + current->height;
+		a.y2 = a.y1 = r_south(current);
 		snap_line(&a);
 	}
 	a.y1 = current->y;
-	a.y2 = current->y + current->height;
+	a.y2 = r_south(current);
 	a.delta = &dx;
 	if(*mask & EAST) {
-		a.x1 = a.x2 = current->x + current->width;
+		a.x1 = a.x2 = r_east(current);
 		snap_line(&a);
 	}
 	if(*mask & WEST) {
@@ -153,11 +153,17 @@ draw_xor_border(XRectangle *r) {
 
 	XSetLineAttributes(blz.dpy, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
 	if(xor.height > 4 && xor.width > 2)
-		XDrawLine(blz.dpy, blz.root, xorgc, xor.x + 2, xor.y +  xor.height / 2,
-			xor.x + xor.width - 2, xor.y + xor.height / 2);
+		XDrawLine(blz.dpy, blz.root, xorgc,
+			xor.x + 2,
+			xor.y +  xor.height / 2,
+			r_east(&xor) - 2,
+			xor.y + xor.height / 2);
 	if(xor.width > 4 && xor.height > 2)
-		XDrawLine(blz.dpy, blz.root, xorgc, xor.x + xor.width / 2, xor.y + 2,
-			xor.x + xor.width / 2, xor.y + xor.height - 2);
+		XDrawLine(blz.dpy, blz.root, xorgc,
+			xor.x + xor.width / 2,
+			xor.y + 2,
+			xor.x + xor.width / 2,
+			r_south(&xor) - 2);
 	XSetLineAttributes(blz.dpy, xorgc, 4, LineSolid, CapNotLast, JoinMiter);
 	XDrawRectangles(blz.dpy, blz.root, xorgc, &xor, 1);
 	XSync(blz.dpy, False);
@@ -175,7 +181,7 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 
 	a_prev = v->area;
 	for(a = a_prev->next; a && a->next; a = a->next) {
-		if(x < (a->rect.x + a->rect.width))
+		if(x < r_east(&a->rect))
 			break;
 		a_prev = a;
 	}
@@ -190,8 +196,8 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 		}
 		return;
 	}
-	if(x > (a->rect.x + a->rect.width - labelh(&def.font))) {
-		rect->x = a->rect.x + a->rect.width - 4;
+	if(x > (r_east(&a->rect) - labelh(&def.font))) {
+		rect->x = r_east(&a->rect) - 4;
 		rect->width = 8;
 
 		if(do_move) {
@@ -209,7 +215,7 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 	for(f = a->frame; f; f = f->anext) {
 		if(y < f->rect.y)
 			break;
-		if(y < (f->rect.y + f->rect.height))
+		if(y < r_south(&f->rect))
 			break;
 		f_close = f;
 	}
@@ -219,7 +225,7 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 		rect->y = f->rect.y;
 		rect->height = 2;
 		if(f_close) {
-			rect->y = (f_close->rect.y + f_close->rect.height);
+			rect->y = r_south(&f_close->rect);
 			rect->height = f->rect.y - rect->y;
 		}
 		if(do_move) {
@@ -233,8 +239,8 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 		}
 		return;
 	}
-	if(y > (f->rect.y + f->rect.height - labelh(&def.font))) {
-		rect->y = f->rect.y + f->rect.height;
+	if(y > r_south(&f->rect) - labelh(&def.font)) {
+		rect->y = r_south(&f->rect);
 		rect->height = (screen->rect.height - labelh(&def.font) - rect->y);
 		if(f->anext)
 			rect->height = (f->anext->rect.y - rect->y);

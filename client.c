@@ -58,7 +58,7 @@ create_client(Window w, XWindowAttributes *wa) {
 		/* depth */	DefaultDepth(blz.dpy, blz.screen),
 		/* class */	CopyFromParent,
 		/* visual */	DefaultVisual(blz.dpy, blz.screen),
-		/* valuemask */	CWOverrideRedirect | CWEventMask,
+		/* valuemask */	CWOverrideRedirect | CWEventMask | CWBackPixmap,
 		/* attributes */&fwa
 		);
 	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
