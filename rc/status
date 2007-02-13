@@ -1,14 +1,9 @@
 #!/bin/sh
 # periodically print date and load average to the bar
 
-xwrite() {
-	file="$1"; shift
-	echo -n "$@" | wmiir write "$file"
-}
-
 wmiir remove /rbar/status 2>/dev/null && sleep 2
 echo $WMII_SELCOLORS | wmiir create /rbar/status
-while xwrite /rbar/status "$WMII_NORMCOLORS" `date` `uptime | sed 's/.*://; s/,//g'`
+while wmiir xwrite /rbar/status "$WMII_NORMCOLORS" `date` `uptime | sed 's/.*://; s/,//g'`
 do
 	sleep 1
 done
