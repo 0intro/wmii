@@ -737,7 +737,7 @@ send_frame:
 		return Ebadvalue;
 	if(!swap) {
 		remove_frame(f);
-		insert_frame(tf, f, True);
+		insert_frame(tf, f, before);
 	}else
 		swap_frames(f, tf);
 	arrange_column(a, False);
