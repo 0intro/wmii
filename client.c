@@ -307,9 +307,9 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 	XWMHints *wmh;
 	char *cwrite;
 
-	cwrite = "Manager";
+	cwrite = "Client";
 	if(write)
-		cwrite = "Client";
+		cwrite = "Manager";
 
 	if(urgent != c->urgent) {
 		if(urgent)
@@ -361,7 +361,7 @@ prop_client(Client *c, XPropertyEvent *e) {
 		break;
 	case XA_WM_HINTS:
 		wmh = XGetWMHints(blz.dpy, c->win);
-		set_urgent(c, (wmh->flags & XUrgencyHint), False);
+		set_urgent(c, (wmh->flags & XUrgencyHint) != 0, False);
 		XFree(wmh);
 		break;
 	}
@@ -454,7 +454,6 @@ destroy_client(Client *c) {
 		}
 
 	update_client_views(c, &dummy);
-	update_views();
 
 	unmap_client(c, WithdrawnState);
 	reparent_client(c, blz.root, c->rect.x, c->rect.y);
@@ -591,8 +590,8 @@ resize_client(Client *c, XRectangle *r) {
 				c->rect.width, c->rect.height);
 		map_client(c);
 		map_frame(c);
+		configure_client(c);
 	}
-	configure_client(c);
 }
 
 void

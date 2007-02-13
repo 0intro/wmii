@@ -171,10 +171,16 @@ detach_from_area(Area *a, Frame *f) {
 	for(pr = a->frame; pr; pr = pr->anext)
 		if(pr->anext == f) break;
 	remove_frame(f);
-	if(a->sel == f)
-		a->sel = pr;
-	if(a->sel == nil)
-		a->sel = a->frame;
+
+	if(a->sel == f) {
+		if(!pr)
+			pr = a->frame;
+		if((a->view == screen->sel) &&
+		   (a->view->sel == a) && (pr))
+			focus_frame(pr, False);
+		else
+			a->sel = pr;
+	}
 
 	if(!a->floating) {
 		if(a->frame)
@@ -334,7 +340,7 @@ focus_area(Area *a) {
 
 	if(f) {
 		draw_frame(f);
-		XSetInputFocus(blz.dpy, f->client->win, RevertToPointerRoot, CurrentTime);
+		XSetInputFocus(blz.dpy, f->client->win, RevertToParent, CurrentTime);
 	}else
 		XSetInputFocus(blz.dpy, screen->barwin, RevertToPointerRoot, CurrentTime);
 

@@ -43,6 +43,7 @@ can get it touch with me at the following location:
 			ken@richsun.UUCP
 */
 
+#include "wmii.h"
 #include <stdio.h>
 #include <X11/Intrinsic.h>
 #include <X11/Xproto.h>
@@ -852,7 +853,10 @@ char *eventtype(XEvent *ev)
 void printevent(XEvent *e)
 {
     XAnyEvent *ev = (void*)e;
+    Client *c;
 
+    if(ev->window && (c = client_of_win(ev->window)))
+	    printf("title=%s\n", c->name);
     printf("%3ld %-20s ", ev->serial, eventtype(e));
     if(ev->send_event)
         printf("(sendevent) ");

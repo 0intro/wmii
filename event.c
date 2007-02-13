@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <X11/keysym.h>
-#include "printevent.h"
 
 uint
 flush_masked_events(long even_mask) {
