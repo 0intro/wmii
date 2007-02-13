@@ -306,7 +306,8 @@ static void
 set_urgent(Client *c, Bool urgent, Bool write) {
 	XWMHints *wmh;
 	char *cwrite, *cnot;
-	Frame *f;
+	Frame *f, *ff;
+	Area *a;
 
 	cwrite = "Client";
 	if(write)
@@ -324,8 +325,13 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 				draw_frame(c->sel);
 			}
 			if(!urgent || c->sel->view != screen->sel)
-				for(f=c->frame; f; f=f->cnext)
-					write_event("%sUrgentTag %s %s\n", cnot, cwrite, f->view->name);
+				for(f=c->frame; f; f=f->cnext) {
+					for(a=f->view->area; a; a=a->next)
+						for(ff=a->frame; ff; ff=ff->anext)
+							if(ff->urgent) break;
+					if(!ff)
+						write_event("%sUrgentTag %s %s\n", cnot, cwrite, f->view->name);
+				}
 		}
 	}
 
