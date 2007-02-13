@@ -45,6 +45,8 @@ create_area(View *v, Area *pos, uint w) {
 		w = min_width;
 	if(col_num && (col_num * min_width + w) > screen->rect.width)
 		return nil;
+	if(pos)
+		scale_view(v, screen->rect.width - w);
 
 	a = ixp_emallocz(sizeof(Area));
 	a->view = v;
@@ -57,9 +59,6 @@ create_area(View *v, Area *pos, uint w) {
 	a->sel = nil;
 	a->next = *p;
 	*p = a;
-
-	if(pos)
-		scale_view(v, screen->rect.width);
 
 	if(a == v->area)
 		a->floating = True;
