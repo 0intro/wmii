@@ -305,21 +305,27 @@ kill_client(Client * c) {
 static void
 set_urgent(Client *c, Bool urgent, Bool write) {
 	XWMHints *wmh;
-	char *cwrite;
+	char *cwrite, *cnot;
+	Frame *f;
 
 	cwrite = "Client";
 	if(write)
 		cwrite = "Manager";
+	cnot = "Not";
+	if(urgent)
+		cnot = "";
 
 	if(urgent != c->urgent) {
-		if(urgent)
-			write_event("Urgent 0x%x %s\n", client->win, cwrite);
-		else
-			write_event("NotUrgent 0x%x %s\n", client->win, cwrite);
+		write_event("%sUrgent 0x%x %s\n", cnot, client->win, cwrite);
 		c->urgent = urgent;
-		if(c->sel && c->sel->view == screen->sel) {
-			update_frame_widget_colors(c->sel);
-			draw_frame(c->sel);
+		if(c->sel) {
+			if(c->sel->view == screen->sel) {
+				update_frame_widget_colors(c->sel);
+				draw_frame(c->sel);
+			}
+			if(!urgent || c->sel->view != screen->sel)
+				for(f=c->frame; f; f=f->cnext)
+					write_event("%sUrgentTag %s %s\n", cnot, cwrite, f->view->name);
 		}
 	}
 

@@ -170,6 +170,14 @@ do
 	UnfocusTag)
 		wmiir echo "/lbar/$parms" "$WMII_NORMCOLORS" "$parms"
 		;;
+	UrgentTag)
+		shift
+		wmiir echo "/lbar/$@" "*$@"
+		;;
+	NotUrgentTag)
+		shift
+		wmiir echo "/lbar/$@" "$@"
+		;;
 	LeftBarClick)
 		shift
 		wmiir echo /ctl view "$@";;
