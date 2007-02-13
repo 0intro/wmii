@@ -342,15 +342,18 @@ message_view(View *v, char *message) {
 	Client *c;
 	Frame *f;
 	Area *a;
+	Bool swap;
 	static char Ebadvalue[] = "bad value";
 
 	if(!strncmp(message, "send ", 5)) {
 		message += 5;
-		if(!(c = client_of_message(v, message, &n)))
-			return Ebadvalue;
-		if(!(f = clientframe_of_view(v, c)))
-			return Ebadvalue;
-		return send_client(f, &message[n]);
+		swap = False;
+		goto send;
+	}
+	if(!strncmp(message, "swap ", 5)) {
+		message += 5;
+		swap = True;
+		goto send;
 	}
 	if(!strncmp(message, "select ", 7)) {
 		message += 7;
@@ -371,6 +374,13 @@ message_view(View *v, char *message) {
 		return nil;
 	}
 	return Ebadvalue;
+
+send:
+	if(!(c = client_of_message(v, message, &n)))
+		return Ebadvalue;
+	if(!(f = clientframe_of_view(v, c)))
+		return Ebadvalue;
+	return send_client(f, &message[n], swap);
 }
 
 void

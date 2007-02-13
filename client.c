@@ -328,7 +328,7 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 				for(f=c->frame; f; f=f->cnext) {
 					for(a=f->view->area; a; a=a->next)
 						for(ff=a->frame; ff; ff=ff->anext)
-							if(ff->urgent) break;
+							if(ff->client->urgent) break;
 					if(!ff)
 						write_event("%sUrgentTag %s %s\n", cnot, cwrite, f->view->name);
 				}
@@ -664,7 +664,7 @@ size_client(Client *c, char *arg) {
 }
 
 char *
-send_client(Frame *f, char *arg) {
+send_client(Frame *f, char *arg, Bool swap) {
 	Area *to, *a;
 	Client *c;
 	Frame *tf;
@@ -681,7 +681,7 @@ send_client(Frame *f, char *arg) {
 			to = c->revert;
 		else
 			to = v->area->next;
-		send_to_area(to, a, f);
+		goto send_area;
 	}else if(!a->floating) {
 		if(!strncmp(arg, "left", 5)) {
 			if(a->floating)
@@ -692,7 +692,7 @@ send_client(Frame *f, char *arg) {
 				to=new_column(v, v->area, 0);
 			if(!to)
 				return Ebadvalue;
-			send_to_area(to, a, f);
+			goto send_area;
 		}
 		else if(!strncmp(arg, "right", 5)) {
 			if(a->floating)
@@ -701,33 +701,49 @@ send_client(Frame *f, char *arg) {
 				to = new_column(v, a, 0);
 			if(!to)
 				return Ebadvalue;
-			send_to_area(to, a, f);
+			goto send_area;
 		}
 		else if(!strncmp(arg, "up", 3)) {
 			for(tf=a->frame; tf; tf=tf->anext)
 				if(tf->anext == f) break;
 			if(!tf)
 				return Ebadvalue;
-			remove_frame(f);
-			insert_frame(tf, f, True);
-			arrange_column(a, False);
+			goto send_frame;
 		}
 		else if(!strncmp(arg, "down", 5)) {
 			if(!f->anext)
 				return Ebadvalue;
-			remove_frame(f);
-			insert_frame(f->anext, f, False);
-			arrange_column(a, False);
+			tf = f->anext;
+			goto send_frame;
 		}
 		else {
 			if(sscanf(arg, "%d", &j) != 1)
 				return Ebadvalue;
 			for(to=v->area; to; to=to->next)
 				if(!--j) break;
-			send_to_area(to, a, f);
+			goto send_area;
 		}
 	}else
 		return Ebadvalue;
+send_frame:
+	if(!swap) {
+		remove_frame(f);
+		insert_frame(tf, f, True);
+	}else
+		swap_frames(f, tf);
+	arrange_column(a, False);
+
+	flush_masked_events(EnterWindowMask);
+	focus_frame(f, True);
+	update_views();
+	return nil;
+
+send_area:
+	if(!swap)
+		send_to_area(to, a, f);
+	else if(to->sel)
+		swap_frames(f, to->sel);
+
 	flush_masked_events(EnterWindowMask);
 	focus_frame(f, True);
 	update_views();

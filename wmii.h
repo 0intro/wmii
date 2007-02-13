@@ -298,7 +298,7 @@ extern void manage_client(Client *c);
 extern void focus(Client *c, Bool restack);
 extern void resize_client(Client *c, XRectangle *r);
 extern void match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky);
-extern char *send_client(Frame *f, char *arg);
+extern char *send_client(Frame *f, char *arg, Bool swap);
 extern char * message_client(Client *c, char *message);
 extern void move_client(Client *c, char *arg);
 extern void size_client(Client *c, char *arg);
