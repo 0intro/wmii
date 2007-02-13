@@ -222,6 +222,7 @@ struct WMScreen {
 	Bar *lbar;
 	Bar *rbar;
 	View *sel;
+	Client *focus;
 	Window barwin;
 
 	XRectangle rect;
@@ -296,6 +297,7 @@ extern void focus_frame(Frame *f, Bool restack);
 extern void reparent_client(Client *c, Window w, int x, int y);
 extern void manage_client(Client *c);
 extern void focus(Client *c, Bool restack);
+extern void focus_client(Client *c);
 extern void resize_client(Client *c, XRectangle *r);
 extern void match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky);
 extern char *send_client(Frame *f, char *arg, Bool swap);

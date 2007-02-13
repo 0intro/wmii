@@ -175,8 +175,7 @@ detach_from_area(Area *a, Frame *f) {
 	if(a->sel == f) {
 		if(!pr)
 			pr = a->frame;
-		if((a->view == screen->sel) &&
-		   (a->view->sel == a) && (pr))
+		if((a->view->sel == a) && (pr))
 			focus_frame(pr, False);
 		else
 			a->sel = pr;
@@ -320,10 +319,6 @@ focus_area(Area *a) {
 	f = a->sel;
 	old_a = v->sel;
 
-	/* XXX: Replace this with an assert later */
-	if(a == old_a)
-		return;
-
 	v->sel = a;
 
 	if(f)
@@ -340,9 +335,9 @@ focus_area(Area *a) {
 
 	if(f) {
 		draw_frame(f);
-		XSetInputFocus(blz.dpy, f->client->win, RevertToParent, CurrentTime);
+		focus_client(f->client);
 	}else
-		XSetInputFocus(blz.dpy, screen->barwin, RevertToPointerRoot, CurrentTime);
+		focus_client(nil);
 
 	if(old_a && old_a->sel)
 		draw_frame(old_a->sel);

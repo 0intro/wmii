@@ -545,6 +545,17 @@ match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky) {
 }
 
 void
+focus_client(Client *c) {
+	if(screen->focus != c) {
+		if(c)
+			XSetInputFocus(blz.dpy, c->win, RevertToParent, CurrentTime);
+		else
+			XSetInputFocus(blz.dpy, screen->barwin, RevertToParent, CurrentTime);
+		screen->focus = c;
+	}
+}
+
+void
 resize_client(Client *c, XRectangle *r) {
 	Frame *f;
 	Bool floating;

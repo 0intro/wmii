@@ -181,7 +181,7 @@ focus_frame(Frame *f, Bool restack) {
 		return;
 
 	if(a == old_a) {
-		XSetInputFocus(blz.dpy, f->client->win, RevertToParent, CurrentTime);
+		focus_client(f->client);
 		draw_frame(f);
 	}
 	else if(old_in_a)
