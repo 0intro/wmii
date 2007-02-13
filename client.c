@@ -669,6 +669,7 @@ send_client(Frame *f, char *arg, Bool swap) {
 	Client *c;
 	Frame *tf;
 	View *v;
+	Bool before;
 	int j;
 
 	a = f->area;
@@ -690,8 +691,6 @@ send_client(Frame *f, char *arg, Bool swap) {
 				if(a == to->next) break;
 			if(!to && (f->anext || f != a->frame))
 				to=new_column(v, v->area, 0);
-			if(!to)
-				return Ebadvalue;
 			goto send_area;
 		}
 		else if(!strncmp(arg, "right", 5)) {
@@ -699,21 +698,17 @@ send_client(Frame *f, char *arg, Bool swap) {
 				return Ebadvalue;
 			if(!(to = a->next) && (f->anext || f != a->frame))
 				to = new_column(v, a, 0);
-			if(!to)
-				return Ebadvalue;
 			goto send_area;
 		}
 		else if(!strncmp(arg, "up", 3)) {
 			for(tf=a->frame; tf; tf=tf->anext)
 				if(tf->anext == f) break;
-			if(!tf)
-				return Ebadvalue;
+			before = True;
 			goto send_frame;
 		}
 		else if(!strncmp(arg, "down", 5)) {
-			if(!f->anext)
-				return Ebadvalue;
 			tf = f->anext;
+			before = False;
 			goto send_frame;
 		}
 		else {
@@ -727,6 +722,8 @@ send_client(Frame *f, char *arg, Bool swap) {
 	return Ebadvalue;
 
 send_frame:
+	if(!tf)
+		return Ebadvalue;
 	if(!swap) {
 		remove_frame(f);
 		insert_frame(tf, f, True);
@@ -740,6 +737,8 @@ send_frame:
 	return nil;
 
 send_area:
+	if(!to)
+		return Ebadvalue;
 	if(!swap)
 		send_to_area(to, a, f);
 	else if(to->sel)
