@@ -723,8 +723,9 @@ send_client(Frame *f, char *arg, Bool swap) {
 				if(!--j) break;
 			goto send_area;
 		}
-	}else
-		return Ebadvalue;
+	}
+	return Ebadvalue;
+
 send_frame:
 	if(!swap) {
 		remove_frame(f);

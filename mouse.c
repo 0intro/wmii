@@ -332,9 +332,14 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 	f = c->sel;
 	floating = f->area->floating;
 	origin = frect = f->rect;
-	rects = floating ? rects_of_view(f->area->view, &num) : nil;
-	snap = floating ? screen->rect.height / 66 : 0;
 	cur = cursor[CurResize];
+	if(floating) {
+		rects = rects_of_view(f->area->view, &num, (grabbox ? c->frame : nil));
+		snap = screen->rect.height / 66;
+	}else{
+		rects = nil;
+		snap = 0;
+	}
 
 	if(align == CENTER) {
 		if(grabbox)

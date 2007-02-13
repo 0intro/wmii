@@ -400,7 +400,7 @@ extern View *get_view(const char *name);
 extern View *create_view(const char *name);
 extern void focus_view(WMScreen *s, View *v);
 extern void update_client_views(Client *c, char **tags);
-extern XRectangle *rects_of_view(View *v, uint *num);
+extern XRectangle *rects_of_view(View *v, uint *num, Frame *ignore);
 extern View *view_of_id(ushort id);
 extern void select_view(const char *arg);
 extern void attach_to_view(View *v, Frame *f);

@@ -241,7 +241,7 @@ place_client(Area *a, Client *c) {
 		|| c->size.flags & USPosition
 		|| c->size.flags & PPosition)
 		return;
-	rects = rects_of_view(a->view, &num);
+	rects = rects_of_view(a->view, &num, nil);
 	if(!field) {
 		mx = screen->rect.width / 8;
 		my = screen->rect.height / 8;

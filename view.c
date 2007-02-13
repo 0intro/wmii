@@ -248,7 +248,7 @@ arrange_view(View *v) {
 }
 
 XRectangle *
-rects_of_view(View *v, uint *num) {
+rects_of_view(View *v, uint *num, Frame *ignore) {
 	XRectangle *result;
 	Frame *f;
 
@@ -256,7 +256,8 @@ rects_of_view(View *v, uint *num) {
 	for(f=v->area->frame; f; f=f->anext, (*num)++);
 	result = ixp_emallocz(*num * sizeof(XRectangle));
 	for(f=v->area->frame; f; f=f->anext)
-		*result++ = f->rect;
+		if(f != ignore)
+			*result++ = f->rect;
 	*result++ = screen->rect;
 	*result++ = screen->brect;
 	return result - *num;
