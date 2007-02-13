@@ -34,7 +34,7 @@ create_area(View *v, Area *pos, uint w) {
 
 	col_num = max((area_num - 1), 0);
 	if(w == 0) {
-		if(area_num) {
+		if(col_num) {
 			w = newcolw_of_view(v);
 			if (w == 0)
 				w = screen->rect.width / (col_num + 1);
