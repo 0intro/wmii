@@ -254,16 +254,21 @@ XRectangle *
 rects_of_view(View *v, uint *num, Frame *ignore) {
 	XRectangle *result;
 	Frame *f;
+	int i;
 
-	*num = 2;
-	for(f=v->area->frame; f; f=f->anext, (*num)++);
-	result = ixp_emallocz(*num * sizeof(XRectangle));
+	i = 2;
+	for(f=v->area->frame; f; f=f->anext);
+		i++;
+	result = ixp_emallocz(i * sizeof(XRectangle));
+
+	i = 0;
 	for(f=v->area->frame; f; f=f->anext)
 		if(f != ignore)
-			*result++ = f->rect;
-	*result++ = screen->rect;
-	*result++ = screen->brect;
-	return result - *num;
+			result[i++] = f->rect;
+	result[i++] = screen->rect;
+	result[i++] = screen->brect;
+	*num = i;
+	return result;
 }
 
 /* XXX: This will need cleanup */
