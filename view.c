@@ -87,13 +87,13 @@ destroy_view(View *v) {
 		if(*i == v) break;
 	*i = v->next;
 	write_event("DestroyTag %s\n", v->name);
+	free(v);
 	if(v == screen->sel) {
 		for(v=view; v && v->next; v=v->next)
 			if(v->next == *i) break;
 		if(v)
 			focus_view(screen, v);
 	}
-	free(v);
 }
 
 static void
