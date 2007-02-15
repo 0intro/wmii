@@ -136,7 +136,7 @@ init_screen(WMScreen *screen) {
 
 	gcv.subwindow_mode = IncludeInferiors;
 	gcv.function = GXxor;
-	gcv.foreground = def.selcolor.bg;
+	gcv.foreground = def.normcolor.bg;
 	gcv.plane_mask = AllPlanes;
 	gcv.graphics_exposures = False;
 	xorgc = XCreateGC(blz.dpy, blz.root, GCForeground | GCGraphicsExposures |

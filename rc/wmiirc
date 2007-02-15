@@ -21,19 +21,17 @@ RIGHT=l
 WMII_FONT='-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*'
 # Colors tuples are "<text> <background> <border>"
 WMII_NORMCOLORS='#222222 #eeeeee #666666'
-WMII_SELCOLORS='#444444 #bbbbbb #556088'
-WMII_FOCUSCOLORS='#ffffff #335577 #447799'
+WMII_SELCOLORS='#ffffff #335577 #447799'
 WMII_BACKGROUND='#333333'
 
 DMENU="dmenu -b -fn $WMII_FONT -nb #eeeeee -nf #222222 -sb #335577 -sf #ffffff"
 WMII_TERM="xterm"
 
-export DMENU WMII_FONT WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS WMII_TERM
+export DMENU WMII_FONT WMII_SELCOLORS WMII_NORMCOLORS WMII_TERM
 
 # WM CONFIGURATION
 wmiir write /ctl << EOF
 font $WMII_FONT
-focuscolors $WMII_FOCUSCOLORS
 selcolors $WMII_SELCOLORS
 normcolors $WMII_NORMCOLORS
 grabmod $MODKEY
@@ -94,7 +92,7 @@ wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
 while read tag
 do
 	if [ "X$tag" = "X$seltag" ]; then
-		echo "$WMII_FOCUSCOLORS" "$tag" | wmiir create "/lbar/$tag" 
+		echo "$WMII_SELCOLORS" "$tag" | wmiir create "/lbar/$tag" 
 	else
 		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag"
 	fi
@@ -165,7 +163,7 @@ do
 		wmiir remove "/lbar/$parms"
 		;;
 	FocusTag)
-		wmiir write "/lbar/$parms" "$WMII_FOCUSCOLORS" "$parms"
+		wmiir write "/lbar/$parms" "$WMII_SELCOLORS" "$parms"
 		;;
 	UnfocusTag)
 		wmiir write "/lbar/$parms" "$WMII_NORMCOLORS" "$parms"

@@ -226,12 +226,8 @@ frame_delta_h() {
 
 void
 update_frame_widget_colors(Frame *f) {
-	if(f->area->sel == f) {
-		if(sel_screen && (f->client == sel_client()))
-			f->grabbox.color = f->tile.color = f->titlebar.color = def.focuscolor;
-		else
-			f->grabbox.color = f->tile.color = f->titlebar.color = def.selcolor;
-	}
+	if(sel_screen && (f->client == sel_client()))
+		f->grabbox.color = f->tile.color = f->titlebar.color = def.selcolor;
 	else
 		f->grabbox.color = f->tile.color = f->titlebar.color = def.normcolor;
 	if(f->client->urgent)
