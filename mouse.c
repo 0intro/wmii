@@ -191,7 +191,7 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 
 		if(do_move) {
 			a = new_column(v, a_prev, 0);
-			send_to_area(a, frame->area, frame);
+			send_to_area(a, frame);
 			focus(frame->client, False);
 		}
 		return;
@@ -202,7 +202,7 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 
 		if(do_move) {
 			a = new_column(v, a, 0);
-			send_to_area(a, frame->area, frame);
+			send_to_area(a, frame);
 			focus(frame->client, False);
 		}
 		return;
@@ -232,7 +232,7 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 			if(frame == f)
 				return;
 			if(a != frame->area)
-				send_to_area(a, frame->area, frame);
+				send_to_area(a, frame);
 			remove_frame(frame);
 			insert_frame(f, frame, True);
 			focus(frame->client, True);
@@ -248,7 +248,7 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 			if(frame == f)
 				return;
 			if(a != frame->area)
-				send_to_area(a, frame->area, frame);
+				send_to_area(a, frame);
 			remove_frame(frame);
 			insert_frame(f, frame, False);
 			focus(frame->client, True);
@@ -378,7 +378,7 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 		hr_x = screen->rect.width / 2;
 		hr_y = screen->rect.height / 2;
 		XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, hr_x, hr_y);
-		while(XCheckMaskEvent(blz.dpy, MouseMask, &ev));
+		while(XCheckMaskEvent(blz.dpy, PointerMotionMask, &ev));
 	}
 
 

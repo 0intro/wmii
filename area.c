@@ -48,7 +48,7 @@ create_area(View *v, Area *pos, uint w) {
 	if(pos)
 		scale_view(v, screen->rect.width - w);
 
-	a = ixp_emallocz(sizeof(Area));
+	a = emallocz(sizeof(Area));
 	a->view = v;
 	a->id = id++;
 	a->rect = screen->rect;
@@ -103,15 +103,17 @@ destroy_area(Area *a) {
 }
 
 void
-send_to_area(Area *to, Area *from, Frame *f) {
+send_to_area(Area *to, Frame *f) {
+	Area *from;
 	assert(to->view == f->view);
+	from = f->area;
 	if(to->floating != from->floating) {
 		XRectangle temp = f->revert;
 		f->revert = f->rect;
 		f->rect = temp;
 	}
 	f->client->revert = from;
-	detach_from_area(from, f);
+	detach_from_area(f);
 	attach_to_area(to, f, True);
 }
 
@@ -128,42 +130,43 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 
 	f->area = a;
 
-	n_frame = 1;
+	n_frame = 0;
 	for(ft=a->frame; ft; ft=ft->anext)
 		n_frame++;
+	if(n_frame == 0)
+		n_frame = 1;
 
 	c->floating = a->floating;
-	if(!a->floating) {
-		h = a->rect.height / n_frame;
-		if(a->frame)
-			scale_column(a, a->rect.height - h);
-	}
-	if(a->sel)
-		insert_frame(a->sel, f, False);
-	else
-		insert_frame(nil, f, False);
-
 	if(!a->floating)
-		f->rect.height = h;
-	else
+		f->rect.height = a->rect.height / n_frame;
+
+	insert_frame(a->sel, f, False);
+
+	if(a->floating)
 		place_client(a, c);
 
+	focus_frame(f, False);
+	resize_frame(f, &f->rect);
 	if(!a->floating)
 		arrange_column(a, False);
-	focus_frame(f, False);
+	else
+		resize_client(f->client, &f->rect);
 
 	update_client_grab(f->client);
-	assert(a->sel);
+	if(a->frame)
+		assert(a->sel);
 }
 
 void
-detach_from_area(Area *a, Frame *f) {
+detach_from_area(Frame *f) {
 	Frame *pr;
 	Client *c;
+	Area *a;
 	View *v;
 	Area *ta;
 	uint i;
 
+	a = f->area;
 	v = a->view;
 	c = f->client;
 
@@ -243,7 +246,7 @@ place_client(Area *a, Client *c) {
 	if(!field) {
 		mx = screen->rect.width / 8;
 		my = screen->rect.height / 8;
-		field = ixp_emallocz(my * mx * sizeof(Bool));
+		field = emallocz(my * mx * sizeof(Bool));
 	}
 	for(y = 0; y < my; y++)
 		for(x = 0; x < mx; x++)

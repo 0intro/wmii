@@ -54,10 +54,10 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 		font->xfont = XLoadQueryFont(blitz->dpy, fontname);
 		if (!font->xfont) {
 			if(!strncmp(fontname, BLITZ_FONT, sizeof(BLITZ_FONT)))
-				ixp_eprint("wmiiwm: error, cannot load '%s' font\n",
+				fatal("wmiiwm: error, cannot load '%s' font\n",
 						BLITZ_FONT);
 			free(font->fontstr);
-			font->fontstr = ixp_estrdup(BLITZ_FONT);
+			font->fontstr = estrdup(BLITZ_FONT);
 			loadfont(blitz, font);
 			return;
 		}
@@ -108,6 +108,8 @@ draw_label(BlitzBrush *b, char *text) {
 		buf[--len] = 0;
 		shortened = True;
 	}
+	if(!len)
+		return;
 	if(w > b->rect.width)
 		return;
 	/* mark shortened info in the string */

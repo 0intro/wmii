@@ -4,7 +4,7 @@
 include config.mk
 
 SRC = area.c bar.c client.c column.c draw.c event.c frame.c fs.c \
-	geom.c key.c main.c mouse.c rule.c util.c view.c
+	geom.c key.c main.c mouse.c rule.c printevent.c util.c view.c
 OBJ = ${SRC:.c=.o}
 
 all: options wmiiwm

@@ -68,7 +68,7 @@ update_rules(Rule **rule, const char *data) {
 			break;
 		case VALUE:
 			if(*p == '\n' || *p == 0) {
-				*rule = ixp_emallocz(sizeof(Rule));
+				*rule = emallocz(sizeof(Rule));
 				*v = 0;
 				trim(value, " \t/");
 				if(!regcomp(&(*rule)->regex, regex, 0)) {

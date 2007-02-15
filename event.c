@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <X11/keysym.h>
+#include "printevent.h"
 
 uint
 flush_masked_events(long even_mask) {
@@ -70,7 +71,8 @@ buttonpress(XEvent *e) {
 					restack_view(f->view);
 				if(ispointinrect(ev->x, ev->y, &f->grabbox.rect))
 					do_mouse_resize(f->client, True, CENTER);
-				else if(!ispointinrect(ev->x, ev->y, &f->titlebar.rect))
+				else if(!ev->subwindow
+				&& !ispointinrect(ev->x, ev->y, &f->titlebar.rect))
 					do_mouse_resize(f->client, False,
 						quadofcoord(&f->client->rect, ev->x, ev->y));
 				if(f->client != sel_client())
@@ -94,11 +96,8 @@ configurerequest(XEvent *e) {
 	wc.y = ev->y;
 	wc.width = ev->width;
 	wc.height = ev->height;
-	wc.border_width = 0;
-	wc.sibling = None;
-	wc.stack_mode = Above;
 
-	ev->value_mask &= ~CWSibling;
+	ev->value_mask &= ~(CWSibling|CWStackMode);
 	if(c) {
 		gravitate_client(c, True);
 		if(ev->value_mask & CWX)
@@ -258,6 +257,52 @@ unmapnotify(XEvent *e) {
 			destroy_client(c);
 }
 
+static void
+focusin(XEvent *e) {
+#if 0
+	Client *c;
+	XFocusChangeEvent *ev = &e->xfocus;
+
+	c = client_of_win(ev->window);
+	if(ev->mode == NotifyGrab) {
+		screen->focus = nil;
+		if(!c)
+			focus_client(nil);
+		else
+			focus(c, False);
+	}if(ev->mode == NotifyUngrab) {
+		if(c)
+			focus(c, False);
+		screen->focus = c;
+	}else if(c) {
+		screen->focus = c;
+		if(c != sel_client()) {
+			focus_client(sel_client());
+		}
+	}
+#endif
+}
+
+static void
+focusout(XEvent *e) {
+#if 0
+	Client *c;
+	XFocusChangeEvent *ev = &e->xfocus;
+
+	c = client_of_win(ev->window);
+	if(ev->mode == NotifyUngrab
+	|| ev->mode == NotifyGrab)
+		return;
+	else if(c) {
+		screen->focus = c;
+		/* Don't let clients grab focus */
+		if(c != sel_client()) {
+			focus_client(sel_client());
+		}
+	}
+#endif
+}
+
 void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress]	= buttonpress,
 	[ButtonRelease]	= buttonrelease,
@@ -270,7 +315,9 @@ void (*handler[LASTEvent]) (XEvent *) = {
 	[MappingNotify]	= mappingnotify,
 	[MapRequest]	= maprequest,
 	[PropertyNotify]= propertynotify,
-	[UnmapNotify]	= unmapnotify
+	[UnmapNotify]	= unmapnotify,
+	[FocusIn]	= focusin,
+	[FocusOut]	= focusout
 };
 
 void
@@ -278,6 +325,8 @@ check_x_event(IXPConn *c) {
 	XEvent ev;
 	while(XPending(blz.dpy)) { /* main event loop */
 		XNextEvent(blz.dpy, &ev);
+		if(verbose)
+			printevent(&ev);
 		if(handler[ev.type])
 			(handler[ev.type]) (&ev); /* call handler */
 	}

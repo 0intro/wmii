@@ -21,7 +21,7 @@ create_client(Window w, XWindowAttributes *wa) {
 	XSetWindowAttributes fwa;
 	long msize;
 
-	c = ixp_emallocz(sizeof(Client));
+	c = emallocz(sizeof(Client));
 	c->win = w;
 	c->rect.x = wa->x;
 	c->rect.y = wa->y;
@@ -259,19 +259,19 @@ reparent_client(Client *c, Window w, int x, int y) {
 void
 configure_client(Client *c) {
 	XConfigureEvent e;
-	Frame *f = c->sel;
+	Frame *f;
+
+	f = c->sel;
+	if(!f)
+		return;
 
 	e.type = ConfigureNotify;
 	e.event = c->win;
 	e.window = c->win;
-	e.x = c->rect.x;
-	e.y = c->rect.y;
-	if(f) {
-		e.x += f->rect.x;
-		e.y += f->rect.y;
-	}
-	e.width = c->rect.width;
-	e.height = c->rect.height;
+	e.x = f->crect.x + f->rect.x - c->border;
+	e.y = f->crect.y + f->rect.y - c->border;
+	e.width = f->crect.width;
+	e.height = f->crect.height;
 	e.border_width = c->border;
 	e.above = None;
 	e.override_redirect = False;
@@ -477,8 +477,8 @@ destroy_client(Client *c) {
 	XUngrabServer(blz.dpy);
 	flush_masked_events(EnterWindowMask);
 
-	free(c);
 	write_event("DestroyClient 0x%x\n", c->win);
+	free(c);
 }
 
 void
@@ -547,32 +547,20 @@ match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky) {
 void
 focus_client(Client *c) {
 	if(screen->focus != c) {
+		screen->focus = c;
 		if(c)
 			XSetInputFocus(blz.dpy, c->win, RevertToParent, CurrentTime);
 		else
 			XSetInputFocus(blz.dpy, screen->barwin, RevertToParent, CurrentTime);
-		screen->focus = c;
 	}
 }
 
 void
 resize_client(Client *c, XRectangle *r) {
 	Frame *f;
-	Bool floating;
 
 	f = c->sel;
-	floating = f->area->floating;
-
 	resize_frame(f, r);
-
-	if(floating) {
-		if((c->rect.width == screen->rect.width) &&
-		   (c->rect.height == screen->rect.height)) {
-			f->rect.x = -def.border;
-			f->rect.y = -labelh(&def.font);
-		}else
-			check_frame_constraints(&f->rect);
-	}
 
 	if(f->area->view == screen->sel) 
 		XMoveResizeWindow(blz.dpy, c->framewin,
@@ -584,37 +572,22 @@ resize_client(Client *c, XRectangle *r) {
 		return;
 	}
 
-	if(f->area->sel != f)
-		switch(f->area->mode) {
-		case Colmax:
-			unmap_frame(c);
-			unmap_client(c, IconicState);
-			break;
-		case Colstack:
-			XMoveResizeWindow(blz.dpy, c->win,
-					c->rect.x, c->rect.y,
-					c->rect.width, c->rect.height);
-			map_frame(c);
-			unmap_client(c, IconicState);
-			break;
-		default:
-			goto ShowWindow;
-		}
-	else {
-	ShowWindow:
-		c->rect = f->rect;
-		c->rect.y = labelh(&def.font);
-		match_sizehints(c, &c->rect, False, NORTH|EAST);
-		c->rect.width -= def.border * 2;
-		c->rect.height -= labelh(&def.font) + def.border;
-		c->rect.x = (f->rect.width - c->rect.width) / 2;
+	c->rect = f->crect;
+	if(f->area->mode == Colmax
+	&& f->area->sel != f) {
+		unmap_frame(c);
+		unmap_client(c, IconicState);
+	}else if(f->collapsed) {
+		map_frame(c);
+		unmap_client(c, IconicState);
+	}else {
 		XMoveResizeWindow(blz.dpy, c->win,
 				c->rect.x, c->rect.y,
 				c->rect.width, c->rect.height);
 		map_client(c);
 		map_frame(c);
-		configure_client(c);
 	}
+	configure_client(c);
 }
 
 void
@@ -631,11 +604,11 @@ newcol_client(Client *c, char *arg) {
 		for(to=v->area; to; to=to->next)
 			if(to->next == a) break;
 		to = new_column(v, to, 0);
-		send_to_area(to, a, f);
+		send_to_area(to, f);
 	}
 	else if(!strncmp(arg, "next", 5)) {
 		to = new_column(v, a, 0);
-		send_to_area(to, a, f);
+		send_to_area(to, f);
 	}
 	else
 		return;
@@ -751,7 +724,7 @@ send_area:
 	if(!to)
 		return Ebadvalue;
 	if(!swap)
-		send_to_area(to, a, f);
+		send_to_area(to, f);
 	else if(to->sel)
 		swap_frames(f, to->sel);
 
@@ -775,7 +748,7 @@ update_client_views(Client *c, char **tags) {
 					break;
 			}
 			f = *fp;
-			detach_from_area(f->area, f);
+			detach_from_area(f);
 			*fp = f->cnext;
 			free(f);
 			if(c->sel == f)

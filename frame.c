@@ -8,7 +8,7 @@
 Frame *
 create_frame(Client *c, View *v) {
 	static ushort id = 1;
-	Frame *f = ixp_emallocz(sizeof(Frame));
+	Frame *f = emallocz(sizeof(Frame));
 
 	f->id = id++;
 	f->client = c;
@@ -21,7 +21,7 @@ create_frame(Client *c, View *v) {
 		c->sel = f;
 		f->revert = f->rect = c->rect;
 		f->revert.width = f->rect.width += 2 * def.border;
-		f->revert.height = f->rect.height += def.border + labelh(&def.font);
+		f->revert.height = f->rect.height += frame_delta_h();
 	}
 	f->collapsed = False;
 	f->tile.blitz = &blz;
@@ -84,8 +84,29 @@ resize_frame(Frame *f, XRectangle *r) {
 	stickycorner = get_sticky(&f->rect, r);
 
 	f->rect = *r;
+	f->crect = *r;
+	match_sizehints(c, &f->crect, f->area->floating, stickycorner);
+
 	if(f->area->floating)
-		match_sizehints(c, &f->rect, f->area->floating, stickycorner);
+		f->rect = f->crect;
+	if(!f->collapsed) {
+		f->crect.width -= def.border * 2;
+		f->crect.height -= frame_delta_h();
+	}
+	f->crect.y = labelh(&def.font);
+	f->crect.x = (f->rect.width - f->crect.width) / 2;
+
+	if(f->collapsed)
+		f->rect.height = labelh(&def.font);
+
+	if(f->area->floating) {
+		if((f->crect.width == screen->rect.width) &&
+		   (f->crect.height == screen->rect.height)) {
+			f->rect.x = -def.border;
+			f->rect.y = -labelh(&def.font);
+		}else
+			check_frame_constraints(&f->rect);
+	}
 }
 
 Bool
@@ -180,10 +201,9 @@ focus_frame(Frame *f, Bool restack) {
 	if(v != screen->sel)
 		return;
 
-	if(a == old_a) {
-		focus_client(f->client);
+	focus_client(f->client);
+	if(a == old_a)
 		draw_frame(f);
-	}
 	else if(old_in_a)
 		draw_frame(old_in_a);
 
@@ -196,6 +216,11 @@ focus_frame(Frame *f, Bool restack) {
 
 	if(restack)
 		restack_view(v);
+}
+
+int
+frame_delta_h() {
+	return def.border + labelh(&def.font);
 }
 
 void

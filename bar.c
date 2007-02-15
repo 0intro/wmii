@@ -21,7 +21,7 @@ create_bar(Bar **b_link, char *name) {
 		memset(b, 0, sizeof(*b));
 	}
 	else
-		b = ixp_emallocz(sizeof(Bar));
+		b = emallocz(sizeof(Bar));
 	b->id = id++;
 	strncpy(b->name, name, sizeof(b->name));
 	b->brush = screen->bbrush;

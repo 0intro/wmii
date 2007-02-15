@@ -2,8 +2,10 @@
  * See LICENSE file for license details.
  */
 #include "wmii.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 char *
 str_of_column_mode(int mode) {
@@ -28,155 +30,153 @@ column_mode_of_str(char *arg) {
 }
 
 static void
-relax_column(Area *a) {
-	uint frame_size, yoff, h;
-	Frame *f;
-	int hdiff;
-	Bool fallthrough = False;
+scale_column(Area *a) {
+	Frame *f, **fp;
+	uint min_height, yoff, dy;
+	uint num_col, num_uncol;
+	uint col_h, uncol_h;
+	int surplus, i, j;
 
 	if(!a->frame)
 		return;
-	frame_size = 0;
+
+	/* This works by comparing heights based on a surplus of their
+	 * minimum size. We start by subtracting the minimum size, then
+	 * scale the surplus, and add back the minimum size later. This
+	 * is based on the size of the client, rather than the frame, so
+	 * increment gaps can be equalized later */
+	/* Frames that can't be accomodated are pushed to the floating layer */
+
+	min_height = labelh(&def.font);
+	col_h = labelh(&def.font);
+	uncol_h = min_height + frame_delta_h();
+
+	num_col = 0;
+	num_uncol = 0;
+	dy = 0;
 	for(f=a->frame; f; f=f->anext)
-		frame_size++;
-	switch(a->mode) {
-	case Coldefault:
-		h = a->rect.height / frame_size;
-		if(h < 2 * labelh(&def.font))
-			fallthrough = True;
-		break;
-	case Colstack:
-		h = a->rect.height - (frame_size - 1) * labelh(&def.font);
-		if(h < 3 * labelh(&def.font))
-			fallthrough = True;
-	default:
-		yoff = a->rect.y;
-		break;
-	}
-	if(fallthrough) {
-		for(f=a->frame; f; f=f->anext) {
-			f->rect.x = a->rect.x + (a->rect.width - f->rect.width) / 2;
-			f->rect.y = a->rect.y + (a->rect.height - f->rect.height) / 2;
-		}
-		return;
-	}
-	/* some relaxing from potential increment gaps */
-	h = 0;
-	for(f=a->frame; f; f=f->anext) {
-		if(a->mode == Colmax) {
-			if(h < f->rect.height)
-				h = f->rect.height;
-		}
+		if(f->collapsed)
+			num_col++;
 		else
-			h += f->rect.height;
+			num_uncol++;
+
+	surplus = a->rect.height;
+	surplus -= num_col * col_h;
+	surplus -= num_uncol * uncol_h;
+	if(surplus < 0) {
+		i = ceil((float)(-surplus)/(uncol_h - col_h));
+		if(i >= num_uncol)
+			i = num_uncol - 1;
+		num_uncol -= i;
+		num_col += i;
+		surplus += i * (uncol_h - col_h);
 	}
-	hdiff = a->rect.height - h;
-	if((a->mode == Coldefault) && (hdiff > 0)) {
-		int hx;
-		for(hx = 1; hx < hdiff; hx++)
-			for(f=a->frame; f && (hx < hdiff); f=f->anext) {
-				uint tmp = f->rect.height;
-				f->rect.height += hx;
-				hdiff -= (f->rect.height - tmp);
+	if(surplus < 0) {
+		i = ceil((float)(-surplus)/col_h);
+		if(i > num_col)
+			i = num_col;
+		num_col -= i;
+		surplus += i * col_h;
+	}
+
+	i = num_col - 1;
+	j = num_uncol - 1;
+	for(f=a->frame; f; f=f->anext) {
+		if(f == a->sel)
+			j++;
+		if(!f->collapsed) {
+			if(j < 0 && f != a->sel)
+				f->collapsed = True;
+			else {
+				if(f->crect.height <= min_height)
+					f->crect.height = 1;
+				else
+					f->crect.height -= min_height;
+				dy += f->crect.height;
 			}
+			j--;
+		}
 	}
-	if(hdiff < 0)
-		hdiff = 0;
-	hdiff /= frame_size;
-	yoff = a->rect.y + hdiff / 2;
+	for(fp=&a->frame; *fp;) {
+		f = *fp;
+		if(f == a->sel)
+			i++;
+		if(f->collapsed) {
+			if(i < 0 && f != a->sel) {
+				f->collapsed = False;
+				send_to_area(f->view->area, f);
+				continue;
+			}
+			i--;
+		}
+		fp=&f->anext;
+	}
+
+	i = num_uncol;
+	for(f=a->frame; f; f=f->anext) {
+		f->rect.x = a->rect.x;
+		f->rect.width = a->rect.width;
+		if(!f->collapsed) {
+			i--;
+			f->rect.height = (float)f->crect.height / dy * surplus;
+			if(!i)
+				f->rect.height = surplus;
+			f->rect.height += min_height + frame_delta_h();
+			match_sizehints(f->client, &f->rect, False, NWEST);
+
+			dy -= f->crect.height;
+			surplus -= f->rect.height - frame_delta_h() - min_height;
+		}else
+			f->rect.height = labelh(&def.font);
+	}
+
+	yoff = a->rect.y;
+	i = num_uncol;
 	for(f=a->frame; f; f=f->anext) {
 		f->rect.y = yoff;
-		if(a->mode != Colmax || f == a->sel)
-			yoff = r_south(&f->rect) + hdiff;
-	}
-}
-
-void
-scale_column(Area *a, float h) {
-	uint yoff, frame_size = 0;
-	Frame *f;
-	uint min_height = 2 * labelh(&def.font);
-	float scale, dy = 0;
-	int hdiff;
-
-	if(!a->frame)
-		return;
-	for(f=a->frame; f; f=f->anext, frame_size++)
-		dy += f->rect.height;
-	scale = h / dy;
-	yoff = 0;
-	for(f=a->frame; f; f=f->anext) {
-		f->rect.height *= scale;
-		if(!f->anext)
-			f->rect.height = h - yoff;
-		yoff += f->rect.height;
-	}
-	/* min_height can only be respected when there is enough space; the caller should guarantee this */
-	if(frame_size * min_height > h)
-		return;
-	yoff = 0;
-	for(f=a->frame, frame_size--; f; f=f->anext, frame_size--) {
-		if(f->rect.height < min_height)
-			f->rect.height = min_height;
-		else if((hdiff = yoff + f->rect.height - h + frame_size * min_height) > 0)
-			f->rect.height -= hdiff;
-		if(!f->anext)
-			f->rect.height = h - yoff;
-		yoff += f->rect.height;
+		if(f->collapsed)
+			yoff += f->rect.height;
+		else{
+			i--;
+			f->rect.height += surplus / num_uncol;
+			if(!i)
+				f->rect.height += surplus % num_uncol;
+			yoff += f->rect.height;
+		}
 	}
 }
 
 void
 arrange_column(Area *a, Bool dirty) {
 	Frame *f;
-	uint num_frames = 0, yoff = a->rect.y, h;
-	uint min_height = 2 * labelh(&def.font);
 
 	if(a->floating || !a->frame)
 		return;
-	for(f=a->frame; f; f=f->anext)
-		num_frames++;
+
 	switch(a->mode) {
 	case Coldefault:
-		h = a->rect.height / num_frames;
-		if(h < min_height)
-			goto Fallthrough;
-		if(dirty) {
-			for(f=a->frame; f; f=f->anext)
-				f->rect.height = h;
-		}
-		scale_column(a, a->rect.height);
 		for(f=a->frame; f; f=f->anext) {
-			f->rect.x = a->rect.x;
-			f->rect.y = yoff;
-			f->rect.width = a->rect.width;
-			yoff += f->rect.height;
+			f->collapsed = False;
+			if(dirty)
+				f->crect.height = 100;
 		}
 		break;
 	case Colstack:
-		h = a->rect.height - (num_frames - 1) * labelh(&def.font);
-		if(h < 3 * labelh(&def.font))
-			goto Fallthrough;
 		for(f=a->frame; f; f=f->anext) {
-			f->rect = a->rect;
-			f->rect.y = yoff;
+			f->collapsed = True;
 			if(f == a->sel)
-				f->rect.height = h;
-			else
-				f->rect.height = labelh(&def.font);
-			yoff += f->rect.height;
+				f->collapsed = False;
 		}
 		break;
-Fallthrough:
 	case Colmax:
-		for(f=a->frame; f; f=f->anext) {
+		for(f=a->frame; f; f=f->anext)
 			f->rect = a->rect;
-		}
-		break;
+		goto resize;
 	default:
 		break;
 	}
-	relax_column(a);
+	scale_column(a);
+resize:
 	for(f=a->frame; f; f=f->anext)
 		resize_client(f->client, &f->rect);
 	flush_masked_events(EnterWindowMask);
@@ -245,7 +245,7 @@ resize_column(Client *c, XRectangle *new) {
 		a->rect.x = new->x;
 		match_horiz(a, &a->rect);
 		match_horiz(west, &west->rect);
-		relax_column(west);
+		//relax_column(west);
 	}
 	if(east && !(sticky & EAST)) {
 		east->rect.width -= r_east(new) - east->rect.x;
@@ -253,7 +253,7 @@ resize_column(Client *c, XRectangle *new) {
 		a->rect.width = r_east(new) - a->rect.x;
 		match_horiz(a, &a->rect);
 		match_horiz(east, &east->rect);
-		relax_column(east);
+		//relax_column(east);
 	}
 AfterHorizontal:
 	/* skip vertical resize unless the column is in equal mode */
@@ -296,7 +296,7 @@ AfterHorizontal:
 		resize_frame(south, &south->rect);
 	}
 AfterVertical:
-	relax_column(a);
+	//relax_column(a);
 	focus_view(screen, v);
 }
 

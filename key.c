@@ -77,7 +77,8 @@ ungrab_key(Key *k) {
 static Key *
 name2key(const char *name) {
 	Key *k;
-	for(k=key; k && strncmp(k->name, name, sizeof(k->name)); k=k->lnext);
+	for(k=key; k; k=k->lnext)
+		if(!strncmp(k->name, name, sizeof(k->name))) break;
 	return k;
 }
 
@@ -95,12 +96,12 @@ get_key(const char *name) {
 		return k;
 	}
 	strncpy(buf, name, sizeof(buf));
-	toks = ixp_tokenize(seq, 8, buf, ',');
+	toks = tokenize(seq, 8, buf, ',');
 	for(i = 0; i < toks; i++) {
 		if(!k)
-			r = k = ixp_emallocz(sizeof(Key));
+			r = k = emallocz(sizeof(Key));
 		else {
-			k->next = ixp_emallocz(sizeof(Key));
+			k->next = emallocz(sizeof(Key));
 			k = k->next;
 		}
 		strncpy(k->name, name, sizeof(k->name));

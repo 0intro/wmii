@@ -58,7 +58,7 @@ get_view(const char *name) {
 View *
 create_view(const char *name) {
 	static ushort id = 1;
-	View **i, *v = ixp_emallocz(sizeof(View));
+	View **i, *v = emallocz(sizeof(View));
 
 	v->id = id++;
 	strncpy(v->name, name, sizeof(v->name));
@@ -174,7 +174,7 @@ restack_view(View *v) {
 	for(c=client; c; c=c->next, i++);
 	if(i >= winssz) {
 		winssz = 2 * i;
-		wins = ixp_erealloc(wins, sizeof(Window) * winssz);
+		wins = erealloc(wins, sizeof(Window) * winssz);
 	}
 
 	wins[0] = screen->barwin;
@@ -259,8 +259,7 @@ rects_of_view(View *v, uint *num, Frame *ignore) {
 	i = 2;
 	for(f=v->area->frame; f; f=f->anext);
 		i++;
-	result = ixp_emallocz(i * sizeof(XRectangle));
-
+	result = emallocz(i * sizeof(XRectangle));
 	i = 0;
 	for(f=v->area->frame; f; f=f->anext)
 		if(f != ignore)
@@ -422,7 +421,7 @@ newcolw_of_view(View *v) {
 			char buf[256];
 			char *toks[16];
 			strncpy(buf, r->value, sizeof(buf));
-			n = ixp_tokenize(toks, 16, buf, '+');
+			n = tokenize(toks, 16, buf, '+');
 			for(a=v->area, i=0; a; a=a->next)
 				i++;
 			if(n && n >= i) {

@@ -27,7 +27,7 @@ static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. G
 
 static void
 usage() {
-	ixp_eprint("usage: wmiiwm -a <address> [-r <wmiirc>] [-v]\n");
+	fatal("usage: wmiiwm -a <address> [-r <wmiirc>] [-v]\n");
 }
 
 static void
@@ -157,7 +157,7 @@ init_screen(WMScreen *screen) {
 int
 wmii_error_handler(Display *dpy, XErrorEvent *error) {
 	if(check_other_wm)
-		ixp_eprint("wmiiwm: another window manager is already running\n");
+		fatal("wmiiwm: another window manager is already running\n");
 	if(error->error_code == BadWindow
 			|| (error->request_code == X_SetInputFocus
 				&& error->error_code == BadMatch)
@@ -231,7 +231,7 @@ main(int argc, char *argv[]) {
 
 	blz.dpy = XOpenDisplay(0);
 	if(!blz.dpy)
-		ixp_eprint("wmiiwm: cannot open dpy\n");
+		fatal("wmiiwm: cannot open dpy\n");
 	blz.screen = DefaultScreen(blz.dpy);
 	blz.root = RootWindow(blz.dpy, blz.screen);
 
@@ -244,19 +244,19 @@ main(int argc, char *argv[]) {
 	/* Check namespace permissions */
 	if(!strncmp(address, "unix!", 5)) {
 		struct stat st;
-		namespace = ixp_estrdup(&address[5]);
+		namespace = estrdup(&address[5]);
 		for(i = strlen(namespace) - 1; i >= 0; i--)
 			if(namespace[i] == '/') break;
 		namespace[i+1] = '\0';
 		if(stat(namespace, &st))
-			ixp_eprint("wmiiwm: can't stat namespace directory \"%s\": %s\n",
+			fatal("wmiiwm: can't stat namespace directory \"%s\": %s\n",
 					namespace, strerror(errno));
 		if(getuid() != st.st_uid)
-			ixp_eprint("wmiiwm: namespace directory \"%s\" exists, "
+			fatal("wmiiwm: namespace directory \"%s\" exists, "
 				"but is not owned by you",
 				namespace);
 		if(st.st_mode & 077)
-			ixp_eprint("wmiiwm: namespace directory \"%s\" exists, "
+			fatal("wmiiwm: namespace directory \"%s\" exists, "
 				"but has group or world permissions",
 				namespace);
 		free(namespace);
@@ -265,7 +265,7 @@ main(int argc, char *argv[]) {
 	errstr = nil;
 	i = ixp_create_sock(address, &errstr);
 	if(i < 0)
-		ixp_eprint("wmiiwm: fatal: %s\n", errstr);
+		fatal("wmiiwm: fatal: %s\n", errstr);
 
 	/* start wmiirc */
 	if(wmiirc) {
@@ -275,12 +275,12 @@ main(int argc, char *argv[]) {
 		switch(fork()) {
 		case 0:
 			if(setsid() == -1)
-				ixp_eprint("wmiiwm: can't setsid: %s\n", strerror(errno));
+				fatal("wmiiwm: can't setsid: %s\n", strerror(errno));
 			close(i);
 			close(ConnectionNumber(blz.dpy));
 			snprintf(execstr, name_len, "exec %s", wmiirc);
 			execl("/bin/sh", "sh", "-c", execstr, nil);
-			ixp_eprint("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
+			fatal("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
 		case -1:
 			perror("wmiiwm: cannot fork wmiirc");
 		default:
@@ -297,14 +297,14 @@ main(int argc, char *argv[]) {
 	client = nil;
 	key = nil;
 	passwd = getpwuid(getuid());
-	user = ixp_estrdup(passwd->pw_name);
+	user = estrdup(passwd->pw_name);
 	def.colrules.string = nil;
 	def.colrules.size = 0;
 	def.tagrules.string = nil;
 	def.tagrules.size = 0;
 	def.keys = nil;
 	def.keyssz = 0;
-	def.font.fontstr = ixp_estrdup(BLITZ_FONT);
+	def.font.fontstr = estrdup(BLITZ_FONT);
 	def.border = 1;
 	def.colmode = Coldefault;
 	strncpy(def.selcolor.colstr, BLITZ_SELCOLORS, sizeof(def.selcolor.colstr));
@@ -318,7 +318,7 @@ main(int argc, char *argv[]) {
 	loadfont(&blz, &def.font);
 	init_lock_keys();
 	num_screens = 1;
-	screens = ixp_emallocz(num_screens * sizeof(*screens));
+	screens = emallocz(num_screens * sizeof(*screens));
 	for(i = 0; i < num_screens; i++) {
 		s = &screens[i];
 		s->lbar = nil;
@@ -327,7 +327,8 @@ main(int argc, char *argv[]) {
 		init_screen(s);
 		pmap = XCreatePixmap(blz.dpy, blz.root, s->rect.width, s->rect.height,
 				DefaultDepth(blz.dpy, blz.screen));
-		wa.event_mask = SubstructureRedirectMask | EnterWindowMask | LeaveWindowMask;
+		wa.event_mask = SubstructureRedirectMask | EnterWindowMask | LeaveWindowMask
+			| FocusChangeMask;
 		wa.cursor = cursor[CurNormal];
 		XChangeWindowAttributes(blz.dpy, blz.root, CWEventMask | CWCursor, &wa);
 		wa.override_redirect = 1;
@@ -359,6 +360,8 @@ main(int argc, char *argv[]) {
 
 	screen = &screens[0];
 
+	screen->focus = (void*)-1;
+	focus_client(nil);
 	scan_wins();
 	starting = False;
 	update_views();

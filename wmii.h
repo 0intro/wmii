@@ -137,6 +137,7 @@ struct Frame {
 	Area *area;
 	ushort id;
 	XRectangle rect;
+	XRectangle crect;
 	XRectangle revert;
 	Client *client;
 	Bool collapsed;
@@ -269,9 +270,9 @@ extern void destroy_area(Area *a);
 extern Area *area_of_id(View *t, ushort id);
 extern void focus_area(Area *a);
 extern char *select_area(Area *a, char *arg);
-extern void send_to_area(Area *to, Area *from, Frame *f);
+extern void send_to_area(Area *to, Frame *f);
 extern void attach_to_area(Area *a, Frame *f, Bool send);
-extern void detach_from_area(Area *a, Frame *f);
+extern void detach_from_area(Frame *f);
 extern Client *sel_client_of_area(Area *a);
 
 /* bar.c */
@@ -313,7 +314,6 @@ extern void apply_tags(Client *c, const char *tags);
 
 /* column.c */
 extern void arrange_column(Area *a, Bool dirty);
-extern void scale_column(Area *a, float h);
 extern void resize_column(Client *c, XRectangle *r);
 extern int column_mode_of_str(char *arg);
 extern char *str_of_column_mode(int mode);
@@ -346,6 +346,7 @@ extern void insert_frame(Frame *pos, Frame *f, Bool before);
 extern void resize_frame(Frame *f, XRectangle *r);
 extern Bool frame_to_top(Frame *f);
 extern void swap_frames(Frame *fa, Frame *fb);
+extern int frame_delta_h();
 extern void draw_frame(Frame *f);
 extern void draw_frames();
 extern void update_frame_widget_colors(Frame *f);
@@ -392,6 +393,12 @@ extern void update_rules(Rule **rule, const char *data);
 extern void trim(char *str, const char *chars);
 
 /* util.c */
+extern uint tokenize(char *res[], uint reslen, char *str, char delim);
+extern char *estrdup(const char *str);
+extern void *erealloc(void *ptr, uint size);
+extern void *emallocz(uint size);
+extern void *emalloc(uint size);
+extern void fatal(const char *fmt, ...);
 extern int max(int a, int b);
 extern char *str_nil(char *s);
 

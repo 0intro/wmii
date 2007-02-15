@@ -142,7 +142,7 @@ get_file() {
 	FileId *temp;
 	if(!free_fileid) {
 		uint i = 15;
-		temp = ixp_emallocz(sizeof(FileId) * i);
+		temp = emallocz(sizeof(FileId) * i);
 		for(; i; i--) {
 			temp->next = free_fileid;
 			free_fileid = temp++;
@@ -181,7 +181,7 @@ write_buf(P9Req *r, void *buf, uint len) {
 	len -= r->ifcall.offset;
 	if(len > r->ifcall.count)
 		len = r->ifcall.count;
-	r->ofcall.data = ixp_emalloc(len);
+	r->ofcall.data = emalloc(len);
 	memcpy(r->ofcall.data, buf + r->ifcall.offset, len);
 	r->ofcall.count = len;
 }
@@ -204,7 +204,7 @@ write_to_buf(P9Req *r, void *buf, uint *len, uint max) {
 	*len = offset + count;
 	
 	if(max == 0) {
-		*(void **)buf = ixp_erealloc(*(void **)buf, *len + 1);
+		*(void **)buf = erealloc(*(void **)buf, *len + 1);
 		buf = *(void **)buf;
 	}
 		
@@ -219,7 +219,7 @@ data_to_cstring(P9Req *r) {
 	uint i;
 	i = r->ifcall.count;
 	if(!i || r->ifcall.data[i - 1] != '\n')
-		r->ifcall.data = ixp_erealloc(r->ifcall.data, ++i);
+		r->ifcall.data = erealloc(r->ifcall.data, ++i);
 	assert(r->ifcall.data);
 	r->ifcall.data[i - 1] = '\0';
 }
@@ -255,7 +255,7 @@ message_root(char *message)
 	else if(!strncmp(message, "font ", 5)) {
 		message += 5;
 		free(def.font.fontstr);
-		def.font.fontstr = ixp_estrdup(message);
+		def.font.fontstr = estrdup(message);
 		loadfont(&blz, &def.font);
 		resize_bar(screen);
 	}
@@ -327,7 +327,7 @@ write_event(char *format, ...) {
 	for(f=pending_event_fids; f; f=f->next) {
 		fi = f->fid->aux;
 		slen = fi->content.buf ? strlen(fi->content.buf) : 0;
-		fi->content.buf = (char *) ixp_erealloc(fi->content.buf, slen + len + 1);
+		fi->content.buf = (char *) erealloc(fi->content.buf, slen + len + 1);
 		(fi->content.buf)[slen] = '\0';
 		strcat(fi->content.buf, buffer);
 	}
@@ -387,7 +387,7 @@ lookup_file(FileId *parent, char *name)
 						file->id = c->win;
 						file->index = c->win;
 						file->tab = *dir;
-						file->tab.name = ixp_estrdup("sel");
+						file->tab.name = estrdup("sel");
 					}if(name) goto LastItem;
 				}
 				if(name) {
@@ -402,7 +402,7 @@ lookup_file(FileId *parent, char *name)
 						file->content.client = c;
 						file->id = c->win;
 						file->tab = *dir;
-						file->tab.name = ixp_emallocz(16);
+						file->tab.name = emallocz(16);
 						snprintf(file->tab.name, 16, "0x%x", (uint)c->win);
 						if(name) goto LastItem;
 					}
@@ -417,7 +417,7 @@ lookup_file(FileId *parent, char *name)
 						file->content.view = screen->sel;
 						file->id = screen->sel->id;
 						file->tab = *dir;
-						file->tab.name = ixp_estrdup("sel");
+						file->tab.name = estrdup("sel");
 					}if(name) goto LastItem;
 				}
 				for(v=view; v; v=v->next) {
@@ -428,7 +428,7 @@ lookup_file(FileId *parent, char *name)
 						file->content.view = v;
 						file->id = v->id;
 						file->tab = *dir;
-						file->tab.name = ixp_estrdup(v->name);
+						file->tab.name = estrdup(v->name);
 						if(name) goto LastItem;
 					}
 				}
@@ -442,7 +442,7 @@ lookup_file(FileId *parent, char *name)
 						file->content.bar = b;
 						file->id = b->id;
 						file->tab = *dir;
-						file->tab.name = ixp_estrdup(b->name);
+						file->tab.name = estrdup(b->name);
 						if(name) goto LastItem;
 					}
 				}
@@ -457,7 +457,7 @@ lookup_file(FileId *parent, char *name)
 			file->content.ref = parent->content.ref;
 			file->index = parent->index;
 			file->tab = *dir;
-			file->tab.name = ixp_estrdup(file->tab.name);
+			file->tab.name = estrdup(file->tab.name);
 			/* Special considerations: */
 			switch(file->tab.type) {
 			case FsDBars:
@@ -489,7 +489,7 @@ void
 fs_attach(P9Req *r) {
 	FileId *f = get_file();
 	f->tab = dirtab[FsRoot][0];
-	f->tab.name = ixp_estrdup("/");
+	f->tab.name = estrdup("/");
 	f->content.ref = nil; /* shut up valgrind */
 	r->fid->aux = f;
 	r->fid->qid.type = f->tab.qtype;
@@ -575,7 +575,7 @@ fs_stat(P9Req *r) {
 
 	dostat(&s, fs_size(r->fid->aux), r->fid->aux);
 	r->ofcall.nstat = size = ixp_sizeof_stat(&s);
-	buf = ixp_emallocz(size);
+	buf = emallocz(size);
 	r->ofcall.stat = buf;
 	ixp_pack_stat(&buf, &size, &s);
 	respond(r, nil);
@@ -594,7 +594,7 @@ fs_read(P9Req *r) {
 		Stat s;
 		offset = 0;
 		size = r->ifcall.count;
-		buf = ixp_emallocz(size);
+		buf = emallocz(size);
 		r->ofcall.data = buf;
 		tf = f = lookup_file(f, nil);
 		/* Note: f->tab.name == "." so we skip it */
@@ -653,7 +653,7 @@ fs_read(P9Req *r) {
 				respond(r, nil);
 				return;
 			}
-			r->ofcall.data = ixp_emallocz(16);
+			r->ofcall.data = emallocz(16);
 			n = snprintf(r->ofcall.data, 16, "0x%x", (uint)f->index);
 			assert(n >= 0);
 			r->ofcall.count = n;
@@ -732,7 +732,7 @@ fs_write(P9Req *r) {
 		data_to_cstring(r);
 		{	uint n;
 			char *toks[32];
-			n = ixp_tokenize(toks, 32, r->ifcall.data, '\n');
+			n = tokenize(toks, 32, r->ifcall.data, '\n');
 			for(i = 0; i < n; i++) {
 				if(errstr)
 					message_root(toks[i]);
@@ -768,7 +768,7 @@ fs_open(P9Req *r) {
 
 	switch(f->tab.type) {
 	case FsFEvent:
-		fl = ixp_emallocz(sizeof(FidLink));
+		fl = emallocz(sizeof(FidLink));
 		fl->fid = r->fid;
 		fl->next = pending_event_fids;
 		pending_event_fids = fl;
