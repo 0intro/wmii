@@ -401,6 +401,7 @@ lookup_file(FileId *parent, char *name)
 						last = &file->next;
 						file->content.client = c;
 						file->id = c->win;
+						file->index = c->win;
 						file->tab = *dir;
 						file->tab.name = emallocz(16);
 						snprintf(file->tab.name, 16, "0x%x", (uint)c->win);
