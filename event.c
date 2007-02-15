@@ -259,6 +259,19 @@ unmapnotify(XEvent *e) {
 
 static void
 focusin(XEvent *e) {
+	Client *c;
+	XFocusChangeEvent *ev = &e->xfocus;
+
+	c = client_of_win(ev->window);
+	if(c) {
+		if(verbose)
+			fprintf(stderr, "screen->focus: %p => %p\n", screen->focus, c);
+		screen->focus = c;
+	}else if(ev->window == screen->barwin) {
+		if(verbose)
+			fprintf(stderr, "screen->focus: %p => %p\n", screen->focus, nil);
+		screen->focus = nil;
+	}
 #if 0
 	Client *c;
 	XFocusChangeEvent *ev = &e->xfocus;
