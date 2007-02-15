@@ -77,7 +77,7 @@ create_view(const char *name) {
 void
 destroy_view(View *v) {
 	Area *a;
-	View **i;
+	View **i, *tv;
 
 	while((a = v->area)) {
 		v->area = a->next;
@@ -87,13 +87,13 @@ destroy_view(View *v) {
 		if(*i == v) break;
 	*i = v->next;
 	write_event("DestroyTag %s\n", v->name);
-	free(v);
 	if(v == screen->sel) {
-		for(v=view; v && v->next; v=v->next)
-			if(v->next == *i) break;
-		if(v)
-			focus_view(screen, v);
+		for(tv=view; tv && tv->next; tv=tv->next)
+			if(tv->next == *i) break;
+		if(tv)
+			focus_view(screen, tv);
 	}
+	free(v);
 }
 
 static void

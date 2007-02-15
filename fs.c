@@ -238,9 +238,12 @@ message_root(char *message)
 	else if(!strncmp(message, "view ", 5))
 		select_view(&message[5]);
 	else if(!strncmp(message, "selcolors ", 10)) {
+		fprintf(stderr, "wmiiwm: warning: selcolors have been removed\n");
+		return Ebadcmd;
+	}else if(!strncmp(message, "focuscolors ", 10)) {
 		message += 10;
 		n = strlen(message);
-		return parse_colors(&message, (int *)&n, &def.selcolor);
+		return parse_colors(&message, (int *)&n, &def.focuscolor);
 	}
 	else if(!strncmp(message, "normcolors ", 11)) {
 		message += 11;
@@ -282,7 +285,7 @@ read_root_ctl() {
 	uint i = 0;
 	if(screen->sel)
 		i += snprintf(&buffer[i], (BUFFER_SIZE - i), "view %s\n", screen->sel->name);
-	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "selcolors %s\n", def.selcolor.colstr);
+	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "focuscolors %s\n", def.focuscolor.colstr);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "normcolors %s\n", def.normcolor.colstr);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "font %s\n", def.font.fontstr);
 	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "grabmod %s\n", def.grabmod);

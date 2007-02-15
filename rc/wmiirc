@@ -21,7 +21,6 @@ RIGHT=l
 WMII_FONT='-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*'
 # Colors tuples are "<text> <background> <border>"
 WMII_NORMCOLORS='#222222 #eeeeee #666666'
-WMII_SELCOLORS='#444444 #bbbbbb #556088'
 WMII_FOCUSCOLORS='#ffffff #335577 #447799'
 WMII_BACKGROUND='#333333'
 
@@ -34,7 +33,6 @@ export DMENU WMII_FONT WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS WMII_TERM
 wmiir write /ctl << EOF
 font $WMII_FONT
 focuscolors $WMII_FOCUSCOLORS
-selcolors $WMII_SELCOLORS
 normcolors $WMII_NORMCOLORS
 grabmod $MODKEY
 border 1

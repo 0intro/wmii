@@ -27,7 +27,7 @@ typedef unsigned long long	uvlong;
 typedef long long		vlong;
 
 #define BLITZ_FONT		"-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*"
-#define BLITZ_SELCOLORS		"#ffffff #335577 #447799"
+#define BLITZ_FOCUSCOLORS	"#ffffff #335577 #447799"
 #define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
 
 typedef struct Blitz Blitz;
@@ -204,7 +204,7 @@ struct Ruleset {
 
 /* global variables */
 struct {
-	BlitzColor selcolor;
+	BlitzColor focuscolor;
 	BlitzColor normcolor;
 	BlitzFont font;
 	uint	 border;

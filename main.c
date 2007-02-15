@@ -307,8 +307,8 @@ main(int argc, char *argv[]) {
 	def.font.fontstr = estrdup(BLITZ_FONT);
 	def.border = 1;
 	def.colmode = Coldefault;
-	strncpy(def.selcolor.colstr, BLITZ_SELCOLORS, sizeof(def.selcolor.colstr));
-	loadcolor(&blz, &def.selcolor);
+	strncpy(def.focuscolor.colstr, BLITZ_FOCUSCOLORS, sizeof(def.focuscolor.colstr));
+	loadcolor(&blz, &def.focuscolor);
 	strncpy(def.normcolor.colstr, BLITZ_NORMCOLORS, sizeof(def.normcolor.colstr));
 	loadcolor(&blz, &def.normcolor);
 	strncpy(def.grabmod, "Mod1", sizeof(def.grabmod));

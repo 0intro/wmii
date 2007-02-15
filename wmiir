@@ -1,12 +1,2 @@
 #!/bin/sh
-export IXP_ADDRESS="$WMII_ADDRESS"
-flag=
-if [ "$1" = -v ]; then
-	flag=-v; shift
-fi
-if [ "$1" = xwrite ]; then
-	file="$2"; shift 2
-	echo "$@" | ixpc $flag write $file
-else
-	exec ixpc $flag $@
-fi
+exec ixpc -a "$WMII_ADDRESS" $@
