@@ -158,6 +158,7 @@ struct Client {
 	int proto;
 	Bool floating;
 	Bool fixedsize;
+	Bool fullscreen;
 	Bool urgent;
 	Bool mapped;
 	Bool frame_mapped;

@@ -169,7 +169,7 @@ restack_view(View *v) {
 	static uint winssz = 0;
 
 	i = 0;
-	n = 1;
+	n = 0;
 
 	for(c=client; c; c=c->next, i++);
 	if(i >= winssz) {
@@ -177,9 +177,13 @@ restack_view(View *v) {
 		wins = erealloc(wins, sizeof(Window) * winssz);
 	}
 
-	wins[0] = screen->barwin;
 	for(f=v->area->stack; f; f=f->snext)
-		wins[n++] = f->client->framewin;;
+		if(f->client->fullscreen)
+			wins[n++] = f->client->framewin;;
+	wins[n++] = screen->barwin;
+	for(f=v->area->stack; f; f=f->snext)
+		if(!f->client->fullscreen)
+			wins[n++] = f->client->framewin;;
 	for(a=v->area->next; a; a=a->next) {
 		if(a->frame) {
 			wins[n++] = a->sel->client->framewin;

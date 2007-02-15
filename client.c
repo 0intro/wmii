@@ -39,6 +39,9 @@ create_client(Window w, XWindowAttributes *wa) {
 		&& c->size.min_width == c->size.max_width
 		&& c->size.min_height == c->size.max_height)
 			c->fixedsize = True;
+	if(c->rect.width == screen->rect.width
+	&& c->rect.height == screen->rect.height)
+		c->fullscreen = True;
 
 	XSetWindowBorderWidth(blz.dpy, c->win, 0);
 	XAddToSaveSet(blz.dpy, c->win);
@@ -573,7 +576,7 @@ resize_client(Client *c, XRectangle *r) {
 		return;
 	}
 
-	c->rect = f->crect;
+	c->rect = f->rect;
 	if(f->area->mode == Colmax
 	&& f->area->sel != f) {
 		unmap_frame(c);
@@ -583,12 +586,12 @@ resize_client(Client *c, XRectangle *r) {
 		unmap_client(c, IconicState);
 	}else {
 		XMoveResizeWindow(blz.dpy, c->win,
-				c->rect.x, c->rect.y,
-				c->rect.width, c->rect.height);
+				f->crect.x, f->crect.y,
+				f->crect.width, f->crect.height);
 		map_client(c);
 		map_frame(c);
+		configure_client(c);
 	}
-	configure_client(c);
 }
 
 void

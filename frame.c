@@ -100,10 +100,11 @@ resize_frame(Frame *f, XRectangle *r) {
 		f->rect.height = labelh(&def.font);
 
 	if(f->area->floating) {
-		if((f->crect.width == screen->rect.width) &&
-		   (f->crect.height == screen->rect.height)) {
+		if(c->fullscreen) {
 			f->rect.x = -def.border;
 			f->rect.y = -labelh(&def.font);
+			f->rect.width = screen->rect.width + 2 * def.border;
+			f->rect.height = screen->rect.height + frame_delta_h();
 		}else
 			check_frame_constraints(&f->rect);
 	}

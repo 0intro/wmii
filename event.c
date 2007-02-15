@@ -90,53 +90,52 @@ configurerequest(XEvent *e) {
 	XWindowChanges wc;
 	XRectangle *frect;
 	Client *c;
+	Frame *f;
 
 	c = client_of_win(ev->window);
-	wc.x = ev->x;
-	wc.y = ev->y;
-	wc.width = ev->width;
-	wc.height = ev->height;
 
-	ev->value_mask &= ~(CWSibling|CWStackMode);
 	if(c) {
+		f = c->sel;
 		gravitate_client(c, True);
 		if(ev->value_mask & CWX)
 			c->rect.x = ev->x;
 		if(ev->value_mask & CWY)
-			c->rect.y = ev->y;
+			f->rect.y = ev->y;
 		if(ev->value_mask & CWWidth)
-			c->rect.width = ev->width;
+			f->rect.width = ev->width;
 		if(ev->value_mask & CWHeight)
-			c->rect.height = ev->height;
+			f->rect.height = ev->height;
 		if(ev->value_mask & CWBorderWidth)
 			c->border = ev->border_width;
 		gravitate_client(c, False);
-		if(c->frame) {
-			if(c->sel->area->floating)
-				frect=&c->sel->rect;
-			else
-				frect=&c->sel->revert;
 
-			frect->y = -labelh(&def.font);
-			frect->x = -def.border;
-			frect->width = c->rect.width + 2 * def.border;
-			frect->height = c->rect.height + def.border + labelh(&def.font);
+		if(c->sel->area->floating)
+			frect=&c->sel->rect;
+		else
+			frect=&c->sel->revert;
 
-			wc.border_width = 1;
-			wc.stack_mode = ev->detail;
-			if(c->sel->area->floating)
-				resize_client(c, frect);
-			wc.x = frect->x + labelh(&def.font);
-			wc.y = frect->y + def.border;
-			wc.width = frect->width - 2 * def.border;
-			wc.height = frect->height - def.border - labelh(&def.font);
-		}
+		*frect = c->rect;
+		frect->y = -labelh(&def.font);
+		frect->x = -def.border;
+		frect->width += 2 * def.border;
+		frect->height += frame_delta_h();
+		c->rect = f->crect;
+
+		if(c->sel->area->floating)
+			resize_client(c, frect);
+		else
+			configure_client(c);
+	}else{
+		wc.x = ev->x;
+		wc.y = ev->y;
+		wc.width = ev->width;
+		wc.height = ev->height;
+		wc.border_width = ev->border_width;
+		wc.sibling = ev->above;
+		wc.stack_mode = ev->detail;
+		XConfigureWindow(blz.dpy, ev->window, ev->value_mask, &wc);
+		XSync(blz.dpy, False);
 	}
-
-	ev->value_mask &= ~CWStackMode;
-	ev->value_mask |= CWBorderWidth;
-	XConfigureWindow(blz.dpy, ev->window, ev->value_mask, &wc);
-	XSync(blz.dpy, False);
 }
 
 static void
