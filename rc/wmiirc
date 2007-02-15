@@ -165,67 +165,67 @@ do
 		wmiir remove "/lbar/$parms"
 		;;
 	FocusTag)
-		wmiir xwrite "/lbar/$parms" "$WMII_FOCUSCOLORS" "$parms"
+		wmiir echo "/lbar/$parms" "$WMII_FOCUSCOLORS" "$parms"
 		;;
 	UnfocusTag)
-		wmiir xwrite "/lbar/$parms" "$WMII_NORMCOLORS" "$parms"
+		wmiir echo "/lbar/$parms" "$WMII_NORMCOLORS" "$parms"
 		;;
 	UrgentTag)
 		shift
-		wmiir xwrite "/lbar/$@" "*$@"
+		wmiir echo "/lbar/$@" "*$@"
 		;;
 	NotUrgentTag)
 		shift
-		wmiir xwrite "/lbar/$@" "$@"
+		wmiir echo "/lbar/$@" "$@"
 		;;
 	LeftBarClick)
 		shift
-		wmiir xwrite /ctl view "$@";;
+		wmiir echo /ctl view "$@";;
 	Key)
 		key="$1"
 		case "$key" in
 		$MODKEY-$LEFT)
-			wmiir xwrite /tag/sel/ctl select left;;
+			wmiir echo /tag/sel/ctl select left;;
 		$MODKEY-$RIGHT)
-			wmiir xwrite /tag/sel/ctl select right;;
+			wmiir echo /tag/sel/ctl select right;;
 		$MODKEY-$DOWN)
-			wmiir xwrite /tag/sel/ctl select down;;
+			wmiir echo /tag/sel/ctl select down;;
 		$MODKEY-$UP)
-			wmiir xwrite /tag/sel/ctl select up;;
+			wmiir echo /tag/sel/ctl select up;;
 		$MODKEY-space)
-			wmiir xwrite /tag/sel/ctl select toggle;;
+			wmiir echo /tag/sel/ctl select toggle;;
 		$MODKEY-d)
-			wmiir xwrite /tag/sel/ctl colmode sel default;;
+			wmiir echo /tag/sel/ctl colmode sel default;;
 		$MODKEY-s)
-			wmiir xwrite /tag/sel/ctl colmode sel stack;;
+			wmiir echo /tag/sel/ctl colmode sel stack;;
 		$MODKEY-m)
-			wmiir xwrite /tag/sel/ctl colmode sel max;;
+			wmiir echo /tag/sel/ctl colmode sel max;;
 		$MODKEY-a)
 			`conf_which "$(proglist $ACTIONS_DIRS | $DMENU)"` &;;
 		$MODKEY-p)
 			sh -c "`$DMENU <$PROGS_FILE`" &;;
 		$MODKEY-t)
-			wmiir xwrite /ctl "view `tagsmenu`" &;;
+			wmiir echo /ctl "view `tagsmenu`" &;;
 		$MODKEY-[0-9])
-			wmiir xwrite /ctl view "`echo $key | sed 's/.*-//'`";;
+			wmiir echo /ctl view "`echo $key | sed 's/.*-//'`";;
 		$MODKEY-Return)
 			$WMII_TERM &;;
 		$MODKEY-Shift-$LEFT)
-			wmiir xwrite /tag/sel/ctl send sel left;;
+			wmiir echo /tag/sel/ctl send sel left;;
 		$MODKEY-Shift-$RIGHT)
-			wmiir xwrite /tag/sel/ctl send sel right;;
+			wmiir echo /tag/sel/ctl send sel right;;
 		$MODKEY-Shift-$DOWN)
-			wmiir xwrite /tag/sel/ctl send sel down;;
+			wmiir echo /tag/sel/ctl send sel down;;
 		$MODKEY-Shift-$UP)
-			wmiir xwrite /tag/sel/ctl send sel up;;
+			wmiir echo /tag/sel/ctl send sel up;;
 		$MODKEY-Shift-space)
-			wmiir xwrite /tag/sel/ctl send sel toggle;;
+			wmiir echo /tag/sel/ctl send sel toggle;;
 		$MODKEY-Shift-c)
-			wmiir xwrite /client/sel/ctl kill;;
+			wmiir echo /client/sel/ctl kill;;
 		$MODKEY-Shift-t)
-			wmiir xwrite "/client/`wmiir read /client/sel/ctl`/tags" "`tagsmenu`" &;;
+			wmiir echo "/client/`wmiir read /client/sel/ctl`/tags" "`tagsmenu`" &;;
 		$MODKEY-Shift-[0-9])
-			wmiir xwrite /client/sel/tags "`echo $key | sed 's/.*-//'`";;
+			wmiir echo /client/sel/tags "`echo $key | sed 's/.*-//'`";;
 		esac;;
 	esac
 done &
