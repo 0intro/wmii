@@ -6,9 +6,9 @@ while [ "`echo '$1' | head -c 1`" = '-' ]; do
 	flags="$flags $1" ; shift
 done
 
-if [ "$1" = 'echo' ]; then
-	file="$2"; shift 2
-	echo "$@" | ixpc $flags write $file
+if [ -n "$3" ]; then
+	com="$1"; file="$2"; shift 2
+	echo "$@" | ixpc $flags $com $file
 else
 	exec ixpc $flags $@
 fi
