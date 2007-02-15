@@ -163,7 +163,7 @@ arrange_column(Area *a, Bool dirty) {
 		break;
 	case Colstack:
 		for(f=a->frame; f; f=f->anext)
-			f->collapsed = (f == a->sel) ? False : True;
+			f->collapsed = (f != a->sel);
 		break;
 	case Colmax:
 		for(f=a->frame; f; f=f->anext) {
