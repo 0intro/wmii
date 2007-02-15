@@ -415,8 +415,8 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 
 			if(rects) {
 				free(rects);
-                rects = nil;
-            }
+				rects = nil;
+			}
 
 			XUngrabPointer(blz.dpy, CurrentTime);
 			XSync(blz.dpy, False);
