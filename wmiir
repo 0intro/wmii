@@ -1,15 +1,12 @@
 #!/bin/sh
 export IXP_ADDRESS="$WMII_ADDRESS"
-
-flags=
-while [ "`echo '$1' | head -c 1`" = '-' ]; do
-	flags="$flags $1" ; shift
-done
-
-if [ -n "$3" ]; then
-	com="$1"; file="$2"; shift 2
-	echo "$@" | ixpc $flags $com $file
-else
-	exec ixpc $flags $@
+flag=
+if [ "$1" = -v ]; then
+	flag=-v; shift
 fi
-
+if [ "$1" = xwrite ]; then
+	file="$2"; shift 2
+	echo "$@" | ixpc $flag write $file
+else
+	exec ixpc $flag $@
+fi
