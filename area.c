@@ -215,7 +215,7 @@ detach_from_area(Frame *f) {
 		assert(a->sel);
 }
 
-void
+static void
 bit_twiddle(uint *field, uint width, uint x, uint y, Bool set) {
 	enum { devisor = sizeof(uint) * 8 };
 	uint bx, mask;
@@ -242,6 +242,7 @@ bit_get(uint *field, uint width, uint x, uint y) {
 static void
 place_client(Area *a, Client *c) {
 	enum { devisor = sizeof(uint) * 8 };
+	enum { dx = 8, dy = 8 };
 	static uint mwidth, mx, my;
 	static uint *field = nil;
 	BlitzAlign align;
@@ -250,7 +251,7 @@ place_client(Area *a, Client *c) {
 	XRectangle *rects;
 	Frame *f, *fr;
 	Bool fit;
-	uint i, j, x, y, dx, dy, cx, cy, maxx, maxy, diff, num;
+	uint i, j, x, y, cx, cy, maxx, maxy, diff, num;
 	int snap;
 
 	snap = screen->rect.height / 66;
@@ -267,16 +268,13 @@ place_client(Area *a, Client *c) {
 		|| c->size.flags & USPosition
 		|| c->size.flags & PPosition)
 		return;
-	rects = rects_of_view(a->view, &num, nil);
 	if(!field) {
-		mx = screen->rect.width / 8;
-		my = screen->rect.height / 8;
+		mx = screen->rect.width / dx;
+		my = screen->rect.height / dy;
 		mwidth = ceil((float)mx / devisor);
 		field = emallocz(sizeof(uint) * mwidth * my);
 	}
 	memset(field, ~0, (sizeof(uint) * mwidth * my));
-	dx = 8;
-	dy = 8;
 	for(fr=a->frame; fr; fr=fr->anext) {
 		if(fr == f) {
 			cx = f->rect.width / dx;
@@ -296,11 +294,6 @@ place_client(Area *a, Client *c) {
 		for(j = y; j < my && j < maxy; j++)
 			for(i = x; i < mx && i < maxx; i++)
 				bit_twiddle(field, mwidth, i, j, False);
-	}
-	for(y = 0; y < my; y++) {
-		for(x = 0; x < mx; x++)
-			fprintf(stderr, "%d", bit_get(field, mwidth, x, y));
-		fprintf(stderr, "\n");
 	}
 	for(y = 0; y < my; y++)
 		for(x = 0; x < mx; x++) {
@@ -334,6 +327,8 @@ place_client(Area *a, Client *c) {
 		diff = a->rect.height - f->rect.height;
 		f->rect.y = a->rect.y + (random() % (diff ? diff : 1));
 	}
+
+	rects = rects_of_view(a->view, &num, nil);
 	snap_rect(rects, num, &f->rect, &align, snap);
 	if(rects)
 		free(rects);
