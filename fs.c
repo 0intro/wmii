@@ -235,36 +235,36 @@ message_root(char *message)
 	}
 	if(!strcmp(message, "quit "))
 		srv.running = 0;
-	else if(!strcmp(message, "view "))
+	else if(!strncmp(message, "view ", 5))
 		select_view(&message[5]);
-	else if(!strcmp(message, "selcolors ")) {
+	else if(!strncmp(message, "selcolors ", 10)) {
 		fprintf(stderr, "wmiiwm: warning: selcolors have been removed\n");
 		return Ebadcmd;
-	}else if(!strcmp(message, "focuscolors ")) {
+	}else if(!strncmp(message, "focuscolors ", 12)) {
 		message += 10;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.focuscolor);
 	}
-	else if(!strcmp(message, "normcolors ")) {
+	else if(!strncmp(message, "normcolors ", 11)) {
 		message += 11;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.normcolor);
 	}
-	else if(!strcmp(message, "font ")) {
+	else if(!strncmp(message, "font ", 5)) {
 		message += 5;
 		free(def.font.fontstr);
 		def.font.fontstr = estrdup(message);
 		loadfont(&blz, &def.font);
 		resize_bar(screen);
 	}
-	else if(!strcmp(message, "border ")) {
+	else if(!strncmp(message, "border ", 7)) {
 		message += 7;
 		n = (uint)strtol(message, &message, 10);
 		if(*message)
 			return Ebadvalue;
 		def.border = n;
 	}
-	else if(!strcmp(message, "grabmod ")) {
+	else if(!strncmp(message, "grabmod ", 8)) {
 		message += 8;
 		ulong mod;
 		mod = mod_key_of_str(message);
