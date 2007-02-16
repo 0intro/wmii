@@ -261,7 +261,7 @@ rects_of_view(View *v, uint *num, Frame *ignore) {
 	int i;
 
 	i = 2;
-	for(f=v->area->frame; f; f=f->anext);
+	for(f=v->area->frame; f; f=f->anext)
 		i++;
 	result = emallocz(i * sizeof(XRectangle));
 	i = 0;
