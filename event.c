@@ -103,11 +103,11 @@ configurerequest(XEvent *e) {
 		if(ev->value_mask & CWX)
 			c->rect.x = ev->x;
 		if(ev->value_mask & CWY)
-			f->rect.y = ev->y;
+			c->rect.y = ev->y;
 		if(ev->value_mask & CWWidth)
-			f->rect.width = ev->width;
+			c->rect.width = ev->width;
 		if(ev->value_mask & CWHeight)
-			f->rect.height = ev->height;
+			c->rect.height = ev->height;
 		if(ev->value_mask & CWBorderWidth)
 			c->border = ev->border_width;
 		gravitate_client(c, False);
