@@ -233,38 +233,38 @@ message_root(char *message)
 		snprintf(buffer, BUFFER_SIZE, "%s ", message);
 		message = buffer;
 	}
-	if(!strncmp(message, "quit ", 5))
+	if(!strcmp(message, "quit "))
 		srv.running = 0;
-	else if(!strncmp(message, "view ", 5))
+	else if(!strcmp(message, "view "))
 		select_view(&message[5]);
-	else if(!strncmp(message, "selcolors ", 10)) {
+	else if(!strcmp(message, "selcolors ")) {
 		fprintf(stderr, "wmiiwm: warning: selcolors have been removed\n");
 		return Ebadcmd;
-	}else if(!strncmp(message, "focuscolors ", 10)) {
+	}else if(!strcmp(message, "focuscolors ")) {
 		message += 10;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.focuscolor);
 	}
-	else if(!strncmp(message, "normcolors ", 11)) {
+	else if(!strcmp(message, "normcolors ")) {
 		message += 11;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.normcolor);
 	}
-	else if(!strncmp(message, "font ", 5)) {
+	else if(!strcmp(message, "font ")) {
 		message += 5;
 		free(def.font.fontstr);
 		def.font.fontstr = estrdup(message);
 		loadfont(&blz, &def.font);
 		resize_bar(screen);
 	}
-	else if(!strncmp(message, "border ", 7)) {
+	else if(!strcmp(message, "border ")) {
 		message += 7;
 		n = (uint)strtol(message, &message, 10);
 		if(*message)
 			return Ebadvalue;
 		def.border = n;
 	}
-	else if(!strncmp(message, "grabmod ", 8)) {
+	else if(!strcmp(message, "grabmod ")) {
 		message += 8;
 		ulong mod;
 		mod = mod_key_of_str(message);
@@ -375,7 +375,7 @@ lookup_file(FileId *parent, char *name)
 		if(!*dir->name) { /* strlen(dir->name) == 0 */
 			switch(parent->tab.type) {
 			case FsDClients:
-				if(!name || !strncmp(name, "sel", 4)) {
+				if(!name || !strcmp(name, "sel")) {
 					if((c = sel_client())) {
 						file = get_file();
 						*last = file;
@@ -407,7 +407,7 @@ lookup_file(FileId *parent, char *name)
 				}
 				break;
 			case FsDTags:
-				if(!name || !strncmp(name, "sel", 4)) {
+				if(!name || !strcmp(name, "sel")) {
 					if(screen->sel) {
 						file = get_file();
 						*last = file;
@@ -459,7 +459,7 @@ lookup_file(FileId *parent, char *name)
 			/* Special considerations: */
 			switch(file->tab.type) {
 			case FsDBars:
-				if(!strncmp(file->tab.name, "lbar", 5))
+				if(!strcmp(file->tab.name, "lbar"))
 					file->content.bar_p = &screen[0].lbar;
 				else
 					file->content.bar_p = &screen[0].rbar;
@@ -504,7 +504,7 @@ fs_walk(P9Req *r) {
 	f = r->fid->aux;
 	clone_files(f);
 	for(i=0; i < r->ifcall.nwname; i++) {
-		if(!strncmp(r->ifcall.wname[i], "..", 3)) {
+		if(!strcmp(r->ifcall.wname[i], "..")) {
 			if(f->next) {
 				nf=f;
 				f=f->next;
@@ -515,7 +515,7 @@ fs_walk(P9Req *r) {
 			if(!nf)
 				break;
 			assert(!nf->next);
-			if(strncmp(r->ifcall.wname[i], ".", 2)) {
+			if(strcmp(r->ifcall.wname[i], ".")) {
 				nf->next = f;
 				f = nf;
 			}

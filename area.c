@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 static void place_client(Area *a, Client *c);
 
@@ -214,10 +215,35 @@ detach_from_area(Frame *f) {
 		assert(a->sel);
 }
 
+void
+bit_twiddle(uint *field, uint width, uint x, uint y, Bool set) {
+	enum { devisor = sizeof(uint) * 8 };
+	uint bx, mask;
+
+	bx = x / devisor;
+	mask = 1 << x % devisor;
+	if(set)
+		field[y*width + bx] |= mask;
+	else
+		field[y*width + bx] &= ~mask;
+}
+
+static Bool
+bit_get(uint *field, uint width, uint x, uint y) {
+	enum { devisor = sizeof(uint) * 8 };
+	uint bx, mask;
+
+	bx = x / devisor;
+	mask = 1 << x % devisor;
+
+	return (field[y*width + bx] & mask) != 0;
+}
+
 static void
 place_client(Area *a, Client *c) {
-	static uint mx, my;
-	static Bool *field;
+	enum { devisor = sizeof(uint) * 8 };
+	static uint mwidth, mx, my;
+	static uint *field = nil;
 	BlitzAlign align;
 	XPoint p1 = {0, 0};
 	XPoint p2 = {0, 0};
@@ -231,7 +257,6 @@ place_client(Area *a, Client *c) {
 	num = 0;
 	fit = False;
 	align = CENTER;
-	field = nil;
 
 	f = c->sel;
 
@@ -246,13 +271,12 @@ place_client(Area *a, Client *c) {
 	if(!field) {
 		mx = screen->rect.width / 8;
 		my = screen->rect.height / 8;
-		field = emallocz(my * mx * sizeof(Bool));
+		mwidth = ceil((float)mx / devisor);
+		field = emallocz(sizeof(uint) * mwidth * my);
 	}
-	for(y = 0; y < my; y++)
-		for(x = 0; x < mx; x++)
-			field[y*mx + x] = True;
-	dx = screen->rect.width / mx;
-	dy = screen->rect.height / my;
+	memset(field, ~0, (sizeof(uint) * mwidth * my));
+	dx = 8;
+	dy = 8;
 	for(fr=a->frame; fr; fr=fr->anext) {
 		if(fr == f) {
 			cx = f->rect.width / dx;
@@ -271,13 +295,18 @@ place_client(Area *a, Client *c) {
 		maxy = r_south(&fr->rect) / dy;
 		for(j = y; j < my && j < maxy; j++)
 			for(i = x; i < mx && i < maxx; i++)
-				field[j*mx + i] = False;
+				bit_twiddle(field, mwidth, i, j, False);
+	}
+	for(y = 0; y < my; y++) {
+		for(x = 0; x < mx; x++)
+			fprintf(stderr, "%d", bit_get(field, mwidth, x, y));
+		fprintf(stderr, "\n");
 	}
 	for(y = 0; y < my; y++)
 		for(x = 0; x < mx; x++) {
-			if(field[y*mx + x]) {
-				for(i = x; (i < mx) && field[y*mx + i]; i++);
-				for(j = y; (j < my) && field[j*mx + x]; j++);
+			if(bit_get(field, mwidth, x, y)) {
+				for(i = x; (i < mx) && bit_get(field, mwidth, i, y); i++);
+				for(j = y; (j < my) && bit_get(field, mwidth, x, j); j++);
 				if(((i - x) * (j - y) > (p2.x - p1.x) * (p2.y - p1.y)) 
 					&& (i - x > cx) && (j - y > cy))
 				{
