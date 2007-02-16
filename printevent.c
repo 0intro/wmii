@@ -853,10 +853,15 @@ char *eventtype(XEvent *ev)
 void printevent(XEvent *e)
 {
     XAnyEvent *ev = (void*)e;
-    Client *c;
+    char *name;
 
-    if(ev->window && (c = client_of_win(ev->window)))
-	    printf("title=%s\n", c->name);
+    if(ev->window) {
+	    XFetchName(blz.dpy, ev->window, &name);
+	    if(name) {
+		    printf("\ttitle=%s\n", name);
+		    XFree(name);
+	    }
+    }
     printf("%3ld %-20s ", ev->serial, eventtype(e));
     if(ev->send_event)
         printf("(sendevent) ");

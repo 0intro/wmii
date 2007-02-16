@@ -30,6 +30,7 @@ create_client(Window w, XWindowAttributes *wa) {
 	c->rect.height = wa->height;
 	c->proto = win_proto(c->win);
 	update_client_name(c);
+	gravitate_client(c, False);
 
 	c->fixedsize = False;
 	XGetTransientForHint(blz.dpy, c->win, &c->trans);

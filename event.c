@@ -96,6 +96,9 @@ configurerequest(XEvent *e) {
 
 	if(c) {
 		f = c->sel;
+		if(verbose)
+			fprintf(stderr, "Configure: %s\n\ta: x=%d y=%d w=%d h=%d\n",
+				c->name, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		gravitate_client(c, True);
 		if(ev->value_mask & CWX)
 			c->rect.x = ev->x;
@@ -108,6 +111,9 @@ configurerequest(XEvent *e) {
 		if(ev->value_mask & CWBorderWidth)
 			c->border = ev->border_width;
 		gravitate_client(c, False);
+		if(verbose)
+			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
+				c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 
 		if(c->sel->area->floating)
 			frect=&c->sel->rect;
@@ -115,8 +121,8 @@ configurerequest(XEvent *e) {
 			frect=&c->sel->revert;
 
 		*frect = c->rect;
-		frect->y = -labelh(&def.font);
-		frect->x = -def.border;
+		frect->y -= labelh(&def.font);
+		frect->x -= def.border;
 		frect->width += 2 * def.border;
 		frect->height += frame_delta_h();
 		c->rect = f->crect;
@@ -133,6 +139,7 @@ configurerequest(XEvent *e) {
 		wc.border_width = ev->border_width;
 		wc.sibling = ev->above;
 		wc.stack_mode = ev->detail;
+		ev->value_mask &= ~(CWStackMode|CWSibling);
 		XConfigureWindow(blz.dpy, ev->window, ev->value_mask, &wc);
 		XSync(blz.dpy, False);
 	}

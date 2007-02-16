@@ -241,7 +241,7 @@ message_root(char *message)
 		fprintf(stderr, "wmiiwm: warning: selcolors have been removed\n");
 		return Ebadcmd;
 	}else if(!strncmp(message, "focuscolors ", 12)) {
-		message += 10;
+		message += 12;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.focuscolor);
 	}
