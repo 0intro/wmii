@@ -134,6 +134,8 @@ scale_column(Area *a) {
 	i = num_uncol;
 	for(f=a->frame; f; f=f->anext) {
 		f->rect.y = yoff;
+		f->rect.x = a->rect.x;
+		f->rect.width = a->rect.width;
 		if(f->collapsed)
 			yoff += f->rect.height;
 		else{
