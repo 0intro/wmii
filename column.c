@@ -178,8 +178,9 @@ arrange_column(Area *a, Bool dirty) {
 	}
 	scale_column(a);
 resize:
-	for(f=a->frame; f; f=f->anext)
-		resize_client(f->client, &f->rect);
+	if(a->view == screen->sel)
+		for(f=a->frame; f; f=f->anext)
+			resize_client(f->client, &f->rect);
 	flush_masked_events(EnterWindowMask);
 }
 

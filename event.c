@@ -365,7 +365,7 @@ check_x_event(IXPConn *c) {
 	XEvent ev;
 	while(XPending(blz.dpy)) { /* main event loop */
 		XNextEvent(blz.dpy, &ev);
-		if(0 && verbose)
+		if(verbose)
 			printevent(&ev);
 		if(handler[ev.type])
 			(handler[ev.type]) (&ev); /* call handler */
