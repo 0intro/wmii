@@ -332,7 +332,7 @@ main(int argc, char *argv[]) {
 		XChangeWindowAttributes(blz.dpy, blz.root, CWEventMask | CWCursor, &wa);
 		wa.override_redirect = 1;
 		wa.background_pixmap = ParentRelative;
-		wa.event_mask = ExposureMask | ButtonReleaseMask
+		wa.event_mask = ExposureMask | ButtonReleaseMask | FocusChangeMask
 			| SubstructureRedirectMask | SubstructureNotifyMask;
 		s->brect = s->rect;
 		s->brect.height = labelh(&def.font);
@@ -359,8 +359,8 @@ main(int argc, char *argv[]) {
 
 	screen = &screens[0];
 
-	screen->focus = (void*)-1;
-	focus_client(nil);
+	screen->focus = nil;
+	XSetInputFocus(blz.dpy, screen->barwin, RevertToParent, CurrentTime);
 	scan_wins();
 	starting = False;
 	update_views();

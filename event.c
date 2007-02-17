@@ -96,11 +96,11 @@ configurerequest(XEvent *e) {
 
 	if(c) {
 		f = c->sel;
-		if(verbose)
+		if(0 && verbose)
 			fprintf(stderr, "Configure: %s\n\ta: x=%d y=%d w=%d h=%d\n",
 				c->name, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		gravitate_client(c, True);
-		if(verbose)
+		if(0 && verbose)
 			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
 				c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		if(ev->value_mask & CWX)
@@ -113,11 +113,11 @@ configurerequest(XEvent *e) {
 			c->rect.height = ev->height;
 		if(ev->value_mask & CWBorderWidth)
 			c->border = ev->border_width;
-		if(verbose)
+		if(0 && verbose)
 			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
 				c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		gravitate_client(c, False);
-		if(verbose)
+		if(0 && verbose)
 			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
 				c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 
@@ -131,7 +131,7 @@ configurerequest(XEvent *e) {
 		frect->x -= def.border;
 		frect->width += 2 * def.border;
 		frect->height += frame_delta_h();
-		if(verbose)
+		if(0 && verbose)
 			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
 				frect->x, frect->y, frect->width, frect->height);
 
@@ -278,12 +278,19 @@ focusin(XEvent *e) {
 
 	c = client_of_win(ev->window);
 	if(c) {
-		if(verbose)
+		if(verbose) {
 			fprintf(stderr, "screen->focus: %p => %p\n", screen->focus, c);
+			fprintf(stderr, "\t%s => %s\n", (screen->focus ? screen->focus->name : nil),
+					c->name);
+		}
+		update_client_grab(c);
 		screen->focus = c;
 	}else if(ev->window == screen->barwin) {
-		if(verbose)
-			fprintf(stderr, "screen->focus: %p => %p\n", screen->focus, nil);
+		if(verbose) {
+			fprintf(stderr, "screen->focus: %p => %p\n", screen->focus, c);
+			fprintf(stderr, "\t%s => %s\n", (screen->focus ? screen->focus->name : nil),
+					"<nil>");
+		}
 		screen->focus = nil;
 	}
 #if 0
@@ -312,6 +319,12 @@ focusin(XEvent *e) {
 
 static void
 focusout(XEvent *e) {
+	Client *c;
+	XFocusChangeEvent *ev = &e->xfocus;
+
+	c = client_of_win(ev->window);
+	if(c)
+		update_client_grab(c);
 #if 0
 	Client *c;
 	XFocusChangeEvent *ev = &e->xfocus;
@@ -352,7 +365,7 @@ check_x_event(IXPConn *c) {
 	XEvent ev;
 	while(XPending(blz.dpy)) { /* main event loop */
 		XNextEvent(blz.dpy, &ev);
-		if(verbose)
+		if(0 && verbose)
 			printevent(&ev);
 		if(handler[ev.type])
 			(handler[ev.type]) (&ev); /* call handler */

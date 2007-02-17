@@ -12,7 +12,7 @@ static void update_client_name(Client *c);
 static char Ebadcmd[] = "bad command",
 	    Ebadvalue[] = "bad value";
 
-#define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
+#define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask | EnterWindowMask | FocusChangeMask)
 #define ButtonMask		(ButtonPressMask | ButtonReleaseMask)
 
 Client *
@@ -91,7 +91,8 @@ manage_client(Client *c) {
 		strncpy(c->tags, (char *)tags.value, sizeof(c->tags));
 	XFree(tags.value);
 
-	reparent_client(c, c->framewin, c->rect.x, c->rect.y);
+	gravitate_client(c, False);
+	reparent_client(c, c->framewin, def.border, labelh(&def.font));
 
 	if(!strlen(c->tags))
 		apply_rules(c);
@@ -174,13 +175,18 @@ void
 update_client_grab(Client *c) {
 	Frame *f;
 	f = c->sel;
-	if(!f->area->floating || f == f->area->stack) {
+	if((f->client != sel_client())
+	|| (f->area->floating && f != f->area->stack)) {
+		if(verbose)
+			fprintf(stderr, "update_client_grab(%p) AnyButton => %s\n", c, str_nil(c->name));
+		grab_button(c->framewin, AnyButton, AnyModifier);
+	}else {
+		if(verbose)
+			fprintf(stderr, "update_client_grab(%p) def.mod => %s\n", c, str_nil(c->name));
 		XUngrabButton(blz.dpy, AnyButton, AnyModifier, c->framewin);
 		grab_button(c->framewin, Button1, def.mod);
 		grab_button(c->framewin, Button3, def.mod);
 	}
-	else
-		grab_button(c->framewin, AnyButton, AnyModifier);
 }
 
 /* convenience function */
@@ -458,10 +464,6 @@ destroy_client(Client *c) {
 
 	XGrabServer(blz.dpy);
 	XSetErrorHandler(dummy_error_handler);
-	if(c->frame) {
-		c->rect.x = c->sel->rect.x;
-		c->rect.y = c->sel->rect.y;
-	}
 	for(tc=&client; *tc; tc=&(*tc)->next)
 		if(*tc == c) {
 			*tc = c->next;
@@ -471,6 +473,7 @@ destroy_client(Client *c) {
 	update_client_views(c, &dummy);
 
 	unmap_client(c, WithdrawnState);
+	gravitate_client(c, True);
 	reparent_client(c, blz.root, c->rect.x, c->rect.y);
 	XFreeGC(blz.dpy, c->gc);
 	XDestroyWindow(blz.dpy, c->framewin);
@@ -550,8 +553,12 @@ match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky) {
 void
 focus_client(Client *c) {
 	if(verbose)
-		fprintf(stderr, "focus_client(%p)\n", c);
+		fprintf(stderr, "focus_client(%p) => %s\n", c, (c ? c->name : nil));
 	if(screen->focus != c) {
+		update_client_grab(c);
+		if(verbose)
+			fprintf(stderr, "\t%s => %s\n", (screen->focus ? screen->focus->name : "<nil>"),
+					(c ? c->name : "<nil>"));
 		if(c)
 			XSetInputFocus(blz.dpy, c->win, RevertToParent, CurrentTime);
 		else
