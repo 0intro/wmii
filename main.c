@@ -2,6 +2,10 @@
  * See LICENSE file for license details.
  */
 #include "wmii.h"
+#include <X11/Xatom.h>
+#include <X11/Xproto.h>
+#include <X11/cursorfont.h>
+#include <X11/keysym.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <locale.h>
@@ -13,11 +17,6 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <X11/cursorfont.h>
-#include <X11/Xproto.h>
-#include <X11/keysym.h>
-#include <X11/Xatom.h>
-#include <X11/Xproto.h>
 
 Bool verbose;
 Bool starting;

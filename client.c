@@ -576,7 +576,9 @@ resize_client(Client *c, XRectangle *r) {
 		return;
 	}
 
-	c->rect = f->rect;
+	c->rect = f->crect;
+	c->rect.x += f->rect.x;
+	c->rect.y += f->rect.y;
 	if(f->area->mode == Colmax
 	&& f->area->sel != f) {
 		unmap_frame(c);
@@ -782,7 +784,6 @@ compare_tags(const void *a, const void *b) {
 void
 apply_tags(Client *c, const char *tags) {
 	uint i, j, k, n;
-	int len;
 	Bool add;
 	char buf[512], last;
 	char *toks[32], *cur;
@@ -792,7 +793,7 @@ apply_tags(Client *c, const char *tags) {
 		if(tags[n] != ' ' && tags[n] != '\t') break;
 	if(tags[n] == '+' || tags[n] == '-')
 		strncpy(buf, c->tags, sizeof(c->tags));
-	strncat(buf, &tags[n], sizeof(buf) - strlen(buf));
+	ixp_strlcat(buf, &tags[n], sizeof(buf));
 	trim(buf, " \t/");
 
 	n = 0;
@@ -849,15 +850,12 @@ apply_tags(Client *c, const char *tags) {
 	}
 	c->tags[0] = '\0';
 	qsort(toks, j, sizeof(char *), compare_tags);
-	len = sizeof(c->tags);
 	if(!j) return;
-	for(i=0, n=0; i < j && len > 1; i++)
+	for(i=0, n=0; i < j; i++)
 		if(!n || strcmp(toks[i], toks[n-1])) {
 			if(i)
-				strncat(c->tags, "+", len);
-			len -= strlen(c->tags);
-			strncat(c->tags, toks[i], len);
-			len -= strlen(c->tags);
+				ixp_strlcat(c->tags, "+", sizeof(c->tags));
+			ixp_strlcat(c->tags, toks[i], sizeof(c->tags));
 			toks[n++] = toks[i];
 		}
 	toks[n] = nil;

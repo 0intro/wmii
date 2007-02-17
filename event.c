@@ -58,7 +58,7 @@ buttonpress(XEvent *e) {
 				break;
 			case Button3:
 				do_mouse_resize(f->client, False,
-						quadofcoord(&f->client->rect, ev->x, ev->y));
+						quadofcoord(&f->rect, ev->x, ev->y));
 				frame_to_top(f);
 				focus(f->client, True);
 				break;
@@ -74,7 +74,7 @@ buttonpress(XEvent *e) {
 				else if(!ev->subwindow
 				&& !ispointinrect(ev->x, ev->y, &f->titlebar.rect))
 					do_mouse_resize(f->client, False,
-						quadofcoord(&f->client->rect, ev->x, ev->y));
+						quadofcoord(&f->rect, ev->x, ev->y));
 				if(f->client != sel_client())
 					focus(f->client, True);
 			}
@@ -100,6 +100,9 @@ configurerequest(XEvent *e) {
 			fprintf(stderr, "Configure: %s\n\ta: x=%d y=%d w=%d h=%d\n",
 				c->name, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		gravitate_client(c, True);
+		if(verbose)
+			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
+				c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		if(ev->value_mask & CWX)
 			c->rect.x = ev->x;
 		if(ev->value_mask & CWY)
@@ -110,6 +113,9 @@ configurerequest(XEvent *e) {
 			c->rect.height = ev->height;
 		if(ev->value_mask & CWBorderWidth)
 			c->border = ev->border_width;
+		if(verbose)
+			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
+				c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		gravitate_client(c, False);
 		if(verbose)
 			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
@@ -125,7 +131,9 @@ configurerequest(XEvent *e) {
 		frect->x -= def.border;
 		frect->width += 2 * def.border;
 		frect->height += frame_delta_h();
-		c->rect = f->crect;
+		if(verbose)
+			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
+				frect->x, frect->y, frect->width, frect->height);
 
 		if(c->sel->area->floating)
 			resize_client(c, frect);
