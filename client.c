@@ -555,13 +555,14 @@ focus_client(Client *c) {
 	if(verbose)
 		fprintf(stderr, "focus_client(%p) => %s\n", c, (c ? c->name : nil));
 	if(screen->focus != c) {
-		update_client_grab(c);
+		if(c)
 		if(verbose)
 			fprintf(stderr, "\t%s => %s\n", (screen->focus ? screen->focus->name : "<nil>"),
 					(c ? c->name : "<nil>"));
-		if(c)
+		if(c) {
 			XSetInputFocus(blz.dpy, c->win, RevertToParent, CurrentTime);
-		else
+			update_client_grab(c);
+		}else
 			XSetInputFocus(blz.dpy, screen->barwin, RevertToParent, CurrentTime);
 	}
 }
