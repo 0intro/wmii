@@ -223,6 +223,7 @@ struct WMScreen {
 	Bar *rbar;
 	View *sel;
 	Client *focus;
+	Client *hasgrab;
 	Window barwin;
 
 	XRectangle rect;

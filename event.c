@@ -291,6 +291,8 @@ focusin(XEvent *e) {
 			fprintf(stderr, "\t%s => %s\n", (screen->focus ? screen->focus->name : nil),
 					c->name);
 		}
+		if(ev->mode == NotifyGrab)
+			screen->hasgrab = c;
 		screen->focus = c;
 		update_client_grab(c);
 		if(c->sel)
@@ -302,6 +304,13 @@ focusin(XEvent *e) {
 					"<nil>");
 		}
 		screen->focus = nil;
+	}else if(ev->mode == NotifyGrab) {
+		c = screen->focus;
+		if(c) {
+			screen->focus = nil;
+			if(c->sel)
+				draw_frame(c->sel);
+		}
 	}
 }
 
@@ -313,11 +322,17 @@ focusout(XEvent *e) {
 	if(!((ev->detail == NotifyNonlinear)
 	   ||(ev->detail == NotifyNonlinearVirtual)))
 		return;
-	if(ev->mode == NotifyWhileGrabbed)
-		return;
+	if(ev->mode == NotifyUngrab)
+		screen->hasgrab = nil;
 
 	c = client_of_win(ev->window);
 	if(c) {
+		if(ev->mode == NotifyWhileGrabbed) {
+			if(screen->focus && screen->hasgrab != screen->focus)
+				screen->hasgrab = screen->focus;
+			if(screen->hasgrab == c)
+				return;
+		}
 		if(screen->focus == c)
 			screen->focus = nil;
 		update_client_grab(c);
