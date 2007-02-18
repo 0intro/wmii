@@ -58,7 +58,7 @@ buttonpress(XEvent *e) {
 				break;
 			case Button3:
 				do_mouse_resize(f->client, False,
-						quadofcoord(&f->rect, ev->x, ev->y));
+						quadofcoord(&f->rect, ev->x_root, ev->y_root));
 				frame_to_top(f);
 				focus(f->client, True);
 				break;
@@ -74,7 +74,7 @@ buttonpress(XEvent *e) {
 				else if(!ev->subwindow
 				&& !ispointinrect(ev->x, ev->y, &f->titlebar.rect))
 					do_mouse_resize(f->client, False,
-						quadofcoord(&f->rect, ev->x, ev->y));
+						quadofcoord(&f->rect, ev->x_root, ev->y_root));
 				if(f->client != sel_client())
 					focus(f->client, True);
 			}
