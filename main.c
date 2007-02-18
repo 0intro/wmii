@@ -23,17 +23,11 @@ Bool starting;
 static Bool check_other_wm;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
+static struct sigaction sa;
 
 static void
 usage() {
 	fatal("usage: wmiiwm -a <address> [-r <wmiirc>] [-v]\n");
-}
-
-static void
-sigchld_handler(int sig) {
-	int ret;
-	/* We only spawn one child */
-	wait(&ret);
 }
 
 static void
@@ -182,8 +176,64 @@ cleanup() {
 
 	for(c=client; c; c=c->next)
 		reparent_client(c, blz.root, c->sel->rect.x, c->sel->rect.y);
-	XSetInputFocus(blz.dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 	XSync(blz.dpy, False);
+}
+
+static void
+cleanup_handler(int signal) {
+	sa.sa_handler = SIG_DFL;
+	sigaction(signal, &sa, nil);
+	switch(signal) {
+	case SIGINT:
+		srv.running = False;
+		break;
+	default:
+		cleanup();
+		XCloseDisplay(blz.dpy);
+		raise(signal);
+		break;
+	}
+}
+
+static void
+sigchld_handler(int sig) {
+	int ret;
+	/* We only spawn one child */
+	wait(&ret);
+}
+
+static void
+init_traps() {
+	char buf[1];
+	int fd[2];
+
+	if(pipe(fd) != 0)
+		fatal("Can't pipe(): %s\n", strerror(errno));;
+
+	switch(fork()) {
+	case -1:
+		fatal("Can't fork(): %s\n", strerror(errno));;
+	default:
+		close(fd[0]);
+		sa.sa_flags = 0;
+		sa.sa_handler = cleanup_handler;
+		sigaction(SIGINT, &sa, nil);
+		sigaction(SIGTERM, &sa, nil);
+		sigaction(SIGQUIT, &sa, nil);
+		sigaction(SIGHUP, &sa, nil);
+		break;
+	case 0:
+		close(fd[1]);
+		close(ConnectionNumber(blz.dpy));
+		setsid();
+		blz.dpy = XOpenDisplay(0);
+		if(!blz.dpy)
+			fatal("wmiiwm: cannot open display\n");
+		read(fd[0], buf, 1);
+		XSetInputFocus(blz.dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+		XCloseDisplay(blz.dpy);
+		exit(0);
+	}
 }
 
 int
@@ -239,6 +289,8 @@ main(int argc, char *argv[]) {
 	XSelectInput(blz.dpy, blz.root, SubstructureRedirectMask | EnterWindowMask);
 	XSync(blz.dpy, False);
 	check_other_wm = False;
+
+	init_traps();
 
 	/* Check namespace permissions */
 	if(!strncmp(address, "unix!", 5)) {
