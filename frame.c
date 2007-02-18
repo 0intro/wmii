@@ -190,30 +190,15 @@ focus_frame(Frame *f, Bool restack) {
 
 	if(a != old_a)
 		focus_area(f->area);
-	else {
-		update_frame_widget_colors(f);
-		if(old)
-			update_frame_widget_colors(old);
-	}
-
-	if(old_in_a)
-		update_frame_widget_colors(old_in_a);
 
 	if(v != screen->sel)
 		return;
 
 	focus_client(f->client);
-	if(a == old_a)
-		draw_frame(f);
-	else if(old_in_a)
-		draw_frame(old_in_a);
 
-	if(f != old) {
-		if(old)
-			draw_frame(old);
-		if(f->area == old_a)
+	if((f != old)
+	&& (f->area == old_a))
 			write_event("ClientFocus 0x%x\n", f->client->win);
-	}
 
 	if(restack)
 		restack_view(v);
@@ -225,17 +210,14 @@ frame_delta_h() {
 }
 
 void
-update_frame_widget_colors(Frame *f) {
-	if(sel_screen && (f->client == sel_client()))
+draw_frame(Frame *f) {
+	if(f->client == screen->focus)
 		f->grabbox.color = f->tile.color = f->titlebar.color = def.focuscolor;
 	else
 		f->grabbox.color = f->tile.color = f->titlebar.color = def.normcolor;
 	if(f->client->urgent)
 		f->grabbox.color.bg = f->grabbox.color.fg;
-}
 
-void
-draw_frame(Frame *f) {
 	if(def.border) {
 		f->tile.border = 1;
 		f->tile.rect = f->rect;
@@ -280,10 +262,8 @@ draw_frames() {
 	Client *c;
 
 	for(c=client; c; c=c->next)
-		if(c->sel && c->sel->view == screen->sel) {
-			update_frame_widget_colors(c->sel);
+		if(c->sel && c->sel->view == screen->sel)
 			draw_frame(c->sel);
-		}
 }
 
 void

@@ -465,89 +465,89 @@ AtomName(Display *dpy, Atom atom)
 static void
 VerbMotion(XMotionEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("root=0x%x%s", (int)ev->root, sep);
-    printf("subwindow=0x%x%s", (int)ev->subwindow, sep);
-    printf("time=%s%s", ServerTime(ev->time), sep);
-    printf("x=%d y=%d%s", ev->x, ev->y, sep);
-    printf("x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
-    printf("state=%s%s", ButtonAndOrModifierState(ev->state), sep);
-    printf("is_hint=%s%s", IsHint(ev->is_hint), sep);
-    printf("same_screen=%s\n", TorF(ev->same_screen));
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "root=0x%x%s", (int)ev->root, sep);
+    fprintf(stderr, "subwindow=0x%x%s", (int)ev->subwindow, sep);
+    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
+    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
+    fprintf(stderr, "x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
+    fprintf(stderr, "state=%s%s", ButtonAndOrModifierState(ev->state), sep);
+    fprintf(stderr, "is_hint=%s%s", IsHint(ev->is_hint), sep);
+    fprintf(stderr, "same_screen=%s\n", TorF(ev->same_screen));
 }
 
 static void
 VerbButton(XButtonEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("root=0x%x%s", (int)ev->root, sep);
-    printf("subwindow=0x%x%s", (int)ev->subwindow, sep);
-    printf("time=%s%s", ServerTime(ev->time), sep);
-    printf("x=%d y=%d%s", ev->x, ev->y, sep);
-    printf("x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
-    printf("state=%s%s", ButtonAndOrModifierState(ev->state), sep);
-    printf("button=%s%s", ButtonAndOrModifierState(ev->button), sep);
-    printf("same_screen=%s\n", TorF(ev->same_screen));
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "root=0x%x%s", (int)ev->root, sep);
+    fprintf(stderr, "subwindow=0x%x%s", (int)ev->subwindow, sep);
+    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
+    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
+    fprintf(stderr, "x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
+    fprintf(stderr, "state=%s%s", ButtonAndOrModifierState(ev->state), sep);
+    fprintf(stderr, "button=%s%s", ButtonAndOrModifierState(ev->button), sep);
+    fprintf(stderr, "same_screen=%s\n", TorF(ev->same_screen));
 }
 
 static void
 VerbColormap(XColormapEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("colormap=%s%s", MaybeNone(ev->colormap), sep);
-    printf("new=%s%s", TorF(ev->new), sep);
-    printf("state=%s\n", ColormapState(ev->state));
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "colormap=%s%s", MaybeNone(ev->colormap), sep);
+    fprintf(stderr, "new=%s%s", TorF(ev->new), sep);
+    fprintf(stderr, "state=%s\n", ColormapState(ev->state));
 }
 
 static void
 VerbCrossing(XCrossingEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("root=0x%x%s", (int)ev->root, sep);
-    printf("subwindow=0x%x%s", (int)ev->subwindow, sep);
-    printf("time=%s%s", ServerTime(ev->time), sep);
-    printf("x=%d y=%d%s", ev->x, ev->y, sep);
-    printf("x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
-    printf("mode=%s%s", GrabMode(ev->mode), sep);
-    printf("detail=%s%s", CrossingDetail(ev->detail), sep);
-    printf("same_screen=%s%s", TorF(ev->same_screen), sep);
-    printf("focus=%s%s", TorF(ev->focus), sep);
-    printf("state=%s\n", ButtonAndOrModifierState(ev->state));
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "root=0x%x%s", (int)ev->root, sep);
+    fprintf(stderr, "subwindow=0x%x%s", (int)ev->subwindow, sep);
+    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
+    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
+    fprintf(stderr, "x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
+    fprintf(stderr, "mode=%s%s", GrabMode(ev->mode), sep);
+    fprintf(stderr, "detail=%s%s", CrossingDetail(ev->detail), sep);
+    fprintf(stderr, "same_screen=%s%s", TorF(ev->same_screen), sep);
+    fprintf(stderr, "focus=%s%s", TorF(ev->focus), sep);
+    fprintf(stderr, "state=%s\n", ButtonAndOrModifierState(ev->state));
 }
 
 static void
 VerbExpose(XExposeEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("x=%d y=%d%s", ev->x, ev->y, sep);
-    printf("width=%d height=%d%s", ev->width, ev->height, sep);
-    printf("count=%d\n", ev->count);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
+    fprintf(stderr, "width=%d height=%d%s", ev->width, ev->height, sep);
+    fprintf(stderr, "count=%d\n", ev->count);
 }
 
 static void
 VerbGraphicsExpose(XGraphicsExposeEvent *ev)
 {
-    printf("drawable=0x%x%s", (int)ev->drawable, sep);
-    printf("x=%d y=%d%s", ev->x, ev->y, sep);
-    printf("width=%d height=%d%s", ev->width, ev->height, sep);
-    printf("major_code=%s%s", MajorCode(ev->major_code), sep);
-    printf("minor_code=%d\n", ev->minor_code);
+    fprintf(stderr, "drawable=0x%x%s", (int)ev->drawable, sep);
+    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
+    fprintf(stderr, "width=%d height=%d%s", ev->width, ev->height, sep);
+    fprintf(stderr, "major_code=%s%s", MajorCode(ev->major_code), sep);
+    fprintf(stderr, "minor_code=%d\n", ev->minor_code);
 }
 
 static void
 VerbNoExpose(XNoExposeEvent *ev)
 {
-    printf("drawable=0x%x%s", (int)ev->drawable, sep);
-    printf("major_code=%s%s", MajorCode(ev->major_code), sep);
-    printf("minor_code=%d\n", ev->minor_code);
+    fprintf(stderr, "drawable=0x%x%s", (int)ev->drawable, sep);
+    fprintf(stderr, "major_code=%s%s", MajorCode(ev->major_code), sep);
+    fprintf(stderr, "minor_code=%d\n", ev->minor_code);
 }
 
 static void
 VerbFocus(XFocusChangeEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("mode=%s%s", GrabMode(ev->mode), sep);
-    printf("detail=%s\n", FocusChangeDetail(ev->detail));
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "mode=%s%s", GrabMode(ev->mode), sep);
+    fprintf(stderr, "detail=%s\n", FocusChangeDetail(ev->detail));
 }
 
 static void
@@ -555,156 +555,156 @@ VerbKeymap(XKeymapEvent *ev)
 {
     int i;
 
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("key_vector=");
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "key_vector=");
     for (i = 0; i < 32; i++)
-	printf("%02x", ev->key_vector[i]);
-    printf("\n");
+	fprintf(stderr, "%02x", ev->key_vector[i]);
+    fprintf(stderr, "\n");
 }
 
 static void
 VerbKey(XKeyEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("root=0x%x%s", (int)ev->root, sep);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "root=0x%x%s", (int)ev->root, sep);
     if(ev->subwindow)
-        printf("subwindow=0x%x%s", (int)ev->subwindow, sep);
-    printf("time=%s%s", ServerTime(ev->time), sep);
-    printf("[%d,%d]%s", ev->x, ev->y, sep);
-    printf("root=[%d,%d]%s", ev->x_root, ev->y_root, sep);
+        fprintf(stderr, "subwindow=0x%x%s", (int)ev->subwindow, sep);
+    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
+    fprintf(stderr, "[%d,%d]%s", ev->x, ev->y, sep);
+    fprintf(stderr, "root=[%d,%d]%s", ev->x_root, ev->y_root, sep);
     if(ev->state)
-        printf("state=%s%s", ButtonAndOrModifierState(ev->state), sep);
-    printf("keycode=%s%s", Keycode(ev), sep);
+        fprintf(stderr, "state=%s%s", ButtonAndOrModifierState(ev->state), sep);
+    fprintf(stderr, "keycode=%s%s", Keycode(ev), sep);
     if(!ev->same_screen)
-        printf("!same_screen");
-    printf("\n");
+        fprintf(stderr, "!same_screen");
+    fprintf(stderr, "\n");
     return;
 
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("root=0x%x%s", (int)ev->root, sep);
-    printf("subwindow=0x%x%s", (int)ev->subwindow, sep);
-    printf("time=%s%s", ServerTime(ev->time), sep);
-    printf("x=%d y=%d%s", ev->x, ev->y, sep);
-    printf("x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
-    printf("state=%s%s", ButtonAndOrModifierState(ev->state), sep);
-    printf("keycode=%s%s", Keycode(ev), sep);
-    printf("same_screen=%s\n", TorF(ev->same_screen));
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "root=0x%x%s", (int)ev->root, sep);
+    fprintf(stderr, "subwindow=0x%x%s", (int)ev->subwindow, sep);
+    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
+    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
+    fprintf(stderr, "x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
+    fprintf(stderr, "state=%s%s", ButtonAndOrModifierState(ev->state), sep);
+    fprintf(stderr, "keycode=%s%s", Keycode(ev), sep);
+    fprintf(stderr, "same_screen=%s\n", TorF(ev->same_screen));
 }
 
 static void
 VerbProperty(XPropertyEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("atom=%s%s", AtomName(ev->display, ev->atom), sep);
-    printf("time=%s%s", ServerTime(ev->time), sep);
-    printf("state=%s\n", PropertyState(ev->state));
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "atom=%s%s", AtomName(ev->display, ev->atom), sep);
+    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
+    fprintf(stderr, "state=%s\n", PropertyState(ev->state));
 }
 
 static void
 VerbResizeRequest(XResizeRequestEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("width=%d height=%d\n", ev->width, ev->height);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "width=%d height=%d\n", ev->width, ev->height);
 }
 
 static void
 VerbCirculate(XCirculateEvent *ev)
 {
-    printf("event=0x%x%s", (int)ev->event, sep);
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("place=%s\n", Place(ev->place));
+    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "place=%s\n", Place(ev->place));
 }
 
 static void
 VerbConfigure(XConfigureEvent *ev)
 {
-    printf("event=0x%x%s", (int)ev->event, sep);
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("x=%d y=%d%s", ev->x, ev->y, sep);
-    printf("width=%d height=%d%s", ev->width, ev->height, sep);
-    printf("border_width=%d%s", ev->border_width, sep);
-    printf("above=%s%s", MaybeNone(ev->above), sep);
-    printf("override_redirect=%s\n", TorF(ev->override_redirect));
+    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
+    fprintf(stderr, "width=%d height=%d%s", ev->width, ev->height, sep);
+    fprintf(stderr, "border_width=%d%s", ev->border_width, sep);
+    fprintf(stderr, "above=%s%s", MaybeNone(ev->above), sep);
+    fprintf(stderr, "override_redirect=%s\n", TorF(ev->override_redirect));
 }
 
 static void
 VerbCreateWindow(XCreateWindowEvent *ev)
 {
-    printf("parent=0x%x%s", (int)ev->parent, sep);
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("x=%d y=%d%s", ev->x, ev->y, sep);
-    printf("width=%d height=%d%s", ev->width, ev->height, sep);
-    printf("border_width=%d%s", ev->border_width, sep);
-    printf("override_redirect=%s\n", TorF(ev->override_redirect));
+    fprintf(stderr, "parent=0x%x%s", (int)ev->parent, sep);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
+    fprintf(stderr, "width=%d height=%d%s", ev->width, ev->height, sep);
+    fprintf(stderr, "border_width=%d%s", ev->border_width, sep);
+    fprintf(stderr, "override_redirect=%s\n", TorF(ev->override_redirect));
 }
 
 static void
 VerbDestroyWindow(XDestroyWindowEvent *ev)
 {
-    printf("event=0x%x%s", (int)ev->event, sep);
-    printf("window=0x%x\n", (int)ev->window);
+    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
+    fprintf(stderr, "window=0x%x\n", (int)ev->window);
 }
 
 static void
 VerbGravity(XGravityEvent *ev)
 {
-    printf("event=0x%x%s", (int)ev->event, sep);
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("x=%d y=%d\n", ev->x, ev->y);
+    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "x=%d y=%d\n", ev->x, ev->y);
 }
 
 static void
 VerbMap(XMapEvent *ev)
 {
-    printf("event=0x%x%s", (int)ev->event, sep);
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("override_redirect=%s\n", TorF(ev->override_redirect));
+    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "override_redirect=%s\n", TorF(ev->override_redirect));
 }
 
 static void
 VerbReparent(XReparentEvent *ev)
 {
-    printf("event=0x%x%s", (int)ev->event, sep);
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("parent=0x%x%s", (int)ev->parent, sep);
-    printf("x=%d y=%d%s", ev->x, ev->y, sep);
-    printf("override_redirect=%s\n", TorF(ev->override_redirect));
+    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "parent=0x%x%s", (int)ev->parent, sep);
+    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
+    fprintf(stderr, "override_redirect=%s\n", TorF(ev->override_redirect));
 }
 
 static void
 VerbUnmap(XUnmapEvent *ev)
 {
-    printf("event=0x%x%s", (int)ev->event, sep);
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("from_configure=%s\n", TorF(ev->from_configure));
+    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "from_configure=%s\n", TorF(ev->from_configure));
 }
 
 static void
 VerbCirculateRequest(XCirculateRequestEvent *ev)
 {
-    printf("parent=0x%x%s", (int)ev->parent, sep);
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("place=%s\n", Place(ev->place));
+    fprintf(stderr, "parent=0x%x%s", (int)ev->parent, sep);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "place=%s\n", Place(ev->place));
 }
 
 static void
 VerbConfigureRequest(XConfigureRequestEvent *ev)
 {
-    printf("parent=0x%x%s", (int)ev->parent, sep);
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("x=%d y=%d%s", ev->x, ev->y, sep);
-    printf("width=%d height=%d%s", ev->width, ev->height, sep);
-    printf("border_width=%d%s", ev->border_width, sep);
-    printf("above=%s%s", MaybeNone(ev->above), sep);
-    printf("detail=%s%s", ConfigureDetail(ev->detail), sep);
-    printf("value_mask=%s\n", ConfigureValueMask(ev->value_mask));
+    fprintf(stderr, "parent=0x%x%s", (int)ev->parent, sep);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
+    fprintf(stderr, "width=%d height=%d%s", ev->width, ev->height, sep);
+    fprintf(stderr, "border_width=%d%s", ev->border_width, sep);
+    fprintf(stderr, "above=%s%s", MaybeNone(ev->above), sep);
+    fprintf(stderr, "detail=%s%s", ConfigureDetail(ev->detail), sep);
+    fprintf(stderr, "value_mask=%s\n", ConfigureValueMask(ev->value_mask));
 }
 
 static void
 VerbMapRequest(XMapRequestEvent *ev)
 {
-    printf("parent=0x%x%s", (int)ev->parent, sep);
-    printf("window=0x%x\n", (int)ev->window);
+    fprintf(stderr, "parent=0x%x%s", (int)ev->parent, sep);
+    fprintf(stderr, "window=0x%x\n", (int)ev->window);
 }
 
 static void
@@ -712,58 +712,58 @@ VerbClient(XClientMessageEvent *ev)
 {
     int i;
 
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("message_type=%s%s", AtomName(ev->display, ev->message_type), sep);
-    printf("format=%d\n", ev->format);
-    printf("data (shown as longs)=");
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "message_type=%s%s", AtomName(ev->display, ev->message_type), sep);
+    fprintf(stderr, "format=%d\n", ev->format);
+    fprintf(stderr, "data (shown as longs)=");
     for (i = 0; i < 5; i++)
-	printf(" 0x%08lx", ev->data.l[i]);
-    printf("\n");
+	fprintf(stderr, " 0x%08lx", ev->data.l[i]);
+    fprintf(stderr, "\n");
 }
 
 static void
 VerbMapping(XMappingEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("request=%s%s", MappingRequest(ev->request), sep);
-    printf("first_keycode=0x%x%s", ev->first_keycode, sep);
-    printf("count=0x%x\n", ev->count);
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "request=%s%s", MappingRequest(ev->request), sep);
+    fprintf(stderr, "first_keycode=0x%x%s", ev->first_keycode, sep);
+    fprintf(stderr, "count=0x%x\n", ev->count);
 }
 
 static void
 VerbSelectionClear(XSelectionClearEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("selection=%s%s", AtomName(ev->display, ev->selection), sep);
-    printf("time=%s\n", ServerTime(ev->time));
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "selection=%s%s", AtomName(ev->display, ev->selection), sep);
+    fprintf(stderr, "time=%s\n", ServerTime(ev->time));
 }
 
 static void
 VerbSelection(XSelectionEvent *ev)
 {
-    printf("requestor=0x%x%s", (int)ev->requestor, sep);
-    printf("selection=%s%s", AtomName(ev->display, ev->selection), sep);
-    printf("target=%s%s", AtomName(ev->display, ev->target), sep);
-    printf("property=%s%s", AtomName(ev->display, ev->property), sep);
-    printf("time=%s\n", ServerTime(ev->time));
+    fprintf(stderr, "requestor=0x%x%s", (int)ev->requestor, sep);
+    fprintf(stderr, "selection=%s%s", AtomName(ev->display, ev->selection), sep);
+    fprintf(stderr, "target=%s%s", AtomName(ev->display, ev->target), sep);
+    fprintf(stderr, "property=%s%s", AtomName(ev->display, ev->property), sep);
+    fprintf(stderr, "time=%s\n", ServerTime(ev->time));
 }
 
 static void
 VerbSelectionRequest(XSelectionRequestEvent *ev)
 {
-    printf("owner=0x%x%s", (int)ev->owner, sep);
-    printf("requestor=0x%x%s", (int)ev->requestor, sep);
-    printf("selection=%s%s", AtomName(ev->display, ev->selection), sep);
-    printf("target=%s%s", AtomName(ev->display, ev->target), sep);
-    printf("property=%s%s", AtomName(ev->display, ev->property), sep);
-    printf("time=%s\n", ServerTime(ev->time));
+    fprintf(stderr, "owner=0x%x%s", (int)ev->owner, sep);
+    fprintf(stderr, "requestor=0x%x%s", (int)ev->requestor, sep);
+    fprintf(stderr, "selection=%s%s", AtomName(ev->display, ev->selection), sep);
+    fprintf(stderr, "target=%s%s", AtomName(ev->display, ev->target), sep);
+    fprintf(stderr, "property=%s%s", AtomName(ev->display, ev->property), sep);
+    fprintf(stderr, "time=%s\n", ServerTime(ev->time));
 }
 
 static void
 VerbVisibility(XVisibilityEvent *ev)
 {
-    printf("window=0x%x%s", (int)ev->window, sep);
-    printf("state=%s\n", VisibilityState(ev->state));
+    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+    fprintf(stderr, "state=%s\n", VisibilityState(ev->state));
 }
 
 /******************************************************************************/
@@ -858,18 +858,18 @@ void printevent(XEvent *e)
     if(ev->window) {
 	    XFetchName(blz.dpy, ev->window, &name);
 	    if(name) {
-		    printf("\ttitle=%s\n", name);
+		    fprintf(stderr, "\ttitle=%s\n", name);
 		    XFree(name);
 	    }
     }
-    printf("%3ld %-20s ", ev->serial, eventtype(e));
+    fprintf(stderr, "%3ld %-20s ", ev->serial, eventtype(e));
     if(ev->send_event)
-        printf("(sendevent) ");
+        fprintf(stderr, "(sendevent) ");
     if(0){
-        printf("type=%s%s", eventtype(e), sep);
-        printf("serial=%lu%s", ev->serial, sep);
-        printf("send_event=%s%s", TorF(ev->send_event), sep);
-        printf("display=0x%p%s", ev->display, sep);
+        fprintf(stderr, "type=%s%s", eventtype(e), sep);
+        fprintf(stderr, "serial=%lu%s", ev->serial, sep);
+        fprintf(stderr, "send_event=%s%s", TorF(ev->send_event), sep);
+        fprintf(stderr, "display=0x%p%s", ev->display, sep);
     }
 
     switch (ev->type) {

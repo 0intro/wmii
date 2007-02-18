@@ -347,26 +347,17 @@ focus_area(Area *a) {
 
 	v->sel = a;
 
-	if(f)
-		update_frame_widget_colors(f);
-	if(old_a) {
-		if(old_a->sel)
-			update_frame_widget_colors(old_a->sel);
-		if(a->floating != old_a->floating)
+	if((old_a)
+	&& (a->floating != old_a->floating))
 			v->revert = old_a;
-	}
 
 	if(v != screen->sel)
 		return;
 
-	if(f) {
-		draw_frame(f);
+	if(f)
 		focus_client(f->client);
-	}else
+	else
 		focus_client(nil);
-
-	if(old_a && old_a->sel)
-		draw_frame(old_a->sel);
 
 	if(a != old_a) {
 		i = 0;

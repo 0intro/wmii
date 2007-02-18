@@ -329,10 +329,8 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 		write_event("%sUrgent 0x%x %s\n", cnot, client->win, cwrite);
 		c->urgent = urgent;
 		if(c->sel) {
-			if(c->sel->view == screen->sel) {
-				update_frame_widget_colors(c->sel);
+			if(c->sel->view == screen->sel)
 				draw_frame(c->sel);
-			}
 			if(!urgent || c->sel->view != screen->sel)
 				for(f=c->frame; f; f=f->cnext) {
 					for(a=f->view->area; a; a=a->next)

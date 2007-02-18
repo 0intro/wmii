@@ -276,7 +276,12 @@ focusin(XEvent *e) {
 	Client *c;
 	XFocusChangeEvent *ev = &e->xfocus;
 
-	if(ev->detail == NotifyPointer)
+	if(!((ev->detail == NotifyNonlinear)
+	   ||(ev->detail == NotifyNonlinearVirtual)
+	   ||(ev->detail == NotifyInferior)
+	   ||(ev->detail == NotifyAncestor)))
+		return;
+	if(ev->mode == NotifyWhileGrabbed)
 		return;
 
 	c = client_of_win(ev->window);
@@ -286,8 +291,10 @@ focusin(XEvent *e) {
 			fprintf(stderr, "\t%s => %s\n", (screen->focus ? screen->focus->name : nil),
 					c->name);
 		}
-		update_client_grab(c);
 		screen->focus = c;
+		update_client_grab(c);
+		if(c->sel)
+			draw_frame(c->sel);
 	}else if(ev->window == screen->barwin) {
 		if(verbose) {
 			fprintf(stderr, "screen->focus: %p => %p\n", screen->focus, c);
@@ -296,28 +303,6 @@ focusin(XEvent *e) {
 		}
 		screen->focus = nil;
 	}
-#if 0
-	Client *c;
-	XFocusChangeEvent *ev = &e->xfocus;
-
-	c = client_of_win(ev->window);
-	if(ev->mode == NotifyGrab) {
-		screen->focus = nil;
-		if(!c)
-			focus_client(nil);
-		else
-			focus(c, False);
-	}if(ev->mode == NotifyUngrab) {
-		if(c)
-			focus(c, False);
-		screen->focus = c;
-	}else if(c) {
-		screen->focus = c;
-		if(c != sel_client()) {
-			focus_client(sel_client());
-		}
-	}
-#endif
 }
 
 static void
@@ -325,28 +310,20 @@ focusout(XEvent *e) {
 	Client *c;
 	XFocusChangeEvent *ev = &e->xfocus;
 
-	if(ev->detail == NotifyPointer)
+	if(!((ev->detail == NotifyNonlinear)
+	   ||(ev->detail == NotifyNonlinearVirtual)))
+		return;
+	if(ev->mode == NotifyWhileGrabbed)
 		return;
 
 	c = client_of_win(ev->window);
-	if(c)
+	if(c) {
+		if(screen->focus == c)
+			screen->focus = nil;
 		update_client_grab(c);
-#if 0
-	Client *c;
-	XFocusChangeEvent *ev = &e->xfocus;
-
-	c = client_of_win(ev->window);
-	if(ev->mode == NotifyUngrab
-	|| ev->mode == NotifyGrab)
-		return;
-	else if(c) {
-		screen->focus = c;
-		/* Don't let clients grab focus */
-		if(c != sel_client()) {
-			focus_client(sel_client());
-		}
+		if(c->sel)
+			draw_frame(c->sel);
 	}
-#endif
 }
 
 void (*handler[LASTEvent]) (XEvent *) = {
