@@ -276,6 +276,9 @@ focusin(XEvent *e) {
 	Client *c;
 	XFocusChangeEvent *ev = &e->xfocus;
 
+	if(ev->detail == NotifyPointer)
+		return;
+
 	c = client_of_win(ev->window);
 	if(c) {
 		if(verbose) {
@@ -321,6 +324,9 @@ static void
 focusout(XEvent *e) {
 	Client *c;
 	XFocusChangeEvent *ev = &e->xfocus;
+
+	if(ev->detail == NotifyPointer)
+		return;
 
 	c = client_of_win(ev->window);
 	if(c)
