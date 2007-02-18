@@ -47,6 +47,13 @@ scan_wins() {
 			if(wa.map_state == IsViewable)
 				manage_client(create_client(wins[i], &wa));
 		}
+		for(i = 0; i < num; i++) {
+			if(!XGetWindowAttributes(blz.dpy, wins[i], &wa))
+				continue;
+			if(XGetTransientForHint(blz.dpy, wins[i], &d1)
+			&& wa.map_state == IsViewable)
+				manage_client(create_client(wins[i], &wa));
+		}
 	}
 	if(wins)
 		XFree(wins);
