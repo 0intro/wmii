@@ -245,10 +245,10 @@ init_traps() {
 
 int
 main(int argc, char *argv[]) {
-	int i;
 	char *address = nil, *wmiirc = nil, *namespace, *errstr;
 	WMScreen *s;
 	struct passwd *passwd;
+	int i;
 	XSetWindowAttributes wa;
 
 	/* command line args */
@@ -426,7 +426,7 @@ main(int argc, char *argv[]) {
 	if(view)
 		write_event("FocusTag %s\n", screen->sel->name);
 
-	/* main event loop */
+	check_x_event(nil);
 	errstr = ixp_server_loop(&srv);
 	if(errstr)
 		fprintf(stderr, "wmiiwm: fatal: %s\n", errstr);
