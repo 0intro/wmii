@@ -1,0 +1,15 @@
+3.6
+* Working grab boxes
+* Border based resizals
+* Grow(and shrink?) ctl commands
+* Switch to mk for building
+
+4.0
+* Get rid of col modes
+* (Multi line) Tag bars
+* Replace bar with master tag bar
+* New event system
+* Resizable managed area
+* Sticky clients
+* New dmenu(with real cursor and using Bio)
+* Depend on plan9-corelibs
