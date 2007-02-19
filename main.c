@@ -245,11 +245,26 @@ init_traps() {
 
 int
 main(int argc, char *argv[]) {
-	char *address = nil, *wmiirc = nil, *namespace, *errstr;
+	char *wmiirc, *errstr, *namespace, *tmp;
+	char address[1024], ns_path[1024];
 	WMScreen *s;
 	struct passwd *passwd;
 	int i;
 	XSetWindowAttributes wa;
+
+	passwd = getpwuid(getuid());
+	user = estrdup(passwd->pw_name);
+	wmiirc = nil;
+	tmp = getenv("WMII_NS_PATH");
+	if(tmp)
+		strncpy(ns_path, tmp, sizeof(ns_path));
+	else
+		snprintf(ns_path, sizeof(ns_path), "/tmp/ns.%s.%s", user, getenv("DISPLAY"));
+	tmp = getenv("WMII_ADDRESS");
+	if(tmp)
+		strncpy(address, tmp, sizeof(ns_path));
+	else
+		snprintf(address, sizeof(address), "unix!%s/wmii", ns_path);
 
 	/* command line args */
 	for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
@@ -263,7 +278,7 @@ main(int argc, char *argv[]) {
 			break;
 		case 'a':
 			if(i + 1 < argc)
-				address = argv[++i];
+				strncpy(address, argv[++i], sizeof(address));
 			else
 				usage();
 			break;
@@ -281,6 +296,9 @@ main(int argc, char *argv[]) {
 
 	if(!address)
 		usage();
+
+	setenv("WMII_NS_PATH", ns_path, True);
+	setenv("WMII_ADDRESS", address, True);
 
 	setlocale(LC_CTYPE, "");
 	starting = True;
@@ -302,10 +320,12 @@ main(int argc, char *argv[]) {
 	/* Check namespace permissions */
 	if(!strncmp(address, "unix!", 5)) {
 		struct stat st;
+
 		namespace = estrdup(&address[5]);
 		for(i = strlen(namespace) - 1; i >= 0; i--)
 			if(namespace[i] == '/') break;
 		namespace[i+1] = '\0';
+
 		if(stat(namespace, &st))
 			fatal("wmiiwm: can't stat namespace directory \"%s\": %s\n",
 					namespace, strerror(errno));
@@ -346,35 +366,31 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	/* IXP server */
 	ixp_server_open_conn(&srv, i, &p9srv, serve_9pcon, nil);
-	/* X server */
 	ixp_server_open_conn(&srv, ConnectionNumber(blz.dpy), nil, check_x_event, nil);
 
 	view = nil;
 	client = nil;
 	key = nil;
-	passwd = getpwuid(getuid());
-	user = estrdup(passwd->pw_name);
-	def.colrules.string = nil;
-	def.colrules.size = 0;
-	def.tagrules.string = nil;
-	def.tagrules.size = 0;
-	def.keys = nil;
-	def.keyssz = 0;
+
+	memset(&def, 0, sizeof(def));
 	def.font.fontstr = estrdup(BLITZ_FONT);
 	def.border = 1;
 	def.colmode = Coldefault;
-	strncpy(def.focuscolor.colstr, BLITZ_FOCUSCOLORS, sizeof(def.focuscolor.colstr));
-	loadcolor(&blz, &def.focuscolor);
-	strncpy(def.normcolor.colstr, BLITZ_NORMCOLORS, sizeof(def.normcolor.colstr));
-	loadcolor(&blz, &def.normcolor);
-	strncpy(def.grabmod, "Mod1", sizeof(def.grabmod));
+
 	def.mod = Mod1Mask;
+	strncpy(def.grabmod, "Mod1", sizeof(def.grabmod));
+
+	strncpy(def.focuscolor.colstr, BLITZ_FOCUSCOLORS, sizeof(def.focuscolor.colstr));
+	strncpy(def.normcolor.colstr, BLITZ_NORMCOLORS, sizeof(def.normcolor.colstr));
+	loadcolor(&blz, &def.focuscolor);
+	loadcolor(&blz, &def.normcolor);
+
 	init_atoms();
 	init_cursors();
 	loadfont(&blz, &def.font);
 	init_lock_keys();
+
 	num_screens = 1;
 	screens = emallocz(num_screens * sizeof(*screens));
 	for(i = 0; i < num_screens; i++) {
@@ -383,25 +399,45 @@ main(int argc, char *argv[]) {
 		s->rbar = nil;
 		s->sel = nil;
 		init_screen(s);
-		pmap = XCreatePixmap(blz.dpy, blz.root, s->rect.width, s->rect.height,
-				DefaultDepth(blz.dpy, blz.screen));
-		wa.event_mask = SubstructureRedirectMask | EnterWindowMask
-			| LeaveWindowMask | FocusChangeMask;
+		pmap = XCreatePixmap(
+			/* display */	blz.dpy,
+			/* drawable */	blz.root,
+			/* width */	s->rect.width,
+			/* height */	s->rect.height,
+			/* depth */	DefaultDepth(blz.dpy, blz.screen)
+			);
+		wa.event_mask = 
+			  SubstructureRedirectMask
+			| EnterWindowMask
+			| LeaveWindowMask
+			| FocusChangeMask;
 		wa.cursor = cursor[CurNormal];
 		XChangeWindowAttributes(blz.dpy, blz.root, CWEventMask | CWCursor, &wa);
 		wa.override_redirect = 1;
 		wa.background_pixmap = ParentRelative;
-		wa.event_mask = ExposureMask | ButtonReleaseMask | FocusChangeMask
-			| SubstructureRedirectMask | SubstructureNotifyMask;
+		wa.event_mask =
+			  ExposureMask
+			| ButtonReleaseMask
+			| FocusChangeMask
+			| SubstructureRedirectMask
+			| SubstructureNotifyMask;
 		s->brect = s->rect;
 		s->brect.height = labelh(&def.font);
 		s->brect.y = s->rect.height - s->brect.height;
-		s->barwin = XCreateWindow(blz.dpy, RootWindow(blz.dpy, blz.screen),
-				s->brect.x, s->brect.y,
-				s->brect.width, s->brect.height, 0,
-				DefaultDepth(blz.dpy, blz.screen),
-				CopyFromParent, DefaultVisual(blz.dpy, blz.screen),
-				CWOverrideRedirect | CWBackPixmap | CWEventMask, &wa);
+		s->barwin = XCreateWindow(
+			/* display */	blz.dpy,
+			/* parent */	RootWindow(blz.dpy, blz.screen),
+			/* x */		s->brect.x,
+			/* y */		s->brect.y,
+			/* width */	s->brect.width,
+			/* height */	s->brect.height,
+			/*border_width*/0,
+			/* depth */	DefaultDepth(blz.dpy, blz.screen),
+			/* class */	CopyFromParent,
+			/* visual */	DefaultVisual(blz.dpy, blz.screen),
+			/* valuemask */	CWOverrideRedirect | CWBackPixmap | CWEventMask,
+			/* attrubutes */&wa
+			);
 		XSync(blz.dpy, False);
 		s->bbrush.blitz = &blz;
 		s->bbrush.gc = XCreateGC(blz.dpy, s->barwin, 0, 0);
@@ -417,9 +453,9 @@ main(int argc, char *argv[]) {
 	}
 
 	screen = &screens[0];
-
 	screen->focus = nil;
 	XSetInputFocus(blz.dpy, screen->barwin, RevertToParent, CurrentTime);
+
 	scan_wins();
 	starting = False;
 	update_views();
