@@ -385,8 +385,8 @@ main(int argc, char *argv[]) {
 		init_screen(s);
 		pmap = XCreatePixmap(blz.dpy, blz.root, s->rect.width, s->rect.height,
 				DefaultDepth(blz.dpy, blz.screen));
-		wa.event_mask = SubstructureRedirectMask | EnterWindowMask | LeaveWindowMask
-			| FocusChangeMask;
+		wa.event_mask = SubstructureRedirectMask | EnterWindowMask
+			| LeaveWindowMask | FocusChangeMask;
 		wa.cursor = cursor[CurNormal];
 		XChangeWindowAttributes(blz.dpy, blz.root, CWEventMask | CWCursor, &wa);
 		wa.override_redirect = 1;
