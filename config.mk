@@ -1,5 +1,5 @@
 # wmii version
-VERSION = $$(hg tip | awk -F '[: ]+' '/^changeset:/ { print "hg" $$2 }')
+VERSION = $$(hg tip --template 'hg\#rev\#')
 CONFVERSION = 3.5
 
 # Customize below to fit your system
