@@ -19,6 +19,14 @@ options:
 	@echo CC $<
 	@${CC} -c ${CFLAGS} $<
 
+# In case this isn't from hg
+.hg/00changelog.i:
+	@mkdir .hg
+	@touch .hg/00changelog.i
+
+# VERSION must be updated on every commit/pull
+config.mk: .hg/00changelog.i
+
 ${OBJ}: wmii.h config.mk
 
 wmiiwm: ${OBJ}
