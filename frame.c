@@ -24,14 +24,6 @@ create_frame(Client *c, View *v) {
 		f->revert.height = f->rect.height += frame_delta_h();
 	}
 	f->collapsed = False;
-	f->tile.blitz = &blz;
-	f->tile.drawable = pmap;
-	f->tile.gc = c->gc;
-	f->tile.font = &def.font;
-	f->tile.color = def.normcolor;
-	f->tile.border = False;
-	f->grabbox = f->titlebar = f->tile;
-	f->titlebar.align = WEST;
 
 	return f;
 }
@@ -211,38 +203,47 @@ frame_delta_h() {
 
 void
 draw_frame(Frame *f) {
-	if(f->client == screen->focus)
-		f->grabbox.color = f->tile.color = f->titlebar.color = def.focuscolor;
-	else
-		f->grabbox.color = f->tile.color = f->titlebar.color = def.normcolor;
-	if(f->client->urgent)
-		f->grabbox.color.bg = f->grabbox.color.fg;
+	BlitzBrush br = { 0 };
 
-	if(def.border) {
-		f->tile.border = 1;
-		f->tile.rect = f->rect;
-		f->tile.rect.x = f->tile.rect.y = 0;
-	}
-	f->grabbox.rect = f->tile.rect;
-	f->grabbox.rect.x += 2;
-	f->grabbox.rect.y += 2;
-	f->grabbox.rect.height = labelh(&def.font) - 4;
-	f->grabbox.rect.width = def.font.height - 3;
-	f->grabbox.border = 1;
-	f->titlebar.rect.x = f->grabbox.rect.x + f->grabbox.rect.width;
-	f->titlebar.rect.y = f->tile.rect.y;
-	f->titlebar.rect.width = f->rect.width - f->titlebar.rect.x;
-	f->titlebar.rect.height = labelh(&def.font);
-	f->titlebar.border = 0;
-	draw_tile(&f->tile);
-	draw_label(&f->titlebar, f->client->name);
-	draw_border(&f->tile);
-	/* XXX: Hack */
-	f->titlebar.rect.x = 0;
-	f->titlebar.rect.width = f->rect.width;
-	f->titlebar.border = 1;
-	draw_border(&f->titlebar);
-	draw_tile(&f->grabbox);
+	br.blitz = &blz;
+	br.font = &def.font;
+	br.drawable = pmap;
+	br.gc = f->client->gc;
+	if(f->client == screen->focus)
+		br.color = def.focuscolor;
+	else
+		br.color = def.normcolor;
+
+	br.rect = f->rect;
+	br.rect.x = 0;
+	br.rect.y = 0;
+	draw_tile(&br);
+
+	br.rect.x += def.font.height - 3;
+	br.rect.width -= br.rect.x;
+	br.rect.height = labelh(&def.font);
+	draw_label(&br, f->client->name);
+	
+	br.border = 1;
+	br.rect.width += br.rect.x;
+	br.rect.x = 0;
+	f->titlebar.x = br.rect.x + 1;
+	f->titlebar.height = br.rect.height - 1;
+	f->titlebar.y = br.rect.y + 1;
+	f->titlebar.width = br.rect.width - 2;
+	draw_border(&br);
+	br.rect.height = f->rect.height;
+	draw_border(&br);
+
+	if(f->client->urgent)
+		br.color.bg = br.color.fg;
+	br.rect.x = 2;
+	br.rect.y = 2;
+	br.rect.height = labelh(&def.font) - 4;
+	br.rect.width = def.font.height - 3;
+	f->grabbox = br.rect;
+	draw_tile(&br);
+
 	XCopyArea(
 		/* display */	blz.dpy,
 		/* src */	pmap,

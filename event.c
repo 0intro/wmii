@@ -69,10 +69,10 @@ buttonpress(XEvent *e) {
 			if(ev->button == Button1) {
 				if(frame_to_top(f))
 					restack_view(f->view);
-				if(ispointinrect(ev->x, ev->y, &f->grabbox.rect))
+				if(ispointinrect(ev->x, ev->y, &f->grabbox))
 					do_mouse_resize(f->client, True, CENTER);
 				else if(!ev->subwindow
-				&& !ispointinrect(ev->x, ev->y, &f->titlebar.rect))
+				&& !ispointinrect(ev->x, ev->y, &f->titlebar))
 					do_mouse_resize(f->client, False,
 						quadofcoord(&f->rect, ev->x_root, ev->y_root));
 				if(f->client != sel_client())

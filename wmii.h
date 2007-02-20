@@ -140,9 +140,8 @@ struct Frame {
 	XRectangle revert;
 	Client *client;
 	Bool collapsed;
-	BlitzBrush tile;
-	BlitzBrush grabbox;
-	BlitzBrush titlebar;
+	XRectangle grabbox;
+	XRectangle titlebar;
 };
 
 struct Client {
