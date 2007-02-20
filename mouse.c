@@ -332,7 +332,7 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 	f = c->sel;
 	floating = f->area->floating;
 	origin = frect = f->rect;
-	cur = cursor[CurResize];
+	cur = cursor_of_quad(align);
 	if(floating) {
 		rects = rects_of_view(f->area->view, &num, (grabbox ? c->frame : nil));
 		snap = screen->rect.height / 66;
@@ -342,23 +342,27 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 	}
 
 	if(align == CENTER) {
-		if(grabbox)
-			cur = cursor[CurMove];
-		else
+		if(!grabbox)
 			cur = cursor[CurInvisible];
-	}
-	
-	if(!floating && (align == CENTER)) {
-		do_managed_move(c);
-		return;
+		if(!floating)
+			do_managed_move(c);
 	}
 
 	XQueryPointer(blz.dpy, c->framewin, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
 	rx = (float)pt_x / frect.width;
 	ry = (float)pt_y / frect.height;
 
-	if(XGrabPointer(blz.dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
-			None, cur, CurrentTime) != GrabSuccess)
+	if(XGrabPointer(
+		/* display */		blz.dpy,
+		/* window */		c->framewin,
+		/* owner_events */	False,
+		/* event_mask */	MouseMask,
+		/* pointer_mode */	GrabModeAsync,
+		/* keyboard_mode */	GrabModeAsync,
+		/* confine_to */	None,
+		/* cursor */		cur,
+		/* time */		CurrentTime
+		) != GrabSuccess)
 		return;
 
 	XQueryPointer(blz.dpy, blz.root, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);

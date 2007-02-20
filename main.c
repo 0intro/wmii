@@ -119,7 +119,10 @@ init_cursors() {
 	pix = XCreateBitmapFromData(blz.dpy, blz.root, (char[]){0}, 1, 1);
 
 	cursor[CurNormal] = XCreateFontCursor(blz.dpy, XC_left_ptr);
-	cursor[CurResize] = XCreateFontCursor(blz.dpy, XC_sizing);
+	cursor[CurNECorner] = XCreateFontCursor(blz.dpy, XC_top_right_corner);
+	cursor[CurNWCorner] = XCreateFontCursor(blz.dpy, XC_top_left_corner);
+	cursor[CurSECorner] = XCreateFontCursor(blz.dpy, XC_bottom_right_corner);
+	cursor[CurSWCorner] = XCreateFontCursor(blz.dpy, XC_bottom_left_corner);
 	cursor[CurMove] = XCreateFontCursor(blz.dpy, XC_fleur);
 	cursor[CurInput] = XCreateFontCursor(blz.dpy, XC_xterm);
 	cursor[CurInvisible] = XCreatePixmapCursor(blz.dpy, pix, pix, &black, &black, 0, 0);

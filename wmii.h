@@ -91,7 +91,8 @@ enum { NetSupported, NetWMName, NetLast };
 enum { Coldefault, Colstack, Colmax };
 
 /* Cursor */
-enum { CurNormal, CurResize, CurMove, CurInput, CurInvisible, CurLast };
+enum { CurNormal, CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
+	CurMove, CurInput, CurInvisible, CurLast };
 
 enum { NCOL = 16 };
 enum { WM_PROTOCOL_DELWIN = 1 };
@@ -164,6 +165,7 @@ struct Client {
 	Window win;
 	Window trans;
 	Window framewin;
+	Cursor cursor;
 	XRectangle rect;
 	XSizeHints size;
 	GC gc;
@@ -293,6 +295,7 @@ extern void map_client(Client *c);
 extern void unmap_client(Client *c, int state);
 extern void map_frame(Client *c);
 extern void unmap_frame(Client *c);
+extern void set_cursor(Client *c, Cursor cur);
 extern void focus_frame(Frame *f, Bool restack);
 extern void reparent_client(Client *c, Window w, int x, int y);
 extern void manage_client(Client *c);
@@ -368,6 +371,7 @@ extern void write_event(char *format, ...);
 /* geom.c */
 extern Bool ispointinrect(int x, int y, XRectangle * r);
 extern BlitzAlign quadofcoord(XRectangle *rect, int x, int y);
+extern Cursor cursor_of_quad(BlitzAlign align);
 extern int strtorect(XRectangle *r, const char *val);
 extern BlitzAlign get_sticky(XRectangle *src, XRectangle *dst);
 extern int r_east(XRectangle *r);

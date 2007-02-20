@@ -251,6 +251,17 @@ unmap_client(Client *c, int state) {
 }
 
 void
+set_cursor(Client *c, Cursor cur) {
+	XSetWindowAttributes wa;
+	
+	if(c->cursor != cur) {
+		c->cursor = cur;
+		wa.cursor = cur;
+		XChangeWindowAttributes(blz.dpy, c->framewin, CWCursor, &wa);
+	}
+}
+
+void
 map_frame(Client *c) {
 	if(!c->frame_mapped) {
 		XMapWindow(blz.dpy, c->framewin);

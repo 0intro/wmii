@@ -27,6 +27,22 @@ quadofcoord(XRectangle *rect, int x, int y) {
 	return ret;
 }
 
+Cursor
+cursor_of_quad(BlitzAlign align) {
+	switch(align) {
+	case NEAST:
+		return cursor[CurNECorner];
+	case NWEST:
+		return cursor[CurNWCorner];
+	case SEAST:
+		return cursor[CurSECorner];
+	case SWEST:
+		return cursor[CurSWCorner];
+	default:
+		return cursor[CurMove];
+	}
+}
+
 /* Syntax: <x> <y> <width> <height> */
 int
 strtorect(XRectangle *r, const char *val) {

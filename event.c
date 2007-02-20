@@ -251,6 +251,21 @@ maprequest(XEvent *e) {
 }
 
 static void
+motionnotify(XEvent *e) {
+	XMotionEvent *ev = &e->xmotion;
+	Cursor cur;
+	Frame *f;
+	
+	if((f = frame_of_win(ev->window))) {
+		if(!ispointinrect(ev->x, ev->y, &f->titlebar)) {
+			cur = cursor_of_quad(quadofcoord(&f->rect, ev->x_root, ev->y_root));
+			set_cursor(f->client, cur);
+		}else
+			set_cursor(f->client, cursor[CurNormal]);
+	}
+}
+
+static void
 propertynotify(XEvent *e) {
 	XPropertyEvent *ev = &e->xproperty;
 	Client *c;
@@ -344,18 +359,20 @@ focusout(XEvent *e) {
 void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress]	= buttonpress,
 	[ButtonRelease]	= buttonrelease,
-	[ConfigureRequest]= configurerequest,
+	[ConfigureRequest]=configurerequest,
 	[DestroyNotify]	= destroynotify,
 	[EnterNotify]	= enternotify,
-	[LeaveNotify]	= leavenotify,
 	[Expose]	= expose,
+	[FocusIn]	= focusin,
+	[FocusOut]	= focusout,
 	[KeyPress]	= keypress,
-	[MappingNotify]	= mappingnotify,
+	[LeaveNotify]	= leavenotify,
 	[MapRequest]	= maprequest,
+	[MappingNotify]	= mappingnotify,
+	[MotionNotify]	= motionnotify,
 	[PropertyNotify]= propertynotify,
 	[UnmapNotify]	= unmapnotify,
-	[FocusIn]	= focusin,
-	[FocusOut]	= focusout
+
 };
 
 void
