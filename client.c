@@ -47,9 +47,14 @@ create_client(Window w, XWindowAttributes *wa) {
 	XAddToSaveSet(blz.dpy, c->win);
 	fwa.override_redirect = 1;
 	fwa.background_pixmap = ParentRelative;
-	fwa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask
-		| ExposureMask | PointerMotionMask | KeyPressMask
-		| ButtonPressMask | ButtonReleaseMask;
+	fwa.event_mask =
+		  SubstructureRedirectMask
+		| SubstructureNotifyMask
+		| ExposureMask
+		| PointerMotionMask
+		| KeyPressMask
+		| ButtonPressMask
+		| ButtonReleaseMask;
 	c->framewin = XCreateWindow(
 		/* display */	blz.dpy,
 		/* parent */	blz.root,
@@ -195,7 +200,10 @@ focus(Client *c, Bool restack) {
 	View *v;
 	Frame *f;
 
-	if(!(f = c->sel)) return;
+	f = c->sel;
+	if(!f)
+		return;
+
 	v = f->area->view;
 	arrange_column(f->area, False);
 	focus_view(screen, v);

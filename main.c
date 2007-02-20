@@ -243,6 +243,12 @@ init_traps() {
 	}
 }
 
+void
+check_9pcon(IXPConn *c) {
+	serve_9pcon(c);
+	check_x_event(c);
+}
+
 int
 main(int argc, char *argv[]) {
 	char *wmiirc, *errstr, *namespace, *tmp;
@@ -366,7 +372,7 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	ixp_server_open_conn(&srv, i, &p9srv, serve_9pcon, nil);
+	ixp_server_open_conn(&srv, i, &p9srv, check_9pcon, nil);
 	ixp_server_open_conn(&srv, ConnectionNumber(blz.dpy), nil, check_x_event, nil);
 
 	view = nil;
