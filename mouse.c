@@ -120,6 +120,7 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 		a.y2 = a.y1 = r_south(current);
 		snap_line(&a);
 	}
+	
 	a.y1 = current->y;
 	a.y2 = r_south(current);
 	a.delta = &dx;
@@ -131,8 +132,10 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 		a.x1 = a.x2 = current->x;
 		snap_line(&a);
 	}
+	
 	rect_morph_xy(current, abs(dx) <= snap ? dx : 0,
 			abs(dy) <= snap ? dy : 0, mask);
+
 	ret = *mask;
 	if(abs(dx) <= snap)
 		ret ^= EAST|WEST;
@@ -344,8 +347,10 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 	if(align == CENTER) {
 		if(!grabbox)
 			cur = cursor[CurInvisible];
-		if(!floating)
+		if(!floating) {
 			do_managed_move(c);
+			return;
+		}
 	}
 
 	XQueryPointer(blz.dpy, c->framewin, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
