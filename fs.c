@@ -889,10 +889,9 @@ fs_clunk(P9Req *r) {
 	FileId *f = r->fid->aux;
 
 	if(!verify_file(f)) {
-		respond(r, Enofile);
+		respond(r, nil);
 		return;
 	}
-
 
 	switch(f->tab.type) {
 	case FsFColRules:
