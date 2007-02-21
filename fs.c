@@ -536,14 +536,14 @@ fs_walk(P9Req *r) {
 	/* If Fids were ref counted, this could be
 	 * done in their decref function */
 	if(r->ifcall.fid == r->ifcall.newfid) {
-		nf=r->fid->aux;
+		nf = r->fid->aux;
 		r->fid->aux = f;
-		while((nf = f)) {
-			f=f->next;
-			free_file(nf);
+		while((f = nf)) {
+			nf = nf->next;
+			free_file(f);
 		}
-	}
-	r->newfid->aux = f;
+	}else
+		r->newfid->aux = f;
 	r->ofcall.nwqid = i;
 	respond(r, nil);
 }
