@@ -88,7 +88,7 @@ resize_frame(Frame *f, XRectangle *r) {
 	}else
 		f->collapsed = False;
 	
-	if(f->rect.width < 2 * def.border) {
+	if(f->rect.width < labelh(&def.font)) {
 		f->rect.width = frame_delta_h();
 		f->collapsed = True;
 	}
