@@ -173,6 +173,7 @@ enternotify(XEvent *e) {
 		if(c->sel->area->mode == Colmax)
 			c = c->sel->area->sel->client;
 		focus(c, False);
+		set_cursor(c, cursor[CurNormal]);
 	}
 	else if(ev->window == blz.root) {
 		sel_screen = True;
@@ -188,102 +189,6 @@ leavenotify(XEvent *e) {
 		sel_screen = True;
 		draw_frames();
 	}
-}
-
-static void
-expose(XEvent *e) {
-	XExposeEvent *ev = &e->xexpose;
-	static Frame *f;
-
-	if(ev->count == 0) {
-		if(ev->window == screen->barwin)
-			draw_bar(screen);
-		else if((f = frame_of_win(ev->window)) && f->view == screen->sel)
-			draw_frame(f);
-	}
-}
-
-static void
-keypress(XEvent *e) {
-	XKeyEvent *ev = &e->xkey;
-	KeySym k = 0;
-	char buf[32];
-	int n;
-	static Frame *f;
-
-
-	ev->state &= valid_mask;
-	if((f = frame_of_win(ev->window))) {
-		buf[0] = 0;
-		n = XLookupString(ev, buf, sizeof(buf), &k, 0);
-		if(IsFunctionKey(k) || IsKeypadKey(k) || IsMiscFunctionKey(k)
-				|| IsPFKey(k) || IsPrivateKeypadKey(k))
-			return;
-		buf[n] = 0;
-	}
-	else
-		kpress(blz.root, ev->state, (KeyCode) ev->keycode);
-}
-
-static void
-mappingnotify(XEvent *e) {
-	XMappingEvent *ev = &e->xmapping;
-
-	XRefreshKeyboardMapping(ev);
-	if(ev->request == MappingKeyboard)
-		update_keys();
-}
-
-static void
-maprequest(XEvent *e) {
-	XMapRequestEvent *ev = &e->xmaprequest;
-	static XWindowAttributes wa;
-
-	if(!XGetWindowAttributes(blz.dpy, ev->window, &wa))
-		return;
-	if(wa.override_redirect) {
-		XSelectInput(blz.dpy, ev->window,
-				(StructureNotifyMask | PropertyChangeMask));
-		return;
-	}
-	if(!client_of_win(ev->window))
-		manage_client(create_client(ev->window, &wa));
-}
-
-static void
-motionnotify(XEvent *e) {
-	XMotionEvent *ev = &e->xmotion;
-	Cursor cur;
-	Frame *f;
-	
-	if((f = frame_of_win(ev->window))) {
-		if(!ispointinrect(ev->x, ev->y, &f->titlebar)) {
-			cur = cursor_of_quad(quadofcoord(&f->rect, ev->x_root, ev->y_root));
-			set_cursor(f->client, cur);
-		}else
-			set_cursor(f->client, cursor[CurNormal]);
-	}
-}
-
-static void
-propertynotify(XEvent *e) {
-	XPropertyEvent *ev = &e->xproperty;
-	Client *c;
-
-	if(ev->state == PropertyDelete)
-		return; /* ignore */
-	if((c = client_of_win(ev->window)))
-		prop_client(c, ev);
-}
-
-static void
-unmapnotify(XEvent *e) {
-	Client *c;
-	XUnmapEvent *ev = &e->xunmap;
-
-	if((c = client_of_win(ev->window)))
-		if(!c->unmapped--)
-			destroy_client(c);
 }
 
 static void
@@ -365,6 +270,103 @@ focusout(XEvent *e) {
 	}
 }
 
+
+static void
+expose(XEvent *e) {
+	XExposeEvent *ev = &e->xexpose;
+	static Frame *f;
+
+	if(ev->count == 0) {
+		if(ev->window == screen->barwin)
+			draw_bar(screen);
+		else if((f = frame_of_win(ev->window)) && f->view == screen->sel)
+			draw_frame(f);
+	}
+}
+
+static void
+keypress(XEvent *e) {
+	XKeyEvent *ev = &e->xkey;
+	KeySym k = 0;
+	char buf[32];
+	int n;
+	static Frame *f;
+
+
+	ev->state &= valid_mask;
+	if((f = frame_of_win(ev->window))) {
+		buf[0] = 0;
+		n = XLookupString(ev, buf, sizeof(buf), &k, 0);
+		if(IsFunctionKey(k) || IsKeypadKey(k) || IsMiscFunctionKey(k)
+				|| IsPFKey(k) || IsPrivateKeypadKey(k))
+			return;
+		buf[n] = 0;
+	}
+	else
+		kpress(blz.root, ev->state, (KeyCode) ev->keycode);
+}
+
+static void
+mappingnotify(XEvent *e) {
+	XMappingEvent *ev = &e->xmapping;
+
+	XRefreshKeyboardMapping(ev);
+	if(ev->request == MappingKeyboard)
+		update_keys();
+}
+
+static void
+maprequest(XEvent *e) {
+	XMapRequestEvent *ev = &e->xmaprequest;
+	static XWindowAttributes wa;
+
+	if(!XGetWindowAttributes(blz.dpy, ev->window, &wa))
+		return;
+	if(wa.override_redirect) {
+		XSelectInput(blz.dpy, ev->window,
+				(StructureNotifyMask | PropertyChangeMask));
+		return;
+	}
+	if(!client_of_win(ev->window))
+		manage_client(create_client(ev->window, &wa));
+}
+
+static void
+motionnotify(XEvent *e) {
+	XMotionEvent *ev = &e->xmotion;
+	Cursor cur;
+	Frame *f;
+	
+	if((f = frame_of_win(ev->window))) {
+		if(!ispointinrect(ev->x, ev->y, &f->titlebar)
+		 &&!ispointinrect(ev->x, ev->y, &f->crect)) {
+			cur = cursor_of_quad(quadofcoord(&f->rect, ev->x_root, ev->y_root));
+			set_cursor(f->client, cur);
+		}else
+			set_cursor(f->client, cursor[CurNormal]);
+	}
+}
+
+static void
+propertynotify(XEvent *e) {
+	XPropertyEvent *ev = &e->xproperty;
+	Client *c;
+
+	if(ev->state == PropertyDelete)
+		return; /* ignore */
+	if((c = client_of_win(ev->window)))
+		prop_client(c, ev);
+}
+
+static void
+unmapnotify(XEvent *e) {
+	Client *c;
+	XUnmapEvent *ev = &e->xunmap;
+
+	if((c = client_of_win(ev->window)))
+		if(!c->unmapped--)
+			destroy_client(c);
+}
 void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress]	= buttonpress,
 	[ButtonRelease]	= buttonrelease,
@@ -387,11 +389,11 @@ void (*handler[LASTEvent]) (XEvent *) = {
 void
 check_x_event(IXPConn *c) {
 	XEvent ev;
-	while(XPending(blz.dpy)) { /* main event loop */
+	while(XPending(blz.dpy)) {
 		XNextEvent(blz.dpy, &ev);
 		if(verbose)
 			printevent(&ev);
 		if(handler[ev.type])
-			(handler[ev.type]) (&ev); /* call handler */
+			handler[ev.type](&ev);
 	}
 }
