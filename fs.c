@@ -174,7 +174,7 @@ clone_files(FileId *f) {
 
 /* This should be moved to libixp */
 static void
-write_buf(P9Req *r, void *buf, uint len) {
+write_buf(P9Req *r, char *buf, uint len) {
 	if(r->ifcall.offset >= len)
 		return;
 
@@ -533,8 +533,6 @@ fs_walk(P9Req *r) {
 		return;
 	}
 	/* Remove refs for r->fid if no new fid */
-	/* If Fids were ref counted, this could be
-	 * done in their decref function */
 	if(r->ifcall.fid == r->ifcall.newfid) {
 		nf = r->fid->aux;
 		r->fid->aux = f;
@@ -617,28 +615,28 @@ fs_read(P9Req *r) {
 	else{
 		switch(f->tab.type) {
 		case FsFprops:
-			write_buf(r, (void *)f->content.client->props, strlen(f->content.client->props));
+			write_buf(r, f->content.client->props, strlen(f->content.client->props));
 			respond(r, nil);
 			return;
 		case FsFColRules:
 		case FsFTagRules:
-			write_buf(r, (void *)f->content.rule->string, f->content.rule->size);
+			write_buf(r, f->content.rule->string, f->content.rule->size);
 			respond(r, nil);
 			return;
 		case FsFKeys:
-			write_buf(r, (void *)def.keys, def.keyssz);
+			write_buf(r, def.keys, def.keyssz);
 			respond(r, nil);
 			return;
 		case FsFCtags:
-			write_buf(r, (void *)f->content.client->tags, strlen(f->content.client->tags));
+			write_buf(r, f->content.client->tags, strlen(f->content.client->tags));
 			respond(r, nil);
 			return;
 		case FsFTctl:
-			write_buf(r, (void *)f->content.view->name, strlen(f->content.view->name));
+			write_buf(r, f->content.view->name, strlen(f->content.view->name));
 			respond(r, nil);
 			return;
 		case FsFBar:
-			write_buf(r, (void *)f->content.bar->buf, strlen(f->content.bar->buf));
+			write_buf(r, f->content.bar->buf, strlen(f->content.bar->buf));
 			respond(r, nil);
 			return;
 		case FsFRctl:
@@ -660,7 +658,7 @@ fs_read(P9Req *r) {
 		case FsFTindex:
 			buf = (char *)view_index(f->content.view);
 			n = strlen(buf);
-			write_buf(r, (void *)buf, n);
+			write_buf(r, buf, n);
 			respond(r, nil);
 			return;
 		case FsFEvent:
