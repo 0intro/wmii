@@ -288,7 +288,7 @@ unmapnotify(XEvent *e) {
 
 static void
 focusin(XEvent *e) {
-	Client *c;
+	Client *c, *old;
 	XFocusChangeEvent *ev = &e->xfocus;
 
 	if(!((ev->detail == NotifyNonlinear)
@@ -300,6 +300,7 @@ focusin(XEvent *e) {
 		return;
 
 	c = client_of_win(ev->window);
+	old = screen->focus;
 	if(c) {
 		if(verbose) {
 			fprintf(stderr, "screen->focus: %p => %p\n", screen->focus, c);
@@ -312,6 +313,8 @@ focusin(XEvent *e) {
 		update_client_grab(c);
 		if(c->sel)
 			draw_frame(c->sel);
+		if(old && old->sel)
+			draw_frame(old->sel);
 	}else if(ev->window == screen->barwin) {
 		if(verbose) {
 			fprintf(stderr, "screen->focus: %p => %p\n", screen->focus, c);
