@@ -78,6 +78,12 @@ resize_frame(Frame *f, XRectangle *r) {
 	f->rect = *r;
 	f->crect = *r;
 	match_sizehints(c, &f->crect, f->area->floating, stickycorner);
+	
+	if(f->rect.height < frame_delta_h()) {
+		f->rect.height = frame_delta_h();
+		f->collapsed = True;
+	}else
+		f->collapsed = False;
 
 	if(f->area->floating)
 		f->rect = f->crect;

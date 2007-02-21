@@ -339,7 +339,7 @@ motionnotify(XEvent *e) {
 	
 	if((f = frame_of_win(ev->window))) {
 		if(!ispointinrect(ev->x, ev->y, &f->titlebar)
-		 &&!ispointinrect(ev->x, ev->y, &f->crect)) {
+		 &&!ev->subwindow) {
 			cur = cursor_of_quad(quadofcoord(&f->rect, ev->x_root, ev->y_root));
 			set_cursor(f->client, cur);
 		}else
