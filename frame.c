@@ -79,14 +79,20 @@ resize_frame(Frame *f, XRectangle *r) {
 	f->crect = *r;
 	match_sizehints(c, &f->crect, f->area->floating, stickycorner);
 	
-	if(f->rect.height < frame_delta_h()) {
+	if(f->area->floating)
+		f->rect = f->crect;
+	
+	if(f->rect.height < frame_delta_h() + labelh(&def.font)) {
 		f->rect.height = frame_delta_h();
 		f->collapsed = True;
 	}else
 		f->collapsed = False;
+	
+	if(f->rect.width < 2 * def.border) {
+		f->rect.width = frame_delta_h();
+		f->collapsed = True;
+	}
 
-	if(f->area->floating)
-		f->rect = f->crect;
 	if(!f->collapsed) {
 		f->crect.width -= def.border * 2;
 		f->crect.height -= frame_delta_h();
