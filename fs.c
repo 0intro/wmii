@@ -485,7 +485,7 @@ Bool
 verify_file(FileId *f) {
 	FileId *nf;
 
-	if(!f)
+	if(!f->next)
 		return True;
 	if(verify_file(f->next)) {
 		nf = lookup_file(f->next, f->tab.name);
