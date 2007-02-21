@@ -291,6 +291,12 @@ focusin(XEvent *e) {
 	Client *c, *old;
 	XFocusChangeEvent *ev = &e->xfocus;
 
+	/* Yes, we're focusing in on nothing, here. */
+	if(ev->detail == NotifyDetailNone) {
+		XSetInputFocus(blz.dpy, screen->barwin, RevertToParent, CurrentTime);
+		return;
+	}
+
 	if(!((ev->detail == NotifyNonlinear)
 	   ||(ev->detail == NotifyNonlinearVirtual)
 	   ||(ev->detail == NotifyInferior)

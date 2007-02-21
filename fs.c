@@ -786,7 +786,7 @@ fs_write(P9Req *r) {
 		respond(r, nil);
 		return;
 	}
-	/* This is an assert because it should this should not be called if
+	/* This is an assert because this function should not be called if
 	 * the file is not open for writing. */
 	assert(!"Write called on an unwritable file");
 }
