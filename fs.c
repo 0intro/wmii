@@ -481,6 +481,22 @@ LastItem:
 	return ret;
 }
 
+Bool
+verify_file(FileId *f) {
+	FileId *nf;
+
+	if(!f)
+		return True;
+	if(verify_file(f->next)) {
+		nf = lookup_file(f->next, f->tab.name);
+		if(nf) {
+			free_file(nf);
+			return True;
+		}
+	}
+	return False;
+}
+
 /* Service Functions */
 /*********************/
 void
@@ -568,8 +584,14 @@ fs_stat(P9Req *r) {
 	Stat s;
 	int size;
 	uchar *buf;
+	FileId *f = r->fid->aux;
 
-	dostat(&s, fs_size(r->fid->aux), r->fid->aux);
+	if(!verify_file(f)) {
+		respond(r, Enofile);
+		return;
+	}
+
+	dostat(&s, fs_size(f), f);
 	r->ofcall.nstat = size = ixp_sizeof_stat(&s);
 	buf = emallocz(size);
 	r->ofcall.stat = buf;
@@ -586,6 +608,12 @@ fs_read(P9Req *r) {
 
 	offset = 0;
 	f = r->fid->aux;
+
+	if(!verify_file(f)) {
+		respond(r, Enofile);
+		return;
+	}
+
 	if(f->tab.perm & P9DMDIR && f->tab.perm & 0400) {
 		Stat s;
 		offset = 0;
@@ -683,6 +711,12 @@ fs_write(P9Req *r) {
 		return;
 	}
 	f = r->fid->aux;
+
+	if(!verify_file(f)) {
+		respond(r, Enofile);
+		return;
+	}
+
 	switch(f->tab.type) {
 	case FsFColRules:
 	case FsFTagRules:
@@ -762,6 +796,11 @@ fs_open(P9Req *r) {
 	FidLink *fl;
 	FileId *f = r->fid->aux;
 
+	if(!verify_file(f)) {
+		respond(r, Enofile);
+		return;
+	}
+
 	switch(f->tab.type) {
 	case FsFEvent:
 		fl = emallocz(sizeof(FidLink));
@@ -822,6 +861,12 @@ void
 fs_remove(P9Req *r) {
 	FileId *f = r->fid->aux;
 
+	if(!verify_file(f)) {
+		respond(r, Enofile);
+		return;
+	}
+
+
 	switch(f->tab.type) {
 	default:
 		/* XXX: This should be taken care of by the library */
@@ -842,6 +887,12 @@ fs_clunk(P9Req *r) {
 	char *buf;
 	int i;
 	FileId *f = r->fid->aux;
+
+	if(!verify_file(f)) {
+		respond(r, Enofile);
+		return;
+	}
+
 
 	switch(f->tab.type) {
 	case FsFColRules:
