@@ -1,0 +1,67 @@
+#!/usr/bin/awk
+// && !begin, /# Events/ {
+	begin = 1
+	print
+	next
+}
+/^#/ && $2 != "Events", 0 {
+	print
+	next
+}
+
+BEGIN {
+	arg[1] = "Nop"
+	writekeys = "wmiir write /keys"
+	readevent = "wmiir read /event"
+}
+
+function addevent() {
+	if(arg[1] == "Key") {
+		keys[arg[2]] = body
+	}
+	else if(arg[1] == "Event") {
+		events[arg[2]] = body
+	}
+	else if(arg[1] == "Action") {
+		actions[arg[2]] = body
+	}
+}
+
+/^(Event|Key|Action)[ \t]/ {
+	addevent()
+	split($0, arg)
+	body = ""
+}
+/^[ \t]/ {
+	body = body"\n"$0
+}
+
+END {
+	for(key in keys)
+		print key | writekeys
+	close(writekeys)
+	print "ACTIONS=\"\""
+	for(action in actions) {
+		gsub("\"", "\\\"", action)
+		print "ACTIONS=\"$ACTIONS\n" action "\""
+		print "Action-" action "() {" actions[action] "\n}"
+	}
+	while(readevent | getline) {
+		split($0, arg)
+		sub("^[a-zA-Z]+[ \t]+", "")
+		print "set -f"
+		if(arg[1] == "Key") {
+			sub("^[^ \t]+", "")
+			print "key=\"" arg[2] "\""
+			body = keys[arg[2]]
+		}
+		else {
+			print "event=\"" arg[1] "\""
+			body = events[arg[1]]
+		}
+		print "set -- " $0
+		print "set +f"
+		print body
+		fflush()
+	}
+}

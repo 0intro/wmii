@@ -1,0 +1,79 @@
+.TH WMIIR 1 wmii\-VERSION
+.SH NAME
+wmiiloop \- wmii event loop processor
+.SH SYNOPSIS
+.B cat 
+.I events
+| 
+.B wmiiloop
+|
+.B sh
+.br
+.SH DESCRIPTION
+.SS Overview
+.B wmiiloop
+is an awk script which preprocesses
+.BR sh (1)
+syntax to simplify writing a wmii event loop.
+
+.br
+.B eventloop
+sends any text up to the first line containing
+.I # 
+.IR Events ,
+and any text after any line begining with
+.IR # ,
+directly to its standard output. Any other line is processed based
+on its first word, with every indented line after it taken as its
+.IR body .
+.TP 2
+.BI "Key " sequence
+The key sequence
+.I sequence
+is bound to its
+.IR body .
+.I sequence
+is written to
+.I /keys
+and
+.I body
+is executed, with
+.I $key
+set to
+.I sequence
+whenever the key is pressed.
+
+.TP 2
+.BI "Event " name
+Whenever an event with
+.I name
+is read from
+.IR /event ,
+.I body
+is executed, with
+.I $event
+set to
+.IR name ,
+and
+.I $[1\-9]
+set to further arguments.
+
+.TP 2
+.BI "Action " name
+A function called
+.BI Action\- name
+is created with
+.I body
+as its body, and
+.I name
+is added to the
+.I $ACTIONS
+variable.
+
+.SH SEE ALSO
+.BR wmii (1),
+.BR wmiir (1),
+.BR wmiiwm (1)
+.B PREFIX/etc/wmiirc
+
+http://www.cs.bell\-labs.com/sys/man/5/INDEX.html
