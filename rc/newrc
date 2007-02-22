@@ -29,7 +29,7 @@ WMII_TERM="xterm"
 
 export WMII_MENU WMII_FONT WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS WMII_TERM
 
-# WM CONFIGURATION
+# WM Configuration
 wmiir write /ctl << EOF
 font $WMII_FONT
 focuscolors $WMII_FOCUSCOLORS
@@ -38,12 +38,12 @@ grabmod $MODKEY
 border 1
 EOF
 
-# COLUMN RULES
+# Column Rules
 wmiir write /colrules <<EOF
 /.*/ -> 58+42
 EOF
 
-# TAGGING RULES
+# Tagging Rules
 wmiir write /tagrules <<EOF
 /XMMS.*/ -> ~
 /Gimp.*/ -> gimp
@@ -54,7 +54,32 @@ EOF
 
 PROGS_FILE="$WMII_NS_DIR/.dmenu.proglist"
 
+# Stop any running instances of wmiirc
+if ! echo Start wmiirc | wmiir write /event
+then
+	exit 1
+fi
+
+# Setup Tag Bar
+wmiir ls /lbar |
+while read bar
+do
+	wmiir remove "/lbar/$bar"
+done
+
+seltag="$(wmiir read /tag/sel/ctl 2>/dev/null)"
+wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
+while read tag
+do
+	if [ "X$tag" = "X$seltag" ]; then
+		echo "$WMII_FOCUSCOLORS" "$tag" | wmiir create "/lbar/$tag" 
+	else
+		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag"
+	fi
+done
+
 { cat <<EOF
+# Events
 Event Start
 	if test "\$1" = "wmiirc"
 	then
@@ -128,68 +153,16 @@ Key $MODKEY-Shift-t
 EOF
 for i in 0 1 2 3 4 5 6 7 8 9; do
 	cat << EOF
-Key $MODKEY-$i)
+Key $MODKEY-$i
 	wmiir xwrite /ctl view "\$(echo \$key | sed 's/.*-//')"
 Key $MODKEY-Shift-$i
 	wmiir xwrite /client/sel/tags "\$(echo \$key | sed 's/.*-//')"
 EOF
 done
-} | awk '
-# Event Loop
-	BEGIN {
-		arg[1] = "Nop"
-		writekeys = "wmiir write /keys"
-		readevent = "wmiir read /event"
-	}
-	function addevent() {
-		if(arg[1] == "Key") {
-			keys[arg[2]] = body
-		}
-		else if(arg[1] == "Event") {
-			events[arg[2]] = body
-		}
-		else if(arg[1] == "Action") {
-			actions[arg[2]] = body
-		}
-	}
-	/^(Event|Key|Action)[ \t]/ {
-		addevent()
-		split($0, arg)
-		body = ""
-	}
-	/^[ \t]/ {
-		body = body"\n"$0
-	}
-	END {
-		for(key in keys)
-			print key | writekeys
-		print "ACTIONS=\"\""
-		for(action in actions) {
-			gsub("\"", "\\\"", action)
-			print "ACTIONS=\"$ACTIONS\n" action "\""
-			print "Action-" action "() {" actions[action] "\n}"
-		}
-		while(readevent | getline) {
-			split($0, arg)
-			sub("^[a-zA-Z]+[ \t]+", "")
-			print "set -f"
-			if(arg[1] == "Key") {
-				sub("^[^ \t]+", "")
-				print "key=\"" arg[2] "\""
-				body = keys[arg[2]]
-			}
-			else {
-				print "event=\"" arg[1] "\""
-				body = events[arg[1]]
-			}
-			print "set -- " $0
-			print "set +f"
-			print body
-			fflush()
-		}
-	}' | {
-		cat << EOF; cat
-# FUNCTIONS
+
+cat <<EOF
+# Functions
+
 proglist() {
 	paths=\$(echo "\$@" | sed 'y/:/ /')
 	ls -lL \$paths 2>/dev/null |
@@ -215,33 +188,69 @@ tagsmenu() {
         wmiir ls /tag | sed "s|/||; /^sel\$/d" | $WMII_MENU
 }
 
-# MISC
+# Misc
 \$(conf_which status) &
 xsetroot -solid "$WMII_BACKGROUND" &
 proglist $PATH >$PROGS_FILE &
-
-# Stop any running instances of wmiirc
-if ! echo Start wmiirc | wmiir write /event
-then
-	exit 1
-fi
-
-# SETUP TAG BAR
-wmiir ls /lbar |
-while read bar
-do
-	wmiir remove "/lbar/\$bar"
-done
-
-seltag="\$(wmiir read /tag/sel/ctl 2>/dev/null)"
-wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
-while read tag
-do
-	if [ "X\$tag" = "X\$seltag" ]; then
-		echo "$WMII_FOCUSCOLORS" "\$tag" | wmiir create "/lbar/\$tag" 
-	else
-		echo "$WMII_NORMCOLORS" "\$tag" | wmiir create "/lbar/\$tag"
-	fi
-done
 EOF
-	} | sh
+
+} | awk '
+# Event Loop
+	BEGIN {
+		arg[1] = "Nop"
+		writekeys = "wmiir write /keys"
+		readevent = "wmiir read /event"
+	}
+	function addevent() {
+		if(arg[1] == "Key") {
+			keys[arg[2]] = body
+		}
+		else if(arg[1] == "Event") {
+			events[arg[2]] = body
+		}
+		else if(arg[1] == "Action") {
+			actions[arg[2]] = body
+		}
+	}
+	/^#/ && $2 != "Events", 0 {
+		print
+		next
+	}
+	/^(Event|Key|Action)[ \t]/ {
+		addevent()
+		split($0, arg)
+		body = ""
+	}
+	/^[ \t]/ {
+		body = body"\n"$0
+	}
+	END {
+		for(key in keys) {
+			print key | writekeys
+			print key >"/dev/fd/2"
+		}
+		print "ACTIONS=\"\""
+		for(action in actions) {
+			gsub("\"", "\\\"", action)
+			print "ACTIONS=\"$ACTIONS\n" action "\""
+			print "Action-" action "() {" actions[action] "\n}"
+		}
+		while(readevent | getline) {
+			split($0, arg)
+			sub("^[a-zA-Z]+[ \t]+", "")
+			print "set -f"
+			if(arg[1] == "Key") {
+				sub("^[^ \t]+", "")
+				print "key=\"" arg[2] "\""
+				body = keys[arg[2]]
+			}
+			else {
+				print "event=\"" arg[1] "\""
+				body = events[arg[1]]
+			}
+			print "set -- " $0
+			print "set +f"
+			print body
+			fflush()
+		}
+	}' | sh
