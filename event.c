@@ -63,7 +63,7 @@ buttonpress(XEvent *e) {
 				focus(f->client, True);
 				break;
 			default: break;
-				XAllowEvents(blz.dpy, ReplayPointer, CurrentTime);
+				XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 			}
 		}else{
 			if(ev->button == Button1) {
@@ -78,10 +78,13 @@ buttonpress(XEvent *e) {
 				if(f->client != sel_client())
 					focus(f->client, True);
 			}
-			XAllowEvents(blz.dpy, ReplayPointer, CurrentTime);
+			if(ev->subwindow)
+				XAllowEvents(blz.dpy, ReplayPointer, ev->time);
+			else
+				XAllowEvents(blz.dpy, AsyncPointer, ev->time);
 		}
 	}else
-		XAllowEvents(blz.dpy, ReplayPointer, CurrentTime);
+		XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 }
 
 static void
