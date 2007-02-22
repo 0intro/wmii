@@ -54,7 +54,9 @@ EOF
 
 # FUNCTIONS
 proglist() {
-	ls -lL "$@" 2>/dev/null | awk '$1 ~ /^[^d].*x/ {print $NF}' | sort | uniq
+	ls -lL "$@" 2>/dev/null |
+		awk '$1 ~ /^[^d].*x/ { print $NF }' |
+		sort | uniq
 }
 
 conf_which () {
@@ -65,20 +67,22 @@ conf_which () {
 }
 
 tagsmenu() {
-	tag=`wmiir read /tag/sel/ctl`
         wmiir ls /tag | sed "s|/||; /^sel\$/d" | $WMII_MENU
 }
 
 # MISC
 PROGS_FILE="$WMII_NS_DIR/.dmenu.proglist"
-ACTIONS_DIRS=`echo "$WMII_CONFPATH" | tr : ' '`
+ACTIONS_DIRS=`echo "$WMII_CONFPATH" | sed 'y/:/ /'`
 
 `conf_which status` &
 xsetroot -solid $WMII_BACKGROUND &
 proglist `echo "$PATH" | sed 'y/:/ /'` >$PROGS_FILE &
 
 # Stop any running instances of wmiirc
-echo Start wmiirc | wmiir write /event || exit 1
+if ! echo Start wmiirc | wmiir write /event
+then
+	exit 1
+fi
 
 # SETUP TAG BAR
 wmiir ls /lbar |
