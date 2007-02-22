@@ -52,13 +52,8 @@ wmiir write /tagrules <<EOF
 /.*/ -> 1
 EOF
 
-PROGS_FILE="$WMII_NS_DIR/.dmenu.proglist"
-
 # Stop any running instances of wmiirc
-if ! echo Start wmiirc | wmiir write /event
-then
-	exit 1
-fi
+echo Start wmiirc | wmiir write /event || exit 1
 
 # Setup Tag Bar
 wmiir ls /lbar |
@@ -79,12 +74,17 @@ do
 done
 
 { cat <<EOF
+# Status Bar Info
+status() {
+	echo -n \$(uptime | sed 's/.*://; s/,//g') '|' \$(date)
+}
+
 # Events
 Event Start
-	if test "\$1" = "wmiirc"
-	then
-		exit
-	fi
+	case "$1" in
+	wmiirc)
+		exit;;
+	exac
 Event CreateTag
 	echo "$WMII_NORMCOLORS" "\$@" | wmiir create "/lbar/\$@"
 Event DestroyTag
@@ -106,6 +106,14 @@ Action quit
 	wmiir xwrite /ctl quit
 Action rehash
 	proglist $PATH >$PROGS_FILE
+Action status
+	if wmiir remove /rbar/status 2>/dev/null; then
+		sleep 2
+	fi
+	echo $WMII_NORMCOLORS | wmiir create /rbar/status
+	while status | wmiir write /rbar/status; do
+		sleep 1
+	done
 Key $MODKEY-$LEFT
 	wmiir xwrite /tag/sel/ctl select left
 Key $MODKEY-$RIGHT
@@ -114,7 +122,7 @@ Key $MODKEY-$DOWN
 	wmiir xwrite /tag/sel/ctl select down
 Key $MODKEY-$UP
 	wmiir xwrite /tag/sel/ctl select up
-Key $MODKEY-space)
+Key $MODKEY-space
 	wmiir xwrite /tag/sel/ctl select toggle
 Key $MODKEY-d
 	wmiir xwrite /tag/sel/ctl colmode sel default
@@ -123,13 +131,7 @@ Key $MODKEY-s
 Key $MODKEY-m
 	wmiir xwrite /tag/sel/ctl colmode sel max
 Key $MODKEY-a
-	{	set -f
-		set -- \$(actionlist | $WMII_MENU)
-		action=\$1; shift
-		set +f
-		Action-"\$action" \$@ ||
-		\$(conf_which "\$action") \$@
-	} &
+	Action \$(actionlist | $WMII_MENU) &
 Key $MODKEY-p
 	sh -c "\$($WMII_MENU <$PROGS_FILE)" &
 Key $MODKEY-t
@@ -162,7 +164,6 @@ done
 
 cat <<EOF
 # Functions
-
 proglist() {
 	paths=\$(echo "\$@" | sed 'y/:/ /')
 	ls -lL \$paths 2>/dev/null |
@@ -188,8 +189,14 @@ tagsmenu() {
         wmiir ls /tag | sed "s|/||; /^sel\$/d" | $WMII_MENU
 }
 
+Action() {
+	action=\$1; shift
+	Action-\$action \$@ || \$(conf_which "\$action") \$@
+}
+
 # Misc
-\$(conf_which status) &
+PROGS_FILE="$WMII_NS_DIR/.proglist"
+Action status &
 xsetroot -solid "$WMII_BACKGROUND" &
 proglist $PATH >$PROGS_FILE &
 EOF
@@ -212,6 +219,11 @@ EOF
 			actions[arg[2]] = body
 		}
 	}
+	// && !begin, /# Events/ {
+		begin = 1
+		print
+		next
+	}
 	/^#/ && $2 != "Events", 0 {
 		print
 		next
@@ -225,10 +237,9 @@ EOF
 		body = body"\n"$0
 	}
 	END {
-		for(key in keys) {
+		for(key in keys)
 			print key | writekeys
-			print key >"/dev/fd/2"
-		}
+		close(writekeys)
 		print "ACTIONS=\"\""
 		for(action in actions) {
 			gsub("\"", "\\\"", action)
@@ -253,4 +264,4 @@ EOF
 			print body
 			fflush()
 		}
-	}' | sh
+	}' | tee /dev/fd/2 | sh
