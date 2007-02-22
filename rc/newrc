@@ -53,7 +53,6 @@ wmiir write /tagrules <<EOF
 EOF
 
 PROGS_FILE="$WMII_NS_DIR/.dmenu.proglist"
-ACTIONS_DIRS="$(echo "$WMII_CONFPATH" | sed 'y/:/ /')"
 
 { cat <<EOF
 Event Start
@@ -69,7 +68,6 @@ Event FocusTag
 	wmiir xwrite "/lbar/\$@" "$WMII_FOCUSCOLORS" "\$@"
 Event UnfocusTag
 	wmiir xwrite "/lbar/\$@" "$WMII_NORMCOLORS" "\$@"
-	
 Event UrgentTag
 	shift
 	wmiir xwrite "/lbar/\$@" "*\$@"
@@ -79,6 +77,10 @@ Event NotUrgentTag
 Event LeftBarClick
 	shift
 	wmiir xwrite /ctl view "\$@"
+Action quit
+	wmiir xwrite /ctl quit
+Action rehash
+	proglist $PATH >$PROGS_FILE
 Key $MODKEY-$LEFT
 	wmiir xwrite /tag/sel/ctl select left
 Key $MODKEY-$RIGHT
@@ -96,7 +98,13 @@ Key $MODKEY-s
 Key $MODKEY-m
 	wmiir xwrite /tag/sel/ctl colmode sel max
 Key $MODKEY-a
-	\$(conf_which "\$(proglist $ACTIONS_DIRS | $WMII_MENU)") &
+	{	set -f
+		set -- \$(actionlist | $WMII_MENU)
+		action=\$1; shift
+		set +f
+		Action-"\$action" \$@ ||
+		\$(conf_which "\$action") \$@
+	} &
 Key $MODKEY-p
 	sh -c "\$($WMII_MENU <$PROGS_FILE)" &
 Key $MODKEY-t
@@ -140,8 +148,11 @@ done
 		else if(arg[1] == "Event") {
 			events[arg[2]] = body
 		}
+		else if(arg[1] == "Action") {
+			actions[arg[2]] = body
+		}
 	}
-	/^(Event|Key)[ \t]/ {
+	/^(Event|Key|Action)[ \t]/ {
 		addevent()
 		split($0, arg)
 		body = ""
@@ -152,6 +163,12 @@ done
 	END {
 		for(key in keys)
 			print key | writekeys
+		print "ACTIONS=\"\""
+		for(action in actions) {
+			gsub("\"", "\\\"", action)
+			print "ACTIONS=\"$ACTIONS\n" action "\""
+			print "Action-" action "() {" actions[action] "\n}"
+		}
 		while(readevent | getline) {
 			split($0, arg)
 			sub("^[a-zA-Z]+[ \t]+", "")
@@ -171,12 +188,20 @@ done
 			fflush()
 		}
 	}' | {
-		cat << EOF
+		cat << EOF; cat
 # FUNCTIONS
 proglist() {
-	ls -lL \$@ 2>/dev/null |
+	paths=\$(echo "\$@" | sed 'y/:/ /')
+	ls -lL \$paths 2>/dev/null |
 		awk '\$1 ~ /^[^d].*x/ { print \$NF }' |
 		sort | uniq
+}
+
+actionlist() {
+	{
+		proglist $WMII_CONFPATH
+		echo \$ACTIONS | tr ' ' '\012'
+	} | sort | uniq
 }
 
 conf_which () {
@@ -193,7 +218,7 @@ tagsmenu() {
 # MISC
 \$(conf_which status) &
 xsetroot -solid "$WMII_BACKGROUND" &
-proglist $(echo "$PATH" | sed 'y/:/ /') >$PROGS_FILE &
+proglist $PATH >$PROGS_FILE &
 
 # Stop any running instances of wmiirc
 if ! echo Start wmiirc | wmiir write /event
@@ -219,5 +244,4 @@ do
 	fi
 done
 EOF
-		cat
-	} | tee /dev/fd/2 | sh
+	} | sh
