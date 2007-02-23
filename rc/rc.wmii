@@ -87,7 +87,7 @@ fn Action-rehash {
 	proglist $PATH >$progs_file
 }
 fn Action-quit {
-	wmiir xwrite quit /ctl
+	wmiir xwrite /ctl quit
 }
 fn Action-status {
 	if(wmiir remove /rbar/status >[2]/dev/null)
@@ -233,7 +233,7 @@ ifs='
 	seltag=`{wmiir read /tag/sel/ctl}
 	for(tag in `{wmiir ls /tag | sed -e 's,/,,; /^sel$/d'}) {
 		if(~ $tag $seltag)
-			echo $WMII_SELCOLORS $tag | wmiir create /lbar/$tag
+			echo $WMII_FOCUSCOLORS $tag | wmiir create /lbar/$tag
 		if not
 			echo $WMII_NORMCOLORS $tag | wmiir create /lbar/$tag
 	}

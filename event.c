@@ -239,7 +239,7 @@ focusin(XEvent *e) {
 	}else if(ev->mode == NotifyGrab) {
 		c = screen->focus;
 		if(c) {
-			screen->focus = nil;
+			screen->focus = &c_magic;
 			if(c->sel)
 				draw_frame(c->sel);
 		}

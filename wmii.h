@@ -235,6 +235,7 @@ struct WMScreen {
 Client *client;
 View *view;
 Key *key;
+Client c_magic;
 
 enum { BUFFER_SIZE = 8092 };
 char buffer[BUFFER_SIZE];
