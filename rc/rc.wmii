@@ -14,9 +14,14 @@ WMII_FONT='fixed'
 WMII_NORMCOLORS='#222222 #5FBF77 #2A7F3F'
 WMII_FOCUSCOLORS='#ffffff #153F1F #2A7F3F'
 WMII_BACKGROUND='#333333'
-WMII_TERM='xterm'
 
-WMII_MENU=(dmenu -b -fn $WMII_FONT -nb '#eeeeee' -nf '#222222' -sb '#335577' -sf '#ffffff')
+fn wmiiterm {
+	xterm
+}
+
+fn wmiimenu {
+	dmenu -b -fn $WMII_FONT -nb '#eeeeee' -nf '#222222' -sb '#335577' -sf '#ffffff'
+}
 
 # Column Rules
 wmiir write /colrules <<!
@@ -133,16 +138,16 @@ fn Key-$MODKEY-m {
 	wmiir xwrite /tag/sel/ctl colmode sel max
 }
 fn Key-$MODKEY-a {
-	Action `{actionlist | $WMII_MENU} &
+	Action `{actionlist | wmiimenu} &
 }
 fn Key-$MODKEY-p {
 	run_command `{wmiimenu <$progs_file} &
 }
 fn Key-$MODKEY-Return {
-	run_command $WMII_TERM &
+	run_command wmiiterm &
 }
 fn Key-$MODKEY-t {
-	wmiir xwrite /ctl view `{tagsmenu | $WMII_MENU} &
+	wmiir xwrite /ctl view `{tagsmenu | wmiimenu} &
 }
 fn Key-$MODKEY-Shift-$LEFT {
 	wmiir xwrite /tag/sel/ctl send sel left
@@ -163,7 +168,7 @@ fn Key-$MODKEY-Shift-c {
 	wmiir xwrite /client/sel/ctl kill
 }
 fn Key-$MODKEY-Shift-t {
-	wmiir xwrite /client/`{wmiir read /client/sel/ctl}/tags `{tagsmenu | $WMII_MENU} &
+	wmiir xwrite /client/`{wmiir read /client/sel/ctl}/tags `{tagsmenu | wmiimenu} &
 }
 for(i in `{seq 0 9}) {
 	fn Key-$MODKEY-$i {
