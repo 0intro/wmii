@@ -770,6 +770,8 @@ fs_write(P9Req *r) {
 					errstr = message_root(toks[i]);
 			}
 		}
+		if(screen->sel)
+			focus_view(screen, screen->sel);
 		if(errstr) {
 			respond(r, errstr);
 			return;

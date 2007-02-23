@@ -226,8 +226,8 @@ fn initkeys {
 initkeys
 
 # Tag Bar
-ifs='
-' {
+ifs='#
+'{
 	for(bar in `{wmiir ls /lbar})
 		wmiir remove /lbar/$bar
 	seltag=`{wmiir read /tag/sel/ctl}

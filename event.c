@@ -266,7 +266,7 @@ focusout(XEvent *e) {
 				return;
 		}
 		if(screen->focus == c)
-			screen->focus = nil;
+			screen->focus = &c_magic;
 		update_client_grab(c);
 		if(c->sel)
 			draw_frame(c->sel);
