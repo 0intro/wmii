@@ -15,9 +15,7 @@ WMII_NORMCOLORS='#222222 #5FBF77 #2A7F3F'
 WMII_FOCUSCOLORS='#ffffff #153F1F #2A7F3F'
 WMII_BACKGROUND='#333333'
 
-fn wmiiterm {
-	xterm
-}
+WMII_TERM=(xterm)
 
 fn wmiimenu {
 	dmenu -b -fn $WMII_FONT -nb '#eeeeee' -nf '#222222' -sb '#335577' -sf '#ffffff'
@@ -144,10 +142,10 @@ fn Key-$MODKEY-p {
 	run_command `{wmiimenu <$progs_file} &
 }
 fn Key-$MODKEY-Return {
-	run_command wmiiterm &
+	run_command $WMII_TERM &
 }
 fn Key-$MODKEY-t {
-	wmiir xwrite /ctl view `{tagsmenu | wmiimenu} &
+	wmiir xwrite /ctl view `{read_tags | wmiimenu} &
 }
 fn Key-$MODKEY-Shift-$LEFT {
 	wmiir xwrite /tag/sel/ctl send sel left
@@ -168,8 +166,8 @@ fn Key-$MODKEY-Shift-c {
 	wmiir xwrite /client/sel/ctl kill
 }
 fn Key-$MODKEY-Shift-t {
-	wmiir xwrite /client/`{wmiir read /client/sel/ctl}/tags `{tagsmenu | wmiimenu} &
-}
+	wmiir xwrite /client/`{wmiir read /client/sel/ctl}^/tags `{read_tags | wmiimenu} &
+
 for(i in `{seq 0 9}) {
 	fn Key-$MODKEY-$i {
 		wmiir xwrite /ctl view `{echo $1 | sed 's/.*-//'}
