@@ -8,25 +8,15 @@ DOWN=j
 LEFT=h
 RIGHT=l
 
-WMII_FONT='-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*'
 # Colors tuples are "<text> <background> <border>"
 WMII_NORMCOLORS='#222222 #5FBF77 #2A7F3F'
 WMII_FOCUSCOLORS='#ffffff #153F1F #2A7F3F'
 WMII_BACKGROUND='#333333'
+WMII_FONT='-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*'
 
-WMII_MENU="dmenu -b -fn '$WMII_FONT' -nb '#5FBF77' -nf '#222222' -sb '#153F1F' -sf '#ffffff'"
 WMII_TERM="xterm"
-
+WMII_MENU="dmenu -b -fn '$WMII_FONT' -nb '#5FBF77' -nf '#222222' -sb '#153F1F' -sf '#ffffff'"
 export WMII_MENU WMII_FONT WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS WMII_TERM
-
-# WM Configuration
-wmiir write /ctl << EOF
-font $WMII_FONT
-focuscolors $WMII_FOCUSCOLORS
-normcolors $WMII_NORMCOLORS
-grabmod $MODKEY
-border 1
-EOF
 
 # Column Rules
 wmiir write /colrules <<EOF
@@ -42,28 +32,9 @@ wmiir write /tagrules <<EOF
 /.*/ -> 1
 EOF
 
-# Stop any running instances of wmiirc
-echo Start wmiirc | wmiir write /event || exit 1
-
-# Setup Tag Bar
-wmiir ls /lbar |
-while read bar
-do
-	wmiir remove "/lbar/$bar"
-done
-
-seltag="$(wmiir read /tag/sel/ctl 2>/dev/null)"
-wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
-while read tag
-do
-	if [ "X$tag" = "X$seltag" ]; then
-		echo "$WMII_FOCUSCOLORS" "$tag" | wmiir create "/lbar/$tag" 
-	else
-		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag"
-	fi
-done
-
-{ cat <<EOF
+# Event processing
+{
+cat <<EOF
 # Status Bar Info
 status() {
 	echo -n \$(uptime | sed 's/.*://; s/,//g') '|' \$(date)
@@ -92,6 +63,7 @@ Event NotUrgentTag
 Event LeftBarClick
 	shift
 	wmiir xwrite /ctl view "\$@"
+# Actions
 Action quit
 	wmiir xwrite /ctl quit
 Action rehash
@@ -104,6 +76,7 @@ Action status
 	while status | wmiir write /rbar/status; do
 		sleep 1
 	done
+# Key Bindings
 Key $MODKEY-$LEFT
 	wmiir xwrite /tag/sel/ctl select left
 Key $MODKEY-$RIGHT
@@ -187,8 +160,39 @@ Action() {
 # Misc
 PROGS_FILE="$WMII_NS_DIR/.proglist"
 Action status &
-xsetroot -solid "$WMII_BACKGROUND" &
 proglist $PATH >$PROGS_FILE &
 EOF
 
-} | wmiiloop | sh
+xsetroot -solid "$WMII_BACKGROUND" &
+
+# WM Configuration
+wmiir write /ctl << EOF
+font $WMII_FONT
+focuscolors $WMII_FOCUSCOLORS
+normcolors $WMII_NORMCOLORS
+grabmod $MODKEY
+border 1
+EOF
+
+# Setup Tag Bar
+wmiir ls /lbar |
+while read bar
+do
+	wmiir remove "/lbar/$bar"
+done
+
+seltag="$(wmiir read /tag/sel/ctl 2>/dev/null)"
+wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
+while read tag
+do
+	if [ "X$tag" = "X$seltag" ]; then
+		echo "$WMII_FOCUSCOLORS" "$tag" | wmiir create "/lbar/$tag" 
+	else
+		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag"
+	fi
+done
+
+# Stop any running instances of wmiirc
+echo Start wmiirc | wmiir write /event || exit 1
+
+} | wmiiloop | tee /dev/fd/2 | sh

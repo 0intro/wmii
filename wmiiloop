@@ -1,10 +1,7 @@
-#!/usr/bin/awk
-// && !begin, /# Events/ {
+#!/usr/bin/awk -f
+/^#/ && $2 !~ /^Events|Actions|Key$/ || !begin, \
+/^#/ && $2 ~ /^(Events|Actions|Key)$/ {
 	begin = 1
-	print
-	next
-}
-/^#/ && $2 != "Events", 0 {
 	print
 	next
 }

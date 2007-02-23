@@ -20,8 +20,8 @@ syntax to simplify writing a wmii event loop.
 .B eventloop
 sends any text up to the first line containing
 .I # 
-.IR Events ,
-and any text after any line begining with
+.IR Events|Actions|Key ,
+and any text after any other line begining with
 .IR # ,
 directly to its standard output. Any other line is processed based
 on its first word, with every indented line after it taken as its
