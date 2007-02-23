@@ -219,11 +219,11 @@ init_traps() {
 	int fd[2];
 
 	if(pipe(fd) != 0)
-		fatal("Can't pipe(): %s\n", strerror(errno));;
+		fatal("Can't pipe(): %s\n", strerror(errno));
 
 	switch(fork()) {
 	case -1:
-		fatal("Can't fork(): %s\n", strerror(errno));;
+		fatal("Can't fork(): %s\n", strerror(errno));
 	default:
 		close(fd[0]);
 		sa.sa_flags = 0;
