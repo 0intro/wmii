@@ -239,13 +239,14 @@ draw_frame(Frame *f) {
 	br.border = 1;
 	br.rect.width += br.rect.x;
 	br.rect.x = 0;
-	f->titlebar.x = br.rect.x + 1;
-	f->titlebar.height = br.rect.height - 1;
-	f->titlebar.y = br.rect.y + 1;
-	f->titlebar.width = br.rect.width - 2;
+	f->titlebar.x = br.rect.x + 3;
+	f->titlebar.height = br.rect.height - 3;
+	f->titlebar.y = br.rect.y + 3;
+	f->titlebar.width = br.rect.width - 6;
 	draw_border(&br);
 	br.rect.height = f->rect.height;
-	draw_border(&br);
+	if(def.border)
+		draw_border(&br);
 
 	if(f->client->urgent)
 		br.color.bg = br.color.fg;

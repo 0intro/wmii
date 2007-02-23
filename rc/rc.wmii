@@ -167,6 +167,7 @@ fn Key-$MODKEY-Shift-c {
 }
 fn Key-$MODKEY-Shift-t {
 	wmiir xwrite /client/`{wmiir read /client/sel/ctl}^/tags `{read_tags | wmiimenu} &
+}
 
 for(i in `{seq 0 9}) {
 	fn Key-$MODKEY-$i {
