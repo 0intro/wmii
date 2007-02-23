@@ -1,10 +1,18 @@
 #!/bin/sh
 # start wmiiwm and wait for its termination
 
-WMII_CONFPATH="$HOME/.wmii-CONFVERSION:CONFPREFIX/wmii-CONFVERSION" export WMII_CONFPATH
-WMII_NS_DIR="/tmp/ns.$USER.${DISPLAY%.0}" export WMII_NS_DIR
-WMII_ADDRESS="unix!$WMII_NS_DIR/wmii" export WMII_ADDRESS
-mkdir -m 700 "$WMII_NS_DIR" 2>/dev/null
+export WMII_CONFPATH="$HOME/.wmii-CONFVERSION:CONFPREFIX/wmii-CONFVERSION"
+export WMII_NS_DIR="/tmp/ns.$USER.${DISPLAY%.0}"
+export WMII_ADDRESS="unix!$WMII_NS_DIR/wmii"
 
+if [ -x /usr/local/plan9/bin/rc ]; then
+	WMIIRC=`PATH="$WMII_CONFPATH:$PATH" which rc.wmii`
+elif [ -n "$PLAN9" ]; then
+	WMIIRC="$PLAN9/bin/rc `PATH="$WMII_CONFPATH:$PATH" which rc.wmii`"
+else
+	WMIIRC=`PATH="$WMII_CONFPATH:$PATH" which wmiirc`
+fi
+
+mkdir -m 700 "$WMII_NS_DIR" 2>/dev/null
 mkdir $HOME/.wmii-CONFVERSION 2>/dev/null && CONFPREFIX/wmii-CONFVERSION/welcome &
-exec wmiiwm -a $WMII_ADDRESS -r `PATH="$WMII_CONFPATH:$PATH" which wmiirc` $@
+exec wmiiwm -a $WMII_ADDRESS -r "$WMIIRC" $@

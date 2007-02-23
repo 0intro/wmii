@@ -1,49 +1,29 @@
 #!/bin/sh
 # Configure wmii
 
-# Contents
-#  Configuration Variables
-#  WM Configuration
-#  Column Rules
-#  Tagging Rules
-#  Utility Functions
-#  Tag Bar Setup
-#  List of Bound Keys
-#  Event Processing Loop
-
-# CONFIGURATION VARIABLES
+# Configuration Variables
 MODKEY=Mod1
 UP=k
 DOWN=j
 LEFT=h
 RIGHT=l
 
-WMII_FONT='-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*'
 # Colors tuples are "<text> <background> <border>"
-WMII_NORMCOLORS='#222222 #eeeeee #666666'
-WMII_FOCUSCOLORS='#ffffff #335577 #447799'
+WMII_NORMCOLORS='#222222 #5FBF77 #2A7F3F'
+WMII_FOCUSCOLORS='#ffffff #153F1F #2A7F3F'
 WMII_BACKGROUND='#333333'
+WMII_FONT='-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*'
 
-WMII_MENU="dmenu -b -fn $WMII_FONT -nb #eeeeee -nf #222222 -sb #335577 -sf #ffffff"
 WMII_TERM="xterm"
-
+WMII_MENU="dmenu -b -fn '$WMII_FONT' -nb '#5FBF77' -nf '#222222' -sb '#153F1F' -sf '#ffffff'"
 export WMII_MENU WMII_FONT WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS WMII_TERM
 
-# WM CONFIGURATION
-wmiir write /ctl << EOF
-font $WMII_FONT
-focuscolors $WMII_FOCUSCOLORS
-normcolors $WMII_NORMCOLORS
-grabmod $MODKEY
-border 1
-EOF
-
-# COLUMN RULES
+# Column Rules
 wmiir write /colrules <<EOF
 /.*/ -> 58+42
 EOF
 
-# TAGGING RULES
+# Tagging Rules
 wmiir write /tagrules <<EOF
 /XMMS.*/ -> ~
 /Gimp.*/ -> gimp
@@ -52,46 +32,155 @@ wmiir write /tagrules <<EOF
 /.*/ -> 1
 EOF
 
-# FUNCTIONS
+# Event processing
+{
+cat <<EOF
+# Status Bar Info
+status() {
+	echo -n \$(uptime | sed 's/.*://; s/,//g') '|' \$(date)
+}
+
+# Events
+Event Start
+	case "\$1" in
+	wmiirc)
+		exit;;
+	exac
+Event CreateTag
+	echo "$WMII_NORMCOLORS" "\$@" | wmiir create "/lbar/\$@"
+Event DestroyTag
+	wmiir remove "/lbar/\$@"
+Event FocusTag
+	wmiir xwrite "/lbar/\$@" "$WMII_FOCUSCOLORS" "\$@"
+Event UnfocusTag
+	wmiir xwrite "/lbar/\$@" "$WMII_NORMCOLORS" "\$@"
+Event UrgentTag
+	shift
+	wmiir xwrite "/lbar/\$@" "*\$@"
+Event NotUrgentTag
+	shift
+	wmiir xwrite "/lbar/\$@" "\$@"
+Event LeftBarClick
+	shift
+	wmiir xwrite /ctl view "\$@"
+# Actions
+Action quit
+	wmiir xwrite /ctl quit
+Action rehash
+	proglist $PATH >$PROGS_FILE
+Action status
+	if wmiir remove /rbar/status 2>/dev/null; then
+		sleep 2
+	fi
+	echo $WMII_NORMCOLORS | wmiir create /rbar/status
+	while status | wmiir write /rbar/status; do
+		sleep 1
+	done
+# Key Bindings
+Key $MODKEY-$LEFT
+	wmiir xwrite /tag/sel/ctl select left
+Key $MODKEY-$RIGHT
+	wmiir xwrite /tag/sel/ctl select right
+Key $MODKEY-$DOWN
+	wmiir xwrite /tag/sel/ctl select down
+Key $MODKEY-$UP
+	wmiir xwrite /tag/sel/ctl select up
+Key $MODKEY-space
+	wmiir xwrite /tag/sel/ctl select toggle
+Key $MODKEY-d
+	wmiir xwrite /tag/sel/ctl colmode sel default
+Key $MODKEY-s
+	wmiir xwrite /tag/sel/ctl colmode sel stack
+Key $MODKEY-m
+	wmiir xwrite /tag/sel/ctl colmode sel max
+Key $MODKEY-a
+	Action \$(actionlist | $WMII_MENU) &
+Key $MODKEY-p
+	sh -c "\$($WMII_MENU <$PROGS_FILE)" &
+Key $MODKEY-t
+	wmiir xwrite /ctl "view \$(tagsmenu)" &
+Key $MODKEY-Return
+	$WMII_TERM &
+Key $MODKEY-Shift-$LEFT
+	wmiir xwrite /tag/sel/ctl send sel left
+Key $MODKEY-Shift-$RIGHT
+	wmiir xwrite /tag/sel/ctl send sel right
+Key $MODKEY-Shift-$DOWN
+	wmiir xwrite /tag/sel/ctl send sel down
+Key $MODKEY-Shift-$UP
+	wmiir xwrite /tag/sel/ctl send sel up
+Key $MODKEY-Shift-space
+	wmiir xwrite /tag/sel/ctl send sel toggle
+Key $MODKEY-Shift-c
+	wmiir xwrite /client/sel/ctl kill
+Key $MODKEY-Shift-t
+	wmiir xwrite "/client/\$(wmiir read /client/sel/ctl)/tags" "\$(tagsmenu)" &
+EOF
+for i in 0 1 2 3 4 5 6 7 8 9; do
+	cat << EOF
+Key $MODKEY-$i
+	wmiir xwrite /ctl view "\$(echo \$key | sed 's/.*-//')"
+Key $MODKEY-Shift-$i
+	wmiir xwrite /client/sel/tags "\$(echo \$key | sed 's/.*-//')"
+EOF
+done
+
+cat <<EOF
+# Functions
 proglist() {
-	ls -lL "$@" 2>/dev/null |
-		awk '$1 ~ /^[^d].*x/ { print $NF }' |
+	paths=\$(echo "\$@" | sed 'y/:/ /')
+	ls -lL \$paths 2>/dev/null |
+		awk '\$1 ~ /^[^d].*x/ { print \$NF }' |
 		sort | uniq
 }
 
+actionlist() {
+	{
+		proglist $WMII_CONFPATH
+		echo \$ACTIONS | tr ' ' '\012'
+	} | sort | uniq
+}
+
 conf_which () {
-	prog=$1; shift
-	if [ -n "$prog" ]; then
-		echo `PATH="$WMII_CONFPATH:$PATH" which $prog` "$@"
-	fi
+	echo \$(PATH="$WMII_CONFPATH:$PATH" which \$1) "\$@"
 }
 
 tagsmenu() {
         wmiir ls /tag | sed "s|/||; /^sel\$/d" | $WMII_MENU
 }
 
-# MISC
-PROGS_FILE="$WMII_NS_DIR/.dmenu.proglist"
-ACTIONS_DIRS=`echo "$WMII_CONFPATH" | sed 'y/:/ /'`
+Action() {
+	action=\$1; shift
+	if [ -n "\$action" ]; then
+		Action-\$action \$@ || \$(conf_which "\$action") \$@
+	fi
+}
 
-`conf_which status` &
-xsetroot -solid $WMII_BACKGROUND &
-proglist `echo "$PATH" | sed 'y/:/ /'` >$PROGS_FILE &
+# Misc
+PROGS_FILE="$WMII_NS_DIR/.proglist"
+Action status &
+proglist $PATH >$PROGS_FILE &
+EOF
 
-# Stop any running instances of wmiirc
-if ! echo Start wmiirc | wmiir write /event
-then
-	exit 1
-fi
+xsetroot -solid "$WMII_BACKGROUND" &
 
-# SETUP TAG BAR
+# WM Configuration
+wmiir write /ctl << EOF
+font $WMII_FONT
+focuscolors $WMII_FOCUSCOLORS
+normcolors $WMII_NORMCOLORS
+grabmod $MODKEY
+border 1
+EOF
+
+# Setup Tag Bar
 wmiir ls /lbar |
 while read bar
 do
 	wmiir remove "/lbar/$bar"
 done
 
-seltag="`wmiir read /tag/sel/ctl 2>/dev/null`"
+seltag="$(wmiir read /tag/sel/ctl 2>/dev/null)"
 wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
 while read tag
 do
@@ -102,132 +191,7 @@ do
 	fi
 done
 
-# BOUND KEYS
-wmiir write /keys <<EOF
-$MODKEY-$LEFT
-$MODKEY-$RIGHT
-$MODKEY-$DOWN
-$MODKEY-$UP
-$MODKEY-space
-$MODKEY-d
-$MODKEY-s
-$MODKEY-m
-$MODKEY-a
-$MODKEY-p
-$MODKEY-t
-$MODKEY-0
-$MODKEY-1
-$MODKEY-2
-$MODKEY-3
-$MODKEY-4
-$MODKEY-5
-$MODKEY-6
-$MODKEY-7
-$MODKEY-8
-$MODKEY-9
-$MODKEY-Return
-$MODKEY-Shift-$LEFT
-$MODKEY-Shift-$RIGHT
-$MODKEY-Shift-$UP
-$MODKEY-Shift-$DOWN
-$MODKEY-Shift-space
-$MODKEY-Shift-c
-$MODKEY-Shift-t
-$MODKEY-Shift-0
-$MODKEY-Shift-1
-$MODKEY-Shift-2
-$MODKEY-Shift-3
-$MODKEY-Shift-4
-$MODKEY-Shift-5
-$MODKEY-Shift-6
-$MODKEY-Shift-7
-$MODKEY-Shift-8
-$MODKEY-Shift-9
-EOF
+# Stop any running instances of wmiirc
+echo Start wmiirc | wmiir write /event || exit 1
 
-# EVENT LOOP
-wmiir read /event 2>/dev/null |
-while read event
-do
-	set -f
-	set -- $event
-	set +f
-	type="$1"; shift
-	parms="$@"
-	case "$type" in
-	Start)
-		if test "$1" = "wmiirc"
-		then
-			exit
-		fi;;
-	CreateTag)
-		echo "$WMII_NORMCOLORS" "$parms" | wmiir create "/lbar/$parms"
-		;;
-	DestroyTag)
-		wmiir remove "/lbar/$parms"
-		;;
-	FocusTag)
-		wmiir xwrite "/lbar/$parms" "$WMII_FOCUSCOLORS" "$parms"
-		;;
-	UnfocusTag)
-		wmiir xwrite "/lbar/$parms" "$WMII_NORMCOLORS" "$parms"
-		;;
-	UrgentTag)
-		shift
-		wmiir xwrite "/lbar/$@" "*$@"
-		;;
-	NotUrgentTag)
-		shift
-		wmiir xwrite "/lbar/$@" "$@"
-		;;
-	LeftBarClick)
-		shift
-		wmiir xwrite /ctl view "$@";;
-	Key)
-		key="$1"
-		case "$key" in
-		$MODKEY-$LEFT)
-			wmiir xwrite /tag/sel/ctl select left;;
-		$MODKEY-$RIGHT)
-			wmiir xwrite /tag/sel/ctl select right;;
-		$MODKEY-$DOWN)
-			wmiir xwrite /tag/sel/ctl select down;;
-		$MODKEY-$UP)
-			wmiir xwrite /tag/sel/ctl select up;;
-		$MODKEY-space)
-			wmiir xwrite /tag/sel/ctl select toggle;;
-		$MODKEY-d)
-			wmiir xwrite /tag/sel/ctl colmode sel default;;
-		$MODKEY-s)
-			wmiir xwrite /tag/sel/ctl colmode sel stack;;
-		$MODKEY-m)
-			wmiir xwrite /tag/sel/ctl colmode sel max;;
-		$MODKEY-a)
-			`conf_which "$(proglist $ACTIONS_DIRS | $WMII_MENU)"` &;;
-		$MODKEY-p)
-			sh -c "`$WMII_MENU <$PROGS_FILE`" &;;
-		$MODKEY-t)
-			wmiir xwrite /ctl "view `tagsmenu`" &;;
-		$MODKEY-[0-9])
-			wmiir xwrite /ctl view "`echo $key | sed 's/.*-//'`";;
-		$MODKEY-Return)
-			$WMII_TERM &;;
-		$MODKEY-Shift-$LEFT)
-			wmiir xwrite /tag/sel/ctl send sel left;;
-		$MODKEY-Shift-$RIGHT)
-			wmiir xwrite /tag/sel/ctl send sel right;;
-		$MODKEY-Shift-$DOWN)
-			wmiir xwrite /tag/sel/ctl send sel down;;
-		$MODKEY-Shift-$UP)
-			wmiir xwrite /tag/sel/ctl send sel up;;
-		$MODKEY-Shift-space)
-			wmiir xwrite /tag/sel/ctl send sel toggle;;
-		$MODKEY-Shift-c)
-			wmiir xwrite /client/sel/ctl kill;;
-		$MODKEY-Shift-t)
-			wmiir xwrite "/client/`wmiir read /client/sel/ctl`/tags" "`tagsmenu`" &;;
-		$MODKEY-Shift-[0-9])
-			wmiir xwrite /client/sel/tags "`echo $key | sed 's/.*-//'`";;
-		esac;;
-	esac
-done &
+} | wmiiloop | tee /dev/fd/2 | sh
