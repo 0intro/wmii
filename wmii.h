@@ -348,6 +348,7 @@ extern void remove_frame(Frame *f);
 extern void insert_frame(Frame *pos, Frame *f, Bool before);
 extern void resize_frame(Frame *f, XRectangle *r);
 extern Bool frame_to_top(Frame *f);
+extern void set_frame_cursor(Frame *f, int x, int y);
 extern void swap_frames(Frame *fa, Frame *fb);
 extern int frame_delta_h();
 extern void draw_frame(Frame *f);

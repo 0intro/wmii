@@ -169,14 +169,20 @@ static void
 enternotify(XEvent *e) {
 	XCrossingEvent *ev = &e->xcrossing;
 	Client *c;
+	Frame *f;
 
-	if(ev->mode != NotifyNormal || ev->detail == NotifyInferior)
+	if(ev->mode != NotifyNormal)
 		return;
 	if((c = client_of_win(ev->window))) {
-		if(c->sel->area->mode == Colmax)
-			c = c->sel->area->sel->client;
-		focus(c, False);
-		set_cursor(c, cursor[CurNormal]);
+		if(ev->detail != NotifyInferior) {
+			focus(c, False);
+			set_cursor(c, cursor[CurNormal]);
+		}
+	}
+	else if((f = frame_of_win(ev->window))) {
+		if(f->area->floating || !f->collapsed)
+			focus(f->client, False);
+		set_frame_cursor(f, ev->x, ev->y);
 	}
 	else if(ev->window == blz.root) {
 		sel_screen = True;
@@ -337,17 +343,10 @@ maprequest(XEvent *e) {
 static void
 motionnotify(XEvent *e) {
 	XMotionEvent *ev = &e->xmotion;
-	Cursor cur;
 	Frame *f;
 	
-	if((f = frame_of_win(ev->window))) {
-		if(!ispointinrect(ev->x, ev->y, &f->titlebar)
-		 &&!ev->subwindow) {
-			cur = cursor_of_quad(quadofcoord(&f->rect, ev->x_root, ev->y_root));
-			set_cursor(f->client, cur);
-		}else
-			set_cursor(f->client, cursor[CurNormal]);
-	}
+	if((f = frame_of_win(ev->window)))
+		set_frame_cursor(f, ev->x, ev->y);
 }
 
 static void

@@ -51,6 +51,7 @@ create_client(Window w, XWindowAttributes *wa) {
 		  SubstructureRedirectMask
 		| SubstructureNotifyMask
 		| ExposureMask
+		| EnterWindowMask
 		| PointerMotionMask
 		| KeyPressMask
 		| ButtonPressMask

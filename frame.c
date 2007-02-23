@@ -114,6 +114,22 @@ resize_frame(Frame *f, XRectangle *r) {
 	}
 }
 
+void
+set_frame_cursor(Frame *f, int x, int y) {
+	XRectangle r;
+	Cursor cur;
+
+	if(!ispointinrect(x, y, &f->titlebar)
+	 &&!ispointinrect(x, y, &f->crect)) {
+	 	r = f->rect;
+	 	r.x = 0;
+	 	r.y = 0;
+	 	cur = cursor_of_quad(quadofcoord(&r, x, y));
+		set_cursor(f->client, cur);
+	}else
+		set_cursor(f->client, cursor[CurNormal]);
+}
+
 Bool
 frame_to_top(Frame *f) {
 	Frame **tf;
