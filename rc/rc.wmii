@@ -178,15 +178,6 @@ for(i in `{seq 0 9}) {
 	}
 }
 
-# WM Configuration
-wmiir write /ctl <<!
-grabmod $MODKEY
-border 2
-font $WMII_FONT
-focuscolors $WMII_FOCUSCOLORS
-normcolors $WMII_NORMCOLORS
-!
-
 # Functions
 fn proglist {
         /bin/ls -lL `{echo $* | tr : ' '} >[2]/dev/null |
@@ -215,6 +206,19 @@ fn run_command {
 	path=$oldpath \
 	eval exec $* </dev/null
 }
+
+local = `{config_whatis rc.wmii.local}
+if(! ~ $#local 0)
+	. $local
+
+# WM Configuration
+wmiir write /ctl <<!
+grabmod $MODKEY
+border 2
+font $WMII_FONT
+focuscolors $WMII_FOCUSCOLORS
+normcolors $WMII_NORMCOLORS
+!
 
 # Misc Setup
 xsetroot -solid $WMII_BACKGROUND
