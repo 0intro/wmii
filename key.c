@@ -195,7 +195,8 @@ void
 kpress(Window w, ulong mod, KeyCode keycode) {
 	Key *k, *found;
 
-	for(k=key; k; k->tnext=k->lnext, k=k->lnext);
+	for(k=key; k; k=k->lnext)
+		 k->tnext=k->lnext;
 	found = match_keys(key, mod, keycode, False);
 	if(!found) {
 		XBell(blz.dpy, 0);

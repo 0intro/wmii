@@ -67,16 +67,16 @@ typedef struct {
 static void
 snap_line(SnapArgs *a) {
 	int i, t_xy;
-	
+
 	/* horizontal */
 	if(a->y1 == a->y2 && (a->mask & (NORTH|SOUTH))) {
 		for(i=0; i < a->num; i++) {
 			if(!(r_east(&a->rects[i]) < a->x1) ||
 				(a->rects[i].x > a->x2)) {
-				
+
 				if(abs(a->rects[i].y - a->y1) <= abs(*a->delta))
 					*a->delta = a->rects[i].y - a->y1;
-				
+
 				t_xy = r_south(&a->rects[i]);
 				if(abs(t_xy - a->y1) < abs(*a->delta))
 					*a->delta = t_xy - a->y1;
@@ -89,10 +89,10 @@ snap_line(SnapArgs *a) {
 		for(i=0; i < a->num; i++) {
 			if(!(r_south(&a->rects[i]) < a->y1) ||
 				(a->rects[i].y > a->y2)) {
-				
+
 				if(abs(a->rects[i].x - a->x1) <= abs(*a->delta))
 					*a->delta = a->rects[i].x - a->x1;
-				
+
 				t_xy = r_east(&a->rects[i]);
 				if(abs(t_xy - a->x1) < abs(*a->delta))
 					*a->delta = t_xy - a->x1;
@@ -120,7 +120,7 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 		a.y2 = a.y1 = r_south(current);
 		snap_line(&a);
 	}
-	
+
 	a.y1 = current->y;
 	a.y2 = r_south(current);
 	a.delta = &dx;
@@ -132,7 +132,7 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 		a.x1 = a.x2 = current->x;
 		snap_line(&a);
 	}
-	
+
 	rect_morph_xy(current, abs(dx) <= snap ? dx : 0,
 			abs(dy) <= snap ? dy : 0, mask);
 

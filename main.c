@@ -18,9 +18,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-Bool verbose;
-Bool starting;
-Client c_magic = { 0 };
 static Bool check_other_wm;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";

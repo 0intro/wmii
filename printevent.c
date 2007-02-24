@@ -130,7 +130,7 @@ ServerTime(Time time)
 if(0)
     sprintf(buffer, "%lu day%s %02lu:%02lu:%02lu.%03lu",
       day, day == 1 ? "" : "(s)", hr, min, sec, msec);
-      
+
     sprintf(buffer, "%lud%luh%lum%lu.%03lds", day, hr, min, sec, msec);
     return (buffer);
 }
@@ -773,7 +773,7 @@ VerbVisibility(XVisibilityEvent *ev)
 char *eventtype(XEvent *ev)
 {
     static char buffer[20];
-    
+
     switch (ev->type) {
     case KeyPress:
 	return ("KeyPress");

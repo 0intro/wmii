@@ -11,14 +11,16 @@ LEFT=h
 RIGHT=l
 
 WMII_FONT='fixed'
-WMII_NORMCOLORS='#222222 #5FBF77 #2A7F3F'
-WMII_FOCUSCOLORS='#ffffff #153F1F #2A7F3F'
+WMII_NORMCOLORS=('#222222' '#5FBF77' '#2A7F3F')
+WMII_FOCUSCOLORS=('#ffffff' '#153F1F' '#2A7F3F')
 WMII_BACKGROUND='#333333'
 
 WMII_TERM=(xterm)
 
 fn wmiimenu {
-	dmenu -b -fn $WMII_FONT -nb '#5FBF7e' -nf '#222222' -sb '#153F1F' -sf '#ffffff'
+	dmenu -b -fn $WMII_FONT \
+		-nf $WMII_NORMCOLORS(1) -nb $WMII_NORMCOLORS(2) \
+		-sf $WMII_FOCUSCOLORS(1) -sb $WMII_FOCUSCOLORS(2)
 }
 
 # Column Rules

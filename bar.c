@@ -31,7 +31,7 @@ create_bar(Bar **b_link, char *name) {
 			break;
 	b->next = *i;
 	*i = b;
-	
+
 	return b;
 }
 

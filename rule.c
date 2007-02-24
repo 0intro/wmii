@@ -20,7 +20,7 @@ void
 trim(char *str, const char *chars) {
 	const char *cp;
 	char *sp, *sn;
-   
+
 	for(cp = chars; *cp; cp++) {
 		for(sp = sn = str; *sn; sn++) {
 			if(*sn != *cp)

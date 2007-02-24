@@ -254,7 +254,7 @@ unmap_client(Client *c, int state) {
 void
 set_cursor(Client *c, Cursor cur) {
 	XSetWindowAttributes wa;
-	
+
 	if(c->cursor != cur) {
 		c->cursor = cur;
 		wa.cursor = cur;
@@ -413,13 +413,15 @@ prop_client(Client *c, XPropertyEvent *e) {
 
 void
 gravitate_client(Client *c, Bool invert) {
-	int dx = 0, dy = 0;
-	int gravity = NorthWestGravity;
+	int dx, dy;
+	int gravity;
 
+	gravity = NorthWestGravity;
 	if(c->size.flags & PWinGravity) {
 		gravity = c->size.win_gravity;
 	}
-	/* y */
+
+	dy = 0;
 	switch (gravity) {
 	case StaticGravity:
 	case NorthWestGravity:
@@ -440,7 +442,8 @@ gravitate_client(Client *c, Bool invert) {
 	default:
 		break;
 	}
-	/* x */
+
+	dx = 0;
 	switch (gravity) {
 	case StaticGravity:
 	case NorthWestGravity:

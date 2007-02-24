@@ -44,7 +44,7 @@ buttonpress(XEvent *e) {
 	Frame *f;
 	Bool inclient;
 	XButtonPressedEvent *ev;
-	
+
 	ev = &e->xbutton;
 	if((f = frame_of_win(ev->window))) {
 		inclient = (ev->subwindow == f->client->win);
@@ -344,7 +344,7 @@ static void
 motionnotify(XEvent *e) {
 	XMotionEvent *ev = &e->xmotion;
 	Frame *f;
-	
+
 	if((f = frame_of_win(ev->window)))
 		set_frame_cursor(f, ev->x, ev->y);
 }

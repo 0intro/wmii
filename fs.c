@@ -202,12 +202,12 @@ write_to_buf(P9Req *r, void *buf, uint *len, uint max) {
 		count = max - offset;
 
 	*len = offset + count;
-	
+
 	if(max == 0) {
 		*(void **)buf = erealloc(*(void **)buf, *len + 1);
 		buf = *(void **)buf;
 	}
-		
+
 	memcpy(buf + offset, r->ifcall.data, count);
 	r->ofcall.count = count;
 	((char *)buf)[offset+count] = '\0';
