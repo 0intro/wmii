@@ -96,7 +96,7 @@ Key $MODKEY-m
 Key $MODKEY-a
 	Action \$(actionlist | $WMII_MENU) &
 Key $MODKEY-p
-	sh -c "\$($WMII_MENU <$PROGS_FILE)" &
+	sh -c "\$($WMII_MENU <\$PROGS_FILE)" &
 Key $MODKEY-t
 	wmiir xwrite /ctl "view \$(tagsmenu)" &
 Key $MODKEY-Return
@@ -155,7 +155,7 @@ Action() {
 # Misc
 PROGS_FILE="$WMII_NS_DIR/.proglist"
 Action status &
-proglist $PATH >$PROGS_FILE &
+proglist $PATH >\$PROGS_FILE &
 EOF
 
 xsetroot -solid "$WMII_BACKGROUND" &
