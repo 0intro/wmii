@@ -23,6 +23,10 @@ fn wmiimenu {
 		-sf $WMII_FOCUSCOLORS(1) -sb $WMII_FOCUSCOLORS(2)
 }
 
+local = `{config_whatis rc.wmii.var}
+if(! ~ $#local 0)
+	. $local
+
 # Column Rules
 wmiir write /colrules <<!
 /./ -> 60+40
