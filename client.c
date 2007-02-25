@@ -398,7 +398,7 @@ prop_client(Client *c, XPropertyEvent *e) {
 				c->fixedsize = True;
 		break;
 	case XA_WM_HINTS:
-		wmh = XGetWMHints(blz.dpy, c->win;
+		wmh = XGetWMHints(blz.dpy, c->win);
 		if(wmh) {
 			set_urgent(c, (wmh->flags & XUrgencyHint) != 0, False);
 			XFree(wmh);
