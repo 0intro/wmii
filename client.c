@@ -233,9 +233,9 @@ map_client(Client *c) {
 		XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 		XMapWindow(blz.dpy, c->win);
 		XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+		set_client_state(c, NormalState);
+		c->mapped = 1;
 	}
-	set_client_state(c, NormalState);
-	c->mapped = 1;
 }
 
 void
@@ -244,11 +244,10 @@ unmap_client(Client *c, int state) {
 		XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
 		XUnmapWindow(blz.dpy, c->win);
 		XSelectInput(blz.dpy, c->win, CLIENT_MASK);
-	/* Always set this, since we don't care anymore once it's been destroyed */
 		c->unmapped++;
+		set_client_state(c, state);
+		c->mapped = 0;
 	}
-	set_client_state(c, state);
-	c->mapped = 0;
 }
 
 void
@@ -399,9 +398,11 @@ prop_client(Client *c, XPropertyEvent *e) {
 				c->fixedsize = True;
 		break;
 	case XA_WM_HINTS:
-		wmh = XGetWMHints(blz.dpy, c->win);
-		set_urgent(c, (wmh->flags & XUrgencyHint) != 0, False);
-		XFree(wmh);
+		wmh = XGetWMHints(blz.dpy, c->win;
+		if(wmh) {
+			set_urgent(c, (wmh->flags & XUrgencyHint) != 0, False);
+			XFree(wmh);
+		}
 		break;
 	}
 	if(e->atom == XA_WM_NAME || e->atom == net_atom[NetWMName]) {
@@ -480,7 +481,7 @@ dummy_error_handler(Display *dpy, XErrorEvent *error) {
 
 void
 destroy_client(Client *c) {
-	char *dummy = nil;
+	char *dummy;
 	Client **tc;
 
 	XGrabServer(blz.dpy);
@@ -491,6 +492,7 @@ destroy_client(Client *c) {
 			break;
 		}
 
+	dummy = nil;
 	update_client_views(c, &dummy);
 
 	unmap_client(c, WithdrawnState);
@@ -510,10 +512,13 @@ destroy_client(Client *c) {
 
 void
 match_sizehints(Client *c, XRectangle *r, Bool floating, BlitzAlign sticky) {
-	XSizeHints *s = &c->size;
-	uint dx = 2 * def.border;
-	uint dy = def.border + labelh(&def.font);
+	XSizeHints *s;
+	uint dx, dy;
 	uint hdiff, wdiff;
+
+	s = &c->size;
+	dx = 2 * def.border;
+	dy = def.border + labelh(&def.font);
 
 	if(floating && (s->flags & PMinSize)) {
 		if(r->width < s->min_width + dx) {
@@ -771,10 +776,10 @@ send_area:
 
 void
 update_client_views(Client *c, char **tags) {
+	Frame **fp, *f;
 	int cmp;
-	Frame *f;
-	Frame **fp = &c->frame;
 
+	fp = &c->frame;
 	while(*fp || *tags) {
 		while(*fp) {
 			if(*tags) {
