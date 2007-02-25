@@ -72,7 +72,7 @@ Action status
 	if wmiir remove /rbar/status 2>/dev/null; then
 		sleep 2
 	fi
-	echo $WMII_NORMCOLORS | wmiir create /rbar/status
+	echo "$WMII_NORMCOLORS" | wmiir create /rbar/status
 	while status | wmiir write /rbar/status; do
 		sleep 1
 	done
@@ -142,7 +142,7 @@ actionlist() {
 }
 
 conf_which () {
-	echo \$(PATH="$WMII_CONFPATH:$PATH" which \$1) "\$@"
+	echo \$({export PATH="$WMII_CONFPATH:$PATH"; which \$1}) "\$@"
 }
 
 tagsmenu() {
@@ -194,4 +194,4 @@ done
 # Stop any running instances of wmiirc
 echo Start wmiirc | wmiir write /event || exit 1
 
-} | wmiiloop | tee /dev/fd/2 | sh
+} | wmiiloop | sh

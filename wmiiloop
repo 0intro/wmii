@@ -10,6 +10,7 @@ BEGIN {
 	arg[1] = "Nop"
 	writekeys = "wmiir write /keys"
 	readevent = "wmiir read /event"
+	print "ACTIONS=\"\""
 }
 
 function addevent() {
@@ -20,7 +21,11 @@ function addevent() {
 		events[arg[2]] = body
 	}
 	else if(arg[1] == "Action") {
-		actions[arg[2]] = body
+		action = arg[2];
+		actions[action] = body
+		gsub("\"", "\\\"", action)
+		print "ACTIONS=\"$ACTIONS\n" action "\""
+		print "Action_" action "() {" actions[action] "\n}"
 	}
 }
 
@@ -37,12 +42,6 @@ END {
 	for(key in keys)
 		print key | writekeys
 	close(writekeys)
-	print "ACTIONS=\"\""
-	for(action in actions) {
-		gsub("\"", "\\\"", action)
-		print "ACTIONS=\"$ACTIONS\n" action "\""
-		print "Action_" action "() {" actions[action] "\n}"
-	}
 	while(readevent | getline) {
 		split($0, arg)
 		sub("^[a-zA-Z]+[ \t]+", "")
