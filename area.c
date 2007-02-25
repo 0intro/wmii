@@ -412,11 +412,13 @@ select_area(Area *a, char *arg) {
 		p = f->anext ? f->anext : a->frame;
 		goto focus_frame;
 	}
-	else {
-		if(sscanf(arg, "%d", &i) != 1)
+	else if(!strncmp(arg, "~", 2)) {
+		new = v->area;
+	}else {
+		if(sscanf(arg, "%u", &i) != 1 || i == 0)
 			return Ebadvalue;
-		for(new=view->area; new->next; new=new->next)
-			if(!--i) break;;
+		for(new=view->area->next; new->next && i; new=new->next)
+			if(!--i) break;
 	}
 	focus_area(new);
 	return nil;
