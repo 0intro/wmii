@@ -67,7 +67,7 @@ Event LeftBarClick
 Action quit
 	wmiir xwrite /ctl quit
 Action rehash
-	proglist $PATH >$PROGS_FILE
+	proglist $PATH >\$PROGS_FILE
 Action status
 	if wmiir remove /rbar/status 2>/dev/null; then
 		sleep 2
