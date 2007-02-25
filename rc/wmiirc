@@ -141,10 +141,6 @@ actionlist() {
 	} | sort | uniq
 }
 
-conf_which () {
-	echo \$({export PATH="$WMII_CONFPATH:$PATH"; which \$1}) "\$@"
-}
-
 tagsmenu() {
         wmiir ls /tag | sed "s|/||; /^sel\$/d" | $WMII_MENU
 }
@@ -152,7 +148,7 @@ tagsmenu() {
 Action() {
 	action=\$1; shift
 	if [ -n "\$action" ]; then
-		Action_\$action \$@ || \$(conf_which "\$action") \$@
+		Action_\$action \$@ || PATH=$WMII_CONFPATH \$action \$@
 	fi
 }
 
