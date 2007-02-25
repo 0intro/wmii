@@ -41,7 +41,7 @@ END {
 	for(action in actions) {
 		gsub("\"", "\\\"", action)
 		print "ACTIONS=\"$ACTIONS\n" action "\""
-		print "Action-" action "() {" actions[action] "\n}"
+		print "Action_" action "() {" actions[action] "\n}"
 	}
 	while(readevent | getline) {
 		split($0, arg)

@@ -417,7 +417,7 @@ select_area(Area *a, char *arg) {
 	}else {
 		if(sscanf(arg, "%u", &i) != 1 || i == 0)
 			return Ebadvalue;
-		for(new=view->area->next; new->next && i; new=new->next)
+		for(new=view->area->next; new->next; new=new->next)
 			if(!--i) break;
 	}
 	focus_area(new);

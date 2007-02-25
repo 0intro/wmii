@@ -152,7 +152,7 @@ tagsmenu() {
 Action() {
 	action=\$1; shift
 	if [ -n "\$action" ]; then
-		Action-\$action \$@ || \$(conf_which "\$action") \$@
+		Action_\$action \$@ || \$(conf_which "\$action") \$@
 	fi
 }
 
