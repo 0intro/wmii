@@ -25,9 +25,8 @@ fn wmiimenu {
 
 fn 9menu {
 	wmii9menu -teleport -font $WMII_FONT \
-		-nf $WMII_NORMCOLORS(1) -nb $WMII_NORMCOLORS(2) \
-		-sf $WMII_FOCUSCOLORS(1) -sb $WMII_FOCUSCOLORS(2) \
-		-br $WMII_FOCUSCOLORS(3) $*
+		-^(nf nb br)^$WMII_NORMCOLORS \
+		-^(sf sb br)^$WMII_FOCUSCOLORS $*
 }
 
 fn config_whatis {
@@ -152,7 +151,7 @@ for(i in `{seq 0 9}) {
 
 # Functions
 fn proglist {
-        /bin/ls -lL `{echo $* | sed 'y/ /:'} >[2]/dev/null \
+        /bin/ls -lL `{echo $* | sed 'y/:/ /'} >[2]/dev/null \
 		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
 		| sort | uniq
 }

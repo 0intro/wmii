@@ -1,5 +1,6 @@
 # window manager improved 2 - window manager improved 2
 #   (C)opyright MMVI Anselm R. Garbe
+.POSIX:
 
 include config.mk
 
@@ -58,9 +59,9 @@ install: all
 	@echo installing executable files to ${DESTDIR}${PREFIX}/bin
 	@mkdir -p -m 0755 ${DESTDIR}${PREFIX}/bin
 	@for i in ${SCRIPTS}; do \
-		sed 's|CONFPREFIX|${CONFPREFIX}|g; \
-		      s|CONFVERSION|${CONFVERSION}|g; \
-		      s|AWKPATH|${AWKPATH}|g' < $$i >${DESTDIR}${PREFIX}/bin/$$i; \
+		sed "s|CONFPREFIX|${CONFPREFIX}|g; \
+		     s|CONFVERSION|${CONFVERSION}|g; \
+		     s|AWKPATH|${AWKPATH}|g" < $$i >${DESTDIR}${PREFIX}/bin/$$i; \
 		chmod 755 ${DESTDIR}${PREFIX}/bin/$$i; \
 	 done
 	@for i in ${BIN}; do\
