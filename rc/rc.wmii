@@ -81,7 +81,7 @@ fn Event-LeftBarClick { shift; wmiir xwrite /ctl view $* }
 fn Event-ClientMouseDown {
 	client = $1; button = $2
 	if(~ $button 3)
-		switch(`{9menu Delete Nop}) {
+		switch(`{9menu Nop Delete}) {
 		case Delete
 			wmiir xwrite /client/$client/ctl kill
 		}
