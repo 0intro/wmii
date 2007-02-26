@@ -29,43 +29,6 @@
  * Initial idea: Arnold Robbins
  * Version using libXg: Matty Farrow (some ideas borrowed)
  * This code by: David Hogan and Arnold Robbins
- *
- * Copyright (c), Arnold Robbins and David Hogan
- *
- * Arnold Robbins
- * arnold@skeeve.com
- * October, 1994
- *
- * Code added to cause pop-up (unIconify) to move menu to mouse.
- * Christopher Platt
- * platt@coos.dartmouth.edu
- * May, 1995
- *
- * Said code moved to -teleport option, and -warp option added.
- * Arnold Robbins
- * June, 1995
- *
- * Code added to allow -fg and -bg colors.
- * John M. O'Donnell
- * odonnell@stpaul.lampf.lanl.gov
- * April, 1997
- *
- * Code added for -file and -path optioins.
- * Peter Seebach
- * seebs@plethora.net
- * October, 2001
- *
- * Code added to allow up and down arrow keys to go up
- * and down menu and RETURN to select an item.
- * Matthias Bauer
- * bauerm@immd1.informatik.uni-erlangen.de
- * June, 2003
- *
- * spawn() changed to do exec directly if -popup, based on
- * suggestion from
- * Andrew Stribblehill
- * a.d.stribblehill@durham.ac.uk
- * June, 2004
  */
 
 #include <stdio.h>
@@ -105,15 +68,12 @@ char *brcname = NULL;
 Colormap defcmap;
 XColor color;
 XFontStruct *font;
-Atom wm_protocols;
-Atom wm_delete_window;
 int g_argc;			/* for XSetWMProperties to use */
 char **g_argv;
 int f_argc;			/* for labels read from files */
 char **f_argv;
 char *geometry = "";
 int savex, savey;
-Window savewindow;
 
 char *fontlist[] = {	/* default font list if no -font */
 	"pelm.latin1.9",
@@ -126,33 +86,21 @@ char *fontlist[] = {	/* default font list if no -font */
 	NULL
 };
 
-/* Modify this to your liking */
-#define CONFIG_MENU_UP_KEY  XK_Up
-#define CONFIG_MENU_DOWN_KEY    XK_Down
-#define CONFIG_MENU_SELECT_KEY  XK_Return
-
 char *progname;		/* my name */
 char *displayname;	/* X display */
 char *fontname;		/* font */
-char *labelname;	/* window and icon name */
 char *filename;		/* file to read options or labels from */
-int popup;		/* true if we're a popup window */
-int popdown;		/* autohide after running a command */
-int iconic;		/* start iconified */
-int teleport;		/* teleport the menu */
-int warp;		/* warp the mouse */
+enum { Warp, Teleport }  teleport;	/* teleport or warp */
 
 char **labels;		/* list of labels and commands */
 char **commands;
 int numitems;
 
-char *shell = "/bin/sh";	/* default shell */
-
-extern void usage(), run_menu(), spawn(), ask_wm_for_delete();
-extern void reap(), set_wm_hints();
-extern void redraw(), teleportmenu(), warpmouse(), restoremouse();
-extern void memory();
-extern int args();
+void usage(), run_menu(), spawn(), ask_wm_for_delete();
+void set_wm_hints();
+void redraw(), teleportmenu(), warpmouse(), restoremouse();
+void memory();
+int args();
 
 /* memory --- print the out of memory message and die */
 
@@ -167,9 +115,7 @@ char *s;
 /* args --- go through the argument list, set options */
 
 int
-args(argc, argv)
-int argc;
-char **argv;
+args(int argc, char **argv)
 {
 	int i;
 	if (argc == 0 || argv == NULL || argv[0] == '\0')
@@ -184,14 +130,7 @@ char **argv;
 		} else if (strcmp(argv[i], "-font") == 0) {
 			fontname = argv[i+1];
 			i++;
-		} else if (strcmp(argv[i], "-shell") == 0) {
-			shell = argv[i+1];
-			i++;
-		} else if (strcmp(argv[i], "-popup") == 0)
-			popup++;
-		else if (strcmp(argv[i], "-popdown") == 0)
-			popdown++;
-		else if (strcmp(argv[i], "-nb") == 0)
+		} else if (strcmp(argv[i], "-nb") == 0)
 			nbgname = argv[++i];
 		else if (strcmp(argv[i], "-nf") == 0)
 			nfgname = argv[++i];
@@ -201,12 +140,10 @@ char **argv;
 			sfgname = argv[++i];
 		else if (strcmp(argv[i], "-br") == 0)
 			brcname = argv[++i];
-		else if (strcmp(argv[i], "-iconic") == 0)
-			iconic++;
 		else if (strcmp(argv[i], "-teleport") == 0)
-			teleport++;
+			teleport = Teleport;
 		else if (strcmp(argv[i], "-warp") == 0)
-			warp++;
+			teleport = Warp;
 		else if (strcmp(argv[i], "-version") == 0) {
 			printf("%s\n", version);
 			exit(0);
@@ -221,9 +158,7 @@ char **argv;
 /* main --- crack arguments, set up X stuff, run the main menu loop */
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 	int i, j;
 	char *cp;
@@ -236,15 +171,12 @@ char **argv;
 
 	/* set default label name */
 	if ((cp = strrchr(argv[0], '/')) == NULL)
-		labelname = argv[0];
+		progname = argv[0];
 	else
-		labelname = ++cp;
+		progname = ++cp;
 
 	++argv;
 	--argc;
-
-	/* and program name for diagnostics */
-	progname = labelname;
 
 	i = args(argc, argv);
 
@@ -421,63 +353,10 @@ char **argv;
 	mask = GCForeground | GCBackground | GCFont | GCLineWidth;
 	gc = XCreateGC(dpy, root, mask, &gv);
 
-	signal(SIGCHLD, reap);
-
 	run_menu();
 
 	XCloseDisplay(dpy);
 	exit(0);
-}
-
-/* spawn --- run a command */
-
-void
-spawn(com)
-char *com;
-{
-	int pid;
-	static char *sh_base = NULL;
-
-	if (sh_base == NULL) {
-		sh_base = strrchr(shell, '/');
-		if (sh_base != NULL)
-			sh_base++;
-		else
-			sh_base = shell;
-	}
-
-	/*
-	 * Since -popup means run command and exit, just
-	 * fall straight into exec code.  Thus only fork
-	 * if not popup.
-	 */
-	if (! popup) {
-		if (strncmp(com, "exec ", 5) != 0) {
-			pid = fork();
-			if (pid < 0) {
-				fprintf(stderr, "%s: can't fork\n", progname);
-				return;
-			} else if (pid > 0)
-				return;
-		} else {
-			com += 5;
-		}
-	}
-
-	close(ConnectionNumber(dpy));
-	execl(shell, sh_base, "-c", com, NULL);
-	execl("/bin/sh", "sh", "-c", com, NULL);
-	_exit(1);
-}
-
-/* reap --- collect dead children */
-
-void
-reap(s)
-int s;
-{
-	(void) wait((int *) NULL);
-	signal(s, reap);
 }
 
 /* usage --- print a usage message and die */
@@ -485,11 +364,10 @@ int s;
 void
 usage()
 {
-	fprintf(stderr, "usage: %s [-display displayname] [-font fname] ", progname);
-	fprintf(stderr, "[-file filename] [-path]");
-	fprintf(stderr, "[-geometry geom] [-shell shell]  [-label name] ");
-	fprintf(stderr, "[-popup] [-popdown] [-iconic]  [-teleport] ");
-	fprintf(stderr, "[-warp]  [-version] menitem:command ...\n");
+	fprintf(stderr, "usage: %s [-display <displayname>] [-font <fontname>] ", progname);
+	fprintf(stderr, "[-file filename] [-geometry <geom>] ");
+	fprintf(stderr, "[-{n,s}{f,b} <color>] ");
+	fprintf(stderr, "[-teleport] [-warp]  [-version] menitem[:command] ...\n");
 	exit(0);
 }
 
@@ -499,8 +377,7 @@ void
 run_menu()
 {
 	XEvent ev;
-	KeySym key;
-	int i, cur, old, wide, high, ico, dx, dy;
+	int i, cur, old, wide, high, dx, dy;
 
 	dx = 0;
 	for (i = 0; i < numitems; i++) {
@@ -520,12 +397,10 @@ run_menu()
 	enum {	MouseMask = 
 		  ButtonPressMask
 		| ButtonReleaseMask
+		| ButtonMotionMask
 		| PointerMotionMask,
 		MenuMask =
 		  MouseMask
-		| ButtonMotionMask
-		| KeyPressMask
-		| LeaveWindowMask
 		| StructureNotifyMask
 		| ExposureMask
 	};
@@ -534,7 +409,6 @@ run_menu()
 
 	XMapWindow(dpy, menuwin);
 
-	ico = 1;	/* warp to first item */
 	i = 0;		/* save menu Item position */
 
 	for (;;) {
@@ -553,19 +427,12 @@ run_menu()
 				break;
 			else if (i < 0 || i >= numitems)
 				break;
-			if (warp)
+			if (teleport == Warp)
 				restoremouse();
+
 			printf("%s\n", commands[i]);
 			return;
-
-			if (strcmp(labels[i], "exit") == 0) {
-				if (commands[i] != labels[i]) {
-					spawn(commands[i]);
-				}
-				return;
-			}
-			spawn(commands[i]);
-			break;
+		case ButtonPress:
 		case MotionNotify:
 			old = cur;
 			cur = ev.xbutton.y/high;
@@ -577,55 +444,8 @@ run_menu()
 				break;
 			redraw(cur, high, wide);
 			break;
-		case KeyPress:
-			key = XKeycodeToKeysym(dpy, ev.xkey.keycode, 0);	
-			if (key != CONFIG_MENU_UP_KEY
-			    && key != CONFIG_MENU_DOWN_KEY
-			    && key != CONFIG_MENU_SELECT_KEY)
-				break;
-
-			if (key == CONFIG_MENU_UP_KEY) {
-				old = cur;
-				cur--;
-			} else if (key == CONFIG_MENU_DOWN_KEY) {
-				old = cur;
-				cur++;
-			}
-			
-			while (cur < 0)
-				cur += numitems;
-		
-			cur %= numitems;
-
-			if (key == CONFIG_MENU_UP_KEY || key == CONFIG_MENU_DOWN_KEY) {
-				if (cur == old)
-					break;
-				if (old >= 0 && old < numitems && cur != -1)
-					XFillRectangle(dpy, menuwin, gc, 0, old*high, wide, high);
-				if (cur >= 0 && cur < numitems && cur != -1)
-					XFillRectangle(dpy, menuwin, gc, 0, cur*high, wide, high);
-				break;
-			}
-
-			if (warp)
-				restoremouse();
-			if (key == CONFIG_MENU_SELECT_KEY) {
-				if (strcmp(labels[cur], "exit") == 0) {
-					if (commands[cur] != labels[cur]) {
-						spawn(commands[cur]);
-					}
-					return;
-				}
-				spawn(commands[cur]);
-			}
-
-			if (popup)
-				return;
-			if (popdown)
-				XIconifyWindow(dpy, menuwin, screen);
-			break;
 		case MapNotify:
-			if (teleport)
+			if (teleport == Teleport)
 				teleportmenu(i, wide, high);
 			else
 				warpmouse(i, wide, high);
@@ -649,8 +469,7 @@ run_menu()
 /* set_wm_hints --- set all the window manager hints */
 
 void
-set_wm_hints(wide, high)
-int wide, high;
+set_wm_hints(int wide, int high)
 {
 	XSetWindowAttributes wa = { 0 };
 	unsigned int w, h;
@@ -676,8 +495,7 @@ int wide, high;
 /* redraw --- actually redraw the menu */
 
 void
-redraw(cur, high, wide)
-int cur, high, wide;
+redraw(int cur, int high, int wide)
 {
 	int tx, ty, i;
 
@@ -700,8 +518,7 @@ int cur, high, wide;
 /* teleportmenu --- move the menu to the right place */
 
 void
-teleportmenu(cur, wide, high)
-int cur, wide, high;
+teleportmenu(int cur, int wide, int high)
 {
 	int x, y, dummy;
 	Window wdummy;
@@ -714,8 +531,7 @@ int cur, wide, high;
 /* warpmouse --- bring the mouse to the menu */
 
 void
-warpmouse(cur, wide, high)
-int cur, wide, high;
+warpmouse(int cur, int wide, int high)
 {
 	int dummy;
 	Window wdummy;
