@@ -569,10 +569,10 @@ run_menu()
 		case MotionNotify:
 			old = cur;
 			cur = ev.xbutton.y/high;
-			if (ev.xbutton.x < 0 || ev.xbutton.x > wide)
-				cur = -1;
-			else if (cur < 0 || cur >= numitems)
-				cur = -1;
+			if (cur < 0)
+				cur = 0;
+			else if (cur >= numitems)
+				cur = numitems - 1;
 			if (cur == old)
 				break;
 			redraw(cur, high, wide);
