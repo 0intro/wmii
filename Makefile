@@ -8,8 +8,9 @@ SRC = area.c bar.c client.c column.c draw.c event.c frame.c fs.c \
 OBJ = ${SRC:.c=.o}
 MAN1 = wmii wmiir wmiiwm wmiiloop
 SCRIPTS = wmii wmiir wmiiloop
+BIN = wmiiwm wmii9menu
 
-all: options wmiiwm
+all: options wmiiwm wmii9menu
 
 options:
 	@echo wmii build options:
@@ -34,11 +35,15 @@ ${OBJ}: wmii.h config.mk
 wmiiwm: ${OBJ}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ} ${LDFLAGS}
-#	@strip $@
+
+# XXX: This doesn't need libixp
+wmii9menu: 9menu.c
+	@echo LD $@
+	@${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:
 	@echo cleaning
-	@rm -f wmiiwm ${OBJ} wmii-${VERSION}.tar.gz
+	@rm -f ${BIN} ${OBJ} wmii-${VERSION}.tar.gz
 
 dist: clean
 	@echo creating dist tarball
@@ -56,14 +61,16 @@ install: all
 		sed 's|CONFPREFIX|${CONFPREFIX}|g; s|CONFVERSION|${CONFVERSION}|g' < $$i >${DESTDIR}${PREFIX}/bin/$$i; \
 		chmod 755 ${DESTDIR}${PREFIX}/bin/$$i; \
 	 done
-	@cp -f wmiiwm ${DESTDIR}${PREFIX}/bin
-	@chmod 755 ${DESTDIR}${PREFIX}/bin/wmiiwm
+	@for i in ${BIN}; do\
+		cp -f $$i ${DESTDIR}${PREFIX}/bin; \
+		chmod 755 ${DESTDIR}${PREFIX}/bin/$$i; \
+	  done
 	@echo installing scripts to ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}
 	@mkdir -p -m 0755 ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}
 	@cd rc; for i in *; do \
 		sed 's|CONFPREFIX|${CONFPREFIX}|g' <$$i >${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}/$$i; \
 		chmod 755 ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}/$$i; \
-	done
+	 done
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p -m 0755 ${DESTDIR}${MANPREFIX}/man1
 	@for i in ${MAN1:=.1}; do \

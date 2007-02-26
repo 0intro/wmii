@@ -23,6 +23,13 @@ fn wmiimenu {
 		-sf $WMII_FOCUSCOLORS(1) -sb $WMII_FOCUSCOLORS(2)
 }
 
+fn 9menu {
+	./9menu -teleport -font $WMII_FONT \
+		-nf $WMII_NORMCOLORS(1) -nb $WMII_NORMCOLORS(2) \
+		-sf $WMII_FOCUSCOLORS(1) -sb $WMII_FOCUSCOLORS(2) \
+		-br $WMII_FOCUSCOLORS(3) $*
+}
+
 fn config_whatis {
 	confpath=`{echo $WMII_CONFPATH | sed 'y/:/ /'}
 	prog=$1; shift
@@ -71,6 +78,15 @@ fn Event-UrgentTag { shift; wmiir xwrite /lbar/$"* '*'$"* }
 fn Event-NotUrgentTag { shift; wmiir xwrite /lbar/$"* $"* }
 
 fn Event-LeftBarClick { shift; wmiir xwrite /ctl view $* }
+fn Event-ClientMouseDown {
+	client = $1; button = $2
+	echo ClientMouseDown $*
+	if(~ $button 3)
+		switch(`{9menu Delete Nop}) {
+		case Delete
+			wmiir xwrite /client/$client/ctl kill
+		}
+}
 
 # Actions
 fn Action {

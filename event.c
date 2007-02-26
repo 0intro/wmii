@@ -80,8 +80,11 @@ buttonpress(XEvent *e) {
 			}
 			if(ev->subwindow)
 				XAllowEvents(blz.dpy, ReplayPointer, ev->time);
-			else
-				XAllowEvents(blz.dpy, AsyncPointer, ev->time);
+			else {
+				XUngrabPointer(blz.dpy, ev->time);
+				XSync(blz.dpy, False);
+				write_event("ClientMouseDown 0x%x %d\n", f->client->win, ev->button);
+			}
 		}
 	}else
 		XAllowEvents(blz.dpy, ReplayPointer, ev->time);
