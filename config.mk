@@ -8,6 +8,7 @@ CONFVERSION = 3.5
 PREFIX = /usr/local
 CONFPREFIX = ${PREFIX}/etc
 MANPREFIX = ${PREFIX}/share/man
+AWKPATH = /usr/bin/awk
 
 X11INC = /usr/X11R6/include
 X11LIB = /usr/X11R6/lib

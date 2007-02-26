@@ -7,7 +7,7 @@ export WMII_ADDRESS="unix!$WMII_NS_DIR/wmii"
 
 if [ -x /usr/local/plan9/bin/rc ]; then
 	WMIIRC=`PATH="$WMII_CONFPATH:$PATH" which rc.wmii`
-elif [ -n "$PLAN9" ]; then
+elif [ -x "$PLAN9/bin/rc" ]; then
 	WMIIRC="$PLAN9/bin/rc `PATH="$WMII_CONFPATH:$PATH" which rc.wmii`"
 else
 	WMIIRC=`PATH="$WMII_CONFPATH:$PATH" which wmiirc`
