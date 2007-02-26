@@ -11,7 +11,7 @@ MAN1 = wmii wmiir wmiiwm wmiiloop
 SCRIPTS = wmii wmiir wmiiloop
 BIN = wmiiwm wmii9menu
 
-all: options wmiiwm wmii9menu
+all: options ${BIN}
 
 options:
 	@echo wmii build options:
@@ -33,11 +33,12 @@ config.mk: .hg/00changelog.i
 
 ${OBJ}: wmii.h config.mk
 
+9menu.o: config.mk
+
 wmiiwm: ${OBJ}
 	@echo LD $@
-	@${CC} -o $@ ${OBJ} ${LDFLAGS}
+	@${CC} -o $@ ${OBJ} ${LDFLAGS} ${LIBIXP}
 
-# XXX: This doesn't need libixp
 wmii9menu: 9menu.o
 	@echo LD $@
 	@${CC} -o $@ 9menu.o ${LDFLAGS}
@@ -50,7 +51,7 @@ dist: clean
 	@echo creating dist tarball
 	@mkdir -p wmii-${VERSION}
 	@cp -R LICENSE Makefile README wmii wmiir config.mk rc \
-		wmii.1 wmiir.1 wmiiwm.1 wmii.h ${SRC} wmii-${VERSION}
+		wmii.1 wmiir.1 wmiiwm.1 wmii.h ${SRC} 9menu.c wmii-${VERSION}
 	@tar -cf wmii-${VERSION}.tar wmii-${VERSION}
 	@gzip wmii-${VERSION}.tar
 	@rm -rf wmii-${VERSION}
