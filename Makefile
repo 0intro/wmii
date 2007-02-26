@@ -37,9 +37,9 @@ wmiiwm: ${OBJ}
 	@${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 # XXX: This doesn't need libixp
-wmii9menu: 9menu.c
+wmii9menu: 9menu.o
 	@echo LD $@
-	@${CC} -o $@ ${OBJ} ${LDFLAGS}
+	@${CC} -o $@ 9menu.o ${LDFLAGS}
 
 clean:
 	@echo cleaning
@@ -80,8 +80,7 @@ install: all
 
 uninstall:
 	@echo removing executable files from ${DESTDIR}${PREFIX}/bin
-	@cd ${DESTDIR}${PREFIX}/bin && rm -f ${SCRIPTS}
-	@rm -f ${DESTDIR}${PREFIX}/bin/wmiiwm
+	@cd ${DESTDIR}${PREFIX}/bin && rm -f ${SCRIPTS} ${BIN}
 	@echo removing scripts from ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}
 	@rm -rf ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}
 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
