@@ -314,7 +314,7 @@ write_event(char *format, ...) {
 	va_list ap;
 	FidLink *f;
 	FileId *fi;
-	P9Req *aux;
+	P9Req *aux, *req;
 
 	va_start(ap, format);
 	vsnprintf(buffer, BUFFER_SIZE, format, ap);
@@ -328,8 +328,10 @@ write_event(char *format, ...) {
 		(fi->content.buf)[slen] = '\0';
 		strcat(fi->content.buf, buffer);
 	}
-	while((aux = pending_event_reads)) {
-		pending_event_reads = pending_event_reads->aux;
+	req = pending_event_reads;
+	pending_event_reads = nil;
+	while((aux = req)) {
+		req = req->aux;
 		respond_event(aux);
 	}
 }
