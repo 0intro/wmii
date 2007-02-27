@@ -37,7 +37,7 @@ fn config_whatis {
 
 # Source Variables, &c
 local = `{config_whatis rc.wmii.local}
-. <{awk '// /^# Overrides/ { exit }' $local}
+. <{awk '//; /^# Overrides/ { exit }' $local </dev/null}
 
 # Column Rules
 wmiir write /colrules <<!
@@ -182,7 +182,7 @@ fn run_command {
 }
 
 # Source Overrides
-. <{awk '/^# Overrides/, 0' $local}
+. <{awk '/^# Overrides/, 0' $local </dev/null}
 
 # WM Configuration
 wmiir write /ctl <<!
