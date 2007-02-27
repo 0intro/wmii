@@ -7,8 +7,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#define ButtonMask	(ButtonPressMask | ButtonReleaseMask)
-#define MouseMask       (ButtonMask | PointerMotionMask)
+enum {
+	ButtonMask =
+		ButtonPressMask | ButtonReleaseMask,
+	MouseMask =
+		ButtonMask | PointerMotionMask
+};
 
 static void
 rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask) {

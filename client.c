@@ -12,8 +12,15 @@ static void update_client_name(Client *c);
 static char Ebadcmd[] = "bad command",
 	    Ebadvalue[] = "bad value";
 
-#define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask | EnterWindowMask | FocusChangeMask)
-#define ButtonMask		(ButtonPressMask | ButtonReleaseMask)
+enum {
+	ClientMask =
+		  StructureNotifyMask
+		| PropertyChangeMask
+		| EnterWindowMask
+		| FocusChangeMask,
+	ButtonMask =
+		  ButtonPressMask | ButtonReleaseMask
+};
 
 Client *
 create_client(Window w, XWindowAttributes *wa) {
@@ -230,9 +237,9 @@ set_client_state(Client * c, int state)
 void
 map_client(Client *c) {
 	if(!c->mapped) {
-		XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+		XSelectInput(blz.dpy, c->win, ClientMask & ~StructureNotifyMask);
 		XMapWindow(blz.dpy, c->win);
-		XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+		XSelectInput(blz.dpy, c->win, ClientMask);
 		set_client_state(c, NormalState);
 		c->mapped = 1;
 	}
@@ -241,9 +248,9 @@ map_client(Client *c) {
 void
 unmap_client(Client *c, int state) {
 	if(c->mapped) {
-		XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+		XSelectInput(blz.dpy, c->win, ClientMask & ~StructureNotifyMask);
 		XUnmapWindow(blz.dpy, c->win);
-		XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+		XSelectInput(blz.dpy, c->win, ClientMask);
 		c->unmapped++;
 		set_client_state(c, state);
 		c->mapped = 0;
@@ -279,9 +286,9 @@ unmap_frame(Client *c) {
 
 void
 reparent_client(Client *c, Window w, int x, int y) {
-	XSelectInput(blz.dpy, c->win, CLIENT_MASK & ~StructureNotifyMask);
+	XSelectInput(blz.dpy, c->win, ClientMask & ~StructureNotifyMask);
 	XReparentWindow(blz.dpy, c->win, w, x, y);
-	XSelectInput(blz.dpy, c->win, CLIENT_MASK);
+	XSelectInput(blz.dpy, c->win, ClientMask);
 }
 
 void
