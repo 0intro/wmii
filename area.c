@@ -414,10 +414,11 @@ select_area(Area *a, char *arg) {
 	}
 	else if(!strncmp(arg, "~", 2)) {
 		new = v->area;
-	}else {
+	}
+	else {
 		if(sscanf(arg, "%u", &i) != 1 || i == 0)
 			return Ebadvalue;
-		for(new=view->area->next; new->next; new=new->next)
+		for(new=v->area->next; new->next; new=new->next)
 			if(!--i) break;
 	}
 	focus_area(new);

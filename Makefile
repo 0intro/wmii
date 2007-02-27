@@ -27,7 +27,6 @@ options:
 .hg/00changelog.i:
 	@mkdir .hg
 	@touch .hg/00changelog.i
-
 # VERSION must be updated on every commit/pull
 config.mk: .hg/00changelog.i
 

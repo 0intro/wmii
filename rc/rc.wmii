@@ -175,7 +175,7 @@ fn read_tags {
 }
 
 fn run_command {
-	@{	rfork ens
+	@{	rfork ns
 		path=$oldpath
 		eval exec $* </dev/null
 	}
@@ -222,5 +222,5 @@ if(echo Start wmiirc | ! wmiir write /event >[2]/dev/null)
 wmiir read /event |
 	while(*=`{read}) {
 		event = $1; shift
-		Event-$event $* >[2]/dev/null
-	}
+		Event-$event $*
+	} >[2]/dev/null

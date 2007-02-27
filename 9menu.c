@@ -130,15 +130,15 @@ args(int argc, char **argv)
 		} else if (strcmp(argv[i], "-font") == 0) {
 			fontname = argv[i+1];
 			i++;
-		} else if (strcmp(argv[i], "-nb") == 0)
+		} else if (strncmp(argv[i], "-nb", 3) == 0)
 			nbgname = argv[i][3] ? &argv[i][3] : argv[++i];
-		else if (strcmp(argv[i], "-nf") == 0)
+		else if (strncmp(argv[i], "-nf", 3) == 0)
 			nfgname = argv[i][3] ? &argv[i][3] : argv[++i];
-		else if (strcmp(argv[i], "-sb") == 0)
+		else if (strncmp(argv[i], "-sb", 3) == 0)
 			sbgname = argv[i][3] ? &argv[i][3] : argv[++i];
-		else if (strcmp(argv[i], "-sf") == 0)
+		else if (strncmp(argv[i], "-sf", 3) == 0)
 			sfgname = argv[i][3] ? &argv[i][3] : argv[++i];
-		else if (strcmp(argv[i], "-br") == 0)
+		else if (strncmp(argv[i], "-br", 3) == 0)
 			brcname = argv[i][3] ? &argv[i][3] : argv[++i];
 		else if (strcmp(argv[i], "-teleport") == 0)
 			teleport = Teleport;
