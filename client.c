@@ -248,23 +248,12 @@ map_client(Client *c) {
 void
 unmap_client(Client *c, int state) {
 	if(c->mapped) {
+		c->unmapped++;
 		XSelectInput(blz.dpy, c->win, ClientMask & ~StructureNotifyMask);
 		XUnmapWindow(blz.dpy, c->win);
 		XSelectInput(blz.dpy, c->win, ClientMask);
-		c->unmapped++;
 		set_client_state(c, state);
 		c->mapped = 0;
-	}
-}
-
-void
-set_cursor(Client *c, Cursor cur) {
-	XSetWindowAttributes wa;
-
-	if(c->cursor != cur) {
-		c->cursor = cur;
-		wa.cursor = cur;
-		XChangeWindowAttributes(blz.dpy, c->framewin, CWCursor, &wa);
 	}
 }
 
@@ -289,6 +278,17 @@ reparent_client(Client *c, Window w, int x, int y) {
 	XSelectInput(blz.dpy, c->win, ClientMask & ~StructureNotifyMask);
 	XReparentWindow(blz.dpy, c->win, w, x, y);
 	XSelectInput(blz.dpy, c->win, ClientMask);
+}
+
+void
+set_cursor(Client *c, Cursor cur) {
+	XSetWindowAttributes wa;
+
+	if(c->cursor != cur) {
+		c->cursor = cur;
+		wa.cursor = cur;
+		XChangeWindowAttributes(blz.dpy, c->framewin, CWCursor, &wa);
+	}
 }
 
 void
