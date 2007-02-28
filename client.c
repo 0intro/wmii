@@ -352,7 +352,7 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 		cnot = "";
 
 	if(urgent != c->urgent) {
-		write_event("%sUrgent 0x%x %s\n", cnot, client->win, cwrite);
+		write_event("%sUrgent 0x%x %s\n", cnot, c->win, cwrite);
 		c->urgent = urgent;
 		if(c->sel) {
 			if(c->sel->view == screen->sel)
