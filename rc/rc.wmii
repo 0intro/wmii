@@ -46,7 +46,6 @@ wmiir write /colrules <<!
 
 # Tagging Rules
 wmiir write /tagrules <<!
-/Firefox/ -> www
 /XMMS.*/ -> ~
 /MPlayer.*/ -> ~
 /.*/ -> !
