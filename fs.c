@@ -70,8 +70,9 @@ static char
 
 /* Global Vars */
 /***************/
-FileId *free_fileid = nil;
-P9Req *pending_event_reads = nil;
+FileId *free_fileid;
+P9Req *pending_event_reads;
+P9Req *outgoing_event_reads;
 FidLink *pending_event_fids;
 P9Srv p9srv = {
 	.open=	fs_open,
@@ -314,7 +315,7 @@ write_event(char *format, ...) {
 	va_list ap;
 	FidLink *f;
 	FileId *fi;
-	P9Req *aux, *req;
+	P9Req *req;
 
 	va_start(ap, format);
 	vsnprintf(buffer, BUFFER_SIZE, format, ap);
@@ -328,11 +329,11 @@ write_event(char *format, ...) {
 		(fi->content.buf)[slen] = '\0';
 		strcat(fi->content.buf, buffer);
 	}
-	req = pending_event_reads;
+	outgoing_event_reads = pending_event_reads;
 	pending_event_reads = nil;
-	while((aux = req)) {
-		req = req->aux;
-		respond_event(aux);
+	while((req = outgoing_event_reads)) {
+		outgoing_event_reads = outgoing_event_reads->aux;
+		respond_event(req);
 	}
 }
 
@@ -936,14 +937,16 @@ fs_clunk(P9Req *r) {
 
 void
 fs_flush(P9Req *r) {
-	P9Req **t;
+	P9Req **i, **j;
 
-	for(t=&pending_event_reads; *t; t=(P9Req **)&(*t)->aux)
-		if(*t == r->oldreq) {
-			*t = (*t)->aux;
-			respond(r->oldreq, Einterrupted);
-			break;
-		}
+	for(i=&pending_event_reads; i != &outgoing_event_reads; i=&outgoing_event_reads)
+		for(j=i; *j; j=(P9Req **)&(*j)->aux)
+			if(*j == r->oldreq) {
+				*j = (*j)->aux;
+				respond(r->oldreq, Einterrupted);
+				goto done;
+			}
+done:
 	respond(r, nil);
 }
 
