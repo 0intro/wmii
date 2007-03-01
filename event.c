@@ -298,12 +298,12 @@ expose(XEvent *e) {
 
 static void
 keypress(XEvent *e) {
+	XEvent me;
 	XKeyEvent *ev = &e->xkey;
+	Frame *f;
 	KeySym k = 0;
 	char buf[32];
 	int n;
-	static Frame *f;
-
 
 	ev->state &= valid_mask;
 	if((f = frame_of_win(ev->window))) {
@@ -314,8 +314,12 @@ keypress(XEvent *e) {
 			return;
 		buf[n] = 0;
 	}
-	else
+	else {
+		while(XCheckMaskEvent(blz.dpy, FocusChangeMask, &me))
+			if(me.xfocus.mode != NotifyGrab)
+				handler[me.type](&me);
 		kpress(blz.root, ev->state, (KeyCode) ev->keycode);
+	}
 }
 
 static void
