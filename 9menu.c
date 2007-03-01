@@ -289,20 +289,6 @@ main(int argc, char **argv)
 	 * white = WhitePixel(dpy, screen);
 	 */
 	defcmap = DefaultColormap(dpy, screen);
-	if (nbgname == NULL
-	    || XParseColor(dpy, defcmap, nbgname, &color) == 0
-	    || XAllocColor(dpy, defcmap, &color) == 0)
-		normbg = BlackPixel(dpy, screen);
-	else
-		normbg = color.pixel;
-
-	if (nfgname == NULL
-	    || XParseColor(dpy, defcmap, nfgname, &color) == 0
-	    || XAllocColor(dpy, defcmap, &color) == 0)
-		normfg = BlackPixel(dpy, screen);
-	else
-		normfg = color.pixel;
-
 	if (sbgname == NULL
 	    || XParseColor(dpy, defcmap, sbgname, &color) == 0
 	    || XAllocColor(dpy, defcmap, &color) == 0)
@@ -313,9 +299,23 @@ main(int argc, char **argv)
 	if (sfgname == NULL
 	    || XParseColor(dpy, defcmap, sfgname, &color) == 0
 	    || XAllocColor(dpy, defcmap, &color) == 0)
-		selfg = BlackPixel(dpy, screen);
+		selfg = WhitePixel(dpy, screen);
 	else
 		selfg = color.pixel;
+
+	if (nbgname == NULL
+	    || XParseColor(dpy, defcmap, nbgname, &color) == 0
+	    || XAllocColor(dpy, defcmap, &color) == 0)
+		normbg = selfg;
+	else
+		normbg = color.pixel;
+
+	if (nfgname == NULL
+	    || XParseColor(dpy, defcmap, nfgname, &color) == 0
+	    || XAllocColor(dpy, defcmap, &color) == 0)
+		normfg = selbg;
+	else
+		normfg = color.pixel;
 
 	if (brcname == NULL
 	    || XParseColor(dpy, defcmap, brcname, &color) == 0
