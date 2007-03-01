@@ -424,9 +424,9 @@ run_menu()
 				break;
 			i = ev.xbutton.y/high;
 			if (ev.xbutton.x < 0 || ev.xbutton.x > wide)
-				break;
+				return;
 			else if (i < 0 || i >= numitems)
-				break;
+				return;
 			if (teleport == Warp)
 				restoremouse();
 
@@ -436,10 +436,8 @@ run_menu()
 		case MotionNotify:
 			old = cur;
 			cur = ev.xbutton.y/high;
-			if (cur < 0)
-				cur = 0;
-			else if (cur >= numitems)
-				cur = numitems - 1;
+			if (ev.xbutton.x < 0 || ev.xbutton.x > wide)
+				cur = ~0;
 			if (cur == old)
 				break;
 			redraw(cur, high, wide);
@@ -452,7 +450,7 @@ run_menu()
 			redraw(cur = i, high, wide);
 			if(XGrabPointer(dpy, menuwin, False, MouseMask,
 				GrabModeAsync, GrabModeAsync,
-				menuwin, None, CurrentTime
+				0, None, CurrentTime
 				) != GrabSuccess) {
 				fprintf(stderr, "Failed to grab the mouse\n");
 			}
