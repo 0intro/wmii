@@ -72,8 +72,8 @@ int g_argc;			/* for XSetWMProperties to use */
 char **g_argv;
 int f_argc;			/* for labels read from files */
 char **f_argv;
-char *geometry = "";
-int savex, savey;
+char *initial = "";
+int cur;
 
 char *fontlist[] = {	/* default font list if no -font */
 	"pelm.latin1.9",
@@ -90,15 +90,14 @@ char *progname;		/* my name */
 char *displayname;	/* X display */
 char *fontname;		/* font */
 char *filename;		/* file to read options or labels from */
-enum { Warp, Teleport }  teleport;	/* teleport or warp */
 
 char **labels;		/* list of labels and commands */
 char **commands;
 int numitems;
 
-void usage(), run_menu(), spawn(), ask_wm_for_delete();
-void set_wm_hints();
-void redraw(), teleportmenu(), warpmouse(), restoremouse();
+void usage(), run_menu();
+void create_window();
+void redraw(), warpmouse();
 void memory();
 int args();
 
@@ -121,16 +120,15 @@ args(int argc, char **argv)
 	if (argc == 0 || argv == NULL || argv[0] == '\0')
 		return -1;
 	for (i = 0; i < argc && argv[i] != NULL; i++) {
-		if (strcmp(argv[i], "-display") == 0) {
-			displayname = argv[i+1];
-			i++;
-		} else if (strcmp(argv[i], "-file") == 0) {
-			filename = argv[i+1];
-			i++;
-		} else if (strcmp(argv[i], "-font") == 0) {
-			fontname = argv[i+1];
-			i++;
-		} else if (strncmp(argv[i], "-nb", 3) == 0)
+		if (strcmp(argv[i], "-display") == 0)
+			displayname = argv[++i];
+		else if (strcmp(argv[i], "-file") == 0)
+			filename = argv[++i];
+		else if (strcmp(argv[i], "-font") == 0)
+			fontname = argv[++i];
+		else if (strncmp(argv[i], "-initial", 9) == 0)
+			initial = argv[++i];
+		else if (strncmp(argv[i], "-nb", 3) == 0)
 			nbgname = argv[i][3] ? &argv[i][3] : argv[++i];
 		else if (strncmp(argv[i], "-nf", 3) == 0)
 			nfgname = argv[i][3] ? &argv[i][3] : argv[++i];
@@ -140,10 +138,6 @@ args(int argc, char **argv)
 			sfgname = argv[i][3] ? &argv[i][3] : argv[++i];
 		else if (strncmp(argv[i], "-br", 3) == 0)
 			brcname = argv[i][3] ? &argv[i][3] : argv[++i];
-		else if (strcmp(argv[i], "-teleport") == 0)
-			teleport = Teleport;
-		else if (strcmp(argv[i], "-warp") == 0)
-			teleport = Warp;
 		else if (strcmp(argv[i], "-version") == 0) {
 			printf("%s\n", version);
 			exit(0);
@@ -254,6 +248,8 @@ main(int argc, char **argv)
 			commands[j] = cp;
 		} else
 			commands[j] = labels[j];
+		if(strcmp(labels[j], initial) == 0)
+			cur = j;
 	}
 
 	/*
@@ -365,9 +361,9 @@ void
 usage()
 {
 	fprintf(stderr, "usage: %s [-display <displayname>] [-font <fontname>] ", progname);
-	fprintf(stderr, "[-file filename] [-geometry <geom>] ");
-	fprintf(stderr, "[-{n,s}{f,b} <color>] ");
-	fprintf(stderr, "[-teleport] [-warp]  [-version] menitem[:command] ...\n");
+	fprintf(stderr, "[-file filename] ");
+	fprintf(stderr, "[-{n,s}{f,b} <color>] [-br <color>] ");
+	fprintf(stderr, "[-version] menitem[:command] ...\n");
 	exit(0);
 }
 
@@ -377,7 +373,7 @@ void
 run_menu()
 {
 	XEvent ev;
-	int i, cur, old, wide, high, dx, dy;
+	int i, old, wide, high, dx, dy;
 
 	dx = 0;
 	for (i = 0; i < numitems; i++) {
@@ -387,23 +383,23 @@ run_menu()
 	}
 	wide = dx;
 
-	old = cur = -1;
-
 	high = font->ascent + font->descent + 1;
 	dy = numitems * high;
 
-	set_wm_hints(wide, dy);
-
-	enum {	MouseMask = 
+	enum {
+	MouseMask = 
 		  ButtonPressMask
 		| ButtonReleaseMask
 		| ButtonMotionMask
 		| PointerMotionMask,
-		MenuMask =
+	MenuMask =
 		  MouseMask
 		| StructureNotifyMask
 		| ExposureMask
 	};
+
+	create_window(wide, high);
+	warpmouse(wide, high);
 
 	XSelectInput(dpy, menuwin, MenuMask);
 
@@ -419,16 +415,11 @@ run_menu()
 				progname, ev.type);
 			break;
 		case ButtonRelease:
-			/* allow button 1 or button 3 */
-			if (ev.xbutton.button == Button2)
-				break;
 			i = ev.xbutton.y/high;
 			if (ev.xbutton.x < 0 || ev.xbutton.x > wide)
 				return;
 			else if (i < 0 || i >= numitems)
 				return;
-			if (teleport == Warp)
-				restoremouse();
 
 			printf("%s\n", commands[i]);
 			return;
@@ -440,14 +431,10 @@ run_menu()
 				cur = ~0;
 			if (cur == old)
 				break;
-			redraw(cur, high, wide);
+			redraw(high, wide);
 			break;
 		case MapNotify:
-			if (teleport == Teleport)
-				teleportmenu(i, wide, high);
-			else
-				warpmouse(i, wide, high);
-			redraw(cur = i, high, wide);
+			redraw(high, wide);
 			if(XGrabPointer(dpy, menuwin, False, MouseMask,
 				GrabModeAsync, GrabModeAsync,
 				0, None, CurrentTime
@@ -456,7 +443,7 @@ run_menu()
 			}
 			break;
 		case Expose:
-			redraw(cur, high, wide);
+			redraw(high, wide);
 			break;
 		case MappingNotify:	/* why do we get this? */
 			break;
@@ -467,18 +454,33 @@ run_menu()
 /* set_wm_hints --- set all the window manager hints */
 
 void
-set_wm_hints(int wide, int high)
+create_window(int wide, int high)
 {
 	XSetWindowAttributes wa = { 0 };
-	unsigned int w, h;
-	int x, y;
+	unsigned int h;
+	int x, y, dummy;
+	Window wdummy;
+	
+	h = high * numitems;
 
-	/* fill in hints in order to parse geometry spec */
-	XParseGeometry(geometry, &x, &y, &w, &h);
+	XQueryPointer(dpy, root, &wdummy, &wdummy, &x, &y,
+				&dummy, &dummy, &dummy);
+	x -= wide / 2;
+	if (x < 0)
+		x = 0;
+	else if (x + wide > DisplayWidth(dpy, screen))
+		x = DisplayWidth(dpy, screen) - wide;
+
+	y -= cur * high + high / 2;
+	if (y < 0)
+		y = 0;
+	else if (y + h > DisplayHeight(dpy, screen))
+		y = DisplayHeight(dpy, screen) - h;
+
 	wa.override_redirect = True;
 	wa.border_pixel = border;
 	wa.background_pixel = normbg;
-	menuwin = XCreateWindow(dpy, root, 0, 0, wide, high,
+	menuwin = XCreateWindow(dpy, root, x, y, wide, h,
 				1, DefaultDepth(dpy, screen), CopyFromParent,
 				DefaultVisual(dpy, screen),
 				  CWOverrideRedirect
@@ -493,7 +495,7 @@ set_wm_hints(int wide, int high)
 /* redraw --- actually redraw the menu */
 
 void
-redraw(int cur, int high, int wide)
+redraw(int high, int wide)
 {
 	int tx, ty, i;
 
@@ -513,43 +515,17 @@ redraw(int cur, int high, int wide)
 	}
 }
 
-/* teleportmenu --- move the menu to the right place */
-
-void
-teleportmenu(int cur, int wide, int high)
-{
-	int x, y, dummy;
-	Window wdummy;
-
-	if (XQueryPointer(dpy, menuwin, &wdummy, &wdummy, &x, &y,
-			       &dummy, &dummy, &dummy))
-		XMoveWindow(dpy, menuwin, x-wide/2, y-cur*high-high/2);
-}
-
 /* warpmouse --- bring the mouse to the menu */
 
 void
-warpmouse(int cur, int wide, int high)
+warpmouse(int wide, int high)
 {
-	int dummy;
-	Window wdummy;
 	int offset;
 
 	/* move tip of pointer into middle of menu item */
 	offset = (font->ascent + font->descent + 1) / 2;
 	offset += 6;	/* fudge factor */
 
-	if (XQueryPointer(dpy, menuwin, &wdummy, &wdummy, &savex, &savey,
-			       &dummy, &dummy, &dummy))
-		XWarpPointer(dpy, None, menuwin, 0, 0, 0, 0,
+	XWarpPointer(dpy, None, menuwin, 0, 0, 0, 0,
 				wide/2, cur*high-high/2+offset);
-}
-
-/* restoremouse --- put the mouse back where it was */
-
-void
-restoremouse()
-{
-	XWarpPointer(dpy, menuwin, root, 0, 0, 0, 0,
-				savex, savey);
 }
