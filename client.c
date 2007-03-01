@@ -219,8 +219,7 @@ focus(Client *c, Bool restack) {
 }
 
 void
-set_client_state(Client * c, int state)
-{
+set_client_state(Client * c, int state) {
 	long data[] = { state, None };
 	XChangeProperty(
 		/* display */	blz.dpy,

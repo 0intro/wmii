@@ -102,7 +102,7 @@ fn Action-rehash { proglist $PATH >$progs_file }
 fn Action-quit { wmiir xwrite /ctl quit }
 fn Action-status {
 	if(wmiir remove /rbar/status >[2]/dev/null)
-
+		sleep 2
 	echo $WMII_NORMCOLORS | wmiir create /rbar/status
 	while(status | wmiir write /rbar/status)
 		sleep 1
