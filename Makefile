@@ -44,7 +44,7 @@ wmii9menu: 9menu.o
 
 clean:
 	@echo cleaning
-	@rm -f ${BIN} ${OBJ} wmii-${VERSION}.tar.gz
+	@rm -f ${BIN} ${OBJ} 9menu.o wmii-${VERSION}.tar.gz
 
 dist: clean
 	@echo creating dist tarball
@@ -61,7 +61,9 @@ install: all
 	@for i in ${SCRIPTS}; do \
 		sed "s|CONFPREFIX|${CONFPREFIX}|g; \
 		     s|CONFVERSION|${CONFVERSION}|g; \
-		     s|AWKPATH|${AWKPATH}|g" < $$i >${DESTDIR}${PREFIX}/bin/$$i; \
+		     s|AWKPATH|${AWKPATH}|g" \
+			$$i \
+			>${DESTDIR}${PREFIX}/bin/$$i; \
 		chmod 755 ${DESTDIR}${PREFIX}/bin/$$i; \
 	 done
 	@for i in ${BIN}; do\
@@ -71,13 +73,19 @@ install: all
 	@echo installing scripts to ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}
 	@mkdir -p -m 0755 ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}
 	@cd rc; for i in *; do \
-		sed 's|CONFPREFIX|${CONFPREFIX}|g' <$$i >${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}/$$i; \
+		sed "s|CONFPREFIX|${CONFPREFIX}|g; \
+		     s|PLAN9BASE|${PLAN9BASE}|g" \
+			$$i \
+			>${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}/$$i; \
 		chmod 755 ${DESTDIR}${CONFPREFIX}/wmii-${CONFVERSION}/$$i; \
 	 done
 	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
 	@mkdir -p -m 0755 ${DESTDIR}${MANPREFIX}/man1
 	@for i in ${MAN1:=.1}; do \
-		sed "s/VERSION/${VERSION}/g; s|CONFPREFIX|${CONFPREFIX}|g" < $$i > ${DESTDIR}${MANPREFIX}/man1/$$i; \
+		sed "s/VERSION/${VERSION}/g; \
+		     s|CONFPREFIX|${CONFPREFIX}|g" \
+			$$i \
+			>${DESTDIR}${MANPREFIX}/man1/$$i; \
 		chmod 644 ${DESTDIR}${MANPREFIX}/man1/$$i; \
 	 done
 

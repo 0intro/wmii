@@ -1,5 +1,5 @@
 # wmii version
-VERSION = $$(hg tip --template 'hg{rev}')
+VERSION = $$(hg tip --template 'hg{rev}' 2>/dev/null)
 CONFVERSION = 3.5
 
 # Customize below to fit your system
@@ -9,6 +9,7 @@ PREFIX = /usr/local
 CONFPREFIX = ${PREFIX}/etc
 MANPREFIX = ${PREFIX}/share/man
 AWKPATH = /usr/bin/awk
+PLAN9BASE = $${PLAN9:-/usr/local/plan9}
 
 X11INC = /usr/X11R6/include
 X11LIB = /usr/X11R6/lib
