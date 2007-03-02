@@ -364,7 +364,7 @@ propertynotify(XEvent *e) {
 	if(ev->state == PropertyDelete)
 		return; /* ignore */
 	if((c = client_of_win(ev->window)))
-		prop_client(c, ev);
+		prop_client(c, ev->atom);
 }
 
 static void

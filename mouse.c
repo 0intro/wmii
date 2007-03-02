@@ -106,12 +106,12 @@ snap_line(SnapArgs *a) {
 }
 
 BlitzAlign
-snap_rect(XRectangle *rects, int num, XRectangle *current,
-          BlitzAlign *mask, int snap)
-{
+snap_rect(XRectangle *rects, int num, XRectangle *current, BlitzAlign *mask, int snap) {
 	SnapArgs a = { rects, num, 0, 0, 0, 0, *mask, nil };
-	int dx = snap + 1, dy = snap + 1;
+	int dx, dy;
 	BlitzAlign ret;
+	
+	dx = dy = snap + 1;
 
 	a.x1 = current->x;
 	a.x2 = r_east(current);
@@ -137,8 +137,10 @@ snap_rect(XRectangle *rects, int num, XRectangle *current,
 		snap_line(&a);
 	}
 
-	rect_morph_xy(current, abs(dx) <= snap ? dx : 0,
-			abs(dy) <= snap ? dy : 0, mask);
+	rect_morph_xy(current,
+			abs(dx) <= snap ? dx : 0,
+			abs(dy) <= snap ? dy : 0,
+			mask);
 
 	ret = *mask;
 	if(abs(dx) <= snap)
@@ -159,6 +161,7 @@ draw_xor_border(XRectangle *r) {
 	xor.height = xor.height > 4 ? xor.height - 4 : 0;
 
 	XSetLineAttributes(blz.dpy, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
+	XSetForeground(blz.dpy, xorgc, def.focuscolor.bg);
 	if(xor.height > 4 && xor.width > 2)
 		XDrawLine(blz.dpy, blz.root, xorgc,
 			xor.x + 2,
@@ -173,7 +176,6 @@ draw_xor_border(XRectangle *r) {
 			r_south(&xor) - 2);
 	XSetLineAttributes(blz.dpy, xorgc, 4, LineSolid, CapNotLast, JoinMiter);
 	XDrawRectangles(blz.dpy, blz.root, xorgc, &xor, 1);
-	XSync(blz.dpy, False);
 }
 
 static void
@@ -451,7 +453,8 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 			pt_y += dy;
 
 			rect_morph_xy(&origin, dx, dy, &align);
-			if(align != CENTER) check_frame_constraints(&origin);
+			if(align != CENTER)
+				check_frame_constraints(&origin);
 			frect = origin;
 
 			if(floating)
@@ -459,7 +462,7 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 			else
 				grav = align ^ CENTER;
 
-			match_sizehints(c, &frect, floating, grav);
+			apply_sizehints(c, &frect, floating, True, grav);
 
 			if(grabbox) {
 				XMoveWindow(blz.dpy, c->framewin, frect.x, frect.y);
@@ -472,7 +475,8 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 		case Expose:
 			(handler[Expose])(&ev);
 			break;
-		default: break;
+		default:
+			break;
 		}
 	}
 }

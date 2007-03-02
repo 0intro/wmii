@@ -122,7 +122,7 @@ scale_column(Area *a) {
 			if(!i)
 				f->rect.height = surplus;
 			f->rect.height += min_height + frame_delta_h();
-			match_sizehints(f->client, &f->rect, False, NWEST);
+			apply_sizehints(f->client, &f->rect, False, True, NWEST);
 
 			dy -= f->crect.height;
 			surplus -= f->rect.height - frame_delta_h() - min_height;

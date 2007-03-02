@@ -68,6 +68,18 @@ insert_frame(Frame *pos, Frame *f, Bool before) {
 }
 
 void
+frame2client(XRectangle *r) {
+	r->width = max(r->width - def.border * 2, 1);
+	r->height = max(r->height - frame_delta_h(), 1);
+}
+
+void
+client2frame(XRectangle *r) {
+	r->width += def.border * 2;
+	r->height += frame_delta_h();
+}
+
+void
 resize_frame(Frame *f, XRectangle *r) {
 	BlitzAlign stickycorner;
 	Client *c;
@@ -75,33 +87,34 @@ resize_frame(Frame *f, XRectangle *r) {
 	c = f->client;
 	stickycorner = get_sticky(&f->rect, r);
 
+	if(c->fullscreen)
+		send_to_area(f->area->view->area, f);
+
 	f->rect = *r;
 	f->crect = *r;
-	match_sizehints(c, &f->crect, f->area->floating, stickycorner);
+	apply_sizehints(c, &f->crect, f->area->floating, True, stickycorner);
 
 	if(f->area->floating)
 		f->rect = f->crect;
 
-	if(f->rect.height < frame_delta_h() + labelh(&def.font)) {
+	frame2client(&f->crect);
+
+	if(f->crect.height < labelh(&def.font)) {
 		f->rect.height = frame_delta_h();
 		f->collapsed = True;
 	}else
 		f->collapsed = False;
 
-	if(f->rect.width < labelh(&def.font)) {
+	if(f->crect.width < labelh(&def.font)) {
 		f->rect.width = frame_delta_h();
 		f->collapsed = True;
 	}
 
-	if(!f->collapsed) {
-		f->crect.width -= def.border * 2;
-		f->crect.height -= frame_delta_h();
-	}
+	if(f->collapsed)
+		f->crect = f->rect;
 	f->crect.y = labelh(&def.font);
 	f->crect.x = (f->rect.width - f->crect.width) / 2;
-
-	if(f->collapsed)
-		f->rect.height = labelh(&def.font);
+	
 
 	if(f->area->floating) {
 		if(c->fullscreen) {
@@ -312,8 +325,8 @@ check_frame_constraints(XRectangle *rect) {
 		rect->x = screen->rect.width - barheight;
 	if(rect->y + barheight > max_height)
 		rect->y = max_height - barheight;
-	if(rect->x + rect->width < barheight)
+	if(r_east(rect) < barheight)
 		rect->x = barheight - rect->width;
-	if(rect->y + rect->height < barheight)
+	if(r_south(rect) < barheight)
 		rect->y = barheight - rect->height;
 }
