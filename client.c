@@ -47,6 +47,7 @@ create_client(Window w, XWindowAttributes *wa) {
 
 	fwa.override_redirect = 1;
 	fwa.background_pixmap = ParentRelative;
+	fwa.backing_store = Always;
 	fwa.event_mask =
 		  SubstructureRedirectMask
 		| SubstructureNotifyMask
@@ -67,7 +68,7 @@ create_client(Window w, XWindowAttributes *wa) {
 		/* depth */	DefaultDepth(blz.dpy, blz.screen),
 		/* class */	CopyFromParent,
 		/* visual */	DefaultVisual(blz.dpy, blz.screen),
-		/* valuemask */	CWOverrideRedirect | CWEventMask | CWBackPixmap,
+		/* valuemask */	CWOverrideRedirect | CWEventMask | CWBackPixmap | CWBackingStore,
 		/* attributes */&fwa
 		);
 
@@ -622,7 +623,7 @@ resize_client(Client *c, XRectangle *r) {
 	f = c->sel;
 	resize_frame(f, r);
 
-	if(f->area->view == screen->sel) 
+	if(f->area->view == screen->sel)
 		XMoveResizeWindow(blz.dpy, c->framewin,
 				f->rect.x, f->rect.y,
 				f->rect.width, f->rect.height);
