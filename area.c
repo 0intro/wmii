@@ -426,10 +426,9 @@ select_area(Area *a, char *arg) {
 	return nil;
 
 focus_frame:
-	frame_to_top(p);
 	focus_frame(p, False);
+	frame_to_top(p);
 	if(v == screen->sel)
 		restack_view(v);
-	flush_masked_events(EnterWindowMask);
 	return nil;
 }

@@ -10,10 +10,10 @@
 #include "printevent.h"
 
 uint
-flush_masked_events(long even_mask) {
+flush_masked_events(long event_mask) {
 	XEvent ev;
 	uint n = 0;
-	while(XCheckMaskEvent(blz.dpy, even_mask, &ev)) n++;
+	while(XCheckMaskEvent(blz.dpy, event_mask, &ev)) n++;
 	return n;
 }
 
@@ -220,6 +220,7 @@ print_focus(Client *c, char *to) {
 static void
 focusin(XEvent *e) {
 	Client *c, *old;
+	XEvent me;
 	XFocusChangeEvent *ev = &e->xfocus;
 
 	/* Yes, we're focusing in on nothing, here. */
@@ -255,6 +256,12 @@ focusin(XEvent *e) {
 		print_focus(nil, "<nil>");
 		screen->focus = nil;
 	}else if(ev->mode == NotifyGrab) {
+		if(ev->window == blz.root) {
+			if(XCheckMaskEvent(blz.dpy, KeyPressMask, &me)) {
+				handler[me.xany.type](&me);
+				return;
+			}
+		}
 		if((c = screen->focus)) {
 			/* Some unmanaged window has focus */
 			print_focus(&c_magic, "<magic>");
@@ -284,7 +291,7 @@ focusout(XEvent *e) {
 				screen->hasgrab = screen->focus;
 			if(screen->hasgrab == c)
 				return;
-		}else if(ev->mode != NotifyGrab) {
+		}else if(ev->mode != NotifyGrab && ev->window != blz.root) {
 			if(screen->focus == c) {
 				print_focus(&c_magic, "<magic>");
 				screen->focus = &c_magic;

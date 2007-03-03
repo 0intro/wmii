@@ -254,7 +254,8 @@ focus(Client *c, Bool restack) {
 
 	v = f->area->view;
 	arrange_column(f->area, False);
-	focus_view(screen, v);
+	if(v != screen->sel)
+		focus_view(screen, v);
 	focus_frame(c->sel, restack);
 }
 
