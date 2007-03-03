@@ -166,7 +166,7 @@ tagsmenu() {
 }
 
 conf_which() {
-	prog=$({PATH="$WMII_CONFPATH:$PATH" which $1})
+	prog=$(PATH="$WMII_CONFPATH:$PATH" which $1)
 	shift
 	if [ -n "$prog" ]; then
 		$prog
@@ -199,15 +199,13 @@ EOF
 
 # Setup Tag Bar
 wmiir ls /lbar |
-while read bar
-do
+while read bar; do
 	wmiir remove "/lbar/$bar"
 done
 
 seltag="$(wmiir read /tag/sel/ctl 2>/dev/null)"
 wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
-while read tag
-do
+while read tag; do
 	if [ "X$tag" = "X$seltag" ]; then
 		echo "$WMII_FOCUSCOLORS" "$tag" | wmiir create "/lbar/$tag" 
 	else
