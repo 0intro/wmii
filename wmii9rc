@@ -1,0 +1,14 @@
+#!/bin/sh
+RC=""
+for i in "$PLAN9" /usr/local/plan9 /usr/local/9 /opt/plan9 /opt/9 /usr/plan9 /usr/9; do
+	if [ -d "$i" -a -x "$i/bin/rc" ]; then
+		RC="$i/bin/rc"
+		break;
+	fi
+done
+
+if [ ! -n "$RC" ]; then
+	exit 1
+elif [ "X$@" != "X" ]; then
+	$RC $@
+fi

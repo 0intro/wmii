@@ -45,7 +45,7 @@ create_client(Window w, XWindowAttributes *wa) {
 	XSetWindowBorderWidth(blz.dpy, c->win, 0);
 	XAddToSaveSet(blz.dpy, c->win);
 
-	fwa.override_redirect = 1;
+	fwa.override_redirect = True;
 	fwa.background_pixmap = ParentRelative;
 	fwa.backing_store = Always;
 	fwa.event_mask =

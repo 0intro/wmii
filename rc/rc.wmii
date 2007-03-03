@@ -1,4 +1,4 @@
-#!PLAN9BASE/bin/rc
+#!/usr/bin/env wmii9rc
 # WMII Configuration
 
 oldpath=$path
