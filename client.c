@@ -155,7 +155,7 @@ manage_client(Client *c) {
 		update_views();
 	XSync(blz.dpy, False);
 
-	if(c->sel->area->view == screen->sel)
+	if(c->sel->view == screen->sel)
 		focus(c, True);
 	flush_masked_events(EnterWindowMask);
 }
@@ -595,6 +595,12 @@ apply_sizehints(Client *c, XRectangle *r, Bool floating, Bool frame, BlitzAlign 
 
 void
 focus_client(Client *c) {
+	XEvent ev;
+
+	while(XCheckMaskEvent(blz.dpy, FocusChangeMask, &ev))
+		if(handler[ev.xany.type])
+			handler[ev.xany.type](&ev);
+
 	if(verbose)
 		fprintf(stderr, "focus_client(%p) => %s\n", c, (c ? c->name : nil));
 	if(screen->focus != c) {

@@ -115,13 +115,14 @@ configurerequest(XEvent *e) {
 		if(ev->value_mask & CWBorderWidth)
 			c->border = ev->border_width;
 		gravitate_client(c, False);
-		
+
 		if((c->rect.height == screen->rect.height)
 		&&(c->rect.width == screen->rect.width)) {
 			c->fullscreen = True;
 			if(c->sel) {
 				if(!c->sel->area->floating)
 					send_to_area(c->sel->view->area, c->sel);
+				focus_client(c);
 				restack_view(c->sel->view);
 			}
 		}
@@ -172,13 +173,19 @@ enternotify(XEvent *e) {
 
 	if(ev->mode != NotifyNormal)
 		return;
+
 	if((c = client_of_win(ev->window))) {
 		if(ev->detail != NotifyInferior) {
+			if(verbose)
+				fprintf(stderr, "enter_notify(c) => %s\n", c->name);
 			focus(c, False);
 			set_cursor(c, cursor[CurNormal]);
-		}
+		}else if(verbose)
+				fprintf(stderr, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
 	}
 	else if((f = frame_of_win(ev->window))) {
+		if(verbose)
+			fprintf(stderr, "enter_notify(f) => %s\n", f->client->name);
 		if(f->area->floating || !f->collapsed)
 			focus(f->client, False);
 		set_frame_cursor(f, ev->x, ev->y);
@@ -404,7 +411,7 @@ check_x_event(IXPConn *c) {
 	XEvent ev;
 	while(XPending(blz.dpy)) {
 		XNextEvent(blz.dpy, &ev);
-		if(verbose)
+		if(verbose & 0)
 			printevent(&ev);
 		if(handler[ev.type])
 			handler[ev.type](&ev);
