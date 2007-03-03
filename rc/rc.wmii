@@ -92,7 +92,7 @@ fn Event-ClientMouseDown {
 # Actions
 fn Action {
 	action=$1; shift
-	if(whatis Action-$action | 9 grep -s '^fn ') {
+	if(whatis Action-$action | grep -s '^fn ') {
 		Action-$action $* &
 	};if not {
 		run_command `{config_whatis $action} $* &
@@ -204,7 +204,7 @@ proglist $PATH >$progs_file &
 
 # Tag Bar Setup
 ifs='#
-'{	for(bar in `{wmiir ls /lbar})
+'{	for(bar in `{comm -1 <{wmiir ls /lbar} <{read_tags}})
 		wmiir remove /lbar/$bar
 	seltag=`{wmiir read /tag/sel/ctl}
 	for(tag in `{read_tags}) {
