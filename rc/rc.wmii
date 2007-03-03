@@ -81,11 +81,13 @@ menulast = ''
 fn Event-ClientMouseDown {
 	client = $1; button = $2
 	if(~ $button 3) {
-		menulast=`{9menu -initial $menulast Nop Delete}
-		switch($menulast) {
+		do=`{9menu -initial $menulast Nop Delete}
+		switch($do) {
 		case Delete
 			wmiir xwrite /client/$client/ctl kill
 		}
+		if(! ~ $#do 0)
+			menulast = $do;
 	}
 }
 

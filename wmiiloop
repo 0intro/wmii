@@ -24,7 +24,7 @@ function addevent() {
 		action = arg[2];
 		actions[action] = body
 		gsub("\"", "\\\"", action)
-		print "ACTIONS=\"$ACTIONS\n" action "\""
+		print "ACTIONS=\"$ACTIONS " action "\""
 		print "Action_" action "() {" actions[action] "\n}"
 	}
 }
@@ -56,7 +56,6 @@ END {
 			body = events[arg[1]]
 		}
 		print "set -- " $0
-		print "set +f"
 		print body
 		fflush()
 	}
