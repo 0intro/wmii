@@ -1,4 +1,5 @@
 /* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+ * (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "wmii.h"
@@ -102,13 +103,7 @@ configurerequest(XEvent *e) {
 
 	if(c) {
 		f = c->sel;
-		if(0 && verbose)
-			fprintf(stderr, "Configure: %s\n\ta: x=%d y=%d w=%d h=%d\n",
-				c->name, c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		gravitate_client(c, True);
-		if(0 && verbose)
-			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
-				c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		if(ev->value_mask & CWX)
 			c->rect.x = ev->x;
 		if(ev->value_mask & CWY)
@@ -119,13 +114,17 @@ configurerequest(XEvent *e) {
 			c->rect.height = ev->height;
 		if(ev->value_mask & CWBorderWidth)
 			c->border = ev->border_width;
-		if(0 && verbose)
-			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
-				c->rect.x, c->rect.y, c->rect.width, c->rect.height);
 		gravitate_client(c, False);
-		if(0 && verbose)
-			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
-				c->rect.x, c->rect.y, c->rect.width, c->rect.height);
+		
+		if((c->rect.height == screen->rect.height)
+		&&(c->rect.width == screen->rect.width)) {
+			c->fullscreen = True;
+			if(c->sel) {
+				if(!c->sel->area->floating)
+					send_to_area(c->sel->view->area, c->sel);
+				restack_view(c->sel->view);
+			}
+		}
 
 		if(c->sel->area->floating)
 			frect=&c->sel->rect;
@@ -137,11 +136,8 @@ configurerequest(XEvent *e) {
 		frect->x -= def.border;
 		frect->width += 2 * def.border;
 		frect->height += frame_delta_h();
-		if(0 && verbose)
-			fprintf(stderr, "\tb: x=%d y=%d w=%d h=%d\n",
-				frect->x, frect->y, frect->width, frect->height);
 
-		if(c->sel->area->floating)
+		if(c->sel->area->floating || c->fullscreen)
 			resize_client(c, frect);
 		else
 			configure_client(c);
@@ -203,6 +199,17 @@ leavenotify(XEvent *e) {
 	}
 }
 
+void
+print_focus(Client *c, char *to) {
+		if(verbose) {
+			fprintf(stderr, "screen->focus: %p => %p\n",
+				screen->focus, c);
+			fprintf(stderr, "\t%s => %s\n",
+				screen->focus ? screen->focus->name : "<nil>",
+				to);
+		}
+}
+
 static void
 focusin(XEvent *e) {
 	Client *c, *old;
@@ -216,6 +223,7 @@ focusin(XEvent *e) {
 
 	if(!((ev->detail == NotifyNonlinear)
 	   ||(ev->detail == NotifyNonlinearVirtual)
+	   ||(ev->detail == NotifyVirtual)
 	   ||(ev->detail == NotifyInferior)
 	   ||(ev->detail == NotifyAncestor)))
 		return;
@@ -225,29 +233,24 @@ focusin(XEvent *e) {
 	c = client_of_win(ev->window);
 	old = screen->focus;
 	if(c) {
-		if(verbose) {
-			fprintf(stderr, "screen->focus: %p => %p\n", screen->focus, c);
-			fprintf(stderr, "\t%s => %s\n", (screen->focus ? screen->focus->name : nil),
-					c->name);
-		}
+		print_focus(c, c->name);
 		if(ev->mode == NotifyGrab)
 			screen->hasgrab = c;
 		screen->focus = c;
-		update_client_grab(c);
-		if(c->sel)
-			draw_frame(c->sel);
-		if(old && old->sel)
-			draw_frame(old->sel);
-	}else if(ev->window == screen->barwin) {
-		if(verbose) {
-			fprintf(stderr, "screen->focus: %p => %p\n", screen->focus, c);
-			fprintf(stderr, "\t%s => %s\n", (screen->focus ? screen->focus->name : nil),
-					"<nil>");
+		if(c != old) {
+			update_client_grab(c);
+			if(c->sel)
+				draw_frame(c->sel);
+			if(old && old->sel)
+				draw_frame(old->sel);
 		}
+	}else if(ev->window == screen->barwin) {
+		print_focus(nil, "<nil>");
 		screen->focus = nil;
 	}else if(ev->mode == NotifyGrab) {
-		c = screen->focus;
-		if(c) {
+		if((c = screen->focus)) {
+			/* Some unmanaged window has focus */
+			print_focus(&c_magic, "<magic>");
 			screen->focus = &c_magic;
 			if(c->sel)
 				draw_frame(c->sel);
@@ -269,16 +272,20 @@ focusout(XEvent *e) {
 	c = client_of_win(ev->window);
 	if(c) {
 		if(ev->mode == NotifyWhileGrabbed) {
-			if(screen->focus && screen->hasgrab != screen->focus)
+			if((screen->focus)
+			&&(screen->hasgrab != screen->focus))
 				screen->hasgrab = screen->focus;
 			if(screen->hasgrab == c)
 				return;
+		}else if(ev->mode != NotifyGrab) {
+			if(screen->focus == c) {
+				print_focus(&c_magic, "<magic>");
+				screen->focus = &c_magic;
+			}
+			update_client_grab(c);
+			if(c->sel)
+				draw_frame(c->sel);
 		}
-		if(screen->focus == c)
-			screen->focus = &c_magic;
-		update_client_grab(c);
-		if(c->sel)
-			draw_frame(c->sel);
 	}
 }
 
@@ -298,7 +305,6 @@ expose(XEvent *e) {
 
 static void
 keypress(XEvent *e) {
-	XEvent me;
 	XKeyEvent *ev = &e->xkey;
 	Frame *f;
 	KeySym k = 0;
@@ -315,9 +321,6 @@ keypress(XEvent *e) {
 		buf[n] = 0;
 	}
 	else {
-		while(XCheckMaskEvent(blz.dpy, FocusChangeMask, &me))
-			if(me.xfocus.mode != NotifyGrab)
-				handler[me.type](&me);
 		kpress(blz.root, ev->state, (KeyCode) ev->keycode);
 	}
 }
@@ -376,6 +379,7 @@ unmapnotify(XEvent *e) {
 		if(!c->unmapped--)
 			destroy_client(c);
 }
+
 void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress]	= buttonpress,
 	[ButtonRelease]	= buttonrelease,

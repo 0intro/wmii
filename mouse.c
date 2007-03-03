@@ -1,5 +1,4 @@
-/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
- * (C)opyright MMVI Kris Maglione <fbsdaemon@gmail.com>
+/* (C)opyright MMVI Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "wmii.h"

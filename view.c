@@ -1,5 +1,5 @@
-/*
- * (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+ * (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 
@@ -171,7 +171,8 @@ restack_view(View *v) {
 	i = 0;
 	n = 0;
 
-	for(c=client; c; c=c->next, i++);
+	for(c=client; c; c=c->next)
+		i++;
 	if(i >= winssz) {
 		winssz = 2 * i;
 		wins = erealloc(wins, sizeof(Window) * winssz);
@@ -179,17 +180,17 @@ restack_view(View *v) {
 
 	for(f=v->area->stack; f; f=f->snext)
 		if(f->client->fullscreen)
-			wins[n++] = f->client->framewin;;
+			wins[n++] = f->client->framewin;
 	wins[n++] = screen->barwin;
 	for(f=v->area->stack; f; f=f->snext)
 		if(!f->client->fullscreen)
-			wins[n++] = f->client->framewin;;
+			wins[n++] = f->client->framewin;
 	for(a=v->area->next; a; a=a->next) {
 		if(a->frame) {
 			wins[n++] = a->sel->client->framewin;
 			for(f=a->frame; f; f=f->anext)
 				if(f != a->sel)
-					wins[n++] = f->client->framewin;;
+					wins[n++] = f->client->framewin;
 		}
 	}
 	if(n)

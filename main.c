@@ -1,4 +1,5 @@
 /* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+ * (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "wmii.h"
@@ -20,7 +21,7 @@
 
 static Bool check_other_wm;
 static int (*x_error_handler) (Display *, XErrorEvent *);
-static char version[] = "wmiiwm - " VERSION ", (C)opyright MMIV-MMVI Anselm R. Garbe\n";
+static char version[] = "wmiiwm - " VERSION ", (C)opyright MMVI-MMVII Kris Maglione\n";
 static struct sigaction sa;
 
 static void

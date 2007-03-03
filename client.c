@@ -1,4 +1,5 @@
 /* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+ * (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "wmii.h"
@@ -82,6 +83,51 @@ create_client(Window w, XWindowAttributes *wa) {
 
 	write_event("CreateClient 0x%x\n", c->win);
 	return c;
+}
+
+static int
+dummy_error_handler(Display *dpy, XErrorEvent *error) {
+	return 0;
+}
+
+void
+destroy_client(Client *c) {
+	char *dummy;
+	Client **tc;
+	XEvent ev;
+
+	XGrabServer(blz.dpy);
+	/* In case the client is already unmapped */
+	XSetErrorHandler(dummy_error_handler);
+
+	for(tc=&client; *tc; tc=&(*tc)->next)
+		if(*tc == c) {
+			*tc = c->next;
+			break;
+		}
+
+	dummy = nil;
+	update_client_views(c, &dummy);
+
+	unmap_client(c, WithdrawnState);
+	gravitate_client(c, True);
+	reparent_client(c, blz.root, c->rect.x, c->rect.y);
+
+	XFreeGC(blz.dpy, c->gc);
+	XDestroyWindow(blz.dpy, c->framewin);
+	XSync(blz.dpy, False);
+
+	XSetErrorHandler(wmii_error_handler);
+	XUngrabServer(blz.dpy);
+	flush_masked_events(EnterWindowMask);
+
+	while(XCheckMaskEvent(blz.dpy, StructureNotifyMask, &ev))
+		if(ev.type != UnmapNotify || ev.xunmap.window != c->win)
+			if(handler[ev.type])
+				handler[ev.type](&ev);
+
+	write_event("DestroyClient 0x%x\n", c->win);
+	free(c);
 }
 
 void
@@ -470,45 +516,6 @@ gravitate_client(Client *c, Bool invert) {
 	}
 	c->rect.x += dx;
 	c->rect.y += dy;
-}
-
-static int
-dummy_error_handler(Display *dpy, XErrorEvent *error) {
-	return 0;
-}
-
-void
-destroy_client(Client *c) {
-	char *dummy;
-	Client **tc;
-
-	XGrabServer(blz.dpy);
-	/* In case the client is already unmapped */
-	XSetErrorHandler(dummy_error_handler);
-
-	for(tc=&client; *tc; tc=&(*tc)->next)
-		if(*tc == c) {
-			*tc = c->next;
-			break;
-		}
-
-	dummy = nil;
-	update_client_views(c, &dummy);
-
-	unmap_client(c, WithdrawnState);
-	gravitate_client(c, True);
-	reparent_client(c, blz.root, c->rect.x, c->rect.y);
-
-	XFreeGC(blz.dpy, c->gc);
-	XDestroyWindow(blz.dpy, c->framewin);
-	XSync(blz.dpy, False);
-
-	XSetErrorHandler(wmii_error_handler);
-	XUngrabServer(blz.dpy);
-	flush_masked_events(EnterWindowMask);
-
-	write_event("DestroyClient 0x%x\n", c->win);
-	free(c);
 }
 
 void

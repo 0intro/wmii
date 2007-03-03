@@ -1,4 +1,4 @@
-/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
+/* (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "wmii.h"
@@ -87,9 +87,6 @@ resize_frame(Frame *f, XRectangle *r) {
 	c = f->client;
 	stickycorner = get_sticky(&f->rect, r);
 
-	if(c->fullscreen)
-		send_to_area(f->area->view->area, f);
-
 	f->rect = *r;
 	f->crect = *r;
 	apply_sizehints(c, &f->crect, f->area->floating, True, stickycorner);
@@ -118,10 +115,12 @@ resize_frame(Frame *f, XRectangle *r) {
 
 	if(f->area->floating) {
 		if(c->fullscreen) {
+			f->crect.width = screen->rect.width;
+			f->crect.height = screen->rect.height;
+			f->rect = f->crect;
+			client2frame(&f->rect);
 			f->rect.x = -def.border;
 			f->rect.y = -labelh(&def.font);
-			f->rect.width = screen->rect.width + 2 * def.border;
-			f->rect.height = screen->rect.height + frame_delta_h();
 		}else
 			check_frame_constraints(&f->rect);
 	}
