@@ -108,9 +108,11 @@ update_frame_selectors(View *v) {
 
 void
 focus_view(WMScreen *s, View *v) {
+	View *old;
 	Frame *f;
 	Client *c;
 
+	old = screen->sel;
 	XGrabServer(blz.dpy);
 	assign_sel_view(v);
 	update_frame_selectors(v);
@@ -129,7 +131,8 @@ focus_view(WMScreen *s, View *v) {
 	draw_frames();
 	XSync(blz.dpy, False);
 	XUngrabServer(blz.dpy);
-	flush_masked_events(EnterWindowMask);
+	if(v != old)
+		flush_masked_events(EnterWindowMask);
 }
 
 void

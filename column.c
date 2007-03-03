@@ -187,7 +187,6 @@ resize:
 			if(f->collapsed)
 				resize_client(f->client, &f->rect);
 	}
-	flush_masked_events(EnterWindowMask);
 }
 
 static void
