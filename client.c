@@ -851,7 +851,7 @@ apply_tags(Client *c, const char *tags) {
 		if(tags[n] != ' ' && tags[n] != '\t') break;
 	if(tags[n] == '+' || tags[n] == '-')
 		strncpy(buf, c->tags, sizeof(c->tags));
-	ixp_strlcat(buf, &tags[n], sizeof(buf));
+	strlcat(buf, &tags[n], sizeof(buf));
 	trim(buf, " \t/");
 
 	n = 0;
@@ -915,8 +915,8 @@ apply_tags(Client *c, const char *tags) {
 	for(i=0, n=0; i < j; i++)
 		if(!n || strcmp(toks[i], toks[n-1])) {
 			if(i)
-				ixp_strlcat(c->tags, "+", sizeof(c->tags));
-			ixp_strlcat(c->tags, toks[i], sizeof(c->tags));
+				strlcat(c->tags, "+", sizeof(c->tags));
+			strlcat(c->tags, toks[i], sizeof(c->tags));
 			toks[n++] = toks[i];
 		}
 	toks[n] = nil;
