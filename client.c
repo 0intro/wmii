@@ -746,14 +746,15 @@ send_client(Frame *f, char *arg, Bool swap) {
 				return Ebadvalue;
 			for(to=v->area->next; to; to=to->next)
 				if(a == to->next) break;
-			if(!to && (f->anext || f != a->frame))
+			if(!to && !swap && (f->anext || f != a->frame))
 				to=new_column(v, v->area, 0);
 			goto send_area;
 		}
 		else if(!strncmp(arg, "right", 5)) {
 			if(a->floating)
 				return Ebadvalue;
-			if(!(to = a->next) && (f->anext || f != a->frame))
+			to = a->next;
+			if(!to && !swap && (f->anext || f != a->frame))
 				to = new_column(v, a, 0);
 			goto send_area;
 		}
