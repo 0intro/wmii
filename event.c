@@ -175,7 +175,7 @@ enternotify(XEvent *e) {
 		return;
 
 	if((c = client_of_win(ev->window))) {
-		if(ev->detail != NotifyInferior) {
+		if(ev->detail != NotifyInferior && screen->focus != c) {
 			if(verbose)
 				fprintf(stderr, "enter_notify(c) => %s\n", c->name);
 			focus(c, False);
@@ -183,7 +183,7 @@ enternotify(XEvent *e) {
 		}else if(verbose)
 				fprintf(stderr, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
 	}
-	else if((f = frame_of_win(ev->window))) {
+	else if((f = frame_of_win(ev->window)) && screen->focus != c) {
 		if(verbose)
 			fprintf(stderr, "enter_notify(f) => %s\n", f->client->name);
 		if(f->area->floating || !f->collapsed)
@@ -235,7 +235,8 @@ focusin(XEvent *e) {
 	   ||(ev->detail == NotifyInferior)
 	   ||(ev->detail == NotifyAncestor)))
 		return;
-	if(ev->mode == NotifyWhileGrabbed)
+	if((ev->mode == NotifyWhileGrabbed)
+	&&(screen->hasgrab != &c_magic))
 		return;
 
 	c = client_of_win(ev->window);
@@ -258,6 +259,7 @@ focusin(XEvent *e) {
 	}else if(ev->mode == NotifyGrab) {
 		if(ev->window == blz.root) {
 			if(XCheckMaskEvent(blz.dpy, KeyPressMask, &me)) {
+				screen->hasgrab = &c_magic;
 				handler[me.xany.type](&me);
 				return;
 			}
@@ -285,7 +287,8 @@ focusout(XEvent *e) {
 
 	c = client_of_win(ev->window);
 	if(c) {
-		if(ev->mode == NotifyWhileGrabbed) {
+		if((ev->mode == NotifyWhileGrabbed)
+		&&(screen->hasgrab != &c_magic)) {
 			if((screen->focus)
 			&&(screen->hasgrab != screen->focus))
 				screen->hasgrab = screen->focus;

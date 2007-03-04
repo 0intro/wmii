@@ -242,23 +242,6 @@ update_client_grab(Client *c) {
 	}
 }
 
-/* convenience function */
-void
-focus(Client *c, Bool restack) {
-	View *v;
-	Frame *f;
-
-	f = c->sel;
-	if(!f)
-		return;
-
-	v = f->area->view;
-	arrange_column(f->area, False);
-	if(v != screen->sel)
-		focus_view(screen, v);
-	focus_frame(c->sel, restack);
-}
-
 void
 set_client_state(Client * c, int state) {
 	long data[] = { state, None };
@@ -596,6 +579,21 @@ apply_sizehints(Client *c, XRectangle *r, Bool floating, Bool frame, BlitzAlign 
 }
 
 void
+focus(Client *c, Bool restack) {
+	View *v;
+	Frame *f;
+
+	f = c->sel;
+	if(!f)
+		return;
+
+	v = f->area->view;
+	if(v != screen->sel)
+		focus_view(screen, v);
+	focus_frame(c->sel, restack);
+}
+
+void
 focus_client(Client *c) {
 	XEvent ev;
 
@@ -620,15 +618,12 @@ focus_client(Client *c) {
 void
 resize_client(Client *c, XRectangle *r) {
 	Frame *f;
+	XEvent ev;
 
 	f = c->sel;
 	resize_frame(f, r);
 
-	if(f->area->view == screen->sel)
-		XMoveResizeWindow(blz.dpy, c->framewin,
-				f->rect.x, f->rect.y,
-				f->rect.width, f->rect.height);
-	else {
+	if(f->area->view != screen->sel) {
 		unmap_client(c, IconicState);
 		unmap_frame(c);
 		return;
@@ -642,6 +637,9 @@ resize_client(Client *c, XRectangle *r) {
 		unmap_frame(c);
 		unmap_client(c, IconicState);
 	}else if(f->collapsed) {
+		XMoveResizeWindow(blz.dpy, c->framewin,
+				f->rect.x, f->rect.y,
+				f->rect.width, f->rect.height);
 		map_frame(c);
 		unmap_client(c, IconicState);
 	}else {
@@ -649,9 +647,16 @@ resize_client(Client *c, XRectangle *r) {
 				f->crect.x, f->crect.y,
 				f->crect.width, f->crect.height);
 		map_client(c);
+		XMoveResizeWindow(blz.dpy, c->framewin,
+				f->rect.x, f->rect.y,
+				f->rect.width, f->rect.height);
 		map_frame(c);
 		configure_client(c);
 	}
+	
+	while(XCheckMaskEvent(blz.dpy, FocusChangeMask|ExposureMask, &ev))
+		if(handler[ev.xany.type])
+			handler[ev.xany.type](&ev);
 }
 
 void

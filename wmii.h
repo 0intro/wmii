@@ -399,6 +399,7 @@ void grab_button(Window w, uint button, ulong mod);
 void update_rules(Rule **rule, const char *data);
 void trim(char *str, const char *chars);
 
+#define strlcat wmii_strlcat
 /* util.c */
 uint tokenize(char *res[], uint reslen, char *str, char delim);
 char *estrdup(const char *str);

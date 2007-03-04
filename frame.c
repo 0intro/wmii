@@ -96,10 +96,9 @@ resize_frame(Frame *f, XRectangle *r) {
 
 	frame2client(&f->crect);
 
-	if(f->crect.height < labelh(&def.font)) {
-		f->rect.height = frame_delta_h();
+	if(f->crect.height < labelh(&def.font))
 		f->collapsed = True;
-	}else
+	else
 		f->collapsed = False;
 
 	if(f->crect.width < labelh(&def.font)) {
@@ -107,8 +106,10 @@ resize_frame(Frame *f, XRectangle *r) {
 		f->collapsed = True;
 	}
 
-	if(f->collapsed)
+	if(f->collapsed) {
+		f->rect.height = labelh(&def.font);
 		f->crect = f->rect;
+	}
 	f->crect.y = labelh(&def.font);
 	f->crect.x = (f->rect.width - f->crect.width) / 2;
 	
@@ -216,9 +217,6 @@ focus_frame(Frame *f, Bool restack) {
 	old_in_a = a->sel;
 
 	a->sel = f;
-	if(!a->floating
-	&& ((a->mode == Colstack) || (a->mode == Colmax)))
-		arrange_column(a, False);
 
 	if(a != old_a)
 		focus_area(f->area);
@@ -227,6 +225,10 @@ focus_frame(Frame *f, Bool restack) {
 		return;
 
 	focus_client(f->client);
+
+	if(!a->floating
+	&& ((a->mode == Colstack) || (a->mode == Colmax)))
+		arrange_column(a, False);
 
 	if((f != old)
 	&& (f->area == old_a))
@@ -244,6 +246,7 @@ frame_delta_h() {
 void
 draw_frame(Frame *f) {
 	BlitzBrush br = { 0 };
+	Frame *tf;
 
 	br.blitz = &blz;
 	br.font = &def.font;
@@ -253,6 +256,12 @@ draw_frame(Frame *f) {
 		br.color = def.focuscolor;
 	else
 		br.color = def.normcolor;
+	if(!f->area->floating && f->area->mode == Colmax)
+		for(tf = f->area->frame; tf; tf=tf->anext)
+			if(tf->client == screen->focus) {
+				br.color = def.focuscolor;
+				break;
+			}
 
 	br.rect = f->rect;
 	br.rect.x = 0;

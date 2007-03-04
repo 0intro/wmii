@@ -180,11 +180,13 @@ arrange_column(Area *a, Bool dirty) {
 	scale_column(a);
 resize:
 	if(a->view == screen->sel) {
+		restack_view(a->view);
+		resize_client(a->sel->client, &a->sel->rect);
 		for(f=a->frame; f; f=f->anext)
-			if(!f->collapsed)
+			if(!f->collapsed && f != a->sel)
 				resize_client(f->client, &f->rect);
 		for(f=a->frame; f; f=f->anext)
-			if(f->collapsed)
+			if(f->collapsed && f != a->sel)
 				resize_client(f->client, &f->rect);
 	}
 }
