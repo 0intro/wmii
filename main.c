@@ -248,7 +248,7 @@ init_traps() {
 void
 check_9pcon(IXPConn *c) {
 	serve_9pcon(c);
-	check_x_event(c);
+	check_x_event(nil);
 }
 
 int

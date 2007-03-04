@@ -613,6 +613,10 @@ focus_client(Client *c) {
 		}else
 			XSetInputFocus(blz.dpy, screen->barwin, RevertToParent, CurrentTime);
 	}
+
+	while(XCheckMaskEvent(blz.dpy, FocusChangeMask, &ev))
+		if(handler[ev.xany.type])
+			handler[ev.xany.type](&ev);
 }
 
 void
