@@ -2,7 +2,6 @@
  * (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include "wmii.h"
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
 #include <X11/cursorfont.h>
@@ -18,6 +17,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "wmii.h"
 
 static Bool check_other_wm;
 static int (*x_error_handler) (Display *, XErrorEvent *);

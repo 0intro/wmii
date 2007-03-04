@@ -1,10 +1,10 @@
 /* Written by Kris Maglione <fbsdaemon at gmail dot com> */
 /* Public domain */
-#include "wmii.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "wmii.h"
 
 void
 fatal(const char *fmt, ...) {

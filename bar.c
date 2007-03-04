@@ -2,10 +2,10 @@
  * (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include "wmii.h"
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include "wmii.h"
 
 Bar *free_bars = nil;
 

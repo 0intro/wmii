@@ -1,13 +1,13 @@
 /* (C)opyright MMVI Kris Maglione <fbsdaemon at gmail dot com>
  * See LICENSE file for license details.
  */
-#include "wmii.h"
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "wmii.h"
 
 
 /* Datatypes: */

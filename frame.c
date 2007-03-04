@@ -1,9 +1,9 @@
 /* (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include "wmii.h"
 #include <stdlib.h>
 #include <string.h>
+#include "wmii.h"
 
 Frame *
 create_frame(Client *c, View *v) {

@@ -2,12 +2,12 @@
  * (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include "wmii.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include "wmii.h"
 
 static void place_client(Area *a, Client *c);
 

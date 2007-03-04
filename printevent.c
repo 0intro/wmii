@@ -43,10 +43,10 @@ can get it touch with me at the following location:
 			ken@richsun.UUCP
 */
 
-#include "wmii.h"
 #include <stdio.h>
 #include <X11/Intrinsic.h>
 #include <X11/Xproto.h>
+#include "wmii.h"
 #include "printevent.h"
 
 static char* sep = " ";

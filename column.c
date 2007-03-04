@@ -2,11 +2,11 @@
  * (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include "wmii.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "wmii.h"
 
 char *
 str_of_column_mode(int mode) {

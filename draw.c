@@ -1,10 +1,10 @@
 /* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-#include "wmii.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "wmii.h"
 
 uint
 textwidth_l(BlitzFont *font, char *text, uint len) {
