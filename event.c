@@ -175,19 +175,23 @@ enternotify(XEvent *e) {
 		return;
 
 	if((c = client_of_win(ev->window))) {
-		if(ev->detail != NotifyInferior && screen->focus != c) {
-			if(verbose)
-				fprintf(stderr, "enter_notify(c) => %s\n", c->name);
-			focus(c, False);
+		if(ev->detail != NotifyInferior) {
+			if(screen->focus != c) {
+				if(verbose)
+					fprintf(stderr, "enter_notify(c) => %s\n", c->name);
+				focus(c, False);
+			}
 			set_cursor(c, cursor[CurNormal]);
 		}else if(verbose)
 				fprintf(stderr, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
 	}
-	else if((f = frame_of_win(ev->window)) && screen->focus != c) {
-		if(verbose)
-			fprintf(stderr, "enter_notify(f) => %s\n", f->client->name);
-		if(f->area->floating || !f->collapsed)
-			focus(f->client, False);
+	else if((f = frame_of_win(ev->window))) {
+		if(screen->focus != c) {
+			if(verbose)
+				fprintf(stderr, "enter_notify(f) => %s\n", f->client->name);
+			if(f->area->floating || !f->collapsed)
+				focus(f->client, False);
+		}
 		set_frame_cursor(f, ev->x, ev->y);
 	}
 	else if(ev->window == blz.root) {
