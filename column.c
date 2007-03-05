@@ -305,7 +305,7 @@ AfterHorizontal:
 		resize_frame(south, &south->rect);
 	}
 AfterVertical:
-	//relax_column(a);
+	arrange_column(a, False);
 	focus_view(screen, v);
 }
 

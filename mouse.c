@@ -236,15 +236,8 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 			rect->y = r_south(&f_close->rect);
 			rect->height = f->rect.y - rect->y;
 		}
-		if(do_move) {
-			if(frame == f)
-				return;
-			if(a != frame->area)
-				send_to_area(a, frame);
-			remove_frame(frame);
-			insert_frame(f, frame, True);
-			focus(frame->client, True);
-		}
+		if(do_move)
+			goto do_move;
 		return;
 	}
 	if(y > r_south(&f->rect) - labelh(&def.font)) {
@@ -252,22 +245,27 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 		rect->height = (screen->rect.height - labelh(&def.font) - rect->y);
 		if(f->anext)
 			rect->height = (f->anext->rect.y - rect->y);
-		if(do_move) {
-			if(frame == f)
-				return;
-			if(a != frame->area)
-				send_to_area(a, frame);
-			remove_frame(frame);
-			insert_frame(f, frame, False);
-			focus(frame->client, True);
-		}
+		if(do_move)
+			goto do_move;
 		return;
 	}
+
 	*rect = f->rect;
 	if(do_move) {
 		swap_frames(frame, f);
 		focus(frame->client, False);
 	}
+	return;
+
+do_move:
+	if(frame == f)
+		return;
+	if(a != frame->area)
+		send_to_area(a, frame);
+	remove_frame(frame);
+	insert_frame(f, frame, False);
+	arrange_column(f->area, False);
+	focus(frame->client, True);
 }
 
 static void

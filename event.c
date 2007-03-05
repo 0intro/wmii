@@ -388,6 +388,16 @@ propertynotify(XEvent *e) {
 }
 
 static void
+mapnotify(XEvent *e) {
+	Client *c;
+	XMapEvent *ev = &e->xmap;
+
+	if((c = client_of_win(ev->window)))
+		if(c == sel_client())
+			focus_client(c);
+}
+
+static void
 unmapnotify(XEvent *e) {
 	Client *c;
 	XUnmapEvent *ev = &e->xunmap;
@@ -408,6 +418,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
 	[FocusOut]	= focusout,
 	[KeyPress]	= keypress,
 	[LeaveNotify]	= leavenotify,
+	[MapNotify]	= mapnotify,
 	[MapRequest]	= maprequest,
 	[MappingNotify]	= mappingnotify,
 	[MotionNotify]	= motionnotify,

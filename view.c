@@ -115,7 +115,6 @@ focus_view(WMScreen *s, View *v) {
 	XGrabServer(blz.dpy);
 	assign_sel_view(v);
 	update_frame_selectors(v);
-	/* gives all(!) clients proper geometry (for use of different tags) */
 	for(c=client; c; c=c->next)
 		if((f = c->sel)) {
 			if(f->view == v) {
@@ -130,8 +129,7 @@ focus_view(WMScreen *s, View *v) {
 	draw_frames();
 	XSync(blz.dpy, False);
 	XUngrabServer(blz.dpy);
-	if(v != old)
-		flush_masked_events(EnterWindowMask);
+	flush_masked_events(EnterWindowMask);
 }
 
 void
@@ -153,8 +151,7 @@ attach_to_view(View *v, Frame *f) {
 	Client *c = f->client;
 
 	c->revert = nil;
-	if(c->trans || c->floating || c->fixedsize
-		|| (c->rect.width == screen->rect.width && c->rect.height == screen->rect.height))
+	if(c->trans || c->floating || c->fixedsize || c->fullscreen)
 		v->sel = v->area;
 	else if(starting && v->sel->floating)
 		v->sel = v->area->next;

@@ -50,10 +50,11 @@ clean:
 dist: clean
 	@echo creating dist tarball
 	@mkdir -p wmii-${VERSION}
-	@cp -R LICENSE Makefile README wmii wmiir config.mk rc \
-		wmii.1 wmiir.1 wmiiwm.1 wmii.h ${SRC} 9menu.c wmii-${VERSION}
-	@tar -cf wmii-${VERSION}.tar wmii-${VERSION}
-	@gzip wmii-${VERSION}.tar
+	@ln LICENSE Makefile config.mk README rc/ \
+		wmii.eps wmii.mp \
+		${MAN1:=.1} ${SRC} ${SCRIPTS} wmii.h 9menu.c \
+		wmii-${VERSION}/
+	@tar -zcf wmii-${VERSION}.tgz wmii-${VERSION}
 	@rm -rf wmii-${VERSION}
 
 install: all
