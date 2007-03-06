@@ -32,7 +32,6 @@ EOF
 # Tagging Rules
 wmiir write /tagrules <<EOF
 /XMMS.*/ -> ~
-/Gimp.*/ -> gimp
 /MPlayer.*/ -> ~
 /.*/ -> !
 /.*/ -> 1
