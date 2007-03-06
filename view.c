@@ -309,7 +309,7 @@ view_index(View *v) {
 						a_i, (uint)f->client->win, r->y,
 						r->height, f->client->props);
 			if(len - n < 0)
-				return (uchar *)buffer;
+				return (uchar*)buffer;
 			buf_i += n;
 			len -= n;
 		}
@@ -344,11 +344,14 @@ area_of_message(View *v, char *message, uint *next) {
 		*next = 4;
 		return v->sel;
 	}
-	if(!strncmp(message, "~ ", 2))
+	if(!strncmp(message, "~ ", 2)) {
+		*next = 2;
 		return v->area;
-	if(1 != sscanf(message, "%d %n", &i, next) || i == 0)
+	}
+	if(1 != sscanf(message, "%u %n", &i, next) || i == 0)
 		return nil;
-	for(a=v->area; i && a; a=a->next, i--);
+	for(a=v->area; i && a; a=a->next)
+		i--;
 	return a;
 }
 

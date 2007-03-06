@@ -209,7 +209,7 @@ write_to_buf(P9Req *r, void *buf, uint *len, uint max) {
 		buf = *(void **)buf;
 	}
 
-	memcpy(buf + offset, r->ifcall.data, count);
+	memcpy((uchar*)buf + offset, r->ifcall.data, count);
 	r->ofcall.count = count;
 	((char *)buf)[offset+count] = '\0';
 }

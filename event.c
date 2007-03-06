@@ -440,5 +440,6 @@ check_x_event(IXPConn *c) {
 			printevent(&ev);
 		if(handler[ev.type])
 			handler[ev.type](&ev);
+		XPending(blz.dpy);
 	}
 }

@@ -144,15 +144,8 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 
 	insert_frame(a->sel, f, False);
 
-	if(a->floating) {
-		fprintf(stderr, "a: f=%p (%s) %d,%d %dx%d\n",
-			f, f->client->name,
-			f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+	if(a->floating)
 		place_frame(f);
-		fprintf(stderr, "b: f=%p (%s) %d,%d %dx%d\n",
-			f, f->client->name,
-			f->rect.x, f->rect.y, f->rect.width, f->rect.height);
-	}
 
 	focus_frame(f, False);
 	resize_frame(f, &f->rect);

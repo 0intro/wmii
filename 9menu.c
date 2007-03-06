@@ -464,7 +464,7 @@ create_window(int wide, int high)
 	h = high * numitems;
 
 	XQueryPointer(dpy, root, &wdummy, &wdummy, &x, &y,
-				&dummy, &dummy, &dummy);
+				&dummy, &dummy, (uint*)&dummy);
 	x -= wide / 2;
 	if (x < 0)
 		x = 0;

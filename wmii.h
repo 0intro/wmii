@@ -13,6 +13,12 @@
 #define nil	((void*)0)
 
 /* Types */
+#undef uchar
+#undef ushort
+#undef uint
+#undef ulong
+#undef uvlong
+#undef vlong
 #define uchar	_wmiiuchar
 #define ushort	_wmiiushort
 #define uint	_wmiiuint
@@ -31,7 +37,6 @@ typedef long long		vlong;
 #define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
 
 typedef struct Blitz Blitz;
-typedef enum BlitzAlign BlitzAlign;
 typedef struct BlitzColor BlitzColor;
 typedef struct BlitzFont BlitzFont;
 typedef struct BlitzBrush BlitzBrush;
@@ -53,6 +58,8 @@ enum BlitzAlign {
 	SWEST = SOUTH | WEST,
 	CENTER = NEAST | SWEST
 };
+
+typedef enum BlitzAlign BlitzAlign;
 
 struct BlitzColor {
 	vlong bg;
