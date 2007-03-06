@@ -182,7 +182,7 @@ frame_of_win(Window w) {
 	for(c=client; c; c=c->next)
 		if(c->framewin == w) break;
 	if(c)
-		return c->frame;
+		return c->sel;
 	return nil;
 }
 

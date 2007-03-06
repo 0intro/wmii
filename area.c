@@ -9,7 +9,7 @@
 #include <math.h>
 #include "wmii.h"
 
-static void place_client(Area *a, Client *c);
+static void place_frame(Frame *f);
 
 Client *
 sel_client_of_area(Area *a) {               
@@ -144,11 +144,19 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 
 	insert_frame(a->sel, f, False);
 
-	if(a->floating)
-		place_client(a, c);
+	if(a->floating) {
+		fprintf(stderr, "a: f=%p (%s) %d,%d %dx%d\n",
+			f, f->client->name,
+			f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+		place_frame(f);
+		fprintf(stderr, "b: f=%p (%s) %d,%d %dx%d\n",
+			f, f->client->name,
+			f->rect.x, f->rect.y, f->rect.width, f->rect.height);
+	}
 
 	focus_frame(f, False);
 	resize_frame(f, &f->rect);
+	restack_view(a->view);
 	if(!a->floating)
 		arrange_column(a, False);
 	else
@@ -241,7 +249,7 @@ bit_get(uint *field, uint width, uint x, uint y) {
 }
 
 static void
-place_client(Area *a, Client *c) {
+place_frame(Frame *f) {
 	enum { devisor = sizeof(uint) * 8 };
 	enum { dx = 8, dy = 8 };
 	static uint mwidth, mx, my;
@@ -250,7 +258,9 @@ place_client(Area *a, Client *c) {
 	XPoint p1 = {0, 0};
 	XPoint p2 = {0, 0};
 	XRectangle *rects;
-	Frame *f, *fr;
+	Frame *fr;
+	Client *c;
+	Area *a;
 	Bool fit;
 	uint i, j, x, y, cx, cy, maxx, maxy, diff, num;
 	int snap;
@@ -260,7 +270,8 @@ place_client(Area *a, Client *c) {
 	fit = False;
 	align = CENTER;
 
-	f = c->sel;
+	a = f->area;
+	c = f->client;
 
 	if(c->trans)
 		return;

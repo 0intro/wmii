@@ -125,6 +125,7 @@ focus_view(WMScreen *s, View *v) {
 				unmap_client(c, IconicState);
 			}
 		}
+	restack_view(v);
 	focus_area(v->sel);
 	draw_frames();
 	XSync(blz.dpy, False);
@@ -166,6 +167,9 @@ restack_view(View *v) {
 	uint n, i;
 	static Window *wins = nil;
 	static uint winssz = 0;
+	
+	if(v != screen->sel)
+		return;
 
 	i = 0;
 	n = 0;
