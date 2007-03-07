@@ -43,9 +43,8 @@ status() {
 	echo -n $(uptime | sed 's/.*://; s/,//g') '|' $(date)
 }
 
-IFS=''
-eval $({
-cat <<'EOF'
+eventstuff() {
+	cat <<'EOF'
 # Events
 Event Start
 	case "$1" in
@@ -98,7 +97,7 @@ Event ClientMouseDown
 		menulast=${do:-"$menulast"}
 	esac
 EOF
-cat <<EOF
+	cat <<EOF
 # Key Bindings
 Key $MODKEY-$LEFT
 	wmiir xwrite /tag/sel/ctl select left
@@ -139,15 +138,18 @@ Key $MODKEY-Shift-c
 Key $MODKEY-Shift-t
 	wmiir xwrite "/client/\$(wmiir read /client/sel/ctl)/tags" "\$(tagsmenu)" &
 EOF
-for i in 0 1 2 3 4 5 6 7 8 9; do
-	cat << EOF
+	for i in 0 1 2 3 4 5 6 7 8 9; do
+		cat << EOF
 Key $MODKEY-$i
 	wmiir xwrite /ctl view "$i"
 Key $MODKEY-Shift-$i
 	wmiir xwrite /client/sel/tags "$i"
 EOF
-done
-} | wmiiloop)
+	done
+}
+
+IFS=''
+eval $(eventstuff | wmiiloop)
 unset IFS
 
 # Functions

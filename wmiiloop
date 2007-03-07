@@ -1,6 +1,7 @@
 #!AWKPATH -f
 BEGIN {
 	arg[1] = "Nop"
+	body = "";
 	writekeys = "wmiir write /keys"
 	print "IFS=''"
 }
@@ -13,7 +14,8 @@ function addevent() {
 	print var "=\"$" var " " arg[2] "\""
 
 	gsub("[^a-zA-Z_0-9]", "_", arg[2]);
-	print arg[1] "_" arg[2] "() {" body "\n}"
+	if(body != "")
+		print arg[1] "_" arg[2] "() {" body "\n}"
 }
 
 /^(Event|Key|Action)[ \t]/ {
