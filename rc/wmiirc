@@ -99,6 +99,15 @@ Event ClientMouseDown
 EOF
 	cat <<EOF
 # Key Bindings
+Key $MODKEY-Control-t
+	case \$(wmiir read /keys | wc -l | tr -d ' \t\n') in
+	0|1)
+		echo -n \$Keys | tr ' ' '\012' | wmiir write /keys
+		wmiir xwrite /ctl grabmod $MODKEY;;
+	*)
+		wmiir xwrite /keys $MODKEY-Control-t
+		wmiir xwrite /ctl grabmod Mod3;;
+	esac
 Key $MODKEY-$LEFT
 	wmiir xwrite /tag/sel/ctl select left
 Key $MODKEY-$RIGHT
@@ -225,5 +234,5 @@ wmiir read /event |
 while read event; do
 	set -- $event
 	event=$1; shift
-	Event_$event $@ # 2>/dev/null
+	Event_$event $@ 2>/dev/null
 done
