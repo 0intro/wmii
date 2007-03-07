@@ -142,9 +142,9 @@ EOF
 for i in 0 1 2 3 4 5 6 7 8 9; do
 	cat << EOF
 Key $MODKEY-$i
-	wmiir xwrite /ctl view "\$(echo \$key | sed 's/.*-//')"
+	wmiir xwrite /ctl view "$i"
 Key $MODKEY-Shift-$i
-	wmiir xwrite /client/sel/tags "\$(echo \$key | sed 's/.*-//')"
+	wmiir xwrite /client/sel/tags "$i"
 EOF
 done
 } | wmiiloop)
@@ -161,7 +161,7 @@ proglist() {
 actionlist() {
 	{
 		proglist $WMII_CONFPATH
-		echo $ACTIONS | tr ' ' '\012'
+		echo -n $Actions | tr ' ' '\012'
 	} | sort | uniq
 }
 
@@ -223,5 +223,5 @@ wmiir read /event |
 while read event; do
 	set -- $event
 	event=$1; shift
-	Event_$event $@ 2>/dev/null
+	Event_$event $@ # 2>/dev/null
 done

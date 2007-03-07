@@ -6,11 +6,11 @@ BEGIN {
 }
 
 function addevent() {
-	if(arg[1] == Key)
-		keys[arg[1]] = 1;
+	if(arg[1] == "Key")
+		keys[arg[2]] = 1;
 
 	var = arg[1] "s"
-	print var "=\"$" var "\n" arg[1] "\""
+	print var "=\"$" var " " arg[2] "\""
 
 	gsub("[^a-zA-Z_0-9]", "_", arg[2]);
 	print arg[1] "_" arg[2] "() {" body "\n}"
@@ -28,6 +28,6 @@ function addevent() {
 END {
 	addevent()
 	for(key in keys)
-		print key | writekeys
+		print key | writekeys;
 	close(writekeys);
 }
