@@ -38,19 +38,23 @@ wmiir write /tagrules <<EOF
 EOF
 
 # Event processing
-{
-cat <<'EOF'
 # Status Bar Info
 status() {
 	echo -n $(uptime | sed 's/.*://; s/,//g') '|' $(date)
 }
 
+IFS=''
+eval $({
+cat <<'EOF'
 # Events
 Event Start
 	case "$1" in
 	wmiirc)
-		exit;;
-	exac
+		exit;
+	esac
+Event Key
+	fn=$(echo $@ | sed 's/[^a-zA-Z_0-9]/_/g')
+	Key_$fn $@
 Event CreateTag
 	echo "$WMII_NORMCOLORS" "$@" | wmiir create "/lbar/$@"
 Event DestroyTag
@@ -143,8 +147,9 @@ Key $MODKEY-Shift-$i
 	wmiir xwrite /client/sel/tags "\$(echo \$key | sed 's/.*-//')"
 EOF
 done
+} | wmiiloop)
+unset IFS
 
-cat <<'EOF'
 # Functions
 proglist() {
 	paths=$(echo "$@" | sed 'y/:/ /')
@@ -183,7 +188,6 @@ Action() {
 PROGS_FILE="$WMII_NS_DIR/.proglist"
 Action status &
 proglist $PATH >$PROGS_FILE &
-EOF
 
 xsetroot -solid "$WMII_BACKGROUND" &
 
@@ -215,4 +219,9 @@ done
 # Stop any running instances of wmiirc
 echo Start wmiirc | wmiir write /event || exit 1
 
-} | wmiiloop | sh
+wmiir read /event |
+while read event; do
+	set -- $event
+	event=$1; shift
+	Event_$event $@ 2>/dev/null
+done

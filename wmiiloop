@@ -1,32 +1,19 @@
 #!AWKPATH -f
-/^#/ && $2 !~ /^Events|Actions|Key$/ || !begin, \
-/^#/ && $2 ~ /^(Events|Actions|Key)$/ {
-	begin = 1
-	print
-	next
-}
-
 BEGIN {
 	arg[1] = "Nop"
 	writekeys = "wmiir write /keys"
-	readevent = "wmiir read /event"
-	print "ACTIONS=\"\""
+	print "IFS=''"
 }
 
 function addevent() {
-	if(arg[1] == "Key") {
-		keys[arg[2]] = body
-	}
-	else if(arg[1] == "Event") {
-		events[arg[2]] = body
-	}
-	else if(arg[1] == "Action") {
-		action = arg[2];
-		actions[action] = body
-		gsub("\"", "\\\"", action)
-		print "ACTIONS=\"$ACTIONS " action "\""
-		print "Action_" action "() {" actions[action] "\n}"
-	}
+	if(arg[1] == Key)
+		keys[arg[1]] = 1;
+
+	var = arg[1] "s"
+	print var "=\"$" var "\n" arg[1] "\""
+
+	gsub("[^a-zA-Z_0-9]", "_", arg[2]);
+	print arg[1] "_" arg[2] "() {" body "\n}"
 }
 
 /^(Event|Key|Action)[ \t]/ {
@@ -39,24 +26,8 @@ function addevent() {
 }
 
 END {
+	addevent()
 	for(key in keys)
 		print key | writekeys
-	close(writekeys)
-	while(readevent | getline) {
-		split($0, arg)
-		sub("^[a-zA-Z]+[ \t]+", "")
-		print "set -f"
-		if(arg[1] == "Key") {
-			sub("^[^ \t]+", "")
-			print "key=\"" arg[2] "\""
-			body = keys[arg[2]]
-		}
-		else {
-			print "event=\"" arg[1] "\""
-			body = events[arg[1]]
-		}
-		print "set -- " $0
-		print body
-		fflush()
-	}
+	close(writekeys);
 }
