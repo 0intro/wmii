@@ -176,6 +176,8 @@ restack_view(View *v) {
 
 	for(c=client; c; c=c->next)
 		i++;
+	if(i == 0)
+		return;
 	if(i >= winssz) {
 		winssz = 2 * i;
 		wins = erealloc(wins, sizeof(Window) * winssz);
