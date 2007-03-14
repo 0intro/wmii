@@ -10,7 +10,7 @@ SRC = area.c bar.c client.c column.c draw.c event.c frame.c fs.c \
 OBJ = ${SRC:.c=.o}
 MAN1 = wmii wmiir wmiiwm wmiiloop
 SCRIPTS = wmiistartrc wmiir wmiiloop wmii9rc
-BIN = wmiiwm wmii9menu
+BIN = wmii wmii9menu
 
 all: options ${BIN}
 
@@ -35,7 +35,7 @@ ${OBJ}: wmii.h config.mk
 
 9menu.o: config.mk
 
-wmiiwm: ${OBJ}
+wmii: ${OBJ}
 	@echo LD $@
 	@${CC} -o $@ ${OBJ} ${LDFLAGS} ${LIBIXP}
 
