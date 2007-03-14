@@ -9,7 +9,7 @@ SRC = area.c bar.c client.c column.c draw.c event.c frame.c fs.c \
 	geom.c key.c main.c mouse.c rule.c printevent.c util.c view.c
 OBJ = ${SRC:.c=.o}
 MAN1 = wmii wmiir wmiiwm wmiiloop
-SCRIPTS = wmii wmiir wmiiloop wmii9rc
+SCRIPTS = wmiistartrc wmiir wmiiloop wmii9rc
 BIN = wmiiwm wmii9menu
 
 all: options ${BIN}

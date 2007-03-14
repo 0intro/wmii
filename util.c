@@ -73,6 +73,13 @@ max(int a, int b) {
 	return b;
 }
 
+int
+min(int a, int b) {
+	if(a < b)
+		return a;
+	return b;
+}
+
 char *
 str_nil(char *s) {
 	if(s)

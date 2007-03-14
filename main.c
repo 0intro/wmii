@@ -205,13 +205,6 @@ cleanup_handler(int signal) {
 }
 
 static void
-sigchld_handler(int sig) {
-	int ret;
-	/* We only spawn one child */
-	wait(&ret);
-}
-
-static void
 init_traps() {
 	char buf[1];
 	int fd[2];
@@ -253,26 +246,21 @@ check_9pcon(IXPConn *c) {
 
 int
 main(int argc, char *argv[]) {
-	char *wmiirc, *errstr, *namespace, *tmp;
+	char *wmiirc, *errstr, *tmp;
 	char address[1024], ns_path[1024];
-	WMScreen *s;
 	struct passwd *passwd;
-	int i;
+	WMScreen *s;
+	int sock, i;
+	pid_t pid;
 	XSetWindowAttributes wa;
 
 	passwd = getpwuid(getuid());
 	user = estrdup(passwd->pw_name);
-	wmiirc = nil;
-	tmp = getenv("WMII_NS_PATH");
-	if(tmp)
-		strncpy(ns_path, tmp, sizeof(ns_path));
-	else
-		snprintf(ns_path, sizeof(ns_path), "/tmp/ns.%s.%s", user, getenv("DISPLAY"));
-	tmp = getenv("WMII_ADDRESS");
-	if(tmp)
-		strncpy(address, tmp, sizeof(ns_path));
-	else
-		snprintf(address, sizeof(address), "unix!%s/wmii", ns_path);
+	wmiirc = "wmiistartrc";
+
+	address[0] = '\0';
+	if((tmp = getenv("WMII_ADDRESS")) && strlen(tmp) > 0)
+		strncpy(address, tmp, sizeof(address));
 
 	/* command line args */
 	for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
@@ -302,10 +290,21 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	if(!address)
-		usage();
+	if(strncmp(address, "unix!", 5) == 0) {
+		tmp = &address[5];
+		i = strrchr(tmp, '/') - tmp;
+		if(i < 0)
+			fatal("wmiiwm: Bad address\n");
+		strncpy(ns_path, tmp, min(sizeof(ns_path), i));
+	}else if((tmp = getenv("WMII_NS_PATH")) && strlen(tmp) > 0)
+		strncpy(ns_path, tmp, sizeof(ns_path));
+	else
+		snprintf(ns_path, sizeof(ns_path), "/tmp/ns.%s.%s", user, getenv("DISPLAY"));
 
-	setenv("WMII_NS_PATH", ns_path, True);
+	if(strlen(address) == 0)
+		snprintf(address, sizeof(address), "unix!%s/wmii", ns_path);
+
+	setenv("WMII_NS_DIR", ns_path, True);
 	setenv("WMII_ADDRESS", address, True);
 
 	setlocale(LC_CTYPE, "");
@@ -325,56 +324,86 @@ main(int argc, char *argv[]) {
 
 	init_traps();
 
+	/* Make sure that the namespace directory exists */
+	switch(pid = fork()) {
+	case -1:
+		fatal("wmiiwm: Can't fork: %s\n", strerror(errno));
+		break; /* Not reached */
+	case 0:
+		execlp("mkdir", "mkdir", "-m", "0700", "-p", ns_path, nil);
+		fatal("wmiiwm: Can't exec mkdir: %s\n", strerror(errno));
+		break; /* Not reached */
+	default:
+		if(waitpid(pid, &i, WUNTRACED) == -1)
+			fprintf(stderr, "wmiiwm: warning: wait for mkdir returned -1: %s\n",
+				strerror(errno));
+		else if(WEXITSTATUS(i) != 0)
+			fatal("wmiiwm: Can't create namespace dir \"%s\" (mkdir returned %d)\n",
+				ns_path, i);
+		break;
+	}
+
 	/* Check namespace permissions */
 	if(!strncmp(address, "unix!", 5)) {
 		struct stat st;
 
-		namespace = estrdup(&address[5]);
-		for(i = strlen(namespace) - 1; i >= 0; i--)
-			if(namespace[i] == '/') break;
-		namespace[i+1] = '\0';
-
-		if(stat(namespace, &st))
-			fatal("wmiiwm: can't stat namespace directory \"%s\": %s\n",
-					namespace, strerror(errno));
+		if(stat(ns_path, &st))
+			fatal("wmiiwm: can't stat ns_path directory \"%s\": %s\n",
+					ns_path, strerror(errno));
 		if(getuid() != st.st_uid)
-			fatal("wmiiwm: namespace directory \"%s\" exists, "
-				"but is not owned by you",
-				namespace);
+			fatal("wmiiwm: ns_path directory \"%s\" exists, "
+					"but is not owned by you",
+				ns_path);
 		if(st.st_mode & 077)
-			fatal("wmiiwm: namespace directory \"%s\" exists, "
-				"but has group or world permissions",
-				namespace);
-		free(namespace);
+			fatal("wmiiwm: ns_path directory \"%s\" exists, "
+					"but has group or world permissions",
+				ns_path);
 	}
 
 	errstr = nil;
-	i = ixp_create_sock(address, &errstr);
-	if(i < 0)
-		fatal("wmiiwm: fatal: %s\n", errstr);
+	sock = ixp_create_sock(address, &errstr);
+	if(sock < 0)
+		fatal("wmiiwm: fatal: %s (%s)\n", errstr, address);
 
 	/* start wmiirc */
 	if(wmiirc) {
-		int name_len = strlen(wmiirc) + 6;
-		char execstr[name_len];
-		signal(SIGCHLD, sigchld_handler);
-		switch(fork()) {
-		case 0:
-			if(setsid() == -1)
-				fatal("wmiiwm: can't setsid: %s\n", strerror(errno));
-			close(i);
-			close(ConnectionNumber(blz.dpy));
-			snprintf(execstr, name_len, "exec %s", wmiirc);
-			execl("/bin/sh", "sh", "-c", execstr, nil);
-			fatal("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
+		/* Double fork hack */
+		switch(pid = fork()) {
 		case -1:
 			perror("wmiiwm: cannot fork wmiirc");
+			break; /* Not reached */
+		case 0:
+			switch(fork()) {
+			case -1:
+				perror("wmiiwm: cannot fork wmiirc");
+				break; /* Not reached */
+			case 0:
+				if(setsid() == -1)
+					fatal("wmiiwm: can't setsid: %s\n", strerror(errno));
+				close(sock);
+				close(ConnectionNumber(blz.dpy));
+
+				/* Run through the user's shell as a login shell */
+				tmp = malloc(sizeof(char*) * (strlen(passwd->pw_shell) + 2));
+				/* Can't overflow */
+				sprintf(tmp, "-%s", passwd->pw_shell);
+				execl(passwd->pw_shell, tmp, "-c", wmiirc, nil);
+
+				fatal("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
+				break; /* Not reached */
+			default:
+				exit(0);
+				break; /* Not reached */
+			}
 		default:
+			waitpid(pid, &i, 0);
+			if(i != 0)
+				exit(1); /* Error already printed */
 			break;
 		}
 	}
 
-	ixp_server_open_conn(&srv, i, &p9srv, check_9pcon, nil);
+	ixp_server_open_conn(&srv, sock, &p9srv, check_9pcon, nil);
 	ixp_server_open_conn(&srv, ConnectionNumber(blz.dpy), nil, check_x_event, nil);
 
 	view = nil;
@@ -401,8 +430,8 @@ main(int argc, char *argv[]) {
 
 	num_screens = 1;
 	screens = emallocz(num_screens * sizeof(*screens));
-	for(i = 0; i < num_screens; i++) {
-		s = &screens[i];
+	for(sock = 0; sock < num_screens; sock++) {
+		s = &screens[sock];
 		s->lbar = nil;
 		s->rbar = nil;
 		s->sel = nil;

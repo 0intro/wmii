@@ -415,6 +415,7 @@ void *emallocz(uint size);
 void *emalloc(uint size);
 void fatal(const char *fmt, ...);
 int max(int a, int b);
+int min(int a, int b);
 char *str_nil(char *s);
 uint strlcat(char *dst, const char *src, unsigned int siz);
 
