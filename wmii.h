@@ -269,6 +269,7 @@ void (*handler[LASTEvent]) (XEvent *);
 /* Misc */
 Bool starting;
 Bool verbose;
+char *execstr;
 
 /* wm.c */
 char *message_root(char *message);

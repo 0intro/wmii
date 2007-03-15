@@ -23,6 +23,7 @@ static Bool check_other_wm;
 static int (*x_error_handler) (Display *, XErrorEvent *);
 static char version[] = "wmiiwm - " VERSION ", (C)opyright MMVI-MMVII Kris Maglione\n";
 static struct sigaction sa;
+static int sleeperfd;
 
 static void
 usage() {
@@ -217,6 +218,7 @@ init_traps() {
 		fatal("Can't fork(): %s\n", strerror(errno));
 	default:
 		close(fd[0]);
+		sleeperfd = fd[1];
 		sa.sa_flags = 0;
 		sa.sa_handler = cleanup_handler;
 		sigaction(SIGINT, &sa, nil);
@@ -507,6 +509,9 @@ main(int argc, char *argv[]) {
 	cleanup();
 	XCloseDisplay(blz.dpy);
 	ixp_server_close(&srv);
+	close(sleeperfd);
+	if(execstr)
+		execl("/bin/sh", "sh", "-c", execstr, nil);
 	if(errstr)
 		return 1;
 	return 0;

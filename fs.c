@@ -236,6 +236,10 @@ message_root(char *message)
 	}
 	if(!strcmp(message, "quit "))
 		srv.running = 0;
+	else if(!strncmp(message, "exec ", 5)) {
+		srv.running = 0;
+		execstr = strdup(&message[5]);
+	}
 	else if(!strncmp(message, "view ", 5))
 		select_view(&message[5]);
 	else if(!strncmp(message, "selcolors ", 10)) {
