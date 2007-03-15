@@ -239,13 +239,15 @@ message_root(char *message)
 	else if(!strncmp(message, "exec ", 5)) {
 		srv.running = 0;
 		execstr = strdup(&message[5]);
+		message += strlen(message);
 	}
 	else if(!strncmp(message, "view ", 5))
 		select_view(&message[5]);
 	else if(!strncmp(message, "selcolors ", 10)) {
 		fprintf(stderr, "wmiiwm: warning: selcolors have been removed\n");
 		return Ebadcmd;
-	}else if(!strncmp(message, "focuscolors ", 12)) {
+	}
+	else if(!strncmp(message, "focuscolors ", 12)) {
 		message += 12;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.focuscolor);

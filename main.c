@@ -387,10 +387,12 @@ main(int argc, char *argv[]) {
 
 				/* Run through the user's shell as a login shell */
 				tmp = malloc(sizeof(char*) * (strlen(passwd->pw_shell) + 2));
-				/* Can't overflow */
-				sprintf(tmp, "-%s", passwd->pw_shell);
-				execl(passwd->pw_shell, tmp, "-c", wmiirc, nil);
+				if(passwd->pw_shell[0] == '/')
+					sprintf(tmp, "-%s", strrchr(passwd->pw_shell, '/') + 1); /* Can't overflow */
+				else
+					fatal("wmiiwm: shell is not an absolute path: %s\n", passwd->pw_shell);
 
+				execl(passwd->pw_shell, tmp, "-c", wmiirc, nil);
 				fatal("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
 				break; /* Not reached */
 			default:
@@ -432,8 +434,8 @@ main(int argc, char *argv[]) {
 
 	num_screens = 1;
 	screens = emallocz(num_screens * sizeof(*screens));
-	for(sock = 0; sock < num_screens; sock++) {
-		s = &screens[sock];
+	for(i = 0; i < num_screens; i++) {
+		s = &screens[i];
 		s->lbar = nil;
 		s->rbar = nil;
 		s->sel = nil;
