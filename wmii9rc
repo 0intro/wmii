@@ -10,5 +10,7 @@ done
 if [ ! -n "$RC" ]; then
 	exit 1
 elif [ "X$@" != "X" ]; then
-	$RC $@
+	exec $RC $@
+else
+	true
 fi
