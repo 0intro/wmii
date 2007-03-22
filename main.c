@@ -298,7 +298,7 @@ main(int argc, char *argv[]) {
 		if(i < 0)
 			fatal("wmiiwm: Bad address\n");
 		strncpy(ns_path, tmp, min(sizeof(ns_path), i));
-	}else if((tmp = getenv("WMII_NS_PATH")) && strlen(tmp) > 0)
+	}else if((tmp = getenv("WMII_NS_DIR")) && strlen(tmp) > 0)
 		strncpy(ns_path, tmp, sizeof(ns_path));
 	else
 		snprintf(ns_path, sizeof(ns_path), "/tmp/ns.%s.%s", user, getenv("DISPLAY"));
