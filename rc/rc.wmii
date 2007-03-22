@@ -211,7 +211,7 @@ proglist $PATH >$progs_file &
 
 # Tag Bar Setup
 ifs='#
-'{	for(bar in `{comm -1 <{wmiir ls /lbar} <{read_tags}})
+'{	for(bar in `{comm -23 <{wmiir ls /lbar} <{read_tags}})
 		wmiir remove /lbar/$bar
 	seltag=`{wmiir read /tag/sel/ctl}
 	for(tag in `{read_tags}) {

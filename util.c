@@ -1,5 +1,6 @@
 /* Written by Kris Maglione <fbsdaemon at gmail dot com> */
 /* Public domain */
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,10 +10,19 @@
 void
 fatal(const char *fmt, ...) {
 	va_list ap;
+	int err;
+
+	err = errno;
+	fprintf(stderr, "wmiiwm: fatal: ");
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
+
+	if(fmt[strlen(fmt)-1] == ':')
+		fprintf(stderr, " %s\n", strerror(err));
+	else
+		fprintf(stderr, "\n");
 
 	exit(1);
 }
@@ -21,7 +31,7 @@ void *
 emalloc(uint size) {
 	void *ret = malloc(size);
 	if(!ret)
-		fatal("fatal: could not malloc() %d bytes\n", size);
+		fatal("could not malloc() %d bytes", size);
 	return ret;
 }
 
@@ -36,7 +46,7 @@ void *
 erealloc(void *ptr, uint size) {
 	void *ret = realloc(ptr, size);
 	if(!ret)
-		fatal("fatal: could not realloc() %d bytes\n", size);
+		fatal("fatal: could not realloc() %d bytes", size);
 	return ret;
 }
 
@@ -44,7 +54,7 @@ char *
 estrdup(const char *str) {
 	void *ret = strdup(str);
 	if(!ret)
-		fatal("fatal: could not strdup() %u bytes\n", strlen(str));
+		fatal("fatal: could not strdup() %u bytes", strlen(str));
 	return ret;
 }
 

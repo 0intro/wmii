@@ -19,10 +19,16 @@
 #include <unistd.h>
 #include "wmii.h"
 
-static Bool check_other_wm;
+#define nelem(ary) (sizeof(ary) / sizeof(*ary))
+
+static const char
+	version[] = "wmiiwm - " VERSION ", ©2007 Kris Maglione\n";
+
 static int (*x_error_handler) (Display *, XErrorEvent *);
-static char version[] = "wmiiwm - " VERSION ", © 2007 Kris Maglione\n";
+static char *address, *ns_path;
+static Bool check_other_wm;
 static struct sigaction sa;
+static struct passwd *passwd;
 static int sleeperfd;
 
 static void
@@ -59,55 +65,136 @@ scan_wins() {
 		XFree(wins);
 }
 
-static int
-win_property(Window w, Atom a, Atom t, long l, uchar **prop) {
-	Atom real;
-	int format;
-	ulong res, extra;
-	int status;
-
-	status = XGetWindowProperty(blz.dpy, w, a, 0L, l, False, t, &real, &format,
-			&res, &extra, prop);
-	if(status != Success || *prop == 0) {
-		return 0;
-	}
-	if(res == 0) {
-		free((void *) *prop);
-	}
-	return res;
-}
-
 int
 win_proto(Window w) {
 	Atom *protocols;
-	long res;
-	int protos = 0;
-	int i;
+	Atom real;
+	ulong nitems, extra;
+	int i, format, status, protos;
 
-	res = win_property(w, wm_atom[WMProtocols], XA_ATOM, 20L,
-			((uchar **) &protocols));
-	if(res <= 0) {
-		return protos;
+	status = XGetWindowProperty(
+		/* display */	blz.dpy,
+		/* window */	w,
+		/* property */	atom[WMProtocols],
+		/* offset */	0L,
+		/* length */	20L,
+		/* delete */	False,
+		/* req_type */	XA_ATOM,
+		/* type_ret */	&real,
+		/* format_ret */&format,
+		/* nitems_ret */&nitems,
+		/* extra_bytes */&extra,
+		/* prop_return */(uchar**)&protocols
+	);
+
+	if(status != Success || protocols == 0) {
+		return 0;
 	}
-	for(i = 0; i < res; i++) {
-		if(protocols[i] == wm_atom[WMDelete])
+
+	if(nitems == 0) {
+		free(protocols);
+		return 0;
+	}
+
+	protos = 0;
+	for(i = 0; i < nitems; i++) {
+		if(protocols[i] == atom[WMDelete])
 			protos |= WM_PROTOCOL_DELWIN;
 	}
-	free((char *) protocols);
+
+	free(protocols);
 	return protos;
 }
 
+static void
+init_ns() {
+	struct stat st;
+	char *p, *q, *display;
+	int ret;
+
+	if(address && strncmp(address, "unix!", 5) == 0) {
+		ns_path = estrdup(&address[5]);
+
+		p = strrchr(ns_path, '/');
+		if(p != nil)
+			p = '\0';
+	}else if((p = getenv("WMII_NS_PATH")) || (p = getenv("NAMESPACE")))
+		ns_path = p;
+	else {
+		display = getenv("DISPLAY");
+		if(display == nil)
+			fatal("DISPLAY is unset");
+
+		display = estrdup(display);
+		p = &display[strlen(display) - 2];
+		if(strcmp(p, ".0") == 0)
+			*p = '\0';
+
+		ns_path = emalloc(strlen(display) + strlen(user) + strlen("/tmp/ns..") + 1);
+		sprintf(ns_path, "/tmp/ns.%s.%s", user, display);
+	}
+
+	if(ns_path[0] != '/' || strlen(ns_path) == 0)
+		fatal("Bad ns_path");
+
+	q = ns_path + strlen(ns_path);
+	for(p = &ns_path[1]; p < q; p++) {
+		if(*p == '/') {
+			*p = '\0';
+			ret = mkdir(ns_path, 0700);
+			if(ret == -1 && errno != EEXIST)
+				fatal("Can't create ns_path '%s':", ns_path);
+			*p = '/';
+		}
+	}
+
+	if(stat(ns_path, &st))
+		fatal("Can't stat ns_path '%s':", ns_path);
+	if(getuid() != st.st_uid)
+		fatal("ns_path '%s' exists but is not owned by you",
+			ns_path);
+	if(st.st_mode & 077)
+		fatal("ns_path '%s' exists, but has group or world permissions",
+			ns_path);
+}
+
+static void
+init_environment() {
+	if(address == nil)
+		address = getenv("WMII_ADDRESS");
+
+	init_ns();
+
+	if(address == nil) {
+		address = emalloc(strlen(ns_path) + strlen("unix!/wmii") + 1);
+		sprintf(address, "unix!%s/wmii", ns_path);
+	}
+
+	setenv("WMII_NS_DIR", ns_path, True);
+	setenv("WMII_ADDRESS", address, True);
+}
+
+static void
+intern_atom(int ident, char *name) {
+	atom[ident] = XInternAtom(blz.dpy, name, False);
+}
 
 static void
 init_atoms() {
-	wm_atom[WMState] = XInternAtom(blz.dpy, "WM_STATE", False);
-	wm_atom[WMProtocols] = XInternAtom(blz.dpy, "WM_PROTOCOLS", False);
-	wm_atom[WMDelete] = XInternAtom(blz.dpy, "WM_DELETE_WINDOW", False);
-	net_atom[NetSupported] = XInternAtom(blz.dpy, "_NET_SUPPORTED", False);
-	net_atom[NetWMName] = XInternAtom(blz.dpy, "_NET_WM_NAME", False);
-	tags_atom = XInternAtom(blz.dpy, "_WIN_TAGS", False);
-	XChangeProperty(blz.dpy, blz.root, net_atom[NetSupported], XA_ATOM, 32,
-			PropModeReplace, (uchar *) net_atom, NetLast);
+	intern_atom(WMState, "WM_STATE");
+	intern_atom(WMProtocols, "WM_PROTOCOLS");
+	intern_atom(WMDelete, "WM_DELETE_WINDOW");
+	intern_atom(NetSupported, "_NET_SUPPORTED");
+	intern_atom(NetWMName, "_NET_WM_NAME");
+	intern_atom(TagsAtom, "_WIN_TAGS");
+
+	XChangeProperty(blz.dpy, blz.root, atom[NetSupported], XA_ATOM, 32,
+			PropModeReplace, (uchar *)&atom[NetSupported], 2);
+}
+
+static void
+create_cursor(int ident, uint shape) {
+	cursor[ident] = XCreateFontCursor(blz.dpy, shape);
 }
 
 static void
@@ -115,17 +202,24 @@ init_cursors() {
 	Pixmap pix;
 	XColor black, dummy;
 
-	XAllocNamedColor(blz.dpy, DefaultColormap(blz.dpy, blz.screen), "black", &black, &dummy);
-	pix = XCreateBitmapFromData(blz.dpy, blz.root, (char[]){0}, 1, 1);
+	create_cursor(CurNormal, XC_left_ptr);
+	create_cursor(CurNECorner, XC_top_right_corner);
+	create_cursor(CurNWCorner, XC_top_left_corner);
+	create_cursor(CurSECorner, XC_bottom_right_corner);
+	create_cursor(CurSWCorner, XC_bottom_left_corner);
+	create_cursor(CurMove, XC_fleur);
+	create_cursor(CurInput, XC_xterm);
 
-	cursor[CurNormal] = XCreateFontCursor(blz.dpy, XC_left_ptr);
-	cursor[CurNECorner] = XCreateFontCursor(blz.dpy, XC_top_right_corner);
-	cursor[CurNWCorner] = XCreateFontCursor(blz.dpy, XC_top_left_corner);
-	cursor[CurSECorner] = XCreateFontCursor(blz.dpy, XC_bottom_right_corner);
-	cursor[CurSWCorner] = XCreateFontCursor(blz.dpy, XC_bottom_left_corner);
-	cursor[CurMove] = XCreateFontCursor(blz.dpy, XC_fleur);
-	cursor[CurInput] = XCreateFontCursor(blz.dpy, XC_xterm);
-	cursor[CurInvisible] = XCreatePixmapCursor(blz.dpy, pix, pix, &black, &black, 0, 0);
+	XAllocNamedColor(blz.dpy, DefaultColormap(blz.dpy, blz.screen),
+			"black", &black,
+			&dummy);
+	pix = XCreateBitmapFromData(blz.dpy, blz.root,
+			(char[]){0}, 1, 1);
+
+	cursor[CurInvisible] = XCreatePixmapCursor(blz.dpy,
+			pix, pix,
+			&black, &black,
+			0, 0);
 
 	XFreePixmap(blz.dpy, pix);
 }
@@ -142,13 +236,23 @@ init_screen(WMScreen *screen) {
 	gcv.foreground = def.normcolor.bg;
 	gcv.plane_mask = AllPlanes;
 	gcv.graphics_exposures = False;
-	xorgc = XCreateGC(blz.dpy, blz.root, GCForeground | GCGraphicsExposures |
-						GCFunction | GCSubwindowMode | GCPlaneMask, &gcv);
+	xorgc = XCreateGC(blz.dpy, blz.root,
+			  GCForeground
+			| GCGraphicsExposures
+			| GCFunction
+			| GCSubwindowMode
+			| GCPlaneMask,
+			&gcv);
+
 	screen->rect.x = screen->rect.y = 0;
 	screen->rect.width = DisplayWidth(blz.dpy, blz.screen);
 	screen->rect.height = DisplayHeight(blz.dpy, blz.screen);
 	def.snap = screen->rect.height / 63;
-	sel_screen = XQueryPointer(blz.dpy, blz.root, &w, &w, &ret, &ret, &ret, &ret, &mask);
+
+	sel_screen = XQueryPointer(blz.dpy, blz.root,
+			&w, &w,
+			&ret, &ret, &ret, &ret,
+			&mask);
 }
 
 /*
@@ -160,21 +264,23 @@ init_screen(WMScreen *screen) {
 int
 wmii_error_handler(Display *dpy, XErrorEvent *error) {
 	if(check_other_wm)
-		fatal("wmiiwm: another window manager is already running\n");
+		fatal("another window manager is already running");
+
 	if(error->error_code == BadWindow
-			|| (error->request_code == X_SetInputFocus
-				&& error->error_code == BadMatch)
-			|| (error->request_code == X_PolyText8
-				&& error->error_code == BadDrawable)
-			|| (error->request_code == X_PolyFillRectangle
-				&& error->error_code == BadDrawable)
-			|| (error->request_code == X_PolySegment
-				&& error->error_code == BadDrawable)
-			|| (error->request_code == X_ConfigureWindow
-				&& error->error_code == BadMatch)
-			|| (error->request_code == X_GrabKey
-				&& error->error_code == BadAccess))
+	||(error->request_code == X_SetInputFocus
+		&& error->error_code == BadMatch)
+	||(error->request_code == X_PolyText8
+		&& error->error_code == BadDrawable)
+	||(error->request_code == X_PolyFillRectangle
+		&& error->error_code == BadDrawable)
+	||(error->request_code == X_PolySegment
+		&& error->error_code == BadDrawable)
+	||(error->request_code == X_ConfigureWindow
+		&& error->error_code == BadMatch)
+	||(error->request_code == X_GrabKey
+	    	&& error->error_code == BadAccess))
 		return 0;
+
 	fprintf(stderr, "wmiiwm: fatal error: Xrequest code=%d, Xerror code=%d\n",
 			error->request_code, error->error_code);
 	return x_error_handler(blz.dpy, error); /* calls exit() */
@@ -193,6 +299,7 @@ static void
 cleanup_handler(int signal) {
 	sa.sa_handler = SIG_DFL;
 	sigaction(signal, &sa, nil);
+
 	switch(signal) {
 	case SIGINT:
 		srv.running = False;
@@ -211,33 +318,41 @@ init_traps() {
 	int fd[2];
 
 	if(pipe(fd) != 0)
-		fatal("Can't pipe(): %s\n", strerror(errno));
+		fatal("Can't pipe():");
 
 	switch(fork()) {
 	case -1:
-		fatal("Can't fork(): %s\n", strerror(errno));
-	default:
-		close(fd[0]);
-		sleeperfd = fd[1];
-		sa.sa_flags = 0;
-		sa.sa_handler = cleanup_handler;
-		sigaction(SIGINT, &sa, nil);
-		sigaction(SIGTERM, &sa, nil);
-		sigaction(SIGQUIT, &sa, nil);
-		sigaction(SIGHUP, &sa, nil);
-		break;
+		fatal("Can't fork():");
+		break; /* not reached */
 	case 0:
 		close(fd[1]);
 		close(ConnectionNumber(blz.dpy));
 		setsid();
+
 		blz.dpy = XOpenDisplay(0);
 		if(!blz.dpy)
-			fatal("wmiiwm: cannot open display\n");
+			fatal("Can't open display");
+
+		/* Wait for parent to exit */
 		read(fd[0], buf, 1);
+
+		/* Reset input focus */
 		XSetInputFocus(blz.dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 		XCloseDisplay(blz.dpy);
 		exit(0);
+	default:
+		break;
 	}
+
+	close(fd[0]);
+	sleeperfd = fd[1];
+
+	sa.sa_flags = 0;
+	sa.sa_handler = cleanup_handler;
+	sigaction(SIGINT, &sa, nil);
+	sigaction(SIGTERM, &sa, nil);
+	sigaction(SIGQUIT, &sa, nil);
+	sigaction(SIGHUP, &sa, nil);
 }
 
 void
@@ -248,9 +363,7 @@ check_9pcon(IXPConn *c) {
 
 int
 main(int argc, char *argv[]) {
-	char *wmiirc, *errstr, *tmp, *display;
-	char address[1024], ns_path[1024];
-	struct passwd *passwd;
+	char *wmiirc, *errstr, *p;
 	WMScreen *s;
 	int sock, i;
 	pid_t pid;
@@ -259,12 +372,6 @@ main(int argc, char *argv[]) {
 	passwd = getpwuid(getuid());
 	user = estrdup(passwd->pw_name);
 	wmiirc = "wmiistartrc";
-	address[0] = '\0';
-
-	display = strdup(getenv("DISPLAY"));
-	if((tmp = strstr(display, ".0")) == display + strlen(display) - 2)
-		*tmp = '\0';
-		
 
 	/* command line args */
 	for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
@@ -277,14 +384,18 @@ main(int argc, char *argv[]) {
 			verbose = True;
 			break;
 		case 'a':
-			if(i + 1 < argc)
-				strncpy(address, argv[++i], sizeof(address));
+			if(argv[i][2] != '\0')
+				address = &argv[i][2];
+			else if(++i < argc)
+				address = argv[i];
 			else
 				usage();
 			break;
 		case 'r':
-			if(i + 1 < argc)
-				wmiirc = argv[++i];
+			if(argv[i][2] != '\0')
+				wmiirc = &argv[i][2];
+			else if(++i < argc)
+				wmiirc = argv[i];
 			else
 				usage();
 			break;
@@ -294,35 +405,12 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-
-	if((strlen(address) == 0)
-	&& (tmp = getenv("WMII_ADDRESS")) && strlen(tmp) > 0)
-		strncpy(address, tmp, sizeof(address));
-
-	if(strncmp(address, "unix!", 5) == 0) {
-		tmp = &address[5];
-		i = strrchr(tmp, '/') - tmp;
-		if(i < 0)
-			fatal("wmiiwm: Bad address\n");
-		strncpy(ns_path, tmp, min(sizeof(ns_path), i));
-	}
-	else if((tmp = getenv("WMII_NS_DIR")) && strlen(tmp) > 0)
-		strncpy(ns_path, tmp, sizeof(ns_path));
-	else
-		snprintf(ns_path, sizeof(ns_path), "/tmp/ns.%s.%s", user, display);
-
-	if(strlen(address) == 0)
-		snprintf(address, sizeof(address), "unix!%s/wmii", ns_path);
-
-	setenv("WMII_NS_DIR", ns_path, True);
-	setenv("WMII_ADDRESS", address, True);
-
 	setlocale(LC_CTYPE, "");
 	starting = True;
 
 	blz.dpy = XOpenDisplay(0);
 	if(!blz.dpy)
-		fatal("wmiiwm: cannot open dpy\n");
+		fatal("Can't open display");
 	blz.screen = DefaultScreen(blz.dpy);
 	blz.root = RootWindow(blz.dpy, blz.screen);
 
@@ -332,76 +420,43 @@ main(int argc, char *argv[]) {
 	XSync(blz.dpy, False);
 	check_other_wm = False;
 
+	init_environment();
 	init_traps();
-
-	/* Make sure that the namespace directory exists */
-	switch(pid = fork()) {
-	case -1:
-		fatal("wmiiwm: Can't fork: %s\n", strerror(errno));
-		break; /* Not reached */
-	case 0:
-		execlp("mkdir", "mkdir", "-m", "0700", "-p", ns_path, nil);
-		fatal("wmiiwm: Can't exec mkdir: %s\n", strerror(errno));
-		break; /* Not reached */
-	default:
-		if(waitpid(pid, &i, WUNTRACED) == -1)
-			fprintf(stderr, "wmiiwm: warning: wait for mkdir returned -1: %s\n",
-				strerror(errno));
-		else if(WEXITSTATUS(i) != 0)
-			fatal("wmiiwm: Can't create namespace dir \"%s\" (mkdir returned %d)\n",
-				ns_path, i);
-		break;
-	}
-
-	/* Check namespace permissions */
-	if(!strncmp(address, "unix!", 5)) {
-		struct stat st;
-
-		if(stat(ns_path, &st))
-			fatal("wmiiwm: can't stat ns_path directory \"%s\": %s\n",
-					ns_path, strerror(errno));
-		if(getuid() != st.st_uid)
-			fatal("wmiiwm: ns_path directory \"%s\" exists, "
-					"but is not owned by you",
-				ns_path);
-		if(st.st_mode & 077)
-			fatal("wmiiwm: ns_path directory \"%s\" exists, "
-					"but has group or world permissions",
-				ns_path);
-	}
 
 	errstr = nil;
 	sock = ixp_create_sock(address, &errstr);
 	if(sock < 0)
-		fatal("wmiiwm: fatal: %s (%s)\n", errstr, address);
+		fatal("Can't create socket '%s': %s", address, errstr);
 
 	/* start wmiirc */
 	if(wmiirc) {
+		char *shell;
+
 		/* Double fork hack */
 		switch(pid = fork()) {
 		case -1:
-			perror("wmiiwm: cannot fork wmiirc");
+			fatal("Can't fork wmiirc");
 			break; /* Not reached */
 		case 0:
 			switch(fork()) {
 			case -1:
-				perror("wmiiwm: cannot fork wmiirc");
+				fatal("Can't fork wmiirc");
 				break; /* Not reached */
 			case 0:
 				if(setsid() == -1)
-					fatal("wmiiwm: can't setsid: %s\n", strerror(errno));
+					fatal("Can't setsid:");
 				close(sock);
 				close(ConnectionNumber(blz.dpy));
 
+				shell = passwd->pw_shell;
+				if(shell[0] != '/')
+					fatal("Shell is not an absolute path: %s", shell);
 				/* Run through the user's shell as a login shell */
-				tmp = malloc(sizeof(char*) * (strlen(passwd->pw_shell) + 2));
-				if(passwd->pw_shell[0] == '/')
-					sprintf(tmp, "-%s", strrchr(passwd->pw_shell, '/') + 1); /* Can't overflow */
-				else
-					fatal("wmiiwm: shell is not an absolute path: %s\n", passwd->pw_shell);
+				p = malloc(sizeof(char*) * (strlen(shell) + 2));
+				sprintf(p, "-%s", strrchr(shell, '/') + 1);
 
-				execl(passwd->pw_shell, tmp, "-c", wmiirc, nil);
-				fatal("wmiiwm: can't exec \"%s\": %s\n", wmiirc, strerror(errno));
+				execl(shell, p, "-c", wmiirc, nil);
+				fatal("Can't exec '%s':", wmiirc);
 				break; /* Not reached */
 			default:
 				exit(0);
@@ -514,15 +569,16 @@ main(int argc, char *argv[]) {
 	check_x_event(nil);
 	errstr = ixp_server_loop(&srv);
 	if(errstr)
-		fprintf(stderr, "wmiiwm: fatal: %s\n", errstr);
 
 	cleanup();
 	XCloseDisplay(blz.dpy);
 	ixp_server_close(&srv);
 	close(sleeperfd);
+
 	if(execstr)
 		execl("/bin/sh", "sh", "-c", execstr, nil);
+
 	if(errstr)
-		return 1;
+		fatal("%s", errstr);
 	return 0;
 }

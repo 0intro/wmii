@@ -136,7 +136,7 @@ manage_client(Client *c) {
 	XTextProperty tags = { 0 };
 	Client *trans;
 
-	XGetTextProperty(blz.dpy, c->win, &tags, tags_atom);
+	XGetTextProperty(blz.dpy, c->win, &tags, atom[TagsAtom]);
 
 	if((trans = client_of_win(c->trans)))
 		strncpy(c->tags, trans->tags, sizeof(c->tags));
@@ -195,7 +195,7 @@ update_client_name(Client *c) {
 
 	name.nitems = 0;
 	c->name[0] = 0;
-	XGetTextProperty(blz.dpy, c->win, &name, net_atom[NetWMName]);
+	XGetTextProperty(blz.dpy, c->win, &name, atom[NetWMName]);
 	if(!name.nitems)
 		XGetWMName(blz.dpy, c->win, &name);
 	if(!name.nitems)
@@ -248,8 +248,8 @@ set_client_state(Client * c, int state) {
 	XChangeProperty(
 		/* display */	blz.dpy,
 		/* parent */	c->win,
-		/* property */	wm_atom[WMState],
-		/* type */	wm_atom[WMState],
+		/* property */	atom[WMState],
+		/* type */	atom[WMState],
 		/* format */	32,
 		/* mode */	PropModeReplace,
 		/* data */	(uchar *) data,
@@ -355,7 +355,7 @@ send_client_message(Window w, Atom a, long value) {
 void
 kill_client(Client * c) {
 	if(c->proto & WM_PROTOCOL_DELWIN)
-		send_client_message(c->win, wm_atom[WMProtocols], wm_atom[WMDelete]);
+		send_client_message(c->win, atom[WMProtocols], atom[WMDelete]);
 	else
 		XKillClient(blz.dpy, c->win);
 }
@@ -409,9 +409,9 @@ prop_client(Client *c, Atom a) {
 	XWMHints *wmh;
 	long msize;
 
-	if(a ==  wm_atom[WMProtocols])
+	if(a ==  atom[WMProtocols])
 		c->proto = win_proto(c->win);
-	else if(a== net_atom[NetWMName]) {
+	else if(a== atom[NetWMName]) {
 wmname:
 		update_client_name(c);
 		if(c->frame)
@@ -933,7 +933,7 @@ apply_tags(Client *c, const char *tags) {
 	toks[n] = nil;
 
 	update_client_views(c, toks);
-	XChangeProperty(blz.dpy, c->win, tags_atom, XA_STRING, 8,
+	XChangeProperty(blz.dpy, c->win, atom[TagsAtom], XA_STRING, 8,
 			PropModeReplace, (uchar *)c->tags, strlen(c->tags));
 }
 

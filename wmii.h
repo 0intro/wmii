@@ -88,11 +88,16 @@ struct BlitzBrush {
 	XRectangle rect;	/* relative rect */
 };
 
-/* WM atoms */
-enum { WMState, WMProtocols, WMDelete, WMLast };
-
-/* NET atoms */
-enum { NetSupported, NetWMName, NetLast };
+enum {
+/* WM atom */
+	WMState, WMProtocols, WMDelete,
+/* NET atom */
+	NetSupported, NetWMName,
+/* Other */
+	TagsAtom,
+/* Last atom */
+	AtomLast
+};
 
 /* Column modes */
 enum { Coldefault, Colstack, Colmax };
@@ -256,9 +261,7 @@ uint num_screens;
 Blitz blz;
 GC xorgc;
 char *user;
-Atom wm_atom[WMLast];
-Atom net_atom[NetLast];
-Atom tags_atom;
+Atom atom[AtomLast];
 Cursor cursor[CurLast];
 uint valid_mask;
 uint num_lock_mask;

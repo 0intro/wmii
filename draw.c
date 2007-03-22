@@ -54,7 +54,7 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 		font->xfont = XLoadQueryFont(blitz->dpy, fontname);
 		if (!font->xfont) {
 			if(!strncmp(fontname, BLITZ_FONT, sizeof(BLITZ_FONT)))
-				fatal("wmiiwm: error, cannot load '%s' font\n",
+				fatal("cannot load font: %s",
 						BLITZ_FONT);
 			free(font->fontstr);
 			font->fontstr = estrdup(BLITZ_FONT);
