@@ -1,4 +1,4 @@
-/* © 2006 Kris Maglione <fbsdaemon at gmail dot com>
+/* ©2006 Kris Maglione <fbsdaemon at gmail dot com>
  * See LICENSE file for license details.
  */
 #include <assert.h>
@@ -244,7 +244,7 @@ message_root(char *message)
 	else if(!strncmp(message, "view ", 5))
 		select_view(&message[5]);
 	else if(!strncmp(message, "selcolors ", 10)) {
-		fprintf(stderr, "wmiiwm: warning: selcolors have been removed\n");
+		fprintf(stderr, "wmii: warning: selcolors have been removed\n");
 		return Ebadcmd;
 	}
 	else if(!strncmp(message, "focuscolors ", 12)) {

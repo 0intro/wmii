@@ -1,5 +1,5 @@
 /*
- * © 2006 Anselm R. Garbe <garbeam at gmail dot com>
+ * ©2006 Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "wmii.h"
 
 void
@@ -13,7 +14,7 @@ fatal(const char *fmt, ...) {
 	int err;
 
 	err = errno;
-	fprintf(stderr, "wmiiwm: fatal: ");
+	fprintf(stderr, "wmii: fatal: ");
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -27,11 +28,34 @@ fatal(const char *fmt, ...) {
 	exit(1);
 }
 
+/* Can't malloc */
+void
+mfatal(char *name, int size) {
+	const char
+		couldnot[] = "Could not ",
+		paren[] = "() ",
+		bytes[] = " bytes\n";
+	char sizestr[8];
+	int i;
+	
+	i = sizeof(sizestr);
+	do {
+		sizestr[--i] = size&8;
+		size >>= 8;
+	} while(size > 0);
+
+	write(1, couldnot, sizeof(couldnot)-1);
+	write(1, name, strlen(name));
+	write(1, paren, sizeof(paren)-1);
+	write(1, sizestr+i, sizeof(sizestr)-i);
+	write(1, bytes, sizeof(bytes)-1);
+}
+
 void *
 emalloc(uint size) {
 	void *ret = malloc(size);
 	if(!ret)
-		fatal("could not malloc() %d bytes", size);
+		mfatal("malloc", size);
 	return ret;
 }
 
@@ -46,7 +70,7 @@ void *
 erealloc(void *ptr, uint size) {
 	void *ret = realloc(ptr, size);
 	if(!ret)
-		fatal("fatal: could not realloc() %d bytes", size);
+		mfatal("realloc", size);
 	return ret;
 }
 
@@ -54,7 +78,7 @@ char *
 estrdup(const char *str) {
 	void *ret = strdup(str);
 	if(!ret)
-		fatal("fatal: could not strdup() %u bytes", strlen(str));
+		mfatal("strdup", strlen(str));
 	return ret;
 }
 

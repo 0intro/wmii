@@ -1,4 +1,4 @@
-/* © 2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+/* ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 #include <stdio.h>
@@ -32,7 +32,7 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 	font->set = XCreateFontSet(blitz->dpy, fontname, &missing, &n, &def);
 	if(missing) {
 		while(n--)
-			fprintf(stderr, "wmiiwm: missing fontset for '%s': %s\n",
+			fprintf(stderr, "wmii: missing fontset for '%s': %s\n",
 					fontname, missing[n]);
 		XFreeStringList(missing);
 	}

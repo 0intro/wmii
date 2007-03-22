@@ -1,5 +1,5 @@
-/* © 2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * © 2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+ * ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 

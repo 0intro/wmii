@@ -1,5 +1,5 @@
-/* © 2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * © 2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+ * ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include <X11/Xatom.h>
@@ -22,7 +22,7 @@
 #define nelem(ary) (sizeof(ary) / sizeof(*ary))
 
 static const char
-	version[] = "wmiiwm - " VERSION ", ©2007 Kris Maglione\n";
+	version[] = "wmii - " VERSION ", ©2007 Kris Maglione\n";
 
 static int (*x_error_handler) (Display *, XErrorEvent *);
 static char *address, *ns_path;
@@ -33,7 +33,7 @@ static int sleeperfd, sock;
 
 static void
 usage() {
-	fatal("usage: wmiiwm -a <address> [-r <wmiirc>] [-v]\n");
+	fatal("usage: wmii [-a <address>] [-r <wmiirc>] [-v]\n");
 }
 
 static void
@@ -281,7 +281,7 @@ wmii_error_handler(Display *dpy, XErrorEvent *error) {
 	    	&& error->error_code == BadAccess))
 		return 0;
 
-	fprintf(stderr, "wmiiwm: fatal error: Xrequest code=%d, Xerror code=%d\n",
+	fprintf(stderr, "wmii: fatal error: Xrequest code=%d, Xerror code=%d\n",
 			error->request_code, error->error_code);
 	return x_error_handler(blz.dpy, error); /* calls exit() */
 }
