@@ -233,4 +233,4 @@ wmiir read /event |
 	while(*=`{read}) {
 		event = $1; shift
 		Event-$event $*
-	} >[2]/dev/null </dev/null | cat
+	} >[2]/dev/null </dev/null
