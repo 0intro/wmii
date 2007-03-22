@@ -1,6 +1,6 @@
 # window manager improved 2 - window manager improved 2
-#   (C)opyright MMVI Anselm R. Garbe
-#   (C)opyright MMVI-MMVII Kris Maglione
+#   © 2006 Anselm R. Garbe
+#   © 2006-2007 Kris Maglione
 .POSIX:
 
 include config.mk

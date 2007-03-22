@@ -1,4 +1,4 @@
-/* (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
+/* © 2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include <stdlib.h>

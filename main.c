@@ -1,5 +1,5 @@
-/* (C)opyright MMIV-MMVI Anselm R. Garbe <garbeam at gmail dot com>
- * (C)opyright MMVI-MMVII Kris Maglione <fbsdaemon@gmail.com>
+/* © 2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+ * © 2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include <X11/Xatom.h>
@@ -21,7 +21,7 @@
 
 static Bool check_other_wm;
 static int (*x_error_handler) (Display *, XErrorEvent *);
-static char version[] = "wmiiwm - " VERSION ", (C)opyright MMVI-MMVII Kris Maglione\n";
+static char version[] = "wmiiwm - " VERSION ", © 2007 Kris Maglione\n";
 static struct sigaction sa;
 static int sleeperfd;
 

@@ -57,6 +57,9 @@ fn status {
 	echo -n `{uptime | sed 's/.*://; s/,//g'} '|' `{date}
 }
 
+# View Titles
+fn viewtitle { echo $* }
+
 # Events
 fn Event-Start {
 	switch($1) {
@@ -68,10 +71,10 @@ fn Event-Start {
 
 fn Event-Key { eval Key-$1 $1 }
 
-fn Event-CreateTag { echo $WMII_NORMCOLORS $* | wmiir create /lbar/$"* }
+fn Event-CreateTag { echo $WMII_NORMCOLORS `{viewtitle $*} | wmiir create /lbar/$"* }
 fn Event-DestroyTag { wmiir remove /lbar/$"* }
-fn Event-FocusTag { wmiir xwrite /lbar/$"* $WMII_FOCUSCOLORS $* }
-fn Event-UnfocusTag { wmiir xwrite /lbar/$"* $WMII_NORMCOLORS $* }
+fn Event-FocusTag { wmiir xwrite /lbar/$"* $WMII_FOCUSCOLORS `{viewtitle $*} }
+fn Event-UnfocusTag { wmiir xwrite /lbar/$"* $WMII_NORMCOLORS `{viewtitle $*} }
 fn Event-UrgentTag { shift; wmiir xwrite /lbar/$"* '*'$"* }
 fn Event-NotUrgentTag { shift; wmiir xwrite /lbar/$"* $"* }
 
@@ -184,7 +187,7 @@ fn read_tags {
 fn run_command {
 	@{	rfork ns
 		path=$oldpath
-		eval exec $* </dev/null
+		eval exec $*
 	}
 }
 
@@ -213,9 +216,9 @@ ifs='#
 	seltag=`{wmiir read /tag/sel/ctl}
 	for(tag in `{read_tags}) {
 		if(~ $tag $seltag)
-			echo $WMII_FOCUSCOLORS $tag | wmiir create /lbar/$tag
+			echo $WMII_FOCUSCOLORS `{viewtitle $tag} | wmiir create /lbar/$tag
 		if not
-			echo $WMII_NORMCOLORS $tag | wmiir create /lbar/$tag
+			echo $WMII_NORMCOLORS `{viewtitle $tag} | wmiir create /lbar/$tag
 	}
 }
 
@@ -230,4 +233,4 @@ wmiir read /event |
 	while(*=`{read}) {
 		event = $1; shift
 		Event-$event $*
-	} >[2]/dev/null
+	} >[2]/dev/null </dev/null | cat

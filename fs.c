@@ -1,4 +1,4 @@
-/* (C)opyright MMVI Kris Maglione <fbsdaemon at gmail dot com>
+/* © 2006 Kris Maglione <fbsdaemon at gmail dot com>
  * See LICENSE file for license details.
  */
 #include <assert.h>
