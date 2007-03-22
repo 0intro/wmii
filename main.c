@@ -29,7 +29,7 @@ static char *address, *ns_path;
 static Bool check_other_wm;
 static struct sigaction sa;
 static struct passwd *passwd;
-static int sleeperfd;
+static int sleeperfd, sock;
 
 static void
 usage() {
@@ -336,7 +336,6 @@ init_traps() {
 		/* Wait for parent to exit */
 		read(fd[0], buf, 1);
 
-		/* Reset input focus */
 		XSetInputFocus(blz.dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
 		XCloseDisplay(blz.dpy);
 		exit(0);
@@ -355,6 +354,51 @@ init_traps() {
 	sigaction(SIGHUP, &sa, nil);
 }
 
+static void
+spawn_command(const char *cmd) {
+	char *shell, *p;
+	pid_t pid;
+	int status;
+
+	/* Double fork hack */
+	switch(pid = fork()) {
+	case -1:
+		fatal("Can't fork:");
+		break; /* Not reached */
+	case 0:
+		switch(fork()) {
+		case -1:
+			fatal("Can't fork:");
+			break; /* Not reached */
+		case 0:
+			if(setsid() == -1)
+				fatal("Can't setsid:");
+			close(sock);
+			close(ConnectionNumber(blz.dpy));
+
+			shell = passwd->pw_shell;
+			if(shell[0] != '/')
+				fatal("Shell is not an absolute path: %s", shell);
+
+			/* Run through the user's shell as a login shell */
+			p = malloc(sizeof(char*) * (strlen(shell) + 2));
+			sprintf(p, "-%s", strrchr(shell, '/') + 1);
+
+			execl(shell, p, "-c", cmd, nil);
+			fatal("Can't exec '%s':", cmd);
+			break; /* Not reached */
+		default:
+			exit(0);
+			break; /* Not reached */
+		}
+	default:
+		waitpid(pid, &status, 0);
+		if(status != 0)
+			exit(1); /* Error already printed */
+		break;
+	}
+}
+
 void
 check_9pcon(IXPConn *c) {
 	serve_9pcon(c);
@@ -363,11 +407,10 @@ check_9pcon(IXPConn *c) {
 
 int
 main(int argc, char *argv[]) {
-	char *wmiirc, *errstr, *p;
+	char *wmiirc, *errstr;
 	WMScreen *s;
-	int sock, i;
-	pid_t pid;
 	XSetWindowAttributes wa;
+	int i;
 
 	passwd = getpwuid(getuid());
 	user = estrdup(passwd->pw_name);
@@ -377,7 +420,7 @@ main(int argc, char *argv[]) {
 	for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
 		switch (argv[i][1]) {
 		case 'v':
-			fprintf(stdout, "%s", version);
+			printf("%s", version);
 			exit(0);
 			break;
 		case 'V':
@@ -428,47 +471,8 @@ main(int argc, char *argv[]) {
 	if(sock < 0)
 		fatal("Can't create socket '%s': %s", address, errstr);
 
-	/* start wmiirc */
-	if(wmiirc) {
-		char *shell;
-
-		/* Double fork hack */
-		switch(pid = fork()) {
-		case -1:
-			fatal("Can't fork wmiirc");
-			break; /* Not reached */
-		case 0:
-			switch(fork()) {
-			case -1:
-				fatal("Can't fork wmiirc");
-				break; /* Not reached */
-			case 0:
-				if(setsid() == -1)
-					fatal("Can't setsid:");
-				close(sock);
-				close(ConnectionNumber(blz.dpy));
-
-				shell = passwd->pw_shell;
-				if(shell[0] != '/')
-					fatal("Shell is not an absolute path: %s", shell);
-				/* Run through the user's shell as a login shell */
-				p = malloc(sizeof(char*) * (strlen(shell) + 2));
-				sprintf(p, "-%s", strrchr(shell, '/') + 1);
-
-				execl(shell, p, "-c", wmiirc, nil);
-				fatal("Can't exec '%s':", wmiirc);
-				break; /* Not reached */
-			default:
-				exit(0);
-				break; /* Not reached */
-			}
-		default:
-			waitpid(pid, &i, 0);
-			if(i != 0)
-				exit(1); /* Error already printed */
-			break;
-		}
-	}
+	if(wmiirc)
+		spawn_command(wmiirc);
 
 	ixp_server_open_conn(&srv, sock, &p9srv, check_9pcon, nil);
 	ixp_server_open_conn(&srv, ConnectionNumber(blz.dpy), nil, check_x_event, nil);
@@ -477,7 +481,6 @@ main(int argc, char *argv[]) {
 	client = nil;
 	key = nil;
 
-	memset(&def, 0, sizeof(def));
 	def.font.fontstr = estrdup(BLITZ_FONT);
 	def.border = 1;
 	def.colmode = Coldefault;
