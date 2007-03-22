@@ -248,7 +248,7 @@ check_9pcon(IXPConn *c) {
 
 int
 main(int argc, char *argv[]) {
-	char *wmiirc, *errstr, *tmp;
+	char *wmiirc, *errstr, *tmp, *display;
 	char address[1024], ns_path[1024];
 	struct passwd *passwd;
 	WMScreen *s;
@@ -259,10 +259,12 @@ main(int argc, char *argv[]) {
 	passwd = getpwuid(getuid());
 	user = estrdup(passwd->pw_name);
 	wmiirc = "wmiistartrc";
-
 	address[0] = '\0';
-	if((tmp = getenv("WMII_ADDRESS")) && strlen(tmp) > 0)
-		strncpy(address, tmp, sizeof(address));
+
+	display = strdup(getenv("DISPLAY"));
+	if((tmp = strstr(display, ".0")) == display + strlen(display) - 2)
+		*tmp = '\0';
+		
 
 	/* command line args */
 	for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
@@ -292,16 +294,22 @@ main(int argc, char *argv[]) {
 		}
 	}
 
+
+	if((strlen(address) == 0)
+	&& (tmp = getenv("WMII_ADDRESS")) && strlen(tmp) > 0)
+		strncpy(address, tmp, sizeof(address));
+
 	if(strncmp(address, "unix!", 5) == 0) {
 		tmp = &address[5];
 		i = strrchr(tmp, '/') - tmp;
 		if(i < 0)
 			fatal("wmiiwm: Bad address\n");
 		strncpy(ns_path, tmp, min(sizeof(ns_path), i));
-	}else if((tmp = getenv("WMII_NS_DIR")) && strlen(tmp) > 0)
+	}
+	else if((tmp = getenv("WMII_NS_DIR")) && strlen(tmp) > 0)
 		strncpy(ns_path, tmp, sizeof(ns_path));
 	else
-		snprintf(ns_path, sizeof(ns_path), "/tmp/ns.%s.%s", user, getenv("DISPLAY"));
+		snprintf(ns_path, sizeof(ns_path), "/tmp/ns.%s.%s", user, display);
 
 	if(strlen(address) == 0)
 		snprintf(address, sizeof(address), "unix!%s/wmii", ns_path);

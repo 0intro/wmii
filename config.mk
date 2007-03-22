@@ -9,6 +9,7 @@ PREFIX = /usr/local
 CONFPREFIX = ${PREFIX}/etc
 MANPREFIX = ${PREFIX}/share/man
 AWKPATH = /usr/bin/awk
+P9PATHS = /usr/local/plan9 /usr/local/9 /opt/plan9 /opt/9 /usr/plan9 /usr/9
 
 X11INC = /usr/X11R6/include
 X11LIB = /usr/X11R6/lib

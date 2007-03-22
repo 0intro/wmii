@@ -63,6 +63,7 @@ install: all
 	@for i in ${SCRIPTS}; do \
 		sed "s|CONFPREFIX|${CONFPREFIX}|g; \
 		     s|CONFVERSION|${CONFVERSION}|g; \
+		     s|P9PATHS|${P9PATHS}|g; \
 		     s|AWKPATH|${AWKPATH}|g" \
 			$$i \
 			>${DESTDIR}${PREFIX}/bin/$$i; \
