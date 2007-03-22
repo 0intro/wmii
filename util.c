@@ -32,7 +32,7 @@ fatal(const char *fmt, ...) {
 void
 mfatal(char *name, int size) {
 	const char
-		couldnot[] = "Could not ",
+		couldnot[] = "wmii: fatal: Could not ",
 		paren[] = "() ",
 		bytes[] = " bytes\n";
 	char sizestr[8];
@@ -40,7 +40,7 @@ mfatal(char *name, int size) {
 	
 	i = sizeof(sizestr);
 	do {
-		sizestr[--i] = size&8;
+		sizestr[--i] = '0' - (size&8);
 		size >>= 8;
 	} while(size > 0);
 
