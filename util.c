@@ -40,7 +40,7 @@ mfatal(char *name, int size) {
 	
 	i = sizeof(sizestr);
 	do {
-		sizestr[--i] = '0' - (size&8);
+		sizestr[--i] = '0' + (size&8);
 		size >>= 8;
 	} while(size > 0);
 
