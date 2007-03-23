@@ -102,10 +102,47 @@ win_proto(Window w) {
 }
 
 static void
+ns_display() {
+	char *p, *disp;
+
+	disp = getenv("DISPLAY");
+	if(disp == nil)
+		fatal("DISPLAY is unset");
+
+	disp = estrdup(disp);
+	p = &disp[strlen(disp) - 2];
+	if(strcmp(p, ".0") == 0)
+		*p = '\0';
+
+	ns_path = emalloc(strlen(disp) + strlen(user) + strlen("/tmp/ns..") + 1);
+	sprintf(ns_path, "/tmp/ns.%s.%s", user, disp);
+
+	free(disp);
+}
+
+static void
+rmkdir(char *path, int mode) {
+	char *p, *q;
+	int ret;
+	char c;
+
+	q = path + strlen(ns_path);
+	for(p = &path[1]; p <= q; p++) {
+		c = *p;
+		if((c == '/') || (c == '\0')) {
+			*p = '\0';
+			ret = mkdir(path, mode);
+			if((ret == -1) && (errno != EEXIST))
+				fatal("Can't create ns_path '%s':", path);
+			*p = c;
+		}
+	}
+}
+
+static void
 init_ns() {
 	struct stat st;
-	char *p, *q, *display;
-	int ret;
+	char *p;
 
 	if(address && strncmp(address, "unix!", 5) == 0) {
 		ns_path = estrdup(&address[5]);
@@ -113,35 +150,16 @@ init_ns() {
 		p = strrchr(ns_path, '/');
 		if(p != nil)
 			p = '\0';
-	}else if((p = getenv("WMII_NS_PATH")) || (p = getenv("NAMESPACE")))
-		ns_path = p;
-	else {
-		display = getenv("DISPLAY");
-		if(display == nil)
-			fatal("DISPLAY is unset");
-
-		display = estrdup(display);
-		p = &display[strlen(display) - 2];
-		if(strcmp(p, ".0") == 0)
-			*p = '\0';
-
-		ns_path = emalloc(strlen(display) + strlen(user) + strlen("/tmp/ns..") + 1);
-		sprintf(ns_path, "/tmp/ns.%s.%s", user, display);
 	}
+	else if((p = getenv("WMII_NS_PATH")) || (p = getenv("NAMESPACE")))
+		ns_path = p;
+	else
+		ns_display();
 
-	if(ns_path[0] != '/' || strlen(ns_path) == 0)
+	if((ns_path[0] != '/') || (strlen(ns_path) == 0))
 		fatal("Bad ns_path");
 
-	q = ns_path + strlen(ns_path);
-	for(p = &ns_path[1]; p < q; p++) {
-		if(*p == '/') {
-			*p = '\0';
-			ret = mkdir(ns_path, 0700);
-			if(ret == -1 && errno != EEXIST)
-				fatal("Can't create ns_path '%s':", ns_path);
-			*p = '/';
-		}
-	}
+	rmkdir(ns_path, 0700);
 
 	if(stat(ns_path, &st))
 		fatal("Can't stat ns_path '%s':", ns_path);
