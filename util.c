@@ -2,7 +2,6 @@
 /* Public domain */
 #include <errno.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -30,7 +29,7 @@ fatal(const char *fmt, ...) {
 
 /* Can't malloc */
 void
-mfatal(char *name, int size) {
+mfatal(char *name, uint size) {
 	const char
 		couldnot[] = "wmii: fatal: Could not ",
 		paren[] = "() ",
@@ -40,8 +39,8 @@ mfatal(char *name, int size) {
 	
 	i = sizeof(sizestr);
 	do {
-		sizestr[--i] = '0' + (size&8);
-		size >>= 8;
+		sizestr[--i] = '0' + (size%10);
+		size /= 10;
 	} while(size > 0);
 
 	write(1, couldnot, sizeof(couldnot)-1);
@@ -49,6 +48,8 @@ mfatal(char *name, int size) {
 	write(1, paren, sizeof(paren)-1);
 	write(1, sizestr+i, sizeof(sizestr)-i);
 	write(1, bytes, sizeof(bytes)-1);
+
+	exit(1);
 }
 
 void *

@@ -1,11 +1,9 @@
-/* ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+ * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
+#include <string.h>
 #include "wmii.h"
 
 char *

@@ -30,48 +30,44 @@
  * Version using libXg: Matty Farrow (some ideas borrowed)
  * This code by: David Hogan and Arnold Robbins
  */
-
 #include <stdio.h>
-#include <fcntl.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <X11/X.h>
-#include <X11/Xatom.h>
-#include <X11/Xlib.h>
-#include <X11/Xproto.h>
 #include <X11/Xutil.h>
-#include <X11/keysymdef.h>
-#include <X11/keysym.h>
 
-char version[] = "@(#) 9menu version 1.8";
+#define nil ((void*)0)
 
-Display *dpy;		/* lovely X stuff */
+char version[] = "@(#) wmii9menu version 1.8";
+
+/* lovely X stuff */
+Display *dpy;
 int screen;
 Window root;
 Window menuwin;
+Colormap defcmap;
+XColor color;
+XFontStruct *font;
 GC gc;
+
 unsigned long selbg;
 unsigned long selfg;
 unsigned long normbg;
 unsigned long normfg;
 unsigned long border;
-char *sfgname = NULL;
-char *sbgname = NULL;
-char *nfgname = NULL;
-char *nbgname = NULL;
-char *brcname = NULL;
-Colormap defcmap;
-XColor color;
-XFontStruct *font;
-int g_argc;			/* for XSetWMProperties to use */
+char *sfgname = nil;
+char *sbgname = nil;
+char *nfgname = nil;
+char *nbgname = nil;
+char *brcname = nil;
+
+/* for XSetWMProperties to use */
+int g_argc;
 char **g_argv;
-int f_argc;			/* for labels read from files */
+
+/* for labels read from files */
+int f_argc;
 char **f_argv;
+
 char *initial = "";
 int cur;
 
@@ -83,7 +79,7 @@ char *fontlist[] = {	/* default font list if no -font */
 	"9x15",
 	"lucidasanstypewriter-12",
 	"fixed",
-	NULL
+	nil
 };
 
 char *progname;		/* my name */
@@ -117,9 +113,9 @@ int
 args(int argc, char **argv)
 {
 	int i;
-	if (argc == 0 || argv == NULL || argv[0] == '\0')
+	if (argc == 0 || argv == nil || argv[0] == '\0')
 		return -1;
-	for (i = 0; i < argc && argv[i] != NULL; i++) {
+	for (i = 0; i < argc && argv[i] != nil; i++) {
 		if (strcmp(argv[i], "-display") == 0)
 			displayname = argv[++i];
 		else if (strcmp(argv[i], "-file") == 0)
@@ -164,7 +160,7 @@ main(int argc, char **argv)
 	g_argv = argv;
 
 	/* set default label name */
-	if ((cp = strrchr(argv[0], '/')) == NULL)
+	if ((cp = strrchr(argv[0], '/')) == nil)
 		progname = argv[0];
 	else
 		progname = ++cp;
@@ -176,7 +172,7 @@ main(int argc, char **argv)
 
 	numitems = argc - i;
 
-	if (numitems <= 0 && filename == NULL)
+	if (numitems <= 0 && filename == nil)
 		usage();
 
 	if (filename) {
@@ -185,7 +181,7 @@ main(int argc, char **argv)
 		FILE *fp;
 
 		fp = fopen(filename, "r");
-		if (fp == NULL) {
+		if (fp == nil) {
 			fprintf(stderr, "%s: couldn't open '%s'\n", progname,
 				filename);
 			exit(1);
@@ -200,7 +196,7 @@ main(int argc, char **argv)
 				if (temp[1]) {
 					*(temp[1]++) = '\0';
 					s = malloc(strlen(temp[1]) + 1);
-					if (s == NULL)
+					if (s == nil)
 						memory("temporary argument");
 					strcpy(s, temp[1]);
 					temp[1] = s;
@@ -229,7 +225,7 @@ main(int argc, char **argv)
 				f_argc += 5;
 			}
 			f_argv[nlabels] = malloc(strlen(s) + 1);
-			if (f_argv[nlabels] == NULL)
+			if (f_argv[nlabels] == nil)
 				memory("temporary text");
 			strcpy(f_argv[nlabels], s);
 			++nlabels;
@@ -238,12 +234,12 @@ main(int argc, char **argv)
 
 	labels = (char **) malloc((numitems + nlabels) * sizeof(char *));
 	commands = (char **) malloc((numitems + nlabels) * sizeof(char *));
-	if (commands == NULL || labels == NULL)
+	if (commands == nil || labels == nil)
 		memory("command and label arrays");
 
 	for (j = 0; j < numitems; j++) {
 		labels[j] = argv[i + j];
-		if ((cp = strchr(labels[j], ':')) != NULL) {
+		if ((cp = strchr(labels[j], ':')) != nil) {
 			*cp++ = '\0';
 			commands[j] = cp;
 		} else
@@ -258,7 +254,7 @@ main(int argc, char **argv)
 	 */
 	for (i = 0; i < nlabels; i++) {
 		labels[j] = f_argv[i];
-		if ((cp = strchr(labels[j], ':')) != NULL) {
+		if ((cp = strchr(labels[j], ':')) != nil) {
 			*cp++ = '\0';
 			commands[j] = cp;
 		} else
@@ -270,9 +266,9 @@ main(int argc, char **argv)
 	numitems += nlabels;
 
 	dpy = XOpenDisplay(displayname);
-	if (dpy == NULL) {
+	if (dpy == nil) {
 		fprintf(stderr, "%s: cannot open display", progname);
-		if (displayname != NULL)
+		if (displayname != nil)
 			fprintf(stderr, " %s", displayname);
 		fprintf(stderr, "\n");
 		exit(1);
@@ -285,35 +281,35 @@ main(int argc, char **argv)
 	 * white = WhitePixel(dpy, screen);
 	 */
 	defcmap = DefaultColormap(dpy, screen);
-	if (sbgname == NULL
+	if (sbgname == nil
 	    || XParseColor(dpy, defcmap, sbgname, &color) == 0
 	    || XAllocColor(dpy, defcmap, &color) == 0)
 		selbg = BlackPixel(dpy, screen);
 	else
 		selbg = color.pixel;
 
-	if (sfgname == NULL
+	if (sfgname == nil
 	    || XParseColor(dpy, defcmap, sfgname, &color) == 0
 	    || XAllocColor(dpy, defcmap, &color) == 0)
 		selfg = WhitePixel(dpy, screen);
 	else
 		selfg = color.pixel;
 
-	if (nbgname == NULL
+	if (nbgname == nil
 	    || XParseColor(dpy, defcmap, nbgname, &color) == 0
 	    || XAllocColor(dpy, defcmap, &color) == 0)
 		normbg = selfg;
 	else
 		normbg = color.pixel;
 
-	if (nfgname == NULL
+	if (nfgname == nil
 	    || XParseColor(dpy, defcmap, nfgname, &color) == 0
 	    || XAllocColor(dpy, defcmap, &color) == 0)
 		normfg = selbg;
 	else
 		normfg = color.pixel;
 
-	if (brcname == NULL
+	if (brcname == nil
 	    || XParseColor(dpy, defcmap, brcname, &color) == 0
 	    || XAllocColor(dpy, defcmap, &color) == 0)
 		border = selbg;
@@ -321,23 +317,23 @@ main(int argc, char **argv)
 		border = color.pixel;
 
 	/* try user's font first */
-	if (fontname != NULL) {
+	if (fontname != nil) {
 		font = XLoadQueryFont(dpy, fontname);
-		if (font == NULL)
+		if (font == nil)
 			fprintf(stderr, "%s: warning: can't load font %s\n",
 				progname, fontname);
 	}
 
 	/* if no user font, try one of our default fonts */
-	if (font == NULL) {
-		for (i = 0; fontlist[i] != NULL; i++) {
+	if (font == nil) {
+		for (i = 0; fontlist[i] != nil; i++) {
 			font = XLoadQueryFont(dpy, fontlist[i]);
-			if (font != NULL)
+			if (font != nil)
 				break;
 		}
 	}
 
-	if (font == NULL) {
+	if (font == nil) {
 		fprintf(stderr, "%s: fatal: cannot load a font\n", progname);
 		exit(1);
 	}

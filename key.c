@@ -1,9 +1,8 @@
-/* ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 #include <string.h>
 #include <stdlib.h>
-#include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include "wmii.h"
 

@@ -1,38 +1,46 @@
-/* ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+ * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
 #include <X11/keysym.h>
 #include "wmii.h"
 #include "printevent.h"
 
+void
+dispatch_event(XEvent *e) {
+	if(handler[e->type])
+		handler[e->type](e);
+}
+
 uint
-flush_masked_events(long event_mask) {
+flushevents(long event_mask, Bool dispatch) {
 	XEvent ev;
 	uint n = 0;
-	while(XCheckMaskEvent(blz.dpy, event_mask, &ev)) n++;
+
+	while(XCheckMaskEvent(blz.dpy, event_mask, &ev)) {
+		if(dispatch)
+			dispatch_event(&ev);
+		n++;
+	}
 	return n;
 }
 
 static void
 buttonrelease(XEvent *e) {
+	XButtonPressedEvent *ev;
 	Frame *f;
 	Bar *b;
-	XButtonPressedEvent *ev = &e->xbutton;
+
+	ev = &e->xbutton;
 	if(ev->window == screen->barwin) {
-		for(b=screen->lbar; b; b=b->next)
-			if(ispointinrect(ev->x, ev->y, &b->brush.rect)) {
-				write_event("LeftBarClick %d %s\n",
-						ev->button, b->name);
+		for(b=screen->bar[BarRight]; b; b=b->next)
+			if(ptinrect(ev->x, ev->y, &b->brush.rect)) {
+				write_event("LeftBarClick %d %s\n", ev->button, b->name);
 				return;
 			}
-		for(b=screen->rbar; b; b=b->next)
-			if(ispointinrect(ev->x, ev->y, &b->brush.rect)) {
-				write_event("RightBarClick %d %s\n",
-						ev->button, b->name);
+		for(b=screen->bar[BarLeft]; b; b=b->next)
+			if(ptinrect(ev->x, ev->y, &b->brush.rect)) {
+				write_event("RightBarClick %d %s\n", ev->button, b->name);
 				return;
 			}
 	}
@@ -42,13 +50,11 @@ buttonrelease(XEvent *e) {
 
 static void
 buttonpress(XEvent *e) {
-	Frame *f;
-	Bool inclient;
 	XButtonPressedEvent *ev;
+	Frame *f;
 
 	ev = &e->xbutton;
 	if((f = frame_of_win(ev->window))) {
-		inclient = (ev->subwindow == f->client->win);
 		if((ev->state & def.mod) == def.mod) {
 			switch(ev->button) {
 			case Button1:
@@ -59,7 +65,7 @@ buttonpress(XEvent *e) {
 				break;
 			case Button3:
 				do_mouse_resize(f->client, False,
-						quadofcoord(&f->rect, ev->x_root, ev->y_root));
+						quadrant(&f->rect, ev->x_root, ev->y_root));
 				frame_to_top(f);
 				focus(f->client, True);
 				break;
@@ -70,20 +76,22 @@ buttonpress(XEvent *e) {
 			if(ev->button == Button1) {
 				if(frame_to_top(f))
 					restack_view(f->view);
-				if(ispointinrect(ev->x, ev->y, &f->grabbox))
+
+				if(ptinrect(ev->x, ev->y, &f->grabbox))
 					do_mouse_resize(f->client, True, CENTER);
-				else if(!ev->subwindow
-				&& !ispointinrect(ev->x, ev->y, &f->titlebar))
-					do_mouse_resize(f->client, False,
-						quadofcoord(&f->rect, ev->x_root, ev->y_root));
+				else if(!ev->subwindow && !ptinrect(ev->x, ev->y, &f->titlebar))
+					do_mouse_resize(f->client, False, quadrant(&f->rect, ev->x_root, ev->y_root));
+
 				if(f->client != sel_client())
 					focus(f->client, True);
 			}
 			if(ev->subwindow)
 				XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 			else {
+				/* Ungrab so a menu can receive events before the button is released */
 				XUngrabPointer(blz.dpy, ev->time);
 				XSync(blz.dpy, False);
+
 				write_event("ClientMouseDown 0x%x %d\n", f->client->win, ev->button);
 			}
 		}
@@ -93,14 +101,14 @@ buttonpress(XEvent *e) {
 
 static void
 configurerequest(XEvent *e) {
-	XConfigureRequestEvent *ev = &e->xconfigurerequest;
+	XConfigureRequestEvent *ev;
 	XWindowChanges wc;
 	XRectangle *frect;
 	Client *c;
 	Frame *f;
 
+	ev = &e->xconfigurerequest;
 	c = client_of_win(ev->window);
-
 	if(c) {
 		f = c->sel;
 		gravitate_client(c, True);
@@ -117,7 +125,7 @@ configurerequest(XEvent *e) {
 		gravitate_client(c, False);
 
 		if((c->rect.height == screen->rect.height)
-		&&(c->rect.width == screen->rect.width)) {
+		&& (c->rect.width == screen->rect.width)) {
 			c->fullscreen = True;
 			if(c->sel) {
 				if(!c->sel->area->floating)
@@ -158,37 +166,36 @@ configurerequest(XEvent *e) {
 
 static void
 destroynotify(XEvent *e) {
+	XDestroyWindowEvent *ev;
 	Client *c;
-	XDestroyWindowEvent *ev = &e->xdestroywindow;
 
+	ev = &e->xdestroywindow;
 	if((c = client_of_win(ev->window)))
 		destroy_client(c);
 }
 
 static void
 enternotify(XEvent *e) {
-	XCrossingEvent *ev = &e->xcrossing;
+	XCrossingEvent *ev;
 	Client *c;
 	Frame *f;
 
+	ev = &e->xcrossing;
 	if(ev->mode != NotifyNormal)
 		return;
 
 	if((c = client_of_win(ev->window))) {
 		if(ev->detail != NotifyInferior) {
 			if(screen->focus != c) {
-				if(verbose)
-					fprintf(stderr, "enter_notify(c) => %s\n", c->name);
+				if(verbose) fprintf(stderr, "enter_notify(c) => %s\n", c->name);
 				focus(c, False);
 			}
 			set_cursor(c, cursor[CurNormal]);
-		}else if(verbose)
-				fprintf(stderr, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
+		}else if(verbose) fprintf(stderr, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
 	}
 	else if((f = frame_of_win(ev->window))) {
 		if(screen->focus != c) {
-			if(verbose)
-				fprintf(stderr, "enter_notify(f) => %s\n", f->client->name);
+			if(verbose) fprintf(stderr, "enter_notify(f) => %s\n", f->client->name);
 			if(f->area->floating || !f->collapsed)
 				focus(f->client, False);
 		}
@@ -202,8 +209,9 @@ enternotify(XEvent *e) {
 
 static void
 leavenotify(XEvent *e) {
-	XCrossingEvent *ev = &e->xcrossing;
+	XCrossingEvent *ev;
 
+	ev = &e->xcrossing;
 	if((ev->window == blz.root) && !ev->same_screen) {
 		sel_screen = True;
 		draw_frames();
@@ -223,10 +231,11 @@ print_focus(Client *c, char *to) {
 
 static void
 focusin(XEvent *e) {
+	XFocusChangeEvent *ev;
 	Client *c, *old;
 	XEvent me;
-	XFocusChangeEvent *ev = &e->xfocus;
 
+	ev = &e->xfocus;
 	/* Yes, we're focusing in on nothing, here. */
 	if(ev->detail == NotifyDetailNone) {
 		XSetInputFocus(blz.dpy, screen->barwin, RevertToParent, CurrentTime);
@@ -240,11 +249,11 @@ focusin(XEvent *e) {
 	   ||(ev->detail == NotifyAncestor)))
 		return;
 	if((ev->mode == NotifyWhileGrabbed)
-	&&(screen->hasgrab != &c_magic))
+	&& (screen->hasgrab != &c_root))
 		return;
 
-	c = client_of_win(ev->window);
 	old = screen->focus;
+	c = client_of_win(ev->window);
 	if(c) {
 		print_focus(c, c->name);
 		if(ev->mode == NotifyGrab)
@@ -261,15 +270,15 @@ focusin(XEvent *e) {
 		print_focus(nil, "<nil>");
 		screen->focus = nil;
 	}else if(ev->mode == NotifyGrab) {
-		if(ev->window == blz.root) {
+		if(ev->window == blz.root)
 			if(XCheckMaskEvent(blz.dpy, KeyPressMask, &me)) {
-				screen->hasgrab = &c_magic;
-				handler[me.xany.type](&me);
+				/* wmii has grabbed focus */
+				screen->hasgrab = &c_root;
+				dispatch_event(&me);
 				return;
 			}
-		}
+		/* Some unmanaged window has grabbed focus */
 		if((c = screen->focus)) {
-			/* Some unmanaged window has focus */
 			print_focus(&c_magic, "<magic>");
 			screen->focus = &c_magic;
 			if(c->sel)
@@ -280,9 +289,10 @@ focusin(XEvent *e) {
 
 static void
 focusout(XEvent *e) {
+	XFocusChangeEvent *ev;
 	Client *c;
-	XFocusChangeEvent *ev = &e->xfocus;
 
+	ev = &e->xfocus;
 	if(!((ev->detail == NotifyNonlinear)
 	   ||(ev->detail == NotifyNonlinearVirtual)))
 		return;
@@ -292,13 +302,13 @@ focusout(XEvent *e) {
 	c = client_of_win(ev->window);
 	if(c) {
 		if((ev->mode == NotifyWhileGrabbed)
-		&&(screen->hasgrab != &c_magic)) {
+		&& (screen->hasgrab != &c_root)) {
 			if((screen->focus)
-			&&(screen->hasgrab != screen->focus))
+			&& (screen->hasgrab != screen->focus))
 				screen->hasgrab = screen->focus;
 			if(screen->hasgrab == c)
 				return;
-		}else if(ev->mode != NotifyGrab && ev->window != blz.root) {
+		}else if(ev->mode != NotifyGrab) {
 			if(screen->focus == c) {
 				print_focus(&c_magic, "<magic>");
 				screen->focus = &c_magic;
@@ -310,46 +320,35 @@ focusout(XEvent *e) {
 	}
 }
 
-
 static void
 expose(XEvent *e) {
-	XExposeEvent *ev = &e->xexpose;
+	XExposeEvent *ev;
 	static Frame *f;
 
+	ev = &e->xexpose;
 	if(ev->count == 0) {
 		if(ev->window == screen->barwin)
 			draw_bar(screen);
-		else if((f = frame_of_win(ev->window)) && f->view == screen->sel)
+		else if((f = frame_of_win(ev->window)))
 			draw_frame(f);
 	}
 }
 
 static void
 keypress(XEvent *e) {
-	XKeyEvent *ev = &e->xkey;
-	Frame *f;
-	KeySym k = 0;
-	char buf[32];
-	int n;
+	XKeyEvent *ev;
 
+	ev = &e->xkey;
 	ev->state &= valid_mask;
-	if((f = frame_of_win(ev->window))) {
-		buf[0] = 0;
-		n = XLookupString(ev, buf, sizeof(buf), &k, 0);
-		if(IsFunctionKey(k) || IsKeypadKey(k) || IsMiscFunctionKey(k)
-				|| IsPFKey(k) || IsPrivateKeypadKey(k))
-			return;
-		buf[n] = 0;
-	}
-	else {
+	if(ev->window == blz.root)
 		kpress(blz.root, ev->state, (KeyCode) ev->keycode);
-	}
 }
 
 static void
 mappingnotify(XEvent *e) {
-	XMappingEvent *ev = &e->xmapping;
+	XMappingEvent *ev;
 
+	ev = &e->xmapping;
 	XRefreshKeyboardMapping(ev);
 	if(ev->request == MappingKeyboard)
 		update_keys();
@@ -357,9 +356,10 @@ mappingnotify(XEvent *e) {
 
 static void
 maprequest(XEvent *e) {
-	XMapRequestEvent *ev = &e->xmaprequest;
+	XMapRequestEvent *ev;
 	static XWindowAttributes wa;
 
+	ev = &e->xmaprequest;
 	if(!XGetWindowAttributes(blz.dpy, ev->window, &wa))
 		return;
 	if(wa.override_redirect) {
@@ -373,18 +373,20 @@ maprequest(XEvent *e) {
 
 static void
 motionnotify(XEvent *e) {
-	XMotionEvent *ev = &e->xmotion;
+	XMotionEvent *ev;
 	Frame *f;
 
+	ev = &e->xmotion;
 	if((f = frame_of_win(ev->window)))
 		set_frame_cursor(f, ev->x, ev->y);
 }
 
 static void
 propertynotify(XEvent *e) {
-	XPropertyEvent *ev = &e->xproperty;
+	XPropertyEvent *ev;
 	Client *c;
 
+	ev = &e->xproperty;
 	if(ev->state == PropertyDelete)
 		return; /* ignore */
 	if((c = client_of_win(ev->window)))
@@ -393,9 +395,10 @@ propertynotify(XEvent *e) {
 
 static void
 mapnotify(XEvent *e) {
+	XMapEvent *ev;
 	Client *c;
-	XMapEvent *ev = &e->xmap;
 
+	ev = &e->xmap;
 	if((c = client_of_win(ev->window)))
 		if(c == sel_client())
 			focus_client(c);
@@ -403,11 +406,12 @@ mapnotify(XEvent *e) {
 
 static void
 unmapnotify(XEvent *e) {
+	XUnmapEvent *ev;
 	Client *c;
-	XUnmapEvent *ev = &e->xunmap;
 
+	ev = &e->xunmap;
 	if((c = client_of_win(ev->window)))
-		if(!c->unmapped--)
+		if(ev->send_event || (c->unmapped-- == 0))
 			destroy_client(c);
 }
 
@@ -438,8 +442,7 @@ check_x_event(IXPConn *c) {
 		XNextEvent(blz.dpy, &ev);
 		if(verbose)
 			printevent(&ev);
-		if(handler[ev.type])
-			handler[ev.type](&ev);
+		dispatch_event(&ev);
 		XPending(blz.dpy);
 	}
 }

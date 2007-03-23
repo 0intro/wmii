@@ -1,8 +1,6 @@
-/* ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include <stdlib.h>
-#include <string.h>
 #include "wmii.h"
 
 Frame *
@@ -132,12 +130,12 @@ set_frame_cursor(Frame *f, int x, int y) {
 	XRectangle r;
 	Cursor cur;
 
-	if(!ispointinrect(x, y, &f->titlebar)
-	 &&!ispointinrect(x, y, &f->crect)) {
+	if(!ptinrect(x, y, &f->titlebar)
+	 &&!ptinrect(x, y, &f->crect)) {
 	 	r = f->rect;
 	 	r.x = 0;
 	 	r.y = 0;
-	 	cur = cursor_of_quad(quadofcoord(&r, x, y));
+	 	cur = cursor_of_quad(quadrant(&r, x, y));
 		set_cursor(f->client, cur);
 	}else
 		set_cursor(f->client, cursor[CurNormal]);
@@ -247,6 +245,9 @@ void
 draw_frame(Frame *f) {
 	BlitzBrush br = { 0 };
 	Frame *tf;
+
+	if(f->view != screen->sel)
+		return;
 
 	br.blitz = &blz;
 	br.font = &def.font;

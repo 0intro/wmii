@@ -1,9 +1,8 @@
-/* ©2006 Kris Maglione <fbsdaemon at gmail dot com>
+/* Copyright ©2006 Kris Maglione <fbsdaemon at gmail dot com>
  * See LICENSE file for license details.
  */
 #include <assert.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -238,7 +237,7 @@ message_root(char *message)
 		srv.running = 0;
 	else if(!strncmp(message, "exec ", 5)) {
 		srv.running = 0;
-		execstr = strdup(&message[5]);
+		execstr = estrdup(&message[5]);
 		message += strlen(message);
 	}
 	else if(!strncmp(message, "view ", 5))
@@ -469,9 +468,9 @@ lookup_file(FileId *parent, char *name)
 			switch(file->tab.type) {
 			case FsDBars:
 				if(!strcmp(file->tab.name, "lbar"))
-					file->content.bar_p = &screen[0].lbar;
+					file->content.bar_p = &screen[0].bar[BarLeft];
 				else
-					file->content.bar_p = &screen[0].rbar;
+					file->content.bar_p = &screen[0].bar[BarRight];
 				break;
 			case FsFColRules:
 				file->content.rule = &def.colrules;

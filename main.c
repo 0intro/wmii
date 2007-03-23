@@ -1,25 +1,20 @@
-/* ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+ * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
 #include <X11/cursorfont.h>
-#include <X11/keysym.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include "wmii.h"
-
-#define nelem(ary) (sizeof(ary) / sizeof(*ary))
 
 static const char
 	version[] = "wmii - " VERSION ", ©2007 Kris Maglione\n";
@@ -381,7 +376,7 @@ spawn_command(const char *cmd) {
 				fatal("Shell is not an absolute path: %s", shell);
 
 			/* Run through the user's shell as a login shell */
-			p = malloc(sizeof(char*) * (strlen(shell) + 2));
+			p = malloc((strlen(shell) + 2));
 			sprintf(p, "-%s", strrchr(shell, '/') + 1);
 
 			execl(shell, p, "-c", cmd, nil);
@@ -502,9 +497,6 @@ main(int argc, char *argv[]) {
 	screens = emallocz(num_screens * sizeof(*screens));
 	for(i = 0; i < num_screens; i++) {
 		s = &screens[i];
-		s->lbar = nil;
-		s->rbar = nil;
-		s->sel = nil;
 		init_screen(s);
 		pmap = XCreatePixmap(
 			/* display */	blz.dpy,

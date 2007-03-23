@@ -1,9 +1,8 @@
-/* ©2006 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include "wmii.h"
 
 enum {
@@ -390,7 +389,7 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 		hr_x = screen->rect.width / 2;
 		hr_y = screen->rect.height / 2;
 		XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, hr_x, hr_y);
-		while(XCheckMaskEvent(blz.dpy, PointerMotionMask, &ev));
+		flushevents(PointerMotionMask, False);
 	}
 
 

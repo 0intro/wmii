@@ -11,6 +11,7 @@
 #include <ixp.h>
 
 #define nil	((void*)0)
+#define nelem(ary) (sizeof(ary) / sizeof(*ary))
 
 /* Types */
 #undef uchar
@@ -231,9 +232,10 @@ struct {
 	int colmode;
 } def;
 
+enum { BarLeft, BarRight };
+
 struct WMScreen {
-	Bar *lbar;
-	Bar *rbar;
+	Bar *bar[2];
 	View *sel;
 	Client *focus;
 	Client *hasgrab;
@@ -248,6 +250,7 @@ Client *client;
 View *view;
 Key *key;
 Client c_magic;
+Client c_root;
 
 enum { BUFFER_SIZE = 8092 };
 char buffer[BUFFER_SIZE];
@@ -350,8 +353,9 @@ uint labelh(BlitzFont *font);
 char *parse_colors(char **buf, int *buflen, BlitzColor *col);
 
 /* event.c */
+void dispatch_event(XEvent *e);
 void check_x_event(IXPConn *c);
-uint flush_masked_events(long even_mask);
+uint flushevents(long even_mask, Bool dispatch);
 
 /* frame.c */
 Frame *create_frame(Client *c, View *v);
@@ -384,8 +388,8 @@ void fs_write(P9Req *r);
 void write_event(char *format, ...);
 
 /* geom.c */
-Bool ispointinrect(int x, int y, XRectangle * r);
-BlitzAlign quadofcoord(XRectangle *rect, int x, int y);
+Bool ptinrect(int x, int y, XRectangle * r);
+BlitzAlign quadrant(XRectangle *rect, int x, int y);
 Cursor cursor_of_quad(BlitzAlign align);
 int strtorect(XRectangle *r, const char *val);
 BlitzAlign get_sticky(XRectangle *src, XRectangle *dst);

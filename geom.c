@@ -1,16 +1,16 @@
-/* ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 #include "wmii.h"
 
 Bool
-ispointinrect(int x, int y, XRectangle * r) {
+ptinrect(int x, int y, XRectangle * r) {
 	return (x >= r->x) && (x < r_east(r))
 		&& (y >= r->y) && (y < r_south(r));
 }
 
 BlitzAlign
-quadofcoord(XRectangle *rect, int x, int y) {
+quadrant(XRectangle *rect, int x, int y) {
 	BlitzAlign ret = 0;
 	x -= rect->x;
 	y -= rect->y;

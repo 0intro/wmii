@@ -1,11 +1,10 @@
 /*
- * ©2006 Anselm R. Garbe <garbeam at gmail dot com>
+ * Copyright ©2006 Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include "wmii.h"
 
 /* basic rule matching language /regex/ -> value

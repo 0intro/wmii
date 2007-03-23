@@ -1,8 +1,7 @@
-/* ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+ * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xatom.h>
@@ -120,12 +119,11 @@ destroy_client(Client *c) {
 
 	XSetErrorHandler(wmii_error_handler);
 	XUngrabServer(blz.dpy);
-	flush_masked_events(EnterWindowMask);
+	flushevents(EnterWindowMask, False);
 
 	while(XCheckMaskEvent(blz.dpy, StructureNotifyMask, &ev))
 		if(ev.type != UnmapNotify || ev.xunmap.window != c->win)
-			if(handler[ev.type])
-				handler[ev.type](&ev);
+			dispatch_event(&ev);
 
 	write_event("DestroyClient 0x%x\n", c->win);
 	free(c);
@@ -158,7 +156,7 @@ manage_client(Client *c) {
 
 	if(c->sel->view == screen->sel)
 		focus(c, True);
-	flush_masked_events(EnterWindowMask);
+	flushevents(EnterWindowMask, False);
 }
 
 Client *
@@ -595,11 +593,7 @@ focus(Client *c, Bool restack) {
 
 void
 focus_client(Client *c) {
-	XEvent ev;
-
-	while(XCheckMaskEvent(blz.dpy, FocusChangeMask, &ev))
-		if(handler[ev.xany.type])
-			handler[ev.xany.type](&ev);
+	flushevents(FocusChangeMask, True);
 
 	if(verbose)
 		fprintf(stderr, "focus_client(%p) => %s\n", c, (c ? c->name : nil));
@@ -614,15 +608,12 @@ focus_client(Client *c) {
 			XSetInputFocus(blz.dpy, screen->barwin, RevertToParent, CurrentTime);
 	}
 
-	while(XCheckMaskEvent(blz.dpy, FocusChangeMask, &ev))
-		if(handler[ev.xany.type])
-			handler[ev.xany.type](&ev);
+	flushevents(FocusChangeMask, True);
 }
 
 void
 resize_client(Client *c, XRectangle *r) {
 	Frame *f;
-	XEvent ev;
 
 	f = c->sel;
 	resize_frame(f, r);
@@ -658,9 +649,7 @@ resize_client(Client *c, XRectangle *r) {
 		configure_client(c);
 	}
 	
-	while(XCheckMaskEvent(blz.dpy, FocusChangeMask|ExposureMask, &ev))
-		if(handler[ev.xany.type])
-			handler[ev.xany.type](&ev);
+	flushevents(FocusChangeMask|ExposureMask, True);
 }
 
 void
@@ -685,7 +674,7 @@ newcol_client(Client *c, char *arg) {
 	}
 	else
 		return;
-	flush_masked_events(EnterWindowMask);
+	flushevents(EnterWindowMask, False);
 }
 
 void
@@ -789,7 +778,7 @@ send_frame:
 		swap_frames(f, tf);
 	arrange_column(a, False);
 
-	flush_masked_events(EnterWindowMask);
+	flushevents(EnterWindowMask, False);
 	focus_frame(f, True);
 	update_views();
 	return nil;
@@ -802,7 +791,7 @@ send_area:
 	else if(to->sel)
 		swap_frames(f, to->sel);
 
-	flush_masked_events(EnterWindowMask);
+	flushevents(EnterWindowMask, False);
 	focus_frame(f, True);
 	update_views();
 	return nil;

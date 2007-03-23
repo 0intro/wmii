@@ -1,10 +1,8 @@
-/* ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+ * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include <math.h>
 #include <string.h>
-#include <stdlib.h>
 #include "wmii.h"
 
 Bar *free_bars = nil;
@@ -68,12 +66,13 @@ draw_bar(WMScreen *s) {
 	Bar *b, *tb, *largest, **pb;
 
 	draw_tile(&s->bbrush);
-	if(!s->lbar && !s->rbar)
+	if(!s->bar[BarLeft] && !s->bar[BarRight])
 		goto MapBar;
+
 	largest = b = tb = nil;
 	tw = width = nb = size = 0;
-	for(b = s->lbar, nb = 2; nb; --nb && (b = s->rbar))
-		for(; b; b=b->next) {
+	for(nb = 0; nb < nelem(s->bar); nb++)
+		for(b = s->bar[nb]; b; b=b->next) {
 			b->brush.rect.x = b->brush.rect.y = 0;
 			b->brush.rect.width = def.font.height & ~1;
 			if(b->text && strlen(b->text))
@@ -83,8 +82,8 @@ draw_bar(WMScreen *s) {
 		}
 	/* Not enough room. Shrink bars until they all fit */
 	if(width > s->brect.width) {
-		for(b = s->lbar, nb = 2; nb; --nb && (b = s->rbar))
-			for(; b; b = b->next) {
+		for(nb = 0; nb < nelem(s->bar); nb++)
+			for(b = s->bar[nb]; b; b=b->next) {
 				for(pb = &largest; *pb; pb = &(*pb)->smaller)
 					if((*pb)->brush.rect.width < b->brush.rect.width)
 						break; 
@@ -105,11 +104,11 @@ draw_bar(WMScreen *s) {
 		width += tw * shrink;
 		tb = nil;
 	}
-	for(b = s->lbar, nb = 2; nb; b = s->rbar, nb--)
-		for(; b; tb = b, b = b->next) {
-			if(b == s->rbar) {
+	for(nb = 0; nb < nelem(s->bar); nb++)
+		for(b = s->bar[nb]; b; tb=b, b=b->next) {
+			if(b == s->bar[BarRight]) {
 				b->brush.align = EAST;
-				s->rbar->brush.rect.width += (s->brect.width - width);
+				b->brush.rect.width += (s->brect.width - width);
 			}else
 				b->brush.align = CENTER;
 			if(tb)
