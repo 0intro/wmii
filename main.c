@@ -146,7 +146,6 @@ init_ns() {
 
 	if(address && strncmp(address, "unix!", 5) == 0) {
 		ns_path = estrdup(&address[5]);
-
 		p = strrchr(ns_path, '/');
 		if(p != nil)
 			p = '\0';

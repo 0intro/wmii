@@ -33,12 +33,12 @@ buttonrelease(XEvent *e) {
 
 	ev = &e->xbutton;
 	if(ev->window == screen->barwin) {
-		for(b=screen->bar[BarRight]; b; b=b->next)
+		for(b=screen->bar[BarLeft]; b; b=b->next)
 			if(ptinrect(ev->x, ev->y, &b->brush.rect)) {
 				write_event("LeftBarClick %d %s\n", ev->button, b->name);
 				return;
 			}
-		for(b=screen->bar[BarLeft]; b; b=b->next)
+		for(b=screen->bar[BarRight]; b; b=b->next)
 			if(ptinrect(ev->x, ev->y, &b->brush.rect)) {
 				write_event("RightBarClick %d %s\n", ev->button, b->name);
 				return;
