@@ -4,6 +4,11 @@
 oldpath=$path
 path=($PLAN9/bin $path)
 
+if(echo $0 | grep -vs '/rc.wmii$') {
+	echo Fatal: This file should only be run as rc.wmii >[1=2]
+	exits badname
+}
+
 MODKEY=Mod1
 UP=k
 DOWN=j
