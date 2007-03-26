@@ -1,5 +1,6 @@
 ROOT=..
 include ${ROOT}/mk/hdr.mk
+include ${ROOT}/mk/wmii.mk
 
 DIRS =	wmii
 TARG =	wmii9menu \

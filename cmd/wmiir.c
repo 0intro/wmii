@@ -286,7 +286,7 @@ main(int argc, char *argv[]) {
 
 	ARGBEGIN{
 	case 'v':
-		puts("ixpc-" VERSION ", ©2007 Kris Maglione\n");
+		printf("%s-" VERSION ", ©2007 Kris Maglione\n", argv0);
 		exit(0);
 	case 'a':
 		address = EARGF(usage());

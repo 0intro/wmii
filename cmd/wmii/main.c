@@ -17,7 +17,7 @@
 #include "wmii.h"
 
 static const char
-	version[] = "wmii - " VERSION ", ©2007 Kris Maglione\n";
+	version[] = "wmii-"VERSION", ©2007 Kris Maglione\n";
 
 static int (*x_error_handler) (Display *, XErrorEvent *);
 static char *address, *ns_path;
