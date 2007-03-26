@@ -15,6 +15,7 @@ LIBS = -L/usr/lib -lc
 # Flags
 CFLAGS = -g -Wall ${INCS} -DVERSION=\"${VERSION}\"
 LDFLAGS = -g ${LIBS}
+STATIC = -static
 
 # Compiler
 CC = cc -c

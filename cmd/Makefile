@@ -19,7 +19,7 @@ include ${ROOT}/mk/dir.mk
 
 OWMIIR=${OFILES} ${LIBIXP}
 wmiir.O: ${OWMIIR}
-	${LINK} $@ $*.o ${OWMIIR}
+	${LINK} $@ ${STATIC} $*.o ${OWMIIR}
 
 EXCFLAGS=${INCX11}
 wmii9menu.O:

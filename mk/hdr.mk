@@ -54,6 +54,7 @@ mkdirs:
 clean:
 install: printinstall mkdirs
 
+FILTER = cat
 COMPILE= CC="${CC}" CFLAGS="${CFLAGS} ${EXCFLAGS}" ${ROOT}/util/compile
 LINK= LD="${LD}" LDFLAGS="${LDFLAGS} ${EXLDFLAGS}" ${ROOT}/util/link
 
