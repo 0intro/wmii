@@ -1,7 +1,10 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
-#include "wmii.h"
+#include <stdio.h>
+#include <util.h>
+#include "dat.h"
+#include "fns.h"
 
 Bool
 ptinrect(int x, int y, XRectangle * r) {

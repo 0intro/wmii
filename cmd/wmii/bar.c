@@ -3,7 +3,9 @@
  * See LICENSE file for license details.
  */
 #include <string.h>
-#include "wmii.h"
+#include <util.h>
+#include "dat.h"
+#include "fns.h"
 
 Bar *free_bars = nil;
 

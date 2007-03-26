@@ -1,7 +1,9 @@
 /* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include "wmii.h"
+#include <util.h>
+#include "dat.h"
+#include "fns.h"
 
 Frame *
 create_frame(Client *c, View *v) {

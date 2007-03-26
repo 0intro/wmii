@@ -46,7 +46,9 @@ can get it touch with me at the following location:
 #include <stdio.h>
 #include <X11/Intrinsic.h>
 #include <X11/Xproto.h>
-#include "wmii.h"
+#include <util.h>
+#include "dat.h"
+#include "fns.h"
 #include "printevent.h"
 
 static char* sep = " ";

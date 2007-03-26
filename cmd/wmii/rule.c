@@ -5,7 +5,9 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "wmii.h"
+#include <util.h>
+#include "dat.h"
+#include "fns.h"
 
 /* basic rule matching language /regex/ -> value
  * regex might contain POSIX regex syntax defined in regex(3) */

@@ -3,7 +3,9 @@
  */
 #include <stdlib.h>
 #include <string.h>
-#include "wmii.h"
+#include <util.h>
+#include "dat.h"
+#include "fns.h"
 
 enum {
 	ButtonMask =

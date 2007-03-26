@@ -11,6 +11,7 @@ mkdirs:
 	done
 
 install: ${HFILES:.h=.install}
+uninstall: ${HFILES:.h=.uninstall}
 
 cleandep:
 	rm .depend 2>/dev/null || true

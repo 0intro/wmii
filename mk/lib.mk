@@ -4,6 +4,7 @@ OFILES = ${OBJ:=.o}
 all: ${HFILES} ${LIB} 
 
 install: ${TARG}.install
+uninstall: ${TARG}.uninstall
 clean: libclean
 depend: ${OBJ:=.depend}
 

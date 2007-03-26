@@ -2,6 +2,8 @@ ROOT= ../..
 include ${ROOT}/mk/hdr.mk
 include ${ROOT}/mk/wmii.mk
 
+main.c: ${ROOT}/mk/wmii.mk
+
 TARG =	wmii
 
 LIB =	${LIBIXP}

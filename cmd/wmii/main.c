@@ -9,12 +9,15 @@
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include "wmii.h"
+#include <util.h>
+#include "dat.h"
+#include "fns.h"
 
 static const char
 	version[] = "wmii-"VERSION", ©2007 Kris Maglione\n";
@@ -568,6 +571,7 @@ main(int argc, char *argv[]) {
 	check_x_event(nil);
 	errstr = ixp_serverloop(&srv);
 	if(errstr)
+		fprintf(stderr, "%s: error: %s\n", argv0, errstr);
 
 	cleanup();
 	XCloseDisplay(blz.dpy);

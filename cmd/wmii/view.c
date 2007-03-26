@@ -3,8 +3,11 @@
  * See LICENSE file for license details.
  */
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include "wmii.h"
+#include <util.h>
+#include "dat.h"
+#include "fns.h"
 
 static Bool
 is_empty(View *v) {

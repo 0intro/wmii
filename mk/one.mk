@@ -4,6 +4,7 @@ OFILES = ${OBJ:=.o}
 all: ${PROG}
 
 install: ${TARG}.install
+uninstall: ${TARG}.uninstall
 clean: oneclean
 depend: ${OBJ:=.depend}
 

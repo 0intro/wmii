@@ -2,8 +2,11 @@
  * See LICENSE file for license details.
  */
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include "wmii.h"
+#include <util.h>
+#include "dat.h"
+#include "fns.h"
 
 uint
 textwidth_l(BlitzFont *font, char *text, uint len) {

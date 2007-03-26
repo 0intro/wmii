@@ -4,7 +4,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <X11/keysym.h>
-#include "wmii.h"
+#include <util.h>
+#include "dat.h"
+#include "fns.h"
 
 void
 init_lock_keys() {

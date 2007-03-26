@@ -16,6 +16,12 @@ dinstall:
 		echo MAKE install ${BASE}$$i/; \
 		(cd $$i && ${MAKE} BASE="${BASE}$$i/" install) || exit $?; \
 	done
+duninstall:
+	for i in ${DIRS}; do \
+		if [ ! -d $$i ]; then echo Skipping nonexistent directory: $$i 1>&2; continue; fi; \
+		echo MAKE uninstall ${BASE}$$i/; \
+		(cd $$i && ${MAKE} BASE="${BASE}$$i/" uninstall) || exit $?; \
+	done
 ddepend:
 	for i in ${DIRS}; do \
 		if [ ! -d $$i ]; then echo Skipping nonexistent directory: $$i 1>&2; continue; fi; \
@@ -26,4 +32,5 @@ ddepend:
 all: dall
 clean: dclean
 install: dinstall
+uninstall: duninstall
 depend: ddepend

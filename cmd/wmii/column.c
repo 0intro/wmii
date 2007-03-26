@@ -4,7 +4,9 @@
  */
 #include <math.h>
 #include <string.h>
-#include "wmii.h"
+#include <util.h>
+#include "dat.h"
+#include "fns.h"
 
 char *
 str_of_column_mode(int mode) {

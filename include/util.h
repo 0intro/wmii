@@ -1,3 +1,26 @@
+#define nil	((void*)0)
+#define nelem(ary) (sizeof(ary) / sizeof(*ary))
+
+/* Types */
+#undef uchar
+#undef ushort
+#undef uint
+#undef ulong
+#undef uvlong
+#undef vlong
+#define uchar	_wmiiuchar
+#define ushort	_wmiiushort
+#define uint	_wmiiuint
+#define ulong	_wmiiulong
+#define vlong	_wmiivlong
+#define uvlong	_wmiiuvlong
+typedef unsigned char		uchar;
+typedef unsigned short		ushort;
+typedef unsigned int		uint;
+typedef unsigned long		ulong;
+typedef unsigned long long	uvlong;
+typedef long long		vlong;
+
 #define strlcat wmii_strlcat
 /* util.c */
 uint tokenize(char *res[], uint reslen, char *str, char delim);
