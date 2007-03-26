@@ -515,7 +515,7 @@ fs_attach(Ixp9Req *r) {
 	FileId *f = get_file();
 	f->tab = dirtab[FsRoot][0];
 	f->tab.name = estrdup("/");
-	f->content.ref = nil; /* shut up valgrind */
+	f->content.ref = nil;
 	r->fid->aux = f;
 	r->fid->qid.type = f->tab.qtype;
 	r->fid->qid.path = QID(f->tab.type, 0);

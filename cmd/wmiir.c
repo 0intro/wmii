@@ -22,18 +22,18 @@ usage() {
 
 /* Utility Functions */
 static void
-write_data(IxpCFid *fid) {
+write_data(IxpCFid *fid, char *name) {
 	void *buf;
 	uint len;
 
 	buf = ixp_emalloc(fid->iounit);;
 	while((len = read(0, buf, fid->iounit)) > 0)
 		if(ixp_write(fid, buf, len) != len)
-			fatal("cannot write file: %s\n", errstr);
+			fatal("cannot write file '%s': %s\n", name, errstr);
 	/* do an explicit empty write when no writing has been done yet */
 	if(fid->offset == 0)
 		if(ixp_write(fid, buf, 0) != 0)
-			fatal("cannot write file: %s\n", errstr);
+			fatal("cannot write file '%s': %s\n", name, errstr);
 	free(buf);
 }
 
@@ -109,7 +109,7 @@ xwrite(int argc, char *argv[]) {
 	if(fid == nil)
 		fatal("Can't open file '%s': %s\n", file, errstr);
 
-	write_data(fid);
+	write_data(fid, file);
 	return 0;
 }
 
@@ -161,12 +161,12 @@ xcreate(int argc, char *argv[]) {
 	}ARGEND;
 
 	file = EARGF(usage());
-	fid = ixp_create(client, file, 0777, P9_OREAD);
+	fid = ixp_create(client, file, 0777, P9_OWRITE);
 	if(fid == nil)
 		fatal("Can't create file '%s': %s\n", file, errstr);
 
 	if((fid->qid.type&P9_DMDIR) == 0)
-		write_data(fid);
+		write_data(fid, file);
 
 	return 0;
 }
