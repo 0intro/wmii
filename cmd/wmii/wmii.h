@@ -9,6 +9,7 @@
 #include <X11/Xutil.h>
 
 #include <ixp.h>
+#include <util.h>
 
 #define nil	((void*)0)
 #define nelem(ary) (sizeof(ary) / sizeof(*ary))
@@ -256,8 +257,8 @@ enum { BUFFER_SIZE = 8092 };
 char buffer[BUFFER_SIZE];
 
 /* IXP */
-IXPServer srv;
-P9Srv p9srv;
+IxpServer srv;
+Ixp9Srv p9srv;
 
 /* X11 */
 uint num_screens;
@@ -354,7 +355,7 @@ char *parse_colors(char **buf, int *buflen, BlitzColor *col);
 
 /* event.c */
 void dispatch_event(XEvent *e);
-void check_x_event(IXPConn *c);
+void check_x_event(IxpConn *c);
 uint flushevents(long even_mask, Bool dispatch);
 
 /* frame.c */
@@ -374,17 +375,17 @@ void update_frame_widget_colors(Frame *f);
 void check_frame_constraints(XRectangle *rect);
 
 /* fs.c */
-void fs_attach(P9Req *r);
-void fs_clunk(P9Req *r);
-void fs_create(P9Req *r);
-void fs_flush(P9Req *r);
+void fs_attach(Ixp9Req *r);
+void fs_clunk(Ixp9Req *r);
+void fs_create(Ixp9Req *r);
+void fs_flush(Ixp9Req *r);
 void fs_freefid(Fid *f);
-void fs_open(P9Req *r);
-void fs_read(P9Req *r);
-void fs_remove(P9Req *r);
-void fs_stat(P9Req *r);
-void fs_walk(P9Req *r);
-void fs_write(P9Req *r);
+void fs_open(Ixp9Req *r);
+void fs_read(Ixp9Req *r);
+void fs_remove(Ixp9Req *r);
+void fs_stat(Ixp9Req *r);
+void fs_walk(Ixp9Req *r);
+void fs_write(Ixp9Req *r);
 void write_event(char *format, ...);
 
 /* geom.c */
@@ -413,19 +414,6 @@ void grab_button(Window w, uint button, ulong mod);
 /* rule.c */
 void update_rules(Rule **rule, const char *data);
 void trim(char *str, const char *chars);
-
-#define strlcat wmii_strlcat
-/* util.c */
-uint tokenize(char *res[], uint reslen, char *str, char delim);
-char *estrdup(const char *str);
-void *erealloc(void *ptr, uint size);
-void *emallocz(uint size);
-void *emalloc(uint size);
-void fatal(const char *fmt, ...);
-int max(int a, int b);
-int min(int a, int b);
-char *str_nil(char *s);
-uint strlcat(char *dst, const char *src, unsigned int siz);
 
 /* view.c */
 void arrange_view(View *v);

@@ -3,9 +3,10 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "wmii.h"
+#include <util.h>
 
 void
 fatal(const char *fmt, ...) {
@@ -13,7 +14,7 @@ fatal(const char *fmt, ...) {
 	int err;
 
 	err = errno;
-	fprintf(stderr, "wmii: fatal: ");
+	fprintf(stderr, "%s: fatal: ", argv0);
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -31,7 +32,7 @@ fatal(const char *fmt, ...) {
 void
 mfatal(char *name, uint size) {
 	const char
-		couldnot[] = "wmii: fatal: Could not ",
+		couldnot[] = ": fatal: Could not ",
 		paren[] = "() ",
 		bytes[] = " bytes\n";
 	char sizestr[8];
@@ -43,6 +44,7 @@ mfatal(char *name, uint size) {
 		size /= 10;
 	} while(size > 0);
 
+	write(1, argv0, strlen(argv0)-1);
 	write(1, couldnot, sizeof(couldnot)-1);
 	write(1, name, strlen(name));
 	write(1, paren, sizeof(paren)-1);

@@ -1,0 +1,20 @@
+#!/bin/sh -f
+
+outfile="$1"; shift
+
+# Derived from Russ Cox's 9c in plan9port.
+
+xtmp=/tmp/cc.$$.$USER.out
+
+echo CC ${BASE}$outfile
+$CC -o $outfile $CFLAGS $@ 2>$xtmp
+status=$?
+
+cat $xtmp \
+| egrep -v ': error: .Each undeclared identifier|: error: for each function it appears|is dangerous, better use|is almost always misused|: In function |: At top level:|support .long long.|In file included from|        from|use of C99 long long|ISO C forbids conversion' \
+| sed 's/ .first use in this function.$//; s/\"\([^\"][^\"]*\)\", line \([0-9][0-9]*\)/\1:\2/g' \
+| uniq 1>&2
+
+rm -f $xtmp $xtmp.status
+exit $status
+

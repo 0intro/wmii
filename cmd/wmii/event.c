@@ -436,7 +436,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
 };
 
 void
-check_x_event(IXPConn *c) {
+check_x_event(IxpConn *c) {
 	XEvent ev;
 	while(XPending(blz.dpy)) {
 		XNextEvent(blz.dpy, &ev);

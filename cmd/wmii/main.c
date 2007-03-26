@@ -412,7 +412,7 @@ spawn_command(const char *cmd) {
 }
 
 void
-check_9pcon(IXPConn *c) {
+check_9pcon(IxpConn *c) {
 	serve_9pcon(c);
 	check_x_event(nil);
 }
@@ -429,36 +429,23 @@ main(int argc, char *argv[]) {
 	wmiirc = "wmiistartrc";
 
 	/* command line args */
-	for(i = 1; (i < argc) && (argv[i][0] == '-'); i++) {
-		switch (argv[i][1]) {
-		case 'v':
-			printf("%s", version);
-			exit(0);
-			break;
-		case 'V':
-			verbose = True;
-			break;
-		case 'a':
-			if(argv[i][2] != '\0')
-				address = &argv[i][2];
-			else if(++i < argc)
-				address = argv[i];
-			else
-				usage();
-			break;
-		case 'r':
-			if(argv[i][2] != '\0')
-				wmiirc = &argv[i][2];
-			else if(++i < argc)
-				wmiirc = argv[i];
-			else
-				usage();
-			break;
-		default:
-			usage();
-			break;
-		}
-	}
+	ARGBEGIN{
+	case 'v':
+		printf("%s", version);
+		exit(0);
+	case 'V':
+		verbose = True;
+		break;
+	case 'a':
+		address = EARGF(usage());
+		break;
+	case 'r':
+		wmiirc = EARGF(usage());
+		break;
+	default:
+		usage();
+		break;
+	}ARGEND;
 
 	setlocale(LC_CTYPE, "");
 	starting = True;
@@ -479,15 +466,15 @@ main(int argc, char *argv[]) {
 	init_traps();
 
 	errstr = nil;
-	sock = ixp_create_sock(address, &errstr);
+	sock = ixp_dial(address);
 	if(sock < 0)
 		fatal("Can't create socket '%s': %s", address, errstr);
 
 	if(wmiirc)
 		spawn_command(wmiirc);
 
-	ixp_server_open_conn(&srv, sock, &p9srv, check_9pcon, nil);
-	ixp_server_open_conn(&srv, ConnectionNumber(blz.dpy), nil, check_x_event, nil);
+	ixp_listen(&srv, sock, &p9srv, check_9pcon, nil);
+	ixp_listen(&srv, ConnectionNumber(blz.dpy), nil, check_x_event, nil);
 
 	view = nil;
 	client = nil;
@@ -579,7 +566,7 @@ main(int argc, char *argv[]) {
 		write_event("FocusTag %s\n", screen->sel->name);
 
 	check_x_event(nil);
-	errstr = ixp_server_loop(&srv);
+	errstr = ixp_serverloop(&srv);
 	if(errstr)
 
 	cleanup();
