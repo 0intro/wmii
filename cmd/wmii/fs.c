@@ -647,6 +647,7 @@ fs_read(Ixp9Req *r) {
 				if(size < n)
 					break;
 				ixp_pstat(&m, &s);
+				size -= n;
 			}
 			offset += n;
 		}
