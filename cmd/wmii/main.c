@@ -422,7 +422,7 @@ check_9pcon(IxpConn *c) {
 
 int
 main(int argc, char *argv[]) {
-	char *wmiirc, *errstr;
+	char *wmiirc;
 	WMScreen *s;
 	XSetWindowAttributes wa;
 	int i;
@@ -469,7 +469,7 @@ main(int argc, char *argv[]) {
 	init_traps();
 
 	errstr = nil;
-	sock = ixp_dial(address);
+	sock = ixp_announce(address);
 	if(sock < 0)
 		fatal("Can't create socket '%s': %s", address, errstr);
 
