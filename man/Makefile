@@ -6,7 +6,7 @@ TARG =	wmii.1	   \
 	wmiir.1	   \
 	wmiiwm.1
 
-FILTER = sed "s|CONFPREFIX|${MAN}|g; \
+FILTER = sed "s|CONFPREFIX|${ETC}|g; \
 	      s|CONFVERSION|${CONFVERSION}|g; \
 	      s|P9PATHS|${P9PATHS}|g; \
 	      s|AWKPATH|${AWKPATH}|g"
