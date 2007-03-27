@@ -42,7 +42,7 @@ char *argv0;
 #define ARGBEGIN int _argi, _argtmp, _inargv=0; char *_argv; \
 		if(!argv0)argv0=ARGF(); _inargv=1; \
 		while(argc && argv[0][0] == '-') { \
-			_argi=1; _argv=*argv++; argc++; \
+			_argi=1; _argv=*argv++; argc--; \
 			while(_argv[_argi]) switch(_argv[_argi++])
 #define ARGEND }_inargv=0;USED(_argtmp);USED(_argv);USED(_argi)
 #define ARGF() ((_inargv && _argv[_argi]) ? \

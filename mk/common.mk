@@ -5,7 +5,7 @@ depend: cleandep
 
 MANDIRS=${MAN}/man1
 mkdirs:
-	for i in ${BIN} ${ETC} ${MANDIRS} ${DIRS}; do \
+	for i in ${BIN} ${ETC} ${LIBDIR} ${MANDIRS} ${INCLUDE} ${DIRS}; do \
 		test -d $$i || echo MKDIR $$i; \
 		mkdir -pm 0755 $$i; \
 	done

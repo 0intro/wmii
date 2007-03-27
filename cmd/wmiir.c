@@ -27,13 +27,12 @@ write_data(IxpCFid *fid, char *name) {
 	uint len;
 
 	buf = ixp_emalloc(fid->iounit);;
-	while((len = read(0, buf, fid->iounit)) > 0)
-		if(ixp_write(fid, buf, len) != len)
+	do {
+		len = read(0, buf, fid->iounit);
+		if(len >= 0 && ixp_write(fid, buf, len) != len)
 			fatal("cannot write file '%s': %s\n", name, errstr);
-	/* do an explicit empty write when no writing has been done yet */
-	if(fid->offset == 0)
-		if(ixp_write(fid, buf, 0) != 0)
-			fatal("cannot write file '%s': %s\n", name, errstr);
+	} while(len > 0);
+
 	free(buf);
 }
 
@@ -277,10 +276,25 @@ xls(int argc, char *argv[]) {
 	return 0;
 }
 
+typedef struct exectab exectab;
+struct exectab {
+	char *cmd;
+	int (*fn)(int, char**);
+} etab[] = {
+	{"write", xwrite},
+	{"xwrite", xawrite},
+	{"read", xread},
+	{"create", xcreate},
+	{"remove", xremove},
+	{"ls", xls},
+	{0, 0}
+};
+
 int
 main(int argc, char *argv[]) {
-	int ret;
 	char *cmd, *address;
+	exectab *tab;
+	int ret;
 
 	address = getenv("WMII_ADDRESS");
 
@@ -304,20 +318,12 @@ main(int argc, char *argv[]) {
 	if(client == nil)
 		fatal("%s\n", errstr);
 
-	if(!strcmp(cmd, "create"))
-		ret = xcreate(argc, argv);
-	else if(!strcmp(cmd, "ls"))
-		ret = xls(argc, argv);
-	else if(!strcmp(cmd, "read"))
-		ret = xread(argc, argv);
-	else if(!strcmp(cmd, "remove"))
-		ret = xremove(argc, argv);
-	else if(!strcmp(cmd, "write"))
-		ret = xwrite(argc, argv);
-	else if(!strcmp(cmd, "xwrite"))
-		ret = xawrite(argc, argv);
-	else
+	for(tab = etab; tab->cmd; tab++)
+		if(strcmp(cmd, tab->cmd) == 0) break;
+	if(tab->cmd == 0)
 		usage();
+
+	ret = tab->fn(argc, argv);
 
 	ixp_unmount(client);
 	return ret;
