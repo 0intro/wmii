@@ -38,7 +38,7 @@ assign_sel_view(View *v) {
 }
 
 Client *
-sel_client_of_view(View *v) {
+view_selclient(View *v) {
 	return v->sel && v->sel->sel ? v->sel->sel->client : nil;
 }
 
@@ -331,7 +331,7 @@ client_of_message(View *v, char *message, uint *next) {
 
 	if(!strncmp(message, "sel ", 4)) {
 		*next = 4;
-		return sel_client_of_view(v);
+		return view_selclient(v);
 	}
 	sscanf(message, "0x%lx %n", &id, next);
 	if(!id)
@@ -412,41 +412,44 @@ send:
 void
 update_views() {
 	View *n, *v, *old;
+	Bool found;
 
 	old = screen->sel;
 	for(v=view; v; v=v->next)
 		update_frame_selectors(v);
 
+	found = False;
 	for(v=view; v; v=n) {
 		n=v->next;
-		if((v != old) && is_empty(v))
-			destroy_view(v);
+		if(v != old) {
+			found = True;
+			if(is_empty(v))
+				destroy_view(v);
+		}
 	}
 
-	focus_view(screen, old);
+	if(found && !strcmp(old->name, "nil"))
+		destroy_view(old);
+	focus_view(screen, screen->sel);
 }
 
 uint
-newcolw_of_view(View *v) {
+newcolw_of_view(View *v, int num) {
+	regmatch_t regm;
 	Rule *r;
-	Area *a;
-	uint i, n;
-	regmatch_t tmpregm;
+	uint n;
 
-	for(r=def.colrules.rule; r; r=r->next) {
-		if(!regexec(&r->regex, v->name, 1, &tmpregm, 0)) {
-			char buf[256];
+	for(r=def.colrules.rule; r; r=r->next)
+		if(!regexec(&r->regex, v->name, 1, &regm, 0)) {
+			char buf[sizeof r->value];
 			char *toks[16];
+
 			strncpy(buf, r->value, sizeof(buf));
 			n = tokenize(toks, 16, buf, '+');
-			for(a=v->area, i=0; a; a=a->next)
-				i++;
-			if(n && n >= i) {
-				if(sscanf(toks[i - 1], "%u", &n) == 1)
-					return (screen->rect.width * n) / 100;
-			}
+			if(n > num)
+				if(sscanf(toks[num], "%u", &n) == 1)
+					return screen->rect.width * ((double)n / 100);
 			break;
 		}
-	}
 	return 0;
 }

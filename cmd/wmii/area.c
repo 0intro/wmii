@@ -14,7 +14,7 @@
 static void place_frame(Frame *f);
 
 Client *
-sel_client_of_area(Area *a) {               
+area_selclient(Area *a) {               
 	if(a && a->sel)
 		return a->sel->client;
 	return nil;
@@ -23,31 +23,36 @@ sel_client_of_area(Area *a) {
 Area *
 create_area(View *v, Area *pos, uint w) {
 	static ushort id = 1;
-	uint area_num, col_num, i;
-	uint min_width;
+	uint areanum, colnum, i;
+	uint minwidth;
 	Area *a, **p;
 
-	min_width = screen->rect.width/NCOL;
-	p = pos ? &pos->next : &v->area;
+	minwidth = screen->rect.width/NCOL;
 
-	area_num = 0;
-	i = 0;
-	for(a = v->area; a != *p; a = a->next)
-		area_num++, i++;
-	for(; a; a = a->next) area_num++;
+	p = &v->area;
+	if(pos)
+		p = &pos->next;
 
-	col_num = max((area_num - 1), 0);
+	i = areanum = 0;
+	a = v->area;
+	for(; a != *p; a = a->next)
+		areanum++, i++;
+	for(; a; a = a->next)
+		areanum++;
+
+	colnum = max((areanum - 1), 0);
 	if(w == 0) {
-		if(col_num) {
-			w = newcolw_of_view(v);
+		if(colnum) {
+			w = newcolw_of_view(v, max(i-1, 0));
 			if (w == 0)
-				w = screen->rect.width / (col_num + 1);
+				w = screen->rect.width / (colnum + 1);
 		}
 		else w = screen->rect.width;
 	}
-	if(w < min_width)
-		w = min_width;
-	if(col_num && (col_num * min_width + w) > screen->rect.width)
+
+	if(w < minwidth)
+		w = minwidth;
+	if(colnum && (colnum * minwidth + w) > screen->rect.width)
 		return nil;
 	if(pos)
 		scale_view(v, screen->rect.width - w);

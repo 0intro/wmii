@@ -163,7 +163,7 @@ manage_client(Client *c) {
 }
 
 Client *
-sel_client() {
+selclient() {
 	if(screen->sel && screen->sel->sel->sel)
 		return screen->sel->sel->sel->client;
 	return nil;
@@ -229,7 +229,7 @@ void
 update_client_grab(Client *c) {
 	Frame *f;
 	f = c->sel;
-	if((f->client != sel_client())
+	if((f->client != selclient())
 	|| (f->area->floating && f != f->area->stack)) {
 		if(verbose)
 			fprintf(stderr, "update_client_grab(%p) AnyButton => %s\n", c, str_nil(c->name));

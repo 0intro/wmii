@@ -386,7 +386,7 @@ lookup_file(FileId *parent, char *name)
 			switch(parent->tab.type) {
 			case FsDClients:
 				if(!name || !strcmp(name, "sel")) {
-					if((c = sel_client())) {
+					if((c = selclient())) {
 						file = get_file();
 						*last = file;
 						last = &file->next;

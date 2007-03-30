@@ -14,7 +14,7 @@ char *select_area(Area *a, char *arg);
 void send_to_area(Area *to, Frame *f);
 void attach_to_area(Area *a, Frame *f, Bool send);
 void detach_from_area(Frame *f);
-Client *sel_client_of_area(Area *a);
+Client *area_selclient(Area *a);
 
 /* bar.c */
 Bar *create_bar(Bar **b_link, char *name);
@@ -47,7 +47,7 @@ char *send_client(Frame *f, char *arg, Bool swap);
 char * message_client(Client *c, char *message);
 void move_client(Client *c, char *arg);
 void size_client(Client *c, char *arg);
-Client *sel_client();
+Client *selclient();
 Frame *frame_of_win(Window w);
 Client *client_of_win(Window w);
 void update_client_grab(Client *c);
@@ -150,13 +150,13 @@ XRectangle *rects_of_view(View *v, uint *num, Frame *ignore);
 View *view_of_id(ushort id);
 void select_view(const char *arg);
 void attach_to_view(View *v, Frame *f);
-Client *sel_client_of_view(View *v);
+Client *view_selclient(View *v);
 char *message_view(View *v, char *message);
 void restack_view(View *v);
 uchar *view_index(View *v);
 void destroy_view(View *v);
 void update_views();
-uint newcolw_of_view(View *v);
+uint newcolw_of_view(View *v, int i);
 
 /* wm.c */
 int wmii_error_handler(Display *dpy, XErrorEvent *error);

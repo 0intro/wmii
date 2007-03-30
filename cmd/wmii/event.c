@@ -85,7 +85,7 @@ buttonpress(XEvent *e) {
 				else if(!ev->subwindow && !ptinrect(ev->x, ev->y, &f->titlebar))
 					do_mouse_resize(f->client, False, quadrant(&f->rect, ev->x_root, ev->y_root));
 
-				if(f->client != sel_client())
+				if(f->client != selclient())
 					focus(f->client, True);
 			}
 			if(ev->subwindow)
@@ -403,7 +403,7 @@ mapnotify(XEvent *e) {
 
 	ev = &e->xmap;
 	if((c = client_of_win(ev->window)))
-		if(c == sel_client())
+		if(c == selclient())
 			focus_client(c);
 }
 
