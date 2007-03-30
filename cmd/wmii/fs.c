@@ -281,8 +281,7 @@ message_root(char *message)
 			return Ebadvalue;
 		strncpy(def.grabmod, message, sizeof(def.grabmod));
 		def.mod = mod;
-		if(view)
-			restack_view(screen->sel);
+		restack_view(screen->sel);
 	}
 	else
 		return Ebadcmd;

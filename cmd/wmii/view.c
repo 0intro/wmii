@@ -58,17 +58,21 @@ get_view(const char *name) {
 View *
 create_view(const char *name) {
 	static ushort id = 1;
-	View **i, *v = emallocz(sizeof(View));
+	View **i, *v;
 
+	v = emallocz(sizeof(View));
 	v->id = id++;
 	strncpy(v->name, name, sizeof(v->name));
+
+	write_event("CreateTag %s\n", v->name);
 	create_area(v, nil, 0);
 	create_area(v, v->area, 0);
+
 	for(i=&view; *i; i=&(*i)->next)
 		if(strcmp((*i)->name, name) < 0) break;
 	v->next = *i;
 	*i = v;
-	write_event("CreateTag %s\n", v->name);
+
 	if(!screen->sel)
 		assign_sel_view(v);
 	return v;
@@ -407,20 +411,19 @@ send:
 
 void
 update_views() {
-	View *n, *v;
-	View *old = screen->sel;
+	View *n, *v, *old;
 
+	old = screen->sel;
 	for(v=view; v; v=v->next)
 		update_frame_selectors(v);
-	if(old && !strncmp(old->name, "nil", 4))
-		old = nil;
-	for((v=view) && (n=v->next); v; (v=n) && (n=v->next))
+
+	for(v=view; v; v=n) {
+		n=v->next;
 		if((v != old) && is_empty(v))
 			destroy_view(v);
-	if(old)
-		focus_view(screen, old);
-	else if(screen->sel)
-		focus_view(screen, screen->sel);
+	}
+
+	focus_view(screen, old);
 }
 
 uint

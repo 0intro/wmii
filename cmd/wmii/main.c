@@ -564,9 +564,9 @@ main(int argc, char *argv[]) {
 
 	scan_wins();
 	starting = False;
+	select_view("nil");
 	update_views();
-	if(view)
-		write_event("FocusTag %s\n", screen->sel->name);
+	write_event("FocusTag %s\n", screen->sel->name);
 
 	check_x_event(nil);
 	errstr = ixp_serverloop(&srv);
