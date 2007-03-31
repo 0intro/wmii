@@ -104,23 +104,24 @@ win_proto(Window w) {
 	return protos;
 }
 
-static void
+static char*
 ns_display() {
-	char *p, *disp;
+	char *s, *disp;
 
 	disp = getenv("DISPLAY");
 	if(disp == nil)
 		fatal("DISPLAY is unset");
 
 	disp = estrdup(disp);
-	p = &disp[strlen(disp) - 2];
-	if(strcmp(p, ".0") == 0)
-		*p = '\0';
+	s = &disp[strlen(disp) - 2];
+	if(strcmp(s, ".0") == 0)
+		*s = '\0';
 
-	ns_path = emalloc(strlen(disp) + strlen(user) + strlen("/tmp/ns..") + 1);
-	sprintf(ns_path, "/tmp/ns.%s.%s", user, disp);
+	s = emalloc(strlen(disp) + strlen(user) + strlen("/tmp/ns..") + 1);
+	sprintf(s, "/tmp/ns.%s.%s", user, disp);
 
 	free(disp);
+	return s;
 }
 
 static void
@@ -145,18 +146,18 @@ rmkdir(char *path, int mode) {
 static void
 init_ns() {
 	struct stat st;
-	char *p;
+	char *s;
 
 	if(address && strncmp(address, "unix!", 5) == 0) {
 		ns_path = estrdup(&address[5]);
-		p = strrchr(ns_path, '/');
-		if(p != nil)
-			p = '\0';
+		s = strrchr(ns_path, '/');
+		if(s != nil)
+			s = '\0';
 	}
-	else if((p = getenv("WMII_NS_PATH")) || (p = getenv("NAMESPACE")))
-		ns_path = p;
+	else if((s = getenv("NAMESPACE")))
+		ns_path = s;
 	else
-		ns_display();
+		ns_path = ns_display();
 
 	if((ns_path[0] != '/') || (strlen(ns_path) == 0))
 		fatal("Bad ns_path");
@@ -175,9 +176,6 @@ init_ns() {
 
 static void
 init_environment() {
-	if(address == nil)
-		address = getenv("WMII_ADDRESS");
-
 	init_ns();
 
 	if(address == nil) {
@@ -582,6 +580,6 @@ main(int argc, char *argv[]) {
 		execl("/bin/sh", "sh", "-c", execstr, nil);
 
 	if(errstr)
-		fatal("%s", errstr);
+		return 1;
 	return 0;
 }
