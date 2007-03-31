@@ -204,12 +204,12 @@ font $WMII_FONT
 focuscolors $WMII_FOCUSCOLORS
 normcolors $WMII_NORMCOLORS
 !
+xsetroot -solid $WMII_BACKGROUND
 
 # Source Overrides
 . <{awk '/^# Overrides/, 0' $local </dev/null}
 
 # Misc Setup
-xsetroot -solid $WMII_BACKGROUND
 Action status &
 progs_file=$WMII_NS_DIR/proglist.$pid
 proglist $PATH >$progs_file &
