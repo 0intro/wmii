@@ -196,9 +196,6 @@ fn run_command {
 	}
 }
 
-# Source Overrides
-. <{awk '/^# Overrides/, 0' $local </dev/null}
-
 # WM Configuration
 wmiir write /ctl <<!
 grabmod $MODKEY
@@ -207,6 +204,9 @@ font $WMII_FONT
 focuscolors $WMII_FOCUSCOLORS
 normcolors $WMII_NORMCOLORS
 !
+
+# Source Overrides
+. <{awk '/^# Overrides/, 0' $local </dev/null}
 
 # Misc Setup
 xsetroot -solid $WMII_BACKGROUND

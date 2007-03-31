@@ -1,6 +1,7 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -34,12 +35,9 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 	font->set = XCreateFontSet(blitz->dpy, fontname, &missing, &n, &def);
 	if(missing) {
 		fprintf(stderr, "%s: missing fontset%s for '%s':", argv0,
-				n > 1 ? "s": "",
-				fontname);
+				(n > 1 ? "s":""), fontname);
 		for(i = 0; i < n; i++)
-			 fprintf(stderr, "%s %s",
-					 i ? ",": "",
-					 missing[i]);
+			 fprintf(stderr, "%s %s", (i ? ",":""), missing[i]);
 		fprintf(stderr, "\n");
 		XFreeStringList(missing);
 	}
@@ -59,10 +57,10 @@ loadfont(Blitz *blitz, BlitzFont *font) {
 			XFreeFont(blitz->dpy, font->xfont);
 		font->xfont = nil;
 		font->xfont = XLoadQueryFont(blitz->dpy, fontname);
-		if (!font->xfont) {
-			if(!strncmp(fontname, BLITZ_FONT, sizeof(BLITZ_FONT)))
-				fatal("cannot load font: %s",
-						BLITZ_FONT);
+		fprintf(stderr, "%s: cannot load font: %s\n", argv0, fontname);
+		if(!font->xfont) {
+			if(!strcmp(fontname, BLITZ_FONT))
+				fatal("cannot load font: %s", BLITZ_FONT);
 			free(font->fontstr);
 			font->fontstr = estrdup(BLITZ_FONT);
 			loadfont(blitz, font);
@@ -129,9 +127,8 @@ draw_label(BlitzBrush *b, char *text) {
 			buf[len - 1] = '.';
 	}
 
-	if(b->font->set) {
+	if(b->font->set)
 		XmbTextExtents(b->font->set, text, len, &r, nil);
-	}
 
 	switch (b->align) {
 	case EAST:
@@ -219,15 +216,24 @@ loadcolor(Blitz *blitz, BlitzColor *c) {
 
 char *
 parse_colors(char **buf, int *buflen, BlitzColor *col) {
-	uint i;
-	if(*buflen < 23 || 3 != sscanf(*buf, "#%06x #%06x #%06x", &i,&i,&i))
+	static regex_t reg;
+	static Bool compiled;
+
+	if(!compiled) {
+		compiled = 1;
+		regcomp(&reg, "^#[0-9a-f]{6} #[0-9a-f]{6} #[0-9a-f]{6}",
+				REG_EXTENDED|REG_NOSUB|REG_ICASE);
+	}
+
+	if(*buflen < 23 || regexec(&reg, *buf, 0, 0, 0))
 		return "bad value";
-	(*buflen) -= 23;
-	bcopy(*buf, col->colstr, 23);
+
+	memcpy(col->colstr, *buf, 23);
 	loadcolor(&blz, col);
 
-	(*buf) += 23;
-	if(**buf == '\n' || **buf == ' ') {
+	*buf += 23;
+	*buflen -= 23;
+	if(isspace(**buf)) {
 		(*buf)++;
 		(*buflen)--;
 	}

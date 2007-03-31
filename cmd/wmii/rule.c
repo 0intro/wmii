@@ -3,6 +3,7 @@
  * See LICENSE file for license details.
  */
 
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <util.h>
@@ -33,9 +34,11 @@ trim(char *str, const char *chars) {
 
 void
 update_rules(Rule **rule, const char *data) {
-	int mode = IGNORE;
+	int state = IGNORE;
 	Rule *rul;
-	char *p, *r = nil, *v = nil, regex[256], value[256];
+	char regex[256], value[256];
+	char *r, *v;
+	const char *p;
 
 	if(!data || !strlen(data))
 		return;
@@ -44,28 +47,26 @@ update_rules(Rule **rule, const char *data) {
 		regfree(&rul->regex);
 		free(rul);
 	}
-	for(p = (char *)data; *p; p++)
-		switch(mode) {
+	for(p = data; *p; p++)
+		switch(state) {
 		case IGNORE:
 			if(*p == '/') {
-				mode = REGEX;
 				r = regex;
+				state = REGEX;
 			}
 			else if(*p == '>') {
-				mode = VALUE;
 				value[0] = 0;
 				v = value;
+				state = VALUE;
 			}
 			break;
 		case REGEX:
 			if(*p == '/') {
-				mode = IGNORE;
 				*r = 0;
+				state = IGNORE;
 			}
-			else {
-				*r = *p;
-				r++;
-			}
+			else
+				*r++ = *p;
 			break;
 		case VALUE:
 			if(*p == '\n' || *p == 0) {
@@ -77,12 +78,12 @@ update_rules(Rule **rule, const char *data) {
 					rule = &(*rule)->next;
 				}
 				else free(*rule);
-				mode = IGNORE;
+				state = IGNORE;
 			}
-			else {
-				*v = *p;
-				v++;
-			}
+			else
+				*v++ = *p;
 			break;
+		default: /* can't happen */
+			assert(!"invalid state");
 		}
 }
