@@ -27,15 +27,20 @@ void
 loadfont(Blitz *blitz, BlitzFont *font) {
 	char *fontname = font->fontstr;
 	char **missing = nil, *def = "?";
-	int n;
+	int n, i;
 
 	if(font->set)
 		XFreeFontSet(blitz->dpy, font->set);
 	font->set = XCreateFontSet(blitz->dpy, fontname, &missing, &n, &def);
 	if(missing) {
-		while(n--)
-			fprintf(stderr, "wmii: missing fontset for '%s': %s\n",
-					fontname, missing[n]);
+		fprintf(stderr, "%s: missing fontset%s for '%s':", argv0,
+				n > 1 ? "s": "",
+				fontname);
+		for(i = 0; i < n; i++)
+			 fprintf(stderr, "%s %s",
+					 i ? ",": "",
+					 missing[i]);
+		fprintf(stderr, "\n");
 		XFreeStringList(missing);
 	}
 	if(font->set) {
