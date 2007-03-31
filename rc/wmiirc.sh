@@ -161,6 +161,27 @@ grabmod $MODKEY
 border 1
 EOF
 
+# Feed events to `wmiiloop' for processing
+IFS=''
+eval $(eventstuff | sed "s/\\\$MODKEY/$MODKEY/g;s/^[	]//" | wmiiloop)
+unset IFS
+
+# Functions
+Action() {
+	action=$1; shift
+	if [ -n "$action" ]; then
+		Action_$action $@ \
+		|| conf_which $action $@
+	fi
+}
+
+proglist() {
+	paths=$(echo "$@" | sed 'y/:/ /')
+	ls -lL $paths 2>/dev/null \
+		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
+		| sort | uniq
+}
+
 # Misc
 progsfile="$WMII_NS_DIR/.proglist"
 Action status &
@@ -186,25 +207,11 @@ while read tag; do
 	fi
 done
 
-# Functions
-Action() {
-	action=$1; shift
-	if [ -n "$action" ]; then
-		Action_$action $@ \
-		|| conf_which $action $@
-	fi
-}
-
+# More functions
 tagsmenu() {
         wmiir ls /tag | sed 's|/||; /^sel$/d' | $WMII_MENU
 }
 
-proglist() {
-	paths=$(echo "$@" | sed 'y/:/ /')
-	ls -lL $paths 2>/dev/null \
-		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
-		| sort | uniq
-}
 actionlist() {
 	{	proglist $WMII_CONFPATH
 		echo -n $Actions | tr ' ' '\012'
@@ -220,11 +227,6 @@ conf_which() {
 	fi
 }
 
-# Feed events to `wmiiloop' for processing
-IFS=''
-eval $(eventstuff | sed "s/\\\$MODKEY/$MODKEY/g;s/^[	]//" | wmiiloop)
-unset IFS
-
 # Stop any running instances of wmiirc
 echo Start wmiirc | wmiir write /event || exit 1
 
@@ -232,5 +234,5 @@ wmiir read /event |
 while read event; do
 	set -- $event
 	event=$1; shift
-	Event_$event $@ 2>/dev/null
-done
+	Event_$event $@
+done 2>/dev/null
