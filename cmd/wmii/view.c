@@ -428,7 +428,7 @@ update_views() {
 		}
 	}
 
-	if(found && !strcmp(old->name, "nil"))
+	if(found && !strcmp(old->name, "nil") && is_empty(old))
 		destroy_view(old);
 	focus_view(screen, screen->sel);
 }

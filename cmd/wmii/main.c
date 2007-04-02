@@ -406,7 +406,7 @@ spawn_command(const char *cmd) {
 		}
 	default:
 		waitpid(pid, &status, 0);
-		if(status != 0)
+		/* if(status != 0)
 			exit(1); /* Error already printed */
 		break;
 	}
