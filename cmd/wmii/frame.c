@@ -48,16 +48,20 @@ remove_frame(Frame *f) {
 void
 insert_frame(Frame *pos, Frame *f, Bool before) {
 	Frame *ft, **p;
-	Area *a = f->area;
+	Area *a;
+
+	a = f->area;
 
 	if(before) {
 		for(ft=a->frame; ft; ft=ft->anext)
 			if(ft->anext == pos) break;
 		pos=ft;
 	}
+
 	p = &a->frame;
 	if(pos)
 		p = &pos->anext;
+
 	f->anext = *p;
 	*p = f;
 
@@ -118,10 +122,11 @@ resize_frame(Frame *f, XRectangle *r) {
 		if(c->fullscreen) {
 			f->crect.width = screen->rect.width;
 			f->crect.height = screen->rect.height;
+
 			f->rect = f->crect;
-			client2frame(&f->rect);
 			f->rect.x = -def.border;
 			f->rect.y = -labelh(&def.font);
+			client2frame(&f->rect);
 		}else
 			check_frame_constraints(&f->rect);
 	}

@@ -166,12 +166,12 @@ attach_to_view(View *v, Frame *f) {
 
 void
 restack_view(View *v) {
+	static Window *wins = nil;
+	static uint winssz = 0;
 	Area *a;
 	Frame *f;
 	Client *c;
-	uint n, i;
-	static Window *wins = nil;
-	static uint winssz = 0;
+	uint n, i, fs;
 	
 	if(v != screen->sel)
 		return;
@@ -188,13 +188,14 @@ restack_view(View *v) {
 		wins = erealloc(wins, sizeof(Window) * winssz);
 	}
 
-	for(f=v->area->stack; f; f=f->snext)
+	fs = 0;
+	for(f=v->area->stack; f; f=f->snext) {
+		wins[n++] = f->client->framewin;
 		if(f->client->fullscreen)
-			wins[n++] = f->client->framewin;
-	wins[n++] = screen->barwin;
-	for(f=v->area->stack; f; f=f->snext)
-		if(!f->client->fullscreen)
-			wins[n++] = f->client->framewin;
+			fs++;
+	}
+	if(fs == 0)
+		wins[n++] = screen->barwin;
 	for(a=v->area->next; a; a=a->next) {
 		if(a->frame) {
 			wins[n++] = a->sel->client->framewin;

@@ -158,6 +158,7 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 	focus_frame(f, False);
 	resize_frame(f, &f->rect);
 	restack_view(a->view);
+
 	if(!a->floating)
 		arrange_column(a, False);
 	else

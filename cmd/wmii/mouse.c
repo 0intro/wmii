@@ -182,7 +182,8 @@ static void
 find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 	View *v;
 	Area *a, *a_prev;
-	Frame *f, *f_close;
+	Frame *f, *f_prev;
+	Bool before;
 
 	v = frame->view;
 	rect->y = 0;
@@ -220,21 +221,22 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 	rect->x = a->rect.x;
 	rect->width = a->rect.width;
 
-	f_close = nil;
+	f_prev = nil;
 	for(f = a->frame; f; f = f->anext) {
 		if(y < f->rect.y)
 			break;
 		if(y < r_south(&f->rect))
 			break;
-		f_close = f;
+		f_prev = f;
 	}
 	if(f == nil)
-		f = f_close;
+		f = f_prev;
 	if(y < (f->rect.y + labelh(&def.font))) {
+		before = True;
 		rect->y = f->rect.y;
 		rect->height = 2;
-		if(f_close) {
-			rect->y = r_south(&f_close->rect);
+		if(f_prev) {
+			rect->y = r_south(&f_prev->rect);
 			rect->height = f->rect.y - rect->y;
 		}
 		if(do_move)
@@ -242,6 +244,7 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 		return;
 	}
 	if(y > r_south(&f->rect) - labelh(&def.font)) {
+		before = False;
 		rect->y = r_south(&f->rect);
 		rect->height = (screen->rect.height - labelh(&def.font) - rect->y);
 		if(f->anext)
@@ -255,6 +258,7 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 	if(do_move) {
 		swap_frames(frame, f);
 		focus(frame->client, False);
+		focus_view(screen, f->view);
 	}
 	return;
 
@@ -264,7 +268,7 @@ do_move:
 	if(a != frame->area)
 		send_to_area(a, frame);
 	remove_frame(frame);
-	insert_frame(f, frame, False);
+	insert_frame(f, frame, before);
 	arrange_column(f->area, False);
 	focus(frame->client, True);
 }
@@ -324,7 +328,7 @@ do_managed_move(Client *c) {
 }
 
 void
-do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
+do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 	BlitzAlign grav;
 	Window dummy;
 	Cursor cur;
@@ -341,7 +345,7 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 	origin = frect = f->rect;
 	cur = cursor_of_quad(align);
 	if(floating) {
-		rects = rects_of_view(f->area->view, &num, (grabbox ? c->frame : nil));
+		rects = rects_of_view(f->area->view, &num, (opaque ? c->frame : nil));
 		snap = screen->rect.height / 66;
 	}else{
 		rects = nil;
@@ -349,7 +353,7 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 	}
 
 	if(align == CENTER) {
-		if(!grabbox)
+		if(!opaque)
 			cur = cursor[CurInvisible];
 		if(!floating) {
 			do_managed_move(c);
@@ -383,20 +387,39 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 		if(align&SOUTH) dy += hr_y;
 		if(align&EAST) dx += hr_x;
 		if(align&WEST) dx -= hr_x;
-		XTranslateCoordinates(blz.dpy, c->framewin, blz.root, dx, dy,
-				&pt_x, &pt_y, &dummy);
-		XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, pt_x, pt_y);
+
+		XTranslateCoordinates(blz.dpy,
+			/* src_w */	c->framewin,
+			/* dst w */	blz.root,
+			/* src x,y */	dx, dy,
+			/* dest x,y */	&pt_x, &pt_y,
+			/* child */	&dummy
+			);
+		XWarpPointer(blz.dpy,
+			/* src_w */	None,
+			/* dest_w */	blz.root,
+			/* src_rect */	0, 0, 0, 0,
+			/* target */	pt_x, pt_y
+			);
 	}
-	else if(!grabbox) {
+	else if(f->client->fullscreen)
+		return;
+	else if(!opaque) {
 		hr_x = screen->rect.width / 2;
 		hr_y = screen->rect.height / 2;
-		XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, hr_x, hr_y);
+
+		XWarpPointer(blz.dpy,
+			/* src_w */	None,
+			/* dest_w */	blz.root,
+			/* src_rect */	0, 0, 0, 0,
+			/* target */	hr_x, hr_y
+			);
 		flushevents(PointerMotionMask, False);
 	}
 
 
 	XSync(blz.dpy, False);
-	if(!grabbox) {
+	if(!opaque) {
 		XGrabServer(blz.dpy);
 		draw_xor_border(&frect);
 	}else
@@ -406,7 +429,7 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			if(!grabbox)
+			if(!opaque)
 				draw_xor_border(&frect);
 
 			if(!floating)
@@ -414,20 +437,29 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 			else
 				resize_client(c, &frect);
 
-			if(!grabbox) {
+			if(!opaque) {
 				if(align != CENTER)
-					XTranslateCoordinates(blz.dpy, c->framewin, blz.root,
-						(frect.width * rx), (frect.height * ry),
-						&pt_x, &pt_y, &dummy);
+					XTranslateCoordinates(blz.dpy,
+						/* src_w */	c->framewin,
+						/* dst w */	blz.root,
+						/* src_x */	(frect.width * rx),
+						/* src_y */	(frect.height * ry),
+						/* dest x,y */	&pt_x, &pt_y,
+						/* child */	&dummy
+						);
 				if(pt_y > screen->brect.y)
 					pt_y = screen->brect.y - 1;
-				XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, pt_x, pt_y);
+				XWarpPointer(blz.dpy,
+					/* src_w */	None,
+					/* dest_w */	blz.root,
+					/* src_rect */	0, 0, 0, 0,
+					/* target */	pt_x, pt_y
+					);
 				XUngrabServer(blz.dpy);
 			}else
 				map_client(c);
 
-			if(rects)
-				free(rects);
+			free(rects);
 
 			XUngrabPointer(blz.dpy, CurrentTime);
 			XSync(blz.dpy, False);
@@ -437,10 +469,15 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 			dx = ev.xmotion.x_root;
 			dy = ev.xmotion.y_root;
 
-			if(align == CENTER && !grabbox) {
+			if(align == CENTER && !opaque) {
 				if(dx == hr_x && dy == hr_y)
 					continue;
-				XWarpPointer(blz.dpy, None, blz.root, 0, 0, 0, 0, hr_x, hr_y);
+				XWarpPointer(blz.dpy,
+					/* src_w */	None,
+					/* dest_w */	blz.root,
+					/* src_rect */	0, 0, 0, 0,
+					/* target */	hr_x, hr_y
+					);
 				dx -= hr_x;
 				dy -= hr_y;
 			}else{
@@ -462,7 +499,7 @@ do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align) {
 
 			apply_sizehints(c, &frect, floating, True, grav);
 
-			if(grabbox) {
+			if(opaque) {
 				XMoveWindow(blz.dpy, c->framewin, frect.x, frect.y);
 				XSync(blz.dpy, False);
 			} else {

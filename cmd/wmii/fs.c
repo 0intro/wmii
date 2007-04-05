@@ -970,7 +970,8 @@ void
 fs_freefid(Fid *f) {
 	FileId *id, *tid;
 
-	for(id=f->aux; id; id = tid) {
+	tid = f->aux;
+	while((id = tid)) {
 		tid = id->next;
 		free_file(id);
 	}

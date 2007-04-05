@@ -268,6 +268,18 @@ init_screen(WMScreen *screen) {
 			&mask);
 }
 
+struct {
+	uchar rcode, ecode;
+} itab[] = {
+	{ 0, BadWindow },
+	{ X_SetInputFocus, BadMatch },
+	{ X_PolyText8, BadDrawable },
+	{ X_PolyFillRectangle, BadDrawable },
+	{ X_PolySegment, BadDrawable },
+	{ X_ConfigureWindow, BadMatch },
+	{ X_GrabKey, BadAccess },
+};
+
 /*
  * There's no way to check accesses to destroyed windows, thus
  * those cases are ignored (especially on UnmapNotify's).
@@ -276,26 +288,18 @@ init_screen(WMScreen *screen) {
  */
 int
 wmii_error_handler(Display *dpy, XErrorEvent *error) {
+	int i;
+
 	if(check_other_wm)
 		fatal("another window manager is already running");
 
-	if(error->error_code == BadWindow
-	||(error->request_code == X_SetInputFocus
-		&& error->error_code == BadMatch)
-	||(error->request_code == X_PolyText8
-		&& error->error_code == BadDrawable)
-	||(error->request_code == X_PolyFillRectangle
-		&& error->error_code == BadDrawable)
-	||(error->request_code == X_PolySegment
-		&& error->error_code == BadDrawable)
-	||(error->request_code == X_ConfigureWindow
-		&& error->error_code == BadMatch)
-	||(error->request_code == X_GrabKey
-	    	&& error->error_code == BadAccess))
-		return 0;
+	for(i = 0; i < nelem(itab); i++)
+		if((itab[i].rcode == 0 || itab[i].rcode == error->request_code)
+		&&(itab[i].ecode == 0 || itab[i].ecode == error->error_code))
+			return 0;
 
-	fprintf(stderr, "wmii: fatal error: Xrequest code=%d, Xerror code=%d\n",
-			error->request_code, error->error_code);
+	fprintf(stderr, "%s: fatal error: Xrequest code=%d, Xerror code=%d\n",
+			argv0, error->request_code, error->error_code);
 	return x_error_handler(blz.dpy, error); /* calls exit() */
 }
 
@@ -407,7 +411,7 @@ spawn_command(const char *cmd) {
 	default:
 		waitpid(pid, &status, 0);
 		/* if(status != 0)
-			exit(1); /* Error already printed */
+			exit(1); */
 		break;
 	}
 }
