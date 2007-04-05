@@ -49,8 +49,8 @@ eventstuff() {
 			exit;
 		esac
 	Event Key
-		fn=$(echo $@ | sed 's/[^a-zA-Z_0-9]/_/g')
-		Key_$fn $@
+		fn=$(echo "$@" | sed 's/[^a-zA-Z_0-9]/_/g')
+		Key_$fn "$@"
 	Event CreateTag
 		echo "$WMII_NORMCOLORS" "$@" | wmiir create "/lbar/$@"
 	Event DestroyTag
@@ -170,8 +170,8 @@ unset IFS
 Action() {
 	action=$1; shift
 	if [ -n "$action" ]; then
-		Action_$action $@ \
-		|| conf_which $action $@
+		Action_$action "$@" \
+		|| conf_which $action "$@"
 	fi
 }
 

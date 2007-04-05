@@ -13,7 +13,7 @@ if [ ! -n "$RC" ]; then
 fi
 
 if [ -n "$1" ]; then
-	exec $RC $@
+	exec $RC "$@"
 else
 	true
 fi
