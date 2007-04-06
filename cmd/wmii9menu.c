@@ -150,6 +150,16 @@ args(int argc, char **argv)
 	return i;
 }
 
+unsigned long
+getcolor(char *name, unsigned long def) {
+	if ((name != nil)
+	 && (XParseColor(dpy, defcmap, name, &color) != 0)
+	 && (XAllocColor(dpy, defcmap, &color) != 0))
+		return color.pixel;
+	else
+		return def;
+}
+
 /* main --- crack arguments, set up X stuff, run the main menu loop */
 
 int
@@ -286,40 +296,12 @@ main(int argc, char **argv)
 	 * white = WhitePixel(dpy, screen);
 	 */
 	defcmap = DefaultColormap(dpy, screen);
-	if (sbgname == nil
-	    || XParseColor(dpy, defcmap, sbgname, &color) == 0
-	    || XAllocColor(dpy, defcmap, &color) == 0)
-		selbg = BlackPixel(dpy, screen);
-	else
-		selbg = color.pixel;
 
-	if (sfgname == nil
-	    || XParseColor(dpy, defcmap, sfgname, &color) == 0
-	    || XAllocColor(dpy, defcmap, &color) == 0)
-		selfg = WhitePixel(dpy, screen);
-	else
-		selfg = color.pixel;
-
-	if (nbgname == nil
-	    || XParseColor(dpy, defcmap, nbgname, &color) == 0
-	    || XAllocColor(dpy, defcmap, &color) == 0)
-		normbg = selfg;
-	else
-		normbg = color.pixel;
-
-	if (nfgname == nil
-	    || XParseColor(dpy, defcmap, nfgname, &color) == 0
-	    || XAllocColor(dpy, defcmap, &color) == 0)
-		normfg = selbg;
-	else
-		normfg = color.pixel;
-
-	if (brcname == nil
-	    || XParseColor(dpy, defcmap, brcname, &color) == 0
-	    || XAllocColor(dpy, defcmap, &color) == 0)
-		border = selbg;
-	else
-		border = color.pixel;
+	selbg = getcolor(sbgname, BlackPixel(dpy, screen));
+	selfg = getcolor(sfgname, WhitePixel(dpy, screen));
+	normbg = getcolor(nbgname, selfg);
+	normfg = getcolor(nfgname, selbg);
+	border = getcolor(brcname, selbg);
 
 	/* try user's font first */
 	if (fontname != nil) {
