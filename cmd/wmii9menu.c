@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xutil.h>
+#include <util.h>
 
 #define nil ((void*)0)
 
@@ -54,16 +55,12 @@ XColor color;
 XFontStruct *font;
 GC gc;
 
-unsigned long selbg;
-unsigned long selfg;
-unsigned long normbg;
-unsigned long normfg;
+unsigned long selfg, selbg;
+unsigned long normfg, normbg;
 unsigned long border;
-char *sfgname = nil;
-char *sbgname = nil;
-char *nfgname = nil;
-char *nbgname = nil;
-char *brcname = nil;
+char *sfgname, *sbgname;
+char *nfgname, *nbgname;
+char *brcname;
 
 /* for XSetWMProperties to use */
 int g_argc;
@@ -96,21 +93,13 @@ char **labels;		/* list of labels and commands */
 char **commands;
 int numitems;
 
-void usage(), run_menu();
+void usage();
+void run_menu();
 void create_window();
-void redraw(), warpmouse();
+void redraw();
+void warpmouse();
 void memory();
 int args();
-
-/* memory --- print the out of memory message and die */
-
-void
-memory(s)
-char *s;
-{
-	fprintf(stderr, "%s: couldn't allocate memory for %s\n", progname, s);
-	exit(1);
-}
 
 /* args --- go through the argument list, set options */
 
@@ -209,19 +198,16 @@ main(int argc, char **argv)
 			char *s = fbuf;
 			strtok(s, "\n");
 			if (s[0] == '-') {
-				char *temp[3];
+				char *temp[2];
+
 				temp[0] = s;
-				temp[1] = strchr(s, ' ');
-				if (temp[1]) {
-					*(temp[1]++) = '\0';
-					s = malloc(strlen(temp[1]) + 1);
-					if (s == nil)
-						memory("temporary argument");
-					strcpy(s, temp[1]);
+				s = strchr(s, ' ');
+				if (s) {
+					*s++ = '\0';
+					s = estrdup(s);
 					temp[1] = s;
 				}
-				temp[2] = 0;
-				args(temp[1] ? 2 : 1, temp);
+				args(s ? 2 : 1, temp);
 				continue;
 			}
 			if (s[0] == '#')
@@ -232,10 +218,9 @@ main(int argc, char **argv)
 			/* allocate space */
 			if (f_argc < nlabels + 1) {
 				int k;
-				char **temp = malloc(sizeof(char *) * (f_argc + 5));
-				if (temp == 0)
-					memory("temporary item");
-
+				char **temp;
+				
+				temp = emalloc(sizeof(char *) * (f_argc + 5));
 				for (k = 0; k < nlabels; k++)
 					temp[k] = f_argv[k];
 
@@ -243,18 +228,13 @@ main(int argc, char **argv)
 				f_argv = temp;
 				f_argc += 5;
 			}
-			f_argv[nlabels] = malloc(strlen(s) + 1);
-			if (f_argv[nlabels] == nil)
-				memory("temporary text");
-			strcpy(f_argv[nlabels], s);
+			f_argv[nlabels] = estrdup(s);
 			++nlabels;
 		}
 	}
 
-	labels = (char **) malloc((numitems + nlabels) * sizeof(char *));
-	commands = (char **) malloc((numitems + nlabels) * sizeof(char *));
-	if (commands == nil || labels == nil)
-		memory("command and label arrays");
+	labels = emalloc((numitems + nlabels) * sizeof(char *));
+	commands = emalloc((numitems + nlabels) * sizeof(char *));
 
 	for (j = 0; j < numitems; j++) {
 		labels[j] = argv[i + j];
@@ -422,12 +402,11 @@ run_menu()
 			break;
 		case MapNotify:
 			redraw(high, wide);
-			if(XGrabPointer(dpy, menuwin, False, MouseMask,
-				GrabModeAsync, GrabModeAsync,
-				0, None, CurrentTime
-				) != GrabSuccess) {
+			if(XGrabPointer(dpy, menuwin,
+					False, MouseMask,
+					GrabModeAsync, GrabModeAsync,
+					0, None, CurrentTime) != GrabSuccess)
 				fprintf(stderr, "Failed to grab the mouse\n");
-			}
 			break;
 		case Expose:
 			redraw(high, wide);

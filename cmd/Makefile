@@ -25,5 +25,5 @@ wmiir.O: ${OWMIIR}
 	${LINK} $@ ${STATIC} ${OWMIIR}
 
 EXCFLAGS=${INCX11}
-wmii9menu.O: wmii9menu.o
-	${LINK} $@ $*.o ${LIBX11}
+wmii9menu.O: wmii9menu.o ${OFILES}
+	${LINK} $@ $*.o ${OFILES} ${LIBX11}
