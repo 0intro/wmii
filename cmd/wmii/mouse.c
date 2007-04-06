@@ -63,9 +63,10 @@ rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask) {
 typedef struct {
 	XRectangle *rects;
 	int num;
-	int x1, y1, x2, y2;
+	int x1, y1;
+	int x2, y2;
+	int dx, dy;
 	BlitzAlign mask;
-	int *delta;
 } SnapArgs;
 
 static void
@@ -78,44 +79,48 @@ snap_line(SnapArgs *a) {
 			if(!(r_east(&a->rects[i]) < a->x1) ||
 				(a->rects[i].x > a->x2)) {
 
-				if(abs(a->rects[i].y - a->y1) <= abs(*a->delta))
-					*a->delta = a->rects[i].y - a->y1;
+				if(abs(a->rects[i].y - a->y1) <= abs(a->dy))
+					a->dy = a->rects[i].y - a->y1;
 
 				t_xy = r_south(&a->rects[i]);
-				if(abs(t_xy - a->y1) < abs(*a->delta))
-					*a->delta = t_xy - a->y1;
+				if(abs(t_xy - a->y1) < abs(a->dy))
+					a->dy = t_xy - a->y1;
 			}
 		}
 	}
 	else if (a->mask & (EAST|WEST)) {
-		/* This is the same as above, tr/xy/yx/, 
-		 *                            s/width/height/, s/height/width/ */
 		for(i=0; i < a->num; i++) {
 			if(!(r_south(&a->rects[i]) < a->y1) ||
 				(a->rects[i].y > a->y2)) {
 
-				if(abs(a->rects[i].x - a->x1) <= abs(*a->delta))
-					*a->delta = a->rects[i].x - a->x1;
+				if(abs(a->rects[i].x - a->x1) <= abs(a->dx))
+					a->dx = a->rects[i].x - a->x1;
 
 				t_xy = r_east(&a->rects[i]);
-				if(abs(t_xy - a->x1) < abs(*a->delta))
-					*a->delta = t_xy - a->x1;
+				if(abs(t_xy - a->x1) < abs(a->dx))
+					a->dx = t_xy - a->x1;
 			}
 		}
 	}
 }
 
+/* Returns a gravity for increment handling. It's normally the opposite of the mask
+ * (the directions that we're resizing in), unless a snap occurs, in which case, it's the
+ * direction of the snap.
+ */
 BlitzAlign
 snap_rect(XRectangle *rects, int num, XRectangle *current, BlitzAlign *mask, int snap) {
-	SnapArgs a = { rects, num, 0, 0, 0, 0, *mask, nil };
-	int dx, dy;
+	SnapArgs a = { 0, };
 	BlitzAlign ret;
-	
-	dx = dy = snap + 1;
+
+	a.rects = rects;
+	a.num = num;
+	a.mask = *mask;
+	a.dx = snap + 1;
+	a.dy = snap + 1;
 
 	a.x1 = current->x;
 	a.x2 = r_east(current);
-	a.delta = &dy;
 	if(*mask & NORTH) {
 		a.y2 = a.y1 = current->y;
 		snap_line(&a);
@@ -127,7 +132,6 @@ snap_rect(XRectangle *rects, int num, XRectangle *current, BlitzAlign *mask, int
 
 	a.y1 = current->y;
 	a.y2 = r_south(current);
-	a.delta = &dx;
 	if(*mask & EAST) {
 		a.x1 = a.x2 = r_east(current);
 		snap_line(&a);
@@ -137,17 +141,20 @@ snap_rect(XRectangle *rects, int num, XRectangle *current, BlitzAlign *mask, int
 		snap_line(&a);
 	}
 
-	rect_morph_xy(current,
-			abs(dx) <= snap ? dx : 0,
-			abs(dy) <= snap ? dy : 0,
-			mask);
-
-	ret = *mask;
-	if(abs(dx) <= snap)
+	ret = CENTER;
+	if(abs(a.dx) > snap)
+		a.dx = 0;
+	else
 		ret ^= EAST|WEST;
-	if(abs(dy) <= snap)
+
+	if(abs(a.dy) > snap)
+		a.dy = 0;
+	else
 		ret ^= NORTH|SOUTH;
-	return ret ^ CENTER;
+
+	rect_morph_xy(current, a.dx, a.dy, mask);
+
+	return ret ^ *mask;
 }
 
 static void
@@ -273,14 +280,21 @@ do_move:
 	focus(frame->client, True);
 }
 
+void
+querypointer(Window w, int *x, int *y) {
+	Window dummy;
+	uint ui;
+	int i;
+	
+	XQueryPointer(blz.dpy, w, &dummy, &dummy, &i, &i, x, y, &ui);
+}
+
 static void
 do_managed_move(Client *c) {
 	XRectangle frect, ofrect;
-	Window dummy;
 	XEvent ev;
 	Frame *f;
-	uint di;
-	int x, y, i;
+	int x, y;
 
 	focus(c, False);
 	f = c->sel;
@@ -291,7 +305,7 @@ do_managed_move(Client *c) {
 		return;
 	XGrabServer(blz.dpy);
 
-	XQueryPointer(blz.dpy, blz.root, &dummy, &dummy, &i, &i, &x, &y, &di);
+	querypointer(blz.root, &x, &y);
 
 	find_droppoint(f, x, y, &frect, False);
 	draw_xor_border(&frect);
@@ -320,7 +334,7 @@ do_managed_move(Client *c) {
 			}
 			break;
 		case Expose:
-			(handler[Expose])(&ev);
+			dispatch_event(&ev);
 			break;
 		default: break;
 		}
@@ -334,8 +348,8 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 	Cursor cur;
 	XEvent ev;
 	XRectangle *rects, ofrect, frect, origin;
-	int snap, dx, dy, pt_x, pt_y, hr_x, hr_y, i;
-	uint num, di;
+	int snap, dx, dy, pt_x, pt_y, hr_x, hr_y;
+	uint num;
 	Bool floating;
 	float rx, ry;
 	Frame *f;
@@ -361,7 +375,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 		}
 	}
 
-	XQueryPointer(blz.dpy, c->framewin, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
+	querypointer(c->framewin, &pt_x, &pt_y);
 	rx = (float)pt_x / frect.width;
 	ry = (float)pt_y / frect.height;
 
@@ -378,7 +392,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 		) != GrabSuccess)
 		return;
 
-	XQueryPointer(blz.dpy, blz.root, &dummy, &dummy, &i, &i, &pt_x, &pt_y, &di);
+	querypointer(blz.root, &pt_x, &pt_y);
 
 	if(align != CENTER) {
 		hr_x = dx = frect.width / 2;
@@ -508,7 +522,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 			}
 			break;
 		case Expose:
-			(handler[Expose])(&ev);
+			dispatch_event(&ev);
 			break;
 		default:
 			break;
@@ -520,7 +534,7 @@ void
 grab_button(Window w, uint button, ulong mod) {
 	XGrabButton(blz.dpy, button, mod, w, False, ButtonMask,
 			GrabModeSync, GrabModeSync, None, None);
-	if((mod != AnyModifier) && num_lock_mask) {
+	if((mod != AnyModifier) && (num_lock_mask != 0)) {
 		XGrabButton(blz.dpy, button, mod | num_lock_mask, w, False, ButtonMask,
 			GrabModeSync, GrabModeAsync, None, None);
 		XGrabButton(blz.dpy, button, mod | num_lock_mask | LockMask, w, False,

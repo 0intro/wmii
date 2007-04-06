@@ -80,8 +80,8 @@ str_of_time(uint val) {
 }
 
 static void
-print_stat(Stat *s, int details) {
-	if(details)
+print_stat(Stat *s, int lflag) {
+	if(lflag)
 		fprintf(stdout, "%s %s %s %5llu %s %s\n", str_of_mode(s->mode),
 				s->uid, s->gid, s->length, str_of_time(s->mtime), s->name);
 	else {

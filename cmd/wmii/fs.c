@@ -73,9 +73,11 @@ static char
 /* Global Vars */
 /***************/
 FileId *free_fileid;
-Ixp9Req *pending_event_reads;
-Ixp9Req *outgoing_event_reads;
-FidLink *pending_event_fids;
+/* Pending, outgoing reads on /event */
+Ixp9Req *peventread, *oeventread;
+/* Fids for /event with pending reads */
+FidLink *peventfid;
+
 Ixp9Srv p9srv = {
 	.open=	fs_open,
 	.walk=	fs_walk,
@@ -122,9 +124,6 @@ dirtab_tag[]=	 {{".",		QTDIR,		FsDTag,		0500|P9_DMDIR },
 		  {"ctl",	QTAPPEND,	FsFTctl,	0600|P9_DMAPPEND },
 		  {"index",	QTFILE,		FsFTindex,	0400 },
 		  {nil}};
-/* Writing the lists separately and using an array of their references
- * removes the need for casting and allows for C90 conformance,
- * since otherwise we would need to use compound literals */
 static Dirtab *dirtab[] = {
 	[FsRoot] = dirtab_root,
 	[FsDBars] = dirtab_bars,
@@ -135,11 +134,6 @@ static Dirtab *dirtab[] = {
 };
 
 /* Utility Functions */
-/*********************/
-
-/* get_file/free_file save and reuse old FileId structs
- * since so many of them are needed for so many
- * purposes */
 static FileId *
 get_file() {
 	FileId *temp;
@@ -167,8 +161,7 @@ free_file(FileId *f) {
 	free_fileid = f;
 }
 
-/* This function's name belies it's true purpose. It increases
- * the reference counts of the FileId list */
+/* Increase the reference counts of the FileId list */
 static void
 clone_files(FileId *f) {
 	for(; f; f=f->next)
@@ -311,8 +304,8 @@ respond_event(Ixp9Req *r) {
 		respond(r, nil);
 		f->content.buf = nil;
 	}else{
-		r->aux = pending_event_reads;
-		pending_event_reads = r;
+		r->aux = peventread;
+		peventread = r;
 	}
 }
 
@@ -329,17 +322,17 @@ write_event(char *format, ...) {
 	va_end(ap);
 	if(!(len = strlen(buffer)))
 		return;
-	for(f=pending_event_fids; f; f=f->next) {
+	for(f=peventfid; f; f=f->next) {
 		fi = f->fid->aux;
 		slen = fi->content.buf ? strlen(fi->content.buf) : 0;
 		fi->content.buf = (char *) erealloc(fi->content.buf, slen + len + 1);
 		(fi->content.buf)[slen] = '\0';
 		strcat(fi->content.buf, buffer);
 	}
-	outgoing_event_reads = pending_event_reads;
-	pending_event_reads = nil;
-	while((req = outgoing_event_reads)) {
-		outgoing_event_reads = outgoing_event_reads->aux;
+	oeventread = peventread;
+	peventread = nil;
+	while((req = oeventread)) {
+		oeventread = oeventread->aux;
 		respond_event(req);
 	}
 }
@@ -361,8 +354,6 @@ dostat(Stat *s, uint len, FileId *f) {
 	s->muid = user;
 }
 
-/* lookup_file */
-/***************/
 /* All lookups and directory organization should be performed through
  * lookup_file, mostly through the dirtabs[] tree. */
 static FileId *
@@ -508,7 +499,6 @@ verify_file(FileId *f) {
 }
 
 /* Service Functions */
-/*********************/
 void
 fs_attach(Ixp9Req *r) {
 	FileId *f = get_file();
@@ -826,8 +816,8 @@ fs_open(Ixp9Req *r) {
 	case FsFEvent:
 		fl = emallocz(sizeof(FidLink));
 		fl->fid = r->fid;
-		fl->next = pending_event_fids;
-		pending_event_fids = fl;
+		fl->next = peventfid;
+		peventfid = fl;
 		break;
 	}
 	if((r->ifcall.mode&3) == P9_OEXEC) {
@@ -855,7 +845,6 @@ fs_create(Ixp9Req *r) {
 
 	switch(f->tab.type) {
 	default:
-		/* XXX: This should be taken care of by the library */
 		respond(r, Enoperm);
 		return;
 	case FsDBars:
@@ -890,7 +879,6 @@ fs_remove(Ixp9Req *r) {
 
 	switch(f->tab.type) {
 	default:
-		/* XXX: This should be taken care of by the library */
 		respond(r, Enoperm);
 		return;
 	case FsFBar:
@@ -937,7 +925,7 @@ fs_clunk(Ixp9Req *r) {
 		draw_bar(screen);
 		break;
 	case FsFEvent:
-		for(fl=&pending_event_fids; *fl; fl=&(*fl)->next)
+		for(fl=&peventfid; *fl; fl=&(*fl)->next)
 			if((*fl)->fid == r->fid) {
 				ft = *fl;
 				*fl = (*fl)->next;
@@ -955,7 +943,7 @@ void
 fs_flush(Ixp9Req *r) {
 	Ixp9Req **i, **j;
 
-	for(i=&pending_event_reads; i != &outgoing_event_reads; i=&outgoing_event_reads)
+	for(i=&peventread; i != &oeventread; i=&oeventread)
 		for(j=i; *j; j=(Ixp9Req **)&(*j)->aux)
 			if(*j == r->oldreq) {
 				*j = (*j)->aux;

@@ -41,8 +41,6 @@
 #include <X11/Xutil.h>
 #include <util.h>
 
-#define nil ((void*)0)
-
 char version[] = "@(#) wmii9menu version 1.8";
 
 /* lovely X stuff */

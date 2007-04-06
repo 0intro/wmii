@@ -446,6 +446,7 @@ check_x_event(IxpConn *c) {
 		if(verbose)
 			printevent(&ev);
 		dispatch_event(&ev);
+		/* Hack to alleviate an apparant Xlib bug */
 		XPending(blz.dpy);
 	}
 }
