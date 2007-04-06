@@ -30,6 +30,11 @@
  * Version using libXg: Matty Farrow (some ideas borrowed)
  * This code by: David Hogan and Arnold Robbins
  */
+
+/* 
+ * Heavily modified by Kris Maglione for use with wmii.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
