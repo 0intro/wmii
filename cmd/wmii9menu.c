@@ -114,38 +114,42 @@ char *s;
 
 /* args --- go through the argument list, set options */
 
+struct {
+	char *name, **var;
+} argtab[] = {
+	{"display", &displayname},
+	{"file", &filename},
+	{"initial", &initial},
+	{"font", &fontname},
+	{"nb", &nbgname},
+	{"nf", &nfgname},
+	{"sb", &sbgname},
+	{"sf", &sfgname},
+	{"br", &brcname},
+	{0, },
+}, *ap;
+
 int
 args(int argc, char **argv)
 {
-	int i;
-	if (argc == 0 || argv == nil || argv[0] == '\0')
-		return -1;
-	for (i = 0; i < argc && argv[i] != nil; i++) {
-		if (strcmp(argv[i], "-display") == 0)
-			displayname = argv[++i];
-		else if (strcmp(argv[i], "-file") == 0)
-			filename = argv[++i];
-		else if (strcmp(argv[i], "-font") == 0)
-			fontname = argv[++i];
-		else if (strncmp(argv[i], "-initial", 9) == 0)
-			initial = argv[++i];
-		else if (strncmp(argv[i], "-nb", 3) == 0)
-			nbgname = argv[i][3] ? &argv[i][3] : argv[++i];
-		else if (strncmp(argv[i], "-nf", 3) == 0)
-			nfgname = argv[i][3] ? &argv[i][3] : argv[++i];
-		else if (strncmp(argv[i], "-sb", 3) == 0)
-			sbgname = argv[i][3] ? &argv[i][3] : argv[++i];
-		else if (strncmp(argv[i], "-sf", 3) == 0)
-			sfgname = argv[i][3] ? &argv[i][3] : argv[++i];
-		else if (strncmp(argv[i], "-br", 3) == 0)
-			brcname = argv[i][3] ? &argv[i][3] : argv[++i];
-		else if (strcmp(argv[i], "-version") == 0) {
+	int i, n;
+	for (i = 0; i < argc && argv[i][0] == '-'; i++) {
+		if(strcmp(argv[i], "-version") == 0) {
 			printf("%s\n", version);
 			exit(0);
-		} else if (argv[i][0] == '-')
+		}
+		if(i+1 >= argc)
 			usage();
-		else
-			break;
+
+		for(ap = argtab; ap->name; ap++) {
+			n = strlen(ap->name);
+			if(strncmp(ap->name, &argv[i][1], n) == 0) {
+				*ap->var = argv[i][n+1] ? &argv[i][n+1] : argv[++i];
+				break;
+			}
+		}
+		if(ap->name == 0)
+			usage();
 	}
 	return i;
 }
