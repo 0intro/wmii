@@ -171,7 +171,7 @@ restack_view(View *v) {
 	Area *a;
 	Frame *f;
 	Client *c;
-	uint n, i, fs;
+	uint n, i;
 	
 	if(v != screen->sel)
 		return;
@@ -188,14 +188,14 @@ restack_view(View *v) {
 		wins = erealloc(wins, sizeof(Window) * winssz);
 	}
 
-	fs = 0;
-	for(f=v->area->stack; f; f=f->snext) {
+	wins[n++] = screen->barwin;
+	for(f=v->area->stack; f; f=f->snext)
+		if(f->client->fullscreen) {
+			n--;
+			break;
+		}
+	for(f=v->area->stack; f; f=f->snext)
 		wins[n++] = f->client->framewin;
-		if(f->client->fullscreen)
-			fs++;
-	}
-	if(fs == 0)
-		wins[n++] = screen->barwin;
 	for(a=v->area->next; a; a=a->next) {
 		if(a->frame) {
 			wins[n++] = a->sel->client->framewin;

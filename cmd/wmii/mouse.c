@@ -2,6 +2,7 @@
  * See LICENSE file for license details.
  */
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <util.h>
 #include "dat.h"
@@ -361,7 +362,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 	int snap, dx, dy, pt_x, pt_y, hr_x, hr_y;
 	uint num;
 	Bool floating;
-	float rx, ry;
+	float rx, ry, hrx, hry;
 	Frame *f;
 
 	f = c->sel;
@@ -423,9 +424,11 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 	else if(f->client->fullscreen)
 		return;
 	else if(!opaque) {
-		hr_x = screen->rect.width / 2;
-		hr_y = screen->rect.height / 2;
-		warppointer(hr_x, hr_y);
+		hrx = (double)(screen->rect.width + frect.width - 2 * labelh(&def.font)) / screen->rect.width;
+		hry = (double)(screen->rect.height  + frect.height - 3 * labelh(&def.font)) / screen->rect.height;
+		pt_x = r_east(&frect) - labelh(&def.font);
+		pt_y = r_south(&frect) - labelh(&def.font);
+		warppointer(pt_x / hrx, pt_y / hry);
 		flushevents(PointerMotionMask, False);
 	}
 
@@ -449,14 +452,13 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 				resize_client(c, &frect);
 
 			if(!opaque) {
-				if(align != CENTER)
-					XTranslateCoordinates(blz.dpy,
-						/* src, dst */	c->framewin, blz.root,
-						/* src_x */	(frect.width * rx),
-						/* src_y */	(frect.height * ry),
-						/* dest x,y */	&pt_x, &pt_y,
-						/* child */	&dummy
-						);
+				XTranslateCoordinates(blz.dpy,
+					/* src, dst */	c->framewin, blz.root,
+					/* src_x */	(frect.width * rx),
+					/* src_y */	(frect.height * ry),
+					/* dest x,y */	&pt_x, &pt_y,
+					/* child */	&dummy
+					);
 				if(pt_y > screen->brect.y)
 					pt_y = screen->brect.y - 1;
 				warppointer(pt_x, pt_y);
@@ -475,11 +477,8 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 			dy = ev.xmotion.y_root;
 
 			if(align == CENTER && !opaque) {
-				if(dx == hr_x && dy == hr_y)
-					continue;
-				warppointer(hr_x, hr_y);
-				dx -= hr_x;
-				dy -= hr_y;
+				dx = (dx * hrx) - pt_x;
+				dy = (dy * hry) - pt_y;
 			}else{
 				dx -= pt_x;
 				dy -= pt_y;
@@ -488,8 +487,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 			pt_y += dy;
 
 			rect_morph_xy(&origin, dx, dy, &align);
-			if(align != CENTER)
-				check_frame_constraints(&origin);
+			check_frame_constraints(&origin);
 			frect = origin;
 
 			if(floating)
@@ -498,6 +496,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 				grav = align ^ CENTER;
 
 			apply_sizehints(c, &frect, floating, True, grav);
+			check_frame_constraints(&frect);
 
 			if(opaque) {
 				XMoveWindow(blz.dpy, c->framewin, frect.x, frect.y);
