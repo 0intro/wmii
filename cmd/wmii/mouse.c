@@ -289,6 +289,16 @@ querypointer(Window w, int *x, int *y) {
 	XQueryPointer(blz.dpy, w, &dummy, &dummy, &i, &i, x, y, &ui);
 }
 
+void
+warppointer(int x, int y) {
+	XWarpPointer(blz.dpy,
+		/* src_w */	None,
+		/* dest_w */	blz.root,
+		/* src_rect */	0, 0, 0, 0,
+		/* target */	x, y
+		);
+}
+
 static void
 do_managed_move(Client *c) {
 	XRectangle frect, ofrect;
@@ -403,34 +413,21 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 		if(align&WEST) dx -= hr_x;
 
 		XTranslateCoordinates(blz.dpy,
-			/* src_w */	c->framewin,
-			/* dst w */	blz.root,
+			/* src, dst */	c->framewin, blz.root,
 			/* src x,y */	dx, dy,
 			/* dest x,y */	&pt_x, &pt_y,
 			/* child */	&dummy
 			);
-		XWarpPointer(blz.dpy,
-			/* src_w */	None,
-			/* dest_w */	blz.root,
-			/* src_rect */	0, 0, 0, 0,
-			/* target */	pt_x, pt_y
-			);
+		warppointer(pt_x, pt_y);
 	}
 	else if(f->client->fullscreen)
 		return;
 	else if(!opaque) {
 		hr_x = screen->rect.width / 2;
 		hr_y = screen->rect.height / 2;
-
-		XWarpPointer(blz.dpy,
-			/* src_w */	None,
-			/* dest_w */	blz.root,
-			/* src_rect */	0, 0, 0, 0,
-			/* target */	hr_x, hr_y
-			);
+		warppointer(hr_x, hr_y);
 		flushevents(PointerMotionMask, False);
 	}
-
 
 	XSync(blz.dpy, False);
 	if(!opaque) {
@@ -454,8 +451,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 			if(!opaque) {
 				if(align != CENTER)
 					XTranslateCoordinates(blz.dpy,
-						/* src_w */	c->framewin,
-						/* dst w */	blz.root,
+						/* src, dst */	c->framewin, blz.root,
 						/* src_x */	(frect.width * rx),
 						/* src_y */	(frect.height * ry),
 						/* dest x,y */	&pt_x, &pt_y,
@@ -463,12 +459,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 						);
 				if(pt_y > screen->brect.y)
 					pt_y = screen->brect.y - 1;
-				XWarpPointer(blz.dpy,
-					/* src_w */	None,
-					/* dest_w */	blz.root,
-					/* src_rect */	0, 0, 0, 0,
-					/* target */	pt_x, pt_y
-					);
+				warppointer(pt_x, pt_y);
 				XUngrabServer(blz.dpy);
 			}else
 				map_client(c);
@@ -486,12 +477,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 			if(align == CENTER && !opaque) {
 				if(dx == hr_x && dy == hr_y)
 					continue;
-				XWarpPointer(blz.dpy,
-					/* src_w */	None,
-					/* dest_w */	blz.root,
-					/* src_rect */	0, 0, 0, 0,
-					/* target */	hr_x, hr_y
-					);
+				warppointer(hr_x, hr_y);
 				dx -= hr_x;
 				dy -= hr_y;
 			}else{

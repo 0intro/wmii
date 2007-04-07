@@ -53,9 +53,9 @@ XColor color;
 XFontStruct *font;
 GC gc;
 
-unsigned long selfg, selbg;
-unsigned long normfg, normbg;
-unsigned long border;
+ulong selfg, selbg;
+ulong normfg, normbg;
+ulong border;
 char *sfgname, *sbgname;
 char *nfgname, *nbgname;
 char *brcname;
@@ -63,10 +63,6 @@ char *brcname;
 /* for XSetWMProperties to use */
 int g_argc;
 char **g_argv;
-
-/* for labels read from files */
-int f_argc;
-char **f_argv;
 
 char *initial = "";
 int cur;
@@ -85,7 +81,6 @@ char *fontlist[] = {	/* default font list if no -font */
 char *progname;		/* my name */
 char *displayname;	/* X display */
 char *fontname;		/* font */
-char *filename;		/* file to read options or labels from */
 
 char **labels;		/* list of labels and commands */
 char **commands;
@@ -105,7 +100,6 @@ struct {
 	char *name, **var;
 } argtab[] = {
 	{"display", &displayname},
-	{"file", &filename},
 	{"initial", &initial},
 	{"font", &fontname},
 	{"nb", &nbgname},
@@ -116,34 +110,9 @@ struct {
 	{0, },
 }, *ap;
 
-int
-args(int argc, char **argv)
-{
-	int i, n;
-	for (i = 0; i < argc && argv[i][0] == '-'; i++) {
-		if(strcmp(argv[i], "-version") == 0) {
-			printf("%s\n", version);
-			exit(0);
-		}
-		if(i+1 >= argc)
-			usage();
-
-		for(ap = argtab; ap->name; ap++) {
-			n = strlen(ap->name);
-			if(strncmp(ap->name, &argv[i][1], n) == 0) {
-				*ap->var = argv[i][n+1] ? &argv[i][n+1] : argv[++i];
-				break;
-			}
-		}
-		if(ap->name == 0)
-			usage();
-	}
-	return i;
-}
-
-unsigned long
-getcolor(char *name, unsigned long def) {
-	if ((name != nil)
+ulong
+getcolor(char *name, ulong def) {
+	if((name != nil)
 	 && (XParseColor(dpy, defcmap, name, &color) != 0)
 	 && (XAllocColor(dpy, defcmap, &color) != 0))
 		return color.pixel;
@@ -156,127 +125,73 @@ getcolor(char *name, unsigned long def) {
 int
 main(int argc, char **argv)
 {
-	int i, j;
+	int i, n;
 	char *cp;
 	XGCValues gv;
-	unsigned long mask;
-	int nlabels = 0;
+	ulong mask;
 
 	g_argc = argc;
 	g_argv = argv;
 
 	/* set default label name */
-	if ((cp = strrchr(argv[0], '/')) == nil)
-		progname = argv[0];
-	else
+	if((cp = strrchr(argv[0], '/')) != nil)
 		progname = ++cp;
+	else
+		progname = argv[0];
 
-	++argv;
-	--argc;
+	for(i = 1; i < argc && argv[i][0] == '-'; i++) {
+		if(strcmp(argv[i], "-version") == 0) {
+			printf("%s\n", version);
+			exit(0);
+		}
 
-	i = args(argc, argv);
+		for(ap = argtab; ap->name; ap++) {
+			n = strlen(ap->name);
+			if(strncmp(ap->name, argv[i]+1, n) == 0)
+				break;
+		}
+		if(ap->name == 0)
+			usage();
 
-	numitems = argc - i;
+		if(argv[i][n+1] != '\0')
+			*ap->var = &argv[i][n+1];
+		else {
+			if(argc <= i+1)
+				usage();
+			*ap->var = argv[++i];
+		}
+	}
+	argc -= i, argv += i;
 
-	if (numitems <= 0 && filename == nil)
+	if(argc == 0)
 		usage();
 
-	if (filename) {
-		/* Read options and labels from file */
-		char fbuf[1024];
-		FILE *fp;
+	numitems = argc;
 
-		fp = fopen(filename, "r");
-		if (fp == nil) {
-			fprintf(stderr, "%s: couldn't open '%s'\n", progname,
-				filename);
-			exit(1);
-		}
-		while (fgets(fbuf, sizeof fbuf, fp)) {
-			char *s = fbuf;
-			strtok(s, "\n");
-			if (s[0] == '-') {
-				char *temp[2];
+	labels = emalloc(numitems * sizeof(*labels));
+	commands = emalloc(numitems * sizeof(*labels));
 
-				temp[0] = s;
-				s = strchr(s, ' ');
-				if (s) {
-					*s++ = '\0';
-					s = estrdup(s);
-					temp[1] = s;
-				}
-				args(s ? 2 : 1, temp);
-				continue;
-			}
-			if (s[0] == '#')
-				continue;
-			/* allow - in menu items to be escaped */
-			if (s[0] == '\\')
-				++s;
-			/* allocate space */
-			if (f_argc < nlabels + 1) {
-				int k;
-				char **temp;
-				
-				temp = emalloc(sizeof(char *) * (f_argc + 5));
-				for (k = 0; k < nlabels; k++)
-					temp[k] = f_argv[k];
-
-				free(f_argv);
-				f_argv = temp;
-				f_argc += 5;
-			}
-			f_argv[nlabels] = estrdup(s);
-			++nlabels;
-		}
-	}
-
-	labels = emalloc((numitems + nlabels) * sizeof(char *));
-	commands = emalloc((numitems + nlabels) * sizeof(char *));
-
-	for (j = 0; j < numitems; j++) {
-		labels[j] = argv[i + j];
-		if ((cp = strchr(labels[j], ':')) != nil) {
+	for(i = 0; i < numitems; i++) {
+		labels[i] = argv[i];
+		if((cp = strchr(labels[i], ':')) != nil) {
 			*cp++ = '\0';
-			commands[j] = cp;
+			commands[i] = cp;
 		} else
-			commands[j] = labels[j];
-		if(strcmp(labels[j], initial) == 0)
-			cur = j;
+			commands[i] = labels[i];
+		if(strcmp(labels[i], initial) == 0)
+			cur = i;
 	}
-
-	/*
-	 * Now we no longer need i (our offset into argv) so we recycle it,
-	 * while keeping the old value of j!
-	 */
-	for (i = 0; i < nlabels; i++) {
-		labels[j] = f_argv[i];
-		if ((cp = strchr(labels[j], ':')) != nil) {
-			*cp++ = '\0';
-			commands[j] = cp;
-		} else
-			commands[j] = labels[j];
-		++j;
-	}
-
-	/* And now we merge the totals */
-	numitems += nlabels;
 
 	dpy = XOpenDisplay(displayname);
-	if (dpy == nil) {
+	if(dpy == nil) {
 		fprintf(stderr, "%s: cannot open display", progname);
-		if (displayname != nil)
+		if(displayname != nil)
 			fprintf(stderr, " %s", displayname);
 		fprintf(stderr, "\n");
 		exit(1);
 	}
 	screen = DefaultScreen(dpy);
 	root = RootWindow(dpy, screen);
-	/*
-	 * This used to be
-	 * black = BlackPixel(dpy, screen);
-	 * white = WhitePixel(dpy, screen);
-	 */
 	defcmap = DefaultColormap(dpy, screen);
 
 	selbg = getcolor(sbgname, BlackPixel(dpy, screen));
@@ -286,23 +201,23 @@ main(int argc, char **argv)
 	border = getcolor(brcname, selbg);
 
 	/* try user's font first */
-	if (fontname != nil) {
+	if(fontname != nil) {
 		font = XLoadQueryFont(dpy, fontname);
-		if (font == nil)
+		if(font == nil)
 			fprintf(stderr, "%s: warning: can't load font %s\n",
 				progname, fontname);
 	}
 
 	/* if no user font, try one of our default fonts */
-	if (font == nil) {
-		for (i = 0; fontlist[i] != nil; i++) {
+	if(font == nil) {
+		for(i = 0; fontlist[i] != nil; i++) {
 			font = XLoadQueryFont(dpy, fontlist[i]);
-			if (font != nil)
+			if(font != nil)
 				break;
 		}
 	}
 
-	if (font == nil) {
+	if(font == nil) {
 		fprintf(stderr, "%s: fatal: cannot load a font\n", progname);
 		exit(1);
 	}
@@ -326,7 +241,6 @@ void
 usage()
 {
 	fprintf(stderr, "usage: %s [-display <displayname>] [-font <fontname>] ", progname);
-	fprintf(stderr, "[-file filename] ");
 	fprintf(stderr, "[-{n,s}{f,b} <color>] [-br <color>] ");
 	fprintf(stderr, "[-version] menitem[:command] ...\n");
 	exit(0);
@@ -341,9 +255,9 @@ run_menu()
 	int i, old, wide, high, dx, dy;
 
 	dx = 0;
-	for (i = 0; i < numitems; i++) {
+	for(i = 0; i < numitems; i++) {
 		wide = XTextWidth(font, labels[i], strlen(labels[i])) + 4;
-		if (wide > dx)
+		if(wide > dx)
 			dx = wide;
 	}
 	wide = dx;
@@ -372,7 +286,7 @@ run_menu()
 
 	i = 0;		/* save menu Item position */
 
-	for (;;) {
+	for(;;) {
 		XNextEvent(dpy, &ev);
 		switch (ev.type) {
 		default:
@@ -381,9 +295,9 @@ run_menu()
 			break;
 		case ButtonRelease:
 			i = ev.xbutton.y/high;
-			if (ev.xbutton.x < 0 || ev.xbutton.x > wide)
+			if(ev.xbutton.x < 0 || ev.xbutton.x > wide)
 				return;
-			else if (i < 0 || i >= numitems)
+			else if(i < 0 || i >= numitems)
 				return;
 
 			printf("%s\n", commands[i]);
@@ -392,9 +306,9 @@ run_menu()
 		case MotionNotify:
 			old = cur;
 			cur = ev.xbutton.y/high;
-			if (ev.xbutton.x < 0 || ev.xbutton.x > wide)
+			if(ev.xbutton.x < 0 || ev.xbutton.x > wide)
 				cur = ~0;
-			if (cur == old)
+			if(cur == old)
 				break;
 			redraw(high, wide);
 			break;
@@ -421,7 +335,7 @@ void
 create_window(int wide, int high)
 {
 	XSetWindowAttributes wa = { 0 };
-	unsigned int h;
+	uint h;
 	int x, y, dummy;
 	Window wdummy;
 	
@@ -430,15 +344,15 @@ create_window(int wide, int high)
 	XQueryPointer(dpy, root, &wdummy, &wdummy, &x, &y,
 				&dummy, &dummy, (uint*)&dummy);
 	x -= wide / 2;
-	if (x < 0)
+	if(x < 0)
 		x = 0;
-	else if (x + wide > DisplayWidth(dpy, screen))
+	else if(x + wide > DisplayWidth(dpy, screen))
 		x = DisplayWidth(dpy, screen) - wide;
 
 	y -= cur * high + high / 2;
-	if (y < 0)
+	if(y < 0)
 		y = 0;
-	else if (y + h > DisplayHeight(dpy, screen))
+	else if(y + h > DisplayHeight(dpy, screen))
 		y = DisplayHeight(dpy, screen) - h;
 
 	wa.override_redirect = True;
@@ -463,15 +377,15 @@ redraw(int high, int wide)
 {
 	int tx, ty, i;
 
-	for (i = 0; i < numitems; i++) {
+	for(i = 0; i < numitems; i++) {
 		tx = (wide - XTextWidth(font, labels[i], strlen(labels[i]))) / 2;
 		ty = i*high + font->ascent + 1;
-		if (cur == i)
+		if(cur == i)
 			XSetForeground(dpy, gc, selbg);
 		else
 			XSetForeground(dpy, gc, normbg);
 		XFillRectangle(dpy, menuwin, gc, 0, i*high, wide, high);
-		if (cur == i)
+		if(cur == i)
 			XSetForeground(dpy, gc, selfg);
 		else
 			XSetForeground(dpy, gc, normfg);
