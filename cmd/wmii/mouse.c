@@ -159,7 +159,7 @@ snap_rect(XRectangle *rects, int num, XRectangle *current, BlitzAlign *mask, int
 }
 
 static void
-draw_xor_border(XRectangle *r) {
+xorborder(XRectangle *r) {
 	XRectangle xor;
 
 	xor = *r;
@@ -187,7 +187,15 @@ draw_xor_border(XRectangle *r) {
 }
 
 static void
+xorrect(XRectangle *r) {
+	XSetLineAttributes(blz.dpy, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
+	XSetForeground(blz.dpy, xorgc, 0x00888888l);
+	XFillRectangles(blz.dpy, blz.root, xorgc, r, 1);
+}
+
+static void
 find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
+	enum { Delta = 5 };
 	View *v;
 	Area *a, *a_prev;
 	Frame *f, *f_prev;
@@ -204,8 +212,8 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 		a_prev = a;
 	}
 	if(x < (a->rect.x + labelh(&def.font))) {
-		rect->x = a->rect.x - 4;
-		rect->width = 8;
+		rect->x = a->rect.x - Delta;
+		rect->width = 2 * Delta;
 
 		if(do_move) {
 			a = new_column(v, a_prev, 0);
@@ -215,8 +223,8 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 		return;
 	}
 	if(x > (r_east(&a->rect) - labelh(&def.font))) {
-		rect->x = r_east(&a->rect) - 4;
-		rect->width = 8;
+		rect->x = r_east(&a->rect) - Delta;
+		rect->width = 2 * Delta;
 
 		if(do_move) {
 			a = new_column(v, a, 0);
@@ -241,22 +249,16 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 		f = f_prev;
 	if(y < (f->rect.y + labelh(&def.font))) {
 		before = True;
-		rect->y = f->rect.y;
-		rect->height = 2;
-		if(f_prev) {
-			rect->y = r_south(&f_prev->rect);
-			rect->height = f->rect.y - rect->y;
-		}
+		rect->y = f->rect.y - Delta;
+		rect->height = 2 * Delta;
 		if(do_move)
 			goto do_move;
 		return;
 	}
 	if(y > r_south(&f->rect) - labelh(&def.font)) {
 		before = False;
-		rect->y = r_south(&f->rect);
-		rect->height = (screen->rect.height - labelh(&def.font) - rect->y);
-		if(f->anext)
-			rect->height = (f->anext->rect.y - rect->y);
+		rect->y = r_south(&f->rect) - Delta;
+		rect->height = 2 * Delta;
 		if(do_move)
 			goto do_move;
 		return;
@@ -319,12 +321,12 @@ do_managed_move(Client *c) {
 	querypointer(blz.root, &x, &y);
 
 	find_droppoint(f, x, y, &frect, False);
-	draw_xor_border(&frect);
+	xorrect(&frect);
 	for(;;) {
 		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			draw_xor_border(&frect);
+			xorrect(&frect);
 
 			find_droppoint(f, x, y, &frect, True);
 
@@ -340,8 +342,8 @@ do_managed_move(Client *c) {
 			find_droppoint(f, x, y, &frect, False);
 
 			if(memcmp(&frect, &ofrect, sizeof(frect))) {
-				draw_xor_border(&ofrect);
-				draw_xor_border(&frect);
+				xorrect(&ofrect);
+				xorrect(&frect);
 			}
 			break;
 		case Expose:
@@ -421,8 +423,10 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 			);
 		warppointer(pt_x, pt_y);
 	}
-	else if(f->client->fullscreen)
+	else if(f->client->fullscreen) {
+		XUngrabPointer(blz.dpy, CurrentTime);
 		return;
+	}
 	else if(!opaque) {
 		hrx = (double)(screen->rect.width + frect.width - 2 * labelh(&def.font)) / screen->rect.width;
 		hry = (double)(screen->rect.height  + frect.height - 3 * labelh(&def.font)) / screen->rect.height;
@@ -435,7 +439,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 	XSync(blz.dpy, False);
 	if(!opaque) {
 		XGrabServer(blz.dpy);
-		draw_xor_border(&frect);
+		xorborder(&frect);
 	}else
 		unmap_client(c, IconicState);
 
@@ -444,7 +448,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 		switch (ev.type) {
 		case ButtonRelease:
 			if(!opaque)
-				draw_xor_border(&frect);
+				xorborder(&frect);
 
 			if(!floating)
 				resize_column(c, &frect);
@@ -502,8 +506,8 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 				XMoveWindow(blz.dpy, c->framewin, frect.x, frect.y);
 				XSync(blz.dpy, False);
 			} else {
-				draw_xor_border(&ofrect);
-				draw_xor_border(&frect);
+				xorborder(&ofrect);
+				xorborder(&frect);
 			}
 			break;
 		case Expose:
