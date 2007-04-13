@@ -13,7 +13,6 @@
 
 
 /* Datatypes: */
-/**************/
 typedef struct Dirtab Dirtab;
 struct Dirtab {
 	char		*name;
@@ -48,7 +47,6 @@ struct FileId {
 };
 
 /* Constants */
-/*************/
 enum {	/* Dirs */
 	FsRoot, FsDClient, FsDClients, FsDBars,
 	FsDTag, FsDTags,

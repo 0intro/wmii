@@ -513,7 +513,7 @@ apply_sizehints(Client *c, XRectangle *r, Bool floating, Bool frame, BlitzAlign 
 	s = &c->size;
 	orig = *r;
 	if(frame)
-		frame2client(r);
+		frame2client(c->sel, r);
 	bw = 0;
 	bh = 0;
 
@@ -564,7 +564,7 @@ apply_sizehints(Client *c, XRectangle *r, Bool floating, Bool frame, BlitzAlign 
 	}
 
 	if(frame)
-		client2frame(r);
+		client2frame(c->sel, r);
 
 	if(!(s->flags & PMinSize) || !floating) {
 		if(r->width > orig.width)

@@ -1,6 +1,8 @@
 /* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#include <math.h>
+#include <stdio.h>
 #include <util.h>
 #include "dat.h"
 #include "fns.h"
@@ -72,15 +74,25 @@ insert_frame(Frame *pos, Frame *f, Bool before) {
 }
 
 void
-frame2client(XRectangle *r) {
-	r->width = max(r->width - def.border * 2, 1);
-	r->height = max(r->height - frame_delta_h(), 1);
+frame2client(Frame *f, XRectangle *r) {
+	if(f->area->floating) {
+		r->width = max(r->width - def.border * 2, 1);
+		r->height = max(r->height - frame_delta_h(), 1);
+	}else {
+		r->width = max(r->width - 2, 1);
+		r->height = max(r->height - labelh(&def.font) - 1, 1);
+	}
 }
 
 void
-client2frame(XRectangle *r) {
-	r->width += def.border * 2;
-	r->height += frame_delta_h();
+client2frame(Frame *f, XRectangle *r) {
+	if(f->area->floating) {
+		r->width += def.border * 2;
+		r->height += frame_delta_h();
+	}else {
+		r->width += 2;
+		r->height +=labelh(&def.font) + 1;
+	}
 }
 
 void
@@ -98,7 +110,7 @@ resize_frame(Frame *f, XRectangle *r) {
 	if(f->area->floating)
 		f->rect = f->crect;
 
-	frame2client(&f->crect);
+	frame2client(f, &f->crect);
 
 	if(f->crect.height < labelh(&def.font))
 		f->collapsed = True;
@@ -126,7 +138,7 @@ resize_frame(Frame *f, XRectangle *r) {
 			f->rect = f->crect;
 			f->rect.x = -def.border;
 			f->rect.y = -labelh(&def.font);
-			client2frame(&f->rect);
+			client2frame(f, &f->rect);
 		}else
 			check_frame_constraints(&f->rect);
 	}
@@ -137,14 +149,16 @@ set_frame_cursor(Frame *f, int x, int y) {
 	XRectangle r;
 	Cursor cur;
 
-	if(!ptinrect(x, y, &f->titlebar)
-	 &&!ptinrect(x, y, &f->crect)) {
+	if(f->area->floating
+	&& !ptinrect(x, y, &f->titlebar)
+	&& !ptinrect(x, y, &f->crect)
+	&& !ingrabbox(f, x, y)) {
 	 	r = f->rect;
 	 	r.x = 0;
 	 	r.y = 0;
 	 	cur = cursor_of_quad(quadrant(&r, x, y));
 		set_cursor(f->client, cur);
-	}else
+	} else
 		set_cursor(f->client, cursor[CurNormal]);
 }
 
@@ -248,10 +262,35 @@ frame_delta_h() {
 	return def.border + labelh(&def.font);
 }
 
+int
+ingrabbox(Frame *f, int x, int y) {
+	int dx, h;
+
+	if(f->area->floating)
+		return 0;
+
+	h = labelh(&def.font) / 3;
+	h = max(h, 4);
+
+	if((f == f->area->frame) && f->area->next)
+		if(x >= f->rect.width - h) {
+			dx = x - (f->rect.width - h);
+			if(y <= dx)
+				return 1;
+		}
+	if((f == f->area->frame) && (f->area != f->view->area->next))
+		if(x <= h && y <= h - x)
+			return 1;
+
+	return 0;
+}
+
 void
 draw_frame(Frame *f) {
 	BlitzBrush br = { 0 };
+	XPoint pt[3];
 	Frame *tf;
+	int h;
 
 	if(f->view != screen->sel)
 		return;
@@ -301,6 +340,30 @@ draw_frame(Frame *f) {
 	br.rect.width = def.font.height - 3;
 	f->grabbox = br.rect;
 	draw_tile(&br);
+
+	if(!f->area->floating) {
+		XSetLineAttributes(blz.dpy, br.gc, 1, LineSolid, CapButt, JoinMiter);
+		h = labelh(&def.font) / 3;
+		h = max(h, 4);
+		if((f == f->area->frame) && f->area->next) {
+			pt[0] = (XPoint){ f->rect.width - h, 0 };
+			pt[1] = (XPoint){ f->rect.width, h };
+			pt[2] = (XPoint){ f->rect.width, 0 };
+			XSetForeground(blz.dpy, br.gc, def.normcolor.bg);
+			XFillPolygon(blz.dpy, br.drawable, br.gc, pt, 3, Convex, CoordModeOrigin);
+			XSetForeground(blz.dpy, br.gc, br.color.border);
+			XDrawLines(blz.dpy, br.drawable, br.gc, pt, 2, CoordModeOrigin);
+		}
+		if((f == f->area->frame) && (f->area != f->view->area->next)) {
+			pt[0] = (XPoint){ h, 0 };
+			pt[1] = (XPoint){ 0, h };
+			pt[2] = (XPoint){ 0, 0 };
+			XSetForeground(blz.dpy, br.gc, def.normcolor.bg);
+			XFillPolygon(blz.dpy, br.drawable, br.gc, pt, 3, Convex, CoordModeOrigin);
+			XSetForeground(blz.dpy, br.gc, br.color.border);
+			XDrawLines(blz.dpy, br.drawable, br.gc, pt, 2, CoordModeOrigin);
+		}
+	}
 
 	XCopyArea(
 		/* display */	blz.dpy,

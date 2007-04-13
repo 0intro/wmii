@@ -27,7 +27,7 @@ static char *address, *ns_path;
 static Bool check_other_wm;
 static struct sigaction sa;
 static struct passwd *passwd;
-static int sleeperfd, sock;
+static int sleeperfd, sock, exitsignal;
 
 static void
 usage() {
@@ -54,8 +54,8 @@ scan_wins() {
 		for(i = 0; i < num; i++) {
 			if(!XGetWindowAttributes(blz.dpy, wins[i], &wa))
 				continue;
-			if(XGetTransientForHint(blz.dpy, wins[i], &d1)
-			&& wa.map_state == IsViewable)
+			if((XGetTransientForHint(blz.dpy, wins[i], &d1))
+			&& (wa.map_state == IsViewable))
 				manage_client(create_client(wins[i], &wa));
 		}
 	}
@@ -167,11 +167,9 @@ init_ns() {
 	if(stat(ns_path, &st))
 		fatal("Can't stat ns_path '%s':", ns_path);
 	if(getuid() != st.st_uid)
-		fatal("ns_path '%s' exists but is not owned by you",
-			ns_path);
+		fatal("ns_path '%s' exists but is not owned by you", ns_path);
 	if(st.st_mode & 077)
-		fatal("ns_path '%s' exists, but has group or world permissions",
-			ns_path);
+		fatal("ns_path '%s' exists, but has group or world permissions", ns_path);
 }
 
 static void
@@ -295,7 +293,7 @@ wmii_error_handler(Display *dpy, XErrorEvent *error) {
 
 	for(i = 0; i < nelem(itab); i++)
 		if((itab[i].rcode == 0 || itab[i].rcode == error->request_code)
-		&&(itab[i].ecode == 0 || itab[i].ecode == error->error_code))
+		&& (itab[i].ecode == 0 || itab[i].ecode == error->error_code))
 			return 0;
 
 	fprintf(stderr, "%s: fatal error: Xrequest code=%d, Xerror code=%d\n",
@@ -317,14 +315,13 @@ cleanup_handler(int signal) {
 	sa.sa_handler = SIG_DFL;
 	sigaction(signal, &sa, nil);
 
+	srv.running = False;
+
 	switch(signal) {
-	case SIGINT:
-		srv.running = False;
-		break;
 	default:
-		cleanup();
-		XCloseDisplay(blz.dpy);
-		raise(signal);
+		exitsignal = signal;
+		break;
+	case SIGINT:
 		break;
 	}
 }
@@ -429,11 +426,8 @@ main(int argc, char *argv[]) {
 	XSetWindowAttributes wa;
 	int i;
 
-	passwd = getpwuid(getuid());
-	user = estrdup(passwd->pw_name);
 	wmiirc = "wmiistartrc";
 
-	/* command line args */
 	ARGBEGIN{
 	case 'v':
 		printf("%s", version);
@@ -452,6 +446,9 @@ main(int argc, char *argv[]) {
 		break;
 	}ARGEND;
 
+	if(argc)
+		usage();
+
 	setlocale(LC_CTYPE, "");
 	starting = True;
 
@@ -467,8 +464,10 @@ main(int argc, char *argv[]) {
 	XSync(blz.dpy, False);
 	check_other_wm = False;
 
+	passwd = getpwuid(getuid());
+	user = estrdup(passwd->pw_name);
+
 	init_environment();
-	init_traps();
 
 	errstr = nil;
 	sock = ixp_announce(address);
@@ -497,6 +496,7 @@ main(int argc, char *argv[]) {
 	loadcolor(&blz, &def.focuscolor);
 	loadcolor(&blz, &def.normcolor);
 
+	init_traps();
 	init_atoms();
 	init_cursors();
 	loadfont(&blz, &def.font);
@@ -580,9 +580,10 @@ main(int argc, char *argv[]) {
 	ixp_server_close(&srv);
 	close(sleeperfd);
 
+	if(exitsignal)
+		raise(exitsignal);
 	if(execstr)
 		execl("/bin/sh", "sh", "-c", execstr, nil);
-
 	if(errstr)
 		return 1;
 	return 0;

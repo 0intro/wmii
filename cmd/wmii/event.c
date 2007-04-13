@@ -80,10 +80,15 @@ buttonpress(XEvent *e) {
 				if(frame_to_top(f))
 					restack_view(f->view);
 
-				if(ptinrect(ev->x, ev->y, &f->grabbox))
+				if(ingrabbox(f, ev->x, ev->y))
+					do_mouse_resize(f->client, False,
+						quadrant(&f->rect, ev->x_root, ev->y_root) & (EAST|WEST));
+				else if(ptinrect(ev->x, ev->y, &f->grabbox))
 					do_mouse_resize(f->client, True, CENTER);
-				else if(!ev->subwindow && !ptinrect(ev->x, ev->y, &f->titlebar))
-					do_mouse_resize(f->client, False, quadrant(&f->rect, ev->x_root, ev->y_root));
+				else if(f->area->floating)
+					if(!ev->subwindow && !ptinrect(ev->x, ev->y, &f->titlebar))
+						do_mouse_resize(f->client, False,
+							quadrant(&f->rect, ev->x_root, ev->y_root));
 
 				if(f->client != selclient())
 					focus(f->client, True);
