@@ -680,38 +680,6 @@ newcol_client(Client *c, char *arg) {
 	flushevents(EnterWindowMask, False);
 }
 
-void
-move_client(Client *c, char *arg) {
-	Frame *f = c->sel;
-	XRectangle new = f->rect;
-	int x, y;
-
-	if(sscanf(arg, "%d %d", &x, &y) != 2)
-		return;
-	new.x += x;
-	new.y += y;
-	if(!f->area->floating)
-		resize_column(f->client->sel, &new);
-	else
-		resize_client(f->client, &new);
-}
-
-void
-size_client(Client *c, char *arg) {
-	Frame *f = c->sel;
-	XRectangle new = f->rect;
-	int w, h;
-
-	if(sscanf(arg, "%d %d", &w, &h) != 2)
-		return;
-	new.width += w;
-	new.height += h;
-	if(!f->area->floating)
-		resize_column(f->client->sel, &new);
-	else
-		resize_client(f->client, &new);
-}
-
 char *
 send_client(Frame *f, char *arg, Bool swap) {
 	Area *to, *a;

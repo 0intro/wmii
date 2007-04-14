@@ -349,6 +349,7 @@ resize:
 	if(a->view == screen->sel) {
 		restack_view(a->view);
 		resize_client(a->sel->client, &a->sel->rect);
+
 		for(f=a->frame; f; f=f->anext)
 			if(!f->collapsed && f != a->sel)
 				resize_client(f->client, &f->rect);

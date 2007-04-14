@@ -17,7 +17,9 @@ enum {
 
 static void
 rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask) {
-	BlitzAlign new_mask = 0;
+	BlitzAlign nmask;
+
+	nmask = 0;
 	if(*mask & NORTH) {
 		if(rect->height - dy >= 0 || *mask & SOUTH) {
 			rect->y += dy;
@@ -26,7 +28,7 @@ rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask) {
 		else {
 			rect->y += rect->height;
 			rect->height = dy - rect->height;
-			new_mask ^= NORTH|SOUTH;
+			nmask ^= NORTH|SOUTH;
 		}
 	}
 	if(*mask & SOUTH) {
@@ -35,7 +37,7 @@ rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask) {
 		else {
 			rect->height = -dy - rect->height;
 			rect->y -= rect->height;
-			new_mask ^= NORTH|SOUTH;
+			nmask ^= NORTH|SOUTH;
 		}
 	}
 	if(*mask & EAST) {
@@ -44,7 +46,7 @@ rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask) {
 		else {
 			rect->width = -dx - rect->width;
 			rect->x -= rect->width;
-			new_mask ^= EAST|WEST;
+			nmask ^= EAST|WEST;
 		}
 	}
 	if(*mask & WEST) {
@@ -55,10 +57,10 @@ rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask) {
 		else {
 			rect->x += rect->width;
 			rect->width = dx - rect->width;
-			new_mask ^= EAST|WEST;
+			nmask ^= EAST|WEST;
 		}
 	}
-	*mask ^= new_mask;
+	*mask ^= nmask;
 }
 
 typedef struct {
@@ -198,23 +200,24 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 	enum { Delta = 5 };
 	View *v;
 	Area *a, *a_prev;
-	Frame *f, *f_prev;
+	Frame *f;
 	Bool before;
 
 	v = frame->view;
-	rect->y = 0;
-	rect->height = screen->rect.height - screen->brect.height;
 
+	/* New column? */
 	a_prev = v->area;
 	for(a = a_prev->next; a && a->next; a = a->next) {
 		if(x < r_east(&a->rect))
 			break;
 		a_prev = a;
 	}
+
+	rect->y = 0;
+	rect->height = screen->rect.height - screen->brect.height;
+	rect->width = 2 * Delta;
 	if(x < (a->rect.x + labelh(&def.font))) {
 		rect->x = a->rect.x - Delta;
-		rect->width = 2 * Delta;
-
 		if(do_move) {
 			a = new_column(v, a_prev, 0);
 			send_to_area(a, frame);
@@ -224,8 +227,6 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 	}
 	if(x > (r_east(&a->rect) - labelh(&def.font))) {
 		rect->x = r_east(&a->rect) - Delta;
-		rect->width = 2 * Delta;
-
 		if(do_move) {
 			a = new_column(v, a, 0);
 			send_to_area(a, frame);
@@ -234,23 +235,20 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 		return;
 	}
 
-	rect->x = a->rect.x;
-	rect->width = a->rect.width;
-
-	f_prev = nil;
+	/* Over/under frame? */
 	for(f = a->frame; f; f = f->anext) {
 		if(y < f->rect.y)
 			break;
 		if(y < r_south(&f->rect))
 			break;
-		f_prev = f;
 	}
-	if(f == nil)
-		f = f_prev;
+
+	rect->x = a->rect.x;
+	rect->width = a->rect.width;
+	rect->height = 2 * Delta;
 	if(y < (f->rect.y + labelh(&def.font))) {
 		before = True;
 		rect->y = f->rect.y - Delta;
-		rect->height = 2 * Delta;
 		if(do_move)
 			goto do_move;
 		return;
@@ -258,12 +256,12 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 	if(y > r_south(&f->rect) - labelh(&def.font)) {
 		before = False;
 		rect->y = r_south(&f->rect) - Delta;
-		rect->height = 2 * Delta;
 		if(do_move)
 			goto do_move;
 		return;
 	}
 
+	/* No? Swap. */
 	*rect = f->rect;
 	if(do_move) {
 		swap_frames(frame, f);
@@ -372,7 +370,7 @@ mouse_resizecol(Divide *d) {
 		if(dp->next == d) break;
 
 	/* Fix later */
-	if(dp == nil || d->next == nil)
+	if(a || a->next == nil)
 		return;
 
 	minw = screen->rect.width/NCOL;
@@ -417,7 +415,6 @@ mouse_resizecol(Divide *d) {
 			goto done;
 		case MotionNotify:
 			x = ev.xmotion.x_root;
-
 			XMoveWindow(blz.dpy, d->w, x, 0);
 			break;
 		case Expose:
