@@ -89,6 +89,7 @@ typedef struct View View;
 typedef struct Area Area;
 typedef struct Frame Frame;
 typedef struct Client Client;
+typedef struct Divide Divide;
 typedef struct Key Key;
 typedef struct Bar Bar;
 typedef struct Rule Rule;
@@ -158,6 +159,13 @@ struct Client {
 	GC gc;
 };
 
+struct Divide {
+	Divide *next;
+	Window w;
+	Bool mapped;
+	int x;
+};
+
 struct Key {
 	Key *next;
 	Key *lnext;
@@ -223,11 +231,11 @@ struct WMScreen {
 Client *client;
 View *view;
 Key *key;
+Divide *divs;
 Client c_magic;
 Client c_root;
 
-enum { BUFFER_SIZE = 8092 };
-char buffer[BUFFER_SIZE];
+char buffer[8092];
 
 /* IXP */
 IxpServer srv;
@@ -235,18 +243,21 @@ Ixp9Srv p9srv;
 
 /* X11 */
 uint num_screens;
-Blitz blz;
-GC xorgc;
-char *user;
-Atom atom[AtomLast];
-Cursor cursor[CurLast];
 uint valid_mask;
 uint num_lock_mask;
 Bool sel_screen;
+
+Blitz blz;
+GC xorgc;
 Pixmap pmap;
+Pixmap divmap, divmask;
+
+Atom atom[AtomLast];
+Cursor cursor[CurLast];
 void (*handler[LASTEvent]) (XEvent *);
 
 /* Misc */
 Bool starting;
 Bool verbose;
+char *user;
 char *execstr;

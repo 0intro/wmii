@@ -139,7 +139,7 @@ manage_client(Client *c) {
 
 	XGetTextProperty(blz.dpy, c->win, &tags, atom[TagsAtom]);
 
-	if((trans = client_of_win(c->trans)))
+	if((trans = win2client(c->trans)))
 		strncpy(c->tags, trans->tags, sizeof(c->tags));
 	else if(tags.nitems)
 		strncpy(c->tags, (char *)tags.value, sizeof(c->tags));
@@ -170,7 +170,7 @@ selclient() {
 }
 
 Client *
-client_of_win(Window w) {
+win2client(Window w) {
 	Client *c;
 	for(c=client; c; c=c->next)
 		if(c->win == w) break;
@@ -178,7 +178,7 @@ client_of_win(Window w) {
 }
 
 Frame *
-frame_of_win(Window w) {
+win2frame(Window w) {
 	Client *c;
 	for(c=client; c; c=c->next)
 		if(c->framewin == w) break;

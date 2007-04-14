@@ -224,14 +224,15 @@ message_root(char *message)
 	uint n;
 
 	if(!strchr(message, ' ')) {
-		snprintf(buffer, BUFFER_SIZE, "%s ", message);
+		snprintf(buffer, sizeof(buffer), "%s ", message);
 		message = buffer;
 	}
 	if(!strcmp(message, "quit "))
 		srv.running = 0;
 	else if(!strncmp(message, "exec ", 5)) {
 		srv.running = 0;
-		execstr = estrdup(&message[5]);
+		execstr = emalloc(strlen(&message[5]) + sizeof("exec "));
+		sprintf(execstr, "exec %s", &message[5]);
 		message += strlen(message);
 	}
 	else if(!strncmp(message, "view ", 5))
@@ -283,12 +284,12 @@ char *
 read_root_ctl() {
 	uint i = 0;
 	if(screen->sel)
-		i += snprintf(&buffer[i], (BUFFER_SIZE - i), "view %s\n", screen->sel->name);
-	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "focuscolors %s\n", def.focuscolor.colstr);
-	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "normcolors %s\n", def.normcolor.colstr);
-	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "font %s\n", def.font.fontstr);
-	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "grabmod %s\n", def.grabmod);
-	i += snprintf(&buffer[i], (BUFFER_SIZE - i), "border %d\n", def.border);
+		i += snprintf(&buffer[i], (sizeof(buffer) - i), "view %s\n", screen->sel->name);
+	i += snprintf(&buffer[i], (sizeof(buffer) - i), "focuscolors %s\n", def.focuscolor.colstr);
+	i += snprintf(&buffer[i], (sizeof(buffer) - i), "normcolors %s\n", def.normcolor.colstr);
+	i += snprintf(&buffer[i], (sizeof(buffer) - i), "font %s\n", def.font.fontstr);
+	i += snprintf(&buffer[i], (sizeof(buffer) - i), "grabmod %s\n", def.grabmod);
+	i += snprintf(&buffer[i], (sizeof(buffer) - i), "border %d\n", def.border);
 	return buffer;
 }
 
@@ -316,7 +317,7 @@ write_event(char *format, ...) {
 	Ixp9Req *req;
 
 	va_start(ap, format);
-	vsnprintf(buffer, BUFFER_SIZE, format, ap);
+	vsnprintf(buffer, sizeof(buffer), format, ap);
 	va_end(ap);
 	if(!(len = strlen(buffer)))
 		return;

@@ -48,17 +48,20 @@ char * message_client(Client *c, char *message);
 void move_client(Client *c, char *arg);
 void size_client(Client *c, char *arg);
 Client *selclient();
-Frame *frame_of_win(Window w);
-Client *client_of_win(Window w);
+Frame *win2frame(Window w);
+Client *win2client(Window w);
 void update_client_grab(Client *c);
 void apply_rules(Client *c);
 void apply_tags(Client *c, const char *tags);
 
 /* column.c */
+Divide *win2div(Window w);
+void update_dividers();
+void update_divs();
+void draw_div(Divide *d);
 void arrange_column(Area *a, Bool dirty);
-void resize_column(Client *c, XRectangle *r);
-int column_mode_of_str(char *arg);
-char *str_of_column_mode(int mode);
+void resize_column(Frame *f, XRectangle *r);
+int str2colmode(const char *str);
 Area *new_column(View *v, Area *pos, uint w);
 
 /* draw.c */

@@ -355,6 +355,81 @@ do_managed_move(Client *c) {
 }
 
 void
+mouse_resizecol(Divide *d) {
+	XSetWindowAttributes wa;
+	XEvent ev;
+	Window cwin;
+	XRectangle r;
+	Divide *dp;
+	View *v;
+	Area *a;
+	uint w, minw;
+	int x;
+
+	v = screen->sel;
+
+	for(a = v->area->next, dp = divs; a; a = a->next, dp = dp->next)
+		if(dp->next == d) break;
+
+	/* Fix later */
+	if(dp == nil || d->next == nil)
+		return;
+
+	minw = screen->rect.width/NCOL;
+	
+	x = a->rect.x + minw;
+	w = r_east(&a->next->rect) - minw;
+	w -= x;
+
+	cwin = XCreateWindow(blz.dpy, blz.root,
+			x, 0, w, 1,
+			/* border */	0,
+			/* depth */	CopyFromParent,
+			/* class */		InputOnly,
+			/* visual */	CopyFromParent,
+			/* valuemask */	0,
+			/* attrib */		&wa
+			);
+	XMapWindow(blz.dpy, cwin);
+
+	if(XGrabPointer(
+		blz.dpy, blz.root,
+		/* owner_events*/	False,
+		/* event_mask */	MouseMask,
+		/* kbd, mouse */	GrabModeAsync, GrabModeAsync,
+		/* confine_to */		cwin,
+		/* cursor */		cursor[CurInvisible],
+		/* time */		CurrentTime
+		) != GrabSuccess)
+		goto done;
+
+	for(;;) {
+		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
+		switch (ev.type) {
+		case ButtonRelease:
+			r = a->rect;
+			r.width = x - r.x;
+			resize_column(a->frame, &r);
+
+			XUngrabPointer(blz.dpy, CurrentTime);
+			XSync(blz.dpy, False);
+			goto done;
+		case MotionNotify:
+			x = ev.xmotion.x_root;
+
+			XMoveWindow(blz.dpy, d->w, x, 0);
+			break;
+		case Expose:
+			dispatch_event(&ev);
+			break;
+		default: break;
+		}
+	}
+done:
+	XDestroyWindow(blz.dpy, cwin);
+}
+
+void
 do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 	BlitzAlign grav;
 	Window dummy;
@@ -428,8 +503,10 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 		return;
 	}
 	else if(!opaque) {
-		hrx = (double)(screen->rect.width + frect.width - 2 * labelh(&def.font)) / screen->rect.width;
-		hry = (double)(screen->rect.height  + frect.height - 3 * labelh(&def.font)) / screen->rect.height;
+		hrx = (double)(screen->rect.width + frect.width - 2 * labelh(&def.font))
+				/ screen->rect.width;
+		hry = (double)(screen->rect.height  + frect.height - 3 * labelh(&def.font))
+				/ screen->rect.height;
 		pt_x = r_east(&frect) - labelh(&def.font);
 		pt_y = r_south(&frect) - labelh(&def.font);
 		warppointer(pt_x / hrx, pt_y / hry);
@@ -451,7 +528,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 				xorborder(&frect);
 
 			if(!floating)
-				resize_column(c, &frect);
+				resize_column(c->sel, &frect);
 			else
 				resize_client(c, &frect);
 

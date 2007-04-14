@@ -120,6 +120,7 @@ focus_view(WMScreen *s, View *v) {
 	XGrabServer(blz.dpy);
 	assign_sel_view(v);
 	update_frame_selectors(v);
+	update_divs();
 	for(c=client; c; c=c->next)
 		if((f = c->sel)) {
 			if(f->view == v) {
@@ -130,6 +131,7 @@ focus_view(WMScreen *s, View *v) {
 				unmap_client(c, IconicState);
 			}
 		}
+
 	restack_view(v);
 	focus_area(v->sel);
 	draw_frames();
@@ -168,9 +170,10 @@ void
 restack_view(View *v) {
 	static Window *wins = nil;
 	static uint winssz = 0;
-	Area *a;
+	Divide *d;
 	Frame *f;
 	Client *c;
+	Area *a;
 	uint n, i;
 	
 	if(v != screen->sel)
@@ -179,31 +182,39 @@ restack_view(View *v) {
 	i = 0;
 	n = 0;
 
-	for(c=client; c; c=c->next)
+	for(c = client; c; c = c->next)
 		i++;
 	if(i == 0)
 		return;
+
+	for(a = v->area; a; a = a->next)
+		i++;
+
 	if(i >= winssz) {
 		winssz = 2 * i;
 		wins = erealloc(wins, sizeof(Window) * winssz);
 	}
 
 	wins[n++] = screen->barwin;
-	for(f=v->area->stack; f; f=f->snext)
+	for(f = v->area->frame; f; f = f->anext)
 		if(f->client->fullscreen) {
 			n--;
 			break;
 		}
+
 	for(f=v->area->stack; f; f=f->snext)
 		wins[n++] = f->client->framewin;
-	for(a=v->area->next; a; a=a->next) {
+
+	for(d = divs; d && d->mapped; d = d->next)
+		wins[n++] = d->w;
+
+	for(a=v->area->next; a; a=a->next)
 		if(a->frame) {
 			wins[n++] = a->sel->client->framewin;
 			for(f=a->frame; f; f=f->anext)
 				if(f != a->sel)
 					wins[n++] = f->client->framewin;
 		}
-	}
 	if(n)
 		XRestackWindows(blz.dpy, wins, n);
 }
@@ -294,7 +305,7 @@ view_index(View *v) {
 	Frame *f;
 	Area *a;
 
-	len = BUFFER_SIZE;
+	len = sizeof(buffer);
 	buf_i = 0;
 	for((a = v->area), (a_i = 0); a && len > 0; (a=a->next), (a_i++)) {
 		if(a->floating)
@@ -365,7 +376,7 @@ area_of_message(View *v, char *message, uint *next) {
 
 char *
 message_view(View *v, char *message) {
-	uint n, i;
+	int n, i;
 	Client *c;
 	Frame *f;
 	Area *a;
@@ -388,13 +399,16 @@ message_view(View *v, char *message) {
 	}
 	if(!strncmp(message, "colmode ", 8)) {
 		message += 8;
-		if(!(a = area_of_message(v, message, &n)) || a == v->area)
+		if((a = area_of_message(v, message, &n)) == nil
+		|| a->floating)
 			return Ebadvalue;
-		if((i = column_mode_of_str(&message[n])) == -1)
+		if((i = str2colmode(&message[n])) == -1)
 			return Ebadvalue;
+
 		a->mode = i;
 		arrange_column(a, True);
 		restack_view(v);
+
 		if(v == screen->sel)
 			focus_view(screen, v);
 		draw_frames();

@@ -47,17 +47,18 @@ buttonrelease(XEvent *e) {
 				return;
 			}
 	}
-	else if((f = frame_of_win(ev->window)))
+	else if((f = win2frame(ev->window)))
 		write_event("ClientClick 0x%x %d\n", f->client->win, ev->button);
 }
 
 static void
 buttonpress(XEvent *e) {
 	XButtonPressedEvent *ev;
+	Divide *d;
 	Frame *f;
 
 	ev = &e->xbutton;
-	if((f = frame_of_win(ev->window))) {
+	if((f = win2frame(ev->window))) {
 		if((ev->state & def.mod) == def.mod) {
 			switch(ev->button) {
 			case Button1:
@@ -80,9 +81,6 @@ buttonpress(XEvent *e) {
 				if(frame_to_top(f))
 					restack_view(f->view);
 
-				if(ingrabbox(f, ev->x, ev->y))
-					do_mouse_resize(f->client, False,
-						quadrant(&f->rect, ev->x_root, ev->y_root) & (EAST|WEST));
 				else if(ptinrect(ev->x, ev->y, &f->grabbox))
 					do_mouse_resize(f->client, True, CENTER);
 				else if(f->area->floating)
@@ -103,7 +101,10 @@ buttonpress(XEvent *e) {
 				write_event("ClientMouseDown 0x%x %d\n", f->client->win, ev->button);
 			}
 		}
-	}else
+	}
+	else if((d = win2div(ev->window)))
+		mouse_resizecol(d);
+	else
 		XAllowEvents(blz.dpy, ReplayPointer, ev->time);
 }
 
@@ -116,7 +117,7 @@ configurerequest(XEvent *e) {
 	Frame *f;
 
 	ev = &e->xconfigurerequest;
-	c = client_of_win(ev->window);
+	c = win2client(ev->window);
 	if(c) {
 		f = c->sel;
 		gravitate_client(c, True);
@@ -178,7 +179,7 @@ destroynotify(XEvent *e) {
 	Client *c;
 
 	ev = &e->xdestroywindow;
-	if((c = client_of_win(ev->window)))
+	if((c = win2client(ev->window)))
 		destroy_client(c);
 }
 
@@ -192,7 +193,7 @@ enternotify(XEvent *e) {
 	if(ev->mode != NotifyNormal)
 		return;
 
-	if((c = client_of_win(ev->window))) {
+	if((c = win2client(ev->window))) {
 		if(ev->detail != NotifyInferior) {
 			if(screen->focus != c) {
 				if(verbose) fprintf(stderr, "enter_notify(c) => %s\n", c->name);
@@ -201,7 +202,7 @@ enternotify(XEvent *e) {
 			set_cursor(c, cursor[CurNormal]);
 		}else if(verbose) fprintf(stderr, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
 	}
-	else if((f = frame_of_win(ev->window))) {
+	else if((f = win2frame(ev->window))) {
 		if(screen->focus != c) {
 			if(verbose) fprintf(stderr, "enter_notify(f) => %s\n", f->client->name);
 			if(f->area->floating || !f->collapsed)
@@ -261,7 +262,7 @@ focusin(XEvent *e) {
 		return;
 
 	old = screen->focus;
-	c = client_of_win(ev->window);
+	c = win2client(ev->window);
 	if(c) {
 		print_focus(c, c->name);
 		if(ev->mode == NotifyGrab)
@@ -307,7 +308,7 @@ focusout(XEvent *e) {
 	if(ev->mode == NotifyUngrab)
 		screen->hasgrab = nil;
 
-	c = client_of_win(ev->window);
+	c = win2client(ev->window);
 	if(c) {
 		if((ev->mode == NotifyWhileGrabbed)
 		&& (screen->hasgrab != &c_root)) {
@@ -331,14 +332,17 @@ focusout(XEvent *e) {
 static void
 expose(XEvent *e) {
 	XExposeEvent *ev;
-	static Frame *f;
+	Divide *d;
+	Frame *f;
 
 	ev = &e->xexpose;
 	if(ev->count == 0) {
 		if(ev->window == screen->barwin)
 			draw_bar(screen);
-		else if((f = frame_of_win(ev->window)))
+		else if((f = win2frame(ev->window)))
 			draw_frame(f);
+		else if((d = win2div(ev->window)))
+			draw_div(d);
 	}
 }
 
@@ -375,7 +379,7 @@ maprequest(XEvent *e) {
 				(StructureNotifyMask | PropertyChangeMask));
 		return;
 	}
-	if(!client_of_win(ev->window))
+	if(!win2client(ev->window))
 		manage_client(create_client(ev->window, &wa));
 }
 
@@ -385,7 +389,7 @@ motionnotify(XEvent *e) {
 	Frame *f;
 
 	ev = &e->xmotion;
-	if((f = frame_of_win(ev->window)))
+	if((f = win2frame(ev->window)))
 		set_frame_cursor(f, ev->x, ev->y);
 }
 
@@ -397,7 +401,7 @@ propertynotify(XEvent *e) {
 	ev = &e->xproperty;
 	if(ev->state == PropertyDelete)
 		return; /* ignore */
-	if((c = client_of_win(ev->window)))
+	if((c = win2client(ev->window)))
 		prop_client(c, ev->atom);
 }
 
@@ -407,7 +411,7 @@ mapnotify(XEvent *e) {
 	Client *c;
 
 	ev = &e->xmap;
-	if((c = client_of_win(ev->window)))
+	if((c = win2client(ev->window)))
 		if(c == selclient())
 			focus_client(c);
 }
@@ -418,7 +422,7 @@ unmapnotify(XEvent *e) {
 	Client *c;
 
 	ev = &e->xunmap;
-	if((c = client_of_win(ev->window)))
+	if((c = win2client(ev->window)))
 		if(ev->send_event || (c->unmapped-- == 0))
 			destroy_client(c);
 }

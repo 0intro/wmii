@@ -54,6 +54,7 @@ resize_bar(WMScreen *s) {
 	s->brect = s->rect;
 	s->brect.height = labelh(&def.font);
 	s->brect.y = s->rect.height - s->brect.height;
+
 	XMoveResizeWindow(blz.dpy, s->barwin, s->brect.x, s->brect.y, s->brect.width, s->brect.height);
 	XSync(blz.dpy, False);
 	draw_bar(s);

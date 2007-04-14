@@ -213,7 +213,7 @@ detach_from_area(Frame *f) {
 	else if(!a->frame) {
 		if(c->trans) {
 			/* focus area of transient, if possible */
-			Client *cl = client_of_win(c->trans);
+			Client *cl = win2client(c->trans);
 			if(cl && cl->frame) {
 				a = cl->sel->area;
 				if(a->view == v)

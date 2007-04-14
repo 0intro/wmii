@@ -7,7 +7,7 @@ main.c: ${ROOT}/mk/wmii.mk
 TARG =	wmii
 
 LIB =	${LIBIXP}
-EXLDFLAGS = -lm ${LIBX11}
+EXLDFLAGS = -lm ${LIBX11} -lXext
 EXCFLAGS = ${INCX11}
 OBJ =	area	\
 	bar	\

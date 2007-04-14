@@ -341,6 +341,7 @@ draw_frame(Frame *f) {
 	f->grabbox = br.rect;
 	draw_tile(&br);
 
+#if 0
 	if(!f->area->floating) {
 		XSetLineAttributes(blz.dpy, br.gc, 1, LineSolid, CapButt, JoinMiter);
 		h = labelh(&def.font) / 3;
@@ -364,6 +365,7 @@ draw_frame(Frame *f) {
 			XDrawLines(blz.dpy, br.drawable, br.gc, pt, 2, CoordModeOrigin);
 		}
 	}
+#endif
 
 	XCopyArea(
 		/* display */	blz.dpy,
