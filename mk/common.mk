@@ -10,9 +10,6 @@ mkdirs:
 		mkdir -pm 0755 $$i; \
 	done
 
-install: ${HFILES:.h=.install}
-uninstall: ${HFILES:.h=.uninstall}
-
 cleandep:
 	rm .depend 2>/dev/null || true
 

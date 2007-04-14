@@ -17,6 +17,8 @@ oneclean:
 		rm $$i; \
 	done 2>/dev/null || true
 
+${OFILES}: ${HFILES}
+
 ${PROG}: ${OFILES} ${LIB}
 	${LINK} $@ ${OFILES} ${LIB}
 

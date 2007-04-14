@@ -691,7 +691,7 @@ move_client(Client *c, char *arg) {
 	new.x += x;
 	new.y += y;
 	if(!f->area->floating)
-		resize_column(f->client, &new);
+		resize_column(f->client->sel, &new);
 	else
 		resize_client(f->client, &new);
 }
@@ -707,7 +707,7 @@ size_client(Client *c, char *arg) {
 	new.width += w;
 	new.height += h;
 	if(!f->area->floating)
-		resize_column(f->client, &new);
+		resize_column(f->client->sel, &new);
 	else
 		resize_client(f->client, &new);
 }

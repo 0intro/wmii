@@ -288,9 +288,7 @@ ingrabbox(Frame *f, int x, int y) {
 void
 draw_frame(Frame *f) {
 	BlitzBrush br = { 0 };
-	XPoint pt[3];
 	Frame *tf;
-	int h;
 
 	if(f->view != screen->sel)
 		return;

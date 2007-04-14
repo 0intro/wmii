@@ -5,6 +5,7 @@ include ${ROOT}/mk/wmii.mk
 main.c: ${ROOT}/mk/wmii.mk
 
 TARG =	wmii
+HFILES=	dat.h fns.h
 
 LIB =	${LIBIXP}
 EXLDFLAGS = -lm ${LIBX11} -lXext

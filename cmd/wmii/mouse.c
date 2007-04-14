@@ -364,7 +364,7 @@ mouse_resizecol(Divide *d) {
 	View *v;
 	Area *a;
 	uint w, minw;
-	int x;
+	int x, y;
 
 	v = screen->sel;
 
@@ -376,13 +376,14 @@ mouse_resizecol(Divide *d) {
 		return;
 
 	minw = screen->rect.width/NCOL;
-	
+
+	querypointer(blz.root, &x, &y);
 	x = a->rect.x + minw;
 	w = r_east(&a->next->rect) - minw;
 	w -= x;
 
 	cwin = XCreateWindow(blz.dpy, blz.root,
-			x, 0, w, 1,
+			x, y, w, 1,
 			/* border */	0,
 			/* depth */	CopyFromParent,
 			/* class */		InputOnly,
