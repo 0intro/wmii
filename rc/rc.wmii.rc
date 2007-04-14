@@ -4,11 +4,6 @@
 oldpath=$path
 path=($PLAN9/bin $path)
 
-if(echo $0 | grep -vs '/rc.wmii$') {
-	echo Fatal: This file should only be run as rc.wmii >[1=2]
-	exit badname
-}
-
 MODKEY=Mod1
 UP=k
 DOWN=j
@@ -39,6 +34,23 @@ fn config_whatis {
 	prog=$1; shift
 	echo `{{path=$confpath whatis $prog} | grep -v '=|^fn '} $*
 }
+
+if(echo $0 | grep -vs '/rc.wmii$') {
+	echo Fatal: This file should only be run as rc.wmii >[1=2]
+	exit badname
+}
+
+if(! text -x $PLAN9/read) {
+	echo Can't find the '''read''' command >[1=2]
+	xmessage -file - <<! &
+	exec `{config_whatis wmiirc}
+}
+rc.wmii can't run:
+	You have a Plan 9 utilities installed, but are missing the 'read' command.
+	This likely means that you have an out-of-date 9base installed.
+
+wmiirc will be run instead.
+!
 
 # Source Variables, &c
 local = `{config_whatis rc.wmii.local}
