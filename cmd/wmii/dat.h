@@ -79,7 +79,7 @@ enum { Coldefault, Colstack, Colmax };
 
 /* Cursor */
 enum { CurNormal, CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
-	CurMove, CurInput, CurInvisible, CurLast };
+	CurDHArrow, CurMove, CurInput, CurInvisible, CurLast };
 
 enum { NCOL = 16 };
 enum { WM_PROTOCOL_DELWIN = 1 };

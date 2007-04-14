@@ -132,6 +132,7 @@ void init_lock_keys();
 ulong mod_key_of_str(char *val);
 
 /* mouse.c */
+void mouse_resizecol(Divide *d);
 void do_mouse_resize(Client *c, Bool grabbox, BlitzAlign align);
 void grab_mouse(Window w, ulong mod, ulong button);
 void ungrab_mouse(Window w, ulong mod, uint button);

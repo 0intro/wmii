@@ -33,7 +33,7 @@ str2colmode(const char *str) {
 	int i;
 	
 	for(i = 0; i < nelem(modes); i++)
-		if(strcasecmp(str, modes[i]))
+		if(!strcasecmp(str, modes[i]))
 			return i;
 	return -1;
 }
@@ -102,6 +102,7 @@ get_div(Divide **dp) {
 
 	wa.override_redirect = True;
 	wa.background_pixmap = ParentRelative;
+	wa.cursor = cursor[CurDHArrow];
 	wa.event_mask =
 		  SubstructureRedirectMask
 		| ExposureMask
@@ -118,7 +119,7 @@ get_div(Divide **dp) {
 		/* depth */	DefaultDepth(blz.dpy, blz.screen),
 		/* class */	CopyFromParent,
 		/* visual */	DefaultVisual(blz.dpy, blz.screen),
-		/* valuemask */	CWOverrideRedirect | CWEventMask | CWBackPixmap,
+		/* valuemask */	CWOverrideRedirect | CWEventMask | CWBackPixmap | CWCursor,
 		/* attributes */&wa
 		);
 

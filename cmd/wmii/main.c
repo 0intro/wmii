@@ -219,6 +219,7 @@ init_cursors() {
 	create_cursor(CurSECorner, XC_bottom_right_corner);
 	create_cursor(CurSWCorner, XC_bottom_left_corner);
 	create_cursor(CurMove, XC_fleur);
+	create_cursor(CurDHArrow, XC_sb_h_double_arrow);
 	create_cursor(CurInput, XC_xterm);
 
 	XAllocNamedColor(blz.dpy, DefaultColormap(blz.dpy, blz.screen),
