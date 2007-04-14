@@ -357,7 +357,6 @@ mouse_resizecol(Divide *d) {
 	XSetWindowAttributes wa;
 	XEvent ev;
 	Window cwin;
-	XRectangle r;
 	Divide *dp;
 	View *v;
 	Area *a;
@@ -406,9 +405,7 @@ mouse_resizecol(Divide *d) {
 		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			r = a->rect;
-			r.width = x - r.x;
-			resize_column(a->frame, &r);
+			resize_column(a, x - a->rect.x);
 
 			XUngrabPointer(blz.dpy, CurrentTime);
 			XSync(blz.dpy, False);
@@ -526,7 +523,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 				xorborder(&frect);
 
 			if(!floating)
-				resize_column(c->sel, &frect);
+				resize_colframe(f, &frect);
 			else
 				resize_client(c, &frect);
 

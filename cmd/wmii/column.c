@@ -2,7 +2,9 @@
  * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#include <assert.h>
 #include <math.h>
+#include <stdio.h>
 #include <string.h>
 #include <X11/extensions/shape.h>
 #include <util.h>
@@ -342,6 +344,7 @@ arrange_column(Area *a, Bool dirty) {
 		}
 		goto resize;
 	default:
+		assert(!"Can't happen");
 		break;
 	}
 	scale_column(a);
@@ -359,119 +362,112 @@ resize:
 	}
 }
 
-static void
-match_horiz(Area *a, XRectangle *r) {
-	Frame *f;
+void
+resize_column(Area *a, int w) {
+	Area *an;
+	int dw;
 
-	for(f=a->frame; f; f=f->anext) {
-		f->rect.x = r->x;
-		f->rect.width = r->width;
-		resize_frame(f, &f->rect);
+	an = a->next;
+	assert(an != nil);
+
+	dw = w - a->rect.width;
+	a->rect.width += dw;
+	an->rect.width -= dw;
+
+	arrange_view(a->view);
+	focus_view(screen, a->view);
+}
+
+static void
+resize_colframeh(Frame *f, XRectangle *r) {
+	Area *a;
+	Frame *fa, *fb;
+	uint minh;
+	int dy, dh, maxy;
+
+	a = f->area;
+	maxy = r_south(r);
+
+	minh = 2 * labelh(&def.font);
+
+	fa = f->anext;
+	for(fb = a->frame; fb; fb = fb->anext)
+		if(fb->anext == f) break;
+
+	if(fb)
+		r->y = max(r->y, fb->rect.y + minh);
+	else
+		r->y = a->rect.y;
+
+	if(fa) {
+		if(maxy > r_south(&fa->rect) - minh)
+			maxy = r_south(&fa->rect) - minh;
 	}
+	else
+		if(r_south(r) >= r_south(&a->rect))
+			maxy = r_south(&a->rect) - 1;
+
+	dy = f->rect.y - r->y;
+	dh = maxy - r_south(&f->rect);
+	if(fb) {
+		fb->rect.height -= dy;
+		resize_frame(fb, &fb->rect);
+	}
+	if(fa) {
+		fa->rect.height -= dh;
+		resize_frame(fa, &fa->rect);
+	}
+
+	f->rect.height = maxy - r->y;
+	resize_frame(f, &f->rect);
 }
 
 void
-resize_column(Frame *f, XRectangle *new) {
-	Area *west, *east, *a;
-	Frame *north, *south;
+resize_colframe(Frame *f, XRectangle *r) {
+	Area *a, *al, *ar;
 	View *v;
-	BlitzAlign sticky;
-	uint min_height;
-	uint min_width;
+	uint minw;
+	int dx, dw, maxx;
 
 	a = f->area;
 	v = a->view;
-	min_height = 2 * labelh(&def.font);
-	min_width = screen->rect.width/NCOL;
+	maxx = r_east(r);
 
-	for(west=v->area->next; west; west=west->next)
-		if(west->next == a) break;
-	east = a->next;
-	for(north=a->frame; north; north=north->anext)
-		if(north->anext == f) break;
-	south = f->anext;
-	/* validate (and trim if necessary) horizontal resize */
-	sticky = get_sticky(&f->rect, new);
-	if(new->width < min_width) {
-		if(sticky & EAST)
-			new->x = r_east(&a->rect) - min_width;
-		new->width = min_width;
+	minw = screen->rect.width/NCOL;
+
+	ar = a->next;
+	for(al = v->area->next; al; al = al->next)
+		if(al->next == a) break;
+
+	if(al)
+		r->x = max(r->x, al->rect.x + minw);
+	else
+		r->x = max(r->x, 0);
+
+	if(ar) {
+		if(maxx >= r_east(&ar->rect) - minw)
+			maxx = r_east(&ar->rect) - minw;
 	}
-	if(west && !(sticky & WEST)) {
-		if(new->x < 0 || new->x < (west->rect.x + min_width)) {
-			new->width -= (west->rect.x + min_width) - new->x;
-			new->x = west->rect.x + min_width;
-		}
-	} else {
-		new->width += new->x - a->rect.x;
-		new->x = a->rect.x;
+	else
+		if(maxx > screen->rect.width)
+			maxx = screen->rect.width - 1;
+
+	dx = a->rect.x - r->x;
+	dw = maxx - r_east(&a->rect);
+	if(dx) {
+		al->rect.width -= dx;
+		arrange_column(al, False);
 	}
-	if(east && !(sticky & EAST)) {
-		if(r_east(new) > r_east(&east->rect) - min_width)
-			new->width = r_east(&east->rect) - min_width - new->x;
-	} else
-		new->width = r_east(&a->rect) - new->x;
-	if(new->width < min_width)
-		goto AfterHorizontal;
-	/* horizontal resize */
-	sticky = get_sticky(&a->rect, new);
-	if(west && !(sticky & WEST)) {
-		west->rect.width = new->x - west->rect.x;
-		a->rect.width += a->rect.x - new->x;
-		a->rect.x = new->x;
-		match_horiz(a, &a->rect);
-		match_horiz(west, &west->rect);
-		//relax_column(west);
+	if(dw) {
+		ar->rect.width -= dw;
+		arrange_column(ar, False);
 	}
-	if(east && !(sticky & EAST)) {
-		east->rect.width -= r_east(new) - east->rect.x;
-		east->rect.x = r_east(new);
-		a->rect.width = r_east(new) - a->rect.x;
-		match_horiz(a, &a->rect);
-		match_horiz(east, &east->rect);
-	}
-AfterHorizontal:
-	/* skip vertical resize unless the column is in equal mode */
-	if(a->mode != Coldefault)
-		goto AfterVertical;
-	/* validate (and trim if necessary) vertical resize */
-	sticky = get_sticky(&f->rect, new);
-	if(new->height < min_height) {
-		if((f->rect.height < min_height) && sticky & (NORTH|SOUTH))
-			goto AfterVertical;
-		if(sticky & SOUTH)
-			new->y = r_south(&f->rect) - min_height;
-		new->height = min_height;
-	}
-	if(north && !(sticky & NORTH))
-		if(new->y < 0 || new->y < (north->rect.y + min_height)) {
-			new->height -= (north->rect.y + min_height) - new->y;
-			new->y = north->rect.y + min_height;
-		}
-	if(south && !(sticky & SOUTH)) {
-		if(r_south(new) > r_south(&south->rect) - min_height)
-			new->height = r_south(&south->rect) - min_height - new->y;
-	}
-	if(new->height < min_height)
-		goto AfterVertical;
-	/* vertical resize */
-	if(north && !(sticky & NORTH)) {
-		north->rect.height = new->y - north->rect.y;
-		f->rect.height += f->rect.y - new->y;
-		f->rect.y = new->y;
-		resize_frame(north, &north->rect);
-		resize_frame(f, &f->rect);
-	}
-	if(south && !(sticky & SOUTH)) {
-		south->rect.height -= r_south(new) - south->rect.y;
-		south->rect.y = r_south(new);
-		f->rect.y = new->y;
-		f->rect.height = new->height;
-		resize_frame(f, &f->rect);
-		resize_frame(south, &south->rect);
-	}
-AfterVertical:
-	arrange_column(a, False);
+
+	resize_colframeh(f, r);
+
+	a->rect.width = maxx - r->x;
+	arrange_view(a->view);
+
 	focus_view(screen, v);
 }
 
