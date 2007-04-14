@@ -370,7 +370,7 @@ mouse_resizecol(Divide *d) {
 		if(dp->next == d) break;
 
 	/* Fix later */
-	if(a || a->next == nil)
+	if(a == nil || a->next == nil)
 		return;
 
 	minw = screen->rect.width/NCOL;
