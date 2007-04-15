@@ -454,11 +454,11 @@ resize_colframe(Frame *f, XRectangle *r) {
 
 	dx = a->rect.x - r->x;
 	dw = maxx - r_east(&a->rect);
-	if(dx) {
+	if(al) {
 		al->rect.width -= dx;
 		arrange_column(al, False);
 	}
-	if(dw) {
+	if(ar) {
 		ar->rect.width -= dw;
 		arrange_column(ar, False);
 	}
