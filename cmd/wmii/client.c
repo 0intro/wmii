@@ -11,6 +11,7 @@
 #include "fns.h"
 
 static void update_client_name(Client *c);
+static Handlers handlers;
 
 static char Ebadcmd[] = "bad command",
 	    Ebadvalue[] = "bad value";
@@ -64,7 +65,10 @@ create_client(XWindow w, XWindowAttributes *wa) {
 			| CWEventMask
 			| CWBackPixmap
 			| CWBackingStore);
-	XSync(display, False);
+	c->framewin->aux = c;
+	c->win.aux = c;
+	sethandler(c->framewin, &framehandler);
+	sethandler(&c->win, &handlers);
 
 	for(t=&client ;; t=&(*t)->next)
 		if(!*t) {
@@ -106,8 +110,9 @@ destroy_client(Client *c) {
 	reparent_client(c, &scr.root, c->rect.min);
 
 	destroywindow(c->framewin);
-	XSync(display, False);
+	sethandler(&c->win, nil);
 
+	XSync(display, False);
 	XSetErrorHandler(wmii_error_handler);
 	XUngrabServer(display);
 	flushevents(EnterWindowMask, False);
@@ -149,6 +154,146 @@ manage_client(Client *c) {
 		focus(c, True);
 	flushevents(EnterWindowMask, False);
 }
+
+/* Handlers */
+static void
+configreq_event(Window *w, XConfigureRequestEvent *e) {
+	Rectangle *frect;
+	Frame *f;
+	Client *c;
+
+	c = w->aux;
+	f = c->sel;
+
+	gravitate_client(c, True);
+	if(e->value_mask & CWX)
+		c->rect.min.x = e->x;
+	if(e->value_mask & CWY)
+		c->rect.min.y = e->y;
+	if(e->value_mask & CWWidth)
+		c->rect.max.x = c->rect.min.x + e->width;
+	if(e->value_mask & CWHeight)
+		c->rect.max.y = c->rect.min.y + e->height;
+	if(e->value_mask & CWBorderWidth)
+		c->border = e->border_width;
+	gravitate_client(c, False);
+
+	if((Dx(c->rect) == Dx(screen->rect))
+	&& (Dy(c->rect) == Dy(screen->rect))) {
+		c->fullscreen = True;
+		if(c->sel) {
+			if(!c->sel->area->floating)
+				send_to_area(c->sel->view->area, c->sel);
+			focus_client(c);
+			restack_view(c->sel->view);
+		}
+	}
+
+	if(c->sel->area->floating)
+		frect=&c->sel->rect;
+	else
+		frect=&c->sel->revert;
+
+	*frect = insetrect(c->rect, -def.border);
+	frect->min.y -= labelh(def.font);
+
+	if(c->sel->area->floating || c->fullscreen)
+		resize_client(c, frect);
+	else
+		configure_client(c);
+}
+
+static void
+destroy_event(Window *w, XDestroyWindowEvent *e) {
+	destroy_client(w->aux);
+}
+
+static void
+enter_event(Window *w, XCrossingEvent *e) {
+	Client *c;
+	
+	c = w->aux;
+	if(e->detail != NotifyInferior) {
+		if(screen->focus != c) {
+			if(verbose) fprintf(stderr, "enter_notify(c) => %s\n", c->name);
+			focus(c, False);
+		}
+		set_cursor(c, cursor[CurNormal]);
+	}else if(verbose) fprintf(stderr, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
+}
+
+static void
+focusin_event(Window *w, XFocusChangeEvent *e) {
+	Client *c, *old;
+
+	c = w->aux;
+
+	//print_focus(c, c->name);
+	if(e->mode == NotifyGrab)
+		screen->hasgrab = c;
+
+	old = screen->focus;
+	screen->focus = c;
+	if(c != old) {
+		update_client_grab(c);
+		if(c->sel)
+			draw_frame(c->sel);
+		if(old && old->sel)
+			draw_frame(old->sel);
+	}
+}
+
+static void
+focusout_event(Window *w, XFocusChangeEvent *e) {
+	Client *c;
+	
+	c = w->aux;
+
+	if((e->mode == NotifyWhileGrabbed) && (screen->hasgrab != &c_root)) {
+		if((screen->focus)
+		&& (screen->hasgrab != screen->focus))
+			screen->hasgrab = screen->focus;
+		if(screen->hasgrab == c)
+			return;
+	}else if(e->mode != NotifyGrab) {
+		if(screen->focus == c) {
+			//print_focus(&c_magic, "<magic>");
+			screen->focus = &c_magic;
+		}
+		update_client_grab(c);
+		if(c->sel)
+			draw_frame(c->sel);
+	}
+}
+
+static void
+unmap_event(Window *w, XUnmapEvent *e) {
+	Client *c;
+	
+	c = w->aux;
+	if(!e->send_event)
+		c->unmapped--;
+	destroy_client(c);
+}
+
+static void
+map_event(Window *w, XMapEvent *e) {
+	Client *c;
+	
+	c = w->aux;
+	if(c == selclient())
+		focus_client(c);
+}
+
+static Handlers handlers = {
+	.configreq = configreq_event,
+	.destroy = destroy_event,
+	.enter = enter_event,
+	.focusin = focusin_event,
+	.focusout = focusout_event,
+	.map = map_event,
+	.unmap = unmap_event,
+};
 
 Client *
 selclient() {

@@ -472,27 +472,7 @@ main(int argc, char *argv[]) {
 		setwinattr(&scr.root, &wa,
 				  CWEventMask
 				| CWCursor);
-
-		wa.override_redirect = 1;
-		wa.background_pixmap = ParentRelative;
-		wa.event_mask =
-			  ExposureMask
-			| ButtonReleaseMask
-			| FocusChangeMask
-			| SubstructureRedirectMask
-			| SubstructureNotifyMask;
-
-		s->brect = s->rect;
-		s->brect.min.y = s->brect.max.y - labelh(def.font);
-
-		s->barwin = createwindow(&scr.root, s->brect, scr.depth, InputOutput, &wa,
-				  CWOverrideRedirect
-				| CWBackPixmap
-				| CWEventMask);
-
-		XSync(display, False);
-		draw_bar(s);
-		XMapRaised(display, s->barwin->w);
+		initbar(s);
 	}
 
 	screen = &screens[0];

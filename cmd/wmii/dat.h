@@ -211,6 +211,8 @@ Divide *divs;
 Client c_magic;
 Client c_root;
 
+Handlers framehandler;
+
 char buffer[8092];
 
 /* IXP */

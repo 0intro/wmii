@@ -12,6 +12,7 @@
 
 static Image *divimg, *divmask;
 static CTuple divc;
+static Handlers divhandler;
 
 char *modes[] = {
 	[Coldefault] =	"default",
@@ -56,9 +57,11 @@ get_div(Divide **dp) {
 		| ButtonPressMask
 		| ButtonReleaseMask;
 	d->w = createwindow(&scr.root, Rect(0, 0, 1, 1), scr.depth, InputOutput, &wa,
-			  CWOverrideRedirect
-			| CWEventMask
-			| CWCursor);
+		  CWOverrideRedirect
+		| CWEventMask
+		| CWCursor);
+	d->w->aux = d;
+	sethandler(d->w, &divhandler);
 
 	*dp = d;
 	return d;
@@ -158,6 +161,28 @@ draw_div(Divide *d) {
 	copyimage(d->w, divimg->r, divimg, ZP);
 	setshapemask(d->w, divmask, ZP);
 }
+
+/* Div Handlers */
+static void
+bdown_event(Window *w, XButtonEvent *e) {
+	Divide *d;
+	
+	d = w->aux;
+	mouse_resizecol(d);
+}
+
+static void
+expose_event(Window *w, XExposeEvent *e) {
+	Divide *d;
+	
+	d = w->aux;
+	draw_div(d);
+}
+
+static Handlers divhandler = {
+	.bdown = bdown_event,
+	.expose = expose_event,
+};
 
 Area *
 new_column(View *v, Area *pos, uint w) {

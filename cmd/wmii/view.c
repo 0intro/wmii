@@ -215,7 +215,7 @@ restack_view(View *v) {
 	for(f=v->area->stack; f; f=f->snext)
 		wins[n++] = f->client->framewin->w;
 
-	for(d = divs; d && d->mapped; d = d->next)
+	for(d = divs; d && d->w->mapped; d = d->next)
 		wins[n++] = d->w->w;
 
 	for(a=v->area->next; a; a=a->next)

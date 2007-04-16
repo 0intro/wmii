@@ -8,7 +8,32 @@
 #include "dat.h"
 #include "fns.h"
 
-Bar *free_bars = nil;
+static Handlers handlers;
+static Bar *free_bars;
+
+void
+initbar(WMScreen *s) {
+	WinAttr wa;
+
+	s->brect = s->rect;
+	s->brect.min.y = s->brect.max.y - labelh(def.font);
+
+	wa.override_redirect = 1;
+	wa.background_pixmap = ParentRelative;
+	wa.event_mask =
+		  ExposureMask
+		| ButtonReleaseMask
+		| FocusChangeMask
+		| SubstructureRedirectMask
+		| SubstructureNotifyMask;
+
+	s->barwin = createwindow(&scr.root, s->brect, scr.depth, InputOutput, &wa,
+			  CWOverrideRedirect
+			| CWBackPixmap
+			| CWEventMask);
+	sethandler(s->barwin, &handlers);
+	mapwin(s->barwin);
+}
 
 Bar *
 create_bar(Bar **bp, char *name) {
@@ -147,3 +172,29 @@ bar_of_name(Bar *bp, const char *name) {
 			break;
 	return b;
 }
+
+static void
+bup_event(Window *w, XButtonPressedEvent *e) {
+	Bar *b;
+
+	for(b=screen->bar[BarLeft]; b; b=b->next)
+		if(ptinrect(Pt(e->x, e->y), b->r)) {
+			write_event("LeftBarClick %d %s\n", e->button, b->name);
+			return;
+		}
+	for(b=screen->bar[BarRight]; b; b=b->next)
+		if(ptinrect(Pt(e->x, e->y), b->r)) {
+			write_event("RightBarClick %d %s\n", e->button, b->name);
+			return;
+		}
+}
+
+static void
+expose_event(Window *w, XExposeEvent *e) {
+	draw_bar(screen);
+}
+
+static Handlers handlers = {
+	.bup = bup_event,
+	.expose = expose_event,
+};

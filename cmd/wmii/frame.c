@@ -102,6 +102,101 @@ client2frame(Frame *f, Rectangle r) {
 	return r;
 }
 
+/* Handlers */
+static void
+bup_event(Window *w, XButtonEvent *e) {
+	write_event("ClientClick 0x%x %d\n", (uint)w->w, e->button);
+}
+
+static void
+bdown_event(Window *w, XButtonEvent *e) {
+	Frame *f;
+	Client *c;
+
+	c = w->aux;
+	f = c->sel;
+
+	if((e->state & def.mod) == def.mod) {
+		switch(e->button) {
+		case Button1:
+			do_mouse_resize(c, False, CENTER);
+			focus(c, True);
+			frame_to_top(f);
+			focus(c, True);
+			break;
+		case Button3:
+			do_mouse_resize(c, False, quadrant(f->rect, Pt(e->x_root, e->y_root)));
+			frame_to_top(f);
+			focus(c, True);
+			break;
+		default: break;
+			XAllowEvents(display, ReplayPointer, e->time);
+		}
+	}else{
+		if(e->button == Button1) {
+			if(frame_to_top(f))
+				restack_view(f->view);
+
+			else if(ptinrect(Pt(e->x, e->y), f->grabbox))
+				do_mouse_resize(c, True, CENTER);
+			else if(f->area->floating)
+				if(!e->subwindow && !ptinrect(Pt(e->x, e->y), f->titlebar))
+					do_mouse_resize(c, False, quadrant(f->rect, Pt(e->x_root, e->y_root)));
+
+			if(f->client != selclient())
+				focus(c, True);
+		}
+		if(e->subwindow)
+			XAllowEvents(display, ReplayPointer, e->time);
+		else {
+			/* Ungrab so a menu can receive events before the button is released */
+			XUngrabPointer(display, e->time);
+			XSync(display, False);
+
+			write_event("ClientMouseDown 0x%x %d\n", f->client->win.w, e->button);
+		}
+	}
+}
+
+static void
+enter_event(Window *w, XCrossingEvent *e) {
+	Client *c;
+	Frame *f;
+
+	c = w->aux;
+	f = c->sel;
+	if(screen->focus != c) {
+		if(verbose) fprintf(stderr, "enter_notify(f) => %s\n", f->client->name);
+		if(f->area->floating || !f->collapsed)
+			focus(f->client, False);
+	}
+	set_frame_cursor(f, Pt(e->x, e->y));
+}
+
+static void
+expose_event(Window *w, XExposeEvent *e) {
+	Client *c;
+	
+	c = w->aux;
+	draw_frame(c->sel);
+}
+
+static void
+motion_event(Window *w, XMotionEvent *e) {
+	Client *c;
+	
+	c = w->aux;
+	set_frame_cursor(c->sel, Pt(e->x, e->y));
+}
+
+Handlers framehandler = {
+	.bup = bup_event,
+	.bdown = bdown_event,
+	.enter = enter_event,
+	.expose = expose_event,
+	.motion = motion_event,
+};
+
 void
 resize_frame(Frame *f, Rectangle r) {
 	Align stickycorner;
@@ -115,7 +210,8 @@ resize_frame(Frame *f, Rectangle r) {
 	apply_sizehints(c, &f->crect, f->area->floating, True, stickycorner);
 
 	if(Dx(r) <= 0 || Dy(r) <= 0)
-		asm("int $3");
+		fprintf(stderr, "Badness: Frame rect: %d,%d %dx%d\n",
+			r.min.x, r.min.y, Dx(r), Dy(r));
 
 	if(f->area->floating)
 		f->rect = f->crect;

@@ -17,6 +17,7 @@ void detach_from_area(Frame*);
 Client *area_selclient(Area*);
 
 /* bar.c */
+void initbar(WMScreen *s);
 Bar *create_bar(Bar **b_link, char *name);
 void destroy_bar(Bar **b_link, Bar*);
 void draw_bar(WMScreen *s);
@@ -165,6 +166,8 @@ void reshapewin(Window *w, Rectangle r);
 void movewin(Window *w, Point pt);
 int mapwin(Window *w);
 int unmapwin(Window *w);
+Handlers* sethandler(Window*, Handlers*);
+Window* findwin(XWindow w);
 uint winprotocols(Window *w);
 void setshapemask(Window *dst, Image *src, Point pt);
 void border(Image *dst, Rectangle r, int w, ulong col);
