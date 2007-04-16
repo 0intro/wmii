@@ -193,7 +193,7 @@ scale_column(Area *a) {
 
 	minh = labelh(def.font);
 	colh = labelh(def.font);
-	uncolh = minh + frame_delta_h();
+	uncolh = minh + colh +1;
 
 	ncol = 0;
 	nuncol = 0;
@@ -234,10 +234,10 @@ scale_column(Area *a) {
 			if(j < 0 && f != a->sel)
 				f->collapsed = True;
 			else {
-				if(Dx(f->crect) <= minh)
-					f->crect.max.x = 1;
+				if(Dy(f->crect) <= minh)
+					f->crect.max.y = 1;
 				else
-					f->crect.max.x = minh;
+					f->crect.max.y -= minh;
 				dy += Dy(f->crect);
 			}
 			j--;
@@ -259,24 +259,24 @@ scale_column(Area *a) {
 	}
 
 	i = nuncol;
-	for(f=a->frame; f; f=f->anext) {
-		f->rect.max.x = Dx(a->rect);
-		if(!f->collapsed) {
-			i--;
-			if(i)
-				f->rect.max.y = (float)Dy(f->crect) / dy * surplus;
-			else
-				f->rect.max.y = surplus;
-			f->rect.max.y += minh + frame_delta_h();
-
-			apply_sizehints(f->client, &f->rect, False, True, NWEST);
-			dy -= Dy(f->crect);
-			resize_frame(f, f->rect);
-
-			surplus -= Dy(f->rect) - frame_delta_h() - minh;
-		}else
-			f->rect.max.y = labelh(def.font);
-	}
+		for(f=a->frame; f; f=f->anext) {
+			f->rect.max.x = Dx(a->rect);
+			if(f->collapsed)
+				f->rect.max.y = labelh(def.font);
+			else {
+				if(--i != 0)
+					f->rect.max.y = (float)Dy(f->crect) / dy * surplus;
+				else
+					f->rect.max.y = surplus;
+				f->rect.max.y += uncolh;
+	
+				apply_sizehints(f->client, &f->rect, False, True, NWEST);
+				dy -= Dy(f->rect) - uncolh;
+				surplus -= Dy(f->rect) - uncolh;
+	
+				resize_frame(f, f->rect);
+			}
+		}
 
 	yoff = a->rect.min.y;
 	i = nuncol;

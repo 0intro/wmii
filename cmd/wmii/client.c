@@ -494,13 +494,14 @@ apply_sizehints(Client *c, Rectangle *r, Bool floating, Bool frame, Align sticky
 	XSizeHints *s;
 	Rectangle r2;
 	uint bw, bh;
-	
+
+	bw = 0;
+	bh = 0;
 	s = &c->size;
+
 	r2 = rectsubpt(*r, r->min);
 	if(frame)
 		r2 = frame2client(c->sel, r2);
-	bw = 0;
-	bh = 0;
 
 	if(s->flags & PMinSize) {
 		bw = s->min_width;

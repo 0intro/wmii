@@ -183,7 +183,7 @@ find_droppoint(Frame *frame, int x, int y, Rectangle *r, Bool do_move) {
 	r->min.y = screen->rect.min.y;
 	r->max.y = screen->brect.min.y;
 	if(x < (a->rect.min.x + labelh(def.font))) {
-		r->min.x = a->rect.min.x + Delta;
+		r->min.x = a->rect.min.x - Delta;
 		r->max.x = a->rect.min.x + Delta;
 		if(do_move) {
 			a = new_column(v, a_prev, 0);
@@ -193,7 +193,7 @@ find_droppoint(Frame *frame, int x, int y, Rectangle *r, Bool do_move) {
 		return;
 	}
 	if(x > (a->rect.max.x - labelh(def.font))) {
-		r->min.x = a->rect.max.x + Delta;
+		r->min.x = a->rect.max.x - Delta;
 		r->max.x = a->rect.max.x + Delta;
 		if(do_move) {
 			a = new_column(v, a, 0);
@@ -343,7 +343,7 @@ mouse_resizecol(Divide *d) {
 
 	querypointer(&scr.root, &x, &y);
 	x = a->rect.min.x + minw;
-	x2 = x + a->next->rect.max.x - minw;
+	x2 = a->next->rect.max.x - minw;
 
 	cwin = createwindow(&scr.root, Rect(x, y, x2, y+1), 0, InputOnly, &wa, 0);
 	mapwin(cwin);

@@ -83,7 +83,7 @@ frame2client(Frame *f, Rectangle r) {
 		r.max.y -= frame_delta_h();
 	}else {
 		r.max.x -= 2;
-		r.max.y -= labelh(def.font) - 1;
+		r.max.y -= labelh(def.font) + 1;
 	}
 	r.max.x = max(r.min.x+1, r.max.x);
 	r.max.y = max(r.min.y+1, r.max.y);
@@ -96,8 +96,8 @@ client2frame(Frame *f, Rectangle r) {
 		r.max.x += def.border * 2;
 		r.max.y += frame_delta_h();
 	}else {
-		r.max.y += 2;
-		r.max.x +=labelh(def.font) + 1;
+		r.max.x += 2;
+		r.max.y += labelh(def.font) + 1;
 	}
 	return r;
 }

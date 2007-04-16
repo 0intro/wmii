@@ -67,7 +67,7 @@ create_view(const char *name) {
 
 	write_event("CreateTag %s\n", v->name);
 	create_area(v, nil, 0);
-	create_area(v, v->area, 0);
+	new_column(v, v->area, 0);
 
 	for(i=&view; *i; i=&(*i)->next)
 		if(strcmp((*i)->name, name) < 0) break;
@@ -296,6 +296,8 @@ arrange_view(View *v) {
 		xoff = a->rect.max.x;
 		arrange_column(a, False);
 	}
+	if(v == screen->sel)
+		update_divs();
 }
 
 Rectangle *
