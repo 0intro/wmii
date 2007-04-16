@@ -12,7 +12,7 @@
 uint
 textwidth_l(BlitzFont *font, char *text, uint len) {
 	if(font->set) {
-		XRectangle r;
+		Rectangle r;
 		XmbTextExtents(font->set, text, len, &r, nil);
 		return r.width;
 	}
@@ -94,7 +94,7 @@ draw_label(BlitzBrush *b, char *text) {
 	uint x, y, w, h, len;
 	Bool shortened = False;
 	static char buf[2048];
-	XRectangle r = {0};
+	Rectangle r = {0};
 	XGCValues gcv;
 
 	draw_tile(b);
@@ -151,7 +151,7 @@ draw_label(BlitzBrush *b, char *text) {
 }
 
 void
-drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle *rect,
+drawbg(Display *dpy, Drawable drawable, GC gc, Rectangle *rect,
 			BlitzColor c, Bool fill, int border)
 {
 	if(fill) {
@@ -164,32 +164,6 @@ drawbg(Display *dpy, Drawable drawable, GC gc, XRectangle *rect,
 		XDrawRectangle(dpy, drawable, gc, rect->x + border / 2, rect->y + border / 2,
 				rect->width - border, rect->height - border);
 	}
-}
-
-void
-drawcursor(Display *dpy, Drawable drawable, GC gc,
-				int x, int y, uint h, BlitzColor c)
-{
-	XSegment s[5];
-
-	XSetForeground(dpy, gc, c.fg);
-	XSetLineAttributes(dpy, gc, 1, LineSolid, CapButt, JoinMiter);
-	s[0].x1 = x - 1;
-	s[0].y1 = s[0].y2 = y;
-	s[0].x2 = x + 2;
-	s[1].x1 = x - 1;
-	s[1].y1 = s[1].y2 = y + 1;
-	s[1].x2 = x + 2;
-	s[2].x1 = s[2].x2 = x;
-	s[2].y1 = y;
-	s[2].y2 = y + h;
-	s[3].x1 = x - 1;
-	s[3].y1 = s[3].y2 = y + h;
-	s[3].x2 = x + 2;
-	s[4].x1 = x - 1;
-	s[4].y1 = s[4].y2 = y + h - 1;
-	s[4].x2 = x + 2;
-	XDrawSegments(dpy, drawable, gc, s, 5);
 }
 
 static ulong

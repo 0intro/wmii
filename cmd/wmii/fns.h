@@ -20,12 +20,11 @@ Client *area_selclient(Area*);
 Bar *create_bar(Bar **b_link, char *name);
 void destroy_bar(Bar **b_link, Bar*);
 void draw_bar(WMScreen *s);
-void draw_border(BlitzBrush*);
 void resize_bar();
 Bar *bar_of_name(Bar *b_link, const char *name);
 
 /* client.c */
-Client *create_client(Window, XWindowAttributes*);
+Client *create_client(XWindow, XWindowAttributes*);
 void destroy_client(Client*);
 void configure_client(Client*);
 void prop_client(Client *c, Atom);
@@ -33,53 +32,37 @@ void kill_client(Client*);
 void gravitate_client(Client*, Bool invert);
 void map_client(Client*);
 void unmap_client(Client*, int state);
-void map_frame(Client*);
-void unmap_frame(Client*);
+int map_frame(Client*);
+int unmap_frame(Client*);
 void set_cursor(Client*, Cursor cur);
 void focus_frame(Frame*, Bool restack);
-void reparent_client(Client*, Window w, int x, int y);
+void reparent_client(Client*, Window*, Point);
 void manage_client(Client*);
 void focus(Client*, Bool restack);
 void focus_client(Client*);
-void resize_client(Client*, XRectangle*);
-void apply_sizehints(Client*, XRectangle*, Bool floating, Bool frame, BlitzAlign sticky);
+void resize_client(Client*, Rectangle*);
+void apply_sizehints(Client*, Rectangle*, Bool floating, Bool frame, Align sticky);
 char *send_client(Frame*, char*, Bool swap);
 char * message_client(Client*, char*);
 void move_client(Client*, char *arg);
 void size_client(Client*, char *arg);
 Client *selclient();
-Frame *win2frame(Window);
-Client *win2client(Window);
+Frame *win2frame(XWindow);
+Client *win2client(XWindow);
 void update_client_grab(Client*);
 void apply_rules(Client*);
 void apply_tags(Client*, const char*);
 
 /* column.c */
-Divide *win2div(Window);
+Divide *win2div(XWindow);
 void update_dividers();
 void update_divs();
 void draw_div(Divide*);
 void arrange_column(Area*, Bool dirty);
 void resize_column(Area*, int w);
-void resize_colframe(Frame*, XRectangle*);
+void resize_colframe(Frame*, Rectangle*);
 int str2colmode(const char *str);
 Area *new_column(View*, Area *pos, uint w);
-
-/* draw.c */
-int loadcolor(Blitz *, BlitzColor *);
-void draw_label(BlitzBrush *, char *text);
-void draw_tile(BlitzBrush *);
-void draw_rect(BlitzBrush *);
-
-void drawbg(Display*, Drawable, GC,
-		XRectangle*, BlitzColor, Bool fill, Bool border);
-void drawcursor(Display*, Drawable, GC,
-				int x, int y, uint h, BlitzColor);
-uint textwidth(BlitzFont*, char *text);
-uint textwidth_l(BlitzFont*, char *text, uint len);
-void loadfont(Blitz*, BlitzFont*);
-uint labelh(BlitzFont *font);
-char *parse_colors(char **buf, int *buflen, BlitzColor*);
 
 /* event.c */
 void dispatch_event(XEvent*);
@@ -90,18 +73,18 @@ uint flushevents(long even_mask, Bool dispatch);
 Frame *create_frame(Client*, View*);
 void remove_frame(Frame*);
 void insert_frame(Frame *pos, Frame*, Bool before);
-void resize_frame(Frame*, XRectangle*);
+void resize_frame(Frame*, Rectangle);
 Bool frame_to_top(Frame *f);
-void set_frame_cursor(Frame*, int x, int y);
+void set_frame_cursor(Frame*, Point);
 void swap_frames(Frame*, Frame*);
 int frame_delta_h();
-void frame2client(Frame*, XRectangle*);
-void client2frame(Frame*, XRectangle*);
+Rectangle frame2client(Frame*, Rectangle);
+Rectangle client2frame(Frame*, Rectangle);
 int ingrabbox(Frame*, int x, int y);
 void draw_frame(Frame*);
 void draw_frames();
 void update_frame_widget_colors(Frame*);
-void check_frame_constraints(XRectangle*);
+Rectangle constrain(Rectangle);
 
 /* fs.c */
 void fs_attach(Ixp9Req*);
@@ -118,28 +101,25 @@ void fs_write(Ixp9Req*);
 void write_event(char*, ...);
 
 /* geom.c */
-Bool ptinrect(int x, int y, XRectangle*);
-BlitzAlign quadrant(XRectangle*, int x, int y);
-Cursor cursor_of_quad(BlitzAlign);
-int strtorect(XRectangle*, const char*);
-BlitzAlign get_sticky(XRectangle *src, XRectangle *dst);
-int r_east(XRectangle*);
-int r_south(XRectangle*);
+Bool ptinrect(Point, Rectangle);
+Align quadrant(Rectangle, Point);
+Cursor cursor_of_quad(Align);
+Align get_sticky(Rectangle src, Rectangle dst);
 
 /* key.c */
-void kpress(Window, ulong mod, KeyCode);
+void kpress(XWindow, ulong mod, KeyCode);
 void update_keys();
 void init_lock_keys();
 ulong mod_key_of_str(char*);
 
 /* mouse.c */
 void mouse_resizecol(Divide*);
-void do_mouse_resize(Client*, Bool opaque, BlitzAlign);
-void grab_mouse(Window, ulong mod, ulong button);
-void ungrab_mouse(Window, ulong mod, uint button);
-BlitzAlign snap_rect(XRectangle *rects, int num, XRectangle *current,
-					 BlitzAlign *mask, int snapw);
-void grab_button(Window, uint button, ulong mod);
+void do_mouse_resize(Client*, Bool opaque, Align);
+void grab_mouse(XWindow, ulong mod, ulong button);
+void ungrab_mouse(XWindow, ulong mod, uint button);
+Align snap_rect(Rectangle *rects, int num, Rectangle *current,
+					 Align *mask, int snapw);
+void grab_button(XWindow, uint button, ulong mod);
 
 /* rule.c */
 void update_rules(Rule**, const char*);
@@ -147,12 +127,12 @@ void trim(char *str, const char *chars);
 
 /* view.c */
 void arrange_view(View*);
-void scale_view(View*, float w);
+void scale_view(View*, int w);
 View *get_view(const char*);
 View *create_view(const char*);
 void focus_view(WMScreen*, View*);
 void update_client_views(Client*, char**);
-XRectangle *rects_of_view(View*, uint *num, Frame *ignore);
+Rectangle *rects_of_view(View*, uint *num, Frame *ignore);
 View *view_of_id(ushort);
 void select_view(const char*);
 void attach_to_view(View*, Frame*);
@@ -167,3 +147,39 @@ uint newcolw_of_view(View*, int i);
 /* wm.c */
 int wmii_error_handler(Display*, XErrorEvent *error);
 int win_proto(Window);
+
+/* x11.c */
+XRectangle XRect(Rectangle r);
+int eqrect(Rectangle a, Rectangle b);
+Point addpt(Point p, Point q);
+Point subpt(Point p, Point q);
+Rectangle insetrect(Rectangle r, int n);
+Rectangle rectaddpt(Rectangle r, Point p);
+Rectangle rectsubpt(Rectangle r, Point p);
+void initdisplay();
+Image * allocimage(int w, int h, int depth);
+void freeimage(Image *img);
+Window *createwindow(Window *parent, Rectangle r, int depth, uint class, WinAttr *wa, int valuemask);
+void destroywindow(Window *w);
+void setwinattr(Window *w, WinAttr *wa, int valmask);
+void reshapewin(Window *w, Rectangle r);
+void movewin(Window *w, Point pt);
+int mapwin(Window *w);
+int unmapwin(Window *w);
+uint winprotocols(Window *w);
+void setshapemask(Window *dst, Image *src, Point pt);
+void border(Image *dst, Rectangle r, int w, ulong col);
+void fill(Image *dst, Rectangle r, ulong col);
+void drawpoly(Image *dst, Point *pt, int np, int cap, int w, ulong col);
+void fillpoly(Image *dst, Point *pt, int np, ulong col);
+void drawline(Image *dst, Point p1, Point p2, int cap, int w, ulong col);
+void drawstring(Image *dst, Font *font, Rectangle r, Align align, char *text, ulong col);
+void copyimage(Image *dst, Rectangle r, Image *src, Point p);
+Bool namedcolor(char *name, ulong *ret);
+Bool loadcolor(CTuple *c, char *str);
+Font * loadfont(char *name);
+void freefont(Font *f);
+uint textwidth_l(Font *font, char *text, uint len);
+uint textwidth(Font *font, char *text);
+uint labelh(Font *font);
+Atom xatom(char *name);

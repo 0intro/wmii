@@ -2,6 +2,8 @@
  * See LICENSE file for license details.
  */
 #include <assert.h>
+#include <ctype.h>
+#include <regex.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +40,7 @@ struct FileId {
 		View	*view;
 		Client	*client;
 		Ruleset	*rule;
-		BlitzColor	*col;
+		CTuple	*col;
 	} content;
 	uint	id;
 	uint	index;
@@ -218,6 +220,33 @@ data_to_cstring(Ixp9Req *r) {
 	r->ifcall.data[i - 1] = '\0';
 }
 
+/* Should be somewhere else */
+char *
+parse_colors(char **buf, int *buflen, CTuple *col) {
+	static regex_t reg;
+	static Bool compiled;
+
+	if(!compiled) {
+		compiled = 1;
+		regcomp(&reg, "^#[0-9a-f]{6} #[0-9a-f]{6} #[0-9a-f]{6}([[:space:]]|$)",
+				REG_EXTENDED|REG_NOSUB|REG_ICASE);
+	}
+
+	if(*buflen < 23 || regexec(&reg, *buf, 0, 0, 0))
+		return "bad value";
+
+	(*buf)[23] = '\0';
+	loadcolor(col, *buf);
+
+	*buf += 23;
+	*buflen -= 23;
+	if(*buflen > 0) {
+		(*buf)++;
+		(*buflen)--;
+	}
+	return nil;
+}
+
 char *
 message_root(char *message)
 {
@@ -253,9 +282,9 @@ message_root(char *message)
 	}
 	else if(!strncmp(message, "font ", 5)) {
 		message += 5;
-		free(def.font.fontstr);
-		def.font.fontstr = estrdup(message);
-		loadfont(&blz, &def.font);
+		freefont(def.font);
+		def.font = loadfont(message);
+		assert(def.font);
 		resize_bar(screen);
 	}
 	else if(!strncmp(message, "border ", 7)) {
@@ -287,7 +316,7 @@ read_root_ctl() {
 		i += snprintf(&buffer[i], (sizeof(buffer) - i), "view %s\n", screen->sel->name);
 	i += snprintf(&buffer[i], (sizeof(buffer) - i), "focuscolors %s\n", def.focuscolor.colstr);
 	i += snprintf(&buffer[i], (sizeof(buffer) - i), "normcolors %s\n", def.normcolor.colstr);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "font %s\n", def.font.fontstr);
+	i += snprintf(&buffer[i], (sizeof(buffer) - i), "font %s\n", def.font->name);
 	i += snprintf(&buffer[i], (sizeof(buffer) - i), "grabmod %s\n", def.grabmod);
 	i += snprintf(&buffer[i], (sizeof(buffer) - i), "border %d\n", def.border);
 	return buffer;
@@ -381,8 +410,8 @@ lookup_file(FileId *parent, char *name)
 						*last = file;
 						last = &file->next;
 						file->content.client = c;
-						file->id = c->win;
-						file->index = c->win;
+						file->id = c->win.w;
+						file->index = c->win.w;
 						file->tab = *dir;
 						file->tab.name = estrdup("sel");
 					}if(name) goto LastItem;
@@ -392,16 +421,16 @@ lookup_file(FileId *parent, char *name)
 					if(*name) goto NextItem;
 				}
 				for(c=client; c; c=c->next) {
-					if(!name || c->win == id) {
+					if(!name || c->win.w == id) {
 						file = get_file();
 						*last = file;
 						last = &file->next;
 						file->content.client = c;
-						file->id = c->win;
-						file->index = c->win;
+						file->id = c->win.w;
+						file->index = c->win.w;
 						file->tab = *dir;
 						file->tab.name = emallocz(16);
-						snprintf(file->tab.name, 16, "0x%x", (uint)c->win);
+						snprintf(file->tab.name, 16, "0x%x", (uint)c->win.w);
 						if(name) goto LastItem;
 					}
 				}
@@ -917,7 +946,7 @@ fs_clunk(Ixp9Req *r) {
 	case FsFBar:
 		buf = f->content.bar->buf;
 		i = strlen(f->content.bar->buf);
-		parse_colors(&buf, &i, &f->content.bar->brush.color);
+		parse_colors(&buf, &i, &f->content.bar->col);
 		while(i > 0 && buf[i - 1] == '\n')
 			buf[--i] = '\0';
 		strncpy(f->content.bar->text, buf, sizeof(f->content.bar->text));

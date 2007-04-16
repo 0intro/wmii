@@ -7,31 +7,31 @@
 #include "fns.h"
 
 Bool
-ptinrect(int x, int y, XRectangle * r) {
-	return (x >= r->x) && (x < r_east(r))
-		&& (y >= r->y) && (y < r_south(r));
+ptinrect(Point pt, Rectangle r) {
+	return (pt.x >= r.min.x) && (pt.x < r.max.x)
+		&& (pt.y >= r.min.y) && (pt.y < r.max.y);
 }
 
-BlitzAlign
-quadrant(XRectangle *rect, int x, int y) {
-	BlitzAlign ret = 0;
-	x -= rect->x;
-	y -= rect->y;
+Align
+quadrant(Rectangle r, Point pt) {
+	Align ret = 0;
 
-	if(x >= rect->width * .5)
+	pt = subpt(pt, r.min);
+
+	if(pt.x >= Dx(r) * .5)
 		ret |= EAST;
-	if(x <= rect->width * .5)
+	if(pt.x <= Dx(r) * .5)
 		ret |= WEST;
-	if(y <= rect->height * .5)
+	if(pt.y <= Dy(r) * .5)
 		ret |= NORTH;
-	if(y >= rect->height * .5)
+	if(pt.y >= Dy(r) * .5)
 		ret |= SOUTH;
 
 	return ret;
 }
 
 Cursor
-cursor_of_quad(BlitzAlign align) {
+cursor_of_quad(Align align) {
 	switch(align) {
 	case NEAST:
 		return cursor[CurNECorner];
@@ -46,39 +46,15 @@ cursor_of_quad(BlitzAlign align) {
 	}
 }
 
-/* Syntax: <x> <y> <width> <height> */
-int
-strtorect(XRectangle *r, const char *val) {
-	XRectangle new;
-	if (!val)
-		return -1;
+Align
+get_sticky(Rectangle src, Rectangle dst) {
+	Align stickycorner = 0;
 
-	if(sscanf(val, "%hd %hd %hu %hu", &new.x, &new.y, &new.width, &new.height) != 4)
-		return -1;
-
-	*r = new;
-	return 0;
-}
-
-int
-r_east(XRectangle *r) {
-	return r->x + r->width;
-}
-
-int
-r_south(XRectangle *r) {
-	return r->y + r->height;
-}
-
-BlitzAlign
-get_sticky(XRectangle *src, XRectangle *dst) {
-	BlitzAlign stickycorner = 0;
-
-	if(src->x != dst->x && r_east(src) == r_east(dst))
+	if(src.min.x != dst.min.x && src.max.x == dst.max.x)
 		stickycorner |= EAST;
 	else
 		stickycorner |= WEST;
-	if(src->y != dst->y && r_south(src) == r_south(dst))
+	if(src.min.y != dst.min.y && src.max.y == dst.max.y)
 		stickycorner |= SOUTH;
 	else    
 		stickycorner |= NORTH;

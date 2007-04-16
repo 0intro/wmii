@@ -14,7 +14,6 @@ OBJ =	area	\
 	bar	\
 	client	\
 	column	\
-	draw	\
 	event	\
 	frame	\
 	fs	\
@@ -25,6 +24,7 @@ OBJ =	area	\
 	rule	\
 	printevent\
 	view	\
+	x11	\
 	../util
 
 include ${ROOT}/mk/one.mk

@@ -47,8 +47,8 @@ can get it touch with me at the following location:
 #include <X11/Intrinsic.h>
 #include <X11/Xproto.h>
 #include <util.h>
-#include "dat.h"
-#include "fns.h"
+//#include "dat.h"
+//#include "fns.h"
 #include "printevent.h"
 
 static char* sep = " ";
@@ -854,11 +854,12 @@ char *eventtype(XEvent *ev)
 
 void printevent(XEvent *e)
 {
+    extern Display* display;
     XAnyEvent *ev = (void*)e;
     char *name;
 
     if(ev->window) {
-	    XFetchName(blz.dpy, ev->window, &name);
+	    XFetchName(display, ev->window, &name);
 	    if(name) {
 		    fprintf(stderr, "\ttitle=%s\n", name);
 		    XFree(name);

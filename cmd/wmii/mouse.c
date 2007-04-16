@@ -1,4 +1,4 @@
-/* Copyright ©2006 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include <stdlib.h>
@@ -16,92 +16,70 @@ enum {
 };
 
 static void
-rect_morph_xy(XRectangle *rect, int dx, int dy, BlitzAlign *mask) {
-	BlitzAlign nmask;
+rect_morph_xy(Rectangle *r, Point d, Align *mask) {
+	int n;
 
-	nmask = 0;
-	if(*mask & NORTH) {
-		if(rect->height - dy >= 0 || *mask & SOUTH) {
-			rect->y += dy;
-			rect->height -= dy;
-		}
-		else {
-			rect->y += rect->height;
-			rect->height = dy - rect->height;
-			nmask ^= NORTH|SOUTH;
-		}
+	if(*mask & NORTH)
+		r->min.y += d.y;
+	if(*mask & WEST)
+		r->min.x += d.x;
+	if(*mask & SOUTH)
+		r->max.y += d.y;
+	if(*mask & EAST)
+		r->max.x += d.x;
+	
+	if(r->min.x > r->max.x) {
+		n = r->min.x;
+		r->min.x = r->max.x;
+		r->max.x = n;
+		*mask ^= EAST|WEST;
 	}
-	if(*mask & SOUTH) {
-		if(rect->height + dy >= 0 || *mask & NORTH)
-			rect->height += dy;
-		else {
-			rect->height = -dy - rect->height;
-			rect->y -= rect->height;
-			nmask ^= NORTH|SOUTH;
-		}
+	if(r->min.y > r->max.y) {
+		n = r->min.y;
+		r->min.y = r->max.y;
+		r->max.y = n;
+		*mask ^= NORTH|SOUTH;
 	}
-	if(*mask & EAST) {
-		if(rect->width + dx >= 0 || *mask & WEST)
-			rect->width += dx;
-		else {
-			rect->width = -dx - rect->width;
-			rect->x -= rect->width;
-			nmask ^= EAST|WEST;
-		}
-	}
-	if(*mask & WEST) {
-		if(rect->width - dx >= 0 || *mask & EAST) {
-			rect->x += dx;
-			rect->width -= dx;
-		}
-		else {
-			rect->x += rect->width;
-			rect->width = dx - rect->width;
-			nmask ^= EAST|WEST;
-		}
-	}
-	*mask ^= nmask;
 }
 
 typedef struct {
-	XRectangle *rects;
+	Rectangle *rects;
 	int num;
-	int x1, y1;
-	int x2, y2;
+	Rectangle r;
+	int x, y;
 	int dx, dy;
-	BlitzAlign mask;
+	Align mask;
 } SnapArgs;
 
 static void
 snap_line(SnapArgs *a) {
-	int i, t_xy;
+	Rectangle *r;
+	int i, x, y;
 
-	/* horizontal */
-	if(a->y1 == a->y2 && (a->mask & (NORTH|SOUTH))) {
+	if(a->mask & (NORTH|SOUTH)) {
 		for(i=0; i < a->num; i++) {
-			if(!(r_east(&a->rects[i]) < a->x1) ||
-				(a->rects[i].x > a->x2)) {
+			r = &a->rects[i];
+			if((r->min.x <= a->r.max.x) && (r->max.x >= a->r.min.x)) {
+				y = r->min.y;
+				if(abs(y - a->y) <= abs(a->dy))
+					a->dy = y - a->y;
 
-				if(abs(a->rects[i].y - a->y1) <= abs(a->dy))
-					a->dy = a->rects[i].y - a->y1;
-
-				t_xy = r_south(&a->rects[i]);
-				if(abs(t_xy - a->y1) < abs(a->dy))
-					a->dy = t_xy - a->y1;
+				y = r->max.y;
+				if(abs(y - a->y) <= abs(a->dy))
+					a->dy = y - a->y;
 			}
 		}
-	}
-	else if (a->mask & (EAST|WEST)) {
+	}else {
 		for(i=0; i < a->num; i++) {
-			if(!(r_south(&a->rects[i]) < a->y1) ||
-				(a->rects[i].y > a->y2)) {
+			r = &a->rects[i];
+			if((r->min.y <= a->r.max.y) && (r->max.y >= a->r.min.y)) {
+				x = r->min.x;
+				if(abs(x - a->x) <= abs(a->dx))
+					a->dx = x - a->x;
 
-				if(abs(a->rects[i].x - a->x1) <= abs(a->dx))
-					a->dx = a->rects[i].x - a->x1;
-
-				t_xy = r_east(&a->rects[i]);
-				if(abs(t_xy - a->x1) < abs(a->dx))
-					a->dx = t_xy - a->x1;
+				x = r->max.x;
+				if(abs(x - a->x) <= abs(a->dx))
+					a->dx = x - a->x;
 			}
 		}
 	}
@@ -111,92 +89,81 @@ snap_line(SnapArgs *a) {
  * (the directions that we're resizing in), unless a snap occurs, in which case, it's the
  * direction of the snap.
  */
-BlitzAlign
-snap_rect(XRectangle *rects, int num, XRectangle *current, BlitzAlign *mask, int snap) {
+Align
+snap_rect(Rectangle *rects, int num, Rectangle *r, Align *mask, int snap) {
 	SnapArgs a = { 0, };
-	BlitzAlign ret;
+	Align ret;
 
 	a.rects = rects;
 	a.num = num;
-	a.mask = *mask;
 	a.dx = snap + 1;
 	a.dy = snap + 1;
+	a.r = *r;
 
-	a.x1 = current->x;
-	a.x2 = r_east(current);
+	a.mask = NORTH|SOUTH;
 	if(*mask & NORTH) {
-		a.y2 = a.y1 = current->y;
+		a.y = r->min.y;
 		snap_line(&a);
 	}
 	if(*mask & SOUTH) {
-		a.y2 = a.y1 = r_south(current);
+		a.y = r->max.y;
 		snap_line(&a);
 	}
 
-	a.y1 = current->y;
-	a.y2 = r_south(current);
+	a.mask = EAST|WEST;
 	if(*mask & EAST) {
-		a.x1 = a.x2 = r_east(current);
+		a.x = r->max.x;
 		snap_line(&a);
 	}
 	if(*mask & WEST) {
-		a.x1 = a.x2 = current->x;
+		a.x = r->min.x;
 		snap_line(&a);
 	}
 
 	ret = CENTER;
-	if(abs(a.dx) > snap)
-		a.dx = 0;
-	else
+	if(abs(a.dx) <= snap)
 		ret ^= EAST|WEST;
-
-	if(abs(a.dy) > snap)
-		a.dy = 0;
 	else
+		a.dx = 0;
+
+	if(abs(a.dy) <= snap)
 		ret ^= NORTH|SOUTH;
+	else
+		a.dy = 0;
 
-	rect_morph_xy(current, a.dx, a.dy, mask);
-
+	rect_morph_xy(r, Pt(a.dx, a.dy), mask);
 	return ret ^ *mask;
 }
 
 static void
-xorborder(XRectangle *r) {
-	XRectangle xor;
+xorborder(Rectangle r) {
+	Rectangle r2;
+	ulong col;
+	
+	col = def.focuscolor.bg;
 
-	xor = *r;
-	xor.x += 2;
-	xor.y += 2;
-	xor.width = xor.width > 4 ? xor.width - 4 : 0;
-	xor.height = xor.height > 4 ? xor.height - 4 : 0;
+	r2 = insetrect(r, 4);
 
-	XSetLineAttributes(blz.dpy, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
-	XSetForeground(blz.dpy, xorgc, def.focuscolor.bg);
-	if(xor.height > 4 && xor.width > 2)
-		XDrawLine(blz.dpy, blz.root, xorgc,
-			xor.x + 2,
-			xor.y +  xor.height / 2,
-			r_east(&xor) - 2,
-			xor.y + xor.height / 2);
-	if(xor.width > 4 && xor.height > 2)
-		XDrawLine(blz.dpy, blz.root, xorgc,
-			xor.x + xor.width / 2,
-			xor.y + 2,
-			xor.x + xor.width / 2,
-			r_south(&xor) - 2);
-	XSetLineAttributes(blz.dpy, xorgc, 4, LineSolid, CapNotLast, JoinMiter);
-	XDrawRectangles(blz.dpy, blz.root, xorgc, &xor, 1);
+	if(Dy(r) > 4 && Dx(r) > 2)
+		drawline(&xor,
+			Pt(r2.min.x, r2.min.y + Dy(r2)/2),
+			Pt(r2.max.x, r2.min.y + Dy(r2)/2),
+			CapNotLast, 1, col);
+	if(Dx(r) > 4 && Dy(r) > 2)
+		drawline(&xor,
+			Pt(r2.min.x + Dx(r2)/2, r.min.y),
+			Pt(r2.min.x + Dx(r2)/2, r.max.y),
+			CapNotLast, 1, col);
+	border(&xor, r, 4, col);
 }
 
 static void
-xorrect(XRectangle *r) {
-	XSetLineAttributes(blz.dpy, xorgc, 1, LineSolid, CapNotLast, JoinMiter);
-	XSetForeground(blz.dpy, xorgc, 0x00888888l);
-	XFillRectangles(blz.dpy, blz.root, xorgc, r, 1);
+xorrect(Rectangle r) {
+	fill(&xor, r, 0x00888888L);
 }
 
 static void
-find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
+find_droppoint(Frame *frame, int x, int y, Rectangle *r, Bool do_move) {
 	enum { Delta = 5 };
 	View *v;
 	Area *a, *a_prev;
@@ -208,16 +175,16 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 	/* New column? */
 	a_prev = v->area;
 	for(a = a_prev->next; a && a->next; a = a->next) {
-		if(x < r_east(&a->rect))
+		if(x < a->rect.max.x)
 			break;
 		a_prev = a;
 	}
 
-	rect->y = 0;
-	rect->height = screen->rect.height - screen->brect.height;
-	rect->width = 2 * Delta;
-	if(x < (a->rect.x + labelh(&def.font))) {
-		rect->x = a->rect.x - Delta;
+	r->min.y = screen->rect.min.y;
+	r->max.y = screen->brect.min.y;
+	if(x < (a->rect.min.x + labelh(def.font))) {
+		r->min.x = a->rect.min.x + Delta;
+		r->max.x = a->rect.min.x + Delta;
 		if(do_move) {
 			a = new_column(v, a_prev, 0);
 			send_to_area(a, frame);
@@ -225,8 +192,9 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 		}
 		return;
 	}
-	if(x > (r_east(&a->rect) - labelh(&def.font))) {
-		rect->x = r_east(&a->rect) - Delta;
+	if(x > (a->rect.max.x - labelh(def.font))) {
+		r->min.x = a->rect.max.x + Delta;
+		r->max.x = a->rect.max.x + Delta;
 		if(do_move) {
 			a = new_column(v, a, 0);
 			send_to_area(a, frame);
@@ -236,33 +204,30 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 	}
 
 	/* Over/under frame? */
-	for(f = a->frame; f; f = f->anext) {
-		if(y < f->rect.y)
+	for(f = a->frame; f; f = f->anext)
+		if(y < f->rect.max.y || f->anext == nil)
 			break;
-		if(y < r_south(&f->rect))
-			break;
-	}
 
-	rect->x = a->rect.x;
-	rect->width = a->rect.width;
-	rect->height = 2 * Delta;
-	if(y < (f->rect.y + labelh(&def.font))) {
+	*r = a->rect;
+	if(y < (f->rect.min.y + labelh(def.font))) {
 		before = True;
-		rect->y = f->rect.y - Delta;
+		r->min.y = f->rect.min.y - Delta;
+		r->max.y = f->rect.min.y + Delta;
 		if(do_move)
 			goto do_move;
 		return;
 	}
-	if(y > r_south(&f->rect) - labelh(&def.font)) {
+	if(y > f->rect.max.y - labelh(def.font)) {
 		before = False;
-		rect->y = r_south(&f->rect) - Delta;
+		r->min.y = f->rect.max.y - Delta;
+		r->max.y = f->rect.max.y + Delta;
 		if(do_move)
 			goto do_move;
 		return;
 	}
 
 	/* No? Swap. */
-	*rect = f->rect;
+	*r = f->rect;
 	if(do_move) {
 		swap_frames(frame, f);
 		focus(frame->client, False);
@@ -282,19 +247,19 @@ do_move:
 }
 
 void
-querypointer(Window w, int *x, int *y) {
-	Window dummy;
+querypointer(Window *w, int *x, int *y) {
+	XWindow dummy;
 	uint ui;
 	int i;
 	
-	XQueryPointer(blz.dpy, w, &dummy, &dummy, &i, &i, x, y, &ui);
+	XQueryPointer(display, w->w, &dummy, &dummy, &i, &i, x, y, &ui);
 }
 
 void
 warppointer(int x, int y) {
-	XWarpPointer(blz.dpy,
+	XWarpPointer(display,
 		/* src_w */	None,
-		/* dest_w */	blz.root,
+		/* dest_w */	scr.root.w,
 		/* src_rect */	0, 0, 0, 0,
 		/* target */	x, y
 		);
@@ -302,7 +267,7 @@ warppointer(int x, int y) {
 
 static void
 do_managed_move(Client *c) {
-	XRectangle frect, ofrect;
+	Rectangle frect, ofrect;
 	XEvent ev;
 	Frame *f;
 	int x, y;
@@ -310,27 +275,29 @@ do_managed_move(Client *c) {
 	focus(c, False);
 	f = c->sel;
 
-	XSync(blz.dpy, False);
-	if(XGrabPointer(blz.dpy, c->framewin, False, MouseMask, GrabModeAsync, GrabModeAsync,
-			None, cursor[CurMove], CurrentTime) != GrabSuccess)
+	XSync(display, False);
+	if(XGrabPointer(display, c->framewin->w, False,
+			MouseMask, GrabModeAsync, GrabModeAsync,
+			None, cursor[CurMove], CurrentTime
+			) != GrabSuccess)
 		return;
-	XGrabServer(blz.dpy);
+	XGrabServer(display);
 
-	querypointer(blz.root, &x, &y);
+	querypointer(&scr.root, &x, &y);
 
 	find_droppoint(f, x, y, &frect, False);
-	xorrect(&frect);
+	xorrect(frect);
 	for(;;) {
-		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
+		XMaskEvent(display, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			xorrect(&frect);
+			xorrect(frect);
 
 			find_droppoint(f, x, y, &frect, True);
 
-			XUngrabServer(blz.dpy);
-			XUngrabPointer(blz.dpy, CurrentTime);
-			XSync(blz.dpy, False);
+			XUngrabServer(display);
+			XUngrabPointer(display, CurrentTime);
+			XSync(display, False);
 			return;
 		case MotionNotify:
 			ofrect = frect;
@@ -339,9 +306,9 @@ do_managed_move(Client *c) {
 
 			find_droppoint(f, x, y, &frect, False);
 
-			if(memcmp(&frect, &ofrect, sizeof(frect))) {
-				xorrect(&ofrect);
-				xorrect(&frect);
+			if(!eqrect(frect, ofrect)) {
+				xorrect(ofrect);
+				xorrect(frect);
 			}
 			break;
 		case Expose:
@@ -354,14 +321,14 @@ do_managed_move(Client *c) {
 
 void
 mouse_resizecol(Divide *d) {
-	XSetWindowAttributes wa;
+	WinAttr wa;
 	XEvent ev;
-	Window cwin;
+	Window *cwin;
 	Divide *dp;
 	View *v;
 	Area *a;
-	uint w, minw;
-	int x, y;
+	uint minw;
+	int x, y, x2;
 
 	v = screen->sel;
 
@@ -372,47 +339,39 @@ mouse_resizecol(Divide *d) {
 	if(a == nil || a->next == nil)
 		return;
 
-	minw = screen->rect.width/NCOL;
+	minw = Dx(screen->rect)/NCOL;
 
-	querypointer(blz.root, &x, &y);
-	x = a->rect.x + minw;
-	w = r_east(&a->next->rect) - minw;
-	w -= x;
+	querypointer(&scr.root, &x, &y);
+	x = a->rect.min.x + minw;
+	x2 = x + a->next->rect.max.x - minw;
 
-	cwin = XCreateWindow(blz.dpy, blz.root,
-			x, y, w, 1,
-			/* border */	0,
-			/* depth */	CopyFromParent,
-			/* class */		InputOnly,
-			/* visual */	CopyFromParent,
-			/* valuemask */	0,
-			/* attrib */		&wa
-			);
-	XMapWindow(blz.dpy, cwin);
+	cwin = createwindow(&scr.root, Rect(x, y, x2, y+1), 0, InputOnly, &wa, 0);
+	mapwin(cwin);
 
 	if(XGrabPointer(
-		blz.dpy, blz.root,
+		display, scr.root.w,
 		/* owner_events*/	False,
 		/* event_mask */	MouseMask,
 		/* kbd, mouse */	GrabModeAsync, GrabModeAsync,
-		/* confine_to */		cwin,
+		/* confine_to */		cwin->w,
 		/* cursor */		cursor[CurInvisible],
 		/* time */		CurrentTime
 		) != GrabSuccess)
 		goto done;
 
+	querypointer(&scr.root, &x, &y);
 	for(;;) {
-		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
+		XMaskEvent(display, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
-			resize_column(a, x - a->rect.x);
+			resize_column(a, x - a->rect.min.x);
 
-			XUngrabPointer(blz.dpy, CurrentTime);
-			XSync(blz.dpy, False);
+			XUngrabPointer(display, CurrentTime);
+			XSync(display, False);
 			goto done;
 		case MotionNotify:
 			x = ev.xmotion.x_root;
-			XMoveWindow(blz.dpy, d->w, x, 0);
+			setdiv(d, x);
 			break;
 		case Expose:
 			dispatch_event(&ev);
@@ -421,16 +380,16 @@ mouse_resizecol(Divide *d) {
 		}
 	}
 done:
-	XDestroyWindow(blz.dpy, cwin);
+	destroywindow(cwin);
 }
 
 void
-do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
-	BlitzAlign grav;
-	Window dummy;
+do_mouse_resize(Client *c, Bool opaque, Align align) {
+	Align grav;
+	XWindow dummy;
 	Cursor cur;
 	XEvent ev;
-	XRectangle *rects, ofrect, frect, origin;
+	Rectangle *rects, ofrect, frect, origin;
 	int snap, dx, dy, pt_x, pt_y, hr_x, hr_y;
 	uint num;
 	Bool floating;
@@ -443,7 +402,7 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 	cur = cursor_of_quad(align);
 	if(floating) {
 		rects = rects_of_view(f->area->view, &num, (opaque ? c->frame : nil));
-		snap = screen->rect.height / 66;
+		snap = def.snap;
 	}else{
 		rects = nil;
 		snap = 0;
@@ -459,12 +418,12 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 	}
 
 	querypointer(c->framewin, &pt_x, &pt_y);
-	rx = (float)pt_x / frect.width;
-	ry = (float)pt_y / frect.height;
+	rx = (float)pt_x / Dx(frect);
+	ry = (float)pt_y /Dy(frect);
 
 	if(XGrabPointer(
-		/* display */		blz.dpy,
-		/* window */		c->framewin,
+		/* display */		display,
+		/* window */		c->framewin->w,
 		/* owner_events */	False,
 		/* event_mask */	MouseMask,
 		/* pointer_mode */	GrabModeAsync,
@@ -475,18 +434,18 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 		) != GrabSuccess)
 		return;
 
-	querypointer(blz.root, &pt_x, &pt_y);
+	querypointer(&scr.root, &pt_x, &pt_y);
 
 	if(align != CENTER) {
-		hr_x = dx = frect.width / 2;
-		hr_y = dy = frect.height / 2;
+		hr_x = dx = Dx(frect) / 2;
+		hr_y = dy = Dy(frect) / 2;
 		if(align&NORTH) dy -= hr_y;
 		if(align&SOUTH) dy += hr_y;
 		if(align&EAST) dx += hr_x;
 		if(align&WEST) dx -= hr_x;
 
-		XTranslateCoordinates(blz.dpy,
-			/* src, dst */	c->framewin, blz.root,
+		XTranslateCoordinates(display,
+			/* src, dst */	c->framewin->w, scr.root.w,
 			/* src x,y */	dx, dy,
 			/* dest x,y */	&pt_x, &pt_y,
 			/* child */	&dummy
@@ -494,33 +453,33 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 		warppointer(pt_x, pt_y);
 	}
 	else if(f->client->fullscreen) {
-		XUngrabPointer(blz.dpy, CurrentTime);
+		XUngrabPointer(display, CurrentTime);
 		return;
 	}
 	else if(!opaque) {
-		hrx = (double)(screen->rect.width + frect.width - 2 * labelh(&def.font))
-				/ screen->rect.width;
-		hry = (double)(screen->rect.height  + frect.height - 3 * labelh(&def.font))
-				/ screen->rect.height;
-		pt_x = r_east(&frect) - labelh(&def.font);
-		pt_y = r_south(&frect) - labelh(&def.font);
+		hrx = (double)(Dx(screen->rect) + Dx(frect) - 2 * labelh(def.font))
+				/ Dx(screen->rect);
+		hry = (double)(Dy(screen->rect)  + Dy(frect) - 3 * labelh(def.font))
+				/ Dy(screen->rect);
+		pt_x = frect.max.x - labelh(def.font);
+		pt_y = frect.max.y - labelh(def.font);
 		warppointer(pt_x / hrx, pt_y / hry);
 		flushevents(PointerMotionMask, False);
 	}
 
-	XSync(blz.dpy, False);
+	XSync(display, False);
 	if(!opaque) {
-		XGrabServer(blz.dpy);
-		xorborder(&frect);
+		XGrabServer(display);
+		xorborder(frect);
 	}else
 		unmap_client(c, IconicState);
 
 	for(;;) {
-		XMaskEvent(blz.dpy, MouseMask | ExposureMask, &ev);
+		XMaskEvent(display, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
 		case ButtonRelease:
 			if(!opaque)
-				xorborder(&frect);
+				xorborder(frect);
 
 			if(!floating)
 				resize_colframe(f, &frect);
@@ -528,24 +487,24 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 				resize_client(c, &frect);
 
 			if(!opaque) {
-				XTranslateCoordinates(blz.dpy,
-					/* src, dst */	c->framewin, blz.root,
-					/* src_x */	(frect.width * rx),
-					/* src_y */	(frect.height * ry),
+				XTranslateCoordinates(display,
+					/* src, dst */	c->framewin->w, scr.root.w,
+					/* src_x */	(Dx(frect) * rx),
+					/* src_y */	(Dy(frect) * ry),
 					/* dest x,y */	&pt_x, &pt_y,
 					/* child */	&dummy
 					);
-				if(pt_y > screen->brect.y)
-					pt_y = screen->brect.y - 1;
+				if(pt_y > screen->brect.min.y)
+					pt_y = screen->brect.min.y - 1;
 				warppointer(pt_x, pt_y);
-				XUngrabServer(blz.dpy);
+				XUngrabServer(display);
 			}else
 				map_client(c);
 
 			free(rects);
 
-			XUngrabPointer(blz.dpy, CurrentTime);
-			XSync(blz.dpy, False);
+			XUngrabPointer(display, CurrentTime);
+			XSync(display, False);
 			return;
 		case MotionNotify:
 			ofrect = frect;
@@ -555,31 +514,31 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 			if(align == CENTER && !opaque) {
 				dx = (dx * hrx) - pt_x;
 				dy = (dy * hry) - pt_y;
-			}else{
+			}else {
 				dx -= pt_x;
 				dy -= pt_y;
 			}
 			pt_x += dx;
 			pt_y += dy;
 
-			rect_morph_xy(&origin, dx, dy, &align);
-			check_frame_constraints(&origin);
+			rect_morph_xy(&origin, Pt(dx, dy), &align);
+			origin = constrain(origin);
 			frect = origin;
 
 			if(floating)
 				grav = snap_rect(rects, num, &frect, &align, snap);
 			else
-				grav = align ^ CENTER;
+				grav = align^CENTER;
 
 			apply_sizehints(c, &frect, floating, True, grav);
-			check_frame_constraints(&frect);
+			frect = constrain(frect);
 
 			if(opaque) {
-				XMoveWindow(blz.dpy, c->framewin, frect.x, frect.y);
-				XSync(blz.dpy, False);
-			} else {
-				xorborder(&ofrect);
-				xorborder(&frect);
+				movewin(c->framewin, frect.min);
+				XSync(display, False);
+			}else {
+				xorborder(ofrect);
+				xorborder(frect);
 			}
 			break;
 		case Expose:
@@ -592,13 +551,13 @@ do_mouse_resize(Client *c, Bool opaque, BlitzAlign align) {
 }
 
 void
-grab_button(Window w, uint button, ulong mod) {
-	XGrabButton(blz.dpy, button, mod, w, False, ButtonMask,
+grab_button(XWindow w, uint button, ulong mod) {
+	XGrabButton(display, button, mod, w, False, ButtonMask,
 			GrabModeSync, GrabModeSync, None, None);
 	if((mod != AnyModifier) && (num_lock_mask != 0)) {
-		XGrabButton(blz.dpy, button, mod | num_lock_mask, w, False, ButtonMask,
+		XGrabButton(display, button, mod | num_lock_mask, w, False, ButtonMask,
 			GrabModeSync, GrabModeAsync, None, None);
-		XGrabButton(blz.dpy, button, mod | num_lock_mask | LockMask, w, False,
+		XGrabButton(display, button, mod | num_lock_mask | LockMask, w, False,
 			ButtonMask, GrabModeSync, GrabModeAsync, None, None);
 	}
 }

@@ -10,20 +10,23 @@
 Frame *
 create_frame(Client *c, View *v) {
 	static ushort id = 1;
-	Frame *f = emallocz(sizeof(Frame));
-
+	Frame *f;
+	
+	f = emallocz(sizeof *f);
 	f->id = id++;
 	f->client = c;
 	f->view = v;
+
 	if(c->sel) {
 		f->revert = c->sel->revert;
 		f->rect = c->sel->rect;
 	}
 	else{
 		c->sel = f;
-		f->revert = f->rect = c->rect;
-		f->revert.width = f->rect.width += 2 * def.border;
-		f->revert.height = f->rect.height += frame_delta_h();
+		f->rect = c->rect;
+		f->rect.max.x += 2 * def.border;
+		f->rect.max.y += frame_delta_h();
+		f->revert = f->rect;
 	}
 	f->collapsed = False;
 
@@ -73,90 +76,90 @@ insert_frame(Frame *pos, Frame *f, Bool before) {
 	}
 }
 
-void
-frame2client(Frame *f, XRectangle *r) {
+Rectangle
+frame2client(Frame *f, Rectangle r) {
 	if(f->area->floating) {
-		r->width = max(r->width - def.border * 2, 1);
-		r->height = max(r->height - frame_delta_h(), 1);
+		r.max.x -= def.border * 2;
+		r.max.y -= frame_delta_h();
 	}else {
-		r->width = max(r->width - 2, 1);
-		r->height = max(r->height - labelh(&def.font) - 1, 1);
+		r.max.x -= 2;
+		r.max.y -= labelh(def.font) - 1;
 	}
+	r.max.x = max(r.min.x+1, r.max.x);
+	r.max.y = max(r.min.y+1, r.max.y);
+	return r;
+}
+
+Rectangle
+client2frame(Frame *f, Rectangle r) {
+	if(f->area->floating) {
+		r.max.x += def.border * 2;
+		r.max.y += frame_delta_h();
+	}else {
+		r.max.y += 2;
+		r.max.x +=labelh(def.font) + 1;
+	}
+	return r;
 }
 
 void
-client2frame(Frame *f, XRectangle *r) {
-	if(f->area->floating) {
-		r->width += def.border * 2;
-		r->height += frame_delta_h();
-	}else {
-		r->width += 2;
-		r->height +=labelh(&def.font) + 1;
-	}
-}
-
-void
-resize_frame(Frame *f, XRectangle *r) {
-	BlitzAlign stickycorner;
+resize_frame(Frame *f, Rectangle r) {
+	Align stickycorner;
+	Point pt;
 	Client *c;
 
 	c = f->client;
-	stickycorner = get_sticky(&f->rect, r);
+	stickycorner = get_sticky(f->rect, r);
 
-	f->rect = *r;
-	f->crect = *r;
+	f->crect = r;
 	apply_sizehints(c, &f->crect, f->area->floating, True, stickycorner);
+
+	if(Dx(r) <= 0 || Dy(r) <= 0)
+		asm("int $3");
 
 	if(f->area->floating)
 		f->rect = f->crect;
-
-	frame2client(f, &f->crect);
-
-	if(f->crect.height < labelh(&def.font))
-		f->collapsed = True;
 	else
-		f->collapsed = False;
+		f->rect = r;
 
-	if(f->crect.width < labelh(&def.font)) {
-		f->rect.width = frame_delta_h();
+	f->crect = frame2client(f, f->crect);
+	f->crect = rectsubpt(f->crect, f->crect.min);
+
+	if(Dx(f->crect) < labelh(def.font)) {
+		f->rect.max.x = f->rect.min.x + frame_delta_h();
 		f->collapsed = True;
 	}
 
 	if(f->collapsed) {
-		f->rect.height = labelh(&def.font);
+		f->rect.max.y= f->rect.min.y + labelh(def.font);
 		f->crect = f->rect;
 	}
-	f->crect.y = labelh(&def.font);
-	f->crect.x = (f->rect.width - f->crect.width) / 2;
-	
+
+	pt.y = labelh(def.font);
 
 	if(f->area->floating) {
 		if(c->fullscreen) {
-			f->crect.width = screen->rect.width;
-			f->crect.height = screen->rect.height;
-
-			f->rect = f->crect;
-			f->rect.x = -def.border;
-			f->rect.y = -labelh(&def.font);
-			client2frame(f, &f->rect);
+			f->crect = screen->rect;
+			f->rect = client2frame(f, f->crect);
+			pt.x = (Dx(f->rect) - Dx(f->crect)) / 2;
+			f->rect = rectsubpt(f->rect, pt);
 		}else
-			check_frame_constraints(&f->rect);
+			f->rect = constrain(f->rect);
 	}
+	pt.x = (Dx(f->rect) - Dx(f->crect)) / 2;
+	f->crect = rectaddpt(f->crect, pt);
 }
 
 void
-set_frame_cursor(Frame *f, int x, int y) {
-	XRectangle r;
+set_frame_cursor(Frame *f, Point pt) {
+	Rectangle r;
 	Cursor cur;
 
 	if(f->area->floating
-	&& !ptinrect(x, y, &f->titlebar)
-	&& !ptinrect(x, y, &f->crect)
-	&& !ingrabbox(f, x, y)) {
-	 	r = f->rect;
-	 	r.x = 0;
-	 	r.y = 0;
-	 	cur = cursor_of_quad(quadrant(&r, x, y));
+	&& !ptinrect(pt, f->titlebar)
+	&& !ptinrect(pt, f->crect)) {
+	 	r = rectsubpt(f->rect, f->rect.min);
+	 	cur = cursor_of_quad(quadrant(r, pt));
 		set_cursor(f->client, cur);
 	} else
 		set_cursor(f->client, cursor[CurNormal]);
@@ -170,18 +173,21 @@ frame_to_top(Frame *f) {
 	a = f->area;
 	if(!a->floating || f == a->stack)
 		return False;
+
 	for(tf=&a->stack; *tf; tf=&(*tf)->snext)
 		if(*tf == f) break;
 	*tf = f->snext;
+
 	f->snext = a->stack;
 	a->stack = f;
+
 	update_client_grab(f->client);
 	return True;
 }
 
 void
 swap_frames(Frame *fa, Frame *fb) {
-	XRectangle trect;
+	Rectangle trect;
 	Area *a;
 	Frame **fp_a, **fp_b, *ft;
 
@@ -259,124 +265,60 @@ focus_frame(Frame *f, Bool restack) {
 
 int
 frame_delta_h() {
-	return def.border + labelh(&def.font);
-}
-
-int
-ingrabbox(Frame *f, int x, int y) {
-	int dx, h;
-
-	if(f->area->floating)
-		return 0;
-
-	h = labelh(&def.font) / 3;
-	h = max(h, 4);
-
-	if((f == f->area->frame) && f->area->next)
-		if(x >= f->rect.width - h) {
-			dx = x - (f->rect.width - h);
-			if(y <= dx)
-				return 1;
-		}
-	if((f == f->area->frame) && (f->area != f->view->area->next))
-		if(x <= h && y <= h - x)
-			return 1;
-
-	return 0;
+	return def.border + labelh(def.font);
 }
 
 void
 draw_frame(Frame *f) {
-	BlitzBrush br = { 0 };
+	Rectangle r, fr;
+	CTuple *col;
 	Frame *tf;
 
 	if(f->view != screen->sel)
 		return;
 
-	br.blitz = &blz;
-	br.font = &def.font;
-	br.drawable = pmap;
-	br.gc = f->client->gc;
 	if(f->client == screen->focus)
-		br.color = def.focuscolor;
+		col = &def.focuscolor;
 	else
-		br.color = def.normcolor;
+		col = &def.normcolor;
 	if(!f->area->floating && f->area->mode == Colmax)
 		for(tf = f->area->frame; tf; tf=tf->anext)
 			if(tf->client == screen->focus) {
-				br.color = def.focuscolor;
+				col = &def.focuscolor;
 				break;
 			}
 
-	br.rect = f->rect;
-	br.rect.x = 0;
-	br.rect.y = 0;
-	draw_tile(&br);
+	/* background */
+	fr = rectsubpt(f->rect, f->rect.min);
+	r = fr;
+	fill(screen->ibuf, r, col->bg);
+	border(screen->ibuf, r, 1, col->border);
 
-	br.rect.x += def.font.height - 3;
-	br.rect.width -= br.rect.x;
-	br.rect.height = labelh(&def.font);
-	draw_label(&br, f->client->name);
+	r.max.y = r.min.y + labelh(def.font);
+	border(screen->ibuf, r, 1, col->border);
 
-	br.border = 1;
-	br.rect.width += br.rect.x;
-	br.rect.x = 0;
-	f->titlebar.x = br.rect.x + 3;
-	f->titlebar.height = br.rect.height - 3;
-	f->titlebar.y = br.rect.y + 3;
-	f->titlebar.width = br.rect.width - 6;
-	draw_border(&br);
-	br.rect.height = f->rect.height;
-	if(def.border)
-		draw_border(&br);
+	f->titlebar = insetrect(r, 3);
+	f->titlebar.max.y += 3;
+
+	/* grabbox */
+	r.min = Pt(2, 2);
+	r.max.x = r.min.x + def.font->height - 3;
+	r.max.y -= 2;
+	f->grabbox = r;
 
 	if(f->client->urgent)
-		br.color.bg = br.color.fg;
-	br.rect.x = 2;
-	br.rect.y = 2;
-	br.rect.height = labelh(&def.font) - 4;
-	br.rect.width = def.font.height - 3;
-	f->grabbox = br.rect;
-	draw_tile(&br);
+		fill(screen->ibuf, r, col->fg);
+	border(screen->ibuf, r, 1, col->border);
 
-#if 0
-	if(!f->area->floating) {
-		XSetLineAttributes(blz.dpy, br.gc, 1, LineSolid, CapButt, JoinMiter);
-		h = labelh(&def.font) / 3;
-		h = max(h, 4);
-		if((f == f->area->frame) && f->area->next) {
-			pt[0] = (XPoint){ f->rect.width - h, 0 };
-			pt[1] = (XPoint){ f->rect.width, h };
-			pt[2] = (XPoint){ f->rect.width, 0 };
-			XSetForeground(blz.dpy, br.gc, def.normcolor.bg);
-			XFillPolygon(blz.dpy, br.drawable, br.gc, pt, 3, Convex, CoordModeOrigin);
-			XSetForeground(blz.dpy, br.gc, br.color.border);
-			XDrawLines(blz.dpy, br.drawable, br.gc, pt, 2, CoordModeOrigin);
-		}
-		if((f == f->area->frame) && (f->area != f->view->area->next)) {
-			pt[0] = (XPoint){ h, 0 };
-			pt[1] = (XPoint){ 0, h };
-			pt[2] = (XPoint){ 0, 0 };
-			XSetForeground(blz.dpy, br.gc, def.normcolor.bg);
-			XFillPolygon(blz.dpy, br.drawable, br.gc, pt, 3, Convex, CoordModeOrigin);
-			XSetForeground(blz.dpy, br.gc, br.color.border);
-			XDrawLines(blz.dpy, br.drawable, br.gc, pt, 2, CoordModeOrigin);
-		}
-	}
-#endif
+	r.min.x = r.max.x;
+	r.max.x = fr.max.x;
+	r.min.y = 0;
+	r.max.y = labelh(def.font);
+	drawstring(screen->ibuf, def.font, r, WEST,
+			f->client->name, col->fg);
 
-	XCopyArea(
-		/* display */	blz.dpy,
-		/* src */	pmap,
-		/* dest */	f->client->framewin,
-		/* gc */	f->client->gc,
-		/* x, y */	0, 0,
-		/* width */	f->rect.width,
-		/* height */	f->rect.height,
-		/* dest_x */	0,
-		/* dest_y */	0
-		);
-	XSync(blz.dpy, False);
+	copyimage(f->client->framewin, fr, screen->ibuf, ZP);
+	XSync(display, False);
 }
 
 void
@@ -388,24 +330,26 @@ draw_frames() {
 			draw_frame(c->sel);
 }
 
-void
-check_frame_constraints(XRectangle *rect) {
-	int max_height;
+Rectangle
+constrain(Rectangle r) {
+	Rectangle sr;
 	int barheight;
 
-	barheight = screen->brect.height;
-	max_height = screen->rect.height - barheight;
+	sr = screen->rect;
+	barheight = Dy(screen->brect);
+	sr.max.y -= barheight;
 
-	if(rect->height > max_height)
-		rect->height = max_height;
-	if(rect->width > screen->rect.width)
-		rect->width = screen->rect.width;
-	if(rect->x + barheight > screen->rect.width)
-		rect->x = screen->rect.width - barheight;
-	if(rect->y + barheight > max_height)
-		rect->y = max_height - barheight;
-	if(r_east(rect) < barheight)
-		rect->x = barheight - rect->width;
-	if(r_south(rect) < barheight)
-		rect->y = barheight - rect->height;
+	if(Dx(r) > Dx(sr))
+		r.max.x = r.min.x + Dx(sr);
+	if(Dy(r) > Dy(sr))
+		r.max.y = r.min.y + Dy(sr);
+	if(r.min.x > sr.max.x - barheight)
+		rectsubpt(r, Pt(sr.min.x - sr.max.x + barheight, 0));
+	if(r.min.y > sr.max.y - barheight)
+		rectsubpt(r, Pt(0, sr.min.y - sr.max.y + barheight));
+	if(r.max.x < barheight)
+		rectaddpt(r, Pt(barheight - sr.max.x, 0));
+	if(r.max.y < barheight)
+		rectaddpt(r, Pt(0, barheight - sr.max.y));
+	return r;
 }

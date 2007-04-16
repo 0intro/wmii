@@ -2,6 +2,7 @@
  * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#include <stdio.h>
 #include <string.h>
 #include <util.h>
 #include "dat.h"
@@ -10,12 +11,14 @@
 Bar *free_bars = nil;
 
 Bar *
-create_bar(Bar **b_link, char *name) {
+create_bar(Bar **bp, char *name) {
 	static uint id = 1;
-	Bar **i, *b = bar_of_name(*b_link, name);;
+	Bar *b;
 
+	b = bar_of_name(*bp, name);;
 	if(b)
 		return b;
+
 	if(free_bars) {
 		b = free_bars;
 		free_bars = b->next;
@@ -23,26 +26,28 @@ create_bar(Bar **b_link, char *name) {
 	}
 	else
 		b = emallocz(sizeof(Bar));
+
 	b->id = id++;
 	strncpy(b->name, name, sizeof(b->name));
-	b->brush = screen->bbrush;
-	b->brush.color = def.normcolor;
-	for(i = b_link; *i; i = &(*i)->next)
-		if(strcmp((*i)->name, name) >= 0)
+	b->col = def.normcolor;
+
+	for(; *bp; bp = &(*bp)->next)
+		if(strcmp((*bp)->name, name) >= 0)
 			break;
-	b->next = *i;
-	*i = b;
+	b->next = *bp;
+	*bp = b;
 
 	return b;
 }
 
 void
-destroy_bar(Bar **b_link, Bar *b) {
+destroy_bar(Bar **bp, Bar *b) {
 	Bar **p;
 
-	for(p = b_link; *p; p = &(*p)->next)
+	for(p = bp; *p; p = &(*p)->next)
 		if(*p == b) break;
 	*p = b->next;
+
 	b->next = free_bars;
 	free_bars = b;
 }
@@ -52,11 +57,11 @@ resize_bar(WMScreen *s) {
 	View *v;
 
 	s->brect = s->rect;
-	s->brect.height = labelh(&def.font);
-	s->brect.y = s->rect.height - s->brect.height;
+	s->brect.min.y = s->brect.max.y - labelh(def.font);
 
-	XMoveResizeWindow(blz.dpy, s->barwin, s->brect.x, s->brect.y, s->brect.width, s->brect.height);
-	XSync(blz.dpy, False);
+	reshapewin(s->barwin, s->brect);
+
+	XSync(display, False);
 	draw_bar(s);
 	for(v = view; v; v = v->next)
 		arrange_view(v);
@@ -64,11 +69,13 @@ resize_bar(WMScreen *s) {
 
 void
 draw_bar(WMScreen *s) {
+	Bar *b, *tb, *largest, **pb;
+	Rectangle r;
+	Align align;
 	uint width, tw, nb, size;
 	float shrink;
-	Bar *b, *tb, *largest, **pb;
 
-	draw_tile(&s->bbrush);
+	fill(screen->ibuf, s->brect, def.normcolor.bg);
 	if(!s->bar[BarLeft] && !s->bar[BarRight])
 		goto MapBar;
 
@@ -76,62 +83,67 @@ draw_bar(WMScreen *s) {
 	tw = width = nb = size = 0;
 	for(nb = 0; nb < nelem(s->bar); nb++)
 		for(b = s->bar[nb]; b; b=b->next) {
-			b->brush.rect.x = b->brush.rect.y = 0;
-			b->brush.rect.width = def.font.height & ~1;
+			b->r.min = ZP;
+			b->r.max.y = Dy(s->brect);
+			b->r.max.x = def.font->height & ~1;
 			if(b->text && strlen(b->text))
-				b->brush.rect.width += textwidth(b->brush.font, b->text);
-			b->brush.rect.height = s->brect.height;
-			width += b->brush.rect.width;
+				b->r.max.x += textwidth(def.font, b->text);
+
+			width += Dx(b->r);
 		}
+
 	/* Not enough room. Shrink bars until they all fit */
-	if(width > s->brect.width) {
+	if(width > Dx(s->brect)) {
 		for(nb = 0; nb < nelem(s->bar); nb++)
 			for(b = s->bar[nb]; b; b=b->next) {
 				for(pb = &largest; *pb; pb = &(*pb)->smaller)
-					if((*pb)->brush.rect.width < b->brush.rect.width)
+					if(Dx((*pb)->r) < Dx(b->r))
 						break; 
 				b->smaller = *pb;
 				*pb = b;
 			}
 		for(tb = largest; tb; tb = tb->smaller) {
-			width -= tb->brush.rect.width;
-			tw += tb->brush.rect.width;
-			shrink = (s->brect.width - width) / (float)tw;
+			width -= Dx(tb->r);
+			tw += Dx(tb->r);
+			shrink = (Dx(s->brect) - width) / (float)tw;
 			if(tb->smaller)
-			if(tb->brush.rect.width * shrink >= tb->smaller->brush.rect.width)
-				break;
+				if(Dx(tb->r) * shrink >= Dx(tb->smaller->r))
+					break;
 		}
 		if(tb)
-		for(b = largest; b != tb->smaller; b = b->smaller)
-			b->brush.rect.width = (int)(b->brush.rect.width * shrink);
+			for(b = largest; b != tb->smaller; b = b->smaller)
+				b->r.max.x *= shrink;
 		width += tw * shrink;
 		tb = nil;
 	}
+
 	for(nb = 0; nb < nelem(s->bar); nb++)
 		for(b = s->bar[nb]; b; tb=b, b=b->next) {
 			if(b == s->bar[BarRight]) {
-				b->brush.align = EAST;
-				b->brush.rect.width += (s->brect.width - width);
+				align = EAST;
+				b->r.max.x += Dx(s->brect) - width;
 			}else
-				b->brush.align = CENTER;
+				align = CENTER;
+
 			if(tb)
-				b->brush.rect.x = tb->brush.rect.x + tb->brush.rect.width;
-			draw_label(&b->brush, b->text);
-			draw_border(&b->brush);
+				b->r = rectaddpt(b->r, Pt( tb->r.max.x, 0));
+
+			fill(screen->ibuf, b->r, b->col.bg);
+			drawstring(screen->ibuf, def.font, b->r, align, b->text, b->col.fg);
+			border(screen->ibuf, b->r, 1, b->col.border);
 		}
 MapBar:
-	XCopyArea(blz.dpy, s->bbrush.drawable, s->barwin, s->bbrush.gc, 0, 0,
-			s->brect.width, s->brect.height, 0, 0);
-	XSync(blz.dpy, False);
+	r = rectsubpt(s->brect, s->brect.min);
+	copyimage(s->barwin, r, screen->ibuf, ZP);
+	XSync(display, False);
 }
 
 Bar *
-bar_of_name(Bar *b_link, const char *name) {
-	static char buf[256];
+bar_of_name(Bar *bp, const char *name) {
 	Bar *b;
 
-	strncpy(buf, name, sizeof(buf));
-	for(b = b_link; b; b = b->next)
-		if(!strncmp(b->name, name, sizeof(b->name))) break;
+	for(b = bp; b; b = b->next)
+		if(!strncmp(b->name, name, sizeof(b->name)))
+			break;
 	return b;
 }

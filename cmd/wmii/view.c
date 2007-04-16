@@ -62,6 +62,7 @@ create_view(const char *name) {
 
 	v = emallocz(sizeof(View));
 	v->id = id++;
+
 	strncpy(v->name, name, sizeof(v->name));
 
 	write_event("CreateTag %s\n", v->name);
@@ -86,14 +87,19 @@ destroy_view(View *v) {
 	while((a = v->area)) {
 		v->area = a->next;
 		destroy_area(a);
-	};
+	}
+
 	for(i=&view; *i; i=&(*i)->next)
 		if(*i == v) break;
 	*i = v->next;
+
 	write_event("DestroyTag %s\n", v->name);
+
 	if(v == screen->sel) {
-		for(tv=view; tv && tv->next; tv=tv->next)
+		for(tv=view; tv; tv=tv->next)
 			if(tv->next == *i) break;
+		if(tv == nil)
+			tv = view;
 		if(tv)
 			focus_view(screen, tv);
 	}
@@ -117,7 +123,9 @@ focus_view(WMScreen *s, View *v) {
 	Client *c;
 
 	old = screen->sel;
-	XGrabServer(blz.dpy);
+
+	XGrabServer(display);
+
 	assign_sel_view(v);
 	update_frame_selectors(v);
 	update_divs();
@@ -135,8 +143,9 @@ focus_view(WMScreen *s, View *v) {
 	restack_view(v);
 	focus_area(v->sel);
 	draw_frames();
-	XSync(blz.dpy, False);
-	XUngrabServer(blz.dpy);
+
+	XSync(display, False);
+	XUngrabServer(display);
 	flushevents(EnterWindowMask, False);
 }
 
@@ -146,10 +155,12 @@ select_view(const char *arg) {
 
 	strncpy(buf, arg, sizeof(buf));
 	trim(buf, " \t+/");
-	if(!strlen(buf))
+
+	if(strlen(buf) == 0)
 		return;
-	if(!strncmp(buf, ".", 2) || !strncmp(buf, "..", 3))
+	if(!strcmp(buf, ".") || !strcmp(buf, ".."))
 		return;
+
 	assign_sel_view(get_view(buf));
 	update_views(); /* performs focus_view */
 }
@@ -168,8 +179,8 @@ attach_to_view(View *v, Frame *f) {
 
 void
 restack_view(View *v) {
-	static Window *wins = nil;
-	static uint winssz = 0;
+	static XWindow *wins;
+	static uint winssz;
 	Divide *d;
 	Frame *f;
 	Client *c;
@@ -180,8 +191,6 @@ restack_view(View *v) {
 		return;
 
 	i = 0;
-	n = 0;
-
 	for(c = client; c; c = c->next)
 		i++;
 	if(i == 0)
@@ -195,7 +204,8 @@ restack_view(View *v) {
 		wins = erealloc(wins, sizeof(Window) * winssz);
 	}
 
-	wins[n++] = screen->barwin;
+	n = 0;
+	wins[n++] = screen->barwin->w;
 	for(f = v->area->frame; f; f = f->anext)
 		if(f->client->fullscreen) {
 			n--;
@@ -203,96 +213,110 @@ restack_view(View *v) {
 		}
 
 	for(f=v->area->stack; f; f=f->snext)
-		wins[n++] = f->client->framewin;
+		wins[n++] = f->client->framewin->w;
 
 	for(d = divs; d && d->mapped; d = d->next)
-		wins[n++] = d->w;
+		wins[n++] = d->w->w;
 
 	for(a=v->area->next; a; a=a->next)
 		if(a->frame) {
-			wins[n++] = a->sel->client->framewin;
+			wins[n++] = a->sel->client->framewin->w;
 			for(f=a->frame; f; f=f->anext)
 				if(f != a->sel)
-					wins[n++] = f->client->framewin;
+					wins[n++] = f->client->framewin->w;
 		}
 	if(n)
-		XRestackWindows(blz.dpy, wins, n);
+		XRestackWindows(display, wins, n);
 }
 
 void
-scale_view(View *v, float w) {
+scale_view(View *v, int w) {
 	uint xoff, num_col;
 	uint min_width;
 	Area *a;
-	float scale, dx = 0;
-	int wdiff = 0;
+	float scale, dx;
+	int wdiff;
 
-	min_width = screen->rect.width/NCOL;
+	min_width = Dx(screen->rect)/NCOL;
 
 	if(!v->area->next)
 		return;
 
 	num_col = 0;
-	for(a=v->area->next; a; a=a->next)
-		num_col++, dx += a->rect.width;
+	dx = 0;
+	for(a=v->area->next; a; a=a->next) {
+		num_col++;
+		dx += Dx(a->rect);
+	}
 
-	scale = w / dx;
+	scale = (float)w / dx;
 	xoff = 0;
 	for(a=v->area->next; a; a=a->next) {
-		a->rect.width *= scale;
+		a->rect.min.x = xoff;
+		a->rect.max.x = xoff + Dx(a->rect) * scale;
 		if(!a->next)
-			a->rect.width = w - xoff;
-		xoff += a->rect.width;
+			a->rect.max.x = w;
+		xoff = a->rect.max.x;
 	}
+
 	/* min_width can only be respected when there is enough space;
 	 * the caller should guarantee this */
 	if(num_col * min_width > w)
 		return;
+
 	xoff = 0;
 	for(a=v->area->next, num_col--; a; a=a->next, num_col--) {
-		if(a->rect.width < min_width)
-			a->rect.width = min_width;
-		else if((wdiff = xoff + a->rect.width - w + num_col * min_width) > 0)
-			a->rect.width -= wdiff;
+		a->rect.min.x = xoff;
+	
+		if(Dx(a->rect) < min_width)
+			a->rect.max.x = xoff + min_width;
+		else if((wdiff = xoff + Dx(a->rect) - w + num_col * min_width) > 0)
+			a->rect.max.x -= wdiff;
 		if(!a->next)
-			a->rect.width = w - xoff;
-		xoff += a->rect.width;
+			a->rect.max.x = w;
+
+		xoff = a->rect.max.x;
 	}
 }
 
 void
 arrange_view(View *v) {
-	uint xoff = 0;
+	uint xoff;
 	Area *a;
 
 	if(!v->area->next)
 		return;
-	scale_view(v, screen->rect.width);
+
+	scale_view(v, Dx(screen->rect));
+	xoff = 0;
 	for(a=v->area->next; a; a=a->next) {
-		a->rect.x = xoff;
-		a->rect.y = 0;
-		a->rect.height = screen->rect.height - screen->brect.height;
-		xoff += a->rect.width;
+		a->rect.min.x = xoff;
+		a->rect.min.y = 0;
+		a->rect.max.y = screen->brect.min.y;
+		xoff = a->rect.max.x;
 		arrange_column(a, False);
 	}
 }
 
-XRectangle *
+Rectangle *
 rects_of_view(View *v, uint *num, Frame *ignore) {
-	XRectangle *result;
+	Rectangle *result;
 	Frame *f;
 	int i;
 
 	i = 2;
 	for(f=v->area->frame; f; f=f->anext)
 		i++;
-	result = emallocz(i * sizeof(XRectangle));
+
+	result = emallocz(i * sizeof(Rectangle));
+
 	i = 0;
 	for(f=v->area->frame; f; f=f->anext)
 		if(f != ignore)
 			result[i++] = f->rect;
 	result[i++] = screen->rect;
 	result[i++] = screen->brect;
+
 	*num = i;
 	return result;
 }
@@ -300,40 +324,43 @@ rects_of_view(View *v, uint *num, Frame *ignore) {
 /* XXX: This will need cleanup */
 uchar *
 view_index(View *v) {
-	uint a_i, buf_i, n;
-	int len;
 	Frame *f;
 	Area *a;
+	char *buf;
+	uint i, n;
+	int len;
 
 	len = sizeof(buffer);
-	buf_i = 0;
-	for((a = v->area), (a_i = 0); a && len > 0; (a=a->next), (a_i++)) {
+	buf = buffer;
+	for((a=v->area), (i=0); a && len > 0; (a=a->next), i++) {
 		if(a->floating)
-			n = snprintf(&buffer[buf_i], len, "# ~ %d %d\n",
-					a->rect.width, a->rect.height);
+			n = snprintf(buf, len, "# ~ %d %d\n",
+					Dx(a->rect), Dy(a->rect));
 		else
-			n = snprintf(&buffer[buf_i], len, "# %d %d %d\n",
-					a_i, a->rect.x, a->rect.width);
-		buf_i += n;
+			n = snprintf(buf, len, "# %d %d %d\n",
+					i, a->rect.min.x, Dx(a->rect));
+
+		buf += n;
 		len -= n;
 		for(f=a->frame; f && len > 0; f=f->anext) {
-			XRectangle *r = &f->rect;
+			Rectangle *r = &f->rect;
 			if(a->floating)
-				n = snprintf(&buffer[buf_i], len, "~ 0x%x %d %d %d %d %s\n",
-						(uint)f->client->win,
-						r->x, r->y, r->width, r->height,
+				n = snprintf(buf, len, "~ 0x%x %d %d %d %d %s\n",
+						(uint)f->client->win.w,
+						r->min.x, r->min.y, Dx(*r), Dy(*r),
 						f->client->props);
 			else
-				n = snprintf(&buffer[buf_i], len, "%d 0x%x %d %d %s\n",
-						a_i, (uint)f->client->win, r->y,
-						r->height, f->client->props);
+				n = snprintf(buf, len, "%d 0x%x %d %d %s\n",
+						i, (uint)f->client->win.w,
+						r->min.y, Dy(*r),
+						f->client->props);
 			if(len - n < 0)
 				return (uchar*)buffer;
-			buf_i += n;
+			buf += n;
 			len -= n;
 		}
 	}
-	return (uchar *)buffer;
+	return (uchar*)buffer;
 }
 
 Client *
@@ -345,12 +372,15 @@ client_of_message(View *v, char *message, uint *next) {
 		*next = 4;
 		return view_selclient(v);
 	}
+
 	sscanf(message, "0x%lx %n", &id, next);
 	if(!id)
 		sscanf(message, "%lu %n", &id, next);
 	if(!id)
 		return nil;
-    for(c=client; c && c->win!=id; c=c->next);
+
+	for(c=client; c; c=c->next)
+		if(c->win.w == id) break;
 	return c;
 }
 
@@ -367,10 +397,11 @@ area_of_message(View *v, char *message, uint *next) {
 		*next = 2;
 		return v->area;
 	}
+
 	if(1 != sscanf(message, "%u %n", &i, next) || i == 0)
 		return nil;
-	for(a=v->area; i && a; a=a->next)
-		i--;
+	for(a=v->area; a; a=a->next)
+		if(i-- == 0) break;
 	return a;
 }
 
@@ -463,7 +494,7 @@ newcolw_of_view(View *v, int num) {
 			n = tokenize(toks, 16, buf, '+');
 			if(n > num)
 				if(sscanf(toks[num], "%u", &n) == 1)
-					return screen->rect.width * ((double)n / 100);
+					return Dx(screen->rect) * ((double)n / 100);
 			break;
 		}
 	return 0;

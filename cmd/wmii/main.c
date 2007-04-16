@@ -2,7 +2,6 @@
  * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include <X11/Xatom.h>
 #include <X11/Xproto.h>
 #include <X11/cursorfont.h>
 #include <errno.h>
@@ -38,70 +37,29 @@ static void
 scan_wins() {
 	int i;
 	uint num;
-	Window *wins;
+	XWindow *wins;
 	XWindowAttributes wa;
-	Window d1, d2;
+	XWindow d1, d2;
 
-	if(XQueryTree(blz.dpy, blz.root, &d1, &d2, &wins, &num)) {
+	if(XQueryTree(display, scr.root.w, &d1, &d2, &wins, &num)) {
 		for(i = 0; i < num; i++) {
-			if(!XGetWindowAttributes(blz.dpy, wins[i], &wa))
+			if(!XGetWindowAttributes(display, wins[i], &wa))
 				continue;
-			if(wa.override_redirect || XGetTransientForHint(blz.dpy, wins[i], &d1))
+			if(wa.override_redirect || XGetTransientForHint(display, wins[i], &d1))
 				continue;
 			if(wa.map_state == IsViewable)
 				manage_client(create_client(wins[i], &wa));
 		}
 		for(i = 0; i < num; i++) {
-			if(!XGetWindowAttributes(blz.dpy, wins[i], &wa))
+			if(!XGetWindowAttributes(display, wins[i], &wa))
 				continue;
-			if((XGetTransientForHint(blz.dpy, wins[i], &d1))
+			if((XGetTransientForHint(display, wins[i], &d1))
 			&& (wa.map_state == IsViewable))
 				manage_client(create_client(wins[i], &wa));
 		}
 	}
 	if(wins)
 		XFree(wins);
-}
-
-int
-win_proto(Window w) {
-	Atom *protocols;
-	Atom real;
-	ulong nitems, extra;
-	int i, format, status, protos;
-
-	status = XGetWindowProperty(
-		/* display */	blz.dpy,
-		/* window */	w,
-		/* property */	atom[WMProtocols],
-		/* offset */	0L,
-		/* length */	20L,
-		/* delete */	False,
-		/* req_type */	XA_ATOM,
-		/* type_ret */	&real,
-		/* format_ret */&format,
-		/* nitems_ret */&nitems,
-		/* extra_bytes */&extra,
-		/* prop_return */(uchar**)&protocols
-	);
-
-	if(status != Success || protocols == 0) {
-		return 0;
-	}
-
-	if(nitems == 0) {
-		free(protocols);
-		return 0;
-	}
-
-	protos = 0;
-	for(i = 0; i < nitems; i++) {
-		if(protocols[i] == atom[WMDelete])
-			protos |= WM_PROTOCOL_DELWIN;
-	}
-
-	free(protocols);
-	return protos;
 }
 
 static char*
@@ -186,26 +144,21 @@ init_environment() {
 }
 
 static void
-intern_atom(int ident, char *name) {
-	atom[ident] = XInternAtom(blz.dpy, name, False);
-}
-
-static void
 init_atoms() {
-	intern_atom(WMState, "WM_STATE");
-	intern_atom(WMProtocols, "WM_PROTOCOLS");
-	intern_atom(WMDelete, "WM_DELETE_WINDOW");
-	intern_atom(NetSupported, "_NET_SUPPORTED");
-	intern_atom(NetWMName, "_NET_WM_NAME");
-	intern_atom(TagsAtom, "_WIN_TAGS");
+	atom[WMState] = xatom("WM_STATE");
+	atom[WMProtocols] = xatom("WM_PROTOCOLS");
+	atom[WMDelete] = xatom("WM_DELETE_WINDOW");
+	atom[NetSupported] = xatom("_NET_SUPPORTED");
+	atom[NetWMName] = xatom("_NET_WM_NAME");
+	atom[TagsAtom] = xatom("_WIN_TAGS");
 
-	XChangeProperty(blz.dpy, blz.root, atom[NetSupported], XA_ATOM, 32,
+	XChangeProperty(display, scr.root.w, atom[NetSupported], XA_ATOM, 32,
 			PropModeReplace, (uchar *)&atom[NetSupported], 2);
 }
 
 static void
 create_cursor(int ident, uint shape) {
-	cursor[ident] = XCreateFontCursor(blz.dpy, shape);
+	cursor[ident] = XCreateFontCursor(display, shape);
 }
 
 static void
@@ -222,23 +175,24 @@ init_cursors() {
 	create_cursor(CurDHArrow, XC_sb_h_double_arrow);
 	create_cursor(CurInput, XC_xterm);
 
-	XAllocNamedColor(blz.dpy, DefaultColormap(blz.dpy, blz.screen),
+	XAllocNamedColor(display, scr.colormap,
 			"black", &black,
 			&dummy);
-	pix = XCreateBitmapFromData(blz.dpy, blz.root,
+	pix = XCreateBitmapFromData(
+			display, scr.root.w,
 			(char[]){0}, 1, 1);
 
-	cursor[CurInvisible] = XCreatePixmapCursor(blz.dpy,
+	cursor[CurInvisible] = XCreatePixmapCursor(display,
 			pix, pix,
 			&black, &black,
 			0, 0);
 
-	XFreePixmap(blz.dpy, pix);
+	XFreePixmap(display, pix);
 }
 
 static void
 init_screen(WMScreen *screen) {
-	Window w;
+	XWindow w;
 	int ret;
 	unsigned mask;
 	XGCValues gcv;
@@ -248,7 +202,10 @@ init_screen(WMScreen *screen) {
 	gcv.foreground = def.normcolor.bg;
 	gcv.plane_mask = AllPlanes;
 	gcv.graphics_exposures = False;
-	xorgc = XCreateGC(blz.dpy, blz.root,
+
+	xor.type = WImage;
+	xor.image = scr.root.w;
+	xor.gc = XCreateGC(display, scr.root.w,
 			  GCForeground
 			| GCGraphicsExposures
 			| GCFunction
@@ -256,12 +213,10 @@ init_screen(WMScreen *screen) {
 			| GCPlaneMask,
 			&gcv);
 
-	screen->rect.x = screen->rect.y = 0;
-	screen->rect.width = DisplayWidth(blz.dpy, blz.screen);
-	screen->rect.height = DisplayHeight(blz.dpy, blz.screen);
-	def.snap = screen->rect.height / 63;
+	screen->rect = scr.rect;
+	def.snap = Dy(scr.rect) / 63;
 
-	sel_screen = XQueryPointer(blz.dpy, blz.root,
+	sel_screen = XQueryPointer(display, scr.root.w,
 			&w, &w,
 			&ret, &ret, &ret, &ret,
 			&mask);
@@ -299,16 +254,19 @@ wmii_error_handler(Display *dpy, XErrorEvent *error) {
 
 	fprintf(stderr, "%s: fatal error: Xrequest code=%d, Xerror code=%d\n",
 			argv0, error->request_code, error->error_code);
-	return x_error_handler(blz.dpy, error); /* calls exit() */
+	return x_error_handler(display, error); /* calls exit() */
 }
 
 static void
 cleanup() {
 	Client *c;
 
-	for(c=client; c; c=c->next)
-		reparent_client(c, blz.root, c->sel->rect.x, c->sel->rect.y);
-	XSync(blz.dpy, False);
+	for(c=client; c; c=c->next) {
+		reparent_client(c, &scr.root, c->sel->rect.min);
+		if(c->sel->view != screen->sel)
+			unmap_client(c, IconicState);
+	}
+	XSync(display, False);
 }
 
 static void
@@ -341,18 +299,18 @@ init_traps() {
 		break; /* not reached */
 	case 0:
 		close(fd[1]);
-		close(ConnectionNumber(blz.dpy));
+		close(ConnectionNumber(display));
 		setsid();
 
-		blz.dpy = XOpenDisplay(0);
-		if(!blz.dpy)
+		display = XOpenDisplay(0);
+		if(!display)
 			fatal("Can't open display");
 
 		/* Wait for parent to exit */
 		read(fd[0], buf, 1);
 
-		XSetInputFocus(blz.dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
-		XCloseDisplay(blz.dpy);
+		XSetInputFocus(display, PointerRoot, RevertToPointerRoot, CurrentTime);
+		XCloseDisplay(display);
 		exit(0);
 	default:
 		break;
@@ -389,7 +347,7 @@ spawn_command(const char *cmd) {
 			if(setsid() == -1)
 				fatal("Can't setsid:");
 			close(sock);
-			close(ConnectionNumber(blz.dpy));
+			close(ConnectionNumber(display));
 
 			shell = passwd->pw_shell;
 			if(shell[0] != '/')
@@ -424,7 +382,7 @@ int
 main(int argc, char *argv[]) {
 	char *wmiirc;
 	WMScreen *s;
-	XSetWindowAttributes wa;
+	WinAttr wa;
 	int i;
 
 	wmiirc = "wmiistartrc";
@@ -453,16 +411,12 @@ main(int argc, char *argv[]) {
 	setlocale(LC_CTYPE, "");
 	starting = True;
 
-	blz.dpy = XOpenDisplay(0);
-	if(!blz.dpy)
-		fatal("Can't open display");
-	blz.screen = DefaultScreen(blz.dpy);
-	blz.root = RootWindow(blz.dpy, blz.screen);
+	initdisplay();
 
 	check_other_wm = True;
 	x_error_handler = XSetErrorHandler(wmii_error_handler);
-	XSelectInput(blz.dpy, blz.root, SubstructureRedirectMask | EnterWindowMask);
-	XSync(blz.dpy, False);
+	XSelectInput(display, scr.root.w, SubstructureRedirectMask | EnterWindowMask);
+	XSync(display, False);
 	check_other_wm = False;
 
 	passwd = getpwuid(getuid());
@@ -478,50 +432,47 @@ main(int argc, char *argv[]) {
 	if(wmiirc)
 		spawn_command(wmiirc);
 
+	init_traps();
+	init_atoms();
+	init_cursors();
+	init_lock_keys();
+
 	ixp_listen(&srv, sock, &p9srv, check_9pcon, nil);
-	ixp_listen(&srv, ConnectionNumber(blz.dpy), nil, check_x_event, nil);
+	ixp_listen(&srv, ConnectionNumber(display), nil, check_x_event, nil);
 
 	view = nil;
 	client = nil;
 	key = nil;
 
-	def.font.fontstr = estrdup(BLITZ_FONT);
+	def.font = loadfont(FONT);
 	def.border = 1;
 	def.colmode = Coldefault;
 
 	def.mod = Mod1Mask;
 	strncpy(def.grabmod, "Mod1", sizeof(def.grabmod));
 
-	strncpy(def.focuscolor.colstr, BLITZ_FOCUSCOLORS, sizeof(def.focuscolor.colstr));
-	strncpy(def.normcolor.colstr, BLITZ_NORMCOLORS, sizeof(def.normcolor.colstr));
-	loadcolor(&blz, &def.focuscolor);
-	loadcolor(&blz, &def.normcolor);
-
-	init_traps();
-	init_atoms();
-	init_cursors();
-	loadfont(&blz, &def.font);
-	init_lock_keys();
+	loadcolor(&def.focuscolor, FOCUSCOLORS);
+	loadcolor(&def.normcolor, NORMCOLORS);
 
 	num_screens = 1;
 	screens = emallocz(num_screens * sizeof(*screens));
+	screen = &screens[0];
 	for(i = 0; i < num_screens; i++) {
 		s = &screens[i];
 		init_screen(s);
-		pmap = XCreatePixmap(
-			/* display */	blz.dpy,
-			/* drawable */	blz.root,
-			/* width */	s->rect.width,
-			/* height */	s->rect.height,
-			/* depth */	DefaultDepth(blz.dpy, blz.screen)
-			);
+
+		s->ibuf = allocimage(Dx(s->rect), Dy(s->rect), scr.depth);
+
 		wa.event_mask = 
 			  SubstructureRedirectMask
 			| EnterWindowMask
 			| LeaveWindowMask
 			| FocusChangeMask;
 		wa.cursor = cursor[CurNormal];
-		XChangeWindowAttributes(blz.dpy, blz.root, CWEventMask | CWCursor, &wa);
+		setwinattr(&scr.root, &wa,
+				  CWEventMask
+				| CWCursor);
+
 		wa.override_redirect = 1;
 		wa.background_pixmap = ParentRelative;
 		wa.event_mask =
@@ -530,40 +481,23 @@ main(int argc, char *argv[]) {
 			| FocusChangeMask
 			| SubstructureRedirectMask
 			| SubstructureNotifyMask;
+
 		s->brect = s->rect;
-		s->brect.height = labelh(&def.font);
-		s->brect.y = s->rect.height - s->brect.height;
-		s->barwin = XCreateWindow(
-			/* display */	blz.dpy,
-			/* parent */	RootWindow(blz.dpy, blz.screen),
-			/* x */		s->brect.x,
-			/* y */		s->brect.y,
-			/* width */	s->brect.width,
-			/* height */	s->brect.height,
-			/*border_width*/0,
-			/* depth */	DefaultDepth(blz.dpy, blz.screen),
-			/* class */	CopyFromParent,
-			/* visual */	DefaultVisual(blz.dpy, blz.screen),
-			/* valuemask */	CWOverrideRedirect | CWBackPixmap | CWEventMask,
-			/* attrubutes */&wa
-			);
-		XSync(blz.dpy, False);
-		s->bbrush.blitz = &blz;
-		s->bbrush.gc = XCreateGC(blz.dpy, s->barwin, 0, 0);
-		s->bbrush.drawable = pmap;
-		s->bbrush.rect = s->brect;
-		s->bbrush.rect.x = 0;
-		s->bbrush.rect.y = 0;
-		s->bbrush.color = def.normcolor;
-		s->bbrush.font = &def.font;
-		s->bbrush.border = 1;
+		s->brect.min.y = s->brect.max.y - labelh(def.font);
+
+		s->barwin = createwindow(&scr.root, s->brect, scr.depth, InputOutput, &wa,
+				  CWOverrideRedirect
+				| CWBackPixmap
+				| CWEventMask);
+
+		XSync(display, False);
 		draw_bar(s);
-		XMapRaised(blz.dpy, s->barwin);
+		XMapRaised(display, s->barwin->w);
 	}
 
 	screen = &screens[0];
 	screen->focus = nil;
-	XSetInputFocus(blz.dpy, screen->barwin, RevertToParent, CurrentTime);
+	XSetInputFocus(display, screen->barwin->w, RevertToParent, CurrentTime);
 
 	scan_wins();
 	starting = False;
@@ -577,7 +511,7 @@ main(int argc, char *argv[]) {
 		fprintf(stderr, "%s: error: %s\n", argv0, errstr);
 
 	cleanup();
-	XCloseDisplay(blz.dpy);
+	XCloseDisplay(display);
 	ixp_server_close(&srv);
 	close(sleeperfd);
 
