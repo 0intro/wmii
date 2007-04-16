@@ -10,9 +10,8 @@
 #include "dat.h"
 #include "fns.h"
 
-int divw, divh;
-GC divgc;
-GC maskgc;
+static Image *divimg, *divmask;
+static CTuple divc;
 
 char *modes[] = {
 	[Coldefault] =	"default",
@@ -37,43 +36,6 @@ str2colmode(const char *str) {
 		if(!strcasecmp(str, modes[i]))
 			return i;
 	return -1;
-}
-
-static void
-draw_pmap(Image *img, ulong cbg, ulong cborder) {
-	Point pt[6];
-
-	pt[0] = Pt(0, 0);
-	pt[1] = Pt(divw/2 - 1, divw/2 - 1);
-
-	pt[2] = Pt(pt[1].x, divh);
-	pt[3] = Pt(divw/2, pt[2].y);
-
-	pt[4] = Pt(pt[3].x, divw/2 - 1);
-	pt[5] = Pt(divw - 1, 0);
-
-	fillpoly(img, pt, nelem(pt), cbg);
-	drawpoly(img, pt, nelem(pt), CapNotLast, 1, cborder);
-}
-
-void
-update_dividers() {
-	if(divimg) {
-		freeimage(divimg);
-		freeimage(divmask);
-	}
-
-	divw = 2 * (labelh(def.font) / 3);
-	divw = max(divw, 10);
-	divh = Dy(screen->rect);
-
-	divimg = allocimage(divw, divh, scr.depth);
-	divmask = allocimage(divw, divh, 1);
-
-	fill(divmask, divmask->r, 0);
-
-	draw_pmap(divimg, def.normcolor.bg, def.normcolor.border);
-	draw_pmap(divmask, 1, 1);
 }
 
 static Divide*
@@ -117,11 +79,53 @@ setdiv(Divide *d, int x) {
 	Rectangle r;
 
 	d->x = x;
-	r = rectaddpt(divimg->r, Pt(x - divw/2, 0));
+	r = rectaddpt(divimg->r, Pt(x - Dx(divimg->r)/2, 0));
 	r.max.y = screen->brect.min.y;
 
 	reshapewin(d->w, r);
 	map_div(d);
+}
+
+static void
+draw_img(Image *img, ulong cbg, ulong cborder) {
+	Point pt[6];
+
+	pt[0] = Pt(0, 0);
+	pt[1] = Pt(Dx(img->r)/2 - 1, Dx(img->r)/2 - 1);
+
+	pt[2] = Pt(pt[1].x, Dy(img->r));
+	pt[3] = Pt(Dx(img->r)/2, pt[2].y);
+
+	pt[4] = Pt(pt[3].x, Dx(img->r)/2 - 1);
+	pt[5] = Pt(Dx(img->r) - 1, 0);
+
+	fillpoly(img, pt, nelem(pt), cbg);
+	drawpoly(img, pt, nelem(pt), CapNotLast, 1, cborder);
+}
+
+void
+update_imgs() {
+	int w, h;
+
+	w = 2 * (labelh(def.font) / 3);
+	w = max(w, 10);
+	h = Dy(screen->rect);
+
+	if(divimg) {
+		if(w == Dx(divimg->r) && h == Dy(divimg->r)
+		&& !memcmp(&divc, &def.normcolor, sizeof(divc)))
+			return;
+		freeimage(divimg);
+		freeimage(divmask);
+	}
+
+	divimg = allocimage(w, h, scr.depth);
+	divmask = allocimage(w, h, 1);
+	divc = def.normcolor;
+
+	fill(divmask, divmask->r, 0);
+	draw_img(divmask, 1, 1);
+	draw_img(divimg, divc.bg, divc.border);
 }
 
 void
@@ -130,7 +134,7 @@ update_divs() {
 	Area *a;
 	View *v;
 
-	update_dividers();
+	update_imgs();
 
 	v = screen->sel;
 	dp = &divs;

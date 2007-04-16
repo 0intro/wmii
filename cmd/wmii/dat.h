@@ -224,7 +224,6 @@ uint num_lock_mask;
 Bool sel_screen;
 
 Image xor;
-Image *divimg, *divmask;
 
 Atom atom[AtomLast];
 Cursor cursor[CurLast];

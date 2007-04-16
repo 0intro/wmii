@@ -55,7 +55,6 @@ void apply_tags(Client*, const char*);
 
 /* column.c */
 Divide *win2div(XWindow);
-void update_dividers();
 void update_divs();
 void draw_div(Divide*);
 void arrange_column(Area*, Bool dirty);
