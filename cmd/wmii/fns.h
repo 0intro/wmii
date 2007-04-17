@@ -182,3 +182,4 @@ uint textwidth_l(Font *font, char *text, uint len);
 uint textwidth(Font *font, char *text);
 uint labelh(Font *font);
 Atom xatom(char *name);
+int grabpointer(Window *w, Window *confine, Cursor cur, int mask);

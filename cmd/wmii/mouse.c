@@ -276,6 +276,13 @@ warppointer(int x, int y) {
 		/* target */	x, y);
 }
 
+void
+translate(Window *src, Window *dst, int sx, int sy, int *dx, int *dy) {
+	XWindow w;
+
+	XTranslateCoordinates(display, src->w, dst->w, sx, sy, dx, dy, &w);
+}
+
 static void
 do_managed_move(Client *c) {
 	Rectangle frect, ofrect;
@@ -287,10 +294,7 @@ do_managed_move(Client *c) {
 	f = c->sel;
 
 	XSync(display, False);
-	if(XGrabPointer(display, c->framewin->w, False,
-			MouseMask, GrabModeAsync, GrabModeAsync,
-			None, cursor[CurMove], CurrentTime
-			) != GrabSuccess)
+	if(!grabpointer(c->framewin, nil, cursor[CurMove], MouseMask))
 		return;
 	XGrabServer(display);
 
@@ -301,15 +305,11 @@ do_managed_move(Client *c) {
 	for(;;) {
 		XMaskEvent(display, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
-		case ButtonRelease:
-			xorrect(frect);
-
-			find_droppoint(f, x, y, &frect, True);
-
-			XUngrabServer(display);
-			XUngrabPointer(display, CurrentTime);
-			XSync(display, False);
-			return;
+		default:
+			break;
+		case Expose:
+			dispatch_event(&ev);
+			break;
 		case MotionNotify:
 			ofrect = frect;
 			x = ev.xmotion.x_root;
@@ -322,10 +322,15 @@ do_managed_move(Client *c) {
 				xorrect(frect);
 			}
 			break;
-		case Expose:
-			dispatch_event(&ev);
-			break;
-		default: break;
+		case ButtonRelease:
+			xorrect(frect);
+
+			find_droppoint(f, x, y, &frect, True);
+
+			XUngrabServer(display);
+			XUngrabPointer(display, CurrentTime);
+			XSync(display, False);
+			return;
 		}
 	}
 }
@@ -355,12 +360,11 @@ mouse_resizecolframe(Frame *f, Align align) {
 	}
 	for(fp = a->frame; fp; fp = fp->anext)
 		if(fp->anext == f) break;
-
 	if(align&EAST)
 		d = d->next;
 
-	minw = Dx(screen->rect)/NCOL;
-	minh = frame_delta_h() + labelh(def.font);
+	if(!grabpointer(&scr.root, cwin, cursor[CurSizing], MouseMask))
+		return;
 
 	if(align&NORTH) {
 		r.min.y = (fp ? fp->rect.min.y : screen->rect.min.y);
@@ -369,9 +373,6 @@ mouse_resizecolframe(Frame *f, Align align) {
 		r.min.y = f->rect.min.y;
 		r.max.y = (f->anext ? f->anext->rect.max.y : a->rect.max.y);
 	}
-	r.min.y += minh;
-	r.max.y -= minh;
-	
 	if(align&WEST) {
 		r.min.x = (ap ? ap->rect.min.x : screen->rect.min.x);
 		r.max.x = a->rect.max.x;
@@ -379,8 +380,12 @@ mouse_resizecolframe(Frame *f, Align align) {
 		r.min.x = a->rect.min.x;
 		r.max.x = (a->next ? a->next->rect.max.x : screen->rect.max.x);
 	}
+	minw = Dx(screen->rect)/NCOL;
+	minh = frame_delta_h() + labelh(def.font);
 	r.min.x += minw;
 	r.max.x -= minw;
+	r.min.y += minh;
+	r.max.y -= minh;
 
 	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
 	mapwin(cwin);
@@ -391,18 +396,8 @@ mouse_resizecolframe(Frame *f, Align align) {
 	else
 		r.min.y = r.max.y - 1;
 	r.max.y = r.min.y + 2;
-	hwin = gethsep(r);
 
-	if(XGrabPointer(
-		display, scr.root.w,
-		/* owner_events*/	False,
-		/* event_mask */	MouseMask,
-		/* kbd, mouse */	GrabModeAsync, GrabModeAsync,
-		/* confine_to */		cwin->w,
-		/* cursor */		cursor[CurSizing],
-		/* time */		CurrentTime
-		) != GrabSuccess)
-		goto done;
+	hwin = gethsep(r);
 	
 	x = ((align&WEST) ? f->rect.min.x : f->rect.max.x);
 	y = ((align&NORTH) ? f->rect.min.y : f->rect.max.y);
@@ -411,6 +406,25 @@ mouse_resizecolframe(Frame *f, Align align) {
 	for(;;) {
 		XMaskEvent(display, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
+		default:
+			break;
+		case Expose:
+			dispatch_event(&ev);
+			break;
+		case MotionNotify:
+			x = ev.xmotion.x_root;
+			y = ev.xmotion.y_root;
+
+			if(align&WEST)
+				r.min.x = x;
+			else
+				r.max.x = x;
+			r.min.y = ((align&SOUTH) ? y : y-1);
+			r.max.y = r.min.y+2;
+
+			setdiv(d, x);
+			reshapewin(hwin, r);
+			break;
 		case ButtonRelease:
 			if(align&WEST)
 				r.min.x = x;
@@ -434,31 +448,11 @@ mouse_resizecolframe(Frame *f, Align align) {
 			else
 				y = f->rect.max.y - 2;
 			warppointer(x, y);
-
-			XUngrabPointer(display, CurrentTime);
-			XSync(display, False);
 			goto done;
-		case MotionNotify:
-			x = ev.xmotion.x_root;
-			y = ev.xmotion.y_root;
-
-			if(align&WEST)
-				r.min.x = x;
-			else
-				r.max.x = x;
-			r.min.y = ((align&SOUTH) ? y : y-1);
-			r.max.y = r.min.y+2;
-
-			setdiv(d, x);
-			reshapewin(hwin, r);
-			break;
-		case Expose:
-			dispatch_event(&ev);
-			break;
-		default: break;
 		}
 	}
 done:
+	XUngrabPointer(display, CurrentTime);
 	destroywindow(cwin);
 	destroywindow(hwin);
 }
@@ -471,8 +465,9 @@ mouse_resizecol(Divide *d) {
 	Divide *dp;
 	View *v;
 	Area *a;
+	Rectangle r;
 	uint minw;
-	int x, y, x2;
+	int x, y;
 
 	v = screen->sel;
 
@@ -483,101 +478,76 @@ mouse_resizecol(Divide *d) {
 	if(a == nil || a->next == nil)
 		return;
 
-	minw = Dx(screen->rect)/NCOL;
+	if(!grabpointer(&scr.root, cwin, cursor[CurInvisible], MouseMask))
+		return;
 
 	querypointer(&scr.root, &x, &y);
-	x = a->rect.min.x + minw;
-	x2 = a->next->rect.max.x - minw;
 
-	cwin = createwindow(&scr.root, Rect(x, y, x2, y+1), 0, InputOnly, &wa, 0);
+	minw = Dx(screen->rect)/NCOL;
+	r.min.x = a->rect.min.x + minw;
+	r.max.x = a->next->rect.max.x - minw;
+	r.min.y = y;
+	r.max.y = y+1;
+	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
 	mapwin(cwin);
 
-	if(XGrabPointer(
-		display, scr.root.w,
-		/* owner_events*/	False,
-		/* event_mask */	MouseMask,
-		/* kbd, mouse */	GrabModeAsync, GrabModeAsync,
-		/* confine_to */		cwin->w,
-		/* cursor */		cursor[CurInvisible],
-		/* time */		CurrentTime
-		) != GrabSuccess)
-		goto done;
-
-	querypointer(&scr.root, &x, &y);
 	for(;;) {
 		XMaskEvent(display, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
-		case ButtonRelease:
-			resize_column(a, x - a->rect.min.x);
-
-			XUngrabPointer(display, CurrentTime);
-			XSync(display, False);
-			goto done;
-		case MotionNotify:
-			x = ev.xmotion.x_root;
-			setdiv(d, x);
+		default:
 			break;
 		case Expose:
 			dispatch_event(&ev);
 			break;
-		default: break;
+		case MotionNotify:
+			x = ev.xmotion.x_root;
+			setdiv(d, x);
+			break;
+		case ButtonRelease:
+			resize_column(a, x - a->rect.min.x);
+			goto done;
 		}
 	}
 done:
+	XUngrabPointer(display, CurrentTime);
 	destroywindow(cwin);
 }
 
 void
 do_mouse_resize(Client *c, Bool opaque, Align align) {
-	Align grav;
-	XWindow dummy;
-	Cursor cur;
 	XEvent ev;
-	Rectangle *rects, ofrect, frect, origin;
-	int snap, dx, dy, pt_x, pt_y, hr_x, hr_y;
+	Rectangle *rects;
+	Rectangle ofrect, frect, origin;
+	Align grav;
+	Cursor cur;
+	int dx, dy, pt_x, pt_y, hr_x, hr_y;
+	float rx, ry, hrx, hry;
 	uint num;
 	Bool floating;
-	float rx, ry, hrx, hry;
 	Frame *f;
 
 	f = c->sel;
-	floating = f->area->floating;
-	origin = frect = f->rect;
-	cur = cursor_of_quad(align);
-	if(floating) {
-		rects = rects_of_view(f->area->view, &num, (opaque ? c->frame : nil));
-		snap = def.snap;
-	}else{
-		mouse_resizecolframe(f, align);
+
+	if(!f->area->floating) {
+		if(align==CENTER)
+			do_managed_move(c);
+		else
+			mouse_resizecolframe(f, align);
 		return;
-		rects = nil;
-		snap = 0;
 	}
 
-	if(align == CENTER) {
-		if(!opaque)
-			cur = cursor[CurInvisible];
-		if(!floating) {
-			do_managed_move(c);
-			return;
-		}
-	}
+	origin = frect = f->rect;
+	rects = rects_of_view(f->area->view, &num, (opaque ? c->frame : nil));
+
+	cur = cursor_of_quad(align);
+	if((align==CENTER) && !opaque)
+		cur = cursor[CurInvisible];
 
 	querypointer(c->framewin, &pt_x, &pt_y);
 	rx = (float)pt_x / Dx(frect);
 	ry = (float)pt_y /Dy(frect);
 
-	if(XGrabPointer(
-		/* display */		display,
-		/* window */		c->framewin->w,
-		/* owner_events */	False,
-		/* event_mask */	MouseMask,
-		/* pointer_mode */	GrabModeAsync,
-		/* keyboard_mode */	GrabModeAsync,
-		/* confine_to */	None,
-		/* cursor */		cur,
-		/* time */		CurrentTime
-		) != GrabSuccess)
+	if(!grabpointer(c->framewin, nil, cur, MouseMask))
 		return;
 
 	querypointer(&scr.root, &pt_x, &pt_y);
@@ -590,12 +560,7 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 		if(align&EAST) dx += hr_x;
 		if(align&WEST) dx -= hr_x;
 
-		XTranslateCoordinates(display,
-			/* src, dst */	c->framewin->w, scr.root.w,
-			/* src x,y */	dx, dy,
-			/* dest x,y */	&pt_x, &pt_y,
-			/* child */	&dummy
-			);
+		translate(c->framewin, &scr.root, dx, dy, &pt_x, &pt_y);
 		warppointer(pt_x, pt_y);
 	}
 	else if(f->client->fullscreen) {
@@ -623,35 +588,11 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 	for(;;) {
 		XMaskEvent(display, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
-		case ButtonRelease:
-			if(!opaque)
-				xorborder(frect);
-
-			if(!floating)
-				resize_colframe(f, &frect);
-			else
-				resize_client(c, &frect);
-
-			if(!opaque) {
-				XTranslateCoordinates(display,
-					/* src, dst */	c->framewin->w, scr.root.w,
-					/* src_x */	(Dx(frect) * rx),
-					/* src_y */	(Dy(frect) * ry),
-					/* dest x,y */	&pt_x, &pt_y,
-					/* child */	&dummy
-					);
-				if(pt_y > screen->brect.min.y)
-					pt_y = screen->brect.min.y - 1;
-				warppointer(pt_x, pt_y);
-				XUngrabServer(display);
-			}else
-				map_client(c);
-
-			free(rects);
-
-			XUngrabPointer(display, CurrentTime);
-			XSync(display, False);
-			return;
+		default:
+			break;
+		case Expose:
+			dispatch_event(&ev);
+			break;
 		case MotionNotify:
 			ofrect = frect;
 			dx = ev.xmotion.x_root;
@@ -671,10 +612,7 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 			origin = constrain(origin);
 			frect = origin;
 
-			if(floating)
-				grav = snap_rect(rects, num, &frect, &align, snap);
-			else
-				grav = align^CENTER;
+			grav = snap_rect(rects, num, &frect, &align, def.snap);
 
 			apply_sizehints(c, &frect, floating, True, grav);
 			frect = constrain(frect);
@@ -687,11 +625,26 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 				xorborder(frect);
 			}
 			break;
-		case Expose:
-			dispatch_event(&ev);
-			break;
-		default:
-			break;
+		case ButtonRelease:
+			if(!opaque)
+				xorborder(frect);
+
+			resize_client(c, &frect);
+
+			if(!opaque) {
+				translate(c->framewin, &scr.root,
+					(Dx(frect)*rx), (Dy(frect)*ry),
+					&pt_x, &pt_y);
+				if(pt_y > screen->brect.min.y)
+					pt_y = screen->brect.min.y - 1;
+				warppointer(pt_x, pt_y);
+				XUngrabServer(display);
+			}else
+				map_client(c);
+
+			free(rects);
+			XUngrabPointer(display, CurrentTime);
+			return;
 		}
 	}
 }
