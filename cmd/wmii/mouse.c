@@ -156,18 +156,20 @@ static void
 hplace(Framewin *fw, Point pt) {
 	Area *a;
 	View *v;
-
+	int minw;
+	
+	minw = Dx(screen->rect)/NCOL;
 	v = screen->sel;
 
 	for(a = v->area->next; a->next; a = a->next)
 		if(pt.x < a->rect.max.x)
 			break;
 
-	if(pt.x - a->rect.min.x < Dx(a->rect)/2)
+	if(abs(pt.x - a->rect.min.x) < minw/2)
 		pt.x = a->rect.min.x;
-	else
+	else if(abs(pt.x - a->rect.max.x) < minw/2)
 		pt.x = a->rect.max.x;
-	
+
 	pt.y = a->rect.min.y;
 	frameadjust(fw, pt, OVert, Dy(a->rect));	
 }

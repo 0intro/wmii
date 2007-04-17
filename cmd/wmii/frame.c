@@ -42,6 +42,8 @@ remove_frame(Frame *f) {
 		f->aprev->anext = f->anext;
 	if(f->anext)
 		f->anext->aprev = f->aprev;
+	if(f == a->frame)
+		a->frame = f->anext;
 
 	if(a->floating) {
 		if(f->sprev)
@@ -49,6 +51,7 @@ remove_frame(Frame *f) {
 		if(f->snext)
 			f->snext->sprev = f->sprev;
 	}
+	f->anext = f->aprev = f->snext = f->sprev = nil;
 }
 
 void
@@ -64,7 +67,6 @@ insert_frame(Frame *pos, Frame *f, Bool before) {
 		f->aprev = pos;
 		f->anext = pos->anext;
 	}else {
-		f->aprev = nil;
 		f->anext = f->area->frame;
 		f->area->frame = f;
 	}

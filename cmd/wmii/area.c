@@ -118,7 +118,6 @@ destroy_area(Area *a) {
 		ta = a->next;
 
 	assert(a->prev || a->next == nil);
-
 	if(a->prev)
 		a->prev->next = a->next;
 	if(a->next)
@@ -424,53 +423,58 @@ focus_area(Area *a) {
 char *
 select_area(Area *a, char *arg) {
 	static char Ebadvalue[] = "bad value";
-	Area *new;
 	uint i;
 	Frame *p, *f;
+	Area *ap;
 	View *v;
 
 	v = a->view;
 	f = a->sel;
-	if(!strncmp(arg, "toggle", 7)) {
+	if(!strcmp(arg, "toggle")) {
 		if(!a->floating)
-			new = v->area;
+			a = v->area;
 		else if(v->revert)
-			new = v->revert;
+			a = v->revert;
 		else
-			new = v->area->next;
-	} else if(!strncmp(arg, "left", 5)) {
+			a = v->area->next;
+	}
+	else if(!strcmp(arg, "left")) {
 		if(a->floating)
 			return Ebadvalue;
-		new = a->prev;
-	} else if(!strncmp(arg, "right", 5)) {
+		for(ap=v->area->next; ap->next; ap=ap->next)
+			if(ap->next == a) break;
+	} 
+	else if(!strcmp(arg, "right")) {
 		if(a->floating)
 			return Ebadvalue;
-		new = a->next;
-		if(new == nil)
-			new = v->area->next;
+		ap = a->next;
+		if(ap == nil)
+			ap = v->area->next;
 	}
-	else if(!strncmp(arg, "up", 3)) {
+	else if(!strcmp(arg, "up")) {
 		if(!f)
 			return Ebadvalue;
-		p = f->aprev;
+		for(p = f->area->frame; p->anext; p = p->anext)
+			if(p->anext == f) break;
 		goto focus_frame;
 	}
-	else if(!strncmp(arg, "down", 5)) {
+	else if(!strcmp(arg, "down")) {
 		if(!f)
 			return Ebadvalue;
-		p = f->anext ? f->anext : a->frame;
+		p = f->anext;
+		if(p == nil)
+			p = a->frame;
 		goto focus_frame;
 	}
-	else if(!strncmp(arg, "~", 2)) {
-		new = v->area;
-	}
+	else if(!strcmp(arg, "~"))
+		ap = v->area;
 	else {
 		if(sscanf(arg, "%u", &i) != 1 || i == 0)
 			return Ebadvalue;
-		for(new=v->area->next; new->next; new=new->next)
+		for(ap=v->area->next; ap; ap=ap->next)
 			if(!--i) break;
 	}
-	focus_area(new);
+	focus_area(ap);
 	return nil;
 
 focus_frame:
