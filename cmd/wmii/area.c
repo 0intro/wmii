@@ -25,19 +25,15 @@ create_area(View *v, Area *pos, uint w) {
 	static ushort id = 1;
 	uint areanum, colnum, i;
 	uint minwidth;
-	Area *a, **p;
+	Area *a;
 
 	minwidth = Dx(screen->rect)/NCOL;
 
-	p = &v->area;
-	if(pos)
-		p = &pos->next;
-
-	i = areanum = 0;
-	a = v->area;
-	for(; a != *p; a = a->next)
-		areanum++, i++;
-	for(; a; a = a->next)
+	i = 0;
+	for(a = v->area; a != pos; a = a->next)
+		 i++;
+	areanum = 0;
+	for(a = v->area; a; a = a->next)
 		areanum++;
 
 	colnum = max((areanum - 1), 0);
@@ -47,17 +43,19 @@ create_area(View *v, Area *pos, uint w) {
 			if (w == 0)
 				w = Dx(screen->rect) / (colnum + 1);
 		}
-		else w = Dx(screen->rect);
+		else
+			w = Dx(screen->rect);
 	}
 
 	if(w < minwidth)
 		w = minwidth;
 	if(colnum && (colnum * minwidth + w) > Dx(screen->rect))
 		return nil;
+
 	if(pos)
 		scale_view(v, Dx(screen->rect) - w);
 
-	a = emallocz(sizeof(Area));
+	a = emallocz(sizeof *a);
 	a->view = v;
 	a->id = id++;
 	a->mode = def.colmode;
@@ -68,14 +66,22 @@ create_area(View *v, Area *pos, uint w) {
 	a->rect.max.x = a->rect.min.x + w;
 	a->rect.max.x = screen->brect.min.y;
 
-	a->next = *p;
-	*p = a;
+	if(pos) {
+		a->next = pos->next;
+		a->prev = pos;
+	}else {
+		a->next = v->area;
+		v->area = a;
+	}
+	if(a->prev)
+		a->prev->next = a;
+	if(a->next)
+		a->next->prev = a;
 
 	if(a == v->area)
 		a->floating = True;
 
-	if((!v->sel)
-	|| (v->sel->floating && v->area->next == a && a->next == nil))
+	if((v->sel == nil) || (v->sel->floating && v->area == a->prev && a->next == nil))
 		focus_area(a);
 
 	if(!a->floating)
@@ -94,24 +100,37 @@ destroy_area(Area *a) {
 
 	if(a->frame)
 		fatal("destroying non-empty area");
+
 	if(v->revert == a)
 		v->revert = nil;
+
 	for(c=client; c; c=c->next)
 		if(c->revert == a)
 			c->revert = nil;
 
-	i = 1;
-	for(ta=v->area; ta; ta=ta->next)
-		if(ta->next == a) break;
-		else i++;
-	if(ta) {
-		ta->next = a->next;
+	i = 0;
+	for(ta=v->area; ta != a; ta=ta->next)
+		i++;
+	
+	if(a->prev)
+		ta = a->prev;
+	else
+		ta = a->next;
+
+	assert(a->prev || a->next == nil);
+
+	if(a->prev)
+		a->prev->next = a->next;
+	if(a->next)
+		a->next->prev = a->prev;
+
+	if(ta && v->sel == a) {
 		if(ta->floating && ta->next)
 			ta = ta->next;
-		if(v->sel == a)
-			focus_area(ta);
+		focus_area(ta);
 	}
-	if(i) write_event("DestroyColumn %d\n", i);
+	write_event("DestroyColumn %d\n", i);
+
 	free(a);
 }
 
@@ -150,8 +169,7 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 	n_frame = 0;
 	for(ft=a->frame; ft; ft=ft->anext)
 		n_frame++;
-	if(n_frame == 0)
-		n_frame = 1;
+	n_frame = max(n_frame, 1);
 
 	c->floating = a->floating;
 	if(!a->floating) {
@@ -178,7 +196,7 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 void
 detach_from_area(Frame *f) {
 	Frame *pr;
-	Client *c;
+	Client *c, *cp;
 	Area *a;
 	View *v;
 	Area *ta;
@@ -188,14 +206,13 @@ detach_from_area(Frame *f) {
 	v = a->view;
 	c = f->client;
 
-	for(pr = a->frame; pr; pr = pr->anext)
-		if(pr->anext == f) break;
+	pr = f->aprev;
 	remove_frame(f);
 
 	if(a->sel == f) {
 		if(!pr)
 			pr = a->frame;
-		if((a->view->sel == a) && (pr))
+		if(pr && (v->sel == a))
 			focus_frame(pr, False);
 		else
 			a->sel = pr;
@@ -206,7 +223,7 @@ detach_from_area(Frame *f) {
 			arrange_column(a, False);
 		else {
 			i = 0;
-			for(ta=v->area; ta && ta != a; ta=ta->next)
+			for(ta=v->area; ta != a; ta=ta->next)
 				i++;
 
 			if(v->area->next->next)
@@ -219,11 +236,9 @@ detach_from_area(Frame *f) {
 	}
 	else if(!a->frame) {
 		if(c->trans) {
-			Client *cl;
-			
-			cl = win2client(c->trans);
-			if(cl && cl->frame) {
-				a = cl->sel->area;
+			cp = win2client(c->trans);
+			if(cp && cp->frame) {
+				a = cp->sel->area;
 				if(a->view == v)
 					focus_area(a);
 			}
@@ -382,9 +397,8 @@ focus_area(Area *a) {
 
 	v->sel = a;
 
-	if((old_a)
-	&& (a->floating != old_a->floating))
-			v->revert = old_a;
+	if((old_a) && (a->floating != old_a->floating))
+		v->revert = old_a;
 
 	if(v != screen->sel)
 		return;
@@ -409,11 +423,11 @@ focus_area(Area *a) {
 
 char *
 select_area(Area *a, char *arg) {
+	static char Ebadvalue[] = "bad value";
 	Area *new;
 	uint i;
 	Frame *p, *f;
 	View *v;
-	static char Ebadvalue[] = "bad value";
 
 	v = a->view;
 	f = a->sel;
@@ -427,18 +441,18 @@ select_area(Area *a, char *arg) {
 	} else if(!strncmp(arg, "left", 5)) {
 		if(a->floating)
 			return Ebadvalue;
-		for(new=v->area->next; new->next; new=new->next)
-			if(new->next == a) break;
+		new = a->prev;
 	} else if(!strncmp(arg, "right", 5)) {
 		if(a->floating)
 			return Ebadvalue;
-		new = a->next ? a->next : v->area->next;
+		new = a->next;
+		if(new == nil)
+			new = v->area->next;
 	}
 	else if(!strncmp(arg, "up", 3)) {
 		if(!f)
 			return Ebadvalue;
-		for(p=a->frame; p->anext; p=p->anext)
-			if(p->anext == f) break;
+		p = f->aprev;
 		goto focus_frame;
 	}
 	else if(!strncmp(arg, "down", 5)) {

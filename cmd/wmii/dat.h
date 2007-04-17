@@ -79,7 +79,7 @@ struct View {
 };
 
 struct Area {
-	Area *next;
+	Area *next, *prev;
 	Frame *frame;
 	Frame *stack;
 	Frame *sel;
@@ -92,8 +92,8 @@ struct Area {
 
 struct Frame {
 	Frame *cnext;
-	Frame *anext;
-	Frame *snext;
+	Frame *anext, *aprev;
+	Frame *snext, *sprev;
 	View *view;
 	Area *area;
 	ushort id;

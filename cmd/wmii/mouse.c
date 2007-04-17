@@ -8,6 +8,7 @@
 #include <util.h>
 #include "dat.h"
 #include "fns.h"
+#include "printevent.h"
 
 enum {
 	ButtonMask =
@@ -341,9 +342,8 @@ mouse_resizecolframe(Frame *f, Align align) {
 	XEvent ev;
 	Window *cwin, *hwin;
 	Divide *d;
-	Frame *fp;
 	View *v;
-	Area *a, *ap;
+	Area *a;
 	Rectangle r;
 	uint minw, minh;
 	int x, y;
@@ -352,29 +352,21 @@ mouse_resizecolframe(Frame *f, Align align) {
 	assert((align&(NORTH|SOUTH)) != (NORTH|SOUTH));
 
 	v = screen->sel;
-	for(a = v->area->next, d = divs; a; a = a->next, d = d->next) {
-		if(a->next == f->area)
-			ap = a;
-		if(a == f->area)
-			break;
-	}
-	for(fp = a->frame; fp; fp = fp->anext)
-		if(fp->anext == f) break;
+	for(a = v->area->next, d = divs; a; a = a->next, d = d->next)
+		if(a == f->area) break;
+
 	if(align&EAST)
 		d = d->next;
 
-	if(!grabpointer(&scr.root, cwin, cursor[CurSizing], MouseMask))
-		return;
-
 	if(align&NORTH) {
-		r.min.y = (fp ? fp->rect.min.y : screen->rect.min.y);
+		r.min.y = (f->aprev ? f->aprev->rect.min.y : screen->rect.min.y);
 		r.max.y = f->rect.max.y;
 	}else {
 		r.min.y = f->rect.min.y;
 		r.max.y = (f->anext ? f->anext->rect.max.y : a->rect.max.y);
 	}
 	if(align&WEST) {
-		r.min.x = (ap ? ap->rect.min.x : screen->rect.min.x);
+		r.min.x = (a->prev ? a->prev->rect.min.x : screen->rect.min.x);
 		r.max.x = a->rect.max.x;
 	}else {
 		r.min.x = a->rect.min.x;
@@ -398,6 +390,9 @@ mouse_resizecolframe(Frame *f, Align align) {
 	r.max.y = r.min.y + 2;
 
 	hwin = gethsep(r);
+
+	if(!grabpointer(&scr.root, cwin, cursor[CurSizing], MouseMask))
+		goto done;
 	
 	x = ((align&WEST) ? f->rect.min.x : f->rect.max.x);
 	y = ((align&NORTH) ? f->rect.min.y : f->rect.max.y);
@@ -478,9 +473,6 @@ mouse_resizecol(Divide *d) {
 	if(a == nil || a->next == nil)
 		return;
 
-	if(!grabpointer(&scr.root, cwin, cursor[CurInvisible], MouseMask))
-		return;
-
 	querypointer(&scr.root, &x, &y);
 
 	minw = Dx(screen->rect)/NCOL;
@@ -488,8 +480,12 @@ mouse_resizecol(Divide *d) {
 	r.max.x = a->next->rect.max.x - minw;
 	r.min.y = y;
 	r.max.y = y+1;
+
 	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
 	mapwin(cwin);
+
+	if(!grabpointer(&scr.root, cwin, cursor[CurInvisible], MouseMask))
+		goto done;
 
 	for(;;) {
 		XMaskEvent(display, MouseMask | ExposureMask, &ev);

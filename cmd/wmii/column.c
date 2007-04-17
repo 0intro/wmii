@@ -178,7 +178,7 @@ static Handlers divhandler = {
 Area *
 new_column(View *v, Area *pos, uint w) {
 	Area *a;
-	
+
 	a = create_area(v, pos, w);
 	if(!a)
 		return nil;
@@ -372,33 +372,32 @@ resize_column(Area *a, int w) {
 static void
 resize_colframeh(Frame *f, Rectangle *r) {
 	Area *a;
-	Frame *fa, *fb;
+	Frame *fn, *fp;
 	uint minh;
 
 	minh = 2 * labelh(def.font);
 
 	a = f->area;
-	fa = f->anext;
-	for(fb = a->frame; fb; fb = fb->anext)
-		if(fb->anext == f) break;
+	fn = f->anext;
+	fp = f->aprev;
 
-	if(fb)
-		r->min.y = max(r->min.y, fb->rect.min.y + minh);
+	if(fp)
+		r->min.y = max(r->min.y, fp->rect.min.y + minh);
 	else
 		r->min.y = max(r->min.y, a->rect.min.y);
 
-	if(fa)
-		r->max.y = min(r->max.y, fa->rect.max.y - minh);
+	if(fn)
+		r->max.y = min(r->max.y, fn->rect.max.y - minh);
 	else
 		r->max.y = min(r->max.y, a->rect.max.y);
 
-	if(fb) {
-		fb->rect.max.y = r->min.y;
-		resize_frame(fb, fb->rect);
+	if(fp) {
+		fp->rect.max.y = r->min.y;
+		resize_frame(fp, fp->rect);
 	}
-	if(fa) {
-		fa->rect.min.y = r->max.y;
-		resize_frame(fa, fa->rect);
+	if(fn) {
+		fn->rect.min.y = r->max.y;
+		resize_frame(fn, fn->rect);
 	}
 
 	resize_frame(f, *r);
@@ -417,9 +416,8 @@ resize_colframe(Frame *f, Rectangle *r) {
 
 	minw = Dx(screen->rect) / NCOL;
 
+	al = a->prev;
 	ar = a->next;
-	for(al = v->area->next; al; al = al->next)
-		if(al->next == a) break;
 
 	if(al)
 		r->min.x = max(r->min.x, al->rect.min.x + minw);

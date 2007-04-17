@@ -70,7 +70,8 @@ create_view(const char *name) {
 	new_column(v, v->area, 0);
 
 	for(i=&view; *i; i=&(*i)->next)
-		if(strcmp((*i)->name, name) < 0) break;
+		if(strcmp((*i)->name, name) < 0)
+			break;
 	v->next = *i;
 	*i = v;
 
@@ -84,10 +85,9 @@ destroy_view(View *v) {
 	Area *a;
 	View **i, *tv;
 
-	while((a = v->area)) {
-		v->area = a->next;
+	while((a = v->area->next))
 		destroy_area(a);
-	}
+	destroy_area(v->area);
 
 	for(i=&view; *i; i=&(*i)->next)
 		if(*i == v) break;
@@ -469,9 +469,10 @@ update_views() {
 	for(v=view; v; v=n) {
 		n=v->next;
 		if(v != old) {
-			found = True;
 			if(is_empty(v))
 				destroy_view(v);
+			else
+				found = True;
 		}
 	}
 

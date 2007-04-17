@@ -36,43 +36,48 @@ create_frame(Client *c, View *v) {
 void
 remove_frame(Frame *f) {
 	Area *a;
-	Frame **ft;
 
 	a = f->area;
-	for(ft = &a->frame; *ft; ft=&(*ft)->anext)
-		if(*ft == f) break;
-	*ft = f->anext;
+	if(f->aprev)
+		f->aprev->anext = f->anext;
+	if(f->anext)
+		f->anext->aprev = f->aprev;
 
 	if(a->floating) {
-		for(ft = &a->stack; *ft; ft=&(*ft)->snext)
-			if(*ft == f) break;
-		*ft = f->snext;
+		if(f->sprev)
+			f->sprev->snext = f->snext;
+		if(f->snext)
+			f->snext->sprev = f->sprev;
 	}
 }
 
 void
 insert_frame(Frame *pos, Frame *f, Bool before) {
-	Frame *ft, **p;
 	Area *a;
 
 	a = f->area;
 
-	if(before) {
-		for(ft=a->frame; ft; ft=ft->anext)
-			if(ft->anext == pos) break;
-		pos=ft;
+	if(before)
+		pos = pos->aprev;
+
+	if(pos) {
+		f->aprev = pos;
+		f->anext = pos->anext;
+	}else {
+		f->aprev = nil;
+		f->anext = f->area->frame;
+		f->area->frame = f;
 	}
-
-	p = &a->frame;
-	if(pos)
-		p = &pos->anext;
-
-	f->anext = *p;
-	*p = f;
+	if(f->aprev)
+		f->aprev->anext = f;
+	if(f->anext)
+		f->anext->aprev = f;
 
 	if(a->floating) {
 		f->snext = a->stack;
 		a->stack = f;
+		if(f->snext)
+			f->snext->sprev = f;
 	}
 }
 
@@ -268,19 +273,21 @@ set_frame_cursor(Frame *f, Point pt) {
 
 Bool
 frame_to_top(Frame *f) {
-	Frame **tf;
 	Area *a;
 
 	a = f->area;
 	if(!a->floating || f == a->stack)
 		return False;
 
-	for(tf=&a->stack; *tf; tf=&(*tf)->snext)
-		if(*tf == f) break;
-	*tf = f->snext;
+	if(f->sprev)
+		f->sprev = f->snext;
+	if(f->snext)
+		f->snext = f->sprev;
 
 	f->snext = a->stack;
 	a->stack = f;
+	if(f->snext)
+		f->snext->sprev = f;
 
 	return True;
 }
@@ -289,38 +296,26 @@ void
 swap_frames(Frame *fa, Frame *fb) {
 	Rectangle trect;
 	Area *a;
-	Frame **fp_a, **fp_b, *ft;
+	Frame *an, *ap, *bn, *bp;
 
 	if(fa == fb) return;
 
-	a = fa->area;
-	for(fp_a = &a->frame; *fp_a; fp_a = &(*fp_a)->anext)
-		if(*fp_a == fa) break;
-	a = fb->area;
-	for(fp_b = &a->frame; *fp_b; fp_b = &(*fp_b)->anext)
-		if(*fp_b == fb) break;
-
-	if(fa->anext == fb) {
-		*fp_a = fb;
-		fa->anext = fb->anext;
-		fb->anext = fa;
-	} else if(fb->anext == fa) {
-		*fp_b = fa;
-		fb->anext = fa->anext;
-		fa->anext = fb;
-	} else {
-		*fp_a = fb;
-		*fp_b = fa;
-		ft = fb->anext;
-		fb->anext = fa->anext;
-		fa->anext = ft;
-	}
+	an = fa->anext;
+	ap = fa->aprev;
+	bn = fb->anext;
+	bp = fb->aprev;
+	
+	fb->anext = an;
+	fb->aprev = ap;
+	fa->anext = bn;
+	fa->aprev = bp;
 
 	if(fb->area->sel == fb)
 		fb->area->sel = fa;
 	if(fa->area->sel == fa)
 		fa->area->sel = fb;
 
+	a = fb->area;
 	fb->area = fa->area;
 	fa->area = a;
 
