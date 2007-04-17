@@ -131,10 +131,9 @@ focus_view(WMScreen *s, View *v) {
 	update_divs();
 	for(c=client; c; c=c->next)
 		if((f = c->sel)) {
-			if(f->view == v) {
+			if(f->view == v)
 				resize_client(c, &f->rect);
-				update_client_grab(c);
-			} else {
+			else {
 				unmap_frame(c);
 				unmap_client(c, IconicState);
 			}

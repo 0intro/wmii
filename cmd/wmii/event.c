@@ -271,14 +271,12 @@ static void
 propertynotify(XEvent *e) {
 	XPropertyEvent *ev;
 	Window *w;
-	Client *c;
 
 	ev = &e->xproperty;
-	w = findwin(e->xany.window);
-	if(ev->state == PropertyDelete)
-		return; /* ignore */
-	if((c = win2client(ev->window)))
-		prop_client(c, ev->atom);
+	if((w = findwin(e->xany.window))) {
+		if(w->handler->property)
+			w->handler->property(w, ev);
+	}
 }
 
 static void

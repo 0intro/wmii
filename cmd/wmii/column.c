@@ -20,15 +20,6 @@ char *modes[] = {
 	[Colmax] =	"max",
 };
 
-Divide *
-win2div(XWindow w) {
-	Divide *d;
-	
-	for(d = divs; d; d = d->next)
-		if(d->w->w == w) return d;
-	return nil;
-}
-
 int
 str2colmode(const char *str) {
 	int i;

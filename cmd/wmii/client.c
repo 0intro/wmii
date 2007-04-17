@@ -61,14 +61,16 @@ create_client(XWindow w, XWindowAttributes *wa) {
 		| ButtonPressMask
 		| ButtonReleaseMask;
 	c->framewin = createwindow(&scr.root, c->rect, scr.depth, InputOutput, &fwa,
-			  CWOverrideRedirect
-			| CWEventMask
-			| CWBackPixmap
-			| CWBackingStore);
+		  CWOverrideRedirect
+		| CWEventMask
+		| CWBackPixmap
+		| CWBackingStore);
 	c->framewin->aux = c;
 	c->win.aux = c;
 	sethandler(c->framewin, &framehandler);
 	sethandler(&c->win, &handlers);
+
+	grab_button(c->framewin->w, AnyButton, AnyModifier);
 
 	for(t=&client ;; t=&(*t)->next)
 		if(!*t) {
@@ -235,7 +237,6 @@ focusin_event(Window *w, XFocusChangeEvent *e) {
 	old = screen->focus;
 	screen->focus = c;
 	if(c != old) {
-		update_client_grab(c);
 		if(c->sel)
 			draw_frame(c->sel);
 		if(old && old->sel)
@@ -260,7 +261,6 @@ focusout_event(Window *w, XFocusChangeEvent *e) {
 			//print_focus(&c_magic, "<magic>");
 			screen->focus = &c_magic;
 		}
-		update_client_grab(c);
 		if(c->sel)
 			draw_frame(c->sel);
 	}
@@ -285,6 +285,17 @@ map_event(Window *w, XMapEvent *e) {
 		focus_client(c);
 }
 
+static void
+property_event(Window *w, XPropertyEvent *e) {
+	Client *c;
+
+	if(e->state == PropertyDelete)
+		return;
+
+	c = w->aux;
+	prop_client(c, e->atom);
+}
+
 static Handlers handlers = {
 	.configreq = configreq_event,
 	.destroy = destroy_event,
@@ -293,11 +304,12 @@ static Handlers handlers = {
 	.focusout = focusout_event,
 	.map = map_event,
 	.unmap = unmap_event,
+	.property = property_event,
 };
 
 Client *
 selclient() {
-	if(screen->sel && screen->sel->sel->sel)
+	if(screen->sel->sel->sel)
 		return screen->sel->sel->sel->client;
 	return nil;
 }
@@ -310,70 +322,40 @@ win2client(XWindow w) {
 	return c;
 }
 
-Frame *
-win2frame(XWindow w) {
-	Client *c;
-	for(c=client; c; c=c->next)
-		if(c->framewin->w == w) break;
-	if(c)
-		return c->sel;
-	return nil;
-}
-
 static void
 update_client_name(Client *c) {
 	XTextProperty name;
-	XClassHint ch;
+	XClassHint ch = {0};
 	int n;
 	char **list = nil;
 
-	name.nitems = 0;
 	c->name[0] = 0;
+
+	name.nitems = 0;
 	XGetTextProperty(display, c->win.w, &name, atom[NetWMName]);
 	if(!name.nitems)
 		XGetWMName(display, c->win.w, &name);
 	if(!name.nitems)
 		return;
+
 	if(name.encoding == XA_STRING)
 		strncpy(c->name, (char *)name.value, sizeof(c->name));
-	else {
-		if(XmbTextPropertyToTextList(display, &name, &list, &n) >= Success
-				&& n > 0 && *list)
-		{
+	else	if(XmbTextPropertyToTextList(display, &name, &list, &n) >= Success)
+		if(n > 0 && *list) {
 			strncpy(c->name, *list, sizeof(c->name));
 			XFreeStringList(list);
 		}
-	}
 	XFree(name.value);
-	if(XGetClassHint(display, c->win.w, &ch)) {
-		snprintf(c->props, sizeof(c->props),
-				"%s:%s:%s",
-				str_nil(ch.res_class),
-				str_nil(ch.res_name),
-				c->name);
-		if(ch.res_class)
-			XFree(ch.res_class);
-		if(ch.res_name)
-			XFree(ch.res_name);
-	}
-}
 
-void
-update_client_grab(Client *c) {
-	Frame *f;
-	f = c->sel;
-	if((f->client != selclient())
-	|| (f->area->floating && f != f->area->stack)) {
-		if(verbose)
-			fprintf(stderr, "update_client_grab(%p) AnyButton => %s\n", c, str_nil(c->name));
-		grab_button(c->framewin->w, AnyButton, AnyModifier);
-	}else {
-		if(verbose)
-			fprintf(stderr, "update_client_grab(%p) def.mod => %s\n", c, str_nil(c->name));
-		XUngrabButton(display, AnyButton, AnyModifier, c->framewin->w);
-		grab_button(c->framewin->w, Button1, def.mod);
-		grab_button(c->framewin->w, Button3, def.mod);
-	}
+	XGetClassHint(display, c->win.w, &ch);
+	snprintf(c->props, sizeof(c->props), "%s:%s:%s",
+			str_nil(ch.res_class),
+			str_nil(ch.res_name),
+			c->name);
+	if(ch.res_class)
+		XFree(ch.res_class);
+	if(ch.res_name)
+		XFree(ch.res_name);
 }
 
 void
@@ -737,10 +719,9 @@ focus_client(Client *c) {
 		if(c && verbose)
 			fprintf(stderr, "\t%s => %s\n", (screen->focus ? screen->focus->name : "<nil>"),
 					(c ? c->name : "<nil>"));
-		if(c) {
+		if(c)
 			XSetInputFocus(display, c->win.w, RevertToParent, CurrentTime);
-			update_client_grab(c);
-		}else
+		else
 			XSetInputFocus(display, screen->barwin->w, RevertToParent, CurrentTime);
 	}
 

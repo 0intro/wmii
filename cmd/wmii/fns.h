@@ -48,14 +48,11 @@ char * message_client(Client*, char*);
 void move_client(Client*, char *arg);
 void size_client(Client*, char *arg);
 Client *selclient();
-Frame *win2frame(XWindow);
 Client *win2client(XWindow);
-void update_client_grab(Client*);
 void apply_rules(Client*);
 void apply_tags(Client*, const char*);
 
 /* column.c */
-Divide *win2div(XWindow);
 void update_divs();
 void draw_div(Divide*);
 void arrange_column(Area*, Bool dirty);

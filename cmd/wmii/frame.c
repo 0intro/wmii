@@ -178,7 +178,11 @@ expose_event(Window *w, XExposeEvent *e) {
 	Client *c;
 	
 	c = w->aux;
-	draw_frame(c->sel);
+	if(c->sel)
+		draw_frame(c->sel);
+	else
+		fprintf(stderr, "Badness: Expose event on a client frame which shouldn't be visible: %x\n",
+			(uint)c->win.w);
 }
 
 static void
@@ -277,7 +281,6 @@ frame_to_top(Frame *f) {
 	f->snext = a->stack;
 	a->stack = f;
 
-	update_client_grab(f->client);
 	return True;
 }
 

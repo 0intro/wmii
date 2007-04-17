@@ -248,8 +248,7 @@ parse_colors(char **buf, int *buflen, CTuple *col) {
 }
 
 char *
-message_root(char *message)
-{
+message_root(char *message) {
 	uint n;
 
 	if(!strchr(message, ' ')) {
@@ -302,7 +301,6 @@ message_root(char *message)
 			return Ebadvalue;
 		strncpy(def.grabmod, message, sizeof(def.grabmod));
 		def.mod = mod;
-		restack_view(screen->sel);
 	}
 	else
 		return Ebadcmd;
