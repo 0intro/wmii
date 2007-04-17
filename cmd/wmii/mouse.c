@@ -16,296 +16,193 @@ enum {
 		ButtonMask | PointerMotionMask
 };
 
-static Window *
-gethsep(Rectangle r) {
+static Handlers handlers;
+
+enum { OHoriz, OVert };
+typedef struct Framewin Framewin;
+struct Framewin {
 	Window *w;
-	WinAttr wa;
-	
-	wa.background_pixel = def.normcolor.border;
-	w = createwindow(&scr.root, r, scr.depth, InputOutput, &wa, CWBackPixel);
-	mapwin(w);
-	XRaiseWindow(display, w->w);
-	return w;
-}
-
-static void
-rect_morph_xy(Rectangle *r, Point d, Align *mask) {
-	int n;
-
-	if(*mask & NORTH)
-		r->min.y += d.y;
-	if(*mask & WEST)
-		r->min.x += d.x;
-	if(*mask & SOUTH)
-		r->max.y += d.y;
-	if(*mask & EAST)
-		r->max.x += d.x;
-
-	if(r->min.x > r->max.x) {
-		n = r->min.x;
-		r->min.x = r->max.x;
-		r->max.x = n;
-		*mask ^= EAST|WEST;
-	}
-	if(r->min.y > r->max.y) {
-		n = r->min.y;
-		r->min.y = r->max.y;
-		r->max.y = n;
-		*mask ^= NORTH|SOUTH;
-	}
-}
-
-typedef struct {
-	Rectangle *rects;
-	int num;
-	Rectangle r;
-	int x, y;
-	int dx, dy;
-	Align mask;
-} SnapArgs;
-
-static void
-snap_line(SnapArgs *a) {
-	Rectangle *r;
-	int i, x, y;
-
-	if(a->mask & (NORTH|SOUTH)) {
-		for(i=0; i < a->num; i++) {
-			r = &a->rects[i];
-			if((r->min.x <= a->r.max.x) && (r->max.x >= a->r.min.x)) {
-				y = r->min.y;
-				if(abs(y - a->y) <= abs(a->dy))
-					a->dy = y - a->y;
-
-				y = r->max.y;
-				if(abs(y - a->y) <= abs(a->dy))
-					a->dy = y - a->y;
-			}
-		}
-	}else {
-		for(i=0; i < a->num; i++) {
-			r = &a->rects[i];
-			if((r->min.y <= a->r.max.y) && (r->max.y >= a->r.min.y)) {
-				x = r->min.x;
-				if(abs(x - a->x) <= abs(a->dx))
-					a->dx = x - a->x;
-
-				x = r->max.x;
-				if(abs(x - a->x) <= abs(a->dx))
-					a->dx = x - a->x;
-			}
-		}
-	}
-}
-
-/* Returns a gravity for increment handling. It's normally the opposite of the mask
- * (the directions that we're resizing in), unless a snap occurs, in which case, it's the
- * direction of the snap.
- */
-Align
-snap_rect(Rectangle *rects, int num, Rectangle *r, Align *mask, int snap) {
-	SnapArgs a = { 0, };
-	Align ret;
-
-	a.rects = rects;
-	a.num = num;
-	a.dx = snap + 1;
-	a.dy = snap + 1;
-	a.r = *r;
-
-	a.mask = NORTH|SOUTH;
-	if(*mask & NORTH) {
-		a.y = r->min.y;
-		snap_line(&a);
-	}
-	if(*mask & SOUTH) {
-		a.y = r->max.y;
-		snap_line(&a);
-	}
-
-	a.mask = EAST|WEST;
-	if(*mask & EAST) {
-		a.x = r->max.x;
-		snap_line(&a);
-	}
-	if(*mask & WEST) {
-		a.x = r->min.x;
-		snap_line(&a);
-	}
-
-	ret = CENTER;
-	if(abs(a.dx) <= snap)
-		ret ^= EAST|WEST;
-	else
-		a.dx = 0;
-
-	if(abs(a.dy) <= snap)
-		ret ^= NORTH|SOUTH;
-	else
-		a.dy = 0;
-
-	rect_morph_xy(r, Pt(a.dx, a.dy), mask);
-	return ret ^ *mask;
-}
-
-static void
-xorborder(Rectangle r) {
-	Rectangle r2;
-	ulong col;
-	
-	col = def.focuscolor.bg;
-
-	r2 = insetrect(r, 4);
-
-	if(Dy(r) > 4 && Dx(r) > 2)
-		drawline(&xor,
-			Pt(r2.min.x, r2.min.y + Dy(r2)/2),
-			Pt(r2.max.x, r2.min.y + Dy(r2)/2),
-			CapNotLast, 1, col);
-	if(Dx(r) > 4 && Dy(r) > 2)
-		drawline(&xor,
-			Pt(r2.min.x + Dx(r2)/2, r.min.y),
-			Pt(r2.min.x + Dx(r2)/2, r.max.y),
-			CapNotLast, 1, col);
-	border(&xor, r, 4, col);
-}
-
-static void
-xorrect(Rectangle r) {
-	fill(&xor, r, 0x00888888L);
-}
-
-static void
-find_droppoint(Frame *frame, Point pt, Rectangle *r, Bool do_move) {
-	enum { Delta = 5 };
-	View *v;
-	Area *a, *a_prev;
 	Frame *f;
-	Bool before;
+	Frame *rf;
+	Area *ra;
+	Rectangle gb;
+	Point pt;
+	int or;
+	int n;
+};
 
-	v = frame->view;
+static Rectangle
+framerect(Framewin *f) {
+	Rectangle r;
+	Point p;
 
-	/* New column? */
-	a_prev = v->area;
-	for(a = a_prev->next; a && a->next; a = a->next) {
+	r.min = ZP;
+	if(f->or == OHoriz) {
+		r.max.x = f->n;
+		r.max.y = f->gb.max.y + f->gb.min.y;
+		r = rectsubpt(r, Pt(0, Dy(r)/2));
+	}else {
+		r.max.x = f->gb.max.x + f->gb.min.x;
+		r.max.y = f->n;
+		r = rectsubpt(r, Pt(Dx(r)/2, 0));
+	}
+	r = rectaddpt(r, f->pt);
+	
+	/* Keep onscreen */
+	p = ZP;
+	p.x -= min(r.min.x, 0);
+	p.x -= max(r.max.x - screen->rect.max.x, 0);
+	p.y -= min(r.min.y, 0);
+	p.y -= max(r.max.y - screen->brect.min.y, 0);
+	return rectaddpt(r, p);;
+}
+
+static void
+frameadjust(Framewin *f, Point pt, int or, int n) {
+	f->or = or;
+	f->n = n;
+	f->pt = pt;
+	reshapewin(f->w, framerect(f));
+}
+
+static Framewin*
+framewin(Frame *f, Point pt, int or, int n) {
+	WinAttr wa;
+	Framewin *fw;
+
+	fw = emallocz(sizeof *fw);
+	wa.override_redirect = True;	
+	wa.event_mask = ExposureMask;
+	fw->w = createwindow(&scr.root, Rect(0, 0, 1, 1), scr.depth, InputOutput, &wa, CWEventMask);
+	fw->w->aux = fw;
+	sethandler(fw->w, &handlers);
+
+	fw->f = f;
+	fw->gb = f->grabbox;
+	frameadjust(fw, pt, or, n);
+
+	mapwin(fw->w);
+	raisewin(fw->w);
+
+	return fw;	
+}
+
+static void
+framedestroy(Framewin *f) {
+	destroywindow(f->w);
+	free(f);
+}
+
+static void
+expose_event(Window *w, XExposeEvent *e) {
+	Rectangle r;
+	Framewin *f;
+	Image *buf;
+	CTuple *c;
+
+	f = w->aux;
+	c = &def.focuscolor;
+	buf = screen->ibuf;
+	
+	r = rectsubpt(w->r, w->r.min);
+	fill(buf, r, c->bg);
+	border(buf, r, 1, c->border);
+	border(buf, f->gb, 1, c->border);
+	border(buf, insetrect(f->gb, -f->gb.min.x), 1, c->border);
+
+	copyimage(w, r, buf, ZP);	
+}
+
+static Handlers handlers = {
+	.expose = expose_event,
+};
+
+static void
+vplace(Framewin *fw, Point pt) {
+	Frame *f;
+	Area *a;
+	View *v;
+
+	v = screen->sel;
+	
+	for(a = v->area->next; a->next; a = a->next)
 		if(pt.x < a->rect.max.x)
 			break;
-		a_prev = a;
-	}
 
-	r->min.y = screen->rect.min.y;
-	r->max.y = screen->brect.min.y;
-	if(pt.x < (a->rect.min.x + labelh(def.font))) {
-		r->min.x = a->rect.min.x - Delta;
-		r->max.x = a->rect.min.x + Delta;
-		if(do_move) {
-			a = new_column(v, a_prev, 0);
-			send_to_area(a, frame);
-			focus(frame->client, False);
-		}
-		return;
-	}
-	if(pt.x > (a->rect.max.x - labelh(def.font))) {
-		r->min.x = a->rect.max.x - Delta;
-		r->max.x = a->rect.max.x + Delta;
-		if(do_move) {
-			a = new_column(v, a, 0);
-			send_to_area(a, frame);
-			focus(frame->client, False);
-		}
-		return;
-	}
-
-	/* Over/under frame? */
-	for(f = a->frame; f; f = f->anext)
-		if(pt.y < f->rect.max.y || f->anext == nil)
+	for(f = a->frame; f->anext; f = f->anext)
+		if(pt.y < f->rect.max.y)
 			break;
 
-	*r = a->rect;
-	if(pt.y < (f->rect.min.y + labelh(def.font))) {
-		before = True;
-		r->min.y = f->rect.min.y - Delta;
-		r->max.y = f->rect.min.y + Delta;
-		if(do_move)
-			goto do_move;
-		return;
+	if(abs(pt.y - f->rect.min.y) < labelh(def.font)) {
+		pt.y = f->rect.min.y;
+		if(f == fw->f)
+			pt.y += Dy(fw->w->r)/2;
+		else if(f->aprev == fw->f)
+			pt.y += labelh(def.font);
 	}
-	if(pt.y > f->rect.max.y - labelh(def.font)) {
-		before = False;
-		r->min.y = f->rect.max.y - Delta;
-		r->max.y = f->rect.max.y + Delta;
-		if(do_move)
-			goto do_move;
-		return;
+	else if(abs(pt.y - f->rect.max.y) < labelh(def.font)) {
+		if(f != fw->f) {
+			pt.y = f->rect.max.y;
+			if(f->anext == fw->f)
+				pt.y += Dy(fw->w->r)/2;
+		}
 	}
-
-	/* No? Swap. */
-	*r = f->rect;
-	if(do_move) {
-		swap_frames(frame, f);
-		focus(frame->client, False);
-		focus_view(screen, f->view);
-	}
-	return;
-
-do_move:
-	if(frame == f)
-		return;
-	if(a != frame->area)
-		send_to_area(a, frame);
-	remove_frame(frame);
-	insert_frame(f, frame, before);
-	arrange_column(f->area, False);
-	focus(frame->client, True);
-}
-
-Point
-querypointer(Window *w) {
-	XWindow dummy;
-	Point pt;
-	uint ui;
-	int i;
 	
-	XQueryPointer(display, w->w, &dummy, &dummy, &i, &i, &pt.x, &pt.y, &ui);
-	return pt;
+	pt.x = a->rect.min.x;
+	frameadjust(fw, pt, OHoriz, Dx(a->rect));	
 }
 
-void
-warppointer(Point pt) {
-	XWarpPointer(display,
-		/* src, dest w */ None, scr.root.w,
-		/* src_rect */	0, 0, 0, 0,
-		/* target */	pt.x, pt.y);
-}
+static void
+hplace(Framewin *fw, Point pt) {
+	Area *a;
+	View *v;
 
-Point
-translate(Window *src, Window *dst, Point sp) {
-	Point pt;
-	XWindow w;
+	v = screen->sel;
 
-	XTranslateCoordinates(display, src->w, dst->w, sp.x, sp.y, &pt.x, &pt.y, &w);
-	return pt;
+	for(a = v->area->next; a->next; a = a->next)
+		if(pt.x < a->rect.max.x)
+			break;
+
+	if(pt.x - a->rect.min.x < Dx(a->rect)/2)
+		pt.x = a->rect.min.x;
+	else
+		pt.x = a->rect.max.x;
+	
+	pt.y = a->rect.min.y;
+	frameadjust(fw, pt, OVert, Dy(a->rect));	
 }
 
 static void
 do_managed_move(Client *c) {
-	Rectangle frect, ofrect;
+	Rectangle r;
+	WinAttr wa;
 	XEvent ev;
+	Framewin *fw;
+	Window *cwin;
 	Frame *f;
 	Point pt;
+	int y;
 
 	focus(c, False);
 	f = c->sel;
 
-	XSync(display, False);
-	if(!grabpointer(c->framewin, nil, cursor[CurMove], MouseMask))
-		return;
-	XGrabServer(display);
-
 	pt = querypointer(&scr.root);
 
-	find_droppoint(f, pt, &frect, False);
-	xorrect(frect);
+	pt.x = f->area->rect.min.x;
+	fw = framewin(f, pt, OHoriz, Dx(f->area->rect));
+	
+	r = screen->rect;
+	r.min.y += fw->gb.min.y + Dy(fw->gb)/2;
+	r.max.y = r.min.y + 1;
+	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
+	mapwin(cwin);
+
+horiz:
+	XUngrabPointer(display, CurrentTime);
+	if(!grabpointer(&scr.root, nil, cursor[CurIcon], MouseMask))
+		goto done;
+	warppointer(pt);
+	vplace(fw, pt);
 	for(;;) {
 		XMaskEvent(display, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
@@ -315,28 +212,74 @@ do_managed_move(Client *c) {
 			dispatch_event(&ev);
 			break;
 		case MotionNotify:
-			ofrect = frect;
 			pt.x = ev.xmotion.x_root;
 			pt.y = ev.xmotion.y_root;
 
-			find_droppoint(f, pt, &frect, False);
-
-			if(!eqrect(frect, ofrect)) {
-				xorrect(ofrect);
-				xorrect(frect);
+			vplace(fw, pt);
+			break;
+		case ButtonPress:
+			switch(ev.xbutton.button) {
+			case 2:
+				goto vert;
 			}
 			break;
 		case ButtonRelease:
-			xorrect(frect);
-
-			find_droppoint(f, pt, &frect, True);
-
-			XUngrabServer(display);
-			XUngrabPointer(display, CurrentTime);
-			XSync(display, False);
-			return;
+			switch(ev.xbutton.button) {
+			case 1:
+				/* Move window */
+				goto done;
+			}
+			break;
 		}
 	}
+vert:
+	y = pt.y;
+	XUngrabPointer(display, CurrentTime);
+	if(!grabpointer(&scr.root, cwin, cursor[CurIcon], MouseMask))
+		goto done;
+	hplace(fw, pt);
+	for(;;) {
+		XMaskEvent(display, MouseMask | ExposureMask, &ev);
+		switch (ev.type) {
+		default:
+			break;
+		case Expose:
+			dispatch_event(&ev);
+			break;
+		case MotionNotify:
+			pt.x = ev.xmotion.x_root;
+			pt.y = ev.xmotion.y_root;
+
+			hplace(fw, pt);
+			break;
+		case ButtonRelease:
+			switch(ev.xbutton.button) {
+			case 1:
+				/* Move window */
+				goto done;
+			case 2:
+				pt.y = y;
+				goto horiz;
+			}
+			break;
+		}
+	}
+done:
+	XUngrabPointer(display, CurrentTime);
+	framedestroy(fw);
+	destroywindow(cwin);
+}
+
+static Window *
+gethsep(Rectangle r) {
+	Window *w;
+	WinAttr wa;
+	
+	wa.background_pixel = def.normcolor.border;
+	w = createwindow(&scr.root, r, scr.depth, InputOutput, &wa, CWBackPixel);
+	mapwin(w);
+	raisewin(w);
+	return w;
 }
 
 void
@@ -507,6 +450,148 @@ mouse_resizecol(Divide *d) {
 done:
 	XUngrabPointer(display, CurrentTime);
 	destroywindow(cwin);
+}
+
+static void
+xorborder(Rectangle r) {
+	Rectangle r2;
+	ulong col;
+	
+	col = def.focuscolor.bg;
+
+	r2 = insetrect(r, 4);
+
+	if(Dy(r) > 4 && Dx(r) > 2)
+		drawline(&xor,
+			Pt(r2.min.x, r2.min.y + Dy(r2)/2),
+			Pt(r2.max.x, r2.min.y + Dy(r2)/2),
+			CapNotLast, 1, col);
+	if(Dx(r) > 4 && Dy(r) > 2)
+		drawline(&xor,
+			Pt(r2.min.x + Dx(r2)/2, r.min.y),
+			Pt(r2.min.x + Dx(r2)/2, r.max.y),
+			CapNotLast, 1, col);
+	border(&xor, r, 4, col);
+}
+
+static void
+rect_morph_xy(Rectangle *r, Point d, Align *mask) {
+	int n;
+
+	if(*mask & NORTH)
+		r->min.y += d.y;
+	if(*mask & WEST)
+		r->min.x += d.x;
+	if(*mask & SOUTH)
+		r->max.y += d.y;
+	if(*mask & EAST)
+		r->max.x += d.x;
+
+	if(r->min.x > r->max.x) {
+		n = r->min.x;
+		r->min.x = r->max.x;
+		r->max.x = n;
+		*mask ^= EAST|WEST;
+	}
+	if(r->min.y > r->max.y) {
+		n = r->min.y;
+		r->min.y = r->max.y;
+		r->max.y = n;
+		*mask ^= NORTH|SOUTH;
+	}
+}
+
+typedef struct {
+	Rectangle *rects;
+	int num;
+	Rectangle r;
+	int x, y;
+	int dx, dy;
+	Align mask;
+} SnapArgs;
+
+static void
+snap_line(SnapArgs *a) {
+	Rectangle *r;
+	int i, x, y;
+
+	if(a->mask & (NORTH|SOUTH)) {
+		for(i=0; i < a->num; i++) {
+			r = &a->rects[i];
+			if((r->min.x <= a->r.max.x) && (r->max.x >= a->r.min.x)) {
+				y = r->min.y;
+				if(abs(y - a->y) <= abs(a->dy))
+					a->dy = y - a->y;
+
+				y = r->max.y;
+				if(abs(y - a->y) <= abs(a->dy))
+					a->dy = y - a->y;
+			}
+		}
+	}else {
+		for(i=0; i < a->num; i++) {
+			r = &a->rects[i];
+			if((r->min.y <= a->r.max.y) && (r->max.y >= a->r.min.y)) {
+				x = r->min.x;
+				if(abs(x - a->x) <= abs(a->dx))
+					a->dx = x - a->x;
+
+				x = r->max.x;
+				if(abs(x - a->x) <= abs(a->dx))
+					a->dx = x - a->x;
+			}
+		}
+	}
+}
+
+/* Returns a gravity for increment handling. It's normally the opposite of the mask
+ * (the directions that we're resizing in), unless a snap occurs, in which case, it's the
+ * direction of the snap.
+ */
+Align
+snap_rect(Rectangle *rects, int num, Rectangle *r, Align *mask, int snap) {
+	SnapArgs a = { 0, };
+	Align ret;
+
+	a.rects = rects;
+	a.num = num;
+	a.dx = snap + 1;
+	a.dy = snap + 1;
+	a.r = *r;
+
+	a.mask = NORTH|SOUTH;
+	if(*mask & NORTH) {
+		a.y = r->min.y;
+		snap_line(&a);
+	}
+	if(*mask & SOUTH) {
+		a.y = r->max.y;
+		snap_line(&a);
+	}
+
+	a.mask = EAST|WEST;
+	if(*mask & EAST) {
+		a.x = r->max.x;
+		snap_line(&a);
+	}
+	if(*mask & WEST) {
+		a.x = r->min.x;
+		snap_line(&a);
+	}
+
+	ret = CENTER;
+	if(abs(a.dx) <= snap)
+		ret ^= EAST|WEST;
+	else
+		a.dx = 0;
+
+	if(abs(a.dy) <= snap)
+		ret ^= NORTH|SOUTH;
+	else
+		a.dy = 0;
+
+	rect_morph_xy(r, Pt(a.dx, a.dy), mask);
+	return ret ^ *mask;
 }
 
 void

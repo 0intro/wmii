@@ -175,6 +175,7 @@ init_cursors() {
 	create_cursor(CurDHArrow, XC_sb_h_double_arrow);
 	create_cursor(CurInput, XC_xterm);
 	create_cursor(CurSizing, XC_sizing);
+	create_cursor(CurIcon, XC_icon);
 
 	XAllocNamedColor(display, scr.colormap,
 			"black", &black,
