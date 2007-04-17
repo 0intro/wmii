@@ -281,8 +281,8 @@ place_frame(Frame *f) {
 	static uint mwidth, mx, my;
 	static uint *field = nil;
 	Align align;
-	XPoint p1 = {0, 0};
-	XPoint p2 = {0, 0};
+	Point p1 = ZP;
+	Point p2 = ZP;
 	Rectangle *rects;
 	Frame *fr;
 	Client *c;

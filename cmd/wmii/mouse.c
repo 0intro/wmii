@@ -8,7 +8,6 @@
 #include <util.h>
 #include "dat.h"
 #include "fns.h"
-#include "printevent.h"
 
 enum {
 	ButtonMask =
@@ -41,7 +40,7 @@ rect_morph_xy(Rectangle *r, Point d, Align *mask) {
 		r->max.y += d.y;
 	if(*mask & EAST)
 		r->max.x += d.x;
-	
+
 	if(r->min.x > r->max.x) {
 		n = r->min.x;
 		r->min.x = r->max.x;
@@ -177,7 +176,7 @@ xorrect(Rectangle r) {
 }
 
 static void
-find_droppoint(Frame *frame, int x, int y, Rectangle *r, Bool do_move) {
+find_droppoint(Frame *frame, Point pt, Rectangle *r, Bool do_move) {
 	enum { Delta = 5 };
 	View *v;
 	Area *a, *a_prev;
@@ -189,14 +188,14 @@ find_droppoint(Frame *frame, int x, int y, Rectangle *r, Bool do_move) {
 	/* New column? */
 	a_prev = v->area;
 	for(a = a_prev->next; a && a->next; a = a->next) {
-		if(x < a->rect.max.x)
+		if(pt.x < a->rect.max.x)
 			break;
 		a_prev = a;
 	}
 
 	r->min.y = screen->rect.min.y;
 	r->max.y = screen->brect.min.y;
-	if(x < (a->rect.min.x + labelh(def.font))) {
+	if(pt.x < (a->rect.min.x + labelh(def.font))) {
 		r->min.x = a->rect.min.x - Delta;
 		r->max.x = a->rect.min.x + Delta;
 		if(do_move) {
@@ -206,7 +205,7 @@ find_droppoint(Frame *frame, int x, int y, Rectangle *r, Bool do_move) {
 		}
 		return;
 	}
-	if(x > (a->rect.max.x - labelh(def.font))) {
+	if(pt.x > (a->rect.max.x - labelh(def.font))) {
 		r->min.x = a->rect.max.x - Delta;
 		r->max.x = a->rect.max.x + Delta;
 		if(do_move) {
@@ -219,11 +218,11 @@ find_droppoint(Frame *frame, int x, int y, Rectangle *r, Bool do_move) {
 
 	/* Over/under frame? */
 	for(f = a->frame; f; f = f->anext)
-		if(y < f->rect.max.y || f->anext == nil)
+		if(pt.y < f->rect.max.y || f->anext == nil)
 			break;
 
 	*r = a->rect;
-	if(y < (f->rect.min.y + labelh(def.font))) {
+	if(pt.y < (f->rect.min.y + labelh(def.font))) {
 		before = True;
 		r->min.y = f->rect.min.y - Delta;
 		r->max.y = f->rect.min.y + Delta;
@@ -231,7 +230,7 @@ find_droppoint(Frame *frame, int x, int y, Rectangle *r, Bool do_move) {
 			goto do_move;
 		return;
 	}
-	if(y > f->rect.max.y - labelh(def.font)) {
+	if(pt.y > f->rect.max.y - labelh(def.font)) {
 		before = False;
 		r->min.y = f->rect.max.y - Delta;
 		r->max.y = f->rect.max.y + Delta;
@@ -260,28 +259,32 @@ do_move:
 	focus(frame->client, True);
 }
 
-void
-querypointer(Window *w, int *x, int *y) {
+Point
+querypointer(Window *w) {
 	XWindow dummy;
+	Point pt;
 	uint ui;
 	int i;
 	
-	XQueryPointer(display, w->w, &dummy, &dummy, &i, &i, x, y, &ui);
+	XQueryPointer(display, w->w, &dummy, &dummy, &i, &i, &pt.x, &pt.y, &ui);
+	return pt;
 }
 
 void
-warppointer(int x, int y) {
+warppointer(Point pt) {
 	XWarpPointer(display,
 		/* src, dest w */ None, scr.root.w,
 		/* src_rect */	0, 0, 0, 0,
-		/* target */	x, y);
+		/* target */	pt.x, pt.y);
 }
 
-void
-translate(Window *src, Window *dst, int sx, int sy, int *dx, int *dy) {
+Point
+translate(Window *src, Window *dst, Point sp) {
+	Point pt;
 	XWindow w;
 
-	XTranslateCoordinates(display, src->w, dst->w, sx, sy, dx, dy, &w);
+	XTranslateCoordinates(display, src->w, dst->w, sp.x, sp.y, &pt.x, &pt.y, &w);
+	return pt;
 }
 
 static void
@@ -289,7 +292,7 @@ do_managed_move(Client *c) {
 	Rectangle frect, ofrect;
 	XEvent ev;
 	Frame *f;
-	int x, y;
+	Point pt;
 
 	focus(c, False);
 	f = c->sel;
@@ -299,9 +302,9 @@ do_managed_move(Client *c) {
 		return;
 	XGrabServer(display);
 
-	querypointer(&scr.root, &x, &y);
+	pt = querypointer(&scr.root);
 
-	find_droppoint(f, x, y, &frect, False);
+	find_droppoint(f, pt, &frect, False);
 	xorrect(frect);
 	for(;;) {
 		XMaskEvent(display, MouseMask | ExposureMask, &ev);
@@ -313,10 +316,10 @@ do_managed_move(Client *c) {
 			break;
 		case MotionNotify:
 			ofrect = frect;
-			x = ev.xmotion.x_root;
-			y = ev.xmotion.y_root;
+			pt.x = ev.xmotion.x_root;
+			pt.y = ev.xmotion.y_root;
 
-			find_droppoint(f, x, y, &frect, False);
+			find_droppoint(f, pt, &frect, False);
 
 			if(!eqrect(frect, ofrect)) {
 				xorrect(ofrect);
@@ -326,7 +329,7 @@ do_managed_move(Client *c) {
 		case ButtonRelease:
 			xorrect(frect);
 
-			find_droppoint(f, x, y, &frect, True);
+			find_droppoint(f, pt, &frect, True);
 
 			XUngrabServer(display);
 			XUngrabPointer(display, CurrentTime);
@@ -345,8 +348,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 	View *v;
 	Area *a;
 	Rectangle r;
-	uint minw, minh;
-	int x, y;
+	Point pt, min;
 
 	assert((align&(EAST|WEST)) != (EAST|WEST));
 	assert((align&(NORTH|SOUTH)) != (NORTH|SOUTH));
@@ -372,12 +374,10 @@ mouse_resizecolframe(Frame *f, Align align) {
 		r.min.x = a->rect.min.x;
 		r.max.x = (a->next ? a->next->rect.max.x : screen->rect.max.x);
 	}
-	minw = Dx(screen->rect)/NCOL;
-	minh = frame_delta_h() + labelh(def.font);
-	r.min.x += minw;
-	r.max.x -= minw;
-	r.min.y += minh;
-	r.max.y -= minh;
+	min.x = Dx(screen->rect)/NCOL;
+	min.y = frame_delta_h() + labelh(def.font);
+	r.min = addpt(r.min, min);
+	r.max = subpt(r.max, min);
 
 	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
 	mapwin(cwin);
@@ -394,9 +394,9 @@ mouse_resizecolframe(Frame *f, Align align) {
 	if(!grabpointer(&scr.root, cwin, cursor[CurSizing], MouseMask))
 		goto done;
 	
-	x = ((align&WEST) ? f->rect.min.x : f->rect.max.x);
-	y = ((align&NORTH) ? f->rect.min.y : f->rect.max.y);
-	warppointer(x, y);
+	pt.x = ((align&WEST) ? f->rect.min.x : f->rect.max.x);
+	pt.y = ((align&NORTH) ? f->rect.min.y : f->rect.max.y);
+	warppointer(pt);
 
 	for(;;) {
 		XMaskEvent(display, MouseMask | ExposureMask, &ev);
@@ -407,42 +407,42 @@ mouse_resizecolframe(Frame *f, Align align) {
 			dispatch_event(&ev);
 			break;
 		case MotionNotify:
-			x = ev.xmotion.x_root;
-			y = ev.xmotion.y_root;
+			pt.x = ev.xmotion.x_root;
+			pt.y = ev.xmotion.y_root;
 
 			if(align&WEST)
-				r.min.x = x;
+				r.min.x = pt.x;
 			else
-				r.max.x = x;
-			r.min.y = ((align&SOUTH) ? y : y-1);
+				r.max.x = pt.x;
+			r.min.y = ((align&SOUTH) ? pt.y : pt.y-1);
 			r.max.y = r.min.y+2;
 
-			setdiv(d, x);
+			setdiv(d, pt.x);
 			reshapewin(hwin, r);
 			break;
 		case ButtonRelease:
 			if(align&WEST)
-				r.min.x = x;
+				r.min.x = pt.x;
 			else
-				r.max.x = x;
+				r.max.x = pt.x;
 			if(align&NORTH) {
-				r.min.y = y;
+				r.min.y = pt.y;
 				r.max.y = f->rect.max.y;
 			}else {
 				r.min.y = f->rect.min.y;
-				r.max.y = y;
+				r.max.y = pt.y;
 			}
 			resize_colframe(f, &r);
 			
 			if(align&WEST)
-				x = f->rect.min.x + 1;
+				pt.x = f->rect.min.x + 1;
 			else
-				x = f->rect.max.x - 2;
+				pt.x = f->rect.max.x - 2;
 			if(align&NORTH)
-				y = f->rect.min.y + 1;
+				pt.y = f->rect.min.y + 1;
 			else
-				y = f->rect.max.y - 2;
-			warppointer(x, y);
+				pt.y = f->rect.max.y - 2;
+			warppointer(pt);
 			goto done;
 		}
 	}
@@ -461,8 +461,8 @@ mouse_resizecol(Divide *d) {
 	View *v;
 	Area *a;
 	Rectangle r;
+	Point pt;
 	uint minw;
-	int x, y;
 
 	v = screen->sel;
 
@@ -473,13 +473,13 @@ mouse_resizecol(Divide *d) {
 	if(a == nil || a->next == nil)
 		return;
 
-	querypointer(&scr.root, &x, &y);
+	pt = querypointer(&scr.root);
 
 	minw = Dx(screen->rect)/NCOL;
 	r.min.x = a->rect.min.x + minw;
 	r.max.x = a->next->rect.max.x - minw;
-	r.min.y = y;
-	r.max.y = y+1;
+	r.min.y = pt.y;
+	r.max.y = pt.y+1;
 
 	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
 	mapwin(cwin);
@@ -496,11 +496,11 @@ mouse_resizecol(Divide *d) {
 			dispatch_event(&ev);
 			break;
 		case MotionNotify:
-			x = ev.xmotion.x_root;
-			setdiv(d, x);
+			pt.x = ev.xmotion.x_root;
+			setdiv(d, pt.x);
 			break;
 		case ButtonRelease:
-			resize_column(a, x - a->rect.min.x);
+			resize_column(a, pt.x - a->rect.min.x);
 			goto done;
 		}
 	}
@@ -516,7 +516,7 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 	Rectangle ofrect, frect, origin;
 	Align grav;
 	Cursor cur;
-	int dx, dy, pt_x, pt_y, hr_x, hr_y;
+	Point d, pt, hr;
 	float rx, ry, hrx, hry;
 	uint num;
 	Bool floating;
@@ -539,25 +539,25 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 	if((align==CENTER) && !opaque)
 		cur = cursor[CurInvisible];
 
-	querypointer(c->framewin, &pt_x, &pt_y);
-	rx = (float)pt_x / Dx(frect);
-	ry = (float)pt_y /Dy(frect);
+	pt = querypointer(c->framewin);
+	rx = (float)pt.x / Dx(frect);
+	ry = (float)pt.y /Dy(frect);
 
 	if(!grabpointer(c->framewin, nil, cur, MouseMask))
 		return;
 
-	querypointer(&scr.root, &pt_x, &pt_y);
+	pt = querypointer(&scr.root);
 
 	if(align != CENTER) {
-		hr_x = dx = Dx(frect) / 2;
-		hr_y = dy = Dy(frect) / 2;
-		if(align&NORTH) dy -= hr_y;
-		if(align&SOUTH) dy += hr_y;
-		if(align&EAST) dx += hr_x;
-		if(align&WEST) dx -= hr_x;
+		d = subpt(frect.max, frect.min);
+		hr = d = divpt(d, Pt(2, 2));
+		if(align&NORTH) d.y -= hr.y;
+		if(align&SOUTH) d.y += hr.y;
+		if(align&EAST) d.x += hr.x;
+		if(align&WEST) d.x -= hr.x;
 
-		translate(c->framewin, &scr.root, dx, dy, &pt_x, &pt_y);
-		warppointer(pt_x, pt_y);
+		pt = translate(c->framewin, &scr.root, d);
+		warppointer(pt);
 	}
 	else if(f->client->fullscreen) {
 		XUngrabPointer(display, CurrentTime);
@@ -568,9 +568,10 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 				/ Dx(screen->rect);
 		hry = (double)(Dy(screen->rect)  + Dy(frect) - 3 * labelh(def.font))
 				/ Dy(screen->rect);
-		pt_x = frect.max.x - labelh(def.font);
-		pt_y = frect.max.y - labelh(def.font);
-		warppointer(pt_x / hrx, pt_y / hry);
+		pt = frect.max;
+		pt.x = (pt.x - labelh(def.font)) / hrx;
+		pt.y = (pt.y - labelh(def.font)) / hry;
+		warppointer(pt);
 		flushevents(PointerMotionMask, False);
 	}
 
@@ -591,20 +592,17 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 			break;
 		case MotionNotify:
 			ofrect = frect;
-			dx = ev.xmotion.x_root;
-			dy = ev.xmotion.y_root;
+			d.x = ev.xmotion.x_root;
+			d.y = ev.xmotion.y_root;
 
 			if(align == CENTER && !opaque) {
-				dx = (dx * hrx) - pt_x;
-				dy = (dy * hry) - pt_y;
-			}else {
-				dx -= pt_x;
-				dy -= pt_y;
-			}
-			pt_x += dx;
-			pt_y += dy;
+				d.x = (d.x * hrx) - pt.x;
+				d.y = (d.y * hry) - pt.y;
+			}else
+				d = subpt(d, pt);
+			pt = addpt(pt, d);
 
-			rect_morph_xy(&origin, Pt(dx, dy), &align);
+			rect_morph_xy(&origin, d, &align);
 			origin = constrain(origin);
 			frect = origin;
 
@@ -628,12 +626,11 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 			resize_client(c, &frect);
 
 			if(!opaque) {
-				translate(c->framewin, &scr.root,
-					(Dx(frect)*rx), (Dy(frect)*ry),
-					&pt_x, &pt_y);
-				if(pt_y > screen->brect.min.y)
-					pt_y = screen->brect.min.y - 1;
-				warppointer(pt_x, pt_y);
+				pt = translate(c->framewin, &scr.root,
+					Pt(Dx(frect)*rx, Dy(frect)*ry));
+				if(pt.y > screen->brect.min.y)
+					pt.y = screen->brect.min.y - 1;
+				warppointer(pt);
 				XUngrabServer(display);
 			}else
 				map_client(c);

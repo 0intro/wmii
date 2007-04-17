@@ -150,6 +150,7 @@ XRectangle XRect(Rectangle r);
 int eqrect(Rectangle a, Rectangle b);
 Point addpt(Point p, Point q);
 Point subpt(Point p, Point q);
+Point divpt(Point p, Point q);
 Rectangle insetrect(Rectangle r, int n);
 Rectangle rectaddpt(Rectangle r, Point p);
 Rectangle rectsubpt(Rectangle r, Point p);
