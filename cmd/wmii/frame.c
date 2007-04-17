@@ -129,14 +129,15 @@ bdown_event(Window *w, XButtonEvent *e) {
 			frame_to_top(f);
 			focus(c, True);
 			break;
-		default: break;
+		default:
 			XAllowEvents(display, ReplayPointer, e->time);
+			break;
 		}
+		XAllowEvents(display, AsyncPointer, e->time);
 	}else{
 		if(e->button == Button1) {
 			if(frame_to_top(f))
 				restack_view(f->view);
-
 			else if(ptinrect(Pt(e->x, e->y), f->grabbox))
 				do_mouse_resize(c, True, CENTER);
 			else if(f->area->floating)

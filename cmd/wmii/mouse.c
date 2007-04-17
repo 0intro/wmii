@@ -1,6 +1,7 @@
 /* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +15,18 @@ enum {
 	MouseMask =
 		ButtonMask | PointerMotionMask
 };
+
+static Window *
+gethsep(Rectangle r) {
+	Window *w;
+	WinAttr wa;
+	
+	wa.background_pixel = def.normcolor.border;
+	w = createwindow(&scr.root, r, scr.depth, InputOutput, &wa, CWBackPixel);
+	mapwin(w);
+	XRaiseWindow(display, w->w);
+	return w;
+}
 
 static void
 rect_morph_xy(Rectangle *r, Point d, Align *mask) {
@@ -258,11 +271,9 @@ querypointer(Window *w, int *x, int *y) {
 void
 warppointer(int x, int y) {
 	XWarpPointer(display,
-		/* src_w */	None,
-		/* dest_w */	scr.root.w,
+		/* src, dest w */ None, scr.root.w,
 		/* src_rect */	0, 0, 0, 0,
-		/* target */	x, y
-		);
+		/* target */	x, y);
 }
 
 static void
@@ -317,6 +328,139 @@ do_managed_move(Client *c) {
 		default: break;
 		}
 	}
+}
+
+void
+mouse_resizecolframe(Frame *f, Align align) {
+	WinAttr wa;
+	XEvent ev;
+	Window *cwin, *hwin;
+	Divide *d;
+	Frame *fp;
+	View *v;
+	Area *a, *ap;
+	Rectangle r;
+	uint minw, minh;
+	int x, y;
+
+	assert((align&(EAST|WEST)) != (EAST|WEST));
+	assert((align&(NORTH|SOUTH)) != (NORTH|SOUTH));
+
+	v = screen->sel;
+	for(a = v->area->next, d = divs; a; a = a->next, d = d->next) {
+		if(a->next == f->area)
+			ap = a;
+		if(a == f->area)
+			break;
+	}
+	for(fp = a->frame; fp; fp = fp->anext)
+		if(fp->anext == f) break;
+
+	if(align&EAST)
+		d = d->next;
+
+	minw = Dx(screen->rect)/NCOL;
+	minh = frame_delta_h() + labelh(def.font);
+
+	if(align&NORTH) {
+		r.min.y = (fp ? fp->rect.min.y : screen->rect.min.y);
+		r.max.y = f->rect.max.y;
+	}else {
+		r.min.y = f->rect.min.y;
+		r.max.y = (f->anext ? f->anext->rect.max.y : a->rect.max.y);
+	}
+	r.min.y += minh;
+	r.max.y -= minh;
+	
+	if(align&WEST) {
+		r.min.x = (ap ? ap->rect.min.x : screen->rect.min.x);
+		r.max.x = a->rect.max.x;
+	}else {
+		r.min.x = a->rect.min.x;
+		r.max.x = (a->next ? a->next->rect.max.x : screen->rect.max.x);
+	}
+	r.min.x += minw;
+	r.max.x -= minw;
+
+	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
+	mapwin(cwin);
+
+	r = f->rect;
+	if(align&NORTH)
+		r.min.y--;
+	else
+		r.min.y = r.max.y - 1;
+	r.max.y = r.min.y + 2;
+	hwin = gethsep(r);
+
+	if(XGrabPointer(
+		display, scr.root.w,
+		/* owner_events*/	False,
+		/* event_mask */	MouseMask,
+		/* kbd, mouse */	GrabModeAsync, GrabModeAsync,
+		/* confine_to */		cwin->w,
+		/* cursor */		cursor[CurSizing],
+		/* time */		CurrentTime
+		) != GrabSuccess)
+		goto done;
+	
+	x = ((align&WEST) ? f->rect.min.x : f->rect.max.x);
+	y = ((align&NORTH) ? f->rect.min.y : f->rect.max.y);
+	warppointer(x, y);
+
+	for(;;) {
+		XMaskEvent(display, MouseMask | ExposureMask, &ev);
+		switch (ev.type) {
+		case ButtonRelease:
+			if(align&WEST)
+				r.min.x = x;
+			else
+				r.max.x = x;
+			if(align&NORTH) {
+				r.min.y = y;
+				r.max.y = f->rect.max.y;
+			}else {
+				r.min.y = f->rect.min.y;
+				r.max.y = y;
+			}
+			resize_colframe(f, &r);
+			
+			if(align&WEST)
+				x = f->rect.min.x + 1;
+			else
+				x = f->rect.max.x - 2;
+			if(align&NORTH)
+				y = f->rect.min.y + 1;
+			else
+				y = f->rect.max.y - 2;
+			warppointer(x, y);
+
+			XUngrabPointer(display, CurrentTime);
+			XSync(display, False);
+			goto done;
+		case MotionNotify:
+			x = ev.xmotion.x_root;
+			y = ev.xmotion.y_root;
+
+			if(align&WEST)
+				r.min.x = x;
+			else
+				r.max.x = x;
+			r.min.y = ((align&SOUTH) ? y : y-1);
+			r.max.y = r.min.y+2;
+
+			setdiv(d, x);
+			reshapewin(hwin, r);
+			break;
+		case Expose:
+			dispatch_event(&ev);
+			break;
+		default: break;
+		}
+	}
+done:
+	destroywindow(cwin);
+	destroywindow(hwin);
 }
 
 void
@@ -404,6 +548,8 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 		rects = rects_of_view(f->area->view, &num, (opaque ? c->frame : nil));
 		snap = def.snap;
 	}else{
+		mouse_resizecolframe(f, align);
+		return;
 		rects = nil;
 		snap = 0;
 	}

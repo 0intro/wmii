@@ -174,6 +174,7 @@ init_cursors() {
 	create_cursor(CurMove, XC_fleur);
 	create_cursor(CurDHArrow, XC_sb_h_double_arrow);
 	create_cursor(CurInput, XC_xterm);
+	create_cursor(CurSizing, XC_sizing);
 
 	XAllocNamedColor(display, scr.colormap,
 			"black", &black,
@@ -222,6 +223,21 @@ init_screen(WMScreen *screen) {
 			&mask);
 }
 
+static void
+cleanup() {
+	Client *c;
+
+	for(c=client; c; c=c->next) {
+		reparent_client(c, &scr.root, c->sel->rect.min);
+		if(c->sel->view != screen->sel)
+			unmap_client(c, IconicState);
+	}
+	XSync(display, False);
+	XCloseDisplay(display);
+	ixp_server_close(&srv);
+	close(sleeperfd);
+}
+
 struct {
 	uchar rcode, ecode;
 } itab[] = {
@@ -242,6 +258,7 @@ struct {
  */
 int
 wmii_error_handler(Display *dpy, XErrorEvent *error) {
+	static Bool dead;
 	int i;
 
 	if(check_other_wm)
@@ -254,19 +271,9 @@ wmii_error_handler(Display *dpy, XErrorEvent *error) {
 
 	fprintf(stderr, "%s: fatal error: Xrequest code=%d, Xerror code=%d\n",
 			argv0, error->request_code, error->error_code);
+	if(!dead++)
+		cleanup();
 	return x_error_handler(display, error); /* calls exit() */
-}
-
-static void
-cleanup() {
-	Client *c;
-
-	for(c=client; c; c=c->next) {
-		reparent_client(c, &scr.root, c->sel->rect.min);
-		if(c->sel->view != screen->sel)
-			unmap_client(c, IconicState);
-	}
-	XSync(display, False);
 }
 
 static void
@@ -491,9 +498,6 @@ main(int argc, char *argv[]) {
 		fprintf(stderr, "%s: error: %s\n", argv0, errstr);
 
 	cleanup();
-	XCloseDisplay(display);
-	ixp_server_close(&srv);
-	close(sleeperfd);
 
 	if(exitsignal)
 		raise(exitsignal);

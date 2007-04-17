@@ -47,7 +47,7 @@ enum {
 enum {
 	CurNormal,
 	CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
-	CurDHArrow, CurMove, CurInput,
+	CurDHArrow, CurMove, CurInput, CurSizing,
 	CurInvisible,
 	CurLast
 };
