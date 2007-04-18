@@ -320,18 +320,17 @@ utfutf(char *s1, char *s2)
 }
 
 char*
-toutf8(const char *str) {
+toutf8n(const char *str, int nstr) {
 	static iconv_t cd;
 	char *buf, *pos;
-	int nbuf, nstr, bsize;
+	int nbuf, bsize;
 
 	if(cd == nil)
 		cd = iconv_open("UTF-8", "");
 	iconv(cd, nil, nil, nil, nil);
 
-	nstr = strlen(str);
 	bsize = nstr * 1.25;
-	buf = emalloc(nbuf);
+	buf = emalloc(bsize);
 	pos = buf;
 	nbuf = bsize-1;
 	while(iconv(cd, &str, &nstr, &pos, &nbuf) == -1)
@@ -345,4 +344,9 @@ toutf8(const char *str) {
 			break;
 	*pos = '\0';
 	return buf;
+}
+
+char*
+toutf8(const char *str) {
+	return toutf8n(str, strlen(str));
 }

@@ -337,15 +337,12 @@ update_client_name(Client *c) {
 		if(Xutf8TextPropertyToTextList(display, &name, &list, &n) == Success) {
 			utfecpy(c->name, c->name+sizeof(c->name), list[0]);
 			XFreeStringList(list);
-			fprintf(stderr, "GotNetWMName: %x: %s\n", (uint)c->win.w, c->name);
 		}
 	}else {
 		XGetWMName(display, c->win.w, &name);
 		if(name.nitems > 0) {
 			str = toutf8((char*)name.value);
 			utfecpy(c->name, c->name+sizeof(c->name), str);
-			fprintf(stderr, "GotWMName: %x: %s (was: %s)\n",
-				(uint)c->win.w, c->name, name.value);
 			free(str);
 			XFree(name.value);
 		}
@@ -437,7 +434,7 @@ configure_client(Client *c) {
 	f = c->sel;
 	if(!f)
 		return;
-	
+
 	r = rectaddpt(f->crect, f->rect.min);
 	r = insetrect(r, -c->border);
 
@@ -445,7 +442,7 @@ configure_client(Client *c) {
 	e.event = c->win.w;
 	e.window = c->win.w;
 	e.x = r.min.x;
-	e.y = r.max.x;
+	e.y = r.min.y;
 	e.width = Dx(r);
 	e.height = Dy(r);
 	e.border_width = c->border;

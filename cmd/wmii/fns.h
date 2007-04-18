@@ -216,4 +216,5 @@ int	utfnlen(char*, long);
 char*	utfrrune(char*, long);
 char*	utfrune(char*, long);
 char*	utfutf(char*, char*);
+char*	toutf8n(const char*, int);
 char*	toutf8(const char*);

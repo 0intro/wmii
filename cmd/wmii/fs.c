@@ -41,7 +41,7 @@ struct FileId {
 		Client	*client;
 		Ruleset	*rule;
 		CTuple	*col;
-	} content;
+	} p;
 	uint	id;
 	uint	index;
 	Dirtab		tab;
@@ -212,12 +212,17 @@ write_to_buf(Ixp9Req *r, void *buf, uint *len, uint max) {
 /* This should be moved to libixp */
 void
 data_to_cstring(Ixp9Req *r) {
+	char *p;
 	uint i;
+
 	i = r->ifcall.count;
-	if(!i || r->ifcall.data[i - 1] != '\n')
-		r->ifcall.data = erealloc(r->ifcall.data, ++i);
+	p = r->ifcall.data;
+	if(p[i - 1] == '\n')
+		i--;
+
+	r->ifcall.data = toutf8n(p, i);
 	assert(r->ifcall.data);
-	r->ifcall.data[i - 1] = '\0';
+	free(p);
 }
 
 /* Should be somewhere else */
@@ -249,6 +254,7 @@ parse_colors(char **buf, int *buflen, CTuple *col) {
 
 char *
 message_root(char *message) {
+	Font *fn;
 	uint n;
 
 	if(!strchr(message, ' ')) {
@@ -281,10 +287,13 @@ message_root(char *message) {
 	}
 	else if(!strncmp(message, "font ", 5)) {
 		message += 5;
-		freefont(def.font);
-		def.font = loadfont(message);
-		assert(def.font);
-		resize_bar(screen);
+		fn = loadfont(message);
+		if(fn) {
+			freefont(def.font);
+			def.font = fn;
+			resize_bar(screen);
+		}else
+			return "can't load font";
 	}
 	else if(!strncmp(message, "border ", 7)) {
 		message += 7;
@@ -324,11 +333,11 @@ read_root_ctl() {
 void
 respond_event(Ixp9Req *r) {
 	FileId *f = r->fid->aux;
-	if(f->content.buf) {
-		r->ofcall.data = (void *)f->content.buf;
-		r->ofcall.count = strlen(f->content.buf);
+	if(f->p.buf) {
+		r->ofcall.data = (void *)f->p.buf;
+		r->ofcall.count = strlen(f->p.buf);
 		respond(r, nil);
-		f->content.buf = nil;
+		f->p.buf = nil;
 	}else{
 		r->aux = peventread;
 		peventread = r;
@@ -350,10 +359,10 @@ write_event(char *format, ...) {
 		return;
 	for(f=peventfid; f; f=f->next) {
 		fi = f->fid->aux;
-		slen = fi->content.buf ? strlen(fi->content.buf) : 0;
-		fi->content.buf = (char *) erealloc(fi->content.buf, slen + len + 1);
-		(fi->content.buf)[slen] = '\0';
-		strcat(fi->content.buf, buffer);
+		slen = fi->p.buf ? strlen(fi->p.buf) : 0;
+		fi->p.buf = (char *) erealloc(fi->p.buf, slen + len + 1);
+		(fi->p.buf)[slen] = '\0';
+		strcat(fi->p.buf, buffer);
 	}
 	oeventread = peventread;
 	peventread = nil;
@@ -407,7 +416,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->content.client = c;
+						file->p.client = c;
 						file->id = c->win.w;
 						file->index = c->win.w;
 						file->tab = *dir;
@@ -423,7 +432,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->content.client = c;
+						file->p.client = c;
 						file->id = c->win.w;
 						file->index = c->win.w;
 						file->tab = *dir;
@@ -439,7 +448,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->content.view = screen->sel;
+						file->p.view = screen->sel;
 						file->id = screen->sel->id;
 						file->tab = *dir;
 						file->tab.name = estrdup("sel");
@@ -450,7 +459,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->content.view = v;
+						file->p.view = v;
 						file->id = v->id;
 						file->tab = *dir;
 						file->tab.name = estrdup(v->name);
@@ -459,12 +468,12 @@ lookup_file(FileId *parent, char *name)
 				}
 				break;
 			case FsDBars:
-				for(b=*parent->content.bar_p; b; b=b->next) {
+				for(b=*parent->p.bar_p; b; b=b->next) {
 					if(!name || !strcmp(name, b->name)) {
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->content.bar = b;
+						file->p.bar = b;
 						file->id = b->id;
 						file->tab = *dir;
 						file->tab.name = estrdup(b->name);
@@ -479,7 +488,7 @@ lookup_file(FileId *parent, char *name)
 			*last = file;
 			last = &file->next;
 			file->id = 0;
-			file->content.ref = parent->content.ref;
+			file->p.ref = parent->p.ref;
 			file->index = parent->index;
 			file->tab = *dir;
 			file->tab.name = estrdup(file->tab.name);
@@ -487,15 +496,15 @@ lookup_file(FileId *parent, char *name)
 			switch(file->tab.type) {
 			case FsDBars:
 				if(!strcmp(file->tab.name, "lbar"))
-					file->content.bar_p = &screen[0].bar[BarLeft];
+					file->p.bar_p = &screen[0].bar[BarLeft];
 				else
-					file->content.bar_p = &screen[0].bar[BarRight];
+					file->p.bar_p = &screen[0].bar[BarRight];
 				break;
 			case FsFColRules:
-				file->content.rule = &def.colrules;
+				file->p.rule = &def.colrules;
 				break;
 			case FsFTagRules:
-				file->content.rule = &def.tagrules;
+				file->p.rule = &def.tagrules;
 				break;
 			}
 			if(name) goto LastItem;
@@ -530,7 +539,7 @@ fs_attach(Ixp9Req *r) {
 	FileId *f = get_file();
 	f->tab = dirtab[FsRoot][0];
 	f->tab.name = estrdup("/");
-	f->content.ref = nil;
+	f->p.ref = nil;
 	r->fid->aux = f;
 	r->fid->qid.type = f->tab.qtype;
 	r->fid->qid.path = QID(f->tab.type, 0);
@@ -595,13 +604,13 @@ fs_size(FileId *f) {
 		return 0;
 	case FsFColRules:
 	case FsFTagRules:
-		return f->content.rule->size;
+		return f->p.rule->size;
 	case FsFKeys:
 		return def.keyssz;
 	case FsFCtags:
-		return strlen(f->content.client->tags);
+		return strlen(f->p.client->tags);
 	case FsFprops:
-		return strlen(f->content.client->props);
+		return strlen(f->p.client->props);
 	}
 }
 
@@ -678,12 +687,12 @@ fs_read(Ixp9Req *r) {
 	else{
 		switch(f->tab.type) {
 		case FsFprops:
-			write_buf(r, f->content.client->props, strlen(f->content.client->props));
+			write_buf(r, f->p.client->props, strlen(f->p.client->props));
 			respond(r, nil);
 			return;
 		case FsFColRules:
 		case FsFTagRules:
-			write_buf(r, f->content.rule->string, f->content.rule->size);
+			write_buf(r, f->p.rule->string, f->p.rule->size);
 			respond(r, nil);
 			return;
 		case FsFKeys:
@@ -691,15 +700,15 @@ fs_read(Ixp9Req *r) {
 			respond(r, nil);
 			return;
 		case FsFCtags:
-			write_buf(r, f->content.client->tags, strlen(f->content.client->tags));
+			write_buf(r, f->p.client->tags, strlen(f->p.client->tags));
 			respond(r, nil);
 			return;
 		case FsFTctl:
-			write_buf(r, f->content.view->name, strlen(f->content.view->name));
+			write_buf(r, f->p.view->name, strlen(f->p.view->name));
 			respond(r, nil);
 			return;
 		case FsFBar:
-			write_buf(r, f->content.bar->buf, strlen(f->content.bar->buf));
+			write_buf(r, f->p.bar->buf, strlen(f->p.bar->buf));
 			respond(r, nil);
 			return;
 		case FsFRctl:
@@ -719,7 +728,7 @@ fs_read(Ixp9Req *r) {
 			respond(r, nil);
 			return;
 		case FsFTindex:
-			buf = (char *)view_index(f->content.view);
+			buf = (char *)view_index(f->p.view);
 			n = strlen(buf);
 			write_buf(r, buf, n);
 			respond(r, nil);
@@ -755,7 +764,7 @@ fs_write(Ixp9Req *r) {
 	switch(f->tab.type) {
 	case FsFColRules:
 	case FsFTagRules:
-		write_to_buf(r, &f->content.rule->string, &f->content.rule->size, 0);
+		write_to_buf(r, &f->p.rule->string, &f->p.rule->size, 0);
 		respond(r, nil);
 		return;
 	case FsFKeys:
@@ -764,20 +773,20 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFCtags:
 		data_to_cstring(r);
-		apply_tags(f->content.client, r->ifcall.data);
+		apply_tags(f->p.client, r->ifcall.data);
 		r->ofcall.count = r->ifcall.count;
 		respond(r, nil);
 		return;
 	case FsFBar:
 		/* XXX: This should validate after each write */
-		i = strlen(f->content.bar->buf);
-		write_to_buf(r, &f->content.bar->buf, &i, 279);
+		i = strlen(f->p.bar->buf);
+		write_to_buf(r, &f->p.bar->buf, &i, 279);
 		r->ofcall.count = i - r->ifcall.offset;
 		respond(r, nil);
 		return;
 	case FsFCctl:
 		data_to_cstring(r);
-		if((errstr = message_client(f->content.client, r->ifcall.data))) {
+		if((errstr = message_client(f->p.client, r->ifcall.data))) {
 			respond(r, errstr);
 			return;
 		}
@@ -786,7 +795,7 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFTctl:
 		data_to_cstring(r);
-		if((errstr = message_view(f->content.view, r->ifcall.data))) {
+		if((errstr = message_view(f->p.view, r->ifcall.data))) {
 			respond(r, errstr);
 			return;
 		}
@@ -796,14 +805,17 @@ fs_write(Ixp9Req *r) {
 	case FsFRctl:
 		data_to_cstring(r);
 		{	uint n;
-			char *toks[32];
-			n = tokenize(toks, 32, r->ifcall.data, '\n');
+			char *p, *toks[32];
+
+			p = toutf8n(r->ifcall.data, r->ifcall.count);
+			n = tokenize(toks, 32, p, '\n');
 			for(i = 0; i < n; i++) {
 				if(errstr)
 					message_root(toks[i]);
 				else
 					errstr = message_root(toks[i]);
 			}
+			free(p);
 		}
 		if(screen->sel)
 			focus_view(screen, screen->sel);
@@ -878,7 +890,7 @@ fs_create(Ixp9Req *r) {
 			respond(r, Ebadvalue);
 			return;
 		}
-		create_bar(f->content.bar_p, r->ifcall.name);
+		create_bar(f->p.bar_p, r->ifcall.name);
 		f = lookup_file(f, r->ifcall.name);
 		if(!f) {
 			respond(r, Enofile);
@@ -908,7 +920,7 @@ fs_remove(Ixp9Req *r) {
 		respond(r, Enoperm);
 		return;
 	case FsFBar:
-		destroy_bar(f->next->content.bar_p, f->content.bar);
+		destroy_bar(f->next->p.bar_p, f->p.bar);
 		draw_bar(screen);
 		respond(r, nil);
 		break;
@@ -919,7 +931,7 @@ void
 fs_clunk(Ixp9Req *r) {
 	Client *c;
 	FidLink **fl, *ft;
-	char *buf;
+	char *buf, *p, *q;
 	int i;
 	FileId *f = r->fid->aux;
 
@@ -930,10 +942,10 @@ fs_clunk(Ixp9Req *r) {
 
 	switch(f->tab.type) {
 	case FsFColRules:
-		update_rules(&f->content.rule->rule, f->content.rule->string);
+		update_rules(&f->p.rule->rule, f->p.rule->string);
 		break;
 	case FsFTagRules:
-		update_rules(&f->content.rule->rule, f->content.rule->string);
+		update_rules(&f->p.rule->rule, f->p.rule->string);
 		for(c=client; c; c=c->next)
 			apply_rules(c);
 		update_views();
@@ -942,12 +954,19 @@ fs_clunk(Ixp9Req *r) {
 		update_keys();
 		break;
 	case FsFBar:
-		buf = f->content.bar->buf;
-		i = strlen(f->content.bar->buf);
-		parse_colors(&buf, &i, &f->content.bar->col);
+		buf = f->p.bar->buf;
+		i = strlen(buf);
+		buf = q = toutf8n(buf, i);
+
+		parse_colors(&buf, &i, &f->p.bar->col);
 		while(i > 0 && buf[i - 1] == '\n')
 			buf[--i] = '\0';
-		strncpy(f->content.bar->text, buf, sizeof(f->content.bar->text));
+
+		p = f->p.bar->text;
+		utfecpy(p, p+sizeof(f->p.bar->text), buf);
+
+		free(q);
+
 		draw_bar(screen);
 		break;
 	case FsFEvent:
@@ -956,7 +975,7 @@ fs_clunk(Ixp9Req *r) {
 				ft = *fl;
 				*fl = (*fl)->next;
 				f = ft->fid->aux;
-				free(f->content.buf);
+				free(f->p.buf);
 				free(ft);
 				break;
 			}
