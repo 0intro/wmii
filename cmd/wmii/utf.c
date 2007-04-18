@@ -321,7 +321,7 @@ utfutf(char *s1, char *s2)
 }
 
 char*
-toutf8n(const char *str, int nstr) {
+toutf8n(char *str, int nstr) {
 	static iconv_t cd;
 	char *buf, *pos;
 	int nbuf, bsize;
@@ -334,7 +334,7 @@ toutf8n(const char *str, int nstr) {
 	buf = emalloc(bsize);
 	pos = buf;
 	nbuf = bsize-1;
-	while(iconv(cd, &str, &nstr, &pos, &nbuf) == -1)
+	while(iconv(cd, (void*)&str, &nstr, &pos, &nbuf) == -1)
 		if(errno == E2BIG) {
 			bsize *= 1.25;
 			nbuf = pos - buf;
@@ -348,6 +348,6 @@ toutf8n(const char *str, int nstr) {
 }
 
 char*
-toutf8(const char *str) {
+toutf8(char *str) {
 	return toutf8n(str, strlen(str));
 }
