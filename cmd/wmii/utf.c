@@ -11,6 +11,7 @@
  * ANY REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
  * OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
  */
+#include <errno.h>
 #include <iconv.h>
 #include <stdarg.h>
 #include <string.h>

@@ -51,16 +51,16 @@ create_client(XWindow w, XWindowAttributes *wa) {
 
 	fwa.override_redirect = True;
 	fwa.event_mask =
-		  SubstructureRedirectMask
-		| SubstructureNotifyMask
-		| ExposureMask
-		| EnterWindowMask
-		| PointerMotionMask
-		| ButtonPressMask
-		| ButtonReleaseMask;
+			  SubstructureRedirectMask
+			| SubstructureNotifyMask
+			| ExposureMask
+			| EnterWindowMask
+			| PointerMotionMask
+			| ButtonPressMask
+			| ButtonReleaseMask;
 	c->framewin = createwindow(&scr.root, c->rect, scr.depth, InputOutput, &fwa,
-		  CWOverrideRedirect
-		| CWEventMask);
+			  CWOverrideRedirect
+			| CWEventMask);
 	c->framewin->aux = c;
 	c->win.aux = c;
 	sethandler(c->framewin, &framehandler);
@@ -250,8 +250,7 @@ focusout_event(Window *w, XFocusChangeEvent *e) {
 	c = w->aux;
 
 	if((e->mode == NotifyWhileGrabbed) && (screen->hasgrab != &c_root)) {
-		if((screen->focus)
-		&& (screen->hasgrab != screen->focus))
+		if((screen->focus) && (screen->hasgrab != screen->focus))
 			screen->hasgrab = screen->focus;
 		if(screen->hasgrab == c)
 			return;
@@ -744,8 +743,7 @@ resize_client(Client *c, Rectangle *r) {
 
 	c->rect = rectaddpt(f->crect, f->rect.min);
 
-	if((f->area->mode == Colmax)
-	&& (f->area->sel != f)) {
+	if((f->area->mode == Colmax) && (f->area->sel != f)) {
 		unmap_frame(c);
 		unmap_client(c, IconicState);
 	}else if(f->collapsed) {
@@ -765,14 +763,19 @@ resize_client(Client *c, Rectangle *r) {
 
 void
 newcol_client(Client *c, char *arg) {
-	Frame *f = c->sel;
-	Area *to, *a = f->area;
-	View *v = a->view;
+	Frame *f;
+	Area *to, *a;
+	View *v;
+
+	f = c->sel;
+	a = f->area;
+	v = f->view;
 
 	if(a->floating)
 		return;
-	if(!f->anext && f == a->frame)
+	if((f->anext == nil) && (f->aprev == nil))
 		return;
+
 	if(!strncmp(arg, "prev", 5)) {
 		for(to=v->area; to; to=to->next)
 			if(to->next == a) break;
@@ -800,6 +803,7 @@ send_client(Frame *f, char *arg, Bool swap) {
 	a = f->area;
 	v = a->view;
 	c = f->client;
+
 	if(!strncmp(arg, "toggle", 7)) {
 		if(!a->floating)
 			to = v->area;
