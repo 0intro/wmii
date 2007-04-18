@@ -39,7 +39,7 @@ create_area(View *v, Area *pos, uint w) {
 	colnum = max((areanum - 1), 0);
 	if(w == 0) {
 		if(colnum) {
-			w = newcolw_of_view(v, max(i-1, 0));
+			w = newcolw(v, max(i-1, 0));
 			if (w == 0)
 				w = Dx(screen->rect) / (colnum + 1);
 		}
@@ -432,11 +432,11 @@ select_area(Area *a, char *arg) {
 	f = a->sel;
 	if(!strcmp(arg, "toggle")) {
 		if(!a->floating)
-			a = v->area;
+			ap = v->area;
 		else if(v->revert)
-			a = v->revert;
+			ap = v->revert;
 		else
-			a = v->area->next;
+			ap = v->area->next;
 	}
 	else if(!strcmp(arg, "left")) {
 		if(a->floating)

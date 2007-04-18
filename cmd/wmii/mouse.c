@@ -54,7 +54,7 @@ framerect(Framewin *f) {
 	p.x -= max(r.max.x - screen->rect.max.x, 0);
 	p.y -= min(r.min.y, 0);
 	p.y -= max(r.max.y - screen->brect.min.y, 0);
-	return rectaddpt(r, p);;
+	return rectaddpt(r, p);
 }
 
 static void
@@ -455,28 +455,6 @@ done:
 }
 
 static void
-xorborder(Rectangle r) {
-	Rectangle r2;
-	ulong col;
-	
-	col = def.focuscolor.bg;
-
-	r2 = insetrect(r, 4);
-
-	if(Dy(r) > 4 && Dx(r) > 2)
-		drawline(&xor,
-			Pt(r2.min.x, r2.min.y + Dy(r2)/2),
-			Pt(r2.max.x, r2.min.y + Dy(r2)/2),
-			CapNotLast, 1, col);
-	if(Dx(r) > 4 && Dy(r) > 2)
-		drawline(&xor,
-			Pt(r2.min.x + Dx(r2)/2, r.min.y),
-			Pt(r2.min.x + Dx(r2)/2, r.max.y),
-			CapNotLast, 1, col);
-	border(&xor, r, 4, col);
-}
-
-static void
 rect_morph_xy(Rectangle *r, Point d, Align *mask) {
 	int n;
 
@@ -600,7 +578,7 @@ void
 do_mouse_resize(Client *c, Bool opaque, Align align) {
 	XEvent ev;
 	Rectangle *rects;
-	Rectangle ofrect, frect, origin;
+	Rectangle frect, origin;
 	Align grav;
 	Cursor cur;
 	Point d, pt, hr;
@@ -624,7 +602,7 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 
 	cur = cursor_of_quad(align);
 	if((align==CENTER) && !opaque)
-		cur = cursor[CurInvisible];
+		cur = cursor[CurSizing];
 
 	pt = querypointer(c->framewin);
 	rx = (float)pt.x / Dx(frect);
@@ -635,15 +613,18 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 
 	pt = querypointer(&scr.root);
 
+	hr = subpt(frect.max, frect.min);
+	hr = divpt(hr, Pt(2, 2));
+
 	if(align != CENTER) {
-		d = subpt(frect.max, frect.min);
-		hr = d = divpt(d, Pt(2, 2));
+		d = hr;
+
 		if(align&NORTH) d.y -= hr.y;
 		if(align&SOUTH) d.y += hr.y;
 		if(align&EAST) d.x += hr.x;
 		if(align&WEST) d.x -= hr.x;
 
-		pt = translate(c->framewin, &scr.root, d);
+		pt = addpt(d, f->rect.min);
 		warppointer(pt);
 	}
 	else if(f->client->fullscreen) {
@@ -655,19 +636,17 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 				/ Dx(screen->rect);
 		hry = (double)(Dy(screen->rect)  + Dy(frect) - 3 * labelh(def.font))
 				/ Dy(screen->rect);
-		pt = frect.max;
-		pt.x = (pt.x - labelh(def.font)) / hrx;
-		pt.y = (pt.y - labelh(def.font)) / hry;
-		warppointer(pt);
+
+		pt.x = frect.max.x - labelh(def.font);
+		pt.y = frect.max.y - labelh(def.font);
+		d.x = pt.x / hrx;
+		d.y = pt.y / hry;
+
+		warppointer(d);
 		flushevents(PointerMotionMask, False);
 	}
 
-	XSync(display, False);
-	if(!opaque) {
-		XGrabServer(display);
-		xorborder(frect);
-	}else
-		unmap_client(c, IconicState);
+	unmap_client(c, IconicState);
 
 	for(;;) {
 		XMaskEvent(display, MouseMask | ExposureMask, &ev);
@@ -678,7 +657,6 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 			dispatch_event(&ev);
 			break;
 		case MotionNotify:
-			ofrect = frect;
 			d.x = ev.xmotion.x_root;
 			d.y = ev.xmotion.y_root;
 
@@ -698,18 +676,9 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 			apply_sizehints(c, &frect, floating, True, grav);
 			frect = constrain(frect);
 
-			if(opaque) {
-				movewin(c->framewin, frect.min);
-				XSync(display, False);
-			}else {
-				xorborder(ofrect);
-				xorborder(frect);
-			}
+			reshapewin(c->framewin, frect);
 			break;
 		case ButtonRelease:
-			if(!opaque)
-				xorborder(frect);
-
 			resize_client(c, &frect);
 
 			if(!opaque) {
@@ -718,9 +687,9 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 				if(pt.y > screen->brect.min.y)
 					pt.y = screen->brect.min.y - 1;
 				warppointer(pt);
-				XUngrabServer(display);
-			}else
-				map_client(c);
+			}
+
+			map_client(c);
 
 			free(rects);
 			XUngrabPointer(display, CurrentTime);

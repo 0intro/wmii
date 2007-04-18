@@ -49,22 +49,17 @@ create_client(XWindow w, XWindowAttributes *wa) {
 	XAddToSaveSet(display, w);
 
 	fwa.override_redirect = True;
-	fwa.background_pixmap = ParentRelative;
-	fwa.backing_store = Always;
 	fwa.event_mask =
 		  SubstructureRedirectMask
 		| SubstructureNotifyMask
 		| ExposureMask
 		| EnterWindowMask
 		| PointerMotionMask
-		| KeyPressMask
 		| ButtonPressMask
 		| ButtonReleaseMask;
 	c->framewin = createwindow(&scr.root, c->rect, scr.depth, InputOutput, &fwa,
 		  CWOverrideRedirect
-		| CWEventMask
-		| CWBackPixmap
-		| CWBackingStore);
+		| CWEventMask);
 	c->framewin->aux = c;
 	c->win.aux = c;
 	sethandler(c->framewin, &framehandler);
@@ -94,15 +89,15 @@ destroy_client(Client *c) {
 	Client **tc;
 	XEvent ev;
 
-	XGrabServer(display);
-	/* In case the client is already unmapped */
-	XSetErrorHandler(dummy_error_handler);
-
 	for(tc=&client; *tc; tc=&(*tc)->next)
 		if(*tc == c) {
 			*tc = c->next;
 			break;
 		}
+
+	XGrabServer(display);
+	/* In case the client is already unmapped */
+	XSetErrorHandler(dummy_error_handler);
 
 	dummy = nil;
 	update_client_views(c, &dummy);

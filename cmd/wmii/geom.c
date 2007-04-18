@@ -14,9 +14,10 @@ ptinrect(Point pt, Rectangle r) {
 
 Align
 quadrant(Rectangle r, Point pt) {
-	Align ret = 0;
+	Align ret;
 
 	pt = subpt(pt, r.min);
+	ret = 0;
 
 	if(pt.x >= Dx(r) * .5)
 		ret |= EAST;

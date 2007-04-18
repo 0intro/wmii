@@ -48,8 +48,8 @@ subpt(Point p, Point q) {
 
 Point
 divpt(Point p, Point q) {
-	p.x *= q.x;
-	p.y *= q.y;
+	p.x /= q.x;
+	p.y /= q.y;
 	return p;
 }
 
@@ -177,7 +177,7 @@ movewin(Window *w, Point pt) {
 
 	assert(w->type == WWindow);
 	r = rectsubpt(w->r, w->r.min);
-	r = rectaddpt(w->r, pt);
+	r = rectaddpt(r, pt);
 	reshapewin(w, r);
 }
 

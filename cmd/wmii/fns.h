@@ -140,7 +140,7 @@ void restack_view(View*);
 uchar *view_index(View*);
 void destroy_view(View*);
 void update_views();
-uint newcolw_of_view(View*, int i);
+uint newcolw(View*, int i);
 
 /* wm.c */
 int wmii_error_handler(Display*, XErrorEvent *error);

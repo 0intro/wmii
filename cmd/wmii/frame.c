@@ -50,6 +50,8 @@ remove_frame(Frame *f) {
 			f->sprev->snext = f->snext;
 		if(f->snext)
 			f->snext->sprev = f->sprev;
+		if(f == a->stack)
+			a->stack = f->snext;
 	}
 	f->anext = f->aprev = f->snext = f->sprev = nil;
 }
@@ -81,6 +83,27 @@ insert_frame(Frame *pos, Frame *f, Bool before) {
 		if(f->snext)
 			f->snext->sprev = f;
 	}
+}
+
+Bool
+frame_to_top(Frame *f) {
+	Area *a;
+
+	a = f->area;
+	if(!a->floating || f == a->stack)
+		return False;
+
+	if(f->sprev)
+		f->sprev = f->snext;
+	if(f->snext)
+		f->snext = f->sprev;
+
+	f->snext = a->stack;
+	a->stack = f;
+	if(f->snext)
+		f->snext->sprev = f;
+
+	return True;
 }
 
 Rectangle
@@ -273,27 +296,6 @@ set_frame_cursor(Frame *f, Point pt) {
 		set_cursor(f->client, cursor[CurNormal]);
 }
 
-Bool
-frame_to_top(Frame *f) {
-	Area *a;
-
-	a = f->area;
-	if(!a->floating || f == a->stack)
-		return False;
-
-	if(f->sprev)
-		f->sprev = f->snext;
-	if(f->snext)
-		f->snext = f->sprev;
-
-	f->snext = a->stack;
-	a->stack = f;
-	if(f->snext)
-		f->snext->sprev = f;
-
-	return True;
-}
-
 void
 swap_frames(Frame *fa, Frame *fb) {
 	Rectangle trect;
@@ -384,9 +386,10 @@ draw_frame(Frame *f) {
 				col = &def.focuscolor;
 				break;
 			}
+	fr = f->client->framewin->r;
+	fr = rectsubpt(fr, fr.min);
 
 	/* background */
-	fr = rectsubpt(f->rect, f->rect.min);
 	r = fr;
 	fill(screen->ibuf, r, col->bg);
 	border(screen->ibuf, r, 1, col->border);
@@ -430,23 +433,21 @@ draw_frames() {
 Rectangle
 constrain(Rectangle r) {
 	Rectangle sr;
-	int barheight;
+	Point p;
 
 	sr = screen->rect;
-	barheight = Dy(screen->brect);
-	sr.max.y -= barheight;
+	sr.max.y = screen->brect.min.y;
 
 	if(Dx(r) > Dx(sr))
 		r.max.x = r.min.x + Dx(sr);
 	if(Dy(r) > Dy(sr))
 		r.max.y = r.min.y + Dy(sr);
-	if(r.min.x > sr.max.x - barheight)
-		rectsubpt(r, Pt(sr.min.x - sr.max.x + barheight, 0));
-	if(r.min.y > sr.max.y - barheight)
-		rectsubpt(r, Pt(0, sr.min.y - sr.max.y + barheight));
-	if(r.max.x < barheight)
-		rectaddpt(r, Pt(barheight - sr.max.x, 0));
-	if(r.max.y < barheight)
-		rectaddpt(r, Pt(0, barheight - sr.max.y));
-	return r;
+
+	sr = insetrect(sr, Dy(screen->brect));
+	p = ZP;
+	p.x -= min(r.max.x - sr.min.x, 0);
+	p.x -= max(r.min.x - sr.max.x, 0);
+	p.y -= min(r.max.y - sr.min.y, 0);
+	p.y -= max(r.min.y - sr.max.y, 0);
+	return rectaddpt(r, p);
 }

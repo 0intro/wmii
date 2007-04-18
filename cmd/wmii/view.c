@@ -482,7 +482,7 @@ update_views() {
 }
 
 uint
-newcolw_of_view(View *v, int num) {
+newcolw(View *v, int num) {
 	regmatch_t regm;
 	Rule *r;
 	uint n;
