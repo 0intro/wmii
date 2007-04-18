@@ -23,7 +23,8 @@ enum {
 		| EnterWindowMask
 		| FocusChangeMask,
 	ButtonMask =
-		  ButtonPressMask | ButtonReleaseMask
+		  ButtonPressMask
+		| ButtonReleaseMask
 };
 
 Client *
@@ -79,12 +80,13 @@ create_client(XWindow w, XWindowAttributes *wa) {
 }
 
 static int
-dummy_error_handler(Display *dpy, XErrorEvent *error) {
+ignoreerrors(Display *d, XErrorEvent *e) {
 	return 0;
 }
 
 void
 destroy_client(Client *c) {
+	int (*handler)(Display*, XErrorEvent*);
 	char *dummy;
 	Client **tc;
 	XEvent ev;
@@ -96,8 +98,9 @@ destroy_client(Client *c) {
 		}
 
 	XGrabServer(display);
+
 	/* In case the client is already unmapped */
-	XSetErrorHandler(dummy_error_handler);
+	handler = XSetErrorHandler(ignoreerrors);
 
 	dummy = nil;
 	update_client_views(c, &dummy);
@@ -110,7 +113,8 @@ destroy_client(Client *c) {
 	sethandler(&c->win, nil);
 
 	XSync(display, False);
-	XSetErrorHandler(wmii_error_handler);
+	XSetErrorHandler(handler);
+
 	XUngrabServer(display);
 	flushevents(EnterWindowMask, False);
 
@@ -321,26 +325,31 @@ static void
 update_client_name(Client *c) {
 	XTextProperty name;
 	XClassHint ch = {0};
+	char **list, *str;
 	int n;
-	char **list = nil;
 
 	c->name[0] = 0;
+	list = nil;
 
 	name.nitems = 0;
 	XGetTextProperty(display, c->win.w, &name, atom[NetWMName]);
-	if(!name.nitems)
-		XGetWMName(display, c->win.w, &name);
-	if(!name.nitems)
-		return;
-
-	if(name.encoding == XA_STRING)
-		strncpy(c->name, (char *)name.value, sizeof(c->name));
-	else	if(XmbTextPropertyToTextList(display, &name, &list, &n) >= Success)
-		if(n > 0 && *list) {
-			strncpy(c->name, *list, sizeof(c->name));
+	if(name.nitems > 0) {
+		if(Xutf8TextPropertyToTextList(display, &name, &list, &n) == Success) {
+			utfecpy(c->name, c->name+sizeof(c->name), list[0]);
 			XFreeStringList(list);
+			fprintf(stderr, "GotNetWMName: %x: %s\n", (uint)c->win.w, c->name);
 		}
-	XFree(name.value);
+	}else {
+		XGetWMName(display, c->win.w, &name);
+		if(name.nitems > 0) {
+			str = toutf8((char*)name.value);
+			utfecpy(c->name, c->name+sizeof(c->name), str);
+			fprintf(stderr, "GotWMName: %x: %s (was: %s)\n",
+				(uint)c->win.w, c->name, name.value);
+			free(str);
+			XFree(name.value);
+		}
+	}
 
 	XGetClassHint(display, c->win.w, &ch);
 	snprintf(c->props, sizeof(c->props), "%s:%s:%s",

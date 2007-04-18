@@ -143,7 +143,6 @@ void update_views();
 uint newcolw(View*, int i);
 
 /* wm.c */
-int wmii_error_handler(Display*, XErrorEvent *error);
 int win_proto(Window);
 
 /* x11.c */
@@ -191,3 +190,30 @@ void warppointer(Point);
 Point translate(Window*, Window*, Point);
 int grabpointer(Window*, Window *confine, Cursor cur, int mask);
 void ungrabpointer();
+
+/* utf.c */
+int	chartorune(Rune*, char*);
+int	fullrune(char*, int n);
+int	runelen(long);
+int	runenlen(Rune*, int nrune);
+Rune*	runestrcat(Rune*, Rune*);
+Rune*	runestrchr(Rune*, Rune);
+int	runestrcmp(Rune*, Rune*);
+Rune*	runestrcpy(Rune*, Rune*);
+Rune*	runestrdup(Rune*) ;
+Rune*	runestrecpy(Rune*, Rune *end, Rune*);
+long	runestrlen(Rune*);
+Rune*	runestrncat(Rune*, Rune*, long);
+int	runestrncmp(Rune*, Rune*, long);
+Rune*	runestrncpy(Rune*, Rune*, long);
+Rune*	runestrrchr(Rune*, Rune);
+Rune*	runestrstr(Rune*, Rune*);
+int	runetochar(char*, Rune *rune);
+Rune	totitlerune(Rune);
+char*	utfecpy(char*, char *end, char*);
+int	utflen(char*);
+int	utfnlen(char*, long);
+char*	utfrrune(char*, long);
+char*	utfrune(char*, long);
+char*	utfutf(char*, char*);
+char*	toutf8(const char*);

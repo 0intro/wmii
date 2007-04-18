@@ -376,8 +376,9 @@ drawstring(Image *dst, Font *font,
 		w = textwidth_l(font, buf, len + min(shortened, 3));
 		if(w <= Dx(r) - (font->height & ~1))
 			break;
-
-		buf[--len] = '.';
+		while(len > 0 && (buf[--len]&0xC0) == 0x80)
+			buf[len] = '.';
+		buf[len] = '.';
 		shortened++;
 	}
 
@@ -399,7 +400,7 @@ drawstring(Image *dst, Font *font,
 
 	XSetForeground(display, dst->gc, col);
 	if(font->set)
-		XmbDrawString(display, dst->image, 
+		Xutf8DrawString(display, dst->image, 
 				font->set, dst->gc,
 				x, y,
 				buf, len);
@@ -506,7 +507,7 @@ textwidth_l(Font *font, char *text, uint len) {
 	XRectangle r;
 
 	if(font->set) {
-		XmbTextExtents(font->set, text, len, &r, nil);
+		Xutf8TextExtents(font->set, text, len, &r, nil);
 		return r.width;
 	}
 	return XTextWidth(font->xfont, text, len);

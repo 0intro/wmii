@@ -21,7 +21,7 @@
 static const char
 	version[] = "wmii-"VERSION", ©2007 Kris Maglione\n";
 
-static int (*x_error_handler) (Display *, XErrorEvent *);
+static int (*xlib_errorhandler) (Display*, XErrorEvent*);
 static char *address, *ns_path;
 static Bool check_other_wm;
 static struct sigaction sa;
@@ -257,8 +257,8 @@ struct {
  * Other types of errors call Xlib's default error handler, which
  * calls exit().
  */
-int
-wmii_error_handler(Display *dpy, XErrorEvent *error) {
+static int
+errorhandler(Display *dpy, XErrorEvent *error) {
 	static Bool dead;
 	int i;
 
@@ -274,7 +274,7 @@ wmii_error_handler(Display *dpy, XErrorEvent *error) {
 			argv0, error->request_code, error->error_code);
 	if(!dead++)
 		cleanup();
-	return x_error_handler(display, error); /* calls exit() */
+	return xlib_errorhandler(display, error); /* calls exit() */
 }
 
 static void
@@ -421,10 +421,14 @@ main(int argc, char *argv[]) {
 
 	initdisplay();
 
+	xlib_errorhandler = XSetErrorHandler(errorhandler);
+
 	check_other_wm = True;
-	x_error_handler = XSetErrorHandler(wmii_error_handler);
-	XSelectInput(display, scr.root.w, SubstructureRedirectMask | EnterWindowMask);
+	XSelectInput(display, scr.root.w,
+			  SubstructureRedirectMask
+			| EnterWindowMask);
 	XSync(display, False);
+
 	check_other_wm = False;
 
 	passwd = getpwuid(getuid());
@@ -432,7 +436,6 @@ main(int argc, char *argv[]) {
 
 	init_environment();
 
-	errstr = nil;
 	sock = ixp_announce(address);
 	if(sock < 0)
 		fatal("Can't create socket '%s': %s", address, errstr);
@@ -447,10 +450,6 @@ main(int argc, char *argv[]) {
 
 	ixp_listen(&srv, sock, &p9srv, check_9pcon, nil);
 	ixp_listen(&srv, ConnectionNumber(display), nil, check_x_event, nil);
-
-	view = nil;
-	client = nil;
-	key = nil;
 
 	def.font = loadfont(FONT);
 	def.border = 1;
@@ -472,10 +471,10 @@ main(int argc, char *argv[]) {
 		s->ibuf = allocimage(Dx(s->rect), Dy(s->rect), scr.depth);
 
 		wa.event_mask = 
-			  SubstructureRedirectMask
-			| EnterWindowMask
-			| LeaveWindowMask
-			| FocusChangeMask;
+				  SubstructureRedirectMask
+				| EnterWindowMask
+				| LeaveWindowMask
+				| FocusChangeMask;
 		wa.cursor = cursor[CurNormal];
 		setwinattr(&scr.root, &wa,
 				  CWEventMask
@@ -483,12 +482,12 @@ main(int argc, char *argv[]) {
 		initbar(s);
 	}
 
-	screen = &screens[0];
 	screen->focus = nil;
 	XSetInputFocus(display, screen->barwin->w, RevertToParent, CurrentTime);
 
 	scan_wins();
 	starting = False;
+
 	select_view("nil");
 	update_views();
 	write_event("FocusTag %s\n", screen->sel->name);

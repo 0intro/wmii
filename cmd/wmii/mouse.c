@@ -481,47 +481,39 @@ rect_morph_xy(Rectangle *r, Point d, Align *mask) {
 	}
 }
 
-typedef struct {
-	Rectangle *rects;
-	int num;
-	Rectangle r;
-	int x, y;
-	int dx, dy;
-	Align mask;
-} SnapArgs;
+static int
+snap_line(Rectangle *rects, int nrect, int d, int horiz, Rectangle *r, int x, int y) {
+	Rectangle *rp;
+	int i, tx, ty;
 
-static void
-snap_line(SnapArgs *a) {
-	Rectangle *r;
-	int i, x, y;
+	if(horiz) {
+		for(i=0; i < nrect; i++) {
+			rp = &rects[i];
+			if((rp->min.x <= r->max.x) && (rp->max.x >= r->min.x)) {
+				ty = rp->min.y;
+				if(abs(ty - y) <= abs(d))
+					d = ty - y;
 
-	if(a->mask & (NORTH|SOUTH)) {
-		for(i=0; i < a->num; i++) {
-			r = &a->rects[i];
-			if((r->min.x <= a->r.max.x) && (r->max.x >= a->r.min.x)) {
-				y = r->min.y;
-				if(abs(y - a->y) <= abs(a->dy))
-					a->dy = y - a->y;
-
-				y = r->max.y;
-				if(abs(y - a->y) <= abs(a->dy))
-					a->dy = y - a->y;
+				ty = rp->max.y;
+				if(abs(ty - y) <= abs(d))
+					d = ty - y;
 			}
 		}
 	}else {
-		for(i=0; i < a->num; i++) {
-			r = &a->rects[i];
-			if((r->min.y <= a->r.max.y) && (r->max.y >= a->r.min.y)) {
-				x = r->min.x;
-				if(abs(x - a->x) <= abs(a->dx))
-					a->dx = x - a->x;
+		for(i=0; i < nrect; i++) {
+			rp = &rects[i];
+			if((rp->min.y <= r->max.y) && (rp->max.y >= r->min.y)) {
+				tx = rp->min.x;
+				if(abs(tx - x) <= abs(d))
+					d = tx - x;
 
-				x = r->max.x;
-				if(abs(x - a->x) <= abs(a->dx))
-					a->dx = x - a->x;
+				tx = rp->max.x;
+				if(abs(tx - x) <= abs(d))
+					d = tx - x;
 			}
 		}
 	}
+	return d;
 }
 
 /* Returns a gravity for increment handling. It's normally the opposite of the mask
@@ -530,47 +522,34 @@ snap_line(SnapArgs *a) {
  */
 Align
 snap_rect(Rectangle *rects, int num, Rectangle *r, Align *mask, int snap) {
-	SnapArgs a = { 0, };
 	Align ret;
+	Point d;
+	
+	d.x = snap+1;
+	d.y = snap+1;
 
-	a.rects = rects;
-	a.num = num;
-	a.dx = snap + 1;
-	a.dy = snap + 1;
-	a.r = *r;
+	if(*mask&NORTH)
+		d.y = snap_line(rects, num, d.y, True, r, 0, r->min.y);
+	if(*mask&SOUTH)
+		d.y = snap_line(rects, num, d.y, True, r, 0, r->max.y);
 
-	a.mask = NORTH|SOUTH;
-	if(*mask & NORTH) {
-		a.y = r->min.y;
-		snap_line(&a);
-	}
-	if(*mask & SOUTH) {
-		a.y = r->max.y;
-		snap_line(&a);
-	}
-
-	a.mask = EAST|WEST;
-	if(*mask & EAST) {
-		a.x = r->max.x;
-		snap_line(&a);
-	}
-	if(*mask & WEST) {
-		a.x = r->min.x;
-		snap_line(&a);
-	}
+	if(*mask&EAST)
+		d.x = snap_line(rects, num, d.x, False, r, r->max.x, 0);
+	if(*mask&WEST)
+		d.x = snap_line(rects, num, d.x, False, r, r->min.x, 0);
 
 	ret = CENTER;
-	if(abs(a.dx) <= snap)
+	if(abs(d.x) <= snap)
 		ret ^= EAST|WEST;
 	else
-		a.dx = 0;
+		d.x = 0;
 
-	if(abs(a.dy) <= snap)
+	if(abs(d.y) <= snap)
 		ret ^= NORTH|SOUTH;
 	else
-		a.dy = 0;
+		d.y = 0;
 
-	rect_morph_xy(r, Pt(a.dx, a.dy), mask);
+	rect_morph_xy(r, d, mask);
 	return ret ^ *mask;
 }
 

@@ -4,6 +4,7 @@
 
 #include <regex.h>
 #include <ixp.h>
+#include <utf.h>
 #include "x11.h"
 
 #define FONT		"-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*"

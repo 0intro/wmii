@@ -9,7 +9,7 @@ LIBDIR = ${PREFIX}/lib
 INCLUDE = ${PREFIX}/include
 
 # Includes and libs
-INCS = -I. -I${ROOT}/include -I${INCLUDE} -I/usr/include
+INCS = -I. -I${ROOT}/include -I${INCLUDE} -I/usr/include -I/usr/local/include
 LIBS = -L/usr/lib -lc
 
 # Flags

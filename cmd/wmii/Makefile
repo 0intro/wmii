@@ -8,7 +8,7 @@ TARG =	wmii
 HFILES=	dat.h fns.h
 
 LIB =	${LIBIXP}
-EXLDFLAGS = -lm ${LIBX11} -lXext
+EXLDFLAGS = -lm ${LIBX11} -lXext -L/usr/local/lib -liconv
 EXCFLAGS = ${INCX11}
 OBJ =	area	\
 	bar	\
@@ -23,6 +23,7 @@ OBJ =	area	\
 	mouse	\
 	rule	\
 	printevent\
+	utf	\
 	view	\
 	x11	\
 	../util
