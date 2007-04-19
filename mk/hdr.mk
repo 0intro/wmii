@@ -63,10 +63,10 @@ all:
 	rm -f ${MAN}/man1/$<
 
 .O.clean:
-	rm $< || true 2>/dev/null
-	rm $*.o || true 2>/dev/null
+	rm -f $< || true 2>/dev/null
+	rm -f $*.o || true 2>/dev/null
 .o.clean:
-	rm $< || true 2>/dev/null
+	rm -f $< || true 2>/dev/null
 
 printinstall:
 mkdirs:

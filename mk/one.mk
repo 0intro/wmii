@@ -14,7 +14,7 @@ printinstall:
 
 oneclean:
 	for i in ${PROG} ${OFILES}; do \
-		rm $$i; \
+		rm -f $$i; \
 	done 2>/dev/null || true
 
 ${OFILES}: ${HFILES}
