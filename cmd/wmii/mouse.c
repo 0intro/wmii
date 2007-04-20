@@ -272,25 +272,35 @@ horiz:
 		case ButtonRelease:
 			switch(ev.xbutton.button) {
 			case 1:
-				if(f->anext && (f->aprev && fw->fp != f->aprev->aprev))
+				if(f->anext && (f->aprev && fw->fp != f->aprev->aprev)) {
 					f->anext->r.min.y = f->r.min.y;
+					resize_frame(f->anext, f->anext->r);
+				}
 				else if(f->aprev && fw->fp == f->aprev->aprev) {
 					fw->fp = f->aprev->aprev;
 					f->aprev->r = f->r;
 				}
-				else if(fw->fp)
-					fw->fp->r.max.y = f->r.max.y;
-				if(fw->ra != f->area)
-					send_to_area(fw->ra, f);
+				else
+					f->aprev->r.max.y = f->r.max.y;
+				resize_frame(f->aprev, f->aprev->r);
+
 				remove_frame(f);
+				f->area = fw->ra;
 				insert_frame(fw->fp, f, False);
-				if(fw->fp)
-					fw->fp->r.max.y= fw->fr.min.y;
+
+				if(f->aprev) {
+					f->aprev->r.max.y = fw->fr.min.y;
+					resize_frame(f->aprev, f->aprev->r);
+				}
+				else
+					fw->fr.min.y = f->area->r.min.y;
 				if(f->anext)
 					fw->fr.max.y = f->anext->r.min.y;
 				else
 					fw->fr.max.y = f->area->r.max.y;
-				resize_colframe(f, &fw->fr);
+				resize_frame(f, fw->fr);
+
+				arrange_view(f->view);
 				goto done;
 			}
 			break;

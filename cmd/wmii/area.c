@@ -173,7 +173,7 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 	c->floating = a->floating;
 	if(!a->floating) {
 		f->r = a->r;
-		f->r.max.y = f->r.min.y + Dx(a->r) / n_frame;
+		f->r.max.y = f->r.min.y + Dy(a->r) / n_frame;
 	}
 
 	insert_frame(a->sel, f, False);
