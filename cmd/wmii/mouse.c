@@ -23,12 +23,14 @@ typedef struct Framewin Framewin;
 struct Framewin {
 	Window *w;
 	Frame *f;
-	Frame *rf;
+	Frame *fp;
+	Rectangle fr;
 	Area *ra;
 	Rectangle gb;
 	Point pt;
 	int or;
 	int n;
+	int before;
 };
 
 static Rectangle
@@ -138,28 +140,44 @@ vplace(Framewin *fw, Point pt) {
 	hr = Dy(r)/2;
 
 	fw->n = pt.y;
+	fw->before = 1;
 
 	for(a = v->area->next; a->next; a = a->next)
 		if(pt.x < a->r.max.x)
 			break;
+	fw->ra = a;
 
-	for(f = a->frame; f->anext; f = f->anext)
+	for(f = a->frame; f->anext; f = f->anext) {
+		if(f == fw->f)
+			fw->before = 0;
 		if(pt.y < f->r.max.y)
 			break;
+	}
 
 	if(!f->collapsed) {
-		if(_vsnap(fw, f->r.max.y - hr))
-			goto done;
+		fw->fp = f;
+		fw->fr = fw->fp->r;
 		if(f == fw->f) {
-			_vsnap(fw, f->r.min.y+hr);
+			fw->fp = f->aprev;
+			fw->fr.max = f->r.max;
+			if(_vsnap(fw, f->r.min.y+hr))
+				goto done;
+		}
+		if(_vsnap(fw, f->r.max.y - hr)) {
+			fw->fr.min.y = f->r.max.y - labelh(def.font);
 			goto done;
 		}
-		if(_vsnap(fw, f->r.min.y+Dy(r)+hr))
+		if(_vsnap(fw, f->r.min.y+Dy(r)+hr)) {
+			fw->fr.min.y = f->r.min.y + labelh(def.font);
 			goto done;
+		}
 		if(f->aprev == nil || f->aprev->collapsed)
 			_vsnap(fw, f->r.min.y);
-		else
-			_vsnap(fw, f->r.min.y-hr);
+		else if(_vsnap(fw, f->r.min.y-hr))
+			fw->fp = f->aprev;
+		fw->fr.min.y = fw->n - hr;
+		if(fw->fp && fw->fp->anext == fw->f)
+			fw->fr.max = fw->f->r.max;
 		goto done;
 	}
 
@@ -192,10 +210,15 @@ hplace(Framewin *fw, Point pt) {
 		if(pt.x < a->r.max.x)
 			break;
 
-	if(abs(pt.x - a->r.min.x) < minw/2)
+	fw->ra = nil;
+	if(abs(pt.x - a->r.min.x) < minw/2) {
 		pt.x = a->r.min.x;
-	else if(abs(pt.x - a->r.max.x) < minw/2)
+		fw->ra = a->prev;
+	}
+	else if(abs(pt.x - a->r.max.x) < minw/2) {
 		pt.x = a->r.max.x;
+		fw->ra = a;
+	}
 
 	pt.y = a->r.min.y;
 	frameadjust(fw, pt, OVert, Dy(a->r));	
@@ -246,17 +269,35 @@ horiz:
 
 			vplace(fw, pt);
 			break;
+		case ButtonRelease:
+			switch(ev.xbutton.button) {
+			case 1:
+				if(f->anext && (f->aprev && fw->fp != f->aprev->aprev))
+					f->anext->r.min.y = f->r.min.y;
+				else if(f->aprev && fw->fp == f->aprev->aprev) {
+					fw->fp = f->aprev->aprev;
+					f->aprev->r = f->r;
+				}
+				else if(fw->fp)
+					fw->fp->r.max.y = f->r.max.y;
+				if(fw->ra != f->area)
+					send_to_area(fw->ra, f);
+				remove_frame(f);
+				insert_frame(fw->fp, f, False);
+				if(fw->fp)
+					fw->fp->r.max.y= fw->fr.min.y;
+				if(f->anext)
+					fw->fr.max.y = f->anext->r.min.y;
+				else
+					fw->fr.max.y = f->area->r.max.y;
+				resize_colframe(f, &fw->fr);
+				goto done;
+			}
+			break;
 		case ButtonPress:
 			switch(ev.xbutton.button) {
 			case 2:
 				goto vert;
-			}
-			break;
-		case ButtonRelease:
-			switch(ev.xbutton.button) {
-			case 1:
-				/* Move window */
-				goto done;
 			}
 			break;
 		}
@@ -284,7 +325,10 @@ vert:
 		case ButtonRelease:
 			switch(ev.xbutton.button) {
 			case 1:
-				/* Move window */
+				if(fw->ra) {
+					fw->ra = new_column(f->view, fw->ra, 0);
+					send_to_area(fw->ra, f);
+				}
 				goto done;
 			case 2:
 				pt.y = y;
