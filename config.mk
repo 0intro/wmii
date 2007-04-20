@@ -13,7 +13,7 @@ INCPATH = .:${ROOT}/include:${INCLUDE}:/usr/include
 LIBS = -L/usr/lib -lc
 
 # Flags
-CFLAGS = -g -Wall -DVERSION=\"${VERSION}\"
+CFLAGS = -g -Wall
 LDFLAGS = -g ${LIBS}
 STATIC = -static
 

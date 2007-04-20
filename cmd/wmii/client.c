@@ -44,10 +44,10 @@ create_client(XWindow w, XWindowAttributes *wa) {
 	c->w.r = c->r;
 
 	c->proto = winprotocols(&c->w);
-	prop_client(c, XA_WM_TRANSIENT_FOR);
-	prop_client(c, XA_WM_NORMAL_HINTS);
-	prop_client(c, XA_WM_HINTS);
-	prop_client(c, XA_WM_NAME);
+	prop_client(c, xatom("WM_TRANSIENT_FOR"));
+	prop_client(c, xatom("WM_NORMAL_HINTS"));
+	prop_client(c, xatom("WM_HINTS"));
+	prop_client(c, xatom("WM_NAME"));
 
 	XSetWindowBorderWidth(display, w, 0);
 	XAddToSaveSet(display, w);
@@ -164,16 +164,17 @@ destroy_client(Client *c) {
 
 void
 manage_client(Client *c) {
-	XTextProperty tags = { 0 };
 	Client *trans;
+	char *tags;
 
-	XGetTextProperty(display, c->w.w, &tags, atom[TagsAtom]);
+	tags = gettextproperty(&c->w, "_WIN_TAGS");
 
 	if((trans = win2client(c->trans)))
 		strncpy(c->tags, trans->tags, sizeof(c->tags));
-	else if(tags.nitems)
-		strncpy(c->tags, (char *)tags.value, sizeof(c->tags));
-	XFree(tags.value);
+	else if(tags)
+		strncpy(c->tags, tags, sizeof(c->tags));
+
+	free(tags);
 
 	gravclient(c, c->w.r);
 	reparent_client(c, c->framewin, Pt(def.border, labelh(def.font)));
@@ -355,35 +356,46 @@ win2client(XWindow w) {
 	return c;
 }
 
+uint
+clientwin(Client *c) {
+	if(c)
+		return (uint)c->w.w;
+	return 0;
+}
+
+char *
+clientname(Client *c) {
+	if(c)
+		return c->name;
+	return "<nil>";
+}
+
 static void
 update_client_name(Client *c) {
-	XClassHint ch = {0};
-	char *str;
+	char *str, **class;
+	int n;
 
-	c->name[0] = '0';
+	c->name[0] = '\0';
 
-	str = gettextproperty(&c->w, atom[NetWMName]);
+	str = gettextproperty(&c->w, "_NET_WM_NAME)");
 	if(str == nil)
-		str = gettextproperty(&c->w, XA_WM_NAME);
+		str = gettextproperty(&c->w, "WM_NAME");
 	if(str)
 		utfecpy(c->name, c->name+sizeof(c->name), str);
 	free(str);
 
-	XGetClassHint(display, c->w.w, &ch);
+	n = gettextlistproperty(&c->w, "WM_CLASS", &class);
 	snprintf(c->props, sizeof(c->props), "%s:%s:%s",
-			str_nil(ch.res_class),
-			str_nil(ch.res_name),
+			(n > 0 ? class[0] : "<nil>"),
+			(n > 1 ? class[1] : "<nil>"),
 			c->name);
-	if(ch.res_class)
-		XFree(ch.res_class);
-	if(ch.res_name)
-		XFree(ch.res_name);
+	freestringlist(class);
 }
 
 void
 set_client_state(Client * c, int state) {
 	long data[] = { state, None };
-	changeproperty(&c->w, atom[WMState], atom[WMState], 32, (uchar*)data, nelem(data));
+	changeprop(&c->w, "WM_STATE", "WM_STATE", data, nelem(data));
 }
 
 void
@@ -455,23 +467,23 @@ configure_client(Client *c) {
 }
 
 static void
-send_client_message(XWindow w, Atom a, long value) {
+send_client_message(Client *c, char *name, char *value) {
 	XEvent e;
 
 	e.type = ClientMessage;
-	e.xclient.window = w;
-	e.xclient.message_type = a;
+	e.xclient.window = c->w.w;
+	e.xclient.message_type = xatom(name);
 	e.xclient.format = 32;
-	e.xclient.data.l[0] = value;
+	e.xclient.data.l[0] = xatom(value);
 	e.xclient.data.l[1] = CurrentTime;
-	XSendEvent(display, w, False, NoEventMask, &e);
+	XSendEvent(display, c->w.w, False, NoEventMask, &e);
 	XSync(display, False);
 }
 
 void
 kill_client(Client * c) {
 	if(c->proto & WM_PROTOCOL_DELWIN)
-		send_client_message(c->w.w, atom[WMProtocols], atom[WMDelete]);
+		send_client_message(c, "WM_PROTOCOLS", "WM_DELETE_WINDOW");
 	else
 		XKillClient(display, c->w.w);
 }
@@ -483,37 +495,32 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 	Frame *f, *ff;
 	Area *a;
 
-	cwrite = "Client";
-	if(write)
-		cwrite = "Manager";
-	cnot = "Not";
-	if(urgent)
-		cnot = "";
+	cwrite = (write ? "Manager" : "Client");
+	cnot = (urgent ? "" : "Not");
 
 	if(urgent != c->urgent) {
-		write_event("%sUrgent 0x%x %s\n", cnot, c->w, cwrite);
+		write_event("%sUrgent 0x%x %s\n", cnot, clientwin(c), cwrite);
 		c->urgent = urgent;
 		if(c->sel) {
 			if(c->sel->view == screen->sel)
 				draw_frame(c->sel);
-			if(!urgent || c->sel->view != screen->sel)
-				for(f=c->frame; f; f=f->cnext) {
+			for(f=c->frame; f; f=f->cnext) {
+				if(!urgent)
 					for(a=f->view->area; a; a=a->next)
 						for(ff=a->frame; ff; ff=ff->anext)
 							if(ff->client->urgent) break;
-					if(!ff)
-						write_event("%sUrgentTag %s %s\n", cnot, cwrite, f->view->name);
-				}
+				if(urgent || ff == nil)
+					write_event("%sUrgentTag %s %s\n", cnot, cwrite, f->view->name);
+			}
 		}
 	}
 
 	if(write) {
 		wmh = XGetWMHints(display, c->w.w);
 		if(wmh) {
+			wmh->flags &= ~XUrgencyHint;
 			if(urgent)
 				wmh->flags |= XUrgencyHint;
-			else
-				wmh->flags &= ~XUrgencyHint;
 			XSetWMHints(display, c->w.w, wmh);
 			XFree(wmh);
 		}
@@ -524,14 +531,10 @@ void
 prop_client(Client *c, Atom a) {
 	XWMHints *wmh;
 
-	if(a ==  atom[WMProtocols])
+	if(a == xatom("WM_PROTOCOLS"))
 		c->proto = winprotocols(&c->w);
-	else if(a== atom[NetWMName]) {
-wmname:
-		update_client_name(c);
-		if(c->frame)
-			draw_frame(c->sel);
-	}
+	else if(a == xatom("_NET_WM_NAME"))
+		goto wmname;
 	else switch (a) {
 	case XA_WM_TRANSIENT_FOR:
 		XGetTransientForHint(display, c->w.w, &c->trans);
@@ -549,7 +552,11 @@ wmname:
 		}
 		break;
 	case XA_WM_NAME:
-		goto wmname;
+wmname:
+		update_client_name(c);
+		if(c->frame)
+			draw_frame(c->sel);
+		break;
 	}
 }
 
@@ -605,18 +612,16 @@ focus_client(Client *c) {
 	flushevents(FocusChangeMask, True);
 
 	if(verbose)
-		fprintf(stderr, "focus_client(%p[%x]) => %s\n", c, 
-			(c ? (uint)c->w.w : 0), (c ? c->name : nil));
+		fprintf(stderr, "focus_client(%p[%x]) => %s\n", c,  clientwin(c), clientname(c));
 
 	if(screen->focus != c) {
 		if(verbose)
 			fprintf(stderr, "\t%s => %s\n",
-					(screen->focus ? screen->focus->name : "<nil>"),
-					(c ? c->name : "<nil>"));
+				clientname(screen->focus), clientname(c));
 		if(c)
-			XSetInputFocus(display, c->w.w, RevertToParent, CurrentTime);
+			setfocus(&c->w, RevertToParent);
 		else
-			XSetInputFocus(display, screen->barwin->w, RevertToParent, CurrentTime);
+			setfocus(screen->barwin, RevertToParent);
 		XSync(display, False);
 	}
 
@@ -901,7 +906,7 @@ apply_tags(Client *c, const char *tags) {
 
 	update_client_views(c, toks);
 
-	changeproperty(&c->w, atom[TagsAtom], atom[Utf8String], 8, (uchar*)c->tags, strlen(c->tags));
+	changeprop(&c->w, "_WIN_TAGS", "UTF8_STRING", c->tags, strlen(c->tags));
 }
 
 void

@@ -13,7 +13,9 @@
 Point ZP = {0, 0};
 Rectangle ZR = {{0, 0}, {0, 0}};
 
-Window wlist;
+Map wmap, amap;
+MapEnt *wbucket[137];
+MapEnt *abucket[137];
 
 XRectangle
 XRect(Rectangle r) {
@@ -111,7 +113,10 @@ initdisplay() {
 	
 	scr.root.parent = &scr.root;
 
-	wlist.next = wlist.prev = &wlist;
+	wmap.bucket = wbucket;
+	wmap.nhash = nelem(wbucket);
+	amap.bucket = abucket;
+	amap.nhash = nelem(abucket);
 }
 
 /* Images */
@@ -121,8 +126,7 @@ allocimage(int w, int h, int depth) {
 
 	img = emallocz(sizeof *img);
 	img->type = WImage;
-	img->image = XCreatePixmap(display, scr.root.w,
-			w, h, depth);
+	img->image = XCreatePixmap(display, scr.root.w, w, h, depth);
 	img->gc = XCreateGC(display, img->image, 0, nil);
 	img->depth = depth;
 	img->r = Rect(0, 0, w, h);
@@ -236,54 +240,43 @@ lowerwin(Window *w) {
 Handlers*
 sethandler(Window *w, Handlers *new) {
 	Handlers *old;
-	Window *wp;
+	MapEnt *e;
 
 	assert(w->type == WWindow);
 	assert((w->prev != nil && w->next != nil) || w->next == w->prev);
 
-	old = w->handler;
-	if(new == nil) {
-		if(w->prev) {
-			w->prev->next = w->next;
-			w->next->prev = w->prev;
-			w->next = w->prev = nil;
-		}
-	}else {
-		for(wp = wlist.next; wp != &wlist; wp = wp->next)
-			if(w->w <= wp->w) break;
-		if(wp->w != w->w) {
-			w->next = wp;
-			w->prev = wp->prev;
-			wp->prev = w;
-			w->prev->next = w;
-		}
+	if(new == nil)
+		maprm(&wmap, (ulong)w->w);
+	else {
+		e = mapget(&wmap, (ulong)w->w, 1);
+		e->val = w;
 	}
+	old = w->handler;
 	w->handler = new;
 	return old;
 }
 
 Window*
 findwin(XWindow w) {
-	Window *wp;
-
-	for(wp = wlist.next; wp != &wlist; wp=wp->next)
-		if(wp->w >= w) break;
-	if(wp->w == w)
-		return wp;
+	MapEnt *e;
+	
+	e = mapget(&wmap, (ulong)w, 0);
+	if(e)
+		return e->val;
 	return nil;
 }
 
 uint
 winprotocols(Window *w) {
 	Atom *protocols;
-	Atom real;
+	Atom real, delete;
 	ulong nitems, extra;
 	int i, format, status, protos;
 
 	status = XGetWindowProperty(
-		display, w->w, atom[WMProtocols],
+		display, w->w, xatom("_WM_PROTOCOLS"),
 		/* offset, length, delete, req_type */
-		0L, 20L, False, XA_ATOM,
+		0L, 20L, False, xatom("ATOM"),
 		/* type, format, nitems, extra bytes returns */
 		&real, &format, &nitems, &extra, 
 		/* property return */
@@ -292,14 +285,10 @@ winprotocols(Window *w) {
 	if(status != Success || protocols == nil)
 		return 0;
 
-	if(nitems == 0) {
-		XFree(protocols);
-		return 0;
-	}
-
 	protos = 0;
+	delete = xatom("WM_DELETE_WINDOW");
 	for(i = 0; i < nitems; i++) {
-		if(protocols[i] == atom[WMDelete])
+		if(protocols[i] == delete)
 			protos |= WM_PROTOCOL_DELWIN;
 	}
 
@@ -490,7 +479,7 @@ loadfont(char *name) {
 		for(i = 0; i < n; i++)
 			 fprintf(stderr, "%s %s", (i ? ",":""), missing[i]);
 		fprintf(stderr, "\n");
-		XFreeStringList(missing);
+		freestringlist(missing);
 	}
 
 	if(f->set) {
@@ -550,35 +539,60 @@ labelh(Font *font) {
 /* Misc */
 Atom
 xatom(char *name) {
-	return XInternAtom(display, name, False);
+	MapEnt *e;
+	
+	e = hashget(&amap, name, 1);
+	if(e->val == nil)
+		e->val = (void*)XInternAtom(display, name, False);
+	return (Atom)e->val;
 }
 
 void
-changeproperty(Window *w, Atom prop, Atom type, int width, uchar *data, int n) {
-	XChangeProperty(display, w->w, prop, type, width, PropModeReplace, data, n);
+changeproperty(Window *w, char *prop, char *type, int width, uchar *data, int n) {
+	XChangeProperty(display, w->w, xatom(prop), xatom(type), width, PropModeReplace, data, n);
+}
+
+void
+freestringlist(char *list[]) {
+	XFreeStringList(list);
+}
+
+int
+gettextlistproperty(Window *w, char *name, char **ret[]) {
+	XTextProperty prop;
+	char **list;
+	int n;
+
+	*ret = nil;
+	n = 0;
+
+	XGetTextProperty(display, w->w, &prop, xatom(name));
+	if(prop.nitems > 0) {
+		if(Xutf8TextPropertyToTextList(display, &prop, &list, &n) == Success)
+			*ret = list;
+		XFree(prop.value);
+	}
+	return n;
 }
 
 char *
-gettextproperty(Window *w, Atom name) {
-	XTextProperty prop;
+gettextproperty(Window *w, char *name) {
 	char **list, *str;
 	int n;
 
 	str = nil;
 
-	XGetTextProperty(display, w->w, &prop, name);
-	if(prop.nitems > 0) {
-		if(Xutf8TextPropertyToTextList(display, &prop, &list, &n) == Success) {
-			if(n > 0) {
-				n = strlen(*list)+1;
-				str = emalloc(n);
-				memcpy(str, *list, n);
-			}
-			XFreeStringList(list);
-		}
-		XFree(prop.value);
-	}
+	n = gettextlistproperty(w, name, &list);
+	if(n > 0)
+		str = estrdup(*list);
+	freestringlist(list);
+
 	return str;
+}
+
+void
+setfocus(Window *w, int mode) {
+	XSetInputFocus(display, w->w, mode, CurrentTime);
 }
 
 /* Mouse */

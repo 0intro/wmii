@@ -132,11 +132,8 @@ void
 print_focus(Client *c, char *to) {
 		if(verbose) {
 			fprintf(stderr, "screen->focus: %p[%x] => %p[%x]\n",
-				screen->focus, (uint)(screen->focus ? screen->focus->w.w : 0),
-				c, (uint)(c ? c->w.w : 0));
-			fprintf(stderr, "\t%s => %s\n",
-				(screen->focus ? screen->focus->name : "<nil>"),
-				to);
+				screen->focus, clientwin(screen->focus), c, clientwin(c));
+			fprintf(stderr, "\t%s => %s\n", clientname(screen->focus), to);
 		}
 }
 
@@ -152,7 +149,7 @@ focusin(XEvent *e) {
 	if(ev->detail == NotifyDetailNone) {
 		print_focus(&c_magic, "<magic[none]>");
 		screen->focus = &c_magic;
-		XSetInputFocus(display, screen->barwin->w, RevertToParent, CurrentTime);
+		setfocus(screen->barwin, RevertToParent);
 		return;
 	}
 

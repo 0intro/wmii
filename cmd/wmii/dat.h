@@ -35,14 +35,6 @@ struct CTuple {
 };
 
 enum {
-	WMState, WMProtocols, WMDelete,
-	NetSupported, NetWMName,
-	Utf8String,
-	TagsAtom,
-	AtomLast
-};
-
-enum {
 	Coldefault, Colstack, Colmax
 };
 
@@ -70,6 +62,20 @@ typedef struct Bar Bar;
 typedef struct Rule Rule;
 typedef struct Ruleset Ruleset;
 typedef struct WMScreen WMScreen;
+typedef struct Map Map;
+typedef struct MapEnt MapEnt;
+
+struct Map {
+	MapEnt **bucket;
+	uint nhash;
+};
+
+struct MapEnt {
+	ulong hash;
+	char *key;
+	void *val;
+	MapEnt *next;
+};
 
 struct View {
 	View *next;
@@ -227,7 +233,6 @@ Bool sel_screen;
 
 Image xor;
 
-Atom atom[AtomLast];
 Cursor cursor[CurLast];
 void (*handler[LASTEvent]) (XEvent *);
 

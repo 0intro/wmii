@@ -49,6 +49,8 @@ void move_client(Client*, char *arg);
 void size_client(Client*, char *arg);
 Client *selclient();
 Client *win2client(XWindow);
+uint clientwin(Client *c);
+char *clientname(Client*);
 void apply_rules(Client*);
 void apply_tags(Client*, const char*);
 
@@ -112,13 +114,18 @@ void update_keys();
 void init_lock_keys();
 ulong mod_key_of_str(char*);
 
+/* map.c */
+MapEnt* mapget(Map*, ulong, int create);
+MapEnt* hashget(Map*, char*, int create);
+void* maprm(Map*, ulong);
+void* hashrm(Map*, char*);
+
 /* mouse.c */
 void mouse_resizecol(Divide*);
 void do_mouse_resize(Client*, Bool opaque, Align);
 void grab_mouse(XWindow, ulong mod, ulong button);
 void ungrab_mouse(XWindow, ulong mod, uint button);
-Align snap_rect(Rectangle *rects, int num, Rectangle *current,
-					 Align *mask, int snapw);
+Align snap_rect(Rectangle *rects, int num, Rectangle *current, Align *mask, int snapw);
 void grab_button(XWindow, uint button, ulong mod);
 
 /* rule.c */
@@ -189,8 +196,11 @@ uint textwidth_l(Font*, char*, uint len);
 uint textwidth(Font*, char*);
 uint labelh(Font*);
 Atom xatom(char*);
-char *gettextproperty(Window*, Atom);
-void changeproperty(Window*, Atom prop, Atom type, int width, uchar *data, int n);
+void freestringlist(char**);
+char *gettextproperty(Window*, char*);
+int gettextlistproperty(Window *w, char *name, char **ret[]);
+void changeproperty(Window*, char *prop, char *type, int width, uchar *data, int n);
+void setfocus(Window*, int mode);
 Point querypointer(Window*);
 void warppointer(Point);
 Point translate(Window*, Window*, Point);

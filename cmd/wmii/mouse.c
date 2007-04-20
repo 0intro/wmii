@@ -52,8 +52,7 @@ framerect(Framewin *f) {
 	p = ZP;
 	p.x -= min(r.min.x, 0);
 	p.x -= max(r.max.x - screen->r.max.x, 0);
-	p.y -= min(r.min.y, 0);
-	p.y -= max(r.max.y - screen->brect.min.y, 0);
+	p.y -= max(r.max.y - screen->brect.min.y - Dy(r)/2, 0);
 	return rectaddpt(r, p);
 }
 
@@ -117,6 +116,15 @@ static Handlers handlers = {
 	.expose = expose_event,
 };
 
+static int
+_vsnap(Framewin *f, int y) {
+	if(abs(f->n - y) < Dy(f->w->r)) {
+		f->n = y;
+		return 1;
+	}
+	return 0;
+}
+
 static void
 vplace(Framewin *fw, Point pt) {
 	Rectangle r;
@@ -128,7 +136,9 @@ vplace(Framewin *fw, Point pt) {
 	v = screen->sel;
 	r = fw->w->r;
 	hr = Dy(r)/2;
-	
+
+	fw->n = pt.y;
+
 	for(a = v->area->next; a->next; a = a->next)
 		if(pt.x < a->r.max.x)
 			break;
@@ -137,32 +147,35 @@ vplace(Framewin *fw, Point pt) {
 		if(pt.y < f->r.max.y)
 			break;
 
-#if 0
 	if(!f->collapsed) {
-		if(pt.y + Dy(r) + hr > f->r.max)
-			pt.y = f->r.max - hr
-		else if(f == fw->r && abs(pt.y - f->r.min + hr) < Dy(r))
-			pt.y = f->r.min + hr;
-		else if(
-	}
-#endif
-
-	if(abs(pt.y - f->r.min.y) < labelh(def.font)) {
-		pt.y = f->r.min.y;
-		if(f == fw->f)
-			pt.y += Dy(fw->w->r)/2;
-		else if(f->aprev == fw->f)
-			pt.y += labelh(def.font);
-	}
-	else if(abs(pt.y - f->r.max.y) < labelh(def.font)) {
-		if(f != fw->f) {
-			pt.y = f->r.max.y;
-			if(f->anext == fw->f)
-				pt.y += Dy(fw->w->r)/2;
+		if(_vsnap(fw, f->r.max.y - hr))
+			goto done;
+		if(f == fw->f) {
+			_vsnap(fw, f->r.min.y+hr);
+			goto done;
 		}
+		if(_vsnap(fw, f->r.min.y+Dy(r)+hr))
+			goto done;
+		if(f->aprev == nil || f->aprev->collapsed)
+			_vsnap(fw, f->r.min.y);
+		else
+			_vsnap(fw, f->r.min.y-hr);
+		goto done;
 	}
-	
+
+	if(pt.y < f->r.min.y + hr) {
+		fw->n = f->r.min.y;
+		 if(f->aprev && !f->aprev->collapsed)
+			fw->n -= hr;
+	}else {
+		fw->n = f->r.max.y;
+		if(f->anext == fw->f)
+			fw->n += hr;
+	}
+
+done:
 	pt.x = a->r.min.x;
+	pt.y = fw->n;
 	frameadjust(fw, pt, OHoriz, Dx(a->r));	
 }
 

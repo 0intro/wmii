@@ -145,16 +145,9 @@ init_environment() {
 
 static void
 init_atoms() {
-	atom[WMState] = xatom("WM_STATE");
-	atom[WMProtocols] = xatom("WM_PROTOCOLS");
-	atom[WMDelete] = xatom("WM_DELETE_WINDOW");
-	atom[NetSupported] = xatom("_NET_SUPPORTED");
-	atom[NetWMName] = xatom("_NET_WM_NAME");
-	atom[Utf8String] = xatom("UTF8_STRING");
-	atom[TagsAtom] = xatom("_WIN_TAGS");
+	Atom net[] = { xatom("_NET_SUPPORTED"), xatom("_NET_WM_NAME")};
 
-	XChangeProperty(display, scr.root.w, atom[NetSupported], XA_ATOM, 32,
-			PropModeReplace, (uchar *)&atom[NetSupported], 2);
+	changeprop(&scr.root, "_NET_SUPPORTED", "ATOM", net, nelem(net));
 }
 
 static void
@@ -485,7 +478,7 @@ main(int argc, char *argv[]) {
 	}
 
 	screen->focus = nil;
-	XSetInputFocus(display, screen->barwin->w, RevertToParent, CurrentTime);
+	setfocus(screen->barwin, RevertToParent);
 
 	scan_wins();
 	starting = False;
