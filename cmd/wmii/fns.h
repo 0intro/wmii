@@ -189,6 +189,8 @@ uint textwidth_l(Font*, char*, uint len);
 uint textwidth(Font*, char*);
 uint labelh(Font*);
 Atom xatom(char*);
+char *gettextproperty(Window*, Atom);
+void changeproperty(Window*, Atom prop, Atom type, int width, uchar *data, int n);
 Point querypointer(Window*);
 void warppointer(Point);
 Point translate(Window*, Window*, Point);

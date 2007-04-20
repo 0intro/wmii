@@ -150,6 +150,7 @@ init_atoms() {
 	atom[WMDelete] = xatom("WM_DELETE_WINDOW");
 	atom[NetSupported] = xatom("_NET_SUPPORTED");
 	atom[NetWMName] = xatom("_NET_WM_NAME");
+	atom[Utf8String] = xatom("UTF8_STRING");
 	atom[TagsAtom] = xatom("_WIN_TAGS");
 
 	XChangeProperty(display, scr.root.w, atom[NetSupported], XA_ATOM, 32,

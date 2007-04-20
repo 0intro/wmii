@@ -119,11 +119,15 @@ static Handlers handlers = {
 
 static void
 vplace(Framewin *fw, Point pt) {
+	Rectangle r;
 	Frame *f;
 	Area *a;
 	View *v;
+	int hr;
 
 	v = screen->sel;
+	r = fw->w->r;
+	hr = Dy(r)/2;
 	
 	for(a = v->area->next; a->next; a = a->next)
 		if(pt.x < a->r.max.x)
@@ -132,6 +136,16 @@ vplace(Framewin *fw, Point pt) {
 	for(f = a->frame; f->anext; f = f->anext)
 		if(pt.y < f->r.max.y)
 			break;
+
+#if 0
+	if(!f->collapsed) {
+		if(pt.y + Dy(r) + hr > f->r.max)
+			pt.y = f->r.max - hr
+		else if(f == fw->r && abs(pt.y - f->r.min + hr) < Dy(r))
+			pt.y = f->r.min + hr;
+		else if(
+	}
+#endif
 
 	if(abs(pt.y - f->r.min.y) < labelh(def.font)) {
 		pt.y = f->r.min.y;

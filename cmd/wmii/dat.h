@@ -37,6 +37,7 @@ struct CTuple {
 enum {
 	WMState, WMProtocols, WMDelete,
 	NetSupported, NetWMName,
+	Utf8String,
 	TagsAtom,
 	AtomLast
 };

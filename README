@@ -9,21 +9,21 @@ the remote access utility.
 
 Requirements
 ------------
-In order to build wmii you need the Xlib header files and libixp. Further
-dependencies are xmessage and dmenu. libixp and dmenu can be obtained from
-[1]. One of plan9port or 9base is also recommended.
+In order to build wmii you need the Xlib header files and libixp. xmessage
+and dmenu are used by the default scripts. libixp and dmenu can be obtained
+from http://suckless.org/. Either plan9port or 9base is recommended.
 
 
 Installation
 ------------
-Edit config.mk to match your local setup. wmii is installed into
-the /usr/local hierarchy by default.
+First, edit config.mk to match your local setup, or to let us guess it, run:
+	make config
 
-Afterwards enter the following command to build and install wmii (if
-necessary as root):
+To build, simply run:
+	make
 
-    make clean install
-
+To install, run the following, as root, if necessary:
+	make install
 
 Running wmii
 ------------
@@ -33,12 +33,12 @@ Add the following line to your .xinitrc to start wmii using startx:
 	true
     done
 
-In order to connect wmii or wmiir to a specific display, make sure that
-the DISPLAY environment variable is set correctly, e.g.:
+In order to connect wmii to a specific display, make sure that
+the DISPLAY environment variable is set correctly. For example:
 
-    DISPLAY=foo.bar:1 wmii
+    DISPLAY=:1 wmii
 
-This will start wmii on display :1 of the host foo.bar.
+This will start wmii on display :1.
 
 
 Configuration
@@ -49,8 +49,8 @@ The main rc.wmii script lives in PREFIX/etc/wmii-3.5/, while rc.wmii.local
 goes in $HOME/.wmii-3.5/.
 
 rc.wmii.local should contain a line containing just: '# Overrides'. You must
-set your MODKEY before this line, if you wish to change it, and define most
-functions after it.
+set your MODKEY and other configuration variables before this line, if you
+wish to change then, and define most functions after it.
 
 Credits
 -------

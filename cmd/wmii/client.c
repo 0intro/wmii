@@ -14,7 +14,9 @@ static void update_client_name(Client *c);
 static Handlers handlers;
 
 static char Ebadcmd[] = "bad command",
-	    Ebadvalue[] = "bad value";
+		Ebadvalue[] = "bad value";
+
+Rectangle gravclient(Client*, Rectangle);
 
 enum {
 	ClientMask =
@@ -39,6 +41,7 @@ create_client(XWindow w, XWindowAttributes *wa) {
 
 	c->w.type = WWindow;
 	c->w.w = w;
+	c->w.r = c->r;
 
 	c->proto = winprotocols(&c->w);
 	prop_client(c, XA_WM_TRANSIENT_FOR);
@@ -48,6 +51,7 @@ create_client(XWindow w, XWindowAttributes *wa) {
 
 	XSetWindowBorderWidth(display, w, 0);
 	XAddToSaveSet(display, w);
+	XSelectInput(display, c->w.w, ClientMask);
 
 	fwa.override_redirect = True;
 	fwa.event_mask =
@@ -85,24 +89,29 @@ ignoreerrors(Display *d, XErrorEvent *e) {
 }
 
 Rectangle
-gravclient(Client *c, Rectangle *rp) {
+gravclient(Client *c, Rectangle rd) {
 	Rectangle r;
-	Point p;
-	
-	p = c->w.hints->grav;
+	Point sp;
+	WinHints *h;
 
-	if(rp)
-		return gravitate(*rp, c->w.r, p);
+	h = c->w.hints;
+	r = client2frame(nil, c->w.r);
+	sp = Pt(def.border, labelh(def.font));
 
-	if(c->sel) {
+	if(eqrect(rd, ZR)) {
 		if(c->sel->area->floating)
 			r = c->sel->r;
 		else
 			r = c->sel->revert;
-	}else
-		r = client2frame(nil, c->w.r);
-	p = addpt(p, Pt(2,2));
-	return gravitate(c->w.r, r, p);
+		r = gravitate(r, c->w.r, h->grav);
+		if(h->gravstatic)
+			r = rectaddpt(r, sp);
+	}else {
+		r = gravitate(rd, r, h->grav);
+		if(h->gravstatic)
+			r = rectsubpt(r, sp);
+	}
+	return r;
 }
 
 void
@@ -126,12 +135,13 @@ destroy_client(Client *c) {
 	/* In case the client is already unmapped */
 	handler = XSetErrorHandler(ignoreerrors);
 
+	r = gravclient(c, ZR);
+	r = frame2client(nil, r);
+
 	dummy = nil;
 	update_client_views(c, &dummy);
 
 	unmap_client(c, WithdrawnState);
-
-	r = gravclient(c, nil);
 	reparent_client(c, &scr.root, r.min);
 
 	write_event("DestroyClient 0x%x\n", (uint)c->w.w);
@@ -165,7 +175,7 @@ manage_client(Client *c) {
 		strncpy(c->tags, (char *)tags.value, sizeof(c->tags));
 	XFree(tags.value);
 
-	//gravclient(c, nil);
+	gravclient(c, c->w.r);
 	reparent_client(c, c->framewin, Pt(def.border, labelh(def.font)));
 
 	if(!strlen(c->tags))
@@ -186,25 +196,27 @@ manage_client(Client *c) {
 static void
 configreq_event(Window *w, XConfigureRequestEvent *e) {
 	Rectangle r;
-	Rectangle *frect;
+	Point p;
 	Frame *f;
 	Client *c;
 
 	c = w->aux;
 	f = c->sel;
 
-	r = gravclient(c, nil);
-	if(e->value_mask & CWX)
-		r.min.x = e->x;
-	if(e->value_mask & CWY)
-		r.min.y = e->y;
-	if(e->value_mask & CWWidth)
+	p = ZP;
+	r = gravclient(c, ZR);
+	if(e->value_mask&CWX)
+		p.x = e->x - r.min.x;
+	if(e->value_mask&CWY)
+		p.y = e->y - r.min.y;
+	if(e->value_mask&CWWidth)
 		r.max.x = r.min.x + e->width;
-	if(e->value_mask & CWHeight)
+	if(e->value_mask&CWHeight)
 		r.max.y = r.min.y + e->height;
-	if(e->value_mask & CWBorderWidth)
+	if(e->value_mask&CWBorderWidth)
 		c->border = e->border_width;
-	r = gravclient(c, &r);
+	r = rectaddpt(r, p);
+	r = gravclient(c, r);
 
 	if((Dx(r) == Dx(screen->r)) && (Dy(r) == Dy(screen->r))) {
 		c->fullscreen = True;
@@ -216,10 +228,9 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 		}
 	}
 
-	if(c->sel->area->floating) {
-		c->sel->r = r;
-		resize_client(c, frect);
-	}else {
+	if(c->sel->area->floating)
+		resize_client(c, &r);
+	else {
 		c->sel->revert = r;
 		configure_client(c);
 	}
@@ -346,30 +357,17 @@ win2client(XWindow w) {
 
 static void
 update_client_name(Client *c) {
-	XTextProperty name;
 	XClassHint ch = {0};
-	char **list, *str;
-	int n;
+	char *str;
 
-	c->name[0] = 0;
-	list = nil;
+	c->name[0] = '0';
 
-	name.nitems = 0;
-	XGetTextProperty(display, c->w.w, &name, atom[NetWMName]);
-	if(name.nitems > 0) {
-		if(Xutf8TextPropertyToTextList(display, &name, &list, &n) == Success) {
-			utfecpy(c->name, c->name+sizeof(c->name), list[0]);
-			XFreeStringList(list);
-		}
-	}else {
-		XGetWMName(display, c->w.w, &name);
-		if(name.nitems > 0) {
-			str = toutf8((char*)name.value);
-			utfecpy(c->name, c->name+sizeof(c->name), str);
-			free(str);
-			XFree(name.value);
-		}
-	}
+	str = gettextproperty(&c->w, atom[NetWMName]);
+	if(str == nil)
+		str = gettextproperty(&c->w, XA_WM_NAME);
+	if(str)
+		utfecpy(c->name, c->name+sizeof(c->name), str);
+	free(str);
 
 	XGetClassHint(display, c->w.w, &ch);
 	snprintf(c->props, sizeof(c->props), "%s:%s:%s",
@@ -385,24 +383,13 @@ update_client_name(Client *c) {
 void
 set_client_state(Client * c, int state) {
 	long data[] = { state, None };
-	XChangeProperty(
-		/* display */	display,
-		/* parent */	c->w.w,
-		/* property */	atom[WMState],
-		/* type */	atom[WMState],
-		/* format */	32,
-		/* mode */	PropModeReplace,
-		/* data */	(uchar *) data,
-		/* npositions */2
-		);
+	changeproperty(&c->w, atom[WMState], atom[WMState], 32, (uchar*)data, nelem(data));
 }
 
 void
 map_client(Client *c) {
 	if(!c->w.mapped) {
-		XSelectInput(display, c->w.w, ClientMask & ~StructureNotifyMask);
 		mapwin(&c->w);
-		XSelectInput(display, c->w.w, ClientMask);
 		set_client_state(c, NormalState);
 	}
 }
@@ -410,10 +397,7 @@ map_client(Client *c) {
 void
 unmap_client(Client *c, int state) {
 	if(c->w.mapped) {
-		c->unmapped++;
-		XSelectInput(display, c->w.w, ClientMask & ~StructureNotifyMask);
 		unmapwin(&c->w);
-		XSelectInput(display, c->w.w, ClientMask);
 		set_client_state(c, state);
 	}
 }
@@ -430,11 +414,7 @@ unmap_frame(Client *c) {
 
 void
 reparent_client(Client *c, Window *w, Point pt) {
-	XSelectInput(display, c->w.w, ClientMask & ~StructureNotifyMask);
-
 	reparentwindow(&c->w, w, pt);
-
-	XSelectInput(display, c->w.w, ClientMask);
 }
 
 void
@@ -471,9 +451,7 @@ configure_client(Client *c) {
 	e.border_width = c->border;
 	e.above = None;
 	e.override_redirect = False;
-	XSendEvent(display, c->w.w, False,
-			StructureNotifyMask, (XEvent *) & e);
-	XSync(display, False);
+	XSendEvent(display, c->w.w, False, StructureNotifyMask, (XEvent*)&e);
 }
 
 static void
@@ -922,8 +900,8 @@ apply_tags(Client *c, const char *tags) {
 	toks[n] = nil;
 
 	update_client_views(c, toks);
-	XChangeProperty(display, c->w.w, atom[TagsAtom], XA_STRING, 8,
-			PropModeReplace, (uchar *)c->tags, strlen(c->tags));
+
+	changeproperty(&c->w, atom[TagsAtom], atom[Utf8String], 8, (uchar*)c->tags, strlen(c->tags));
 }
 
 void

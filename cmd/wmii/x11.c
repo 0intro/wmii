@@ -553,6 +553,34 @@ xatom(char *name) {
 	return XInternAtom(display, name, False);
 }
 
+void
+changeproperty(Window *w, Atom prop, Atom type, int width, uchar *data, int n) {
+	XChangeProperty(display, w->w, prop, type, width, PropModeReplace, data, n);
+}
+
+char *
+gettextproperty(Window *w, Atom name) {
+	XTextProperty prop;
+	char **list, *str;
+	int n;
+
+	str = nil;
+
+	XGetTextProperty(display, w->w, &prop, name);
+	if(prop.nitems > 0) {
+		if(Xutf8TextPropertyToTextList(display, &prop, &list, &n) == Success) {
+			if(n > 0) {
+				n = strlen(*list)+1;
+				str = emalloc(n);
+				memcpy(str, *list, n);
+			}
+			XFreeStringList(list);
+		}
+		XFree(prop.value);
+	}
+	return str;
+}
+
 /* Mouse */
 Point
 querypointer(Window *w) {
@@ -660,21 +688,22 @@ sethints(Window *w) {
 
 	switch (xs.win_gravity) {
 	case EastGravity:case CenterGravity:case WestGravity:
-		p.y = -1;
+		p.y = 1;
 		break;
 	case SouthEastGravity:case SouthGravity:case SouthWestGravity:
-		p.y = -2;
+		p.y = 2;
 		break;
 	}
 	switch (xs.win_gravity) {
 	case NorthGravity:case CenterGravity:case SouthGravity:
-		p.x = -1;
+		p.x = 1;
 		break;
 	case NorthEastGravity:case EastGravity:case SouthEastGravity:
-		p.x = -2;
+		p.x = 2;
 		break;
 	}
 	h->grav = p;
+	h->gravstatic = (xs.win_gravity&StaticGravity) == 0;
 }
 
 Rectangle
@@ -709,16 +738,16 @@ sizehint(WinHints *h, Rectangle r) {
 }
 
 Rectangle
-gravitate(Rectangle rd, Rectangle rs, Point grav) {
+gravitate(Rectangle rc, Rectangle rf, Point grav) {
 	Point d;
 
-	rd = rectsubpt(rd, rd.min);
-	d = subpt(rs.max, rs.min);
-	d = subpt(rd.max, d);
+	rf = rectsubpt(rf, rf.min);
+
+	d = subpt(rc.max, rc.min);
+	d = subpt(rf.max, d);
 
 	d = divpt(d, Pt(2, 2));
 	d = mulpt(d, grav);
 
-	d = addpt(d, rs.min);
-	return rectaddpt(rd, d);
+	return rectaddpt(rc, d);
 }
