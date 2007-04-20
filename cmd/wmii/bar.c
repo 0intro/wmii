@@ -15,7 +15,7 @@ void
 initbar(WMScreen *s) {
 	WinAttr wa;
 
-	s->brect = s->rect;
+	s->brect = s->r;
 	s->brect.min.y = s->brect.max.y - labelh(def.font);
 
 	wa.override_redirect = 1;
@@ -81,7 +81,7 @@ void
 resize_bar(WMScreen *s) {
 	View *v;
 
-	s->brect = s->rect;
+	s->brect = s->r;
 	s->brect.min.y = s->brect.max.y - labelh(def.font);
 
 	reshapewin(s->barwin, s->brect);

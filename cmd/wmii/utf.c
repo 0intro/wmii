@@ -330,13 +330,13 @@ toutf8n(char *str, int nstr) {
 		cd = iconv_open("UTF-8", "");
 	iconv(cd, nil, nil, nil, nil);
 
-	bsize = nstr * 1.25;
+	bsize = nstr * 1.25 + 4;
 	buf = emalloc(bsize);
 	pos = buf;
 	nbuf = bsize-1;
 	while(iconv(cd, (void*)&str, &nstr, &pos, &nbuf) == -1)
 		if(errno == E2BIG) {
-			bsize *= 1.25;
+			bsize *= 1.25 + 4;
 			nbuf = pos - buf;
 			buf = erealloc(buf, bsize);
 			pos = buf + nbuf;

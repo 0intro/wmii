@@ -1,6 +1,7 @@
 #!/bin/sh -f
 RC=""
-for i in "$PLAN9" P9PATHS; do
+IFS=:
+for i in "$PLAN9" `echo P9PATHS`; do
 	if [ -d "$i" -a -x "$i/bin/rc" ]; then
 		export PLAN9="$i"
 		RC="$i/bin/rc"
@@ -13,7 +14,7 @@ if [ ! -n "$RC" ]; then
 fi
 
 if [ -n "$1" ]; then
-	exec $RC "$@"
+	exec "$RC" "$@"
 else
 	true
 fi

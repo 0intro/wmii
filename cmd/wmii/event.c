@@ -1,5 +1,4 @@
-/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include <stdio.h>
@@ -11,6 +10,8 @@
 
 void
 dispatch_event(XEvent *e) {
+	if(verbose)
+		printevent(e);
 	if(handler[e->type])
 		handler[e->type](e);
 }
@@ -34,7 +35,7 @@ buttonrelease(XEvent *e) {
 	Window *w;
 
 	ev = &e->xbutton;
-	if((w = findwin(e->xany.window)))
+	if((w = findwin(ev->window)))
 		if(w->handler->bup)
 			w->handler->bup(w, ev);
 }
@@ -45,7 +46,7 @@ buttonpress(XEvent *e) {
 	Window *w;
 
 	ev = &e->xbutton;
-	if((w = findwin(e->xany.window))) {
+	if((w = findwin(ev->window))) {
 		if(w->handler->bdown)
 			w->handler->bdown(w, ev);
 	}
@@ -56,11 +57,11 @@ buttonpress(XEvent *e) {
 static void
 configurerequest(XEvent *e) {
 	XConfigureRequestEvent *ev;
-	Window *w;
 	XWindowChanges wc;
+	Window *w;
 
 	ev = &e->xconfigurerequest;
-	if((w = findwin(e->xany.window))) {
+	if((w = findwin(ev->window))) {
 		if(w->handler->configreq)
 			w->handler->configreq(w, ev);
 	}else{
@@ -71,9 +72,8 @@ configurerequest(XEvent *e) {
 		wc.border_width = ev->border_width;
 		wc.sibling = ev->above;
 		wc.stack_mode = ev->detail;
-		ev->value_mask &= ~(CWStackMode|CWSibling);
+		//ev->value_mask &= ~(CWStackMode|CWSibling);
 		XConfigureWindow(display, ev->window, ev->value_mask, &wc);
-		XSync(display, False);
 	}
 }
 
@@ -81,11 +81,18 @@ static void
 destroynotify(XEvent *e) {
 	XDestroyWindowEvent *ev;
 	Window *w;
+	Client *c;
 
 	ev = &e->xdestroywindow;
-	if((w = findwin(e->xany.window))) {
+	if((w = findwin(ev->window))) {
 		if(w->handler->destroy)
 			w->handler->destroy(w, ev);
+	}else {
+		if(verbose)
+			fprintf(stderr, "DestroyWindow(%x) (no handler)\n", (uint)ev->window);
+		if((c = win2client(ev->window)))
+			fprintf(stderr, "Badness: Unhandled DestroyNotify: "
+				"Client: %p, Window: %x, Name: %s\n", c, (uint)c->w.w, c->name);
 	}
 }
 
@@ -98,7 +105,7 @@ enternotify(XEvent *e) {
 	if(ev->mode != NotifyNormal)
 		return;
 
-	if((w = findwin(e->xany.window))) {
+	if((w = findwin(ev->window))) {
 		if(w->handler->enter)
 			w->handler->enter(w, ev);
 	}
@@ -114,7 +121,7 @@ leavenotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xcrossing;
-	w = findwin(e->xany.window);
+	w = findwin(ev->window);
 	if((ev->window == scr.root.w) && !ev->same_screen) {
 		sel_screen = True;
 		draw_frames();
@@ -124,10 +131,11 @@ leavenotify(XEvent *e) {
 void
 print_focus(Client *c, char *to) {
 		if(verbose) {
-			fprintf(stderr, "screen->focus: %p => %p\n",
-				screen->focus, c);
+			fprintf(stderr, "screen->focus: %p[%x] => %p[%x]\n",
+				screen->focus, (uint)(screen->focus ? screen->focus->w.w : 0),
+				c, (uint)(c ? c->w.w : 0));
 			fprintf(stderr, "\t%s => %s\n",
-				screen->focus ? screen->focus->name : "<nil>",
+				(screen->focus ? screen->focus->name : "<nil>"),
 				to);
 		}
 }
@@ -142,6 +150,8 @@ focusin(XEvent *e) {
 	ev = &e->xfocus;
 	/* Yes, we're focusing in on nothing, here. */
 	if(ev->detail == NotifyDetailNone) {
+		print_focus(&c_magic, "<magic[none]>");
+		screen->focus = &c_magic;
 		XSetInputFocus(display, screen->barwin->w, RevertToParent, CurrentTime);
 		return;
 	}
@@ -152,17 +162,16 @@ focusin(XEvent *e) {
 	   ||(ev->detail == NotifyInferior)
 	   ||(ev->detail == NotifyAncestor)))
 		return;
-	if((ev->mode == NotifyWhileGrabbed)
-	&& (screen->hasgrab != &c_root))
+	if((ev->mode == NotifyWhileGrabbed) && (screen->hasgrab != &c_root))
 		return;
 
-	if((w = findwin(e->xany.window))) {
-		if(w->handler->focusin)
-			w->handler->focusin(w, ev);
-	}
-	else if(ev->window == screen->barwin->w) {
+	if(ev->window == screen->barwin->w) {
 		print_focus(nil, "<nil>");
 		screen->focus = nil;
+	}
+	else if((w = findwin(ev->window))) {
+		if(w->handler->focusin)
+			w->handler->focusin(w, ev);
 	}
 	else if(ev->mode == NotifyGrab) {
 		if(ev->window == scr.root.w)
@@ -194,7 +203,7 @@ focusout(XEvent *e) {
 	if(ev->mode == NotifyUngrab)
 		screen->hasgrab = nil;
 
-	if((w = findwin(e->xany.window))) {
+	if((w = findwin(ev->window))) {
 		if(w->handler->focusout)
 			w->handler->focusout(w, ev);
 	}
@@ -207,7 +216,7 @@ expose(XEvent *e) {
 
 	ev = &e->xexpose;
 	if(ev->count == 0) {
-		if((w = findwin(e->xany.window))) {
+		if((w = findwin(ev->window))) {
 			if(w->handler->expose)
 				w->handler->expose(w, ev);
 		}
@@ -220,7 +229,7 @@ keypress(XEvent *e) {
 	Window *w;
 
 	ev = &e->xkey;
-	w = findwin(e->xany.window);
+	w = findwin(ev->window);
 	ev->state &= valid_mask;
 	if(ev->window == scr.root.w)
 		kpress(scr.root.w, ev->state, (KeyCode) ev->keycode);
@@ -243,9 +252,11 @@ maprequest(XEvent *e) {
 	XWindowAttributes wa;
 
 	ev = &e->xmaprequest;
-	w = findwin(e->xany.window);
+	w = findwin(ev->window);
+
 	if(!XGetWindowAttributes(display, ev->window, &wa))
 		return;
+
 	if(wa.override_redirect) {
 		XSelectInput(display, ev->window,
 				(StructureNotifyMask | PropertyChangeMask));
@@ -261,7 +272,7 @@ motionnotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xmotion;
-	if((w = findwin(e->xany.window))) {
+	if((w = findwin(ev->window))) {
 		if(w->handler->motion)
 			w->handler->motion(w, ev);
 	}
@@ -273,7 +284,7 @@ propertynotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xproperty;
-	if((w = findwin(e->xany.window))) {
+	if((w = findwin(ev->window))) {
 		if(w->handler->property)
 			w->handler->property(w, ev);
 	}
@@ -285,7 +296,7 @@ mapnotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xmap;
-	if((w = findwin(e->xany.window))) {
+	if((w = findwin(ev->window))) {
 		if(w->handler->map)
 			w->handler->map(w, ev);
 	}
@@ -297,7 +308,7 @@ unmapnotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xunmap;
-	if((w = findwin(e->xany.window))) {
+	if((w = findwin(ev->window)) && (ev->event == w->parent->w)) {
 		if(ev->send_event || w->unmapped-- == 0)
 			if(w->handler->unmap)
 				w->handler->unmap(w, ev);
@@ -328,8 +339,6 @@ check_x_event(IxpConn *c) {
 	XEvent ev;
 	while(XPending(display)) {
 		XNextEvent(display, &ev);
-		if(verbose)
-			printevent(&ev);
 		dispatch_event(&ev);
 		/* Hack to alleviate an apparant Xlib bug */
 		XPending(display);

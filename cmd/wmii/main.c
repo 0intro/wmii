@@ -215,7 +215,7 @@ init_screen(WMScreen *screen) {
 			| GCPlaneMask,
 			&gcv);
 
-	screen->rect = scr.rect;
+	screen->r = scr.rect;
 	def.snap = Dy(scr.rect) / 63;
 
 	sel_screen = XQueryPointer(display, scr.root.w,
@@ -229,7 +229,7 @@ cleanup() {
 	Client *c;
 
 	for(c=client; c; c=c->next) {
-		reparent_client(c, &scr.root, c->sel->rect.min);
+		reparent_client(c, &scr.root, c->sel->r.min);
 		if(c->sel->view != screen->sel)
 			unmap_client(c, IconicState);
 	}
@@ -468,10 +468,11 @@ main(int argc, char *argv[]) {
 		s = &screens[i];
 		init_screen(s);
 
-		s->ibuf = allocimage(Dx(s->rect), Dy(s->rect), scr.depth);
+		s->ibuf = allocimage(Dx(s->r), Dy(s->r), scr.depth);
 
 		wa.event_mask = 
 				  SubstructureRedirectMask
+				| SubstructureNotifyMask
 				| EnterWindowMask
 				| LeaveWindowMask
 				| FocusChangeMask;

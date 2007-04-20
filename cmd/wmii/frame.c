@@ -19,14 +19,14 @@ create_frame(Client *c, View *v) {
 
 	if(c->sel) {
 		f->revert = c->sel->revert;
-		f->rect = c->sel->rect;
+		f->r = c->sel->r;
 	}
 	else{
 		c->sel = f;
-		f->rect = c->rect;
-		f->rect.max.x += 2 * def.border;
-		f->rect.max.y += frame_delta_h();
-		f->revert = f->rect;
+		f->r = c->r;
+		f->r.max.x += 2 * def.border;
+		f->r.max.y += frame_delta_h();
+		f->revert = f->r;
 	}
 	f->collapsed = False;
 
@@ -108,7 +108,7 @@ frame_to_top(Frame *f) {
 
 Rectangle
 frame2client(Frame *f, Rectangle r) {
-	if(f->area->floating) {
+	if(f == nil || f->area->floating) {
 		r.max.x -= def.border * 2;
 		r.max.y -= frame_delta_h();
 	}else {
@@ -122,7 +122,7 @@ frame2client(Frame *f, Rectangle r) {
 
 Rectangle
 client2frame(Frame *f, Rectangle r) {
-	if(f->area->floating) {
+	if(f == nil || f->area->floating) {
 		r.max.x += def.border * 2;
 		r.max.y += frame_delta_h();
 	}else {
@@ -155,7 +155,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 			focus(c, True);
 			break;
 		case Button3:
-			do_mouse_resize(c, False, quadrant(f->rect, Pt(e->x_root, e->y_root)));
+			do_mouse_resize(c, False, quadrant(f->r, Pt(e->x_root, e->y_root)));
 			frame_to_top(f);
 			focus(c, True);
 			break;
@@ -172,7 +172,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 				do_mouse_resize(c, True, CENTER);
 			else if(f->area->floating)
 				if(!e->subwindow && !ptinrect(Pt(e->x, e->y), f->titlebar))
-					do_mouse_resize(c, False, quadrant(f->rect, Pt(e->x_root, e->y_root)));
+					do_mouse_resize(c, False, quadrant(f->r, Pt(e->x_root, e->y_root)));
 
 			if(f->client != selclient())
 				focus(c, True);
@@ -184,7 +184,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 			XUngrabPointer(display, e->time);
 			XSync(display, False);
 
-			write_event("ClientMouseDown 0x%x %d\n", f->client->win.w, e->button);
+			write_event("ClientMouseDown 0x%x %d\n", f->client->w.w, e->button);
 		}
 	}
 }
@@ -213,7 +213,7 @@ expose_event(Window *w, XExposeEvent *e) {
 		draw_frame(c->sel);
 	else
 		fprintf(stderr, "Badness: Expose event on a client frame which shouldn't be visible: %x\n",
-			(uint)c->win.w);
+			(uint)c->w.w);
 }
 
 static void
@@ -239,45 +239,44 @@ resize_frame(Frame *f, Rectangle r) {
 	Client *c;
 
 	c = f->client;
-	stickycorner = get_sticky(f->rect, r);
+	stickycorner = get_sticky(f->r, r);
 
-	f->crect = r;
-	apply_sizehints(c, &f->crect, f->area->floating, True, stickycorner);
+	f->crect = frame_hints(f, r, stickycorner);
 
 	if(Dx(r) <= 0 || Dy(r) <= 0)
 		fprintf(stderr, "Badness: Frame rect: %d,%d %dx%d\n",
 			r.min.x, r.min.y, Dx(r), Dy(r));
 
 	if(f->area->floating)
-		f->rect = f->crect;
+		f->r = f->crect;
 	else
-		f->rect = r;
+		f->r = r;
 
 	f->crect = frame2client(f, f->crect);
 	f->crect = rectsubpt(f->crect, f->crect.min);
 
 	if(Dx(f->crect) < labelh(def.font)) {
-		f->rect.max.x = f->rect.min.x + frame_delta_h();
+		f->r.max.x = f->r.min.x + frame_delta_h();
 		f->collapsed = True;
 	}
 
 	if(f->collapsed) {
-		f->rect.max.y= f->rect.min.y + labelh(def.font);
-		f->crect = f->rect;
+		f->r.max.y= f->r.min.y + labelh(def.font);
+		f->crect = f->r;
 	}
 
 	pt.y = labelh(def.font);
 
 	if(f->area->floating) {
 		if(c->fullscreen) {
-			f->crect = screen->rect;
-			f->rect = client2frame(f, f->crect);
-			pt.x = (Dx(f->rect) - Dx(f->crect)) / 2;
-			f->rect = rectsubpt(f->rect, pt);
+			f->crect = screen->r;
+			f->r = client2frame(f, f->crect);
+			pt.x = (Dx(f->r) - Dx(f->crect)) / 2;
+			f->r = rectsubpt(f->r, pt);
 		}else
-			f->rect = constrain(f->rect);
+			f->r = constrain(f->r);
 	}
-	pt.x = (Dx(f->rect) - Dx(f->crect)) / 2;
+	pt.x = (Dx(f->r) - Dx(f->crect)) / 2;
 	f->crect = rectaddpt(f->crect, pt);
 }
 
@@ -289,7 +288,7 @@ set_frame_cursor(Frame *f, Point pt) {
 	if(f->area->floating
 	&& !ptinrect(pt, f->titlebar)
 	&& !ptinrect(pt, f->crect)) {
-	 	r = rectsubpt(f->rect, f->rect.min);
+	 	r = rectsubpt(f->r, f->r.min);
 	 	cur = cursor_of_quad(quadrant(r, pt));
 		set_cursor(f->client, cur);
 	} else
@@ -323,9 +322,9 @@ swap_frames(Frame *fa, Frame *fb) {
 	fb->area = fa->area;
 	fa->area = a;
 
-	trect = fa->rect;
-	fa->rect = fb->rect;
-	fb->rect = trect;
+	trect = fa->r;
+	fa->r = fb->r;
+	fb->r = trect;
 }
 
 void
@@ -356,7 +355,7 @@ focus_frame(Frame *f, Bool restack) {
 
 	if((f != old)
 	&& (f->area == old_a))
-			write_event("ClientFocus 0x%x\n", f->client->win);
+			write_event("ClientFocus 0x%x\n", f->client->w.w);
 
 	if(restack)
 		restack_view(v);
@@ -435,7 +434,7 @@ constrain(Rectangle r) {
 	Rectangle sr;
 	Point p;
 
-	sr = screen->rect;
+	sr = screen->r;
 	sr.max.y = screen->brect.min.y;
 
 	if(Dx(r) > Dx(sr))

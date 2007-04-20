@@ -8,8 +8,8 @@ TARG =	wmii
 HFILES=	dat.h fns.h
 
 LIB =	${LIBIXP}
-EXLDFLAGS = -lm ${LIBX11} -lXext -L/usr/local/lib -liconv
-EXCFLAGS = ${INCX11}
+EXLDFLAGS = -lm ${LIBX11} -lXext ${LIBICONV}
+EXCFLAGS = ${INCX11} ${INCICONV}
 OBJ =	area	\
 	bar	\
 	client	\

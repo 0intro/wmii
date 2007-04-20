@@ -6,4 +6,7 @@ DIRS =	libixp	\
 	rc	\
 	man
 
+config:
+	ROOT="${ROOT}" ${ROOT}/util/genconfig
+
 include ${ROOT}/mk/dir.mk

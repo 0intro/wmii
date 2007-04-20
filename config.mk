@@ -9,11 +9,11 @@ LIBDIR = ${PREFIX}/lib
 INCLUDE = ${PREFIX}/include
 
 # Includes and libs
-INCS = -I. -I${ROOT}/include -I${INCLUDE} -I/usr/include -I/usr/local/include
+INCPATH = .:${ROOT}/include:${INCLUDE}:/usr/include
 LIBS = -L/usr/lib -lc
 
 # Flags
-CFLAGS = -g -Wall ${INCS} -DVERSION=\"${VERSION}\"
+CFLAGS = -g -Wall -DVERSION=\"${VERSION}\"
 LDFLAGS = -g ${LIBS}
 STATIC = -static
 
@@ -21,15 +21,14 @@ STATIC = -static
 CC = cc -c
 # Linker (Under normal circumstances, this should *not* be 'ld')
 LD = cc
-# Other
-AR = ar cr
-RANLIB = ranlib
 
-AWKPATH = /usr/bin/awk
-P9PATHS = /usr/local/plan9 /usr/local/9 /opt/plan9 /opt/9 /usr/plan9 /usr/9
+AWKPATH = $$(which awk)
+P9PATHS = ${PLAN9}:/usr/local/plan9:/usr/local/9:/opt/plan9:/opt/9:/usr/plan9:/usr/9
 
 INCX11 = -I/usr/X11R6/include
 LIBX11 = -L/usr/X11R6/lib -lX11
+LIBICONV = # Leave blank if your libc includes iconv (glibc does)
+INCICONV = /usr/include
 LIBIXP = ${ROOT}/libixp/libixp.a
 LIBIXP = ${LIBDIR}/libixp.a
 
@@ -38,3 +37,4 @@ LIBIXP = ${LIBDIR}/libixp.a
 #LDFLAGS = ${LIBS} -R${PREFIX}/lib
 #LDFLAGS += -lsocket -lnsl
 #CFLAGS += -xtarget=ultra
+

@@ -27,7 +27,7 @@ create_area(View *v, Area *pos, uint w) {
 	uint minwidth;
 	Area *a;
 
-	minwidth = Dx(screen->rect)/NCOL;
+	minwidth = Dx(screen->r)/NCOL;
 
 	i = 0;
 	for(a = v->area; a != pos; a = a->next)
@@ -41,19 +41,19 @@ create_area(View *v, Area *pos, uint w) {
 		if(colnum) {
 			w = newcolw(v, max(i-1, 0));
 			if (w == 0)
-				w = Dx(screen->rect) / (colnum + 1);
+				w = Dx(screen->r) / (colnum + 1);
 		}
 		else
-			w = Dx(screen->rect);
+			w = Dx(screen->r);
 	}
 
 	if(w < minwidth)
 		w = minwidth;
-	if(colnum && (colnum * minwidth + w) > Dx(screen->rect))
+	if(colnum && (colnum * minwidth + w) > Dx(screen->r))
 		return nil;
 
 	if(pos)
-		scale_view(v, Dx(screen->rect) - w);
+		scale_view(v, Dx(screen->r) - w);
 
 	a = emallocz(sizeof *a);
 	a->view = v;
@@ -62,9 +62,9 @@ create_area(View *v, Area *pos, uint w) {
 	a->frame = nil;
 	a->sel = nil;
 
-	a->rect = screen->rect;
-	a->rect.max.x = a->rect.min.x + w;
-	a->rect.max.x = screen->brect.min.y;
+	a->r = screen->r;
+	a->r.max.x = a->r.min.x + w;
+	a->r.max.x = screen->brect.min.y;
 
 	if(pos) {
 		a->next = pos->next;
@@ -143,8 +143,8 @@ send_to_area(Area *to, Frame *f) {
 
 	if(to->floating != from->floating) {
 		Rectangle temp = f->revert;
-		f->revert = f->rect;
-		f->rect = temp;
+		f->revert = f->r;
+		f->r = temp;
 	}
 	f->client->revert = from;
 
@@ -172,8 +172,8 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 
 	c->floating = a->floating;
 	if(!a->floating) {
-		f->rect = a->rect;
-		f->rect.max.y = f->rect.min.y + Dx(a->rect) / n_frame;
+		f->r = a->r;
+		f->r.max.y = f->r.min.y + Dx(a->r) / n_frame;
 	}
 
 	insert_frame(a->sel, f, False);
@@ -182,7 +182,7 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 		place_frame(f);
 
 	focus_frame(f, False);
-	resize_frame(f, f->rect);
+	resize_frame(f, f->r);
 	restack_view(a->view);
 
 	if(!a->floating)
@@ -290,7 +290,7 @@ place_frame(Frame *f) {
 	uint i, j, x, y, cx, cy, maxx, maxy, diff, num;
 	int snap;
 
-	snap = Dy(screen->rect) / 66;
+	snap = Dy(screen->r) / 66;
 	num = 0;
 	fit = False;
 	align = CENTER;
@@ -300,14 +300,14 @@ place_frame(Frame *f) {
 
 	if(c->trans)
 		return;
-	if(Dx(c->rect) >= Dx(a->rect)
-		|| Dy(c->rect) >= Dy(a->rect)
+	if(Dx(c->r) >= Dx(a->r)
+		|| Dy(c->r) >= Dy(a->r)
 		|| c->size.flags & USPosition
 		|| c->size.flags & PPosition)
 		return;
 	if(!field) {
-		mx = Dx(screen->rect) / dx;
-		my = Dy(screen->rect) / dy;
+		mx = Dx(screen->r) / dx;
+		my = Dy(screen->r) / dy;
 		mwidth = ceil((float)mx / devisor);
 		field = emallocz(sizeof(uint) * mwidth * my);
 	}
@@ -315,23 +315,23 @@ place_frame(Frame *f) {
 	memset(field, ~0, (sizeof(uint) * mwidth * my));
 	for(fr=a->frame; fr; fr=fr->anext) {
 		if(fr == f) {
-			cx = Dx(f->rect) / dx;
-			cy = Dx(f->rect) / dy;
+			cx = Dx(f->r) / dx;
+			cy = Dx(f->r) / dy;
 			continue;
 		}
 
-		if(fr->rect.min.x < 0)
+		if(fr->r.min.x < 0)
 			x = 0;
 		else
-			x = fr->rect.min.x / dx;
+			x = fr->r.min.x / dx;
 
-		if(fr->rect.min.y < 0)
+		if(fr->r.min.y < 0)
 			y = 0;
 		else
-			y = fr->rect.min.y / dy;
+			y = fr->r.min.y / dy;
 
-		maxx = fr->rect.max.x / dx;
-		maxy = fr->rect.max.y / dy;
+		maxx = fr->r.max.x / dx;
+		maxy = fr->r.max.y / dy;
 		for(j = y; j < my && j < maxy; j++)
 			for(i = x; i < mx && i < maxx; i++)
 				bit_set(field, mwidth, i, j, False);
@@ -364,21 +364,21 @@ place_frame(Frame *f) {
 		p1.y *= dy;
 	}
 
-	if(!fit || (p1.x + Dx(f->rect) > a->rect.max.x)) {
-		diff = Dx(a->rect) - Dx(f->rect);
-		p1.x = a->rect.min.x + (random() % min(diff, 1));
+	if(!fit || (p1.x + Dx(f->r) > a->r.max.x)) {
+		diff = Dx(a->r) - Dx(f->r);
+		p1.x = a->r.min.x + (random() % min(diff, 1));
 	}
 
-	if(!fit && (p1.y + Dy(f->rect) > a->rect.max.y)) {
-		diff = Dy(a->rect) - Dy(f->rect);
-		p1.y = a->rect.min.y + (random() % min(diff, 1));
+	if(!fit && (p1.y + Dy(f->r) > a->r.max.y)) {
+		diff = Dy(a->r) - Dy(f->r);
+		p1.y = a->r.min.y + (random() % min(diff, 1));
 	}
 
-	p1 = subpt(p1, f->rect.min);
-	f->rect = rectaddpt(f->rect, p1);
+	p1 = subpt(p1, f->r.min);
+	f->r = rectaddpt(f->r, p1);
 
 	rects = rects_of_view(a->view, &num, nil);
-	snap_rect(rects, num, &f->rect, &align, snap);
+	snap_rect(rects, num, &f->r, &align, snap);
 	if(rects)
 		free(rects);
 }
@@ -416,7 +416,7 @@ focus_area(Area *a) {
 		else
 			write_event("ColumnFocus %d\n", i);
 		if(a->frame)
-			write_event("ClientFocus 0x%x\n", a->sel->client->win);
+			write_event("ClientFocus 0x%x\n", a->sel->client->w.w);
 	}
 }
 

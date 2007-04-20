@@ -32,6 +32,11 @@ eqrect(Rectangle a, Rectangle b) {
 		&& a.min.y==b.min.y && a.max.y==b.max.y;
 }
 
+int
+eqpt(Point p, Point q) {
+	return p.x==q.x && p.y==q.y;
+}
+
 Point
 addpt(Point p, Point q) {
 	p.x += q.x;
@@ -43,6 +48,13 @@ Point
 subpt(Point p, Point q) {
 	p.x -= q.x;
 	p.y -= q.y;
+	return p;
+}
+
+Point
+mulpt(Point p, Point q) {
+	p.x *= q.x;
+	p.y *= q.y;
 	return p;
 }
 
@@ -96,6 +108,8 @@ initdisplay() {
 	scr.root.w = RootWindow(display, scr.screen);
 	scr.root.r = Rect(0, 0, DisplayWidth(display, scr.screen), DisplayHeight(display, scr.screen));
 	scr.rect = scr.root.r;
+	
+	scr.root.parent = &scr.root;
 
 	wlist.next = wlist.prev = &wlist;
 }
@@ -134,6 +148,7 @@ createwindow(Window *parent, Rectangle r, int depth, uint class,
 
 	w = emallocz(sizeof *w);
 	w->type = WWindow;
+	w->parent = parent;
 
 	w->w =  XCreateWindow(display, parent->w, r.min.x, r.min.y, Dx(r), Dy(r),
 				0 /* border */, depth, class, scr.visual, valmask, wa);
@@ -149,12 +164,18 @@ createwindow(Window *parent, Rectangle r, int depth, uint class,
 }
 
 void
+reparentwindow(Window *w, Window *par, Point p) {
+	XReparentWindow(display, w->w, par->w, p.x, p.y);
+	w->parent = par;
+}
+
+void
 destroywindow(Window *w) {
 	assert(w->type == WWindow);
+	sethandler(w, nil);
 	if(w->gc)
 		XFreeGC(display, w->gc);
 	XDestroyWindow(display, w->w);
-	sethandler(w, nil);
 }
 
 void
@@ -218,12 +239,15 @@ sethandler(Window *w, Handlers *new) {
 	Window *wp;
 
 	assert(w->type == WWindow);
+	assert((w->prev != nil && w->next != nil) || w->next == w->prev);
 
 	old = w->handler;
-	if(new == nil && w->prev) {
-		w->prev->next = w->next;
-		w->next->prev = w->prev;
-		w->next = w->prev = nil;
+	if(new == nil) {
+		if(w->prev) {
+			w->prev->next = w->next;
+			w->next->prev = w->prev;
+			w->next = w->prev = nil;
+		}
 	}else {
 		for(wp = wlist.next; wp != &wlist; wp = wp->next)
 			if(w->w <= wp->w) break;
@@ -573,4 +597,128 @@ grabpointer(Window *w, Window *confine, Cursor cur, int mask) {
 void
 ungrabpointer() {
 	XUngrabPointer(display, CurrentTime);
+}
+
+/* Insanity */
+void
+sethints(Window *w) {
+	enum { MaxInt = ((uint)(1<<(8*sizeof(int)-1))-1) };
+	XSizeHints xs;
+	WinHints *h;
+	Point p;
+	long size;
+
+	if(!XGetWMNormalHints(display, w->w, &xs, &size)) {
+		free(w->hints);
+		w->hints = nil;
+		return;
+	}
+
+	if(w->hints == nil)
+		w->hints = emalloc(sizeof *h);
+	h = w->hints;
+	memset(h, 0, sizeof *h);
+
+	h->max = Pt(MaxInt, MaxInt);
+	if(xs.flags&PMinSize) {
+		p.x = xs.min_width;
+		p.y = xs.min_height;
+		h->min = p;
+	}
+	if(xs.flags&PMaxSize) {
+		p.x = xs.max_width;
+		p.y = xs.max_height;
+		h->max = p;
+	}
+
+	h->base = h->min;
+	if(xs.flags&PBaseSize) {
+		p.x = xs.base_width;
+		p.y = xs.base_height;
+		h->base = p;
+		h->baspect = p;
+	}
+
+	h->inc = Pt(1,1);
+	if(xs.flags&PResizeInc) {
+		h->inc.x = xs.width_inc;
+		h->inc.y = xs.height_inc;
+	}
+
+	if(xs.flags&PAspect) {
+		p.x = xs.min_aspect.x;
+		p.y = xs.min_aspect.y;
+		h->aspect.min = p;
+		p.x = xs.max_aspect.x;
+		p.y = xs.max_aspect.y;
+		h->aspect.max = p;
+	}
+
+	p = ZP;
+	if((xs.flags&PWinGravity) == 0)
+		xs.win_gravity = NorthWestGravity;
+
+	switch (xs.win_gravity) {
+	case EastGravity:case CenterGravity:case WestGravity:
+		p.y = -1;
+		break;
+	case SouthEastGravity:case SouthGravity:case SouthWestGravity:
+		p.y = -2;
+		break;
+	}
+	switch (xs.win_gravity) {
+	case NorthGravity:case CenterGravity:case SouthGravity:
+		p.x = -1;
+		break;
+	case NorthEastGravity:case EastGravity:case SouthEastGravity:
+		p.x = -2;
+		break;
+	}
+	h->grav = p;
+}
+
+Rectangle
+sizehint(WinHints *h, Rectangle r) {
+	Point p, p2, o;
+	
+	o = r.min;
+	r = rectsubpt(r, o);
+
+	/* Min/max */
+	r.max.x = max(r.max.x, h->min.x);
+	r.max.y = max(r.max.y, h->min.y);
+	r.max.x = min(r.max.x, h->max.x);
+	r.max.y = min(r.max.y, h->max.y);
+
+	/* Increment */
+	p = subpt(r.max, h->base);
+	r.max.x -= p.x % h->inc.x;
+	r.max.y -= p.y % h->inc.y;
+
+	/* Aspect */
+	p = subpt(r.max, h->baspect);
+	p.y = max(p.y, 1);
+	p2 = h->aspect.min;
+	if(p.x * p2.y / p.y < p2.x)
+		r.max.y = h->baspect.y + p.x * p2.y / p2.x;
+	p2 = h->aspect.max;
+	if(p.x * p2.y / p.y > p2.x)
+		r.max.x = h->baspect.x + p.y * p2.x / p2.y;
+	
+	return rectaddpt(r, o);
+}
+
+Rectangle
+gravitate(Rectangle rd, Rectangle rs, Point grav) {
+	Point d;
+
+	rd = rectsubpt(rd, rd.min);
+	d = subpt(rs.max, rs.min);
+	d = subpt(rd.max, d);
+
+	d = divpt(d, Pt(2, 2));
+	d = mulpt(d, grav);
+
+	d = addpt(d, rs.min);
+	return rectaddpt(rd, d);
 }

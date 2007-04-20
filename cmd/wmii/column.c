@@ -103,7 +103,7 @@ update_imgs() {
 
 	w = 2 * (labelh(def.font) / 3);
 	w = max(w, 10);
-	h = Dy(screen->rect);
+	h = Dy(screen->r);
 
 	if(divimg) {
 		if(w == Dx(divimg->r) && h == Dy(divimg->r)
@@ -135,12 +135,12 @@ update_divs() {
 	for(a = v->area->next; a; a = a->next) {
 		d = get_div(dp);
 		dp = &d->next;
-		setdiv(d, a->rect.min.x);
+		setdiv(d, a->r.min.x);
 
 		if(!a->next) {
 			d = get_div(dp);
 			dp = &d->next;
-			setdiv(d, a->rect.max.x);
+			setdiv(d, a->r.max.x);
 		}
 	}
 	for(d = *dp; d; d = d->next)
@@ -220,7 +220,7 @@ scale_column(Area *a) {
 		else
 			nuncol++;
 
-	surplus = Dy(a->rect);
+	surplus = Dy(a->r);
 	surplus -= ncol * colh;
 	surplus -= nuncol * uncolh;
 	if(surplus < 0) {
@@ -242,7 +242,7 @@ scale_column(Area *a) {
 	i = ncol - 1;
 	j = nuncol - 1;
 	for(f=a->frame; f; f=f->anext) {
-		f->rect = rectsubpt(f->rect, f->rect.min);
+		f->r = rectsubpt(f->r, f->r.min);
 		f->crect = rectsubpt(f->crect, f->crect.min);
 		if(f == a->sel)
 			j++;
@@ -276,36 +276,36 @@ scale_column(Area *a) {
 
 	i = nuncol;
 		for(f=a->frame; f; f=f->anext) {
-			f->rect.max.x = Dx(a->rect);
+			f->r.max.x = Dx(a->r);
 			if(f->collapsed)
-				f->rect.max.y = labelh(def.font);
+				f->r.max.y = labelh(def.font);
 			else {
 				if(--i != 0)
-					f->rect.max.y = (float)Dy(f->crect) / dy * surplus;
+					f->r.max.y = (float)Dy(f->crect) / dy * surplus;
 				else
-					f->rect.max.y = surplus;
-				f->rect.max.y += uncolh;
+					f->r.max.y = surplus;
+				f->r.max.y += uncolh;
+				f->r = frame_hints(f, f->r, NWEST);
+
+				dy -= Dy(f->r) - uncolh;
+				surplus -= Dy(f->r) - uncolh;
 	
-				apply_sizehints(f->client, &f->rect, False, True, NWEST);
-				dy -= Dy(f->rect) - uncolh;
-				surplus -= Dy(f->rect) - uncolh;
-	
-				resize_frame(f, f->rect);
+				resize_frame(f, f->r);
 			}
 		}
 
-	yoff = a->rect.min.y;
+	yoff = a->r.min.y;
 	i = nuncol;
 	for(f=a->frame; f; f=f->anext) {
-		f->rect = rectaddpt(f->rect, Pt(a->rect.min.x, yoff));
-		f->rect.max.x = a->rect.max.x;
+		f->r = rectaddpt(f->r, Pt(a->r.min.x, yoff));
+		f->r.max.x = a->r.max.x;
 		if(!f->collapsed) {
 			i--;
-			f->rect.max.y += surplus / nuncol;
+			f->r.max.y += surplus / nuncol;
 			if(!i)
-				f->rect.max.y += surplus % nuncol;
+				f->r.max.y += surplus % nuncol;
 		}
-		yoff = f->rect.max.y;
+		yoff = f->r.max.y;
 	}
 }
 
@@ -331,7 +331,7 @@ arrange_column(Area *a, Bool dirty) {
 	case Colmax:
 		for(f=a->frame; f; f=f->anext) {
 			f->collapsed = False;
-			f->rect = a->rect;
+			f->r = a->r;
 		}
 		goto resize;
 	default:
@@ -342,14 +342,14 @@ arrange_column(Area *a, Bool dirty) {
 resize:
 	if(a->view == screen->sel) {
 		restack_view(a->view);
-		resize_client(a->sel->client, &a->sel->rect);
+		resize_client(a->sel->client, &a->sel->r);
 
 		for(f=a->frame; f; f=f->anext)
 			if(!f->collapsed && f != a->sel)
-				resize_client(f->client, &f->rect);
+				resize_client(f->client, &f->r);
 		for(f=a->frame; f; f=f->anext)
 			if(f->collapsed && f != a->sel)
-				resize_client(f->client, &f->rect);
+				resize_client(f->client, &f->r);
 	}
 }
 
@@ -361,9 +361,9 @@ resize_column(Area *a, int w) {
 	an = a->next;
 	assert(an != nil);
 
-	dw = w - Dx(a->rect);
-	a->rect.max.x += dw;
-	an->rect.min.x += dw;
+	dw = w - Dx(a->r);
+	a->r.max.x += dw;
+	an->r.min.x += dw;
 
 	arrange_view(a->view);
 	focus_view(screen, a->view);
@@ -382,22 +382,22 @@ resize_colframeh(Frame *f, Rectangle *r) {
 	fp = f->aprev;
 
 	if(fp)
-		r->min.y = max(r->min.y, fp->rect.min.y + minh);
+		r->min.y = max(r->min.y, fp->r.min.y + minh);
 	else
-		r->min.y = max(r->min.y, a->rect.min.y);
+		r->min.y = max(r->min.y, a->r.min.y);
 
 	if(fn)
-		r->max.y = min(r->max.y, fn->rect.max.y - minh);
+		r->max.y = min(r->max.y, fn->r.max.y - minh);
 	else
-		r->max.y = min(r->max.y, a->rect.max.y);
+		r->max.y = min(r->max.y, a->r.max.y);
 
 	if(fp) {
-		fp->rect.max.y = r->min.y;
-		resize_frame(fp, fp->rect);
+		fp->r.max.y = r->min.y;
+		resize_frame(fp, fp->r);
 	}
 	if(fn) {
-		fn->rect.min.y = r->max.y;
-		resize_frame(fn, fn->rect);
+		fn->r.min.y = r->max.y;
+		resize_frame(fn, fn->r);
 	}
 
 	resize_frame(f, *r);
@@ -414,38 +414,38 @@ resize_colframe(Frame *f, Rectangle *r) {
 	v = a->view;
 	maxx = r->max.x;
 
-	minw = Dx(screen->rect) / NCOL;
+	minw = Dx(screen->r) / NCOL;
 
 	al = a->prev;
 	ar = a->next;
 
 	if(al)
-		r->min.x = max(r->min.x, al->rect.min.x + minw);
+		r->min.x = max(r->min.x, al->r.min.x + minw);
 	else
 		r->min.x = max(r->min.x, 0);
 
 	if(ar) {
-		if(maxx >= ar->rect.max.x - minw)
-			maxx = ar->rect.max.x - minw;
+		if(maxx >= ar->r.max.x - minw)
+			maxx = ar->r.max.x - minw;
 	}
 	else
-		if(maxx > screen->rect.max.x)
-			maxx = screen->rect.max.x;
+		if(maxx > screen->r.max.x)
+			maxx = screen->r.max.x;
 
-	dx = a->rect.min.x - r->min.x;
-	dw = maxx - a->rect.max.x;
+	dx = a->r.min.x - r->min.x;
+	dw = maxx - a->r.max.x;
 	if(al) {
-		al->rect.max.x -= dx;
+		al->r.max.x -= dx;
 		arrange_column(al, False);
 	}
 	if(ar) {
-		ar->rect.max.x -= dw;
+		ar->r.max.x -= dw;
 		arrange_column(ar, False);
 	}
 
 	resize_colframeh(f, r);
 
-	a->rect.max.x = maxx;
+	a->r.max.x = maxx;
 	arrange_view(a->view);
 
 	focus_view(screen, v);

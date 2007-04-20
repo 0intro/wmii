@@ -51,7 +51,7 @@ framerect(Framewin *f) {
 	/* Keep onscreen */
 	p = ZP;
 	p.x -= min(r.min.x, 0);
-	p.x -= max(r.max.x - screen->rect.max.x, 0);
+	p.x -= max(r.max.x - screen->r.max.x, 0);
 	p.y -= min(r.min.y, 0);
 	p.y -= max(r.max.y - screen->brect.min.y, 0);
 	return rectaddpt(r, p);
@@ -126,30 +126,30 @@ vplace(Framewin *fw, Point pt) {
 	v = screen->sel;
 	
 	for(a = v->area->next; a->next; a = a->next)
-		if(pt.x < a->rect.max.x)
+		if(pt.x < a->r.max.x)
 			break;
 
 	for(f = a->frame; f->anext; f = f->anext)
-		if(pt.y < f->rect.max.y)
+		if(pt.y < f->r.max.y)
 			break;
 
-	if(abs(pt.y - f->rect.min.y) < labelh(def.font)) {
-		pt.y = f->rect.min.y;
+	if(abs(pt.y - f->r.min.y) < labelh(def.font)) {
+		pt.y = f->r.min.y;
 		if(f == fw->f)
 			pt.y += Dy(fw->w->r)/2;
 		else if(f->aprev == fw->f)
 			pt.y += labelh(def.font);
 	}
-	else if(abs(pt.y - f->rect.max.y) < labelh(def.font)) {
+	else if(abs(pt.y - f->r.max.y) < labelh(def.font)) {
 		if(f != fw->f) {
-			pt.y = f->rect.max.y;
+			pt.y = f->r.max.y;
 			if(f->anext == fw->f)
 				pt.y += Dy(fw->w->r)/2;
 		}
 	}
 	
-	pt.x = a->rect.min.x;
-	frameadjust(fw, pt, OHoriz, Dx(a->rect));	
+	pt.x = a->r.min.x;
+	frameadjust(fw, pt, OHoriz, Dx(a->r));	
 }
 
 static void
@@ -158,20 +158,20 @@ hplace(Framewin *fw, Point pt) {
 	View *v;
 	int minw;
 	
-	minw = Dx(screen->rect)/NCOL;
+	minw = Dx(screen->r)/NCOL;
 	v = screen->sel;
 
 	for(a = v->area->next; a->next; a = a->next)
-		if(pt.x < a->rect.max.x)
+		if(pt.x < a->r.max.x)
 			break;
 
-	if(abs(pt.x - a->rect.min.x) < minw/2)
-		pt.x = a->rect.min.x;
-	else if(abs(pt.x - a->rect.max.x) < minw/2)
-		pt.x = a->rect.max.x;
+	if(abs(pt.x - a->r.min.x) < minw/2)
+		pt.x = a->r.min.x;
+	else if(abs(pt.x - a->r.max.x) < minw/2)
+		pt.x = a->r.max.x;
 
-	pt.y = a->rect.min.y;
-	frameadjust(fw, pt, OVert, Dy(a->rect));	
+	pt.y = a->r.min.y;
+	frameadjust(fw, pt, OVert, Dy(a->r));	
 }
 
 static void
@@ -190,10 +190,10 @@ do_managed_move(Client *c) {
 
 	pt = querypointer(&scr.root);
 
-	pt.x = f->area->rect.min.x;
-	fw = framewin(f, pt, OHoriz, Dx(f->area->rect));
+	pt.x = f->area->r.min.x;
+	fw = framewin(f, pt, OHoriz, Dx(f->area->r));
 	
-	r = screen->rect;
+	r = screen->r;
 	r.min.y += fw->gb.min.y + Dy(fw->gb)/2;
 	r.max.y = r.min.y + 1;
 	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
@@ -306,20 +306,20 @@ mouse_resizecolframe(Frame *f, Align align) {
 		d = d->next;
 
 	if(align&NORTH) {
-		r.min.y = (f->aprev ? f->aprev->rect.min.y : screen->rect.min.y);
-		r.max.y = f->rect.max.y;
+		r.min.y = (f->aprev ? f->aprev->r.min.y : screen->r.min.y);
+		r.max.y = f->r.max.y;
 	}else {
-		r.min.y = f->rect.min.y;
-		r.max.y = (f->anext ? f->anext->rect.max.y : a->rect.max.y);
+		r.min.y = f->r.min.y;
+		r.max.y = (f->anext ? f->anext->r.max.y : a->r.max.y);
 	}
 	if(align&WEST) {
-		r.min.x = (a->prev ? a->prev->rect.min.x : screen->rect.min.x);
-		r.max.x = a->rect.max.x;
+		r.min.x = (a->prev ? a->prev->r.min.x : screen->r.min.x);
+		r.max.x = a->r.max.x;
 	}else {
-		r.min.x = a->rect.min.x;
-		r.max.x = (a->next ? a->next->rect.max.x : screen->rect.max.x);
+		r.min.x = a->r.min.x;
+		r.max.x = (a->next ? a->next->r.max.x : screen->r.max.x);
 	}
-	min.x = Dx(screen->rect)/NCOL;
+	min.x = Dx(screen->r)/NCOL;
 	min.y = frame_delta_h() + labelh(def.font);
 	r.min = addpt(r.min, min);
 	r.max = subpt(r.max, min);
@@ -327,7 +327,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
 	mapwin(cwin);
 
-	r = f->rect;
+	r = f->r;
 	if(align&NORTH)
 		r.min.y--;
 	else
@@ -339,8 +339,8 @@ mouse_resizecolframe(Frame *f, Align align) {
 	if(!grabpointer(&scr.root, cwin, cursor[CurSizing], MouseMask))
 		goto done;
 	
-	pt.x = ((align&WEST) ? f->rect.min.x : f->rect.max.x);
-	pt.y = ((align&NORTH) ? f->rect.min.y : f->rect.max.y);
+	pt.x = ((align&WEST) ? f->r.min.x : f->r.max.x);
+	pt.y = ((align&NORTH) ? f->r.min.y : f->r.max.y);
 	warppointer(pt);
 
 	for(;;) {
@@ -372,21 +372,21 @@ mouse_resizecolframe(Frame *f, Align align) {
 				r.max.x = pt.x;
 			if(align&NORTH) {
 				r.min.y = pt.y;
-				r.max.y = f->rect.max.y;
+				r.max.y = f->r.max.y;
 			}else {
-				r.min.y = f->rect.min.y;
+				r.min.y = f->r.min.y;
 				r.max.y = pt.y;
 			}
 			resize_colframe(f, &r);
 			
 			if(align&WEST)
-				pt.x = f->rect.min.x + 1;
+				pt.x = f->r.min.x + 1;
 			else
-				pt.x = f->rect.max.x - 2;
+				pt.x = f->r.max.x - 2;
 			if(align&NORTH)
-				pt.y = f->rect.min.y + 1;
+				pt.y = f->r.min.y + 1;
 			else
-				pt.y = f->rect.max.y - 2;
+				pt.y = f->r.max.y - 2;
 			warppointer(pt);
 			goto done;
 		}
@@ -420,9 +420,9 @@ mouse_resizecol(Divide *d) {
 
 	pt = querypointer(&scr.root);
 
-	minw = Dx(screen->rect)/NCOL;
-	r.min.x = a->rect.min.x + minw;
-	r.max.x = a->next->rect.max.x - minw;
+	minw = Dx(screen->r)/NCOL;
+	r.min.x = a->r.min.x + minw;
+	r.max.x = a->next->r.max.x - minw;
 	r.min.y = pt.y;
 	r.max.y = pt.y+1;
 
@@ -445,7 +445,7 @@ mouse_resizecol(Divide *d) {
 			setdiv(d, pt.x);
 			break;
 		case ButtonRelease:
-			resize_column(a, pt.x - a->rect.min.x);
+			resize_column(a, pt.x - a->r.min.x);
 			goto done;
 		}
 	}
@@ -563,7 +563,6 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 	Point d, pt, hr;
 	float rx, ry, hrx, hry;
 	uint num;
-	Bool floating;
 	Frame *f;
 
 	f = c->sel;
@@ -576,7 +575,7 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 		return;
 	}
 
-	origin = frect = f->rect;
+	origin = frect = f->r;
 	rects = rects_of_view(f->area->view, &num, (opaque ? c->frame : nil));
 
 	cur = cursor_of_quad(align);
@@ -603,7 +602,7 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 		if(align&EAST) d.x += hr.x;
 		if(align&WEST) d.x -= hr.x;
 
-		pt = addpt(d, f->rect.min);
+		pt = addpt(d, f->r.min);
 		warppointer(pt);
 	}
 	else if(f->client->fullscreen) {
@@ -611,10 +610,10 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 		return;
 	}
 	else if(!opaque) {
-		hrx = (double)(Dx(screen->rect) + Dx(frect) - 2 * labelh(def.font))
-				/ Dx(screen->rect);
-		hry = (double)(Dy(screen->rect)  + Dy(frect) - 3 * labelh(def.font))
-				/ Dy(screen->rect);
+		hrx = (double)(Dx(screen->r) + Dx(frect) - 2 * labelh(def.font))
+				/ Dx(screen->r);
+		hry = (double)(Dy(screen->r)  + Dy(frect) - 3 * labelh(def.font))
+				/ Dy(screen->r);
 
 		pt.x = frect.max.x - labelh(def.font);
 		pt.y = frect.max.y - labelh(def.font);
@@ -652,7 +651,7 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 
 			grav = snap_rect(rects, num, &frect, &align, def.snap);
 
-			apply_sizehints(c, &frect, floating, True, grav);
+			frect = frame_hints(f, frect, grav);
 			frect = constrain(frect);
 
 			reshapewin(c->framewin, frect);

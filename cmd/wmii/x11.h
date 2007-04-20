@@ -13,6 +13,7 @@ typedef struct Point Point;
 typedef struct Rectangle Rectangle;
 typedef struct Screen Screen;
 typedef struct Window Window;
+typedef struct WinHints WinHints;
 typedef struct Handlers Handlers;
 typedef struct Window Image;
 typedef struct Font Font;
@@ -29,15 +30,25 @@ struct Rectangle {
 struct Window {
 	int type;
 	XWindow w;
+	Window *parent;
 	Drawable image;
 	GC gc;
 	Rectangle r;
 	void *aux;
 	Handlers *handler;
 	Window *next, *prev;
+	WinHints *hints;
 	Bool mapped;
 	int unmapped;
 	int depth;
+};
+
+struct WinHints {
+	Point min, max;
+	Point base, baspect;
+	Point inc;
+	Rectangle aspect;
+	Point grav;
 };
 
 struct Handlers {

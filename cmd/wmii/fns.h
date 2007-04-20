@@ -66,6 +66,7 @@ Area *new_column(View*, Area *pos, uint w);
 void dispatch_event(XEvent*);
 void check_x_event(IxpConn*);
 uint flushevents(long even_mask, Bool dispatch);
+void print_focus(Client *c, char *to);
 
 /* frame.c */
 Frame *create_frame(Client*, View*);
@@ -76,6 +77,7 @@ Bool frame_to_top(Frame *f);
 void set_frame_cursor(Frame*, Point);
 void swap_frames(Frame*, Frame*);
 int frame_delta_h();
+Rectangle frame_hints(Frame*, Rectangle, Align);
 Rectangle frame2client(Frame*, Rectangle);
 Rectangle client2frame(Frame*, Rectangle);
 int ingrabbox(Frame*, int x, int y);
@@ -148,6 +150,7 @@ int win_proto(Window);
 /* x11.c */
 XRectangle XRect(Rectangle);
 int eqrect(Rectangle, Rectangle);
+int eqpt(Point, Point);
 Point addpt(Point, Point);
 Point subpt(Point, Point);
 Point divpt(Point, Point);
@@ -158,6 +161,7 @@ void initdisplay();
 Image * allocimage(int w, int h, int depth);
 void freeimage(Image *);
 Window *createwindow(Window *parent, Rectangle, int depth, uint class, WinAttr*, int valuemask);
+void reparentwindow(Window*, Window*, Point);
 void destroywindow(Window*);
 void setwinattr(Window*, WinAttr*, int valmask);
 void reshapewin(Window*, Rectangle);
@@ -188,8 +192,11 @@ Atom xatom(char*);
 Point querypointer(Window*);
 void warppointer(Point);
 Point translate(Window*, Window*, Point);
-int grabpointer(Window*, Window *confine, Cursor cur, int mask);
+int grabpointer(Window*, Window *confine, Cursor, int mask);
 void ungrabpointer();
+Rectangle gravitate(Rectangle dst, Rectangle src, Point grav);
+Rectangle sizehint(WinHints*, Rectangle);
+void sethints(Window*);
 
 /* utf.c */
 int	chartorune(Rune*, char*);

@@ -88,7 +88,7 @@ struct Area {
 	Bool floating;
 	ushort id;
 	int mode;
-	Rectangle rect;
+	Rectangle r;
 };
 
 struct Frame {
@@ -98,7 +98,7 @@ struct Frame {
 	View *view;
 	Area *area;
 	ushort id;
-	Rectangle rect;
+	Rectangle r;
 	Rectangle crect;
 	Rectangle revert;
 	Client *client;
@@ -121,14 +121,12 @@ struct Client {
 	Bool fixedsize;
 	Bool fullscreen;
 	Bool urgent;
-	Bool mapped;
-	Bool frame_mapped;
 	int unmapped;
-	Window win;
+	Window w;
 	XWindow trans;
 	Window *framewin;
 	Cursor cursor;
-	Rectangle rect;
+	Rectangle r;
 	XSizeHints size;
 	GC gc;
 };
@@ -201,7 +199,7 @@ struct WMScreen {
 	Window *barwin;
 	Image *ibuf;
 
-	Rectangle rect;
+	Rectangle r;
 	Rectangle brect;
 } *screens, *screen;
 

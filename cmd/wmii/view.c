@@ -132,7 +132,7 @@ focus_view(WMScreen *s, View *v) {
 	for(c=client; c; c=c->next)
 		if((f = c->sel)) {
 			if(f->view == v)
-				resize_client(c, &f->rect);
+				resize_client(c, &f->r);
 			else {
 				unmap_frame(c);
 				unmap_client(c, IconicState);
@@ -236,7 +236,7 @@ scale_view(View *v, int w) {
 	float scale, dx;
 	int wdiff;
 
-	min_width = Dx(screen->rect)/NCOL;
+	min_width = Dx(screen->r)/NCOL;
 
 	if(!v->area->next)
 		return;
@@ -245,17 +245,17 @@ scale_view(View *v, int w) {
 	dx = 0;
 	for(a=v->area->next; a; a=a->next) {
 		num_col++;
-		dx += Dx(a->rect);
+		dx += Dx(a->r);
 	}
 
 	scale = (float)w / dx;
 	xoff = 0;
 	for(a=v->area->next; a; a=a->next) {
-		a->rect.min.x = xoff;
-		a->rect.max.x = xoff + Dx(a->rect) * scale;
+		a->r.min.x = xoff;
+		a->r.max.x = xoff + Dx(a->r) * scale;
 		if(!a->next)
-			a->rect.max.x = w;
-		xoff = a->rect.max.x;
+			a->r.max.x = w;
+		xoff = a->r.max.x;
 	}
 
 	/* min_width can only be respected when there is enough space;
@@ -265,16 +265,16 @@ scale_view(View *v, int w) {
 
 	xoff = 0;
 	for(a=v->area->next, num_col--; a; a=a->next, num_col--) {
-		a->rect.min.x = xoff;
+		a->r.min.x = xoff;
 	
-		if(Dx(a->rect) < min_width)
-			a->rect.max.x = xoff + min_width;
-		else if((wdiff = xoff + Dx(a->rect) - w + num_col * min_width) > 0)
-			a->rect.max.x -= wdiff;
+		if(Dx(a->r) < min_width)
+			a->r.max.x = xoff + min_width;
+		else if((wdiff = xoff + Dx(a->r) - w + num_col * min_width) > 0)
+			a->r.max.x -= wdiff;
 		if(!a->next)
-			a->rect.max.x = w;
+			a->r.max.x = w;
 
-		xoff = a->rect.max.x;
+		xoff = a->r.max.x;
 	}
 }
 
@@ -286,13 +286,13 @@ arrange_view(View *v) {
 	if(!v->area->next)
 		return;
 
-	scale_view(v, Dx(screen->rect));
+	scale_view(v, Dx(screen->r));
 	xoff = 0;
 	for(a=v->area->next; a; a=a->next) {
-		a->rect.min.x = xoff;
-		a->rect.min.y = 0;
-		a->rect.max.y = screen->brect.min.y;
-		xoff = a->rect.max.x;
+		a->r.min.x = xoff;
+		a->r.min.y = 0;
+		a->r.max.y = screen->brect.min.y;
+		xoff = a->r.max.x;
 		arrange_column(a, False);
 	}
 	if(v == screen->sel)
@@ -314,8 +314,8 @@ rects_of_view(View *v, uint *num, Frame *ignore) {
 	i = 0;
 	for(f=v->area->frame; f; f=f->anext)
 		if(f != ignore)
-			result[i++] = f->rect;
-	result[i++] = screen->rect;
+			result[i++] = f->r;
+	result[i++] = screen->r;
 	result[i++] = screen->brect;
 
 	*num = i;
@@ -336,23 +336,23 @@ view_index(View *v) {
 	for((a=v->area), (i=0); a && len > 0; (a=a->next), i++) {
 		if(a->floating)
 			n = snprintf(buf, len, "# ~ %d %d\n",
-					Dx(a->rect), Dy(a->rect));
+					Dx(a->r), Dy(a->r));
 		else
 			n = snprintf(buf, len, "# %d %d %d\n",
-					i, a->rect.min.x, Dx(a->rect));
+					i, a->r.min.x, Dx(a->r));
 
 		buf += n;
 		len -= n;
 		for(f=a->frame; f && len > 0; f=f->anext) {
-			Rectangle *r = &f->rect;
+			Rectangle *r = &f->r;
 			if(a->floating)
 				n = snprintf(buf, len, "~ 0x%x %d %d %d %d %s\n",
-						(uint)f->client->win.w,
+						(uint)f->client->w.w,
 						r->min.x, r->min.y, Dx(*r), Dy(*r),
 						f->client->props);
 			else
 				n = snprintf(buf, len, "%d 0x%x %d %d %s\n",
-						i, (uint)f->client->win.w,
+						i, (uint)f->client->w.w,
 						r->min.y, Dy(*r),
 						f->client->props);
 			if(len - n < 0)
@@ -381,7 +381,7 @@ client_of_message(View *v, char *message, uint *next) {
 		return nil;
 
 	for(c=client; c; c=c->next)
-		if(c->win.w == id) break;
+		if(c->w.w == id) break;
 	return c;
 }
 
@@ -496,7 +496,7 @@ newcolw(View *v, int num) {
 			n = tokenize(toks, 16, buf, '+');
 			if(n > num)
 				if(sscanf(toks[num], "%u", &n) == 1)
-					return Dx(screen->rect) * ((double)n / 100);
+					return Dx(screen->r) * ((double)n / 100);
 			break;
 		}
 	return 0;

@@ -252,6 +252,7 @@ parse_colors(char **buf, int *buflen, CTuple *col) {
 	return nil;
 }
 
+#define strecmp(str, const) (strncmp((str), (const), sizeof(const)-1))
 char *
 message_root(char *message) {
 	Font *fn;
@@ -261,32 +262,35 @@ message_root(char *message) {
 		snprintf(buffer, sizeof(buffer), "%s ", message);
 		message = buffer;
 	}
-	if(!strcmp(message, "quit "))
+
+	if(!strecmp(message, "quit "))
 		srv.running = 0;
-	else if(!strncmp(message, "exec ", 5)) {
+	else if(!strecmp(message, "exec ")) {
+		message += sizeof("exec ")-1;
 		srv.running = 0;
-		execstr = emalloc(strlen(&message[5]) + sizeof("exec "));
+		execstr = emalloc(strlen(message) + sizeof("exec "));
 		sprintf(execstr, "exec %s", &message[5]);
-		message += strlen(message);
 	}
-	else if(!strncmp(message, "view ", 5))
-		select_view(&message[5]);
-	else if(!strncmp(message, "selcolors ", 10)) {
-		fprintf(stderr, "wmii: warning: selcolors have been removed\n");
+	else if(!strecmp(message, "view ")) {
+		message += sizeof("view ")-1;
+		select_view(message);
+	}
+	else if(!strecmp(message, "selcolors ")) {
+		fprintf(stderr, "%s: warning: selcolors have been removed\n", argv0);
 		return Ebadcmd;
 	}
-	else if(!strncmp(message, "focuscolors ", 12)) {
-		message += 12;
+	else if(!strecmp(message, "focuscolors ")) {
+		message += sizeof("focuscolors ")-1;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.focuscolor);
 	}
-	else if(!strncmp(message, "normcolors ", 11)) {
-		message += 11;
+	else if(!strecmp(message, "normcolors ")) {
+		message += sizeof("normcolors ")-1;
 		n = strlen(message);
 		return parse_colors(&message, (int *)&n, &def.normcolor);
 	}
-	else if(!strncmp(message, "font ", 5)) {
-		message += 5;
+	else if(!strecmp(message, "font ")) {
+		message += sizeof("font ")-1;
 		fn = loadfont(message);
 		if(fn) {
 			freefont(def.font);
@@ -295,15 +299,15 @@ message_root(char *message) {
 		}else
 			return "can't load font";
 	}
-	else if(!strncmp(message, "border ", 7)) {
-		message += 7;
+	else if(!strecmp(message, "border ")) {
+		message += sizeof("border ")-1;
 		n = (uint)strtol(message, &message, 10);
 		if(*message)
 			return Ebadvalue;
 		def.border = n;
 	}
-	else if(!strncmp(message, "grabmod ", 8)) {
-		message += 8;
+	else if(!strecmp(message, "grabmod ")) {
+		message += sizeof("grabmod ")-1;
 		ulong mod;
 		mod = mod_key_of_str(message);
 		if(!(mod & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)))
@@ -417,8 +421,8 @@ lookup_file(FileId *parent, char *name)
 						*last = file;
 						last = &file->next;
 						file->p.client = c;
-						file->id = c->win.w;
-						file->index = c->win.w;
+						file->id = c->w.w;
+						file->index = c->w.w;
 						file->tab = *dir;
 						file->tab.name = estrdup("sel");
 					}if(name) goto LastItem;
@@ -428,16 +432,16 @@ lookup_file(FileId *parent, char *name)
 					if(*name) goto NextItem;
 				}
 				for(c=client; c; c=c->next) {
-					if(!name || c->win.w == id) {
+					if(!name || c->w.w == id) {
 						file = get_file();
 						*last = file;
 						last = &file->next;
 						file->p.client = c;
-						file->id = c->win.w;
-						file->index = c->win.w;
+						file->id = c->w.w;
+						file->index = c->w.w;
 						file->tab = *dir;
 						file->tab.name = emallocz(16);
-						snprintf(file->tab.name, 16, "0x%x", (uint)c->win.w);
+						snprintf(file->tab.name, 16, "0x%x", (uint)c->w.w);
 						if(name) goto LastItem;
 					}
 				}
