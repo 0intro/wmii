@@ -294,6 +294,12 @@ setshapemask(Window *dst, Image *src, Point pt) {
 		ShapeBounding, pt.x, pt.y, src->image, ShapeSet);
 }
 
+static void
+setgccol(Image *dst, ulong col) {
+	XSetForeground(display, dst->gc, col);
+	XSetBackground(display, dst->gc, col);
+}
+
 /* Drawing */
 void
 border(Image *dst, Rectangle r, int w, ulong col) {
@@ -305,14 +311,14 @@ border(Image *dst, Rectangle r, int w, ulong col) {
 	r.max.y -= w%2;
 
 	XSetLineAttributes(display, dst->gc, w, LineSolid, CapButt, JoinMiter);
-	XSetForeground(display, dst->gc, col);
+	setgccol(dst, col);
 	XDrawRectangle(display, dst->image, dst->gc,
 			r.min.x, r.min.y, Dx(r), Dy(r));
 }
 
 void
 fill(Image *dst, Rectangle r, ulong col) {
-	XSetForeground(display, dst->gc, col);
+	setgccol(dst, col);
 	XFillRectangle(display, dst->image, dst->gc,
 		r.min.x, r.min.y, Dx(r), Dy(r));
 }
@@ -336,7 +342,7 @@ drawpoly(Image *dst, Point *pt, int np, int cap, int w, ulong col) {
 	
 	xp = convpts(pt, np);
 	XSetLineAttributes(display, dst->gc, w, LineSolid, cap, JoinMiter);
-	XSetForeground(display, dst->gc, col);
+	setgccol(dst, col);
 	XDrawLines(display, dst->image, dst->gc, xp, np, CoordModeOrigin);
 	free(xp);
 }
@@ -346,7 +352,7 @@ fillpoly(Image *dst, Point *pt, int np, ulong col) {
 	XPoint *xp;
 
 	xp = convpts(pt, np);
-	XSetForeground(display, dst->gc, col);
+	setgccol(dst, col);
 	XFillPolygon(display, dst->image, dst->gc, xp, np, Complex, CoordModeOrigin);
 	free(xp);
 }
@@ -354,7 +360,7 @@ fillpoly(Image *dst, Point *pt, int np, ulong col) {
 void
 drawline(Image *dst, Point p1, Point p2, int cap, int w, ulong col) {
 	XSetLineAttributes(display, dst->gc, w, LineSolid, cap, JoinMiter);
-	XSetForeground(display, dst->gc, col);
+	setgccol(dst, col);
 	XDrawLine(display, dst->image, dst->gc, p1.x, p1.y, p2.x, p2.y);
 }
 
@@ -402,7 +408,7 @@ drawstring(Image *dst, Font *font,
 		break;
 	}
 
-	XSetForeground(display, dst->gc, col);
+	setgccol(dst, col);
 	if(font->set)
 		Xutf8DrawString(display, dst->image, 
 				font->set, dst->gc,
