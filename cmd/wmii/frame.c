@@ -180,7 +180,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 static void
 expose_event(Window *w, XExposeEvent *e) {
 	Client *c;
-	
+
 	c = w->aux;
 	if(c->sel)
 		draw_frame(c->sel);
@@ -435,6 +435,7 @@ draw_frame(Frame *f) {
 	drawstring(screen->ibuf, def.font, r, WEST,
 			f->client->name, col->fg);
 
+	XSetWindowBackgroundPixmap(display, f->client->framewin->w, None);
 	copyimage(f->client->framewin, fr, screen->ibuf, ZP);
 	XSync(display, False);
 }

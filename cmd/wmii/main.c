@@ -220,11 +220,15 @@ init_screen(WMScreen *screen) {
 
 static void
 cleanup() {
+	Point p;
 	Client *c;
 
 	for(c=client; c; c=c->next) {
-		reparent_client(c, &scr.root, c->sel->r.min);
-		if(c->sel->view != screen->sel)
+		p = ZP;
+		if(c->sel)
+			p = c->sel->r.min;
+		reparent_client(c, &scr.root, p);
+		if(c->sel && c->sel->view != screen->sel)
 			unmap_client(c, IconicState);
 	}
 	XSync(display, False);
@@ -382,10 +386,11 @@ check_9pcon(IxpConn *c) {
 
 int
 main(int argc, char *argv[]) {
-	char *wmiirc;
+	char *wmiirc, *str;
 	WMScreen *s;
 	WinAttr wa;
 	int i;
+	ulong col;
 
 	wmiirc = "wmiistartrc";
 
@@ -476,6 +481,14 @@ main(int argc, char *argv[]) {
 				| CWCursor);
 		initbar(s);
 	}
+
+	str = "This app is broken. Disable its transparency feature.";
+	i = textwidth(def.font, str) + labelh(def.font);
+	broken = allocimage(i, labelh(def.font), scr.depth);
+
+	namedcolor("#ff0000", &col);
+	fill(broken, broken->r, scr.black);
+	drawstring(broken, def.font, broken->r, EAST, str, col);
 
 	screen->focus = nil;
 	setfocus(screen->barwin, RevertToParent);

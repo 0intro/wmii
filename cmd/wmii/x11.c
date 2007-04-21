@@ -297,7 +297,6 @@ setshapemask(Window *dst, Image *src, Point pt) {
 static void
 setgccol(Image *dst, ulong col) {
 	XSetForeground(display, dst->gc, col);
-	XSetBackground(display, dst->gc, col);
 }
 
 /* Drawing */

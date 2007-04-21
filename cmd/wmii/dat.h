@@ -239,6 +239,7 @@ Cursor cursor[CurLast];
 void (*handler[LASTEvent]) (XEvent *);
 
 /* Misc */
+Image *broken;
 Bool starting;
 Bool verbose;
 char *user;

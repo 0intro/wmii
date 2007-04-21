@@ -56,6 +56,7 @@ create_client(XWindow w, XWindowAttributes *wa) {
 	XSelectInput(display, c->w.w, ClientMask);
 
 	fwa.override_redirect = True;
+	fwa.background_pixmap = broken->image;
 	fwa.event_mask =
 			  SubstructureRedirectMask
 			| SubstructureNotifyMask
@@ -66,7 +67,8 @@ create_client(XWindow w, XWindowAttributes *wa) {
 			| ButtonReleaseMask;
 	c->framewin = createwindow(&scr.root, c->r, scr.depth, InputOutput, &fwa,
 			  CWOverrideRedirect
-			| CWEventMask);
+			| CWEventMask
+			| CWBackPixmap);
 	c->framewin->aux = c;
 	c->w.aux = c;
 	sethandler(c->framewin, &framehandler);
@@ -138,8 +140,10 @@ destroy_client(Client *c) {
 	/* In case the client is already unmapped */
 	handler = XSetErrorHandler(ignoreerrors);
 
-	r = gravclient(c, ZR);
-	r = frame2client(nil, r);
+	if(c->sel) {
+		r = gravclient(c, ZR);
+		r = frame2client(nil, r);
+	}
 
 	dummy = nil;
 	update_client_views(c, &dummy);
