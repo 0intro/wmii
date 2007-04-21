@@ -48,14 +48,14 @@ scan_wins() {
 			if(wa.override_redirect || XGetTransientForHint(display, wins[i], &d1))
 				continue;
 			if(wa.map_state == IsViewable)
-				manage_client(create_client(wins[i], &wa));
+				create_client(wins[i], &wa);
 		}
 		for(i = 0; i < num; i++) {
 			if(!XGetWindowAttributes(display, wins[i], &wa))
 				continue;
 			if((XGetTransientForHint(display, wins[i], &d1))
 			&& (wa.map_state == IsViewable))
-				manage_client(create_client(wins[i], &wa));
+				create_client(wins[i], &wa);
 		}
 	}
 	if(wins)

@@ -260,7 +260,7 @@ maprequest(XEvent *e) {
 		return;
 	}
 	if(!win2client(ev->window))
-		manage_client(create_client(ev->window, &wa));
+		create_client(ev->window, &wa);
 }
 
 static void

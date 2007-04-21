@@ -386,24 +386,42 @@ mouse_resizecolframe(Frame *f, Align align) {
 	if(align&EAST)
 		d = d->next;
 
-	if(align&NORTH) {
-		r.min.y = (f->aprev ? f->aprev->r.min.y : screen->r.min.y);
-		r.max.y = f->r.max.y;
-	}else {
-		r.min.y = f->r.min.y;
-		r.max.y = (f->anext ? f->anext->r.max.y : a->r.max.y);
-	}
-	if(align&WEST) {
-		r.min.x = (a->prev ? a->prev->r.min.x : screen->r.min.x);
-		r.max.x = a->r.max.x;
-	}else {
-		r.min.x = a->r.min.x;
-		r.max.x = (a->next ? a->next->r.max.x : screen->r.max.x);
-	}
 	min.x = Dx(screen->r)/NCOL;
 	min.y = frame_delta_h() + labelh(def.font);
-	r.min = addpt(r.min, min);
-	r.max = subpt(r.max, min);
+	if(align&NORTH) {
+		if(f->aprev) {
+			r.min.y = f->aprev->r.min.y + min.y;
+			r.max.y = f->r.max.y - min.y;
+		}else {
+			r.min.y = a->r.min.y;
+			r.max.y = r.min.y + 1;
+		}
+	}else {
+		if(f->anext) {
+			r.max.y = f->anext->r.max.y - min.y;
+			r.min.y = f->r.min.y + min.y;
+		}else {
+			r.max.y = a->r.max.y;
+			r.min.y = r.max.y - 1;
+		}
+	}
+	if(align&WEST) {
+		if(a->prev) {
+			r.min.x = a->prev->r.min.x + min.x;
+			r.max.x = a->r.max.x - min.x;
+		}else {
+			r.min.x = a->r.min.x;
+			r.max.x = r.min.x + 1;
+		}
+	}else {
+		if(a->next) {
+			r.max.x = a->next->r.max.x - min.x;
+			r.min.x = a->r.min.x + min.x;
+		}else {
+			r.max.x = a->r.max.x;
+			r.min.x = r.max.x - 1;
+		}
+	}
 
 	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
 	mapwin(cwin);
@@ -447,27 +465,25 @@ mouse_resizecolframe(Frame *f, Align align) {
 			reshapewin(hwin, r);
 			break;
 		case ButtonRelease:
+			r = f->r;
 			if(align&WEST)
 				r.min.x = pt.x;
 			else
 				r.max.x = pt.x;
-			if(align&NORTH) {
-				r.min.y = pt.y;
-				r.max.y = f->r.max.y;
-			}else {
-				r.min.y = f->r.min.y;
-				r.max.y = pt.y;
-			}
-			resize_colframe(f, &r);
-			
-			if(align&WEST)
-				pt.x = f->r.min.x + 1;
-			else
-				pt.x = f->r.max.x - 2;
 			if(align&NORTH)
-				pt.y = f->r.min.y + 1;
+				r.min.y = pt.y;
 			else
-				pt.y = f->r.max.y - 2;
+				r.max.y = pt.y;
+			resize_colframe(f, &r);
+
+			if(align&WEST)
+				pt.x = f->r.min.x + 4;
+			else
+				pt.x = f->r.max.x - 4;
+			if(align&NORTH)
+				pt.y = f->r.min.y + 4;
+			else
+				pt.y = f->r.max.y - 4;
 			warppointer(pt);
 			goto done;
 		}
@@ -657,7 +673,7 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 	}
 
 	origin = frect = f->r;
-	rects = rects_of_view(f->area->view, &num, (opaque ? c->frame : nil));
+	rects = rects_of_view(f->area->view, &num, c->frame);
 
 	cur = cursor_of_quad(align);
 	if((align==CENTER) && !opaque)
@@ -705,8 +721,6 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 		flushevents(PointerMotionMask, False);
 	}
 
-	unmap_client(c, IconicState);
-
 	for(;;) {
 		XMaskEvent(display, MouseMask | ExposureMask, &ev);
 		switch (ev.type) {
@@ -747,8 +761,6 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 					pt.y = screen->brect.min.y - 1;
 				warppointer(pt);
 			}
-
-			map_client(c);
 
 			free(rects);
 			XUngrabPointer(display, CurrentTime);

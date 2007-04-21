@@ -48,6 +48,7 @@ create_client(XWindow w, XWindowAttributes *wa) {
 	prop_client(c, xatom("WM_NORMAL_HINTS"));
 	prop_client(c, xatom("WM_HINTS"));
 	prop_client(c, xatom("WM_NAME"));
+	prop_client(c, xatom("_MOTIF_WM_HINTS"));
 
 	XSetWindowBorderWidth(display, w, 0);
 	XAddToSaveSet(display, w);
@@ -80,6 +81,7 @@ create_client(XWindow w, XWindowAttributes *wa) {
 		}
 
 	write_event("CreateClient 0x%x\n", c->w.w);
+	manage_client(c);
 	return c;
 }
 
@@ -95,7 +97,7 @@ gravclient(Client *c, Rectangle rd) {
 	WinHints *h;
 
 	h = c->w.hints;
-	r = client2frame(nil, c->w.r);
+	r = client2frame(c->sel, c->w.r);
 	sp = Pt(def.border, labelh(def.font));
 
 	if(eqrect(rd, ZR)) {
@@ -164,6 +166,7 @@ destroy_client(Client *c) {
 
 void
 manage_client(Client *c) {
+	Rectangle r;
 	Client *trans;
 	char *tags;
 
@@ -176,7 +179,6 @@ manage_client(Client *c) {
 
 	free(tags);
 
-	gravclient(c, c->w.r);
 	reparent_client(c, c->framewin, Pt(def.border, labelh(def.font)));
 
 	if(!strlen(c->tags))
@@ -184,9 +186,14 @@ manage_client(Client *c) {
 	else
 		apply_tags(c, c->tags);
 
+	r = gravclient(c, c->w.r);
+	if(c->sel->area->floating)
+		resize_client(c, &r);
+	else
+		c->sel->revert = r;
+
 	if(!starting)
 		update_views();
-	XSync(display, False);
 
 	if(c->sel->view == screen->sel)
 		focus(c, True);
@@ -527,6 +534,44 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 	}
 }
 
+static void
+updatemwm(Client *c) {
+	enum {
+		All =		1<<0,
+		Border =	1<<1,
+		Title =	1<<3,
+	};
+	Rectangle r;
+	ulong *ret, decor;
+	Atom real;
+	int n;
+
+	decor = 0;
+	n = getproperty(&c->w, "_MOTIF_WM_HINTS", "_MOTIF_WM_HINTS", &real, 
+				2L, (uchar**)&ret, 1L);
+	if(n == 0) {
+		c->borderless = 0;
+		c->titleless = 0;
+	}else {
+		decor = *ret;
+		free(ret);
+
+		if(c->sel)
+			r = frame2client(c->sel, c->sel->r);
+
+		if(decor&All)
+			decor ^= ~0;
+		c->borderless = ((decor&Border)==0);
+		c->titleless = ((decor&Title)==0);
+
+		if(c->sel) {
+			r = client2frame(c->sel, c->sel->r);
+			resize_client(c, &r);
+			draw_frame(c->sel);
+		}
+	}
+}
+
 void
 prop_client(Client *c, Atom a) {
 	XWMHints *wmh;
@@ -535,6 +580,8 @@ prop_client(Client *c, Atom a) {
 		c->proto = winprotocols(&c->w);
 	else if(a == xatom("_NET_WM_NAME"))
 		goto wmname;
+	else if(a == xatom("_MOTIF_WM_HINTS"))
+		updatemwm(c);
 	else switch (a) {
 	case XA_WM_TRANSIENT_FOR:
 		XGetTransientForHint(display, c->w.w, &c->trans);

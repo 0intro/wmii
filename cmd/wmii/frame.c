@@ -23,9 +23,7 @@ create_frame(Client *c, View *v) {
 	}
 	else{
 		c->sel = f;
-		f->r = c->r;
-		f->r.max.x += 2 * def.border;
-		f->r.max.y += frame_delta_h();
+		f->r = client2frame(f, c->w.r);
 		f->revert = f->r;
 	}
 	f->collapsed = False;
@@ -94,42 +92,17 @@ frame_to_top(Frame *f) {
 		return False;
 
 	if(f->sprev)
-		f->sprev = f->snext;
+		f->sprev->snext = f->snext;
 	if(f->snext)
-		f->snext = f->sprev;
+		f->snext->sprev = f->sprev;
 
 	f->snext = a->stack;
 	a->stack = f;
+	f->sprev = nil;
 	if(f->snext)
 		f->snext->sprev = f;
 
 	return True;
-}
-
-Rectangle
-frame2client(Frame *f, Rectangle r) {
-	if(f == nil || f->area->floating) {
-		r.max.x -= def.border * 2;
-		r.max.y -= frame_delta_h();
-	}else {
-		r.max.x -= 2;
-		r.max.y -= labelh(def.font) + 1;
-	}
-	r.max.x = max(r.min.x+1, r.max.x);
-	r.max.y = max(r.min.y+1, r.max.y);
-	return r;
-}
-
-Rectangle
-client2frame(Frame *f, Rectangle r) {
-	if(f == nil || f->area->floating) {
-		r.max.x += def.border * 2;
-		r.max.y += frame_delta_h();
-	}else {
-		r.max.x += 2;
-		r.max.y += labelh(def.font) + 1;
-	}
-	return r;
 }
 
 /* Handlers */
@@ -232,6 +205,48 @@ Handlers framehandler = {
 	.motion = motion_event,
 };
 
+Rectangle
+frame2client(Frame *f, Rectangle r) {
+	if(f == nil || f->area == nil || f->area->floating) {
+		r.max.x -= def.border * 2;
+		r.max.y -= frame_delta_h();
+		if(f) {
+			if(f->client->borderless) {
+				r.max.x += 2 * def.border;
+				r.max.y += def.border;
+			}
+			if(f->client->titleless)
+				r.max.y += labelh(def.font);
+		}
+	}else {
+		r.max.x -= 2;
+		r.max.y -= labelh(def.font) + 1;
+	}
+	r.max.x = max(r.min.x+1, r.max.x);
+	r.max.y = max(r.min.y+1, r.max.y);
+	return r;
+}
+
+Rectangle
+client2frame(Frame *f, Rectangle r) {
+	if(f == nil || f->area == nil ||  f->area->floating) {
+		r.max.x += def.border * 2;
+		r.max.y += frame_delta_h();
+		if(f) {
+			if(f->client->borderless) {
+				r.max.x -= 2 * def.border;
+				r.max.y -= def.border;
+			}
+			if(f->client->titleless)
+				r.max.y -= labelh(def.font);
+		}
+	}else {
+		r.max.x += 2;
+		r.max.y += labelh(def.font) + 1;
+	}
+	return r;
+}
+
 void
 resize_frame(Frame *f, Rectangle r) {
 	Align stickycorner;
@@ -265,7 +280,11 @@ resize_frame(Frame *f, Rectangle r) {
 		f->crect = f->r;
 	}
 
-	pt.y = labelh(def.font);
+	pt = ZP;
+	if(!f->client->borderless)
+		pt.y += 1;
+	if(!f->client->titleless)
+		pt.y += labelh(def.font) - 1;
 
 	if(f->area->floating) {
 		if(c->fullscreen) {

@@ -197,6 +197,7 @@ uint textwidth(Font*, char*);
 uint labelh(Font*);
 Atom xatom(char*);
 void freestringlist(char**);
+ulong getproperty(Window *w, char *prop, char *type, Atom *actual, ulong offset, uchar **ret, ulong length);
 char *gettextproperty(Window*, char*);
 int gettextlistproperty(Window *w, char *name, char **ret[]);
 void changeproperty(Window*, char *prop, char *type, int width, uchar *data, int n);

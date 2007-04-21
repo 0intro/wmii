@@ -128,6 +128,8 @@ struct Client {
 	Bool fixedsize;
 	Bool fullscreen;
 	Bool urgent;
+	Bool borderless;
+	Bool titleless;
 	int unmapped;
 	Window w;
 	XWindow trans;

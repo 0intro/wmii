@@ -269,30 +269,21 @@ findwin(XWindow w) {
 uint
 winprotocols(Window *w) {
 	Atom *protocols;
-	Atom real, delete;
-	ulong nitems, extra;
-	int i, format, status, protos;
+	Atom actual, delete;
+	int i, n, protos;
 
-	status = XGetWindowProperty(
-		display, w->w, xatom("_WM_PROTOCOLS"),
-		/* offset, length, delete, req_type */
-		0L, 20L, False, xatom("ATOM"),
-		/* type, format, nitems, extra bytes returns */
-		&real, &format, &nitems, &extra, 
-		/* property return */
-		(uchar**)&protocols);
-
-	if(status != Success || protocols == nil)
+	n = getproperty(w, "_WM_PROTOCOLS", "ATOM", &actual, 0L, (uchar**)&protocols, 20L);
+	if(n == 0)
 		return 0;
 
 	protos = 0;
 	delete = xatom("WM_DELETE_WINDOW");
-	for(i = 0; i < nitems; i++) {
+	for(i = 0; i < n; i++) {
 		if(protocols[i] == delete)
 			protos |= WM_PROTOCOL_DELWIN;
 	}
 
-	XFree(protocols);
+	free(protocols);
 	return protos;
 }
 
@@ -557,6 +548,25 @@ freestringlist(char *list[]) {
 	XFreeStringList(list);
 }
 
+ulong
+getproperty(Window *w, char *prop, char *type, Atom *actual, ulong offset, uchar **ret, ulong length) {
+	Atom typea;
+	ulong n, extra;
+	int status, format;
+	
+	typea = (type ? xatom(type) : 0L);
+
+	status = XGetWindowProperty(display, w->w,
+		xatom(prop), offset, length, False /* delete */,
+		typea, actual, &format, &n, &extra, ret);
+
+	if(status != Success)
+		return 0;
+	if(n == 0)
+		free(*ret);
+	return n;
+}
+
 int
 gettextlistproperty(Window *w, char *name, char **ret[]) {
 	XTextProperty prop;
@@ -701,23 +711,23 @@ sethints(Window *w) {
 		xs.win_gravity = NorthWestGravity;
 
 	switch (xs.win_gravity) {
-	case EastGravity:case CenterGravity:case WestGravity:
+	case EastGravity: case CenterGravity: case WestGravity:
 		p.y = 1;
 		break;
-	case SouthEastGravity:case SouthGravity:case SouthWestGravity:
+	case SouthEastGravity: case SouthGravity: case SouthWestGravity:
 		p.y = 2;
 		break;
 	}
 	switch (xs.win_gravity) {
-	case NorthGravity:case CenterGravity:case SouthGravity:
+	case NorthGravity: case CenterGravity: case SouthGravity:
 		p.x = 1;
 		break;
-	case NorthEastGravity:case EastGravity:case SouthEastGravity:
+	case NorthEastGravity: case EastGravity: case SouthEastGravity:
 		p.x = 2;
 		break;
 	}
 	h->grav = p;
-	h->gravstatic = (xs.win_gravity&StaticGravity) == 0;
+	h->gravstatic = (xs.win_gravity==StaticGravity);
 }
 
 Rectangle
