@@ -31,7 +31,7 @@ str2colmode(const char *str) {
 }
 
 static Divide*
-get_div(Divide **dp) {
+getdiv(Divide **dp) {
 	WinAttr wa;
 	Divide *d;
 
@@ -59,12 +59,12 @@ get_div(Divide **dp) {
 }
 
 static void
-map_div(Divide *d) {
+mapdiv(Divide *d) {
 	mapwin(d->w);
 }
 
 static void
-unmap_div(Divide *d) {
+unmapdiv(Divide *d) {
 	unmapwin(d->w);
 }
 
@@ -77,11 +77,11 @@ setdiv(Divide *d, int x) {
 	r.max.y = screen->brect.min.y;
 
 	reshapewin(d->w, r);
-	map_div(d);
+	mapdiv(d);
 }
 
 static void
-draw_img(Image *img, ulong cbg, ulong cborder) {
+drawimg(Image *img, ulong cbg, ulong cborder) {
 	Point pt[6];
 
 	pt[0] = Pt(0, 0);
@@ -98,7 +98,14 @@ draw_img(Image *img, ulong cbg, ulong cborder) {
 }
 
 void
+drawdiv(Divide *d) {
+	copyimage(d->w, divimg->r, divimg, ZP);
+	setshapemask(d->w, divmask, ZP);
+}
+
+void
 update_imgs() {
+	Divide *d;
 	int w, h;
 
 	w = 2 * (labelh(def.font) / 3);
@@ -118,8 +125,11 @@ update_imgs() {
 	divc = def.normcolor;
 
 	fill(divmask, divmask->r, 0);
-	draw_img(divmask, 1, 1);
-	draw_img(divimg, divc.bg, divc.border);
+	drawimg(divmask, 1, 1);
+	drawimg(divimg, divc.bg, divc.border);
+
+	for(d = divs; d && d->w->mapped; d = d->next)
+		drawdiv(d);
 }
 
 void
@@ -133,24 +143,18 @@ update_divs() {
 	v = screen->sel;
 	dp = &divs;
 	for(a = v->area->next; a; a = a->next) {
-		d = get_div(dp);
+		d = getdiv(dp);
 		dp = &d->next;
 		setdiv(d, a->r.min.x);
 
 		if(!a->next) {
-			d = get_div(dp);
+			d = getdiv(dp);
 			dp = &d->next;
 			setdiv(d, a->r.max.x);
 		}
 	}
 	for(d = *dp; d; d = d->next)
-		unmap_div(d);
-}
-
-void
-draw_div(Divide *d) {
-	copyimage(d->w, divimg->r, divimg, ZP);
-	setshapemask(d->w, divmask, ZP);
+		unmapdiv(d);
 }
 
 /* Div Handlers */
@@ -167,7 +171,7 @@ expose_event(Window *w, XExposeEvent *e) {
 	Divide *d;
 	
 	d = w->aux;
-	draw_div(d);
+	drawdiv(d);
 }
 
 static Handlers divhandler = {

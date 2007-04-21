@@ -50,6 +50,7 @@ struct WinHints {
 	Rectangle aspect;
 	Point grav;
 	Bool gravstatic;
+	Bool position;
 };
 
 struct Handlers {

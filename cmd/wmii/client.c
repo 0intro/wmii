@@ -36,6 +36,7 @@ create_client(XWindow w, XWindowAttributes *wa) {
 
 	c = emallocz(sizeof(Client));
 	c->border = wa->border_width;
+
 	c->r.min = Pt(wa->x, wa->y);
 	c->r.max = addpt(c->r.min, Pt(wa->width, wa->height));
 
@@ -124,7 +125,7 @@ destroy_client(Client *c) {
 	Client **tc;
 	XEvent ev;
 
-	if(verbose) fprintf(stderr, "client.c:destroy_client(%p) %s\n", c, c->name);
+	Debug fprintf(stderr, "client.c:destroy_client(%p) %s\n", c, c->name);
 
 	for(tc=&client; *tc; tc=&(*tc)->next)
 		if(*tc == c) {
@@ -179,6 +180,7 @@ manage_client(Client *c) {
 
 	free(tags);
 
+	r = c->w.r;
 	reparent_client(c, c->framewin, Pt(def.border, labelh(def.font)));
 
 	if(!strlen(c->tags))
@@ -186,11 +188,13 @@ manage_client(Client *c) {
 	else
 		apply_tags(c, c->tags);
 
-	r = gravclient(c, c->w.r);
-	if(c->sel->area->floating)
-		resize_client(c, &r);
-	else
-		c->sel->revert = r;
+	if(c->w.hints->position) {
+		r = gravclient(c, r);
+		if(c->sel->area->floating)
+			resize_client(c, &r);
+		else
+			c->sel->revert = r;
+	}
 
 	if(!starting)
 		update_views();
@@ -246,7 +250,7 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 
 static void
 destroy_event(Window *w, XDestroyWindowEvent *e) {
-	if(verbose) fprintf(stderr, "client.c:destroy_event(%x)\n", (uint)w->w);
+	Debug fprintf(stderr, "client.c:destroy_event(%x)\n", (uint)w->w);
 	destroy_client(w->aux);
 }
 
@@ -257,11 +261,11 @@ enter_event(Window *w, XCrossingEvent *e) {
 	c = w->aux;
 	if(e->detail != NotifyInferior) {
 		if(screen->focus != c) {
-			if(verbose) fprintf(stderr, "enter_notify(c) => %s\n", c->name);
+			Debug fprintf(stderr, "enter_notify(c) => %s\n", c->name);
 			focus(c, False);
 		}
 		set_cursor(c, cursor[CurNormal]);
-	}else if(verbose)
+	}else Debug
 		fprintf(stderr, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
 }
 
@@ -658,13 +662,10 @@ void
 focus_client(Client *c) {
 	flushevents(FocusChangeMask, True);
 
-	if(verbose)
-		fprintf(stderr, "focus_client(%p[%x]) => %s\n", c,  clientwin(c), clientname(c));
+	Debug fprintf(stderr, "focus_client(%p[%x]) => %s\n", c,  clientwin(c), clientname(c));
 
 	if(screen->focus != c) {
-		if(verbose)
-			fprintf(stderr, "\t%s => %s\n",
-				clientname(screen->focus), clientname(c));
+		Debug fprintf(stderr, "\t%s => %s\n", clientname(screen->focus), clientname(c));
 		if(c)
 			setfocus(&c->w, RevertToParent);
 		else
@@ -879,8 +880,10 @@ apply_tags(Client *c, const char *tags) {
 	buf[0] = 0;
 	for(n = 0; tags[n]; n++)
 		if(tags[n] != ' ' && tags[n] != '\t') break;
+
 	if(tags[n] == '+' || tags[n] == '-')
 		strncpy(buf, c->tags, sizeof(c->tags));
+
 	strlcat(buf, &tags[n], sizeof(buf));
 	trim(buf, " \t/");
 
@@ -895,9 +898,7 @@ apply_tags(Client *c, const char *tags) {
 	}
 	while(buf[n] && n < sizeof(buf) && j < 32) { 
 		for(i = n; i < sizeof(buf) - 1; i++)
-			if(buf[i] == '+'
-			|| buf[i] == '-'
-			|| buf[i] == '\0')
+			if(buf[i] == '+' || buf[i] == '-' || buf[i] == '\0')
 				break;
 		last = buf[i];
 		buf[i] = '\0';
@@ -907,9 +908,9 @@ apply_tags(Client *c, const char *tags) {
 			c->floating = add;
 		else if(!strncmp(&buf[n], "!", 2))
 			cur = view ? screen->sel->name : "nil";
-		else if(strncmp(&buf[n], "sel", 4)
-		     && strncmp(&buf[n], ".", 2)
-		     && strncmp(&buf[n], "..", 3))
+		else if(strcmp(&buf[n], "sel")
+		     && strcmp(&buf[n], ".")
+		     && strcmp(&buf[n], ".."))
 			cur = &buf[n];
 
 		n = i + 1;

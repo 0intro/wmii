@@ -230,50 +230,50 @@ restack_view(View *v) {
 
 void
 scale_view(View *v, int w) {
-	uint xoff, num_col;
-	uint min_width;
+	uint xoff, numcol;
+	uint minwidth;
 	Area *a;
-	float scale, dx;
-	int wdiff;
+	float scale;
+	int wdiff, dx;
 
-	min_width = Dx(screen->r)/NCOL;
+	minwidth = Dx(screen->r)/NCOL;
 
 	if(!v->area->next)
 		return;
 
-	num_col = 0;
+	numcol = 0;
 	dx = 0;
 	for(a=v->area->next; a; a=a->next) {
-		num_col++;
+		numcol++;
 		dx += Dx(a->r);
 	}
 
 	scale = (float)w / dx;
 	xoff = 0;
 	for(a=v->area->next; a; a=a->next) {
-		a->r.min.x = xoff;
 		a->r.max.x = xoff + Dx(a->r) * scale;
+		a->r.min.x = xoff;
 		if(!a->next)
 			a->r.max.x = w;
 		xoff = a->r.max.x;
 	}
 
-	/* min_width can only be respected when there is enough space;
+	/* minwidth can only be respected when there is enough space;
 	 * the caller should guarantee this */
-	if(num_col * min_width > w)
+	if(numcol * minwidth > w)
 		return;
 
+	dx = numcol * minwidth;
 	xoff = 0;
-	for(a=v->area->next, num_col--; a; a=a->next, num_col--) {
+	for(a=v->area->next, numcol--; a; a=a->next, numcol--) {
 		a->r.min.x = xoff;
-	
-		if(Dx(a->r) < min_width)
-			a->r.max.x = xoff + min_width;
-		else if((wdiff = xoff + Dx(a->r) - w + num_col * min_width) > 0)
+
+		if(Dx(a->r) < minwidth)
+			a->r.max.x = xoff + minwidth;
+		else if((wdiff = xoff + Dx(a->r) - w + dx) > 0)
 			a->r.max.x -= wdiff;
 		if(!a->next)
 			a->r.max.x = w;
-
 		xoff = a->r.max.x;
 	}
 }
@@ -492,11 +492,12 @@ newcolw(View *v, int num) {
 			char buf[sizeof r->value];
 			char *toks[16];
 
-			strncpy(buf, r->value, sizeof(buf));
+			strcpy(buf, r->value);
+
 			n = tokenize(toks, 16, buf, '+');
-			if(n > num)
+			if(num < n)
 				if(sscanf(toks[num], "%u", &n) == 1)
-					return Dx(screen->r) * ((double)n / 100);
+					return Dx(screen->r) * (n / 100.0);
 			break;
 		}
 	return 0;

@@ -23,8 +23,9 @@ area_selclient(Area *a) {
 Area *
 create_area(View *v, Area *pos, uint w) {
 	static ushort id = 1;
-	uint areanum, colnum, i;
+	uint areanum, i;
 	uint minwidth;
+	int colnum;
 	Area *a;
 
 	minwidth = Dx(screen->r)/NCOL;
@@ -36,10 +37,10 @@ create_area(View *v, Area *pos, uint w) {
 	for(a = v->area; a; a = a->next)
 		areanum++;
 
-	colnum = max((areanum - 1), 0);
+	colnum = areanum - 1;
 	if(w == 0) {
-		if(colnum) {
-			w = newcolw(v, max(i-1, 0));
+		if(colnum >= 0) {
+			w = newcolw(v, i);
 			if (w == 0)
 				w = Dx(screen->r) / (colnum + 1);
 		}
@@ -63,8 +64,9 @@ create_area(View *v, Area *pos, uint w) {
 	a->sel = nil;
 
 	a->r = screen->r;
-	a->r.max.x = a->r.min.x + w;
-	a->r.max.x = screen->brect.min.y;
+	a->r.min.x = 0;
+	a->r.max.x = w;
+	a->r.max.y = screen->brect.min.y;
 
 	if(pos) {
 		a->next = pos->next;
@@ -300,10 +302,7 @@ place_frame(Frame *f) {
 
 	if(c->trans)
 		return;
-	if(Dx(c->r) >= Dx(a->r)
-		|| Dy(c->r) >= Dy(a->r)
-		|| c->size.flags & USPosition
-		|| c->size.flags & PPosition)
+	if(c->fullscreen || c->w.hints->position)
 		return;
 	if(!field) {
 		mx = Dx(screen->r) / dx;

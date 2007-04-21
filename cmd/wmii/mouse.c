@@ -272,17 +272,18 @@ horiz:
 		case ButtonRelease:
 			switch(ev.xbutton.button) {
 			case 1:
-				if(f->anext && (f->aprev && fw->fp != f->aprev->aprev)) {
+				if(f->anext && (!f->aprev || fw->fp != f->aprev || fw->fp != f->aprev->aprev)) {
 					f->anext->r.min.y = f->r.min.y;
 					resize_frame(f->anext, f->anext->r);
 				}
-				else if(f->aprev && fw->fp == f->aprev->aprev) {
-					fw->fp = f->aprev->aprev;
-					f->aprev->r = f->r;
+				else if(f->aprev) {
+					if(fw->fp == f->aprev->aprev) {
+						fw->fp = f->aprev->aprev;
+						f->aprev->r = f->r;
+					}else
+						f->aprev->r.max.y = f->r.max.y;
+					resize_frame(f->aprev, f->aprev->r);
 				}
-				else
-					f->aprev->r.max.y = f->r.max.y;
-				resize_frame(f->aprev, f->aprev->r);
 
 				remove_frame(f);
 				f->area = fw->ra;

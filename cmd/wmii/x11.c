@@ -660,18 +660,17 @@ sethints(Window *w) {
 	Point p;
 	long size;
 
-	if(!XGetWMNormalHints(display, w->w, &xs, &size)) {
-		free(w->hints);
-		w->hints = nil;
-		return;
-	}
-
 	if(w->hints == nil)
 		w->hints = emalloc(sizeof *h);
+
 	h = w->hints;
 	memset(h, 0, sizeof *h);
 
 	h->max = Pt(MaxInt, MaxInt);
+
+	if(!XGetWMNormalHints(display, w->w, &xs, &size))
+		return;
+
 	if(xs.flags&PMinSize) {
 		p.x = xs.min_width;
 		p.y = xs.min_height;
@@ -705,6 +704,8 @@ sethints(Window *w) {
 		p.y = xs.max_aspect.y;
 		h->aspect.max = p;
 	}
+	
+	h->position = ((xs.flags&(USPosition|PPosition)) != 0);
 
 	p = ZP;
 	if((xs.flags&PWinGravity) == 0)
@@ -733,7 +734,10 @@ sethints(Window *w) {
 Rectangle
 sizehint(WinHints *h, Rectangle r) {
 	Point p, p2, o;
-	
+
+	if(h == nil)
+		return r;
+
 	o = r.min;
 	r = rectsubpt(r, o);
 

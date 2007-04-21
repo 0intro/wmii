@@ -811,6 +811,7 @@ fs_write(Ixp9Req *r) {
 		{	uint n;
 			char *p, *toks[32];
 
+			errstr = nil;
 			p = toutf8n(r->ifcall.data, r->ifcall.count);
 			n = tokenize(toks, 32, p, '\n');
 			for(i = 0; i < n; i++) {
@@ -821,14 +822,9 @@ fs_write(Ixp9Req *r) {
 			}
 			free(p);
 		}
-		if(screen->sel)
-			focus_view(screen, screen->sel);
-		if(errstr) {
-			respond(r, errstr);
-			return;
-		}
+		focus_view(screen, screen->sel);
 		r->ofcall.count = r->ifcall.count;
-		respond(r, nil);
+		respond(r, errstr);
 		return;
 	case FsFEvent:
 		if(r->ifcall.data[r->ifcall.count-1] == '\n')

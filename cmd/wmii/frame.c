@@ -170,7 +170,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 	c = w->aux;
 	f = c->sel;
 	if(screen->focus != c) {
-		if(verbose) fprintf(stderr, "enter_notify(f) => %s\n", f->client->name);
+		Debug fprintf(stderr, "enter_notify(f) => %s\n", f->client->name);
 		if(f->area->floating || !f->collapsed)
 			focus(f->client, False);
 	}

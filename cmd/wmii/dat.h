@@ -243,3 +243,6 @@ Bool starting;
 Bool verbose;
 char *user;
 char *execstr;
+
+#define Debug if(verbose)
+
