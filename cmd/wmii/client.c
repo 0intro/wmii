@@ -10,9 +10,7 @@
 #include "dat.h"
 #include "fns.h"
 
-static void update_client_name(Client *c);
 static Handlers handlers;
-
 static char Ebadcmd[] = "bad command";
 
 Rectangle gravclient(Client*, Rectangle);
@@ -47,6 +45,7 @@ create_client(XWindow w, XWindowAttributes *wa) {
 	prop_client(c, xatom("WM_TRANSIENT_FOR"));
 	prop_client(c, xatom("WM_NORMAL_HINTS"));
 	prop_client(c, xatom("WM_HINTS"));
+	prop_client(c, xatom("WM_CLASS"));
 	prop_client(c, xatom("WM_NAME"));
 	prop_client(c, xatom("_MOTIF_WM_HINTS"));
 
@@ -385,35 +384,6 @@ clientname(Client *c) {
 }
 
 void
-update_class(Client *c) {
-	char **class;
-	int n;
-
-	n = gettextlistproperty(&c->w, "WM_CLASS", &class);
-	snprintf(c->props, sizeof(c->props), "%s:%s:%s",
-			(n > 0 ? class[0] : "<nil>"),
-			(n > 1 ? class[1] : "<nil>"),
-			c->name);
-	freestringlist(class);
-}
-
-static void
-update_client_name(Client *c) {
-	char *str;
-
-	c->name[0] = '\0';
-
-	str = gettextproperty(&c->w, "_NET_WM_NAME)");
-	if(str == nil)
-		str = gettextproperty(&c->w, "WM_NAME");
-	if(str)
-		utfecpy(c->name, c->name+sizeof(c->name), str);
-	free(str);
-	
-	update_class(c);
-}
-
-void
 set_client_state(Client * c, int state) {
 	long data[] = { state, None };
 	changeprop(&c->w, "WM_STATE", "WM_STATE", data, nelem(data));
@@ -548,6 +518,36 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 	}
 }
 
+void
+update_class(Client *c) {
+	char *str;
+
+	str = utfrune(c->props, L':');
+	if(str)
+		str = utfrune(str+1, L':');
+	if(str == nil) {
+		strcpy(c->props, "::");
+		str = c->props + 1;
+	}
+	utfecpy(str+1, c->props+sizeof(c->props), c->name);
+}
+
+static void
+update_client_name(Client *c) {
+	char *str;
+
+	c->name[0] = '\0';
+
+	str = gettextproperty(&c->w, "_NET_WM_NAME)");
+	if(str == nil)
+		str = gettextproperty(&c->w, "WM_NAME");
+	if(str)
+		utfecpy(c->name, c->name+sizeof(c->name), str);
+	free(str);
+
+	update_class(c);
+}
+
 static void
 updatemwm(Client *c) {
 	enum {
@@ -589,6 +589,8 @@ updatemwm(Client *c) {
 void
 prop_client(Client *c, Atom a) {
 	XWMHints *wmh;
+	char **class;
+	int n;
 
 	if(a == xatom("WM_PROTOCOLS"))
 		c->proto = winprotocols(&c->w);
@@ -611,6 +613,14 @@ prop_client(Client *c, Atom a) {
 			set_urgent(c, (wmh->flags & XUrgencyHint) != 0, False);
 			XFree(wmh);
 		}
+		break;
+	case XA_WM_CLASS:
+		n = gettextlistproperty(&c->w, "WM_CLASS", &class);
+		snprintf(c->props, sizeof(c->props), "%s:%s:",
+				(n > 0 ? class[0] : "<nil>"),
+				(n > 1 ? class[1] : "<nil>"));
+		freestringlist(class);
+		update_class(c);
 		break;
 	case XA_WM_NAME:
 wmname:
