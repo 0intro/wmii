@@ -228,6 +228,7 @@ scale_column(Area *a) {
 
 	surplus = Dy(a->r) - (ncol * colh) - (nuncol * uncolh);
 
+	/* Collapse until there is room */
 	if(surplus < 0) {
 		i = ceil((float)(-surplus) / (uncolh - colh));
 		if(i >= nuncol)
@@ -236,6 +237,7 @@ scale_column(Area *a) {
 		ncol += i;
 		surplus += i * (uncolh - colh);
 	}
+	/* Push to the floating layer until there is room */
 	if(surplus < 0) {
 		i = ceil((float)(-surplus)/colh);
 		if(i > ncol)
@@ -244,69 +246,77 @@ scale_column(Area *a) {
 		surplus += i * colh;
 	}
 
-	i = ncol - 1;
 	j = nuncol - 1;
-	for(f=a->frame; f; f=f->anext) {
-		if(f == a->sel)
-			j++;
-		if(!f->collapsed) {
-			if(j < 0 && (f != a->sel))
-				f->collapsed = True;
-			else {
-				if(Dy(f->crect) <= minh)
-					f->crect.max.y = 1;
-				else
-					f->crect.max.y -= minh;
-			}
-			j--;
-		}
-	}
+	i = ncol - 1;
+	/* Decide  which to collapse, float */
 	for(fp=&a->frame; *fp;) {
 		f = *fp;
 		if(f == a->sel)
-			i++;
+			i++, j++;
+		if(!f->collapsed) {
+			if(j < 0 && (f != a->sel))
+				f->collapsed = True;
+			j--;
+		}
 		if(f->collapsed) {
-			if(i < 0 && f != a->sel) {
+			if(i < 0 && (f != a->sel)) {
 				f->collapsed = False;
 				send_to_area(f->view->area, f);
 				continue;
 			}
 			i--;
-			f->r.max.y = colh;
 		}
+		/* Doesn't change if we 'continue' */
+		fp=&f->anext;
+	}
 
+	surplus = 0;
+	for(f=a->frame; f; f=f->anext) {
 		f->r = rectsubpt(f->r, f->r.min);
 		f->crect = rectsubpt(f->crect, f->crect.min);
 		f->r.max.x = Dx(a->r);
-		if(!f->collapsed) {
-			dy += Dy(f->crect);
+
+		if(f->collapsed) {
+			f->r.max.y = colh;
+		}else {
 			f->r.max.y = uncolh;
+			dy += Dy(f->crect);
+			surplus += Dy(f->r);
 		}
-		fp=&f->anext;
 	}
 	for(f = a->frame; f; f = f->anext)
 		f->ratio = (float)Dy(f->crect)/dy;
 
 	j = 0;
-	while(surplus != j) {
+	surplus = Dy(a->r) - surplus;
+	while(surplus > 0 && surplus != j) {
 		j = surplus;
 		dy = 0;
 		for(f=a->frame; f; f=f->anext) {
 			if(!f->collapsed) {
 				f->r.max.y += f->ratio * surplus;
 				resize_frame(f, f->r);
-				f->r.max.y = Dy(f->crect) + frame_delta_h();
+				f->r.max.y = Dy(f->crect) + labelh(def.font) + 1;
 			}
 			dy += Dy(f->r);
 		}
 		surplus = Dy(a->r) - dy;
+	}
+	for(f=a->frame; f && surplus > 0; f=f->anext) {
+		if(!f->collapsed) {
+			dy = Dy(f->r);
+			f->r.max.y += surplus;
+			resize_frame(f, f->r);
+			f->r.max.y = Dy(f->crect) + labelh(def.font) + 1;
+			surplus -= Dy(f->r) - dy;
+		}
 	}
 
 	yoff = a->r.min.y;
 	i = nuncol;
 	for(f=a->frame; f; f=f->anext) {
 		f->r = rectaddpt(f->r, Pt(a->r.min.x, yoff));
-		f->r.max.x = a->r.max.x;
+
 		if(!f->collapsed) {
 			i--;
 			f->r.max.y += surplus / nuncol;

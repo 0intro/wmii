@@ -272,7 +272,7 @@ horiz:
 		case ButtonRelease:
 			switch(ev.xbutton.button) {
 			case 1:
-				if(f->anext && (!f->aprev || fw->fp != f->aprev || fw->fp != f->aprev->aprev)) {
+				if(f->anext && (!f->aprev || (fw->fp != f->aprev && fw->fp != f->aprev->aprev))) {
 					f->anext->r.min.y = f->r.min.y;
 					resize_frame(f->anext, f->anext->r);
 				}
