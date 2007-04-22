@@ -216,7 +216,8 @@ xls(int argc, char *argv[]) {
 	Message m;
 	Stat *stat;
 	IxpCFid *fid;
-	char *file, *buf;
+	char *file;
+	uchar *buf;
 	int lflag, dflag, count, nstat, mstat, i;
 
 	lflag = dflag = 0;
