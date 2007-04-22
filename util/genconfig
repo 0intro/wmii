@@ -104,7 +104,7 @@ findinc INCICONV iconv.h $INCS /usr/local/include
 findlib LIBX11 X11 $libs /usr/X11R6/lib /usr/X11/lib /usr/openwin/lib /usr/x11/lib /opt/X11 /opt/x11
 findlib LIBICONV iconv $libs
 findlib LIBIXP ixp ${ROOT}/libixp $libs
-LIBIXP=$(echo "$LIBIXP"|sed 's,^-L\([^ ]*\) -l\([^ ]*\)$,\1/lib\2,')
+LIBIXP=$(echo "$LIBIXP"|sed 's,^-L\([^ ]*\) -l\([^ ]*\)$,\1/lib\2.a,')
 IFS="$oifs"
 
 # Back to prompting
