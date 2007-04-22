@@ -13,8 +13,7 @@
 static void update_client_name(Client *c);
 static Handlers handlers;
 
-static char Ebadcmd[] = "bad command",
-		Ebadvalue[] = "bad value";
+static char Ebadcmd[] = "bad command";
 
 Rectangle gravclient(Client*, Rectangle);
 
@@ -410,6 +409,8 @@ update_client_name(Client *c) {
 	if(str)
 		utfecpy(c->name, c->name+sizeof(c->name), str);
 	free(str);
+	
+	update_class(c);
 }
 
 void
