@@ -16,7 +16,8 @@ FILTER = sed "s|CONFPREFIX|${ETC}|g; \
 	      s|CONFVERSION|${CONFVERSION}|g; \
 	      s|P9PATHS|${P9PATHS}|g; \
 	      s|AWKPATH|${AWKPATH}|g"
-EXCFLAGS = -DVERSION=\"${VERSION}\"
+
+EXCFLAGS = ${INCX11} -DVERSION=\"${VERSION}\"
 
 include ${ROOT}/mk/many.mk
 include ${ROOT}/mk/dir.mk
@@ -25,6 +26,5 @@ OWMIIR=wmiir.o ${OFILES} ${LIBIXP}
 wmiir.O: ${OWMIIR}
 	${LINK} $@ ${STATIC} ${OWMIIR}
 
-EXCFLAGS=${INCX11}
 wmii9menu.O: wmii9menu.o ${OFILES}
 	${LINK} $@ $*.o ${OFILES} ${LIBX11}
