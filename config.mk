@@ -38,3 +38,4 @@ LIBIXP = ${LIBDIR}/libixp.a
 #LDFLAGS += -lsocket -lnsl
 #CFLAGS += -xtarget=ultra
 
+

@@ -91,17 +91,21 @@ unset force
 #for i in LIBX11 LIBICONV LIBIXP INCX11; do
 #	eval "unset $i ${i}_orig"; done
 
-libs="$LIBDIR:$(echo "$INCPATH"|sed 's,/include\(:\|$\),/lib\1,g')$(echo "$LDFLAGS"|sed 's,-L\([^ ]*\),:\1,g')"
+libs="$LIBDIR:$(echo "$INCPATH"|sed 's,/include\(:\|$\),/lib\1,g')"
+libs="$libs$(echo "$LDFLAGS"|sed 's,-L\([^ ]*\),:\1,g')"
+libs="$libs:/usr/local/lib:/opt/local/lib"
 eval "libs=\"$libs\""
 LIBIXP=${LIBIXP%/libixp.a}
+INCPATH="$INCPATH:/usr/local/include:/opt/local/include"
 
 oifs="$IFS"
 IFS=:
-findinc INCX11 X11/Xlib.h $INCS /usr/X11R6/include /usr/x11/include /usr/x11/include /usr/X11/include \
+findinc INCX11 X11/Xlib.h $INCPATH /usr/X11R6/include /usr/x11/include /usr/x11/include /usr/X11/include \
 	/usr/openwin/include /opt/x11/include /opt/X11/include
-findinc INCICONV iconv.h $INCS /usr/local/include
+findinc INCICONV iconv.h $INCPATH
 
-findlib LIBX11 X11 $libs /usr/X11R6/lib /usr/X11/lib /usr/openwin/lib /usr/x11/lib /opt/X11 /opt/x11
+findlib LIBX11 X11 $libs /usr/X11R6/lib /usr/X11/lib /usr/openwin/lib /usr/x11/lib /opt/X11 /opt/x11 \
+	/usr/local/lib /opt/local/lib
 findlib LIBICONV iconv $libs
 findlib LIBIXP ixp ${ROOT}/libixp $libs
 LIBIXP=$(echo "$LIBIXP"|sed 's,^-L\([^ ]*\) -l\([^ ]*\)$,\1/lib\2.a,')
