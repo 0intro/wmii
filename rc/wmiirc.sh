@@ -129,6 +129,8 @@ eventstuff() {
 		wmiir xwrite /ctl "view \$(tagsmenu)" &
 	Key $MODKEY-Return
 		$WMII_TERM &
+!
+	cat<<!
 	Key $MODKEY-Shift-$LEFT
 		wmiir xwrite /tag/sel/ctl send sel left
 	Key $MODKEY-Shift-$RIGHT
