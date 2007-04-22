@@ -53,7 +53,7 @@ enum {	/* Dirs */
 	FsRoot, FsDClient, FsDClients, FsDBars,
 	FsDTag, FsDTags,
 	/* Files */
-	FsFBar, FsFCctl, FsFColRules,
+	FsFBar, FsFCctl, FsFColRules, FsFClabel,
 	FsFCtags, FsFEvent, FsFKeys, FsFRctl,
 	FsFTagRules, FsFTctl, FsFTindex,
 	FsFprops
@@ -111,6 +111,7 @@ dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|P9_DMDIR },
 		  {nil}},
 dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|P9_DMDIR },
 		  {"ctl",	QTAPPEND,	FsFCctl,	0600|P9_DMAPPEND },
+		  {"label",	QTFILE,	FsFClabel,	0600 },
 		  {"tags",	QTFILE,		FsFCtags,	0600 },
 		  {"props",	QTFILE,		FsFprops,	0400 },
 		  {nil}},
@@ -613,6 +614,8 @@ fs_size(FileId *f) {
 		return def.keyssz;
 	case FsFCtags:
 		return strlen(f->p.client->tags);
+	case FsFClabel:
+		return strlen(f->p.client->name);
 	case FsFprops:
 		return strlen(f->p.client->props);
 	}
@@ -707,6 +710,10 @@ fs_read(Ixp9Req *r) {
 			write_buf(r, f->p.client->tags, strlen(f->p.client->tags));
 			respond(r, nil);
 			return;
+		case FsFClabel:
+			write_buf(r, f->p.client->name, strlen(f->p.client->name));
+			respond(r, nil);
+			return;
 		case FsFTctl:
 			write_buf(r, f->p.view->name, strlen(f->p.view->name));
 			respond(r, nil);
@@ -773,6 +780,14 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFKeys:
 		write_to_buf(r, &def.keys, &def.keyssz, 0);
+		respond(r, nil);
+		return;
+	case FsFClabel:
+		data_to_cstring(r);
+		utfecpy(f->p.client->name, f->p.client->name+sizeof(client->name), r->ifcall.data);
+		draw_frame(f->p.client->sel);
+		update_class(f->p.client);
+		r->ofcall.count = r->ifcall.count;
 		respond(r, nil);
 		return;
 	case FsFCtags:

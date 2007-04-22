@@ -218,17 +218,18 @@ scale_column(Area *a) {
 	ncol = 0;
 	nuncol = 0;
 	dy = 0;
-	for(f=a->frame; f; f=f->anext)
+	for(f=a->frame; f; f=f->anext) {
+		resize_frame(f, f->r);
 		if(f->collapsed)
 			ncol++;
 		else
 			nuncol++;
+	}
 
-	surplus = Dy(a->r);
-	surplus -= ncol * colh;
-	surplus -= nuncol * uncolh;
+	surplus = Dy(a->r) - (ncol * colh) - (nuncol * uncolh);
+
 	if(surplus < 0) {
-		i = ceil((float)(-surplus)/(uncolh - colh));
+		i = ceil((float)(-surplus) / (uncolh - colh));
 		if(i >= nuncol)
 			i = nuncol - 1;
 		nuncol -= i;
@@ -246,19 +247,16 @@ scale_column(Area *a) {
 	i = ncol - 1;
 	j = nuncol - 1;
 	for(f=a->frame; f; f=f->anext) {
-		f->r = rectsubpt(f->r, f->r.min);
-		f->crect = rectsubpt(f->crect, f->crect.min);
 		if(f == a->sel)
 			j++;
 		if(!f->collapsed) {
-			if(j < 0 && f != a->sel)
+			if(j < 0 && (f != a->sel))
 				f->collapsed = True;
 			else {
 				if(Dy(f->crect) <= minh)
 					f->crect.max.y = 1;
 				else
 					f->crect.max.y -= minh;
-				dy += Dy(f->crect);
 			}
 			j--;
 		}
@@ -274,29 +272,35 @@ scale_column(Area *a) {
 				continue;
 			}
 			i--;
+			f->r.max.y = colh;
+		}
+
+		f->r = rectsubpt(f->r, f->r.min);
+		f->crect = rectsubpt(f->crect, f->crect.min);
+		f->r.max.x = Dx(a->r);
+		if(!f->collapsed) {
+			dy += Dy(f->crect);
+			f->r.max.y = uncolh;
 		}
 		fp=&f->anext;
 	}
+	for(f = a->frame; f; f = f->anext)
+		f->ratio = (float)Dy(f->crect)/dy;
 
-	i = nuncol;
+	j = 0;
+	while(surplus != j) {
+		j = surplus;
+		dy = 0;
 		for(f=a->frame; f; f=f->anext) {
-			f->r.max.x = Dx(a->r);
-			if(f->collapsed)
-				f->r.max.y = labelh(def.font);
-			else {
-				if(--i != 0)
-					f->r.max.y = (float)Dy(f->crect) / dy * surplus;
-				else
-					f->r.max.y = surplus;
-				f->r.max.y += uncolh;
-				f->r = frame_hints(f, f->r, NWEST);
-
-				dy -= Dy(f->r) - uncolh;
-				surplus -= Dy(f->r) - uncolh;
-	
+			if(!f->collapsed) {
+				f->r.max.y += f->ratio * surplus;
 				resize_frame(f, f->r);
+				f->r.max.y = Dy(f->crect) + frame_delta_h();
 			}
+			dy += Dy(f->r);
 		}
+		surplus = Dy(a->r) - dy;
+	}
 
 	yoff = a->r.min.y;
 	i = nuncol;

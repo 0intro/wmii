@@ -112,6 +112,7 @@ struct Frame {
 	Bool collapsed;
 	Rectangle grabbox;
 	Rectangle titlebar;
+	float ratio;
 };
 
 struct Client {

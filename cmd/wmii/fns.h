@@ -28,6 +28,7 @@ Bar *bar_of_name(Bar *b_link, const char *name);
 Client *create_client(XWindow, XWindowAttributes*);
 void destroy_client(Client*);
 void configure_client(Client*);
+void update_class(Client *c);
 void prop_client(Client *c, Atom);
 void kill_client(Client*);
 void gravitate_client(Client*, Bool invert);

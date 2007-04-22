@@ -385,10 +385,22 @@ clientname(Client *c) {
 	return "<nil>";
 }
 
+void
+update_class(Client *c) {
+	char **class;
+	int n;
+
+	n = gettextlistproperty(&c->w, "WM_CLASS", &class);
+	snprintf(c->props, sizeof(c->props), "%s:%s:%s",
+			(n > 0 ? class[0] : "<nil>"),
+			(n > 1 ? class[1] : "<nil>"),
+			c->name);
+	freestringlist(class);
+}
+
 static void
 update_client_name(Client *c) {
-	char *str, **class;
-	int n;
+	char *str;
 
 	c->name[0] = '\0';
 
@@ -398,13 +410,6 @@ update_client_name(Client *c) {
 	if(str)
 		utfecpy(c->name, c->name+sizeof(c->name), str);
 	free(str);
-
-	n = gettextlistproperty(&c->w, "WM_CLASS", &class);
-	snprintf(c->props, sizeof(c->props), "%s:%s:%s",
-			(n > 0 ? class[0] : "<nil>"),
-			(n > 1 ? class[1] : "<nil>"),
-			c->name);
-	freestringlist(class);
 }
 
 void
