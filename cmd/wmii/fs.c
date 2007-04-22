@@ -51,7 +51,7 @@ enum {	/* Dirs */
 	FsRoot, FsDClient, FsDClients, FsDBars,
 	FsDTag, FsDTags,
 	/* Files */
-	FsFBar, FsFCctl, FsFColRules,
+	FsFBar, FsFCctl, FsFColRules, FsFClabel,
 	FsFCtags, FsFEvent, FsFKeys, FsFRctl,
 	FsFTagRules, FsFTctl, FsFTindex,
 	FsFprops
@@ -109,6 +109,7 @@ dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|P9_DMDIR },
 		  {nil}},
 dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|P9_DMDIR },
 		  {"ctl",	QTAPPEND,	FsFCctl,	0600|P9_DMAPPEND },
+		  {"label",	QTFILE,		FsFClabel,	0600 },
 		  {"tags",	QTFILE,		FsFCtags,	0600 },
 		  {"props",	QTFILE,		FsFprops,	0400 },
 		  {nil}},
@@ -571,6 +572,8 @@ fs_size(FileId *f) {
 		return f->content.rule->size;
 	case FsFKeys:
 		return def.keyssz;
+	case FsFClabel:
+		return strlen(f->content.client->name);
 	case FsFCtags:
 		return strlen(f->content.client->tags);
 	case FsFprops:
@@ -663,6 +666,10 @@ fs_read(Ixp9Req *r) {
 			write_buf(r, def.keys, def.keyssz);
 			respond(r, nil);
 			return;
+		case FsFClabel:
+			write_buf(r, f->content.client->name, strlen(f->content.client->name));
+			respond(r, nil);
+			return;
 		case FsFCtags:
 			write_buf(r, f->content.client->tags, strlen(f->content.client->tags));
 			respond(r, nil);
@@ -711,7 +718,9 @@ fs_read(Ixp9Req *r) {
 void
 fs_write(Ixp9Req *r) {
 	FileId *f;
+	Client *c;
 	char *errstr = nil;
+	XClassHint ch;
 	uint i;
 
 	if(r->ifcall.count == 0) {
@@ -733,6 +742,25 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFKeys:
 		write_to_buf(r, &def.keys, &def.keyssz, 0);
+		respond(r, nil);
+		return;
+	case FsFClabel:
+		data_to_cstring(r);
+		c = f->content.client;
+		strncpy(c->name, r->ifcall.data, sizeof(c->name));
+		if(XGetClassHint(blz.dpy, c->win, &ch)) {
+			snprintf(c->props, sizeof(c->props),
+					"%s:%s:%s",
+					str_nil(ch.res_class),
+					str_nil(ch.res_name),
+					c->name);
+			if(ch.res_class)
+				XFree(ch.res_class);
+			if(ch.res_name)
+				XFree(ch.res_name);
+		}
+		draw_frame(f->content.client->sel);
+		r->ofcall.count = r->ifcall.count;
 		respond(r, nil);
 		return;
 	case FsFCtags:
