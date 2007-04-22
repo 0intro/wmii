@@ -368,8 +368,7 @@ focus_frame(Frame *f, Bool restack) {
 
 	focus_client(f->client);
 
-	if(!a->floating
-	&& ((a->mode == Colstack) || (a->mode == Colmax)))
+	if(!a->floating && ((a->mode == Colstack) || (a->mode == Colmax)))
 		arrange_column(a, False);
 
 	if((f != old)

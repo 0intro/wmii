@@ -12,8 +12,7 @@
 #include "fns.h"
 
 static void place_frame(Frame *f);
-static char Ebadcmd[] = "bad command",
-		Ebadvalue[] = "bad value";
+static char Ebadvalue[] = "bad value";
 
 Client *
 area_selclient(Area *a) {               
@@ -177,7 +176,7 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 	c->floating = a->floating;
 	if(!a->floating) {
 		f->r = a->r;
-		f->r.max.y = f->r.min.y + Dy(a->r) / n_frame;
+		f->r.max.y = Dy(a->r) / n_frame;
 	}
 
 	insert_frame(a->sel, f, False);

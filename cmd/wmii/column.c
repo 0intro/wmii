@@ -339,7 +339,7 @@ arrange_column(Area *a, Bool dirty) {
 		for(f=a->frame; f; f=f->anext) {
 			f->collapsed = False;
 			if(dirty)
-				f->crect = Rect(0, 0, 100, 100);
+				f->r = Rect(0, 0, 100, 100);
 		}
 		break;
 	case Colstack:
