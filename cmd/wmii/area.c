@@ -12,6 +12,8 @@
 #include "fns.h"
 
 static void place_frame(Frame *f);
+static char Ebadcmd[] = "bad command",
+		Ebadvalue[] = "bad value";
 
 Client *
 area_selclient(Area *a) {               
@@ -421,7 +423,6 @@ focus_area(Area *a) {
 
 char *
 select_area(Area *a, char *arg) {
-	static char Ebadvalue[] = "bad value";
 	uint i;
 	Frame *p, *f;
 	Area *ap;
@@ -481,5 +482,94 @@ focus_frame:
 	frame_to_top(p);
 	if(v == screen->sel)
 		restack_view(v);
+	return nil;
+}
+
+char *
+send_client(Frame *f, char *arg, Bool swap) {
+	Area *to, *a;
+	Client *c;
+	Frame *tf;
+	View *v;
+	Bool before;
+	int j;
+
+	a = f->area;
+	v = a->view;
+	c = f->client;
+
+	if(!strncmp(arg, "toggle", 7)) {
+		if(!a->floating)
+			to = v->area;
+		else if(c->revert && !c->revert->floating)
+			to = c->revert;
+		else
+			to = v->area->next;
+		goto send_area;
+	}else if(!a->floating) {
+		if(!strncmp(arg, "left", 5)) {
+			if(a->floating)
+				return Ebadvalue;
+			for(to=v->area->next; to; to=to->next)
+				if(a == to->next) break;
+			if(!to && !swap && (f->anext || f != a->frame))
+				to=new_column(v, v->area, 0);
+			goto send_area;
+		}
+		else if(!strncmp(arg, "right", 5)) {
+			if(a->floating)
+				return Ebadvalue;
+			to = a->next;
+			if(!to && !swap && (f->anext || f != a->frame))
+				to = new_column(v, a, 0);
+			goto send_area;
+		}
+		else if(!strncmp(arg, "up", 3)) {
+			for(tf=a->frame; tf; tf=tf->anext)
+				if(tf->anext == f) break;
+			before = True;
+			goto send_frame;
+		}
+		else if(!strncmp(arg, "down", 5)) {
+			tf = f->anext;
+			before = False;
+			goto send_frame;
+		}
+		else {
+			if(sscanf(arg, "%d", &j) != 1)
+				return Ebadvalue;
+			for(to=v->area; to; to=to->next)
+				if(!--j) break;
+			goto send_area;
+		}
+	}
+	return Ebadvalue;
+
+send_frame:
+	if(!tf)
+		return Ebadvalue;
+	if(!swap) {
+		remove_frame(f);
+		insert_frame(tf, f, before);
+	}else
+		swap_frames(f, tf);
+	arrange_column(a, False);
+
+	flushevents(EnterWindowMask, False);
+	focus_frame(f, True);
+	update_views();
+	return nil;
+
+send_area:
+	if(!to)
+		return Ebadvalue;
+	if(!swap)
+		send_to_area(to, f);
+	else if(to->sel)
+		swap_frames(f, to->sel);
+
+	flushevents(EnterWindowMask, False);
+	focus_frame(f, True);
+	update_views();
 	return nil;
 }

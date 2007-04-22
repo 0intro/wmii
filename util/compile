@@ -7,7 +7,6 @@ outfile="$1"; shift
 xtmp=/tmp/cc.$$.$USER.out
 
 echo CC ${BASE}$outfile
-echo $CC -o $outfile $CFLAGS $@ 2>$xtmp
 $CC -o $outfile $CFLAGS $@ 2>$xtmp
 status=$?
 
