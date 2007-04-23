@@ -366,12 +366,12 @@ place_frame(Frame *f) {
 
 	if(!fit || (p1.x + Dx(f->r) > a->r.max.x)) {
 		diff = Dx(a->r) - Dx(f->r);
-		p1.x = a->r.min.x + (random() % min(diff, 1));
+		p1.x = a->r.min.x + (random() % max(diff, 1));
 	}
 
 	if(!fit && (p1.y + Dy(f->r) > a->r.max.y)) {
 		diff = Dy(a->r) - Dy(f->r);
-		p1.y = a->r.min.y + (random() % min(diff, 1));
+		p1.y = a->r.min.y + (random() % max(diff, 1));
 	}
 
 	p1 = subpt(p1, f->r.min);

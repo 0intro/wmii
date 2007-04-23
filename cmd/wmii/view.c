@@ -224,8 +224,10 @@ restack_view(View *v) {
 				if(f != a->sel)
 					wins[n++] = f->client->framewin->w;
 		}
-	if(n)
+	if(n) {
+		XRaiseWindow(display, wins[0]);
 		XRestackWindows(display, wins, n);
+	}
 }
 
 void
