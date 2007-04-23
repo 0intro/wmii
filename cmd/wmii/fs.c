@@ -268,9 +268,9 @@ message_root(char *message) {
 		srv.running = 0;
 	else if(!strecmp(message, "exec ")) {
 		message += sizeof("exec ")-1;
-		srv.running = 0;
 		execstr = emalloc(strlen(message) + sizeof("exec "));
-		sprintf(execstr, "exec %s", &message[5]);
+		sprintf(execstr, "exec %s", message);
+		srv.running = 0;
 	}
 	else if(!strecmp(message, "view ")) {
 		message += sizeof("view ")-1;

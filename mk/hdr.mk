@@ -3,7 +3,8 @@
 all:
 
 .c.depend:
-	${DEPEND} $< >>.depend
+	echo MKDEP $<
+	${MKDEP} ${FULLCFLAGS} $< >>.depend
 
 .c.o:
 	${COMPILE} $@ $<
@@ -72,9 +73,11 @@ printinstall:
 mkdirs:
 clean:
 install: printinstall mkdirs
+depend: cleandep
 
 FILTER = cat
-COMPILE= CC="${CC}" CFLAGS="${CFLAGS} -I$$(echo ${INCPATH}|sed 's/:/ -I/g') ${EXCFLAGS}" ${ROOT}/util/compile
+FULLCFLAGS = ${CFLAGS} -I$$(echo ${INCPATH}|sed 's/:/ -I/g') ${EXCFLAGS}
+COMPILE= CC="${CC}" CFLAGS="${FULLCFLAGS}" ${ROOT}/util/compile
 LINK= LD="${LD}" LDFLAGS="${LDFLAGS} ${EXLDFLAGS}" ${ROOT}/util/link
 
 include ${ROOT}/config.mk

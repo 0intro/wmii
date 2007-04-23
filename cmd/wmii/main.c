@@ -509,6 +509,7 @@ main(int argc, char *argv[]) {
 
 	if(exitsignal)
 		raise(exitsignal);
+	fprintf(stderr, "execstr: %s\n", execstr);
 	if(execstr)
 		execl("/bin/sh", "sh", "-c", execstr, nil);
 	if(errstr)
