@@ -15,8 +15,6 @@ dispatch_event(XEvent *e) {
 	Debug printevent(e);
 	if(handler[e->type])
 		handler[e->type](e);
-	for(c = client; c; c = c->next)
-		XSetWindowBackgroundPixmap(display, c->framewin->w, broken->image);
 }
 
 uint

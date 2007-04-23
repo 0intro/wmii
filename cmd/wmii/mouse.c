@@ -750,7 +750,8 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 			frect = frame_hints(f, frect, grav);
 			frect = constrain(frect);
 
-			reshapewin(c->framewin, frect);
+			//reshapewin(c->framewin, frect);
+			resize_client(c, &frect);
 			break;
 		case ButtonRelease:
 			resize_client(c, &frect);

@@ -54,7 +54,7 @@ create_client(XWindow w, XWindowAttributes *wa) {
 	XSelectInput(display, c->w.w, ClientMask);
 
 	fwa.override_redirect = True;
-	fwa.background_pixmap = broken->image;
+	fwa.background_pixmap = None;
 	fwa.event_mask =
 			  SubstructureRedirectMask
 			| SubstructureNotifyMask
