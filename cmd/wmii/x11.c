@@ -672,6 +672,7 @@ sethints(Window *w) {
 	memset(h, 0, sizeof *h);
 
 	h->max = Pt(MaxInt, MaxInt);
+	h->inc = Pt(1,1);
 
 	if(!XGetWMNormalHints(display, w->w, &xs, &size))
 		return;
@@ -695,10 +696,9 @@ sethints(Window *w) {
 		h->baspect = p;
 	}
 
-	h->inc = Pt(1,1);
 	if(xs.flags&PResizeInc) {
-		h->inc.x = xs.width_inc;
-		h->inc.y = xs.height_inc;
+		h->inc.x = max(xs.width_inc, 1);
+		h->inc.y = max(xs.height_inc, 1);
 	}
 
 	if(xs.flags&PAspect) {
