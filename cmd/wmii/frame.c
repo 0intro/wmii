@@ -371,9 +371,8 @@ focus_frame(Frame *f, Bool restack) {
 	if(!a->floating && ((a->mode == Colstack) || (a->mode == Colmax)))
 		arrange_column(a, False);
 
-	if((f != old)
-	&& (f->area == old_a))
-			write_event("ClientFocus 0x%x\n", f->client->w.w);
+	if((f != old) && (f->area == old_a))
+		write_event("ClientFocus 0x%x\n", f->client->w.w);
 
 	if(restack)
 		restack_view(v);

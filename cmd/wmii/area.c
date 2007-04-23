@@ -84,7 +84,7 @@ create_area(View *v, Area *pos, uint w) {
 	if(a == v->area)
 		a->floating = True;
 
-	if((v->sel == nil) || (v->sel->floating && v->area == a->prev && a->next == nil))
+	if(v->sel == nil)
 		focus_area(a);
 
 	if(!a->floating)
@@ -201,8 +201,6 @@ detach_from_area(Frame *f) {
 	Client *c, *cp;
 	Area *a;
 	View *v;
-	Area *ta;
-	uint i;
 
 	a = f->area;
 	v = a->view;
@@ -224,10 +222,6 @@ detach_from_area(Frame *f) {
 		if(a->frame)
 			arrange_column(a, False);
 		else {
-			i = 0;
-			for(ta=v->area; ta != a; ta=ta->next)
-				i++;
-
 			if(v->area->next->next)
 				destroy_area(a);
 			else if((a->frame == nil) && (v->area->frame))
@@ -235,8 +229,7 @@ detach_from_area(Frame *f) {
 
 			arrange_view(v);
 		}
-	}
-	else if(!a->frame) {
+	}else if(!a->frame) {
 		if(c->trans) {
 			cp = win2client(c->trans);
 			if(cp && cp->frame) {
@@ -432,7 +425,7 @@ select_area(Area *a, char *arg) {
 	if(!strcmp(arg, "toggle")) {
 		if(!a->floating)
 			ap = v->area;
-		else if(v->revert)
+		else if(v->revert && v->revert != a)
 			ap = v->revert;
 		else
 			ap = v->area->next;

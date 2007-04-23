@@ -68,6 +68,8 @@ create_view(const char *name) {
 	write_event("CreateTag %s\n", v->name);
 	create_area(v, nil, 0);
 	new_column(v, v->area, 0);
+	
+	focus_area(v->area->next);
 
 	for(i=&view; *i; i=&(*i)->next)
 		if(strcmp((*i)->name, name) < 0)
@@ -166,13 +168,14 @@ select_view(const char *arg) {
 
 void
 attach_to_view(View *v, Frame *f) {
-	Client *c = f->client;
-
+	Client *c;
+	
+	c = f->client;
 	c->revert = nil;
 	if(c->trans || c->floating || c->fixedsize || c->fullscreen)
-		v->sel = v->area;
+		focus_area(v->area);
 	else if(starting && v->sel->floating)
-		v->sel = v->area->next;
+		focus_area(v->area->next);
 	attach_to_area(v->sel, f, False);
 }
 
