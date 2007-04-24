@@ -17,7 +17,7 @@ FILTER = sed "s|CONFPREFIX|${ETC}|g; \
 	      s|P9PATHS|${P9PATHS}|g; \
 	      s|AWKPATH|${AWKPATH}|g"
 
-EXCFLAGS = ${INCX11} -DVERSION=\"${VERSION}\"
+CFLAGS += ${INCX11} -DVERSION=\"${VERSION}\"
 
 include ${ROOT}/mk/many.mk
 include ${ROOT}/mk/dir.mk

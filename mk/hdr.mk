@@ -76,8 +76,9 @@ install: printinstall mkdirs
 depend: cleandep
 
 FILTER = cat
-FULLCFLAGS = ${CFLAGS} -I$$(echo ${INCPATH}|sed 's/:/ -I/g') ${EXCFLAGS}
-COMPILE= CC="${CC}" CFLAGS="${FULLCFLAGS}" ${ROOT}/util/compile
-LINK= LD="${LD}" LDFLAGS="${LDFLAGS} ${EXLDFLAGS}" ${ROOT}/util/link
+COMPILE= CC="${CC}" CFLAGS="${CFLAGS}" ${ROOT}/util/compile
+LINK= LD="${LD}" LDFLAGS="${LDFLAGS}" ${ROOT}/util/link
 
 include ${ROOT}/config.mk
+CFLAGS += -I$$(echo ${INCPATH}|sed 's/:/ -I/g')
+

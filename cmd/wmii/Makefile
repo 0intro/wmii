@@ -8,8 +8,8 @@ TARG =	wmii
 HFILES=	dat.h fns.h utf.h x11.h
 
 LIB =	${LIBIXP}
-EXLDFLAGS = -lm ${LIBX11} -lXext ${LIBICONV}
-EXCFLAGS = ${INCX11} ${INCICONV} -DVERSION=\"${VERSION}\"
+LDFLAGS += -lm ${LIBX11} -lXext ${LIBICONV}
+CFLAGS += ${INCX11} ${INCICONV} -DVERSION=\"${VERSION}\"
 OBJ =	area	\
 	bar	\
 	client	\
@@ -31,3 +31,4 @@ OBJ =	area	\
 	../util
 
 include ${ROOT}/mk/one.mk
+

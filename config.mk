@@ -13,8 +13,8 @@ INCPATH = .:${ROOT}/include:${INCLUDE}:/usr/include
 LIBS = -L/usr/lib -lc
 
 # Flags
-CFLAGS = -g -Wall
-LDFLAGS = -g ${LIBS}
+CFLAGS += -g -O0 -Wall
+LDFLAGS += -g ${LIBS}
 STATIC = -static
 MKDEP = cpp -M
 
