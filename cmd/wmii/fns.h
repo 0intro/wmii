@@ -2,15 +2,11 @@
  * See LICENSE file for license details.
  */
 
-/* wm.c */
-char *message_root(char *message);
-
 /* area.c */
 Area *create_area(View*, Area *pos, uint w);
 void destroy_area(Area*);
 Area *area_of_id(View*, ushort id);
 void focus_area(Area*);
-char *select_area(Area*, char *arg);
 void send_to_area(Area*, Frame*);
 void attach_to_area(Area*, Frame*, Bool send);
 void detach_from_area(Frame*);
@@ -36,6 +32,7 @@ void map_client(Client*);
 void unmap_client(Client*, int state);
 int map_frame(Client*);
 int unmap_frame(Client*);
+void set_urgent(Client *c, Bool urgent, Bool write);
 void set_cursor(Client*, Cursor cur);
 void focus_frame(Frame*, Bool restack);
 void reparent_client(Client*, Window*, Point);
@@ -44,8 +41,6 @@ void focus(Client*, Bool restack);
 void focus_client(Client*);
 void resize_client(Client*, Rectangle*);
 void apply_sizehints(Client*, Rectangle*, Bool floating, Bool frame, Align sticky);
-char *send_client(Frame*, char*, Bool swap);
-char * message_client(Client*, char*);
 void move_client(Client*, char *arg);
 void size_client(Client*, char *arg);
 Client *selclient();
@@ -74,7 +69,7 @@ void print_focus(Client *c, char *to);
 /* frame.c */
 Frame *create_frame(Client*, View*);
 void remove_frame(Frame*);
-void insert_frame(Frame *pos, Frame*, Bool before);
+void insert_frame(Frame *pos, Frame*);
 void resize_frame(Frame*, Rectangle);
 Bool frame_to_top(Frame *f);
 void set_frame_cursor(Frame*, Point);
@@ -121,6 +116,17 @@ MapEnt* hashget(Map*, char*, int create);
 void* maprm(Map*, ulong);
 void* hashrm(Map*, char*);
 
+/* message.c */
+char * getword(Message*);
+Area * strarea(View*, char*);
+char * message_view(View*, Message*);
+char * parse_colors(Message*, CTuple*);
+char * message_root(void*, Message*);
+char * read_root_ctl();
+char * message_client(Client*, Message*);
+char *select_area(Area*, Message*);
+char *send_client(Frame*, Message*, Bool swap);
+
 /* mouse.c */
 void mouse_resizecol(Divide*);
 void do_mouse_resize(Client*, Bool opaque, Align);
@@ -142,10 +148,11 @@ void focus_view(WMScreen*, View*);
 void update_client_views(Client*, char**);
 Rectangle *rects_of_view(View*, uint *num, Frame *ignore);
 View *view_of_id(ushort);
+Frame *view_clientframe(View *v, Client *c);
 void select_view(const char*);
 void attach_to_view(View*, Frame*);
 Client *view_selclient(View*);
-char *message_view(View*, char*);
+char *message_view(View *v, Message *m);
 void restack_view(View*);
 uchar *view_index(View*);
 void destroy_view(View*);
@@ -239,3 +246,4 @@ char*	utfrune(char*, long);
 char*	utfutf(char*, char*);
 char*	toutf8n(char*, int);
 char*	toutf8(char*);
+int		isspacerune(Rune c);

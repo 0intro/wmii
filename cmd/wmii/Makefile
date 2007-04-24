@@ -21,6 +21,7 @@ OBJ =	area	\
 	key		\
 	main		\
 	map		\
+	message	\
 	mouse	\
 	rule		\
 	printevent\

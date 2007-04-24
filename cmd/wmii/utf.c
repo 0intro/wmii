@@ -351,3 +351,49 @@ char*
 toutf8(char *str) {
 	return toutf8n(str, strlen(str));
 }
+
+/*
+ * space ranges
+ */
+static
+Rune	__space2[] =
+{
+	0x0009,	0x000a,	/* tab and newline */
+	0x0020,	0x0020,	/* space */
+	0x00a0,	0x00a0,	/*   */
+	0x2000,	0x200b,	/*   - ​ */
+	0x2028,	0x2029,	/*   -   */
+	0x3000,	0x3000,	/* 　 */
+	0xfeff,	0xfeff,	/* ﻿ */
+};
+
+static Rune*
+bsearch(Rune c, Rune *t, int n, int ne)
+{
+	Rune *p;
+	int m;
+
+	while(n > 1) {
+		m = n/2;
+		p = t + m*ne;
+		if(c >= p[0]) {
+			t = p;
+			n = n-m;
+		} else
+			n = m;
+	}
+	if(n && c >= t[0])
+		return t;
+	return 0;
+}
+
+int
+isspacerune(Rune c)
+{
+	Rune *p;
+
+	p = bsearch(c, __space2, nelem(__space2)/2, 2);
+	if(p && c >= p[0] && c <= p[1])
+		return 1;
+	return 0;
+}

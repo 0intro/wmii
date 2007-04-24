@@ -13,7 +13,7 @@ WMII_NORMCOLORS='#222222 #5FBF77 #2A7F3F'
 WMII_FOCUSCOLORS='#ffffff #153F1F #2A7F3F'
 
 WMII_BACKGROUND='#333333'
-WMII_FONT='-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*'
+WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
 WMII_MENU="dmenu -b -fn $WMII_FONT -nf $1 -nb $2 -sf $4 -sb $5"

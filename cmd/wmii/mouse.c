@@ -287,7 +287,7 @@ horiz:
 
 				remove_frame(f);
 				f->area = fw->ra;
-				insert_frame(fw->fp, f, False);
+				insert_frame(fw->fp, f);
 
 				if(f->aprev) {
 					f->aprev->r.max.y = fw->fr.min.y;

@@ -12,7 +12,6 @@
 #include "fns.h"
 
 static void place_frame(Frame *f);
-static char Ebadvalue[] = "bad value";
 
 Client *
 area_selclient(Area *a) {               
@@ -179,7 +178,7 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 		f->r.max.y = Dy(a->r) / n_frame;
 	}
 
-	insert_frame(a->sel, f, False);
+	insert_frame(a->sel, f);
 
 	if(a->floating)
 		place_frame(f);
@@ -411,157 +410,4 @@ focus_area(Area *a) {
 		if(a->frame)
 			write_event("ClientFocus 0x%x\n", a->sel->client->w.w);
 	}
-}
-
-char *
-select_area(Area *a, char *arg) {
-	uint i;
-	Frame *p, *f;
-	Area *ap;
-	View *v;
-
-	v = a->view;
-	f = a->sel;
-	if(!strcmp(arg, "toggle")) {
-		if(!a->floating)
-			ap = v->area;
-		else if(v->revert && v->revert != a)
-			ap = v->revert;
-		else
-			ap = v->area->next;
-	}
-	else if(!strcmp(arg, "left")) {
-		if(a->floating)
-			return Ebadvalue;
-		for(ap=v->area->next; ap->next; ap=ap->next)
-			if(ap->next == a) break;
-	} 
-	else if(!strcmp(arg, "right")) {
-		if(a->floating)
-			return Ebadvalue;
-		ap = a->next;
-		if(ap == nil)
-			ap = v->area->next;
-	}
-	else if(!strcmp(arg, "up")) {
-		if(!f)
-			return Ebadvalue;
-		for(p = f->area->frame; p->anext; p = p->anext)
-			if(p->anext == f) break;
-		goto focus_frame;
-	}
-	else if(!strcmp(arg, "down")) {
-		if(!f)
-			return Ebadvalue;
-		p = f->anext;
-		if(p == nil)
-			p = a->frame;
-		goto focus_frame;
-	}
-	else if(!strcmp(arg, "~"))
-		ap = v->area;
-	else {
-		if(sscanf(arg, "%u", &i) != 1 || i == 0)
-			return Ebadvalue;
-		for(ap=v->area->next; ap; ap=ap->next)
-			if(!--i) break;
-	}
-	focus_area(ap);
-	return nil;
-
-focus_frame:
-	focus_frame(p, False);
-	frame_to_top(p);
-	if(v == screen->sel)
-		restack_view(v);
-	return nil;
-}
-
-char *
-send_client(Frame *f, char *arg, Bool swap) {
-	Area *to, *a;
-	Client *c;
-	Frame *tf;
-	View *v;
-	Bool before;
-	int j;
-
-	a = f->area;
-	v = a->view;
-	c = f->client;
-
-	if(!strncmp(arg, "toggle", 7)) {
-		if(!a->floating)
-			to = v->area;
-		else if(c->revert && !c->revert->floating)
-			to = c->revert;
-		else
-			to = v->area->next;
-		goto send_area;
-	}else if(!a->floating) {
-		if(!strncmp(arg, "left", 5)) {
-			if(a->floating)
-				return Ebadvalue;
-			for(to=v->area->next; to; to=to->next)
-				if(a == to->next) break;
-			if(!to && !swap && (f->anext || f != a->frame))
-				to=new_column(v, v->area, 0);
-			goto send_area;
-		}
-		else if(!strncmp(arg, "right", 5)) {
-			if(a->floating)
-				return Ebadvalue;
-			to = a->next;
-			if(!to && !swap && (f->anext || f != a->frame))
-				to = new_column(v, a, 0);
-			goto send_area;
-		}
-		else if(!strncmp(arg, "up", 3)) {
-			for(tf=a->frame; tf; tf=tf->anext)
-				if(tf->anext == f) break;
-			before = True;
-			goto send_frame;
-		}
-		else if(!strncmp(arg, "down", 5)) {
-			tf = f->anext;
-			before = False;
-			goto send_frame;
-		}
-		else {
-			if(sscanf(arg, "%d", &j) != 1)
-				return Ebadvalue;
-			for(to=v->area; to; to=to->next)
-				if(!--j) break;
-			goto send_area;
-		}
-	}
-	return Ebadvalue;
-
-send_frame:
-	if(!tf)
-		return Ebadvalue;
-	if(!swap) {
-		remove_frame(f);
-		insert_frame(tf, f, before);
-	}else
-		swap_frames(f, tf);
-	arrange_column(a, False);
-
-	flushevents(EnterWindowMask, False);
-	focus_frame(f, True);
-	update_views();
-	return nil;
-
-send_area:
-	if(!to)
-		return Ebadvalue;
-	if(!swap)
-		send_to_area(to, f);
-	else if(to->sel)
-		swap_frames(f, to->sel);
-
-	flushevents(EnterWindowMask, False);
-	focus_frame(f, True);
-	update_views();
-	return nil;
 }

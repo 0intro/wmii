@@ -7,7 +7,7 @@
 #include <utf.h>
 #include "x11.h"
 
-#define FONT		"-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*"
+#define FONT		"-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*"
 #define FOCUSCOLORS	"#ffffff #335577 #447799"
 #define NORMCOLORS	"#222222 #eeeeee #666666"
 

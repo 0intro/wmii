@@ -10,8 +10,6 @@
 
 void
 dispatch_event(XEvent *e) {
-	Client *c;
-
 	Debug printevent(e);
 	if(handler[e->type])
 		handler[e->type](e);

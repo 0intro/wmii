@@ -11,7 +11,6 @@
 #include "fns.h"
 
 static Handlers handlers;
-static char Ebadcmd[] = "bad command";
 
 Rectangle gravclient(Client*, Rectangle);
 
@@ -433,7 +432,7 @@ kill_client(Client * c) {
 		XKillClient(display, c->w.w);
 }
 
-static void
+void
 set_urgent(Client *c, Bool urgent, Bool write) {
 	XWMHints *wmh;
 	char *cwrite, *cnot;
@@ -910,17 +909,4 @@ apply_rules(Client *c) {
 			}
 	if(!strlen(c->tags))
 		apply_tags(c, "nil");
-}
-
-char *
-message_client(Client *c, char *message) {
-	if(!strcmp(message, "kill"))
-		kill_client(c);
-	else if(!strcmp(message, "Urgent"))
-		set_urgent(c, True, True);
-	else if(!strcmp(message, "NotUrgent"))
-		set_urgent(c, False, True);
-	else
-		return Ebadcmd;
-	return nil;
 }

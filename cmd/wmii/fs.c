@@ -64,8 +64,7 @@ static char
 	Enoperm[] = "permission denied",
 	Enofile[] = "file not found",
 	Ebadvalue[] = "bad value",
-	Einterrupted[] = "interrupted",
-	Ebadcmd[] = "bad command";
+	Einterrupted[] = "interrupted";
 
 /* Macros */
 #define QID(t, i) (((vlong)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
@@ -226,114 +225,38 @@ data_to_cstring(Ixp9Req *r) {
 	free(p);
 }
 
-/* Should be somewhere else */
-char *
-parse_colors(char **buf, int *buflen, CTuple *col) {
-	static regex_t reg;
-	static Bool compiled;
-
-	if(!compiled) {
-		compiled = 1;
-		regcomp(&reg, "^#[0-9a-f]{6} #[0-9a-f]{6} #[0-9a-f]{6}([[:space:]]|$)",
-				REG_EXTENDED|REG_NOSUB|REG_ICASE);
-	}
-
-	if(*buflen < 23 || regexec(&reg, *buf, 0, 0, 0))
-		return "bad value";
-
-	(*buf)[23] = '\0';
-	loadcolor(col, *buf);
-
-	*buf += 23;
-	*buflen -= 23;
-	if(*buflen > 0) {
-		(*buf)++;
-		(*buflen)--;
-	}
-	return nil;
-}
-
-#define strecmp(str, const) (strncmp((str), (const), sizeof(const)-1))
-char *
-message_root(char *message) {
-	Font *fn;
-	uint n;
-
-	if(!strchr(message, ' ')) {
-		snprintf(buffer, sizeof(buffer), "%s ", message);
-		message = buffer;
-	}
-
-	if(!strecmp(message, "quit "))
-		srv.running = 0;
-	else if(!strecmp(message, "exec ")) {
-		message += sizeof("exec ")-1;
-		execstr = emalloc(strlen(message) + sizeof("exec "));
-		sprintf(execstr, "exec %s", message);
-		srv.running = 0;
-	}
-	else if(!strecmp(message, "view ")) {
-		message += sizeof("view ")-1;
-		select_view(message);
-	}
-	else if(!strecmp(message, "selcolors ")) {
-		fprintf(stderr, "%s: warning: selcolors have been removed\n", argv0);
-		return Ebadcmd;
-	}
-	else if(!strecmp(message, "focuscolors ")) {
-		message += sizeof("focuscolors ")-1;
-		n = strlen(message);
-		return parse_colors(&message, (int *)&n, &def.focuscolor);
-	}
-	else if(!strecmp(message, "normcolors ")) {
-		message += sizeof("normcolors ")-1;
-		n = strlen(message);
-		return parse_colors(&message, (int *)&n, &def.normcolor);
-	}
-	else if(!strecmp(message, "font ")) {
-		message += sizeof("font ")-1;
-		fn = loadfont(message);
-		if(fn) {
-			freefont(def.font);
-			def.font = fn;
-			resize_bar(screen);
-		}else
-			return "can't load font";
-	}
-	else if(!strecmp(message, "border ")) {
-		message += sizeof("border ")-1;
-		n = (uint)strtol(message, &message, 10);
-		if(*message)
-			return Ebadvalue;
-		def.border = n;
-	}
-	else if(!strecmp(message, "grabmod ")) {
-		message += sizeof("grabmod ")-1;
-		ulong mod;
-		mod = mod_key_of_str(message);
-		if(!(mod & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)))
-			return Ebadvalue;
-		strncpy(def.grabmod, message, sizeof(def.grabmod));
-		def.mod = mod;
-	}
-	else
-		return Ebadcmd;
-	return nil;
-}
+typedef char* (*MsgFunc)(void*, Message*);
 
 char *
-read_root_ctl() {
-	uint i = 0;
-	if(screen->sel)
-		i += snprintf(&buffer[i], (sizeof(buffer) - i), "view %s\n", screen->sel->name);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "focuscolors %s\n", def.focuscolor.colstr);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "normcolors %s\n", def.normcolor.colstr);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "font %s\n", def.font->name);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "grabmod %s\n", def.grabmod);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "border %d\n", def.border);
-	return buffer;
-}
+message(Ixp9Req *r, MsgFunc fn) {
+	char *err, *s, *p, c;
+	FileId *f;
+	Message m;
 
+	f = r->fid->aux;
+
+	data_to_cstring(r);
+	s = r->ifcall.data;
+
+	err = nil;
+	c = *s;
+	while(c != '\0') {
+		while(*s == '\n')
+			s++;
+		p = s;
+		while(*p != '\0' && *p != '\n')
+			p++;
+		c = *p;
+		*p = '\0';
+
+		m = ixp_message(s, p-s, 0);
+		s = fn(f->p.ref, &m);
+		if(s)
+			err = s;
+		s = p + 1;
+	}
+	return err;
+}
 
 void
 respond_event(Ixp9Req *r) {
@@ -627,7 +550,9 @@ fs_stat(Ixp9Req *r) {
 	Stat s;
 	int size;
 	uchar *buf;
-	FileId *f = r->fid->aux;
+	FileId *f;
+	
+	f = r->fid->aux;
 
 	if(!verify_file(f)) {
 		respond(r, Enofile);
@@ -797,47 +722,23 @@ fs_write(Ixp9Req *r) {
 		respond(r, nil);
 		return;
 	case FsFBar:
-		/* XXX: This should validate after each write */
 		i = strlen(f->p.bar->buf);
 		write_to_buf(r, &f->p.bar->buf, &i, 279);
 		r->ofcall.count = i - r->ifcall.offset;
 		respond(r, nil);
 		return;
 	case FsFCctl:
-		data_to_cstring(r);
-		if((errstr = message_client(f->p.client, r->ifcall.data))) {
-			respond(r, errstr);
-			return;
-		}
+		errstr = message(r, (MsgFunc)message_client);
 		r->ofcall.count = r->ifcall.count;
-		respond(r, nil);
+		respond(r, errstr);
 		return;
 	case FsFTctl:
-		data_to_cstring(r);
-		if((errstr = message_view(f->p.view, r->ifcall.data))) {
-			respond(r, errstr);
-			return;
-		}
+		errstr = message(r, (MsgFunc)message_view);
 		r->ofcall.count = r->ifcall.count;
-		respond(r, nil);
+		respond(r, errstr);
 		return;
 	case FsFRctl:
-		data_to_cstring(r);
-		{	uint n;
-			char *p, *toks[32];
-
-			errstr = nil;
-			p = toutf8n(r->ifcall.data, r->ifcall.count);
-			n = tokenize(toks, 32, p, '\n');
-			for(i = 0; i < n; i++) {
-				if(errstr)
-					message_root(toks[i]);
-				else
-					errstr = message_root(toks[i]);
-			}
-			free(p);
-		}
-		focus_view(screen, screen->sel);
+		errstr = message(r, (MsgFunc)message_root);
 		r->ofcall.count = r->ifcall.count;
 		respond(r, errstr);
 		return;
@@ -944,12 +845,13 @@ fs_remove(Ixp9Req *r) {
 
 void
 fs_clunk(Ixp9Req *r) {
-	Client *c;
 	FidLink **fl, *ft;
-	char *buf, *p, *q;
-	int i;
-	FileId *f = r->fid->aux;
-
+	FileId *f;
+	char *p, *q;
+	Client *c;
+	Message m;
+	
+	f = r->fid->aux;
 	if(!verify_file(f)) {
 		respond(r, nil);
 		return;
@@ -969,18 +871,19 @@ fs_clunk(Ixp9Req *r) {
 		update_keys();
 		break;
 	case FsFBar:
-		buf = f->p.bar->buf;
-		i = strlen(buf);
-		buf = q = toutf8n(buf, i);
+		p = toutf8(f->p.bar->buf);
+		
+		m = ixp_message(p, strlen(p), 0);
+		parse_colors(&m, &f->p.bar->col);
 
-		parse_colors(&buf, &i, &f->p.bar->col);
-		while(i > 0 && buf[i - 1] == '\n')
-			buf[--i] = '\0';
+		q = m.end-1;
+		while(q >= (char*)m.pos && *q == '\n')
+			*q-- = '\0';
 
-		p = f->p.bar->text;
-		utfecpy(p, p+sizeof(f->p.bar->text), buf);
+		q = f->p.bar->text;
+		utfecpy(q, q+sizeof((Bar){}.text), m.pos);
 
-		free(q);
+		free(p);
 
 		draw_bar(screen);
 		break;

@@ -55,13 +55,10 @@ remove_frame(Frame *f) {
 }
 
 void
-insert_frame(Frame *pos, Frame *f, Bool before) {
+insert_frame(Frame *pos, Frame *f) {
 	Area *a;
 
 	a = f->area;
-
-	if(before)
-		pos = pos->aprev;
 
 	if(pos) {
 		f->aprev = pos;

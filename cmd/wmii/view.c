@@ -19,8 +19,9 @@ is_empty(View *v) {
 }
 
 Frame *
-clientframe_of_view(View *v, Client *c) {              
+view_clientframe(View *v, Client *c) {              
 	Frame *f;
+
 	for(f=c->frame; f; f=f->cnext)
 		if(f->area->view == v)
 			break;
@@ -367,98 +368,6 @@ view_index(View *v) {
 		}
 	}
 	return (uchar*)buffer;
-}
-
-Client *
-client_of_message(View *v, char *message, uint *next) {              
-	ulong id = 0;
-	Client *c;
-
-	if(!strncmp(message, "sel ", 4)) {
-		*next = 4;
-		return view_selclient(v);
-	}
-
-	sscanf(message, "0x%lx %n", &id, next);
-	if(!id)
-		sscanf(message, "%lu %n", &id, next);
-	if(!id)
-		return nil;
-
-	for(c=client; c; c=c->next)
-		if(c->w.w == id) break;
-	return c;
-}
-
-Area *
-area_of_message(View *v, char *message, uint *next) {
-	uint i;
-	Area *a;
-
-	if(!strncmp(message, "sel ", 4)) {
-		*next = 4;
-		return v->sel;
-	}
-	if(!strncmp(message, "~ ", 2)) {
-		*next = 2;
-		return v->area;
-	}
-
-	if(1 != sscanf(message, "%u %n", &i, next) || i == 0)
-		return nil;
-	for(a=v->area; a; a=a->next)
-		if(i-- == 0) break;
-	return a;
-}
-
-char *
-message_view(View *v, char *message) {
-	int n, i;
-	Client *c;
-	Frame *f;
-	Area *a;
-	Bool swap;
-	static char Ebadvalue[] = "bad value";
-
-	if(!strncmp(message, "send ", 5)) {
-		message += 5;
-		swap = False;
-		goto send;
-	}
-	if(!strncmp(message, "swap ", 5)) {
-		message += 5;
-		swap = True;
-		goto send;
-	}
-	if(!strncmp(message, "select ", 7)) {
-		message += 7;
-		return select_area(v->sel, message);
-	}
-	if(!strncmp(message, "colmode ", 8)) {
-		message += 8;
-		if((a = area_of_message(v, message, &n)) == nil
-		|| a->floating)
-			return Ebadvalue;
-		if((i = str2colmode(&message[n])) == -1)
-			return Ebadvalue;
-
-		a->mode = i;
-		arrange_column(a, True);
-		restack_view(v);
-
-		if(v == screen->sel)
-			focus_view(screen, v);
-		draw_frames();
-		return nil;
-	}
-	return Ebadvalue;
-
-send:
-	if(!(c = client_of_message(v, message, &n)))
-		return Ebadvalue;
-	if(!(f = clientframe_of_view(v, c)))
-		return Ebadvalue;
-	return send_client(f, &message[n], swap);
 }
 
 void

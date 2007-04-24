@@ -10,7 +10,7 @@ DOWN=j
 LEFT=h
 RIGHT=l
 
-WMII_FONT='fixed'
+WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 WMII_NORMCOLORS=('#222222' '#5FBF77' '#2A7F3F')
 WMII_FOCUSCOLORS=('#ffffff' '#153F1F' '#2A7F3F')
 WMII_BACKGROUND='#333333'
