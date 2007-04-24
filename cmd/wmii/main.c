@@ -281,7 +281,7 @@ struct {
 
 /*
  * There's no way to check accesses to destroyed windows, thus
- * those cases are ignored (especially on UnmapNotify's).
+ * those cases are ignored (especially on UnmapNotifies).
  * Other types of errors call Xlib's default error handler, which
  * calls exit().
  */

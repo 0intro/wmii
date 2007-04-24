@@ -215,8 +215,10 @@ restack_view(View *v) {
 				if(f != a->sel)
 					wins[n++] = f->client->framewin;
 		}
-	if(n)
+	if(n) {
+		XRaiseWindow(blz.dpy, wins[0]);
 		XRestackWindows(blz.dpy, wins, n);
+	}
 }
 
 void
