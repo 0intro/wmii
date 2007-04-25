@@ -108,7 +108,7 @@ Align get_sticky(Rectangle src, Rectangle dst);
 void kpress(XWindow, ulong mod, KeyCode);
 void update_keys();
 void init_lock_keys();
-ulong mod_key_of_str(char*);
+ulong str2modmask(char*);
 
 /* map.c */
 MapEnt* mapget(Map*, ulong, int create);
@@ -125,7 +125,7 @@ char * message_root(void*, Message*);
 char * read_root_ctl();
 char * message_client(Client*, Message*);
 char *select_area(Area*, Message*);
-char *send_client(Frame*, Message*, Bool swap);
+char *send_client(View*, Message*, Bool swap);
 
 /* mouse.c */
 void mouse_resizecol(Divide*);

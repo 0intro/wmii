@@ -145,7 +145,7 @@ init_environment() {
 
 static void
 init_atoms() {
-	Atom net[] = { xatom("_NET_SUPPORTED"), xatom("_NET_WM_NAME")};
+	Atom net[] = { xatom("_NET_SUPPORTED"), xatom("_NET_WM_NAME") };
 
 	changeprop(&scr.root, "_NET_SUPPORTED", "ATOM", net, nelem(net));
 }
@@ -172,8 +172,7 @@ init_cursors() {
 	create_cursor(CurIcon, XC_icon);
 
 	XAllocNamedColor(display, scr.colormap,
-			"black", &black,
-			&dummy);
+			"black", &black, &dummy);
 	pix = XCreateBitmapFromData(
 			display, scr.root.w,
 			(char[]){0}, 1, 1);

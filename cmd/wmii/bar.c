@@ -100,10 +100,6 @@ draw_bar(WMScreen *s) {
 	uint width, tw, nb, size;
 	float shrink;
 
-	fill(screen->ibuf, s->brect, def.normcolor.bg);
-	if(!s->bar[BarLeft] && !s->bar[BarRight])
-		goto MapBar;
-
 	largest = b = tb = nil;
 	tw = width = nb = size = 0;
 	for(nb = 0; nb < nelem(s->bar); nb++)
@@ -152,13 +148,16 @@ draw_bar(WMScreen *s) {
 
 			if(tb)
 				b->r = rectaddpt(b->r, Pt( tb->r.max.x, 0));
+		}
 
+	r = rectsubpt(s->brect, s->brect.min);
+	fill(screen->ibuf, r, def.normcolor.bg);
+	for(nb = 0; nb < nelem(s->bar); nb++)
+		for(b = s->bar[nb]; b; tb=b, b=b->next) {
 			fill(screen->ibuf, b->r, b->col.bg);
 			drawstring(screen->ibuf, def.font, b->r, align, b->text, b->col.fg);
 			border(screen->ibuf, b->r, 1, b->col.border);
 		}
-MapBar:
-	r = rectsubpt(s->brect, s->brect.min);
 	copyimage(s->barwin, r, screen->ibuf, ZP);
 	XSync(display, False);
 }

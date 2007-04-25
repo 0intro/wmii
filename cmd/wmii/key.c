@@ -32,7 +32,7 @@ init_lock_keys() {
 }
 
 ulong
-mod_key_of_str(char *val) {
+str2modmask(char *val) {
 	ulong mod = 0;
 
 	if (strstr(val, "Shift"))
@@ -112,7 +112,7 @@ get_key(const char *name) {
 		else
 			kstr = seq[i];
 		k->key = XKeysymToKeycode(display, XStringToKeysym(kstr));
-		k->mod = mod_key_of_str(seq[i]);
+		k->mod = str2modmask(seq[i]);
 	}
 	if(r) {
 		r->id = id++;

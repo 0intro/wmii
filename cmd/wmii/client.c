@@ -104,7 +104,7 @@ manage_client(Client *c) {
 	r = c->w.r;
 	p.x = def.border;
 	p.y = labelh(def.font);
-	reparent_client(c, c->framewin, p);
+	reparent_client(c, c->framewin, ZP);
 
 	if(!strlen(c->tags))
 		apply_rules(c);
@@ -358,9 +358,9 @@ resize_client(Client *c, Rectangle *r) {
 		map_frame(c);
 		unmap_client(c, IconicState);
 	}else {
-		reshapewin(&c->w, f->crect);
 		map_client(c);
 		reshapewin(c->framewin, f->r);
+		reshapewin(&c->w, f->crect);
 		map_frame(c);
 		configure_client(c);
 	}
@@ -505,18 +505,18 @@ update_client_name(Client *c) {
 static void
 updatemwm(Client *c) {
 	enum {
-		All =		1<<0,
-		Border =	1<<1,
-		Title =	1<<3,
+		All =		0x1,
+		Border =	0x2,
+		Title =	0x8,
 	};
 	Rectangle r;
 	ulong *ret, decor;
 	Atom real;
 	int n;
 
-	decor = 0;
 	n = getproperty(&c->w, "_MOTIF_WM_HINTS", "_MOTIF_WM_HINTS", &real, 
 				2L, (uchar**)&ret, 1L);
+
 	if(n == 0) {
 		c->borderless = 0;
 		c->titleless = 0;

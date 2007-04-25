@@ -1,6 +1,7 @@
 /* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,15 +9,84 @@
 #include "dat.h"
 #include "fns.h"
 
+static char Ebadcmd[] = "bad command",
+	Ebadvalue[] = "bad value";
+
+/* Edit s/"([^"]+)"/L\1/g	Edit |tr 'a-z' 'A-Z' */
+enum {
+	LNOTURGENT,
+	LURGENT,
+	LBORDER,
+	LCOLMODE,
+	LDOWN,
+	LEXEC,
+	LFOCUSCOLORS,
+	LFONT,
+	LGRABMOD,
+	LKILL,
+	LLEFT,
+	LNORMCOLORS,
+	LQUIT,
+	LRIGHT,
+	LSELCOLORS,
+	LSELECT,
+	LSEND,
+	LSWAP,
+	LTOGGLE,
+	LUP,
+	LVIEW,
+	LTILDE,
+};
+char *symtab[] = {
+	"NotUrgent",
+	"Urgent",
+	"border",
+	"colmode",
+	"down",
+	"exec",
+	"focuscolors",
+	"font",
+	"grabmod",
+	"kill",
+	"left",
+	"normcolors",
+	"quit",
+	"right",
+	"selcolors",
+	"select",
+	"send",
+	"swap",
+	"toggle",
+	"up",
+	"view",
+	"~",
+};
+
 /* Edit ,y/^[a-zA-Z].*\n.* {\n/d
  * Edit s/^([a-zA-Z].*)\n(.*) {\n/\1 \2;\n/
  * Edit ,x/^static.*\n/d
  */
 
-#define strecmp(str, const) (strncmp((str), (const), sizeof(const)-1))
-	
-static char Ebadcmd[] = "bad command",
-	Ebadvalue[] = "bad value";
+static int
+getsym(char *s) {
+	int i, n, m, cmp;
+
+	n = nelem(symtab);
+	i = 0;
+	while(n) {
+		m = n/2;
+		cmp = strcmp(s, symtab[i+m]);
+		if(cmp == 0)
+			return i+m;
+		if(cmp > 0) {
+			i += m;
+			n = n-m;
+		}
+		else
+			n = m;
+	}
+	return -1;
+}
 
 static void
 eatrunes(Message *m, int (*p)(Rune), int val) {
@@ -48,13 +118,15 @@ getword(Message *m) {
 	return ret;
 }
 
+
+#define strbcmp(str, const) (strncmp((str), (const), sizeof(const)-1))	
 static int
 getbase(char **s) {
-	if(!strecmp(*s, "0x")) {
+	if(!strbcmp(*s, "0x")) {
 		*s += 2;
 		return 16;
 	}
-	if(strecmp(*s, "0")) {
+	if(!strbcmp(*s, "0")) {
 		*s += 1;
 		return 8;
 	}
@@ -126,30 +198,25 @@ strarea(View *v, char *s) {
 
 char *
 message_view(View *v, Message *m) {
-	Client *c;
-	Frame *f;
 	Area *a;
 	char *s;
 	int i;
-	Bool swap;
 
 	s = getword(m);
 
-	if(!strcmp(s, "send")) {
-		swap = False;
-		goto send;
-	}
-	if(!strcmp(s, "swap")) {
-		swap = True;
-		goto send;
-	}
-	if(!strcmp(s, "select"))
+	switch(getsym(s)) {
+	case LSEND:
+		return send_client(v, m, 0);
+	case LSWAP:
+		return send_client(v, m, 1);
+	case LSELECT:
 		return select_area(v->sel, m);
-	if(!strcmp(s, "colmode")) {
+	case LCOLMODE:
 		s = getword(m);
-
 		if((a = strarea(v, s)) == nil || a->floating)
 			return Ebadvalue;
+
+		s = getword(m);
 		if((i = str2colmode(s)) == -1)
 			return Ebadvalue;
 
@@ -161,18 +228,10 @@ message_view(View *v, Message *m) {
 			focus_view(screen, v);
 		draw_frames();
 		return nil;
+	default:
+		return Ebadcmd;
 	}
-	return Ebadcmd;
-
-send:
-	s = getword(m);
-
-	if(!(c = strclient(v, s)))
-		return Ebadvalue;
-	if(!(f = view_clientframe(v, c)))
-		return Ebadvalue;
-
-	return send_client(f, m, swap);
+	assert(!"can't get here");
 }
 
 char *
@@ -203,56 +262,64 @@ parse_colors(Message *m, CTuple *col) {
 char *
 message_root(void *p, Message *m) {
 	Font *fn;
-	char *s;
+	char *s, *ret;
 	ulong n;
 
+	ret = nil;
 	s = getword(m);
 
-	if(!strcmp(s, "quit"))
+	switch(getsym(s)) {
+	case LQUIT:
 		srv.running = 0;
-	else if(!strcmp(s, "exec")) {
+		break;
+	case LEXEC:
 		execstr = emalloc(strlen(m->pos) + sizeof("exec "));
 		sprintf(execstr, "exec %s", m->pos);
 		srv.running = 0;
-	}
-	else if(!strcmp(s,"view"))
+		break;
+	case LVIEW:
 		select_view(m->pos);
-	else if(!strcmp(s, "selcolors")) {
+		break;
+	case LSELCOLORS:
 		fprintf(stderr, "%s: warning: selcolors have been removed\n", argv0);
 		return Ebadcmd;
-	}
-	else if(!strcmp(s, "focuscolors"))
-		return parse_colors(m, &def.focuscolor);
-	else if(!strcmp(s, "normcolors"))
-		return parse_colors(m, &def.normcolor);
-	else if(!strcmp(s, "font")) {
+	case LFOCUSCOLORS:
+		ret = parse_colors(m, &def.focuscolor);
+		focus_view(screen, screen->sel);
+		break;
+	case LNORMCOLORS:
+		ret = parse_colors(m, &def.normcolor);
+		focus_view(screen, screen->sel);
+		break;
+	case LFONT:
 		fn = loadfont(m->pos);
 		if(fn) {
 			freefont(def.font);
 			def.font = fn;
 			resize_bar(screen);
 		}else
-			return "can't load font";
-	}
-	else if(!strcmp(s, "border")) {
+			ret = "can't load font";
+		break;
+	case LBORDER:
 		if(!getulong(getword(m), &n))
 			return Ebadvalue;
 		def.border = n;
 		/* XXX: Apply the change */
-	}
-	else if(!strcmp(s, "grabmod")) {
+		break;
+	case LGRABMOD:
 		s = getword(m);
-		n = mod_key_of_str(s);
+		n = str2modmask(s);
 
 		if(!(n & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)))
 			return Ebadvalue;
 
 		strncpy(def.grabmod, s, sizeof(def.grabmod));
 		def.mod = n;
-	}
-	else
+		break;
+	default:
 		return Ebadcmd;
-	return nil;
+	}
+	return ret;
 }
 
 char *
@@ -273,104 +340,131 @@ message_client(Client *c, Message *m) {
 	
 	s = getword(m);
 
-	if(!strcmp(s, "kill"))
+	switch(getsym(s)) {
+	case LKILL:
 		kill_client(c);
-	else if(!strcmp(s, "Urgent"))
+		break;
+	case LURGENT:
 		set_urgent(c, True, True);
-	else if(!strcmp(s, "NotUrgent"))
+		break;
+	case LNOTURGENT:
 		set_urgent(c, False, True);
-	else
+		break;
+	default:
 		return Ebadcmd;
+	}
 	return nil;
 }
 
-char *
-send_client(Frame *f, Message *m, Bool swap) {
-	Area *to, *a;
-	Client *c;
-	Frame *tf;
-	View *v;
-	char *s;
-	ulong i;
-
+static char*
+send_frame(Frame *f, int sym, Bool swap) {
+	Frame *fp;
+	Area *a;
+	
 	a = f->area;
-	v = a->view;
-	c = f->client;
 
-	s = getword(m);
-
-	if(!strcmp(s, "toggle")) {
-		if(!a->floating)
-			to = v->area;
-		else if(c->revert && !c->revert->floating)
-			to = c->revert;
-		else
-			to = v->area->next;
-		goto send_area;
-	}else if(!a->floating) {
-		if(!strcmp(s, "left")) {
-			if(a->floating)
+	switch(sym) {
+	case LUP:
+			fp = f->aprev;
+			if(!fp)
 				return Ebadvalue;
-			for(to=v->area->next; to; to=to->next)
-				if(a == to->next) break;
-			if(!to && !swap && (f->anext || f != a->frame))
-				to=new_column(v, v->area, 0);
-			goto send_area;
-		}
-		else if(!strcmp(s, "right")) {
-			if(a->floating)
+			fp = fp->aprev;
+			break;
+	case LDOWN:
+			fp = f->anext;
+			if(!fp)
 				return Ebadvalue;
-			to = a->next;
-			if(!to && !swap && (f->anext || f != a->frame))
-				to = new_column(v, a, 0);
-			goto send_area;
-		}
-		else if(!strcmp(s, "up")) {
-			tf = f->aprev;
-			if(!tf)
-				return Ebadvalue;
-			tf = tf->aprev;
-			goto send_frame;
-		}
-		else if(!strcmp(s, "down")) {
-			tf = f->anext;
-			if(!tf)
-				return Ebadvalue;
-			goto send_frame;
-		}
-		else {
-			if(!getulong(s, &i) || i == 0)
-				return Ebadvalue;
-			for(to=v->area; to; to=to->next)
-				if(!i--) break;
-			goto send_area;
-		}
+			break;
 	}
-	return Ebadvalue;
 
-send_frame:
-	if(!swap) {
-		remove_frame(f);
-		insert_frame(tf, f);
-	}else {
-		if(!tf)
+	if(swap) {
+		if(!fp)
 			return Ebadvalue;
-		swap_frames(f, tf);
+		swap_frames(f, fp);
+	}else {
+		remove_frame(f);
+		insert_frame(fp, f);
 	}
+
 	arrange_column(a, False);
 
 	flushevents(EnterWindowMask, False);
 	focus_frame(f, True);
 	update_views();
 	return nil;
+}
 
-send_area:
+char *
+send_client(View *v, Message *m, Bool swap) {
+	Area *to, *a;
+	Frame *f;
+	Client *c;
+	char *s;
+	ulong i;
+	int sym;
+
+	s = getword(m);
+
+	c = strclient(v, s);
+	if(c == nil)
+		return Ebadvalue;
+
+	f = view_clientframe(v, c);
+	if(f == nil)
+		return Ebadvalue;
+
+	a = f->area;
+	to = nil;
+
+	s = getword(m);
+	sym = getsym(s);
+
+	switch(sym) {
+	case LTOGGLE:
+		if(!a->floating)
+			to = v->area;
+		else if(c->revert && !c->revert->floating)
+			to = c->revert;
+		else
+			to = v->area->next;
+	case LUP:
+	case LDOWN:
+		return send_frame(f, sym, swap);
+	case LLEFT:
+		if(a->floating)
+			return Ebadvalue;
+
+		if(a->prev != v->area)
+			to = a->prev;
+		a = v->area;
+		break;
+	case LRIGHT:
+		if(a->floating)
+			return Ebadvalue;
+
+		to = a->next;
+		break;
+	default:
+		if(!getulong(s, &i) || i == 0)
+			return Ebadvalue;
+
+		for(to=v->area; to; to=to->next)
+			if(!i--) break;
+		break;
+	}
+	
+	if(!to && !swap && (f->anext || f != a->frame))
+		to = new_column(v, a, 0);
+
 	if(!to)
 		return Ebadvalue;
+
 	if(!swap)
 		send_to_area(to, f);
 	else if(to->sel)
 		swap_frames(f, to->sel);
+	else
+		return Ebadvalue;
 
 	flushevents(EnterWindowMask, False);
 	focus_frame(f, True);
@@ -378,71 +472,81 @@ send_area:
 	return nil;
 }
 
-char *
+static char*
+select_frame(Frame *f, int sym) {
+	Frame *fp;
+	Area *a;
+
+	if(!f)
+		return Ebadvalue;
+	a = f->area;
+
+	switch(sym) {
+	case LUP:
+		for(fp = a->frame; fp->anext; fp = fp->anext)
+			if(fp->anext == f) break;
+		break;
+	case LDOWN:
+		fp = f->anext;
+		if(fp == nil)
+			fp = a->frame;
+		break;
+	}
+
+	focus_frame(fp, False);
+	frame_to_top(fp);
+	if(f->view == screen->sel)
+		restack_view(f->view);
+	return nil;
+}
+
+char*
 select_area(Area *a, Message *m) {
-	Frame *p, *f;
 	Area *ap;
 	View *v;
 	char *s;
 	ulong i;
+	int sym;
 
 	v = a->view;
-	f = a->sel;
-	
 	s = getword(m);
+	sym = getsym(s);
 	
-	
-	if(!strcmp(s, "toggle")) {
+	switch(sym) {
+	case LUP:
+	case LDOWN:
+		return select_frame(a->sel, sym);
+	case LTOGGLE:
 		if(!a->floating)
 			ap = v->area;
 		else if(v->revert && v->revert != a)
 			ap = v->revert;
 		else
 			ap = v->area->next;
-	}
-	else if(!strcmp(s, "left")) {
+		break;
+	case LLEFT:
 		if(a->floating)
 			return Ebadvalue;
 		for(ap=v->area->next; ap->next; ap=ap->next)
 			if(ap->next == a) break;
-	} 
-	else if(!strcmp(s, "right")) {
+		break;
+	case LRIGHT:
 		if(a->floating)
 			return Ebadvalue;
 		ap = a->next;
 		if(ap == nil)
 			ap = v->area->next;
-	}
-	else if(!strcmp(s, "up")) {
-		if(!f)
-			return Ebadvalue;
-		for(p = f->area->frame; p->anext; p = p->anext)
-			if(p->anext == f) break;
-		goto focus_frame;
-	}
-	else if(!strcmp(s, "down")) {
-		if(!f)
-			return Ebadvalue;
-		p = f->anext;
-		if(p == nil)
-			p = a->frame;
-		goto focus_frame;
-	}
-	else if(!strcmp(s, "~"))
+		break;
+	case LTILDE:
 		ap = v->area;
-	else {
+		break;
+	default:
 		if(!getulong(s, &i) || i == 0)
 			return Ebadvalue;
 		for(ap=v->area->next; ap; ap=ap->next)
 			if(!--i) break;
 	}
-	focus_area(ap);
-	return nil;
 
-focus_frame:
-	focus_frame(p, False);
-	frame_to_top(p);
-	if(v == screen->sel)
-		restack_view(v);
+	focus_area(ap);
 	return nil;
 }

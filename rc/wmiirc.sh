@@ -125,8 +125,6 @@ eventstuff() {
 		wmiir xwrite /client/sel/ctl kill
 	Key $MODKEY-Shift-t
 		wmiir xwrite "/client/$(wmiir read /client/sel/ctl)/tags" "$(tagsmenu)" &
-!
-	cat<<!
 	Key $MODKEY-$LEFT
 		wmiir xwrite /tag/sel/ctl select left
 	Key $MODKEY-$RIGHT
@@ -164,9 +162,7 @@ border 1
 EOF
 
 # Feed events to `wmiiloop' for processing
-IFS=''
-eval $(eventstuff | sed "s/\$MODKEY/$MODKEY/g;s/^[	]//" | wmiiloop)
-unset IFS
+eval "$(eventstuff | sed 's/^[	]//' | wmiiloop)"
 
 # Functions
 Action() {

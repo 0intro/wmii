@@ -180,11 +180,12 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 
 	insert_frame(a->sel, f);
 
-	if(a->floating)
+	if(a->floating) {
 		place_frame(f);
+		resize_client(f->client, &f->r);
+	}
 
 	focus_frame(f, False);
-	resize_frame(f, f->r);
 	restack_view(a->view);
 
 	if(!a->floating)
