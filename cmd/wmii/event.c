@@ -172,7 +172,11 @@ focusin(XEvent *e) {
 		if(ev->window == scr.root.w)
 			if(XCheckMaskEvent(display, KeyPressMask, &me)) {
 				/* wmii has grabbed focus */
+				c = screen->focus;
 				screen->hasgrab = &c_root;
+				screen->focus = &c_magic;
+				if(c)
+					draw_frame(c->sel);
 				dispatch_event(&me);
 				return;
 			}
