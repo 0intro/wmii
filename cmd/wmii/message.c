@@ -365,16 +365,18 @@ send_frame(Frame *f, int sym, Bool swap) {
 
 	switch(sym) {
 	case LUP:
-			fp = f->aprev;
-			if(!fp)
-				return Ebadvalue;
-			fp = fp->aprev;
-			break;
+		fp = f->aprev;
+		if(!fp)
+			return Ebadvalue;
+		fp = fp->aprev;
+		break;
 	case LDOWN:
-			fp = f->anext;
-			if(!fp)
-				return Ebadvalue;
-			break;
+		fp = f->anext;
+		if(!fp)
+			return Ebadvalue;
+		break;
+	default:
+		assert(!"can't get here");
 	}
 
 	if(swap) {
@@ -427,6 +429,7 @@ send_client(View *v, Message *m, Bool swap) {
 			to = c->revert;
 		else
 			to = v->area->next;
+		break;
 	case LUP:
 	case LDOWN:
 		return send_frame(f, sym, swap);
