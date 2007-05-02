@@ -222,6 +222,7 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 			a = new_column(v, a_prev, 0);
 			send_to_area(a, frame);
 			focus(frame->client, False);
+			focus_view(screen, v);
 		}
 		return;
 	}
@@ -231,6 +232,7 @@ find_droppoint(Frame *frame, int x, int y, XRectangle *rect, Bool do_move) {
 			a = new_column(v, a, 0);
 			send_to_area(a, frame);
 			focus(frame->client, False);
+			focus_view(screen, v);
 		}
 		return;
 	}

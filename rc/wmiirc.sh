@@ -13,7 +13,7 @@ WMII_NORMCOLORS='#222222 #5FBF77 #2A7F3F'
 WMII_FOCUSCOLORS='#ffffff #153F1F #2A7F3F'
 
 WMII_BACKGROUND='#333333'
-WMII_FONT='-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*'
+WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
 WMII_MENU="dmenu -b -fn $WMII_FONT -nf $1 -nb $2 -sf $4 -sb $5"
@@ -39,7 +39,8 @@ status() {
 }
 
 # Event processing
-#  processed later by `wmiiloop' and evaled
+#  Processed later by `wmiiloop' and evaled.
+#  Duplicate the eval line and replace 'eval' with 'echo' for details.
 eventstuff() {
 	cat <<'!'
 	# Events
@@ -97,20 +98,12 @@ eventstuff() {
 	Key $MODKEY-Control-t
 		case $(wmiir read /keys | wc -l | tr -d ' \t\n') in
 		0|1)
-			echo -n $Keys | tr ' ' '\012' | wmiir write /keys
+			echo -n \$Keys | tr ' ' '\012' | wmiir write /keys
 			wmiir xwrite /ctl grabmod $MODKEY;;
 		*)
 			wmiir xwrite /keys $MODKEY-Control-t
 			wmiir xwrite /ctl grabmod Mod3;;
 		esac
-	Key $MODKEY-$LEFT
-		wmiir xwrite /tag/sel/ctl select left
-	Key $MODKEY-$RIGHT
-		wmiir xwrite /tag/sel/ctl select right
-	Key $MODKEY-$DOWN
-		wmiir xwrite /tag/sel/ctl select down
-	Key $MODKEY-$UP
-		wmiir xwrite /tag/sel/ctl select up
 	Key $MODKEY-space
 		wmiir xwrite /tag/sel/ctl select toggle
 	Key $MODKEY-d
@@ -127,6 +120,20 @@ eventstuff() {
 		wmiir xwrite /ctl "view $(tagsmenu)" &
 	Key $MODKEY-Return
 		$WMII_TERM &
+	Key $MODKEY-Shift-space
+		wmiir xwrite /tag/sel/ctl send sel toggle
+	Key $MODKEY-Shift-c
+		wmiir xwrite /client/sel/ctl kill
+	Key $MODKEY-Shift-t
+		wmiir xwrite "/client/$(wmiir read /client/sel/ctl)/tags" "$(tagsmenu)" &
+	Key $MODKEY-$LEFT
+		wmiir xwrite /tag/sel/ctl select left
+	Key $MODKEY-$RIGHT
+		wmiir xwrite /tag/sel/ctl select right
+	Key $MODKEY-$DOWN
+		wmiir xwrite /tag/sel/ctl select down
+	Key $MODKEY-$UP
+		wmiir xwrite /tag/sel/ctl select up
 	Key $MODKEY-Shift-$LEFT
 		wmiir xwrite /tag/sel/ctl send sel left
 	Key $MODKEY-Shift-$RIGHT
@@ -135,12 +142,6 @@ eventstuff() {
 		wmiir xwrite /tag/sel/ctl send sel down
 	Key $MODKEY-Shift-$UP
 		wmiir xwrite /tag/sel/ctl send sel up
-	Key $MODKEY-Shift-space
-		wmiir xwrite /tag/sel/ctl send sel toggle
-	Key $MODKEY-Shift-c
-		wmiir xwrite /client/sel/ctl kill
-	Key $MODKEY-Shift-t
-		wmiir xwrite "/client/$(wmiir read /client/sel/ctl)/tags" "$(tagsmenu)" &
 !
 	for i in 0 1 2 3 4 5 6 7 8 9; do
 		cat <<!
@@ -162,9 +163,7 @@ border 1
 EOF
 
 # Feed events to `wmiiloop' for processing
-IFS=''
-eval $(eventstuff | sed "s/\\\$MODKEY/$MODKEY/g;s/^[	]//" | wmiiloop)
-unset IFS
+eval "$(eventstuff | sed 's/^[	]//' | wmiiloop)"
 
 # Functions
 Action() {
