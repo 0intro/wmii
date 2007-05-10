@@ -1,0 +1,25 @@
+Source: wmii
+Section: x11
+Priority: optional
+Maintainer: Daniel Baumann <daniel@debian.org>
+Build-Depends: libx11-dev, libxext-dev, x11proto-xext-dev, debhelper (>= 4.0)
+Standards-Version: 3.7.2
+
+Package: wmii
+Architecture: any
+Depends: ${shlibs:Depends}, dwm-tools
+Conflicts: wmii2
+Replaces: wmii2
+Recommends: wmii-doc
+Provides: x-window-manager
+Description: lightweight tabbed and tiled X11 window manager
+ wmii is a dynamic window manager for X11, which is highly customizable and
+ usable with keyboard and mouse. It supports conventional, tabbed and tiled
+ window management with low memory usage. It is highly modularized and uses an
+ inter-process communication interface which is oriented on the 9p protocol of
+ plan9.
+ .
+ This package contains a pre-3.6 snapshot of the window manager; wmii2 contains
+ version 2.
+ .
+  Homepage: <http://wmii.suckless.org/>

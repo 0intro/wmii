@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=wmii
+Comment=wmii pre-3.6 Development Snapshot
+Exec=wmii
+Icon=wmii.png
+Type=XSession

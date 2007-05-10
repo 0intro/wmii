@@ -1,0 +1,11 @@
+CFLAGS += \
+	-std=gnu99 \
+	-pipe \
+	-Wall \
+	-Wno-parentheses \
+	-Wno-missing-braces \
+	-Wno-switch \
+	-Wno-comment \
+	-Wno-sign-compare \
+	-Wno-uninitialized \
+	-Wno-unused-parameter \
