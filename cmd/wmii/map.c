@@ -107,6 +107,7 @@ hashrm(Map *map, char *str) {
 	MapEnt **e, *te;
 	void *ret;
 	
+	ret = nil;
 	e = hashgetp(map, str, 0);
 	if(*e) {
 		te = *e;

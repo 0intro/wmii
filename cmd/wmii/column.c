@@ -204,13 +204,6 @@ scale_column(Area *a) {
 	if(!a->frame)
 		return;
 
-	/* This works by comparing heights based on a surplus of their
-	 * minimum size. We start by subtracting the minimum size, then
-	 * scale the surplus, and add back the minimum size later. This
-	 * is based on the size of the client, rather than the frame, so
-	 * increment gaps can be equalized later */
-	/* Frames that can't be accomodated are pushed to the floating layer */
-
 	minh = labelh(def.font);
 	colh = labelh(def.font);
 	uncolh = minh + colh +1;
@@ -253,11 +246,6 @@ scale_column(Area *a) {
 		f = *fp;
 		if(f == a->sel)
 			i++, j++;
-		if(!f->collapsed) {
-			if(j < 0 && (f != a->sel))
-				f->collapsed = True;
-			j--;
-		}
 		if(f->collapsed) {
 			if(i < 0 && (f != a->sel)) {
 				f->collapsed = False;
@@ -265,6 +253,10 @@ scale_column(Area *a) {
 				continue;
 			}
 			i--;
+		}else {
+			if(j < 0 && (f != a->sel))
+				f->collapsed = True;
+			j--;
 		}
 		/* Doesn't change if we 'continue' */
 		fp=&f->anext;
@@ -281,8 +273,8 @@ scale_column(Area *a) {
 		}else {
 			f->r.max.y = uncolh;
 			dy += Dy(f->crect);
-			surplus += Dy(f->r);
 		}
+		surplus += Dy(f->r);
 	}
 	for(f = a->frame; f; f = f->anext)
 		f->ratio = (float)Dy(f->crect)/dy;
@@ -293,11 +285,9 @@ scale_column(Area *a) {
 		j = surplus;
 		dy = 0;
 		for(f=a->frame; f; f=f->anext) {
-			if(!f->collapsed) {
+			if(!f->collapsed)
 				f->r.max.y += f->ratio * surplus;
-				resize_frame(f, f->r);
-				f->r.max.y = Dy(f->crect) + labelh(def.font) + 1;
-			}
+			resize_frame(f, f->r);
 			dy += Dy(f->r);
 		}
 		surplus = Dy(a->r) - dy;
@@ -336,11 +326,9 @@ arrange_column(Area *a, Bool dirty) {
 
 	switch(a->mode) {
 	case Coldefault:
-		for(f=a->frame; f; f=f->anext) {
-			f->collapsed = False;
-			if(dirty)
+		if(dirty)
+			for(f=a->frame; f; f=f->anext)
 				f->r = Rect(0, 0, 100, 100);
-		}
 		break;
 	case Colstack:
 		for(f=a->frame; f; f=f->anext)

@@ -133,7 +133,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 			XAllowEvents(display, ReplayPointer, e->time);
 			break;
 		}
-		XAllowEvents(display, AsyncPointer, e->time);
+		XUngrabPointer(display, e->time);
 	}else{
 		if(e->button == Button1) {
 			if(frame_to_top(f))
@@ -267,6 +267,13 @@ resize_frame(Frame *f, Rectangle r) {
 	f->crect = frame2client(f, f->crect);
 	f->crect = rectsubpt(f->crect, f->crect.min);
 
+	if(!f->area->floating && f->area->mode == Coldefault) {
+		if(Dy(f->r) < 2 * labelh(def.font))
+			f->collapsed = True;
+		else
+			f->collapsed = False;
+	}
+
 	if(Dx(f->crect) < labelh(def.font)) {
 		f->r.max.x = f->r.min.x + frame_delta_h();
 		f->collapsed = True;
@@ -313,34 +320,29 @@ set_frame_cursor(Frame *f, Point pt) {
 
 void
 swap_frames(Frame *fa, Frame *fb) {
-	Rectangle trect;
-	Area *a;
-	Frame *an, *ap, *bn, *bp;
+	Frame **fp;
+	Client *c;
 
 	if(fa == fb) return;
-
-	an = fa->anext;
-	ap = fa->aprev;
-	bn = fb->anext;
-	bp = fb->aprev;
 	
-	fb->anext = an;
-	fb->aprev = ap;
-	fa->anext = bn;
-	fa->aprev = bp;
+	for(fp = &fa->client->frame; *fp; fp = &(*fp)->cnext)
+		if(*fp == fa) break;
+	*fp = (*fp)->cnext;
 
-	if(fb->area->sel == fb)
-		fb->area->sel = fa;
-	if(fa->area->sel == fa)
-		fa->area->sel = fb;
+	for(fp = &fb->client->frame; *fp; fp = &(*fp)->cnext)
+		if(*fp == fb) break;
+	*fp = (*fp)->cnext;
+	
+	c = fa->client;
+	fa->client = fb->client;
+	fb->client = c;
 
-	a = fb->area;
-	fb->area = fa->area;
-	fa->area = a;
+	fb->cnext = c->frame;
+	c->frame = fb;
 
-	trect = fa->r;
-	fa->r = fb->r;
-	fb->r = trect;
+	c = fa->client;
+	fa->cnext = c->frame;
+	c->frame = fa;
 }
 
 void

@@ -9,10 +9,11 @@
 #include "dat.h"
 #include "fns.h"
 
-static char Ebadcmd[] = "bad command",
+static char
+	Ebadcmd[] = "bad command",
 	Ebadvalue[] = "bad value";
 
-/* Edit s/"([^"]+)"/L\1/g	Edit |tr 'a-z' 'A-Z' */
+/* Edit |sort   Edit s/"([^"]+)"/L\1/g   Edit |tr 'a-z' 'A-Z' */
 enum {
 	LNOTURGENT,
 	LURGENT,
@@ -388,7 +389,7 @@ send_frame(Frame *f, int sym, Bool swap) {
 		insert_frame(fp, f);
 	}
 
-	arrange_column(a, False);
+	arrange_view(f->view);
 
 	flushevents(EnterWindowMask, False);
 	focus_frame(f, True);
@@ -471,6 +472,7 @@ send_client(View *v, Message *m, Bool swap) {
 
 	flushevents(EnterWindowMask, False);
 	focus_frame(f, True);
+	arrange_view(v);
 	update_views();
 	return nil;
 }
@@ -494,6 +496,8 @@ select_frame(Frame *f, int sym) {
 		if(fp == nil)
 			fp = a->frame;
 		break;
+	default:
+		assert(!"can't get here");
 	}
 
 	focus_frame(fp, False);

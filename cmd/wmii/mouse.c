@@ -30,7 +30,6 @@ struct Framewin {
 	Point pt;
 	int or;
 	int n;
-	int before;
 };
 
 static Rectangle
@@ -63,7 +62,6 @@ frameadjust(Framewin *f, Point pt, int or, int n) {
 	f->or = or;
 	f->n = n;
 	f->pt = pt;
-	reshapewin(f->w, framerect(f));
 }
 
 static Framewin*
@@ -81,6 +79,7 @@ framewin(Frame *f, Point pt, int or, int n) {
 	fw->f = f;
 	fw->gb = f->grabbox;
 	frameadjust(fw, pt, or, n);
+	reshapewin(fw->w, framerect(fw));
 
 	mapwin(fw->w);
 	raisewin(fw->w);
@@ -136,33 +135,34 @@ vplace(Framewin *fw, Point pt) {
 	int hr;
 
 	v = screen->sel;
-	r = fw->w->r;
-	hr = Dy(r)/2;
-
-	fw->n = pt.y;
-	fw->before = 1;
 
 	for(a = v->area->next; a->next; a = a->next)
 		if(pt.x < a->r.max.x)
 			break;
 	fw->ra = a;
 
-	for(f = a->frame; f->anext; f = f->anext) {
-		if(f == fw->f)
-			fw->before = 0;
+	pt.x = a->r.min.x;
+	frameadjust(fw, pt, OHoriz, Dx(a->r));
+
+	r = fw->w->r;
+	hr = Dy(r)/2;
+	fw->n = pt.y;
+
+	for(f = a->frame; f->anext; f = f->anext)
 		if(pt.y < f->r.max.y)
 			break;
-	}
 
 	if(!f->collapsed) {
 		fw->fp = f;
 		fw->fr = fw->fp->r;
+
 		if(f == fw->f) {
 			fw->fp = f->aprev;
 			fw->fr.max = f->r.max;
 			if(_vsnap(fw, f->r.min.y+hr))
 				goto done;
 		}
+
 		if(_vsnap(fw, f->r.max.y - hr)) {
 			fw->fr.min.y = f->r.max.y - labelh(def.font);
 			goto done;
@@ -175,26 +175,27 @@ vplace(Framewin *fw, Point pt) {
 			_vsnap(fw, f->r.min.y);
 		else if(_vsnap(fw, f->r.min.y-hr))
 			fw->fp = f->aprev;
-		fw->fr.min.y = fw->n - hr;
+		fw->fr.min.y = pt.y - hr;
 		if(fw->fp && fw->fp->anext == fw->f)
 			fw->fr.max = fw->f->r.max;
 		goto done;
 	}
 
 	if(pt.y < f->r.min.y + hr) {
-		fw->n = f->r.min.y;
+		pt.y = f->r.min.y;
 		 if(f->aprev && !f->aprev->collapsed)
-			fw->n -= hr;
+			pt.y -= hr;
 	}else {
-		fw->n = f->r.max.y;
+		pt.y = f->r.max.y;
 		if(f->anext == fw->f)
-			fw->n += hr;
+			pt.y += hr;
 	}
 
 done:
 	pt.x = a->r.min.x;
 	pt.y = fw->n;
-	frameadjust(fw, pt, OHoriz, Dx(a->r));	
+	frameadjust(fw, pt, OHoriz, Dx(a->r));
+	reshapewin(fw->w, framerect(fw));
 }
 
 static void
@@ -221,7 +222,8 @@ hplace(Framewin *fw, Point pt) {
 	}
 
 	pt.y = a->r.min.y;
-	frameadjust(fw, pt, OVert, Dy(a->r));	
+	frameadjust(fw, pt, OVert, Dy(a->r));
+	reshapewin(fw->w, framerect(fw));	
 }
 
 static void
@@ -232,7 +234,7 @@ do_managed_move(Client *c) {
 	Framewin *fw;
 	Window *cwin;
 	Frame *f;
-	Point pt;
+	Point pt, pt2;
 	int y;
 
 	focus(c, False);
@@ -240,8 +242,9 @@ do_managed_move(Client *c) {
 
 	pt = querypointer(&scr.root);
 
-	pt.x = f->area->r.min.x;
-	fw = framewin(f, pt, OHoriz, Dx(f->area->r));
+	pt2.x = f->area->r.min.x;
+	pt2.y = pt.y;
+	fw = framewin(f, pt2, OHoriz, Dx(f->area->r));
 	
 	r = screen->r;
 	r.min.y += fw->gb.min.y + Dy(fw->gb)/2;
@@ -272,7 +275,7 @@ horiz:
 		case ButtonRelease:
 			switch(ev.xbutton.button) {
 			case 1:
-				if(f->anext && (!f->aprev || (fw->fp != f->aprev && fw->fp != f->aprev->aprev))) {
+				if((f->anext) && (!f->aprev || (fw->fp != f->aprev && fw->fp != f->aprev->aprev))) {
 					f->anext->r.min.y = f->r.min.y;
 					resize_frame(f->anext, f->anext->r);
 				}
@@ -352,6 +355,11 @@ done:
 	XUngrabPointer(display, CurrentTime);
 	framedestroy(fw);
 	destroywindow(cwin);
+
+	pt = addpt(f->r.min, f->grabbox.min);
+	pt.x += Dx(f->grabbox)/2;
+	pt.y += Dy(f->grabbox)/2;
+	warppointer(pt);
 }
 
 static Window *

@@ -104,14 +104,14 @@ manage_client(Client *c) {
 	r = c->w.r;
 	p.x = def.border;
 	p.y = labelh(def.font);
-	reparent_client(c, c->framewin, ZP);
+	reparentwindow(&c->w, c->framewin, p);
 
 	if(!strlen(c->tags))
 		apply_rules(c);
 	else
 		apply_tags(c, c->tags);
 
-	if(c->w.hints->position) {
+	if(c->w.hints->position || starting) {
 		r = gravclient(c, r);
 		if(c->sel->area->floating)
 			resize_client(c, &r);
@@ -138,7 +138,7 @@ destroy_client(Client *c) {
 	Rectangle r;
 	char *dummy;
 	Client **tc;
-	XEvent ev;
+	Bool hide;
 
 	Debug fprintf(stderr, "client.c:destroy_client(%p) %s\n", c, c->name);
 
@@ -148,37 +148,39 @@ destroy_client(Client *c) {
 			break;
 		}
 
+	r = c->w.r;
+	if(c->sel) {
+		r = gravclient(c, ZR);
+		r = frame2client(c->sel, r);
+	}
+
+	hide = False;	
+	if(!c->sel || c->sel->view != screen->sel)
+		hide = True;
+
 	XGrabServer(display);
 
 	/* In case the client is already unmapped */
 	handler = XSetErrorHandler(ignoreerrors);
 
-	if(c->sel) {
-		r = gravclient(c, ZR);
-		r = frame2client(nil, r);
-	}
-
 	dummy = nil;
 	update_client_views(c, &dummy);
-
-	unmap_client(c, WithdrawnState);
-	reparent_client(c, &scr.root, r.min);
-
-	write_event("DestroyClient 0x%x\n", (uint)c->w.w);
-
-	destroywindow(c->framewin);
+	unmap_client(c, IconicState);
 	sethandler(&c->w, nil);
+
+	if(hide)
+		reparentwindow(&c->w, &scr.root, screen->r.max);
+	else
+		reparentwindow(&c->w, &scr.root, r.min);
+	destroywindow(c->framewin);
 
 	XSync(display, False);
 	XSetErrorHandler(handler);
-
 	XUngrabServer(display);
+
+	write_event("DestroyClient 0x%x\n", clientwin(c));
+
 	flushevents(EnterWindowMask, False);
-
-	while(XCheckMaskEvent(display, StructureNotifyMask, &ev))
-		if(ev.type != UnmapNotify || ev.xunmap.window != c->w.w)
-			dispatch_event(&ev);
-
 	free(c);
 }
 
@@ -325,14 +327,15 @@ focus_client(Client *c) {
 
 	if(screen->focus != c) {
 		Debug fprintf(stderr, "\t%s => %s\n", clientname(screen->focus), clientname(c));
+
 		if(c)
 			setfocus(&c->w, RevertToParent);
 		else
 			setfocus(screen->barwin, RevertToParent);
-		XSync(display, False);
-	}
 
-	flushevents(FocusChangeMask, True);
+		XSync(display, False);
+		flushevents(FocusChangeMask, True);
+	}
 }
 
 void
@@ -364,13 +367,8 @@ resize_client(Client *c, Rectangle *r) {
 		map_frame(c);
 		configure_client(c);
 	}
-	
-	flushevents(FocusChangeMask|ExposureMask, True);
-}
 
-void
-reparent_client(Client *c, Window *w, Point pt) {
-	reparentwindow(&c->w, w, pt);
+	flushevents(FocusChangeMask|ExposureMask, True);
 }
 
 void
@@ -500,6 +498,8 @@ update_client_name(Client *c) {
 	free(str);
 
 	update_class(c);
+	if(c->sel)
+		draw_frame(c->sel);
 }
 
 static void
@@ -546,13 +546,15 @@ prop_client(Client *c, Atom a) {
 	char **class;
 	int n;
 
-	if(a == xatom("WM_PROTOCOLS"))
+	if(a == xatom("WM_PROTOCOLS")) {
 		c->proto = winprotocols(&c->w);
-	else if(a == xatom("_NET_WM_NAME"))
+	}
+	else if(a == xatom("_NET_WM_NAME")) {
 		goto wmname;
-	else if(a == xatom("_MOTIF_WM_HINTS"))
+	}
+	else if(a == xatom("_MOTIF_WM_HINTS")) {
 		updatemwm(c);
-	else switch (a) {
+	}else switch (a) {
 	case XA_WM_TRANSIENT_FOR:
 		XGetTransientForHint(display, c->w.w, &c->trans);
 		break;
@@ -579,8 +581,6 @@ prop_client(Client *c, Atom a) {
 	case XA_WM_NAME:
 wmname:
 		update_client_name(c);
-		if(c->frame)
-			draw_frame(c->sel);
 		break;
 	}
 }
@@ -611,7 +611,8 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 	r = rectaddpt(r, p);
 	r = gravclient(c, r);
 
-	if((Dx(r) == Dx(screen->r)) && (Dy(r) == Dy(screen->r))) {
+	if((Dx(r) == Dx(screen->r))
+	&& (Dy(r) == Dy(screen->r))) {
 		c->fullscreen = True;
 		if(f) {
 			if(!f->area->floating)
@@ -666,27 +667,22 @@ focusin_event(Window *w, XFocusChangeEvent *e) {
 	if(c != old) {
 		if(c->sel)
 			draw_frame(c->sel);
-		if(old && old->sel)
-			draw_frame(old->sel);
 	}
 }
 
 static void
 focusout_event(Window *w, XFocusChangeEvent *e) {
 	Client *c;
-	
-	c = w->aux;
 
+	c = w->aux;
 	if((e->mode == NotifyWhileGrabbed) && (screen->hasgrab != &c_root)) {
 		if((screen->focus) && (screen->hasgrab != screen->focus))
 			screen->hasgrab = screen->focus;
 		if(screen->hasgrab == c)
 			return;
-	}else if(e->mode != NotifyGrab) {
-		if(screen->focus == c) {
-			print_focus(&c_magic, "<magic>");
-			screen->focus = &c_magic;
-		}
+	}else if(screen->focus == c) {
+		print_focus(&c_magic, "<magic>");
+		screen->focus = &c_magic;
 		if(c->sel)
 			draw_frame(c->sel);
 	}

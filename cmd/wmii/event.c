@@ -15,6 +15,8 @@ dispatch_event(XEvent *e) {
 		handler[e->type](e);
 }
 
+#define handle(w, fn, ev) ((w)->handler->fn ? (w)->handler->fn((w), ev) : (void)0)
+
 uint
 flushevents(long event_mask, Bool dispatch) {
 	XEvent ev;
@@ -35,8 +37,7 @@ buttonrelease(XEvent *e) {
 
 	ev = &e->xbutton;
 	if((w = findwin(ev->window)))
-		if(w->handler->bup)
-			w->handler->bup(w, ev);
+		handle(w, bup, ev);
 }
 
 static void
@@ -45,10 +46,8 @@ buttonpress(XEvent *e) {
 	Window *w;
 
 	ev = &e->xbutton;
-	if((w = findwin(ev->window))) {
-		if(w->handler->bdown)
-			w->handler->bdown(w, ev);
-	}
+	if((w = findwin(ev->window)))
+		handle(w, bdown, ev);
 	else
 		XAllowEvents(display, ReplayPointer, ev->time);
 }
@@ -60,10 +59,9 @@ configurerequest(XEvent *e) {
 	Window *w;
 
 	ev = &e->xconfigurerequest;
-	if((w = findwin(ev->window))) {
-		if(w->handler->configreq)
-			w->handler->configreq(w, ev);
-	}else{
+	if((w = findwin(ev->window)))
+		handle(w, configreq, ev);
+	else{
 		wc.x = ev->x;
 		wc.y = ev->y;
 		wc.width = ev->width;
@@ -71,7 +69,6 @@ configurerequest(XEvent *e) {
 		wc.border_width = ev->border_width;
 		wc.sibling = ev->above;
 		wc.stack_mode = ev->detail;
-		//ev->value_mask &= ~(CWStackMode|CWSibling);
 		XConfigureWindow(display, ev->window, ev->value_mask, &wc);
 	}
 }
@@ -83,10 +80,9 @@ destroynotify(XEvent *e) {
 	Client *c;
 
 	ev = &e->xdestroywindow;
-	if((w = findwin(ev->window))) {
-		if(w->handler->destroy)
-			w->handler->destroy(w, ev);
-	}else {
+	if((w = findwin(ev->window))) 
+		handle(w, destroy, ev);
+	else {
 		Debug fprintf(stderr, "DestroyWindow(%x) (no handler)\n", (uint)ev->window);
 		if((c = win2client(ev->window)))
 			fprintf(stderr, "Badness: Unhandled DestroyNotify: "
@@ -103,10 +99,8 @@ enternotify(XEvent *e) {
 	if(ev->mode != NotifyNormal)
 		return;
 
-	if((w = findwin(ev->window))) {
-		if(w->handler->enter)
-			w->handler->enter(w, ev);
-	}
+	if((w = findwin(ev->window))) 
+		handle(w, enter, ev);
 	else if(ev->window == scr.root.w) {
 		sel_screen = True;
 		draw_frames();
@@ -164,21 +158,15 @@ focusin(XEvent *e) {
 		print_focus(nil, "<nil>");
 		screen->focus = nil;
 	}
-	else if((w = findwin(ev->window))) {
-		if(w->handler->focusin)
-			w->handler->focusin(w, ev);
-	}
+	else if((w = findwin(ev->window))) 
+		handle(w, focusin, ev);
 	else if(ev->mode == NotifyGrab) {
 		if(ev->window == scr.root.w)
 			if(XCheckMaskEvent(display, KeyPressMask, &me)) {
 				/* wmii has grabbed focus */
-				c = screen->focus;
 				screen->hasgrab = &c_root;
-				screen->focus = &c_magic;
-				if(c)
-					draw_frame(c->sel);
+				flushevents(FocusChangeMask, True);
 				dispatch_event(&me);
-				return;
 			}
 		/* Some unmanaged window has grabbed focus */
 		if((c = screen->focus)) {
@@ -197,15 +185,16 @@ focusout(XEvent *e) {
 
 	ev = &e->xfocus;
 	if(!((ev->detail == NotifyNonlinear)
-	   ||(ev->detail == NotifyNonlinearVirtual)))
+	   ||(ev->detail == NotifyNonlinearVirtual)
+	   ||(ev->detail == NotifyVirtual)
+	   ||(ev->detail == NotifyInferior)
+	   ||(ev->detail == NotifyAncestor)))
 		return;
 	if(ev->mode == NotifyUngrab)
 		screen->hasgrab = nil;
 
-	if((w = findwin(ev->window))) {
-		if(w->handler->focusout)
-			w->handler->focusout(w, ev);
-	}
+	if((w = findwin(ev->window))) 
+		handle(w, focusout, ev);
 }
 
 static void
@@ -215,10 +204,8 @@ expose(XEvent *e) {
 
 	ev = &e->xexpose;
 	if(ev->count == 0) {
-		if((w = findwin(ev->window))) {
-			if(w->handler->expose)
-				w->handler->expose(w, ev);
-		}
+		if((w = findwin(ev->window))) 
+			handle(w, expose, ev);
 	}
 }
 
@@ -271,10 +258,8 @@ motionnotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xmotion;
-	if((w = findwin(ev->window))) {
-		if(w->handler->motion)
-			w->handler->motion(w, ev);
-	}
+	if((w = findwin(ev->window)))
+		handle(w, motion, ev);
 }
 
 static void
@@ -283,10 +268,8 @@ propertynotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xproperty;
-	if((w = findwin(ev->window))) {
-		if(w->handler->property)
-			w->handler->property(w, ev);
-	}
+	if((w = findwin(ev->window))) 
+		handle(w, property, ev);
 }
 
 static void
@@ -295,10 +278,8 @@ mapnotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xmap;
-	if((w = findwin(ev->window))) {
-		if(w->handler->map)
-			w->handler->map(w, ev);
-	}
+	if((w = findwin(ev->window))) 
+		handle(w, map, ev);
 }
 
 static void
@@ -309,28 +290,27 @@ unmapnotify(XEvent *e) {
 	ev = &e->xunmap;
 	if((w = findwin(ev->window)) && (ev->event == w->parent->w)) {
 		if(ev->send_event || w->unmapped-- == 0)
-			if(w->handler->unmap)
-				w->handler->unmap(w, ev);
+			handle(w, unmap, ev);
 	}
 }
 
 void (*handler[LASTEvent]) (XEvent *) = {
-	[ButtonPress]	= buttonpress,
-	[ButtonRelease]	= buttonrelease,
-	[ConfigureRequest]=configurerequest,
-	[DestroyNotify]	= destroynotify,
-	[EnterNotify]	= enternotify,
-	[Expose]	= expose,
-	[FocusIn]	= focusin,
-	[FocusOut]	= focusout,
-	[KeyPress]	= keypress,
-	[LeaveNotify]	= leavenotify,
-	[MapNotify]	= mapnotify,
-	[MapRequest]	= maprequest,
-	[MappingNotify]	= mappingnotify,
-	[MotionNotify]	= motionnotify,
-	[PropertyNotify]= propertynotify,
-	[UnmapNotify]	= unmapnotify,
+	[ButtonPress] = buttonpress,
+	[ButtonRelease] = buttonrelease,
+	[ConfigureRequest] = configurerequest,
+	[DestroyNotify] = destroynotify,
+	[EnterNotify] = enternotify,
+	[Expose] = expose,
+	[FocusIn] = focusin,
+	[FocusOut] = focusout,
+	[KeyPress] = keypress,
+	[LeaveNotify] = leavenotify,
+	[MapNotify] = mapnotify,
+	[MapRequest] = maprequest,
+	[MappingNotify] = mappingnotify,
+	[MotionNotify] = motionnotify,
+	[PropertyNotify] = propertynotify,
+	[UnmapNotify] = unmapnotify,
 };
 
 void

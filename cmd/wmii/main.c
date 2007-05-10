@@ -219,19 +219,8 @@ init_screen(WMScreen *screen) {
 
 static void
 cleanup() {
-	Point p;
-	Client *c;
-
-	for(c=client; c; c=c->next) {
-		p = ZP;
-		if(c->sel)
-			p = c->sel->r.min;
-		reparent_client(c, &scr.root, p);
-		if(c->sel && c->sel->view != screen->sel)
-			unmap_client(c, IconicState);
-	}
-	XSync(display, False);
-	XCloseDisplay(display);
+	while(client) 
+		destroy_client(client);
 	ixp_server_close(&srv);
 	close(sleeperfd);
 }
@@ -250,7 +239,7 @@ struct {
 
 /*
  * There's no way to check accesses to destroyed windows, thus
- * those cases are ignored (especially on UnmapNotify's).
+ * those cases are ignored (especially on UnmapNotifys).
  * Other types of errors call Xlib's default error handler, which
  * calls exit().
  */
@@ -269,6 +258,8 @@ errorhandler(Display *dpy, XErrorEvent *error) {
 
 	fprintf(stderr, "%s: fatal error: Xrequest code=%d, Xerror code=%d\n",
 			argv0, error->request_code, error->error_code);
+
+	/* Try to cleanup, but only try once, in case we're called again */
 	if(!dead++)
 		cleanup();
 	return xlib_errorhandler(display, error); /* calls exit() */
@@ -377,10 +368,15 @@ spawn_command(const char *cmd) {
 	}
 }
 
-void
+static void
 check_9pcon(IxpConn *c) {
 	serve_9pcon(c);
 	check_x_event(nil);
+}
+
+static void
+closedisplay(IxpConn *c) {
+	XCloseDisplay(display);
 }
 
 int
@@ -447,7 +443,7 @@ main(int argc, char *argv[]) {
 	init_lock_keys();
 
 	ixp_listen(&srv, sock, &p9srv, check_9pcon, nil);
-	ixp_listen(&srv, ConnectionNumber(display), nil, check_x_event, nil);
+	ixp_listen(&srv, ConnectionNumber(display), nil, check_x_event, closedisplay);
 
 	def.font = loadfont(FONT);
 	def.border = 1;
@@ -508,7 +504,6 @@ main(int argc, char *argv[]) {
 
 	if(exitsignal)
 		raise(exitsignal);
-	fprintf(stderr, "execstr: %s\n", execstr);
 	if(execstr)
 		execl("/bin/sh", "sh", "-c", execstr, nil);
 	if(errstr)

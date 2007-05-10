@@ -664,7 +664,7 @@ fs_read(Ixp9Req *r) {
 			respond(r, nil);
 			return;
 		case FsFTindex:
-			buf = (char *)view_index(f->p.view);
+			buf = (char*)view_index(f->p.view);
 			n = strlen(buf);
 			write_buf(r, buf, n);
 			respond(r, nil);

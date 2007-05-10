@@ -296,7 +296,7 @@ place_frame(Frame *f) {
 
 	if(c->trans)
 		return;
-	if(c->fullscreen || c->w.hints->position)
+	if(c->fullscreen || c->w.hints->position || starting)
 		return;
 	if(!field) {
 		mx = Dx(screen->r) / dx;

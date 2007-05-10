@@ -171,6 +171,8 @@ void
 reparentwindow(Window *w, Window *par, Point p) {
 	XReparentWindow(display, w->w, par->w, p.x, p.y);
 	w->parent = par;
+	w->r = rectsubpt(w->r, w->r.min);
+	w->r = rectaddpt(w->r, p);
 }
 
 void
