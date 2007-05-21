@@ -1,9 +1,14 @@
 ROOT=.
 include ${ROOT}/mk/hdr.mk
 
-DIRS =	libixp	\
+PDIRS = \
 	cmd	\
 	rc	\
 	man
 
+DIRS =	libixp	\
+	${PDIRS}
+
 include ${ROOT}/mk/dir.mk
+INSTDIRS = ${PDIRS}
+

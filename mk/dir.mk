@@ -1,5 +1,5 @@
 MKSUBDIR =  targ=$@; \
-	for i in ${DIRS}; do \
+	for i in $$dirs; do \
 		if [ ! -d $$i ]; then \
 			echo Skipping nonexistent directory: $$i 1>&2; \
 		else \
@@ -7,19 +7,23 @@ MKSUBDIR =  targ=$@; \
 			(cd $$i && ${MAKE} BASE="${BASE}$$i/" $${targ\#d}) || exit $?; \
 		fi; \
 	done
+
 dall:
-	${MKSUBDIR}
+	dirs="${DIRS}"; ${MKSUBDIR}
 dclean:
-	${MKSUBDIR}
+	dirs="${DIRS}"; ${MKSUBDIR}
 dinstall:
-	${MKSUBDIR}
+	dirs="${INSTDIRS}"; ${MKSUBDIR}
 duninstall:
-	${MKSUBDIR}
+	dirs="${INSTDIRS}"; ${MKSUBDIR}
 ddepend:
-	${MKSUBDIR}
+	dirs="${DIRS}"; ${MKSUBDIR}
 
 all: dall
 clean: dclean
 install: dinstall
 uninstall: duninstall
 depend: ddepend
+
+INSTDIRS = ${DIRS}
+

@@ -20,6 +20,5 @@ printinstall:
 ${LIB}: ${OFILES}
 	@echo AR $@
 	@${AR} $@ ${OFILES}
-	@${RANLIB} $@
 
 include ${ROOT}/mk/common.mk

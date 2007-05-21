@@ -192,11 +192,11 @@ export WMII_MENU WMII_9MENU WMII_FONT WMII_TERM
 export WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS
 
 # Setup Tag Bar
+seltag="$(wmiir read /tag/sel/ctl 2>/dev/null)"
 wmiir ls /lbar |
 while read bar; do
 	wmiir remove "/lbar/$bar"
 done
-seltag="$(wmiir read /tag/sel/ctl 2>/dev/null)"
 wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
 while read tag; do
 	if [ "X$tag" = "X$seltag" ]; then
