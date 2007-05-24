@@ -168,6 +168,7 @@ int eqrect(Rectangle, Rectangle);
 int eqpt(Point, Point);
 Point addpt(Point, Point);
 Point subpt(Point, Point);
+Point mulpt(Point p, Point q);
 Point divpt(Point, Point);
 Rectangle insetrect(Rectangle, int);
 Rectangle rectaddpt(Rectangle, Point);

@@ -275,7 +275,7 @@ frame_hints(Frame *f, Rectangle r, Align sticky) {
 	return rectaddpt(r, p);
 }
 
-void
+static void
 set_client_state(Client * c, int state) {
 	long data[] = { state, None };
 	changeprop(&c->w, "WM_STATE", "WM_STATE", data, nelem(data));
@@ -734,6 +734,7 @@ static Handlers handlers = {
 };
 
 /* Other */
+#if 0 /* Not used at the moment */
 void
 newcol_client(Client *c, char *arg) {
 	Frame *f;
@@ -763,6 +764,7 @@ newcol_client(Client *c, char *arg) {
 		return;
 	flushevents(EnterWindowMask, False);
 }
+#endif
 
 void
 update_client_views(Client *c, char **tags) {

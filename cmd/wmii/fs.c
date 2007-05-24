@@ -183,7 +183,7 @@ write_buf(Ixp9Req *r, char *buf, uint len) {
 }
 
 /* This should be moved to libixp */
-void
+static void
 write_to_buf(Ixp9Req *r, void *buf, uint *len, uint max) {
 	uint offset, count;
 
@@ -210,7 +210,7 @@ write_to_buf(Ixp9Req *r, void *buf, uint *len, uint max) {
 }
 
 /* This should be moved to libixp */
-void
+static void
 data_to_cstring(Ixp9Req *r) {
 	char *p;
 	uint i;
@@ -227,7 +227,7 @@ data_to_cstring(Ixp9Req *r) {
 
 typedef char* (*MsgFunc)(void*, Message*);
 
-char *
+static char *
 message(Ixp9Req *r, MsgFunc fn) {
 	char *err, *s, *p, c;
 	FileId *f;
@@ -258,7 +258,7 @@ message(Ixp9Req *r, MsgFunc fn) {
 	return err;
 }
 
-void
+static void
 respond_event(Ixp9Req *r) {
 	FileId *f = r->fid->aux;
 	if(f->p.buf) {
@@ -445,7 +445,7 @@ LastItem:
 	return ret;
 }
 
-Bool
+static Bool
 verify_file(FileId *f) {
 	FileId *nf;
 
@@ -525,7 +525,7 @@ fs_walk(Ixp9Req *r) {
 	respond(r, nil);
 }
 
-uint
+static uint
 fs_size(FileId *f) {
 	switch(f->tab.type) {
 	default:

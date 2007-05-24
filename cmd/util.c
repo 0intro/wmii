@@ -29,7 +29,7 @@ fatal(const char *fmt, ...) {
 }
 
 /* Can't malloc */
-void
+static void
 mfatal(char *name, uint size) {
 	const char
 		couldnot[] = ": fatal: Could not ",

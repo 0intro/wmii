@@ -97,13 +97,13 @@ drawimg(Image *img, ulong cbg, ulong cborder) {
 	drawpoly(img, pt, nelem(pt), CapNotLast, 1, cborder);
 }
 
-void
+static void
 drawdiv(Divide *d) {
 	copyimage(d->w, divimg->r, divimg, ZP);
 	setshapemask(d->w, divmask, ZP);
 }
 
-void
+static void
 update_imgs(void) {
 	Divide *d;
 	int w, h;

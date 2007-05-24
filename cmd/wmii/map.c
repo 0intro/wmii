@@ -4,6 +4,7 @@
 #include <string.h>
 #include <util.h>
 #include "dat.h"
+#include "fns.h"
 
 /* Edit s/^([a-zA-Z].*)\n([a-z].*) {/\1 \2;/g  x/^([^a-zA-Z]|static|$)/-+d  s/ (\*map|val|*str)//g */
 

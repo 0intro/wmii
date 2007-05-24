@@ -60,7 +60,7 @@ struct Pair {
 
 static char* sep = " ";
 
-char *
+static char *
 search(Pair *lst, int key, char *(*def)(int)) {
 	for(; lst->val; lst++)
 		if(lst->key == key)
@@ -70,7 +70,7 @@ search(Pair *lst, int key, char *(*def)(int)) {
 
 static char buffer[512];
 
-char           *
+static char*
 unmask(Pair * list, uint val)
 {
 	Pair  *p;

@@ -9,3 +9,9 @@ CFLAGS += \
 	-Wno-sign-compare \
 	-Wno-uninitialized \
 	-Wno-unused-parameter \
+	-Wimplicit \
+	-Wreturn-type \
+	-Wtrigraphs \
+	-Wstrict-prototypes \
+	-Wmissing-prototypes \
+	-Wpointer-arith \

@@ -374,7 +374,7 @@ gethsep(Rectangle r) {
 	return w;
 }
 
-void
+static void
 mouse_resizecolframe(Frame *f, Align align) {
 	WinAttr wa;
 	XEvent ev;
