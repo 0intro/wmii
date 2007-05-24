@@ -29,12 +29,12 @@ static struct passwd *passwd;
 static int sleeperfd, sock, exitsignal;
 
 static void
-usage() {
+usage(void) {
 	fatal("usage: wmii [-a <address>] [-r <wmiirc>] [-v]\n");
 }
 
 static void
-scan_wins() {
+scan_wins(void) {
 	int i;
 	uint num;
 	XWindow *wins;
@@ -63,7 +63,7 @@ scan_wins() {
 }
 
 static char*
-ns_display() {
+ns_display(void) {
 	char *s, *disp;
 
 	disp = getenv("DISPLAY");
@@ -102,7 +102,7 @@ rmkdir(char *path, int mode) {
 }
 
 static void
-init_ns() {
+init_ns(void) {
 	struct stat st;
 	char *s;
 
@@ -131,7 +131,7 @@ init_ns() {
 }
 
 static void
-init_environment() {
+init_environment(void) {
 	init_ns();
 
 	if(address == nil) {
@@ -144,7 +144,7 @@ init_environment() {
 }
 
 static void
-init_atoms() {
+init_atoms(void) {
 	Atom net[] = { xatom("_NET_SUPPORTED"), xatom("_NET_WM_NAME") };
 
 	changeprop(&scr.root, "_NET_SUPPORTED", "ATOM", net, nelem(net));
@@ -156,7 +156,7 @@ create_cursor(int ident, uint shape) {
 }
 
 static void
-init_cursors() {
+init_cursors(void) {
 	Pixmap pix;
 	XColor black, dummy;
 
@@ -218,7 +218,7 @@ init_screen(WMScreen *screen) {
 }
 
 static void
-cleanup() {
+cleanup(void) {
 	while(client) 
 		destroy_client(client);
 	ixp_server_close(&srv);
@@ -282,7 +282,7 @@ cleanup_handler(int signal) {
 }
 
 static void
-init_traps() {
+init_traps(void) {
 	char buf[1];
 	int fd[2];
 

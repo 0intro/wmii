@@ -1,4 +1,4 @@
-/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+/* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include <stdio.h>

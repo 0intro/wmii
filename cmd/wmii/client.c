@@ -2,6 +2,7 @@
  * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,6 +10,8 @@
 #include <util.h>
 #include "dat.h"
 #include "fns.h"
+
+#define Mbsearch(k, l, cmp) bsearch(k, l, nelem(l), sizeof(*l), cmp)
 
 static Handlers handlers;
 
@@ -186,7 +189,7 @@ destroy_client(Client *c) {
 
 /* Convenience functions */
 Client *
-selclient() {
+selclient(void) {
 	if(screen->sel->sel->sel)
 		return screen->sel->sel->sel->client;
 	return nil;
@@ -325,7 +328,7 @@ focus_client(Client *c) {
 
 	Debug fprintf(stderr, "focus_client(%p[%x]) => %s\n", c,  clientwin(c), clientname(c));
 
-	if(screen->focus != c) {
+	if((c == nil || !c->noinput) && screen->focus != c) {
 		Debug fprintf(stderr, "\t%s => %s\n", clientname(screen->focus), clientname(c));
 
 		if(c)
@@ -566,6 +569,7 @@ prop_client(Client *c, Atom a) {
 	case XA_WM_HINTS:
 		wmh = XGetWMHints(display, c->w.w);
 		if(wmh) {
+			c->noinput = !((wmh->flags&InputFocus) && wmh->input);
 			set_urgent(c, (wmh->flags & XUrgencyHint) != 0, False);
 			XFree(wmh);
 		}
@@ -798,9 +802,20 @@ update_client_views(Client *c, char **tags) {
 }
 
 static int
-compare_tags(const void *a, const void *b) {
+bsstrcmp(const void *a, const void *b) {
+	return strcmp((char*)a, (char*)b);
+}
+
+static int
+strpcmp(const void *a, const void *b) {
 	return strcmp(*(char **)a, *(char **)b);
 }
+
+static char *badtags[] = {
+	".",
+	"..",
+	"sel",
+};
 
 void
 apply_tags(Client *c, const char *tags) {
@@ -810,8 +825,10 @@ apply_tags(Client *c, const char *tags) {
 	char *toks[32], *cur;
 
 	buf[0] = 0;
+
 	for(n = 0; tags[n]; n++)
-		if(tags[n] != ' ' && tags[n] != '\t') break;
+		if(!isspace(tags[n]))
+			break;
 
 	if(tags[n] == '+' || tags[n] == '-')
 		strncpy(buf, c->tags, sizeof(c->tags));
@@ -820,7 +837,6 @@ apply_tags(Client *c, const char *tags) {
 	trim(buf, " \t/");
 
 	n = 0;
-	j = 0;
 	add = True;
 	if(buf[0] == '+')
 		n++;
@@ -828,6 +844,8 @@ apply_tags(Client *c, const char *tags) {
 		n++;
 		add = False;
 	}
+
+	j = 0;
 	while(buf[n] && n < sizeof(buf) && j < 32) { 
 		for(i = n; i < sizeof(buf) - 1; i++)
 			if(buf[i] == '+' || buf[i] == '-' || buf[i] == '\0')
@@ -836,14 +854,12 @@ apply_tags(Client *c, const char *tags) {
 		buf[i] = '\0';
 
 		cur = nil;
-		if(!strncmp(&buf[n], "~", 2))
+		if(!strcmp(buf+n, "~"))
 			c->floating = add;
-		else if(!strncmp(&buf[n], "!", 2))
-			cur = view ? screen->sel->name : "nil";
-		else if(strcmp(&buf[n], "sel")
-		     && strcmp(&buf[n], ".")
-		     && strcmp(&buf[n], ".."))
-			cur = &buf[n];
+		else if(!strcmp(buf+n, "!"))
+			cur = screen->sel->name;
+		else if(!Mbsearch(buf+n, badtags, bsstrcmp))
+			cur = buf+n;
 
 		n = i + 1;
 		if(cur) {
@@ -870,14 +886,15 @@ apply_tags(Client *c, const char *tags) {
 		}
 	}
 
-	c->tags[0] = '\0';
 	if(!j)
 		return;
-	qsort(toks, j, sizeof(char *), compare_tags);
 
+	qsort(toks, j, sizeof(char *), strpcmp);
+
+	c->tags[0] = '\0';
 	for(i=0, n=0; i < j; i++)
-		if(!n || strcmp(toks[i], toks[n-1])) {
-			if(i)
+		if(n == 0 || strcmp(toks[i], toks[n-1])) {
+			if(i > 0)
 				strlcat(c->tags, "+", sizeof(c->tags));
 			strlcat(c->tags, toks[i], sizeof(c->tags));
 			toks[n++] = toks[i];
@@ -893,16 +910,17 @@ void
 apply_rules(Client *c) {
 	Rule *r;
 	regmatch_t rm;
-	
+
 	if(strlen(c->tags))
 		return;
+
 	if(def.tagrules.string) 	
 		for(r=def.tagrules.rule; r; r=r->next)
 			if(!regexec(&r->regex, c->props, 1, &rm, 0)) {
 				apply_tags(c, r->value);
-				if(strlen(c->tags) && strcmp(c->tags, "nil"))
+				if(strcmp(c->tags, "nil"))
 					break;
 			}
-	if(!strlen(c->tags))
+	if(c->tags[0] == '\0')
 		apply_tags(c, "nil");
 }

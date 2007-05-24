@@ -96,7 +96,7 @@ rectsubpt(Rectangle r, Point p) {
 
 /* Init */
 void
-initdisplay() {
+initdisplay(void) {
 	display = XOpenDisplay(nil);
 	scr.screen = DefaultScreen(display);
 	scr.colormap = DefaultColormap(display, scr.screen);
@@ -654,7 +654,7 @@ grabpointer(Window *w, Window *confine, Cursor cur, int mask) {
 }
 
 void
-ungrabpointer() {
+ungrabpointer(void) {
 	XUngrabPointer(display, CurrentTime);
 }
 

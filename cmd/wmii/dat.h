@@ -131,6 +131,7 @@ struct Client {
 	Bool urgent;
 	Bool borderless;
 	Bool titleless;
+	Bool noinput;
 	int unmapped;
 	Window w;
 	XWindow trans;

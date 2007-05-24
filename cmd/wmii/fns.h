@@ -17,7 +17,7 @@ void initbar(WMScreen *s);
 Bar *create_bar(Bar **b_link, char *name);
 void destroy_bar(Bar **b_link, Bar*);
 void draw_bar(WMScreen *s);
-void resize_bar();
+void resize_bar(WMScreen *s);
 Bar *bar_of_name(Bar *b_link, const char *name);
 
 /* client.c */
@@ -43,7 +43,7 @@ void resize_client(Client*, Rectangle*);
 void apply_sizehints(Client*, Rectangle*, Bool floating, Bool frame, Align sticky);
 void move_client(Client*, char *arg);
 void size_client(Client*, char *arg);
-Client *selclient();
+Client *selclient(void);
 Client *win2client(XWindow);
 uint clientwin(Client *c);
 char *clientname(Client*);
@@ -51,7 +51,7 @@ void apply_rules(Client*);
 void apply_tags(Client*, const char*);
 
 /* column.c */
-void update_divs();
+void update_divs(void);
 void draw_div(Divide*);
 void setdiv(Divide*, int x);
 void arrange_column(Area*, Bool dirty);
@@ -74,13 +74,13 @@ void resize_frame(Frame*, Rectangle);
 Bool frame_to_top(Frame *f);
 void set_frame_cursor(Frame*, Point);
 void swap_frames(Frame*, Frame*);
-int frame_delta_h();
+int frame_delta_h(void);
 Rectangle frame_hints(Frame*, Rectangle, Align);
 Rectangle frame2client(Frame*, Rectangle);
 Rectangle client2frame(Frame*, Rectangle);
 int ingrabbox(Frame*, int x, int y);
 void draw_frame(Frame*);
-void draw_frames();
+void draw_frames(void);
 void update_frame_widget_colors(Frame*);
 Rectangle constrain(Rectangle);
 
@@ -106,8 +106,8 @@ Align get_sticky(Rectangle src, Rectangle dst);
 
 /* key.c */
 void kpress(XWindow, ulong mod, KeyCode);
-void update_keys();
-void init_lock_keys();
+void update_keys(void);
+void init_lock_keys(void);
 ulong str2modmask(char*);
 
 /* map.c */
@@ -122,7 +122,7 @@ Area * strarea(View*, char*);
 char * message_view(View*, Message*);
 char * parse_colors(Message*, CTuple*);
 char * message_root(void*, Message*);
-char * read_root_ctl();
+char * read_root_ctl(void);
 char * message_client(Client*, Message*);
 char *select_area(Area*, Message*);
 char *send_client(View*, Message*, Bool swap);
@@ -156,7 +156,7 @@ char *message_view(View *v, Message *m);
 void restack_view(View*);
 uchar *view_index(View*);
 void destroy_view(View*);
-void update_views();
+void update_views(void);
 uint newcolw(View*, int i);
 
 /* wm.c */
@@ -172,7 +172,7 @@ Point divpt(Point, Point);
 Rectangle insetrect(Rectangle, int);
 Rectangle rectaddpt(Rectangle, Point);
 Rectangle rectsubpt(Rectangle, Point);
-void initdisplay();
+void initdisplay(void);
 Image * allocimage(int w, int h, int depth);
 void freeimage(Image *);
 Window *createwindow(Window *parent, Rectangle, int depth, uint class, WinAttr*, int valuemask);
@@ -214,7 +214,7 @@ Point querypointer(Window*);
 void warppointer(Point);
 Point translate(Window*, Window*, Point);
 int grabpointer(Window*, Window *confine, Cursor, int mask);
-void ungrabpointer();
+void ungrabpointer(void);
 Rectangle gravitate(Rectangle dst, Rectangle src, Point grav);
 Rectangle sizehint(WinHints*, Rectangle);
 void sethints(Window*);

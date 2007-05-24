@@ -371,7 +371,7 @@ view_index(View *v) {
 }
 
 void
-update_views() {
+update_views(void) {
 	View *n, *v, *old;
 	Bool found;
 

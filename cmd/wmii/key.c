@@ -9,7 +9,7 @@
 #include "fns.h"
 
 void
-init_lock_keys() {
+init_lock_keys(void) {
 	XModifierKeymap *modmap;
 	KeyCode num_lock;
 	static int masks[] = {
@@ -213,7 +213,7 @@ kpress(XWindow w, ulong mod, KeyCode keycode) {
 }
 
 void
-update_keys() {
+update_keys(void) {
 	Key *k, *n;
 	char *l, *p;
 

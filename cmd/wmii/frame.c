@@ -285,9 +285,9 @@ resize_frame(Frame *f, Rectangle r) {
 	}
 
 	pt = ZP;
-	if(!f->client->borderless)
+	if(!f->client->borderless || !f->area->floating)
 		pt.y += 1;
-	if(!f->client->titleless)
+	if(!f->client->titleless || !f->area->floating)
 		pt.y += labelh(def.font) - 1;
 
 	if(f->area->floating) {
@@ -324,7 +324,7 @@ swap_frames(Frame *fa, Frame *fb) {
 	Client *c;
 
 	if(fa == fb) return;
-	
+
 	for(fp = &fa->client->frame; *fp; fp = &(*fp)->cnext)
 		if(*fp == fa) break;
 	*fp = (*fp)->cnext;
@@ -378,7 +378,7 @@ focus_frame(Frame *f, Bool restack) {
 }
 
 int
-frame_delta_h() {
+frame_delta_h(void) {
 	return def.border + labelh(def.font);
 }
 
@@ -438,7 +438,7 @@ draw_frame(Frame *f) {
 }
 
 void
-draw_frames() {
+draw_frames(void) {
 	Client *c;
 
 	for(c=client; c; c=c->next)

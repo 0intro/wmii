@@ -135,7 +135,7 @@ static Dirtab *dirtab[] = {
 
 /* Utility Functions */
 static FileId *
-get_file() {
+get_file(void) {
 	FileId *temp;
 	if(!free_fileid) {
 		uint i = 15;

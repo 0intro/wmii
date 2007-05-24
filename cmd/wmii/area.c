@@ -246,11 +246,11 @@ detach_from_area(Frame *f) {
 
 static void
 bit_set(uint *field, uint width, uint x, uint y, Bool set) {
-	enum { devisor = sizeof(uint) * 8 };
+	enum { divisor = sizeof(uint) * 8 };
 	uint bx, mask;
 
-	bx = x / devisor;
-	mask = 1 << x % devisor;
+	bx = x / divisor;
+	mask = 1 << x % divisor;
 	if(set)
 		field[y*width + bx] |= mask;
 	else
@@ -259,18 +259,18 @@ bit_set(uint *field, uint width, uint x, uint y, Bool set) {
 
 static Bool
 bit_get(uint *field, uint width, uint x, uint y) {
-	enum { devisor = sizeof(uint) * 8 };
+	enum { divisor = sizeof(uint) * 8 };
 	uint bx, mask;
 
-	bx = x / devisor;
-	mask = 1 << x % devisor;
+	bx = x / divisor;
+	mask = 1 << x % divisor;
 
 	return (field[y*width + bx] & mask) != 0;
 }
 
 static void
 place_frame(Frame *f) {
-	enum { devisor = sizeof(uint) * 8 };
+	enum { divisor = sizeof(uint) * 8 };
 	enum { dx = 8, dy = 8 };
 
 	static uint mwidth, mx, my;
@@ -301,7 +301,7 @@ place_frame(Frame *f) {
 	if(!field) {
 		mx = Dx(screen->r) / dx;
 		my = Dy(screen->r) / dy;
-		mwidth = ceil((float)mx / devisor);
+		mwidth = ceil((float)mx / divisor);
 		field = emallocz(sizeof(uint) * mwidth * my);
 	}
 

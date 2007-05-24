@@ -324,7 +324,7 @@ message_root(void *p, Message *m) {
 }
 
 char *
-read_root_ctl() {
+read_root_ctl(void) {
 	uint i = 0;
 	i += snprintf(&buffer[i], (sizeof(buffer) - i), "view %s\n", screen->sel->name);
 	i += snprintf(&buffer[i], (sizeof(buffer) - i), "focuscolors %s\n", def.focuscolor.colstr);

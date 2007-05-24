@@ -104,7 +104,7 @@ drawdiv(Divide *d) {
 }
 
 void
-update_imgs() {
+update_imgs(void) {
 	Divide *d;
 	int w, h;
 
@@ -133,7 +133,7 @@ update_imgs() {
 }
 
 void
-update_divs() {
+update_divs(void) {
 	Divide **dp, *d;
 	Area *a;
 	View *v;

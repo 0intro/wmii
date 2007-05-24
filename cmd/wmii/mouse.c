@@ -245,7 +245,7 @@ do_managed_move(Client *c) {
 	pt2.x = f->area->r.min.x;
 	pt2.y = pt.y;
 	fw = framewin(f, pt2, OHoriz, Dx(f->area->r));
-	
+
 	r = screen->r;
 	r.min.y += fw->gb.min.y + Dy(fw->gb)/2;
 	r.max.y = r.min.y + 1;
@@ -415,7 +415,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 		}
 	}
 	if(align&WEST) {
-		if(a->prev) {
+		if(a->prev != v->area) {
 			r.min.x = a->prev->r.min.x + min.x;
 			r.max.x = a->r.max.x - min.x;
 		}else {
@@ -446,7 +446,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 
 	if(!grabpointer(&scr.root, cwin, cursor[CurSizing], MouseMask))
 		goto done;
-	
+
 	pt.x = ((align&WEST) ? f->r.min.x : f->r.max.x);
 	pt.y = ((align&NORTH) ? f->r.min.y : f->r.max.y);
 	warppointer(pt);
