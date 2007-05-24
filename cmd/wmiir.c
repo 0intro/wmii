@@ -14,7 +14,7 @@ static IxpClient *client;
 static void
 usage() {
 	fprintf(stderr,
-		   "usage: %1$s [-a <address>] {create | read | ls [-ld] | remove | write} <file>\n"
+		   "usage: %1$s [-a <address>] {create | read | ls [-ld] | remove | rm | write} <file>\n"
 		   "       %1$s [-a <address>] xwrite <file> <data>\n"
 		   "       %1$s -v\n", argv0);
 	exit(1);
@@ -29,7 +29,7 @@ write_data(IxpCFid *fid, char *name) {
 	buf = ixp_emalloc(fid->iounit);;
 	do {
 		len = read(0, buf, fid->iounit);
-		if(len >= 0 && ixp_write(fid, buf, len) != len)
+		if(len > 0 && ixp_write(fid, buf, len) != len)
 			fatal("cannot write file '%s': %s\n", name, errstr);
 	} while(len > 0);
 
@@ -287,6 +287,7 @@ struct exectab {
 	{"read", xread},
 	{"create", xcreate},
 	{"remove", xremove},
+	{"rm", xremove},
 	{"ls", xls},
 	{0, 0}
 };
