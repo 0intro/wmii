@@ -259,7 +259,7 @@ xls(int argc, char *argv[]) {
 		while(m.pos < m.end) {
 			if(nstat == mstat) {
 				mstat <<= 1;
-				stat = ixp_erealloc(stat, mstat);
+				stat = erealloc(stat, sizeof(*stat) * mstat);
 			}
 			ixp_pstat(&m, &stat[nstat++]);
 		}
