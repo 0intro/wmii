@@ -1,63 +1,75 @@
-.TH WMIIR 1 wmii\-VERSION
+'\" t
+.\" Manual page created with latex2man on Fri May 25 01:36:45 EDT 2007
+.\" NOTE: This file is generated, DO NOT EDIT.
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "WMIILOOP" "1" "25 May 2007" "" ""
 .SH NAME
-wmiiloop \(em wmii event loop processor
+
+wmiiloop\-VERSION
+.PP
 .SH SYNOPSIS
-.B cat 
-.I events
-| 
-.B wmiiloop
-|
-.B sh
-.br
+
+eval
+"$(wmiiloop
+<events)"
+.PP
 .SH DESCRIPTION
-.SS Overview
-.B wmiiloop
-is an awk script which preprocesses
-.BR sh (1)
-syntax to simplify writing a wmii event loop.
 
-.br
-.B eventloop
-associates lines begining with 
-.IR Event ", " Action ", or " Key
-(henceforth known as
-.BR $keyword ),
-followed by arbitrary text (henceforth known as
-.BR $args ),
-with functions which call any indented lines which follow.
-In the function names, all non-alphanumeric characters in $args
-are replaced with underscores (_). The functions are named
-$keyword'_'$args.
-
-Any variables in the unintented lines are interpolated by the shell.
-
-Additionally, each declaration's
-.B $args
-are assigned to a variable named
-.BR $keyword's' .
-In this case, no transliteration occurs. For instance, the following
-declaration:
-
-.B Key 
-.IB $MODKEY -j
-.br
+.PP
+wmiiloop
+is an awk and sh script which preprocesses \fIsh\fP(1)
+syntax 
+to simplify writing a wmii event loop. 
+.PP
+wmiiloop
+associates lines begining with \fIEvent\fP,
+\fIAction\fP,
+or 
+\fIKey\fP
+(henceforth known as \fB$keyword\fP),
+followed by arbitrary 
+text (henceforth known as \fB$args\fP),
+with functions which call any 
+indented lines which follow. In the function names, all non\-alphanumeric 
+characters in \fB$args\fP
+are replaced with underscores (_). The 
+functions are named \fB$keyword\fP\&'_\&'\fB$args\fP\&.
+.PP
+Any variables in the unintented lines are interpolated by the shell. 
+.PP
+Additionally, each declaration\&'s \fB$args\fP
+are assigned to a variable 
+named \fB$keyword\fP\&'s\&'\&.
+In this case, no transliteration occurs. For 
+instance, the following declaration: 
+.PP
+.Vb
+Key $MODKEY\-j
 	echo Got $@
-
-yields (assuming 
-.I $MODKEY
-is set to 
-.IR Mod1 ):
-
-Keys=" $Keys Mod1-j"
-.br
+.Ve
+yields (assuming \fI$MODKEY\fP
+is set to \fIMod1\fP):
+.PP
+.Vb
+Keys=" $Keys Mod1\-j"
 Mod1_j() {
-.br
 	echo Got $@
-.br
 }
-
+.Ve
+.PP
 .SH SEE ALSO
-.BR wmii (1),
-.BR wmiir (1),
-.B PREFIX/etc/wmiirc
 
+\fIwmii\fP(1),
+\fIwmii\fP(1)\&.
+\fIwmiir\fP(1),
+PREFX/etc/wmiirc
+.PP
+.\" NOTE: This file is generated, DO NOT EDIT.
