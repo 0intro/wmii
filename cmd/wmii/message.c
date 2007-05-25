@@ -15,6 +15,8 @@ static char
 
 /* Edit |sort   Edit s/"([^"]+)"/L\1/g   Edit |tr 'a-z' 'A-Z' */
 enum {
+	LFULLSCREEN,
+	LNOTFULLSCREEN,
 	LNOTURGENT,
 	LURGENT,
 	LBORDER,
@@ -39,6 +41,8 @@ enum {
 	LTILDE,
 };
 char *symtab[] = {
+	"Fullscreen",
+	"NotFullscreen",
 	"NotUrgent",
 	"Urgent",
 	"border",
@@ -350,6 +354,12 @@ message_client(Client *c, Message *m) {
 		break;
 	case LNOTURGENT:
 		set_urgent(c, False, True);
+		break;
+	case LFULLSCREEN:
+		fullscreen(c, True);
+		break;
+	case LNOTFULLSCREEN:
+		fullscreen(c, False);
 		break;
 	default:
 		return Ebadcmd;

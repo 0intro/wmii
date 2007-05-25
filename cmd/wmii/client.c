@@ -434,6 +434,22 @@ kill_client(Client * c) {
 }
 
 void
+fullscreen(Client *c, Bool fullscreen) {
+	Frame *f;
+
+	c->fullscreen = fullscreen;
+	if((f = c->sel)) {
+		if(fullscreen) {
+			if(!f->area->floating)
+				send_to_area(f->view->area, f);
+			focus_client(c);
+		}
+		if(f->view == screen->sel)
+			focus_view(screen, f->view);
+	}
+}
+
+void
 set_urgent(Client *c, Bool urgent, Bool write) {
 	XWMHints *wmh;
 	char *cwrite, *cnot;
@@ -615,16 +631,8 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 	r = rectaddpt(r, p);
 	r = gravclient(c, r);
 
-	if((Dx(r) == Dx(screen->r))
-	&& (Dy(r) == Dy(screen->r))) {
-		c->fullscreen = True;
-		if(f) {
-			if(!f->area->floating)
-				send_to_area(f->view->area, f);
-			focus_client(c);
-			restack_view(f->view);
-		}
-	}
+	if((Dx(r) == Dx(screen->r)) && (Dy(r) == Dy(screen->r)))
+		fullscreen(c, True);
 
 	if(c->sel->area->floating)
 		resize_client(c, &r);
