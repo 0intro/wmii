@@ -379,7 +379,6 @@ send_frame(Frame *f, int sym, Bool swap) {
 		fp = f->aprev;
 		if(!fp)
 			return Ebadvalue;
-		fp = fp->aprev;
 		break;
 	case LDOWN:
 		fp = f->anext;

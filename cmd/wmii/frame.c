@@ -332,17 +332,19 @@ swap_frames(Frame *fa, Frame *fb) {
 	for(fp = &fb->client->frame; *fp; fp = &(*fp)->cnext)
 		if(*fp == fb) break;
 	*fp = (*fp)->cnext;
-	
+
 	c = fa->client;
 	fa->client = fb->client;
 	fb->client = c;
-
 	fb->cnext = c->frame;
 	c->frame = fb;
 
 	c = fa->client;
 	fa->cnext = c->frame;
 	c->frame = fa;
+
+	if(c->sel && c->sel->view == screen->sel)
+		focus_view(screen, c->sel->view);
 }
 
 void
