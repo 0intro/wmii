@@ -3,8 +3,7 @@ include ${ROOT}/mk/hdr.mk
 
 TARG =	wmii.1	   \
 	wmiiloop.1 \
-	wmiir.1	   \
-	wmiiwm.1
+	wmiir.1
 
 FILTER = sed "s|CONFPREFIX|${ETC}|g; \
 	      s|CONFVERSION|${CONFVERSION}|g; \
