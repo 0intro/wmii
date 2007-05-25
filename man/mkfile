@@ -1,0 +1,9 @@
+TARG = `{make -VTARG}
+
+default:V: all
+
+all:V: $TARG
+
+%.1: %.tex
+	latex2man -M $stem.tex $stem.1
+

@@ -204,7 +204,7 @@ main(int argc, char **argv)
 	if(fontname != nil) {
 		font = XLoadQueryFont(dpy, fontname);
 		if(font == nil)
-			fprintf(stderr, "%s: warning: can't load font %s\n",
+			fprintf(stderr, "%s: warning: can't load font '%s'\n",
 				progname, fontname);
 	}
 

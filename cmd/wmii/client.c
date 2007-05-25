@@ -336,6 +336,8 @@ focus_client(Client *c) {
 		else
 			setfocus(screen->barwin, RevertToParent);
 
+		write_event("ClientFocus 0x%x\n", clientwin(c));
+
 		XSync(display, False);
 		flushevents(FocusChangeMask, True);
 	}
