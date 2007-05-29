@@ -778,9 +778,11 @@ gravitate(Rectangle rc, Rectangle rf, Point grav) {
 
 	rf = rectsubpt(rf, rf.min);
 
+	/* Get delta between frame and client rectangles */
 	d = subpt(rc.max, rc.min);
 	d = subpt(rf.max, d);
 
+	/* Divide by 2 and apply gravity */
 	d = divpt(d, Pt(2, 2));
 	d = mulpt(d, grav);
 

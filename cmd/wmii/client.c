@@ -152,10 +152,8 @@ destroy_client(Client *c) {
 		}
 
 	r = c->w.r;
-	if(c->sel) {
+	if(c->sel)
 		r = gravclient(c, ZR);
-		r = frame2client(c->sel, r);
-	}
 
 	hide = False;	
 	if(!c->sel || c->sel->view != screen->sel)
@@ -224,7 +222,6 @@ gravclient(Client *c, Rectangle rd) {
 	WinHints *h;
 
 	h = c->w.hints;
-	r = client2frame(c->sel, c->w.r);
 	sp = Pt(def.border, labelh(def.font));
 
 	if(eqrect(rd, ZR)) {
@@ -235,10 +232,13 @@ gravclient(Client *c, Rectangle rd) {
 		r = gravitate(r, c->w.r, h->grav);
 		if(h->gravstatic)
 			r = rectaddpt(r, sp);
+		r = frame2client(nil, r);
 	}else {
+		r = client2frame(c->sel, c->w.r);
 		r = gravitate(rd, r, h->grav);
 		if(h->gravstatic)
 			r = rectsubpt(r, sp);
+		r = client2frame(nil, r);
 	}
 	return r;
 }
@@ -403,14 +403,19 @@ configure_client(Client *c) {
 	e.type = ConfigureNotify;
 	e.event = c->w.w;
 	e.window = c->w.w;
+	e.above = None;
+	e.override_redirect = False;
+
 	e.x = r.min.x;
 	e.y = r.min.y;
 	e.width = Dx(r);
 	e.height = Dy(r);
 	e.border_width = c->border;
-	e.above = None;
-	e.override_redirect = False;
-	XSendEvent(display, c->w.w, False, StructureNotifyMask, (XEvent*)&e);
+
+	XSendEvent(display, c->w.w,
+		/*propegate*/ False,
+		StructureNotifyMask,
+		(XEvent*)&e);
 }
 
 static void
@@ -480,13 +485,14 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 
 	if(write) {
 		wmh = XGetWMHints(display, c->w.w);
-		if(wmh) {
-			wmh->flags &= ~XUrgencyHint;
-			if(urgent)
-				wmh->flags |= XUrgencyHint;
-			XSetWMHints(display, c->w.w, wmh);
-			XFree(wmh);
-		}
+		if(wmh == nil)
+			wmh = emallocz(sizeof *wmh);
+
+		wmh->flags &= ~XUrgencyHint;
+		if(urgent)
+			wmh->flags |= XUrgencyHint;
+		XSetWMHints(display, c->w.w, wmh);
+		XFree(wmh);
 	}
 }
 
@@ -511,7 +517,7 @@ update_client_name(Client *c) {
 
 	c->name[0] = '\0';
 
-	str = gettextproperty(&c->w, "_NET_WM_NAME)");
+	str = gettextproperty(&c->w, "_NET_WM_NAME");
 	if(str == nil)
 		str = gettextproperty(&c->w, "WM_NAME");
 	if(str)
@@ -536,7 +542,7 @@ updatemwm(Client *c) {
 	int n;
 
 	n = getproperty(&c->w, "_MOTIF_WM_HINTS", "_MOTIF_WM_HINTS", &real, 
-				2L, (uchar**)&ret, 1L);
+			2L, (uchar**)&ret, 1L);
 
 	if(n == 0) {
 		c->borderless = 0;
@@ -575,7 +581,8 @@ prop_client(Client *c, Atom a) {
 	}
 	else if(a == xatom("_MOTIF_WM_HINTS")) {
 		updatemwm(c);
-	}else switch (a) {
+	}
+	else switch (a) {
 	case XA_WM_TRANSIENT_FOR:
 		XGetTransientForHint(display, c->w.w, &c->trans);
 		break;
@@ -611,26 +618,28 @@ wmname:
 static void
 configreq_event(Window *w, XConfigureRequestEvent *e) {
 	Rectangle r;
-	Point p;
 	Frame *f;
 	Client *c;
 
 	c = w->aux;
 	f = c->sel;
 
-	p = ZP;
 	r = gravclient(c, ZR);
+	r.max = subpt(r.max, r.min);
+
 	if(e->value_mask&CWX)
-		p.x = e->x - r.min.x;
+		r.min.x = e->x;
 	if(e->value_mask&CWY)
-		p.y = e->y - r.min.y;
+		r.min.y = e->y;
 	if(e->value_mask&CWWidth)
-		r.max.x = r.min.x + e->width;
+		r.max.x = e->width;
 	if(e->value_mask&CWHeight)
-		r.max.y = r.min.y + e->height;
+		r.max.y = e->height;
+
 	if(e->value_mask&CWBorderWidth)
 		c->border = e->border_width;
-	r = rectaddpt(r, p);
+
+	r.max = addpt(r.min, r.max);
 	r = gravclient(c, r);
 
 	if((Dx(r) == Dx(screen->r)) && (Dy(r) == Dy(screen->r)))
