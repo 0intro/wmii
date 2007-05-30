@@ -296,8 +296,10 @@ place_frame(Frame *f) {
 
 	if(c->trans)
 		return;
-	if(c->fullscreen || c->w.hints->position || starting)
+	if(c->fullscreen || c->w.hints->position || starting) {
+		f->r = gravclient(c, c->w.r);
 		return;
+	}
 	if(!field) {
 		mx = Dx(screen->r) / dx;
 		my = Dy(screen->r) / dy;

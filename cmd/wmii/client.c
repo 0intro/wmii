@@ -15,8 +15,6 @@
 
 static Handlers handlers;
 
-Rectangle gravclient(Client*, Rectangle);
-
 enum {
 	ClientMask =
 		  StructureNotifyMask
@@ -90,7 +88,6 @@ create_client(XWindow w, XWindowAttributes *wa) {
 
 void
 manage_client(Client *c) {
-	Rectangle r;
 	Point p;
 	Client *trans;
 	char *tags;
@@ -104,23 +101,14 @@ manage_client(Client *c) {
 
 	free(tags);
 
-	r = c->w.r;
 	p.x = def.border;
 	p.y = labelh(def.font);
 	reparentwindow(&c->w, c->framewin, p);
 
-	if(!strlen(c->tags))
-		apply_rules(c);
-	else
+	if(c->tags[0])
 		apply_tags(c, c->tags);
-
-	if(c->w.hints->position || starting) {
-		r = gravclient(c, r);
-		if(c->sel->area->floating)
-			resize_client(c, &r);
-		else
-			c->sel->revert = r;
-	}
+	else
+		apply_rules(c);
 
 	if(!starting)
 		update_views();
@@ -144,6 +132,8 @@ destroy_client(Client *c) {
 	Bool hide;
 
 	Debug fprintf(stderr, "client.c:destroy_client(%p) %s\n", c, c->name);
+
+	unmapwin(c->framewin);
 
 	for(tc=&client; *tc; tc=&(*tc)->next)
 		if(*tc == c) {

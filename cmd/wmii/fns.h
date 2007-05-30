@@ -32,6 +32,7 @@ void map_client(Client*);
 void unmap_client(Client*, int state);
 int map_frame(Client*);
 int unmap_frame(Client*);
+Rectangle gravclient(Client*, Rectangle);
 void fullscreen(Client*, Bool);
 void set_urgent(Client *, Bool urgent, Bool write);
 void set_cursor(Client*, Cursor);
