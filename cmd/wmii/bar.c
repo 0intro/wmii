@@ -22,6 +22,7 @@ initbar(WMScreen *s) {
 	wa.background_pixmap = ParentRelative;
 	wa.event_mask =
 		  ExposureMask
+		| ButtonPressMask
 		| ButtonReleaseMask
 		| FocusChangeMask
 		| SubstructureRedirectMask
@@ -173,6 +174,26 @@ bar_of_name(Bar *bp, const char *name) {
 }
 
 static void
+bdown_event(Window *w, XButtonPressedEvent *e) {
+	Bar *b;
+
+	/* Ungrab so a menu can receive events before the button is released */
+	XUngrabPointer(display, e->time);
+	XSync(display, False);
+
+	for(b=screen->bar[BarLeft]; b; b=b->next)
+		if(ptinrect(Pt(e->x, e->y), b->r)) {
+			write_event("LeftBarMouseDown %d %s\n", e->button, b->name);
+			return;
+		}
+	for(b=screen->bar[BarRight]; b; b=b->next)
+		if(ptinrect(Pt(e->x, e->y), b->r)) {
+			write_event("RightBarMouseDown %d %s\n", e->button, b->name);
+			return;
+		}
+}
+
+static void
 bup_event(Window *w, XButtonPressedEvent *e) {
 	Bar *b;
 
@@ -194,6 +215,7 @@ expose_event(Window *w, XExposeEvent *e) {
 }
 
 static Handlers handlers = {
+	.bdown = bdown_event,
 	.bup = bup_event,
 	.expose = expose_event,
 };
