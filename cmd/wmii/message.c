@@ -2,6 +2,7 @@
  * See LICENSE file for license details.
  */
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,12 +84,12 @@ getsym(char *s) {
 		cmp = strcmp(s, symtab[i+m]);
 		if(cmp == 0)
 			return i+m;
-		if(cmp > 0) {
+		if(cmp < 0 || m == 0)
+			n = m;
+		else {
 			i += m;
 			n = n-m;
 		}
-		else
-			n = m;
 	}
 	return -1;
 }
@@ -127,11 +128,24 @@ getword(Message *m) {
 #define strbcmp(str, const) (strncmp((str), (const), sizeof(const)-1))	
 static int
 getbase(char **s) {
-	if(!strbcmp(*s, "0x")) {
+	char base[3];
+	char *p;
+	
+	p = *s;
+	if(!strbcmp(p, "0x")) {
 		*s += 2;
 		return 16;
 	}
-	if(!strbcmp(*s, "0")) {
+	if(isdigit(p[0]) && p[1] == 'r') {
+		*s += 2;
+		return p[0] - '0';
+	}
+	if(isdigit(p[0]) && isdigit(p[1]) && p[2] == 'r') {
+		*s += 3;
+		strncpy(base, p, sizeof base);
+		return atoi(base);
+	}
+	if(!strbcmp(p, "0")) {
 		*s += 1;
 		return 8;
 	}
@@ -186,10 +200,10 @@ strarea(View *v, char *s) {
 	if(!getlong(s, &i) || i == 0)
 		return nil;
 
-	if(i > 0) {
-		for(a = v->area; a; a = a->next)
+	if(i > 0)
+		for(a = v->area; a; a = a->next) {
 			if(i-- == 0) break;
-	}
+		}
 	else {
 		for(a = v->area; a->next; a = a->next)
 			;
@@ -315,7 +329,7 @@ message_root(void *p, Message *m) {
 		s = getword(m);
 		n = str2modmask(s);
 
-		if(!(n & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)))
+		if((n & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)) == 0)
 			return Ebadvalue;
 
 		strncpy(def.grabmod, s, sizeof(def.grabmod));
@@ -379,6 +393,7 @@ send_frame(Frame *f, int sym, Bool swap) {
 		fp = f->aprev;
 		if(!fp)
 			return Ebadvalue;
+		fp = fp->aprev;
 		break;
 	case LDOWN:
 		fp = f->anext;
