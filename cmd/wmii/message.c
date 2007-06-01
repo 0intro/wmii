@@ -105,6 +105,8 @@ eatrunes(Message *m, int (*p)(Rune), int val) {
 			break;
 		m->pos += n;
 	}
+	if(m->pos > m->end)
+		m->pos = m->end;
 }
 
 char *
