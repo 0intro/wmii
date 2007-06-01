@@ -86,13 +86,13 @@ char **labels;		/* list of labels and commands */
 char **commands;
 int numitems;
 
-void usage();
-void run_menu();
-void create_window();
-void redraw();
-void warpmouse();
-void memory();
-int args();
+void usage(void);
+void run_menu(void);
+void create_window(int, int);
+void redraw(int, int);
+void warpmouse(int, int);
+void memory(void);
+int args(void);
 
 /* args --- go through the argument list, set options */
 
@@ -110,7 +110,7 @@ struct {
 	{0, },
 }, *ap;
 
-ulong
+static ulong
 getcolor(char *name, ulong def) {
 	if((name != nil)
 	 && (XParseColor(dpy, defcmap, name, &color) != 0)
@@ -204,7 +204,7 @@ main(int argc, char **argv)
 	if(fontname != nil) {
 		font = XLoadQueryFont(dpy, fontname);
 		if(font == nil)
-			fprintf(stderr, "%s: warning: can't load font %s\n",
+			fprintf(stderr, "%s: warning: can't load font '%s'\n",
 				progname, fontname);
 	}
 
@@ -238,7 +238,7 @@ main(int argc, char **argv)
 /* usage --- print a usage message and die */
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: %s [-display <displayname>] [-font <fontname>] ", progname);
 	fprintf(stderr, "[-{n,s}{f,b} <color>] [-br <color>] ");
@@ -249,7 +249,7 @@ usage()
 /* run_menu --- put up the window, execute selected commands */
 
 void
-run_menu()
+run_menu(void)
 {
 	XEvent ev;
 	int i, old, wide, high, dx, dy;

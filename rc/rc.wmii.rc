@@ -10,7 +10,7 @@ DOWN=j
 LEFT=h
 RIGHT=l
 
-WMII_FONT='fixed'
+WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 WMII_NORMCOLORS=('#222222' '#5FBF77' '#2A7F3F')
 WMII_FOCUSCOLORS=('#ffffff' '#153F1F' '#2A7F3F')
 WMII_BACKGROUND='#333333'
@@ -74,7 +74,6 @@ fn status {
 	echo -n `{uptime | sed 's/.*://; s/,//g'} '|' `{date}
 }
 
-# View Titles
 fn viewtitle { echo $* }
 
 # Events
@@ -101,10 +100,12 @@ menulast = ''
 fn Event-ClientMouseDown {
 	client = $1; button = $2
 	if(~ $button 3) {
-		do=`{9menu -initial $menulast Nop Delete}
+		do=`{9menu -initial $menulast Nop Delete Fullscreen}
 		switch($do) {
 		case Delete
 			wmiir xwrite /client/$client/ctl kill
+		case Fullscreen
+			wmiir xwrite /client/$client/ctl Fullscreen
 		}
 		if(! ~ $#do 0)
 			menulast = $do;

@@ -1,205 +1,391 @@
-.TH WMII 1 wmii-VERSION
-.SH NAME
-wmii \(em window manager improved\(emimproved
-.SH SYNOPSIS
-.B wmii
-.SH DESCRIPTION
-.SS Overview
-.B wmii
-is a dynamic window manager for X11. See
-.BR wmiiwm (1)
-for more info.
-.SS Actions
-An action is a shell script in the default setup, but it can actually be
-any executable file.  It is executed usually by selecting it from the
-actions menu.
-You can customize an action by copying it from the global action
-directory CONFPREFIX/wmii-3.5 to $HOME/.wmii-3.5 and then editing the copy to
-fit your needs.  Of course you can also create your own actions there; make
-sure that they are executable.
-.P
-Here is a list of the default actions:
-.TP 2
-quit
-leave the window manager nicely
-.TP 2
-status
-periodically print date and load average to the bar
-.TP 2
-welcome
-display a welcome message that contains the wmii tutorial
-.TP 2
-wmiirc
-configure wmii
-.SS Default Key Bindings
-.PD 0
-.B Moving Around
-.RS 2
-.TP 16
-.I Key	
-.I Action
-.TP
-.B Mod-h
-Move to a
-.B window
-to the 
-.B left
-of the one currently focused
-.TP
-.B Mod-l
-Move to a
-.B window
-to the
-.B right
-of the one currently focused
-.TP
-.B Mod-j
-Move to a
-.B window below
-the one currently focused
-.TP
-.B Mod-k
-Move to a
-.B window above
-the one currently focused
-.TP
-.B Mod-space
-.B Toggle
-between the managed and floating
-.B layer
-.TP
-.BI Mod-t \ tag
-Move to the
-.B view
-of the given
-.I tag
-.TP
-.B Mod-[0-9]
-Move to the
-.B view
-with the given number
-.PD 1
-.P
-.RE
-.B Moving Things Around
-.RS 2
-.PD 0
-.TP 16
-.I Key
-.I Action
-.TP
-.B Mod-Shift-h
-Move the current window
-.B window
-to a column on the
-.B left
-.TP
-.B Mod-Shift-l
-Move the current window
-.B window
-to a column on the
-.B right
-.TP
-.B Mod-Shift-j
-Move the current
-.B window below
-the one beneath it
-.TP
-.B Mod-Shift-k
-Move the current
-.B window above
-the one above it
-.TP
-.B Mod-Shift-space
-.B Toggle
-the current
-.B window
-between the managed and floating
-.B layer
-.TP
-.BI Mod-Shift-t \ tag
-Move the current window to the
-.B view
-of the given
-.I tag
-.TP
-.B Mod-Shift-[0-9]
-Move to the current window to the
-.B view
-with the given number
-.PD 1
-.P
-.RE
-.B Miscellaneous
-.RS 2
-.PD 0
-.TP 16
-.I Key
-.I Action
-.TP
-.B Mod-m
-Switch the current column to
-.B max mode
-.TP
-.B Mod-s
-Switch the current column to
-.B stack mode
-.TP
-.B Mod-d
-Switch the current column to
-.B default mode
-.TP
-.B Mod-Shift-c
-.B Kill
-the selected client
-.TP
-.BI Mod-p \ program
-.B Execute
-.I program
-.TP
-.BI Mod-a \ action
-Execute the
-.B named action
-.TP
-.B Mod-Enter
-Start an
-.B xterm
+'\" t
+.\" Manual page created with latex2man on Fri May 25 01:36:45 EDT 2007
+.\" NOTE: This file is generated, DO NOT EDIT.
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
 
-.SS Configuration
-If you feel the need to change the default configuration, then customize (as
-described above) the
-.B wmiirc
-action.  This action is executed at the end of the
-.B wmii
-script and does all the work of setting up the window manager, the key
-bindings, the bar labels, etc.
+.fi
+..
+.TH "WMII" "1" "25 May 2007" "" ""
+.SH NAME
+
+wmii\-VERSION
+.PP
+.SH SYNOPSIS
+
+wmii
+[\fB\-a\fP\fI<address>\fP]
+[\fB\-c\fP\fI<wmiirc>\fP]
+.br
+wmii
+\fB\-v\fP
+.PP
+.SH DESCRIPTION
+
+.PP
+.SS OVERVIEW
+.PP
+wmii
+is a dynamic window manager for X11. In contrast to 
+static window management the user rarely has to think about how to 
+organize windows, no matter what he is doing or how many 
+applications are used at the same time. The window manager adapts 
+to the current environment and fits to the needs of the user, rather 
+than forcing him to use a preset, fixed layout and trying to 
+shoehorn all windows and applications into it. 
+.PP
+wmii
+supports classic and tiled window management with 
+extended keyboard and mouse control. The classic window management 
+arranges windows in a floating layer in which windows can be moved 
+and resized freely. The tiled window management is based on columns 
+which split up the screen horizontally. Each column handles 
+arbitrary windows and arranges them vertically in a nonoverlapping 
+way. They can then be moved and resized between and within columns 
+at will. 
+.PP
+wmii
+provides a virtual filesystem which represents the 
+internal state similar to the procfs of Unix operating systems. 
+Modifying this virtual filesystem results in changing the state of 
+the window manager. The virtual filesystem service can be accessed 
+through 9Pcapable client programs, like \fIwmiir\fP(1)\&.
+This 
+allows simple and powerful remote control of the core window 
+manager. 
+.PP
+wmii
+basically consists of clients, columns, views, and the 
+bar, which are described in detail in the \fBTerminology\fP
+section. 
+.PP
+.SS TERMINOLOGY
+.PP
+.TP
+Display 
+A running X server instance consisting of input devices 
+and screens. 
+.TP
+Screen 
+A physical or virtual (Xinerama or \fIXnest\fP(1))
+screen 
+of an X display. A screen displays a bar window and a view at a time. 
+.TP
+Window 
+A (rectangular) drawable X object which is displayed on a 
+screen, usually an application window. 
+.TP
+Client 
+An application window surrounded by a frame window containing 
+a border and a titlebar. 
+.TP
+Floating layer 
+A screen layer of wmii
+on top of all other 
+layers, where clients are arranged in a classic (floating) way. 
+They can be resized or moved freely. 
+.TP
+Managed layer 
+A screen layer of wmii
+behind the floating layer, 
+where clients are arranged in a nonoverlapping (managed) way. Here, 
+the window manager dynamically assigns each client a size and position. 
+The managed layer consists of columns. 
+.TP
+Tag 
+Alphanumeric strings which can be assigned to a client. This provides 
+a mechanism to group clients with similar properties. Clients can have one 
+tag, e.g. \fIwork\fP,
+or several tags, e.g. \fIwork+mail\fP\&.
+.PP
+Tags are separated with the \fI+\fP
+character. 
+.TP
+View 
+A set of clients containing a specific tag, quite similiar to a 
+workspace in other window managers. It consists of the floating and 
+managed layers. 
+.TP
+Column 
+A column is a screen area which arranges clients vertically in a 
+non\-overlapping way. Columns provide three different modes, which 
+arrange clients with equal size, stacked, or maximized respectively. 
+Clients can be moved and resized between and within columns freely. 
+.TP
+Bar 
+The bar at the bottom of the screen displays a label for each view and 
+allows the creation of arbitrary userdefined labels. 
+.TP
+Event 
+An event is a message which can be read from a special file in the 
+filesystem of wmii,
+such as a mouse button press, a key press, or 
+a message written by a different 9P\-client. 
+.PP
+.SS BASIC WINDOW MANAGEMENT
+.PP
+Running a raw wmii
+process without a \fIwmiirc\fP(1)
+script 
+provides basic window management capabilities already. However, to 
+use it effectively, remote control through its filesystem interface 
+is necessary. By default it is only usable with the mouse in 
+conjunction with the \fIMod1 (Alt)\fP
+modifier key. Other 
+interactions, such as customizing the style, killing or retagging 
+clients, and grabbing keys, cannot be achieved without accessing the 
+filesystem. 
+.PP
+The filesystem can be accessed by connecting to the \fIaddress\fP
+of wmii
+with any 9P\-capable client, such as \fIwmiir\fP(1)
+.PP
+.SS ACTIONS
+.PP
+An action is a shell script in the default setup, but it can 
+actually be any executable file. It is executed usually by 
+selecting it from the actions menu. You can customize an action by 
+copying it from the global action directory 
+CONFPREFIX/wmii\-3.5
+to $HOME/.wmii\-3.5
+and then 
+editing the copy to fit your needs. Of course you can also create 
+your own actions there; make sure that they are executable. 
+.PP
+Here is a list of the default actions: 
+.PP
+.TS
+tab(&) expand;
+l lS.
+T{
+quit 
+T}&T{
+leave the window manager nicely 
+T}
+T{
+status 
+T}&T{
+periodically print date and load average to the bar 
+T}
+T{
+welcome 
+T}&T{
+display a welcome message that contains the wmii tutorial 
+T}
+T{
+wmiirc 
+T}&T{
+configure wmii 
+T}
+.TE
+.PP
+.SS DEFAULT KEY BINDINGS
+.SS Moving Around
+.PP
+.TS
+tab(&) expand;
+l lS.
+T{
+\fBKey\fP
+T}&T{
+\fBAction\fP
+T}
+T{
+Mod\-h 
+T}&T{
+Move to a window to the \fIleft\fP
+of the one currently 
+focused 
+T}
+T{
+Mod\-l 
+T}&T{
+Move to a window to the \fIright\fP
+of the one currently 
+focused 
+T}
+T{
+Mod\-j 
+T}&T{
+Move to the window \fIbelow\fP
+the one currently focused 
+T}
+T{
+Mod\-k 
+T}&T{
+Move to a window \fIabove\fP
+the one currently focused 
+T}
+T{
+Mod\-space 
+T}&T{
+Toggle between the managed and floating layers 
+T}
+T{
+Mod\-t \fItag\fP
+T}&T{
+Move to the view of the given \fItag\fP
+T}
+T{
+Mod\-\fI[0\-9]\fP
+T}&T{
+Move to the view with the given number 
+T}
+.TE
+.PP
+.SS Moving Things Around
+.PP
+.TS
+tab(&) expand;
+l lS.
+T{
+\fBKey\fP
+T}&T{
+\fBAction\fP
+T}
+T{
+Mod\-Shift\-h 
+T}&T{
+Move the current window \fIwindow\fP
+to a 
+column on the \fIleft\fP
+T}
+T{
+Mod\-Shift\-l 
+T}&T{
+Move the current window to a column 
+on the \fIright\fP
+T}
+T{
+Mod\-Shift\-j 
+T}&T{
+Move the current window below the window 
+beneath it. 
+T}
+T{
+Mod\-Shift\-k 
+T}&T{
+Move the current window above the window 
+above it. 
+T}
+T{
+Mod\-Shift\-space 
+T}&T{
+Toggle the current window between the 
+managed and floating layer 
+T}
+T{
+Mod\-Shift\-t \fItag\fP
+T}&T{
+Move the current window to the 
+view of the given \fItag\fP
+T}
+T{
+Mod\-Shift\-\fI[0\-9]\fP
+T}&T{
+Move to the current window to the 
+view with the given number 
+T}
+.TE
+.PP
+.SS Miscellaneous
+.PP
+.TS
+tab(&) expand;
+l lS.
+T{
+\fBKey\fP
+T}&T{
+\fBAction\fP
+T}
+T{
+Mod\-m 
+T}&T{
+Switch the current column to \fImax mode\fP
+T}
+T{
+Mod\-s 
+T}&T{
+Switch the current column to \fIstack mode\fP
+T}
+T{
+Mod\-d 
+T}&T{
+Switch the current column to \fIdefault mode\fP
+T}
+T{
+Mod\-Shift\-c 
+T}&T{
+Kill
+the selected client 
+T}
+T{
+Mod\-p \fIprogram\fP
+T}&T{
+Execute
+\fIprogram\fP
+T}
+T{
+Mod\-a \fIaction\fP
+T}&T{
+Execute
+the named \fIaction\fP
+T}
+T{
+Mod\-Enter 
+T}&T{
+Execute
+an xterm
+T}
+.TE
+.PP
+.SH CONFIGURATION
+
+.PP
+If you feel the need to change the default configuration, then 
+customize (as described above) the wmiirc
+action. This 
+action is executed at the end of the wmii
+script and does all 
+the work of setting up the window manager, the key bindings, the bar 
+labels, etc. 
+.PP
 .SH FILES
+
+.PP
 .TP
-/tmp/ns.$USER.${DISPLAY%.0}/wmii
-The wmii socket file which provides a 9P service.
+/tmp/ns.USER.{DISPLAY%\&.0}/wmii 
+The wmii socket file which provides a 9P service. 
 .TP
-CONFPREFIX/wmii-3.5
-Global action directory.
+CONFPREFIX/wmii\-3.5 
+Global action directory. 
 .TP
-$HOME/.wmii-3.5
-User-specific action directory.  Actions are first searched here.
+$HOME/.wmii\-3.5 
+User\-specific action directory. Actions are first searched here. 
+.PP
 .SH ENVIRONMENT
+
+.PP
 .TP
-HOME, DISPLAY
-See the section
-.B FILES
-above.
-.P
-The following variables are set and exported within
-.B wmii
-and thus can be used in actions:
+HOME, DISPLAY 
+See the section \fBFILES\fP
+above. 
+.PP
+The following variables are set and exported within wmii
+and 
+thus can be used in actions: 
+.PP
 .TP
-WMII_ADDRESS
-Socket file of
-.BR wmiiwm (1).
-Used by
-.BR wmiir (1).
+WMII_ADDRESS 
+Socket file of Used by \fIwmiir\fP(1)\&.
+.PP
 .SH SEE ALSO
-.BR wmiiwm (1),
-.BR dmenu (1),
-.BR wmiir (1)
+
+\fIdmenu\fP(1),
+\fIwmiir\fP(1)
+.PP
+.\" NOTE: This file is generated, DO NOT EDIT.

@@ -23,59 +23,70 @@ area_selclient(Area *a) {
 Area *
 create_area(View *v, Area *pos, uint w) {
 	static ushort id = 1;
-	uint areanum, colnum, i;
+	uint areanum, i;
 	uint minwidth;
-	Area *a, **p;
+	int colnum;
+	Area *a;
 
-	minwidth = screen->rect.width/NCOL;
+	minwidth = Dx(screen->r)/NCOL;
 
-	p = &v->area;
-	if(pos)
-		p = &pos->next;
-
-	i = areanum = 0;
-	a = v->area;
-	for(; a != *p; a = a->next)
-		areanum++, i++;
-	for(; a; a = a->next)
+	i = 0;
+	for(a = v->area; a != pos; a = a->next)
+		 i++;
+	areanum = 0;
+	for(a = v->area; a; a = a->next)
 		areanum++;
 
-	colnum = max((areanum - 1), 0);
+	colnum = areanum - 1;
 	if(w == 0) {
-		if(colnum) {
-			w = newcolw_of_view(v, max(i-1, 0));
+		if(colnum >= 0) {
+			w = newcolw(v, i);
 			if (w == 0)
-				w = screen->rect.width / (colnum + 1);
+				w = Dx(screen->r) / (colnum + 1);
 		}
-		else w = screen->rect.width;
+		else
+			w = Dx(screen->r);
 	}
 
 	if(w < minwidth)
 		w = minwidth;
-	if(colnum && (colnum * minwidth + w) > screen->rect.width)
+	if(colnum && (colnum * minwidth + w) > Dx(screen->r))
 		return nil;
-	if(pos)
-		scale_view(v, screen->rect.width - w);
 
-	a = emallocz(sizeof(Area));
+	if(pos)
+		scale_view(v, Dx(screen->r) - w);
+
+	a = emallocz(sizeof *a);
 	a->view = v;
 	a->id = id++;
-	a->rect = screen->rect;
-	a->rect.height = screen->rect.height - screen->brect.height;
 	a->mode = def.colmode;
-	a->rect.width = w;
 	a->frame = nil;
 	a->sel = nil;
-	a->next = *p;
-	*p = a;
+
+	a->r = screen->r;
+	a->r.min.x = 0;
+	a->r.max.x = w;
+	a->r.max.y = screen->brect.min.y;
+
+	if(pos) {
+		a->next = pos->next;
+		a->prev = pos;
+	}else {
+		a->next = v->area;
+		v->area = a;
+	}
+	if(a->prev)
+		a->prev->next = a;
+	if(a->next)
+		a->next->prev = a;
 
 	if(a == v->area)
 		a->floating = True;
-	if((!v->sel) ||
-	   (v->sel->floating && v->area->next == a && a->next == nil))
+
+	if(v->sel == nil)
 		focus_area(a);
 
-	if(i)
+	if(!a->floating)
 		write_event("CreateColumn %d\n", i);
 	return a;
 }
@@ -91,38 +102,54 @@ destroy_area(Area *a) {
 
 	if(a->frame)
 		fatal("destroying non-empty area");
+
 	if(v->revert == a)
 		v->revert = nil;
+
 	for(c=client; c; c=c->next)
 		if(c->revert == a)
 			c->revert = nil;
 
-	i = 1;
-	for(ta=v->area; ta; ta=ta->next)
-		if(ta->next == a) break;
-		else i++;
-	if(ta) {
-		ta->next = a->next;
+	i = 0;
+	for(ta=v->area; ta != a; ta=ta->next)
+		i++;
+	
+	if(a->prev)
+		ta = a->prev;
+	else
+		ta = a->next;
+
+	assert(a->prev || a->next == nil);
+	if(a->prev)
+		a->prev->next = a->next;
+	if(a->next)
+		a->next->prev = a->prev;
+
+	if(ta && v->sel == a) {
 		if(ta->floating && ta->next)
 			ta = ta->next;
-		if(v->sel == a)
-			focus_area(ta);
+		focus_area(ta);
 	}
-	if(i) write_event("DestroyColumn %d\n", i);
+	write_event("DestroyColumn %d\n", i);
+
 	free(a);
 }
 
 void
 send_to_area(Area *to, Frame *f) {
 	Area *from;
+
 	assert(to->view == f->view);
+
 	from = f->area;
+
 	if(to->floating != from->floating) {
-		XRectangle temp = f->revert;
-		f->revert = f->rect;
-		f->rect = temp;
+		Rectangle temp = f->revert;
+		f->revert = f->r;
+		f->r = temp;
 	}
 	f->client->revert = from;
+
 	detach_from_area(f);
 	attach_to_area(to, f, True);
 }
@@ -143,28 +170,27 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 	n_frame = 0;
 	for(ft=a->frame; ft; ft=ft->anext)
 		n_frame++;
-	if(n_frame == 0)
-		n_frame = 1;
+	n_frame = max(n_frame, 1);
 
 	c->floating = a->floating;
-	if(!a->floating)
-		f->rect.height = a->rect.height / n_frame;
+	if(!a->floating) {
+		f->r = a->r;
+		f->r.max.y = Dy(a->r) / n_frame;
+	}
 
-	insert_frame(a->sel, f, False);
+	insert_frame(a->sel, f);
 
-	if(a->floating)
+	if(a->floating) {
 		place_frame(f);
+		resize_client(f->client, &f->r);
+	}
 
 	focus_frame(f, False);
-	resize_frame(f, &f->rect);
 	restack_view(a->view);
 
 	if(!a->floating)
 		arrange_column(a, False);
-	else
-		resize_frame(f, &f->rect);
 
-	update_client_grab(f->client);
 	if(a->frame)
 		assert(a->sel);
 }
@@ -172,24 +198,21 @@ attach_to_area(Area *a, Frame *f, Bool send) {
 void
 detach_from_area(Frame *f) {
 	Frame *pr;
-	Client *c;
+	Client *c, *cp;
 	Area *a;
 	View *v;
-	Area *ta;
-	uint i;
 
 	a = f->area;
 	v = a->view;
 	c = f->client;
 
-	for(pr = a->frame; pr; pr = pr->anext)
-		if(pr->anext == f) break;
+	pr = f->aprev;
 	remove_frame(f);
 
 	if(a->sel == f) {
 		if(!pr)
 			pr = a->frame;
-		if((a->view->sel == a) && (pr))
+		if(pr && (v->sel == a))
 			focus_frame(pr, False);
 		else
 			a->sel = pr;
@@ -199,23 +222,18 @@ detach_from_area(Frame *f) {
 		if(a->frame)
 			arrange_column(a, False);
 		else {
-			i = 0;
-			for(ta=v->area; ta && ta != a; ta=ta->next)
-				i++;
 			if(v->area->next->next)
 				destroy_area(a);
-			else if(!a->frame && v->area->frame)
-				/* focus floating area if it contains something */
+			else if((a->frame == nil) && (v->area->frame))
 				focus_area(v->area);
+
 			arrange_view(v);
 		}
-	}
-	else if(!a->frame) {
+	}else if(!a->frame) {
 		if(c->trans) {
-			/* focus area of transient, if possible */
-			Client *cl = win2client(c->trans);
-			if(cl && cl->frame) {
-				a = cl->sel->area;
+			cp = win2client(c->trans);
+			if(cp && cp->frame) {
+				a = cp->sel->area;
 				if(a->view == v)
 					focus_area(a);
 			}
@@ -227,12 +245,12 @@ detach_from_area(Frame *f) {
 }
 
 static void
-bit_twiddle(uint *field, uint width, uint x, uint y, Bool set) {
-	enum { devisor = sizeof(uint) * 8 };
+bit_set(uint *field, uint width, uint x, uint y, Bool set) {
+	enum { divisor = sizeof(uint) * 8 };
 	uint bx, mask;
 
-	bx = x / devisor;
-	mask = 1 << x % devisor;
+	bx = x / divisor;
+	mask = 1 << x % divisor;
 	if(set)
 		field[y*width + bx] |= mask;
 	else
@@ -241,25 +259,26 @@ bit_twiddle(uint *field, uint width, uint x, uint y, Bool set) {
 
 static Bool
 bit_get(uint *field, uint width, uint x, uint y) {
-	enum { devisor = sizeof(uint) * 8 };
+	enum { divisor = sizeof(uint) * 8 };
 	uint bx, mask;
 
-	bx = x / devisor;
-	mask = 1 << x % devisor;
+	bx = x / divisor;
+	mask = 1 << x % divisor;
 
 	return (field[y*width + bx] & mask) != 0;
 }
 
 static void
 place_frame(Frame *f) {
-	enum { devisor = sizeof(uint) * 8 };
+	enum { divisor = sizeof(uint) * 8 };
 	enum { dx = 8, dy = 8 };
+
 	static uint mwidth, mx, my;
 	static uint *field = nil;
-	BlitzAlign align;
-	XPoint p1 = {0, 0};
-	XPoint p2 = {0, 0};
-	XRectangle *rects;
+	Align align;
+	Point p1 = ZP;
+	Point p2 = ZP;
+	Rectangle *rects;
 	Frame *fr;
 	Client *c;
 	Area *a;
@@ -267,7 +286,7 @@ place_frame(Frame *f) {
 	uint i, j, x, y, cx, cy, maxx, maxy, diff, num;
 	int snap;
 
-	snap = screen->rect.height / 66;
+	snap = Dy(screen->r) / 66;
 	num = 0;
 	fit = False;
 	align = CENTER;
@@ -277,43 +296,52 @@ place_frame(Frame *f) {
 
 	if(c->trans)
 		return;
-	if(c->rect.width >= a->rect.width
-		|| c->rect.height >= a->rect.height
-		|| c->size.flags & USPosition
-		|| c->size.flags & PPosition)
+	if(c->fullscreen || c->w.hints->position || starting) {
+		f->r = gravclient(c, c->w.r);
 		return;
+	}
 	if(!field) {
-		mx = screen->rect.width / dx;
-		my = screen->rect.height / dy;
-		mwidth = ceil((float)mx / devisor);
+		mx = Dx(screen->r) / dx;
+		my = Dy(screen->r) / dy;
+		mwidth = ceil((float)mx / divisor);
 		field = emallocz(sizeof(uint) * mwidth * my);
 	}
+
 	memset(field, ~0, (sizeof(uint) * mwidth * my));
 	for(fr=a->frame; fr; fr=fr->anext) {
 		if(fr == f) {
-			cx = f->rect.width / dx;
-			cy = f->rect.height / dy;
+			cx = Dx(f->r) / dx;
+			cy = Dx(f->r) / dy;
 			continue;
 		}
-		if(fr->rect.x < 0)
+
+		if(fr->r.min.x < 0)
 			x = 0;
 		else
-			x = fr->rect.x / dx;
-		if(fr->rect.y < 0)
+			x = fr->r.min.x / dx;
+
+		if(fr->r.min.y < 0)
 			y = 0;
 		else
-			y = fr->rect.y / dy;
-		maxx = r_east(&fr->rect) / dx;
-		maxy = r_south(&fr->rect) / dy;
+			y = fr->r.min.y / dy;
+
+		maxx = fr->r.max.x / dx;
+		maxy = fr->r.max.y / dy;
 		for(j = y; j < my && j < maxy; j++)
 			for(i = x; i < mx && i < maxx; i++)
-				bit_twiddle(field, mwidth, i, j, False);
+				bit_set(field, mwidth, i, j, False);
 	}
+
 	for(y = 0; y < my; y++)
 		for(x = 0; x < mx; x++) {
 			if(bit_get(field, mwidth, x, y)) {
-				for(i = x; (i < mx) && bit_get(field, mwidth, i, y); i++);
-				for(j = y; (j < my) && bit_get(field, mwidth, x, j); j++);
+				for(i = x; i < mx; i++)
+					if(bit_get(field, mwidth, i, y) == 0)
+						break;
+				for(j = y; j < my; j++)
+					if(bit_get(field, mwidth, x, j) == 0)
+						break;
+
 				if(((i - x) * (j - y) > (p2.x - p1.x) * (p2.y - p1.y)) 
 					&& (i - x > cx) && (j - y > cy))
 				{
@@ -325,25 +353,27 @@ place_frame(Frame *f) {
 				}
 			}
 		}
+
 	if(fit) {
 		p1.x *= dx;
 		p1.y *= dy;
 	}
-	if(fit && (p1.x + f->rect.width < r_south(&a->rect)))
-		f->rect.x = p1.x;
-	else {
-		diff = a->rect.width - f->rect.width;
-		f->rect.x = a->rect.x + (random() % (diff ? diff : 1));
-	}
-	if(fit && (p1.y + f->rect.height < (r_south(&a->rect))))
-		f->rect.y = p1.y;
-	else {
-		diff = a->rect.height - f->rect.height;
-		f->rect.y = a->rect.y + (random() % (diff ? diff : 1));
+
+	if(!fit || (p1.x + Dx(f->r) > a->r.max.x)) {
+		diff = Dx(a->r) - Dx(f->r);
+		p1.x = a->r.min.x + (random() % max(diff, 1));
 	}
 
+	if(!fit && (p1.y + Dy(f->r) > a->r.max.y)) {
+		diff = Dy(a->r) - Dy(f->r);
+		p1.y = a->r.min.y + (random() % max(diff, 1));
+	}
+
+	p1 = subpt(p1, f->r.min);
+	f->r = rectaddpt(f->r, p1);
+
 	rects = rects_of_view(a->view, &num, nil);
-	snap_rect(rects, num, &f->rect, &align, snap);
+	snap_rect(rects, num, &f->r, &align, snap);
 	if(rects)
 		free(rects);
 }
@@ -361,9 +391,8 @@ focus_area(Area *a) {
 
 	v->sel = a;
 
-	if((old_a)
-	&& (a->floating != old_a->floating))
-			v->revert = old_a;
+	if((old_a) && (a->floating != old_a->floating))
+		v->revert = old_a;
 
 	if(v != screen->sel)
 		return;
@@ -377,71 +406,9 @@ focus_area(Area *a) {
 		i = 0;
 		for(a = v->area; a != v->sel; a = a->next)
 			i++;
-		if(i)
-			write_event("ColumnFocus %d\n", i);
-		else
+		if(a->floating)
 			write_event("FocusFloating\n");
-		if(a->frame)
-			write_event("ClientFocus 0x%x\n", a->sel->client->win);
-	}
-}
-
-char *
-select_area(Area *a, char *arg) {
-	Area *new;
-	uint i;
-	Frame *p, *f;
-	View *v;
-	static char Ebadvalue[] = "bad value";
-
-	v = a->view;
-	f = a->sel;
-	if(!strncmp(arg, "toggle", 7)) {
-		if(!a->floating)
-			new = v->area;
-		else if(v->revert)
-			new = v->revert;
 		else
-			new = v->area->next;
-	} else if(!strncmp(arg, "left", 5)) {
-		if(a->floating)
-			return Ebadvalue;
-		for(new=v->area->next; new->next; new=new->next)
-			if(new->next == a) break;
-	} else if(!strncmp(arg, "right", 5)) {
-		if(a->floating)
-			return Ebadvalue;
-		new = a->next ? a->next : v->area->next;
+			write_event("ColumnFocus %d\n", i);
 	}
-	else if(!strncmp(arg, "up", 3)) {
-		if(!f)
-			return Ebadvalue;
-		for(p=a->frame; p->anext; p=p->anext)
-			if(p->anext == f) break;
-		goto focus_frame;
-	}
-	else if(!strncmp(arg, "down", 5)) {
-		if(!f)
-			return Ebadvalue;
-		p = f->anext ? f->anext : a->frame;
-		goto focus_frame;
-	}
-	else if(!strncmp(arg, "~", 2)) {
-		new = v->area;
-	}
-	else {
-		if(sscanf(arg, "%u", &i) != 1 || i == 0)
-			return Ebadvalue;
-		for(new=v->area->next; new->next; new=new->next)
-			if(!--i) break;
-	}
-	focus_area(new);
-	return nil;
-
-focus_frame:
-	focus_frame(p, False);
-	frame_to_top(p);
-	if(v == screen->sel)
-		restack_view(v);
-	return nil;
 }

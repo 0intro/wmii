@@ -1,0 +1,243 @@
+#!sh
+# WMII Configuration
+load std
+load string
+load regex
+
+mount -Aa {os dial unix!/tmp/ns.kris.:1/wmii >[1=0]} / || exit
+#mount -Aa {os rc -c 'dial $WMII_ADDRESS' >[1=0]} /
+
+MODKEY=Mod1
+UP=k
+DOWN=j
+LEFT=h
+RIGHT=l
+
+WMII_FONT=fixed
+WMII_NORMCOLORS=('#222222' '#5FBF77' '#2A7F3F')
+WMII_FOCUSCOLORS=('#ffffff' '#153F1F' '#2A7F3F')
+WMII_BACKGROUND='#333333'
+
+WMII_TERM=urxvt
+
+fn wmiimenu {
+	run_command ${re sg '#' '"#"' (dmenu -b -fn $WMII_FONT
+		-nf ${hd $WMII_NORMCOLORS} -nb ${index 2 $WMII_NORMCOLORS}
+		-sf ${hd $WMII_FOCUSCOLORS} -sb ${index 2 $WMII_FOCUSCOLORS})}
+}
+
+fn 9menu {
+	run_command (wmii9menu -font $WMII_FONT
+		-^(nf nb br)^$WMII_NORMCOLORS
+		-^(sf sb br)^$WMII_FOCUSCOLORS $*)
+}
+
+# Column Rules
+echo '/./ -> 60+40' >/colrules
+
+# Tagging Rules
+{ echo '/Firefox/ -> www
+/XMMS.*/ -> ~
+/MPlayer.*/ -> ~
+/.*/ -> !
+/.*/ -> 1
+' } >/tagrules
+
+subfn seq {
+	arg := $*
+	result=`{os seq $arg}
+}
+
+subfn hostenv {
+	arg := $"*
+	result="{os sh -c ${quote eval echo -n '$'$arg}}
+}
+
+# Status Bar Info
+fn status {
+	echo ${re mg '[0-9]+\.[0-9]+' "{os uptime}} '|' `{date}
+}
+
+# Events
+fn Event-Start {
+	if { ~ $1 wmiirc } {
+		rm -f $progs_file
+		exit
+	}
+}
+
+fn Event-Key {
+	echo Key-$1
+	Key-$1 $1
+}
+
+fn Event-CreateTag { echo $WMII_NORMCOLORS $* >> /lbar/$"* }
+fn Event-DestroyTag { rm /lbar/$"* }
+fn Event-FocusTag { echo $WMII_FOCUSCOLORS $* > /lbar/$"* }
+fn Event-UnfocusTag { echo $WMII_NORMCOLORS $* > /lbar/$"* }
+fn Event-UrgentTag { echo '*'${tl $*} > ${quote /lbar/${tl $*} } }
+fn Event-NotUrgentTag { echo ${tl $*} > ${quote /lbar/${tl $*} } }
+
+fn Event-LeftBarClick { echo view ${tl $*} >/ctl }
+lastcmd=''
+fn Event-ClientMouseDown {
+	(client button) := $*
+	if { ~ $button 3 } {
+		lastcmd = `{9menu -initial $lastcmd Nop Delete}
+		cmp := {~ $do $1}
+		or 	{and {$cmp Nop}	{echo Do nothing}
+		} 	{and {$cmp Delete}	{echo kill >/client/$client/ctl}}
+	}
+}
+
+# Actions
+fn Action {
+	(action args) := $*
+	if {whatis Action-$action | grep -s '^load std; fn '} {
+		Action-$action $args
+	} {
+		run_command ${config_whatis $action} $args </dev/null
+	}
+}
+fn Action-quit { echo quit >>/ctl }
+fn Action-rehash {
+	flag x -
+	proglist ${hostenv PATH} >$progs_file
+}
+fn Action-status {
+	if {rm /rbar/status >[2]/dev/null} {
+		sleep 2
+	}
+	echo $WMII_NORMCOLORS >/rbar/status
+	while {status >/rbar/status} {
+		sleep 1
+	}
+}
+
+# Key Bindings
+fn Key-$MODKEY-Control-t {
+	if { ~ `{wc -l /keys} 0 1} {
+		initkeys
+		grabmod $MODKEY >/ctl
+	} {
+		echo $MODKEY-Control-t >/keys
+		echo grabmod Mod3 >/ctl
+	}
+}
+
+fn Key-$MODKEY-$LEFT { echo select left >/tag/sel/ctl }
+fn Key-$MODKEY-$RIGHT { echo select right >/tag/sel/ctl }
+fn Key-$MODKEY-$DOWN { echo select down >/tag/sel/ctl }
+fn Key-$MODKEY-$UP { echo select up >/tag/sel/ctl }
+
+fn Key-$MODKEY-Shift-$LEFT { echo send sel left >/tag/sel/ctl }
+fn Key-$MODKEY-Shift-$RIGHT { echo send sel right >/tag/sel/ctl }
+fn Key-$MODKEY-Shift-$DOWN { echo send sel down >/tag/sel/ctl }
+fn Key-$MODKEY-Shift-$UP { echo send sel up >/tag/sel/ctl }
+
+fn Key-$MODKEY-space { echo select toggle >/tag/sel/ctl }
+fn Key-$MODKEY-Shift-space { echo send sel toggle >/tag/sel/ctl }
+
+fn Key-$MODKEY-d { echo colmode sel default >/tag/sel/ctl }
+fn Key-$MODKEY-s { echo colmode sel stack >/tag/sel/ctl }
+fn Key-$MODKEY-m { echo colmode sel max >/tag/sel/ctl }
+
+fn Key-$MODKEY-Shift-c { echo kill >/client/sel/ctl }
+
+fn Key-$MODKEY-a { Action `{actionlist | wmiimenu} & }
+fn Key-$MODKEY-p { run_command `{wmiimenu <$progs_file} </dev/null & }
+fn Key-$MODKEY-Return { run_command $WMII_TERM & }
+fn Key-$MODKEY-t { echo view `{read_tags | wmiimenu} >/ctl & }
+fn Key-$MODKEY-Shift-t {
+	sel := "{cat /client/sel/ctl}
+	read_tags | wmiimenu >/client/$sel/tags
+}
+
+for(i in ${seq 0 9}) {
+	fn Key-$MODKEY-$i { echo view ${tl ${splitr $1 -}} >/ctl }
+	fn Key-Shift-$MODKEY-$i { echo ${tl ${splitr $1 -}} >/client/sel/tags}
+}
+
+# Functions
+fn proglist {
+	apply {ls -lp $*} /n/local^${split : $"*} |
+		grep '^[^d][^ 	]*x' |
+		getlines { 
+			echo ${index 10 ${split ' 	' $line}}
+		} | sort | uniq
+}
+
+fn getfuns {
+	ls -p /env | grep '^fn-' ^ $1 ^ '-' | getlines {
+		echo ${re s '^fn-[^-]+-' '' $line}
+	}
+}
+
+fn actionlist {
+	{	rescue '*' {} { 
+			proglist ${hostenv WMII_CONFPATH} 
+		}
+	 	getfuns Action
+	} | sort | uniq
+}
+
+fn initkeys {
+	getfuns Key >/keys
+}
+
+fn read_tags {
+	ls -p /tag | grep -v '^sel$'
+}
+
+subfn config_whatis {
+	result="{os sh -c ${quote eval PATH'='${hostenv WMII_CONFPATH} which $*}}
+}
+
+fn run_command {
+	@{	pctl newpgrp
+		vars := 'DISPLAY=:1' 'PATH=/home/kris/wmiiinst/bin:$PATH'
+		os sh -c ${quote eval $vars $*}
+	} $*
+}
+
+# WM Configuration
+{
+	echo grabmod $MODKEY
+	echo border 2
+	echo font $WMII_FONT
+	echo focuscolors $WMII_FOCUSCOLORS
+	echo normcolors $WMII_NORMCOLORS
+} >/ctl
+
+# Misc Setup
+os xsetroot -solid $WMII_BACKGROUND
+Action status &
+progs_file=/tmp/proglist.${pid}
+Action rehash &
+
+# Tag Bar Setup
+seltag="{cat /tag/sel/ctl}
+comm -2 ${pipe read_tags} ${pipe ls -p /lbar/*} | getlines {
+	rm /lbar/$line
+}
+read_tags | getlines {
+	if {~ $line $seltag} {
+		echo $WMII_FOCUSCOLORS $line >/lbar/$line
+	} {
+		echo $WMII_NORMCOLORS $line >/lbar/$line
+	}
+}
+
+# Keygrab Setup
+initkeys
+
+echo Start wmiirc >/event
+
+# Event Loop
+getlines {
+	(event args) := ${split ' 	' $line}
+	echo Event-$event: $args
+	rescue '*' { echo Exception: $exception } {
+		Event-$event $args
+	}
+} </event

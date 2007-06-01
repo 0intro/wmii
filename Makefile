@@ -6,8 +6,11 @@ PDIRS = \
 	rc	\
 	man
 
-DIRS =	libixp	\
+DIRS =	\
 	${PDIRS}
+
+config:
+	ROOT="${ROOT}" ${ROOT}/util/genconfig
 
 include ${ROOT}/mk/dir.mk
 INSTDIRS = ${PDIRS}

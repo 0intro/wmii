@@ -72,6 +72,8 @@ eventstuff() {
 	# Actions
 	Action quit
 		wmiir xwrite /ctl quit
+	Action exec
+		wmiir xwrite /ctl exec "$@"
 	Action rehash
 		proglist $PATH >$progsfile
 	Action status
@@ -162,8 +164,13 @@ grabmod $MODKEY
 border 1
 EOF
 
+export WMII_MENU WMII_9MENU WMII_FONT WMII_TERM
+export WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS
+
 # Feed events to `wmiiloop' for processing
-eval "$(eventstuff | sed 's/^[	]//' | wmiiloop)"
+eval "$(eventstuff | sed 's/^[	]//' | { . wmiiloop; })"
+
+echo "$Keys" | tr ' ' '\n' | wmiir write /keys
 
 # Functions
 Action() {
@@ -187,9 +194,6 @@ Action status &
 proglist $PATH >$progsfile &
 
 xsetroot -solid "$WMII_BACKGROUND" &
-
-export WMII_MENU WMII_9MENU WMII_FONT WMII_TERM
-export WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS
 
 # Setup Tag Bar
 seltag="$(wmiir read /tag/sel/ctl 2>/dev/null)"

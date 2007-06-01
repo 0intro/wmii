@@ -2,27 +2,18 @@
  * See LICENSE file for license details.
  */
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
 #include <regex.h>
 #include <ixp.h>
+#include <utf.h>
+#include "x11.h"
 
-#define BLITZ_FONT		"-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*"
-#define BLITZ_FOCUSCOLORS	"#ffffff #335577 #447799"
-#define BLITZ_NORMCOLORS	"#222222 #eeeeee #666666"
+#define FONT		"-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*"
+#define FOCUSCOLORS	"#ffffff #335577 #447799"
+#define NORMCOLORS	"#222222 #eeeeee #666666"
 
-typedef struct Blitz Blitz;
-typedef struct BlitzColor BlitzColor;
-typedef struct BlitzFont BlitzFont;
-typedef struct BlitzBrush BlitzBrush;
+typedef struct CTuple CTuple;
 
-struct Blitz {
-	Display *dpy;
-	int screen;
-	Window root;
-};
-
-enum BlitzAlign {
+enum Align {
 	NORTH = 0x01,
 	EAST  = 0x02,
 	SOUTH = 0x04,
@@ -34,60 +25,31 @@ enum BlitzAlign {
 	CENTER = NEAST | SWEST
 };
 
-typedef enum BlitzAlign BlitzAlign;
+typedef enum Align Align;
 
-struct BlitzColor {
-	vlong bg;
-	vlong fg;
-	vlong border;
+struct CTuple {
+	ulong bg;
+	ulong fg;
+	ulong border;
 	char colstr[24]; /* #RRGGBB #RRGGBB #RRGGBB */
 };
 
-struct BlitzFont {
-	XFontStruct *xfont;
-	XFontSet set;
-	int ascent;
-	int descent;
-	uint height;
-	char *fontstr;
-};
-
-struct BlitzBrush {
-	Blitz *blitz;
-	Drawable drawable;
-	GC gc;
-	int border;
-	BlitzColor color;
-	BlitzAlign align;
-	BlitzFont *font;
-	XRectangle rect;	/* relative rect */
-};
-
 enum {
-/* WM atom */
-	WMState, WMProtocols, WMDelete,
-/* NET atom */
-	NetSupported, NetWMName,
-/* Other */
-	TagsAtom,
-/* Last atom */
-	AtomLast
+	Coldefault, Colstack, Colmax
 };
 
-/* Column modes */
-enum { Coldefault, Colstack, Colmax };
-
-/* Cursor */
 enum {
 	CurNormal,
 	CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
-	CurDHArrow, CurMove, CurInput,
+	CurDHArrow, CurMove, CurInput, CurSizing, CurIcon,
 	CurInvisible,
 	CurLast
 };
 
-enum { NCOL = 16 };
-enum { WM_PROTOCOL_DELWIN = 1 };
+enum { 
+	NCOL = 16,
+	WM_PROTOCOL_DELWIN = 1
+};
 
 /* Data Structures */
 typedef struct View View;
@@ -100,6 +62,20 @@ typedef struct Bar Bar;
 typedef struct Rule Rule;
 typedef struct Ruleset Ruleset;
 typedef struct WMScreen WMScreen;
+typedef struct Map Map;
+typedef struct MapEnt MapEnt;
+
+struct Map {
+	MapEnt **bucket;
+	uint nhash;
+};
+
+struct MapEnt {
+	ulong hash;
+	char *key;
+	void *val;
+	MapEnt *next;
+};
 
 struct View {
 	View *next;
@@ -111,7 +87,7 @@ struct View {
 };
 
 struct Area {
-	Area *next;
+	Area *next, *prev;
 	Frame *frame;
 	Frame *stack;
 	Frame *sel;
@@ -119,23 +95,24 @@ struct Area {
 	Bool floating;
 	ushort id;
 	int mode;
-	XRectangle rect;
+	Rectangle r;
 };
 
 struct Frame {
 	Frame *cnext;
-	Frame *anext;
-	Frame *snext;
+	Frame *anext, *aprev;
+	Frame *snext, *sprev;
 	View *view;
 	Area *area;
 	ushort id;
-	XRectangle rect;
-	XRectangle crect;
-	XRectangle revert;
+	Rectangle r;
+	Rectangle crect;
+	Rectangle revert;
 	Client *client;
 	Bool collapsed;
-	XRectangle grabbox;
-	XRectangle titlebar;
+	Rectangle grabbox;
+	Rectangle titlebar;
+	float ratio;
 };
 
 struct Client {
@@ -152,21 +129,22 @@ struct Client {
 	Bool fixedsize;
 	Bool fullscreen;
 	Bool urgent;
-	Bool mapped;
-	Bool frame_mapped;
+	Bool borderless;
+	Bool titleless;
+	Bool noinput;
 	int unmapped;
-	Window win;
-	Window trans;
-	Window framewin;
+	Window w;
+	XWindow trans;
+	Window *framewin;
 	Cursor cursor;
-	XRectangle rect;
+	Rectangle r;
 	XSizeHints size;
 	GC gc;
 };
 
 struct Divide {
 	Divide *next;
-	Window w;
+	Window *w;
 	Bool mapped;
 	int x;
 };
@@ -188,7 +166,8 @@ struct Bar {
 	char text[256];
 	char name[256];
 	ushort id;
-	BlitzBrush brush;
+	Rectangle r;
+	CTuple col;
 };
 
 struct Rule {
@@ -205,9 +184,9 @@ struct Ruleset {
 
 /* global variables */
 struct {
-	BlitzColor focuscolor;
-	BlitzColor normcolor;
-	BlitzFont font;
+	CTuple focuscolor;
+	CTuple normcolor;
+	Font *font;
 	uint	 border;
 	uint	 snap;
 	char *keys;
@@ -219,18 +198,20 @@ struct {
 	int colmode;
 } def;
 
-enum { BarLeft, BarRight };
+enum {
+	BarLeft, BarRight
+};
 
 struct WMScreen {
 	Bar *bar[2];
 	View *sel;
 	Client *focus;
 	Client *hasgrab;
-	Window barwin;
+	Window *barwin;
+	Image *ibuf;
 
-	XRectangle rect;
-	XRectangle brect;
-	BlitzBrush bbrush;
+	Rectangle r;
+	Rectangle brect;
 } *screens, *screen;
 
 Client *client;
@@ -239,6 +220,8 @@ Key *key;
 Divide *divs;
 Client c_magic;
 Client c_root;
+
+Handlers framehandler;
 
 char buffer[8092];
 
@@ -252,17 +235,17 @@ uint valid_mask;
 uint num_lock_mask;
 Bool sel_screen;
 
-Blitz blz;
-GC xorgc;
-Pixmap pmap;
-Pixmap divmap, divmask;
+Image xor;
 
-Atom atom[AtomLast];
 Cursor cursor[CurLast];
 void (*handler[LASTEvent]) (XEvent *);
 
 /* Misc */
+Image *broken;
 Bool starting;
 Bool verbose;
 char *user;
 char *execstr;
+
+#define Debug if(verbose)
+

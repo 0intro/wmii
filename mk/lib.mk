@@ -10,7 +10,7 @@ depend: ${OBJ:=.depend}
 
 libclean:
 	for i in ${LIB} ${OFILES}; do \
-		rm $$i; \
+		rm -f $$i; \
 	done 2>/dev/null || true
 
 printinstall:
@@ -20,5 +20,6 @@ printinstall:
 ${LIB}: ${OFILES}
 	@echo AR $@
 	@${AR} $@ ${OFILES}
+	@${RANLIB} $@
 
 include ${ROOT}/mk/common.mk

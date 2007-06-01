@@ -2,6 +2,7 @@
  * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,10 +11,9 @@
 #include "dat.h"
 #include "fns.h"
 
-static void update_client_name(Client *c);
+#define Mbsearch(k, l, cmp) bsearch(k, l, nelem(l), sizeof(*l), cmp)
 
-static char Ebadcmd[] = "bad command",
-	    Ebadvalue[] = "bad value";
+static Handlers handlers;
 
 enum {
 	ClientMask =
@@ -22,60 +22,57 @@ enum {
 		| EnterWindowMask
 		| FocusChangeMask,
 	ButtonMask =
-		  ButtonPressMask | ButtonReleaseMask
+		  ButtonPressMask
+		| ButtonReleaseMask
 };
 
 Client *
-create_client(Window w, XWindowAttributes *wa) {
+create_client(XWindow w, XWindowAttributes *wa) {
 	Client **t, *c;
-	XSetWindowAttributes fwa;
+	WinAttr fwa;
 
 	c = emallocz(sizeof(Client));
-	c->win = w;
-	c->rect.x = wa->x;
-	c->rect.y = wa->y;
 	c->border = wa->border_width;
-	c->rect.width = wa->width;
-	c->rect.height = wa->height;
 
-	c->proto = win_proto(c->win);
-	prop_client(c, XA_WM_TRANSIENT_FOR);
-	prop_client(c, XA_WM_NORMAL_HINTS);
-	prop_client(c, XA_WM_HINTS);
-	prop_client(c, XA_WM_NAME);
+	c->r.min = Pt(wa->x, wa->y);
+	c->r.max = addpt(c->r.min, Pt(wa->width, wa->height));
 
-	XSetWindowBorderWidth(blz.dpy, c->win, 0);
-	XAddToSaveSet(blz.dpy, c->win);
+	c->w.type = WWindow;
+	c->w.w = w;
+	c->w.r = c->r;
+
+	prop_client(c, xatom("WM_PROTOCOLS"));
+	prop_client(c, xatom("WM_TRANSIENT_FOR"));
+	prop_client(c, xatom("WM_NORMAL_HINTS"));
+	prop_client(c, xatom("WM_HINTS"));
+	prop_client(c, xatom("WM_CLASS"));
+	prop_client(c, xatom("WM_NAME"));
+	prop_client(c, xatom("_MOTIF_WM_HINTS"));
+
+	XSetWindowBorderWidth(display, w, 0);
+	XAddToSaveSet(display, w);
+	XSelectInput(display, c->w.w, ClientMask);
 
 	fwa.override_redirect = True;
-	fwa.background_pixmap = ParentRelative;
-	fwa.backing_store = Always;
+	fwa.background_pixmap = None;
 	fwa.event_mask =
-		  SubstructureRedirectMask
-		| SubstructureNotifyMask
-		| ExposureMask
-		| EnterWindowMask
-		| PointerMotionMask
-		| KeyPressMask
-		| ButtonPressMask
-		| ButtonReleaseMask;
-	c->framewin = XCreateWindow(
-		/* display */	blz.dpy,
-		/* parent */	blz.root,
-		/* x */		c->rect.x,
-		/* y */		c->rect.y,
-		/* width */	c->rect.width + 2 * def.border,
-		/* height */	c->rect.height + def.border + labelh(&def.font),
-		/* border */	0,
-		/* depth */	DefaultDepth(blz.dpy, blz.screen),
-		/* class */	CopyFromParent,
-		/* visual */	DefaultVisual(blz.dpy, blz.screen),
-		/* valuemask */	CWOverrideRedirect | CWEventMask | CWBackPixmap | CWBackingStore,
-		/* attributes */&fwa
-		);
+			  SubstructureRedirectMask
+			| SubstructureNotifyMask
+			| ExposureMask
+			| EnterWindowMask
+			| PointerMotionMask
+			| ButtonPressMask
+			| ButtonReleaseMask;
+	c->framewin = createwindow(&scr.root, c->r, scr.depth, InputOutput, &fwa,
+			  CWOverrideRedirect
+			| CWEventMask
+			| CWBackPixmap);
+	c->framewin->aux = c;
+	c->w.aux = c;
+	sethandler(c->framewin, &framehandler);
+	sethandler(&c->w, &handlers);
 
-	c->gc = XCreateGC(blz.dpy, c->framewin, 0, 0);
-	XSync(blz.dpy, False);
+	grab_button(c->framewin->w, AnyButton, AnyModifier);
 
 	for(t=&client ;; t=&(*t)->next)
 		if(!*t) {
@@ -84,24 +81,60 @@ create_client(Window w, XWindowAttributes *wa) {
 			break;
 		}
 
-	write_event("CreateClient 0x%x\n", c->win);
+	write_event("CreateClient 0x%x\n", c->w.w);
+	manage_client(c);
 	return c;
 }
 
+void
+manage_client(Client *c) {
+	Point p;
+	Client *trans;
+	char *tags;
+
+	tags = gettextproperty(&c->w, "_WIN_TAGS");
+
+	if((trans = win2client(c->trans)))
+		strncpy(c->tags, trans->tags, sizeof(c->tags));
+	else if(tags)
+		strncpy(c->tags, tags, sizeof(c->tags));
+
+	free(tags);
+
+	p.x = def.border;
+	p.y = labelh(def.font);
+
+	if(c->tags[0])
+		apply_tags(c, c->tags);
+	else
+		apply_rules(c);
+
+	reparentwindow(&c->w, c->framewin, p);
+
+	if(!starting)
+		update_views();
+
+	if(c->sel->view == screen->sel)
+		focus(c, True);
+	flushevents(EnterWindowMask, False);
+}
+
 static int
-dummy_error_handler(Display *dpy, XErrorEvent *error) {
+ignoreerrors(Display *d, XErrorEvent *e) {
 	return 0;
 }
 
 void
 destroy_client(Client *c) {
+	int (*handler)(Display*, XErrorEvent*);
+	Rectangle r;
 	char *dummy;
 	Client **tc;
-	XEvent ev;
+	Bool hide;
 
-	XGrabServer(blz.dpy);
-	/* In case the client is already unmapped */
-	XSetErrorHandler(dummy_error_handler);
+	Debug fprintf(stderr, "client.c:destroy_client(%p) %s\n", c, c->name);
+
+	unmapwin(c->framewin);
 
 	for(tc=&client; *tc; tc=&(*tc)->next)
 		if(*tc == c) {
@@ -109,474 +142,160 @@ destroy_client(Client *c) {
 			break;
 		}
 
+	r = c->w.r;
+	if(c->sel)
+		r = gravclient(c, ZR);
+
+	hide = False;	
+	if(!c->sel || c->sel->view != screen->sel)
+		hide = True;
+
+	XGrabServer(display);
+
+	/* In case the client is already unmapped */
+	handler = XSetErrorHandler(ignoreerrors);
+
 	dummy = nil;
 	update_client_views(c, &dummy);
+	unmap_client(c, IconicState);
+	sethandler(&c->w, nil);
 
-	unmap_client(c, WithdrawnState);
-	gravitate_client(c, True);
-	reparent_client(c, blz.root, c->rect.x, c->rect.y);
+	if(hide)
+		reparentwindow(&c->w, &scr.root, screen->r.max);
+	else
+		reparentwindow(&c->w, &scr.root, r.min);
+	destroywindow(c->framewin);
 
-	XFreeGC(blz.dpy, c->gc);
-	XDestroyWindow(blz.dpy, c->framewin);
-	XSync(blz.dpy, False);
+	XSync(display, False);
+	XSetErrorHandler(handler);
+	XUngrabServer(display);
 
-	XSetErrorHandler(wmii_error_handler);
-	XUngrabServer(blz.dpy);
+	write_event("DestroyClient 0x%x\n", clientwin(c));
+
 	flushevents(EnterWindowMask, False);
-
-	while(XCheckMaskEvent(blz.dpy, StructureNotifyMask, &ev))
-		if(ev.type != UnmapNotify || ev.xunmap.window != c->win)
-			dispatch_event(&ev);
-
-	write_event("DestroyClient 0x%x\n", c->win);
 	free(c);
 }
 
-void
-manage_client(Client *c) {
-	XTextProperty tags = { 0 };
-	Client *trans;
-
-	XGetTextProperty(blz.dpy, c->win, &tags, atom[TagsAtom]);
-
-	if((trans = win2client(c->trans)))
-		strncpy(c->tags, trans->tags, sizeof(c->tags));
-	else if(tags.nitems)
-		strncpy(c->tags, (char *)tags.value, sizeof(c->tags));
-	XFree(tags.value);
-
-	gravitate_client(c, False);
-	reparent_client(c, c->framewin, def.border, labelh(&def.font));
-
-	if(!strlen(c->tags))
-		apply_rules(c);
-	else
-		apply_tags(c, c->tags);
-
-	if(!starting)
-		update_views();
-	XSync(blz.dpy, False);
-
-	if(c->sel->view == screen->sel)
-		focus(c, True);
-	flushevents(EnterWindowMask, False);
-}
-
+/* Convenience functions */
 Client *
-selclient() {
-	if(screen->sel && screen->sel->sel->sel)
+selclient(void) {
+	if(screen->sel->sel->sel)
 		return screen->sel->sel->sel->client;
 	return nil;
 }
 
 Client *
-win2client(Window w) {
+win2client(XWindow w) {
 	Client *c;
 	for(c=client; c; c=c->next)
-		if(c->win == w) break;
+		if(c->w.w == w) break;
 	return c;
 }
 
-Frame *
-win2frame(Window w) {
-	Client *c;
-	for(c=client; c; c=c->next)
-		if(c->framewin == w) break;
+uint
+clientwin(Client *c) {
 	if(c)
-		return c->sel;
-	return nil;
+		return (uint)c->w.w;
+	return 0;
+}
+
+char *
+clientname(Client *c) {
+	if(c)
+		return c->name;
+	return "<nil>";
+}
+
+Rectangle
+gravclient(Client *c, Rectangle rd) {
+	Rectangle r;
+	Point sp;
+	WinHints *h;
+
+	h = c->w.hints;
+	sp = Pt(def.border, labelh(def.font));
+
+	if(eqrect(rd, ZR)) {
+		if(c->sel->area->floating)
+			r = c->sel->r;
+		else
+			r = c->sel->revert;
+		r = gravitate(r, c->w.r, h->grav);
+		if(h->gravstatic)
+			r = rectaddpt(r, sp);
+		r = frame2client(nil, r);
+	}else {
+		r = client2frame(c->sel, c->w.r);
+		r = gravitate(rd, r, h->grav);
+		if(h->gravstatic)
+			r = rectsubpt(r, sp);
+		r = client2frame(nil, r);
+	}
+	return r;
+}
+
+Rectangle
+frame_hints(Frame *f, Rectangle r, Align sticky) {
+	Rectangle or;
+	Point p;
+	Client *c;
+
+	c = f->client;
+	if(c->w.hints == nil)
+		return r;
+
+	or = r;
+	r = frame2client(f, r);
+	r = sizehint(c->w.hints, r);
+	r = client2frame(f, r);
+
+	if(!f->area->floating) {
+		/* Not allowed to grow */
+		if(Dx(r) > Dx(or))
+			r.max.x =r.min.x+Dx(or);
+		if(Dy(r) > Dy(or))
+			r.max.y = r.min.y+Dy(or);
+	}
+
+	p = ZP;
+	if((sticky&(EAST|WEST)) == EAST)
+		p.x = Dx(or) - Dx(r);
+	if((sticky&(NORTH|SOUTH)) == SOUTH)
+		p.y = Dy(or) - Dy(r);
+
+	return rectaddpt(r, p);
 }
 
 static void
-update_client_name(Client *c) {
-	XTextProperty name;
-	XClassHint ch;
-	int n;
-	char **list = nil;
-
-	name.nitems = 0;
-	c->name[0] = 0;
-	XGetTextProperty(blz.dpy, c->win, &name, atom[NetWMName]);
-	if(!name.nitems)
-		XGetWMName(blz.dpy, c->win, &name);
-	if(!name.nitems)
-		return;
-	if(name.encoding == XA_STRING)
-		strncpy(c->name, (char *)name.value, sizeof(c->name));
-	else {
-		if(XmbTextPropertyToTextList(blz.dpy, &name, &list, &n) >= Success
-				&& n > 0 && *list)
-		{
-			strncpy(c->name, *list, sizeof(c->name));
-			XFreeStringList(list);
-		}
-	}
-	XFree(name.value);
-	if(XGetClassHint(blz.dpy, c->win, &ch)) {
-		snprintf(c->props, sizeof(c->props),
-				"%s:%s:%s",
-				str_nil(ch.res_class),
-				str_nil(ch.res_name),
-				c->name);
-		if(ch.res_class)
-			XFree(ch.res_class);
-		if(ch.res_name)
-			XFree(ch.res_name);
-	}
-}
-
-void
-update_client_grab(Client *c) {
-	Frame *f;
-	f = c->sel;
-	if((f->client != selclient())
-	|| (f->area->floating && f != f->area->stack)) {
-		if(verbose)
-			fprintf(stderr, "update_client_grab(%p) AnyButton => %s\n", c, str_nil(c->name));
-		grab_button(c->framewin, AnyButton, AnyModifier);
-	}else {
-		if(verbose)
-			fprintf(stderr, "update_client_grab(%p) def.mod => %s\n", c, str_nil(c->name));
-		XUngrabButton(blz.dpy, AnyButton, AnyModifier, c->framewin);
-		grab_button(c->framewin, Button1, def.mod);
-		grab_button(c->framewin, Button3, def.mod);
-	}
-}
-
-void
 set_client_state(Client * c, int state) {
 	long data[] = { state, None };
-	XChangeProperty(
-		/* display */	blz.dpy,
-		/* parent */	c->win,
-		/* property */	atom[WMState],
-		/* type */	atom[WMState],
-		/* format */	32,
-		/* mode */	PropModeReplace,
-		/* data */	(uchar *) data,
-		/* npositions */2
-		);
+	changeprop(&c->w, "WM_STATE", "WM_STATE", data, nelem(data));
 }
 
 void
 map_client(Client *c) {
-	if(!c->mapped) {
-		XSelectInput(blz.dpy, c->win, ClientMask & ~StructureNotifyMask);
-		XMapWindow(blz.dpy, c->win);
-		XSelectInput(blz.dpy, c->win, ClientMask);
+	if(!c->w.mapped) {
+		mapwin(&c->w);
 		set_client_state(c, NormalState);
-		c->mapped = 1;
 	}
 }
 
 void
 unmap_client(Client *c, int state) {
-	if(c->mapped) {
-		c->unmapped++;
-		XSelectInput(blz.dpy, c->win, ClientMask & ~StructureNotifyMask);
-		XUnmapWindow(blz.dpy, c->win);
-		XSelectInput(blz.dpy, c->win, ClientMask);
+	if(c->w.mapped) {
+		unmapwin(&c->w);
 		set_client_state(c, state);
-		c->mapped = 0;
 	}
 }
 
-void
+int
 map_frame(Client *c) {
-	if(!c->frame_mapped) {
-		XMapWindow(blz.dpy, c->framewin);
-		c->frame_mapped = True;
-	}
+	return mapwin(c->framewin);
 }
 
-void
+int
 unmap_frame(Client *c) {
-	if(c->frame_mapped) {
-		XUnmapWindow(blz.dpy, c->framewin);
-		c->frame_mapped = False;
-	}
-}
-
-void
-reparent_client(Client *c, Window w, int x, int y) {
-	XSelectInput(blz.dpy, c->win, ClientMask & ~StructureNotifyMask);
-	XReparentWindow(blz.dpy, c->win, w, x, y);
-	XSelectInput(blz.dpy, c->win, ClientMask);
-}
-
-void
-set_cursor(Client *c, Cursor cur) {
-	XSetWindowAttributes wa;
-
-	if(c->cursor != cur) {
-		c->cursor = cur;
-		wa.cursor = cur;
-		XChangeWindowAttributes(blz.dpy, c->framewin, CWCursor, &wa);
-	}
-}
-
-void
-configure_client(Client *c) {
-	XConfigureEvent e;
-	Frame *f;
-
-	f = c->sel;
-	if(!f)
-		return;
-
-	e.type = ConfigureNotify;
-	e.event = c->win;
-	e.window = c->win;
-	e.x = f->crect.x + f->rect.x - c->border;
-	e.y = f->crect.y + f->rect.y - c->border;
-	e.width = f->crect.width;
-	e.height = f->crect.height;
-	e.border_width = c->border;
-	e.above = None;
-	e.override_redirect = False;
-	XSendEvent(blz.dpy, c->win, False,
-			StructureNotifyMask, (XEvent *) & e);
-	XSync(blz.dpy, False);
-}
-
-static void
-send_client_message(Window w, Atom a, long value) {
-	XEvent e;
-
-	e.type = ClientMessage;
-	e.xclient.window = w;
-	e.xclient.message_type = a;
-	e.xclient.format = 32;
-	e.xclient.data.l[0] = value;
-	e.xclient.data.l[1] = CurrentTime;
-	XSendEvent(blz.dpy, w, False, NoEventMask, &e);
-	XSync(blz.dpy, False);
-}
-
-void
-kill_client(Client * c) {
-	if(c->proto & WM_PROTOCOL_DELWIN)
-		send_client_message(c->win, atom[WMProtocols], atom[WMDelete]);
-	else
-		XKillClient(blz.dpy, c->win);
-}
-
-static void
-set_urgent(Client *c, Bool urgent, Bool write) {
-	XWMHints *wmh;
-	char *cwrite, *cnot;
-	Frame *f, *ff;
-	Area *a;
-
-	cwrite = "Client";
-	if(write)
-		cwrite = "Manager";
-	cnot = "Not";
-	if(urgent)
-		cnot = "";
-
-	if(urgent != c->urgent) {
-		write_event("%sUrgent 0x%x %s\n", cnot, c->win, cwrite);
-		c->urgent = urgent;
-		if(c->sel) {
-			if(c->sel->view == screen->sel)
-				draw_frame(c->sel);
-			if(!urgent || c->sel->view != screen->sel)
-				for(f=c->frame; f; f=f->cnext) {
-					for(a=f->view->area; a; a=a->next)
-						for(ff=a->frame; ff; ff=ff->anext)
-							if(ff->client->urgent) break;
-					if(!ff)
-						write_event("%sUrgentTag %s %s\n", cnot, cwrite, f->view->name);
-				}
-		}
-	}
-
-	if(write) {
-		wmh = XGetWMHints(blz.dpy, c->win);
-		if(wmh) {
-			if(urgent)
-				wmh->flags |= XUrgencyHint;
-			else
-				wmh->flags &= ~XUrgencyHint;
-			XSetWMHints(blz.dpy, c->win, wmh);
-			XFree(wmh);
-		}
-	}
-}
-
-void
-prop_client(Client *c, Atom a) {
-	XWMHints *wmh;
-	long msize;
-
-	if(a ==  atom[WMProtocols])
-		c->proto = win_proto(c->win);
-	else if(a== atom[NetWMName]) {
-wmname:
-		update_client_name(c);
-		if(c->frame)
-			draw_frame(c->sel);
-	}else switch (a) {
-	case XA_WM_TRANSIENT_FOR:
-		XGetTransientForHint(blz.dpy, c->win, &c->trans);
-		break;
-	case XA_WM_NORMAL_HINTS:
-		if(!XGetWMNormalHints(blz.dpy, c->win, &c->size, &msize) || !c->size.flags)
-			c->size.flags = PSize;
-		c->fixedsize = False;
-		if((c->size.flags & PMinSize) && (c->size.flags & PMaxSize)
-		&&(c->size.min_width == c->size.max_width)
-		&&(c->size.min_height == c->size.max_height))
-				c->fixedsize = True;
-		break;
-	case XA_WM_HINTS:
-		wmh = XGetWMHints(blz.dpy, c->win);
-		if(wmh) {
-			set_urgent(c, (wmh->flags & XUrgencyHint) != 0, False);
-			XFree(wmh);
-		}
-		break;
-	case XA_WM_NAME:
-		goto wmname;
-	}
-}
-
-void
-gravitate_client(Client *c, Bool invert) {
-	int dx, dy;
-	int gravity;
-
-	gravity = NorthWestGravity;
-	if(c->size.flags & PWinGravity) {
-		gravity = c->size.win_gravity;
-	}
-
-	dy = 0;
-	switch (gravity) {
-	case StaticGravity:
-	case NorthWestGravity:
-	case NorthGravity:
-	case NorthEastGravity:
-		dy = labelh(&def.font);
-		break;
-	case EastGravity:
-	case CenterGravity:
-	case WestGravity:
-		dy = -(c->rect.height / 2) + labelh(&def.font);
-		break;
-	case SouthEastGravity:
-	case SouthGravity:
-	case SouthWestGravity:
-		dy = -c->rect.height;
-		break;
-	default:
-		break;
-	}
-
-	dx = 0;
-	switch (gravity) {
-	case StaticGravity:
-	case NorthWestGravity:
-	case WestGravity:
-	case SouthWestGravity:
-		dx = def.border;
-		break;
-	case NorthGravity:
-	case CenterGravity:
-	case SouthGravity:
-		dx = -(c->rect.width / 2) + def.border;
-		break;
-	case NorthEastGravity:
-	case EastGravity:
-	case SouthEastGravity:
-		dx = -(c->rect.width + def.border);
-		break;
-	default:
-		break;
-	}
-
-	if(invert) {
-		dx = -dx;
-		dy = -dy;
-	}
-	c->rect.x += dx;
-	c->rect.y += dy;
-}
-
-void
-apply_sizehints(Client *c, XRectangle *r, Bool floating, Bool frame, BlitzAlign sticky) {
-	XSizeHints *s;
-	XRectangle orig;
-	uint bw, bh;
-	
-	s = &c->size;
-	orig = *r;
-	if(frame)
-		frame2client(c->sel, r);
-	bw = 0;
-	bh = 0;
-
-	if(s->flags & PMinSize) {
-		bw = s->min_width;
-		bh = s->min_height;
-		if(floating) {
-			if(r->width < s->min_width)
-				r->width = s->min_width;
-			if(r->height < s->min_height)
-				r->height = s->min_height;
-		}
-	}
-	if(s->flags & PMaxSize) {
-		if(r->width > s->max_width)
-			r->width = s->max_width;
-		if(r->height > s->max_height)
-			r->height = s->max_height;
-	}
-
-	if(s->flags & PBaseSize) {
-		bw = s->base_width;
-		bh = s->base_height;
-	}
-
-	if(s->flags & PResizeInc) {
-		if(s->width_inc > 0) 
-			r->width -= (r->width - bw) % s->width_inc;
-		if(s->height_inc > 0)
-			r->height -= (r->height - bh) % s->height_inc;
-	}
-
-	if((s->flags & (PBaseSize|PMinSize)) == PMinSize) {
-		bw = 0;
-		bh = 0;
-	}
-
-	if(s->flags & PAspect) {
-		double min, max, initial;
-
-		min = (double)s->min_aspect.x / s->min_aspect.y;
-		max = (double)s->max_aspect.x / s->max_aspect.y;
-		initial = (double)(r->width - bw) / (r->height - bh);
-		if(initial < min)
-			r->height = bh + (r->width - bw) / min;
-		if(initial > max)
-			r->width = bw + (r->height - bh) * max;
-	}
-
-	if(frame)
-		client2frame(c->sel, r);
-
-	if(!(s->flags & PMinSize) || !floating) {
-		if(r->width > orig.width)
-			r->width = orig.width;
-		if(r->height > orig.height)
-			r->height = orig.height;
-	}
-	
-	if((sticky & (EAST|WEST)) == EAST)
-		r->x = r_east(&orig) - r->width;
-	if((sticky & (NORTH|SOUTH)) == SOUTH)
-		r->y = r_south(&orig) - r->height;
+	return unmapwin(c->framewin);
 }
 
 void
@@ -598,28 +317,29 @@ void
 focus_client(Client *c) {
 	flushevents(FocusChangeMask, True);
 
-	if(verbose)
-		fprintf(stderr, "focus_client(%p) => %s\n", c, (c ? c->name : nil));
-	if(screen->focus != c) {
-		if(c && verbose)
-			fprintf(stderr, "\t%s => %s\n", (screen->focus ? screen->focus->name : "<nil>"),
-					(c ? c->name : "<nil>"));
-		if(c) {
-			XSetInputFocus(blz.dpy, c->win, RevertToParent, CurrentTime);
-			update_client_grab(c);
-		}else
-			XSetInputFocus(blz.dpy, screen->barwin, RevertToParent, CurrentTime);
-	}
+	Debug fprintf(stderr, "focus_client(%p[%x]) => %s\n", c,  clientwin(c), clientname(c));
 
-	flushevents(FocusChangeMask, True);
+	if((c == nil || !c->noinput) && screen->focus != c) {
+		Debug fprintf(stderr, "\t%s => %s\n", clientname(screen->focus), clientname(c));
+
+		if(c)
+			setfocus(&c->w, RevertToParent);
+		else
+			setfocus(screen->barwin, RevertToParent);
+
+		write_event("ClientFocus 0x%x\n", clientwin(c));
+
+		XSync(display, False);
+		flushevents(FocusChangeMask, True);
+	}
 }
 
 void
-resize_client(Client *c, XRectangle *r) {
+resize_client(Client *c, Rectangle *r) {
 	Frame *f;
 
 	f = c->sel;
-	resize_frame(f, r);
+	resize_frame(f, *r);
 
 	if(f->area->view != screen->sel) {
 		unmap_client(c, IconicState);
@@ -627,44 +347,419 @@ resize_client(Client *c, XRectangle *r) {
 		return;
 	}
 
-	c->rect = f->crect;
-	c->rect.x += f->rect.x;
-	c->rect.y += f->rect.y;
-	if((f->area->mode == Colmax)
-	&& (f->area->sel != f)) {
+	c->r = rectaddpt(f->crect, f->r.min);
+
+	if((f->area->mode == Colmax) && (f->area->sel != f)) {
 		unmap_frame(c);
 		unmap_client(c, IconicState);
 	}else if(f->collapsed) {
-		XMoveResizeWindow(blz.dpy, c->framewin,
-				f->rect.x, f->rect.y,
-				f->rect.width, f->rect.height);
+		reshapewin(c->framewin, f->r);
 		map_frame(c);
 		unmap_client(c, IconicState);
 	}else {
-		XMoveResizeWindow(blz.dpy, c->win,
-				f->crect.x, f->crect.y,
-				f->crect.width, f->crect.height);
 		map_client(c);
-		XMoveResizeWindow(blz.dpy, c->framewin,
-				f->rect.x, f->rect.y,
-				f->rect.width, f->rect.height);
+		reshapewin(c->framewin, f->r);
+		reshapewin(&c->w, f->crect);
 		map_frame(c);
 		configure_client(c);
 	}
-	
+
 	flushevents(FocusChangeMask|ExposureMask, True);
 }
 
 void
+set_cursor(Client *c, Cursor cur) {
+	WinAttr wa;
+
+	if(c->cursor != cur) {
+		c->cursor = cur;
+		wa.cursor = cur;
+		setwinattr(c->framewin, &wa, CWCursor);
+	}
+}
+
+void
+configure_client(Client *c) {
+	XConfigureEvent e;
+	Rectangle r;
+	Frame *f;
+
+	f = c->sel;
+	if(!f)
+		return;
+
+	r = rectaddpt(f->crect, f->r.min);
+	r = insetrect(r, -c->border);
+
+	e.type = ConfigureNotify;
+	e.event = c->w.w;
+	e.window = c->w.w;
+	e.above = None;
+	e.override_redirect = False;
+
+	e.x = r.min.x;
+	e.y = r.min.y;
+	e.width = Dx(r);
+	e.height = Dy(r);
+	e.border_width = c->border;
+
+	XSendEvent(display, c->w.w,
+		/*propegate*/ False,
+		StructureNotifyMask,
+		(XEvent*)&e);
+}
+
+static void
+send_client_message(Client *c, char *name, char *value) {
+	XEvent e;
+
+	e.type = ClientMessage;
+	e.xclient.window = c->w.w;
+	e.xclient.message_type = xatom(name);
+	e.xclient.format = 32;
+	e.xclient.data.l[0] = xatom(value);
+	e.xclient.data.l[1] = CurrentTime;
+	XSendEvent(display, c->w.w, False, NoEventMask, &e);
+	XSync(display, False);
+}
+
+void
+kill_client(Client * c) {
+	if(c->proto & WM_PROTOCOL_DELWIN)
+		send_client_message(c, "WM_PROTOCOLS", "WM_DELETE_WINDOW");
+	else
+		XKillClient(display, c->w.w);
+}
+
+void
+fullscreen(Client *c, Bool fullscreen) {
+	Frame *f;
+
+	c->fullscreen = fullscreen;
+	if((f = c->sel)) {
+		if(fullscreen) {
+			if(!f->area->floating)
+				send_to_area(f->view->area, f);
+			focus_client(c);
+		}
+		if(f->view == screen->sel)
+			focus_view(screen, f->view);
+	}
+}
+
+void
+set_urgent(Client *c, Bool urgent, Bool write) {
+	XWMHints *wmh;
+	char *cwrite, *cnot;
+	Frame *f, *ff;
+	Area *a;
+
+	cwrite = (write ? "Manager" : "Client");
+	cnot = (urgent ? "" : "Not");
+
+	if(urgent != c->urgent) {
+		write_event("%sUrgent 0x%x %s\n", cnot, clientwin(c), cwrite);
+		c->urgent = urgent;
+		if(c->sel) {
+			if(c->sel->view == screen->sel)
+				draw_frame(c->sel);
+			for(f=c->frame; f; f=f->cnext) {
+				if(!urgent)
+					for(a=f->view->area; a; a=a->next)
+						for(ff=a->frame; ff; ff=ff->anext)
+							if(ff->client->urgent) break;
+				if(urgent || ff == nil)
+					write_event("%sUrgentTag %s %s\n", cnot, cwrite, f->view->name);
+			}
+		}
+	}
+
+	if(write) {
+		wmh = XGetWMHints(display, c->w.w);
+		if(wmh == nil)
+			wmh = emallocz(sizeof *wmh);
+
+		wmh->flags &= ~XUrgencyHint;
+		if(urgent)
+			wmh->flags |= XUrgencyHint;
+		XSetWMHints(display, c->w.w, wmh);
+		XFree(wmh);
+	}
+}
+
+/* X11 stuff */
+void
+update_class(Client *c) {
+	char *str;
+
+	str = utfrune(c->props, L':');
+	if(str)
+		str = utfrune(str+1, L':');
+	if(str == nil) {
+		strcpy(c->props, "::");
+		str = c->props + 1;
+	}
+	utfecpy(str+1, c->props+sizeof(c->props), c->name);
+}
+
+static void
+update_client_name(Client *c) {
+	char *str;
+
+	c->name[0] = '\0';
+
+	str = gettextproperty(&c->w, "_NET_WM_NAME");
+	if(str == nil)
+		str = gettextproperty(&c->w, "WM_NAME");
+	if(str)
+		utfecpy(c->name, c->name+sizeof(c->name), str);
+	free(str);
+
+	update_class(c);
+	if(c->sel)
+		draw_frame(c->sel);
+}
+
+static void
+updatemwm(Client *c) {
+	enum {
+		All =		0x1,
+		Border =	0x2,
+		Title =	0x8,
+	};
+	Rectangle r;
+	ulong *ret, decor;
+	Atom real;
+	int n;
+
+	n = getproperty(&c->w, "_MOTIF_WM_HINTS", "_MOTIF_WM_HINTS", &real, 
+			2L, (uchar**)&ret, 1L);
+
+	if(n == 0) {
+		c->borderless = 0;
+		c->titleless = 0;
+	}else {
+		decor = *ret;
+		free(ret);
+
+		if(c->sel)
+			r = frame2client(c->sel, c->sel->r);
+
+		if(decor&All)
+			decor ^= ~0;
+		c->borderless = ((decor&Border)==0);
+		c->titleless = ((decor&Title)==0);
+
+		if(c->sel) {
+			r = client2frame(c->sel, c->sel->r);
+			resize_client(c, &r);
+			draw_frame(c->sel);
+		}
+	}
+}
+
+void
+prop_client(Client *c, Atom a) {
+	XWMHints *wmh;
+	char **class;
+	int n;
+
+	if(a == xatom("WM_PROTOCOLS")) {
+		c->proto = winprotocols(&c->w);
+	}
+	else if(a == xatom("_NET_WM_NAME")) {
+		goto wmname;
+	}
+	else if(a == xatom("_MOTIF_WM_HINTS")) {
+		updatemwm(c);
+	}
+	else switch (a) {
+	case XA_WM_TRANSIENT_FOR:
+		XGetTransientForHint(display, c->w.w, &c->trans);
+		break;
+	case XA_WM_NORMAL_HINTS:
+		sethints(&c->w);
+		if(c->w.hints)
+			c->fixedsize = eqpt(c->w.hints->min, c->w.hints->max);
+		break;
+	case XA_WM_HINTS:
+		wmh = XGetWMHints(display, c->w.w);
+		if(wmh) {
+			c->noinput = !((wmh->flags&InputFocus) && wmh->input);
+			set_urgent(c, (wmh->flags & XUrgencyHint) != 0, False);
+			XFree(wmh);
+		}
+		break;
+	case XA_WM_CLASS:
+		n = gettextlistproperty(&c->w, "WM_CLASS", &class);
+		snprintf(c->props, sizeof(c->props), "%s:%s:",
+				(n > 0 ? class[0] : "<nil>"),
+				(n > 1 ? class[1] : "<nil>"));
+		freestringlist(class);
+		update_class(c);
+		break;
+	case XA_WM_NAME:
+wmname:
+		update_client_name(c);
+		break;
+	}
+}
+
+/* Handlers */
+static void
+configreq_event(Window *w, XConfigureRequestEvent *e) {
+	Rectangle r;
+	Frame *f;
+	Client *c;
+
+	c = w->aux;
+	f = c->sel;
+
+	r = gravclient(c, ZR);
+	r.max = subpt(r.max, r.min);
+
+	if(e->value_mask&CWX)
+		r.min.x = e->x;
+	if(e->value_mask&CWY)
+		r.min.y = e->y;
+	if(e->value_mask&CWWidth)
+		r.max.x = e->width;
+	if(e->value_mask&CWHeight)
+		r.max.y = e->height;
+
+	if(e->value_mask&CWBorderWidth)
+		c->border = e->border_width;
+
+	r.max = addpt(r.min, r.max);
+	r = gravclient(c, r);
+
+	if((Dx(r) == Dx(screen->r)) && (Dy(r) == Dy(screen->r)))
+		fullscreen(c, True);
+
+	if(c->sel->area->floating)
+		resize_client(c, &r);
+	else {
+		c->sel->revert = r;
+		configure_client(c);
+	}
+}
+
+static void
+destroy_event(Window *w, XDestroyWindowEvent *e) {
+	Debug fprintf(stderr, "client.c:destroy_event(%x)\n", (uint)w->w);
+	destroy_client(w->aux);
+}
+
+static void
+enter_event(Window *w, XCrossingEvent *e) {
+	Client *c;
+	
+	c = w->aux;
+	if(e->detail != NotifyInferior) {
+		if(screen->focus != c) {
+			Debug fprintf(stderr, "enter_notify(c) => %s\n", c->name);
+			focus(c, False);
+		}
+		set_cursor(c, cursor[CurNormal]);
+	}else Debug
+		fprintf(stderr, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
+}
+
+static void
+focusin_event(Window *w, XFocusChangeEvent *e) {
+	Client *c, *old;
+
+	c = w->aux;
+
+	print_focus(c, c->name);
+
+	if(e->mode == NotifyGrab)
+		screen->hasgrab = c;
+
+	old = screen->focus;
+	screen->focus = c;
+	if(c != old) {
+		if(c->sel)
+			draw_frame(c->sel);
+	}
+}
+
+static void
+focusout_event(Window *w, XFocusChangeEvent *e) {
+	Client *c;
+
+	c = w->aux;
+	if((e->mode == NotifyWhileGrabbed) && (screen->hasgrab != &c_root)) {
+		if((screen->focus) && (screen->hasgrab != screen->focus))
+			screen->hasgrab = screen->focus;
+		if(screen->hasgrab == c)
+			return;
+	}else if(screen->focus == c) {
+		print_focus(&c_magic, "<magic>");
+		screen->focus = &c_magic;
+		if(c->sel)
+			draw_frame(c->sel);
+	}
+}
+
+static void
+unmap_event(Window *w, XUnmapEvent *e) {
+	Client *c;
+	
+	c = w->aux;
+	if(!e->send_event)
+		c->unmapped--;
+	destroy_client(c);
+}
+
+static void
+map_event(Window *w, XMapEvent *e) {
+	Client *c;
+	
+	c = w->aux;
+	if(c == selclient())
+		focus_client(c);
+}
+
+static void
+property_event(Window *w, XPropertyEvent *e) {
+	Client *c;
+
+	if(e->state == PropertyDelete)
+		return;
+
+	c = w->aux;
+	prop_client(c, e->atom);
+}
+
+static Handlers handlers = {
+	.configreq = configreq_event,
+	.destroy = destroy_event,
+	.enter = enter_event,
+	.focusin = focusin_event,
+	.focusout = focusout_event,
+	.map = map_event,
+	.unmap = unmap_event,
+	.property = property_event,
+};
+
+/* Other */
+#if 0 /* Not used at the moment */
+void
 newcol_client(Client *c, char *arg) {
-	Frame *f = c->sel;
-	Area *to, *a = f->area;
-	View *v = a->view;
+	Frame *f;
+	Area *to, *a;
+	View *v;
+
+	f = c->sel;
+	a = f->area;
+	v = f->view;
 
 	if(a->floating)
 		return;
-	if(!f->anext && f == a->frame)
+	if((f->anext == nil) && (f->aprev == nil))
 		return;
+
 	if(!strncmp(arg, "prev", 5)) {
 		for(to=v->area; to; to=to->next)
 			if(to->next == a) break;
@@ -679,94 +774,7 @@ newcol_client(Client *c, char *arg) {
 		return;
 	flushevents(EnterWindowMask, False);
 }
-
-char *
-send_client(Frame *f, char *arg, Bool swap) {
-	Area *to, *a;
-	Client *c;
-	Frame *tf;
-	View *v;
-	Bool before;
-	int j;
-
-	a = f->area;
-	v = a->view;
-	c = f->client;
-	if(!strncmp(arg, "toggle", 7)) {
-		if(!a->floating)
-			to = v->area;
-		else if(c->revert && !c->revert->floating)
-			to = c->revert;
-		else
-			to = v->area->next;
-		goto send_area;
-	}else if(!a->floating) {
-		if(!strncmp(arg, "left", 5)) {
-			if(a->floating)
-				return Ebadvalue;
-			for(to=v->area->next; to; to=to->next)
-				if(a == to->next) break;
-			if(!to && !swap && (f->anext || f != a->frame))
-				to=new_column(v, v->area, 0);
-			goto send_area;
-		}
-		else if(!strncmp(arg, "right", 5)) {
-			if(a->floating)
-				return Ebadvalue;
-			to = a->next;
-			if(!to && !swap && (f->anext || f != a->frame))
-				to = new_column(v, a, 0);
-			goto send_area;
-		}
-		else if(!strncmp(arg, "up", 3)) {
-			for(tf=a->frame; tf; tf=tf->anext)
-				if(tf->anext == f) break;
-			before = True;
-			goto send_frame;
-		}
-		else if(!strncmp(arg, "down", 5)) {
-			tf = f->anext;
-			before = False;
-			goto send_frame;
-		}
-		else {
-			if(sscanf(arg, "%d", &j) != 1)
-				return Ebadvalue;
-			for(to=v->area; to; to=to->next)
-				if(!--j) break;
-			goto send_area;
-		}
-	}
-	return Ebadvalue;
-
-send_frame:
-	if(!tf)
-		return Ebadvalue;
-	if(!swap) {
-		remove_frame(f);
-		insert_frame(tf, f, before);
-	}else
-		swap_frames(f, tf);
-	arrange_column(a, False);
-
-	flushevents(EnterWindowMask, False);
-	focus_frame(f, True);
-	update_views();
-	return nil;
-
-send_area:
-	if(!to)
-		return Ebadvalue;
-	if(!swap)
-		send_to_area(to, f);
-	else if(to->sel)
-		swap_frames(f, to->sel);
-
-	flushevents(EnterWindowMask, False);
-	focus_frame(f, True);
-	update_views();
-	return nil;
-}
+#endif
 
 void
 update_client_views(Client *c, char **tags) {
@@ -806,9 +814,20 @@ update_client_views(Client *c, char **tags) {
 }
 
 static int
-compare_tags(const void *a, const void *b) {
+bsstrcmp(const void *a, const void *b) {
+	return strcmp((char*)a, (char*)b);
+}
+
+static int
+strpcmp(const void *a, const void *b) {
 	return strcmp(*(char **)a, *(char **)b);
 }
+
+static char *badtags[] = {
+	".",
+	"..",
+	"sel",
+};
 
 void
 apply_tags(Client *c, const char *tags) {
@@ -818,15 +837,18 @@ apply_tags(Client *c, const char *tags) {
 	char *toks[32], *cur;
 
 	buf[0] = 0;
+
 	for(n = 0; tags[n]; n++)
-		if(tags[n] != ' ' && tags[n] != '\t') break;
+		if(!isspace(tags[n]))
+			break;
+
 	if(tags[n] == '+' || tags[n] == '-')
 		strncpy(buf, c->tags, sizeof(c->tags));
+
 	strlcat(buf, &tags[n], sizeof(buf));
 	trim(buf, " \t/");
 
 	n = 0;
-	j = 0;
 	add = True;
 	if(buf[0] == '+')
 		n++;
@@ -834,24 +856,22 @@ apply_tags(Client *c, const char *tags) {
 		n++;
 		add = False;
 	}
+
+	j = 0;
 	while(buf[n] && n < sizeof(buf) && j < 32) { 
 		for(i = n; i < sizeof(buf) - 1; i++)
-			if(buf[i] == '+'
-			|| buf[i] == '-'
-			|| buf[i] == '\0')
+			if(buf[i] == '+' || buf[i] == '-' || buf[i] == '\0')
 				break;
 		last = buf[i];
 		buf[i] = '\0';
 
 		cur = nil;
-		if(!strncmp(&buf[n], "~", 2))
+		if(!strcmp(buf+n, "~"))
 			c->floating = add;
-		else if(!strncmp(&buf[n], "!", 2))
-			cur = view ? screen->sel->name : "nil";
-		else if(strncmp(&buf[n], "sel", 4)
-		     && strncmp(&buf[n], ".", 2)
-		     && strncmp(&buf[n], "..", 3))
-			cur = &buf[n];
+		else if(!strcmp(buf+n, "!"))
+			cur = screen->sel->name;
+		else if(!Mbsearch(buf+n, badtags, bsstrcmp))
+			cur = buf+n;
 
 		n = i + 1;
 		if(cur) {
@@ -878,14 +898,15 @@ apply_tags(Client *c, const char *tags) {
 		}
 	}
 
-	c->tags[0] = '\0';
 	if(!j)
 		return;
-	qsort(toks, j, sizeof(char *), compare_tags);
 
+	qsort(toks, j, sizeof(char *), strpcmp);
+
+	c->tags[0] = '\0';
 	for(i=0, n=0; i < j; i++)
-		if(!n || strcmp(toks[i], toks[n-1])) {
-			if(i)
+		if(n == 0 || strcmp(toks[i], toks[n-1])) {
+			if(i > 0)
 				strlcat(c->tags, "+", sizeof(c->tags));
 			strlcat(c->tags, toks[i], sizeof(c->tags));
 			toks[n++] = toks[i];
@@ -893,37 +914,25 @@ apply_tags(Client *c, const char *tags) {
 	toks[n] = nil;
 
 	update_client_views(c, toks);
-	XChangeProperty(blz.dpy, c->win, atom[TagsAtom], XA_STRING, 8,
-			PropModeReplace, (uchar *)c->tags, strlen(c->tags));
+
+	changeprop(&c->w, "_WIN_TAGS", "UTF8_STRING", c->tags, strlen(c->tags));
 }
 
 void
 apply_rules(Client *c) {
 	Rule *r;
 	regmatch_t rm;
-	
+
 	if(strlen(c->tags))
 		return;
+
 	if(def.tagrules.string) 	
 		for(r=def.tagrules.rule; r; r=r->next)
 			if(!regexec(&r->regex, c->props, 1, &rm, 0)) {
 				apply_tags(c, r->value);
-				if(strlen(c->tags) && strcmp(c->tags, "nil"))
+				if(strcmp(c->tags, "nil"))
 					break;
 			}
-	if(!strlen(c->tags))
+	if(c->tags[0] == '\0')
 		apply_tags(c, "nil");
-}
-
-char *
-message_client(Client *c, char *message) {
-	if(!strncmp(message, "kill", 5))
-		kill_client(c);
-	else if(!strncmp(message, "Urgent", 7))
-		set_urgent(c, True, True);
-	else if(!strncmp(message, "NotUrgent", 10))
-		set_urgent(c, False, True);
-	else
-		return Ebadcmd;
-	return nil;
 }

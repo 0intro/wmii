@@ -5,26 +5,30 @@ include ${ROOT}/mk/wmii.mk
 main.c: ${ROOT}/mk/wmii.mk
 
 TARG =	wmii
-HFILES=	dat.h fns.h
+HFILES=	dat.h fns.h utf.h x11.h
 
 LIB =	${LIBIXP}
-EXLDFLAGS = -lm ${LIBX11} -lXext
-EXCFLAGS = ${INCX11}
+LDFLAGS += -lm ${LIBX11} -lXext ${LIBICONV}
+CFLAGS += ${INCX11} ${INCICONV} -DVERSION=\"${VERSION}\"
 OBJ =	area	\
 	bar	\
 	client	\
 	column	\
-	draw	\
 	event	\
 	frame	\
-	fs	\
+	fs		\
 	geom	\
-	key	\
-	main	\
+	key		\
+	main		\
+	map		\
+	message	\
 	mouse	\
-	rule	\
+	rule		\
 	printevent\
-	view	\
+	utf		\
+	view		\
+	x11		\
 	../util
 
 include ${ROOT}/mk/one.mk
+

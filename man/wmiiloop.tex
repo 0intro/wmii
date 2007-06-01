@@ -1,0 +1,42 @@
+\begin{Name}{1}{wmiiloop}{Kris Maglione}{}{wmiir}
+	\Prog{wmiiloop}-VERSION
+\end{Name}
+
+\section{Synopsis}
+\Prog{eval} "\$(\Prog{wmiiloop} <\File{events})"
+
+\section{Description}
+
+\Prog{wmiiloop} is an awk and sh script which preprocesses \Cmd{sh}{1} syntax
+to simplify writing a wmii event loop.
+
+\Prog{wmiiloop} associates lines begining with \emph{Event}, \emph{Action}, or
+\emph{Key} (henceforth known as \textbf{\$keyword}), followed by arbitrary
+text (henceforth known as \textbf{\$args}), with functions which call any
+indented lines which follow.  In the function names, all non-alphanumeric
+characters in \textbf{\$args} are replaced with underscores (\_). The
+functions are named \textbf{\$keyword}'_'\textbf{\$args}.
+
+Any variables in the unintented lines are interpolated by the shell.
+
+Additionally, each declaration's \textbf{\$args} are assigned to a variable
+named \textbf{\$keyword}'s'. In this case, no transliteration occurs. For
+instance, the following declaration:
+
+\begin{verbatim}
+Key $MODKEY-j
+	echo Got $@
+\end{verbatim}
+yields (assuming \emph{\$MODKEY} is set to \emph{Mod1}):
+
+\begin{verbatim}
+Keys=" $Keys Mod1-j"
+Mod1_j() {
+	echo Got $@
+}
+\end{verbatim}
+
+\section{SEE ALSO}
+\Cmd{wmii}{1}, \Cmd{wmii}{1}. \Cmd{wmiir}{1},
+\File{PREFX/etc/wmiirc}
+

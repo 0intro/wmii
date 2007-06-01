@@ -6,29 +6,19 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <X11/extensions/shape.h>
 #include <util.h>
 #include "dat.h"
 #include "fns.h"
 
-int divw, divh;
-GC divgc;
-GC maskgc;
+static Image *divimg, *divmask;
+static CTuple divc;
+static Handlers divhandler;
 
 char *modes[] = {
 	[Coldefault] =	"default",
 	[Colstack] =	"stack",
 	[Colmax] =	"max",
 };
-
-Divide *
-win2div(Window w) {
-	Divide *d;
-	
-	for(d = divs; d; d = d->next)
-		if(d->w == w) return d;
-	return nil;
-}
 
 int
 str2colmode(const char *str) {
@@ -40,61 +30,9 @@ str2colmode(const char *str) {
 	return -1;
 }
 
-static void
-draw_pmap(Pixmap pm, GC gc, Bool color) {
-	XPoint pt[4];
-
-	pt[0] = (XPoint){ 0, 0 };
-	pt[1] = (XPoint){ divw/2 - 1, divw/2 - 1 };
-	pt[2] = (XPoint){ divw/2, divw/2 - 1 };
-	pt[3] = (XPoint){ divw - 1, 0 };
-
-	if(color)
-		XSetForeground(blz.dpy, gc, def.normcolor.bg);
-	else {
-		XSetForeground(blz.dpy, gc, 0);
-		XFillRectangle(blz.dpy, pm, gc, 0, 0, divw, divh);
-		XSetForeground(blz.dpy, gc, 1);
-	}
-
-	XFillPolygon(blz.dpy, pm, gc, pt, nelem(pt), Convex, CoordModeOrigin);
-
-	if(color)
-		XSetForeground(blz.dpy, gc, def.normcolor.border);
-
-	XDrawLines(blz.dpy, pm, gc, pt, nelem(pt), CoordModeOrigin);
-	XDrawRectangle(blz.dpy, pm, gc, pt[1].x, pt[1].y, 1, screen->rect.height);
-}
-
-void
-update_dividers() {
-	if(divmap) {
-		XFreePixmap(blz.dpy, divmap);
-		XFreePixmap(blz.dpy, divmask);
-		XFreeGC(blz.dpy, divgc);
-		XFreeGC(blz.dpy, maskgc);
-	}
-
-	divw = 2 * (labelh(&def.font) / 3);
-	divw = max(divw, 10);
-	divh = screen->rect.height;
-
-	divmap = XCreatePixmap(blz.dpy, blz.root,
-				divw, divh,
-				DefaultDepth(blz.dpy, blz.screen));
-	divmask = XCreatePixmap(blz.dpy, blz.root,
-				divw, divh,
-				1);
-	divgc = XCreateGC(blz.dpy, divmap, 0, 0);
-	maskgc = XCreateGC(blz.dpy, divmask, 0, 0);
-
-	draw_pmap(divmap, divgc, True);
-	draw_pmap(divmask, maskgc, False);
-}
-
 static Divide*
-get_div(Divide **dp) {
-	XSetWindowAttributes wa;
+getdiv(Divide **dp) {
+	WinAttr wa;
 	Divide *d;
 
 	if(*dp)
@@ -103,100 +41,156 @@ get_div(Divide **dp) {
 	d = emallocz(sizeof *d);
 
 	wa.override_redirect = True;
-	wa.background_pixmap = ParentRelative;
 	wa.cursor = cursor[CurDHArrow];
 	wa.event_mask =
-		  SubstructureRedirectMask
-		| ExposureMask
+		  ExposureMask
 		| EnterWindowMask
-		| PointerMotionMask
 		| ButtonPressMask
 		| ButtonReleaseMask;
-	d->w = XCreateWindow(
-		/* display */	blz.dpy,
-		/* parent */	blz.root,
-		/* x, y */		0, 0,
-		/* w, h */		1, 1,
-		/* border */	0,
-		/* depth */	DefaultDepth(blz.dpy, blz.screen),
-		/* class */	CopyFromParent,
-		/* visual */	DefaultVisual(blz.dpy, blz.screen),
-		/* valuemask */	CWOverrideRedirect | CWEventMask | CWBackPixmap | CWCursor,
-		/* attributes */&wa
-		);
+	d->w = createwindow(&scr.root, Rect(0, 0, 1, 1), scr.depth, InputOutput, &wa,
+		  CWOverrideRedirect
+		| CWEventMask
+		| CWCursor);
+	d->w->aux = d;
+	sethandler(d->w, &divhandler);
 
 	*dp = d;
 	return d;
 }
 
 static void
-map_div(Divide *d) {
-	if(!d->mapped)
-		XMapWindow(blz.dpy, d->w);
-	d->mapped = 1;
+mapdiv(Divide *d) {
+	mapwin(d->w);
 }
 
 static void
-unmap_div(Divide *d) {
-	if(d->mapped)
-		XUnmapWindow(blz.dpy, d->w);
-	d->mapped = 0;
-}
-
-static void
-move_div(Divide *d, int x) {
-	d->x = x - divw/2;
-
-	XMoveResizeWindow(blz.dpy,
-			d->w,
-			d->x, 0,
-			divw, divh);
-	map_div(d);
+unmapdiv(Divide *d) {
+	unmapwin(d->w);
 }
 
 void
-update_divs() {
+setdiv(Divide *d, int x) {
+	Rectangle r;
+
+	d->x = x;
+	r = rectaddpt(divimg->r, Pt(x - Dx(divimg->r)/2, 0));
+	r.max.y = screen->brect.min.y;
+
+	reshapewin(d->w, r);
+	mapdiv(d);
+}
+
+static void
+drawimg(Image *img, ulong cbg, ulong cborder) {
+	Point pt[6];
+
+	pt[0] = Pt(0, 0);
+	pt[1] = Pt(Dx(img->r)/2 - 1, Dx(img->r)/2 - 1);
+
+	pt[2] = Pt(pt[1].x, Dy(img->r));
+	pt[3] = Pt(Dx(img->r)/2, pt[2].y);
+
+	pt[4] = Pt(pt[3].x, Dx(img->r)/2 - 1);
+	pt[5] = Pt(Dx(img->r) - 1, 0);
+
+	fillpoly(img, pt, nelem(pt), cbg);
+	drawpoly(img, pt, nelem(pt), CapNotLast, 1, cborder);
+}
+
+static void
+drawdiv(Divide *d) {
+	copyimage(d->w, divimg->r, divimg, ZP);
+	setshapemask(d->w, divmask, ZP);
+}
+
+static void
+update_imgs(void) {
+	Divide *d;
+	int w, h;
+
+	w = 2 * (labelh(def.font) / 3);
+	w = max(w, 10);
+	h = Dy(screen->r);
+
+	if(divimg) {
+		if(w == Dx(divimg->r) && h == Dy(divimg->r)
+		&& !memcmp(&divc, &def.normcolor, sizeof(divc)))
+			return;
+		freeimage(divimg);
+		freeimage(divmask);
+	}
+
+	divimg = allocimage(w, h, scr.depth);
+	divmask = allocimage(w, h, 1);
+	divc = def.normcolor;
+
+	fill(divmask, divmask->r, 0);
+	drawimg(divmask, 1, 1);
+	drawimg(divimg, divc.bg, divc.border);
+
+	for(d = divs; d && d->w->mapped; d = d->next)
+		drawdiv(d);
+}
+
+void
+update_divs(void) {
 	Divide **dp, *d;
 	Area *a;
 	View *v;
 
-	update_dividers();
-	
+	update_imgs();
+
 	v = screen->sel;
 	dp = &divs;
 	for(a = v->area->next; a; a = a->next) {
-		d = get_div(dp);
+		d = getdiv(dp);
 		dp = &d->next;
-		d->x = a->rect.x - divw/2;
-		move_div(d, a->rect.x);
+		setdiv(d, a->r.min.x);
+
 		if(!a->next) {
-			d = get_div(dp);
+			d = getdiv(dp);
 			dp = &d->next;
-			move_div(d, r_east(&a->rect));
+			setdiv(d, a->r.max.x);
 		}
 	}
 	for(d = *dp; d; d = d->next)
-		unmap_div(d);
+		unmapdiv(d);
 }
 
-void
-draw_div(Divide *d) {
-	XCopyArea(
-		blz.dpy,
-		divmap, d->w,
-		divgc,
-		/* x, y */	0, 0,
-		/* w, h */	divw, divh,
-		/* dest x, y */	0, 0
-		);
-	XShapeCombineMask (
-		/* dpy */	blz.dpy,
-		/* dst */	d->w,
-		/* type */	ShapeBounding,
-		/* off x, y */	0, 0,
-		/* src */	divmask,
-		/* op */	ShapeSet
-		);
+/* Div Handlers */
+static void
+bdown_event(Window *w, XButtonEvent *e) {
+	Divide *d;
+	
+	d = w->aux;
+	mouse_resizecol(d);
+}
+
+static void
+expose_event(Window *w, XExposeEvent *e) {
+	Divide *d;
+	
+	d = w->aux;
+	drawdiv(d);
+}
+
+static Handlers divhandler = {
+	.bdown = bdown_event,
+	.expose = expose_event,
+};
+
+Area *
+new_column(View *v, Area *pos, uint w) {
+	Area *a;
+
+	a = create_area(v, pos, w);
+	if(!a)
+		return nil;
+
+	arrange_view(v);
+	if(v == screen->sel)
+		focus_view(screen, v);
+	return a;
 }
 
 static void
@@ -210,37 +204,33 @@ scale_column(Area *a) {
 	if(!a->frame)
 		return;
 
-	/* This works by comparing heights based on a surplus of their
-	 * minimum size. We start by subtracting the minimum size, then
-	 * scale the surplus, and add back the minimum size later. This
-	 * is based on the size of the client, rather than the frame, so
-	 * increment gaps can be equalized later */
-	/* Frames that can't be accomodated are pushed to the floating layer */
-
-	minh = labelh(&def.font);
-	colh = labelh(&def.font);
-	uncolh = minh + frame_delta_h();
+	minh = labelh(def.font);
+	colh = labelh(def.font);
+	uncolh = minh + colh +1;
 
 	ncol = 0;
 	nuncol = 0;
 	dy = 0;
-	for(f=a->frame; f; f=f->anext)
+	for(f=a->frame; f; f=f->anext) {
+		resize_frame(f, f->r);
 		if(f->collapsed)
 			ncol++;
 		else
 			nuncol++;
+	}
 
-	surplus = a->rect.height;
-	surplus -= ncol * colh;
-	surplus -= nuncol * uncolh;
+	surplus = Dy(a->r) - (ncol * colh) - (nuncol * uncolh);
+
+	/* Collapse until there is room */
 	if(surplus < 0) {
-		i = ceil((float)(-surplus)/(uncolh - colh));
+		i = ceil((float)(-surplus) / (uncolh - colh));
 		if(i >= nuncol)
 			i = nuncol - 1;
 		nuncol -= i;
 		ncol += i;
 		surplus += i * (uncolh - colh);
 	}
+	/* Push to the floating layer until there is room */
 	if(surplus < 0) {
 		i = ceil((float)(-surplus)/colh);
 		if(i > ncol)
@@ -249,72 +239,81 @@ scale_column(Area *a) {
 		surplus += i * colh;
 	}
 
-	i = ncol - 1;
 	j = nuncol - 1;
-	for(f=a->frame; f; f=f->anext) {
-		if(f == a->sel)
-			j++;
-		if(!f->collapsed) {
-			if(j < 0 && f != a->sel)
-				f->collapsed = True;
-			else {
-				if(f->crect.height <= minh)
-					f->crect.height = 1;
-				else
-					f->crect.height -= minh;
-				dy += f->crect.height;
-			}
-			j--;
-		}
-	}
+	i = ncol - 1;
+	/* Decide  which to collapse, float */
 	for(fp=&a->frame; *fp;) {
 		f = *fp;
 		if(f == a->sel)
-			i++;
+			i++, j++;
 		if(f->collapsed) {
-			if(i < 0 && f != a->sel) {
+			if(i < 0 && (f != a->sel)) {
 				f->collapsed = False;
 				send_to_area(f->view->area, f);
 				continue;
 			}
 			i--;
+		}else {
+			if(j < 0 && (f != a->sel))
+				f->collapsed = True;
+			j--;
 		}
+		/* Doesn't change if we 'continue' */
 		fp=&f->anext;
 	}
 
-	i = nuncol;
+	surplus = 0;
 	for(f=a->frame; f; f=f->anext) {
-		f->rect.x = a->rect.x;
-		f->rect.width = a->rect.width;
-		if(!f->collapsed) {
-			i--;
-			f->rect.height = (float)f->crect.height / dy * surplus;
-			if(!i)
-				f->rect.height = surplus;
-			f->rect.height += minh + frame_delta_h();
-			apply_sizehints(f->client, &f->rect, False, True, NWEST);
+		f->r = rectsubpt(f->r, f->r.min);
+		f->crect = rectsubpt(f->crect, f->crect.min);
+		f->r.max.x = Dx(a->r);
 
-			dy -= f->crect.height;
-			surplus -= f->rect.height - frame_delta_h() - minh;
-		}else
-			f->rect.height = labelh(&def.font);
+		if(f->collapsed) {
+			f->r.max.y = colh;
+		}else {
+			f->r.max.y = uncolh;
+			dy += Dy(f->crect);
+		}
+		surplus += Dy(f->r);
+	}
+	for(f = a->frame; f; f = f->anext)
+		f->ratio = (float)Dy(f->crect)/dy;
+
+	j = 0;
+	surplus = Dy(a->r) - surplus;
+	while(surplus > 0 && surplus != j) {
+		j = surplus;
+		dy = 0;
+		for(f=a->frame; f; f=f->anext) {
+			if(!f->collapsed)
+				f->r.max.y += f->ratio * surplus;
+			resize_frame(f, f->r);
+			dy += Dy(f->r);
+		}
+		surplus = Dy(a->r) - dy;
+	}
+	for(f=a->frame; f && surplus > 0; f=f->anext) {
+		if(!f->collapsed) {
+			dy = Dy(f->r);
+			f->r.max.y += surplus;
+			resize_frame(f, f->r);
+			f->r.max.y = Dy(f->crect) + labelh(def.font) + 1;
+			surplus -= Dy(f->r) - dy;
+		}
 	}
 
-	yoff = a->rect.y;
+	yoff = a->r.min.y;
 	i = nuncol;
 	for(f=a->frame; f; f=f->anext) {
-		f->rect.y = yoff;
-		f->rect.x = a->rect.x;
-		f->rect.width = a->rect.width;
-		if(f->collapsed)
-			yoff += f->rect.height;
-		else{
+		f->r = rectaddpt(f->r, Pt(a->r.min.x, yoff));
+
+		if(!f->collapsed) {
 			i--;
-			f->rect.height += surplus / nuncol;
+			f->r.max.y += surplus / nuncol;
 			if(!i)
-				f->rect.height += surplus % nuncol;
-			yoff += f->rect.height;
+				f->r.max.y += surplus % nuncol;
 		}
+		yoff = f->r.max.y;
 	}
 }
 
@@ -327,11 +326,9 @@ arrange_column(Area *a, Bool dirty) {
 
 	switch(a->mode) {
 	case Coldefault:
-		for(f=a->frame; f; f=f->anext) {
-			f->collapsed = False;
-			if(dirty)
-				f->crect.height = 100;
-		}
+		if(dirty)
+			for(f=a->frame; f; f=f->anext)
+				f->r = Rect(0, 0, 100, 100);
 		break;
 	case Colstack:
 		for(f=a->frame; f; f=f->anext)
@@ -340,7 +337,7 @@ arrange_column(Area *a, Bool dirty) {
 	case Colmax:
 		for(f=a->frame; f; f=f->anext) {
 			f->collapsed = False;
-			f->rect = a->rect;
+			f->r = a->r;
 		}
 		goto resize;
 	default:
@@ -351,14 +348,14 @@ arrange_column(Area *a, Bool dirty) {
 resize:
 	if(a->view == screen->sel) {
 		restack_view(a->view);
-		resize_client(a->sel->client, &a->sel->rect);
+		resize_client(a->sel->client, &a->sel->r);
 
 		for(f=a->frame; f; f=f->anext)
 			if(!f->collapsed && f != a->sel)
-				resize_client(f->client, &f->rect);
+				resize_client(f->client, &f->r);
 		for(f=a->frame; f; f=f->anext)
 			if(f->collapsed && f != a->sel)
-				resize_client(f->client, &f->rect);
+				resize_client(f->client, &f->r);
 	}
 }
 
@@ -370,60 +367,50 @@ resize_column(Area *a, int w) {
 	an = a->next;
 	assert(an != nil);
 
-	dw = w - a->rect.width;
-	a->rect.width += dw;
-	an->rect.width -= dw;
+	dw = w - Dx(a->r);
+	a->r.max.x += dw;
+	an->r.min.x += dw;
 
 	arrange_view(a->view);
 	focus_view(screen, a->view);
 }
 
 static void
-resize_colframeh(Frame *f, XRectangle *r) {
+resize_colframeh(Frame *f, Rectangle *r) {
 	Area *a;
-	Frame *fa, *fb;
+	Frame *fn, *fp;
 	uint minh;
-	int dy, dh, maxy;
+
+	minh = 2 * labelh(def.font);
 
 	a = f->area;
-	maxy = r_south(r);
+	fn = f->anext;
+	fp = f->aprev;
 
-	minh = 2 * labelh(&def.font);
-
-	fa = f->anext;
-	for(fb = a->frame; fb; fb = fb->anext)
-		if(fb->anext == f) break;
-
-	if(fb)
-		r->y = max(r->y, fb->rect.y + minh);
+	if(fp)
+		r->min.y = max(r->min.y, fp->r.min.y + minh);
 	else
-		r->y = a->rect.y;
+		r->min.y = max(r->min.y, a->r.min.y);
 
-	if(fa) {
-		if(maxy > r_south(&fa->rect) - minh)
-			maxy = r_south(&fa->rect) - minh;
-	}
+	if(fn)
+		r->max.y = min(r->max.y, fn->r.max.y - minh);
 	else
-		if(r_south(r) >= r_south(&a->rect))
-			maxy = r_south(&a->rect) - 1;
+		r->max.y = min(r->max.y, a->r.max.y);
 
-	dy = f->rect.y - r->y;
-	dh = maxy - r_south(&f->rect);
-	if(fb) {
-		fb->rect.height -= dy;
-		resize_frame(fb, &fb->rect);
+	if(fp) {
+		fp->r.max.y = r->min.y;
+		resize_frame(fp, fp->r);
 	}
-	if(fa) {
-		fa->rect.height -= dh;
-		resize_frame(fa, &fa->rect);
+	if(fn) {
+		fn->r.min.y = r->max.y;
+		resize_frame(fn, fn->r);
 	}
 
-	f->rect.height = maxy - r->y;
-	resize_frame(f, &f->rect);
+	resize_frame(f, *r);
 }
 
 void
-resize_colframe(Frame *f, XRectangle *r) {
+resize_colframe(Frame *f, Rectangle *r) {
 	Area *a, *al, *ar;
 	View *v;
 	uint minw;
@@ -431,51 +418,43 @@ resize_colframe(Frame *f, XRectangle *r) {
 
 	a = f->area;
 	v = a->view;
-	maxx = r_east(r);
+	maxx = r->max.x;
 
-	minw = screen->rect.width/NCOL;
+	minw = Dx(screen->r) / NCOL;
 
+	al = a->prev;
 	ar = a->next;
 	for(al = v->area->next; al; al = al->next)
 		if(al->next == a) break;
 
 	if(al)
-		r->x = max(r->x, al->rect.x + minw);
+		r->min.x = max(r->min.x, al->r.min.x + minw);
 	else
-		r->x = max(r->x, 0);
+		r->min.x = max(r->min.x, 0);
 
 	if(ar) {
-		if(maxx >= r_east(&ar->rect) - minw)
-			maxx = r_east(&ar->rect) - minw;
+		if(maxx >= ar->r.max.x - minw)
+			maxx = ar->r.max.x - minw;
 	}
 	else
-		if(maxx > screen->rect.width)
-			maxx = screen->rect.width - 1;
+		if(maxx > screen->r.max.x)
+			maxx = screen->r.max.x;
 
-	dx = a->rect.x - r->x;
-	dw = maxx - r_east(&a->rect);
+	dx = a->r.min.x - r->min.x;
+	dw = maxx - a->r.max.x;
 	if(al) {
-		al->rect.width -= dx;
+		al->r.max.x -= dx;
 		arrange_column(al, False);
 	}
 	if(ar) {
-		ar->rect.width -= dw;
+		ar->r.max.x -= dw;
 		arrange_column(ar, False);
 	}
 
 	resize_colframeh(f, r);
 
-	a->rect.width = maxx - r->x;
+	a->r.max.x = maxx;
 	arrange_view(a->view);
 
 	focus_view(screen, v);
-}
-
-Area *
-new_column(View *v, Area *pos, uint w) {
-	Area *a = create_area(v, pos, w);
-	if(!a)
-		return nil;
-	arrange_view(v);
-	return a;
 }

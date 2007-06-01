@@ -4,11 +4,9 @@
 * Switch to mk for building
 
 4.0
-* Get rid of col modes
+* Get rid of colmodes
 * (Multi line) Tag bars
-* Replace bar with master tag bar
-* New event system
 * Resizable managed area
-* Sticky clients
+* Regex-based tag strings
 * New dmenu(with real cursor and using Bio)
-* Depend on plan9-corelibs
+* Use libbio, libfmt, libregex9

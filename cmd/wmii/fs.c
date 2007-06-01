@@ -2,6 +2,8 @@
  * See LICENSE file for license details.
  */
 #include <assert.h>
+#include <ctype.h>
+#include <regex.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,8 +40,8 @@ struct FileId {
 		View	*view;
 		Client	*client;
 		Ruleset	*rule;
-		BlitzColor	*col;
-	} content;
+		CTuple	*col;
+	} p;
 	uint	id;
 	uint	index;
 	Dirtab		tab;
@@ -62,8 +64,7 @@ static char
 	Enoperm[] = "permission denied",
 	Enofile[] = "file not found",
 	Ebadvalue[] = "bad value",
-	Einterrupted[] = "interrupted",
-	Ebadcmd[] = "bad command";
+	Einterrupted[] = "interrupted";
 
 /* Macros */
 #define QID(t, i) (((vlong)((t)&0xFF)<<32)|((i)&0xFFFFFFFF))
@@ -109,7 +110,7 @@ dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|P9_DMDIR },
 		  {nil}},
 dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|P9_DMDIR },
 		  {"ctl",	QTAPPEND,	FsFCctl,	0600|P9_DMAPPEND },
-		  {"label",	QTFILE,		FsFClabel,	0600 },
+		  {"label",	QTFILE,	FsFClabel,	0600 },
 		  {"tags",	QTFILE,		FsFCtags,	0600 },
 		  {"props",	QTFILE,		FsFprops,	0400 },
 		  {nil}},
@@ -134,7 +135,7 @@ static Dirtab *dirtab[] = {
 
 /* Utility Functions */
 static FileId *
-get_file() {
+get_file(void) {
 	FileId *temp;
 	if(!free_fileid) {
 		uint i = 15;
@@ -182,7 +183,7 @@ write_buf(Ixp9Req *r, char *buf, uint len) {
 }
 
 /* This should be moved to libixp */
-void
+static void
 write_to_buf(Ixp9Req *r, void *buf, uint *len, uint max) {
 	uint offset, count;
 
@@ -209,100 +210,38 @@ write_to_buf(Ixp9Req *r, void *buf, uint *len, uint max) {
 }
 
 /* This should be moved to libixp */
-void
+static void
 data_to_cstring(Ixp9Req *r) {
+	char *p;
 	uint i;
 	i = r->ifcall.count;
-	if(!i || r->ifcall.data[i - 1] != '\n')
-		r->ifcall.data = erealloc(r->ifcall.data, ++i);
+	p = r->ifcall.data;
+	if(p[i - 1] == '\n')
+		i--;
+
+	r->ifcall.data = toutf8n(p, i);
 	assert(r->ifcall.data);
-	r->ifcall.data[i - 1] = '\0';
+	free(p);
 }
 
-char *
-message_root(char *message)
-{
-	uint n;
+typedef char* (*MsgFunc)(void*, Message*);
 
-	if(!strchr(message, ' ')) {
-		snprintf(buffer, sizeof(buffer), "%s ", message);
-		message = buffer;
-	}
-	if(!strcmp(message, "quit "))
-		srv.running = 0;
-	else if(!strncmp(message, "exec ", 5)) {
-		srv.running = 0;
-		execstr = emalloc(strlen(&message[5]) + sizeof("exec "));
-		sprintf(execstr, "exec %s", &message[5]);
-		message += strlen(message);
-	}
-	else if(!strncmp(message, "view ", 5))
-		select_view(&message[5]);
-	else if(!strncmp(message, "selcolors ", 10)) {
-		fprintf(stderr, "wmii: warning: selcolors have been removed\n");
-		return Ebadcmd;
-	}
-	else if(!strncmp(message, "focuscolors ", 12)) {
-		message += 12;
-		n = strlen(message);
-		return parse_colors(&message, (int *)&n, &def.focuscolor);
-	}
-	else if(!strncmp(message, "normcolors ", 11)) {
-		message += 11;
-		n = strlen(message);
-		return parse_colors(&message, (int *)&n, &def.normcolor);
-	}
-	else if(!strncmp(message, "font ", 5)) {
-		message += 5;
-		free(def.font.fontstr);
-		def.font.fontstr = estrdup(message);
-		loadfont(&blz, &def.font);
-		resize_bar(screen);
-	}
-	else if(!strncmp(message, "border ", 7)) {
-		message += 7;
-		n = (uint)strtol(message, &message, 10);
-		if(*message)
-			return Ebadvalue;
-		def.border = n;
-	}
-	else if(!strncmp(message, "grabmod ", 8)) {
-		message += 8;
-		ulong mod;
-		mod = mod_key_of_str(message);
-		if(!(mod & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)))
-			return Ebadvalue;
-		strncpy(def.grabmod, message, sizeof(def.grabmod));
-		def.mod = mod;
-		restack_view(screen->sel);
-	}
-	else
-		return Ebadcmd;
-	return nil;
-}
+static char *
+message(Ixp9Req *r, MsgFunc fn) {
+	char *err, *s, *p, c;
+	FileId *f;
+	Message m;
 
-char *
-read_root_ctl() {
-	uint i = 0;
-	if(screen->sel)
-		i += snprintf(&buffer[i], (sizeof(buffer) - i), "view %s\n", screen->sel->name);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "focuscolors %s\n", def.focuscolor.colstr);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "normcolors %s\n", def.normcolor.colstr);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "font %s\n", def.font.fontstr);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "grabmod %s\n", def.grabmod);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "border %d\n", def.border);
-	return buffer;
-}
-
+	f = r->fid->aux;
 
 void
 respond_event(Ixp9Req *r) {
 	FileId *f = r->fid->aux;
-	if(f->content.buf) {
-		r->ofcall.data = (void *)f->content.buf;
-		r->ofcall.count = strlen(f->content.buf);
+	if(f->p.buf) {
+		r->ofcall.data = (void *)f->p.buf;
+		r->ofcall.count = strlen(f->p.buf);
 		respond(r, nil);
-		f->content.buf = nil;
+		f->p.buf = nil;
 	}else{
 		r->aux = peventread;
 		peventread = r;
@@ -324,10 +263,10 @@ write_event(char *format, ...) {
 		return;
 	for(f=peventfid; f; f=f->next) {
 		fi = f->fid->aux;
-		slen = fi->content.buf ? strlen(fi->content.buf) : 0;
-		fi->content.buf = (char *) erealloc(fi->content.buf, slen + len + 1);
-		(fi->content.buf)[slen] = '\0';
-		strcat(fi->content.buf, buffer);
+		slen = fi->p.buf ? strlen(fi->p.buf) : 0;
+		fi->p.buf = (char *) erealloc(fi->p.buf, slen + len + 1);
+		(fi->p.buf)[slen] = '\0';
+		strcat(fi->p.buf, buffer);
 	}
 	oeventread = peventread;
 	peventread = nil;
@@ -381,9 +320,9 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->content.client = c;
-						file->id = c->win;
-						file->index = c->win;
+						file->p.client = c;
+						file->id = c->w.w;
+						file->index = c->w.w;
 						file->tab = *dir;
 						file->tab.name = estrdup("sel");
 					}if(name) goto LastItem;
@@ -393,16 +332,16 @@ lookup_file(FileId *parent, char *name)
 					if(*name) goto NextItem;
 				}
 				for(c=client; c; c=c->next) {
-					if(!name || c->win == id) {
+					if(!name || c->w.w == id) {
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->content.client = c;
-						file->id = c->win;
-						file->index = c->win;
+						file->p.client = c;
+						file->id = c->w.w;
+						file->index = c->w.w;
 						file->tab = *dir;
 						file->tab.name = emallocz(16);
-						snprintf(file->tab.name, 16, "0x%x", (uint)c->win);
+						snprintf(file->tab.name, 16, "0x%x", (uint)c->w.w);
 						if(name) goto LastItem;
 					}
 				}
@@ -413,7 +352,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->content.view = screen->sel;
+						file->p.view = screen->sel;
 						file->id = screen->sel->id;
 						file->tab = *dir;
 						file->tab.name = estrdup("sel");
@@ -424,7 +363,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->content.view = v;
+						file->p.view = v;
 						file->id = v->id;
 						file->tab = *dir;
 						file->tab.name = estrdup(v->name);
@@ -433,12 +372,12 @@ lookup_file(FileId *parent, char *name)
 				}
 				break;
 			case FsDBars:
-				for(b=*parent->content.bar_p; b; b=b->next) {
+				for(b=*parent->p.bar_p; b; b=b->next) {
 					if(!name || !strcmp(name, b->name)) {
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->content.bar = b;
+						file->p.bar = b;
 						file->id = b->id;
 						file->tab = *dir;
 						file->tab.name = estrdup(b->name);
@@ -453,7 +392,7 @@ lookup_file(FileId *parent, char *name)
 			*last = file;
 			last = &file->next;
 			file->id = 0;
-			file->content.ref = parent->content.ref;
+			file->p.ref = parent->p.ref;
 			file->index = parent->index;
 			file->tab = *dir;
 			file->tab.name = estrdup(file->tab.name);
@@ -461,15 +400,15 @@ lookup_file(FileId *parent, char *name)
 			switch(file->tab.type) {
 			case FsDBars:
 				if(!strcmp(file->tab.name, "lbar"))
-					file->content.bar_p = &screen[0].bar[BarLeft];
+					file->p.bar_p = &screen[0].bar[BarLeft];
 				else
-					file->content.bar_p = &screen[0].bar[BarRight];
+					file->p.bar_p = &screen[0].bar[BarRight];
 				break;
 			case FsFColRules:
-				file->content.rule = &def.colrules;
+				file->p.rule = &def.colrules;
 				break;
 			case FsFTagRules:
-				file->content.rule = &def.tagrules;
+				file->p.rule = &def.tagrules;
 				break;
 			}
 			if(name) goto LastItem;
@@ -482,7 +421,7 @@ LastItem:
 	return ret;
 }
 
-Bool
+static Bool
 verify_file(FileId *f) {
 	FileId *nf;
 
@@ -504,7 +443,7 @@ fs_attach(Ixp9Req *r) {
 	FileId *f = get_file();
 	f->tab = dirtab[FsRoot][0];
 	f->tab.name = estrdup("/");
-	f->content.ref = nil;
+	f->p.ref = nil;
 	r->fid->aux = f;
 	r->fid->qid.type = f->tab.qtype;
 	r->fid->qid.path = QID(f->tab.type, 0);
@@ -562,22 +501,22 @@ fs_walk(Ixp9Req *r) {
 	respond(r, nil);
 }
 
-uint
+static uint
 fs_size(FileId *f) {
 	switch(f->tab.type) {
 	default:
 		return 0;
 	case FsFColRules:
 	case FsFTagRules:
-		return f->content.rule->size;
+		return f->p.rule->size;
 	case FsFKeys:
 		return def.keyssz;
-	case FsFClabel:
-		return strlen(f->content.client->name);
 	case FsFCtags:
-		return strlen(f->content.client->tags);
+		return strlen(f->p.client->tags);
+	case FsFClabel:
+		return strlen(f->p.client->name);
 	case FsFprops:
-		return strlen(f->content.client->props);
+		return strlen(f->p.client->props);
 	}
 }
 
@@ -587,7 +526,9 @@ fs_stat(Ixp9Req *r) {
 	Stat s;
 	int size;
 	uchar *buf;
-	FileId *f = r->fid->aux;
+	FileId *f;
+	
+	f = r->fid->aux;
 
 	if(!verify_file(f)) {
 		respond(r, Enofile);
@@ -654,32 +595,32 @@ fs_read(Ixp9Req *r) {
 	else{
 		switch(f->tab.type) {
 		case FsFprops:
-			write_buf(r, f->content.client->props, strlen(f->content.client->props));
+			write_buf(r, f->p.client->props, strlen(f->p.client->props));
 			respond(r, nil);
 			return;
 		case FsFColRules:
 		case FsFTagRules:
-			write_buf(r, f->content.rule->string, f->content.rule->size);
+			write_buf(r, f->p.rule->string, f->p.rule->size);
 			respond(r, nil);
 			return;
 		case FsFKeys:
 			write_buf(r, def.keys, def.keyssz);
 			respond(r, nil);
 			return;
-		case FsFClabel:
-			write_buf(r, f->content.client->name, strlen(f->content.client->name));
+		case FsFCtags:
+			write_buf(r, f->p.client->tags, strlen(f->p.client->tags));
 			respond(r, nil);
 			return;
-		case FsFCtags:
-			write_buf(r, f->content.client->tags, strlen(f->content.client->tags));
+		case FsFClabel:
+			write_buf(r, f->p.client->name, strlen(f->p.client->name));
 			respond(r, nil);
 			return;
 		case FsFTctl:
-			write_buf(r, f->content.view->name, strlen(f->content.view->name));
+			write_buf(r, f->p.view->name, strlen(f->p.view->name));
 			respond(r, nil);
 			return;
 		case FsFBar:
-			write_buf(r, f->content.bar->buf, strlen(f->content.bar->buf));
+			write_buf(r, f->p.bar->buf, strlen(f->p.bar->buf));
 			respond(r, nil);
 			return;
 		case FsFRctl:
@@ -699,7 +640,7 @@ fs_read(Ixp9Req *r) {
 			respond(r, nil);
 			return;
 		case FsFTindex:
-			buf = (char *)view_index(f->content.view);
+			buf = (char*)view_index(f->p.view);
 			n = strlen(buf);
 			write_buf(r, buf, n);
 			respond(r, nil);
@@ -718,9 +659,7 @@ fs_read(Ixp9Req *r) {
 void
 fs_write(Ixp9Req *r) {
 	FileId *f;
-	Client *c;
 	char *errstr = nil;
-	XClassHint ch;
 	uint i;
 
 	if(r->ifcall.count == 0) {
@@ -737,7 +676,7 @@ fs_write(Ixp9Req *r) {
 	switch(f->tab.type) {
 	case FsFColRules:
 	case FsFTagRules:
-		write_to_buf(r, &f->content.rule->string, &f->content.rule->size, 0);
+		write_to_buf(r, &f->p.rule->string, &f->p.rule->size, 0);
 		respond(r, nil);
 		return;
 	case FsFKeys:
@@ -746,74 +685,38 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFClabel:
 		data_to_cstring(r);
-		c = f->content.client;
-		strncpy(c->name, r->ifcall.data, sizeof(c->name));
-		if(XGetClassHint(blz.dpy, c->win, &ch)) {
-			snprintf(c->props, sizeof(c->props),
-					"%s:%s:%s",
-					str_nil(ch.res_class),
-					str_nil(ch.res_name),
-					c->name);
-			if(ch.res_class)
-				XFree(ch.res_class);
-			if(ch.res_name)
-				XFree(ch.res_name);
-		}
-		draw_frame(f->content.client->sel);
+		utfecpy(f->p.client->name, f->p.client->name+sizeof(client->name), r->ifcall.data);
+		draw_frame(f->p.client->sel);
+		update_class(f->p.client);
 		r->ofcall.count = r->ifcall.count;
 		respond(r, nil);
 		return;
 	case FsFCtags:
 		data_to_cstring(r);
-		apply_tags(f->content.client, r->ifcall.data);
+		apply_tags(f->p.client, r->ifcall.data);
 		r->ofcall.count = r->ifcall.count;
 		respond(r, nil);
 		return;
 	case FsFBar:
-		/* XXX: This should validate after each write */
-		i = strlen(f->content.bar->buf);
-		write_to_buf(r, &f->content.bar->buf, &i, 279);
+		i = strlen(f->p.bar->buf);
+		write_to_buf(r, &f->p.bar->buf, &i, 279);
 		r->ofcall.count = i - r->ifcall.offset;
 		respond(r, nil);
 		return;
 	case FsFCctl:
-		data_to_cstring(r);
-		if((errstr = message_client(f->content.client, r->ifcall.data))) {
-			respond(r, errstr);
-			return;
-		}
+		errstr = message(r, (MsgFunc)message_client);
 		r->ofcall.count = r->ifcall.count;
-		respond(r, nil);
+		respond(r, errstr);
 		return;
 	case FsFTctl:
-		data_to_cstring(r);
-		if((errstr = message_view(f->content.view, r->ifcall.data))) {
-			respond(r, errstr);
-			return;
-		}
+		errstr = message(r, (MsgFunc)message_view);
 		r->ofcall.count = r->ifcall.count;
-		respond(r, nil);
+		respond(r, errstr);
 		return;
 	case FsFRctl:
-		data_to_cstring(r);
-		{	uint n;
-			char *toks[32];
-			n = tokenize(toks, 32, r->ifcall.data, '\n');
-			for(i = 0; i < n; i++) {
-				if(errstr)
-					message_root(toks[i]);
-				else
-					errstr = message_root(toks[i]);
-			}
-		}
-		if(screen->sel)
-			focus_view(screen, screen->sel);
-		if(errstr) {
-			respond(r, errstr);
-			return;
-		}
+		errstr = message(r, (MsgFunc)message_root);
 		r->ofcall.count = r->ifcall.count;
-		respond(r, nil);
+		respond(r, errstr);
 		return;
 	case FsFEvent:
 		if(r->ifcall.data[r->ifcall.count-1] == '\n')
@@ -879,7 +782,7 @@ fs_create(Ixp9Req *r) {
 			respond(r, Ebadvalue);
 			return;
 		}
-		create_bar(f->content.bar_p, r->ifcall.name);
+		create_bar(f->p.bar_p, r->ifcall.name);
 		f = lookup_file(f, r->ifcall.name);
 		if(!f) {
 			respond(r, Enofile);
@@ -909,7 +812,7 @@ fs_remove(Ixp9Req *r) {
 		respond(r, Enoperm);
 		return;
 	case FsFBar:
-		destroy_bar(f->next->content.bar_p, f->content.bar);
+		destroy_bar(f->next->p.bar_p, f->p.bar);
 		draw_bar(screen);
 		respond(r, nil);
 		break;
@@ -918,12 +821,13 @@ fs_remove(Ixp9Req *r) {
 
 void
 fs_clunk(Ixp9Req *r) {
-	Client *c;
 	FidLink **fl, *ft;
-	char *buf;
-	int i;
-	FileId *f = r->fid->aux;
-
+	FileId *f;
+	char *p, *q;
+	Client *c;
+	Message m;
+	
+	f = r->fid->aux;
 	if(!verify_file(f)) {
 		respond(r, nil);
 		return;
@@ -931,10 +835,10 @@ fs_clunk(Ixp9Req *r) {
 
 	switch(f->tab.type) {
 	case FsFColRules:
-		update_rules(&f->content.rule->rule, f->content.rule->string);
+		update_rules(&f->p.rule->rule, f->p.rule->string);
 		break;
 	case FsFTagRules:
-		update_rules(&f->content.rule->rule, f->content.rule->string);
+		update_rules(&f->p.rule->rule, f->p.rule->string);
 		for(c=client; c; c=c->next)
 			apply_rules(c);
 		update_views();
@@ -943,12 +847,20 @@ fs_clunk(Ixp9Req *r) {
 		update_keys();
 		break;
 	case FsFBar:
-		buf = f->content.bar->buf;
-		i = strlen(f->content.bar->buf);
-		parse_colors(&buf, &i, &f->content.bar->brush.color);
-		while(i > 0 && buf[i - 1] == '\n')
-			buf[--i] = '\0';
-		strncpy(f->content.bar->text, buf, sizeof(f->content.bar->text));
+		p = toutf8(f->p.bar->buf);
+		
+		m = ixp_message(p, strlen(p), 0);
+		parse_colors(&m, &f->p.bar->col);
+
+		q = m.end-1;
+		while(q >= (char*)m.pos && *q == '\n')
+			*q-- = '\0';
+
+		q = f->p.bar->text;
+		utfecpy(q, q+sizeof((Bar){}.text), m.pos);
+
+		free(p);
+
 		draw_bar(screen);
 		break;
 	case FsFEvent:

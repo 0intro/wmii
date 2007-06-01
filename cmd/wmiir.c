@@ -12,9 +12,9 @@
 static IxpClient *client;
 
 static void
-usage() {
+usage(void) {
 	fprintf(stderr,
-		   "usage: %1$s [-a <address>] {create | read | ls [-ld] | remove | write} <file>\n"
+		   "usage: %1$s [-a <address>] {create | read | ls [-ld] | remove | rm | write} <file>\n"
 		   "       %1$s [-a <address>] xwrite <file> <data>\n"
 		   "       %1$s -v\n", argv0);
 	exit(1);
@@ -24,12 +24,12 @@ usage() {
 static void
 write_data(IxpCFid *fid, char *name) {
 	void *buf;
-	uint len;
+	int len;
 
 	buf = ixp_emalloc(fid->iounit);;
 	do {
 		len = read(0, buf, fid->iounit);
-		if(len >= 0 && ixp_write(fid, buf, len) != len)
+		if(len > 0 && ixp_write(fid, buf, len) != len)
 			fatal("cannot write file '%s': %s\n", name, errstr);
 	} while(len > 0);
 
@@ -216,7 +216,8 @@ xls(int argc, char *argv[]) {
 	Message m;
 	Stat *stat;
 	IxpCFid *fid;
-	char *file, *buf;
+	char *file;
+	uchar *buf;
 	int lflag, dflag, count, nstat, mstat, i;
 
 	lflag = dflag = 0;
@@ -258,7 +259,7 @@ xls(int argc, char *argv[]) {
 		while(m.pos < m.end) {
 			if(nstat == mstat) {
 				mstat <<= 1;
-				stat = ixp_erealloc(stat, mstat);
+				stat = erealloc(stat, sizeof(*stat) * mstat);
 			}
 			ixp_pstat(&m, &stat[nstat++]);
 		}
@@ -286,6 +287,7 @@ struct exectab {
 	{"read", xread},
 	{"create", xcreate},
 	{"remove", xremove},
+	{"rm", xremove},
 	{"ls", xls},
 	{0, 0}
 };

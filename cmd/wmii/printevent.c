@@ -1,463 +1,559 @@
 /*
  * Original code posted to comp.sources.x
  * Modifications by Russ Cox <rsc@swtch.com>.
+ * Further modifications by Kris Maglione <fbsdaemon@gmail.com>
  */
 
 /*
-Path: uunet!wyse!mikew
-From: mikew@wyse.wyse.com (Mike Wexler)
-Newsgroups: comp.sources.x
-Subject: v02i056:  subroutine to print events in human readable form, Part01/01
-Message-ID: <1935@wyse.wyse.com>
-Date: 22 Dec 88 19:28:25 GMT
-Organization: Wyse Technology, San Jose
-Lines: 1093
-Approved: mikew@wyse.com
+ * Path: uunet!wyse!mikew From: mikew@wyse.wyse.com (Mike Wexler) Newsgroups:
+ * comp.sources.x Subject: v02i056:  subroutine to print events in human
+ * readable form, Part01/01 Message-ID: <1935@wyse.wyse.com> Date: 22 Dec 88
+ * 19:28:25 GMT Organization: Wyse Technology, San Jose Lines: 1093 Approved:
+ * mikew@wyse.com
+ * 
+ * Submitted-by: richsun!darkstar!ken Posting-number: Volume 2, Issue 56
+ * Archive-name: showevent/part01
+ * 
+ * 
+ * There are times during debugging when it would be real useful to be able to
+ * print the fields of an event in a human readable form.  Too many times I
+ * found myself scrounging around in section 8 of the Xlib manual looking for
+ * the valid fields for the events I wanted to see, then adding printf's to
+ * display the numeric values of the fields, and then scanning through X.h
+ * trying to decode the cryptic detail and state fields.  After playing with
+ * xev, I decided to write a couple of standard functions that I could keep
+ * in a library and call on whenever I needed a little debugging verbosity.
+ * The first function, GetType(), is useful for returning the string
+ * representation of the type of an event.  The second function, ShowEvent(),
+ * is used to display all the fields of an event in a readable format.  The
+ * functions are not complicated, in fact, they are mind-numbingly boring -
+ * but that's just the point nobody wants to spend the time writing functions
+ * like this, they just want to have them when they need them.
+ * 
+ * A simple, sample program is included which does little else but to
+ * demonstrate the use of these two functions.  These functions have saved me
+ * many an hour during debugging and I hope you find some benefit to these.
+ * If you have any comments, suggestions, improvements, or if you find any
+ * blithering errors you can get it touch with me at the following location:
+ * 
+ * ken@richsun.UUCP
+ */
 
-Submitted-by: richsun!darkstar!ken
-Posting-number: Volume 2, Issue 56
-Archive-name: showevent/part01
-
-
-There are times during debugging when it would be real useful to be able to
-print the fields of an event in a human readable form.  Too many times I found 
-myself scrounging around in section 8 of the Xlib manual looking for the valid 
-fields for the events I wanted to see, then adding printf's to display the 
-numeric values of the fields, and then scanning through X.h trying to decode
-the cryptic detail and state fields.  After playing with xev, I decided to
-write a couple of standard functions that I could keep in a library and call
-on whenever I needed a little debugging verbosity.  The first function,
-GetType(), is useful for returning the string representation of the type of
-an event.  The second function, ShowEvent(), is used to display all the fields
-of an event in a readable format.  The functions are not complicated, in fact,
-they are mind-numbingly boring - but that's just the point nobody wants to
-spend the time writing functions like this, they just want to have them when
-they need them.
-
-A simple, sample program is included which does little else but to demonstrate
-the use of these two functions.  These functions have saved me many an hour 
-during debugging and I hope you find some benefit to these.  If you have any
-comments, suggestions, improvements, or if you find any blithering errors you 
-can get it touch with me at the following location:
-
-			ken@richsun.UUCP
-*/
-
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <X11/Intrinsic.h>
 #include <X11/Xproto.h>
 #include <util.h>
-#include "dat.h"
-#include "fns.h"
+//#include "dat.h"
+//#include "fns.h"
 #include "printevent.h"
 
+#define nil ((void*)0)
+
+typedef struct Pair Pair;
+
+struct Pair {
+	int key;
+	char *val;
+};
+
 static char* sep = " ";
+
+static char *
+search(Pair *lst, int key, char *(*def)(int)) {
+	for(; lst->val; lst++)
+		if(lst->key == key)
+			return lst->val;
+	return def(key);
+}
+
+static char buffer[512];
+
+static char*
+unmask(Pair * list, uint val)
+{
+	Pair  *p;
+	char *s, *end;
+	Boolean first = True;
+
+	buffer[0] = '\0';
+	end = buffer + sizeof buffer;
+	s = buffer;
+
+	s += strlcat(s, "(", end - s);
+
+	for (p = list; p->val; p++)
+		if (val & p->key) {
+			if (!first)
+				s += strlcat(s, "|", end - s);
+			first = False;
+			s += strlcat(s, p->val, end - s);
+		}
+
+	s += strlcat(s, ")", end - s);
+
+	return buffer;
+}
+
+static char *
+strhex(int key) {
+	sprintf(buffer, "0x%x", key);
+	return buffer;
+}
+
+static char *
+strdec(int key) {
+	sprintf(buffer, "%d", key);
+	return buffer;
+}
+
+static char *
+strign(int key) {
+	return "?";
+}
 
 /******************************************************************************/
 /**** Miscellaneous routines to convert values to their string equivalents ****/
 /******************************************************************************/
 
-/* Returns the string equivalent of a boolean parameter */
-static char*
-TorF(int bool)
+static char    *
+Self(char *str)
 {
-    switch (bool) {
-    case True:
-	return ("True");
-
-    case False:
-	return ("False");
-
-    default:
-	return ("?");
-    }
-}
-
-/* Returns the string equivalent of a property notify state */
-static char*
-PropertyState(int state)
-{
-    switch (state) {
-    case PropertyNewValue:
-	return ("PropertyNewValue");
-
-    case PropertyDelete:
-	return ("PropertyDelete");
-
-    default:
-	return ("?");
-    }
-}
-
-/* Returns the string equivalent of a visibility notify state */
-static char*
-VisibilityState(int state)
-{
-    switch (state) {
-    case VisibilityUnobscured:
-	return ("VisibilityUnobscured");
-
-    case VisibilityPartiallyObscured:
-	return ("VisibilityPartiallyObscured");
-
-    case VisibilityFullyObscured:
-	return ("VisibilityFullyObscured");
-
-    default:
-	return ("?");
-    }
+	strncpy(buffer, str, sizeof buffer);
+	free(str);
+	return buffer;
 }
 
 /* Returns the string equivalent of a timestamp */
-static char*
+static char    *
 ServerTime(Time time)
 {
-    ulong msec;
-    ulong sec;
-    ulong min;
-    ulong hr;
-    ulong day;
-    static char buffer[32];
+	ulong		msec;
+	ulong		sec;
+	ulong		min;
+	ulong		hr;
+	ulong		day;
 
-    msec = time % 1000;
-    time /= 1000;
-    sec = time % 60;
-    time /= 60;
-    min = time % 60;
-    time /= 60;
-    hr = time % 24;
-    time /= 24;
-    day = time;
+	msec = time % 1000;
+	time /= 1000;
+	sec = time % 60;
+	time /= 60;
+	min = time % 60;
+	time /= 60;
+	hr = time % 24;
+	time /= 24;
+	day = time;
 
-if(0)
-    sprintf(buffer, "%lu day%s %02lu:%02lu:%02lu.%03lu",
-      day, day == 1 ? "" : "(s)", hr, min, sec, msec);
+	if (0)
+		sprintf(buffer, "%lu day%s %02lu:%02lu:%02lu.%03lu",
+			day, day == 1 ? "" : "(s)", hr, min, sec, msec);
 
-    sprintf(buffer, "%lud%luh%lum%lu.%03lds", day, hr, min, sec, msec);
-    return (buffer);
+	sprintf(buffer, "%lud%luh%lum%lu.%03lds", day, hr, min, sec, msec);
+	return buffer;
 }
 
-/* Simple structure to ease the interpretation of masks */
-typedef struct MaskType MaskType;
-struct MaskType
+/* Returns the string equivalent of a boolean parameter */
+static char    *
+TorF(int key)
 {
-    uint value;
-    char *string;
-};
+	static Pair	list[] = {
+		{True, "True"},
+		{False, "False"},
+		{0, nil},
+	};
+
+	return search(list, key, strign);
+}
+
+/* Returns the string equivalent of a property notify state */
+static char    *
+PropertyState(int key)
+{
+	static Pair	list[] = {
+		{PropertyNewValue, "PropertyNewValue"},
+		{PropertyDelete, "PropertyDelete"},
+		{0, nil},
+	};
+
+	return search(list, key, strign);
+}
+
+/* Returns the string equivalent of a visibility notify state */
+static char    *
+VisibilityState(int key)
+{
+	static Pair	list[] = {
+		{VisibilityUnobscured, "VisibilityUnobscured"},
+		{VisibilityPartiallyObscured, "VisibilityPartiallyObscured"},
+		{VisibilityFullyObscured, "VisibilityFullyObscured"},
+		{0, nil},
+	};
+
+	return search(list, key, strign);
+}
 
 /* Returns the string equivalent of a mask of buttons and/or modifier keys */
-static char*
+static char    *
 ButtonAndOrModifierState(uint state)
 {
-    static char buffer[256];
-    static MaskType masks[] = {
-	{Button1Mask, "Button1Mask"},
-	{Button2Mask, "Button2Mask"},
-	{Button3Mask, "Button3Mask"},
-	{Button4Mask, "Button4Mask"},
-	{Button5Mask, "Button5Mask"},
-	{ShiftMask, "ShiftMask"},
-	{LockMask, "LockMask"},
-	{ControlMask, "ControlMask"},
-	{Mod1Mask, "Mod1Mask"},
-	{Mod2Mask, "Mod2Mask"},
-	{Mod3Mask, "Mod3Mask"},
-	{Mod4Mask, "Mod4Mask"},
-	{Mod5Mask, "Mod5Mask"},
-    };
-    int num_masks = sizeof(masks) / sizeof(MaskType);
-    int i;
-    Boolean first = True;
+	static Pair	list[] = {
+		{Button1Mask, "Button1Mask"},
+		{Button2Mask, "Button2Mask"},
+		{Button3Mask, "Button3Mask"},
+		{Button4Mask, "Button4Mask"},
+		{Button5Mask, "Button5Mask"},
+		{ShiftMask, "ShiftMask"},
+		{LockMask, "LockMask"},
+		{ControlMask, "ControlMask"},
+		{Mod1Mask, "Mod1Mask"},
+		{Mod2Mask, "Mod2Mask"},
+		{Mod3Mask, "Mod3Mask"},
+		{Mod4Mask, "Mod4Mask"},
+		{Mod5Mask, "Mod5Mask"},
+		{0, nil},
+	};
 
-    buffer[0] = 0;
-
-    for (i = 0; i < num_masks; i++)
-	if (state & masks[i].value) {
-	    if (first) {
-		first = False;
-		strcpy(buffer, masks[i].string);
-	    } else {
-		strcat(buffer, " | ");
-		strcat(buffer, masks[i].string);
-	    }
-	}
-    return (buffer);
+	return unmask(list, state);
 }
 
 /* Returns the string equivalent of a mask of configure window values */
-static char*
+static char    *
 ConfigureValueMask(uint valuemask)
 {
-    static char buffer[256];
-    static MaskType masks[] = {
-	{CWX, "CWX"},
-	{CWY, "CWY"},
-	{CWWidth, "CWWidth"},
-	{CWHeight, "CWHeight"},
-	{CWBorderWidth, "CWBorderWidth"},
-	{CWSibling, "CWSibling"},
-	{CWStackMode, "CWStackMode"},
-    };
-    int num_masks = sizeof(masks) / sizeof(MaskType);
-    int i;
-    Boolean first = True;
+	static Pair	list[] = {
+		{CWX, "CWX"},
+		{CWY, "CWY"},
+		{CWWidth, "CWWidth"},
+		{CWHeight, "CWHeight"},
+		{CWBorderWidth, "CWBorderWidth"},
+		{CWSibling, "CWSibling"},
+		{CWStackMode, "CWStackMode"},
+		{0, nil},
+	};
 
-    buffer[0] = 0;
-
-    for (i = 0; i < num_masks; i++)
-	if (valuemask & masks[i].value) {
-	    if (first) {
-		first = False;
-		strcpy(buffer, masks[i].string);
-	    } else {
-		strcat(buffer, " | ");
-		strcat(buffer, masks[i].string);
-	    }
-	}
-
-    return (buffer);
+	return unmask(list, valuemask);
 }
 
 /* Returns the string equivalent of a motion hint */
-static char*
-IsHint(char is_hint)
+#if 0
+static char    *
+IsHint(char key)
 {
-    switch (is_hint) {
-    case NotifyNormal:
-	return ("NotifyNormal");
+	static Pair	list[] = {
+		{NotifyNormal, "NotifyNormal"},
+		{NotifyHint, "NotifyHint"},
+		{0, nil},
+	};
 
-    case NotifyHint:
-	return ("NotifyHint");
-
-    default:
-	return ("?");
-    }
+	return search(list, key, strign);
 }
+#endif
 
 /* Returns the string equivalent of an id or the value "None" */
-static char*
-MaybeNone(int value)
+static char    *
+MaybeNone(int key)
 {
-    static char buffer[16];
+	static Pair	list[] = {
+		{None, "None"},
+		{0, nil},
+	};
 
-    if (value == None)
-	return ("None");
-    else {
-	sprintf(buffer, "0x%x", value);
-	return (buffer);
-    }
+	return search(list, key, strhex);
 }
 
 /* Returns the string equivalent of a colormap state */
-static char*
-ColormapState(int state)
+static char    *
+ColormapState(int key)
 {
-    switch (state) {
-    case ColormapInstalled:
-	return ("ColormapInstalled");
+	static Pair	list[] = {
+		{ColormapInstalled, "ColormapInstalled"},
+		{ColormapUninstalled, "ColormapUninstalled"},
+		{0, nil},
+	};
 
-    case ColormapUninstalled:
-	return ("ColormapUninstalled");
-
-    default:
-	return ("?");
-    }
+	return search(list, key, strign);
 }
 
 /* Returns the string equivalent of a crossing detail */
-static char*
-CrossingDetail(int detail)
+static char    *
+CrossingDetail(int key)
 {
-    switch (detail) {
-    case NotifyAncestor:
-	return ("NotifyAncestor");
+	static Pair	list[] = {
+		{NotifyAncestor, "NotifyAncestor"},
+		{NotifyInferior, "NotifyInferior"},
+		{NotifyVirtual, "NotifyVirtual"},
+		{NotifyNonlinear, "NotifyNonlinear"},
+		{NotifyNonlinearVirtual, "NotifyNonlinearVirtual"},
+		{0, nil},
+	};
 
-    case NotifyInferior:
-	return ("NotifyInferior");
-
-    case NotifyVirtual:
-	return ("NotifyVirtual");
-
-    case NotifyNonlinear:
-	return ("NotifyNonlinear");
-
-    case NotifyNonlinearVirtual:
-	return ("NotifyNonlinearVirtual");
-
-    default:
-	return ("?");
-    }
+	return search(list, key, strign);
 }
 
 /* Returns the string equivalent of a focus change detail */
-static char*
-FocusChangeDetail(int detail)
+static char    *
+FocusChangeDetail(int key)
 {
-    switch (detail) {
-    case NotifyAncestor:
-	return ("NotifyAncestor");
+	static Pair	list[] = {
+		{NotifyAncestor, "NotifyAncestor"},
+		{NotifyInferior, "NotifyInferior"},
+		{NotifyVirtual, "NotifyVirtual"},
+		{NotifyNonlinear, "NotifyNonlinear"},
+		{NotifyNonlinearVirtual, "NotifyNonlinearVirtual"},
+		{NotifyPointer, "NotifyPointer"},
+		{NotifyPointerRoot, "NotifyPointerRoot"},
+		{NotifyDetailNone, "NotifyDetailNone"},
+		{0, nil},
+	};
 
-    case NotifyInferior:
-	return ("NotifyInferior");
-
-    case NotifyVirtual:
-	return ("NotifyVirtual");
-
-    case NotifyNonlinear:
-	return ("NotifyNonlinear");
-
-    case NotifyNonlinearVirtual:
-	return ("NotifyNonlinearVirtual");
-
-    case NotifyPointer:
-	return ("NotifyPointer");
-
-    case NotifyPointerRoot:
-	return ("NotifyPointerRoot");
-
-    case NotifyDetailNone:
-	return ("NotifyDetailNone");
-
-    default:
-	return ("?");
-    }
+	return search(list, key, strign);
 }
 
 /* Returns the string equivalent of a configure detail */
-static char*
-ConfigureDetail(int detail)
+static char    *
+ConfigureDetail(int key)
 {
-    switch (detail) {
-    case Above:
-	return ("Above");
+	static Pair	list[] = {
+		{Above, "Above"},
+		{Below, "Below"},
+		{TopIf, "TopIf"},
+		{BottomIf, "BottomIf"},
+		{Opposite, "Opposite"},
+		{0, nil},
+	};
 
-    case Below:
-	return ("Below");
-
-    case TopIf:
-	return ("TopIf");
-
-    case BottomIf:
-	return ("BottomIf");
-
-    case Opposite:
-	return ("Opposite");
-
-    default:
-	return ("?");
-    }
+	return search(list, key, strign);
 }
 
 /* Returns the string equivalent of a grab mode */
-static char*
-GrabMode(int mode)
+static char    *
+GrabMode(int key)
 {
-    switch (mode) {
-    case NotifyNormal:
-	return ("NotifyNormal");
+	static Pair	list[] = {
+		{NotifyNormal, "NotifyNormal"},
+		{NotifyGrab, "NotifyGrab"},
+		{NotifyUngrab, "NotifyUngrab"},
+		{NotifyWhileGrabbed, "NotifyWhileGrabbed"},
+		{0, nil},
+	};
 
-    case NotifyGrab:
-	return ("NotifyGrab");
-
-    case NotifyUngrab:
-	return ("NotifyUngrab");
-
-    case NotifyWhileGrabbed:
-	return ("NotifyWhileGrabbed");
-
-    default:
-	return ("?");
-    }
+	return search(list, key, strign);
 }
 
 /* Returns the string equivalent of a mapping request */
-static char*
-MappingRequest(int request)
+static char    *
+MappingRequest(int key)
 {
-    switch (request) {
-    case MappingModifier:
-	return ("MappingModifier");
+	static Pair	list[] = {
+		{MappingModifier, "MappingModifier"},
+		{MappingKeyboard, "MappingKeyboard"},
+		{MappingPointer, "MappingPointer"},
+		{0, nil},
+	};
 
-    case MappingKeyboard:
-	return ("MappingKeyboard");
-
-    case MappingPointer:
-	return ("MappingPointer");
-
-    default:
-	return ("?");
-    }
+	return search(list, key, strign);
 }
 
 /* Returns the string equivalent of a stacking order place */
-static char*
-Place(int place)
+static char    *
+Place(int key)
 {
-    switch (place) {
-    case PlaceOnTop:
-	return ("PlaceOnTop");
+	static Pair	list[] = {
+		{PlaceOnTop, "PlaceOnTop"},
+		{PlaceOnBottom, "PlaceOnBottom"},
+		{0, nil},
+	};
 
-    case PlaceOnBottom:
-	return ("PlaceOnBottom");
-
-    default:
-	return ("?");
-    }
+	return search(list, key, strign);
 }
 
 /* Returns the string equivalent of a major code */
-static char*
-MajorCode(int code)
+static char    *
+MajorCode(int key)
 {
-    static char buffer[32];
+	static Pair	list[] = {
+		{X_CopyArea, "X_CopyArea"},
+		{X_CopyPlane, "X_CopyPlane"},
+		{0, nil},
+	};
 
-    switch (code) {
-    case X_CopyArea:
-	return ("X_CopyArea");
-
-    case X_CopyPlane:
-	return ("X_CopyPlane");
-
-    default:
-	sprintf(buffer, "0x%x", code);
-	return (buffer);
-    }
+	return search(list, key, strhex);
 }
 
+static char    *
+eventtype(int key)
+{
+	static Pair	list[] = {
+		{ButtonPress, "ButtonPress"},
+		{ButtonRelease, "ButtonRelease"},
+		{CirculateNotify, "CirculateNotify"},
+		{CirculateRequest, "CirculateRequest"},
+		{ClientMessage, "ClientMessage"},
+		{ColormapNotify, "ColormapNotify"},
+		{ConfigureNotify, "ConfigureNotify"},
+		{ConfigureRequest, "ConfigureRequest"},
+		{CreateNotify, "CreateNotify"},
+		{DestroyNotify, "DestroyNotify"},
+		{EnterNotify, "EnterNotify"},
+		{Expose, "Expose"},
+		{FocusIn, "FocusIn"},
+		{FocusOut, "FocusOut"},
+		{GraphicsExpose, "GraphicsExpose"},
+		{GravityNotify, "GravityNotify"},
+		{KeyPress, "KeyPress"},
+		{KeyRelease, "KeyRelease"},
+		{KeymapNotify, "KeymapNotify"},
+		{LeaveNotify, "LeaveNotify"},
+		{MapNotify, "MapNotify"},
+		{MapRequest, "MapRequest"},
+		{MappingNotify, "MappingNotify"},
+		{MotionNotify, "MotionNotify"},
+		{NoExpose, "NoExpose"},
+		{PropertyNotify, "PropertyNotify"},
+		{ReparentNotify, "ReparentNotify"},
+		{ResizeRequest, "ResizeRequest"},
+		{SelectionClear, "SelectionClear"},
+		{SelectionNotify, "SelectionNotify"},
+		{SelectionRequest, "SelectionRequest"},
+		{UnmapNotify, "UnmapNotify"},
+		{VisibilityNotify, "VisibilityNotify"},
+		{0, nil},
+	};
+
+	return search(list, key, strdec);
+}
 /* Returns the string equivalent the keycode contained in the key event */
 static char*
-Keycode(XKeyEvent *ev)
+Keycode(XKeyEvent * ev)
 {
-    static char buffer[256];
-    KeySym keysym_str;
-    char *keysym_name;
-    char string[256];
+	KeySym		keysym_str;
+	char           *keysym_name;
 
-    XLookupString(ev, string, 64, &keysym_str, NULL);
+	XLookupString(ev, buffer, sizeof buffer, &keysym_str, NULL);
 
-    if (keysym_str == NoSymbol)
-	keysym_name = "NoSymbol";
-    else if (!(keysym_name = XKeysymToString(keysym_str)))
-	keysym_name = "(no name)";
-    sprintf(buffer, "%u (keysym 0x%x \"%s\")",
-      (int)ev->keycode, (int)keysym_str, keysym_name);
-    return (buffer);
+	if (keysym_str == NoSymbol)
+		keysym_name = "NoSymbol";
+	else
+		keysym_name = XKeysymToString(keysym_str);
+	if(keysym_name == nil)
+		keysym_name = "(no name)";
+
+	snprintf(buffer, sizeof buffer, "%u (keysym 0x%x \"%s\")",
+		(int)ev->keycode, (int)keysym_str, keysym_name);
+	return buffer;
 }
 
-/* Returns the string equivalent of an atom or "None"*/
-static char*
-AtomName(Display *dpy, Atom atom)
+/* Returns the string equivalent of an atom or "None" */
+static char    *
+AtomName(Atom atom)
 {
-    static char buffer[256];
-    char *atom_name;
+	extern Display *display;
+	char           *atom_name;
 
-    if (atom == None)
-	return ("None");
+	if (atom == None)
+		return "None";
 
-    atom_name = XGetAtomName(dpy, atom);
-    strncpy(buffer, atom_name, 256);
-    XFree(atom_name);
-    return (buffer);
+	atom_name = XGetAtomName(display, atom);
+	strncpy(buffer, atom_name, sizeof buffer);
+	XFree(atom_name);
+
+	return buffer;
+}
+
+#define _(m) #m, ev->m
+
+enum {
+	TEnd,
+	TAtom,
+	TBool,
+	TColMap,
+	TConfDetail,
+	TConfMask,
+	TFocus,
+	TGrabMode,
+	TInt,
+	TIntNone,
+	TMajor,
+	TMapping,
+	TModState,
+	TPlace,
+	TPropState,
+	TString,
+	TTime,
+	TVis,
+	TWindow,
+	TXing,
+};
+
+typedef struct TypeTab TypeTab;
+
+struct TypeTab {
+	int size;
+	char *(*fn)();
+} ttab[] = {
+	[TEnd] = {0, nil},
+	[TAtom] = {sizeof(Atom), AtomName},
+	[TBool] = {sizeof(Bool), TorF},
+	[TColMap] = {sizeof(int), ColormapState},
+	[TConfDetail] = {sizeof(int), ConfigureDetail},
+	[TConfMask] = {sizeof(int), ConfigureValueMask},
+	[TFocus] = {sizeof(int), FocusChangeDetail},
+	[TGrabMode] = {sizeof(int), GrabMode},
+	[TIntNone] = {sizeof(int), MaybeNone},
+	[TInt] = {sizeof(int), strdec},
+	[TMajor] = {sizeof(int), MajorCode},
+	[TMapping] = {sizeof(int), MappingRequest},
+	[TModState] = {sizeof(int), ButtonAndOrModifierState},
+	[TPlace] = {sizeof(int), Place},
+	[TPropState] = {sizeof(int), PropertyState},
+	[TString] = {sizeof(char*), Self},
+	[TTime] = {sizeof(Time), ServerTime},
+	[TVis] = {sizeof(int), VisibilityState},
+	[TWindow] = {sizeof(Window), strhex},
+	[TXing] = {sizeof(int), CrossingDetail},
+};
+
+static void
+pevent(void *ev, ...) {
+	static char buf[4096];
+	static char *bend = buf + sizeof(buf);
+	va_list ap;
+	TypeTab *t;
+	char *p, *key, *val;
+	int n, type, valint;
+
+	va_start(ap, ev);
+
+	p = buf;
+	*p = '\0';
+	n = 0;
+	for(;;) {
+		type = va_arg(ap, int);
+		if(type == TEnd)
+			break;
+		t = &ttab[type];
+
+		key = va_arg(ap, char*);
+		switch(t->size) {
+		default:
+			break; /* Can't continue */
+		case sizeof(int):
+			valint = va_arg(ap, int);
+			val = t->fn(valint);
+			break;
+		}
+
+		if(n++ != 0)
+			p += strlcat(p, sep, bend-p);
+		p += snprintf(p, bend-p, "%s=%s", key, val);
+
+		if(p >= bend)
+			break;	
+	}
+	fprintf(stderr, "%s\n", buf);
+
+	va_end(ap);
 }
 
 /******************************************************************************/
@@ -467,533 +563,448 @@ AtomName(Display *dpy, Atom atom)
 static void
 VerbMotion(XMotionEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "root=0x%x%s", (int)ev->root, sep);
-    fprintf(stderr, "subwindow=0x%x%s", (int)ev->subwindow, sep);
-    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
-    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
-    fprintf(stderr, "x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
-    fprintf(stderr, "state=%s%s", ButtonAndOrModifierState(ev->state), sep);
-    fprintf(stderr, "is_hint=%s%s", IsHint(ev->is_hint), sep);
-    fprintf(stderr, "same_screen=%s\n", TorF(ev->same_screen));
+	pevent(ev,
+		TWindow, _(window),
+		TWindow, _(root),
+		TWindow, _(subwindow),
+		TTime, _(time),
+		TInt, _(x), TInt, _(y),
+		TInt, _(x_root), TInt, _(y_root),
+		TModState, _(state),
+		TBool, _(same_screen),
+		TEnd
+	);
+    //fprintf(stderr, "is_hint=%s%s", IsHint(ev->is_hint), sep);
 }
 
 static void
 VerbButton(XButtonEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "root=0x%x%s", (int)ev->root, sep);
-    fprintf(stderr, "subwindow=0x%x%s", (int)ev->subwindow, sep);
-    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
-    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
-    fprintf(stderr, "x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
-    fprintf(stderr, "state=%s%s", ButtonAndOrModifierState(ev->state), sep);
-    fprintf(stderr, "button=%s%s", ButtonAndOrModifierState(ev->button), sep);
-    fprintf(stderr, "same_screen=%s\n", TorF(ev->same_screen));
+	pevent(ev,
+		TWindow, _(window),
+		TWindow, _(root),
+		TWindow, _(subwindow),
+		TTime, _(time),
+		TInt, _(x), TInt, _(y),
+		TInt, _(x_root), TInt, _(y_root),
+		TModState, _(state),
+		TModState, _(button),
+		TBool, _(same_screen),
+		TEnd
+	);
 }
 
 static void
 VerbColormap(XColormapEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "colormap=%s%s", MaybeNone(ev->colormap), sep);
-    fprintf(stderr, "new=%s%s", TorF(ev->new), sep);
-    fprintf(stderr, "state=%s\n", ColormapState(ev->state));
+	pevent(ev,
+		TWindow, _(window),
+		TIntNone, _(colormap),
+		TBool, _(new),
+		TColMap, _(state),
+		TEnd
+	);
 }
 
 static void
 VerbCrossing(XCrossingEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "root=0x%x%s", (int)ev->root, sep);
-    fprintf(stderr, "subwindow=0x%x%s", (int)ev->subwindow, sep);
-    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
-    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
-    fprintf(stderr, "x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
-    fprintf(stderr, "mode=%s%s", GrabMode(ev->mode), sep);
-    fprintf(stderr, "detail=%s%s", CrossingDetail(ev->detail), sep);
-    fprintf(stderr, "same_screen=%s%s", TorF(ev->same_screen), sep);
-    fprintf(stderr, "focus=%s%s", TorF(ev->focus), sep);
-    fprintf(stderr, "state=%s\n", ButtonAndOrModifierState(ev->state));
+	pevent(ev,
+		TWindow, _(window),
+		TWindow, _(root),
+		TWindow, _(subwindow),
+		TTime, _(time),
+		TInt, _(x), TInt, _(y),
+		TInt, _(x_root), TInt, _(y_root),
+		TGrabMode, _(mode),
+		TXing, _(detail),
+		TBool, _(same_screen),
+		TBool, _(focus),
+		TModState, _(state),
+		TEnd
+	);
 }
 
 static void
 VerbExpose(XExposeEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
-    fprintf(stderr, "width=%d height=%d%s", ev->width, ev->height, sep);
-    fprintf(stderr, "count=%d\n", ev->count);
+	pevent(ev,
+		TWindow, _(window),
+		TInt, _(x), TInt, _(y),
+		TInt, _(width), TInt, _(height),
+		TInt, _(count),
+		TEnd
+	);
 }
 
 static void
 VerbGraphicsExpose(XGraphicsExposeEvent *ev)
 {
-    fprintf(stderr, "drawable=0x%x%s", (int)ev->drawable, sep);
-    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
-    fprintf(stderr, "width=%d height=%d%s", ev->width, ev->height, sep);
-    fprintf(stderr, "major_code=%s%s", MajorCode(ev->major_code), sep);
-    fprintf(stderr, "minor_code=%d\n", ev->minor_code);
+	pevent(ev,
+		TWindow, _(drawable),
+		TInt, _(x), TInt, _(y),
+		TInt, _(width), TInt, _(height),
+		TMajor, _(major_code),
+		TInt, _(minor_code),
+		TEnd
+	);
 }
 
 static void
 VerbNoExpose(XNoExposeEvent *ev)
 {
-    fprintf(stderr, "drawable=0x%x%s", (int)ev->drawable, sep);
-    fprintf(stderr, "major_code=%s%s", MajorCode(ev->major_code), sep);
-    fprintf(stderr, "minor_code=%d\n", ev->minor_code);
+	pevent(ev,
+		TWindow, _(drawable),
+		TMajor, _(major_code),
+		TInt, _(minor_code),
+		TEnd
+	);
 }
 
 static void
 VerbFocus(XFocusChangeEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "mode=%s%s", GrabMode(ev->mode), sep);
-    fprintf(stderr, "detail=%s\n", FocusChangeDetail(ev->detail));
+	pevent(ev,
+		TWindow, _(window),
+		TGrabMode, _(mode),
+		TFocus, _(detail),
+		TEnd
+	);
 }
 
 static void
-VerbKeymap(XKeymapEvent *ev)
+VerbKeymap(XKeymapEvent * ev)
 {
-    int i;
+	int		i;
 
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "key_vector=");
-    for (i = 0; i < 32; i++)
-	fprintf(stderr, "%02x", ev->key_vector[i]);
-    fprintf(stderr, "\n");
+	fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+	fprintf(stderr, "key_vector=");
+	for (i = 0; i < 32; i++)
+		fprintf(stderr, "%02x", ev->key_vector[i]);
+	fprintf(stderr, "\n");
 }
 
 static void
 VerbKey(XKeyEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "root=0x%x%s", (int)ev->root, sep);
-    if(ev->subwindow)
-        fprintf(stderr, "subwindow=0x%x%s", (int)ev->subwindow, sep);
-    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
-    fprintf(stderr, "[%d,%d]%s", ev->x, ev->y, sep);
-    fprintf(stderr, "root=[%d,%d]%s", ev->x_root, ev->y_root, sep);
-    if(ev->state)
-        fprintf(stderr, "state=%s%s", ButtonAndOrModifierState(ev->state), sep);
-    fprintf(stderr, "keycode=%s%s", Keycode(ev), sep);
-    if(!ev->same_screen)
-        fprintf(stderr, "!same_screen");
-    fprintf(stderr, "\n");
-    return;
-
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "root=0x%x%s", (int)ev->root, sep);
-    fprintf(stderr, "subwindow=0x%x%s", (int)ev->subwindow, sep);
-    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
-    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
-    fprintf(stderr, "x_root=%d y_root=%d%s", ev->x_root, ev->y_root, sep);
-    fprintf(stderr, "state=%s%s", ButtonAndOrModifierState(ev->state), sep);
-    fprintf(stderr, "keycode=%s%s", Keycode(ev), sep);
-    fprintf(stderr, "same_screen=%s\n", TorF(ev->same_screen));
+	pevent(ev,
+		TWindow, _(window),
+		TWindow, _(root),
+		TWindow, _(subwindow),
+		TTime, _(time),
+		TInt, _(x), TInt, _(y),
+		TInt, _(x_root), TInt, _(y_root),
+		TModState, _(state),
+		TString, "keycode", estrdup(Keycode(ev)),
+		TBool, _(same_screen),
+		TEnd
+	);
 }
 
 static void
 VerbProperty(XPropertyEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "atom=%s%s", AtomName(ev->display, ev->atom), sep);
-    fprintf(stderr, "time=%s%s", ServerTime(ev->time), sep);
-    fprintf(stderr, "state=%s\n", PropertyState(ev->state));
+	pevent(ev,
+		TWindow, _(window),
+		TAtom, _(atom),
+		TTime, _(time),
+		TPropState, _(state),
+		TEnd
+	);
 }
 
 static void
 VerbResizeRequest(XResizeRequestEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "width=%d height=%d\n", ev->width, ev->height);
+	pevent(ev,
+		TWindow, _(window),
+		TInt, _(width), TInt, _(height),
+		TEnd
+	);
 }
 
 static void
 VerbCirculate(XCirculateEvent *ev)
 {
-    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "place=%s\n", Place(ev->place));
+	pevent(ev,
+		TWindow, _(event),
+		TWindow, _(window),
+		TPlace, _(place),
+		TEnd
+	);
 }
 
 static void
 VerbConfigure(XConfigureEvent *ev)
 {
-    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
-    fprintf(stderr, "width=%d height=%d%s", ev->width, ev->height, sep);
-    fprintf(stderr, "border_width=%d%s", ev->border_width, sep);
-    fprintf(stderr, "above=%s%s", MaybeNone(ev->above), sep);
-    fprintf(stderr, "override_redirect=%s\n", TorF(ev->override_redirect));
+	pevent(ev,
+		TWindow, _(event),
+		TWindow, _(window),
+		TInt, _(x), TInt, _(y),
+		TInt, _(width), TInt, _(height),
+		TInt, _(border_width),
+		TIntNone, _(above),
+		TBool, _(override_redirect),
+		TEnd
+	);
 }
 
 static void
 VerbCreateWindow(XCreateWindowEvent *ev)
 {
-    fprintf(stderr, "parent=0x%x%s", (int)ev->parent, sep);
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
-    fprintf(stderr, "width=%d height=%d%s", ev->width, ev->height, sep);
-    fprintf(stderr, "border_width=%d%s", ev->border_width, sep);
-    fprintf(stderr, "override_redirect=%s\n", TorF(ev->override_redirect));
+	pevent(ev,
+		TWindow, _(parent),
+		TWindow, _(window),
+		TInt, _(x), TInt, _(y),
+		TInt, _(width), TInt, _(height),
+		TInt, _(border_width),
+		TBool, _(override_redirect),
+		TEnd
+	);
 }
 
 static void
 VerbDestroyWindow(XDestroyWindowEvent *ev)
 {
-    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
-    fprintf(stderr, "window=0x%x\n", (int)ev->window);
+	pevent(ev,
+		TWindow, _(event),
+		TWindow, _(window),
+		TEnd
+	);
 }
 
 static void
 VerbGravity(XGravityEvent *ev)
 {
-    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "x=%d y=%d\n", ev->x, ev->y);
+	pevent(ev,
+		TWindow, _(event),
+		TWindow, _(window),
+		TInt, _(x), TInt, _(y),
+		TEnd
+	);
 }
 
 static void
 VerbMap(XMapEvent *ev)
 {
-    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "override_redirect=%s\n", TorF(ev->override_redirect));
+	pevent(ev,
+		TWindow, _(event),
+		TWindow, _(window),
+		TBool, _(override_redirect),
+		TEnd
+	);
 }
 
 static void
 VerbReparent(XReparentEvent *ev)
 {
-    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "parent=0x%x%s", (int)ev->parent, sep);
-    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
-    fprintf(stderr, "override_redirect=%s\n", TorF(ev->override_redirect));
+	pevent(ev,
+		TWindow, _(event),
+		TWindow, _(window),
+		TWindow, _(parent),
+		TInt, _(x), TInt, _(y),
+		TBool, _(override_redirect),
+		TEnd
+	);
 }
 
 static void
 VerbUnmap(XUnmapEvent *ev)
 {
-    fprintf(stderr, "event=0x%x%s", (int)ev->event, sep);
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "from_configure=%s\n", TorF(ev->from_configure));
+	pevent(ev,
+		TWindow, _(event),
+		TWindow, _(window),
+		TBool, _(from_configure),
+		TEnd
+	);
 }
 
 static void
 VerbCirculateRequest(XCirculateRequestEvent *ev)
 {
-    fprintf(stderr, "parent=0x%x%s", (int)ev->parent, sep);
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "place=%s\n", Place(ev->place));
+	pevent(ev,
+		TWindow, _(parent),
+		TWindow, _(window),
+		TPlace, _(place),
+		TEnd
+	);
 }
 
 static void
 VerbConfigureRequest(XConfigureRequestEvent *ev)
 {
-    fprintf(stderr, "parent=0x%x%s", (int)ev->parent, sep);
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "x=%d y=%d%s", ev->x, ev->y, sep);
-    fprintf(stderr, "width=%d height=%d%s", ev->width, ev->height, sep);
-    fprintf(stderr, "border_width=%d%s", ev->border_width, sep);
-    fprintf(stderr, "above=%s%s", MaybeNone(ev->above), sep);
-    fprintf(stderr, "detail=%s%s", ConfigureDetail(ev->detail), sep);
-    fprintf(stderr, "value_mask=%s\n", ConfigureValueMask(ev->value_mask));
+	pevent(ev,
+		TWindow, _(parent),
+		TWindow, _(window),
+		TInt, _(x), TInt, _(y),
+		TInt, _(width), TInt, _(height),
+		TInt, _(border_width),
+		TIntNone, _(above),
+		TConfDetail, _(detail),
+		TConfMask, _(value_mask),
+		TEnd
+	);
 }
 
 static void
 VerbMapRequest(XMapRequestEvent *ev)
 {
-    fprintf(stderr, "parent=0x%x%s", (int)ev->parent, sep);
-    fprintf(stderr, "window=0x%x\n", (int)ev->window);
+	pevent(ev,
+		TWindow, _(parent),
+		TWindow, _(window),
+		TEnd
+	);
 }
 
 static void
-VerbClient(XClientMessageEvent *ev)
+VerbClient(XClientMessageEvent * ev)
 {
-    int i;
+	int		i;
 
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "message_type=%s%s", AtomName(ev->display, ev->message_type), sep);
-    fprintf(stderr, "format=%d\n", ev->format);
-    fprintf(stderr, "data (shown as longs)=");
-    for (i = 0; i < 5; i++)
-	fprintf(stderr, " 0x%08lx", ev->data.l[i]);
-    fprintf(stderr, "\n");
+	fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
+	fprintf(stderr, "message_type=%s%s", AtomName(ev->message_type), sep);
+	fprintf(stderr, "format=%d\n", ev->format);
+	fprintf(stderr, "data (shown as longs)=");
+	for (i = 0; i < 5; i++)
+		fprintf(stderr, " 0x%08lx", ev->data.l[i]);
+	fprintf(stderr, "\n");
 }
 
 static void
 VerbMapping(XMappingEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "request=%s%s", MappingRequest(ev->request), sep);
-    fprintf(stderr, "first_keycode=0x%x%s", ev->first_keycode, sep);
-    fprintf(stderr, "count=0x%x\n", ev->count);
+	pevent(ev,
+		TWindow, _(window),
+		TMapping, _(request),
+		TWindow, _(first_keycode),
+		TWindow, _(count),
+		TEnd
+	);
 }
 
 static void
 VerbSelectionClear(XSelectionClearEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "selection=%s%s", AtomName(ev->display, ev->selection), sep);
-    fprintf(stderr, "time=%s\n", ServerTime(ev->time));
+	pevent(ev,
+		TWindow, _(window),
+		TAtom, _(selection),
+		TTime, _(time),
+		TEnd
+	);
 }
 
 static void
 VerbSelection(XSelectionEvent *ev)
 {
-    fprintf(stderr, "requestor=0x%x%s", (int)ev->requestor, sep);
-    fprintf(stderr, "selection=%s%s", AtomName(ev->display, ev->selection), sep);
-    fprintf(stderr, "target=%s%s", AtomName(ev->display, ev->target), sep);
-    fprintf(stderr, "property=%s%s", AtomName(ev->display, ev->property), sep);
-    fprintf(stderr, "time=%s\n", ServerTime(ev->time));
+	pevent(ev,
+		TWindow, _(requestor),
+		TAtom, _(selection),
+		TAtom, _(target),
+		TAtom, _(property),
+		TTime, _(time),
+		TEnd
+	);
 }
 
 static void
 VerbSelectionRequest(XSelectionRequestEvent *ev)
 {
-    fprintf(stderr, "owner=0x%x%s", (int)ev->owner, sep);
-    fprintf(stderr, "requestor=0x%x%s", (int)ev->requestor, sep);
-    fprintf(stderr, "selection=%s%s", AtomName(ev->display, ev->selection), sep);
-    fprintf(stderr, "target=%s%s", AtomName(ev->display, ev->target), sep);
-    fprintf(stderr, "property=%s%s", AtomName(ev->display, ev->property), sep);
-    fprintf(stderr, "time=%s\n", ServerTime(ev->time));
+	pevent(ev,
+		TWindow, _(owner),
+		TWindow, _(requestor),
+		TAtom, _(selection),
+		TAtom, _(target),
+		TAtom, _(property),
+		TTime, _(time),
+		TEnd
+	);
 }
 
 static void
 VerbVisibility(XVisibilityEvent *ev)
 {
-    fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-    fprintf(stderr, "state=%s\n", VisibilityState(ev->state));
-}
-
-/******************************************************************************/
-/************ Return the string representation for type of an event ***********/
-/******************************************************************************/
-
-char *eventtype(XEvent *ev)
-{
-    static char buffer[20];
-
-    switch (ev->type) {
-    case KeyPress:
-	return ("KeyPress");
-    case KeyRelease:
-	return ("KeyRelease");
-    case ButtonPress:
-	return ("ButtonPress");
-    case ButtonRelease:
-	return ("ButtonRelease");
-    case MotionNotify:
-	return ("MotionNotify");
-    case EnterNotify:
-	return ("EnterNotify");
-    case LeaveNotify:
-	return ("LeaveNotify");
-    case FocusIn:
-	return ("FocusIn");
-    case FocusOut:
-	return ("FocusOut");
-    case KeymapNotify:
-	return ("KeymapNotify");
-    case Expose:
-	return ("Expose");
-    case GraphicsExpose:
-	return ("GraphicsExpose");
-    case NoExpose:
-	return ("NoExpose");
-    case VisibilityNotify:
-	return ("VisibilityNotify");
-    case CreateNotify:
-	return ("CreateNotify");
-    case DestroyNotify:
-	return ("DestroyNotify");
-    case UnmapNotify:
-	return ("UnmapNotify");
-    case MapNotify:
-	return ("MapNotify");
-    case MapRequest:
-	return ("MapRequest");
-    case ReparentNotify:
-	return ("ReparentNotify");
-    case ConfigureNotify:
-	return ("ConfigureNotify");
-    case ConfigureRequest:
-	return ("ConfigureRequest");
-    case GravityNotify:
-	return ("GravityNotify");
-    case ResizeRequest:
-	return ("ResizeRequest");
-    case CirculateNotify:
-	return ("CirculateNotify");
-    case CirculateRequest:
-	return ("CirculateRequest");
-    case PropertyNotify:
-	return ("PropertyNotify");
-    case SelectionClear:
-	return ("SelectionClear");
-    case SelectionRequest:
-	return ("SelectionRequest");
-    case SelectionNotify:
-	return ("SelectionNotify");
-    case ColormapNotify:
-	return ("ColormapNotify");
-    case ClientMessage:
-	return ("ClientMessage");
-    case MappingNotify:
-	return ("MappingNotify");
-    }
-    sprintf(buffer, "%d", ev->type);
-    return buffer;
+	pevent(ev,
+		TWindow, _(window),
+		TVis, _(state),
+		TEnd
+	);
 }
 
 /******************************************************************************/
 /**************** Print the values of all fields for any event ****************/
 /******************************************************************************/
 
-void printevent(XEvent *e)
+typedef struct Handler Handler;
+
+struct Handler {
+	int key;
+	void (*fn)();
+};
+
+void 
+printevent(XEvent * e)
 {
-    XAnyEvent *ev = (void*)e;
-    char *name;
+	extern Display *display;
+	XAnyEvent      *ev = (void *)e;
+	char           *name;
 
-    if(ev->window) {
-	    XFetchName(blz.dpy, ev->window, &name);
-	    if(name) {
-		    fprintf(stderr, "\ttitle=%s\n", name);
-		    XFree(name);
-	    }
-    }
-    fprintf(stderr, "%3ld %-20s ", ev->serial, eventtype(e));
-    if(ev->send_event)
-        fprintf(stderr, "(sendevent) ");
-    if(0){
-        fprintf(stderr, "type=%s%s", eventtype(e), sep);
-        fprintf(stderr, "serial=%lu%s", ev->serial, sep);
-        fprintf(stderr, "send_event=%s%s", TorF(ev->send_event), sep);
-        fprintf(stderr, "display=0x%p%s", ev->display, sep);
-    }
+	if (ev->window) {
+		XFetchName(display, ev->window, &name);
+		if (name)
+			fprintf(stderr, "\ttitle=%s\n", name);
+		XFree(name);
+	}
 
-    switch (ev->type) {
-    case MotionNotify:
-	VerbMotion((void*)ev);
-	break;
+	fprintf(stderr, "%3ld %-20s ", ev->serial, eventtype(e->xany.type));
+	if (ev->send_event)
+		fprintf(stderr, "(sendevent) ");
+	if (0) {
+		fprintf(stderr, "type=%s%s", eventtype(e->xany.type), sep);
+		fprintf(stderr, "serial=%lu%s", ev->serial, sep);
+		fprintf(stderr, "send_event=%s%s", TorF(ev->send_event), sep);
+		fprintf(stderr, "display=0x%p%s", ev->display, sep);
+	}
+	static Handler	fns[] = {
+		{MotionNotify, VerbMotion},
+		{ButtonPress, VerbButton},
+		{ButtonRelease, VerbButton},
+		{ColormapNotify, VerbColormap},
+		{EnterNotify, VerbCrossing},
+		{LeaveNotify, VerbCrossing},
+		{Expose, VerbExpose},
+		{GraphicsExpose, VerbGraphicsExpose},
+		{NoExpose, VerbNoExpose},
+		{FocusIn, VerbFocus},
+		{FocusOut, VerbFocus},
+		{KeymapNotify, VerbKeymap},
+		{KeyPress, VerbKey},
+		{KeyRelease, VerbKey},
+		{PropertyNotify, VerbProperty},
+		{ResizeRequest, VerbResizeRequest},
+		{CirculateNotify, VerbCirculate},
+		{ConfigureNotify, VerbConfigure},
+		{CreateNotify, VerbCreateWindow},
+		{DestroyNotify, VerbDestroyWindow},
+		{GravityNotify, VerbGravity},
+		{MapNotify, VerbMap},
+		{ReparentNotify, VerbReparent},
+		{UnmapNotify, VerbUnmap},
+		{CirculateRequest, VerbCirculateRequest},
+		{ConfigureRequest, VerbConfigureRequest},
+		{MapRequest, VerbMapRequest},
+		{ClientMessage, VerbClient},
+		{MappingNotify, VerbMapping},
+		{SelectionClear, VerbSelectionClear},
+		{SelectionNotify, VerbSelection},
+		{SelectionRequest, VerbSelectionRequest},
+		{VisibilityNotify, VerbVisibility},
+		{0, nil},
+	};
+	Handler *p;
 
-    case ButtonPress:
-    case ButtonRelease:
-	VerbButton((void*)ev);
-	break;
-
-    case ColormapNotify:
-	VerbColormap((void*)ev);
-	break;
-
-    case EnterNotify:
-    case LeaveNotify:
-	VerbCrossing((void*)ev);
-	break;
-
-    case Expose:
-	VerbExpose((void*)ev);
-	break;
-
-    case GraphicsExpose:
-	VerbGraphicsExpose((void*)ev);
-	break;
-
-    case NoExpose:
-	VerbNoExpose((void*)ev);
-	break;
-
-    case FocusIn:
-    case FocusOut:
-	VerbFocus((void*)ev);
-	break;
-
-    case KeymapNotify:
-	VerbKeymap((void*)ev);
-	break;
-
-    case KeyPress:
-    case KeyRelease:
-	VerbKey((void*)ev);
-	break;
-
-    case PropertyNotify:
-	VerbProperty((void*)ev);
-	break;
-
-    case ResizeRequest:
-	VerbResizeRequest((void*)ev);
-	break;
-
-    case CirculateNotify:
-	VerbCirculate((void*)ev);
-	break;
-
-    case ConfigureNotify:
-	VerbConfigure((void*)ev);
-	break;
-
-    case CreateNotify:
-	VerbCreateWindow((void*)ev);
-	break;
-
-    case DestroyNotify:
-	VerbDestroyWindow((void*)ev);
-	break;
-
-    case GravityNotify:
-	VerbGravity((void*)ev);
-	break;
-
-    case MapNotify:
-	VerbMap((void*)ev);
-	break;
-
-    case ReparentNotify:
-	VerbReparent((void*)ev);
-	break;
-
-    case UnmapNotify:
-	VerbUnmap((void*)ev);
-	break;
-
-    case CirculateRequest:
-	VerbCirculateRequest((void*)ev);
-	break;
-
-    case ConfigureRequest:
-	VerbConfigureRequest((void*)ev);
-	break;
-
-    case MapRequest:
-	VerbMapRequest((void*)ev);
-	break;
-
-    case ClientMessage:
-	VerbClient((void*)ev);
-	break;
-
-    case MappingNotify:
-	VerbMapping((void*)ev);
-	break;
-
-    case SelectionClear:
-	VerbSelectionClear((void*)ev);
-	break;
-
-    case SelectionNotify:
-	VerbSelection((void*)ev);
-	break;
-
-    case SelectionRequest:
-	VerbSelectionRequest((void*)ev);
-	break;
-
-    case VisibilityNotify:
-	VerbVisibility((void*)ev);
-	break;
-    }
+	for (p = fns; p->fn; p++)
+		if (p->key == ev->type)
+			break;
+	if (p->fn)
+		p->fn(ev);
 }
-

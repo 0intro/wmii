@@ -1,0 +1,189 @@
+\begin{Name}{1}{wmii}{Kris Maglione}{}{wmii - window manager improved, improved}
+	\Prog{wmii}-VERSION
+\end{Name}
+
+\section{SYNOPSIS}
+\Prog{wmii} \oOptArg{-a}{<address>} \oOptArg{-c}{<wmiirc>} \\
+\Prog{wmii} \Opt{-v}
+
+\section{DESCRIPTION}
+
+\subsection{Overview}
+
+\Prog{wmii} is a dynamic window manager for X11. In contrast to
+static window management the user rarely has to think about how to
+organize windows, no matter what he is doing or how many
+applications are used at the same time.  The window manager adapts
+to the current environment and fits to the needs of the user, rather
+than forcing him to use a preset, fixed layout and trying to
+shoehorn all windows and applications into it.
+
+\Prog{wmii} supports classic and tiled window management with
+extended keyboard and mouse control. The classic window management
+arranges windows in a floating layer in which windows can be moved
+and resized freely. The tiled window management is based on columns
+which split up the screen horizontally. Each column handles
+arbitrary windows and arranges them vertically in a non\-overlapping
+way. They can then be moved and resized between and within columns
+at will.
+
+\Prog{wmii} provides a virtual filesystem which represents the
+internal state similar to the procfs of Unix operating systems.
+Modifying this virtual filesystem results in changing the state of
+the window manager. The virtual filesystem service can be accessed
+through 9P\-capable client programs, like \Cmd{wmiir}{1}.  This
+allows simple and powerful remote control of the core window
+manager.
+
+\Prog{wmii} basically consists of clients, columns, views, and the
+bar, which are described in detail in the \textbf{Terminology}
+section.
+
+\subsection{Terminology}
+
+\begin{description}
+\item[Display] A running X server instance consisting of input devices
+	and screens.
+\item[Screen] A physical or virtual (Xinerama or \Cmd{Xnest}{1}) screen
+	of an X display. A screen displays a bar window and a view at a time.
+\item[Window] A (rectangular) drawable X object which is displayed on a
+	screen, usually an application window.
+\item[Client] An application window surrounded by a frame window containing
+	a border and a titlebar.
+\item[Floating layer] A screen layer of \Prog{wmii} on top of all other
+	layers, where clients are arranged in a classic (floating) way.
+	They can be resized or moved freely.
+\item[Managed layer] A screen layer of \Prog{wmii} behind the floating layer,
+	where clients are arranged in a non\-overlapping (managed) way.  Here,
+	the window manager dynamically assigns each client a size and position.
+	The managed layer consists of columns.
+\item[Tag] Alphanumeric strings which can be assigned to a client. This provides
+	a mechanism to group clients with similar properties. Clients can have one
+	tag, e.g. \emph{work}, or several tags, e.g.  \emph{work+mail}.
+
+	Tags are separated with the \emph{+} character.
+\item[View] A set of clients containing a specific tag, quite similiar to a
+	workspace in other window managers.  It consists of the floating and
+	managed layers.
+\item[Column] A column is a screen area which arranges clients vertically in a
+	non-overlapping way. Columns provide three different modes, which
+	arrange clients with equal size, stacked, or maximized respectively.
+	Clients can be moved and resized between and within columns freely.
+\item[Bar] The bar at the bottom of the screen displays a label for each view and
+	allows the creation of arbitrary user\-defined labels.
+\item[Event] An event is a message which can be read from a special file in the
+	filesystem of \Prog{wmii}, such as a mouse button press, a key press, or
+	a message written by a different 9P-client.
+\end{description}
+
+\subsection{Basic window management}
+
+Running a raw \Prog{wmii} process without a \Cmd{wmiirc}{1} script
+provides basic window management capabilities already. However, to
+use it effectively, remote control through its filesystem interface
+is necessary.  By default it is only usable with the mouse in
+conjunction with the \emph{Mod1 (Alt)} modifier key. Other
+interactions, such as customizing the style, killing or retagging
+clients, and grabbing keys, cannot be achieved without accessing the
+filesystem.
+
+The filesystem can be accessed by connecting to the \emph{address}
+of \Prog{wmii} with any 9P-capable client, such as \Cmd{wmiir}{1}
+
+\subsection{Actions}
+
+An action is a shell script in the default setup, but it can
+actually be any executable file.  It is executed usually by
+selecting it from the actions menu.  You can customize an action by
+copying it from the global action directory
+\File{CONFPREFIX/wmii-3.5} to \File{\$HOME/.wmii-3.5} and then
+editing the copy to fit your needs.  Of course you can also create
+your own actions there; make sure that they are executable.
+
+Here is a list of the default actions:
+
+\begin{Table}[]{2}
+quit	& leave the window manager nicely \\
+status	& periodically print date and load average to the bar \\
+welcome	& display a welcome message that contains the wmii tutorial \\
+wmiirc	& configure wmii \\
+\end{Table}
+
+\subsection{Default Key Bindings}
+\subsubsection{Moving Around}
+\begin{Table}[]{2}
+\textbf{Key} & \textbf{Action} \\
+Mod-h	& Move to a window to the \emph{left} of the one currently
+	focused \\
+Mod-l	& Move to a window to the \emph{right} of the one currently
+	focused \\
+Mod-j	& Move to the window \emph{below} the one currently focused \\
+Mod-k	& Move to a window \emph{above} the one currently focused \\
+Mod-space & Toggle between the managed and floating layers \\
+Mod-t \emph{tag} & Move to the view of the given \emph{tag} \\
+Mod-\emph{[0-9]} & Move to the view with the given number \\
+\end{Table}
+
+\subsubsection{Moving Things Around}
+\begin{Table}[]{2}
+\textbf{Key} & \textbf{Action} \\
+Mod-Shift-h	& Move the current window \emph{window} to a
+	column on the \emph{left} \\
+Mod-Shift-l	& Move the current window to a column
+	on the \emph{right} \\
+Mod-Shift-j	& Move the current window below the window
+	beneath it. \\
+Mod-Shift-k	& Move the current window above the window
+	above it. \\
+Mod-Shift-space	& Toggle the current window between the
+	managed and floating layer \\
+Mod-Shift-t \emph{tag}	& Move the current window to the
+	view of the given \emph{tag} \\
+Mod-Shift-\emph{[0-9]}	& Move to the current window to the
+	view with the given number \\
+\end{Table}
+
+\subsubsection{Miscellaneous}
+\begin{Table}[]{2}
+\textbf{Key} & \textbf{Action} \\
+Mod-m	& Switch the current column to \emph{max mode} \\
+Mod-s	& Switch the current column to \emph{stack mode} \\
+Mod-d	& Switch the current column to \emph{default mode} \\
+Mod-Shift-c	& \Prog{Kill} the selected client \\
+Mod-p \emph{program}	& \Prog{Execute} \emph{program} \\
+Mod-a \emph{action}	& \Prog{Execute} the named \emph{action} \\
+Mod-Enter	& \Prog{Execute} an \Prog{xterm} \\
+\end{Table}
+
+\section{Configuration}
+
+If you feel the need to change the default configuration, then
+customize (as described above) the \Prog{wmiirc} action.  This
+action is executed at the end of the \Prog{wmii} script and does all
+the work of setting up the window manager, the key bindings, the bar
+labels, etc.
+
+\section{FILES}
+
+\begin{description}
+\item[/tmp/ns.$USER.${DISPLAY\%.0}/wmii] The wmii socket file which provides a 9P service.
+\item[CONFPREFIX/wmii-3.5] Global action directory.
+\item[\$HOME/.wmii-3.5] User-specific action directory.  Actions are first searched here.
+\end{description}
+
+\section{ENVIRONMENT}
+
+\begin{description}
+\item[HOME, DISPLAY] See the section \textbf{FILES} above.
+\end{description}
+
+The following variables are set and exported within \Prog{wmii} and
+thus can be used in actions:
+
+\begin{description}
+\item[WMII\_ADDRESS] Socket file of Used by \Cmd{wmiir}{1}.
+\end{description}
+
+\section{SEE ALSO}
+\Cmd{dmenu}{1}, \Cmd{wmiir}{1}
+
