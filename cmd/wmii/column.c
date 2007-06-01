@@ -424,8 +424,6 @@ resize_colframe(Frame *f, Rectangle *r) {
 
 	al = a->prev;
 	ar = a->next;
-	for(al = v->area->next; al; al = al->next)
-		if(al->next == a) break;
 
 	if(al)
 		r->min.x = max(r->min.x, al->r.min.x + minw);

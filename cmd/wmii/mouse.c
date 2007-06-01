@@ -87,7 +87,10 @@ framewin(Frame *f, Point pt, int or, int n) {
 	return fw;	
 }
 
-	return ret ^ *mask;
+static void
+framedestroy(Framewin *f) {
+	destroywindow(f->w);
+	free(f);
 }
 
 static void
@@ -228,6 +231,8 @@ do_managed_move(Client *c) {
 	Rectangle r;
 	WinAttr wa;
 	XEvent ev;
+	Framewin *fw;
+	Window *cwin;
 	Frame *f;
 	Point pt, pt2;
 	int y;
@@ -500,7 +505,7 @@ done:
 
 void
 mouse_resizecol(Divide *d) {
-	XSetWindowAttributes wa;
+	WinAttr wa;
 	XEvent ev;
 	Window *cwin;
 	Divide *dp;
@@ -663,6 +668,7 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 	Cursor cur;
 	Point d, pt, hr;
 	float rx, ry, hrx, hry;
+	uint num;
 	Frame *f;
 
 	f = c->sel;

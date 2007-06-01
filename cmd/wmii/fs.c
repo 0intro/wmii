@@ -214,6 +214,7 @@ static void
 data_to_cstring(Ixp9Req *r) {
 	char *p;
 	uint i;
+
 	i = r->ifcall.count;
 	p = r->ifcall.data;
 	if(p[i - 1] == '\n')
@@ -234,7 +235,30 @@ message(Ixp9Req *r, MsgFunc fn) {
 
 	f = r->fid->aux;
 
-void
+	data_to_cstring(r);
+	s = r->ifcall.data;
+
+	err = nil;
+	c = *s;
+	while(c != '\0') {
+		while(*s == '\n')
+			s++;
+		p = s;
+		while(*p != '\0' && *p != '\n')
+			p++;
+		c = *p;
+		*p = '\0';
+
+		m = ixp_message(s, p-s, 0);
+		s = fn(f->p.ref, &m);
+		if(s)
+			err = s;
+		s = p + 1;
+	}
+	return err;
+}
+
+static void
 respond_event(Ixp9Req *r) {
 	FileId *f = r->fid->aux;
 	if(f->p.buf) {
@@ -869,7 +893,7 @@ fs_clunk(Ixp9Req *r) {
 				ft = *fl;
 				*fl = (*fl)->next;
 				f = ft->fid->aux;
-				free(f->content.buf);
+				free(f->p.buf);
 				free(ft);
 				break;
 			}

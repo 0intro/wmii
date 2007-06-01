@@ -471,44 +471,10 @@ main(int argc, char *argv[]) {
 				| LeaveWindowMask
 				| FocusChangeMask;
 		wa.cursor = cursor[CurNormal];
-		XChangeWindowAttributes(blz.dpy, blz.root, CWEventMask | CWCursor, &wa);
-		wa.override_redirect = 1;
-		wa.background_pixmap = ParentRelative;
-		wa.event_mask =
-			  ExposureMask
-			| ButtonReleaseMask
-			| FocusChangeMask
-			| SubstructureRedirectMask
-			| SubstructureNotifyMask;
-		s->brect = s->rect;
-		s->brect.height = labelh(&def.font);
-		s->brect.y = s->rect.height - s->brect.height;
-		s->barwin = XCreateWindow(
-			/* display */	blz.dpy,
-			/* parent */	RootWindow(blz.dpy, blz.screen),
-			/* x */		s->brect.x,
-			/* y */		s->brect.y,
-			/* width */	s->brect.width,
-			/* height */	s->brect.height,
-			/*border_width*/0,
-			/* depth */	DefaultDepth(blz.dpy, blz.screen),
-			/* class */	CopyFromParent,
-			/* visual */	DefaultVisual(blz.dpy, blz.screen),
-			/* valuemask */	CWOverrideRedirect | CWBackPixmap | CWEventMask,
-			/* attrubutes */&wa
-			);
-		XSync(blz.dpy, False);
-		s->bbrush.blitz = &blz;
-		s->bbrush.gc = XCreateGC(blz.dpy, s->barwin, 0, 0);
-		s->bbrush.drawable = pmap;
-		s->bbrush.rect = s->brect;
-		s->bbrush.rect.x = 0;
-		s->bbrush.rect.y = 0;
-		s->bbrush.color = def.normcolor;
-		s->bbrush.font = &def.font;
-		s->bbrush.border = 1;
-		draw_bar(s);
-		XMapRaised(blz.dpy, s->barwin);
+		setwinattr(&scr.root, &wa,
+				  CWEventMask
+				| CWCursor);
+		initbar(s);
 	}
 
 	str = "This app is broken. Disable its transparency feature.";

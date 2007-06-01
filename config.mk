@@ -17,6 +17,7 @@ include ${ROOT}/mk/gcc.mk
 CFLAGS += -g -O0
 LDFLAGS += -g ${LIBS}
 STATIC = -static
+MKDEP = cpp -M
 
 # Compiler
 CC = cc -c
@@ -30,6 +31,7 @@ INCX11 = -I/usr/X11R6/include
 LIBX11 = -L/usr/X11R6/lib -lX11
 LIBICONV = # Leave blank if your libc includes iconv (glibc does)
 LIBIXP = ${ROOT}/libixp/libixp.a
+LIBIXP = ${LIBDIR}/libixp.a
 
 # Solaris
 #CFLAGS = -fast ${INCS} -DVERSION=\"${VERSION}\"

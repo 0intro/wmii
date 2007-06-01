@@ -223,11 +223,8 @@ actionlist() {
 
 conf_which() {
 	which=$(which which)
-	prog=$(PATH="$WMII_CONFPATH" $which $1)
-	shift
-	if [ -n "$prog" ]; then
-		$prog
-	fi
+	prog=$(PATH="$WMII_CONFPATH" $which $1); shift
+	[ -n "$prog" ] && $prog "$@"
 }
 
 # Stop any running instances of wmiirc

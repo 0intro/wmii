@@ -73,7 +73,8 @@ create_view(const char *name) {
 	focus_area(v->area->next);
 
 	for(i=&view; *i; i=&(*i)->next)
-		if(strcmp((*i)->name, name) < 0) break;
+		if(strcmp((*i)->name, name) < 0)
+			break;
 	v->next = *i;
 	*i = v;
 
@@ -96,6 +97,7 @@ destroy_view(View *v) {
 	*i = v->next;
 
 	write_event("DestroyTag %s\n", v->name);
+
 	if(v == screen->sel) {
 		for(tv=view; tv; tv=tv->next)
 			if(tv->next == *i) break;
@@ -158,7 +160,7 @@ select_view(const char *arg) {
 
 	if(strlen(buf) == 0)
 		return;
-	if(!strncmp(buf, ".", 2) || !strncmp(buf, "..", 3))
+	if(!strcmp(buf, ".") || !strcmp(buf, ".."))
 		return;
 
 	assign_sel_view(get_view(buf));
@@ -258,13 +260,13 @@ scale_view(View *v, int w) {
 		a->r.max.x = xoff + Dx(a->r) * scale;
 		a->r.min.x = xoff;
 		if(!a->next)
-			a->rect.width = w - xoff;
-		xoff += a->rect.width;
+			a->r.max.x = w;
+		xoff = a->r.max.x;
 	}
 
 	/* minwidth can only be respected when there is enough space;
 	 * the caller should guarantee this */
-	if(num_col * min_width > w)
+	if(numcol * minwidth > w)
 		return;
 
 	dx = numcol * minwidth;
@@ -303,7 +305,7 @@ arrange_view(View *v) {
 		update_divs();
 }
 
-XRectangle *
+Rectangle *
 rects_of_view(View *v, uint *num, Frame *ignore) {
 	Rectangle *result;
 	Frame *f;
@@ -407,7 +409,7 @@ newcolw(View *v, int num) {
 			strcpy(buf, r->value);
 
 			n = tokenize(toks, 16, buf, '+');
-			if(n > num)
+			if(num < n)
 				if(sscanf(toks[num], "%u", &n) == 1)
 					return Dx(screen->r) * (n / 100.0);
 			break;
