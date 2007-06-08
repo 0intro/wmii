@@ -130,9 +130,8 @@ getword(Message *m) {
 #define strbcmp(str, const) (strncmp((str), (const), sizeof(const)-1))	
 static int
 getbase(char **s) {
-	char base[3];
 	char *p;
-	
+
 	p = *s;
 	if(!strbcmp(p, "0x")) {
 		*s += 2;
@@ -144,8 +143,7 @@ getbase(char **s) {
 	}
 	if(isdigit(p[0]) && isdigit(p[1]) && p[2] == 'r') {
 		*s += 3;
-		strncpy(base, p, sizeof base);
-		return atoi(base);
+		return 10*(p[0]-'0') + (p[1]-'0');
 	}
 	if(!strbcmp(p, "0")) {
 		*s += 1;

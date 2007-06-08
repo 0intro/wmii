@@ -165,7 +165,7 @@ fn Key-$MODKEY-m { wmiir xwrite /tag/sel/ctl colmode sel max }
 fn Key-$MODKEY-Shift-c { wmiir xwrite /client/sel/ctl kill }
 
 fn Key-$MODKEY-a { Action `{actionlist | wmiimenu} & }
-fn Key-$MODKEY-p { run_command `{wmiimenu <$progs_file} & }
+fn Key-$MODKEY-p { ifs=() { run_command `{wmiimenu <$progs_file} & } }
 fn Key-$MODKEY-Return { run_command $WMII_TERM & }
 fn Key-$MODKEY-t { wmiir xwrite /ctl view `{read_tags | wmiimenu} & }
 fn Key-$MODKEY-Shift-t {

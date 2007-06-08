@@ -9,7 +9,7 @@ little bit familiar with wmii.
 
 From here on, keypresses will be described such that M-a refers to
 pressing $MODKEY and a at the same time. $MODKEY refers to a
-configuratin variable which contains the Alt key by default.
+configuration variable which contains the Alt key by default.
 
 Let's go!
 
