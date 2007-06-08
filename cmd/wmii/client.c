@@ -930,7 +930,7 @@ apply_rules(Client *c) {
 		for(r=def.tagrules.rule; r; r=r->next)
 			if(!regexec(&r->regex, c->props, 1, &rm, 0)) {
 				apply_tags(c, r->value);
-				if(strcmp(c->tags, "nil"))
+				if(c->tags[0] && strcmp(c->tags, "nil"))
 					break;
 			}
 	if(c->tags[0] == '\0')
