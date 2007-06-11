@@ -360,7 +360,7 @@ read_root_ctl(void) {
 char *
 message_client(Client *c, Message *m) {
 	char *s;
-	
+
 	s = getword(m);
 
 	switch(getsym(s)) {
@@ -519,11 +519,13 @@ select_frame(Frame *f, Message *m, int sym) {
 
 	switch(sym) {
 	case LUP:
-		for(fp = a->frame; fp; fp = fp->anext)
+		for(fp = a->frame; fp->anext; fp = fp->anext)
 			if(fp->anext == f) break;
 		break;
 	case LDOWN:
 		fp = f->anext;
+		if(fp == nil)
+			fp = a->frame;
 		break;
 	case LCLIENT:
 		s = getword(m);

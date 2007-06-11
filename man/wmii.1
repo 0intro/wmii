@@ -1,5 +1,5 @@
 '\" t
-.\" Manual page created with latex2man on Fri May 25 01:36:45 EDT 2007
+.\" Manual page created with latex2man on Mon Jun 11 12:04:08 EDT 2007
 .\" NOTE: This file is generated, DO NOT EDIT.
 .de Vb
 .ft CW
@@ -10,13 +10,11 @@
 
 .fi
 ..
-.TH "WMII" "1" "25 May 2007" "" ""
+.TH "WMII" "1" "11 June 2007" "" ""
 .SH NAME
-
 wmii\-VERSION
 .PP
 .SH SYNOPSIS
-
 wmii
 [\fB\-a\fP\fI<address>\fP]
 [\fB\-c\fP\fI<wmiirc>\fP]
@@ -25,7 +23,6 @@ wmii
 \fB\-v\fP
 .PP
 .SH DESCRIPTION
-
 .PP
 .SS OVERVIEW
 .PP
@@ -66,37 +63,37 @@ section.
 .SS TERMINOLOGY
 .PP
 .TP
-Display 
+Display
 A running X server instance consisting of input devices 
 and screens. 
 .TP
-Screen 
+Screen
 A physical or virtual (Xinerama or \fIXnest\fP(1))
 screen 
 of an X display. A screen displays a bar window and a view at a time. 
 .TP
-Window 
+Window
 A (rectangular) drawable X object which is displayed on a 
 screen, usually an application window. 
 .TP
-Client 
+Client
 An application window surrounded by a frame window containing 
 a border and a titlebar. 
 .TP
-Floating layer 
+Floating layer
 A screen layer of wmii
 on top of all other 
 layers, where clients are arranged in a classic (floating) way. 
 They can be resized or moved freely. 
 .TP
-Managed layer 
+Managed layer
 A screen layer of wmii
 behind the floating layer, 
 where clients are arranged in a nonoverlapping (managed) way. Here, 
 the window manager dynamically assigns each client a size and position. 
 The managed layer consists of columns. 
 .TP
-Tag 
+Tag
 Alphanumeric strings which can be assigned to a client. This provides 
 a mechanism to group clients with similar properties. Clients can have one 
 tag, e.g. \fIwork\fP,
@@ -105,22 +102,22 @@ or several tags, e.g. \fIwork+mail\fP\&.
 Tags are separated with the \fI+\fP
 character. 
 .TP
-View 
+View
 A set of clients containing a specific tag, quite similiar to a 
 workspace in other window managers. It consists of the floating and 
 managed layers. 
 .TP
-Column 
+Column
 A column is a screen area which arranges clients vertically in a 
 non\-overlapping way. Columns provide three different modes, which 
 arrange clients with equal size, stacked, or maximized respectively. 
 Clients can be moved and resized between and within columns freely. 
 .TP
-Bar 
+Bar
 The bar at the bottom of the screen displays a label for each view and 
 allows the creation of arbitrary userdefined labels. 
 .TP
-Event 
+Event
 An event is a message which can be read from a special file in the 
 filesystem of wmii,
 such as a mouse button press, a key press, or 
@@ -344,7 +341,6 @@ T}
 .TE
 .PP
 .SH CONFIGURATION
-
 .PP
 If you feel the need to change the default configuration, then 
 customize (as described above) the wmiirc
@@ -354,24 +350,317 @@ script and does all
 the work of setting up the window manager, the key bindings, the bar 
 labels, etc. 
 .PP
-.SH FILES
-
+.SH FILESYSTEM
+.PP
+Most aspects of wmii
+are controlled via the filesystem. 
+It is usually accessed via the \fIwmiir\fP(1)
+command, but it 
+can be accessed by any 9P
+client, including plan9port\&'s 
+\fI9P\fP(1),
+and can be mounted natively on Linux via v9fs[1], 
+and on Inferno (which man run on top of Linux). 
+.PP
+The filesystem is, as are many other 9P filesystems, entirely 
+synthetic. The files exist only in memory, and are not written 
+to disk. They are generally initiated on wmii startup via a 
+script such as rc.wmii or wmiirc. Several files read commands, 
+others simply act as if they were ordinary files (their contents 
+are updated and returned exactly as written), though writing 
+them has side\-effects (such as changing key bindings). A 
+description of the filesystem layout and control commands 
+follows. 
+.PP
+.SS Hierarchy
+.TP
+/
+Global control files 
+.TP
+/client/\fI*\fP/
+Client control files 
+.TP
+/tag/\fI*\fP/
+View control files 
+.TP
+/lbar/, /rbar/
+Files representing the contents of the 
+bottom bar 
+.PP
+.SS The / Hierarchy
+.TP
+colrules
+The \fIcolrules\fP
+file contains a list of 
+rules which affect the width of newly created columns. 
+Rules have the form: 
+.br
+\fB \fP
+.br
+\fB \fP\fB \fP/\fIregex\fP/
+\-> \fIwidth\fP[\fI+width\&...
+\fP]
+.br
+\fB \fP
+.br
+When a new column, \fIn\fP,
+is created on a view whose 
+name matches \fIregex\fP,
+the \fIn\fPth
+given 
+\fIwidth\fP
+percentage of the screen is given to it. If 
+there is no \fIn\fPth
+width, 1/\fIncol\fPth
+of the 
+screen is given to it. 
+.TP
+tagrules
+The \fItagrules\fP
+file contains a list of 
+rules similar to the colrules. These rules specify 
+the tags a client is to be given when it is created. 
+Rules are specified: 
+.br
+\fB \fP
+.br
+\fB \fP\fB \fP/\fIregex\fP/
+\-> \fItag\fP[\fI+tag\&...
+\fP]
+.br
+\fB \fP
+.br
+When a client\&'s \fIname\fP:\fIclass\fP:\fItitle\fP
+matches \fIregex\fP,
+it is given the tagstring 
+\fItag\fP\&.
+There are two special tags. \fI!\fP,
+which 
+will be replaced with \fIsel\fP
+in the future, 
+represents the current tag. \fI^\fP
+represents the 
+floating layer. 
+.TP
+keys
+The \fIkeys\fP
+file contains a list of keys which 
+wmii
+will grab. Whenever these key combinations 
+are pressed, the string which represents them are 
+written to /event
+as: Key \fIstring\fP
+.TP
+event
+The \fIevent\fP
+file never returns EOF while 
+wmii
+is running. It stays open and reports events 
+as they occur. Included among them are: 
+.RS
+.TP
+\fINot\fPUrgent \fIclient\fP \fIManager|Client\fP
+\fIclient\fP\&'s
+urgent hint has been set or 
+unset. The second arg is \fIClient\fP
+if it\&'s 
+been set by the client, and \fIManager\fP
+if 
+it\&'s been set by wmii
+via a control 
+message. 
+.TP
+\fINot\fPUrgentTag \fItag\fP \fIManager|Client\fP
+A client on \fItag\fP
+has had its urgent hint 
+set, or the last urgent client has had its 
+urgent hint unset. 
+.TP
+ClientClick|ClientMouseDown \fIclient\fP \fIbutton\fP
+A client\&'s titlebar has either been clicked or 
+has a button pressed over it. 
+.TP
+\fILeft|Right\fPBar\fIClick|MouseDown\fP \fIbutton\fP \fIbar\fP
+A left or right bar has been clicked or has a 
+button pressed over it. 
+.TP
+\&...To be continued\&...
+.RE
+.RS
+.PP
+.RE
+.TP
+ctl
+The \fIctl\fP
+file takes a number of messages to 
+change global settings such as color and font, which can 
+be viewed by reading it. It also takes the following 
+commands: 
+.RS
+.TP
+quit
+Quit wmii
+.TP
+exec \fIprog\fP
+Replace wmii
+with 
+\fIprog\fP
+.RE
+.RS
+.PP
+.RE
+.PP
+.SS The /client/ Hierarchy
+.PP
+Each directory under /client/
+represents an X11 client. 
+Each directory is named for the X window id of the window the 
+client represents, in the form that most X utilities recognize. 
+The one exception is the special sel
+directory, which 
+represents the currently selected client. 
+.PP
+.RE
+.TP
+ctl
+When read, the ctl
+file returns the X window id 
+of the client. The following commands may be written to 
+it: 
+.RS
+.TP
+kill
+Close the client\&'s window. This command will 
+likely kill the X client in the future 
+(including its other windows), while the close 
+command will replace it. 
+.TP
+\fINot\fPUrgent
+Set or unset the client\&'s urgent 
+hint. 
+.TP
+\fINot\fPFullscreen
+.RS
+.PP
+.RE
+.RE
+.PP
+.RE
+.TP
+label
+Set or read a client\&'s label (title). 
+.TP
+props
+Returns a clients class and label as: 
+\fIname\fP:\fIclass\fP:\fIlabel\fP
+.TP
+tags
+Set or read a client\&'s tags. Tags are seperated by 
+\fI+\fP
+or {\-}. Tags begining with \fI+\fP
+are added, 
+while those begining with \fI\-\fP
+are removed. If the 
+tag string written begins with \fI+\fP
+or \fI\-\fP,
+the 
+written tags are added to or removed from the client\&'s 
+set, otherwise, the set is overwritten. 
+.PP
+.SS The /tag/ Hierarchy
+.PP
+Each directory under /tag/
+represents a view, containing 
+all of the clients with the given tag applied. The special 
+sel
+directory represents the currently selected tag. 
 .PP
 .TP
-/tmp/ns.USER.{DISPLAY%\&.0}/wmii 
+ctl
+The ctl
+file can be read to retrieve the name 
+of the tag the directory represents, or written with the 
+following commands: 
+.RS
+.TP
+select
+Select a client: 
+.br
+\fB \fP\fB \fPselect \fIleft|right|up|down\fP
+.br
+\fB \fP\fB \fPselect \fIrow number|sel\fP
+[\fIframe number\fP]
+.br
+\fB \fP\fB \fPselect client \fIclient\fP
+.TP
+send
+Send a client somewhere: 
+.RS
+.TP
+send \fIclient|sel\fP \fIup|down|left|right\fP
+.TP
+send \fIclient|sel\fP \fIarea\fP
+Send 
+\fIclient\fP
+to the nth \fIarea\fP
+.TP
+send \fIclient|sel\fP toggle
+Toggle 
+\fIclient\fP
+between the floating and 
+managed layer. 
+.RE
+.RS
+.PP
+.RE
+.TP
+swap
+Swap a client with another. Same syntax as 
+send. 
+.RE
+.RS
+.PP
+.RE
+.TP
+index
+Read for a description of the contents of a tag. 
+.PP
+.SS The /rbar/, /lbar/ Hierarchy
+.PP
+The files under /rbar/
+and /lbar/
+represent the 
+items of the bar at the bottom of the screen. Files under 
+/lbar/
+appear on the left side of the bar, while those 
+under /rbar/
+appear on the right, with the leftmost item 
+occupying all extra available space. The items are sorted 
+lexicographically. 
+.PP
+The files may be read to obtain the colors and text of the bars. 
+The colors are at the begining of the string, represented as a 
+tuple of 3 hex color codes for the foreground, background, and 
+border, respectively. When writing the bar files, the colors may 
+be omitted if the text would not otherwise appear to contain 
+them. 
+.PP
+.SH FILES
+.PP
+.TP
+/tmp/ns.USER.{DISPLAY%\&.0}/wmii
 The wmii socket file which provides a 9P service. 
 .TP
-CONFPREFIX/wmii\-3.5 
+CONFPREFIX/wmii\-3.5
 Global action directory. 
 .TP
-$HOME/.wmii\-3.5 
+$HOME/.wmii\-3.5
 User\-specific action directory. Actions are first searched here. 
 .PP
 .SH ENVIRONMENT
-
 .PP
 .TP
-HOME, DISPLAY 
+HOME, DISPLAY
 See the section \fBFILES\fP
 above. 
 .PP
@@ -380,12 +669,13 @@ and
 thus can be used in actions: 
 .PP
 .TP
-WMII_ADDRESS 
+WMII_ADDRESS
 Socket file of Used by \fIwmiir\fP(1)\&.
 .PP
 .SH SEE ALSO
-
 \fIdmenu\fP(1),
 \fIwmiir\fP(1)
+.PP
+[1] http://www.suckless.org/wiki/wmii/tips/9p_tips 
 .PP
 .\" NOTE: This file is generated, DO NOT EDIT.

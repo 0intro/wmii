@@ -163,6 +163,175 @@ action is executed at the end of the \Prog{wmii} script and does all
 the work of setting up the window manager, the key bindings, the bar
 labels, etc.
 
+\section{Filesystem}
+
+Most aspects of \Prog{wmii} are controlled via the filesystem.
+It is usually accessed via the \Cmd{wmiir}{1} command, but it
+can be accessed by any \texttt{9P} client, including plan9port's
+\Cmd{9P}{1}, and can be mounted natively on Linux via v9fs[1],
+and on Inferno (which man run on top of Linux).
+
+The filesystem is, as are many other 9P filesystems, entirely
+synthetic. The files exist only in memory, and are not written
+to disk. They are generally initiated on wmii startup via a
+script such as rc.wmii or wmiirc. Several files read commands,
+others simply act as if they were ordinary files (their contents
+are updated and returned exactly as written), though writing
+them has side-effects (such as changing key bindings). A
+description of the filesystem layout and control commands
+follows.
+
+\subsubsection{Hierarchy}
+\begin{description}
+\item[/] Global control files
+\item[/client/\emph{*}/] Client control files
+\item[/tag/\emph{*}/] View control files
+\item[/lbar/, /rbar/] Files representing the contents of the
+	bottom bar
+\end{description}
+
+\subsubsection{The / Hierarchy}
+\begin{description}
+\item[colrules] The \emph{colrules} file contains a list of
+	rules which affect the width of newly created columns.
+	Rules have the form: \\ \SP % Yuck!
+	\MANbr
+	\SP\SP /\Arg{regex}/ -> \Arg{width}\oArg{+width\Dots} \\ \SP
+	\MANbr
+	When a new column, \Arg{n}, is created on a view whose
+	name matches \Arg{regex}, the \Arg{n}th given
+	\Arg{width} percentage of the screen is given to it. If
+	there is no \Arg{n}th width, 1/\emph{ncol}th of the
+	screen is given to it.
+\item[tagrules] The \emph{tagrules} file contains a list of
+	rules similar to the colrules. These rules specify 
+	the tags a client is to be given when it is created.
+	Rules are specified: \\ \SP
+	\MANbr
+	\SP\SP /\Arg{regex}/ -> \Arg{tag}\oArg{+tag\Dots} \\ \SP
+	\MANbr
+	When a client's \Arg{name}:\Arg{class}:\Arg{title}
+	matches \Arg{regex}, it is given the tagstring
+	\Arg{tag}. There are two special tags. \emph{!}, which
+	will be replaced with \emph{sel} in the future,
+	represents the current tag. \emph{\Circum} represents the
+	floating layer.
+\item[keys] The \emph{keys} file contains a list of keys which
+	\Prog{wmii} will grab. Whenever these key combinations
+	are pressed, the string which represents them are
+	written to \File{/event} as: Key \Arg{string}
+\item[event] The \emph{event} file never returns EOF while
+	\Prog{wmii} is running. It stays open and reports events
+	as they occur. Included among them are:
+	\begin{description}
+	\item[\emph{Not}Urgent \Arg{client} \Arg{Manager\Bar Client}]
+		\Arg{client}'s urgent hint has been set or
+		unset. The second arg is \emph{Client} if it's
+		been set by the client, and \emph{Manager} if
+		it's been set by \Prog{wmii} via a control
+		message.
+	\item[\emph{Not}UrgentTag \Arg{tag} \Arg{Manager\Bar Client}]
+		A client on \Arg{tag} has had its urgent hint
+		set, or the last urgent client has had its
+		urgent hint unset.
+	\item[ClientClick\Bar ClientMouseDown \Arg{client} \Arg{button}]
+		A client's titlebar has either been clicked or
+		has a button pressed over it.
+	\item[\emph{Left\Bar Right}Bar\emph{Click\Bar MouseDown} \Arg{button} \Arg{bar}]
+		A left or right bar has been clicked or has a
+		button pressed over it.
+	\item[\Dots] To be continued\Dots
+	\end{description}
+\item[ctl] The \emph{ctl} file takes a number of messages to
+	change global settings such as color and font, which can
+	be viewed by reading it. It also takes the following
+	commands:
+	\begin{description}
+	\item[quit] Quit \Prog{wmii}
+	\item[exec \Arg{prog}] Replace \Prog{wmii} with
+		\emph{prog}
+	\end{description}
+\end{description}
+
+\subsubsection{The /client/ Hierarchy}
+
+Each directory under \File{/client/} represents an X11 client.
+Each directory is named for the X window id of the window the
+client represents, in the form that most X utilities recognize.
+The one exception is the special \File{sel} directory, which
+represents the currently selected client.
+
+\begin{description}
+\item[ctl] When read, the \File{ctl} file returns the X window id
+	of the client. The following commands may be written to
+	it:
+	\begin{description}
+	\item[kill] Close the client's window. This command will
+		likely kill the X client in the future
+		(including its other windows), while the close
+		command will replace it.
+	\item[\Arg{Not}Urgent] Set or unset the client's urgent
+		hint.
+	\item[\Arg{Not}Fullscreen]
+
+	\end{description}
+\item[label] Set or read a client's label (title).
+\item[props] Returns a clients class and label as:
+	\emph{name}:\emph{class}:\emph{label}
+\item[tags] Set or read a client's tags. Tags are seperated by
+	\emph{+} or {-}. Tags begining with \emph{+} are added,
+	while those begining with \emph{-} are removed. If the
+	tag string written begins with \emph{+} or \emph{-}, the
+	written tags are added to or removed from the client's
+	set, otherwise, the set is overwritten.
+\end{description}
+
+\subsubsection{The /tag/ Hierarchy}
+
+Each directory under \File{/tag/} represents a view, containing
+all of the clients with the given tag applied. The special
+\File{sel} directory represents the currently selected tag.
+
+\begin{description}
+\item[ctl] The \File{ctl} file can be read to retrieve the name
+	of the tag the directory represents, or written with the
+	following commands:
+	\begin{description}
+	\item[select] Select a client: \\
+		\SP\SP select \Arg{left\Bar right\Bar up\Bar down} \\
+		\SP\SP select \Arg{row number\Bar sel} \oArg{frame number} \\
+		\SP\SP select client \Arg{client}
+	\item[send] Send a client somewhere:
+		\begin{description}
+		\item[send \Arg{client|sel} \Arg{up|down|left|right}]
+		\item[send \Arg{client|sel} \Arg{area}] Send
+			\Arg{client} to the nth \Arg{area}
+		\item[send \Arg{client|sel} toggle] Toggle
+			\Arg{client} between the floating and
+			managed layer.
+		\end{description}
+	\item[swap] Swap a client with another. Same syntax as
+		send.
+	\end{description}
+\item[index] Read for a description of the contents of a tag.
+\end{description}
+
+\subsubsection{The /rbar/, /lbar/ Hierarchy}
+
+The files under \File{/rbar/} and \File{/lbar/} represent the
+items of the bar at the bottom of the screen. Files under
+\File{/lbar/} appear on the left side of the bar, while those
+under \File{/rbar/} appear on the right, with the leftmost item
+occupying all extra available space. The items are sorted
+lexicographically.
+
+The files may be read to obtain the colors and text of the bars.
+The colors are at the begining of the string, represented as a
+tuple of 3 hex color codes for the foreground, background, and
+border, respectively. When writing the bar files, the colors may
+be omitted if the text would not otherwise appear to contain
+them.
+
 \section{FILES}
 
 \begin{description}
@@ -186,4 +355,6 @@ thus can be used in actions:
 
 \section{SEE ALSO}
 \Cmd{dmenu}{1}, \Cmd{wmiir}{1}
+
+[1] http://www.suckless.org/wiki/wmii/tips/9p\_tips
 
