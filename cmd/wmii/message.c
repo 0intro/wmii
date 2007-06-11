@@ -21,6 +21,7 @@ enum {
 	LNOTURGENT,
 	LURGENT,
 	LBORDER,
+	LCLIENT,
 	LCOLMODE,
 	LDOWN,
 	LEXEC,
@@ -47,6 +48,7 @@ char *symtab[] = {
 	"NotUrgent",
 	"Urgent",
 	"border",
+	"client",
 	"colmode",
 	"down",
 	"exec",
@@ -114,7 +116,7 @@ getword(Message *m) {
 	char *ret;
 	Rune r;
 	int n;
-	
+
 	eatrunes(m, isspacerune, 1);
 	ret = m->pos;
 	eatrunes(m, isspacerune, 0);
@@ -123,6 +125,8 @@ getword(Message *m) {
 	m->pos += n;
 	eatrunes(m, isspacerune, 1);
 
+	if(ret == (char*)m->end)
+		return nil;
 	return ret;
 }
 
@@ -502,9 +506,12 @@ send_client(View *v, Message *m, Bool swap) {
 }
 
 static char*
-select_frame(Frame *f, int sym) {
+select_frame(Frame *f, Message *m, int sym) {
 	Frame *fp;
+	Client *c;
 	Area *a;
+	char *s;
+	ulong i;
 
 	if(!f)
 		return Ebadvalue;
@@ -512,17 +519,27 @@ select_frame(Frame *f, int sym) {
 
 	switch(sym) {
 	case LUP:
-		for(fp = a->frame; fp->anext; fp = fp->anext)
+		for(fp = a->frame; fp; fp = fp->anext)
 			if(fp->anext == f) break;
 		break;
 	case LDOWN:
 		fp = f->anext;
-		if(fp == nil)
-			fp = a->frame;
+		break;
+	case LCLIENT:
+		s = getword(m);
+		if(s == nil || !getulong(s, &i))
+			return "usage: select client <client>";
+		c = win2client(i);
+		if(c == nil)
+			return "unknown client";
+		fp = view_clientframe(f->view, c);
 		break;
 	default:
 		assert(!"can't get here");
 	}
+
+	if(fp == nil)
+		return "invalid selection";
 
 	focus_frame(fp, False);
 	frame_to_top(fp);
@@ -533,6 +550,7 @@ select_frame(Frame *f, int sym) {
 
 char*
 select_area(Area *a, Message *m) {
+	Frame *f;
 	Area *ap;
 	View *v;
 	char *s;
@@ -544,9 +562,6 @@ select_area(Area *a, Message *m) {
 	sym = getsym(s);
 	
 	switch(sym) {
-	case LUP:
-	case LDOWN:
-		return select_frame(a->sel, sym);
 	case LTOGGLE:
 		if(!a->floating)
 			ap = v->area;
@@ -555,6 +570,10 @@ select_area(Area *a, Message *m) {
 		else
 			ap = v->area->next;
 		break;
+	case LUP:
+	case LDOWN:
+	case LCLIENT:
+		return select_frame(a->sel, m, sym);
 	case LLEFT:
 		if(a->floating)
 			return Ebadvalue;
@@ -572,10 +591,26 @@ select_area(Area *a, Message *m) {
 		ap = v->area;
 		break;
 	default:
-		if(!getulong(s, &i) || i == 0)
-			return Ebadvalue;
-		for(ap=v->area->next; ap; ap=ap->next)
-			if(!--i) break;
+		if(!strcmp(s, "sel"))
+			ap = v->sel;
+		else {
+			if(!getulong(s, &i) || i == 0)
+				return Ebadvalue;
+			for(ap=v->area->next; ap; ap=ap->next)
+				if(--i == 0) break;
+			if(i != 0)
+				return Ebadvalue;
+		}
+		if((s = getword(m))) {
+			if(!getulong(s, &i))
+				return Ebadvalue;
+			for(f = ap->frame; f; f = f->anext)
+				if(--i == 0) break;
+			if(i != 0)
+				return Ebadvalue;
+			focus_frame(f, True);
+			return nil;
+		}
 	}
 
 	focus_area(ap);

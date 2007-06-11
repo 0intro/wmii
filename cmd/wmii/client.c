@@ -104,12 +104,12 @@ manage_client(Client *c) {
 	p.x = def.border;
 	p.y = labelh(def.font);
 
+	reparentwindow(&c->w, c->framewin, p);
+
 	if(c->tags[0])
 		apply_tags(c, c->tags);
 	else
 		apply_rules(c);
-
-	reparentwindow(&c->w, c->framewin, p);
 
 	if(!starting)
 		update_views();
