@@ -199,13 +199,13 @@ kpress(XWindow w, ulong mod, KeyCode keycode) {
 	for(k=key; k; k=k->lnext)
 		 k->tnext=k->lnext;
 	found = match_keys(key, mod, keycode, False);
-	if(!found) {
+	if(!found) /* grabbed but not found */
 		XBell(display, 0);
-	} /* grabbed but not found */
 	else if(!found->tnext && !found->next)
 		write_event("Key %s\n", found->name);
 	else {
 		XGrabKeyboard(display, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+		flushevents(FocusChangeMask, True);
 		kpress_seq(w, found);
 		XUngrabKeyboard(display, CurrentTime);
 		XSync(display, False);

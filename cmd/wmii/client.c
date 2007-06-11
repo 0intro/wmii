@@ -690,10 +690,8 @@ focusout_event(Window *w, XFocusChangeEvent *e) {
 
 	c = w->aux;
 	if((e->mode == NotifyWhileGrabbed) && (screen->hasgrab != &c_root)) {
-		if((screen->focus) && (screen->hasgrab != screen->focus))
+		if(screen->focus)
 			screen->hasgrab = screen->focus;
-		if(screen->hasgrab == c)
-			return;
 	}else if(screen->focus == c) {
 		print_focus(&c_magic, "<magic>");
 		screen->focus = &c_magic;

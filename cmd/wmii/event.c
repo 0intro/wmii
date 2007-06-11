@@ -165,7 +165,6 @@ focusin(XEvent *e) {
 			if(XCheckMaskEvent(display, KeyPressMask, &me)) {
 				/* wmii has grabbed focus */
 				screen->hasgrab = &c_root;
-				flushevents(FocusChangeMask, True);
 				dispatch_event(&me);
 			}
 		/* Some unmanaged window has grabbed focus */

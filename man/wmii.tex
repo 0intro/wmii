@@ -196,7 +196,7 @@ follows.
 	rules which affect the width of newly created columns.
 	Rules have the form: \\ \SP % Yuck!
 	\MANbr
-	\SP\SP /\Arg{regex}/ -> \Arg{width}\oArg{+width\Dots} \\ \SP
+	\SP\SP /\Arg{regex}/ -> \Arg{width}\oArg{+width...} \\ \SP
 	\MANbr
 	When a new column, \Arg{n}, is created on a view whose
 	name matches \Arg{regex}, the \Arg{n}th given
@@ -208,7 +208,7 @@ follows.
 	the tags a client is to be given when it is created.
 	Rules are specified: \\ \SP
 	\MANbr
-	\SP\SP /\Arg{regex}/ -> \Arg{tag}\oArg{+tag\Dots} \\ \SP
+	\SP\SP /\Arg{regex}/ -> \Arg{tag}\oArg{+tag...} \\ \SP
 	\MANbr
 	When a client's \Arg{name}:\Arg{class}:\Arg{title}
 	matches \Arg{regex}, it is given the tagstring
@@ -240,7 +240,7 @@ follows.
 	\item[\emph{Left\Bar Right}Bar\emph{Click\Bar MouseDown} \Arg{button} \Arg{bar}]
 		A left or right bar has been clicked or has a
 		button pressed over it.
-	\item[\Dots] To be continued\Dots
+	\item[...] To be continued...
 	\end{description}
 \item[ctl] The \emph{ctl} file takes a number of messages to
 	change global settings such as color and font, which can
