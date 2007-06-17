@@ -369,8 +369,7 @@ spawn_command(const char *cmd) {
 }
 
 static void
-check_9pcon(IxpConn *c) {
-	serve_9pcon(c);
+check_preselect(IxpServer *s) {
 	check_x_event(nil);
 }
 
@@ -442,7 +441,8 @@ main(int argc, char *argv[]) {
 	init_cursors();
 	init_lock_keys();
 
-	ixp_listen(&srv, sock, &p9srv, check_9pcon, nil);
+	srv.preselect = check_preselect;
+	ixp_listen(&srv, sock, &p9srv, serve_9pcon, nil);
 	ixp_listen(&srv, ConnectionNumber(display), nil, check_x_event, closedisplay);
 
 	def.font = loadfont(FONT);

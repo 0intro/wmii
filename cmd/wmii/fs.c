@@ -46,6 +46,7 @@ struct FileId {
 	uint	index;
 	Dirtab		tab;
 	ushort	nref;
+	uchar	volatil;
 };
 
 /* Constants */
@@ -92,7 +93,8 @@ Ixp9Srv p9srv = {
 };
 
 /* ad-hoc file tree. Empty names ("") indicate dynamic entries to be filled
- * in by lookup_file */
+ * in by lookup_file 
+ */
 static Dirtab
 dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|P9_DMDIR },
 		  {"rbar",	QTDIR,		FsDBars,	0700|P9_DMDIR },
@@ -147,6 +149,7 @@ get_file(void) {
 	}
 	temp = free_fileid;
 	free_fileid = temp->next;
+	temp->volatil = 0;
 	temp->nref = 1;
 	temp->next = nil;
 	return temp;
@@ -283,13 +286,19 @@ write_event(char *format, ...) {
 	va_start(ap, format);
 	vsnprintf(buffer, sizeof(buffer), format, ap);
 	va_end(ap);
-	if(!(len = strlen(buffer)))
+
+	len = strlen(buffer);
+	if(len == 0)
 		return;
+
 	for(f=peventfid; f; f=f->next) {
 		fi = f->fid->aux;
-		slen = fi->p.buf ? strlen(fi->p.buf) : 0;
-		fi->p.buf = (char *) erealloc(fi->p.buf, slen + len + 1);
-		(fi->p.buf)[slen] = '\0';
+
+		slen = 0;
+		if(fi->p.buf)
+			slen = strlen(fi->p.buf);
+		fi->p.buf = erealloc(fi->p.buf, slen + len + 1);
+		fi->p.buf[slen] = '\0';
 		strcat(fi->p.buf, buffer);
 	}
 	oeventread = peventread;
@@ -344,6 +353,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
+						file->volatil = True;
 						file->p.client = c;
 						file->id = c->w.w;
 						file->index = c->w.w;
@@ -360,6 +370,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
+						file->volatil = True;
 						file->p.client = c;
 						file->id = c->w.w;
 						file->index = c->w.w;
@@ -376,6 +387,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
+						file->volatil = True;
 						file->p.view = screen->sel;
 						file->id = screen->sel->id;
 						file->tab = *dir;
@@ -387,6 +399,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
+						file->volatil = True;
 						file->p.view = v;
 						file->id = v->id;
 						file->tab = *dir;
@@ -401,6 +414,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
+						file->volatil = True;
 						file->p.bar = b;
 						file->id = b->id;
 						file->tab = *dir;
@@ -448,17 +462,21 @@ LastItem:
 static Bool
 verify_file(FileId *f) {
 	FileId *nf;
+	int ret;
 
 	if(!f->next)
 		return True;
+
+	ret = False;
 	if(verify_file(f->next)) {
 		nf = lookup_file(f->next, f->tab.name);
 		if(nf) {
+			if(!nf->volatil || nf->p.ref == f->p.ref)
+				ret = True;
 			free_file(nf);
-			return True;
 		}
 	}
-	return False;
+	return ret;
 }
 
 /* Service Functions */
@@ -676,8 +694,10 @@ fs_read(Ixp9Req *r) {
 			return;
 		}
 	}
-	/* This is an assert because it should this should not be called if
-	 * the file is not open for reading. */
+	/* 
+	 * This is an assert because this should this should not be called if
+	 * the file is not open for reading.
+	 */
 	assert(!"Read called on an unreadable file");
 }
 
@@ -753,8 +773,10 @@ fs_write(Ixp9Req *r) {
 		respond(r, nil);
 		return;
 	}
-	/* This is an assert because this function should not be called if
-	 * the file is not open for writing. */
+	/*
+	 * This is an assert because this function should not be called if
+	 * the file is not open for writing.
+	 */
 	assert(!"Write called on an unwritable file");
 }
 
