@@ -20,6 +20,28 @@ area_selclient(Area *a) {
 	return nil;
 }
 
+uint
+area_idx(Area *a) {
+	View *v;
+	Area *ap;
+	uint i;
+
+	v = a->view;
+	for(i = 0, ap = v->area; a != ap; ap = ap->next)
+		i++;
+	return i;
+}
+
+char*
+area_name(Area *a) {
+	static char buf[16];
+	
+	if(a->floating)
+		return "~";
+	snprintf(buf, sizeof(buf), "%d", area_idx(a));
+	return buf;
+}
+
 Area *
 create_area(View *v, Area *pos, uint w) {
 	static ushort id = 1;
@@ -234,11 +256,13 @@ detach_from_area(Frame *f) {
 			cp = win2client(c->trans);
 			if(cp && cp->frame) {
 				a = cp->sel->area;
-				if(a->view == v)
+				if(a->view == v) {
 					focus_area(a);
+					return;
+				}
 			}
 		}
-		else if(v->area->next->frame)
+		if(v->area->next->frame)
 			focus_area(v->area->next);
 	}else
 		assert(a->sel);

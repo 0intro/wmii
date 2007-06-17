@@ -30,6 +30,13 @@ str2colmode(const char *str) {
 	return -1;
 }
 
+char*
+colmode2str(int i) {
+	if(i < nelem(modes))
+		return modes[i];
+	return nil;
+}
+
 static Divide*
 getdiv(Divide **dp) {
 	WinAttr wa;

@@ -1,5 +1,5 @@
 '\" t
-.\" Manual page created with latex2man on Mon Jun 11 12:08:17 EDT 2007
+.\" Manual page created with latex2man on Mon Jun 11 15:48:33 EDT 2007
 .\" NOTE: This file is generated, DO NOT EDIT.
 .de Vb
 .ft CW
@@ -28,130 +28,137 @@ wmii
 .PP
 wmii
 is a dynamic window manager for X11. In contrast to 
-static window management the user rarely has to think about how to 
-organize windows, no matter what he is doing or how many 
-applications are used at the same time. The window manager adapts 
-to the current environment and fits to the needs of the user, rather 
-than forcing him to use a preset, fixed layout and trying to 
-shoehorn all windows and applications into it. 
+static window management the user rarely has to think about how 
+to organize windows, no matter what he is doing or how many 
+applications are used at the same time. The window manager 
+adapts to the current environment and fits to the needs of the 
+user, rather than forcing him to use a preset, fixed layout and 
+trying to shoehorn all windows and applications into it. 
 .PP
 wmii
 supports classic and tiled window management with 
-extended keyboard and mouse control. The classic window management 
-arranges windows in a floating layer in which windows can be moved 
-and resized freely. The tiled window management is based on columns 
-which split up the screen horizontally. Each column handles 
-arbitrary windows and arranges them vertically in a nonoverlapping 
-way. They can then be moved and resized between and within columns 
-at will. 
+extended keyboard and mouse control. The classic window 
+management arranges windows in a floating layer in which windows 
+can be moved and resized freely. The tiled window management is 
+based on columns which split up the screen horizontally. Each 
+column handles arbitrary windows and arranges them vertically in 
+a nonoverlapping way. They can then be moved and resized 
+between and within columns at will. 
 .PP
 wmii
 provides a virtual filesystem which represents the 
 internal state similar to the procfs of Unix operating systems. 
-Modifying this virtual filesystem results in changing the state of 
-the window manager. The virtual filesystem service can be accessed 
-through 9Pcapable client programs, like \fIwmiir\fP(1)\&.
-This 
-allows simple and powerful remote control of the core window 
-manager. 
+Modifying this virtual filesystem results in changing the state 
+of the window manager. The virtual filesystem service can be 
+accessed through 9Pcapable client programs, like 
+\fIwmiir\fP(1)\&.
+This allows simple and powerful remote control 
+of the core window manager. 
 .PP
 wmii
-basically consists of clients, columns, views, and the 
-bar, which are described in detail in the \fBTerminology\fP
+basically consists of clients, columns, views, and 
+the bar, which are described in detail in the 
+\fBTerminology\fP
 section. 
 .PP
 .SS TERMINOLOGY
 .PP
 .TP
 Display
-A running X server instance consisting of input devices 
-and screens. 
+A running X server instance consisting of input 
+devices and screens. 
 .TP
 Screen
 A physical or virtual (Xinerama or \fIXnest\fP(1))
-screen 
-of an X display. A screen displays a bar window and a view at a time. 
+screen of an X display. A screen displays a bar window 
+and a view at a time. 
 .TP
 Window
-A (rectangular) drawable X object which is displayed on a 
-screen, usually an application window. 
+A (rectangular) drawable X object which is 
+displayed on a screen, usually an application window. 
 .TP
 Client
-An application window surrounded by a frame window containing 
-a border and a titlebar. 
+An application window surrounded by a frame window 
+containing a border and a titlebar. 
 .TP
 Floating layer
 A screen layer of wmii
-on top of all other 
-layers, where clients are arranged in a classic (floating) way. 
-They can be resized or moved freely. 
+on top of 
+all other layers, where clients are arranged in a 
+classic (floating) way. They can be resized or moved 
+freely. 
 .TP
 Managed layer
 A screen layer of wmii
-behind the floating layer, 
-where clients are arranged in a nonoverlapping (managed) way. Here, 
-the window manager dynamically assigns each client a size and position. 
-The managed layer consists of columns. 
+behind the 
+floating layer, where clients are arranged in a 
+nonoverlapping (managed) way. Here, the window 
+manager dynamically assigns each client a size and 
+position. The managed layer consists of columns. 
 .TP
 Tag
-Alphanumeric strings which can be assigned to a client. This provides 
-a mechanism to group clients with similar properties. Clients can have one 
-tag, e.g. \fIwork\fP,
+Alphanumeric strings which can be assigned to a 
+client. This provides a mechanism to group clients with 
+similar properties. Clients can have one tag, e.g. 
+\fIwork\fP,
 or several tags, e.g. \fIwork+mail\fP\&.
-.PP
 Tags are separated with the \fI+\fP
 character. 
 .TP
 View
-A set of clients containing a specific tag, quite similiar to a 
-workspace in other window managers. It consists of the floating and 
-managed layers. 
+A set of clients containing a specific tag, quite 
+similiar to a workspace in other window managers. It 
+consists of the floating and managed layers. 
 .TP
 Column
-A column is a screen area which arranges clients vertically in a 
-non\-overlapping way. Columns provide three different modes, which 
-arrange clients with equal size, stacked, or maximized respectively. 
-Clients can be moved and resized between and within columns freely. 
+A column is a screen area which arranges clients 
+vertically in a non\-overlapping way. Columns provide 
+three different modes, which arrange clients with equal 
+size, stacked, or maximized respectively. Clients can 
+be moved and resized between and within columns freely. 
 .TP
 Bar
-The bar at the bottom of the screen displays a label for each view and 
-allows the creation of arbitrary userdefined labels. 
+The bar at the bottom of the screen displays a label 
+for each view and allows the creation of arbitrary 
+userdefined labels. 
 .TP
 Event
-An event is a message which can be read from a special file in the 
-filesystem of wmii,
-such as a mouse button press, a key press, or 
-a message written by a different 9P\-client. 
+An event is a message which can be read from a 
+special file in the filesystem of wmii,
+such as a 
+mouse button press, a key press, or a message written by 
+a different 9P\-client. 
 .PP
 .SS BASIC WINDOW MANAGEMENT
 .PP
 Running a raw wmii
 process without a \fIwmiirc\fP(1)
-script 
-provides basic window management capabilities already. However, to 
-use it effectively, remote control through its filesystem interface 
-is necessary. By default it is only usable with the mouse in 
-conjunction with the \fIMod1 (Alt)\fP
-modifier key. Other 
-interactions, such as customizing the style, killing or retagging 
-clients, and grabbing keys, cannot be achieved without accessing the 
-filesystem. 
+script provides basic window management capabilities already. 
+However, to use it effectively, remote control through its 
+filesystem interface is necessary. By default it is only usable 
+with the mouse in conjunction with the \fIMod1 (Alt)\fP
+modifier key. Other interactions, such as customizing the style, 
+killing or retagging clients, and grabbing keys, cannot be 
+achieved without accessing the filesystem. 
 .PP
-The filesystem can be accessed by connecting to the \fIaddress\fP
+The filesystem can be accessed by connecting to the 
+\fIaddress\fP
 of wmii
-with any 9P\-capable client, such as \fIwmiir\fP(1)
+with any 9P\-capable client, such 
+as \fIwmiir\fP(1)
 .PP
 .SS ACTIONS
 .PP
 An action is a shell script in the default setup, but it can 
 actually be any executable file. It is executed usually by 
-selecting it from the actions menu. You can customize an action by 
-copying it from the global action directory 
+selecting it from the actions menu. You can customize an action 
+by copying it from the global action directory 
 CONFPREFIX/wmii\-3.5
 to $HOME/.wmii\-3.5
 and then 
-editing the copy to fit your needs. Of course you can also create 
-your own actions there; make sure that they are executable. 
+editing the copy to fit your needs. Of course you can also 
+create your own actions there; make sure that they are 
+executable. 
 .PP
 Here is a list of the default actions: 
 .PP
@@ -346,9 +353,9 @@ If you feel the need to change the default configuration, then
 customize (as described above) the wmiirc
 action. This 
 action is executed at the end of the wmii
-script and does all 
-the work of setting up the window manager, the key bindings, the bar 
-labels, etc. 
+script and does 
+all the work of setting up the window manager, the key bindings, 
+the bar labels, etc. 
 .PP
 .SH FILESYSTEM
 .PP
@@ -556,15 +563,16 @@ Returns a clients class and label as:
 tags
 Set or read a client\&'s tags. Tags are seperated by 
 \fI+\fP
-or {\-}. Tags begining with \fI+\fP
-are added, 
-while those begining with \fI\-\fP
-are removed. If the 
-tag string written begins with \fI+\fP
-or \fI\-\fP,
-the 
-written tags are added to or removed from the client\&'s 
-set, otherwise, the set is overwritten. 
+or \fI\-\fP\&.
+Tags begining with \fI+\fP
+are 
+added, while those begining with \fI\-\fP
+are removed. 
+If the tag string written begins with \fI+\fP
+or 
+\fI\-\fP,
+the written tags are added to or removed from 
+the client\&'s set, otherwise, the set is overwritten. 
 .PP
 .SS The /tag/ Hierarchy
 .PP
@@ -648,13 +656,15 @@ them.
 .PP
 .TP
 /tmp/ns.USER.{DISPLAY%\&.0}/wmii
-The wmii socket file which provides a 9P service. 
+The wmii socket file 
+which provides a 9P service. 
 .TP
 CONFPREFIX/wmii\-3.5
 Global action directory. 
 .TP
 $HOME/.wmii\-3.5
-User\-specific action directory. Actions are first searched here. 
+User\-specific action directory. Actions 
+are first searched here. 
 .PP
 .SH ENVIRONMENT
 .PP

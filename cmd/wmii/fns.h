@@ -3,6 +3,8 @@
  */
 
 /* area.c */
+char *area_name(Area *a);
+uint area_idx(Area *a);
 Area *create_area(View*, Area *pos, uint w);
 void destroy_area(Area*);
 Area *area_of_id(View*, ushort id);
@@ -60,6 +62,7 @@ void arrange_column(Area*, Bool dirty);
 void resize_column(Area*, int w);
 void resize_colframe(Frame*, Rectangle*);
 int str2colmode(const char *str);
+char *colmode2str(int i);
 Area *new_column(View*, Area *pos, uint w);
 
 /* event.c */
@@ -69,6 +72,7 @@ uint flushevents(long even_mask, Bool dispatch);
 void print_focus(Client *c, char *to);
 
 /* frame.c */
+uint frame_idx(Frame *f);
 Frame *create_frame(Client*, View*);
 void remove_frame(Frame*);
 void insert_frame(Frame *pos, Frame*);
@@ -157,6 +161,7 @@ Client *view_selclient(View*);
 char *message_view(View *v, Message *m);
 void restack_view(View*);
 uchar *view_index(View*);
+uchar *view_ctl(View *v);
 void destroy_view(View*);
 void update_views(void);
 uint newcolw(View*, int i);

@@ -182,9 +182,8 @@ kpress_seq(XWindow w, Key *done) {
 	if((done->mod == mod) && (done->key == key))
 		emulate_key_press(mod, key); /* double key */
 	else {
-		if(!found) {
+		if(!found)
 			XBell(display, 0);
-		} /* grabbed but not found */
 		else if(!found->tnext && !found->next)
 			write_event("Key %s\n", found->name);
 		else

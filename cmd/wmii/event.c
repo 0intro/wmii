@@ -134,7 +134,6 @@ focusin(XEvent *e) {
 	XFocusChangeEvent *ev;
 	Window *w;
 	Client *c;
-	XEvent me;
 
 	ev = &e->xfocus;
 	/* Yes, we're focusing in on nothing, here. */
@@ -162,13 +161,9 @@ focusin(XEvent *e) {
 		handle(w, focusin, ev);
 	else if(ev->mode == NotifyGrab) {
 		if(ev->window == scr.root.w)
-			if(XCheckMaskEvent(display, KeyPressMask, &me)) {
-				/* wmii has grabbed focus */
-				screen->hasgrab = &c_root;
-				dispatch_event(&me);
-			}
+			screen->hasgrab = &c_root;
 		/* Some unmanaged window has grabbed focus */
-		if((c = screen->focus)) {
+		else if((c = screen->focus)) {
 			print_focus(&c_magic, "<magic>");
 			screen->focus = &c_magic;
 			if(c->sel)
@@ -179,6 +174,7 @@ focusin(XEvent *e) {
 
 static void
 focusout(XEvent *e) {
+	XEvent me;
 	XFocusChangeEvent *ev;
 	Window *w;
 
@@ -192,7 +188,10 @@ focusout(XEvent *e) {
 	if(ev->mode == NotifyUngrab)
 		screen->hasgrab = nil;
 
-	if((w = findwin(ev->window))) 
+	if((ev->mode == NotifyGrab)
+	&& XCheckMaskEvent(display, KeyPressMask, &me))
+			dispatch_event(&me);
+	else if((w = findwin(ev->window))) 
 		handle(w, focusout, ev);
 }
 

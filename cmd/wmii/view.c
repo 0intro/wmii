@@ -331,41 +331,64 @@ rects_of_view(View *v, uint *num, Frame *ignore) {
 /* XXX: This will need cleanup */
 uchar *
 view_index(View *v) {
+	Rectangle *r;
 	Frame *f;
 	Area *a;
-	char *buf;
-	uint i, n;
-	int len;
+	char *buf, *end;
+	uint i;
 
-	len = sizeof(buffer);
 	buf = buffer;
-	for((a=v->area), (i=0); a && len > 0; (a=a->next), i++) {
+	end = buffer+sizeof(buffer);
+	for((a=v->area), (i=0); a && buf < end-1; (a=a->next), i++) {
 		if(a->floating)
-			n = snprintf(buf, len, "# ~ %d %d\n",
+			buf += snprintf(buf, end-buf, "# ~ %d %d\n",
 					Dx(a->r), Dy(a->r));
 		else
-			n = snprintf(buf, len, "# %d %d %d\n",
+			buf += snprintf(buf, end-buf, "# %d %d %d\n",
 					i, a->r.min.x, Dx(a->r));
 
-		buf += n;
-		len -= n;
-		for(f=a->frame; f && len > 0; f=f->anext) {
-			Rectangle *r = &f->r;
+		for(f=a->frame; f && buf < end-1; f=f->anext) {
+			r = &f->r;
 			if(a->floating)
-				n = snprintf(buf, len, "~ 0x%x %d %d %d %d %s\n",
+				buf += snprintf(buf, end-buf, "~ 0x%x %d %d %d %d %s\n",
 						(uint)f->client->w.w,
-						r->min.x, r->min.y, Dx(*r), Dy(*r),
+						r->min.x, r->min.y,
+						Dx(*r), Dy(*r),
 						f->client->props);
 			else
-				n = snprintf(buf, len, "%d 0x%x %d %d %s\n",
+				buf += snprintf(buf, end-buf, "%d 0x%x %d %d %s\n",
 						i, (uint)f->client->w.w,
 						r->min.y, Dy(*r),
 						f->client->props);
-			if(len - n < 0)
-				return (uchar*)buffer;
-			buf += n;
-			len -= n;
 		}
+	}
+	return (uchar*)buffer;
+}
+
+uchar *
+view_ctl(View *v) {
+	Area *a;
+	char *buf, *end;
+	uint i;
+
+	buf = buffer;
+	end = buffer+sizeof(buffer);
+
+	buf += snprintf(buf, end-buf, "%s\n", v->name);
+
+	/* select <area>[ <frame>] */
+	buf += snprintf(buf, end-buf, "select %s", area_name(v->sel));
+	if(v->sel->sel)
+		buf  += snprintf(buf, end-buf, " %d", frame_idx(v->sel->sel));
+	buf  += snprintf(buf, end-buf, "\n");
+
+	/* select client <client> */
+	if(v->sel->sel)
+		buf  += snprintf(buf, end-buf, "select client 0x%x\n", clientwin(v->sel->sel->client));
+
+	for(a = v->area->next, i = 1; a && buf < end-1; a = a->next, i++) {
+		buf += snprintf(buf, end-buf, "colmode %d %s\n",
+			i, colmode2str(a->mode));
 	}
 	return (uchar*)buffer;
 }

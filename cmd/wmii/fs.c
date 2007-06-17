@@ -639,10 +639,6 @@ fs_read(Ixp9Req *r) {
 			write_buf(r, f->p.client->name, strlen(f->p.client->name));
 			respond(r, nil);
 			return;
-		case FsFTctl:
-			write_buf(r, f->p.view->name, strlen(f->p.view->name));
-			respond(r, nil);
-			return;
 		case FsFBar:
 			write_buf(r, f->p.bar->buf, strlen(f->p.bar->buf));
 			respond(r, nil);
@@ -665,6 +661,12 @@ fs_read(Ixp9Req *r) {
 			return;
 		case FsFTindex:
 			buf = (char*)view_index(f->p.view);
+			n = strlen(buf);
+			write_buf(r, buf, n);
+			respond(r, nil);
+			return;
+		case FsFTctl:
+			buf = (char*)view_ctl(f->p.view);
 			n = strlen(buf);
 			write_buf(r, buf, n);
 			respond(r, nil);

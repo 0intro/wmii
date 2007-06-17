@@ -7,6 +7,17 @@
 #include "dat.h"
 #include "fns.h"
 
+uint
+frame_idx(Frame *f) {
+	Frame *fp;
+	uint i;
+
+	fp = f->area->frame;
+	for(i = 1; fp != f; fp = fp->anext)
+		i++;
+	return i;
+}
+
 Frame *
 create_frame(Client *c, View *v) {
 	static ushort id = 1;
