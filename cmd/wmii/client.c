@@ -533,7 +533,7 @@ updatemwm(Client *c) {
 	int n;
 
 	n = getproperty(&c->w, "_MOTIF_WM_HINTS", "_MOTIF_WM_HINTS", &real, 
-			2L, (uchar**)&ret, 1L);
+			2L, (void*)&ret, 1L);
 
 	if(n == 0) {
 		c->borderless = 0;

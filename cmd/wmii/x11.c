@@ -274,7 +274,7 @@ winprotocols(Window *w) {
 	Atom actual, delete;
 	int i, n, protos;
 
-	n = getproperty(w, "WM_PROTOCOLS", "ATOM", &actual, 0L, (uchar**)&protocols, 20L);
+	n = getproperty(w, "WM_PROTOCOLS", "ATOM", &actual, 0L, (void*)&protocols, 20L);
 	if(n == 0)
 		return 0;
 
