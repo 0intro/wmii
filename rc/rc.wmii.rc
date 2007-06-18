@@ -231,7 +231,7 @@ proglist $PATH >$progs_file &
 ifs='#
 '{	for(bar in `{comm -23 <{wmiir ls /lbar} <{read_tags}})
 		wmiir remove /lbar/$bar
-	seltag=`{wmiir read /tag/sel/ctl}
+	seltag=`{wmiir read /tag/sel/ctl | sed 1q}
 	for(tag in `{read_tags}) {
 		if(~ $tag $seltag)
 			echo $WMII_FOCUSCOLORS `{viewtitle $tag} | wmiir create /lbar/$tag

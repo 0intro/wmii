@@ -931,7 +931,7 @@ fs_flush(Ixp9Req *r) {
 	Ixp9Req **i, **j;
 
 	for(i=&peventread; i != &oeventread; i=&oeventread)
-		for(j=i; *j; j=(Ixp9Req **)&(*j)->aux)
+		for(j=i; *j; j=(Ixp9Req**)&(*j)->aux)
 			if(*j == r->oldreq) {
 				*j = (*j)->aux;
 				respond(r->oldreq, Einterrupted);
