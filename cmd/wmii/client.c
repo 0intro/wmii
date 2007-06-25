@@ -268,7 +268,7 @@ frame_hints(Frame *f, Rectangle r, Align sticky) {
 
 static void
 set_client_state(Client * c, int state) {
-	long data[] = { state, None };
+	Atom data[] = { state, None };
 	changeprop(&c->w, "WM_STATE", "WM_STATE", data, nelem(data));
 }
 

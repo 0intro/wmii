@@ -464,26 +464,26 @@ loadcolor(CTuple *c, char *str) {
 Font *
 loadfont(char *name) {
 	Font *f;
-	char **missing = nil, *def = "?";
+	XFontStruct **xfonts;
+	char **missing, **font_names;
 	int n, i;
 
+	missing = nil;
 	f = emallocz(sizeof *f);
 	f->name = estrdup(name);
-
-	f->set = XCreateFontSet(display, name, &missing, &n, &def);
+	f->set = XCreateFontSet(display, name, &missing, &n, nil);
 	if(missing) {
-		fprintf(stderr, "%s: missing fontset%s for '%s':", argv0,
-				(n > 1 ? "s":""), name);
+		setvbuf(stderr, nil, _IOLBF, 0);
+		fprintf(stderr, "%s: note: missing fontset%s for '%s':", argv0,
+				(n > 1 ? "s" : ""), name);
 		for(i = 0; i < n; i++)
-			 fprintf(stderr, "%s %s", (i ? ",":""), missing[i]);
+			fprintf(stderr, "%s %s", (i ? "," : ""), missing[i]);
 		fprintf(stderr, "\n");
+		setvbuf(stderr, nil, _IONBF, 0);
 		freestringlist(missing);
 	}
 
 	if(f->set) {
-		XFontStruct **xfonts;
-		char **font_names;
-
 		XFontsOfFontSet(f->set, &xfonts, &font_names);
 		f->ascent = xfonts[0]->ascent;
 		f->descent = xfonts[0]->descent;

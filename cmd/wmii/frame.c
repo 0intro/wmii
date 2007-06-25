@@ -144,7 +144,8 @@ bdown_event(Window *w, XButtonEvent *e) {
 			XAllowEvents(display, ReplayPointer, e->time);
 			break;
 		}
-		XUngrabPointer(display, e->time);
+		if(e->button != Button1)
+			XUngrabPointer(display, e->time);
 	}else{
 		if(e->button == Button1) {
 			if(frame_to_top(f))
