@@ -220,18 +220,17 @@ gravclient(Client *c, Rectangle rd) {
 			r = c->sel->r;
 		else
 			r = c->sel->revert;
-		r = gravitate(r, c->w.r, h->grav);
+		r = gravitate(c->w.r, r, h->grav);
 		if(h->gravstatic)
 			r = rectaddpt(r, sp);
-		r = frame2client(nil, r);
+		return r;
 	}else {
-		r = client2frame(c->sel, c->w.r);
-		r = gravitate(rd, r, h->grav);
+		r = client2frame(nil, rd);
+		r = gravitate(r, rd, h->grav);
 		if(h->gravstatic)
 			r = rectsubpt(r, sp);
-		r = client2frame(nil, r);
+		return r;
 	}
-	return r;
 }
 
 Rectangle
@@ -608,7 +607,7 @@ wmname:
 /* Handlers */
 static void
 configreq_event(Window *w, XConfigureRequestEvent *e) {
-	Rectangle r;
+	Rectangle r, cr;
 	Frame *f;
 	Client *c;
 
@@ -631,9 +630,10 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 		c->border = e->border_width;
 
 	r.max = addpt(r.min, r.max);
+	cr = r;
 	r = gravclient(c, r);
 
-	if((Dx(r) == Dx(screen->r)) && (Dy(r) == Dy(screen->r)))
+	if((Dx(cr) == Dx(screen->r)) && (Dy(cr) == Dy(screen->r)))
 		fullscreen(c, True);
 
 	if(c->sel->area->floating)
@@ -866,7 +866,7 @@ apply_tags(Client *c, const char *tags) {
 		cur = nil;
 		if(!strcmp(buf+n, "~"))
 			c->floating = add;
-		else if(!strcmp(buf+n, "!") || strcmp(buf+n, "sel"))
+		else if(!strcmp(buf+n, "!") || !strcmp(buf+n, "sel"))
 			cur = screen->sel->name;
 		else if(!Mbsearch(buf+n, badtags, bsstrcmp))
 			cur = buf+n;
