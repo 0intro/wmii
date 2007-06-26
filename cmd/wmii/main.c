@@ -177,7 +177,7 @@ init_cursors(void) {
 			display, scr.root.w,
 			(char[]){0}, 1, 1);
 
-	cursor[CurInvisible] = XCreatePixmapCursor(display,
+	cursor[CurNone] = XCreatePixmapCursor(display,
 			pix, pix,
 			&black, &black,
 			0, 0);

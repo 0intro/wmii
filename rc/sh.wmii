@@ -8,6 +8,8 @@ argv0 = $0
 #mount -Aa {styxmon {os rc -c 'dial $WMII_ADDRESS' >[1=0]}} / || raise mount
 mount -Aa {os rc -c 'dial $WMII_ADDRESS' >[1=0]} / || raise mount
 
+{`{read} && echo halt>/dev/sysctl}&
+
 MODKEY=Mod1
 UP=k
 DOWN=j
@@ -15,7 +17,6 @@ LEFT=h
 RIGHT=l
 
 WMII_FONT=fixed
-WMII_FONT='drift,-*-fixed-*-*-*-*-9-*-*-*-*-*-*-*'
 WMII_NORMCOLORS=('#222222' '#5FBF77' '#2A7F3F')
 WMII_FOCUSCOLORS=('#ffffff' '#153F1F' '#2A7F3F')
 WMII_BACKGROUND='#333333'
@@ -64,14 +65,30 @@ subfn ftl {
 
 subfn lines {
 	ifs := "{echo}
-	arg = $*
+	arg := $*
 	result = `{$arg}
+}
+
+fn dofn {
+	(cmd args) := $*
+	if {~ "{whatis $cmd >[2]/dev/null} 'load std; fn '*} {$cmd $args;{}}
+}
+
+fn run_command {
+	os -b -d ${hostenv HOME} $* &
 }
 
 fn dprint {
 	arg := $*
 	or {~ $#debug 0} {~ $debug '' 0} { echo $arg }
 }
+
+subfn config_whatis {
+	result=${lines {os rc -c 'PATH=$WMII_CONFPATH which $*' $* </dev/null} $*}
+}
+
+local := $home/.wmii-3.5/sh.wmii.local
+if {ftest -x $local} {run $local}
 
 # Status Bar Info
 fn status {
@@ -122,11 +139,7 @@ fn Event-ClientMouseDown {
 # Actions
 fn Action {
 	(action args) := $*
-	if {~ "{whatis Action-$action >[2]/dev/null} 'load std; fn '*} {
-		Action-$action $args
-	} {
-		run_command ${config_whatis $action} $args
-	}
+	or {dofn Action-$action $args} {run_command ${config_whatis $action} $args}
 }
 fn Action-quit { echo quit >>/ctl }
 fn Action-rehash {
@@ -183,26 +196,12 @@ fn Key-$MODKEY-Shift-t {
 	read_tags | wmiimenu >/client/$sel/tags
 }
 
-fn next_tag {
-	os awk -v curtag'='${lines sed 1q /tag/sel/ctl} '
-		NR==1 {first = $0}
-		$0==curtag { if(getline) print $0; else print first; exit }'
-}
-fn Key-$MODKEY-n {
-	echo view `{read_tags | next_tag} >/ctl
-}
-fn Key-$MODKEY-b {
-	echo view `{read_tags | tail -r | next_tag} >/ctl
-}
-
-for(i in ${seq 0 9}) {
-	fn Key-$MODKEY-$i { echo view ${tl ${splitr $1 -}} >/ctl }
-	fn Key-Shift-$MODKEY-$i { echo ${tl ${splitr $1 -}} >/client/sel/tags}
-}
+fn Key-$MODKEY-^${seq 0 9} { echo view ${tl ${splitr $1 -}} >/ctl }
+fn Key-Shift-$MODKEY-${seq 0 9} { echo ${tl ${splitr $1 -}} >/client/sel/tags}
 
 # Functions
 fn proglist {
-	os find ${split : $"*} -maxdepth 1 -type f | sed 's,.*/,,' | sort | uniq
+	os find ${split : $"*} -maxdepth 1 -type f </dev/null | sed 's,.*/,,' | sort | uniq
 	#for(d in /n/local^${split : $"*}) {
 	#	fs filter {mode -d} $d
 	#} | sed 's,.*/,,' | sort | uniq
@@ -228,14 +227,6 @@ fn read_tags {
 	ls -p /tag | grep -v '^sel$'
 }
 
-subfn config_whatis {
-	result=${lines os rc -c 'PATH=$WMII_CONFPATH which $*' $*}
-}
-
-fn run_command {
-	os -b -d ${hostenv HOME} $* &
-}
-
 # WM Configuration
 {
 	echo grabmod $MODKEY
@@ -246,10 +237,12 @@ fn run_command {
 } >/ctl
 
 # Misc Setup
-os xsetroot -solid $WMII_BACKGROUND
+os xsetroot -solid $WMII_BACKGROUND </dev/null
 Action status &
 progs_file=/tmp/proglist.${pid}
 Action rehash &
+
+dofn Local-Overrides
 
 # Tag Bar Setup
 seltag=${lines sed 1q /tag/sel/ctl}

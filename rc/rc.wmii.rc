@@ -172,10 +172,8 @@ fn Key-$MODKEY-Shift-t {
 	wmiir xwrite /client/`{wmiir read /client/sel/ctl}^/tags `{read_tags | wmiimenu} &
 }
 
-for(i in `{seq 0 9}) {
-	fn Key-$MODKEY-$i { wmiir xwrite /ctl view `{echo $1 | sed 's/.*-//'} }
-	fn Key-Shift-$MODKEY-$i {wmiir xwrite /client/sel/tags `{echo $1 | sed 's/.*-//'} }
-}
+fn Key-$MODKEY-^`{seq 0 9} { wmiir xwrite /ctl view `{echo $1 | sed 's/.*-//'} }
+fn Key-Shift-$MODKEY-^`{seq 0 9} { wmiir xwrite /client/sel/tags `{echo $1 | sed 's/.*-//'} }
 
 # Functions
 fn proglist {

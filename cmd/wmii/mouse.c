@@ -535,7 +535,7 @@ mouse_resizecol(Divide *d) {
 	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
 	mapwin(cwin);
 
-	if(!grabpointer(&scr.root, cwin, cursor[CurInvisible], MouseMask))
+	if(!grabpointer(&scr.root, cwin, cursor[CurNone], MouseMask))
 		goto done;
 
 	for(;;) {
