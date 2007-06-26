@@ -268,7 +268,7 @@ frame_hints(Frame *f, Rectangle r, Align sticky) {
 
 static void
 set_client_state(Client * c, int state) {
-	Atom data[] = { state, None };
+	long data[] = { state, None };
 	changeprop(&c->w, "WM_STATE", "WM_STATE", data, nelem(data));
 }
 
@@ -866,7 +866,7 @@ apply_tags(Client *c, const char *tags) {
 		cur = nil;
 		if(!strcmp(buf+n, "~"))
 			c->floating = add;
-		else if(!strcmp(buf+n, "!"))
+		else if(!strcmp(buf+n, "!") || strcmp(buf+n, "sel"))
 			cur = screen->sel->name;
 		else if(!Mbsearch(buf+n, badtags, bsstrcmp))
 			cur = buf+n;

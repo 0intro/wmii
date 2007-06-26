@@ -113,5 +113,6 @@ XRectangle XRect(Rectangle r);
 #define Pt(x, y) ((Point){(x), (y)})
 #define Rpt(p, q) ((Rectangle){p, q})
 #define Rect(x0, y0, x1, y1) ((Rectangle){Pt(x0, y0), Pt(x1, y1)})
-#define changeprop(w, prop, type, data, n) changeproperty(w, prop, type, (sizeof(*(data))*8), \
-			(uchar*)(data), n)
+#define changeprop(w, prop, type, data, n) changeproperty(w, prop, type, ((sizeof(*(data)) == 8 ? 4 : sizeof(*(data))) \
+									  * 8), \
+							  (uchar*)(data), n)

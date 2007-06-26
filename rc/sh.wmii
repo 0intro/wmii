@@ -209,9 +209,7 @@ fn proglist {
 }
 
 fn getfuns {
-	ls -p /env | grep '^fn-' ^ $1 ^ '-' | getlines {
-		echo ${re s '^fn-[^-]+-' '' $line}
-	}
+	ls -p /env | sed -n 's/^fn-' ^ $1 ^ '-//p'
 }
 
 fn actionlist {
@@ -254,7 +252,7 @@ progs_file=/tmp/proglist.${pid}
 Action rehash &
 
 # Tag Bar Setup
-{ifs:="{echo}; seltag=`{sed 1q /tag/sel/ctl}}
+seltag=${lines sed 1q /tag/sel/ctl}
 comm -13 ${pipe from {read_tags}} ${pipe from {ls -p /lbar/*}} |
 	getlines { rm /lbar/$line }
 read_tags | getlines {
@@ -281,3 +279,4 @@ getlines {
 	} </dev/null
 	dprint loop
 } </event
+

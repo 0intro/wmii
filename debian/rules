@@ -12,7 +12,7 @@ UNPATCH=debian/unpatch.ed
 
 CFLAGS = -g -O0
 ifeq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	# wmii is IO, not CPU bound. Please do not use -O2 here.
+	# wmii is IO, not CPU, bound. Please do not use -O2 here.
 	CFLAGS += -O
 endif
 ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
