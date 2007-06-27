@@ -321,7 +321,7 @@ utfutf(char *s1, char *s2)
 }
 
 char*
-toutf8n(char *str, int nstr) {
+toutf8n(char *str, size_t nstr) {
 	static iconv_t cd;
 	char *buf, *pos;
 	size_t nbuf, bsize;

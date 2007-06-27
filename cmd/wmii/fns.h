@@ -255,6 +255,6 @@ int	utfnlen(char*, long);
 char*	utfrrune(char*, long);
 char*	utfrune(char*, long);
 char*	utfutf(char*, char*);
-char*	toutf8n(char*, int);
+char*	toutf8n(char*, size_t);
 char*	toutf8(char*);
 int		isspacerune(Rune c);
