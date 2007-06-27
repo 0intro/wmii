@@ -29,7 +29,7 @@ wmiir write /colrules <<!
 wmiir write /tagrules <<!
 /XMMS.*/ -> ~
 /MPlayer.*/ -> ~
-/.*/ -> !
+/.*/ -> sel
 /.*/ -> 1
 !
 

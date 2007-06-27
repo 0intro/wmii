@@ -31,8 +31,10 @@ fn 9menu {
 
 fn config_whatis {
 	confpath=`{echo $WMII_CONFPATH | sed 'y/:/ /'}
-	prog=$1; shift
-	echo `{{path=$confpath whatis $prog} | grep -v '=|^fn '} $*
+	prog = `{{path=$confpath whatis $1} | grep -v '^fn|= '}; shift
+	if(~ $#prog 0)
+		prog = /dev/null
+	echo $prog $*
 }
 
 if(echo $0 | grep -vs '/rc.wmii$') {
@@ -52,10 +54,6 @@ rc.wmii can't run:
 wmiirc will be run instead.
 !
 
-# Source Variables, &c
-local = `{config_whatis rc.wmii.local}
-. <{awk '//; /^# Overrides/ { exit }' $local </dev/null}
-
 # Column Rules
 wmiir write /colrules <<!
 /./ -> 60+40
@@ -65,7 +63,7 @@ wmiir write /colrules <<!
 wmiir write /tagrules <<!
 /XMMS.*/ -> ~
 /MPlayer.*/ -> ~
-/.*/ -> !
+/.*/ -> sel
 /.*/ -> 1
 !
 
@@ -74,18 +72,37 @@ fn status {
 	echo -n `{uptime | sed 's/.*://; s/,//g'} '|' `{date}
 }
 
+# Functions
 fn viewtitle { echo $* }
 
-# Events
-fn Event-Start {
-	switch($1) {
-	case wmiirc
-		rm -f $progs_file
-		exit
-	}
+fn proglist {
+        /bin/ls -lL `{echo $* | sed 'y/:/ /'} >[2]/dev/null \
+		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
+		| sort | uniq
 }
 
-fn Event-Key { eval Key-$1 $1 }
+fn getfuns {
+	env | sed -n 's/^fn#'^$1^'-([^=]+).*/\1/p'
+}
+
+fn actionlist {
+	{	proglist $WMII_CONFPATH
+	 	getfuns Action
+	} | sort | uniq
+}
+
+fn initkeys {
+	getfuns Key | wmiir write /keys
+}
+
+fn read_tags {
+	wmiir ls /tag | sed 's,/,,; /^sel$/d'
+}
+
+fn run_command {
+	rfork ns
+	path=$oldpath { eval exec $* }
+}
 
 fn Event-CreateTag { echo $WMII_NORMCOLORS `{viewtitle $*} | wmiir create /lbar/$"* }
 fn Event-DestroyTag { wmiir remove /lbar/$"* }
@@ -112,14 +129,16 @@ fn Event-ClientMouseDown {
 	}
 }
 
+fn 'fn?' {rc -c 'whatis '$1 >[2]/dev/null | grep -s '^fn ' }
+
 # Actions
 fn Action {
-	action=$1; shift
-	if(whatis Action-$action | grep -s '^fn ') {
-		Action-$action $* &
-	};if not {
-		run_command `{config_whatis $action} $* &
-	}
+	cmd=$1 action=Action-$cmd { shift
+		if('fn?' $action)
+			$action $*
+		if not
+			run_command `{config_whatis $cmd} $*
+	} &
 }
 fn Action-rehash { proglist $PATH >$progs_file }
 fn Action-quit { wmiir xwrite /ctl quit }
@@ -132,6 +151,30 @@ fn Action-status {
 	while(status | wmiir write /rbar/status)
 		sleep 1
 }
+
+# Events
+fn Event-Start {
+	switch($1) {
+	case wmiirc
+		rm -f $progs_file
+		exit
+	}
+}
+fn Event-Key { eval Key-$1 $1 }
+
+# Source Variables, &c
+local = `{config_whatis rc.wmii.local}
+. <{awk '//;
+	/^# Overrides/ {
+		print "xmessage -file - <<!"
+		print "rc.wmii: Warning:"
+		print "	Your rc.wmii.local contains an ''# Overrides'' line."
+		print "	This line has a deprecated special meaning. Functions"
+		print "	you wish to override should be defined in a function"
+		print "	called Action-overridekeys"
+		print "!"
+		exit
+	}' $local </dev/null}
 
 # Key Bindings
 fn Key-$MODKEY-Control-t {
@@ -175,38 +218,6 @@ fn Key-$MODKEY-Shift-t {
 fn Key-$MODKEY-^`{seq 0 9} { wmiir xwrite /ctl view `{echo $1 | sed 's/.*-//'} }
 fn Key-Shift-$MODKEY-^`{seq 0 9} { wmiir xwrite /client/sel/tags `{echo $1 | sed 's/.*-//'} }
 
-# Functions
-fn proglist {
-        /bin/ls -lL `{echo $* | sed 'y/:/ /'} >[2]/dev/null \
-		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
-		| sort | uniq
-}
-
-fn getfuns {
-	env | sed -n 's/^fn#'^$1^'-([^=]+).*/\1/p'
-}
-
-fn actionlist {
-	{	proglist $WMII_CONFPATH
-	 	getfuns Action
-	} | sort | uniq
-}
-
-fn initkeys {
-	getfuns Key | wmiir write /keys
-}
-
-fn read_tags {
-	wmiir ls /tag | sed 's,/,,; /^sel$/d'
-}
-
-fn run_command {
-	@{	rfork ns
-		path=$oldpath
-		eval exec $*
-	}
-}
-
 # WM Configuration
 wmiir write /ctl <<!
 grabmod $MODKEY
@@ -219,9 +230,13 @@ xsetroot -solid $WMII_BACKGROUND
 
 # Source Overrides
 . <{awk '/^# Overrides/, 0' $local </dev/null}
+if('fn?' Action-overridekeys)
+	Action-overridekeys
+if not
+	. `{config_whatis overridekeys}
 
 # Misc Setup
-Action status &
+Action status
 progs_file=$WMII_NS_DIR/proglist.$pid
 proglist $PATH >$progs_file &
 

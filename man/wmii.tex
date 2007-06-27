@@ -202,7 +202,7 @@ follows.
 \begin{description}
 \item[colrules] The \emph{colrules} file contains a list of
 	rules which affect the width of newly created columns.
-	Rules have the form: \\ \SP % Yuck!
+	Rules have the form: \\ \SP % Yuck! (kludge)
 	\MANbr
 	\SP\SP /\Arg{regex}/ -> \Arg{width}\oArg{+width...} \\ \SP
 	\MANbr
@@ -218,12 +218,11 @@ follows.
 	\MANbr
 	\SP\SP /\Arg{regex}/ -> \Arg{tag}\oArg{+tag...} \\ \SP
 	\MANbr
-	When a client's \Arg{name}:\Arg{class}:\Arg{title}
-	matches \Arg{regex}, it is given the tagstring
-	\Arg{tag}. There are two special tags. \emph{!}, which
-	will be replaced with \emph{sel} in the future,
-	represents the current tag. \emph{\Circum} represents the
-	floating layer.
+	When a client's \Arg{name}:\Arg{class}:\Arg{title} matches
+	\Arg{regex}, it is given the tagstring \Arg{tag}. There are
+	two special tags. \emph{!}, which is deprecated, and identical
+	to \emph{sel}, represents the current tag. \emph{\Circum}
+	represents the floating layer.
 \item[keys] The \emph{keys} file contains a list of keys which
 	\Prog{wmii} will grab. Whenever these key combinations
 	are pressed, the string which represents them are
