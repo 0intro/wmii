@@ -546,8 +546,23 @@ xatom(char *name) {
 }
 
 void
-changeproperty(Window *w, char *prop, char *type, int width, uchar *data, int n) {
+changeproperty(Window *w, char *prop, char *type, int width, uchar data[], int n) {
 	XChangeProperty(display, w->w, xatom(prop), xatom(type), width, PropModeReplace, data, n);
+}
+
+void
+changeprop_char(Window *w, char *prop, char *type, char data[], int len) {
+	changeproperty(w, prop, type, 8, (uchar*)data, len);
+}
+
+void
+changeprop_short(Window *w, char *prop, char *type, short data[], int len) {
+	changeproperty(w, prop, type, 16, (uchar*)data, len);
+}
+
+void
+changeprop_long(Window *w, char *prop, char *type, long data[], int len) {
+	changeproperty(w, prop, type, 32, (uchar*)data, len);
 }
 
 void

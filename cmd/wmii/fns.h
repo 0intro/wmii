@@ -217,6 +217,9 @@ ulong getproperty(Window *w, char *prop, char *type, Atom *actual, ulong offset,
 char *gettextproperty(Window*, char*);
 int gettextlistproperty(Window *w, char *name, char **ret[]);
 void changeproperty(Window*, char *prop, char *type, int width, uchar *data, int n);
+void changeprop_char(Window *w, char *prop, char *type, char data[], int len);
+void changeprop_short(Window *w, char *prop, char *type, short data[], int len);
+void changeprop_long(Window *w, char *prop, char *type, long data[], int len);
 void setfocus(Window*, int mode);
 Point querypointer(Window*);
 void warppointer(Point);

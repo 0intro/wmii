@@ -321,7 +321,7 @@ place_frame(Frame *f) {
 	if(c->trans)
 		return;
 	if(c->fullscreen || c->w.hints->position || starting) {
-		f->r = gravclient(c, c->w.r);
+		f->r = gravclient(c, c->r);
 		return;
 	}
 	if(!field) {

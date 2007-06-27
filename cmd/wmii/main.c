@@ -147,7 +147,7 @@ static void
 init_atoms(void) {
 	Atom net[] = { xatom("_NET_SUPPORTED"), xatom("_NET_WM_NAME") };
 
-	changeprop(&scr.root, "_NET_SUPPORTED", "ATOM", net, nelem(net));
+	changeprop_long(&scr.root, "_NET_SUPPORTED", "ATOM", net, nelem(net));
 }
 
 static void

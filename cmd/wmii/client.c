@@ -92,7 +92,9 @@ manage_client(Client *c) {
 	Client *trans;
 	char *tags;
 
-	tags = gettextproperty(&c->w, "_WIN_TAGS");
+	tags = gettextproperty(&c->w, "_WMII_TAGS");
+	if(tags == nil)
+		tags = gettextproperty(&c->w, "_WIN_TAGS");
 
 	if((trans = win2client(c->trans)))
 		strncpy(c->tags, trans->tags, sizeof(c->tags));
@@ -119,7 +121,7 @@ manage_client(Client *c) {
 	flushevents(EnterWindowMask, False);
 }
 
-static int
+static int /* Temporary Xlib error handler */
 ignoreerrors(Display *d, XErrorEvent *e) {
 	return 0;
 }
@@ -268,7 +270,8 @@ frame_hints(Frame *f, Rectangle r, Align sticky) {
 static void
 set_client_state(Client * c, int state) {
 	long data[] = { state, None };
-	changeprop(&c->w, "WM_STATE", "WM_STATE", data, nelem(data));
+
+	changeprop_long(&c->w, "WM_STATE", "WM_STATE", data, nelem(data));
 }
 
 void
@@ -913,7 +916,7 @@ apply_tags(Client *c, const char *tags) {
 
 	update_client_views(c, toks);
 
-	changeprop(&c->w, "_WIN_TAGS", "UTF8_STRING", c->tags, strlen(c->tags));
+	changeprop_char(&c->w, "_WMII_TAGS", "UTF8_STRING", c->tags, strlen(c->tags));
 }
 
 void
