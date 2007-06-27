@@ -347,13 +347,18 @@ message_root(void *p, Message *m) {
 
 char *
 read_root_ctl(void) {
-	uint i = 0;
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "view %s\n", screen->sel->name);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "focuscolors %s\n", def.focuscolor.colstr);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "normcolors %s\n", def.normcolor.colstr);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "font %s\n", def.font->name);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "grabmod %s\n", def.grabmod);
-	i += snprintf(&buffer[i], (sizeof(buffer) - i), "border %d\n", def.border);
+	char *b, *e;
+
+	b = buffer;
+	e = b + sizeof(buffer);
+#define print(...) if(b < e) snprintf(b, e-b, __VA_ARGS__)
+	print("view %s\n", screen->sel->name);
+	print("focuscolors %s\n", def.focuscolor.colstr);
+	print("normcolors %s\n", def.normcolor.colstr);
+	print("font %s\n", def.font->name);
+	print("grabmod %s\n", def.grabmod);
+	print("border %d\n", def.border);
+#undef print
 	return buffer;
 }
 

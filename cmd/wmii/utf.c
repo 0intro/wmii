@@ -324,7 +324,7 @@ char*
 toutf8n(char *str, int nstr) {
 	static iconv_t cd;
 	char *buf, *pos;
-	int nbuf, bsize;
+	size_t nbuf, bsize;
 
 	if(cd == nil)
 		cd = iconv_open("UTF-8", "");

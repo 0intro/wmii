@@ -100,8 +100,11 @@ fn read_tags {
 }
 
 fn run_command {
+	@{
 	rfork ns
-	path=$oldpath { eval exec $* }
+	path=$oldpath
+	eval exec $* &
+	}
 }
 
 fn Event-CreateTag { echo $WMII_NORMCOLORS `{viewtitle $*} | wmiir create /lbar/$"* }
