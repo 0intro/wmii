@@ -222,10 +222,10 @@ gravclient(Client *c, Rectangle rd) {
 			r = c->sel->r;
 		else
 			r = c->sel->revert;
-		r = gravitate(r, c->r, h->grav);
+		r = gravitate(c->r, r, h->grav);
 		if(h->gravstatic)
 			r = rectaddpt(r, sp);
-		return frame2client(c->sel, r);
+		return frame2client(nil, r);
 	}else {
 		r = client2frame(nil, rd);
 		r = gravitate(r, rd, h->grav);

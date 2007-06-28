@@ -351,7 +351,7 @@ read_root_ctl(void) {
 
 	b = buffer;
 	e = b + sizeof(buffer);
-#define print(...) if(b < e) snprintf(b, e-b, __VA_ARGS__)
+#define print(...) if(b < e) b += snprintf(b, e-b, __VA_ARGS__)
 	print("view %s\n", screen->sel->name);
 	print("focuscolors %s\n", def.focuscolor.colstr);
 	print("normcolors %s\n", def.normcolor.colstr);

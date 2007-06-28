@@ -805,5 +805,5 @@ gravitate(Rectangle rc, Rectangle rf, Point grav) {
 	d = divpt(d, Pt(2, 2));
 	d = mulpt(d, grav);
 
-	return rectsubpt(rc, d);
+	return rectaddpt(rc, d);
 }
