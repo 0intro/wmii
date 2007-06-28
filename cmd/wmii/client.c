@@ -222,10 +222,10 @@ gravclient(Client *c, Rectangle rd) {
 			r = c->sel->r;
 		else
 			r = c->sel->revert;
-		r = gravitate(c->w.r, r, h->grav);
+		r = gravitate(r, c->r, h->grav);
 		if(h->gravstatic)
 			r = rectaddpt(r, sp);
-		return r;
+		return frame2client(c->sel, r);
 	}else {
 		r = client2frame(nil, rd);
 		r = gravitate(r, rd, h->grav);
@@ -528,35 +528,35 @@ updatemwm(Client *c) {
 		All =		0x1,
 		Border =	0x2,
 		Title =	0x8,
+		FlagDecor = 0x2,
+		Flags =	0,
+		Decor =	2,
 	};
 	Rectangle r;
-	ulong *ret, decor;
+	ulong *ret;
 	Atom real;
 	int n;
 
 	n = getproperty(&c->w, "_MOTIF_WM_HINTS", "_MOTIF_WM_HINTS", &real, 
-			2L, (void*)&ret, 1L);
+			0L, (void*)&ret, 3L);
 
-	if(n == 0) {
+	if(c->sel)
+		r = frame2client(c->sel, c->sel->r);
+	if(n >= 3 && (ret[Flags]&FlagDecor)) {
+		if(ret[Decor]&All)
+			ret[Decor] ^= ~0;
+		c->borderless = ((ret[Decor]&Border)==0);
+		c->titleless = ((ret[Decor]&Title)==0);
+	}else {
 		c->borderless = 0;
 		c->titleless = 0;
-	}else {
-		decor = *ret;
-		free(ret);
+	}
+	free(ret);
 
-		if(c->sel)
-			r = frame2client(c->sel, c->sel->r);
-
-		if(decor&All)
-			decor ^= ~0;
-		c->borderless = ((decor&Border)==0);
-		c->titleless = ((decor&Title)==0);
-
-		if(c->sel) {
-			r = client2frame(c->sel, c->sel->r);
-			resize_client(c, &r);
-			draw_frame(c->sel);
-		}
+	if(c->sel) {
+		r = client2frame(c->sel, r);
+		resize_client(c, &r);
+		draw_frame(c->sel);
 	}
 }
 

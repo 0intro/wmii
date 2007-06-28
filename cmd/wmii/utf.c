@@ -320,6 +320,7 @@ utfutf(char *s1, char *s2)
 	return 0;
 }
 
+/* This iconv crud is not by Ken or Rob. It is in the Public Domain. */
 char*
 toutf8n(char *str, size_t nstr) {
 	static iconv_t cd;

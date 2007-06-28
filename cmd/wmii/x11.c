@@ -575,17 +575,21 @@ getproperty(Window *w, char *prop, char *type, Atom *actual, ulong offset, uchar
 	Atom typea;
 	ulong n, extra;
 	int status, format;
-	
+
 	typea = (type ? xatom(type) : 0L);
 
 	status = XGetWindowProperty(display, w->w,
 		xatom(prop), offset, length, False /* delete */,
 		typea, actual, &format, &n, &extra, ret);
 
-	if(status != Success)
+	if(status != Success) {
+		*ret = nil;
 		return 0;
-	if(n == 0)
+	}
+	if(n == 0) {
 		free(*ret);
+		*ret = nil;
+	}
 	return n;
 }
 
@@ -801,5 +805,5 @@ gravitate(Rectangle rc, Rectangle rf, Point grav) {
 	d = divpt(d, Pt(2, 2));
 	d = mulpt(d, grav);
 
-	return rectaddpt(rc, d);
+	return rectsubpt(rc, d);
 }
