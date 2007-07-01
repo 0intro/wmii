@@ -1,4 +1,5 @@
 /* Public Domain --Kris Maglione */
+#include <errno.h>
 #include <iconv.h>
 #include <string.h>
 #include <util.h>
