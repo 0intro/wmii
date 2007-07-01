@@ -2,6 +2,10 @@
  * See LICENSE file for license details.
  */
 
+#ifdef VARARGCK
+# pragma varargck	argpos	write_event	1
+#endif
+
 /* area.c */
 char *area_name(Area *a);
 uint area_idx(Area *a);

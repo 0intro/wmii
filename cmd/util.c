@@ -13,10 +13,14 @@ static int
 Vfmt(Fmt *f) {
 	char *fmt;
 	va_list ap;
+	int i;
 
 	fmt = va_arg(f->args, char*);
 	va_copy(ap, va_arg(f->args, va_list));
-	return fmtvprint(f, fmt, ap);
+
+	i = fmtvprint(f, fmt, ap);
+	va_end(ap);
+	return i;
 }
 
 void

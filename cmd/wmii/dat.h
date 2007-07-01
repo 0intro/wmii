@@ -14,6 +14,14 @@
 #define FOCUSCOLORS	"#ffffff #335577 #447799"
 #define NORMCOLORS	"#222222 #eeeeee #666666"
 
+#ifdef VARARGCK
+# pragma varargck	type	"C"	Client*	
+# pragma varargck	type	"W"	Window*	
+# pragma varargck	type	"P"	Point
+# pragma varargck	type	"R"	Rectangle
+# pragma varargck	type	"r"	void
+#endif
+
 typedef struct CTuple CTuple;
 
 enum Align {
