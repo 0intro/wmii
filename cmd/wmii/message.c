@@ -270,7 +270,7 @@ parse_colors(IxpMsg *m, CTuple *col) {
 		if(*p++ != '#')
 			return Ebad;
 		for(j = 0; j < 6 && p < (char*)m->end; j++)
-			if(!ishexnumber(*p++))
+			if(!isxdigit(*p++))
 				return Ebad;
 		chartorune(&r, p);
 		if(i < 2 && r != ' ' || !(isspacerune(r) || *p == '\0'))

@@ -18,8 +18,8 @@ printinstall:
 	echo '	Lib: ${LIBDIR}'
 
 ${LIB}: ${OFILES}
-	@echo AR $$($(ROOT)/util/cleanname $(BASE)/$@)
-	@${AR} $@ ${OFILES}
-	@${RANLIB} $@
+	echo AR $$($(ROOT)/util/cleanname $(BASE)/$@)
+	mkdir ${ROOT}/lib 2>/dev/null || true
+	${AR} $@ ${OFILES}
 
 include ${ROOT}/mk/common.mk

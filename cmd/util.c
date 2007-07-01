@@ -15,7 +15,7 @@ Vfmt(Fmt *f) {
 	va_list ap;
 
 	fmt = va_arg(f->args, char*);
-	ap = va_arg(f->args, va_list);
+	va_copy(ap, va_arg(f->args, va_list));
 	return fmtvprint(f, fmt, ap);
 }
 
