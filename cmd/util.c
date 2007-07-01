@@ -6,24 +6,28 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <fmt.h>
 #include <util.h>
+
+static int
+Vfmt(Fmt *f) {
+	char *fmt;
+	va_list ap;
+
+	fmt = va_arg(f->args, char*);
+	ap = va_arg(f->args, va_list);
+	return fmtvprint(f, fmt, ap);
+}
 
 void
 fatal(const char *fmt, ...) {
 	va_list ap;
-	int err;
 
-	err = errno;
-	fprintf(stderr, "%s: fatal: ", argv0);
+	fmtinstall('V', Vfmt);
 
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	fprint(2, "%s: fatal: %V\n", argv0, fmt, ap);
 	va_end(ap);
-
-	if(fmt[strlen(fmt)-1] == ':')
-		fprintf(stderr, " %s\n", strerror(err));
-	else
-		fprintf(stderr, "\n");
 
 	exit(1);
 }
@@ -35,6 +39,7 @@ mfatal(char *name, uint size) {
 		couldnot[] = ": fatal: Could not ",
 		paren[] = "() ",
 		bytes[] = " bytes\n";
+	char buf[1024];
 	char sizestr[8];
 	int i;
 	
@@ -44,12 +49,13 @@ mfatal(char *name, uint size) {
 		size /= 10;
 	} while(size > 0);
 
-	write(1, argv0, strlen(argv0)-1);
-	write(1, couldnot, sizeof(couldnot)-1);
-	write(1, name, strlen(name));
-	write(1, paren, sizeof(paren)-1);
-	write(1, sizestr+i, sizeof(sizestr)-i);
-	write(1, bytes, sizeof(bytes)-1);
+	strlcat(buf, argv0, sizeof(buf));
+	strlcat(buf, couldnot, sizeof(buf));
+	strlcat(buf, name, sizeof(buf));
+	strlcat(buf, paren, sizeof(buf));
+	strlcat(buf, sizestr+i, sizeof(buf));
+	strlcat(buf, bytes, sizeof(buf));
+	write(2, buf, strlen(buf));
 
 	exit(1);
 }

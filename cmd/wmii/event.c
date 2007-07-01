@@ -83,10 +83,10 @@ destroynotify(XEvent *e) {
 	if((w = findwin(ev->window))) 
 		handle(w, destroy, ev);
 	else {
-		Debug fprintf(stderr, "DestroyWindow(%x) (no handler)\n", (uint)ev->window);
+		Dprint("DestroyWindow(%ux) (no handler)\n", (uint)ev->window);
 		if((c = win2client(ev->window)))
-			fprintf(stderr, "Badness: Unhandled DestroyNotify: "
-				"Client: %p, Window: %x, Name: %s\n", c, (uint)c->w.w, c->name);
+			fprint(2, "Badness: Unhandled DestroyNotify: "
+				"Client: %p, Window: %W, Name: %s\n", c, &c->w, c->name);
 	}
 }
 
@@ -122,11 +122,9 @@ leavenotify(XEvent *e) {
 
 void
 print_focus(Client *c, char *to) {
-		Debug {
-			fprintf(stderr, "screen->focus: %p[%x] => %p[%x]\n",
-				screen->focus, clientwin(screen->focus), c, clientwin(c));
-			fprintf(stderr, "\t%s => %s\n", clientname(screen->focus), to);
-		}
+	Dprint("screen->focus: %p[%C] => %p[%C]\n",
+			screen->focus, screen->focus, c, c);
+	Dprint("\t%s => %s\n", clientname(screen->focus), to);
 }
 
 static void

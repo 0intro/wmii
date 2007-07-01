@@ -49,7 +49,7 @@ void move_client(Client*, char *arg);
 void size_client(Client*, char *arg);
 Client *selclient(void);
 Client *win2client(XWindow);
-uint clientwin(Client *c);
+int Cfmt(Fmt *f);
 char *clientname(Client*);
 void apply_rules(Client*);
 void apply_tags(Client*, const char*);
@@ -123,15 +123,15 @@ void* maprm(Map*, ulong);
 void* hashrm(Map*, char*);
 
 /* message.c */
-char * getword(Message*);
+char * getword(IxpMsg*);
 Area * strarea(View*, char*);
-char * message_view(View*, Message*);
-char * parse_colors(Message*, CTuple*);
-char * message_root(void*, Message*);
+char * message_view(View*, IxpMsg*);
+char * parse_colors(IxpMsg*, CTuple*);
+char * message_root(void*, IxpMsg*);
 char * read_root_ctl(void);
-char * message_client(Client*, Message*);
-char *select_area(Area*, Message*);
-char *send_client(View*, Message*, Bool swap);
+char * message_client(Client*, IxpMsg*);
+char *select_area(Area*, IxpMsg*);
+char *send_client(View*, IxpMsg*, Bool swap);
 
 /* mouse.c */
 void mouse_resizecol(Divide*);
@@ -158,7 +158,7 @@ Frame *view_clientframe(View *v, Client *c);
 void select_view(const char*);
 void attach_to_view(View*, Frame*);
 Client *view_selclient(View*);
-char *message_view(View *v, Message *m);
+char *message_view(View *v, IxpMsg *m);
 void restack_view(View*);
 uchar *view_index(View*);
 uchar *view_ctl(View *v);

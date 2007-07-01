@@ -1,6 +1,7 @@
 #!/bin/sh -f
 
 outfile="$1"; shift
+bin="$(echo $0 | sed 's,/[^/]*$,,')"
 
 # Derived from Russ Cox's 9l in plan9port.
 ofiles=""
@@ -19,7 +20,7 @@ done
 
 xtmp=/tmp/ld.$$.$USER.out
 
-echo LD ${BASE}$outfile
+echo LD "$($bin/cleanname ${BASE}$outfile)"
 $LD -o $outfile $ofiles $LDFLAGS $args >$xtmp 2>&1
 status=$?
 

@@ -6,7 +6,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <util.h>
+#include <bio.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -94,6 +96,30 @@ rectsubpt(Rectangle r, Point p) {
 	return r;
 }
 
+static int
+Rfmt(Fmt *f) {
+	Rectangle r;
+
+	r = va_arg(f->args, Rectangle);
+	return fmtprint(f, "%P+%dx%d", r.min, Dx(r), Dy(r));
+}
+
+static int
+Pfmt(Fmt *f) {
+	Point p;
+
+	p = va_arg(f->args, Point);
+	return fmtprint(f, "(%d,%d)", p.x, p.y);
+}
+
+static int
+Wfmt(Fmt *f) {
+	Window *w;
+
+	w = va_arg(f->args, Window*);
+	return fmtprint(f, "0x%ux", w);
+}
+
 /* Init */
 void
 initdisplay(void) {
@@ -117,6 +143,10 @@ initdisplay(void) {
 	wmap.nhash = nelem(wbucket);
 	amap.bucket = abucket;
 	amap.nhash = nelem(abucket);
+
+	fmtinstall('R', Rfmt);
+	fmtinstall('P', Pfmt);
+	fmtinstall('W', Wfmt);
 }
 
 /* Images */
@@ -139,6 +169,7 @@ freeimage(Image *img) {
 
 	XFreePixmap(display, img->image);
 	XFreeGC(display, img->gc);
+	free(img);
 }
 
 /* Windows */
@@ -182,6 +213,7 @@ destroywindow(Window *w) {
 	if(w->gc)
 		XFreeGC(display, w->gc);
 	XDestroyWindow(display, w->w);
+	free(w);
 }
 
 void
@@ -371,7 +403,7 @@ drawstring(Image *dst, Font *font,
 		char *text, ulong col) {
 	char *buf;
 	uint x, y, w, h, len;
-	Bool shortened;
+	int shortened;
 
 	shortened = 0;
 
@@ -463,6 +495,7 @@ loadcolor(CTuple *c, char *str) {
 /* Fonts */
 Font *
 loadfont(char *name) {
+	Biobuf *b;
 	Font *f;
 	XFontStruct **xfonts;
 	char **missing, **font_names;
@@ -473,13 +506,13 @@ loadfont(char *name) {
 	f->name = estrdup(name);
 	f->set = XCreateFontSet(display, name, &missing, &n, nil);
 	if(missing) {
-		setvbuf(stderr, nil, _IOLBF, 0);
-		fprintf(stderr, "%s: note: missing fontset%s for '%s':", argv0,
+		b = Bfdopen(dup(2), O_WRONLY);
+		Bprint(b, "%s: note: missing fontset%s for '%s':", argv0,
 				(n > 1 ? "s" : ""), name);
 		for(i = 0; i < n; i++)
-			fprintf(stderr, "%s %s", (i ? "," : ""), missing[i]);
-		fprintf(stderr, "\n");
-		setvbuf(stderr, nil, _IONBF, 0);
+			Bprint(b, "%s %s", (i ? "," : ""), missing[i]);
+		Bprint(b, "\n");
+		Bterm(b);
 		freestringlist(missing);
 	}
 
@@ -491,7 +524,7 @@ loadfont(char *name) {
 	else {
 		f->xfont = XLoadQueryFont(display, name);
 		if(!f->xfont) {
-			fprintf(stderr, "%s: cannot load font: %s\n", argv0, name);
+			fprint(2, "%s: cannot load font: %s\n", argv0, name);
 			freefont(f);
 			return nil;
 		}
@@ -805,5 +838,5 @@ gravitate(Rectangle rc, Rectangle rf, Point grav) {
 	d = divpt(d, Pt(2, 2));
 	d = mulpt(d, grav);
 
-	return rectaddpt(rc, d);
+	return rectsubpt(rc, d);
 }

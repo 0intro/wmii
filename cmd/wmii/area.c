@@ -38,7 +38,7 @@ area_name(Area *a) {
 	
 	if(a->floating)
 		return "~";
-	snprintf(buf, sizeof(buf), "%d", area_idx(a));
+	snprint(buf, sizeof(buf), "%d", area_idx(a));
 	return buf;
 }
 

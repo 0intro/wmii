@@ -7,6 +7,10 @@ PDIRS = \
 	man
 
 DIRS =	\
+	libutf	\
+	libfmt	\
+	libbio	\
+	libregexp\
 	${PDIRS}
 
 config:

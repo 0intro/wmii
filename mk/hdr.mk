@@ -4,7 +4,7 @@ all:
 
 .c.depend:
 	echo MKDEP $<
-	${MKDEP} ${FULLCFLAGS} $< >>.depend
+	${MKDEP} ${CFLAGS} $< >>.depend
 
 .c.o:
 	${COMPILE} $@ $<

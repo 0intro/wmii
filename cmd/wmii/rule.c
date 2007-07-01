@@ -44,7 +44,7 @@ update_rules(Rule **rule, const char *data) {
 		return;
 	while((rul = *rule)) {
 		*rule = rul->next;
-		regfree(&rul->regex);
+		free(rul->regex);
 		free(rul);
 	}
 	for(p = data; *p; p++)
@@ -73,7 +73,8 @@ update_rules(Rule **rule, const char *data) {
 				*rule = emallocz(sizeof(Rule));
 				*v = 0;
 				trim(value, " \t/");
-				if(!regcomp(&(*rule)->regex, regex, 0)) {
+				(*rule)->regex = regcomp(regex);
+				if((*rule)->regex) {
 					strncpy((*rule)->value, value, sizeof(rul->value));
 					rule = &(*rule)->next;
 				}

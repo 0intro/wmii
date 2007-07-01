@@ -1,4 +1,4 @@
-LIB = ${TARG}.a
+LIB = ${ROOT}/lib/${TARG}.a
 OFILES = ${OBJ:=.o}
 
 all: ${HFILES} ${LIB} 
@@ -18,7 +18,7 @@ printinstall:
 	echo '	Lib: ${LIBDIR}'
 
 ${LIB}: ${OFILES}
-	@echo AR $@
+	@echo AR $$($(ROOT)/util/cleanname $(BASE)/$@)
 	@${AR} $@ ${OFILES}
 	@${RANLIB} $@
 

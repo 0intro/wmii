@@ -1,12 +1,13 @@
 #!/bin/sh -f
 
 outfile="$1"; shift
+bin="$(echo $0 | sed 's,/[^/]*$,,')"
 
 # Derived from Russ Cox's 9c in plan9port.
 
 xtmp=/tmp/cc.$$.$USER.out
 
-echo CC ${BASE}$outfile
+echo CC $($bin/cleanname ${BASE}$outfile)
 $CC -o $outfile $CFLAGS $@ 2>$xtmp
 status=$?
 

@@ -33,6 +33,11 @@ usage(void) {
 	fatal("usage: wmii [-a <address>] [-r <wmiirc>] [-v]\n");
 }
 
+static int
+errfmt(Fmt *f) {
+	return fmtstrcpy(f, ixp_errbuf());
+}
+
 static void
 scan_wins(void) {
 	int i;
@@ -76,7 +81,7 @@ ns_display(void) {
 		*s = '\0';
 
 	s = emalloc(strlen(disp) + strlen(user) + strlen("/tmp/ns..") + 1);
-	sprintf(s, "/tmp/ns.%s.%s", user, disp);
+	sprint(s, "/tmp/ns.%s.%s", user, disp);
 
 	free(disp);
 	return s;
@@ -95,7 +100,7 @@ rmkdir(char *path, int mode) {
 			*p = '\0';
 			ret = mkdir(path, mode);
 			if((ret == -1) && (errno != EEXIST))
-				fatal("Can't create ns_path '%s':", path);
+				fatal("Can't create ns_path '%s': %r", path);
 			*p = c;
 		}
 	}
@@ -123,7 +128,7 @@ init_ns(void) {
 	rmkdir(ns_path, 0700);
 
 	if(stat(ns_path, &st))
-		fatal("Can't stat ns_path '%s':", ns_path);
+		fatal("Can't stat ns_path '%s': %r", ns_path);
 	if(getuid() != st.st_uid)
 		fatal("ns_path '%s' exists but is not owned by you", ns_path);
 	if(st.st_mode & 077)
@@ -136,7 +141,7 @@ init_environment(void) {
 
 	if(address == nil) {
 		address = emalloc(strlen(ns_path) + strlen("unix!/wmii") + 1);
-		sprintf(address, "unix!%s/wmii", ns_path);
+		sprint(address, "unix!%s/wmii", ns_path);
 	}
 
 	setenv("WMII_NS_DIR", ns_path, True);
@@ -256,7 +261,7 @@ errorhandler(Display *dpy, XErrorEvent *error) {
 		&& (itab[i].ecode == 0 || itab[i].ecode == error->error_code))
 			return 0;
 
-	fprintf(stderr, "%s: fatal error: Xrequest code=%d, Xerror code=%d\n",
+	fprint(2, "%s: fatal error: Xrequest code=%d, Xerror code=%d\n",
 			argv0, error->request_code, error->error_code);
 
 	/* Try to cleanup, but only try once, in case we're called again */
@@ -287,27 +292,37 @@ init_traps(void) {
 	int fd[2];
 
 	if(pipe(fd) != 0)
-		fatal("Can't pipe():");
+		fatal("Can't pipe(): %r");
 
+	/* Double fork hack */
 	switch(fork()) {
 	case -1:
-		fatal("Can't fork():");
+		fatal("Can't fork(): %r");
 		break; /* not reached */
 	case 0:
-		close(fd[1]);
-		close(ConnectionNumber(display));
-		setsid();
+		switch(fork()) {
+		case -1:
+			fatal("Can't fork(): %r");
+			break; /* not reached */
+		case 0:
+			exit(0);
+			break;
+		default:
+			close(fd[1]);
+			close(ConnectionNumber(display));
+			setsid();
 
-		display = XOpenDisplay(0);
-		if(!display)
-			fatal("Can't open display");
+			display = XOpenDisplay(0);
+			if(!display)
+				fatal("Can't open display");
 
-		/* Wait for parent to exit */
-		read(fd[0], buf, 1);
+			/* Wait for parent to exit */
+			read(fd[0], buf, 1);
 
-		XSetInputFocus(display, PointerRoot, RevertToPointerRoot, CurrentTime);
-		XCloseDisplay(display);
-		exit(0);
+			XSetInputFocus(display, PointerRoot, RevertToPointerRoot, CurrentTime);
+			XCloseDisplay(display);
+			exit(0);
+		}
 	default:
 		break;
 	}
@@ -332,16 +347,16 @@ spawn_command(const char *cmd) {
 	/* Double fork hack */
 	switch(pid = fork()) {
 	case -1:
-		fatal("Can't fork:");
+		fatal("Can't fork: %r");
 		break; /* Not reached */
 	case 0:
 		switch(fork()) {
 		case -1:
-			fatal("Can't fork:");
+			fatal("Can't fork: %r");
 			break; /* Not reached */
 		case 0:
 			if(setsid() == -1)
-				fatal("Can't setsid:");
+				fatal("Can't setsid: %r");
 			close(sock);
 			close(ConnectionNumber(display));
 
@@ -351,10 +366,10 @@ spawn_command(const char *cmd) {
 
 			/* Run through the user's shell as a login shell */
 			p = malloc((strlen(shell) + 2));
-			sprintf(p, "-%s", strrchr(shell, '/') + 1);
+			sprint(p, "-%s", strrchr(shell, '/') + 1);
 
 			execl(shell, p, "-c", cmd, nil);
-			fatal("Can't exec '%s':", cmd);
+			fatal("Can't exec '%s': %r", cmd);
 			break; /* Not reached */
 		default:
 			exit(0);
@@ -380,17 +395,19 @@ closedisplay(IxpConn *c) {
 
 int
 main(int argc, char *argv[]) {
-	char *wmiirc, *str;
+	char *wmiirc;
 	WMScreen *s;
 	WinAttr wa;
 	int i;
-	ulong col;
+
+	fmtinstall('r', errfmt);
+	fmtinstall('C', Cfmt);
 
 	wmiirc = "wmiistartrc";
 
 	ARGBEGIN{
 	case 'v':
-		printf("%s", version);
+		print("%s", version);
 		exit(0);
 	case 'V':
 		verbose = True;
@@ -431,7 +448,7 @@ main(int argc, char *argv[]) {
 
 	sock = ixp_announce(address);
 	if(sock < 0)
-		fatal("Can't create socket '%s': %s", address, errstr);
+		fatal("Can't create socket '%s': %r", address);
 
 	if(wmiirc)
 		spawn_command(wmiirc);
@@ -477,14 +494,6 @@ main(int argc, char *argv[]) {
 		initbar(s);
 	}
 
-	str = "This app is broken. Disable its transparency feature.";
-	i = textwidth(def.font, str) + labelh(def.font);
-	broken = allocimage(i, labelh(def.font), scr.depth);
-
-	namedcolor("#ff0000", &col);
-	fill(broken, broken->r, scr.black);
-	drawstring(broken, def.font, broken->r, EAST, str, col);
-
 	screen->focus = nil;
 	setfocus(screen->barwin, RevertToParent);
 
@@ -496,9 +505,9 @@ main(int argc, char *argv[]) {
 	write_event("FocusTag %s\n", screen->sel->name);
 
 	check_x_event(nil);
-	errstr = ixp_serverloop(&srv);
-	if(errstr)
-		fprintf(stderr, "%s: error: %s\n", argv0, errstr);
+	i = ixp_serverloop(&srv);
+	if(i)
+		fprint(2, "%s: error: %r\n", argv0);
 
 	cleanup();
 
@@ -506,7 +515,5 @@ main(int argc, char *argv[]) {
 		raise(exitsignal);
 	if(execstr)
 		execl("/bin/sh", "sh", "-c", execstr, nil);
-	if(errstr)
-		return 1;
-	return 0;
+	return i;
 }

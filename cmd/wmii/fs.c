@@ -96,34 +96,34 @@ Ixp9Srv p9srv = {
  * in by lookup_file 
  */
 static Dirtab
-dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|P9_DMDIR },
-		  {"rbar",	QTDIR,		FsDBars,	0700|P9_DMDIR },
-		  {"lbar",	QTDIR,		FsDBars,	0700|P9_DMDIR },
-		  {"client",	QTDIR,		FsDClients,	0500|P9_DMDIR },
-		  {"tag",	QTDIR,		FsDTags,	0500|P9_DMDIR },
-		  {"ctl",	QTAPPEND,	FsFRctl,	0600|P9_DMAPPEND },
+dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
+		  {"rbar",	QTDIR,		FsDBars,	0700|DMDIR },
+		  {"lbar",	QTDIR,		FsDBars,	0700|DMDIR },
+		  {"client",	QTDIR,		FsDClients,	0500|DMDIR },
+		  {"tag",	QTDIR,		FsDTags,	0500|DMDIR },
+		  {"ctl",	QTAPPEND,	FsFRctl,	0600|DMAPPEND },
 		  {"colrules",	QTFILE,		FsFColRules,	0600 }, 
 		  {"event",	QTFILE,		FsFEvent,	0600 },
 		  {"keys",	QTFILE,		FsFKeys,	0600 },
 		  {"tagrules",	QTFILE,		FsFTagRules,	0600 }, 
 		  {nil}},
-dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|P9_DMDIR },
-		  {"",		QTDIR,		FsDClient,	0500|P9_DMDIR },
+dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
+		  {"",		QTDIR,		FsDClient,	0500|DMDIR },
 		  {nil}},
-dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|P9_DMDIR },
-		  {"ctl",	QTAPPEND,	FsFCctl,	0600|P9_DMAPPEND },
+dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|DMDIR },
+		  {"ctl",	QTAPPEND,	FsFCctl,	0600|DMAPPEND },
 		  {"label",	QTFILE,	FsFClabel,	0600 },
 		  {"tags",	QTFILE,		FsFCtags,	0600 },
 		  {"props",	QTFILE,		FsFprops,	0400 },
 		  {nil}},
-dirtab_bars[]=	 {{".",		QTDIR,		FsDBars,	0700|P9_DMDIR },
+dirtab_bars[]=	 {{".",		QTDIR,		FsDBars,	0700|DMDIR },
 		  {"",		QTFILE,		FsFBar,		0600 },
 		  {nil}},
-dirtab_tags[]=	 {{".",		QTDIR,		FsDTags,	0500|P9_DMDIR },
-		  {"",		QTDIR,		FsDTag,		0500|P9_DMDIR },
+dirtab_tags[]=	 {{".",		QTDIR,		FsDTags,	0500|DMDIR },
+		  {"",		QTDIR,		FsDTag,		0500|DMDIR },
 		  {nil}},
-dirtab_tag[]=	 {{".",		QTDIR,		FsDTag,		0500|P9_DMDIR },
-		  {"ctl",	QTAPPEND,	FsFTctl,	0600|P9_DMAPPEND },
+dirtab_tag[]=	 {{".",		QTDIR,		FsDTag,		0500|DMDIR },
+		  {"ctl",	QTAPPEND,	FsFTctl,	0600|DMAPPEND },
 		  {"index",	QTFILE,		FsFTindex,	0400 },
 		  {nil}};
 static Dirtab *dirtab[] = {
@@ -190,7 +190,7 @@ static void
 write_to_buf(Ixp9Req *r, void *buf, uint *len, uint max) {
 	uint offset, count;
 
-	offset = (r->fid->omode&P9_OAPPEND) ? *len : r->ifcall.offset;
+	offset = (r->fid->omode&OAPPEND) ? *len : r->ifcall.offset;
 	if(offset > *len || r->ifcall.count == 0) {
 		r->ofcall.count = 0;
 		return;
@@ -228,13 +228,13 @@ data_to_cstring(Ixp9Req *r) {
 	free(p);
 }
 
-typedef char* (*MsgFunc)(void*, Message*);
+typedef char* (*MsgFunc)(void*, IxpMsg*);
 
 static char *
 message(Ixp9Req *r, MsgFunc fn) {
 	char *err, *s, *p, c;
 	FileId *f;
-	Message m;
+	IxpMsg m;
 
 	f = r->fid->aux;
 
@@ -284,7 +284,7 @@ write_event(char *format, ...) {
 	Ixp9Req *req;
 
 	va_start(ap, format);
-	vsnprintf(buffer, sizeof(buffer), format, ap);
+	vsnprint(buffer, sizeof(buffer), format, ap);
 	va_end(ap);
 
 	len = strlen(buffer);
@@ -338,7 +338,7 @@ lookup_file(FileId *parent, char *name)
 	Bar *b;
 	uint id;
 
-	if(!(parent->tab.perm & P9_DMDIR))
+	if(!(parent->tab.perm & DMDIR))
 		return nil;
 	dir = dirtab[parent->tab.type];
 	last = &ret;
@@ -375,8 +375,8 @@ lookup_file(FileId *parent, char *name)
 						file->id = c->w.w;
 						file->index = c->w.w;
 						file->tab = *dir;
-						file->tab.name = emallocz(16);
-						snprintf(file->tab.name, 16, "0x%x", (uint)c->w.w);
+						file->tab.name = smprint("%C", c);
+						assert(file->tab.name);
 						if(name) goto LastItem;
 					}
 				}
@@ -564,7 +564,7 @@ fs_size(FileId *f) {
 
 void
 fs_stat(Ixp9Req *r) {
-	Message m;
+	IxpMsg m;
 	Stat s;
 	int size;
 	uchar *buf;
@@ -603,9 +603,9 @@ fs_read(Ixp9Req *r) {
 		return;
 	}
 
-	if(f->tab.perm & P9_DMDIR && f->tab.perm & 0400) {
+	if(f->tab.perm & DMDIR && f->tab.perm & 0400) {
 		Stat s;
-		Message m;
+		IxpMsg m;
 
 		offset = 0;
 		size = r->ifcall.count;
@@ -671,10 +671,8 @@ fs_read(Ixp9Req *r) {
 				respond(r, nil);
 				return;
 			}
-			r->ofcall.data = emallocz(16);
-			n = snprintf(r->ofcall.data, 16, "0x%x", (uint)f->index);
-			assert(n >= 0);
-			r->ofcall.count = n;
+			r->ofcall.data = smprint("%C", f->p.client);
+			r->ofcall.count = strlen(r->ofcall.data); /* will die if nil */
 			respond(r, nil);
 			return;
 		case FsFTindex:
@@ -798,19 +796,19 @@ fs_open(Ixp9Req *r) {
 		peventfid = fl;
 		break;
 	}
-	if((r->ifcall.mode&3) == P9_OEXEC) {
+	if((r->ifcall.mode&3) == OEXEC) {
 		respond(r, Enoperm);
 		return;
 	}
-	if((r->ifcall.mode&3) != P9_OREAD && !(f->tab.perm & 0200)) {
+	if((r->ifcall.mode&3) != OREAD && !(f->tab.perm & 0200)) {
 		respond(r, Enoperm);
 		return;
 	}
-	if((r->ifcall.mode&3) != P9_OWRITE && !(f->tab.perm & 0400)) {
+	if((r->ifcall.mode&3) != OWRITE && !(f->tab.perm & 0400)) {
 		respond(r, Enoperm);
 		return;
 	}
-	if((r->ifcall.mode&~(3|P9_OAPPEND|P9_OTRUNC))) {
+	if((r->ifcall.mode&~(3|OAPPEND|OTRUNC))) {
 		respond(r, Enoperm);
 		return;
 	}
@@ -873,7 +871,7 @@ fs_clunk(Ixp9Req *r) {
 	FileId *f;
 	char *p, *q;
 	Client *c;
-	Message m;
+	IxpMsg m;
 	
 	f = r->fid->aux;
 	if(!verify_file(f)) {

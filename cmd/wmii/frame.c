@@ -116,7 +116,7 @@ frame_to_top(Frame *f) {
 /* Handlers */
 static void
 bup_event(Window *w, XButtonEvent *e) {
-	write_event("ClientClick 0x%x %d\n", (uint)w->w, e->button);
+	write_event("ClientClick %C %d\n", w->aux, e->button);
 }
 
 static void
@@ -166,7 +166,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 			XUngrabPointer(display, e->time);
 			XSync(display, False);
 
-			write_event("ClientMouseDown 0x%x %d\n", f->client->w.w, e->button);
+			write_event("ClientMouseDown %C %d\n", f->client, e->button);
 		}
 	}
 }
@@ -179,7 +179,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 	c = w->aux;
 	f = c->sel;
 	if(screen->focus != c) {
-		Debug fprintf(stderr, "enter_notify(f) => %s\n", f->client->name);
+		Dprint("enter_notify(f) => %s\n", f->client->name);
 		if(f->area->floating || !f->collapsed)
 			focus(f->client, False);
 	}
@@ -194,8 +194,8 @@ expose_event(Window *w, XExposeEvent *e) {
 	if(c->sel)
 		draw_frame(c->sel);
 	else
-		fprintf(stderr, "Badness: Expose event on a client frame which shouldn't be visible: %x\n",
-			(uint)c->w.w);
+		fprint(2, "Badness: Expose event on a client frame which shouldn't be visible: %C\n",
+			c);
 }
 
 static void
@@ -268,8 +268,7 @@ resize_frame(Frame *f, Rectangle r) {
 	f->crect = frame_hints(f, r, stickycorner);
 
 	if(Dx(r) <= 0 || Dy(r) <= 0)
-		fprintf(stderr, "Badness: Frame rect: %d,%d %dx%d\n",
-			r.min.x, r.min.y, Dx(r), Dy(r));
+		fprint(2, "Badness: Frame rect: %R\n", r);
 
 	if(f->area->floating)
 		f->r = f->crect;

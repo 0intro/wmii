@@ -1,6 +1,8 @@
 /* Copyright ©2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#define IXP_NO_P9_
+#define IXP_P9_STRUCTS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +10,7 @@
 #include <unistd.h>
 #include <ixp.h>
 #include <util.h>
+#include <fmt.h>
 
 static IxpClient *client;
 
@@ -20,17 +23,22 @@ usage(void) {
 	exit(1);
 }
 
+static int
+errfmt(Fmt *f) {
+	return fmtstrcpy(f, ixp_errbuf());
+}
+
 /* Utility Functions */
 static void
 write_data(IxpCFid *fid, char *name) {
 	void *buf;
 	int len;
 
-	buf = ixp_emalloc(fid->iounit);;
+	buf = emalloc(fid->iounit);;
 	do {
 		len = read(0, buf, fid->iounit);
 		if(len > 0 && ixp_write(fid, buf, len) != len)
-			fatal("cannot write file '%s': %s\n", name, errstr);
+			fatal("cannot write file '%s': %r\n", name);
 	} while(len > 0);
 
 	free(buf);
@@ -106,7 +114,7 @@ xwrite(int argc, char *argv[]) {
 	file = EARGF(usage());
 	fid = ixp_open(client, file, P9_OWRITE);
 	if(fid == nil)
-		fatal("Can't open file '%s': %s\n", file, errstr);
+		fatal("Can't open file '%s': %r\n", file);
 
 	write_data(fid, file);
 	return 0;
@@ -126,17 +134,17 @@ xawrite(int argc, char *argv[]) {
 	file = EARGF(usage());
 	fid = ixp_open(client, file, P9_OWRITE);
 	if(fid == nil)
-		fatal("Can't open file '%s': %s\n", file, errstr);
+		fatal("Can't open file '%s': %r\n", file);
 
 	nbuf = 0;
 	mbuf = 128;
-	buf = ixp_emalloc(mbuf);
+	buf = emalloc(mbuf);
 	while(argc) {
 		arg = ARGF();
 		len = strlen(arg);
 		if(nbuf + len > mbuf) {
 			mbuf <<= 1;
-			buf = ixp_erealloc(buf, mbuf);
+			buf = erealloc(buf, mbuf);
 		}
 		memcpy(buf+nbuf, arg, len);
 		nbuf += len;
@@ -145,7 +153,7 @@ xawrite(int argc, char *argv[]) {
 	}
 
 	if(ixp_write(fid, buf, nbuf) == -1)
-		fatal("cannot write file '%s': %s\n", file, errstr);
+		fatal("cannot write file '%s': %r\n", file);
 	return 0;
 }
 
@@ -162,7 +170,7 @@ xcreate(int argc, char *argv[]) {
 	file = EARGF(usage());
 	fid = ixp_create(client, file, 0777, P9_OWRITE);
 	if(fid == nil)
-		fatal("Can't create file '%s': %s\n", file, errstr);
+		fatal("Can't create file '%s': %r\n", file);
 
 	if((fid->qid.type&P9_DMDIR) == 0)
 		write_data(fid, file);
@@ -181,7 +189,7 @@ xremove(int argc, char *argv[]) {
 
 	file = EARGF(usage());
 	if(ixp_remove(client, file) == 0)
-		fatal("Can't remove file '%s': %s\n", file, errstr);
+		fatal("Can't remove file '%s': %r\n", file);
 	return 0;
 }
 
@@ -199,21 +207,21 @@ xread(int argc, char *argv[]) {
 	file = EARGF(usage());
 	fid = ixp_open(client, file, P9_OREAD);
 	if(fid == nil)
-		fatal("Can't open file '%s': %s\n", file, errstr);
+		fatal("Can't open file '%s': %r\n", file);
 
-	buf = ixp_emalloc(fid->iounit);
+	buf = emalloc(fid->iounit);
 	while((count = ixp_read(fid, buf, fid->iounit)) > 0)
 		write(1, buf, count);
 
 	if(count == -1)
-		fatal("cannot read file/directory '%s': %s\n", file, errstr);
+		fatal("cannot read file/directory '%s': %r\n", file);
 
 	return 0;
 }
 
 static int
 xls(int argc, char *argv[]) {
-	Message m;
+	IxpMsg m;
 	Stat *stat;
 	IxpCFid *fid;
 	char *file;
@@ -237,7 +245,7 @@ xls(int argc, char *argv[]) {
 
 	stat = ixp_stat(client, file);
 	if(stat == nil)
-		fatal("cannot stat file '%s': %s\n", file, errstr);
+		fatal("cannot stat file '%s': %r\n", file);
 
 	if(dflag || (stat->mode&P9_DMDIR) == 0) {
 		print_stat(stat, lflag);
@@ -248,12 +256,12 @@ xls(int argc, char *argv[]) {
 
 	fid = ixp_open(client, file, P9_OREAD);
 	if(fid == nil)
-		fatal("Can't open file '%s': %s\n", file, errstr);
+		fatal("Can't open file '%s': %r\n", file);
 
 	nstat = 0;
 	mstat = 16;
-	stat = ixp_emalloc(sizeof(*stat) * mstat);
-	buf = ixp_emalloc(fid->iounit);
+	stat = emalloc(sizeof(*stat) * mstat);
+	buf = emalloc(fid->iounit);
 	while((count = ixp_read(fid, buf, fid->iounit)) > 0) {
 		m = ixp_message(buf, count, MsgUnpack);
 		while(m.pos < m.end) {
@@ -273,7 +281,7 @@ xls(int argc, char *argv[]) {
 	free(stat);
 
 	if(count == -1)
-		fatal("cannot read directory '%s': %s\n", file, errstr);
+		fatal("cannot read directory '%s': %r\n", file);
 	return 0;
 }
 
@@ -298,6 +306,8 @@ main(int argc, char *argv[]) {
 	exectab *tab;
 	int ret;
 
+	fmtinstall('r', errfmt);
+
 	address = getenv("WMII_ADDRESS");
 
 	ARGBEGIN{
@@ -318,7 +328,7 @@ main(int argc, char *argv[]) {
 
 	client = ixp_mount(address);
 	if(client == nil)
-		fatal("%s\n", errstr);
+		fatal("can't mount: %r\n");
 
 	for(tab = etab; tab->cmd; tab++)
 		if(strcmp(cmd, tab->cmd) == 0) break;

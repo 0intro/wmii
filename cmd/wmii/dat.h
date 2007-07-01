@@ -2,9 +2,12 @@
  * See LICENSE file for license details.
  */
 
-#include <regex.h>
+#include <regexp9.h>
+#define IXP_P9_STRUCTS
+#define IXP_NO_P9_
 #include <ixp.h>
 #include <utf.h>
+#include <fmt.h>
 #include "x11.h"
 
 #define FONT		"-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*"
@@ -172,7 +175,7 @@ struct Bar {
 
 struct Rule {
 	Rule *next;
-	regex_t regex;
+	Reprog *regex;
 	char value[256];
 };
 
@@ -248,4 +251,5 @@ char *user;
 char *execstr;
 
 #define Debug if(verbose)
+#define Dprint(...) do{ Debug fprint(2, __VA_ARGS__); }while(0)
 

@@ -338,26 +338,26 @@ view_index(View *v) {
 	uint i;
 
 	buf = buffer;
-	end = buffer+sizeof(buffer);
+	end = buffer+sizeof(buffer)-1;
 	for((a=v->area), (i=0); a && buf < end-1; (a=a->next), i++) {
 		if(a->floating)
-			buf += snprintf(buf, end-buf, "# ~ %d %d\n",
+			buf = seprint(buf, end, "# ~ %d %d\n",
 					Dx(a->r), Dy(a->r));
 		else
-			buf += snprintf(buf, end-buf, "# %d %d %d\n",
+			buf = seprint(buf, end, "# %d %d %d\n",
 					i, a->r.min.x, Dx(a->r));
 
 		for(f=a->frame; f && buf < end-1; f=f->anext) {
 			r = &f->r;
 			if(a->floating)
-				buf += snprintf(buf, end-buf, "~ 0x%x %d %d %d %d %s\n",
-						(uint)f->client->w.w,
+				buf = seprint(buf, end, "~ %C %d %d %d %d %s\n",
+						f->client,
 						r->min.x, r->min.y,
 						Dx(*r), Dy(*r),
 						f->client->props);
 			else
-				buf += snprintf(buf, end-buf, "%d 0x%x %d %d %s\n",
-						i, (uint)f->client->w.w,
+				buf = seprint(buf, end, "%d %C %d %d %s\n",
+						i, f->client,
 						r->min.y, Dy(*r),
 						f->client->props);
 		}
@@ -372,22 +372,22 @@ view_ctl(View *v) {
 	uint i;
 
 	buf = buffer;
-	end = buffer+sizeof(buffer);
+	end = buffer+sizeof(buffer)-1;
 
-	buf += snprintf(buf, end-buf, "%s\n", v->name);
+	buf = seprint(buf, end, "%s\n", v->name);
 
 	/* select <area>[ <frame>] */
-	buf += snprintf(buf, end-buf, "select %s", area_name(v->sel));
+	buf = seprint(buf, end, "select %s", area_name(v->sel));
 	if(v->sel->sel)
-		buf  += snprintf(buf, end-buf, " %d", frame_idx(v->sel->sel));
-	buf  += snprintf(buf, end-buf, "\n");
+		buf  = seprint(buf, end, " %d", frame_idx(v->sel->sel));
+	buf = seprint(buf, end, "\n");
 
 	/* select client <client> */
 	if(v->sel->sel)
-		buf  += snprintf(buf, end-buf, "select client 0x%x\n", clientwin(v->sel->sel->client));
+		buf = seprint(buf, end, "select client %C\n", v->sel->sel->client);
 
 	for(a = v->area->next, i = 1; a && buf < end-1; a = a->next, i++) {
-		buf += snprintf(buf, end-buf, "colmode %d %s\n",
+		buf = seprint(buf, end, "colmode %d %s\n",
 			i, colmode2str(a->mode));
 	}
 	return (uchar*)buffer;
@@ -420,12 +420,11 @@ update_views(void) {
 
 uint
 newcolw(View *v, int num) {
-	regmatch_t regm;
 	Rule *r;
 	uint n;
 
 	for(r=def.colrules.rule; r; r=r->next)
-		if(!regexec(&r->regex, v->name, 1, &regm, 0)) {
+		if(regexec(r->regex, v->name, nil, 0)) {
 			char buf[sizeof r->value];
 			char *toks[16];
 

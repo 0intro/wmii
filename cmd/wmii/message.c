@@ -97,7 +97,7 @@ getsym(char *s) {
 }
 
 static void
-eatrunes(Message *m, int (*p)(Rune), int val) {
+eatrunes(IxpMsg *m, int (*p)(Rune), int val) {
 	Rune r;
 	int n;
 
@@ -112,7 +112,7 @@ eatrunes(Message *m, int (*p)(Rune), int val) {
 }
 
 char *
-getword(Message *m) {
+getword(IxpMsg *m) {
 	char *ret;
 	Rune r;
 	int n;
@@ -220,7 +220,7 @@ strarea(View *v, char *s) {
 }
 
 char *
-message_view(View *v, Message *m) {
+message_view(View *v, IxpMsg *m) {
 	Area *a;
 	char *s;
 	int i;
@@ -258,32 +258,39 @@ message_view(View *v, Message *m) {
 }
 
 char *
-parse_colors(Message *m, CTuple *col) {
-	static regex_t reg;
-	static Bool compiled;
-	char c;
+parse_colors(IxpMsg *m, CTuple *col) {
+	static char Ebad[] = "bad color string";
+	Rune r;
+	char c, *p;
+	int i, j;
 
-	if(!compiled) {
-		compiled = 1;
-		regcomp(&reg, "^#[0-9a-f]{6} #[0-9a-f]{6} #[0-9a-f]{6}([[:space:]]|$)",
-				REG_EXTENDED|REG_NOSUB|REG_ICASE);
+	/* '#%6x #%6x #%6x' */
+	p = m->pos;
+	for(i = 0; i < 3 && p < (char*)m->end; i++) {
+		if(*p++ != '#')
+			return Ebad;
+		for(j = 0; j < 6 && p < (char*)m->end; j++)
+			if(!ishexnumber(*p++))
+				return Ebad;
+		chartorune(&r, p);
+		if(i < 2 && r != ' ' || !(isspacerune(r) || *p == '\0'))
+			return Ebad;
+		if(i < 2)
+			p++;
 	}
 
-	if(m->pos + 23 > m->end || regexec(&reg, m->pos, 0, 0, 0))
-		return "bad value";
-
-	c = m->pos[23];
-	m->pos[23] = '\0';
+	c = *p;
+	*p = '\0';
 	loadcolor(col, m->pos);
-	m->pos[23] = c;
+	*p = c;
 
-	m->pos += 23;
+	m->pos = p;
 	eatrunes(m, isspacerune, 1);
 	return nil;
 }
 
 char *
-message_root(void *p, Message *m) {
+message_root(void *p, IxpMsg *m) {
 	Font *fn;
 	char *s, *ret;
 	ulong n;
@@ -296,15 +303,14 @@ message_root(void *p, Message *m) {
 		srv.running = 0;
 		break;
 	case LEXEC:
-		execstr = emalloc(strlen(m->pos) + sizeof("exec "));
-		sprintf(execstr, "exec %s", m->pos);
+		execstr = smprint("exec %s", m->pos);
 		srv.running = 0;
 		break;
 	case LVIEW:
 		select_view(m->pos);
 		break;
 	case LSELCOLORS:
-		fprintf(stderr, "%s: warning: selcolors have been removed\n", argv0);
+		fprint(2, "%s: warning: selcolors have been removed\n", argv0);
 		return Ebadcmd;
 	case LFOCUSCOLORS:
 		ret = parse_colors(m, &def.focuscolor);
@@ -350,20 +356,18 @@ read_root_ctl(void) {
 	char *b, *e;
 
 	b = buffer;
-	e = b + sizeof(buffer);
-#define print(...) if(b < e) b += snprintf(b, e-b, __VA_ARGS__)
-	print("view %s\n", screen->sel->name);
-	print("focuscolors %s\n", def.focuscolor.colstr);
-	print("normcolors %s\n", def.normcolor.colstr);
-	print("font %s\n", def.font->name);
-	print("grabmod %s\n", def.grabmod);
-	print("border %d\n", def.border);
-#undef print
+	e = b + sizeof(buffer) - 1;
+	b = seprint(b, e, "view %s\n", screen->sel->name);
+	b = seprint(b, e, "focuscolors %s\n", def.focuscolor.colstr);
+	b = seprint(b, e, "normcolors %s\n", def.normcolor.colstr);
+	b = seprint(b, e, "font %s\n", def.font->name);
+	b = seprint(b, e, "grabmod %s\n", def.grabmod);
+	b = seprint(b, e, "border %d\n", def.border);
 	return buffer;
 }
 
 char *
-message_client(Client *c, Message *m) {
+message_client(Client *c, IxpMsg *m) {
 	char *s;
 
 	s = getword(m);
@@ -431,7 +435,7 @@ send_frame(Frame *f, int sym, Bool swap) {
 }
 
 char *
-send_client(View *v, Message *m, Bool swap) {
+send_client(View *v, IxpMsg *m, Bool swap) {
 	Area *to, *a;
 	Frame *f;
 	Client *c;
@@ -511,7 +515,7 @@ send_client(View *v, Message *m, Bool swap) {
 }
 
 static char*
-select_frame(Frame *f, Message *m, int sym) {
+select_frame(Frame *f, IxpMsg *m, int sym) {
 	Frame *fp;
 	Client *c;
 	Area *a;
@@ -556,7 +560,7 @@ select_frame(Frame *f, Message *m, int sym) {
 }
 
 char*
-select_area(Area *a, Message *m) {
+select_area(Area *a, IxpMsg *m) {
 	Frame *f;
 	Area *ap;
 	View *v;

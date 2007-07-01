@@ -5,10 +5,10 @@ include ${ROOT}/mk/wmii.mk
 main.c: ${ROOT}/mk/wmii.mk
 
 TARG =	wmii
-HFILES=	dat.h fns.h utf.h x11.h
+HFILES=	dat.h fns.h x11.h
 
 LIB =	${LIBIXP}
-LDFLAGS += -lm ${LIBX11} -lXext ${LIBICONV}
+LDFLAGS += -lm ${LIBX11} -lXext ${LIBICONV} -lregexp9 -lbio -lfmt -lutf
 CFLAGS += ${INCX11} ${INCICONV} -DVERSION=\"${VERSION}\"
 OBJ =	area	\
 	bar	\

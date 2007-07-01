@@ -114,8 +114,8 @@ draw_bar(WMScreen *s) {
 			width += Dx(b->r);
 		}
 
-	/* Not enough room. Shrink bars until they all fit */
-	if(width > Dx(s->brect)) {
+
+	if(width > Dx(s->brect)) { /* Not enough room. Shrink bars until they all fit. */
 		for(nb = 0; nb < nelem(s->bar); nb++)
 			for(b = s->bar[nb]; b; b=b->next) {
 				for(pb = &largest; *pb; pb = &(*pb)->smaller)

@@ -81,7 +81,7 @@ create_client(XWindow w, XWindowAttributes *wa) {
 			break;
 		}
 
-	write_event("CreateClient 0x%x\n", c->w.w);
+	write_event("CreateClient %C\n", c);
 	manage_client(c);
 	return c;
 }
@@ -134,7 +134,7 @@ destroy_client(Client *c) {
 	Client **tc;
 	Bool hide;
 
-	Debug fprintf(stderr, "client.c:destroy_client(%p) %s\n", c, c->name);
+	Dprint("client.c:destroy_client(%p) %s\n", c, c->name);
 
 	unmapwin(c->framewin);
 
@@ -172,9 +172,10 @@ destroy_client(Client *c) {
 	XSetErrorHandler(handler);
 	XUngrabServer(display);
 
-	write_event("DestroyClient 0x%x\n", clientwin(c));
+	write_event("DestroyClient %C\n", c);
 
 	flushevents(EnterWindowMask, False);
+	free(c->w.hints);
 	free(c);
 }
 
@@ -194,11 +195,14 @@ win2client(XWindow w) {
 	return c;
 }
 
-uint
-clientwin(Client *c) {
+int
+Cfmt(Fmt *f) {
+	Client *c;
+
+	c = va_arg(f->args, Client*);
 	if(c)
-		return (uint)c->w.w;
-	return 0;
+		return fmtprint(f, "%W", &c->w);
+	return fmtprint(f, "<nil>");
 }
 
 char *
@@ -222,13 +226,14 @@ gravclient(Client *c, Rectangle rd) {
 			r = c->sel->r;
 		else
 			r = c->sel->revert;
-		r = gravitate(c->r, r, h->grav);
+		r = gravitate(r, c->r, h->grav);
 		if(h->gravstatic)
 			r = rectaddpt(r, sp);
-		return frame2client(nil, r);
+		r = frame2client(nil, r);
+		return r;
 	}else {
 		r = client2frame(nil, rd);
-		r = gravitate(r, rd, h->grav);
+		r = gravitate(rd, r, h->grav);
 		if(h->gravstatic)
 			r = rectsubpt(r, sp);
 		return r;
@@ -319,17 +324,17 @@ void
 focus_client(Client *c) {
 	flushevents(FocusChangeMask, True);
 
-	Debug fprintf(stderr, "focus_client(%p[%x]) => %s\n", c,  clientwin(c), clientname(c));
+	Dprint("focus_client(%p[%C]) => %s\n", c,  c, clientname(c));
 
 	if((c == nil || !c->noinput) && screen->focus != c) {
-		Debug fprintf(stderr, "\t%s => %s\n", clientname(screen->focus), clientname(c));
+		Dprint("\t%s => %s\n", clientname(screen->focus), clientname(c));
 
 		if(c)
 			setfocus(&c->w, RevertToParent);
 		else
 			setfocus(screen->barwin, RevertToParent);
 
-		write_event("ClientFocus 0x%x\n", clientwin(c));
+		write_event("ClientFocus %C\n", c);
 
 		XSync(display, False);
 		flushevents(FocusChangeMask, True);
@@ -460,7 +465,7 @@ set_urgent(Client *c, Bool urgent, Bool write) {
 	cnot = (urgent ? "" : "Not");
 
 	if(urgent != c->urgent) {
-		write_event("%sUrgent 0x%x %s\n", cnot, clientwin(c), cwrite);
+		write_event("%sUrgent %C %s\n", cnot, c, cwrite);
 		c->urgent = urgent;
 		if(c->sel) {
 			if(c->sel->view == screen->sel)
@@ -594,7 +599,7 @@ prop_client(Client *c, Atom a) {
 		break;
 	case XA_WM_CLASS:
 		n = gettextlistproperty(&c->w, "WM_CLASS", &class);
-		snprintf(c->props, sizeof(c->props), "%s:%s:",
+		snprint(c->props, sizeof(c->props), "%s:%s:",
 				(n > 0 ? class[0] : "<nil>"),
 				(n > 1 ? class[1] : "<nil>"));
 		freestringlist(class);
@@ -649,7 +654,7 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 
 static void
 destroy_event(Window *w, XDestroyWindowEvent *e) {
-	Debug fprintf(stderr, "client.c:destroy_event(%x)\n", (uint)w->w);
+	Dprint("client.c:destroy_event(%W)\n", w);
 	destroy_client(w->aux);
 }
 
@@ -660,12 +665,11 @@ enter_event(Window *w, XCrossingEvent *e) {
 	c = w->aux;
 	if(e->detail != NotifyInferior) {
 		if(screen->focus != c) {
-			Debug fprintf(stderr, "enter_notify(c) => %s\n", c->name);
+			Dprint("enter_notify(c) => %s\n", c->name);
 			focus(c, False);
 		}
 		set_cursor(c, cursor[CurNormal]);
-	}else Debug
-		fprintf(stderr, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
+	}else Dprint("enter_notify(c[NotifyInferior]) => %s\n", c->name);
 }
 
 static void
@@ -922,14 +926,13 @@ apply_tags(Client *c, const char *tags) {
 void
 apply_rules(Client *c) {
 	Rule *r;
-	regmatch_t rm;
 
 	if(strlen(c->tags))
 		return;
 
 	if(def.tagrules.string) 	
 		for(r=def.tagrules.rule; r; r=r->next)
-			if(!regexec(&r->regex, c->props, 1, &rm, 0)) {
+			if(regexec(r->regex, c->props, nil, 0)) {
 				apply_tags(c, r->value);
 				if(c->tags[0] && strcmp(c->tags, "nil"))
 					break;
@@ -937,3 +940,4 @@ apply_rules(Client *c) {
 	if(c->tags[0] == '\0')
 		apply_tags(c, "nil");
 }
+
