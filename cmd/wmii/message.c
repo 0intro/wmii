@@ -12,13 +12,12 @@
 
 static char
 	Ebadcmd[] = "bad command",
-	Ebadvalue[] = "bad value";
+	Ebadvalue[] = "bad value",
+	Ebadusage[] = "bad usage";
 
 /* Edit |sort   Edit s/"([^"]+)"/L\1/g   Edit |tr 'a-z' 'A-Z' */
 enum {
 	LFULLSCREEN,
-	LNOTFULLSCREEN,
-	LNOTURGENT,
 	LURGENT,
 	LBORDER,
 	LCLIENT,
@@ -31,6 +30,8 @@ enum {
 	LKILL,
 	LLEFT,
 	LNORMCOLORS,
+	LOFF,
+	LON,
 	LQUIT,
 	LRIGHT,
 	LSELCOLORS,
@@ -44,8 +45,6 @@ enum {
 };
 char *symtab[] = {
 	"Fullscreen",
-	"NotFullscreen",
-	"NotUrgent",
 	"Urgent",
 	"border",
 	"client",
@@ -58,6 +57,8 @@ char *symtab[] = {
 	"kill",
 	"left",
 	"normcolors",
+	"off",
+	"on",
 	"quit",
 	"right",
 	"selcolors",
@@ -79,6 +80,9 @@ static int
 getsym(char *s) {
 	int i, n, m, cmp;
 
+	if(s == nil)
+		return -1;
+
 	n = nelem(symtab);
 	i = 0;
 	while(n) {
@@ -94,6 +98,20 @@ getsym(char *s) {
 		}
 	}
 	return -1;
+}
+
+static int
+gettoggle(IxpMsg *m) {
+	switch(getsym(getword(m))) {
+	case LON:
+		return On;
+	case LOFF:
+		return Off;
+	case LTOGGLE:
+		return Toggle;
+	default:
+		return -1;
+	}
 }
 
 static void
@@ -129,7 +147,6 @@ getword(IxpMsg *m) {
 		return nil;
 	return ret;
 }
-
 
 #define strbcmp(str, const) (strncmp((str), (const), sizeof(const)-1))	
 static int
@@ -369,6 +386,7 @@ read_root_ctl(void) {
 char *
 message_client(Client *c, IxpMsg *m) {
 	char *s;
+	int i;
 
 	s = getword(m);
 
@@ -377,16 +395,16 @@ message_client(Client *c, IxpMsg *m) {
 		kill_client(c);
 		break;
 	case LURGENT:
-		set_urgent(c, True, True);
-		break;
-	case LNOTURGENT:
-		set_urgent(c, False, True);
+		i = gettoggle(m);
+		if(i == -1)
+			return Ebadusage;
+		set_urgent(c, i, True);
 		break;
 	case LFULLSCREEN:
-		fullscreen(c, True);
-		break;
-	case LNOTFULLSCREEN:
-		fullscreen(c, False);
+		i = gettoggle(m);
+		if(i == -1)
+			return Ebadusage;
+		fullscreen(c, i);
 		break;
 	default:
 		return Ebadcmd;

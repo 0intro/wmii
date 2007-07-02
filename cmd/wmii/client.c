@@ -439,10 +439,17 @@ kill_client(Client * c) {
 }
 
 void
-fullscreen(Client *c, Bool fullscreen) {
+fullscreen(Client *c, int fullscreen) {
 	Frame *f;
+	
+	if(fullscreen == Toggle)
+		fullscreen = c->fullscreen ^ On;
+	if(fullscreen == c->fullscreen)
+		return;
 
+	write_event("Fullscreen %C %s\n", c, (fullscreen ? "on" : "off"));
 	c->fullscreen = fullscreen;
+
 	if((f = c->sel)) {
 		if(fullscreen) {
 			if(!f->area->floating)
@@ -455,11 +462,14 @@ fullscreen(Client *c, Bool fullscreen) {
 }
 
 void
-set_urgent(Client *c, Bool urgent, Bool write) {
+set_urgent(Client *c, int urgent, Bool write) {
 	XWMHints *wmh;
 	char *cwrite, *cnot;
 	Frame *f, *ff;
 	Area *a;
+
+	if(urgent == Toggle)
+		urgent = c->urgent ^ On;
 
 	cwrite = (write ? "Manager" : "Client");
 	cnot = (urgent ? "" : "Not");

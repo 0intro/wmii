@@ -215,7 +215,7 @@ fn Key-$MODKEY-p { ifs=() { run_command `{wmiimenu <$progs_file} & } }
 fn Key-$MODKEY-Return { run_command $WMII_TERM & }
 fn Key-$MODKEY-t { wmiir xwrite /ctl view `{read_tags | wmiimenu} & }
 fn Key-$MODKEY-Shift-t {
-	wmiir xwrite /client/`{wmiir read /client/sel/ctl}^/tags `{read_tags | wmiimenu} &
+	wmiir xwrite /client/`{wmiir read /client/sel/ctl|sed 1q}^/tags `{read_tags | wmiimenu} &
 }
 
 fn Key-$MODKEY-^`{seq 0 9} { wmiir xwrite /ctl view `{echo $1 | sed 's/.*-//'} }

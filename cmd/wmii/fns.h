@@ -127,13 +127,13 @@ void* maprm(Map*, ulong);
 void* hashrm(Map*, char*);
 
 /* message.c */
-char * getword(IxpMsg*);
-Area * strarea(View*, char*);
-char * message_view(View*, IxpMsg*);
-char * parse_colors(IxpMsg*, CTuple*);
-char * message_root(void*, IxpMsg*);
-char * read_root_ctl(void);
-char * message_client(Client*, IxpMsg*);
+char *getword(IxpMsg*);
+Area *strarea(View*, char*);
+char *message_view(View*, IxpMsg*);
+char *parse_colors(IxpMsg*, CTuple*);
+char *message_root(void*, IxpMsg*);
+char *read_root_ctl(void);
+char *message_client(Client*, IxpMsg*);
 char *select_area(Area*, IxpMsg*);
 char *send_client(View*, IxpMsg*, Bool swap);
 

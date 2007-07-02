@@ -15,9 +15,9 @@
 Point ZP = {0, 0};
 Rectangle ZR = {{0, 0}, {0, 0}};
 
-Map wmap, amap;
-MapEnt *wbucket[137];
-MapEnt *abucket[137];
+static Map wmap, amap;
+static MapEnt *wbucket[137];
+static MapEnt *abucket[137];
 
 XRectangle
 XRect(Rectangle r) {
@@ -117,7 +117,7 @@ Wfmt(Fmt *f) {
 	Window *w;
 
 	w = va_arg(f->args, Window*);
-	return fmtprint(f, "0x%ux", w);
+	return fmtprint(f, "0x%ux", w->w);
 }
 
 /* Init */

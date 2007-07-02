@@ -22,8 +22,6 @@
 # pragma varargck	type	"r"	void
 #endif
 
-typedef struct CTuple CTuple;
-
 enum Align {
 	NORTH = 0x01,
 	EAST  = 0x02,
@@ -33,9 +31,10 @@ enum Align {
 	NWEST = NORTH | WEST,
 	SEAST = SOUTH | EAST,
 	SWEST = SOUTH | WEST,
-	CENTER = NEAST | SWEST
+	CENTER = NEAST | SWEST,
 };
 
+typedef struct CTuple CTuple;
 typedef enum Align Align;
 
 struct CTuple {
@@ -46,7 +45,13 @@ struct CTuple {
 };
 
 enum {
-	Coldefault, Colstack, Colmax
+	Coldefault, Colstack, Colmax,
+};
+
+enum {
+	Off,
+	On,
+	Toggle,
 };
 
 enum {
@@ -54,12 +59,12 @@ enum {
 	CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
 	CurDHArrow, CurMove, CurInput, CurSizing, CurIcon,
 	CurNone,
-	CurLast
+	CurLast,
 };
 
-enum { 
+enum {
 	NCOL = 16,
-	WM_PROTOCOL_DELWIN = 1
+	WM_PROTOCOL_DELWIN = 1,
 };
 
 /* Data Structures */

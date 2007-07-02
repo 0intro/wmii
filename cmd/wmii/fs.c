@@ -699,7 +699,6 @@ fs_read(Ixp9Req *r) {
 	assert(!"Read called on an unreadable file");
 }
 
-/* This function needs to be seriously cleaned up */
 void
 fs_write(Ixp9Req *r) {
 	FileId *f;
