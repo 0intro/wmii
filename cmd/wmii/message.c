@@ -511,7 +511,7 @@ send_client(View *v, IxpMsg *m, Bool swap) {
 			if(!i--) break;
 		break;
 	}
-	
+
 	if(!to && !swap && (f->anext || f != a->frame))
 		to = new_column(v, a, 0);
 

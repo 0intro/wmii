@@ -135,7 +135,7 @@ destroy_area(Area *a) {
 	i = 0;
 	for(ta=v->area; ta != a; ta=ta->next)
 		i++;
-	
+
 	if(a->prev)
 		ta = a->prev;
 	else

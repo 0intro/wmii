@@ -125,7 +125,7 @@ fn Event-ClientMouseDown {
 		case Delete
 			wmiir xwrite /client/$client/ctl kill
 		case Fullscreen
-			wmiir xwrite /client/$client/ctl Fullscreen
+			wmiir xwrite /client/$client/ctl Fullscreen on
 		}
 		if(! ~ $#do 0)
 			menulast = $do;
@@ -200,6 +200,8 @@ fn Key-$MODKEY-Shift-$LEFT { wmiir xwrite /tag/sel/ctl send sel left }
 fn Key-$MODKEY-Shift-$RIGHT { wmiir xwrite /tag/sel/ctl send sel right }
 fn Key-$MODKEY-Shift-$DOWN { wmiir xwrite /tag/sel/ctl send sel down }
 fn Key-$MODKEY-Shift-$UP { wmiir xwrite /tag/sel/ctl send sel up }
+
+fn Key-$MODKEY-f { wmiir xwrite /client/sel/ctl Fullscreen toggle }
 
 fn Key-$MODKEY-space { wmiir xwrite /tag/sel/ctl select toggle }
 fn Key-$MODKEY-Shift-space { wmiir xwrite /tag/sel/ctl send sel toggle }

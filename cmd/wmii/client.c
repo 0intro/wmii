@@ -452,10 +452,13 @@ fullscreen(Client *c, int fullscreen) {
 
 	if((f = c->sel)) {
 		if(fullscreen) {
-			if(!f->area->floating)
+			if(f->area->floating)
+				f->revert = f->r;
+			else
 				send_to_area(f->view->area, f);
 			focus_client(c);
-		}
+		}else
+			resize_frame(f, f->revert);
 		if(f->view == screen->sel)
 			focus_view(screen, f->view);
 	}
