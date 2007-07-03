@@ -308,9 +308,6 @@ init_traps(void) {
 			fatal("Can't fork(): %r");
 			break; /* not reached */
 		case 0:
-			exit(0);
-			break;
-		default:
 			close(fd[1]);
 			close(ConnectionNumber(display));
 			setsid();
@@ -325,6 +322,9 @@ init_traps(void) {
 			XSetInputFocus(display, PointerRoot, RevertToPointerRoot, CurrentTime);
 			XCloseDisplay(display);
 			exit(0);
+		default:
+			exit(0);
+			break;
 		}
 	default:
 		waitpid(pid, &status, 0);
