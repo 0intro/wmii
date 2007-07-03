@@ -54,11 +54,11 @@ int __i;
 
 #define ARGF() ((_inargv && _argv[_argi]) ? \
 			(_argtmp=_argi, _argi=strlen(_argv), __i=_argi,_argv+_argtmp) \
-			: ((argc > 0) ? (--argc, ++argv, __i=argc, __p=argv, (*argv-1)) : ((char*)0)))
+			: ((argc > 0) ? (--argc, ++argv, __i=argc, __p=argv, *(argv-1)) : ((char*)0)))
 
 #define EARGF(f) ((_inargv && _argv[_argi]) ? \
 			(_argtmp=_argi, _argi=strlen(_argv), __i=_argi, _argv+_argtmp) \
-			: ((argc > 0) ? (--argc, ++argv, __i=argc, __p=argv, (*argv-1)) : ((f), (char*)0)))
+			: ((argc > 0) ? (--argc, ++argv, __i=argc, __p=argv, *(argv-1)) : ((f), (char*)0)))
 
 #ifndef KENC
 # undef USED
