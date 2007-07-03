@@ -42,12 +42,14 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <X11/Intrinsic.h>
-#include <X11/Xproto.h>
 #include <util.h>
-//#include "dat.h"
+#include <bio.h>
+#include "dat.h"
 //#include "fns.h"
 #include "printevent.h"
+#include <X11/Xproto.h>
+#define Window XWindow
+#include <X11/Intrinsic.h>
 
 #define nil ((void*)0)
 
@@ -67,8 +69,6 @@ search(Pair *lst, int key, char *(*def)(int)) {
 			return lst->val;
 	return def(key);
 }
-
-static char buffer[512];
 
 static char*
 unmask(Pair * list, uint val)
@@ -117,23 +117,45 @@ strign(int key) {
 /**** Miscellaneous routines to convert values to their string equivalents ****/
 /******************************************************************************/
 
-static char    *
-Self(char *str)
-{
-	strncpy(buffer, str, sizeof buffer);
-	free(str);
-	return buffer;
+static void
+TInt(Biobuf *b, va_list *ap) {
+	Bprint(b, "%d", va_arg(*ap, int));
+}
+
+static void
+TWindow(Biobuf *b, va_list *ap) {
+	Window w;
+
+	w = va_arg(*ap, Window);
+	Bprint(b, "0x%ux", (uint)w);
+}
+
+static void
+TData(Biobuf *b, va_list *ap) {
+	long *l;
+	int i;
+
+	l = va_arg(*ap, long*);
+	Bprint(b, "{");
+	for (i = 0; i < 5; i++) {
+		if(i > 0)
+			Bprint(b, ", ");
+		Bprint(b, "0x%08lx", l[i]);
+	}
+	Bprint(b, "}");
 }
 
 /* Returns the string equivalent of a timestamp */
-static char    *
-ServerTime(Time time)
-{
-	ulong		msec;
-	ulong		sec;
-	ulong		min;
-	ulong		hr;
-	ulong		day;
+static void
+TTime(Biobuf *b, va_list *ap) {
+	ulong   msec;
+	ulong   sec;
+	ulong   min;
+	ulong   hr;
+	ulong   day;
+	Time time;
+
+	time = va_arg(*ap, Time);
 
 	msec = time % 1000;
 	time /= 1000;
@@ -149,55 +171,56 @@ ServerTime(Time time)
 		sprintf(buffer, "%lu day%s %02lu:%02lu:%02lu.%03lu",
 			day, day == 1 ? "" : "(s)", hr, min, sec, msec);
 
-	sprintf(buffer, "%lud%luh%lum%lu.%03lds", day, hr, min, sec, msec);
-	return buffer;
+	Bprint(b, "%lud%luh%lum%lu.%03lds", day, hr, min, sec, msec);
 }
 
 /* Returns the string equivalent of a boolean parameter */
-static char    *
-TorF(int key)
-{
-	static Pair	list[] = {
+static void
+TBool(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{True, "True"},
 		{False, "False"},
 		{0, nil},
 	};
+	Bool key;
 
-	return search(list, key, strign);
+	key = va_arg(*ap, Bool);
+	Bprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a property notify state */
-static char    *
-PropertyState(int key)
-{
-	static Pair	list[] = {
+static void
+TPropState(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{PropertyNewValue, "PropertyNewValue"},
 		{PropertyDelete, "PropertyDelete"},
 		{0, nil},
 	};
+	uint key;
 
-	return search(list, key, strign);
+	key = va_arg(*ap, uint);
+	Bprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a visibility notify state */
-static char    *
-VisibilityState(int key)
-{
-	static Pair	list[] = {
+static void
+TVis(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{VisibilityUnobscured, "VisibilityUnobscured"},
 		{VisibilityPartiallyObscured, "VisibilityPartiallyObscured"},
 		{VisibilityFullyObscured, "VisibilityFullyObscured"},
 		{0, nil},
 	};
+	int key;
 
-	return search(list, key, strign);
+	key = va_arg(*ap, int);
+	Bprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a mask of buttons and/or modifier keys */
-static char    *
-ButtonAndOrModifierState(uint state)
-{
-	static Pair	list[] = {
+static void
+TModState(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{Button1Mask, "Button1Mask"},
 		{Button2Mask, "Button2Mask"},
 		{Button3Mask, "Button3Mask"},
@@ -213,15 +236,16 @@ ButtonAndOrModifierState(uint state)
 		{Mod5Mask, "Mod5Mask"},
 		{0, nil},
 	};
+	uint state;
 
-	return unmask(list, state);
+	state = va_arg(*ap, uint);
+	Bprint(b, "%s", unmask(list, state));
 }
 
 /* Returns the string equivalent of a mask of configure window values */
-static char    *
-ConfigureValueMask(uint valuemask)
-{
-	static Pair	list[] = {
+static void
+TConfMask(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{CWX, "CWX"},
 		{CWY, "CWY"},
 		{CWWidth, "CWWidth"},
@@ -231,55 +255,58 @@ ConfigureValueMask(uint valuemask)
 		{CWStackMode, "CWStackMode"},
 		{0, nil},
 	};
+	uint valuemask;
 
-	return unmask(list, valuemask);
+	valuemask = va_arg(*ap, uint);
+	Bprint(b, "%s", unmask(list, valuemask));
 }
 
 /* Returns the string equivalent of a motion hint */
 #if 0
-static char    *
-IsHint(char key)
-{
-	static Pair	list[] = {
+static void
+IsHint(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{NotifyNormal, "NotifyNormal"},
 		{NotifyHint, "NotifyHint"},
 		{0, nil},
 	};
+	char key;
 
-	return search(list, key, strign);
+	key = va_arg(*ap, char);
+	Bprint(b, "%s", search(list, key, strign));
 }
 #endif
 
 /* Returns the string equivalent of an id or the value "None" */
-static char    *
-MaybeNone(int key)
-{
-	static Pair	list[] = {
+static void
+TIntNone(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{None, "None"},
 		{0, nil},
 	};
+	int key;
 
-	return search(list, key, strhex);
+	key = va_arg(*ap, int);
+	Bprint(b, "%s", search(list, key, strhex));
 }
 
 /* Returns the string equivalent of a colormap state */
-static char    *
-ColormapState(int key)
-{
-	static Pair	list[] = {
+static void
+TColMap(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{ColormapInstalled, "ColormapInstalled"},
 		{ColormapUninstalled, "ColormapUninstalled"},
 		{0, nil},
 	};
+	int key;
 
-	return search(list, key, strign);
+	Bprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a crossing detail */
-static char    *
-CrossingDetail(int key)
-{
-	static Pair	list[] = {
+static void
+TXing(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{NotifyAncestor, "NotifyAncestor"},
 		{NotifyInferior, "NotifyInferior"},
 		{NotifyVirtual, "NotifyVirtual"},
@@ -287,15 +314,16 @@ CrossingDetail(int key)
 		{NotifyNonlinearVirtual, "NotifyNonlinearVirtual"},
 		{0, nil},
 	};
+	int key;
 
-	return search(list, key, strign);
+	key = va_arg(*ap, int);
+	Bprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a focus change detail */
-static char    *
-FocusChangeDetail(int key)
-{
-	static Pair	list[] = {
+static void
+TFocus(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{NotifyAncestor, "NotifyAncestor"},
 		{NotifyInferior, "NotifyInferior"},
 		{NotifyVirtual, "NotifyVirtual"},
@@ -306,15 +334,16 @@ FocusChangeDetail(int key)
 		{NotifyDetailNone, "NotifyDetailNone"},
 		{0, nil},
 	};
+	int key;
 
-	return search(list, key, strign);
+	key = va_arg(*ap, int);
+	Bprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a configure detail */
-static char    *
-ConfigureDetail(int key)
-{
-	static Pair	list[] = {
+static void
+TConfDetail(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{Above, "Above"},
 		{Below, "Below"},
 		{TopIf, "TopIf"},
@@ -322,69 +351,74 @@ ConfigureDetail(int key)
 		{Opposite, "Opposite"},
 		{0, nil},
 	};
+	int key;
 
-	return search(list, key, strign);
+	key = va_arg(*ap, int);
+	Bprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a grab mode */
-static char    *
-GrabMode(int key)
-{
-	static Pair	list[] = {
+static void
+TGrabMode(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{NotifyNormal, "NotifyNormal"},
 		{NotifyGrab, "NotifyGrab"},
 		{NotifyUngrab, "NotifyUngrab"},
 		{NotifyWhileGrabbed, "NotifyWhileGrabbed"},
 		{0, nil},
 	};
+	int key;
 
-	return search(list, key, strign);
+	key = va_arg(*ap, int);
+	Bprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a mapping request */
-static char    *
-MappingRequest(int key)
-{
-	static Pair	list[] = {
+static void
+TMapping(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{MappingModifier, "MappingModifier"},
 		{MappingKeyboard, "MappingKeyboard"},
 		{MappingPointer, "MappingPointer"},
 		{0, nil},
 	};
+	int key;
 
-	return search(list, key, strign);
+	key = va_arg(*ap, int);
+	Bprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a stacking order place */
-static char    *
-Place(int key)
-{
-	static Pair	list[] = {
+static void
+TPlace(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{PlaceOnTop, "PlaceOnTop"},
 		{PlaceOnBottom, "PlaceOnBottom"},
 		{0, nil},
 	};
+	int key;
 
-	return search(list, key, strign);
+	key = va_arg(*ap, int);
+	Bprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a major code */
-static char    *
-MajorCode(int key)
-{
-	static Pair	list[] = {
+static void
+TMajor(Biobuf *b, va_list *ap) {
+	static Pair list[] = {
 		{X_CopyArea, "X_CopyArea"},
 		{X_CopyPlane, "X_CopyPlane"},
 		{0, nil},
 	};
+	int key;
 
-	return search(list, key, strhex);
+	key = va_arg(*ap, int);
+	Bprint(b, "%s", search(list, key, strhex));
 }
 
-static char    *
-eventtype(int key)
-{
-	static Pair	list[] = {
+static char*
+eventtype(int key) {
+	static Pair list[] = {
 		{ButtonPress, "ButtonPress"},
 		{ButtonRelease, "ButtonRelease"},
 		{CirculateNotify, "CirculateNotify"},
@@ -420,17 +454,18 @@ eventtype(int key)
 		{VisibilityNotify, "VisibilityNotify"},
 		{0, nil},
 	};
-
 	return search(list, key, strdec);
 }
 /* Returns the string equivalent the keycode contained in the key event */
-static char*
-Keycode(XKeyEvent * ev)
-{
-	KeySym		keysym_str;
-	char           *keysym_name;
+static void
+TKeycode(Biobuf *b, va_list *ap) {
+	KeySym keysym_str;
+	XKeyEvent *ev;
+	char *keysym_name;
 
-	XLookupString(ev, buffer, sizeof buffer, &keysym_str, NULL);
+	ev = va_arg(*ap, XKeyEvent*);
+
+	XLookupString(ev, buffer, sizeof buffer, &keysym_str, nil);
 
 	if (keysym_str == NoSymbol)
 		keysym_name = "NoSymbol";
@@ -439,121 +474,54 @@ Keycode(XKeyEvent * ev)
 	if(keysym_name == nil)
 		keysym_name = "(no name)";
 
-	snprintf(buffer, sizeof buffer, "%u (keysym 0x%x \"%s\")",
-		(int)ev->keycode, (int)keysym_str, keysym_name);
-	return buffer;
+	Bprint(b, "%ud (keysym 0x%x \"%s\")", (int)ev->keycode,
+			(int)keysym_str, keysym_name);
 }
 
 /* Returns the string equivalent of an atom or "None" */
-static char    *
-AtomName(Atom atom)
-{
-	extern Display *display;
-	char           *atom_name;
+static void
+TAtom(Biobuf *b, va_list *ap) {
+	char *atom_name;
+	Atom atom;
 
-	if (atom == None)
-		return "None";
-
+	atom = va_arg(*ap, Atom);
 	atom_name = XGetAtomName(display, atom);
-	strncpy(buffer, atom_name, sizeof buffer);
+	Bprint(b, "%s", atom_name);
 	XFree(atom_name);
-
-	return buffer;
 }
 
 #define _(m) #m, ev->m
-
-enum {
-	TEnd,
-	TAtom,
-	TBool,
-	TColMap,
-	TConfDetail,
-	TConfMask,
-	TFocus,
-	TGrabMode,
-	TInt,
-	TIntNone,
-	TMajor,
-	TMapping,
-	TModState,
-	TPlace,
-	TPropState,
-	TString,
-	TTime,
-	TVis,
-	TWindow,
-	TXing,
-};
-
-typedef struct TypeTab TypeTab;
-
-struct TypeTab {
-	int size;
-	char *(*fn)();
-} ttab[] = {
-	[TEnd] = {0, nil},
-	[TAtom] = {sizeof(Atom), AtomName},
-	[TBool] = {sizeof(Bool), TorF},
-	[TColMap] = {sizeof(int), ColormapState},
-	[TConfDetail] = {sizeof(int), ConfigureDetail},
-	[TConfMask] = {sizeof(int), ConfigureValueMask},
-	[TFocus] = {sizeof(int), FocusChangeDetail},
-	[TGrabMode] = {sizeof(int), GrabMode},
-	[TIntNone] = {sizeof(int), MaybeNone},
-	[TInt] = {sizeof(int), strdec},
-	[TMajor] = {sizeof(int), MajorCode},
-	[TMapping] = {sizeof(int), MappingRequest},
-	[TModState] = {sizeof(int), ButtonAndOrModifierState},
-	[TPlace] = {sizeof(int), Place},
-	[TPropState] = {sizeof(int), PropertyState},
-	[TString] = {sizeof(char*), Self},
-	[TTime] = {sizeof(Time), ServerTime},
-	[TVis] = {sizeof(int), VisibilityState},
-	[TWindow] = {sizeof(Window), strhex},
-	[TXing] = {sizeof(int), CrossingDetail},
-};
+#define TEnd nil
+typedef void (*Tfn)(Biobuf*, va_list*);
 
 static void
 pevent(void *ev, ...) {
-	static char buf[4096];
-	static char *bend = buf + sizeof(buf);
+	static Biobuf *b;
 	va_list ap;
-	TypeTab *t;
-	char *p, *key, *val;
-	int n, type, valint;
+	Tfn fn;
+	char *key;
+	int n;
+
+	if(b == nil)
+		b = Bfdopen(2, O_WRONLY);
 
 	va_start(ap, ev);
-
-	p = buf;
-	*p = '\0';
-	n = 0;
 	for(;;) {
-		type = va_arg(ap, int);
-		if(type == TEnd)
+		fn = va_arg(ap, Tfn);
+		if(fn == TEnd)
 			break;
-		t = &ttab[type];
-
-		key = va_arg(ap, char*);
-		switch(t->size) {
-		default:
-			break; /* Can't continue */
-		case sizeof(int):
-			valint = va_arg(ap, int);
-			val = t->fn(valint);
-			break;
-		}
 
 		if(n++ != 0)
-			p += strlcat(p, sep, bend-p);
-		p += snprintf(p, bend-p, "%s=%s", key, val);
+			Bprint(b, "%s", sep);
 
-		if(p >= bend)
-			break;	
+		key = va_arg(ap, char*);
+		Bprint(b, "%s=", key);
+		fn(b, &ap);
 	}
-	fprintf(stderr, "%s\n", buf);
-
 	va_end(ap);
+
+	Bprint(b, "\n");
+	Bflush(b);
 }
 
 /******************************************************************************/
@@ -561,8 +529,9 @@ pevent(void *ev, ...) {
 /******************************************************************************/
 
 static void
-VerbMotion(XMotionEvent *ev)
-{
+VerbMotion(XEvent *e) {
+	XMotionEvent *ev = &e->xmotion;
+
 	pevent(ev,
 		TWindow, _(window),
 		TWindow, _(root),
@@ -578,8 +547,9 @@ VerbMotion(XMotionEvent *ev)
 }
 
 static void
-VerbButton(XButtonEvent *ev)
-{
+VerbButton(XEvent *e) {
+	XButtonEvent *ev = &e->xbutton;
+
 	pevent(ev,
 		TWindow, _(window),
 		TWindow, _(root),
@@ -595,8 +565,9 @@ VerbButton(XButtonEvent *ev)
 }
 
 static void
-VerbColormap(XColormapEvent *ev)
-{
+VerbColormap(XEvent *e) {
+	XColormapEvent *ev = &e->xcolormap;
+
 	pevent(ev,
 		TWindow, _(window),
 		TIntNone, _(colormap),
@@ -607,8 +578,9 @@ VerbColormap(XColormapEvent *ev)
 }
 
 static void
-VerbCrossing(XCrossingEvent *ev)
-{
+VerbCrossing(XEvent *e) {
+	XCrossingEvent *ev = &e->xcrossing;
+
 	pevent(ev,
 		TWindow, _(window),
 		TWindow, _(root),
@@ -626,8 +598,9 @@ VerbCrossing(XCrossingEvent *ev)
 }
 
 static void
-VerbExpose(XExposeEvent *ev)
-{
+VerbExpose(XEvent *e) {
+	XExposeEvent *ev = &e->xexpose;
+
 	pevent(ev,
 		TWindow, _(window),
 		TInt, _(x), TInt, _(y),
@@ -638,8 +611,9 @@ VerbExpose(XExposeEvent *ev)
 }
 
 static void
-VerbGraphicsExpose(XGraphicsExposeEvent *ev)
-{
+VerbGraphicsExpose(XEvent *e) {
+	XGraphicsExposeEvent *ev = &e->xgraphicsexpose;
+
 	pevent(ev,
 		TWindow, _(drawable),
 		TInt, _(x), TInt, _(y),
@@ -651,8 +625,9 @@ VerbGraphicsExpose(XGraphicsExposeEvent *ev)
 }
 
 static void
-VerbNoExpose(XNoExposeEvent *ev)
-{
+VerbNoExpose(XEvent *e) {
+	XNoExposeEvent *ev = &e->xnoexpose;
+
 	pevent(ev,
 		TWindow, _(drawable),
 		TMajor, _(major_code),
@@ -662,8 +637,9 @@ VerbNoExpose(XNoExposeEvent *ev)
 }
 
 static void
-VerbFocus(XFocusChangeEvent *ev)
-{
+VerbFocus(XEvent *e) {
+	XFocusChangeEvent *ev = &e->xfocus;
+
 	pevent(ev,
 		TWindow, _(window),
 		TGrabMode, _(mode),
@@ -673,8 +649,9 @@ VerbFocus(XFocusChangeEvent *ev)
 }
 
 static void
-VerbKeymap(XKeymapEvent * ev)
-{
+VerbKeymap(XEvent *e) {
+	XKeymapEvent *ev = &e->xkeymap;
+
 	int		i;
 
 	fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
@@ -685,8 +662,9 @@ VerbKeymap(XKeymapEvent * ev)
 }
 
 static void
-VerbKey(XKeyEvent *ev)
-{
+VerbKey(XEvent *e) {
+	XKeyEvent *ev = &e->xkey;
+
 	pevent(ev,
 		TWindow, _(window),
 		TWindow, _(root),
@@ -695,15 +673,16 @@ VerbKey(XKeyEvent *ev)
 		TInt, _(x), TInt, _(y),
 		TInt, _(x_root), TInt, _(y_root),
 		TModState, _(state),
-		TString, "keycode", estrdup(Keycode(ev)),
+		TKeycode, "keycode", ev,
 		TBool, _(same_screen),
 		TEnd
 	);
 }
 
 static void
-VerbProperty(XPropertyEvent *ev)
-{
+VerbProperty(XEvent *e) {
+	XPropertyEvent *ev = &e->xproperty;
+
 	pevent(ev,
 		TWindow, _(window),
 		TAtom, _(atom),
@@ -714,8 +693,9 @@ VerbProperty(XPropertyEvent *ev)
 }
 
 static void
-VerbResizeRequest(XResizeRequestEvent *ev)
-{
+VerbResizeRequest(XEvent *e) {
+	XResizeRequestEvent *ev = &e->xresizerequest;
+
 	pevent(ev,
 		TWindow, _(window),
 		TInt, _(width), TInt, _(height),
@@ -724,8 +704,9 @@ VerbResizeRequest(XResizeRequestEvent *ev)
 }
 
 static void
-VerbCirculate(XCirculateEvent *ev)
-{
+VerbCirculate(XEvent *e) {
+	XCirculateEvent *ev = &e->xcirculate;
+
 	pevent(ev,
 		TWindow, _(event),
 		TWindow, _(window),
@@ -735,8 +716,9 @@ VerbCirculate(XCirculateEvent *ev)
 }
 
 static void
-VerbConfigure(XConfigureEvent *ev)
-{
+VerbConfigure(XEvent *e) {
+	XConfigureEvent *ev = &e->xconfigure;
+
 	pevent(ev,
 		TWindow, _(event),
 		TWindow, _(window),
@@ -750,8 +732,9 @@ VerbConfigure(XConfigureEvent *ev)
 }
 
 static void
-VerbCreateWindow(XCreateWindowEvent *ev)
-{
+VerbCreateWindow(XEvent *e) {
+	XCreateWindowEvent *ev = &e->xcreatewindow;
+
 	pevent(ev,
 		TWindow, _(parent),
 		TWindow, _(window),
@@ -764,8 +747,9 @@ VerbCreateWindow(XCreateWindowEvent *ev)
 }
 
 static void
-VerbDestroyWindow(XDestroyWindowEvent *ev)
-{
+VerbDestroyWindow(XEvent *e) {
+	XDestroyWindowEvent *ev = &e->xdestroywindow;
+
 	pevent(ev,
 		TWindow, _(event),
 		TWindow, _(window),
@@ -774,8 +758,9 @@ VerbDestroyWindow(XDestroyWindowEvent *ev)
 }
 
 static void
-VerbGravity(XGravityEvent *ev)
-{
+VerbGravity(XEvent *e) {
+	XGravityEvent *ev = &e->xgravity;
+
 	pevent(ev,
 		TWindow, _(event),
 		TWindow, _(window),
@@ -785,8 +770,9 @@ VerbGravity(XGravityEvent *ev)
 }
 
 static void
-VerbMap(XMapEvent *ev)
-{
+VerbMap(XEvent *e) {
+	XMapEvent *ev = &e->xmap;
+
 	pevent(ev,
 		TWindow, _(event),
 		TWindow, _(window),
@@ -796,8 +782,9 @@ VerbMap(XMapEvent *ev)
 }
 
 static void
-VerbReparent(XReparentEvent *ev)
-{
+VerbReparent(XEvent *e) {
+	XReparentEvent *ev = &e->xreparent;
+
 	pevent(ev,
 		TWindow, _(event),
 		TWindow, _(window),
@@ -809,8 +796,9 @@ VerbReparent(XReparentEvent *ev)
 }
 
 static void
-VerbUnmap(XUnmapEvent *ev)
-{
+VerbUnmap(XEvent *e) {
+	XUnmapEvent *ev = &e->xunmap;
+
 	pevent(ev,
 		TWindow, _(event),
 		TWindow, _(window),
@@ -820,8 +808,9 @@ VerbUnmap(XUnmapEvent *ev)
 }
 
 static void
-VerbCirculateRequest(XCirculateRequestEvent *ev)
-{
+VerbCirculateRequest(XEvent *e) {
+	XCirculateRequestEvent *ev = &e->xcirculaterequest;
+
 	pevent(ev,
 		TWindow, _(parent),
 		TWindow, _(window),
@@ -831,8 +820,9 @@ VerbCirculateRequest(XCirculateRequestEvent *ev)
 }
 
 static void
-VerbConfigureRequest(XConfigureRequestEvent *ev)
-{
+VerbConfigureRequest(XEvent *e) {
+	XConfigureRequestEvent *ev = &e->xconfigurerequest;
+
 	pevent(ev,
 		TWindow, _(parent),
 		TWindow, _(window),
@@ -847,8 +837,9 @@ VerbConfigureRequest(XConfigureRequestEvent *ev)
 }
 
 static void
-VerbMapRequest(XMapRequestEvent *ev)
-{
+VerbMapRequest(XEvent *e) {
+	XMapRequestEvent *ev = &e->xmaprequest;
+
 	pevent(ev,
 		TWindow, _(parent),
 		TWindow, _(window),
@@ -857,22 +848,22 @@ VerbMapRequest(XMapRequestEvent *ev)
 }
 
 static void
-VerbClient(XClientMessageEvent * ev)
-{
-	int		i;
+VerbClient(XEvent *e) {
+	XClientMessageEvent *ev = &e->xclient;
 
-	fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-	fprintf(stderr, "message_type=%s%s", AtomName(ev->message_type), sep);
-	fprintf(stderr, "format=%d\n", ev->format);
-	fprintf(stderr, "data (shown as longs)=");
-	for (i = 0; i < 5; i++)
-		fprintf(stderr, " 0x%08lx", ev->data.l[i]);
-	fprintf(stderr, "\n");
+	pevent(ev,
+		TWindow, _(window),
+		TAtom, _(message_type),
+		TInt, _(format),
+		TData, "data (as longs)", ev->data,
+		TEnd
+	);
 }
 
 static void
-VerbMapping(XMappingEvent *ev)
-{
+VerbMapping(XEvent *e) {
+	XMappingEvent *ev = &e->xmapping;
+
 	pevent(ev,
 		TWindow, _(window),
 		TMapping, _(request),
@@ -883,8 +874,9 @@ VerbMapping(XMappingEvent *ev)
 }
 
 static void
-VerbSelectionClear(XSelectionClearEvent *ev)
-{
+VerbSelectionClear(XEvent *e) {
+	XSelectionClearEvent *ev = &e->xselectionclear;
+
 	pevent(ev,
 		TWindow, _(window),
 		TAtom, _(selection),
@@ -894,8 +886,9 @@ VerbSelectionClear(XSelectionClearEvent *ev)
 }
 
 static void
-VerbSelection(XSelectionEvent *ev)
-{
+VerbSelection(XEvent *e) {
+	XSelectionEvent *ev = &e->xselection;
+
 	pevent(ev,
 		TWindow, _(requestor),
 		TAtom, _(selection),
@@ -907,8 +900,9 @@ VerbSelection(XSelectionEvent *ev)
 }
 
 static void
-VerbSelectionRequest(XSelectionRequestEvent *ev)
-{
+VerbSelectionRequest(XEvent *e) {
+	XSelectionRequestEvent *ev = &e->xselectionrequest;
+
 	pevent(ev,
 		TWindow, _(owner),
 		TWindow, _(requestor),
@@ -921,8 +915,9 @@ VerbSelectionRequest(XSelectionRequestEvent *ev)
 }
 
 static void
-VerbVisibility(XVisibilityEvent *ev)
-{
+VerbVisibility(XEvent *e) {
+	XVisibilityEvent *ev = &e->xvisibility;
+
 	pevent(ev,
 		TWindow, _(window),
 		TVis, _(state),
@@ -938,33 +933,23 @@ typedef struct Handler Handler;
 
 struct Handler {
 	int key;
-	void (*fn)();
+	void (*fn)(XEvent*);
 };
 
 void 
-printevent(XEvent * e)
-{
-	extern Display *display;
-	XAnyEvent      *ev = (void *)e;
-	char           *name;
-
-	if (ev->window) {
-		XFetchName(display, ev->window, &name);
-		if (name)
-			fprintf(stderr, "\ttitle=%s\n", name);
-		XFree(name);
-	}
+printevent(XEvent *e) {
+	XAnyEvent *ev = &e->xany;
 
 	fprintf(stderr, "%3ld %-20s ", ev->serial, eventtype(e->xany.type));
-	if (ev->send_event)
+	if(ev->send_event)
 		fprintf(stderr, "(sendevent) ");
-	if (0) {
+	/*
 		fprintf(stderr, "type=%s%s", eventtype(e->xany.type), sep);
 		fprintf(stderr, "serial=%lu%s", ev->serial, sep);
 		fprintf(stderr, "send_event=%s%s", TorF(ev->send_event), sep);
 		fprintf(stderr, "display=0x%p%s", ev->display, sep);
-	}
-	static Handler	fns[] = {
+	*/
+	static Handler fns[] = {
 		{MotionNotify, VerbMotion},
 		{ButtonPress, VerbButton},
 		{ButtonRelease, VerbButton},
@@ -1003,8 +988,8 @@ printevent(XEvent * e)
 	Handler *p;
 
 	for (p = fns; p->fn; p++)
-		if (p->key == ev->type)
+		if (p->key == ev->type) {
+			p->fn(e);
 			break;
-	if (p->fn)
-		p->fn(ev);
+		}
 }

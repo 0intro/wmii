@@ -1,0 +1,11 @@
+default:V: all
+
+TARG=\
+	event.dis\
+
+all:V: $TARG
+
+nuke:V: rm *.dis *.sbl
+
+%.dis:	%.b
+	limbo -Cgw $stem.b

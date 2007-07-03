@@ -144,9 +144,7 @@ destroy_client(Client *c) {
 			break;
 		}
 
-	r = c->w.r;
-	if(c->sel)
-		r = gravclient(c, ZR);
+	r = gravclient(c, ZR);
 
 	hide = False;	
 	if(!c->sel || c->sel->view != screen->sel)
@@ -222,10 +220,13 @@ gravclient(Client *c, Rectangle rd) {
 	sp = Pt(def.border, labelh(def.font));
 
 	if(eqrect(rd, ZR)) {
-		if(c->sel->area->floating)
-			r = c->sel->r;
-		else
-			r = c->sel->revert;
+		if(c->sel) {
+			if(c->sel->area->floating)
+				r = c->sel->r;
+			else
+				r = c->sel->revert;
+		}else
+			r = client2frame(nil, c->r);
 		r = gravitate(r, c->r, h->grav);
 		if(h->gravstatic)
 			r = rectaddpt(r, sp);
@@ -389,14 +390,8 @@ void
 configure_client(Client *c) {
 	XConfigureEvent e;
 	Rectangle r;
-	Frame *f;
 
-	f = c->sel;
-	if(!f)
-		return;
-
-	r = rectaddpt(f->crect, f->r.min);
-	r = insetrect(r, -c->border);
+	r = insetrect(c->r, -c->border);
 
 	e.type = ConfigureNotify;
 	e.event = c->w.w;
@@ -454,8 +449,10 @@ fullscreen(Client *c, int fullscreen) {
 		if(fullscreen) {
 			if(f->area->floating)
 				f->revert = f->r;
-			else
+			else {
+				f->r = f->revert;
 				send_to_area(f->view->area, f);
+			}
 			focus_client(c);
 		}else
 			resize_frame(f, f->revert);

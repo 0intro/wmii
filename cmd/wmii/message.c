@@ -478,14 +478,6 @@ send_client(View *v, IxpMsg *m, Bool swap) {
 	sym = getsym(s);
 
 	switch(sym) {
-	case LTOGGLE:
-		if(!a->floating)
-			to = v->area;
-		else if(c->revert && !c->revert->floating)
-			to = c->revert;
-		else
-			to = v->area->next;
-		break;
 	case LUP:
 	case LDOWN:
 		return send_frame(f, sym, swap);
@@ -502,6 +494,14 @@ send_client(View *v, IxpMsg *m, Bool swap) {
 			return Ebadvalue;
 
 		to = a->next;
+		break;
+	case LTOGGLE:
+		if(!a->floating)
+			to = v->area;
+		else if(c->revert && !c->revert->floating)
+			to = c->revert;
+		else
+			to = v->area->next;
 		break;
 	default:
 		if(!getulong(s, &i) || i == 0)

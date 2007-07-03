@@ -22,7 +22,7 @@ Frame *
 create_frame(Client *c, View *v) {
 	static ushort id = 1;
 	Frame *f;
-	
+
 	f = emallocz(sizeof *f);
 	f->id = id++;
 	f->client = c;
@@ -33,9 +33,9 @@ create_frame(Client *c, View *v) {
 		f->r = c->sel->r;
 	}
 	else{
-		c->sel = f;
-		f->r = client2frame(f, c->w.r);
+		f->r = client2frame(f, gravclient(c, ZR));
 		f->revert = f->r;
+		c->sel = f;
 	}
 	f->collapsed = False;
 
