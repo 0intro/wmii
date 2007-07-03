@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -109,7 +108,7 @@ create_area(View *v, Area *pos, uint w) {
 		focus_area(a);
 
 	if(!a->floating)
-		write_event("CreateColumn %d\n", i);
+		write_event("CreateColumn %ud\n", i);
 	return a;
 }
 
@@ -152,7 +151,7 @@ destroy_area(Area *a) {
 			ta = ta->next;
 		focus_area(ta);
 	}
-	write_event("DestroyColumn %d\n", i);
+	write_event("DestroyColumn %ud\n", i);
 
 	free(a);
 }
@@ -173,19 +172,16 @@ send_to_area(Area *to, Frame *f) {
 	f->client->revert = from;
 
 	detach_from_area(f);
-	attach_to_area(to, f, True);
+	attach_to_area(to, f);
 }
 
 void
-attach_to_area(Area *a, Frame *f, Bool send) {
-	uint h, n_frame;
+attach_to_area(Area *a, Frame *f) {
+	uint n_frame;
 	Frame *ft;
 	Client *c;
-	View *v;
 
-	v = a->view;
 	c = f->client;
-	h = 0;
 
 	f->area = a;
 
@@ -331,6 +327,8 @@ place_frame(Frame *f) {
 		field = emallocz(sizeof(uint) * mwidth * my);
 	}
 
+	SET(cx);
+	SET(cy);
 	memset(field, ~0, (sizeof(uint) * mwidth * my));
 	for(fr=a->frame; fr; fr=fr->anext) {
 		if(fr == f) {

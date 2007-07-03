@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -252,7 +251,7 @@ message(Ixp9Req *r, MsgFunc fn) {
 		c = *p;
 		*p = '\0';
 
-		m = ixp_message(s, p-s, 0);
+		m = ixp_message((uchar*)s, p-s, 0);
 		s = fn(f->p.ref, &m);
 		if(s)
 			err = s;
@@ -361,6 +360,7 @@ lookup_file(FileId *parent, char *name)
 						file->tab.name = estrdup("sel");
 					}if(name) goto LastItem;
 				}
+				SET(id);
 				if(name) {
 					id = (uint)strtol(name, &name, 16);
 					if(*name) goto NextItem;
@@ -595,7 +595,6 @@ fs_read(Ixp9Req *r) {
 	int n, offset;
 	int size;
 
-	offset = 0;
 	f = r->fid->aux;
 
 	if(!verify_file(f)) {
@@ -610,7 +609,7 @@ fs_read(Ixp9Req *r) {
 		offset = 0;
 		size = r->ifcall.count;
 		buf = emallocz(size);
-		m = ixp_message(buf, size, MsgPack);
+		m = ixp_message((uchar*)buf, size, MsgPack);
 
 		tf = f = lookup_file(f, nil);
 		/* Note: f->tab.name == "." so we skip it */
@@ -630,7 +629,7 @@ fs_read(Ixp9Req *r) {
 			free_file(f);
 		}
 		r->ofcall.count = r->ifcall.count - size;
-		r->ofcall.data = m.data;
+		r->ofcall.data = (char*)m.data;
 		respond(r, nil);
 		return;
 	}
@@ -702,7 +701,7 @@ fs_read(Ixp9Req *r) {
 void
 fs_write(Ixp9Req *r) {
 	FileId *f;
-	char *errstr = nil;
+	char *errstr;
 	uint i;
 
 	if(r->ifcall.count == 0) {
@@ -742,7 +741,7 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFBar:
 		i = strlen(f->p.bar->buf);
-		write_to_buf(r, &f->p.bar->buf, &i, 279);
+		write_to_buf(r, f->p.bar->buf, &i, 279);
 		r->ofcall.count = i - r->ifcall.offset;
 		respond(r, nil);
 		return;
@@ -894,15 +893,15 @@ fs_clunk(Ixp9Req *r) {
 	case FsFBar:
 		p = toutf8(f->p.bar->buf);
 		
-		m = ixp_message(p, strlen(p), 0);
+		m = ixp_message((uchar*)p, strlen(p), 0);
 		parse_colors(&m, &f->p.bar->col);
 
-		q = m.end-1;
+		q = (char*)m.end-1;
 		while(q >= (char*)m.pos && *q == '\n')
 			*q-- = '\0';
 
 		q = f->p.bar->text;
-		utfecpy(q, q+sizeof((Bar){}.text), m.pos);
+		utfecpy(q, q+sizeof(((Bar*)0)->text), (char*)m.pos);
 
 		free(p);
 

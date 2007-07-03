@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -48,6 +47,7 @@ get_view(const char *name) {
 	View *v;
 	int cmp;
 
+	SET(cmp);
 	for(v = view; v; v=v->next)
 		if((cmp=strcmp(name, v->name)) >= 0)
 			break;
@@ -121,11 +121,10 @@ update_frame_selectors(View *v) {
 
 void
 focus_view(WMScreen *s, View *v) {
-	View *old;
 	Frame *f;
 	Client *c;
-
-	old = screen->sel;
+	
+	USED(s);
 
 	XGrabServer(display);
 
@@ -177,7 +176,7 @@ attach_to_view(View *v, Frame *f) {
 		focus_area(v->area);
 	else if(starting && v->sel->floating)
 		focus_area(v->area->next);
-	attach_to_area(v->sel, f, False);
+	attach_to_area(v->sel, f);
 }
 
 void

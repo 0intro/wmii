@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -99,6 +98,8 @@ expose_event(Window *w, XExposeEvent *e) {
 	Framewin *f;
 	Image *buf;
 	CTuple *c;
+	
+	USED(e);
 
 	f = w->aux;
 	c = &def.focuscolor;
@@ -681,7 +682,8 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 		return;
 	}
 
-	origin = frect = f->r;
+	origin = f->r;
+	frect = f->r;
 	rects = rects_of_view(f->area->view, &num, c->frame);
 
 	cur = cursor_of_quad(align);

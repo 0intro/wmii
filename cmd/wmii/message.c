@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -120,7 +119,7 @@ eatrunes(IxpMsg *m, int (*p)(Rune), int val) {
 	int n;
 
 	while(m->pos < m->end) {
-		n = chartorune(&r, m->pos);
+		n = chartorune(&r, (char*)m->pos);
 		if(p(r) != val)
 			break;
 		m->pos += n;
@@ -136,9 +135,9 @@ getword(IxpMsg *m) {
 	int n;
 
 	eatrunes(m, isspacerune, 1);
-	ret = m->pos;
+	ret = (char*)m->pos;
 	eatrunes(m, isspacerune, 0);
-	n = chartorune(&r, m->pos);
+	n = chartorune(&r, (char*)m->pos);
 	*m->pos = '\0';
 	m->pos += n;
 	eatrunes(m, isspacerune, 1);
@@ -271,7 +270,7 @@ message_view(View *v, IxpMsg *m) {
 	default:
 		return Ebadcmd;
 	}
-	assert(!"can't get here");
+	/* not reached */
 }
 
 char *
@@ -282,7 +281,7 @@ parse_colors(IxpMsg *m, CTuple *col) {
 	int i, j;
 
 	/* '#%6x #%6x #%6x' */
-	p = m->pos;
+	p = (char*)m->pos;
 	for(i = 0; i < 3 && p < (char*)m->end; i++) {
 		if(*p++ != '#')
 			return Ebad;
@@ -298,10 +297,10 @@ parse_colors(IxpMsg *m, CTuple *col) {
 
 	c = *p;
 	*p = '\0';
-	loadcolor(col, m->pos);
+	loadcolor(col, (char*)m->pos);
 	*p = c;
 
-	m->pos = p;
+	m->pos = (uchar*)p;
 	eatrunes(m, isspacerune, 1);
 	return nil;
 }
@@ -312,6 +311,7 @@ message_root(void *p, IxpMsg *m) {
 	char *s, *ret;
 	ulong n;
 
+	USED(p);
 	ret = nil;
 	s = getword(m);
 
@@ -320,11 +320,11 @@ message_root(void *p, IxpMsg *m) {
 		srv.running = 0;
 		break;
 	case LEXEC:
-		execstr = smprint("exec %s", m->pos);
+		execstr = smprint("exec %s", (char*)m->pos);
 		srv.running = 0;
 		break;
 	case LVIEW:
-		select_view(m->pos);
+		select_view((char*)m->pos);
 		break;
 	case LSELCOLORS:
 		fprint(2, "%s: warning: selcolors have been removed\n", argv0);
@@ -338,7 +338,7 @@ message_root(void *p, IxpMsg *m) {
 		focus_view(screen, screen->sel);
 		break;
 	case LFONT:
-		fn = loadfont(m->pos);
+		fn = loadfont((char*)m->pos);
 		if(fn) {
 			freefont(def.font);
 			def.font = fn;
@@ -380,6 +380,7 @@ read_root_ctl(void) {
 	b = seprint(b, e, "font %s\n", def.font->name);
 	b = seprint(b, e, "grabmod %s\n", def.grabmod);
 	b = seprint(b, e, "border %d\n", def.border);
+	USED(b);
 	return buffer;
 }
 
@@ -415,10 +416,8 @@ message_client(Client *c, IxpMsg *m) {
 static char*
 send_frame(Frame *f, int sym, Bool swap) {
 	Frame *fp;
-	Area *a;
-	
-	a = f->area;
 
+	SET(fp);
 	switch(sym) {
 	case LUP:
 		fp = f->aprev;
@@ -544,6 +543,7 @@ select_frame(Frame *f, IxpMsg *m, int sym) {
 		return Ebadvalue;
 	a = f->area;
 
+	SET(fp);
 	switch(sym) {
 	case LUP:
 		for(fp = a->frame; fp->anext; fp = fp->anext)

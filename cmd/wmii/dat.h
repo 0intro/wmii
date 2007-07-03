@@ -5,7 +5,9 @@
 #include <regexp9.h>
 #define IXP_P9_STRUCTS
 #define IXP_NO_P9_
+#include <stdint.h>
 #include <ixp.h>
+#include <util.h>
 #include <utf.h>
 #include <fmt.h>
 #include "x11.h"
@@ -13,14 +15,6 @@
 #define FONT		"-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*"
 #define FOCUSCOLORS	"#ffffff #335577 #447799"
 #define NORMCOLORS	"#222222 #eeeeee #666666"
-
-#ifdef VARARGCK
-# pragma varargck	type	"C"	Client*	
-# pragma varargck	type	"W"	Window*	
-# pragma varargck	type	"P"	Point
-# pragma varargck	type	"R"	Rectangle
-# pragma varargck	type	"r"	void
-#endif
 
 enum Align {
 	NORTH = 0x01,

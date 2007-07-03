@@ -14,7 +14,6 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -115,7 +114,7 @@ init_ns(void) {
 		ns_path = estrdup(&address[5]);
 		s = strrchr(ns_path, '/');
 		if(s != nil)
-			s = '\0';
+			*s = '\0';
 	}
 	else if((s = getenv("NAMESPACE")))
 		ns_path = s;
@@ -152,7 +151,7 @@ static void
 init_atoms(void) {
 	Atom net[] = { xatom("_NET_SUPPORTED"), xatom("_NET_WM_NAME") };
 
-	changeprop_long(&scr.root, "_NET_SUPPORTED", "ATOM", net, nelem(net));
+	changeprop_long(&scr.root, "_NET_SUPPORTED", "ATOM", (long*)net, nelem(net));
 }
 
 static void
@@ -162,6 +161,7 @@ create_cursor(int ident, uint shape) {
 
 static void
 init_cursors(void) {
+	static char zchar[1];
 	Pixmap pix;
 	XColor black, dummy;
 
@@ -180,7 +180,7 @@ init_cursors(void) {
 			"black", &black, &dummy);
 	pix = XCreateBitmapFromData(
 			display, scr.root.w,
-			(char[]){0}, 1, 1);
+			zchar, 1, 1);
 
 	cursor[CurNone] = XCreatePixmapCursor(display,
 			pix, pix,
@@ -252,6 +252,8 @@ static int
 errorhandler(Display *dpy, XErrorEvent *error) {
 	static Bool dead;
 	int i;
+	
+	USED(dpy);
 
 	if(check_other_wm)
 		fatal("another window manager is already running");
@@ -385,11 +387,15 @@ spawn_command(const char *cmd) {
 
 static void
 check_preselect(IxpServer *s) {
+	USED(s);
+
 	check_x_event(nil);
 }
 
 static void
 closedisplay(IxpConn *c) {
+	USED(c);
+
 	XCloseDisplay(display);
 }
 

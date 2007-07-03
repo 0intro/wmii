@@ -42,7 +42,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <util.h>
 #include <bio.h>
 #include "dat.h"
 //#include "fns.h"
@@ -91,7 +90,7 @@ unmask(Pair * list, uint val)
 			s += strlcat(s, p->val, end - s);
 		}
 
-	s += strlcat(s, ")", end - s);
+	strlcat(s, ")", end - s);
 
 	return buffer;
 }
@@ -110,6 +109,8 @@ strdec(int key) {
 
 static char *
 strign(int key) {
+	USED(key);
+
 	return "?";
 }
 
@@ -300,6 +301,7 @@ TColMap(Biobuf *b, va_list *ap) {
 	};
 	int key;
 
+	key = va_arg(ap, int);
 	Bprint(b, "%s", search(list, key, strign));
 }
 
@@ -505,6 +507,7 @@ pevent(void *ev, ...) {
 	if(b == nil)
 		b = Bfdopen(2, O_WRONLY);
 
+	n = 0;
 	va_start(ap, ev);
 	for(;;) {
 		fn = va_arg(ap, Tfn);

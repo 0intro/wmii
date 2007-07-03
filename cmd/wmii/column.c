@@ -6,7 +6,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -168,6 +167,8 @@ update_divs(void) {
 static void
 bdown_event(Window *w, XButtonEvent *e) {
 	Divide *d;
+
+	USED(e);
 	
 	d = w->aux;
 	mouse_resizecol(d);
@@ -176,6 +177,8 @@ bdown_event(Window *w, XButtonEvent *e) {
 static void
 expose_event(Window *w, XExposeEvent *e) {
 	Divide *d;
+	
+	USED(e);
 	
 	d = w->aux;
 	drawdiv(d);
@@ -243,7 +246,7 @@ scale_column(Area *a) {
 		if(i > ncol)
 			i = ncol;
 		ncol -= i;
-		surplus += i * colh;
+		/* surplus += i * colh; */
 	}
 
 	j = nuncol - 1;

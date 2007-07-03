@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <fmt.h>
 #include <util.h>
+#include <fmt.h>
 
 static int
 Vfmt(Fmt *f) {
@@ -28,6 +28,7 @@ fatal(const char *fmt, ...) {
 	va_list ap;
 
 	fmtinstall('V', Vfmt);
+	fmtinstall('\001', Vfmt);
 
 	va_start(ap, fmt);
 	fprint(2, "%s: fatal: %V\n", argv0, fmt, ap);

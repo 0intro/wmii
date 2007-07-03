@@ -3,7 +3,6 @@
  */
 #include <stdio.h>
 #include <X11/keysym.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 #include "printevent.h"
@@ -15,7 +14,7 @@ dispatch_event(XEvent *e) {
 		handler[e->type](e);
 }
 
-#define handle(w, fn, ev) ((w)->handler->fn ? (w)->handler->fn((w), ev) : (void)0)
+#define handle(w, fn, ev) if(!(w)->handler->fn) {}else (w)->handler->fn((w), ev)
 
 uint
 flushevents(long event_mask, Bool dispatch) {
@@ -110,10 +109,8 @@ enternotify(XEvent *e) {
 static void
 leavenotify(XEvent *e) {
 	XCrossingEvent *ev;
-	Window *w;
 
 	ev = &e->xcrossing;
-	w = findwin(ev->window);
 	if((ev->window == scr.root.w) && !ev->same_screen) {
 		sel_screen = True;
 		draw_frames();
@@ -208,10 +205,8 @@ expose(XEvent *e) {
 static void
 keypress(XEvent *e) {
 	XKeyEvent *ev;
-	Window *w;
 
 	ev = &e->xkey;
-	w = findwin(ev->window);
 	ev->state &= valid_mask;
 	if(ev->window == scr.root.w)
 		kpress(scr.root.w, ev->state, (KeyCode) ev->keycode);
@@ -230,11 +225,9 @@ mappingnotify(XEvent *e) {
 static void
 maprequest(XEvent *e) {
 	XMapRequestEvent *ev;
-	Window *w;
 	XWindowAttributes wa;
 
 	ev = &e->xmaprequest;
-	w = findwin(ev->window);
 
 	if(!XGetWindowAttributes(display, ev->window, &wa))
 		return;
@@ -312,6 +305,9 @@ void (*handler[LASTEvent]) (XEvent *) = {
 void
 check_x_event(IxpConn *c) {
 	XEvent ev;
+	
+	USED(c);
+
 	while(XPending(display)) {
 		XNextEvent(display, &ev);
 		dispatch_event(&ev);

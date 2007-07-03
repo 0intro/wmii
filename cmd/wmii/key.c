@@ -4,7 +4,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <X11/keysym.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -90,7 +89,9 @@ get_key(const char *name) {
 	char *kstr;
 	uint i, toks;
 	static ushort id = 1;
-	Key *k = 0, *r = 0;
+	Key *k, *r;
+
+	r = nil;
 
 	if((k = name2key(name))) {
 		ungrab_key(k);

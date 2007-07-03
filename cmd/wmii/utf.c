@@ -2,7 +2,6 @@
 #include <errno.h>
 #include <iconv.h>
 #include <string.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 

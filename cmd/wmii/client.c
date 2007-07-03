@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <X11/Xatom.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -123,6 +122,8 @@ manage_client(Client *c) {
 
 static int /* Temporary Xlib error handler */
 ignoreerrors(Display *d, XErrorEvent *e) {
+	USED(d);
+	USED(e);
 	return 0;
 }
 
@@ -481,6 +482,7 @@ set_urgent(Client *c, int urgent, Bool write) {
 			if(c->sel->view == screen->sel)
 				draw_frame(c->sel);
 			for(f=c->frame; f; f=f->cnext) {
+				SET(ff);
 				if(!urgent)
 					for(a=f->view->area; a; a=a->next)
 						for(ff=a->frame; ff; ff=ff->anext)
@@ -626,11 +628,9 @@ wmname:
 static void
 configreq_event(Window *w, XConfigureRequestEvent *e) {
 	Rectangle r, cr;
-	Frame *f;
 	Client *c;
 
 	c = w->aux;
-	f = c->sel;
 
 	r = gravclient(c, ZR);
 	r.max = subpt(r.max, r.min);
@@ -664,6 +664,9 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 
 static void
 destroy_event(Window *w, XDestroyWindowEvent *e) {
+	USED(w);
+	USED(e);
+
 	Dprint("client.c:destroy_event(%W)\n", w);
 	destroy_client(w->aux);
 }
@@ -730,6 +733,8 @@ unmap_event(Window *w, XUnmapEvent *e) {
 static void
 map_event(Window *w, XMapEvent *e) {
 	Client *c;
+
+	USED(e);
 	
 	c = w->aux;
 	if(c == selclient())
@@ -798,6 +803,7 @@ update_client_views(Client *c, char **tags) {
 
 	fp = &c->frame;
 	while(*fp || *tags) {
+		SET(cmp);
 		while(*fp) {
 			if(*tags) {
 				cmp = strcmp((*fp)->view->name, *tags);

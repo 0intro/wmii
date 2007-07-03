@@ -2,7 +2,6 @@
 /* Public domain */
 #include <stdlib.h>
 #include <string.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -61,6 +60,7 @@ hashgetp(Map *map, char *str, int create) {
 	if(*e && (*e)->key == nil)
 		(*e)->key = str;
 	else {
+		SET(cmp);
 		for(; *e; e = &(*e)->next)
 			if((*e)->hash > h || (cmp = strcmp((*e)->key, str)) >= 0)
 				break;

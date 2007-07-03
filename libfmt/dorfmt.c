@@ -57,5 +57,4 @@ dorfmt(Fmt *f, const Rune *fmt)
 		if(fmt == nil)
 			return -1;
 	}
-	return 0;		/* not reached */
 }

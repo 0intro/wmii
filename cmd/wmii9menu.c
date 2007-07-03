@@ -145,6 +145,7 @@ main(int argc, char **argv)
 			exit(0);
 		}
 
+		SET(n);
 		for(ap = argtab; ap->name; ap++) {
 			n = strlen(ap->name);
 			if(strncmp(ap->name, argv[i]+1, n) == 0)
@@ -232,7 +233,7 @@ main(int argc, char **argv)
 	run_menu();
 
 	XCloseDisplay(dpy);
-	exit(0);
+	return 0;
 }
 
 /* usage --- print a usage message and die */
@@ -248,23 +249,6 @@ usage(void)
 
 /* run_menu --- put up the window, execute selected commands */
 
-void
-run_menu(void)
-{
-	XEvent ev;
-	int i, old, wide, high, dx, dy;
-
-	dx = 0;
-	for(i = 0; i < numitems; i++) {
-		wide = XTextWidth(font, labels[i], strlen(labels[i])) + 4;
-		if(wide > dx)
-			dx = wide;
-	}
-	wide = dx;
-
-	high = font->ascent + font->descent + 1;
-	dy = numitems * high;
-
 	enum {
 	MouseMask = 
 		  ButtonPressMask
@@ -277,14 +261,28 @@ run_menu(void)
 		| ExposureMask
 	};
 
+void
+run_menu(void)
+{
+	XEvent ev;
+	int i, old, wide, high, dx;
+
+	dx = 0;
+	for(i = 0; i < numitems; i++) {
+		wide = XTextWidth(font, labels[i], strlen(labels[i])) + 4;
+		if(wide > dx)
+			dx = wide;
+	}
+	wide = dx;
+
+	high = font->ascent + font->descent + 1;
+
 	create_window(wide, high);
 	warpmouse(wide, high);
 
 	XSelectInput(dpy, menuwin, MenuMask);
 
 	XMapWindow(dpy, menuwin);
-
-	i = 0;		/* save menu Item position */
 
 	for(;;) {
 		XNextEvent(dpy, &ev);

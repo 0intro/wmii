@@ -4,6 +4,12 @@
 
 #ifdef VARARGCK
 # pragma varargck	argpos	write_event	1
+
+# pragma varargck	type	"C"	Client*	
+# pragma varargck	type	"W"	Window*	
+# pragma varargck	type	"P"	Point
+# pragma varargck	type	"R"	Rectangle
+# pragma varargck	type	"r"	void
 #endif
 
 /* area.c */
@@ -14,7 +20,7 @@ void destroy_area(Area*);
 Area *area_of_id(View*, ushort id);
 void focus_area(Area*);
 void send_to_area(Area*, Frame*);
-void attach_to_area(Area*, Frame*, Bool send);
+void attach_to_area(Area*, Frame*);
 void detach_from_area(Frame*);
 Client *area_selclient(Area*);
 

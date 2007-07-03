@@ -2,7 +2,6 @@
  * See LICENSE file for license details.
  */
 #include <stdio.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 

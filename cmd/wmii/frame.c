@@ -3,7 +3,6 @@
  */
 #include <math.h>
 #include <stdio.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -190,6 +189,8 @@ static void
 expose_event(Window *w, XExposeEvent *e) {
 	Client *c;
 
+	USED(e);
+
 	c = w->aux;
 	if(c->sel)
 		draw_frame(c->sel);
@@ -360,15 +361,12 @@ swap_frames(Frame *fa, Frame *fb) {
 
 void
 focus_frame(Frame *f, Bool restack) {
-	Frame *old, *old_in_a;
 	View *v;
 	Area *a, *old_a;
 
 	a = f->area;
 	v = f->view;
-	old = v->sel->sel;
 	old_a = v->sel;
-	old_in_a = a->sel;
 
 	a->sel = f;
 

@@ -19,9 +19,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include <fmt.h>
 #include "plan9.h"
-#include "fmt.h"
 #include "fmtdef.h"
 
 enum

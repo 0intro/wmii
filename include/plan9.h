@@ -1,28 +1,31 @@
 /*
  * compiler directive on Plan 9
  */
-#ifndef USED
-#define USED(x) if(x);else
-#endif
-
-#include <utf.h>
-#include <fmt.h>
-#include <string.h>
-#include <unistd.h>
 
 /*
  * easiest way to make sure these are defined
  */
-#define uchar	_p9uchar
-#define ushort	_p9ushort
-#define uint	_p9uint
-#define ulong	_p9ulong
+#ifndef KENC
+# ifndef USED
+#  define USED(x) if(x);else
+# endif
+# define uchar	_p9uchar
+# define ushort	_p9ushort
+# define uint	_p9uint
+# define ulong	_p9ulong
+#endif
 typedef unsigned char		uchar;
 typedef unsigned short		ushort;
 typedef unsigned int		uint;
 typedef unsigned long		ulong;
 typedef long long		vlong;
 typedef unsigned long long	uvlong;
+
+#include <utf.h>
+#include <stdint.h>
+#include <fmt.h>
+#include <string.h>
+#include <unistd.h>
 
 #define OREAD		O_RDONLY
 #define OWRITE	O_WRONLY

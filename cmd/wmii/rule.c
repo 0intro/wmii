@@ -6,7 +6,6 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -39,6 +38,9 @@ update_rules(Rule **rule, const char *data) {
 	char regex[256], value[256];
 	char *r, *v;
 	const char *p;
+	
+	SET(r);
+	SET(v);
 
 	if(!data || !strlen(data))
 		return;

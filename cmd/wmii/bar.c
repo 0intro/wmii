@@ -4,7 +4,6 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <util.h>
 #include "dat.h"
 #include "fns.h"
 
@@ -98,11 +97,11 @@ draw_bar(WMScreen *s) {
 	Bar *b, *tb, *largest, **pb;
 	Rectangle r;
 	Align align;
-	uint width, tw, nb, size;
+	uint width, tw, nb;
 	float shrink;
 
-	largest = b = tb = nil;
-	tw = width = nb = size = 0;
+	largest = nil;
+	tw = width = 0;
 	for(nb = 0; nb < nelem(s->bar); nb++)
 		for(b = s->bar[nb]; b; b=b->next) {
 			b->r.min = ZP;
@@ -136,16 +135,13 @@ draw_bar(WMScreen *s) {
 			for(b = largest; b != tb->smaller; b = b->smaller)
 				b->r.max.x *= shrink;
 		width += tw * shrink;
-		tb = nil;
 	}
 
+	SET(tb);
 	for(nb = 0; nb < nelem(s->bar); nb++)
 		for(b = s->bar[nb]; b; tb=b, b=b->next) {
-			if(b == s->bar[BarRight]) {
-				align = EAST;
+			if(b == s->bar[BarRight])
 				b->r.max.x += Dx(s->brect) - width;
-			}else
-				align = CENTER;
 
 			if(tb)
 				b->r = rectaddpt(b->r, Pt( tb->r.max.x, 0));
@@ -154,7 +150,10 @@ draw_bar(WMScreen *s) {
 	r = rectsubpt(s->brect, s->brect.min);
 	fill(screen->ibuf, r, def.normcolor.bg);
 	for(nb = 0; nb < nelem(s->bar); nb++)
-		for(b = s->bar[nb]; b; tb=b, b=b->next) {
+		for(b = s->bar[nb]; b; b=b->next) {
+			align = CENTER;
+			if(b == s->bar[BarRight])
+				align = EAST;
 			fill(screen->ibuf, b->r, b->col.bg);
 			drawstring(screen->ibuf, def.font, b->r, align, b->text, b->col.fg);
 			border(screen->ibuf, b->r, 1, b->col.border);
@@ -176,6 +175,8 @@ bar_of_name(Bar *bp, const char *name) {
 static void
 bdown_event(Window *w, XButtonPressedEvent *e) {
 	Bar *b;
+	
+	USED(w);
 
 	/* Ungrab so a menu can receive events before the button is released */
 	XUngrabPointer(display, e->time);
@@ -196,6 +197,9 @@ bdown_event(Window *w, XButtonPressedEvent *e) {
 static void
 bup_event(Window *w, XButtonPressedEvent *e) {
 	Bar *b;
+	
+	USED(w);
+	USED(e);
 
 	for(b=screen->bar[BarLeft]; b; b=b->next)
 		if(ptinrect(Pt(e->x, e->y), b->r)) {
@@ -211,6 +215,8 @@ bup_event(Window *w, XButtonPressedEvent *e) {
 
 static void
 expose_event(Window *w, XExposeEvent *e) {
+	USED(w);
+	USED(e);
 	draw_bar(screen);
 }
 

@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 #include <bio.h>
 #include "dat.h"
 #include "fns.h"
@@ -117,7 +116,7 @@ Wfmt(Fmt *f) {
 	Window *w;
 
 	w = va_arg(f->args, Window*);
-	return fmtprint(f, "0x%ux", w->w);
+	return fmtprint(f, "0x%ulx", w->w);
 }
 
 /* Init */
@@ -415,6 +414,7 @@ drawstring(Image *dst, Font *font,
 	y = r.min.y + Dy(r) / 2 - h / 2 + font->ascent;
 
 	/* shorten text if necessary */
+	SET(w);
 	while(len > 0) {
 		w = textwidth_l(font, buf, len + min(shortened, 3));
 		if(w <= Dx(r) - (font->height & ~1))
