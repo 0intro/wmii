@@ -291,13 +291,14 @@ cleanup_handler(int signal) {
 static void
 init_traps(void) {
 	char buf[1];
-	int fd[2];
+	pid_t pid;
+	int fd[2], status;
 
 	if(pipe(fd) != 0)
 		fatal("Can't pipe(): %r");
 
 	/* Double fork hack */
-	switch(fork()) {
+	switch(pid = fork()) {
 	case -1:
 		fatal("Can't fork(): %r");
 		break; /* not reached */
@@ -326,6 +327,7 @@ init_traps(void) {
 			exit(0);
 		}
 	default:
+		waitpid(pid, &status, 0);
 		break;
 	}
 
