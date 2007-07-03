@@ -61,7 +61,7 @@ patch:
 			awk -f "${PATCHES}/un$$base.awk" $$files >>debian/unpatch.ed; \
 			for f in $$files; do \
 				cat <"${PATCHES}/$$base.ed"; \
-				ed $$f <"${PATCHES}/$$base.ed"; \
+				ed -s $$f <"${PATCHES}/$$base.ed"; \
 			done; \
 		done; \
 	fi
@@ -69,7 +69,7 @@ patch:
 unpatch:
 	set -e; \
 	if [ -e ${UNPATCH} ]; then \
-		ed <${UNPATCH}; \
+		ed -s <${UNPATCH}; \
 		rm ${UNPATCH}; \
 	fi
 

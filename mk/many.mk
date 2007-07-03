@@ -4,6 +4,7 @@ all: ${OFILES} ${PROGS}
 
 install: ${TARG:=.install}
 uninstall: ${TARG:=.uninstall}
+depend: ${OFILES:.o=.depend} ${TARG:=.depend}
 clean: manyclean
 
 printinstall:

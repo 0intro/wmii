@@ -117,6 +117,7 @@ xwrite(int argc, char *argv[]) {
 		fatal("Can't open file '%s': %r\n", file);
 
 	write_data(fid, file);
+	ixp_close(fid);
 	return 0;
 }
 
@@ -142,7 +143,7 @@ xawrite(int argc, char *argv[]) {
 	while(argc) {
 		arg = ARGF();
 		len = strlen(arg);
-		if(nbuf + len > mbuf) {
+		if(nbuf + len + 1 > mbuf) {
 			mbuf <<= 1;
 			buf = erealloc(buf, mbuf);
 		}
@@ -154,6 +155,8 @@ xawrite(int argc, char *argv[]) {
 
 	if(ixp_write(fid, buf, nbuf) == -1)
 		fatal("cannot write file '%s': %r\n", file);
+	ixp_close(fid);
+	free(buf);
 	return 0;
 }
 
@@ -174,7 +177,7 @@ xcreate(int argc, char *argv[]) {
 
 	if((fid->qid.type&P9_DMDIR) == 0)
 		write_data(fid, file);
-
+	ixp_close(fid);
 	return 0;
 }
 
@@ -212,6 +215,7 @@ xread(int argc, char *argv[]) {
 	buf = emalloc(fid->iounit);
 	while((count = ixp_read(fid, buf, fid->iounit)) > 0)
 		write(1, buf, count);
+	ixp_close(fid);
 
 	if(count == -1)
 		fatal("cannot read file/directory '%s': %r\n", file);
@@ -272,6 +276,7 @@ xls(int argc, char *argv[]) {
 			ixp_pstat(&m, &stat[nstat++]);
 		}
 	}
+	ixp_close(fid);
 
 	qsort(stat, nstat, sizeof(*stat), comp_stat);
 	for(i = 0; i < nstat; i++) {

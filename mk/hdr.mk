@@ -6,6 +6,9 @@ all:
 	echo MKDEP $<
 	${MKDEP} ${CFLAGS} $< >>.depend
 
+.sh.depend .rc.depend .1.depend .awk.depend:
+	:
+
 .c.o:
 	${COMPILE} $@ $<
 
@@ -16,17 +19,7 @@ all:
 	${COMPILE} $@ $<
 	${LINK} $@ $<
 
-.awk.O:
-	echo FILTER ${BASE}$<
-	${FILTER} $< >$@
-	chmod 0755 $@
-
-.rc.O:
-	echo FILTER ${BASE}$<
-	${FILTER} $< >$@
-	chmod 0755 $@
-
-.sh.O:
+.rc.O .sh.O .awk.O:
 	echo FILTER ${BASE}$<
 	${FILTER} $< >$@
 	chmod 0755 $@
