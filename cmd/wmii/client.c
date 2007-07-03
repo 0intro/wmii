@@ -231,14 +231,13 @@ gravclient(Client *c, Rectangle rd) {
 		r = gravitate(r, c->r, h->grav);
 		if(h->gravstatic)
 			r = rectaddpt(r, sp);
-		r = frame2client(nil, r);
-		return r;
+		return frame2client(nil, r);
 	}else {
 		r = client2frame(nil, rd);
 		r = gravitate(rd, r, h->grav);
 		if(h->gravstatic)
 			r = rectsubpt(r, sp);
-		return r;
+		return client2frame(nil, r);
 	}
 }
 
@@ -392,7 +391,7 @@ configure_client(Client *c) {
 	XConfigureEvent e;
 	Rectangle r;
 
-	r = insetrect(c->r, -c->border);
+	r = rectsubpt(c->r, Pt(c->border, c->border));
 
 	e.type = ConfigureNotify;
 	e.event = c->w.w;
