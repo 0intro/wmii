@@ -37,8 +37,8 @@ char *str_nil(char *s);
 uint strlcat(char *dst, const char *src, unsigned int siz);
 
 char *argv0;
-static void *__p;
-static int __i;
+void *__p;
+int __i;
 #undef ARGBEGIN
 #undef ARGEND
 #undef ARGF

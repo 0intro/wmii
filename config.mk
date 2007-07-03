@@ -9,20 +9,20 @@ LIBDIR = ${PREFIX}/lib
 INCLUDE = ${PREFIX}/include
 
 # Includes and libs
-INCPATH = .:${HOME}/libixp/include:${ROOT}/include:${INCLUDE}:/usr/include
-LIBS = -L/usr/lib -lc -L${ROOT}/lib -L${HOME}/libixp/lib
+INCPATH = .:${ROOT}/include:${INCLUDE}:/usr/include
+LIBS = -L/usr/lib -lc -L${ROOT}/lib
 
 # Flags
-#include ${ROOT}/mk/gcc.mk
-CFLAGS = -wF -DVARARGCK
-LDFLAGS += ${LIBS}
+include ${ROOT}/mk/gcc.mk
+CFLAGS += -g -O0
+LDFLAGS += -g ${LIBS}
 STATIC = -static
 MKDEP = cpp -M
 
 # Compiler
-CC = 8cc
+CC = cc -c
 # Linker (Under normal circumstances, this should *not* be 'ld')
-LD = : 8l
+LD = cc
 # Archiver
 AR = ar crs
 

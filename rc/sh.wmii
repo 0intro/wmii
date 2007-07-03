@@ -69,9 +69,19 @@ subfn lines {
 	result = `{$arg}
 }
 
+fn 'fn?' {
+	args := $*
+	~ ("{rescue '*' {} {whatis $args >[2]/dev/null}}
+	   'load std; fn '*)
+}
+
+fn ifx {
+	(pred fn val args) := $*
+	if {$pred $val} {$fn $val $args}
+}
+
 fn dofn {
-	(cmd args) := $*
-	if {~ "{whatis $cmd >[2]/dev/null} 'load std; fn '*} {$cmd $args;{}}
+	ifx 'fn?' {$*} $*
 }
 
 fn run_command {
@@ -87,44 +97,45 @@ subfn config_whatis {
 	result=${lines {os rc -c 'PATH=$WMII_CONFPATH which $*' $* </dev/null} $*}
 }
 
-local := $home/.wmii-3.5/sh.wmii.local
-if {ftest -x $local} {run $local}
-
 # Status Bar Info
 fn status {
 	echo ${re mg '[0-9]+\.[0-9]+' "{os uptime}} '|' `{date}
 }
 
+for(i in Key Event Action) {
+	'{fn $i { fn '$i'-$1 ${tl $*} }}'
+}
+
 # Events
-fn Event-Start {
+Event Start {
 	if {~ $1 wmiirc} {
 		rm -f $progs_file
 		exit
 	}
 }
 
-fn Event-Key {
+Event Key {
 	dprint Key-$1
 	Key-$1 $1
 }
 
-fn Event-CreateTag { echo $WMII_NORMCOLORS $* > /lbar/$"* }
-fn Event-DestroyTag { rm /lbar/$"* }
-fn Event-FocusTag { echo $WMII_FOCUSCOLORS $* > /lbar/$"* }
-fn Event-UnfocusTag { echo $WMII_NORMCOLORS $* > /lbar/$"* }
-fn Event-UrgentTag { echo '*'${ftl $*} > /lbar/${ftl $*} }
-fn Event-NotUrgentTag { echo ${tl $*} > /lbar/${ftl $*} }
+Event CreateTag { echo $WMII_NORMCOLORS $* > /lbar/$"* }
+Event DestroyTag { rm /lbar/$"* }
+Event FocusTag { echo $WMII_FOCUSCOLORS $* > /lbar/$"* }
+Event UnfocusTag { echo $WMII_NORMCOLORS $* > /lbar/$"* }
+Event UrgentTag { echo '*'${ftl $*} > /lbar/${ftl $*} }
+Event NotUrgentTag { echo ${tl $*} > /lbar/${ftl $*} }
 
-fn Event-LeftBarClick {
+Event LeftBarClick {
 	(button name) := $*
 	if {~ $button 1} { echo view $name >/ctl }
 }
-fn Event-LeftBarMouseDown {
+Event LeftBarMouseDown {
 	(button name) := $*
 	if {~ $button 3} { echo view "{9menu ${lines read_tags}} >/ctl & }
 }
 lastcmd=''
-fn Event-ClientMouseDown {
+Event ClientMouseDown {
 	(client button) := $*
 	if {~ $button 3} {
 		lastcmd = `{9menu -initial $lastcmd Nop Delete Fullscreen}
@@ -137,28 +148,30 @@ fn Event-ClientMouseDown {
 }
 
 # Actions
-fn Action {
-	(action args) := $*
-	or {dofn Action-$action $args} {run_command ${config_whatis $action} $args}
-}
-fn Action-quit { echo quit >>/ctl }
-fn Action-rehash {
+Action quit { echo quit >>/ctl }
+Action rehash {
 	flag x -
 	proglist ${hostenv PATH} >$progs_file
 }
-fn Action-status {
+Action status {
 	flag x -
 	if {rm /rbar/status >[2]/dev/null} { sleep 1 }
 	echo $WMII_NORMCOLORS >/rbar/status
 	while {status >/rbar/status} { sleep 1 }
 }
-fn Action-sh.wmii {
-	os -b inferno $argv0 &
-	exit
+
+ifx {ftest -x $*} {run $*} $home/.wmii-3.5/sh.wmii.local
+fn Key { ifx {! 'fn?' $*} {fn $*} Key-$1 ${tl $*} }
+
+fn Action {
+	(action args) := $*
+	or {dofn Action-$action $args} {
+		ifx {! ~ $#* 0} {run_command $*} ${config_whatis $action} $args
+	}
 }
 
 # Key Bindings
-fn Key-$MODKEY-Control-t {
+Key $MODKEY-Control-t {
 	if { ~ `{wc -l /keys} 0 1} {
 		initkeys
 		grabmod $MODKEY >/ctl
@@ -168,36 +181,36 @@ fn Key-$MODKEY-Control-t {
 	}
 }
 
-fn Key-$MODKEY-$LEFT { echo select left >/tag/sel/ctl }
-fn Key-$MODKEY-$RIGHT { echo select right >/tag/sel/ctl }
-fn Key-$MODKEY-$UP { echo select up >/tag/sel/ctl }
-fn Key-$MODKEY-$DOWN { echo select down >/tag/sel/ctl }
+Key $MODKEY-$LEFT { echo select left >/tag/sel/ctl }
+Key $MODKEY-$RIGHT { echo select right >/tag/sel/ctl }
+Key $MODKEY-$UP { echo select up >/tag/sel/ctl }
+Key $MODKEY-$DOWN { echo select down >/tag/sel/ctl }
 
-fn Key-$MODKEY-Shift-$LEFT { echo send sel left >/tag/sel/ctl }
-fn Key-$MODKEY-Shift-$RIGHT { echo send sel right >/tag/sel/ctl }
-fn Key-$MODKEY-Shift-$DOWN { echo send sel down >/tag/sel/ctl }
-fn Key-$MODKEY-Shift-$UP { echo send sel up >/tag/sel/ctl }
+Key $MODKEY-Shift-$LEFT { echo send sel left >/tag/sel/ctl }
+Key $MODKEY-Shift-$RIGHT { echo send sel right >/tag/sel/ctl }
+Key $MODKEY-Shift-$DOWN { echo send sel down >/tag/sel/ctl }
+Key $MODKEY-Shift-$UP { echo send sel up >/tag/sel/ctl }
 
-fn Key-$MODKEY-space { echo select toggle >/tag/sel/ctl }
-fn Key-$MODKEY-Shift-space { echo send sel toggle >/tag/sel/ctl }
+Key $MODKEY-space { echo select toggle >/tag/sel/ctl }
+Key $MODKEY-Shift-space { echo send sel toggle >/tag/sel/ctl }
 
-fn Key-$MODKEY-d { echo colmode sel default >/tag/sel/ctl }
-fn Key-$MODKEY-s { echo colmode sel stack >/tag/sel/ctl }
-fn Key-$MODKEY-m { echo colmode sel max >/tag/sel/ctl }
+Key $MODKEY-d { echo colmode sel default >/tag/sel/ctl }
+Key $MODKEY-s { echo colmode sel stack >/tag/sel/ctl }
+Key $MODKEY-m { echo colmode sel max >/tag/sel/ctl }
 
-fn Key-$MODKEY-Shift-c { echo kill >/client/sel/ctl }
+Key $MODKEY-Shift-c { echo kill >/client/sel/ctl }
 
-fn Key-$MODKEY-a { Action `{actionlist | wmiimenu} & }
-fn Key-$MODKEY-p { run_command rc -c "{wmiimenu <$progs_file} & }
-fn Key-$MODKEY-Return { run_command $WMII_TERM & }
-fn Key-$MODKEY-t { echo view `{read_tags | wmiimenu} >/ctl & }
-fn Key-$MODKEY-Shift-t {
+Key $MODKEY-a { Action `{actionlist | wmiimenu} & }
+Key $MODKEY-p { run_command rc -c "{wmiimenu <$progs_file} & }
+Key $MODKEY-Return { run_command $WMII_TERM & }
+Key $MODKEY-t { echo view `{read_tags | wmiimenu} >/ctl & }
+Key $MODKEY-Shift-t {
 	sel := "{cat /client/sel/ctl}
 	read_tags | wmiimenu >/client/$sel/tags
 }
 
-fn Key-$MODKEY-^${seq 0 9} { echo view ${tl ${splitr $1 -}} >/ctl }
-fn Key-Shift-$MODKEY-${seq 0 9} { echo ${tl ${splitr $1 -}} >/client/sel/tags}
+Key $MODKEY-^${seq 0 9} { echo view ${tl ${splitr $1 -}} >/ctl }
+Key Shift-$MODKEY-${seq 0 9} { echo ${tl ${splitr $1 -}} >/client/sel/tags}
 
 # Functions
 fn proglist {
@@ -238,11 +251,12 @@ fn read_tags {
 
 # Misc Setup
 os xsetroot -solid $WMII_BACKGROUND </dev/null
+
+dofn Local-Overrides
+
 Action status &
 progs_file=/tmp/proglist.${pid}
 Action rehash &
-
-dofn Local-Overrides
 
 # Tag Bar Setup
 seltag=${lines sed 1q /tag/sel/ctl}
@@ -266,9 +280,7 @@ getlines {
 	(event args) := ${split ' 	' $line}
 	dprint Event-$event: $args
 	rescue '*' { dprint Exception: $exception } {
-		if {whatis Event-$event >/dev/null >[2=1]} {
-			Event-$event $args
-		}
+		dofn Event-$event $args
 	} </dev/null
 	dprint loop
 } </event

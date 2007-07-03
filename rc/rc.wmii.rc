@@ -145,6 +145,7 @@ fn Action {
 }
 fn Action-rehash { proglist $PATH >$progs_file }
 fn Action-quit { wmiir xwrite /ctl quit }
+fn Action-exec { wmiir xwrite /ctl exec $* }
 fn Action-status {
 	flag x -
 	flag r -

@@ -301,7 +301,7 @@ TColMap(Biobuf *b, va_list *ap) {
 	};
 	int key;
 
-	key = va_arg(ap, int);
+	key = va_arg(*ap, int);
 	Bprint(b, "%s", search(list, key, strign));
 }
 
