@@ -12,9 +12,10 @@ include "bufio.m";
 	Iobuf: import bufio;
 include "lists.m";
 	lists: Lists;
-	append: import lists;
+	append, reverse: import lists;
 include "regex.m";
 	regex: Regex;
+	Re: import regex;
 include "sh.m";
 	sh: Sh;
 
@@ -98,22 +99,24 @@ init(draw: ref Draw->Context, argv: list of string)
 	line = chan of string;
 	spawn readlines(line, sys->fildes(0));
 
-	regx := ".?";
-	vflag := 0;
+	relist: list of ref (Re, int);
 
 	argv = tl argv;
-	if(hd argv == "-v") {
-		vflag++;
-		argv = tl argv;
+	for(; argv != nil; argv = tl argv) {
+		vflag := 0;
+		if(hd argv == "-v") {
+			argv = tl argv;
+			vflag = 1;
+		}
+		(re, err) := regex->compile(hd argv, 0);
+		if(err != nil)
+			raise sprint("bad regex %q: %s", hd argv, err);
+		relist = ref (re, vflag) :: relist;
 	}
-	if(argv != nil)
-		regx = hd argv;
+
+	relist = reverse(relist);
 	
-	(re, err) := regex->compile(regx, 0);
-	if(err != nil)
-		raise sprint("bad regex: %s", err);
-	
-	for(;;) {
+line:	for(;;) {
 		lin := <-line;
 		if(lin == nil)
 			break;
@@ -121,18 +124,21 @@ init(draw: ref Draw->Context, argv: list of string)
 		if(l == nil)
 			continue;
 
-		(ev, end) := str->toint(hd l, 10);
+		(evn, end) := str->toint(hd l, 10);
 		if(end == nil) {
-			match := regex->execute(re, lin);
-			if(match != nil || (match == nil && vflag)) {
-				print("%s", lin);
-				for(; l != nil; l = tl l) {
-					(k, v) := str->splitstrr(hd l, "=");
-					if(ishex(v)) {
-						(name, ok) := readfile(sprint("/mnt/wmii/client/%s/props", v));
-						if(ok)
-							print("%d	%s%s\n", ev, k, name);
-					}
+			for(rel := relist; rel != nil; rel = tl relist) {
+				(re, vflag) := *(hd rel);
+				match := regex->execute(re, lin);
+				if((match == nil) != vflag)
+					continue line;
+			}
+			print("%s", lin);
+			for(; l != nil; l = tl l) {
+				(k, v) := str->splitstrr(hd l, "=");
+				if(ishex(v)) {
+					(name, ok) := readfile(sprint("/mnt/wmii/client/%s/props", v));
+					if(ok)
+						print("%d	%s%s\n", evn, k, name);
 				}
 			}
 		}else
