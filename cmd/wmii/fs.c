@@ -901,7 +901,7 @@ fs_clunk(Ixp9Req *r) {
 			*q-- = '\0';
 
 		q = f->p.bar->text;
-		utfecpy(q, q+sizeof(((Bar*)0)->text), (char*)m.pos);
+		utflcpy(q, (char*)m.pos, sizeof(((Bar*)0)->text));
 
 		free(p);
 

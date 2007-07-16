@@ -112,7 +112,7 @@ Bfdopen(int f, int mode)
 }
 
 Biobuf*
-Bopen(char *name, int mode)
+Bopen(const char *name, int mode)
 {
 	Biobuf *bp;
 	int f;

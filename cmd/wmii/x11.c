@@ -483,7 +483,7 @@ Bool
 loadcolor(CTuple *c, char *str) {
 	char buf[24];
 
-	strncpy(buf, str, sizeof buf);
+	utflcpy(buf, str, sizeof(buf));
 	memcpy(c->colstr, str, sizeof c->colstr);
 
 	buf[7] = buf[15] = buf[23] = '\0';

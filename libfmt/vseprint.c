@@ -17,7 +17,7 @@
 #include "fmtdef.h"
 
 char*
-vseprint(char *buf, char *e, char *fmt, va_list args)
+vseprint(char *buf, char *e, const char *fmt, va_list args)
 {
 	Fmt f;
 

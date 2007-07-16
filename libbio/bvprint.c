@@ -17,7 +17,7 @@ fmtBflush(Fmt *f)
 }
 
 int
-Bvprint(Biobuf *bp, char *fmt, va_list arg)
+Bvprint(Biobuf *bp, const char *fmt, va_list arg)
 {
 	int n;
 	Fmt f;

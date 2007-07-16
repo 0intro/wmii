@@ -18,7 +18,7 @@
 #include "fmtdef.h"
 
 Rune*
-runevseprint(Rune *buf, Rune *e, char *fmt, va_list args)
+runevseprint(Rune *buf, Rune *e, const char *fmt, va_list args)
 {
 	Fmt f;
 

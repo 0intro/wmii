@@ -64,7 +64,7 @@ create_view(const char *name) {
 	v = emallocz(sizeof(View));
 	v->id = id++;
 
-	strncpy(v->name, name, sizeof(v->name));
+	utflcpy(v->name, name, sizeof(v->name));
 
 	write_event("CreateTag %s\n", v->name);
 	create_area(v, nil, 0);
@@ -154,7 +154,7 @@ void
 select_view(const char *arg) {
 	char buf[256];
 
-	strncpy(buf, arg, sizeof(buf));
+	utflcpy(buf, arg, sizeof(buf));
 	trim(buf, " \t+/");
 
 	if(strlen(buf) == 0)
@@ -172,7 +172,8 @@ attach_to_view(View *v, Frame *f) {
 	
 	c = f->client;
 	c->revert = nil;
-	if(c->trans || c->floating || c->fixedsize || c->fullscreen)
+	if(c->trans || c->floating || c->fixedsize
+	|| c->titleless || c->borderless || c->fullscreen)
 		focus_area(v->area);
 	else if(starting && v->sel->floating)
 		focus_area(v->area->next);

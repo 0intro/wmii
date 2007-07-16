@@ -17,7 +17,7 @@
 #include "utf.h"
 
 int
-utflen(char *s)
+utflen(const char *s)
 {
 	int c;
 	long n;

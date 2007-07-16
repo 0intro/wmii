@@ -8,6 +8,7 @@ bin="$(echo $0 | sed 's,/[^/]*$,,')"
 xtmp=/tmp/cc.$$.$USER.out
 
 echo CC $($bin/cleanname ${BASE}$outfile)
+[ -n "$noisycc" ] && echo $CC -o $outfile $CFLAGS $@
 $CC -o $outfile $CFLAGS $@ 2>$xtmp
 status=$?
 

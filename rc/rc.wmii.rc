@@ -1,45 +1,19 @@
 #!/usr/bin/env wmii9rc
 # WMII Configuration
 
+confpath=`{echo $WMII_CONFPATH | sed 'y/:/ /'}
 oldpath=$path
 path=($PLAN9/bin $path)
 
-MODKEY=Mod1
-UP=k
-DOWN=j
-LEFT=h
-RIGHT=l
-
-WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
-WMII_NORMCOLORS=('#222222' '#5FBF77' '#2A7F3F')
-WMII_FOCUSCOLORS=('#ffffff' '#153F1F' '#2A7F3F')
-WMII_BACKGROUND='#333333'
-
-WMII_TERM=(xterm)
-
-fn wmiimenu {
-	dmenu -b -fn $WMII_FONT \
-		-nf $WMII_NORMCOLORS(1) -nb $WMII_NORMCOLORS(2) \
-		-sf $WMII_FOCUSCOLORS(1) -sb $WMII_FOCUSCOLORS(2)
-}
-
-fn 9menu {
-	wmii9menu -font $WMII_FONT \
-		-^(nf nb br)^$WMII_NORMCOLORS \
-		-^(sf sb br)^$WMII_FOCUSCOLORS $*
+# Sanity checks
+if(echo $0 | grep -s '(^|/)rc\.wmii\.local$') {
+	echo >[1=2] Fatal: This file must not be named rc.wmii.local
+	exit badname
 }
 
 fn config_whatis {
-	confpath=`{echo $WMII_CONFPATH | sed 'y/:/ /'}
-	prog = `{{path=$confpath whatis $1} | grep -v '^fn|= '}; shift
-	if(~ $#prog 0)
-		prog = /dev/null
-	echo $prog $*
-}
-
-if(echo $0 | grep -vs '/rc.wmii$') {
-	echo Fatal: This file should only be run as rc.wmii >[1=2]
-	exit badname
+	prog = `{@{path=$confpath whatis $1} | grep -v '^fn|= ' || echo /dev/null}
+	shift; echo $prog $*
 }
 
 if(! test -x $PLAN9/bin/read) {
@@ -53,6 +27,20 @@ rc.wmii can't run:
 
 wmiirc will be run instead.
 !
+
+# Configurables
+MODKEY=Mod1
+UP=k
+DOWN=j
+LEFT=h
+RIGHT=l
+
+WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
+WMII_NORMCOLORS=('#222222' '#5FBF77' '#2A7F3F')
+WMII_FOCUSCOLORS=('#ffffff' '#153F1F' '#2A7F3F')
+WMII_BACKGROUND='#333333'
+
+WMII_TERM=(xterm)
 
 # Column Rules
 wmiir write /colrules <<!
@@ -68,21 +56,27 @@ wmiir write /tagrules <<!
 !
 
 # Status Bar Info
-fn status {
-	echo -n `{uptime | sed 's/.*://; s/,//g'} '|' `{date}
+fn status { echo -n `{uptime | sed 's/.*://; s/,//g'} '|' `{date} }
+
+fn viewtitle { echo $* }
+
+# Convenience Functions
+fn wmiimenu {
+	dmenu -b -fn $WMII_FONT \
+		-nf $WMII_NORMCOLORS(1) -nb $WMII_NORMCOLORS(2) \
+		-sf $WMII_FOCUSCOLORS(1) -sb $WMII_FOCUSCOLORS(2)
 }
 
-# Functions
-fn viewtitle { echo $* }
+fn 9menu {
+	wmii9menu -font $WMII_FONT \
+		-^(nf nb br)^$WMII_NORMCOLORS \
+		-^(sf sb br)^$WMII_FOCUSCOLORS $*
+}
 
 fn proglist {
         /bin/ls -lL `{echo $* | sed 'y/:/ /'} >[2]/dev/null \
 		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
 		| sort | uniq
-}
-
-fn getfuns {
-	env | sed -n 's/^fn#'^$1^'-([^=]+).*/\1/p'
 }
 
 fn actionlist {
@@ -91,21 +85,27 @@ fn actionlist {
 	} | sort | uniq
 }
 
-fn initkeys {
-	getfuns Key | wmiir write /keys
-}
-
-fn read_tags {
-	wmiir ls /tag | sed 's,/,,; /^sel$/d'
-}
-
-fn run_command {
-	@{
-	rfork ns
-	path=$oldpath
-	eval exec $* &
+fn run_command { @{
+		rfork ns
+		path=$oldpath
+		eval exec $* &
 	}
 }
+
+fn getfuns { env | sed -n 's/^fn#'^$1^'-([^=]+).*/\1/p' }
+fn initkeys { getfuns Key | wmiir write /keys }
+fn read_tags { wmiir ls /tag | sed 's,/,,; /^sel$/d' }
+fn 'fn?' {rc -c 'whatis '$1 >[2]/dev/null | grep -s '^fn ' }
+
+# Events
+fn Event-Start {
+	switch($1) {
+	case wmiirc
+		rm -f $progs_file
+		exit
+	}
+}
+fn Event-Key { Key-$1 $1 }
 
 fn Event-CreateTag { echo $WMII_NORMCOLORS `{viewtitle $*} | wmiir create /lbar/$"* }
 fn Event-DestroyTag { wmiir remove /lbar/$"* }
@@ -116,7 +116,6 @@ fn Event-NotUrgentTag { shift; wmiir xwrite /lbar/$"* $"* }
 
 fn Event-LeftBarClick { shift; wmiir xwrite /ctl view $* }
 
-menulast = ''
 fn Event-ClientMouseDown {
 	client = $1; button = $2
 	if(~ $button 3) {
@@ -131,10 +130,8 @@ fn Event-ClientMouseDown {
 			menulast = $do;
 	}
 }
+menulast = Nop
 
-fn 'fn?' {rc -c 'whatis '$1 >[2]/dev/null | grep -s '^fn ' }
-
-# Actions
 fn Action {
 	cmd=$1 action=Action-$cmd { shift
 		if('fn?' $action)
@@ -143,28 +140,26 @@ fn Action {
 			run_command `{config_whatis $cmd} $*
 	} &
 }
-fn Action-rehash { proglist $PATH >$progs_file }
+
+# Actions
+fn Action-rehash {
+	if(test -d /proc/$pid)
+		for(i in $WMII_NS_DIR/proglist.*) {
+			id=`{echo $i | sed 's/.*\.(.*)/\1/'} \
+			if(! test -d /proc/$id) rm $i
+		}
+	proglist $PATH >$progs_file
+}
 fn Action-quit { wmiir xwrite /ctl quit }
 fn Action-exec { wmiir xwrite /ctl exec $* }
 fn Action-status {
-	flag x -
-	flag r -
+	flag x -; flag r -
 	if(wmiir remove /rbar/status >[2]/dev/null)
 		sleep 2
 	echo $WMII_NORMCOLORS | wmiir create /rbar/status
 	while(status | wmiir write /rbar/status)
 		sleep 1
 }
-
-# Events
-fn Event-Start {
-	switch($1) {
-	case wmiirc
-		rm -f $progs_file
-		exit
-	}
-}
-fn Event-Key { eval Key-$1 $1 }
 
 # Source Variables, &c
 local = `{config_whatis rc.wmii.local}
@@ -181,7 +176,13 @@ local = `{config_whatis rc.wmii.local}
 	}' $local </dev/null}
 
 # Key Bindings
-fn Key-$MODKEY-Control-t {
+fn key {
+	key=()
+	for(k in Key-$*) if(! 'fn?' $k) key = ($key $k)
+	~ $#key 0
+}
+
+key $MODKEY-Control-t || fn $key {
 	switch(`{wmiir read /keys | wc -l}) {
 	case 0 1
 		initkeys
@@ -192,37 +193,40 @@ fn Key-$MODKEY-Control-t {
 	}
 }
 
-fn Key-$MODKEY-$LEFT { wmiir xwrite /tag/sel/ctl select left }
-fn Key-$MODKEY-$RIGHT { wmiir xwrite /tag/sel/ctl select right }
-fn Key-$MODKEY-$DOWN { wmiir xwrite /tag/sel/ctl select down }
-fn Key-$MODKEY-$UP { wmiir xwrite /tag/sel/ctl select up }
+key $MODKEY-$LEFT || fn $key { wmiir xwrite /tag/sel/ctl select left }
+key $MODKEY-$RIGHT || fn $key { wmiir xwrite /tag/sel/ctl select right }
+key $MODKEY-$DOWN || fn $key { wmiir xwrite /tag/sel/ctl select down }
+key $MODKEY-$UP || fn $key { wmiir xwrite /tag/sel/ctl select up }
 
-fn Key-$MODKEY-Shift-$LEFT { wmiir xwrite /tag/sel/ctl send sel left }
-fn Key-$MODKEY-Shift-$RIGHT { wmiir xwrite /tag/sel/ctl send sel right }
-fn Key-$MODKEY-Shift-$DOWN { wmiir xwrite /tag/sel/ctl send sel down }
-fn Key-$MODKEY-Shift-$UP { wmiir xwrite /tag/sel/ctl send sel up }
+key $MODKEY-Shift-$LEFT || fn $key { wmiir xwrite /tag/sel/ctl send sel left }
+key $MODKEY-Shift-$RIGHT || fn $key { wmiir xwrite /tag/sel/ctl send sel right }
+key $MODKEY-Shift-$DOWN || fn $key { wmiir xwrite /tag/sel/ctl send sel down }
+key $MODKEY-Shift-$UP || fn $key { wmiir xwrite /tag/sel/ctl send sel up }
 
-fn Key-$MODKEY-f { wmiir xwrite /client/sel/ctl Fullscreen toggle }
+key $MODKEY-f || fn $key { wmiir xwrite /client/sel/ctl Fullscreen toggle }
 
-fn Key-$MODKEY-space { wmiir xwrite /tag/sel/ctl select toggle }
-fn Key-$MODKEY-Shift-space { wmiir xwrite /tag/sel/ctl send sel toggle }
+key $MODKEY-space || fn $key { wmiir xwrite /tag/sel/ctl select toggle }
+key $MODKEY-Shift-space || fn $key { wmiir xwrite /tag/sel/ctl send sel toggle }
+key $MODKEY-d || fn $key { wmiir xwrite /tag/sel/ctl colmode sel default }
+key $MODKEY-s || fn $key { wmiir xwrite /tag/sel/ctl colmode sel stack }
+key $MODKEY-m || fn $key { wmiir xwrite /tag/sel/ctl colmode sel max }
 
-fn Key-$MODKEY-d { wmiir xwrite /tag/sel/ctl colmode sel default }
-fn Key-$MODKEY-s { wmiir xwrite /tag/sel/ctl colmode sel stack }
-fn Key-$MODKEY-m { wmiir xwrite /tag/sel/ctl colmode sel max }
+key $MODKEY-Shift-c || fn $key { wmiir xwrite /client/sel/ctl kill }
 
-fn Key-$MODKEY-Shift-c { wmiir xwrite /client/sel/ctl kill }
+key $MODKEY-a || fn $key { Action `{actionlist | wmiimenu} & }
+key $MODKEY-p || fn $key { ifs=() { run_command `{wmiimenu <$progs_file} & } }
+key $MODKEY-Return || fn $key { run_command $WMII_TERM & }
 
-fn Key-$MODKEY-a { Action `{actionlist | wmiimenu} & }
-fn Key-$MODKEY-p { ifs=() { run_command `{wmiimenu <$progs_file} & } }
-fn Key-$MODKEY-Return { run_command $WMII_TERM & }
-fn Key-$MODKEY-t { wmiir xwrite /ctl view `{read_tags | wmiimenu} & }
-fn Key-$MODKEY-Shift-t {
-	wmiir xwrite /client/`{wmiir read /client/sel/ctl|sed 1q}^/tags `{read_tags | wmiimenu} &
+key $MODKEY-t || fn $key { wmiir xwrite /ctl view `{read_tags | wmiimenu} & }
+key $MODKEY-Shift-t || fn $key {
+	sel = `{wmiir read /client/sel/ctl | sed 1q} \
+	wmiir xwrite /client/$sel/tags `{read_tags | wmiimenu} &
 }
 
-fn Key-$MODKEY-^`{seq 0 9} { wmiir xwrite /ctl view `{echo $1 | sed 's/.*-//'} }
-fn Key-Shift-$MODKEY-^`{seq 0 9} { wmiir xwrite /client/sel/tags `{echo $1 | sed 's/.*-//'} }
+key $MODKEY-^`{seq 0 9}|| fn $key  { wmiir xwrite /ctl view `{echo $1 | sed 's/.*-//'} }
+key Shift-$MODKEY-^`{seq 0 9} || fn $key {
+	wmiir xwrite /client/sel/tags `{echo $1 | sed 's/.*-//'}
+}
 
 # WM Configuration
 wmiir write /ctl <<!
@@ -242,9 +246,9 @@ if not
 	. `{config_whatis overridekeys}
 
 # Misc Setup
-Action status
 progs_file=$WMII_NS_DIR/proglist.$pid
-proglist $PATH >$progs_file &
+Action status
+Action rehash
 
 # Tag Bar Setup
 ifs='#
@@ -263,7 +267,7 @@ ifs='#
 initkeys
 
 if(echo Start wmiirc | ! wmiir write /event >[2]/dev/null)
-	exit 1
+	exit write
 
 # Event Loop
 wmiir read /event |
@@ -271,4 +275,3 @@ wmiir read /event |
 		event = $1; shift
 		Event-$event $*
 	} >[2]/dev/null </dev/null
-

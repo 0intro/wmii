@@ -96,9 +96,9 @@ manage_client(Client *c) {
 		tags = gettextproperty(&c->w, "_WIN_TAGS");
 
 	if((trans = win2client(c->trans)))
-		strncpy(c->tags, trans->tags, sizeof(c->tags));
+		utflcpy(c->tags, trans->tags, sizeof(c->tags));
 	else if(tags)
-		strncpy(c->tags, tags, sizeof(c->tags));
+		utflcpy(c->tags, tags, sizeof(c->tags));
 
 	free(tags);
 
@@ -517,7 +517,7 @@ update_class(Client *c) {
 		strcpy(c->props, "::");
 		str = c->props + 1;
 	}
-	utfecpy(str+1, c->props+sizeof(c->props), c->name);
+	utflcpy(str+1, c->name, sizeof(c->props));
 }
 
 static void
@@ -530,7 +530,7 @@ update_client_name(Client *c) {
 	if(str == nil)
 		str = gettextproperty(&c->w, "WM_NAME");
 	if(str)
-		utfecpy(c->name, c->name+sizeof(c->name), str);
+		utflcpy(c->name, str, sizeof(c->name));
 	free(str);
 
 	update_class(c);
@@ -558,6 +558,7 @@ updatemwm(Client *c) {
 
 	if(c->sel)
 		r = frame2client(c->sel, c->sel->r);
+
 	if(n >= 3 && (ret[Flags]&FlagDecor)) {
 		if(ret[Decor]&All)
 			ret[Decor] ^= ~0;
@@ -863,7 +864,7 @@ apply_tags(Client *c, const char *tags) {
 			break;
 
 	if(tags[n] == '+' || tags[n] == '-')
-		strncpy(buf, c->tags, sizeof(c->tags));
+		utflcpy(buf, c->tags, sizeof(c->tags));
 
 	strlcat(buf, &tags[n], sizeof(buf));
 	trim(buf, " \t/");

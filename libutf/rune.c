@@ -41,7 +41,7 @@ enum
 };
 
 int
-chartorune(Rune *rune, char *str)
+chartorune(Rune *rune, const char *str)
 {
 	int c, c1, c2;
 	long l;
@@ -161,7 +161,7 @@ runenlen(Rune *r, int nrune)
 }
 
 int
-fullrune(char *str, int n)
+fullrune(const char *str, int n)
 {
 	int c;
 

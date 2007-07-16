@@ -135,6 +135,14 @@ str_nil(char *s) {
 	return "<nil>";
 }
 
+int
+utflcpy(char *to, const char *from, int l) {
+	char *p;
+	
+	p = utfecpy(to, to+l, from);
+	return p-to;
+}
+
 uint
 strlcat(char *dst, const char *src, uint size) {
 	const char *s;

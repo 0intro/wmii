@@ -97,7 +97,7 @@ get_key(const char *name) {
 		ungrab_key(k);
 		return k;
 	}
-	strncpy(buf, name, sizeof(buf));
+	utflcpy(buf, name, sizeof(buf));
 	toks = tokenize(seq, 8, buf, ',');
 	for(i = 0; i < toks; i++) {
 		if(!k)
@@ -106,7 +106,7 @@ get_key(const char *name) {
 			k->next = emallocz(sizeof(Key));
 			k = k->next;
 		}
-		strncpy(k->name, name, sizeof(k->name));
+		utflcpy(k->name, name, sizeof(k->name));
 		kstr = strrchr(seq[i], '-');
 		if(kstr)
 			kstr++;

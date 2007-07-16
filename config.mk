@@ -14,7 +14,7 @@ LIBS = -L/usr/lib -lc -L${ROOT}/lib
 
 # Flags
 include ${ROOT}/mk/gcc.mk
-CFLAGS += -g -O0
+CFLAGS += -g -O0 -DIXPlint
 LDFLAGS += -g ${LIBS}
 STATIC = -static
 MKDEP = cpp -M

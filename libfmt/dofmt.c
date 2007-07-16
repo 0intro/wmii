@@ -19,7 +19,7 @@
 
 /* format the output into f->to and return the number of characters fmted  */
 int
-dofmt(Fmt *f, char *fmt)
+dofmt(Fmt *f, const char *fmt)
 {
 	Rune rune, *rt, *rs;
 	int r;
@@ -249,7 +249,7 @@ __runefmt(Fmt *f)
 
 /* public helper routine: fmt out a null terminated string already in hand */
 int
-fmtstrcpy(Fmt *f, char *s)
+fmtstrcpy(Fmt *f, const char *s)
 {
 	int i, j;
 	Rune r;

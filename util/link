@@ -21,6 +21,7 @@ done
 xtmp=/tmp/ld.$$.$USER.out
 
 echo LD "$($bin/cleanname ${BASE}$outfile)"
+[ -n "$noisycc" ] && echo $LD -o $outfile $ofiles $LDFLAGS $args
 $LD -o $outfile $ofiles $LDFLAGS $args >$xtmp 2>&1
 status=$?
 

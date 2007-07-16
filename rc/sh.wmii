@@ -142,7 +142,7 @@ Event ClientMouseDown {
 		cmp := {~ $lastcmd $*}
 		if {$cmp Nop} {
 		} {$cmp Delete} { echo kill >/client/$client/ctl
-		} {$cmp Fullscreen} { echo Fullscreen >/client/$client/ctl
+		} {$cmp Fullscreen} { echo Fullscreen toggle >/client/$client/ctl
 		}
 	}
 }
@@ -197,6 +197,8 @@ Key $MODKEY-Shift-space { echo send sel toggle >/tag/sel/ctl }
 Key $MODKEY-d { echo colmode sel default >/tag/sel/ctl }
 Key $MODKEY-s { echo colmode sel stack >/tag/sel/ctl }
 Key $MODKEY-m { echo colmode sel max >/tag/sel/ctl }
+
+Key $MODKEY-f { echo Fullscreen toggle >/client/sel/ctl }
 
 Key $MODKEY-Shift-c { echo kill >/client/sel/ctl }
 

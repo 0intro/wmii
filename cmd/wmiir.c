@@ -16,7 +16,7 @@ static IxpClient *client;
 
 static void
 usage(void) {
-	fprintf(stderr,
+	fprint(1,
 		   "usage: %1$s [-a <address>] {create | read | ls [-ld] | remove | rm | write} <file>\n"
 		   "       %1$s [-a <address>] xwrite <file> <data>\n"
 		   "       %1$s -v\n", argv0);
@@ -64,7 +64,7 @@ setrwx(long m, char *s) {
 }
 
 static char *
-str_of_mode(uint mode) {
+modestr(uint mode) {
 	static char buf[16];
 
 	buf[0]='-';
@@ -79,7 +79,7 @@ str_of_mode(uint mode) {
 }
 
 static char *
-str_of_time(uint val) {
+timestr(uint val) {
 	static char buf[32];
 
 	ctime_r((time_t*)&val, buf);
@@ -90,13 +90,14 @@ str_of_time(uint val) {
 static void
 print_stat(Stat *s, int lflag) {
 	if(lflag)
-		fprintf(stdout, "%s %s %s %5llu %s %s\n", str_of_mode(s->mode),
-				s->uid, s->gid, s->length, str_of_time(s->mtime), s->name);
+		print("%s %s %s %5llud %s %s\n",
+				modestr(s->mode), s->uid, s->gid, s->length,
+				timestr(s->mtime), s->name);
 	else {
 		if((s->mode&P9_DMDIR) && strcmp(s->name, "/"))
-			fprintf(stdout, "%s/\n", s->name);
+			print("%s/\n", s->name);
 		else
-			fprintf(stdout, "%s\n", s->name);
+			print("%s\n", s->name);
 	}
 }
 
@@ -317,7 +318,7 @@ main(int argc, char *argv[]) {
 
 	ARGBEGIN{
 	case 'v':
-		printf("%s-" VERSION ", ©2007 Kris Maglione\n", argv0);
+		print("%s-" VERSION ", ©2007 Kris Maglione\n", argv0);
 		exit(0);
 	case 'a':
 		address = EARGF(usage());

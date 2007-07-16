@@ -137,7 +137,7 @@ fmtfmt(int c)
 }
 
 void*
-__fmtdispatch(Fmt *f, void *fmt, int isrunes)
+__fmtdispatch(Fmt *f, const void *fmt, int isrunes)
 {
 	Rune rune, r;
 	int i, n;
@@ -213,6 +213,6 @@ __fmtdispatch(Fmt *f, void *fmt, int isrunes)
 		if(n < 0)
 			return nil;
 		if(n == 0)
-			return fmt;
+			return (void*)fmt;
 	}
 }

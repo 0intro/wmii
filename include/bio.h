@@ -70,8 +70,8 @@ int	Binit(Biobuf*, int, int);
 int	Binits(Biobuf*, int, int, unsigned char*, int);
 int	Blinelen(Biobuf*);
 off_t	Boffset(Biobuf*);
-Biobuf*	Bopen(char*, int);
-int	Bprint(Biobuf*, char*, ...);
+Biobuf*	Bopen(const char*, int);
+int	Bprint(Biobuf*, const char*, ...);
 int	Bputc(Biobuf*, int);
 int	Bputrune(Biobuf*, long);
 void*	Brdline(Biobuf*, int);
@@ -82,6 +82,6 @@ int	Bterm(Biobuf*);
 int	Bungetc(Biobuf*);
 int	Bungetrune(Biobuf*);
 long	Bwrite(Biobuf*, void*, long);
-int	Bvprint(Biobuf*, char*, va_list);
+int	Bvprint(Biobuf*, const char*, va_list);
 
 #endif

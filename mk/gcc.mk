@@ -1,5 +1,5 @@
 CFLAGS += \
-	-std=gnu99 \
+	-std=c99 \
 	-pipe \
 	-Wall \
 	-Wno-parentheses \

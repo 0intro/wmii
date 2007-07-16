@@ -53,7 +53,7 @@ create_bar(Bar **bp, char *name) {
 		b = emallocz(sizeof(Bar));
 
 	b->id = id++;
-	strncpy(b->name, name, sizeof(b->name));
+	utflcpy(b->name, name, sizeof(b->name));
 	b->col = def.normcolor;
 
 	for(; *bp; bp = &(*bp)->next)
@@ -144,7 +144,7 @@ draw_bar(WMScreen *s) {
 				b->r.max.x += Dx(s->brect) - width;
 
 			if(tb)
-				b->r = rectaddpt(b->r, Pt( tb->r.max.x, 0));
+				b->r = rectaddpt(b->r, Pt(tb->r.max.x, 0));
 		}
 
 	r = rectsubpt(s->brect, s->brect.min);
@@ -162,7 +162,7 @@ draw_bar(WMScreen *s) {
 	XSync(display, False);
 }
 
-Bar *
+Bar*
 bar_of_name(Bar *bp, const char *name) {
 	Bar *b;
 

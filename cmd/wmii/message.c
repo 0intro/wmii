@@ -359,7 +359,7 @@ message_root(void *p, IxpMsg *m) {
 		if((n & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)) == 0)
 			return Ebadvalue;
 
-		strncpy(def.grabmod, s, sizeof(def.grabmod));
+		utflcpy(def.grabmod, s, sizeof(def.grabmod));
 		def.mod = n;
 		break;
 	default:
@@ -511,7 +511,7 @@ send_client(View *v, IxpMsg *m, Bool swap) {
 		break;
 	}
 
-	if(!to && !swap && (f->anext || f != a->frame))
+	if(!to && !swap && (f->anext || f != f->area->frame))
 		to = new_column(v, a, 0);
 
 	if(!to)

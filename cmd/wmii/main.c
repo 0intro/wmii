@@ -475,7 +475,7 @@ main(int argc, char *argv[]) {
 	def.colmode = Coldefault;
 
 	def.mod = Mod1Mask;
-	strncpy(def.grabmod, "Mod1", sizeof(def.grabmod));
+	strcpy(def.grabmod, "Mod1");
 
 	loadcolor(&def.focuscolor, FOCUSCOLORS);
 	loadcolor(&def.normcolor, NORMCOLORS);

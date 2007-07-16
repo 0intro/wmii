@@ -17,7 +17,7 @@
 #include "utf.h"
 
 char*
-utfrune(char *s, long c)
+utfrune(const char *s, long c)
 {
 	long c1;
 	Rune r;
@@ -32,13 +32,13 @@ utfrune(char *s, long c)
 			if(c1 == 0)
 				return 0;
 			if(c1 == c)
-				return s;
+				return (char*)s;
 			s++;
 			continue;
 		}
 		n = chartorune(&r, s);
 		if(r == c)
-			return s;
+			return (char*)s;
 		s += n;
 	}
 }

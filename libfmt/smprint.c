@@ -17,7 +17,7 @@
 #include "fmtdef.h"
 
 char*
-smprint(char *fmt, ...)
+smprint(const char *fmt, ...)
 {
 	va_list args;
 	char *p;

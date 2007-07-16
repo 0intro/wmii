@@ -34,6 +34,7 @@ void fatal(const char *fmt, ...);
 int max(int a, int b);
 int min(int a, int b);
 char *str_nil(char *s);
+int utflcpy(char *to, const char *from, int l);
 uint strlcat(char *dst, const char *src, unsigned int siz);
 
 char *argv0;

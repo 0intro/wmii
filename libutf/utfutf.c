@@ -22,9 +22,9 @@
  * 0 if none
  */
 char*
-utfutf(char *s1, char *s2)
+utfutf(const char *s1, const char *s2)
 {
-	char *p;
+	const char *p;
 	long f, n1, n2;
 	Rune r;
 
@@ -36,6 +36,6 @@ utfutf(char *s1, char *s2)
 	n2 = strlen(s2);
 	for(p=s1; p=utfrune(p, f); p+=n1)
 		if(strncmp(p, s2, n2) == 0)
-			return p;
+			return (char*)p;
 	return 0;
 }

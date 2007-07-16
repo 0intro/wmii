@@ -24,7 +24,7 @@
  * but ignore any width flags
  */
 int
-fmtvprint(Fmt *f, char *fmt, va_list args)
+fmtvprint(Fmt *f,  const char *fmt, va_list args)
 {
 	va_list va;
 	int n;

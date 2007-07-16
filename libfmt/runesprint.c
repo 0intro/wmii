@@ -18,7 +18,7 @@
 #include "fmtdef.h"
 
 int
-runesprint(Rune *buf, char *fmt, ...)
+runesprint(Rune *buf, const char *fmt, ...)
 {
 	int n;
 	va_list args;

@@ -43,7 +43,7 @@ int          __errfmt(Fmt *f);
 int          __flagfmt(Fmt *f);
 int          __fmtFdFlush(Fmt *f);
 int          __fmtcpy(Fmt *f, const void *vm, int n, int sz);
-void*        __fmtdispatch(Fmt *f, void *fmt, int isrunes);
+void*        __fmtdispatch(Fmt *f, const void *fmt, int isrunes);
 void *       __fmtflush(Fmt *f, void *t, int len);
 void         __fmtlock(void);
 int          __fmtpad(Fmt *f, int n);

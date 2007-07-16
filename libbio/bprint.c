@@ -2,7 +2,7 @@
 #include	<bio.h>
 
 int
-Bprint(Biobuf *bp, char *fmt, ...)
+Bprint(Biobuf *bp, const char *fmt, ...)
 {
 	int n;
 	va_list arg;

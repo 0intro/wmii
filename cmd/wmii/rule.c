@@ -77,7 +77,7 @@ update_rules(Rule **rule, const char *data) {
 				trim(value, " \t/");
 				(*rule)->regex = regcomp(regex);
 				if((*rule)->regex) {
-					strncpy((*rule)->value, value, sizeof(rul->value));
+					utflcpy((*rule)->value, value, sizeof(rul->value));
 					rule = &(*rule)->next;
 				}
 				else free(*rule);

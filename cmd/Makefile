@@ -17,7 +17,7 @@ FILTER = sed "s|CONFPREFIX|${ETC}|g; \
 	      s|P9PATHS|${P9PATHS}|g; \
 	      s|AWKPATH|${AWKPATH}|g"
 
-LDFLAGS += -lbio -lfmt -lutf
+LDFLAGS += -lfmt -lutf
 CFLAGS += ${INCX11} -DVERSION=\"${VERSION}\"
 
 include ${ROOT}/mk/many.mk
