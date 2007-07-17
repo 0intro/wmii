@@ -859,7 +859,7 @@ VerbClient(XEvent *e) {
 		TWindow, _(window),
 		TAtom, _(message_type),
 		TInt, _(format),
-		TData, "data (as longs)", ev->data,
+		TData, "data (as longs)", &ev->data,
 		TEnd
 	);
 }

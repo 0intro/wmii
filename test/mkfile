@@ -8,4 +8,4 @@ all:V: $TARG
 nuke:V: rm *.dis *.sbl
 
 %.dis:	%.b
-	limbo -Cgw $stem.b
+	limbo -gw $stem.b
