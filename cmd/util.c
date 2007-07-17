@@ -9,30 +9,37 @@
 #include <util.h>
 #include <fmt.h>
 
+typedef struct VFmt VFmt;
+struct VFmt {
+	const char *fmt;
+	va_list args;
+};
+
+#ifdef VARARGCK
+# pragma varargck type "V" VFmt*
+#endif
+
 static int
 Vfmt(Fmt *f) {
-	char *fmt;
-	va_list ap;
+	VFmt *vf;
 	int i;
 
-	fmt = va_arg(f->args, char*);
-	va_copy(ap, va_arg(f->args, va_list));
-
-	i = fmtvprint(f, fmt, ap);
-	va_end(ap);
+	vf = va_arg(f->args, VFmt*);
+	i = fmtvprint(f, vf->fmt, vf->args);
 	return i;
 }
 
 void
 fatal(const char *fmt, ...) {
-	va_list ap;
+	VFmt fp;
 
 	fmtinstall('V', Vfmt);
 	fmtinstall('\001', Vfmt);
 
-	va_start(ap, fmt);
-	fprint(2, "%s: fatal: %V\n", argv0, fmt, ap);
-	va_end(ap);
+	fp.fmt = fmt;
+	va_start(fp.args, fmt);
+	fprint(2, "%s: fatal: %V\n", argv0, &fp);
+	va_end(fp.args);
 
 	exit(1);
 }
