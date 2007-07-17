@@ -1,6 +1,7 @@
 /* Copyright ©2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#include "dat.h"
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
@@ -8,7 +9,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <bio.h>
-#include "dat.h"
 #include "fns.h"
 
 Point ZP = {0, 0};

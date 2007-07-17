@@ -39,12 +39,12 @@
  * ken@richsun.UUCP
  */
 
+#include "dat.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <bio.h>
-#include "dat.h"
 //#include "fns.h"
 #include "printevent.h"
 #include <X11/Xproto.h>

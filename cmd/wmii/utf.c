@@ -1,8 +1,8 @@
 /* Public Domain --Kris Maglione */
+#include "dat.h"
 #include <errno.h>
 #include <iconv.h>
 #include <string.h>
-#include "dat.h"
 #include "fns.h"
 
 char*

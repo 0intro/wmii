@@ -3,10 +3,10 @@
  * See LICENSE file for license details.
  */
 
+#include "dat.h"
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include "dat.h"
 #include "fns.h"
 
 /* basic rule matching language /regex/ -> value

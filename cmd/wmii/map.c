@@ -1,8 +1,8 @@
 /* Written by Kris Maglione */
 /* Public domain */
+#include "dat.h"
 #include <stdlib.h>
 #include <string.h>
-#include "dat.h"
 #include "fns.h"
 
 /* Edit s/^([a-zA-Z].*)\n([a-z].*) {/\1 \2;/g  x/^([^a-zA-Z]|static|$)/-+d  s/ (\*map|val|*str)//g */

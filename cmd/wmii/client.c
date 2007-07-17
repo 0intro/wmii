@@ -2,12 +2,12 @@
  * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#include "dat.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <X11/Xatom.h>
-#include "dat.h"
 #include "fns.h"
 
 #define Mbsearch(k, l, cmp) bsearch(k, l, nelem(l), sizeof(*l), cmp)

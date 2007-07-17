@@ -2,9 +2,10 @@
  * See LICENSE file for license details.
  */
 
-#include <regexp9.h>
+#define _XOPEN_SOURCE 600
 #define IXP_P9_STRUCTS
 #define IXP_NO_P9_
+#include <regexp9.h>
 #include <stdint.h>
 #include <ixp.h>
 #include <util.h>

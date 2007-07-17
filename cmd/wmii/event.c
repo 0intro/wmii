@@ -1,9 +1,9 @@
 /* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#include "dat.h"
 #include <stdio.h>
 #include <X11/keysym.h>
-#include "dat.h"
 #include "fns.h"
 #include "printevent.h"
 

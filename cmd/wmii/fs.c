@@ -1,15 +1,14 @@
 /* Copyright ©2006 Kris Maglione <fbsdaemon at gmail dot com>
  * See LICENSE file for license details.
  */
+#include "dat.h"
 #include <assert.h>
 #include <ctype.h>
-#include <regex.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "dat.h"
 #include "fns.h"
 
 

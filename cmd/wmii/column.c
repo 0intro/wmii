@@ -2,11 +2,12 @@
  * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#include "dat.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include "dat.h"
+#include <strings.h>
 #include "fns.h"
 
 static Image *divimg, *divmask;
