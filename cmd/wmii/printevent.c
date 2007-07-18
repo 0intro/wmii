@@ -75,23 +75,21 @@ unmask(Pair * list, uint val)
 {
 	Pair  *p;
 	char *s, *end;
-	Boolean first = True;
+	int n;
 
 	buffer[0] = '\0';
 	end = buffer + sizeof buffer;
 	s = buffer;
 
-	s += strlcat(s, "(", end - s);
-
+	n = 0;
+	s = utfecpy(s, end, "(");
 	for (p = list; p->val; p++)
 		if (val & p->key) {
-			if (!first)
-				s += strlcat(s, "|", end - s);
-			first = False;
-			s += strlcat(s, p->val, end - s);
+			if(n++)
+				s = utfecpy(s, end, "|");
+			s = utfecpy(s, end, p->val);
 		}
-
-	strlcat(s, ")", end - s);
+	utfecpy(s, end, ")");
 
 	return buffer;
 }
@@ -150,6 +148,7 @@ TData(Biobuf *b, va_list *ap) {
 /* Returns the string equivalent of a timestamp */
 static void
 TTime(Biobuf *b, va_list *ap) {
+	ldiv_t	d;
 	ulong   msec;
 	ulong   sec;
 	ulong   min;
@@ -159,21 +158,23 @@ TTime(Biobuf *b, va_list *ap) {
 
 	time = va_arg(*ap, Time);
 
-	msec = time % 1000;
-	time /= 1000;
-	sec = time % 60;
-	time /= 60;
-	min = time % 60;
-	time /= 60;
-	hr = time % 24;
-	time /= 24;
-	day = time;
+	msec = time/1000;
+	d = ldiv(msec, 60);
+	msec = time-msec*1000;
 
-	if (0)
-		sprintf(buffer, "%lu day%s %02lu:%02lu:%02lu.%03lu",
-			day, day == 1 ? "" : "(s)", hr, min, sec, msec);
+	sec = d.rem;
+	d = ldiv(d.quot, 60);
+	min = d.rem;
+	d = ldiv(d.quot, 24);
+	hr = d.rem;
+	day = d.quot;
 
-	Bprint(b, "%lud%luh%lum%lu.%03lds", day, hr, min, sec, msec);
+#ifdef notdef
+	sprintf(buffer, "%lu day%s %02lu:%02lu:%02lu.%03lu",
+		day, day == 1 ? "" : "(s)", hr, min, sec, msec);
+#endif
+
+	Bprint(b, "%ludd_%ludh_%ludm_%lud.%03luds", day, hr, min, sec, msec);
 }
 
 /* Returns the string equivalent of a boolean parameter */

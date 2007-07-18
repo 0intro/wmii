@@ -77,9 +77,9 @@ vsmprint(const char *fmt, va_list args)
 
 	if(fmtstrinit(&f) < 0)
 		return nil;
-	VA_COPY(f.args,args);
+	va_copy(f.args,args);
 	n = dofmt(&f, fmt);
-	VA_END(f.args);
+	va_end(f.args);
 	if(n < 0){
 		free(f.start);
 		return nil;

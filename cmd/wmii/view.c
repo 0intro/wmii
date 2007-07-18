@@ -421,7 +421,7 @@ update_views(void) {
 uint
 newcolw(View *v, int num) {
 	Rule *r;
-	uint n;
+	ulong n;
 
 	for(r=def.colrules.rule; r; r=r->next)
 		if(regexec(r->regex, v->name, nil, 0)) {
@@ -432,7 +432,7 @@ newcolw(View *v, int num) {
 
 			n = tokenize(toks, 16, buf, '+');
 			if(num < n)
-				if(sscanf(toks[num], "%u", &n) == 1)
+				if(getulong(toks[num], &n))
 					return Dx(screen->r) * (n / 100.0);
 			break;
 		}

@@ -24,9 +24,9 @@ vfprint(int fd, const char *fmt, va_list args)
 	int n;
 
 	fmtfdinit(&f, fd, buf, sizeof(buf));
-	VA_COPY(f.args,args);
+	va_copy(f.args,args);
 	n = dofmt(&f, fmt);
-	VA_END(f.args);
+	va_end(f.args);
 	if(n > 0 && __fmtFdFlush(&f) == 0)
 		return -1;
 	return n;

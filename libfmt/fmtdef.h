@@ -106,11 +106,7 @@ int          __strfmt(Fmt *f);
 	}\
 	}while(0)
 
-#ifdef va_copy
-#	define VA_COPY(a,b) va_copy(a,b)
-#	define VA_END(a) va_end(a)
-#else
-#	define VA_COPY(a,b) (a) = (b)
-#	define VA_END(a)
+#ifndef va_copy
+#	define va_copy(a,b) (a) = (b)
 #endif
 

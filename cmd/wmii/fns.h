@@ -4,7 +4,7 @@
 
 #ifdef VARARGCK
 # pragma varargck	argpos	write_event	1
-
+#
 # pragma varargck	type	"C"	Client*	
 # pragma varargck	type	"W"	Window*	
 # pragma varargck	type	"P"	Point
@@ -134,6 +134,8 @@ void* hashrm(Map*, char*);
 
 /* message.c */
 char *getword(IxpMsg*);
+int getulong(char*, ulong*);
+int getlong(char*, long*);
 Area *strarea(View*, char*);
 char *message_view(View*, IxpMsg*);
 char *parse_colors(IxpMsg*, CTuple*);

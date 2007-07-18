@@ -172,7 +172,7 @@ getbase(char **s) {
 	return 10;
 }
 
-static int
+int
 getlong(char *s, long *ret) {
 	char *end, *rend;
 	int base;
@@ -184,7 +184,7 @@ getlong(char *s, long *ret) {
 	return (end == rend);
 }
 
-static int
+int
 getulong(char *s, ulong *ret) {
 	char *end, *rend;
 	int base;
@@ -288,11 +288,14 @@ parse_colors(IxpMsg *m, CTuple *col) {
 		for(j = 0; j < 6 && p < (char*)m->end; j++)
 			if(!isxdigit(*p++))
 				return Ebad;
+
 		chartorune(&r, p);
-		if(i < 2 && r != ' ' || !(isspacerune(r) || *p == '\0'))
-			return Ebad;
-		if(i < 2)
+		if(i < 2) {
+			if(r != ' ')
+				return Ebad;
 			p++;
+		}else if(!isspacerune(r) && *p != '\0')
+			return Ebad;
 	}
 
 	c = *p;
@@ -345,12 +348,13 @@ message_root(void *p, IxpMsg *m) {
 			resize_bar(screen);
 		}else
 			ret = "can't load font";
+		focus_view(screen, screen->sel);
 		break;
 	case LBORDER:
 		if(!getulong(getword(m), &n))
 			return Ebadvalue;
 		def.border = n;
-		/* XXX: Apply the change */
+		focus_view(screen, screen->sel);
 		break;
 	case LGRABMOD:
 		s = getword(m);

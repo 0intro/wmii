@@ -265,12 +265,14 @@ detach_from_area(Frame *f) {
 }
 
 static void
-bit_set(uint *field, uint width, uint x, uint y, Bool set) {
+bit_set(uint *field, uint width, uint x, uint y, int set) {
 	enum { divisor = sizeof(uint) * 8 };
 	uint bx, mask;
+	div_t d;
 
-	bx = x / divisor;
-	mask = 1 << x % divisor;
+	d = div(x, divisor);
+	bx = d.quot;
+	mask = 1 << d.rem;
 	if(set)
 		field[y*width + bx] |= mask;
 	else
@@ -281,9 +283,11 @@ static Bool
 bit_get(uint *field, uint width, uint x, uint y) {
 	enum { divisor = sizeof(uint) * 8 };
 	uint bx, mask;
+	div_t d;
 
-	bx = x / divisor;
-	mask = 1 << x % divisor;
+	d = div(x, divisor);
+	bx = d.quot;
+	mask = 1 << d.rem;
 
 	return (field[y*width + bx] & mask) != 0;
 }

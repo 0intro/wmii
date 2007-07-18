@@ -77,9 +77,9 @@ runevsmprint(const char *fmt, va_list args)
 
 	if(runefmtstrinit(&f) < 0)
 		return nil;
-	VA_COPY(f.args,args);
+	va_copy(f.args,args);
 	n = dofmt(&f, fmt);
-	VA_END(f.args);
+	va_end(f.args);
 	if(f.start == nil)
 		return nil;
 	if(n < 0){
