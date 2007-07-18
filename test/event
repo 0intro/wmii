@@ -1,0 +1,19 @@
+#!/bin/rc
+
+wm=''
+if(~ $1 -d) {
+	wm = '&wm/wm wm/logon</dev/null'
+	shift
+}
+
+inferno '{$home/wmii/test/event.dis $*'$wm'}' $* &
+inf = $apid
+
+. 9.rc
+
+fn sigint sigterm {exit}
+fn sigexit {/bin/kill $apid}
+
+while(! ~ `{read </dev/tty} q)
+	true
+
