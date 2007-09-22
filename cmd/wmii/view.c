@@ -269,10 +269,10 @@ scale_view(View *v, int w) {
 	if(numcol * minwidth > w)
 		return;
 
-	dx = numcol * minwidth;
 	xoff = 0;
 	for(a=v->area->next, numcol--; a; a=a->next, numcol--) {
 		a->r.min.x = xoff;
+		dx = numcol * minwidth;
 
 		if(Dx(a->r) < minwidth)
 			a->r.max.x = xoff + minwidth;
