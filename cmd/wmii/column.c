@@ -425,15 +425,17 @@ resize_colframe(Frame *f, Rectangle *r) {
 	Area *a, *al, *ar;
 	View *v;
 	uint minw;
-	int dx, dw, maxx;
+	int dx, dw;
 
 	a = f->area;
 	v = a->view;
-	maxx = r->max.x;
 
 	minw = Dx(screen->r) / NCOL;
 
-	al = a->prev;
+	if(a->prev && !a->prev->floating)
+		al = a->prev;
+	else
+		al = nil;
 	ar = a->next;
 
 	if(al)
@@ -441,28 +443,26 @@ resize_colframe(Frame *f, Rectangle *r) {
 	else
 		r->min.x = max(r->min.x, 0);
 
-	if(ar) {
-		if(maxx >= ar->r.max.x - minw)
-			maxx = ar->r.max.x - minw;
-	}
+	if(ar)
+		r->max.x = min(r->max.x, ar->r.max.x - minw);
 	else
-		if(maxx > screen->r.max.x)
-			maxx = screen->r.max.x;
+		r->max.x = min(r->max.x, screen->r.max.x);
 
 	dx = a->r.min.x - r->min.x;
-	dw = maxx - a->r.max.x;
+	dw = r->max.x - a->r.max.x;
 	if(al) {
 		al->r.max.x -= dx;
 		arrange_column(al, False);
 	}
 	if(ar) {
-		ar->r.max.x -= dw;
+		ar->r.min.x += dw;
 		arrange_column(ar, False);
 	}
 
 	resize_colframeh(f, r);
 
-	a->r.max.x = maxx;
+	a->r.min.x = r->min.x;
+	a->r.max.x = r->max.x;
 	arrange_view(a->view);
 
 	focus_view(screen, v);
