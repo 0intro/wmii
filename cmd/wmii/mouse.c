@@ -289,9 +289,8 @@ horiz:
 					resize_frame(f->aprev, f->aprev->r);
 				}
 
-				remove_frame(f);
-				f->area = fw->ra;
-				insert_frame(fw->fp, f);
+				detach_from_area(f);
+				attach_to_area(fw->ra, f);
 
 				if(f->aprev) {
 					f->aprev->r.max.y = fw->fr.min.y;
