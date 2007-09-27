@@ -34,6 +34,7 @@ Let's go!
   window and move the cursor around.
 - Resize the xclock window: Hold $MODKEY, right-click the
   window and move the cursor around.
+- Kill the selected client (the xclock window) with: M-Shift-c
 - Open the actions menu: M-a
   Rerun wmiirc by selecting 'wmiirc'.
 - We'll now have a look at the internal filesystem used by
