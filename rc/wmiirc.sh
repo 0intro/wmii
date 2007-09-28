@@ -100,7 +100,7 @@ eventstuff() {
 	Key $MODKEY-Control-t
 		case $(wmiir read /keys | wc -l | tr -d ' \t\n') in
 		0|1)
-			echo -n \$Keys | tr ' ' '\012' | wmiir write /keys
+			echo -n $Keys | tr ' ' '\012' | wmiir write /keys
 			wmiir xwrite /ctl grabmod $MODKEY;;
 		*)
 			wmiir xwrite /keys $MODKEY-Control-t
