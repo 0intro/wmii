@@ -200,7 +200,7 @@ attach_to_area(Area *a, Frame *f) {
 
 	if(a->floating) {
 		place_frame(f);
-		resize_client(f->client, &f->r);
+		resize_frame(f, f->r);
 	}
 
 	focus_frame(f, False);
