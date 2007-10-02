@@ -289,7 +289,11 @@ horiz:
 					resize_frame(f->aprev, f->aprev->r);
 				}
 
-				if (fw->ra != f->area) {
+				if (f->aprev || f->anext) {
+					remove_frame(f);
+					f->area = fw->ra;
+					insert_frame(fw->fp, f);
+				} else if (f->area != fw->ra) {
 					detach_from_area(f);
 					attach_to_area(fw->ra, f);
 				}
