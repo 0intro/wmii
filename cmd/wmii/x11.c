@@ -122,7 +122,8 @@ Wfmt(Fmt *f) {
 /* Init */
 void
 initdisplay(void) {
-	display = XOpenDisplay(nil);
+	if(!(display = XOpenDisplay(nil)))
+		fatal("couldn't open display");
 	scr.screen = DefaultScreen(display);
 	scr.colormap = DefaultColormap(display, scr.screen);
 	scr.visual = DefaultVisual(display, scr.screen);
