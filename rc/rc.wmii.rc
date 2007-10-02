@@ -19,6 +19,7 @@ fn config_whatis {
 if(! test -x $PLAN9/bin/read) {
 	echo 'Can''t find the ''read'' command' >[1=2]
 	xmessage -file - <<'!'
+	path=$oldpath
 	exec `{config_whatis wmiirc}
 }
 rc.wmii can't run:
