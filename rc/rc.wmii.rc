@@ -12,7 +12,7 @@ if(echo $0 | grep -s '(^|/)rc\.wmii\.local$') {
 }
 
 fn config_whatis {
-	prog = `{@{path=$confpath whatis $1} | grep -v '^fn|= ' || echo /dev/null}
+	prog = `{@{path=$confpath whatis $1} | grep -v '^fn|=' || echo /dev/null}
 	shift; echo $prog $*
 }
 
