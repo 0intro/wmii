@@ -39,6 +39,9 @@ create_client(XWindow w, XWindowAttributes *wa) {
 	c->w.type = WWindow;
 	c->w.w = w;
 	c->w.r = c->r;
+    
+	if((Dx(c->r) == Dx(screen->r)) && (Dy(c->r) == Dy(screen->r)))
+		fullscreen(c, True);
 
 	prop_client(c, xatom("WM_PROTOCOLS"));
 	prop_client(c, xatom("WM_TRANSIENT_FOR"));
