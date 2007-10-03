@@ -5,7 +5,7 @@ name, and not to its source code or any other materials.
 When in doubt about any of these conditions or other matters
 of packaging or distrobution, , please contact the wmii
 mailing lists <wmii-hackers@suckless.org> or
-<wmii@suckless.org>, or Kris Maglione <fbsdaemon@gmail.com>.
+<wmii@suckless.org>.
 
 Any binary distribution of wmii MUST have a properly set
 version string. This string may normally be set in

@@ -2,7 +2,7 @@ Abstract
 --------
 window manager improved-improved is a dynamic window manager for X11.
 It supports classic and tiled window management with extended
-keyboard, mouse, and 9P-based [2] remote control.
+keyboard, mouse, and 9P-based [1] remote control.
 It consists of the wmiiwm(1) window manager and the wmiir(1)
 the remote access utility.
 
@@ -11,7 +11,7 @@ Requirements
 ------------
 In order to build wmii you need the Xlib header files and libixp. xmessage
 and dmenu are used by the default scripts. libixp and dmenu can be obtained
-from http://suckless.org/. Either plan9port or 9base is recommended.
+from http://suckless.org/. Either plan9port[2] or 9base is recommended.
 
 
 Installation
@@ -59,7 +59,7 @@ The following people have contributed especially to wmii in various ways:
 - Christoph Wegscheider <christoph dot wegscheider at wegi dot net>
 - Georg Neis <gn at suckless dot org>
 - Uwe Zeisberger <zeisberg at informatik dot uni-freiburg dot de>
-- Uriel <uriel at suckless dot org>
+- Uriel <uriel99 at gmail dot com>
 - Scot Doyle <scot at scotdoyle dot com>
 - Sebastian Hartmann <seb dot wmi at gmx dot de>
 - Bernhard Leiner <bleiner at gmail dot com>
@@ -85,5 +85,5 @@ The following people have contributed especially to wmii in various ways:
 
 References
 ----------
-[1] http://www.suckless.org/
-[2] http://www.cs.bell-labs.com/sys/man/5/INDEX.html 
+[1] http://9p.cat-v.org
+[2] http://plan9.us
