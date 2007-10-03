@@ -1,12 +1,24 @@
+BUGS
+* 'Fullscreen' menu option broken for menus in non-focused titlebars (stackmode).
+* collapsed clients outside stacked mode don't always uncollapse when they receive focus
+* resizing within a column affects clients it shouldn't (seems to average client size?)
+* various qiv brokenness
+* firefox full screen only works sometimes (and coming back from fs is broken)
+
 3.6
+[bugfix only]
+
+4.0
 * Working grab boxes
 * Grow(and shrink?) ctl commands
 * Switch to mk for building
-
-4.0
-* Get rid of colmodes
-* (Multi line) Tag bars
-* Resizable managed area
-* Regex-based tag strings
-* New dmenu(with real cursor and using Bio)
 * Use libbio, libfmt, libregex9
+* New dmenu(with real cursor and using Bio)? (use 9menu instead?)
+* Depend on p9p and replace script mess with a single set using p9p commands
+
+4.1
+* Resizable managed area
+* bring back col creation with the mouse
+* (Multi line) Tag bars
+* Regex-based tag strings
+* Get rid of colmodes? (they suck, but sort of work and we need max mode anyway)
