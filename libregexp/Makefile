@@ -11,7 +11,7 @@ OBJ=\
 	regsub\
 	regaux\
 	rregexec\
-	rregsub\
+	rregsub
 
 include ${ROOT}/mk/lib.mk
 
