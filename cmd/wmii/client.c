@@ -330,7 +330,10 @@ focus_client(Client *c) {
 
 	Dprint("focus_client(%p[%C]) => %s\n", c,  c, clientname(c));
 
-	if((c == nil || !c->noinput) && screen->focus != c) {
+	if (screen->focus == c)
+		return;
+
+	if(c == nil || !c->noinput) {
 		Dprint("\t%s => %s\n", clientname(screen->focus), clientname(c));
 
 		if(c)
@@ -342,6 +345,8 @@ focus_client(Client *c) {
 
 		XSync(display, False);
 		flushevents(FocusChangeMask, True);
+	} else if(c && c->noinput) {
+		setfocus(nil, RevertToParent);
 	}
 }
 

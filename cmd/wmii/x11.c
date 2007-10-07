@@ -662,7 +662,11 @@ gettextproperty(Window *w, char *name) {
 
 void
 setfocus(Window *w, int mode) {
-	XSetInputFocus(display, w->w, mode, CurrentTime);
+	if(w) {
+		XSetInputFocus(display, w->w, mode, CurrentTime);
+	} else { /* "relinquish" focus */
+		XSetInputFocus(display, PointerRoot, mode, CurrentTime);
+	}
 }
 
 /* Mouse */
