@@ -16,8 +16,8 @@ WMII_BACKGROUND='#333333'
 WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
-WMII_MENU="dmenu -b -fn $WMII_FONT -nf $1 -nb $2 -sf $4 -sb $5"
-WMII_9MENU="wmii9menu -font $WMII_FONT -nf $1 -nb $2 -sf $4 -sb $5 -br $6"
+WMII_MENU="dmenu -b -fn '$WMII_FONT' -nf '$1' -nb '$2' -sf '$4' -sb '$5'"
+WMII_9MENU="wmii9menu -font '$WMII_FONT' -nf '$1' -nb '$2' -sf '$4' -sb '$5' -br '$6'"
 WMII_TERM="xterm"
 
 # Column Rules
@@ -89,7 +89,7 @@ eventstuff() {
 		client=$1; button=$2
 		case "$button" in
 		3)
-			do=$($WMII_9MENU -initial "${menulast:-SomeRandomName}" Nop Delete)
+			do=$(eval $WMII_9MENU -initial "${menulast:-SomeRandomName}" Nop Delete)
 			case "$do" in
 			Delete)
 				wmiir xwrite /client/$client/ctl kill
@@ -115,13 +115,13 @@ eventstuff() {
 	Key $MODKEY-m
 		wmiir xwrite /tag/sel/ctl colmode sel max
 	Key $MODKEY-a
-		Action $(actionlist | $WMII_MENU) &
+		Action $(actionlist | eval $WMII_MENU) &
 	Key $MODKEY-p
-		sh -c "$($WMII_MENU <$progsfile)" &
+		sh -c "$(eval $WMII_MENU <$progsfile)" &
 	Key $MODKEY-t
 		wmiir xwrite /ctl "view $(tagsmenu)" &
 	Key $MODKEY-Return
-		$WMII_TERM &
+		eval $WMII_TERM &
 	Key $MODKEY-Shift-space
 		wmiir xwrite /tag/sel/ctl send sel toggle
 	Key $MODKEY-Shift-c
@@ -212,7 +212,7 @@ done
 
 # More functions
 tagsmenu() {
-        wmiir ls /tag | sed 's|/||; /^sel$/d' | $WMII_MENU
+        wmiir ls /tag | sed 's|/||; /^sel$/d' | eval $WMII_MENU
 }
 
 actionlist() {
