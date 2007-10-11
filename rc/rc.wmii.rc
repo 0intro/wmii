@@ -76,7 +76,7 @@ fn 9menu {
 
 fn proglist {
         /bin/ls -lL `{echo $* | sed 'y/:/ /'} >[2]/dev/null \
-		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
+		| awk '$1 ~ /^[^d][^/]*x/ { print $NF }' \
 		| sort | uniq
 }
 
