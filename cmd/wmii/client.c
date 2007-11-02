@@ -337,16 +337,16 @@ focus_client(Client *c) {
 		Dprint("\t%s => %s\n", clientname(screen->focus), clientname(c));
 
 		if(c)
-			setfocus(&c->w, RevertToParent);
+			setfocus(&c->w, RevertToPointerRoot);
 		else
-			setfocus(screen->barwin, RevertToParent);
+			setfocus(screen->barwin, RevertToPointerRoot);
 
 		write_event("ClientFocus %C\n", c);
 
 		XSync(display, False);
 		flushevents(FocusChangeMask, True);
 	} else if(c && c->noinput) {
-		setfocus(nil, RevertToParent);
+		setfocus(nil, RevertToPointerRoot);
 	}
 }
 

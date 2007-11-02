@@ -135,7 +135,7 @@ focusin(XEvent *e) {
 	if(ev->detail == NotifyDetailNone) {
 		print_focus(&c_magic, "<magic[none]>");
 		screen->focus = &c_magic;
-		setfocus(screen->barwin, RevertToParent);
+		setfocus(screen->barwin, RevertToPointerRoot);
 		return;
 	}
 
