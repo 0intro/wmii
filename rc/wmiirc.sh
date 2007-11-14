@@ -9,8 +9,8 @@ LEFT=h
 RIGHT=l
 
 # Colors tuples: "<text> <background> <border>"
-WMII_NORMCOLORS='#222222 #5FBF77 #2A7F3F'
-WMII_FOCUSCOLORS='#ffffff #153F1F #2A7F3F'
+WMII_NORMCOLORS='#888888 #222222 #333333'
+WMII_FOCUSCOLORS='#ffffff #285577 #4c7899'
 
 WMII_BACKGROUND='#333333'
 WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
@@ -184,7 +184,7 @@ Action() {
 proglist() {
 	paths=$(echo "$@" | sed 'y/:/ /')
 	ls -lL $paths 2>/dev/null \
-		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
+		| awk '$1 ~ /^[^d].*x/ && NF > 2 { print $NF }' \
 		| sort | uniq
 }
 
