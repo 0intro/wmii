@@ -89,10 +89,12 @@ eventstuff() {
 		client=$1; button=$2
 		case "$button" in
 		3)
-			do=$(eval $WMII_9MENU -initial "${menulast:-SomeRandomName}" Nop Delete)
+			do=$(eval $WMII_9MENU -initial "${menulast:-SomeRandomName}" Nop Delete Fullscreen)
 			case "$do" in
 			Delete)
-				wmiir xwrite /client/$client/ctl kill
+				wmiir xwrite /client/$client/ctl kill;;
+			Fullscreen)
+				wmiir xwrite /client/$client/ctl Fullscreen on;;
 			esac
 			menulast=${do:-"$menulast"}
 		esac
@@ -124,6 +126,8 @@ eventstuff() {
 		eval $WMII_TERM &
 	Key $MODKEY-Shift-space
 		wmiir xwrite /tag/sel/ctl send sel toggle
+	Key $MODKEY-f
+		wmiir xwrite /client/sel/ctl Fullscreen toggle
 	Key $MODKEY-Shift-c
 		wmiir xwrite /client/sel/ctl kill
 	Key $MODKEY-Shift-t
