@@ -1,23 +1,34 @@
 /* Copyright ©2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#define _X11_VISIBLE
+#define ZP _ZP
+#define ZR _ZR
+#define pointerwin __pointerwin
 #include "dat.h"
 #include <assert.h>
 #include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 #include <bio.h>
 #include "fns.h"
+#undef  ZP /* These should be allocated in read-only memory, */
+#undef  ZR /* but declaring them const causes too much trouble
+            * elsewhere. */
+#undef  pointerwin
 
-Point ZP = {0, 0};
-Rectangle ZR = {{0, 0}, {0, 0}};
+const Point ZP = {0, 0};
+const Rectangle ZR = {{0, 0}, {0, 0}};
+
+const Window _pointerwin = {
+	.w = PointerRoot
+};
+Window *const pointerwin = (Window*)&_pointerwin;
 
 static Map wmap, amap;
 static MapEnt *wbucket[137];
 static MapEnt *abucket[137];
 
+/* Rectangles/Points */
 XRectangle
 XRect(Rectangle r) {
 	XRectangle xr;
@@ -95,6 +106,20 @@ rectsubpt(Rectangle r, Point p) {
 	return r;
 }
 
+/* Formatters */
+static int
+Afmt(Fmt *f) {
+	Atom a;
+	char *s;
+	int i;
+
+	a = va_arg(f->args, Atom);
+	s = XGetAtomName(display, a);
+	i = fmtprint(f, "%s", s);
+	free(s);
+	return i;
+}
+
 static int
 Rfmt(Fmt *f) {
 	Rectangle r;
@@ -143,13 +168,14 @@ initdisplay(void) {
 	amap.bucket = abucket;
 	amap.nhash = nelem(abucket);
 
+	fmtinstall('A', Afmt);
 	fmtinstall('R', Rfmt);
 	fmtinstall('P', Pfmt);
 	fmtinstall('W', Wfmt);
 }
 
 /* Images */
-Image *
+Image*
 allocimage(int w, int h, int depth) {
 	Image *img;
 
@@ -172,7 +198,7 @@ freeimage(Image *img) {
 }
 
 /* Windows */
-Window *
+Window*
 createwindow(Window *parent, Rectangle r, int depth, uint class,
 		WinAttr *wa, int valmask)
 		{
@@ -195,6 +221,15 @@ createwindow(Window *parent, Rectangle r, int depth, uint class,
 	w->r = r;
 	w->depth = depth;
 	return w;
+}
+
+Window*
+window(XWindow w) {
+	static Window win;
+
+	win.type = WWindow;
+	win.w = w;
+	return &win;
 }
 
 void
@@ -279,9 +314,9 @@ sethandler(Window *w, Handlers *new) {
 	assert((w->prev != nil && w->next != nil) || w->next == w->prev);
 
 	if(new == nil)
-		maprm(&wmap, (ulong)w->w);
+		map_rm(&wmap, (ulong)w->w);
 	else {
-		e = mapget(&wmap, (ulong)w->w, 1);
+		e = map_get(&wmap, (ulong)w->w, 1);
 		e->val = w;
 	}
 	old = w->handler;
@@ -293,7 +328,7 @@ Window*
 findwin(XWindow w) {
 	MapEnt *e;
 	
-	e = mapget(&wmap, (ulong)w, 0);
+	e = map_get(&wmap, (ulong)w, 0);
 	if(e)
 		return e->val;
 	return nil;
@@ -468,7 +503,7 @@ copyimage(Image *dst, Rectangle r, Image *src, Point p) {
 }
 
 /* Colors */
-Bool
+bool
 namedcolor(char *name, ulong *ret) {
 	XColor c, c2;
 
@@ -479,7 +514,7 @@ namedcolor(char *name, ulong *ret) {
 	return 0;
 }
 
-Bool
+bool
 loadcolor(CTuple *c, char *str) {
 	char buf[24];
 
@@ -493,7 +528,7 @@ loadcolor(CTuple *c, char *str) {
 }
 
 /* Fonts */
-Font *
+Font*
 loadfont(char *name) {
 	Biobuf *b;
 	Font *f;
@@ -572,15 +607,41 @@ Atom
 xatom(char *name) {
 	MapEnt *e;
 	
-	e = hashget(&amap, name, 1);
+	e = hash_get(&amap, name, 1);
 	if(e->val == nil)
 		e->val = (void*)XInternAtom(display, name, False);
 	return (Atom)e->val;
 }
 
 void
+sendevent(Window *w, bool propegate, long mask, XEvent *e) {
+	XSendEvent(display, w->w, propegate, mask, e);
+}
+
+KeyCode
+keycode(char *name) {
+	return XKeysymToKeycode(display, XStringToKeysym(name));
+}
+
+void
+sync(void) {
+	XSync(display, False);
+}
+
+/* Properties */
+void
+delproperty(Window *w, char *prop) {
+	XDeleteProperty(display, w->w, xatom(prop));
+}
+
+void
 changeproperty(Window *w, char *prop, char *type, int width, uchar data[], int n) {
 	XChangeProperty(display, w->w, xatom(prop), xatom(type), width, PropModeReplace, data, n);
+}
+
+void
+changeprop_string(Window *w, char *prop, char *string) {
+	changeprop_char(w, prop, "UTF8_STRING", string, strlen(string));
 }
 
 void
@@ -596,6 +657,25 @@ changeprop_short(Window *w, char *prop, char *type, short data[], int len) {
 void
 changeprop_long(Window *w, char *prop, char *type, long data[], int len) {
 	changeproperty(w, prop, type, 32, (uchar*)data, len);
+}
+
+void
+changeprop_textlist(Window *w, char *prop, char *type, char *data[]) {
+	char **p, *s, *t;
+	int len, n;
+
+	len = 0;
+	for(p=data; *p; p++)
+		len += strlen(*p) + 1;
+	s = emalloc(len);
+	t = s;
+	for(p=data; *p; p++) {
+		n = strlen(*p) + 1;
+		memcpy(t, *p, n);
+		t += n;
+	}
+	changeprop_char(w, prop, type, s, len);
+	free(s);
 }
 
 void
@@ -626,6 +706,27 @@ getproperty(Window *w, char *prop, char *type, Atom *actual, ulong offset, uchar
 	return n;
 }
 
+char**
+strlistdup(char *list[], int n) {
+	char **p, *q;
+	int i, m;
+
+	for(i=0, m=0; i < n; i++)
+		m += strlen(list[i])+1;
+
+	p = malloc((n+1)*sizeof(char*) + m);
+	q = (char*)&p[n+1];
+
+	for(i=0; i < n; i++) {
+		p[i] = q;
+		m = strlen(list[i])+1;
+		memcpy(q, list[i], m);
+		q += m;
+	}
+	p[n] = nil;
+	return p;
+}
+
 int
 gettextlistproperty(Window *w, char *name, char **ret[]) {
 	XTextProperty prop;
@@ -644,7 +745,7 @@ gettextlistproperty(Window *w, char *name, char **ret[]) {
 	return n;
 }
 
-char *
+char*
 gettextproperty(Window *w, char *name) {
 	char **list, *str;
 	int n;
@@ -667,13 +768,23 @@ setfocus(Window *w, int mode) {
 /* Mouse */
 Point
 querypointer(Window *w) {
-	XWindow dummy;
+	XWindow win;
 	Point pt;
 	uint ui;
 	int i;
 	
-	XQueryPointer(display, w->w, &dummy, &dummy, &i, &i, &pt.x, &pt.y, &ui);
+	XQueryPointer(display, w->w, &win, &win, &i, &i, &pt.x, &pt.y, &ui);
 	return pt;
+}
+
+int
+pointerscreen(void) {
+	XWindow win;
+	Point pt;
+	uint ui;
+	int i;
+	
+	return XQueryPointer(display, scr.root.w, &win, &win, &i, &i, &pt.x, &pt.y, &ui);
 }
 
 void
@@ -771,18 +882,26 @@ sethints(Window *w) {
 		xs.win_gravity = NorthWestGravity;
 
 	switch (xs.win_gravity) {
-	case EastGravity: case CenterGravity: case WestGravity:
+	case EastGravity:
+	case CenterGravity:
+	case WestGravity:
 		p.y = 1;
 		break;
-	case SouthEastGravity: case SouthGravity: case SouthWestGravity:
+	case SouthEastGravity:
+	case SouthGravity:
+	case SouthWestGravity:
 		p.y = 2;
 		break;
 	}
 	switch (xs.win_gravity) {
-	case NorthGravity: case CenterGravity: case SouthGravity:
+	case NorthGravity:
+	case CenterGravity:
+	case SouthGravity:
 		p.x = 1;
 		break;
-	case NorthEastGravity: case EastGravity: case SouthEastGravity:
+	case NorthEastGravity:
+	case EastGravity:
+	case SouthEastGravity:
 		p.x = 2;
 		break;
 	}
@@ -820,7 +939,7 @@ sizehint(WinHints *h, Rectangle r) {
 	p2 = h->aspect.max;
 	if(p.x * p2.y / p.y > p2.x)
 		r.max.x = h->baspect.x + p.y * p2.x / p2.y;
-	
+
 	return rectaddpt(r, o);
 }
 

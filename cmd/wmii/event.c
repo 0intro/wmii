@@ -2,14 +2,14 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <stdio.h>
 #include <X11/keysym.h>
 #include "fns.h"
 #include "printevent.h"
 
 void
 dispatch_event(XEvent *e) {
-	Debug printevent(e);
+	Debug(DEvent)
+		printevent(e);
 	if(handler[e->type])
 		handler[e->type](e);
 }
@@ -17,7 +17,7 @@ dispatch_event(XEvent *e) {
 #define handle(w, fn, ev) if(!(w)->handler->fn) {}else (w)->handler->fn((w), ev)
 
 uint
-flushevents(long event_mask, Bool dispatch) {
+flushevents(long event_mask, bool dispatch) {
 	XEvent ev;
 	uint n = 0;
 
@@ -73,6 +73,14 @@ configurerequest(XEvent *e) {
 }
 
 static void
+clientmessage(XEvent *e) {
+	XClientMessageEvent *ev;
+
+	ev = &e->xclient;
+	ewmh_clientmessage(ev);
+}
+
+static void
 destroynotify(XEvent *e) {
 	XDestroyWindowEvent *ev;
 	Window *w;
@@ -82,7 +90,7 @@ destroynotify(XEvent *e) {
 	if((w = findwin(ev->window))) 
 		handle(w, destroy, ev);
 	else {
-		Dprint("DestroyWindow(%ux) (no handler)\n", (uint)ev->window);
+		Dprint(DGeneric, "DestroyWindow(%ux) (no handler)\n", (uint)ev->window);
 		if((c = win2client(ev->window)))
 			fprint(2, "Badness: Unhandled DestroyNotify: "
 				"Client: %p, Window: %W, Name: %s\n", c, &c->w, c->name);
@@ -102,7 +110,7 @@ enternotify(XEvent *e) {
 		handle(w, enter, ev);
 	else if(ev->window == scr.root.w) {
 		sel_screen = True;
-		draw_frames();
+		frame_draw_all();
 	}
 }
 
@@ -113,15 +121,15 @@ leavenotify(XEvent *e) {
 	ev = &e->xcrossing;
 	if((ev->window == scr.root.w) && !ev->same_screen) {
 		sel_screen = True;
-		draw_frames();
+		frame_draw_all();
 	}
 }
 
 void
-print_focus(Client *c, char *to) {
-	Dprint("screen->focus: %p[%C] => %p[%C]\n",
+print_focus(Client *c, const char *to) {
+	Dprint(DFocus, "screen->focus: %p[%C] => %p[%C]\n",
 			screen->focus, screen->focus, c, c);
-	Dprint("\t%s => %s\n", clientname(screen->focus), to);
+	Dprint(DFocus, "\t%s => %s\n", clientname(screen->focus), to);
 }
 
 static void
@@ -162,7 +170,7 @@ focusin(XEvent *e) {
 			print_focus(&c_magic, "<magic>");
 			screen->focus = &c_magic;
 			if(c->sel)
-				draw_frame(c->sel);
+				frame_draw(c->sel);
 		}
 	}
 }
@@ -234,11 +242,11 @@ maprequest(XEvent *e) {
 
 	if(wa.override_redirect) {
 		XSelectInput(display, ev->window,
-				(StructureNotifyMask | PropertyChangeMask));
+			(StructureNotifyMask | PropertyChangeMask));
 		return;
 	}
 	if(!win2client(ev->window))
-		create_client(ev->window, &wa);
+		client_create(ev->window, &wa);
 }
 
 static void
@@ -287,6 +295,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress] = buttonpress,
 	[ButtonRelease] = buttonrelease,
 	[ConfigureRequest] = configurerequest,
+	[ClientMessage] = clientmessage,
 	[DestroyNotify] = destroynotify,
 	[EnterNotify] = enternotify,
 	[Expose] = expose,

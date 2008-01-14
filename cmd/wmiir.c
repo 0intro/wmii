@@ -17,9 +17,9 @@ static IxpClient *client;
 static void
 usage(void) {
 	fprint(1,
-		   "usage: %1$s [-a <address>] {create | read | ls [-ld] | remove | rm | write} <file>\n"
-		   "       %1$s [-a <address>] xwrite <file> <data>\n"
-		   "       %1$s -v\n", argv0);
+		   "usage: %s [-a <address>] {create | read | ls [-ld] | remove | rm | write} <file>\n"
+		   "       %s [-a <address>] xwrite <file> <data>\n"
+		   "       %s -v\n", argv0, argv0, argv0);
 	exit(1);
 }
 
@@ -185,6 +185,7 @@ xcreate(int argc, char *argv[]) {
 static int
 xremove(int argc, char *argv[]) {
 	char *file;
+	int n;
 
 	ARGBEGIN{
 	default:
@@ -192,8 +193,12 @@ xremove(int argc, char *argv[]) {
 	}ARGEND;
 
 	file = EARGF(usage());
-	if(ixp_remove(client, file) == 0)
-		fatal("Can't remove file '%s': %r\n", file);
+	do {
+		if(ixp_remove(client, file) == 0) {
+			fprint(2, "%s: Can't remove file '%s': %r\n", argv0, file);
+			n++;
+		}
+	}while((file = ARGF()));
 	return 0;
 }
 
@@ -208,18 +213,22 @@ xread(int argc, char *argv[]) {
 		usage();
 	}ARGEND;
 
+	if(argc == 0)
+		usage();
 	file = EARGF(usage());
-	fid = ixp_open(client, file, P9_OREAD);
-	if(fid == nil)
-		fatal("Can't open file '%s': %r\n", file);
+	do {
+		fid = ixp_open(client, file, P9_OREAD);
+		if(fid == nil)
+			fatal("Can't open file '%s': %r\n", file);
 
-	buf = emalloc(fid->iounit);
-	while((count = ixp_read(fid, buf, fid->iounit)) > 0)
-		write(1, buf, count);
-	ixp_close(fid);
+		buf = emalloc(fid->iounit);
+		while((count = ixp_read(fid, buf, fid->iounit)) > 0)
+			write(1, buf, count);
+		ixp_close(fid);
 
-	if(count == -1)
-		fatal("cannot read file/directory '%s': %r\n", file);
+		if(count == -1)
+			fprint(2, "%s: cannot read file/directory '%s': %r\n", argv0, file);
+	}while((file = ARGF()));
 
 	return 0;
 }
@@ -299,6 +308,7 @@ struct exectab {
 	{"write", xwrite},
 	{"xwrite", xawrite},
 	{"read", xread},
+	{"cat", xread},
 	{"create", xcreate},
 	{"remove", xremove},
 	{"rm", xremove},
@@ -308,7 +318,7 @@ struct exectab {
 
 int
 main(int argc, char *argv[]) {
-	char *cmd, *address;
+	char *address;
 	exectab *tab;
 	int ret;
 
@@ -327,8 +337,6 @@ main(int argc, char *argv[]) {
 		usage();
 	}ARGEND;
 
-	cmd = EARGF(usage());
-
 	if(!address)
 		fatal("$WMII_ADDRESS not set\n");
 
@@ -337,7 +345,7 @@ main(int argc, char *argv[]) {
 		fatal("can't mount: %r\n");
 
 	for(tab = etab; tab->cmd; tab++)
-		if(strcmp(cmd, tab->cmd) == 0) break;
+		if(strcmp(*argv, tab->cmd) == 0) break;
 	if(tab->cmd == 0)
 		usage();
 

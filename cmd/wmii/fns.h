@@ -3,244 +3,225 @@
  */
 
 #ifdef VARARGCK
-# pragma varargck	argpos	write_event	1
+# pragma varargck	argpos	event	1
 #
 # pragma varargck	type	"C"	Client*	
-# pragma varargck	type	"W"	Window*	
-# pragma varargck	type	"P"	Point
-# pragma varargck	type	"R"	Rectangle
 # pragma varargck	type	"r"	void
 #endif
 
+/* XXX: These don't belong here. */
+
+typedef struct Vector_long Vector_long;
+struct Vector_long {
+	long*	ary;
+	long	n;
+	long	size;
+};
+
+static void
+vector_linit(Vector_long *v) {
+	memset(v, 0, sizeof *v);
+}
+
+static void
+vector_lfree(Vector_long *v) {
+	free(v->ary);
+	memset(v, 0, sizeof *v);
+}
+
+static void
+vector_lpush(Vector_long *v, long val) {
+	if(v->n == v->size) {
+		if(v->size == 0)
+			v->size = 2;
+		v->size <<= 2;
+		v->ary = erealloc(v->ary, v->size * sizeof *v->ary);
+	}
+	v->ary[v->n++] = val;
+}
+
+static inline void
+__grr__(void) {
+	vector_linit(nil);
+	vector_lfree(nil);
+	vector_lpush(nil, 0);
+}
+
 /* area.c */
-char *area_name(Area *a);
-uint area_idx(Area *a);
-Area *create_area(View*, Area *pos, uint w);
-void destroy_area(Area*);
-Area *area_of_id(View*, ushort id);
-void focus_area(Area*);
-void send_to_area(Area*, Frame*);
-void attach_to_area(Area*, Frame*);
-void detach_from_area(Frame*);
-Client *area_selclient(Area*);
+void	area_attach(Area*, Frame*);
+Area*	area_create(View*, Area *pos, uint w);
+void	area_destroy(Area*);
+void	area_detach(Frame*);
+void	area_focus(Area*);
+uint	area_idx(Area*);
+void	area_moveto(Area*, Frame*);
+char*	area_name(Area*);
+Client*	area_selclient(Area*);
 
 /* bar.c */
-void initbar(WMScreen *s);
-Bar *create_bar(Bar **b_link, char *name);
-void destroy_bar(Bar **b_link, Bar*);
-void draw_bar(WMScreen *s);
-void resize_bar(WMScreen *s);
-Bar *bar_of_name(Bar *b_link, const char *name);
+Bar*	bar_create(Bar**, const char*);
+void	bar_destroy(Bar**, Bar*);
+void	bar_draw(WMScreen*);
+Bar*	bar_find(Bar*, const char*);
+void	bar_init(WMScreen*);
+void	bar_resize(WMScreen*);
 
 /* client.c */
-Client *create_client(XWindow, XWindowAttributes*);
-void destroy_client(Client*);
-void configure_client(Client*);
-void update_class(Client *c);
-void prop_client(Client *c, Atom);
-void kill_client(Client*);
-void gravitate_client(Client*, Bool invert);
-void map_client(Client*);
-void unmap_client(Client*, int state);
-int map_frame(Client*);
-int unmap_frame(Client*);
-Rectangle gravclient(Client*, Rectangle);
-void fullscreen(Client*, Bool);
-void set_urgent(Client *, Bool urgent, Bool write);
-void set_cursor(Client*, Cursor);
-void focus_frame(Frame*, Bool restack);
-void reparent_client(Client*, Window*, Point);
-void manage_client(Client*);
-void focus(Client*, Bool restack);
-void focus_client(Client*);
-void resize_client(Client*, Rectangle*);
-void apply_sizehints(Client*, Rectangle*, Bool floating, Bool frame, Align sticky);
-void move_client(Client*, char *arg);
-void size_client(Client*, char *arg);
-Client *selclient(void);
-Client *win2client(XWindow);
-int Cfmt(Fmt *f);
-char *clientname(Client*);
-void apply_rules(Client*);
-void apply_tags(Client*, const char*);
+int	Cfmt(Fmt *f);
+void	apply_rules(Client*);
+void	apply_tags(Client*, const char*);
+void	client_configure(Client*);
+Client*	client_create(XWindow, XWindowAttributes*);
+void	client_destroy(Client*);
+void	client_focus(Client*);
+void	client_kill(Client*);
+void	client_manage(Client*);
+void	client_map(Client*);
+void	client_prop(Client*, Atom);
+void	client_reparent(Client*, Window*, Point);
+void	client_resize(Client*, Rectangle);
+void	client_setcursor(Client*, Cursor);
+void	client_seturgent(Client*, int urgent, bool write);
+void	client_unmap(Client*, int state);
+Frame*	client_viewframe(Client *c, View *v);
+char*	clientname(Client*);
+void	focus(Client*, bool restack);
+void	fullscreen(Client*, int);
+int	map_frame(Client*);
+Client*	selclient(void);
+int	unmap_frame(Client*);
+void	update_class(Client*);
+Client*	win2client(XWindow);
+Rectangle	client_grav(Client*, Rectangle);
 
 /* column.c */
-void update_divs(void);
-void draw_div(Divide*);
-void setdiv(Divide*, int x);
-void arrange_column(Area*, Bool dirty);
-void resize_column(Area*, int w);
-void resize_colframe(Frame*, Rectangle*);
-int str2colmode(const char *str);
-char *colmode2str(int i);
-Area *new_column(View*, Area *pos, uint w);
+char*	colmode2str(int);
+int	str2colmode(const char*);
+void	column_arrange(Area*, bool dirty);
+Area*	column_new(View*, Area *, uint);
+void	column_resize(Area*, int);
+void	column_resizeframe(Frame*, Rectangle*);
+void	div_draw(Divide*);
+void	div_set(Divide*, int x);
+void	div_update_all(void);
 
 /* event.c */
-void dispatch_event(XEvent*);
-void check_x_event(IxpConn*);
-uint flushevents(long even_mask, Bool dispatch);
-void print_focus(Client *c, char *to);
+void	check_x_event(IxpConn*);
+void	dispatch_event(XEvent*);
+uint	flushevents(long, bool dispatch);
+void	print_focus(Client*, const char*);
+
+/* ewmh.c */
+int	ewmh_clientmessage(XClientMessageEvent*);
+void	ewmh_destroyclient(Client*);
+void	ewmh_framesize(Client*);
+void	ewmh_getstrut(Client*);
+void	ewmh_getwintype(Client*);
+void	ewmh_init(void);
+void	ewmh_initclient(Client*);
+void	ewmh_prop(Client*, Atom);
+void	ewmh_updateclient(Client*);
+void	ewmh_updateclientlist(void);
+void	ewmh_updateclients(void);
+void	ewmh_updatestacking(void);
+void	ewmh_updatestate(Client*);
+void	ewmh_updateview(void);
+void	ewmh_updateviews(void);
 
 /* frame.c */
-uint frame_idx(Frame *f);
-Frame *create_frame(Client*, View*);
-void remove_frame(Frame*);
-void insert_frame(Frame *pos, Frame*);
-void resize_frame(Frame*, Rectangle);
-Bool frame_to_top(Frame *f);
-void set_frame_cursor(Frame*, Point);
-void swap_frames(Frame*, Frame*);
-int frame_delta_h(void);
-Rectangle frame_hints(Frame*, Rectangle, Align);
-Rectangle frame2client(Frame*, Rectangle);
-Rectangle client2frame(Frame*, Rectangle);
-int ingrabbox(Frame*, int x, int y);
-void draw_frame(Frame*);
-void draw_frames(void);
-void update_frame_widget_colors(Frame*);
+Frame*	frame_create(Client*, View*);
+int	frame_delta_h(void);
+void	frame_draw(Frame*);
+void	frame_draw_all(void);
+void	frame_focus(Frame*);
+uint	frame_idx(Frame*);
+void	frame_insert(Frame *pos, Frame*);
+void	frame_remove(Frame*);
+void	frame_resize(Frame*, Rectangle);
+void	frame_setcursor(Frame*, Point);
+void	frame_swap(Frame*, Frame*);
+bool	frame_to_top(Frame*);
+int	ingrabbox_p(Frame*, int x, int y);
+void	move_focus(Frame*, Frame*);
 Rectangle constrain(Rectangle);
+Rectangle frame_client2rect(Frame*, Rectangle);
+Rectangle frame_hints(Frame*, Rectangle, Align);
+Rectangle frame_rect2client(Frame*, Rectangle);
 
 /* fs.c */
-void fs_attach(Ixp9Req*);
-void fs_clunk(Ixp9Req*);
-void fs_create(Ixp9Req*);
-void fs_flush(Ixp9Req*);
-void fs_freefid(Fid*);
-void fs_open(Ixp9Req*);
-void fs_read(Ixp9Req*);
-void fs_remove(Ixp9Req*);
-void fs_stat(Ixp9Req*);
-void fs_walk(Ixp9Req*);
-void fs_write(Ixp9Req*);
-void write_event(char*, ...);
+void	fs_attach(Ixp9Req*);
+void	fs_clunk(Ixp9Req*);
+void	fs_create(Ixp9Req*);
+void	fs_flush(Ixp9Req*);
+void	fs_freefid(Fid*);
+void	fs_open(Ixp9Req*);
+void	fs_read(Ixp9Req*);
+void	fs_remove(Ixp9Req*);
+void	fs_stat(Ixp9Req*);
+void	fs_walk(Ixp9Req*);
+void	fs_write(Ixp9Req*);
+void	event(const char*, ...);
 
 /* geom.c */
-Bool ptinrect(Point, Rectangle);
-Align quadrant(Rectangle, Point);
-Cursor cursor_of_quad(Align);
-Align get_sticky(Rectangle src, Rectangle dst);
+Cursor	quad_cursor(Align);
+Align	get_sticky(Rectangle src, Rectangle dst);
+bool	rect_haspoint_p(Point, Rectangle);
+Align	quadrant(Rectangle, Point);
 
 /* key.c */
-void kpress(XWindow, ulong mod, KeyCode);
-void update_keys(void);
-void init_lock_keys(void);
-ulong str2modmask(char*);
+void	init_lock_keys(void);
+void	kpress(XWindow, ulong mod, KeyCode);
+ulong	str2modmask(const char*);
+void	update_keys(void);
 
 /* map.c */
-MapEnt* mapget(Map*, ulong, int create);
-MapEnt* hashget(Map*, char*, int create);
-void* maprm(Map*, ulong);
-void* hashrm(Map*, char*);
+MapEnt*	hash_get(Map*, const char*, int create);
+void*	hash_rm(Map*, const char*);
+MapEnt*	map_get(Map*, ulong, int create);
+void*	map_rm(Map*, ulong);
 
 /* message.c */
-char *getword(IxpMsg*);
-int getulong(char*, ulong*);
-int getlong(char*, long*);
-Area *strarea(View*, char*);
-char *message_view(View*, IxpMsg*);
-char *parse_colors(IxpMsg*, CTuple*);
-char *message_root(void*, IxpMsg*);
-char *read_root_ctl(void);
-char *message_client(Client*, IxpMsg*);
-char *select_area(Area*, IxpMsg*);
-char *send_client(View*, IxpMsg*, Bool swap);
+int	getlong(const char*, long*);
+int	getulong(const char*, ulong*);
+char*	message_client(Client*, IxpMsg*);
+char*	message_root(void*, IxpMsg*);
+char*	message_view(View*, IxpMsg*);
+char*	msg_getword(IxpMsg*);
+char*	msg_parsecolors(IxpMsg*, CTuple*);
+char*	msg_selectarea(Area*, IxpMsg*);
+char*	msg_sendclient(View*, IxpMsg*, bool swap);
+char*	root_readctl(void);
+Area*	strarea(View*, const char*);
 
 /* mouse.c */
-void mouse_resizecol(Divide*);
-void do_mouse_resize(Client*, Bool opaque, Align);
-void grab_mouse(XWindow, ulong mod, ulong button);
-void ungrab_mouse(XWindow, ulong mod, uint button);
-Align snap_rect(Rectangle *rects, int num, Rectangle *current, Align *mask, int snapw);
-void grab_button(XWindow, uint button, ulong mod);
+void	mouse_resize(Client*, bool opaque, Align);
+void	mouse_resizecol(Divide*);
+void	grab_button(XWindow, uint button, ulong mod);
+Align	snap_rect(Rectangle *rects, int num, Rectangle *current, Align *mask, int snapw);
 
 /* rule.c */
-void update_rules(Rule**, const char*);
-void trim(char *str, const char *chars);
+void	trim(char *str, const char *chars);
+void	update_rules(Rule**, const char*);
 
 /* view.c */
-void arrange_view(View*);
-void scale_view(View*, int w);
-View *get_view(const char*);
-View *create_view(const char*);
-void focus_view(WMScreen*, View*);
-void update_client_views(Client*, char**);
-Rectangle *rects_of_view(View*, uint *num, Frame *ignore);
-View *view_of_id(ushort);
-Frame *view_clientframe(View *v, Client *c);
-void select_view(const char*);
-void attach_to_view(View*, Frame*);
-Client *view_selclient(View*);
-char *message_view(View *v, IxpMsg *m);
-void restack_view(View*);
-uchar *view_index(View*);
-uchar *view_ctl(View *v);
-void destroy_view(View*);
-void update_views(void);
-uint newcolw(View*, int i);
+void	view_arrange(View*);
+void	view_attach(View*, Frame*);
+View*	view_create(const char*);
+char*	view_ctl(View *v);
+void	view_destroy(View*);
+void	view_focus(WMScreen*, View*);
+bool	view_fullscreen_p(View*);
+char*	view_index(View*);
+uint	view_newcolw(View*, int i);
+void	view_restack(View*);
+void	view_scale(View*, int w);
+Client*	view_selclient(View*);
+void	view_select(const char*);
+void	view_setclient(Client*, char**);
+void	view_update_all(void);
+Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 
-/* wm.c */
-int win_proto(Window);
+/* utf.c */
+char*	toutf8(const char*);
+char*	toutf8n(const char*, size_t);
 
-/* x11.c */
-XRectangle XRect(Rectangle);
-int eqrect(Rectangle, Rectangle);
-int eqpt(Point, Point);
-Point addpt(Point, Point);
-Point subpt(Point, Point);
-Point mulpt(Point p, Point q);
-Point divpt(Point, Point);
-Rectangle insetrect(Rectangle, int);
-Rectangle rectaddpt(Rectangle, Point);
-Rectangle rectsubpt(Rectangle, Point);
-void initdisplay(void);
-Image * allocimage(int w, int h, int depth);
-void freeimage(Image *);
-Window *createwindow(Window *parent, Rectangle, int depth, uint class, WinAttr*, int valuemask);
-void reparentwindow(Window*, Window*, Point);
-void destroywindow(Window*);
-void setwinattr(Window*, WinAttr*, int valmask);
-void reshapewin(Window*, Rectangle);
-void movewin(Window*, Point);
-int mapwin(Window*);
-int unmapwin(Window*);
-void lowerwin(Window*);
-void raisewin(Window*);
-Handlers* sethandler(Window*, Handlers*);
-Window* findwin(XWindow);
-uint winprotocols(Window*);
-void setshapemask(Window *dst, Image *src, Point);
-void border(Image *dst, Rectangle, int w, ulong col);
-void fill(Image *dst, Rectangle, ulong col);
-void drawpoly(Image *dst, Point *pt, int np, int cap, int w, ulong col);
-void fillpoly(Image *dst, Point *pt, int np, ulong col);
-void drawline(Image *dst, Point p1, Point p2, int cap, int w, ulong col);
-void drawstring(Image *dst, Font *font, Rectangle, Align align, char *text, ulong col);
-void copyimage(Image *dst, Rectangle, Image *src, Point p);
-Bool namedcolor(char *name, ulong*);
-Bool loadcolor(CTuple*, char*);
-Font * loadfont(char*);
-void freefont(Font*);
-uint textwidth_l(Font*, char*, uint len);
-uint textwidth(Font*, char*);
-uint labelh(Font*);
-Atom xatom(char*);
-void freestringlist(char**);
-ulong getproperty(Window *w, char *prop, char *type, Atom *actual, ulong offset, uchar **ret, ulong length);
-char *gettextproperty(Window*, char*);
-int gettextlistproperty(Window *w, char *name, char **ret[]);
-void changeproperty(Window*, char *prop, char *type, int width, uchar *data, int n);
-void changeprop_char(Window *w, char *prop, char *type, char data[], int len);
-void changeprop_short(Window *w, char *prop, char *type, short data[], int len);
-void changeprop_long(Window *w, char *prop, char *type, long data[], int len);
-void setfocus(Window*, int mode);
-Point querypointer(Window*);
-void warppointer(Point);
-Point translate(Window*, Window*, Point);
-int grabpointer(Window*, Window *confine, Cursor, int mask);
-void ungrabpointer(void);
-Rectangle gravitate(Rectangle dst, Rectangle src, Point grav);
-Rectangle sizehint(WinHints*, Rectangle);
-void sethints(Window*);
-
-char*	toutf8n(char*, size_t);
-char*	toutf8(char*);

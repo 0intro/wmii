@@ -16,13 +16,11 @@ typedef struct Reprog		Reprog;
  *	Sub expression matches
  */
 struct Resub{
-	union
-	{
+	union {
 		char *sp;
 		Rune *rsp;
 	}s;
-	union
-	{
+	union {
 		char *ep;
 		Rune *rep;
 	}e;

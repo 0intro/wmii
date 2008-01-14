@@ -9,11 +9,12 @@
 # ifndef USED
 #  define USED(x) if(x);else
 # endif
-# define uchar	_p9uchar
-# define ushort	_p9ushort
-# define uint	_p9uint
-# define ulong	_p9ulong
 #endif
+
+#define uchar	_p9uchar
+#define ushort	_p9ushort
+#define uint	_p9uint
+#define ulong	_p9ulong
 typedef unsigned char		uchar;
 typedef unsigned short		ushort;
 typedef unsigned int		uint;

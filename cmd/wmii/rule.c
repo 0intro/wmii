@@ -5,8 +5,6 @@
 
 #include "dat.h"
 #include <assert.h>
-#include <string.h>
-#include <stdlib.h>
 #include "fns.h"
 
 /* basic rule matching language /regex/ -> value
@@ -20,14 +18,15 @@ enum {
 void
 trim(char *str, const char *chars) {
 	const char *cp;
-	char *sp, *sn;
+	char *p, *q;
+	char c;
 
-	for(cp = chars; *cp; cp++) {
-		for(sp = sn = str; *sn; sn++) {
-			if(*sn != *cp)
-				*(sp++) = *sn;
-		}
-		*sp = 0;
+	for(cp = chars; (c = *cp); cp++) {
+		q = str;
+		for(p = q; *p; p++)
+			if(*p != c)
+				*q++ = *p;
+		*q = '\0';
 	}
 }
 
@@ -87,6 +86,6 @@ update_rules(Rule **rule, const char *data) {
 				*v++ = *p;
 			break;
 		default: /* can't happen */
-			assert(!"invalid state");
+			die("invalid state");
 		}
 }

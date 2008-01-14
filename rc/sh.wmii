@@ -45,8 +45,7 @@ echo '
 /Firefox/ -> www
 /XMMS.*/ -> ~
 /MPlayer.*/ -> ~
-/.*/ -> !
-/.*/ -> 1
+/.*/ -> sel
 ' >/tagrules
 
 subfn seq {
@@ -139,6 +138,7 @@ Event ClientMouseDown {
 	(client button) := $*
 	if {~ $button 3} {
 		lastcmd = `{9menu -initial $lastcmd Nop Delete Fullscreen}
+		if{~ $#lastcmd 0} {lastcmd=''}
 		cmp := {~ $lastcmd $*}
 		if {$cmp Nop} {
 		} {$cmp Delete} { echo kill >/client/$client/ctl

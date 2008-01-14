@@ -9,8 +9,12 @@ for i in "$PLAN9" `echo P9PATHS`; do
 	fi
 done
 
-if [ ! -n "$RC" ]; then
+if [ -n "$RC" ]; then
 	exit 1
+fi
+
+if [ ! -x "$PLAN9/bin/read" ]; then
+	echo 1>&2 $0: Found rc, but not read'(1)'. You probably have an out-of-date 9base installed.
 fi
 
 if [ -n "$1" ]; then

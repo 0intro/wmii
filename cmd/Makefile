@@ -27,5 +27,10 @@ OWMIIR=wmiir.o ${OFILES} ${LIBIXP}
 wmiir.O: ${OWMIIR}
 	${LINK} $@ ${STATIC} ${OWMIIR}
 
+OMENU=menu.o wmii/x11.o ${OFILES} ${LIBIXP}
+menu.O: ${OMENU} dall
+	${LINK} $@ ${OMENU}
+
 wmii9menu.O: wmii9menu.o ${OFILES}
 	${LINK} $@ $*.o ${OFILES} ${LIBX11}
+

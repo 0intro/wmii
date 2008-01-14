@@ -1,17 +1,16 @@
 CFLAGS += \
 	-std=c99 \
 	-pipe \
+	-pedantic \
 	-Wall \
-	-Wno-parentheses \
-	-Wno-missing-braces \
-	-Wno-switch \
-	-Wno-comment \
-	-Wno-sign-compare \
-	-Wno-uninitialized \
-	-Wno-unused-parameter \
 	-Wimplicit \
-	-Wreturn-type \
-	-Wtrigraphs \
-	-Wstrict-prototypes \
 	-Wmissing-prototypes \
+	-Wno-comment \
+	-Wno-missing-braces \
+	-Wno-parentheses \
+	-Wno-sign-compare \
+	-Wno-switch \
 	-Wpointer-arith \
+	-Wreturn-type \
+	-Wstrict-prototypes \
+	-Wtrigraphs \

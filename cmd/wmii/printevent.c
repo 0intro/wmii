@@ -41,9 +41,6 @@
 
 #include "dat.h"
 #include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <bio.h>
 //#include "fns.h"
 #include "printevent.h"
@@ -96,13 +93,13 @@ unmask(Pair * list, uint val)
 
 static char *
 strhex(int key) {
-	sprintf(buffer, "0x%x", key);
+	sprint(buffer, "0x%x", key);
 	return buffer;
 }
 
 static char *
 strdec(int key) {
-	sprintf(buffer, "%d", key);
+	sprint(buffer, "%d", key);
 	return buffer;
 }
 
@@ -656,14 +653,13 @@ VerbFocus(XEvent *e) {
 static void
 VerbKeymap(XEvent *e) {
 	XKeymapEvent *ev = &e->xkeymap;
+	int i;
 
-	int		i;
-
-	fprintf(stderr, "window=0x%x%s", (int)ev->window, sep);
-	fprintf(stderr, "key_vector=");
+	fprint(2, "window=0x%x%s", (int)ev->window, sep);
+	fprint(2, "key_vector=");
 	for (i = 0; i < 32; i++)
-		fprintf(stderr, "%02x", ev->key_vector[i]);
-	fprintf(stderr, "\n");
+		fprint(2, "%02x", ev->key_vector[i]);
+	fprint(2, "\n");
 }
 
 static void
@@ -935,7 +931,6 @@ VerbVisibility(XEvent *e) {
 /******************************************************************************/
 
 typedef struct Handler Handler;
-
 struct Handler {
 	int key;
 	void (*fn)(XEvent*);
@@ -945,9 +940,9 @@ void
 printevent(XEvent *e) {
 	XAnyEvent *ev = &e->xany;
 
-	fprintf(stderr, "%3ld %-20s ", ev->serial, eventtype(e->xany.type));
+	fprint(2, "%3ld %-20s ", ev->serial, eventtype(e->xany.type));
 	if(ev->send_event)
-		fprintf(stderr, "(sendevent) ");
+		fprint(2, "(sendevent) ");
 	/*
 		fprintf(stderr, "type=%s%s", eventtype(e->xany.type), sep);
 		fprintf(stderr, "serial=%lu%s", ev->serial, sep);

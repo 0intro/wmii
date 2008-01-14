@@ -17,7 +17,7 @@
 #include "utf.h"
 
 Rune*
-runestrecpy(Rune *s1, Rune *es1, Rune *s2)
+runestrecpy(Rune *s1, Rune *es1, const Rune *s2)
 {
 	if(s1 >= es1)
 		return s1;

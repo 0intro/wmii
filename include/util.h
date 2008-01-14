@@ -8,63 +8,69 @@
 #undef ulong
 #undef uvlong
 #undef vlong
-#ifndef KENC
-# define uchar	_wmiiuchar
-# define ushort	_wmiiushort
-# define uint	_wmiiuint
-# define ulong	_wmiiulong
-# define vlong	_wmiivlong
-# define uvlong	_wmiiuvlong
-#endif
+#define uchar	_x_uchar
+#define ushort	_x_ushort
+#define uint	_x_uint
+#define ulong	_x_ulong
+#define uvlong _x_uvlong
+#define vlong	_x_vlong
+
 typedef unsigned char		uchar;
 typedef unsigned short		ushort;
 typedef unsigned int		uint;
 typedef unsigned long		ulong;
 typedef unsigned long long	uvlong;
-typedef long long		vlong;
+
+typedef long long	vlong;
 
 #define strlcat wmii_strlcat
 /* util.c */
-uint tokenize(char *res[], uint reslen, char *str, char delim);
-char *estrdup(const char *str);
-void *erealloc(void *ptr, uint size);
-void *emallocz(uint size);
-void *emalloc(uint size);
-void fatal(const char *fmt, ...);
-int max(int a, int b);
-int min(int a, int b);
-char *str_nil(char *s);
-int utflcpy(char *to, const char *from, int l);
-uint strlcat(char *dst, const char *src, unsigned int siz);
+void	_die(char*, int, char*);
+void*	emalloc(uint);
+void*	emallocz(uint);
+void*	erealloc(void*, uint);
+char*	estrdup(const char*);
+void	fatal(const char*, ...);
+int	max(int, int);
+int	min(int, int);
+char*	str_nil(char*);
+uint	strlcat(char*, const char*, uint);
+uint	tokenize(char **, uint, char*, char);
+int	utflcpy(char*, const char*, int);
+
+#define die(x) \
+	_die(__FILE__, __LINE__, x)
 
 char *argv0;
-void *__p;
-int __i;
 #undef ARGBEGIN
 #undef ARGEND
 #undef ARGF
 #undef EARGF
 #define ARGBEGIN \
-		int _argi=0, _argtmp=0, _inargv=0; char *_argv=nil; \
-		if(!argv0) argv0=ARGF(); \
+		int _argtmp=0, _inargv=0; char *_argv=nil; \
+		if(!argv0) argv0=*argv; argv++, argc--; \
 		_inargv=1; USED(_inargv); \
 		while(argc && argv[0][0] == '-') { \
-			_argi=1; _argv=*argv++; argc--; \
-			while(_argv[_argi]) switch(_argv[_argi++])
-#define ARGEND }_inargv=0;USED(_argtmp);USED(_argv);USED(_argi);USED(_inargv)
+			_argv=&argv[0][1]; argv++; argc--; \
+			if(_argv[0] == '-' && _argv[1] == '\0') \
+				break; \
+			while(*_argv) switch(*_argv++)
+#define ARGEND }_inargv=0;USED(_argtmp, _argv, _inargv)
 
-#define ARGF() ((_inargv && _argv[_argi]) ? \
-			(_argtmp=_argi, _argi=strlen(_argv), __i=_argi,_argv+_argtmp) \
-			: ((argc > 0) ? (--argc, ++argv, __i=argc, __p=argv, *(argv-1)) : ((char*)0)))
+#define EARGF(f) ((_inargv && *_argv) ? \
+			(_argtmp=strlen(_argv), _argv+=_argtmp, _argv-_argtmp) \
+			: ((argc > 0) ? \
+				(--argc, ++argv, _used(argc), *(argv-1)) \
+				: ((f), (char*)0)))
+#define ARGF() EARGF(_used(0))
 
-#define EARGF(f) ((_inargv && _argv[_argi]) ? \
-			(_argtmp=_argi, _argi=strlen(_argv), __i=_argi, _argv+_argtmp) \
-			: ((argc > 0) ? (--argc, ++argv, __i=argc, __p=argv, *(argv-1)) : ((f), (char*)0)))
-
+static inline void
+_used(long a, ...) {
+	if(a){}
+}
 #ifndef KENC
-# undef USED
-# undef SET
-# define USED(x) if(x){}else
-# define SET(x) ((x)=0)
+#  undef USED
+#  undef SET
+#  define USED(...) _used((long)__VA_ARGS__)
+#  define SET(x) USED(&x)
 #endif
-

@@ -40,7 +40,7 @@ status() {
 
 # Event processing
 #  Processed later by `wmiiloop' and evaled.
-#  Duplicate the eval line and replace 'eval' with 'echo' for details.
+#  Uncomment the line before the eval and run for details.
 eventstuff() {
 	cat <<'!'
 	# Events
@@ -168,6 +168,7 @@ export WMII_MENU WMII_9MENU WMII_FONT WMII_TERM
 export WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS
 
 # Feed events to `wmiiloop' for processing
+#echo "$(eventstuff | sed 's/^[	]//' | { . wmiiloop; })"
 eval "$(eventstuff | sed 's/^[	]//' | { . wmiiloop; })"
 
 echo "$Keys" | tr ' ' '\n' | wmiir write /keys
@@ -196,18 +197,14 @@ proglist $PATH >$progsfile &
 xsetroot -solid "$WMII_BACKGROUND" &
 
 # Setup Tag Bar
-seltag="$(wmiir read /tag/sel/ctl 2>/dev/null)"
-wmiir ls /lbar |
-while read bar; do
-	wmiir remove "/lbar/$bar"
-done
-wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
-while read tag; do
-	if [ "X$tag" = "X$seltag" ]; then
-		echo "$WMII_FOCUSCOLORS" "$tag" | wmiir create "/lbar/$tag" 
+(IFS="$(echo)"; wmiir rm $(wmiir ls /lbar))
+seltag="$(wmiir read /tag/sel/ctl 2>/dev/null | sed 1q)"
+wmiir ls /tag | sed -e 's|/||; /^sel$/d' | while read tag; do
+	if [ "$tag" = "$seltag" ]; then
+		echo "$WMII_FOCUSCOLORS" "$tag"
 	else
-		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag"
-	fi
+		echo "$WMII_NORMCOLORS" "$tag"
+	fi | wmiir create "/lbar/$tag"
 done
 
 # More functions
@@ -230,9 +227,9 @@ conf_which() {
 # Stop any running instances of wmiirc
 echo Start wmiirc | wmiir write /event || exit 1
 
-wmiir read /event |
-while read event; do
+wmiir read /event | while read event; do
 	set -- $event
 	event=$1; shift
 	Event_$event $@
 done 2>/dev/null
+

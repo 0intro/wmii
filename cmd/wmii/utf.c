@@ -2,11 +2,10 @@
 #include "dat.h"
 #include <errno.h>
 #include <iconv.h>
-#include <string.h>
 #include "fns.h"
 
 char*
-toutf8n(char *str, size_t nstr) {
+toutf8n(const char *str, size_t nstr) {
 	static iconv_t cd;
 	char *buf, *pos;
 	size_t nbuf, bsize;
@@ -33,7 +32,7 @@ toutf8n(char *str, size_t nstr) {
 }
 
 char*
-toutf8(char *str) {
+toutf8(const char *str) {
 	return toutf8n(str, strlen(str));
 }
 

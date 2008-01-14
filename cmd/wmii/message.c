@@ -4,10 +4,11 @@
 #include "dat.h"
 #include <assert.h>
 #include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "fns.h"
+
+static char* msg_debug(IxpMsg*);
+static char* msg_selectframe(Frame*, IxpMsg*, int);
+static char* msg_sendframe(Frame*, int, bool);
 
 static char
 	Ebadcmd[] = "bad command",
@@ -21,6 +22,7 @@ enum {
 	LBORDER,
 	LCLIENT,
 	LCOLMODE,
+	LDEBUG,
 	LDOWN,
 	LEXEC,
 	LFOCUSCOLORS,
@@ -48,6 +50,7 @@ char *symtab[] = {
 	"border",
 	"client",
 	"colmode",
+	"debug",
 	"down",
 	"exec",
 	"focuscolors",
@@ -70,23 +73,30 @@ char *symtab[] = {
 	"~",
 };
 
+char *debugtab[] = {
+	"event",
+	"ewmh",
+	"focus",
+	"generic",
+};
+
 /* Edit ,y/^[a-zA-Z].*\n.* {\n/d
  * Edit s/^([a-zA-Z].*)\n(.*) {\n/\1 \2;\n/
  * Edit ,x/^static.*\n/d
  */
 
 static int
-getsym(char *s) {
+_bsearch(char *s, char **tab, int ntab) {
 	int i, n, m, cmp;
 
 	if(s == nil)
 		return -1;
 
-	n = nelem(symtab);
+	n = ntab;
 	i = 0;
 	while(n) {
 		m = n/2;
-		cmp = strcmp(s, symtab[i+m]);
+		cmp = strcmp(s, tab[i+m]);
 		if(cmp == 0)
 			return i+m;
 		if(cmp < 0 || m == 0)
@@ -100,8 +110,18 @@ getsym(char *s) {
 }
 
 static int
+getsym(char *s) {
+	return _bsearch(s, symtab, nelem(symtab));
+}
+
+static int
+getdebug(char *s) {
+	return _bsearch(s, debugtab, nelem(debugtab));
+}
+
+static int
 gettoggle(IxpMsg *m) {
-	switch(getsym(getword(m))) {
+	switch(getsym(msg_getword(m))) {
 	case LON:
 		return On;
 	case LOFF:
@@ -119,7 +139,7 @@ eatrunes(IxpMsg *m, int (*p)(Rune), int val) {
 	int n;
 
 	while(m->pos < m->end) {
-		n = chartorune(&r, (char*)m->pos);
+		n = chartorune(&r, m->pos);
 		if(p(r) != val)
 			break;
 		m->pos += n;
@@ -128,44 +148,46 @@ eatrunes(IxpMsg *m, int (*p)(Rune), int val) {
 		m->pos = m->end;
 }
 
-char *
-getword(IxpMsg *m) {
+char*
+msg_getword(IxpMsg *m) {
 	char *ret;
 	Rune r;
 	int n;
 
 	eatrunes(m, isspacerune, 1);
-	ret = (char*)m->pos;
+	ret = m->pos;
 	eatrunes(m, isspacerune, 0);
-	n = chartorune(&r, (char*)m->pos);
+	n = chartorune(&r, m->pos);
 	*m->pos = '\0';
 	m->pos += n;
 	eatrunes(m, isspacerune, 1);
 
-	if(ret == (char*)m->end)
+	if(ret == m->end)
 		return nil;
 	return ret;
 }
 
 #define strbcmp(str, const) (strncmp((str), (const), sizeof(const)-1))	
 static int
-getbase(char **s) {
-	char *p;
+getbase(const char **s) {
+	const char *p;
 
 	p = *s;
 	if(!strbcmp(p, "0x")) {
 		*s += 2;
 		return 16;
 	}
-	if(isdigit(p[0]) && p[1] == 'r') {
-		*s += 2;
-		return p[0] - '0';
+	if(isdigit(p[0])) {
+		if(p[1] == 'r') {
+			*s += 2;
+			return p[0] - '0';
+		}
+		if(isdigit(p[1]) && p[2] == 'r') {
+			*s += 3;
+			return 10*(p[0]-'0') + (p[1]-'0');
+		}
 	}
-	if(isdigit(p[0]) && isdigit(p[1]) && p[2] == 'r') {
-		*s += 3;
-		return 10*(p[0]-'0') + (p[1]-'0');
-	}
-	if(!strbcmp(p, "0")) {
+	if(p[0] == '0') {
 		*s += 1;
 		return 8;
 	}
@@ -173,8 +195,9 @@ getbase(char **s) {
 }
 
 int
-getlong(char *s, long *ret) {
-	char *end, *rend;
+getlong(const char *s, long *ret) {
+	const char *end;
+	char *rend;
 	int base;
 
 	end = s+strlen(s);
@@ -185,8 +208,9 @@ getlong(char *s, long *ret) {
 }
 
 int
-getulong(char *s, ulong *ret) {
-	char *end, *rend;
+getulong(const char *s, ulong *ret) {
+	const char *end;
+	char *rend;
 	int base;
 
 	end = s+strlen(s);
@@ -196,7 +220,7 @@ getulong(char *s, ulong *ret) {
 	return (end == rend);
 }
 
-static Client *
+static Client*
 strclient(View *v, char *s) {
 	ulong id;
 
@@ -208,8 +232,8 @@ strclient(View *v, char *s) {
 	return nil;
 }
 
-Area *
-strarea(View *v, char *s) {
+Area*
+strarea(View *v, const char *s) {
 	Area *a;
 	long i;
 
@@ -220,10 +244,10 @@ strarea(View *v, char *s) {
 	if(!getlong(s, &i) || i == 0)
 		return nil;
 
-	if(i > 0)
-		for(a = v->area; a; a = a->next) {
+	if(i > 0) {
+		for(a = v->area; a; a = a->next)
 			if(i-- == 0) break;
-		}
+	}
 	else {
 		for(a = v->area; a->next; a = a->next)
 			;
@@ -235,80 +259,36 @@ strarea(View *v, char *s) {
 	return a;
 }
 
-char *
-message_view(View *v, IxpMsg *m) {
-	Area *a;
+char*
+message_client(Client *c, IxpMsg *m) {
 	char *s;
 	int i;
 
-	s = getword(m);
+	s = msg_getword(m);
 
 	switch(getsym(s)) {
-	case LSEND:
-		return send_client(v, m, 0);
-	case LSWAP:
-		return send_client(v, m, 1);
-	case LSELECT:
-		return select_area(v->sel, m);
-	case LCOLMODE:
-		s = getword(m);
-		if((a = strarea(v, s)) == nil || a->floating)
-			return Ebadvalue;
-
-		s = getword(m);
-		if((i = str2colmode(s)) == -1)
-			return Ebadvalue;
-
-		a->mode = i;
-		arrange_column(a, True);
-		restack_view(v);
-
-		if(v == screen->sel)
-			focus_view(screen, v);
-		draw_frames();
-		return nil;
+	case LFULLSCREEN:
+		i = gettoggle(m);
+		if(i == -1)
+			return Ebadusage;
+		fullscreen(c, i);
+		break;
+	case LKILL:
+		client_kill(c);
+		break;
+	case LURGENT:
+		i = gettoggle(m);
+		if(i == -1)
+			return Ebadusage;
+		client_seturgent(c, i, True);
+		break;
 	default:
 		return Ebadcmd;
 	}
-	/* not reached */
-}
-
-char *
-parse_colors(IxpMsg *m, CTuple *col) {
-	static char Ebad[] = "bad color string";
-	Rune r;
-	char c, *p;
-	int i, j;
-
-	/* '#%6x #%6x #%6x' */
-	p = (char*)m->pos;
-	for(i = 0; i < 3 && p < (char*)m->end; i++) {
-		if(*p++ != '#')
-			return Ebad;
-		for(j = 0; j < 6 && p < (char*)m->end; j++)
-			if(!isxdigit(*p++))
-				return Ebad;
-
-		chartorune(&r, p);
-		if(i < 2) {
-			if(r != ' ')
-				return Ebad;
-			p++;
-		}else if(!isspacerune(r) && *p != '\0')
-			return Ebad;
-	}
-
-	c = *p;
-	*p = '\0';
-	loadcolor(col, (char*)m->pos);
-	*p = c;
-
-	m->pos = (uchar*)p;
-	eatrunes(m, isspacerune, 1);
 	return nil;
 }
 
-char *
+char*
 message_root(void *p, IxpMsg *m) {
 	Font *fn;
 	char *s, *ret;
@@ -316,48 +296,38 @@ message_root(void *p, IxpMsg *m) {
 
 	USED(p);
 	ret = nil;
-	s = getword(m);
+	s = msg_getword(m);
 
 	switch(getsym(s)) {
-	case LQUIT:
-		srv.running = 0;
+	case LBORDER:
+		if(!getulong(msg_getword(m), &n))
+			return Ebadvalue;
+		def.border = n;
+		view_focus(screen, screen->sel);
+		break;
+	case LDEBUG:
+		ret = msg_debug(m);
 		break;
 	case LEXEC:
-		execstr = smprint("exec %s", (char*)m->pos);
+		execstr = smprint("exec %s", m->pos);
 		srv.running = 0;
 		break;
-	case LVIEW:
-		select_view((char*)m->pos);
-		break;
-	case LSELCOLORS:
-		fprint(2, "%s: warning: selcolors have been removed\n", argv0);
-		return Ebadcmd;
 	case LFOCUSCOLORS:
-		ret = parse_colors(m, &def.focuscolor);
-		focus_view(screen, screen->sel);
-		break;
-	case LNORMCOLORS:
-		ret = parse_colors(m, &def.normcolor);
-		focus_view(screen, screen->sel);
+		ret = msg_parsecolors(m, &def.focuscolor);
+		view_focus(screen, screen->sel);
 		break;
 	case LFONT:
-		fn = loadfont((char*)m->pos);
+		fn = loadfont(m->pos);
 		if(fn) {
 			freefont(def.font);
 			def.font = fn;
-			resize_bar(screen);
+			bar_resize(screen);
 		}else
 			ret = "can't load font";
-		focus_view(screen, screen->sel);
-		break;
-	case LBORDER:
-		if(!getulong(getword(m), &n))
-			return Ebadvalue;
-		def.border = n;
-		focus_view(screen, screen->sel);
+		view_focus(screen, screen->sel);
 		break;
 	case LGRABMOD:
-		s = getword(m);
+		s = msg_getword(m);
 		n = str2modmask(s);
 
 		if((n & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)) == 0)
@@ -366,97 +336,276 @@ message_root(void *p, IxpMsg *m) {
 		utflcpy(def.grabmod, s, sizeof(def.grabmod));
 		def.mod = n;
 		break;
+	case LNORMCOLORS:
+		ret = msg_parsecolors(m, &def.normcolor);
+		view_focus(screen, screen->sel);
+		break;
+	case LSELCOLORS:
+		fprint(2, "%s: warning: selcolors have been removed\n", argv0);
+		return Ebadcmd;
+	case LVIEW:
+		view_select(m->pos);
+		break;
+	case LQUIT:
+		srv.running = 0;
+		break;
 	default:
 		return Ebadcmd;
 	}
 	return ret;
 }
 
-char *
-read_root_ctl(void) {
-	char *b, *e;
-
-	b = buffer;
-	e = b + sizeof(buffer) - 1;
-	b = seprint(b, e, "view %s\n", screen->sel->name);
-	b = seprint(b, e, "focuscolors %s\n", def.focuscolor.colstr);
-	b = seprint(b, e, "normcolors %s\n", def.normcolor.colstr);
-	b = seprint(b, e, "font %s\n", def.font->name);
-	b = seprint(b, e, "grabmod %s\n", def.grabmod);
-	b = seprint(b, e, "border %d\n", def.border);
-	USED(b);
-	return buffer;
-}
-
-char *
-message_client(Client *c, IxpMsg *m) {
+char*
+message_view(View *v, IxpMsg *m) {
+	Area *a;
 	char *s;
 	int i;
 
-	s = getword(m);
+	s = msg_getword(m);
 
 	switch(getsym(s)) {
-	case LKILL:
-		kill_client(c);
-		break;
-	case LURGENT:
-		i = gettoggle(m);
+	case LCOLMODE:
+		s = msg_getword(m);
+		a = strarea(v, s);
+		if(a == nil || a->floating)
+			return Ebadvalue;
+
+		s = msg_getword(m);
+		i = str2colmode(s);
 		if(i == -1)
-			return Ebadusage;
-		set_urgent(c, i, True);
-		break;
-	case LFULLSCREEN:
-		i = gettoggle(m);
-		if(i == -1)
-			return Ebadusage;
-		fullscreen(c, i);
-		break;
+			return Ebadvalue;
+
+		a->mode = i;
+		column_arrange(a, True);
+		view_restack(v);
+
+		if(v == screen->sel)
+			view_focus(screen, v);
+		frame_draw_all();
+		return nil;
+	case LSELECT:
+		return msg_selectarea(v->sel, m);
+	case LSEND:
+		return msg_sendclient(v, m, 0);
+	case LSWAP:
+		return msg_sendclient(v, m, 1);
 	default:
 		return Ebadcmd;
 	}
+	/* not reached */
+}
+
+static void
+printdebug(void) {
+	int i, j;
+
+	for(i=0, j=0; i < nelem(debugtab); i++)
+		Debug(1<<i) {
+			if(j++ > 0)
+				bufprint(" ");
+			bufprint("%s", debugtab[i]);
+		}
+}
+
+char*
+root_readctl(void) {
+	bufclear();
+	bufprint("view %s\n", screen->sel->name);
+	bufprint("focuscolors %s\n", def.focuscolor.colstr);
+	bufprint("normcolors %s\n", def.normcolor.colstr);
+	bufprint("font %s\n", def.font->name);
+	bufprint("grabmod %s\n", def.grabmod);
+	bufprint("border %d\n", def.border);
+	if(debug) {
+		bufprint("debug ");
+		printdebug();
+		bufprint("\n");
+	}
+	return buffer;
+}
+
+static char*
+msg_debug(IxpMsg *m) {
+	char *opt;
+	int d;
+	char add;
+
+	bufclear();
+	while((opt = msg_getword(m))) {
+		add = '+';
+		if(opt[0] == '+' || opt[0] == '-')
+			add = *opt++;
+		d = getdebug(opt);
+		if(d == -1) {
+			bufprint(", %s", opt);
+			continue;
+		}
+		if(add == '+')
+			debug |= 1<<d;
+		else
+			debug &= ~(1<<d);
+	}
+	if(buffer[0] != '\0') {
+		opt = smprint("Bad debug options: %s", buffer+2);
+		utfecpy(buffer, buffer+sizeof(buffer), opt);
+		free(opt);
+		return buffer;
+	}
+	return nil;
+}
+
+char*
+msg_parsecolors(IxpMsg *m, CTuple *col) {
+	static char Ebad[] = "bad color string";
+	Rune r;
+	char c, *p;
+	int i, j;
+
+	/* '#%6x #%6x #%6x' */
+	p = m->pos;
+	for(i = 0; i < 3 && p < m->end; i++) {
+		if(*p++ != '#')
+			return Ebad;
+		for(j = 0; j < 6; j++)
+			if(p >= m->end || !isxdigit(*p++))
+				return Ebad;
+
+		chartorune(&r, p);
+		if(i < 2) {
+			if(r != ' ')
+				return Ebad;
+			p++;
+		}else if(*p != '\0' && !isspacerune(r))
+			return Ebad;
+	}
+
+	c = *p;
+	*p = '\0';
+	loadcolor(col, m->pos);
+	*p = c;
+
+	m->pos = p;
+	eatrunes(m, isspacerune, 1);
+	return nil;
+}
+
+char*
+msg_selectarea(Area *a, IxpMsg *m) {
+	Frame *f;
+	Area *ap;
+	View *v;
+	char *s;
+	ulong i;
+	int sym;
+
+	v = a->view;
+	s = msg_getword(m);
+	sym = getsym(s);
+
+	switch(sym) {
+	case LTOGGLE:
+		if(!a->floating)
+			ap = v->area;
+		else if(v->revert && v->revert != a)
+			ap = v->revert;
+		else
+			ap = v->area->next;
+		break;
+	case LUP:
+	case LDOWN:
+	case LCLIENT:
+		return msg_selectframe(a->sel, m, sym);
+	case LLEFT:
+		if(a->floating)
+			return Ebadvalue;
+		for(ap=v->area->next; ap->next; ap=ap->next)
+			if(ap->next == a) break;
+		break;
+	case LRIGHT:
+		if(a->floating)
+			return Ebadvalue;
+		ap = a->next;
+		if(ap == nil)
+			ap = v->area->next;
+		break;
+	case LTILDE:
+		ap = v->area;
+		break;
+	default:
+		if(!strcmp(s, "sel"))
+			ap = v->sel;
+		else {
+			if(!getulong(s, &i) || i == 0)
+				return Ebadvalue;
+			for(ap=v->area->next; ap; ap=ap->next)
+				if(--i == 0) break;
+			if(i != 0)
+				return Ebadvalue;
+		}
+		if((s = msg_getword(m))) {
+			if(!getulong(s, &i))
+				return Ebadvalue;
+			for(f = ap->frame; f; f = f->anext)
+				if(--i == 0) break;
+			if(i != 0)
+				return Ebadvalue;
+			frame_focus(f);
+			return nil;
+		}
+	}
+
+	area_focus(ap);
 	return nil;
 }
 
 static char*
-send_frame(Frame *f, int sym, Bool swap) {
+msg_selectframe(Frame *f, IxpMsg *m, int sym) {
 	Frame *fp;
+	Client *c;
+	Area *a;
+	char *s;
+	ulong i;
+
+	if(!f)
+		return Ebadvalue;
+	a = f->area;
 
 	SET(fp);
 	switch(sym) {
 	case LUP:
-		fp = f->aprev;
-		if(!fp)
-			return Ebadvalue;
-		fp = fp->aprev;
+		for(fp = a->frame; fp->anext; fp = fp->anext)
+			if(fp->anext == f) break;
 		break;
 	case LDOWN:
 		fp = f->anext;
-		if(!fp)
-			return Ebadvalue;
+		if(fp == nil)
+			fp = a->frame;
+		break;
+	case LCLIENT:
+		s = msg_getword(m);
+		if(s == nil || !getulong(s, &i))
+			return "usage: select client <client>";
+		c = win2client(i);
+		if(c == nil)
+			return "unknown client";
+		fp = client_viewframe(c, f->view);
 		break;
 	default:
-		assert(!"can't get here");
+		die("can't get here");
 	}
 
-	if(swap) {
-		if(!fp)
-			return Ebadvalue;
-		swap_frames(f, fp);
-	}else {
-		remove_frame(f);
-		insert_frame(fp, f);
-	}
+	if(fp == nil)
+		return "invalid selection";
 
-	arrange_view(f->view);
-
-	flushevents(EnterWindowMask, False);
-	focus_frame(f, True);
-	update_views();
+	frame_focus(fp);
+	frame_to_top(fp);
+	if(f->view == screen->sel)
+		view_restack(f->view);
 	return nil;
 }
 
-char *
-send_client(View *v, IxpMsg *m, Bool swap) {
+char*
+msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	Area *to, *a;
 	Frame *f;
 	Client *c;
@@ -464,26 +613,26 @@ send_client(View *v, IxpMsg *m, Bool swap) {
 	ulong i;
 	int sym;
 
-	s = getword(m);
+	s = msg_getword(m);
 
 	c = strclient(v, s);
 	if(c == nil)
 		return Ebadvalue;
 
-	f = view_clientframe(v, c);
+	f = client_viewframe(c, v);
 	if(f == nil)
 		return Ebadvalue;
 
 	a = f->area;
 	to = nil;
 
-	s = getword(m);
+	s = msg_getword(m);
 	sym = getsym(s);
 
 	switch(sym) {
 	case LUP:
 	case LDOWN:
-		return send_frame(f, sym, swap);
+		return msg_sendframe(f, sym, swap);
 	case LLEFT:
 		if(a->floating)
 			return Ebadvalue;
@@ -516,136 +665,60 @@ send_client(View *v, IxpMsg *m, Bool swap) {
 	}
 
 	if(!to && !swap && (f->anext || f != f->area->frame))
-		to = new_column(v, a, 0);
+		to = column_new(v, a, 0);
 
 	if(!to)
 		return Ebadvalue;
 
 	if(!swap)
-		send_to_area(to, f);
+		area_moveto(to, f);
 	else if(to->sel)
-		swap_frames(f, to->sel);
+		frame_swap(f, to->sel);
 	else
 		return Ebadvalue;
 
 	flushevents(EnterWindowMask, False);
-	focus_frame(f, True);
-	arrange_view(v);
-	update_views();
+	frame_focus(f);
+	view_arrange(v);
+	view_update_all();
 	return nil;
 }
 
 static char*
-select_frame(Frame *f, IxpMsg *m, int sym) {
+msg_sendframe(Frame *f, int sym, bool swap) {
 	Frame *fp;
-	Client *c;
-	Area *a;
-	char *s;
-	ulong i;
-
-	if(!f)
-		return Ebadvalue;
-	a = f->area;
 
 	SET(fp);
 	switch(sym) {
 	case LUP:
-		for(fp = a->frame; fp->anext; fp = fp->anext)
-			if(fp->anext == f) break;
+		fp = f->aprev;
+		if(!fp)
+			return Ebadvalue;
+		fp = fp->aprev;
 		break;
 	case LDOWN:
 		fp = f->anext;
-		if(fp == nil)
-			fp = a->frame;
-		break;
-	case LCLIENT:
-		s = getword(m);
-		if(s == nil || !getulong(s, &i))
-			return "usage: select client <client>";
-		c = win2client(i);
-		if(c == nil)
-			return "unknown client";
-		fp = view_clientframe(f->view, c);
+		if(!fp)
+			return Ebadvalue;
 		break;
 	default:
-		assert(!"can't get here");
+		die("can't get here");
 	}
 
-	if(fp == nil)
-		return "invalid selection";
+	if(swap) {
+		if(!fp)
+			return Ebadvalue;
+		frame_swap(f, fp);
+	}else {
+		frame_remove(f);
+		frame_insert(fp, f);
+	}
 
-	focus_frame(fp, False);
-	frame_to_top(fp);
-	if(f->view == screen->sel)
-		restack_view(f->view);
+	view_arrange(f->view);
+
+	flushevents(EnterWindowMask, False);
+	frame_focus(f);
+	view_update_all();
 	return nil;
 }
 
-char*
-select_area(Area *a, IxpMsg *m) {
-	Frame *f;
-	Area *ap;
-	View *v;
-	char *s;
-	ulong i;
-	int sym;
-
-	v = a->view;
-	s = getword(m);
-	sym = getsym(s);
-	
-	switch(sym) {
-	case LTOGGLE:
-		if(!a->floating)
-			ap = v->area;
-		else if(v->revert && v->revert != a)
-			ap = v->revert;
-		else
-			ap = v->area->next;
-		break;
-	case LUP:
-	case LDOWN:
-	case LCLIENT:
-		return select_frame(a->sel, m, sym);
-	case LLEFT:
-		if(a->floating)
-			return Ebadvalue;
-		for(ap=v->area->next; ap->next; ap=ap->next)
-			if(ap->next == a) break;
-		break;
-	case LRIGHT:
-		if(a->floating)
-			return Ebadvalue;
-		ap = a->next;
-		if(ap == nil)
-			ap = v->area->next;
-		break;
-	case LTILDE:
-		ap = v->area;
-		break;
-	default:
-		if(!strcmp(s, "sel"))
-			ap = v->sel;
-		else {
-			if(!getulong(s, &i) || i == 0)
-				return Ebadvalue;
-			for(ap=v->area->next; ap; ap=ap->next)
-				if(--i == 0) break;
-			if(i != 0)
-				return Ebadvalue;
-		}
-		if((s = getword(m))) {
-			if(!getulong(s, &i))
-				return Ebadvalue;
-			for(f = ap->frame; f; f = f->anext)
-				if(--i == 0) break;
-			if(i != 0)
-				return Ebadvalue;
-			focus_frame(f, True);
-			return nil;
-		}
-	}
-
-	focus_area(ap);
-	return nil;
-}

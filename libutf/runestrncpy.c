@@ -17,7 +17,7 @@
 #include "utf.h"
 
 Rune*
-runestrncpy(Rune *s1, Rune *s2, long n)
+runestrncpy(Rune *s1, const Rune *s2, long n)
 {
 	int i;
 	Rune *os1;
