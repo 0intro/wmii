@@ -41,4 +41,6 @@ LIBIXP = ${LIBDIR}/libixp.a
 #LDFLAGS += -lsocket -lnsl
 #CFLAGS += -xtarget=ultra
 
-
+# Darwin
+#STATIC = # This space intentionally left blank
+#LIBICONV = -liconv
