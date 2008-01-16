@@ -247,7 +247,7 @@ message(Ixp9Req *r, MsgFunc fn) {
 		c = *p;
 		*p = '\0';
 
-		m = ixp_message((uchar*)s, p-s, 0);
+		m = ixp_message(s, p-s, 0);
 		s = fn(f->p.ref, &m);
 		if(s)
 			err = s;
@@ -563,7 +563,7 @@ fs_stat(Ixp9Req *r) {
 	IxpMsg m;
 	Stat s;
 	int size;
-	uchar *buf;
+	char *buf;
 	FileId *f;
 	
 	f = r->fid->aux;
@@ -589,7 +589,7 @@ fs_read(Ixp9Req *r) {
 	char *buf;
 	FileId *f, *tf;
 	int n, offset;
-	int size;
+	ulong size;
 
 	f = r->fid->aux;
 
@@ -604,8 +604,10 @@ fs_read(Ixp9Req *r) {
 
 		offset = 0;
 		size = r->ifcall.count;
+		if(size > IXP_MAX_MSG)
+			size = r->fid->iounit;
 		buf = emallocz(size);
-		m = ixp_message((uchar*)buf, size, MsgPack);
+		m = ixp_message(buf, size, MsgPack);
 
 		tf = f = lookup_file(f, nil);
 		/* Note: f->tab.name == "." so we skip it */
@@ -892,7 +894,7 @@ fs_clunk(Ixp9Req *r) {
 	case FsFBar:
 		p = toutf8(f->p.bar->buf);
 		
-		m = ixp_message((uchar*)p, strlen(p), 0);
+		m = ixp_message(p, strlen(p), 0);
 		msg_parsecolors(&m, &f->p.bar->col);
 
 		q = (char*)m.end-1;

@@ -1,7 +1,15 @@
+DEBUGCFLAGS = \
+	-g \
+	-O1 \
+	-fno-builtin \
+	-fno-inline \
+	-fno-omit-frame-pointer \
+	-fno-optimize-sibling-calls \
+	-fno-unroll-loops
 CFLAGS += \
 	-std=c99 \
-	-pipe \
 	-pedantic \
+	-pipe \
 	-Wall \
 	-Wimplicit \
 	-Wmissing-prototypes \
@@ -13,4 +21,4 @@ CFLAGS += \
 	-Wpointer-arith \
 	-Wreturn-type \
 	-Wstrict-prototypes \
-	-Wtrigraphs \
+	-Wtrigraphs

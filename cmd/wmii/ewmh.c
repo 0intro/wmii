@@ -1,8 +1,9 @@
 /* Copyright ©2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
-#include <assert.h>
 #include "dat.h"
+#include <assert.h>
+#include <sys/limits.h>
 #include "fns.h"
 
 Window *ewmhwin;
@@ -190,20 +191,40 @@ ewmh_getstrut(Client *c) {
 	enum {
 		Left, Right, Top, Bottom,
 		LeftMin, LeftMax,
-		RithtMin, RightMax,
+		RightMin, RightMax,
 		TopMin, TopMax,
-		BottomMin, BottomMax
+		BottomMin, BottomMax,
+		Last = BottomMax
 	};
-	Atom actual;
-	long strut[12];
+	long *strut;
 	ulong n;
 
-	n = getproperty(&c->w, Net("WM_STRUT_PARTIAL"), "CARDINAL", &actual,
-		0L, (void*)&strut, nelem(strut));
-	if(n != nelem(strut))
-		return;
-	if(actual != xatom("ATOM"))
-		return;
+	if(c->strut)
+		free(c->strut);
+	c->strut = nil;
+
+	n = getprop_long(&c->w, Net("WM_STRUT_PARTIAL"), "CARDINAL",
+		0L, &strut, Last);
+	if(n != nelem(strut)) {
+		free(strut);
+		n = getprop_long(&c->w, Net("WM_STRUT"), "CARDINAL",
+			0L, &strut, 4L);
+		if(n != 4) {
+			free(strut);
+			return;
+		}
+		strut = erealloc(strut, Last * sizeof *strut);
+		strut[LeftMin] = strut[RightMin] = 0;
+		strut[LeftMax] = strut[RightMax] = INT_MAX;
+		strut[TopMin] = strut[BottomMin] = 0;
+		strut[TopMax] = strut[BottomMax] = INT_MAX;
+	}
+	c->strut = emalloc(sizeof *c->strut);
+	c->strut->left =   Rect(0,                strut[LeftMin],  strut[Left],      strut[LeftMax]);
+	c->strut->right =  Rect(-strut[Right],    strut[RightMin], 0,                strut[RightMax]);
+	c->strut->top =    Rect(strut[TopMin],    0,               strut[TopMax],    strut[Top]);
+	c->strut->bottom = Rect(strut[BottomMin], -strut[Bottom],  strut[BottomMax], 0);
+	free(strut);
 }
 
 int
@@ -251,23 +272,24 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 	if(msg == NET("ACTIVE_WINDOW")) {
 		if(e->format != 32)
 			return -1;
-		if(l[0] != 2)
-			return 1;
-		c == win2client(e->window);
+		Dprint(DEwmh, "\tsource: %ld\n", l[0]);
+		Dprint(DEwmh, "\twindow: 0x%lx\n", e->window);
+		c = win2client(e->window);
 		if(c == nil)
+			return 1;
+		Dprint(DEwmh, "\tclient: %s\n", clientname(c));
+		if(l[0] != 2)
 			return 1;
 		focus(c, true);
 		return 1;
 	}else
 	if(msg == NET("CURRENT_DESKTOP")) {
-		print("\t%ld\n", l[0]);
 		if(e->format != 32)
 			return -1;
-		print("\t%ld\n", l[0]);
 		for(v=view, i=l[0]; v; v=v->next, i--)
 			if(i == 0)
 				break;
-		print("\t%d\n", i);
+		Dprint(DEwmh, "\t%s\n", v->name);
 		if(i == 0)
 			view_select(v->name);
 		return 1;

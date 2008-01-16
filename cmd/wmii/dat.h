@@ -72,34 +72,15 @@ typedef struct Bar Bar;
 typedef struct Client Client;
 typedef struct Divide Divide;
 typedef struct Frame Frame;
+typedef struct Group Group;
 typedef struct Key Key;
 typedef struct Map Map;
 typedef struct MapEnt MapEnt;
 typedef struct Rule Rule;
 typedef struct Ruleset Ruleset;
+typedef struct Strut Strut;
 typedef struct View View;
 typedef struct WMScreen WMScreen;
-
-struct Map {
-	MapEnt**bucket;
-	uint	nhash;
-};
-
-struct MapEnt {
-	ulong		hash;
-	const char*	key;
-	void*		val;
-	MapEnt*		next;
-};
-
-struct View {
-	View*	next;
-	char	name[256];
-	ushort	id;
-	Area*	area;
-	Area*	sel;
-	Area*	revert;
-};
 
 struct Area {
 	Area*	next;
@@ -114,23 +95,15 @@ struct Area {
 	Rectangle	r;
 };
 
-struct Frame {
-	Frame*	cnext;
-	Frame*	anext;
-	Frame*	aprev;
-	Frame*	snext;
-	Frame*	sprev;
-	View*	view;
-	Area*	area;
-	Client*	client;
+struct Bar {
+	Bar*	next;
+	Bar*	smaller;
+	char	buf[280];
+	char	text[256];
+	char	name[256];
 	ushort	id;
-	bool	collapsed;
-	float	ratio;
-	Rectangle	r;
-	Rectangle	crect;
-	Rectangle	revert;
-	Rectangle	grabbox;
-	Rectangle	titlebar;
+	Rectangle r;
+	CTuple	col;
 };
 
 struct Client {
@@ -141,6 +114,8 @@ struct Client {
 	Window	w;
 	Window*	framewin;
 	XWindow	trans;
+	Group*	group;
+	Strut*	strut;
 	Cursor	cursor;
 	Rectangle r;
 	char	name[256];
@@ -165,6 +140,32 @@ struct Divide {
 	int	x;
 };
 
+struct Frame {
+	Frame*	cnext;
+	Frame*	anext;
+	Frame*	aprev;
+	Frame*	snext;
+	Frame*	sprev;
+	View*	view;
+	Area*	area;
+	Client*	client;
+	ushort	id;
+	bool	collapsed;
+	float	ratio;
+	Rectangle	r;
+	Rectangle	crect;
+	Rectangle	revert;
+	Rectangle	grabbox;
+	Rectangle	titlebar;
+};
+
+struct Group {
+	Group*	next;
+	XWindow	leader;
+	Client	*client;
+	int	ref;
+};
+
 struct Key {
 	Key*	next;
 	Key*	lnext;
@@ -175,15 +176,16 @@ struct Key {
 	KeyCode	key;
 };
 
-struct Bar {
-	Bar*	next;
-	Bar*	smaller;
-	char	buf[280];
-	char	text[256];
-	char	name[256];
-	ushort	id;
-	Rectangle r;
-	CTuple	col;
+struct Map {
+	MapEnt**bucket;
+	uint	nhash;
+};
+
+struct MapEnt {
+	ulong		hash;
+	const char*	key;
+	void*		val;
+	MapEnt*		next;
 };
 
 struct Rule {
@@ -193,9 +195,26 @@ struct Rule {
 };
 
 struct Ruleset {
-	Rule	*rule;
-	char	*string;
+	Rule*	rule;
+	char*	string;
 	uint	size;
+};
+
+struct Strut {
+	Rectangle	left;
+	Rectangle	right;
+	Rectangle	top;
+	Rectangle	bottom;
+};
+
+struct View {
+	View*	next;
+	char	name[256];
+	ushort	id;
+	Area*	area;
+	Area*	sel;
+	Area*	oldsel;
+	Area*	revert;
 };
 
 #ifndef EXTERN

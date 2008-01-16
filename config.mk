@@ -14,7 +14,7 @@ LIBS = -L/usr/lib -lc -L${ROOT}/lib
 
 # Flags
 include ${ROOT}/mk/gcc.mk
-CFLAGS += -g -O0 -DIXPlint
+CFLAGS += ${DEBUGCFLAGS} -DIXPlint
 LDFLAGS += -g ${LIBS}
 STATIC = -static
 MKDEP = cpp -M
@@ -35,10 +35,14 @@ LIBICONV = # Leave blank if your libc includes iconv (glibc does)
 LIBIXP = ${ROOT}/libixp/libixp.a
 LIBIXP = ${LIBDIR}/libixp.a
 
+# *BSD
+#LIBICONV = -liconv
+# +Darwin
+#STATIC = # Darwon doesn't like static linking
+
 # Solaris
 #CFLAGS = -fast ${INCS} -DVERSION=\"${VERSION}\"
 #LDFLAGS = ${LIBS} -R${PREFIX}/lib
 #LDFLAGS += -lsocket -lnsl
 #CFLAGS += -xtarget=ultra
-
 

@@ -90,25 +90,34 @@ frame_insert(Frame *pos, Frame *f) {
 }
 
 bool
-frame_to_top(Frame *f) {
+frame_restack(Frame *f, Frame *above) {
 	Area *a;
 
 	a = f->area;
-	if(!a->floating || f == a->stack)
-		return False;
+	if(!a->floating)
+		return false;
+	if(above && above->area != a)
+		return false;
 
 	if(f->sprev)
 		f->sprev->snext = f->snext;
+	else
+		a->stack = f->snext;
 	if(f->snext)
 		f->snext->sprev = f->sprev;
 
 	f->snext = a->stack;
-	a->stack = f;
-	f->sprev = nil;
+	f->sprev = above;
+	if(above == nil)
+		a->stack = f;
+	else
+		f->snext = above->snext;
 	if(f->snext)
 		f->snext->sprev = f;
+	if(f->sprev)
+		f->sprev->snext = f;
 
-	return True;
+	return true;
 }
 
 /* Handlers */
@@ -130,12 +139,12 @@ bdown_event(Window *w, XButtonEvent *e) {
 		case Button1:
 			mouse_resize(c, False, CENTER);
 			focus(c, false);
-			frame_to_top(f);
+			frame_restack(f, nil);
 			focus(c, false); /* Blech */
 			break;
 		case Button3:
 			mouse_resize(c, False, quadrant(f->r, Pt(e->x_root, e->y_root)));
-			frame_to_top(f);
+			frame_restack(f, nil);
 			focus(c, false);
 			break;
 		default:
@@ -146,7 +155,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 			XUngrabPointer(display, e->time);
 	}else{
 		if(e->button == Button1) {
-			if(frame_to_top(f))
+			if(frame_restack(f, nil))
 				view_restack(f->view);
 			else if(rect_haspoint_p(Pt(e->x, e->y), f->grabbox))
 				mouse_resize(c, True, CENTER);
@@ -381,25 +390,29 @@ move_focus(Frame *old_f, Frame *f) {
 
 void
 frame_focus(Frame *f) {
+	Client *c;
+	Frame *old_f;
 	View *v;
 	Area *a, *old_a;
-	Frame *old_f;
 
-	a = f->area;
+	c = f->client;
 	v = f->view;
+	a = f->area;
 	old_a = v->sel;
 
 	old_f = old_a->sel;
 	a->sel = f;
 
-	if(a != old_a)
+	if(a != old_a) {
+		if(c->trans || (c->w.ewmh.type & (TypeDialog|TypeSplash)))
+			v->oldsel = v->sel;
 		area_focus(f->area);
+	}
 
 	if(v != screen->sel || a != v->sel)
 		return;
 
 	move_focus(old_f, f);
-
 	client_focus(f->client);
 
 	if(!a->floating && ((a->mode == Colstack) || (a->mode == Colmax)))

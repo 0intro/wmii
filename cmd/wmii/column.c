@@ -268,7 +268,7 @@ scale_column(Area *a) {
 			j--;
 		}
 		/* Doesn't change if we 'continue' */
-		fp=&f->anext;
+		fp = &f->anext;
 	}
 
 	surplus = 0;

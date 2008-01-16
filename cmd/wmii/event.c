@@ -14,7 +14,8 @@ dispatch_event(XEvent *e) {
 		handler[e->type](e);
 }
 
-#define handle(w, fn, ev) if(!(w)->handler->fn) {}else (w)->handler->fn((w), ev)
+#define handle(w, fn, ev) \
+	BLOCK(if((w)->handler->fn) (w)->handler->fn((w), ev))
 
 uint
 flushevents(long event_mask, bool dispatch) {
@@ -26,6 +27,37 @@ flushevents(long event_mask, bool dispatch) {
 			dispatch_event(&ev);
 		n++;
 	}
+	return n;
+}
+
+static Bool
+findenter(Display *d, XEvent *e, XPointer v) {
+	long *l;
+
+	l = (long*)v;
+	if(*l)
+		return False;
+	if(e->type == EnterNotify)
+		return True;
+	if(e->type == MotionNotify)
+		(*l)++;
+	return False;
+}
+
+/* This isn't perfect. If there were motion events in the queue
+ * before this was called, then it flushes nothing. If we don't
+ * check for them, we might lose a legitamate enter event.
+ */
+uint
+flushenterevents(void) {
+	XEvent e;
+	long l;
+	int n;
+
+	l = 0;
+	n = 0;
+	while(XCheckIfEvent(display, &e, findenter, (void*)&l))
+		n++;
 	return n;
 }
 
@@ -236,11 +268,10 @@ maprequest(XEvent *e) {
 	XWindowAttributes wa;
 
 	ev = &e->xmaprequest;
-
 	if(!XGetWindowAttributes(display, ev->window, &wa))
 		return;
-
 	if(wa.override_redirect) {
+		/* Do I really want these? */
 		XSelectInput(display, ev->window,
 			(StructureNotifyMask | PropertyChangeMask));
 		return;

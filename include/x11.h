@@ -183,6 +183,7 @@ Window*	findwin(XWindow);
 void	freefont(Font*);
 void	freeimage(Image *);
 void	freestringlist(char**);
+ulong	getprop_long(Window*, char*, char*, ulong, long**, ulong);
 ulong	getproperty(Window*, char *prop, char *type, Atom *actual, ulong offset, uchar **ret, ulong length);
 int	gettextlistproperty(Window *w, char *name, char **ret[]);
 int	grabpointer(Window*, Window *confine, Cursor, int mask);

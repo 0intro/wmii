@@ -337,10 +337,10 @@ findwin(XWindow w) {
 uint
 winprotocols(Window *w) {
 	Atom *protocols;
-	Atom actual, delete;
+	Atom delete;
 	int i, n, protos;
 
-	n = getproperty(w, "WM_PROTOCOLS", "ATOM", &actual, 0L, (void*)&protocols, 20L);
+	n = getprop_long(w, "WM_PROTOCOLS", "ATOM", 0L, (long**)&protocols, 20L);
 	if(n == 0)
 		return 0;
 
@@ -683,17 +683,17 @@ freestringlist(char *list[]) {
 	XFreeStringList(list);
 }
 
-ulong
-getproperty(Window *w, char *prop, char *type, Atom *actual, ulong offset, uchar **ret, ulong length) {
+static ulong
+getprop(Window *w, char *prop, char *type, Atom *actual, int *format, ulong offset, uchar **ret, ulong length) {
 	Atom typea;
 	ulong n, extra;
-	int status, format;
+	int status;
 
 	typea = (type ? xatom(type) : 0L);
 
 	status = XGetWindowProperty(display, w->w,
 		xatom(prop), offset, length, False /* delete */,
-		typea, actual, &format, &n, &extra, ret);
+		typea, actual, format, &n, &extra, ret);
 
 	if(status != Success) {
 		*ret = nil;
@@ -704,6 +704,29 @@ getproperty(Window *w, char *prop, char *type, Atom *actual, ulong offset, uchar
 		*ret = nil;
 	}
 	return n;
+}
+
+ulong
+getproperty(Window *w, char *prop, char *type, Atom *actual, ulong offset, uchar **ret, ulong length) {
+	int format;
+
+	return getprop(w, prop, type, actual, &format, offset, ret, length);
+}
+
+ulong
+getprop_long(Window *w, char *prop, char *type, ulong offset, long **ret, ulong length) {
+	Atom actual;
+	ulong n;
+	int format;
+
+	n = getprop(w, prop, type, &actual, &format, offset, (uchar**)ret, length);
+	if(n == 0 || format == 32 && xatom(type) == actual)
+		return n;
+	Dprint(DGeneric, "getprop_long(%W, %s, %s) format=%d, actual=\"%A\"\n",
+		w, prop, type, format, actual);
+	free(*ret);
+	*ret = 0;
+	return 0;
 }
 
 char**

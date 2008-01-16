@@ -57,6 +57,7 @@ uint	area_idx(Area*);
 void	area_moveto(Area*, Frame*);
 char*	area_name(Area*);
 Client*	area_selclient(Area*);
+void	area_setsel(Area*, Frame*);
 
 /* bar.c */
 Bar*	bar_create(Bar**, const char*);
@@ -108,6 +109,7 @@ void	div_update_all(void);
 /* event.c */
 void	check_x_event(IxpConn*);
 void	dispatch_event(XEvent*);
+uint	flushenterevents(void);
 uint	flushevents(long, bool dispatch);
 void	print_focus(Client*, const char*);
 
@@ -138,9 +140,9 @@ uint	frame_idx(Frame*);
 void	frame_insert(Frame *pos, Frame*);
 void	frame_remove(Frame*);
 void	frame_resize(Frame*, Rectangle);
+bool	frame_restack(Frame*, Frame*);
 void	frame_setcursor(Frame*, Point);
 void	frame_swap(Frame*, Frame*);
-bool	frame_to_top(Frame*);
 int	ingrabbox_p(Frame*, int x, int y);
 void	move_focus(Frame*, Frame*);
 Rectangle constrain(Rectangle);
@@ -217,7 +219,7 @@ void	view_restack(View*);
 void	view_scale(View*, int w);
 Client*	view_selclient(View*);
 void	view_select(const char*);
-void	view_setclient(Client*, char**);
+void	client_setviews(Client*, char**);
 void	view_update_all(void);
 Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 

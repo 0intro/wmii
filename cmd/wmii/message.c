@@ -598,7 +598,7 @@ msg_selectframe(Frame *f, IxpMsg *m, int sym) {
 		return "invalid selection";
 
 	frame_focus(fp);
-	frame_to_top(fp);
+	frame_restack(fp, nil);
 	if(f->view == screen->sel)
 		view_restack(f->view);
 	return nil;
@@ -677,7 +677,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	else
 		return Ebadvalue;
 
-	flushevents(EnterWindowMask, False);
+	flushenterevents();
 	frame_focus(f);
 	view_arrange(v);
 	view_update_all();
@@ -716,7 +716,7 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 
 	view_arrange(f->view);
 
-	flushevents(EnterWindowMask, False);
+	flushenterevents();
 	frame_focus(f);
 	view_update_all();
 	return nil;

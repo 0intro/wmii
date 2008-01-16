@@ -374,15 +374,18 @@ main(int argc, char *argv[]) {
 	wmiirc = "wmiistartrc";
 
 	ARGBEGIN{
-	case 'v':
-		print("%s", version);
-		exit(0);
 	case 'a':
 		address = EARGF(usage());
+		break;
+	case 'G':
+		debug |= DGeneric;
 		break;
 	case 'r':
 		wmiirc = EARGF(usage());
 		break;
+	case 'v':
+		print("%s", version);
+		exit(0);
 	default:
 		usage();
 		break;

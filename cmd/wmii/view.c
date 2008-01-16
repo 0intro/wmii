@@ -139,7 +139,7 @@ view_focus(WMScreen *s, View *v) {
 
 	sync();
 	XUngrabServer(display);
-	flushevents(EnterWindowMask, False);
+	flushenterevents();
 }
 
 void
@@ -161,6 +161,7 @@ view_select(const char *arg) {
 void
 view_attach(View *v, Frame *f) {
 	Client *c;
+	Frame *ff;
 	Area *a;
 	
 	c = f->client;
@@ -169,12 +170,14 @@ view_attach(View *v, Frame *f) {
 	a = v->sel;
 	if(c->trans || c->floating || c->fixedsize
 	|| c->titleless || c->borderless || c->fullscreen
-	|| (c->w.ewmh.type & TypeDialog))
+	|| (c->w.ewmh.type & (TypeDialog|TypeSplash|TypeDock)))
 		a = v->area;
+	else if(c->group && c->group->client
+	&& (ff = client_viewframe(c->group->client, v)))
+		a = ff->area;
 	else if(starting && v->sel->floating)
 		a = v->area->next;
-	if(!(c->w.ewmh.type & TypeSplash))
-		area_focus(a);
+
 	area_attach(a, f);
 }
 
@@ -213,10 +216,8 @@ view_restack(View *v) {
 		}
 
 	ewmh_updatestacking();
-	if(wins.n) {
-		XRaiseWindow(display, wins.ary[0]);
+	if(wins.n)
 		XRestackWindows(display, (ulong*)wins.ary, wins.n);
-	}
 }
 
 void

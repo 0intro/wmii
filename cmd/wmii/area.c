@@ -175,6 +175,17 @@ area_moveto(Area *to, Frame *f) {
 }
 
 void
+area_setsel(Area *a, Frame *f) {
+	View *v;
+
+	v = a->view;
+	if(a == v->sel && f)
+		frame_focus(f);
+	else
+		a->sel = f;
+}
+
+void
 area_attach(Area *a, Frame *f) {
 	uint n_frame;
 	Frame *ft;
@@ -202,12 +213,8 @@ area_attach(Area *a, Frame *f) {
 		client_resize(f->client, f->r);
 	}
 
-	if(!a->sel) {
-		if(a == a->view->sel)
-			frame_focus(f);
-		else
-			a->sel = f;
-	}
+	if(!a->sel)
+		area_setsel(a, f);
 	view_restack(a->view);
 
 	if(!a->floating)
@@ -220,7 +227,7 @@ area_attach(Area *a, Frame *f) {
 void
 area_detach(Frame *f) {
 	Frame *pr;
-	Client *c, *cp;
+	Client *c;
 	Area *a;
 	View *v;
 
@@ -234,10 +241,8 @@ area_detach(Frame *f) {
 	if(a->sel == f) {
 		if(!pr)
 			pr = a->frame;
-		if(pr && (v->sel == a))
-			frame_focus(pr);
-		else
-			a->sel = pr;
+		if(pr)
+			area_setsel(a, pr);
 	}
 
 	if(!a->floating) {
@@ -248,20 +253,14 @@ area_detach(Frame *f) {
 				area_destroy(a);
 			else if((a->frame == nil) && (v->area->frame))
 				area_focus(v->area);
-
 			view_arrange(v);
 		}
 	}else if(!a->frame) {
-		if(c->trans) {
-			cp = win2client(c->trans);
-			if(cp && cp->frame) {
-				a = cp->sel->area;
-				if(a->view == v) {
-					area_focus(a);
-					return;
-				}
+		if(c->trans || (c->w.ewmh.type & (TypeDialog|TypeSplash)))
+			if(v->oldsel) {
+				area_focus(v->oldsel);
+				return;
 			}
-		}
 		if(v->area->next->frame)
 			area_focus(v->area->next);
 	}else
