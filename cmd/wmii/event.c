@@ -1,4 +1,4 @@
-/* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -135,6 +135,7 @@ enternotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xcrossing;
+	xtime = ev->time;
 	if(ev->mode != NotifyNormal)
 		return;
 
@@ -151,6 +152,7 @@ leavenotify(XEvent *e) {
 	XCrossingEvent *ev;
 
 	ev = &e->xcrossing;
+	xtime = ev->time;
 	if((ev->window == scr.root.w) && !ev->same_screen) {
 		sel_screen = True;
 		frame_draw_all();
@@ -247,6 +249,7 @@ keypress(XEvent *e) {
 	XKeyEvent *ev;
 
 	ev = &e->xkey;
+	xtime = ev->time;
 	ev->state &= valid_mask;
 	if(ev->window == scr.root.w)
 		kpress(scr.root.w, ev->state, (KeyCode) ev->keycode);
@@ -286,6 +289,7 @@ motionnotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xmotion;
+	xtime = ev->time;
 	if((w = findwin(ev->window)))
 		handle(w, motion, ev);
 }
@@ -296,6 +300,7 @@ propertynotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xproperty;
+	xtime = ev->time;
 	if((w = findwin(ev->window))) 
 		handle(w, property, ev);
 }

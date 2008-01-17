@@ -9,7 +9,7 @@ args=""
 for i
 do
 	case "$i" in
-	*.[ao])
+	*.[ao]|*.o_pic)
 		ofiles="$ofiles $i"
 		;;
 	*)

@@ -59,8 +59,19 @@ fn Event-UnfocusTag { wmiir xwrite /lbar/$"* $wmiinormcol $* }
 fn Event-UrgentTag { shift; wmiir xwrite /lbar/$"* '*'$"* }
 fn Event-NotUrgentTag { shift; wmiir xwrite /lbar/$"* $"* }
 
-fn Event-LeftBarClick { shift; wmiir xwrite /ctl view $* }
+fn Event-Unresponsive {
+	client = $1; shift
+	@{
+		msg = 'The following client is not responding. What would you like to do?'
+		resp = `{wihack -transient $client \
+				xmessage -nearmouse -buttons Kill,Wait -print \
+				$msg $nl '' `{wmiir read /client/sel/label}}
+		if(~ $resp Kill)
+			wmiir xwrite /client/$client/ctl slay
+	}&
+}
 
+fn Event-LeftBarClick { shift; wmiir xwrite /ctl view $* }
 fn Event-ClientMouseDown {
 	client = $1; button = $2
 	if(~ $button 3) {
@@ -156,7 +167,7 @@ key $MODKEY-m || fn $key { wmiir xwrite /tag/sel/ctl colmode sel max }
 key $MODKEY-Shift-c || fn $key { wmiir xwrite /client/sel/ctl kill }
 
 key $MODKEY-a || fn $key { Action `{wi_actions | wi_menu} & }
-key $MODKEY-p || fn $key { ifs=() { wi_runcmd `{wi_menu <$progs_file} & } }
+key $MODKEY-p || fn $key { ifs=() { wi_runcmd -t `{wi_menu <$progs_file} & } }
 key $MODKEY-Return || fn $key { wi_runcmd $WMII_TERM & }
 
 key $MODKEY-t || fn $key { wmiir xwrite /ctl view `{wi_tags | wi_menu} & }

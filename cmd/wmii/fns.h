@@ -1,4 +1,4 @@
-/* © 2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+/* Copyright ©2007-2008 Kris Maglione <jg@suckless.org>
  * See LICENSE file for license details.
  */
 
@@ -75,7 +75,7 @@ void	client_configure(Client*);
 Client*	client_create(XWindow, XWindowAttributes*);
 void	client_destroy(Client*);
 void	client_focus(Client*);
-void	client_kill(Client*);
+void	client_kill(Client*, bool);
 void	client_manage(Client*);
 void	client_map(Client*);
 void	client_prop(Client*, Atom);
@@ -121,7 +121,9 @@ void	ewmh_getstrut(Client*);
 void	ewmh_getwintype(Client*);
 void	ewmh_init(void);
 void	ewmh_initclient(Client*);
+void	ewmh_pingclient(Client*);
 void	ewmh_prop(Client*, Atom);
+long	ewmh_protocols(Window*);
 void	ewmh_updateclient(Client*);
 void	ewmh_updateclientlist(void);
 void	ewmh_updateclients(void);

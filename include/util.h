@@ -1,3 +1,6 @@
+/* Copyright ©2007-2008 Kris Maglione <fbsdaemon@gmail.com>
+ * See LICENSE file for license details.
+ */
 #define nil	((void*)0)
 #define nelem(ary) (sizeof(ary) / sizeof(*ary))
 

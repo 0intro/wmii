@@ -174,7 +174,7 @@ fn Action {
 Key $MODKEY-Control-t {
 	if { ~ `{wc -l /keys} 0 1} {
 		initkeys
-		grabmod $MODKEY >/ctl
+		echo grabmod $MODKEY >/ctl
 	} {
 		echo $MODKEY-Control-t >/keys
 		echo grabmod Mod3 >/ctl

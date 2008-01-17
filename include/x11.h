@@ -1,3 +1,6 @@
+/* Copyright ©2007-2008 Kris Maglione <fbsdaemon@gmail.com>
+ * See LICENSE file for license details.
+ */
 #define Window XWindow
 #define Font XFont
 #define Screen XScreen
@@ -53,7 +56,9 @@ struct Rectangle {
 };
 
 struct Ewmh {
-	long type;
+	long	type;
+	long	ping;
+	long	timer;
 };
 
 struct Window {
@@ -157,8 +162,6 @@ XRectangle XRect(Rectangle r);
 		(uchar*)(data), n)
 
 /* x11.c */
-Window	*createwindow(Window *parent, Rectangle, int depth, uint class, WinAttr*, int valuemask);
-char	*gettextproperty(Window*, char*);
 Point	addpt(Point, Point);
 Image*	allocimage(int w, int h, int depth);
 void	border(Image *dst, Rectangle, int w, ulong col);
@@ -169,12 +172,13 @@ void	changeprop_string(Window*, char*, char*);
 void	changeprop_textlist(Window*, char*, char*, char*[]);
 void	changeproperty(Window*, char*, char*, int width, uchar*, int);
 void	copyimage(Image*, Rectangle, Image*, Point);
+Window*	createwindow(Window *parent, Rectangle, int depth, uint class, WinAttr*, int valuemask);
 void	delproperty(Window*, char*);
 void	destroywindow(Window*);
 Point	divpt(Point, Point);
 void	drawline(Image*, Point, Point, int cap, int w, ulong col);
 void	drawpoly(Image*, Point*, int, int cap, int w, ulong col);
-void	drawstring(Image*, Font*, Rectangle, Align, char*, ulong col);
+uint	drawstring(Image*, Font*, Rectangle, Align, char*, ulong col);
 int	eqpt(Point, Point);
 int	eqrect(Rectangle, Rectangle);
 void	fill(Image*, Rectangle, ulong col);
@@ -184,8 +188,9 @@ void	freefont(Font*);
 void	freeimage(Image *);
 void	freestringlist(char**);
 ulong	getprop_long(Window*, char*, char*, ulong, long**, ulong);
+char*	getprop_string(Window*, char*);
+int	getprop_textlist(Window *w, char *name, char **ret[]);
 ulong	getproperty(Window*, char *prop, char *type, Atom *actual, ulong offset, uchar **ret, ulong length);
-int	gettextlistproperty(Window *w, char *name, char **ret[]);
 int	grabpointer(Window*, Window *confine, Cursor, int mask);
 void	initdisplay(void);
 KeyCode	keycode(char*);
@@ -207,8 +212,8 @@ void	setfocus(Window*, int mode);
 void	sethints(Window*);
 void	setshapemask(Window *dst, Image *src, Point);
 void	setwinattr(Window*, WinAttr*, int valmask);
-Point	subpt(Point, Point);
 char**	strlistdup(char**, int);
+Point	subpt(Point, Point);
 void	sync(void);
 uint	textwidth(Font*, char*);
 uint	textwidth_l(Font*, char*, uint len);
@@ -217,13 +222,13 @@ void	ungrabpointer(void);
 int	unmapwin(Window*);
 void	warppointer(Point);
 Window*	window(XWindow);
-uint	winprotocols(Window*);
+long	winprotocols(Window*);
 Atom	xatom(char*);
-Handlers*	sethandler(Window*, Handlers*);
 XRectangle	XRect(Rectangle);
 Rectangle	gravitate(Rectangle dst, Rectangle src, Point grav);
 Rectangle	insetrect(Rectangle, int);
 Rectangle	rectaddpt(Rectangle, Point);
 Rectangle	rectsubpt(Rectangle, Point);
+Handlers*	sethandler(Window*, Handlers*);
 Rectangle	sizehint(WinHints*, Rectangle);
 

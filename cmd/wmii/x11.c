@@ -1,4 +1,4 @@
-/* Copyright ©2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2007-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #define _X11_VISIBLE
@@ -25,8 +25,9 @@ const Window _pointerwin = {
 Window *const pointerwin = (Window*)&_pointerwin;
 
 static Map wmap, amap;
-static MapEnt *wbucket[137];
-static MapEnt *abucket[137];
+static MapEnt* wbucket[137];
+static MapEnt* abucket[137];
+
 
 /* Rectangles/Points */
 XRectangle
@@ -334,25 +335,9 @@ findwin(XWindow w) {
 	return nil;
 }
 
-uint
+long
 winprotocols(Window *w) {
-	Atom *protocols;
-	Atom delete;
-	int i, n, protos;
-
-	n = getprop_long(w, "WM_PROTOCOLS", "ATOM", 0L, (long**)&protocols, 20L);
-	if(n == 0)
-		return 0;
-
-	protos = 0;
-	delete = xatom("WM_DELETE_WINDOW");
-	for(i = 0; i < n; i++) {
-		if(protocols[i] == delete)
-			protos |= WM_PROTOCOL_DELWIN;
-	}
-
-	free(protocols);
-	return protos;
+	return ewmh_protocols(w);
 }
 
 /* Shape */
@@ -431,7 +416,7 @@ drawline(Image *dst, Point p1, Point p2, int cap, int w, ulong col) {
 	XDrawLine(display, dst->image, dst->gc, p1.x, p1.y, p2.x, p2.y);
 }
 
-void
+uint
 drawstring(Image *dst, Font *font,
 		Rectangle r, Align align,
 		char *text, ulong col) {
@@ -491,6 +476,7 @@ drawstring(Image *dst, Font *font,
 
 done:
 	free(buf);
+	return w;
 }
 
 void
@@ -751,7 +737,7 @@ strlistdup(char *list[], int n) {
 }
 
 int
-gettextlistproperty(Window *w, char *name, char **ret[]) {
+getprop_textlist(Window *w, char *name, char **ret[]) {
 	XTextProperty prop;
 	char **list;
 	int n;
@@ -769,13 +755,13 @@ gettextlistproperty(Window *w, char *name, char **ret[]) {
 }
 
 char*
-gettextproperty(Window *w, char *name) {
+getprop_string(Window *w, char *name) {
 	char **list, *str;
 	int n;
 
 	str = nil;
 
-	n = gettextlistproperty(w, name, &list);
+	n = getprop_textlist(w, name, &list);
 	if(n > 0)
 		str = estrdup(*list);
 	freestringlist(list);

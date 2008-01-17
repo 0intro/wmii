@@ -1,4 +1,4 @@
-/* Copyright ©2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2007-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -17,6 +17,22 @@ Window *ewmhwin;
 #define	STATE(x) xatom(State(x))
 #define	TYPE(x) xatom(Type(x))
 
+static void
+senemessage(Window *w, char *name, char *value, long l2, long l3, long l4) {
+	XClientMessageEvent e;
+
+	e.type = ClientMessage;
+	e.window = w->w;
+	e.message_type = xatom(name);
+	e.format = 32;
+	e.data.l[0] = xatom(value);
+	e.data.l[1] = xtime;
+	e.data.l[2] = l2;
+	e.data.l[3] = l3;
+	e.data.l[4] = l4;
+	sendevent(w, false, NoEventMask, (XEvent*)&e);
+}
+
 void
 ewmh_init(void) {
 	WinAttr wa;
@@ -28,10 +44,8 @@ ewmh_init(void) {
 		InputOnly, &wa, 0);
 
 	win[0] = ewmhwin->w;
-	changeprop_long(&scr.root, Net("SUPPORTING_WM_CHECK"), "WINDOW",
-		win, 1);
-	changeprop_long(ewmhwin, Net("SUPPORTING_WM_CHECK"), "WINDOW",
-		win, 1);
+	changeprop_long(&scr.root, Net("SUPPORTING_WM_CHECK"), "WINDOW", win, 1);
+	changeprop_long(ewmhwin, Net("SUPPORTING_WM_CHECK"), "WINDOW", win, 1);
 	changeprop_string(ewmhwin, Net("WM_NAME"), myname);
 	changeprop_long(&scr.root, Net("DESKTOP_VIEWPORT"), "CARDINAL",
 		(long[]){0, 0}, 2);
@@ -123,7 +137,39 @@ ewmh_initclient(Client *c) {
 
 void
 ewmh_destroyclient(Client *c) {
+	Ewmh *e;
+
 	ewmh_updateclientlist();
+
+	e = &c->w.ewmh;
+	if(e->timer)
+		ixp_unsettimer(&srv, e->timer);
+}
+
+static void
+pingtimeout(long id, void *v) {
+	Client *c;
+
+	c = v;
+	event("Unresponsive %C\n", c);
+	c->w.ewmh.ping = 0;
+	c->w.ewmh.timer = 0;
+}
+
+void
+ewmh_pingclient(Client *c) {
+	Ewmh *e;
+
+	if(!(c->proto & ProtoPing))
+		return;
+
+	e = &c->w.ewmh;
+	if(e->ping)
+		return;
+
+	senemessage(&c->w, "WM_PROTOCOLS", Net("WM_PING"), c->w.w, 0, 0);
+	e->ping = xtime++;
+	e->timer = ixp_settimer(&srv, PingTime, pingtimeout, c);
 }
 
 void
@@ -135,13 +181,37 @@ ewmh_prop(Client *c, Atom a) {
 		ewmh_getstrut(c);
 }
 
+typedef struct Prop Prop;
+struct Prop {
+	char*	name;
+	long	mask;
+	Atom	atom;
+};
+
+static long
+getmask(Prop *props, long *vals, int n) {
+	Prop *p;
+	long ret;
+
+	if(props[0].atom == 0)
+		for(p=props; p->name; p++)
+			p->atom = xatom(p->name);
+
+	ret = 0;
+	while(n--) {
+		Dprint(DEwmh, "\tvals[%d] = \"%A\"\n", n, vals[n]);
+		for(p=props; p->name; p++)
+			if(p->atom == vals[n]) {
+				ret |= p->mask;
+				break;
+			}
+	}
+	return ret;
+}
+
 void
 ewmh_getwintype(Client *c) {
-	struct {
-		char*	name;
-		long	mask;
-		Atom	atom;
-	} static pairs[] = {
+	static Prop props[] = {
 		{Type("DESKTOP"), TypeDesktop},
 		{Type("DOCK"), TypeDock},
 		{Type("TOOLBAR"), TypeToolbar},
@@ -151,39 +221,40 @@ ewmh_getwintype(Client *c) {
 		{Type("DIALOG"), TypeDialog},
 		{Type("NORMAL"), TypeNormal},
 		{0, }
-	}, *pair;
-	Atom actual, atom;
+	};
 	long *types;
-	long mask;
-	ulong n;
-	int i;
+	long n, mask;
 
-	if(!pairs[0].atom)
-		for(pair=pairs; pair->name; pair++)
-			pair->atom = xatom(pair->name);
+	n = getprop_long(&c->w, Net("WM_WINDOW_TYPE"), "ATOM",
+		0L, &types, 16);
+	Dprint(DEwmh, "ewmh_getwintype(%C) n = %ld\n", c, n);
+	mask = getmask(props, types, n);
+	free(types);
 
-	n = getproperty(&c->w, Net("WM_WINDOW_TYPE"), "ATOM", &actual,
-		0L, (void*)&types, nelem(types));
-
-	Dprint(DEwmh, "ewmh_getwintype(%C) actual = %A; n = %d\n", c, actual, n);
-	if(actual != xatom("ATOM"))
-		return;
-
-	mask = 0;
-	for(i=0; i < n; i++) {
-		atom = types[i];
-		Dprint(DEwmh, "\ttypes[%d] = \"%A\"\n", i, types[i], types[i]);
-		for(pair=pairs; pair->name; pair++)
-			if(pair->atom == atom) {
-				mask |= pair->mask;
-				break;
-			}
-	}
 	c->w.ewmh.type = mask;
 	if(mask & TypeDock) {
 		c->borderless = 1;
 		c->titleless = 1;
 	}
+}
+
+long
+ewmh_protocols(Window *w) {
+	static Prop props[] = {
+		{"WM_DELETE_WINDOW", ProtoDelete},
+		{"WM_TAKE_FOCUS", ProtoTakeFocus},
+		{Net("WM_PING"), ProtoPing},
+		{0, }
+	};
+	long *protos;
+	long n, mask;
+
+	n = getprop_long(w, "WM_PROTOCOLS", "ATOM",
+		0L, &protos, 16);
+	Dprint(DEwmh, "ewmh_protocols(%W) n = %ld\n", w, n);
+	mask = getmask(props, protos, n);
+	free(protos);
+	return mask;
 }
 
 void
@@ -293,6 +364,26 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 		if(i == 0)
 			view_select(v->name);
 		return 1;
+	}else
+	if(msg == xatom("WM_PROTOCOLS")) {
+		Dprint(DEwmh, "\t%A\n", l[0]);
+		if(l[0] == NET("WM_PING")) {
+			if(e->format != 32)
+				return -1;
+			if(e->window != scr.root.w)
+				return -1;
+			c = win2client(l[2]);
+			if(c == nil)
+				return 1;
+			Dprint(DEwmh, "\tclient = [%C]\"%s\"\n", c, clientname(c));
+			Dprint(DEwmh, "\ttimer = %ld, ping = %ld\n",
+					c->w.ewmh.timer, c->w.ewmh.ping);
+			if(c->w.ewmh.timer)
+				ixp_unsettimer(&srv, c->w.ewmh.timer);
+			c->w.ewmh.timer = 0;
+			c->w.ewmh.ping = 0;
+			return 1;
+		}
 	}
 
 	return 0;
@@ -335,7 +426,6 @@ ewmh_updatestate(Client *c) {
 	if(c->urgent)
 		state[i++] = STATE("DEMANDS_ATTENTION");
 
-	assert(i < nelem(state)); /* Can't happen. */
 	if(i > 0)
 		changeprop_long(&c->w, Net("WM_STATE"), "ATOM", state, i);
 	else

@@ -1,4 +1,4 @@
-/* Copyright ©2006 Kris Maglione <fbsdaemon at gmail dot com>
+/* Copyright ©2006-2008 Kris Maglione <fbsdaemon at gmail dot com>
  * See LICENSE file for license details.
  */
 #include "dat.h"

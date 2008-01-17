@@ -11,3 +11,4 @@ FILTER = sed "s|CONFPREFIX|${ETC}|g; \
 	      s|AWKPATH|${AWKPATH}|g"
 
 include ${ROOT}/mk/man.mk
+

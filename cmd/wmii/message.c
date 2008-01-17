@@ -1,4 +1,4 @@
-/* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -38,6 +38,7 @@ enum {
 	LSELCOLORS,
 	LSELECT,
 	LSEND,
+	LSLAY,
 	LSWAP,
 	LTOGGLE,
 	LUP,
@@ -66,6 +67,7 @@ char *symtab[] = {
 	"selcolors",
 	"select",
 	"send",
+	"slay",
 	"swap",
 	"toggle",
 	"up",
@@ -274,7 +276,10 @@ message_client(Client *c, IxpMsg *m) {
 		fullscreen(c, i);
 		break;
 	case LKILL:
-		client_kill(c);
+		client_kill(c, true);
+		break;
+	case LSLAY:
+		client_kill(c, false);
 		break;
 	case LURGENT:
 		i = gettoggle(m);
@@ -573,7 +578,7 @@ msg_selectframe(Frame *f, IxpMsg *m, int sym) {
 	SET(fp);
 	switch(sym) {
 	case LUP:
-		for(fp = a->frame; fp->anext; fp = fp->anext)
+		for(fp=a->frame; fp->anext; fp=fp->anext)
 			if(fp->anext == f) break;
 		break;
 	case LDOWN:

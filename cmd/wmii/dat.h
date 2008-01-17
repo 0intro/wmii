@@ -1,4 +1,4 @@
-/* © 2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+/* Copyright ©2007-2008 Kris Maglione <jg@suckless.org>
  * See LICENSE file for license details.
  */
 
@@ -19,6 +19,10 @@
 #define FONT		"-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*"
 #define FOCUSCOLORS	"#ffffff #335577 #447799"
 #define NORMCOLORS	"#222222 #eeeeee #666666"
+
+enum {
+	PingTime = 10000,
+};
 
 enum EWMHType {
 	TypeDesktop	= 1<<0,
@@ -56,7 +60,12 @@ enum {
 
 enum {
 	NCOL = 16,
-	WM_PROTOCOL_DELWIN = 1,
+};
+
+enum Protocols {
+	ProtoDelete	= 1<<0,
+	ProtoTakeFocus	= 1<<1,
+	ProtoPing	= 1<<2,
 };
 
 enum DebugOpt {
@@ -122,7 +131,7 @@ struct Client {
 	char	tags[256];
 	char	props[512];
 	uint	border;
-	int	proto;
+	long	proto;
 	char	floating;
 	char	fixedsize;
 	char	fullscreen;
@@ -213,6 +222,7 @@ struct View {
 	ushort	id;
 	Area*	area;
 	Area*	sel;
+	Area*	colsel;
 	Area*	oldsel;
 	Area*	revert;
 };
@@ -293,6 +303,7 @@ EXTERN bool	starting;
 EXTERN char*	user;
 EXTERN char*	execstr;
 EXTERN int	debug;
+EXTERN long	xtime;
 
 #define Debug(x) if(debug&(x))
 #define Dprint(x, ...) BLOCK( Debug(x) fprint(2, __VA_ARGS__) )

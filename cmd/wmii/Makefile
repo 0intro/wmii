@@ -9,7 +9,8 @@ HFILES=	dat.h fns.h
 
 LIB =	${LIBIXP}
 LDFLAGS += -lm ${LIBX11} -lXext ${LIBICONV} -lregexp9 -lbio -lfmt -lutf
-CFLAGS += ${INCX11} ${INCICONV} -DVERSION=\"${VERSION}\"
+CFLAGS += ${INCX11} ${INCICONV} -DVERSION=\"${VERSION}\" \
+	  -DIXP_NEEDAPI=86
 OBJ =	area	\
 	bar	\
 	client	\

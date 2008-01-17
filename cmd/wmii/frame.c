@@ -1,4 +1,4 @@
-/* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -106,16 +106,17 @@ frame_restack(Frame *f, Frame *above) {
 	if(f->snext)
 		f->snext->sprev = f->sprev;
 
-	f->snext = a->stack;
 	f->sprev = above;
-	if(above == nil)
+	if(above == nil) {
+		f->snext = a->stack;
 		a->stack = f;
-	else
+	}
+	else {
 		f->snext = above->snext;
+		above->snext = f;
+	}
 	if(f->snext)
 		f->snext->sprev = f;
-	if(f->sprev)
-		f->sprev->snext = f;
 
 	return true;
 }
@@ -403,11 +404,10 @@ frame_focus(Frame *f) {
 	old_f = old_a->sel;
 	a->sel = f;
 
-	if(a != old_a) {
-		if(c->trans || (c->w.ewmh.type & (TypeDialog|TypeSplash)))
-			v->oldsel = v->sel;
+	if(a != old_a)
 		area_focus(f->area);
-	}
+	if(old_a != v->oldsel && f != old_f)
+		v->oldsel = nil;
 
 	if(v != screen->sel || a != v->sel)
 		return;
@@ -429,6 +429,7 @@ frame_draw(Frame *f) {
 	Rectangle r, fr;
 	CTuple *col;
 	Frame *tf;
+	uint w;
 
 	if(f->view != screen->sel)
 		return;
@@ -483,15 +484,24 @@ frame_draw(Frame *f) {
 	r.max.x = fr.max.x;
 	r.min.y = 0;
 	r.max.y = labelh(def.font);
-	drawstring(screen->ibuf, def.font, r, WEST,
+	if(f->client->floating)
+		r.max.x -= Dx(f->grabbox);
+	w = drawstring(screen->ibuf, def.font, r, WEST,
 			f->client->name, col->fg);
+
+	if(f->client->floating) {
+		r.min.x = r.min.x + w + 10;
+		r.max.x = f->titlebar.max.x + 1;
+		r.min.y = f->grabbox.min.y;
+		r.max.y = f->grabbox.max.y;
+		border(screen->ibuf, r, 1, col->border);
+	}
 
 	/* Why? Because some non-ICCCM-compliant apps feel the need to
 	 * change the background properties of all of their ancestor windows
-	 * in order to implement pseudo-transparency. Lovely, no?
+	 * in order to implement pseudo-transparency.
 	 * What's more, the designers of X11 felt that it would be unfair to
 	 * implementers to make it possible to detect, or forbid, such changes.
-	 * This is why we love X11 so.
 	 */
 	XSetWindowBackgroundPixmap(display, f->client->framewin->w, None);
 

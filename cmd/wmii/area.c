@@ -1,5 +1,5 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+ * Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -32,6 +32,8 @@ char*
 area_name(Area *a) {
 	static char buf[16];
 	
+	if(a == nil)
+		return "<nil>";
 	if(a->floating)
 		return "~";
 	snprint(buf, sizeof(buf), "%d", area_idx(a));
@@ -130,11 +132,17 @@ area_destroy(Area *a) {
 
 	idx = area_idx(a);
 
-	if(a->prev)
+	if(a->prev && !a->prev->floating)
 		ta = a->prev;
 	else
 		ta = a->next;
 
+	if(a == v->colsel)
+		v->colsel = ta;
+
+	/* Can only destroy the floating area when destroying a
+	 * view---after destroying all columns.
+	 */
 	assert(a->prev || a->next == nil);
 	if(a->prev)
 		a->prev->next = a->next;
@@ -142,8 +150,6 @@ area_destroy(Area *a) {
 		a->next->prev = a->prev;
 
 	if(ta && v->sel == a) {
-		if(ta->floating && ta->next)
-			ta = ta->next;
 		area_focus(ta);
 	}
 	event("DestroyArea %d\n", idx);
@@ -187,7 +193,7 @@ area_setsel(Area *a, Frame *f) {
 
 void
 area_attach(Area *a, Frame *f) {
-	uint n_frame;
+	uint nframe;
 	Frame *ft;
 	Client *c;
 
@@ -195,15 +201,15 @@ area_attach(Area *a, Frame *f) {
 
 	f->area = a;
 
-	n_frame = 0;
+	nframe = 0;
 	for(ft=a->frame; ft; ft=ft->anext)
-		n_frame++;
-	n_frame = max(n_frame, 1);
+		nframe++;
+	nframe = max(nframe, 1);
 
 	c->floating = a->floating;
 	if(!a->floating) {
 		f->r = a->r;
-		f->r.max.y = Dy(a->r) / n_frame;
+		f->r.max.y = Dy(a->r) / nframe;
 	}
 
 	frame_insert(a->sel, f);
@@ -238,13 +244,6 @@ area_detach(Frame *f) {
 	pr = f->aprev;
 	frame_remove(f);
 
-	if(a->sel == f) {
-		if(!pr)
-			pr = a->frame;
-		if(pr)
-			area_setsel(a, pr);
-	}
-
 	if(!a->floating) {
 		if(a->frame)
 			column_arrange(a, False);
@@ -255,16 +254,19 @@ area_detach(Frame *f) {
 				area_focus(v->area);
 			view_arrange(v);
 		}
-	}else if(!a->frame) {
-		if(c->trans || (c->w.ewmh.type & (TypeDialog|TypeSplash)))
-			if(v->oldsel) {
-				area_focus(v->oldsel);
-				return;
-			}
-		if(v->area->next->frame)
-			area_focus(v->area->next);
+	}else if(v->oldsel)
+		area_focus(v->oldsel);
+	else if(!a->frame) {
+		if(v->colsel->frame)
+			area_focus(v->colsel);
 	}else
 		assert(a->sel);
+
+	if(a->sel == f) {
+		if(!pr)
+			pr = a->frame;
+		area_setsel(a, pr);
+	}
 }
 
 static void
@@ -421,6 +423,8 @@ area_focus(Area *a) {
 		return;
 
 	v->sel = a;
+	if(!a->floating)
+		v->colsel = a;
 
 	if((old_a) && (a->floating != old_a->floating))
 		v->revert = old_a;

@@ -1,5 +1,5 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+ * Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -157,11 +157,10 @@ client_create(XWindow w, XWindowAttributes *wa) {
 void
 client_manage(Client *c) {
 	Client *trans;
+	Frame *f;
 	char *tags;
 
-	tags = gettextproperty(&c->w, "_WMII_TAGS");
-	if(tags == nil)
-		tags = gettextproperty(&c->w, "_WIN_TAGS");
+	tags = getprop_string(&c->w, "_WMII_TAGS");
 
 	trans = win2client(c->trans);
 	if(trans == nil && c->group)
@@ -181,15 +180,23 @@ client_manage(Client *c) {
 	if(!starting)
 		view_update_all();
 
-	if(c->sel->view == screen->sel)
-	if(!(c->w.ewmh.type & TypeSplash))
-	if(!c->group || c->group->ref == 1
-	|| selclient() && selclient()->group == c->group)
+	bool newgroup = !c->group
+		     || c->group->ref == 1
+		     || selclient() && (selclient()->group == c->group);
+
+	f = c->sel;
+	if((f->view == screen->sel)
+	&& (!(c->w.ewmh.type & TypeSplash))
+	&& newgroup) {
+		if(f->area != f->view->sel)
+			f->view->oldsel = f->view->sel;
 		focus(c, false);
+	}
 	else {
 		frame_restack(c->sel, c->sel->area->sel);
 		view_restack(c->sel->view);
 	}
+
 	flushenterevents();
 }
 
@@ -206,8 +213,6 @@ client_destroy(Client *c) {
 	char *dummy;
 	Client **tc;
 	bool hide;
-
-	Dprint(DGeneric, "client.c:client_destroy(%p) %s\n", c, c->name);
 
 	unmapwin(c->framewin);
 
@@ -509,15 +514,17 @@ client_sendmessage(Client *c, char *name, char *value) {
 	e.message_type = xatom(name);
 	e.format = 32;
 	e.data.l[0] = xatom(value);
-	e.data.l[1] = CurrentTime;
+	e.data.l[1] = xtime;
 	sendevent(&c->w, false, NoEventMask, (XEvent*)&e);
 	sync();
 }
 
 void
-client_kill(Client * c) {
-	if(c->proto & WM_PROTOCOL_DELWIN)
+client_kill(Client *c, bool nice) {
+	if(nice && (c->proto & ProtoDelete)) {
 		client_sendmessage(c, "WM_PROTOCOLS", "WM_DELETE_WINDOW");
+		ewmh_pingclient(c);
+	}
 	else
 		XKillClient(display, c->w.w);
 }
@@ -617,9 +624,9 @@ client_updatename(Client *c) {
 
 	c->name[0] = '\0';
 
-	str = gettextproperty(&c->w, "_NET_WM_NAME");
+	str = getprop_string(&c->w, "_NET_WM_NAME");
 	if(str == nil)
-		str = gettextproperty(&c->w, "WM_NAME");
+		str = getprop_string(&c->w, "WM_NAME");
 	if(str)
 		utflcpy(c->name, str, sizeof(c->name));
 	free(str);
@@ -702,7 +709,7 @@ client_prop(Client *c, Atom a) {
 		}
 		break;
 	case XA_WM_CLASS:
-		n = gettextlistproperty(&c->w, "WM_CLASS", &class);
+		n = getprop_textlist(&c->w, "WM_CLASS", &class);
 		snprint(c->props, sizeof(c->props), "%s:%s:",
 				(n > 0 ? class[0] : "<nil>"),
 				(n > 1 ? class[1] : "<nil>"));
@@ -775,7 +782,8 @@ enter_event(Window *w, XCrossingEvent *e) {
 			focus(c, false);
 		}
 		client_setcursor(c, cursor[CurNormal]);
-	}else Dprint(DGeneric, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
+	}else
+		Dprint(DGeneric, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
 }
 
 static void
@@ -857,38 +865,6 @@ static Handlers handlers = {
 };
 
 /* Other */
-#if 0 /* Not used at the moment */
-void
-newcol_client(Client *c, char *arg) {
-	Frame *f;
-	Area *to, *a;
-	View *v;
-
-	f = c->sel;
-	a = f->area;
-	v = f->view;
-
-	if(a->floating)
-		return;
-	if((f->anext == nil) && (f->aprev == nil))
-		return;
-
-	if(!strncmp(arg, "prev", 5)) {
-		for(to=v->area; to; to=to->next)
-			if(to->next == a) break;
-		to = column_new(v, to, 0);
-		area_moveto(to, f);
-	}
-	else if(!strncmp(arg, "next", 5)) {
-		to = column_new(v, a, 0);
-		area_moveto(to, f);
-	}
-	else
-		return;
-	flushenterevents();
-}
-#endif
-
 void
 client_setviews(Client *c, char **tags) {
 	Frame **fp, *f;

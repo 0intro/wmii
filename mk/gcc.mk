@@ -5,7 +5,8 @@ DEBUGCFLAGS = \
 	-fno-inline \
 	-fno-omit-frame-pointer \
 	-fno-optimize-sibling-calls \
-	-fno-unroll-loops
+	-fno-unroll-loops \
+	-DIXPlint
 CFLAGS += \
 	-std=c99 \
 	-pedantic \
@@ -22,3 +23,7 @@ CFLAGS += \
 	-Wreturn-type \
 	-Wstrict-prototypes \
 	-Wtrigraphs
+MKDEP = cpp -M
+SOCFLAGS += -fPIC
+SOLDFLAGS += -shared -soname $(SONAME)
+
