@@ -1,4 +1,4 @@
-/* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -8,15 +8,17 @@
 
 void
 dispatch_event(XEvent *e) {
-	Debug printevent(e);
+	Debug(DEvent)
+		printevent(e);
 	if(handler[e->type])
 		handler[e->type](e);
 }
 
-#define handle(w, fn, ev) if(!(w)->handler->fn) {}else (w)->handler->fn((w), ev)
+#define handle(w, fn, ev) \
+	BLOCK(if((w)->handler->fn) (w)->handler->fn((w), ev))
 
 uint
-flushevents(long event_mask, Bool dispatch) {
+flushevents(long event_mask, bool dispatch) {
 	XEvent ev;
 	uint n = 0;
 
@@ -25,6 +27,37 @@ flushevents(long event_mask, Bool dispatch) {
 			dispatch_event(&ev);
 		n++;
 	}
+	return n;
+}
+
+static Bool
+findenter(Display *d, XEvent *e, XPointer v) {
+	long *l;
+
+	l = (long*)v;
+	if(*l)
+		return False;
+	if(e->type == EnterNotify)
+		return True;
+	if(e->type == MotionNotify)
+		(*l)++;
+	return False;
+}
+
+/* This isn't perfect. If there were motion events in the queue
+ * before this was called, then it flushes nothing. If we don't
+ * check for them, we might lose a legitamate enter event.
+ */
+uint
+flushenterevents(void) {
+	XEvent e;
+	long l;
+	int n;
+
+	l = 0;
+	n = 0;
+	while(XCheckIfEvent(display, &e, findenter, (void*)&l))
+		n++;
 	return n;
 }
 
@@ -72,6 +105,14 @@ configurerequest(XEvent *e) {
 }
 
 static void
+clientmessage(XEvent *e) {
+	XClientMessageEvent *ev;
+
+	ev = &e->xclient;
+	ewmh_clientmessage(ev);
+}
+
+static void
 destroynotify(XEvent *e) {
 	XDestroyWindowEvent *ev;
 	Window *w;
@@ -81,7 +122,7 @@ destroynotify(XEvent *e) {
 	if((w = findwin(ev->window))) 
 		handle(w, destroy, ev);
 	else {
-		Dprint("DestroyWindow(%ux) (no handler)\n", (uint)ev->window);
+		Dprint(DGeneric, "DestroyWindow(%ux) (no handler)\n", (uint)ev->window);
 		if((c = win2client(ev->window)))
 			fprint(2, "Badness: Unhandled DestroyNotify: "
 				"Client: %p, Window: %W, Name: %s\n", c, &c->w, c->name);
@@ -94,6 +135,7 @@ enternotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xcrossing;
+	xtime = ev->time;
 	if(ev->mode != NotifyNormal)
 		return;
 
@@ -101,7 +143,7 @@ enternotify(XEvent *e) {
 		handle(w, enter, ev);
 	else if(ev->window == scr.root.w) {
 		sel_screen = True;
-		draw_frames();
+		frame_draw_all();
 	}
 }
 
@@ -110,17 +152,18 @@ leavenotify(XEvent *e) {
 	XCrossingEvent *ev;
 
 	ev = &e->xcrossing;
+	xtime = ev->time;
 	if((ev->window == scr.root.w) && !ev->same_screen) {
 		sel_screen = True;
-		draw_frames();
+		frame_draw_all();
 	}
 }
 
 void
-print_focus(Client *c, char *to) {
-	Dprint("screen->focus: %p[%C] => %p[%C]\n",
+print_focus(Client *c, const char *to) {
+	Dprint(DFocus, "screen->focus: %p[%C] => %p[%C]\n",
 			screen->focus, screen->focus, c, c);
-	Dprint("\t%s => %s\n", clientname(screen->focus), to);
+	Dprint(DFocus, "\t%s => %s\n", clientname(screen->focus), to);
 }
 
 static void
@@ -161,7 +204,7 @@ focusin(XEvent *e) {
 			print_focus(&c_magic, "<magic>");
 			screen->focus = &c_magic;
 			if(c->sel)
-				draw_frame(c->sel);
+				frame_draw(c->sel);
 		}
 	}
 }
@@ -206,6 +249,7 @@ keypress(XEvent *e) {
 	XKeyEvent *ev;
 
 	ev = &e->xkey;
+	xtime = ev->time;
 	ev->state &= valid_mask;
 	if(ev->window == scr.root.w)
 		kpress(scr.root.w, ev->state, (KeyCode) ev->keycode);
@@ -227,17 +271,16 @@ maprequest(XEvent *e) {
 	XWindowAttributes wa;
 
 	ev = &e->xmaprequest;
-
 	if(!XGetWindowAttributes(display, ev->window, &wa))
 		return;
-
 	if(wa.override_redirect) {
+		/* Do I really want these? */
 		XSelectInput(display, ev->window,
 				(StructureNotifyMask | PropertyChangeMask));
 		return;
 	}
 	if(!win2client(ev->window))
-		create_client(ev->window, &wa);
+		client_create(ev->window, &wa);
 }
 
 static void
@@ -246,6 +289,7 @@ motionnotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xmotion;
+	xtime = ev->time;
 	if((w = findwin(ev->window)))
 		handle(w, motion, ev);
 }
@@ -256,6 +300,7 @@ propertynotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xproperty;
+	xtime = ev->time;
 	if((w = findwin(ev->window))) 
 		handle(w, property, ev);
 }
@@ -286,6 +331,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress] = buttonpress,
 	[ButtonRelease] = buttonrelease,
 	[ConfigureRequest] = configurerequest,
+	[ClientMessage] = clientmessage,
 	[DestroyNotify] = destroynotify,
 	[EnterNotify] = enternotify,
 	[Expose] = expose,

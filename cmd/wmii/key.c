@@ -2,36 +2,38 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <string.h>
-#include <stdlib.h>
 #include <X11/keysym.h>
 #include "fns.h"
 
 void
 init_lock_keys(void) {
 	XModifierKeymap *modmap;
-	KeyCode num_lock;
+	KeyCode numlock;
 	static int masks[] = {
-		ShiftMask, LockMask, ControlMask, Mod1Mask,
-		Mod2Mask, Mod3Mask, Mod4Mask, Mod5Mask
+		ShiftMask, LockMask, ControlMask,
+		Mod1Mask, Mod2Mask, Mod3Mask,
+		Mod4Mask, Mod5Mask
 	};
 	int i;
 
-	num_lock_mask = 0;
+	numlock_mask = 0;
 	modmap = XGetModifierMapping(display);
-	num_lock = XKeysymToKeycode(display, XStringToKeysym("Num_Lock"));
+	numlock = keycode("Num_Lock");
+	if(numlock)
 	if(modmap && modmap->max_keypermod > 0) {
-		int max = (sizeof(masks) / sizeof(int)) * modmap->max_keypermod;
+		int max;
+		
+		max = nelem(masks) * modmap->max_keypermod;
 		for(i = 0; i < max; i++)
-			if(num_lock && (modmap->modifiermap[i] == num_lock))
-				num_lock_mask = masks[i / modmap->max_keypermod];
+			if(modmap->modifiermap[i] == numlock)
+				numlock_mask = masks[i / modmap->max_keypermod];
 	}
 	XFreeModifiermap(modmap);
-	valid_mask = 255 & ~(num_lock_mask | LockMask);
+	valid_mask = 255 & ~(numlock_mask | LockMask);
 }
 
 ulong
-str2modmask(char *val) {
+str2modmask(const char *val) {
 	ulong mod = 0;
 
 	if (strstr(val, "Shift"))
@@ -52,38 +54,40 @@ str2modmask(char *val) {
 }
 
 static void
-grab_key(Key *k) {
+grabkey(Key *k) {
 	XGrabKey(display, k->key, k->mod, scr.root.w,
 			True, GrabModeAsync, GrabModeAsync);
-	if(num_lock_mask) {
-		XGrabKey(display, k->key, k->mod | num_lock_mask, scr.root.w,
+	if(numlock_mask) {
+		XGrabKey(display, k->key, k->mod | numlock_mask, scr.root.w,
 				True, GrabModeAsync, GrabModeAsync);
-		XGrabKey(display, k->key, k->mod | num_lock_mask | LockMask, scr.root.w,
+		XGrabKey(display, k->key, k->mod | numlock_mask | LockMask, scr.root.w,
 				True, GrabModeAsync, GrabModeAsync);
 	}
-	XSync(display, False);
+	sync();
 }
 
 static void
-ungrab_key(Key *k) {
+ungrabkey(Key *k) {
 	XUngrabKey(display, k->key, k->mod, scr.root.w);
-	if(num_lock_mask) {
-		XUngrabKey(display, k->key, k->mod | num_lock_mask, scr.root.w);
-		XUngrabKey(display, k->key, k->mod | num_lock_mask | LockMask, scr.root.w);
+	if(numlock_mask) {
+		XUngrabKey(display, k->key, k->mod | numlock_mask, scr.root.w);
+		XUngrabKey(display, k->key, k->mod | numlock_mask | LockMask, scr.root.w);
 	}
-	XSync(display, False);
+	sync();
 }
 
 static Key *
 name2key(const char *name) {
 	Key *k;
+
 	for(k=key; k; k=k->lnext)
-		if(!strncmp(k->name, name, sizeof(k->name))) break;
-	return k;
+		if(!strncmp(k->name, name, sizeof(k->name)))
+			return k;
+	return nil;
 }
 
 static Key *
-get_key(const char *name) {
+getkey(const char *name) {
 	char buf[128];
 	char *seq[8];
 	char *kstr;
@@ -94,7 +98,7 @@ get_key(const char *name) {
 	r = nil;
 
 	if((k = name2key(name))) {
-		ungrab_key(k);
+		ungrabkey(k);
 		return k;
 	}
 	utflcpy(buf, name, sizeof(buf));
@@ -139,26 +143,30 @@ next_keystroke(ulong *mod, KeyCode *code) {
 }
 
 static void
-emulate_key_press(ulong mod, KeyCode key) {
-	XEvent e;
-	XWindow client_win;
-	int revert;
+fake_keypress(ulong mod, KeyCode key) {
+	XKeyEvent e;
+	Client *c;
 
-	XGetInputFocus(display, &client_win, &revert);
-	e.xkey.type = KeyPress;
-	e.xkey.time = CurrentTime;
-	e.xkey.window = client_win;
-	e.xkey.display = display;
-	e.xkey.state = mod;
-	e.xkey.keycode = key;
-	XSendEvent(display, client_win, True, KeyPressMask, &e);
-	e.xkey.type = KeyRelease;
-	XSendEvent(display, client_win, True, KeyReleaseMask, &e);
-	XSync(display, False);
+	c = screen->focus;
+	if(c == nil || c->w.w == 0)
+		return;
+
+	e.time = CurrentTime;
+	e.window = c->w.w;
+	e.display = display;
+	e.state = mod;
+	e.keycode = key;
+
+	e.type = KeyPress;
+	sendevent(&c->w, true, KeyPressMask, (XEvent*)&e);
+	e.type = KeyRelease;
+	sendevent(&c->w, true, KeyReleaseMask, (XEvent*)&e);
+
+	sync();
 }
 
 static Key *
-match_keys(Key *k, ulong mod, KeyCode keycode, Bool seq) {
+match_keys(Key *k, ulong mod, KeyCode keycode, bool seq) {
 	Key *ret = nil, *next;
 
 	for(next = k->tnext; k; (k=next) && (next=k->tnext)) {
@@ -181,12 +189,12 @@ kpress_seq(XWindow w, Key *done) {
 	next_keystroke(&mod, &key);
 	found = match_keys(done, mod, key, True);
 	if((done->mod == mod) && (done->key == key))
-		emulate_key_press(mod, key); /* double key */
+		fake_keypress(mod, key); /* double key */
 	else {
 		if(!found)
 			XBell(display, 0);
 		else if(!found->tnext && !found->next)
-			write_event("Key %s\n", found->name);
+			event("Key %s\n", found->name);
 		else
 			kpress_seq(w, found);
 	}
@@ -202,13 +210,13 @@ kpress(XWindow w, ulong mod, KeyCode keycode) {
 	if(!found) /* grabbed but not found */
 		XBell(display, 0);
 	else if(!found->tnext && !found->next)
-		write_event("Key %s\n", found->name);
+		event("Key %s\n", found->name);
 	else {
 		XGrabKeyboard(display, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
 		flushevents(FocusChangeMask, True);
 		kpress_seq(w, found);
 		XUngrabKeyboard(display, CurrentTime);
-		XSync(display, False);
+		sync();
 	}
 }
 
@@ -220,7 +228,7 @@ update_keys(void) {
 	init_lock_keys();
 	while((k = key)) {
 		key = key->lnext;
-		ungrab_key(k);
+		ungrabkey(k);
 		while((n = k)) {
 			k = k->next;
 			free(n);
@@ -229,8 +237,8 @@ update_keys(void) {
 	for(l = p = def.keys; p && *p;) {
 		if(*p == '\n') {
 			*p = 0;
-			if((k = get_key(l)))
-				grab_key(k);
+			if((k = getkey(l)))
+				grabkey(k);
 			*p = '\n';
 			l = ++p;
 		}
@@ -238,8 +246,8 @@ update_keys(void) {
 			p++;
 	}
 	if(l < p && strlen(l)) {
-		if((k = get_key(l)))
-			grab_key(k);
+		if((k = getkey(l)))
+			grabkey(k);
 	}
-	XSync(display, False);
+	sync();
 }

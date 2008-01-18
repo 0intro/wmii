@@ -1,8 +1,6 @@
 /* Written by Kris Maglione */
 /* Public domain */
 #include "dat.h"
-#include <stdlib.h>
-#include <string.h>
 #include "fns.h"
 
 /* Edit s/^([a-zA-Z].*)\n([a-z].*) {/\1 \2;/g  x/^([^a-zA-Z]|static|$)/-+d  s/ (\*map|val|*str)//g */
@@ -23,7 +21,7 @@ hash(const char *str) {
 }
 
 static void
-insert(MapEnt **e, ulong val, char *key) {
+insert(MapEnt **e, ulong val, const char *key) {
 	MapEnt *te;
 	
 	te = emallocz(sizeof *te);
@@ -34,7 +32,7 @@ insert(MapEnt **e, ulong val, char *key) {
 }
 
 static MapEnt**
-mapgetp(Map *map, ulong val, int create) {
+map_getp(Map *map, ulong val, int create) {
 	MapEnt **e;
 
 	e = &map->bucket[val%map->nhash];
@@ -50,13 +48,13 @@ mapgetp(Map *map, ulong val, int create) {
 }
 
 static MapEnt**
-hashgetp(Map *map, char *str, int create) {
+hash_getp(Map *map, const char *str, int create) {
 	MapEnt **e;
 	ulong h;
 	int cmp;
 	
 	h = hash(str);
-	e = mapgetp(map, h, create);
+	e = map_getp(map, h, create);
 	if(*e && (*e)->key == nil)
 		(*e)->key = str;
 	else {
@@ -72,28 +70,28 @@ hashgetp(Map *map, char *str, int create) {
 }
 
 MapEnt*
-mapget(Map *map, ulong val, int create) {
+map_get(Map *map, ulong val, int create) {
 	MapEnt **e;
 	
-	e = mapgetp(map, val, create);
+	e = map_getp(map, val, create);
 	return *e;
 }
 
 MapEnt*
-hashget(Map *map, char *str, int create) {
+hash_get(Map *map, const char *str, int create) {
 	MapEnt **e;
 	
-	e = hashgetp(map, str, create);
+	e = hash_getp(map, str, create);
 	return *e;
 }
 
 void*
-maprm(Map *map, ulong val) {
+map_rm(Map *map, ulong val) {
 	MapEnt **e, *te;
 	void *ret;
 	
 	ret = nil;
-	e = mapgetp(map, val, 0);
+	e = map_getp(map, val, 0);
 	if(*e) {
 		te = *e;
 		ret = te->val;
@@ -104,12 +102,12 @@ maprm(Map *map, ulong val) {
 }
 
 void*
-hashrm(Map *map, char *str) {
+hash_rm(Map *map, const char *str) {
 	MapEnt **e, *te;
 	void *ret;
 	
 	ret = nil;
-	e = hashgetp(map, str, 0);
+	e = hash_getp(map, str, 0);
 	if(*e) {
 		te = *e;
 		ret = te->val;

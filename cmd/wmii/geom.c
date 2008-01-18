@@ -1,11 +1,11 @@
-/* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
 #include "fns.h"
 
-Bool
-ptinrect(Point pt, Rectangle r) {
+bool
+rect_haspoint_p(Point pt, Rectangle r) {
 	return (pt.x >= r.min.x) && (pt.x < r.max.x)
 		&& (pt.y >= r.min.y) && (pt.y < r.max.y);
 }
@@ -30,7 +30,7 @@ quadrant(Rectangle r, Point pt) {
 }
 
 Cursor
-cursor_of_quad(Align align) {
+quad_cursor(Align align) {
 	switch(align) {
 	case NEAST:
 		return cursor[CurNECorner];

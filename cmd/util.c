@@ -1,6 +1,8 @@
 /* Written by Kris Maglione <fbsdaemon at gmail dot com> */
 /* Public domain */
 #include <errno.h>
+#include <sys/types.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -42,6 +44,19 @@ fatal(const char *fmt, ...) {
 	va_end(fp.args);
 
 	exit(1);
+}
+
+void
+_die(char *file, int line, char *msg) {
+	fprint(2, "%s: dieing at %s:%d: %s\n",
+		file, line, msg);
+	kill(getpid(), SIGABRT);
+	abort(); /* Adds too many frames:
+		  *  _die()
+		  *  abort()
+		  *  raise(SIGABRT)
+		  *  kill(getpid(), SIGABRT)
+		  */
 }
 
 /* Can't malloc */

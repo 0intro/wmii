@@ -1,5 +1,5 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+ * Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #define EXTERN
@@ -11,14 +11,10 @@
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include "fns.h"
-
-enum { false, true };
 
 static const char
 	version[] = "wmii-"VERSION", ©2007 Kris Maglione\n";
@@ -52,17 +48,19 @@ scan_wins(void) {
 		for(i = 0; i < num; i++) {
 			if(!XGetWindowAttributes(display, wins[i], &wa))
 				continue;
+			/* Skip transients. */
 			if(wa.override_redirect || XGetTransientForHint(display, wins[i], &d1))
 				continue;
 			if(wa.map_state == IsViewable)
-				create_client(wins[i], &wa);
+				client_create(wins[i], &wa);
 		}
+		/* Manage transients. */
 		for(i = 0; i < num; i++) {
 			if(!XGetWindowAttributes(display, wins[i], &wa))
 				continue;
 			if((XGetTransientForHint(display, wins[i], &d1))
 			&& (wa.map_state == IsViewable))
-				create_client(wins[i], &wa);
+				client_create(wins[i], &wa);
 		}
 	}
 	if(wins)
@@ -150,13 +148,6 @@ init_environment(void) {
 }
 
 static void
-init_atoms(void) {
-	Atom net[] = { xatom("_NET_SUPPORTED"), xatom("_NET_WM_NAME") };
-
-	changeprop_long(&scr.root, "_NET_SUPPORTED", "ATOM", (long*)net, nelem(net));
-}
-
-static void
 create_cursor(int ident, uint shape) {
 	cursor[ident] = XCreateFontCursor(display, shape);
 }
@@ -194,23 +185,17 @@ init_cursors(void) {
 
 static void
 init_screen(WMScreen *screen) {
-	XWindow w;
-	int ret;
-	unsigned mask;
 
 	screen->r = scr.rect;
 	def.snap = Dy(scr.rect) / 63;
 
-	sel_screen = XQueryPointer(display, scr.root.w,
-			&w, &w,
-			&ret, &ret, &ret, &ret,
-			&mask);
+	sel_screen = pointerscreen();
 }
 
 static void
 cleanup(void) {
 	while(client) 
-		destroy_client(client);
+		client_destroy(client);
 	ixp_server_close(&srv);
 	close(sleeperfd);
 }
@@ -225,6 +210,7 @@ struct {
 	{ X_PolySegment, BadDrawable },
 	{ X_ConfigureWindow, BadMatch },
 	{ X_GrabKey, BadAccess },
+	{ X_GetAtomName, BadAtom },
 };
 
 /*
@@ -322,7 +308,7 @@ init_traps(void) {
 		/* Wait for parent to exit */
 		read(fd[0], buf, 1);
 
-		XSetInputFocus(display, PointerRoot, RevertToPointerRoot, CurrentTime);
+		setfocus(pointerwin, RevertToPointerRoot);
 		XCloseDisplay(display);
 		exit(0);
 	}
@@ -388,14 +374,11 @@ main(int argc, char *argv[]) {
 	wmiirc = "wmiistartrc";
 
 	ARGBEGIN{
-	case 'v':
-		print("%s", version);
-		exit(0);
-	case 'V':
-		verbose = true;
-		break;
 	case 'a':
 		address = EARGF(usage());
+		break;
+	case 'G':
+		debug |= DGeneric;
 		break;
 	case 'r':
 		wmiirc = EARGF(usage());
@@ -420,7 +403,7 @@ main(int argc, char *argv[]) {
 	XSelectInput(display, scr.root.w,
 			  SubstructureRedirectMask
 			| EnterWindowMask);
-	XSync(display, False);
+	sync();
 
 	check_other_wm = false;
 
@@ -438,9 +421,9 @@ main(int argc, char *argv[]) {
 		spawn_command(wmiirc);
 
 	init_traps();
-	init_atoms();
 	init_cursors();
 	init_lock_keys();
+	ewmh_init();
 
 	srv.preselect = check_preselect;
 	ixp_listen(&srv, sock, &p9srv, serve_9pcon, nil);
@@ -475,7 +458,7 @@ main(int argc, char *argv[]) {
 		setwinattr(&scr.root, &wa,
 				  CWEventMask
 				| CWCursor);
-		initbar(s);
+		bar_init(s);
 	}
 
 	screen->focus = nil;
@@ -484,9 +467,11 @@ main(int argc, char *argv[]) {
 	scan_wins();
 	starting = false;
 
-	select_view("nil");
-	update_views();
-	write_event("FocusTag %s\n", screen->sel->name);
+	view_select("nil");
+	view_update_all();
+	ewmh_updateviews();
+
+	event("FocusTag %s\n", screen->sel->name);
 
 	i = ixp_serverloop(&srv);
 	if(i)

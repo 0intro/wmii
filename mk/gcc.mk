@@ -1,7 +1,7 @@
 CFLAGS += \
 	-std=c99 \
-	-pipe \
 	-pedantic \
+	-pipe \
 	-Wall \
 	-Wimplicit \
 	-Wmissing-prototypes \
@@ -13,4 +13,8 @@ CFLAGS += \
 	-Wpointer-arith \
 	-Wreturn-type \
 	-Wstrict-prototypes \
-	-Wtrigraphs \
+	-Wtrigraphs
+MKDEP = cpp -M
+SOCFLAGS += -fPIC
+SOLDFLAGS += -shared -soname $(SONAME)
+

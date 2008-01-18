@@ -1,12 +1,9 @@
-/*
- * Copyright ©2006 Anselm R. Garbe <garbeam at gmail dot com>
+/* Copyright ©2006 Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 
 #include "dat.h"
 #include <assert.h>
-#include <string.h>
-#include <stdlib.h>
 #include "fns.h"
 
 /* basic rule matching language /regex/ -> value
@@ -88,6 +85,6 @@ update_rules(Rule **rule, const char *data) {
 				*v++ = *p;
 			break;
 		default: /* can't happen */
-			assert(!"invalid state");
+			die("invalid state");
 		}
 }

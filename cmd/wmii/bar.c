@@ -1,16 +1,15 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+ * Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <string.h>
 #include "fns.h"
 
 static Handlers handlers;
 static Bar *free_bars;
 
 void
-initbar(WMScreen *s) {
+bar_init(WMScreen *s) {
 	WinAttr wa;
 
 	s->brect = s->r;
@@ -34,12 +33,12 @@ initbar(WMScreen *s) {
 	mapwin(s->barwin);
 }
 
-Bar *
-create_bar(Bar **bp, char *name) {
+Bar*
+bar_create(Bar **bp, const char *name) {
 	static uint id = 1;
 	Bar *b;
 
-	b = bar_of_name(*bp, name);;
+	b = bar_find(*bp, name);;
 	if(b)
 		return b;
 
@@ -65,7 +64,7 @@ create_bar(Bar **bp, char *name) {
 }
 
 void
-destroy_bar(Bar **bp, Bar *b) {
+bar_destroy(Bar **bp, Bar *b) {
 	Bar **p;
 
 	for(p = bp; *p; p = &p[0]->next)
@@ -77,7 +76,7 @@ destroy_bar(Bar **bp, Bar *b) {
 }
 
 void
-resize_bar(WMScreen *s) {
+bar_resize(WMScreen *s) {
 	View *v;
 
 	s->brect = s->r;
@@ -85,14 +84,14 @@ resize_bar(WMScreen *s) {
 
 	reshapewin(s->barwin, s->brect);
 
-	XSync(display, False);
-	draw_bar(s);
+	sync();
+	bar_draw(s);
 	for(v = view; v; v = v->next)
-		arrange_view(v);
+		view_arrange(v);
 }
 
 void
-draw_bar(WMScreen *s) {
+bar_draw(WMScreen *s) {
 	Bar *b, *tb, *largest, **pb;
 	Rectangle r;
 	Align align;
@@ -158,11 +157,11 @@ draw_bar(WMScreen *s) {
 			border(screen->ibuf, b->r, 1, b->col.border);
 		}
 	copyimage(s->barwin, r, screen->ibuf, ZP);
-	XSync(display, False);
+	sync();
 }
 
 Bar*
-bar_of_name(Bar *bp, const char *name) {
+bar_find(Bar *bp, const char *name) {
 	Bar *b;
 
 	for(b = bp; b; b = b->next)
@@ -179,16 +178,16 @@ bdown_event(Window *w, XButtonPressedEvent *e) {
 
 	/* Ungrab so a menu can receive events before the button is released */
 	XUngrabPointer(display, e->time);
-	XSync(display, False);
+	sync();
 
 	for(b=screen->bar[BarLeft]; b; b=b->next)
-		if(ptinrect(Pt(e->x, e->y), b->r)) {
-			write_event("LeftBarMouseDown %d %s\n", e->button, b->name);
+		if(rect_haspoint_p(Pt(e->x, e->y), b->r)) {
+			event("LeftBarMouseDown %d %s\n", e->button, b->name);
 			return;
 		}
 	for(b=screen->bar[BarRight]; b; b=b->next)
-		if(ptinrect(Pt(e->x, e->y), b->r)) {
-			write_event("RightBarMouseDown %d %s\n", e->button, b->name);
+		if(rect_haspoint_p(Pt(e->x, e->y), b->r)) {
+			event("RightBarMouseDown %d %s\n", e->button, b->name);
 			return;
 		}
 }
@@ -200,13 +199,13 @@ bup_event(Window *w, XButtonPressedEvent *e) {
 	USED(w, e);
 
 	for(b=screen->bar[BarLeft]; b; b=b->next)
-		if(ptinrect(Pt(e->x, e->y), b->r)) {
-			write_event("LeftBarClick %d %s\n", e->button, b->name);
+		if(rect_haspoint_p(Pt(e->x, e->y), b->r)) {
+			event("LeftBarClick %d %s\n", e->button, b->name);
 			return;
 		}
 	for(b=screen->bar[BarRight]; b; b=b->next)
-		if(ptinrect(Pt(e->x, e->y), b->r)) {
-			write_event("RightBarClick %d %s\n", e->button, b->name);
+		if(rect_haspoint_p(Pt(e->x, e->y), b->r)) {
+			event("RightBarClick %d %s\n", e->button, b->name);
 			return;
 		}
 }
@@ -214,7 +213,7 @@ bup_event(Window *w, XButtonPressedEvent *e) {
 static void
 expose_event(Window *w, XExposeEvent *e) {
 	USED(w, e);
-	draw_bar(screen);
+	bar_draw(screen);
 }
 
 static Handlers handlers = {

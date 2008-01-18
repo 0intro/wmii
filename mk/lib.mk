@@ -1,25 +1,30 @@
-LIB = ${ROOT}/lib/${TARG}.a
+PTARG = $(ROOT)/lib/$(TARG)
+LIB = $(PTARG).a
 OFILES = ${OBJ:=.o}
 
-all: ${HFILES} ${LIB} 
+all: $(HFILES) $(LIB) 
 
-install: ${TARG}.install
-uninstall: ${TARG}.uninstall
+install: $(PTARG).install
+uninstall: $(PTARG).uninstall
 clean: libclean
 depend: ${OBJ:=.depend}
 
 libclean:
-	for i in ${LIB} ${OFILES}; do \
+	for i in $(LIB) $(OFILES); do \
 		rm -f $$i; \
 	done 2>/dev/null || true
 
 printinstall:
 	echo 'Install directories:'
-	echo '	Lib: ${LIBDIR}'
+	echo '	Lib: $(LIBDIR)'
 
-${LIB}: ${OFILES}
-	echo AR $$($(ROOT)/util/cleanname $(BASE)/$@)
-	mkdir ${ROOT}/lib 2>/dev/null || true
-	${AR} $@ ${OFILES}
+$(LIB): $(OFILES)
+	echo AR $$($(CLEANNAME) $(BASE)/$@)
+	mkdir $(ROOT)/lib 2>/dev/null || true
+	$(AR) $@ $(OFILES)
 
-include ${ROOT}/mk/common.mk
+SOMKSH=case "$(MAKESO)" in 1|[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]) echo $(ROOT)/mk/so.mk;; *) echo /dev/null;; esac
+SOMK:=${shell $(SOMKSH)}
+SOMK!=$(SOMKSH)
+include $(SOMK)
+

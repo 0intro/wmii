@@ -1,12 +1,10 @@
-/* Copyright ©2006 Kris Maglione <fbsdaemon at gmail dot com>
+/* Copyright ©2006-2008 Kris Maglione <fbsdaemon at gmail dot com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
 #include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include "fns.h"
 
@@ -109,7 +107,7 @@ dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
 		  {nil}},
 dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|DMDIR },
 		  {"ctl",	QTAPPEND,	FsFCctl,	0600|DMAPPEND },
-		  {"label",	QTFILE,	FsFClabel,	0600 },
+		  {"label",	QTFILE,		FsFClabel,	0600 },
 		  {"tags",	QTFILE,		FsFCtags,	0600 },
 		  {"props",	QTFILE,		FsFprops,	0400 },
 		  {nil}},
@@ -200,7 +198,7 @@ write_to_buf(Ixp9Req *r, char **buf, uint *len, uint max) {
 
 	*len = offset + count;
 	if(max == 0)
-		*buf = erealloc((void*)*buf, *len + 1);
+		*buf = erealloc(*buf, *len + 1);
 
 	p = *buf;
 
@@ -227,7 +225,7 @@ data_to_cstring(Ixp9Req *r) {
 
 typedef char* (*MsgFunc)(void*, IxpMsg*);
 
-static char *
+static char*
 message(Ixp9Req *r, MsgFunc fn) {
 	char *err, *s, *p, c;
 	FileId *f;
@@ -249,7 +247,7 @@ message(Ixp9Req *r, MsgFunc fn) {
 		c = *p;
 		*p = '\0';
 
-		m = ixp_message((uchar*)s, p-s, 0);
+		m = ixp_message(s, p-s, 0);
 		s = fn(f->p.ref, &m);
 		if(s)
 			err = s;
@@ -273,7 +271,7 @@ respond_event(Ixp9Req *r) {
 }
 
 void
-write_event(char *format, ...) {
+event(const char *format, ...) {
 	uint len, slen;
 	va_list ap;
 	FidLink *f;
@@ -457,7 +455,7 @@ LastItem:
 	return ret;
 }
 
-static Bool
+static bool
 verify_file(FileId *f) {
 	FileId *nf;
 	int ret;
@@ -565,7 +563,7 @@ fs_stat(Ixp9Req *r) {
 	IxpMsg m;
 	Stat s;
 	int size;
-	uchar *buf;
+	char *buf;
 	FileId *f;
 	
 	f = r->fid->aux;
@@ -591,7 +589,7 @@ fs_read(Ixp9Req *r) {
 	char *buf;
 	FileId *f, *tf;
 	int n, offset;
-	int size;
+	ulong size;
 
 	f = r->fid->aux;
 
@@ -606,8 +604,10 @@ fs_read(Ixp9Req *r) {
 
 		offset = 0;
 		size = r->ifcall.count;
+		if(size > r->fid->iounit)
+			size = r->fid->iounit;
 		buf = emallocz(size);
-		m = ixp_message((uchar*)buf, size, MsgPack);
+		m = ixp_message(buf, size, MsgPack);
 
 		tf = f = lookup_file(f, nil);
 		/* Note: f->tab.name == "." so we skip it */
@@ -659,7 +659,7 @@ fs_read(Ixp9Req *r) {
 			respond(r, nil);
 			return;
 		case FsFRctl:
-			buf = read_root_ctl();
+			buf = root_readctl();
 			write_buf(r, buf, strlen(buf));
 			respond(r, nil);
 			return;
@@ -673,13 +673,13 @@ fs_read(Ixp9Req *r) {
 			respond(r, nil);
 			return;
 		case FsFTindex:
-			buf = (char*)view_index(f->p.view);
+			buf = view_index(f->p.view);
 			n = strlen(buf);
 			write_buf(r, buf, n);
 			respond(r, nil);
 			return;
 		case FsFTctl:
-			buf = (char*)view_ctl(f->p.view);
+			buf = view_ctl(f->p.view);
 			n = strlen(buf);
 			write_buf(r, buf, n);
 			respond(r, nil);
@@ -693,7 +693,7 @@ fs_read(Ixp9Req *r) {
 	 * This is an assert because this should this should not be called if
 	 * the file is not open for reading.
 	 */
-	assert(!"Read called on an unreadable file");
+	die("Read called on an unreadable file");
 }
 
 void
@@ -727,7 +727,7 @@ fs_write(Ixp9Req *r) {
 	case FsFClabel:
 		data_to_cstring(r);
 		utfecpy(f->p.client->name, f->p.client->name+sizeof(client->name), r->ifcall.data);
-		draw_frame(f->p.client->sel);
+		frame_draw(f->p.client->sel);
 		update_class(f->p.client);
 		r->ofcall.count = r->ifcall.count;
 		respond(r, nil);
@@ -740,7 +740,6 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFBar:
 		i = strlen(f->p.bar->buf);
-		/* Why the explicit cast? Ask gcc. */
 		p = f->p.bar->buf;
 		write_to_buf(r, &p, &i, 279);
 		r->ofcall.count = i - r->ifcall.offset;
@@ -763,9 +762,9 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFEvent:
 		if(r->ifcall.data[r->ifcall.count-1] == '\n')
-			write_event("%.*s", (int)r->ifcall.count, r->ifcall.data);
+			event("%.*s", (int)r->ifcall.count, r->ifcall.data);
 		else
-			write_event("%.*s\n", (int)r->ifcall.count, r->ifcall.data);
+			event("%.*s\n", (int)r->ifcall.count, r->ifcall.data);
 		r->ofcall.count = r->ifcall.count;
 		respond(r, nil);
 		return;
@@ -774,7 +773,7 @@ fs_write(Ixp9Req *r) {
 	 * This is an assert because this function should not be called if
 	 * the file is not open for writing.
 	 */
-	assert(!"Write called on an unwritable file");
+	die("Write called on an unwritable file");
 }
 
 void
@@ -827,7 +826,7 @@ fs_create(Ixp9Req *r) {
 			respond(r, Ebadvalue);
 			return;
 		}
-		create_bar(f->p.bar_p, r->ifcall.name);
+		bar_create(f->p.bar_p, r->ifcall.name);
 		f = lookup_file(f, r->ifcall.name);
 		if(!f) {
 			respond(r, Enofile);
@@ -857,8 +856,8 @@ fs_remove(Ixp9Req *r) {
 		respond(r, Enoperm);
 		return;
 	case FsFBar:
-		destroy_bar(f->next->p.bar_p, f->p.bar);
-		draw_bar(screen);
+		bar_destroy(f->next->p.bar_p, f->p.bar);
+		bar_draw(screen);
 		respond(r, nil);
 		break;
 	}
@@ -886,7 +885,7 @@ fs_clunk(Ixp9Req *r) {
 		update_rules(&f->p.rule->rule, f->p.rule->string);
 		for(c=client; c; c=c->next)
 			apply_rules(c);
-		update_views();
+		view_update_all();
 		break;
 	case FsFKeys:
 		update_keys();
@@ -894,8 +893,8 @@ fs_clunk(Ixp9Req *r) {
 	case FsFBar:
 		p = toutf8(f->p.bar->buf);
 		
-		m = ixp_message((uchar*)p, strlen(p), 0);
-		parse_colors(&m, &f->p.bar->col);
+		m = ixp_message(p, strlen(p), 0);
+		msg_parsecolors(&m, &f->p.bar->col);
 
 		q = (char*)m.end-1;
 		while(q >= (char*)m.pos && *q == '\n')
@@ -906,7 +905,7 @@ fs_clunk(Ixp9Req *r) {
 
 		free(p);
 
-		draw_bar(screen);
+		bar_draw(screen);
 		break;
 	case FsFEvent:
 		for(fl=&peventfid; *fl; fl=&fl[0]->next)

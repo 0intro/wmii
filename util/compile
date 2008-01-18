@@ -15,10 +15,49 @@ status=$?
 base=$(echo $BASE | sed 's/,/\\,/g')
 re='\([^[:space:]/]*\..:[0-9]\)'
 
+undup() { # GCC is crap.
+	awk '
+	function shift() {
+		for(n=1; n<=3; n++)
+			if(2*n <= nl)
+			for(i=1; i<=n; i++) {
+				if(l[i] != l[i+n])
+					break;
+				if(i == n) {
+					for(i=1; i<=n; i++)
+						print l[i]
+					nl -= 2*n;
+					for(i=1; i<=nl; i++)
+						l[i] = l[i+2*n];
+					return;
+				}
+			}
+		if(nl == 0)
+			return
+		print l[1]
+		for(i=1; i<nl; i++)
+			l[i] = l[i+1]
+		nl--
+	}
+	BEGIN{
+		nl=0
+		maxl=6
+	}
+	{
+		if(nl == maxl)
+			shift()
+		l[++nl] = $0
+	}
+	END{
+		while(nl > 0)
+			shift();
+	}'
+}
+
 cat $xtmp | sed "s,^$re,$base&,g; s,\([[:space:]]\)$re,\1$base\2,g" |
 	egrep -v ': error: .Each undeclared identifier|: error: for each function it appears|is dangerous, better use|is almost always misused|: In function |: At top level:|support .long long.|use of C99 long long|ISO C forbids conversion' |
 	sed 's/ .first use in this function.$//; s/\"\([^\"][^\"]*\)\", line \([0-9][0-9]*\)/\1:\2/g' |
-	uniq 1>&2
+	undup 1>&2
 
 rm -f $xtmp
 exit $status

@@ -1,65 +1,69 @@
 .SILENT:
-.SUFFIXES: .O .o .c .sh .rc .awk .1 .depend .install .uninstall .clean
+.SUFFIXES: .O .o .o_pic .c .sh .rc .so .awk .1 .depend .install .uninstall .clean
 all:
 
 .c.depend:
 	echo MKDEP $<
-	${MKDEP} ${CFLAGS} $< >>.depend
+	$(MKDEP) $(CFLAGS) $< >>.depend
 
 .sh.depend .rc.depend .1.depend .awk.depend:
 	:
 
 .c.o:
-	${COMPILE} $@ $<
+	$(COMPILE) $@ $<
+
+.c.o_pic:
+	$(COMPILEPIC) $@ $<
 
 .o.O:
-	${LINK} $@ $<
+	$(LINK) $@ $<
 
 .c.O:
-	${COMPILE} $@ $<
-	${LINK} $@ $<
+	${COMPILE} ${<:.c=.o} $<
+	${LINK} $@ ${<:.c=.o}
+
 
 .rc.O .sh.O .awk.O:
-	echo FILTER ${BASE}$<
-	${FILTER} $< >$@
+	echo FILTER $(BASE)$<
+	$(FILTER) $< >$@
 	chmod 0755 $@
 
 .O.install:
-	echo INSTALL ${BASE}$*
-	cp -f $< ${BIN}/$*
-	chmod 0755 ${BIN}/$* 
+	echo INSTALL $$($(CLEANNAME) $(BASE)$*)
+	cp -f $< $(BIN)/$*
+	chmod 0755 $(BIN)/$* 
 .O.uninstall:
-	echo UNINSTALL ${BASE}$*
-	rm -f ${BIN}/$* 
+	echo UNINSTALL $$($(CLEANNAME) $(BASE)$*)
+	rm -f $(BIN)/$* 
 
-.a.install:
-	echo INSTALL ${BASE}$<
-	cp -f $< ${LIBDIR}/$<
-	chmod 0644 ${LIBDIR}/$<
-.a.uninstall:
-	echo UNINSTALL ${BASE}$<
-	rm -f ${LIBDIR}/$<
+.a.install .so.install:
+	echo INSTALL $$($(CLEANNAME) $(BASE)$<)
+	cp -f $< $(LIBDIR)/$<
+	chmod 0644 $(LIBDIR)/$<
+.a.uninstall .so.uninstall:
+	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
+	rm -f $(LIBDIR)/$<
 
 .h.install:
-	echo INSTALL ${BASE}$<
-	cp -f $< ${INCLUDE}/$<
-	chmod 0644 ${INCLUDE}/$<
+	echo INSTALL $$($(CLEANNAME) $(BASE)$<)
+	cp -f $< $(INCLUDE)/$<
+	chmod 0644 $(INCLUDE)/$<
 .h.uninstall:
-	echo UNINSTALL ${BASE}$<
-	rm -f ${INCLUDE}/$<
+	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
+	rm -f $(INCLUDE)/$<
 
 .1.install:
-	echo INSTALL man $*'(1)'
-	${FILTER} $< >${MAN}/man1/$<
-	chmod 0644 ${MAN}/man1/$<
+	echo INSTALL man $$($(CLEANNAME) $*'(1)')
+	$(FILTER) $< >$(MAN)/man1/$<
+	chmod 0644 $(MAN)/man1/$<
 .1.uninstall:
-	echo UNINSTALL man $*'(1)'
-	rm -f ${MAN}/man1/$<
+	echo UNINSTALL man $$($(CLEANNAME) $*'(1)')
+	rm -f $(MAN)/man1/$<
 
 .O.clean:
 	rm -f $< || true 2>/dev/null
 	rm -f $*.o || true 2>/dev/null
-.o.clean:
+.o.clean .o_pic.clean:
 	rm -f $< || true 2>/dev/null
 
 printinstall:
@@ -69,9 +73,13 @@ install: printinstall mkdirs
 depend: cleandep
 
 FILTER = cat
-COMPILE= CC="${CC}" CFLAGS="${CFLAGS}" ${ROOT}/util/compile
-LINK= LD="${LD}" LDFLAGS="${LDFLAGS}" ${ROOT}/util/link
+COMPILE= CC="$(CC)" CFLAGS="$(CFLAGS)" $(ROOT)/util/compile
+COMPILEPIC= CC="$(CC)" CFLAGS="$(CFLAGS) $(SOCFLAGS)" $(ROOT)/util/compile
+LINK= LD="$(LD)" LDFLAGS="$(LDFLAGS)" $(ROOT)/util/link
+LINKSO= LD="$(LD)" LDFLAGS="$(SOLDFLAGS)" $(ROOT)/util/link
+CLEANNAME=$(ROOT)/util/cleanname
 
-include ${ROOT}/config.mk
-CFLAGS += -I$$(echo ${INCPATH}|sed 's/:/ -I/g')
+include $(ROOT)/config.mk
+CFLAGS += -I$$(echo $(INCPATH)|sed 's/:/ -I/g')
+include $(ROOT)/mk/common.mk
 

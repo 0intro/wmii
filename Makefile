@@ -2,15 +2,16 @@ ROOT=.
 include ${ROOT}/mk/hdr.mk
 
 PDIRS = \
-	cmd	\
-	rc	\
+	cmd	     \
+	libwmii_hack \
+	rc	     \
 	man
 
 DIRS =	\
-	libutf	\
-	libfmt	\
-	libbio	\
-	libregexp\
+	libbio    \
+	libfmt	  \
+	libregexp \
+	libutf	  \
 	${PDIRS}
 
 config:

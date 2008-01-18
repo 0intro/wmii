@@ -201,8 +201,9 @@ xsetroot -solid "$WMII_BACKGROUND" &
 
 # Setup Tag Bar
 (IFS="$(echo)"; wmiir rm $(wmiir ls /lbar))
-seltag="$(wmiir read /tag/sel/ctl 2>/dev/null | sed 1q)"
-wmiir ls /tag | sed -e 's|/||; /^sel$/d' | while read tag; do
+seltag="$(wmiir read /tag/sel/ctl | sed 1q)"
+wmiir ls /tag | sed -e 's|/||; /^sel$/d' | while read tag
+do
 	if [ "$tag" = "$seltag" ]; then
 		echo "$WMII_FOCUSCOLORS" "$tag"
 	else
@@ -230,7 +231,8 @@ conf_which() {
 # Stop any running instances of wmiirc
 echo Start wmiirc | wmiir write /event || exit 1
 
-wmiir read /event | while read event; do
+wmiir read /event | while read event
+do
 	set -- $event
 	event=$1; shift
 	Event_$event $@

@@ -5,13 +5,11 @@
 #include "dat.h"
 #include <assert.h>
 #include <math.h>
-#include <stdlib.h>
-#include <string.h>
 #include "fns.h"
 
 static void place_frame(Frame *f);
 
-Client *
+Client*
 area_selclient(Area *a) {               
 	if(a && a->sel)
 		return a->sel->client;
@@ -40,8 +38,8 @@ area_name(Area *a) {
 	return buf;
 }
 
-Area *
-create_area(View *v, Area *pos, uint w) {
+Area*
+area_create(View *v, Area *pos, uint w) {
 	static ushort id = 1;
 	uint areanum, i;
 	uint minwidth;
@@ -60,7 +58,7 @@ create_area(View *v, Area *pos, uint w) {
 	colnum = areanum - 1;
 	if(w == 0) {
 		if(colnum >= 0) {
-			w = newcolw(v, i);
+			w = view_newcolw(v, i);
 			if (w == 0)
 				w = Dx(screen->r) / (colnum + 1);
 		}
@@ -74,7 +72,7 @@ create_area(View *v, Area *pos, uint w) {
 		return nil;
 
 	if(pos)
-		scale_view(v, Dx(screen->r) - w);
+		view_scale(v, Dx(screen->r) - w);
 
 	a = emallocz(sizeof *a);
 	a->view = v;
@@ -104,24 +102,24 @@ create_area(View *v, Area *pos, uint w) {
 		a->floating = True;
 
 	if(v->sel == nil)
-		focus_area(a);
+		area_focus(a);
 
 	if(!a->floating)
-		write_event("CreateColumn %ud\n", i);
+		event("CreateColumn %ud\n", i);
 	return a;
 }
 
 void
-destroy_area(Area *a) {
+area_destroy(Area *a) {
 	Client *c;
 	Area *ta;
 	View *v;
-	uint i;
+	int idx;
 
 	v = a->view;
 
 	if(a->frame)
-		fatal("destroying non-empty area");
+		die("destroying non-empty area");
 
 	if(v->revert == a)
 		v->revert = nil;
@@ -130,15 +128,19 @@ destroy_area(Area *a) {
 		if(c->revert == a)
 			c->revert = nil;
 
-	i = 0;
-	for(ta=v->area; ta != a; ta=ta->next)
-		i++;
+	idx = area_idx(a);
 
-	if(a->prev)
+	if(a->prev && !a->prev->floating)
 		ta = a->prev;
 	else
 		ta = a->next;
 
+	if(a == v->colsel)
+		v->colsel = ta;
+
+	/* Can only destroy the floating area when destroying a
+	 * view---after destroying all columns.
+	 */
 	assert(a->prev || a->next == nil);
 	if(a->prev)
 		a->prev->next = a->next;
@@ -146,17 +148,17 @@ destroy_area(Area *a) {
 		a->next->prev = a->prev;
 
 	if(ta && v->sel == a) {
-		if(ta->floating && ta->next)
-			ta = ta->next;
-		focus_area(ta);
+		area_focus(ta);
 	}
-	write_event("DestroyColumn %ud\n", i);
+	event("DestroyArea %d\n", idx);
+	/* Deprecated */
+	event("DestroyColumn %d\n", idx);
 
 	free(a);
 }
 
 void
-send_to_area(Area *to, Frame *f) {
+area_moveto(Area *to, Frame *f) {
 	Area *from;
 
 	assert(to->view == f->view);
@@ -164,19 +166,32 @@ send_to_area(Area *to, Frame *f) {
 	from = f->area;
 
 	if(to->floating != from->floating) {
-		Rectangle temp = f->revert;
+		Rectangle tr;
+		
+		tr = f->revert;
 		f->revert = f->r;
 		f->r = temp;
 	}
 	f->client->revert = from;
 
-	detach_from_area(f);
-	attach_to_area(to, f);
+	area_detach(f);
+	area_attach(to, f);
 }
 
 void
-attach_to_area(Area *a, Frame *f) {
-	uint n_frame;
+area_setsel(Area *a, Frame *f) {
+	View *v;
+
+	v = a->view;
+	if(a == v->sel && f)
+		frame_focus(f);
+	else
+		a->sel = f;
+}
+
+void
+area_attach(Area *a, Frame *f) {
+	uint nframe;
 	Frame *ft;
 	Client *c;
 
@@ -184,10 +199,10 @@ attach_to_area(Area *a, Frame *f) {
 
 	f->area = a;
 
-	n_frame = 0;
+	nframe = 0;
 	for(ft=a->frame; ft; ft=ft->anext)
-		n_frame++;
-	n_frame = max(n_frame, 1);
+		nframe++;
+	nframe = max(nframe, 1);
 
 	c->floating = a->floating;
 	if(!a->floating) {
@@ -195,27 +210,28 @@ attach_to_area(Area *a, Frame *f) {
 		f->r.max.y = Dy(a->r) / n_frame;
 	}
 
-	insert_frame(a->sel, f);
+	frame_insert(a->sel, f);
 
 	if(a->floating) {
 		place_frame(f);
-		resize_frame(f, f->r);
+		client_resize(f->client, f->r);
 	}
 
-	focus_frame(f, False);
-	restack_view(a->view);
+	if(!a->sel)
+		area_setsel(a, f);
+	view_restack(a->view);
 
 	if(!a->floating)
-		arrange_column(a, False);
+		column_arrange(a, False);
 
 	if(a->frame)
 		assert(a->sel);
 }
 
 void
-detach_from_area(Frame *f) {
+area_detach(Frame *f) {
 	Frame *pr;
-	Client *c, *cp;
+	Client *c;
 	Area *a;
 	View *v;
 
@@ -224,43 +240,31 @@ detach_from_area(Frame *f) {
 	c = f->client;
 
 	pr = f->aprev;
-	remove_frame(f);
+	frame_remove(f);
+
+	if(!a->floating) {
+		if(a->frame)
+			column_arrange(a, False);
+		else {
+			if(v->area->next->next)
+				area_destroy(a);
+			else if((a->frame == nil) && (v->area->frame))
+				area_focus(v->area);
+			view_arrange(v);
+		}
+	}else if(v->oldsel)
+		area_focus(v->oldsel);
+	else if(!a->frame) {
+		if(v->colsel->frame)
+			area_focus(v->colsel);
+	}else
+		assert(a->sel);
 
 	if(a->sel == f) {
 		if(!pr)
 			pr = a->frame;
-		if(pr && (v->sel == a))
-			focus_frame(pr, False);
-		else
-			a->sel = pr;
+		area_setsel(a, pr);
 	}
-
-	if(!a->floating) {
-		if(a->frame)
-			arrange_column(a, False);
-		else {
-			if(v->area->next->next)
-				destroy_area(a);
-			else if((a->frame == nil) && (v->area->frame))
-				focus_area(v->area);
-
-			arrange_view(v);
-		}
-	}else if(!a->frame) {
-		if(c->trans) {
-			cp = win2client(c->trans);
-			if(cp && cp->frame) {
-				a = cp->sel->area;
-				if(a->view == v) {
-					focus_area(a);
-					return;
-				}
-			}
-		}
-		if(v->area->next->frame)
-			focus_area(v->area->next);
-	}else
-		assert(a->sel);
 }
 
 static void
@@ -305,7 +309,7 @@ place_frame(Frame *f) {
 	Frame *fr;
 	Client *c;
 	Area *a;
-	Bool fit;
+	bool fit;
 	uint i, j, x, y, cx, cy, maxx, maxy, diff, num;
 	int snap;
 
@@ -404,11 +408,10 @@ place_frame(Frame *f) {
 }
 
 void
-focus_area(Area *a) {
+area_focus(Area *a) {
 	Frame *f;
 	View *v;
 	Area *old_a;
-	int i;
 
 	v = a->view;
 	f = a->sel;
@@ -422,18 +425,19 @@ focus_area(Area *a) {
 	if(v != screen->sel)
 		return;
 
+	move_focus(old_a->sel, f);
+
 	if(f)
-		focus_client(f->client);
+		client_focus(f->client);
 	else
-		focus_client(nil);
+		client_focus(nil);
 
 	if(a != old_a) {
-		i = 0;
-		for(a = v->area; a != v->sel; a = a->next)
-			i++;
+		event("AreaFocus %s\n", area_name(a));
+		/* Deprecated */
 		if(a->floating)
-			write_event("FocusFloating\n");
+			event("FocusFloating\n");
 		else
-			write_event("ColumnFocus %d\n", i);
+			event("ColumnFocus %d\n", area_idx(a));
 	}
 }

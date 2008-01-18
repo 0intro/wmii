@@ -1,4 +1,4 @@
-/* Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -16,8 +16,8 @@ frame_idx(Frame *f) {
 	return i;
 }
 
-Frame *
-create_frame(Client *c, View *v) {
+Frame*
+frame_create(Client *c, View *v) {
 	static ushort id = 1;
 	Frame *f;
 
@@ -31,7 +31,7 @@ create_frame(Client *c, View *v) {
 		f->r = c->sel->r;
 	}
 	else{
-		f->r = client2frame(f, gravclient(c, ZR));
+		f->r = frame_client2rect(f, client_grav(c, ZR));
 		f->revert = f->r;
 		c->sel = f;
 	}
@@ -41,7 +41,7 @@ create_frame(Client *c, View *v) {
 }
 
 void
-remove_frame(Frame *f) {
+frame_remove(Frame *f) {
 	Area *a;
 
 	a = f->area;
@@ -64,7 +64,7 @@ remove_frame(Frame *f) {
 }
 
 void
-insert_frame(Frame *pos, Frame *f) {
+frame_insert(Frame *pos, Frame *f) {
 	Area *a;
 
 	a = f->area;
@@ -89,32 +89,42 @@ insert_frame(Frame *pos, Frame *f) {
 	}
 }
 
-Bool
-frame_to_top(Frame *f) {
+bool
+frame_restack(Frame *f, Frame *above) {
 	Area *a;
 
 	a = f->area;
-	if(!a->floating || f == a->stack)
-		return False;
+	if(!a->floating)
+		return false;
+	if(above && above->area != a)
+		return false;
 
 	if(f->sprev)
 		f->sprev->snext = f->snext;
+	else
+		a->stack = f->snext;
 	if(f->snext)
 		f->snext->sprev = f->sprev;
 
-	f->snext = a->stack;
-	a->stack = f;
-	f->sprev = nil;
+	f->sprev = above;
+	if(above == nil) {
+		f->snext = a->stack;
+		a->stack = f;
+	}
+	else {
+		f->snext = above->snext;
+		above->snext = f;
+	}
 	if(f->snext)
 		f->snext->sprev = f;
 
-	return True;
+	return true;
 }
 
 /* Handlers */
 static void
 bup_event(Window *w, XButtonEvent *e) {
-	write_event("ClientClick %C %d\n", w->aux, e->button);
+	event("ClientClick %C %d\n", w->aux, e->button);
 }
 
 static void
@@ -128,15 +138,15 @@ bdown_event(Window *w, XButtonEvent *e) {
 	if((e->state & def.mod) == def.mod) {
 		switch(e->button) {
 		case Button1:
-			do_mouse_resize(c, False, CENTER);
-			focus(c, True);
-			frame_to_top(f);
-			focus(c, True);
+			mouse_resize(c, False, CENTER);
+			focus(c, false);
+			frame_restack(f, nil);
+			focus(c, false); /* Blech */
 			break;
 		case Button3:
-			do_mouse_resize(c, False, quadrant(f->r, Pt(e->x_root, e->y_root)));
-			frame_to_top(f);
-			focus(c, True);
+			mouse_resize(c, False, quadrant(f->r, Pt(e->x_root, e->y_root)));
+			frame_restack(f, nil);
+			focus(c, false);
 			break;
 		default:
 			XAllowEvents(display, ReplayPointer, e->time);
@@ -146,25 +156,25 @@ bdown_event(Window *w, XButtonEvent *e) {
 			XUngrabPointer(display, e->time);
 	}else{
 		if(e->button == Button1) {
-			if(frame_to_top(f))
-				restack_view(f->view);
-			else if(ptinrect(Pt(e->x, e->y), f->grabbox))
-				do_mouse_resize(c, True, CENTER);
+			if(frame_restack(f, nil))
+				view_restack(f->view);
+			else if(rect_haspoint_p(Pt(e->x, e->y), f->grabbox))
+				mouse_resize(c, True, CENTER);
 			else if(f->area->floating)
-				if(!e->subwindow && !ptinrect(Pt(e->x, e->y), f->titlebar))
-					do_mouse_resize(c, False, quadrant(f->r, Pt(e->x_root, e->y_root)));
+				if(!e->subwindow && !rect_haspoint_p(Pt(e->x, e->y), f->titlebar))
+					mouse_resize(c, False, quadrant(f->r, Pt(e->x_root, e->y_root)));
 
 			if(f->client != selclient())
-				focus(c, True);
+				focus(c, false);
 		}
 		if(e->subwindow)
 			XAllowEvents(display, ReplayPointer, e->time);
 		else {
 			/* Ungrab so a menu can receive events before the button is released */
 			XUngrabPointer(display, e->time);
-			XSync(display, False);
+			sync();
 
-			write_event("ClientMouseDown %C %d\n", f->client, e->button);
+			event("ClientMouseDown %C %d\n", f->client, e->button);
 		}
 	}
 }
@@ -176,12 +186,12 @@ enter_event(Window *w, XCrossingEvent *e) {
 
 	c = w->aux;
 	f = c->sel;
-	if(screen->focus != c) {
-		Dprint("enter_notify(f) => %s\n", f->client->name);
+	if(screen->focus != c || selclient() != c) {
+		Dprint(DGeneric, "enter_notify(f) => %s\n", f->client->name);
 		if(f->area->floating || !f->collapsed)
-			focus(f->client, False);
+			focus(f->client, false);
 	}
-	set_frame_cursor(f, Pt(e->x, e->y));
+	frame_setcursor(f, Pt(e->x, e->y));
 }
 
 static void
@@ -192,7 +202,7 @@ expose_event(Window *w, XExposeEvent *e) {
 
 	c = w->aux;
 	if(c->sel)
-		draw_frame(c->sel);
+		frame_draw(c->sel);
 	else
 		fprint(2, "Badness: Expose event on a client frame which shouldn't be visible: %C\n",
 			c);
@@ -203,7 +213,7 @@ motion_event(Window *w, XMotionEvent *e) {
 	Client *c;
 	
 	c = w->aux;
-	set_frame_cursor(c->sel, Pt(e->x, e->y));
+	frame_setcursor(c->sel, Pt(e->x, e->y));
 }
 
 Handlers framehandler = {
@@ -215,7 +225,7 @@ Handlers framehandler = {
 };
 
 Rectangle
-frame2client(Frame *f, Rectangle r) {
+frame_rect2client(Frame *f, Rectangle r) {
 	if(f == nil || f->area == nil || f->area->floating) {
 		r.max.x -= def.border * 2;
 		r.max.y -= frame_delta_h();
@@ -237,7 +247,7 @@ frame2client(Frame *f, Rectangle r) {
 }
 
 Rectangle
-client2frame(Frame *f, Rectangle r) {
+frame_client2rect(Frame *f, Rectangle r) {
 	if(f == nil || f->area == nil ||  f->area->floating) {
 		r.max.x += def.border * 2;
 		r.max.y += frame_delta_h();
@@ -257,10 +267,11 @@ client2frame(Frame *f, Rectangle r) {
 }
 
 void
-resize_frame(Frame *f, Rectangle r) {
+frame_resize(Frame *f, Rectangle r) {
 	Align stickycorner;
 	Point pt;
 	Client *c;
+	int collapsed;
 
 	c = f->client;
 	stickycorner = get_sticky(f->r, r);
@@ -275,8 +286,10 @@ resize_frame(Frame *f, Rectangle r) {
 	else
 		f->r = r;
 
-	f->crect = frame2client(f, f->crect);
+	f->crect = frame_rect2client(f, f->crect);
 	f->crect = rectsubpt(f->crect, f->crect.min);
+
+	collapsed = f->collapsed;
 
 	if(!f->area->floating && f->area->mode == Coldefault) {
 		if(Dy(f->r) < 2 * labelh(def.font))
@@ -295,6 +308,9 @@ resize_frame(Frame *f, Rectangle r) {
 		f->crect = f->r;
 	}
 
+	if(collapsed != f->collapsed)
+		ewmh_updatestate(c);
+
 	pt = ZP;
 	if(!f->client->borderless || !f->area->floating)
 		pt.y += 1;
@@ -304,7 +320,7 @@ resize_frame(Frame *f, Rectangle r) {
 	if(f->area->floating) {
 		if(c->fullscreen) {
 			f->crect = screen->r;
-			f->r = client2frame(f, f->crect);
+			f->r = frame_client2rect(f, f->crect);
 			pt.x = (Dx(f->r) - Dx(f->crect)) / 2;
 			f->r = rectsubpt(f->r, pt);
 		}else
@@ -315,22 +331,22 @@ resize_frame(Frame *f, Rectangle r) {
 }
 
 void
-set_frame_cursor(Frame *f, Point pt) {
+frame_setcursor(Frame *f, Point pt) {
 	Rectangle r;
 	Cursor cur;
 
 	if(f->area->floating
-	&& !ptinrect(pt, f->titlebar)
-	&& !ptinrect(pt, f->crect)) {
+	&& !rect_haspoint_p(pt, f->titlebar)
+	&& !rect_haspoint_p(pt, f->crect)) {
 	 	r = rectsubpt(f->r, f->r.min);
-	 	cur = cursor_of_quad(quadrant(r, pt));
-		set_cursor(f->client, cur);
+	 	cur = quad_cursor(quadrant(r, pt));
+		client_setcursor(f->client, cur);
 	} else
-		set_cursor(f->client, cursor[CurNormal]);
+		client_setcursor(f->client, cursor[CurNormal]);
 }
 
 void
-swap_frames(Frame *fa, Frame *fb) {
+frame_swap(Frame *fa, Frame *fb) {
 	Frame **fp;
 	Client *c;
 
@@ -355,33 +371,52 @@ swap_frames(Frame *fa, Frame *fb) {
 	c->frame = fa;
 
 	if(c->sel && c->sel->view == screen->sel)
-		focus_view(screen, c->sel->view);
+		view_focus(screen, c->sel->view);
 }
 
 void
-focus_frame(Frame *f, Bool restack) {
+move_focus(Frame *old_f, Frame *f) {
+	int noinput;
+
+	noinput = (old_f && old_f->client->noinput) ||
+		  (f && f->client->noinput) ||
+		  screen->hasgrab != &c_root;
+	if(noinput) {
+		if(old_f)
+			frame_draw(old_f);
+		if(f)
+			frame_draw(f);
+	}
+}
+
+void
+frame_focus(Frame *f) {
+	Client *c;
+	Frame *old_f;
 	View *v;
 	Area *a, *old_a;
 
-	a = f->area;
+	c = f->client;
 	v = f->view;
+	a = f->area;
 	old_a = v->sel;
 
+	old_f = old_a->sel;
 	a->sel = f;
 
 	if(a != old_a)
-		focus_area(f->area);
+		area_focus(f->area);
+	if(old_a != v->oldsel && f != old_f)
+		v->oldsel = nil;
 
-	if(v != screen->sel)
+	if(v != screen->sel || a != v->sel)
 		return;
 
-	focus_client(f->client);
+	move_focus(old_f, f);
+	client_focus(f->client);
 
 	if(!a->floating && ((a->mode == Colstack) || (a->mode == Colmax)))
-		arrange_column(a, False);
-
-	if(restack)
-		restack_view(v);
+		column_arrange(a, False);
 }
 
 int
@@ -390,15 +425,17 @@ frame_delta_h(void) {
 }
 
 void
-draw_frame(Frame *f) {
+frame_draw(Frame *f) {
 	Rectangle r, fr;
 	CTuple *col;
 	Frame *tf;
+	uint w;
 
 	if(f->view != screen->sel)
 		return;
 
-	if(f->client == screen->focus)
+	if(f->client == screen->focus
+	|| f->client == selclient())
 		col = &def.focuscolor;
 	else
 		col = &def.normcolor;
@@ -422,6 +459,11 @@ draw_frame(Frame *f) {
 	f->titlebar = insetrect(r, 3);
 	f->titlebar.max.y += 3;
 
+	/* Odd state of focus. */
+	if(f->client != selclient() && col == &def.focuscolor)
+		border(screen->ibuf, insetrect(r, 1),
+			1, def.normcolor.bg);
+
 	/* grabbox */
 	r.min = Pt(2, 2);
 	r.max.x = r.min.x + def.font->height - 3;
@@ -432,25 +474,34 @@ draw_frame(Frame *f) {
 		fill(screen->ibuf, r, col->fg);
 	border(screen->ibuf, r, 1, col->border);
 
+	/* Odd state of focus. */
+	if(f->client != screen->focus && col == &def.focuscolor)
+		border(screen->ibuf, insetrect(r, -1),
+			1, def.normcolor.bg);
+
+	/* Label */
 	r.min.x = r.max.x;
 	r.max.x = fr.max.x;
 	r.min.y = 0;
 	r.max.y = labelh(def.font);
-	drawstring(screen->ibuf, def.font, r, WEST,
+	if(f->client->floating)
+		r.max.x -= Dx(f->grabbox);
+	w = drawstring(screen->ibuf, def.font, r, WEST,
 			f->client->name, col->fg);
 
 	XSetWindowBackgroundPixmap(display, f->client->framewin->w, None);
+
 	copyimage(f->client->framewin, fr, screen->ibuf, ZP);
 	XSync(display, False);
 }
 
 void
-draw_frames(void) {
+frame_draw_all(void) {
 	Client *c;
 
 	for(c=client; c; c=c->next)
 		if(c->sel && c->sel->view == screen->sel)
-			draw_frame(c->sel);
+			frame_draw(c->sel);
 }
 
 Rectangle

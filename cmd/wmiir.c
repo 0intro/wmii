@@ -239,7 +239,7 @@ xls(int argc, char *argv[]) {
 	Stat *stat;
 	IxpCFid *fid;
 	char *file;
-	uchar *buf;
+	char *buf;
 	int lflag, dflag, count, nstat, mstat, i;
 
 	lflag = dflag = 0;

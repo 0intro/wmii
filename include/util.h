@@ -25,6 +25,7 @@ typedef long long	vlong;
 
 #define strlcat wmii_strlcat
 /* util.c */
+void	_die(char*, int, char*);
 void*	emalloc(uint);
 void*	emallocz(uint);
 void*	erealloc(void*, uint);
@@ -36,6 +37,9 @@ char*	str_nil(char*);
 uint	strlcat(char*, const char*, uint);
 uint	tokenize(char **, uint, char*, char);
 int	utflcpy(char*, const char*, int);
+
+#define die(x) \
+	_die(__FILE__, __LINE__, x)
 
 char *argv0;
 #undef ARGBEGIN
