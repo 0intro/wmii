@@ -2,7 +2,6 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <stdio.h>
 #include "fns.h"
 
 Bool

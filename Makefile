@@ -23,5 +23,6 @@ deb:
 	dpkg-buildpackage -rfakeroot
 
 include ${ROOT}/mk/dir.mk
+include ${ROOT}/mk/common.mk
 INSTDIRS = ${PDIRS}
 

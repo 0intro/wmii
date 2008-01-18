@@ -1,11 +1,11 @@
 /* Copyright ©2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#define _X11_VISIBLE
 #include "dat.h"
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <bio.h>
@@ -122,8 +122,7 @@ Wfmt(Fmt *f) {
 /* Init */
 void
 initdisplay(void) {
-	if(!(display = XOpenDisplay(nil)))
-		fatal("couldn't open display");
+	display = XOpenDisplay(nil);
 	scr.screen = DefaultScreen(display);
 	scr.colormap = DefaultColormap(display, scr.screen);
 	scr.visual = DefaultVisual(display, scr.screen);
@@ -627,6 +626,27 @@ getproperty(Window *w, char *prop, char *type, Atom *actual, ulong offset, uchar
 	return n;
 }
 
+char**
+strlistdup(char *list[], int n) {
+	char **p, *q;
+	int i, m;
+
+	for(i=0, m=0; i < n; i++)
+		m += strlen(list[i])+1;
+
+	p = malloc((n+1)*sizeof(char*) + m);
+	q = (char*)&p[n+1];
+
+	for(i=0; i < n; i++) {
+		p[i] = q;
+		m = strlen(list[i])+1;
+		memcpy(q, list[i], m);
+		q += m;
+	}
+	p[n] = nil;
+	return p;
+}
+
 int
 gettextlistproperty(Window *w, char *name, char **ret[]) {
 	XTextProperty prop;
@@ -662,11 +682,7 @@ gettextproperty(Window *w, char *name) {
 
 void
 setfocus(Window *w, int mode) {
-	if(w) {
-		XSetInputFocus(display, w->w, mode, CurrentTime);
-	} else { /* "relinquish" focus */
-		XSetInputFocus(display, PointerRoot, mode, CurrentTime);
-	}
+	XSetInputFocus(display, w->w, mode, CurrentTime);
 }
 
 /* Mouse */

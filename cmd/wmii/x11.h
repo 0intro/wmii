@@ -3,8 +3,10 @@
 #define Screen XScreen
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xatom.h>
-#include <X11/extensions/shape.h>
+#ifdef _X11_VISIBLE
+#  include <X11/Xatom.h>
+#  include <X11/extensions/shape.h>
+#endif
 #undef Window
 #undef Font
 #undef Screen

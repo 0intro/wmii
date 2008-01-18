@@ -3,7 +3,6 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <stdio.h>
 #include <string.h>
 #include "fns.h"
 
@@ -56,8 +55,8 @@ create_bar(Bar **bp, char *name) {
 	utflcpy(b->name, name, sizeof(b->name));
 	b->col = def.normcolor;
 
-	for(; *bp; bp = &(*bp)->next)
-		if(strcmp((*bp)->name, name) >= 0)
+	for(; *bp; bp = &bp[0]->next)
+		if(strcmp(bp[0]->name, name) >= 0)
 			break;
 	b->next = *bp;
 	*bp = b;
@@ -69,7 +68,7 @@ void
 destroy_bar(Bar **bp, Bar *b) {
 	Bar **p;
 
-	for(p = bp; *p; p = &(*p)->next)
+	for(p = bp; *p; p = &p[0]->next)
 		if(*p == b) break;
 	*p = b->next;
 
@@ -113,12 +112,11 @@ draw_bar(WMScreen *s) {
 			width += Dx(b->r);
 		}
 
-
 	if(width > Dx(s->brect)) { /* Not enough room. Shrink bars until they all fit. */
 		for(nb = 0; nb < nelem(s->bar); nb++)
 			for(b = s->bar[nb]; b; b=b->next) {
-				for(pb = &largest; *pb; pb = &(*pb)->smaller)
-					if(Dx((*pb)->r) < Dx(b->r))
+				for(pb = &largest; *pb; pb = &pb[0]->smaller)
+					if(Dx(pb[0]->r) < Dx(b->r))
 						break; 
 				b->smaller = *pb;
 				*pb = b;
@@ -131,13 +129,14 @@ draw_bar(WMScreen *s) {
 				if(Dx(tb->r) * shrink >= Dx(tb->smaller->r))
 					break;
 		}
+		SET(shrink);
 		if(tb)
 			for(b = largest; b != tb->smaller; b = b->smaller)
 				b->r.max.x *= shrink;
 		width += tw * shrink;
 	}
 
-	SET(tb);
+	tb = nil;
 	for(nb = 0; nb < nelem(s->bar); nb++)
 		for(b = s->bar[nb]; b; tb=b, b=b->next) {
 			if(b == s->bar[BarRight])
@@ -198,8 +197,7 @@ static void
 bup_event(Window *w, XButtonPressedEvent *e) {
 	Bar *b;
 	
-	USED(w);
-	USED(e);
+	USED(w, e);
 
 	for(b=screen->bar[BarLeft]; b; b=b->next)
 		if(ptinrect(Pt(e->x, e->y), b->r)) {
@@ -215,8 +213,7 @@ bup_event(Window *w, XButtonPressedEvent *e) {
 
 static void
 expose_event(Window *w, XExposeEvent *e) {
-	USED(w);
-	USED(e);
+	USED(w, e);
 	draw_bar(screen);
 }
 

@@ -4,7 +4,6 @@
  */
 #include "dat.h"
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "fns.h"
 
@@ -134,7 +133,7 @@ focus_view(WMScreen *s, View *v) {
 	for(c=client; c; c=c->next)
 		if((f = c->sel)) {
 			if(f->view == v)
-				resize_client(c, &f->r);
+				resize_client(c, f->r);
 			else {
 				unmap_frame(c);
 				unmap_client(c, IconicState);
@@ -188,15 +187,15 @@ restack_view(View *v) {
 	Frame *f;
 	Client *c;
 	Area *a;
-	uint n, i;
+	uint n, i, fscrn;
 	
 	if(v != screen->sel)
 		return;
 
-	i = 0;
+	i = 1;
 	for(c = client; c; c = c->next)
 		i++;
-	if(i == 0)
+	if(i == 1)
 		return;
 
 	for(a = v->area; a; a = a->next)
@@ -208,15 +207,20 @@ restack_view(View *v) {
 	}
 
 	n = 0;
+	fscrn = 0;
 	wins[n++] = screen->barwin->w;
-	for(f = v->area->frame; f; f = f->anext)
+	for(f=v->area->frame; f; f=f->anext)
 		if(f->client->fullscreen) {
 			n--;
+			fscrn++;
 			break;
 		}
 
 	for(f=v->area->stack; f; f=f->snext)
 		wins[n++] = f->client->framewin->w;
+
+	if(fscrn)
+		wins[n++] = screen->barwin->w;
 
 	for(d = divs; d && d->w->mapped; d = d->next)
 		wins[n++] = d->w->w;
@@ -228,10 +232,8 @@ restack_view(View *v) {
 				if(f != a->sel)
 					wins[n++] = f->client->framewin->w;
 		}
-	if(n) {
-		XRaiseWindow(display, wins[0]);
+	if(n)
 		XRestackWindows(display, wins, n);
-	}
 }
 
 void
@@ -269,10 +271,10 @@ scale_view(View *v, int w) {
 	if(numcol * minwidth > w)
 		return;
 
+	dx = numcol * minwidth;
 	xoff = 0;
 	for(a=v->area->next, numcol--; a; a=a->next, numcol--) {
 		a->r.min.x = xoff;
-		dx = numcol * minwidth;
 
 		if(Dx(a->r) < minwidth)
 			a->r.max.x = xoff + minwidth;
@@ -328,14 +330,13 @@ rects_of_view(View *v, uint *num, Frame *ignore) {
 	return result;
 }
 
-/* XXX: This will need cleanup */
 uchar *
 view_index(View *v) {
 	Rectangle *r;
 	Frame *f;
 	Area *a;
 	char *buf, *end;
-	uint i;
+	int i;
 
 	buf = buffer;
 	end = buffer+sizeof(buffer)-1;
@@ -396,20 +397,20 @@ view_ctl(View *v) {
 void
 update_views(void) {
 	View *n, *v, *old;
-	Bool found;
+	int found;
 
 	old = screen->sel;
 	for(v=view; v; v=v->next)
 		update_frame_selectors(v);
 
-	found = False;
+	found = 0;
 	for(v=view; v; v=n) {
 		n=v->next;
 		if(v != old) {
 			if(is_empty(v))
 				destroy_view(v);
 			else
-				found = True;
+				found++;
 		}
 	}
 

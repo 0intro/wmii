@@ -17,7 +17,7 @@
 #include "utf.h"
 
 int
-runestrcmp(Rune *s1, Rune *s2)
+runestrcmp(const Rune *s1, const Rune *s2)
 {
 	Rune c1, c2;
 

@@ -14,7 +14,7 @@
 #include <plan9.h>
 
 long
-runestrlen(Rune *s)
+runestrlen(const Rune *s)
 {
 
 	return runestrchr(s, 0) - s;

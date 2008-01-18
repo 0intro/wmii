@@ -2,7 +2,6 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <stdio.h>
 #include <X11/keysym.h>
 #include "fns.h"
 #include "printevent.h"
@@ -135,7 +134,7 @@ focusin(XEvent *e) {
 	if(ev->detail == NotifyDetailNone) {
 		print_focus(&c_magic, "<magic[none]>");
 		screen->focus = &c_magic;
-		setfocus(screen->barwin, RevertToPointerRoot);
+		setfocus(screen->barwin, RevertToParent);
 		return;
 	}
 

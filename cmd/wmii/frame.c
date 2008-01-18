@@ -3,7 +3,6 @@
  */
 #include "dat.h"
 #include <math.h>
-#include <stdio.h>
 #include "fns.h"
 
 uint
@@ -337,13 +336,13 @@ swap_frames(Frame *fa, Frame *fb) {
 
 	if(fa == fb) return;
 
-	for(fp = &fa->client->frame; *fp; fp = &(*fp)->cnext)
+	for(fp = &fa->client->frame; *fp; fp = &fp[0]->cnext)
 		if(*fp == fa) break;
-	*fp = (*fp)->cnext;
+	fp[0] = fp[0]->cnext;
 
-	for(fp = &fb->client->frame; *fp; fp = &(*fp)->cnext)
+	for(fp = &fb->client->frame; *fp; fp = &fp[0]->cnext)
 		if(*fp == fb) break;
-	*fp = (*fp)->cnext;
+	fp[0] = fp[0]->cnext;
 
 	c = fa->client;
 	fa->client = fb->client;

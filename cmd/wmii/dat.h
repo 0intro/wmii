@@ -131,26 +131,24 @@ struct Client {
 	Area *revert;
 	Frame *frame;
 	Frame *sel;
+	Window w;
+	Window *framewin;
+	XWindow trans;
+	Cursor cursor;
+	Rectangle r;
 	char name[256];
 	char tags[256];
 	char props[512];
 	uint border;
 	int proto;
-	Bool floating;
-	Bool fixedsize;
-	Bool fullscreen;
-	Bool urgent;
-	Bool borderless;
-	Bool titleless;
-	Bool noinput;
+	char floating;
+	char fixedsize;
+	char fullscreen;
+	char urgent;
+	char borderless;
+	char titleless;
+	char noinput;
 	int unmapped;
-	Window w;
-	XWindow trans;
-	Window *framewin;
-	Cursor cursor;
-	Rectangle r;
-	XSizeHints size;
-	GC gc;
 };
 
 struct Divide {
@@ -193,19 +191,23 @@ struct Ruleset {
 	uint		size;
 };
 
+#ifndef EXTERN
+#  define EXTERN extern
+#endif
+
 /* global variables */
-struct {
+EXTERN struct {
 	CTuple focuscolor;
 	CTuple normcolor;
 	Font *font;
-	uint	 border;
-	uint	 snap;
 	char *keys;
-	uint	 keyssz;
 	Ruleset	tagrules;
 	Ruleset	colrules;
 	char grabmod[5];
 	ulong mod;
+	uint border;
+	uint snap;
+	uint keyssz;
 	int colmode;
 } def;
 
@@ -213,7 +215,7 @@ enum {
 	BarLeft, BarRight
 };
 
-struct WMScreen {
+EXTERN struct WMScreen {
 	Bar *bar[2];
 	View *sel;
 	Client *focus;
@@ -225,39 +227,41 @@ struct WMScreen {
 	Rectangle brect;
 } *screens, *screen;
 
-Client *client;
-View *view;
-Key *key;
-Divide *divs;
-Client c_magic;
-Client c_root;
+EXTERN Client*	client;
+EXTERN View*	view;
+EXTERN Key*	key;
+EXTERN Divide*	divs;
+EXTERN Client	c_magic;
+EXTERN Client	c_root;
 
-Handlers framehandler;
+EXTERN Handlers	framehandler;
 
-char buffer[8092];
+EXTERN char	buffer[8092];
 
 /* IXP */
-IxpServer srv;
-Ixp9Srv p9srv;
+EXTERN IxpServer srv;
+EXTERN Ixp9Srv	p9srv;
 
 /* X11 */
-uint num_screens;
-uint valid_mask;
-uint num_lock_mask;
-Bool sel_screen;
+EXTERN uint	num_screens;
+EXTERN uint	valid_mask;
+EXTERN uint	num_lock_mask;
+EXTERN Bool	sel_screen;
 
-Image xor;
+EXTERN Cursor	cursor[CurLast];
 
-Cursor cursor[CurLast];
-void (*handler[LASTEvent]) (XEvent *);
+typedef void (*XHandler)(XEvent*);
+EXTERN XHandler handler[LASTEvent];
 
 /* Misc */
-Image *broken;
-Bool starting;
-Bool verbose;
-char *user;
-char *execstr;
+EXTERN Image*	broken;
+EXTERN Bool	starting;
+EXTERN Bool	verbose;
+EXTERN char*	user;
+EXTERN char*	execstr;
+
+#define BLOCK(x) do { x; }while(0)
 
 #define Debug if(verbose)
-#define Dprint(...) do{ Debug fprint(2, __VA_ARGS__); }while(0)
+#define Dprint(...) BLOCK( Debug fprint(2, __VA_ARGS__) )
 

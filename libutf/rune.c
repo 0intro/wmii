@@ -97,7 +97,7 @@ bad:
 }
 
 int
-runetochar(char *str, Rune *rune)
+runetochar(char *str, const Rune *rune)
 {
 	long c;
 
@@ -132,17 +132,15 @@ runetochar(char *str, Rune *rune)
 }
 
 int
-runelen(long c)
+runelen(Rune c)
 {
-	Rune rune;
 	char str[10];
 
-	rune = c;
-	return runetochar(str, &rune);
+	return runetochar(str, &c);
 }
 
 int
-runenlen(Rune *r, int nrune)
+runenlen(const Rune *r, int nrune)
 {
 	int nb, c;
 

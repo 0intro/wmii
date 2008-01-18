@@ -2,14 +2,15 @@
  * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
+#define EXTERN
 #include "dat.h"
 #include <X11/Xproto.h>
 #include <X11/cursorfont.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -17,12 +18,14 @@
 #include <unistd.h>
 #include "fns.h"
 
+enum { false, true };
+
 static const char
 	version[] = "wmii-"VERSION", ©2007 Kris Maglione\n";
 
 static int (*xlib_errorhandler) (Display*, XErrorEvent*);
 static char *address, *ns_path;
-static Bool check_other_wm;
+static int check_other_wm;
 static struct sigaction sa;
 static struct passwd *passwd;
 static int sleeperfd, sock, exitsignal;
@@ -88,20 +91,21 @@ ns_display(void) {
 
 static void
 rmkdir(char *path, int mode) {
-	char *p, *q;
+	char *p;
 	int ret;
 	char c;
 
-	q = path + strlen(ns_path);
-	for(p = &path[1]; p <= q; p++) {
+	for(p = path+1; ; p++) {
 		c = *p;
 		if((c == '/') || (c == '\0')) {
 			*p = '\0';
 			ret = mkdir(path, mode);
 			if((ret == -1) && (errno != EEXIST))
-				fatal("Can't create ns_path '%s': %r", path);
+				fatal("Can't create path '%s': %r", path);
 			*p = c;
 		}
+		if(c == '\0')
+			break;
 	}
 }
 
@@ -121,7 +125,7 @@ init_ns(void) {
 	else
 		ns_path = ns_display();
 
-	if((ns_path[0] != '/') || (strlen(ns_path) == 0))
+	if(ns_path[0] != '/' || ns_path[0] == '\0')
 		fatal("Bad ns_path");
 
 	rmkdir(ns_path, 0700);
@@ -138,10 +142,8 @@ static void
 init_environment(void) {
 	init_ns();
 
-	if(address == nil) {
-		address = emalloc(strlen(ns_path) + strlen("unix!/wmii") + 1);
-		sprint(address, "unix!%s/wmii", ns_path);
-	}
+	if(address == nil)
+		address = smprint("unix!%s/wmii", ns_path);
 
 	setenv("WMII_NS_DIR", ns_path, True);
 	setenv("WMII_ADDRESS", address, True);
@@ -195,23 +197,6 @@ init_screen(WMScreen *screen) {
 	XWindow w;
 	int ret;
 	unsigned mask;
-	XGCValues gcv;
-
-	gcv.subwindow_mode = IncludeInferiors;
-	gcv.function = GXxor;
-	gcv.foreground = def.normcolor.bg;
-	gcv.plane_mask = AllPlanes;
-	gcv.graphics_exposures = False;
-
-	xor.type = WImage;
-	xor.image = scr.root.w;
-	xor.gc = XCreateGC(display, scr.root.w,
-			  GCForeground
-			| GCGraphicsExposures
-			| GCFunction
-			| GCSubwindowMode
-			| GCPlaneMask,
-			&gcv);
 
 	screen->r = scr.rect;
 	def.snap = Dy(scr.rect) / 63;
@@ -250,9 +235,9 @@ struct {
  */
 static int
 errorhandler(Display *dpy, XErrorEvent *error) {
-	static Bool dead;
+	static int dead;
 	int i;
-	
+
 	USED(dpy);
 
 	if(check_other_wm)
@@ -266,7 +251,7 @@ errorhandler(Display *dpy, XErrorEvent *error) {
 	fprint(2, "%s: fatal error: Xrequest code=%d, Xerror code=%d\n",
 			argv0, error->request_code, error->error_code);
 
-	/* Try to cleanup, but only try once, in case we're called again */
+	/* Try to cleanup, but only try once, in case we're called recursively. */
 	if(!dead++)
 		cleanup();
 	return xlib_errorhandler(display, error); /* calls exit() */
@@ -289,46 +274,57 @@ cleanup_handler(int signal) {
 }
 
 static void
+closeexec(int fd) {
+	fcntl(fd, F_SETFL, FD_CLOEXEC);
+}
+
+static int
+doublefork(void) {
+	pid_t pid;
+	int status;
+	
+	switch(pid=fork()) {
+	case -1:
+		fatal("Can't fork(): %r");
+	case 0:
+		switch(pid=fork()) {
+		case -1:
+			fatal("Can't fork(): %r");
+		case 0:
+			return 0;
+		default:
+			exit(0);
+		}
+	default:
+		waitpid(pid, &status, 0);
+		return pid;
+	}
+	return -1; /* not reached */
+}
+
+static void
 init_traps(void) {
 	char buf[1];
-	pid_t pid;
-	int fd[2], status;
+	int fd[2];
 
 	if(pipe(fd) != 0)
 		fatal("Can't pipe(): %r");
 
-	/* Double fork hack */
-	switch(pid = fork()) {
-	case -1:
-		fatal("Can't fork(): %r");
-		break; /* not reached */
-	case 0:
-		switch(fork()) {
-		case -1:
-			fatal("Can't fork(): %r");
-			break; /* not reached */
-		case 0:
-			close(fd[1]);
-			close(ConnectionNumber(display));
-			setsid();
+	if(doublefork() == 0) {
+		close(fd[1]);
+		close(ConnectionNumber(display));
+		setsid();
 
-			display = XOpenDisplay(0);
-			if(!display)
-				fatal("Can't open display");
+		display = XOpenDisplay(0);
+		if(!display)
+			fatal("Can't open display");
 
-			/* Wait for parent to exit */
-			read(fd[0], buf, 1);
+		/* Wait for parent to exit */
+		read(fd[0], buf, 1);
 
-			XSetInputFocus(display, PointerRoot, RevertToPointerRoot, CurrentTime);
-			XCloseDisplay(display);
-			exit(0);
-		default:
-			exit(0);
-			break;
-		}
-	default:
-		waitpid(pid, &status, 0);
-		break;
+		XSetInputFocus(display, PointerRoot, RevertToPointerRoot, CurrentTime);
+		XCloseDisplay(display);
+		exit(0);
 	}
 
 	close(fd[0]);
@@ -340,50 +336,28 @@ init_traps(void) {
 	sigaction(SIGTERM, &sa, nil);
 	sigaction(SIGQUIT, &sa, nil);
 	sigaction(SIGHUP, &sa, nil);
+	sigaction(SIGUSR1, &sa, nil);
+	sigaction(SIGUSR2, &sa, nil);
 }
 
 static void
 spawn_command(const char *cmd) {
 	char *shell, *p;
-	pid_t pid;
-	int status;
 
-	/* Double fork hack */
-	switch(pid = fork()) {
-	case -1:
-		fatal("Can't fork: %r");
-		break; /* Not reached */
-	case 0:
-		switch(fork()) {
-		case -1:
-			fatal("Can't fork: %r");
-			break; /* Not reached */
-		case 0:
-			if(setsid() == -1)
-				fatal("Can't setsid: %r");
-			close(sock);
-			close(ConnectionNumber(display));
+	if(doublefork() == 0) {
+		if(setsid() == -1)
+			fatal("Can't setsid: %r");
 
-			shell = passwd->pw_shell;
-			if(shell[0] != '/')
-				fatal("Shell is not an absolute path: %s", shell);
+		shell = passwd->pw_shell;
+		if(shell[0] != '/')
+			fatal("Shell is not an absolute path: %s", shell);
 
-			/* Run through the user's shell as a login shell */
-			p = malloc((strlen(shell) + 2));
-			sprint(p, "-%s", strrchr(shell, '/') + 1);
+		/* Run through the user's shell as a login shell */
+		p = smprint("-%s", strrchr(shell, '/') + 1);
 
-			execl(shell, p, "-c", cmd, nil);
-			fatal("Can't exec '%s': %r", cmd);
-			break; /* Not reached */
-		default:
-			exit(0);
-			break; /* Not reached */
-		}
-	default:
-		waitpid(pid, &status, 0);
-		/* if(status != 0)
-			exit(1); */
-		break;
+		execl(shell, p, "-c", cmd, nil);
+		fatal("Can't exec '%s': %r", cmd);
+		/* Not reached */
 	}
 }
 
@@ -418,7 +392,7 @@ main(int argc, char *argv[]) {
 		print("%s", version);
 		exit(0);
 	case 'V':
-		verbose = True;
+		verbose = true;
 		break;
 	case 'a':
 		address = EARGF(usage());
@@ -438,16 +412,17 @@ main(int argc, char *argv[]) {
 	starting = True;
 
 	initdisplay();
+	closeexec(ConnectionNumber(display));
 
 	xlib_errorhandler = XSetErrorHandler(errorhandler);
 
-	check_other_wm = True;
+	check_other_wm = true;
 	XSelectInput(display, scr.root.w,
 			  SubstructureRedirectMask
 			| EnterWindowMask);
 	XSync(display, False);
 
-	check_other_wm = False;
+	check_other_wm = false;
 
 	passwd = getpwuid(getuid());
 	user = estrdup(passwd->pw_name);
@@ -457,6 +432,7 @@ main(int argc, char *argv[]) {
 	sock = ixp_announce(address);
 	if(sock < 0)
 		fatal("Can't create socket '%s': %r", address);
+	closeexec(sock);
 
 	if(wmiirc)
 		spawn_command(wmiirc);
@@ -506,13 +482,12 @@ main(int argc, char *argv[]) {
 	setfocus(screen->barwin, RevertToParent);
 
 	scan_wins();
-	starting = False;
+	starting = false;
 
 	select_view("nil");
 	update_views();
 	write_event("FocusTag %s\n", screen->sel->name);
 
-	check_x_event(nil);
 	i = ixp_serverloop(&srv);
 	if(i)
 		fprint(2, "%s: error: %r\n", argv0);

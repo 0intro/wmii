@@ -5,7 +5,6 @@
 #include "dat.h"
 #include <ctype.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <X11/Xatom.h>
 #include "fns.h"
@@ -76,7 +75,7 @@ create_client(XWindow w, XWindowAttributes *wa) {
 
 	grab_button(c->framewin->w, AnyButton, AnyModifier);
 
-	for(t=&client ;; t=&(*t)->next)
+	for(t=&client ;; t=&t[0]->next)
 		if(!*t) {
 			c->next = *t;
 			*t = c;
@@ -125,8 +124,7 @@ manage_client(Client *c) {
 
 static int /* Temporary Xlib error handler */
 ignoreerrors(Display *d, XErrorEvent *e) {
-	USED(d);
-	USED(e);
+	USED(d, e);
 	return 0;
 }
 
@@ -142,7 +140,7 @@ destroy_client(Client *c) {
 
 	unmapwin(c->framewin);
 
-	for(tc=&client; *tc; tc=&(*tc)->next)
+	for(tc=&client; *tc; tc=&tc[0]->next)
 		if(*tc == c) {
 			*tc = c->next;
 			break;
@@ -330,32 +328,27 @@ focus_client(Client *c) {
 
 	Dprint("focus_client(%p[%C]) => %s\n", c,  c, clientname(c));
 
-	if (screen->focus == c)
-		return;
-
-	if(c == nil || !c->noinput) {
+	if((c == nil || !c->noinput) && screen->focus != c) {
 		Dprint("\t%s => %s\n", clientname(screen->focus), clientname(c));
 
 		if(c)
-			setfocus(&c->w, RevertToPointerRoot);
+			setfocus(&c->w, RevertToParent);
 		else
-			setfocus(screen->barwin, RevertToPointerRoot);
+			setfocus(screen->barwin, RevertToParent);
 
 		write_event("ClientFocus %C\n", c);
 
 		XSync(display, False);
 		flushevents(FocusChangeMask, True);
-	} else if(c && c->noinput) {
-		setfocus(nil, RevertToPointerRoot);
 	}
 }
 
 void
-resize_client(Client *c, Rectangle *r) {
+resize_client(Client *c, Rectangle r) {
 	Frame *f;
 
 	f = c->sel;
-	resize_frame(f, *r);
+	resize_frame(f, r);
 
 	if(f->area->view != screen->sel) {
 		unmap_client(c, IconicState);
@@ -455,10 +448,6 @@ fullscreen(Client *c, int fullscreen) {
 
 	if((f = c->sel)) {
 		if(fullscreen) {
-			/* we lose information here if the client was just moved to
-			 * the floating area, but it's worth it */
-			c->revert = f->area;
-
 			if(f->area->floating)
 				f->revert = f->r;
 			else {
@@ -466,13 +455,8 @@ fullscreen(Client *c, int fullscreen) {
 				send_to_area(f->view->area, f);
 			}
 			focus_client(c);
-		}else {
+		}else
 			resize_frame(f, f->revert);
-			if (c->revert) {
-				send_to_area(c->revert, f);
-				c->revert = nil;
-			}
-		}
 		if(f->view == screen->sel)
 			focus_view(screen, f->view);
 	}
@@ -589,7 +573,7 @@ updatemwm(Client *c) {
 
 	if(c->sel) {
 		r = client2frame(c->sel, r);
-		resize_client(c, &r);
+		resize_client(c, r);
 		draw_frame(c->sel);
 	}
 }
@@ -672,7 +656,7 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 		fullscreen(c, True);
 
 	if(c->sel->area->floating)
-		resize_client(c, &r);
+		resize_client(c, r);
 	else {
 		c->sel->revert = r;
 		configure_client(c);
@@ -681,8 +665,7 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 
 static void
 destroy_event(Window *w, XDestroyWindowEvent *e) {
-	USED(w);
-	USED(e);
+	USED(w, e);
 
 	Dprint("client.c:destroy_event(%W)\n", w);
 	destroy_client(w->aux);
@@ -823,7 +806,7 @@ update_client_views(Client *c, char **tags) {
 		SET(cmp);
 		while(*fp) {
 			if(*tags) {
-				cmp = strcmp((*fp)->view->name, *tags);
+				cmp = strcmp(fp[0]->view->name, *tags);
 				if(cmp >= 0)
 					break;
 			}
@@ -844,7 +827,7 @@ update_client_views(Client *c, char **tags) {
 				f->cnext = *fp;
 				*fp = f;
 			}
-			if(*fp) fp=&(*fp)->cnext;
+			if(fp[0]) fp=&fp[0]->cnext;
 			tags++;
 		}
 	}
@@ -857,8 +840,12 @@ bsstrcmp(const void *a, const void *b) {
 }
 
 static int
-strpcmp(const void *a, const void *b) {
-	return strcmp(*(char **)a, *(char **)b);
+strpcmp(const void *ap, const void *bp) {
+	char **a, **b;
+	
+	a = (char**)ap; /* gcc wants this case. *sigh* */
+	b = (char**)bp;
+	return strcmp(*a, *b);
 }
 
 static char *badtags[] = {

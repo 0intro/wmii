@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -185,8 +184,9 @@ write_buf(Ixp9Req *r, char *buf, uint len) {
 
 /* This should be moved to libixp */
 static void
-write_to_buf(Ixp9Req *r, void *buf, uint *len, uint max) {
+write_to_buf(Ixp9Req *r, char **buf, uint *len, uint max) {
 	uint offset, count;
+	char *p;
 
 	offset = (r->fid->omode&OAPPEND) ? *len : r->ifcall.offset;
 	if(offset > *len || r->ifcall.count == 0) {
@@ -199,15 +199,14 @@ write_to_buf(Ixp9Req *r, void *buf, uint *len, uint max) {
 		count = max - offset;
 
 	*len = offset + count;
+	if(max == 0)
+		*buf = erealloc((void*)*buf, *len + 1);
 
-	if(max == 0) {
-		*(void **)buf = erealloc(*(void **)buf, *len + 1);
-		buf = *(void **)buf;
-	}
+	p = *buf;
 
-	memcpy((uchar*)buf + offset, r->ifcall.data, count);
+	memcpy(p+offset, r->ifcall.data, count);
 	r->ofcall.count = count;
-	((char *)buf)[offset+count] = '\0';
+	p[offset+count] = '\0';
 }
 
 /* This should be moved to libixp */
@@ -583,7 +582,7 @@ fs_stat(Ixp9Req *r) {
 	m = ixp_message(buf, size, MsgPack);
 	ixp_pstat(&m, &s);
 
-	r->ofcall.stat = m.data;
+	r->ofcall.stat = (uchar*)m.data;
 	respond(r, nil);
 }
 
@@ -701,6 +700,7 @@ void
 fs_write(Ixp9Req *r) {
 	FileId *f;
 	char *errstr;
+	char *p;
 	uint i;
 
 	if(r->ifcall.count == 0) {
@@ -740,7 +740,9 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFBar:
 		i = strlen(f->p.bar->buf);
-		write_to_buf(r, f->p.bar->buf, &i, 279);
+		/* Why the explicit cast? Ask gcc. */
+		p = f->p.bar->buf;
+		write_to_buf(r, &p, &i, 279);
 		r->ofcall.count = i - r->ifcall.offset;
 		respond(r, nil);
 		return;
@@ -761,9 +763,9 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFEvent:
 		if(r->ifcall.data[r->ifcall.count-1] == '\n')
-			write_event("%.*s", r->ifcall.count, r->ifcall.data);
+			write_event("%.*s", (int)r->ifcall.count, r->ifcall.data);
 		else
-			write_event("%.*s\n", r->ifcall.count, r->ifcall.data);
+			write_event("%.*s\n", (int)r->ifcall.count, r->ifcall.data);
 		r->ofcall.count = r->ifcall.count;
 		respond(r, nil);
 		return;
@@ -907,10 +909,10 @@ fs_clunk(Ixp9Req *r) {
 		draw_bar(screen);
 		break;
 	case FsFEvent:
-		for(fl=&peventfid; *fl; fl=&(*fl)->next)
-			if((*fl)->fid == r->fid) {
-				ft = *fl;
-				*fl = (*fl)->next;
+		for(fl=&peventfid; *fl; fl=&fl[0]->next)
+			if(fl[0]->fid == r->fid) {
+				ft = fl[0];
+				fl[0] = fl[0]->next;
 				f = ft->fid->aux;
 				free(f->p.buf);
 				free(ft);
@@ -926,9 +928,9 @@ fs_flush(Ixp9Req *r) {
 	Ixp9Req **i, **j;
 
 	for(i=&peventread; i != &oeventread; i=&oeventread)
-		for(j=i; *j; j=(Ixp9Req**)&(*j)->aux)
+		for(j=i; *j; j=(Ixp9Req**)&j[0]->aux)
 			if(*j == r->oldreq) {
-				*j = (*j)->aux;
+				j[0] = j[0]->aux;
 				respond(r->oldreq, Einterrupted);
 				goto done;
 			}

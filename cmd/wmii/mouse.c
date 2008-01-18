@@ -4,7 +4,6 @@
 #include "dat.h"
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "fns.h"
 
@@ -289,14 +288,9 @@ horiz:
 					resize_frame(f->aprev, f->aprev->r);
 				}
 
-				if (f->aprev || f->anext) {
-					remove_frame(f);
-					f->area = fw->ra;
-					insert_frame(fw->fp, f);
-				} else if (f->area != fw->ra) {
-					detach_from_area(f);
-					attach_to_area(fw->ra, f);
-				}
+				remove_frame(f);
+				f->area = fw->ra;
+				insert_frame(fw->fp, f);
 
 				if(f->aprev) {
 					f->aprev->r.max.y = fw->fr.min.y;
@@ -750,6 +744,8 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 			d.y = ev.xmotion.y_root;
 
 			if(align == CENTER && !opaque) {
+				SET(hrx);
+				SET(hry);
 				d.x = (d.x * hrx) - pt.x;
 				d.y = (d.y * hry) - pt.y;
 			}else
@@ -766,10 +762,10 @@ do_mouse_resize(Client *c, Bool opaque, Align align) {
 			frect = constrain(frect);
 
 			//reshapewin(c->framewin, frect);
-			resize_client(c, &frect);
+			resize_client(c, frect);
 			break;
 		case ButtonRelease:
-			resize_client(c, &frect);
+			resize_client(c, frect);
 
 			if(!opaque) {
 				pt = translate(c->framewin, &scr.root,

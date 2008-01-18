@@ -5,7 +5,6 @@
 #include "dat.h"
 #include <assert.h>
 #include <math.h>
-#include <stdio.h>
 #include <string.h>
 #include <strings.h>
 #include "fns.h"
@@ -359,14 +358,14 @@ arrange_column(Area *a, Bool dirty) {
 resize:
 	if(a->view == screen->sel) {
 		restack_view(a->view);
-		resize_client(a->sel->client, &a->sel->r);
+		resize_client(a->sel->client, a->sel->r);
 
 		for(f=a->frame; f; f=f->anext)
 			if(!f->collapsed && f != a->sel)
-				resize_client(f->client, &f->r);
+				resize_client(f->client, f->r);
 		for(f=a->frame; f; f=f->anext)
 			if(f->collapsed && f != a->sel)
-				resize_client(f->client, &f->r);
+				resize_client(f->client, f->r);
 	}
 }
 
@@ -425,17 +424,15 @@ resize_colframe(Frame *f, Rectangle *r) {
 	Area *a, *al, *ar;
 	View *v;
 	uint minw;
-	int dx, dw;
+	int dx, dw, maxx;
 
 	a = f->area;
 	v = a->view;
+	maxx = r->max.x;
 
 	minw = Dx(screen->r) / NCOL;
 
-	if(a->prev && !a->prev->floating)
-		al = a->prev;
-	else
-		al = nil;
+	al = a->prev;
 	ar = a->next;
 
 	if(al)
@@ -443,26 +440,28 @@ resize_colframe(Frame *f, Rectangle *r) {
 	else
 		r->min.x = max(r->min.x, 0);
 
-	if(ar)
-		r->max.x = min(r->max.x, ar->r.max.x - minw);
+	if(ar) {
+		if(maxx >= ar->r.max.x - minw)
+			maxx = ar->r.max.x - minw;
+	}
 	else
-		r->max.x = min(r->max.x, screen->r.max.x);
+		if(maxx > screen->r.max.x)
+			maxx = screen->r.max.x;
 
 	dx = a->r.min.x - r->min.x;
-	dw = r->max.x - a->r.max.x;
+	dw = maxx - a->r.max.x;
 	if(al) {
 		al->r.max.x -= dx;
 		arrange_column(al, False);
 	}
 	if(ar) {
-		ar->r.min.x += dw;
+		ar->r.max.x -= dw;
 		arrange_column(ar, False);
 	}
 
 	resize_colframeh(f, r);
 
-	a->r.min.x = r->min.x;
-	a->r.max.x = r->max.x;
+	a->r.max.x = maxx;
 	arrange_view(a->view);
 
 	focus_view(screen, v);

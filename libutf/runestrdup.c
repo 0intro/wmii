@@ -15,7 +15,7 @@
 #include <plan9.h>
 
 Rune*
-runestrdup(Rune *s) 
+runestrdup(const Rune *s) 
 {  
 	Rune *ns;
 

@@ -21,14 +21,15 @@
  * 0 if none
  */
 Rune*
-runestrstr(Rune *s1, Rune *s2)
+runestrstr(const Rune *s1, const Rune *s2)
 {
-	Rune *p, *pa, *pb;
+	const Rune *pa, *pb;
+	Rune *p;
 	int c0, c;
 
 	c0 = *s2;
 	if(c0 == 0)
-		return s1;
+		return (Rune*)s1;
 	s2++;
 	for(p=runestrchr(s1, c0); p; p=runestrchr(p+1, c0)) {
 		pa = p;

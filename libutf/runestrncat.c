@@ -17,7 +17,7 @@
 #include "utf.h"
 
 Rune*
-runestrncat(Rune *s1, Rune *s2, long n)
+runestrncat(Rune *s1, const Rune *s2, long n)
 {
 	Rune *os1;
 

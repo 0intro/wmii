@@ -9,15 +9,15 @@ LEFT=h
 RIGHT=l
 
 # Colors tuples: "<text> <background> <border>"
-WMII_NORMCOLORS='#888888 #222222 #333333'
-WMII_FOCUSCOLORS='#ffffff #285577 #4c7899'
+WMII_NORMCOLORS='#222222 #5FBF77 #2A7F3F'
+WMII_FOCUSCOLORS='#ffffff #153F1F #2A7F3F'
 
 WMII_BACKGROUND='#333333'
 WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
-WMII_MENU="dmenu -b -fn '$WMII_FONT' -nf '$1' -nb '$2' -sf '$4' -sb '$5'"
-WMII_9MENU="wmii9menu -font '$WMII_FONT' -nf '$1' -nb '$2' -sf '$4' -sb '$5' -br '$6'"
+WMII_MENU='dmenu -b -fn "$WMII_FONT" -nf '"$1 -nb $2 -sf $4 -sb $5"
+WMII_9MENU='wmii9menu -font "$WMII_FONT" -nf '"$1 -nb $2 -sf $4 -sb $5 -br $6"
 WMII_TERM="xterm"
 
 # Column Rules
@@ -40,7 +40,7 @@ status() {
 
 # Event processing
 #  Processed later by `wmiiloop' and evaled.
-#  Duplicate the eval line and replace 'eval' with 'echo' for details.
+#  Uncomment the line before the eval and run for details.
 eventstuff() {
 	cat <<'!'
 	# Events
@@ -188,7 +188,7 @@ Action() {
 proglist() {
 	paths=$(echo "$@" | sed 'y/:/ /')
 	ls -lL $paths 2>/dev/null \
-		| awk '$1 ~ /^[^d].*x/ && NF > 2 { print $NF }' \
+		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
 		| sort | uniq
 }
 
@@ -200,18 +200,14 @@ proglist $PATH >$progsfile &
 xsetroot -solid "$WMII_BACKGROUND" &
 
 # Setup Tag Bar
-seltag="$(wmiir read /tag/sel/ctl 2>/dev/null)"
-wmiir ls /lbar |
-while read bar; do
-	wmiir remove "/lbar/$bar"
-done
-wmiir ls /tag | sed -e 's|/||; /^sel$/d' |
-while read tag; do
-	if [ "X$tag" = "X$seltag" ]; then
-		echo "$WMII_FOCUSCOLORS" "$tag" | wmiir create "/lbar/$tag" 
+(IFS="$(echo)"; wmiir rm $(wmiir ls /lbar))
+seltag="$(wmiir read /tag/sel/ctl 2>/dev/null | sed 1q)"
+wmiir ls /tag | sed -e 's|/||; /^sel$/d' | while read tag; do
+	if [ "$tag" = "$seltag" ]; then
+		echo "$WMII_FOCUSCOLORS" "$tag"
 	else
-		echo "$WMII_NORMCOLORS" "$tag" | wmiir create "/lbar/$tag"
-	fi
+		echo "$WMII_NORMCOLORS" "$tag"
+	fi | wmiir create "/lbar/$tag"
 done
 
 # More functions
@@ -234,9 +230,9 @@ conf_which() {
 # Stop any running instances of wmiirc
 echo Start wmiirc | wmiir write /event || exit 1
 
-wmiir read /event |
-while read event; do
+wmiir read /event | while read event; do
 	set -- $event
 	event=$1; shift
 	Event_$event $@
 done 2>/dev/null
+

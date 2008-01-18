@@ -4,7 +4,6 @@
 #include "dat.h"
 #include <assert.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "fns.h"
@@ -119,7 +118,7 @@ eatrunes(IxpMsg *m, int (*p)(Rune), int val) {
 	int n;
 
 	while(m->pos < m->end) {
-		n = chartorune(&r, (char*)m->pos);
+		n = chartorune(&r, m->pos);
 		if(p(r) != val)
 			break;
 		m->pos += n;
@@ -135,14 +134,14 @@ getword(IxpMsg *m) {
 	int n;
 
 	eatrunes(m, isspacerune, 1);
-	ret = (char*)m->pos;
+	ret = m->pos;
 	eatrunes(m, isspacerune, 0);
-	n = chartorune(&r, (char*)m->pos);
+	n = chartorune(&r, m->pos);
 	*m->pos = '\0';
 	m->pos += n;
 	eatrunes(m, isspacerune, 1);
 
-	if(ret == (char*)m->end)
+	if(ret == m->end)
 		return nil;
 	return ret;
 }
@@ -165,7 +164,7 @@ getbase(char **s) {
 		*s += 3;
 		return 10*(p[0]-'0') + (p[1]-'0');
 	}
-	if(!strbcmp(p, "0")) {
+	if(p[0] == '0') {
 		*s += 1;
 		return 8;
 	}
@@ -220,10 +219,10 @@ strarea(View *v, char *s) {
 	if(!getlong(s, &i) || i == 0)
 		return nil;
 
-	if(i > 0)
-		for(a = v->area; a; a = a->next) {
+	if(i > 0) {
+		for(a = v->area; a; a = a->next)
 			if(i-- == 0) break;
-		}
+	}
 	else {
 		for(a = v->area; a->next; a = a->next)
 			;
@@ -252,11 +251,13 @@ message_view(View *v, IxpMsg *m) {
 		return select_area(v->sel, m);
 	case LCOLMODE:
 		s = getword(m);
-		if((a = strarea(v, s)) == nil || a->floating)
+		a = strarea(v, s);
+		if(a == nil || a->floating)
 			return Ebadvalue;
 
 		s = getword(m);
-		if((i = str2colmode(s)) == -1)
+		i = str2colmode(s);
+		if(i == -1)
 			return Ebadvalue;
 
 		a->mode = i;
@@ -281,12 +282,12 @@ parse_colors(IxpMsg *m, CTuple *col) {
 	int i, j;
 
 	/* '#%6x #%6x #%6x' */
-	p = (char*)m->pos;
-	for(i = 0; i < 3 && p < (char*)m->end; i++) {
+	p = m->pos;
+	for(i = 0; i < 3 && p < m->end; i++) {
 		if(*p++ != '#')
 			return Ebad;
-		for(j = 0; j < 6 && p < (char*)m->end; j++)
-			if(!isxdigit(*p++))
+		for(j = 0; j < 6; j++)
+			if(p >= m->end || !isxdigit(*p++))
 				return Ebad;
 
 		chartorune(&r, p);
@@ -294,16 +295,16 @@ parse_colors(IxpMsg *m, CTuple *col) {
 			if(r != ' ')
 				return Ebad;
 			p++;
-		}else if(!isspacerune(r) && *p != '\0')
+		}else if(*p != '\0' && !isspacerune(r))
 			return Ebad;
 	}
 
 	c = *p;
 	*p = '\0';
-	loadcolor(col, (char*)m->pos);
+	loadcolor(col, m->pos);
 	*p = c;
 
-	m->pos = (uchar*)p;
+	m->pos = p;
 	eatrunes(m, isspacerune, 1);
 	return nil;
 }
@@ -323,11 +324,11 @@ message_root(void *p, IxpMsg *m) {
 		srv.running = 0;
 		break;
 	case LEXEC:
-		execstr = smprint("exec %s", (char*)m->pos);
+		execstr = smprint("exec %s", m->pos);
 		srv.running = 0;
 		break;
 	case LVIEW:
-		select_view((char*)m->pos);
+		select_view(m->pos);
 		break;
 	case LSELCOLORS:
 		fprint(2, "%s: warning: selcolors have been removed\n", argv0);
@@ -341,7 +342,7 @@ message_root(void *p, IxpMsg *m) {
 		focus_view(screen, screen->sel);
 		break;
 	case LFONT:
-		fn = loadfont((char*)m->pos);
+		fn = loadfont(m->pos);
 		if(fn) {
 			freefont(def.font);
 			def.font = fn;

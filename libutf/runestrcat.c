@@ -16,7 +16,7 @@
 #include <plan9.h>
 
 Rune*
-runestrcat(Rune *s1, Rune *s2)
+runestrcat(Rune *s1, const Rune *s2)
 {
 
 	runestrcpy(runestrchr(s1, 0), s2);

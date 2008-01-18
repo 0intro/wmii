@@ -1,6 +1,8 @@
 #!/usr/bin/env wmii9rc
 # WMII Configuration
 
+ifs='' {nl=`{echo}}
+
 confpath=`{echo $WMII_CONFPATH | sed 'y/:/ /'}
 oldpath=$path
 path=($PLAN9/bin $path)
@@ -11,24 +13,6 @@ if(echo $0 | grep -s '(^|/)rc\.wmii\.local$') {
 	exit badname
 }
 
-fn config_whatis {
-	prog = `{@{path=$confpath whatis $1} | grep -v '^fn|=' || echo /dev/null}
-	shift; echo $prog $*
-}
-
-if(! test -x $PLAN9/bin/read) {
-	echo 'Can''t find the ''read'' command' >[1=2]
-	xmessage -file - <<'!'
-	path=$oldpath
-	exec `{config_whatis wmiirc}
-}
-rc.wmii can't run:
-	You have a Plan 9 utilities installed, but are missing the 'read' command.
-	This likely means that you have an out-of-date 9base installed.
-
-wmiirc will be run instead.
-!
-
 # Configurables
 MODKEY=Mod1
 UP=k
@@ -37,8 +21,8 @@ LEFT=h
 RIGHT=l
 
 WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
-WMII_NORMCOLORS=('#888888' '#222222' '#333333')
-WMII_FOCUSCOLORS=('#ffffff' '#285577' '#4C7899')
+WMII_NORMCOLORS=('#222222' '#5FBF77' '#2A7F3F')
+WMII_FOCUSCOLORS=('#ffffff' '#153F1F' '#2A7F3F')
 WMII_BACKGROUND='#333333'
 
 WMII_TERM=(xterm)
@@ -58,7 +42,6 @@ wmiir write /tagrules <<!
 
 # Status Bar Info
 fn status { echo -n `{uptime | sed 's/.*://; s/,//g'} '|' `{date} }
-
 fn viewtitle { echo $* }
 
 # Convenience Functions
@@ -86,6 +69,11 @@ fn actionlist {
 	} | sort | uniq
 }
 
+fn config_whatis {
+	prog = `{@{path=$confpath whatis $1} | grep -v '^fn|= ' || echo /dev/null}
+	shift; echo $prog $*
+}
+
 fn run_command { @{
 		rfork ns
 		path=$oldpath
@@ -93,9 +81,16 @@ fn run_command { @{
 	}
 }
 
-fn getfuns { env | sed -n 's/^fn#'^$1^'-([^=]+).*/\1/p' }
-fn initkeys { getfuns Key | wmiir write /keys }
-fn read_tags { wmiir ls /tag | sed 's,/,,; /^sel$/d' }
+fn getfuns {
+	env | sed -n 's/^fn#'^$1^'-([^=]+).*/\1/p'
+}
+fn initkeys {
+	getfuns Key | wmiir write /keys
+}
+fn read_tags {
+	wmiir ls /tag | sed 's,/,,; /^sel$/d'
+}
+
 fn 'fn?' {rc -c 'whatis '$1 >[2]/dev/null | grep -s '^fn ' }
 
 # Events
@@ -231,11 +226,11 @@ key Shift-$MODKEY-^`{seq 0 9} || fn $key {
 
 # WM Configuration
 wmiir write /ctl <<!
-grabmod $MODKEY
-border 2
-font $WMII_FONT
-focuscolors $WMII_FOCUSCOLORS
-normcolors $WMII_NORMCOLORS
+	grabmod $MODKEY
+	border 2
+	font $WMII_FONT
+	focuscolors $WMII_FOCUSCOLORS
+	normcolors $WMII_NORMCOLORS
 !
 xsetroot -solid $WMII_BACKGROUND
 
@@ -252,9 +247,8 @@ Action status
 Action rehash
 
 # Tag Bar Setup
-ifs='#
-'{	for(bar in `{comm -23 <{wmiir ls /lbar} <{read_tags}})
-		wmiir remove /lbar/$bar
+ifs=$nl{
+	wmiir rm `{comm -23 <{wmiir ls /lbar} <{read_tags}}
 	seltag=`{wmiir read /tag/sel/ctl | sed 1q}
 	for(tag in `{read_tags}) {
 		if(~ $tag $seltag)
@@ -276,3 +270,4 @@ wmiir read /event |
 		event = $1; shift
 		Event-$event $*
 	} >[2]/dev/null </dev/null
+
