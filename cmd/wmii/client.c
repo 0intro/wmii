@@ -193,9 +193,9 @@ client_manage(Client *c) {
 		     || selclient() && (selclient()->group == c->group);
 
 	f = c->sel;
-	if((f->view == screen->sel)
-	&& (!(c->w.ewmh.type & TypeSplash))
-	&& newgroup) {
+	if(f->view == screen->sel)
+	if(!(c->w.ewmh.type & TypeSplash))
+	if(newgroup) {
 		if(f->area != f->view->sel)
 			f->view->oldsel = f->view->sel;
 		focus(c, false);

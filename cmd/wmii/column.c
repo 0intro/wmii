@@ -50,6 +50,8 @@ column_attach(Area *a, Frame *f) {
 	uint nframe;
 	Frame *ft;
 
+	f->client->floating = false;
+
 	nframe = 0;
 	for(ft=a->frame; ft; ft=ft->anext)
 		nframe++;

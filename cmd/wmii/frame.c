@@ -492,7 +492,7 @@ frame_draw(Frame *f) {
 	w = drawstring(screen->ibuf, def.font, r, WEST,
 			f->client->name, col->fg);
 
-	if(f->client->floating) {
+	if(f->area->floating) {
 		r.min.x = r.min.x + w + 10;
 		r.max.x = f->titlebar.max.x + 1;
 		r.min.y = f->grabbox.min.y;
