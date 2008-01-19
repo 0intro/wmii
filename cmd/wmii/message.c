@@ -156,13 +156,13 @@ msg_getword(IxpMsg *m) {
 	Rune r;
 	int n;
 
-	eatrunes(m, isspacerune, 1);
+	eatrunes(m, isspacerune, true);
 	ret = m->pos;
-	eatrunes(m, isspacerune, 0);
+	eatrunes(m, isspacerune, false);
 	n = chartorune(&r, m->pos);
 	*m->pos = '\0';
 	m->pos += n;
-	eatrunes(m, isspacerune, 1);
+	eatrunes(m, isspacerune, true);
 
 	if(ret == m->end)
 		return nil;
@@ -285,7 +285,7 @@ message_client(Client *c, IxpMsg *m) {
 		i = gettoggle(m);
 		if(i == -1)
 			return Ebadusage;
-		client_seturgent(c, i, True);
+		client_seturgent(c, i, UrgManager);
 		break;
 	default:
 		return Ebadcmd;
@@ -391,9 +391,9 @@ message_view(View *v, IxpMsg *m) {
 	case LSELECT:
 		return msg_selectarea(v->sel, m);
 	case LSEND:
-		return msg_sendclient(v, m, 0);
+		return msg_sendclient(v, m, false);
 	case LSWAP:
-		return msg_sendclient(v, m, 1);
+		return msg_sendclient(v, m, true);
 	default:
 		return Ebadcmd;
 	}
@@ -410,23 +410,6 @@ printdebug(void) {
 				bufprint(" ");
 			bufprint("%s", debugtab[i]);
 		}
-}
-
-char*
-root_readctl(void) {
-	bufclear();
-	bufprint("view %s\n", screen->sel->name);
-	bufprint("focuscolors %s\n", def.focuscolor.colstr);
-	bufprint("normcolors %s\n", def.normcolor.colstr);
-	bufprint("font %s\n", def.font->name);
-	bufprint("grabmod %s\n", def.grabmod);
-	bufprint("border %d\n", def.border);
-	if(debug) {
-		bufprint("debug ");
-		printdebug();
-		bufprint("\n");
-	}
-	return buffer;
 }
 
 static char*
@@ -490,7 +473,7 @@ msg_parsecolors(IxpMsg *m, CTuple *col) {
 	*p = c;
 
 	m->pos = p;
-	eatrunes(m, isspacerune, 1);
+	eatrunes(m, isspacerune, true);
 	return nil;
 }
 
@@ -655,10 +638,10 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	case LTOGGLE:
 		if(!a->floating)
 			to = v->area;
-		else if(c->revert && !c->revert->floating)
-			to = c->revert;
+		else if(f->column)
+			to = view_findarea(v, f->column, true);
 		else
-			to = v->area->next;
+			to = view_findarea(v, v->selcol, true);
 		break;
 	default:
 		if(!getulong(s, &i) || i == 0)
@@ -716,7 +699,7 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 		frame_swap(f, fp);
 	}else {
 		frame_remove(f);
-		frame_insert(fp, f);
+		frame_insert(f, fp);
 	}
 
 	view_arrange(f->view);
@@ -725,5 +708,45 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 	frame_focus(f);
 	view_update_all();
 	return nil;
+}
+
+char*
+readctl_root(void) {
+	bufclear();
+	bufprint("view %s\n", screen->sel->name);
+	bufprint("focuscolors %s\n", def.focuscolor.colstr);
+	bufprint("normcolors %s\n", def.normcolor.colstr);
+	bufprint("font %s\n", def.font->name);
+	bufprint("grabmod %s\n", def.grabmod);
+	bufprint("border %d\n", def.border);
+	if(debug) {
+		bufprint("debug ");
+		printdebug();
+		bufprint("\n");
+	}
+	return buffer;
+}
+
+char*
+readctl_view(View *v) {
+	Area *a;
+	uint i;
+
+	bufclear();
+	bufprint("%s\n", v->name);
+
+	/* select <area>[ <frame>] */
+	bufprint("select %s", area_name(v->sel));
+	if(v->sel->sel)
+		bufprint(" %d", frame_idx(v->sel->sel));
+	bufprint("\n");
+
+	/* select client <client> */
+	if(v->sel->sel)
+		bufprint("select client %C\n", v->sel->sel->client);
+
+	for(a = v->area->next, i = 1; a; a = a->next, i++)
+		bufprint("colmode %d %s\n", i, colmode2str(a->mode));
+	return buffer;
 }
 

@@ -15,8 +15,10 @@ OBJ =	area	\
 	bar	\
 	client	\
 	column	\
+	div	\
 	event	\
 	ewmh	\
+	float	\
 	frame	\
 	fs	\
 	geom	\

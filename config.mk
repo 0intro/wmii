@@ -26,7 +26,7 @@ LD = cc
 AR = ar crs
 
 AWKPATH = $$(which awk)
-P9PATHS = ${PLAN9}:"'$$(HOME)/plan9'":/usr/local/plan9:/usr/local/9:/opt/plan9:/opt/9:/usr/plan9:/usr/9
+P9PATHS = ${PLAN9}:"'$${HOME}/plan9'":/usr/local/plan9:/usr/local/9:/opt/plan9:/opt/9:/usr/plan9:/usr/9
 
 INCX11 = -I/usr/X11R6/include
 LIBX11 = -L/usr/X11R6/lib -lX11

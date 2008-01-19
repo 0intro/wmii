@@ -7,6 +7,7 @@ usage() {
 }
 
 checkarg='[ ${#@} -gt 0 ] || usage'
+export WMII_HACK_TIME=$(date +%s)
 
 while [ ${#@} -gt 0 ]
 do

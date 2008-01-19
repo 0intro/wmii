@@ -10,7 +10,7 @@ void
 dispatch_event(XEvent *e) {
 	Debug(DEvent)
 		printevent(e);
-	if(handler[e->type])
+	if(e->type < nelem(handler) && handler[e->type])
 		handler[e->type](e);
 }
 
@@ -356,7 +356,5 @@ check_x_event(IxpConn *c) {
 	while(XPending(display)) {
 		XNextEvent(display, &ev);
 		dispatch_event(&ev);
-		/* Hack to alleviate an apparant Xlib bug */
-		XPending(display);
 	}
 }

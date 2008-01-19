@@ -79,13 +79,16 @@ struct Window {
 };
 
 struct WinHints {
-	Point min, max;
-	Point base, baspect;
-	Point inc;
+	Point	min;
+	Point	max;
+	Point	base;
+	Point	baspect;
+	Point	inc;
+	Point	grav;
 	Rectangle aspect;
-	Point grav;
-	bool gravstatic;
-	bool position;
+	XWindow	group;
+	bool	gravstatic;
+	bool	position;
 };
 
 struct Handlers {
@@ -224,6 +227,7 @@ void	warppointer(Point);
 Window*	window(XWindow);
 long	winprotocols(Window*);
 Atom	xatom(char*);
+void	sendmessage(Window*, char*, char*, long, long, long);
 XRectangle	XRect(Rectangle);
 Rectangle	gravitate(Rectangle dst, Rectangle src, Point grav);
 Rectangle	insetrect(Rectangle, int);

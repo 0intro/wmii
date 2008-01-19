@@ -15,8 +15,8 @@ RIGHT=l
 # Theme
 wmiifont='drift,-*-fixed-*-*-*-*-9-*-*-*-*-*-*-*'
 wmiifont='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
-wmiinormcol=`{echo '#222222 #5FBF77 #2A7F3F'}
-wmiifocuscol=`{echo '#ffffff #153F1F #2A7F3F'}
+wmiinormcol=`{echo '#000000 #c1c48b #81654f'}
+wmiifocuscol=`{echo '#000000 #81654f #000000'}
 wmiibackground='#333333'
 
 # Programs
@@ -24,7 +24,8 @@ WMII_TERM=(xterm)
 
 # Column Rules
 wmiir write /colrules <<!
-/./ -> 60+40
+/gimp/ -> 17+83+41
+/./ -> 62+38 # Golden Ratio
 !
 
 # Tagging Rules
@@ -32,7 +33,6 @@ wmiir write /tagrules <<!
 /VLC/ -> ~
 /XMMS.*/ -> ~
 /MPlayer.*/ -> ~
-/.*/ -> sel
 !
 
 # Status Bar Info
@@ -102,7 +102,7 @@ fn Action {
 }
 
 fn Action-rehash {
-	comm -23 <{ls $WMII_NS_DIR/proglist.* | awk -F'\.' '{print $NF}'} \
+	comm -23 <{ls $WMII_NS_DIR/proglist.* >[2]/dev/null | awk -F'\.' '{print $NF}'} \
 		 <{ps | awk '{print $2}'} |
 	while(id=`{read})
 		rm $WMII_NS_DIR/proglist.$id

@@ -35,7 +35,8 @@ frame_create(Client *c, View *v) {
 		f->revert = f->r;
 		c->sel = f;
 	}
-	f->collapsed = False;
+	f->collapsed = false;
+	f->oldarea = -1;
 
 	return f;
 }
@@ -64,7 +65,7 @@ frame_remove(Frame *f) {
 }
 
 void
-frame_insert(Frame *pos, Frame *f) {
+frame_insert(Frame *f, Frame *pos) {
 	Area *a;
 
 	a = f->area;
@@ -432,6 +433,8 @@ frame_draw(Frame *f) {
 	uint w;
 
 	if(f->view != screen->sel)
+		return;
+	if(f->area == nil) /* Blech. */
 		return;
 
 	if(f->client == screen->focus

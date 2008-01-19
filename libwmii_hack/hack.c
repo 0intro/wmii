@@ -24,6 +24,7 @@ static long	ntypes;
 static char*	tags[32];
 static long	ntags;
 static long	pid;
+static long	stime;
 static char	hostname[256];
 static long	nmsec;
 
@@ -88,6 +89,10 @@ init(Display *d) { /* Hrm... assumes one display... */
 		ntags = n;
 		free(s);
 	}
+	if((s = getenv("WMII_HACK_TIME"))) {
+		getlong(s, &stime);
+		unsetenv("WMII_HACK_TIME");
+	}
 
 	pid = getpid();
 	gethostname(hostname, sizeof hostname);
@@ -95,12 +100,17 @@ init(Display *d) { /* Hrm... assumes one display... */
 
 static void
 setprops(Display *d, Window w) {
+	long *l;
 
 	if(!xlib)
 		init(d);
 
-	changeprop_long(d, w, "_NET_WM_PID", "CARDINAL", &pid, 1);
-	changeprop_string(d, w, "_NET_WM_CLIENT_MACHINE", hostname);
+	if(getprop_long(d, w, "_NET_WM_PID", "CARDINAL", 0L, &l, 1L))
+		free(l);
+	else {
+		changeprop_long(d, w, "_NET_WM_PID", "CARDINAL", &pid, 1);
+		changeprop_string(d, w, "WM_CLIENT_MACHINE", hostname);
+	}
 
 	/* Kludge. */
 	if(nmsec == 0)
@@ -114,6 +124,8 @@ setprops(Display *d, Window w) {
 		changeprop_long(d, w, "_NET_WM_WINDOW_TYPE", "ATOM", (long*)types, ntypes);
 	if(ntags)
 		changeprop_textlist(d, w, "_WMII_TAGS", "UTF8_STRING", tags);
+	if(stime)
+		changeprop_long(d, w, "_WMII_LAUNCH_TIME", "CARDINAL", &stime, 1);
 }
 
 int

@@ -17,22 +17,6 @@ Window *ewmhwin;
 #define	STATE(x) xatom(State(x))
 #define	TYPE(x) xatom(Type(x))
 
-static void
-senemessage(Window *w, char *name, char *value, long l2, long l3, long l4) {
-	XClientMessageEvent e;
-
-	e.type = ClientMessage;
-	e.window = w->w;
-	e.message_type = xatom(name);
-	e.format = 32;
-	e.data.l[0] = xatom(value);
-	e.data.l[1] = xtime;
-	e.data.l[2] = l2;
-	e.data.l[3] = l3;
-	e.data.l[4] = l4;
-	sendevent(w, false, NoEventMask, (XEvent*)&e);
-}
-
 void
 ewmh_init(void) {
 	WinAttr wa;
@@ -143,7 +127,8 @@ ewmh_destroyclient(Client *c) {
 
 	e = &c->w.ewmh;
 	if(e->timer)
-		ixp_unsettimer(&srv, e->timer);
+		if(!ixp_unsettimer(&srv, e->timer))
+			fprint(2, "Badness: %C: Can't unset timer\n", c);
 }
 
 static void
@@ -167,18 +152,21 @@ ewmh_pingclient(Client *c) {
 	if(e->ping)
 		return;
 
-	senemessage(&c->w, "WM_PROTOCOLS", Net("WM_PING"), c->w.w, 0, 0);
+	sendmessage(&c->w, "WM_PROTOCOLS", Net("WM_PING"), c->w.w, 0, 0);
 	e->ping = xtime++;
 	e->timer = ixp_settimer(&srv, PingTime, pingtimeout, c);
 }
 
-void
+int
 ewmh_prop(Client *c, Atom a) {
 	if(a == NET("WM_WINDOW_TYPE"))
 		ewmh_getwintype(c);
 	else
 	if(a == NET("WM_STRUT_PARTIAL"))
 		ewmh_getstrut(c);
+	else
+		return 0;
+	return 1;
 }
 
 typedef struct Prop Prop;
@@ -336,7 +324,7 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 				fullscreen(c, action);
 			else
 			if(l[i] == STATE("DEMANDS_ATTENTION"))
-				client_seturgent(c, action, false);
+				client_seturgent(c, action, UrgClient);
 		}
 		return 1;
 	}else
@@ -415,7 +403,7 @@ ewmh_updatestate(Client *c) {
 	int i;
 
 	f = c->sel;
-	if(f->view != screen->sel)
+	if(f == nil || f->view != screen->sel)
 		return;
 
 	i = 0;

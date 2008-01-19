@@ -600,6 +600,22 @@ xatom(char *name) {
 }
 
 void
+sendmessage(Window *w, char *name, char *value, long l2, long l3, long l4) {
+	XClientMessageEvent e;
+
+	e.type = ClientMessage;
+	e.window = w->w;
+	e.message_type = xatom(name);
+	e.format = 32;
+	e.data.l[0] = xatom(value);
+	e.data.l[1] = xtime;
+	e.data.l[2] = l2;
+	e.data.l[3] = l3;
+	e.data.l[4] = l4;
+	sendevent(w, false, NoEventMask, (XEvent*)&e);
+}
+
+void
 sendevent(Window *w, bool propegate, long mask, XEvent *e) {
 	XSendEvent(display, w->w, propegate, mask, e);
 }
@@ -835,6 +851,7 @@ void
 sethints(Window *w) {
 	enum { MaxInt = ((uint)(1<<(8*sizeof(int)-1))-1) };
 	XSizeHints xs;
+	XWMHints *wmh;
 	WinHints *h;
 	Point p;
 	long size;
@@ -847,6 +864,13 @@ sethints(Window *w) {
 
 	h->max = Pt(MaxInt, MaxInt);
 	h->inc = Pt(1,1);
+
+	wmh = XGetWMHints(display, w->w);
+	if(wmh) {
+		if(wmh->flags&WindowGroupHint)
+			h->group = wmh->window_group;
+		free(wmh);
+	}
 
 	if(!XGetWMNormalHints(display, w->w, &xs, &size))
 		return;

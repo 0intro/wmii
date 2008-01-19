@@ -79,7 +79,6 @@ freestringlist(char *list[]) {
 }
 #endif
 
-#if 0
 static ulong
 getprop(Display *display, Window w, char *prop, char *type, Atom *actual, int *format, ulong offset, uchar **ret, ulong length) {
 	Atom typea;
@@ -102,7 +101,6 @@ getprop(Display *display, Window w, char *prop, char *type, Atom *actual, int *f
 	}
 	return n;
 }
-#endif
 
 #if 0
 static ulong
@@ -113,7 +111,6 @@ getproperty(Display *display, Window w, char *prop, char *type, Atom *actual, ul
 }
 #endif
 
-#if 0
 static ulong
 getprop_long(Display *display, Window w, char *prop, char *type, ulong offset, long **ret, ulong length) {
 	Atom actual;
@@ -127,7 +124,6 @@ getprop_long(Display *display, Window w, char *prop, char *type, ulong offset, l
 	*ret = 0;
 	return 0;
 }
-#endif
 
 #ifdef notdef
 static char**

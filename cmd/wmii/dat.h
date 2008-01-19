@@ -24,6 +24,11 @@ enum {
 	PingTime = 10000,
 };
 
+enum {
+	UrgManager,
+	UrgClient,
+};
+
 enum EWMHType {
 	TypeDesktop	= 1<<0,
 	TypeDock	= 1<<1,
@@ -117,7 +122,6 @@ struct Bar {
 
 struct Client {
 	Client*	next;
-	Area*	revert;
 	Frame*	frame;
 	Frame*	sel;
 	Window	w;
@@ -155,13 +159,16 @@ struct Frame {
 	Frame*	aprev;
 	Frame*	snext;
 	Frame*	sprev;
+	Client*	client;
 	View*	view;
 	Area*	area;
-	Client*	client;
+	int	oldarea;
+	int	column;
 	ushort	id;
 	bool	collapsed;
 	float	ratio;
 	Rectangle	r;
+	Rectangle	oldr;
 	Rectangle	crect;
 	Rectangle	revert;
 	Rectangle	grabbox;
@@ -222,10 +229,27 @@ struct View {
 	ushort	id;
 	Area*	area;
 	Area*	sel;
-	Area*	colsel;
 	Area*	oldsel;
 	Area*	revert;
+	int	selcol;
+	Rectangle r;
 };
+
+/* Yuck. */
+#define VECTOR(type, nam, c) \
+typedef struct Vector_##nam Vector_##nam;      \
+struct Vector_##nam {                          \
+	type*	ary;                           \
+	long	n;                             \
+	long	size;                          \
+};                                             \
+void	vector_##c##free(Vector_##nam*);       \
+void	vector_##c##init(Vector_##nam*);       \
+void	vector_##c##push(Vector_##nam*, type); \
+
+VECTOR(long, long, l)
+VECTOR(Rectangle, rect, r)
+#undef  VECTOR
 
 #ifndef EXTERN
 #  define EXTERN extern

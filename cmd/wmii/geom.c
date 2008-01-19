@@ -10,6 +10,34 @@ rect_haspoint_p(Point pt, Rectangle r) {
 		&& (pt.y >= r.min.y) && (pt.y < r.max.y);
 }
 
+bool
+rect_intersect_p(Rectangle r, Rectangle r2) {
+	return r.min.x <= r2.max.x
+	    && r.max.x >= r2.min.x
+	    && r.min.y <= r2.max.y
+	    && r.max.y >= r2.min.y;
+}
+
+Rectangle
+rect_intersection(Rectangle r, Rectangle r2) {
+	Rectangle ret;
+
+	/* canonrect(ret) != ret if not intersection */
+	ret.min.x = max(r.min.x, r2.min.x);
+	ret.max.x = min(r.max.x, r2.max.x);
+	ret.min.y = max(r.min.y, r2.min.y);
+	ret.max.y = min(r.max.y, r2.max.y);
+	return ret;
+}
+
+bool
+rect_contains_p(Rectangle r, Rectangle r2) {
+	return r2.min.x >= r.min.x
+	    && r2.max.x <= r.max.x
+	    && r2.min.y >= r.min.y
+	    && r2.max.y <= r.max.y;
+}
+
 Align
 quadrant(Rectangle r, Point pt) {
 	Align ret;
@@ -60,3 +88,32 @@ get_sticky(Rectangle src, Rectangle dst) {
 
 	return stickycorner;
 }
+
+/* XXX: These don't belong here. */
+/* Blech. */
+#define VECTOR(type, nam, c) \
+void                                                                    \
+vector_##c##init(Vector_##nam *v) {                                     \
+	memset(v, 0, sizeof *v);                                        \
+}                                                                       \
+                                                                        \
+void                                                                    \
+vector_##c##free(Vector_##nam *v) {                                     \
+	free(v->ary);                                                   \
+	memset(v, 0, sizeof *v);                                        \
+}                                                                       \
+                                                                        \
+void                                                                    \
+vector_##c##push(Vector_##nam *v, type val) {                           \
+	if(v->n == v->size) {                                           \
+		if(v->size == 0)                                        \
+			v->size = 2;                                    \
+		v->size <<= 2;                                          \
+		v->ary = erealloc(v->ary, v->size * sizeof *v->ary);    \
+	}                                                               \
+	v->ary[v->n++] = val;                                           \
+}                                                                       \
+
+VECTOR(long, long, l)
+VECTOR(Rectangle, rect, r)
+

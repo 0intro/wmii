@@ -10,7 +10,7 @@ static void	changeprop_textlist(Display*, Window, char*, char*, char*[]);
 static void	changeproperty(Display*, Window, char*, char*, int width, uchar*, int);
 /* static void	delproperty(Display*, Window, char*); */
 /* static void	freestringlist(char**); */
-/* static ulong	getprop_long(Display*, Window, char*, char*, ulong, long**, ulong); */
+static ulong	getprop_long(Display*, Window, char*, char*, ulong, long**, ulong);
 /* static char*	getprop_string(Display*, Window, char*); */
 /* static int	getprop_textlist(Display*, Window, char*, char**[]); */
 /* static ulong	getproperty(Display*, Window, char*, char*, Atom*, ulong, uchar**, ulong); */

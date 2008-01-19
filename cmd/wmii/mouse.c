@@ -202,8 +202,8 @@ hplace(Framewin *fw, Point pt) {
 	View *v;
 	int minw;
 	
-	minw = Dx(screen->r)/NCOL;
 	v = screen->sel;
+	minw = Dx(v->r)/NCOL;
 
 	for(a = v->area->next; a->next; a = a->next)
 		if(pt.x < a->r.max.x)
@@ -289,7 +289,7 @@ horiz:
 
 				frame_remove(f);
 				f->area = fw->ra;
-				frame_insert(fw->fp, f);
+				frame_insert(f, fw->fp);
 
 				if(f->aprev) {
 					f->aprev->r.max.y = fw->fr.min.y;
@@ -394,7 +394,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 	if(align&EAST)
 		d = d->next;
 
-	min.x = Dx(screen->r)/NCOL;
+	min.x = Dx(v->r)/NCOL;
 	min.y = frame_delta_h() + labelh(def.font);
 	if(align&NORTH) {
 		if(f->aprev) {
@@ -526,7 +526,7 @@ mouse_resizecol(Divide *d) {
 
 	pt = querypointer(&scr.root);
 
-	minw = Dx(screen->r)/NCOL;
+	minw = Dx(v->r)/NCOL;
 	r.min.x = a->r.min.x + minw;
 	r.max.x = a->next->r.max.x - minw;
 	r.min.y = pt.y;
