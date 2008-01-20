@@ -235,6 +235,22 @@ struct View {
 	Rectangle r;
 };
 
+/* Yuck. */
+#define VECTOR(type, nam, c) \
+typedef struct Vector_##nam Vector_##nam;      \
+struct Vector_##nam {                          \
+	type*	ary;                           \
+	long	n;                             \
+	long	size;                          \
+};                                             \
+void	vector_##c##free(Vector_##nam*);       \
+void	vector_##c##init(Vector_##nam*);       \
+void	vector_##c##push(Vector_##nam*, type); \
+
+VECTOR(long, long, l)
+VECTOR(Rectangle, rect, r)
+#undef  VECTOR
+
 #ifndef EXTERN
 #  define EXTERN extern
 #endif

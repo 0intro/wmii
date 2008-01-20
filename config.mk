@@ -18,7 +18,6 @@ CFLAGS += $(DEBUGCFLAGS)
 LDFLAGS += -g $(LIBS)
 SOLDFLAGS += $(LDFLAGS)
 STATIC = -static
-MKDEP = cpp -M
 
 # Compiler, Linker. Linker should usually *not* be ld.
 CC = cc -c

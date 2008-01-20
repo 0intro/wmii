@@ -1,13 +1,11 @@
-/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2007 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
 #include <assert.h>
 #include <math.h>
+#include <sys/limits.h>
 #include "fns.h"
-
-static void place_frame(Frame *f);
 
 Client*
 area_selclient(Area *a) {               
@@ -249,3 +247,4 @@ area_focus(Area *a) {
 			event("ColumnFocus %d\n", area_idx(a));
 	}
 }
+

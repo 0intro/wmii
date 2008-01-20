@@ -705,3 +705,44 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 	view_update_all();
 	return nil;
 }
+
+char*
+readctl_root(void) {
+	bufclear();
+	bufprint("view %s\n", screen->sel->name);
+	bufprint("focuscolors %s\n", def.focuscolor.colstr);
+	bufprint("normcolors %s\n", def.normcolor.colstr);
+	bufprint("font %s\n", def.font->name);
+	bufprint("grabmod %s\n", def.grabmod);
+	bufprint("border %d\n", def.border);
+	if(debug) {
+		bufprint("debug ");
+		printdebug();
+		bufprint("\n");
+	}
+	return buffer;
+}
+
+char*
+readctl_view(View *v) {
+	Area *a;
+	uint i;
+
+	bufclear();
+	bufprint("%s\n", v->name);
+
+	/* select <area>[ <frame>] */
+	bufprint("select %s", area_name(v->sel));
+	if(v->sel->sel)
+		bufprint(" %d", frame_idx(v->sel->sel));
+	bufprint("\n");
+
+	/* select client <client> */
+	if(v->sel->sel)
+		bufprint("select client %C\n", v->sel->sel->client);
+
+	for(a = v->area->next, i = 1; a; a = a->next, i++)
+		bufprint("colmode %d %s\n", i, colmode2str(a->mode));
+	return buffer;
+}
+

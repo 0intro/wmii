@@ -47,7 +47,7 @@ toutf8n(char *str, size_t nstr) {
 }
 
 char*
-toutf8(char *str) {
+toutf8(const char *str) {
 	return toutf8n(str, strlen(str));
 }
 

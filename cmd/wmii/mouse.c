@@ -299,7 +299,7 @@ horiz:
 
 				r = fw->fprev_r;
 				if(f->aprev) {
-					f->aprev->r.max.y = fw->fr.min.y;
+					f->aprev->r.max.y = r.min.y;
 					frame_resize(f->aprev, f->aprev->r);
 				}else
 					r.min.y = f->area->r.min.y;

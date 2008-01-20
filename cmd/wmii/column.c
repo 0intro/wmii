@@ -108,18 +108,8 @@ column_remove(Frame *f, bool arrange) {
 	}
 }
 
-static Handlers divhandler = {
-	.bdown = bdown_event,
-	.expose = expose_event,
-};
-
-Area*
-column_new(View *v, Area *pos, uint w) {
-	Area *a;
-
-	a = area_create(v, pos, w);
-	if(!a)
-		return nil;
+void
+column_detach(Frame *f) {
 
 	column_remove(f, true);
 }

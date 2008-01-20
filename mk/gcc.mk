@@ -1,3 +1,12 @@
+DEBUGCFLAGS = \
+	-g \
+	-O1 \
+	-fno-builtin \
+	-fno-inline \
+	-fno-omit-frame-pointer \
+	-fno-optimize-sibling-calls \
+	-fno-unroll-loops \
+	-DIXPlint
 CFLAGS += \
 	-std=c99 \
 	-pedantic \

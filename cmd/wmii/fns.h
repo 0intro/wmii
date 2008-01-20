@@ -38,6 +38,7 @@ Client*	client_create(XWindow, XWindowAttributes*);
 void	client_destroy(Client*);
 bool	client_floats_p(Client*);
 void	client_focus(Client*);
+Frame*	client_groupframe(Client*, View*);
 void	client_kill(Client*, bool);
 void	client_manage(Client*);
 void	client_map(Client*);

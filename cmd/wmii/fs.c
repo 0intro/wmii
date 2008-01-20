@@ -659,7 +659,7 @@ fs_read(Ixp9Req *r) {
 			respond(r, nil);
 			return;
 		case FsFRctl:
-			buf = root_readctl();
+			buf = readctl_root();
 			write_buf(r, buf, strlen(buf));
 			respond(r, nil);
 			return;
