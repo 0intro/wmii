@@ -433,12 +433,8 @@ msg_debug(IxpMsg *m) {
 		else
 			debug &= ~(1<<d);
 	}
-	if(buffer[0] != '\0') {
-		opt = smprint("Bad debug options: %s", buffer+2);
-		utfecpy(buffer, buffer+sizeof(buffer), opt);
-		free(opt);
-		return buffer;
-	}
+	if(buffer[0] != '\0')
+		return sxprint("Bad debug options: %s", buffer+2);
 	return nil;
 }
 

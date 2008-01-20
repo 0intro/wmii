@@ -46,6 +46,30 @@ fatal(const char *fmt, ...) {
 	exit(1);
 }
 
+char*
+vsxprint(const char *fmt, va_list ap) {
+	static char*	bufs[16];
+	static long	nbuf;
+	int id;
+
+	id = nbuf++ % nelem(bufs);
+	if(bufs[id])
+		free(bufs[id]);
+	bufs[id] = vsmprint(fmt, ap);
+	return bufs[id];
+}
+
+char*
+sxprint(const char *fmt, ...) {
+	va_list ap;
+	char *ret;
+
+	va_start(ap, fmt);
+	ret = vsxprint(fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
 void
 _die(char *file, int line, char *msg) {
 	fprint(2, "%s: dieing at %s:%d: %s\n",
@@ -148,13 +172,6 @@ min(int a, int b) {
 	if(a < b)
 		return a;
 	return b;
-}
-
-char *
-str_nil(char *s) {
-	if(s)
-		return s;
-	return "<nil>";
 }
 
 int

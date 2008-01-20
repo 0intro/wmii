@@ -28,14 +28,12 @@ area_idx(Area *a) {
 
 char*
 area_name(Area *a) {
-	static char buf[16];
-	
+
 	if(a == nil)
 		return "<nil>";
 	if(a->floating)
 		return "~";
-	snprint(buf, sizeof(buf), "%d", area_idx(a));
-	return buf;
+	return sxprint("%d", area_idx(a));
 }
 
 Area*
