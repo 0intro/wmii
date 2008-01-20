@@ -454,7 +454,7 @@ drawstring(Image *dst, Font *font,
 		len += min(shortened, 3);
 
 	switch (align) {
-	case EAST:
+	case East:
 		x = r.max.x - (w + (font->height / 2));
 		break;
 	default:

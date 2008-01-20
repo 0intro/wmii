@@ -16,15 +16,15 @@
 #undef Screen
 
 enum Align {
-	NORTH = 0x01,
-	EAST  = 0x02,
-	SOUTH = 0x04,
-	WEST  = 0x08,
-	NEAST = NORTH | EAST,
-	NWEST = NORTH | WEST,
-	SEAST = SOUTH | EAST,
-	SWEST = SOUTH | WEST,
-	CENTER = NEAST | SWEST,
+	North = 0x01,
+	East  = 0x02,
+	South = 0x04,
+	West  = 0x08,
+	NEast = North | East,
+	NWest = North | West,
+	SEast = South | East,
+	SWest = South | West,
+	Center = NEast | SWest,
 };
 
 typedef enum Align Align;

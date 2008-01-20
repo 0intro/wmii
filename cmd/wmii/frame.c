@@ -139,13 +139,13 @@ bdown_event(Window *w, XButtonEvent *e) {
 	if((e->state & def.mod) == def.mod) {
 		switch(e->button) {
 		case Button1:
-			mouse_resize(c, False, CENTER);
+			mouse_resize(c, false, Center);
 			focus(c, false);
 			frame_restack(f, nil);
 			focus(c, false); /* Blech */
 			break;
 		case Button3:
-			mouse_resize(c, False, quadrant(f->r, Pt(e->x_root, e->y_root)));
+			mouse_resize(c, false, quadrant(f->r, Pt(e->x_root, e->y_root)));
 			frame_restack(f, nil);
 			focus(c, false);
 			break;
@@ -160,10 +160,10 @@ bdown_event(Window *w, XButtonEvent *e) {
 			if(frame_restack(f, nil))
 				view_restack(f->view);
 			else if(rect_haspoint_p(Pt(e->x, e->y), f->grabbox))
-				mouse_resize(c, True, CENTER);
+				mouse_resize(c, true, Center);
 			else if(f->area->floating)
 				if(!e->subwindow && !rect_haspoint_p(Pt(e->x, e->y), f->titlebar))
-					mouse_resize(c, False, quadrant(f->r, Pt(e->x_root, e->y_root)));
+					mouse_resize(c, false, quadrant(f->r, Pt(e->x_root, e->y_root)));
 
 			if(f->client != selclient())
 				focus(c, false);
@@ -489,7 +489,7 @@ frame_draw(Frame *f) {
 	r.max.y = labelh(def.font);
 	if(f->client->floating)
 		r.max.x -= Dx(f->grabbox);
-	w = drawstring(screen->ibuf, def.font, r, WEST,
+	w = drawstring(screen->ibuf, def.font, r, West,
 			f->client->name, col->fg);
 
 	if(f->area->floating) {

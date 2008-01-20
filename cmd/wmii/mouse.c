@@ -5,6 +5,8 @@
 #include <assert.h>
 #include "fns.h"
 
+/* Here be dragons. */
+
 enum {
 	ButtonMask =
 		ButtonPressMask | ButtonReleaseMask,
@@ -17,15 +19,16 @@ static Handlers handlers;
 enum { OHoriz, OVert };
 typedef struct Framewin Framewin;
 struct Framewin {
-	Window *w;
-	Frame *f;
-	Frame *fp;
-	Rectangle fr;
-	Area *ra;
-	Rectangle gb;
-	Point pt;
-	int or;
-	int n;
+	/* Todo... give these better names. */
+	Window* w;
+	Rectangle grabbox;
+	Rectangle fprev_r;
+	Frame*	fprev;
+	Frame*	f;
+	Area*	ra;
+	Point	pt;
+	int	orientation;
+	int	xy;
 };
 
 static Rectangle
@@ -34,13 +37,13 @@ framerect(Framewin *f) {
 	Point p;
 
 	r.min = ZP;
-	if(f->or == OHoriz) {
-		r.max.x = f->n;
-		r.max.y = f->gb.max.y + f->gb.min.y;
+	if(f->orientation == OHoriz) {
+		r.max.x = f->xy;
+		r.max.y = f->grabbox.max.y + f->grabbox.min.y;
 		r = rectsubpt(r, Pt(0, Dy(r)/2));
 	}else {
-		r.max.x = f->gb.max.x + f->gb.min.x;
-		r.max.y = f->n;
+		r.max.x = f->grabbox.max.x + f->grabbox.min.x;
+		r.max.y = f->xy;
 		r = rectsubpt(r, Pt(Dx(r)/2, 0));
 	}
 	r = rectaddpt(r, f->pt);
@@ -54,14 +57,14 @@ framerect(Framewin *f) {
 }
 
 static void
-frameadjust(Framewin *f, Point pt, int or, int n) {
-	f->or = or;
-	f->n = n;
+frameadjust(Framewin *f, Point pt, int orientation, int xy) {
+	f->orientation = orientation;
+	f->xy = xy;
 	f->pt = pt;
 }
 
 static Framewin*
-framewin(Frame *f, Point pt, int or, int n) {
+framewin(Frame *f, Point pt, int orientation, int n) {
 	WinAttr wa;
 	Framewin *fw;
 
@@ -73,8 +76,8 @@ framewin(Frame *f, Point pt, int or, int n) {
 	sethandler(fw->w, &handlers);
 
 	fw->f = f;
-	fw->gb = f->grabbox;
-	frameadjust(fw, pt, or, n);
+	fw->grabbox = f->grabbox;
+	frameadjust(fw, pt, orientation, n);
 	reshapewin(fw->w, framerect(fw));
 
 	mapwin(fw->w);
@@ -105,8 +108,8 @@ expose_event(Window *w, XExposeEvent *e) {
 	r = rectsubpt(w->r, w->r.min);
 	fill(buf, r, c->bg);
 	border(buf, r, 1, c->border);
-	border(buf, f->gb, 1, c->border);
-	border(buf, insetrect(f->gb, -f->gb.min.x), 1, c->border);
+	border(buf, f->grabbox, 1, c->border);
+	border(buf, insetrect(f->grabbox, -f->grabbox.min.x), 1, c->border);
 
 	copyimage(w, r, buf, ZP);	
 }
@@ -117,8 +120,8 @@ static Handlers handlers = {
 
 static int
 _vsnap(Framewin *f, int y) {
-	if(abs(f->n - y) < Dy(f->w->r)) {
-		f->n = y;
+	if(abs(f->xy - y) < Dy(f->w->r)) {
+		f->xy = y;
 		return 1;
 	}
 	return 0;
@@ -144,38 +147,38 @@ vplace(Framewin *fw, Point pt) {
 
 	r = fw->w->r;
 	hr = Dy(r)/2;
-	fw->n = pt.y;
+	fw->xy = pt.y;
 
 	for(f = a->frame; f->anext; f = f->anext)
 		if(pt.y < f->r.max.y)
 			break;
 
 	if(!f->collapsed) {
-		fw->fp = f;
-		fw->fr = fw->fp->r;
+		fw->fprev = f;
+		fw->fprev_r = f->r;
 
 		if(f == fw->f) {
-			fw->fp = f->aprev;
-			fw->fr.max = f->r.max;
+			fw->fprev = f->aprev;
+			fw->fprev_r.max = f->r.max;
 			if(_vsnap(fw, f->r.min.y+hr))
 				goto done;
 		}
 
 		if(_vsnap(fw, f->r.max.y - hr)) {
-			fw->fr.min.y = f->r.max.y - labelh(def.font);
+			fw->fprev_r.min.y = f->r.max.y - labelh(def.font);
 			goto done;
 		}
 		if(_vsnap(fw, f->r.min.y+Dy(r)+hr)) {
-			fw->fr.min.y = f->r.min.y + labelh(def.font);
+			fw->fprev_r.min.y = f->r.min.y + labelh(def.font);
 			goto done;
 		}
 		if(f->aprev == nil || f->aprev->collapsed)
 			_vsnap(fw, f->r.min.y);
 		else if(_vsnap(fw, f->r.min.y-hr))
-			fw->fp = f->aprev;
-		fw->fr.min.y = pt.y - hr;
-		if(fw->fp && fw->fp->anext == fw->f)
-			fw->fr.max = fw->f->r.max;
+			fw->fprev = f->aprev;
+		fw->fprev_r.min.y = pt.y - hr;
+		if(fw->fprev && fw->fprev->anext == fw->f)
+			fw->fprev_r.max = fw->f->r.max;
 		goto done;
 	}
 
@@ -191,7 +194,7 @@ vplace(Framewin *fw, Point pt) {
 
 done:
 	pt.x = a->r.min.x;
-	pt.y = fw->n;
+	pt.y = fw->xy;
 	frameadjust(fw, pt, OHoriz, Dx(a->r));
 	reshapewin(fw->w, framerect(fw));
 }
@@ -231,7 +234,7 @@ do_managed_move(Client *c) {
 	XEvent ev;
 	Framewin *fw;
 	Window *cwin;
-	Frame *f;
+	Frame *f, *fprev, *fnext;
 	Point pt, pt2;
 	int y;
 
@@ -245,7 +248,7 @@ do_managed_move(Client *c) {
 	fw = framewin(f, pt2, OHoriz, Dx(f->area->r));
 
 	r = screen->r;
-	r.min.y += fw->gb.min.y + Dy(fw->gb)/2;
+	r.min.y += fw->grabbox.min.y + Dy(fw->grabbox)/2;
 	r.max.y = r.min.y + 1;
 	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
 	mapwin(cwin);
@@ -274,34 +277,39 @@ horiz:
 			switch(ev.xbutton.button) {
 			case 1:
 			/* TODO: Fix... Tangled, broken mess. */
-				if((f->anext) && (!f->aprev || (fw->fp != f->aprev && fw->fp != f->aprev->aprev))) {
-					f->anext->r.min.y = f->r.min.y;
-					frame_resize(f->anext, f->anext->r);
+				fprev = f->aprev;
+				fnext = f->anext;
+				column_remove(f, false);
+				if(fnext
+				&& (!fprev || (fw->fprev != fprev)
+				           && (fw->fprev != fprev->aprev))) {
+					fnext->r.min.y = f->r.min.y;
+					frame_resize(fnext, fnext->r);
 				}
-				else if(f->aprev) {
-					if(fw->fp == f->aprev->aprev) {
-						fw->fp = f->aprev->aprev;
-						f->aprev->r = f->r;
+				else if(fprev) {
+					if(fw->fprev == fprev->aprev) {
+						fw->fprev = fprev->aprev;
+						fprev->r = f->r;
 					}else
-						f->aprev->r.max.y = f->r.max.y;
-					frame_resize(f->aprev, f->aprev->r);
+						fprev->r.max.y = f->r.max.y;
+					frame_resize(fprev, fprev->r);
 				}
 
-				frame_remove(f);
-				f->area = fw->ra;
-				frame_insert(f, fw->fp);
+				column_insert(fw->ra, f, fw->fprev);
 
+				r = fw->fprev_r;
 				if(f->aprev) {
-					f->aprev->r.max.y = fw->fr.min.y;
+					f->aprev->r.max.y = r.min.y;
 					frame_resize(f->aprev, f->aprev->r);
-				}
-				else
-					fw->fr.min.y = f->area->r.min.y;
+				}else
+					r.min.y = f->area->r.min.y;
+
 				if(f->anext)
-					fw->fr.max.y = f->anext->r.min.y;
+					r.max.y = f->anext->r.min.y;
 				else
-					fw->fr.max.y = f->area->r.max.y;
-				frame_resize(f, fw->fr);
+					r.max.y = f->area->r.max.y;
+
+				frame_resize(f, fw->fprev_r);
 
 				view_arrange(f->view);
 				goto done;
@@ -341,6 +349,7 @@ vert:
 				if(fw->ra) {
 					fw->ra = column_new(f->view, fw->ra, 0);
 					area_moveto(fw->ra, f);
+					view_arrange(f->view); /* I hate this. */
 				}
 				goto done;
 			case 2:
@@ -384,19 +393,19 @@ mouse_resizecolframe(Frame *f, Align align) {
 	Rectangle r;
 	Point pt, min;
 
-	assert((align&(EAST|WEST)) != (EAST|WEST));
-	assert((align&(NORTH|SOUTH)) != (NORTH|SOUTH));
+	assert((align&(East|West)) != (East|West));
+	assert((align&(North|South)) != (North|South));
 
 	v = screen->sel;
 	for(a = v->area->next, d = divs; a; a = a->next, d = d->next)
 		if(a == f->area) break;
 
-	if(align&EAST)
+	if(align&East)
 		d = d->next;
 
 	min.x = Dx(v->r)/NCOL;
 	min.y = /*frame_delta_h() +*/ labelh(def.font);
-	if(align&NORTH) {
+	if(align&North) {
 		if(f->aprev) {
 			r.min.y = f->aprev->r.min.y + min.y;
 			r.max.y = f->r.max.y - min.y;
@@ -413,7 +422,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 			r.min.y = r.max.y - 1;
 		}
 	}
-	if(align&WEST) {
+	if(align&West) {
 		if(a->prev != v->area) {
 			r.min.x = a->prev->r.min.x + min.x;
 			r.max.x = a->r.max.x - min.x;
@@ -435,7 +444,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 	mapwin(cwin);
 
 	r = f->r;
-	if(align&NORTH)
+	if(align&North)
 		r.min.y--;
 	else
 		r.min.y = r.max.y - 1;
@@ -446,8 +455,8 @@ mouse_resizecolframe(Frame *f, Align align) {
 	if(!grabpointer(&scr.root, cwin, cursor[CurSizing], MouseMask))
 		goto done;
 
-	pt.x = ((align&WEST) ? f->r.min.x : f->r.max.x);
-	pt.y = ((align&NORTH) ? f->r.min.y : f->r.max.y);
+	pt.x = ((align&West) ? f->r.min.x : f->r.max.x);
+	pt.y = ((align&North) ? f->r.min.y : f->r.max.y);
 	warppointer(pt);
 
 	for(;;) {
@@ -462,11 +471,11 @@ mouse_resizecolframe(Frame *f, Align align) {
 			pt.x = ev.xmotion.x_root;
 			pt.y = ev.xmotion.y_root;
 
-			if(align&WEST)
+			if(align&West)
 				r.min.x = pt.x;
 			else
 				r.max.x = pt.x;
-			r.min.y = ((align&SOUTH) ? pt.y : pt.y-1);
+			r.min.y = ((align&South) ? pt.y : pt.y-1);
 			r.max.y = r.min.y+2;
 
 			div_set(d, pt.x);
@@ -474,22 +483,22 @@ mouse_resizecolframe(Frame *f, Align align) {
 			break;
 		case ButtonRelease:
 			r = f->r;
-			if(align&WEST)
+			if(align&West)
 				r.min.x = pt.x;
 			else
 				r.max.x = pt.x;
-			if(align&NORTH)
+			if(align&North)
 				r.min.y = pt.y;
 			else
 				r.max.y = pt.y;
 			column_resizeframe(f, &r);
 
 			/* XXX: Magic number... */
-			if(align&WEST)
+			if(align&West)
 				pt.x = f->r.min.x + 4;
 			else
 				pt.x = f->r.max.x - 4;
-			if(align&NORTH)
+			if(align&North)
 				pt.y = f->r.min.y + 4;
 			else
 				pt.y = f->r.max.y - 4;
@@ -564,26 +573,26 @@ static void
 rect_morph(Rectangle *r, Point d, Align *mask) {
 	int n;
 
-	if(*mask & NORTH)
+	if(*mask & North)
 		r->min.y += d.y;
-	if(*mask & WEST)
+	if(*mask & West)
 		r->min.x += d.x;
-	if(*mask & SOUTH)
+	if(*mask & South)
 		r->max.y += d.y;
-	if(*mask & EAST)
+	if(*mask & East)
 		r->max.x += d.x;
 
 	if(r->min.x > r->max.x) {
 		n = r->min.x;
 		r->min.x = r->max.x;
 		r->max.x = n;
-		*mask ^= EAST|WEST;
+		*mask ^= East|West;
 	}
 	if(r->min.y > r->max.y) {
 		n = r->min.y;
 		r->min.y = r->max.y;
 		r->max.y = n;
-		*mask ^= NORTH|SOUTH;
+		*mask ^= North|South;
 	}
 }
 
@@ -639,24 +648,24 @@ snap_rect(Rectangle *rects, int num, Rectangle *r, Align *mask, int snap) {
 	d.x = snap+1;
 	d.y = snap+1;
 
-	if(*mask&NORTH)
+	if(*mask&North)
 		d.y = snap_hline(rects, num, d.y, r, r->min.y);
-	if(*mask&SOUTH)
+	if(*mask&South)
 		d.y = snap_hline(rects, num, d.y, r, r->max.y);
 
-	if(*mask&EAST)
+	if(*mask&East)
 		d.x = snap_vline(rects, num, d.x, r, r->max.x);
-	if(*mask&WEST)
+	if(*mask&West)
 		d.x = snap_vline(rects, num, d.x, r, r->min.x);
 
-	ret = CENTER;
+	ret = Center;
 	if(abs(d.x) <= snap)
-		ret ^= EAST|WEST;
+		ret ^= East|West;
 	else
 		d.x = 0;
 
 	if(abs(d.y) <= snap)
-		ret ^= NORTH|SOUTH;
+		ret ^= North|South;
 	else
 		d.y = 0;
 
@@ -666,7 +675,7 @@ snap_rect(Rectangle *rects, int num, Rectangle *r, Align *mask, int snap) {
 
 /* Grumble... Messy... TODO: Rewrite. */
 void
-mouse_resize(Client *c, bool opaque, Align align) {
+mouse_resize(Client *c, bool grabbox, Align align) {
 	XEvent ev;
 	Rectangle *rects;
 	Rectangle frect, origin;
@@ -679,8 +688,11 @@ mouse_resize(Client *c, bool opaque, Align align) {
 
 	f = c->sel;
 
+	if(f->client->fullscreen)
+		return;
+
 	if(!f->area->floating) {
-		if(align==CENTER)
+		if(align==Center)
 			do_managed_move(c);
 		else
 			mouse_resizecolframe(f, align);
@@ -692,7 +704,7 @@ mouse_resize(Client *c, bool opaque, Align align) {
 	rects = view_rects(f->area->view, &num, c->frame);
 
 	cur = quad_cursor(align);
-	if((align==CENTER) && !opaque)
+	if((align==Center) && !grabbox)
 		cur = cursor[CurSizing];
 
 	pt = querypointer(c->framewin);
@@ -707,21 +719,17 @@ mouse_resize(Client *c, bool opaque, Align align) {
 	hr = subpt(frect.max, frect.min);
 	hr = divpt(hr, Pt(2, 2));
 
-	if(align != CENTER) {
+	if(align != Center) {
 		d = hr;
-		if(align&NORTH) d.y -= hr.y;
-		if(align&SOUTH) d.y += hr.y;
-		if(align&EAST) d.x += hr.x;
-		if(align&WEST) d.x -= hr.x;
+		if(align&North) d.y -= hr.y;
+		if(align&South) d.y += hr.y;
+		if(align&East) d.x += hr.x;
+		if(align&West) d.x -= hr.x;
 
 		pt = addpt(d, f->r.min);
 		warppointer(pt);
 	}
-	else if(f->client->fullscreen) {
-		ungrabpointer();
-		return;
-	}
-	else if(!opaque) {
+	else if(!grabbox) {
 		hrx = (double)(Dx(screen->r) + Dx(frect) - 2 * labelh(def.font))
 				/ Dx(screen->r);
 		hry = (double)(Dy(screen->r)  + Dy(frect) - 3 * labelh(def.font))
@@ -748,7 +756,7 @@ mouse_resize(Client *c, bool opaque, Align align) {
 			d.x = ev.xmotion.x_root;
 			d.y = ev.xmotion.y_root;
 
-			if(align == CENTER && !opaque) {
+			if(align == Center && !grabbox) {
 				SET(hrx);
 				SET(hry);
 				d.x = (d.x * hrx) - pt.x;
@@ -772,7 +780,7 @@ mouse_resize(Client *c, bool opaque, Align align) {
 		case ButtonRelease:
 			client_resize(c, frect);
 
-			if(!opaque) {
+			if(!grabbox) {
 				pt = translate(c->framewin, &scr.root,
 					Pt(Dx(frect)*rx, Dy(frect)*ry));
 				if(pt.y > screen->brect.min.y)

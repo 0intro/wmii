@@ -149,9 +149,9 @@ bar_draw(WMScreen *s) {
 	fill(screen->ibuf, r, def.normcolor.bg);
 	for(nb = 0; nb < nelem(s->bar); nb++)
 		for(b = s->bar[nb]; b; b=b->next) {
-			align = CENTER;
+			align = Center;
 			if(b == s->bar[BarRight])
-				align = EAST;
+				align = East;
 			fill(screen->ibuf, b->r, b->col.bg);
 			drawstring(screen->ibuf, def.font, b->r, align, b->text, b->col.fg);
 			border(screen->ibuf, b->r, 1, b->col.border);

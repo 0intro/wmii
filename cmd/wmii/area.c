@@ -198,24 +198,14 @@ area_attach(Area *a, Frame *f) {
 
 void
 area_detach(Frame *f) {
-	Frame *pr;
 	Area *a;
 
 	a = f->area;
-	pr = f->aprev;
 
 	if(a->floating)
 		float_detach(f);
 	else
 		column_detach(f);
-
-	f->area = nil;
-	if(a->sel == f) {
-		if(!pr)
-			pr = a->frame;
-		a->sel = nil;
-		area_setsel(a, pr);
-	}
 }
 
 void

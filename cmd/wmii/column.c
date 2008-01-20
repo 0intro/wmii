@@ -46,31 +46,37 @@ column_new(View *v, Area *pos, uint w) {
 }
 
 void
+column_insert(Area *a, Frame *f, Frame *pos) {
+
+	f->area = a;
+	f->client->floating = false;
+	f->column = area_idx(a);
+	frame_insert(f, pos);
+}
+
+void
 column_attach(Area *a, Frame *f) {
 	uint nframe;
 	Frame *ft;
-
-	f->client->floating = false;
 
 	nframe = 0;
 	for(ft=a->frame; ft; ft=ft->anext)
 		nframe++;
 	nframe = max(nframe, 1);
 
-	f->column = area_idx(a);
 	f->r = a->r;
 	f->r.max.y = Dy(a->r) / nframe;
 
-	frame_insert(f, a->sel);
+	column_insert(a, f, a->sel);
 	if(a->sel == nil)
 		area_setsel(a, f);
-
 	column_arrange(a, false);
 }
 
 void
-column_detach(Frame *f) {
+column_remove(Frame *f, bool arrange) {
 	Client *c;
+	Frame *pr;
 	Area *a;
 	View *v;
 
@@ -78,16 +84,34 @@ column_detach(Frame *f) {
 	v = a->view;
 	c = f->client;
 
+	pr = f->aprev;
+
 	frame_remove(f);
 
-	if(a->frame)
-		column_arrange(a, False);
+	f->area = nil;
+	if(a->sel == f) {
+		if(!pr)
+			pr = a->frame;
+		a->sel = nil;
+		area_setsel(a, pr);
+	}
+
+	if(a->frame) {
+		if(arrange)
+			column_arrange(a, False);
+	}
 	else {
 		if(v->area->next->next)
 			area_destroy(a);
 		else if(v->area->frame)
 			area_focus(v->area);
 	}
+}
+
+void
+column_detach(Frame *f) {
+
+	column_remove(f, true);
 }
 
 static void

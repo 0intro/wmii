@@ -133,7 +133,8 @@ init_ns(void) {
 	if(getuid() != st.st_uid)
 		fatal("ns_path '%s' exists but is not owned by you", ns_path);
 	if(st.st_mode & 077)
-		fatal("ns_path '%s' exists, but has group or world permissions", ns_path);
+		if(chmod(ns_path, st.st_mode & ~077))
+			fatal("ns_path '%s' exists, but has group or world permissions", ns_path);
 }
 
 static void

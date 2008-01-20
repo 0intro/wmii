@@ -379,9 +379,9 @@ frame_hints(Frame *f, Rectangle r, Align sticky) {
 	}
 
 	p = ZP;
-	if((sticky&(EAST|WEST)) == EAST)
+	if((sticky&(East|West)) == East)
 		p.x = Dx(or) - Dx(r);
-	if((sticky&(NORTH|SOUTH)) == SOUTH)
+	if((sticky&(North|South)) == South)
 		p.y = Dy(or) - Dy(r);
 
 	return rectaddpt(r, p);

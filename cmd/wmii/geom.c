@@ -46,13 +46,13 @@ quadrant(Rectangle r, Point pt) {
 	ret = 0;
 
 	if(pt.x >= Dx(r) * .5)
-		ret |= EAST;
+		ret |= East;
 	if(pt.x <= Dx(r) * .5)
-		ret |= WEST;
+		ret |= West;
 	if(pt.y <= Dy(r) * .5)
-		ret |= NORTH;
+		ret |= North;
 	if(pt.y >= Dy(r) * .5)
-		ret |= SOUTH;
+		ret |= South;
 
 	return ret;
 }
@@ -60,13 +60,13 @@ quadrant(Rectangle r, Point pt) {
 Cursor
 quad_cursor(Align align) {
 	switch(align) {
-	case NEAST:
+	case NEast:
 		return cursor[CurNECorner];
-	case NWEST:
+	case NWest:
 		return cursor[CurNWCorner];
-	case SEAST:
+	case SEast:
 		return cursor[CurSECorner];
-	case SWEST:
+	case SWest:
 		return cursor[CurSWCorner];
 	default:
 		return cursor[CurMove];
@@ -78,13 +78,13 @@ get_sticky(Rectangle src, Rectangle dst) {
 	Align stickycorner = 0;
 
 	if(src.min.x != dst.min.x && src.max.x == dst.max.x)
-		stickycorner |= EAST;
+		stickycorner |= East;
 	else
-		stickycorner |= WEST;
+		stickycorner |= West;
 	if(src.min.y != dst.min.y && src.max.y == dst.max.y)
-		stickycorner |= SOUTH;
+		stickycorner |= South;
 	else    
-		stickycorner |= NORTH;
+		stickycorner |= North;
 
 	return stickycorner;
 }
