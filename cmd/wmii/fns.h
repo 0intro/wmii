@@ -9,44 +9,6 @@
 # pragma varargck	type	"r"	void
 #endif
 
-/* XXX: These don't belong here. */
-
-typedef struct Vector_long Vector_long;
-struct Vector_long {
-	long*	ary;
-	long	n;
-	long	size;
-};
-
-static void
-vector_linit(Vector_long *v) {
-	memset(v, 0, sizeof *v);
-}
-
-static void
-vector_lfree(Vector_long *v) {
-	free(v->ary);
-	memset(v, 0, sizeof *v);
-}
-
-static void
-vector_lpush(Vector_long *v, long val) {
-	if(v->n == v->size) {
-		if(v->size == 0)
-			v->size = 2;
-		v->size <<= 2;
-		v->ary = erealloc(v->ary, v->size * sizeof *v->ary);
-	}
-	v->ary[v->n++] = val;
-}
-
-static inline void
-__grr__(void) {
-	vector_linit(nil);
-	vector_lfree(nil);
-	vector_lpush(nil, 0);
-}
-
 /* area.c */
 void	area_attach(Area*, Frame*);
 Area*	area_create(View*, Area *pos, uint w);
@@ -74,6 +36,7 @@ void	apply_tags(Client*, const char*);
 void	client_configure(Client*);
 Client*	client_create(XWindow, XWindowAttributes*);
 void	client_destroy(Client*);
+bool	client_floats_p(Client*);
 void	client_focus(Client*);
 void	client_kill(Client*, bool);
 void	client_manage(Client*);
@@ -82,7 +45,7 @@ void	client_prop(Client*, Atom);
 void	client_reparent(Client*, Window*, Point);
 void	client_resize(Client*, Rectangle);
 void	client_setcursor(Client*, Cursor);
-void	client_seturgent(Client*, int urgent, bool write);
+void	client_seturgent(Client*, bool, int);
 void	client_unmap(Client*, int state);
 Frame*	client_viewframe(Client *c, View *v);
 char*	clientname(Client*);
@@ -96,15 +59,19 @@ Client*	win2client(XWindow);
 Rectangle	client_grav(Client*, Rectangle);
 
 /* column.c */
-char*	colmode2str(int);
-int	str2colmode(const char*);
+char*	colmode2str(uint);
 void	column_arrange(Area*, bool dirty);
+void	column_attach(Area*, Frame*);
+void	column_detach(Frame*);
+void	column_insert(Area*, Frame*, Frame*);
 Area*	column_new(View*, Area *, uint);
+void	column_remove(Frame*, bool);
 void	column_resize(Area*, int);
 void	column_resizeframe(Frame*, Rectangle*);
 void	div_draw(Divide*);
 void	div_set(Divide*, int x);
 void	div_update_all(void);
+int	str2colmode(const char*);
 
 /* event.c */
 void	check_x_event(IxpConn*);
@@ -122,7 +89,7 @@ void	ewmh_getwintype(Client*);
 void	ewmh_init(void);
 void	ewmh_initclient(Client*);
 void	ewmh_pingclient(Client*);
-void	ewmh_prop(Client*, Atom);
+int	ewmh_prop(Client*, Atom);
 long	ewmh_protocols(Window*);
 void	ewmh_updateclient(Client*);
 void	ewmh_updateclientlist(void);
@@ -132,6 +99,10 @@ void	ewmh_updatestate(Client*);
 void	ewmh_updateview(void);
 void	ewmh_updateviews(void);
 
+/* float.c */
+void	float_attach(Area*, Frame*);
+void	float_detach(Frame*);
+
 /* frame.c */
 Frame*	frame_create(Client*, View*);
 int	frame_delta_h(void);
@@ -139,7 +110,7 @@ void	frame_draw(Frame*);
 void	frame_draw_all(void);
 void	frame_focus(Frame*);
 uint	frame_idx(Frame*);
-void	frame_insert(Frame *pos, Frame*);
+void	frame_insert(Frame*, Frame *pos);
 void	frame_remove(Frame*);
 void	frame_resize(Frame*, Rectangle);
 bool	frame_restack(Frame*, Frame*);
@@ -167,10 +138,13 @@ void	fs_write(Ixp9Req*);
 void	event(const char*, ...);
 
 /* geom.c */
-Cursor	quad_cursor(Align);
 Align	get_sticky(Rectangle src, Rectangle dst);
-bool	rect_haspoint_p(Point, Rectangle);
+Cursor	quad_cursor(Align);
 Align	quadrant(Rectangle, Point);
+bool	rect_contains_p(Rectangle, Rectangle);
+bool	rect_haspoint_p(Point, Rectangle);
+bool	rect_intersect_p(Rectangle, Rectangle);
+Rectangle	rect_intersection(Rectangle, Rectangle);
 
 /* key.c */
 void	init_lock_keys(void);
@@ -194,7 +168,8 @@ char*	msg_getword(IxpMsg*);
 char*	msg_parsecolors(IxpMsg*, CTuple*);
 char*	msg_selectarea(Area*, IxpMsg*);
 char*	msg_sendclient(View*, IxpMsg*, bool swap);
-char*	root_readctl(void);
+char*	readctl_root(void);
+char*	readctl_view(View*);
 Area*	strarea(View*, const char*);
 
 /* mouse.c */
@@ -208,8 +183,30 @@ void	trim(char *str, const char *chars);
 void	update_rules(Rule**, const char*);
 
 /* view.c */
+void	view_arrange(View*);
+void	view_attach(View*, Frame*);
+View*	view_create(const char*);
+void	view_destroy(View*);
+Area*	view_findarea(View*, int, bool);
+void	view_focus(WMScreen*, View*);
+bool	view_fullscreen_p(View*);
+char*	view_index(View*);
+uint	view_newcolw(View*, int i);
+void	view_restack(View*);
+void	view_scale(View*, int w);
+Client*	view_selclient(View*);
+void	view_select(const char*);
+void	client_setviews(Client*, char**);
+void	view_update_all(void);
+Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 
 /* utf.c */
 char*	toutf8(const char*);
 char*	toutf8n(const char*, size_t);
+
+/* xext.c */
+void	randr_event(XEvent*);
+void	randr_init(void);
+void	xext_event(XEvent*);
+void	xext_init(void);
 

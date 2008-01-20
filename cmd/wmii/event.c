@@ -10,8 +10,10 @@ void
 dispatch_event(XEvent *e) {
 	Debug(DEvent)
 		printevent(e);
-	if(handler[e->type])
+	if(e->type < nelem(handler) && handler[e->type])
 		handler[e->type](e);
+	else
+		xext_event(e);
 }
 
 #define handle(w, fn, ev) \
@@ -276,7 +278,7 @@ maprequest(XEvent *e) {
 	if(wa.override_redirect) {
 		/* Do I really want these? */
 		XSelectInput(display, ev->window,
-				(StructureNotifyMask | PropertyChangeMask));
+			(StructureNotifyMask | PropertyChangeMask));
 		return;
 	}
 	if(!win2client(ev->window))
@@ -356,7 +358,5 @@ check_x_event(IxpConn *c) {
 	while(XPending(display)) {
 		XNextEvent(display, &ev);
 		dispatch_event(&ev);
-		/* Hack to alleviate an apparant Xlib bug */
-		XPending(display);
 	}
 }

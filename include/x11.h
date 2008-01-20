@@ -6,21 +6,22 @@
 #ifdef _X11_VISIBLE
 #  include <X11/Xatom.h>
 #  include <X11/extensions/shape.h>
+#  include <X11/extensions/Xrandr.h>
 #endif
 #undef Window
 #undef Font
 #undef Screen
 
 enum Align {
-	NORTH = 0x01,
-	EAST  = 0x02,
-	SOUTH = 0x04,
-	WEST  = 0x08,
-	NEAST = NORTH | EAST,
-	NWEST = NORTH | WEST,
-	SEAST = SOUTH | EAST,
-	SWEST = SOUTH | WEST,
-	CENTER = NEAST | SWEST,
+	North = 0x01,
+	East  = 0x02,
+	South = 0x04,
+	West  = 0x08,
+	NEast = North | East,
+	NWest = North | West,
+	SEast = South | East,
+	SWest = South | West,
+	Center = NEast | SWest,
 };
 
 typedef enum Align Align;
@@ -76,13 +77,16 @@ struct Window {
 };
 
 struct WinHints {
-	Point min, max;
-	Point base, baspect;
-	Point inc;
+	Point	min;
+	Point	max;
+	Point	base;
+	Point	baspect;
+	Point	inc;
+	Point	grav;
 	Rectangle aspect;
-	Point grav;
-	bool gravstatic;
-	bool position;
+	XWindow	group;
+	bool	gravstatic;
+	bool	position;
 };
 
 struct Handlers {
@@ -221,6 +225,7 @@ void	warppointer(Point);
 Window*	window(XWindow);
 long	winprotocols(Window*);
 Atom	xatom(char*);
+void	sendmessage(Window*, char*, char*, long, long, long);
 XRectangle	XRect(Rectangle);
 Rectangle	gravitate(Rectangle dst, Rectangle src, Point grav);
 Rectangle	insetrect(Rectangle, int);

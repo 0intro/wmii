@@ -1,4 +1,4 @@
-/* © 2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+/* Copyright ©2007-2008 Kris Maglione <jg@suckless.org>
  * See LICENSE file for license details.
  */
 
@@ -6,12 +6,15 @@
 #define IXP_P9_STRUCTS
 #define IXP_NO_P9_
 #include <regexp9.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ixp.h>
 #include <util.h>
 #include <utf.h>
 #include <fmt.h>
-#include "x11.h"
+#include <x11.h>
 
 #define FONT		"-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*"
 #define FOCUSCOLORS	"#ffffff #335577 #447799"
@@ -19,6 +22,11 @@
 
 enum {
 	PingTime = 10000,
+};
+
+enum {
+	UrgManager,
+	UrgClient,
 };
 
 enum EWMHType {
@@ -114,7 +122,6 @@ struct Bar {
 
 struct Client {
 	Client*	next;
-	Area*	revert;
 	Frame*	frame;
 	Frame*	sel;
 	Window	w;
@@ -152,13 +159,16 @@ struct Frame {
 	Frame*	aprev;
 	Frame*	snext;
 	Frame*	sprev;
+	Client*	client;
 	View*	view;
 	Area*	area;
-	Client*	client;
+	int	oldarea;
+	int	column;
 	ushort	id;
 	bool	collapsed;
 	float	ratio;
 	Rectangle	r;
+	Rectangle	oldr;
 	Rectangle	crect;
 	Rectangle	revert;
 	Rectangle	grabbox;
@@ -219,9 +229,10 @@ struct View {
 	ushort	id;
 	Area*	area;
 	Area*	sel;
-	Area*	colsel;
 	Area*	oldsel;
 	Area*	revert;
+	int	selcol;
+	Rectangle r;
 };
 
 #ifndef EXTERN
@@ -296,4 +307,12 @@ typedef void (*XHandler)(XEvent*);
 EXTERN XHandler handler[LASTEvent];
 
 /* Misc */
+EXTERN bool	starting;
+EXTERN char*	user;
+EXTERN char*	execstr;
+EXTERN int	debug;
+EXTERN long	xtime;
+
+#define Debug(x) if(debug&(x))
+#define Dprint(x, ...) BLOCK( Debug(x) fprint(2, __VA_ARGS__) )
 

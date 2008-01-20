@@ -35,7 +35,8 @@ frame_create(Client *c, View *v) {
 		f->revert = f->r;
 		c->sel = f;
 	}
-	f->collapsed = False;
+	f->collapsed = false;
+	f->oldarea = -1;
 
 	return f;
 }
@@ -64,7 +65,7 @@ frame_remove(Frame *f) {
 }
 
 void
-frame_insert(Frame *pos, Frame *f) {
+frame_insert(Frame *f, Frame *pos) {
 	Area *a;
 
 	a = f->area;
@@ -138,13 +139,13 @@ bdown_event(Window *w, XButtonEvent *e) {
 	if((e->state & def.mod) == def.mod) {
 		switch(e->button) {
 		case Button1:
-			mouse_resize(c, False, CENTER);
+			mouse_resize(c, false, Center);
 			focus(c, false);
 			frame_restack(f, nil);
 			focus(c, false); /* Blech */
 			break;
 		case Button3:
-			mouse_resize(c, False, quadrant(f->r, Pt(e->x_root, e->y_root)));
+			mouse_resize(c, false, quadrant(f->r, Pt(e->x_root, e->y_root)));
 			frame_restack(f, nil);
 			focus(c, false);
 			break;
@@ -159,10 +160,10 @@ bdown_event(Window *w, XButtonEvent *e) {
 			if(frame_restack(f, nil))
 				view_restack(f->view);
 			else if(rect_haspoint_p(Pt(e->x, e->y), f->grabbox))
-				mouse_resize(c, True, CENTER);
+				mouse_resize(c, true, Center);
 			else if(f->area->floating)
 				if(!e->subwindow && !rect_haspoint_p(Pt(e->x, e->y), f->titlebar))
-					mouse_resize(c, False, quadrant(f->r, Pt(e->x_root, e->y_root)));
+					mouse_resize(c, false, quadrant(f->r, Pt(e->x_root, e->y_root)));
 
 			if(f->client != selclient())
 				focus(c, false);
@@ -433,6 +434,8 @@ frame_draw(Frame *f) {
 
 	if(f->view != screen->sel)
 		return;
+	if(f->area == nil) /* Blech. */
+		return;
 
 	if(f->client == screen->focus
 	|| f->client == selclient())
@@ -486,13 +489,34 @@ frame_draw(Frame *f) {
 	r.max.y = labelh(def.font);
 	if(f->client->floating)
 		r.max.x -= Dx(f->grabbox);
-	w = drawstring(screen->ibuf, def.font, r, WEST,
+	w = drawstring(screen->ibuf, def.font, r, West,
 			f->client->name, col->fg);
 
+	if(f->area->floating) {
+		r.min.x = r.min.x + w + 10;
+		r.max.x = f->titlebar.max.x + 1;
+		r.min.y = f->grabbox.min.y;
+		r.max.y = f->grabbox.max.y;
+		border(screen->ibuf, r, 1, col->border);
+	}
+
+	/* Border increment gaps... */
+	r.min.y = f->crect.min.y;
+	r.min.x = max(1, f->crect.min.x - 1);
+	r.max.x = min(fr.max.x - 1, f->crect.max.x + 1);
+	r.max.y = min(fr.max.y - 1, f->crect.max.y + 1);
+	border(screen->ibuf, r, 1, col->border);
+
+	/* Why? Because some non-ICCCM-compliant apps feel the need to
+	 * change the background properties of all of their ancestor windows
+	 * in order to implement pseudo-transparency.
+	 * What's more, the designers of X11 felt that it would be unfair to
+	 * implementers to make it possible to detect, or forbid, such changes.
+	 */
 	XSetWindowBackgroundPixmap(display, f->client->framewin->w, None);
 
 	copyimage(f->client->framewin, fr, screen->ibuf, ZP);
-	XSync(display, False);
+	sync();
 }
 
 void

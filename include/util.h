@@ -33,10 +33,11 @@ char*	estrdup(const char*);
 void	fatal(const char*, ...);
 int	max(int, int);
 int	min(int, int);
-char*	str_nil(char*);
 uint	strlcat(char*, const char*, uint);
+char*	sxprint(const char*, ...);
 uint	tokenize(char **, uint, char*, char);
 int	utflcpy(char*, const char*, int);
+char*	vsxprint(const char*, va_list);
 
 #define die(x) \
 	_die(__FILE__, __LINE__, x)

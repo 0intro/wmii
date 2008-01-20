@@ -22,8 +22,12 @@ all:
 	${COMPILE} ${<:.c=.o} $<
 	${LINK} $@ ${<:.c=.o}
 
-
-.rc.O .sh.O .awk.O:
+.sh.O:
+	echo FILTER $(BASE)$<
+	$(FILTER) $< >$@
+	sh -n $@
+	chmod 0755 $@
+.rc.O .awk.O:
 	echo FILTER $(BASE)$<
 	$(FILTER) $< >$@
 	chmod 0755 $@

@@ -10,6 +10,34 @@ rect_haspoint_p(Point pt, Rectangle r) {
 		&& (pt.y >= r.min.y) && (pt.y < r.max.y);
 }
 
+bool
+rect_intersect_p(Rectangle r, Rectangle r2) {
+	return r.min.x <= r2.max.x
+	    && r.max.x >= r2.min.x
+	    && r.min.y <= r2.max.y
+	    && r.max.y >= r2.min.y;
+}
+
+Rectangle
+rect_intersection(Rectangle r, Rectangle r2) {
+	Rectangle ret;
+
+	/* canonrect(ret) != ret if not intersection */
+	ret.min.x = max(r.min.x, r2.min.x);
+	ret.max.x = min(r.max.x, r2.max.x);
+	ret.min.y = max(r.min.y, r2.min.y);
+	ret.max.y = min(r.max.y, r2.max.y);
+	return ret;
+}
+
+bool
+rect_contains_p(Rectangle r, Rectangle r2) {
+	return r2.min.x >= r.min.x
+	    && r2.max.x <= r.max.x
+	    && r2.min.y >= r.min.y
+	    && r2.max.y <= r.max.y;
+}
+
 Align
 quadrant(Rectangle r, Point pt) {
 	Align ret;
@@ -18,13 +46,13 @@ quadrant(Rectangle r, Point pt) {
 	ret = 0;
 
 	if(pt.x >= Dx(r) * .5)
-		ret |= EAST;
+		ret |= East;
 	if(pt.x <= Dx(r) * .5)
-		ret |= WEST;
+		ret |= West;
 	if(pt.y <= Dy(r) * .5)
-		ret |= NORTH;
+		ret |= North;
 	if(pt.y >= Dy(r) * .5)
-		ret |= SOUTH;
+		ret |= South;
 
 	return ret;
 }
@@ -32,13 +60,13 @@ quadrant(Rectangle r, Point pt) {
 Cursor
 quad_cursor(Align align) {
 	switch(align) {
-	case NEAST:
+	case NEast:
 		return cursor[CurNECorner];
-	case NWEST:
+	case NWest:
 		return cursor[CurNWCorner];
-	case SEAST:
+	case SEast:
 		return cursor[CurSECorner];
-	case SWEST:
+	case SWest:
 		return cursor[CurSWCorner];
 	default:
 		return cursor[CurMove];
@@ -50,13 +78,13 @@ get_sticky(Rectangle src, Rectangle dst) {
 	Align stickycorner = 0;
 
 	if(src.min.x != dst.min.x && src.max.x == dst.max.x)
-		stickycorner |= EAST;
+		stickycorner |= East;
 	else
-		stickycorner |= WEST;
+		stickycorner |= West;
 	if(src.min.y != dst.min.y && src.max.y == dst.max.y)
-		stickycorner |= SOUTH;
+		stickycorner |= South;
 	else    
-		stickycorner |= NORTH;
+		stickycorner |= North;
 
 	return stickycorner;
 }

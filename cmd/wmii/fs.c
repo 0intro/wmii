@@ -679,7 +679,7 @@ fs_read(Ixp9Req *r) {
 			respond(r, nil);
 			return;
 		case FsFTctl:
-			buf = view_ctl(f->p.view);
+			buf = readctl_view(f->p.view);
 			n = strlen(buf);
 			write_buf(r, buf, n);
 			respond(r, nil);

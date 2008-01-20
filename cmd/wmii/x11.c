@@ -8,8 +8,6 @@
 #include "dat.h"
 #include <assert.h>
 #include <math.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <bio.h>
 #include "fns.h"
@@ -31,6 +29,7 @@ static MapEnt* wbucket[137];
 static MapEnt* abucket[137];
 
 
+/* Rectangles/Points */
 XRectangle
 XRect(Rectangle r) {
 	XRectangle xr;
@@ -344,6 +343,7 @@ winprotocols(Window *w) {
 /* Shape */
 void
 setshapemask(Window *dst, Image *src, Point pt) {
+	/* Assumes that we have the shape extension... */
 	XShapeCombineMask (display, dst->w,
 		ShapeBounding, pt.x, pt.y, src->image, ShapeSet);
 }
@@ -454,7 +454,7 @@ drawstring(Image *dst, Font *font,
 		len += min(shortened, 3);
 
 	switch (align) {
-	case EAST:
+	case East:
 		x = r.max.x - (w + (font->height / 2));
 		break;
 	default:
@@ -598,6 +598,22 @@ xatom(char *name) {
 	if(e->val == nil)
 		e->val = (void*)XInternAtom(display, name, False);
 	return (Atom)e->val;
+}
+
+void
+sendmessage(Window *w, char *name, char *value, long l2, long l3, long l4) {
+	XClientMessageEvent e;
+
+	e.type = ClientMessage;
+	e.window = w->w;
+	e.message_type = xatom(name);
+	e.format = 32;
+	e.data.l[0] = xatom(value);
+	e.data.l[1] = xtime;
+	e.data.l[2] = l2;
+	e.data.l[3] = l3;
+	e.data.l[4] = l4;
+	sendevent(w, false, NoEventMask, (XEvent*)&e);
 }
 
 void
@@ -836,6 +852,7 @@ void
 sethints(Window *w) {
 	enum { MaxInt = ((uint)(1<<(8*sizeof(int)-1))-1) };
 	XSizeHints xs;
+	XWMHints *wmh;
 	WinHints *h;
 	Point p;
 	long size;
@@ -848,6 +865,13 @@ sethints(Window *w) {
 
 	h->max = Pt(MaxInt, MaxInt);
 	h->inc = Pt(1,1);
+
+	wmh = XGetWMHints(display, w->w);
+	if(wmh) {
+		if(wmh->flags&WindowGroupHint)
+			h->group = wmh->window_group;
+		free(wmh);
+	}
 
 	if(!XGetWMNormalHints(display, w->w, &xs, &size))
 		return;
@@ -897,7 +921,9 @@ sethints(Window *w) {
 	case WestGravity:
 		p.y = 1;
 		break;
-	case SouthEastGravity: case SouthGravity: case SouthWestGravity:
+	case SouthEastGravity:
+	case SouthGravity:
+	case SouthWestGravity:
 		p.y = 2;
 		break;
 	}
@@ -907,7 +933,9 @@ sethints(Window *w) {
 	case SouthGravity:
 		p.x = 1;
 		break;
-	case NorthEastGravity: case EastGravity: case SouthEastGravity:
+	case NorthEastGravity:
+	case EastGravity:
+	case SouthEastGravity:
 		p.x = 2;
 		break;
 	}

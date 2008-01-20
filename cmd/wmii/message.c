@@ -156,13 +156,13 @@ msg_getword(IxpMsg *m) {
 	Rune r;
 	int n;
 
-	eatrunes(m, isspacerune, 1);
+	eatrunes(m, isspacerune, true);
 	ret = m->pos;
-	eatrunes(m, isspacerune, 0);
+	eatrunes(m, isspacerune, false);
 	n = chartorune(&r, m->pos);
 	*m->pos = '\0';
 	m->pos += n;
-	eatrunes(m, isspacerune, 1);
+	eatrunes(m, isspacerune, true);
 
 	if(ret == m->end)
 		return nil;
@@ -285,7 +285,7 @@ message_client(Client *c, IxpMsg *m) {
 		i = gettoggle(m);
 		if(i == -1)
 			return Ebadusage;
-		client_seturgent(c, i, True);
+		client_seturgent(c, i, UrgManager);
 		break;
 	default:
 		return Ebadcmd;
@@ -391,17 +391,55 @@ message_view(View *v, IxpMsg *m) {
 	case LSELECT:
 		return msg_selectarea(v->sel, m);
 	case LSEND:
-		return msg_sendclient(v, m, 0);
+		return msg_sendclient(v, m, false);
 	case LSWAP:
-		return msg_sendclient(v, m, 1);
+		return msg_sendclient(v, m, true);
 	default:
 		return Ebadcmd;
 	}
 	/* not reached */
 }
 
-char *
-parse_colors(IxpMsg *m, CTuple *col) {
+static void
+printdebug(void) {
+	int i, j;
+
+	for(i=0, j=0; i < nelem(debugtab); i++)
+		Debug(1<<i) {
+			if(j++ > 0)
+				bufprint(" ");
+			bufprint("%s", debugtab[i]);
+		}
+}
+
+static char*
+msg_debug(IxpMsg *m) {
+	char *opt;
+	int d;
+	char add;
+
+	bufclear();
+	while((opt = msg_getword(m))) {
+		add = '+';
+		if(opt[0] == '+' || opt[0] == '-')
+			add = *opt++;
+		d = getdebug(opt);
+		if(d == -1) {
+			bufprint(", %s", opt);
+			continue;
+		}
+		if(add == '+')
+			debug |= 1<<d;
+		else
+			debug &= ~(1<<d);
+	}
+	if(buffer[0] != '\0')
+		return sxprint("Bad debug options: %s", buffer+2);
+	return nil;
+}
+
+char*
+msg_parsecolors(IxpMsg *m, CTuple *col) {
 	static char Ebad[] = "bad color string";
 	Rune r;
 	char c, *p;
@@ -431,7 +469,7 @@ parse_colors(IxpMsg *m, CTuple *col) {
 	*p = c;
 
 	m->pos = p;
-	eatrunes(m, isspacerune, 1);
+	eatrunes(m, isspacerune, true);
 	return nil;
 }
 
@@ -596,10 +634,10 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	case LTOGGLE:
 		if(!a->floating)
 			to = v->area;
-		else if(c->revert && !c->revert->floating)
-			to = c->revert;
+		else if(f->column)
+			to = view_findarea(v, f->column, true);
 		else
-			to = v->area->next;
+			to = view_findarea(v, v->selcol, true);
 		break;
 	default:
 		if(!getulong(s, &i) || i == 0)
@@ -657,7 +695,7 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 		frame_swap(f, fp);
 	}else {
 		frame_remove(f);
-		frame_insert(fp, f);
+		frame_insert(f, fp);
 	}
 
 	view_arrange(f->view);

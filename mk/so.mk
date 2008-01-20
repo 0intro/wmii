@@ -1,5 +1,5 @@
 SOPTARG = $(ROOT)/lib/$(TARG)
-SO = $(PTARG).so
+SO = $(SOPTARG).so
 SONAME = $(TARG).so
 OFILES_PIC = ${OBJ:=.o_pic}
 

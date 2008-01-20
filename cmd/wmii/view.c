@@ -51,6 +51,8 @@ view_create(const char *name) {
 
 	v = emallocz(sizeof(View));
 	v->id = id++;
+	v->r = screen->r;
+	v->r.max.y = screen->barwin->r.min.y;
 
 	utflcpy(v->name, name, sizeof(v->name));
 
@@ -99,6 +101,16 @@ view_destroy(View *v) {
 	ewmh_updateviews();
 }
 
+Area*
+view_findarea(View *v, int idx, bool create) {
+	Area *a;
+
+	for(a=v->area->next; a && --idx > 0; a=a->next)
+		if(create && a->next == nil)
+			return area_create(v, a, 0);
+	return a;
+}
+
 static void
 update_frame_selectors(View *v) {
 	Area *a;
@@ -111,8 +123,10 @@ update_frame_selectors(View *v) {
 
 void
 view_focus(WMScreen *s, View *v) {
-	Frame *f;
 	Client *c;
+	Frame *f;
+	Area *a;
+	bool fscrn;
 	
 	USED(s);
 
@@ -121,6 +135,21 @@ view_focus(WMScreen *s, View *v) {
 	_view_select(v);
 	update_frame_selectors(v);
 	div_update_all();
+	fscrn = false;
+	for(a=v->area; a; a=a->next)
+		for(f=a->frame; f; f=f->anext)
+			if(f->client->fullscreen) {
+				fscrn = true;
+				if(!f->area->floating) {
+					f->oldr = f->revert;
+					f->oldarea = area_idx(f->area);
+					area_moveto(v->area, f);
+					area_setsel(v->area, f);
+				}else if(f->oldarea == -1) {
+					f->oldr = f->r; /* XXX: oldr */
+					f->oldarea = 0;
+				}
+			}
 	for(c=client; c; c=c->next)
 		if((f = c->sel)) {
 			if(f->view == v)
@@ -133,9 +162,12 @@ view_focus(WMScreen *s, View *v) {
 			ewmh_updateclient(c);
 		}
 
-	restack_view(v);
-	focus_area(v->sel);
-	draw_frames();
+	view_restack(v);
+	if(fscrn)
+		area_focus(v->area);
+	else
+		area_focus(v->sel);
+	frame_draw_all();
 
 	sync();
 	XUngrabServer(display);
@@ -165,15 +197,11 @@ view_attach(View *v, Frame *f) {
 	Area *a;
 	
 	c = f->client;
-	c->revert = nil;
 
 	a = v->sel;
-	if(c->trans || c->floating || c->fixedsize
-	|| c->titleless || c->borderless || c->fullscreen
-	|| (c->w.ewmh.type & (TypeDialog|TypeSplash|TypeDock)))
+	if(client_floats_p(c))
 		a = v->area;
-	else if(c->group && c->group->client
-	&& (ff = client_viewframe(c->group->client, v)))
+	else if((ff = client_groupframe(c, v)))
 		a = ff->area;
 	else if(starting && v->sel->floating)
 		a = v->area->next;
@@ -228,7 +256,7 @@ view_scale(View *v, int w) {
 	float scale;
 	int wdiff, dx;
 
-	minwidth = Dx(screen->r)/NCOL;
+	minwidth = Dx(v->r)/NCOL;
 
 	if(!v->area->next)
 		return;
@@ -278,7 +306,7 @@ view_arrange(View *v) {
 	if(!v->area->next)
 		return;
 
-	view_scale(v, Dx(screen->r));
+	view_scale(v, Dx(v->r));
 	xoff = 0;
 	for(a=v->area->next; a; a=a->next) {
 		a->r.min.x = xoff;
@@ -314,6 +342,44 @@ view_rects(View *v, uint *num, Frame *ignore) {
 	return result;
 }
 
+void
+view_update_all(void) {
+	View *n, *v, *old;
+
+	old = screen->sel;
+	for(v=view; v; v=v->next)
+		update_frame_selectors(v);
+
+	for(v=view; v; v=n) {
+		n=v->next;
+		if(v != old && empty_p(v))
+			view_destroy(v);
+	}
+
+	view_focus(screen, screen->sel);
+}
+
+uint
+view_newcolw(View *v, int num) {
+	Rule *r;
+	ulong n;
+
+	for(r=def.colrules.rule; r; r=r->next)
+		if(regexec(r->regex, v->name, nil, 0)) {
+			char buf[sizeof r->value];
+			char *toks[16];
+
+			strcpy(buf, r->value);
+
+			n = tokenize(toks, 16, buf, '+');
+			if(num < n)
+				if(getulong(toks[num], &n))
+					return Dx(v->r) * (n / 100.0);
+			break;
+		}
+	return 0;
+}
+
 char*
 view_index(View *v) {
 	Rectangle *r;
@@ -344,74 +410,5 @@ view_index(View *v) {
 		}
 	}
 	return buffer;
-}
-
-char*
-view_ctl(View *v) {
-	Area *a;
-	uint i;
-
-	bufclear();
-	bufprint("%s\n", v->name);
-
-	/* select <area>[ <frame>] */
-	bufprint("select %s", area_name(v->sel));
-	if(v->sel->sel)
-		bufprint(" %d", frame_idx(v->sel->sel));
-	bufprint("\n");
-
-	/* select client <client> */
-	if(v->sel->sel)
-		bufprint("select client %C\n", v->sel->sel->client);
-
-	for(a = v->area->next, i = 1; a; a = a->next, i++)
-		bufprint("colmode %d %s\n", i, colmode2str(a->mode));
-	return buffer;
-}
-
-void
-view_update_all(void) {
-	View *n, *v, *old;
-	int found;
-
-	old = screen->sel;
-	for(v=view; v; v=v->next)
-		update_frame_selectors(v);
-
-	found = 0;
-	for(v=view; v; v=n) {
-		n=v->next;
-		if(v != old) {
-			if(empty_p(v))
-				view_destroy(v);
-			else
-				found++;
-		}
-	}
-
-	if(found && !strcmp(old->name, "nil") && empty_p(old))
-		view_destroy(old);
-	view_focus(screen, screen->sel);
-}
-
-uint
-view_newcolw(View *v, int num) {
-	Rule *r;
-	ulong n;
-
-	for(r=def.colrules.rule; r; r=r->next)
-		if(regexec(r->regex, v->name, nil, 0)) {
-			char buf[sizeof r->value];
-			char *toks[16];
-
-			strcpy(buf, r->value);
-
-			n = tokenize(toks, 16, buf, '+');
-			if(num < n)
-				if(getulong(toks[num], &n))
-					return Dx(screen->r) * (n / 100.0);
-			break;
-		}
-	return 0;
 }
 
