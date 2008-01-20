@@ -7,9 +7,9 @@ wmiir.c: $(ROOT)/mk/wmii.mk
 DIRS =	wmii
 TARG =	wihack    \
 	wmii.rc   \
+	wmii.sh   \
 	wmii9menu \
 	wmii9rc	  \
-	wmiiloop  \
 	wmiir	  \
 	wmiistartrc
 

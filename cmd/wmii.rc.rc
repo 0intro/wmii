@@ -1,6 +1,17 @@
 
+# For the time being, this file follows the lisp bracing
+# convention. i.e.:
+#  if(frob this) {
+#    frob that
+#    if(frob theother) {
+#      unfrob this
+#      unfrob that}}
+
 wmiiscript=$1
 wmiikeys=()
+
+wi_nl='
+'
 
 echo Start $wmiiscript | wmiir write /event >[2]/dev/null \
 	|| exit write
@@ -16,13 +27,6 @@ fn wi_atexit {}
 fn sigexit {
 	wi_atexit
 }
-
-fn Event-Start {
-	if(~ $1 $wmiiscript)
-		exit
-}
-
-fn Event-Key { Key-$1 $1 }
 
 fn wi_fatal {
 	echo $scriptname: Fatal: $*
@@ -51,6 +55,10 @@ fn wi_9menu {
 		-^(sf sb br)^$wmiifocuscol $*
 }
 
+fn wi_fn-p {
+	rc -c 'whatis '$1 >[2]/dev/null | grep -s '^fn '
+}
+
 fn wi_proglist {
         /bin/ls -lL `{echo $* | sed 'y/:/ /'} >[2]/dev/null \
 		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
@@ -64,9 +72,14 @@ fn wi_actions {
 }
 
 fn wi_script {
-	prog = `{@{path=$confpath whatis $1} |
-		grep -v '^fn|= ' || echo /dev/null}
-	shift; echo $prog $*
+	noprog=true prog=() {
+		if(~ $1 -f) {
+			shift
+			noprog=/dev/null
+		}
+		prog = `{rc -c 'path=$confpath whatis '$1 >[2]/dev/null \
+			| grep -v '^fn|= ' || echo $noprog}
+		shift; echo $prog $*}
 }
 
 
@@ -78,9 +91,7 @@ fn wi_initkeys {
 				<{echo $wmiikeys | sort | uniq}}
 			{echo $wmiikeys; wi_getfuns Key} \
 				| sort | uniq \
-				| wmiir write /keys
-		}
-	}
+				| wmiir write /keys }}
 	fn wi_atexit {
 		wi_cleankeys
 	}
@@ -91,9 +102,7 @@ fn wi_cleankeys {
 		wmiikeys = `{wmiir read /keys} {
 			comm -23 <{echo $wmiikeys | sort | uniq} \
 				 <{echo $mykeys} \
-				 | wmiir write /keys
-		}
-	}
+				 | wmiir write /keys }}
 }
 
 fn wi_runcmd { @{
@@ -101,15 +110,18 @@ fn wi_runcmd { @{
 		path=$oldpath
 		if(~ $1 -t) {
 			shift
-			* = (wihack -tags `{wmiir read /tag/sel/ctl | sed 1q} $*)
-		}
-		eval exec $* &
-	}
+			* = (wihack -tags `{wmiir read /tag/sel/ctl | sed 1q} $*) }
+		eval exec $* & }
 }
 
 fn wi_getfuns {
 	env | sed -n 's/^fn#'^$1^'-([^=]+).*/\1/p'
 }
+
+for(i in Key Event Action)
+	fns=`{wi_getfuns $i} {
+		if(! ~ $fns '')
+			fn $i-^$fns}
 
 fn wi_tags {
 	wmiir ls /tag | sed 's,/,,; /^sel$/d'
@@ -119,9 +131,30 @@ fn wi_eventloop {
 	wi_initkeys
 
 	wmiir read /event |
-		while(*=`{read}) {
-			event = $1; shift
-			Event-$event $*
-		} >[2]/dev/null </dev/null
+	while(ifs=$wi_nl{wi_event=`{read}}) {
+		ifs=$wi_nl{
+			wi_arg=`{echo $wi_event | sed 's/^[^ ]+ //'}}
+		* = `{echo $wi_event}
+		event = $1; shift
+		Event-$event $*
+	} >[2]/dev/null </dev/null
+}
+
+fn Event-Key {
+	Key-$1 $1
+}
+
+fn Event-Start {
+       if(~ $1 $wmiiscript)
+               exit
+}
+
+fn Action {
+       cmd=$1 action=Action-$cmd { shift
+               if(wi_fn-p $action)
+                       $action $*
+               if not
+                       wi_runcmd `{wi_script $cmd} $*
+       } &
 }
 

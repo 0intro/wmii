@@ -1,9 +1,9 @@
 The following conditions apply to any distribution which
-uses the name wmii. These conditions apply only to wmii
+uses the name wmii.  These conditions apply only to wmii
 name, and not to its source code or any other materials.
 
 When in doubt about any of these conditions or other matters
-of packaging or distrobution, , please contact the wmii
+of packaging or distribution, please contact the wmii
 mailing lists <wmii-hackers@suckless.org> or
 <wmii@suckless.org>, or Kris Maglione <fbsdaemon@gmail.com>.
 
@@ -13,23 +13,23 @@ version string. This string may normally be set in
 revision number for builds from a Mercurial tree, so long as
 the 'hg' command is present and properly functioning.
 
-Any version which not an official release or snapshot MUST
-be contain the hg revision number in its version string.
-This SHOULD be formated as hgXXXX, where XXXX is the decimal
-revision number.
+Any version which is not an official release or snapshot
+MUST be contain the hg revision number in its version
+string.  This SHOULD be formatted as hgXXXX, where XXXX is
+the decimal revision number.
 
 The version string of any snapshot release MUST contain the
 date of the snapshot in the form YYYYMMDD, and SHOULD
-contain the word snap or snapshot. The version string of a
-snapshot MAY contain the version of a full release that the
-snapshot is expected to lead to, but it MUST be either
+contain the word snap or snapshot.  The version string of a
+snapshot MAY contain the version name of a full release that
+the snapshot is expected to lead to, but it MUST be either
 directly preceded, or directly followed by, the word 'pre',
 optionally separated by a non-alphanumeric character,
-including -~_,./, the version.
+including -~_,./.
 
 Any binary distribution which is modified in any non-trivial
 way MUST signify the modifications in its name or version
-string. This includes patches to use Xft for font display,
+string.  This includes patches to use Xft for font display,
 but does NOT include minor patches to improve consistency
 with the rest of the system, including changing the default
 terminal emulator or changing any build flags as set in

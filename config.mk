@@ -1,6 +1,6 @@
 # Customize below to fit your system
 
-# paths
+# Paths
 PREFIX = /usr/local
   BIN = $(PREFIX)/bin
   MAN = $(PREFIX)/share/man
@@ -31,7 +31,6 @@ P9PATHS = ${PLAN9}:"'$${HOME}/plan9'":/usr/local/plan9:/usr/local/9:/opt/plan9:/
 INCX11 = -I/usr/X11R6/include
 LIBX11 = -L/usr/X11R6/lib -lX11
 LIBICONV = # Leave blank if your libc includes iconv (glibc does)
-LIBIXP = $(ROOT)/libixp/libixp.a
 LIBIXP = $(LIBDIR)/libixp.a
 
 # Operating System Configurations
@@ -39,7 +38,7 @@ LIBIXP = $(LIBDIR)/libixp.a
 # *BSD
 #LIBICONV = -liconv
 # +Darwin
-#STATIC = # Darwon doesn't like static linking
+#STATIC = # Darwin doesn't like static linking
 
 # Solaris
 #CFLAGS = -fast $(INCS)

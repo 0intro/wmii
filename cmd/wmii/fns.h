@@ -172,6 +172,7 @@ char*	msg_sendclient(View*, IxpMsg*, bool swap);
 char*	readctl_root(void);
 char*	readctl_view(View*);
 Area*	strarea(View*, const char*);
+void	warning(const char*, ...);
 
 /* mouse.c */
 void	mouse_resize(Client*, bool opaque, Align);

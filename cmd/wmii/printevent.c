@@ -526,9 +526,9 @@ pevent(void *ev, ...) {
 	Bflush(b);
 }
 
-/******************************************************************************/
-/**** Routines to print out readable values for the field of various events ***/
-/******************************************************************************/
+/*****************************************************************************/
+/*** Routines to print out readable values for the field of various events ***/
+/*****************************************************************************/
 
 static void
 VerbMotion(XEvent *e) {

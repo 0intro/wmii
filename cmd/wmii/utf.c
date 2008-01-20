@@ -7,7 +7,7 @@
 #include "fns.h"
 
 char*
-toutf8n(char *str, size_t nstr) {
+toutf8n(const char *str, size_t nstr) {
 	static iconv_t cd;
 	static bool haveiconv;
 	char *buf, *pos;

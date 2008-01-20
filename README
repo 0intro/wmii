@@ -3,7 +3,7 @@ Abstract
 window manager improved-improved is a dynamic window manager for X11.
 It supports classic and tiled window management with extended
 keyboard, mouse, and 9P-based [1] remote control.
-It consists of the wmiiwm(1) window manager and the wmiir(1)
+It consists of the wmii(1) window manager and the wmiir(1)
 the remote access utility.
 
 
@@ -12,6 +12,7 @@ Requirements
 In order to build wmii you need the Xlib header files and libixp. xmessage
 and dmenu are used by the default scripts. libixp and dmenu can be obtained
 from http://suckless.org/. Either plan9port[2] or 9base is recommended.
+If you have the wmii+ixp distribution, libixp is already provided.
 
 
 Installation
@@ -48,9 +49,9 @@ which remotely controls the window manager and handles various events.
 The main rc.wmii script lives in PREFIX/etc/wmii-3.5/, while rc.wmii.local
 goes in $HOME/.wmii-3.5/.
 
-rc.wmii.local should contain a line containing just: '# Overrides'. You must
-set your MODKEY and other configuration variables before this line, if you
-wish to change then, and define most functions after it.
+If you wish to unbind keys bound by rc.wmii in rc.wmii.local, you
+must do so inside the function Action-overridekeys. You may,
+however, define new keys or redefine keys anywhere.
 
 Credits
 -------
@@ -87,3 +88,4 @@ References
 ----------
 [1] http://9p.cat-v.org
 [2] http://plan9.us
+

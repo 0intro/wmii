@@ -84,6 +84,13 @@ LINKSO= LD="$(LD)" LDFLAGS="$(SOLDFLAGS)" $(ROOT)/util/link
 CLEANNAME=$(ROOT)/util/cleanname
 
 include $(ROOT)/config.mk
+
+# I hate this.
+MKCFGSH=if test -f $(ROOT)/config.local.mk; then echo $(ROOT)/config.local.mk; else echo /dev/null; fi
+MKCFG:=${shell $(MKCFGSH)}
+MKCFG!=${MKCFGSH}
+include $(MKCFG)
+
 CFLAGS += -I$$(echo $(INCPATH)|sed 's/:/ -I/g')
 include $(ROOT)/mk/common.mk
 

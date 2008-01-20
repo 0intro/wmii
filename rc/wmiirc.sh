@@ -1,5 +1,6 @@
 #!/bin/sh -f
 # Configure wmii
+. wmii.sh wmiirc
 
 # Configuration Variables
 MODKEY=Mod1
@@ -9,28 +10,26 @@ LEFT=h
 RIGHT=l
 
 # Colors tuples: "<text> <background> <border>"
-WMII_NORMCOLORS='#222222 #5FBF77 #2A7F3F'
-WMII_FOCUSCOLORS='#ffffff #153F1F #2A7F3F'
+WMII_NORMCOLORS='#000000 #c1c48b #81654f'
+WMII_FOCUSCOLORS='#000000 #81654f #000000'
 
 WMII_BACKGROUND='#333333'
 WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
-WMII_MENU='dmenu -b -fn "$WMII_FONT" -nf '"$1 -nb $2 -sf $4 -sb $5"
-WMII_9MENU='wmii9menu -font "$WMII_FONT" -nf '"$1 -nb $2 -sf $4 -sb $5 -br $6"
+WMII_MENU='dmenu -b -fn "$WMII_FONT" -nf '"'$1' -nb '$2' -sf '$4' -sb '$5'"
+WMII_9MENU='wmii9menu -font "$WMII_FONT" -nf '"'$1' -nb '$2' -sf '$4' -sb '$5' -br '$6'"
 WMII_TERM="xterm"
 
 # Column Rules
 wmiir write /colrules <<!
-/.*/ -> 58+42
+/gimp/ -> 17+83+41
+/.*/ -> 62+38 # Golden Ratio
 !
 
 # Tagging Rules
 wmiir write /tagrules <<!
-/XMMS.*/ -> ~
-/MPlayer.*/ -> ~
-/.*/ -> sel
-/.*/ -> 1
+/MPlayer|VLC/ -> ~
 !
 
 # Status Bar Info
@@ -39,19 +38,8 @@ status() {
 }
 
 # Event processing
-#  Processed later by `wmiiloop' and evaled.
-#  Uncomment the line before the eval and run for details.
-eventstuff() {
-	cat <<'!'
+wi_events -s '	' <<'!'
 	# Events
-	Event Start
-		case "$1" in
-		wmiirc)
-			exit;
-		esac
-	Event Key
-		fn=$(echo "$@" | sed 's/[^a-zA-Z_0-9]/_/g')
-		Key_$fn "$@"
 	Event CreateTag
 		echo "$WMII_NORMCOLORS" "$@" | wmiir create "/lbar/$@"
 	Event DestroyTag
@@ -89,7 +77,7 @@ eventstuff() {
 		client=$1; button=$2
 		case "$button" in
 		3)
-			do=$(eval $WMII_9MENU -initial "${menulast:-SomeRandomName}" Nop Delete Fullscreen)
+			do=$(wi_9menu -initial "${menulast:-SomeRandomName}" Nop Delete Fullscreen)
 			case "$do" in
 			Delete)
 				wmiir xwrite /client/$client/ctl kill;;
@@ -102,7 +90,7 @@ eventstuff() {
 	Key $MODKEY-Control-t
 		case $(wmiir read /keys | wc -l | tr -d ' \t\n') in
 		0|1)
-			echo -n $Keys | tr ' ' '\012' | wmiir write /keys
+			echo -n "$Keys" | wmiir write /keys
 			wmiir xwrite /ctl grabmod $MODKEY;;
 		*)
 			wmiir xwrite /keys $MODKEY-Control-t
@@ -117,11 +105,11 @@ eventstuff() {
 	Key $MODKEY-m
 		wmiir xwrite /tag/sel/ctl colmode sel max
 	Key $MODKEY-a
-		Action $(actionlist | eval $WMII_MENU) &
+		Action $(wi_actions | wi_menu) &
 	Key $MODKEY-p
-		sh -c "$(eval $WMII_MENU <$progsfile)" &
+		sh -c "$(wi_menu <$progsfile)" &
 	Key $MODKEY-t
-		wmiir xwrite /ctl "view $(tagsmenu)" &
+		wmiir xwrite /ctl "view $(wi_tags | wi_menu)" &
 	Key $MODKEY-Return
 		eval $WMII_TERM &
 	Key $MODKEY-Shift-space
@@ -131,7 +119,7 @@ eventstuff() {
 	Key $MODKEY-Shift-c
 		wmiir xwrite /client/sel/ctl kill
 	Key $MODKEY-Shift-t
-		wmiir xwrite "/client/$(wmiir read /client/sel/ctl)/tags" "$(tagsmenu)" &
+		wmiir xwrite "/client/$(wmiir read /client/sel/ctl)/tags" "$(wi_tags | wi_menu)" &
 	Key $MODKEY-$LEFT
 		wmiir xwrite /tag/sel/ctl select left
 	Key $MODKEY-$RIGHT
@@ -150,59 +138,37 @@ eventstuff() {
 		wmiir xwrite /tag/sel/ctl send sel up
 !
 	for i in 0 1 2 3 4 5 6 7 8 9; do
-		cat <<!
+		wi_events -s '	' <<!
 	Key $MODKEY-$i
 		wmiir xwrite /ctl view "$i"
 	Key $MODKEY-Shift-$i
 		wmiir xwrite /client/sel/tags "$i"
 !
 	done
-}
 
 # WM Configuration
-wmiir write /ctl << EOF
-font $WMII_FONT
-focuscolors $WMII_FOCUSCOLORS
-normcolors $WMII_NORMCOLORS
-grabmod $MODKEY
-border 1
-EOF
+wmiir write /ctl <<!
+	view 1
+	font $WMII_FONT
+	focuscolors $WMII_FOCUSCOLORS
+	normcolors $WMII_NORMCOLORS
+	grabmod $MODKEY
+	border 1
+!
+xsetroot -solid "$WMII_BACKGROUND" &
 
 export WMII_MENU WMII_9MENU WMII_FONT WMII_TERM
 export WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS
 
-# Feed events to `wmiiloop' for processing
-eval "$(eventstuff | sed 's/^[	]//' | { . wmiiloop; })"
-
-echo "$Keys" | tr ' ' '\n' | wmiir write /keys
-
-# Functions
-Action() {
-	action=$1; shift
-	if [ -n "$action" ]; then
-		Action_$action "$@" \
-		|| conf_which $action "$@"
-	fi
-}
-
-proglist() {
-	paths=$(echo "$@" | sed 'y/:/ /')
-	ls -lL $paths 2>/dev/null \
-		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
-		| sort | uniq
-}
-
 # Misc
 progsfile="$WMII_NS_DIR/.proglist"
 Action status &
-proglist $PATH >$progsfile &
-
-xsetroot -solid "$WMII_BACKGROUND" &
+wi_proglist $PATH >$progsfile &
 
 # Setup Tag Bar
-(IFS="$(echo)"; wmiir rm $(wmiir ls /lbar))
+(IFS="$(echo)"; wmiir rm $(wmiir ls /lbar | sed 's,^,/lbar/,'))
 seltag="$(wmiir read /tag/sel/ctl | sed 1q)"
-wmiir ls /tag | sed -e 's|/||; /^sel$/d' | while read tag
+wi_tags | while read tag
 do
 	if [ "$tag" = "$seltag" ]; then
 		echo "$WMII_FOCUSCOLORS" "$tag"
@@ -211,30 +177,5 @@ do
 	fi | wmiir create "/lbar/$tag"
 done
 
-# More functions
-tagsmenu() {
-        wmiir ls /tag | sed 's|/||; /^sel$/d' | eval $WMII_MENU
-}
-
-actionlist() {
-	{	proglist $WMII_CONFPATH
-		echo -n $Actions | tr ' ' '\012'
-	} | sort | uniq
-}
-
-conf_which() {
-	which=$(which which)
-	prog=$(PATH="$WMII_CONFPATH" $which $1); shift
-	[ -n "$prog" ] && $prog "$@"
-}
-
-# Stop any running instances of wmiirc
-echo Start wmiirc | wmiir write /event || exit 1
-
-wmiir read /event | while read event
-do
-	set -- $event
-	event=$1; shift
-	Event_$event $@
-done 2>/dev/null
+wi_eventloop
 

@@ -1,3 +1,6 @@
 3.6 Release Notes
 
-wmiirc users: the semantics of WMII_MENU, WMII_9MENU and WMII_TERM have changed. If you're using them in custom scripts you'll need to change them to "eval $WMII_MENU" instead of just "$WMII_MENU".
+wmiirc users: the semantics of WMII_MENU, WMII_9MENU and WMII_TERM
+have changed. If you're using them in custom scripts you'll need to
+change them to "eval $WMII_MENU" instead of just "$WMII_MENU".
+

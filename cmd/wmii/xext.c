@@ -22,10 +22,8 @@ xext_init(void) {
 void
 xext_event(XEvent *e) {
 
-	if(have_RandR && (ulong)(e->type - randr_eventbase) < RRNumberEvents) {
-		e->type -= randr_eventbase;
+	if(have_RandR && (ulong)(e->type - randr_eventbase) < RRNumberEvents)
 		randr_event(e);
-	}
 }
 
 void
@@ -61,7 +59,7 @@ randr_screenchange(XRRScreenChangeNotifyEvent *ev) {
 void
 randr_event(XEvent *e) {
 
-	switch(e->type) {
+	switch(e->type-randr_eventbase) {
 	default:
 		break;
 	case RRScreenChangeNotify: /* Yuck. */

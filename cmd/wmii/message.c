@@ -164,7 +164,15 @@ msg_getword(IxpMsg *m) {
 	m->pos += n;
 	eatrunes(m, isspacerune, true);
 
-	if(ret == m->end)
+	/* Filter out comments. */
+	if(*ret == '#') {
+		*ret = '\0';
+		m->pos = m->end;
+	}
+	if(*ret == '\\')
+		if(ret[1] == '\\' || ret[1] == '#')
+			ret++;
+	if(*ret == '\0')
 		return nil;
 	return ret;
 }
@@ -302,6 +310,8 @@ message_root(void *p, IxpMsg *m) {
 	USED(p);
 	ret = nil;
 	s = msg_getword(m);
+	if(s == nil)
+		return nil;
 
 	switch(getsym(s)) {
 	case LBORDER:
@@ -367,6 +377,8 @@ message_view(View *v, IxpMsg *m) {
 	int i;
 
 	s = msg_getword(m);
+	if(s == nil)
+		return nil;
 
 	switch(getsym(s)) {
 	case LCOLMODE:
@@ -398,18 +410,6 @@ message_view(View *v, IxpMsg *m) {
 		return Ebadcmd;
 	}
 	/* not reached */
-}
-
-static void
-printdebug(void) {
-	int i, j;
-
-	for(i=0, j=0; i < nelem(debugtab); i++)
-		Debug(1<<i) {
-			if(j++ > 0)
-				bufprint(" ");
-			bufprint("%s", debugtab[i]);
-		}
 }
 
 static char*
@@ -706,6 +706,18 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 	return nil;
 }
 
+static void
+printdebug(void) {
+	int i, j;
+
+	for(i=0, j=0; i < nelem(debugtab); i++)
+		Debug(1<<i) {
+			if(j++ > 0)
+				bufprint(" ");
+			bufprint("%s", debugtab[i]);
+		}
+}
+
 char*
 readctl_root(void) {
 	bufclear();
@@ -744,5 +756,19 @@ readctl_view(View *v) {
 	for(a = v->area->next, i = 1; a; a = a->next, i++)
 		bufprint("colmode %d %s\n", i, colmode2str(a->mode));
 	return buffer;
+}
+
+void
+warning(const char *fmt, ...) {
+	va_list ap;
+	char *s;
+
+	va_start(ap, fmt);
+	s = vsmprint(fmt, ap);
+	va_end(ap);
+
+	event("Warning %s\n", s);
+	fprint(2, "%s: warning: %s\n", s);
+	free(s);
 }
 
