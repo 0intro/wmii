@@ -139,6 +139,7 @@ view_focus(WMScreen *s, View *v) {
 	for(a=v->area; a; a=a->next)
 		for(f=a->frame; f; f=f->anext)
 			if(f->client->fullscreen) {
+				f->collapsed = false;
 				fscrn = true;
 				if(!f->area->floating) {
 					f->oldr = f->revert;

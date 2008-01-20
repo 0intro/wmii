@@ -225,6 +225,7 @@ Handlers framehandler = {
 	.motion = motion_event,
 };
 
+/* These must die!!! */
 Rectangle
 frame_rect2client(Frame *f, Rectangle r) {
 	if(f == nil || f->area == nil || f->area->floating) {
@@ -278,6 +279,8 @@ frame_resize(Frame *f, Rectangle r) {
 	stickycorner = get_sticky(f->r, r);
 
 	f->crect = frame_hints(f, r, stickycorner);
+	if(c->fullscreen)
+		f->crect = screen->r;
 
 	if(Dx(r) <= 0 || Dy(r) <= 0)
 		fprint(2, "Badness: Frame rect: %R\n", r);
@@ -305,7 +308,7 @@ frame_resize(Frame *f, Rectangle r) {
 	}
 
 	if(f->collapsed) {
-		f->r.max.y= f->r.min.y + labelh(def.font);
+		f->r.max.y = f->r.min.y + labelh(def.font);
 		f->crect = f->r;
 	}
 
