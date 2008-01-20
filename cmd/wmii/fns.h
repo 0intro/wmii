@@ -203,3 +203,9 @@ Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 char*	toutf8(const char*);
 char*	toutf8n(const char*, size_t);
 
+/* xext.c */
+void	randr_event(XEvent*);
+void	randr_init(void);
+void	xext_event(XEvent*);
+void	xext_init(void);
+

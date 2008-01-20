@@ -395,7 +395,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 		d = d->next;
 
 	min.x = Dx(v->r)/NCOL;
-	min.y = frame_delta_h() + labelh(def.font);
+	min.y = /*frame_delta_h() +*/ labelh(def.font);
 	if(align&NORTH) {
 		if(f->aprev) {
 			r.min.y = f->aprev->r.min.y + min.y;

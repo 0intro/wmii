@@ -343,6 +343,7 @@ winprotocols(Window *w) {
 /* Shape */
 void
 setshapemask(Window *dst, Image *src, Point pt) {
+	/* Assumes that we have the shape extension... */
 	XShapeCombineMask (display, dst->w,
 		ShapeBounding, pt.x, pt.y, src->image, ShapeSet);
 }

@@ -500,6 +500,13 @@ frame_draw(Frame *f) {
 		border(screen->ibuf, r, 1, col->border);
 	}
 
+	/* Border increment gaps... */
+	r.min.y = f->crect.min.y;
+	r.min.x = max(1, f->crect.min.x - 1);
+	r.max.x = min(fr.max.x - 1, f->crect.max.x + 1);
+	r.max.y = min(fr.max.y - 1, f->crect.max.y + 1);
+	border(screen->ibuf, r, 1, col->border);
+
 	/* Why? Because some non-ICCCM-compliant apps feel the need to
 	 * change the background properties of all of their ancestor windows
 	 * in order to implement pseudo-transparency.

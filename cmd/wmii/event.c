@@ -12,6 +12,8 @@ dispatch_event(XEvent *e) {
 		printevent(e);
 	if(e->type < nelem(handler) && handler[e->type])
 		handler[e->type](e);
+	else
+		xext_event(e);
 }
 
 #define handle(w, fn, ev) \

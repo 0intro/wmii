@@ -427,6 +427,7 @@ main(int argc, char *argv[]) {
 	init_cursors();
 	init_lock_keys();
 	ewmh_init();
+	xext_init();
 
 	srv.preselect = check_preselect;
 	ixp_listen(&srv, sock, &p9srv, serve_9pcon, nil);
@@ -466,11 +467,11 @@ main(int argc, char *argv[]) {
 
 	screen->focus = nil;
 	setfocus(screen->barwin, RevertToParent);
+	view_select("1");
 
 	scan_wins();
 	starting = false;
 
-	view_select("nil");
 	view_update_all();
 	ewmh_updateviews();
 

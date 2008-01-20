@@ -9,6 +9,7 @@
 #ifdef _X11_VISIBLE
 #  include <X11/Xatom.h>
 #  include <X11/extensions/shape.h>
+#  include <X11/extensions/Xrandr.h>
 #endif
 #undef Window
 #undef Font
