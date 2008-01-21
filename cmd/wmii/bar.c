@@ -120,6 +120,7 @@ bar_draw(WMScreen *s) {
 				b->smaller = *pb;
 				*pb = b;
 			}
+		SET(shrink);
 		for(tb = largest; tb; tb = tb->smaller) {
 			width -= Dx(tb->r);
 			tw += Dx(tb->r);
@@ -128,7 +129,6 @@ bar_draw(WMScreen *s) {
 				if(Dx(tb->r) * shrink >= Dx(tb->smaller->r))
 					break;
 		}
-		SET(shrink);
 		if(tb)
 			for(b = largest; b != tb->smaller; b = b->smaller)
 				b->r.max.x *= shrink;

@@ -76,5 +76,6 @@ _used(long a, ...) {
 #  undef USED
 #  undef SET
 #  define USED(...) _used((long)__VA_ARGS__)
-#  define SET(x) USED(&x)
+#  define SET(x) (x = 0)
+/* # define SET(x) USED(&x) GCC 4 is 'too smart' for this. */
 #endif

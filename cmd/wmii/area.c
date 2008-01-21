@@ -4,7 +4,7 @@
 #include "dat.h"
 #include <assert.h>
 #include <math.h>
-#include <sys/limits.h>
+#include <limits.h>
 #include "fns.h"
 
 Client*

@@ -2,7 +2,7 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <sys/limits.h>
+#include <limits.h>
 #include "fns.h"
 
 static void float_placeframe(Frame*);
@@ -123,6 +123,7 @@ float_placeframe(Frame *f) {
 		vp2 = vptemp;
 	}
 
+	p = ZP; /* SET(p) */
 	if(vp->n == 0) {
 		p.x = random() % max(0, Dx(a->r) - dim.x);
 		p.y = random() % max(0, Dy(a->r) - dim.y);

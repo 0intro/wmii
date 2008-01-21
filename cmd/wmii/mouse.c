@@ -719,6 +719,9 @@ mouse_resize(Client *c, bool grabbox, Align align) {
 	hr = subpt(frect.max, frect.min);
 	hr = divpt(hr, Pt(2, 2));
 
+	SET(hrx);
+	SET(hry);
+
 	if(align != Center) {
 		d = hr;
 		if(align&North) d.y -= hr.y;
@@ -757,8 +760,6 @@ mouse_resize(Client *c, bool grabbox, Align align) {
 			d.y = ev.xmotion.y_root;
 
 			if(align == Center && !grabbox) {
-				SET(hrx);
-				SET(hry);
 				d.x = (d.x * hrx) - pt.x;
 				d.y = (d.y * hry) - pt.y;
 			}else

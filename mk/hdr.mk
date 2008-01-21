@@ -77,8 +77,9 @@ install: printinstall mkdirs
 depend: cleandep
 
 FILTER = cat
-COMPILE= CC="$(CC)" CFLAGS="$(CFLAGS)" $(ROOT)/util/compile
-COMPILEPIC= CC="$(CC)" CFLAGS="$(CFLAGS) $(SOCFLAGS)" $(ROOT)/util/compile
+EXCFLAGS = -I$$(echo $(INCPATH)|sed 's/:/ -I/g') -D_XOPEN_SOURCE=600
+COMPILE= CC="$(CC)" CFLAGS="$(EXCFLAGS) $(CFLAGS)" $(ROOT)/util/compile
+COMPILEPIC= CC="$(CC)" CFLAGS="$(EXCFLAGS) $(CFLAGS) $(SOCFLAGS)" $(ROOT)/util/compile
 LINK= LD="$(LD)" LDFLAGS="$(LDFLAGS)" $(ROOT)/util/link
 LINKSO= LD="$(LD)" LDFLAGS="$(SOLDFLAGS)" $(ROOT)/util/link
 CLEANNAME=$(ROOT)/util/cleanname
@@ -91,6 +92,5 @@ MKCFG:=${shell $(MKCFGSH)}
 MKCFG!=${MKCFGSH}
 include $(MKCFG)
 
-CFLAGS += -I$$(echo $(INCPATH)|sed 's/:/ -I/g')
 include $(ROOT)/mk/common.mk
 

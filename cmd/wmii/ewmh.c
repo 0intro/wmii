@@ -3,7 +3,7 @@
  */
 #include "dat.h"
 #include <assert.h>
-#include <sys/limits.h>
+#include <limits.h>
 #include "fns.h"
 
 Window *ewmhwin;
