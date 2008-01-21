@@ -66,7 +66,7 @@ void	column_attach(Area*, Frame*);
 void	column_detach(Frame*);
 void	column_insert(Area*, Frame*, Frame*);
 Area*	column_new(View*, Area *, uint);
-void	column_remove(Frame*, bool);
+void	column_remove(Frame*);
 void	column_resize(Area*, int);
 void	column_resizeframe(Frame*, Rectangle*);
 void	div_draw(Divide*);
@@ -179,6 +179,9 @@ void	mouse_resize(Client*, bool opaque, Align);
 void	mouse_resizecol(Divide*);
 void	grab_button(XWindow, uint button, ulong mod);
 Align	snap_rect(Rectangle *rects, int num, Rectangle *current, Align *mask, int snapw);
+
+/* printevent.c */
+void	printevent(XEvent*);
 
 /* rule.c */
 void	trim(char *str, const char *chars);

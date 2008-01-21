@@ -20,7 +20,8 @@ area_idx(Area *a) {
 	uint i;
 
 	v = a->view;
-	for(i = 0, ap = v->area; a != ap; ap = ap->next)
+	i = 0;
+	for(ap=v->area; a != ap; ap=ap->next)
 		i++;
 	return i;
 }

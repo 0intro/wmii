@@ -124,7 +124,7 @@ update_frame_selectors(View *v) {
 void
 view_focus(WMScreen *s, View *v) {
 	Client *c;
-	Frame *f;
+	Frame *f, *fnext;
 	Area *a;
 	bool fscrn;
 	
@@ -137,7 +137,8 @@ view_focus(WMScreen *s, View *v) {
 	div_update_all();
 	fscrn = false;
 	for(a=v->area; a; a=a->next)
-		for(f=a->frame; f; f=f->anext)
+		for(f=a->frame; f; f=fnext) {
+			fnext = f->anext;
 			if(f->client->fullscreen) {
 				f->collapsed = false;
 				fscrn = true;
@@ -151,6 +152,7 @@ view_focus(WMScreen *s, View *v) {
 					f->oldarea = 0;
 				}
 			}
+		}
 	for(c=client; c; c=c->next)
 		if((f = c->sel)) {
 			if(f->view == v)
@@ -302,13 +304,18 @@ view_scale(View *v, int w) {
 void
 view_arrange(View *v) {
 	uint xoff;
-	Area *a;
+	Area *a, *anext;
 
 	if(!v->area->next)
 		return;
 
 	view_scale(v, Dx(v->r));
 	xoff = 0;
+	for(a=v->area->next; a; a=anext) {
+		anext = a->next;
+		if(!a->frame && v->area->next->next)
+			area_destroy(a);
+	}
 	for(a=v->area->next; a; a=a->next) {
 		a->r.min.x = xoff;
 		a->r.min.y = 0;

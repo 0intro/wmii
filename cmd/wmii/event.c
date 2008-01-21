@@ -4,7 +4,6 @@
 #include "dat.h"
 #include <X11/keysym.h>
 #include "fns.h"
-#include "printevent.h"
 
 void
 dispatch_event(XEvent *e) {

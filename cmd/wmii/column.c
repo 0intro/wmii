@@ -35,13 +35,13 @@ column_new(View *v, Area *pos, uint w) {
 	Area *a;
 
 	a = area_create(v, pos, w);
+	return a;
 	if(!a)
 		return nil;
 
 	view_arrange(v);
 	if(v == screen->sel)
 		view_focus(screen, v);
-	return a;
 }
 
 void
@@ -51,6 +51,8 @@ column_insert(Area *a, Frame *f, Frame *pos) {
 	f->client->floating = false;
 	f->column = area_idx(a);
 	frame_insert(f, pos);
+	if(a->sel == nil)
+		area_setsel(a, f);
 }
 
 void
@@ -67,13 +69,11 @@ column_attach(Area *a, Frame *f) {
 	f->r.max.y = Dy(a->r) / nframe;
 
 	column_insert(a, f, a->sel);
-	if(a->sel == nil)
-		area_setsel(a, f);
 	column_arrange(a, false);
 }
 
 void
-column_remove(Frame *f, bool arrange) {
+column_remove(Frame *f) {
 	Client *c;
 	Frame *pr;
 	Area *a;
@@ -94,23 +94,15 @@ column_remove(Frame *f, bool arrange) {
 		a->sel = nil;
 		area_setsel(a, pr);
 	}
-
-	if(a->frame) {
-		if(arrange)
-			column_arrange(a, False);
-	}
-	else {
-		if(v->area->next->next)
-			area_destroy(a);
-		else if(v->area->frame)
-			area_focus(v->area);
-	}
 }
 
 void
 column_detach(Frame *f) {
+	Area *a;
 
-	column_remove(f, true);
+	a = f->area;
+	column_remove(f);
+	column_arrange(a, false);
 }
 
 static void
@@ -240,9 +232,16 @@ column_scale(Area *a) {
 void
 column_arrange(Area *a, bool dirty) {
 	Frame *f;
+	View *v;
 
 	if(a->floating || !a->frame)
 		return;
+
+	v = a->view;
+	if(!a->frame) {
+		view_arrange(v);
+		return;
+	}
 
 	switch(a->mode) {
 	case Coldefault:
@@ -266,8 +265,8 @@ column_arrange(Area *a, bool dirty) {
 	}
 	column_scale(a);
 resize:
-	if(a->view == screen->sel) {
-		view_restack(a->view);
+	if(v == screen->sel) {
+		view_restack(v);
 		client_resize(a->sel->client, a->sel->r);
 
 		for(f=a->frame; f; f=f->anext)

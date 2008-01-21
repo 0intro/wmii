@@ -44,9 +44,7 @@
 #include <bio.h>
 //#include "fns.h"
 #include "printevent.h"
-#include <X11/Xproto.h>
 #define Window XWindow
-#include <X11/Intrinsic.h>
 
 #define nil ((void*)0)
 
@@ -406,15 +404,15 @@ TPlace(Biobuf *b, va_list *ap) {
 /* Returns the string equivalent of a major code */
 static void
 TMajor(Biobuf *b, va_list *ap) {
-	static Pair list[] = {
-		{X_CopyArea, "X_CopyArea"},
-		{X_CopyPlane, "X_CopyPlane"},
-		{0, nil},
-	};
-	int key;
+	static char *list[] = { XMajors };
+	char *s;
+	uint key;
 
-	key = va_arg(*ap, int);
-	Bprint(b, "%s", search(list, key, strhex));
+	key = va_arg(*ap, uint);
+	s = "<nil>";
+	if(key < nelem(list))
+		s = list[key];
+	Bprint(b, "%s", s);
 }
 
 static char*

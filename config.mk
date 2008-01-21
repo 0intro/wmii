@@ -14,7 +14,7 @@ LIBS = -L/usr/lib -lc -L$(ROOT)/lib
 
 # Flags
 include $(ROOT)/mk/gcc.mk
-CFLAGS += $(DEBUGCFLAGS)
+CFLAGS += $(DEBUGCFLAGS) -O0
 LDFLAGS += -g $(LIBS)
 SOLDFLAGS += $(LDFLAGS)
 STATIC = -static

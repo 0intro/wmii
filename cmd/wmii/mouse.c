@@ -278,7 +278,7 @@ horiz:
 			/* TODO: Fix... Tangled, broken mess. */
 				fprev = f->aprev;
 				fnext = f->anext;
-				column_remove(f, false);
+				column_remove(f);
 				if(fnext
 				&& (!fprev || (fw->fprev != fprev)
 				           && (fw->fprev != fprev->aprev))) {
