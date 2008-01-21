@@ -88,7 +88,7 @@ update_rules(Rule **rule, const char *data) {
 			if(c == '\n' || c == '#' || c == 0) {
 				*v = 0;
 				trim(value, " \t/");
-				*rule = emallocz(sizeof *rule);
+				*rule = emallocz(sizeof **rule);
 				(*rule)->regex = regcomp(regex);
 				if((*rule)->regex) {
 					utflcpy((*rule)->value, value, sizeof(rul->value));
