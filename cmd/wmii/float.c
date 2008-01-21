@@ -28,6 +28,7 @@ float_detach(Frame *f) {
 	v = f->view;
 	a = f->area;
 	sel = view_findarea(v, v->selcol, false);
+	assert(sel);
 	pr = f->aprev;
 
 	frame_remove(f);

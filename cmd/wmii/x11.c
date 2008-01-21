@@ -6,7 +6,6 @@
 #define ZR _ZR
 #define pointerwin __pointerwin
 #include "dat.h"
-#include <assert.h>
 #include <math.h>
 #include <unistd.h>
 #include <bio.h>
@@ -149,6 +148,8 @@ Wfmt(Fmt *f) {
 void
 initdisplay(void) {
 	display = XOpenDisplay(nil);
+	if(display == nil)
+		fatal("Can't open display");
 	scr.screen = DefaultScreen(display);
 	scr.colormap = DefaultColormap(display, scr.screen);
 	scr.visual = DefaultVisual(display, scr.screen);
@@ -601,15 +602,15 @@ xatom(char *name) {
 }
 
 void
-sendmessage(Window *w, char *name, char *value, long l2, long l3, long l4) {
+sendmessage(Window *w, char *name, long l0, long l1, long l2, long l3, long l4) {
 	XClientMessageEvent e;
 
 	e.type = ClientMessage;
 	e.window = w->w;
 	e.message_type = xatom(name);
 	e.format = 32;
-	e.data.l[0] = xatom(value);
-	e.data.l[1] = xtime;
+	e.data.l[0] = l0;
+	e.data.l[1] = l1;
 	e.data.l[2] = l2;
 	e.data.l[3] = l3;
 	e.data.l[4] = l4;

@@ -206,6 +206,10 @@ Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 char*	toutf8(const char*);
 char*	toutf8n(const char*, size_t);
 
+/* xdnd.c */
+int	xdnd_clientmessage(XClientMessageEvent*);
+void	xdnd_init(void);
+
 /* xext.c */
 void	randr_event(XEvent*);
 void	randr_init(void);

@@ -3,7 +3,6 @@
  */
 
 #include "dat.h"
-#include <assert.h>
 #include "fns.h"
 
 void

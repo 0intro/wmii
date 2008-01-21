@@ -111,7 +111,10 @@ clientmessage(XEvent *e) {
 	XClientMessageEvent *ev;
 
 	ev = &e->xclient;
-	ewmh_clientmessage(ev);
+	if(ewmh_clientmessage(ev))
+		return;
+	if(xdnd_clientmessage(ev))
+		return;
 }
 
 static void

@@ -5,6 +5,7 @@
 #define _XOPEN_SOURCE 600
 #define IXP_P9_STRUCTS
 #define IXP_NO_P9_
+#include <assert.h>
 #include <regexp9.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -74,10 +75,11 @@ enum Protocols {
 };
 
 enum DebugOpt {
-	DEvent	= 1<<0,
-	DEwmh	= 1<<1,
-	DFocus	= 1<<2,
-	DGeneric= 1<<3,
+	DDnd	= 1<<0,
+	DEvent	= 1<<1,
+	DEwmh	= 1<<2,
+	DFocus	= 1<<3,
+	DGeneric= 1<<4,
 };
 
 /* Data Structures */

@@ -3,7 +3,6 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <assert.h>
 #include <math.h>
 #include <strings.h>
 #include "fns.h"

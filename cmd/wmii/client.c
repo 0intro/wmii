@@ -3,7 +3,6 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <assert.h>
 #include <ctype.h>
 #include <X11/Xatom.h>
 #include "fns.h"
@@ -535,7 +534,7 @@ client_configure(Client *c) {
 void
 client_kill(Client *c, bool nice) {
 	if(nice && (c->proto & ProtoDelete)) {
-		sendmessage(&c->w, "WM_PROTOCOLS", "WM_DELETE_WINDOW", 0, 0, 0);
+		sendmessage(&c->w, "WM_PROTOCOLS", xatom("WM_DELETE_WINDOW"), xtime, 0, 0, 0);
 		ewmh_pingclient(c);
 	}
 	else

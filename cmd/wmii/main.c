@@ -465,6 +465,7 @@ main(int argc, char *argv[]) {
 				| CWCursor);
 		bar_init(s);
 	}
+	xdnd_init();
 
 	screen->focus = nil;
 	setfocus(screen->barwin, RevertToParent);

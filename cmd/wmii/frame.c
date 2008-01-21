@@ -83,6 +83,7 @@ frame_insert(Frame *f, Frame *pos) {
 		f->anext->aprev = f;
 
 	if(a->floating) {
+		assert(f->sprev == nil);
 		f->snext = a->stack;
 		a->stack = f;
 		if(f->snext)
@@ -97,7 +98,7 @@ frame_restack(Frame *f, Frame *above) {
 	a = f->area;
 	if(!a->floating)
 		return false;
-	if(above && above->area != a)
+	if(f->sprev == above)
 		return false;
 
 	if(f->sprev)
@@ -139,15 +140,17 @@ bdown_event(Window *w, XButtonEvent *e) {
 	if((e->state & def.mod) == def.mod) {
 		switch(e->button) {
 		case Button1:
-			mouse_resize(c, false, Center);
 			focus(c, false);
+			mouse_resize(c, false, Center);
+			break;
+		case Button2:
 			frame_restack(f, nil);
-			focus(c, false); /* Blech */
+			view_restack(f->view);
+			focus(c, false);
 			break;
 		case Button3:
-			mouse_resize(c, false, quadrant(f->r, Pt(e->x_root, e->y_root)));
-			frame_restack(f, nil);
 			focus(c, false);
+			mouse_resize(c, false, quadrant(f->r, Pt(e->x_root, e->y_root)));
 			break;
 		default:
 			XAllowEvents(display, ReplayPointer, e->time);
@@ -157,9 +160,11 @@ bdown_event(Window *w, XButtonEvent *e) {
 			XUngrabPointer(display, e->time);
 	}else{
 		if(e->button == Button1) {
-			if(frame_restack(f, nil))
+			if(!e->subwindow) {
+				frame_restack(f, nil);
 				view_restack(f->view);
-			else if(rect_haspoint_p(Pt(e->x, e->y), f->grabbox))
+			}
+			if(rect_haspoint_p(Pt(e->x, e->y), f->grabbox))
 				mouse_resize(c, true, Center);
 			else if(f->area->floating)
 				if(!e->subwindow && !rect_haspoint_p(Pt(e->x, e->y), f->titlebar))

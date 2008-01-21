@@ -31,6 +31,7 @@ OBJ =	area	\
 	printevent\
 	utf	\
 	view	\
+	xdnd	\
 	x11	\
 	xext	\
 	../util

@@ -2,7 +2,6 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <time.h>

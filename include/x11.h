@@ -228,7 +228,7 @@ void	warppointer(Point);
 Window*	window(XWindow);
 long	winprotocols(Window*);
 Atom	xatom(char*);
-void	sendmessage(Window*, char*, char*, long, long, long);
+void	sendmessage(Window*, char*, long, long, long, long, long);
 XRectangle	XRect(Rectangle);
 Rectangle	gravitate(Rectangle dst, Rectangle src, Point grav);
 Rectangle	insetrect(Rectangle, int);

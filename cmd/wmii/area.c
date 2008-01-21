@@ -2,7 +2,6 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <assert.h>
 #include <math.h>
 #include <limits.h>
 #include "fns.h"

@@ -92,7 +92,7 @@ fn Event-Notice {
 	{ sleep $noticetimeout; wmiir xwrite $noticebar ' ' }& # Bug...
 	xpid = $apid}
 
-fn Event-LeftBarClick {
+fn Event-LeftBar^(Click DND) {
 	shift; wmiir xwrite /ctl view $*}
 fn Event-ClientMouseDown {
 	client = $1; button = $2

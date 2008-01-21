@@ -2,7 +2,6 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <assert.h>
 #include <ctype.h>
 #include "fns.h"
 
@@ -76,6 +75,7 @@ char *symtab[] = {
 };
 
 char *debugtab[] = {
+	"dnd",
 	"event",
 	"ewmh",
 	"focus",

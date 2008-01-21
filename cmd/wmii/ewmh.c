@@ -2,7 +2,6 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
-#include <assert.h>
 #include <limits.h>
 #include "fns.h"
 
@@ -152,7 +151,7 @@ ewmh_pingclient(Client *c) {
 	if(e->ping)
 		return;
 
-	sendmessage(&c->w, "WM_PROTOCOLS", Net("WM_PING"), c->w.w, 0, 0);
+	sendmessage(&c->w, "WM_PROTOCOLS", NET("WM_PING"), xtime, c->w.w, 0, 0);
 	e->ping = xtime++;
 	e->timer = ixp_settimer(&srv, PingTime, pingtimeout, c);
 }
@@ -354,10 +353,10 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 		return 1;
 	}else
 	if(msg == xatom("WM_PROTOCOLS")) {
+		if(e->format != 32)
+			return 0;
 		Dprint(DEwmh, "\t%A\n", l[0]);
 		if(l[0] == NET("WM_PING")) {
-			if(e->format != 32)
-				return -1;
 			if(e->window != scr.root.w)
 				return -1;
 			c = win2client(l[2]);
