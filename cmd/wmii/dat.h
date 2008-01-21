@@ -117,6 +117,7 @@ struct Bar {
 	char	buf[280];
 	char	text[256];
 	char	name[256];
+	int	bar;
 	ushort	id;
 	Rectangle r;
 	CTuple	col;

@@ -211,7 +211,7 @@ char*	toutf8n(const char*, size_t);
 
 /* xdnd.c */
 int	xdnd_clientmessage(XClientMessageEvent*);
-void	xdnd_init(void);
+void	xdnd_initwindow(Window*);
 
 /* xext.c */
 void	randr_event(XEvent*);

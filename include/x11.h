@@ -27,26 +27,17 @@ enum Align {
 	Center = NEast | SWest,
 };
 
+enum WindowType {
+	WWindow,
+	WImage,
+};
+
 typedef enum Align Align;
 
-typedef struct CTuple CTuple;
-typedef struct Point Point;
-typedef struct Rectangle Rectangle;
-typedef struct Screen Screen;
-typedef struct Ewmh Ewmh;
-typedef struct Window Window;
-typedef struct WinHints WinHints;
-typedef struct Handlers Handlers;
-typedef struct Window Image;
-typedef struct Font Font;
 typedef XSetWindowAttributes WinAttr;
 
-struct CTuple {
-	ulong bg;
-	ulong fg;
-	ulong border;
-	char colstr[24]; /* #RRGGBB #RRGGBB #RRGGBB */
-};
+typedef struct Point Point;
+typedef struct Rectangle Rectangle;
 
 struct Point {
 	int x, y;
@@ -56,27 +47,54 @@ struct Rectangle {
 	Point min, max;
 };
 
+typedef struct CTuple CTuple;
+typedef struct Ewmh Ewmh;
+typedef struct Font Font;
+typedef struct Handlers Handlers;
+typedef struct Screen Screen;
+typedef struct WinHints WinHints;
+typedef struct Window Image;
+typedef struct Window Window;
+
+struct CTuple {
+	ulong bg;
+	ulong fg;
+	ulong border;
+	char colstr[24]; /* #RRGGBB #RRGGBB #RRGGBB */
+};
+
 struct Ewmh {
 	long	type;
 	long	ping;
 	long	timer;
 };
 
-struct Window {
-	int type;
-	XWindow w;
-	Window *parent;
-	Drawable image;
-	GC gc;
-	Rectangle r;
-	void *aux;
-	Handlers *handler;
-	Window *next, *prev;
-	WinHints *hints;
-	Ewmh ewmh;
-	bool mapped;
-	int unmapped;
-	int depth;
+struct Font {
+	XFontStruct *xfont;
+	XFontSet set;
+	int ascent;
+	int descent;
+	uint height;
+	char *name;
+};
+
+struct Handlers {
+	Rectangle (*dndmotion)(Window*, Point);
+	void (*bdown)(Window*, XButtonEvent*);
+	void (*bup)(Window*, XButtonEvent*);
+	void (*configreq)(Window*, XConfigureRequestEvent*);
+	void (*destroy)(Window*, XDestroyWindowEvent*);
+	void (*enter)(Window*, XCrossingEvent*);
+	void (*expose)(Window*, XExposeEvent*);
+	void (*focusin)(Window*, XFocusChangeEvent*);
+	void (*focusout)(Window*, XFocusChangeEvent*);
+	void (*kdown)(Window*, XKeyEvent*);
+	void (*kup)(Window*, XKeyEvent*);
+	void (*leave)(Window*, XCrossingEvent*);
+	void (*map)(Window*, XMapEvent*);
+	void (*motion)(Window*, XMotionEvent*);
+	void (*property)(Window*, XPropertyEvent*);
+	void (*unmap)(Window*, XUnmapEvent*);
 };
 
 struct WinHints {
@@ -92,45 +110,36 @@ struct WinHints {
 	bool	position;
 };
 
-struct Handlers {
-	void (*bdown)(Window*, XButtonEvent*);
-	void (*bup)(Window*, XButtonEvent*);
-	void (*kdown)(Window*, XKeyEvent*);
-	void (*kup)(Window*, XKeyEvent*);
-	void (*focusin)(Window*, XFocusChangeEvent*);
-	void (*focusout)(Window*, XFocusChangeEvent*);
-	void (*enter)(Window*, XCrossingEvent*);
-	void (*leave)(Window*, XCrossingEvent*);
-	void (*motion)(Window*, XMotionEvent*);
-	void (*destroy)(Window*, XDestroyWindowEvent*);
-	void (*configreq)(Window*, XConfigureRequestEvent*);
-	void (*map)(Window*, XMapEvent*);
-	void (*unmap)(Window*, XUnmapEvent*);
-	void (*property)(Window*, XPropertyEvent*);
-	void (*expose)(Window*, XExposeEvent*);
+struct Window {
+	int		type;
+	XWindow		w;
+	Drawable	image;
+	GC		gc;
+	Rectangle	r;
+	Window*		parent;
+	Window*		next;
+	Window*		prev;
+	Handlers*	handler;
+	WinHints*	hints;
+	Ewmh		ewmh;
+	void*		dnd;
+	void*		aux;
+	bool		mapped;
+	int		unmapped;
+	int		depth;
 };
 
 struct Screen {
-	int screen;
-	Window root;
-	Colormap colormap;
-	Visual *visual;
-	Rectangle rect;
-	GC gc;
-	int depth;
-	int fd;
-	ulong black, white;
-};
-
-enum { WWindow, WImage };
-
-struct Font {
-	XFontStruct *xfont;
-	XFontSet set;
-	int ascent;
-	int descent;
-	uint height;
-	char *name;
+	int		screen;
+	Window		root;
+	GC		gc;
+	Colormap	colormap;
+	Visual*		visual;
+	Rectangle	rect;
+	int		depth;
+	int		fd;
+	ulong		black;
+	ulong		white;
 };
 
 #ifdef VARARGCK
@@ -146,8 +155,6 @@ Screen scr;
 extern Point ZP;
 extern Rectangle ZR;
 extern Window* pointerwin;
-
-Rectangle insetrect(Rectangle r, int n);
 
 Point Pt(int x, int y);
 Rectangle Rect(int x0, int y0, int x1, int y1);

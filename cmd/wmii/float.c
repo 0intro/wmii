@@ -126,8 +126,8 @@ float_placeframe(Frame *f) {
 
 	p = ZP; /* SET(p) */
 	if(vp->n == 0) {
-		p.x = random() % max(0, Dx(a->r) - dim.x);
-		p.y = random() % max(0, Dy(a->r) - dim.y);
+		p.x = random() % max(1, Dx(a->r) - dim.x);
+		p.y = random() % max(1, Dy(a->r) - dim.y);
 	}else {
 		area = LONG_MAX;
 		for(i=0; i < vp->n; i++) {

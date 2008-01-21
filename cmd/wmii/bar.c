@@ -8,6 +8,10 @@
 static Handlers handlers;
 static Bar *free_bars;
 
+#define foreach_bar(s, b) \
+	for(int __bar_n=0; __bar_n < nelem((s)->bar); __bar_n++) \
+		for((b)=(s)->bar[__bar_n]; (b); (b)=(b)->next)
+
 void
 bar_init(WMScreen *s) {
 	WinAttr wa;
@@ -29,6 +33,8 @@ bar_init(WMScreen *s) {
 			  CWOverrideRedirect
 			| CWBackPixmap
 			| CWEventMask);
+	s->barwin->aux = s;
+	xdnd_initwindow(s->barwin);
 	sethandler(s->barwin, &handlers);
 	mapwin(s->barwin);
 }
@@ -36,7 +42,9 @@ bar_init(WMScreen *s) {
 Bar*
 bar_create(Bar **bp, const char *name) {
 	static uint id = 1;
+	WMScreen *s;
 	Bar *b;
+	uint i;
 
 	b = bar_find(*bp, name);;
 	if(b)
@@ -59,6 +67,13 @@ bar_create(Bar **bp, const char *name) {
 			break;
 	b->next = *bp;
 	*bp = b;
+	
+	/* FIXME: Kludge. */
+	for(s=screens; s < screens+num_screens; s++) {
+		i = bp - s->bar;
+		if(i < nelem(s->bar))
+			b->bar = i;
+	}
 
 	return b;
 }
@@ -95,33 +110,30 @@ bar_draw(WMScreen *s) {
 	Bar *b, *tb, *largest, **pb;
 	Rectangle r;
 	Align align;
-	uint width, tw, nb;
+	uint width, tw;
 	float shrink;
 
 	largest = nil;
 	tw = width = 0;
-	for(nb = 0; nb < nelem(s->bar); nb++)
-		for(b = s->bar[nb]; b; b=b->next) {
-			b->r.min = ZP;
-			b->r.max.y = Dy(s->brect);
-			b->r.max.x = def.font->height & ~1;
-			if(b->text && strlen(b->text))
-				b->r.max.x += textwidth(def.font, b->text);
-
-			width += Dx(b->r);
-		}
+	foreach_bar(s, b) {
+		b->r.min = ZP;
+		b->r.max.y = Dy(s->brect);
+		b->r.max.x = def.font->height & ~1;
+		if(b->text && strlen(b->text))
+			b->r.max.x += textwidth(def.font, b->text);
+		width += Dx(b->r);
+	}
 
 	if(width > Dx(s->brect)) { /* Not enough room. Shrink bars until they all fit. */
-		for(nb = 0; nb < nelem(s->bar); nb++)
-			for(b = s->bar[nb]; b; b=b->next) {
-				for(pb = &largest; *pb; pb = &pb[0]->smaller)
-					if(Dx(pb[0]->r) < Dx(b->r))
-						break; 
-				b->smaller = *pb;
-				*pb = b;
-			}
+		foreach_bar(s, b) {
+			for(pb=&largest; *pb; pb=&pb[0]->smaller)
+				if(Dx(pb[0]->r) < Dx(b->r))
+					break; 
+			b->smaller = *pb;
+			*pb = b;
+		}
 		SET(shrink);
-		for(tb = largest; tb; tb = tb->smaller) {
+		for(tb=largest; tb; tb=tb->smaller) {
 			width -= Dx(tb->r);
 			tw += Dx(tb->r);
 			shrink = (Dx(s->brect) - width) / (float)tw;
@@ -130,32 +142,30 @@ bar_draw(WMScreen *s) {
 					break;
 		}
 		if(tb)
-			for(b = largest; b != tb->smaller; b = b->smaller)
+			for(b=largest; b != tb->smaller; b=b->smaller)
 				b->r.max.x *= shrink;
 		width += tw * shrink;
 	}
 
 	tb = nil;
-	for(nb = 0; nb < nelem(s->bar); nb++)
-		for(b = s->bar[nb]; b; tb=b, b=b->next) {
-			if(b == s->bar[BarRight])
-				b->r.max.x += Dx(s->brect) - width;
-
-			if(tb)
-				b->r = rectaddpt(b->r, Pt(tb->r.max.x, 0));
-		}
+	foreach_bar(s, b) {
+		if(tb)
+			b->r = rectaddpt(b->r, Pt(tb->r.max.x, 0));
+		if(b == s->bar[BarRight])
+			b->r.max.x += Dx(s->brect) - width;
+		tb = b;
+	}
 
 	r = rectsubpt(s->brect, s->brect.min);
 	fill(screen->ibuf, r, def.normcolor.bg);
-	for(nb = 0; nb < nelem(s->bar); nb++)
-		for(b = s->bar[nb]; b; b=b->next) {
-			align = Center;
-			if(b == s->bar[BarRight])
-				align = East;
-			fill(screen->ibuf, b->r, b->col.bg);
-			drawstring(screen->ibuf, def.font, b->r, align, b->text, b->col.fg);
-			border(screen->ibuf, b->r, 1, b->col.border);
-		}
+	foreach_bar(s, b) {
+		align = Center;
+		if(b == s->bar[BarRight])
+			align = East;
+		fill(screen->ibuf, b->r, b->col.bg);
+		drawstring(screen->ibuf, def.font, b->r, align, b->text, b->col.fg);
+		border(screen->ibuf, b->r, 1, b->col.border);
+	}
 	copyimage(s->barwin, r, screen->ibuf, ZP);
 	sync();
 }
@@ -170,44 +180,59 @@ bar_find(Bar *bp, const char *name) {
 	return b;
 }
 
+static char *barside[] = {
+	[BarLeft]  = "Left",
+	[BarRight] = "Right",
+};
+
+static Bar*
+findbar(WMScreen *s, Point p) {
+	Bar *b;
+
+	foreach_bar(s, b)
+		if(rect_haspoint_p(p, b->r))
+			return b;
+	return nil;
+}
+
 static void
 bdown_event(Window *w, XButtonPressedEvent *e) {
+	WMScreen *s;
 	Bar *b;
-	
-	USED(w);
 
 	/* Ungrab so a menu can receive events before the button is released */
 	XUngrabPointer(display, e->time);
 	sync();
 
-	for(b=screen->bar[BarLeft]; b; b=b->next)
-		if(rect_haspoint_p(Pt(e->x, e->y), b->r)) {
-			event("LeftBarMouseDown %d %s\n", e->button, b->name);
-			return;
-		}
-	for(b=screen->bar[BarRight]; b; b=b->next)
-		if(rect_haspoint_p(Pt(e->x, e->y), b->r)) {
-			event("RightBarMouseDown %d %s\n", e->button, b->name);
-			return;
-		}
+	s = w->aux;
+	b = findbar(s, Pt(e->x, e->y));
+	if(b)
+		event("%sBarMouseDown %d %s\n", barside[b->bar], e->button, b->name);
 }
 
 static void
 bup_event(Window *w, XButtonPressedEvent *e) {
+	WMScreen *s;
 	Bar *b;
 	
-	USED(w, e);
+	s = w->aux;
+	b = findbar(s, Pt(e->x, e->y));
+	if(b)
+		event("%sBarClick %d %s\n", barside[b->bar], e->button, b->name);
+}
 
-	for(b=screen->bar[BarLeft]; b; b=b->next)
-		if(rect_haspoint_p(Pt(e->x, e->y), b->r)) {
-			event("LeftBarClick %d %s\n", e->button, b->name);
-			return;
-		}
-	for(b=screen->bar[BarRight]; b; b=b->next)
-		if(rect_haspoint_p(Pt(e->x, e->y), b->r)) {
-			event("RightBarClick %d %s\n", e->button, b->name);
-			return;
-		}
+static Rectangle
+dndmotion_event(Window *w, Point p) {
+	WMScreen *s;
+	Bar *b;
+
+	s = w->aux;
+	b = findbar(s, p);
+	if(b) {
+		event("%sBarDND 1 %s\n", barside[b->bar], b->name);
+		return b->r;
+	}
+	return ZR;
 }
 
 static void
@@ -219,5 +244,6 @@ expose_event(Window *w, XExposeEvent *e) {
 static Handlers handlers = {
 	.bdown = bdown_event,
 	.bup = bup_event,
+	.dndmotion = dndmotion_event,
 	.expose = expose_event,
 };
