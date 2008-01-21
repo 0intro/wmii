@@ -9,6 +9,10 @@ DOWN=j
 LEFT=h
 RIGHT=l
 
+# Bars
+noticetimeout=5
+noticebar=/rbar/!notice
+
 # Colors tuples: "<text> <background> <border>"
 WMII_NORMCOLORS='#000000 #c1c48b #81654f'
 WMII_FOCUSCOLORS='#000000 #81654f #000000'
@@ -37,6 +41,8 @@ status() {
 	echo -n $(uptime | sed 's/.*://; s/,//g') '|' $(date)
 }
 
+echo $WMII_NORMCOLORS | wmiir create $noticebar
+
 # Event processing
 wi_events -s '	' <<'!'
 	# Events
@@ -54,9 +60,26 @@ wi_events -s '	' <<'!'
 	Event NotUrgentTag
 		shift
 		wmiir xwrite "/lbar/$@" "$@"
-	Event LeftBarClick
+	Event LeftBarClick LeftBarDND
 		shift
 		wmiir xwrite /ctl view "$@"
+	Event Unresponsive
+		{
+			client=$1; shift
+			msg="The following client is not responding. What would you like to do?$wi_nl"
+			resp=$(wihack -transient $client \
+				      xmessage -nearmouse -buttons Kill,Wait -print \
+				               "$msg $(wmiir read /client/sel/label)")
+			if [ "$resp" = Kill ]; then
+				wmiir xwrite /client/$client/ctl slay &
+			fi
+		}&
+	Event Notice
+		wmiir xwrite $noticebar $wi_arg
+
+		kill $xpid 2>/dev/null # Let's hope this isn't reused...
+		{ sleep $noticetimeout; wmiir xwrite $noticebar ' '; }&
+		xpid = $!
 	# Actions
 	Action quit
 		wmiir xwrite /ctl quit
@@ -166,8 +189,10 @@ Action status &
 wi_proglist $PATH >$progsfile &
 
 # Setup Tag Bar
-(IFS="$(echo)"; wmiir rm $(wmiir ls /lbar | sed 's,^,/lbar/,'))
-seltag="$(wmiir read /tag/sel/ctl | sed 1q)"
+OIFS="$IFS"; IFS="$wi_nl"
+wmiir rm $(wmiir ls /lbar | sed 's,^,/lbar/,')
+seltag=$(wmiir read /tag/sel/ctl | sed 1q)
+IFS="$OIFS"
 wi_tags | while read tag
 do
 	if [ "$tag" = "$seltag" ]; then

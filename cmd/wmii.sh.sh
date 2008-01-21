@@ -9,27 +9,31 @@ Keys=""
 Actions=""
 Events=""
 
+wi_nl='
+'
+
 _wi_script() {
 	cat <<'!'
 	BEGIN {
 		arg[1] = "Nop"
+		narg = 1;
 		body = "";
 	}
 	function addevent() {
-		if(arg[1] == "Key")
-			keys[arg[2]] = 1;
-
 		var = arg[1] "s"
-		printf "%s=\"$%s\n%s\"\n", var, var, arg[2]
-
-		gsub("[^a-zA-Z_0-9]", "_", arg[2]);
-		if(body != "")
-			printf "%s_%s() { %s\n }\n", arg[1], arg[2], body
+		for(i=2; i <= narg; i++) {
+			printf "%s=\"$%s\n%s\"\n", var, var, arg[i]
+			gsub("[^a-zA-Z_0-9]", "_", arg[i]);
+			if(body != "") {
+				printf "%s_%s() { %s\n }\n", arg[1], arg[i], body
+				body = sprintf("%s_%s \"$@\"", arg[1], arg[2])
+			}
+		}
 	}
-
 	/^(Event|Key|Action)[ \t]/ {
 		addevent()
 		split($0, arg)
+		narg = NF
 		body = ""
 	}
 	/^[ \t]/ {
@@ -129,8 +133,8 @@ wi_eventloop() {
 
 	wmiir read /event | while read wi_event
 	do
-		OIFS="$IFS"; IFS="$(echo)"
-		wi_args=$(echo "$wi_event" | sed 's/^[^ ]+ //')
+		OIFS="$IFS"; IFS="$wi_nl"
+		wi_arg=$(echo "$wi_event" | sed 's/^[^ ]* //')
 		IFS="$OIFS"
 		set -- $wi_event
 		event=$1; shift

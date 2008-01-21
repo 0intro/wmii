@@ -71,9 +71,11 @@ fn Event-FocusTag {
 fn Event-UnfocusTag {
 	wmiir xwrite /lbar/$"* $wmiinormcol $*}
 fn Event-UrgentTag {
-	shift; wmiir xwrite /lbar/$"* '*'$"*}
+	shift
+	wmiir xwrite /lbar/$"* '*'$"*}
 fn Event-NotUrgentTag {
-	shift; wmiir xwrite /lbar/$"* $"*}
+	shift
+	wmiir xwrite /lbar/$"* $"*}
 
 fn Event-Unresponsive {
 	client = $1; shift
