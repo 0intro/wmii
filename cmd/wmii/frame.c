@@ -281,11 +281,15 @@ frame_resize(Frame *f, Rectangle r) {
 	int collapsed;
 
 	c = f->client;
-	stickycorner = get_sticky(f->r, r);
 
-	f->crect = frame_hints(f, r, stickycorner);
-	if(c->fullscreen)
+	if(c->fullscreen) {
 		f->crect = screen->r;
+		f->r = screen->r;
+		return;
+	}
+
+	stickycorner = get_sticky(f->r, r);
+	f->crect = frame_hints(f, r, stickycorner);
 
 	if(Dx(r) <= 0 || Dy(r) <= 0)
 		fprint(2, "Badness: Frame rect: %R\n", r);
@@ -326,15 +330,8 @@ frame_resize(Frame *f, Rectangle r) {
 	if(!f->client->titleless || !f->area->floating)
 		pt.y += labelh(def.font) - 1;
 
-	if(f->area->floating) {
-		if(c->fullscreen) {
-			f->crect = screen->r;
-			f->r = frame_client2rect(f, f->crect);
-			pt.x = (Dx(f->r) - Dx(f->crect)) / 2;
-			f->r = rectsubpt(f->r, pt);
-		}else
-			f->r = constrain(f->r);
-	}
+	if(f->area->floating)
+		f->r = constrain(f->r);
 	pt.x = (Dx(f->r) - Dx(f->crect)) / 2;
 	f->crect = rectaddpt(f->crect, pt);
 }
