@@ -6,6 +6,7 @@
 #define ZR _ZR
 #define pointerwin __pointerwin
 #include "dat.h"
+#include <limits.h>
 #include <math.h>
 #include <unistd.h>
 #include <bio.h>
@@ -15,17 +16,16 @@
             * elsewhere. */
 #undef  pointerwin
 
-const Point ZP = {0, 0};
-const Rectangle ZR = {{0, 0}, {0, 0}};
+const Point	ZP = {0, 0};
+const Rectangle	ZR = {{0, 0}, {0, 0}};
 
-const Window _pointerwin = {
-	.w = PointerRoot
-};
-Window *const pointerwin = (Window*)&_pointerwin;
+const Window	_pointerwin = { .w = PointerRoot };
+Window*		const pointerwin = (Window*)&_pointerwin;
 
-static Map wmap, amap;
-static MapEnt* wbucket[137];
-static MapEnt* abucket[137];
+static Map	windowmap;
+static Map	atommap;
+static MapEnt*	wbucket[137];
+static MapEnt*	abucket[137];
 
 
 /* Rectangles/Points */
@@ -43,7 +43,7 @@ XRect(Rectangle r) {
 int
 eqrect(Rectangle a, Rectangle b) {
 	return a.min.x==b.min.x && a.max.x==b.max.x
-		&& a.min.y==b.min.y && a.max.y==b.max.y;
+	    && a.min.y==b.min.y && a.max.y==b.max.y;
 }
 
 int
@@ -165,10 +165,10 @@ initdisplay(void) {
 	
 	scr.root.parent = &scr.root;
 
-	wmap.bucket = wbucket;
-	wmap.nhash = nelem(wbucket);
-	amap.bucket = abucket;
-	amap.nhash = nelem(abucket);
+	windowmap.bucket = wbucket;
+	windowmap.nhash = nelem(wbucket);
+	atommap.bucket = abucket;
+	atommap.nhash = nelem(abucket);
 
 	fmtinstall('A', Afmt);
 	fmtinstall('R', Rfmt);
@@ -183,8 +183,8 @@ allocimage(int w, int h, int depth) {
 
 	img = emallocz(sizeof *img);
 	img->type = WImage;
-	img->image = XCreatePixmap(display, scr.root.w, w, h, depth);
-	img->gc = XCreateGC(display, img->image, 0, nil);
+	img->w = XCreatePixmap(display, scr.root.w, w, h, depth);
+	img->gc = XCreateGC(display, img->w, 0, nil);
 	img->depth = depth;
 	img->r = Rect(0, 0, w, h);
 	return img;
@@ -194,16 +194,14 @@ void
 freeimage(Image *img) {
 	assert(img->type == WImage);
 
-	XFreePixmap(display, img->image);
+	XFreePixmap(display, img->w);
 	XFreeGC(display, img->gc);
 	free(img);
 }
 
 /* Windows */
 Window*
-createwindow(Window *parent, Rectangle r, int depth, uint class,
-		WinAttr *wa, int valmask)
-		{
+createwindow(Window *parent, Rectangle r, int depth, uint class, WinAttr *wa, int valmask) {
 	Window *w;
 
 	assert(parent->type == WWindow);
@@ -214,11 +212,8 @@ createwindow(Window *parent, Rectangle r, int depth, uint class,
 
 	w->w =  XCreateWindow(display, parent->w, r.min.x, r.min.y, Dx(r), Dy(r),
 				0 /* border */, depth, class, scr.visual, valmask, wa);
-
-	if(class != InputOnly) {
+	if(class != InputOnly)
 		w->gc = XCreateGC(display, w->w, 0, nil);
-		w->image = w->w;
-	}
 
 	w->r = r;
 	w->depth = depth;
@@ -226,12 +221,13 @@ createwindow(Window *parent, Rectangle r, int depth, uint class,
 }
 
 Window*
-window(XWindow w) {
-	static Window win;
+window(XWindow xw) {
+	Window *w;
 
-	win.type = WWindow;
-	win.w = w;
-	return &win;
+	w = malloc(sizeof *w);
+	w->type = WWindow;
+	w->w = xw;
+	return freelater(w);
 }
 
 void
@@ -316,9 +312,9 @@ sethandler(Window *w, Handlers *new) {
 	assert((w->prev != nil && w->next != nil) || w->next == w->prev);
 
 	if(new == nil)
-		map_rm(&wmap, (ulong)w->w);
+		map_rm(&windowmap, (ulong)w->w);
 	else {
-		e = map_get(&wmap, (ulong)w->w, 1);
+		e = map_get(&windowmap, (ulong)w->w, 1);
 		e->val = w;
 	}
 	old = w->handler;
@@ -330,7 +326,7 @@ Window*
 findwin(XWindow w) {
 	MapEnt *e;
 	
-	e = map_get(&wmap, (ulong)w, 0);
+	e = map_get(&windowmap, (ulong)w, 0);
 	if(e)
 		return e->val;
 	return nil;
@@ -346,7 +342,7 @@ void
 setshapemask(Window *dst, Image *src, Point pt) {
 	/* Assumes that we have the shape extension... */
 	XShapeCombineMask (display, dst->w,
-		ShapeBounding, pt.x, pt.y, src->image, ShapeSet);
+		ShapeBounding, pt.x, pt.y, src->w, ShapeSet);
 }
 
 static void
@@ -366,14 +362,14 @@ border(Image *dst, Rectangle r, int w, ulong col) {
 
 	XSetLineAttributes(display, dst->gc, w, LineSolid, CapButt, JoinMiter);
 	setgccol(dst, col);
-	XDrawRectangle(display, dst->image, dst->gc,
+	XDrawRectangle(display, dst->w, dst->gc,
 			r.min.x, r.min.y, Dx(r), Dy(r));
 }
 
 void
 fill(Image *dst, Rectangle r, ulong col) {
 	setgccol(dst, col);
-	XFillRectangle(display, dst->image, dst->gc,
+	XFillRectangle(display, dst->w, dst->gc,
 		r.min.x, r.min.y, Dx(r), Dy(r));
 }
 
@@ -397,7 +393,7 @@ drawpoly(Image *dst, Point *pt, int np, int cap, int w, ulong col) {
 	xp = convpts(pt, np);
 	XSetLineAttributes(display, dst->gc, w, LineSolid, cap, JoinMiter);
 	setgccol(dst, col);
-	XDrawLines(display, dst->image, dst->gc, xp, np, CoordModeOrigin);
+	XDrawLines(display, dst->w, dst->gc, xp, np, CoordModeOrigin);
 	free(xp);
 }
 
@@ -407,7 +403,7 @@ fillpoly(Image *dst, Point *pt, int np, ulong col) {
 
 	xp = convpts(pt, np);
 	setgccol(dst, col);
-	XFillPolygon(display, dst->image, dst->gc, xp, np, Complex, CoordModeOrigin);
+	XFillPolygon(display, dst->w, dst->gc, xp, np, Complex, CoordModeOrigin);
 	free(xp);
 }
 
@@ -415,13 +411,13 @@ void
 drawline(Image *dst, Point p1, Point p2, int cap, int w, ulong col) {
 	XSetLineAttributes(display, dst->gc, w, LineSolid, cap, JoinMiter);
 	setgccol(dst, col);
-	XDrawLine(display, dst->image, dst->gc, p1.x, p1.y, p2.x, p2.y);
+	XDrawLine(display, dst->w, dst->gc, p1.x, p1.y, p2.x, p2.y);
 }
 
 uint
 drawstring(Image *dst, Font *font,
-		Rectangle r, Align align,
-		char *text, ulong col) {
+	   Rectangle r, Align align,
+	   char *text, ulong col) {
 	char *buf;
 	uint x, y, w, h, len;
 	int shortened;
@@ -465,13 +461,13 @@ drawstring(Image *dst, Font *font,
 
 	setgccol(dst, col);
 	if(font->set)
-		Xutf8DrawString(display, dst->image, 
+		Xutf8DrawString(display, dst->w, 
 				font->set, dst->gc,
 				x, y,
 				buf, len);
 	else {
 		XSetFont(display, dst->gc, font->xfont->fid);
-		XDrawString(display, dst->image, dst->gc,
+		XDrawString(display, dst->w, dst->gc,
 				x, y,
 				buf, len);
 	}
@@ -484,10 +480,10 @@ done:
 void
 copyimage(Image *dst, Rectangle r, Image *src, Point p) {
 	XCopyArea(display,
-		src->image, dst->image,
-		dst->gc,
-		r.min.x, r.min.y, Dx(r), Dy(r),
-		p.x, p.y);
+		  src->w, dst->w,
+		  dst->gc,
+		  r.min.x, r.min.y, Dx(r), Dy(r),
+		  p.x, p.y);
 }
 
 /* Colors */
@@ -497,22 +493,22 @@ namedcolor(char *name, ulong *ret) {
 
 	if(XAllocNamedColor(display, scr.colormap, name, &c, &c2)) {
 		*ret = c.pixel;
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 bool
 loadcolor(CTuple *c, char *str) {
 	char buf[24];
 
-	utflcpy(buf, str, sizeof(buf));
+	utflcpy(buf, str, sizeof buf);
 	memcpy(c->colstr, str, sizeof c->colstr);
 
 	buf[7] = buf[15] = buf[23] = '\0';
 	return namedcolor(buf, &c->fg)
-		&& namedcolor(buf+8, &c->bg)
-		&& namedcolor(buf+16, &c->border);
+	    && namedcolor(buf+8, &c->bg)
+	    && namedcolor(buf+16, &c->border);
 }
 
 /* Fonts */
@@ -533,7 +529,7 @@ loadfont(char *name) {
 		Bprint(b, "%s: note: missing fontset%s for '%s':", argv0,
 				(n > 1 ? "s" : ""), name);
 		for(i = 0; i < n; i++)
-			Bprint(b, "%s %s", (i ? "," : ""), missing[i]);
+			Bprint(b, "%s %s", i?",":"", missing[i]);
 		Bprint(b, "\n");
 		Bterm(b);
 		freestringlist(missing);
@@ -543,8 +539,7 @@ loadfont(char *name) {
 		XFontsOfFontSet(f->set, &xfonts, &font_names);
 		f->ascent = xfonts[0]->ascent;
 		f->descent = xfonts[0]->descent;
-	}
-	else {
+	}else {
 		f->xfont = XLoadQueryFont(display, name);
 		if(!f->xfont) {
 			fprint(2, "%s: cannot load font: %s\n", argv0, name);
@@ -595,7 +590,7 @@ Atom
 xatom(char *name) {
 	MapEnt *e;
 	
-	e = hash_get(&amap, name, 1);
+	e = hash_get(&atommap, name, 1);
 	if(e->val == nil)
 		e->val = (void*)XInternAtom(display, name, False);
 	return (Atom)e->val;
@@ -851,7 +846,6 @@ ungrabpointer(void) {
 /* Insanity */
 void
 sethints(Window *w) {
-	enum { MaxInt = ((uint)(1<<(8*sizeof(int)-1))-1) };
 	XSizeHints xs;
 	XWMHints *wmh;
 	WinHints *h;
@@ -864,12 +858,12 @@ sethints(Window *w) {
 	h = w->hints;
 	memset(h, 0, sizeof *h);
 
-	h->max = Pt(MaxInt, MaxInt);
+	h->max = Pt(INT_MAX, INT_MAX);
 	h->inc = Pt(1,1);
 
 	wmh = XGetWMHints(display, w->w);
 	if(wmh) {
-		if(wmh->flags&WindowGroupHint)
+		if(wmh->flags & WindowGroupHint)
 			h->group = wmh->window_group;
 		free(wmh);
 	}
@@ -877,45 +871,40 @@ sethints(Window *w) {
 	if(!XGetWMNormalHints(display, w->w, &xs, &size))
 		return;
 
-	if(xs.flags&PMinSize) {
-		p.x = xs.min_width;
-		p.y = xs.min_height;
-		h->min = p;
+	if(xs.flags & PMinSize) {
+		h->min.x = xs.min_width;
+		h->min.y = xs.min_height;
 	}
-	if(xs.flags&PMaxSize) {
-		p.x = xs.max_width;
-		p.y = xs.max_height;
-		h->max = p;
+	if(xs.flags & PMaxSize) {
+		h->max.x = xs.max_width;
+		h->max.y = xs.max_height;
 	}
 
 	h->base = h->min;
-	if(xs.flags&PBaseSize) {
+	if(xs.flags & PBaseSize) {
 		p.x = xs.base_width;
 		p.y = xs.base_height;
 		h->base = p;
 		h->baspect = p;
 	}
 
-	if(xs.flags&PResizeInc) {
+	if(xs.flags & PResizeInc) {
 		h->inc.x = max(xs.width_inc, 1);
 		h->inc.y = max(xs.height_inc, 1);
 	}
 
-	if(xs.flags&PAspect) {
-		p.x = xs.min_aspect.x;
-		p.y = xs.min_aspect.y;
-		h->aspect.min = p;
-		p.x = xs.max_aspect.x;
-		p.y = xs.max_aspect.y;
-		h->aspect.max = p;
+	if(xs.flags & PAspect) {
+		h->aspect.min.x = xs.min_aspect.x;
+		h->aspect.min.y = xs.min_aspect.y;
+		h->aspect.max.x = xs.max_aspect.x;
+		h->aspect.max.y = xs.max_aspect.y;
 	}
-	
-	h->position = ((xs.flags&(USPosition|PPosition)) != 0);
+
+	h->position = ((xs.flags & (USPosition|PPosition)) != 0);
 
 	p = ZP;
-	if((xs.flags&PWinGravity) == 0)
+	if(!(xs.flags & PWinGravity))
 		xs.win_gravity = NorthWestGravity;
-
 	switch (xs.win_gravity) {
 	case EastGravity:
 	case CenterGravity:
@@ -946,13 +935,13 @@ sethints(Window *w) {
 
 Rectangle
 sizehint(WinHints *h, Rectangle r) {
-	Point p, p2, o;
+	Point p, aspect, origin;
 
 	if(h == nil)
 		return r;
 
-	o = r.min;
-	r = rectsubpt(r, o);
+	origin = r.min;
+	r = rectsubpt(r, origin);
 
 	/* Min/max */
 	r.max.x = max(r.max.x, h->min.x);
@@ -968,25 +957,27 @@ sizehint(WinHints *h, Rectangle r) {
 	/* Aspect */
 	p = subpt(r.max, h->baspect);
 	p.y = max(p.y, 1);
-	p2 = h->aspect.min;
-	if(p.x * p2.y / p.y < p2.x)
-		r.max.y = h->baspect.y + p.x * p2.y / p2.x;
-	p2 = h->aspect.max;
-	if(p.x * p2.y / p.y > p2.x)
-		r.max.x = h->baspect.x + p.y * p2.x / p2.y;
 
-	return rectaddpt(r, o);
+	aspect = h->aspect.min;
+	if(p.x * aspect.y / p.y < aspect.x)
+		r.max.y = h->baspect.y
+			+ p.x * aspect.y / aspect.x;
+
+	aspect = h->aspect.max;
+	if(p.x * aspect.y / p.y > aspect.x)
+		r.max.x = h->baspect.x
+		        + p.y * aspect.x / aspect.y;
+
+	return rectaddpt(r, origin);
 }
 
 Rectangle
 gravitate(Rectangle rc, Rectangle rf, Point grav) {
 	Point d;
 
-	rf = rectsubpt(rf, rf.min);
-
 	/* Get delta between frame and client rectangles */
-	d = subpt(rc.max, rc.min);
-	d = subpt(rf.max, d);
+	d = subpt(subpt(rf.max, rf.min),
+		  subpt(rc.max, rc.min));
 
 	/* Divide by 2 and apply gravity */
 	d = divpt(d, Pt(2, 2));
@@ -994,3 +985,4 @@ gravitate(Rectangle rc, Rectangle rf, Point grav) {
 
 	return rectsubpt(rc, d);
 }
+

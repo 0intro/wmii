@@ -112,8 +112,7 @@ struct WinHints {
 
 struct Window {
 	int		type;
-	XWindow		w;
-	Drawable	image;
+	XID		w;
 	GC		gc;
 	Rectangle	r;
 	Window*		parent;

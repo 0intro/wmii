@@ -1,6 +1,7 @@
 #!/bin/sh -f
 # Configure wmii
-. wmii.sh wmiirc
+wmiiscript=wmiirc # For wmii.sh
+. wmii.sh
 
 # Configuration Variables
 MODKEY=Mod1
@@ -63,6 +64,19 @@ wi_events -s '	' <<'!'
 	Event LeftBarClick LeftBarDND
 		shift
 		wmiir xwrite /ctl view "$@"
+	Event ClientMouseDown
+		client=$1; button=$2
+		case "$button" in
+		3)
+			do=$(wi_9menu -initial "$menulast" Nop Delete Fullscreen)
+			case "$do" in
+			Delete)
+				wmiir xwrite /client/$client/ctl kill;;
+			Fullscreen)
+				wmiir xwrite /client/$client/ctl Fullscreen on;;
+			esac
+			menulast=${do:-"$menulast"}
+		esac
 	Event Unresponsive
 		{
 			client=$1; shift
@@ -96,19 +110,6 @@ wi_events -s '	' <<'!'
 		while status | wmiir write /rbar/status; do
 			sleep 1
 		done
-	Event ClientMouseDown
-		client=$1; button=$2
-		case "$button" in
-		3)
-			do=$(wi_9menu -initial "${menulast:-SomeRandomName}" Nop Delete Fullscreen)
-			case "$do" in
-			Delete)
-				wmiir xwrite /client/$client/ctl kill;;
-			Fullscreen)
-				wmiir xwrite /client/$client/ctl Fullscreen on;;
-			esac
-			menulast=${do:-"$menulast"}
-		esac
 	# Key Bindings
 	Key $MODKEY-Control-t
 		case $(wmiir read /keys | wc -l | tr -d ' \t\n') in
@@ -130,9 +131,9 @@ wi_events -s '	' <<'!'
 	Key $MODKEY-a
 		Action $(wi_actions | wi_menu) &
 	Key $MODKEY-p
-		sh -c "$(wi_menu <$progsfile)" &
+		wmiir setsid "$(wi_menu <$progsfile)" &
 	Key $MODKEY-t
-		wmiir xwrite /ctl "view $(wi_tags | wi_menu)" &
+		wmiir xwrite /ctl view $(wi_tags | wi_menu) &
 	Key $MODKEY-Return
 		eval $WMII_TERM &
 	Key $MODKEY-Shift-space
@@ -142,7 +143,7 @@ wi_events -s '	' <<'!'
 	Key $MODKEY-Shift-c
 		wmiir xwrite /client/sel/ctl kill
 	Key $MODKEY-Shift-t
-		wmiir xwrite "/client/$(wmiir read /client/sel/ctl)/tags" "$(wi_tags | wi_menu)" &
+		wmiir xwrite "/client/$(wmiir read /client/sel/ctl)/tags" $(wi_tags | wi_menu) &
 	Key $MODKEY-$LEFT
 		wmiir xwrite /tag/sel/ctl select left
 	Key $MODKEY-$RIGHT

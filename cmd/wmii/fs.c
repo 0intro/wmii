@@ -433,9 +433,9 @@ lookup_file(FileId *parent, char *name)
 			switch(file->tab.type) {
 			case FsDBars:
 				if(!strcmp(file->tab.name, "lbar"))
-					file->p.bar_p = &screen[0].bar[BarLeft];
+					file->p.bar_p = &screen[0].bar[BLeft];
 				else
-					file->p.bar_p = &screen[0].bar[BarRight];
+					file->p.bar_p = &screen[0].bar[BRight];
 				break;
 			case FsFColRules:
 				file->p.rule = &def.colrules;

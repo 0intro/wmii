@@ -4,9 +4,10 @@
 #include "dat.h"
 #include "fns.h"
 
-static Image *divimg, *divmask;
-static CTuple divc;
-static Handlers handlers;
+static Image*	divimg;
+static Image*	divmask;
+static CTuple	divcolor;
+static Handlers	handlers;
 
 static Divide*
 getdiv(Divide **dp) {
@@ -92,7 +93,7 @@ update_imgs(void) {
 
 	if(divimg) {
 		if(w == Dx(divimg->r) && h == Dy(divimg->r)
-		&& !memcmp(&divc, &def.normcolor, sizeof(divc)))
+		&& !memcmp(&divcolor, &def.normcolor, sizeof divcolor))
 			return;
 		freeimage(divimg);
 		freeimage(divmask);
@@ -100,11 +101,11 @@ update_imgs(void) {
 
 	divimg = allocimage(w, h, scr.depth);
 	divmask = allocimage(w, h, 1);
-	divc = def.normcolor;
+	divcolor = def.normcolor;
 
 	fill(divmask, divmask->r, 0);
 	drawimg(divmask, 1, 1);
-	drawimg(divimg, divc.bg, divc.border);
+	drawimg(divimg, divcolor.bg, divcolor.border);
 
 	for(d = divs; d && d->w->mapped; d = d->next)
 		drawdiv(d);

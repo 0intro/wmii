@@ -1,12 +1,10 @@
-/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
 #include "fns.h"
 
 static Handlers handlers;
-static Bar *free_bars;
 
 #define foreach_bar(s, b) \
 	for(int __bar_n=0; __bar_n < nelem((s)->bar); __bar_n++) \
@@ -25,10 +23,7 @@ bar_init(WMScreen *s) {
 		  ExposureMask
 		| ButtonPressMask
 		| ButtonReleaseMask
-		| FocusChangeMask
-		| SubstructureRedirectMask
-		| SubstructureNotifyMask;
-
+		| FocusChangeMask;
 	s->barwin = createwindow(&scr.root, s->brect, scr.depth, InputOutput, &wa,
 			  CWOverrideRedirect
 			| CWBackPixmap
@@ -37,6 +32,20 @@ bar_init(WMScreen *s) {
 	xdnd_initwindow(s->barwin);
 	sethandler(s->barwin, &handlers);
 	mapwin(s->barwin);
+}
+
+void
+bar_resize(WMScreen *s) {
+	View *v;
+
+	s->brect = s->r;
+	s->brect.min.y = s->brect.max.y - labelh(def.font);
+
+	reshapewin(s->barwin, s->brect);
+
+	bar_draw(s);
+	for(v=view; v; v=v->next)
+		view_arrange(v);
 }
 
 Bar*
@@ -50,16 +59,9 @@ bar_create(Bar **bp, const char *name) {
 	if(b)
 		return b;
 
-	if(free_bars) {
-		b = free_bars;
-		free_bars = b->next;
-		memset(b, 0, sizeof(*b));
-	}
-	else
-		b = emallocz(sizeof(Bar));
-
+	b = emallocz(sizeof *b);
 	b->id = id++;
-	utflcpy(b->name, name, sizeof(b->name));
+	utflcpy(b->name, name, sizeof b->name);
 	b->col = def.normcolor;
 
 	for(; *bp; bp = &bp[0]->next)
@@ -85,24 +87,7 @@ bar_destroy(Bar **bp, Bar *b) {
 	for(p = bp; *p; p = &p[0]->next)
 		if(*p == b) break;
 	*p = b->next;
-
-	b->next = free_bars;
-	free_bars = b;
-}
-
-void
-bar_resize(WMScreen *s) {
-	View *v;
-
-	s->brect = s->r;
-	s->brect.min.y = s->brect.max.y - labelh(def.font);
-
-	reshapewin(s->barwin, s->brect);
-
-	sync();
-	bar_draw(s);
-	for(v = view; v; v = v->next)
-		view_arrange(v);
+	free(b);
 }
 
 void
@@ -151,7 +136,7 @@ bar_draw(WMScreen *s) {
 	foreach_bar(s, b) {
 		if(tb)
 			b->r = rectaddpt(b->r, Pt(tb->r.max.x, 0));
-		if(b == s->bar[BarRight])
+		if(b == s->bar[BRight])
 			b->r.max.x += Dx(s->brect) - width;
 		tb = b;
 	}
@@ -160,7 +145,7 @@ bar_draw(WMScreen *s) {
 	fill(screen->ibuf, r, def.normcolor.bg);
 	foreach_bar(s, b) {
 		align = Center;
-		if(b == s->bar[BarRight])
+		if(b == s->bar[BRight])
 			align = East;
 		fill(screen->ibuf, b->r, b->col.bg);
 		drawstring(screen->ibuf, def.font, b->r, align, b->text, b->col.fg);
@@ -175,14 +160,14 @@ bar_find(Bar *bp, const char *name) {
 	Bar *b;
 
 	for(b = bp; b; b = b->next)
-		if(!strncmp(b->name, name, sizeof(b->name)))
+		if(!strcmp(b->name, name))
 			break;
 	return b;
 }
 
 static char *barside[] = {
-	[BarLeft]  = "Left",
-	[BarRight] = "Right",
+	[BLeft]  = "Left",
+	[BRight] = "Right",
 };
 
 static Bar*
@@ -247,3 +232,4 @@ static Handlers handlers = {
 	.dndmotion = dndmotion_event,
 	.expose = expose_event,
 };
+

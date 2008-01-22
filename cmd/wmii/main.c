@@ -241,6 +241,7 @@ errorhandler(Display *dpy, XErrorEvent *error) {
 	/* Try to cleanup, but only try once, in case we're called recursively. */
 	if(!dead++)
 		cleanup();
+	abort();
 	return xlib_errorhandler(display, error); /* calls exit() */
 }
 

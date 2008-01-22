@@ -384,8 +384,8 @@ ewmh_framesize(Client *c) {
 	f = c->sel;
 	r.min.x = f->crect.min.x;
 	r.min.y = f->crect.min.y;
-	r.max.x = f->r.max.x - f->crect.max.x;
-	r.max.y = f->r.max.y - f->crect.max.y;
+	r.max.x = Dx(f->r) - f->crect.max.x;
+	r.max.y = Dy(f->r) - f->crect.max.y;
 
 	long extents[] = {
 		r.min.x, r.max.x,

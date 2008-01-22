@@ -46,17 +46,25 @@ fatal(const char *fmt, ...) {
 	exit(1);
 }
 
-char*
-vsxprint(const char *fmt, va_list ap) {
-	static char*	bufs[16];
-	static long	nbuf;
+void*
+freelater(void *p) {
+	static char*	obj[16];
+	static long	nobj;
 	int id;
 
-	id = nbuf++ % nelem(bufs);
-	if(bufs[id])
-		free(bufs[id]);
-	bufs[id] = vsmprint(fmt, ap);
-	return bufs[id];
+	id = nobj++ % nelem(obj);
+	free(obj[id]);
+	obj[id] = p;
+	return p;
+}
+
+char*
+vsxprint(const char *fmt, va_list ap) {
+	char *s;
+
+	s = vsmprint(fmt, ap);
+	freelater(s);
+	return s;
 }
 
 char*
@@ -93,19 +101,19 @@ mfatal(char *name, uint size) {
 	char buf[1024];
 	char sizestr[8];
 	int i;
-	
-	i = sizeof(sizestr);
+
+	i = sizeof sizestr;
 	do {
 		sizestr[--i] = '0' + (size%10);
 		size /= 10;
 	} while(size > 0);
 
-	strlcat(buf, argv0, sizeof(buf));
-	strlcat(buf, couldnot, sizeof(buf));
-	strlcat(buf, name, sizeof(buf));
-	strlcat(buf, paren, sizeof(buf));
-	strlcat(buf, sizestr+i, sizeof(buf));
-	strlcat(buf, bytes, sizeof(buf));
+	strlcat(buf, argv0, sizeof buf);
+	strlcat(buf, couldnot, sizeof buf);
+	strlcat(buf, name, sizeof buf);
+	strlcat(buf, paren, sizeof buf);
+	strlcat(buf, sizestr+i, sizeof buf);
+	strlcat(buf, bytes, sizeof buf);
 	write(2, buf, strlen(buf));
 
 	exit(1);
@@ -204,3 +212,4 @@ strlcat(char *dst, const char *src, uint size) {
 		*d = '\0';
 	return size - n - 1;
 }
+

@@ -1,5 +1,4 @@
 
-wmiiscript=$1
 if [ -z "$scriptname" ]; then
 	scriptname="$wmiiscript"; fi
 echo Start $wmiiscript | wmiir write /event 2>/dev/null ||

@@ -300,19 +300,41 @@ xls(int argc, char *argv[]) {
 	return 0;
 }
 
+static int
+xsetsid(int argc, char *argv[]) {
+	char *av0;
+
+	av0 = nil;
+	ARGBEGIN{
+	case '0':
+		av0 = EARGF(usage());
+		break;
+	default:
+		usage();
+	}ARGEND;
+	if(av0 == nil)
+		av0 = argv[0];
+
+	setsid();
+	execvp(av0, argv);
+	fatal("setsid: can't exec: %r");
+	return 1; /* NOTREACHED */
+}
+
 typedef struct exectab exectab;
 struct exectab {
 	char *cmd;
 	int (*fn)(int, char**);
 } etab[] = {
-	{"write", xwrite},
-	{"xwrite", xawrite},
-	{"read", xread},
 	{"cat", xread},
 	{"create", xcreate},
+	{"ls", xls},
+	{"read", xread},
 	{"remove", xremove},
 	{"rm", xremove},
-	{"ls", xls},
+	{"setsid", xsetsid},
+	{"write", xwrite},
+	{"xwrite", xawrite},
 	{0, 0}
 };
 

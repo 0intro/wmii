@@ -494,7 +494,8 @@ client_resize(Client *c, Rectangle r) {
 		client_configure(c);
 		ewmh_framesize(c);
 	}
-
+	sync(); /* Not ideal. */
+	flushenterevents();
 	flushevents(FocusChangeMask|ExposureMask, True);
 }
 
@@ -557,8 +558,12 @@ fullscreen(Client *c, int fullscreen) {
 
 	if(!fullscreen)
 		for(f=c->frame; f; f=f->cnext) {
-			if(f->oldarea == 0)
+			if(f->oldarea == 0) {
 				frame_resize(f, f->oldr); /* XXX: oldr Replace with floatr */
+				if(f->view == screen->sel) /* FIXME */
+					client_resize(f->client, f->r);
+
+			}
 			else if(f->oldarea > 0) {
 				wassel = (f == f->area->sel);
 				area_moveto(view_findarea(f->view, f->oldarea, true), f);

@@ -15,7 +15,7 @@
 #define ushort	_x_ushort
 #define uint	_x_uint
 #define ulong	_x_ulong
-#define uvlong _x_uvlong
+#define uvlong	_x_uvlong
 #define vlong	_x_vlong
 
 typedef unsigned char		uchar;
@@ -34,6 +34,7 @@ void*	emallocz(uint);
 void*	erealloc(void*, uint);
 char*	estrdup(const char*);
 void	fatal(const char*, ...);
+void*	freelater(void*);
 int	max(int, int);
 int	min(int, int);
 uint	strlcat(char*, const char*, uint);

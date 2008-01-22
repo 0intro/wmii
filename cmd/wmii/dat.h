@@ -275,7 +275,7 @@ EXTERN struct {
 } def;
 
 enum {
-	BarLeft, BarRight
+	BLeft, BRight
 };
 
 #define BLOCK(x) do { x; }while(0)
