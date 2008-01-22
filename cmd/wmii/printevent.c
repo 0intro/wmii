@@ -113,36 +113,36 @@ strign(int key) {
 /******************************************************************************/
 
 static void
-TInt(Biobuf *b, va_list *ap) {
-	Bprint(b, "%d", va_arg(*ap, int));
+TInt(Fmt *b, va_list *ap) {
+	fmtprint(b, "%d", va_arg(*ap, int));
 }
 
 static void
-TWindow(Biobuf *b, va_list *ap) {
+TWindow(Fmt *b, va_list *ap) {
 	Window w;
 
 	w = va_arg(*ap, Window);
-	Bprint(b, "0x%ux", (uint)w);
+	fmtprint(b, "0x%ux", (uint)w);
 }
 
 static void
-TData(Biobuf *b, va_list *ap) {
+TData(Fmt *b, va_list *ap) {
 	long *l;
 	int i;
 
 	l = va_arg(*ap, long*);
-	Bprint(b, "{");
+	fmtprint(b, "{");
 	for (i = 0; i < 5; i++) {
 		if(i > 0)
-			Bprint(b, ", ");
-		Bprint(b, "0x%08lx", l[i]);
+			fmtprint(b, ", ");
+		fmtprint(b, "0x%08lx", l[i]);
 	}
-	Bprint(b, "}");
+	fmtprint(b, "}");
 }
 
 /* Returns the string equivalent of a timestamp */
 static void
-TTime(Biobuf *b, va_list *ap) {
+TTime(Fmt *b, va_list *ap) {
 	ldiv_t	d;
 	ulong   msec;
 	ulong   sec;
@@ -169,12 +169,12 @@ TTime(Biobuf *b, va_list *ap) {
 		day, day == 1 ? "" : "(s)", hr, min, sec, msec);
 #endif
 
-	Bprint(b, "%ludd_%ludh_%ludm_%lud.%03luds", day, hr, min, sec, msec);
+	fmtprint(b, "%ludd_%ludh_%ludm_%lud.%03luds", day, hr, min, sec, msec);
 }
 
 /* Returns the string equivalent of a boolean parameter */
 static void
-TBool(Biobuf *b, va_list *ap) {
+TBool(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{True, "True"},
 		{False, "False"},
@@ -183,12 +183,12 @@ TBool(Biobuf *b, va_list *ap) {
 	Bool key;
 
 	key = va_arg(*ap, Bool);
-	Bprint(b, "%s", search(list, key, strign));
+	fmtprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a property notify state */
 static void
-TPropState(Biobuf *b, va_list *ap) {
+TPropState(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{PropertyNewValue, "PropertyNewValue"},
 		{PropertyDelete, "PropertyDelete"},
@@ -197,12 +197,12 @@ TPropState(Biobuf *b, va_list *ap) {
 	uint key;
 
 	key = va_arg(*ap, uint);
-	Bprint(b, "%s", search(list, key, strign));
+	fmtprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a visibility notify state */
 static void
-TVis(Biobuf *b, va_list *ap) {
+TVis(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{VisibilityUnobscured, "VisibilityUnobscured"},
 		{VisibilityPartiallyObscured, "VisibilityPartiallyObscured"},
@@ -212,12 +212,12 @@ TVis(Biobuf *b, va_list *ap) {
 	int key;
 
 	key = va_arg(*ap, int);
-	Bprint(b, "%s", search(list, key, strign));
+	fmtprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a mask of buttons and/or modifier keys */
 static void
-TModState(Biobuf *b, va_list *ap) {
+TModState(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{Button1Mask, "Button1Mask"},
 		{Button2Mask, "Button2Mask"},
@@ -237,12 +237,12 @@ TModState(Biobuf *b, va_list *ap) {
 	uint state;
 
 	state = va_arg(*ap, uint);
-	Bprint(b, "%s", unmask(list, state));
+	fmtprint(b, "%s", unmask(list, state));
 }
 
 /* Returns the string equivalent of a mask of configure window values */
 static void
-TConfMask(Biobuf *b, va_list *ap) {
+TConfMask(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{CWX, "CWX"},
 		{CWY, "CWY"},
@@ -256,13 +256,13 @@ TConfMask(Biobuf *b, va_list *ap) {
 	uint valuemask;
 
 	valuemask = va_arg(*ap, uint);
-	Bprint(b, "%s", unmask(list, valuemask));
+	fmtprint(b, "%s", unmask(list, valuemask));
 }
 
 /* Returns the string equivalent of a motion hint */
 #if 0
 static void
-IsHint(Biobuf *b, va_list *ap) {
+IsHint(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{NotifyNormal, "NotifyNormal"},
 		{NotifyHint, "NotifyHint"},
@@ -271,13 +271,13 @@ IsHint(Biobuf *b, va_list *ap) {
 	char key;
 
 	key = va_arg(*ap, char);
-	Bprint(b, "%s", search(list, key, strign));
+	fmtprint(b, "%s", search(list, key, strign));
 }
 #endif
 
 /* Returns the string equivalent of an id or the value "None" */
 static void
-TIntNone(Biobuf *b, va_list *ap) {
+TIntNone(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{None, "None"},
 		{0, nil},
@@ -285,12 +285,12 @@ TIntNone(Biobuf *b, va_list *ap) {
 	int key;
 
 	key = va_arg(*ap, int);
-	Bprint(b, "%s", search(list, key, strhex));
+	fmtprint(b, "%s", search(list, key, strhex));
 }
 
 /* Returns the string equivalent of a colormap state */
 static void
-TColMap(Biobuf *b, va_list *ap) {
+TColMap(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{ColormapInstalled, "ColormapInstalled"},
 		{ColormapUninstalled, "ColormapUninstalled"},
@@ -299,12 +299,12 @@ TColMap(Biobuf *b, va_list *ap) {
 	int key;
 
 	key = va_arg(*ap, int);
-	Bprint(b, "%s", search(list, key, strign));
+	fmtprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a crossing detail */
 static void
-TXing(Biobuf *b, va_list *ap) {
+TXing(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{NotifyAncestor, "NotifyAncestor"},
 		{NotifyInferior, "NotifyInferior"},
@@ -316,12 +316,12 @@ TXing(Biobuf *b, va_list *ap) {
 	int key;
 
 	key = va_arg(*ap, int);
-	Bprint(b, "%s", search(list, key, strign));
+	fmtprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a focus change detail */
 static void
-TFocus(Biobuf *b, va_list *ap) {
+TFocus(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{NotifyAncestor, "NotifyAncestor"},
 		{NotifyInferior, "NotifyInferior"},
@@ -336,12 +336,12 @@ TFocus(Biobuf *b, va_list *ap) {
 	int key;
 
 	key = va_arg(*ap, int);
-	Bprint(b, "%s", search(list, key, strign));
+	fmtprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a configure detail */
 static void
-TConfDetail(Biobuf *b, va_list *ap) {
+TConfDetail(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{Above, "Above"},
 		{Below, "Below"},
@@ -353,12 +353,12 @@ TConfDetail(Biobuf *b, va_list *ap) {
 	int key;
 
 	key = va_arg(*ap, int);
-	Bprint(b, "%s", search(list, key, strign));
+	fmtprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a grab mode */
 static void
-TGrabMode(Biobuf *b, va_list *ap) {
+TGrabMode(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{NotifyNormal, "NotifyNormal"},
 		{NotifyGrab, "NotifyGrab"},
@@ -369,12 +369,12 @@ TGrabMode(Biobuf *b, va_list *ap) {
 	int key;
 
 	key = va_arg(*ap, int);
-	Bprint(b, "%s", search(list, key, strign));
+	fmtprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a mapping request */
 static void
-TMapping(Biobuf *b, va_list *ap) {
+TMapping(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{MappingModifier, "MappingModifier"},
 		{MappingKeyboard, "MappingKeyboard"},
@@ -384,12 +384,12 @@ TMapping(Biobuf *b, va_list *ap) {
 	int key;
 
 	key = va_arg(*ap, int);
-	Bprint(b, "%s", search(list, key, strign));
+	fmtprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a stacking order place */
 static void
-TPlace(Biobuf *b, va_list *ap) {
+TPlace(Fmt *b, va_list *ap) {
 	static Pair list[] = {
 		{PlaceOnTop, "PlaceOnTop"},
 		{PlaceOnBottom, "PlaceOnBottom"},
@@ -398,12 +398,12 @@ TPlace(Biobuf *b, va_list *ap) {
 	int key;
 
 	key = va_arg(*ap, int);
-	Bprint(b, "%s", search(list, key, strign));
+	fmtprint(b, "%s", search(list, key, strign));
 }
 
 /* Returns the string equivalent of a major code */
 static void
-TMajor(Biobuf *b, va_list *ap) {
+TMajor(Fmt *b, va_list *ap) {
 	static char *list[] = { XMajors };
 	char *s;
 	uint key;
@@ -412,7 +412,7 @@ TMajor(Biobuf *b, va_list *ap) {
 	s = "<nil>";
 	if(key < nelem(list))
 		s = list[key];
-	Bprint(b, "%s", s);
+	fmtprint(b, "%s", s);
 }
 
 static char*
@@ -457,7 +457,7 @@ eventtype(int key) {
 }
 /* Returns the string equivalent the keycode contained in the key event */
 static void
-TKeycode(Biobuf *b, va_list *ap) {
+TKeycode(Fmt *b, va_list *ap) {
 	KeySym keysym_str;
 	XKeyEvent *ev;
 	char *keysym_name;
@@ -473,55 +473,65 @@ TKeycode(Biobuf *b, va_list *ap) {
 	if(keysym_name == nil)
 		keysym_name = "(no name)";
 
-	Bprint(b, "%ud (keysym 0x%x \"%s\")", (int)ev->keycode,
+	fmtprint(b, "%ud (keysym 0x%x \"%s\")", (int)ev->keycode,
 			(int)keysym_str, keysym_name);
 }
 
 /* Returns the string equivalent of an atom or "None" */
 static void
-TAtom(Biobuf *b, va_list *ap) {
+TAtom(Fmt *b, va_list *ap) {
 	char *atom_name;
 	Atom atom;
 
 	atom = va_arg(*ap, Atom);
 	atom_name = XGetAtomName(display, atom);
-	Bprint(b, "%s", atom_name);
+	fmtprint(b, "%s", atom_name);
 	XFree(atom_name);
 }
 
 #define _(m) #m, ev->m
 #define TEnd nil
-typedef void (*Tfn)(Biobuf*, va_list*);
+typedef void (*Tfn)(Fmt*, va_list*);
 
 static void
-pevent(void *ev, ...) {
-	static Biobuf *b;
+pevent(void *e, ...) {
+	Fmt f;
 	va_list ap;
 	Tfn fn;
-	char *key;
+	XAnyEvent *ev;
+	char *key, *s;
 	int n;
 
-	if(b == nil)
-		b = Bfdopen(2, O_WRONLY);
+	if(fmtstrinit(&f) < 0)
+		return;
+
+	ev = e;
+	fmtprint(&f, "%3ld %-20s ", ev->serial, eventtype(ev->type));
+	if(ev->send_event)
+		fmtprint(&f, "(sendevent) ");
 
 	n = 0;
-	va_start(ap, ev);
+	va_start(ap, e);
 	for(;;) {
 		fn = va_arg(ap, Tfn);
 		if(fn == TEnd)
 			break;
 
 		if(n++ != 0)
-			Bprint(b, "%s", sep);
+			fmtprint(&f, "%s", sep);
 
 		key = va_arg(ap, char*);
-		Bprint(b, "%s=", key);
-		fn(b, &ap);
+		fmtprint(&f, "%s=", key);
+		fn(&f, &ap);
 	}
 	va_end(ap);
 
-	Bprint(b, "\n");
-	Bflush(b);
+	fmtprint(&f, "\n");
+	s = fmtstrflush(&f);
+
+	void dprint(const char*, ...);
+	dprint("%s", s);
+	free(s);
 }
 
 /*****************************************************************************/
@@ -937,10 +947,6 @@ struct Handler {
 void 
 printevent(XEvent *e) {
 	XAnyEvent *ev = &e->xany;
-
-	fprint(2, "%3ld %-20s ", ev->serial, eventtype(e->xany.type));
-	if(ev->send_event)
-		fprint(2, "(sendevent) ");
 	/*
 		fprintf(stderr, "type=%s%s", eventtype(e->xany.type), sep);
 		fprintf(stderr, "serial=%lu%s", ev->serial, sep);

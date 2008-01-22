@@ -53,7 +53,8 @@ div_set(Divide *d, int x) {
 
 	d->x = x;
 	r = rectaddpt(divimg->r, Pt(x - Dx(divimg->r)/2, 0));
-	r.max.y = screen->brect.min.y;
+	r.min.y = screen->sel->r.min.y;
+	r.max.y = screen->sel->r.max.y;
 
 	reshapewin(d->w, r);
 	mapdiv(d);

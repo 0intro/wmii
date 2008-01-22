@@ -78,7 +78,8 @@ ewmh_updateclientlist(void) {
 	for(c=client; c; c=c->next)
 		i++;
 	list = emalloc(i * sizeof *list);
-	for(c=client, i=0; c; c=c->next)
+	i = 0;
+	for(c=client; c; c=c->next)
 		list[i++] = c->w.w;
 	changeprop_long(&scr.root, Net("CLIENT_LIST"), "WINDOW", list, i);
 }
@@ -93,14 +94,18 @@ ewmh_updatestacking(void) {
 	vector_linit(&vec);
 
 	for(v=view; v; v=v->next)
-		for(f=v->area->stack; f; f=f->snext)
-			if(f->client->sel == f)
-				vector_lpush(&vec, f->client->w.w);
-	for(v=view; v; v=v->next)
 		for(a=v->area->next; a; a=a->next)
 			for(f=a->frame; f; f=f->anext)
 				if(f->client->sel == f)
 					vector_lpush(&vec, f->client->w.w);
+	for(v=view; v; v=v->next) {
+		for(f=v->area->stack; f; f=f->snext)
+			if(!f->snext)
+				break;
+		for(; f; f=f->sprev)
+			if(f->client->sel == f)
+				vector_lpush(&vec, f->client->w.w);
+	}
 
 	changeprop_long(&scr.root, Net("CLIENT_LIST_STACKING"), "WINDOW", vec.ary, vec.n);
 	vector_lfree(&vec);
@@ -115,6 +120,7 @@ ewmh_initclient(Client *c) {
 	changeprop_long(&c->w, Net("WM_ALLOWED_ACTIONS"), "ATOM",
 		allowed, nelem(allowed));
 	ewmh_getwintype(c);
+	ewmh_getstrut(c);
 	ewmh_updateclientlist();
 }
 
@@ -128,6 +134,7 @@ ewmh_destroyclient(Client *c) {
 	if(e->timer)
 		if(!ixp_unsettimer(&srv, e->timer))
 			fprint(2, "Badness: %C: Can't unset timer\n", c);
+	free(c->strut);
 }
 
 static void
@@ -252,18 +259,18 @@ ewmh_getstrut(Client *c) {
 		RightMin, RightMax,
 		TopMin, TopMax,
 		BottomMin, BottomMax,
-		Last = BottomMax
+		Last
 	};
 	long *strut;
 	ulong n;
 
-	if(c->strut)
+	if(c->strut == nil)
 		free(c->strut);
 	c->strut = nil;
 
 	n = getprop_long(&c->w, Net("WM_STRUT_PARTIAL"), "CARDINAL",
 		0L, &strut, Last);
-	if(n != nelem(strut)) {
+	if(n != Last) {
 		free(strut);
 		n = getprop_long(&c->w, Net("WM_STRUT"), "CARDINAL",
 			0L, &strut, 4L);
@@ -271,6 +278,7 @@ ewmh_getstrut(Client *c) {
 			free(strut);
 			return;
 		}
+		Dprint(DEwmh, "ewmh_getstrut(%C[%s]) Using WM_STRUT\n", c, clientname(c));
 		strut = erealloc(strut, Last * sizeof *strut);
 		strut[LeftMin] = strut[RightMin] = 0;
 		strut[LeftMax] = strut[RightMax] = INT_MAX;
@@ -282,7 +290,13 @@ ewmh_getstrut(Client *c) {
 	c->strut->right =  Rect(-strut[Right],    strut[RightMin], 0,                strut[RightMax]);
 	c->strut->top =    Rect(strut[TopMin],    0,               strut[TopMax],    strut[Top]);
 	c->strut->bottom = Rect(strut[BottomMin], -strut[Bottom],  strut[BottomMax], 0);
+	Dprint(DEwmh, "ewmh_getstrut(%C[%s])\n", c, clientname(c));
+	Dprint(DEwmh, "\ttop: %R\n", c->strut->top);
+	Dprint(DEwmh, "\tleft: %R\n", c->strut->left);
+	Dprint(DEwmh, "\tright: %R\n", c->strut->right);
+	Dprint(DEwmh, "\tbottom: %R\n", c->strut->bottom);
 	free(strut);
+	view_focus(screen, screen->sel);
 }
 
 int

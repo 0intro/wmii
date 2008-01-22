@@ -379,9 +379,6 @@ main(int argc, char *argv[]) {
 	case 'a':
 		address = EARGF(usage());
 		break;
-	case 'G':
-		debug |= DGeneric;
-		break;
 	case 'r':
 		wmiirc = EARGF(usage());
 		break;

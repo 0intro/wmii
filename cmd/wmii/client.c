@@ -140,7 +140,6 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	p.y = labelh(def.font);
 	reparentwindow(&c->w, c->framewin, p);
 
-	ewmh_initclient(c);
 	group_init(c);
 
 	grab_button(c->framewin->w, AnyButton, AnyModifier);
@@ -151,6 +150,8 @@ client_create(XWindow w, XWindowAttributes *wa) {
 			*t = c;
 			break;
 		}
+
+	ewmh_initclient(c);
 
 	event("CreateClient %C\n", c);
 	client_manage(c);
@@ -269,7 +270,7 @@ client_viewframe(Client *c, View *v) {
 	Frame *f;
 
 	for(f=c->frame; f; f=f->cnext)
-		if(f->area->view == v)
+		if(f->view == v)
 			break;
 	return f;
 } 
@@ -372,7 +373,7 @@ frame_hints(Frame *f, Rectangle r, Align sticky) {
 	if(!f->area->floating) {
 		/* Not allowed to grow */
 		if(Dx(r) > Dx(or))
-			r.max.x =r.min.x+Dx(or);
+			r.max.x = r.min.x+Dx(or);
 		if(Dy(r) > Dy(or))
 			r.max.y = r.min.y+Dy(or);
 	}
@@ -703,7 +704,7 @@ client_prop(Client *c, Atom a) {
 	int n;
 
 	if(a == xatom("WM_PROTOCOLS"))
-		c->proto = winprotocols(&c->w);
+		c->proto = ewmh_protocols(&c->w);
 	else
 	if(a == xatom("_NET_WM_NAME"))
 		goto wmname;

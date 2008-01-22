@@ -48,6 +48,29 @@ bar_resize(WMScreen *s) {
 		view_arrange(v);
 }
 
+void
+bar_setbounds(int left, int right) {
+	Rectangle *r;
+
+	r = &screen->brect;
+	r->min.x = left;
+	r->max.x = right;
+	reshapewin(screen->barwin, *r);
+}
+
+void
+bar_sety(int y) {
+	Rectangle *r;
+	int dy;
+
+	r = &screen->brect;
+
+	dy = y - r->min.y;
+	r->min.y += dy;
+	r->max.y += dy;
+	reshapewin(screen->barwin, *r);
+}
+
 Bar*
 bar_create(Bar **bp, const char *name) {
 	static uint id = 1;

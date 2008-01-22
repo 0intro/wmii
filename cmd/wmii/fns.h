@@ -28,6 +28,8 @@ void	bar_draw(WMScreen*);
 Bar*	bar_find(Bar*, const char*);
 void	bar_init(WMScreen*);
 void	bar_resize(WMScreen*);
+void	bar_sety(int);
+void	bar_setbounds(int, int);
 
 /* client.c */
 int	Cfmt(Fmt *f);
@@ -47,6 +49,7 @@ void	client_reparent(Client*, Window*, Point);
 void	client_resize(Client*, Rectangle);
 void	client_setcursor(Client*, Cursor);
 void	client_seturgent(Client*, bool, int);
+void	client_setviews(Client*, char**);
 void	client_unmap(Client*, int state);
 Frame*	client_viewframe(Client *c, View *v);
 char*	clientname(Client*);
@@ -173,6 +176,12 @@ char*	readctl_root(void);
 char*	readctl_view(View*);
 Area*	strarea(View*, const char*);
 void	warning(const char*, ...);
+/* debug */
+void	debug(int, const char*, ...);
+void	dprint(const char*, ...);
+int	getdebug(char*);
+bool	setdebug(int);
+void	vdebug(int, const char*, va_list);
 
 /* mouse.c */
 void	mouse_resize(Client*, bool opaque, Align);
@@ -201,8 +210,8 @@ void	view_restack(View*);
 void	view_scale(View*, int w);
 Client*	view_selclient(View*);
 void	view_select(const char*);
-void	client_setviews(Client*, char**);
 void	view_update_all(void);
+void	view_update_rect(View*);
 Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 
 /* utf.c */

@@ -28,7 +28,7 @@ float_detach(Frame *f) {
 	v = f->view;
 	a = f->area;
 	sel = view_findarea(v, v->selcol, false);
-	assert(sel);
+	assert(sel || !v->area->next);
 	pr = f->aprev;
 
 	frame_remove(f);
@@ -44,7 +44,7 @@ float_detach(Frame *f) {
 	if(v->oldsel)
 		area_focus(v->oldsel);
 	else if(!a->frame)
-		if(sel->frame)
+		if(sel && sel->frame)
 			area_focus(sel);
 }
 

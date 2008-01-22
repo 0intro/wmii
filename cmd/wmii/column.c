@@ -102,7 +102,10 @@ column_detach(Frame *f) {
 
 	a = f->area;
 	column_remove(f);
-	column_arrange(a, false);
+	if(a->frame)
+		column_arrange(a, false);
+	else if(a->view->area->next->next)
+		area_destroy(a);
 }
 
 static void
@@ -238,10 +241,6 @@ column_arrange(Area *a, bool dirty) {
 		return;
 
 	v = a->view;
-	if(!a->frame) {
-		view_arrange(v);
-		return;
-	}
 
 	switch(a->mode) {
 	case Coldefault:
@@ -290,7 +289,7 @@ column_resize(Area *a, int w) {
 	a->r.max.x += dw;
 	an->r.min.x += dw;
 
-	view_arrange(a->view);
+	/* view_arrange(a->view); */
 	view_focus(screen, a->view);
 }
 
@@ -300,7 +299,7 @@ column_resizeframe_h(Frame *f, Rectangle *r) {
 	Frame *fn, *fp;
 	uint minh;
 
-	minh = 2 * labelh(def.font);
+	minh = labelh(def.font);
 
 	a = f->area;
 	fn = f->anext;
@@ -333,42 +332,41 @@ column_resizeframe(Frame *f, Rectangle *r) {
 	Area *a, *al, *ar;
 	View *v;
 	uint minw;
-	int dx, dw, maxx;
 
 	a = f->area;
 	v = a->view;
-	maxx = r->max.x;
 
 	minw = Dx(v->r) / NCOL;
 
-	al = a->prev;
 	ar = a->next;
+	al = a->prev;
+	if(al == v->area)
+		al = nil;
 
 	if(al)
 		r->min.x = max(r->min.x, al->r.min.x + minw);
 	else
-		r->min.x = max(r->min.x, 0);
+		r->min.x = max(r->min.x, v->r.min.x);
 
 	if(ar)
-		maxx = min(maxx, a->r.max.x - minw);
+		r->max.x = min(r->max.x, ar->r.max.x - minw);
 	else
-		maxx = min(maxx, v->r.max.x);
+		r->max.x = min(r->max.x, v->r.max.x);
 
-	dx = a->r.min.x - r->min.x;
-	dw = maxx - a->r.max.x;
+	a->r.min.x = r->min.x;
+	a->r.max.x = r->max.x;
 	if(al) {
-		al->r.max.x -= dx;
-		column_arrange(al, False);
+		al->r.max.x = a->r.min.x;
+		column_arrange(al, false);
 	}
 	if(ar) {
-		ar->r.max.x -= dw;
-		column_arrange(ar, False);
+		ar->r.min.x = a->r.max.x;
+		column_arrange(ar, false);
 	}
 
 	column_resizeframe_h(f, r);
 
-	a->r.max.x = maxx;
-	view_arrange(a->view);
-
+	/* view_arrange(v); */
 	view_focus(screen, v);
 }
+

@@ -119,6 +119,8 @@ area_destroy(Area *a) {
 
 	if(v->revert == a)
 		v->revert = nil;
+	if(v->oldsel == a)
+		v->oldsel = nil;
 
 	idx = area_idx(a);
 
@@ -190,7 +192,7 @@ area_attach(Area *a, Frame *f) {
 	else
 		column_attach(a, f);
 
-	view_restack(a->view);
+	view_arrange(a->view);
 
 	if(a->frame)
 		assert(a->sel);
@@ -206,6 +208,7 @@ area_detach(Frame *f) {
 		float_detach(f);
 	else
 		column_detach(f);
+	view_arrange(a->view);
 }
 
 void

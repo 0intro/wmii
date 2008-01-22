@@ -68,6 +68,7 @@ view_create(const char *name) {
 	v->next = *i;
 	*i = v;
 
+	view_arrange(v);
 	if(!screen->sel)
 		_view_select(v);
 	ewmh_updateviews();
@@ -122,6 +123,54 @@ update_frame_selectors(View *v) {
 }
 
 void
+view_update_rect(View *v) {
+	Rectangle r, sr, brect;
+	Strut *strut;
+	Frame *f;
+	int left, right, top, bottom;
+
+	top = 0;
+	left = 0;
+	right = 0;
+	bottom = 0;
+	for(f=v->area->frame; f; f=f->anext) {
+		strut = f->client->strut;
+		if(!strut)
+			continue;
+		/* Can do better in the future. */
+		top = max(top, strut->top.max.y);
+		left = max(left, strut->left.max.x);
+		right = min(right, strut->right.min.x);
+		bottom = min(bottom, strut->bottom.min.y);
+	}
+	r = screen->r;
+	r.min.y += min(top, .3 * Dy(screen->r));
+	r.min.x += min(left, .3 * Dx(screen->r));
+	r.max.x += max(right, -.3 * Dx(screen->r));
+	r.max.y += max(bottom, -.3 * Dy(screen->r));
+	r.max.y -= Dy(screen->brect);
+	v->r = r;
+
+	bar_sety(r.max.y);
+	brect = screen->brect;
+	brect.min.x = screen->r.min.x;
+	brect.max.x = screen->r.max.x;
+	for(f=v->area->frame; f; f=f->anext) {
+		/* This is not pretty. :( */
+		strut = f->client->strut;
+		if(!strut)
+			continue;
+		sr = strut->left;
+		if(rect_intersect_p(brect, sr))
+			brect.min.x = sr.max.x;
+		sr = rectaddpt(strut->right, screen->r.max);
+		if(rect_intersect_p(brect, sr))
+			brect.max.x = sr.min.x;
+	}
+	bar_setbounds(brect.min.x, brect.max.x);
+}
+
+void
 view_focus(WMScreen *s, View *v) {
 	Client *c;
 	Frame *f, *fnext;
@@ -133,6 +182,7 @@ view_focus(WMScreen *s, View *v) {
 	XGrabServer(display);
 
 	_view_select(v);
+	view_arrange(v);
 	update_frame_selectors(v);
 	div_update_all();
 	fscrn = false;
@@ -257,7 +307,7 @@ view_scale(View *v, int w) {
 	uint minwidth;
 	Area *a;
 	float scale;
-	int wdiff, dx;
+	int dx;
 
 	minwidth = Dx(v->r)/NCOL;
 
@@ -272,12 +322,12 @@ view_scale(View *v, int w) {
 	}
 
 	scale = (float)w / dx;
-	xoff = 0;
+	xoff = v->r.min.x;
 	for(a=v->area->next; a; a=a->next) {
 		a->r.max.x = xoff + Dx(a->r) * scale;
 		a->r.min.x = xoff;
 		if(!a->next)
-			a->r.max.x = w;
+			a->r.max.x = v->r.min.x + w;
 		xoff = a->r.max.x;
 	}
 
@@ -286,42 +336,38 @@ view_scale(View *v, int w) {
 	if(numcol * minwidth > w)
 		return;
 
-	dx = numcol * minwidth;
-	xoff = 0;
-	for(a=v->area->next, numcol--; a; a=a->next, numcol--) {
+	xoff = v->r.min.x;
+	for(a=v->area->next; a; a=a->next) {
 		a->r.min.x = xoff;
 
 		if(Dx(a->r) < minwidth)
 			a->r.max.x = xoff + minwidth;
-		else if((wdiff = xoff + Dx(a->r) - w + dx) > 0)
-			a->r.max.x -= wdiff;
 		if(!a->next)
-			a->r.max.x = w;
+			a->r.max.x = v->r.min.x + w;
 		xoff = a->r.max.x;
 	}
 }
 
 void
 view_arrange(View *v) {
-	uint xoff;
-	Area *a, *anext;
+	Area *a;
 
 	if(!v->area->next)
 		return;
-
-	view_scale(v, Dx(v->r));
-	xoff = 0;
+	/*
 	for(a=v->area->next; a; a=anext) {
 		anext = a->next;
 		if(!a->frame && v->area->next->next)
 			area_destroy(a);
 	}
+	*/
+	view_update_rect(v);
+	view_scale(v, Dx(v->r));
 	for(a=v->area->next; a; a=a->next) {
-		a->r.min.x = xoff;
-		a->r.min.y = 0;
-		a->r.max.y = screen->brect.min.y;
-		xoff = a->r.max.x;
-		column_arrange(a, False);
+		/* This is wrong... */
+		a->r.min.y = v->r.min.y;
+		a->r.max.y = v->r.max.y;
+		column_arrange(a, false);
 	}
 	if(v == screen->sel)
 		div_update_all();

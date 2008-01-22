@@ -10,48 +10,96 @@
 
 /* Datatypes: */
 typedef struct Dirtab Dirtab;
+typedef struct FileId FileId;
+typedef struct PLink PLink;
+typedef struct Pending Pending;
+typedef struct RLink RLink;
+typedef struct Queue Queue;
+
+struct PLink {
+	PLink*		next;
+	PLink*		prev;
+	IxpFid*		fid;
+	Queue*		queue;
+	Pending*	pending;
+};
+
+struct RLink {
+	RLink*		next;
+	RLink*		prev;
+	Ixp9Req*	req;
+};
+
+struct Pending {
+	RLink	req;
+	PLink	fids;
+};
+
+struct Queue {
+	Queue*	link;
+	char*	dat;
+	long	len;
+};
+
+static Pending	events;
+static Pending	pdebug[NDebugOpt];
+
 struct Dirtab {
-	char		*name;
+	char*	name;
 	uchar	qtype;
 	uint	type;
 	uint	perm;
+	uint	flags;
 };
 
-typedef struct FidLink FidLink;
-struct FidLink {
-	FidLink *next;
-	Fid *fid;
-};
-
-typedef struct FileId FileId;
 struct FileId {
-	FileId		*next;
+	FileId*	next;
 	union {
-		void	*ref;
-		char	*buf;
-		Bar	*bar;
-		Bar	**bar_p;
-		View	*view;
-		Client	*client;
-		Ruleset	*rule;
-		CTuple	*col;
+		Bar*		bar;
+		Bar**		bar_p;
+		CTuple*		col;
+		Client*		client;
+		PLink*		p;
+		Ruleset*	rule;
+		View*		view;
+		char*		buf;
+		void*		ref;
 	} p;
+	bool	pending;
 	uint	id;
 	uint	index;
-	Dirtab		tab;
+	Dirtab	tab;
 	ushort	nref;
 	uchar	volatil;
 };
 
+enum {
+	FLHide = 1,
+};
+
 /* Constants */
 enum {	/* Dirs */
-	FsRoot, FsDClient, FsDClients, FsDBars,
-	FsDTag, FsDTags,
+	FsDBars,
+	FsDClient,
+	FsDClients,
+	FsDDebug,
+	FsDTag,
+	FsDTags,
+	FsRoot,
 	/* Files */
-	FsFBar, FsFCctl, FsFColRules, FsFClabel,
-	FsFCtags, FsFEvent, FsFKeys, FsFRctl,
-	FsFTagRules, FsFTctl, FsFTindex,
-	FsFprops
+	FsFBar,
+	FsFCctl,
+	FsFClabel,
+	FsFColRules,
+	FsFCtags,
+	FsFDebug,
+	FsFEvent,
+	FsFKeys,
+	FsFRctl,
+	FsFTagRules,
+	FsFTctl,
+	FsFTindex,
+	FsFprops,
 };
 
 /* Error messages */
@@ -67,10 +115,6 @@ static char
 /* Global Vars */
 /***************/
 FileId *free_fileid;
-/* Pending, outgoing reads on /event */
-Ixp9Req *peventread, *oeventread;
-/* Fids for /event with pending reads */
-FidLink *peventfid;
 
 Ixp9Srv p9srv = {
 	.open=	fs_open,
@@ -93,6 +137,7 @@ static Dirtab
 dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
 		  {"rbar",	QTDIR,		FsDBars,	0700|DMDIR },
 		  {"lbar",	QTDIR,		FsDBars,	0700|DMDIR },
+		  {"debug",	QTDIR,		FsDDebug,	0500|DMDIR, FLHide },
 		  {"client",	QTDIR,		FsDClients,	0500|DMDIR },
 		  {"tag",	QTDIR,		FsDTags,	0500|DMDIR },
 		  {"ctl",	QTAPPEND,	FsFRctl,	0600|DMAPPEND },
@@ -110,6 +155,9 @@ dirtab_client[]= {{".",		QTDIR,		FsDClient,	0500|DMDIR },
 		  {"tags",	QTFILE,		FsFCtags,	0600 },
 		  {"props",	QTFILE,		FsFprops,	0400 },
 		  {nil}},
+dirtab_debug[]=  {{".",		QTDIR,		FsDDebug,	0500|DMDIR, FLHide },
+		  {"",		QTFILE,		FsFDebug,	0400 },
+		  {nil}},
 dirtab_bars[]=	 {{".",		QTDIR,		FsDBars,	0700|DMDIR },
 		  {"",		QTFILE,		FsFBar,		0600 },
 		  {nil}},
@@ -120,11 +168,12 @@ dirtab_tag[]=	 {{".",		QTDIR,		FsDTag,		0500|DMDIR },
 		  {"ctl",	QTAPPEND,	FsFTctl,	0600|DMAPPEND },
 		  {"index",	QTFILE,		FsFTindex,	0400 },
 		  {nil}};
-static Dirtab *dirtab[] = {
+static Dirtab* dirtab[] = {
 	[FsRoot] = dirtab_root,
 	[FsDBars] = dirtab_bars,
 	[FsDClients] = dirtab_clients,
 	[FsDClient] = dirtab_client,
+	[FsDDebug] = dirtab_debug,
 	[FsDTags] = dirtab_tags,
 	[FsDTag] = dirtab_tag,
 };
@@ -146,6 +195,7 @@ get_file(void) {
 	temp->volatil = 0;
 	temp->nref = 1;
 	temp->next = nil;
+	temp->pending = false;
 	return temp;
 }
 
@@ -255,52 +305,159 @@ message(Ixp9Req *r, MsgFunc fn) {
 	return err;
 }
 
+/* FIXME: Move to external lib */
 static void
-respond_event(Ixp9Req *r) {
-	FileId *f = r->fid->aux;
-	if(f->p.buf) {
-		r->ofcall.data = (void *)f->p.buf;
-		r->ofcall.count = strlen(f->p.buf);
+pending_respond(Ixp9Req *r) {
+	FileId *f;
+	PLink *p;
+	RLink *rl;
+	Queue *q;
+
+	f = r->fid->aux;
+	p = f->p.p;
+	assert(f->pending);
+	if(p->queue) {
+		q = p->queue;
+		p->queue = q->link;
+		r->ofcall.data = q->dat;
+		r->ofcall.count = q->len;
+		if(r->aux) {
+			rl = r->aux;
+			rl->next->prev = rl->prev;
+			rl->prev->next = rl->next;
+			free(rl);
+		}
 		respond(r, nil);
-		f->p.buf = nil;
-	}else{
-		r->aux = peventread;
-		peventread = r;
+		free(q);
+	}else {
+		rl = emallocz(sizeof *rl);
+		rl->req = r;
+		rl->next = &p->pending->req;
+		rl->prev = rl->next->prev;
+		rl->next->prev = rl;
+		rl->prev->next = rl;
+		r->aux = rl;
 	}
+}
+
+static void
+pending_write(Pending *p, char *dat, long n) {
+	RLink rl;
+	Queue **qp, *q;
+	PLink *pp;
+	RLink *rp;
+
+	if(n == 0)
+		return;
+
+	if(p->req.next == nil) {
+		p->req.next = &p->req;
+		p->req.prev = &p->req;
+		p->fids.prev = &p->fids;
+		p->fids.next = &p->fids;
+	}
+
+	for(pp=p->fids.next; pp != &p->fids; pp=pp->next) {
+		for(qp=&pp->queue; *qp; qp=&qp[0]->link)
+			;
+		q = emallocz(sizeof *q);
+		q->dat = emalloc(n);
+		memcpy(q->dat, dat, n);
+		q->len = n;
+		*qp = q;
+	}
+	rl.next = &rl;
+	rl.prev = &rl;
+	if(p->req.next != &p->req) {
+		rl.next = p->req.next;
+		rl.prev = p->req.prev;
+		p->req.prev = &p->req;
+		p->req.next = &p->req;
+	}
+	rl.prev->next = &rl;
+	rl.next->prev = &rl;
+	while((rp = rl.next) != &rl)
+		pending_respond(rp->req);
+}
+
+static void
+pending_pushfid(Pending *p, IxpFid *f) {
+	PLink *pl;
+	FileId *fi;
+
+	if(p->req.next == nil) {
+		p->req.next = &p->req;
+		p->req.prev = &p->req;
+		p->fids.prev = &p->fids;
+		p->fids.next = &p->fids;
+	}
+
+	fi = f->aux;
+	pl = emallocz(sizeof *pl);
+	pl->fid = f;
+	pl->pending = p;
+	pl->next = &p->fids;
+	pl->prev = pl->next->prev;
+	pl->next->prev = pl;
+	pl->prev->next = pl;
+	fi->pending = true;
+	fi->p.p = pl;
 }
 
 void
 event(const char *format, ...) {
-	uint len, slen;
 	va_list ap;
-	FidLink *f;
-	FileId *fi;
-	Ixp9Req *req;
 
 	va_start(ap, format);
 	vsnprint(buffer, sizeof(buffer), format, ap);
 	va_end(ap);
 
-	len = strlen(buffer);
-	if(len == 0)
-		return;
+	pending_write(&events, buffer, strlen(buffer));
+}
 
-	for(f=peventfid; f; f=f->next) {
-		fi = f->fid->aux;
+static int dflags;
+bool
+setdebug(int flag) {
+	dflags = flag;
+	return true;
+}
 
-		slen = 0;
-		if(fi->p.buf)
-			slen = strlen(fi->p.buf);
-		fi->p.buf = erealloc(fi->p.buf, slen + len + 1);
-		fi->p.buf[slen] = '\0';
-		strcat(fi->p.buf, buffer);
-	}
-	oeventread = peventread;
-	peventread = nil;
-	while((req = oeventread)) {
-		oeventread = oeventread->aux;
-		respond_event(req);
-	}
+void
+vdebug(int flag, const char *fmt, va_list ap) {
+	char *s;
+	int i, len;
+
+	if(flag == 0)
+		flag = dflags;
+
+	s = vsmprint(fmt, ap);
+	len = strlen(s);
+
+	if(debugflag&flag)
+		print("%s", s);
+	if(debugfile&flag)
+	for(i=0; i < nelem(pdebug); i++)
+		if(flag & (1<<i))
+			pending_write(pdebug+i, s, len);
+	free(s);
+}
+
+void
+debug(int flag, const char *fmt, ...) {
+	va_list ap;
+
+	va_start(ap, fmt);
+	vdebug(flag, fmt, ap);
+	va_end(ap);
+}
+
+void
+dprint(const char *fmt, ...) {
+	va_list ap;
+
+	va_start(ap, fmt);
+	vdebug(0, fmt, ap);
+	va_end(ap);
 }
 
 static void
@@ -331,6 +488,7 @@ lookup_file(FileId *parent, char *name)
 	View *v;
 	Bar *b;
 	uint id;
+	int i;
 
 	if(!(parent->tab.perm & DMDIR))
 		return nil;
@@ -339,7 +497,7 @@ lookup_file(FileId *parent, char *name)
 	ret = nil;
 	for(; dir->name; dir++) {
 		/* Dynamic dirs */
-		if(!*dir->name) { /* strlen(dir->name) == 0 */
+		if(dir->name[0] == '\0') {
 			switch(parent->tab.type) {
 			case FsDClients:
 				if(!name || !strcmp(name, "sel")) {
@@ -347,7 +505,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->volatil = True;
+						file->volatil = true;
 						file->p.client = c;
 						file->id = c->w.w;
 						file->index = c->w.w;
@@ -365,7 +523,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->volatil = True;
+						file->volatil = true;
 						file->p.client = c;
 						file->id = c->w.w;
 						file->index = c->w.w;
@@ -376,13 +534,25 @@ lookup_file(FileId *parent, char *name)
 					}
 				}
 				break;
+			case FsDDebug:
+				for(i=0; i < nelem(pdebug); i++)
+					if(!name || !strcmp(name, debugtab[i])) {
+						file = get_file();
+						*last = file;
+						last = &file->next;
+						file->id = i;
+						file->tab = *dir;
+						file->tab.name = estrdup(debugtab[i]);
+						if(name) goto LastItem;
+					}
+				break;
 			case FsDTags:
 				if(!name || !strcmp(name, "sel")) {
 					if(screen->sel) {
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->volatil = True;
+						file->volatil = true;
 						file->p.view = screen->sel;
 						file->id = screen->sel->id;
 						file->tab = *dir;
@@ -394,7 +564,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->volatil = True;
+						file->volatil = true;
 						file->p.view = v;
 						file->id = v->id;
 						file->tab = *dir;
@@ -409,7 +579,7 @@ lookup_file(FileId *parent, char *name)
 						file = get_file();
 						*last = file;
 						last = &file->next;
-						file->volatil = True;
+						file->volatil = true;
 						file->p.bar = b;
 						file->id = b->id;
 						file->tab = *dir;
@@ -420,7 +590,7 @@ lookup_file(FileId *parent, char *name)
 				break;
 			}
 		}else /* Static dirs */
-		if(!name || !strcmp(name, dir->name)) {
+		if(!name && !(dir->flags & FLHide) || name && !strcmp(name, dir->name)) {
 			file = get_file();
 			*last = file;
 			last = &file->next;
@@ -460,14 +630,14 @@ verify_file(FileId *f) {
 	int ret;
 
 	if(!f->next)
-		return True;
+		return true;
 
-	ret = False;
+	ret = false;
 	if(verify_file(f->next)) {
 		nf = lookup_file(f->next, f->tab.name);
 		if(nf) {
 			if(!nf->volatil || nf->p.ref == f->p.ref)
-				ret = True;
+				ret = true;
 			free_file(nf);
 		}
 	}
@@ -631,6 +801,10 @@ fs_read(Ixp9Req *r) {
 		return;
 	}
 	else{
+		if(f->pending) {
+			pending_respond(r);
+			return;
+		}
 		switch(f->tab.type) {
 		case FsFprops:
 			write_buf(r, f->p.client->props, strlen(f->p.client->props));
@@ -682,9 +856,6 @@ fs_read(Ixp9Req *r) {
 			n = strlen(buf);
 			write_buf(r, buf, n);
 			respond(r, nil);
-			return;
-		case FsFEvent:
-			respond_event(r);
 			return;
 		}
 	}
@@ -777,8 +948,9 @@ fs_write(Ixp9Req *r) {
 
 void
 fs_open(Ixp9Req *r) {
-	FidLink *fl;
-	FileId *f = r->fid->aux;
+	FileId *f;
+	
+	f = r->fid->aux;
 
 	if(!verify_file(f)) {
 		respond(r, Enofile);
@@ -787,10 +959,11 @@ fs_open(Ixp9Req *r) {
 
 	switch(f->tab.type) {
 	case FsFEvent:
-		fl = emallocz(sizeof(FidLink));
-		fl->fid = r->fid;
-		fl->next = peventfid;
-		peventfid = fl;
+		pending_pushfid(&events, r->fid);
+		break;
+	case FsFDebug:
+		pending_pushfid(pdebug+f->id, r->fid);
+		debugfile |= 1<<f->id;
 		break;
 	}
 	if((r->ifcall.mode&3) == OEXEC) {
@@ -864,14 +1037,36 @@ fs_remove(Ixp9Req *r) {
 
 void
 fs_clunk(Ixp9Req *r) {
-	FidLink **fl, *ft;
 	FileId *f;
+	PLink *pl;
+	Queue *qu;
 	char *p, *q;
 	Client *c;
 	IxpMsg m;
 	
 	f = r->fid->aux;
 	if(!verify_file(f)) {
+		respond(r, nil);
+		return;
+	}
+
+	if(f->pending) {
+		/* Should probably be in freefid */
+		pl = f->p.p;
+		pl->prev->next = pl->next;
+		pl->next->prev = pl->prev;
+		while((qu = pl->queue)) {
+			pl->queue = qu->link;
+			free(qu->dat);
+			free(qu);
+		};
+		switch(f->tab.type) {
+		case FsFDebug:
+			if(pl->pending->fids.next == &pl->pending->fids)
+				debugfile &= ~(1<<f->id);
+			break;
+		}
+		free(pl);
 		respond(r, nil);
 		return;
 	}
@@ -906,33 +1101,27 @@ fs_clunk(Ixp9Req *r) {
 
 		bar_draw(screen);
 		break;
-	case FsFEvent:
-		for(fl=&peventfid; *fl; fl=&fl[0]->next)
-			if(fl[0]->fid == r->fid) {
-				ft = fl[0];
-				fl[0] = fl[0]->next;
-				f = ft->fid->aux;
-				free(f->p.buf);
-				free(ft);
-				break;
-			}
-		break;
 	}
 	respond(r, nil);
 }
 
 void
 fs_flush(Ixp9Req *r) {
-	Ixp9Req **i, **j;
+	Ixp9Req *or;
+	FileId *f;
+	RLink *rl;
 
-	for(i=&peventread; i != &oeventread; i=&oeventread)
-		for(j=i; *j; j=(Ixp9Req**)&j[0]->aux)
-			if(*j == r->oldreq) {
-				j[0] = j[0]->aux;
-				respond(r->oldreq, Einterrupted);
-				goto done;
-			}
-done:
+	or = r->oldreq;
+	f = or->fid->aux;
+	if(f->pending) {
+		rl = or->aux;
+		if(rl) {
+			rl->prev->next = rl->next;
+			rl->next->prev = rl->prev;
+			free(rl);
+		}
+	}
+	respond(r->oldreq, Einterrupted);
 	respond(r, nil);
 }
 
@@ -946,3 +1135,4 @@ fs_freefid(Fid *f) {
 		free_file(id);
 	}
 }
+

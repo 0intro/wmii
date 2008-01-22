@@ -80,6 +80,7 @@ enum DebugOpt {
 	DEwmh	= 1<<2,
 	DFocus	= 1<<3,
 	DGeneric= 1<<4,
+	NDebugOpt = 5,
 };
 
 /* Data Structures */
@@ -329,9 +330,12 @@ EXTERN XHandler handler[LASTEvent];
 EXTERN bool	starting;
 EXTERN char*	user;
 EXTERN char*	execstr;
-EXTERN int	debug;
+EXTERN int	debugflag;
+EXTERN int	debugfile;
 EXTERN long	xtime;
 
-#define Debug(x) if(debug&(x))
-#define Dprint(x, ...) BLOCK( Debug(x) fprint(2, __VA_ARGS__) )
+extern char*	debugtab[];
+
+#define Debug(x) if((debugflag|debugfile)&(x) && setdebug(x))
+#define Dprint(x, ...) BLOCK( debug(x, __VA_ARGS__) )
 

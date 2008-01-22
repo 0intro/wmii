@@ -81,7 +81,7 @@ sxprint(const char *fmt, ...) {
 void
 _die(char *file, int line, char *msg) {
 	fprint(2, "%s: dieing at %s:%d: %s\n",
-		file, line, msg);
+		argv0, file, line, msg);
 	kill(getpid(), SIGABRT);
 	abort(); /* Adds too many frames:
 		  *  _die()

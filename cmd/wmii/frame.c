@@ -275,9 +275,10 @@ frame_client2rect(Frame *f, Rectangle r) {
 
 void
 frame_resize(Frame *f, Rectangle r) {
-	Align stickycorner;
-	Point pt;
 	Client *c;
+	Rectangle cr;
+	Point pt;
+	Align stickycorner;
 	int collapsed;
 
 	c = f->client;
@@ -299,8 +300,8 @@ frame_resize(Frame *f, Rectangle r) {
 	else
 		f->r = r;
 
-	f->crect = frame_rect2client(f, f->crect);
-	f->crect = rectsubpt(f->crect, f->crect.min);
+	cr = frame_rect2client(f, f->crect);
+	cr = rectsubpt(cr, cr.min);
 
 	collapsed = f->collapsed;
 
@@ -311,14 +312,12 @@ frame_resize(Frame *f, Rectangle r) {
 			f->collapsed = False;
 	}
 
-	if(Dx(f->crect) < labelh(def.font)) {
+	if(Dx(cr) < labelh(def.font))
 		f->r.max.x = f->r.min.x + frame_delta_h();
-		f->collapsed = True;
-	}
 
 	if(f->collapsed) {
 		f->r.max.y = f->r.min.y + labelh(def.font);
-		f->crect = f->r;
+		cr = f->r;
 	}
 
 	if(collapsed != f->collapsed)
@@ -330,10 +329,10 @@ frame_resize(Frame *f, Rectangle r) {
 	if(!f->client->titleless || !f->area->floating)
 		pt.y += labelh(def.font) - 1;
 
-	if(f->area->floating)
+	if(f->area->floating && !f->client->strut)
 		f->r = constrain(f->r);
-	pt.x = (Dx(f->r) - Dx(f->crect)) / 2;
-	f->crect = rectaddpt(f->crect, pt);
+	pt.x = (Dx(f->r) - Dx(cr)) / 2;
+	f->crect = rectaddpt(cr, pt);
 }
 
 void

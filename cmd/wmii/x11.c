@@ -332,11 +332,6 @@ findwin(XWindow w) {
 	return nil;
 }
 
-long
-winprotocols(Window *w) {
-	return ewmh_protocols(w);
-}
-
 /* Shape */
 void
 setshapemask(Window *dst, Image *src, Point pt) {

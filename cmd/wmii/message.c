@@ -74,7 +74,7 @@ char *symtab[] = {
 	"~",
 };
 
-char *debugtab[] = {
+char* debugtab[] = {
 	"dnd",
 	"event",
 	"ewmh",
@@ -116,7 +116,7 @@ getsym(char *s) {
 	return _bsearch(s, symtab, nelem(symtab));
 }
 
-static int
+int
 getdebug(char *s) {
 	return _bsearch(s, debugtab, nelem(debugtab));
 }
@@ -429,9 +429,9 @@ msg_debug(IxpMsg *m) {
 			continue;
 		}
 		if(add == '+')
-			debug |= 1<<d;
+			debugflag |= 1<<d;
 		else
-			debug &= ~(1<<d);
+			debugflag &= ~(1<<d);
 	}
 	if(buffer[0] != '\0')
 		return sxprint("Bad debug options: %s", buffer+2);
@@ -663,7 +663,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 
 	flushenterevents();
 	frame_focus(f);
-	view_arrange(v);
+	/* view_arrange(v); */
 	view_update_all();
 	return nil;
 }
@@ -698,7 +698,7 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 		frame_insert(f, fp);
 	}
 
-	view_arrange(f->view);
+	/* view_arrange(f->view); */
 
 	flushenterevents();
 	frame_focus(f);
@@ -707,11 +707,11 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 }
 
 static void
-printdebug(void) {
+printdebug(int mask) {
 	int i, j;
 
 	for(i=0, j=0; i < nelem(debugtab); i++)
-		Debug(1<<i) {
+		if(mask & (1<<i)) {
 			if(j++ > 0)
 				bufprint(" ");
 			bufprint("%s", debugtab[i]);
@@ -727,9 +727,14 @@ readctl_root(void) {
 	bufprint("font %s\n", def.font->name);
 	bufprint("grabmod %s\n", def.grabmod);
 	bufprint("border %d\n", def.border);
-	if(debug) {
+	if(debugflag) {
 		bufprint("debug ");
-		printdebug();
+		printdebug(debugflag);
+		bufprint("\n");
+	}
+	if(debugfile) {
+		bufprint("debugfile ");
+		printdebug(debugfile);
 		bufprint("\n");
 	}
 	return buffer;
