@@ -239,6 +239,7 @@ XRectangle	XRect(Rectangle);
 Rectangle	gravitate(Rectangle dst, Rectangle src, Point grav);
 Rectangle	insetrect(Rectangle, int);
 Rectangle	rectaddpt(Rectangle, Point);
+Rectangle	rectsetorigin(Rectangle, Point);
 Rectangle	rectsubpt(Rectangle, Point);
 Handlers*	sethandler(Window*, Handlers*);
 Rectangle	sizehint(WinHints*, Rectangle);

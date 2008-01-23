@@ -154,7 +154,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 		switch(e->button) {
 		case Button1:
 			focus(c, false);
-			mouse_resize(c, false, Center);
+			mouse_resize(c, Center);
 			break;
 		case Button2:
 			frame_restack(f, nil);
@@ -163,7 +163,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 			break;
 		case Button3:
 			focus(c, false);
-			mouse_resize(c, false, quadrant(f->r, Pt(e->x_root, e->y_root)));
+			mouse_resize(c, quadrant(f->r, Pt(e->x_root, e->y_root)));
 			break;
 		default:
 			XAllowEvents(display, ReplayPointer, e->time);
@@ -178,10 +178,10 @@ bdown_event(Window *w, XButtonEvent *e) {
 				view_restack(f->view);
 			}
 			if(rect_haspoint_p(Pt(e->x, e->y), f->grabbox))
-				mouse_resize(c, true, Center);
+				mouse_movegrabbox(c);
 			else if(f->area->floating)
 				if(!e->subwindow && !rect_haspoint_p(Pt(e->x, e->y), f->titlebar))
-					mouse_resize(c, false, quadrant(f->r, Pt(e->x_root, e->y_root)));
+					mouse_resize(c, quadrant(f->r, Pt(e->x_root, e->y_root)));
 
 			if(f->client != selclient())
 				focus(c, false);

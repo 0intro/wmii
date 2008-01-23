@@ -106,6 +106,17 @@ rectsubpt(Rectangle r, Point p) {
 	return r;
 }
 
+Rectangle
+rectsetorigin(Rectangle r, Point p) {
+	Rectangle ret;
+
+	ret.min.x = p.x;
+	ret.min.y = p.y;
+	ret.max.x = p.x + Dx(r);
+	ret.max.y = p.y + Dy(r);
+	return ret;
+}
+
 /* Formatters */
 static int
 Afmt(Fmt *f) {
