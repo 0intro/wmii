@@ -508,7 +508,7 @@ pevent(void *e, ...) {
 	ev = e;
 	fmtprint(&f, "%3ld %-20s ", ev->serial, eventtype(ev->type));
 	if(ev->send_event)
-		fmtprint(&f, "(sendevent) ");
+		fmtstrcpy(&f, "(sendevent) ");
 
 	n = 0;
 	va_start(ap, e);
@@ -526,7 +526,7 @@ pevent(void *e, ...) {
 	}
 	va_end(ap);
 
-	fmtprint(&f, "\n");
+	fmtstrcpy(&f, "\n");
 	s = fmtstrflush(&f);
 
 	void dprint(const char*, ...);

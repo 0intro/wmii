@@ -84,26 +84,35 @@ frame_insert(Frame *f, Frame *pos) {
 
 	if(a->floating) {
 		assert(f->sprev == nil);
-		f->snext = a->stack;
-		a->stack = f;
-		if(f->snext)
-			f->snext->sprev = f;
+		frame_restack(f, nil);
 	}
 }
 
 bool
 frame_restack(Frame *f, Frame *above) {
+	Client *c;
+	Frame *fp;
 	Area *a;
 
+	c = f->client;
 	a = f->area;
 	if(!a->floating)
 		return false;
+
+	if(above == nil && !(c->w.ewmh.type & TypeDock))
+		for(fp=a->stack; fp; fp=fp->snext)
+			if(fp->client->w.ewmh.type & TypeDock)
+				above = fp;
+			else
+				break;
+
+	if(f->sprev || f == a->stack)
 	if(f->sprev == above)
 		return false;
 
 	if(f->sprev)
 		f->sprev->snext = f->snext;
-	else
+	else if(f->snext)
 		a->stack = f->snext;
 	if(f->snext)
 		f->snext->sprev = f->sprev;
@@ -119,6 +128,10 @@ frame_restack(Frame *f, Frame *above) {
 	}
 	if(f->snext)
 		f->snext->sprev = f;
+
+	for(fp=a->stack; fp; fp=fp->snext)
+		print("[%C]%s\n", fp->client, clientname(fp->client));
+	print("\n");
 
 	return true;
 }

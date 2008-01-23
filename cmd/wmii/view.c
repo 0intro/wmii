@@ -276,10 +276,17 @@ view_restack(View *v) {
 	wins.n = 0;
 	fscrn = view_fullscreen_p(v);
 
+	/* *sigh */
+	for(f=v->area->stack; f; f=f->snext)
+		if(f->client->w.ewmh.type & TypeDock)
+			vector_lpush(&wins, f->client->framewin->w);
+		else
+			break;
+
 	if(!fscrn)
 		vector_lpush(&wins, screen->barwin->w);
 
-	for(f=v->area->stack; f; f=f->snext)
+	for(; f; f=f->snext)
 		vector_lpush(&wins, f->client->framewin->w);
 
 	if(fscrn)

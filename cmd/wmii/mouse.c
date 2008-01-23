@@ -490,7 +490,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 				r.min.y = pt.y;
 			else
 				r.max.y = pt.y;
-			column_resizeframe(f, &r);
+			column_resizeframe(f, r);
 
 			/* XXX: Magic number... */
 			if(align&West)

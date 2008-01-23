@@ -165,11 +165,12 @@ area_moveto(Area *to, Frame *f) {
 	}
 
 	area_detach(f);
-	area_attach(to, f);
 
 	/* Temporary kludge. */
-	if(!to->floating && to->floating != from->floating)
-		column_resizeframe(f, &tr);
+	if(!to->floating && to->floating != from->floating) {
+		column_attachrect(to, f, tr);
+	}else
+		area_attach(to, f);
 }
 
 void

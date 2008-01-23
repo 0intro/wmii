@@ -73,6 +73,26 @@ column_attach(Area *a, Frame *f) {
 }
 
 void
+column_attachrect(Area *a, Frame *f, Rectangle r) {
+	Frame *fp, *pos;
+	int before, after;
+
+	pos = nil;
+	for(fp=a->frame; fp; pos=fp, fp=fp->anext) {
+		if(r.max.y < fp->r.min.y)
+			continue;
+		if(r.min.x > fp->r.max.y)
+			continue;
+		before = fp->r.min.y - r.min.y;
+		after = r.max.y - fp->r.max.y;
+		if(abs(before) <= abs(after))
+			break;
+	}
+	column_insert(a, f, pos);
+	column_resizeframe(f, r);
+}
+
+void
 column_remove(Frame *f) {
 	Client *c;
 	Frame *pr;
@@ -294,7 +314,7 @@ column_resize(Area *a, int w) {
 }
 
 static void
-column_resizeframe_h(Frame *f, Rectangle *r) {
+column_resizeframe_h(Frame *f, Rectangle r) {
 	Area *a;
 	Frame *fn, *fp;
 	uint minh;
@@ -306,29 +326,29 @@ column_resizeframe_h(Frame *f, Rectangle *r) {
 	fp = f->aprev;
 
 	if(fp)
-		r->min.y = max(r->min.y, fp->r.min.y + minh);
+		r.min.y = max(r.min.y, fp->r.min.y + minh);
 	else
-		r->min.y = max(r->min.y, a->r.min.y);
+		r.min.y = max(r.min.y, a->r.min.y);
 
 	if(fn)
-		r->max.y = min(r->max.y, fn->r.max.y - minh);
+		r.max.y = min(r.max.y, fn->r.max.y - minh);
 	else
-		r->max.y = min(r->max.y, a->r.max.y);
+		r.max.y = min(r.max.y, a->r.max.y);
 
 	if(fp) {
-		fp->r.max.y = r->min.y;
+		fp->r.max.y = r.min.y;
 		frame_resize(fp, fp->r);
 	}
 	if(fn) {
-		fn->r.min.y = r->max.y;
+		fn->r.min.y = r.max.y;
 		frame_resize(fn, fn->r);
 	}
 
-	frame_resize(f, *r);
+	frame_resize(f, r);
 }
 
 void
-column_resizeframe(Frame *f, Rectangle *r) {
+column_resizeframe(Frame *f, Rectangle r) {
 	Area *a, *al, *ar;
 	View *v;
 	uint minw;
@@ -344,17 +364,17 @@ column_resizeframe(Frame *f, Rectangle *r) {
 		al = nil;
 
 	if(al)
-		r->min.x = max(r->min.x, al->r.min.x + minw);
+		r.min.x = max(r.min.x, al->r.min.x + minw);
 	else
-		r->min.x = max(r->min.x, v->r.min.x);
+		r.min.x = max(r.min.x, v->r.min.x);
 
 	if(ar)
-		r->max.x = min(r->max.x, ar->r.max.x - minw);
+		r.max.x = min(r.max.x, ar->r.max.x - minw);
 	else
-		r->max.x = min(r->max.x, v->r.max.x);
+		r.max.x = min(r.max.x, v->r.max.x);
 
-	a->r.min.x = r->min.x;
-	a->r.max.x = r->max.x;
+	a->r.min.x = r.min.x;
+	a->r.max.x = r.max.x;
 	if(al) {
 		al->r.max.x = a->r.min.x;
 		column_arrange(al, false);
@@ -367,6 +387,7 @@ column_resizeframe(Frame *f, Rectangle *r) {
 	column_resizeframe_h(f, r);
 
 	/* view_arrange(v); */
-	view_focus(screen, v);
+	if(v == screen->sel)
+		view_focus(screen, v);
 }
 

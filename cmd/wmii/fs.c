@@ -232,23 +232,28 @@ write_buf(Ixp9Req *r, char *buf, uint len) {
 /* This should be moved to libixp */
 static void
 write_to_buf(Ixp9Req *r, char **buf, uint *len, uint max) {
-	uint offset, count;
+	FileId *f;
 	char *p;
+	uint offset, count;
 
-	offset = (r->fid->omode&OAPPEND) ? *len : r->ifcall.offset;
+	f = r->fid->aux;
+
+	offset = r->ifcall.offset;
+	if(f->tab.perm & DMAPPEND)
+		offset = *len;
+
 	if(offset > *len || r->ifcall.count == 0) {
 		r->ofcall.count = 0;
 		return;
 	}
 
 	count = r->ifcall.count;
-	if(max && (count > max - offset))
+	if(max && (offset + count > max))
 		count = max - offset;
 
 	*len = offset + count;
 	if(max == 0)
 		*buf = erealloc(*buf, *len + 1);
-
 	p = *buf;
 
 	memcpy(p+offset, r->ifcall.data, count);
@@ -987,7 +992,9 @@ fs_open(Ixp9Req *r) {
 
 void
 fs_create(Ixp9Req *r) {
-	FileId *f = r->fid->aux;
+	FileId *f;
+	
+	f = r->fid->aux;
 
 	switch(f->tab.type) {
 	default:
