@@ -1,6 +1,6 @@
 SOPTARG = $(ROOT)/lib/$(TARG)
-SO = $(SOPTARG).so
-SONAME = $(TARG).so
+SO = $(SOPTARG).$(SOEXT)
+SONAME = $(TARG).$(SOEXT)
 OFILES_PIC = ${OBJ:=.o_pic}
 
 all: $(HFILES) $(SO) 

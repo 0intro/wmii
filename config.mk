@@ -17,6 +17,7 @@ include $(ROOT)/mk/gcc.mk
 CFLAGS += $(DEBUGCFLAGS) -O0
 LDFLAGS += -g $(LIBS)
 SOLDFLAGS += $(LDFLAGS)
+SHARED = -shared -Wl,-soname=$(SONAME)
 STATIC = -static
 
 # Compiler, Linker. Linker should usually *not* be ld.
@@ -39,6 +40,8 @@ LIBIXP = $(LIBDIR)/libixp.a
 #LIBICONV = -liconv
 # +Darwin
 #STATIC = # Darwin doesn't like static linking
+#SHARED = -dynamiclib
+#SOEXT = dylib
 
 # Solaris
 #CFLAGS = -fast $(INCS)

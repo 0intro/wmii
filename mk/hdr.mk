@@ -1,5 +1,5 @@
 .SILENT:
-.SUFFIXES: .O .o .o_pic .c .sh .rc .so .awk .1 .depend .install .uninstall .clean
+.SUFFIXES: .O .o .o_pic .c .sh .rc .so .dylib .awk .1 .depend .install .uninstall .clean
 all:
 
 .c.depend:
@@ -44,7 +44,7 @@ all:
 	echo INSTALL $$($(CLEANNAME) $(BASE)$<)
 	cp -f $< $(LIBDIR)/$<
 	chmod 0644 $(LIBDIR)/$<
-.a.uninstall .so.uninstall:
+.a.uninstall .$(SOEXT).uninstall:
 	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
 	rm -f $(LIBDIR)/$<
 
@@ -81,8 +81,9 @@ EXCFLAGS = -I$$(echo $(INCPATH)|sed 's/:/ -I/g') -D_XOPEN_SOURCE=600
 COMPILE= CC="$(CC)" CFLAGS="$(EXCFLAGS) $(CFLAGS)" $(ROOT)/util/compile
 COMPILEPIC= CC="$(CC)" CFLAGS="$(EXCFLAGS) $(CFLAGS) $(SOCFLAGS)" $(ROOT)/util/compile
 LINK= LD="$(LD)" LDFLAGS="$(LDFLAGS)" $(ROOT)/util/link
-LINKSO= LD="$(LD)" LDFLAGS="$(SOLDFLAGS)" $(ROOT)/util/link
+LINKSO= LD="$(LD)" LDFLAGS="$(SOLDFLAGS) $(SHARED)" $(ROOT)/util/link
 CLEANNAME=$(ROOT)/util/cleanname
+SOEXT=so
 
 include $(ROOT)/config.mk
 

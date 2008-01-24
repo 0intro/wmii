@@ -71,9 +71,11 @@ frame_insert(Frame *f, Frame *pos) {
 	a = f->area;
 
 	if(pos) {
+		assert(pos != f);
 		f->aprev = pos;
 		f->anext = pos->anext;
 	}else {
+		assert(f->area->frame != f);
 		f->anext = f->area->frame;
 		f->area->frame = f;
 	}

@@ -11,6 +11,7 @@ CFLAGS += \
 	-std=c99 \
 	-pedantic \
 	-pipe \
+	-fno-strict-aliasing \
 	-Wall \
 	-Wimplicit \
 	-Wmissing-prototypes \
@@ -25,5 +26,4 @@ CFLAGS += \
 	-Wtrigraphs
 MKDEP = cpp -M
 SOCFLAGS += -fPIC
-SOLDFLAGS += -shared -soname $(SONAME)
 

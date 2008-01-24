@@ -13,6 +13,7 @@ float_attach(Area *a, Frame *f) {
 	f->client->floating = true;
 
 	float_placeframe(f);
+	assert(a->sel != f);
 	frame_insert(f, a->sel);
 
 	if(a->sel == nil)

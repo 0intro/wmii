@@ -156,7 +156,6 @@ area_moveto(Area *to, Frame *f) {
 	assert(to->view == f->view);
 
 	from = f->area;
-
 	if(to->floating != from->floating) {
 		/* XXX: This must be changed. */
 		tr = f->revert;

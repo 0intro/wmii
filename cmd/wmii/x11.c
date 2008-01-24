@@ -460,6 +460,9 @@ drawstring(Image *dst, Font *font,
 	case East:
 		x = r.max.x - (w + (font->height / 2));
 		break;
+	case Center:
+		x = r.min.x + (Dx(r) - w) / 2;
+		break;
 	default:
 		x = r.min.x + (font->height / 2);
 		break;
