@@ -72,6 +72,8 @@ column_attach(Area *a, Frame *f) {
 	column_arrange(a, false);
 }
 
+static void column_scale(Area*);
+
 void
 column_attachrect(Area *a, Frame *f, Rectangle r) {
 	Frame *fp, *pos;
@@ -88,7 +90,16 @@ column_attachrect(Area *a, Frame *f, Rectangle r) {
 		if(abs(before) <= abs(after))
 			break;
 	}
+	if(Dy(a->r) > Dy(r)) {
+		a->r.max.y -= Dy(r);
+		column_scale(a);
+		a->r.max.y += Dy(r);
+	}
 	column_insert(a, f, pos);
+	for(fp=f->anext; fp; fp=fp->anext) {
+		fp->r.min.y += Dy(r);
+		fp->r.max.y += Dy(r);
+	}
 	column_resizeframe(f, r);
 }
 

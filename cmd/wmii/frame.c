@@ -27,12 +27,12 @@ frame_create(Client *c, View *v) {
 	f->view = v;
 
 	if(c->sel) {
-		f->revert = c->sel->revert;
+		f->floatr = c->sel->floatr;
 		f->r = c->sel->r;
 	}
 	else{
 		f->r = frame_client2rect(f, client_grav(c, ZR));
-		f->revert = f->r;
+		f->floatr = f->r;
 		c->sel = f;
 	}
 	f->collapsed = false;
@@ -130,10 +130,6 @@ frame_restack(Frame *f, Frame *above) {
 	}
 	if(f->snext)
 		f->snext->sprev = f;
-
-	for(fp=a->stack; fp; fp=fp->snext)
-		print("[%C]%s\n", fp->client, clientname(fp->client));
-	print("\n");
 
 	return true;
 }
@@ -288,6 +284,7 @@ frame_client2rect(Frame *f, Rectangle r) {
 	return r;
 }
 
+/* FIXME: This is getting entirely too long! */
 void
 frame_resize(Frame *f, Rectangle r) {
 	Client *c;
@@ -346,6 +343,12 @@ frame_resize(Frame *f, Rectangle r) {
 
 	if(f->area->floating && !f->client->strut)
 		f->r = constrain(f->r);
+
+	if(f->area->floating)
+		f->floatr = f->r;
+	else
+		f->colr = f->r;
+
 	pt.x = (Dx(f->r) - Dx(cr)) / 2;
 	f->crect = rectaddpt(cr, pt);
 }

@@ -150,24 +150,21 @@ area_destroy(Area *a) {
 
 void
 area_moveto(Area *to, Frame *f) {
-	Rectangle tr;
 	Area *from;
+	bool fromfloating;
 
 	assert(to->view == f->view);
 
 	from = f->area;
-	if(to->floating != from->floating) {
-		/* XXX: This must be changed. */
-		tr = f->revert;
-		f->revert = f->r;
-		f->r = tr;
-	}
+	fromfloating = from->floating;
 
 	area_detach(f);
 
 	/* Temporary kludge. */
-	if(!to->floating && to->floating != from->floating) {
-		column_attachrect(to, f, tr);
+	if(!to->floating
+	&& to->floating != fromfloating
+	&& !eqrect(f->colr, ZR)) {
+		column_attachrect(to, f, f->colr);
 	}else
 		area_attach(to, f);
 }
@@ -200,15 +197,17 @@ area_attach(Area *a, Frame *f) {
 
 void
 area_detach(Frame *f) {
+	View *v;
 	Area *a;
 
 	a = f->area;
+	v = a->view;
 
 	if(a->floating)
 		float_detach(f);
 	else
 		column_detach(f);
-	view_arrange(a->view);
+	view_arrange(v);
 }
 
 void

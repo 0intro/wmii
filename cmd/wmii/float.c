@@ -12,6 +12,7 @@ float_attach(Area *a, Frame *f) {
 
 	f->client->floating = true;
 
+	f->r = f->floatr;
 	float_placeframe(f);
 	assert(a->sel != f);
 	frame_insert(f, a->sel);

@@ -174,7 +174,7 @@ void
 view_focus(WMScreen *s, View *v) {
 	Client *c;
 	Frame *f, *fnext;
-	Area *a;
+	Area *a, *an;
 	bool fscrn;
 	
 	USED(s);
@@ -186,23 +186,22 @@ view_focus(WMScreen *s, View *v) {
 	update_frame_selectors(v);
 	div_update_all();
 	fscrn = false;
-	for(a=v->area; a; a=a->next)
+	for(a=v->area; a; a=an) {
+		an = a->next;
 		for(f=a->frame; f; f=fnext) {
 			fnext = f->anext;
 			if(f->client->fullscreen) {
 				f->collapsed = false;
 				fscrn = true;
 				if(!f->area->floating) {
-					f->oldr = f->revert;
 					f->oldarea = area_idx(f->area);
 					area_moveto(v->area, f);
 					area_setsel(v->area, f);
-				}else if(f->oldarea == -1) {
-					f->oldr = f->r; /* XXX: oldr */
+				}else if(f->oldarea == -1)
 					f->oldarea = 0;
-				}
 			}
 		}
+	}
 	for(c=client; c; c=c->next)
 		if((f = c->sel)) {
 			if(f->view == v)

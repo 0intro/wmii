@@ -318,10 +318,7 @@ client_grav(Client *c, Rectangle rd) {
 
 	if(eqrect(rd, ZR)) {
 		if(c->sel) {
-			if(c->sel->area->floating)
-				r = c->sel->r;
-			else
-				r = c->sel->revert;
+			r = c->sel->floatr;
 		}else
 			r = frame_client2rect(nil, c->r);
 		r = gravitate(r, c->r, h->grav);
@@ -560,7 +557,7 @@ fullscreen(Client *c, int fullscreen) {
 	if(!fullscreen)
 		for(f=c->frame; f; f=f->cnext) {
 			if(f->oldarea == 0) {
-				frame_resize(f, f->oldr); /* XXX: oldr Replace with floatr */
+				frame_resize(f, f->floatr);
 				if(f->view == screen->sel) /* FIXME */
 					client_resize(f->client, f->r);
 
@@ -568,7 +565,6 @@ fullscreen(Client *c, int fullscreen) {
 			else if(f->oldarea > 0) {
 				wassel = (f == f->area->sel);
 				area_moveto(view_findarea(f->view, f->oldarea, true), f);
-				f->revert = f->oldr; /* XXX: oldr */
 				if(wassel)
 					frame_focus(f);
 			}
@@ -780,7 +776,7 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 		flushenterevents();
 	}
 	else {
-		c->sel->revert = r;
+		c->sel->floatr = r;
 		client_configure(c);
 	}
 }

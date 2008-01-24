@@ -172,9 +172,9 @@ struct Frame {
 	bool	collapsed;
 	float	ratio;
 	Rectangle	r;
-	Rectangle	oldr;
+	Rectangle	colr;
+	Rectangle	floatr;
 	Rectangle	crect;
-	Rectangle	revert;
 	Rectangle	grabbox;
 	Rectangle	titlebar;
 };
