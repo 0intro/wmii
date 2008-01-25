@@ -1,0 +1,115 @@
+/* Copyright ©2008 Kris Maglione <fbsdaemon@gmail.com>
+ * See LICENSE file for license details.
+ */
+#include "dat.h"
+#include "fns.h"
+
+/* Blech. */
+#define VECTOR(type, nam, c) \
+void                                                                    \
+vector_##c##init(Vector_##nam *v) {                                     \
+	memset(v, 0, sizeof *v);                                        \
+}                                                                       \
+                                                                        \
+void                                                                    \
+vector_##c##free(Vector_##nam *v) {                                     \
+	free(v->ary);                                                   \
+	memset(v, 0, sizeof *v);                                        \
+}                                                                       \
+                                                                        \
+void                                                                    \
+vector_##c##push(Vector_##nam *v, type val) {                           \
+	if(v->n == v->size) {                                           \
+		if(v->size == 0)                                        \
+			v->size = 2;                                    \
+		v->size <<= 2;                                          \
+		v->ary = erealloc(v->ary, v->size * sizeof *v->ary);    \
+	}                                                               \
+	v->ary[v->n++] = val;                                           \
+}                                                                       \
+
+VECTOR(long, long, l)
+VECTOR(Rectangle, rect, r)
+VECTOR(void*, ptr, p)
+
+void
+reinit(Regex *r, char *regx) {
+
+	refree(r);
+
+	r->regex = estrdup(regx);
+	r->regc = regcomp(regx);
+}
+
+void
+refree(Regex *r) {
+
+	free(r->regex);
+	free(r->regc);
+	r->regex = nil;
+	r->regc = nil;
+}
+
+void
+uniq(char **toks) {
+	char **p, **q;
+
+	q = toks;
+	if(*q == nil)
+		return;
+	for(p=q+1; *p; p++)
+		if(strcmp(*q, *p))
+			*++q = *p;
+	*++q = nil;
+}
+
+char**
+comm(int cols, char **toka, char **tokb) {
+	Vector_ptr vec;
+	char **ret;
+	char *p;
+	int cmp, len, i;
+
+	len = 0;
+	vector_pinit(&vec);
+	while(*toka || *tokb) {
+		if(!*toka)
+			cmp = 1;
+		else if(!*tokb)
+			cmp = -1;
+		else
+			cmp = strcmp(*toka, *tokb);
+		if(cmp < 0) {
+			if(cols & CLeft) {
+				vector_ppush(&vec, *toka);
+				len += strlen(*toka) + 1;
+			}
+			toka++;
+		}else if(cmp > 0) {
+			if(cols & CRight) {
+				vector_ppush(&vec, *tokb);
+				len += strlen(*tokb) + 1;
+			}
+			tokb++;
+		}else {
+			if(cols & CCenter) {
+				vector_ppush(&vec, *toka);
+				len += strlen(*toka) + 1;
+			}
+			toka++;
+			tokb++;
+		}
+	}
+	ret = emalloc((vec.n+1) * sizeof(char*) + len);
+	ret[vec.n] = nil;
+	p = (char*)&ret[vec.n+1];
+	for(i=0; i < vec.n; i++) {
+		len = strlen(vec.ary[i]) + 1;
+		memcpy(p, vec.ary[i], len);
+		ret[i] = p;
+		p += len;
+	}
+	free(vec.ary);
+	return ret;
+}
+

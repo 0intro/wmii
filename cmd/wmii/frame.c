@@ -301,6 +301,9 @@ frame_resize(Frame *f, Rectangle r) {
 		return;
 	}
 
+	if(f->area->floating)
+		f->collapsed = false;
+
 	stickycorner = get_sticky(f->r, r);
 	f->crect = frame_hints(f, r, stickycorner);
 

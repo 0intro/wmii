@@ -26,6 +26,12 @@ enum {
 };
 
 enum {
+	CLeft = 1<<0,
+	CCenter = 1<<1,
+	CRight = 1<<2,
+};
+
+enum {
 	UrgManager,
 	UrgClient,
 };
@@ -93,6 +99,7 @@ typedef struct Group Group;
 typedef struct Key Key;
 typedef struct Map Map;
 typedef struct MapEnt MapEnt;
+typedef struct Regex Regex;
 typedef struct Rule Rule;
 typedef struct Ruleset Ruleset;
 typedef struct Strut Strut;
@@ -124,6 +131,11 @@ struct Bar {
 	CTuple	col;
 };
 
+struct Regex {
+	char*	regex;
+	Reprog*	regc;
+};
+
 struct Client {
 	Client*	next;
 	Frame*	frame;
@@ -131,10 +143,12 @@ struct Client {
 	Window	w;
 	Window*	framewin;
 	XWindow	trans;
+	Regex	tagre;
 	Group*	group;
 	Strut*	strut;
 	Cursor	cursor;
 	Rectangle r;
+	char**	retags;
 	char	name[256];
 	char	tags[256];
 	char	props[512];
@@ -212,6 +226,7 @@ struct Rule {
 	Rule*	next;
 	Reprog*	regex;
 	char	value[256];
+
 };
 
 struct Ruleset {
@@ -253,6 +268,7 @@ void	vector_##c##push(Vector_##nam*, type); \
 
 VECTOR(long, long, l)
 VECTOR(Rectangle, rect, r)
+VECTOR(void*, ptr, p)
 #undef  VECTOR
 
 #ifndef EXTERN
@@ -333,6 +349,8 @@ EXTERN char*	execstr;
 EXTERN int	debugflag;
 EXTERN int	debugfile;
 EXTERN long	xtime;
+
+EXTERN Client*	kludge;
 
 extern char*	debugtab[];
 

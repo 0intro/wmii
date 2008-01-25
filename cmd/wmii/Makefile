@@ -30,6 +30,7 @@ OBJ =	area	\
 	rule	\
 	printevent\
 	utf	\
+	_util	\
 	view	\
 	xdnd	\
 	x11	\

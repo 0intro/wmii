@@ -408,6 +408,8 @@ mouse_resizecolframe(Frame *f, Align align) {
 	assert((align&(East|West)) != (East|West));
 	assert((align&(North|South)) != (North|South));
 
+	f->collapsed = false;
+
 	v = screen->sel;
 	d = divs;
 	for(a=v->area->next; a != f->area; a=a->next)
@@ -681,8 +683,10 @@ static int (*tramp[])(Frame*) = {
 static void
 trampoline(int fn, Frame *f) {
 
-	while(fn > 0)
+	while(fn > 0) {
+		f->collapsed = false;
 		fn = tramp[fn](f);
+	}
 	ungrabpointer();
 
 	warppointer(grabboxcenter(f));

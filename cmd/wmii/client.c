@@ -245,6 +245,8 @@ client_destroy(Client *c) {
 	none = nil;
 	client_setviews(c, &none);
 	sethandler(&c->w, nil);
+	refree(&c->tagre);
+	free(c->retags);
 
 	if(hide)
 		reparentwindow(&c->w, &scr.root, screen->r.max);
@@ -910,6 +912,7 @@ client_setviews(Client *c, char **tags) {
 				f = frame_create(c, view_create(*tags));
 				if(f->view == screen->sel || !c->sel)
 					c->sel = f;
+				kludge = c;
 				view_attach(f->view, f);
 				f->cnext = *fp;
 				*fp = f;
@@ -918,7 +921,8 @@ client_setviews(Client *c, char **tags) {
 			tags++;
 		}
 	}
-	view_update_all();
+	if(c->sel == nil)
+		c->sel = c->frame;
 }
 
 static int
@@ -943,10 +947,13 @@ static char *badtags[] = {
 
 void
 apply_tags(Client *c, const char *tags) {
+	View *v;
 	uint i, j, k, n;
 	bool add;
 	char buf[512], last;
-	char *toks[32], *cur;
+	char *toks[32], *vtags[32];
+	char **p;
+	char *cur;
 
 	buf[0] = 0;
 
@@ -958,7 +965,6 @@ apply_tags(Client *c, const char *tags) {
 		utflcpy(buf, c->tags, sizeof(c->tags));
 
 	strlcat(buf, &tags[n], sizeof(buf));
-	trim(buf, " \t/");
 
 	n = 0;
 	add = True;
@@ -971,6 +977,27 @@ apply_tags(Client *c, const char *tags) {
 
 	j = 0;
 	while(buf[n] && n < sizeof(buf) && j < 32) { 
+		if(buf[n] == '/') {
+			for(i=n+1; i < sizeof(buf) - 1; i++)
+				if(buf[i] == '/')
+					break;
+			if(buf[i] != '/')
+				goto ifnot;
+			i++;
+			if(buf[i] != '+'
+			&& buf[i] != '-'
+			&& buf[i] != '\0') /* Don't be lenient */
+				goto ifnot;
+			buf[i-1] = '\0';
+			if(add)
+				reinit(&c->tagre, buf+n+1);
+			else
+				refree(&c->tagre);
+			last = buf[i];
+			buf[i] = '\0';
+			goto next;
+		}
+	ifnot:
 		for(i = n; i < sizeof(buf) - 1; i++)
 			if(buf[i] == '+'
 			|| buf[i] == '-'
@@ -978,6 +1005,8 @@ apply_tags(Client *c, const char *tags) {
 				break;
 		last = buf[i];
 		buf[i] = '\0';
+
+		trim(buf+n, " \t/");
 
 		cur = nil;
 		if(!strcmp(buf+n, "~"))
@@ -990,7 +1019,7 @@ apply_tags(Client *c, const char *tags) {
 			cur = buf+n;
 
 		n = i + 1;
-		if(cur) {
+		if(cur && j < nelem(toks)-1) {
 			if(add)
 				toks[j++] = cur;
 			else {
@@ -1001,6 +1030,7 @@ apply_tags(Client *c, const char *tags) {
 			}
 		}
 
+	next:
 		if(last == '+')
 			add = True;
 		if(last == '-')
@@ -1009,20 +1039,33 @@ apply_tags(Client *c, const char *tags) {
 			buf[n] = '\0';
 	}
 
-	if(!j)
-		return;
-
+	toks[j] = nil;
 	qsort(toks, j, sizeof *toks, strpcmp);
-
+	uniq(toks);
 	c->tags[0] = '\0';
-	for(i=0, n=0; i < j; i++)
-		if(n == 0 || strcmp(toks[i], toks[n-1])) {
-			if(i > 0)
-				strlcat(c->tags, "+", sizeof c->tags);
-			strlcat(c->tags, toks[i], sizeof c->tags);
-			toks[n++] = toks[i];
-		}
-	toks[n] = nil;
+	for(p=toks; *p; p++) {
+		if(p > toks)
+			strlcat(c->tags, "+", sizeof c->tags);
+		strlcat(c->tags, *p, sizeof c->tags);
+	}
+
+	i = 0;
+	if(c->tagre.regex)
+		for(v=view; v; v=v->next)
+			if(regexec(c->tagre.regc, v->name, nil, 0))
+				if(i < nelem(vtags)-1)
+					vtags[i++] = v->name;
+	vtags[i] = nil;
+
+	free(c->retags);
+	c->retags = comm(CRight, toks, vtags);
+
+	for(p=vtags; *p; p++)
+		if(j < nelem(toks)-1)
+			toks[j++] = *p;
+	toks[j] = nil;
+	qsort(toks, j, sizeof *toks, strpcmp);
+	uniq(toks);
 
 	client_setviews(c, toks);
 

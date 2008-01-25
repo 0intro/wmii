@@ -7,11 +7,25 @@
 
 static bool
 empty_p(View *v) {
+	Frame *f;
 	Area *a;
+	char **p;
+	int cmp;
+
 	for(a=v->area; a; a=a->next)
-		if(a->frame)
-			return False;
-	return True;
+		for(f=a->frame; f; f=f->anext) {
+			for(p=f->client->retags; *p; p++) {
+				cmp = strcmp(*p, v->name);
+				if(cmp == 0)
+					goto nextframe;
+				if(cmp > 0)
+					return false;
+			}
+			return false;
+		nextframe:
+			continue;
+		}
+	return true;
 }
 
 static void
@@ -43,11 +57,17 @@ view_fullscreen_p(View *v) {
 View*
 view_create(const char *name) {
 	static ushort id = 1;
-	View **i, *v;
+	View **vp;
+	Client *c;
+	View *v;
 
 	for(v=view; v; v=v->next)
 		if(!strcmp(name, v->name))
 			return v;
+
+	print("xviews:\n");
+	for(View *q=view; q; q=q->next)
+		print("view: %d %s\n", !strcmp(name, q->name), q->name);
 
 	v = emallocz(sizeof(View));
 	v->id = id++;
@@ -62,11 +82,17 @@ view_create(const char *name) {
 	
 	area_focus(v->area->next);
 
-	for(i=&view; *i; i=&(*i)->next)
-		if(strcmp((*i)->name, name) >= 0)
+	for(vp=&view; *vp; vp=&(*vp)->next)
+		if(strcmp((*vp)->name, name) >= 0)
 			break;
-	v->next = *i;
-	*i = v;
+	v->next = *vp;
+	*vp = v;
+
+	/* FIXME: Belongs elsewhere */
+	/* FIXME: Can do better. */
+	for(c=client; c; c=c->next)
+		if(c != kludge)
+			apply_tags(c, c->tags);
 
 	view_arrange(v);
 	if(!screen->sel)
@@ -77,22 +103,29 @@ view_create(const char *name) {
 
 void
 view_destroy(View *v) {
+	View **vp;
+	Frame *f;
+	View *tv;
 	Area *a;
-	View **i, *tv;
+
+	for(vp=&view; *vp; vp=&(*vp)->next)
+		if(*vp == v) break;
+	*vp = v->next;
+
+	/* FIXME: Can do better */
+	for(a=v->area; a; a=a->next)
+		for(f=a->frame; f; f=f->anext)
+			apply_tags(f->client, f->client->tags);
 
 	while((a = v->area->next))
 		area_destroy(a);
 	area_destroy(v->area);
 
-	for(i=&view; *i; i=&(*i)->next)
-		if(*i == v) break;
-	*i = v->next;
-
 	event("DestroyTag %s\n", v->name);
 
 	if(v == screen->sel) {
 		for(tv=view; tv; tv=tv->next)
-			if(tv->next == *i) break;
+			if(tv->next == *vp) break;
 		if(tv == nil)
 			tv = view;
 		if(tv)
@@ -259,6 +292,9 @@ view_attach(View *v, Frame *f) {
 		a = v->area->next;
 
 	area_attach(a, f);
+
+	if(c->sel == nil)
+		c->sel = f;
 }
 
 void
@@ -429,7 +465,7 @@ view_newcolw(View *v, int num) {
 			char buf[sizeof r->value];
 			char *toks[16];
 
-			strcpy(buf, r->value);
+			utflcpy(buf, r->value, sizeof buf);
 
 			n = tokenize(toks, 16, buf, '+');
 			if(num < n)

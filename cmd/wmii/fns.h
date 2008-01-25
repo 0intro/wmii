@@ -216,6 +216,12 @@ void	view_update_all(void);
 void	view_update_rect(View*);
 Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 
+/* util.c */
+void	refree(Regex*);
+void	reinit(Regex*, char*);
+char**	comm(int, char**, char**);
+void	uniq(char**);
+
 /* utf.c */
 char*	toutf8(const char*);
 char*	toutf8n(const char*, size_t);
