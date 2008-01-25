@@ -86,12 +86,6 @@ bar_create(Bar **bp, const char *name) {
 	b->id = id++;
 	utflcpy(b->name, name, sizeof b->name);
 	b->col = def.normcolor;
-
-	for(; *bp; bp = &bp[0]->next)
-		if(strcmp(bp[0]->name, name) >= 0)
-			break;
-	b->next = *bp;
-	*bp = b;
 	
 	/* FIXME: Kludge. */
 	for(s=screens; s < screens+num_screens; s++) {
@@ -99,6 +93,12 @@ bar_create(Bar **bp, const char *name) {
 		if(i < nelem(s->bar))
 			b->bar = i;
 	}
+
+	for(; *bp; bp = &bp[0]->next)
+		if(strcmp(bp[0]->name, name) >= 0)
+			break;
+	b->next = *bp;
+	*bp = b;
 
 	return b;
 }
