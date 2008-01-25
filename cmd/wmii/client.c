@@ -181,7 +181,7 @@ client_manage(Client *c) {
 	free(tags);
 
 	/* Maybe not the best idea... */
-	if(!trans || !c->tags[0])
+	if(!c->trans || !c->tags[0])
 		apply_rules(c);
 	apply_tags(c, c->tags);
 
@@ -190,7 +190,8 @@ client_manage(Client *c) {
 
 	bool newgroup = !c->group
 		     || c->group->ref == 1
-		     || selclient() && (selclient()->group == c->group);
+		     || selclient() && (selclient()->group == c->group)
+		     || group_leader(c->group) && !client_viewframe(group_leader(c->group), c->sel->view);
 
 	f = c->sel;
 	if(f->view == screen->sel)
