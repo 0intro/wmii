@@ -207,6 +207,7 @@ Area*	view_findarea(View*, int, bool);
 void	view_focus(WMScreen*, View*);
 bool	view_fullscreen_p(View*);
 char*	view_index(View*);
+char**	view_names(void);
 uint	view_newcolw(View*, int i);
 void	view_restack(View*);
 void	view_scale(View*, int w);
@@ -217,9 +218,11 @@ void	view_update_rect(View*);
 Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 
 /* util.c */
+char**	comm(int, char**, char**);
+char**	grep(char**, Reprog*, int);
+char*	join(char**, char*);
 void	refree(Regex*);
 void	reinit(Regex*, char*);
-char**	comm(int, char**, char**);
 void	uniq(char**);
 
 /* utf.c */

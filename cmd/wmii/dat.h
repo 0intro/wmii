@@ -32,6 +32,10 @@ enum {
 };
 
 enum {
+	GInvert = 1<<0,
+};
+
+enum {
 	UrgManager,
 	UrgClient,
 };
@@ -144,6 +148,7 @@ struct Client {
 	Window*	framewin;
 	XWindow	trans;
 	Regex	tagre;
+	Regex	tagvre;
 	Group*	group;
 	Strut*	strut;
 	Cursor	cursor;

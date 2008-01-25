@@ -70,18 +70,14 @@ ewmh_init(void) {
 
 void
 ewmh_updateclientlist(void) {
+	Vector_long vec;
 	Client *c;
-	long *list;
-	int i;
 
-	i = 0;
+	vector_linit(&vec);
 	for(c=client; c; c=c->next)
-		i++;
-	list = emalloc(i * sizeof *list);
-	i = 0;
-	for(c=client; c; c=c->next)
-		list[i++] = c->w.w;
-	changeprop_long(&scr.root, Net("CLIENT_LIST"), "WINDOW", list, i);
+		vector_lpush(&vec, c->w.w);
+	changeprop_long(&scr.root, Net("CLIENT_LIST"), "WINDOW", vec.ary, vec.n);
+	free(vec.ary);
 }
 
 void

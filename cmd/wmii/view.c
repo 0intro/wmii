@@ -5,6 +5,10 @@
 #include "dat.h"
 #include "fns.h"
 
+#define foreach_frame(v, a, f) \
+	for((a)=(v)->area; (a); (a)=(a)->next) \
+		for((f)=(a)->frame; (f); (f)=(f)->anext)
+
 static bool
 empty_p(View *v) {
 	Frame *f;
@@ -12,19 +16,18 @@ empty_p(View *v) {
 	char **p;
 	int cmp;
 
-	for(a=v->area; a; a=a->next)
-		for(f=a->frame; f; f=f->anext) {
-			for(p=f->client->retags; *p; p++) {
-				cmp = strcmp(*p, v->name);
-				if(cmp == 0)
-					goto nextframe;
-				if(cmp > 0)
-					return false;
-			}
-			return false;
-		nextframe:
-			continue;
+	foreach_frame(v, a, f) {
+		for(p=f->client->retags; *p; p++) {
+			cmp = strcmp(*p, v->name);
+			if(cmp == 0)
+				goto nextframe;
+			if(cmp > 0)
+				return false;
 		}
+		return false;
+	nextframe:
+		continue;
+	}
 	return true;
 }
 
@@ -65,10 +68,6 @@ view_create(const char *name) {
 		if(!strcmp(name, v->name))
 			return v;
 
-	print("xviews:\n");
-	for(View *q=view; q; q=q->next)
-		print("view: %d %s\n", !strcmp(name, q->name), q->name);
-
 	v = emallocz(sizeof(View));
 	v->id = id++;
 	v->r = screen->r;
@@ -104,18 +103,22 @@ view_create(const char *name) {
 void
 view_destroy(View *v) {
 	View **vp;
-	Frame *f;
+	Frame *f, *fn;
 	View *tv;
-	Area *a;
+	Area *a, *an;
 
 	for(vp=&view; *vp; vp=&(*vp)->next)
 		if(*vp == v) break;
 	*vp = v->next;
 
 	/* FIXME: Can do better */
-	for(a=v->area; a; a=a->next)
-		for(f=a->frame; f; f=f->anext)
+	for(a=v->area; a; a=an) {
+		an = a->next;
+		for(f=a->frame; f; f=fn) {
+			fn = f->anext;
 			apply_tags(f->client, f->client->tags);
+		}
+	}
 
 	while((a = v->area->next))
 		area_destroy(a);
@@ -150,9 +153,8 @@ update_frame_selectors(View *v) {
 	Area *a;
 	Frame *f;
 
-	for(a=v->area; a; a=a->next)
-		for(f=a->frame; f; f=f->anext)
-			f->client->sel = f;
+	foreach_frame(v, a, f)
+		f->client->sel = f;
 }
 
 void
@@ -295,6 +297,18 @@ view_attach(View *v, Frame *f) {
 
 	if(c->sel == nil)
 		c->sel = f;
+}
+
+char**
+view_names(void) {
+	Vector_ptr vec;
+	View *v;
+
+	vector_pinit(&vec);
+	for(v=view; v; v=v->next)
+		vector_ppush(&vec, v->name);
+	vector_ppush(&vec, nil);
+	return erealloc(vec.ary, vec.n * sizeof *vec.ary);
 }
 
 void
@@ -484,7 +498,7 @@ view_index(View *v) {
 	int i;
 
 	bufclear();
-	for((a=v->area), (i=0); a; (a=a->next), i++) {
+	for(a=v->area, i=0; a; a=a->next, i++) {
 		if(a->floating)
 			bufprint("# ~ %d %d\n", Dx(a->r), Dy(a->r));
 		else

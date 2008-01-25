@@ -246,6 +246,7 @@ client_destroy(Client *c) {
 	client_setviews(c, &none);
 	sethandler(&c->w, nil);
 	refree(&c->tagre);
+	refree(&c->tagvre);
 	free(c->retags);
 
 	if(hide)
@@ -914,6 +915,7 @@ client_setviews(Client *c, char **tags) {
 					c->sel = f;
 				kludge = c;
 				view_attach(f->view, f);
+				kludge = nil;
 				f->cnext = *fp;
 				*fp = f;
 			}
@@ -947,13 +949,12 @@ static char *badtags[] = {
 
 void
 apply_tags(Client *c, const char *tags) {
-	View *v;
 	uint i, j, k, n;
 	bool add;
 	char buf[512], last;
-	char *toks[32], *vtags[32];
-	char **p;
-	char *cur;
+	char *toks[32];
+	char **p, **q;
+	char *cur, *s;
 
 	buf[0] = 0;
 
@@ -962,17 +963,16 @@ apply_tags(Client *c, const char *tags) {
 			break;
 
 	if(tags[n] == '+' || tags[n] == '-')
-		utflcpy(buf, c->tags, sizeof(c->tags));
-
-	strlcat(buf, &tags[n], sizeof(buf));
+		utflcpy(buf, c->tags, sizeof c->tags);
+	strlcat(buf, &tags[n], sizeof buf);
 
 	n = 0;
-	add = True;
+	add = true;
 	if(buf[0] == '+')
 		n++;
 	else if(buf[0] == '-') {
 		n++;
-		add = False;
+		add = false;
 	}
 
 	j = 0;
@@ -992,7 +992,7 @@ apply_tags(Client *c, const char *tags) {
 			if(add)
 				reinit(&c->tagre, buf+n+1);
 			else
-				refree(&c->tagre);
+				reinit(&c->tagvre, buf+n+1);
 			last = buf[i];
 			buf[i] = '\0';
 			goto next;
@@ -1018,7 +1018,6 @@ apply_tags(Client *c, const char *tags) {
 		if(!Mbsearch(buf+n, badtags, bsstrcmp))
 			cur = buf+n;
 
-		n = i + 1;
 		if(cur && j < nelem(toks)-1) {
 			if(add)
 				toks[j++] = cur;
@@ -1031,10 +1030,11 @@ apply_tags(Client *c, const char *tags) {
 		}
 
 	next:
+		n = i + 1;
 		if(last == '+')
-			add = True;
+			add = true;
 		if(last == '-')
-			add = False;
+			add = false;
 		if(last == '\0')
 			buf[n] = '\0';
 	}
@@ -1042,32 +1042,24 @@ apply_tags(Client *c, const char *tags) {
 	toks[j] = nil;
 	qsort(toks, j, sizeof *toks, strpcmp);
 	uniq(toks);
-	c->tags[0] = '\0';
-	for(p=toks; *p; p++) {
-		if(p > toks)
-			strlcat(c->tags, "+", sizeof c->tags);
-		strlcat(c->tags, *p, sizeof c->tags);
-	}
 
-	i = 0;
-	if(c->tagre.regex)
-		for(v=view; v; v=v->next)
-			if(regexec(c->tagre.regc, v->name, nil, 0))
-				if(i < nelem(vtags)-1)
-					vtags[i++] = v->name;
-	vtags[i] = nil;
+	s = join(toks, "+");
+	utflcpy(c->tags, s, sizeof c->tags);
+	free(s);
 
 	free(c->retags);
-	c->retags = comm(CRight, toks, vtags);
 
-	for(p=vtags; *p; p++)
-		if(j < nelem(toks)-1)
-			toks[j++] = *p;
-	toks[j] = nil;
-	qsort(toks, j, sizeof *toks, strpcmp);
-	uniq(toks);
+	p = view_names();
+	q = grep(p, c->tagre.regc, 0);
+	free(p);
+	p = grep(q, c->tagvre.regc, GInvert);
+	free(q);
+	c->retags = comm(CRight, toks, p);
+	free(p);
 
-	client_setviews(c, toks);
+	p = comm(~0, c->retags, toks);
+	client_setviews(c, p);
+	free(p);
 
 	changeprop_string(&c->w, "_WMII_TAGS", c->tags);
 }

@@ -37,8 +37,10 @@ reinit(Regex *r, char *regx) {
 
 	refree(r);
 
-	r->regex = estrdup(regx);
-	r->regc = regcomp(regx);
+	if(regx[0] != '\0') {
+		r->regex = estrdup(regx);
+		r->regc = regcomp(regx);
+	}
 }
 
 void
@@ -67,8 +69,7 @@ char**
 comm(int cols, char **toka, char **tokb) {
 	Vector_ptr vec;
 	char **ret;
-	char *p;
-	int cmp, len, i;
+	int cmp, len;
 
 	len = 0;
 	vector_pinit(&vec);
@@ -100,16 +101,45 @@ comm(int cols, char **toka, char **tokb) {
 			tokb++;
 		}
 	}
-	ret = emalloc((vec.n+1) * sizeof(char*) + len);
-	ret[vec.n] = nil;
-	p = (char*)&ret[vec.n+1];
-	for(i=0; i < vec.n; i++) {
-		len = strlen(vec.ary[i]) + 1;
-		memcpy(p, vec.ary[i], len);
-		ret[i] = p;
-		p += len;
-	}
+	ret = strlistdup((char**)vec.ary, vec.n);
 	free(vec.ary);
 	return ret;
+}
+
+char**
+grep(char **list, Reprog *re, int flags) {
+	Vector_ptr vec;
+	char **p;
+	int res;
+
+	vector_pinit(&vec);
+	for(p=list; *p; p++) {
+		res = 0;
+		if(re)
+			res = regexec(re, *p, nil, 0);
+		if(res && !(flags & GInvert)
+		|| !res && (flags & GInvert))
+			vector_ppush(&vec, *p);
+	}
+	p = strlistdup((char**)vec.ary, vec.n);
+	free(vec.ary);
+	return p;
+}
+
+char*
+join(char **list, char *sep) {
+	Fmt f;
+	char **p;
+
+	if(fmtstrinit(&f) < 0)
+		abort();
+
+	for(p=list; *p; p++) {
+		if(p != list)
+			fmtstrcpy(&f, sep);
+		fmtstrcpy(&f, *p);
+	}
+
+	return fmtstrflush(&f);
 }
 
