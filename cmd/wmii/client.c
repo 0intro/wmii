@@ -12,14 +12,12 @@
 static Handlers handlers;
 
 enum {
-	ClientMask =
-		  StructureNotifyMask
-		| PropertyChangeMask
-		| EnterWindowMask
-		| FocusChangeMask,
-	ButtonMask =
-		  ButtonPressMask
-		| ButtonReleaseMask
+	ClientMask = StructureNotifyMask
+		   | PropertyChangeMask
+		   | EnterWindowMask
+		   | FocusChangeMask,
+	ButtonMask = ButtonPressMask
+		   | ButtonReleaseMask
 };
 
 static Group*	group;
@@ -117,20 +115,19 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	XAddToSaveSet(display, w);
 	XSelectInput(display, c->w.w, ClientMask);
 
-	fwa.override_redirect = True;
+	fwa.override_redirect = true;
 	fwa.background_pixmap = None;
-	fwa.event_mask =
-			  SubstructureRedirectMask
-			| SubstructureNotifyMask
-			| ExposureMask
-			| EnterWindowMask
-			| PointerMotionMask
-			| ButtonPressMask
-			| ButtonReleaseMask;
-	c->framewin = createwindow(&scr.root, c->r, scr.depth, InputOutput, &fwa,
-			  CWOverrideRedirect
-			| CWEventMask
-			| CWBackPixmap);
+	fwa.event_mask = SubstructureRedirectMask
+		       | SubstructureNotifyMask
+		       | ExposureMask
+		       | EnterWindowMask
+		       | PointerMotionMask
+		       | ButtonPressMask
+		       | ButtonReleaseMask;
+	c->framewin = createwindow(&scr.root, c->r, scr.depth, InputOutput,
+			&fwa, CWOverrideRedirect
+			    | CWEventMask
+			    | CWBackPixmap);
 	c->framewin->aux = c;
 	c->w.aux = c;
 	sethandler(c->framewin, &framehandler);
@@ -1043,25 +1040,32 @@ apply_tags(Client *c, const char *tags) {
 	qsort(toks, j, sizeof *toks, strpcmp);
 	uniq(toks);
 
+	/* I'm setting a new convention here by putting free calls on
+	 * the same line as the list processing calls which obselete
+	 * their variables. It may be odd, but it makes the code
+	 * flow much clearer;
+	 */
+
 	s = join(toks, "+");
-	utflcpy(c->tags, s, sizeof c->tags);
-	free(s);
+	utflcpy(c->tags, s, sizeof c->tags); free(s);
+	changeprop_string(&c->w, "_WMII_TAGS", c->tags);
 
 	free(c->retags);
-
 	p = view_names();
-	q = grep(p, c->tagre.regc, 0);
-	free(p);
-	p = grep(q, c->tagvre.regc, GInvert);
-	free(q);
-	c->retags = comm(CRight, toks, p);
-	free(p);
+	q = grep(p, c->tagre.regc, 0); free(p);
+	p = grep(q, c->tagvre.regc, GInvert); free(q);
+	c->retags = comm(CRight, toks, p); free(p);
+
+	if(c->retags[0] == nil && toks[0] == nil) {
+		if(c->tagre.regex)
+			toks[0] = "orphans";
+		else
+			toks[0] = screen->sel->name;
+		toks[1] = nil;
+	}
 
 	p = comm(~0, c->retags, toks);
-	client_setviews(c, p);
-	free(p);
-
-	changeprop_string(&c->w, "_WMII_TAGS", c->tags);
+	client_setviews(c, p); free(p);
 }
 
 void
