@@ -889,6 +889,12 @@ sethints(Window *w) {
 		h->max.y = xs.max_height;
 	}
 
+	/* Goddamn buggy clients. */
+	if(h->max.x < h->min.x)
+		h->max.x = h->min.x;
+	if(h->max.y < h->min.y)
+		h->max.y = h->min.y;
+
 	h->base = h->min;
 	if(xs.flags & PBaseSize) {
 		p.x = xs.base_width;

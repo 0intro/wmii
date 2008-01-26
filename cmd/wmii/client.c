@@ -950,7 +950,7 @@ apply_tags(Client *c, const char *tags) {
 	bool add;
 	char buf[512], last;
 	char *toks[32];
-	char **p, **q;
+	char **p;
 	char *cur, *s;
 
 	buf[0] = 0;
@@ -1040,21 +1040,17 @@ apply_tags(Client *c, const char *tags) {
 	qsort(toks, j, sizeof *toks, strpcmp);
 	uniq(toks);
 
-	/* I'm setting a new convention here by putting free calls on
-	 * the same line as the list processing calls which obselete
-	 * their variables. It may be odd, but it makes the code
-	 * flow much clearer;
-	 */
-
 	s = join(toks, "+");
-	utflcpy(c->tags, s, sizeof c->tags); free(s);
-	changeprop_string(&c->w, "_WMII_TAGS", c->tags);
+	utflcpy(c->tags, s, sizeof c->tags);
+	changeprop_string(&c->w, "_WMII_TAGS", s);
+	free(s);
 
 	free(c->retags);
 	p = view_names();
-	q = grep(p, c->tagre.regc, 0); free(p);
-	p = grep(q, c->tagvre.regc, GInvert); free(q);
-	c->retags = comm(CRight, toks, p); free(p);
+	grep(p, c->tagre.regc, 0);
+	grep(p, c->tagvre.regc, GInvert);
+	c->retags = comm(CRight, toks, p);
+	free(p);
 
 	if(c->retags[0] == nil && toks[0] == nil) {
 		if(c->tagre.regex)
@@ -1065,7 +1061,8 @@ apply_tags(Client *c, const char *tags) {
 	}
 
 	p = comm(~0, c->retags, toks);
-	client_setviews(c, p); free(p);
+	client_setviews(c, p);
+	free(p);
 }
 
 void

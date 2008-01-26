@@ -106,24 +106,21 @@ comm(int cols, char **toka, char **tokb) {
 	return ret;
 }
 
-char**
+void
 grep(char **list, Reprog *re, int flags) {
-	Vector_ptr vec;
-	char **p;
+	char **p, **q;
 	int res;
 
-	vector_pinit(&vec);
-	for(p=list; *p; p++) {
+	q = list;
+	for(p=q; *p; p++) {
 		res = 0;
 		if(re)
 			res = regexec(re, *p, nil, 0);
 		if(res && !(flags & GInvert)
 		|| !res && (flags & GInvert))
-			vector_ppush(&vec, *p);
+			*q++ = *p;
 	}
-	p = strlistdup((char**)vec.ary, vec.n);
-	free(vec.ary);
-	return p;
+	*q = nil;
 }
 
 char*

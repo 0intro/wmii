@@ -219,7 +219,7 @@ Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 
 /* util.c */
 char**	comm(int, char**, char**);
-char**	grep(char**, Reprog*, int);
+void	grep(char**, Reprog*, int);
 char*	join(char**, char*);
 void	refree(Regex*);
 void	reinit(Regex*, char*);
