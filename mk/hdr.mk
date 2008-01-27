@@ -21,7 +21,7 @@ all:
 
 .c.depend:
 	echo MKDEP $<
-	$(MKDEP) $(CFLAGS) $< >>.depend
+	$(MKDEP) $(EXCFLAGS) $(CFLAGS) $< >>.depend
 
 .sh.depend .rc.depend .1.depend .awk.depend:
 	:
@@ -82,9 +82,11 @@ all:
 	rm -f $(MAN)/man1/$<
 
 .O.clean:
+	echo CLEAN $$($(CLEANNAME) $(BASE)$<)
 	rm -f $< || true 2>/dev/null
 	rm -f $*.o || true 2>/dev/null
 .o.clean .o_pic.clean:
+	echo CLEAN $$($(CLEANNAME) $(BASE)$<)
 	rm -f $< || true 2>/dev/null
 
 printinstall:

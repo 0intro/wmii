@@ -13,6 +13,7 @@ printinstall:
 
 manyclean:
 	for i in ${TARG:=.o} ${TARG:=.O} $(OFILES); do \
+		echo CLEAN $$($(CLEANNAME) $(BASE)$$i); \
 		rm -f $$i; \
 	done 2>/dev/null || true
 

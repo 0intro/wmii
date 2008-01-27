@@ -122,7 +122,7 @@ bar_draw(WMScreen *s) {
 	float shrink;
 
 	largest = nil;
-	tw = width = 0;
+	width = 0;
 	foreach_bar(s, b) {
 		b->r.min = ZP;
 		b->r.max.y = Dy(s->brect);
@@ -141,13 +141,15 @@ bar_draw(WMScreen *s) {
 			*pb = b;
 		}
 		SET(shrink);
+		tw = 0;
 		for(tb=largest; tb; tb=tb->smaller) {
 			width -= Dx(tb->r);
 			tw += Dx(tb->r);
 			shrink = (Dx(s->brect) - width) / (float)tw;
-			if(tb->smaller)
-				if(Dx(tb->r) * shrink >= Dx(tb->smaller->r))
-					break;
+			if(tb->smaller && Dx(tb->r) * shrink < Dx(tb->smaller->r))
+				continue;
+			if(width + (int)(tw * shrink) <= Dx(s->brect))
+				break;
 		}
 		if(tb)
 			for(b=largest; b != tb->smaller; b=b->smaller)

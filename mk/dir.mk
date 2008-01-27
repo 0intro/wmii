@@ -1,10 +1,10 @@
-MKSUBDIR =  targ=$@; \
+MKSUBDIR =  targ=$@; targ=$${targ\#d}; \
 	for i in $$dirs; do \
 		if [ ! -d $$i ]; then \
 			echo Skipping nonexistent directory: $$i 1>&2; \
 		else \
-			echo MAKE $${targ\#d} $(BASE)$$i/; \
-			(cd $$i && $(MAKE) BASE="$(BASE)$$i/" $${targ\#d}) || exit $?; \
+			echo MAKE $$targ $(BASE)$$i/; \
+			(cd $$i && $(MAKE) BASE="$(BASE)$$i/" $$targ) || exit $?; \
 		fi; \
 	done
 

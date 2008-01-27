@@ -115,6 +115,7 @@ struct Window {
 	XID		w;
 	GC		gc;
 	Rectangle	r;
+	int		border;
 	Window*		parent;
 	Window*		next;
 	Window*		prev;
@@ -218,6 +219,7 @@ void	raisewin(Window*);
 void	reparentwindow(Window*, Window*, Point);
 void	reshapewin(Window*, Rectangle);
 void	sendevent(Window*, bool propegate, long mask, XEvent*);
+void	setborder(Window*, int, long);
 void	setfocus(Window*, int mode);
 void	sethints(Window*);
 void	setshapemask(Window *dst, Image *src, Point);

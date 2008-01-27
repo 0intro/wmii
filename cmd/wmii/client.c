@@ -180,7 +180,10 @@ client_manage(Client *c) {
 	/* Maybe not the best idea... */
 	if(!c->trans || !c->tags[0])
 		apply_rules(c);
-	apply_tags(c, c->tags);
+	if(c->tags[0])
+		apply_tags(c, c->tags);
+	else
+		apply_tags(c, "sel");
 
 	if(!starting)
 		view_update_all();
@@ -310,28 +313,30 @@ clientname(Client *c) {
 
 Rectangle
 client_grav(Client *c, Rectangle rd) {
-	Rectangle r;
+	Rectangle r, cr;
 	Point sp;
 	WinHints *h;
 
 	h = c->w.hints;
-	sp = Pt(def.border, labelh(def.font));
 
 	if(eqrect(rd, ZR)) {
 		if(c->sel) {
 			r = c->sel->floatr;
 		}else
-			r = frame_client2rect(nil, c->r);
-		r = gravitate(r, c->r, h->grav);
-		if(h->gravstatic)
-			r = rectaddpt(r, sp);
-		return frame_rect2client(nil, r);
-	}else {
-		r = frame_client2rect(nil, rd);
-		r = gravitate(rd, r, h->grav);
-		if(h->gravstatic)
+			r = frame_client2rect(c, c->r, true);
+		cr = frame_rect2client(c, r, true);
+		sp = subpt(cr.min, r.min);
+		r = gravitate(r, cr, h->grav);
+		if(!h->gravstatic)
 			r = rectsubpt(r, sp);
-		return frame_client2rect(nil, r);
+		return frame_rect2client(c, r, true);
+	}else {
+		r = frame_client2rect(c, rd, true);
+		sp = subpt(rd.min, r.min);
+		r = gravitate(rd, r, h->grav);
+		if(!h->gravstatic)
+			r = rectaddpt(r, sp);
+		return frame_client2rect(c, r, true);
 	}
 }
 
@@ -364,9 +369,9 @@ frame_hints(Frame *f, Rectangle r, Align sticky) {
 		return r;
 
 	or = r;
-	r = frame_rect2client(f, r);
+	r = frame_rect2client(c, r, f->area->floating);
 	r = sizehint(c->w.hints, r);
-	r = frame_client2rect(f, r);
+	r = frame_client2rect(c, r, f->area->floating);
 
 	if(!f->area->floating) {
 		/* Not allowed to grow */
@@ -381,7 +386,6 @@ frame_hints(Frame *f, Rectangle r, Align sticky) {
 		p.x = Dx(or) - Dx(r);
 	if((sticky&(North|South)) == South)
 		p.y = Dy(or) - Dy(r);
-
 	return rectaddpt(r, p);
 }
 
@@ -674,8 +678,9 @@ updatemwm(Client *c) {
 	n = getprop_long(&c->w, "_MOTIF_WM_HINTS", "_MOTIF_WM_HINTS",
 			0L, (long**)&ret, 3L);
 
+	/* FIXME: Look over this. */
 	if(c->sel)
-		r = frame_rect2client(c->sel, c->sel->r);
+		r = frame_rect2client(c, c->sel->r, c->sel->area->floating);
 
 	c->borderless = 0;
 	c->titleless = 0;
@@ -688,7 +693,7 @@ updatemwm(Client *c) {
 	free(ret);
 
 	if(c->sel) {
-		r = frame_client2rect(c->sel, r);
+		r = frame_client2rect(c, r, c->sel->area->floating);
 		client_resize(c, r);
 		frame_draw(c->sel);
 	}
@@ -775,8 +780,7 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 		client_resize(c, r);
 		sync();
 		flushenterevents();
-	}
-	else {
+	}else {
 		c->sel->floatr = r;
 		client_configure(c);
 	}
@@ -1075,7 +1079,5 @@ apply_rules(Client *c) {
 				apply_tags(c, r->value);
 				break;
 			}
-	if(c->tags[0] == '\0')
-		apply_tags(c, "sel");
 }
 

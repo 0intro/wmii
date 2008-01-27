@@ -28,7 +28,7 @@ typedef long long	vlong;
 
 #define strlcat wmii_strlcat
 /* util.c */
-void	_die(char*, int, char*);
+void	_die(char*, int, char*, ...);
 void*	emalloc(uint);
 void*	emallocz(uint);
 void*	erealloc(void*, uint);
@@ -43,8 +43,8 @@ uint	tokenize(char **, uint, char*, char);
 int	utflcpy(char*, const char*, int);
 char*	vsxprint(const char*, va_list);
 
-#define die(x) \
-	_die(__FILE__, __LINE__, x)
+#define die(...) \
+	_die(__FILE__, __LINE__, __VA_ARGS__)
 
 char *argv0;
 #undef ARGBEGIN

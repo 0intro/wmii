@@ -248,6 +248,11 @@ column_scale(Area *a) {
 		}
 	}
 
+	if(surplus < 0) {
+		print("Badness: surplus = %d\n", surplus);
+		surplus = 0;
+	}
+
 	yoff = a->r.min.y;
 	i = nuncol;
 	for(f=a->frame; f; f=f->anext) {

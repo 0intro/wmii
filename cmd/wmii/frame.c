@@ -29,9 +29,8 @@ frame_create(Client *c, View *v) {
 	if(c->sel) {
 		f->floatr = c->sel->floatr;
 		f->r = c->sel->r;
-	}
-	else{
-		f->r = frame_client2rect(f, client_grav(c, ZR));
+	}else{
+		f->r = frame_client2rect(c, client_grav(c, ZR), true);
 		f->floatr = f->r;
 		c->sel = f;
 	}
@@ -243,58 +242,63 @@ Handlers framehandler = {
 
 /* These must die!!! */
 Rectangle
-frame_rect2client(Frame *f, Rectangle r) {
-	if(f == nil || f->area == nil || f->area->floating) {
-		r.max.x -= def.border * 2;
-		r.max.y -= frame_delta_h();
-		if(f) {
-			if(f->client->borderless) {
-				r.max.x += 2 * def.border;
-				r.max.y += def.border;
-			}
-			if(f->client->titleless)
-				r.max.y += labelh(def.font);
-		}
+frame_rect2client(Client *c, Rectangle r, bool floating) {
+
+	if(c->fullscreen)
+		return r;
+
+	if(!floating) {
+		r.min.x += 1;
+		r.min.y += labelh(def.font);
+		r.max.x -= 1;
+		r.max.y -= 1;
 	}else {
-		r.max.x -= 2;
-		r.max.y -= labelh(def.font) + 1;
+		if(!c->borderless) {
+			r.min.x += def.border;
+			r.max.x -= def.border;
+			r.max.y -= def.border;
+		}
+		if(!c->titleless)
+			r.min.y += labelh(def.font);
 	}
-	r.max.x = max(r.min.x+1, r.max.x);
-	r.max.y = max(r.min.y+1, r.max.y);
+	r.max.x = max(r.max.x, r.min.x+1);
+	r.max.y = max(r.max.y, r.min.y+1);
 	return r;
 }
 
 Rectangle
-frame_client2rect(Frame *f, Rectangle r) {
-	if(f == nil || f->area == nil ||  f->area->floating) {
-		r.max.x += def.border * 2;
-		r.max.y += frame_delta_h();
-		if(f) {
-			if(f->client->borderless) {
-				r.max.x -= 2 * def.border;
-				r.max.y -= def.border;
-			}
-			if(f->client->titleless)
-				r.max.y -= labelh(def.font);
-		}
+frame_client2rect(Client *c, Rectangle r, bool floating) {
+
+	if(c->fullscreen)
+		return r;
+
+	if(!floating) {
+		r.min.x -= 1;
+		r.min.y -= labelh(def.font);
+		r.max.x += 1;
+		r.max.y += 1;
 	}else {
-		r.max.x += 2;
-		r.max.y += labelh(def.font) + 1;
+		if(!c->borderless) {
+			r.min.x -= def.border;
+			r.max.x += def.border;
+			r.max.y += def.border;
+		}
+		if(!c->titleless)
+			r.min.y -= labelh(def.font);
 	}
 	return r;
 }
 
-/* FIXME: This is getting entirely too long! */
 void
 frame_resize(Frame *f, Rectangle r) {
 	Client *c;
-	Rectangle cr;
-	Point pt;
-	Align stickycorner;
+	Rectangle fr, cr;
 	int collapsed;
 
-	c = f->client;
+	if(Dx(r) <= 0 || Dy(r) <= 0)
+		die("Frame rect: %R\n", r);
 
+	c = f->client;
 	if(c->fullscreen) {
 		f->crect = screen->r;
 		f->r = screen->r;
@@ -304,56 +308,148 @@ frame_resize(Frame *f, Rectangle r) {
 	if(f->area->floating)
 		f->collapsed = false;
 
-	stickycorner = get_sticky(f->r, r);
-	f->crect = frame_hints(f, r, stickycorner);
+	fr = frame_hints(f, r, get_sticky(f->r, r));
+	if(f->area->floating && !c->strut)
+		fr = constrain(fr);
 
-	if(Dx(r) <= 0 || Dy(r) <= 0)
-		fprint(2, "Badness: Frame rect: %R\n", r);
-
-	if(f->area->floating)
-		f->r = f->crect;
-	else
-		f->r = r;
-
-	cr = frame_rect2client(f, f->crect);
-	cr = rectsubpt(cr, cr.min);
-
+	/* Collapse managed frames which are too small */
 	collapsed = f->collapsed;
-
 	if(!f->area->floating && f->area->mode == Coldefault) {
+		f->collapsed = false;
 		if(Dy(f->r) < 2 * labelh(def.font))
-			f->collapsed = True;
-		else
-			f->collapsed = False;
+			f->collapsed = true;
 	}
-
-	if(Dx(cr) < labelh(def.font))
-		f->r.max.x = f->r.min.x + frame_delta_h();
-
-	if(f->collapsed) {
-		f->r.max.y = f->r.min.y + labelh(def.font);
-		cr = f->r;
-	}
-
 	if(collapsed != f->collapsed)
 		ewmh_updatestate(c);
 
-	pt = ZP;
-	if(!f->client->borderless || !f->area->floating)
-		pt.y += 1;
-	if(!f->client->titleless || !f->area->floating)
-		pt.y += labelh(def.font) - 1;
+	fr.max.x = max(fr.max.x, fr.min.x + 2*labelh(def.font));
+	if(f->collapsed)
+		fr.max.y = fr.min.y + labelh(def.font);
 
-	if(f->area->floating && !f->client->strut)
-		f->r = constrain(f->r);
+	cr = frame_rect2client(c, fr, f->area->floating);
+	if(f->area->floating)
+		f->r = fr;
+	else {
+		cr.min.x += ((Dx(fr) - Dx(cr)) - 2 * (cr.min.x - fr.min.x))
+			    / 2;
+		f->r = r;
+	}
+	f->crect = rectsubpt(cr, f->r.min);
 
 	if(f->area->floating)
 		f->floatr = f->r;
 	else
 		f->colr = f->r;
+}
 
-	pt.x = (Dx(f->r) - Dx(cr)) / 2;
-	f->crect = rectaddpt(cr, pt);
+void
+frame_draw(Frame *f) {
+	Rectangle r, fr;
+	Client *c;
+	CTuple *col;
+	Frame *tf;
+	uint w;
+
+	if(f->view != screen->sel)
+		return;
+	if(f->area == nil) /* Blech. */
+		return;
+
+	c = f->client;
+
+	if(c == screen->focus
+	|| c == selclient())
+		col = &def.focuscolor;
+	else
+		col = &def.normcolor;
+	if(!f->area->floating && f->area->mode == Colmax)
+		for(tf = f->area->frame; tf; tf=tf->anext)
+			if(tf->client == screen->focus) {
+				col = &def.focuscolor;
+				break;
+			}
+	fr = c->framewin->r;
+	fr = rectsubpt(fr, fr.min);
+
+	/* background */
+	r = fr;
+	fill(screen->ibuf, r, col->bg);
+	border(screen->ibuf, r, 1, col->border);
+
+	r.max.y = r.min.y + labelh(def.font);
+	border(screen->ibuf, r, 1, col->border);
+
+	f->titlebar = insetrect(r, 3);
+	f->titlebar.max.y += 3;
+
+	/* Odd state of focus. */
+	if(c != selclient() && col == &def.focuscolor)
+		border(screen->ibuf, insetrect(r, 1),
+			1, def.normcolor.bg);
+
+	/* grabbox */
+	r.min = Pt(2, 2);
+	r.max.x = r.min.x + def.font->height - 3;
+	r.max.y -= 2;
+	f->grabbox = r;
+
+	if(c->urgent)
+		fill(screen->ibuf, r, col->fg);
+	border(screen->ibuf, r, 1, col->border);
+
+	/* Odd state of focus. */
+	if(c != screen->focus && col == &def.focuscolor)
+		border(screen->ibuf, insetrect(r, -1),
+			1, def.normcolor.bg);
+	if(c->borderless && c->titleless && c == selclient())
+		setborder(c->framewin, def.border, def.focuscolor.border);
+	else
+		setborder(c->framewin, 0, 0);
+
+	/* Label */
+	r.min.x = r.max.x;
+	r.max.x = fr.max.x;
+	r.min.y = 0;
+	r.max.y = labelh(def.font);
+	if(c->floating)
+		r.max.x -= Dx(f->grabbox);
+	w = drawstring(screen->ibuf, def.font, r, West,
+			c->name, col->fg);
+
+	if(f->area->floating) {
+		r.min.x = r.min.x + w + 10;
+		r.max.x = f->titlebar.max.x + 1;
+		r.min.y = f->grabbox.min.y;
+		r.max.y = f->grabbox.max.y;
+		border(screen->ibuf, r, 1, col->border);
+	}
+
+	/* Border increment gaps... */
+	r.min.y = f->crect.min.y;
+	r.min.x = max(1, f->crect.min.x - 1);
+	r.max.x = min(fr.max.x - 1, f->crect.max.x + 1);
+	r.max.y = min(fr.max.y - 1, f->crect.max.y + 1);
+	border(screen->ibuf, r, 1, col->border);
+
+	/* Why? Because some non-ICCCM-compliant apps feel the need to
+	 * change the background properties of all of their ancestor windows
+	 * in order to implement pseudo-transparency.
+	 * What's more, the designers of X11 felt that it would be unfair to
+	 * implementers to make it possible to detect, or forbid, such changes.
+	 */
+	XSetWindowBackgroundPixmap(display, c->framewin->w, None);
+
+	copyimage(c->framewin, fr, screen->ibuf, ZP);
+	sync();
+}
+
+void
+frame_draw_all(void) {
+	Client *c;
+
+	for(c=client; c; c=c->next)
+		if(c->sel && c->sel->view == screen->sel)
+			frame_draw(c->sel);
 }
 
 void
@@ -448,109 +544,6 @@ frame_focus(Frame *f) {
 int
 frame_delta_h(void) {
 	return def.border + labelh(def.font);
-}
-
-void
-frame_draw(Frame *f) {
-	Rectangle r, fr;
-	CTuple *col;
-	Frame *tf;
-	uint w;
-
-	if(f->view != screen->sel)
-		return;
-	if(f->area == nil) /* Blech. */
-		return;
-
-	if(f->client == screen->focus
-	|| f->client == selclient())
-		col = &def.focuscolor;
-	else
-		col = &def.normcolor;
-	if(!f->area->floating && f->area->mode == Colmax)
-		for(tf = f->area->frame; tf; tf=tf->anext)
-			if(tf->client == screen->focus) {
-				col = &def.focuscolor;
-				break;
-			}
-	fr = f->client->framewin->r;
-	fr = rectsubpt(fr, fr.min);
-
-	/* background */
-	r = fr;
-	fill(screen->ibuf, r, col->bg);
-	border(screen->ibuf, r, 1, col->border);
-
-	r.max.y = r.min.y + labelh(def.font);
-	border(screen->ibuf, r, 1, col->border);
-
-	f->titlebar = insetrect(r, 3);
-	f->titlebar.max.y += 3;
-
-	/* Odd state of focus. */
-	if(f->client != selclient() && col == &def.focuscolor)
-		border(screen->ibuf, insetrect(r, 1),
-			1, def.normcolor.bg);
-
-	/* grabbox */
-	r.min = Pt(2, 2);
-	r.max.x = r.min.x + def.font->height - 3;
-	r.max.y -= 2;
-	f->grabbox = r;
-
-	if(f->client->urgent)
-		fill(screen->ibuf, r, col->fg);
-	border(screen->ibuf, r, 1, col->border);
-
-	/* Odd state of focus. */
-	if(f->client != screen->focus && col == &def.focuscolor)
-		border(screen->ibuf, insetrect(r, -1),
-			1, def.normcolor.bg);
-
-	/* Label */
-	r.min.x = r.max.x;
-	r.max.x = fr.max.x;
-	r.min.y = 0;
-	r.max.y = labelh(def.font);
-	if(f->client->floating)
-		r.max.x -= Dx(f->grabbox);
-	w = drawstring(screen->ibuf, def.font, r, West,
-			f->client->name, col->fg);
-
-	if(f->area->floating) {
-		r.min.x = r.min.x + w + 10;
-		r.max.x = f->titlebar.max.x + 1;
-		r.min.y = f->grabbox.min.y;
-		r.max.y = f->grabbox.max.y;
-		border(screen->ibuf, r, 1, col->border);
-	}
-
-	/* Border increment gaps... */
-	r.min.y = f->crect.min.y;
-	r.min.x = max(1, f->crect.min.x - 1);
-	r.max.x = min(fr.max.x - 1, f->crect.max.x + 1);
-	r.max.y = min(fr.max.y - 1, f->crect.max.y + 1);
-	border(screen->ibuf, r, 1, col->border);
-
-	/* Why? Because some non-ICCCM-compliant apps feel the need to
-	 * change the background properties of all of their ancestor windows
-	 * in order to implement pseudo-transparency.
-	 * What's more, the designers of X11 felt that it would be unfair to
-	 * implementers to make it possible to detect, or forbid, such changes.
-	 */
-	XSetWindowBackgroundPixmap(display, f->client->framewin->w, None);
-
-	copyimage(f->client->framewin, fr, screen->ibuf, ZP);
-	sync();
-}
-
-void
-frame_draw_all(void) {
-	Client *c;
-
-	for(c=client; c; c=c->next)
-		if(c->sel && c->sel->view == screen->sel)
-			frame_draw(c->sel);
 }
 
 Rectangle

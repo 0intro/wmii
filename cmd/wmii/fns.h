@@ -124,9 +124,9 @@ void	frame_swap(Frame*, Frame*);
 int	ingrabbox_p(Frame*, int x, int y);
 void	move_focus(Frame*, Frame*);
 Rectangle constrain(Rectangle);
-Rectangle frame_client2rect(Frame*, Rectangle);
+Rectangle frame_client2rect(Client*, Rectangle, bool);
+Rectangle frame_rect2client(Client*, Rectangle, bool);
 Rectangle frame_hints(Frame*, Rectangle, Align);
-Rectangle frame_rect2client(Frame*, Rectangle);
 
 /* fs.c */
 void	fs_attach(Ixp9Req*);

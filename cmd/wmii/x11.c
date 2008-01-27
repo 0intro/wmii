@@ -243,6 +243,7 @@ window(XWindow xw) {
 
 void
 reparentwindow(Window *w, Window *par, Point p) {
+	assert(w->type == WWindow);
 	XReparentWindow(display, w->w, par->w, p.x, p.y);
 	w->parent = par;
 	w->r = rectsubpt(w->r, w->r.min);
@@ -266,11 +267,31 @@ setwinattr(Window *w, WinAttr *wa, int valmask) {
 }
 
 void
+setborder(Window *w, int width, long pixel) {
+	Rectangle r;
+
+	assert(w->type == WWindow);
+	if(width)
+		XSetWindowBorder(display, w->w, pixel);
+	if(w->border != width) {
+		w->border = width;
+		XSetWindowBorderWidth(display, w->w, width);
+		/* FIXME: Kludge */
+		r = w->r;
+		w->r = ZR;
+		reshapewin(w, r);
+	}
+}
+
+void
 reshapewin(Window *w, Rectangle r) {
 	assert(w->type == WWindow);
-	if(!eqrect(r, w->r))
+	assert(Dx(r) > 0 && Dy(r) > 0); /* Rather than an X error. */
+	if(!eqrect(r, w->r)) {
+		w->r = r;
+		r = rectsubpt(r, Pt(w->border, w->border));
 		XMoveResizeWindow(display, w->w, r.min.x, r.min.y, Dx(r), Dy(r));
-	w->r = r;
+	}
 }
 
 void
@@ -278,13 +299,13 @@ movewin(Window *w, Point pt) {
 	Rectangle r;
 
 	assert(w->type == WWindow);
-	r = rectsubpt(w->r, w->r.min);
-	r = rectaddpt(r, pt);
+	r = rectsetorigin(w->r, pt);
 	reshapewin(w, r);
 }
 
 int
 mapwin(Window *w) {
+	assert(w->type == WWindow);
 	if(!w->mapped) {
 		XMapWindow(display, w->w);
 		w->mapped = 1;
@@ -295,6 +316,7 @@ mapwin(Window *w) {
 
 int
 unmapwin(Window *w) {
+	assert(w->type == WWindow);
 	if(w->mapped) {
 		XUnmapWindow(display, w->w);
 		w->mapped = 0;
@@ -306,11 +328,13 @@ unmapwin(Window *w) {
 
 void
 raisewin(Window *w) {
+	assert(w->type == WWindow);
 	XRaiseWindow(display, w->w);
 }
 
 void
 lowerwin(Window *w) {
+	assert(w->type == WWindow);
 	XLowerWindow(display, w->w);
 }
 
