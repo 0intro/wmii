@@ -66,7 +66,7 @@ search(Pair *lst, int key, char *(*def)(int)) {
 }
 
 static char*
-unmask(Pair * list, uint val)
+unmask(Pair *list, uint val)
 {
 	Pair  *p;
 	char *s, *end;

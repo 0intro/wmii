@@ -164,8 +164,8 @@ MapEnt*	map_get(Map*, ulong, int create);
 void*	map_rm(Map*, ulong);
 
 /* message.c */
-int	getlong(const char*, long*);
-int	getulong(const char*, ulong*);
+bool	getlong(const char*, long*);
+bool	getulong(const char*, ulong*);
 char*	message_client(Client*, IxpMsg*);
 char*	message_root(void*, IxpMsg*);
 char*	message_view(View*, IxpMsg*);
@@ -203,6 +203,7 @@ void	view_arrange(View*);
 void	view_attach(View*, Frame*);
 View*	view_create(const char*);
 void	view_destroy(View*);
+void	view_detach(Frame*);
 Area*	view_findarea(View*, int, bool);
 void	view_focus(WMScreen*, View*);
 bool	view_fullscreen_p(View*);

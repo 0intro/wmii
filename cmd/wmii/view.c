@@ -299,6 +299,16 @@ view_attach(View *v, Frame *f) {
 		c->sel = f;
 }
 
+void
+view_detach(Frame *f) {
+	View *v;
+
+	v = f->view;
+	area_detach(f);
+	if(v != screen->sel && empty_p(v))
+		view_destroy(v);
+}
+
 char**
 view_names(void) {
 	Vector_ptr vec;

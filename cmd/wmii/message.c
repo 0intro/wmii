@@ -124,12 +124,9 @@ getdebug(char *s) {
 static int
 gettoggle(IxpMsg *m) {
 	switch(getsym(msg_getword(m))) {
-	case LON:
-		return On;
-	case LOFF:
-		return Off;
-	case LTOGGLE:
-		return Toggle;
+	case LON:	return On;
+	case LOFF:	return Off;
+	case LTOGGLE:	return Toggle;
 	default:
 		return -1;
 	}
@@ -179,52 +176,68 @@ msg_getword(IxpMsg *m) {
 
 #define strbcmp(str, const) (strncmp((str), (const), sizeof(const)-1))	
 static int
-getbase(const char **s) {
+getbase(const char **s, long *sign) {
 	const char *p;
+	int ret;
+
+	ret = 10;
+	*sign = 1;
+	if(**s == '-') {
+		*sign = -1;
+		*s += 1;
+	}else if(**s == '+')
+		*s += 1;
 
 	p = *s;
 	if(!strbcmp(p, "0x")) {
 		*s += 2;
-		return 16;
+		ret = 16;
 	}
-	if(isdigit(p[0])) {
+	else if(isdigit(p[0])) {
 		if(p[1] == 'r') {
 			*s += 2;
-			return p[0] - '0';
+			ret = p[0] - '0';
 		}
-		if(isdigit(p[1]) && p[2] == 'r') {
+		else if(isdigit(p[1]) && p[2] == 'r') {
 			*s += 3;
-			return 10*(p[0]-'0') + (p[1]-'0');
+			ret = 10*(p[0]-'0') + (p[1]-'0');
 		}
 	}
-	if(p[0] == '0') {
-		*s += 1;
-		return 8;
+	else if(p[0] == '0') {
+		ret = 8;
 	}
-	return 10;
+	if(ret != 10 && (**s == '-' || **s == '+'))
+		*sign = 0;
+	return ret;
 }
 
-int
+bool
 getlong(const char *s, long *ret) {
 	const char *end;
 	char *rend;
 	int base;
+	long sign;
 
 	end = s+strlen(s);
-	base = getbase(&s);
+	base = getbase(&s, &sign);
+	if(sign == 0)
+		return false;
 
-	*ret = strtol(s, &rend, base);
+	*ret = sign * strtol(s, &rend, base);
 	return (end == rend);
 }
 
-int
+bool
 getulong(const char *s, ulong *ret) {
 	const char *end;
 	char *rend;
 	int base;
+	long sign;
 
 	end = s+strlen(s);
-	base = getbase(&s);
+	base = getbase(&s, &sign);
+	if(sign < 1)
+		return false;
 
 	*ret = strtoul(s, &rend, base);
 	return (end == rend);
@@ -233,6 +246,11 @@ getulong(const char *s, ulong *ret) {
 static Client*
 strclient(View *v, char *s) {
 	ulong id;
+
+	/*
+	 * sel
+	 * 0x<window xid>
+	 */
 
 	if(!strcmp(s, "sel"))
 		return view_selclient(v);
@@ -246,6 +264,12 @@ Area*
 strarea(View *v, const char *s) {
 	Area *a;
 	long i;
+
+	/*
+	 * sel
+	 * ~
+	 * <column number>
+	 */
 
 	if(!strcmp(s, "sel"))
 		return v->sel;
@@ -275,6 +299,16 @@ message_client(Client *c, IxpMsg *m) {
 	int i;
 
 	s = msg_getword(m);
+
+	/*
+	 * Toggle ::= on
+	 *	    | off
+	 *	    | toggle
+	 * Fullscreen <toggle>
+	 * Urgent <toggle>
+	 * kill
+	 * slay
+	 */
 
 	switch(getsym(s)) {
 	case LFULLSCREEN:
@@ -379,6 +413,41 @@ message_view(View *v, IxpMsg *m) {
 	s = msg_getword(m);
 	if(s == nil)
 		return nil;
+
+	/* 
+	 * area ::= ~
+	 *        | <column number>
+	 *        | sel
+	 * # This *should* be identical to <frame>
+	 * place ::= <column number>
+	 *	  #| ~ # This should be, but isn't.
+	 *         | left
+	 *         | right
+	 *         | up
+	 *         | down
+	 *         | toggle
+	 * colmode ::= default
+	 *           | stack
+	 *           | normal
+	 * column ::= sel
+	 *          | <column number>
+	 * frame ::= up
+	 *         | down
+	 *         | left
+	 *         | right
+	 *         | toggle
+	 *         | client <window xid>
+	 *         | sel
+	 *         | ~
+	 *         | <column> <frame number>
+	 *         | <column>
+	 *
+	 * colmode <area> <colmode>
+	 * select <area>
+	 * send <frame> <place>
+	 * swap <frame> <place>
+	 * select <ordframe>
+	 */
 
 	switch(getsym(s)) {
 	case LCOLMODE:
@@ -620,7 +689,6 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	case LLEFT:
 		if(a->floating)
 			return Ebadvalue;
-
 		if(a->prev != v->area)
 			to = a->prev;
 		a = v->area;
@@ -628,7 +696,6 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	case LRIGHT:
 		if(a->floating)
 			return Ebadvalue;
-
 		to = a->next;
 		break;
 	case LTOGGLE:
@@ -642,9 +709,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	default:
 		if(!getulong(s, &i) || i == 0)
 			return Ebadvalue;
-
-		for(to=v->area; to; to=to->next)
-			if(!i--) break;
+		to = view_findarea(v, i, true);
 		break;
 	}
 

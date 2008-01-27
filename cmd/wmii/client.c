@@ -194,7 +194,6 @@ client_manage(Client *c) {
 		     || group_leader(c->group) && !client_viewframe(group_leader(c->group), c->sel->view);
 
 	f = c->sel;
-	if(f->view == screen->sel)
 	if(!(c->w.ewmh.type & TypeSplash))
 	if(newgroup) {
 		if(f->area != f->view->sel)
@@ -903,7 +902,7 @@ client_setviews(Client *c, char **tags) {
 			}
 
 			f = *fp;
-			area_detach(f);
+			view_detach(f);
 			*fp = f->cnext;
 			if(c->sel == f)
 				c->sel = *fp;

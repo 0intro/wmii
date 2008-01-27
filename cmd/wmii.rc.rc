@@ -55,6 +55,16 @@ fn wi_9menu {
 		-^(sf sb br)^$wmiifocuscol $*
 }
 
+fn wi_fnmenu {
+	group=$1^Menu-$2 last=$group^_last fns=`{wi_getfuns $group} {
+	shift 2
+	if(! ~ $#fns 0) {
+		res = `{wi_9menu -initial $"($last) $fns} \
+		if(! ~ $res '') {
+			($last) = $res
+			$group-$res $*}}}
+}
+
 fn wi_fn-p {
 	rc -c 'whatis '$1 >[2]/dev/null | grep -s '^fn '
 }
@@ -125,6 +135,10 @@ for(i in Key Event Action)
 
 fn wi_tags {
 	wmiir ls /tag | sed 's,/,,; /^sel$/d'
+}
+
+fn wi_seltag {
+	wmiir read /tag/sel/ctl | sed 1q
 }
 
 fn wi_eventloop {

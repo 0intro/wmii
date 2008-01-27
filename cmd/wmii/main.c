@@ -483,7 +483,10 @@ main(int argc, char *argv[]) {
 
 	if(exitsignal)
 		raise(exitsignal);
-	if(execstr)
+	if(execstr) {
+		quotefmtinstall();
+		print("/bin/sh -c %q\n", execstr);
 		execl("/bin/sh", "sh", "-c", execstr, nil);
+	}
 	return i;
 }

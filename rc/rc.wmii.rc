@@ -96,19 +96,30 @@ fn Event-Notice {
 
 fn Event-LeftBar^(Click DND) {
 	shift; wmiir xwrite /ctl view $*}
+
+fn ClientMenu-3-Delete {
+	wmiir xwrite /client/$1/ctl kill}
+fn ClientMenu-3-Fullscreen {
+	wmiir xwrite /client/$1/ctl Fullscreen on}
 fn Event-ClientMouseDown {
-	client = $1; button = $2
-	if(~ $button 3) {
-		do=`{wi_9menu -initial $menulast Nop Delete Fullscreen}
-		switch($do) {
-		case Delete
-			wmiir xwrite /client/$client/ctl kill
-		case Fullscreen
-			wmiir xwrite /client/$client/ctl Fullscreen on
-		}
-		if(! ~ $do '')
-			menulast = $do;}}
-menulast = Nop
+	wi_fnmenu Client $2 $1 &}
+
+fn LBarMenu-3-Delete {
+	tag=$1; clients=`{wmiir read /tag/$tag/index | awk '/[^#]/{print $2}'}
+	for(c in $clients) {
+		if(~ $tag `{wmiir read /client/$c/tags})
+			wmiir xwrite /client/$c/ctl kill
+		if not
+			wmiir xwrite /client/$c/tags -$tag}
+	if(~ $tag `{wi_seltag}) {
+		newtag = `{wi_tags | awk -v't='$tag '
+			$1 == t { if(!l) getline l
+				  print l
+				  exit }
+			{ l = $0 }'}
+		wmiir xwrite /ctl view $newtag}}
+fn Event-LeftBarMouseDown {
+	wi_fnmenu LBar $* &}
 
 # Actions
 fn Action-rehash {
@@ -229,10 +240,11 @@ Action rehash
 
 # Tag Bar Setup
 ifs=$wi_nl{
-	oldbars=`{comm -23 <{wmiir ls /lbar} <{wi_tags}}
+	oldbars=`{comm -23 <{wmiir ls /lbar} \
+			   <{wi_tags}}
 	if(! ~ $oldbars '')
 		wmiir rm /lbar/^$oldbars
-	seltag=`{wmiir read /tag/sel/ctl | sed 1q}
+	seltag=`{wi_seltag}
 	for(tag in `{wi_tags}) {
 		if(~ $tag $seltag)
 			echo $wmiifocuscol $tag | wmiir create /lbar/$tag
