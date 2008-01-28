@@ -167,10 +167,11 @@ fake_keypress(ulong mod, KeyCode key) {
 
 static Key *
 match_keys(Key *k, ulong mod, KeyCode keycode, bool seq) {
-	Key *ret = nil, *next;
+	Key *ret, *next;
+	volatile int i; /* shut up ken */
 
-	/* I *hate* GCC 4. */
-	for(next = k->tnext; k; (void)((k=next) && (next=k->tnext))) {
+	ret = nil;
+	for(next = k->tnext; k; i = (k=next) && (next=k->tnext)) {
 		if(seq)
 			k = k->next;
 		if(k && (k->mod == mod) && (k->key == keycode)) {

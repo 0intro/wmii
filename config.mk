@@ -10,7 +10,7 @@ PREFIX = /usr/local
 
 # Includes and libs
 INCPATH = .:$(ROOT)/include:$(INCLUDE):/usr/include
-LIBS = -L/usr/lib -lc -L$(ROOT)/lib
+LIBS = -L/usr/lib -L$(ROOT)/lib
 
 # Flags
 include $(ROOT)/mk/gcc.mk
@@ -35,6 +35,14 @@ LIBICONV = # Leave blank if your libc includes iconv (glibc does)
 LIBIXP = $(LIBDIR)/libixp.a
 
 # Operating System Configurations
+
+# KenCC
+# Note: wmii *must* always compile under KenCC. It's vital for
+# argument checking in formatted IO, and similar diagnostics.
+#CFLAGS = -wF
+#STATIC = # Implied
+#CC=pcc -c
+#LD=pcc
 
 # *BSD
 #LIBICONV = -liconv

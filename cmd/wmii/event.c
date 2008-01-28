@@ -35,6 +35,7 @@ static Bool
 findenter(Display *d, XEvent *e, XPointer v) {
 	long *l;
 
+	USED(d);
 	l = (long*)v;
 	if(*l)
 		return False;
@@ -164,9 +165,9 @@ leavenotify(XEvent *e) {
 }
 
 void
-print_focus(Client *c, const char *to) {
-	Dprint(DFocus, "screen->focus: %p[%C] => %p[%C]\n",
-			screen->focus, screen->focus, c, c);
+print_focus(const char *fn, Client *c, const char *to) {
+	Dprint(DFocus, "%s() screen->focus:\n", fn);
+	Dprint(DFocus, "\t%C => %C\n", screen->focus, c);
 	Dprint(DFocus, "\t%s => %s\n", clientname(screen->focus), to);
 }
 
@@ -179,7 +180,7 @@ focusin(XEvent *e) {
 	ev = &e->xfocus;
 	/* Yes, we're focusing in on nothing, here. */
 	if(ev->detail == NotifyDetailNone) {
-		print_focus(&c_magic, "<magic[none]>");
+		print_focus("focusin", &c_magic, "<magic[none]>");
 		screen->focus = &c_magic;
 		setfocus(screen->barwin, RevertToParent);
 		return;
@@ -195,7 +196,7 @@ focusin(XEvent *e) {
 		return;
 
 	if(ev->window == screen->barwin->w) {
-		print_focus(nil, "<nil>");
+		print_focus("focusin", nil, "<nil>");
 		screen->focus = nil;
 	}
 	else if((w = findwin(ev->window))) 
@@ -205,7 +206,7 @@ focusin(XEvent *e) {
 			screen->hasgrab = &c_root;
 		/* Some unmanaged window has grabbed focus */
 		else if((c = screen->focus)) {
-			print_focus(&c_magic, "<magic>");
+			print_focus("focusin", &c_magic, "<magic>");
 			screen->focus = &c_magic;
 			if(c->sel)
 				frame_draw(c->sel);
@@ -231,7 +232,7 @@ focusout(XEvent *e) {
 
 	if((ev->mode == NotifyGrab)
 	&& XCheckMaskEvent(display, KeyPressMask, &me))
-			dispatch_event(&me);
+		dispatch_event(&me);
 	else if((w = findwin(ev->window))) 
 		handle(w, focusout, ev);
 }

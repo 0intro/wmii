@@ -136,6 +136,10 @@ frame_restack(Frame *f, Frame *above) {
 /* Handlers */
 static void
 bup_event(Window *w, XButtonEvent *e) {
+	if((e->state & def.mod) != def.mod)
+		XAllowEvents(display, ReplayPointer, e->time);
+	else
+		XUngrabPointer(display, e->time);
 	event("ClientClick %C %d\n", w->aux, e->button);
 }
 
@@ -157,6 +161,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 			frame_restack(f, nil);
 			view_restack(f->view);
 			focus(c, false);
+			grabpointer(c->framewin, nil, cursor[CurNone], ButtonReleaseMask);
 			break;
 		case Button3:
 			focus(c, false);
@@ -166,9 +171,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 			XAllowEvents(display, ReplayPointer, e->time);
 			break;
 		}
-		if(e->button != Button1)
-			XUngrabPointer(display, e->time);
-	}else{
+	}else {
 		if(e->button == Button1) {
 			if(!e->subwindow) {
 				frame_restack(f, nil);
@@ -293,7 +296,7 @@ void
 frame_resize(Frame *f, Rectangle r) {
 	Client *c;
 	Rectangle fr, cr;
-	int collapsed;
+	int collapsed, dx;
 
 	if(Dx(r) <= 0 || Dy(r) <= 0)
 		die("Frame rect: %R\n", r);
@@ -330,9 +333,11 @@ frame_resize(Frame *f, Rectangle r) {
 	if(f->area->floating)
 		f->r = fr;
 	else {
-		cr.min.x += ((Dx(fr) - Dx(cr)) - 2 * (cr.min.x - fr.min.x))
-			    / 2;
 		f->r = r;
+		dx = Dx(r) - Dx(cr);
+		dx -= 2 * (cr.min.x - fr.min.x);
+		cr.min.x += dx / 2;
+		cr.max.x += dx / 2;
 	}
 	f->crect = rectsubpt(cr, f->r.min);
 
@@ -356,7 +361,9 @@ frame_draw(Frame *f) {
 		return;
 
 	c = f->client;
+	fr = rectsetorigin(c->framewin->r, ZP);
 
+	/* Pick colors. */
 	if(c == screen->focus
 	|| c == selclient())
 		col = &def.focuscolor;
@@ -368,24 +375,24 @@ frame_draw(Frame *f) {
 				col = &def.focuscolor;
 				break;
 			}
-	fr = c->framewin->r;
-	fr = rectsubpt(fr, fr.min);
 
-	/* background */
+	/* Background/border */
 	r = fr;
 	fill(screen->ibuf, r, col->bg);
 	border(screen->ibuf, r, 1, col->border);
 
+	/* Title border */
 	r.max.y = r.min.y + labelh(def.font);
 	border(screen->ibuf, r, 1, col->border);
 
 	f->titlebar = insetrect(r, 3);
 	f->titlebar.max.y += 3;
 
-	/* Odd state of focus. */
+	/* Odd focus. Ulselected, with keyboard focus. */
+	/* Draw a border just inside the titlebar. */
+	/* FIXME: Perhaps this should be normcolored? */
 	if(c != selclient() && col == &def.focuscolor)
-		border(screen->ibuf, insetrect(r, 1),
-			1, def.normcolor.bg);
+		border(screen->ibuf, insetrect(r, 1), 1, def.normcolor.bg);
 
 	/* grabbox */
 	r.min = Pt(2, 2);
@@ -397,10 +404,12 @@ frame_draw(Frame *f) {
 		fill(screen->ibuf, r, col->fg);
 	border(screen->ibuf, r, 1, col->border);
 
-	/* Odd state of focus. */
+	/* Odd focus. Selected, without keyboard focus. */
+	/* Draw a border around the grabbox. */
 	if(c != screen->focus && col == &def.focuscolor)
-		border(screen->ibuf, insetrect(r, -1),
-			1, def.normcolor.bg);
+		border(screen->ibuf, insetrect(r, -1), 1, def.normcolor.bg);
+
+	/* Draw a border on borderless/titleless selected apps. */
 	if(c->borderless && c->titleless && c == selclient())
 		setborder(c->framewin, def.border, def.focuscolor.border);
 	else
@@ -513,12 +522,10 @@ move_focus(Frame *old_f, Frame *f) {
 
 void
 frame_focus(Frame *f) {
-	Client *c;
 	Frame *old_f;
 	View *v;
 	Area *a, *old_a;
 
-	c = f->client;
 	v = f->view;
 	a = f->area;
 	old_a = v->sel;

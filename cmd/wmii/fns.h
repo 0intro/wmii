@@ -3,7 +3,10 @@
  */
 
 #ifdef VARARGCK
+# pragma varargck	argpos	debug	2
+# pragma varargck	argpos	dprint	1
 # pragma varargck	argpos	event	1
+# pragma varargck	argpos	warning	1
 #
 # pragma varargck	type	"C"	Client*	
 # pragma varargck	type	"r"	void
@@ -44,6 +47,7 @@ Frame*	client_groupframe(Client*, View*);
 void	client_kill(Client*, bool);
 void	client_manage(Client*);
 void	client_map(Client*);
+void	client_message(Client*, char*, long);
 void	client_prop(Client*, Atom);
 void	client_reparent(Client*, Window*, Point);
 void	client_resize(Client*, Rectangle);
@@ -83,7 +87,7 @@ void	check_x_event(IxpConn*);
 void	dispatch_event(XEvent*);
 uint	flushenterevents(void);
 uint	flushevents(long, bool dispatch);
-void	print_focus(Client*, const char*);
+void	print_focus(const char*, Client*, const char*);
 
 /* ewmh.c */
 int	ewmh_clientmessage(XClientMessageEvent*);

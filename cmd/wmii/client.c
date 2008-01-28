@@ -17,7 +17,7 @@ enum {
 		   | EnterWindowMask
 		   | FocusChangeMask,
 	ButtonMask = ButtonPressMask
-		   | ButtonReleaseMask
+		   | ButtonReleaseMask,
 };
 
 static Group*	group;
@@ -113,7 +113,6 @@ client_create(XWindow w, XWindowAttributes *wa) {
 
 	XSetWindowBorderWidth(display, w, 0);
 	XAddToSaveSet(display, w);
-	XSelectInput(display, c->w.w, ClientMask);
 
 	fwa.override_redirect = true;
 	fwa.background_pixmap = None;
@@ -132,6 +131,8 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	c->w.aux = c;
 	sethandler(c->framewin, &framehandler);
 	sethandler(&c->w, &handlers);
+
+	XSelectInput(display, c->w.w, ClientMask);
 
 	p.x = def.border;
 	p.y = labelh(def.font);
@@ -426,6 +427,7 @@ focus(Client *c, bool user) {
 	View *v;
 	Frame *f;
 
+	USED(user);
 	f = c->sel;
 	if(!f)
 		return;
@@ -442,9 +444,10 @@ focus(Client *c, bool user) {
 
 void
 client_focus(Client *c) {
+	static long id;
 	flushevents(FocusChangeMask, True);
 
-	Dprint(DFocus, "client_focus(%p[%C]) => %s\n", c,  c, clientname(c));
+	Dprint(DFocus, "client_focus([%C]%s) %ld\n", c, clientname(c), id++);
 
 	if(c) {
 		if(c->noinput)
@@ -453,8 +456,12 @@ client_focus(Client *c) {
 			c->group->client = c;
 	}
 
+	sync();
+	flushevents(FocusChangeMask, true);
+	Dprint(DFocus, "client_focus([%C]%s) %ld\n", c, clientname(c), id);
 	if(screen->focus != c) {
-		Dprint(DFocus, "\t%s => %s\n", clientname(screen->focus), clientname(c));
+		Dprint(DFocus, "\t[%C]%s => [%C]%s\n", screen->focus, clientname(screen->focus),
+				c, clientname(c));
 		if(c)
 			setfocus(&c->w, RevertToParent);
 		else
@@ -462,7 +469,7 @@ client_focus(Client *c) {
 		event("ClientFocus %C\n", c);
 
 		sync();
-		flushevents(FocusChangeMask, True);
+		flushevents(FocusChangeMask, true);
 	}
 }
 
@@ -535,12 +542,16 @@ client_configure(Client *c) {
 }
 
 void
+client_message(Client *c, char *msg, long l2) {
+	sendmessage(&c->w, "WM_PROTOCOLS", xatom(msg), xtime, l2, 0, 0);
+}
+
+void
 client_kill(Client *c, bool nice) {
 	if(nice && (c->proto & ProtoDelete)) {
-		sendmessage(&c->w, "WM_PROTOCOLS", xatom("WM_DELETE_WINDOW"), xtime, 0, 0, 0);
+		client_message(c, "WM_DELETE_WINDOW", 0);
 		ewmh_pingclient(c);
-	}
-	else
+	}else
 		XKillClient(display, c->w.w);
 }
 
@@ -799,12 +810,12 @@ enter_event(Window *w, XCrossingEvent *e) {
 	c = w->aux;
 	if(e->detail != NotifyInferior) {
 		if(screen->focus != c) {
-			Dprint(DGeneric, "enter_notify(c) => %s\n", c->name);
+			Dprint(DGeneric, "enter_notify([%C]%s)\n", c, c->name);
 			focus(c, false);
 		}
 		client_setcursor(c, cursor[CurNormal]);
 	}else
-		Dprint(DGeneric, "enter_notify(c[NotifyInferior]) => %s\n", c->name);
+		Dprint(DGeneric, "enter_notify(%C[NotifyInferior]%s)\n", c, c->name);
 }
 
 static void
@@ -813,7 +824,7 @@ focusin_event(Window *w, XFocusChangeEvent *e) {
 
 	c = w->aux;
 
-	print_focus(c, c->name);
+	print_focus("focusin_event", c, c->name);
 
 	if(e->mode == NotifyGrab)
 		screen->hasgrab = c;
@@ -835,7 +846,7 @@ focusout_event(Window *w, XFocusChangeEvent *e) {
 		if(screen->focus)
 			screen->hasgrab = screen->focus;
 	}else if(screen->focus == c) {
-		print_focus(&c_magic, "<magic>");
+		print_focus("focusout_event", &c_magic, "<magic>");
 		screen->focus = &c_magic;
 		if(c->sel)
 			frame_draw(c->sel);

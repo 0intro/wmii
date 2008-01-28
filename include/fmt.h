@@ -55,6 +55,13 @@ enum{
 extern	int	(*fmtdoquote)(int);
 
 #ifdef VARARGCK
+/* *sigh* */
+  typedef unsigned char		_fmt_uchar;
+  typedef unsigned short	_fmt_ushort;
+  typedef unsigned int		_fmt_uint;
+  typedef unsigned long		_fmt_ulong;
+  typedef unsigned long long	_fmt_uvlong;
+  typedef long long		_fmt_vlong;
 # pragma varargck	argpos	fmtprint	2
 # pragma varargck	argpos	fprint		2
 # pragma varargck	argpos	print		1
@@ -67,26 +74,26 @@ extern	int	(*fmtdoquote)(int);
 # pragma varargck	argpos	snprint		3
 # pragma varargck	argpos	sprint		2
 
-# pragma varargck	type	"lld"	vlong
-# pragma varargck	type	"llx"	vlong
-# pragma varargck	type	"lld"	uvlong
-# pragma varargck	type	"llx"	uvlong
+# pragma varargck	type	"lld"	_fmt_vlong
+# pragma varargck	type	"llx"	_fmt_vlong
+# pragma varargck	type	"lld"	_fmt_uvlong
+# pragma varargck	type	"llx"	_fmt_uvlong
 # pragma varargck	type	"ld"	long
 # pragma varargck	type	"lx"	long
 # pragma varargck	type	"lb"	long
-# pragma varargck	type	"ld"	ulong
-# pragma varargck	type	"lx"	ulong
-# pragma varargck	type	"lb"	ulong
+# pragma varargck	type	"ld"	_fmt_ulong
+# pragma varargck	type	"lx"	_fmt_ulong
+# pragma varargck	type	"lb"	_fmt_ulong
 # pragma varargck	type	"d"	int
 # pragma varargck	type	"x"	int
 # pragma varargck	type	"c"	int
 # pragma varargck	type	"C"	int
 # pragma varargck	type	"b"	int
-# pragma varargck	type	"d"	uint
-# pragma varargck	type	"x"	uint
-# pragma varargck	type	"c"	uint
-# pragma varargck	type	"C"	uint
-# pragma varargck	type	"b"	uint
+# pragma varargck	type	"d"	_fmt_uint
+# pragma varargck	type	"x"	_fmt_uint
+# pragma varargck	type	"c"	_fmt_uint
+# pragma varargck	type	"C"	_fmt_uint
+# pragma varargck	type	"b"	_fmt_uint
 # pragma varargck	type	"f"	double
 # pragma varargck	type	"e"	double
 # pragma varargck	type	"g"	double

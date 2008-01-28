@@ -14,6 +14,7 @@ printinstall:
 
 oneclean:
 	for i in $(PROG) $(OFILES); do \
+		[ -e $$i ] && \
 		echo CLEAN $$($(CLEANNAME) $(BASE)$$i); \
 		rm -f $$i; \
 	done 2>/dev/null || true

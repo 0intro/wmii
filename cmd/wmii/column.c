@@ -36,12 +36,14 @@ column_new(View *v, Area *pos, uint w) {
 
 	a = area_create(v, pos, w);
 	return a;
+#if 0
 	if(!a)
 		return nil;
 
 	view_arrange(v);
 	if(v == screen->sel)
 		view_focus(screen, v);
+#endif
 }
 
 void
@@ -105,15 +107,10 @@ column_attachrect(Area *a, Frame *f, Rectangle r) {
 
 void
 column_remove(Frame *f) {
-	Client *c;
 	Frame *pr;
 	Area *a;
-	View *v;
 
 	a = f->area;
-	v = a->view;
-	c = f->client;
-
 	pr = f->aprev;
 
 	frame_remove(f);

@@ -705,7 +705,7 @@ mouse_movegrabbox(Client *c) {
 }
 #  endif
 
-int
+static int
 thcol(Frame *f) {
 	Framewin *fw;
 	Frame *fprev, *fnext;
@@ -800,7 +800,7 @@ done:
 	return ret;
 }
 
-int
+static int
 tvcol(Frame *f) {
 	Framewin *fw;
 	Window *cwin;
@@ -858,13 +858,13 @@ done:
 	return ret;
 }
 
-int
+static int
 tfloat(Frame *f) {
 	Rectangle *rects;
 	Rectangle frect, origin;
 	Point pt, pt1;
 	Client *c;
-	Align align, grav;
+	Align align;
 	uint nrect, button;
 	int ret;
 
@@ -885,8 +885,10 @@ tfloat(Frame *f) {
 	pt = querypointer(&scr.root);
 	pt1 = grabboxcenter(f);
 	goto casmotion;
+label:
 	for(;;pt1=pt)
 		switch (readmouse(&pt, &button)) {
+		default: goto label; /* shut up ken */
 		case MotionNotify:
 		casmotion:
 			origin = rectaddpt(origin, subpt(pt, pt1));
@@ -894,7 +896,7 @@ tfloat(Frame *f) {
 			frect = origin;
 
 			align = Center;
-			grav = snap_rect(rects, nrect, &frect, &align, def.snap);
+			snap_rect(rects, nrect, &frect, &align, def.snap);
 
 			frect = frame_hints(f, frect, Center);
 			frect = constrain(frect);
@@ -922,7 +924,7 @@ done:
 void
 grab_button(XWindow w, uint button, ulong mod) {
 	XGrabButton(display, button, mod, w, false, ButtonMask,
-			GrabModeSync, GrabModeSync, None, None);
+			GrabModeSync, GrabModeAsync, None, None);
 	if((mod != AnyModifier) && (numlock_mask != 0)) {
 		XGrabButton(display, button, mod | numlock_mask, w, false, ButtonMask,
 			GrabModeSync, GrabModeAsync, None, None);

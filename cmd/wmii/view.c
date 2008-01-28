@@ -68,7 +68,7 @@ view_create(const char *name) {
 		if(!strcmp(name, v->name))
 			return v;
 
-	v = emallocz(sizeof(View));
+	v = emallocz(sizeof *v);
 	v->id = id++;
 	v->r = screen->r;
 	v->r.max.y = screen->barwin->r.min.y;

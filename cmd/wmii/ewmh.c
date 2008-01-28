@@ -30,8 +30,10 @@ ewmh_init(void) {
 	changeprop_long(&scr.root, Net("SUPPORTING_WM_CHECK"), "WINDOW", win, 1);
 	changeprop_long(ewmhwin, Net("SUPPORTING_WM_CHECK"), "WINDOW", win, 1);
 	changeprop_string(ewmhwin, Net("WM_NAME"), myname);
+
+	long zz[] = {0, 0};
 	changeprop_long(&scr.root, Net("DESKTOP_VIEWPORT"), "CARDINAL",
-		(long[]){0, 0}, 2);
+		zz, 2);
 
 	long supported[] = {
 		/* Misc */
@@ -137,6 +139,7 @@ static void
 pingtimeout(long id, void *v) {
 	Client *c;
 
+	USED(id);
 	c = v;
 	event("Unresponsive %C\n", c);
 	c->w.ewmh.ping = 0;
@@ -154,7 +157,7 @@ ewmh_pingclient(Client *c) {
 	if(e->ping)
 		return;
 
-	sendmessage(&c->w, "WM_PROTOCOLS", NET("WM_PING"), xtime, c->w.w, 0, 0);
+	client_message(c, Net("WM_PING"), c->w.w);
 	e->ping = xtime++;
 	e->timer = ixp_settimer(&srv, PingTime, pingtimeout, c);
 }
@@ -179,7 +182,7 @@ struct Prop {
 };
 
 static long
-getmask(Prop *props, long *vals, int n) {
+getmask(Prop *props, ulong *vals, int n) {
 	Prop *p;
 	long ret;
 
@@ -212,10 +215,10 @@ ewmh_getwintype(Client *c) {
 		{Type("NORMAL"), TypeNormal},
 		{0, }
 	};
-	long *types;
+	ulong *types;
 	long n, mask;
 
-	n = getprop_long(&c->w, Net("WM_WINDOW_TYPE"), "ATOM",
+	n = getprop_ulong(&c->w, Net("WM_WINDOW_TYPE"), "ATOM",
 		0L, &types, 16);
 	Dprint(DEwmh, "ewmh_getwintype(%C) n = %ld\n", c, n);
 	mask = getmask(props, types, n);
@@ -236,10 +239,10 @@ ewmh_protocols(Window *w) {
 		{Net("WM_PING"), ProtoPing},
 		{0, }
 	};
-	long *protos;
+	ulong *protos;
 	long n, mask;
 
-	n = getprop_long(w, "WM_PROTOCOLS", "ATOM",
+	n = getprop_ulong(w, "WM_PROTOCOLS", "ATOM",
 		0L, &protos, 16);
 	Dprint(DEwmh, "ewmh_protocols(%W) n = %ld\n", w, n);
 	mask = getmask(props, protos, n);
@@ -299,10 +302,11 @@ int
 ewmh_clientmessage(XClientMessageEvent *e) {
 	Client *c;
 	View *v;
-	long *l;
-	int msg, action, i;
+	ulong *l;
+	ulong msg;
+	int action, i;
 
-	l = e->data.l;
+	l = (ulong*)e->data.l;
 	msg = e->message_type;
 	Dprint(DEwmh, "ClientMessage: %A\n", msg);
 

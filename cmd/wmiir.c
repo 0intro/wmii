@@ -185,7 +185,6 @@ xcreate(int argc, char *argv[]) {
 static int
 xremove(int argc, char *argv[]) {
 	char *file;
-	int n;
 
 	ARGBEGIN{
 	default:
@@ -194,10 +193,8 @@ xremove(int argc, char *argv[]) {
 
 	file = EARGF(usage());
 	do {
-		if(ixp_remove(client, file) == 0) {
+		if(!ixp_remove(client, file))
 			fprint(2, "%s: Can't remove file '%s': %r\n", argv0, file);
-			n++;
-		}
 	}while((file = ARGF()));
 	return 0;
 }

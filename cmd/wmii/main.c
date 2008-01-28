@@ -286,7 +286,7 @@ doublefork(void) {
 		waitpid(pid, &status, 0);
 		return pid;
 	}
-	return -1; /* not reached */
+	/* NOTREACHED */
 }
 
 static void

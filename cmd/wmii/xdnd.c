@@ -26,7 +26,7 @@ xdnd_clientmessage(XClientMessageEvent *e) {
 	Rectangle r;
 	Point p;
 	long pos, siz;
-	int msg;
+	ulong msg;
 
 	dnd = nil;
 	msg = e->message_type;

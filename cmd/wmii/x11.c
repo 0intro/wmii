@@ -692,6 +692,11 @@ changeprop_long(Window *w, char *prop, char *type, long data[], int len) {
 }
 
 void
+changeprop_ulong(Window *w, char *prop, char *type, ulong data[], int len) {
+	changeproperty(w, prop, type, 32, (uchar*)data, len);
+}
+
+void
 changeprop_textlist(Window *w, char *prop, char *type, char *data[]) {
 	char **p, *s, *t;
 	int len, n;
@@ -759,6 +764,11 @@ getprop_long(Window *w, char *prop, char *type, ulong offset, long **ret, ulong 
 	free(*ret);
 	*ret = 0;
 	return 0;
+}
+
+ulong
+getprop_ulong(Window *w, char *prop, char *type, ulong offset, ulong **ret, ulong length) {
+	return getprop_long(w, prop, type, offset, (long**)ret, length);
 }
 
 char**

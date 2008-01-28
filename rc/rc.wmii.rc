@@ -240,16 +240,16 @@ Action rehash
 
 # Tag Bar Setup
 ifs=$wi_nl{
-	oldbars=`{comm -23 <{wmiir ls /lbar} \
+	rc -c 'wmiir rm /lbar/^$*' >[2]/dev/null \
+		`{comm -23 <{wmiir ls /lbar} \
 			   <{wi_tags}}
-	if(! ~ $oldbars '')
-		wmiir rm /lbar/^$oldbars
 	seltag=`{wi_seltag}
-	for(tag in `{wi_tags}) {
+	for(tag in `{wi_tags}) {{
 		if(~ $tag $seltag)
-			echo $wmiifocuscol $tag | wmiir create /lbar/$tag
+			echo $wmiifocuscol $tag
 		if not
-			echo $wmiinormcol $tag | wmiir create /lbar/$tag}}
+			echo $wmiinormcol $tag
+		} | wmiir create /lbar/$tag}}
 
 wi_eventloop
 

@@ -838,7 +838,7 @@ warning(const char *fmt, ...) {
 	va_end(ap);
 
 	event("Warning %s\n", s);
-	fprint(2, "%s: warning: %s\n", s);
+	fprint(2, "%s: warning: %s\n", argv0, s);
 	free(s);
 }
 

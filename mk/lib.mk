@@ -11,6 +11,8 @@ depend: ${OBJ:=.depend}
 
 libclean:
 	for i in $(LIB) $(OFILES); do \
+		[ -e $$i ] && \
+		echo CLEAN $$($(CLEANNAME) $(BASE)$$i); \
 		rm -f $$i; \
 	done 2>/dev/null || true
 

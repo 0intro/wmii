@@ -144,9 +144,9 @@ struct Screen {
 
 #ifdef VARARGCK
 # pragma varargck	type	"A"	Atom
-# pragma varargck	type	"W"	Window*	
 # pragma varargck	type	"P"	Point
 # pragma varargck	type	"R"	Rectangle
+# pragma varargck	type	"W"	Window*	
 #endif
 
 Display *display;
@@ -181,6 +181,7 @@ void	changeprop_long(Window*, char*, char*, long[], int);
 void	changeprop_short(Window*, char*, char*, short[], int);
 void	changeprop_string(Window*, char*, char*);
 void	changeprop_textlist(Window*, char*, char*, char*[]);
+void	changeprop_ulong(Window*, char*, char*, ulong[], int);
 void	changeproperty(Window*, char*, char*, int width, uchar*, int);
 void	copyimage(Image*, Rectangle, Image*, Point);
 Window*	createwindow(Window *parent, Rectangle, int depth, uint class, WinAttr*, int valuemask);
@@ -201,6 +202,7 @@ void	freestringlist(char**);
 ulong	getprop_long(Window*, char*, char*, ulong, long**, ulong);
 char*	getprop_string(Window*, char*);
 int	getprop_textlist(Window *w, char *name, char **ret[]);
+ulong	getprop_ulong(Window*, char*, char*, ulong, ulong**, ulong);
 ulong	getproperty(Window*, char *prop, char *type, Atom *actual, ulong offset, uchar **ret, ulong length);
 int	grabpointer(Window*, Window *confine, Cursor, int mask);
 void	initdisplay(void);

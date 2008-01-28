@@ -29,21 +29,28 @@ toutf8n(const char *str, size_t nstr) {
 
 	iconv(cd, nil, nil, nil, nil);
 
-	bsize = nstr * 1.25 + 4;
+	bsize = nstr << 1;
 	buf = emalloc(bsize);
 	pos = buf;
 	nbuf = bsize-1;
+	/* The (void*) cast is because, while the BSDs declare:
+	 * size_t iconv(iconv_t, const char**, size_t*, char**, size_t*),
+	 * GNU/Linux and POSIX declare:
+	 * size_t iconv(iconv_t, char**, size_t*, char**, size_t*).
+	 * This just happens to be safer than declaring our own
+	 * prototype.
+	 */
 	while(iconv(cd, (void*)&str, &nstr, &pos, &nbuf) == -1)
 		if(errno == E2BIG) {
-			bsize *= 1.25 + 4;
+			bsize <<= 1;
 			nbuf = pos - buf;
 			buf = erealloc(buf, bsize);
 			pos = buf + nbuf;
 			nbuf = bsize - nbuf - 1;
 		}else
 			break;
-	*pos = '\0';
-	return buf;
+	*pos++ = '\0';
+	return erealloc(buf, pos-buf);
 }
 
 char*
