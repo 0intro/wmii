@@ -727,7 +727,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 		return Ebadvalue;
 
 	flushenterevents();
-	frame_focus(f);
+	frame_focus(client_viewframe(c, v));
 	/* view_arrange(v); */
 	view_update_all();
 	return nil;
@@ -743,7 +743,8 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 		fp = f->aprev;
 		if(!fp)
 			return Ebadvalue;
-		fp = fp->aprev;
+		if(!swap)
+			fp = fp->aprev;
 		break;
 	case LDOWN:
 		fp = f->anext;
@@ -754,11 +755,9 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 		die("can't get here");
 	}
 
-	if(swap) {
-		if(!fp)
-			return Ebadvalue;
+	if(swap)
 		frame_swap(f, fp);
-	}else {
+	else {
 		frame_remove(f);
 		frame_insert(f, fp);
 	}
