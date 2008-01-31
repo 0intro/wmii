@@ -15,7 +15,7 @@ toutf8n(const char *str, size_t nstr) {
 
 	if(cd == nil) {
 		cd = iconv_open("UTF-8", nl_langinfo(CODESET));
-		if((int)cd == -1)
+		if((long)cd == -1)
 			warning("Can't convert from local character encoding to UTF-8");
 		else
 			haveiconv = true;
