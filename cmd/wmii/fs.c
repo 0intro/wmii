@@ -776,7 +776,6 @@ fs_read(Ixp9Req *r) {
 		Stat s;
 		IxpMsg m;
 
-		offset = 0;
 		size = r->ifcall.count;
 		if(size > r->fid->iounit)
 			size = r->fid->iounit;
@@ -785,6 +784,7 @@ fs_read(Ixp9Req *r) {
 
 		tf = f = lookup_file(f, nil);
 		/* Note: f->tab.name == "." so we skip it */
+		offset = 0;
 		for(f=f->next; f; f=f->next) {
 			dostat(&s, fs_size(f), f);
 			n = ixp_sizeof_stat(&s);
@@ -800,8 +800,8 @@ fs_read(Ixp9Req *r) {
 			tf=tf->next;
 			free_file(f);
 		}
-		r->ofcall.count = r->ifcall.count - size;
-		r->ofcall.data = (char*)m.data;
+		r->ofcall.count = m.pos - m.data;
+		r->ofcall.data = m.data;
 		respond(r, nil);
 		return;
 	}
