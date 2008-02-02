@@ -184,13 +184,13 @@ init_cursors(void) {
 	XFreePixmap(display, pix);
 }
 
-static void
+void
 init_screen(WMScreen *screen) {
 
 	screen->r = scr.rect;
 	def.snap = Dy(scr.rect) / 63;
-
-	sel_screen = pointerscreen();
+	freeimage(screen->ibuf);
+	screen->ibuf = allocimage(Dx(screen->r), Dy(screen->r), scr.depth);
 }
 
 static void
@@ -446,14 +446,14 @@ main(int argc, char *argv[]) {
 	loadcolor(&def.focuscolor, FOCUSCOLORS);
 	loadcolor(&def.normcolor, NORMCOLORS);
 
+	sel_screen = pointerscreen();
+
 	num_screens = 1;
 	screens = emallocz(num_screens * sizeof(*screens));
 	screen = &screens[0];
 	for(i = 0; i < num_screens; i++) {
 		s = &screens[i];
 		init_screen(s);
-
-		s->ibuf = allocimage(Dx(s->r), Dy(s->r), scr.depth);
 
 		wa.event_mask = 
 				  SubstructureRedirectMask

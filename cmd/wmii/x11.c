@@ -203,6 +203,9 @@ allocimage(int w, int h, int depth) {
 
 void
 freeimage(Image *img) {
+	if(img == nil)
+		return;
+
 	assert(img->type == WImage);
 
 	XFreePixmap(display, img->w);

@@ -45,14 +45,15 @@ randr_screenchange(XRRScreenChangeNotifyEvent *ev) {
 	Point d;
 
 	XRRUpdateConfiguration((XEvent*)ev);
-	
+	scr.rect = Rect(0, 0, ev->width, ev->height);
+
 	d.x = ev->width - Dx(screen->r);
 	d.y = ev->height - Dy(screen->r);
 	for(v=view; v; v=v->next) {
 		v->r.max.x += d.x;
 		v->r.max.y += d.y;
 	}
-	screen->r = Rect(0, 0, ev->width, ev->height);
+	init_screen(screen);
 	bar_resize(screen);
 }
 

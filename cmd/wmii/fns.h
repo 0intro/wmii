@@ -161,6 +161,9 @@ void	kpress(XWindow, ulong mod, KeyCode);
 ulong	str2modmask(const char*);
 void	update_keys(void);
 
+/* main.c */
+void	init_screen(WMScreen*);
+
 /* map.c */
 MapEnt*	hash_get(Map*, const char*, int create);
 void*	hash_rm(Map*, const char*);
