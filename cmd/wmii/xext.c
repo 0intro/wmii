@@ -10,9 +10,20 @@
 #endif
 
 static void	randr_screenchange(XRRScreenChangeNotifyEvent*);
+static bool	randr_event_p(XEvent *e);
+
+typedef void (*EvHandler)(XEvent*);
+static EvHandler	randr_handlers[RRNumberEvents];
 
 bool	have_RandR;
 int	randr_eventbase;
+
+static void
+handle(XEvent *e, EvHandler ha[], int base) {
+
+	if(ha[e->type-base])
+		ha[e->type-base](e);
+}
 
 void
 xext_init(void) {
@@ -22,8 +33,8 @@ xext_init(void) {
 void
 xext_event(XEvent *e) {
 
-	if(have_RandR && (ulong)(e->type - randr_eventbase) < RRNumberEvents)
-		randr_event(e);
+	if(randr_event_p(e))
+		handle(e, randr_handlers, randr_eventbase);
 }
 
 void
@@ -34,9 +45,14 @@ randr_init(void) {
 	if(have_RandR)
 		if(XRRQueryVersion(display, &major, &minor) && major < 1)
 			have_RandR = false;
-	if(!have_RandR)
-		return;
-	XRRSelectInput(display, scr.root.w, RRScreenChangeNotifyMask);
+	if(have_RandR)
+		XRRSelectInput(display, scr.root.w, RRScreenChangeNotifyMask);
+}
+
+static bool
+randr_event_p(XEvent *e) {
+	return have_RandR
+	    && (uint)e->type - randr_eventbase < RRNumberEvents;
 }
 
 static void
@@ -45,10 +61,13 @@ randr_screenchange(XRRScreenChangeNotifyEvent *ev) {
 	Point d;
 
 	XRRUpdateConfiguration((XEvent*)ev);
-	scr.rect = Rect(0, 0, ev->width, ev->height);
+	if(ev->rotation+90 % 180)
+		scr.rect = Rect(0, 0, ev->width, ev->height);
+	else
+		scr.rect = Rect(0, 0, ev->height, ev->width);
 
-	d.x = ev->width - Dx(screen->r);
-	d.y = ev->height - Dy(screen->r);
+	d.x = Dx(scr.rect) - Dx(screen->r);
+	d.y = Dy(scr.rect) - Dy(screen->r);
 	for(v=view; v; v=v->next) {
 		v->r.max.x += d.x;
 		v->r.max.y += d.y;
@@ -57,15 +76,7 @@ randr_screenchange(XRRScreenChangeNotifyEvent *ev) {
 	bar_resize(screen);
 }
 
-void
-randr_event(XEvent *e) {
-
-	switch(e->type-randr_eventbase) {
-	default:
-		break;
-	case RRScreenChangeNotify: /* Yuck. */
-		randr_screenchange((XRRScreenChangeNotifyEvent*)e);
-		break;
-	}
-}
+static EvHandler randr_handlers[] = {
+	[RRScreenChangeNotify] = (EvHandler)randr_screenchange,
+};
 
