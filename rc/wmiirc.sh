@@ -185,7 +185,7 @@ export WMII_MENU WMII_9MENU WMII_FONT WMII_TERM
 export WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS
 
 # Misc
-progsfile="$WMII_NS_DIR/.proglist"
+progsfile="$(wmiir namespace)/.proglist"
 Action status &
 wi_proglist $PATH >$progsfile &
 

@@ -411,7 +411,7 @@ convpts(Point *pt, int np) {
 	XPoint *rp;
 	int i;
 	
-	rp = emalloc(np * sizeof(*rp));
+	rp = emalloc(np * sizeof *rp);
 	for(i = 0; i < np; i++) {
 		rp[i].x = pt[i].x;
 		rp[i].y = pt[i].y;
@@ -628,7 +628,7 @@ xatom(char *name) {
 	
 	e = hash_get(&atommap, name, 1);
 	if(e->val == nil)
-		e->val = (void*)XInternAtom(display, name, False);
+		e->val = (void*)XInternAtom(display, name, false);
 	return (Atom)e->val;
 }
 
@@ -660,7 +660,7 @@ keycode(char *name) {
 
 void
 sync(void) {
-	XSync(display, False);
+	XSync(display, false);
 }
 
 /* Properties */
@@ -732,7 +732,7 @@ getprop(Window *w, char *prop, char *type, Atom *actual, int *format, ulong offs
 	typea = (type ? xatom(type) : 0L);
 
 	status = XGetWindowProperty(display, w->w,
-		xatom(prop), offset, length, False /* delete */,
+		xatom(prop), offset, length, false /* delete */,
 		typea, actual, format, &n, &extra, ret);
 
 	if(status != Success) {
@@ -762,8 +762,6 @@ getprop_long(Window *w, char *prop, char *type, ulong offset, long **ret, ulong 
 	n = getprop(w, prop, type, &actual, &format, offset, (uchar**)ret, length);
 	if(n == 0 || format == 32 && xatom(type) == actual)
 		return n;
-	Dprint(DGeneric, "getprop_long(%W, %s, %s) format=%d, actual=\"%A\"\n",
-		w, prop, type, format, actual);
 	free(*ret);
 	*ret = 0;
 	return 0;
@@ -775,19 +773,21 @@ getprop_ulong(Window *w, char *prop, char *type, ulong offset, ulong **ret, ulon
 }
 
 char**
-strlistdup(char *list[], int n) {
+strlistdup(char *list[]) {
 	char **p, *q;
-	int i, m;
+	int i, m, n;
 
-	for(i=0, m=0; i < n; i++)
-		m += strlen(list[i])+1;
+	n = 0;
+	m = 0;
+	for(p=list; *p; p++, n++)
+		m += strlen(*p) + 1;
 
-	p = malloc((n+1)*sizeof(char*) + m);
+	p = malloc((n+1) * sizeof(*p) + m);
 	q = (char*)&p[n+1];
 
 	for(i=0; i < n; i++) {
 		p[i] = q;
-		m = strlen(list[i])+1;
+		m = strlen(list[i]) + 1;
 		memcpy(q, list[i], m);
 		q += m;
 	}
@@ -879,7 +879,7 @@ grabpointer(Window *w, Window *confine, Cursor cur, int mask) {
 	cw = None;
 	if(confine)
 		cw = confine->w;
-	return XGrabPointer(display, w->w, False /* owner events */, mask,
+	return XGrabPointer(display, w->w, false /* owner events */, mask,
 		GrabModeAsync, GrabModeAsync, cw, cur, CurrentTime
 		) == GrabSuccess;
 }

@@ -226,7 +226,7 @@ void	setfocus(Window*, int mode);
 void	sethints(Window*);
 void	setshapemask(Window *dst, Image *src, Point);
 void	setwinattr(Window*, WinAttr*, int valmask);
-char**	strlistdup(char**, int);
+char**	strlistdup(char**);
 Point	subpt(Point, Point);
 void	sync(void);
 uint	textwidth(Font*, char*);

@@ -169,8 +169,8 @@ main(int argc, char **argv)
 
 	numitems = argc;
 
-	labels = emalloc(numitems * sizeof(*labels));
-	commands = emalloc(numitems * sizeof(*labels));
+	labels = emalloc(numitems * sizeof *labels);
+	commands = emalloc(numitems * sizeof *labels);
 
 	for(i = 0; i < numitems; i++) {
 		labels[i] = argv[i];

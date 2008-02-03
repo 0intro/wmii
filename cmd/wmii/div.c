@@ -19,7 +19,7 @@ getdiv(Divide **dp) {
 
 	d = emallocz(sizeof *d);
 
-	wa.override_redirect = True;
+	wa.override_redirect = true;
 	wa.cursor = cursor[CurDHArrow];
 	wa.event_mask =
 		  ExposureMask

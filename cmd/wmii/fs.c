@@ -184,7 +184,7 @@ get_file(void) {
 	FileId *temp;
 	if(!free_fileid) {
 		uint i = 15;
-		temp = emallocz(sizeof(FileId) * i);
+		temp = emallocz(i * sizeof *temp);
 		for(; i; i--) {
 			temp->next = free_fileid;
 			free_fileid = temp++;
@@ -414,7 +414,7 @@ event(const char *format, ...) {
 	va_list ap;
 
 	va_start(ap, format);
-	vsnprint(buffer, sizeof(buffer), format, ap);
+	vsnprint(buffer, sizeof buffer, format, ap);
 	va_end(ap);
 
 	pending_write(&events, buffer, strlen(buffer));
@@ -435,11 +435,15 @@ vdebug(int flag, const char *fmt, va_list ap) {
 	if(flag == 0)
 		flag = dflags;
 
+	if(!((debugflag|debugfile) & flag))
+		return;
+
 	s = vsmprint(fmt, ap);
 	len = strlen(s);
 
 	if(debugflag&flag)
 		print("%s", s);
+
 	if(debugfile&flag)
 	for(i=0; i < nelem(pdebug); i++)
 		if(flag & (1<<i))
@@ -1102,7 +1106,7 @@ fs_clunk(Ixp9Req *r) {
 			*q-- = '\0';
 
 		q = f->p.bar->text;
-		utflcpy(q, (char*)m.pos, sizeof(((Bar*)0)->text));
+		utflcpy(q, (char*)m.pos, sizeof ((Bar*)0)->text);
 
 		free(p);
 

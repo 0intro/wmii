@@ -30,7 +30,7 @@ frame_create(Client *c, View *v) {
 		f->floatr = c->sel->floatr;
 		f->r = c->sel->r;
 	}else{
-		f->r = frame_client2rect(c, client_grav(c, ZR), true);
+		f->r = client_grav(c, ZR);
 		f->floatr = f->r;
 		c->sel = f;
 	}
@@ -545,7 +545,7 @@ frame_focus(Frame *f) {
 	client_focus(f->client);
 
 	if(!a->floating && ((a->mode == Colstack) || (a->mode == Colmax)))
-		column_arrange(a, False);
+		column_arrange(a, false);
 }
 
 int

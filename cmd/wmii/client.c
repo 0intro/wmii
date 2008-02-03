@@ -93,7 +93,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	WinAttr fwa;
 	Point p;
 
-	c = emallocz(sizeof(Client));
+	c = emallocz(sizeof *c);
 	c->border = wa->border_width;
 
 	c->r.min = Pt(wa->x, wa->y);
@@ -199,9 +199,8 @@ client_manage(Client *c) {
 	if(newgroup) {
 		if(f->area != f->view->sel)
 			f->view->oldsel = f->view->sel;
-		focus(c, false);
-	}
-	else {
+		frame_focus(f);
+	}else {
 		frame_restack(c->sel, c->sel->area->sel);
 		view_restack(c->sel->view);
 	}
@@ -233,9 +232,9 @@ client_destroy(Client *c) {
 
 	r = client_grav(c, ZR);
 
-	hide = False;	
+	hide = false;	
 	if(!c->sel || c->sel->view != screen->sel)
-		hide = True;
+		hide = true;
 
 	XGrabServer(display);
 
@@ -264,6 +263,7 @@ client_destroy(Client *c) {
 	event("DestroyClient %C\n", c);
 
 	flushenterevents();
+	flushevents(FocusChangeMask, true);
 	free(c->w.hints);
 	free(c);
 }
@@ -322,9 +322,12 @@ client_grav(Client *c, Rectangle rd) {
 	if(eqrect(rd, ZR)) {
 		if(c->sel) {
 			r = c->sel->floatr;
-		}else
-			r = frame_client2rect(c, c->r, true);
-		cr = frame_rect2client(c, r, true);
+			cr = frame_rect2client(c, r, true);
+		}else {
+			cr = c->r;
+			r = frame_client2rect(c, cr, true);
+			r = rectsetorigin(r, cr.min);
+		}
 		sp = subpt(cr.min, r.min);
 		r = gravitate(r, cr, h->grav);
 		if(!h->gravstatic)
@@ -445,7 +448,7 @@ focus(Client *c, bool user) {
 void
 client_focus(Client *c) {
 	static long id;
-	flushevents(FocusChangeMask, True);
+	flushevents(FocusChangeMask, true);
 
 	Dprint(DFocus, "client_focus([%C]%s) %ld\n", c, clientname(c), id++);
 
@@ -505,7 +508,7 @@ client_resize(Client *c, Rectangle r) {
 	}
 	sync(); /* Not ideal. */
 	flushenterevents();
-	flushevents(FocusChangeMask|ExposureMask, True);
+	flushevents(FocusChangeMask|ExposureMask, true);
 }
 
 void
@@ -530,7 +533,7 @@ client_configure(Client *c) {
 	e.event = c->w.w;
 	e.window = c->w.w;
 	e.above = None;
-	e.override_redirect = False;
+	e.override_redirect = false;
 
 	e.x = r.min.x;
 	e.y = r.min.y;
@@ -650,7 +653,7 @@ update_class(Client *c) {
 		strcpy(c->props, "::");
 		str = c->props + 1;
 	}
-	utflcpy(str+1, c->name, sizeof(c->props));
+	utflcpy(str+1, c->name, sizeof c->props);
 }
 
 static void
@@ -663,7 +666,7 @@ client_updatename(Client *c) {
 	if(str == nil)
 		str = getprop_string(&c->w, "WM_NAME");
 	if(str)
-		utflcpy(c->name, str, sizeof(c->name));
+		utflcpy(c->name, str, sizeof c->name);
 	free(str);
 
 	update_class(c);
@@ -685,12 +688,20 @@ updatemwm(Client *c) {
 	ulong *ret;
 	int n;
 
+	/* To quote Metacity, or KWin quoting Metacity:
+	 *   We support MWM hints deemed non-stupid
+	 * Our definition of non-stupid is a bit less lenient than
+	 * theirs, though. In fact, we don't really even support the
+	 * idea of supporting the hints that we support, but apps
+	 * like xmms (which noone should use) break if we don't.
+	 */
+
 	n = getprop_long(&c->w, "_MOTIF_WM_HINTS", "_MOTIF_WM_HINTS",
 			0L, (long**)&ret, 3L);
 
-	/* FIXME: Look over this. */
+	/* FIXME: Should somehow handle all frames. */
 	if(c->sel)
-		r = frame_rect2client(c, c->sel->r, c->sel->area->floating);
+		r = client_grav(c, ZR);
 
 	c->borderless = 0;
 	c->titleless = 0;
@@ -703,7 +714,7 @@ updatemwm(Client *c) {
 	free(ret);
 
 	if(c->sel) {
-		r = frame_client2rect(c, r, c->sel->area->floating);
+		r = client_grav(c, r);
 		client_resize(c, r);
 		frame_draw(c->sel);
 	}
@@ -746,7 +757,7 @@ client_prop(Client *c, Atom a) {
 		break;
 	case XA_WM_CLASS:
 		n = getprop_textlist(&c->w, "WM_CLASS", &class);
-		snprint(c->props, sizeof(c->props), "%s:%s:",
+		snprint(c->props, sizeof c->props, "%s:%s:",
 				(n > 0 ? class[0] : "<nil>"),
 				(n > 1 ? class[1] : "<nil>"));
 		freestringlist(class);

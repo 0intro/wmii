@@ -56,12 +56,12 @@ str2modmask(const char *val) {
 static void
 grabkey(Key *k) {
 	XGrabKey(display, k->key, k->mod, scr.root.w,
-			True, GrabModeAsync, GrabModeAsync);
+			true, GrabModeAsync, GrabModeAsync);
 	if(numlock_mask) {
 		XGrabKey(display, k->key, k->mod | numlock_mask, scr.root.w,
-				True, GrabModeAsync, GrabModeAsync);
+				true, GrabModeAsync, GrabModeAsync);
 		XGrabKey(display, k->key, k->mod | numlock_mask | LockMask, scr.root.w,
-				True, GrabModeAsync, GrabModeAsync);
+				true, GrabModeAsync, GrabModeAsync);
 	}
 	sync();
 }
@@ -81,7 +81,7 @@ name2key(const char *name) {
 	Key *k;
 
 	for(k=key; k; k=k->lnext)
-		if(!strncmp(k->name, name, sizeof(k->name)))
+		if(!strncmp(k->name, name, sizeof k->name))
 			return k;
 	return nil;
 }
@@ -101,16 +101,16 @@ getkey(const char *name) {
 		ungrabkey(k);
 		return k;
 	}
-	utflcpy(buf, name, sizeof(buf));
+	utflcpy(buf, name, sizeof buf);
 	toks = tokenize(seq, 8, buf, ',');
 	for(i = 0; i < toks; i++) {
 		if(!k)
-			r = k = emallocz(sizeof(Key));
+			r = k = emallocz(sizeof *k);
 		else {
-			k->next = emallocz(sizeof(Key));
+			k->next = emallocz(sizeof *k);
 			k = k->next;
 		}
-		utflcpy(k->name, name, sizeof(k->name));
+		utflcpy(k->name, name, sizeof k->name);
 		kstr = strrchr(seq[i], '-');
 		if(kstr)
 			kstr++;
@@ -189,7 +189,7 @@ kpress_seq(XWindow w, Key *done) {
 	Key *found;
 
 	next_keystroke(&mod, &key);
-	found = match_keys(done, mod, key, True);
+	found = match_keys(done, mod, key, true);
 	if((done->mod == mod) && (done->key == key))
 		fake_keypress(mod, key); /* double key */
 	else {
@@ -208,14 +208,14 @@ kpress(XWindow w, ulong mod, KeyCode keycode) {
 
 	for(k=key; k; k=k->lnext)
 		 k->tnext=k->lnext;
-	found = match_keys(key, mod, keycode, False);
+	found = match_keys(key, mod, keycode, false);
 	if(!found) /* grabbed but not found */
 		XBell(display, 0);
 	else if(!found->tnext && !found->next)
 		event("Key %s\n", found->name);
 	else {
-		XGrabKeyboard(display, w, True, GrabModeAsync, GrabModeAsync, CurrentTime);
-		flushevents(FocusChangeMask, True);
+		XGrabKeyboard(display, w, true, GrabModeAsync, GrabModeAsync, CurrentTime);
+		flushevents(FocusChangeMask, true);
 		kpress_seq(w, found);
 		XUngrabKeyboard(display, CurrentTime);
 		sync();

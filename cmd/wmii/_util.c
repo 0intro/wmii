@@ -101,7 +101,8 @@ comm(int cols, char **toka, char **tokb) {
 			tokb++;
 		}
 	}
-	ret = strlistdup((char**)vec.ary, vec.n);
+	vector_ppush(&vec, nil);
+	ret = strlistdup((char**)vec.ary);
 	free(vec.ary);
 	return ret;
 }

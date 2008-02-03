@@ -360,5 +360,5 @@ EXTERN Client*	kludge;
 extern char*	debugtab[];
 
 #define Debug(x) if((debugflag|debugfile)&(x) && setdebug(x))
-#define Dprint(x, ...) BLOCK( debug(x, __VA_ARGS__) )
+#define Dprint(x, ...) BLOCK( if((debugflag|debugfile)&(x)) debug(x, __VA_ARGS__) )
 

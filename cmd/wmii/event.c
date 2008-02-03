@@ -9,9 +9,10 @@ void
 dispatch_event(XEvent *e) {
 	Debug(DEvent)
 		printevent(e);
-	if(e->type < nelem(handler) && handler[e->type])
-		handler[e->type](e);
-	else
+	if(e->type < nelem(handler)) {
+		if(handler[e->type])
+			handler[e->type](e);
+	}else
 		xext_event(e);
 }
 
@@ -38,12 +39,12 @@ findenter(Display *d, XEvent *e, XPointer v) {
 	USED(d);
 	l = (long*)v;
 	if(*l)
-		return False;
+		return false;
 	if(e->type == EnterNotify)
-		return True;
+		return true;
 	if(e->type == MotionNotify)
 		(*l)++;
-	return False;
+	return false;
 }
 
 /* This isn't perfect. If there were motion events in the queue
@@ -147,7 +148,7 @@ enternotify(XEvent *e) {
 	if((w = findwin(ev->window))) 
 		handle(w, enter, ev);
 	else if(ev->window == scr.root.w) {
-		sel_screen = True;
+		sel_screen = true;
 		frame_draw_all();
 	}
 }
@@ -159,7 +160,7 @@ leavenotify(XEvent *e) {
 	ev = &e->xcrossing;
 	xtime = ev->time;
 	if((ev->window == scr.root.w) && !ev->same_screen) {
-		sel_screen = True;
+		sel_screen = true;
 		frame_draw_all();
 	}
 }

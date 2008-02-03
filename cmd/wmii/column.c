@@ -191,14 +191,14 @@ column_scale(Area *a) {
 			i++, j++;
 		if(f->collapsed) {
 			if(i < 0 && (f != a->sel)) {
-				f->collapsed = False;
+				f->collapsed = false;
 				area_moveto(f->view->area, f);
 				continue;
 			}
 			i--;
 		}else {
 			if(j < 0 && (f != a->sel))
-				f->collapsed = True;
+				f->collapsed = true;
 			j--;
 		}
 		/* Doesn't change if we 'continue' */
@@ -287,7 +287,7 @@ column_arrange(Area *a, bool dirty) {
 		break;
 	case Colmax:
 		for(f=a->frame; f; f=f->anext) {
-			f->collapsed = False;
+			f->collapsed = false;
 			f->r = a->r;
 		}
 		goto resize;

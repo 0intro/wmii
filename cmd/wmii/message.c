@@ -382,7 +382,7 @@ message_root(void *p, IxpMsg *m) {
 		if((n & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)) == 0)
 			return Ebadvalue;
 
-		utflcpy(def.grabmod, s, sizeof(def.grabmod));
+		utflcpy(def.grabmod, s, sizeof def.grabmod);
 		def.mod = n;
 		break;
 	case LNORMCOLORS:
@@ -462,7 +462,7 @@ message_view(View *v, IxpMsg *m) {
 			return Ebadvalue;
 
 		a->mode = i;
-		column_arrange(a, True);
+		column_arrange(a, true);
 		view_restack(v);
 
 		if(v == screen->sel)

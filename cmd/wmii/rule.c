@@ -91,7 +91,7 @@ update_rules(Rule **rule, const char *data) {
 				*rule = emallocz(sizeof **rule);
 				(*rule)->regex = regcomp(regex);
 				if((*rule)->regex) {
-					utflcpy((*rule)->value, value, sizeof(rul->value));
+					utflcpy((*rule)->value, value, sizeof rul->value);
 					rule = &(*rule)->next;
 				}else
 					free(*rule);

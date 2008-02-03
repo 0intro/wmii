@@ -8,7 +8,22 @@ iconwidth = 32
 iconscale = `{*=$epsbox; hoc -e $iconwidth/'('$3-' '$1')'}
 iconheight = `{*=$epsbox; hoc -e '('$4-' '$2')*'$iconscale}
 
-icon.png: $eps
+%.png: %.eps
+	* = `{hoc -e'-('$epsbox')'}
+	x = $1
+	y = $2
+	gs -q -dBATCH -dNOPAUSE -sDEVICE=pngalpha -sOutputFile=$target -g$iconwidth'x'$iconheight - <<!
+		$iconscale $iconscale scale
+		$x $y translate
+		($eps) run
+		showpage
+		quit
+	!
+
+%-small.png: %.eps
+	iconwidth = 16
+	iconscale = `{*=$epsbox; hoc -e $iconwidth/'('$3-' '$1')'}
+	iconheight = `{*=$epsbox; hoc -e '('$4-' '$2')*'$iconscale}
 	* = `{hoc -e'-('$epsbox')'}
 	x = $1
 	y = $2

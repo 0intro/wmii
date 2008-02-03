@@ -20,11 +20,15 @@ static const char
 	version[] = "wmii-"VERSION", ©2007 Kris Maglione\n";
 
 static int (*xlib_errorhandler) (Display*, XErrorEvent*);
-static char *address, *ns_path;
-static int check_other_wm;
-static struct sigaction sa;
-static struct passwd *passwd;
-static int sleeperfd, sock, exitsignal;
+static char*	address;
+static char*	ns_path;
+static bool	check_other_wm;
+static int	sleeperfd;
+static int	sock;
+static int	exitsignal;
+
+static struct sigaction	sa;
+static struct passwd*	passwd;
 
 static void
 usage(void) {
@@ -67,49 +71,8 @@ scan_wins(void) {
 		XFree(wins);
 }
 
-static char*
-ns_display(void) {
-	char *s, *disp;
-
-	disp = getenv("DISPLAY");
-	if(disp == nil)
-		fatal("DISPLAY is unset");
-
-	disp = estrdup(disp);
-	s = &disp[strlen(disp) - 2];
-	if(strcmp(s, ".0") == 0)
-		*s = '\0';
-
-	s = emalloc(strlen(disp) + strlen(user) + strlen("/tmp/ns..") + 1);
-	sprint(s, "/tmp/ns.%s.%s", user, disp);
-
-	free(disp);
-	return s;
-}
-
-static void
-rmkdir(char *path, int mode) {
-	char *p;
-	int ret;
-	char c;
-
-	for(p = path+1; ; p++) {
-		c = *p;
-		if((c == '/') || (c == '\0')) {
-			*p = '\0';
-			ret = mkdir(path, mode);
-			if((ret == -1) && (errno != EEXIST))
-				fatal("Can't create path '%s': %r", path);
-			*p = c;
-		}
-		if(c == '\0')
-			break;
-	}
-}
-
 static void
 init_ns(void) {
-	struct stat st;
 	char *s;
 
 	if(address && strncmp(address, "unix!", 5) == 0) {
@@ -117,35 +80,24 @@ init_ns(void) {
 		s = strrchr(ns_path, '/');
 		if(s != nil)
 			*s = '\0';
-	}
-	else if((s = getenv("NAMESPACE")))
-		ns_path = s;
-	else
-		ns_path = ns_display();
+		if(ns_path[0] != '/' || ns_path[0] == '\0')
+			fatal("address \"%s\" is not an absolute path", address);
+		setenv("NAMESPACE", ns_path, true);
+	}else
+		ns_path = ixp_namespace();
 
-	if(ns_path[0] != '/' || ns_path[0] == '\0')
-		fatal("Bad ns_path");
-
-	rmkdir(ns_path, 0700);
-
-	if(stat(ns_path, &st))
-		fatal("Can't stat ns_path '%s': %r", ns_path);
-	if(getuid() != st.st_uid)
-		fatal("ns_path '%s' exists but is not owned by you", ns_path);
-	if(st.st_mode & 077)
-		if(chmod(ns_path, st.st_mode & ~077))
-			fatal("ns_path '%s' exists, but has group or world permissions", ns_path);
+	if(ns_path == nil)
+		fatal("Bad namespace path: %r\n");
 }
 
 static void
 init_environment(void) {
 	init_ns();
 
-	if(address == nil)
+	if(address)
+		setenv("WMII_ADDRESS", address, true);
+	else
 		address = smprint("unix!%s/wmii", ns_path);
-
-	setenv("WMII_NS_DIR", ns_path, True);
-	setenv("WMII_ADDRESS", address, True);
 }
 
 static void
@@ -249,7 +201,7 @@ cleanup_handler(int signal) {
 	sa.sa_handler = SIG_DFL;
 	sigaction(signal, &sa, nil);
 
-	srv.running = False;
+	srv.running = false;
 
 	switch(signal) {
 	default:
@@ -395,7 +347,7 @@ main(int argc, char *argv[]) {
 		usage();
 
 	setlocale(LC_CTYPE, "");
-	starting = True;
+	starting = true;
 
 	initdisplay();
 
@@ -449,7 +401,7 @@ main(int argc, char *argv[]) {
 	sel_screen = pointerscreen();
 
 	num_screens = 1;
-	screens = emallocz(num_screens * sizeof(*screens));
+	screens = emallocz(num_screens * sizeof *screens);
 	screen = &screens[0];
 	for(i = 0; i < num_screens; i++) {
 		s = &screens[i];

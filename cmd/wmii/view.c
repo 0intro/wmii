@@ -73,7 +73,7 @@ view_create(const char *name) {
 	v->r = screen->r;
 	v->r.max.y = screen->barwin->r.min.y;
 
-	utflcpy(v->name, name, sizeof(v->name));
+	utflcpy(v->name, name, sizeof v->name);
 
 	event("CreateTag %s\n", v->name);
 	area_create(v, nil, 0);
@@ -265,7 +265,7 @@ void
 view_select(const char *arg) {
 	char buf[256];
 
-	utflcpy(buf, arg, sizeof(buf));
+	utflcpy(buf, arg, sizeof buf);
 	trim(buf, " \t+/");
 
 	if(buf[0] == '\0')
@@ -301,10 +301,16 @@ view_attach(View *v, Frame *f) {
 
 void
 view_detach(Frame *f) {
+	Client *c;
 	View *v;
 
 	v = f->view;
+	c = f->client;
+
 	area_detach(f);
+	if(c->sel == f)
+		c->sel = f->cnext;
+
 	if(v != screen->sel && empty_p(v))
 		view_destroy(v);
 }
@@ -449,7 +455,7 @@ view_rects(View *v, uint *num, Frame *ignore) {
 	for(f=v->area->frame; f; f=f->anext)
 		i++;
 
-	result = emallocz(i * sizeof(Rectangle));
+	result = emallocz(i * sizeof *result);
 
 	i = 0;
 	for(f=v->area->frame; f; f=f->anext)

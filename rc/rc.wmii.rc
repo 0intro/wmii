@@ -123,10 +123,10 @@ fn Event-LeftBarMouseDown {
 
 # Actions
 fn Action-rehash {
-	comm -23 <{ls $WMII_NS_DIR/proglist.* >[2]/dev/null | awk -F'\.' '{print $NF}'} \
+	comm -23 <{ls `{namespace}/proglist.* >[2]/dev/null | awk -F'\.' '{print $NF}'} \
 		 <{ps | awk '{print $2}'} |
 	while(id=`{read})
-		rm $WMII_NS_DIR/proglist.$id
+		rm `{namespace}/proglist.$id
 	wi_proglist $PATH >$progs_file}
 fn Action-quit {
 	wmiir xwrite /ctl quit}
@@ -221,7 +221,6 @@ key Shift-$MODKEY-^`{seq 0 9} || fn $key {
 
 #` WM Configuration
 wmiir write /ctl <<!
-	view 1
 	grabmod $MODKEY
 	border 2
 	font $wmiifont
@@ -234,7 +233,7 @@ xsetroot -solid $wmiibackground
 Action overridekeys
 
 # Misc Setup
-progs_file=$WMII_NS_DIR/proglist.$pid
+progs_file=`{namespace}/proglist.$pid
 Action status
 Action rehash
 

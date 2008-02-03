@@ -96,7 +96,7 @@ area_create(View *v, Area *pos, uint w) {
 		a->next->prev = a;
 
 	if(a == v->area)
-		a->floating = True;
+		a->floating = true;
 
 	if(v->sel == nil)
 		area_focus(a);
