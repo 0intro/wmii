@@ -682,6 +682,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	s = msg_getword(m);
 	sym = getsym(s);
 
+	/* FIXME: Should use a helper function. */
 	switch(sym) {
 	case LUP:
 	case LDOWN:
@@ -705,6 +706,11 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 			to = view_findarea(v, f->column, true);
 		else
 			to = view_findarea(v, v->selcol, true);
+		break;
+	case LTILDE:
+		if(a->floating)
+			return Ebadvalue;
+		to = v->area;
 		break;
 	default:
 		if(!getulong(s, &i) || i == 0)
