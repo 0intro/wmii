@@ -214,7 +214,8 @@ cleanup_handler(int signal) {
 
 static void
 closeexec(int fd) {
-	fcntl(fd, F_SETFL, FD_CLOEXEC);
+	if(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
+		fatal("can't set %d close on exec: %r", fd);
 }
 
 static int
