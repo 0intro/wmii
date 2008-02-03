@@ -164,6 +164,7 @@ client_manage(Client *c) {
 
 	if(Dx(c->r) == Dx(screen->r))
 	if(Dy(c->r) == Dy(screen->r))
+	if(c->w.ewmh.type == 0)
 		fullscreen(c, true);
 
 	tags = getprop_string(&c->w, "_WMII_TAGS");
