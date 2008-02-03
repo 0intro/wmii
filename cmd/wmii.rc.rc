@@ -141,10 +141,14 @@ fn wi_seltag {
 	wmiir read /tag/sel/ctl | sed 1q
 }
 
+fn wi_readevent {
+	wmiir read /event
+}
+
 fn wi_eventloop {
 	wi_initkeys
 
-	wmiir read /event |
+	wi_readevent |
 	while(ifs=$wi_nl{wi_event=`{read}}) {
 		ifs=$wi_nl{
 			wi_arg=`{echo $wi_event | sed 's/^[^ ]+ //'}}

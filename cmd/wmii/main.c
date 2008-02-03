@@ -287,8 +287,6 @@ spawn_command(const char *cmd) {
 	if(doublefork() == 0) {
 		if(setsid() == -1)
 			fatal("Can't setsid: %r");
-		/* Was closeexeced, but Xlib-xcb doesn't like it. */
-		close(ConnectionNumber(display));
 
 		shell = passwd->pw_shell;
 		if(shell[0] != '/')
@@ -370,10 +368,7 @@ main(int argc, char *argv[]) {
 	sock = ixp_announce(address);
 	if(sock < 0)
 		fatal("Can't create socket '%s': %r", address);
-	/* Grr! Xlib-xcb doesn't like this in the least.
-	 * And I thought XF86 Xlib was bad... *sigh*
 	closeexec(ConnectionNumber(display));
-	*/
 	closeexec(sock);
 
 	if(wmiirc)
