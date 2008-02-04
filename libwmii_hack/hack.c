@@ -13,34 +13,27 @@
 #include "x11.c"
 
 enum {
-	Timeout = 10000,
+	Timeout = 10,
 };
 
 static void*	xlib;
 
+static Window	lastwin;
 static long	transient;
 static Atom	types[32];
 static long	ntypes;
-static char*	tags[32];
-static long	ntags;
+static char**	tags;
 static long	pid;
 static long	stime;
 static char	hostname[256];
-static long	nmsec;
+static long	nsec;
 
 typedef Window (*mapfn)(Display*, Window);
 
 static Window (*mapwindow)(Display*, Window);
 static Window (*mapraised)(Display*, Window);
-
-static long
-msec(void) {
-	struct timeval tv;
-
-	if(!gettimeofday(&tv, 0))
-		return 0;
-	return tv.tv_sec*1000 + tv.tv_usec/1000;
-}
+static Window (*unmapwindow)(Display*, Window);
+static Window (*destroywindow)(Display*, Window);
 
 static void
 init(Display *d) { /* Hrm... assumes one display... */
@@ -54,6 +47,8 @@ init(Display *d) { /* Hrm... assumes one display... */
 		return;
 	mapwindow = (mapfn)(uintptr_t)dlsym(xlib, "XMapWindow");
 	mapraised = (mapfn)(uintptr_t)dlsym(xlib, "XMapRaised");
+	unmapwindow = (mapfn)(uintptr_t)dlsym(xlib, "XUnmapWindow");
+	destroywindow = (mapfn)(uintptr_t)dlsym(xlib, "XDestroyWindow");
 
 	unsetenv("LD_PRELOAD");
 
@@ -84,9 +79,8 @@ init(Display *d) { /* Hrm... assumes one display... */
 		unsetenv("WMII_HACK_TAGS");
 
 		n = tokenize(toks, nelem(toks)-1, s, '+');
-		for(i=0; i < n; i++)
-			tags[i] = strdup(toks[i]);
-		ntags = n;
+		toks[n] = 0;
+		tags = strlistdup(toks);
 		free(s);
 	}
 	if((s = getenv("WMII_HACK_TIME"))) {
@@ -113,16 +107,22 @@ setprops(Display *d, Window w) {
 	}
 
 	/* Kludge. */
-	if(nmsec == 0)
-		nmsec = msec();
-	if(msec() > nmsec + Timeout)
+	if(nsec == 0)
+		nsec = time(0);
+	else if(time(0) > nsec + Timeout)
 		return;
+
+	if(lastwin) {
+		free(tags);
+		getprop_textlist(d, lastwin, "_WMII_TAGS", &tags);
+	}
+	lastwin = w;
 
 	if(transient)
 		changeprop_long(d, w, "WM_TRANSIENT_FOR", "WINDOW", &transient, 1);
 	if(ntypes)
 		changeprop_long(d, w, "_NET_WM_WINDOW_TYPE", "ATOM", (long*)types, ntypes);
-	if(ntags)
+	if(tags)
 		changeprop_textlist(d, w, "_WMII_TAGS", "UTF8_STRING", tags);
 	if(stime)
 		changeprop_long(d, w, "_WMII_LAUNCH_TIME", "CARDINAL", &stime, 1);
@@ -140,5 +140,22 @@ XMapRaised(Display *d, Window w) {
 
 	setprops(d, w);
 	return mapraised(d, w);
+}
+
+/* These are not perfect. */
+int
+XUnmapWindow(Display *d, Window w) {
+
+	if(lastwin == w)
+		lastwin = 0;
+	return unmapwindow(d, w);
+}
+
+int
+XDestroyWindow(Display *d, Window w) {
+
+	if(lastwin == w)
+		lastwin = 0;
+	return destroywindow(d, w);
 }
 

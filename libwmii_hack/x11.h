@@ -12,7 +12,7 @@ static void	changeproperty(Display*, Window, char*, char*, int width, uchar*, in
 /* static void	freestringlist(char**); */
 static ulong	getprop_long(Display*, Window, char*, char*, ulong, long**, ulong);
 /* static char*	getprop_string(Display*, Window, char*); */
-/* static int	getprop_textlist(Display*, Window, char*, char**[]); */
+static int	getprop_textlist(Display*, Window, char*, char**[]);
 /* static ulong	getproperty(Display*, Window, char*, char*, Atom*, ulong, uchar**, ulong); */
 static Atom	xatom(Display*, char*);
 

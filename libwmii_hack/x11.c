@@ -150,25 +150,47 @@ strlistdup(char *list[], int n) {
 }
 #endif
 
-#if 0
+static char**
+strlistdup(char *list[]) {
+	char **p, *q;
+	int i, m, n;
+
+	n = 0;
+	m = 0;
+	for(p=list; *p; p++, n++)
+		m += strlen(*p) + 1;
+
+	p = malloc((n+1) * sizeof(*p) + m);
+	q = (char*)&p[n+1];
+
+	for(i=0; i < n; i++) {
+		p[i] = q;
+		m = strlen(list[i]) + 1;
+		memcpy(q, list[i], m);
+		q += m;
+	}
+	p[n] = nil;
+	return p;
+}
+
 static int
 getprop_textlist(Display *display, Window w, char *name, char **ret[]) {
 	XTextProperty prop;
 	char **list;
 	int n;
 
-	*ret = nil;
 	n = 0;
 
 	XGetTextProperty(display, w, &prop, xatom(display, name));
 	if(prop.nitems > 0) {
-		if(Xutf8TextPropertyToTextList(display, &prop, &list, &n) == Success)
-			*ret = list;
+		if(Xutf8TextPropertyToTextList(display, &prop, &list, &n) == Success) {
+			*ret = strlistdup(list);
+			XFreeStringList(list);
+		}
 		XFree(prop.value);
 	}
 	return n;
 }
-#endif
 
 #if 0
 static char*

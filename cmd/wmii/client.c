@@ -173,7 +173,7 @@ client_manage(Client *c) {
 	if(trans == nil && c->group)
 		trans = group_leader(c->group);
 
-	if(tags)
+	if(tags && (!trans || starting))
 		utflcpy(c->tags, tags, sizeof c->tags);
 	else if(trans)
 		utflcpy(c->tags, trans->tags, sizeof c->tags);
