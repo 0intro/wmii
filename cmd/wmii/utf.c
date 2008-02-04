@@ -29,7 +29,7 @@ toutf8n(const char *str, size_t nstr) {
 
 	iconv(cd, nil, nil, nil, nil);
 
-	bsize = nstr << 1;
+	bsize = (nstr+1) << 1;
 	buf = emalloc(bsize);
 	pos = buf;
 	nbuf = bsize-1;
