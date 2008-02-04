@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "util.c"
@@ -79,8 +80,7 @@ init(Display *d) { /* Hrm... assumes one display... */
 		unsetenv("WMII_HACK_TAGS");
 
 		n = tokenize(toks, nelem(toks)-1, s, '+');
-		toks[n] = 0;
-		tags = strlistdup(toks);
+		tags = strlistdup(toks, n);
 		free(s);
 	}
 	if((s = getenv("WMII_HACK_TIME"))) {

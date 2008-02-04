@@ -6,7 +6,7 @@ lconf="$home/.wmii-CONFVERSION"
 gconf="CONFPREFIX/wmii-CONFVERSION" 
 
 export WMII_CONFPATH="$lconf:$gconf"
-export POSIXLY_CORRECT=gnu_hippies
+#export POSIXLY_CORRECT=gnu_hippies
 
 which="$(which which)"
 if wmii9rc; then

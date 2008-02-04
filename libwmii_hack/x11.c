@@ -151,14 +151,13 @@ strlistdup(char *list[], int n) {
 #endif
 
 static char**
-strlistdup(char *list[]) {
+strlistdup(char *list[], int n) {
 	char **p, *q;
-	int i, m, n;
+	int i, m;
 
-	n = 0;
 	m = 0;
-	for(p=list; *p; p++, n++)
-		m += strlen(*p) + 1;
+	for(i=0; i < n; i++)
+		m += strlen(list[i]) + 1;
 
 	p = malloc((n+1) * sizeof(*p) + m);
 	q = (char*)&p[n+1];
@@ -184,7 +183,7 @@ getprop_textlist(Display *display, Window w, char *name, char **ret[]) {
 	XGetTextProperty(display, w, &prop, xatom(display, name));
 	if(prop.nitems > 0) {
 		if(Xutf8TextPropertyToTextList(display, &prop, &list, &n) == Success) {
-			*ret = strlistdup(list);
+			*ret = strlistdup(list, n);
 			XFreeStringList(list);
 		}
 		XFree(prop.value);
