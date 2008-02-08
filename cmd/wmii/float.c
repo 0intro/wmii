@@ -88,7 +88,7 @@ float_placeframe(Frame *f) {
 		return;
 	*/
 	if(c->fullscreen || c->w.hints->position || starting) {
-		f->r = client_grav(c, c->r);
+		f->r = f->floatr;
 		return;
 	}
 

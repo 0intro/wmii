@@ -97,7 +97,8 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	c->border = wa->border_width;
 
 	c->r.min = Pt(wa->x, wa->y);
-	c->r.max = addpt(c->r.min, Pt(wa->width, wa->height));
+	c->r.max = addpt(c->r.min,
+			 Pt(wa->width, wa->height));
 
 	c->w.type = WWindow;
 	c->w.w = w;
@@ -193,7 +194,8 @@ client_manage(Client *c) {
 	bool newgroup = !c->group
 		     || c->group->ref == 1
 		     || selclient() && (selclient()->group == c->group)
-		     || group_leader(c->group) && !client_viewframe(group_leader(c->group), c->sel->view);
+		     || group_leader(c->group) && !client_viewframe(group_leader(c->group),
+								    c->sel->view);
 
 	f = c->sel;
 	if(!(c->w.ewmh.type & TypeSplash))
