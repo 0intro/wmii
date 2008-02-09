@@ -16,7 +16,7 @@ MKCFG!=${MKCFGSH}
 include $(MKCFG)
 
 .SILENT:
-.SUFFIXES: .O .o .o_pic .c .sh .rc .$(SOEXT) .awk .1 .depend .install .uninstall .clean
+.SUFFIXES: .O .o .o_pic .c .sh .rc .$(SOEXT) .awk .1 .man1 .depend .install .uninstall .clean
 all:
 
 .c.depend:
@@ -28,13 +28,11 @@ all:
 
 .c.o:
 	$(COMPILE) $@ $<
-
 .c.o_pic:
 	$(COMPILEPIC) $@ $<
 
 .o.O:
 	$(LINK) $@ $<
-
 .c.O:
 	$(COMPILE) ${<:.c=.o} $<
 	$(LINK) $@ ${<:.c=.o}
@@ -48,6 +46,9 @@ all:
 	echo FILTER $(BASE)$<
 	$(FILTER) $< >$@
 	chmod 0755 $@
+.1.man1:
+	echo FILTER $(BASE)$<
+	$(FILTER) $< >$@
 
 .O.install:
 	echo INSTALL $$($(CLEANNAME) $(BASE)$*)
@@ -73,11 +74,14 @@ all:
 	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
 	rm -f $(INCLUDE)/$<
 
-.1.install:
-	echo INSTALL man $$($(CLEANNAME) $*'(1)')
-	$(FILTER) $< >$(MAN)/man1/$<
-	chmod 0644 $(MAN)/man1/$<
-.1.uninstall:
+.man1.install:
+	set -e; \
+	man=$(<:$*.man%=%); \
+	path="$(MAN)/man$$man/$*.$$man"; \
+	echo INSTALL man $$($(CLEANNAME) "$(BASE)/$*($$man)"); \
+	cp "$<" "$$path"; \
+	chmod 0644 "$$path"
+.man1.uninstall:
 	echo UNINSTALL man $$($(CLEANNAME) $*'(1)')
 	rm -f $(MAN)/man1/$<
 
