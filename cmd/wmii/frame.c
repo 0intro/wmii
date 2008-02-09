@@ -99,6 +99,8 @@ frame_restack(Frame *f, Frame *above) {
 	a = f->area;
 	if(!a->floating)
 		return false;
+	if(f == above)
+		return false;
 
 	if(above == nil && !(c->w.ewmh.type & TypeDock))
 		for(fp=a->stack; fp; fp=fp->snext)
@@ -129,6 +131,7 @@ frame_restack(Frame *f, Frame *above) {
 	}
 	if(f->snext)
 		f->snext->sprev = f;
+	assert(f->snext != f && f->sprev != f);
 
 	return true;
 }
