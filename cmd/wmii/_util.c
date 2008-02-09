@@ -2,6 +2,10 @@
  * See LICENSE file for license details.
  */
 #include "dat.h"
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include "fns.h"
 
 /* Blech. */
@@ -31,6 +35,139 @@ vector_##c##push(Vector_##nam *v, type val) {                           \
 VECTOR(long, long, l)
 VECTOR(Rectangle, rect, r)
 VECTOR(void*, ptr, p)
+
+int
+doublefork(void) {
+	pid_t pid;
+	int status;
+	
+	switch(pid=fork()) {
+	case -1:
+		fatal("Can't fork(): %r");
+	case 0:
+		switch(pid=fork()) {
+		case -1:
+			fatal("Can't fork(): %r");
+		case 0:
+			return 0;
+		default:
+			exit(0);
+		}
+	default:
+		waitpid(pid, &status, 0);
+		return pid;
+	}
+	/* NOTREACHED */
+}
+
+void
+closeexec(int fd) {
+	if(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
+		fatal("can't set %d close on exec: %r", fd);
+}
+
+int
+spawn3(int fd[3], const char *file, char *argv[]) {
+	/* Some ideas from Russ Cox's libthread port. */
+	int p[2];
+	int pid;
+	int _errno;
+
+	if(pipe(p) < 0)
+		return -1;
+	closeexec(p[1]);
+
+	switch(pid = doublefork()) {
+	case 0:
+		dup2(fd[0], 0);
+		dup2(fd[1], 1);
+		dup2(fd[2], 2);
+
+		execvp(file, argv);
+		write(p[1], &errno, sizeof _errno);
+		exit(1);
+		break;
+	default:
+		close(p[1]);
+		if(read(p[0], &_errno, sizeof _errno) == sizeof _errno)
+			pid = -1;
+		close(p[0]);
+		break;
+	case -1: /* can't happen */
+		break;
+	}
+
+	close(fd[0]);
+	/* These could fail if any of these was also a previous fd. */
+	close(fd[1]);
+	close(fd[2]);
+	return pid;
+}
+
+int
+spawn3l(int fd[3], const char *file, ...) {
+	va_list ap;
+	char **argv;
+	int i, n;
+
+	va_start(ap, file);
+	for(n=0; va_arg(ap, char*); n++)
+		;
+	va_end(ap);
+
+	argv = emalloc((n+1) * sizeof *argv);
+	va_start(ap, file);
+	for(i=0; i <= n; i++)
+		argv[i] = va_arg(ap, char*);
+	va_end(ap);
+
+	return spawn3(fd, file, argv);
+}
+
+void
+backtrace(void) {
+	char *proc, *spid;
+	int fd[3], p[2], q[2];
+	int pid, status, n;
+
+	proc = sxprint("/proc/%d/file", getpid());
+	spid = sxprint("%d", getpid());
+	switch(pid = fork()) {
+	case -1:
+		return;
+	case 0:
+		break;
+	default:
+		waitpid(pid, &status, 0);
+		return;
+	}
+
+	if(pipe(p) < 0 || pipe(q) < 0)
+		exit(0);
+	closeexec(p[1]);
+	closeexec(q[0]);
+
+	fd[0] = p[0];
+	fd[1] = q[1];
+	fd[2] = open("/dev/null", O_WRONLY);
+	if(spawn3l(fd, "gdb", "gdb", "-batch", "-x", "/dev/fd/0", proc, spid, nil) < 0)
+		exit(1);
+
+	fprint(p[1], "bt full\n");
+	fprint(p[1], "detach\n");
+	close(p[1]);
+
+	/* Why? Because gdb freezes waiting for user input
+	 * if its stdout is a tty.
+	 */
+	/* It'd be nice to make this a /debug file at some point,
+	 * anyway.
+	 */
+	while((n = read(q[0], buffer, sizeof buffer)) > 0)
+		write(2, buffer, n);
+	exit(0);
+
+}
 
 void
 reinit(Regex *r, char *regx) {

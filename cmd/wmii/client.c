@@ -263,6 +263,7 @@ client_destroy(Client *c) {
 
 	ewmh_destroyclient(c);
 	group_remove(c);
+	client_seturgent(c, false, UrgClient);
 	event("DestroyClient %C\n", c);
 
 	flushenterevents();
@@ -692,17 +693,19 @@ updatemwm(Client *c) {
 	int n;
 
 	/* To quote Metacity, or KWin quoting Metacity:
+	 *
 	 *   We support MWM hints deemed non-stupid
+	 *
 	 * Our definition of non-stupid is a bit less lenient than
 	 * theirs, though. In fact, we don't really even support the
 	 * idea of supporting the hints that we support, but apps
 	 * like xmms (which noone should use) break if we don't.
 	 */
 
-	n = getprop_long(&c->w, "_MOTIF_WM_HINTS", "_MOTIF_WM_HINTS",
-			0L, (long**)&ret, 3L);
+	n = getprop_ulong(&c->w, "_MOTIF_WM_HINTS", "_MOTIF_WM_HINTS",
+			0L, &ret, 3L);
 
-	/* FIXME: Should somehow handle all frames. */
+	/* FIXME: Should somehow handle all frames of a client. */
 	if(c->sel)
 		r = client_grav(c, ZR);
 

@@ -225,12 +225,17 @@ void	view_update_all(void);
 void	view_update_rect(View*);
 Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 
-/* util.c */
+/* _util.c */
+void	backtrace(void);
+void	closeexec(int);
 char**	comm(int, char**, char**);
+int	doublefork(void);
 void	grep(char**, Reprog*, int);
 char*	join(char**, char*);
 void	refree(Regex*);
 void	reinit(Regex*, char*);
+int	spawn3(int[3], const char*, char*[]);
+int	spawn3l(int[3], const char*, ...);
 void	uniq(char**);
 
 /* utf.c */

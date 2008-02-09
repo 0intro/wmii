@@ -142,18 +142,20 @@ column_scale(Area *a) {
 	uint minh, yoff, dy;
 	uint ncol, nuncol;
 	uint colh, uncolh;
-	int surplus, i, j;
+	int surplus, osurplus, i, j;
 
 	if(!a->frame)
 		return;
 
+	/* The minimum heights of collapsed and uncollpsed frames.
+	 */
 	minh = labelh(def.font);
 	colh = labelh(def.font);
-	uncolh = minh + colh +1;
+	uncolh = minh + colh + 1;
 
+	/* Count collapsed and uncollapsed frames. */
 	ncol = 0;
 	nuncol = 0;
-	dy = 0;
 	for(f=a->frame; f; f=f->anext) {
 		frame_resize(f, f->r);
 		if(f->collapsed)
@@ -162,11 +164,13 @@ column_scale(Area *a) {
 			nuncol++;
 	}
 
-	surplus = Dy(a->r) - (ncol * colh) - (nuncol * uncolh);
+	surplus = Dy(a->r)
+		- (ncol * colh)
+		- (nuncol * uncolh);
 
 	/* Collapse until there is room */
 	if(surplus < 0) {
-		i = ceil((float)(-surplus) / (uncolh - colh));
+		i = ceil(-1.F * surplus / (uncolh - colh));
 		if(i >= nuncol)
 			i = nuncol - 1;
 		nuncol -= i;
@@ -175,74 +179,94 @@ column_scale(Area *a) {
 	}
 	/* Push to the floating layer until there is room */
 	if(surplus < 0) {
-		i = ceil((float)(-surplus)/colh);
+		i = ceil(-1.F * surplus / colh);
 		if(i > ncol)
 			i = ncol;
 		ncol -= i;
-		/* surplus += i * colh; */
+		surplus += i * colh;
 	}
 
+	/* Decide which to collapse and which to float. */
 	j = nuncol - 1;
 	i = ncol - 1;
-	/* Decide  which to collapse, float */
 	for(fp=&a->frame; *fp;) {
 		f = *fp;
-		if(f == a->sel)
-			i++, j++;
-		if(f->collapsed) {
-			if(i < 0 && (f != a->sel)) {
-				f->collapsed = false;
-				area_moveto(f->view->area, f);
-				continue;
+		if(f != a->sel) {
+			if(!f->collapsed) {
+				if(j < 0)
+					f->collapsed = true;
+				j--;
 			}
-			i--;
-		}else {
-			if(j < 0 && (f != a->sel))
-				f->collapsed = true;
-			j--;
+			if(f->collapsed) {
+				if(i < 0) {
+					f->collapsed = false;
+					area_moveto(f->view->area, f);
+					continue;
+				}
+				i--;
+			}
 		}
 		/* Doesn't change if we 'continue' */
 		fp = &f->anext;
 	}
 
-	surplus = 0;
+	/* Make some adjustments. */
+	surplus = Dy(a->r);
 	for(f=a->frame; f; f=f->anext) {
 		f->r = rectsubpt(f->r, f->r.min);
-		f->crect = rectsubpt(f->crect, f->crect.min);
 		f->r.max.x = Dx(a->r);
 
 		if(f->collapsed) {
+			surplus -= colh;
+			f->dy = 0;
 			f->r.max.y = colh;
 		}else {
+			surplus -= uncolh;
+			f->dy = Dy(f->r);
 			f->r.max.y = uncolh;
-			dy += Dy(f->crect);
 		}
-		surplus += Dy(f->r);
 	}
-	for(f = a->frame; f; f = f->anext)
-		f->ratio = (float)Dy(f->crect)/dy;
 
-	j = 0;
-	surplus = Dy(a->r) - surplus;
-	while(surplus > 0 && surplus != j) {
-		j = surplus;
+	/* Distribute the surplus.
+	 * When a frame doesn't accept its allocation, don't try to
+	 * allocate to it again. Keep going until we have no more
+	 * surplus, or no more frames will accept it.
+	 */
+	osurplus = 0;
+	while(surplus > 0 && surplus != osurplus) {
+		osurplus = surplus;
 		dy = 0;
-		for(f=a->frame; f; f=f->anext) {
-			if(!f->collapsed)
-				f->r.max.y += f->ratio * surplus;
-			frame_resize(f, f->r);
-			dy += Dy(f->r);
-		}
-		surplus = Dy(a->r) - dy;
+		for(f=a->frame; f; f=f->anext)
+			if(f->dy)
+				dy += f->dy;
+		for(f=a->frame; f; f=f->anext)
+			if(f->dy) {
+				i = Dy(f->r);
+				f->r.max.y += ((float)f->dy / dy) * osurplus;
+
+				frame_resize(f, f->r);
+
+				f->r.max.y = Dy(f->crect) + labelh(def.font) + 1;
+				surplus -= Dy(f->r) - i;
+				f->dy = Dy(f->r);
+
+				if(Dy(f->r) == i)
+					f->dy = 0;
+			}
 	}
-	for(f=a->frame; f && surplus > 0; f=f->anext) {
+
+	/* Now, try to give each frame, in turn, the entirety of the
+	 * surplus that we have left. A single frame might be able
+	 * to fill its increment gap with all of what's left, but
+	 * not with its fair share.
+	 */
+	for(f=a->frame; f && surplus > 0; f=f->anext)
 		if(!f->collapsed) {
 			dy = Dy(f->r);
 			f->r.max.y += surplus;
 			frame_resize(f, f->r);
 			f->r.max.y = Dy(f->crect) + labelh(def.font) + 1;
 			surplus -= Dy(f->r) - dy;
-		}
 	}
 
 	if(surplus < 0) {
@@ -250,11 +274,15 @@ column_scale(Area *a) {
 		surplus = 0;
 	}
 
+	/* Adjust the y coordnates of each frame. */
 	yoff = a->r.min.y;
 	i = nuncol;
 	for(f=a->frame; f; f=f->anext) {
-		f->r = rectaddpt(f->r, Pt(a->r.min.x, yoff));
-
+		f->r = rectaddpt(f->r,
+				 Pt(a->r.min.x, yoff));
+		/* Give each frame an equal portion of the surplus,
+		 * whether it wants it or not.
+		 */
 		if(!f->collapsed) {
 			i--;
 			f->r.max.y += surplus / nuncol;

@@ -189,7 +189,7 @@ struct Frame {
 	int	column;
 	ushort	id;
 	bool	collapsed;
-	float	ratio;
+	int	dy;
 	Rectangle	r;
 	Rectangle	colr;
 	Rectangle	floatr;

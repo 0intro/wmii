@@ -7,12 +7,10 @@
 #include <X11/Xproto.h>
 #include <X11/cursorfont.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include "fns.h"
 
@@ -210,36 +208,6 @@ cleanup_handler(int signal) {
 	case SIGINT:
 		break;
 	}
-}
-
-static void
-closeexec(int fd) {
-	if(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
-		fatal("can't set %d close on exec: %r", fd);
-}
-
-static int
-doublefork(void) {
-	pid_t pid;
-	int status;
-	
-	switch(pid=fork()) {
-	case -1:
-		fatal("Can't fork(): %r");
-	case 0:
-		switch(pid=fork()) {
-		case -1:
-			fatal("Can't fork(): %r");
-		case 0:
-			return 0;
-		default:
-			exit(0);
-		}
-	default:
-		waitpid(pid, &status, 0);
-		return pid;
-	}
-	/* NOTREACHED */
 }
 
 static void

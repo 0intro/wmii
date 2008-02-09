@@ -191,8 +191,11 @@ area_attach(Area *a, Frame *f) {
 
 	view_arrange(a->view);
 
-	if(a->frame)
-		assert(a->sel);
+	if(a->frame && a->sel == nil) {
+		fprint(2, "a->sel == nil\n");
+		backtrace();
+		a->sel = a->frame;
+	}
 }
 
 void
