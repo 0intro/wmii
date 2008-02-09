@@ -300,9 +300,8 @@ frame_resize(Frame *f, Rectangle r) {
 	Rectangle fr, cr;
 	int collapsed, dx;
 
-	if(Dx(r) <= 0 || Dy(r) <= 0) {
+	if(btassert("4 full", Dx(r) <= 0 || Dy(r) <= 0)) {
 		fprint(2, "Frame rect: %R\n", r);
-		backtrace();
 		r.max.x = min(r.min.x+1, r.max.x);
 		r.max.y = min(r.min.y+1, r.max.y);
 	}

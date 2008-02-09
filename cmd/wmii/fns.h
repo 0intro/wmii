@@ -12,6 +12,9 @@
 # pragma varargck	type	"r"	void
 #endif
 
+#define btassert(arg, cond) \
+	(cond ? fprint(1, __FILE__":%d: failed assertion: " #cond "\n", __LINE__), backtrace(arg), true : false)
+
 /* area.c */
 void	area_attach(Area*, Frame*);
 Area*	area_create(View*, Area *pos, uint w);
@@ -226,7 +229,7 @@ void	view_update_rect(View*);
 Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 
 /* _util.c */
-void	backtrace(void);
+void	backtrace(char*);
 void	closeexec(int);
 char**	comm(int, char**, char**);
 int	doublefork(void);

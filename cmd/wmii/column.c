@@ -164,6 +164,12 @@ column_scale(Area *a) {
 			nuncol++;
 	}
 
+	/* FIXME: Kludge. */
+	dy = Dy(a->view->r) - Dy(a->r);
+	minh = colh * (ncol + nuncol - 1) + uncolh;
+	if(dy && Dy(a->r) < minh)
+		a->r.max.y += min(dy, minh - Dy(a->r));
+
 	surplus = Dy(a->r)
 		- (ncol * colh)
 		- (nuncol * uncolh);

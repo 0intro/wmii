@@ -125,7 +125,7 @@ spawn3l(int fd[3], const char *file, ...) {
 }
 
 void
-backtrace(void) {
+backtrace(char *btarg) {
 	char *proc, *spid;
 	int fd[3], p[2], q[2];
 	int pid, status, n;
@@ -153,7 +153,7 @@ backtrace(void) {
 	if(spawn3l(fd, "gdb", "gdb", "-batch", "-x", "/dev/fd/0", proc, spid, nil) < 0)
 		exit(1);
 
-	fprint(p[1], "bt full\n");
+	fprint(p[1], "bt %s\n", btarg);
 	fprint(p[1], "detach\n");
 	close(p[1]);
 
