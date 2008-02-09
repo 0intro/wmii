@@ -29,8 +29,8 @@ frame_create(Client *c, View *v) {
 	if(c->sel) {
 		f->floatr = c->sel->floatr;
 		f->r = c->sel->r;
-	}else{
-		f->r = client_grav(c, ZR);
+	}else {
+		f->r = client_grav(c, c->r);
 		f->floatr = f->r;
 		c->sel = f;
 	}

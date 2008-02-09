@@ -36,8 +36,8 @@ all:
 	$(LINK) $@ $<
 
 .c.O:
-	${COMPILE} ${<:.c=.o} $<
-	${LINK} $@ ${<:.c=.o}
+	$(COMPILE) ${<:.c=.o} $<
+	$(LINK) $@ ${<:.c=.o}
 
 .sh.O:
 	echo FILTER $(BASE)$<
