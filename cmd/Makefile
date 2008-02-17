@@ -2,9 +2,6 @@ ROOT=..
 include $(ROOT)/mk/hdr.mk
 include $(ROOT)/mk/wmii.mk
 
-all:
-	false
-
 wmiir.c: $(ROOT)/mk/wmii.mk
 
 DIRS =	wmii

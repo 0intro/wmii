@@ -1,5 +1,5 @@
 MKSUBDIR = \
-	set -e							\
+	set -e;							\
 	targ=$@; targ=$${targ\#d};				\
 	for i in $$dirs; do					\
 		export BASE=$(BASE)$$i/;			\
