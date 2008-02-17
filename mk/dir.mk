@@ -1,12 +1,14 @@
-MKSUBDIR =  targ=$@; targ=$${targ\#d}; \
-	for i in $$dirs; do \
-		export BASE=$(BASE)$$i/; \
-		if [ ! -d $$i ]; then \
-			echo Skipping nonexistent directory: $$i 1>&2; \
-		else \
-			echo MAKE $$targ $$BASE; \
-			(cd $$i && $(MAKE) $$targ) || exit $?; \
-		fi; \
+MKSUBDIR = \
+	set -e							\
+	targ=$@; targ=$${targ\#d};				\
+	for i in $$dirs; do					\
+		export BASE=$(BASE)$$i/;			\
+		if [ ! -d $$i ]; then				\
+			echo Skipping nonexistent directory: $$i 1>&2;	\
+		else						\
+			echo MAKE $$targ $$BASE;		\
+			(cd $$i && $(MAKE) $$targ) || exit $?;	\
+		fi;						\
 	done
 
 dall:

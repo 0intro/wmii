@@ -215,7 +215,7 @@ freeimage(Image *img) {
 
 /* Windows */
 Window*
-createwindow(Window *parent, Rectangle r, int depth, uint class, WinAttr *wa, int valmask) {
+createwindow_visual(Window *parent, Rectangle r, int depth, Visual *vis, uint class, WinAttr *wa, int valmask) {
 	Window *w;
 
 	assert(parent->type == WWindow);
@@ -224,14 +224,23 @@ createwindow(Window *parent, Rectangle r, int depth, uint class, WinAttr *wa, in
 	w->type = WWindow;
 	w->parent = parent;
 
-	w->w =  XCreateWindow(display, parent->w, r.min.x, r.min.y, Dx(r), Dy(r),
-				0 /* border */, depth, class, scr.visual, valmask, wa);
+	w->w = XCreateWindow(display, parent->w, r.min.x, r.min.y, Dx(r), Dy(r),
+				0 /* border */, depth, class, vis, valmask, wa);
+#if 0
+	print("createwindow_visual(%W, %R, %d, %p, %ud, %p, %x) = %W\n",
+			parent, r, depth, vis, class, wa, valmask, w);
+#endif
 	if(class != InputOnly)
 		w->gc = XCreateGC(display, w->w, 0, nil);
 
 	w->r = r;
 	w->depth = depth;
 	return w;
+}
+
+Window*
+createwindow(Window *parent, Rectangle r, int depth, uint class, WinAttr *wa, int valmask) {
+	return createwindow_visual(parent, r, depth, scr.visual, class, wa, valmask);
 }
 
 Window*
@@ -528,7 +537,8 @@ namedcolor(char *name, ulong *ret) {
 	XColor c, c2;
 
 	if(XAllocNamedColor(display, scr.colormap, name, &c, &c2)) {
-		*ret = c.pixel;
+		/* FIXME: Kludge. */
+		*ret = c.pixel | 0xff000000;
 		return true;
 	}
 	return false;

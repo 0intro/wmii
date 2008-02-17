@@ -140,7 +140,11 @@ init_screen(WMScreen *screen) {
 	screen->r = scr.rect;
 	def.snap = Dy(scr.rect) / 63;
 	freeimage(screen->ibuf);
+	freeimage(screen->ibuf32);
 	screen->ibuf = allocimage(Dx(screen->r), Dy(screen->r), scr.depth);
+	/* Probably shouldn't do this until it's needed. */
+	if(render_visual)
+		screen->ibuf32 = allocimage(Dx(screen->r), Dy(screen->r), 32);
 }
 
 static void
@@ -189,8 +193,11 @@ errorhandler(Display *dpy, XErrorEvent *error) {
 			argv0, error->request_code, error->error_code);
 
 	/* Try to cleanup, but only try once, in case we're called recursively. */
+	USED(dead);
+#ifdef notdef
 	if(!dead++)
 		cleanup();
+#endif
 	return xlib_errorhandler(display, error); /* calls exit() */
 }
 

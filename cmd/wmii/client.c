@@ -92,6 +92,8 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	Client **t, *c;
 	WinAttr fwa;
 	Point p;
+	Visual *vis;
+	int depth;
 
 	c = emallocz(sizeof *c);
 	c->border = wa->border_width;
@@ -104,6 +106,15 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	c->w.w = w;
 	c->w.r = c->r;
 
+	depth = scr.depth;
+	vis = scr.visual;
+	c->ibuf = &screen->ibuf;
+	if(render_argb_p(wa->visual)) {
+		depth = 32;
+		vis = render_visual;
+		c->ibuf = &screen->ibuf32;
+	}
+
 	client_prop(c, xatom("WM_PROTOCOLS"));
 	client_prop(c, xatom("WM_TRANSIENT_FOR"));
 	client_prop(c, xatom("WM_NORMAL_HINTS"));
@@ -115,8 +126,9 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	XSetWindowBorderWidth(display, w, 0);
 	XAddToSaveSet(display, w);
 
-	fwa.override_redirect = true;
 	fwa.background_pixmap = None;
+	fwa.border_pixel = 0;
+	fwa.colormap = XCreateColormap(display, scr.root.w, vis, AllocNone);
 	fwa.event_mask = SubstructureRedirectMask
 		       | SubstructureNotifyMask
 		       | ExposureMask
@@ -124,10 +136,17 @@ client_create(XWindow w, XWindowAttributes *wa) {
 		       | PointerMotionMask
 		       | ButtonPressMask
 		       | ButtonReleaseMask;
-	c->framewin = createwindow(&scr.root, c->r, scr.depth, InputOutput,
-			&fwa, CWOverrideRedirect
+	fwa.override_redirect = true;
+	c->framewin = createwindow_visual(&scr.root, c->r,
+			depth, vis, InputOutput,
+			&fwa, CWBackPixmap
+			    /* These next two matter for argb windows. Donno why. */
+			    | CWBorderPixel
+			    | CWColormap
 			    | CWEventMask
-			    | CWBackPixmap);
+			    | CWOverrideRedirect);
+	XFreeColormap(display, fwa.colormap);
+
 	c->framewin->aux = c;
 	c->w.aux = c;
 	sethandler(c->framewin, &framehandler);
@@ -180,8 +199,7 @@ client_manage(Client *c) {
 		utflcpy(c->tags, trans->tags, sizeof c->tags);
 	free(tags);
 
-	/* Maybe not the best idea... */
-	if(!c->trans || !c->tags[0])
+	if(!c->tags[0])
 		apply_rules(c);
 	if(c->tags[0])
 		apply_tags(c, c->tags);

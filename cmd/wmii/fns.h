@@ -251,7 +251,7 @@ void	xdnd_initwindow(Window*);
 
 /* xext.c */
 void	randr_event(XEvent*);
-void	randr_init(void);
+bool	render_argb_p(Visual*);
 void	xext_event(XEvent*);
 void	xext_init(void);
 

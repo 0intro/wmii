@@ -358,6 +358,7 @@ frame_draw(Frame *f) {
 	Client *c;
 	CTuple *col;
 	Frame *tf;
+	Image *img;
 	uint w;
 
 	if(f->view != screen->sel)
@@ -366,6 +367,7 @@ frame_draw(Frame *f) {
 		return;
 
 	c = f->client;
+	img = *c->ibuf;
 	fr = rectsetorigin(c->framewin->r, ZP);
 
 	/* Pick colors. */
@@ -383,12 +385,12 @@ frame_draw(Frame *f) {
 
 	/* Background/border */
 	r = fr;
-	fill(screen->ibuf, r, col->bg);
-	border(screen->ibuf, r, 1, col->border);
+	fill(img, r, col->bg);
+	border(img, r, 1, col->border);
 
 	/* Title border */
 	r.max.y = r.min.y + labelh(def.font);
-	border(screen->ibuf, r, 1, col->border);
+	border(img, r, 1, col->border);
 
 	f->titlebar = insetrect(r, 3);
 	f->titlebar.max.y += 3;
@@ -397,7 +399,7 @@ frame_draw(Frame *f) {
 	/* Draw a border just inside the titlebar. */
 	/* FIXME: Perhaps this should be normcolored? */
 	if(c != selclient() && col == &def.focuscolor)
-		border(screen->ibuf, insetrect(r, 1), 1, def.normcolor.bg);
+		border(img, insetrect(r, 1), 1, def.normcolor.bg);
 
 	/* grabbox */
 	r.min = Pt(2, 2);
@@ -406,13 +408,13 @@ frame_draw(Frame *f) {
 	f->grabbox = r;
 
 	if(c->urgent)
-		fill(screen->ibuf, r, col->fg);
-	border(screen->ibuf, r, 1, col->border);
+		fill(img, r, col->fg);
+	border(img, r, 1, col->border);
 
 	/* Odd focus. Selected, without keyboard focus. */
 	/* Draw a border around the grabbox. */
 	if(c != screen->focus && col == &def.focuscolor)
-		border(screen->ibuf, insetrect(r, -1), 1, def.normcolor.bg);
+		border(img, insetrect(r, -1), 1, def.normcolor.bg);
 
 	/* Draw a border on borderless/titleless selected apps. */
 	if(c->borderless && c->titleless && c == selclient())
@@ -427,7 +429,7 @@ frame_draw(Frame *f) {
 	r.max.y = labelh(def.font);
 	if(c->floating)
 		r.max.x -= Dx(f->grabbox);
-	w = drawstring(screen->ibuf, def.font, r, West,
+	w = drawstring(img, def.font, r, West,
 			c->name, col->fg);
 
 	if(f->area->floating) {
@@ -435,7 +437,7 @@ frame_draw(Frame *f) {
 		r.max.x = f->titlebar.max.x + 1;
 		r.min.y = f->grabbox.min.y;
 		r.max.y = f->grabbox.max.y;
-		border(screen->ibuf, r, 1, col->border);
+		border(img, r, 1, col->border);
 	}
 
 	/* Border increment gaps... */
@@ -443,7 +445,7 @@ frame_draw(Frame *f) {
 	r.min.x = max(1, f->crect.min.x - 1);
 	r.max.x = min(fr.max.x - 1, f->crect.max.x + 1);
 	r.max.y = min(fr.max.y - 1, f->crect.max.y + 1);
-	border(screen->ibuf, r, 1, col->border);
+	border(img, r, 1, col->border);
 
 	/* Why? Because some non-ICCCM-compliant apps feel the need to
 	 * change the background properties of all of their ancestor windows
@@ -453,7 +455,7 @@ frame_draw(Frame *f) {
 	 */
 	XSetWindowBackgroundPixmap(display, c->framewin->w, None);
 
-	copyimage(c->framewin, fr, screen->ibuf, ZP);
+	copyimage(c->framewin, fr, img, ZP);
 	sync();
 }
 

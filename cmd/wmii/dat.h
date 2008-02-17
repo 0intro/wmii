@@ -146,6 +146,7 @@ struct Client {
 	Frame*	sel;
 	Window	w;
 	Window*	framewin;
+	Image**	ibuf;
 	XWindow	trans;
 	Regex	tagre;
 	Regex	tagvre;
@@ -309,6 +310,7 @@ EXTERN struct WMScreen {
 	Client*	hasgrab;
 	Window*	barwin;
 	Image*	ibuf;
+	Image*	ibuf32;
 
 	Rectangle r;
 	Rectangle brect;
@@ -354,6 +356,7 @@ EXTERN char*	execstr;
 EXTERN int	debugflag;
 EXTERN int	debugfile;
 EXTERN long	xtime;
+EXTERN Visual*	render_visual;
 
 EXTERN Client*	kludge;
 

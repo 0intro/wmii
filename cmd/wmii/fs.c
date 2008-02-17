@@ -1052,7 +1052,6 @@ fs_clunk(Ixp9Req *r) {
 	PLink *pl;
 	Queue *qu;
 	char *p, *q;
-	Client *c;
 	IxpMsg m;
 	
 	f = r->fid->aux;
@@ -1088,9 +1087,11 @@ fs_clunk(Ixp9Req *r) {
 		break;
 	case FsFTagRules:
 		update_rules(&f->p.rule->rule, f->p.rule->string);
+		/*
 		for(c=client; c; c=c->next)
 			apply_rules(c);
 		view_update_all();
+		*/
 		break;
 	case FsFKeys:
 		update_keys();
