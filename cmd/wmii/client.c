@@ -244,6 +244,7 @@ client_destroy(Client *c) {
 	bool hide;
 
 	unmapwin(c->framewin);
+	client_seturgent(c, false, UrgClient);
 
 	for(tc=&client; *tc; tc=&tc[0]->next)
 		if(*tc == c) {
@@ -281,7 +282,6 @@ client_destroy(Client *c) {
 
 	ewmh_destroyclient(c);
 	group_remove(c);
-	client_seturgent(c, false, UrgClient);
 	event("DestroyClient %C\n", c);
 
 	flushenterevents();

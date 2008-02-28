@@ -19,7 +19,7 @@ enum {
 
 static void*	xlib;
 
-static Window	lastwin;
+static long	lastwin;
 static long	transient;
 static Atom	types[32];
 static long	ntypes;
@@ -112,10 +112,8 @@ setprops(Display *d, Window w) {
 	else if(time(0) > nsec + Timeout)
 		return;
 
-	if(lastwin) {
-		free(tags);
-		getprop_textlist(d, lastwin, "_WMII_TAGS", &tags);
-	}
+	if(lastwin)
+		changeprop_long(d, lastwin, "_WMII_AFFINE", "WINDOW", &lastwin, 1);
 	lastwin = w;
 
 	if(transient)

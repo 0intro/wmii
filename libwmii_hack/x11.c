@@ -172,6 +172,7 @@ strlistdup(char *list[], int n) {
 	return p;
 }
 
+#if 0
 static int
 getprop_textlist(Display *display, Window w, char *name, char **ret[]) {
 	XTextProperty prop;
@@ -190,6 +191,7 @@ getprop_textlist(Display *display, Window w, char *name, char **ret[]) {
 	}
 	return n;
 }
+#endif
 
 #if 0
 static char*
