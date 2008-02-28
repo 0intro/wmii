@@ -741,9 +741,11 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 
 static char*
 msg_sendframe(Frame *f, int sym, bool swap) {
+	Client *c;
 	Frame *fp;
 
 	SET(fp);
+	c = f->client;
 	switch(sym) {
 	case LUP:
 		fp = f->aprev;
@@ -771,7 +773,7 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 	/* view_arrange(f->view); */
 
 	flushenterevents();
-	frame_focus(f);
+	frame_focus(client_viewframe(c, f->view));
 	view_update_all();
 	return nil;
 }
