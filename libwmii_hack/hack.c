@@ -33,8 +33,6 @@ typedef Window (*mapfn)(Display*, Window);
 
 static Window (*mapwindow)(Display*, Window);
 static Window (*mapraised)(Display*, Window);
-static Window (*unmapwindow)(Display*, Window);
-static Window (*destroywindow)(Display*, Window);
 
 static void
 init(Display *d) { /* Hrm... assumes one display... */
@@ -48,8 +46,6 @@ init(Display *d) { /* Hrm... assumes one display... */
 		return;
 	mapwindow = (mapfn)(uintptr_t)dlsym(xlib, "XMapWindow");
 	mapraised = (mapfn)(uintptr_t)dlsym(xlib, "XMapRaised");
-	unmapwindow = (mapfn)(uintptr_t)dlsym(xlib, "XUnmapWindow");
-	destroywindow = (mapfn)(uintptr_t)dlsym(xlib, "XDestroyWindow");
 
 	unsetenv("LD_PRELOAD");
 
@@ -138,22 +134,5 @@ XMapRaised(Display *d, Window w) {
 
 	setprops(d, w);
 	return mapraised(d, w);
-}
-
-/* These are not perfect. */
-int
-XUnmapWindow(Display *d, Window w) {
-
-	if(lastwin == w)
-		lastwin = 0;
-	return unmapwindow(d, w);
-}
-
-int
-XDestroyWindow(Display *d, Window w) {
-
-	if(lastwin == w)
-		lastwin = 0;
-	return destroywindow(d, w);
 }
 
