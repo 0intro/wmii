@@ -131,7 +131,7 @@ wi_events -s '	' <<'!'
 	Key $MODKEY-a
 		Action $(wi_actions | wi_menu) &
 	Key $MODKEY-p
-		wmiir setsid "$(wi_menu <$progsfile)" &
+		eval wmiir setsid "$(wi_menu <$progsfile)" &
 	Key $MODKEY-t
 		wmiir xwrite /ctl view $(wi_tags | wi_menu) &
 	Key $MODKEY-Return
