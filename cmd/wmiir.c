@@ -228,7 +228,7 @@ xread(int argc, char *argv[]) {
 		ixp_close(fid);
 
 		if(count == -1)
-			fprint(2, "%s: cannot read file/directory '%s': %r\n", argv0, file);
+			fprint(2, "%s: cannot read file '%s': %r\n", argv0, file);
 	}while((file = ARGF()));
 
 	return 0;
@@ -389,6 +389,9 @@ main(int argc, char *argv[]) {
 	default:
 		usage();
 	}ARGEND;
+
+	if(argc < 1)
+		usage();
 
 	for(tab=utiltab; tab->cmd; tab++)
 		if(!strcmp(*argv, tab->cmd))
