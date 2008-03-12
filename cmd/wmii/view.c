@@ -311,7 +311,9 @@ view_detach(Frame *f) {
 	if(c->sel == f)
 		c->sel = f->cnext;
 
-	if(v != screen->sel && empty_p(v))
+	if(v == screen->sel)
+		view_focus(screen, v);
+	else if(empty_p(v))
 		view_destroy(v);
 }
 

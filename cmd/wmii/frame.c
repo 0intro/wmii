@@ -179,12 +179,12 @@ bdown_event(Window *w, XButtonEvent *e) {
 			if(!e->subwindow) {
 				frame_restack(f, nil);
 				view_restack(f->view);
+				if(rect_haspoint_p(Pt(e->x, e->y), f->grabbox))
+					mouse_movegrabbox(c);
+				else if(f->area->floating)
+					if(!e->subwindow && !rect_haspoint_p(Pt(e->x, e->y), f->titlebar))
+						mouse_resize(c, quadrant(f->r, Pt(e->x_root, e->y_root)));
 			}
-			if(rect_haspoint_p(Pt(e->x, e->y), f->grabbox))
-				mouse_movegrabbox(c);
-			else if(f->area->floating)
-				if(!e->subwindow && !rect_haspoint_p(Pt(e->x, e->y), f->titlebar))
-					mouse_resize(c, quadrant(f->r, Pt(e->x_root, e->y_root)));
 
 			if(f->client != selclient())
 				focus(c, false);

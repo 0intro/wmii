@@ -106,6 +106,8 @@ float_placeframe(Frame *f) {
 	 */
 	vector_rpush(vp, a->r);
 	for(ff=a->frame; ff; ff=ff->anext) {
+		if(ff == f)
+			continue;
 		fr = ff->r;
 		vp2->n = 0;
 		for(i=0; i < vp->n; i++) {

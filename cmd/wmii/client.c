@@ -485,7 +485,8 @@ client_focus(Client *c) {
 	flushevents(FocusChangeMask, true);
 	Dprint(DFocus, "client_focus([%C]%s) %ld\n", c, clientname(c), id);
 	if(screen->focus != c) {
-		Dprint(DFocus, "\t[%C]%s => [%C]%s\n", screen->focus, clientname(screen->focus),
+		Dprint(DFocus, "\t[%C]%s => [%C]%s\n",
+				screen->focus, clientname(screen->focus),
 				c, clientname(c));
 		if(c)
 			setfocus(&c->w, RevertToParent);
