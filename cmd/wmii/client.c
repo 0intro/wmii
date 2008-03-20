@@ -470,27 +470,29 @@ focus(Client *c, bool user) {
 void
 client_focus(Client *c) {
 	static long id;
+	long _id;
 	flushevents(FocusChangeMask, true);
 
-	Dprint(DFocus, "client_focus([%C]%s) %ld\n", c, clientname(c), id++);
+	_id = id++ % 99;
+	Dprint(DFocus, "client_focus([%C]%s) %ld\n", c, clientname(c), _id);
 
-	if(c) {
-		if(c->noinput)
-			return;
-		if(c->group)
-			c->group->client = c;
-	}
+	if(c && c->group)
+		c->group->client = c;
 
 	sync();
 	flushevents(FocusChangeMask, true);
-	Dprint(DFocus, "client_focus([%C]%s) %ld\n", c, clientname(c), id);
+
+	Dprint(DFocus, "\t%02d [%C]%s\n\t=> [%C]%s\n",
+			_id,
+			screen->focus, clientname(screen->focus),
+			c, clientname(c));
 	if(screen->focus != c) {
-		Dprint(DFocus, "\t[%C]%s => [%C]%s\n",
-				screen->focus, clientname(screen->focus),
-				c, clientname(c));
-		if(c)
-			setfocus(&c->w, RevertToParent);
-		else
+		if(c) {
+			if(c->proto & ProtoTakeFocus)
+				client_message(c, "WM_TAKE_FOCUS", 0);
+			else if(!c->noinput)
+				setfocus(&c->w, RevertToParent);
+		}else
 			setfocus(screen->barwin, RevertToParent);
 		event("ClientFocus %C\n", c);
 
