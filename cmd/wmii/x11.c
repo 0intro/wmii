@@ -279,6 +279,11 @@ setwinattr(Window *w, WinAttr *wa, int valmask) {
 }
 
 void
+selectinput(Window *w, long mask) {
+	XSelectInput(display, w->w, mask);
+}
+
+void
 setborder(Window *w, int width, long pixel) {
 	Rectangle r;
 

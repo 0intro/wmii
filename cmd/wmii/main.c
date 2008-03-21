@@ -328,9 +328,8 @@ main(int argc, char *argv[]) {
 	xlib_errorhandler = XSetErrorHandler(errorhandler);
 
 	check_other_wm = true;
-	XSelectInput(display, scr.root.w,
-			  SubstructureRedirectMask
-			| EnterWindowMask);
+	selectinput(&scr.root, SubstructureRedirectMask
+			     | EnterWindowMask);
 	sync();
 
 	check_other_wm = false;

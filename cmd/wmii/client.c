@@ -152,7 +152,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	sethandler(c->framewin, &framehandler);
 	sethandler(&c->w, &handlers);
 
-	XSelectInput(display, c->w.w, ClientMask);
+	selectinput(&c->w, ClientMask);
 
 	p.x = def.border;
 	p.y = labelh(def.font);

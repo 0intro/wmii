@@ -82,6 +82,7 @@ struct Handlers {
 	Rectangle (*dndmotion)(Window*, Point);
 	void (*bdown)(Window*, XButtonEvent*);
 	void (*bup)(Window*, XButtonEvent*);
+	void (*config)(Window*, XConfigureEvent*);
 	void (*configreq)(Window*, XConfigureRequestEvent*);
 	void (*destroy)(Window*, XDestroyWindowEvent*);
 	void (*enter)(Window*, XCrossingEvent*);
@@ -221,6 +222,7 @@ Point	querypointer(Window*);
 void	raisewin(Window*);
 void	reparentwindow(Window*, Window*, Point);
 void	reshapewin(Window*, Rectangle);
+void	selectinput(Window*, long);
 void	sendevent(Window*, bool propegate, long mask, XEvent*);
 void	setborder(Window*, int, long);
 void	setfocus(Window*, int mode);
