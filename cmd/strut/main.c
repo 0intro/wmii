@@ -95,7 +95,6 @@ static void
 getwinsize(Window *win) {
 	int x, y;
 	uint w, h;
-	/* ignored */
 	XWindow root;
 	uint border, depth;
 
@@ -103,7 +102,7 @@ getwinsize(Window *win) {
 		     &x, &y, &w, &h,
 		     &border, &depth);
 	win->r = rectaddpt(Rect(0, 0, w, h),
-			   Pt(x, y));
+			   Pt(x+border, y+border));
 }
 
 int

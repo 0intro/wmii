@@ -85,7 +85,7 @@ config(Window *w, XConfigureEvent *ev) {
 	USED(w);
 
 	frame.r = rectaddpt(Rect(0, 0, ev->width, ev->height),
-			    Pt(ev->x, ev->y));
+			    Pt(ev->x+ev->border_width, ev->y+ev->border_width));
 	restrut();
 
 }
