@@ -198,7 +198,7 @@ view_update_rect(View *v) {
 		sr = strut->left;
 		if(rect_intersect_p(brect, sr))
 			brect.min.x = sr.max.x;
-		sr = rectaddpt(strut->right, screen->r.max);
+		sr = rectaddpt(strut->right, Pt(screen->r.max.x, 0));
 		if(rect_intersect_p(brect, sr))
 			brect.max.x = sr.min.x;
 	}
