@@ -124,6 +124,10 @@ spawn3l(int fd[3], const char *file, ...) {
 	return spawn3(fd, file, argv);
 }
 
+/* Only works on *BSD (only FreeBSD confirmed). GDB on my Linux
+ * doesn't like -x <pipe>, and /proc/%d/exe is the correct /proc
+ * path.
+ */
 void
 backtrace(char *btarg) {
 	char *proc, *spid;

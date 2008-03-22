@@ -1085,7 +1085,7 @@ apply_tags(Client *c, const char *tags) {
 		if(last == '-')
 			add = false;
 		if(last == '\0')
-			buf[n] = '\0';
+			break;
 	}
 
 	toks[j] = nil;
