@@ -91,6 +91,7 @@ void	dispatch_event(XEvent*);
 uint	flushenterevents(void);
 uint	flushevents(long, bool dispatch);
 void	print_focus(const char*, Client*, const char*);
+void	xtime_kludge(void);
 
 /* ewmh.c */
 int	ewmh_clientmessage(XClientMessageEvent*);

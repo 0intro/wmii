@@ -474,7 +474,6 @@ client_focus(Client *c) {
 	flushevents(FocusChangeMask, true);
 
 	_id = id++ % 99;
-	Dprint(DFocus, "client_focus([%C]%s) %ld\n", c, clientname(c), _id);
 
 	if(c && c->group)
 		c->group->client = c;
@@ -482,16 +481,19 @@ client_focus(Client *c) {
 	sync();
 	flushevents(FocusChangeMask, true);
 
+	Dprint(DFocus, "client_focus([%C]%s) %ld\n", c, clientname(c), _id);
 	Dprint(DFocus, "\t%02d [%C]%s\n\t=> [%C]%s\n",
 			_id,
 			screen->focus, clientname(screen->focus),
 			c, clientname(c));
 	if(screen->focus != c) {
 		if(c) {
-			if(c->proto & ProtoTakeFocus)
-				client_message(c, "WM_TAKE_FOCUS", 0);
-			else if(!c->noinput)
+			if(!c->noinput)
 				setfocus(&c->w, RevertToParent);
+			if(c->proto & ProtoTakeFocus) {
+				xtime_kludge();
+				client_message(c, "WM_TAKE_FOCUS", 0);
+			}
 		}else
 			setfocus(screen->barwin, RevertToParent);
 		event("ClientFocus %C\n", c);

@@ -19,6 +19,36 @@ dispatch_event(XEvent *e) {
 #define handle(w, fn, ev) \
 	BLOCK(if((w)->handler->fn) (w)->handler->fn((w), ev))
 
+static int
+findtime(Display *d, XEvent *e, XPointer v) {
+        Window *w;
+
+        w = (Window*)v;
+        if(e->type == PropertyNotify && e->xproperty.window == w->w) {
+                xtime = e->xproperty.time;
+                return true;
+        }
+        return false;
+}
+
+void
+xtime_kludge(void) {
+        Window *w;
+        WinAttr wa;
+        XEvent e;
+        long l;
+
+        w = createwindow(&scr.root, Rect(0, 0, 1, 1), 0, InputOnly, &wa, 0);
+
+        XSelectInput(display, w->w, PropertyChangeMask);
+        changeprop_long(w, "ATOM", "ATOM", &l, 0);
+	sync();
+        XIfEvent(display, &e, findtime, (void*)w);
+
+        destroywindow(w);
+}
+
+
 uint
 flushevents(long event_mask, bool dispatch) {
 	XEvent ev;

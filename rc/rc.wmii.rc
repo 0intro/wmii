@@ -85,7 +85,8 @@ fn Event-Unresponsive {
 				xmessage -nearmouse -buttons Kill,Wait -print \
 				$msg $wi_nl '' `{wmiir read /client/sel/label}}
 		if(~ $resp Kill)
-			wmiir xwrite /client/$client/ctl slay }&}
+			wmiir xwrite /client/$client/ctl slay
+	}&}
 echo $wmiinormcol | wmiir create $noticebar
 fn Event-Notice {
 	wmiir xwrite $noticebar $wi_arg
@@ -142,7 +143,7 @@ fn Action-status {
 }
 
 # Source Variables, &c
-if(~ $0 rc.wmii.local */rc.wmii.local)
+if(~ $0 ('' */)rc.wmii.local)
 	wi_notice This file should not be named rc.wmii.local
 if not
 	. `{wi_script -f rc.wmii.local}
@@ -158,7 +159,7 @@ fn key {
 key $MODKEY-Control-t || fn $key {
 	switch(`{wmiir read /keys | wc -l}) {
 	case 0 1
-		wmiir xwrite /ctl $keys
+		wmiir xwrite /keys $keys
 		wmiir xwrite /ctl grabmod $MODKEY
 	case *
 		ifs=() { keys=`{wmiir read /keys} }
