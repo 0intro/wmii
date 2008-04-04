@@ -775,6 +775,8 @@ client_prop(Client *c, Atom a) {
 		sethints(&c->w);
 		if(c->w.hints)
 			c->fixedsize = eqpt(c->w.hints->min, c->w.hints->max);
+		if(c->sel && c->sel->view == screen->sel)
+			view_focus(screen, screen->sel);
 		break;
 	case XA_WM_HINTS:
 		wmh = XGetWMHints(display, c->w.w);
