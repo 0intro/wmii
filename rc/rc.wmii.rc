@@ -87,7 +87,6 @@ fn Event-Unresponsive {
 		if(~ $resp Kill)
 			wmiir xwrite /client/$client/ctl slay
 	}&}
-echo $wmiinormcol | wmiir create $noticebar
 fn Event-Notice {
 	wmiir xwrite $noticebar $wi_arg
 
@@ -147,6 +146,7 @@ if(~ $0 ('' */)rc.wmii.local)
 	wi_notice This file should not be named rc.wmii.local
 if not
 	. `{wi_script -f rc.wmii.local}
+echo $wmiinormcol | wmiir create $noticebar
 
 # Key Bindings
 fn key {
