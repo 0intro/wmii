@@ -50,6 +50,15 @@ float_detach(Frame *f) {
 			area_focus(sel);
 }
 
+void
+float_resizeframe(Frame *f, Rectangle r) {
+
+	if(f->area->view == screen->sel)
+		client_resize(f->client, r);
+	else
+		frame_resize(f, r);
+}
+
 static void
 rect_push(Vector_rect *vec, Rectangle r) {
 	Rectangle *rp;

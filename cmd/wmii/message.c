@@ -6,6 +6,8 @@
 #include "fns.h"
 
 static char* msg_debug(IxpMsg*);
+static char* msg_grow(View*, IxpMsg*);
+static char* msg_nudge(View*, IxpMsg*);
 static char* msg_selectframe(Frame*, IxpMsg*, int);
 static char* msg_sendframe(Frame*, int, bool);
 
@@ -27,9 +29,11 @@ enum {
 	LFOCUSCOLORS,
 	LFONT,
 	LGRABMOD,
+	LGROW,
 	LKILL,
 	LLEFT,
 	LNORMCOLORS,
+	LNUDGE,
 	LOFF,
 	LON,
 	LQUIT,
@@ -56,9 +60,11 @@ char *symtab[] = {
 	"focuscolors",
 	"font",
 	"grabmod",
+	"grow",
 	"kill",
 	"left",
 	"normcolors",
+	"nudge",
 	"off",
 	"on",
 	"quit",
@@ -127,6 +133,21 @@ gettoggle(IxpMsg *m) {
 	case LON:	return On;
 	case LOFF:	return Off;
 	case LTOGGLE:	return Toggle;
+	default:
+		return -1;
+	}
+}
+
+static int
+getdirection(IxpMsg *m) {
+	int i;
+
+	switch(i = getsym(msg_getword(m))) {
+	case LLEFT:
+	case LRIGHT:
+	case LUP:
+	case LDOWN:
+		return i;
 	default:
 		return -1;
 	}
@@ -243,6 +264,14 @@ getulong(const char *s, ulong *ret) {
 	return (end == rend);
 }
 
+static char*
+strend(const char *s, int n) {
+	int len;
+
+	len = strlen(s);
+	return (char*)(uintptr_t)s + max(0, len - n);
+}
+
 static Client*
 strclient(View *v, char *s) {
 	ulong id;
@@ -252,6 +281,8 @@ strclient(View *v, char *s) {
 	 * 0x<window xid>
 	 */
 
+	if(s == nil)
+		return nil;
 	if(!strcmp(s, "sel"))
 		return view_selclient(v);
 	if(getulong(s, &id))
@@ -291,6 +322,40 @@ strarea(View *v, const char *s) {
 			a = nil;
 	}
 	return a;
+}
+
+static Frame*
+getframe(View *v, IxpMsg *m) {
+	Client *c;
+	Frame *f;
+	Area *a;
+	char *s;
+	ulong l;
+
+	s = msg_getword(m);
+	if(!strcmp(s, "client")) {
+		c = strclient(v, msg_getword(m));
+		if(c == nil)
+			return nil;
+		return client_viewframe(c, v);
+	}
+
+	a = strarea(v, s);
+	if(a == nil) {
+		print("a == nil\n");
+		return nil;
+	}
+
+	s = msg_getword(m);
+	if(!s)
+		return nil;
+	if(!strcmp(s, "sel"))
+		return a->sel;
+	if(!getulong(s, &l))
+		return nil;
+	for(f=a->frame; f; f=f->anext)
+		if(--l == 0) break;
+	return f;
 }
 
 char*
@@ -418,13 +483,14 @@ message_view(View *v, IxpMsg *m) {
 	 * area ::= ~
 	 *        | <column number>
 	 *        | sel
+	 * direction ::= left
+	 *             | right
+	 *             | up
+	 *             | down
 	 * # This *should* be identical to <frame>
 	 * place ::= <column number>
 	 *	  #| ~ # This should be, but isn't.
-	 *         | left
-	 *         | right
-	 *         | up
-	 *         | down
+	 *	   | <direction>
 	 *         | toggle
 	 * colmode ::= default
 	 *           | stack
@@ -441,11 +507,16 @@ message_view(View *v, IxpMsg *m) {
 	 *         | ~
 	 *         | <column> <frame number>
 	 *         | <column>
+	 * amount ::= 
+	 *	    | <number>
+	 *          | <number>px
 	 *
 	 * colmode <area> <colmode>
 	 * select <area>
 	 * send <frame> <place>
 	 * swap <frame> <place>
+	 * grow <thing> <direction> <amount>
+	 * nudge <thing> <direction> <amount>
 	 * select <ordframe>
 	 */
 
@@ -469,6 +540,10 @@ message_view(View *v, IxpMsg *m) {
 			view_focus(screen, v);
 		frame_draw_all();
 		return nil;
+	case LGROW:
+		return msg_grow(v, m);
+	case LNUDGE:
+		return msg_nudge(v, m);
 	case LSELECT:
 		return msg_selectarea(v->sel, m);
 	case LSEND:
@@ -504,6 +579,96 @@ msg_debug(IxpMsg *m) {
 	}
 	if(buffer[0] != '\0')
 		return sxprint("Bad debug options: %s", buffer+2);
+	return nil;
+}
+
+static bool
+getamt(IxpMsg *m, int *amt) {
+	char *s, *p;
+	long l;
+
+	s = msg_getword(m);
+	if(s) {
+		p = strend(s, 2);
+		if(!strcmp(p, "px")) {
+			*p = '\0';
+			*amt = 1;
+		}
+
+		if(!getlong(s, &l))
+			return false;
+		*amt *= l;
+	}
+	return true;
+}
+
+static char*
+msg_grow(View *v, IxpMsg *m) {
+	Frame *f;
+	Rectangle r;
+	int dir, amount;
+
+	f = getframe(v, m);
+	if(f == nil)
+		return "bad frame";
+
+	dir = getdirection(m);
+	if(dir == -1)
+		return "bad direction";
+
+	amount = Dy(f->titlebar);
+	if(!getamt(m, &amount))
+		return Ebadvalue;
+
+	r = f->r;
+	switch(dir) {
+	case LLEFT:	r.min.x -= amount; break;
+	case LRIGHT:	r.max.x += amount; break;
+	case LUP:	r.min.y -= amount; break;
+	case LDOWN:	r.max.y += amount; break;
+	default:	abort();
+	}
+
+	if(f->area->floating)
+		float_resizeframe(f, r);
+	else
+		column_resizeframe(f, r);
+
+	return nil;
+}
+
+static char*
+msg_nudge(View *v, IxpMsg *m) {
+	Frame *f;
+	Rectangle r;
+	int dir, amount;
+
+	f = getframe(v, m);
+	if(f == nil)
+		return "bad frame";
+
+	dir = getdirection(m);
+	if(dir == -1)
+		return "bad direction";
+
+	amount = Dy(f->titlebar);
+	if(!getamt(m, &amount))
+		return Ebadvalue;
+
+	r = f->r;
+	switch(dir) {
+	case LLEFT:	r = rectaddpt(r, Pt(-amount, 0)); break;
+	case LRIGHT:	r = rectaddpt(r, Pt( amount, 0)); break;
+	case LUP:	r = rectaddpt(r, Pt(0, -amount)); break;
+	case LDOWN:	r = rectaddpt(r, Pt(0,  amount)); break;
+	default:	abort();
+	}
+
+	if(f->area->floating)
+		float_resizeframe(f, r);
+	else
+		column_resizeframe(f, r);
+
 	return nil;
 }
 
