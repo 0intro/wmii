@@ -101,8 +101,7 @@ float_placeframe(Frame *f) {
 	vp2 = &rvec2;
 
 	/* Find all rectangles on the floating layer into which
-	 * the new frame would fit. (Please ignore the man behind
-	 * the curtain).
+	 * the new frame would fit.
 	 */
 	vector_rpush(vp, a->r);
 	for(ff=a->frame; ff; ff=ff->anext) {
@@ -130,10 +129,15 @@ float_placeframe(Frame *f) {
 		vp2 = vptemp;
 	}
 
-	p = ZP; /* SET(p) */
+	p = ZP;
 	if(vp->n == 0) {
-		p.x = random() % max(1, Dx(a->r) - dim.x);
-		p.y = random() % max(1, Dy(a->r) - dim.y);
+		/* Cascade. */
+		ff = a->sel;
+		if(ff)
+			p = addpt(ff->r.min, Pt(Dy(ff->titlebar), Dy(ff->titlebar)));
+		if(p.x + Dx(f->r) > Dx(screen->r) ||
+		   p.y + Dy(f->r) > screen->brect.min.y)
+			p = ZP;
 	}else {
 		area = LONG_MAX;
 		for(i=0; i < vp->n; i++) {
@@ -146,7 +150,6 @@ float_placeframe(Frame *f) {
 		}
 	}
 
-	fr = rectsubpt(f->r, f->r.min);
-	f->r = rectaddpt(fr, p);
+	f->r = rectsetorigin(f->r, p);
 }
 
