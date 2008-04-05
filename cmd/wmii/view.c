@@ -237,17 +237,17 @@ view_focus(WMScreen *s, View *v) {
 			}
 		}
 	}
-	for(c=client; c; c=c->next)
-		if((f = c->sel)) {
-			if(f->view == v)
-				client_resize(c, f->r);
-			else {
-				unmap_frame(c);
-				client_unmap(c, IconicState);
-			}
-			ewmh_updatestate(c);
-			ewmh_updateclient(c);
+	for(c=client; c; c=c->next) {
+		f = c->sel;
+		if(f && f->view == v)
+			client_resize(c, f->r);
+		else {
+			unmap_frame(c);
+			client_unmap(c, IconicState);
 		}
+		ewmh_updatestate(c);
+		ewmh_updateclient(c);
+	}
 
 	view_restack(v);
 	if(fscrn)
