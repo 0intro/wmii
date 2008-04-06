@@ -583,7 +583,7 @@ msg_debug(IxpMsg *m) {
 }
 
 static bool
-getamt(IxpMsg *m, int *amt) {
+getamt(IxpMsg *m, Point *amt) {
 	char *s, *p;
 	long l;
 
@@ -592,40 +592,51 @@ getamt(IxpMsg *m, int *amt) {
 		p = strend(s, 2);
 		if(!strcmp(p, "px")) {
 			*p = '\0';
-			*amt = 1;
+			amt->x = 1;
+			amt->y = 1;
 		}
 
 		if(!getlong(s, &l))
 			return false;
-		*amt *= l;
+		amt->x *= l;
+		amt->y *= l;
 	}
 	return true;
 }
 
 static char*
 msg_grow(View *v, IxpMsg *m) {
+	Client *c;
 	Frame *f;
 	Rectangle r;
-	int dir, amount;
+	Point amount;
+	int dir;
 
 	f = getframe(v, m);
 	if(f == nil)
 		return "bad frame";
+	c = f->client;
 
 	dir = getdirection(m);
 	if(dir == -1)
 		return "bad direction";
 
-	amount = Dy(f->titlebar);
+	amount.x = Dy(f->titlebar);
+	amount.y = Dy(f->titlebar);
+	if(c->w.hints->inc.x > amount.x/2)
+		amount.x = c->w.hints->inc.x;
+	if(c->w.hints->inc.y > amount.y/2)
+		amount.y = c->w.hints->inc.y;
+
 	if(!getamt(m, &amount))
 		return Ebadvalue;
 
 	r = f->r;
 	switch(dir) {
-	case LLEFT:	r.min.x -= amount; break;
-	case LRIGHT:	r.max.x += amount; break;
-	case LUP:	r.min.y -= amount; break;
-	case LDOWN:	r.max.y += amount; break;
+	case LLEFT:	r.min.x -= amount.x; break;
+	case LRIGHT:	r.max.x += amount.x; break;
+	case LUP:	r.min.y -= amount.y; break;
+	case LDOWN:	r.max.y += amount.y; break;
 	default:	abort();
 	}
 
@@ -641,7 +652,8 @@ static char*
 msg_nudge(View *v, IxpMsg *m) {
 	Frame *f;
 	Rectangle r;
-	int dir, amount;
+	Point amount;
+	int dir;
 
 	f = getframe(v, m);
 	if(f == nil)
@@ -651,16 +663,17 @@ msg_nudge(View *v, IxpMsg *m) {
 	if(dir == -1)
 		return "bad direction";
 
-	amount = Dy(f->titlebar);
+	amount.x = Dy(f->titlebar);
+	amount.y = Dy(f->titlebar);
 	if(!getamt(m, &amount))
 		return Ebadvalue;
 
 	r = f->r;
 	switch(dir) {
-	case LLEFT:	r = rectaddpt(r, Pt(-amount, 0)); break;
-	case LRIGHT:	r = rectaddpt(r, Pt( amount, 0)); break;
-	case LUP:	r = rectaddpt(r, Pt(0, -amount)); break;
-	case LDOWN:	r = rectaddpt(r, Pt(0,  amount)); break;
+	case LLEFT:	r = rectaddpt(r, Pt(-amount.x, 0)); break;
+	case LRIGHT:	r = rectaddpt(r, Pt( amount.x, 0)); break;
+	case LUP:	r = rectaddpt(r, Pt(0, -amount.y)); break;
+	case LDOWN:	r = rectaddpt(r, Pt(0,  amount.y)); break;
 	default:	abort();
 	}
 
