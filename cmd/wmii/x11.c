@@ -283,32 +283,40 @@ selectinput(Window *w, long mask) {
 	XSelectInput(display, w->w, mask);
 }
 
+static void
+configwin(Window *w, Rectangle r, int border) {
+	XWindowChanges wc;
+
+	if(eqrect(r, w->r) && border == w->border)
+		return;
+
+	wc.x = r.min.x - border;
+	wc.y = r.min.y - border;
+	wc.width = Dx(r);
+	wc.height = Dy(r);
+	wc.border_width = border;
+	XConfigureWindow(display, w->w, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
+
+	w->r = r;
+	w->border = border;
+}
+
 void
 setborder(Window *w, int width, long pixel) {
-	Rectangle r;
 
 	assert(w->type == WWindow);
 	if(width)
 		XSetWindowBorder(display, w->w, pixel);
-	if(w->border != width) {
-		w->border = width;
-		XSetWindowBorderWidth(display, w->w, width);
-		/* FIXME: Kludge */
-		r = w->r;
-		w->r = ZR;
-		reshapewin(w, r);
-	}
+	if(width != w->border)
+		configwin(w, w->r, width);
 }
 
 void
 reshapewin(Window *w, Rectangle r) {
 	assert(w->type == WWindow);
 	assert(Dx(r) > 0 && Dy(r) > 0); /* Rather than an X error. */
-	if(!eqrect(r, w->r)) {
-		w->r = r;
-		r = rectsubpt(r, Pt(w->border, w->border));
-		XMoveResizeWindow(display, w->w, r.min.x, r.min.y, Dx(r), Dy(r));
-	}
+
+	configwin(w, r, w->border);
 }
 
 void
@@ -543,6 +551,10 @@ namedcolor(char *name, ulong *ret) {
 
 	if(XAllocNamedColor(display, scr.colormap, name, &c, &c2)) {
 		/* FIXME: Kludge. */
+		/* This isn't garunteed to work. In the case of RGBA
+		 * visuals, we need the Alpha set to 1.0. This
+		 * could, in theory, break plain RGB, or even RGBA.
+		 */
 		*ret = c.pixel | 0xff000000;
 		return true;
 	}

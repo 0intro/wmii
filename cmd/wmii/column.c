@@ -93,6 +93,7 @@ column_attachrect(Area *a, Frame *f, Rectangle r) {
 			break;
 	}
 	if(Dy(a->r) > Dy(r)) {
+		/* Kludge. */
 		a->r.max.y -= Dy(r);
 		column_scale(a);
 		a->r.max.y += Dy(r);
