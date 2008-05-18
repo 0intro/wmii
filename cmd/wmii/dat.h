@@ -114,6 +114,7 @@ struct Area {
 	Area*	next;
 	Area*	prev;
 	Frame*	frame;
+	Frame*	frame_old;
 	Frame*	stack;
 	Frame*	sel;
 	View*	view;

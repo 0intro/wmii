@@ -151,7 +151,7 @@ column_scale(Area *a) {
 	/* Kludge. This should be idempotent, but the algorithm is
 	 * flawed, so it's not. Well, with this, it is.
 	 */
-	if(eqrect(a->r, a->r_old)) {
+	if(eqrect(a->r, a->r_old) && a->frame == a->frame_old) {
 		for(f=a->frame; f; f=f->anext)
 			if(!eqrect(f->r, f->colr_old)
 			|| f->anext != f->anext_old)
@@ -321,6 +321,7 @@ column_scale(Area *a) {
 		yoff = f->r.max.y;
 	}
 	a->r_old = a->r; /* Kludge. */
+	a->frame_old = a->frame;
 }
 
 void
