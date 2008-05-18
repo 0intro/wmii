@@ -147,6 +147,18 @@ column_scale(Area *a) {
 	if(!a->frame)
 		return;
 
+	/* Kludge. This should be idempotent, but the algorithm is
+	 * flawed, so it's not. Well, with this, it is.
+	 */
+	if(eqrect(a->r, a->r_old)) {
+		for(f=a->frame; f; f=f->anext)
+			if(!eqrect(f->r, f->colr_old)
+			|| f->anext != f->anext_old)
+				break;
+		if(f == nil)
+			return;
+	}
+
 	/* The minimum heights of collapsed and uncollpsed frames.
 	 */
 	minh = labelh(def.font);
@@ -162,6 +174,15 @@ column_scale(Area *a) {
 			ncol++;
 		else
 			nuncol++;
+	}
+
+	if(nuncol == 0) {
+		nuncol++;
+		ncol--;
+		if(a->sel)
+			a->sel->collapsed = false;
+		else
+			a->frame->collapsed = false;
 	}
 
 	/* FIXME: Kludge. */
@@ -251,12 +272,11 @@ column_scale(Area *a) {
 				f->r.max.y += ((float)f->dy / dy) * osurplus;
 
 				frame_resize(f, f->r);
+				f->r.max.y = Dy(f->crect) + colh + 1;
 
-				f->r.max.y = Dy(f->crect) + labelh(def.font) + 1;
 				surplus -= Dy(f->r) - i;
 				f->dy = Dy(f->r);
-
-				if(Dy(f->r) == i)
+				if(f->dy == i)
 					f->dy = 0;
 			}
 	}
@@ -273,7 +293,7 @@ column_scale(Area *a) {
 			frame_resize(f, f->r);
 			f->r.max.y = Dy(f->crect) + labelh(def.font) + 1;
 			surplus -= Dy(f->r) - dy;
-	}
+		}
 
 	if(surplus < 0) {
 		print("Badness: surplus = %d\n", surplus);
@@ -294,9 +314,12 @@ column_scale(Area *a) {
 			f->r.max.y += surplus / nuncol;
 			if(!i)
 				f->r.max.y += surplus % nuncol;
+			f->colr_old = f->r; /* Kludge. */
+			f->anext_old = f->anext;
 		}
 		yoff = f->r.max.y;
 	}
+	a->r_old = a->r; /* Kludge. */
 }
 
 void
@@ -316,8 +339,10 @@ column_arrange(Area *a, bool dirty) {
 				f->r = Rect(0, 0, 100, 100);
 		break;
 	case Colstack:
-		for(f=a->frame; f; f=f->anext)
+		for(f=a->frame; f; f=f->anext) {
 			f->collapsed = (f != a->sel);
+			f->r = Rect(0, 0, 1, 1);
+		}
 		break;
 	case Colmax:
 		for(f=a->frame; f; f=f->anext) {

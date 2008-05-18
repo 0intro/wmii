@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <bio.h>
 #include "fns.h"
 
 /* Blech. */
@@ -89,8 +90,10 @@ spawn3(int fd[3], const char *file, char *argv[]) {
 		break;
 	default:
 		close(p[1]);
-		if(read(p[0], &_errno, sizeof _errno) == sizeof _errno)
+		if(read(p[0], &_errno, sizeof _errno) == sizeof _errno) {
 			pid = -1;
+			errno = _errno;
+		}
 		close(p[0]);
 		break;
 	case -1: /* can't happen */
@@ -117,6 +120,7 @@ spawn3l(int fd[3], const char *file, ...) {
 
 	argv = emalloc((n+1) * sizeof *argv);
 	va_start(ap, file);
+	quotefmtinstall();
 	for(i=0; i <= n; i++)
 		argv[i] = va_arg(ap, char*);
 	va_end(ap);
@@ -128,14 +132,20 @@ spawn3l(int fd[3], const char *file, ...) {
  * doesn't like -x <pipe>, and /proc/%d/exe is the correct /proc
  * path.
  */
+#ifdef __linux__
+# define PROGTXT "exe"
+#else
+# define PROGTXT "file"
+#endif
 void
 backtrace(char *btarg) {
-	char *proc, *spid;
-	int fd[3], p[2], q[2];
-	int pid, status, n;
+	char *proc, *spid, *gdbcmd;
+	int fd[3], p[2];
+	int pid, status, cmdfd;
 
-	proc = sxprint("/proc/%d/file", getpid());
+	proc = sxprint("/proc/%d/" PROGTXT, getpid());
 	spid = sxprint("%d", getpid());
+
 	switch(pid = fork()) {
 	case -1:
 		return;
@@ -146,29 +156,43 @@ backtrace(char *btarg) {
 		return;
 	}
 
-	if(pipe(p) < 0 || pipe(q) < 0)
-		exit(0);
-	closeexec(p[1]);
-	closeexec(q[0]);
 
-	fd[0] = p[0];
-	fd[1] = q[1];
-	fd[2] = open("/dev/null", O_WRONLY);
-	if(spawn3l(fd, "gdb", "gdb", "-batch", "-x", "/dev/fd/0", proc, spid, nil) < 0)
+	if(pipe(p) < 0)
+		exit(0);
+	closeexec(p[0]);
+
+	gdbcmd = estrdup("/tmp/gdbcmd.XXXXXX");
+	cmdfd = mkstemp(gdbcmd);
+	if(cmdfd < 0)
 		exit(1);
 
-	fprint(p[1], "bt %s\n", btarg);
-	fprint(p[1], "detach\n");
-	close(p[1]);
+	fprint(cmdfd, "bt %s\n", btarg);
+	fprint(cmdfd, "detach\n");
+	close(cmdfd);
+
+	fd[0] = open("/dev/null", O_RDONLY);
+	fd[1] = p[1];
+	fd[2] = dup(2);
+	if(spawn3l(fd, "gdb", "gdb", "-batch", "-x", gdbcmd, proc, spid, nil) < 0) {
+		unlink(gdbcmd);
+		exit(1);
+	}
 
 	/* Why? Because gdb freezes waiting for user input
 	 * if its stdout is a tty.
+	 * Might be easier to pipe to sed 2,4d here.
 	 */
-	/* It'd be nice to make this a /debug file at some point,
-	 * anyway.
-	 */
-	while((n = read(q[0], buffer, sizeof buffer)) > 0)
-		write(2, buffer, n);
+	Biobuf bp;
+	char *s;
+	int i = 0;
+
+	Binit(&bp, p[0], OREAD);
+	while((s = Brdstr(&bp, '\n', 1))) {
+		if(i++ >= 4)
+			fprint(2, "%s\n", s);
+		free(s);
+	}
+	unlink(gdbcmd);
 	exit(0);
 
 }

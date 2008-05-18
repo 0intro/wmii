@@ -150,8 +150,11 @@ vplace(Framewin *fw, Point pt) {
 	hr = Dy(r)/2;
 	fw->xy = pt.y;
 
+	if(a->frame == nil)
+		goto done;
+
 	for(f = a->frame; f->anext; f = f->anext)
-		if(pt.y < f->r.max.y)
+		if(f->r.max.y > pt.y)
 			break;
 
 	if(!f->collapsed) {
@@ -160,14 +163,18 @@ vplace(Framewin *fw, Point pt) {
 
 		if(f == fw->f) {
 			fw->fprev = f->aprev;
-			fw->fprev_r.max = f->r.max;
-			if(_vsnap(fw, f->r.min.y+hr))
-				goto done;
+			fw->fprev_r.min.y = pt.y - hr;
+			//if(_vsnap(fw, f->r.min.y+hr))
+			goto done;
 		}
 
 		if(_vsnap(fw, f->r.max.y - hr)) {
-			fw->fprev_r.min.y = f->r.max.y - labelh(def.font);
-			goto done;
+			if(f == fw->f->aprev)
+				fw->xy = pt.y;
+			else {
+				fw->fprev_r.min.y = f->r.max.y - labelh(def.font);
+				goto done;
+			}
 		}
 		if(_vsnap(fw, f->r.min.y+Dy(r)+hr)) {
 			fw->fprev_r.min.y = f->r.min.y + labelh(def.font);
@@ -177,6 +184,7 @@ vplace(Framewin *fw, Point pt) {
 			_vsnap(fw, f->r.min.y);
 		else if(_vsnap(fw, f->r.min.y-hr))
 			fw->fprev = f->aprev;
+
 		fw->fprev_r.min.y = pt.y - hr;
 		if(fw->fprev && fw->fprev->anext == fw->f)
 			fw->fprev_r.max = fw->f->r.max;
@@ -780,6 +788,9 @@ thcol(Frame *f) {
 			else
 				r.max.y = f->area->r.max.y;
 
+			Dprint(DGeneric, "fw->fprev: %C fprev: %C f: %C f->r: %R fprev_r: %R\n",
+					 (fw->fprev?fw->fprev->client:nil), (fprev?fprev->client:nil),
+					 f->client, f->r, fw->fprev_r);
 			frame_resize(f, fw->fprev_r);
 
 			if(!a->frame && !a->floating)

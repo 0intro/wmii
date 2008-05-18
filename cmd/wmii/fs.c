@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <time.h>
+#include <unistd.h>
 #include "fns.h"
 
 
@@ -430,7 +431,6 @@ setdebug(int flag) {
 void
 vdebug(int flag, const char *fmt, va_list ap) {
 	char *s;
-	int i, len;
 
 	if(flag == 0)
 		flag = dflags;
@@ -439,15 +439,7 @@ vdebug(int flag, const char *fmt, va_list ap) {
 		return;
 
 	s = vsmprint(fmt, ap);
-	len = strlen(s);
-
-	if(debugflag&flag)
-		print("%s", s);
-
-	if(debugfile&flag)
-	for(i=0; i < nelem(pdebug); i++)
-		if(flag & (1<<i))
-			pending_write(pdebug+i, s, len);
+	dwrite(flag, s, strlen(s), false);
 	free(s);
 }
 
@@ -467,6 +459,22 @@ dprint(const char *fmt, ...) {
 	va_start(ap, fmt);
 	vdebug(0, fmt, ap);
 	va_end(ap);
+}
+
+void
+dwrite(int flag, void *buf, int n, bool always) {
+	int i;
+
+	if(flag == 0)
+		flag = dflags;
+
+	if(always || debugflag&flag)
+		write(2, buf, n);
+
+	if(debugfile&flag)
+	for(i=0; i < nelem(pdebug); i++)
+		if(flag & (1<<i))
+			pending_write(pdebug+i, buf, n);
 }
 
 static void

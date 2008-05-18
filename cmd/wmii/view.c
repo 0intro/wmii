@@ -295,6 +295,8 @@ view_attach(View *v, Frame *f) {
 
 	area_attach(a, f);
 
+	/* TODO: Decide whether to focus this frame */
+
 	if(c->sel == nil)
 		c->sel = f;
 }

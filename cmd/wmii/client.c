@@ -4,6 +4,7 @@
  */
 #include "dat.h"
 #include <ctype.h>
+#include <strings.h>
 #include <X11/Xatom.h>
 #include "fns.h"
 
@@ -490,7 +491,7 @@ client_focus(Client *c) {
 		if(c) {
 			if(!c->noinput)
 				setfocus(&c->w, RevertToParent);
-			if(c->proto & ProtoTakeFocus) {
+			else if(c->proto & ProtoTakeFocus) {
 				xtime_kludge();
 				client_message(c, "WM_TAKE_FOCUS", 0);
 			}
@@ -751,6 +752,7 @@ updatemwm(Client *c) {
 
 void
 client_prop(Client *c, Atom a) {
+	WinHints h;
 	XWMHints *wmh;
 	char **class;
 	int n;
@@ -772,9 +774,13 @@ client_prop(Client *c, Atom a) {
 		XGetTransientForHint(display, c->w.w, &c->trans);
 		break;
 	case XA_WM_NORMAL_HINTS:
+		memset(&h, 0, sizeof h);
+		if(c->w.hints)
+			bcopy(c->w.hints, &h, sizeof h);
 		sethints(&c->w);
 		if(c->w.hints)
 			c->fixedsize = eqpt(c->w.hints->min, c->w.hints->max);
+		if(memcmp(&h, c->w.hints, sizeof h))
 		if(c->sel && c->sel->view == screen->sel)
 			view_focus(screen, screen->sel);
 		break;
@@ -966,7 +972,7 @@ client_setviews(Client *c, char **tags) {
 				f = frame_create(c, view_create(*tags));
 				if(f->view == screen->sel || !c->sel)
 					c->sel = f;
-				kludge = c;
+				kludge = c; /* FIXME */
 				view_attach(f->view, f);
 				kludge = nil;
 				f->cnext = *fp;

@@ -192,6 +192,7 @@ void	warning(const char*, ...);
 /* debug */
 void	debug(int, const char*, ...);
 void	dprint(const char*, ...);
+void	dwrite(int, void*, int, bool);
 int	getdebug(char*);
 bool	setdebug(int);
 void	vdebug(int, const char*, va_list);

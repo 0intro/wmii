@@ -125,10 +125,10 @@ fn wi_runcmd { @{
 }
 
 fn wi_getfuns {
-	env | sed -n 's/^fn#'^$1^'-([^=]+).*/\1/p'
+	env | sed -n 's/^fn#'^$1^'-([^=]+).*/\1/p' | sort | uniq
 }
 
-for(i in Key Event Action)
+for(i in Key Event Action '*Menu')
 	fns=`{wi_getfuns $i} {
 		if(! ~ $fns '')
 			fn $i-^$fns}

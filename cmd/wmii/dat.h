@@ -121,6 +121,7 @@ struct Area {
 	ushort	id;
 	int	mode;
 	Rectangle	r;
+	Rectangle	r_old;
 };
 
 struct Bar {
@@ -181,6 +182,7 @@ struct Frame {
 	Frame*	cnext;
 	Frame*	anext;
 	Frame*	aprev;
+	Frame*	anext_old;
 	Frame*	snext;
 	Frame*	sprev;
 	Client*	client;
@@ -193,6 +195,7 @@ struct Frame {
 	int	dy;
 	Rectangle	r;
 	Rectangle	colr;
+	Rectangle	colr_old;
 	Rectangle	floatr;
 	Rectangle	crect;
 	Rectangle	grabbox;
@@ -362,6 +365,6 @@ EXTERN Client*	kludge;
 
 extern char*	debugtab[];
 
-#define Debug(x) if((debugflag|debugfile)&(x) && setdebug(x))
+#define Debug(x) if(((debugflag|debugfile)&(x)) && setdebug(x))
 #define Dprint(x, ...) BLOCK( if((debugflag|debugfile)&(x)) debug(x, __VA_ARGS__) )
 
