@@ -22,8 +22,8 @@ WMII_BACKGROUND='#333333'
 WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
-WMII_MENU='dmenu -b -fn "$WMII_FONT" -nf '"'$1' -nb '$2' -sf '$4' -sb '$5'"
-WMII_9MENU='wmii9menu -font "$WMII_FONT" -nf '"'$1' -nb '$2' -sf '$4' -sb '$5' -br '$6'"
+WMII_MENU="dmenu -b -fn '\$WMII_FONT' -nf '$1' -nb '$2' -sf '$4' -sb '$5'"
+WMII_9MENU="wmii9menu -font '\$WMII_FONT' -nf '$1' -nb '$2' -sf '$4' -sb '$5' -br '$6'"
 WMII_TERM="xterm"
 
 # Column Rules
@@ -42,10 +42,13 @@ status() {
 	echo -n $(uptime | sed 's/.*://; s/,//g') '|' $(date)
 }
 
+wi_runconf -s wmiirc_local
+
 echo $WMII_NORMCOLORS | wmiir create $noticebar
 
 # Event processing
-wi_events -s '	' <<'!'
+events="$(
+	sed 's/^	//' <<'!'
 	# Events
 	Event CreateTag
 		echo "$WMII_NORMCOLORS" "$@" | wmiir create "/lbar/$@"
@@ -162,13 +165,19 @@ wi_events -s '	' <<'!'
 		wmiir xwrite /tag/sel/ctl send sel up
 !
 	for i in 0 1 2 3 4 5 6 7 8 9; do
-		wi_events -s '	' <<!
+		sed 's/^	//' <<!
 	Key $MODKEY-$i
 		wmiir xwrite /ctl view "$i"
 	Key $MODKEY-Shift-$i
 		wmiir xwrite /client/sel/tags "$i"
 !
 	done
+)"
+wi_events <<!
+$events
+$local_events
+!
+unset events local_events
 
 # WM Configuration
 wmiir write /ctl <<!
@@ -190,10 +199,10 @@ Action status &
 wi_proglist $PATH >$progsfile &
 
 # Setup Tag Bar
-OIFS="$IFS"; IFS="$wi_nl"
+IFS="$wi_nl"
 wmiir rm $(wmiir ls /lbar | sed 's,^,/lbar/,')
 seltag=$(wmiir read /tag/sel/ctl | sed 1q)
-IFS="$OIFS"
+unset IFS
 wi_tags | while read tag
 do
 	if [ "$tag" = "$seltag" ]; then

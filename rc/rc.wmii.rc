@@ -206,7 +206,7 @@ key $MODKEY-Shift-c || fn $key {
 key $MODKEY-a || fn $key {
 	Action `{wi_actions | wi_menu} &}
 key $MODKEY-p || fn $key {
-	ifs=() { wi_runcmd -t `{wi_menu <$progs_file} & }}
+	ifs=() { wi_runcmd `{wi_menu <$progs_file} & }}
 key $MODKEY-Return || fn $key {
 	wi_runcmd $WMII_TERM &}
 
