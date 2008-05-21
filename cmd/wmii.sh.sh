@@ -76,7 +76,6 @@ wi_events() {
 		_sed="s/^$2//"
 		shift 2
 	fi
-	#cho "$(_wi_text | awk "$(_wi_script)")"
 	eval "$(_wi_text | awk "$(_wi_script)")"
 }
 

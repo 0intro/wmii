@@ -114,7 +114,11 @@ float_placeframe(Frame *f) {
 	 */
 	vector_rpush(vp, a->r);
 	for(ff=a->frame; ff; ff=ff->anext) {
-		if(ff == f)
+		/* TODO: Find out why this is needed.
+		 * The frame hasn't been inserted yet, but somehow,
+		 * its old rectangle winds up in the list.
+		 */
+		if(ff->client == f->client)
 			continue;
 		fr = ff->r;
 		vp2->n = 0;

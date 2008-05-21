@@ -221,7 +221,6 @@ client_manage(Client *c) {
 	if(newgroup) {
 		if(f->area != f->view->sel)
 			f->view->oldsel = f->view->sel;
-		frame_focus(f);
 	}else {
 		frame_restack(c->sel, c->sel->area->sel);
 		view_restack(c->sel->view);

@@ -3,6 +3,7 @@
  */
 #include "hack.h"
 #include <dlfcn.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -16,6 +17,8 @@
 enum {
 	Timeout = 10,
 };
+
+typedef int (*XErrorHandler)(Display*, XErrorEvent*);
 
 static void*	xlib;
 
@@ -65,7 +68,7 @@ init(Display *d) { /* Hrm... assumes one display... */
 					*p += 'A' - 'a';
 			toks[i] = smprint("_NET_WM_WINDOW_TYPE_%s", toks[i]);
 		}
-		XInternAtoms(d, toks, n, False, types);
+		XInternAtoms(d, toks, n, false, types);
 		ntypes = n;
 		for(i=0; i < n; i++)
 			free(toks[i]);
@@ -88,6 +91,12 @@ init(Display *d) { /* Hrm... assumes one display... */
 	gethostname(hostname, sizeof hostname);
 }
 
+static int /* Temporary Xlib error handler */
+ignoreerrors(Display *d, XErrorEvent *e) {
+	//USED(d, e);
+	return 0;
+}
+
 static void
 setprops(Display *d, Window w) {
 	long *l;
@@ -107,10 +116,6 @@ setprops(Display *d, Window w) {
 		nsec = time(0);
 	else if(time(0) > nsec + Timeout)
 		return;
-
-	if(lastwin)
-		changeprop_long(d, lastwin, "_WMII_AFFINE", "WINDOW", &lastwin, 1);
-	lastwin = w;
 
 	if(transient)
 		changeprop_long(d, w, "WM_TRANSIENT_FOR", "WINDOW", &transient, 1);

@@ -217,8 +217,8 @@ view_focus(WMScreen *s, View *v) {
 	XGrabServer(display);
 
 	_view_select(v);
-	view_arrange(v);
 	update_frame_selectors(v);
+	view_arrange(v);
 	div_update_all();
 	fscrn = false;
 	for(a=v->area; a; a=an) {
@@ -294,8 +294,8 @@ view_attach(View *v, Frame *f) {
 		a = v->area->next;
 
 	area_attach(a, f);
-
 	/* TODO: Decide whether to focus this frame */
+	frame_focus(f);
 
 	if(c->sel == nil)
 		c->sel = f;

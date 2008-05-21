@@ -149,7 +149,7 @@ column_scale(Area *a) {
 		return;
 
 	/* Kludge. This should be idempotent, but the algorithm is
-	 * flawed, so it's not. Well, with this, it is.
+	 * flawed, so it's not. This is far from perfect.
 	 */
 	if(eqrect(a->r, a->r_old) && a->frame == a->frame_old) {
 		for(f=a->frame; f; f=f->anext)
