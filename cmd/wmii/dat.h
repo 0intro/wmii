@@ -66,6 +66,11 @@ enum {
 	Toggle,
 };
 
+enum Barpos {
+	BBottom,
+	BTop,
+};
+
 enum {
 	CurNormal,
 	CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
@@ -315,6 +320,7 @@ EXTERN struct WMScreen {
 	Window*	barwin;
 	Image*	ibuf;
 	Image*	ibuf32;
+	int	barpos;
 
 	Rectangle r;
 	Rectangle brect;

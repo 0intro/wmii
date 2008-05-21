@@ -36,16 +36,11 @@ bar_init(WMScreen *s) {
 
 void
 bar_resize(WMScreen *s) {
-	View *v;
 
 	s->brect = s->r;
-	s->brect.min.y = s->brect.max.y - labelh(def.font);
+	s->brect.max.y = labelh(def.font);
 
-	reshapewin(s->barwin, s->brect);
-
-	bar_draw(s);
-	for(v=view; v; v=v->next)
-		view_arrange(v);
+	view_update(screen->sel);
 }
 
 void
@@ -65,9 +60,9 @@ bar_sety(int y) {
 
 	r = &screen->brect;
 
-	dy = y - r->min.y;
-	r->min.y += dy;
-	r->max.y += dy;
+	dy = Dy(*r);
+	r->min.y = y;
+	r->max.y = y + dy;
 	reshapewin(screen->barwin, *r);
 }
 

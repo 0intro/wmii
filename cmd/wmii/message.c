@@ -20,6 +20,7 @@ static char
 enum {
 	LFULLSCREEN,
 	LURGENT,
+	LBAR,
 	LBORDER,
 	LCLIENT,
 	LCOLMODE,
@@ -51,6 +52,7 @@ enum {
 char *symtab[] = {
 	"Fullscreen",
 	"Urgent",
+	"bar",
 	"border",
 	"client",
 	"colmode",
@@ -86,6 +88,11 @@ char* debugtab[] = {
 	"ewmh",
 	"focus",
 	"generic",
+};
+
+static char* barpostab[] = {
+	"bottom",
+	"top",
 };
 
 /* Edit ,y/^[a-zA-Z].*\n.* {\n/d
@@ -125,6 +132,11 @@ getsym(char *s) {
 int
 getdebug(char *s) {
 	return _bsearch(s, debugtab, nelem(debugtab));
+}
+
+static int
+getbarpos(char *s) {
+	return _bsearch(s, barpostab, nelem(barpostab));
 }
 
 static int
@@ -405,6 +417,7 @@ message_root(void *p, IxpMsg *m) {
 	Font *fn;
 	char *s, *ret;
 	ulong n;
+	int i;
 
 	USED(p);
 	ret = nil;
@@ -413,11 +426,21 @@ message_root(void *p, IxpMsg *m) {
 		return nil;
 
 	switch(getsym(s)) {
+	case LBAR: /* bar on? <"top" | "bottom"> */
+		s = msg_getword(m);
+		if(!strcmp(s, "on"))
+			s = msg_getword(m);
+		i = getbarpos(s);
+		if(i < 0)
+			return Ebadvalue;
+		screen->barpos = i;
+		view_update(screen->sel);
+		break;
 	case LBORDER:
 		if(!getulong(msg_getword(m), &n))
 			return Ebadvalue;
 		def.border = n;
-		view_focus(screen, screen->sel);
+		view_update(screen->sel);
 		break;
 	case LDEBUG:
 		ret = msg_debug(m);
@@ -428,7 +451,7 @@ message_root(void *p, IxpMsg *m) {
 		break;
 	case LFOCUSCOLORS:
 		ret = msg_parsecolors(m, &def.focuscolor);
-		view_focus(screen, screen->sel);
+		view_update(screen->sel);
 		break;
 	case LFONT:
 		fn = loadfont(m->pos);
@@ -438,7 +461,7 @@ message_root(void *p, IxpMsg *m) {
 			bar_resize(screen);
 		}else
 			ret = "can't load font";
-		view_focus(screen, screen->sel);
+		view_update(screen->sel);
 		break;
 	case LGRABMOD:
 		s = msg_getword(m);
@@ -452,7 +475,7 @@ message_root(void *p, IxpMsg *m) {
 		break;
 	case LNORMCOLORS:
 		ret = msg_parsecolors(m, &def.normcolor);
-		view_focus(screen, screen->sel);
+		view_update(screen->sel);
 		break;
 	case LSELCOLORS:
 		fprint(2, "%s: warning: selcolors have been removed\n", argv0);
@@ -536,9 +559,7 @@ message_view(View *v, IxpMsg *m) {
 		column_arrange(a, true);
 		view_restack(v);
 
-		if(v == screen->sel)
-			view_focus(screen, v);
-		frame_draw_all();
+		view_update(v);
 		return nil;
 	case LGROW:
 		return msg_grow(v, m);
@@ -977,6 +998,7 @@ readctl_root(void) {
 	bufprint("font %s\n", def.font->name);
 	bufprint("grabmod %s\n", def.grabmod);
 	bufprint("border %d\n", def.border);
+	bufprint("bar on %s\n", barpostab[screen->barpos]);
 	if(debugflag) {
 		bufprint("debug ");
 		printdebug(debugflag);

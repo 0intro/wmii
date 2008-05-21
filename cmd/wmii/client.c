@@ -618,8 +618,7 @@ fullscreen(Client *c, int fullscreen) {
 		for(f=c->frame; f; f=f->cnext)
 			f->oldarea = -1;
 		if((f = c->sel))
-			if(f->view == screen->sel)
-				view_focus(screen, f->view);
+			view_update(f->view);
 	}
 }
 
@@ -780,8 +779,8 @@ client_prop(Client *c, Atom a) {
 		if(c->w.hints)
 			c->fixedsize = eqpt(c->w.hints->min, c->w.hints->max);
 		if(memcmp(&h, c->w.hints, sizeof h))
-		if(c->sel && c->sel->view == screen->sel)
-			view_focus(screen, screen->sel);
+		if(c->sel)
+			view_update(c->sel->view);
 		break;
 	case XA_WM_HINTS:
 		wmh = XGetWMHints(display, c->w.w);

@@ -149,7 +149,7 @@ view_findarea(View *v, int idx, bool create) {
 }
 
 static void
-update_frame_selectors(View *v) {
+frames_update_sel(View *v) {
 	Area *a;
 	Frame *f;
 
@@ -183,10 +183,15 @@ view_update_rect(View *v) {
 	r.min.x += min(left, .3 * Dx(screen->r));
 	r.max.x += max(right, -.3 * Dx(screen->r));
 	r.max.y += max(bottom, -.3 * Dy(screen->r));
-	r.max.y -= Dy(screen->brect);
+	if(screen->barpos == BTop) {
+		bar_sety(r.min.y);
+		r.min.y += Dy(screen->brect);
+	}else {
+		r.max.y -= Dy(screen->brect);
+		bar_sety(r.max.y);
+	}
 	v->r = r;
 
-	bar_sety(r.max.y);
 	brect = screen->brect;
 	brect.min.x = screen->r.min.x;
 	brect.max.x = screen->r.max.x;
@@ -206,20 +211,18 @@ view_update_rect(View *v) {
 }
 
 void
-view_focus(WMScreen *s, View *v) {
+view_update(View *v) {
 	Client *c;
 	Frame *f, *fnext;
 	Area *a, *an;
 	bool fscrn;
-	
-	USED(s);
 
-	XGrabServer(display);
+	if(v != screen->sel)
+		return;
 
-	_view_select(v);
-	update_frame_selectors(v);
+	frames_update_sel(v);
 	view_arrange(v);
-	div_update_all();
+
 	fscrn = false;
 	for(a=v->area; a; a=an) {
 		an = a->next;
@@ -237,6 +240,7 @@ view_focus(WMScreen *s, View *v) {
 			}
 		}
 	}
+
 	for(c=client; c; c=c->next) {
 		f = c->sel;
 		if(f && f->view == v)
@@ -257,8 +261,20 @@ view_focus(WMScreen *s, View *v) {
 	frame_draw_all();
 
 	sync();
-	XUngrabServer(display);
 	flushenterevents();
+}
+
+void
+view_focus(WMScreen *s, View *v) {
+	
+	USED(s);
+
+	XGrabServer(display);
+
+	_view_select(v);
+	view_update(v);
+
+	XUngrabServer(display);
 }
 
 void
@@ -314,7 +330,7 @@ view_detach(Frame *f) {
 		c->sel = f->cnext;
 
 	if(v == screen->sel)
-		view_focus(screen, v);
+		view_update(v);
 	else if(empty_p(v))
 		view_destroy(v);
 }
@@ -478,7 +494,7 @@ view_update_all(void) {
 
 	old = screen->sel;
 	for(v=view; v; v=v->next)
-		update_frame_selectors(v);
+		frames_update_sel(v);
 
 	for(v=view; v; v=n) {
 		n=v->next;
@@ -486,7 +502,7 @@ view_update_all(void) {
 			view_destroy(v);
 	}
 
-	view_focus(screen, screen->sel);
+	view_update(screen->sel);
 }
 
 uint

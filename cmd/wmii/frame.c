@@ -508,8 +508,8 @@ frame_swap(Frame *fa, Frame *fb) {
 	fa->cnext = c->frame;
 	c->frame = fa;
 
-	if(c->sel && c->sel->view == screen->sel)
-		view_focus(screen, c->sel->view);
+	if(c->sel)
+		view_update(c->sel->view);
 }
 
 void

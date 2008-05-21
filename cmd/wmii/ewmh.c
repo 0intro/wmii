@@ -295,7 +295,7 @@ ewmh_getstrut(Client *c) {
 	Dprint(DEwmh, "\tright: %R\n", c->strut->right);
 	Dprint(DEwmh, "\tbottom: %R\n", c->strut->bottom);
 	free(strut);
-	view_focus(screen, screen->sel);
+	view_update(screen->sel);
 }
 
 int

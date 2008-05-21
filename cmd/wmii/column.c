@@ -41,8 +41,7 @@ column_new(View *v, Area *pos, uint w) {
 		return nil;
 
 	view_arrange(v);
-	if(v == screen->sel)
-		view_focus(screen, v);
+	view_update(v);
 #endif
 }
 
@@ -384,7 +383,7 @@ column_resize(Area *a, int w) {
 	an->r.min.x += dw;
 
 	/* view_arrange(a->view); */
-	view_focus(screen, a->view);
+	view_update(a->view);
 }
 
 static void
@@ -461,7 +460,6 @@ column_resizeframe(Frame *f, Rectangle r) {
 	column_resizeframe_h(f, r);
 
 	/* view_arrange(v); */
-	if(v == screen->sel)
-		view_focus(screen, v);
+	view_update(v);
 }
 
