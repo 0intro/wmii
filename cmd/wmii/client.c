@@ -386,6 +386,7 @@ client_groupframe(Client *c, View *v) {
 Rectangle
 frame_hints(Frame *f, Rectangle r, Align sticky) {
 	Rectangle or;
+	WinHints h;
 	Point p;
 	Client *c;
 
@@ -394,9 +395,8 @@ frame_hints(Frame *f, Rectangle r, Align sticky) {
 		return r;
 
 	or = r;
-	r = frame_rect2client(c, r, f->area->floating);
-	r = sizehint(c->w.hints, r);
-	r = frame_client2rect(c, r, f->area->floating);
+	h = frame_gethints(f);
+	r = sizehint(&h, r);
 
 	if(!f->area->floating) {
 		/* Not allowed to grow */

@@ -246,6 +246,51 @@ Handlers framehandler = {
 	.motion = motion_event,
 };
 
+WinHints
+frame_gethints(Frame *f) {
+	WinHints h;
+	Client *c;
+	Point d;
+	int minh;
+
+	minh = labelh(def.font);
+
+	c = f->client;
+	h = *c->w.hints;
+
+	d.y = labelh(def.font);
+	if(f->area->floating) {
+		d.x = 2*def.border;
+		d.y += def.border;
+	}else {
+		d.x = 2;
+		d.y += 2;
+	}
+
+	if(h.min.x < 2*minh)
+		h.min.x = minh + (2*minh) % h.inc.x;
+	if(h.min.y < minh)
+		h.min.y = minh + minh % h.inc.y;
+
+	h.min.x += d.x;
+	h.min.y += d.y;
+	if(h.max.x + d.x > h.max.x)
+		h.max.x += d.x;
+	if(h.max.y + d.y > h.max.y)
+		h.max.y += d.y;
+
+	h.base.x += d.x;
+	h.base.y += d.y;
+	h.baspect.x += d.x;
+	h.baspect.y += d.y;
+
+	h.group = 0;
+	h.grav = ZP;
+	h.gravstatic = 0;
+	h.position = 0;
+	return h;
+}
+
 Rectangle
 frame_rect2client(Client *c, Rectangle r, bool floating) {
 

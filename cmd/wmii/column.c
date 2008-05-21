@@ -136,6 +136,8 @@ column_detach(Frame *f) {
 		area_destroy(a);
 }
 
+/* This is impossibly long and tortuous. We can do better.
+ */
 static void
 column_scale(Area *a) {
 	Frame *f, **fp;
@@ -254,12 +256,10 @@ column_scale(Area *a) {
 	}
 
 	/* Distribute the surplus.
-	 * When a frame doesn't accept its allocation, don't try to
-	 * allocate to it again. Keep going until we have no more
-	 * surplus, or no more frames will accept it.
 	 */
 	osurplus = 0;
-	while(surplus != osurplus) {
+	/* More on this later. */
+	//while(surplus != osurplus) {
 		osurplus = surplus;
 		dy = 0;
 		for(f=a->frame; f; f=f->anext)
@@ -278,13 +278,15 @@ column_scale(Area *a) {
 				if(f->dy == i)
 					f->dy = 0;
 			}
-	}
+	//}
 
 	/* Now, try to give each frame, in turn, the entirety of the
 	 * surplus that we have left. A single frame might be able
 	 * to fill its increment gap with all of what's left, but
 	 * not with its fair share.
 	 */
+#if 0
+	No, don''t. Causes too much trouble, the way things are now.
 	for(f=a->frame; f && surplus > 0; f=f->anext)
 		if(!f->collapsed) {
 			dy = Dy(f->r);
@@ -293,6 +295,7 @@ column_scale(Area *a) {
 			f->r.max.y = Dy(f->crect) + colh + 1;
 			surplus -= Dy(f->r) - dy;
 		}
+#endif
 
 	if(surplus < 0) {
 		print("Badness: surplus = %d\n", surplus);
@@ -437,13 +440,17 @@ column_resizeframe(Frame *f, Rectangle r) {
 
 	if(al)
 		r.min.x = max(r.min.x, al->r.min.x + minw);
-	else
+	else { /* Hm... */
 		r.min.x = max(r.min.x, v->r.min.x);
+		r.max.x = max(r.max.x, r.min.x + minw);
+	}
 
 	if(ar)
 		r.max.x = min(r.max.x, ar->r.max.x - minw);
-	else
+	else {
 		r.max.x = min(r.max.x, v->r.max.x);
+		r.min.x = min(r.min.x, r.max.x - minw);
+	}
 
 	a->r.min.x = r.min.x;
 	a->r.max.x = r.max.x;

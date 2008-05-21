@@ -134,8 +134,9 @@ int	ingrabbox_p(Frame*, int x, int y);
 void	move_focus(Frame*, Frame*);
 Rectangle constrain(Rectangle);
 Rectangle frame_client2rect(Client*, Rectangle, bool);
-Rectangle frame_rect2client(Client*, Rectangle, bool);
+WinHints  frame_gethints(Frame*);
 Rectangle frame_hints(Frame*, Rectangle, Align);
+Rectangle frame_rect2client(Client*, Rectangle, bool);
 
 /* fs.c */
 void	fs_attach(Ixp9Req*);
