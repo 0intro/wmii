@@ -248,9 +248,8 @@ column_scale(Area *a) {
 			f->dy = 0;
 			f->r.max.y = colh;
 		}else {
-			surplus -= uncolh;
-			f->dy = Dy(f->r);
-			f->r.max.y = uncolh;
+			surplus -= Dy(f->r);
+			f->dy = Dy(f->r) - uncolh;
 		}
 	}
 
@@ -260,7 +259,7 @@ column_scale(Area *a) {
 	 * surplus, or no more frames will accept it.
 	 */
 	osurplus = 0;
-	while(surplus > 0 && surplus != osurplus) {
+	while(surplus != osurplus) {
 		osurplus = surplus;
 		dy = 0;
 		for(f=a->frame; f; f=f->anext)
@@ -274,8 +273,8 @@ column_scale(Area *a) {
 				frame_resize(f, f->r);
 				f->r.max.y = Dy(f->crect) + colh + 1;
 
-				surplus -= Dy(f->r) - i;
 				f->dy = Dy(f->r);
+				surplus -= f->dy - i;
 				if(f->dy == i)
 					f->dy = 0;
 			}
@@ -291,7 +290,7 @@ column_scale(Area *a) {
 			dy = Dy(f->r);
 			f->r.max.y += surplus;
 			frame_resize(f, f->r);
-			f->r.max.y = Dy(f->crect) + labelh(def.font) + 1;
+			f->r.max.y = Dy(f->crect) + colh + 1;
 			surplus -= Dy(f->r) - dy;
 		}
 

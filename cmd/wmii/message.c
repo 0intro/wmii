@@ -91,8 +91,8 @@ char* debugtab[] = {
 };
 
 static char* barpostab[] = {
-	"bottom",
-	"top",
+	[BBottom] = "bottom",
+	[BTop]    = "top",
 };
 
 /* Edit ,y/^[a-zA-Z].*\n.* {\n/d
@@ -644,9 +644,9 @@ msg_grow(View *v, IxpMsg *m) {
 
 	amount.x = Dy(f->titlebar);
 	amount.y = Dy(f->titlebar);
-	if(c->w.hints->inc.x > amount.x/2)
+	if(amount.x < c->w.hints->inc.x)
 		amount.x = c->w.hints->inc.x;
-	if(c->w.hints->inc.y > amount.y/2)
+	if(amount.y < c->w.hints->inc.y)
 		amount.y = c->w.hints->inc.y;
 
 	if(!getamt(m, &amount))

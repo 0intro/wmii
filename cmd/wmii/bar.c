@@ -19,15 +19,14 @@ bar_init(WMScreen *s) {
 
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
-	wa.event_mask =
-		  ExposureMask
-		| ButtonPressMask
-		| ButtonReleaseMask
-		| FocusChangeMask;
-	s->barwin = createwindow(&scr.root, s->brect, scr.depth, InputOutput, &wa,
-			  CWOverrideRedirect
-			| CWBackPixmap
-			| CWEventMask);
+	wa.event_mask = ExposureMask
+		      | ButtonPressMask
+		      | ButtonReleaseMask
+		      | FocusChangeMask;
+	s->barwin = createwindow(&scr.root, s->brect, scr.depth, InputOutput,
+			&wa, CWOverrideRedirect
+			   | CWBackPixmap
+			   | CWEventMask);
 	s->barwin->aux = s;
 	xdnd_initwindow(s->barwin);
 	sethandler(s->barwin, &handlers);
@@ -179,7 +178,7 @@ Bar*
 bar_find(Bar *bp, const char *name) {
 	Bar *b;
 
-	for(b = bp; b; b = b->next)
+	for(b=bp; b; b=b->next)
 		if(!strcmp(b->name, name))
 			break;
 	return b;
