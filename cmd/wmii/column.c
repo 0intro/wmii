@@ -66,9 +66,6 @@ column_attach(Area *a, Frame *f) {
 		nframe++;
 	nframe = max(nframe, 1);
 
-	f->r = a->r;
-	f->r.max.y = Dy(a->r) / nframe;
-	/* COLR */
 	f->colr = a->r;
 	f->colr.max.y = Dy(a->r) / nframe;
 
@@ -240,7 +237,7 @@ column_fit(Area *a, uint *ncolp, uint *nuncolp) {
 	if(nuncolp) *nuncolp = nuncol;
 }
 
-static void
+void
 column_settle(Area *a) {
 	Frame *f;
 	uint yoff, yoffcr;
@@ -269,6 +266,7 @@ column_settle(Area *a) {
 		f->colr = rectsetorigin(f->colr, Pt(a->r.min.x, yoffcr));
 		f->r.min.x = a->r.min.x;
 		f->r.max.x = a->r.max.x;
+		if(def.incmode == ISqueeze)
 		if(!f->collapsed) {
 			f->r.max.y += surplus;
 			if(n-- > 0)
@@ -384,18 +382,12 @@ column_scale(Area *a) {
 			dy += Dy(f->colr);
 	}
 	for(f=a->frame; f; f=f->anext) {
-		WinHints h;
-
 		f->dy = Dy(f->r);
 		f->colr.min.x = a->r.min.x;
 		f->colr.max.x = a->r.max.x;
 		if(!f->collapsed)
 			f->colr.max.y += ((float)f->dy / dy) * surplus;
 		frame_resize(f, f->colr);
-		if(!f->collapsed) {
-			h = frame_gethints(f);
-			f->r = sizehint(&h, f->r);
-		}
 	}
 
 	if(def.incmode == ISqueeze)
@@ -417,10 +409,6 @@ column_arrange(Area *a, bool dirty) {
 	case Coldefault:
 		if(dirty)
 			for(f=a->frame; f; f=f->anext)
-				f->r = Rect(0, 0, 100, 100);
-		/* COLR */
-		if(dirty)
-			for(f=a->frame; f; f=f->anext)
 				f->colr = Rect(0, 0, 100, 100);
 		break;
 	case Colstack:
@@ -434,21 +422,15 @@ column_arrange(Area *a, bool dirty) {
 		}
 		goto resize;
 	default:
-		die("can't get here");
+		die("not reached");
 		break;
 	}
 	column_scale(a);
 resize:
 	if(v == screen->sel) {
 		view_restack(v);
-		client_resize(a->sel->client, a->sel->r);
-
 		for(f=a->frame; f; f=f->anext)
-			if(!f->collapsed && f != a->sel)
-				client_resize(f->client, f->r);
-		for(f=a->frame; f; f=f->anext)
-			if(f->collapsed && f != a->sel)
-				client_resize(f->client, f->r);
+			client_resize(f->client, f->r);
 	}
 }
 

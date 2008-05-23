@@ -179,11 +179,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 			if(!e->subwindow) {
 				frame_restack(f, nil);
 				view_restack(f->view);
-				if(rect_haspoint_p(Pt(e->x, e->y), f->grabbox))
-					mouse_movegrabbox(c);
-				else if(f->area->floating)
-					if(!e->subwindow && !rect_haspoint_p(Pt(e->x, e->y), f->titlebar))
-						mouse_resize(c, quadrant(f->r, Pt(e->x_root, e->y_root)));
+				mouse_checkresize(f, Pt(e->x, e->y), true);
 			}
 
 			if(f->client != selclient())
@@ -213,7 +209,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 		if(f->area->floating || !f->collapsed)
 			focus(f->client, false);
 	}
-	frame_setcursor(f, Pt(e->x, e->y));
+	mouse_checkresize(f, Pt(e->x, e->y), false);
 }
 
 static void
@@ -235,7 +231,7 @@ motion_event(Window *w, XMotionEvent *e) {
 	Client *c;
 	
 	c = w->aux;
-	frame_setcursor(c->sel, Pt(e->x, e->y));
+	mouse_checkresize(c->sel, Pt(e->x, e->y), false);
 }
 
 Handlers framehandler = {
@@ -370,7 +366,7 @@ frame_resize(Frame *f, Rectangle r) {
 	collapsed = f->collapsed;
 	if(!f->area->floating && f->area->mode == Coldefault) {
 		f->collapsed = false;
-		if(Dy(f->r) < 2 * labelh(def.font))
+		if(Dy(r) < 2 * labelh(def.font))
 			f->collapsed = true;
 	}
 	if(collapsed != f->collapsed)
@@ -510,21 +506,6 @@ frame_draw_all(void) {
 	for(c=client; c; c=c->next)
 		if(c->sel && c->sel->view == screen->sel)
 			frame_draw(c->sel);
-}
-
-void
-frame_setcursor(Frame *f, Point pt) {
-	Rectangle r;
-	Cursor cur;
-
-	if(f->area->floating
-	&& !rect_haspoint_p(pt, f->titlebar)
-	&& !rect_haspoint_p(pt, f->crect)) {
-	 	r = rectsubpt(f->r, f->r.min);
-	 	cur = quad_cursor(quadrant(r, pt));
-		client_setcursor(f->client, cur);
-	} else
-		client_setcursor(f->client, cursor[CurNormal]);
 }
 
 void

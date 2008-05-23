@@ -116,6 +116,7 @@ init_cursors(void) {
 	create_cursor(CurSWCorner, XC_bottom_left_corner);
 	create_cursor(CurMove, XC_fleur);
 	create_cursor(CurDHArrow, XC_sb_h_double_arrow);
+	create_cursor(CurDVArrow, XC_sb_v_double_arrow);
 	create_cursor(CurInput, XC_xterm);
 	create_cursor(CurSizing, XC_sizing);
 	create_cursor(CurIcon, XC_icon);
@@ -297,6 +298,7 @@ main(int argc, char *argv[]) {
 	WinAttr wa;
 	int i;
 
+	quotefmtinstall();
 	fmtinstall('r', errfmt);
 	fmtinstall('a', afmt);
 	fmtinstall('C', Cfmt);

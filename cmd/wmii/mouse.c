@@ -13,6 +13,51 @@ enum {
 		ButtonMask | PointerMotionMask
 };
 
+static void
+cwin_expose(Window *w, XExposeEvent *e) {
+
+	fill(w, rectsubpt(w->r, w->r.min), def.focuscolor.bg);
+	fill(w, w->r, def.focuscolor.bg);
+}
+
+static Handlers chandler = {
+	.expose = cwin_expose,
+};
+
+Window*
+constraintwin(Rectangle r) {
+	Window *w;
+	WinAttr wa;
+
+	w = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
+	if(0) {
+		Window *w2;
+
+		w2 = createwindow(&scr.root, r, 0, InputOutput, &wa, 0);
+		selectinput(w2, ExposureMask);
+		w->aux = w2;
+
+		setborder(w2, 1, def.focuscolor.border);
+		sethandler(w2, &chandler);
+		mapwin(w2);
+		raisewin(w2);
+	}
+	mapwin(w);
+	return w;
+}
+
+void
+destroyconstraintwin(Window *w) {
+	Window *w2;
+
+	if(w->aux) {
+		w2 = w->aux;
+		sethandler(w2, nil);
+		destroywindow(w2);
+	}
+	destroywindow(w);
+}
+
 static Window*
 gethsep(Rectangle r) {
 	Window *w;
@@ -167,7 +212,6 @@ readmotion(Point *p) {
 
 static void
 mouse_resizecolframe(Frame *f, Align align) {
-	WinAttr wa;
 	Window *cwin, *hwin;
 	Divide *d;
 	View *v;
@@ -196,7 +240,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 	/* At any rate, set the limits of where this box may be
 	 * dragged.
 	 */
-#define frob(pred, rmin, rmax, plus, minus, xy) BLOCK( \
+#define frob(pred, f, aprev, rmin, rmax, plus, minus, xy) BLOCK( \
 		if(pred) {                                           \
 			r.rmin.xy = f->aprev->r.rmin.xy plus min.xy; \
 			r.rmax.xy = f->r.rmax.xy minus min.xy;       \
@@ -205,17 +249,16 @@ mouse_resizecolframe(Frame *f, Align align) {
 			r.rmax.xy = r.rmin.xy plus 1;                \
 		})
 	if(align&North)
-		frob(f->aprev,           min, max, +, -, y);
+		frob(f->aprev,           f, aprev, min, max, +, -, y);
 	else
-		frob(f->anext,           max, min, -, +, y);
+		frob(f->anext,           f, anext, max, min, -, +, y);
 	if(align&West)
-		frob(a->prev != v->area, min, max, +, -, x);
+		frob(a->prev != v->area, a, prev,  min, max, +, -, x);
 	else
-		frob(a->next,            max, min, -, +, x);
+		frob(a->next,            a, next,  max, min, -, +, x);
 #undef frob
 
-	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
-	mapwin(cwin);
+	cwin = constraintwin(r);
 
 	r = f->r;
 	if(align&North)
@@ -269,13 +312,12 @@ mouse_resizecolframe(Frame *f, Align align) {
 
 done:
 	ungrabpointer();
-	destroywindow(cwin);
+	destroyconstraintwin(cwin);
 	destroywindow(hwin);
 }
 
 void
 mouse_resizecol(Divide *d) {
-	WinAttr wa;
 	Window *cwin;
 	Divide *dp;
 	View *v;
@@ -301,8 +343,7 @@ mouse_resizecol(Divide *d) {
 	r.min.y = pt.y;
 	r.max.y = pt.y+1;
 
-	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
-	mapwin(cwin);
+	cwin = constraintwin(r);
 
 	if(!grabpointer(&scr.root, cwin, cursor[CurNone], MouseMask))
 		goto done;
@@ -314,7 +355,7 @@ mouse_resizecol(Divide *d) {
 
 done:
 	ungrabpointer();
-	destroywindow(cwin);
+	destroyconstraintwin(cwin);
 }
 
 void
@@ -418,6 +459,88 @@ mouse_resize(Client *c, Align align) {
 
 	free(rects);
 	ungrabpointer();
+}
+
+static void
+mouse_tempvertresize(Area *a, Point p) {
+	Frame *fa, *fb;
+	Window *cwin;
+	Rectangle r;
+	int dy, incmode;
+
+	for(fa=a->frame; fa; fa=fa->anext)
+		if(p.y < fa->r.max.y + labelh(def.font)/2)
+			break;
+	if(!(fa && fa->anext))
+		return;
+	for(fb=fa->anext; fb->anext; fb=fb->anext)
+		if(!fb->collapsed) break;
+
+	incmode = def.incmode;
+	def.incmode = IShow;
+	column_arrange(a, false);
+
+	dy = fb->colr.min.y - fa->colr.max.y;
+
+	r.min.x = p.x;
+	r.max.x = p.x + 1;
+	r.min.y = fa->r.min.y + labelh(def.font);
+	r.max.y = a->r.max.y - dy;
+	cwin = constraintwin(r);
+
+	if(!grabpointer(&scr.root, cwin, cursor[CurDVArrow], MouseMask))
+		goto done;
+
+	int amin = fa->colr.min.y;
+	while(readmotion(&p)) {
+		fa->colr.min.y = amin;
+		fa->colr.max.y = p.y;
+		fb->colr.min.y = p.y + dy;
+		column_arrange(a, false);
+	}
+
+done:
+	ungrabpointer();
+	destroyconstraintwin(cwin);
+	def.incmode = incmode;
+	column_arrange(a, false);
+}
+
+void
+mouse_checkresize(Frame *f, Point p, bool exec) {
+	Rectangle r;
+	Cursor cur;
+	int q;
+
+	cur = cursor[CurNormal];
+	if(rect_haspoint_p(p, f->crect)) {
+		client_setcursor(f->client, cur);
+		return;
+	}
+
+	r = rectsubpt(f->r, f->r.min);
+	q = quadrant(r, p);
+	if(rect_haspoint_p(p, f->grabbox)) {
+		cur = cursor[CurMove];
+		if(exec) mouse_movegrabbox(f->client);
+	}
+	else if(f->area->floating) {
+		if(p.x <= 2 || p.y <= 2
+		|| r.max.x - p.x <= 2
+		|| r.max.y - p.y <= 2) {
+			cur = quad_cursor(q);
+			if(exec) mouse_resize(f->client, q);
+		}
+	}else {
+		if(f->aprev && p.y <= 2
+		|| f->anext && r.max.y - p.y <= 2) {
+			cur = cursor[CurDVArrow];
+			if(exec) mouse_tempvertresize(f->area, addpt(p, f->r.min));
+		}
+	}
+
+	if(!exec)
+		client_setcursor(f->client, cur);
 }
 
 static void

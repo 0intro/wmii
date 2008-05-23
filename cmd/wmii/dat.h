@@ -80,7 +80,8 @@ enum Barpos {
 enum {
 	CurNormal,
 	CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
-	CurDHArrow, CurMove, CurInput, CurSizing, CurIcon,
+	CurDHArrow, CurDVArrow, CurMove, CurInput, CurSizing,
+	CurIcon,
 	CurNone,
 	CurLast,
 };

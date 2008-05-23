@@ -402,8 +402,8 @@ thcol(Frame *f) {
 
 			column_drop(fw->ra, f, fw->pt.y);
 
-			if(!a->frame && !a->floating && f->view->area->next->next)
-				area_destroy(a);
+ 			if(!a->frame && !a->floating && f->view->area->next->next)
+ 				area_destroy(a);
 			goto done;
 		case ButtonPress:
 			if(button == 2)

@@ -83,6 +83,7 @@ Area*	column_new(View*, Area *, uint);
 void	column_remove(Frame*);
 void	column_resize(Area*, int);
 void	column_resizeframe(Frame*, Rectangle);
+void	column_settle(Area*);
 void	div_draw(Divide*);
 void	div_set(Divide*, int x);
 void	div_update_all(void);
@@ -131,7 +132,6 @@ void	frame_insert(Frame*, Frame *pos);
 void	frame_remove(Frame*);
 void	frame_resize(Frame*, Rectangle);
 bool	frame_restack(Frame*, Frame*);
-void	frame_setcursor(Frame*, Point);
 void	frame_swap(Frame*, Frame*);
 int	ingrabbox_p(Frame*, int x, int y);
 void	move_focus(Frame*, Frame*);
@@ -202,7 +202,10 @@ bool	setdebug(int);
 void	vdebug(int, const char*, va_list);
 
 /* mouse.c */
+Window*	constraintwin(Rectangle);
+void	destroyconstraintwin(Window*);
 void	grab_button(XWindow, uint button, ulong mod);
+void	mouse_checkresize(Frame*, Point, bool);
 void	mouse_movegrabbox(Client*);
 void	mouse_resize(Client*, Align);
 void	mouse_resizecol(Divide*);
