@@ -158,7 +158,6 @@ destroynotify(XEvent *e) {
 	if((w = findwin(ev->window))) 
 		handle(w, destroy, ev);
 	else {
-		Dprint(DGeneric, "DestroyWindow(%ux) (no handler)\n", (uint)ev->window);
 		if((c = win2client(ev->window)))
 			fprint(2, "Badness: Unhandled DestroyNotify: "
 				"Client: %p, Window: %W, Name: %s\n", c, &c->w, c->name);

@@ -856,12 +856,12 @@ enter_event(Window *w, XCrossingEvent *e) {
 	c = w->aux;
 	if(e->detail != NotifyInferior) {
 		if(screen->focus != c) {
-			Dprint(DGeneric, "enter_notify([%C]%s)\n", c, c->name);
+			Dprint(DFocus, "enter_notify([%C]%s)\n", c, c->name);
 			focus(c, false);
 		}
 		client_setcursor(c, cursor[CurNormal]);
 	}else
-		Dprint(DGeneric, "enter_notify(%C[NotifyInferior]%s)\n", c, c->name);
+		Dprint(DFocus, "enter_notify(%C[NotifyInferior]%s)\n", c, c->name);
 }
 
 static void

@@ -21,8 +21,6 @@ struct Framewin {
 	/* Todo... give these better names. */
 	Window* w;
 	Rectangle grabbox;
-	Rectangle fprev_r;
-	Frame*	fprev;
 	Frame*	f;
 	Area*	ra;
 	Point	pt;
@@ -39,7 +37,6 @@ framerect(Framewin *f) {
 	if(f->orientation == OHoriz) {
 		r.max.x = f->xy;
 		r.max.y = f->grabbox.max.y + f->grabbox.min.y;
-		r = rectsubpt(r, Pt(0, Dy(r)/2));
 	}else {
 		r.max.x = f->grabbox.max.x + f->grabbox.min.x;
 		r.max.y = f->xy;
@@ -119,21 +116,14 @@ static Handlers handlers = {
 	.expose = expose_event,
 };
 
-static int
-_vsnap(Framewin *f, int y) {
-	if(abs(f->xy - y) < Dy(f->w->r)) {
-		f->xy = y;
-		return 1;
-	}
-	return 0;
-}
-
 static void
 vplace(Framewin *fw, Point pt) {
+	Vector_long vec = {0};
 	Rectangle r;
 	Frame *f;
 	Area *a;
 	View *v;
+	long l;
 	int hr;
 
 	v = screen->sel;
@@ -153,52 +143,24 @@ vplace(Framewin *fw, Point pt) {
 	if(a->frame == nil)
 		goto done;
 
-	for(f = a->frame; f->anext; f = f->anext)
-		if(f->r.max.y > pt.y)
-			break;
-
-	if(!f->collapsed) {
-		fw->fprev = f;
-		fw->fprev_r = f->r;
-
-		if(f == fw->f) {
-			fw->fprev = f->aprev;
-			fw->fprev_r.min.y = pt.y - hr;
-			//if(_vsnap(fw, f->r.min.y+hr))
-			goto done;
-		}
-
-		if(_vsnap(fw, f->r.max.y - hr)) {
-			if(f == fw->f->aprev)
-				fw->xy = pt.y;
-			else {
-				fw->fprev_r.min.y = f->r.max.y - labelh(def.font);
-				goto done;
-			}
-		}
-		if(_vsnap(fw, f->r.min.y+Dy(r)+hr)) {
-			fw->fprev_r.min.y = f->r.min.y + labelh(def.font);
-			goto done;
-		}
-		if(f->aprev == nil || f->aprev->collapsed)
-			_vsnap(fw, f->r.min.y);
-		else if(_vsnap(fw, f->r.min.y-hr))
-			fw->fprev = f->aprev;
-
-		fw->fprev_r.min.y = pt.y - hr;
-		if(fw->fprev && fw->fprev->anext == fw->f)
-			fw->fprev_r.max = fw->f->r.max;
-		goto done;
+	vector_lpush(&vec, a->frame->r.min.y);
+	for(f=a->frame; f; f=f->anext) {
+		if(f == fw->f)
+			vector_lpush(&vec, f->r.min.y + 0*hr);
+		else if(f->collapsed)
+			vector_lpush(&vec, f->r.min.y + 1*hr);
+		else
+			vector_lpush(&vec, f->r.min.y + 2*hr);
+		if(!f->collapsed)
+			vector_lpush(&vec, f->r.max.y - 2*hr);
 	}
 
-	if(pt.y < f->r.min.y + hr) {
-		pt.y = f->r.min.y;
-		 if(f->aprev && !f->aprev->collapsed)
-			pt.y -= hr;
-	}else {
-		pt.y = f->r.max.y;
-		if(f->anext == fw->f)
-			pt.y += hr;
+	for(int i=0; i < vec.n; i++) {
+		l = vec.ary[i];
+		if(abs(fw->xy - l) < hr) {
+			fw->xy = l;
+			break;
+		}
 	}
 
 done:
@@ -298,11 +260,107 @@ mouse_movegrabbox(Client *c) {
 }
 
 static int
+_openstack_down(Frame *f, int h) {
+	int ret;
+	int dy;
+
+	if(f == nil)
+		return 0;;
+	ret = 0;
+	if(!f->collapsed) {
+		dy = Dy(f->colr) - labelh(def.font);
+		if(dy >= h) {
+			f->colr.min.y += h;
+			return h;
+		}else {
+			f->collapsed = true;
+			f->colr.min.y += dy;
+			ret = dy;
+			h -= dy;
+		}
+	}
+	dy = _openstack_down(f->anext, h);
+	f->colr.min.y += dy;
+	f->colr.max.y += dy;
+	return ret + dy;
+}
+
+static int
+_openstack_up(Frame *f, int h) {
+	int ret;
+	int dy;
+
+	if(f == nil)
+		return 0;
+	ret = 0;
+	if(!f->collapsed) {
+		dy = Dy(f->colr) - labelh(def.font);
+		if(dy >= h) {
+			f->colr.max.y -= h;
+			return h;
+		}else {
+			f->collapsed = true;
+			f->colr.max.y -= dy;
+			ret = dy;
+			h -= dy;
+		}
+	}
+	dy = _openstack_up(f->aprev, h);
+	f->colr.min.y -= dy;
+	f->colr.max.y -= dy;
+	return ret + dy;
+}
+
+static int
+column_openstack(Area *a, Frame *f, int h) {
+
+	if(f == nil)
+		_openstack_down(a->frame, h);
+	else {
+		h -= _openstack_down(f->anext, h);
+		if(h)
+			return _openstack_up(f->aprev, h);
+	}
+	return 0;
+}
+
+static void
+column_drop(Area *a, Frame *f, int y) {
+	Frame *ff;
+	int dy;
+
+	for(ff=a->frame; ff; ff=ff->anext)
+		assert(ff != f);
+
+	if(a->frame == nil || y <= a->frame->r.min.y) {
+		column_openstack(a, nil, labelh(def.font));
+		column_insert(a, f, nil);
+		return;
+	}
+	for(ff=a->frame; ff->anext; ff=ff->anext)
+		if(y < ff->colr.max.y) break;
+
+	y = max(y, ff->colr.min.y + labelh(def.font));
+	y = min(y, ff->colr.max.y);
+	dy = ff->colr.max.y - y;
+	if(dy <= labelh(def.font)) {
+		f->collapsed = true;
+		f->colr.min.y = 0;
+		f->colr.max.y = labelh(def.font);
+		column_openstack(a, ff->anext, labelh(def.font) - dy);
+	}else {
+		f->colr.min.y = y;
+		f->colr.max.y = ff->colr.max.y;
+		ff->colr.max.y = y;
+	}
+	column_insert(a, f, ff);
+}
+
+static int
 thcol(Frame *f) {
 	Framewin *fw;
-	Frame *fprev, *fnext;
+	Frame *fp, *fn;
 	Area *a;
-	Rectangle r;
 	Point pt, pt2;
 	uint button;
 	int ret;
@@ -328,57 +386,22 @@ thcol(Frame *f) {
 		case ButtonRelease:
 			if(button != 1)
 				continue;
-			/* TODO: Fix... I think that this should be
-			 * simpler, at least clearer, and should be
-			 * elsewhere. But the expected behavior
-			 * turns out to be more complex than one
-			 * would suspect. The simpler algorithms
-			 * tend not to do what you want.
-			 */
 			a = f->area;
 			if(a->floating)
 				area_detach(f);
 			else {
-				fprev = f->aprev;
-				fnext = f->anext;
+				fp = f->aprev;
+				fn = f->anext;
 				column_remove(f);
-				if(fnext
-				&& (!fprev || (fw->fprev != fprev)
-					   && (fw->fprev != fprev->aprev))) {
-					fnext->colr.min.y = f->colr.min.y;
-					frame_resize(fnext, fnext->colr);
-				}
-				else if(fprev) {
-					if(fw->fprev == fprev->aprev) {
-						fw->fprev = fprev->aprev;
-						fprev->colr = f->r;
-					}else
-						fprev->colr.max.y = f->r.max.y;
-					frame_resize(fprev, fprev->colr);
-				}
+				if(fp)
+					fp->colr.max.y = f->colr.max.y;
+				else if(fn && fw->pt.y > fn->r.min.y)
+					fn->colr.min.y = f->colr.min.y;
 			}
 
-			column_insert(fw->ra, f, fw->fprev);
+			column_drop(fw->ra, f, fw->pt.y);
 
-			r = fw->fprev_r;
-			if(f->aprev) {
-				f->aprev->colr.max.y = r.min.y;
-				frame_resize(f->aprev, f->aprev->colr);
-			}else
-				r.min.y = f->area->r.min.y;
-
-			if(f->anext)
-				r.max.y = f->anext->r.min.y;
-			else
-				r.max.y = f->area->r.max.y;
-
-			Dprint(DGeneric, "fw->fprev: %C fprev: %C f: %C f->r: %R fprev_r: %R\n",
-					 (fw->fprev?fw->fprev->client:nil), (fprev?fprev->client:nil),
-					 f->client, f->r, fw->fprev_r);
-			f->colr = fw->fprev_r;
-			frame_resize(f, f->colr);
-
-			if(!a->frame && !a->floating)
+			if(!a->frame && !a->floating && f->view->area->next->next)
 				area_destroy(a);
 			goto done;
 		case ButtonPress:

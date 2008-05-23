@@ -209,7 +209,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 	c = w->aux;
 	f = c->sel;
 	if(screen->focus != c || selclient() != c) {
-		Dprint(DGeneric, "enter_notify(f) => %s\n", f->client->name);
+		Dprint(DFocus, "enter_notify(f) => %s\n", f->client->name);
 		if(f->area->floating || !f->collapsed)
 			focus(f->client, false);
 	}
