@@ -138,7 +138,7 @@ vplace(Framewin *fw, Point pt) {
 
 	r = fw->w->r;
 	hr = Dy(r)/2;
-	fw->xy = pt.y;
+	pt.y -= hr;
 
 	if(a->frame == nil)
 		goto done;
@@ -151,14 +151,14 @@ vplace(Framewin *fw, Point pt) {
 			vector_lpush(&vec, f->r.min.y + 1*hr);
 		else
 			vector_lpush(&vec, f->r.min.y + 2*hr);
-		if(!f->collapsed)
+		if(!f->collapsed && f->anext != fw->f)
 			vector_lpush(&vec, f->r.max.y - 2*hr);
 	}
 
 	for(int i=0; i < vec.n; i++) {
 		l = vec.ary[i];
-		if(abs(fw->xy - l) < hr) {
-			fw->xy = l;
+		if(abs(pt.y - l) < hr) {
+			pt.y = l;
 			break;
 		}
 	}
@@ -166,7 +166,6 @@ vplace(Framewin *fw, Point pt) {
 
 done:
 	pt.x = a->r.min.x;
-	pt.y = fw->xy;
 	frameadjust(fw, pt, OHoriz, Dx(a->r));
 	reshapewin(fw->w, framerect(fw));
 }
@@ -239,8 +238,6 @@ trampoline(int fn, Frame *f) {
 		fn = tramp[fn](f);
 	}
 	ungrabpointer();
-
-	warppointer(grabboxcenter(f));
 }
 
 void
@@ -249,15 +246,20 @@ mouse_movegrabbox(Client *c) {
 	int incmode;
 
 	f = c->sel;
+
 	incmode = def.incmode;
 	def.incmode = IShow;
 	view_update(f->view);
+	warppointer(grabboxcenter(f));
+
 	if(f->area->floating)
 		trampoline(TFloat, f);
 	else
 		trampoline(THCol, f);
+
 	def.incmode = incmode;
 	view_update(f->view);
+	warppointer(grabboxcenter(f));
 }
 
 static int
@@ -377,7 +379,6 @@ thcol(Frame *f) {
 	if(!grabpointer(&scr.root, nil, cursor[CurIcon], MouseMask))
 		goto done;
 
-	warppointer(pt);
 	vplace(fw, pt);
 	for(;;)
 		switch (readmouse(&pt, &button)) {

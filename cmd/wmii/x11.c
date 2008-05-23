@@ -884,6 +884,17 @@ pointerscreen(void) {
 
 void
 warppointer(Point pt) {
+	/* Nasty kludge for xephyr, xnest. */
+	static int havereal = -1;
+	static char* real;
+
+	if(havereal == -1) {
+		real = getenv("REALDISPLAY");
+		havereal = real != nil;
+	}
+	if(havereal)
+		system(sxprint("DISPLAY=%s wiwarp %d %d", real, pt.x, pt.y));
+
 	XWarpPointer(display,
 		/* src, dest w */ None, scr.root.w,
 		/* src_rect */	0, 0, 0, 0,

@@ -428,7 +428,8 @@ column_arrange(Area *a, bool dirty) {
 	column_scale(a);
 resize:
 	if(v == screen->sel) {
-		view_restack(v);
+		//view_restack(v);
+		client_resize(a->sel->client, a->sel->r);
 		for(f=a->frame; f; f=f->anext)
 			client_resize(f->client, f->r);
 	}

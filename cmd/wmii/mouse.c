@@ -491,9 +491,7 @@ mouse_tempvertresize(Area *a, Point p) {
 	if(!grabpointer(&scr.root, cwin, cursor[CurDVArrow], MouseMask))
 		goto done;
 
-	int amin = fa->colr.min.y;
 	while(readmotion(&p)) {
-		fa->colr.min.y = amin;
 		fa->colr.max.y = p.y;
 		fb->colr.min.y = p.y + dy;
 		column_arrange(a, false);
