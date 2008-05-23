@@ -312,7 +312,7 @@ _openstack_up(Frame *f, int h) {
 	return ret + dy;
 }
 
-static int
+static void
 column_openstack(Area *a, Frame *f, int h) {
 
 	if(f == nil)
@@ -320,9 +320,8 @@ column_openstack(Area *a, Frame *f, int h) {
 	else {
 		h -= _openstack_down(f->anext, h);
 		if(h)
-			return _openstack_up(f->aprev, h);
+			_openstack_up(f->aprev, h);
 	}
-	return 0;
 }
 
 static void
@@ -334,6 +333,7 @@ column_drop(Area *a, Frame *f, int y) {
 		assert(ff != f);
 
 	if(a->frame == nil || y <= a->frame->r.min.y) {
+		f->collapsed = true;
 		column_openstack(a, nil, labelh(def.font));
 		column_insert(a, f, nil);
 		return;

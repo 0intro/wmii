@@ -244,31 +244,35 @@ static void
 column_settle(Area *a) {
 	Frame *f;
 	uint yoff, yoffcr;
-	int i, surplus, nuncol, n;
+	int surplus, nuncol, n;
 
 	nuncol = 0;
 	surplus = column_surplus(a);
 	for(f=a->frame; f; f=f->anext)
 		if(!f->collapsed) nuncol++;
 
+	if(nuncol == 0) {
+		fprint(2, "%s: Badness: No uncollapsed frames, column %d, view %q\n",
+				argv0, area_idx(a), a->view->name);
+		return;
+	}
+	if(surplus < 0)
+		fprint(2, "%s: Badness: surplus = %d in column_settle, column %d, view %q\n",
+				argv0, surplus, area_idx(a), a->view->name);
+
 	yoff = a->r.min.y;
 	yoffcr = yoff;
-	i = nuncol;
-	n = 0;
-	if(surplus / nuncol == 0)
-		n = surplus;
+	n = surplus % nuncol;
+	surplus /= nuncol;
 	for(f=a->frame; f; f=f->anext) {
 		f->r = rectsetorigin(f->r, Pt(a->r.min.x, yoff));
 		f->colr = rectsetorigin(f->colr, Pt(a->r.min.x, yoffcr));
 		f->r.min.x = a->r.min.x;
 		f->r.max.x = a->r.max.x;
 		if(!f->collapsed) {
-			if(n == 0)
-				f->r.max.y += surplus / nuncol;
-			else if(n-- > 0)
+			f->r.max.y += surplus;
+			if(n-- > 0)
 				f->r.max.y++;
-			if(--i == 0)
-				f->r.max.y = a->r.max.y;
 		}
 		yoff = f->r.max.y;
 		yoffcr = f->colr.max.y;
@@ -319,15 +323,13 @@ column_squeeze(Area *a) {
 	int surplus, osurplus, dy;
 
 	fvec.n = 0;
-	for(f=a->frame; f; f=f->anext) {
-		h = frame_gethints(f);
-		f->r = sizehint(&h, f->r);
-		vector_ppush(&fvec, f);
-	}
+	for(f=a->frame; f; f=f->anext)
+		if(!f->collapsed) {
+			h = frame_gethints(f);
+			f->r = sizehint(&h, f->r);
+			vector_ppush(&fvec, f);
+		}
 	fp = (Frame**)fvec.ary;
-	/* I would prefer an unstable sort. Unfortunately, the GNU people
-	 * provide a stable one, so, this works better on BSD.
-	 */
 	qsort(fp, fvec.n, sizeof *fp, comp_frame);
 
 	surplus = column_surplus(a);
@@ -479,24 +481,25 @@ column_resizeframe_h(Frame *f, Rectangle r) {
 	fp = f->aprev;
 
 	if(fp)
-		r.min.y = max(r.min.y, fp->r.min.y + minh);
+		r.min.y = max(r.min.y, fp->colr.min.y + minh);
 	else /* XXX. */
 		r.min.y = max(r.min.y, a->r.min.y);
 
 	if(fn)
-		r.max.y = min(r.max.y, fn->r.max.y - minh);
+		r.max.y = min(r.max.y, fn->colr.max.y - minh);
 	else
 		r.max.y = min(r.max.y, a->r.max.y);
 
 	if(fp) {
-		fp->r.max.y = r.min.y;
-		frame_resize(fp, fp->r);
+		fp->colr.max.y = r.min.y;
+		frame_resize(fp, fp->colr);
 	}
 	if(fn) {
-		fn->r.min.y = r.max.y;
-		frame_resize(fn, fn->r);
+		fn->colr.min.y = r.max.y;
+		frame_resize(fn, fn->colr);
 	}
 
+	f->colr = r;
 	frame_resize(f, r);
 }
 
