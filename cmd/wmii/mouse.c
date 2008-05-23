@@ -360,7 +360,7 @@ grabboxcenter(Frame *f) {
 	p.x += Dx(f->grabbox)/2;
 	p.y += Dy(f->grabbox)/2;
 	return p;
-	/* Pretty, but not concise.
+	/* Pretty, but not clear.
 	pt = addpt(pt, divpt(subpt(f->grabbox.max,
 				   f->grabbox.min),
 			     Pt(2, 2)))
@@ -428,40 +428,29 @@ mouse_resizecolframe(Frame *f, Align align) {
 
 	min.x = Dx(v->r)/NCOL;
 	min.y = /*frame_delta_h() +*/ labelh(def.font);
-	if(align&North) {
-		if(f->aprev) {
-			r.min.y = f->aprev->r.min.y + min.y;
-			r.max.y = f->r.max.y - min.y;
-		}else {
-			r.min.y = a->r.min.y;
-			r.max.y = r.min.y + 1;
-		}
-	}else {
-		if(f->anext) {
-			r.max.y = f->anext->r.max.y - min.y;
-			r.min.y = f->r.min.y + min.y;
-		}else {
-			r.max.y = a->r.max.y;
-			r.min.y = r.max.y - 1;
-		}
-	}
-	if(align&West) {
-		if(a->prev != v->area) {
-			r.min.x = a->prev->r.min.x + min.x;
-			r.max.x = a->r.max.x - min.x;
-		}else {
-			r.min.x = a->r.min.x;
-			r.max.x = r.min.x + 1;
-		}
-	}else {
-		if(a->next) {
-			r.max.x = a->next->r.max.x - min.x;
-			r.min.x = a->r.min.x + min.x;
-		}else {
-			r.max.x = a->r.max.x;
-			r.min.x = r.max.x - 1;
-		}
-	}
+	/* This would be so simple in lisp... */
+	/* This must be evil. But, I hate to repeat myself. */
+	/* And I hate to see patterns. */
+	/* At any rate, set the limits of where this box may be
+	 * dragged.
+	 */
+#define frob(pred, rmin, rmax, plus, minus, xy) BLOCK( \
+		if(pred) {                                           \
+			r.rmin.xy = f->aprev->r.rmin.xy plus min.xy; \
+			r.rmax.xy = f->r.rmax.xy minus min.xy;       \
+		}else {                                              \
+			r.rmin.xy = a->r.rmin.xy;                    \
+			r.rmax.xy = r.rmin.xy plus 1;                \
+		})
+	if(align&North)
+		frob(f->aprev,           min, max, +, -, y);
+	else
+		frob(f->anext,           max, min, -, +, y);
+	if(align&West)
+		frob(a->prev != v->area, min, max, +, -, x);
+	else
+		frob(a->next,            max, min, -, +, x);
+#undef frob
 
 	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
 	mapwin(cwin);
@@ -688,6 +677,10 @@ static int (*tramp[])(Frame*) = {
 	tfloat,
 };
 
+/* Trampoline to allow properly tail recursive move/resize routines.
+ * We could probably get away with plain tail calls, but I don't
+ * like the idea.
+ */
 static void
 trampoline(int fn, Frame *f) {
 
@@ -706,6 +699,8 @@ mouse_movegrabbox(Client *c) {
 	Frame *f;
 
 	f = c->sel;
+	for(Area *a=f->view->area->next; a; a=a->next)
+		column_frob(a);
 	if(f->area->floating)
 		trampoline(TFloat, f);
 	else
@@ -745,11 +740,11 @@ thcol(Frame *f) {
 			if(button != 1)
 				continue;
 			/* TODO: Fix... I think that this should be
-			 * simpler, and should be elsewhere. But the
-			 * expected behavior turns out to be more
-			 * complex than one would suspect. The
-			 * simpler algorithms tend not to do what
-			 * you want.
+			 * simpler, at least clearer, and should be
+			 * elsewhere. But the expected behavior
+			 * turns out to be more complex than one
+			 * would suspect. The simpler algorithms
+			 * tend not to do what you want.
 			 */
 			a = f->area;
 			if(a->floating)
@@ -761,16 +756,16 @@ thcol(Frame *f) {
 				if(fnext
 				&& (!fprev || (fw->fprev != fprev)
 					   && (fw->fprev != fprev->aprev))) {
-					fnext->r.min.y = f->r.min.y;
-					frame_resize(fnext, fnext->r);
+					fnext->colr.min.y = f->colr.min.y;
+					frame_resize(fnext, fnext->colr);
 				}
 				else if(fprev) {
 					if(fw->fprev == fprev->aprev) {
 						fw->fprev = fprev->aprev;
-						fprev->r = f->r;
+						fprev->colr = f->r;
 					}else
-						fprev->r.max.y = f->r.max.y;
-					frame_resize(fprev, fprev->r);
+						fprev->colr.max.y = f->r.max.y;
+					frame_resize(fprev, fprev->colr);
 				}
 			}
 
@@ -778,8 +773,8 @@ thcol(Frame *f) {
 
 			r = fw->fprev_r;
 			if(f->aprev) {
-				f->aprev->r.max.y = r.min.y;
-				frame_resize(f->aprev, f->aprev->r);
+				f->aprev->colr.max.y = r.min.y;
+				frame_resize(f->aprev, f->aprev->colr);
 			}else
 				r.min.y = f->area->r.min.y;
 
@@ -791,7 +786,8 @@ thcol(Frame *f) {
 			Dprint(DGeneric, "fw->fprev: %C fprev: %C f: %C f->r: %R fprev_r: %R\n",
 					 (fw->fprev?fw->fprev->client:nil), (fprev?fprev->client:nil),
 					 f->client, f->r, fw->fprev_r);
-			frame_resize(f, fw->fprev_r);
+			f->colr = fw->fprev_r;
+			frame_resize(f, f->colr);
 
 			if(!a->frame && !a->floating)
 				area_destroy(a);
@@ -931,16 +927,19 @@ done:
 
 #endif
 
+static void
+_grab(XWindow w, uint button, ulong mod) {
+	XGrabButton(display, button, mod, w, false, ButtonMask,
+			GrabModeSync, GrabModeAsync, None, None);
+}
+
 /* Doesn't belong here */
 void
 grab_button(XWindow w, uint button, ulong mod) {
-	XGrabButton(display, button, mod, w, false, ButtonMask,
-			GrabModeSync, GrabModeAsync, None, None);
-	if((mod != AnyModifier) && (numlock_mask != 0)) {
-		XGrabButton(display, button, mod | numlock_mask, w, false, ButtonMask,
-			GrabModeSync, GrabModeAsync, None, None);
-		XGrabButton(display, button, mod | numlock_mask | LockMask, w, false,
-			ButtonMask, GrabModeSync, GrabModeAsync, None, None);
+	_grab(w, button, mod);
+	if((mod != AnyModifier) && numlock_mask) {
+		_grab(w, button, mod | numlock_mask);
+		_grab(w, button, mod | numlock_mask | LockMask);
 	}
 }
 

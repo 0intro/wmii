@@ -26,6 +26,18 @@ area_idx(Area *a) {
 	return i;
 }
 
+int
+afmt(Fmt *f) {
+	Area *a;
+
+	a = va_arg(f->args, Area*);
+	if(a == nil)
+		return fmtstrcpy(f, "<nil>");
+	if(a->floating)
+		return fmtstrcpy(f, "~");
+	return fmtprint(f, "%d", area_idx(a));
+}
+
 char*
 area_name(Area *a) {
 
@@ -53,6 +65,8 @@ area_create(View *v, Area *pos, uint w) {
 	for(a=v->area; a; a=a->next)
 		areanum++;
 
+	/* TODO: Need a better sizing/placing algorithm.
+	 */
 	colnum = areanum - 1;
 	if(w == 0) {
 		if(colnum >= 0) {
@@ -241,7 +255,7 @@ area_focus(Area *a) {
 		client_focus(nil);
 
 	if(a != old_a) {
-		event("AreaFocus %s\n", area_name(a));
+		event("AreaFocus %a\n", a);
 		/* Deprecated */
 		if(a->floating)
 			event("FocusFloating\n");

@@ -8,6 +8,7 @@
 # pragma varargck	argpos	event	1
 # pragma varargck	argpos	warning	1
 #
+# pragma varargck	type	"a"	Area*	
 # pragma varargck	type	"C"	Client*	
 # pragma varargck	type	"r"	void
 #endif
@@ -16,6 +17,7 @@
 	(cond ? fprint(1, __FILE__":%d: failed assertion: " #cond "\n", __LINE__), backtrace(arg), true : false)
 
 /* area.c */
+int	afmt(Fmt*);
 void	area_attach(Area*, Frame*);
 Area*	area_create(View*, Area *pos, uint w);
 void	area_destroy(Area*);
@@ -75,6 +77,7 @@ void	column_arrange(Area*, bool dirty);
 void	column_attach(Area*, Frame*);
 void	column_attachrect(Area*, Frame*, Rectangle);
 void	column_detach(Frame*);
+void	column_frob(Area*);
 void	column_insert(Area*, Frame*, Frame*);
 Area*	column_new(View*, Area *, uint);
 void	column_remove(Frame*);

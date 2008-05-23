@@ -652,6 +652,7 @@ msg_grow(View *v, IxpMsg *m) {
 	if(!getamt(m, &amount))
 		return Ebadvalue;
 
+	/* COLR */
 	r = f->r;
 	switch(dir) {
 	case LLEFT:	r.min.x -= amount.x; break;
@@ -689,6 +690,7 @@ msg_nudge(View *v, IxpMsg *m) {
 	if(!getamt(m, &amount))
 		return Ebadvalue;
 
+	/* COLR */
 	r = f->r;
 	switch(dir) {
 	case LLEFT:	r = rectaddpt(r, Pt(-amount.x, 0)); break;
@@ -1021,7 +1023,7 @@ readctl_view(View *v) {
 	bufprint("%s\n", v->name);
 
 	/* select <area>[ <frame>] */
-	bufprint("select %s", area_name(v->sel));
+	bufprint("select %a", v->sel);
 	if(v->sel->sel)
 		bufprint(" %d", frame_idx(v->sel->sel));
 	bufprint("\n");

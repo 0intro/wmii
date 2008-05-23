@@ -68,6 +68,9 @@ column_attach(Area *a, Frame *f) {
 
 	f->r = a->r;
 	f->r.max.y = Dy(a->r) / nframe;
+	/* COLR */
+	f->colr = a->r;
+	f->colr.max.y = Dy(a->r) / nframe;
 
 	column_insert(a, f, a->sel);
 	column_arrange(a, false);
@@ -136,30 +139,24 @@ column_detach(Frame *f) {
 		area_destroy(a);
 }
 
-/* This is impossibly long and tortuous. We can do better.
- */
+static int
+column_surplus(Area *a) {
+	Frame *f;
+	int surplus;
+
+	surplus = Dy(a->r);
+	for(f=a->frame; f; f=f->anext)
+		surplus -= Dy(f->r);
+	return surplus;
+}
+
 static void
-column_scale(Area *a) {
+column_fit(Area *a, uint *ncolp, uint *nuncolp) {
 	Frame *f, **fp;
-	uint minh, yoff, dy;
+	uint minh, dy;
 	uint ncol, nuncol;
 	uint colh, uncolh;
-	int surplus, osurplus, i, j;
-
-	if(!a->frame)
-		return;
-
-	/* Kludge. This should be idempotent, but the algorithm is
-	 * flawed, so it's not. This is far from perfect.
-	 */
-	if(eqrect(a->r, a->r_old) && a->frame == a->frame_old) {
-		for(f=a->frame; f; f=f->anext)
-			if(!eqrect(f->r, f->colr_old)
-			|| f->anext != f->anext_old)
-				break;
-		if(f == nil)
-			return;
-	}
+	int surplus, i, j;
 
 	/* The minimum heights of collapsed and uncollpsed frames.
 	 */
@@ -171,7 +168,7 @@ column_scale(Area *a) {
 	ncol = 0;
 	nuncol = 0;
 	for(f=a->frame; f; f=f->anext) {
-		frame_resize(f, f->r);
+		frame_resize(f, f->colr);
 		if(f->collapsed)
 			ncol++;
 		else
@@ -239,90 +236,168 @@ column_scale(Area *a) {
 		fp = &f->anext;
 	}
 
-	/* Make some adjustments. */
-	surplus = Dy(a->r);
-	for(f=a->frame; f; f=f->anext) {
-		f->r = rectsubpt(f->r, f->r.min);
-		f->r.max.x = Dx(a->r);
+	if(ncolp) *ncolp = ncol;
+	if(nuncolp) *nuncolp = nuncol;
+}
 
-		if(f->collapsed) {
-			surplus -= colh;
-			f->dy = 0;
-			f->r.max.y = colh;
-		}else {
-			surplus -= Dy(f->r);
-			f->dy = Dy(f->r) - uncolh;
+static void
+column_settle(Area *a) {
+	Frame *f;
+	uint yoff, yoffcr;
+	int i, surplus, nuncol, n;
+
+	nuncol = 0;
+	surplus = column_surplus(a);
+	for(f=a->frame; f; f=f->anext)
+		if(!f->collapsed) nuncol++;
+
+	yoff = a->r.min.y;
+	yoffcr = yoff;
+	i = nuncol;
+	n = 0;
+	if(surplus / nuncol == 0)
+		n = surplus;
+	for(f=a->frame; f; f=f->anext) {
+		f->r = rectsetorigin(f->r, Pt(a->r.min.x, yoff));
+		f->colr = rectsetorigin(f->colr, Pt(a->r.min.x, yoffcr));
+		f->r.min.x = a->r.min.x;
+		f->r.max.x = a->r.max.x;
+		if(!f->collapsed) {
+			if(n == 0)
+				f->r.max.y += surplus / nuncol;
+			else if(n-- > 0)
+				f->r.max.y++;
+			if(--i == 0)
+				f->r.max.y = a->r.max.y;
+		}
+		yoff = f->r.max.y;
+		yoffcr = f->colr.max.y;
+	}
+}
+
+static int
+foo(Frame *f) {
+	WinHints h;
+	int maxh;
+
+	h = frame_gethints(f);
+	maxh = 0;
+	if(h.aspect.max.x)
+		maxh = h.baspect.y +
+		       (Dx(f->r) - h.baspect.x) *
+		       h.aspect.max.y / h.aspect.max.x;
+	maxh = max(maxh, h.max.y);
+
+	if(Dy(f->r) > maxh)
+		return 0;
+	return h.inc.y - (Dy(f->r) - h.base.y) % h.inc.y;
+}
+
+static int
+comp_frame(const void *a, const void *b) {
+	Frame *fa, *fb;
+	int ia, ib;
+
+	fa = *(Frame**)a;
+	fb = *(Frame**)b;
+	ia = foo(fa);
+	ib = foo(fb);
+	return ia < ib             ? -1 :
+	       ia > ib             ?  1 :
+	       /* Favor the selected client. */
+	       fa == fa->area->sel ? -1 :
+	       fb == fa->area->sel ?  1 :
+	                              0;
+}
+
+static void
+column_squeeze(Area *a) {
+	static Vector_ptr fvec; 
+	WinHints h;
+	Frame **fp;
+	Frame *f;
+	int surplus, osurplus, dy;
+
+	fvec.n = 0;
+	for(f=a->frame; f; f=f->anext) {
+		h = frame_gethints(f);
+		f->r = sizehint(&h, f->r);
+		vector_ppush(&fvec, f);
+	}
+	fp = (Frame**)fvec.ary;
+	/* I would prefer an unstable sort. Unfortunately, the GNU people
+	 * provide a stable one, so, this works better on BSD.
+	 */
+	qsort(fp, fvec.n, sizeof *fp, comp_frame);
+
+	surplus = column_surplus(a);
+	for(osurplus=0; surplus != osurplus;) {
+		osurplus = surplus;
+		for(; f=*fp; fp++) {
+			dy = foo(f);
+			if(dy > surplus)
+				break;
+			surplus -= dy;
+			f->r.max.y += dy;
 		}
 	}
+}
+
+void
+column_frob(Area *a) {
+	Frame *f;
+
+	for(f=a->frame; f; f=f->anext)
+		f->r = f->colr;
+	column_settle(a);
+	if(a->view == screen->sel)
+	for(f=a->frame; f; f=f->anext)
+		client_resize(f->client, f->r);
+}
+
+static void
+column_scale(Area *a) {
+	Frame *f;
+	uint dy;
+	uint ncol, nuncol;
+	uint colh;
+	int surplus;
+
+	if(!a->frame)
+		return;
+
+	column_fit(a, &ncol, &nuncol);
+	colh = labelh(def.font);
+	surplus = Dy(a->r);
 
 	/* Distribute the surplus.
 	 */
-	osurplus = 0;
-	/* More on this later. */
-	//while(surplus != osurplus) {
-		osurplus = surplus;
-		dy = 0;
-		for(f=a->frame; f; f=f->anext)
-			if(f->dy)
-				dy += f->dy;
-		for(f=a->frame; f; f=f->anext)
-			if(f->dy) {
-				i = Dy(f->r);
-				f->r.max.y += ((float)f->dy / dy) * osurplus;
-
-				frame_resize(f, f->r);
-				f->r.max.y = Dy(f->crect) + colh + 1;
-
-				f->dy = Dy(f->r);
-				surplus -= f->dy - i;
-				if(f->dy == i)
-					f->dy = 0;
-			}
-	//}
-
-	/* Now, try to give each frame, in turn, the entirety of the
-	 * surplus that we have left. A single frame might be able
-	 * to fill its increment gap with all of what's left, but
-	 * not with its fair share.
-	 */
-#if 0
-	No, don''t. Causes too much trouble, the way things are now.
-	for(f=a->frame; f && surplus > 0; f=f->anext)
-		if(!f->collapsed) {
-			dy = Dy(f->r);
-			f->r.max.y += surplus;
-			frame_resize(f, f->r);
-			f->r.max.y = Dy(f->crect) + colh + 1;
-			surplus -= Dy(f->r) - dy;
-		}
-#endif
-
-	if(surplus < 0) {
-		print("Badness: surplus = %d\n", surplus);
-		surplus = 0;
-	}
-
-	/* Adjust the y coordnates of each frame. */
-	yoff = a->r.min.y;
-	i = nuncol;
+	dy = 0;
+	surplus = Dy(a->r);
 	for(f=a->frame; f; f=f->anext) {
-		f->r = rectaddpt(f->r,
-				 Pt(a->r.min.x, yoff));
-		/* Give each frame an equal portion of the surplus,
-		 * whether it wants it or not.
-		 */
-		if(!f->collapsed) {
-			i--;
-			f->r.max.y += surplus / nuncol;
-			if(!i)
-				f->r.max.y += surplus % nuncol;
-			f->colr_old = f->r; /* Kludge. */
-			f->anext_old = f->anext;
-		}
-		yoff = f->r.max.y;
+		if(f->collapsed)
+			f->colr.max.y = f->colr.min.y + colh;
+		surplus -= Dy(f->colr);
+		if(!f->collapsed)
+			dy += Dy(f->colr);
 	}
-	a->r_old = a->r; /* Kludge. */
-	a->frame_old = a->frame;
+	for(f=a->frame; f; f=f->anext) {
+		WinHints h;
+
+		f->dy = Dy(f->r);
+		f->colr.min.x = a->r.min.x;
+		f->colr.max.x = a->r.max.x;
+		if(!f->collapsed)
+			f->colr.max.y += ((float)f->dy / dy) * surplus;
+		frame_resize(f, f->colr);
+		if(!f->collapsed) {
+			h = frame_gethints(f);
+			f->r = sizehint(&h, f->r);
+		}
+	}
+
+	column_squeeze(a);
+	column_settle(a);
 }
 
 void
@@ -340,12 +415,14 @@ column_arrange(Area *a, bool dirty) {
 		if(dirty)
 			for(f=a->frame; f; f=f->anext)
 				f->r = Rect(0, 0, 100, 100);
+		/* COLR */
+		if(dirty)
+			for(f=a->frame; f; f=f->anext)
+				f->colr = Rect(0, 0, 100, 100);
 		break;
 	case Colstack:
-		for(f=a->frame; f; f=f->anext) {
+		for(f=a->frame; f; f=f->anext)
 			f->collapsed = (f != a->sel);
-			f->r = Rect(0, 0, 1, 1);
-		}
 		break;
 	case Colmax:
 		for(f=a->frame; f; f=f->anext) {
@@ -402,7 +479,7 @@ column_resizeframe_h(Frame *f, Rectangle r) {
 
 	if(fp)
 		r.min.y = max(r.min.y, fp->r.min.y + minh);
-	else
+	else /* XXX. */
 		r.min.y = max(r.min.y, a->r.min.y);
 
 	if(fn)

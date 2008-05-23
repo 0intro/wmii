@@ -366,6 +366,7 @@ frame_resize(Frame *f, Rectangle r) {
 		fr = constrain(fr);
 
 	/* Collapse managed frames which are too small */
+	/* XXX. */
 	collapsed = f->collapsed;
 	if(!f->area->floating && f->area->mode == Coldefault) {
 		f->collapsed = false;
@@ -393,8 +394,6 @@ frame_resize(Frame *f, Rectangle r) {
 
 	if(f->area->floating)
 		f->floatr = f->r;
-	else
-		f->colr = f->r;
 }
 
 void
