@@ -202,10 +202,12 @@ bool	setdebug(int);
 void	vdebug(int, const char*, va_list);
 
 /* mouse.c */
+void	grab_button(XWindow, uint button, ulong mod);
 void	mouse_movegrabbox(Client*);
 void	mouse_resize(Client*, Align);
 void	mouse_resizecol(Divide*);
-void	grab_button(XWindow, uint button, ulong mod);
+bool	readmotion(Point*);
+int	readmouse(Point*, uint*);
 Align	snap_rect(Rectangle *rects, int num, Rectangle *current, Align *mask, int snapw);
 
 /* printevent.c */

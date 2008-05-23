@@ -396,7 +396,8 @@ column_scale(Area *a) {
 		}
 	}
 
-	column_squeeze(a);
+	if(def.incmode == ISqueeze)
+		column_squeeze(a);
 	column_settle(a);
 }
 

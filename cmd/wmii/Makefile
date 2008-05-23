@@ -23,6 +23,7 @@ OBJ =	area	\
 	fs	\
 	geom	\
 	key	\
+	layout	\
 	main	\
 	map	\
 	message	\

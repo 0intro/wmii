@@ -31,6 +31,12 @@ enum {
 	CRight = 1<<2,
 };
 
+enum IncMode {
+	ISqueeze,
+	IShow,
+	IIgnore,
+};
+
 enum {
 	GInvert = 1<<0,
 };
@@ -304,6 +310,7 @@ EXTERN struct {
 	uint	border;
 	uint	snap;
 	int	colmode;
+	int	incmode;
 } def;
 
 enum {
