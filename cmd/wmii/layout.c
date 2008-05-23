@@ -162,6 +162,7 @@ vplace(Framewin *fw, Point pt) {
 			break;
 		}
 	}
+	vector_lfree(&vec);
 
 done:
 	pt.x = a->r.min.x;
