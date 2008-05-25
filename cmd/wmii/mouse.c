@@ -97,45 +97,36 @@ rect_morph(Rectangle *r, Point d, Align *mask) {
 	}
 }
 
+/* Yes, yes, macros are evil. So are patterns. */
+#define frob(xy, yx) \
+	Rectangle *rp;                                                        \
+	int i, txy;                                                           \
+                                                                              \
+	for(i=0; i < nrect; i++) {                                            \
+		rp = &rects[i];                                               \
+		if((rp->min.yx <= r->max.yx) && (rp->max.yx >= r->min.yx)) {  \
+			txy = rp->min.xy;                                     \
+			if(abs(txy - xy) <= abs(dxy))                         \
+				dxy = txy - xy;                               \
+                                                                              \
+			txy = rp->max.xy;                                     \
+			if(abs(txy - xy) <= abs(dxy))                         \
+				dxy = txy - xy;                               \
+		}                                                             \
+	}                                                                     \
+	return dxy                                                            \
+
 static int
-snap_hline(Rectangle *rects, int nrect, int dy, Rectangle *r, int y) {
-	Rectangle *rp;
-	int i, ty;
-
-	for(i=0; i < nrect; i++) {
-		rp = &rects[i];
-		if((rp->min.x <= r->max.x) && (rp->max.x >= r->min.x)) {
-			ty = rp->min.y;
-			if(abs(ty - y) <= abs(dy))
-				dy = ty - y;
-
-			ty = rp->max.y;
-			if(abs(ty - y) <= abs(dy))
-				dy = ty - y;
-		}
-	}
-	return dy;
+snap_hline(Rectangle *rects, int nrect, int dxy, Rectangle *r, int y) {
+	frob(y, x);
 }
 
 static int
-snap_vline(Rectangle *rects, int nrect, int dx, Rectangle *r, int x) {
-	Rectangle *rp;
-	int i, tx;
-
-	for(i=0; i < nrect; i++) {
-		rp = &rects[i];
-		if((rp->min.y <= r->max.y) && (rp->max.y >= r->min.y)) {
-			tx = rp->min.x;
-			if(abs(tx - x) <= abs(dx))
-				dx = tx - x;
-
-			tx = rp->max.x;
-			if(abs(tx - x) <= abs(dx))
-				dx = tx - x;
-		}
-	}
-	return dx;
+snap_vline(Rectangle *rects, int nrect, int dxy, Rectangle *r, int x) {
+	frob(x, y);
 }
+
+#undef frob
 
 /* Returns a gravity for increment handling. It's normally the opposite of the mask
  * (the directions that we're resizing in), unless a snap occurs, in which case, it's the
@@ -240,7 +231,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 	/* At any rate, set the limits of where this box may be
 	 * dragged.
 	 */
-#define frob(pred, f, aprev, rmin, rmax, plus, minus, xy) BLOCK( \
+#define frob(pred, f, aprev, rmin, rmax, plus, minus, xy) BLOCK(     \
 		if(pred) {                                           \
 			r.rmin.xy = f->aprev->r.rmin.xy plus min.xy; \
 			r.rmax.xy = f->r.rmax.xy minus min.xy;       \

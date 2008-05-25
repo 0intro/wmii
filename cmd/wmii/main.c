@@ -15,7 +15,7 @@
 #include "fns.h"
 
 static const char
-	version[] = "wmii-"VERSION", ©2007 Kris Maglione\n";
+	version[] = "wmii-"VERSION", ©2008 Kris Maglione\n";
 
 static int (*xlib_errorhandler) (Display*, XErrorEvent*);
 static char*	address;
@@ -332,7 +332,8 @@ main(int argc, char *argv[]) {
 
 	check_other_wm = true;
 	selectinput(&scr.root, SubstructureRedirectMask
-			     | EnterWindowMask);
+			     | EnterWindowMask
+			     | PointerMotionMask);
 	sync();
 
 	check_other_wm = false;

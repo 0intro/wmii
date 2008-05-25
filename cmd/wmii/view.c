@@ -259,9 +259,6 @@ view_update(View *v) {
 	else
 		area_focus(v->sel);
 	frame_draw_all();
-
-	sync();
-	flushenterevents();
 }
 
 void

@@ -198,6 +198,13 @@ bdown_event(Window *w, XButtonEvent *e) {
 }
 
 static void
+config_event(Window *w, XConfigureEvent *e) {
+
+	USED(w, e);
+	ignoreenter = true;
+}
+
+static void
 enter_event(Window *w, XCrossingEvent *e) {
 	Client *c;
 	Frame *f;
@@ -206,7 +213,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 	f = c->sel;
 	if(screen->focus != c || selclient() != c) {
 		Dprint(DFocus, "enter_notify(f) => %s\n", f->client->name);
-		if(f->area->floating || !f->collapsed)
+		if(!ignoreenter && (f->area->floating || !f->collapsed))
 			focus(f->client, false);
 	}
 	mouse_checkresize(f, Pt(e->x, e->y), false);
@@ -237,6 +244,7 @@ motion_event(Window *w, XMotionEvent *e) {
 Handlers framehandler = {
 	.bup = bup_event,
 	.bdown = bdown_event,
+	.config = config_event,
 	.enter = enter_event,
 	.expose = expose_event,
 	.motion = motion_event,
@@ -341,7 +349,7 @@ frame_resize(Frame *f, Rectangle r) {
 	Rectangle fr, cr;
 	int collapsed, dx;
 
-	if(btassert("4 full", Dx(r) <= 0 || Dy(r) <= 0)) {
+	if(btassert("8 full", Dx(r) <= 0 || Dy(r) <= 0)) {
 		fprint(2, "Frame rect: %R\n", r);
 		r.max.x = min(r.min.x+1, r.max.x);
 		r.max.y = min(r.min.y+1, r.max.y);

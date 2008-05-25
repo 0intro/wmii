@@ -369,6 +369,7 @@ EXTERN XHandler handler[LASTEvent];
 
 /* Misc */
 EXTERN bool	starting;
+EXTERN bool	ignoreenter;
 EXTERN char*	user;
 EXTERN char*	execstr;
 EXTERN int	debugflag;

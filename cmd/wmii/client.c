@@ -132,6 +132,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	fwa.colormap = XCreateColormap(display, scr.root.w, vis, AllocNone);
 	fwa.event_mask = SubstructureRedirectMask
 		       | SubstructureNotifyMask
+		       | StructureNotifyMask
 		       | ExposureMask
 		       | EnterWindowMask
 		       | PointerMotionMask
@@ -141,7 +142,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	c->framewin = createwindow_visual(&scr.root, c->r,
 			depth, vis, InputOutput,
 			&fwa, CWBackPixmap
-			    /* These next two matter for argb windows. Donno why. */
+			    /* These next two matter for ARGB windows. Donno why. */
 			    | CWBorderPixel
 			    | CWColormap
 			    | CWEventMask
@@ -226,7 +227,7 @@ client_manage(Client *c) {
 		view_restack(c->sel->view);
 	}
 
-	flushenterevents();
+	ignoreenter = true;
 }
 
 static int /* Temporary Xlib error handler */
@@ -284,7 +285,7 @@ client_destroy(Client *c) {
 	group_remove(c);
 	event("DestroyClient %C\n", c);
 
-	flushenterevents();
+	ignoreenter = true;
 	flushevents(FocusChangeMask, true);
 	free(c->w.hints);
 	free(c);
@@ -533,9 +534,6 @@ client_resize(Client *c, Rectangle r) {
 		client_configure(c);
 		ewmh_framesize(c);
 	}
-	sync(); /* Not ideal. */
-	flushenterevents();
-	flushevents(FocusChangeMask|ExposureMask, true);
 }
 
 void
@@ -834,8 +832,6 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 
 	if(c->sel->area->floating) {
 		client_resize(c, r);
-		sync();
-		flushenterevents();
 	}else {
 		c->sel->floatr = r;
 		client_configure(c);
@@ -855,7 +851,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 	
 	c = w->aux;
 	if(e->detail != NotifyInferior) {
-		if(screen->focus != c) {
+		if(!ignoreenter && screen->focus != c) {
 			Dprint(DFocus, "enter_notify([%C]%s)\n", c, c->name);
 			focus(c, false);
 		}

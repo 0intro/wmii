@@ -507,27 +507,30 @@ lookup_file(FileId *parent, char *name)
 	uint id;
 	int i;
 
+
 	if(!(parent->tab.perm & DMDIR))
 		return nil;
 	dir = dirtab[parent->tab.type];
 	last = &ret;
 	ret = nil;
 	for(; dir->name; dir++) {
+#		define push_file(nam) \
+			file = get_file();  \
+			*last = file;       \
+			last = &file->next; \
+			file->tab = *dir;   \
+			file->tab.name = estrdup(nam)
 		/* Dynamic dirs */
 		if(dir->name[0] == '\0') {
 			switch(parent->tab.type) {
 			case FsDClients:
 				if(!name || !strcmp(name, "sel")) {
 					if((c = selclient())) {
-						file = get_file();
-						*last = file;
-						last = &file->next;
+						push_file("sel");
 						file->volatil = true;
 						file->p.client = c;
 						file->id = c->w.w;
 						file->index = c->w.w;
-						file->tab = *dir;
-						file->tab.name = estrdup("sel");
 					}if(name) goto LastItem;
 				}
 				SET(id);
@@ -537,15 +540,11 @@ lookup_file(FileId *parent, char *name)
 				}
 				for(c=client; c; c=c->next) {
 					if(!name || c->w.w == id) {
-						file = get_file();
-						*last = file;
-						last = &file->next;
+						push_file(sxprint("%C", c));
 						file->volatil = true;
 						file->p.client = c;
 						file->id = c->w.w;
 						file->index = c->w.w;
-						file->tab = *dir;
-						file->tab.name = smprint("%C", c);
 						assert(file->tab.name);
 						if(name) goto LastItem;
 					}
@@ -554,38 +553,26 @@ lookup_file(FileId *parent, char *name)
 			case FsDDebug:
 				for(i=0; i < nelem(pdebug); i++)
 					if(!name || !strcmp(name, debugtab[i])) {
-						file = get_file();
-						*last = file;
-						last = &file->next;
+						push_file(debugtab[i]);
 						file->id = i;
-						file->tab = *dir;
-						file->tab.name = estrdup(debugtab[i]);
 						if(name) goto LastItem;
 					}
 				break;
 			case FsDTags:
 				if(!name || !strcmp(name, "sel")) {
 					if(screen->sel) {
-						file = get_file();
-						*last = file;
-						last = &file->next;
+						push_file("sel");
 						file->volatil = true;
 						file->p.view = screen->sel;
 						file->id = screen->sel->id;
-						file->tab = *dir;
-						file->tab.name = estrdup("sel");
 					}if(name) goto LastItem;
 				}
 				for(v=view; v; v=v->next) {
 					if(!name || !strcmp(name, v->name)) {
-						file = get_file();
-						*last = file;
-						last = &file->next;
+						push_file(v->name);
 						file->volatil = true;
 						file->p.view = v;
 						file->id = v->id;
-						file->tab = *dir;
-						file->tab.name = estrdup(v->name);
 						if(name) goto LastItem;
 					}
 				}
@@ -593,14 +580,10 @@ lookup_file(FileId *parent, char *name)
 			case FsDBars:
 				for(b=*parent->p.bar_p; b; b=b->next) {
 					if(!name || !strcmp(name, b->name)) {
-						file = get_file();
-						*last = file;
-						last = &file->next;
+						push_file(b->name);
 						file->volatil = true;
 						file->p.bar = b;
 						file->id = b->id;
-						file->tab = *dir;
-						file->tab.name = estrdup(b->name);
 						if(name) goto LastItem;
 					}
 				}
@@ -608,14 +591,10 @@ lookup_file(FileId *parent, char *name)
 			}
 		}else /* Static dirs */
 		if(!name && !(dir->flags & FLHide) || name && !strcmp(name, dir->name)) {
-			file = get_file();
-			*last = file;
-			last = &file->next;
+			push_file(file->tab.name);
 			file->id = 0;
 			file->p.ref = parent->p.ref;
 			file->index = parent->index;
-			file->tab = *dir;
-			file->tab.name = estrdup(file->tab.name);
 			/* Special considerations: */
 			switch(file->tab.type) {
 			case FsDBars:
@@ -635,6 +614,7 @@ lookup_file(FileId *parent, char *name)
 		}
 	NextItem:
 		continue;
+#		undef push_file
 	}
 LastItem:
 	*last = nil;

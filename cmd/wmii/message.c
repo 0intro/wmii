@@ -931,7 +931,6 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	else
 		return Ebadvalue;
 
-	flushenterevents();
 	frame_focus(client_viewframe(c, v));
 	/* view_arrange(v); */
 	view_update_all();
@@ -971,7 +970,6 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 
 	/* view_arrange(f->view); */
 
-	flushenterevents();
 	frame_focus(client_viewframe(c, f->view));
 	view_update_all();
 	return nil;

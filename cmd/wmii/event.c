@@ -138,6 +138,16 @@ configurerequest(XEvent *e) {
 }
 
 static void
+configurenotify(XEvent *e) {
+	XConfigureEvent *ev;
+	Window *w;
+
+	ev = &e->xconfigure;
+	if((w = findwin(ev->window)))
+		handle(w, config, ev);
+}
+
+static void
 clientmessage(XEvent *e) {
 	XClientMessageEvent *ev;
 
@@ -323,6 +333,8 @@ motionnotify(XEvent *e) {
 	XMotionEvent *ev;
 	Window *w;
 
+	ignoreenter = false;
+
 	ev = &e->xmotion;
 	xtime = ev->time;
 	if((w = findwin(ev->window)))
@@ -366,6 +378,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress] = buttonpress,
 	[ButtonRelease] = buttonrelease,
 	[ConfigureRequest] = configurerequest,
+	[ConfigureNotify] = configurenotify,
 	[ClientMessage] = clientmessage,
 	[DestroyNotify] = destroynotify,
 	[EnterNotify] = enternotify,
