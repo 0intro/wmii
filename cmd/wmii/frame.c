@@ -271,6 +271,9 @@ frame_gethints(Frame *f) {
 		d.y += 2;
 	}
 
+	if(!f->area->floating && def.incmode == IIgnore)
+		h.inc = Pt(1, 1);
+
 	if(h.min.x < 2*minh)
 		h.min.x = minh + (2*minh) % h.inc.x;
 	if(h.min.y < minh)
@@ -365,9 +368,7 @@ frame_resize(Frame *f, Rectangle r) {
 	if(f->area->floating)
 		f->collapsed = false;
 
-	fr = r;
-	if(def.incmode != IIgnore)
-		fr = frame_hints(f, r, get_sticky(f->r, r));
+	fr = frame_hints(f, r, get_sticky(f->r, r));
 	if(f->area->floating && !c->strut)
 		fr = constrain(fr);
 
@@ -383,10 +384,8 @@ frame_resize(Frame *f, Rectangle r) {
 		ewmh_updatestate(c);
 
 	fr.max.x = max(fr.max.x, fr.min.x + 2*labelh(def.font));
-	/*
-	if(f->collapsed)
+	if(f->collapsed && f->area->floating)
 		fr.max.y = fr.min.y + labelh(def.font);
-	*/
 
 	cr = frame_rect2client(c, fr, f->area->floating);
 	if(f->area->floating)
@@ -409,7 +408,6 @@ frame_draw(Frame *f) {
 	Rectangle r, fr;
 	Client *c;
 	CTuple *col;
-	Frame *tf;
 	Image *img;
 	uint w;
 
@@ -423,17 +421,19 @@ frame_draw(Frame *f) {
 	fr = rectsetorigin(c->framewin->r, ZP);
 
 	/* Pick colors. */
-	if(c == screen->focus
-	|| c == selclient())
+	if(c == selclient() || c == screen->focus)
 		col = &def.focuscolor;
 	else
 		col = &def.normcolor;
+	/*
+	Frame *tf;
 	if(!f->area->floating && f->area->mode == Colmax)
-		for(tf = f->area->frame; tf; tf=tf->anext)
+		for(tf=f->area->frame; tf; tf=tf->anext)
 			if(tf->client == screen->focus) {
 				col = &def.focuscolor;
 				break;
 			}
+	*/
 
 	/* Background/border */
 	r = fr;
@@ -449,9 +449,10 @@ frame_draw(Frame *f) {
 
 	/* Odd focus. Ulselected, with keyboard focus. */
 	/* Draw a border just inside the titlebar. */
-	/* FIXME: Perhaps this should be normcolored? */
-	if(c != selclient() && col == &def.focuscolor)
+	if(c != selclient() && c == screen->focus) {
 		border(img, insetrect(r, 1), 1, def.normcolor.bg);
+		border(img, insetrect(r, 2), 1, def.focuscolor.border);
+	}
 
 	/* grabbox */
 	r.min = Pt(2, 2);

@@ -128,6 +128,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	XAddToSaveSet(display, w);
 
 	fwa.background_pixmap = None;
+	fwa.bit_gravity = NorthWestGravity;
 	fwa.border_pixel = 0;
 	fwa.colormap = XCreateColormap(display, scr.root.w, vis, AllocNone);
 	fwa.event_mask = SubstructureRedirectMask
@@ -142,6 +143,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	c->framewin = createwindow_visual(&scr.root, c->r,
 			depth, vis, InputOutput,
 			&fwa, CWBackPixmap
+			    | CWBitGravity
 			    /* These next two matter for ARGB windows. Donno why. */
 			    | CWBorderPixel
 			    | CWColormap
