@@ -316,9 +316,8 @@ static void
 column_squeeze(Area *a) {
 	static Vector_ptr fvec; 
 	WinHints h;
-	Frame **fp;
 	Frame *f;
-	int surplus, osurplus, dy;
+	int surplus, osurplus, dy, i;
 
 	fvec.n = 0;
 	for(f=a->frame; f; f=f->anext)
@@ -327,13 +326,13 @@ column_squeeze(Area *a) {
 			f->r = sizehint(&h, f->r);
 			vector_ppush(&fvec, f);
 		}
-	fp = (Frame**)fvec.ary;
-	qsort(fp, fvec.n, sizeof *fp, comp_frame);
 
 	surplus = column_surplus(a);
 	for(osurplus=0; surplus != osurplus;) {
 		osurplus = surplus;
-		for(; f=*fp; fp++) {
+		qsort(fvec.ary, fvec.n, sizeof *fvec.ary, comp_frame);
+		for(i=0; i < fvec.n; i++) {
+			f=fvec.ary[i];
 			dy = foo(f);
 			if(dy > surplus)
 				break;

@@ -452,40 +452,116 @@ mouse_resize(Client *c, Align align) {
 	ungrabpointer();
 }
 
+static int
+pushstack_down(Frame *f, int y) {
+	int ret;
+	int dh, dy;
+
+	if(f == nil)
+		return 0;;
+	ret = 0;
+	dy = y - f->colr.min.y;
+	if(dy < 0)
+		return 0;
+	if(!f->collapsed) {
+		dh = Dy(f->colr) - labelh(def.font);
+		if(dy <= dh) {
+			f->colr.min.y += dy;
+			return dy;
+		}else {
+			f->collapsed = true;
+			f->colr.min.y += dh;
+			ret = dh;
+			dy -= dh;
+		}
+	}
+	dy = pushstack_down(f->anext, f->colr.max.y + dy);
+	f->colr.min.y += dy;
+	f->colr.max.y += dy;
+	return ret + dy;
+}
+
+static int
+pushstack_up(Frame *f, int y) {
+	int ret;
+	int dh, dy;
+
+	if(f == nil)
+		return 0;
+	ret = 0;
+	dy = f->colr.max.y - y;
+	if(dy < 0)
+		return 0;
+	if(!f->collapsed) {
+		dh = Dy(f->colr) - labelh(def.font);
+		if(dy <= dh) {
+			f->colr.max.y -= dy;
+			return dy;
+		}else {
+			f->collapsed = true;
+			f->colr.max.y -= dh;
+			ret = dh;
+			dy -= dh;
+		}
+	}
+	dy = pushstack_up(f->aprev, f->colr.min.y - dy);
+	f->colr.min.y -= dy;
+	f->colr.max.y -= dy;
+	return ret + dy;
+}
+
 static void
 mouse_tempvertresize(Area *a, Point p) {
-	Frame *fa, *fb;
+	Frame *fa, *fb, *f;
 	Window *cwin;
 	Rectangle r;
-	int dy, incmode;
+	Point pt;
+	int incmode, nabove, nbelow;
+
+	if(a->mode != Coldefault)
+		return;
 
 	for(fa=a->frame; fa; fa=fa->anext)
 		if(p.y < fa->r.max.y + labelh(def.font)/2)
 			break;
 	if(!(fa && fa->anext))
 		return;
-	for(fb=fa->anext; fb->anext; fb=fb->anext)
-		if(!fb->collapsed) break;
+	fb = fa->anext;
+	nabove=0;
+	nbelow=0;
+	for(f=fa; f; f=f->aprev)
+		nabove++;
+	for(f=fa->anext; f; f=f->anext)
+		nbelow++;
 
 	incmode = def.incmode;
-	def.incmode = IShow;
+	def.incmode = IIgnore;
 	column_arrange(a, false);
-
-	dy = fb->colr.min.y - fa->colr.max.y;
 
 	r.min.x = p.x;
 	r.max.x = p.x + 1;
-	r.min.y = fa->r.min.y + labelh(def.font);
-	r.max.y = a->r.max.y - dy;
+	r.min.y = a->r.min.y + labelh(def.font) * nabove;
+	r.max.y = a->r.max.y - labelh(def.font) * nbelow;
 	cwin = constraintwin(r);
 
 	if(!grabpointer(&scr.root, cwin, cursor[CurDVArrow], MouseMask))
 		goto done;
 
-	while(readmotion(&p)) {
-		fa->colr.max.y = p.y;
-		fb->colr.min.y = p.y + dy;
-		column_arrange(a, false);
+	for(f=a->frame; f; f=f->anext)
+		f->colr_old = f->colr;
+
+	while(readmotion(&pt)) {
+		for(f=a->frame; f; f=f->anext) {
+			f->collapsed = false;
+			f->colr = f->colr_old;
+		}
+		if(pt.y > p.y)
+			pushstack_down(fb, pt.y);
+		else
+			pushstack_up(fa, pt.y);
+		fa->colr.max.y = pt.y;
+		fb->colr.min.y = pt.y;
+		column_frob(a);
 	}
 
 done:

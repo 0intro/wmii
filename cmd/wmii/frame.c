@@ -365,7 +365,9 @@ frame_resize(Frame *f, Rectangle r) {
 	if(f->area->floating)
 		f->collapsed = false;
 
-	fr = frame_hints(f, r, get_sticky(f->r, r));
+	fr = r;
+	if(def.incmode != IIgnore)
+		fr = frame_hints(f, r, get_sticky(f->r, r));
 	if(f->area->floating && !c->strut)
 		fr = constrain(fr);
 
@@ -381,8 +383,10 @@ frame_resize(Frame *f, Rectangle r) {
 		ewmh_updatestate(c);
 
 	fr.max.x = max(fr.max.x, fr.min.x + 2*labelh(def.font));
+	/*
 	if(f->collapsed)
 		fr.max.y = fr.min.y + labelh(def.font);
+	*/
 
 	cr = frame_rect2client(c, fr, f->area->floating);
 	if(f->area->floating)
