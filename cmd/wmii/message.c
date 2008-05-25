@@ -652,7 +652,10 @@ msg_grow(View *v, IxpMsg *m) {
 	if(!getamt(m, &amount))
 		return Ebadvalue;
 
-	r = f->colr;
+	if(f->area->floating)
+		r = f->r;
+	else
+		r = f->colr;
 	switch(dir) {
 	case LLEFT:	r.min.x -= amount.x; break;
 	case LRIGHT:	r.max.x += amount.x; break;
@@ -689,7 +692,10 @@ msg_nudge(View *v, IxpMsg *m) {
 	if(!getamt(m, &amount))
 		return Ebadvalue;
 
-	r = f->colr;
+	if(f->area->floating)
+		r = f->r;
+	else
+		r = f->colr;
 	switch(dir) {
 	case LLEFT:	r = rectaddpt(r, Pt(-amount.x, 0)); break;
 	case LRIGHT:	r = rectaddpt(r, Pt( amount.x, 0)); break;

@@ -45,8 +45,8 @@ wmiifocuscol=`{wi_readctl focuscolors}
 
 fn wi_menu {
 	dmenu -b -fn $wmiifont \
-		-nf $wmiinormcol(1) -nb $wmiinormcol(2) \
-		-sf $wmiifocuscol(1) -sb $wmiifocuscol(2)
+		 -nf $wmiinormcol(1) -nb $wmiinormcol(2) \
+		 -sf $wmiifocuscol(1) -sb $wmiifocuscol(2)
 }
 
 fn wi_9menu {
@@ -156,7 +156,7 @@ fn wi_eventloop {
 			wi_arg=`{echo $wi_event | sed 's/^[^ ]+ //'}}
 		* = `{echo $wi_event}
 		event = $1; shift
-		Event-$event $*
+		Event-$"event $*
 	} >[2]/dev/null </dev/null
 }
 

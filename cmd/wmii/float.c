@@ -30,7 +30,7 @@ float_detach(Frame *f) {
 	v = f->view;
 	a = f->area;
 	sel = view_findarea(v, v->selcol, false);
-	assert(sel || !v->area->next);
+	if(!(sel || !v->area->next)) warning("%s:%d: !(sel || !v->area->next)", __FILE__, __LINE__);
 	pr = f->aprev;
 
 	frame_remove(f);
