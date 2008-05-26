@@ -350,7 +350,7 @@ done:
 }
 
 void
-mouse_resize(Client *c, Align align) {
+mouse_resize(Client *c, Align align, bool grabmod) {
 	Rectangle *rects;
 	Rectangle frect, origin;
 	Align grav;
@@ -365,7 +365,7 @@ mouse_resize(Client *c, Align align) {
 		return;
 	if(!f->area->floating) {
 		if(align==Center)
-			mouse_movegrabbox(c);
+			mouse_movegrabbox(c, grabmod);
 		else
 			mouse_resizecolframe(f, align);
 		return;
@@ -587,14 +587,14 @@ mouse_checkresize(Frame *f, Point p, bool exec) {
 	q = quadrant(r, p);
 	if(rect_haspoint_p(p, f->grabbox)) {
 		cur = cursor[CurMove];
-		if(exec) mouse_movegrabbox(f->client);
+		if(exec) mouse_movegrabbox(f->client, false);
 	}
 	else if(f->area->floating) {
 		if(p.x <= 2 || p.y <= 2
 		|| r.max.x - p.x <= 2
 		|| r.max.y - p.y <= 2) {
 			cur = quad_cursor(q);
-			if(exec) mouse_resize(f->client, q);
+			if(exec) mouse_resize(f->client, q, false);
 		}
 	}else {
 		if(f->aprev && p.y <= 2

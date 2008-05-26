@@ -1,14 +1,10 @@
 BUGS
 * collapsed clients outside stacked mode don't always uncollapse when they receive focus
-* resizing within a column affects clients it shouldn't (seems to average client size?)
-* geometry goes wacky with lots of clients in one column
 * various qiv brokenness
 * dosbox won't grab the mouse
 
 4.0
 * Opaque managed moves. I know I've argued against it, but it may be doable.
-* Regex-based tag strings
 * Resizable managed area
-* Grow and shrink ctl commands
 * New dmenu, with real cursor; snarfable.
 

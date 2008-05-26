@@ -5,6 +5,7 @@
 #include "fns.h"
 
 /* Here be dragons. */
+/* Actually, I'm happy to say, the dragons have dissipated. */
 
 enum {
 	ButtonMask =
@@ -241,11 +242,19 @@ trampoline(int fn, Frame *f) {
 }
 
 void
-mouse_movegrabbox(Client *c) {
+mouse_movegrabbox(Client *c, bool grabmod) {
 	Frame *f;
+	Point p;
+	float x, y;
 	int incmode;
 
 	f = c->sel;
+
+	if(grabmod) {
+		p = querypointer(f->client->framewin);
+		x = (float)p.x / Dx(f->r);
+		y = (float)p.y / Dy(f->r);
+	}
 
 	incmode = def.incmode;
 	def.incmode = IShow;
@@ -259,7 +268,11 @@ mouse_movegrabbox(Client *c) {
 
 	def.incmode = incmode;
 	view_update(f->view);
-	warppointer(grabboxcenter(f));
+	if(grabmod)
+		warppointer(addpt(f->r.min, Pt(x * Dx(f->r),
+					       y * Dy(f->r))));
+	else
+		warppointer(grabboxcenter(f));
 }
 
 static int
@@ -336,6 +349,8 @@ column_drop(Area *a, Frame *f, int y) {
 
 	if(a->frame == nil || y <= a->frame->r.min.y) {
 		f->collapsed = true;
+		f->colr.min.y = 0;
+		f->colr.max.y = labelh(def.font);
 		column_openstack(a, nil, labelh(def.font));
 		column_insert(a, f, nil);
 		return;
@@ -370,14 +385,14 @@ thcol(Frame *f) {
 
 	focus(f->client, false);
 
+	ret = TDone;
+	if(!grabpointer(&scr.root, nil, cursor[CurIcon], MouseMask))
+		return TDone;
+
 	pt = querypointer(&scr.root);
 	pt2.x = f->area->r.min.x;
 	pt2.y = pt.y;
 	fw = framewin(f, pt2, OHoriz, Dx(f->area->r));
-
-	ret = TDone;
-	if(!grabpointer(&scr.root, nil, cursor[CurIcon], MouseMask))
-		goto done;
 
 	vplace(fw, pt);
 	for(;;)
@@ -509,10 +524,10 @@ tfloat(Frame *f) {
 	pt = querypointer(&scr.root);
 	pt1 = grabboxcenter(f);
 	goto casmotion;
-label:
+shut_up_ken:
 	for(;;pt1=pt)
 		switch (readmouse(&pt, &button)) {
-		default: goto label; /* shut up ken */
+		default: goto shut_up_ken;
 		case MotionNotify:
 		casmotion:
 			origin = rectaddpt(origin, subpt(pt, pt1));

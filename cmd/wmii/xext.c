@@ -117,6 +117,8 @@ bool
 render_argb_p(Visual *v) {
 	XRenderPictFormat *f;
 
+	if(!have_render)
+		return false;
 	f = XRenderFindVisualFormat(display, v);
 	return f
 	    && f->type == PictTypeDirect

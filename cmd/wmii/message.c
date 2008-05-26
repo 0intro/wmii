@@ -822,22 +822,51 @@ msg_selectframe(Frame *f, IxpMsg *m, int sym) {
 	Client *c;
 	Area *a;
 	char *s;
-	ulong i;
+	bool stack;
+	ulong i, dy;
 
 	if(!f)
 		return Ebadvalue;
 	a = f->area;
 
+	stack = false;
+	if(sym == LUP || sym == LDOWN) {
+		s = msg_getword(m);
+		if(s)
+			if(!strcmp(s, "stack"))
+				stack = true;
+			else
+				return Ebadvalue;
+	}
+
 	SET(fp);
 	switch(sym) {
 	case LUP:
-		for(fp=a->frame; fp->anext; fp=fp->anext)
-			if(fp->anext == f) break;
+		/* XXX */
+		if(stack) {
+			for(; f->aprev && f->aprev->collapsed; f=f->aprev)
+				;
+			for(fp=a->frame; fp->anext; fp=fp->anext)
+				if(fp->anext == f) break;
+			for(; fp->aprev && fp->collapsed; fp=fp->aprev)
+				;
+		}else
+			for(fp=a->frame; fp->anext; fp=fp->anext)
+				if(fp->anext == f) break;
 		break;
 	case LDOWN:
-		fp = f->anext;
-		if(fp == nil)
-			fp = a->frame;
+		/* XXX */
+		if(stack) {
+			for(fp=f->anext; fp && fp->collapsed; fp=fp->anext)
+				;
+			if(fp == nil)
+				for(fp=a->frame; fp->collapsed; fp=fp->anext)
+					;
+		}else {
+			fp = f->anext;
+			if(fp == nil)
+				fp = a->frame;
+		}
 		break;
 	case LCLIENT:
 		s = msg_getword(m);
@@ -854,11 +883,20 @@ msg_selectframe(Frame *f, IxpMsg *m, int sym) {
 
 	if(fp == nil)
 		return "invalid selection";
+	if(fp == f)
+		return nil;
+	/* XXX */
+	if(fp->collapsed && !f->area->floating) {
+		dy = Dy(f->colr);
+		f->colr.max.y = f->colr.min.y + Dy(fp->colr);
+		fp->colr.max.y = fp->colr.min.y + dy;
+		column_arrange(a, false);
+	}
 
 	frame_focus(fp);
 	frame_restack(fp, nil);
-	if(f->view == screen->sel)
-		view_restack(f->view);
+	if(fp->view == screen->sel)
+		view_restack(fp->view);
 	return nil;
 }
 

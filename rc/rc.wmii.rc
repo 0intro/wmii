@@ -176,6 +176,10 @@ key $MODKEY-$DOWN || fn $key {
 	wmiir xwrite /tag/sel/ctl select down}
 key $MODKEY-$UP || fn $key {
 	wmiir xwrite /tag/sel/ctl select up}
+key $MODKEY-Control-$DOWN || fn $key {
+	wmiir xwrite /tag/sel/ctl select down stack}
+key $MODKEY-Control-$UP || fn $key {
+	wmiir xwrite /tag/sel/ctl select up stack}
 
 key $MODKEY-Shift-$LEFT || fn $key {
 	wmiir xwrite /tag/sel/ctl send sel left}

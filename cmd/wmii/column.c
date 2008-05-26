@@ -56,21 +56,87 @@ column_insert(Area *a, Frame *f, Frame *pos) {
 		area_setsel(a, f);
 }
 
-void
-column_attach(Area *a, Frame *f) {
-	uint nframe;
-	Frame *ft;
+/* Temporary. */
+static void
+stack_scale(Frame *first, int height) {
+	Frame *f;
+	Area *a;
+	uint dy;
+	int surplus;
+
+	a = first->area;
+
+	/*
+	 * Will need something like this.
+	column_fit(a, &ncol, &nuncol);
+	*/
+
+	dy = 0;
+	for(f=first; f && !f->collapsed; f=f->anext)
+		dy += Dy(f->colr);
+
+	/* Distribute the surplus.
+	 */
+	surplus = height - dy;
+	for(f=first; f && !f->collapsed; f=f->anext)
+		f->colr.max.y += ((float)Dy(f->r) / dy) * surplus;
+}
+
+static void
+stack_info(Frame *f, Frame **firstp, int *dyp, int *nframep) {
+	Frame *ft, *first;
+	int dy, nframe;
 
 	nframe = 0;
-	for(ft=a->frame; ft; ft=ft->anext)
+	dy = 0;
+	for(ft=f; ft && !ft->collapsed; ft=ft->aprev) {
+		first = ft;
 		nframe++;
-	nframe = max(nframe, 1);
+		dy += Dy(ft->colr);
+	}
+	for(ft=f->anext; ft && !ft->collapsed; ft=ft->anext) {
+		if(first == nil)
+			first = ft;
+		nframe++;
+		dy += Dy(ft->colr);
+	}
+	if(nframep) *nframep = nframe;
+	if(firstp) *firstp = first;
+	if(dyp) *dyp = dy;
+}
+
+void
+column_attach(Area *a, Frame *f) {
+	Frame *first;
+	int nframe, dy, h;
 
 	f->colr = a->r;
-	f->colr.max.y = Dy(a->r) / nframe;
+
+	if(a->sel) {
+		stack_info(a->sel, &first, &dy, &nframe);
+		h = dy / (nframe+1);
+		f->colr.max.y = f->colr.min.y + h;
+		stack_scale(first, dy - h);
+	}
 
 	column_insert(a, f, a->sel);
 	column_arrange(a, false);
+}
+
+void
+column_detach(Frame *f) {
+	Frame *first;
+	Area *a;
+	int dy;
+
+	a = f->area;
+	stack_info(f, &first, &dy, nil);
+	column_remove(f);
+	if(a->frame) {
+		stack_scale(first, dy);
+		column_arrange(a, false);
+	}else if(a->view->area->next->next)
+		area_destroy(a);
 }
 
 static void column_scale(Area*);
@@ -122,18 +188,6 @@ column_remove(Frame *f) {
 		a->sel = nil;
 		area_setsel(a, pr);
 	}
-}
-
-void
-column_detach(Frame *f) {
-	Area *a;
-
-	a = f->area;
-	column_remove(f);
-	if(a->frame)
-		column_arrange(a, false);
-	else if(a->view->area->next->next)
-		area_destroy(a);
 }
 
 static int

@@ -158,7 +158,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 		switch(e->button) {
 		case Button1:
 			focus(c, false);
-			mouse_resize(c, Center);
+			mouse_resize(c, Center, true);
 			break;
 		case Button2:
 			frame_restack(f, nil);
@@ -168,7 +168,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 			break;
 		case Button3:
 			focus(c, false);
-			mouse_resize(c, quadrant(f->r, Pt(e->x_root, e->y_root)));
+			mouse_resize(c, quadrant(f->r, Pt(e->x_root, e->y_root)), true);
 			break;
 		default:
 			XAllowEvents(display, ReplayPointer, e->time);
