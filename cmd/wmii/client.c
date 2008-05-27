@@ -853,6 +853,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 	
 	c = w->aux;
 	if(e->detail != NotifyInferior) {
+		if(e->detail != NotifyVirtual)
 		if(!ignoreenter && screen->focus != c) {
 			Dprint(DFocus, "enter_notify([%C]%s)\n", c, c->name);
 			focus(c, false);

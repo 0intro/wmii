@@ -188,6 +188,10 @@ area_setsel(Area *a, Frame *f) {
 	View *v;
 
 	v = a->view;
+	for(; f && f->collapsed && f->anext; f=f->anext)
+		;
+	for(; f && f->collapsed && f->aprev; f=f->aprev)
+		;
 	if(a == v->sel && f)
 		frame_focus(f);
 	else

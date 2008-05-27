@@ -22,6 +22,8 @@ wmiifont='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 wmiinormcol=`{echo '#000000 #c1c48b #81654f'}
 wmiifocuscol=`{echo '#000000 #81654f #000000'}
 wmiibackground='#333333'
+wmiifloatbackground='#222222'
+fn setbackground { xsetroot -solid $* }
 
 # Programs
 WMII_TERM=(xterm)
@@ -76,6 +78,11 @@ fn Event-UrgentTag {
 fn Event-NotUrgentTag {
 	shift
 	wmiir xwrite /lbar/$"* $"*}
+fn Event-AreaFocus {
+	if(~ $1 '~')
+		setbackground $wmiifloatbackground
+	if not
+		setbackground $wmiibackground }
 
 fn Event-Unresponsive {
 	client = $1; shift
@@ -233,7 +240,7 @@ wmiir write /ctl <<!
 	focuscolors $wmiifocuscol
 	normcolors $wmiinormcol
 !
-xsetroot -solid $wmiibackground
+setbackground $wmiibackground
 
 # Source Overrides
 Action overridekeys

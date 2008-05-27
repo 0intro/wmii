@@ -89,6 +89,13 @@ stack_info(Frame *f, Frame **firstp, int *dyp, int *nframep) {
 
 	nframe = 0;
 	dy = 0;
+	first = nil;
+	for(ft=f; ft && ft->collapsed; ft=ft->anext)
+		;
+	if(ft && ft != f) {
+		f = ft;
+		dy += Dy(f->colr);
+	}
 	for(ft=f; ft && !ft->collapsed; ft=ft->aprev) {
 		first = ft;
 		nframe++;
@@ -133,7 +140,8 @@ column_detach(Frame *f) {
 	stack_info(f, &first, &dy, nil);
 	column_remove(f);
 	if(a->frame) {
-		stack_scale(first, dy);
+		if(first)
+			stack_scale(first, dy);
 		column_arrange(a, false);
 	}else if(a->view->area->next->next)
 		area_destroy(a);
@@ -480,6 +488,7 @@ column_arrange(Area *a, bool dirty) {
 	}
 	column_scale(a);
 resize:
+	area_setsel(a, a->sel);
 	if(v == screen->sel) {
 		//view_restack(v);
 		client_resize(a->sel->client, a->sel->r);

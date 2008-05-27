@@ -302,6 +302,8 @@ main(int argc, char *argv[]) {
 	fmtinstall('r', errfmt);
 	fmtinstall('a', afmt);
 	fmtinstall('C', Cfmt);
+extern int fmtevent(Fmt*);
+	fmtinstall('E', fmtevent);
 
 	wmiirc = "wmiistartrc";
 

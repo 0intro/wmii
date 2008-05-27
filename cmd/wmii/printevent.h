@@ -1,4 +1,4 @@
-void printevent(XEvent*);
+int fmtevent(Fmt *fmt);
 
 enum {
 	X_CreateWindow = 1,

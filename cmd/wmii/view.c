@@ -37,7 +37,8 @@ _view_select(View *v) {
 		if(screen->sel)
 			event("UnfocusTag %s\n",screen->sel->name);
 		screen->sel = v;
-		event("FocusTag %s\n", screen->sel->name);
+		event("FocusTag %s\n", v->name);
+		event("AreaFocus %a\n", v->sel);
 		ewmh_updateview();
 	}
 }

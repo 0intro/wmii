@@ -493,22 +493,18 @@ TAtom(Fmt *b, va_list *ap) {
 #define TEnd nil
 typedef void (*Tfn)(Fmt*, va_list*);
 
-static void
-pevent(void *e, ...) {
-	Fmt f;
+static int
+pevent(Fmt *fmt, void *e, ...) {
 	va_list ap;
 	Tfn fn;
 	XAnyEvent *ev;
-	char *key, *s;
+	char *key;
 	int n;
 
-	if(fmtstrinit(&f) < 0)
-		return;
-
 	ev = e;
-	fmtprint(&f, "%3ld %-20s ", ev->serial, eventtype(ev->type));
+	fmtprint(fmt, "%3ld %-20s ", ev->serial, eventtype(ev->type));
 	if(ev->send_event)
-		fmtstrcpy(&f, "(sendevent) ");
+		fmtstrcpy(fmt, "(sendevent) ");
 
 	n = 0;
 	va_start(ap, e);
@@ -518,31 +514,25 @@ pevent(void *e, ...) {
 			break;
 
 		if(n++ != 0)
-			fmtprint(&f, "%s", sep);
+			fmtprint(fmt, "%s", sep);
 
 		key = va_arg(ap, char*);
-		fmtprint(&f, "%s=", key);
-		fn(&f, &ap);
+		fmtprint(fmt, "%s=", key);
+		fn(fmt, &ap);
 	}
 	va_end(ap);
-
-	fmtstrcpy(&f, "\n");
-	s = fmtstrflush(&f);
-
-	void dprint(const char*, ...);
-	dprint("%s", s);
-	free(s);
+	return 0;
 }
 
 /*****************************************************************************/
 /*** Routines to print out readable values for the field of various events ***/
 /*****************************************************************************/
 
-static void
-VerbMotion(XEvent *e) {
+static int
+VerbMotion(Fmt *fmt, XEvent *e) {
 	XMotionEvent *ev = &e->xmotion;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TWindow, _(root),
 		TWindow, _(subwindow),
@@ -556,11 +546,11 @@ VerbMotion(XEvent *e) {
     //fprintf(stderr, "is_hint=%s%s", IsHint(ev->is_hint), sep);
 }
 
-static void
-VerbButton(XEvent *e) {
+static int
+VerbButton(Fmt *fmt, XEvent *e) {
 	XButtonEvent *ev = &e->xbutton;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TWindow, _(root),
 		TWindow, _(subwindow),
@@ -574,11 +564,11 @@ VerbButton(XEvent *e) {
 	);
 }
 
-static void
-VerbColormap(XEvent *e) {
+static int
+VerbColormap(Fmt *fmt, XEvent *e) {
 	XColormapEvent *ev = &e->xcolormap;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TIntNone, _(colormap),
 		TBool, _(new),
@@ -587,11 +577,11 @@ VerbColormap(XEvent *e) {
 	);
 }
 
-static void
-VerbCrossing(XEvent *e) {
+static int
+VerbCrossing(Fmt *fmt, XEvent *e) {
 	XCrossingEvent *ev = &e->xcrossing;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TWindow, _(root),
 		TWindow, _(subwindow),
@@ -607,11 +597,11 @@ VerbCrossing(XEvent *e) {
 	);
 }
 
-static void
-VerbExpose(XEvent *e) {
+static int
+VerbExpose(Fmt *fmt, XEvent *e) {
 	XExposeEvent *ev = &e->xexpose;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TInt, _(x), TInt, _(y),
 		TInt, _(width), TInt, _(height),
@@ -620,11 +610,11 @@ VerbExpose(XEvent *e) {
 	);
 }
 
-static void
-VerbGraphicsExpose(XEvent *e) {
+static int
+VerbGraphicsExpose(Fmt *fmt, XEvent *e) {
 	XGraphicsExposeEvent *ev = &e->xgraphicsexpose;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(drawable),
 		TInt, _(x), TInt, _(y),
 		TInt, _(width), TInt, _(height),
@@ -634,11 +624,11 @@ VerbGraphicsExpose(XEvent *e) {
 	);
 }
 
-static void
-VerbNoExpose(XEvent *e) {
+static int
+VerbNoExpose(Fmt *fmt, XEvent *e) {
 	XNoExposeEvent *ev = &e->xnoexpose;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(drawable),
 		TMajor, _(major_code),
 		TInt, _(minor_code),
@@ -646,11 +636,11 @@ VerbNoExpose(XEvent *e) {
 	);
 }
 
-static void
-VerbFocus(XEvent *e) {
+static int
+VerbFocus(Fmt *fmt, XEvent *e) {
 	XFocusChangeEvent *ev = &e->xfocus;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TGrabMode, _(mode),
 		TFocus, _(detail),
@@ -658,23 +648,24 @@ VerbFocus(XEvent *e) {
 	);
 }
 
-static void
-VerbKeymap(XEvent *e) {
+static int
+VerbKeymap(Fmt *fmt, XEvent *e) {
 	XKeymapEvent *ev = &e->xkeymap;
 	int i;
 
-	fprint(2, "window=0x%x%s", (int)ev->window, sep);
-	fprint(2, "key_vector=");
+	fmtprint(fmt, "window=0x%x%s", (int)ev->window, sep);
+	fmtprint(fmt, "key_vector=");
 	for (i = 0; i < 32; i++)
-		fprint(2, "%02x", ev->key_vector[i]);
-	fprint(2, "\n");
+		fmtprint(fmt, "%02x", ev->key_vector[i]);
+	fmtprint(fmt, "\n");
+	return 0;
 }
 
-static void
-VerbKey(XEvent *e) {
+static int
+VerbKey(Fmt *fmt, XEvent *e) {
 	XKeyEvent *ev = &e->xkey;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TWindow, _(root),
 		TWindow, _(subwindow),
@@ -688,11 +679,11 @@ VerbKey(XEvent *e) {
 	);
 }
 
-static void
-VerbProperty(XEvent *e) {
+static int
+VerbProperty(Fmt *fmt, XEvent *e) {
 	XPropertyEvent *ev = &e->xproperty;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TAtom, _(atom),
 		TTime, _(time),
@@ -701,22 +692,22 @@ VerbProperty(XEvent *e) {
 	);
 }
 
-static void
-VerbResizeRequest(XEvent *e) {
+static int
+VerbResizeRequest(Fmt *fmt, XEvent *e) {
 	XResizeRequestEvent *ev = &e->xresizerequest;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TInt, _(width), TInt, _(height),
 		TEnd
 	);
 }
 
-static void
-VerbCirculate(XEvent *e) {
+static int
+VerbCirculate(Fmt *fmt, XEvent *e) {
 	XCirculateEvent *ev = &e->xcirculate;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(event),
 		TWindow, _(window),
 		TPlace, _(place),
@@ -724,11 +715,11 @@ VerbCirculate(XEvent *e) {
 	);
 }
 
-static void
-VerbConfigure(XEvent *e) {
+static int
+VerbConfigure(Fmt *fmt, XEvent *e) {
 	XConfigureEvent *ev = &e->xconfigure;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(event),
 		TWindow, _(window),
 		TInt, _(x), TInt, _(y),
@@ -740,11 +731,11 @@ VerbConfigure(XEvent *e) {
 	);
 }
 
-static void
-VerbCreateWindow(XEvent *e) {
+static int
+VerbCreateWindow(Fmt *fmt, XEvent *e) {
 	XCreateWindowEvent *ev = &e->xcreatewindow;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(parent),
 		TWindow, _(window),
 		TInt, _(x), TInt, _(y),
@@ -755,22 +746,22 @@ VerbCreateWindow(XEvent *e) {
 	);
 }
 
-static void
-VerbDestroyWindow(XEvent *e) {
+static int
+VerbDestroyWindow(Fmt *fmt, XEvent *e) {
 	XDestroyWindowEvent *ev = &e->xdestroywindow;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(event),
 		TWindow, _(window),
 		TEnd
 	);
 }
 
-static void
-VerbGravity(XEvent *e) {
+static int
+VerbGravity(Fmt *fmt, XEvent *e) {
 	XGravityEvent *ev = &e->xgravity;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(event),
 		TWindow, _(window),
 		TInt, _(x), TInt, _(y),
@@ -778,11 +769,11 @@ VerbGravity(XEvent *e) {
 	);
 }
 
-static void
-VerbMap(XEvent *e) {
+static int
+VerbMap(Fmt *fmt, XEvent *e) {
 	XMapEvent *ev = &e->xmap;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(event),
 		TWindow, _(window),
 		TBool, _(override_redirect),
@@ -790,11 +781,11 @@ VerbMap(XEvent *e) {
 	);
 }
 
-static void
-VerbReparent(XEvent *e) {
+static int
+VerbReparent(Fmt *fmt, XEvent *e) {
 	XReparentEvent *ev = &e->xreparent;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(event),
 		TWindow, _(window),
 		TWindow, _(parent),
@@ -804,11 +795,11 @@ VerbReparent(XEvent *e) {
 	);
 }
 
-static void
-VerbUnmap(XEvent *e) {
+static int
+VerbUnmap(Fmt *fmt, XEvent *e) {
 	XUnmapEvent *ev = &e->xunmap;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(event),
 		TWindow, _(window),
 		TBool, _(from_configure),
@@ -816,11 +807,11 @@ VerbUnmap(XEvent *e) {
 	);
 }
 
-static void
-VerbCirculateRequest(XEvent *e) {
+static int
+VerbCirculateRequest(Fmt *fmt, XEvent *e) {
 	XCirculateRequestEvent *ev = &e->xcirculaterequest;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(parent),
 		TWindow, _(window),
 		TPlace, _(place),
@@ -828,11 +819,11 @@ VerbCirculateRequest(XEvent *e) {
 	);
 }
 
-static void
-VerbConfigureRequest(XEvent *e) {
+static int
+VerbConfigureRequest(Fmt *fmt, XEvent *e) {
 	XConfigureRequestEvent *ev = &e->xconfigurerequest;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(parent),
 		TWindow, _(window),
 		TInt, _(x), TInt, _(y),
@@ -845,22 +836,22 @@ VerbConfigureRequest(XEvent *e) {
 	);
 }
 
-static void
-VerbMapRequest(XEvent *e) {
+static int
+VerbMapRequest(Fmt *fmt, XEvent *e) {
 	XMapRequestEvent *ev = &e->xmaprequest;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(parent),
 		TWindow, _(window),
 		TEnd
 	);
 }
 
-static void
-VerbClient(XEvent *e) {
+static int
+VerbClient(Fmt *fmt, XEvent *e) {
 	XClientMessageEvent *ev = &e->xclient;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TAtom, _(message_type),
 		TInt, _(format),
@@ -869,11 +860,11 @@ VerbClient(XEvent *e) {
 	);
 }
 
-static void
-VerbMapping(XEvent *e) {
+static int
+VerbMapping(Fmt *fmt, XEvent *e) {
 	XMappingEvent *ev = &e->xmapping;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TMapping, _(request),
 		TWindow, _(first_keycode),
@@ -882,11 +873,11 @@ VerbMapping(XEvent *e) {
 	);
 }
 
-static void
-VerbSelectionClear(XEvent *e) {
+static int
+VerbSelectionClear(Fmt *fmt, XEvent *e) {
 	XSelectionClearEvent *ev = &e->xselectionclear;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TAtom, _(selection),
 		TTime, _(time),
@@ -894,11 +885,11 @@ VerbSelectionClear(XEvent *e) {
 	);
 }
 
-static void
-VerbSelection(XEvent *e) {
+static int
+VerbSelection(Fmt *fmt, XEvent *e) {
 	XSelectionEvent *ev = &e->xselection;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(requestor),
 		TAtom, _(selection),
 		TAtom, _(target),
@@ -908,11 +899,11 @@ VerbSelection(XEvent *e) {
 	);
 }
 
-static void
-VerbSelectionRequest(XEvent *e) {
+static int
+VerbSelectionRequest(Fmt *fmt, XEvent *e) {
 	XSelectionRequestEvent *ev = &e->xselectionrequest;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(owner),
 		TWindow, _(requestor),
 		TAtom, _(selection),
@@ -923,11 +914,11 @@ VerbSelectionRequest(XEvent *e) {
 	);
 }
 
-static void
-VerbVisibility(XEvent *e) {
+static int
+VerbVisibility(Fmt *fmt, XEvent *e) {
 	XVisibilityEvent *ev = &e->xvisibility;
 
-	pevent(ev,
+	return 	pevent(fmt, ev,
 		TWindow, _(window),
 		TVis, _(state),
 		TEnd
@@ -941,12 +932,13 @@ VerbVisibility(XEvent *e) {
 typedef struct Handler Handler;
 struct Handler {
 	int key;
-	void (*fn)(XEvent*);
+	int (*fn)(Fmt*, XEvent*);
 };
 
-void 
-printevent(XEvent *e) {
-	XAnyEvent *ev = &e->xany;
+int 
+fmtevent(Fmt *fmt) {
+	XEvent *e;
+	XAnyEvent *ev;
 	/*
 		fprintf(stderr, "type=%s%s", eventtype(e->xany.type), sep);
 		fprintf(stderr, "serial=%lu%s", ev->serial, sep);
@@ -991,9 +983,12 @@ printevent(XEvent *e) {
 	};
 	Handler *p;
 
+	e = va_arg(fmt->args, XEvent*);
+	ev = &e->xany;
+
 	for (p = fns; p->fn; p++)
-		if (p->key == ev->type) {
-			p->fn(e);
-			break;
-		}
+		if (p->key == ev->type)
+			return p->fn(fmt, e);
+	return 1;
 }
+

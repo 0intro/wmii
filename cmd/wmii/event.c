@@ -7,8 +7,7 @@
 
 void
 dispatch_event(XEvent *e) {
-	Debug(DEvent)
-		printevent(e);
+	Dprint(DEvent, "%E\n", e);
 	if(e->type < nelem(handler)) {
 		if(handler[e->type])
 			handler[e->type](e);

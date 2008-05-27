@@ -213,6 +213,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 	f = c->sel;
 	if(screen->focus != c || selclient() != c) {
 		Dprint(DFocus, "enter_notify(f) => %s\n", f->client->name);
+		if(e->detail != NotifyInferior)
 		if(!ignoreenter && (f->area->floating || !f->collapsed))
 			focus(f->client, false);
 	}
@@ -574,6 +575,11 @@ frame_focus(Frame *f) {
 	v = f->view;
 	a = f->area;
 	old_a = v->sel;
+
+	for(; f->collapsed && f->anext; f=f->anext)
+		;
+	for(; f->collapsed && f->aprev; f=f->aprev)
+		;
 
 	old_f = old_a->sel;
 	a->sel = f;

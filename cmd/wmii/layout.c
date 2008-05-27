@@ -235,7 +235,7 @@ static void
 trampoline(int fn, Frame *f) {
 
 	while(fn > 0) {
-		f->collapsed = false;
+		//f->collapsed = false;
 		fn = tramp[fn](f);
 	}
 	ungrabpointer();
@@ -356,7 +356,7 @@ column_drop(Area *a, Frame *f, int y) {
 		return;
 	}
 	for(ff=a->frame; ff->anext; ff=ff->anext)
-		if(y < ff->colr.max.y) break;
+		if(y <= ff->colr.max.y) break;
 
 	y = max(y, ff->colr.min.y + labelh(def.font));
 	y = min(y, ff->colr.max.y);
@@ -365,7 +365,7 @@ column_drop(Area *a, Frame *f, int y) {
 		f->collapsed = true;
 		f->colr.min.y = 0;
 		f->colr.max.y = labelh(def.font);
-		column_openstack(a, ff->anext, labelh(def.font) - dy);
+		column_openstack(a, ff, labelh(def.font) - dy);
 	}else {
 		f->colr.min.y = y;
 		f->colr.max.y = ff->colr.max.y;
@@ -381,7 +381,7 @@ thcol(Frame *f) {
 	Area *a;
 	Point pt, pt2;
 	uint button;
-	int ret;
+	int ret, collapsed;
 
 	focus(f->client, false);
 
@@ -407,16 +407,29 @@ thcol(Frame *f) {
 			if(a->floating)
 				area_detach(f);
 			else {
+				collapsed = f->collapsed;
 				fp = f->aprev;
 				fn = f->anext;
 				column_remove(f);
-				if(fp)
-					fp->colr.max.y = f->colr.max.y;
-				else if(fn && fw->pt.y > fn->r.min.y)
-					fn->colr.min.y = f->colr.min.y;
+				if(!f->collapsed)
+					if(fp)
+						fp->colr.max.y = f->colr.max.y;
+					else if(fn && fw->pt.y > fn->r.min.y)
+						fn->colr.min.y = f->colr.min.y;
 			}
 
 			column_drop(fw->ra, f, fw->pt.y);
+			if(collapsed) {
+				/* XXX */
+				for(; fn && fn->collapsed; fn=fn->anext)
+					;
+				if(fn == nil)
+					for(fn=fp; fn && fn->collapsed; fn=fn->aprev)
+						;
+				if(fp)
+					fp->colr.max.x += labelh(def.font);
+			}
+				
 
  			if(!a->frame && !a->floating && f->view->area->next->next)
  				area_destroy(a);
