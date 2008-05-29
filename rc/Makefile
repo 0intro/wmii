@@ -10,6 +10,7 @@ TARG =	rc.wmii   \
 FILTER = sed "s|CONFPREFIX|${ETC}|g; \
 	      s|CONFVERSION|${CONFVERSION}|g; \
 	      s|P9PATHS|${P9PATHS}|g; \
+	      s|BINSH|$(BINSH)|g; \
 	      s|AWKPATH|${AWKPATH}|g"
 
 include ${ROOT}/mk/many.mk

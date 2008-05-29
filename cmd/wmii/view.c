@@ -220,6 +220,8 @@ view_update(View *v) {
 
 	if(v != screen->sel)
 		return;
+	if(starting)
+		return;
 
 	frames_update_sel(v);
 	view_arrange(v);
@@ -313,6 +315,7 @@ view_attach(View *v, Frame *f) {
 
 	if(c->sel == nil)
 		c->sel = f;
+	view_update(v);
 }
 
 void

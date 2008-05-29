@@ -28,6 +28,10 @@ AR = ar crs
 
 AWKPATH = $$(which awk)
 P9PATHS = ${PLAN9}:"'$${HOME}/plan9'":/usr/local/plan9:/usr/local/9:/opt/plan9:/opt/9:/usr/plan9:/usr/9
+# Your make shell. By default, the first found of /bin/dash, /bin/ksh,
+# /bin/sh. Except with bsdmake, which assumes /bin/sh is sane. bash and zsh
+# are painfully slow, and should be avoided.
+#BINSH = /bin/ash
 
 INCX11 = -I/usr/X11R6/include
 LIBX11 = -L/usr/X11R6/lib -lX11

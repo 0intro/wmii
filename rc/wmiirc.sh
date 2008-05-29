@@ -1,4 +1,4 @@
-#!/bin/sh -f
+#!BINSH -f
 # Configure wmii
 wmiiscript=wmiirc # For wmii.sh
 . wmii.sh
@@ -22,8 +22,8 @@ WMII_BACKGROUND='#333333'
 WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
-WMII_MENU="dmenu -b -fn '\$WMII_FONT' -nf '$1' -nb '$2' -sf '$4' -sb '$5'"
-WMII_9MENU="wmii9menu -font '\$WMII_FONT' -nf '$1' -nb '$2' -sf '$4' -sb '$5' -br '$6'"
+WMII_MENU='dmenu -b -fn "$WMII_FONT"'" -nf '$1' -nb '$2' -sf '$4' -sb '$5'"
+WMII_9MENU='wmii9menu -font "$WMII_FONT"'" -nf '$1' -nb '$2' -sf '$4' -sb '$5' -br '$6'"
 WMII_TERM="xterm"
 
 # Column Rules
@@ -47,7 +47,7 @@ wi_runconf -s wmiirc_local
 echo $WMII_NORMCOLORS | wmiir create $noticebar
 
 # Event processing
-events="$(
+events() {
 	sed 's/^	//' <<'!'
 	# Events
 	Event CreateTag
@@ -97,6 +97,31 @@ events="$(
 		kill $xpid 2>/dev/null # Let's hope this isn't reused...
 		{ sleep $noticetimeout; wmiir xwrite $noticebar ' '; }&
 		xpid = $!
+	Menu Client-3-Delete
+		wmiir xwrite /client/$1/ctl kill
+	Menu Client-3-Fullscreen {
+		wmiir xwrite /client/$1/ctl Fullscreen on
+	Event ClientMouseDown
+		wi_fnmenu Client $2 $1 &
+	Menu LBar-3-Delete
+		tag=$1; clients=$(wmiir read "/tag/$tag/index" | awk '/[^#]/{print $2}')
+		for c in $clients; do
+			if [ "$tag" = "$(wmiir read /client/$c/tags)" ]; then
+				wmiir xwrite /client/$c/ctl kill
+			else
+				wmiir xwrite /client/$c/tags -$tag
+			fi
+			if [ "$tag" = "$(wi_seltag)" ]; then
+				newtag=$(wi_tags | awk -v't='$tag '
+					$1 == t { if(!l) getline l
+						  print l
+						  exit }
+					{ l = $0 }')
+				wmiir xwrite /ctl view $newtag
+			fi
+		done
+	Event LeftBarMouseDown
+		wi_fnmenu LBar "$@" &
 	# Actions
 	Action quit
 		wmiir xwrite /ctl quit
@@ -138,7 +163,7 @@ events="$(
 	Key $MODKEY-t
 		wmiir xwrite /ctl view $(wi_tags | wi_menu) &
 	Key $MODKEY-Return
-		eval $WMII_TERM &
+		eval wmiir setsid $WMII_TERM &
 	Key $MODKEY-Shift-space
 		wmiir xwrite /tag/sel/ctl send sel toggle
 	Key $MODKEY-f
@@ -172,9 +197,9 @@ events="$(
 		wmiir xwrite /client/sel/tags "$i"
 !
 	done
-)"
+}
 wi_events <<!
-$events
+$(events)
 $local_events
 !
 unset events local_events
@@ -195,7 +220,7 @@ export WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS
 
 # Misc
 progsfile="$(wmiir namespace)/.proglist"
-Action status &
+action status &
 wi_proglist $PATH >$progsfile &
 
 # Setup Tag Bar

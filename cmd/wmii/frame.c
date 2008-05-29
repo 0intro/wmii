@@ -568,7 +568,7 @@ move_focus(Frame *old_f, Frame *f) {
 
 void
 frame_focus(Frame *f) {
-	Frame *old_f;
+	Frame *old_f, *ff;
 	View *v;
 	Area *a, *old_a;
 
@@ -576,10 +576,20 @@ frame_focus(Frame *f) {
 	a = f->area;
 	old_a = v->sel;
 
-	for(; f->collapsed && f->anext; f=f->anext)
-		;
-	for(; f->collapsed && f->aprev; f=f->aprev)
-		;
+	if(0 && f->collapsed) {
+		for(ff=f; ff->collapsed && ff->anext; ff=ff->anext)
+			;
+		for(; ff->collapsed && ff->aprev; ff=ff->aprev)
+			;
+		/* XXX */
+		f->colr.max.y = f->colr.min.y + Dy(ff->colr);
+		ff->colr.max.y = ff->colr.min.y + labelh(def.font);
+	}else {
+		for(; f->collapsed && f->anext; f=f->anext)
+			;
+		for(; f->collapsed && f->aprev; f=f->aprev)
+			;
+	}
 
 	old_f = old_a->sel;
 	a->sel = f;
@@ -595,7 +605,9 @@ frame_focus(Frame *f) {
 	move_focus(old_f, f);
 	client_focus(f->client);
 
+	/*
 	if(!a->floating && ((a->mode == Colstack) || (a->mode == Colmax)))
+	*/
 		column_arrange(a, false);
 }
 

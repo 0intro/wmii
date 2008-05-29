@@ -1,4 +1,4 @@
-#!/bin/sh -f
+#!BINSH -f
 # start wmiirc
 
 export home="$HOME"

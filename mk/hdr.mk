@@ -14,6 +14,14 @@ MKCFGSH=if test -f $(ROOT)/config.local.mk; then echo $(ROOT)/config.local.mk; e
 MKCFG:=${shell $(MKCFGSH)}
 MKCFG!=${MKCFGSH}
 include $(MKCFG)
+# and this:
+# Try to find a sane shell. /bin/sh is a last resort, because it's
+# usually bash on Linux, which means, it's painfully slow.
+BINSH := $(shell \
+	   if [ -x /bin/dash ]; then echo /bin/dash; \
+	   elif [ -x /bin/ksh ]; then echo /bin/ksh; \
+	   else echo /bin/sh; fi)
+BINSH != echo /bin/sh
 
 .SILENT:
 .SUFFIXES: .O .o .o_pic .c .sh .rc .$(SOEXT) .awk .1 .man1 .depend .install .uninstall .clean

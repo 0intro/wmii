@@ -5,6 +5,6 @@ BUGS
 
 4.0
 * Opaque managed moves. I know I've argued against it, but it may be doable.
-* Resizable managed area
+* Resizable managed area. Maybe. Struts seem to do everything this might.
 * New dmenu, with real cursor; snarfable.
 

@@ -369,8 +369,11 @@ comp_frame(const void *a, const void *b) {
 	return ia < ib             ? -1 :
 	       ia > ib             ?  1 :
 	       /* Favor the selected client. */
+	       /* No... don't. Windows shouldn't jump when the mouse
+		* enters them.
 	       fa == fa->area->sel ? -1 :
 	       fb == fa->area->sel ?  1 :
+	       */
 	                              0;
 }
 
@@ -488,7 +491,9 @@ column_arrange(Area *a, bool dirty) {
 	}
 	column_scale(a);
 resize:
-	area_setsel(a, a->sel);
+	/* XXX */
+	if(a->sel->collapsed)
+		area_setsel(a, a->sel);
 	if(v == screen->sel) {
 		//view_restack(v);
 		client_resize(a->sel->client, a->sel->r);
