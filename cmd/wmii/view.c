@@ -108,9 +108,14 @@ view_destroy(View *v) {
 	View *tv;
 	Area *a, *an;
 
+	if(v->dead)
+		return;
+	v->dead = true;
+
 	for(vp=&view; *vp; vp=&(*vp)->next)
 		if(*vp == v) break;
 	*vp = v->next;
+	assert(v != v->next);
 
 	/* FIXME: Can do better */
 	for(a=v->area; a; a=an) {

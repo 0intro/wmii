@@ -273,6 +273,7 @@ struct View {
 	Area*	oldsel;
 	Area*	revert;
 	int	selcol;
+	bool	dead;
 	Rectangle r;
 };
 

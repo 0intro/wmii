@@ -4,6 +4,7 @@
 #include "dat.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <bio.h>
@@ -304,5 +305,18 @@ join(char **list, char *sep) {
 	}
 
 	return fmtstrflush(&f);
+}
+
+int
+strlcatprint(char *buf, int len, const char *fmt, ...) {
+	va_list ap;
+	int buflen;
+	int ret;
+
+	va_start(ap, fmt);
+	buflen = strlen(buf);
+	ret = vsnprint(buf+buflen, len-buflen, fmt, ap);
+	va_end(ap);
+	return ret;
 }
 

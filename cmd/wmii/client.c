@@ -981,6 +981,8 @@ client_setviews(Client *c, char **tags) {
 	}
 	if(c->sel == nil)
 		c->sel = c->frame;
+	if(c->sel)
+		frame_draw(c->sel);
 }
 
 static int
@@ -1002,6 +1004,39 @@ static char *badtags[] = {
 	"..",
 	"sel",
 };
+
+char*
+client_extratags(Client *c) {
+	Frame *f;
+	char *toks[32];
+	char *s, *s2;
+	int i;
+
+	i = 0;
+	toks[i++] = "";
+	for(f=c->frame; f && i < nelem(toks)-1; f=f->cnext)
+		if(f != c->sel)
+			toks[i++] = f->view->name;
+	toks[i] = nil;
+
+	s = nil;
+	if(i > 1)
+		s = join(toks, "+");
+	if(!c->tagre.regex && !c->tagvre.regex)
+		return s;
+
+	if(c->tagre.regex) {
+		s2 = s;
+		s = smprint("%s+/%s/", s, c->tagre.regex);
+		free(s2);
+	}
+	if(c->tagvre.regex) {
+		s2 = s;
+		s = smprint("%s-/%s/", s, c->tagvre.regex);
+		free(s2);
+	}
+	return s;
+}
 
 void
 apply_tags(Client *c, const char *tags) {
@@ -1101,6 +1136,10 @@ apply_tags(Client *c, const char *tags) {
 
 	s = join(toks, "+");
 	utflcpy(c->tags, s, sizeof c->tags);
+	if(c->tagre.regex)
+		strlcatprint(c->tags, sizeof c->tags, "+/%s/", c->tagre.regex);
+	if(c->tagvre.regex)
+		strlcatprint(c->tags, sizeof c->tags, "-/%s/", c->tagvre.regex);
 	changeprop_string(&c->w, "_WMII_TAGS", s);
 	free(s);
 

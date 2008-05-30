@@ -406,10 +406,11 @@ frame_resize(Frame *f, Rectangle r) {
 
 void
 frame_draw(Frame *f) {
-	Rectangle r, fr;
+	Rectangle r, r2, fr;
 	Client *c;
 	CTuple *col;
 	Image *img;
+	char *s;
 	uint w;
 
 	if(f->view != screen->sel)
@@ -426,15 +427,6 @@ frame_draw(Frame *f) {
 		col = &def.focuscolor;
 	else
 		col = &def.normcolor;
-	/*
-	Frame *tf;
-	if(!f->area->floating && f->area->mode == Colmax)
-		for(tf=f->area->frame; tf; tf=tf->anext)
-			if(tf->client == screen->focus) {
-				col = &def.focuscolor;
-				break;
-			}
-	*/
 
 	/* Background/border */
 	r = fr;
@@ -481,8 +473,19 @@ frame_draw(Frame *f) {
 	r.max.x = fr.max.x;
 	r.min.y = 0;
 	r.max.y = labelh(def.font);
-	if(c->floating)
-		r.max.x -= Dx(f->grabbox);
+	if((s = client_extratags(c))) {
+		r2 = r;
+		w = textwidth(def.font, s);
+		w = min(w, Dx(r) - 30); /* Magic number. */
+		if(w > 0) { /* Magic number. */
+			r.max.x -= w + 4;
+			drawstring(img, def.font, r2, East,
+				   s, col->fg);
+		}
+		free(s);
+	}else
+		if(c->floating)
+			r.max.x -= Dx(f->grabbox);
 	w = drawstring(img, def.font, r, West,
 			c->name, col->fg);
 
