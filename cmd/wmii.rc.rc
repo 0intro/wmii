@@ -175,6 +175,6 @@ fn Action {
                        $action $*
                if not
                        wi_runcmd `{wi_script $cmd} $*
-       } &
+       }
 }
 

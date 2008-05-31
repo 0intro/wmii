@@ -65,8 +65,7 @@ group_remove(Client *c) {
 	g->ref--;
 	if(g->ref == 0) {
 		for(gp=&group; *gp; gp=&gp[0]->next)
-			if(*gp == g)
-				break;
+			if(*gp == g) break;
 		assert(*gp == g);
 		gp[0] = gp[0]->next;
 	}
@@ -720,7 +719,7 @@ updatemwm(Client *c) {
 	 * Our definition of non-stupid is a bit less lenient than
 	 * theirs, though. In fact, we don't really even support the
 	 * idea of supporting the hints that we support, but apps
-	 * like xmms (which noone should use) break if we don't.
+	 * like xmms (which no one should use) break if we don't.
 	 */
 
 	n = getprop_ulong(&c->w, "_MOTIF_WM_HINTS", "_MOTIF_WM_HINTS",
@@ -922,7 +921,7 @@ static void
 property_event(Window *w, XPropertyEvent *e) {
 	Client *c;
 
-	if(e->state == PropertyDelete)
+	if(e->state == PropertyDelete) /* FIXME */
 		return;
 
 	c = w->aux;
@@ -1074,8 +1073,7 @@ apply_tags(Client *c, const char *tags) {
 		/* Check for regex. */
 		if(buf[n] == '/') {
 			for(i=n+1; i < sizeof(buf) - 1; i++)
-				if(buf[i] == '/')
-					break;
+				if(buf[i] == '/') break;
 			if(buf[i] == '/') {
 				i++;
 				if(buf[i] == '+'
@@ -1156,10 +1154,7 @@ apply_tags(Client *c, const char *tags) {
 	free(p);
 
 	if(c->retags[0] == nil && toks[0] == nil) {
-		if(c->tagre.regex)
-			toks[0] = "orphans";
-		else
-			toks[0] = screen->sel->name;
+		toks[0] = "orphans";
 		toks[1] = nil;
 	}
 
