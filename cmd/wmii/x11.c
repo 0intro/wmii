@@ -592,7 +592,7 @@ loadfont(char *name) {
 		Bprint(b, "%s: note: missing fontset%s for '%s':", argv0,
 				(n > 1 ? "s" : ""), name);
 		for(i = 0; i < n; i++)
-			Bprint(b, "%s %s", i?",":"", missing[i]);
+			Bprint(b, "%s %s", (i ? "," : ""), missing[i]);
 		Bprint(b, "\n");
 		Bterm(b);
 		freestringlist(missing);

@@ -353,7 +353,8 @@ frame_resize(Frame *f, Rectangle r) {
 	Rectangle fr, cr;
 	int collapsed, dx;
 
-	if(btassert("8 full", Dx(r) <= 0 || Dy(r) <= 0)) {
+	if(btassert("8 full", Dx(r) <= 0 || Dy(r) < 0
+		           || Dy(r) == 0 && !f->area->max && !f->collapsed)) {
 		fprint(2, "Frame rect: %R\n", r);
 		r.max.x = min(r.min.x+1, r.max.x);
 		r.max.y = min(r.min.y+1, r.max.y);
@@ -404,14 +405,34 @@ frame_resize(Frame *f, Rectangle r) {
 		f->floatr = f->r;
 }
 
+static void
+pushlabel(Image *img, Rectangle *rp, char *s, CTuple *col) {
+	Rectangle r;
+	int w;
+
+	w = textwidth(def.font, s) + def.font->height;
+	w = min(w, Dx(*rp) - 30); /* Magic number. */
+	if(w > 0) {
+		r = *rp;
+		rp->max.x -= w;
+		if(0)
+		drawline(img, Pt(rp->max.x, r.min.y+2),
+			      Pt(rp->max.x, r.max.y-2),
+			      CapButt, 1, col->border);
+		drawstring(img, def.font, r, East,
+			   s, col->fg);
+	}
+}
+
 void
 frame_draw(Frame *f) {
-	Rectangle r, r2, fr;
+	Rectangle r, fr;
 	Client *c;
 	CTuple *col;
 	Image *img;
 	char *s;
 	uint w;
+	int n, m;
 
 	if(f->view != screen->sel)
 		return;
@@ -462,7 +483,7 @@ frame_draw(Frame *f) {
 	if(c != screen->focus && col == &def.focuscolor)
 		border(img, insetrect(r, -1), 1, def.normcolor.bg);
 
-	/* Draw a border on borderless/titleless selected apps. */
+	/* Draw a border on borderless+titleless selected apps. */
 	if(c->borderless && c->titleless && c == selclient())
 		setborder(c->framewin, def.border, def.focuscolor.border);
 	else
@@ -473,22 +494,25 @@ frame_draw(Frame *f) {
 	r.max.x = fr.max.x;
 	r.min.y = 0;
 	r.max.y = labelh(def.font);
-	if((s = client_extratags(c))) {
-		r2 = r;
-		w = textwidth(def.font, s);
-		w = min(w, Dx(r) - 30); /* Magic number. */
-		if(w > 0) { /* Magic number. */
-			r.max.x -= w + 4;
-			drawstring(img, def.font, r2, East,
-				   s, col->fg);
-		}
+	/* Draw count on frames in 'max' columns. */
+	if(f->area->max) {
+		/* XXX */
+		n = stack_count(f, &m);
+		s = smprint("%d/%d", m, n);
+		pushlabel(img, &r, s, col);
 		free(s);
-	}else
-		if(c->floating)
-			r.max.x -= Dx(f->grabbox);
+	}
+	/* Label clients with extra tags. */
+	if((s = client_extratags(c))) {
+		pushlabel(img, &r, s, col);
+		free(s);
+	}else /* Make sure floating clients have room for their indicators. */
+	if(c->floating)
+		r.max.x -= Dx(f->grabbox);
 	w = drawstring(img, def.font, r, West,
 			c->name, col->fg);
 
+	/* Draw inner border on floating clients. */
 	if(f->area->floating) {
 		r.min.x = r.min.x + w + 10;
 		r.max.x = f->titlebar.max.x + 1;
@@ -586,7 +610,7 @@ frame_focus(Frame *f) {
 		/* XXX */
 		f->colr.max.y = f->colr.min.y + Dy(ff->colr);
 		ff->colr.max.y = ff->colr.min.y + labelh(def.font);
-	}else {
+	}else if(f->area->mode == Coldefault) {
 		for(; f->collapsed && f->anext; f=f->anext)
 			;
 		for(; f->collapsed && f->aprev; f=f->aprev)
@@ -623,8 +647,7 @@ constrain(Rectangle r) {
 	Rectangle sr;
 	Point p;
 
-	sr = screen->r;
-	sr.max.y = screen->brect.min.y;
+	sr = screen->sel->area->r;
 
 	if(Dx(r) > Dx(sr))
 		r.max.x = r.min.x + Dx(sr);
@@ -639,3 +662,4 @@ constrain(Rectangle r) {
 	p.y -= max(r.min.y - sr.max.y, 0);
 	return rectaddpt(r, p);
 }
+

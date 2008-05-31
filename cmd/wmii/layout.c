@@ -536,13 +536,14 @@ tfloat(Frame *f) {
 
 	pt = querypointer(&scr.root);
 	pt1 = grabboxcenter(f);
-	goto casmotion;
+	goto case_motion;
+
 shut_up_ken:
 	for(;;pt1=pt)
 		switch (readmouse(&pt, &button)) {
 		default: goto shut_up_ken;
 		case MotionNotify:
-		casmotion:
+		case_motion:
 			origin = rectaddpt(origin, subpt(pt, pt1));
 			origin = constrain(origin);
 			frect = origin;

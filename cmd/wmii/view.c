@@ -17,16 +17,14 @@ empty_p(View *v) {
 	int cmp;
 
 	foreach_frame(v, a, f) {
+		cmp = 1;
 		for(p=f->client->retags; *p; p++) {
 			cmp = strcmp(*p, v->name);
-			if(cmp == 0)
-				goto nextframe;
-			if(cmp > 0)
-				return false;
+			if(cmp >= 0)
+				break;
 		}
-		return false;
-	nextframe:
-		continue;
+		if(cmp)
+			return false;
 	}
 	return true;
 }
@@ -45,7 +43,9 @@ _view_select(View *v) {
 
 Client*
 view_selclient(View *v) {
-	return v->sel && v->sel->sel ? v->sel->sel->client : nil;
+	if(v->sel && v->sel->sel)
+		return v->sel->sel->client;
+	return nil;
 }
 
 bool
@@ -72,7 +72,6 @@ view_create(const char *name) {
 	v = emallocz(sizeof *v);
 	v->id = id++;
 	v->r = screen->r;
-	v->r.max.y = screen->barwin->r.min.y;
 
 	utflcpy(v->name, name, sizeof v->name);
 
@@ -197,6 +196,7 @@ view_update_rect(View *v) {
 		r.max.y -= Dy(screen->brect);
 		bar_sety(r.max.y);
 	}
+	v->area->r = r;
 	v->r = r;
 
 	brect = screen->brect;
@@ -317,7 +317,14 @@ view_attach(View *v, Frame *f) {
 
 	area_attach(a, f);
 	/* TODO: Decide whether to focus this frame */
-	frame_focus(f);
+	bool newgroup = !c->group
+		     || c->group->ref == 1
+		     || view_selclient(v) && (view_selclient(v)->group == c->group)
+		     || group_leader(c->group) && !client_viewframe(group_leader(c->group),
+								    c->sel->view);
+	if(!(c->w.ewmh.type & (TypeSplash|TypeDock)))
+	if(newgroup)
+		frame_focus(f);
 
 	if(c->sel == nil)
 		c->sel = f;
@@ -430,8 +437,6 @@ view_scale(View *v, int w) {
 		xoff = a->r.max.x;
 	}
 
-	/* minwidth can only be respected when there is enough space;
-	 * the caller should guarantee this */
 	if(numcol * minwidth > w)
 		return;
 
@@ -453,13 +458,7 @@ view_arrange(View *v) {
 
 	if(!v->area->next)
 		return;
-	/*
-	for(a=v->area->next; a; a=anext) {
-		anext = a->next;
-		if(!a->frame && v->area->next->next)
-			area_destroy(a);
-	}
-	*/
+
 	view_update_rect(v);
 	view_scale(v, Dx(v->r));
 	for(a=v->area->next; a; a=a->next) {
@@ -481,7 +480,6 @@ view_rects(View *v, uint *num, Frame *ignore) {
 	i = 2;
 	for(f=v->area->frame; f; f=f->anext)
 		i++;
-
 	result = emallocz(i * sizeof *result);
 
 	i = 0;
@@ -515,15 +513,13 @@ view_update_all(void) {
 uint
 view_newcolw(View *v, int num) {
 	Rule *r;
+	char *toks[16];
+	char buf[sizeof r->value];
 	ulong n;
 
 	for(r=def.colrules.rule; r; r=r->next)
 		if(regexec(r->regex, v->name, nil, 0)) {
-			char buf[sizeof r->value];
-			char *toks[16];
-
 			utflcpy(buf, r->value, sizeof buf);
-
 			n = tokenize(toks, 16, buf, '+');
 			if(num < n)
 				if(getulong(toks[num], &n))

@@ -79,7 +79,7 @@ init_ns(void) {
 		if(s != nil)
 			*s = '\0';
 		if(ns_path[0] != '/' || ns_path[0] == '\0')
-			fatal("address \"%s\" is not an absolute path", address);
+			fatal("address %q is not an absolute path", address);
 		setenv("NAMESPACE", ns_path, true);
 	}else
 		ns_path = ixp_namespace();
@@ -156,19 +156,6 @@ cleanup(void) {
 	close(sleeperfd);
 }
 
-struct {
-	uchar rcode, ecode;
-} itab[] = {
-	{ 0, BadWindow },
-	{ X_SetInputFocus, BadMatch },
-	{ X_PolyText8, BadDrawable },
-	{ X_PolyFillRectangle, BadDrawable },
-	{ X_PolySegment, BadDrawable },
-	{ X_ConfigureWindow, BadMatch },
-	{ X_GrabKey, BadAccess },
-	{ X_GetAtomName, BadAtom },
-};
-
 /*
  * There's no way to check accesses to destroyed windows, thus
  * those cases are ignored (especially on UnmapNotifies).
@@ -177,6 +164,18 @@ struct {
  */
 static int
 errorhandler(Display *dpy, XErrorEvent *error) {
+	static struct {
+		uchar rcode, ecode;
+	} itab[] = {
+		{ 0, BadWindow },
+		{ X_SetInputFocus, BadMatch },
+		{ X_PolyText8, BadDrawable },
+		{ X_PolyFillRectangle, BadDrawable },
+		{ X_PolySegment, BadDrawable },
+		{ X_ConfigureWindow, BadMatch },
+		{ X_GrabKey, BadAccess },
+		{ X_GetAtomName, BadAtom },
+	};
 	static int dead;
 	int i;
 
@@ -293,6 +292,7 @@ closedisplay(IxpConn *c) {
 
 int
 main(int argc, char *argv[]) {
+	char **oargv;
 	char *wmiirc;
 	WMScreen *s;
 	WinAttr wa;
@@ -307,6 +307,7 @@ extern int fmtevent(Fmt*);
 
 	wmiirc = "wmiistartrc";
 
+	oargv = argv;
 	ARGBEGIN{
 	case 'a':
 		address = EARGF(usage());
@@ -383,12 +384,11 @@ extern int fmtevent(Fmt*);
 		s = &screens[i];
 		init_screen(s);
 
-		wa.event_mask = 
-				  SubstructureRedirectMask
-				| SubstructureNotifyMask
-				| EnterWindowMask
-				| LeaveWindowMask
-				| FocusChangeMask;
+		wa.event_mask = SubstructureRedirectMask
+			      | SubstructureNotifyMask
+			      | EnterWindowMask
+			      | LeaveWindowMask
+			      | FocusChangeMask;
 		wa.cursor = cursor[CurNormal];
 		setwinattr(&scr.root, &wa,
 				  CWEventMask
@@ -417,9 +417,16 @@ extern int fmtevent(Fmt*);
 	if(exitsignal)
 		raise(exitsignal);
 	if(execstr) {
-		quotefmtinstall();
-		print("/bin/sh -c %q\n", execstr);
-		execl("/bin/sh", "sh", "-c", execstr, nil);
+		char *toks[32];
+		int n;
+
+		n = unquote(strdup(execstr), toks, nelem(toks)-1);
+		toks[n] = nil;
+		execvp(toks[0], toks);
+		fprint(2, "%s: failed to exec %q: %r\n", argv0, execstr);
+		execvp(argv0, oargv);
+		fatal("failed to exec myself");
 	}
 	return i;
 }
+

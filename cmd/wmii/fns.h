@@ -65,6 +65,7 @@ Frame*	client_viewframe(Client *c, View *v);
 char*	clientname(Client*);
 void	focus(Client*, bool restack);
 void	fullscreen(Client*, int);
+Client*	group_leader(Group*);
 int	map_frame(Client*);
 Client*	selclient(void);
 int	unmap_frame(Client*);
@@ -73,7 +74,8 @@ Client*	win2client(XWindow);
 Rectangle	client_grav(Client*, Rectangle);
 
 /* column.c */
-char*	colmode2str(uint);
+bool	column_setmode(Area*, const char*);
+char*	column_getmode(Area*);
 void	column_arrange(Area*, bool dirty);
 void	column_attach(Area*, Frame*);
 void	column_attachrect(Area*, Frame*, Rectangle);
@@ -88,7 +90,7 @@ void	column_settle(Area*);
 void	div_draw(Divide*);
 void	div_set(Divide*, int x);
 void	div_update_all(void);
-int	str2colmode(const char*);
+int	stack_count(Frame*, int*);
 
 /* event.c */
 void	check_x_event(IxpConn*);
@@ -255,6 +257,7 @@ int	strlcatprint(char*, int, const char*, ...);
 int	spawn3(int[3], const char*, char*[]);
 int	spawn3l(int[3], const char*, ...);
 void	uniq(char**);
+int	unquote(char*, char*[], int);
 
 /* utf.c */
 char*	toutf8(const char*);

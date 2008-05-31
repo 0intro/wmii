@@ -72,7 +72,7 @@ group_remove(Client *c) {
 	}
 }
 
-static Client*
+Client*
 group_leader(Group *g) {
 	Client *c;
 
@@ -519,12 +519,13 @@ client_resize(Client *c, Rectangle r) {
 
 	c->r = rectaddpt(f->crect, f->r.min);
 
-	if((f->area->mode == Colmax) && (f->area->sel != f)) {
-		unmap_frame(c);
-		client_unmap(c, IconicState);
-	}else if(f->collapsed) {
-		reshapewin(c->framewin, f->r);
-		map_frame(c);
+	if(f->collapsed) {
+		if(f->area->max)
+			unmap_frame(c);
+		else {
+			reshapewin(c->framewin, f->r);
+			map_frame(c);
+		}
 		client_unmap(c, IconicState);
 	}else {
 		client_map(c);
@@ -1025,12 +1026,12 @@ client_extratags(Client *c) {
 
 	if(c->tagre.regex) {
 		s2 = s;
-		s = smprint("%s+/%s/", s, c->tagre.regex);
+		s = smprint("%s+/%s/", s ? s : "", c->tagre.regex);
 		free(s2);
 	}
 	if(c->tagvre.regex) {
 		s2 = s;
-		s = smprint("%s-/%s/", s, c->tagvre.regex);
+		s = smprint("%s-/%s/", s ? s : "", c->tagvre.regex);
 		free(s2);
 	}
 	return s;
@@ -1053,6 +1054,10 @@ apply_tags(Client *c, const char *tags) {
 
 	if(tags[n] == '+' || tags[n] == '-')
 		utflcpy(buf, c->tags, sizeof c->tags);
+	else {
+		refree(&c->tagre);
+		refree(&c->tagvre);
+	}
 	strlcat(buf, &tags[n], sizeof buf);
 
 	n = 0;
@@ -1066,27 +1071,29 @@ apply_tags(Client *c, const char *tags) {
 
 	j = 0;
 	while(buf[n] && n < sizeof(buf) && j < 32) { 
+		/* Check for regex. */
 		if(buf[n] == '/') {
 			for(i=n+1; i < sizeof(buf) - 1; i++)
 				if(buf[i] == '/')
 					break;
-			if(buf[i] != '/')
-				goto ifnot;
-			i++;
-			if(buf[i] != '+'
-			&& buf[i] != '-'
-			&& buf[i] != '\0') /* Don't be lenient */
-				goto ifnot;
-			buf[i-1] = '\0';
-			if(add)
-				reinit(&c->tagre, buf+n+1);
-			else
-				reinit(&c->tagvre, buf+n+1);
-			last = buf[i];
-			buf[i] = '\0';
-			goto next;
+			if(buf[i] == '/') {
+				i++;
+				if(buf[i] == '+'
+				|| buf[i] == '-'
+				|| buf[i] == '\0') { /* Don't be lenient */
+					buf[i-1] = '\0';
+					if(add)
+						reinit(&c->tagre, buf+n+1);
+					else
+						reinit(&c->tagvre, buf+n+1);
+					last = buf[i];
+					buf[i] = '\0';
+
+					goto next;
+				}
+			}
 		}
-	ifnot:
+
 		for(i = n; i < sizeof(buf) - 1; i++)
 			if(buf[i] == '+'
 			|| buf[i] == '-'
@@ -1138,7 +1145,7 @@ apply_tags(Client *c, const char *tags) {
 		strlcatprint(c->tags, sizeof c->tags, "+/%s/", c->tagre.regex);
 	if(c->tagvre.regex)
 		strlcatprint(c->tags, sizeof c->tags, "-/%s/", c->tagvre.regex);
-	changeprop_string(&c->w, "_WMII_TAGS", s);
+	changeprop_string(&c->w, "_WMII_TAGS", c->tags);
 	free(s);
 
 	free(c->retags);

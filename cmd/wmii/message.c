@@ -446,7 +446,7 @@ message_root(void *p, IxpMsg *m) {
 		ret = msg_debug(m);
 		break;
 	case LEXEC:
-		execstr = smprint("exec %s", m->pos);
+		execstr = strdup(m->pos);
 		srv.running = 0;
 		break;
 	case LFOCUSCOLORS:
@@ -496,7 +496,6 @@ char*
 message_view(View *v, IxpMsg *m) {
 	Area *a;
 	char *s;
-	int i;
 
 	s = msg_getword(m);
 	if(s == nil)
@@ -551,11 +550,9 @@ message_view(View *v, IxpMsg *m) {
 			return Ebadvalue;
 
 		s = msg_getword(m);
-		i = str2colmode(s);
-		if(i == -1)
+		if(s == nil || !column_setmode(a, s))
 			return Ebadvalue;
 
-		a->mode = i;
 		column_arrange(a, true);
 		view_restack(v);
 
@@ -886,7 +883,7 @@ msg_selectframe(Frame *f, IxpMsg *m, int sym) {
 	if(fp == f)
 		return nil;
 	/* XXX */
-	if(fp->collapsed && !f->area->floating) {
+	if(fp->collapsed && !f->area->floating && f->area->mode == Coldefault) {
 		dy = Dy(f->colr);
 		f->colr.max.y = f->colr.min.y + Dy(fp->colr);
 		fp->colr.max.y = fp->colr.min.y + dy;
@@ -1073,7 +1070,7 @@ readctl_view(View *v) {
 		bufprint("select client %C\n", v->sel->sel->client);
 
 	for(a = v->area->next, i = 1; a; a = a->next, i++)
-		bufprint("colmode %d %s\n", i, colmode2str(a->mode));
+		bufprint("colmode %d %s\n", i, column_getmode(a));
 	return buffer;
 }
 

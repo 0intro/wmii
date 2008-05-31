@@ -20,15 +20,15 @@ void
 ewmh_init(void) {
 	WinAttr wa;
 	char myname[] = "wmii";
-	long win[1];
+	long win;
 
 	ewmhwin = createwindow(&scr.root,
 		Rect(0, 0, 1, 1), 0 /*depth*/,
 		InputOnly, &wa, 0);
 
-	win[0] = ewmhwin->w;
-	changeprop_long(&scr.root, Net("SUPPORTING_WM_CHECK"), "WINDOW", win, 1);
-	changeprop_long(ewmhwin, Net("SUPPORTING_WM_CHECK"), "WINDOW", win, 1);
+	win = ewmhwin->w;
+	changeprop_long(&scr.root, Net("SUPPORTING_WM_CHECK"), "WINDOW", &win, 1);
+	changeprop_long(ewmhwin, Net("SUPPORTING_WM_CHECK"), "WINDOW", &win, 1);
 	changeprop_string(ewmhwin, Net("WM_NAME"), myname);
 
 	long zz[] = {0, 0};
@@ -98,8 +98,7 @@ ewmh_updatestacking(void) {
 					vector_lpush(&vec, f->client->w.w);
 	for(v=view; v; v=v->next) {
 		for(f=v->area->stack; f; f=f->snext)
-			if(!f->snext)
-				break;
+			if(!f->snext) break;
 		for(; f; f=f->sprev)
 			if(f->client->sel == f)
 				vector_lpush(&vec, f->client->w.w);
@@ -202,6 +201,18 @@ getmask(Prop *props, ulong *vals, int n) {
 	return ret;
 }
 
+static long
+getprop_mask(Window *w, char *prop, Prop *props) {
+	ulong *vals;
+	long n, mask;
+
+	n = getprop_ulong(w, prop, "ATOM",
+		0L, &vals, 16);
+	mask = getmask(props, vals, n);
+	free(vals);
+	return mask;
+}
+
 void
 ewmh_getwintype(Client *c) {
 	static Prop props[] = {
@@ -215,14 +226,9 @@ ewmh_getwintype(Client *c) {
 		{Type("NORMAL"), TypeNormal},
 		{0, }
 	};
-	ulong *types;
-	long n, mask;
+	long mask;
 
-	n = getprop_ulong(&c->w, Net("WM_WINDOW_TYPE"), "ATOM",
-		0L, &types, 16);
-	Dprint(DEwmh, "ewmh_getwintype(%C) n = %ld\n", c, n);
-	mask = getmask(props, types, n);
-	free(types);
+	mask = getprop_mask(&c->w, Net("WM_WINDOW_TYPE"), props);
 
 	c->w.ewmh.type = mask;
 	if(mask & TypeDock) {
@@ -239,15 +245,8 @@ ewmh_protocols(Window *w) {
 		{Net("WM_PING"), ProtoPing},
 		{0, }
 	};
-	ulong *protos;
-	long n, mask;
 
-	n = getprop_ulong(w, "WM_PROTOCOLS", "ATOM",
-		0L, &protos, 16);
-	Dprint(DEwmh, "ewmh_protocols(%W) n = %ld\n", w, n);
-	mask = getmask(props, protos, n);
-	free(protos);
-	return mask;
+	return getprop_mask(w, "WM_PROTOCOLS", props);
 }
 
 void

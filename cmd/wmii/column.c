@@ -13,7 +13,7 @@ char *modes[] = {
 	[Colmax] =	"max",
 };
 
-int
+static int
 str2colmode(const char *str) {
 	int i;
 	
@@ -23,11 +23,30 @@ str2colmode(const char *str) {
 	return -1;
 }
 
+bool
+column_setmode(Area *a, const char *mode) {
+	int i;
+
+	i = str2colmode(mode);
+	if(i == -1)
+		return false;
+	a->mode = i;
+	a->max = false;
+	if(i == Colmax) {
+		a->mode = Colstack;
+		a->max = true;
+	}
+	return true;
+}
+
 char*
-colmode2str(uint i) {
-	if(i < nelem(modes))
-		return modes[i];
-	return nil;
+column_getmode(Area *a) {
+
+	if(a->mode == Coldefault)
+		return "default";
+	if(a->max)
+		return "max";
+	return "stack";
 }
 
 Area*
@@ -112,6 +131,21 @@ stack_info(Frame *f, Frame **firstp, int *dyp, int *nframep) {
 	if(dyp) *dyp = dy;
 }
 
+int
+stack_count(Frame *f, int *mp) {
+	Frame *fp;
+	int n, m;
+
+	n = 0;
+	for(fp=f->aprev; fp && fp->collapsed; fp=fp->aprev)
+		n++;
+	m = ++n;
+	for(fp=f->anext; fp && fp->collapsed; fp=fp->anext)
+		n++;
+	if(mp) *mp = m;
+	return n;
+}
+
 void
 column_attach(Area *a, Frame *f) {
 	Frame *first;
@@ -191,8 +225,13 @@ column_remove(Frame *f) {
 
 	f->area = nil;
 	if(a->sel == f) {
-		if(!pr)
+		if(pr == nil)
 			pr = a->frame;
+		if(pr && pr->collapsed)
+			if(pr->anext && !pr->anext->collapsed)
+				pr = pr->anext;
+			else
+				pr->collapsed = false;
 		a->sel = nil;
 		area_setsel(a, pr);
 	}
@@ -222,6 +261,8 @@ column_fit(Area *a, uint *ncolp, uint *nuncolp) {
 	minh = labelh(def.font);
 	colh = labelh(def.font);
 	uncolh = minh + colh + 1;
+	if(a->max)
+		colh = 0;
 
 	/* Count collapsed and uncollapsed frames. */
 	ncol = 0;
@@ -431,16 +472,18 @@ column_scale(Area *a) {
 		return;
 
 	column_fit(a, &ncol, &nuncol);
-	colh = labelh(def.font);
-	surplus = Dy(a->r);
 
-	/* Distribute the surplus.
-	 */
+	colh = labelh(def.font);
+	if(a->max)
+		colh = 0;
+
 	dy = 0;
 	surplus = Dy(a->r);
 	for(f=a->frame; f; f=f->anext) {
 		if(f->collapsed)
 			f->colr.max.y = f->colr.min.y + colh;
+		else if(Dy(f->colr) == 0)
+			f->colr.max.y++;
 		surplus -= Dy(f->colr);
 		if(!f->collapsed)
 			dy += Dy(f->colr);
@@ -451,6 +494,7 @@ column_scale(Area *a) {
 		f->colr.max.x = a->r.max.x;
 		if(!f->collapsed)
 			f->colr.max.y += ((float)f->dy / dy) * surplus;
+		assert(f->collapsed ? Dy(f->r) >= 0 : dy > 0);
 		frame_resize(f, f->colr);
 	}
 
@@ -476,21 +520,15 @@ column_arrange(Area *a, bool dirty) {
 				f->colr = Rect(0, 0, 100, 100);
 		break;
 	case Colstack:
+		/* XXX */
 		for(f=a->frame; f; f=f->anext)
 			f->collapsed = (f != a->sel);
 		break;
-	case Colmax:
-		for(f=a->frame; f; f=f->anext) {
-			f->collapsed = false;
-			f->r = a->r;
-		}
-		goto resize;
 	default:
 		die("not reached");
 		break;
 	}
 	column_scale(a);
-resize:
 	/* XXX */
 	if(a->sel->collapsed)
 		area_setsel(a, a->sel);
