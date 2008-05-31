@@ -133,6 +133,7 @@ struct Area {
 	bool	floating;
 	ushort	id;
 	int	mode;
+	bool	max;
 	Rectangle	r;
 	Rectangle	r_old;
 };
@@ -235,13 +236,6 @@ struct Key {
 struct Map {
 	MapEnt**bucket;
 	uint	nhash;
-};
-
-struct MapEnt {
-	ulong		hash;
-	const char*	key;
-	void*		val;
-	MapEnt*		next;
 };
 
 struct Rule {

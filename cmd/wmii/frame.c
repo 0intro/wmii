@@ -513,7 +513,6 @@ frame_draw(Frame *f) {
 	XSetWindowBackgroundPixmap(display, c->framewin->w, None);
 
 	copyimage(c->framewin, fr, img, ZP);
-	sync();
 }
 
 void

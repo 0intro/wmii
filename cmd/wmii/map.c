@@ -5,6 +5,13 @@
 
 /* Edit s/^([a-zA-Z].*)\n([a-z].*) {/\1 \2;/g  x/^([^a-zA-Z]|static|$)/-+d  s/ (\*map|val|*str)//g */
 
+struct MapEnt {
+	ulong		hash;
+	const char*	key;
+	void*		val;
+	MapEnt*		next;
+};
+
 MapEnt *NM;
 
 /* By Dan Bernstein. Public domain. */
@@ -69,20 +76,20 @@ hash_getp(Map *map, const char *str, int create) {
 	return e;
 }
 
-MapEnt*
-map_get(Map *map, ulong val, int create) {
-	MapEnt **e;
+void**
+map_get(Map *map, ulong val, bool create) {
+	MapEnt *e;
 	
-	e = map_getp(map, val, create);
-	return *e;
+	e = *map_getp(map, val, create);
+	return e ? &e->val : nil;
 }
 
-MapEnt*
-hash_get(Map *map, const char *str, int create) {
-	MapEnt **e;
+void**
+hash_get(Map *map, const char *str, bool create) {
+	MapEnt *e;
 	
-	e = hash_getp(map, str, create);
-	return *e;
+	e = *hash_getp(map, str, create);
+	return e ? &e->val : nil;
 }
 
 void*
@@ -116,3 +123,4 @@ hash_rm(Map *map, const char *str) {
 	}
 	return ret;
 }
+

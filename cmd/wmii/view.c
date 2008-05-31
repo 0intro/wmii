@@ -118,6 +118,7 @@ view_destroy(View *v) {
 	assert(v != v->next);
 
 	/* FIXME: Can do better */
+	/* Detach frames held here by regex tags. */
 	for(a=v->area; a; a=an) {
 		an = a->next;
 		for(f=a->frame; f; f=fn) {

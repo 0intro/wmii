@@ -54,16 +54,20 @@ str2modmask(const char *val) {
 }
 
 static void
-grabkey(Key *k) {
-	XGrabKey(display, k->key, k->mod, scr.root.w,
+_grab(XWindow w, int keycode, uint mod) {
+	XGrabKey(display, keycode, mod, w,
 			true, GrabModeAsync, GrabModeAsync);
+}
+
+static void
+grabkey(Key *k) {
+	/* Round trip. */
+	_grab(scr.root.w, k->key, k->mod);
 	if(numlock_mask) {
-		XGrabKey(display, k->key, k->mod | numlock_mask, scr.root.w,
-				true, GrabModeAsync, GrabModeAsync);
-		XGrabKey(display, k->key, k->mod | numlock_mask | LockMask, scr.root.w,
-				true, GrabModeAsync, GrabModeAsync);
+		_grab(scr.root.w, k->key, k->mod | numlock_mask);
+		_grab(scr.root.w, k->key, k->mod | numlock_mask | LockMask);
 	}
-	sync();
+	/* sync(); */
 }
 
 static void
@@ -73,7 +77,9 @@ ungrabkey(Key *k) {
 		XUngrabKey(display, k->key, k->mod | numlock_mask, scr.root.w);
 		XUngrabKey(display, k->key, k->mod | numlock_mask | LockMask, scr.root.w);
 	}
+	/*
 	sync();
+	*/
 }
 
 static Key *
@@ -253,3 +259,4 @@ update_keys(void) {
 	}
 	sync();
 }
+

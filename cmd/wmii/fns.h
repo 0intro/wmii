@@ -175,9 +175,9 @@ void	update_keys(void);
 void	init_screen(WMScreen*);
 
 /* map.c */
-MapEnt*	hash_get(Map*, const char*, int create);
+void**	hash_get(Map*, const char*, bool create);
 void*	hash_rm(Map*, const char*);
-MapEnt*	map_get(Map*, ulong, int create);
+void**	map_get(Map*, ulong, bool create);
 void*	map_rm(Map*, ulong);
 
 /* message.c */

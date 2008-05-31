@@ -171,7 +171,6 @@ bar_draw(WMScreen *s) {
 		border(screen->ibuf, b->r, 1, b->col.border);
 	}
 	copyimage(s->barwin, r, screen->ibuf, ZP);
-	sync();
 }
 
 Bar*

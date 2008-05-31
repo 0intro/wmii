@@ -262,26 +262,26 @@ client_destroy(Client *c) {
 		hide = true;
 
 	XGrabServer(display);
-
-	/* In case the client is already unmapped */
+	/* In case the client is already destroyed. */
 	handler = XSetErrorHandler(ignoreerrors);
 
-	none = nil;
-	client_setviews(c, &none);
 	sethandler(&c->w, nil);
-	refree(&c->tagre);
-	refree(&c->tagvre);
-	free(c->retags);
-
 	if(hide)
 		reparentwindow(&c->w, &scr.root, screen->r.max);
 	else
 		reparentwindow(&c->w, &scr.root, r.min);
-	destroywindow(c->framewin);
 
 	sync();
 	XSetErrorHandler(handler);
 	XUngrabServer(display);
+
+	none = nil;
+	client_setviews(c, &none);
+	refree(&c->tagre);
+	refree(&c->tagvre);
+	free(c->retags);
+
+	destroywindow(c->framewin);
 
 	ewmh_destroyclient(c);
 	group_remove(c);
@@ -472,11 +472,9 @@ focus(Client *c, bool user) {
 
 void
 client_focus(Client *c) {
+	/* Round trip. */
 	static long id;
 	long _id;
-	flushevents(FocusChangeMask, true);
-
-	_id = id++ % 99;
 
 	if(c && c->group)
 		c->group->client = c;
@@ -484,9 +482,9 @@ client_focus(Client *c) {
 	sync();
 	flushevents(FocusChangeMask, true);
 
+	_id = id++ % 99;
 	Dprint(DFocus, "client_focus([%C]%s) %ld\n", c, clientname(c), _id);
-	Dprint(DFocus, "\t%02d [%C]%s\n\t=> [%C]%s\n",
-			_id,
+	Dprint(DFocus, "\t%02d [%C]%s\n\t=> [%C]%s\n", _id,
 			screen->focus, clientname(screen->focus),
 			c, clientname(c));
 	if(screen->focus != c) {
@@ -513,7 +511,7 @@ client_resize(Client *c, Rectangle r) {
 	f = c->sel;
 	frame_resize(f, r);
 
-	if(f->area->view != screen->sel) {
+	if(f->view != screen->sel) {
 		client_unmap(c, IconicState);
 		unmap_frame(c);
 		return;

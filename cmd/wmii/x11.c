@@ -366,7 +366,7 @@ lowerwin(Window *w) {
 Handlers*
 sethandler(Window *w, Handlers *new) {
 	Handlers *old;
-	MapEnt *e;
+	void **e;
 
 	assert(w->type == WWindow);
 	assert((w->prev != nil && w->next != nil) || w->next == w->prev);
@@ -374,8 +374,8 @@ sethandler(Window *w, Handlers *new) {
 	if(new == nil)
 		map_rm(&windowmap, (ulong)w->w);
 	else {
-		e = map_get(&windowmap, (ulong)w->w, 1);
-		e->val = w;
+		e = map_get(&windowmap, (ulong)w->w, true);
+		*e = w;
 	}
 	old = w->handler;
 	w->handler = new;
@@ -384,11 +384,11 @@ sethandler(Window *w, Handlers *new) {
 
 Window*
 findwin(XWindow w) {
-	MapEnt *e;
+	void **e;
 	
-	e = map_get(&windowmap, (ulong)w, 0);
+	e = map_get(&windowmap, (ulong)w, false);
 	if(e)
-		return e->val;
+		return *e;
 	return nil;
 }
 
@@ -651,12 +651,12 @@ labelh(Font *font) {
 /* Misc */
 Atom
 xatom(char *name) {
-	MapEnt *e;
+	void **e;
 	
-	e = hash_get(&atommap, name, 1);
-	if(e->val == nil)
-		e->val = (void*)XInternAtom(display, name, false);
-	return (Atom)e->val;
+	e = hash_get(&atommap, name, true);
+	if(*e == nil)
+		*e = (void*)XInternAtom(display, name, false);
+	return (Atom)*e;
 }
 
 void
