@@ -149,7 +149,7 @@ xawrite(int argc, char *argv[]) {
 
 	nbuf = 0;
 	for(i=0; i < argc; i++)
-		nbuf += strlen(argv[i]) + 1;
+		nbuf += strlen(argv[i]) + (i > 0);
 	buf = emalloc(nbuf);
 	buf[0] = '\0';
 	while(argc) {
