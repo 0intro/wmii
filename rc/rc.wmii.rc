@@ -247,8 +247,8 @@ Action overridekeys
 
 # Misc Setup
 progs_file=`{namespace}^/proglist.$pid
-Action status
-Action rehash
+Action status &
+Action rehash &
 
 # Tag Bar Setup
 ifs=$wi_nl{
