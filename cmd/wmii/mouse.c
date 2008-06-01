@@ -536,6 +536,7 @@ mouse_tempvertresize(Area *a, Point p) {
 
 	incmode = def.incmode;
 	def.incmode = IIgnore;
+	resizing = true;
 	column_arrange(a, false);
 
 	r.min.x = p.x;
@@ -568,6 +569,7 @@ done:
 	ungrabpointer();
 	destroyconstraintwin(cwin);
 	def.incmode = incmode;
+	resizing = false;
 	column_arrange(a, false);
 }
 

@@ -5,6 +5,8 @@
 #include <X11/keysym.h>
 #include "fns.h"
 
+typedef void (*EvHandler)(XEvent*);
+
 void
 dispatch_event(XEvent *e) {
 	Dprint(DEvent, "%E\n", e);
@@ -94,21 +96,17 @@ flushenterevents(void) {
 }
 
 static void
-buttonrelease(XEvent *e) {
-	XButtonPressedEvent *ev;
+buttonrelease(XButtonPressedEvent *ev) {
 	Window *w;
 
-	ev = &e->xbutton;
 	if((w = findwin(ev->window)))
 		handle(w, bup, ev);
 }
 
 static void
-buttonpress(XEvent *e) {
-	XButtonPressedEvent *ev;
+buttonpress(XButtonPressedEvent *ev) {
 	Window *w;
 
-	ev = &e->xbutton;
 	if((w = findwin(ev->window)))
 		handle(w, bdown, ev);
 	else
@@ -116,12 +114,10 @@ buttonpress(XEvent *e) {
 }
 
 static void
-configurerequest(XEvent *e) {
-	XConfigureRequestEvent *ev;
+configurerequest(XConfigureRequestEvent *ev) {
 	XWindowChanges wc;
 	Window *w;
 
-	ev = &e->xconfigurerequest;
 	if((w = findwin(ev->window)))
 		handle(w, configreq, ev);
 	else{
@@ -137,20 +133,16 @@ configurerequest(XEvent *e) {
 }
 
 static void
-configurenotify(XEvent *e) {
-	XConfigureEvent *ev;
+configurenotify(XConfigureEvent *ev) {
 	Window *w;
 
-	ev = &e->xconfigure;
 	if((w = findwin(ev->window)))
 		handle(w, config, ev);
 }
 
 static void
-clientmessage(XEvent *e) {
-	XClientMessageEvent *ev;
+clientmessage(XClientMessageEvent *ev) {
 
-	ev = &e->xclient;
 	if(ewmh_clientmessage(ev))
 		return;
 	if(xdnd_clientmessage(ev))
@@ -158,12 +150,10 @@ clientmessage(XEvent *e) {
 }
 
 static void
-destroynotify(XEvent *e) {
-	XDestroyWindowEvent *ev;
+destroynotify(XDestroyWindowEvent *ev) {
 	Window *w;
 	Client *c;
 
-	ev = &e->xdestroywindow;
 	if((w = findwin(ev->window))) 
 		handle(w, destroy, ev);
 	else {
@@ -174,11 +164,9 @@ destroynotify(XEvent *e) {
 }
 
 static void
-enternotify(XEvent *e) {
-	XCrossingEvent *ev;
+enternotify(XCrossingEvent *ev) {
 	Window *w;
 
-	ev = &e->xcrossing;
 	xtime = ev->time;
 	if(ev->mode != NotifyNormal)
 		return;
@@ -192,10 +180,8 @@ enternotify(XEvent *e) {
 }
 
 static void
-leavenotify(XEvent *e) {
-	XCrossingEvent *ev;
+leavenotify(XCrossingEvent *ev) {
 
-	ev = &e->xcrossing;
 	xtime = ev->time;
 	if((ev->window == scr.root.w) && !ev->same_screen) {
 		sel_screen = true;
@@ -211,12 +197,10 @@ print_focus(const char *fn, Client *c, const char *to) {
 }
 
 static void
-focusin(XEvent *e) {
-	XFocusChangeEvent *ev;
+focusin(XFocusChangeEvent *ev) {
 	Window *w;
 	Client *c;
 
-	ev = &e->xfocus;
 	/* Yes, we're focusing in on nothing, here. */
 	if(ev->detail == NotifyDetailNone) {
 		print_focus("focusin", &c_magic, "<magic[none]>");
@@ -254,12 +238,10 @@ focusin(XEvent *e) {
 }
 
 static void
-focusout(XEvent *e) {
+focusout(XFocusChangeEvent *ev) {
 	XEvent me;
-	XFocusChangeEvent *ev;
 	Window *w;
 
-	ev = &e->xfocus;
 	if(!((ev->detail == NotifyNonlinear)
 	   ||(ev->detail == NotifyNonlinearVirtual)
 	   ||(ev->detail == NotifyVirtual)
@@ -277,22 +259,17 @@ focusout(XEvent *e) {
 }
 
 static void
-expose(XEvent *e) {
-	XExposeEvent *ev;
+expose(XExposeEvent *ev) {
 	Window *w;
 
-	ev = &e->xexpose;
-	if(ev->count == 0) {
+	if(ev->count == 0)
 		if((w = findwin(ev->window))) 
 			handle(w, expose, ev);
-	}
 }
 
 static void
-keypress(XEvent *e) {
-	XKeyEvent *ev;
+keypress(XKeyEvent *ev) {
 
-	ev = &e->xkey;
 	xtime = ev->time;
 	ev->state &= valid_mask;
 	if(ev->window == scr.root.w)
@@ -300,27 +277,25 @@ keypress(XEvent *e) {
 }
 
 static void
-mappingnotify(XEvent *e) {
-	XMappingEvent *ev;
+mappingnotify(XMappingEvent *ev) {
 
-	ev = &e->xmapping;
 	XRefreshKeyboardMapping(ev);
 	if(ev->request == MappingKeyboard)
 		update_keys();
 }
 
 static void
-maprequest(XEvent *e) {
-	XMapRequestEvent *ev;
+maprequest(XMapRequestEvent *ev) {
 	XWindowAttributes wa;
 
-	ev = &e->xmaprequest;
 	if(!XGetWindowAttributes(display, ev->window, &wa))
 		return;
 	if(wa.override_redirect) {
 		/* Do I really want these? */
+		/* Probably not.
 		XSelectInput(display, ev->window,
-			(StructureNotifyMask | PropertyChangeMask));
+			 PropertyChangeMask | StructureNotifyMask);
+		*/
 		return;
 	}
 	if(!win2client(ev->window))
@@ -328,45 +303,37 @@ maprequest(XEvent *e) {
 }
 
 static void
-motionnotify(XEvent *e) {
-	XMotionEvent *ev;
+motionnotify(XMotionEvent *ev) {
 	Window *w;
 
 	ignoreenter = false;
 
-	ev = &e->xmotion;
 	xtime = ev->time;
 	if((w = findwin(ev->window)))
 		handle(w, motion, ev);
 }
 
 static void
-propertynotify(XEvent *e) {
-	XPropertyEvent *ev;
+propertynotify(XPropertyEvent *ev) {
 	Window *w;
 
-	ev = &e->xproperty;
 	xtime = ev->time;
 	if((w = findwin(ev->window))) 
 		handle(w, property, ev);
 }
 
 static void
-mapnotify(XEvent *e) {
-	XMapEvent *ev;
+mapnotify(XMapEvent *ev) {
 	Window *w;
 
-	ev = &e->xmap;
 	if((w = findwin(ev->window))) 
 		handle(w, map, ev);
 }
 
 static void
-unmapnotify(XEvent *e) {
-	XUnmapEvent *ev;
+unmapnotify(XUnmapEvent *ev) {
 	Window *w;
 
-	ev = &e->xunmap;
 	if((w = findwin(ev->window)) && (ev->event == w->parent->w)) {
 		w->mapped = false;
 		if(ev->send_event || w->unmapped-- == 0)
@@ -374,25 +341,25 @@ unmapnotify(XEvent *e) {
 	}
 }
 
-void (*handler[LASTEvent]) (XEvent *) = {
-	[ButtonPress] = buttonpress,
-	[ButtonRelease] = buttonrelease,
-	[ConfigureRequest] = configurerequest,
-	[ConfigureNotify] = configurenotify,
-	[ClientMessage] = clientmessage,
-	[DestroyNotify] = destroynotify,
-	[EnterNotify] = enternotify,
-	[Expose] = expose,
-	[FocusIn] = focusin,
-	[FocusOut] = focusout,
-	[KeyPress] = keypress,
-	[LeaveNotify] = leavenotify,
-	[MapNotify] = mapnotify,
-	[MapRequest] = maprequest,
-	[MappingNotify] = mappingnotify,
-	[MotionNotify] = motionnotify,
-	[PropertyNotify] = propertynotify,
-	[UnmapNotify] = unmapnotify,
+EvHandler handler[LASTEvent] = {
+	[ButtonPress] =		(EvHandler)buttonpress,
+	[ButtonRelease] =	(EvHandler)buttonrelease,
+	[ConfigureRequest] =	(EvHandler)configurerequest,
+	[ConfigureNotify] =	(EvHandler)configurenotify,
+	[ClientMessage] =	(EvHandler)clientmessage,
+	[DestroyNotify] =	(EvHandler)destroynotify,
+	[EnterNotify] =		(EvHandler)enternotify,
+	[Expose] =		(EvHandler)expose,
+	[FocusIn] =		(EvHandler)focusin,
+	[FocusOut] =		(EvHandler)focusout,
+	[KeyPress] =		(EvHandler)keypress,
+	[LeaveNotify] =		(EvHandler)leavenotify,
+	[MapNotify] =		(EvHandler)mapnotify,
+	[MapRequest] =		(EvHandler)maprequest,
+	[MappingNotify] =	(EvHandler)mappingnotify,
+	[MotionNotify] =	(EvHandler)motionnotify,
+	[PropertyNotify] =	(EvHandler)propertynotify,
+	[UnmapNotify] =		(EvHandler)unmapnotify,
 };
 
 void
@@ -406,3 +373,4 @@ check_x_event(IxpConn *c) {
 		dispatch_event(&ev);
 	}
 }
+

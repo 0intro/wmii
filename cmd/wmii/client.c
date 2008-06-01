@@ -519,7 +519,7 @@ client_resize(Client *c, Rectangle r) {
 	c->r = rectaddpt(f->crect, f->r.min);
 
 	if(f->collapsed) {
-		if(f->area->max)
+		if(f->area->max && !resizing)
 			unmap_frame(c);
 		else {
 			reshapewin(c->framewin, f->r);

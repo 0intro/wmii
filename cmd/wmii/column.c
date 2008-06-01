@@ -13,18 +13,56 @@ char *modes[] = {
 	[Colmax] =	"max",
 };
 
-static int
-str2colmode(const char *str) {
-	int i;
-	
-	for(i = 0; i < nelem(modes); i++)
-		if(!strcasecmp(str, modes[i]))
-			return i;
-	return -1;
-}
-
 bool
 column_setmode(Area *a, const char *mode) {
+	char *s, *t, *orig;
+	char add, old;
+
+	orig = strdup(mode);
+	t = orig;
+	old = '\0';
+	for(s=t; *s; s=t) {
+		add = old;
+		while((old=*s) && !strchr("+-^", old))
+			s++;
+		*s = '\0';
+		if(s > t) {
+			if(!strcmp(t, "max")) {
+				if(add == '\0' || add == '+')
+					a->max = true;
+				else if(add == '-')
+					a->max = false;
+				else
+					a->max = !a->max;
+			}else
+			if(!strcmp(t, "stack")) {
+				if(add == '\0' || add == '+')
+					a->mode = Colstack;
+				else if(add == '-')
+					a->mode = Coldefault;
+				else
+					a->mode = a->mode == Colstack ? Coldefault : Colstack;
+			}else
+			if(!strcmp(t, "default")) {
+				if(add == '\0' || add == '+') {
+					a->mode = Coldefault;
+					column_arrange(a, true);
+				}else if(add == '-')
+					a->mode = Colstack;
+				else
+					a->mode = a->mode == Coldefault ? Colstack : Coldefault;
+			}else
+				return false;
+		}
+		t = s;
+		if(old)
+			t++;
+		
+	}
+	free(orig);
+	return true;
+
+#ifdef notdef
 	int i;
 
 	i = str2colmode(mode);
@@ -37,6 +75,7 @@ column_setmode(Area *a, const char *mode) {
 		a->max = true;
 	}
 	return true;
+#endif
 }
 
 char*
@@ -261,7 +300,7 @@ column_fit(Area *a, uint *ncolp, uint *nuncolp) {
 	minh = labelh(def.font);
 	colh = labelh(def.font);
 	uncolh = minh + colh + 1;
-	if(a->max)
+	if(a->max && !resizing)
 		colh = 0;
 
 	/* Count collapsed and uncollapsed frames. */
@@ -421,15 +460,13 @@ comp_frame(const void *a, const void *b) {
 static void
 column_squeeze(Area *a) {
 	static Vector_ptr fvec; 
-	WinHints h;
 	Frame *f;
 	int surplus, osurplus, dy, i;
 
 	fvec.n = 0;
 	for(f=a->frame; f; f=f->anext)
 		if(!f->collapsed) {
-			h = frame_gethints(f);
-			f->r = sizehint(&h, f->r);
+			f->r = frame_hints(f, f->r, 0);
 			vector_ppush(&fvec, f);
 		}
 
@@ -474,7 +511,7 @@ column_scale(Area *a) {
 	column_fit(a, &ncol, &nuncol);
 
 	colh = labelh(def.font);
-	if(a->max)
+	if(a->max && !resizing)
 		colh = 0;
 
 	dy = 0;

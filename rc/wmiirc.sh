@@ -151,11 +151,11 @@ events() {
 	Key $MODKEY-space
 		wmiir xwrite /tag/sel/ctl select toggle
 	Key $MODKEY-d
-		wmiir xwrite /tag/sel/ctl colmode sel default
+		wmiir xwrite /tag/sel/ctl colmode sel default-max
 	Key $MODKEY-s
-		wmiir xwrite /tag/sel/ctl colmode sel stack
+		wmiir xwrite /tag/sel/ctl colmode sel stack-max
 	Key $MODKEY-m
-		wmiir xwrite /tag/sel/ctl colmode sel max
+		wmiir xwrite /tag/sel/ctl colmode sel stack+max
 	Key $MODKEY-a
 		Action $(wi_actions | wi_menu) &
 	Key $MODKEY-p

@@ -205,11 +205,11 @@ key $MODKEY-space || fn $key {
 key $MODKEY-Shift-space || fn $key {
 	wmiir xwrite /tag/sel/ctl send sel toggle}
 key $MODKEY-d || fn $key {
-	wmiir xwrite /tag/sel/ctl colmode sel default}
+	wmiir xwrite /tag/sel/ctl colmode sel default-max}
 key $MODKEY-s || fn $key {
-	wmiir xwrite /tag/sel/ctl colmode sel stack}
+	wmiir xwrite /tag/sel/ctl colmode sel stack-max}
 key $MODKEY-m || fn $key {
-	wmiir xwrite /tag/sel/ctl colmode sel max}
+	wmiir xwrite /tag/sel/ctl colmode sel stack+max}
 
 key $MODKEY-Shift-c || fn $key {
 	wmiir xwrite /client/sel/ctl kill}

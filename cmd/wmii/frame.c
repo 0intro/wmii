@@ -255,6 +255,7 @@ WinHints
 frame_gethints(Frame *f) {
 	WinHints h;
 	Client *c;
+	Rectangle r;
 	Point d;
 	int minh;
 
@@ -263,14 +264,9 @@ frame_gethints(Frame *f) {
 	c = f->client;
 	h = *c->w.hints;
 
-	d.y = labelh(def.font);
-	if(f->area->floating) {
-		d.x = 2*def.border;
-		d.y += def.border;
-	}else {
-		d.x = 2;
-		d.y += 2;
-	}
+	r = frame_rect2client(c, f->r, f->area->floating);
+	d.x = Dx(f->r) - Dx(r);
+	d.y = Dy(f->r) - Dy(r);
 
 	if(!f->area->floating && def.incmode == IIgnore)
 		h.inc = Pt(1, 1);
@@ -282,6 +278,7 @@ frame_gethints(Frame *f) {
 
 	h.min.x += d.x;
 	h.min.y += d.y;
+	/* Guard against overflow. */
 	if(h.max.x + d.x > h.max.x)
 		h.max.x += d.x;
 	if(h.max.y + d.y > h.max.y)
@@ -354,7 +351,7 @@ frame_resize(Frame *f, Rectangle r) {
 	int collapsed, dx;
 
 	if(btassert("8 full", Dx(r) <= 0 || Dy(r) < 0
-		           || Dy(r) == 0 && !f->area->max && !f->collapsed)) {
+		           || Dy(r) == 0 && (!f->area->max || resizing) && !f->collapsed)) {
 		fprint(2, "Frame rect: %R\n", r);
 		r.max.x = min(r.min.x+1, r.max.x);
 		r.max.y = min(r.min.y+1, r.max.y);
@@ -495,7 +492,7 @@ frame_draw(Frame *f) {
 	r.min.y = 0;
 	r.max.y = labelh(def.font);
 	/* Draw count on frames in 'max' columns. */
-	if(f->area->max) {
+	if(f->area->max && !resizing) {
 		/* XXX */
 		n = stack_count(f, &m);
 		s = smprint("%d/%d", m, n);

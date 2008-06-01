@@ -275,12 +275,8 @@ view_focus(WMScreen *s, View *v) {
 	
 	USED(s);
 
-	XGrabServer(display);
-
 	_view_select(v);
 	view_update(v);
-
-	XUngrabServer(display);
 }
 
 void

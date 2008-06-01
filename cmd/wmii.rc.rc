@@ -70,9 +70,10 @@ fn wi_fn-p {
 }
 
 fn wi_proglist {
-        /bin/ls -lL `{echo $* | sed 'y/:/ /'} >[2]/dev/null \
-		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
-		| sort | uniq
+	# XXX: maxdepth is not POSIX compliant.
+	ifs=: { find -L `{echo $*} -type f -a -maxdepth 1 \
+	        '(' -perm -0100 -o -perm -0010 -o -perm -0001 ')' >[2]/dev/null \
+		| sed 's,.*/,,' | sort | uniq}
 }
 
 fn wi_actions {

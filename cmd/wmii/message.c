@@ -553,7 +553,7 @@ message_view(View *v, IxpMsg *m) {
 		if(s == nil || !column_setmode(a, s))
 			return Ebadvalue;
 
-		column_arrange(a, true);
+		column_arrange(a, false);
 		view_restack(v);
 
 		view_update(v);
@@ -889,6 +889,8 @@ msg_selectframe(Frame *f, IxpMsg *m, int sym) {
 		fp->colr.max.y = fp->colr.min.y + dy;
 		column_arrange(a, false);
 	}
+	if(!f->area->floating)
+		frame_draw_all();
 
 	frame_focus(fp);
 	frame_restack(fp, nil);
