@@ -42,6 +42,7 @@ status() {
 	echo -n $(uptime | sed 's/.*://; s/,//g') '|' $(date)
 }
 
+local_events() { true;}
 wi_runconf -s wmiirc_local
 
 echo $WMII_NORMCOLORS | wmiir create $noticebar
@@ -180,6 +181,10 @@ events() {
 		wmiir xwrite /tag/sel/ctl select down
 	Key $MODKEY-$UP
 		wmiir xwrite /tag/sel/ctl select up
+	Key $MODKEY-Control-$DOWN
+		wmiir xwrite /tag/sel/ctl select down stack
+	Key $MODKEY-Control-$UP
+		wmiir xwrite /tag/sel/ctl select up stack
 	Key $MODKEY-Shift-$LEFT
 		wmiir xwrite /tag/sel/ctl send sel left
 	Key $MODKEY-Shift-$RIGHT
@@ -200,7 +205,7 @@ events() {
 }
 wi_events <<!
 $(events)
-$local_events
+$(local_events)
 !
 unset events local_events
 

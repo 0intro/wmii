@@ -71,7 +71,7 @@ fn wi_fn-p {
 
 fn wi_proglist {
 	# XXX: maxdepth is not POSIX compliant.
-	ifs=: { find -L `{echo $*} -type f -a -maxdepth 1 \
+	ifs=: { find -L `{echo -n $*} -type f -a -maxdepth 1 \
 	        '(' -perm -0100 -o -perm -0010 -o -perm -0001 ')' >[2]/dev/null \
 		| sed 's,.*/,,' | sort | uniq}
 }
