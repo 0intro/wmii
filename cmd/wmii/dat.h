@@ -32,9 +32,9 @@ enum {
 };
 
 enum IncMode {
-	ISqueeze,
-	IShow,
 	IIgnore,
+	IShow,
+	ISqueeze,
 };
 
 enum {
@@ -81,7 +81,7 @@ enum {
 	CurNormal,
 	CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
 	CurDHArrow, CurDVArrow, CurMove, CurInput, CurSizing,
-	CurIcon,
+	CurTCross, CurIcon,
 	CurNone,
 	CurLast,
 };

@@ -61,31 +61,13 @@ column_setmode(Area *a, const char *mode) {
 	}
 	free(orig);
 	return true;
-
-#ifdef notdef
-	int i;
-
-	i = str2colmode(mode);
-	if(i == -1)
-		return false;
-	a->mode = i;
-	a->max = false;
-	if(i == Colmax) {
-		a->mode = Colstack;
-		a->max = true;
-	}
-	return true;
-#endif
 }
 
 char*
 column_getmode(Area *a) {
 
-	if(a->mode == Coldefault)
-		return "default";
-	if(a->max)
-		return "max";
-	return "stack";
+	return sxprint("%s%cmax", a->mode == Colstack ? "stack" : "default",
+				  a->max ? '+' : '-');
 }
 
 Area*
@@ -408,7 +390,7 @@ column_settle(Area *a) {
 		f->colr = rectsetorigin(f->colr, Pt(a->r.min.x, yoffcr));
 		f->r.min.x = a->r.min.x;
 		f->r.max.x = a->r.max.x;
-		if(def.incmode == ISqueeze)
+		if(def.incmode == ISqueeze && !resizing)
 		if(!f->collapsed) {
 			f->r.max.y += surplus;
 			if(n-- > 0)
@@ -535,7 +517,7 @@ column_scale(Area *a) {
 		frame_resize(f, f->colr);
 	}
 
-	if(def.incmode == ISqueeze)
+	if(def.incmode == ISqueeze && !resizing)
 		column_squeeze(a);
 	column_settle(a);
 }

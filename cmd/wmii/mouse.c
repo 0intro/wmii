@@ -128,9 +128,10 @@ snap_vline(Rectangle *rects, int nrect, int dxy, Rectangle *r, int x) {
 
 #undef frob
 
-/* Returns a gravity for increment handling. It's normally the opposite of the mask
- * (the directions that we're resizing in), unless a snap occurs, in which case, it's the
- * direction of the snap.
+/* Returns a gravity for increment handling. It's normally the
+ * opposite of the mask (the directions that we're resizing in),
+ * unless a snap occurs, in which case, it's the direction of the
+ * snap.
  */
 Align
 snap_rect(Rectangle *rects, int num, Rectangle *r, Align *mask, int snap) {
@@ -588,7 +589,7 @@ mouse_checkresize(Frame *f, Point p, bool exec) {
 	r = rectsubpt(f->r, f->r.min);
 	q = quadrant(r, p);
 	if(rect_haspoint_p(p, f->grabbox)) {
-		cur = cursor[CurMove];
+		cur = cursor[CurTCross];
 		if(exec) mouse_movegrabbox(f->client, false);
 	}
 	else if(f->area->floating) {

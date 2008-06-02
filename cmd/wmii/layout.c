@@ -246,7 +246,6 @@ mouse_movegrabbox(Client *c, bool grabmod) {
 	Frame *f;
 	Point p;
 	float x, y;
-	int incmode;
 
 	f = c->sel;
 
@@ -256,8 +255,6 @@ mouse_movegrabbox(Client *c, bool grabmod) {
 		y = (float)p.y / Dy(f->r);
 	}
 
-	incmode = def.incmode;
-	def.incmode = IShow;
 	resizing = true;
 	view_update(f->view);
 	warppointer(grabboxcenter(f));
@@ -267,7 +264,6 @@ mouse_movegrabbox(Client *c, bool grabmod) {
 	else
 		trampoline(THCol, f);
 
-	def.incmode = incmode;
 	resizing = false;
 	view_update(f->view);
 	if(grabmod)

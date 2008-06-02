@@ -31,6 +31,7 @@ enum {
 	LFONT,
 	LGRABMOD,
 	LGROW,
+	LINCMODE,
 	LKILL,
 	LLEFT,
 	LNORMCOLORS,
@@ -63,6 +64,7 @@ char *symtab[] = {
 	"font",
 	"grabmod",
 	"grow",
+	"incmode",
 	"kill",
 	"left",
 	"normcolors",
@@ -91,8 +93,13 @@ char* debugtab[] = {
 };
 
 static char* barpostab[] = {
-	[BBottom] = "bottom",
-	[BTop]    = "top",
+	"bottom",
+	"top",
+};
+static char* incmodetab[] = {
+	"ignore",
+	"show",
+	"squeeze",
 };
 
 /* Edit ,y/^[a-zA-Z].*\n.* {\n/d
@@ -134,9 +141,14 @@ getdebug(char *s) {
 	return _bsearch(s, debugtab, nelem(debugtab));
 }
 
-static int
-getbarpos(char *s) {
-	return _bsearch(s, barpostab, nelem(barpostab));
+static bool
+setdef(int *ptr, char *s, char *tab[], int ntab) {
+	int i;
+
+	i = _bsearch(s, tab, ntab);
+	if(i >= 0)
+		*ptr = i;
+	return i >= 0;
 }
 
 static int
@@ -417,7 +429,6 @@ message_root(void *p, IxpMsg *m) {
 	Font *fn;
 	char *s, *ret;
 	ulong n;
-	int i;
 
 	USED(p);
 	ret = nil;
@@ -430,10 +441,8 @@ message_root(void *p, IxpMsg *m) {
 		s = msg_getword(m);
 		if(!strcmp(s, "on"))
 			s = msg_getword(m);
-		i = getbarpos(s);
-		if(i < 0)
+		if(!setdef(&screen->barpos, s, barpostab, nelem(barpostab)))
 			return Ebadvalue;
-		screen->barpos = i;
 		view_update(screen->sel);
 		break;
 	case LBORDER:
@@ -473,12 +482,17 @@ message_root(void *p, IxpMsg *m) {
 		utflcpy(def.grabmod, s, sizeof def.grabmod);
 		def.mod = n;
 		break;
+	case LINCMODE:
+		if(!setdef(&def.incmode, msg_getword(m), incmodetab, nelem(incmodetab)))
+			return Ebadvalue;
+		view_update(screen->sel);
+		break;
 	case LNORMCOLORS:
 		ret = msg_parsecolors(m, &def.normcolor);
 		view_update(screen->sel);
 		break;
 	case LSELCOLORS:
-		fprint(2, "%s: warning: selcolors have been removed\n", argv0);
+		warning("selcolors have been removed");
 		return Ebadcmd;
 	case LVIEW:
 		view_select(m->pos);
@@ -1033,13 +1047,8 @@ printdebug(int mask) {
 char*
 readctl_root(void) {
 	bufclear();
-	bufprint("view %s\n", screen->sel->name);
-	bufprint("focuscolors %s\n", def.focuscolor.colstr);
-	bufprint("normcolors %s\n", def.normcolor.colstr);
-	bufprint("font %s\n", def.font->name);
-	bufprint("grabmod %s\n", def.grabmod);
-	bufprint("border %d\n", def.border);
 	bufprint("bar on %s\n", barpostab[screen->barpos]);
+	bufprint("border %d\n", def.border);
 	if(debugflag) {
 		bufprint("debug ");
 		printdebug(debugflag);
@@ -1050,6 +1059,12 @@ readctl_root(void) {
 		printdebug(debugfile);
 		bufprint("\n");
 	}
+	bufprint("focuscolors %s\n", def.focuscolor.colstr);
+	bufprint("font %s\n", def.font->name);
+	bufprint("grabmod %s\n", def.grabmod);
+	bufprint("incmode %s\n", incmodetab[screen->barpos]);
+	bufprint("normcolors %s\n", def.normcolor.colstr);
+	bufprint("view %s\n", screen->sel->name);
 	return buffer;
 }
 

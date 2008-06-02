@@ -120,6 +120,7 @@ init_cursors(void) {
 	create_cursor(CurInput, XC_xterm);
 	create_cursor(CurSizing, XC_sizing);
 	create_cursor(CurIcon, XC_icon);
+	create_cursor(CurTCross, XC_tcross);
 
 	XAllocNamedColor(display, scr.colormap,
 			"black", &black, &dummy);
@@ -209,9 +210,15 @@ cleanup_handler(int signal) {
 	srv.running = false;
 
 	switch(signal) {
+	case SIGTERM:
+		sa.sa_handler = cleanup_handler;
+		sigaction(SIGALRM, &sa, nil);
+		alarm(1);
 	default:
 		exitsignal = signal;
 		break;
+	case SIGALRM:
+		raise(SIGTERM);
 	case SIGINT:
 		break;
 	}
@@ -230,7 +237,7 @@ init_traps(void) {
 		close(ConnectionNumber(display));
 		setsid();
 
-		display = XOpenDisplay(0);
+		display = XOpenDisplay(nil);
 		if(!display)
 			fatal("Can't open display");
 
@@ -365,9 +372,10 @@ extern int fmtevent(Fmt*);
 	ixp_listen(&srv, sock, &p9srv, serve_9pcon, nil);
 	ixp_listen(&srv, ConnectionNumber(display), nil, check_x_event, closedisplay);
 
-	def.font = loadfont(FONT);
 	def.border = 1;
 	def.colmode = Coldefault;
+	def.font = loadfont(FONT);
+	def.incmode = ISqueeze;
 
 	def.mod = Mod1Mask;
 	strcpy(def.grabmod, "Mod1");
