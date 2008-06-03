@@ -40,7 +40,7 @@ write_data(IxpCFid *fid, char *name) {
 		if(len <= 0)
 			break;
 		if(ixp_write(fid, buf, len) != len)
-			fatal("cannot write file '%s': %r\n", name);
+			fatal("cannot write file %q\n", name);
 	}
 	free(buf);
 }
@@ -375,6 +375,7 @@ main(int argc, char *argv[]) {
 	exectab *tab;
 	int ret;
 
+	quotefmtinstall();
 	fmtinstall('r', errfmt);
 
 	address = getenv("WMII_ADDRESS");
