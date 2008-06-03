@@ -342,8 +342,7 @@ extern int fmtevent(Fmt*);
 
 	check_other_wm = true;
 	selectinput(&scr.root, SubstructureRedirectMask
-			     | EnterWindowMask
-			     | PointerMotionMask);
+			     | EnterWindowMask);
 	sync();
 
 	check_other_wm = false;

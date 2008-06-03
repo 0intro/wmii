@@ -227,8 +227,6 @@ client_manage(Client *c) {
 		frame_restack(c->sel, c->sel->area->sel);
 		view_restack(c->sel->view);
 	}
-
-	ignoreenter = true;
 }
 
 static int /* Temporary Xlib error handler */
@@ -286,7 +284,6 @@ client_destroy(Client *c) {
 	group_remove(c);
 	event("DestroyClient %C\n", c);
 
-	ignoreenter = true;
 	flushevents(FocusChangeMask, true);
 	free(c->w.hints);
 	free(c);
@@ -852,7 +849,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 	c = w->aux;
 	if(e->detail != NotifyInferior) {
 		if(e->detail != NotifyVirtual)
-		if(!ignoreenter && screen->focus != c) {
+		if(e->serial != ignoreenter && screen->focus != c) {
 			Dprint(DFocus, "enter_notify([%C]%s)\n", c, c->name);
 			focus(c, false);
 		}

@@ -201,7 +201,6 @@ static void
 config_event(Window *w, XConfigureEvent *e) {
 
 	USED(w, e);
-	ignoreenter = true;
 }
 
 static void
@@ -212,9 +211,10 @@ enter_event(Window *w, XCrossingEvent *e) {
 	c = w->aux;
 	f = c->sel;
 	if(screen->focus != c || selclient() != c) {
-		Dprint(DFocus, "enter_notify(f) => %s\n", f->client->name);
+		Dprint(DFocus, "enter_notify(f) => [%C]%s%s\n",
+		       f->client, f->client->name, ignoreenter == e->serial ? " (ignored)" : "");
 		if(e->detail != NotifyInferior)
-		if(!ignoreenter && (f->area->floating || !f->collapsed))
+		if(e->serial != ignoreenter && (f->area->floating || !f->collapsed))
 			focus(f->client, false);
 	}
 	mouse_checkresize(f, Pt(e->x, e->y), false);

@@ -136,11 +136,6 @@ getsym(char *s) {
 	return _bsearch(s, symtab, nelem(symtab));
 }
 
-int
-getdebug(char *s) {
-	return _bsearch(s, debugtab, nelem(debugtab));
-}
-
 static bool
 setdef(int *ptr, char *s, char *tab[], int ntab) {
 	int i;
@@ -289,11 +284,11 @@ getulong(const char *s, ulong *ret) {
 }
 
 static char*
-strend(const char *s, int n) {
+strend(char *s, int n) {
 	int len;
 
 	len = strlen(s);
-	return (char*)(uintptr_t)s + max(0, len - n);
+	return s + max(0, len - n);
 }
 
 static Client*
@@ -599,7 +594,7 @@ msg_debug(IxpMsg *m) {
 		add = '+';
 		if(opt[0] == '+' || opt[0] == '-')
 			add = *opt++;
-		d = getdebug(opt);
+		d = _bsearch(opt, debugtab, nelem(debugtab));
 		if(d == -1) {
 			bufprint(", %s", opt);
 			continue;

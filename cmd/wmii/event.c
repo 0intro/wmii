@@ -136,6 +136,7 @@ static void
 configurenotify(XConfigureEvent *ev) {
 	Window *w;
 
+	ignoreenter = ev->serial;
 	if((w = findwin(ev->window)))
 		handle(w, config, ev);
 }
@@ -305,8 +306,6 @@ maprequest(XMapRequestEvent *ev) {
 static void
 motionnotify(XMotionEvent *ev) {
 	Window *w;
-
-	ignoreenter = false;
 
 	xtime = ev->time;
 	if((w = findwin(ev->window)))
