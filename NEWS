@@ -1,0 +1,9 @@
+2008-08-25:
+    * libixp version 97 now required
+    * Stack and max modes now affect floating clients:
+        - max: Collapsed clients disappear, all clients disappear
+               when managed layer is selected.
+        - stack: All clients but selected are collapsed.
+    * Adobe's Flash plugin's fullscreen mode now works.
+    * Some annoying focus bugs are fixed.
+
