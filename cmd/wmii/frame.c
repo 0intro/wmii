@@ -215,6 +215,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 		       f->client, f->client->name, ignoreenter == e->serial ? " (ignored)" : "");
 		if(e->detail != NotifyInferior)
 		if(e->serial != ignoreenter && (f->area->floating || !f->collapsed))
+		if(!(c->w.ewmh.type & TypeSplash))
 			focus(f->client, false);
 	}
 	mouse_checkresize(f, Pt(e->x, e->y), false);
@@ -296,26 +297,30 @@ frame_gethints(Frame *f) {
 	return h;
 }
 
+#define ADJ(PE, ME) \
+	if(c->fullscreen)                            \
+		return r;                            \
+                                                     \
+	if(!floating) {                              \
+		r.min.x PE 1;                        \
+		r.min.y PE labelh(def.font);         \
+		r.max.x ME 1;                        \
+		r.max.y ME 1;                        \
+	}else {                                      \
+		if(!c->borderless) {                 \
+			r.min.x PE def.border;       \
+			r.max.x ME def.border;       \
+			r.max.y ME def.border;       \
+		}                                    \
+		if(!c->titleless)                    \
+			r.min.y PE labelh(def.font); \
+	}                                            \
+
 Rectangle
 frame_rect2client(Client *c, Rectangle r, bool floating) {
 
-	if(c->fullscreen)
-		return r;
+	ADJ(+=, -=)
 
-	if(!floating) {
-		r.min.x += 1;
-		r.min.y += labelh(def.font);
-		r.max.x -= 1;
-		r.max.y -= 1;
-	}else {
-		if(!c->borderless) {
-			r.min.x += def.border;
-			r.max.x -= def.border;
-			r.max.y -= def.border;
-		}
-		if(!c->titleless)
-			r.min.y += labelh(def.font);
-	}
 	r.max.x = max(r.max.x, r.min.x+1);
 	r.max.y = max(r.max.y, r.min.y+1);
 	return r;
@@ -324,25 +329,12 @@ frame_rect2client(Client *c, Rectangle r, bool floating) {
 Rectangle
 frame_client2rect(Client *c, Rectangle r, bool floating) {
 
-	if(c->fullscreen)
-		return r;
+	ADJ(-=, +=)
 
-	if(!floating) {
-		r.min.x -= 1;
-		r.min.y -= labelh(def.font);
-		r.max.x += 1;
-		r.max.y += 1;
-	}else {
-		if(!c->borderless) {
-			r.min.x -= def.border;
-			r.max.x += def.border;
-			r.max.y += def.border;
-		}
-		if(!c->titleless)
-			r.min.y -= labelh(def.font);
-	}
 	return r;
 }
+
+#undef ADJ
 
 void
 frame_resize(Frame *f, Rectangle r) {
@@ -364,8 +356,10 @@ frame_resize(Frame *f, Rectangle r) {
 		return;
 	}
 
+	/*
 	if(f->area->floating)
 		f->collapsed = false;
+	*/
 
 	fr = frame_hints(f, r, get_sticky(f->r, r));
 	if(f->area->floating && !c->strut)
@@ -398,7 +392,7 @@ frame_resize(Frame *f, Rectangle r) {
 	}
 	f->crect = rectsubpt(cr, f->r.min);
 
-	if(f->area->floating)
+	if(f->area->floating && !f->collapsed)
 		f->floatr = f->r;
 }
 
@@ -458,7 +452,7 @@ frame_draw(Frame *f) {
 	f->titlebar = insetrect(r, 3);
 	f->titlebar.max.y += 3;
 
-	/* Odd focus. Ulselected, with keyboard focus. */
+	/* Odd focus. Unselected, with keyboard focus. */
 	/* Draw a border just inside the titlebar. */
 	if(c != selclient() && c == screen->focus) {
 		border(img, insetrect(r, 1), 1, def.normcolor.bg);
@@ -481,7 +475,7 @@ frame_draw(Frame *f) {
 		border(img, insetrect(r, -1), 1, def.normcolor.bg);
 
 	/* Draw a border on borderless+titleless selected apps. */
-	if(c->borderless && c->titleless && c == selclient())
+	if(f->area->floating && c->borderless && c->titleless && c == selclient())
 		setborder(c->framewin, def.border, def.focuscolor.border);
 	else
 		setborder(c->framewin, 0, 0);
@@ -626,6 +620,8 @@ frame_focus(Frame *f) {
 		return;
 
 	move_focus(old_f, f);
+	if(a->floating)
+		float_arrange(a);
 	client_focus(f->client);
 
 	/*

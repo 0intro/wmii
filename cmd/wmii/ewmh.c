@@ -7,6 +7,9 @@
 
 Window *ewmhwin;
 
+static void	ewmh_getwinstate(Client*);
+static void	ewmh_setstate(Client*, Atom, int);
+
 #define Net(x) ("_NET_" x)
 #define	Action(x) ("_NET_WM_ACTION_" x)
 #define	State(x) ("_NET_WM_STATE_" x)
@@ -117,6 +120,7 @@ ewmh_initclient(Client *c) {
 	changeprop_long(&c->w, Net("WM_ALLOWED_ACTIONS"), "ATOM",
 		allowed, nelem(allowed));
 	ewmh_getwintype(c);
+	ewmh_getwinstate(c);
 	ewmh_getstrut(c);
 	ewmh_updateclientlist();
 }
@@ -237,6 +241,18 @@ ewmh_getwintype(Client *c) {
 	}
 }
 
+static void
+ewmh_getwinstate(Client *c) {
+	ulong *vals;
+	long n;
+
+	n = getprop_ulong(&c->w, Net("WM_STATE"), "ATOM",
+		0L, &vals, 16);
+	while(--n >= 0)
+		ewmh_setstate(c, vals[n], On);
+	free(vals);
+}
+
 long
 ewmh_protocols(Window *w) {
 	static Prop props[] = {
@@ -297,6 +313,20 @@ ewmh_getstrut(Client *c) {
 	view_update(screen->sel);
 }
 
+static void
+ewmh_setstate(Client *c, Atom state, int action) {
+
+	Dprint(DEwmh, "\tSTATE = %A\n", state);
+	if(state == 0)
+		return;
+
+	if(state == STATE("FULLSCREEN"))
+		fullscreen(c, action);
+	else
+	if(state == STATE("DEMANDS_ATTENTION"))
+		client_seturgent(c, action, UrgClient);
+}
+
 int
 ewmh_clientmessage(XClientMessageEvent *e) {
 	Client *c;
@@ -328,16 +358,8 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 			return -1;
 		}
 		Dprint(DEwmh, "\tAction: %s\n", TOGGLE(action));
-		for(i = 1; i <= 2; i++) {
-			if(l[i] == 0)
-				break;
-			Dprint(DEwmh, "\tl[%d] = %A\n", i, l[i]);
-			if(l[i] == STATE("FULLSCREEN"))
-				fullscreen(c, action);
-			else
-			if(l[i] == STATE("DEMANDS_ATTENTION"))
-				client_seturgent(c, action, UrgClient);
-		}
+		ewmh_setstate(c, l[1], action);
+		ewmh_setstate(c, l[2], action);
 		return 1;
 	}else
 	if(msg == NET("ACTIVE_WINDOW")) {

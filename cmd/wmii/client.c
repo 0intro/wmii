@@ -469,8 +469,6 @@ focus(Client *c, bool user) {
 void
 client_focus(Client *c) {
 	/* Round trip. */
-	static long id;
-	long _id;
 
 	if(c && c->group)
 		c->group->client = c;
@@ -478,9 +476,8 @@ client_focus(Client *c) {
 	sync();
 	flushevents(FocusChangeMask, true);
 
-	_id = id++ % 99;
-	Dprint(DFocus, "client_focus([%C]%s) %ld\n", c, clientname(c), _id);
-	Dprint(DFocus, "\t%02d [%C]%s\n\t=> [%C]%s\n", _id,
+	Dprint(DFocus, "client_focus([%C]%s)\n", c, clientname(c));
+	Dprint(DFocus, "\t[%C]%s\n\t=> [%C]%s\n",
 			screen->focus, clientname(screen->focus),
 			c, clientname(c));
 	if(screen->focus != c) {

@@ -120,6 +120,7 @@ void	ewmh_updateview(void);
 void	ewmh_updateviews(void);
 
 /* float.c */
+void	float_arrange(Area*);
 void	float_attach(Area*, Frame*);
 void	float_detach(Frame*);
 void	float_resizeframe(Frame*, Rectangle);

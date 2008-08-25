@@ -73,6 +73,7 @@ Event Key
 !
 	eval "cat <<!
 $(sed "$_sed" | sed '/^[ 	]/s/\([$`]\)/\\\1/g')
+!
 "
 }
 

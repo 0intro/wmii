@@ -35,6 +35,7 @@
  * Heavily modified by Kris Maglione for use with wmii.
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -5,6 +5,9 @@ BUGS
 
 4.0
 * Opaque managed moves. I know I've argued against it, but it may be doable.
+* Clicking layout boxes should do useful things.
+* Collapse/uncollapse frames with the keyboard.
+* Open modes (to replace colmodes).
 * Resizable managed area. Maybe. Struts seem to do everything this might.
 * New dmenu, with real cursor; snarfable.
 

@@ -16,7 +16,7 @@ static char
 	Ebadvalue[] = "bad value",
 	Ebadusage[] = "bad usage";
 
-/* Edit |sort   Edit s/"([^"]+)"/L\1/g   Edit |tr 'a-z' 'A-Z' */
+/* Edit |sort Edit |sed 's/"([^"]+)"/L\1/g' | tr 'a-z' 'A-Z' */
 enum {
 	LFULLSCREEN,
 	LURGENT,
@@ -501,6 +501,41 @@ message_root(void *p, IxpMsg *m) {
 	return ret;
 }
 
+static void
+printdebug(int mask) {
+	int i, j;
+
+	for(i=0, j=0; i < nelem(debugtab); i++)
+		if(mask & (1<<i)) {
+			if(j++ > 0) bufprint(" ");
+			bufprint("%s", debugtab[i]);
+		}
+}
+
+char*
+readctl_root(void) {
+	bufclear();
+	bufprint("bar on %s\n", barpostab[screen->barpos]);
+	bufprint("border %d\n", def.border);
+	if(debugflag) {
+		bufprint("debug ");
+		printdebug(debugflag);
+		bufprint("\n");
+	}
+	if(debugfile) {
+		bufprint("debugfile ");
+		printdebug(debugfile);
+		bufprint("\n");
+	}
+	bufprint("focuscolors %s\n", def.focuscolor.colstr);
+	bufprint("font %s\n", def.font->name);
+	bufprint("grabmod %s\n", def.grabmod);
+	bufprint("incmode %s\n", incmodetab[screen->barpos]);
+	bufprint("normcolors %s\n", def.normcolor.colstr);
+	bufprint("view %s\n", screen->sel->name);
+	return buffer;
+}
+
 char*
 message_view(View *v, IxpMsg *m) {
 	Area *a;
@@ -555,7 +590,7 @@ message_view(View *v, IxpMsg *m) {
 	case LCOLMODE:
 		s = msg_getword(m);
 		a = strarea(v, s);
-		if(a == nil || a->floating)
+		if(a == nil) /* || a->floating) */
 			return Ebadvalue;
 
 		s = msg_getword(m);
@@ -581,6 +616,29 @@ message_view(View *v, IxpMsg *m) {
 		return Ebadcmd;
 	}
 	/* not reached */
+}
+
+char*
+readctl_view(View *v) {
+	Area *a;
+	uint i;
+
+	bufclear();
+	bufprint("%s\n", v->name);
+
+	/* select <area>[ <frame>] */
+	bufprint("select %a", v->sel);
+	if(v->sel->sel)
+		bufprint(" %d", frame_idx(v->sel->sel));
+	bufprint("\n");
+
+	/* select client <client> */
+	if(v->sel->sel)
+		bufprint("select client %C\n", v->sel->sel->client);
+
+	for(a = v->area->next, i = 1; a; a = a->next, i++)
+		bufprint("colmode %d %s\n", i, column_getmode(a));
+	return buffer;
 }
 
 static char*
@@ -1025,65 +1083,6 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 	frame_focus(client_viewframe(c, f->view));
 	view_update_all();
 	return nil;
-}
-
-static void
-printdebug(int mask) {
-	int i, j;
-
-	for(i=0, j=0; i < nelem(debugtab); i++)
-		if(mask & (1<<i)) {
-			if(j++ > 0)
-				bufprint(" ");
-			bufprint("%s", debugtab[i]);
-		}
-}
-
-char*
-readctl_root(void) {
-	bufclear();
-	bufprint("bar on %s\n", barpostab[screen->barpos]);
-	bufprint("border %d\n", def.border);
-	if(debugflag) {
-		bufprint("debug ");
-		printdebug(debugflag);
-		bufprint("\n");
-	}
-	if(debugfile) {
-		bufprint("debugfile ");
-		printdebug(debugfile);
-		bufprint("\n");
-	}
-	bufprint("focuscolors %s\n", def.focuscolor.colstr);
-	bufprint("font %s\n", def.font->name);
-	bufprint("grabmod %s\n", def.grabmod);
-	bufprint("incmode %s\n", incmodetab[screen->barpos]);
-	bufprint("normcolors %s\n", def.normcolor.colstr);
-	bufprint("view %s\n", screen->sel->name);
-	return buffer;
-}
-
-char*
-readctl_view(View *v) {
-	Area *a;
-	uint i;
-
-	bufclear();
-	bufprint("%s\n", v->name);
-
-	/* select <area>[ <frame>] */
-	bufprint("select %a", v->sel);
-	if(v->sel->sel)
-		bufprint(" %d", frame_idx(v->sel->sel));
-	bufprint("\n");
-
-	/* select client <client> */
-	if(v->sel->sel)
-		bufprint("select client %C\n", v->sel->sel->client);
-
-	for(a = v->area->next, i = 1; a; a = a->next, i++)
-		bufprint("colmode %d %s\n", i, column_getmode(a));
-	return buffer;
 }
 
 void

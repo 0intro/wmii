@@ -147,7 +147,7 @@ xawrite(int argc, char *argv[]) {
 	if(fid == nil)
 		fatal("Can't open file '%s': %r\n", file);
 
-	nbuf = 0;
+	nbuf = 1;
 	for(i=0; i < argc; i++)
 		nbuf += strlen(argv[i]) + (i > 0);
 	buf = emalloc(nbuf);

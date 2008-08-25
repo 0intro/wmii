@@ -211,7 +211,6 @@ unset events local_events
 
 # WM Configuration
 wmiir write /ctl <<!
-	view 1
 	font $WMII_FONT
 	focuscolors $WMII_FOCUSCOLORS
 	normcolors $WMII_NORMCOLORS

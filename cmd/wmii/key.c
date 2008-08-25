@@ -92,7 +92,7 @@ name2key(const char *name) {
 	return nil;
 }
 
-static Key *
+static Key*
 getkey(const char *name) {
 	char buf[128];
 	char *seq[8];

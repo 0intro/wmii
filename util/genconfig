@@ -96,7 +96,8 @@ prompt() {
 	unset val
 	if [ -z "$def" -o -n "$force" ]; then
 		echo "$@"
-		read -p "$var[$def]$(equals) " val
+		echo -n "$var[$def]$(equals) " 
+		read val
 		echo
 	fi
 

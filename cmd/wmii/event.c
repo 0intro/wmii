@@ -274,7 +274,7 @@ keypress(XKeyEvent *ev) {
 	xtime = ev->time;
 	ev->state &= valid_mask;
 	if(ev->window == scr.root.w)
-		kpress(scr.root.w, ev->state, (KeyCode) ev->keycode);
+		kpress(scr.root.w, ev->state, (KeyCode)ev->keycode);
 }
 
 static void
@@ -325,6 +325,7 @@ static void
 mapnotify(XMapEvent *ev) {
 	Window *w;
 
+	ignoreenter = ev->serial;
 	if((w = findwin(ev->window))) 
 		handle(w, map, ev);
 }
@@ -333,6 +334,7 @@ static void
 unmapnotify(XUnmapEvent *ev) {
 	Window *w;
 
+	ignoreenter = ev->serial;
 	if((w = findwin(ev->window)) && (ev->event == w->parent->w)) {
 		w->mapped = false;
 		if(ev->send_event || w->unmapped-- == 0)

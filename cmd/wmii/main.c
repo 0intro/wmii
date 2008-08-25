@@ -372,7 +372,7 @@ extern int fmtevent(Fmt*);
 	ixp_listen(&srv, ConnectionNumber(display), nil, check_x_event, closedisplay);
 
 	def.border = 1;
-	def.colmode = Coldefault;
+	def.colmode = Colstack;
 	def.font = loadfont(FONT);
 	def.incmode = ISqueeze;
 

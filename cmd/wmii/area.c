@@ -89,7 +89,10 @@ area_create(View *v, Area *pos, uint w) {
 	a = emallocz(sizeof *a);
 	a->view = v;
 	a->id = id++;
-	a->mode = def.colmode;
+	if(v->area)
+		a->mode = def.colmode;
+	else
+		a->mode = Coldefault;
 	a->frame = nil;
 	a->sel = nil;
 
@@ -245,8 +248,11 @@ area_focus(Area *a) {
 	if(!a->floating)
 		v->selcol = area_idx(a);
 
-	if((old_a) && (a->floating != old_a->floating))
+	if((old_a) && (a->floating != old_a->floating)) {
 		v->revert = old_a;
+		if(v->area->max)
+			view_update(v);
+	}
 
 	if(v != screen->sel)
 		return;

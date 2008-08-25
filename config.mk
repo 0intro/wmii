@@ -49,7 +49,7 @@ LIBIXP = $(LIBDIR)/libixp.a
 #LD=pcc
 
 # *BSD
-#LIBICONV = -liconv
+#LIBICONV = -L/usr/local/lib -liconv
 # +Darwin
 #STATIC = # Darwin doesn't like static linking
 #SHARED = -dynamiclib

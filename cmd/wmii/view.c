@@ -252,7 +252,8 @@ view_update(View *v) {
 
 	for(c=client; c; c=c->next) {
 		f = c->sel;
-		if(f && f->view == v)
+		if(f && f->view == v
+		&& !(f->area->max && f->area->floating && f->area != v->sel))
 			client_resize(c, f->r);
 		else {
 			unmap_frame(c);
@@ -304,8 +305,11 @@ view_attach(View *v, Frame *f) {
 	c = f->client;
 
 	a = v->sel;
-	if(client_floats_p(c))
+	if(client_floats_p(c)) {
+		if(v->sel != v->area)
+			v->oldsel = v->sel;
 		a = v->area;
+	}
 	else if((ff = client_groupframe(c, v)))
 		a = ff->area;
 	else if(starting && v->sel->floating)

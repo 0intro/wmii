@@ -129,7 +129,7 @@ stack_info(Frame *f, Frame **firstp, int *dyp, int *nframep) {
 
 	nframe = 0;
 	dy = 0;
-	first = nil;
+	first = f;
 	for(ft=f; ft && ft->collapsed; ft=ft->anext)
 		;
 	if(ft && ft != f) {
@@ -513,7 +513,9 @@ column_scale(Area *a) {
 		f->colr.max.x = a->r.max.x;
 		if(!f->collapsed)
 			f->colr.max.y += ((float)f->dy / dy) * surplus;
-		assert(f->collapsed ? Dy(f->r) >= 0 : dy > 0);
+		if(btassert("6 full", !(f->collapsed ? Dy(f->r) >= 0 : dy > 0)))
+			warning("Something's fucked: %s:%d:%s()",
+				__FILE__, __LINE__, __func__);
 		frame_resize(f, f->colr);
 	}
 
@@ -527,6 +529,8 @@ column_arrange(Area *a, bool dirty) {
 	Frame *f;
 	View *v;
 
+	if(a->floating)
+		float_arrange(a);
 	if(a->floating || !a->frame)
 		return;
 

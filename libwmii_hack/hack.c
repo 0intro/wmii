@@ -18,8 +18,6 @@ enum {
 	Timeout = 10,
 };
 
-typedef int (*XErrorHandler)(Display*, XErrorEvent*);
-
 static void*	xlib;
 
 static long	lastwin;

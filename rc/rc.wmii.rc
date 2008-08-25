@@ -90,7 +90,7 @@ fn Event-Unresponsive {
 		msg = 'The following client is not responding. What would you like to do?'
 		resp = `{wihack -transient $client \
 				xmessage -nearmouse -buttons Kill,Wait -print \
-				$msg $wi_nl '' `{wmiir read /client/sel/label}}
+				$msg $wi_nl '' `{wmiir read /client/$client/label}}
 		if(~ $resp Kill)
 			wmiir xwrite /client/$client/ctl slay
 	}&}

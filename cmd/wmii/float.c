@@ -59,6 +59,30 @@ float_resizeframe(Frame *f, Rectangle r) {
 		frame_resize(f, r);
 }
 
+void
+float_arrange(Area *a) {
+	Frame *f;
+
+	assert(a->floating);
+
+	switch(a->mode) {
+	case Coldefault:
+		for(f=a->frame; f; f=f->anext)
+			f->collapsed = false;
+		break;
+	case Colstack:
+		for(f=a->frame; f; f=f->anext)
+			f->collapsed = (f != a->sel);
+		break;
+	default:
+		die("not reached");
+		break;
+	}
+	for(f=a->frame; f; f=f->anext)
+		f->r = f->floatr;
+	view_update(a->view);
+}
+
 static void
 rect_push(Vector_rect *vec, Rectangle r) {
 	Rectangle *rp;
@@ -163,6 +187,6 @@ float_placeframe(Frame *f) {
 		}
 	}
 
-	f->r = rectsetorigin(f->r, p);
+	f->floatr = rectsetorigin(f->r, p);
 }
 

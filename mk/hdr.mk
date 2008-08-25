@@ -84,7 +84,7 @@ all:
 
 .man1.install:
 	set -e; \
-	man=$(<:$*.man%=%); \
+	man=1; \
 	path="$(MAN)/man$$man/$*.$$man"; \
 	echo INSTALL man $$($(CLEANNAME) "$(BASE)/$*($$man)"); \
 	cp "$<" "$$path"; \
