@@ -253,7 +253,7 @@ view_update(View *v) {
 	for(c=client; c; c=c->next) {
 		f = c->sel;
 		if(f && f->view == v
-		&& !(f->area->max && f->area->floating && f->area != v->sel))
+		&& !(f->area && f->area->max && f->area->floating && f->area != v->sel))
 			client_resize(c, f->r);
 		else {
 			unmap_frame(c);
@@ -312,8 +312,10 @@ view_attach(View *v, Frame *f) {
 	}
 	else if((ff = client_groupframe(c, v)))
 		a = ff->area;
-	else if(starting && v->sel->floating)
-		a = v->area->next;
+	else if(v->sel->floating) {
+		if(starting || c->sel && c->sel->area && !c->sel->area->floating)
+			a = v->area->next;
+	}
 
 	area_attach(a, f);
 	/* TODO: Decide whether to focus this frame */
@@ -322,9 +324,13 @@ view_attach(View *v, Frame *f) {
 		     || view_selclient(v) && (view_selclient(v)->group == c->group)
 		     || group_leader(c->group) && !client_viewframe(group_leader(c->group),
 								    c->sel->view);
-	if(!(c->w.ewmh.type & (TypeSplash|TypeDock)))
-	if(newgroup)
-		frame_focus(f);
+	if(!(c->w.ewmh.type & (TypeSplash|TypeDock))) {
+		if(newgroup)
+			frame_focus(f);
+		else if(c->group && f->area->sel->client->group == c->group)
+			/* XXX: Stack. */
+			area_setsel(f->area, f);
+	}
 
 	if(c->sel == nil)
 		c->sel = f;

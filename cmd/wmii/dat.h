@@ -102,7 +102,8 @@ enum DebugOpt {
 	DEwmh	= 1<<2,
 	DFocus	= 1<<3,
 	DGeneric= 1<<4,
-	NDebugOpt = 5,
+	DStack  = 1<<5,
+	NDebugOpt = 6,
 };
 
 /* Data Structures */

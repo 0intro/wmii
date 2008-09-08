@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <sys/signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <bio.h>
@@ -73,7 +74,6 @@ spawn3(int fd[3], const char *file, char *argv[]) {
 	/* Some ideas from Russ Cox's libthread port. */
 	int p[2];
 	int pid;
-	int _errno;
 
 	if(pipe(p) < 0)
 		return -1;
@@ -86,15 +86,13 @@ spawn3(int fd[3], const char *file, char *argv[]) {
 		dup2(fd[2], 2);
 
 		execvp(file, argv);
-		write(p[1], &errno, sizeof _errno);
+		write(p[1], &errno, sizeof errno);
 		exit(1);
 		break;
 	default:
 		close(p[1]);
-		if(read(p[0], &_errno, sizeof _errno) == sizeof _errno) {
+		if(read(p[0], &errno, sizeof errno) == sizeof errno)
 			pid = -1;
-			errno = _errno;
-		}
 		close(p[0]);
 		break;
 	case -1: /* can't happen */
@@ -129,43 +127,26 @@ spawn3l(int fd[3], const char *file, ...) {
 	return spawn3(fd, file, argv);
 }
 
-/* Only works on *BSD (only FreeBSD confirmed). GDB on my Linux
- * doesn't like -x <pipe>, and /proc/%d/exe is the correct /proc
- * path.
- */
 #ifdef __linux__
 # define PROGTXT "exe"
 #else
 # define PROGTXT "file"
 #endif
-void
-backtrace(char *btarg) {
+
+static void
+_backtrace(int pid, char *btarg) {
 	char *proc, *spid, *gdbcmd;
 	int fd[3], p[2];
-	int pid, status, cmdfd;
-
-	proc = sxprint("/proc/%d/" PROGTXT, getpid());
-	spid = sxprint("%d", getpid());
-
-	switch(pid = fork()) {
-	case -1:
-		return;
-	case 0:
-		break;
-	default:
-		waitpid(pid, &status, 0);
-		return;
-	}
-
+	int status, cmdfd;
 
 	if(pipe(p) < 0)
-		exit(0);
+		goto done;
 	closeexec(p[0]);
 
 	gdbcmd = estrdup("/tmp/gdbcmd.XXXXXX");
 	cmdfd = mkstemp(gdbcmd);
 	if(cmdfd < 0)
-		exit(1);
+		goto done;
 
 	fprint(cmdfd, "bt %s\n", btarg);
 	fprint(cmdfd, "detach\n");
@@ -174,9 +155,12 @@ backtrace(char *btarg) {
 	fd[0] = open("/dev/null", O_RDONLY);
 	fd[1] = p[1];
 	fd[2] = dup(2);
+
+	proc = sxprint("/proc/%d/" PROGTXT, pid);
+	spid = sxprint("%d", pid);
 	if(spawn3l(fd, "gdb", "gdb", "-batch", "-x", gdbcmd, proc, spid, nil) < 0) {
 		unlink(gdbcmd);
-		exit(1);
+		goto done;
 	}
 
 	/* Why? Because gdb freezes waiting for user input
@@ -185,16 +169,36 @@ backtrace(char *btarg) {
 	 */
 	Biobuf bp;
 	char *s;
-	int i = 0;
 
 	Binit(&bp, p[0], OREAD);
 	while((s = Brdstr(&bp, '\n', 1))) {
-		if(i++ >= 4)
-			fprint(2, "%s\n", s);
+		Dprint(DStack, "%s\n", s);
 		free(s);
 	}
 	unlink(gdbcmd);
-	exit(0);
+
+done:
+	kill(pid, SIGKILL);
+	waitpid(pid, &status, 0);
+}
+
+void
+backtrace(char *btarg) {
+	int pid;
+
+	/* Fork so we can backtrace the child. Keep this stack
+	 * frame minimal, so the trace is fairly clean.
+	 */
+	switch(pid = fork()) {
+	case -1:
+		return;
+	case 0:
+		kill(getpid(), SIGSTOP);
+		_exit(0);
+	default:
+		_backtrace(pid, btarg);
+		break;
+	}
 
 }
 

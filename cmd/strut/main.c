@@ -110,6 +110,8 @@ main(int argc, char *argv[]) {
 	char *s;
 
 	fmtinstall('r', errfmt);
+extern int fmtevent(Fmt*);
+	fmtinstall('E', fmtevent);
 
 	ARGBEGIN{
 	default:

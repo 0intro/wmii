@@ -45,24 +45,24 @@ restrut(void) {
 	 * Not ideal.
 	 */
 	if(Dy(strut[Top])) {
-		if(strut[Top].min.x <= scr.rect.min.x)
+		if(Dx(strut[Left]))
 			if(Dy(strut[Top]) < Dx(strut[Left]))
 				strut[Left] = ZR;
 			else
 				strut[Top] = ZR;
-		if(strut[Top].max.x >= scr.rect.max.x)
+		if(Dx(strut[Right]))
 			if(Dy(strut[Top]) < Dx(strut[Right]))
 				strut[Right] = ZR;
 			else
 				strut[Top] = ZR;
 	}
 	if(Dy(strut[Bottom])) {
-		if(strut[Bottom].min.x <= scr.rect.min.x)
+		if(Dx(strut[Left]))
 			if(Dy(strut[Bottom]) < Dx(strut[Left]))
 				strut[Left] = ZR;
 			else
 				strut[Bottom] = ZR;
-		if(strut[Bottom].max.x >= scr.rect.max.x)
+		if(Dx(strut[Right]))
 			if(Dy(strut[Bottom]) < Dx(strut[Right]))
 				strut[Right] = ZR;
 			else

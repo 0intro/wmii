@@ -35,13 +35,13 @@ float_detach(Frame *f) {
 
 	frame_remove(f);
 
-	f->area = nil;
 	if(a->sel == f) {
 		if(!pr)
 			pr = a->frame;
 		a->sel = nil;
 		area_setsel(a, pr);
 	}
+	f->area = nil;
 
 	if(v->oldsel)
 		area_focus(v->oldsel);

@@ -221,8 +221,10 @@ client_manage(Client *c) {
 	f = c->sel;
 	if(!(c->w.ewmh.type & TypeSplash))
 	if(newgroup) {
+		/* XXX: Look over this.
 		if(f->area != f->view->sel)
 			f->view->oldsel = f->view->sel;
+		*/
 	}else {
 		frame_restack(c->sel, c->sel->area->sel);
 		view_restack(c->sel->view);

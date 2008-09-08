@@ -8,7 +8,7 @@ static void (*handler[LASTEvent])(XEvent*);
 
 void
 dispatch_event(XEvent *e) {
-	/* printevent(e); */
+	/* print("%E\n", e); */
 	if(e->type < nelem(handler) && handler[e->type])
 		handler[e->type](e);
 }

@@ -172,6 +172,9 @@ area_moveto(Area *to, Frame *f) {
 
 	assert(to->view == f->view);
 
+	if(f->client->fullscreen && !to->floating)
+		return;
+
 	from = f->area;
 	fromfloating = from->floating;
 
@@ -228,6 +231,10 @@ area_detach(Frame *f) {
 		float_detach(f);
 	else
 		column_detach(f);
+
+	if(v->sel->sel == nil && v->area->sel)
+		v->sel = v->area;
+
 	view_arrange(v);
 }
 

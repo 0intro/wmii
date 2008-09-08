@@ -90,6 +90,7 @@ char* debugtab[] = {
 	"ewmh",
 	"focus",
 	"generic",
+	"stack",
 };
 
 static char* barpostab[] = {
@@ -430,6 +431,11 @@ message_root(void *p, IxpMsg *m) {
 	s = msg_getword(m);
 	if(s == nil)
 		return nil;
+
+	if(!strcmp(s, "backtrace")) {
+		backtrace(m->pos);
+		return nil;
+	}
 
 	switch(getsym(s)) {
 	case LBAR: /* bar on? <"top" | "bottom"> */

@@ -487,7 +487,7 @@ drawstring(Image *dst, Font *font,
 	y = r.min.y + Dy(r) / 2 - h / 2 + font->ascent;
 
 	/* shorten text if necessary */
-	SET(w);
+	w = 0;
 	while(len > 0) {
 		w = textwidth_l(font, buf, len + min(shortened, 3));
 		if(w <= Dx(r) - (font->height & ~1))
