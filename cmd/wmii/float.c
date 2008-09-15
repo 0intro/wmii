@@ -24,12 +24,13 @@ float_attach(Area *a, Frame *f) {
 void
 float_detach(Frame *f) {
 	Frame *pr;
-	Area *a, *sel;
+	Area *a, *sel, *oldsel;
 	View *v;
 
 	v = f->view;
 	a = f->area;
 	sel = view_findarea(v, v->selcol, false);
+	oldsel = v->oldsel;
 	if(!(sel || !v->area->next)) warning("%s:%d: !(sel || !v->area->next)", __FILE__, __LINE__);
 	pr = f->aprev;
 
@@ -43,8 +44,8 @@ float_detach(Frame *f) {
 	}
 	f->area = nil;
 
-	if(v->oldsel)
-		area_focus(v->oldsel);
+	if(oldsel)
+		area_focus(oldsel);
 	else if(!a->frame)
 		if(sel && sel->frame)
 			area_focus(sel);

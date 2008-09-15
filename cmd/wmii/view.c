@@ -300,20 +300,27 @@ void
 view_attach(View *v, Frame *f) {
 	Client *c;
 	Frame *ff;
-	Area *a;
+	Area *a, *oldsel;
 	
 	c = f->client;
 
+	oldsel = nil;
 	a = v->sel;
 	if(client_floats_p(c)) {
 		if(v->sel != v->area)
-			v->oldsel = v->sel;
+			oldsel = v->sel;
 		a = v->area;
 	}
 	else if((ff = client_groupframe(c, v)))
 		a = ff->area;
 	else if(v->sel->floating) {
-		if(starting || c->sel && c->sel->area && !c->sel->area->floating)
+		if(v->oldsel)
+			a = v->oldsel;
+		/* Don't float a frame when starting or when its
+		 * last focused frame didn't float. Important when
+		 * tagging with +foo.
+		 */
+		else if(starting || c->sel && c->sel->area && !c->sel->area->floating)
 			a = v->area->next;
 	}
 
@@ -331,6 +338,9 @@ view_attach(View *v, Frame *f) {
 			/* XXX: Stack. */
 			area_setsel(f->area, f);
 	}
+
+	if(oldsel)
+		v->oldsel = oldsel;
 
 	if(c->sel == nil)
 		c->sel = f;
