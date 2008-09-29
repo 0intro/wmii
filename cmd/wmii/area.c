@@ -254,6 +254,8 @@ area_focus(Area *a) {
 	v->sel = a;
 	if(!a->floating)
 		v->selcol = area_idx(a);
+	if(a != old_a)
+		v->oldsel = nil;
 
 	if((old_a) && (a->floating != old_a->floating)) {
 		v->revert = old_a;

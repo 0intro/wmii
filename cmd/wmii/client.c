@@ -779,7 +779,7 @@ client_prop(Client *c, Atom a) {
 	case XA_WM_HINTS:
 		wmh = XGetWMHints(display, c->w.w);
 		if(wmh) {
-			c->noinput = !((wmh->flags&InputFocus) && wmh->input);
+			c->noinput = (wmh->flags&InputFocus) && !wmh->input;
 			client_seturgent(c, (wmh->flags & XUrgencyHint) != 0, UrgClient);
 			XFree(wmh);
 		}

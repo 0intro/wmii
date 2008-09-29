@@ -506,7 +506,7 @@ frame_draw(Frame *f) {
 	/* Draw inner border on floating clients. */
 	if(f->area->floating) {
 		r.min.x = r.min.x + w + 10;
-		r.max.x = f->titlebar.max.x + 1;
+		r.max.x += Dx(f->grabbox) - 2;
 		r.min.y = f->grabbox.min.y;
 		r.max.y = f->grabbox.max.y;
 		border(img, r, 1, col->border);
