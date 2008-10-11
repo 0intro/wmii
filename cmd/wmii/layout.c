@@ -235,10 +235,15 @@ static void
 trampoline(int fn, Frame *f) {
 
 	while(fn > 0) {
+		resizing = fn != TFloat;
+		view_update(f->view);
+		warppointer(grabboxcenter(f));
 		//f->collapsed = false;
 		fn = tramp[fn](f);
 	}
 	ungrabpointer();
+	resizing = false;
+	view_update(f->view);
 }
 
 void
@@ -255,17 +260,11 @@ mouse_movegrabbox(Client *c, bool grabmod) {
 		y = (float)p.y / Dy(f->r);
 	}
 
-	resizing = true;
-	view_update(f->view);
-	warppointer(grabboxcenter(f));
-
 	if(f->area->floating)
 		trampoline(TFloat, f);
 	else
 		trampoline(THCol, f);
 
-	resizing = false;
-	view_update(f->view);
 	if(grabmod)
 		warppointer(addpt(f->r.min, Pt(x * Dx(f->r),
 					       y * Dy(f->r))));

@@ -27,6 +27,9 @@ static Map	atommap;
 static MapEnt*	wbucket[137];
 static MapEnt*	abucket[137];
 
+static int	errorhandler(Display*, XErrorEvent*);
+static int	(*xlib_errorhandler) (Display*, XErrorEvent*);
+
 
 /* Rectangles/Points */
 XRectangle
@@ -185,6 +188,46 @@ initdisplay(void) {
 	fmtinstall('R', Rfmt);
 	fmtinstall('P', Pfmt);
 	fmtinstall('W', Wfmt);
+
+	xlib_errorhandler = XSetErrorHandler(errorhandler);
+}
+
+/* Error handling */
+
+ErrorCode ignored_xerrors[];
+static bool	_trap_errors;
+static long	nerrors;
+
+static int
+errorhandler(Display *dpy, XErrorEvent *error) {
+	ErrorCode *e;
+
+	USED(dpy);
+
+	if(_trap_errors)
+		nerrors++;
+
+	e = ignored_xerrors;
+	if(e)
+	for(; e->rcode || e->ecode; e++)
+		if((e->rcode == 0 || e->rcode == error->request_code)
+		&& (e->ecode == 0 || e->ecode == error->error_code))
+			return 0;
+
+	fprint(2, "%s: fatal error: Xrequest code=%d, Xerror code=%d\n",
+			argv0, error->request_code, error->error_code);
+	return xlib_errorhandler(display, error); /* calls exit() */
+}
+
+int
+traperrors(bool enable) {
+	
+	sync();
+	_trap_errors = enable;
+	if (enable)
+		nerrors = 0;
+	return nerrors;
+	
 }
 
 /* Images */

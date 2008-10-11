@@ -252,10 +252,11 @@ view_update(View *v) {
 
 	for(c=client; c; c=c->next) {
 		f = c->sel;
-		if(f && f->view == v
-		&& !(f->area && f->area->max && f->area->floating && f->area != v->sel))
-			client_resize(c, f->r);
-		else {
+		if((f && f->view == v)
+		&& (f->area == v->sel || !(f->area && f->area->max && f->area->floating))) {
+			if(f->area)
+				client_resize(c, f->r);
+		}else {
 			unmap_frame(c);
 			client_unmap(c, IconicState);
 		}
@@ -304,8 +305,11 @@ view_attach(View *v, Frame *f) {
 	
 	c = f->client;
 
-	oldsel = nil;
+	oldsel = v->oldsel;
 	a = v->sel;
+	print("view: %s\n", v->name);
+	print("client: %C\n", c);
+	print("< sel: %a\n", v->sel);
 	if(client_floats_p(c)) {
 		if(v->sel != v->area)
 			oldsel = v->sel;
@@ -323,6 +327,7 @@ view_attach(View *v, Frame *f) {
 		else if(starting || c->sel && c->sel->area && !c->sel->area->floating)
 			a = v->area->next;
 	}
+	print("< sel: %a oldsel: %a\n", v->sel, oldsel);
 
 	area_attach(a, f);
 	/* TODO: Decide whether to focus this frame */
@@ -341,6 +346,7 @@ view_attach(View *v, Frame *f) {
 
 	if(oldsel)
 		v->oldsel = oldsel;
+	print("< sel: %a oldsel: %a\n", v->sel, oldsel);
 
 	if(c->sel == nil)
 		c->sel = f;

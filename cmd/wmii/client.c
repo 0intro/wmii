@@ -159,7 +159,6 @@ client_create(XWindow w, XWindowAttributes *wa) {
 
 	p.x = def.border;
 	p.y = labelh(def.font);
-	reparentwindow(&c->w, c->framewin, p);
 
 	group_init(c);
 
@@ -172,6 +171,20 @@ client_create(XWindow w, XWindowAttributes *wa) {
 			break;
 		}
 
+
+	/* 
+	 * It's actually possible for a window to be destroyed
+	 * before we get a chance to reparant it. Check for that
+	 * now, because otherwise we'll wind up mapping an empty
+	 * frame.
+	 */
+	traperrors(true);
+	reparentwindow(&c->w, c->framewin, p);
+	if(traperrors(false)) {
+		client_destroy(c);
+		return nil;
+	}
+
 	ewmh_initclient(c);
 
 	event("CreateClient %C\n", c);
@@ -181,7 +194,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 
 void
 client_manage(Client *c) {
-	Client *trans;
+	Client *leader;
 	Frame *f;
 	char *tags;
 
@@ -192,14 +205,14 @@ client_manage(Client *c) {
 
 	tags = getprop_string(&c->w, "_WMII_TAGS");
 
-	trans = win2client(c->trans);
-	if(trans == nil && c->group)
-		trans = group_leader(c->group);
+	leader = win2client(c->trans);
+	if(leader == nil && c->group)
+		leader = group_leader(c->group);
 
-	if(tags && (!trans || starting))
+	if(tags && (!leader || leader == c || starting))
 		utflcpy(c->tags, tags, sizeof c->tags);
-	else if(trans)
-		utflcpy(c->tags, trans->tags, sizeof c->tags);
+	else if(leader)
+		utflcpy(c->tags, leader->tags, sizeof c->tags);
 	free(tags);
 
 	if(!c->tags[0])
@@ -231,15 +244,8 @@ client_manage(Client *c) {
 	}
 }
 
-static int /* Temporary Xlib error handler */
-ignoreerrors(Display *d, XErrorEvent *e) {
-	USED(d, e);
-	return 0;
-}
-
 void
 client_destroy(Client *c) {
-	int (*handler)(Display*, XErrorEvent*);
 	Rectangle r;
 	char *none;
 	Client **tc;
@@ -261,8 +267,9 @@ client_destroy(Client *c) {
 		hide = true;
 
 	XGrabServer(display);
+
 	/* In case the client is already destroyed. */
-	handler = XSetErrorHandler(ignoreerrors);
+	traperrors(true);
 
 	sethandler(&c->w, nil);
 	if(hide)
@@ -270,8 +277,7 @@ client_destroy(Client *c) {
 	else
 		reparentwindow(&c->w, &scr.root, r.min);
 
-	sync();
-	XSetErrorHandler(handler);
+	traperrors(false);
 	XUngrabServer(display);
 
 	none = nil;

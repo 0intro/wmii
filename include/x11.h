@@ -48,6 +48,7 @@ struct Rectangle {
 };
 
 typedef struct CTuple CTuple;
+typedef struct ErrorCode ErrorCode;
 typedef struct Ewmh Ewmh;
 typedef struct Font Font;
 typedef struct Handlers Handlers;
@@ -61,6 +62,11 @@ struct CTuple {
 	ulong fg;
 	ulong border;
 	char colstr[24]; /* #RRGGBB #RRGGBB #RRGGBB */
+};
+
+struct ErrorCode {
+	uchar rcode;
+	uchar ecode;
 };
 
 struct Ewmh {
@@ -234,6 +240,7 @@ Point	subpt(Point, Point);
 void	sync(void);
 uint	textwidth(Font*, char*);
 uint	textwidth_l(Font*, char*, uint len);
+int	traperrors(bool);
 Point	translate(Window*, Window*, Point);
 void	ungrabpointer(void);
 int	unmapwin(Window*);

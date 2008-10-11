@@ -17,10 +17,8 @@
 static const char
 	version[] = "wmii-"VERSION", ©2008 Kris Maglione\n";
 
-static int (*xlib_errorhandler) (Display*, XErrorEvent*);
 static char*	address;
 static char*	ns_path;
-static bool	check_other_wm;
 static int	sleeperfd;
 static int	sock;
 static int	exitsignal;
@@ -136,6 +134,23 @@ init_cursors(void) {
 	XFreePixmap(display, pix);
 }
 
+/*
+ * There's no way to check accesses to destroyed windows, thus
+ * those cases are ignored (especially on UnmapNotifies).
+ * Other types of errors call Xlib's default error handler, which
+ * calls exit().
+ */
+ErrorCode ignored_xerrors[] = {
+	{ 0, BadWindow },
+	{ X_SetInputFocus, BadMatch },
+	{ X_PolyText8, BadDrawable },
+	{ X_PolyFillRectangle, BadDrawable },
+	{ X_PolySegment, BadDrawable },
+	{ X_ConfigureWindow, BadMatch },
+	{ X_GrabKey, BadAccess },
+	{ X_GetAtomName, BadAtom },
+};
+
 void
 init_screen(WMScreen *screen) {
 
@@ -155,51 +170,6 @@ cleanup(void) {
 		client_destroy(client);
 	ixp_server_close(&srv);
 	close(sleeperfd);
-}
-
-/*
- * There's no way to check accesses to destroyed windows, thus
- * those cases are ignored (especially on UnmapNotifies).
- * Other types of errors call Xlib's default error handler, which
- * calls exit().
- */
-static int
-errorhandler(Display *dpy, XErrorEvent *error) {
-	static struct {
-		uchar rcode, ecode;
-	} itab[] = {
-		{ 0, BadWindow },
-		{ X_SetInputFocus, BadMatch },
-		{ X_PolyText8, BadDrawable },
-		{ X_PolyFillRectangle, BadDrawable },
-		{ X_PolySegment, BadDrawable },
-		{ X_ConfigureWindow, BadMatch },
-		{ X_GrabKey, BadAccess },
-		{ X_GetAtomName, BadAtom },
-	};
-	static int dead;
-	int i;
-
-	USED(dpy);
-
-	if(check_other_wm)
-		fatal("another window manager is already running");
-
-	for(i = 0; i < nelem(itab); i++)
-		if((itab[i].rcode == 0 || itab[i].rcode == error->request_code)
-		&& (itab[i].ecode == 0 || itab[i].ecode == error->error_code))
-			return 0;
-
-	fprint(2, "%s: fatal error: Xrequest code=%d, Xerror code=%d\n",
-			argv0, error->request_code, error->error_code);
-
-	/* Try to cleanup, but only try once, in case we're called recursively. */
-	USED(dead);
-#ifdef notdef
-	if(!dead++)
-		cleanup();
-#endif
-	return xlib_errorhandler(display, error); /* calls exit() */
 }
 
 static void
@@ -338,14 +308,12 @@ extern int fmtevent(Fmt*);
 
 	initdisplay();
 
-	xlib_errorhandler = XSetErrorHandler(errorhandler);
-
-	check_other_wm = true;
+	traperrors(true);
 	selectinput(&scr.root, SubstructureRedirectMask
 			     | EnterWindowMask);
 	sync();
-
-	check_other_wm = false;
+	if(traperrors(false))
+		fatal("another window manager is already running");
 
 	passwd = getpwuid(getuid());
 	user = estrdup(passwd->pw_name);
