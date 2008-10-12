@@ -1,9 +1,10 @@
-/* Copyright ©2008 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2008 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #define _X11_VISIBLE
 #include "dat.h"
 #include <X11/extensions/Xrender.h>
+#include <X11/extensions/Xinerama.h>
 #include "fns.h"
 
 #if RANDR_MAJOR < 1
@@ -14,12 +15,14 @@ static void	randr_screenchange(XRRScreenChangeNotifyEvent*);
 static bool	randr_event_p(XEvent *e);
 static void	randr_init(void);
 static void	render_init(void);
+static void	xinerama_init(void);
 
 typedef void (*EvHandler)(XEvent*);
 static EvHandler	randr_handlers[RRNumberEvents];
 
 bool	have_RandR;
 bool	have_render;
+bool	have_xinerama;
 int	randr_eventbase;
 
 static void
@@ -33,6 +36,7 @@ void
 xext_init(void) {
 	randr_init();
 	render_init();
+	xinerama_init();
 }
 
 void
@@ -77,8 +81,7 @@ randr_screenchange(XRRScreenChangeNotifyEvent *ev) {
 		v->r.max.x += d.x;
 		v->r.max.y += d.y;
 	}
-	init_screen(screen);
-	bar_resize(screen);
+	init_screens();
 }
 
 static EvHandler randr_handlers[] = {
@@ -123,5 +126,39 @@ render_argb_p(Visual *v) {
 	return f
 	    && f->type == PictTypeDirect
 	    && f->direct.alphaMask;
+}
+
+static void
+xinerama_init(void) {
+	int base;
+
+	have_xinerama = XineramaQueryExtension(display, &base, &base);
+	if(have_xinerama)
+		have_xinerama = XineramaIsActive(display);
+}
+
+Rectangle*
+xinerama_screens(int *np) {
+	static Rectangle *rects;
+	XineramaScreenInfo *res;
+	int i, n;
+
+	if(!have_xinerama) {
+		*np = 1;
+		return &scr.rect;
+	}
+
+	free(rects);
+	res = XineramaQueryScreens(display, &n);
+	rects = emalloc(n * sizeof *rects);
+	for(i=0; i < n; i++) {
+		rects[i].min.x = res[i].x_org;
+		rects[i].min.y = res[i].y_org;
+		rects[i].max.x = res[i].x_org + res[i].width;
+		rects[i].max.y = res[i].y_org + res[i].height;
+	}
+
+	*np = n;
+	return rects;
 }
 

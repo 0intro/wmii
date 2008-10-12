@@ -1,5 +1,5 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
+ * Copyright ©2006-2008 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -307,9 +307,6 @@ view_attach(View *v, Frame *f) {
 
 	oldsel = v->oldsel;
 	a = v->sel;
-	print("view: %s\n", v->name);
-	print("client: %C\n", c);
-	print("< sel: %a\n", v->sel);
 	if(client_floats_p(c)) {
 		if(v->sel != v->area)
 			oldsel = v->sel;
@@ -327,7 +324,6 @@ view_attach(View *v, Frame *f) {
 		else if(starting || c->sel && c->sel->area && !c->sel->area->floating)
 			a = v->area->next;
 	}
-	print("< sel: %a oldsel: %a\n", v->sel, oldsel);
 
 	area_attach(a, f);
 	/* TODO: Decide whether to focus this frame */
@@ -346,7 +342,6 @@ view_attach(View *v, Frame *f) {
 
 	if(oldsel)
 		v->oldsel = oldsel;
-	print("< sel: %a oldsel: %a\n", v->sel, oldsel);
 
 	if(c->sel == nil)
 		c->sel = f;

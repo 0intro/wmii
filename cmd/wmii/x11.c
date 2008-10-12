@@ -1,4 +1,4 @@
-/* Copyright ©2007-2008 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2007-2008 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #define _X11_VISIBLE

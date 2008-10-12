@@ -175,7 +175,7 @@ ulong	str2modmask(const char*);
 void	update_keys(void);
 
 /* main.c */
-void	init_screen(WMScreen*);
+void	init_screens(void);
 
 /* map.c */
 void**	hash_get(Map*, const char*, bool create);
@@ -272,4 +272,5 @@ void	randr_event(XEvent*);
 bool	render_argb_p(Visual*);
 void	xext_event(XEvent*);
 void	xext_init(void);
+Rectangle*	xinerama_screens(int*);
 

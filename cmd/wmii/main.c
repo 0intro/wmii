@@ -1,5 +1,5 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
+ * Copyright ©2006-2008 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #define EXTERN
@@ -152,16 +152,34 @@ ErrorCode ignored_xerrors[] = {
 };
 
 void
-init_screen(WMScreen *screen) {
+init_screens(void) {
+	Rectangle *rects;
+	int i, n, m;
 
-	screen->r = scr.rect;
-	def.snap = Dy(scr.rect) / 63;
-	freeimage(screen->ibuf);
-	freeimage(screen->ibuf32);
-	screen->ibuf = allocimage(Dx(screen->r), Dy(screen->r), scr.depth);
-	/* Probably shouldn't do this until it's needed. */
-	if(render_visual)
-		screen->ibuf32 = allocimage(Dx(screen->r), Dy(screen->r), 32);
+	rects = xinerama_screens(&n);
+	m = max(n, num_screens);
+
+	screens = erealloc(screens, m * sizeof *screens);
+	for(i=num_screens; i < m; i++)
+		screens[i] = (WMScreen){ 0, };
+
+	num_screens = m;
+
+	for(i=0; i < n; i++) {
+		screen = &screens[i];
+
+		screen->r = scr.rect;
+		def.snap = Dy(scr.rect) / 63;
+		freeimage(screen->ibuf);
+		freeimage(screen->ibuf32);
+		screen->ibuf = allocimage(Dx(screen->r), Dy(screen->r), scr.depth);
+		/* Probably shouldn't do this until it's needed. */
+		if(render_visual)
+			screen->ibuf32 = allocimage(Dx(screen->r), Dy(screen->r), 32);
+
+		bar_init(screen);
+	}
+	screen = &screens[0];
 }
 
 static void
@@ -271,7 +289,6 @@ int
 main(int argc, char *argv[]) {
 	char **oargv;
 	char *wmiirc;
-	WMScreen *s;
 	WinAttr wa;
 	int i;
 
@@ -352,24 +369,17 @@ extern int fmtevent(Fmt*);
 
 	sel_screen = pointerscreen();
 
-	num_screens = 1;
-	screens = emallocz(num_screens * sizeof *screens);
-	screen = &screens[0];
-	for(i = 0; i < num_screens; i++) {
-		s = &screens[i];
-		init_screen(s);
+	init_screens();
 
-		wa.event_mask = SubstructureRedirectMask
-			      | SubstructureNotifyMask
-			      | EnterWindowMask
-			      | LeaveWindowMask
-			      | FocusChangeMask;
-		wa.cursor = cursor[CurNormal];
-		setwinattr(&scr.root, &wa,
-				  CWEventMask
-				| CWCursor);
-		bar_init(s);
-	}
+	wa.event_mask = SubstructureRedirectMask
+		      | SubstructureNotifyMask
+		      | EnterWindowMask
+		      | LeaveWindowMask
+		      | FocusChangeMask;
+	wa.cursor = cursor[CurNormal];
+	setwinattr(&scr.root, &wa,
+			  CWEventMask
+			| CWCursor);
 
 	screen->focus = nil;
 	setfocus(screen->barwin, RevertToParent);

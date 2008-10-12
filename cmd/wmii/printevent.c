@@ -1,7 +1,7 @@
 /*
  * Original code posted to comp.sources.x
  * Modifications by Russ Cox <rsc@swtch.com>.
- * Further modifications by Kris Maglione <fbsdaemon@gmail.com>
+ * Further modifications by Kris Maglione <maglione.k at Gmail>
  */
 
 /*

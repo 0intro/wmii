@@ -1,5 +1,5 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
+ * Copyright ©2006-2008 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -17,6 +17,12 @@ bool
 column_setmode(Area *a, const char *mode) {
 	char *s, *t, *orig;
 	char add, old;
+
+	/* The mapping between the current internal
+	 * representation and the external interface
+	 * is currently a bit complex. That will probably
+	 * change.
+	 */
 
 	orig = strdup(mode);
 	t = orig;

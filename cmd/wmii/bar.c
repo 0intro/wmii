@@ -1,4 +1,4 @@
-/* Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2008 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -13,6 +13,11 @@ static Handlers handlers;
 void
 bar_init(WMScreen *s) {
 	WinAttr wa;
+
+	if(s->barwin) {
+		bar_resize(s);
+		return;
+	}
 
 	s->brect = s->r;
 	s->brect.min.y = s->brect.max.y - labelh(def.font);
