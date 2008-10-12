@@ -158,6 +158,7 @@ xinerama_screens(int *np) {
 		rects[i].max.y = res[i].y_org + res[i].height;
 	}
 
+	print("have_xinerama: true; n: %d\n", n);
 	*np = n;
 	return rects;
 }

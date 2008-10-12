@@ -44,7 +44,11 @@ bar_resize(WMScreen *s) {
 	s->brect = s->r;
 	s->brect.max.y = labelh(def.font);
 
-	view_update(screen->sel);
+	/* Not guarangeed to exist on xinerama displays, for the
+	 * moment;
+	 */
+	if(screen->sel)
+		view_update(screen->sel);
 }
 
 void

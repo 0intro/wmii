@@ -154,28 +154,31 @@ ErrorCode ignored_xerrors[] = {
 void
 init_screens(void) {
 	Rectangle *rects;
+	static Image *ibuf, *ibuf32;
 	int i, n, m;
 
 	rects = xinerama_screens(&n);
 	m = max(n, num_screens);
-
 	screens = erealloc(screens, m * sizeof *screens);
 	for(i=num_screens; i < m; i++)
 		screens[i] = (WMScreen){ 0, };
-
 	num_screens = m;
+
+	freeimage(ibuf);
+	freeimage(ibuf32);
+	ibuf = allocimage(Dx(scr.rect), Dy(scr.rect), scr.depth);
+	ibuf32 = nil; /* Probably shouldn't do this until it's needed. */
+	if(render_visual)
+		ibuf32 = allocimage(Dx(scr.rect), Dy(scr.rect), 32);
 
 	for(i=0; i < n; i++) {
 		screen = &screens[i];
 
-		screen->r = scr.rect;
-		def.snap = Dy(scr.rect) / 63;
-		freeimage(screen->ibuf);
-		freeimage(screen->ibuf32);
-		screen->ibuf = allocimage(Dx(screen->r), Dy(screen->r), scr.depth);
-		/* Probably shouldn't do this until it's needed. */
-		if(render_visual)
-			screen->ibuf32 = allocimage(Dx(screen->r), Dy(screen->r), 32);
+		print("rects[%d]: %R\n", i, rects[i]);
+		screen->r = rects[i];
+		def.snap = Dy(rects[i]) / 63;
+		screen->ibuf = ibuf;
+		screen->ibuf32 = ibuf32;
 
 		bar_init(screen);
 	}
