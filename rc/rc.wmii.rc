@@ -215,17 +215,21 @@ key $MODKEY-Shift-c || fn $key {
 	wmiir xwrite /client/sel/ctl kill}
 
 key $MODKEY-a || fn $key {
-	Action `{wi_actions | wi_menu} &}
+	Action `{wi_actions | wimenu} &}
 key $MODKEY-p || fn $key {
-	ifs=() { wi_runcmd `{wi_menu <$progs_file} & }}
+	ifs=() { cmd = `{wimenu -h $progs_hist <$progs_file} }
+	wi_runcmd $cmd &
+	{ cat $progs_hist; echo $cmd; } | uniq | sed '/^$/d' \
+		| tail -$progs_len >$progs_hist.$pid
+	mv $progs_hist.$pid $progs_hist}
 key $MODKEY-Return || fn $key {
 	wi_runcmd $WMII_TERM &}
 
 key $MODKEY-t || fn $key {
-	wmiir xwrite /ctl view `{wi_tags | wi_menu} &}
+	wmiir xwrite /ctl view `{wi_tags | wimenu} &}
 key $MODKEY-Shift-t || fn $key {
 	sel = `{wmiir read /client/sel/ctl | sed 1q} \
-	wmiir xwrite /client/$sel/tags `{wi_tags | wi_menu} &}
+	wmiir xwrite /client/$sel/tags `{wi_tags | wimenu} &}
 
 key $MODKEY-^`{seq 0 9} || fn $key {
 	wmiir xwrite /ctl view `{echo $1 | sed 's/.*-//'}}
@@ -247,6 +251,9 @@ Action overridekeys
 
 # Misc Setup
 progs_file=`{namespace}^/proglist.$pid
+progs_hist=`{namespace}^/proghist
+progs_len=5000
+touch $progs_hist
 Action status &
 Action rehash &
 

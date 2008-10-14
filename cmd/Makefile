@@ -4,7 +4,8 @@ include $(ROOT)/mk/wmii.mk
 
 wmiir.c: $(ROOT)/mk/wmii.mk
 
-DIRS =	wmii
+DIRS =	wmii \
+	menu
 TARG =	wihack    \
 	wmii.rc   \
 	wmii.sh   \

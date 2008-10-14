@@ -4,7 +4,7 @@ include $(ROOT)/mk/wmii.mk
 
 main.c: $(ROOT)/mk/wmii.mk
 
-TARG =	menu
+TARG =	wimenu
 HFILES=	dat.h fns.h
 
 LIB =	$(LIBIXP)

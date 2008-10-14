@@ -43,12 +43,6 @@ wmiifont=`{wi_readctl font}
 wmiinormcol=`{wi_readctl normcolors}
 wmiifocuscol=`{wi_readctl focuscolors}
 
-fn wi_menu {
-	dmenu -b -fn $wmiifont \
-		 -nf $wmiinormcol(1) -nb $wmiinormcol(2) \
-		 -sf $wmiifocuscol(1) -sb $wmiifocuscol(2)
-}
-
 fn wi_9menu {
 	wmii9menu -font `{echo $wmiifont | sed 's/,.*//'} \
 		-^(nf nb br)^$wmiinormcol \
