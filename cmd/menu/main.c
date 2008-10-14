@@ -255,6 +255,7 @@ main(int argc, char *argv[]) {
 	srv.preselect = preselect;
 	ixp_listen(&srv, ConnectionNumber(display), nil, check_x_event, end);
 
+	ontop = !strcmp(readctl("bar on "), "top");
 	loadcolor(&cnorm, readctl("normcolors "));
 	loadcolor(&csel, readctl("focuscolors "));
 	font = loadfont(readctl("font "));
