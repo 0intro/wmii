@@ -637,22 +637,42 @@ frame_delta_h(void) {
 
 Rectangle
 constrain(Rectangle r) {
-	Rectangle sr;
+	WMScreen *s, *bestx, *besty;
+	Rectangle isect;
 	Point p;
+	int i, nbestx, nbesty;
 
-	sr = screen->sel->floating->r;
+	/* Find the screen that this intersects most with
+	 * (or doesn't intersect least with), and then make
+	 * sure that it overlaps that screen, in the opposite
+	 * direction.
+	 */
+	SET(nbestx);
+	SET(nbesty);
+	SET(s);
 
-	if(Dx(r) > Dx(sr))
-		r.max.x = r.min.x + Dx(sr);
-	if(Dy(r) > Dy(sr))
-		r.max.y = r.min.y + Dy(sr);
+	bestx = nil;
+	besty = nil;
+	for(i=0; i < nscreens; i++) {
+		s = &screens[i];
+		isect = rect_intersection(r, s->r);
+		if(!bestx || Dx(isect) > nbestx && Dy(isect) > 0) {
+			bestx = s;
+			nbestx = Dx(isect);
+		}
+		if(!besty || Dy(isect) > nbesty && Dy(isect) > 0) {
+			besty = s;
+			nbesty = Dy(isect);
+		}
+	}
 
-	sr = insetrect(sr, Dy(screen->brect));
 	p = ZP;
-	p.x -= min(r.max.x - sr.min.x, 0);
-	p.x -= max(r.min.x - sr.max.x, 0);
-	p.y -= min(r.max.y - sr.min.y, 0);
-	p.y -= max(r.min.y - sr.max.y, 0);
+	isect = insetrect(bestx->r, Dy(screen->brect));
+	p.x -= min(r.max.x - isect.min.x, 0);
+	p.x -= max(r.min.x - isect.max.x, 0);
+	isect = insetrect(besty->r, Dy(screen->brect));
+	p.y -= min(r.max.y - isect.min.y, 0);
+	p.y -= max(r.min.y - isect.max.y, 0);
 	return rectaddpt(r, p);
 }
 

@@ -25,7 +25,7 @@ static char* (*find)(const char*, const char*);
 
 static void
 usage(void) {
-	fatal("usage: wimenu ...\n");
+	fatal("usage: wimenu -i [-h <history>] [-a <address>]\n");
 }
 
 static int
@@ -271,7 +271,7 @@ main(int argc, char *argv[]) {
 	if(histfile) {
 		inbuf = Bopen(histfile, OREAD);
 		if(!inbuf)
-			fatal("Can't open histfile %q: %r", histfile);
+			fatal("Can't open history file %q: %r", histfile);
 		item = populate_list(inbuf, true);
 		if(item) {
 			link(item->prev, &hist);
