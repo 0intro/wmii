@@ -51,6 +51,17 @@ menu_unmap(long id, void *p) {
 	XFlush(display);
 }
 
+static char*
+histtext(Item *i) {
+	static char *orig;
+
+	if(!histidx->string) {
+		free(orig);
+		orig = strdup(filter);
+	}
+	return i->string ? i->string : orig;
+}
+
 static void
 menu_cmd(int op) {
 	bool res;
@@ -71,14 +82,14 @@ menu_cmd(int op) {
 		break;
 	case HIST_NEXT:
 		if(histidx->next) {
+			strncpy(filter, histtext(histidx->next), sizeof filter);
 			histidx = histidx->next;
-			strncpy(filter, histidx->string, sizeof filter);
 		}
 		break;
 	case HIST_PREV:
 		if(histidx->prev) {
+			strncpy(filter, histtext(histidx->prev), sizeof filter);
 			histidx = histidx->prev;
-			strncpy(filter, histidx->string, sizeof filter);
 		}
 		break;
 	case KILL_CHAR:
