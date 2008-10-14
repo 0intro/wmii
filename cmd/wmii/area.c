@@ -13,13 +13,15 @@ area_selclient(Area *a) {
 	return nil;
 }
 
-uint
+int
 area_idx(Area *a) {
 	View *v;
 	Area *ap;
 	uint i;
 
 	v = a->view;
+	if(a->floating)
+		return -1;
 	i = 1;
 	for(ap=v->areas[a->screen]; a != ap; ap=ap->next)
 		i++;
@@ -120,6 +122,8 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 	if(v->sel == nil && !a->floating)
 		area_focus(a);
 
+	print("%s: screen: %d a: %p mode: %x floating: %d v->floating: %p v->areas: %p\n", v->name, a->screen, a, a->mode, a->floating, v->floating, v->areas);
+
 	if(!a->floating)
 		event("CreateColumn %ud\n", i);
 	return a;
@@ -151,11 +155,13 @@ area_destroy(Area *a) {
 	/* Can only destroy the floating area when destroying a
 	 * view---after destroying all columns.
 	 */
-	assert(!a->floating || a->prev || a->next);
+	assert(!a->floating || !v->areas[0]);
 	if(a->prev)
 		a->prev->next = a->next;
-	else
+	else if(!a->floating)
 		v->areas[a->screen] = a->next;
+	else
+		v->floating = nil;
 	if(a->next)
 		a->next->prev = a->prev;
 

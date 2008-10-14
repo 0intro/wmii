@@ -554,6 +554,7 @@ column_arrange(Area *a, bool dirty) {
 			f->collapsed = (f != a->sel);
 		break;
 	default:
+		print("Dieing: %s: screen: %d a: %p mode: %x floating: %d\n", v->name, a->screen, a, a->mode, a->floating);
 		die("not reached");
 		break;
 	}

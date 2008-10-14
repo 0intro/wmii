@@ -124,7 +124,9 @@ spawn3l(int fd[3], const char *file, ...) {
 		argv[i] = va_arg(ap, char*);
 	va_end(ap);
 
-	return spawn3(fd, file, argv);
+	i = spawn3(fd, file, argv);
+	free(argv);
+	return i;
 }
 
 #ifdef __linux__
@@ -174,6 +176,7 @@ _backtrace(int pid, char *btarg) {
 	unlink(gdbcmd);
 
 done:
+	free(gdbcmd);
 	kill(pid, SIGKILL);
 	waitpid(pid, &status, 0);
 }

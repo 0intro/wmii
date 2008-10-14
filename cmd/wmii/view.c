@@ -241,6 +241,7 @@ view_update(View *v) {
 	frames_update_sel(v);
 	view_arrange(v);
 
+	fscrn = false;
 	foreach_frame(v, s, a, f)
 		if(f->client->fullscreen) {
 			f->collapsed = false;
@@ -485,7 +486,7 @@ view_arrange(View *v) {
 		/* This is wrong... */
 		a->r.min.y = v->r.min.y;
 		a->r.max.y = v->r.max.y;
-		print("a->r: %R %R %R\n", a->r, v->r, screen->r);
+/* 		print("a->r: %R %R %R\n", a->r, v->r, screen->r); */
 		column_arrange(a, false);
 	}
 	if(v == screen->sel)

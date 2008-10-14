@@ -68,6 +68,7 @@ group_remove(Client *c) {
 			if(*gp == g) break;
 		assert(*gp == g);
 		gp[0] = gp[0]->next;
+		free(g);
 	}
 }
 

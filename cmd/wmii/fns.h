@@ -38,7 +38,7 @@ Area*	area_create(View*, Area *pos, int scrn, uint w);
 void	area_destroy(Area*);
 void	area_detach(Frame*);
 void	area_focus(Area*);
-uint	area_idx(Area*);
+int	area_idx(Area*);
 void	area_moveto(Area*, Frame*);
 char*	area_name(Area*);
 Client*	area_selclient(Area*);
