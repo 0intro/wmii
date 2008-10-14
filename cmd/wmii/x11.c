@@ -675,7 +675,7 @@ textwidth_l(Font *font, char *text, uint len) {
 	XRectangle r;
 
 	if(font->set) {
-		Xutf8TextExtents(font->set, text, len, &r, nil);
+		Xutf8TextExtents(font->set, text, len, nil, &r);
 		return r.width;
 	}
 	return XTextWidth(font->xfont, text, len);

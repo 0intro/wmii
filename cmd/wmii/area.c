@@ -56,7 +56,6 @@ area_create(View *v, Area *pos, int scrn, uint w) {
 	int colnum;
 	Area *a;
 
-
 	if(v->areas) { /* Creating a column. */
 		minwidth = Dx(v->r)/NCOL;
 		i = v->floating == nil;
@@ -91,9 +90,9 @@ area_create(View *v, Area *pos, int scrn, uint w) {
 	a->view = v;
 	a->id = id++;
 	if(v->areas)
-		a->mode = Coldefault;
-	else
 		a->mode = def.colmode;
+	else
+		a->mode = Coldefault;
 	a->screen = scrn;
 	a->frame = nil;
 	a->sel = nil;

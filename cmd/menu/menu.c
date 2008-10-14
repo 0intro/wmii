@@ -165,7 +165,7 @@ menu_draw(void) {
 	r2.max.x = inputw;
 	drawstring(ibuf, font, r2, West, filter, cnorm.fg);
 
-	r2.min.x = textwidth(font, filter) + pad/2 + 1;
+	r2.min.x = textwidth(font, filter) + pad/2;
 	r2.max.x = r2.min.x + 2;
 	r2.min.y++;
 	r2.max.y--;
