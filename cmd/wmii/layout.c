@@ -129,7 +129,7 @@ vplace(Framewin *fw, Point pt) {
 
 	v = screen->sel;
 
-	for(a = v->area->next; a->next; a = a->next)
+	for(a = v->firstarea; a->next; a = a->next)
 		if(pt.x < a->r.max.x)
 			break;
 	fw->ra = a;
@@ -180,7 +180,7 @@ hplace(Framewin *fw, Point pt) {
 	v = screen->sel;
 	minw = Dx(v->r)/NCOL;
 
-	for(a = v->area->next; a->next; a = a->next)
+	for(a = v->firstarea; a->next; a = a->next)
 		if(pt.x < a->r.max.x)
 			break;
 
@@ -428,7 +428,7 @@ thcol(Frame *f) {
 			}
 				
 
- 			if(!a->frame && !a->floating && f->view->area->next->next)
+ 			if(!a->frame && !a->floating && f->view->firstarea->next)
  				area_destroy(a);
 			goto done;
 		case ButtonPress:
@@ -490,7 +490,7 @@ tvcol(Frame *f) {
 			if(button != 1)
 				continue;
 			if(fw->ra) {
-				fw->ra = column_new(f->view, fw->ra, 0);
+				fw->ra = column_new(f->view, fw->ra, screen->idx, 0);
 				area_moveto(fw->ra, f);
 			}
 			goto done;
@@ -518,7 +518,7 @@ tfloat(Frame *f) {
 			f->anext->colr.min.y = f->colr.min.y;
 		else if(f->aprev)
 			f->aprev->colr.max.y = f->colr.max.y;
-		area_moveto(f->view->area, f);
+		area_moveto(f->view->floating, f);
 	}
 	map_frame(f->client);
 	focus(f->client, false);

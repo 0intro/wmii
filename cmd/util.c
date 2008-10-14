@@ -1,12 +1,15 @@
 /* Written by Kris Maglione <fbsdaemon at gmail dot com> */
 /* Public domain */
+#include <ctype.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <util.h>
 #include <fmt.h>
@@ -218,4 +221,22 @@ strlcat(char *dst, const char *src, uint size) {
 		*d = '\0';
 	return size - n - 1;
 }
+
+/* TODO: Make this UTF-8 compliant. */
+char*
+strcasestr(const char *dst, const char *src) {
+	int dc, sc;
+        int len;
+
+	len = strlen(src) - 1;
+	for(; (sc = *src) && *dst; src++) {
+		sc = tolower(dc);
+		for(; (dc = *dst); dst++) {
+			dc = tolower(dc);
+			if(sc == dc && !strncasecmp(dst+1, src+1, len))
+				return (char*)(uintptr_t)dst;
+		}
+	}
+	return nil;
+} 
 

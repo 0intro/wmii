@@ -218,7 +218,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 
 	v = screen->sel;
 	d = divs;
-	for(a=v->area->next; a != f->area; a=a->next)
+	for(a=v->firstarea; a != f->area; a=a->next)
 		d = d->next;
 
 	if(align&East)
@@ -241,13 +241,13 @@ mouse_resizecolframe(Frame *f, Align align) {
 			r.rmax.xy = r.rmin.xy plus 1;                \
 		})
 	if(align&North)
-		frob(f->aprev,           f, aprev, min, max, +, -, y);
+		frob(f->aprev, f, aprev, min, max, +, -, y);
 	else
-		frob(f->anext,           f, anext, max, min, -, +, y);
+		frob(f->anext, f, anext, max, min, -, +, y);
 	if(align&West)
-		frob(a->prev != v->area, a, prev,  min, max, +, -, x);
+		frob(a->prev,  a, prev,  min, max, +, -, x);
 	else
-		frob(a->next,            a, next,  max, min, -, +, x);
+		frob(a->next,  a, next,  max, min, -, +, x);
 #undef frob
 
 	cwin = constraintwin(r);
@@ -320,7 +320,7 @@ mouse_resizecol(Divide *d) {
 
 	v = screen->sel;
 
-	for(a = v->area->next, dp = divs; a; a = a->next, dp = dp->next)
+	for(a = v->firstarea, dp = divs; a; a = a->next, dp = dp->next)
 		if(dp->next == d) break;
 
 	/* Fix later */

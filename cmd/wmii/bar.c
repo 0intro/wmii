@@ -91,7 +91,7 @@ bar_create(Bar **bp, const char *name) {
 	b->col = def.normcolor;
 	
 	/* FIXME: Kludge. */
-	for(s=screens; s < screens+num_screens; s++) {
+	for(s=screens; s < screens+nscreens; s++) {
 		i = bp - s->bar;
 		if(i < nelem(s->bar))
 			b->bar = i;

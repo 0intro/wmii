@@ -1,17 +1,17 @@
 ROOT= ../..
-include ${ROOT}/mk/hdr.mk
-include ${ROOT}/mk/wmii.mk
+include $(ROOT)/mk/hdr.mk
+include $(ROOT)/mk/wmii.mk
 
-main.c: ${ROOT}/mk/wmii.mk
+main.c: $(ROOT)/mk/wmii.mk
 
 TARG =	wmii
 HFILES=	dat.h fns.h
 
-LIB =	${LIBIXP}
-LDFLAGS += -lm ${LIBX11} -lXext -lXrandr -lXinerama \
-	   ${LIBICONV} -lregexp9 -lbio -lfmt -lutf
+LIB =	$(LIBIXP)
+LDFLAGS += -lm $(LIBX11) -lXext -lXrandr -lXinerama \
+	   $(LIBICONV) -lregexp9 -lbio -lfmt -lutf
 
-CFLAGS += ${INCX11} ${INCICONV} -DVERSION=\"${VERSION}\" \
+CFLAGS += $(INCX11) $(INCICONV) -DVERSION=\"$(VERSION)\" \
 	  -DIXP_NEEDAPI=97
 OBJ =	area	\
 	bar	\
@@ -40,5 +40,5 @@ OBJ =	area	\
 	xext	\
 	../util
 
-include ${ROOT}/mk/one.mk
+include $(ROOT)/mk/one.mk
 

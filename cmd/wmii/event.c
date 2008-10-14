@@ -49,7 +49,6 @@ xtime_kludge(void) {
         XIfEvent(display, &e, findtime, (void*)w);
 }
 
-
 uint
 flushevents(long event_mask, bool dispatch) {
 	XEvent ev;
@@ -366,12 +365,9 @@ EvHandler handler[LASTEvent] = {
 void
 check_x_event(IxpConn *c) {
 	XEvent ev;
-	
-	USED(c);
 
-	while(XPending(display)) {
-		XNextEvent(display, &ev);
+	USED(c);
+	while(XCheckMaskEvent(display, ~0, &ev))
 		dispatch_event(&ev);
-	}
 }
 

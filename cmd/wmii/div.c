@@ -122,7 +122,7 @@ div_update_all(void) {
 
 	v = screen->sel;
 	dp = &divs;
-	for(a = v->area->next; a; a = a->next) {
+	for(a = v->firstarea; a; a = a->next) {
 		d = getdiv(dp);
 		dp = &d->next;
 		div_set(d, a->r.min.x);

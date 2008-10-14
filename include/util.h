@@ -32,6 +32,7 @@ typedef long long	vlong;
 #endif
 
 #define strlcat wmii_strlcat
+#define strcasestr wmii_strcasestr
 /* util.c */
 void	_die(char*, int, char*, ...);
 void*	emalloc(uint);
@@ -43,6 +44,7 @@ void*	freelater(void*);
 int	max(int, int);
 int	min(int, int);
 uint	strlcat(char*, const char*, uint);
+char*	strcasestr(const char*, const char*);
 char*	sxprint(const char*, ...);
 uint	tokenize(char **, uint, char*, char);
 int	utflcpy(char*, const char*, int);

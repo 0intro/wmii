@@ -5,9 +5,15 @@
 #include "dat.h"
 #include "fns.h"
 
-#define foreach_frame(v, a, f) \
-	for((a)=(v)->area; (a); (a)=(a)->next) \
-		for((f)=(a)->frame; (f); (f)=(f)->anext)
+#define foreach_area(v, s, a) \
+	Area *__anext; /* Getting ugly... */ \
+	for(s=0; s <= nscreens; s++) \
+		for((a)=(s < nscreens ? (v)->areas[s] : v->floating), __anext=(a)->next; (a); (void)(((a)=__anext) && (__anext=(a)->next)))
+
+#define foreach_frame(v, s, a, f) \
+	Frame *__fnext; \
+	foreach_area(v, s, a) \
+		for((void)(((f)=(a)->frame) && (__fnext=(f)->anext)); (f); (void)(((f)=__fnext) && (__fnext=(f)->anext)))
 
 static bool
 empty_p(View *v) {
@@ -15,8 +21,9 @@ empty_p(View *v) {
 	Area *a;
 	char **p;
 	int cmp;
+	int s;
 
-	foreach_frame(v, a, f) {
+	foreach_frame(v, s, a, f) {
 		cmp = 1;
 		for(p=f->client->retags; *p; p++) {
 			cmp = strcmp(*p, v->name);
@@ -52,7 +59,7 @@ bool
 view_fullscreen_p(View *v) {
 	Frame *f;
 
-	for(f=v->area->frame; f; f=f->anext)
+	for(f=v->floating->frame; f; f=f->anext)
 		if(f->client->fullscreen)
 			return true;
 	return false;
@@ -64,10 +71,15 @@ view_create(const char *name) {
 	View **vp;
 	Client *c;
 	View *v;
+	int i;
 
-	for(v=view; v; v=v->next)
-		if(!strcmp(name, v->name))
-			return v;
+	for(vp=&view; *vp; vp=&(*vp)->next) {
+		i = strcmp((*vp)->name, name);
+		if(i == 0)
+			return *vp;
+		if(i > 0)
+			break;
+	}
 
 	v = emallocz(sizeof *v);
 	v->id = id++;
@@ -76,14 +88,14 @@ view_create(const char *name) {
 	utflcpy(v->name, name, sizeof v->name);
 
 	event("CreateTag %s\n", v->name);
-	area_create(v, nil, 0);
-	column_new(v, v->area, 0);
-	
-	area_focus(v->area->next);
+	area_create(v, nil, screen->idx, 0);
 
-	for(vp=&view; *vp; vp=&(*vp)->next)
-		if(strcmp((*vp)->name, name) >= 0)
-			break;
+	v->areas = emallocz(nscreens * sizeof *v->areas);
+	for(i=0; i < nscreens; i++)
+		view_init(v, i);
+	
+	area_focus(v->firstarea);
+
 	v->next = *vp;
 	*vp = v;
 
@@ -101,11 +113,17 @@ view_create(const char *name) {
 }
 
 void
+view_init(View *v, int iscreen) {
+	column_new(v, nil, iscreen, 0);
+}
+
+void
 view_destroy(View *v) {
 	View **vp;
 	Frame *f, *fn;
 	View *tv;
 	Area *a, *an;
+	int s;
 
 	if(v->dead)
 		return;
@@ -118,7 +136,7 @@ view_destroy(View *v) {
 
 	/* FIXME: Can do better */
 	/* Detach frames held here by regex tags. */
-	for(a=v->area; a; a=an) {
+	for(a=v->floating; a; a=an) {
 		an = a->next;
 		for(f=a->frame; f; f=fn) {
 			fn = f->anext;
@@ -126,9 +144,8 @@ view_destroy(View *v) {
 		}
 	}
 
-	while((a = v->area->next))
+	foreach_area(v, s, a)
 		area_destroy(a);
-	area_destroy(v->area);
 
 	event("DestroyTag %s\n", v->name);
 
@@ -148,18 +165,19 @@ Area*
 view_findarea(View *v, int idx, bool create) {
 	Area *a;
 
-	for(a=v->area->next; a && --idx > 0; a=a->next)
+	for(a=v->firstarea; a && --idx > 0; a=a->next)
 		if(create && a->next == nil)
-			return area_create(v, a, 0);
+			return area_create(v, a, screen->idx, 0);
 	return a;
 }
 
 static void
 frames_update_sel(View *v) {
-	Area *a;
 	Frame *f;
+	Area *a;
+	int s;
 
-	foreach_frame(v, a, f)
+	foreach_frame(v, s, a, f)
 		f->client->sel = f;
 }
 
@@ -174,7 +192,7 @@ view_update_rect(View *v) {
 	left = 0;
 	right = 0;
 	bottom = 0;
-	for(f=v->area->frame; f; f=f->anext) {
+	for(f=v->floating->frame; f; f=f->anext) {
 		strut = f->client->strut;
 		if(!strut)
 			continue;
@@ -196,13 +214,13 @@ view_update_rect(View *v) {
 		r.max.y -= Dy(screen->brect);
 		bar_sety(r.max.y);
 	}
-	v->area->r = r;
+	v->floating->r = r;
 	v->r = r;
 
 	brect = screen->brect;
 	brect.min.x = screen->r.min.x;
 	brect.max.x = screen->r.max.x;
-	for(f=v->area->frame; f; f=f->anext) {
+	for(f=v->floating->frame; f; f=f->anext) {
 		/* This is not pretty. :( */
 		strut = f->client->strut;
 		if(!strut)
@@ -220,9 +238,10 @@ view_update_rect(View *v) {
 void
 view_update(View *v) {
 	Client *c;
-	Frame *f, *fnext;
-	Area *a, *an;
+	Frame *f;
+	Area *a;
 	bool fscrn;
+	int s;
 
 	if(v != screen->sel)
 		return;
@@ -232,23 +251,17 @@ view_update(View *v) {
 	frames_update_sel(v);
 	view_arrange(v);
 
-	fscrn = false;
-	for(a=v->area; a; a=an) {
-		an = a->next;
-		for(f=a->frame; f; f=fnext) {
-			fnext = f->anext;
-			if(f->client->fullscreen) {
-				f->collapsed = false;
-				fscrn = true;
-				if(!f->area->floating) {
-					f->oldarea = area_idx(f->area);
-					area_moveto(v->area, f);
-					area_setsel(v->area, f);
-				}else if(f->oldarea == -1)
-					f->oldarea = 0;
-			}
+	foreach_frame(v, s, a, f)
+		if(f->client->fullscreen) {
+			f->collapsed = false;
+			fscrn = true;
+			if(!f->area->floating) {
+				f->oldarea = area_idx(f->area);
+				area_moveto(v->floating, f);
+				area_setsel(v->floating, f);
+			}else if(f->oldarea == -1)
+				f->oldarea = 0;
 		}
-	}
 
 	for(c=client; c; c=c->next) {
 		f = c->sel;
@@ -266,7 +279,7 @@ view_update(View *v) {
 
 	view_restack(v);
 	if(fscrn)
-		area_focus(v->area);
+		area_focus(v->floating);
 	else
 		area_focus(v->sel);
 	frame_draw_all();
@@ -308,9 +321,9 @@ view_attach(View *v, Frame *f) {
 	oldsel = v->oldsel;
 	a = v->sel;
 	if(client_floats_p(c)) {
-		if(v->sel != v->area)
+		if(v->sel != v->floating)
 			oldsel = v->sel;
-		a = v->area;
+		a = v->floating;
 	}
 	else if((ff = client_groupframe(c, v)))
 		a = ff->area;
@@ -322,7 +335,7 @@ view_attach(View *v, Frame *f) {
 		 * tagging with +foo.
 		 */
 		else if(starting || c->sel && c->sel->area && !c->sel->area->floating)
-			a = v->area->next;
+			a = v->firstarea;
 	}
 
 	area_attach(a, f);
@@ -393,7 +406,7 @@ view_restack(View *v) {
 	fscrn = view_fullscreen_p(v);
 
 	/* *sigh */
-	for(f=v->area->stack; f; f=f->snext)
+	for(f=v->floating->stack; f; f=f->snext)
 		if(f->client->w.ewmh.type & TypeDock)
 			vector_lpush(&wins, f->client->framewin->w);
 		else
@@ -411,7 +424,7 @@ view_restack(View *v) {
 	for(d = divs; d && d->w->mapped; d = d->next)
 		vector_lpush(&wins, d->w->w);
 
-	for(a=v->area->next; a; a=a->next)
+	for(a=v->firstarea; a; a=a->next)
 		if(a->frame) {
 			vector_lpush(&wins, a->sel->client->framewin->w);
 			for(f=a->frame; f; f=f->anext)
@@ -434,19 +447,19 @@ view_scale(View *v, int w) {
 
 	minwidth = Dx(v->r)/NCOL;
 
-	if(!v->area->next)
+	if(!v->firstarea)
 		return;
 
 	numcol = 0;
 	dx = 0;
-	for(a=v->area->next; a; a=a->next) {
+	for(a=v->firstarea; a; a=a->next) {
 		numcol++;
 		dx += Dx(a->r);
 	}
 
 	scale = (float)w / dx;
 	xoff = v->r.min.x;
-	for(a=v->area->next; a; a=a->next) {
+	for(a=v->firstarea; a; a=a->next) {
 		a->r.max.x = xoff + Dx(a->r) * scale;
 		a->r.min.x = xoff;
 		if(!a->next)
@@ -458,7 +471,7 @@ view_scale(View *v, int w) {
 		return;
 
 	xoff = v->r.min.x;
-	for(a=v->area->next; a; a=a->next) {
+	for(a=v->firstarea; a; a=a->next) {
 		a->r.min.x = xoff;
 
 		if(Dx(a->r) < minwidth)
@@ -473,12 +486,12 @@ void
 view_arrange(View *v) {
 	Area *a;
 
-	if(!v->area->next)
+	if(!v->firstarea)
 		return;
 
 	view_update_rect(v);
 	view_scale(v, Dx(v->r));
-	for(a=v->area->next; a; a=a->next) {
+	for(a=v->firstarea; a; a=a->next) {
 		/* This is wrong... */
 		a->r.min.y = v->r.min.y;
 		a->r.max.y = v->r.max.y;
@@ -495,12 +508,12 @@ view_rects(View *v, uint *num, Frame *ignore) {
 	int i;
 
 	i = 2;
-	for(f=v->area->frame; f; f=f->anext)
+	for(f=v->floating->frame; f; f=f->anext)
 		i++;
 	result = emallocz(i * sizeof *result);
 
 	i = 0;
-	for(f=v->area->frame; f; f=f->anext)
+	for(f=v->floating->frame; f; f=f->anext)
 		if(f != ignore)
 			result[i++] = f->r;
 	result[i++] = screen->r;
@@ -551,10 +564,10 @@ view_index(View *v) {
 	Rectangle *r;
 	Frame *f;
 	Area *a;
-	int i;
+	int i, s;
 
 	bufclear();
-	for(a=v->area, i=0; a; a=a->next, i++) {
+	foreach_area(v, s, a) {
 		if(a->floating)
 			bufprint("# ~ %d %d\n", Dx(a->r), Dy(a->r));
 		else

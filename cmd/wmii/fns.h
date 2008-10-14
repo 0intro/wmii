@@ -19,7 +19,7 @@
 /* area.c */
 int	afmt(Fmt*);
 void	area_attach(Area*, Frame*);
-Area*	area_create(View*, Area *pos, uint w);
+Area*	area_create(View*, Area *pos, int scrn, uint w);
 void	area_destroy(Area*);
 void	area_detach(Frame*);
 void	area_focus(Area*);
@@ -82,7 +82,7 @@ void	column_attachrect(Area*, Frame*, Rectangle);
 void	column_detach(Frame*);
 void	column_frob(Area*);
 void	column_insert(Area*, Frame*, Frame*);
-Area*	column_new(View*, Area *, uint);
+Area*	column_new(View*, Area*, int, uint);
 void	column_remove(Frame*);
 void	column_resize(Area*, int);
 void	column_resizeframe(Frame*, Rectangle);
@@ -233,6 +233,7 @@ Area*	view_findarea(View*, int, bool);
 void	view_focus(WMScreen*, View*);
 bool	view_fullscreen_p(View*);
 char*	view_index(View*);
+void	view_init(View*, int iscreen);
 char**	view_names(void);
 uint	view_newcolw(View*, int i);
 void	view_restack(View*);

@@ -154,16 +154,34 @@ ErrorCode ignored_xerrors[] = {
 void
 init_screens(void) {
 	Rectangle *rects;
+	View *v;
 	static Image *ibuf, *ibuf32;
 	int i, n, m;
 
-	rects = xinerama_screens(&n);
-	m = max(n, num_screens);
-	screens = erealloc(screens, m * sizeof *screens);
-	for(i=num_screens; i < m; i++)
-		screens[i] = (WMScreen){ 0, };
-	num_screens = m;
+#ifdef notdef
+        d.x = Dx(scr.rect) - Dx(screen->r);
+        d.y = Dy(scr.rect) - Dy(screen->r);
+        for(v=view; v; v=v->next) {
+                v->r.max.x += d.x;
+                v->r.max.y += d.y;
+        }
+#endif
 
+	/* Reallocate screens, zero any new ones. */
+	rects = xinerama_screens(&n);
+	m = max(n, nscreens);
+	screens = erealloc(screens, m * sizeof *screens);
+	for(i=nscreens; i < m; i++) {
+		screens[i] = (WMScreen){0};
+		for(v=view; v; v=v->next) {
+			v->areas = erealloc(v->areas, m * sizeof *v->areas);
+			view_init(v, i);
+		}
+	}
+
+	nscreens = m;
+
+	/* Reallocate buffers. */
 	freeimage(ibuf);
 	freeimage(ibuf32);
 	ibuf = allocimage(Dx(scr.rect), Dy(scr.rect), scr.depth);
@@ -171,10 +189,11 @@ init_screens(void) {
 	if(render_visual)
 		ibuf32 = allocimage(Dx(scr.rect), Dy(scr.rect), 32);
 
+	/* Resize and initialize screens. */
 	for(i=0; i < n; i++) {
 		screen = &screens[i];
+		screen->idx = i;
 
-		print("rects[%d]: %R\n", i, rects[i]);
 		screen->r = rects[i];
 		def.snap = Dy(rects[i]) / 63;
 		screen->ibuf = ibuf;

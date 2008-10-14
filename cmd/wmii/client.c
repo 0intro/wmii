@@ -645,7 +645,7 @@ client_seturgent(Client *c, bool urgent, int from) {
 			for(f=c->frame; f; f=f->cnext) {
 				SET(ff);
 				if(!urgent)
-					for(a=f->view->area; a; a=a->next)
+					for(a=f->view->floating; a; a=a->next)
 						for(ff=a->frame; ff; ff=ff->anext)
 							if(ff->client->urgent) break;
 				if(urgent || ff == nil)

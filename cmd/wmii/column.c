@@ -77,10 +77,10 @@ column_getmode(Area *a) {
 }
 
 Area*
-column_new(View *v, Area *pos, uint w) {
+column_new(View *v, Area *pos, int scrn, uint w) {
 	Area *a;
 
-	a = area_create(v, pos, w);
+	a = area_create(v, pos, scrn, w);
 	return a;
 #if 0
 	if(!a)
@@ -204,7 +204,7 @@ column_detach(Frame *f) {
 		if(first)
 			stack_scale(first, dy);
 		column_arrange(a, false);
-	}else if(a->view->area->next->next)
+	}else if(a->view->areas[a->screen]->next)
 		area_destroy(a);
 }
 
@@ -353,7 +353,7 @@ column_fit(Area *a, uint *ncolp, uint *nuncolp) {
 			if(f->collapsed) {
 				if(i < 0) {
 					f->collapsed = false;
-					area_moveto(f->view->area, f);
+					area_moveto(f->view->floating, f);
 					continue;
 				}
 				i--;
@@ -633,7 +633,7 @@ column_resizeframe(Frame *f, Rectangle r) {
 
 	ar = a->next;
 	al = a->prev;
-	if(al == v->area)
+	if(al == v->floating)
 		al = nil;
 
 	if(al)

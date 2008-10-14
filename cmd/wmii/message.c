@@ -325,20 +325,21 @@ strarea(View *v, const char *s) {
 	if(!strcmp(s, "sel"))
 		return v->sel;
 	if(!strcmp(s, "~"))
-		return v->area;
+		return v->floating;
 	if(!getlong(s, &i) || i == 0)
 		return nil;
 
+	/* FIXME: Very broken! */
 	if(i > 0) {
-		for(a = v->area; a; a = a->next)
+		for(a = v->firstarea; a; a = a->next)
 			if(i-- == 0) break;
 	}
 	else {
-		for(a = v->area; a->next; a = a->next)
+		for(a = v->firstarea; a->next; a = a->next)
 			;
-		for(; a != v->area; a = a->prev)
+		for(; a != v->firstarea; a = a->prev)
 			if(++i == 0) break;
-		if(a == v->area)
+		if(a == v->firstarea)
 			a = nil;
 	}
 	return a;
@@ -642,7 +643,7 @@ readctl_view(View *v) {
 	if(v->sel->sel)
 		bufprint("select client %C\n", v->sel->sel->client);
 
-	for(a = v->area->next, i = 1; a; a = a->next, i++)
+	for(a = v->firstarea, i = 1; a; a = a->next, i++)
 		bufprint("colmode %d %s\n", i, column_getmode(a));
 	return buffer;
 }
@@ -833,11 +834,11 @@ msg_selectarea(Area *a, IxpMsg *m) {
 	switch(sym) {
 	case LTOGGLE:
 		if(!a->floating)
-			ap = v->area;
+			ap = v->floating;
 		else if(v->revert && v->revert != a)
 			ap = v->revert;
 		else
-			ap = v->area->next;
+			ap = v->firstarea;
 		break;
 	case LUP:
 	case LDOWN:
@@ -846,7 +847,7 @@ msg_selectarea(Area *a, IxpMsg *m) {
 	case LLEFT:
 		if(a->floating)
 			return Ebadvalue;
-		for(ap=v->area->next; ap->next; ap=ap->next)
+		for(ap=v->firstarea; ap->next; ap=ap->next)
 			if(ap->next == a) break;
 		break;
 	case LRIGHT:
@@ -854,10 +855,10 @@ msg_selectarea(Area *a, IxpMsg *m) {
 			return Ebadvalue;
 		ap = a->next;
 		if(ap == nil)
-			ap = v->area->next;
+			ap = v->firstarea;
 		break;
 	case LTILDE:
-		ap = v->area;
+		ap = v->floating;
 		break;
 	default:
 		if(!strcmp(s, "sel"))
@@ -865,7 +866,7 @@ msg_selectarea(Area *a, IxpMsg *m) {
 		else {
 			if(!getulong(s, &i) || i == 0)
 				return Ebadvalue;
-			for(ap=v->area->next; ap; ap=ap->next)
+			for(ap=v->firstarea; ap; ap=ap->next)
 				if(--i == 0) break;
 			if(i != 0)
 				return Ebadvalue;
@@ -1005,9 +1006,9 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	case LLEFT:
 		if(a->floating)
 			return Ebadvalue;
-		if(a->prev != v->area)
+		if(a->prev)
 			to = a->prev;
-		a = v->area;
+		a = v->floating;
 		break;
 	case LRIGHT:
 		if(a->floating)
@@ -1016,7 +1017,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 		break;
 	case LTOGGLE:
 		if(!a->floating)
-			to = v->area;
+			to = v->floating;
 		else if(f->column)
 			to = view_findarea(v, f->column, true);
 		else
@@ -1025,7 +1026,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	case LTILDE:
 		if(a->floating)
 			return Ebadvalue;
-		to = v->area;
+		to = v->floating;
 		break;
 	default:
 		if(!getulong(s, &i) || i == 0)
@@ -1035,7 +1036,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	}
 
 	if(!to && !swap && (f->anext || f != f->area->frame))
-		to = column_new(v, a, 0);
+		to = column_new(v, a, screen->idx, 0);
 
 	if(!to)
 		return Ebadvalue;

@@ -134,6 +134,7 @@ struct Area {
 	bool	floating;
 	ushort	id;
 	int	mode;
+	int	screen;
 	bool	max;
 	Rectangle	r;
 	Rectangle	r_old;
@@ -259,11 +260,13 @@ struct Strut {
 	Rectangle	bottom;
 };
 
+#define firstarea areas[screen->idx]
 struct View {
 	View*	next;
 	char	name[256];
 	ushort	id;
-	Area*	area;
+	Area*	floating;
+	Area**	areas;
 	Area*	sel;
 	Area*	oldsel;
 	Area*	revert;
@@ -325,6 +328,7 @@ EXTERN struct WMScreen {
 	Image*	ibuf;
 	Image*	ibuf32;
 	int	barpos;
+	int	idx;
 
 	Rectangle r;
 	Rectangle brect;
@@ -353,7 +357,7 @@ EXTERN IxpServer srv;
 EXTERN Ixp9Srv	p9srv;
 
 /* X11 */
-EXTERN uint	num_screens;
+EXTERN uint	nscreens;
 EXTERN uint	valid_mask;
 EXTERN uint	numlock_mask;
 EXTERN bool	sel_screen;

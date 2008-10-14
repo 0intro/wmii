@@ -640,7 +640,7 @@ constrain(Rectangle r) {
 	Rectangle sr;
 	Point p;
 
-	sr = screen->sel->area->r;
+	sr = screen->sel->floating->r;
 
 	if(Dx(r) > Dx(sr))
 		r.max.x = r.min.x + Dx(sr);

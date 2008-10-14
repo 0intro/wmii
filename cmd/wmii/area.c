@@ -20,8 +20,8 @@ area_idx(Area *a) {
 	uint i;
 
 	v = a->view;
-	i = 0;
-	for(ap=v->area; a != ap; ap=ap->next)
+	i = 1;
+	for(ap=v->areas[a->screen]; a != ap; ap=ap->next)
 		i++;
 	return i;
 }
@@ -49,50 +49,52 @@ area_name(Area *a) {
 }
 
 Area*
-area_create(View *v, Area *pos, uint w) {
+area_create(View *v, Area *pos, int scrn, uint w) {
 	static ushort id = 1;
-	uint areanum, i;
+	uint i;
 	uint minwidth;
 	int colnum;
 	Area *a;
 
-	minwidth = Dx(v->r)/NCOL;
 
-	i = 0;
-	if(pos)
-		i = area_idx(pos);
-	areanum = 0;
-	for(a=v->area; a; a=a->next)
-		areanum++;
+	if(v->areas) { /* Creating a column. */
+		minwidth = Dx(v->r)/NCOL;
+		i = v->floating == nil;
+		if(pos)
+			i = area_idx(pos);
 
-	/* TODO: Need a better sizing/placing algorithm.
-	 */
-	colnum = areanum - 1;
-	if(w == 0) {
-		if(colnum >= 0) {
-			w = view_newcolw(v, i);
-			if (w == 0)
-				w = Dx(v->r) / (colnum + 1);
+		colnum = 0;
+		for(a=v->areas[scrn]; a; a=a->next)
+			colnum++;
+
+		/* TODO: Need a better sizing/placing algorithm.
+		 */
+		if(w == 0) {
+			if(colnum >= 0) {
+				w = view_newcolw(v, i);
+				if (w == 0)
+					w = Dx(v->r) / (colnum + 1);
+			}
+			else
+				w = Dx(v->r);
 		}
-		else
-			w = Dx(v->r);
-	}
 
-	if(w < minwidth)
-		w = minwidth;
-	if(colnum && (colnum * minwidth + w) > Dx(v->r))
-		return nil;
+		if(w < minwidth)
+			w = minwidth;
+		if(colnum && (colnum * minwidth + w) > Dx(v->r))
+			return nil;
 
-	if(pos)
 		view_scale(v, Dx(v->r) - w);
+	}
 
 	a = emallocz(sizeof *a);
 	a->view = v;
 	a->id = id++;
-	if(v->area)
-		a->mode = def.colmode;
-	else
+	if(v->areas)
 		a->mode = Coldefault;
+	else
+		a->mode = def.colmode;
+	a->screen = scrn;
 	a->frame = nil;
 	a->sel = nil;
 
@@ -100,20 +102,22 @@ area_create(View *v, Area *pos, uint w) {
 	a->r.min.x = 0;
 	a->r.max.x = w;
 
-	if(pos) {
+	if(!v->floating) {
+		v->floating = a;
+		a->floating = true;
+	}
+	else if(pos) {
 		a->next = pos->next;
 		a->prev = pos;
-	}else {
-		a->next = v->area;
-		v->area = a;
+	}
+	else {
+		a->next = v->areas[scrn];
+		v->areas[scrn] = a;
 	}
 	if(a->prev)
 		a->prev->next = a;
 	if(a->next)
 		a->next->prev = a;
-
-	if(a == v->area)
-		a->floating = true;
 
 	if(v->sel == nil)
 		area_focus(a);
@@ -232,8 +236,8 @@ area_detach(Frame *f) {
 	else
 		column_detach(f);
 
-	if(v->sel->sel == nil && v->area->sel)
-		v->sel = v->area;
+	if(v->sel->sel == nil && v->floating->sel)
+		v->sel = v->floating;
 
 	view_arrange(v);
 }
@@ -259,7 +263,7 @@ area_focus(Area *a) {
 
 	if((old_a) && (a->floating != old_a->floating)) {
 		v->revert = old_a;
-		if(v->area->max)
+		if(v->floating->max)
 			view_update(v);
 	}
 
