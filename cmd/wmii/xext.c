@@ -66,21 +66,12 @@ randr_event_p(XEvent *e) {
 
 static void
 randr_screenchange(XRRScreenChangeNotifyEvent *ev) {
-	View *v;
-	Point d;
 
 	XRRUpdateConfiguration((XEvent*)ev);
 	if(ev->rotation+90 % 180)
 		scr.rect = Rect(0, 0, ev->width, ev->height);
 	else
 		scr.rect = Rect(0, 0, ev->height, ev->width);
-
-	d.x = Dx(scr.rect) - Dx(screen->r);
-	d.y = Dy(scr.rect) - Dy(screen->r);
-	for(v=view; v; v=v->next) {
-		v->r.max.x += d.x;
-		v->r.max.y += d.y;
-	}
 	init_screens();
 }
 
@@ -158,7 +149,6 @@ xinerama_screens(int *np) {
 		rects[i].max.y = res[i].y_org + res[i].height;
 	}
 
-	print("have_xinerama: true; n: %d\n", n);
 	*np = n;
 	return rects;
 }
