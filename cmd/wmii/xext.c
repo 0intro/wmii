@@ -148,6 +148,7 @@ xinerama_screens(int *np) {
 		rects[i].max.x = res[i].x_org + res[i].width;
 		rects[i].max.y = res[i].y_org + res[i].height;
 	}
+	XFree(res);
 
 	*np = n;
 	return rects;
