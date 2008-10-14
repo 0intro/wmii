@@ -67,7 +67,7 @@ readctl(char *key) {
 			p += nkey;
 			s = strchr(p, '\n');
 			n = (s ? s : ectl) - p;
-			s = emalloc(n + 1);
+			s = freelater(emalloc(n + 1));
 			s[n] = '\0';
 			return strncpy(s, p, n);
 		}

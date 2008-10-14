@@ -69,17 +69,6 @@ menu_cmd(int op) {
 
 	i = strlen(filter);
 	switch(op) {
-	case ACCEPT:
-		srv.running = false;
-		if(matchidx)
-			print("%s", matchidx->retstring);
-		else
-			result = 1;
-		break;
-	case REJECT:
-		srv.running = false;
-		result = 1;
-		break;
 	case HIST_NEXT:
 		if(histidx->next) {
 			strncpy(filter, histtext(histidx->next), sizeof filter);
@@ -110,6 +99,23 @@ menu_cmd(int op) {
 		/* TODO: Add a caret. */
 		filter[0] = '\0';
 		break;
+	default:
+		goto next;
+	}
+	update_filter();
+next:
+	switch(op) {
+	case ACCEPT:
+		srv.running = false;
+		if(matchidx)
+			print("%s", matchidx->retstring);
+		else
+			result = 1;
+		break;
+	case REJECT:
+		srv.running = false;
+		result = 1;
+		break;
 	case CMPL_NEXT:
 		matchidx = matchidx->next;
 		break;
@@ -117,19 +123,21 @@ menu_cmd(int op) {
 		matchidx = matchidx->prev;
 		break;
 	case CMPL_FIRST:
-		matchidx = matchfirst;
+		matchstart = matchfirst;
+		matchidx = nil;
+		matchend = nil;
 		break;
 	case CMPL_LAST:
 		matchidx = matchfirst->prev;
 		break;
 	case CMPL_NEXT_PAGE:
-		matchstart = matchend->next;
+		matchidx = matchend->next;
 		break;
 	case CMPL_PREV_PAGE:
 		matchend = matchstart->prev;
+		matchidx = nil;
 		break;
 	}
-	update_filter();
 	menu_draw();
 }
 
@@ -138,18 +146,39 @@ menu_draw(void) {
 	Rectangle r, r2;
 	CTuple *c;
 	Item *i;
-	int inputw, itemoff, end, pad;
+	int inputw, itemoff, end, pad, n;
 
 	r = barwin->r;
 	r = rectsetorigin(r, ZP);
 	r2 = r;
 
+	pad = (font->height & ~1);
 	inputw = min(Dx(r) / 3, maxwidth) + pad;
 	itemoff = inputw + 2 * ltwidth;
 	end = Dx(r) - ltwidth;
-	pad = (font->height & ~1);
 
 	fill(ibuf, r, cnorm.bg);
+
+	if(matchend && matchidx == matchend->next)
+		matchstart = matchidx;
+	else if(matchidx == matchstart->prev)
+		matchend = matchidx;
+
+	if(matchend == matchstart->prev && matchstart != matchidx) {
+		n = itemoff;
+		matchstart = matchend;
+		for(i=matchend; ; i=i->prev) {
+			n += i->width + pad;
+			if(n > end)
+				break;
+			matchstart = i;
+			if(i == matchfirst)
+				break;
+		}
+	}
+
+	if(matchidx == nil)
+		matchidx = matchstart;
 
 	for(i=matchstart; i->string; i=i->next) {
 		r2.min.x = itemoff;
