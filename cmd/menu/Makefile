@@ -13,6 +13,7 @@ LDFLAGS += -lm $(LIBX11) -lXext -lXrandr -lXinerama \
 CFLAGS += $(INCX11) -DVERSION=\"$(VERSION)\" \
 	  -DIXP_NEEDAPI=86
 OBJ =	main	\
+	caret	\
 	event	\
 	menu	\
 	../wmii/geom	\

@@ -1,4 +1,8 @@
 
+void	caret_delete(int, int);
+char*	caret_find(int, int);
+void	caret_insert(char*, bool);
+void	caret_move(int, int);
 void	check_x_event(IxpConn*);
 void	debug(int, const char*, ...);
 void	dispatch_event(XEvent*);

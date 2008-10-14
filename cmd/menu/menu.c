@@ -12,13 +12,11 @@ static int	numlock;
 static void	menu_draw(void);
 
 enum {
-	ACCEPT,
+	ACCEPT = CARET_LAST,
 	REJECT,
 	HIST_NEXT,
 	HIST_PREV,
-	KILL_CHAR,
-	KILL_WORD,
-	KILL_LINE,
+	KILL,
 	CMPL_NEXT,
 	CMPL_PREV,
 	CMPL_FIRST,
@@ -57,47 +55,29 @@ histtext(Item *i) {
 
 	if(!histidx->string) {
 		free(orig);
-		orig = strdup(filter);
+		orig = strdup(input.string);
 	}
 	return i->string ? i->string : orig;
 }
 
 static void
-menu_cmd(int op) {
-	bool res;
-	int i;
+menu_cmd(int op, int motion) {
 
-	i = strlen(filter);
 	switch(op) {
 	case HIST_NEXT:
 		if(histidx->next) {
-			strncpy(filter, histtext(histidx->next), sizeof filter);
+			caret_insert(histtext(histidx->next), true);
 			histidx = histidx->next;
 		}
 		break;
 	case HIST_PREV:
 		if(histidx->prev) {
-			strncpy(filter, histtext(histidx->prev), sizeof filter);
+			caret_insert(histtext(histidx->prev), true);
 			histidx = histidx->prev;
 		}
 		break;
-	case KILL_CHAR:
-		if(i > 0)
-			filter[i-1] = '\0';
-		break;
-	case KILL_WORD:
-		if(i == 0)
-			break;
-		for(i--; i >= 0 && isspace(filter[i]); i--)
-			filter[i] = '\0';
-		if(i >= 0)
-			res = !isalnum(filter[i]);
-		for(; i >= 0 && !isalnum(filter[i]) == res && !isspace(filter[i]); i--)
-			filter[i] = '\0';
-		break;
-	case KILL_LINE:
-		/* TODO: Add a caret. */
-		filter[0] = '\0';
+	case KILL:
+		caret_delete(BACKWARD, motion);
 		break;
 	default:
 		goto next;
@@ -115,6 +95,10 @@ next:
 	case REJECT:
 		srv.running = false;
 		result = 1;
+		break;
+	case BACKWARD:
+	case FORWARD:
+		caret_move(op, motion);
 		break;
 	case CMPL_NEXT:
 		matchidx = matchidx->next;
@@ -203,9 +187,9 @@ menu_draw(void) {
 		drawstring(ibuf, font, r2, East, ">", cnorm.fg);
 	r2 = r;
 	r2.max.x = inputw;
-	drawstring(ibuf, font, r2, West, filter, cnorm.fg);
+	drawstring(ibuf, font, r2, West, input.string, cnorm.fg);
 
-	r2.min.x = textwidth(font, filter) + pad/2;
+	r2.min.x = textwidth_l(font, input.string, input.pos - input.string) + pad/2;
 	r2.max.x = r2.min.x + 2;
 	r2.min.y++;
 	r2.max.y--;
@@ -244,7 +228,7 @@ menu_show(void) {
 static void
 kdown_event(Window *w, XKeyEvent *e) {
 	char buf[32];
-	int num, i;
+	int num;
 	KeySym ksym;
 
 	buf[0] = 0;
@@ -268,37 +252,41 @@ kdown_event(Window *w, XKeyEvent *e) {
 		default:
 			return;
 		case XK_bracketleft: /* Esc */
-			menu_cmd(REJECT);
+			menu_cmd(REJECT, 0);
 			return;
 		case XK_j:
 		case XK_J:
 		case XK_m:
 		case XK_M:
-			menu_cmd(ACCEPT);
+			menu_cmd(ACCEPT, 0);
 			return;
 		case XK_n:
 		case XK_N:
-			menu_cmd(HIST_NEXT);
+			menu_cmd(HIST_NEXT, 0);
 			return;
 		case XK_p:
 		case XK_P:
-			menu_cmd(HIST_PREV);
+			menu_cmd(HIST_PREV, 0);
 			return;
 		case XK_i: /* Tab */
 		case XK_I:
-			menu_cmd(CMPL_NEXT);
+			if(e->state & ShiftMask)
+				menu_cmd(CMPL_PREV, 0);
+			else
+				menu_cmd(CMPL_NEXT, 0);
 			return;
 		case XK_h:
 		case XK_H:
-			menu_cmd(KILL_CHAR);
+			menu_cmd(KILL, CHAR);
 			return;
+		case XK_BackSpace:
 		case XK_w:
 		case XK_W:
-			menu_cmd(KILL_WORD);
+			menu_cmd(KILL, WORD);
 			return;
 		case XK_u:
 		case XK_U:
-			menu_cmd(KILL_LINE);
+			menu_cmd(KILL, LINE);
 			return;
 		}
 	}
@@ -308,74 +296,70 @@ kdown_event(Window *w, XKeyEvent *e) {
 		default:
 			return;
 		case XK_h:
-			menu_cmd(CMPL_PREV);
+			menu_cmd(CMPL_PREV, 0);
 			return;
 		case XK_l:
-			menu_cmd(CMPL_NEXT);
+			menu_cmd(CMPL_NEXT, 0);
 			return;
 		case XK_j:
-			menu_cmd(CMPL_NEXT_PAGE);
+			menu_cmd(CMPL_NEXT_PAGE, 0);
 			return;
 		case XK_k:
-			menu_cmd(CMPL_PREV_PAGE);
+			menu_cmd(CMPL_PREV_PAGE, 0);
 			return;
 		case XK_g:
-			menu_cmd(CMPL_FIRST);
+			menu_cmd(CMPL_FIRST, 0);
 			return;
 		case XK_G:
-			menu_cmd(CMPL_LAST);
+			menu_cmd(CMPL_LAST, 0);
 			return;
 		}
 	}
 	switch(ksym) {
 	default:
 		if(num && !iscntrl(buf[0])) {
-			i = strlen(filter);
-			if(i < sizeof filter - 1) {
-				filter[i] = buf[0];
-				filter[i+1] = '\0';
-			}
+			caret_insert(buf, false);
 			update_filter();
 			menu_draw();
 		}
 		break;
 	case XK_Escape:
-		menu_cmd(REJECT);
+		menu_cmd(REJECT, 0);
 		return;
 	case XK_Return:
-		menu_cmd(ACCEPT);
+		menu_cmd(ACCEPT, 0);
 		return;
 	case XK_BackSpace:
-		menu_cmd(KILL_CHAR);
+		menu_cmd(KILL, CHAR);
 		return;
 	case XK_Up:
-		menu_cmd(HIST_PREV);
+		menu_cmd(HIST_PREV, 0);
 		return;
 	case XK_Down:
-		menu_cmd(HIST_NEXT);
+		menu_cmd(HIST_NEXT, 0);
 		return;
 	case XK_Home:
 		/* TODO: Caret. */
-		menu_cmd(CMPL_FIRST);
+		menu_cmd(CMPL_FIRST, 0);
 		return;
 	case XK_End:
 		/* TODO: Caret. */
-		menu_cmd(CMPL_LAST);
+		menu_cmd(CMPL_LAST, 0);
 		return;
 	case XK_Left:
-		menu_cmd(CMPL_PREV);
+		menu_cmd(BACKWARD, CHAR);
 		return;
 	case XK_Right:
-		menu_cmd(CMPL_NEXT);
+		menu_cmd(FORWARD, CHAR);
 		return;
 	case XK_Next:
-		menu_cmd(CMPL_NEXT_PAGE);
+		menu_cmd(CMPL_NEXT_PAGE, 0);
 		return;
 	case XK_Prior:
-		menu_cmd(CMPL_PREV_PAGE);
+		menu_cmd(CMPL_PREV_PAGE, 0);
 		return;
 	case XK_Tab:
-		menu_cmd(CMPL_NEXT);
+		menu_cmd(CMPL_NEXT, 0);
 		return;
 	}
 }

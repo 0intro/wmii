@@ -151,7 +151,7 @@ update_filter(void) {
 	/* TODO: Perhaps filter only previous matches unless filter
 	 * has been truncated.
 	 */
-	matchfirst = matchstart = matchidx = filter_list(items, filter);
+	matchfirst = matchstart = matchidx = filter_list(items, input.string);
 }
 
 /*
@@ -264,6 +264,7 @@ main(int argc, char *argv[]) {
 
 	inbuf = Bfdopen(0, OREAD);
 	items = populate_list(inbuf, false);
+	caret_insert("", true);
 	update_filter();
 
 	Bterm(inbuf);

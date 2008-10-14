@@ -15,6 +15,15 @@
 # define EXTERN extern
 #endif
 
+enum {
+	FORWARD,
+	BACKWARD,
+	LINE,
+	WORD,
+	CHAR,
+	CARET_LAST,
+};
+
 typedef struct Item	Item;
 
 struct Item {
@@ -26,6 +35,14 @@ struct Item {
 	int	len;
 	int	width;
 };
+
+EXTERN struct {
+	char*	string;
+	char*	end;
+	char*	pos;
+	int	len;
+	int	size;
+} input;
 
 EXTERN long	xtime;
 EXTERN Image*	ibuf;
@@ -45,8 +62,6 @@ EXTERN Item*	matchend;
 EXTERN Item*	matchidx;
 
 EXTERN Item*	histidx;
-
-EXTERN char	filter[1024];
 
 EXTERN int	maxwidth;
 EXTERN int	result;
