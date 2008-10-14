@@ -208,7 +208,7 @@ init_screens(void) {
 
 int
 main(int argc, char *argv[]) {
-	Item hist = { .string = "", };
+	static Item hist;
 	Item *item;
 	char *address;
 	char *histfile;
