@@ -219,9 +219,7 @@ key $MODKEY-a || fn $key {
 key $MODKEY-p || fn $key {
 	ifs=() { cmd = `{wimenu -h $progs_hist <$progs_file} }
 	wi_runcmd $cmd &
-	{ cat $progs_hist; echo $cmd; } | uniq | sed '/^$/d' \
-		| tail -$progs_len >$progs_hist.$pid
-	mv $progs_hist.$pid $progs_hist}
+	wi_addhist $hist.prog $histlen $cmd}
 key $MODKEY-Return || fn $key {
 	wi_runcmd $WMII_TERM &}
 
@@ -251,8 +249,8 @@ Action overridekeys
 
 # Misc Setup
 progs_file=`{namespace}^/proglist.$pid
-progs_hist=`{namespace}^/proghist
-progs_len=5000
+hist=`{namespace}^/history
+histlen=5000
 touch $progs_hist
 Action status &
 Action rehash &

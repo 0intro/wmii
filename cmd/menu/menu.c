@@ -87,10 +87,11 @@ next:
 	switch(op) {
 	case ACCEPT:
 		srv.running = false;
-		if(matchidx)
+		if(matchidx->retstring && !motion)
 			print("%s", matchidx->retstring);
 		else
-			result = 1;
+			print("%s", input.string);
+
 		break;
 	case REJECT:
 		srv.running = false;
@@ -258,7 +259,7 @@ kdown_event(Window *w, XKeyEvent *e) {
 		case XK_J:
 		case XK_m:
 		case XK_M:
-			menu_cmd(ACCEPT, 0);
+			menu_cmd(ACCEPT, e->state&ShiftMask);
 			return;
 		case XK_n:
 		case XK_N:
@@ -327,7 +328,7 @@ kdown_event(Window *w, XKeyEvent *e) {
 		menu_cmd(REJECT, 0);
 		return;
 	case XK_Return:
-		menu_cmd(ACCEPT, 0);
+		menu_cmd(ACCEPT, e->state&ShiftMask);
 		return;
 	case XK_BackSpace:
 		menu_cmd(KILL, CHAR);
