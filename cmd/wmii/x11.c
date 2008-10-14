@@ -970,6 +970,19 @@ ungrabpointer(void) {
 	XUngrabPointer(display, CurrentTime);
 }
 
+int
+grabkeyboard(Window *w) {
+
+	return XGrabKeyboard(display, w->w, false /* owner events */,
+		GrabModeAsync, GrabModeAsync, CurrentTime
+		) == GrabSuccess;
+}
+
+void
+ungrabkeyboard(void) {
+	XUngrabKeyboard(display, CurrentTime);
+}
+
 /* Insanity */
 void
 sethints(Window *w) {

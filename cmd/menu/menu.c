@@ -223,7 +223,7 @@ menu_show(void) {
 	mapwin(barwin);
 	raisewin(barwin);
 	menu_draw();
-	setfocus(barwin, RevertToPointerRoot);
+	grabkeyboard(barwin);
 }
 
 static void
