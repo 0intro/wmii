@@ -125,13 +125,20 @@ vplace(Framewin *fw, Point pt) {
 	Area *a;
 	View *v;
 	long l;
-	int hr;
+	int hr, s;
 
 	v = screen->sel;
 
-	for(a = v->firstarea; a->next; a = a->next)
-		if(pt.x < a->r.max.x)
-			break;
+	/* XXX: Multihead. Check this over. */
+	for(s=0; s < nscreens; s++) {
+		if(!rect_haspoint_p(pt, screen[s].r))
+			continue;
+		for(a=v->areas[s]; a; a=a->next)
+			if(pt.x < a->r.max.x)
+				goto found;
+	}
+	return; /* XXX: Multihead. */
+found:
 	fw->ra = a;
 
 	pt.x = a->r.min.x;
@@ -175,12 +182,13 @@ static void
 hplace(Framewin *fw, Point pt) {
 	Area *a;
 	View *v;
-	int minw;
+	int minw, s;
 	
 	v = screen->sel;
 	minw = Dx(v->r)/NCOL;
 
-	for(a = v->firstarea; a->next; a = a->next)
+	/* XXX: Multihead. Check this over. */
+	foreach_column(v, s, a)
 		if(pt.x < a->r.max.x)
 			break;
 
@@ -254,6 +262,8 @@ mouse_movegrabbox(Client *c, bool grabmod) {
 
 	f = c->sel;
 
+	SET(x);
+	SET(y);
 	if(grabmod) {
 		p = querypointer(f->client->framewin);
 		x = (float)p.x / Dx(f->r);
@@ -400,6 +410,9 @@ thcol(Frame *f) {
 		case ButtonRelease:
 			if(button != 1)
 				continue;
+			SET(collapsed);
+			SET(fp);
+			SET(fn);
 			a = f->area;
 			if(a->floating)
 				area_detach(f);
@@ -416,7 +429,7 @@ thcol(Frame *f) {
 			}
 
 			column_drop(fw->ra, f, fw->pt.y);
-			if(collapsed) {
+			if(!a->floating && collapsed) {
 				/* XXX */
 				for(; fn && fn->collapsed; fn=fn->anext)
 					;

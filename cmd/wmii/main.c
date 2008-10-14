@@ -171,12 +171,12 @@ init_screens(void) {
 	rects = xinerama_screens(&n);
 	m = max(n, nscreens);
 	screens = erealloc(screens, m * sizeof *screens);
+	for(v=view; v; v=v->next)
+		v->areas = erealloc(v->areas, m * sizeof *v->areas);
 	for(i=nscreens; i < m; i++) {
 		screens[i] = (WMScreen){0};
-		for(v=view; v; v=v->next) {
-			v->areas = erealloc(v->areas, m * sizeof *v->areas);
+		for(v=view; v; v=v->next)
 			view_init(v, i);
-		}
 	}
 
 	nscreens = m;

@@ -108,6 +108,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 
 	depth = scr.depth;
 	vis = scr.visual;
+	/* XXX: Multihead. */
 	c->ibuf = &screen->ibuf;
 	if(render_argb_p(wa->visual)) {
 		depth = 32;

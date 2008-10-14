@@ -102,6 +102,7 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 	if(!v->floating) {
 		v->floating = a;
 		a->floating = true;
+		a->screen = -1;
 	}
 	else if(pos) {
 		a->next = pos->next;

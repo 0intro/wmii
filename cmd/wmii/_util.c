@@ -163,10 +163,6 @@ _backtrace(int pid, char *btarg) {
 		goto done;
 	}
 
-	/* Why? Because gdb freezes waiting for user input
-	 * if its stdout is a tty.
-	 * Might be easier to pipe to sed 2,4d here.
-	 */
 	Biobuf bp;
 	char *s;
 

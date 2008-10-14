@@ -13,6 +13,21 @@
 # pragma varargck	type	"r"	void
 #endif
 
+#define foreach_area(v, s, a) \
+	Area *__anext; /* Getting ugly... */  \
+	for(s=0; s <= nscreens; s++)          \
+		for((a)=(s < nscreens ? (v)->areas[s] : v->floating), __anext=(a)->next; (a); (void)(((a)=__anext) && (__anext=(a)->next)))
+
+#define foreach_column(v, s, a) \
+	Area *__anext; /* Getting ugly... */  \
+	for(s=0; s < nscreens; s++)           \
+		for((a)=(v)->areas[s], __anext=(a)->next; (a); (void)(((a)=__anext) && (__anext=(a)->next)))
+
+#define foreach_frame(v, s, a, f) \
+	Frame *__fnext;           \
+	foreach_area(v, s, a)     \
+		for((void)(((f)=(a)->frame) && (__fnext=(f)->anext)); (f); (void)(((f)=__fnext) && (__fnext=(f)->anext)))
+
 #define btassert(arg, cond) \
 	(cond ? fprint(1, __FILE__":%d: failed assertion: " #cond "\n", __LINE__), backtrace(arg), true : false)
 

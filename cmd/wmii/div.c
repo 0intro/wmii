@@ -117,12 +117,13 @@ div_update_all(void) {
 	Divide **dp, *d;
 	Area *a;
 	View *v;
+	int s;
 
 	update_imgs();
 
 	v = screen->sel;
 	dp = &divs;
-	for(a = v->firstarea; a; a = a->next) {
+	foreach_area(v, s, a) {
 		d = getdiv(dp);
 		dp = &d->next;
 		div_set(d, a->r.min.x);

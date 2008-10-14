@@ -845,12 +845,14 @@ msg_selectarea(Area *a, IxpMsg *m) {
 	case LCLIENT:
 		return msg_selectframe(a->sel, m, sym);
 	case LLEFT:
+		/* XXX: Multihead. */
 		if(a->floating)
 			return Ebadvalue;
 		for(ap=v->firstarea; ap->next; ap=ap->next)
 			if(ap->next == a) break;
 		break;
 	case LRIGHT:
+		/* XXX: Multihead. */
 		if(a->floating)
 			return Ebadvalue;
 		ap = a->next;
@@ -866,6 +868,7 @@ msg_selectarea(Area *a, IxpMsg *m) {
 		else {
 			if(!getulong(s, &i) || i == 0)
 				return Ebadvalue;
+			/* XXX: Multihead. */
 			for(ap=v->firstarea; ap; ap=ap->next)
 				if(--i == 0) break;
 			if(i != 0)
@@ -913,7 +916,7 @@ msg_selectframe(Frame *f, IxpMsg *m, int sym) {
 	SET(fp);
 	switch(sym) {
 	case LUP:
-		/* XXX */
+		/* XXX: Stack. */
 		if(stack) {
 			for(; f->aprev && f->aprev->collapsed; f=f->aprev)
 				;
@@ -926,7 +929,7 @@ msg_selectframe(Frame *f, IxpMsg *m, int sym) {
 				if(fp->anext == f) break;
 		break;
 	case LDOWN:
-		/* XXX */
+		/* XXX: Stack. */
 		if(stack) {
 			for(fp=f->anext; fp && fp->collapsed; fp=fp->anext)
 				;
@@ -1006,6 +1009,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	case LLEFT:
 		if(a->floating)
 			return Ebadvalue;
+		/* XXX: Multihead. */
 		if(a->prev)
 			to = a->prev;
 		a = v->floating;
@@ -1013,6 +1017,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	case LRIGHT:
 		if(a->floating)
 			return Ebadvalue;
+		/* XXX: Multihead. */
 		to = a->next;
 		break;
 	case LTOGGLE:
@@ -1063,6 +1068,7 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 	c = f->client;
 	switch(sym) {
 	case LUP:
+		/* XXX: Multihead. */
 		fp = f->aprev;
 		if(!fp)
 			return Ebadvalue;
@@ -1070,6 +1076,7 @@ msg_sendframe(Frame *f, int sym, bool swap) {
 			fp = fp->aprev;
 		break;
 	case LDOWN:
+		/* XXX: Multihead. */
 		fp = f->anext;
 		if(!fp)
 			return Ebadvalue;

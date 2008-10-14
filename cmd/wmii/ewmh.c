@@ -91,16 +91,16 @@ ewmh_updatestacking(void) {
 	Frame *f;
 	Area *a;
 	View *v;
-	int i;
+	int s;
 
 	vector_linit(&vec);
 
-	for(v=view; v; v=v->next) /* Wow... */
-		for(i=0; i < nscreens; i++)
-			for(a=v->areas[i]; a; a=a->next)
-				for(f=a->frame; f; f=f->anext)
-					if(f->client->sel == f)
-						vector_lpush(&vec, f->client->w.w);
+	for(v=view; v; v=v->next) {
+		foreach_column(v, s, a)
+			for(f=a->frame; f; f=f->anext)
+				if(f->client->sel == f)
+					vector_lpush(&vec, f->client->w.w);
+	}
 	for(v=view; v; v=v->next) {
 		for(f=v->floating->stack; f; f=f->snext)
 			if(!f->snext) break;

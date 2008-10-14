@@ -5,16 +5,6 @@
 #include "dat.h"
 #include "fns.h"
 
-#define foreach_area(v, s, a) \
-	Area *__anext; /* Getting ugly... */ \
-	for(s=0; s <= nscreens; s++) \
-		for((a)=(s < nscreens ? (v)->areas[s] : v->floating), __anext=(a)->next; (a); (void)(((a)=__anext) && (__anext=(a)->next)))
-
-#define foreach_frame(v, s, a, f) \
-	Frame *__fnext; \
-	foreach_area(v, s, a) \
-		for((void)(((f)=(a)->frame) && (__fnext=(f)->anext)); (f); (void)(((f)=__fnext) && (__fnext=(f)->anext)))
-
 static bool
 empty_p(View *v) {
 	Frame *f;

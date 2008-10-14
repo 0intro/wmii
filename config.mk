@@ -14,7 +14,7 @@ LIBS = -L/usr/lib -L$(ROOT)/lib
 
 # Flags
 include $(ROOT)/mk/gcc.mk
-CFLAGS += $(DEBUGCFLAGS) -O1
+CFLAGS += $(DEBUGCFLAGS) -O0
 LDFLAGS += -g $(LIBS)
 SOLDFLAGS += $(LDFLAGS)
 SHARED = -shared -Wl,-soname=$(SONAME)
