@@ -235,7 +235,7 @@ bool	view_fullscreen_p(View*);
 char*	view_index(View*);
 void	view_init(View*, int iscreen);
 char**	view_names(void);
-uint	view_newcolw(View*, int i);
+uint	view_newcolwidth(View*, int i);
 void	view_restack(View*);
 void	view_scale(View*, int w);
 Client*	view_selclient(View*);

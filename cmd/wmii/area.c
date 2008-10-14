@@ -49,57 +49,55 @@ area_name(Area *a) {
 }
 
 Area*
-area_create(View *v, Area *pos, int scrn, uint w) {
+area_create(View *v, Area *pos, int scrn, uint width) {
 	static ushort id = 1;
 	uint i;
 	uint minwidth;
-	int colnum;
+	int numcols;
 	Area *a;
 
+	SET(i);
 	if(v->areas) { /* Creating a column. */
 		minwidth = Dx(v->r)/NCOL;
-		i = v->floating == nil;
-		if(pos)
-			i = area_idx(pos);
-
-		colnum = 0;
+		i = pos ? area_idx(pos) : 1;
+		numcols = 0;
 		for(a=v->areas[scrn]; a; a=a->next)
-			colnum++;
+			numcols++;
 
 		/* TODO: Need a better sizing/placing algorithm.
 		 */
-		if(w == 0) {
-			if(colnum >= 0) {
-				w = view_newcolw(v, i);
-				if (w == 0)
-					w = Dx(v->r) / (colnum + 1);
+		if(width == 0) {
+			if(numcols >= 0) {
+				width = view_newcolwidth(v, i);
+				if (width == 0)
+					width = Dx(v->r) / (numcols + 1);
 			}
 			else
-				w = Dx(v->r);
+				width = Dx(v->r);
 		}
 
-		if(w < minwidth)
-			w = minwidth;
-		if(colnum && (colnum * minwidth + w) > Dx(v->r))
+		if(width < minwidth)
+			width = minwidth;
+		if(numcols && (numcols * minwidth + width) > Dx(v->r))
 			return nil;
 
-		view_scale(v, Dx(v->r) - w);
+		view_scale(v, Dx(v->r) - width);
 	}
 
 	a = emallocz(sizeof *a);
 	a->view = v;
+	a->screen = scrn;
 	a->id = id++;
 	if(v->areas)
 		a->mode = def.colmode;
 	else
 		a->mode = Coldefault;
-	a->screen = scrn;
 	a->frame = nil;
 	a->sel = nil;
 
 	a->r = v->r;
 	a->r.min.x = 0;
-	a->r.max.x = w;
+	a->r.max.x = width;
 
 	if(!v->floating) {
 		v->floating = a;
@@ -118,7 +116,7 @@ area_create(View *v, Area *pos, int scrn, uint w) {
 	if(a->next)
 		a->next->prev = a;
 
-	if(v->sel == nil)
+	if(v->sel == nil && !a->floating)
 		area_focus(a);
 
 	if(!a->floating)
@@ -128,7 +126,7 @@ area_create(View *v, Area *pos, int scrn, uint w) {
 
 void
 area_destroy(Area *a) {
-	Area *ta;
+	Area *newfocus;
 	View *v;
 	int idx;
 
@@ -145,25 +143,26 @@ area_destroy(Area *a) {
 	idx = area_idx(a);
 
 	if(a->prev && !a->prev->floating)
-		ta = a->prev;
+		newfocus = a->prev;
 	else
-		ta = a->next;
+		newfocus = a->next;
 
 	/* Can only destroy the floating area when destroying a
 	 * view---after destroying all columns.
 	 */
-	assert(a->prev || a->next == nil);
+	assert(!a->floating || a->prev || a->next);
 	if(a->prev)
 		a->prev->next = a->next;
+	else
+		v->areas[a->screen] = a->next;
 	if(a->next)
 		a->next->prev = a->prev;
 
-	if(ta && v->sel == a)
-		area_focus(ta);
+	if(newfocus && v->sel == a)
+		area_focus(newfocus);
+
 	view_arrange(v);
 	event("DestroyArea %d\n", idx);
-	/* Deprecated */
-	event("DestroyColumn %d\n", idx);
 
 	free(a);
 }
@@ -186,9 +185,9 @@ area_moveto(Area *to, Frame *f) {
 	/* Temporary kludge. */
 	if(!to->floating
 	&& to->floating != fromfloating
-	&& !eqrect(f->colr, ZR)) {
+	&& !eqrect(f->colr, ZR))
 		column_attachrect(to, f, f->colr);
-	}else
+	else
 		area_attach(to, f);
 }
 
@@ -197,10 +196,12 @@ area_setsel(Area *a, Frame *f) {
 	View *v;
 
 	v = a->view;
+	/* XXX: Stack. */
 	for(; f && f->collapsed && f->anext; f=f->anext)
 		;
 	for(; f && f->collapsed && f->aprev; f=f->aprev)
 		;
+
 	if(a == v->sel && f)
 		frame_focus(f);
 	else
@@ -255,6 +256,7 @@ area_focus(Area *a) {
 		return;
 
 	v->sel = a;
+	/* XXX: Multihead. */
 	if(!a->floating)
 		v->selcol = area_idx(a);
 	if(a != old_a)

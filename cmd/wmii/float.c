@@ -31,7 +31,6 @@ float_detach(Frame *f) {
 	a = f->area;
 	sel = view_findarea(v, v->selcol, false);
 	oldsel = v->oldsel;
-	if(!(sel || !v->areas[a->screen]->next)) warning("%s:%d: !(sel || !v->area->next)", __FILE__, __LINE__);
 	pr = f->aprev;
 
 	frame_remove(f);
@@ -76,6 +75,7 @@ float_arrange(Area *a) {
 			f->collapsed = (f != a->sel);
 		break;
 	default:
+		print("colmode: %x\n", a->mode);
 		die("not reached");
 		break;
 	}

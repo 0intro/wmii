@@ -250,7 +250,7 @@ dndmotion_event(Window *w, Point p) {
 static void
 expose_event(Window *w, XExposeEvent *e) {
 	USED(w, e);
-	bar_draw(screen);
+	bar_draw(w->aux);
 }
 
 static Handlers handlers = {

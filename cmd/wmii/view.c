@@ -495,6 +495,7 @@ view_arrange(View *v) {
 		/* This is wrong... */
 		a->r.min.y = v->r.min.y;
 		a->r.max.y = v->r.max.y;
+		print("a->r: %R %R %R\n", a->r, v->r, screen->r);
 		column_arrange(a, false);
 	}
 	if(v == screen->sel)
@@ -541,7 +542,7 @@ view_update_all(void) {
 }
 
 uint
-view_newcolw(View *v, int num) {
+view_newcolwidth(View *v, int num) {
 	Rule *r;
 	char *toks[16];
 	char buf[sizeof r->value];
