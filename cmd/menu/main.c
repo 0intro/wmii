@@ -262,6 +262,9 @@ main(int argc, char *argv[]) {
 	if(!font)
 		fatal("Can't load font %q", readctl("font "));
 
+	xext_init();
+	menu_init();
+
 	inbuf = Bfdopen(0, OREAD);
 	items = populate_list(inbuf, false);
 	caret_insert("", true);
@@ -281,8 +284,6 @@ main(int argc, char *argv[]) {
 		Bterm(inbuf);
 	}
 
-	xext_init();
-	menu_init();
 	init_screens();
 
 	i = ixp_serverloop(&srv);

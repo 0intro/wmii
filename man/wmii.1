@@ -1,5 +1,5 @@
 '\" t
-.\" Manual page created with latex2man on Tue Jul  3 10:15:50 EDT 2007
+.\" Manual page created with latex2man on Wed Oct 15 16:08:29 EDT 2008
 .\" NOTE: This file is generated, DO NOT EDIT.
 .de Vb
 .ft CW
@@ -10,7 +10,8 @@
 
 .fi
 ..
-.TH "WMII" "1" "03 July 2007" "" ""
+.TH "WMII" "1" "  Wed Dec 31 19:00:00 EDT 1969
+" "" ""
 .SH NAME
 wmii\-VERSION
 .PP
@@ -592,12 +593,10 @@ following commands:
 select
 Select a client: 
 .br
-\fB \fP\fB \fPselect \fIleft|right|up|down\fP
+\fB \fP\fB \fPselect \fIdirection\fP
 .br
-\fB \fP\fB \fPselect \fIrow number|sel\fP
-[\fIframe number\fP]
+\fB \fP\fB \fPselect \fIframe\fP
 .br
-\fB \fP\fB \fPselect client \fIclient\fP
 .TP
 send
 Send a client somewhere: 
@@ -623,6 +622,51 @@ managed layer.
 swap
 Swap a client with another. Same syntax as 
 send. 
+.TP
+grow
+Grow or shrink a client. 
+\fB \fP\fB \fPgrow \fI<frame>\fP
+\fI<direction>\fP
+\fI[amount]\fP
+.TP
+nudge
+Nudge a client in a given direction. 
+\fB \fP\fB \fPgrow \fI<frame>\fP
+\fI<direction>\fP
+\fI[amount]\fP
+.RE
+.RS
+.PP
+Where the arguments are defined as follows: 
+.RS
+.RE
+.TP
+area
+Selects a column or the floating area. 
+.br
+\fB \fP\fB \fParea ::= "~"\fB \fP| <number> | "sel" 
+.br
+Where   represents the floating area and <number> 
+represents a column index, starting at one. 
+.TP
+frame
+Selects a client window. 
+.br
+\fB \fP\fB \fPframe ::= <area> <space> <index> | <area> "sel" | client <window\-id> 
+.br
+Where <index> represents the nth frame of <area> or 
+<window\-id> is the X11 window id of the given client. 
+.TP
+amount
+The amount to grow or nudge something. 
+.br
+\fB \fP\fB \fPamount ::= <number> "px"? 
+.br
+If "px" is given, <number> is interperated as an exact 
+pixel count. Otherwise, it\&'s interperated as a "reasonable" 
+amount, which is usually either the height of a window\&'s title 
+bar, or its sizing increment (as defined by X11) in a given 
+direction. 
 .RE
 .RS
 .PP

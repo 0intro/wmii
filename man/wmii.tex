@@ -305,9 +305,8 @@ all of the clients with the given tag applied. The special
 	following commands:
 	\begin{description}
 	\item[select] Select a client: \\
-		\SP\SP select \Arg{left\Bar right\Bar up\Bar down} \\
-		\SP\SP select \Arg{row number\Bar sel} \oArg{frame number} \\
-		\SP\SP select client \Arg{client}
+		\SP\SP select \Arg{direction} \\
+		\SP\SP select \Arg{frame} \\
 	\item[send] Send a client somewhere:
 		\begin{description}
 		\item[send \Arg{client|sel} \Arg{up|down|left|right}]
@@ -319,7 +318,31 @@ all of the clients with the given tag applied. The special
 		\end{description}
 	\item[swap] Swap a client with another. Same syntax as
 		send.
+        \item[grow] Grow or shrink a client.
+                \SP\SP grow \Arg{<frame>} \Arg{<direction>} \Arg{[amount]}
+        \item[nudge] Nudge a client in a given direction.
+                \SP\SP grow \Arg{<frame>} \Arg{<direction>} \Arg{[amount]}
 	\end{description}
+
+        Where the arguments are defined as follows:
+        \begin{description}
+        \item[area] Selects a column or the floating area. \\
+            \SP\SP area ::= "\Tilde"\SP | <number> | "sel" \\
+            Where ~ represents the floating area and <number>
+            represents a column index, starting at one.
+        \item[frame] Selects a client window. \\
+            \SP\SP frame ::= <area> <space> <index> | <area> "sel" | client <window-id> \\
+            Where <index> represents the nth frame of <area> or
+            <window-id> is the X11 window id of the given client.
+        \item[amount] The amount to grow or nudge something. \\
+            \SP\SP amount ::= <number> "px"? \\
+            If "px" is given, <number> is interperated as an exact
+            pixel count. Otherwise, it's interperated as a "reasonable"
+            amount, which is usually either the height of a window's title
+            bar, or its sizing increment (as defined by X11) in a given
+            direction.
+	\end{description}
+
 \item[index] Read for a description of the contents of a tag.
 \end{description}
 

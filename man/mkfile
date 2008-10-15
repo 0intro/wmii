@@ -1,4 +1,4 @@
-TARG = `{make -VTARG}
+TARG = `{bmake -VTARG}
 
 default:V: all
 

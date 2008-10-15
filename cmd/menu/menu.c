@@ -223,7 +223,10 @@ menu_show(void) {
 	mapwin(barwin);
 	raisewin(barwin);
 	menu_draw();
-	grabkeyboard(barwin);
+	if(!grabkeyboard(barwin)) {
+		srv.running = false;
+		result = 1;
+	}
 }
 
 static void
@@ -241,13 +244,12 @@ kdown_event(Window *w, XKeyEvent *e) {
 			ksym = (ksym - XK_KP_0) + XK_0;
 
 	if(IsFunctionKey(ksym)
-	|| IsKeypadKey(ksym)
 	|| IsMiscFunctionKey(ksym)
-	|| IsPFKey(ksym)
+	|| IsKeypadKey(ksym)
 	|| IsPrivateKeypadKey(ksym))
+	|| IsPFKey(ksym)
 		return;
 
-	/* first check if a control mask is omitted */
 	if(e->state & ControlMask) {
 		switch (ksym) {
 		default:
@@ -269,13 +271,6 @@ kdown_event(Window *w, XKeyEvent *e) {
 		case XK_P:
 			menu_cmd(HIST_PREV, 0);
 			return;
-		case XK_i: /* Tab */
-		case XK_I:
-			if(e->state & ShiftMask)
-				menu_cmd(CMPL_PREV, 0);
-			else
-				menu_cmd(CMPL_NEXT, 0);
-			return;
 		case XK_h:
 		case XK_H:
 			menu_cmd(KILL, CHAR);
@@ -288,6 +283,13 @@ kdown_event(Window *w, XKeyEvent *e) {
 		case XK_u:
 		case XK_U:
 			menu_cmd(KILL, LINE);
+			return;
+		case XK_i: /* Tab */
+		case XK_I:
+			if(e->state & ShiftMask)
+				menu_cmd(CMPL_PREV, 0);
+			else
+				menu_cmd(CMPL_NEXT, 0);
 			return;
 		}
 	}
@@ -302,11 +304,11 @@ kdown_event(Window *w, XKeyEvent *e) {
 		case XK_l:
 			menu_cmd(CMPL_NEXT, 0);
 			return;
-		case XK_j:
-			menu_cmd(CMPL_NEXT_PAGE, 0);
-			return;
 		case XK_k:
 			menu_cmd(CMPL_PREV_PAGE, 0);
+			return;
+		case XK_j:
+			menu_cmd(CMPL_NEXT_PAGE, 0);
 			return;
 		case XK_g:
 			menu_cmd(CMPL_FIRST, 0);
@@ -324,14 +326,26 @@ kdown_event(Window *w, XKeyEvent *e) {
 			menu_draw();
 		}
 		break;
+	case XK_Tab:
+		if(e->state & ShiftMask)
+			menu_cmd(CMPL_PREV, 0);
+		else
+			menu_cmd(CMPL_NEXT, 0);
+		return;
+	case XK_Return:
+		menu_cmd(ACCEPT, e->state & ShiftMask);
+		return;
 	case XK_Escape:
 		menu_cmd(REJECT, 0);
 		return;
-	case XK_Return:
-		menu_cmd(ACCEPT, e->state&ShiftMask);
-		return;
 	case XK_BackSpace:
 		menu_cmd(KILL, CHAR);
+		return;
+	case XK_Left:
+		menu_cmd(BACKWARD, CHAR);
+		return;
+	case XK_Right:
+		menu_cmd(FORWARD, CHAR);
 		return;
 	case XK_Up:
 		menu_cmd(HIST_PREV, 0);
@@ -340,27 +354,16 @@ kdown_event(Window *w, XKeyEvent *e) {
 		menu_cmd(HIST_NEXT, 0);
 		return;
 	case XK_Home:
-		/* TODO: Caret. */
 		menu_cmd(CMPL_FIRST, 0);
 		return;
 	case XK_End:
-		/* TODO: Caret. */
 		menu_cmd(CMPL_LAST, 0);
-		return;
-	case XK_Left:
-		menu_cmd(BACKWARD, CHAR);
-		return;
-	case XK_Right:
-		menu_cmd(FORWARD, CHAR);
-		return;
-	case XK_Next:
-		menu_cmd(CMPL_NEXT_PAGE, 0);
 		return;
 	case XK_Prior:
 		menu_cmd(CMPL_PREV_PAGE, 0);
 		return;
-	case XK_Tab:
-		menu_cmd(CMPL_NEXT, 0);
+	case XK_Next:
+		menu_cmd(CMPL_NEXT_PAGE, 0);
 		return;
 	}
 }
