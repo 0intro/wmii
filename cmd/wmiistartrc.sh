@@ -16,5 +16,5 @@ else
 fi
 
 mkdir $lconf 2>/dev/null && $gconf/welcome &
-exec "$WMIIRC" "$@"
+"$WMIIRC" "$@" || exec "$gconf/wmiirc" "$@"
 
