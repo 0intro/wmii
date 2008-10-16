@@ -480,7 +480,7 @@ view_scale(View *v, int w) {
 	uint minwidth;
 	Area *a;
 	float scale;
-	int dx;
+	int dx, s;
 
 	minwidth = Dx(v->screenr)/NCOL; /* XXX: Multihead. */
 
@@ -495,27 +495,31 @@ view_scale(View *v, int w) {
 	}
 
 	scale = (float)w / dx;
-	xoff = v->screenr.min.x; /* XXX: Multihead. */
-	for(a=v->firstarea; a; a=a->next) {
-		a->r.max.x = xoff + Dx(a->r) * scale;
-		a->r.min.x = xoff;
-		if(!a->next)
-			a->r.max.x = v->screenr.min.x + w; /* XXX: Multihead. */
-		xoff = a->r.max.x;
+	for(s=0; s < nscreens; s++) {
+		xoff = v->r[s].min.x;
+		for(a=v->areas[s]; a; a=a->next) {
+			a->r.max.x = xoff + Dx(a->r) * scale;
+			a->r.min.x = xoff;
+			if(!a->next)
+				a->r.max.x = v->r[s].min.x + w; /* XXX: Multihead. */
+			xoff = a->r.max.x;
+		}
 	}
 
 	if(numcol * minwidth > w)
 		return;
 
-	xoff = v->screenr.min.x; /* XXX: Multihead. */
-	for(a=v->firstarea; a; a=a->next) {
-		a->r.min.x = xoff;
+	for(s=0; s < nscreens; s++) {
+		xoff = v->r[s].min.x;
+		for(a=v->areas[s]; a; a=a->next) {
+			a->r.min.x = xoff;
 
-		if(Dx(a->r) < minwidth)
-			a->r.max.x = xoff + minwidth;
-		if(!a->next)
-			a->r.max.x = v->screenr.min.x + w; /* XXX: Multihead. */
-		xoff = a->r.max.x;
+			if(Dx(a->r) < minwidth)
+				a->r.max.x = xoff + minwidth;
+			if(!a->next)
+				a->r.max.x = v->r[s].min.x + w;
+			xoff = a->r.max.x;
+		}
 	}
 }
 
@@ -523,17 +527,19 @@ view_scale(View *v, int w) {
 void
 view_arrange(View *v) {
 	Area *a;
+	int s;
 
 	if(!v->firstarea)
 		return;
 
 	view_update_rect(v);
 	view_scale(v, Dx(v->screenr));
-	for(a=v->firstarea; a; a=a->next) {
+	foreach_area(v, s, a) {
+		if(a->floating)
+			continue;
 		/* This is wrong... */
-		a->r.min.y = v->screenr.min.y;
-		a->r.max.y = v->screenr.max.y;
-/* 		print("a->r: %R %R %R\n", a->r, v->r, screen->r); */
+		a->r.min.y = v->r[s].min.y;
+		a->r.max.y = v->r[s].max.y;
 		column_arrange(a, false);
 	}
 	if(v == screen->sel)
