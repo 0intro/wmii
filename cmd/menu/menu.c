@@ -127,7 +127,8 @@ menu_draw(void) {
 	r2 = r;
 
 	pad = (font->height & ~1);
-	inputw = min(Dx(r) / 3, maxwidth) + pad;
+	inputw = min(Dx(r) / 3, maxwidth);
+	inputw = max(inputw, textwidth(font, input.string)) + pad;
 	itemoff = inputw + 2 * ltwidth;
 	end = Dx(r) - ltwidth;
 
