@@ -47,7 +47,7 @@ fn wi_fnmenu {
 	group=$1^Menu-$2 last=$group^_last fns=`{wi_getfuns $group} {
 	shift 2
 	if(! ~ $#fns 0) {
-		res = `{wmii9menu -initial $"($last) $fns} \
+		res = `{wmii9menu -i $"($last) $fns} \
 		if(! ~ $res '') {
 			($last) = $res
 			$group-$res $*}}}

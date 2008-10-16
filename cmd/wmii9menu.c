@@ -37,6 +37,7 @@
 
 #define IXP_NO_P9_
 #define IXP_P9_STRUCTS
+#include <fmt.h>
 #include <ixp.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -58,7 +59,6 @@ static IxpClient* client;
 static IxpCFid*	ctlfid;
 static char 	ctl[1024];
 static char*	ectl;
-static char*	address;
 
 static int	wborder;
 
@@ -106,57 +106,31 @@ void warpmouse(int, int);
 void memory(void);
 int args(void);
 
-/* args --- go through the argument list, set options */
-
-struct {
-	char *name, **var;
-} argtab[] = {
-	{"initial", &initial},
-	{"a", &address},
-	{0, },
-}, *ap;
-
 /* main --- crack arguments, set up X stuff, run the main menu loop */
 
 int
 main(int argc, char **argv)
 {
-	int i, n;
+	static char *address;
 	char *cp;
+	int i;
 
 	g_argc = argc;
 	g_argv = argv;
 
-	/* set default label name */
-	if((cp = strrchr(argv[0], '/')) != nil)
-		argv0 = ++cp;
-	else
-		argv0 = argv[0];
-
-	for(i = 1; i < argc && argv[i][0] == '-'; i++) {
-		if(strcmp(argv[i], "-version") == 0) {
-			printf("%s\n", version);
-			exit(0);
-		}
-
-		SET(n);
-		for(ap = argtab; ap->name; ap++) {
-			n = strlen(ap->name);
-			if(strncmp(ap->name, argv[i]+1, n) == 0)
-				break;
-		}
-		if(ap->name == 0)
-			usage();
-
-		if(argv[i][n+1] != '\0')
-			*ap->var = &argv[i][n+1];
-		else {
-			if(argc <= i+1)
-				usage();
-			*ap->var = argv[++i];
-		}
-	}
-	argc -= i, argv += i;
+	ARGBEGIN{
+	case 'v':
+		print("%s\n", version);
+		return 0;
+	case 'a':
+		address = EARGF(usage());
+		break;
+	case 'i':
+		initial = EARGF(usage());
+		break;
+	default:
+		usage();
+	}ARGEND;
 
 	if(argc == 0)
 		usage();
@@ -209,8 +183,8 @@ main(int argc, char **argv)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s -version\n", argv0);
-	fprintf(stderr, "       %s [-a <address>] [-initial <arg>] menitem[:command] ...\n", argv0);
+	fprintf(stderr, "usage: %s -v\n", argv0);
+	fprintf(stderr, "       %s [-a <address>] [-i <arg>] menitem[:command] ...\n", argv0);
 	exit(0);
 }
 

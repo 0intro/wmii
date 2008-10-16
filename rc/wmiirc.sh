@@ -66,19 +66,6 @@ events() {
 	Event LeftBarClick LeftBarDND
 		shift
 		wmiir xwrite /ctl view "$@"
-	Event ClientMouseDown
-		client=$1; button=$2
-		case "$button" in
-		3)
-			do=$(wimii9menu -initial "$menulast" Nop Delete Fullscreen)
-			case "$do" in
-			Delete)
-				wmiir xwrite /client/$client/ctl kill;;
-			Fullscreen)
-				wmiir xwrite /client/$client/ctl Fullscreen on;;
-			esac
-			menulast=${do:-"$menulast"}
-		esac
 	Event Unresponsive
 		{
 			client=$1; shift

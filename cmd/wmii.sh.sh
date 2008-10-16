@@ -110,7 +110,7 @@ wi_fnmenu() {
 	eval "last=\"\$$_last\""
 	res=$(set -- $(echo "$Menus" | awk -v "s=$group" 'BEGIN{n=length(s)}
 		         substr($1,1,n) == s{print substr($1,n+2)}')
-	      [ $# != 0 ] && wmii9menu -initial "$last" "$@")
+	      [ $# != 0 ] && wmii9menu -i "$last" "$@")
 	if [ -n "$res" ]; then
 		eval "$_last="'"$res"'
 		Menu $group-$res "$@"
