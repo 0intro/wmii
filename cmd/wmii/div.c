@@ -53,8 +53,9 @@ div_set(Divide *d, int x) {
 
 	d->x = x;
 	r = rectaddpt(divimg->r, Pt(x - Dx(divimg->r)/2, 0));
-	r.min.y = screen->sel->r.min.y;
-	r.max.y = screen->sel->r.max.y;
+	/* XXX: Multihead. */
+	r.min.y = screen->sel->screenr.min.y;
+	r.max.y = screen->sel->screenr.max.y;
 
 	reshapewin(d->w, r);
 	mapdiv(d);
@@ -90,7 +91,8 @@ update_imgs(void) {
 
 	w = 2 * (labelh(def.font) / 3);
 	w = max(w, 10);
-	h = Dy(screen->sel->r);
+	/* XXX: Multihead. */
+	h = Dy(screen->sel->screenr);
 
 	if(divimg) {
 		if(w == Dx(divimg->r) && h == Dy(divimg->r)

@@ -224,7 +224,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 	if(align&East)
 		d = d->next;
 
-	min.x = Dx(v->r)/NCOL;
+	min.x = Dx(v->r[a->screen])/NCOL;
 	min.y = /*frame_delta_h() +*/ labelh(def.font);
 	/* This would be so simple in lisp... */
 	/* This must be evil. But, I hate to repeat myself. */
@@ -329,7 +329,7 @@ mouse_resizecol(Divide *d) {
 
 	pt = querypointer(&scr.root);
 
-	minw = Dx(v->r)/NCOL;
+	minw = Dx(v->r[a->screen])/NCOL;
 	r.min.x = a->r.min.x + minw;
 	r.max.x = a->next->r.max.x - minw;
 	r.min.y = pt.y;
@@ -445,8 +445,8 @@ mouse_resize(Client *c, Align align, bool grabmod) {
 	pt = addpt(c->framewin->r.min,
 		   Pt(Dx(frect) * rx,
 		      Dy(frect) * ry));
-	if(pt.y > f->view->r.max.y)
-		pt.y = f->view->r.max.y - 1;
+	if(pt.y > f->view->r[f->area->screen].max.y)
+		pt.y = f->view->r[f->area->screen].max.y - 1;
 	warppointer(pt);
 
 	free(rects);

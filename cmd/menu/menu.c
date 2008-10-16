@@ -224,6 +224,7 @@ menu_show(void) {
 	raisewin(barwin);
 	menu_draw();
 	if(!grabkeyboard(barwin)) {
+		exit(1);
 		srv.running = false;
 		result = 1;
 	}
@@ -246,8 +247,8 @@ kdown_event(Window *w, XKeyEvent *e) {
 	if(IsFunctionKey(ksym)
 	|| IsMiscFunctionKey(ksym)
 	|| IsKeypadKey(ksym)
-	|| IsPrivateKeypadKey(ksym))
-	|| IsPFKey(ksym)
+	|| IsPrivateKeypadKey(ksym)
+	|| IsPFKey(ksym))
 		return;
 
 	if(e->state & ControlMask) {

@@ -312,7 +312,7 @@ column_fit(Area *a, uint *ncolp, uint *nuncolp) {
 	}
 
 	/* FIXME: Kludge. */
-	dy = Dy(a->view->r) - Dy(a->r);
+	dy = Dy(a->view->r[a->screen]) - Dy(a->r);
 	minh = colh * (ncol + nuncol - 1) + uncolh;
 	if(dy && Dy(a->r) < minh)
 		a->r.max.y += min(dy, minh - Dy(a->r));
@@ -554,7 +554,7 @@ column_arrange(Area *a, bool dirty) {
 			f->collapsed = (f != a->sel);
 		break;
 	default:
-		print("Dieing: %s: screen: %d a: %p mode: %x floating: %d\n", v->name, a->screen, a, a->mode, a->floating);
+		fprint(2, "Dieing: %s: screen: %d a: %p mode: %x floating: %d\n", v->name, a->screen, a, a->mode, a->floating);
 		die("not reached");
 		break;
 	}
@@ -630,7 +630,7 @@ column_resizeframe(Frame *f, Rectangle r) {
 	a = f->area;
 	v = a->view;
 
-	minw = Dx(v->r) / NCOL;
+	minw = Dx(v->r[a->screen]) / NCOL;
 
 	ar = a->next;
 	al = a->prev;
@@ -640,14 +640,14 @@ column_resizeframe(Frame *f, Rectangle r) {
 	if(al)
 		r.min.x = max(r.min.x, al->r.min.x + minw);
 	else { /* Hm... */
-		r.min.x = max(r.min.x, v->r.min.x);
+		r.min.x = max(r.min.x, v->r[a->screen].min.x);
 		r.max.x = max(r.max.x, r.min.x + minw);
 	}
 
 	if(ar)
 		r.max.x = min(r.max.x, ar->r.max.x - minw);
 	else {
-		r.max.x = min(r.max.x, v->r.max.x);
+		r.max.x = min(r.max.x, v->r[a->screen].max.x);
 		r.min.x = min(r.min.x, r.max.x - minw);
 	}
 

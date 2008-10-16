@@ -460,20 +460,19 @@ ewmh_updatestate(Client *c) {
 void
 ewmh_updateviews(void) {
 	View *v;
-	char **tags;
+	Vector_ptr tags;
 	long i;
 
 	if(starting)
 		return;
 
+	vector_pinit(&tags);
 	for(v=view, i=0; v; v=v->next)
-		i++;
-	tags = emalloc((i + 1) * sizeof *tags);
-	for(v=view, i=0; v; v=v->next)
-		tags[i++] = v->name;
-	tags[i] = nil;
-	changeprop_textlist(&scr.root, Net("DESKTOP_NAMES"), "UTF8_STRING", tags);
+		vector_ppush(&tags, v->name);
+	vector_ppush(&tags, nil);
+	changeprop_textlist(&scr.root, Net("DESKTOP_NAMES"), "UTF8_STRING", (char**)tags.ary);
 	changeprop_long(&scr.root, Net("NUMBER_OF_DESKTOPS"), "CARDINAL", &i, 1);
+	vector_pfree(&tags);
 	ewmh_updateview();
 	ewmh_updateclients();
 }

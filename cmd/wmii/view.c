@@ -73,14 +73,14 @@ view_create(const char *name) {
 
 	v = emallocz(sizeof *v);
 	v->id = id++;
-	v->r = screen->r;
+	v->r = emallocz(nscreens * sizeof *v->r);
+	v->areas = emallocz(nscreens * sizeof *v->areas);
 
 	utflcpy(v->name, name, sizeof v->name);
 
 	event("CreateTag %s\n", v->name);
 	area_create(v, nil, screen->idx, 0);
 
-	v->areas = emallocz(nscreens * sizeof *v->areas);
 	for(i=0; i < nscreens; i++)
 		view_init(v, i);
 	
@@ -147,6 +147,8 @@ view_destroy(View *v) {
 		if(tv)
 			view_focus(screen, tv);
 	}
+	free(v->areas);
+	free(v->r);
 	free(v);
 	ewmh_updateviews();
 }
@@ -171,12 +173,45 @@ frames_update_sel(View *v) {
 		f->client->sel = f;
 }
 
+/* Don't let increment hints take up more than half
+ * of the screen, in either direction.
+ */
+static Rectangle
+fix_rect(Rectangle old, Rectangle new) {
+	double r;
+
+	new = rect_intersection(new, old);
+
+	r = (Dy(old) - Dy(new)) / Dy(old);
+	if(r > .5) {
+		r -= .5;
+		new.min.y -= r * (new.min.y - old.min.y);
+		new.max.y += r * (old.max.y - new.max.y);
+	}
+	r = (Dx(old) - Dx(new)) / Dx(old);
+	if(r > .5) {
+		r -= .5;
+		new.min.x -= r * (new.min.x - old.min.x);
+		new.max.x += r * (old.max.x - new.max.x);
+	}
+	return new;
+}
+
 void
 view_update_rect(View *v) {
-	Rectangle r, sr, brect;
+	Rectangle r, sr, brect, scrnr;
+	WMScreen *scrn;
 	Strut *strut;
 	Frame *f;
 	int left, right, top, bottom;
+	int s;
+
+	/* XXX:
+	 * Incidentally, really need to move screen->sel elsewhere.
+	if(v != screen->sel)
+		return false;
+	*/
+
 
 	top = 0;
 	left = 0;
@@ -192,37 +227,47 @@ view_update_rect(View *v) {
 		right = min(right, strut->right.min.x);
 		bottom = min(bottom, strut->bottom.min.y);
 	}
-	r = screen->r;
-	r.min.y += min(top, .3 * Dy(screen->r));
-	r.min.x += min(left, .3 * Dx(screen->r));
-	r.max.x += max(right, -.3 * Dx(screen->r));
-	r.max.y += max(bottom, -.3 * Dy(screen->r));
-	if(screen->barpos == BTop) {
-		bar_sety(r.min.y);
-		r.min.y += Dy(screen->brect);
-	}else {
-		r.max.y -= Dy(screen->brect);
-		bar_sety(r.max.y);
-	}
-	v->floating->r = r;
-	v->r = r;
+	scrnr = scr.rect;
+	scrnr.min.y += top;
+	scrnr.min.x += left;
+	scrnr.max.x += right;
+	scrnr.max.y += bottom;
 
-	brect = screen->brect;
-	brect.min.x = screen->r.min.x;
-	brect.max.x = screen->r.max.x;
-	for(f=v->floating->frame; f; f=f->anext) {
-		/* This is not pretty. :( */
-		strut = f->client->strut;
-		if(!strut)
-			continue;
-		sr = strut->left;
-		if(rect_intersect_p(brect, sr))
-			brect.min.x = sr.max.x;
-		sr = rectaddpt(strut->right, Pt(screen->r.max.x, 0));
-		if(rect_intersect_p(brect, sr))
-			brect.max.x = sr.min.x;
+	/* FIXME: Multihead. */
+	v->floating->r = scr.rect;
+
+	for(s=0; s < nscreens; s++) {
+		scrn = &screens[s];
+		r = fix_rect(scrn->r, scrnr);
+
+		if(scrn->barpos == BTop) {
+			bar_sety(scrn, r.min.y);
+			r.min.y += Dy(scrn->brect);
+		}else {
+			r.max.y -= Dy(scrn->brect);
+			bar_sety(scrn, r.max.y);
+		}
+
+		v->r[s] = r;
+
+		brect = scrn->brect;
+		brect.min.x = r.min.x;
+		brect.max.x = r.max.x;
+		for(f=v->floating->frame; f; f=f->anext) {
+			/* This is not pretty. :( */
+			strut = f->client->strut;
+			if(!strut)
+				continue;
+			sr = strut->left;
+			if(rect_intersect_p(brect, sr))
+				brect.min.x = sr.max.x;
+			sr = rectaddpt(strut->right, Pt(scr.rect.max.x, 0));
+			if(rect_intersect_p(brect, sr))
+				brect.max.x = sr.min.x;
+		}
+
+		bar_setbounds(scrn, brect.min.x, brect.max.x);
 	}
-	bar_setbounds(brect.min.x, brect.max.x);
 }
 
 void
@@ -428,6 +473,7 @@ view_restack(View *v) {
 		XRestackWindows(display, (ulong*)wins.ary, wins.n);
 }
 
+/* XXX: Multihead. */
 void
 view_scale(View *v, int w) {
 	uint xoff, numcol;
@@ -436,7 +482,7 @@ view_scale(View *v, int w) {
 	float scale;
 	int dx;
 
-	minwidth = Dx(v->r)/NCOL;
+	minwidth = Dx(v->screenr)/NCOL; /* XXX: Multihead. */
 
 	if(!v->firstarea)
 		return;
@@ -449,30 +495,31 @@ view_scale(View *v, int w) {
 	}
 
 	scale = (float)w / dx;
-	xoff = v->r.min.x;
+	xoff = v->screenr.min.x; /* XXX: Multihead. */
 	for(a=v->firstarea; a; a=a->next) {
 		a->r.max.x = xoff + Dx(a->r) * scale;
 		a->r.min.x = xoff;
 		if(!a->next)
-			a->r.max.x = v->r.min.x + w;
+			a->r.max.x = v->screenr.min.x + w; /* XXX: Multihead. */
 		xoff = a->r.max.x;
 	}
 
 	if(numcol * minwidth > w)
 		return;
 
-	xoff = v->r.min.x;
+	xoff = v->screenr.min.x; /* XXX: Multihead. */
 	for(a=v->firstarea; a; a=a->next) {
 		a->r.min.x = xoff;
 
 		if(Dx(a->r) < minwidth)
 			a->r.max.x = xoff + minwidth;
 		if(!a->next)
-			a->r.max.x = v->r.min.x + w;
+			a->r.max.x = v->screenr.min.x + w; /* XXX: Multihead. */
 		xoff = a->r.max.x;
 	}
 }
 
+/* XXX: Multihead. */
 void
 view_arrange(View *v) {
 	Area *a;
@@ -481,11 +528,11 @@ view_arrange(View *v) {
 		return;
 
 	view_update_rect(v);
-	view_scale(v, Dx(v->r));
+	view_scale(v, Dx(v->screenr));
 	for(a=v->firstarea; a; a=a->next) {
 		/* This is wrong... */
-		a->r.min.y = v->r.min.y;
-		a->r.max.y = v->r.max.y;
+		a->r.min.y = v->screenr.min.y;
+		a->r.max.y = v->screenr.max.y;
 /* 		print("a->r: %R %R %R\n", a->r, v->r, screen->r); */
 		column_arrange(a, false);
 	}
@@ -495,24 +542,22 @@ view_arrange(View *v) {
 
 Rectangle*
 view_rects(View *v, uint *num, Frame *ignore) {
-	Rectangle *result;
+	Vector_rect result;
 	Frame *f;
 	int i;
 
-	i = 2;
-	for(f=v->floating->frame; f; f=f->anext)
-		i++;
-	result = emallocz(i * sizeof *result);
+	vector_rinit(&result);
 
-	i = 0;
 	for(f=v->floating->frame; f; f=f->anext)
 		if(f != ignore)
-			result[i++] = f->r;
-	result[i++] = screen->r;
-	result[i++] = screen->brect;
+			vector_rpush(&result, f->r);
+	for(i=0; i < nscreens; i++) {
+		vector_rpush(&result, v->r[i]);
+		vector_rpush(&result, screens[i].r);
+	}
 
-	*num = i;
-	return result;
+	*num = result.n;
+	return result.ary;
 }
 
 void
@@ -545,7 +590,7 @@ view_newcolwidth(View *v, int num) {
 			n = tokenize(toks, 16, buf, '+');
 			if(num < n)
 				if(getulong(toks[num], &n))
-					return Dx(v->r) * (n / 100.0);
+					return Dx(v->screenr) * (n / 100.0); /* XXX: Multihead. */
 			break;
 		}
 	return 0;

@@ -75,7 +75,6 @@ float_arrange(Area *a) {
 			f->collapsed = (f != a->sel);
 		break;
 	default:
-		print("colmode: %x\n", a->mode);
 		die("not reached");
 		break;
 	}

@@ -117,6 +117,24 @@ static Handlers handlers = {
 	.expose = expose_event,
 };
 
+static Area*
+find_area(Point pt) {
+	View *v;
+	Area *a;
+	int s;
+
+	v = screen->sel;
+	/* XXX: Multihead. Check this over. */
+	for(s=0; s < nscreens; s++) {
+		if(!rect_haspoint_p(pt, screen[s].r))
+			continue;
+		for(a=v->areas[s]; a; a=a->next)
+			if(pt.x < a->r.max.x)
+				return a;
+	}
+	return nil; /* XXX: Multihead. */
+}
+
 static void
 vplace(Framewin *fw, Point pt) {
 	Vector_long vec = {0};
@@ -125,20 +143,14 @@ vplace(Framewin *fw, Point pt) {
 	Area *a;
 	View *v;
 	long l;
-	int hr, s;
+	int hr;
 
 	v = screen->sel;
 
-	/* XXX: Multihead. Check this over. */
-	for(s=0; s < nscreens; s++) {
-		if(!rect_haspoint_p(pt, screen[s].r))
-			continue;
-		for(a=v->areas[s]; a; a=a->next)
-			if(pt.x < a->r.max.x)
-				goto found;
-	}
-	return; /* XXX: Multihead. */
-found:
+	a = find_area(pt);
+	if(a == nil)
+		return; /* XXX: Multihead. */
+
 	fw->ra = a;
 
 	pt.x = a->r.min.x;
@@ -182,17 +194,16 @@ static void
 hplace(Framewin *fw, Point pt) {
 	Area *a;
 	View *v;
-	int minw, s;
+	int minw;
 	
 	v = screen->sel;
-	minw = Dx(v->r)/NCOL;
 
-	/* XXX: Multihead. Check this over. */
-	foreach_column(v, s, a)
-		if(pt.x < a->r.max.x)
-			break;
+	a = find_area(pt);
+	if(a == nil)
+		return; /* XXX: Multihead. */
 
 	fw->ra = nil;
+	minw = Dx(v->r[a->screen])/NCOL;
 	if(abs(pt.x - a->r.min.x) < minw/2) {
 		pt.x = a->r.min.x;
 		fw->ra = a->prev;
@@ -473,9 +484,10 @@ tvcol(Frame *f) {
 	pt = querypointer(&scr.root);
 	pt2.x = pt.x;
 	pt2.y = f->area->r.min.y;
-	fw = framewin(f, pt2, OVert, Dy(f->view->r));
 
-	r = f->view->r;
+	r = f->view->r[f->area->screen];
+	fw = framewin(f, pt2, OVert, Dy(r));
+
 	r.min.y += fw->grabbox.min.y + Dy(fw->grabbox)/2;
 	r.max.y = r.min.y + 1;
 	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);

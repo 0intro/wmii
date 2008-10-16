@@ -52,26 +52,26 @@ bar_resize(WMScreen *s) {
 }
 
 void
-bar_setbounds(int left, int right) {
+bar_setbounds(WMScreen *s, int left, int right) {
 	Rectangle *r;
 
-	r = &screen->brect;
+	r = &s->brect;
 	r->min.x = left;
 	r->max.x = right;
-	reshapewin(screen->barwin, *r);
+	reshapewin(s->barwin, *r);
 }
 
 void
-bar_sety(int y) {
+bar_sety(WMScreen *s, int y) {
 	Rectangle *r;
 	int dy;
 
-	r = &screen->brect;
+	r = &s->brect;
 
 	dy = Dy(*r);
 	r->min.y = y;
 	r->max.y = y + dy;
-	reshapewin(screen->barwin, *r);
+	reshapewin(s->barwin, *r);
 }
 
 Bar*

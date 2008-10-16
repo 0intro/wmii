@@ -363,7 +363,7 @@ getframe(View *v, IxpMsg *m) {
 
 	a = strarea(v, s);
 	if(a == nil) {
-		print("a == nil\n");
+		fprint(2, "a == nil\n");
 		return nil;
 	}
 
@@ -469,7 +469,8 @@ message_root(void *p, IxpMsg *m) {
 		if(fn) {
 			freefont(def.font);
 			def.font = fn;
-			bar_resize(screen);
+			for(n=0; n < nscreens; n++)
+				bar_resize(&screens[n]);
 		}else
 			ret = "can't load font";
 		view_update(screen->sel);

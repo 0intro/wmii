@@ -60,7 +60,7 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 
 	SET(i);
 	if(v->areas) { /* Creating a column. */
-		minwidth = Dx(v->r)/NCOL;
+		minwidth = Dx(v->r[scrn])/NCOL;
 		i = pos ? area_idx(pos) : 1;
 		numcols = 0;
 		for(a=v->areas[scrn]; a; a=a->next)
@@ -72,18 +72,18 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 			if(numcols >= 0) {
 				width = view_newcolwidth(v, i);
 				if (width == 0)
-					width = Dx(v->r) / (numcols + 1);
+					width = Dx(v->r[scrn]) / (numcols + 1);
 			}
 			else
-				width = Dx(v->r);
+				width = Dx(v->r[scrn]);
 		}
 
 		if(width < minwidth)
 			width = minwidth;
-		if(numcols && (numcols * minwidth + width) > Dx(v->r))
+		if(numcols && (numcols * minwidth + width) > Dx(v->r[scrn]))
 			return nil;
 
-		view_scale(v, Dx(v->r) - width);
+		view_scale(v, Dx(v->r[scrn]) - width);
 	}
 
 	a = emallocz(sizeof *a);
@@ -97,7 +97,7 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 	a->frame = nil;
 	a->sel = nil;
 
-	a->r = v->r;
+	a->r = v->r[scrn];
 	a->r.min.x = 0;
 	a->r.max.x = width;
 
@@ -121,8 +121,6 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 
 	if(v->sel == nil && !a->floating)
 		area_focus(a);
-
-	print("%s: screen: %d a: %p mode: %x floating: %d v->floating: %p v->areas: %p\n", v->name, a->screen, a, a->mode, a->floating, v->floating, v->areas);
 
 	if(!a->floating)
 		event("CreateColumn %ud\n", i);

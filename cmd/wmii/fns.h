@@ -51,8 +51,8 @@ void	bar_draw(WMScreen*);
 Bar*	bar_find(Bar*, const char*);
 void	bar_init(WMScreen*);
 void	bar_resize(WMScreen*);
-void	bar_sety(int);
-void	bar_setbounds(int, int);
+void	bar_sety(WMScreen*, int);
+void	bar_setbounds(WMScreen*, int, int);
 
 /* client.c */
 int	Cfmt(Fmt *f);

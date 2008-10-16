@@ -261,6 +261,7 @@ struct Strut {
 };
 
 #define firstarea areas[screen->idx]
+#define screenr r[screen->idx]
 struct View {
 	View*	next;
 	char	name[256];
@@ -272,7 +273,7 @@ struct View {
 	Area*	revert;
 	int	selcol;
 	bool	dead;
-	Rectangle r;
+	Rectangle *r;
 };
 
 /* Yuck. */
