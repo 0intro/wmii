@@ -155,7 +155,6 @@ void
 init_screens(void) {
 	Rectangle *rects;
 	View *v;
-	static Image *ibuf, *ibuf32;
 	int i, n, m;
 
 #ifdef notdef
@@ -170,14 +169,15 @@ init_screens(void) {
 	/* Reallocate screens, zero any new ones. */
 	rects = xinerama_screens(&n);
 	m = max(n, nscreens);
-	screens = erealloc(screens, m * sizeof *screens);
+	screens = erealloc(screens, (m + 1) * sizeof *screens);
+	screens[m] = nil;
 	for(v=view; v; v=v->next) {
 		v->areas = erealloc(v->areas, m * sizeof *v->areas);
 		v->r = erealloc(v->r, m * sizeof *v->r);
 	}
 
 	for(i=nscreens; i < m; i++) {
-		screens[i] = (WMScreen){0};
+		screens[i] = emallocz(sizeof *screens[i]);
 		for(v=view; v; v=v->next)
 			view_init(v, i);
 	}
@@ -193,18 +193,23 @@ init_screens(void) {
 		ibuf32 = allocimage(Dx(scr.rect), Dy(scr.rect), 32);
 
 	/* Resize and initialize screens. */
-	for(i=0; i < n; i++) {
-		screen = &screens[i];
+	for(i=0; i < nscreens; i++) {
+		screen = screens[i];
 		screen->idx = i;
 
-		screen->r = rects[i];
-		def.snap = Dy(rects[i]) / 63;
+		screen->showing = i < n;
+		if(screen->showing)
+			screen->r = rects[i];
+		else
+			screen->r = rectsetorigin(screen->r, scr.rect.max);
+		def.snap = Dy(screen->r) / 63;
 		screen->ibuf = ibuf;
 		screen->ibuf32 = ibuf32;
-
-		bar_init(screen);
+		bar_init(screens[i]);
 	}
-	screen = &screens[0];
+	screen = screens[0];
+	if(screen->sel)
+		view_update(screen->sel);
 }
 
 static void

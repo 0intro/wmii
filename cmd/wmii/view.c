@@ -104,6 +104,7 @@ view_create(const char *name) {
 
 void
 view_init(View *v, int iscreen) {
+	v->areas[iscreen] = nil;
 	column_new(v, nil, iscreen, 0);
 }
 
@@ -237,7 +238,7 @@ view_update_rect(View *v) {
 	v->floating->r = scr.rect;
 
 	for(s=0; s < nscreens; s++) {
-		scrn = &screens[s];
+		scrn = screens[s];
 		r = fix_rect(scrn->r, scrnr);
 
 		if(scrn->barpos == BTop) {
@@ -501,7 +502,7 @@ view_scale(View *v, int w) {
 			a->r.max.x = xoff + Dx(a->r) * scale;
 			a->r.min.x = xoff;
 			if(!a->next)
-				a->r.max.x = v->r[s].min.x + w; /* XXX: Multihead. */
+				a->r.max.x = v->r[s].min.x + w;
 			xoff = a->r.max.x;
 		}
 	}
@@ -559,7 +560,7 @@ view_rects(View *v, uint *num, Frame *ignore) {
 			vector_rpush(&result, f->r);
 	for(i=0; i < nscreens; i++) {
 		vector_rpush(&result, v->r[i]);
-		vector_rpush(&result, screens[i].r);
+		vector_rpush(&result, screens[i]->r);
 	}
 
 	*num = result.n;

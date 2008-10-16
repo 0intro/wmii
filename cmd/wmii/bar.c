@@ -42,13 +42,9 @@ void
 bar_resize(WMScreen *s) {
 
 	s->brect = s->r;
-	s->brect.max.y = labelh(def.font);
-
-	/* Not guarangeed to exist on xinerama displays, for the
-	 * moment;
-	 */
-	if(screen->sel)
-		view_update(screen->sel);
+	s->brect.min.y = s->r.max.y - labelh(def.font);
+	reshapewin(s->barwin, s->brect);
+	/* FIXME: view_arrange. */
 }
 
 void
@@ -77,7 +73,7 @@ bar_sety(WMScreen *s, int y) {
 Bar*
 bar_create(Bar **bp, const char *name) {
 	static uint id = 1;
-	WMScreen *s;
+	WMScreen *s, **sp;
 	Bar *b;
 	uint i;
 
@@ -91,7 +87,7 @@ bar_create(Bar **bp, const char *name) {
 	b->col = def.normcolor;
 	
 	/* FIXME: Kludge. */
-	for(s=screens; s < screens+nscreens; s++) {
+	for(sp=screens; (s = *sp); sp++) {
 		i = bp - s->bar;
 		if(i < nelem(s->bar))
 			b->bar = i;

@@ -110,11 +110,11 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	depth = scr.depth;
 	vis = scr.visual;
 	/* XXX: Multihead. */
-	c->ibuf = &screen->ibuf;
+	c->ibuf = &ibuf;
 	if(render_argb_p(wa->visual)) {
 		depth = 32;
 		vis = render_visual;
-		c->ibuf = &screen->ibuf32;
+		c->ibuf = &ibuf32;
 	}
 
 	client_prop(c, xatom("WM_PROTOCOLS"));

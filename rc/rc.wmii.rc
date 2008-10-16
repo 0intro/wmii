@@ -251,7 +251,6 @@ Action overridekeys
 progs_file=`{namespace}^/proglist.$pid
 hist=`{namespace}^/history
 histlen=5000
-touch $progs_hist
 Action status &
 Action rehash &
 

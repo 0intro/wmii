@@ -124,8 +124,11 @@ xinerama_init(void) {
 	int base;
 
 	have_xinerama = XineramaQueryExtension(display, &base, &base);
-	if(have_xinerama)
-		have_xinerama = XineramaIsActive(display);
+}
+
+static bool
+xinerama_active(void) {
+	return have_xinerama && XineramaIsActive(display);
 }
 
 Rectangle*
@@ -134,7 +137,7 @@ xinerama_screens(int *np) {
 	XineramaScreenInfo *res;
 	int i, n;
 
-	if(!have_xinerama) {
+	if(!xinerama_active()) {
 		*np = 1;
 		return &scr.rect;
 	}

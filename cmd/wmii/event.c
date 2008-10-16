@@ -367,7 +367,9 @@ check_x_event(IxpConn *c) {
 	XEvent ev;
 
 	USED(c);
-	while(XCheckMaskEvent(display, ~0, &ev))
+	while(XPending(display)) {
+		XNextEvent(display, &ev);
 		dispatch_event(&ev);
+	}
 }
 

@@ -330,12 +330,13 @@ EXTERN struct WMScreen {
 	Window*	barwin;
 	Image*	ibuf;
 	Image*	ibuf32;
+	bool	showing;
 	int	barpos;
 	int	idx;
 
 	Rectangle r;
 	Rectangle brect;
-} *screens, *screen;
+} **screens, *screen;
 
 EXTERN Client*	client;
 EXTERN View*	view;
@@ -364,6 +365,8 @@ EXTERN uint	nscreens;
 EXTERN uint	valid_mask;
 EXTERN uint	numlock_mask;
 EXTERN bool	sel_screen;
+EXTERN Image*	ibuf;
+EXTERN Image*	ibuf32;
 
 EXTERN Cursor	cursor[CurLast];
 

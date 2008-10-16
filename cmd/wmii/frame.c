@@ -654,7 +654,7 @@ constrain(Rectangle r) {
 	bestx = nil;
 	besty = nil;
 	for(i=0; i < nscreens; i++) {
-		s = &screens[i];
+		s = screens[i];
 		isect = rect_intersection(r, s->r);
 		if(!bestx || Dx(isect) > nbestx && Dy(isect) > 0) {
 			bestx = s;

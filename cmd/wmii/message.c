@@ -475,7 +475,7 @@ message_root(void *p, IxpMsg *m) {
 			freefont(def.font);
 			def.font = fn;
 			for(n=0; n < nscreens; n++)
-				bar_resize(&screens[n]);
+				bar_resize(screens[n]);
 		}else
 			ret = "can't load font";
 		view_update(screen->sel);
