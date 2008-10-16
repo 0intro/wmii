@@ -247,6 +247,9 @@ main(int argc, char *argv[]) {
 
 	initdisplay();
 
+	xext_init();
+	menu_init();
+
 	if(address && *address)
 		client = ixp_mount(address);
 	else
@@ -267,9 +270,6 @@ main(int argc, char *argv[]) {
 	font = loadfont(readctl("font "));
 	if(!font)
 		fatal("Can't load font %q", readctl("font "));
-
-	xext_init();
-	menu_init();
 
 	inbuf = Bfdopen(0, OREAD);
 	items = populate_list(inbuf, false);

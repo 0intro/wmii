@@ -118,7 +118,8 @@ fn wi_runcmd { @{
 			* = (wihack -tags `{wmiir read /tag/sel/ctl | sed 1q} $*) }
 		fn `{env | 9 sed -n 's/^fn#([^=]+).*/\1/p'}
 		mykeys=()
-		eval exec $* & }
+		if(! ~ $* '')
+			eval exec $* & }
 }
 
 fn wi_getfuns {

@@ -973,7 +973,7 @@ ungrabpointer(void) {
 int
 grabkeyboard(Window *w) {
 
-	return XGrabKeyboard(display, w->w, false /* owner events */,
+	return XGrabKeyboard(display, w->w, true /* owner events */,
 		GrabModeAsync, GrabModeAsync, CurrentTime
 		) == GrabSuccess;
 }

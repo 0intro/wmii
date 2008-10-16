@@ -1,6 +1,7 @@
 #include "dat.h"
 #include <ctype.h>
 #include <string.h>
+#include <unistd.h>
 #include "fns.h"
 
 static Window*	barwin;
@@ -28,16 +29,22 @@ void
 menu_init(void) {
 	WinAttr wa;
 
-	ltwidth = textwidth(font, "<");
-
 	wa.override_redirect = 1;
 	wa.background_pixmap = ParentRelative;
 	wa.event_mask = ExposureMask | KeyPressMask;
-	barwin = createwindow(&scr.root, Rect(0, 0, 1, 1), scr.depth, InputOutput,
+	barwin = createwindow(&scr.root, Rect(-1, -1, 1, 1), scr.depth, InputOutput,
 			&wa, CWOverrideRedirect
 			   | CWBackPixmap
 			   | CWEventMask);
 	sethandler(barwin, &handlers);
+	mapwin(barwin);
+
+	int i = 0;
+	while(!grabkeyboard(barwin)) {
+		if(i++ > 1000)
+			fatal("can't grab keyboard");
+		usleep(1000);
+	}
 }
 
 static void
@@ -189,6 +196,8 @@ menu_show(void) {
 
 	USED(menu_unmap);
 
+	ltwidth = textwidth(font, "<");
+
 	pad = (font->height & ~1)/2;
 	height = font->height + 2;
 
@@ -205,11 +214,6 @@ menu_show(void) {
 	mapwin(barwin);
 	raisewin(barwin);
 	menu_draw();
-	if(!grabkeyboard(barwin)) {
-		exit(1);
-		srv.running = false;
-		result = 1;
-	}
 }
 
 static void

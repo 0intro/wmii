@@ -217,7 +217,8 @@ key $MODKEY-Shift-c || fn $key {
 key $MODKEY-a || fn $key {
 	Action `{wi_actions | wimenu -h $hist.action -n $histlen} &}
 key $MODKEY-p || fn $key {
-	ifs=() { wi_runcmd `{wimenu -h $hist.prog -n $histlen <$progs_file} & }}
+	ifs=() { cmd = `{wimenu -h $hist.prog -n $histlen <$progs_file >[2]/dev/tty} }
+	wi_runcmd $cmd & }
 
 key $MODKEY-Return || fn $key {
 	wi_runcmd $WMII_TERM &}
