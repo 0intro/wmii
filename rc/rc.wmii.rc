@@ -215,19 +215,18 @@ key $MODKEY-Shift-c || fn $key {
 	wmiir xwrite /client/sel/ctl kill}
 
 key $MODKEY-a || fn $key {
-	Action `{wi_actions | wimenu} &}
+	Action `{wi_actions | wimenu -h $hist.action -n $histlen} &}
 key $MODKEY-p || fn $key {
-	ifs=() { cmd = `{wimenu -h $progs_hist <$progs_file} }
-	wi_runcmd $cmd &
-	wi_addhist $hist.prog $histlen $cmd}
+	ifs=() { wi_runcmd `{wimenu -h $hist.prog -n $histlen <$progs_file} & }}
+
 key $MODKEY-Return || fn $key {
 	wi_runcmd $WMII_TERM &}
 
 key $MODKEY-t || fn $key {
-	wmiir xwrite /ctl view `{wi_tags | wimenu} &}
+	wmiir xwrite /ctl view `{wi_tags | wimenu -h $hist.tag -n 50} &}
 key $MODKEY-Shift-t || fn $key {
 	sel = `{wmiir read /client/sel/ctl | sed 1q} \
-	wmiir xwrite /client/$sel/tags `{wi_tags | wimenu} &}
+	wmiir xwrite /client/$sel/tags `{wi_tags | wimenu -h $hist.tag -n 50} &}
 
 key $MODKEY-^`{seq 0 9} || fn $key {
 	wmiir xwrite /ctl view `{echo $1 | sed 's/.*-//'}}

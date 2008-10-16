@@ -14,6 +14,7 @@ CFLAGS += $(INCX11) -DVERSION=\"$(VERSION)\" \
 	  -DIXP_NEEDAPI=86
 OBJ =	main	\
 	caret	\
+	history	\
 	event	\
 	menu	\
 	../wmii/geom	\

@@ -49,12 +49,6 @@ fn wi_9menu {
 		-^(sf sb br)^$wmiifocuscol $*
 }
 
-fn wi_addhist {
-	file = $1 len=$2 { shift 2
-		{ cat $file; echo $*; } | uniq | sed '/^$/d' \
-		| tail -$len >$file.$pid
-		mv $file.$pid $file}}
-
 fn wi_fnmenu {
 	group=$1^Menu-$2 last=$group^_last fns=`{wi_getfuns $group} {
 	shift 2

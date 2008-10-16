@@ -14,8 +14,7 @@ static void	menu_draw(void);
 enum {
 	ACCEPT = CARET_LAST,
 	REJECT,
-	HIST_NEXT,
-	HIST_PREV,
+	HIST,
 	KILL,
 	CMPL_NEXT,
 	CMPL_PREV,
@@ -49,32 +48,15 @@ menu_unmap(long id, void *p) {
 	XFlush(display);
 }
 
-static char*
-histtext(Item *i) {
-	static char *orig;
-
-	if(!histidx->string) {
-		free(orig);
-		orig = strdup(input.string);
-	}
-	return i->string ? i->string : orig;
-}
-
 static void
 menu_cmd(int op, int motion) {
+	int n;
 
 	switch(op) {
-	case HIST_NEXT:
-		if(histidx->next) {
-			caret_insert(histtext(histidx->next), true);
-			histidx = histidx->next;
-		}
-		break;
-	case HIST_PREV:
-		if(histidx->prev) {
-			caret_insert(histtext(histidx->prev), true);
-			histidx = histidx->prev;
-		}
+	case HIST:
+		n = input.pos - input.string;
+		caret_insert(history_search(motion, input.string, n), true);
+		input.pos = input.string + n;
 		break;
 	case KILL:
 		caret_delete(BACKWARD, motion);
@@ -190,7 +172,7 @@ menu_draw(void) {
 	r2.max.x = inputw;
 	drawstring(ibuf, font, r2, West, input.string, cnorm.fg);
 
-	r2.min.x = textwidth_l(font, input.string, input.pos - input.string) + pad/2;
+	r2.min.x = textwidth_l(font, input.string, input.pos - input.string) + pad/2 - 1;
 	r2.max.x = r2.min.x + 2;
 	r2.min.y++;
 	r2.max.y--;
@@ -266,11 +248,11 @@ kdown_event(Window *w, XKeyEvent *e) {
 			return;
 		case XK_n:
 		case XK_N:
-			menu_cmd(HIST_NEXT, 0);
+			menu_cmd(HIST, FORWARD);
 			return;
 		case XK_p:
 		case XK_P:
-			menu_cmd(HIST_PREV, 0);
+			menu_cmd(HIST, BACKWARD);
 			return;
 		case XK_h:
 		case XK_H:
@@ -349,10 +331,10 @@ kdown_event(Window *w, XKeyEvent *e) {
 		menu_cmd(FORWARD, CHAR);
 		return;
 	case XK_Up:
-		menu_cmd(HIST_PREV, 0);
+		menu_cmd(HIST, BACKWARD);
 		return;
 	case XK_Down:
-		menu_cmd(HIST_NEXT, 0);
+		menu_cmd(HIST, FORWARD);
 		return;
 	case XK_Home:
 		menu_cmd(CMPL_FIRST, 0);

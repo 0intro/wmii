@@ -61,10 +61,14 @@ EXTERN Item*	matchstart;
 EXTERN Item*	matchend;
 EXTERN Item*	matchidx;
 
+EXTERN Item	hist;
 EXTERN Item*	histidx;
 
 EXTERN int	maxwidth;
 EXTERN int	result;
+
+EXTERN  char*	(*find)(const char*, const char*);
+EXTERN  int	(*compare)(const char*, const char*, size_t);
 
 EXTERN char	buffer[8092];
 EXTERN char*	_buffer;

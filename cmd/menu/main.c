@@ -21,8 +21,6 @@ static Biobuf*	inbuf;
 static char 	ctl[1024];
 static char*	ectl;
 
-static char* (*find)(const char*, const char*);
-
 static void
 usage(void) {
 	fatal("usage: wimenu -i [-h <history>] [-a <address>]\n");
@@ -208,17 +206,21 @@ init_screens(void) {
 
 int
 main(int argc, char *argv[]) {
-	static Item hist;
 	Item *item;
 	char *address;
 	char *histfile;
 	int i;
+	long ndump;
 
 	quotefmtinstall();
 	fmtinstall('r', errfmt);
 	address = getenv("WMII_ADDRESS");
 	histfile = nil;
+
 	find = strstr;
+	compare = strncmp;
+
+	ndump = -1;
 
 	ARGBEGIN{
 	case 'a':
@@ -227,8 +229,12 @@ main(int argc, char *argv[]) {
 	case 'h':
 		histfile = EARGF(usage());
 		break;
+	case 'n':
+		ndump = strtol(EARGF(usage()), nil, 10);
+		break;
 	case 'i':
 		find = strcasestr;
+		compare = strncasecmp;
 		break;
 	default:
 		usage();
@@ -272,16 +278,17 @@ main(int argc, char *argv[]) {
 
 	Bterm(inbuf);
 	histidx = &hist;
+	link(&hist, &hist);
 	if(histfile) {
 		inbuf = Bopen(histfile, OREAD);
-		if(!inbuf)
-			fatal("Can't open history file %q: %r", histfile);
-		item = populate_list(inbuf, true);
-		if(item) {
-			link(item->prev, &hist);
-			item->prev = nil;
+		if(inbuf) {
+			item = populate_list(inbuf, true);
+			if(item) {
+				link(item->prev, &hist);
+				link(&hist, item);
+			}
+			Bterm(inbuf);
 		}
-		Bterm(inbuf);
 	}
 
 	init_screens();
@@ -290,6 +297,10 @@ main(int argc, char *argv[]) {
 	if(i)
 		fprint(2, "%s: error: %r\n", argv0);
 	XCloseDisplay(display);
+
+	if(ndump >= 0 && histfile && result == 0)
+		history_dump(histfile, ndump);
+
 	return result;
 }
 
