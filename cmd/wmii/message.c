@@ -453,6 +453,11 @@ message_root(void *p, IxpMsg *m) {
 		def.border = n;
 		view_update(screen->sel);
 		break;
+	case LCOLMODE:
+		s = msg_getword(m);
+		if(!setdef(&def.colmode, s, modes, Collast))
+			return Ebadvalue;
+		break;
 	case LDEBUG:
 		ret = msg_debug(m);
 		break;
@@ -525,6 +530,7 @@ readctl_root(void) {
 	bufclear();
 	bufprint("bar on %s\n", barpostab[screen->barpos]);
 	bufprint("border %d\n", def.border);
+	bufprint("colmode %s\n", modes[def.colmode]);
 	if(debugflag) {
 		bufprint("debug ");
 		printdebug(debugflag);

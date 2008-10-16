@@ -58,8 +58,10 @@ enum EWMHType {
 };
 
 enum {
-	Coldefault, Colstack, Colmax,
+	Coldefault, Colstack, Colmax, Collast
 };
+
+extern char*	modes[];
 
 #define TOGGLE(x) \
 	(x == On ? "On" : \
