@@ -1013,7 +1013,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 		/* XXX: Multihead. */
 		if(a->prev)
 			to = a->prev;
-		a = v->floating;
+		a = nil;
 		break;
 	case LRIGHT:
 		if(a->floating)
