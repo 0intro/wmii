@@ -43,17 +43,11 @@ wmiifont=`{wi_readctl font}
 wmiinormcol=`{wi_readctl normcolors}
 wmiifocuscol=`{wi_readctl focuscolors}
 
-fn wi_9menu {
-	wmii9menu -font `{echo $wmiifont | sed 's/,.*//'} \
-		-^(nf nb br)^$wmiinormcol \
-		-^(sf sb br)^$wmiifocuscol $*
-}
-
 fn wi_fnmenu {
 	group=$1^Menu-$2 last=$group^_last fns=`{wi_getfuns $group} {
 	shift 2
 	if(! ~ $#fns 0) {
-		res = `{wi_9menu -initial $"($last) $fns} \
+		res = `{wmii9menu -initial $"($last) $fns} \
 		if(! ~ $res '') {
 			($last) = $res
 			$group-$res $*}}}

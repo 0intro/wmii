@@ -22,8 +22,6 @@ WMII_BACKGROUND='#333333'
 WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
-WMII_MENU='dmenu -b -fn "$WMII_FONT"'" -nf '$1' -nb '$2' -sf '$4' -sb '$5'"
-WMII_9MENU='wmii9menu -font "$WMII_FONT"'" -nf '$1' -nb '$2' -sf '$4' -sb '$5' -br '$6'"
 WMII_TERM="xterm"
 
 # Column Rules
@@ -72,7 +70,7 @@ events() {
 		client=$1; button=$2
 		case "$button" in
 		3)
-			do=$(wi_9menu -initial "$menulast" Nop Delete Fullscreen)
+			do=$(wimii9menu -initial "$menulast" Nop Delete Fullscreen)
 			case "$do" in
 			Delete)
 				wmiir xwrite /client/$client/ctl kill;;
@@ -219,7 +217,7 @@ wmiir write /ctl <<!
 !
 xsetroot -solid "$WMII_BACKGROUND" &
 
-export WMII_MENU WMII_9MENU WMII_FONT WMII_TERM
+export WMII_FONT WMII_TERM
 export WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS
 
 # Misc

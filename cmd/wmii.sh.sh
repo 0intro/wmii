@@ -104,22 +104,13 @@ wmiifont="$(wi_readctl font)"
 wmiinormcol="$(wi_readctl normcolors)"
 wmiifocuscol="$(wi_readctl focuscolors)"
 
-wi_menu() {
-	eval "wi_menu() { $WMII_MENU"' "$@"; }'
-	wi_menu "$@"
-}
-wi_9menu() {
-	eval "wi_9menu() { $WMII_9MENU"' "$@"; }'
-	wi_9menu "$@"
-}
-
 wi_fnmenu() {
 	group="$1-$2"; shift 2
 	_last="$(echo $group|tr - _)_last"
 	eval "last=\"\$$_last\""
 	res=$(set -- $(echo "$Menus" | awk -v "s=$group" 'BEGIN{n=length(s)}
 		         substr($1,1,n) == s{print substr($1,n+2)}')
-	      [ $# != 0 ] && wi_9menu -initial "$last" "$@")
+	      [ $# != 0 ] && wmii9menu -initial "$last" "$@")
 	if [ -n "$res" ]; then
 		eval "$_last="'"$res"'
 		Menu $group-$res "$@"

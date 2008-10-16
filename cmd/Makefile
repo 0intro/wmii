@@ -36,6 +36,7 @@ OMENU=menu.o wmii/x11.o $(OFILES) $(LIBIXP)
 menu.O: $(OMENU) dall
 	$(LINK) $@ $(OMENU)
 
-wmii9menu.O: wmii9menu.o $(OFILES)
-	$(LINK) $@ $*.o $(OFILES) $(LIBX11)
+O9MENU=wmii9menu.o wmii/x11.o wmii/map.o $(OFILES) $(LIBIXP)
+wmii9menu.O: $(O9MENU) dall
+	$(LINK) $@ $(O9MENU) $(LIBX11) -lXext -lbio
 
