@@ -148,6 +148,7 @@ fn wi_eventloop {
 		event = $1; shift
 		Event-$"event $*
 	} >[2]/dev/null </dev/null
+	true
 }
 
 fn Event-Key {

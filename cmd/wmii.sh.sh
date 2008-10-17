@@ -181,6 +181,7 @@ wi_eventloop() {
 		event=$1; shift
 		Event $event "$@"
 	done
+	true
 }
 
 action() {
