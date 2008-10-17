@@ -431,13 +431,13 @@ mouse_resize(Client *c, Align align, bool grabmod) {
 		pt = addpt(pt, d);
 
 		rect_morph(&origin, d, &align);
-		origin = constrain(origin);
+		origin = constrain(origin, -1);
 		frect = origin;
 
 		grav = snap_rect(rects, nrect, &frect, &align, def.snap);
 
 		frect = frame_hints(f, frect, grav);
-		frect = constrain(frect);
+		frect = constrain(frect, -1);
 
 		client_resize(c, frect);
 	}

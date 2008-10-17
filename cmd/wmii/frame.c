@@ -363,7 +363,7 @@ frame_resize(Frame *f, Rectangle r) {
 
 	fr = frame_hints(f, r, get_sticky(f->r, r));
 	if(f->area->floating && !c->strut)
-		fr = constrain(fr);
+		fr = constrain(fr, -1);
 
 	/* Collapse managed frames which are too small */
 	/* XXX. */
@@ -636,45 +636,43 @@ frame_delta_h(void) {
 }
 
 Rectangle
-constrain(Rectangle r) {
-	WMScreen *s, *bestx, *besty;
-	Rectangle isect;
+constrain(Rectangle r, int inset) {
+	WMScreen **sp;
+	WMScreen *s, *sbest;
+	Rectangle isect, rbest;
 	Point p;
-	int i, nbestx, nbesty;
+	int best, n;
 
-	/* Find the screen that this intersects most with
-	 * (or doesn't intersect least with), and then make
-	 * sure that it overlaps that screen, in the opposite
-	 * direction.
+	if(inset < 0)
+		inset = Dy(screen->brect);
+	/* 
+	 * FIXME: This will cause problems for windows with
+	 * D(r) < 2 * isect
 	 */
-	SET(nbestx);
-	SET(nbesty);
-	SET(s);
 
-	bestx = nil;
-	besty = nil;
-	for(i=0; i < nscreens; i++) {
-		s = screens[i];
-		if(!s->showing)
-			continue;
-		isect = rect_intersection(r, s->r);
-		if(!bestx || Dx(isect) > nbestx && Dy(isect) > 0) {
-			bestx = s;
-			nbestx = Dx(isect);
-		}
-		if(!besty || Dy(isect) > nbesty && Dy(isect) > 0) {
-			besty = s;
-			nbesty = Dy(isect);
+	sbest = nil;
+	rbest = ZR; /* SET(rbest) */
+	SET(best);
+	for(sp=screens; (s = *sp); sp++) {
+		isect = rect_intersection(r, insetrect(s->r, inset));
+		if(Dx(isect) >= 0 && Dy(isect) >= 0)
+			return r;
+		if(Dx(isect) < 0 && Dy(isect) < 0)
+			n = max(Dx(isect), Dy(isect));
+		else
+			n = min(Dx(isect), Dy(isect));
+		if(!sbest || n > best) {
+			sbest = s;
+			best = n;
 		}
 	}
 
 	p = ZP;
-	isect = insetrect(bestx->r, Dy(screen->brect));
-	p.x -= min(r.max.x - isect.min.x, 0);
-	p.x -= max(r.min.x - isect.max.x, 0);
-	isect = insetrect(besty->r, Dy(screen->brect));
-	p.y -= min(r.max.y - isect.min.y, 0);
-	p.y -= max(r.min.y - isect.max.y, 0);
+	rbest = insetrect(sbest->r, inset);
+	p.x -= min(r.max.x - rbest.min.x, 0);
+	p.x -= max(r.min.x - rbest.max.x, 0);
+	p.y -= min(r.max.y - rbest.min.y, 0);
+	p.y -= max(r.min.y - rbest.max.y, 0);
 	return rectaddpt(r, p);
 }
 

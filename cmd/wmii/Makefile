@@ -30,6 +30,7 @@ OBJ =	area	\
 	map	\
 	message	\
 	mouse	\
+	root	\
 	rule	\
 	printevent\
 	screen	\

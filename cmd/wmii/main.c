@@ -204,7 +204,6 @@ init_screens(void) {
 			screen->r = rects[i];
 		else
 			screen->r = rectsetorigin(screen->r, scr.rect.max);
-		print("screens[%d]->r = %R\n", i, screens[i]->r);
 		def.snap = Dy(screen->r) / 63;
 		bar_init(screens[i]);
 	}
@@ -320,7 +319,6 @@ int
 main(int argc, char *argv[]) {
 	char **oargv;
 	char *wmiirc;
-	WinAttr wa;
 	int i;
 
 	quotefmtinstall();
@@ -357,9 +355,8 @@ extern int fmtevent(Fmt*);
 	initdisplay();
 
 	traperrors(true);
-	selectinput(&scr.root, SubstructureRedirectMask
-			     | EnterWindowMask);
-	sync();
+	selectinput(&scr.root, EnterWindowMask
+			     | SubstructureRedirectMask);
 	if(traperrors(false))
 		fatal("another window manager is already running");
 
@@ -401,16 +398,7 @@ extern int fmtevent(Fmt*);
 	disp.sel = pointerscreen();
 
 	init_screens();
-
-	wa.event_mask = SubstructureRedirectMask
-		      | SubstructureNotifyMask
-		      | EnterWindowMask
-		      | LeaveWindowMask
-		      | FocusChangeMask;
-	wa.cursor = cursor[CurNormal];
-	setwinattr(&scr.root, &wa,
-			  CWEventMask
-			| CWCursor);
+	root_init();
 
 	disp.focus = nil;
 	setfocus(screen->barwin, RevertToParent);

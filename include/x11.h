@@ -99,6 +99,7 @@ struct Handlers {
 	void (*kup)(Window*, XKeyEvent*);
 	void (*leave)(Window*, XCrossingEvent*);
 	void (*map)(Window*, XMapEvent*);
+	void (*mapreq)(Window*, XMapRequestEvent*);
 	void (*motion)(Window*, XMotionEvent*);
 	void (*property)(Window*, XPropertyEvent*);
 	void (*unmap)(Window*, XUnmapEvent*);

@@ -1013,6 +1013,7 @@ char*
 client_extratags(Client *c) {
 	Frame *f;
 	char *toks[32];
+	char **tags;
 	char *s, *s2;
 	int i;
 
@@ -1022,10 +1023,12 @@ client_extratags(Client *c) {
 		if(f != c->sel)
 			toks[i++] = f->view->name;
 	toks[i] = nil;
+	tags = comm(CLeft, toks, c->retags);
 
 	s = nil;
 	if(i > 1)
-		s = join(toks, "+");
+		s = join(tags, "+");
+	free(tags);
 	if(!c->tagre.regex && !c->tagvre.regex)
 		return s;
 

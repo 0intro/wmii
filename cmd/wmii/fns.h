@@ -156,7 +156,7 @@ bool	frame_restack(Frame*, Frame*);
 void	frame_swap(Frame*, Frame*);
 int	ingrabbox_p(Frame*, int x, int y);
 void	move_focus(Frame*, Frame*);
-Rectangle constrain(Rectangle);
+Rectangle constrain(Rectangle, int);
 Rectangle frame_client2rect(Client*, Rectangle, bool);
 WinHints  frame_gethints(Frame*);
 Rectangle frame_hints(Frame*, Rectangle, Align);
@@ -235,6 +235,9 @@ Align	snap_rect(Rectangle *rects, int num, Rectangle *current, Align *mask, int 
 
 /* printevent.c */
 void	printevent(XEvent*);
+
+/* root.c */
+void	root_init(void);
 
 /* screen.c */
 int	ownerscreen(Rectangle);

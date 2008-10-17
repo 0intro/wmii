@@ -567,14 +567,14 @@ shut_up_ken:
 		case MotionNotify:
 		case_motion:
 			origin = rectaddpt(origin, subpt(pt, pt1));
-			origin = constrain(origin);
+			origin = constrain(origin, -1);
 			frect = origin;
 
 			align = Center;
 			snap_rect(rects, nrect, &frect, &align, def.snap);
 
 			frect = frame_hints(f, frect, Center);
-			frect = constrain(frect);
+			frect = constrain(frect, -1);
 			client_resize(c, frect);
 			continue;
 		case ButtonRelease:

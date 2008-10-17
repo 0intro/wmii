@@ -173,20 +173,15 @@ enternotify(XCrossingEvent *ev) {
 
 	if((w = findwin(ev->window))) 
 		handle(w, enter, ev);
-	else if(ev->window == scr.root.w) {
-		disp.sel = true;
-		frame_draw_all();
-	}
 }
 
 static void
 leavenotify(XCrossingEvent *ev) {
+	Window *w;
 
 	xtime = ev->time;
-	if((ev->window == scr.root.w) && !ev->same_screen) {
-		disp.sel = true;
-		frame_draw_all();
-	}
+	if((w = findwin(ev->window))) 
+		handle(w, leave, ev);
 }
 
 void
@@ -225,10 +220,8 @@ focusin(XFocusChangeEvent *ev) {
 	else if((w = findwin(ev->window))) 
 		handle(w, focusin, ev);
 	else if(ev->mode == NotifyGrab) {
-		if(ev->window == scr.root.w)
-			disp.hasgrab = &c_root;
 		/* Some unmanaged window has grabbed focus */
-		else if((c = disp.focus)) {
+		if((c = disp.focus)) {
 			print_focus("focusin", &c_magic, "<magic>");
 			disp.focus = &c_magic;
 			if(c->sel)
@@ -269,11 +262,11 @@ expose(XExposeEvent *ev) {
 
 static void
 keypress(XKeyEvent *ev) {
+	Window *w;
 
 	xtime = ev->time;
-	ev->state &= valid_mask;
-	if(ev->window == scr.root.w)
-		kpress(scr.root.w, ev->state, (KeyCode)ev->keycode);
+	if((w = findwin(ev->window))) 
+		handle(w, kdown, ev);
 }
 
 static void
@@ -286,20 +279,10 @@ mappingnotify(XMappingEvent *ev) {
 
 static void
 maprequest(XMapRequestEvent *ev) {
-	XWindowAttributes wa;
+	Window *w;
 
-	if(!XGetWindowAttributes(display, ev->window, &wa))
-		return;
-	if(wa.override_redirect) {
-		/* Do I really want these? */
-		/* Probably not.
-		XSelectInput(display, ev->window,
-			 PropertyChangeMask | StructureNotifyMask);
-		*/
-		return;
-	}
-	if(!win2client(ev->window))
-		client_create(ev->window, &wa);
+	if((w = findwin(ev->parent)))
+		handle(w, mapreq, ev);
 }
 
 static void
