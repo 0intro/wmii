@@ -174,7 +174,7 @@ enternotify(XCrossingEvent *ev) {
 	if((w = findwin(ev->window))) 
 		handle(w, enter, ev);
 	else if(ev->window == scr.root.w) {
-		sel_screen = true;
+		disp.sel = true;
 		frame_draw_all();
 	}
 }
@@ -184,16 +184,16 @@ leavenotify(XCrossingEvent *ev) {
 
 	xtime = ev->time;
 	if((ev->window == scr.root.w) && !ev->same_screen) {
-		sel_screen = true;
+		disp.sel = true;
 		frame_draw_all();
 	}
 }
 
 void
 print_focus(const char *fn, Client *c, const char *to) {
-	Dprint(DFocus, "%s() screen->focus:\n", fn);
-	Dprint(DFocus, "\t%C => %C\n", screen->focus, c);
-	Dprint(DFocus, "\t%s => %s\n", clientname(screen->focus), to);
+	Dprint(DFocus, "%s() disp.focus:\n", fn);
+	Dprint(DFocus, "\t%C => %C\n", disp.focus, c);
+	Dprint(DFocus, "\t%s => %s\n", clientname(disp.focus), to);
 }
 
 static void
@@ -204,7 +204,7 @@ focusin(XFocusChangeEvent *ev) {
 	/* Yes, we're focusing in on nothing, here. */
 	if(ev->detail == NotifyDetailNone) {
 		print_focus("focusin", &c_magic, "<magic[none]>");
-		screen->focus = &c_magic;
+		disp.focus = &c_magic;
 		setfocus(screen->barwin, RevertToParent);
 		return;
 	}
@@ -215,22 +215,22 @@ focusin(XFocusChangeEvent *ev) {
 	   ||(ev->detail == NotifyInferior)
 	   ||(ev->detail == NotifyAncestor)))
 		return;
-	if((ev->mode == NotifyWhileGrabbed) && (screen->hasgrab != &c_root))
+	if((ev->mode == NotifyWhileGrabbed) && (disp.hasgrab != &c_root))
 		return;
 
 	if(ev->window == screen->barwin->w) {
 		print_focus("focusin", nil, "<nil>");
-		screen->focus = nil;
+		disp.focus = nil;
 	}
 	else if((w = findwin(ev->window))) 
 		handle(w, focusin, ev);
 	else if(ev->mode == NotifyGrab) {
 		if(ev->window == scr.root.w)
-			screen->hasgrab = &c_root;
+			disp.hasgrab = &c_root;
 		/* Some unmanaged window has grabbed focus */
-		else if((c = screen->focus)) {
+		else if((c = disp.focus)) {
 			print_focus("focusin", &c_magic, "<magic>");
-			screen->focus = &c_magic;
+			disp.focus = &c_magic;
 			if(c->sel)
 				frame_draw(c->sel);
 		}
@@ -249,7 +249,7 @@ focusout(XFocusChangeEvent *ev) {
 	   ||(ev->detail == NotifyAncestor)))
 		return;
 	if(ev->mode == NotifyUngrab)
-		screen->hasgrab = nil;
+		disp.hasgrab = nil;
 
 	if((ev->mode == NotifyGrab)
 	&& XCheckMaskEvent(display, KeyPressMask, &me))

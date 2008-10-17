@@ -139,6 +139,8 @@ void	float_arrange(Area*);
 void	float_attach(Area*, Frame*);
 void	float_detach(Frame*);
 void	float_resizeframe(Frame*, Rectangle);
+Vector_rect*	unique_rects(Vector_rect*, Rectangle);
+Rectangle	max_rect(Vector_rect*);
 
 /* frame.c */
 Frame*	frame_create(Client*, View*);

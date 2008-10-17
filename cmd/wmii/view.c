@@ -28,10 +28,10 @@ empty_p(View *v) {
 
 static void
 _view_select(View *v) {
-	if(screen->sel != v) {
-		if(screen->sel)
-			event("UnfocusTag %s\n",screen->sel->name);
-		screen->sel = v;
+	if(selview != v) {
+		if(selview)
+			event("UnfocusTag %s\n",selview->name);
+		selview = v;
 		event("FocusTag %s\n", v->name);
 		event("AreaFocus %a\n", v->sel);
 		ewmh_updateview();
@@ -96,7 +96,7 @@ view_create(const char *name) {
 			apply_tags(c, c->tags);
 
 	view_arrange(v);
-	if(!screen->sel)
+	if(!selview)
 		_view_select(v);
 	ewmh_updateviews();
 	return v;
@@ -140,7 +140,7 @@ view_destroy(View *v) {
 
 	event("DestroyTag %s\n", v->name);
 
-	if(v == screen->sel) {
+	if(v == selview) {
 		for(tv=view; tv; tv=tv->next)
 			if(tv->next == *vp) break;
 		if(tv == nil)
@@ -200,39 +200,32 @@ fix_rect(Rectangle old, Rectangle new) {
 
 void
 view_update_rect(View *v) {
-	Rectangle r, sr, brect, scrnr;
+	static Vector_rect vec;
+	static Vector_rect *vp;
+	Rectangle r, sr, rr, brect, scrnr;
 	WMScreen *scrn;
 	Strut *strut;
 	Frame *f;
-	int left, right, top, bottom;
-	int s;
+	int s, i;
+	/* These short variable names are hell, eh? */
 
 	/* XXX:
-	 * Incidentally, really need to move screen->sel elsewhere.
-	if(v != screen->sel)
+	if(v != selview)
 		return false;
 	*/
-
-
-	top = 0;
-	left = 0;
-	right = 0;
-	bottom = 0;
+	vec.n = 0;
 	for(f=v->floating->frame; f; f=f->anext) {
 		strut = f->client->strut;
 		if(!strut)
 			continue;
-		/* Can do better in the future. */
-		top = max(top, strut->top.max.y);
-		left = max(left, strut->left.max.x);
-		right = min(right, strut->right.min.x);
-		bottom = min(bottom, strut->bottom.min.y);
+		vector_rpush(&vec, strut->top);
+		vector_rpush(&vec, strut->left);
+		vector_rpush(&vec, rectaddpt(strut->right, Pt(scr.rect.max.x, 0)));
+		vector_rpush(&vec, rectaddpt(strut->bottom, Pt(0, scr.rect.max.y)));
 	}
-	scrnr = scr.rect;
-	scrnr.min.y += top;
-	scrnr.min.x += left;
-	scrnr.max.x += right;
-	scrnr.max.y += bottom;
+	/* Find the largest screen space not occupied by struts. */
+	vp = unique_rects(&vec, scr.rect);
+	scrnr = max_rect(vp);
 
 	/* FIXME: Multihead. */
 	v->floating->r = scr.rect;
@@ -241,33 +234,33 @@ view_update_rect(View *v) {
 		scrn = screens[s];
 		r = fix_rect(scrn->r, scrnr);
 
-		if(scrn->barpos == BTop) {
-			bar_sety(scrn, r.min.y);
-			r.min.y += Dy(scrn->brect);
-		}else {
-			r.max.y -= Dy(scrn->brect);
-			bar_sety(scrn, r.max.y);
-		}
-
-		v->r[s] = r;
-
+		/* Ugly. Very, very ugly. */
+		/*
+		 * Try to find some rectangle near the edge of the
+		 * screen where the bar will fit. This way, for
+		 * instance, a system tray can be placed there
+		 * without taking up too much extra screen real
+		 * estate.
+		 */
+		rr = r;
 		brect = scrn->brect;
-		brect.min.x = r.min.x;
-		brect.max.x = r.max.x;
-		for(f=v->floating->frame; f; f=f->anext) {
-			/* This is not pretty. :( */
-			strut = f->client->strut;
-			if(!strut)
+		for(i=0; i < vp->n; i++) {
+			sr = rect_intersection(vp->ary[i], scrn->r);
+			if(Dx(sr) < Dx(r)/2 || Dy(sr) < Dy(brect))
 				continue;
-			sr = strut->left;
-			if(rect_intersect_p(brect, sr))
-				brect.min.x = sr.max.x;
-			sr = rectaddpt(strut->right, Pt(scr.rect.max.x, 0));
-			if(rect_intersect_p(brect, sr))
-				brect.max.x = sr.min.x;
+			if(scrn->barpos == BTop && sr.min.y < rr.min.y
+			|| scrn->barpos != BTop && sr.max.y > rr.max.y)
+				rr = sr;
 		}
-
-		bar_setbounds(scrn, brect.min.x, brect.max.x);
+		if(scrn->barpos == BTop) {
+			bar_sety(scrn, rr.min.y);
+			r.min.y = max(r.min.y, scrn->brect.max.y);
+		}else {
+			bar_sety(scrn, rr.max.y - Dy(brect));
+			r.max.y = min(r.max.y, scrn->brect.min.y);
+		}
+		bar_setbounds(scrn, rr.min.x, rr.max.x);
+		v->r[s] = r;
 	}
 }
 
@@ -279,7 +272,7 @@ view_update(View *v) {
 	bool fscrn;
 	int s;
 
-	if(v != screen->sel)
+	if(v != selview)
 		return;
 	if(starting)
 		return;
@@ -410,7 +403,7 @@ view_detach(Frame *f) {
 	if(c->sel == f)
 		c->sel = f->cnext;
 
-	if(v == screen->sel)
+	if(v == selview)
 		view_update(v);
 	else if(empty_p(v))
 		view_destroy(v);
@@ -436,7 +429,7 @@ view_restack(View *v) {
 	Area *a;
 	bool fscrn;
 	
-	if(v != screen->sel)
+	if(v != selview)
 		return;
 
 	wins.n = 0;
@@ -543,7 +536,7 @@ view_arrange(View *v) {
 		a->r.max.y = v->r[s].max.y;
 		column_arrange(a, false);
 	}
-	if(v == screen->sel)
+	if(v == selview)
 		div_update_all();
 }
 
@@ -571,7 +564,7 @@ void
 view_update_all(void) {
 	View *n, *v, *old;
 
-	old = screen->sel;
+	old = selview;
 	for(v=view; v; v=v->next)
 		frames_update_sel(v);
 
@@ -581,7 +574,7 @@ view_update_all(void) {
 			view_destroy(v);
 	}
 
-	view_update(screen->sel);
+	view_update(selview);
 }
 
 uint

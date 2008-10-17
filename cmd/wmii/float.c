@@ -53,7 +53,7 @@ float_detach(Frame *f) {
 void
 float_resizeframe(Frame *f, Rectangle r) {
 
-	if(f->area->view == screen->sel)
+	if(f->area->view == selview)
 		client_resize(f->client, r);
 	else
 		frame_resize(f, r);
@@ -100,12 +100,65 @@ rect_push(Vector_rect *vec, Rectangle r) {
 	vector_rpush(vec, r);
 }
 
+Vector_rect*
+unique_rects(Vector_rect *vec, Rectangle orig) {
+	static Vector_rect vec1, vec2;
+	Vector_rect *v1, *v2, *v;
+	Rectangle r1, r2;
+	int i, j;
+
+	v1 = &vec1;
+	v2 = &vec2;
+	v1->n = 0;
+	vector_rpush(v1, orig);
+	for(i=0; i < vec->n; i++) {
+		v2->n = 0;
+		r1 = vec->ary[i];
+		for(j=0; j < v1->n; j++) {
+			r2 = v1->ary[j];
+			if(!rect_intersect_p(r1, r2)) {
+				rect_push(v2, r2);
+				continue;
+			}
+			if(r2.min.x < r1.min.x)
+				rect_push(v2, Rect(r2.min.x, r2.min.y, r1.min.x, r2.max.y));
+			if(r2.min.y < r1.min.y)
+				rect_push(v2, Rect(r2.min.x, r2.min.y, r2.max.x, r1.min.y));
+			if(r2.max.x > r1.max.x)
+				rect_push(v2, Rect(r1.max.x, r2.min.y, r2.max.x, r2.max.y));
+			if(r2.max.y > r1.max.y)
+				rect_push(v2, Rect(r2.min.x, r1.max.y, r2.max.x, r2.max.y));
+		}
+		v = v1;
+		v1 = v2;
+		v2 = v;
+	}
+	return v1;
+}
+
+Rectangle
+max_rect(Vector_rect *vec) {
+	Rectangle *r, *rp;
+	int i, a, area;
+
+	area = 0;
+	r = 0;
+	for(i=0; i < vec->n; i++) {
+		rp = &vec->ary[i];
+		a = Dx(*rp) * Dy(*rp);
+		if(a > area) {
+			area = a;
+			r = rp;
+		}
+	}
+	return r ? *r : ZR;
+}
+
 static void
 float_placeframe(Frame *f) {
-	static Vector_rect rvec, rvec2;
-	Vector_rect *vp, *vp2, *vptemp;
-	Rectangle *rp;
-	Rectangle r, fr;
+	static Vector_rect vec;
+	Vector_rect *vp;
+	Rectangle r;
 	Point dim, p;
 	Client *c;
 	Frame *ff;
@@ -125,49 +178,36 @@ float_placeframe(Frame *f) {
 		return;
 	}
 
-	dim.x = Dx(f->r);
-	dim.y = Dy(f->r);
-
-	rvec.n = 0;
-	rvec2.n = 0;
-	vp = &rvec;
-	vp2 = &rvec2;
-
 	/* Find all rectangles on the floating layer into which
 	 * the new frame would fit.
 	 */
-	vector_rpush(vp, a->r);
-	for(ff=a->frame; ff; ff=ff->anext) {
-		/* TODO: Find out why this is needed.
+	vec.n = 0;
+	for(ff=a->frame; ff; ff=ff->anext)
+		/* TODO: Find out why this check is needed.
 		 * The frame hasn't been inserted yet, but somehow,
 		 * its old rectangle winds up in the list.
 		 */
-		if(ff->client == f->client)
+		if(ff->client != f->client)
+			vector_rpush(&vec, ff->r);
+	vp = unique_rects(&vec, a->r);
+
+	area = LONG_MAX;
+	dim.x = Dx(f->r);
+	dim.y = Dy(f->r);
+	p = ZP;
+
+	for(i=0; i < vp->n; i++) {
+		r = vp->ary[i];
+		if(Dx(r) < dim.x || Dy(r) < dim.y)
 			continue;
-		fr = ff->r;
-		vp2->n = 0;
-		for(i=0; i < vp->n; i++) {
-			r = vp->ary[i];
-			if(!rect_intersect_p(fr, r)) {
-				rect_push(vp2, r);
-				continue;
-			}
-			if(r.min.x < fr.min.x && fr.min.x - r.min.x >= dim.x)
-				rect_push(vp2, Rect(r.min.x, r.min.y, fr.min.x, r.max.y));
-			if(r.max.x > fr.max.x && r.max.x - fr.max.x >= dim.x)
-				rect_push(vp2, Rect(fr.max.x, r.min.y, r.max.x, r.max.y));
-			if(r.min.y < fr.min.y && fr.min.y - r.min.y >= dim.y)
-				rect_push(vp2, Rect(r.min.x, r.min.y, r.max.x, fr.min.y));
-			if(r.max.y > fr.max.y && r.max.y - fr.max.y >= dim.y)
-				rect_push(vp2, Rect(r.min.x, fr.max.y, r.max.x, r.max.y));
+		l = Dx(r) * Dy(r);
+		if(l < area) {
+			area = l;
+			p = r.min;
 		}
-		vptemp = vp;
-		vp = vp2;
-		vp2 = vptemp;
 	}
 
-	p = ZP;
-	if(vp->n == 0) {
+	if(area == LONG_MAX) {
 		/* Cascade. */
 		ff = a->sel;
 		if(ff)
@@ -175,16 +215,6 @@ float_placeframe(Frame *f) {
 		if(p.x + Dx(f->r) > Dx(screen->r) ||
 		   p.y + Dy(f->r) > screen->brect.min.y)
 			p = ZP;
-	}else {
-		area = LONG_MAX;
-		for(i=0; i < vp->n; i++) {
-			rp = &vp->ary[i];
-			l = Dx(*rp) * Dy(*rp);
-			if(l < area) {
-				area = l;
-				p = rp->min;
-			}
-		}
 	}
 
 	f->floatr = rectsetorigin(f->r, p);

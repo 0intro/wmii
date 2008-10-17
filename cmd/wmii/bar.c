@@ -166,16 +166,16 @@ bar_draw(WMScreen *s) {
 	}
 
 	r = rectsubpt(s->brect, s->brect.min);
-	fill(screen->ibuf, r, def.normcolor.bg);
+	fill(disp.ibuf, r, def.normcolor.bg);
 	foreach_bar(s, b) {
 		align = Center;
 		if(b == s->bar[BRight])
 			align = East;
-		fill(screen->ibuf, b->r, b->col.bg);
-		drawstring(screen->ibuf, def.font, b->r, align, b->text, b->col.fg);
-		border(screen->ibuf, b->r, 1, b->col.border);
+		fill(disp.ibuf, b->r, b->col.bg);
+		drawstring(disp.ibuf, def.font, b->r, align, b->text, b->col.fg);
+		border(disp.ibuf, b->r, 1, b->col.border);
 	}
-	copyimage(s->barwin, r, screen->ibuf, ZP);
+	copyimage(s->barwin, r, disp.ibuf, ZP);
 }
 
 Bar*

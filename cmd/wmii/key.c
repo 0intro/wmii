@@ -153,7 +153,7 @@ fake_keypress(ulong mod, KeyCode key) {
 	XKeyEvent e;
 	Client *c;
 
-	c = screen->focus;
+	c = disp.focus;
 	if(c == nil || c->w.w == 0)
 		return;
 

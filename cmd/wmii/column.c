@@ -481,7 +481,7 @@ column_frob(Area *a) {
 	for(f=a->frame; f; f=f->anext)
 		f->r = f->colr;
 	column_settle(a);
-	if(a->view == screen->sel)
+	if(a->view == selview)
 	for(f=a->frame; f; f=f->anext)
 		client_resize(f->client, f->r);
 }
@@ -563,7 +563,7 @@ column_arrange(Area *a, bool dirty) {
 	/* XXX */
 	if(a->sel->collapsed)
 		area_setsel(a, a->sel);
-	if(v == screen->sel) {
+	if(v == selview) {
 		//view_restack(v);
 		client_resize(a->sel->client, a->sel->r);
 		for(f=a->frame; f; f=f->anext)

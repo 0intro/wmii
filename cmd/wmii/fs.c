@@ -278,11 +278,11 @@ lookup_file(IxpFileId *parent, char *name)
 				break;
 			case FsDTags:
 				if(!name || !strcmp(name, "sel")) {
-					if(screen->sel) {
+					if(selview) {
 						push_file("sel");
 						file->volatil = true;
-						file->p.view = screen->sel;
-						file->id = screen->sel->id;
+						file->p.view = selview;
+						file->id = selview->id;
 					}if(name) goto LastItem;
 				}
 				for(v=view; v; v=v->next) {

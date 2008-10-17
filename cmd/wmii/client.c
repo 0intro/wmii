@@ -265,7 +265,7 @@ client_destroy(Client *c) {
 	r = client_grav(c, ZR);
 
 	hide = false;	
-	if(!c->sel || c->sel->view != screen->sel)
+	if(!c->sel || c->sel->view != selview)
 		hide = true;
 
 	XGrabServer(display);
@@ -312,8 +312,8 @@ client_viewframe(Client *c, View *v) {
 
 Client*
 selclient(void) {
-	if(screen->sel->sel->sel)
-		return screen->sel->sel->sel->client;
+	if(selview->sel->sel)
+		return selview->sel->sel->client;
 	return nil;
 }
 
@@ -471,7 +471,7 @@ focus(Client *c, bool user) {
 	 */
 
 	v = f->view;
-	if(v != screen->sel)
+	if(v != selview)
 		view_focus(screen, v);
 	frame_focus(c->sel);
 }
@@ -488,9 +488,9 @@ client_focus(Client *c) {
 
 	Dprint(DFocus, "client_focus([%C]%s)\n", c, clientname(c));
 	Dprint(DFocus, "\t[%C]%s\n\t=> [%C]%s\n",
-			screen->focus, clientname(screen->focus),
+			disp.focus, clientname(disp.focus),
 			c, clientname(c));
-	if(screen->focus != c) {
+	if(disp.focus != c) {
 		if(c) {
 			if(!c->noinput)
 				setfocus(&c->w, RevertToParent);
@@ -514,7 +514,7 @@ client_resize(Client *c, Rectangle r) {
 	f = c->sel;
 	frame_resize(f, r);
 
-	if(f->view != screen->sel) {
+	if(f->view != selview) {
 		client_unmap(c, IconicState);
 		unmap_frame(c);
 		return;
@@ -605,7 +605,7 @@ fullscreen(Client *c, int fullscreen) {
 		for(f=c->frame; f; f=f->cnext) {
 			if(f->oldarea == 0) {
 				frame_resize(f, f->floatr);
-				if(f->view == screen->sel) /* FIXME */
+				if(f->view == selview) /* FIXME */
 					client_resize(f->client, f->r);
 
 			}
@@ -642,7 +642,7 @@ client_seturgent(Client *c, bool urgent, int from) {
 		c->urgent = urgent;
 		ewmh_updatestate(c);
 		if(c->sel) {
-			if(c->sel->view == screen->sel)
+			if(c->sel->view == selview)
 				frame_draw(c->sel);
 			for(f=c->frame; f; f=f->cnext) {
 				SET(ff);
@@ -856,7 +856,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 	c = w->aux;
 	if(e->detail != NotifyInferior) {
 		if(e->detail != NotifyVirtual)
-		if(e->serial != ignoreenter && screen->focus != c) {
+		if(e->serial != ignoreenter && disp.focus != c) {
 			Dprint(DFocus, "enter_notify([%C]%s)\n", c, c->name);
 			focus(c, false);
 		}
@@ -874,10 +874,10 @@ focusin_event(Window *w, XFocusChangeEvent *e) {
 	print_focus("focusin_event", c, c->name);
 
 	if(e->mode == NotifyGrab)
-		screen->hasgrab = c;
+		disp.hasgrab = c;
 
-	old = screen->focus;
-	screen->focus = c;
+	old = disp.focus;
+	disp.focus = c;
 	if(c != old) {
 		if(c->sel)
 			frame_draw(c->sel);
@@ -889,12 +889,12 @@ focusout_event(Window *w, XFocusChangeEvent *e) {
 	Client *c;
 
 	c = w->aux;
-	if((e->mode == NotifyWhileGrabbed) && (screen->hasgrab != &c_root)) {
-		if(screen->focus)
-			screen->hasgrab = screen->focus;
-	}else if(screen->focus == c) {
+	if((e->mode == NotifyWhileGrabbed) && (disp.hasgrab != &c_root)) {
+		if(disp.focus)
+			disp.hasgrab = disp.focus;
+	}else if(disp.focus == c) {
 		print_focus("focusout_event", &c_magic, "<magic>");
-		screen->focus = &c_magic;
+		disp.focus = &c_magic;
 		if(c->sel)
 			frame_draw(c->sel);
 	}
@@ -969,7 +969,7 @@ client_setviews(Client *c, char **tags) {
 		if(*tags) {
 			if(!*fp || cmp > 0) {
 				f = frame_create(c, view_create(*tags));
-				if(f->view == screen->sel || !c->sel)
+				if(f->view == selview || !c->sel)
 					c->sel = f;
 				kludge = c; /* FIXME */
 				view_attach(f->view, f);
@@ -1111,7 +1111,7 @@ apply_tags(Client *c, const char *tags) {
 			c->floating = add;
 		else
 		if(!strcmp(buf+n, "!") || !strcmp(buf+n, "sel"))
-			cur = screen->sel->name;
+			cur = selview->name;
 		else
 		if(!Mbsearch(buf+n, badtags, bsstrcmp))
 			cur = buf+n;

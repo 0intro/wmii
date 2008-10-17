@@ -191,6 +191,8 @@ init_screens(void) {
 	ibuf32 = nil; /* Probably shouldn't do this until it's needed. */
 	if(render_visual)
 		ibuf32 = allocimage(Dx(scr.rect), Dy(scr.rect), 32);
+	disp.ibuf = ibuf;
+	disp.ibuf32 = ibuf32;
 
 	/* Resize and initialize screens. */
 	for(i=0; i < nscreens; i++) {
@@ -202,14 +204,13 @@ init_screens(void) {
 			screen->r = rects[i];
 		else
 			screen->r = rectsetorigin(screen->r, scr.rect.max);
+		print("screens[%d]->r = %R\n", i, screens[i]->r);
 		def.snap = Dy(screen->r) / 63;
-		screen->ibuf = ibuf;
-		screen->ibuf32 = ibuf32;
 		bar_init(screens[i]);
 	}
 	screen = screens[0];
-	if(screen->sel)
-		view_update(screen->sel);
+	if(selview)
+		view_update(selview);
 }
 
 static void
@@ -397,7 +398,7 @@ extern int fmtevent(Fmt*);
 	loadcolor(&def.focuscolor, FOCUSCOLORS);
 	loadcolor(&def.normcolor, NORMCOLORS);
 
-	sel_screen = pointerscreen();
+	disp.sel = pointerscreen();
 
 	init_screens();
 
@@ -411,7 +412,7 @@ extern int fmtevent(Fmt*);
 			  CWEventMask
 			| CWCursor);
 
-	screen->focus = nil;
+	disp.focus = nil;
 	setfocus(screen->barwin, RevertToParent);
 	view_select("1");
 
@@ -421,7 +422,7 @@ extern int fmtevent(Fmt*);
 	view_update_all();
 	ewmh_updateviews();
 
-	event("FocusTag %s\n", screen->sel->name);
+	event("FocusTag %s\n", selview->name);
 
 	i = ixp_serverloop(&srv);
 	if(i)

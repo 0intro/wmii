@@ -445,13 +445,13 @@ message_root(void *p, IxpMsg *m) {
 			s = msg_getword(m);
 		if(!setdef(&screen->barpos, s, barpostab, nelem(barpostab)))
 			return Ebadvalue;
-		view_update(screen->sel);
+		view_update(selview);
 		break;
 	case LBORDER:
 		if(!getulong(msg_getword(m), &n))
 			return Ebadvalue;
 		def.border = n;
-		view_update(screen->sel);
+		view_update(selview);
 		break;
 	case LCOLMODE:
 		s = msg_getword(m);
@@ -467,7 +467,7 @@ message_root(void *p, IxpMsg *m) {
 		break;
 	case LFOCUSCOLORS:
 		ret = msg_parsecolors(m, &def.focuscolor);
-		view_update(screen->sel);
+		view_update(selview);
 		break;
 	case LFONT:
 		fn = loadfont(m->pos);
@@ -478,7 +478,7 @@ message_root(void *p, IxpMsg *m) {
 				bar_resize(screens[n]);
 		}else
 			ret = "can't load font";
-		view_update(screen->sel);
+		view_update(selview);
 		break;
 	case LGRABMOD:
 		s = msg_getword(m);
@@ -493,11 +493,11 @@ message_root(void *p, IxpMsg *m) {
 	case LINCMODE:
 		if(!setdef(&def.incmode, msg_getword(m), incmodetab, nelem(incmodetab)))
 			return Ebadvalue;
-		view_update(screen->sel);
+		view_update(selview);
 		break;
 	case LNORMCOLORS:
 		ret = msg_parsecolors(m, &def.normcolor);
-		view_update(screen->sel);
+		view_update(selview);
 		break;
 	case LSELCOLORS:
 		warning("selcolors have been removed");
@@ -546,7 +546,7 @@ readctl_root(void) {
 	bufprint("grabmod %s\n", def.grabmod);
 	bufprint("incmode %s\n", incmodetab[screen->barpos]);
 	bufprint("normcolors %s\n", def.normcolor.colstr);
-	bufprint("view %s\n", screen->sel->name);
+	bufprint("view %s\n", selview->name);
 	return buffer;
 }
 
@@ -978,7 +978,7 @@ msg_selectframe(Frame *f, IxpMsg *m, int sym) {
 
 	frame_focus(fp);
 	frame_restack(fp, nil);
-	if(fp->view == screen->sel)
+	if(fp->view == selview)
 		view_restack(fp->view);
 	return nil;
 }

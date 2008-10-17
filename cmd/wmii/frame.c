@@ -210,7 +210,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 
 	c = w->aux;
 	f = c->sel;
-	if(screen->focus != c || selclient() != c) {
+	if(disp.focus != c || selclient() != c) {
 		Dprint(DFocus, "enter_notify(f) => [%C]%s%s\n",
 		       f->client, f->client->name, ignoreenter == e->serial ? " (ignored)" : "");
 		if(e->detail != NotifyInferior)
@@ -425,7 +425,7 @@ frame_draw(Frame *f) {
 	uint w;
 	int n, m;
 
-	if(f->view != screen->sel)
+	if(f->view != selview)
 		return;
 	if(f->area == nil) /* Blech. */
 		return;
@@ -435,7 +435,7 @@ frame_draw(Frame *f) {
 	fr = rectsetorigin(c->framewin->r, ZP);
 
 	/* Pick colors. */
-	if(c == selclient() || c == screen->focus)
+	if(c == selclient() || c == disp.focus)
 		col = &def.focuscolor;
 	else
 		col = &def.normcolor;
@@ -454,7 +454,7 @@ frame_draw(Frame *f) {
 
 	/* Odd focus. Unselected, with keyboard focus. */
 	/* Draw a border just inside the titlebar. */
-	if(c != selclient() && c == screen->focus) {
+	if(c != selclient() && c == disp.focus) {
 		border(img, insetrect(r, 1), 1, def.normcolor.bg);
 		border(img, insetrect(r, 2), 1, def.focuscolor.border);
 	}
@@ -471,7 +471,7 @@ frame_draw(Frame *f) {
 
 	/* Odd focus. Selected, without keyboard focus. */
 	/* Draw a border around the grabbox. */
-	if(c != screen->focus && col == &def.focuscolor)
+	if(c != disp.focus && col == &def.focuscolor)
 		border(img, insetrect(r, -1), 1, def.normcolor.bg);
 
 	/* Draw a border on borderless+titleless selected apps. */
@@ -535,7 +535,7 @@ frame_draw_all(void) {
 	Client *c;
 
 	for(c=client; c; c=c->next)
-		if(c->sel && c->sel->view == screen->sel)
+		if(c->sel && c->sel->view == selview)
 			frame_draw(c->sel);
 }
 
@@ -574,7 +574,7 @@ move_focus(Frame *old_f, Frame *f) {
 
 	noinput = (old_f && old_f->client->noinput) ||
 		  (f && f->client->noinput) ||
-		  screen->hasgrab != &c_root;
+		  disp.hasgrab != &c_root;
 	if(noinput) {
 		if(old_f)
 			frame_draw(old_f);
@@ -616,7 +616,7 @@ frame_focus(Frame *f) {
 	if(old_a != v->oldsel && f != old_f)
 		v->oldsel = nil;
 
-	if(v != screen->sel || a != v->sel)
+	if(v != selview || a != v->sel)
 		return;
 
 	move_focus(old_f, f);

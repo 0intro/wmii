@@ -312,7 +312,7 @@ ewmh_getstrut(Client *c) {
 	Dprint(DEwmh, "\tright: %R\n", c->strut->right);
 	Dprint(DEwmh, "\tbottom: %R\n", c->strut->bottom);
 	free(strut);
-	view_update(screen->sel);
+	view_update(selview);
 }
 
 static void
@@ -439,7 +439,7 @@ ewmh_updatestate(Client *c) {
 	int i;
 
 	f = c->sel;
-	if(f == nil || f->view != screen->sel)
+	if(f == nil || f->view != selview)
 		return;
 
 	i = 0;
@@ -496,7 +496,7 @@ ewmh_updateview(void) {
 	if(starting)
 		return;
 
-	i = viewidx(screen->sel);
+	i = viewidx(selview);
 	changeprop_long(&scr.root, Net("CURRENT_DESKTOP"), "CARDINAL", &i, 1);
 }
 

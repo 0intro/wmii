@@ -102,7 +102,7 @@ expose_event(Window *w, XExposeEvent *e) {
 
 	f = w->aux;
 	c = &def.focuscolor;
-	buf = screen->ibuf;
+	buf = disp.ibuf;
 	
 	r = rectsubpt(w->r, w->r.min);
 	fill(buf, r, c->bg);
@@ -123,10 +123,10 @@ find_area(Point pt) {
 	Area *a;
 	int s;
 
-	v = screen->sel;
+	v = selview;
 	/* XXX: Multihead. Check this over. */
 	for(s=0; s < nscreens; s++) {
-		if(!rect_haspoint_p(pt, screen[s].r))
+		if(!rect_haspoint_p(pt, screens[s]->r))
 			continue;
 		for(a=v->areas[s]; a; a=a->next)
 			if(pt.x < a->r.max.x)
@@ -145,7 +145,7 @@ vplace(Framewin *fw, Point pt) {
 	long l;
 	int hr;
 
-	v = screen->sel;
+	v = selview;
 
 	a = find_area(pt);
 	if(a == nil)
@@ -196,7 +196,7 @@ hplace(Framewin *fw, Point pt) {
 	View *v;
 	int minw;
 	
-	v = screen->sel;
+	v = selview;
 
 	a = find_area(pt);
 	if(a == nil)

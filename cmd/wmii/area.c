@@ -90,10 +90,11 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 	a->view = v;
 	a->screen = scrn;
 	a->id = id++;
-	if(v->areas)
-		a->mode = def.colmode;
-	else
+	a->floating = !v->floating;
+	if(a->floating)
 		a->mode = Coldefault;
+	else
+		a->mode = def.colmode;
 	a->frame = nil;
 	a->sel = nil;
 
@@ -101,9 +102,8 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 	a->r.min.x = 0;
 	a->r.max.x = width;
 
-	if(!v->floating) {
+	if(a->floating) {
 		v->floating = a;
-		a->floating = true;
 		a->screen = -1;
 	}
 	else if(pos) {
@@ -273,7 +273,7 @@ area_focus(Area *a) {
 			view_update(v);
 	}
 
-	if(v != screen->sel)
+	if(v != selview)
 		return;
 
 	move_focus(old_a->sel, f);

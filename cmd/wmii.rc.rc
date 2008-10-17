@@ -161,11 +161,13 @@ fn Event-Start {
 }
 
 fn Action {
-       cmd=$1 action=Action-$cmd { shift
-               if(wi_fn-p $action)
-                       $action $*
-               if not
-                       wi_runcmd `{wi_script $cmd} $*
-       }
+	cmd=$1 action=Action-$"cmd { shift
+		if(! ~ $cmd '') {
+			if(wi_fn-p $action)
+				$action $*
+			if not
+				wi_runcmd `{wi_script $cmd} $*
+		}
+	}
 }
 

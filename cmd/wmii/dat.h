@@ -324,12 +324,7 @@ enum {
 
 EXTERN struct WMScreen {
 	Bar*	bar[2];
-	View*	sel;
-	Client*	focus;
-	Client*	hasgrab;
 	Window*	barwin;
-	Image*	ibuf;
-	Image*	ibuf32;
 	bool	showing;
 	int	barpos;
 	int	idx;
@@ -337,9 +332,19 @@ EXTERN struct WMScreen {
 	Rectangle r;
 	Rectangle brect;
 } **screens, *screen;
+EXTERN uint	nscreens;
+
+EXTERN struct {
+	Client*	focus;
+	Client*	hasgrab;
+	Image*	ibuf;
+	Image*	ibuf32;
+	bool	sel;
+} disp;
 
 EXTERN Client*	client;
 EXTERN View*	view;
+EXTERN View*	selview;
 EXTERN Key*	key;
 EXTERN Divide*	divs;
 EXTERN Client	c_magic;
@@ -361,10 +366,8 @@ EXTERN IxpServer srv;
 EXTERN Ixp9Srv	p9srv;
 
 /* X11 */
-EXTERN uint	nscreens;
 EXTERN uint	valid_mask;
 EXTERN uint	numlock_mask;
-EXTERN bool	sel_screen;
 EXTERN Image*	ibuf;
 EXTERN Image*	ibuf32;
 

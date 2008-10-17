@@ -216,7 +216,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 
 	f->collapsed = false;
 
-	v = screen->sel;
+	v = selview;
 	d = divs;
 	for(a=v->firstarea; a != f->area; a=a->next)
 		d = d->next;
@@ -318,7 +318,7 @@ mouse_resizecol(Divide *d) {
 	Point pt;
 	uint minw;
 
-	v = screen->sel;
+	v = selview;
 
 	for(a = v->firstarea, dp = divs; a; a = a->next, dp = dp->next)
 		if(dp->next == d) break;

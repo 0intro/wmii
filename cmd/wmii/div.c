@@ -54,8 +54,8 @@ div_set(Divide *d, int x) {
 	d->x = x;
 	r = rectaddpt(divimg->r, Pt(x - Dx(divimg->r)/2, 0));
 	/* XXX: Multihead. */
-	r.min.y = screen->sel->screenr.min.y;
-	r.max.y = screen->sel->screenr.max.y;
+	r.min.y = selview->screenr.min.y;
+	r.max.y = selview->screenr.max.y;
 
 	reshapewin(d->w, r);
 	mapdiv(d);
@@ -92,7 +92,7 @@ update_imgs(void) {
 	w = 2 * (labelh(def.font) / 3);
 	w = max(w, 10);
 	/* XXX: Multihead. */
-	h = Dy(screen->sel->screenr);
+	h = Dy(selview->screenr);
 
 	if(divimg) {
 		if(w == Dx(divimg->r) && h == Dy(divimg->r)
@@ -123,7 +123,7 @@ div_update_all(void) {
 
 	update_imgs();
 
-	v = screen->sel;
+	v = selview;
 	dp = &divs;
 	foreach_area(v, s, a) {
 		d = getdiv(dp);
