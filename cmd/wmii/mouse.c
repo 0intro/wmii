@@ -362,7 +362,7 @@ mouse_resize(Client *c, Align align, bool grabmod) {
 	Frame *f;
 
 	f = c->sel;
-	if(f->client->fullscreen)
+	if(f->client->fullscreen >= 0)
 		return;
 	if(!f->area->floating) {
 		if(align==Center)

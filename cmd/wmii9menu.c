@@ -213,7 +213,7 @@ run_menu(void)
 		wide = max(wide, textwidth(font, labels[i]));
 	wide += font->height & ~1;
 
-	size_window(wide, high * i);
+	size_window(wide, high);
 	warpmouse(wide, high);
 
 	for(;;) {
@@ -248,7 +248,8 @@ run_menu(void)
 		case Expose:
 			redraw(high, wide);
 			break;
-		case MappingNotify:	/* why do we get this? */
+		case ConfigureNotify:
+		case MappingNotify:
 			break;
 		}
 	}
@@ -277,16 +278,18 @@ create_window(void)
 void
 size_window(int wide, int high)
 {
+	Rectangle r;
 	Point p;
 	int h;
 
 	h = high * numitems;
+	r = Rect(0, 0, wide, h);
 
 	p = querypointer(&scr.root);
 	p.x -= wide / 2;
 	if(p.x < 0)
 		p.x = 0;
-	else if(p.x + wide > Dy(scr.rect))
+	else if(p.x + wide > Dx(scr.rect))
 		p.x = Dy(scr.rect) - wide;
 
 	p.y -= cur * high + high / 2;
@@ -295,7 +298,7 @@ size_window(int wide, int high)
 	else if(p.y + h > Dy(scr.rect))
 		p.y = Dy(scr.rect) - h;
 
-	reshapewin(menuwin, Rpt(p, addpt(p, Pt(wide, high))));
+	reshapewin(menuwin, rectaddpt(r, p));
 
 	//XSetWindowBackground(display, menuwin->w, cnorm.bg);
 	setborder(menuwin, 1, cnorm.border);

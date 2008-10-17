@@ -179,7 +179,7 @@ area_moveto(Area *to, Frame *f) {
 
 	assert(to->view == f->view);
 
-	if(f->client->fullscreen && !to->floating)
+	if(f->client->fullscreen >= 0 && !to->floating)
 		return;
 
 	from = f->area;
@@ -257,7 +257,7 @@ area_focus(Area *a) {
 	f = a->sel;
 	old_a = v->sel;
 
-	if(view_fullscreen_p(v) && !a->floating)
+	if(!a->floating && view_fullscreen_p(v, a->screen))
 		return;
 
 	v->sel = a;

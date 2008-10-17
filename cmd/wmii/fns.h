@@ -236,6 +236,9 @@ Align	snap_rect(Rectangle *rects, int num, Rectangle *current, Align *mask, int 
 /* printevent.c */
 void	printevent(XEvent*);
 
+/* screen.c */
+int	ownerscreen(Rectangle);
+
 /* rule.c */
 void	trim(char *str, const char *chars);
 void	update_rules(Rule**, const char*);
@@ -248,7 +251,7 @@ void	view_destroy(View*);
 void	view_detach(Frame*);
 Area*	view_findarea(View*, int, bool);
 void	view_focus(WMScreen*, View*);
-bool	view_fullscreen_p(View*);
+bool	view_fullscreen_p(View*, int);
 char*	view_index(View*);
 void	view_init(View*, int iscreen);
 char**	view_names(void);

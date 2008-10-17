@@ -177,16 +177,16 @@ struct Client {
 	char	name[256];
 	char	tags[256];
 	char	props[512];
-	uint	border;
 	long	proto;
+	uint	border;
+	int	fullscreen;
+	int	unmapped;
 	char	floating;
 	char	fixedsize;
-	char	fullscreen;
 	char	urgent;
 	char	borderless;
 	char	titleless;
 	char	noinput;
-	int	unmapped;
 };
 
 struct Divide {

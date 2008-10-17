@@ -445,7 +445,7 @@ ewmh_updatestate(Client *c) {
 	i = 0;
 	if(f->collapsed)
 		state[i++] = STATE("SHADED");
-	if(c->fullscreen)
+	if(c->fullscreen >= 0)
 		state[i++] = STATE("FULLSCREEN");
 	if(c->urgent)
 		state[i++] = STATE("DEMANDS_ATTENTION");

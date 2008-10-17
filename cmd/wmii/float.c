@@ -173,7 +173,7 @@ float_placeframe(Frame *f) {
 	if(c->trans)
 		return;
 	*/
-	if(c->fullscreen || c->w.hints->position || starting) {
+	if(c->fullscreen >= 0 || c->w.hints->position || starting) {
 		f->r = f->floatr;
 		return;
 	}

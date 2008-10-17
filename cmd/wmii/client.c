@@ -97,6 +97,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	int depth;
 
 	c = emallocz(sizeof *c);
+	c->fullscreen = -1;
 	c->border = wa->border_width;
 
 	c->r.min = Pt(wa->x, wa->y);
@@ -381,7 +382,7 @@ client_floats_p(Client *c) {
 	    || c->fixedsize
 	    || c->titleless
 	    || c->borderless
-	    || c->fullscreen
+	    || c->fullscreen >= 0
 	    || (c->w.ewmh.type & (TypeDialog|TypeSplash|TypeDock));
 }
 
@@ -593,14 +594,14 @@ fullscreen(Client *c, int fullscreen) {
 	bool wassel;
 	
 	if(fullscreen == Toggle)
-		fullscreen = c->fullscreen ^ On;
-	if(fullscreen == c->fullscreen)
+		fullscreen = (c->fullscreen >= 0) ^ On;
+	if(fullscreen == (c->fullscreen >= 0))
 		return;
 
 	event("Fullscreen %C %s\n", c, (fullscreen ? "on" : "off"));
-	c->fullscreen = fullscreen;
 	ewmh_updatestate(c);
 
+	c->fullscreen = -1;
 	if(!fullscreen)
 		for(f=c->frame; f; f=f->cnext) {
 			if(f->oldarea == 0) {
@@ -617,6 +618,7 @@ fullscreen(Client *c, int fullscreen) {
 			}
 		}
 	else {
+		c->fullscreen = ownerscreen(c->r);
 		for(f=c->frame; f; f=f->cnext)
 			f->oldarea = -1;
 		if((f = c->sel))

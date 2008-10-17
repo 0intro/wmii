@@ -32,6 +32,7 @@ OBJ =	area	\
 	mouse	\
 	rule	\
 	printevent\
+	screen	\
 	utf	\
 	_util	\
 	view	\

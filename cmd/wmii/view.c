@@ -46,11 +46,11 @@ view_selclient(View *v) {
 }
 
 bool
-view_fullscreen_p(View *v) {
+view_fullscreen_p(View *v, int scrn) {
 	Frame *f;
 
 	for(f=v->floating->frame; f; f=f->anext)
-		if(f->client->fullscreen)
+		if(f->client->fullscreen == scrn)
 			return true;
 	return false;
 }
@@ -269,7 +269,6 @@ view_update(View *v) {
 	Client *c;
 	Frame *f;
 	Area *a;
-	bool fscrn;
 	int s;
 
 	if(v != selview)
@@ -280,11 +279,9 @@ view_update(View *v) {
 	frames_update_sel(v);
 	view_arrange(v);
 
-	fscrn = false;
 	foreach_frame(v, s, a, f)
-		if(f->client->fullscreen) {
+		if(f->client->fullscreen >= 0) {
 			f->collapsed = false;
-			fscrn = true;
 			if(!f->area->floating) {
 				f->oldarea = area_idx(f->area);
 				area_moveto(v->floating, f);
@@ -308,7 +305,7 @@ view_update(View *v) {
 	}
 
 	view_restack(v);
-	if(fscrn)
+	if(!v->sel->floating && view_fullscreen_p(v, v->sel->screen))
 		area_focus(v->floating);
 	else
 		area_focus(v->sel);
@@ -427,13 +424,11 @@ view_restack(View *v) {
 	Divide *d;
 	Frame *f;
 	Area *a;
-	bool fscrn;
 	
 	if(v != selview)
 		return;
 
 	wins.n = 0;
-	fscrn = view_fullscreen_p(v);
 
 	/* *sigh */
 	for(f=v->floating->stack; f; f=f->snext)
@@ -442,14 +437,11 @@ view_restack(View *v) {
 		else
 			break;
 
-	if(!fscrn)
-		vector_lpush(&wins, screen->barwin->w);
-
 	for(; f; f=f->snext)
 		vector_lpush(&wins, f->client->framewin->w);
 
-	if(fscrn)
-		vector_lpush(&wins, screen->barwin->w);
+	for(int s=0; s < nscreens; s++)
+		vector_lpush(&wins, screens[s]->barwin->w);
 
 	for(d = divs; d && d->w->mapped; d = d->next)
 		vector_lpush(&wins, d->w->w);

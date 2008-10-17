@@ -298,7 +298,7 @@ frame_gethints(Frame *f) {
 }
 
 #define ADJ(PE, ME) \
-	if(c->fullscreen)                            \
+	if(c->fullscreen >= 0)                       \
 		return r;                            \
                                                      \
 	if(!floating) {                              \
@@ -350,9 +350,9 @@ frame_resize(Frame *f, Rectangle r) {
 	}
 
 	c = f->client;
-	if(c->fullscreen) {
-		f->crect = screen->r;
-		f->r = screen->r;
+	if(c->fullscreen >= 0) {
+		f->crect = screens[c->fullscreen]->r;
+		f->r = rectsetorigin(f->crect, ZP);
 		return;
 	}
 
