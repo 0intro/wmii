@@ -351,8 +351,8 @@ frame_resize(Frame *f, Rectangle r) {
 
 	c = f->client;
 	if(c->fullscreen >= 0) {
-		f->crect = screens[c->fullscreen]->r;
-		f->r = rectsetorigin(f->crect, ZP);
+		f->r = screens[c->fullscreen]->r;
+		f->crect = rectsetorigin(f->r, ZP);
 		return;
 	}
 
