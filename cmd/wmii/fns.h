@@ -212,7 +212,7 @@ char*	msg_selectarea(Area*, IxpMsg*);
 char*	msg_sendclient(View*, IxpMsg*, bool swap);
 char*	readctl_root(void);
 char*	readctl_view(View*);
-Area*	strarea(View*, const char*);
+Area*	strarea(View*, int, const char*);
 void	warning(const char*, ...);
 /* debug */
 void	debug(int, const char*, ...);

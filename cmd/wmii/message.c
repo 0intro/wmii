@@ -312,7 +312,7 @@ strclient(View *v, char *s) {
 }
 
 Area*
-strarea(View *v, const char *s) {
+strarea(View *v, int scrn, const char *s) {
 	Area *a;
 	long i;
 
@@ -331,22 +331,21 @@ strarea(View *v, const char *s) {
 
 	/* FIXME: Very broken! */
 	if(i > 0) {
-		for(a = v->firstarea; a; a = a->next)
-			if(i-- == 0) break;
+		for(a = v->areas[scrn]; a; a = a->next)
+			if(i-- == 1) break;
 	}
 	else {
-		for(a = v->firstarea; a->next; a = a->next)
+		/* FIXME: Switch to circularly linked list. */
+		for(a = v->areas[scrn]; a->next; a = a->next)
 			;
-		for(; a != v->firstarea; a = a->prev)
+		for(; a; a = a->prev)
 			if(++i == 0) break;
-		if(a == v->firstarea)
-			a = nil;
 	}
 	return a;
 }
 
 static Frame*
-getframe(View *v, IxpMsg *m) {
+getframe(View *v, int scrn, IxpMsg *m) {
 	Client *c;
 	Frame *f;
 	Area *a;
@@ -361,7 +360,7 @@ getframe(View *v, IxpMsg *m) {
 		return client_viewframe(c, v);
 	}
 
-	a = strarea(v, s);
+	a = strarea(v, scrn, s);
 	if(a == nil) {
 		fprint(2, "a == nil\n");
 		return nil;
@@ -603,7 +602,7 @@ message_view(View *v, IxpMsg *m) {
 	switch(getsym(s)) {
 	case LCOLMODE:
 		s = msg_getword(m);
-		a = strarea(v, s);
+		a = strarea(v, screen->idx, s);
 		if(a == nil) /* || a->floating) */
 			return Ebadvalue;
 
@@ -711,7 +710,7 @@ msg_grow(View *v, IxpMsg *m) {
 	Point amount;
 	int dir;
 
-	f = getframe(v, m);
+	f = getframe(v, screen->idx, m);
 	if(f == nil)
 		return "bad frame";
 	c = f->client;
@@ -757,7 +756,7 @@ msg_nudge(View *v, IxpMsg *m) {
 	Point amount;
 	int dir;
 
-	f = getframe(v, m);
+	f = getframe(v, screen->idx, m);
 	if(f == nil)
 		return "bad frame";
 
@@ -870,17 +869,9 @@ msg_selectarea(Area *a, IxpMsg *m) {
 		ap = v->floating;
 		break;
 	default:
-		if(!strcmp(s, "sel"))
-			ap = v->sel;
-		else {
-			if(!getulong(s, &i) || i == 0)
-				return Ebadvalue;
-			/* XXX: Multihead. */
-			for(ap=v->firstarea; ap; ap=ap->next)
-				if(--i == 0) break;
-			if(i != 0)
-				return Ebadvalue;
-		}
+		ap = strarea(v, a->screen, s);
+		if(!ap || ap->floating)
+			return Ebadvalue;
 		if((s = msg_getword(m))) {
 			if(!getulong(s, &i))
 				return Ebadvalue;

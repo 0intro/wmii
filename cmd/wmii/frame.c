@@ -639,7 +639,7 @@ Rectangle
 constrain(Rectangle r, int inset) {
 	WMScreen **sp;
 	WMScreen *s, *sbest;
-	Rectangle isect, rbest;
+	Rectangle isect;
 	Point p;
 	int best, n;
 
@@ -650,9 +650,8 @@ constrain(Rectangle r, int inset) {
 	 * D(r) < 2 * isect
 	 */
 
-	sbest = nil;
-	rbest = ZR; /* SET(rbest) */
 	SET(best);
+	sbest = nil;
 	for(sp=screens; (s = *sp); sp++) {
 		isect = rect_intersection(r, insetrect(s->r, inset));
 		if(Dx(isect) >= 0 && Dy(isect) >= 0)
@@ -667,12 +666,11 @@ constrain(Rectangle r, int inset) {
 		}
 	}
 
-	p = ZP;
-	rbest = insetrect(sbest->r, inset);
-	p.x -= min(r.max.x - rbest.min.x, 0);
-	p.x -= max(r.min.x - rbest.max.x, 0);
-	p.y -= min(r.max.y - rbest.min.y, 0);
-	p.y -= max(r.min.y - rbest.max.y, 0);
+	isect = insetrect(sbest->r, inset);
+	p.x =  min(r.max.x - isect.min.x, 0);
+	p.x -= max(r.min.x - isect.max.x, 0);
+	p.y =  min(r.max.y - isect.min.y, 0);
+	p.y -= max(r.min.y - isect.max.y, 0);
 	return rectaddpt(r, p);
 }
 
