@@ -24,6 +24,10 @@ WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
 WMII_TERM="xterm"
 
+# Menu history
+hist="$(wmiir namespace)/history"
+histnum=5000
+
 # Column Rules
 wmiir write /colrules <<!
 /gimp/ -> 17+83+41
@@ -143,11 +147,11 @@ events() {
 	Key $MODKEY-m
 		wmiir xwrite /tag/sel/ctl colmode sel stack+max
 	Key $MODKEY-a
-		Action $(wi_actions | wi_menu) &
+		Action $(wi_actions | wimenu -h "${hist}.actions" -n $histnum) &
 	Key $MODKEY-p
-		eval wmiir setsid "$(wi_menu <$progsfile)" &
+		eval wmiir setsid "$(wimenu -h "${hist}.progs" -n $histnum <$progsfile)" &
 	Key $MODKEY-t
-		wmiir xwrite /ctl view $(wi_tags | wi_menu) &
+		wmiir xwrite /ctl view $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
 	Key $MODKEY-Return
 		eval wmiir setsid $WMII_TERM &
 	Key $MODKEY-Shift-space
@@ -157,7 +161,7 @@ events() {
 	Key $MODKEY-Shift-c
 		wmiir xwrite /client/sel/ctl kill
 	Key $MODKEY-Shift-t
-		wmiir xwrite "/client/$(wmiir read /client/sel/ctl)/tags" $(wi_tags | wi_menu) &
+		wmiir xwrite "/client/$(wmiir read /client/sel/ctl)/tags" $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
 	Key $MODKEY-$LEFT
 		wmiir xwrite /tag/sel/ctl select left
 	Key $MODKEY-$RIGHT
