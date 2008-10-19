@@ -431,8 +431,7 @@ mouse_resize(Client *c, Align align, bool grabmod) {
 		pt = addpt(pt, d);
 
 		rect_morph(&origin, d, &align);
-		origin = constrain(origin, -1);
-		frect = origin;
+		frect = constrain(origin, -1);
 
 		grav = snap_rect(rects, nrect, &frect, &align, def.snap);
 
@@ -445,8 +444,8 @@ mouse_resize(Client *c, Align align, bool grabmod) {
 	pt = addpt(c->framewin->r.min,
 		   Pt(Dx(frect) * rx,
 		      Dy(frect) * ry));
-	if(pt.y > f->view->r[f->area->screen].max.y)
-		pt.y = f->view->r[f->area->screen].max.y - 1;
+	if(pt.y > scr.rect.max.y)
+		pt.y = scr.rect.max.y - 1;
 	warppointer(pt);
 
 	free(rects);
