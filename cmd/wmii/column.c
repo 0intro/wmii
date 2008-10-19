@@ -80,7 +80,7 @@ Area*
 column_new(View *v, Area *pos, int scrn, uint w) {
 	Area *a;
 
-	assert(!pos || !pos->floating);
+	assert(!pos || !pos->floating && pos->screen == scrn);
 	a = area_create(v, pos, scrn, w);
 	return a;
 #if 0

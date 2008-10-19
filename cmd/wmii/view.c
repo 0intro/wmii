@@ -459,53 +459,48 @@ view_restack(View *v) {
 		XRestackWindows(display, (ulong*)wins.ary, wins.n);
 }
 
-/* XXX: Multihead. */
 void
-view_scale(View *v, int w) {
+view_scale(View *v, int scrn, int width) {
 	uint xoff, numcol;
 	uint minwidth;
 	Area *a;
 	float scale;
-	int dx, s;
+	int dx;
 
-	minwidth = Dx(v->screenr)/NCOL; /* XXX: Multihead. */
+	minwidth = Dx(v->r[scrn])/NCOL; /* XXX: Multihead. */
 
-	if(!v->firstarea)
+	if(!v->areas[scrn])
 		return;
 
 	numcol = 0;
 	dx = 0;
-	for(a=v->firstarea; a; a=a->next) {
+	for(a=v->areas[scrn]; a; a=a->next) {
 		numcol++;
 		dx += Dx(a->r);
 	}
 
-	scale = (float)w / dx;
-	for(s=0; s < nscreens; s++) {
-		xoff = v->r[s].min.x;
-		for(a=v->areas[s]; a; a=a->next) {
-			a->r.max.x = xoff + Dx(a->r) * scale;
-			a->r.min.x = xoff;
-			if(!a->next)
-				a->r.max.x = v->r[s].min.x + w;
-			xoff = a->r.max.x;
-		}
+	scale = (float)width / dx;
+	xoff = v->r[scrn].min.x;
+	for(a=v->areas[scrn]; a; a=a->next) {
+		a->r.max.x = xoff + Dx(a->r) * scale;
+		a->r.min.x = xoff;
+		if(!a->next)
+			a->r.max.x = v->r[scrn].min.x + width;
+		xoff = a->r.max.x;
 	}
 
-	if(numcol * minwidth > w)
+	if(numcol * minwidth > width)
 		return;
 
-	for(s=0; s < nscreens; s++) {
-		xoff = v->r[s].min.x;
-		for(a=v->areas[s]; a; a=a->next) {
-			a->r.min.x = xoff;
+	xoff = v->r[scrn].min.x;
+	for(a=v->areas[scrn]; a; a=a->next) {
+		a->r.min.x = xoff;
 
-			if(Dx(a->r) < minwidth)
-				a->r.max.x = xoff + minwidth;
-			if(!a->next)
-				a->r.max.x = v->r[s].min.x + w;
-			xoff = a->r.max.x;
-		}
+		if(Dx(a->r) < minwidth)
+			a->r.max.x = xoff + minwidth;
+		if(!a->next)
+			a->r.max.x = v->r[scrn].min.x + width;
+		xoff = a->r.max.x;
 	}
 }
 
@@ -519,7 +514,8 @@ view_arrange(View *v) {
 		return;
 
 	view_update_rect(v);
-	view_scale(v, Dx(v->screenr));
+	for(s=0; s < nscreens; s++)
+		view_scale(v, s, Dx(v->r[s]));
 	foreach_area(v, s, a) {
 		if(a->floating)
 			continue;

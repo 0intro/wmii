@@ -5,7 +5,6 @@
 #include <ctype.h>
 #include "fns.h"
 
-static char* msg_debug(IxpMsg*);
 static char* msg_grow(View*, IxpMsg*);
 static char* msg_nudge(View*, IxpMsg*);
 static char* msg_selectframe(Frame*, IxpMsg*, int);
@@ -654,7 +653,7 @@ readctl_view(View *v) {
 	return buffer;
 }
 
-static char*
+char*
 msg_debug(IxpMsg *m) {
 	char *opt;
 	int d;
@@ -1039,7 +1038,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	}
 
 	if(!to && !swap && (f->anext || f != f->area->frame))
-		to = column_new(v, a, screen->idx, 0);
+		to = column_new(v, a, f->area->screen, 0);
 
 	if(!to)
 		return Ebadvalue;

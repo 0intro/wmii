@@ -58,6 +58,7 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 	int numcols;
 	Area *a;
 
+	assert(!pos || pos->screen == scrn);
 	SET(i);
 	if(v->areas) { /* Creating a column. */
 		minwidth = Dx(v->r[scrn])/NCOL;
@@ -83,7 +84,7 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 		if(numcols && (numcols * minwidth + width) > Dx(v->r[scrn]))
 			return nil;
 
-		view_scale(v, Dx(v->r[scrn]) - width);
+		view_scale(v, scrn, Dx(v->r[scrn]) - width);
 	}
 
 	a = emallocz(sizeof *a);

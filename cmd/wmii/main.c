@@ -317,8 +317,9 @@ closedisplay(IxpConn *c) {
 
 int
 main(int argc, char *argv[]) {
+	IxpMsg m;
 	char **oargv;
-	char *wmiirc;
+	char *wmiirc, *s;
 	int i;
 
 	quotefmtinstall();
@@ -341,6 +342,11 @@ extern int fmtevent(Fmt*);
 	case 'v':
 		print("%s", version);
 		exit(0);
+	case 'D':
+		s = EARGF(usage());
+		m = ixp_message(s, strlen(s), 0);
+		msg_debug(&m);
+		break;
 	default:
 		usage();
 		break;
