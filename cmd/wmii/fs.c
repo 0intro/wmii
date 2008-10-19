@@ -633,6 +633,7 @@ fs_create(Ixp9Req *r) {
 void
 fs_remove(Ixp9Req *r) {
 	IxpFileId *f;
+	WMScreen *s;
 	
 	f = r->fid->aux;
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
@@ -646,8 +647,9 @@ fs_remove(Ixp9Req *r) {
 		respond(r, Enoperm);
 		return;
 	case FsFBar:
+		s = f->p.bar->screen;
 		bar_destroy(f->next->p.bar_p, f->p.bar);
-		bar_draw(screen);
+		bar_draw(s);
 		respond(r, nil);
 		break;
 	}
@@ -701,7 +703,7 @@ fs_clunk(Ixp9Req *r) {
 		q = f->p.bar->text;
 		utflcpy(q, (char*)m.pos, sizeof ((Bar*)0)->text);
 
-		bar_draw(screen);
+		bar_draw(f->p.bar->screen);
 		break;
 	}
 	respond(r, nil);

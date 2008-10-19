@@ -86,12 +86,13 @@ bar_create(Bar **bp, const char *name) {
 	utflcpy(b->name, name, sizeof b->name);
 	b->col = def.normcolor;
 	
-	/* FIXME: Kludge. */
 	for(sp=screens; (s = *sp); sp++) {
 		i = bp - s->bar;
 		if(i < nelem(s->bar))
-			b->bar = i;
+			break;
 	}
+	b->bar = i;
+	b->screen = s;
 
 	for(; *bp; bp = &bp[0]->next)
 		if(strcmp(bp[0]->name, name) >= 0)
@@ -167,6 +168,7 @@ bar_draw(WMScreen *s) {
 
 	r = rectsubpt(s->brect, s->brect.min);
 	fill(disp.ibuf, r, def.normcolor.bg);
+	border(disp.ibuf, r, 1, def.normcolor.border);
 	foreach_bar(s, b) {
 		align = Center;
 		if(b == s->bar[BRight])

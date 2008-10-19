@@ -403,14 +403,14 @@ mouse_resize(Client *c, Align align, bool grabmod) {
 		pt = addpt(d, f->r.min);
 		warppointer(pt);
 	}else {
-		hrx = (double)(Dx(screen->r)
+		hrx = (double)(Dx(scr.rect)
 			     + Dx(frect)
 			     - 2 * labelh(def.font))
-		    / Dx(screen->r);
-		hry = (double)(Dy(screen->r)
+		    / Dx(scr.rect);
+		hry = (double)(Dy(scr.rect)
 			     + Dy(frect)
 			     - 3 * labelh(def.font))
-		    / Dy(screen->r);
+		    / Dy(scr.rect);
 
 		pt.x = frect.max.x - labelh(def.font);
 		pt.y = frect.max.y - labelh(def.font);

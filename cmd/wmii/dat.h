@@ -150,8 +150,9 @@ struct Bar {
 	char	name[256];
 	int	bar;
 	ushort	id;
-	Rectangle r;
 	CTuple	col;
+	Rectangle	r;
+	WMScreen*	screen;
 };
 
 struct Regex {
