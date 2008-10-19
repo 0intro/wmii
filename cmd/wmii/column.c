@@ -200,6 +200,8 @@ column_detach(Frame *f) {
 
 	a = f->area;
 	stack_info(f, &first, &dy, nil);
+	if(first && first == f)
+		first = f->anext;
 	column_remove(f);
 	if(a->frame) {
 		if(first)
@@ -220,8 +222,6 @@ column_attachrect(Area *a, Frame *f, Rectangle r) {
 	for(fp=a->frame; fp; pos=fp, fp=fp->anext) {
 		if(r.max.y < fp->r.min.y)
 			continue;
-		if(r.min.x > fp->r.max.y)
-			continue;
 		before = fp->r.min.y - r.min.y;
 		after = r.max.y - fp->r.max.y;
 		if(abs(before) <= abs(after))
@@ -234,11 +234,7 @@ column_attachrect(Area *a, Frame *f, Rectangle r) {
 		a->r.max.y += Dy(r);
 	}
 	column_insert(a, f, pos);
-	for(fp=f->anext; fp; fp=fp->anext) {
-		fp->r.min.y += Dy(r);
-		fp->r.max.y += Dy(r);
-	}
-	column_resizeframe(f, r);
+	column_scale(a);
 }
 
 void
@@ -306,10 +302,7 @@ column_fit(Area *a, uint *ncolp, uint *nuncolp) {
 	if(nuncol == 0) {
 		nuncol++;
 		ncol--;
-		if(a->sel)
-			a->sel->collapsed = false;
-		else
-			a->frame->collapsed = false;
+		(a->sel ? a->sel : a->frame)->collapsed = false;
 	}
 
 	/* FIXME: Kludge. */
@@ -421,29 +414,24 @@ foo(Frame *f) {
 		       h.aspect.max.y / h.aspect.max.x;
 	maxh = max(maxh, h.max.y);
 
-	if(Dy(f->r) > maxh)
+	if(Dy(f->r) >= maxh)
 		return 0;
 	return h.inc.y - (Dy(f->r) - h.base.y) % h.inc.y;
 }
 
 static int
 comp_frame(const void *a, const void *b) {
-	Frame *fa, *fb;
 	int ia, ib;
 
-	fa = *(Frame**)a;
-	fb = *(Frame**)b;
-	ia = foo(fa);
-	ib = foo(fb);
-	return ia < ib             ? -1 :
-	       ia > ib             ?  1 :
-	       /* Favor the selected client. */
-	       /* No... don't. Windows shouldn't jump when the mouse
-		* enters them.
-	       fa == fa->area->sel ? -1 :
-	       fb == fa->area->sel ?  1 :
-	       */
-	                              0;
+	ia = foo(*(Frame**)a);
+	ib = foo(*(Frame**)b);
+	/* 
+	 * I'd like to favor the selected client, but
+	 * it causes windows to jump as focus changes.
+	 */
+	return ia < ib ? -1 :
+	       ia > ib ?  1 :
+	                  0;
 }
 
 static void
@@ -515,7 +503,7 @@ column_scale(Area *a) {
 			dy += Dy(f->colr);
 	}
 	for(f=a->frame; f; f=f->anext) {
-		f->dy = Dy(f->r);
+		f->dy = Dy(f->colr);
 		f->colr.min.x = a->r.min.x;
 		f->colr.max.x = a->r.max.x;
 		if(!f->collapsed)
@@ -633,10 +621,8 @@ column_resizeframe(Frame *f, Rectangle r) {
 
 	minw = Dx(v->r[a->screen]) / NCOL;
 
-	ar = a->next;
 	al = a->prev;
-	if(al == v->floating)
-		al = nil;
+	ar = a->next;
 
 	if(al)
 		r.min.x = max(r.min.x, al->r.min.x + minw);

@@ -176,7 +176,6 @@ area_destroy(Area *a) {
 void
 area_moveto(Area *to, Frame *f) {
 	Area *from;
-	bool fromfloating;
 
 	assert(to->view == f->view);
 
@@ -184,13 +183,12 @@ area_moveto(Area *to, Frame *f) {
 		return;
 
 	from = f->area;
-	fromfloating = from->floating;
 
 	area_detach(f);
 
 	/* Temporary kludge. */
 	if(!to->floating
-	&& to->floating != fromfloating
+	&& to->floating != from->floating
 	&& !eqrect(f->colr, ZR))
 		column_attachrect(to, f, f->colr);
 	else
