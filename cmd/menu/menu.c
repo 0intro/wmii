@@ -251,6 +251,14 @@ kdown_event(Window *w, XKeyEvent *e) {
 		case XK_M:
 			menu_cmd(ACCEPT, e->state&ShiftMask);
 			return;
+		case XK_a:
+		case XK_A:
+			menu_cmd(BACKWARD, LINE);
+			return;
+		case XK_e:
+		case XK_E:
+			menu_cmd(FORWARD, LINE);
+			return;
 		case XK_n:
 		case XK_N:
 			menu_cmd(HIST, FORWARD);

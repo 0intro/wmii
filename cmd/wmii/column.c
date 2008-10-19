@@ -7,6 +7,8 @@
 #include <strings.h>
 #include "fns.h"
 
+static void	column_resizeframe_h(Frame*, Rectangle);
+
 char *modes[] = {
 	[Coldefault] =	"default",
 	[Colstack] =	"stack",
@@ -130,13 +132,15 @@ stack_scale(Frame *first, int height) {
 }
 
 static void
-stack_info(Frame *f, Frame **firstp, int *dyp, int *nframep) {
-	Frame *ft, *first;
+stack_info(Frame *f, Frame **firstp, Frame **lastp, int *dyp, int *nframep) {
+	Frame *ft, *first, *last;
 	int dy, nframe;
 
 	nframe = 0;
 	dy = 0;
 	first = f;
+	last = f;
+
 	for(ft=f; ft && ft->collapsed; ft=ft->anext)
 		;
 	if(ft && ft != f) {
@@ -151,11 +155,13 @@ stack_info(Frame *f, Frame **firstp, int *dyp, int *nframep) {
 	for(ft=f->anext; ft && !ft->collapsed; ft=ft->anext) {
 		if(first == nil)
 			first = ft;
+		last = ft;
 		nframe++;
 		dy += Dy(ft->colr);
 	}
 	if(nframep) *nframep = nframe;
 	if(firstp) *firstp = first;
+	if(lastp) *lastp = last;
 	if(dyp) *dyp = dy;
 }
 
@@ -174,6 +180,66 @@ stack_count(Frame *f, int *mp) {
 	return n;
 }
 
+Frame*
+stack_find(Area *a, Frame *f, int dir) {
+	Frame *fp;
+
+	switch (dir) {
+	default:
+		die("not reached");
+	case North:
+		if(f)
+			for(f=f->aprev; f && f->collapsed; f=f->aprev)
+				;
+		else {
+			f = nil;
+			for(fp=a->frame; fp; fp=fp->anext)
+				if(!fp->collapsed)
+					f = fp;
+		}
+		break;
+	case South:
+		if(f)
+			for(f=f->anext; f && f->collapsed; f=f->anext)
+				;
+		else
+			for(f=a->frame; f && f->collapsed; f=f->anext)
+				;
+		break;
+	}
+	return f;
+}
+
+/* TODO: Move elsewhere. */
+bool
+find(Area **ap, Frame **fp, int dir) {
+	Rectangle r;
+	Frame *f;
+	Area *a;
+
+	f = *fp;
+	a = *ap;
+	r = f ? f->r : a->r;
+
+	if(dir == North || dir == South) {
+		*fp = stack_find(a, f, dir);
+		if(*fp)
+			return true;
+		*ap = area_find(a->view, r, dir);
+		if(!*ap)
+			return false;
+		*fp = stack_find(*ap, *fp, dir);
+		return *fp;
+	}
+	if(dir != East && dir != West)
+		die("not reached");
+	*ap = area_find(a->view, r, dir);
+	if(!*ap)
+		return false;
+	*fp = ap[0]->sel;
+	return true;
+}
+
 void
 column_attach(Area *a, Frame *f) {
 	Frame *first;
@@ -182,7 +248,7 @@ column_attach(Area *a, Frame *f) {
 	f->colr = a->r;
 
 	if(a->sel) {
-		stack_info(a->sel, &first, &dy, &nframe);
+		stack_info(a->sel, &first, nil, &dy, &nframe);
 		h = dy / (nframe+1);
 		f->colr.max.y = f->colr.min.y + h;
 		stack_scale(first, dy - h);
@@ -199,7 +265,7 @@ column_detach(Frame *f) {
 	int dy;
 
 	a = f->area;
-	stack_info(f, &first, &dy, nil);
+	stack_info(f, &first, nil, &dy, nil);
 	if(first && first == f)
 		first = f->anext;
 	column_remove(f);
@@ -235,6 +301,7 @@ column_attachrect(Area *a, Frame *f, Rectangle r) {
 	}
 	column_insert(a, f, pos);
 	column_scale(a);
+	column_resizeframe_h(f, r);
 }
 
 void

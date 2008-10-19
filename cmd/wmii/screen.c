@@ -79,6 +79,55 @@ findscreen(Rectangle rect, int direction) {
 }
 #endif
 
+void*
+findthing(Rectangle rect, int direction, Vector_ptr *vec, Rectangle (*key)(void*)) {
+	Rectangle isect;
+	Rectangle r, bestisect, bestr;
+	void *best, *p;
+	int i, n;
+
+	best = nil;
+#define frob(min, max, LT, x, y) \
+	if(D##y(isect) > 0) /* If they intersect at some point on this axis */  \
+	if(r.min.x LT rect.min.x) {                                             \
+		n = abs(r.max.x - rect.min.x) - abs(bestr.max.x - rect.min.x);  \
+		if(best == nil                                                  \
+		|| n == 0 && D##y(isect) > D##y(bestisect)                      \
+		|| n < 0                                                        \
+		) {                                                             \
+			best = p;                                               \
+			bestr = r;                                              \
+			bestisect = isect;                                      \
+		}                                                               \
+	}
+
+	/* Variable hell? Certainly. */
+	for(i=0; i < vec->n; i++) {
+		p = vec->ary[i];
+		r = key(p);
+		isect = rect_intersection(rect, r);
+		switch(direction) {
+		default:
+			die("not reached");
+			/* Not reached */
+		case West:
+			frob(min, max, <, x, y);
+			break;
+		case East:
+			frob(max, min, >, x, y);
+			break;
+		case North:
+			frob(min, max, <, y, x);
+			break;
+		case South:
+			frob(max, min, >, y, x);
+			break;
+		}
+	}
+#undef frob
+	return best;
+}
+
 int
 ownerscreen(Rectangle r) {
 	Rectangle isect;

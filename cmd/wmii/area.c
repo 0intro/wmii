@@ -28,6 +28,27 @@ area_idx(Area *a) {
 	return i;
 }
 
+static Rectangle
+area_rect(void *v) {
+	Area *a;
+
+	a = v;
+	return a->r;
+}
+
+Area*
+area_find(View *v, Rectangle r, int dir) {
+	static Vector_ptr vec;
+	Area *a;
+	int s;
+
+	vec.n = 0;
+	foreach_column(v, s, a)
+		vector_ppush(&vec, a);
+
+	return findthing(r, dir, &vec, area_rect);
+}
+
 int
 afmt(Fmt *f) {
 	Area *a;

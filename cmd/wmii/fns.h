@@ -13,18 +13,21 @@
 # pragma varargck	type	"r"	void
 #endif
 
+#define with(type, var) \
+	for(type *var=(void*)-1; var == (void*)-1; var=nil)
+
 #define foreach_area(v, s, a) \
-	Area *__anext; /* Getting ugly... */  \
+	with(Area, __anext) \
 	for(s=0; s <= nscreens; s++)          \
 		for((a)=(s < nscreens ? (v)->areas[s] : v->floating), __anext=(a)->next; (a); (void)(((a)=__anext) && (__anext=(a)->next)))
 
 #define foreach_column(v, s, a) \
-	Area *__anext; /* Getting ugly... */  \
+	with(Area, __anext) \
 	for(s=0; s < nscreens; s++)           \
 		for((a)=(v)->areas[s], __anext=(a)->next; (a); (void)(((a)=__anext) && (__anext=(a)->next)))
 
 #define foreach_frame(v, s, a, f) \
-	Frame *__fnext;           \
+	with(Frame, __fnext) \
 	foreach_area(v, s, a)     \
 		for((void)(((f)=(a)->frame) && (__fnext=(f)->anext)); (f); (void)(((f)=__fnext) && (__fnext=(f)->anext)))
 
@@ -37,6 +40,7 @@ void	area_attach(Area*, Frame*);
 Area*	area_create(View*, Area *pos, int scrn, uint w);
 void	area_destroy(Area*);
 void	area_detach(Frame*);
+Area*	area_find(View*, Rectangle, int);
 void	area_focus(Area*);
 int	area_idx(Area*);
 void	area_moveto(Area*, Frame*);
@@ -105,7 +109,9 @@ void	column_settle(Area*);
 void	div_draw(Divide*);
 void	div_set(Divide*, int x);
 void	div_update_all(void);
+bool	find(Area**, Frame**, int);
 int	stack_count(Frame*, int*);
+Frame*	stack_find(Area*, Frame*, int);
 
 /* event.c */
 void	check_x_event(IxpConn*);
@@ -241,6 +247,7 @@ void	printevent(XEvent*);
 void	root_init(void);
 
 /* screen.c */
+void*	findthing(Rectangle, int, Vector_ptr*, Rectangle(*)(void*));
 int	ownerscreen(Rectangle);
 
 /* rule.c */

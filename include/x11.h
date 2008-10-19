@@ -208,6 +208,7 @@ Window*	findwin(XWindow);
 void	freefont(Font*);
 void	freeimage(Image *);
 void	freestringlist(char**);
+XWindow	getfocus(void);
 ulong	getprop_long(Window*, char*, char*, ulong, long**, ulong);
 char*	getprop_string(Window*, char*);
 int	getprop_textlist(Window *w, char *name, char **ret[]);

@@ -7,8 +7,15 @@
 
 static char* msg_grow(View*, IxpMsg*);
 static char* msg_nudge(View*, IxpMsg*);
-static char* msg_selectframe(Frame*, IxpMsg*, int);
+static char* msg_selectframe(Area*, IxpMsg*, int);
 static char* msg_sendframe(Frame*, int, bool);
+
+#define DIR(s) (\
+	s == LUP	? North : \
+	s == LDOWN	? South : \
+	s == LLEFT	? West  : \
+	s == LRIGHT	? East  : \
+			  (abort(), 0))
 
 static char
 	Ebadcmd[] = "bad command",
@@ -359,6 +366,7 @@ getframe(View *v, int scrn, IxpMsg *m) {
 		return client_viewframe(c, v);
 	}
 
+	/* XXX: Multihead */
 	a = strarea(v, scrn, s);
 	if(a == nil) {
 		fprint(2, "a == nil\n");
@@ -601,6 +609,7 @@ message_view(View *v, IxpMsg *m) {
 	switch(getsym(s)) {
 	case LCOLMODE:
 		s = msg_getword(m);
+		/* XXX: Multihead */
 		a = strarea(v, screen->idx, s);
 		if(a == nil) /* || a->floating) */
 			return Ebadvalue;
@@ -845,29 +854,17 @@ msg_selectarea(Area *a, IxpMsg *m) {
 		else
 			ap = v->firstarea;
 		break;
+	case LLEFT:
+	case LRIGHT:
 	case LUP:
 	case LDOWN:
 	case LCLIENT:
-		return msg_selectframe(a->sel, m, sym);
-	case LLEFT:
-		/* XXX: Multihead. */
-		if(a->floating)
-			return Ebadvalue;
-		for(ap=v->firstarea; ap->next; ap=ap->next)
-			if(ap->next == a) break;
-		break;
-	case LRIGHT:
-		/* XXX: Multihead. */
-		if(a->floating)
-			return Ebadvalue;
-		ap = a->next;
-		if(ap == nil)
-			ap = v->firstarea;
-		break;
+		return msg_selectframe(a, m, sym);
 	case LTILDE:
 		ap = v->floating;
 		break;
 	default:
+		/* XXX: Multihead */
 		ap = strarea(v, a->screen, s);
 		if(!ap || ap->floating)
 			return Ebadvalue;
@@ -888,17 +885,15 @@ msg_selectarea(Area *a, IxpMsg *m) {
 }
 
 static char*
-msg_selectframe(Frame *f, IxpMsg *m, int sym) {
-	Frame *fp;
+msg_selectframe(Area *a, IxpMsg *m, int sym) {
 	Client *c;
-	Area *a;
+	Frame *f, *fp;
 	char *s;
 	bool stack;
 	ulong i, dy;
 
-	if(!f)
-		return Ebadvalue;
-	a = f->area;
+	f = a->sel;
+	fp = f;
 
 	stack = false;
 	if(sym == LUP || sym == LDOWN) {
@@ -910,65 +905,38 @@ msg_selectframe(Frame *f, IxpMsg *m, int sym) {
 				return Ebadvalue;
 	}
 
-	SET(fp);
-	switch(sym) {
-	case LUP:
-		/* XXX: Stack. */
-		if(stack) {
-			for(; f->aprev && f->aprev->collapsed; f=f->aprev)
-				;
-			for(fp=a->frame; fp->anext; fp=fp->anext)
-				if(fp->anext == f) break;
-			for(; fp->aprev && fp->collapsed; fp=fp->aprev)
-				;
-		}else
-			for(fp=a->frame; fp->anext; fp=fp->anext)
-				if(fp->anext == f) break;
-		break;
-	case LDOWN:
-		/* XXX: Stack. */
-		if(stack) {
-			for(fp=f->anext; fp && fp->collapsed; fp=fp->anext)
-				;
-			if(fp == nil)
-				for(fp=a->frame; fp->collapsed; fp=fp->anext)
-					;
-		}else {
-			fp = f->anext;
-			if(fp == nil)
-				fp = a->frame;
-		}
-		break;
-	case LCLIENT:
+	if(sym == LCLIENT) {
 		s = msg_getword(m);
 		if(s == nil || !getulong(s, &i))
 			return "usage: select client <client>";
 		c = win2client(i);
 		if(c == nil)
 			return "unknown client";
-		fp = client_viewframe(c, f->view);
-		break;
-	default:
-		die("can't get here");
+		f = client_viewframe(c, f->view);
+		if(!f)
+			return Ebadvalue;
+	}
+	else {
+		if(!find(&a, &f, DIR(sym)))
+			return Ebadvalue;
 	}
 
-	if(fp == nil)
-		return "invalid selection";
-	if(fp == f)
+	area_focus(a);
+
+	if(!f)
 		return nil;
+
 	/* XXX */
-	if(fp->collapsed && !f->area->floating && f->area->mode == Coldefault) {
+	if(a == fp->area && f->collapsed && !f->area->floating && f->area->mode == Coldefault) {
 		dy = Dy(f->colr);
 		f->colr.max.y = f->colr.min.y + Dy(fp->colr);
 		fp->colr.max.y = fp->colr.min.y + dy;
 		column_arrange(a, false);
 	}
-	if(!f->area->floating)
-		frame_draw_all();
 
-	frame_focus(fp);
-	frame_restack(fp, nil);
-	if(fp->view == selview)
+	frame_focus(f);
+	frame_restack(f, nil);
+	if(f->view == selview)
 		view_restack(fp->view);
 	return nil;
 }

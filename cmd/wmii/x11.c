@@ -903,6 +903,14 @@ setfocus(Window *w, int mode) {
 	XSetInputFocus(display, w->w, mode, CurrentTime);
 }
 
+XWindow
+getfocus(void) {
+	XWindow ret, revert;
+
+	XGetInputFocus(display, &ret, &revert);
+	return ret;
+}
+
 /* Mouse */
 Point
 querypointer(Window *w) {
