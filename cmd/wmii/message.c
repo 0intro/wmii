@@ -917,7 +917,7 @@ msg_selectframe(Area *a, IxpMsg *m, int sym) {
 			return Ebadvalue;
 	}
 	else {
-		if(!find(&a, &f, DIR(sym), true))
+		if(!find(&a, &f, DIR(sym), true, stack))
 			return Ebadvalue;
 	}
 

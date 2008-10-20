@@ -181,7 +181,7 @@ stack_count(Frame *f, int *mp) {
 }
 
 Frame*
-stack_find(Area *a, Frame *f, int dir) {
+stack_find(Area *a, Frame *f, int dir, bool stack) {
 	Frame *fp;
 
 	switch (dir) {
@@ -189,21 +189,21 @@ stack_find(Area *a, Frame *f, int dir) {
 		die("not reached");
 	case North:
 		if(f)
-			for(f=f->aprev; f && f->collapsed; f=f->aprev)
+			for(f=f->aprev; f && f->collapsed && stack; f=f->aprev)
 				;
 		else {
 			f = nil;
 			for(fp=a->frame; fp; fp=fp->anext)
-				if(!fp->collapsed)
+				if(!fp->collapsed || !stack)
 					f = fp;
 		}
 		break;
 	case South:
 		if(f)
-			for(f=f->anext; f && f->collapsed; f=f->anext)
+			for(f=f->anext; f && f->collapsed && stack; f=f->anext)
 				;
 		else
-			for(f=a->frame; f && f->collapsed; f=f->anext)
+			for(f=a->frame; f && f->collapsed && stack; f=f->anext)
 				;
 		break;
 	}
@@ -212,7 +212,7 @@ stack_find(Area *a, Frame *f, int dir) {
 
 /* TODO: Move elsewhere. */
 bool
-find(Area **ap, Frame **fp, int dir, bool wrap) {
+find(Area **ap, Frame **fp, int dir, bool wrap, bool stack) {
 	Rectangle r;
 	Frame *f;
 	Area *a;
@@ -222,13 +222,13 @@ find(Area **ap, Frame **fp, int dir, bool wrap) {
 	r = f ? f->r : a->r;
 
 	if(dir == North || dir == South) {
-		*fp = stack_find(a, f, dir);
+		*fp = stack_find(a, f, dir, stack);
 		if(*fp)
 			return true;
 		*ap = area_find(a->view, r, dir, wrap);
 		if(!*ap)
 			return false;
-		*fp = stack_find(*ap, *fp, dir);
+		*fp = stack_find(*ap, *fp, dir, stack);
 		return *fp;
 	}
 	if(dir != East && dir != West)

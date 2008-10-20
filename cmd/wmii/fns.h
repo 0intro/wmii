@@ -109,9 +109,9 @@ void	column_settle(Area*);
 void	div_draw(Divide*);
 void	div_set(Divide*, int x);
 void	div_update_all(void);
-bool	find(Area**, Frame**, int, bool);
+bool	find(Area**, Frame**, int, bool, bool);
 int	stack_count(Frame*, int*);
-Frame*	stack_find(Area*, Frame*, int);
+Frame*	stack_find(Area*, Frame*, int, bool);
 
 /* event.c */
 void	check_x_event(IxpConn*);
