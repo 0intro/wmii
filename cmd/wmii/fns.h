@@ -40,7 +40,7 @@ void	area_attach(Area*, Frame*);
 Area*	area_create(View*, Area *pos, int scrn, uint w);
 void	area_destroy(Area*);
 void	area_detach(Frame*);
-Area*	area_find(View*, Rectangle, int);
+Area*	area_find(View*, Rectangle, int, bool);
 void	area_focus(Area*);
 int	area_idx(Area*);
 void	area_moveto(Area*, Frame*);
@@ -109,7 +109,7 @@ void	column_settle(Area*);
 void	div_draw(Divide*);
 void	div_set(Divide*, int x);
 void	div_update_all(void);
-bool	find(Area**, Frame**, int);
+bool	find(Area**, Frame**, int, bool);
 int	stack_count(Frame*, int*);
 Frame*	stack_find(Area*, Frame*, int);
 
@@ -247,7 +247,7 @@ void	printevent(XEvent*);
 void	root_init(void);
 
 /* screen.c */
-void*	findthing(Rectangle, int, Vector_ptr*, Rectangle(*)(void*));
+void*	findthing(Rectangle, int, Vector_ptr*, Rectangle(*)(void*), bool);
 int	ownerscreen(Rectangle);
 
 /* rule.c */

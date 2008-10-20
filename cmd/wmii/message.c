@@ -917,7 +917,7 @@ msg_selectframe(Area *a, IxpMsg *m, int sym) {
 			return Ebadvalue;
 	}
 	else {
-		if(!find(&a, &f, DIR(sym)))
+		if(!find(&a, &f, DIR(sym), true))
 			return Ebadvalue;
 	}
 
@@ -927,7 +927,8 @@ msg_selectframe(Area *a, IxpMsg *m, int sym) {
 		return nil;
 
 	/* XXX */
-	if(a == fp->area && f->collapsed && !f->area->floating && f->area->mode == Coldefault) {
+	if(fp && fp->area == a)
+	if(f->collapsed && !f->area->floating && f->area->mode == Coldefault) {
 		dy = Dy(f->colr);
 		f->colr.max.y = f->colr.min.y + Dy(fp->colr);
 		fp->colr.max.y = fp->colr.min.y + dy;
@@ -937,7 +938,7 @@ msg_selectframe(Area *a, IxpMsg *m, int sym) {
 	frame_focus(f);
 	frame_restack(f, nil);
 	if(f->view == selview)
-		view_restack(fp->view);
+		view_restack(a->view);
 	return nil;
 }
 

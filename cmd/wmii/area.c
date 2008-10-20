@@ -37,7 +37,7 @@ area_rect(void *v) {
 }
 
 Area*
-area_find(View *v, Rectangle r, int dir) {
+area_find(View *v, Rectangle r, int dir, bool wrap) {
 	static Vector_ptr vec;
 	Area *a;
 	int s;
@@ -46,7 +46,7 @@ area_find(View *v, Rectangle r, int dir) {
 	foreach_column(v, s, a)
 		vector_ppush(&vec, a);
 
-	return findthing(r, dir, &vec, area_rect);
+	return findthing(r, dir, &vec, area_rect, wrap);
 }
 
 int

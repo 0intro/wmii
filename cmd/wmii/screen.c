@@ -79,8 +79,38 @@ findscreen(Rectangle rect, int direction) {
 }
 #endif
 
+static Rectangle
+leastthing(Rectangle rect, int direction, Vector_ptr *vec, Rectangle (*key)(void*)) {
+	void *p;
+	Rectangle r;
+	Point pt;
+	int i, best, d;
+
+	SET(d);
+	for(i=0; i < vec->n; i++) {
+		p = vec->ary[i];
+		r = key(p);
+		switch(direction) {
+		case South: d =  r.min.y; break;
+		case North: d = -r.max.y; break;
+		case East:  d =  r.min.x; break;
+		case West:  d = -r.max.x; break;
+		}
+		if(i == 0 || d < best)
+			best = d;
+	}
+	pt = rect.min;
+	switch(direction) {
+	case South: pt.y =  best - Dy(rect); break;
+	case North: pt.y = -best + Dy(rect); break;
+	case East:  pt.x =  best - Dy(rect); break;
+	case West:  pt.x = -best + Dy(rect); break;
+	}
+	return rectsetorigin(rect, pt);
+}
+
 void*
-findthing(Rectangle rect, int direction, Vector_ptr *vec, Rectangle (*key)(void*)) {
+findthing(Rectangle rect, int direction, Vector_ptr *vec, Rectangle (*key)(void*), bool wrap) {
 	Rectangle isect;
 	Rectangle r, bestisect, bestr;
 	void *best, *p;
@@ -125,6 +155,10 @@ findthing(Rectangle rect, int direction, Vector_ptr *vec, Rectangle (*key)(void*
 		}
 	}
 #undef frob
+	if(!best && wrap) {
+		r = leastthing(rect, direction, vec, key);
+		return findthing(r, direction, vec, key, false);
+	}
 	return best;
 }
 

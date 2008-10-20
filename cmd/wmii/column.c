@@ -212,7 +212,7 @@ stack_find(Area *a, Frame *f, int dir) {
 
 /* TODO: Move elsewhere. */
 bool
-find(Area **ap, Frame **fp, int dir) {
+find(Area **ap, Frame **fp, int dir, bool wrap) {
 	Rectangle r;
 	Frame *f;
 	Area *a;
@@ -225,7 +225,7 @@ find(Area **ap, Frame **fp, int dir) {
 		*fp = stack_find(a, f, dir);
 		if(*fp)
 			return true;
-		*ap = area_find(a->view, r, dir);
+		*ap = area_find(a->view, r, dir, wrap);
 		if(!*ap)
 			return false;
 		*fp = stack_find(*ap, *fp, dir);
@@ -233,7 +233,7 @@ find(Area **ap, Frame **fp, int dir) {
 	}
 	if(dir != East && dir != West)
 		die("not reached");
-	*ap = area_find(a->view, r, dir);
+	*ap = area_find(a->view, r, dir, wrap);
 	if(!*ap)
 		return false;
 	*fp = ap[0]->sel;
