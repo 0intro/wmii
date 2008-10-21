@@ -348,7 +348,7 @@ view_attach(View *v, Frame *f) {
 	oldsel = v->oldsel;
 	a = v->sel;
 	if(client_floats_p(c)) {
-		if(v->sel != v->floating)
+		if(v->sel != v->floating && c->fullscreen < 0)
 			oldsel = v->sel;
 		a = v->floating;
 	}

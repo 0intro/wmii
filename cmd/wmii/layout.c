@@ -452,6 +452,7 @@ thcol(Frame *f) {
 			}
 				
 
+			/* XXX: Multihead. */
  			if(!a->frame && !a->floating && f->view->firstarea->next)
  				area_destroy(a);
 			goto done;

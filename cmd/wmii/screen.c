@@ -162,6 +162,12 @@ findthing(Rectangle rect, int direction, Vector_ptr *vec, Rectangle (*key)(void*
 	return best;
 }
 
+static int
+area(Rectangle r) {
+	return Dx(r) * Dy(r) *
+	       (Dx(r) < 0 && Dy(r) < 0 ? -1 : 1);
+}
+
 int
 ownerscreen(Rectangle r) {
 	Rectangle isect;
@@ -170,8 +176,10 @@ ownerscreen(Rectangle r) {
 	SET(besta);
 	best = -1;
 	for(s=0; s < nscreens; s++) {
+		if(!screens[s]->showing)
+			continue;
 		isect = rect_intersection(r, screens[s]->r);
-		a = Dx(isect) * Dy(isect);
+		a = area(isect);
 		if(best < 0 || a > besta) {
 			besta = a;
 			best = s;

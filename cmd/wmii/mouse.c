@@ -210,6 +210,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 	Area *a;
 	Rectangle r;
 	Point pt, min;
+	int s;
 
 	assert((align&(East|West)) != (East|West));
 	assert((align&(North|South)) != (North|South));
@@ -218,8 +219,11 @@ mouse_resizecolframe(Frame *f, Align align) {
 
 	v = selview;
 	d = divs;
-	for(a=v->firstarea; a != f->area; a=a->next)
+	foreach_column(v, s, a) {
+		if(a == f->area)
+			break;
 		d = d->next;
+	}
 
 	if(align&East)
 		d = d->next;
@@ -316,12 +320,16 @@ mouse_resizecol(Divide *d) {
 	Area *a;
 	Rectangle r;
 	Point pt;
-	uint minw;
+	int minw, s;
 
 	v = selview;
 
-	for(a = v->firstarea, dp = divs; a; a = a->next, dp = dp->next)
-		if(dp->next == d) break;
+	dp = divs;
+	foreach_column(v, s, a) {
+		if(dp->next == d)
+			break;
+		dp = dp->next;
+	}
 
 	/* Fix later */
 	if(a == nil || a->next == nil)

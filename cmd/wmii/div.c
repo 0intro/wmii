@@ -125,7 +125,7 @@ div_update_all(void) {
 
 	v = selview;
 	dp = &divs;
-	foreach_area(v, s, a) {
+	foreach_column(v, s, a) {
 		d = getdiv(dp);
 		dp = &d->next;
 		div_set(d, a->r.min.x);
