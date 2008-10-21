@@ -50,12 +50,14 @@ unmapdiv(Divide *d) {
 void
 div_set(Divide *d, int x) {
 	Rectangle r;
+	int scrn;
+
+	scrn = d->left ? d->left->screen : d->right->screen;
 
 	d->x = x;
 	r = rectaddpt(divimg->r, Pt(x - Dx(divimg->r)/2, 0));
-	/* XXX: Multihead. */
-	r.min.y = selview->screenr.min.y;
-	r.max.y = selview->screenr.max.y;
+	r.min.y = selview->r[scrn].min.y;
+	r.max.y = selview->r[scrn].max.y;
 
 	reshapewin(d->w, r);
 	mapdiv(d);
@@ -117,7 +119,7 @@ update_imgs(void) {
 void
 div_update_all(void) {
 	Divide **dp, *d;
-	Area *a;
+	Area *a, *ap;
 	View *v;
 	int s;
 
@@ -125,14 +127,20 @@ div_update_all(void) {
 
 	v = selview;
 	dp = &divs;
+	ap = nil;
 	foreach_column(v, s, a) {
 		d = getdiv(dp);
 		dp = &d->next;
+		d->left = ap;
+		d->right = a;
 		div_set(d, a->r.min.x);
+		ap = a;
 
 		if(!a->next) {
 			d = getdiv(dp);
 			dp = &d->next;
+			d->left = a;
+			d->right = nil;
 			div_set(d, a->r.max.x);
 		}
 	}

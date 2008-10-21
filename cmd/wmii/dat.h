@@ -193,6 +193,8 @@ struct Client {
 struct Divide {
 	Divide*	next;
 	Window*	w;
+	Area*	left;
+	Area*	right;
 	bool	mapped;
 	int	x;
 };

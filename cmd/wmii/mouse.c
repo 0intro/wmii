@@ -315,22 +315,15 @@ done:
 void
 mouse_resizecol(Divide *d) {
 	Window *cwin;
-	Divide *dp;
 	View *v;
 	Area *a;
 	Rectangle r;
 	Point pt;
-	int minw, s;
+	int minw;
 
 	v = selview;
 
-	dp = divs;
-	foreach_column(v, s, a) {
-		if(dp->next == d)
-			break;
-		dp = dp->next;
-	}
-
+	a = d->left;
 	/* Fix later */
 	if(a == nil || a->next == nil)
 		return;
