@@ -89,7 +89,9 @@ events() {
 		xpid = $!
 	Menu Client-3-Delete
 		wmiir xwrite /client/$1/ctl kill
-	Menu Client-3-Fullscreen {
+	Menu Client-3-Kill
+		wmiir xwrite /client/$1/ctl slay
+	Menu Client-3-Fullscreen
 		wmiir xwrite /client/$1/ctl Fullscreen on
 	Event ClientMouseDown
 		wi_fnmenu Client $2 $1 &

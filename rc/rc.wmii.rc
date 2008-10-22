@@ -106,6 +106,8 @@ fn Event-LeftBar^(Click DND) {
 
 fn ClientMenu-3-Delete {
 	wmiir xwrite /client/$1/ctl kill}
+fn ClientMenu-3-Kill {
+	wmiir xwrite /client/$1/ctl slay}
 fn ClientMenu-3-Fullscreen {
 	wmiir xwrite /client/$1/ctl Fullscreen on}
 fn Event-ClientMouseDown {
