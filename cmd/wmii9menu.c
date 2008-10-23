@@ -290,7 +290,7 @@ size_window(int wide, int high)
 	if(p.x < 0)
 		p.x = 0;
 	else if(p.x + wide > Dx(scr.rect))
-		p.x = Dy(scr.rect) - wide;
+		p.x = Dx(scr.rect) - wide;
 
 	p.y -= cur * high + high / 2;
 	if(p.y < 0)
