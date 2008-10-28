@@ -98,31 +98,31 @@ rect_morph(Rectangle *r, Point d, Align *mask) {
 }
 
 /* Yes, yes, macros are evil. So are patterns. */
-#define frob(xy, yx) \
-	Rectangle *rp;                                                        \
-	int i, txy;                                                           \
-                                                                              \
-	for(i=0; i < nrect; i++) {                                            \
-		rp = &rects[i];                                               \
-		if((rp->min.yx <= r->max.yx) && (rp->max.yx >= r->min.yx)) {  \
-			txy = rp->min.xy;                                     \
-			if(abs(txy - xy) <= abs(dxy))                         \
-				dxy = txy - xy;                               \
-                                                                              \
-			txy = rp->max.xy;                                     \
-			if(abs(txy - xy) <= abs(dxy))                         \
-				dxy = txy - xy;                               \
-		}                                                             \
-	}                                                                     \
-	return dxy                                                            \
+#define frob(x, y) \
+        Rectangle *rp;                                                    \
+        int i, tx;                                                        \
+                                                                          \
+        for(i=0; i < nrect; i++) {                                        \
+                rp = &rects[i];                                           \
+                if((rp->min.y <= r->max.y) && (rp->max.y >= r->min.y)) {  \
+                        tx = rp->min.x;                                   \
+                        if(abs(tx - x) <= abs(dx))                        \
+                                dx = tx - x;                              \
+                                                                          \
+                        tx = rp->max.x;                                   \
+                        if(abs(tx - x) <= abs(dx))                        \
+                                dx = tx - x;                              \
+                }                                                         \
+        }                                                                 \
+        return dx                                                         \
 
 static int
-snap_hline(Rectangle *rects, int nrect, int dxy, Rectangle *r, int y) {
+snap_hline(Rectangle *rects, int nrect, int dx, Rectangle *r, int y) {
 	frob(y, x);
 }
 
 static int
-snap_vline(Rectangle *rects, int nrect, int dxy, Rectangle *r, int x) {
+snap_vline(Rectangle *rects, int nrect, int dx, Rectangle *r, int x) {
 	frob(x, y);
 }
 

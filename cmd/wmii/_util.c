@@ -188,16 +188,17 @@ backtrace(char *btarg) {
 	/* Fork so we can backtrace the child. Keep this stack
 	 * frame minimal, so the trace is fairly clean.
 	 */
-	switch(pid = fork()) {
-	case -1:
-		return;
-	case 0:
-		kill(getpid(), SIGSTOP);
-		_exit(0);
-	default:
-		_backtrace(pid, btarg);
-		break;
-	}
+	Debug(DStack)
+		switch(pid = fork()) {
+		case -1:
+			return;
+		case 0:
+			kill(getpid(), SIGSTOP);
+			_exit(0);
+		default:
+			_backtrace(pid, btarg);
+			break;
+		}
 
 }
 

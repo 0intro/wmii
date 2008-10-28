@@ -746,9 +746,11 @@ updatemwm(Client *c) {
 	free(ret);
 
 	if(c->sel) {
-		r = client_grav(c, r);
-		client_resize(c, r);
-		frame_draw(c->sel);
+		c->sel->floatr = c->r;
+		if(c->sel->area->floating) {
+			client_resize(c, c->sel->floatr);
+			frame_draw(c->sel);
+		}
 	}
 }
 
