@@ -230,12 +230,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 
 	min.x = Dx(v->r[a->screen])/NCOL;
 	min.y = /*frame_delta_h() +*/ labelh(def.font);
-	/* This would be so simple in lisp... */
-	/* This must be evil. But, I hate to repeat myself. */
-	/* And I hate to see patterns. */
-	/* At any rate, set the limits of where this box may be
-	 * dragged.
-	 */
+	/* Set the limits of where this box may be dragged. */
 #define frob(pred, f, aprev, rmin, rmax, plus, minus, xy) BLOCK(     \
 		if(pred) {                                           \
 			r.rmin.xy = f->aprev->r.rmin.xy plus min.xy; \

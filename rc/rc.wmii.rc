@@ -161,7 +161,7 @@ echo $wmiinormcol | wmiir create $noticebar
 _keys = `{wi_getfuns Key}
 fn key {
 	key=()
-	for(k) if(! ~ $_keys $k) key = ($key Key-$k)
+	for(k) if(! ~ $k $_keys) key = ($key Key-$k)
 	~ $#key 0}
 
 # This is... ugly.

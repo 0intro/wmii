@@ -1,3 +1,10 @@
+
+    * Add ‘Kill’ to client right-click menu
+    * wmii9menu now takes similar args to wimenu
+    * Document grow/nudge commands.
+    * Add wimenu with history and caret support
+    * Xinerama support
+
 2008-08-25:
     * libixp version 97 now required
     * Stack and max modes now affect floating clients:
@@ -6,4 +13,3 @@
         - stack: All clients but selected are collapsed.
     * Adobe's Flash plugin's fullscreen mode now works.
     * Some annoying focus bugs are fixed.
-
