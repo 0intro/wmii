@@ -592,6 +592,7 @@ view_index(View *v) {
 	int i, s;
 
 	bufclear();
+	i = 0;
 	foreach_area(v, s, a) {
 		if(a->floating)
 			bufprint("# ~ %d %d\n", Dx(a->r), Dy(a->r));
