@@ -225,7 +225,8 @@ find(Area **ap, Frame **fp, int dir, bool wrap, bool stack) {
 		*fp = stack_find(a, f, dir, stack);
 		if(*fp)
 			return true;
-		*ap = area_find(a->view, r, dir, wrap);
+		if (!a->floating)
+			*ap = area_find(a->view, r, dir, wrap);
 		if(!*ap)
 			return false;
 		*fp = stack_find(*ap, *fp, dir, stack);

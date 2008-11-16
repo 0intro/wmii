@@ -364,6 +364,8 @@ view_attach(View *v, Frame *f) {
 		else if(starting || c->sel && c->sel->area && !c->sel->area->floating)
 			a = v->firstarea;
 	}
+	if(!a->floating && view_fullscreen_p(v, a->screen))
+		a = v->floating;
 
 	area_attach(a, f);
 	/* TODO: Decide whether to focus this frame */
@@ -594,6 +596,7 @@ view_index(View *v) {
 	bufclear();
 	i = 0;
 	foreach_area(v, s, a) {
+		i++;
 		if(a->floating)
 			bufprint("# ~ %d %d\n", Dx(a->r), Dy(a->r));
 		else
