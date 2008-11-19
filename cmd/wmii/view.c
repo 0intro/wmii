@@ -426,6 +426,7 @@ view_restack(View *v) {
 	Divide *d;
 	Frame *f;
 	Area *a;
+	int s;
 	
 	if(v != selview)
 		return;
@@ -448,7 +449,7 @@ view_restack(View *v) {
 	for(d = divs; d && d->w->mapped; d = d->next)
 		vector_lpush(&wins, d->w->w);
 
-	for(a=v->firstarea; a; a=a->next)
+	foreach_column(v, s, a)
 		if(a->frame) {
 			vector_lpush(&wins, a->sel->client->framewin->w);
 			for(f=a->frame; f; f=f->anext)
