@@ -254,6 +254,7 @@ long	winprotocols(Window*);
 Atom	xatom(char*);
 void	sendmessage(Window*, char*, long, long, long, long, long);
 XRectangle	XRect(Rectangle);
+Rectangle	getwinrect(Window*);
 Rectangle	gravitate(Rectangle dst, Rectangle src, Point grav);
 Rectangle	insetrect(Rectangle, int);
 Rectangle	rectaddpt(Rectangle, Point);

@@ -898,6 +898,17 @@ getprop_string(Window *w, char *name) {
 	return str;
 }
 
+Rectangle
+getwinrect(Window *w) {
+	XWindowAttributes wa;
+	Point p;
+
+	if(!XGetWindowAttributes(display, w->w, &wa))
+		return ZR;
+	p = translate(w, &scr.root, ZP);
+	return rectaddpt(Rect(0, 0, wa.width, wa.height), p);
+}
+
 void
 setfocus(Window *w, int mode) {
 	XSetInputFocus(display, w->w, mode, CurrentTime);
