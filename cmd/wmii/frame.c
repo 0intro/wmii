@@ -653,6 +653,8 @@ constrain(Rectangle r, int inset) {
 	SET(best);
 	sbest = nil;
 	for(sp=screens; (s = *sp); sp++) {
+		if (!screen->showing)
+			continue;
 		isect = rect_intersection(r, insetrect(s->r, inset));
 		if(Dx(isect) >= 0 && Dy(isect) >= 0)
 			return r;

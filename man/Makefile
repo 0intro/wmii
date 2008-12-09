@@ -3,8 +3,10 @@ include ${ROOT}/mk/hdr.mk
 include ${ROOT}/mk/wmii.mk
 
 TARG =	wmii.1	   \
-	wmiiloop.1 \
 	wmiir.1
+
+wmiir.1:
+	true
 
 $(TARG): Makefile $(ROOT)/mk/wmii.mk
 

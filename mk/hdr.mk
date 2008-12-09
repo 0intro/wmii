@@ -54,9 +54,9 @@ all:
 	echo FILTER $(BASE)$<
 	$(FILTER) $< >$@
 	chmod 0755 $@
-.1.man1:
-	echo FILTER $(BASE)$<
-	$(FILTER) $< >$@
+.man1.1:
+	echo TXT2TAGS $(BASE)$<
+	txt2tags -o- $< | $(FILTER) >$@
 
 .O.install:
 	echo INSTALL $$($(CLEANNAME) $(BASE)$*)
@@ -82,14 +82,14 @@ all:
 	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
 	rm -f $(INCLUDE)/$<
 
-.man1.install:
+.1.install:
 	set -e; \
 	man=1; \
 	path="$(MAN)/man$$man/$*.$$man"; \
 	echo INSTALL man $$($(CLEANNAME) "$(BASE)/$*($$man)"); \
 	cp "$<" "$$path"; \
 	chmod 0644 "$$path"
-.man1.uninstall:
+.1.uninstall:
 	echo UNINSTALL man $$($(CLEANNAME) $*'(1)')
 	rm -f $(MAN)/man1/$<
 
