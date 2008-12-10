@@ -5,8 +5,8 @@ install: all
 MANDIRS=$(MAN)/man1
 mkdirs:
 	for i in $(BIN) $(ETC) $(LIBDIR) $(MANDIRS) $(INCLUDE) $(DIRS); do \
-		test -d $$i || echo MKDIR $$i; \
-		mkdir -pm 0755 $$i; \
+		test -d $(DESTDIR)$$i || echo MKDIR $$i; \
+		mkdir -pm 0755 $(DESTDIR)$$i; \
 	done
 
 cleandep:
