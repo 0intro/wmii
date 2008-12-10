@@ -32,11 +32,10 @@ OWMIIR=wmiir.o $(OFILES) $(LIBIXP)
 wmiir.O: $(OWMIIR)
 	$(LINK) $@ $(STATIC) $(OWMIIR)
 
-OMENU=menu.o wmii/x11.o $(OFILES) $(LIBIXP)
-menu.O: $(OMENU) dall
-	$(LINK) $@ $(OMENU)
+wmii/x11.o wmii/map.o: dall
+	true
 
 O9MENU=wmii9menu.o wmii/x11.o wmii/map.o $(OFILES) $(LIBIXP)
-wmii9menu.O: $(O9MENU) dall
+wmii9menu.O: $(O9MENU)
 	$(LINK) $@ $(O9MENU) $(LIBX11) -lXext -lbio
 
