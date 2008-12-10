@@ -251,7 +251,7 @@ Action overridekeys
 
 # Misc Setup
 progs_file=`{namespace}^/proglist.$pid
-hist=`{namespace}^/history
+hist=`{echo $WMII_CONFPATH | sed 's,:.*,/,'}^/history
 histlen=5000
 Action status &
 Action rehash &
