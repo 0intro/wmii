@@ -162,9 +162,9 @@ float_placeframe(Frame *f) {
 	Point dim, p;
 	Client *c;
 	Frame *ff;
-	Area *a;
+	Area *a, *sel;
 	long area, l;
-	int i;
+	int i, s;
 
 	a = f->area;
 	c = f->client;
@@ -173,6 +173,7 @@ float_placeframe(Frame *f) {
 	if(c->trans)
 		return;
 	*/
+
 	if(c->fullscreen >= 0 || c->w.hints->position || starting) {
 		f->r = f->floatr;
 		return;
@@ -189,7 +190,28 @@ float_placeframe(Frame *f) {
 		 */
 		if(ff->client != f->client)
 			vector_rpush(&vec, ff->r);
-	vp = unique_rects(&vec, a->r);
+
+	/* Decide which screen we want to place this on.
+	 * Ideally, it should probably Do the Right Thing
+	 * when a screen fills, but what's the right thing?
+	 * I think usage will show...
+	 */
+	s = -1;
+	ff = client_groupframe(c, f->view);
+	if (ff)
+		s = ownerscreen(ff->r);
+	else if (selclient())
+		s = ownerscreen(selclient()->sel->r);
+	else {
+		sel = view_findarea(a->view, a->view->selcol, false);
+		if (sel)
+			s = sel->screen;
+	}
+
+	r = a->r;
+	if (s > -1)
+		r = screens[s]->r;
+	vp = unique_rects(&vec, r);
 
 	area = LONG_MAX;
 	dim.x = Dx(f->r);

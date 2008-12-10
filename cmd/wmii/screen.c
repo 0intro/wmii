@@ -117,6 +117,8 @@ findthing(Rectangle rect, int direction, Vector_ptr *vec, Rectangle (*key)(void*
 	int i, n;
 
 	best = nil;
+
+	/* For the record, I really hate these macros. */
 #define frob(min, max, LT, x, y) \
 	if(D##y(isect) > 0) /* If they intersect at some point on this axis */  \
 	if(r.min.x LT rect.min.x) {                                             \
