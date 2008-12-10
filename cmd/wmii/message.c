@@ -945,7 +945,7 @@ msg_selectframe(Area *a, IxpMsg *m, int sym) {
 char*
 msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	Area *to, *a;
-	Frame *f;
+	Frame *f, *ff;
 	Client *c;
 	char *s;
 	ulong i;
@@ -975,15 +975,11 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	case LLEFT:
 		if(a->floating)
 			return Ebadvalue;
-		/* XXX: Multihead. */
-		if(a->prev)
-			to = a->prev;
-		a = nil;
+		to = a->prev;
 		break;
 	case LRIGHT:
 		if(a->floating)
 			return Ebadvalue;
-		/* XXX: Multihead. */
 		to = a->next;
 		break;
 	case LTOGGLE:
@@ -1006,8 +1002,19 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 		break;
 	}
 
-	if(!to && !swap && (f->anext || f != f->area->frame))
-		to = column_new(v, a, f->area->screen, 0);
+	if(!to && !swap) {
+		/* XXX: Multihead - clean this up, move elsewhere. */
+		if(!f->anext && f == f->area->frame) {
+			ff = f;
+			to = a;
+			if(!find(&to, &ff, DIR(sym), false, false))
+				return Ebadvalue;
+		}
+		else {
+			to = (sym == LLEFT) ? nil : a;
+			to = column_new(v, to, a->screen, 0);
+		}
+	}
 
 	if(!to)
 		return Ebadvalue;

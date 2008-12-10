@@ -321,6 +321,7 @@ frame_rect2client(Client *c, Rectangle r, bool floating) {
 
 	ADJ(+=, -=)
 
+	/* Force clients to be at least 1x1 */
 	r.max.x = max(r.max.x, r.min.x+1);
 	r.max.y = max(r.max.y, r.min.y+1);
 	return r;
