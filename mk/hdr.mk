@@ -60,38 +60,38 @@ all:
 
 .O.install:
 	echo INSTALL $$($(CLEANNAME) $(BASE)$*)
-	cp -f $< $(BIN)/$*
-	chmod 0755 $(BIN)/$* 
+	cp -f $< $(DESTDIR)$(BIN)/$*
+	chmod 0755 $(DESTDIR)$(BIN)/$* 
 .O.uninstall:
 	echo UNINSTALL $$($(CLEANNAME) $(BASE)$*)
-	rm -f $(BIN)/$* 
+	rm -f $(DESTDIR)$(BIN)/$* 
 
 .a.install .$(SOEXT).install:
 	echo INSTALL $$($(CLEANNAME) $(BASE)$<)
-	cp -f $< $(LIBDIR)/$<
-	chmod 0644 $(LIBDIR)/$<
+	cp -f $< $(DESTDIR)$(LIBDIR)/$<
+	chmod 0644 $(DESTDIR)$(LIBDIR)/$<
 .a.uninstall .$(SOEXT).uninstall:
 	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
-	rm -f $(LIBDIR)/$<
+	rm -f $(DESTDIR)$(LIBDIR)/$<
 
 .h.install:
 	echo INSTALL $$($(CLEANNAME) $(BASE)$<)
-	cp -f $< $(INCLUDE)/$<
-	chmod 0644 $(INCLUDE)/$<
+	cp -f $< $(DESTDIR)$(INCLUDE)/$<
+	chmod 0644 $(DESTDIR)$(INCLUDE)/$<
 .h.uninstall:
 	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
-	rm -f $(INCLUDE)/$<
+	rm -f $(DESTDIR)$(INCLUDE)/$<
 
 .1.install:
 	set -e; \
 	man=1; \
 	path="$(MAN)/man$$man/$*.$$man"; \
 	echo INSTALL man $$($(CLEANNAME) "$(BASE)/$*($$man)"); \
-	cp "$<" "$$path"; \
-	chmod 0644 "$$path"
+	cp "$<" $(DESTDIR)"$$path"; \
+	chmod 0644 $(DESTDIR)"$$path"
 .1.uninstall:
 	echo UNINSTALL man $$($(CLEANNAME) $*'(1)')
-	rm -f $(MAN)/man1/$<
+	rm -f $(DESTDIR)$(MAN)/man1/$<
 
 .O.clean:
 	echo CLEAN $$($(CLEANNAME) $(BASE)$<)
