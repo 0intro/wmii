@@ -450,11 +450,13 @@ thcol(Frame *f) {
 				if(fp)
 					fp->colr.max.x += labelh(def.font);
 			}
-				
+
 
 			/* XXX: Multihead. */
  			if(!a->frame && !a->floating && f->view->firstarea->next)
  				area_destroy(a);
+
+			frame_focus(f);
 			goto done;
 		case ButtonPress:
 			if(button == 2)
