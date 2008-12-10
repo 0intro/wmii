@@ -10,30 +10,32 @@ static CTuple	divcolor;
 static Handlers	handlers;
 
 static Divide*
-getdiv(Divide **dp) {
+getdiv(Divide ***dp) {
 	WinAttr wa;
 	Divide *d;
 
-	if(*dp)
-		return *dp;
+	if(**dp) {
+		d = **dp;
+		d->side = 0;
+	}else {
+		d = emallocz(sizeof *d);
 
-	d = emallocz(sizeof *d);
-
-	wa.override_redirect = true;
-	wa.cursor = cursor[CurDHArrow];
-	wa.event_mask =
-		  ExposureMask
-		| EnterWindowMask
-		| ButtonPressMask
-		| ButtonReleaseMask;
-	d->w = createwindow(&scr.root, Rect(0, 0, 1, 1), scr.depth, InputOutput, &wa,
-		  CWOverrideRedirect
-		| CWEventMask
-		| CWCursor);
-	d->w->aux = d;
-	sethandler(d->w, &handlers);
-
-	*dp = d;
+		wa.override_redirect = true;
+		wa.cursor = cursor[CurDHArrow];
+		wa.event_mask =
+			  ExposureMask
+			| EnterWindowMask
+			| ButtonPressMask
+			| ButtonReleaseMask;
+		d->w = createwindow(&scr.root, Rect(0, 0, 1, 1), scr.depth, InputOutput, &wa,
+			  CWOverrideRedirect
+			| CWEventMask
+			| CWCursor);
+		d->w->aux = d;
+		sethandler(d->w, &handlers);
+		**dp = d;
+	}
+	*dp = &d->next;
 	return d;
 }
 
@@ -64,7 +66,7 @@ div_set(Divide *d, int x) {
 }
 
 static void
-drawimg(Image *img, ulong cbg, ulong cborder) {
+drawimg(Image *img, ulong cbg, ulong cborder, int side) {
 	Point pt[6];
 
 	pt[0] = Pt(0, 0);
@@ -76,12 +78,22 @@ drawimg(Image *img, ulong cbg, ulong cborder) {
 	pt[4] = Pt(pt[3].x, Dx(img->r)/2 - 1);
 	pt[5] = Pt(Dx(img->r) - 1, 0);
 
+	if (side & 1)
+		pt[0].x = pt[1].x = pt[2].x + 1;
+	if (side & 2)
+		pt[5].x = pt[4].x = pt[3].x - 1;
+
 	fillpoly(img, pt, nelem(pt), cbg);
 	drawpoly(img, pt, nelem(pt), CapNotLast, 1, cborder);
 }
 
 static void
 drawdiv(Divide *d) {
+
+	fill(divmask, divmask->r, 0);
+	drawimg(divmask, 1, 1, d->side);
+	drawimg(divimg, divcolor.bg, divcolor.border, d->side);
+
 	copyimage(d->w, divimg->r, divimg, ZP);
 	setshapemask(d->w, divmask, ZP);
 }
@@ -108,10 +120,6 @@ update_imgs(void) {
 	divmask = allocimage(w, h, 1);
 	divcolor = def.normcolor;
 
-	fill(divmask, divmask->r, 0);
-	drawimg(divmask, 1, 1);
-	drawimg(divimg, divcolor.bg, divcolor.border);
-
 	for(d = divs; d && d->w->mapped; d = d->next)
 		drawdiv(d);
 }
@@ -129,19 +137,23 @@ div_update_all(void) {
 	dp = &divs;
 	ap = nil;
 	foreach_column(v, s, a) {
-		d = getdiv(dp);
-		dp = &d->next;
+		if (ap && ap->screen != s)
+			ap = nil;
+
+		d = getdiv(&dp);
 		d->left = ap;
 		d->right = a;
 		div_set(d, a->r.min.x);
 		ap = a;
+		if (!ap)
+			d->side |= 1;
 
 		if(!a->next) {
-			d = getdiv(dp);
-			dp = &d->next;
+			d = getdiv(&dp);
 			d->left = a;
 			d->right = nil;
 			div_set(d, a->r.max.x);
+			d->side |= 2;
 		}
 	}
 	for(d = *dp; d; d = d->next)
