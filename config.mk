@@ -10,7 +10,7 @@ PREFIX = /usr/local
 
 # Includes and libs
 INCPATH = .:$(ROOT)/include:$(INCLUDE):/usr/include
-LIBS = -L/usr/lib -L$(ROOT)/lib
+LIBS = -L$(ROOT)/lib -L/usr/lib
 
 # Flags
 include $(ROOT)/mk/gcc.mk

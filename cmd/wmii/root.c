@@ -66,7 +66,7 @@ motion_event(Window *w, XMotionEvent *e) {
 	Rectangle r, r2;
 
 	r = rectsetorigin(Rect(0, 0, 1, 1), Pt(e->x_root, e->y_root));
-	r2 = constrain(r, 1);
+	r2 = constrain(r, 0);
 	if(!eqrect(r, r2))
  		warppointer(r2.min);
 }

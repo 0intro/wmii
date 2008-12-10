@@ -647,7 +647,7 @@ constrain(Rectangle r, int inset) {
 		inset = Dy(screen->brect);
 	/* 
 	 * FIXME: This will cause problems for windows with
-	 * D(r) < 2 * isect
+	 * D(r) < 2 * inset
 	 */
 
 	SET(best);
@@ -658,7 +658,7 @@ constrain(Rectangle r, int inset) {
 		isect = rect_intersection(r, insetrect(s->r, inset));
 		if(Dx(isect) >= 0 && Dy(isect) >= 0)
 			return r;
-		if(Dx(isect) < 0 && Dy(isect) < 0)
+		if(Dx(isect) <= 0 && Dy(isect) <= 0)
 			n = max(Dx(isect), Dy(isect));
 		else
 			n = min(Dx(isect), Dy(isect));
@@ -669,9 +669,10 @@ constrain(Rectangle r, int inset) {
 	}
 
 	isect = insetrect(sbest->r, inset);
-	p.x =  min(r.max.x - isect.min.x, 0);
+	p = ZP;
+	p.x -= min(r.max.x - isect.min.x, 0);
 	p.x -= max(r.min.x - isect.max.x, 0);
-	p.y =  min(r.max.y - isect.min.y, 0);
+	p.y -= min(r.max.y - isect.min.y, 0);
 	p.y -= max(r.min.y - isect.max.y, 0);
 	return rectaddpt(r, p);
 }
