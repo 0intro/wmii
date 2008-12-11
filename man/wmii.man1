@@ -394,7 +394,7 @@ all of the clients with the given tag applied. The special
         : frame
             Selects a client window.
 
-```    frame ::= <area> <space> <index> | <area> "sel" | client <window-id>
+```    frame ::= <area> <index> | <area> sel | client <window-id>
 
             Where <index> represents the nth frame of <area> or <window-id> is
             the X11 window id of the given client.
@@ -402,7 +402,7 @@ all of the clients with the given tag applied. The special
         : amount
             The amount to grow or nudge something.
 
-```    amount ::= <number> "px"?
+```    amount ::= <number> | <number>px
         
             If "px" is given, <number> is interperated as an exact pixel count.
             Otherwise, it's interperated as a "reasonable" amount, which is
