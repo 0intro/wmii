@@ -359,7 +359,7 @@ getframe(View *v, int scrn, IxpMsg *m) {
 	ulong l;
 
 	s = msg_getword(m);
-	if(!strcmp(s, "client")) {
+	if(!s || !strcmp(s, "client")) {
 		c = strclient(v, msg_getword(m));
 		if(c == nil)
 			return nil;
