@@ -7,6 +7,7 @@
 #include <X11/Xproto.h>
 #include <X11/cursorfont.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
@@ -291,9 +292,11 @@ spawn_command(const char *cmd) {
 		shell = passwd->pw_shell;
 		if(shell[0] != '/')
 			fatal("Shell is not an absolute path: %s", shell);
-
 		/* Run through the user's shell as a login shell */
 		p = smprint("-%s", strrchr(shell, '/') + 1);
+
+		close(0);
+		open("/dev/null", O_RDONLY);
 
 		execl(shell, p, "-c", cmd, nil);
 		fatal("Can't exec '%s': %r", cmd);
