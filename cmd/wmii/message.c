@@ -265,6 +265,8 @@ getlong(const char *s, long *ret) {
 	int base;
 	long sign;
 
+	if(s == nil)
+		return false;
 	end = s+strlen(s);
 	base = getbase(&s, &sign);
 	if(sign == 0)
@@ -281,6 +283,8 @@ getulong(const char *s, ulong *ret) {
 	int base;
 	long sign;
 
+	if(s == nil)
+		return false;
 	end = s+strlen(s);
 	base = getbase(&s, &sign);
 	if(sign < 1)
@@ -328,6 +332,8 @@ strarea(View *v, int scrn, const char *s) {
 	 * <column number>
 	 */
 
+	if(s == nil)
+		return nil;
 	if(!strcmp(s, "sel"))
 		return v->sel;
 	if(!strcmp(s, "~"))
