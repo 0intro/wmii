@@ -124,6 +124,8 @@ getkey(const char *name) {
 			kstr = seq[i];
 		k->key = XKeysymToKeycode(display, XStringToKeysym(kstr));
 		k->mod = str2modmask(seq[i]);
+		if (k->key == NoSymbol)
+			return nil;
 	}
 	if(r) {
 		r->id = id++;

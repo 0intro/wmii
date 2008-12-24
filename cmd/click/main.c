@@ -18,38 +18,18 @@ usage(void) {
 
 static void
 click(Window *w, Point p) {
-	Point rp, restore;
+	Rectangle r;
+	Point rp;
 
-	restore = querypointer(&scr.root);
-
-	rp = translate(w, &scr.root, p);
+	r = getwinrect(w);
+	rp = subpt(r.max, p);
 
 	XTestFakeMotionEvent(display, 0, rp.x, rp.y, 0);
 
 	XTestFakeButtonEvent(display, 1, true, 0);
 	XTestFakeButtonEvent(display, 1, false, 0);
 
-	rp = getwinrect(w).max;
-	XTestFakeMotionEvent(display, 0, rp.x - 1, rp.y - 1, 0);
-
-	return;
-	XButtonEvent e = { 0, };
-
-	e.root = scr.root.w;
-	e.window = w->w;
-	e.same_screen = true;
-
-	e.x = p.x;
-	e.y = p.y;
-	e.x_root = rp.x;
-	e.y_root = rp.y;
-	e.button = 1; /* Hopefully ignored, except enough to do the trick. */
-
-	e.type = ButtonPress;
-	sendevent(w, true, ButtonPressMask, (XEvent*)&e);
-	e.type = ButtonRelease;
-	e.state = Button1Mask;
-	sendevent(w, true, ButtonReleaseMask, (XEvent*)&e);
+	XTestFakeMotionEvent(display, 0, r.max.x, r.max.y, 0);
 }
 
 int
@@ -74,7 +54,7 @@ main(int argc, char *argv[]) {
 	if(argc)
 		usage();
 
-	click(&win, Pt(0, 0));
+	click(&win, Pt(1, 1));
 
 	XCloseDisplay(display);
 	return 0;
