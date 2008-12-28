@@ -221,10 +221,9 @@ mouse_resizecolframe(Frame *f, Align align) {
 	d = divs;
 	foreach_column(v, s, a) {
 		if(a == f->area)
-			goto found;
+			break;
 		d = d->next;
 	}
-found:
 
 	if(align&East)
 		d = d->next;
