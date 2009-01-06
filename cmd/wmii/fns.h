@@ -13,7 +13,7 @@
 # pragma varargck	type	"r"	void
 #endif
 
-#define _cond(cond, n) __alive++ == n && cond
+#define _cond(cond, n) (cond) && __alive++ == n
 #define _cont(cont) (void)(__alive--, cont)
 
 #define with(type, var) \
