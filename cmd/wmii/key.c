@@ -1,4 +1,5 @@
-/* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
+/* Copyright ©2006-2008 Kris Maglione <fbsdaemon at Gmail>
+ * Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -54,6 +55,16 @@ str2modmask(const char *val) {
 }
 
 static void
+freekey(Key *k) {
+	Key *n;
+
+	while((n = k)) {
+		k = k->next;
+		free(n);
+	}
+}
+
+static void
 _grab(XWindow w, int keycode, uint mod) {
 	XGrabKey(display, keycode, mod, w,
 			true, GrabModeAsync, GrabModeAsync);
@@ -61,7 +72,6 @@ _grab(XWindow w, int keycode, uint mod) {
 
 static void
 grabkey(Key *k) {
-	/* Round trip. */
 	_grab(scr.root.w, k->key, k->mod);
 	if(numlock_mask) {
 		_grab(scr.root.w, k->key, k->mod | numlock_mask);
@@ -77,9 +87,7 @@ ungrabkey(Key *k) {
 		XUngrabKey(display, k->key, k->mod | numlock_mask, scr.root.w);
 		XUngrabKey(display, k->key, k->mod | numlock_mask | LockMask, scr.root.w);
 	}
-	/*
-	sync();
-	*/
+	/* sync(); */
 }
 
 static Key *
@@ -125,7 +133,10 @@ getkey(const char *name) {
 		k->key = XKeysymToKeycode(display, XStringToKeysym(kstr));
 		k->mod = str2modmask(seq[i]);
 		if (k->key == NoSymbol)
+		{
+			freekey(r);
 			return nil;
+		}
 	}
 	if(r) {
 		r->id = id++;
@@ -215,7 +226,8 @@ kpress(XWindow w, ulong mod, KeyCode keycode) {
 	Key *k, *found;
 
 	for(k=key; k; k=k->lnext)
-		 k->tnext=k->lnext;
+		 k->tnext = k->lnext;
+
 	found = match_keys(key, mod, keycode, false);
 	if(!found) /* grabbed but not found */
 		XBell(display, 0);
@@ -232,17 +244,14 @@ kpress(XWindow w, ulong mod, KeyCode keycode) {
 
 void
 update_keys(void) {
-	Key *k, *n;
+	Key *k;
 	char *l, *p;
 
 	init_lock_keys();
 	while((k = key)) {
 		key = key->lnext;
 		ungrabkey(k);
-		while((n = k)) {
-			k = k->next;
-			free(n);
-		}
+		freekey(k);
 	}
 	for(l = p = def.keys; p && *p;) {
 		if(*p == '\n') {
