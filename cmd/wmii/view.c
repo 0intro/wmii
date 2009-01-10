@@ -277,7 +277,6 @@ view_update(View *v) {
 		return;
 
 	frames_update_sel(v);
-	view_arrange(v);
 
 	foreach_frame(v, s, a, f)
 		if(f->client->fullscreen >= 0) {
@@ -289,6 +288,8 @@ view_update(View *v) {
 			}else if(f->oldarea == -1)
 				f->oldarea = 0;
 		}
+
+	view_arrange(v);
 
 	for(c=client; c; c=c->next) {
 		f = c->sel;
