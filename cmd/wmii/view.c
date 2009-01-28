@@ -125,15 +125,10 @@ view_destroy(View *v) {
 	*vp = v->next;
 	assert(v != v->next);
 
-	/* FIXME: Can do better */
 	/* Detach frames held here by regex tags. */
-	for(a=v->floating; a; a=an) {
-		an = a->next;
-		for(f=a->frame; f; f=fn) {
-			fn = f->anext;
-			apply_tags(f->client, f->client->tags);
-		}
-	}
+	/* FIXME: Can do better. */
+	foreach_frame(v, s, a, f)
+		apply_tags(f->client, f->client->tags);
 
 	foreach_area(v, s, a)
 		area_destroy(a);
