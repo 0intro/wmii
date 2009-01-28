@@ -159,12 +159,12 @@ init_screens(void) {
 	int i, n, m;
 
 #ifdef notdef
-        d.x = Dx(scr.rect) - Dx(screen->r);
-        d.y = Dy(scr.rect) - Dy(screen->r);
-        for(v=view; v; v=v->next) {
-                v->r.max.x += d.x;
-                v->r.max.y += d.y;
-        }
+	d.x = Dx(scr.rect) - Dx(screen->r);
+	d.y = Dy(scr.rect) - Dy(screen->r);
+	for(v=view; v; v=v->next) {
+		v->r.max.x += d.x;
+		v->r.max.y += d.y;
+	}
 #endif
 
 	/* Reallocate screens, zero any new ones. */
@@ -215,7 +215,7 @@ init_screens(void) {
 
 static void
 cleanup(void) {
-	while(client) 
+	while(client)
 		client_destroy(client);
 	ixp_server_close(&srv);
 	close(sleeperfd);

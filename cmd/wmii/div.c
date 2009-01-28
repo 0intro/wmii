@@ -27,7 +27,8 @@ getdiv(Divide ***dp) {
 			| EnterWindowMask
 			| ButtonPressMask
 			| ButtonReleaseMask;
-		d->w = createwindow(&scr.root, Rect(0, 0, 1, 1), scr.depth, InputOutput, &wa,
+		d->w = createwindow(&scr.root, Rect(0, 0, 1, 1), scr.depth,
+				    InputOutput, &wa,
 			  CWOverrideRedirect
 			| CWEventMask
 			| CWCursor);

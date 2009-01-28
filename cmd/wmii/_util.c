@@ -17,13 +17,13 @@ void                                                                    \
 vector_##c##init(Vector_##nam *v) {                                     \
 	memset(v, 0, sizeof *v);                                        \
 }                                                                       \
-                                                                        \
+									\
 void                                                                    \
 vector_##c##free(Vector_##nam *v) {                                     \
 	free(v->ary);                                                   \
 	memset(v, 0, sizeof *v);                                        \
 }                                                                       \
-                                                                        \
+									\
 void                                                                    \
 vector_##c##push(Vector_##nam *v, type val) {                           \
 	if(v->n == v->size) {                                           \

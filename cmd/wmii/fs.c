@@ -77,7 +77,7 @@ Ixp9Srv p9srv = {
 };
 
 /* ad-hoc file tree. Empty names ("") indicate dynamic entries to be filled
- * in by lookup_file 
+ * in by lookup_file
  */
 static IxpDirtab
 dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
@@ -87,10 +87,10 @@ dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
 		  {"client",	QTDIR,		FsDClients,	0500|DMDIR },
 		  {"tag",	QTDIR,		FsDTags,	0500|DMDIR },
 		  {"ctl",	QTAPPEND,	FsFRctl,	0600|DMAPPEND },
-		  {"colrules",	QTFILE,		FsFColRules,	0600 }, 
+		  {"colrules",	QTFILE,		FsFColRules,	0600 },
 		  {"event",	QTFILE,		FsFEvent,	0600 },
 		  {"keys",	QTFILE,		FsFKeys,	0600 },
-		  {"tagrules",	QTFILE,		FsFTagRules,	0600 }, 
+		  {"tagrules",	QTFILE,		FsFTagRules,	0600 },
 		  {nil}},
 dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
 		  {"",		QTDIR,		FsDClient,	0500|DMDIR },
@@ -232,11 +232,11 @@ lookup_file(IxpFileId *parent, char *name)
 	last = &ret;
 	ret = nil;
 	for(; dir->name; dir++) {
-#		define push_file(nam) \
-			file = ixp_srv_getfile();  \
-			*last = file;       \
-			last = &file->next; \
-			file->tab = *dir;   \
+#		define push_file(nam)             \
+			file = ixp_srv_getfile(); \
+			*last = file;             \
+			last = &file->next;       \
+			file->tab = *dir;         \
 			file->tab.name = estrdup(nam)
 		/* Dynamic dirs */
 		if(dir->name[0] == '\0') {
@@ -483,7 +483,7 @@ fs_read(Ixp9Req *r) {
 			return;
 		}
 	}
-	/* 
+	/*
 	 * This is an assert because this should this should not be called if
 	 * the file is not open for reading.
 	 */
@@ -521,7 +521,9 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFClabel:
 		ixp_srv_data2cstring(r);
-		utfecpy(f->p.client->name, f->p.client->name+sizeof(client->name), r->ifcall.io.data);
+		utfecpy(f->p.client->name,
+			f->p.client->name+sizeof(client->name),
+			r->ifcall.io.data);
 		frame_draw(f->p.client->sel);
 		update_class(f->p.client);
 		r->ofcall.io.count = r->ifcall.io.count;

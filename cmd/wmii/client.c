@@ -231,8 +231,9 @@ client_manage(Client *c) {
 	bool newgroup = !c->group
 		     || c->group->ref == 1
 		     || selclient() && (selclient()->group == c->group)
-		     || group_leader(c->group) && !client_viewframe(group_leader(c->group),
-								    c->sel->view);
+		     || group_leader(c->group)
+		        && !client_viewframe(group_leader(c->group),
+					     c->sel->view);
 
 	f = c->sel;
 	if(!(c->w.ewmh.type & TypeSplash))
@@ -302,14 +303,14 @@ client_destroy(Client *c) {
 
 /* Convenience functions */
 Frame*
-client_viewframe(Client *c, View *v) {              
+client_viewframe(Client *c, View *v) {
 	Frame *f;
 
 	for(f=c->frame; f; f=f->cnext)
 		if(f->view == v)
 			break;
 	return f;
-} 
+}
 
 Client*
 selclient(void) {
@@ -378,7 +379,7 @@ client_grav(Client *c, Rectangle rd) {
 bool
 client_floats_p(Client *c) {
 	return c->trans
-            || c->floating
+	    || c->floating
 	    || c->fixedsize
 	    || c->titleless
 	    || c->borderless
@@ -612,7 +613,8 @@ fullscreen(Client *c, int fullscreen) {
 			}
 			else if(f->oldarea > 0) {
 				wassel = (f == f->area->sel);
-				area_moveto(view_findarea(f->view, f->oldarea, true), f);
+				area_moveto(view_findarea(f->view, f->oldarea, true),
+					    f);
 				if(wassel)
 					frame_focus(f);
 			}
@@ -653,7 +655,8 @@ client_seturgent(Client *c, bool urgent, int from) {
 						for(ff=a->frame; ff; ff=ff->anext)
 							if(ff->client->urgent) break;
 				if(urgent || ff == nil)
-					event("%sUrgentTag %s %s\n", cnot, cfrom, f->view->name);
+					event("%sUrgentTag %s %s\n",
+					      cnot, cfrom, f->view->name);
 			}
 		}
 	}
@@ -1080,7 +1083,7 @@ apply_tags(Client *c, const char *tags) {
 	}
 
 	j = 0;
-	while(buf[n] && n < sizeof(buf) && j < 32) { 
+	while(buf[n] && n < sizeof(buf) && j < 32) {
 		/* Check for regex. */
 		if(buf[n] == '/') {
 			for(i=n+1; i < sizeof(buf) - 1; i++)

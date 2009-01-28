@@ -362,7 +362,8 @@ view_attach(View *v, Frame *f) {
 		 * last focused frame didn't float. Important when
 		 * tagging with +foo.
 		 */
-		else if(starting || c->sel && c->sel->area && !c->sel->area->floating)
+		else if(starting
+		     || c->sel && c->sel->area && !c->sel->area->floating)
 			a = v->firstarea;
 	}
 	if(!a->floating && view_fullscreen_p(v, a->screen))
@@ -372,11 +373,15 @@ view_attach(View *v, Frame *f) {
 	/* TODO: Decide whether to focus this frame */
 	bool newgroup = !c->group
 		     || c->group->ref == 1
-		     || view_selclient(v) && (view_selclient(v)->group == c->group)
-		     || group_leader(c->group) && !client_viewframe(group_leader(c->group),
-								    c->sel->view);
+		     || view_selclient(v)
+		        && view_selclient(v)->group == c->group
+		     || group_leader(c->group)
+		        && !client_viewframe(group_leader(c->group),
+					     c->sel->view);
+
 	if(!(c->w.ewmh.type & (TypeSplash|TypeDock))) {
-		if(newgroup && !(c->tagre.regex && regexec(c->tagre.regc, v->name, nil, 0)))
+		if(newgroup
+		&& !(c->tagre.regex && regexec(c->tagre.regc, v->name, nil, 0)))
 			frame_focus(f);
 		else if(c->group && f->area->sel->client->group == c->group)
 			/* XXX: Stack. */

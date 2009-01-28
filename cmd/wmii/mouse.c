@@ -99,22 +99,22 @@ rect_morph(Rectangle *r, Point d, Align *mask) {
 
 /* Yes, yes, macros are evil. So are patterns. */
 #define frob(x, y) \
-        Rectangle *rp;                                                    \
-        int i, tx;                                                        \
-                                                                          \
-        for(i=0; i < nrect; i++) {                                        \
-                rp = &rects[i];                                           \
-                if((rp->min.y <= r->max.y) && (rp->max.y >= r->min.y)) {  \
-                        tx = rp->min.x;                                   \
-                        if(abs(tx - x) <= abs(dx))                        \
-                                dx = tx - x;                              \
-                                                                          \
-                        tx = rp->max.x;                                   \
-                        if(abs(tx - x) <= abs(dx))                        \
-                                dx = tx - x;                              \
-                }                                                         \
-        }                                                                 \
-        return dx                                                         \
+	Rectangle *rp;                                                    \
+	int i, tx;                                                        \
+									  \
+	for(i=0; i < nrect; i++) {                                        \
+		rp = &rects[i];                                           \
+		if((rp->min.y <= r->max.y) && (rp->max.y >= r->min.y)) {  \
+			tx = rp->min.x;                                   \
+			if(abs(tx - x) <= abs(dx))                        \
+				dx = tx - x;                              \
+									  \
+			tx = rp->max.x;                                   \
+			if(abs(tx - x) <= abs(dx))                        \
+				dx = tx - x;                              \
+		}                                                         \
+	}                                                                 \
+	return dx                                                         \
 
 static int
 snap_hline(Rectangle *rects, int nrect, int dx, Rectangle *r, int y) {
@@ -598,7 +598,8 @@ mouse_checkresize(Frame *f, Point p, bool exec) {
 		if(f->aprev && p.y <= 2
 		|| f->anext && r.max.y - p.y <= 2) {
 			cur = cursor[CurDVArrow];
-			if(exec) mouse_tempvertresize(f->area, addpt(p, f->r.min));
+			if(exec)
+				mouse_tempvertresize(f->area, addpt(p, f->r.min));
 		}
 	}
 

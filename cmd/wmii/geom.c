@@ -66,7 +66,7 @@ quad_cursor(Align align) {
 	case SWest: return cursor[CurSWCorner];
 	case South:
 	case North: return cursor[CurDVArrow];
-	case East:  
+	case East:
 	case West:  return cursor[CurDHArrow];
 	default:    return cursor[CurMove];
 	}
@@ -86,7 +86,7 @@ get_sticky(Rectangle src, Rectangle dst) {
 	if(src.min.y != dst.min.y
 	&& src.max.y == dst.max.y)
 		corner |= South;
-	else    
+	else
 		corner |= North;
 
 	return corner;

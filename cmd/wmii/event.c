@@ -22,31 +22,31 @@ dispatch_event(XEvent *e) {
 
 static int
 findtime(Display *d, XEvent *e, XPointer v) {
-        Window *w;
+	Window *w;
 
-        w = (Window*)v;
-        if(e->type == PropertyNotify && e->xproperty.window == w->w) {
-                xtime = e->xproperty.time;
-                return true;
-        }
-        return false;
+	w = (Window*)v;
+	if(e->type == PropertyNotify && e->xproperty.window == w->w) {
+		xtime = e->xproperty.time;
+		return true;
+	}
+	return false;
 }
 
 void
 xtime_kludge(void) {
 	/* Round trip. */
-        static Window *w;
-        WinAttr wa;
-        XEvent e;
-        long l;
+	static Window *w;
+	WinAttr wa;
+	XEvent e;
+	long l;
 
 	if(w == nil) {
 		w = createwindow(&scr.root, Rect(0, 0, 1, 1), 0, InputOnly, &wa, 0);
 		selectinput(w, PropertyChangeMask);
 	}
-        changeprop_long(w, "ATOM", "ATOM", &l, 0);
+	changeprop_long(w, "ATOM", "ATOM", &l, 0);
 	sync();
-        XIfEvent(display, &e, findtime, (void*)w);
+	XIfEvent(display, &e, findtime, (void*)w);
 }
 
 uint
@@ -154,12 +154,13 @@ destroynotify(XDestroyWindowEvent *ev) {
 	Window *w;
 	Client *c;
 
-	if((w = findwin(ev->window))) 
+	if((w = findwin(ev->window)))
 		handle(w, destroy, ev);
 	else {
 		if((c = win2client(ev->window)))
 			fprint(2, "Badness: Unhandled DestroyNotify: "
-				"Client: %p, Window: %W, Name: %s\n", c, &c->w, c->name);
+				  "Client: %p, Window: %W, Name: %s\n",
+				  c, &c->w, c->name);
 	}
 }
 
@@ -171,7 +172,7 @@ enternotify(XCrossingEvent *ev) {
 	if(ev->mode != NotifyNormal)
 		return;
 
-	if((w = findwin(ev->window))) 
+	if((w = findwin(ev->window)))
 		handle(w, enter, ev);
 }
 
@@ -180,7 +181,7 @@ leavenotify(XCrossingEvent *ev) {
 	Window *w;
 
 	xtime = ev->time;
-	if((w = findwin(ev->window))) 
+	if((w = findwin(ev->window)))
 		handle(w, leave, ev);
 }
 
@@ -217,7 +218,7 @@ focusin(XFocusChangeEvent *ev) {
 		print_focus("focusin", nil, "<nil>");
 		disp.focus = nil;
 	}
-	else if((w = findwin(ev->window))) 
+	else if((w = findwin(ev->window)))
 		handle(w, focusin, ev);
 	else if(ev->mode == NotifyGrab) {
 		/* Some unmanaged window has grabbed focus */
@@ -247,7 +248,7 @@ focusout(XFocusChangeEvent *ev) {
 	if((ev->mode == NotifyGrab)
 	&& XCheckMaskEvent(display, KeyPressMask, &me))
 		dispatch_event(&me);
-	else if((w = findwin(ev->window))) 
+	else if((w = findwin(ev->window)))
 		handle(w, focusout, ev);
 }
 
@@ -256,7 +257,7 @@ expose(XExposeEvent *ev) {
 	Window *w;
 
 	if(ev->count == 0)
-		if((w = findwin(ev->window))) 
+		if((w = findwin(ev->window)))
 			handle(w, expose, ev);
 }
 
@@ -265,7 +266,7 @@ keypress(XKeyEvent *ev) {
 	Window *w;
 
 	xtime = ev->time;
-	if((w = findwin(ev->window))) 
+	if((w = findwin(ev->window)))
 		handle(w, kdown, ev);
 }
 
@@ -299,7 +300,7 @@ propertynotify(XPropertyEvent *ev) {
 	Window *w;
 
 	xtime = ev->time;
-	if((w = findwin(ev->window))) 
+	if((w = findwin(ev->window)))
 		handle(w, property, ev);
 }
 
@@ -308,7 +309,7 @@ mapnotify(XMapEvent *ev) {
 	Window *w;
 
 	ignoreenter = ev->serial;
-	if((w = findwin(ev->window))) 
+	if((w = findwin(ev->window)))
 		handle(w, map, ev);
 }
 

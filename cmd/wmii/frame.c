@@ -212,7 +212,8 @@ enter_event(Window *w, XCrossingEvent *e) {
 	f = c->sel;
 	if(disp.focus != c || selclient() != c) {
 		Dprint(DFocus, "enter_notify(f) => [%C]%s%s\n",
-		       f->client, f->client->name, ignoreenter == e->serial ? " (ignored)" : "");
+		       f->client, f->client->name,
+		       ignoreenter == e->serial ? " (ignored)" : "");
 		if(e->detail != NotifyInferior)
 		if(e->serial != ignoreenter && (f->area->floating || !f->collapsed))
 		if(!(c->w.ewmh.type & TypeSplash))
@@ -300,7 +301,7 @@ frame_gethints(Frame *f) {
 #define ADJ(PE, ME) \
 	if(c->fullscreen >= 0)                       \
 		return r;                            \
-                                                     \
+						     \
 	if(!floating) {                              \
 		r.min.x PE 1;                        \
 		r.min.y PE labelh(def.font);         \
@@ -344,7 +345,8 @@ frame_resize(Frame *f, Rectangle r) {
 	int collapsed, dx;
 
 	if(btassert("8 full", Dx(r) <= 0 || Dy(r) < 0
-		           || Dy(r) == 0 && (!f->area->max || resizing) && !f->collapsed)) {
+		           || Dy(r) == 0 && (!f->area->max || resizing)
+			      && !f->collapsed)) {
 		fprint(2, "Frame rect: %R\n", r);
 		r.max.x = min(r.min.x+1, r.max.x);
 		r.max.y = min(r.min.y+1, r.max.y);

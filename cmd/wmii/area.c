@@ -7,7 +7,7 @@
 #include "fns.h"
 
 Client*
-area_selclient(Area *a) {               
+area_selclient(Area *a) {
 	if(a && a->sel)
 		return a->sel->client;
 	return nil;

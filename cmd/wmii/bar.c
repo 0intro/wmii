@@ -136,7 +136,7 @@ bar_draw(WMScreen *s) {
 		foreach_bar(s, b) {
 			for(pb=&largest; *pb; pb=&pb[0]->smaller)
 				if(Dx(pb[0]->r) < Dx(b->r))
-					break; 
+					break;
 			b->smaller = *pb;
 			*pb = b;
 		}

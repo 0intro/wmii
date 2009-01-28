@@ -174,7 +174,9 @@ initdisplay(void) {
 	scr.black = BlackPixel(display, scr.screen);
 	
 	scr.root.w = RootWindow(display, scr.screen);
-	scr.root.r = Rect(0, 0, DisplayWidth(display, scr.screen), DisplayHeight(display, scr.screen));
+	scr.root.r = Rect(0, 0,
+			  DisplayWidth(display, scr.screen),
+			  DisplayHeight(display, scr.screen));
 	scr.rect = scr.root.r;
 	
 	scr.root.parent = &scr.root;
@@ -258,7 +260,9 @@ freeimage(Image *img) {
 
 /* Windows */
 Window*
-createwindow_visual(Window *parent, Rectangle r, int depth, Visual *vis, uint class, WinAttr *wa, int valmask) {
+createwindow_visual(Window *parent, Rectangle r,
+		    int depth, Visual *vis, uint class,
+		    WinAttr *wa, int valmask) {
 	Window *w;
 
 	assert(parent->type == WWindow);
@@ -562,7 +566,7 @@ drawstring(Image *dst, Font *font,
 
 	setgccol(dst, col);
 	if(font->set)
-		Xutf8DrawString(display, dst->w, 
+		Xutf8DrawString(display, dst->w,
 				font->set, dst->gc,
 				x, y,
 				buf, len);
@@ -740,8 +744,10 @@ delproperty(Window *w, char *prop) {
 }
 
 void
-changeproperty(Window *w, char *prop, char *type, int width, uchar data[], int n) {
-	XChangeProperty(display, w->w, xatom(prop), xatom(type), width, PropModeReplace, data, n);
+changeproperty(Window *w, char *prop, char *type,
+	       int width, uchar data[], int n) {
+	XChangeProperty(display, w->w, xatom(prop), xatom(type), width,
+			PropModeReplace, data, n);
 }
 
 void
@@ -794,7 +800,8 @@ freestringlist(char *list[]) {
 }
 
 static ulong
-getprop(Window *w, char *prop, char *type, Atom *actual, int *format, ulong offset, uchar **ret, ulong length) {
+getprop(Window *w, char *prop, char *type, Atom *actual, int *format,
+	ulong offset, uchar **ret, ulong length) {
 	Atom typea;
 	ulong n, extra;
 	int status;
@@ -817,14 +824,16 @@ getprop(Window *w, char *prop, char *type, Atom *actual, int *format, ulong offs
 }
 
 ulong
-getproperty(Window *w, char *prop, char *type, Atom *actual, ulong offset, uchar **ret, ulong length) {
+getproperty(Window *w, char *prop, char *type, Atom *actual,
+	    ulong offset, uchar **ret, ulong length) {
 	int format;
 
 	return getprop(w, prop, type, actual, &format, offset, ret, length);
 }
 
 ulong
-getprop_long(Window *w, char *prop, char *type, ulong offset, long **ret, ulong length) {
+getprop_long(Window *w, char *prop, char *type,
+	     ulong offset, long **ret, ulong length) {
 	Atom actual;
 	ulong n;
 	int format;
@@ -838,7 +847,8 @@ getprop_long(Window *w, char *prop, char *type, ulong offset, long **ret, ulong 
 }
 
 ulong
-getprop_ulong(Window *w, char *prop, char *type, ulong offset, ulong **ret, ulong length) {
+getprop_ulong(Window *w, char *prop, char *type,
+	      ulong offset, ulong **ret, ulong length) {
 	return getprop_long(w, prop, type, offset, (long**)ret, length);
 }
 
@@ -941,7 +951,8 @@ pointerscreen(void) {
 	uint ui;
 	int i;
 	
-	return XQueryPointer(display, scr.root.w, &win, &win, &i, &i, &pt.x, &pt.y, &ui);
+	return XQueryPointer(display, scr.root.w, &win, &win, &i, &i,
+			     &pt.x, &pt.y, &ui);
 }
 
 void
@@ -968,7 +979,8 @@ translate(Window *src, Window *dst, Point sp) {
 	Point pt;
 	XWindow w;
 
-	XTranslateCoordinates(display, src->w, dst->w, sp.x, sp.y, &pt.x, &pt.y, &w);
+	XTranslateCoordinates(display, src->w, dst->w, sp.x, sp.y,
+			      &pt.x, &pt.y, &w);
 	return pt;
 }
 

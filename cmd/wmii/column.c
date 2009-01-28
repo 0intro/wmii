@@ -504,7 +504,7 @@ comp_frame(const void *a, const void *b) {
 
 static void
 column_squeeze(Area *a) {
-	static Vector_ptr fvec; 
+	static Vector_ptr fvec;
 	Frame *f;
 	int surplus, osurplus, dy, i;
 
@@ -611,7 +611,8 @@ column_arrange(Area *a, bool dirty) {
 			f->collapsed = (f != a->sel);
 		break;
 	default:
-		fprint(2, "Dieing: %s: screen: %d a: %p mode: %x floating: %d\n", v->name, a->screen, a, a->mode, a->floating);
+		fprint(2, "Dieing: %s: screen: %d a: %p mode: %x floating: %d\n",
+		       v->name, a->screen, a, a->mode, a->floating);
 		die("not reached");
 		break;
 	}
