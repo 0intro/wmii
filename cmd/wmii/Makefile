@@ -8,7 +8,7 @@ TARG =	wmii
 HFILES=	dat.h fns.h
 
 LIB =	$(LIBIXP)
-LDFLAGS += -lm $(LIBX11) -lXext -lXrandr -lXinerama \
+LDFLAGS += -lm $(LIBX11) -lXext -lXrandr -lXrender -lXinerama \
 	   $(LIBICONV) -lregexp9 -lbio -lfmt -lutf
 
 CFLAGS += $(INCX11) $(INCICONV) -DVERSION=\"$(VERSION)\" \

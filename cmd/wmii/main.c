@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <locale.h>
 #include <pwd.h>
-#include <signal.h>
+#include <sys/signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include "fns.h"

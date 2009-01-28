@@ -111,9 +111,9 @@ view_init(View *v, int iscreen) {
 void
 view_destroy(View *v) {
 	View **vp;
-	Frame *f, *fn;
+	Frame *f;
 	View *tv;
-	Area *a, *an;
+	Area *a;
 	int s;
 
 	if(v->dead)
