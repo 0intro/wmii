@@ -208,6 +208,7 @@ run_menu(void)
 	XEvent ev;
 	int i, old, wide, high;
 
+	wide = 0;
 	high = labelh(font);
 	for(i = 0; i < numitems; i++)
 		wide = max(wide, textwidth(font, labels[i]));

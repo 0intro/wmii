@@ -478,7 +478,7 @@ frame_draw(Frame *f) {
 		border(img, insetrect(r, -1), 1, def.normcolor.bg);
 
 	/* Draw a border on borderless+titleless selected apps. */
-	if(f->area->floating && c->borderless && c->titleless && c == selclient())
+	if(f->area->floating && c->borderless && c->titleless && !c->fullscreen && c == selclient())
 		setborder(c->framewin, def.border, def.focuscolor.border);
 	else
 		setborder(c->framewin, 0, 0);
