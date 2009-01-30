@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 600
 #define IXP_P9_STRUCTS
 #define IXP_NO_P9_
 #include <fmt.h>

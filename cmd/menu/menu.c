@@ -1,6 +1,6 @@
 #include "dat.h"
 #include <ctype.h>
-#include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include "fns.h"
 

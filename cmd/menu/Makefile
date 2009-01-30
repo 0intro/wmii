@@ -8,7 +8,7 @@ TARG =	wimenu
 HFILES=	dat.h fns.h
 
 LIB =	$(LIBIXP)
-LDFLAGS += -lm $(LIBX11) -lXext -lXrandr -lXinerama \
+LDFLAGS += -lm $(LIBX11) -lXext -lXrandr -LXrender -lXinerama \
 	   -lregexp9 -lbio -lfmt -lutf
 CFLAGS += $(INCX11) -DVERSION=\"$(VERSION)\" \
 	  -DIXP_NEEDAPI=86
