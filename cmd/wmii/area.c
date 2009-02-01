@@ -204,6 +204,8 @@ area_moveto(Area *to, Frame *f) {
 		return;
 
 	from = f->area;
+	if (from == to)
+		return;
 
 	area_detach(f);
 
