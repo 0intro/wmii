@@ -59,8 +59,10 @@ column_setmode(Area *a, const char *mode) {
 					a->mode = Colstack;
 				else
 					a->mode = a->mode == Coldefault ? Colstack : Coldefault;
-			}else
+			}else {
+				free(orig);
 				return false;
+			}
 		}
 		t = s;
 		if(old)
