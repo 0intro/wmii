@@ -286,6 +286,7 @@ client_destroy(Client *c) {
 
 	none = nil;
 	client_setviews(c, &none);
+	client_unmap(c, WithdrawnState);
 	refree(&c->tagre);
 	refree(&c->tagvre);
 	free(c->retags);
@@ -442,10 +443,9 @@ client_map(Client *c) {
 
 void
 client_unmap(Client *c, int state) {
-	if(c->w.mapped) {
+	if(c->w.mapped)
 		unmapwin(&c->w);
-		client_setstate(c, state);
-	}
+	client_setstate(c, state);
 }
 
 int
