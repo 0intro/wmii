@@ -342,6 +342,8 @@ xsetsid(int argc, char *argv[]) {
 	}ARGEND;
 	if(av0 == nil)
 		av0 = argv[0];
+	if(av0 == nil)
+		return 1;
 
 	setsid();
 	execvp(av0, argv);
