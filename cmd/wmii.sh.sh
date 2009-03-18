@@ -55,7 +55,7 @@ _wi_script() {
 		for(k in d) {
 			printf "%s() {\n", k
 			printf " %s=$1; shift\n", tolower(k)
-			printf "case $%s in\n%s\nesac\n", tolower(k), d[k]
+			printf "case $%s in\n%s\n*) return 1\nesac\n", tolower(k), d[k]
 			printf "}\n"
 		}
 	}

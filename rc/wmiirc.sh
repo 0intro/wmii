@@ -149,7 +149,7 @@ events() {
 	Key $MODKEY-m
 		wmiir xwrite /tag/sel/ctl colmode sel stack+max
 	Key $MODKEY-a
-		Action $(wi_actions | wimenu -h "${hist}.actions" -n $histnum) &
+		action $(wi_actions | wimenu -h "${hist}.actions" -n $histnum) &
 	Key $MODKEY-p
 		eval wmiir setsid "$(wimenu -h "${hist}.progs" -n $histnum <$progsfile)" &
 	Key $MODKEY-t
@@ -220,7 +220,7 @@ wi_proglist $PATH >$progsfile &
 
 # Setup Tag Bar
 IFS="$wi_nl"
-wmiir rm $(wmiir ls /lbar | sed 's,^,/lbar/,')
+wmiir rm $(wmiir ls /lbar | sed 's,^,/lbar/,') >/dev/null
 seltag=$(wmiir read /tag/sel/ctl | sed 1q)
 unset IFS
 wi_tags | while read tag
