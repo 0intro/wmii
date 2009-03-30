@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include "fns.h"
 
-static Window*	barwin;
 static Handlers handlers;
 
 static int	ltwidth;

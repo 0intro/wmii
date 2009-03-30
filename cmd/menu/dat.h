@@ -57,6 +57,8 @@ EXTERN Visual*	render_visual;
 
 EXTERN IxpServer	srv;
 
+EXTERN Window*	barwin;
+
 EXTERN Item*	items;
 EXTERN Item*	matchfirst;
 EXTERN Item*	matchstart;

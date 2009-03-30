@@ -8,6 +8,7 @@
 #include <X11/Xproto.h>
 #include <locale.h>
 #include <strings.h>
+#include <unistd.h>
 #include <bio.h>
 #include "fns.h"
 #define link _link
@@ -251,7 +252,8 @@ main(int argc, char *argv[]) {
 	initdisplay();
 
 	xext_init();
-	menu_init();
+	if(!isatty(0))
+		menu_init();
 
 	if(address && *address)
 		client = ixp_mount(address);
@@ -293,6 +295,9 @@ main(int argc, char *argv[]) {
 			Bterm(inbuf);
 		}
 	}
+
+	if(barwin == nil)
+		menu_init();
 
 	init_screens();
 
