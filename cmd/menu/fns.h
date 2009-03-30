@@ -12,7 +12,7 @@ uint	flushevents(long, bool);
 void	history_dump(const char*, int);
 char*	history_search(int, char*, int);
 char*	histtext(Item*);
-void	init_screens(void);
+void	init_screens(int);
 void	menu_init(void);
 void	menu_show(void);
 void	xtime_kludge(void);
