@@ -229,7 +229,7 @@ xread(int argc, char *argv[]) {
 
 		if(count == -1)
 			fprint(2, "%s: cannot read file '%s': %r\n", argv0, file);
-	}while((file = ARGF()));
+	} while((file = ARGF()));
 
 	return 0;
 }

@@ -21,7 +21,7 @@ static char*	ectl;
 
 static void
 usage(void) {
-	fatal("usage: wimenu -i [-h <history>] [-a <address>]\n");
+	fatal("usage: wimenu -i [-h <history>] [-a <address>] [-p <prompt>]\n");
 }
 
 static int
@@ -214,6 +214,8 @@ main(int argc, char *argv[]) {
 	fmtinstall('r', errfmt);
 	address = getenv("WMII_ADDRESS");
 	histfile = nil;
+	prompt = nil;
+	promptw = 0;
 
 	find = strstr;
 	compare = strncmp;
@@ -229,6 +231,9 @@ main(int argc, char *argv[]) {
 		break;
 	case 'n':
 		ndump = strtol(EARGF(usage()), nil, 10);
+		break;
+	case 'p':
+		prompt = EARGF(usage());
 		break;
 	case 'i':
 		find = strcasestr;

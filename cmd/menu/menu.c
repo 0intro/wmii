@@ -117,20 +117,30 @@ next:
 
 static void
 menu_draw(void) {
-	Rectangle r, r2;
+	Rectangle r, rd, rp, r2;
 	CTuple *c;
 	Item *i;
 	int inputw, itemoff, end, pad, n;
 
 	r = barwin->r;
 	r = rectsetorigin(r, ZP);
-	r2 = r;
 
 	pad = (font->height & ~1);
-	inputw = min(Dx(r) / 3, maxwidth);
+
+	rd = r;
+	if (prompt) {
+		if (!promptw)
+			promptw = textwidth(font, prompt) + 2 * ltwidth;
+		rd.min.x += promptw;
+
+		rp = r;
+		rp.max.x = promptw;
+	}
+
+	inputw = min(Dx(rd) / 3, maxwidth);
 	inputw = max(inputw, textwidth(font, input.string)) + pad;
 	itemoff = inputw + 2 * ltwidth;
-	end = Dx(r) - ltwidth;
+	end = Dx(rd) - ltwidth;
 
 	fill(ibuf, r, cnorm.bg);
 
@@ -155,10 +165,11 @@ menu_draw(void) {
 	if(matchidx == nil)
 		matchidx = matchstart;
 
+	r2 = rd;
 	for(i=matchstart; i->string; i=i->next) {
-		r2.min.x = itemoff;
+		r2.min.x = promptw + itemoff;
 		itemoff  = itemoff + i->width + pad;
-		r2.max.x = min(itemoff, end);
+		r2.max.x = promptw + min(itemoff, end);
 		if(i != matchstart && itemoff > end)
 			break;
 
@@ -170,23 +181,26 @@ menu_draw(void) {
 			break;
 	}
 
-	r2 = r;
-	r2.min.x = inputw;
+	r2 = rd;
+	r2.min.x = promptw + inputw;
 	if(matchstart != matchfirst)
 		drawstring(ibuf, font, r2, West, "<", cnorm.fg);
 	if(matchend->next != matchfirst)
 		drawstring(ibuf, font, r2, East, ">", cnorm.fg);
-	r2 = r;
-	r2.max.x = inputw;
+	r2 = rd;
+	r2.max.x = promptw + inputw;
 	drawstring(ibuf, font, r2, West, input.string, cnorm.fg);
 
-	r2.min.x = textwidth_l(font, input.string, input.pos - input.string) + pad/2 - 1;
+	r2.min.x = promptw + textwidth_l(font, input.string, input.pos - input.string) + pad/2 - 1;
 	r2.max.x = r2.min.x + 2;
 	r2.min.y++;
 	r2.max.y--;
 	border(ibuf, r2, 1, cnorm.border);
 
-	border(ibuf, r, 1, cnorm.border);
+	if (prompt)
+		drawstring(ibuf, font, rp, West, prompt, cnorm.fg);
+
+	border(ibuf, rd, 1, cnorm.border);
 	copyimage(barwin, r, ibuf, ZP);
 }
 

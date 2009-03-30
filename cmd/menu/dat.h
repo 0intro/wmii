@@ -72,6 +72,9 @@ EXTERN int	result;
 EXTERN  char*	(*find)(const char*, const char*);
 EXTERN  int	(*compare)(const char*, const char*, size_t);
 
+EXTERN char*	prompt;
+EXTERN int	promptw;
+
 EXTERN char	buffer[8092];
 EXTERN char*	_buffer;
 
