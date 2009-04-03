@@ -1,4 +1,5 @@
 #!/usr/bin/env wmii9rc
+cd
 scriptname=$0
 oldpath=$path; path=($PLAN9/bin $path)
 . wmii.rc wmiirc # Include utility functions

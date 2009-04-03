@@ -996,7 +996,7 @@ client_setviews(Client *c, char **tags) {
 
 static int
 bsstrcmp(const void *a, const void *b) {
-	return strcmp((char*)a, (char*)b);
+	return strcmp((char*)a, *(char**)b);
 }
 
 static int
