@@ -8,8 +8,10 @@
 
 static void
 splice(Item *i) {
-	i->next->prev = i->prev;
-	i->prev->next = i->next;
+	if(i->next != nil) 
+		i->next->prev = i->prev;
+	if(i->prev != nil)
+		i->prev->next = i->next;
 }
 
 char*
