@@ -1,5 +1,5 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2008 Kris Maglione <maglione.k at Gmail>
+ * Copyright ©2006-2009 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #define EXTERN
@@ -16,7 +16,7 @@
 #include "fns.h"
 
 static const char
-	version[] = "wmii-"VERSION", ©2008 Kris Maglione\n";
+	version[] = "wmii-"VERSION", ©2009 Kris Maglione\n";
 
 static char*	address;
 static char*	ns_path;

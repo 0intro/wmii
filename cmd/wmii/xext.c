@@ -1,4 +1,4 @@
-/* Copyright ©2008 Kris Maglione <maglione.k at Gmail>
+/* Copyright ©2008-2009 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #define _X11_VISIBLE

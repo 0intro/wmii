@@ -84,7 +84,7 @@ void	client_prop(Client*, Atom);
 void	client_reparent(Client*, Window*, Point);
 void	client_resize(Client*, Rectangle);
 void	client_setcursor(Client*, Cursor);
-void	client_seturgent(Client*, bool, int);
+void	client_seturgent(Client*, int, int);
 void	client_setviews(Client*, char**);
 void	client_unmap(Client*, int state);
 Frame*	client_viewframe(Client *c, View *v);

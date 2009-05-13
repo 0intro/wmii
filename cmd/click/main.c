@@ -1,4 +1,4 @@
-/* Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2009 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #define EXTERN
@@ -9,7 +9,7 @@
 #include <string.h>
 #include "fns.h"
 
-static const char version[] = "click-"VERSION", ©2008 Kris Maglione\n";
+static const char version[] = "click-"VERSION", ©2009 Kris Maglione\n";
 
 static void
 usage(void) {

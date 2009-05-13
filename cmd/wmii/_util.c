@@ -1,4 +1,4 @@
-/* Copyright ©2008 Kris Maglione <maglione.k at Gmail>
+/* Copyright ©2008-2009 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -239,9 +239,8 @@ char**
 comm(int cols, char **toka, char **tokb) {
 	Vector_ptr vec;
 	char **ret;
-	int cmp, len;
+	int cmp;
 
-	len = 0;
 	vector_pinit(&vec);
 	while(*toka || *tokb) {
 		if(!*toka)
@@ -251,22 +250,16 @@ comm(int cols, char **toka, char **tokb) {
 		else
 			cmp = strcmp(*toka, *tokb);
 		if(cmp < 0) {
-			if(cols & CLeft) {
+			if(cols & CLeft)
 				vector_ppush(&vec, *toka);
-				len += strlen(*toka) + 1;
-			}
 			toka++;
 		}else if(cmp > 0) {
-			if(cols & CRight) {
+			if(cols & CRight)
 				vector_ppush(&vec, *tokb);
-				len += strlen(*tokb) + 1;
-			}
 			tokb++;
 		}else {
-			if(cols & CCenter) {
+			if(cols & CCenter)
 				vector_ppush(&vec, *toka);
-				len += strlen(*toka) + 1;
-			}
 			toka++;
 			tokb++;
 		}

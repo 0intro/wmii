@@ -272,6 +272,14 @@ kdown_event(Window *w, XKeyEvent *e) {
 		case XK_E:
 			menu_cmd(FORWARD, LINE);
 			return;
+		case XK_b:
+		case XK_B:
+			menu_cmd(BACKWARD, CHAR);
+			return;
+		case XK_f:
+		case XK_F:
+			menu_cmd(FORWARD, CHAR);
+			return;
 		case XK_n:
 		case XK_N:
 			menu_cmd(HIST, FORWARD);
@@ -324,6 +332,14 @@ kdown_event(Window *w, XKeyEvent *e) {
 			return;
 		case XK_G:
 			menu_cmd(CMPL_LAST, 0);
+			return;
+		case XK_b:
+		case XK_B:
+			menu_cmd(BACKWARD, WORD);
+			return;
+		case XK_f:
+		case XK_F:
+			menu_cmd(FORWARD, WORD);
 			return;
 		}
 	}

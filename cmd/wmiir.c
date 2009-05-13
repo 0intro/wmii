@@ -1,4 +1,4 @@
-/* Copyight ©2007-2008 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyight ©2007-2009 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #define IXP_NO_P9_
@@ -384,7 +384,7 @@ main(int argc, char *argv[]) {
 
 	ARGBEGIN{
 	case 'v':
-		print("%s-" VERSION ", ©2008 Kris Maglione\n", argv0);
+		print("%s-" VERSION ", ©2009 Kris Maglione\n", argv0);
 		exit(0);
 	case 'a':
 		address = EARGF(usage());

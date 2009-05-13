@@ -2,11 +2,12 @@ MKSHELL=rc
 path=$PLAN9/bin $path
 
 eps = wmii.eps
+calc = rc -c 'hoc -e $"*'
 
 epsbox = `{sed -n '/^%%BoundingBox:/{s/.*://p; q;}' $eps}
 iconwidth = 154
-iconscale = `{*=$epsbox; hoc -e $iconwidth/'('$3-' '$1')'}
-iconheight = `{*=$epsbox; hoc -e '('$4-' '$2')*'$iconscale}
+iconscale = `{*=$epsbox; $calc $iconwidth / '('$3 - $1')'}
+iconheight = `{*=$epsbox; $calc '('$4 - $2') *' $iconscale}
 
 %.png: %.eps
 	* = `{hoc -e'-('$epsbox')'}

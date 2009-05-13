@@ -51,7 +51,7 @@ echo $WMII_NORMCOLORS | wmiir create $noticebar
 
 # Event processing
 events() {
-	sed 's/^	//' <<'!'
+	cat <<'!'
 	# Events
 	Event CreateTag
 		echo "$WMII_NORMCOLORS" "$@" | wmiir create "/lbar/$@"
@@ -186,7 +186,7 @@ events() {
 		wmiir xwrite /tag/sel/ctl send sel up
 !
 	for i in 0 1 2 3 4 5 6 7 8 9; do
-		sed 's/^	//' <<!
+		cat <<'!'
 	Key $MODKEY-$i
 		wmiir xwrite /ctl view "$i"
 	Key $MODKEY-Shift-$i
@@ -195,7 +195,7 @@ events() {
 	done
 }
 wi_events <<!
-$(events)
+$(events | sed 's/^	\|^        //')
 $(local_events)
 !
 unset events local_events

@@ -1,4 +1,4 @@
-/* Copyright ©2006-2008 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2009 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #define IXP_NO_P9_
@@ -13,7 +13,7 @@
 #include "fns.h"
 #define link _link
 
-static const char version[] = "wimenu-"VERSION", ©2008 Kris Maglione\n";
+static const char version[] = "wimenu-"VERSION", ©2009 Kris Maglione\n";
 static IxpClient* client;
 static IxpCFid*	ctlfid;
 static Biobuf*	inbuf;

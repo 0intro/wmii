@@ -1,5 +1,5 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2008 Kris Maglione <maglione.k at Gmail>
+ * Copyright ©2006-2009 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -629,7 +629,7 @@ fullscreen(Client *c, int fullscreen) {
 }
 
 void
-client_seturgent(Client *c, bool urgent, int from) {
+client_seturgent(Client *c, int urgent, int from) {
 	XWMHints *wmh;
 	char *cfrom, *cnot;
 	Frame *f, *ff;

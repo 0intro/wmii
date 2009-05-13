@@ -1,4 +1,4 @@
-/* Copyright ©2006-2008 Kris Maglione <maglione.k at Gmail>
+/* Copyright ©2006-2009 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -212,8 +212,10 @@ dostat(Stat *s, IxpFileId *f) {
 	s->muid = user;
 }
 
-/* All lookups and directory organization should be performed through
- * lookup_file, mostly through the dirtabs[] tree. */
+/* 
+ * All lookups and directory organization should be performed through
+ * lookup_file, mostly through the dirtab[] tree.
+ */
 static IxpFileId*
 lookup_file(IxpFileId *parent, char *name)
 {
@@ -249,12 +251,15 @@ lookup_file(IxpFileId *parent, char *name)
 						file->p.client = c;
 						file->id = c->w.w;
 						file->index = c->w.w;
-					}if(name) goto LastItem;
+					}
+					if(name)
+						goto LastItem;
 				}
 				SET(id);
 				if(name) {
 					id = (uint)strtol(name, &name, 16);
-					if(*name) goto NextItem;
+					if(*name)
+						goto NextItem;
 				}
 				for(c=client; c; c=c->next) {
 					if(!name || c->w.w == id) {
@@ -264,7 +269,8 @@ lookup_file(IxpFileId *parent, char *name)
 						file->id = c->w.w;
 						file->index = c->w.w;
 						assert(file->tab.name);
-						if(name) goto LastItem;
+						if(name)
+							goto LastItem;
 					}
 				}
 				break;
@@ -273,7 +279,8 @@ lookup_file(IxpFileId *parent, char *name)
 					if(!name || !strcmp(name, debugtab[i])) {
 						push_file(debugtab[i]);
 						file->id = i;
-						if(name) goto LastItem;
+						if(name)
+							goto LastItem;
 					}
 				break;
 			case FsDTags:
@@ -283,7 +290,9 @@ lookup_file(IxpFileId *parent, char *name)
 						file->volatil = true;
 						file->p.view = selview;
 						file->id = selview->id;
-					}if(name) goto LastItem;
+					}
+					if(name)
+						goto LastItem;
 				}
 				for(v=view; v; v=v->next) {
 					if(!name || !strcmp(name, v->name)) {
@@ -291,7 +300,8 @@ lookup_file(IxpFileId *parent, char *name)
 						file->volatil = true;
 						file->p.view = v;
 						file->id = v->id;
-						if(name) goto LastItem;
+						if(name)
+							goto LastItem;
 					}
 				}
 				break;
@@ -302,7 +312,8 @@ lookup_file(IxpFileId *parent, char *name)
 						file->volatil = true;
 						file->p.bar = b;
 						file->id = b->id;
-						if(name) goto LastItem;
+						if(name)
+							goto LastItem;
 					}
 				}
 				break;
@@ -329,7 +340,8 @@ lookup_file(IxpFileId *parent, char *name)
 				file->p.rule = &def.tagrules;
 				break;
 			}
-			if(name) goto LastItem;
+			if(name)
+				goto LastItem;
 		}
 	NextItem:
 		continue;
@@ -466,7 +478,8 @@ fs_read(Ixp9Req *r) {
 				return;
 			}
 			r->ofcall.io.data = smprint("%C", f->p.client);
-			r->ofcall.io.count = strlen(r->ofcall.io.data); /* will die if nil */
+			/* Will (and should) die if result is nil */
+			r->ofcall.io.count = strlen(r->ofcall.io.data);
 			respond(r, nil);
 			return;
 		case FsFTindex:
@@ -483,10 +496,7 @@ fs_read(Ixp9Req *r) {
 			return;
 		}
 	}
-	/*
-	 * This is an assert because this should this should not be called if
-	 * the file is not open for reading.
-	 */
+	/* This should not be called if the file is not open for reading. */
 	die("Read called on an unreadable file");
 }
 
@@ -566,9 +576,7 @@ fs_write(Ixp9Req *r) {
 		return;
 	}
 	/*
-	 * This is an assert because this function should not be called if
-	 * the file is not open for writing.
-	 */
+	/* This should not be called if the file is not open for writing. */
 	die("Write called on an unwritable file");
 }
 

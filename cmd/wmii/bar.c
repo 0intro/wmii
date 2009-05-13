@@ -1,4 +1,4 @@
-/* Copyright ©2006-2008 Kris Maglione <maglione.k at Gmail>
+/* Copyright ©2006-2009 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "dat.h"
