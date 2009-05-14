@@ -1,6 +1,8 @@
 syntax: regexp
-(^|/)\.((.*\.)?swp|depend|hgignore)$
+(^|/)\.((.*\.)?sw.|depend|hgignore)$
 (^|/)(tags|mkfile)$
-\.([oOa]|o_pic|so)$
-^config\.local\.mk$
-
+\.([oOa]|o_pic|so|orig|bak)$
+^cmd/(stfo|osd|wiwarp)(/|$)
+syntax: glob
+config.local.mk
+cmd/menu/bindings.c

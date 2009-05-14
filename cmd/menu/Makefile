@@ -4,6 +4,11 @@ include $(ROOT)/mk/wmii.mk
 
 main.c: $(ROOT)/mk/wmii.mk
 
+bindings.c: keys.txt Makefile
+	( echo "char binding_spec[] = "; \
+	  sed 's/.*/	"&\\n"/' keys.txt; \
+	  echo "	;" ) >bindings.c
+
 TARG =	wimenu
 HFILES=	dat.h fns.h
 
@@ -17,11 +22,14 @@ OBJ =	main	\
 	history	\
 	event	\
 	menu	\
+	keys	\
+	bindings \
 	../wmii/geom	\
 	../wmii/map	\
 	../wmii/printevent	\
 	../wmii/x11	\
 	../wmii/xext	\
+	../clientutil	\
 	../util
 
 include $(ROOT)/mk/one.mk

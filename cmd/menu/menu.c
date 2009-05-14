@@ -7,7 +7,6 @@
 static Handlers handlers;
 
 static int	ltwidth;
-static int	numlock;
 
 static void	menu_draw(void);
 
@@ -232,12 +231,15 @@ menu_show(void) {
 
 static void
 kdown_event(Window *w, XKeyEvent *e) {
+	char **action, **p;
+	char *key;
 	char buf[32];
 	int num;
 	KeySym ksym;
 
 	buf[0] = 0;
 	num = XLookupString(e, buf, sizeof buf, &ksym, 0);
+	key = XKeysymToString(ksym);
 	if(IsKeypadKey(ksym))
 		if(ksym == XK_KP_Enter)
 			ksym = XK_Return;
@@ -251,145 +253,60 @@ kdown_event(Window *w, XKeyEvent *e) {
 	|| IsPFKey(ksym))
 		return;
 
-	if(e->state & ControlMask) {
-		switch (ksym) {
-		default:
-			return;
-		case XK_bracketleft: /* Esc */
-			menu_cmd(REJECT, 0);
-			return;
-		case XK_j:
-		case XK_J:
-		case XK_m:
-		case XK_M:
-			menu_cmd(ACCEPT, e->state&ShiftMask);
-			return;
-		case XK_a:
-		case XK_A:
-			menu_cmd(BACKWARD, LINE);
-			return;
-		case XK_e:
-		case XK_E:
-			menu_cmd(FORWARD, LINE);
-			return;
-		case XK_b:
-		case XK_B:
-			menu_cmd(BACKWARD, CHAR);
-			return;
-		case XK_f:
-		case XK_F:
-			menu_cmd(FORWARD, CHAR);
-			return;
-		case XK_n:
-		case XK_N:
-			menu_cmd(HIST, FORWARD);
-			return;
-		case XK_p:
-		case XK_P:
-			menu_cmd(HIST, BACKWARD);
-			return;
-		case XK_h:
-		case XK_H:
-			menu_cmd(KILL, CHAR);
-			return;
-		case XK_BackSpace:
-		case XK_w:
-		case XK_W:
-			menu_cmd(KILL, WORD);
-			return;
-		case XK_u:
-		case XK_U:
-			menu_cmd(KILL, LINE);
-			return;
-		case XK_i: /* Tab */
-		case XK_I:
-			if(e->state & ShiftMask)
-				menu_cmd(CMPL_PREV, 0);
-			else
-				menu_cmd(CMPL_NEXT, 0);
-			return;
-		}
-	}
-	/* Alt-<Key> - Vim */
-	if((e->state & ~(numlock | LockMask)) & Mod1Mask) {
-		switch(ksym) {
-		default:
-			return;
-		case XK_h:
-			menu_cmd(CMPL_PREV, 0);
-			return;
-		case XK_l:
-			menu_cmd(CMPL_NEXT, 0);
-			return;
-		case XK_k:
-			menu_cmd(CMPL_PREV_PAGE, 0);
-			return;
-		case XK_j:
-			menu_cmd(CMPL_NEXT_PAGE, 0);
-			return;
-		case XK_g:
-			menu_cmd(CMPL_FIRST, 0);
-			return;
-		case XK_G:
-			menu_cmd(CMPL_LAST, 0);
-			return;
-		case XK_b:
-		case XK_B:
-			menu_cmd(BACKWARD, WORD);
-			return;
-		case XK_f:
-		case XK_F:
-			menu_cmd(FORWARD, WORD);
-			return;
-		}
-	}
-	switch(ksym) {
-	default:
+	action = find_key(key, e->state);
+	if(action == nil || action[0] == nil) {
 		if(num && !iscntrl(buf[0])) {
 			caret_insert(buf, false);
 			update_filter();
 			menu_draw();
 		}
-		break;
-	case XK_Tab:
-		if(e->state & ShiftMask)
-			menu_cmd(CMPL_PREV, 0);
-		else
-			menu_cmd(CMPL_NEXT, 0);
-		return;
-	case XK_Return:
-		menu_cmd(ACCEPT, e->state & ShiftMask);
-		return;
-	case XK_Escape:
-		menu_cmd(REJECT, 0);
-		return;
-	case XK_BackSpace:
-		menu_cmd(KILL, CHAR);
-		return;
-	case XK_Left:
-		menu_cmd(BACKWARD, CHAR);
-		return;
-	case XK_Right:
-		menu_cmd(FORWARD, CHAR);
-		return;
-	case XK_Up:
-		menu_cmd(HIST, BACKWARD);
-		return;
-	case XK_Down:
-		menu_cmd(HIST, FORWARD);
-		return;
-	case XK_Home:
-		menu_cmd(CMPL_FIRST, 0);
-		return;
-	case XK_End:
-		menu_cmd(CMPL_LAST, 0);
-		return;
-	case XK_Prior:
-		menu_cmd(CMPL_PREV_PAGE, 0);
-		return;
-	case XK_Next:
-		menu_cmd(CMPL_NEXT_PAGE, 0);
-		return;
+	}
+	else {
+		long mask = 0;
+#		define have(val) !!(mask & (1 << val))
+		for(p=action+1; *p; p++)
+			mask |= 1 << getsym(*p);
+		int amount = (
+			have(LCHAR) ? CHAR :
+			have(LWORD) ? WORD :
+			have(LLINE) ? LINE :
+			-1);
+		switch(getsym(action[0])) {
+		case LACCEPT:
+			menu_cmd(ACCEPT, have(LLITERAL));
+			break;
+		case LBACKWARD:
+			menu_cmd(BACKWARD, amount);
+			break;
+		case LCOMPLETE:
+			amount = CMPL_NEXT;
+			if(have(LNEXT))
+				amount = CMPL_NEXT;
+			else if(have(LPREV))
+				amount = CMPL_PREV;
+			else if(have(LNEXTPAGE))
+				amount = CMPL_NEXT_PAGE;
+			else if(have(LPREVPAGE))
+				amount = CMPL_PREV_PAGE;
+			else if(have(LFIRST))
+				amount = CMPL_FIRST;
+			else if(have(LLAST))
+				amount = CMPL_LAST;
+			menu_cmd(amount, 0);
+			break;
+		case LFORWARD:
+			menu_cmd(FORWARD, amount);
+			break;
+		case LHISTORY:
+			menu_cmd(HIST, have(LBACKWARD) ? BACKWARD : FORWARD);
+			break;
+		case LKILL:
+			menu_cmd(KILL, amount);
+			break;
+		case LREJECT:
+			menu_cmd(REJECT, 0);
+			break;
+		}
 	}
 }
 

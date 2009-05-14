@@ -10,15 +10,13 @@
 #include <strings.h>
 #include <unistd.h>
 #include <bio.h>
+#include <clientutil.h>
 #include "fns.h"
 #define link _link
 
 static const char version[] = "wimenu-"VERSION", ©2009 Kris Maglione\n";
-static IxpClient* client;
-static IxpCFid*	ctlfid;
 static Biobuf*	inbuf;
-static char 	ctl[1024];
-static char*	ectl;
+static bool	alwaysprint;
 
 static void
 usage(void) {
@@ -49,27 +47,6 @@ void dprint(long mask, char *fmt, ...) {
 	va_start(ap, fmt);
 	vfprint(2, fmt, ap);
 	va_end(ap);
-}
-
-static char*
-readctl(char *key) {
-	char *s, *p;
-	int nkey, n;
-
-	nkey = strlen(key);
-	p = ctl - 1;
-	do {
-		p++;
-		if(!strncmp(p, key, nkey)) {
-			p += nkey;
-			s = strchr(p, '\n');
-			n = (s ? s : ectl) - p;
-			s = freelater(emalloc(n + 1));
-			s[n] = '\0';
-			return strncpy(s, p, n);
-		}
-	} while((p = strchr(p, '\n')));
-	return "";
 }
 
 static void
@@ -149,6 +126,11 @@ update_filter(void) {
 	 * has been truncated.
 	 */
 	matchfirst = matchstart = matchidx = filter_list(items, input.string);
+	if(alwaysprint) {
+		write(1, input.string, input.pos - input.string);
+		write(1, "", 1);
+		write(1, input.pos, input.end - input.pos + 1);
+	}
 }
 
 /*
@@ -182,7 +164,7 @@ preselect(IxpServer *s) {
 	check_x_event(nil);
 }
 
-#define SCREEN_WITH_POINTER -1
+enum { PointerScreen = -1 };
 
 void
 init_screens(int screen_hint) {
@@ -191,11 +173,10 @@ init_screens(int screen_hint) {
 	int i, n;
 
 	rects = xinerama_screens(&n);
-	if (screen_hint >= 0 && screen_hint < n) {
-		/* we were given a valid screen index, use that */
+	if (screen_hint >= 0 && screen_hint < n)
+		/* We were given a valid screen index, use that. */
 		i = screen_hint;
-
-	} else {
+	else {
 		/* Pick the screen with the pointer, for now. Later,
 		 * try for the screen with the focused window first.
 		 */
@@ -215,6 +196,7 @@ main(int argc, char *argv[]) {
 	Item *item;
 	char *address;
 	char *histfile;
+	char *keyfile;
 	int i;
 	long ndump;
 	int screen;
@@ -223,9 +205,8 @@ main(int argc, char *argv[]) {
 	fmtinstall('r', errfmt);
 	address = getenv("WMII_ADDRESS");
 	histfile = nil;
-	prompt = nil;
-	promptw = 0;
-	screen = SCREEN_WITH_POINTER;
+	keyfile = nil;
+	screen = PointerScreen;
 
 	find = strstr;
 	compare = strncmp;
@@ -236,8 +217,14 @@ main(int argc, char *argv[]) {
 	case 'a':
 		address = EARGF(usage());
 		break;
+	case 'c':
+		alwaysprint = true;
+		break;
 	case 'h':
 		histfile = EARGF(usage());
+		break;
+	case 'k':
+		keyfile = EARGF(usage());
 		break;
 	case 'n':
 		ndump = strtol(EARGF(usage()), nil, 10);
@@ -267,16 +254,7 @@ main(int argc, char *argv[]) {
 	if(!isatty(0))
 		menu_init();
 
-	if(address && *address)
-		client = ixp_mount(address);
-	else
-		client = ixp_nsmount("wmii");
-	if(client == nil)
-		fatal("can't mount: %r\n");
-
-	ctlfid = ixp_open(client, "ctl", OREAD);
-	i = ixp_read(ctlfid, ctl, 1023);
-	ectl = ctl + i;
+	client_init(address);
 
 	srv.preselect = preselect;
 	ixp_listen(&srv, ConnectionNumber(display), nil, check_x_event, end);
@@ -292,6 +270,13 @@ main(int argc, char *argv[]) {
 	items = populate_list(inbuf, false);
 	caret_insert("", true);
 	update_filter();
+
+	parse_keys(binding_spec);
+	if(keyfile) {
+		i = open(keyfile, O_RDONLY);
+		if(read(i, buffer, sizeof(buffer)) > 0)
+			parse_keys(buffer);
+	}
 
 	Bterm(inbuf);
 	histidx = &hist;

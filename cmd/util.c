@@ -177,6 +177,24 @@ tokenize(char *res[], uint reslen, char *str, char delim) {
 	return i;
 }
 
+uint
+stokenize(char *res[], uint reslen, char *str, char *delim) {
+	char *s;
+	uint i;
+
+	i = 0;
+	s = str;
+	while(i < reslen && *s) {
+		while(strchr(delim, *s))
+			*(s++) = '\0';
+		if(*s)
+			res[i++] = s;
+		while(*s && !strchr(delim, *s))
+			s++;
+	}
+	return i;
+}
+
 int
 max(int a, int b) {
 	if(a > b)

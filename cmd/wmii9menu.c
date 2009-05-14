@@ -44,6 +44,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <clientutil.h>
 #include <util.h>
 #include <x11.h>
 
@@ -55,36 +56,10 @@ static CTuple	cnorm;
 static CTuple	csel;
 static Font*	font;
 
-static IxpClient* client;
-static IxpCFid*	ctlfid;
-static char 	ctl[1024];
-static char*	ectl;
-
 static int	wborder;
 
 char	buffer[8092];
 char*	_buffer;
-
-static char*
-readctl(char *key) {
-	char *s, *p;
-	int nkey, n;
-
-	nkey = strlen(key);
-	p = ctl - 1;
-	do {
-		p++;
-		if(!strncmp(p, key, nkey)) {
-			p += nkey;
-			s = strchr(p, '\n');
-			n = (s ? s : ectl) - p;
-			s = freelater(emalloc(n + 1));
-			s[n] = '\0';
-			return strncpy(s, p, n);
-		}
-	} while((p = strchr(p, '\n')));
-	return "";
-}
 
 /* for XSetWMProperties to use */
 int g_argc;
@@ -154,16 +129,7 @@ main(int argc, char **argv)
 			cur = i;
 	}
 
-	if(address && *address)
-		client = ixp_mount(address);
-	else
-		client = ixp_nsmount("wmii");
-	if(client == nil)
-		fatal("can't mount: %r\n");
-
-	ctlfid = ixp_open(client, "ctl", OREAD);
-	i = ixp_read(ctlfid, ctl, 1023);
-	ectl = ctl + i;
+	client_init(address);
 
 	wborder = strtol(readctl("border "), nil, 10);
 	loadcolor(&cnorm, readctl("normcolors "));

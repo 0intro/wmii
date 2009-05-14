@@ -35,7 +35,7 @@ wmiir.O: $(OWMIIR)
 wmii/x11.o wmii/map.o: dall
 	true
 
-O9MENU=wmii9menu.o wmii/x11.o wmii/map.o $(OFILES) $(LIBIXP)
+O9MENU=wmii9menu.o clientutil.o wmii/x11.o wmii/map.o $(OFILES) $(LIBIXP)
 wmii9menu.O: $(O9MENU)
 	$(LINK) $@ $(O9MENU) $(LIBX11) -lXext -lbio
 

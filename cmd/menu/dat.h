@@ -26,6 +26,26 @@ enum {
 	CARET_LAST,
 };
 
+enum {
+	LACCEPT,
+	LBACKWARD,
+	LCHAR,
+	LCOMPLETE,
+	LFIRST,
+	LFORWARD,
+	LHISTORY,
+	LKILL,
+	LLAST,
+	LLINE,
+	LLITERAL,
+	LNEXT,
+	LNEXTPAGE,
+	LPREV,
+	LPREVPAGE,
+	LREJECT,
+	LWORD,
+};
+
 typedef struct Item	Item;
 
 struct Item {
@@ -45,6 +65,10 @@ EXTERN struct {
 	int	len;
 	int	size;
 } input;
+
+extern char	binding_spec[];
+
+EXTERN int	numlock;
 
 EXTERN long	xtime;
 EXTERN Image*	ibuf;

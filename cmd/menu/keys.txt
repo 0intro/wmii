@@ -1,0 +1,49 @@
+Control-j Accept
+Control-m Accept
+Return    Accept
+Control-Shift-j Accept literal
+Control-Shift-m Accept literal
+Shift-Return    Accept literal
+
+Escape    Reject
+Control-[ Reject
+
+Left      Backward char
+Control-b Backward char
+Right     Forward  char
+Control-f Forward  char
+
+Mod1-b    Backward word
+Mod1-f    Forward  word
+
+Control-a Backward line
+Control-e Forward  line
+
+Control-p History backward
+Up        History backward
+Control-n History forward
+Down      History forward
+
+BackSpace         Kill char
+Control-h         Kill char
+Control-Backspace Kill word
+Control-w         Kill word
+Control-u         Kill line
+
+Tab          Complete next
+Control-i    Complete next
+Mod1-l       Complete next
+
+Shift-Tab    Complete prev
+Control-Shift-i Complete prev
+Mod1-h       Complete prev
+
+Prior        Complete prevpage
+Mod1-k       Complete prevpage
+Next         Complete nextpage
+Mod1-j       Complete nextpage
+Home         Complete first
+Mod1-g       Complete first
+End          Complete last
+Mod1-Shift-g Complete last
+

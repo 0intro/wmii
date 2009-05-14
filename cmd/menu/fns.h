@@ -18,6 +18,11 @@ void	menu_show(void);
 void	xtime_kludge(void);
 void	update_filter(void);
 
+/* keys.c */
+void	parse_keys(char*);
+char**	find_key(char*, long);
+int	getsym(char*);
+
 /* geom.c */
 Align	get_sticky(Rectangle src, Rectangle dst);
 Cursor	quad_cursor(Align);

@@ -79,8 +79,7 @@ caret_find(int dir, int type) {
 			return end;
 		}
 	}
-	die("not reached");
-	return nil; /* shut up ken */
+	return input.pos;
 }
 
 void
@@ -114,6 +113,8 @@ void
 caret_insert(char *s, bool clear) {
 	int pos, end, len, size;
 
+	if(s == nil)
+		return;
 	if(clear) {
 		input.pos = input.string;
 		input.end = input.string;
