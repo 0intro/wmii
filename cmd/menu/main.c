@@ -194,9 +194,10 @@ init_screens(int screen_hint) {
 int
 main(int argc, char *argv[]) {
 	Item *item;
-	char *address;
-	char *histfile;
-	char *keyfile;
+	static char *address;
+	static char *histfile;
+	static char *keyfile;
+	static bool nokeys;
 	int i;
 	long ndump;
 	int screen;
@@ -204,8 +205,6 @@ main(int argc, char *argv[]) {
 	quotefmtinstall();
 	fmtinstall('r', errfmt);
 	address = getenv("WMII_ADDRESS");
-	histfile = nil;
-	keyfile = nil;
 	screen = PointerScreen;
 
 	find = strstr;
@@ -223,6 +222,8 @@ main(int argc, char *argv[]) {
 	case 'h':
 		histfile = EARGF(usage());
 		break;
+	case 'K':
+		nokeys = true;
 	case 'k':
 		keyfile = EARGF(usage());
 		break;
@@ -271,7 +272,8 @@ main(int argc, char *argv[]) {
 	caret_insert("", true);
 	update_filter();
 
-	parse_keys(binding_spec);
+	if(!nokeys)
+		parse_keys(binding_spec);
 	if(keyfile) {
 		i = open(keyfile, O_RDONLY);
 		if(read(i, buffer, sizeof(buffer)) > 0)
