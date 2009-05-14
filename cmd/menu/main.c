@@ -222,6 +222,10 @@ main(int argc, char *argv[]) {
 	case 'h':
 		histfile = EARGF(usage());
 		break;
+	case 'i':
+		find = strcasestr;
+		compare = strncasecmp;
+		break;
 	case 'K':
 		nokeys = true;
 	case 'k':
@@ -235,10 +239,6 @@ main(int argc, char *argv[]) {
 		break;
 	case 's':
 		screen = strtol(EARGF(usage()), nil, 10);
-		break;
-	case 'i':
-		find = strcasestr;
-		compare = strncasecmp;
 		break;
 	default:
 		usage();

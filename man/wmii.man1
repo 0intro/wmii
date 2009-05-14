@@ -2,34 +2,7 @@ WMII
 
 Dec, 2008
 
-%!target: man
-%!encoding: UTF-8
-
-% Special formatting for certain constructs. They, unfortunately
-% have to be post-processed. The _italic_ hack is necessary for
-% italicising things like /_foo_/, which txt2tags will ignore.
-% The others need to work in ``` lines.
-%!postproc(man): (<.*?>)    \\fI\1\\fR
-%!postproc(man): _(.*?)_    \\fI\1\\fR
-%!postproc(man): `(.*?)`    \\fB\1\\fR
-%!postproc(man): (\[.*?\])  \\fI\1\\fR
-%!postproc(man): \+$        \n.P
-
-%!postproc(html): (<.*?>)  (:arg \1:)
-%!postproc(html): _(.*?)_  (:emph \1:)
-%!postproc(html): `(.*?)`  (:code \1:)
-%!postproc(html): \+$      <br/>
-
-%!postproc(html) \(:(\w+)\s*(.*):\) <span class="\1">\2</span>
-
-% Well, it seems that txt2tags isn't particularly well suited
-% to troff output. These two hacks make multi-level definition
-% lists possible.
-%!postproc(man): ^\s*>>$ .RS 8
-%!postproc(man): ^\s*<<$ .RS -8
-
-%!postproc(html): ^\s*>>$
-%!postproc(html): ^\s*<<$
+%!includeconf: header.t2t
 
 = NAME =
 
