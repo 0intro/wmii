@@ -473,19 +473,13 @@ fs_read(Ixp9Req *r) {
 			respond(r, nil);
 			return;
 		case FsFCctl:
-			if(r->ifcall.io.offset) {
-				respond(r, nil);
-				return;
-			}
-			r->ofcall.io.data = smprint("%C", f->p.client);
-			/* Will (and should) die if result is nil */
-			r->ofcall.io.count = strlen(r->ofcall.io.data);
+			buf = readctl_client(f->p.client);
+			ixp_srv_readbuf(r, buf, strlen(buf));
 			respond(r, nil);
 			return;
 		case FsFTindex:
 			buf = view_index(f->p.view);
-			n = strlen(buf);
-			ixp_srv_readbuf(r, buf, n);
+			ixp_srv_readbuf(r, buf, strlen(buf));
 			respond(r, nil);
 			return;
 		case FsFTctl:

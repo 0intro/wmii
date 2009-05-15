@@ -24,7 +24,7 @@ Up        History backward
 Control-n History forward
 Down      History forward
 
-BackSpace         Kill char
+Backspace         Kill char
 Control-h         Kill char
 Control-Backspace Kill word
 Control-w         Kill word

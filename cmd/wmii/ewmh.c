@@ -323,7 +323,7 @@ ewmh_setstate(Client *c, Atom state, int action) {
 		return;
 
 	if(state == STATE("FULLSCREEN"))
-		fullscreen(c, action);
+		fullscreen(c, action, -1);
 	else
 	if(state == STATE("DEMANDS_ATTENTION"))
 		client_seturgent(c, action, UrgClient);

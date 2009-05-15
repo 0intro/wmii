@@ -204,7 +204,7 @@ client_manage(Client *c) {
 	if(Dx(c->r) == Dx(screen->r))
 	if(Dy(c->r) == Dy(screen->r))
 	if(c->w.ewmh.type == 0)
-		fullscreen(c, true);
+		fullscreen(c, true, -1);
 
 	tags = getprop_string(&c->w, "_WMII_TAGS");
 
@@ -590,7 +590,7 @@ client_kill(Client *c, bool nice) {
 }
 
 void
-fullscreen(Client *c, int fullscreen) {
+fullscreen(Client *c, int fullscreen, long screen) {
 	Frame *f;
 	bool wassel;
 	
@@ -620,7 +620,7 @@ fullscreen(Client *c, int fullscreen) {
 			}
 		}
 	else {
-		c->fullscreen = ownerscreen(c->r);
+		c->fullscreen = screen >= 0 ? screen : ownerscreen(c->r);
 		for(f=c->frame; f; f=f->cnext)
 			f->oldarea = -1;
 		if((f = c->sel))
