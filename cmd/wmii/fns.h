@@ -201,7 +201,6 @@ Rectangle	rect_intersection(Rectangle, Rectangle);
 /* key.c */
 void	init_lock_keys(void);
 void	kpress(XWindow, ulong mod, KeyCode);
-ulong	str2modmask(const char*);
 void	update_keys(void);
 
 /* main.c */

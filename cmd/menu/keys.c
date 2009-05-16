@@ -5,7 +5,6 @@
 #include "fns.h"
 
 typedef struct Key Key;
-typedef struct KMask KMask;
 
 struct Key {
 	Key*	next;
@@ -15,19 +14,6 @@ struct Key {
 };
 
 static Key* bindings;
-
-static struct KMask {
-	int		mask;
-	const char*	name;
-} masks[] = {
-	{ControlMask, "Control"},
-	{Mod1Mask,    "Mod1"},
-	{Mod2Mask,    "Mod2"},
-	{Mod3Mask,    "Mod3"},
-	{Mod4Mask,    "Mod4"},
-	{ShiftMask,   "Shift"},
-	{0,}
-};
 
 static void
 init_numlock(void) {
@@ -58,12 +44,10 @@ void
 parse_keys(char *spec) {
 	static char *lines[1024];
 	static char *words[16];
-	static char *keys[16];
 	Key *k;
-	KMask *m;
 	char *p, *line;
-	long mask;
-	int i, j, nlines, nwords, nkeys;
+	int mask;
+	int i, nlines, nwords;
 
 	if(!numlock)
 		init_numlock();
@@ -74,24 +58,14 @@ parse_keys(char *spec) {
 		p = strchr(line, '#');
 		if(p)
 			*p = '\0';
+
 		nwords = stokenize(words, nelem(words) - 1, line, " \t");
 		words[nwords] = nil;
 		if(!words[0])
 			continue;
-		mask = 0;
-		nkeys = tokenize(keys, nelem(keys), words[0], '-');
-		for(j=0; j < nkeys; j++) {
-			for(m=masks; m->mask; m++)
-				if(!strcasecmp(m->name, keys[j])) {
-					mask |= m->mask;
-					goto next;
-				}
-			break;
-		next: continue;
-		}
-		if(j == nkeys - 1) {
+		if(parsekey(words[0], &mask, &p)) {
 			k = emallocz(sizeof *k);
-			k->key    = keys[j];
+			k->key    = p;
 			k->mask   = mask;
 			k->action = strlistdup(words + 1);
 			k->next   = bindings;

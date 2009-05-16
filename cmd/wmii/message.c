@@ -462,6 +462,7 @@ message_root(void *p, IxpMsg *m) {
 	Font *fn;
 	char *s, *ret;
 	ulong n;
+	int i;
 
 	USED(p);
 	ret = nil;
@@ -518,13 +519,11 @@ message_root(void *p, IxpMsg *m) {
 		break;
 	case LGRABMOD:
 		s = msg_getword(m);
-		n = str2modmask(s);
-
-		if((n & (Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask)) == 0)
+		if(!parsekey(s, &i, nil) || i == 0)
 			return Ebadvalue;
 
 		utflcpy(def.grabmod, s, sizeof def.grabmod);
-		def.mod = n;
+		def.mod = i;
 		break;
 	case LINCMODE:
 		if(!setdef(&def.incmode, msg_getword(m), incmodetab, nelem(incmodetab)))

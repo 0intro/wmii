@@ -8,22 +8,19 @@
 
 void
 init_lock_keys(void) {
+	static int masks[] = {
+		ShiftMask, LockMask, ControlMask, Mod1Mask, Mod2Mask,
+		Mod3Mask, Mod4Mask, Mod5Mask
+	};
 	XModifierKeymap *modmap;
 	KeyCode numlock;
-	static int masks[] = {
-		ShiftMask, LockMask, ControlMask,
-		Mod1Mask, Mod2Mask, Mod3Mask,
-		Mod4Mask, Mod5Mask
-	};
-	int i;
+	int i, max;
 
 	numlock_mask = 0;
 	modmap = XGetModifierMapping(display);
 	numlock = keycode("Num_Lock");
 	if(numlock)
 	if(modmap && modmap->max_keypermod > 0) {
-		int max;
-		
 		max = nelem(masks) * modmap->max_keypermod;
 		for(i = 0; i < max; i++)
 			if(modmap->modifiermap[i] == numlock)
@@ -31,27 +28,6 @@ init_lock_keys(void) {
 	}
 	XFreeModifiermap(modmap);
 	valid_mask = 255 & ~(numlock_mask | LockMask);
-}
-
-ulong
-str2modmask(const char *val) {
-	ulong mod = 0;
-
-	if (strstr(val, "Shift"))
-		mod |= ShiftMask;
-	if (strstr(val, "Control"))
-		mod |= ControlMask;
-	if (strstr(val, "Mod1"))
-		mod |= Mod1Mask;
-	if (strstr(val, "Mod2"))
-		mod |= Mod2Mask;
-	if (strstr(val, "Mod3"))
-		mod |= Mod3Mask;
-	if (strstr(val, "Mod4"))
-		mod |= Mod4Mask;
-	if (strstr(val, "Mod5"))
-		mod |= Mod5Mask;
-	return mod;
 }
 
 static void
@@ -73,21 +49,21 @@ _grab(XWindow w, int keycode, uint mod) {
 static void
 grabkey(Key *k) {
 	_grab(scr.root.w, k->key, k->mod);
+	_grab(scr.root.w, k->key, k->mod | LockMask);
 	if(numlock_mask) {
 		_grab(scr.root.w, k->key, k->mod | numlock_mask);
 		_grab(scr.root.w, k->key, k->mod | numlock_mask | LockMask);
 	}
-	/* sync(); */
 }
 
 static void
 ungrabkey(Key *k) {
 	XUngrabKey(display, k->key, k->mod, scr.root.w);
+	XUngrabKey(display, k->key, k->mod | LockMask, scr.root.w);
 	if(numlock_mask) {
 		XUngrabKey(display, k->key, k->mod | numlock_mask, scr.root.w);
 		XUngrabKey(display, k->key, k->mod | numlock_mask | LockMask, scr.root.w);
 	}
-	/* sync(); */
 }
 
 static Key *
@@ -102,12 +78,13 @@ name2key(const char *name) {
 
 static Key*
 getkey(const char *name) {
+	Key *k, *r;
 	char buf[128];
 	char *seq[8];
 	char *kstr;
+	int mask;
 	uint i, toks;
 	static ushort id = 1;
-	Key *k, *r;
 
 	r = nil;
 
@@ -125,15 +102,11 @@ getkey(const char *name) {
 			k = k->next;
 		}
 		utflcpy(k->name, name, sizeof k->name);
-		kstr = strrchr(seq[i], '-');
-		if(kstr)
-			kstr++;
-		else
-			kstr = seq[i];
-		k->key = XKeysymToKeycode(display, XStringToKeysym(kstr));
-		k->mod = str2modmask(seq[i]);
-		if (k->key == NoSymbol)
-		{
+		if(parsekey(seq[i], &mask, &kstr)) {
+			k->key = keycode(kstr);
+			k->mod = mask;
+		}
+		if(k->key == 0) {
 			freekey(r);
 			return nil;
 		}

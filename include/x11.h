@@ -226,6 +226,7 @@ int	mapwin(Window*);
 void	movewin(Window*, Point);
 Point	mulpt(Point p, Point q);
 bool	namedcolor(char *name, ulong*);
+bool	parsekey(char*, int*, char**);
 int	pointerscreen(void);
 Point	querypointer(Window*);
 void	raisewin(Window*);
