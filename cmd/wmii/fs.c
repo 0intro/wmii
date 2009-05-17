@@ -535,6 +535,8 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFCtags:
 		ixp_srv_data2cstring(r);
+		print("%d\n", r->ifcall.io.count);
+		print("%s\n", r->ifcall.io.data);
 		apply_tags(f->p.client, r->ifcall.io.data);
 		r->ofcall.io.count = r->ifcall.io.count;
 		respond(r, nil);
@@ -706,6 +708,11 @@ fs_clunk(Ixp9Req *r) {
 
 		q = f->p.bar->text;
 		utflcpy(q, (char*)m.pos, sizeof ((Bar*)0)->text);
+
+		p[0] = '\0';
+		strlcat(p, f->p.bar->col.colstr, sizeof(f->p.bar->buf));
+		strlcat(p, " ", sizeof(f->p.bar->buf));
+		strlcat(p, f->p.bar->text, sizeof(f->p.bar->buf));
 
 		bar_draw(f->p.bar->screen);
 		break;

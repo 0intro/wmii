@@ -2,8 +2,6 @@
  * See LICENSE file for license details.
  */
 #define _X11_VISIBLE
-#define ZP _ZP
-#define ZR _ZR
 #define pointerwin __pointerwin
 #include "dat.h"
 #include <limits.h>
@@ -12,9 +10,6 @@
 #include <unistd.h>
 #include <bio.h>
 #include "fns.h"
-#undef  ZP /* These should be allocated in read-only memory, */
-#undef  ZR /* but declaring them const causes too much trouble
-            * elsewhere. */
 #undef  pointerwin
 
 const Point	ZP = {0, 0};
@@ -897,7 +892,8 @@ getprop_ulong(Window *w, char *prop, char *type,
 
 char**
 strlistdup(char *list[]) {
-	char **p, *q;
+	char **p;
+	char *q;
 	int i, m, n;
 
 	n = 0;
@@ -1120,11 +1116,11 @@ sethints(Window *w) {
 		h->aspect.max.y = xs.max_aspect.y;
 	}
 
-	h->position = ((xs.flags & (USPosition|PPosition)) != 0);
+	h->position = (xs.flags & (USPosition|PPosition)) != 0;
 
-	p = ZP;
 	if(!(xs.flags & PWinGravity))
 		xs.win_gravity = NorthWestGravity;
+	p = ZP;
 	switch (xs.win_gravity) {
 	case EastGravity:
 	case CenterGravity:
@@ -1150,7 +1146,7 @@ sethints(Window *w) {
 		break;
 	}
 	h->grav = p;
-	h->gravstatic = (xs.win_gravity==StaticGravity);
+	h->gravstatic = (xs.win_gravity == StaticGravity);
 }
 
 Rectangle

@@ -424,6 +424,8 @@ extern int fmtevent(Fmt*);
 	i = ixp_serverloop(&srv);
 	if(i)
 		fprint(2, "%s: error: %r\n", argv0);
+	else
+		event("Quit");
 
 	cleanup();
 

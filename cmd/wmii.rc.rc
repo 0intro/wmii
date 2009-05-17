@@ -155,6 +155,10 @@ fn Event-Key {
 	Key-$1 $1
 }
 
+fn Event-Quit {
+	exit
+}
+
 fn Event-Start {
        if(~ $1 $wmiiscript)
                exit

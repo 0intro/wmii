@@ -64,9 +64,9 @@ enum {
 extern char*	modes[];
 
 #define TOGGLE(x) \
-	(x == On ? "On" : \
-	 x == Off ? "Off" : \
-	 x == Toggle ? "Toggle" : \
+	(x == On ? "on" : \
+	 x == Off ? "off" : \
+	 x == Toggle ? "toggle" : \
 	 "<toggle>")
 enum {
 	Off,

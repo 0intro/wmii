@@ -99,7 +99,7 @@ rect_morph(Rectangle *r, Point d, Align *mask) {
 
 /* Yes, yes, macros are evil. So are patterns. */
 #define frob(x, y) \
-	Rectangle *rp;                                                    \
+	const Rectangle *rp;                                              \
 	int i, tx;                                                        \
 									  \
 	for(i=0; i < nrect; i++) {                                        \
@@ -117,12 +117,12 @@ rect_morph(Rectangle *r, Point d, Align *mask) {
 	return dx                                                         \
 
 static int
-snap_hline(Rectangle *rects, int nrect, int dx, Rectangle *r, int y) {
+snap_hline(const Rectangle *rects, int nrect, int dx, const Rectangle *r, int y) {
 	frob(y, x);
 }
 
 static int
-snap_vline(Rectangle *rects, int nrect, int dx, Rectangle *r, int x) {
+snap_vline(const Rectangle *rects, int nrect, int dx, const Rectangle *r, int x) {
 	frob(x, y);
 }
 
@@ -134,7 +134,7 @@ snap_vline(Rectangle *rects, int nrect, int dx, Rectangle *r, int x) {
  * snap.
  */
 Align
-snap_rect(Rectangle *rects, int num, Rectangle *r, Align *mask, int snap) {
+snap_rect(const Rectangle *rects, int num, Rectangle *r, Align *mask, int snap) {
 	Align ret;
 	Point d;
 	

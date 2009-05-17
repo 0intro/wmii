@@ -245,7 +245,7 @@ void	mouse_resize(Client*, Align, bool);
 void	mouse_resizecol(Divide*);
 bool	readmotion(Point*);
 int	readmouse(Point*, uint*);
-Align	snap_rect(Rectangle *rects, int num, Rectangle *current, Align *mask, int snapw);
+Align	snap_rect(const Rectangle *rects, int num, Rectangle *current, Align *mask, int snapw);
 
 /* printevent.c */
 void	printevent(XEvent*);

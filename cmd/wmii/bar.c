@@ -85,6 +85,10 @@ bar_create(Bar **bp, const char *name) {
 	b->id = id++;
 	utflcpy(b->name, name, sizeof b->name);
 	b->col = def.normcolor;
+
+	strlcat(b->buf, b->col.colstr, sizeof(b->buf));
+	strlcat(b->buf, " ", sizeof(b->buf));
+	strlcat(b->buf, b->text, sizeof(b->buf));
 	
 	for(sp=screens; (s = *sp); sp++) {
 		i = bp - s->bar;

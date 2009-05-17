@@ -160,8 +160,8 @@ struct Screen {
 Display *display;
 Screen scr;
 
-extern Point ZP;
-extern Rectangle ZR;
+extern const Point ZP;
+extern const Rectangle ZR;
 extern Window* pointerwin;
 
 Point Pt(int x, int y);

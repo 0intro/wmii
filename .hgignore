@@ -1,7 +1,7 @@
 syntax: regexp
 (^|/)\.((.*\.)?sw.|depend|hgignore)$
 (^|/)(tags|mkfile)$
-\.([oOa]|o_pic|so|orig|bak)$
+\.([oOa]|o_pic|so|orig|bak|pyc|pyo)$
 ^cmd/(stfo|osd|wiwarp)(/|$)
 syntax: glob
 config.local.mk
