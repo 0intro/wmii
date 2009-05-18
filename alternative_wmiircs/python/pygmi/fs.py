@@ -344,14 +344,17 @@ class Button(object):
             if colors or label:
                 f.write(self.getval(colors, label))
     def remove(self):
-        client.remove(self.path)
+        try:
+            client.remove(self.path)
+        except Exception:
+            pass
 
     def getval(self, colors=None, label=None):
         if colors is None:
             colors = self.colors
         if label is None:
             label = self.label
-        return ' '.join([Color(c).hex for c in colors] + [label])
+        return ' '.join([Color(c).hex for c in colors] + [str(label)])
 
     colors = property(
         lambda self: tuple(map(Color, client.read(self.path).split(' ')[:3])),
@@ -371,6 +374,13 @@ class Colors(object):
     def __init__(self, foreground=None, background=None, border=None):
         vals = foreground, background, border
         self.vals = tuple(map(Color, vals))
+
+    def __iter__(self):
+        return iter(self.vals)
+    def __list__(self):
+        return list(self.vals)
+    def __tuple__(self):
+        return self.vals
 
     @classmethod
     def from_string(cls, val):
@@ -484,8 +494,8 @@ class Rules(collections.MutableMapping):
 class wmii(Ctl):
     ctl_path = '/ctl'
     ctl_types = {
-        'normcolors': (Colors.from_string, lambda c: str(Colors(c))),
-        'focuscolors': (Colors.from_string, lambda c: str(Colors(c))),
+        'normcolors': (Colors.from_string, lambda c: str(Colors(*c))),
+        'focuscolors': (Colors.from_string, lambda c: str(Colors(*c))),
         'border': (int, str),
     }
 

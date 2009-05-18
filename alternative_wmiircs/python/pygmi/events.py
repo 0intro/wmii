@@ -3,6 +3,7 @@ import re
 import sys
 import traceback
 
+import pygmi
 from pygmi import monitor, client, call, program_list
 
 __all__ = ('bind_keys', 'bind_events', 'toggle_keys', 'event_loop',
@@ -65,29 +66,27 @@ def event_loop():
     events.alive = False
 
 class Actions(object):
-    which = call('which', 'which')
-
     def __getattr__(self, name):
         if name.startswith('_') or name.endswith('_'):
             raise AttributeError()
         if hasattr(self, name + '_'):
             return getattr(self, name + '_')
         def action(args=''):
-            cmd = call(self.which, name,
-                       env=dict(os.environ, PATH=':'.join(confpath)))
-            call(shell, '-c', '$* %s' % args, '--', cmd,
-                 background=True)
+            cmd = pygmi.find_script(name)
+            if cmd:
+                call(pygmi.shell, '-c', '$* %s' % args, '--', cmd,
+                     background=True)
         return action
 
     def _call(self, args):
-        a = args.split(' ')
+        a = args.split(' ', 1)
         if a:
             getattr(self, a[0])(*a[1:])
 
     @property
     def _choices(self):
         return sorted(
-            program_list(confpath) +
+            program_list(pygmi.confpath) +
             [re.sub('_$', '', k) for k in dir(self)
              if not re.match('^_', k) and callable(getattr(self, k))])
 

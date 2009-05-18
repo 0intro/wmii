@@ -35,6 +35,14 @@ def curry(func, *args, **kwargs):
     curried.__name__ = func.__name__ + '__curried__'
     return curried
 
+def find_script(name):
+    for path in confpath:
+        if os.access('%s/%s' % (path, name), os.X_OK):
+            return '%s/%s' % (path, name)
+
+confpath = os.environ['WMII_CONFPATH'].split(':')
+shell = None
+
 from pygmi import events, fs, menu, monitor
 from pygmi.events import *
 from pygmi.fs import *
@@ -42,6 +50,8 @@ from pygmi.menu import *
 from pygmi.monitor import *
 
 __all__ = (fs.__all__ + monitor.__all__ + events.__all__ +
-           menu.__all__ + ('client', 'call', 'curry', 'program_list'))
+           menu.__all__ + (
+               'client', 'call', 'curry', 'program_list',
+               'find_script', 'confpath', 'shell'))
 
 # vim:se sts=4 sw=4 et:

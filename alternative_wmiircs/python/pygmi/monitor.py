@@ -38,7 +38,7 @@ class Monitor(object):
     interval = 1.0
 
     def __init__(self, name=None, interval=None, side=None,
-                 action=None):
+                 action=None, colors=None, label=None):
         if side:
             self.side = side
         if name:
@@ -48,13 +48,15 @@ class Monitor(object):
         if action:
             self.action = action
 
-        self.button = Button(self.side, self.name)
+        self.timer = None
+        self.button = Button(self.side, self.name, colors, label)
         self.tick()
 
     def tick(self):
         from pygmi import events
-        if not events.alive:
-            if client:
+        mon = monitors.get(self.name, None)
+        if self.timer and not (events.alive and mon is self):
+            if client and (not mon or mon is self):
                 self.button.remove()
             return
         if self.active:

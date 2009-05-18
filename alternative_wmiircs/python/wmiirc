@@ -3,6 +3,7 @@ import os
 import re
 import sys
 
+import pygmi
 from pygmi import *
 from pygmi import events
 
@@ -24,18 +25,18 @@ noticebar=('right', '!notice')
 background = '#333333'
 floatbackground='#222222'
 
-wmii.font = 'drift,-*-fixed-*-*-*-*-9-*-*-*-*-*-*-*'
-wmii.normcolors = '#000000', '#c1c48b', '#81654f'
-wmii.focuscolors = '#000000', '#81654f', '#000000'
-wmii.grabmod = events.keydefs['mod']
-wmii.border = 2
+wmii['font'] = 'drift,-*-fixed-*-*-*-*-9-*-*-*-*-*-*-*'
+wmii['normcolors'] = '#000000', '#c1c48b', '#81654f'
+wmii['focuscolors'] = '#000000', '#81654f', '#000000'
+wmii['grabmod'] = events.keydefs['mod']
+wmii['border'] = 2
 
 def setbackground(color):
     call('xsetroot', '-solid', color)
 setbackground(background)
 
 terminal = 'wmiir', 'setsid', 'xterm'
-shell = os.environ.get('SHELL', 'sh')
+pygmi.shell = os.environ.get('SHELL', 'sh')
 
 @defmonitor
 def load():
@@ -63,10 +64,6 @@ def unresponsive_client(client):
         client.slay()
 
 # End Configuration
-
-confpath = os.environ['WMII_CONFPATH'].split(':')
-events.confpath = confpath
-events.shell = shell
 
 client.write('/event', 'Start wmiirc')
 
@@ -112,7 +109,7 @@ class Actions(events.Actions):
 
 program_menu = Menu(histfile='%s/history.prog' % confpath[0], nhist=5000,
                     action=curry(call, 'wmiir', 'setsid',
-                                 shell, '-c', background=True))
+                                 pygmi.shell, '-c', background=True))
 action_menu = Menu(histfile='%s/history.action' % confpath[0], nhist=500,
                    choices=lambda: Actions._choices,
                    action=Actions._call)
@@ -200,8 +197,7 @@ map(bind_num, range(0, 10))
 
 Actions.rehash()
 
-# Misc Setup
-#progs_file=`{namespace}^/proglist.$pid
+execfile(pygmi.find_script('wmiirc.local.py') or '/dev/null')
 
 event_loop()
 
