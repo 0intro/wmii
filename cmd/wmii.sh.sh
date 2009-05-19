@@ -169,6 +169,10 @@ wi_seltag() {
 	wmiir read /tag/sel/ctl | sed 1q | tr -d '\012'
 }
 
+wi_selclient() {
+	wmiir read /client/sel/ctl | sed 1q | tr -d '\012'
+}
+
 wi_eventloop() {
 	echo "$Keys" | wmiir write /keys
 

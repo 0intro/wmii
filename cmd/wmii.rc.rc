@@ -133,6 +133,10 @@ fn wi_seltag {
 	wmiir read /tag/sel/ctl | sed 1q
 }
 
+fn wi_selclient {
+	wmiir read /client/sel/ctl | sed 1q
+}
+
 fn wi_readevent {
 	wmiir read /event
 }

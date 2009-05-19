@@ -53,32 +53,33 @@ class Monitor(object):
         self.tick()
 
     def tick(self):
-        from pygmi import events
         mon = monitors.get(self.name, None)
-        if self.timer and not (events.alive and mon is self):
-            if client and (not mon or mon is self):
-                self.button.remove()
+        if self.timer and mon is not self:
             return
         if self.active:
             from threading import Timer
             label = self.getlabel()
             if isinstance(label, basestring):
                 label = None, label
-            self.button.create(*label)
+            if label is None:
+                self.button.remove()
+            else:
+                self.button.create(*label)
+
             self.timer = Timer(self.interval, self.tick)
+            self.timer.daemon = True
             self.timer.start()
 
     def getlabel(self):
         if self.action:
-            return self.action()
-        return ()
+            return self.action(self)
+        return None
 
     _active = True
     def _set_active(self, val):
         self._active = bool(val)
-        if val:
-            self.tick()
-        else:
+        self.tick()
+        if not val:
             self.button.remove()
 
     active = property(

@@ -1,4 +1,5 @@
 import os
+import sys
 
 from pyxp import Client
 
@@ -40,8 +41,10 @@ def find_script(name):
         if os.access('%s/%s' % (path, name), os.X_OK):
             return '%s/%s' % (path, name)
 
-confpath = os.environ['WMII_CONFPATH'].split(':')
-shell = None
+confpath = os.environ.get('WMII_CONFPATH', '%s/.wmii' % os.environ['HOME']).split(':')
+shell = os.environ['SHELL']
+
+sys.path += confpath
 
 from pygmi import events, fs, menu, monitor
 from pygmi.events import *

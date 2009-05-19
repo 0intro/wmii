@@ -39,10 +39,10 @@ terminal = 'wmiir', 'setsid', 'xterm'
 pygmi.shell = os.environ.get('SHELL', 'sh')
 
 @defmonitor
-def load():
+def load(self):
     return re.sub(r'^.*: ', '', call('uptime')).replace(', ', ' ')
 @defmonitor
-def time():
+def time(self):
     from datetime import datetime
     return datetime.now().strftime('%c')
 
@@ -75,8 +75,8 @@ bind_events({
     'DestroyTag':   tags.delete,
     'FocusTag':     tags.focus,
     'UnfocusTag':   tags.unfocus,
-    'UrgentTag':    lambda args: tags.set_urgent(args.split(' ')[1], True),
-    'NotUrgentTag': lambda args: tags.set_urgent(args.split(' ')[1], False),
+    'UrgentTag':    lambda args: tags.set_urgent(args.split()[1], True),
+    'NotUrgentTag': lambda args: tags.set_urgent(args.split()[1], False),
 
     'AreaFocus':    lambda args: (args == '~' and
                                   (setbackground(floatbackground), True) or
@@ -88,10 +88,10 @@ bind_events({
     'Notice':       lambda args: notice.show(args),
 
     ('LeftBarClick', 'LeftBarDND'):
-        lambda args: args.split(' ')[0] == '1' and tags.select(args.split(' ', 1)[1]),
+        lambda args: args.split()[0] == '1' and tags.select(args.split(' ', 1)[1]),
 
-    'ClientMouseDown':  lambda args: menu(*args.split(' '), type='client'),
-    'LeftBarMouseDown': lambda args: menu(*reversed(args.split(' ')), type='lbar'),
+    'ClientMouseDown':  lambda args: menu(*args.split(), type='client'),
+    'LeftBarMouseDown': lambda args: menu(*reversed(args.split()), type='lbar'),
 })
 
 @apply
@@ -139,9 +139,12 @@ class Notice(Button):
     def tick(self):
         self.label = ''
 
+    def write(self, notice):
+        client.write('/event', 'Notice %s' % notice.replace('\n', ' '))
+
     def show(self, notice):
         if self.timer:
-            self.timer.stop()
+            self.timer.cancel()
         self.label = notice
         from threading import Timer
         self.timer = Timer(noticetimeout, self.tick)

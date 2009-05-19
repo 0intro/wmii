@@ -229,7 +229,7 @@ key $MODKEY-Return || fn $key {
 key $MODKEY-t || fn $key {
 	wmiir xwrite /ctl view `{wi_tags | wimenu -h $hist.tag -n 50} &}
 key $MODKEY-Shift-t || fn $key {
-	sel = `{wmiir read /client/sel/ctl | sed 1q} \
+	sel = `{wi_selclient} \
 	wmiir xwrite /client/$sel/tags `{wi_tags | wimenu -h $hist.tag -n 50} &}
 
 key $MODKEY-^`{seq 0 9} || fn $key {
