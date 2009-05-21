@@ -65,7 +65,7 @@ def unresponsive_client(client):
 
 # End Configuration
 
-client.write('/event', 'Start wmiirc')
+client.awrite('/event', 'Start wmiirc')
 
 tags = Tags()
 bind_events({
@@ -105,7 +105,7 @@ class Actions(events.Actions):
     def exec_(self, args=''):
         wmii['exec'] = args
     def exit(self, args=''):
-        client.write('/event', 'Quit')
+        client.awrite('/event', 'Quit')
 
 program_menu = Menu(histfile='%s/history.prog' % confpath[0], nhist=5000,
                     action=curry(call, 'wmiir', 'setsid',
@@ -140,7 +140,7 @@ class Notice(Button):
         self.label = ''
 
     def write(self, notice):
-        client.write('/event', 'Notice %s' % notice.replace('\n', ' '))
+        client.awrite('/event', 'Notice %s' % notice.replace('\n', ' '))
 
     def show(self, notice):
         if self.timer:

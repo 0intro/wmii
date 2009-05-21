@@ -14,6 +14,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+import sys
+import traceback
+
 from pyxp import fields
 from pyxp.dial import dial
 from threading import *
@@ -22,13 +25,14 @@ Condition = Condition().__class__
 __all__ = 'Mux',
 
 class Mux(object):
-    def __init__(self, con, process, mintag=0, maxtag=1<<16 - 1):
+    def __init__(self, con, process, flush=None, mintag=0, maxtag=1<<16 - 1):
         self.queue = set()
         self.lock = RLock()
         self.rendez = Condition(self.lock)
         self.outlock = RLock()
         self.inlock = RLock()
         self.process = process
+        self.flush = flush
         self.wait = {}
         self.free = set(range(mintag, maxtag))
         self.mintag = mintag
@@ -42,60 +46,78 @@ class Mux(object):
         if self.fd is None:
             raise Exception("No connection")
 
-    def rpc(self, dat):
-        r = self.newrpc(dat)
-
+    def mux(self, rpc):
         try:
+            rpc.waiting = True
             self.lock.acquire()
-            while self.muxer and self.muxer != r and r.data is None:
-                r.wait()
+            while self.muxer and self.muxer != rpc and rpc.data is None:
+                rpc.wait()
 
-            if r.data is None:
-                if self.muxer and self.muxer != r:
-                    self.fail()
-                self.muxer = r
+            if rpc.data is None:
+                assert not self.muxer or self.muxer is rpc
+                self.muxer = rpc
                 self.lock.release()
                 try:
-                    while r.data is None:
+                    while rpc.data is None:
                         data = self.recv()
                         if data is None:
                             self.lock.acquire()
-                            self.queue.remove(r)
+                            self.queue.remove(rpc)
                             raise Exception("unexpected eof")
                         self.dispatch(data)
-                    self.lock.acquire()
                 finally:
+                    self.lock.acquire()
                     self.electmuxer()
-            self.puttag(r)
         except Exception, e:
-            import sys
-            import traceback
             traceback.print_exc(sys.stdout)
-            print e
+            if self.flush:
+                self.flush(self, rpc.data)
+            raise e
         finally:
             if self.lock._is_owned():
                 self.lock.release()
-        return r.data
+
+        if rpc.async:
+            if callable(rpc.async):
+                rpc.async(self, rpc.data)
+        else:
+            return rpc.data
+
+    def rpc(self, dat, async=None):
+        rpc = self.newrpc(dat, async)
+        if async:
+            with self.lock:
+                if self.muxer is None:
+                    self.electmuxer()
+        else:
+            return self.mux(rpc)
 
     def electmuxer(self):
+        async = None
         for rpc in self.queue:
-            if self.muxer != rpc and rpc.async == False:
-                self.muxer = rpc
-                rpc.notify()
-                return
+            if self.muxer != rpc:
+                if rpc.async:
+                    async = rpc
+                else:
+                    self.muxer = rpc
+                    rpc.notify()
+                    return
         self.muxer = None
+        if async:
+            self.muxer = async
+            Thread(target=self.mux, args=(async,)).start()
 
     def dispatch(self, dat):
-        tag = dat.tag - self.mintag
-        r = None
+        tag = dat.tag
+        rpc = None
         with self.lock:
-            r = self.wait.get(tag, None)
-            if r is None or r not in self.queue:
-                print "bad rpc tag: %u (no one waiting on it)" % dat.tag
+            rpc = self.wait.get(tag, None)
+            if rpc is None or rpc not in self.queue:
+                #print "bad rpc tag: %u (no one waiting on it)" % dat.tag
                 return
-            self.queue.remove(r)
-            r.data = dat
-            r.notify()
+            self.puttag(rpc)
+            self.queue.remove(rpc)
+            rpc.dispatch(dat)
 
     def gettag(self, r):
         tag = 0
@@ -111,16 +133,13 @@ class Mux(object):
         self.wait[tag] = r
 
         r.tag = tag
-        r.data.tag = r.tag
-        r.data = None
+        r.orig.tag = r.tag
         return r.tag
 
-    def puttag(self, r):
-        t = r.tag
-        if self.wait.get(t, None) != r:
-            self.fail()
-        del self.wait[t]
-        self.free.add(t)
+    def puttag(self, rpc):
+        if rpc.tag in self.wait:
+            del self.wait[rpc.tag]
+        self.free.add(rpc.tag)
         self.rendez.notify()
 
     def send(self, dat):
@@ -128,17 +147,20 @@ class Mux(object):
         n = self.fd.send(data)
         return n == len(data)
     def recv(self):
-        data = self.fd.recv(4)
-        if data:
-            len = fields.Int.decoders[4](data, 0)
-            data += self.fd.recv(len - 4)
-            return self.process(data)
+        try:
+            with self.inlock:
+                data = self.fd.recv(4)
+                if data:
+                    len = fields.Int.decoders[4](data, 0)
+                    data += self.fd.recv(len - 4)
+                    return self.process(data)
+        except Exception, e:
+            traceback.print_exc(sys.stdout)
+            print repr(data)
+            return None
 
-    def fail():
-        raise Exception()
-
-    def newrpc(self, dat):
-        rpc = Rpc(self, dat)
+    def newrpc(self, dat, async=None):
+        rpc = Rpc(self, dat, async)
         tag = None
 
         with self.lock:
@@ -153,11 +175,19 @@ class Mux(object):
             self.puttag(rpc)
 
 class Rpc(Condition):
-    def __init__(self, mux, data):
+    def __init__(self, mux, data, async=None):
         super(Rpc, self).__init__(mux.lock)
         self.mux = mux
+        self.orig = data
+        self.data = None
+        self.waiting = False
+        self.async = async
+
+    def dispatch(self, data=None):
         self.data = data
-        self.waiting = True
-        self.async = False
+        if not self.async or self.waiting:
+            self.notify()
+        elif callable(self.async):
+            Thread(target=self.async, args=(self.mux, data)).start()
 
 # vim:se sts=4 sw=4 et:

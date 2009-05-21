@@ -1,7 +1,7 @@
 import os
 import sys
 
-from pyxp import Client
+from pyxp.asyncclient import Client
 
 if 'WMII_ADDRESS' in os.environ:
     client = Client(os.environ['WMII_ADDRESS'])

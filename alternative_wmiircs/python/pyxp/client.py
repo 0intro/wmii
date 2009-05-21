@@ -1,5 +1,4 @@
-# Copyright (C) 2007 Kris Maglione
-# See PERMISSIONS
+# Copyright (C) 2009 Kris Maglione
 
 import operator
 import os
@@ -43,6 +42,12 @@ class RPCError(Exception):
 
 class Client(object):
     ROOT_FID = 0
+
+    @staticmethod
+    def respond(callback, data, exc=None, tb=None):
+        if callable(callback):
+            callback(data, exc, tb)
+
 
     def __enter__(self):
         return self
@@ -89,30 +94,49 @@ class Client(object):
             self.mux.fd.close()
             self.mux = None
 
-    def dorpc(self, req):
-        resp = self.mux.rpc(req)
-        if isinstance(resp, fcall.Rerror):
-            raise RPCError, "RPC returned error (%s): %s" % (
-                req.__class__.__name__, resp.ename)
-        if req.type != resp.type ^ 1:
-            raise ProtocolException, "Missmatched RPC message types: %s => %s" % (
-                req.__class__.__name__, resp.__class__.__name__)
-        return resp
+    def dorpc(self, req, callback=None, error=None):
+        def doresp(resp):
+            if isinstance(resp, fcall.Rerror):
+                raise RPCError, "%s[%d] RPC returned error: %s" % (
+                    req.__class__.__name__, resp.tag, resp.ename)
+            if req.type != resp.type ^ 1:
+                raise ProtocolException, "Missmatched RPC message types: %s => %s" % (
+                    req.__class__.__name__, resp.__class__.__name__)
+            return resp
+        def next(mux, resp):
+            try:
+                res = doresp(resp)
+            except Exception, e:
+                if error:
+                    self.respond(error, None, e, None)
+                else:
+                    self.respond(callback, None, e, None)
+            else:
+                self.respond(callback, res)
+        if not callback:
+            return doresp(self.mux.rpc(req))
+        self.mux.rpc(req, next)
 
     def splitpath(self, path):
         return [v for v in path.split('/') if v != '']
 
     def getfid(self):
         with self.lock:
-            if len(self.fids):
+            if self.fids:
                 return self.fids.pop()
-            else:
-                self.lastfid += 1
-                return self.lastfid
+            self.lastfid += 1
+            return self.lastfid
     def putfid(self, fid):
         with self.lock:
             self.files.pop(fid)
             self.fids.append(fid)
+
+    def aclunk(self, fid, callback=None):
+        def next(resp, exc, tb):
+            if resp:
+                self.putfid(fid)
+            self.respond(callback, resp, exc, tb)
+        self.dorpc(fcall.Tclunk(fid=fid), next)
 
     def clunk(self, fid):
         try:
@@ -133,9 +157,9 @@ class Client(object):
 
         @apply
         class Res:
-            def __enter__(self):
+            def __enter__(res):
                 return fid
-            def __exit__(self, exc_type, exc_value, traceback):
+            def __exit__(res, exc_type, exc_value, traceback):
                 if exc_type:
                     self.clunk(fid)
         return Res
@@ -148,20 +172,20 @@ class Client(object):
             resp = self.dorpc(open(fid))
 
         def cleanup():
-            self.clunk(fid)
-        file = File(self, resp, fid, mode, cleanup)
+            self.aclunk(fid)
+        file = File(self, '/'.join(path), resp, fid, mode, cleanup)
         self.files[fid] = file
 
         return file
 
-    def open(self, path, mode = OREAD):
+    def open(self, path, mode=OREAD):
         path = self.splitpath(path)
 
         def open(fid):
             return fcall.Topen(fid=fid, mode=mode)
         return self._open(path, mode, open)
 
-    def create(self, path, mode = OREAD, perm = 0):
+    def create(self, path, mode=OREAD, perm=0):
         path = self.splitpath(path)
         name = path.pop()
 
@@ -209,22 +233,23 @@ class File(object):
     def __exit__(self, *args):
         self.close()
 
-    def __init__(self, client, fcall, fid, mode, cleanup):
+    def __init__(self, client, path, fcall, fid, mode, cleanup):
         self.lock = RLock()
         self.client = client
+        self.path = path
         self.fid = fid
         self.cleanup = cleanup
         self.mode = mode
         self.iounit = fcall.iounit
         self.qid = fcall.qid
+        self.closed = False
 
         self.offset = 0
-        self.fd = None
 
-    def dorpc(self, fcall):
+    def dorpc(self, fcall, async=None, error=None):
         if hasattr(fcall, 'fid'):
             fcall.fid = self.fid
-        return self.client.dorpc(fcall)
+        return self.client.dorpc(fcall, async, error)
 
     def stat(self):
         resp = self.dorpc(fcall.Tstat())
@@ -262,6 +287,9 @@ class File(object):
             if not data:
                 break
             lines = data.split('\n')
+            if last:
+                lines[0] = last + lines[0]
+                last = None
             for i in range(0, len(lines) - 1):
                 yield lines[i]
             last = lines[-1]
@@ -300,15 +328,13 @@ class File(object):
                 yield s
 
     def close(self):
-        try:
-            if self.fd:
-                self.fd_close()
-        finally:
-            self.cleanup()
-            self.tg = None
-            self.fid = None
-            self.client = None
-            self.qid = None
+        assert not self.closed
+        self.closed = True
+        self.cleanup()
+        self.tg = None
+        self.fid = None
+        self.client = None
+        self.qid = None
 
     def remove(self):
         try:
@@ -318,11 +344,5 @@ class File(object):
                 self.close()
             except Exception:
                 pass
-
-    def fd_close(self):
-        try:
-            self.fd.close()
-        finally:
-            self.fd = None
 
 # vim:se sts=4 sw=4 et:

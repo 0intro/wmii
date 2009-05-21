@@ -74,13 +74,9 @@ class Date(Int):
     def marshall(self, val):
         return self.encode(int(val.strftime('%s')))
 
-# To do: use unicode strings, ensure UTF-8.
-# Not a problem in Python 3K, but there the other
-# data blobs are.
-class String(Int):
+class Data(Int):
     def __init__(self, size=2):
-        super(String, self).__init__(size)
-
+        super(Data, self).__init__(size)
     def unmarshall(self, data, offset):
         n = self.decode(data, offset)
         offset += self.size
@@ -89,8 +85,18 @@ class String(Int):
     def marshall(self, val):
         return [self.encode(len(val)), val]
 
-class Data(String):
-    pass
+# Note: Py3K strings are Unicode by default. They can't store binary
+#       data.
+class String(Data):
+    def unmarshall(self, data, offset):
+        off, val = super(String, self).unmarshall(data, offset)
+        return off, val.decode('UTF-8')
+    def marshall(self, val):
+        if isinstance(val, str):
+            str.decode('UTF-8')
+        else:
+            val = val.encode('UTF-8')
+        return super(String, self).marshall(val)
 
 class Array(Int):
     def __init__(self, size, spec):

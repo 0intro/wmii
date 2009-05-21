@@ -61,7 +61,7 @@ class Rattach(Fcall):
 
 class Terror(Fcall):
     def __init__(self):
-        raise Error("Illegal 9P tag 'Terror' encountered")
+        raise Exception("Illegal 9P tag 'Terror' encountered")
 class Rerror(Fcall):
     ename = String()
 

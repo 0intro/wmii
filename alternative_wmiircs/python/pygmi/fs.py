@@ -16,7 +16,7 @@ class Ctl(object):
         pass
 
     def ctl(self, msg):
-        client.write(self.ctl_path, msg)
+        client.awrite(self.ctl_path, msg)
 
     def __getitem__(self, key):
         for line in self.ctl_lines():
@@ -58,7 +58,7 @@ class Ctl(object):
         lines = tuple(client.readlines(self.ctl_path))
         if self.ctl_hasid:
             lines = lines[1:]
-        return lines[:-1]
+        return lines
 
     _id = None
     @property
@@ -111,7 +111,7 @@ class Dir(Ctl):
         def __set__(self, dir, val):
             if not self.writable:
                 raise NotImplementedError('File %s is not writable' % self.name)
-            return client.write('%s/%s' % (dir.path, self.name), val)
+            return client.awrite('%s/%s' % (dir.path, self.name), val)
 
     @property
     def ctl_path(self):
@@ -341,13 +341,9 @@ class Button(object):
 
     def create(self, colors=None, label=None):
         with client.create(self.path, OWRITE) as f:
-            if colors or label:
-                f.write(self.getval(colors, label))
+            f.write(self.getval(colors, label))
     def remove(self):
-        try:
-            client.remove(self.path)
-        except Exception:
-            pass
+        client.aremove(self.path)
 
     def getval(self, colors=None, label=None):
         if colors is None:
@@ -358,7 +354,7 @@ class Button(object):
 
     colors = property(
         lambda self: tuple(map(Color, client.read(self.path).split(' ')[:3])),
-        lambda self, val: client.write(self.path, self.getval(colors=val)))
+        lambda self, val: client.awrite(self.path, self.getval(colors=val)))
 
     label = property(
         lambda self: client.read(self.path).split(' ', 3)[3],
@@ -480,7 +476,7 @@ class Rules(collections.MutableMapping):
             assert '/' not in k and '\n' not in v
             lines.append('/%s/ -> %s' % (k, v))
         lines.append('')
-        client.write(self.path, '\n'.join(lines))
+        client.awrite(self.path, '\n'.join(lines))
 
     def iteritems(self):
         for line in client.readlines(self.path):
@@ -520,7 +516,7 @@ class Tags(object):
             self.add(t.id)
         for b in wmii.lbuttons:
             if b.name not in self.tags:
-                b.remove()
+                b.aremove()
         self.focus(Tag('sel').id)
 
         self.mru = [self.sel.id]
