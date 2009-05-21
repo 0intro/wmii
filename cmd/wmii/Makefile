@@ -7,11 +7,12 @@ main.c: $(ROOT)/mk/wmii.mk
 TARG =	wmii
 HFILES=	dat.h fns.h
 
-LIB =	$(LIBIXP)
-LDFLAGS += -lm $(LIBX11) -lXext -lXrandr -lXrender -lXinerama \
-	   $(LIBICONV) -lregexp9 -lbio -lfmt -lutf
+PACKAGES += $(X11PACKAGES) xext xrandr xrender xinerama
 
-CFLAGS += $(INCX11) $(INCICONV) -DVERSION=\"$(VERSION)\" \
+LIB =	$(LIBIXP)
+LDFLAGS += -lm $(LIBICONV) -lregexp9 -lbio -lfmt -lutf
+
+CFLAGS += $(INCICONV) -DVERSION=\"$(VERSION)\" \
 	  -DIXP_NEEDAPI=97
 OBJ =	area	\
 	bar	\

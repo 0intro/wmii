@@ -33,8 +33,8 @@ P9PATHS = ${PLAN9}:"'$${HOME}/plan9'":/usr/local/plan9:/usr/local/9:/opt/plan9:/
 # are painfully slow, and should be avoided.
 #BINSH = /bin/ash
 
-INCX11 = $$(pkg-config --cflags xft)
-LIBX11 = $$(pkg-config --libs xft)
+X11PACKAGES = xft
+INCX11 = $$(pkg-config --cflags $(X11PACKAGES))
 LIBICONV = # Leave blank if your libc includes iconv (glibc does)
 LIBIXP = $(LIBDIR)/libixp.a
 

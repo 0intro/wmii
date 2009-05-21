@@ -1,11 +1,13 @@
 FILTER = cat
 EXCFLAGS = -I$$(echo $(INCPATH)|sed 's/:/ -I/g') -D_XOPEN_SOURCE=600
-COMPILE= CC="$(CC)" CFLAGS="$(EXCFLAGS) $(CFLAGS)" $(ROOT)/util/compile
-COMPILEPIC= CC="$(CC)" CFLAGS="$(EXCFLAGS) $(CFLAGS) $(SOCFLAGS)" $(ROOT)/util/compile
-LINK= LD="$(LD)" LDFLAGS="$(LDFLAGS)" $(ROOT)/util/link
-LINKSO= LD="$(LD)" LDFLAGS="$(SOLDFLAGS) $(SHARED)" $(ROOT)/util/link
+COMPILE= CC="$(CC)" CFLAGS="$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES))" $(ROOT)/util/compile
+COMPILEPIC= CC="$(CC)" CFLAGS="$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $(SOCFLAGS)" $(ROOT)/util/compile
+LINK= LD="$(LD)" LDFLAGS="$(LDFLAGS) $$(pkg-config --libs $(PACKAGES))" $(ROOT)/util/link
+LINKSO= LD="$(LD)" LDFLAGS="$(SOLDFLAGS) $(SHARED) $$(pkg-config --libs $(PACKAGES))" $(ROOT)/util/link
 CLEANNAME=$(ROOT)/util/cleanname
 SOEXT=so
+
+PACKAGES = 2>/dev/null
 
 include $(ROOT)/config.mk
 

@@ -37,5 +37,5 @@ wmii/x11.o wmii/map.o: dall
 
 O9MENU=wmii9menu.o clientutil.o wmii/x11.o wmii/map.o $(OFILES) $(LIBIXP)
 wmii9menu.O: $(O9MENU)
-	$(LINK) $@ $(O9MENU) $(LIBX11) -lXext -lbio
+	$(LINK) $@ $(O9MENU) $$(pkg-config --libs $(X11PACKAGES)) -lXext -lbio
 

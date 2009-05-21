@@ -12,11 +12,11 @@ bindings.c: keys.txt Makefile
 TARG =	wimenu
 HFILES=	dat.h fns.h
 
+PACKAGES += $(X11PACKAGES) xext xrandr xrender xinerama
+
 LIB =	$(LIBIXP)
-LDFLAGS += -lm $(LIBX11) -lXext -lXrandr -LXrender -lXinerama \
-	   -lregexp9 -lbio -lfmt -lutf
-CFLAGS += $(INCX11) -DVERSION=\"$(VERSION)\" \
-	  -DIXP_NEEDAPI=86
+LDFLAGS += -lm -lregexp9 -lbio -lfmt -lutf
+CFLAGS += -DVERSION=\"$(VERSION)\" -DIXP_NEEDAPI=86
 OBJ =	main	\
 	caret	\
 	history	\

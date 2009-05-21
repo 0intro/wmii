@@ -7,10 +7,11 @@ main.c: ${ROOT}/mk/wmii.mk
 TARG =	wistrut
 HFILES=	dat.h fns.h
 
-LIB =	${LIBIXP}
-LDFLAGS += -lm ${LIBX11} -lXext -lXrandr -lregexp9 -lbio -lfmt -lutf
-CFLAGS += ${INCX11} -DVERSION=\"${VERSION}\" \
-	  -DIXP_NEEDAPI=86
+PACKAGES += $(X11PACKAGES) xext xrandr xinerama
+
+LIB =	$(LIBIXP)
+LDFLAGS += -lm -lregexp9 -lbio -lfmt -lutf
+CFLAGS += -DVERSION=\"$(VERSION)\" -DIXP_NEEDAPI=86
 OBJ =	main	\
 	event	\
 	ewmh	\
