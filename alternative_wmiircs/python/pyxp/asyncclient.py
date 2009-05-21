@@ -41,7 +41,7 @@ class Client(client.Client):
                        next)
         next()
 
-    def _open(self, path, mode, open):
+    def _open(self, path, mode, open, origpath=None):
         resp = None
 
         with self.walk(path) as nfid:
@@ -50,18 +50,18 @@ class Client(client.Client):
 
         def cleanup():
             self.aclunk(fid)
-        file = File(self, '/'.join(path), resp, fid, mode, cleanup)
+        file = File(self, origpath or '/'.join(path), resp, fid, mode, cleanup)
         self.files[fid] = file
 
         return file
 
-    def _aopen(self, path, mode, open, callback):
+    def _aopen(self, path, mode, open, callback, origpath=None):
         resp = None
         def next(fid, exc, tb):
             def next(resp, exc, tb):
                 def cleanup():
                     self.clunk(fid)
-                file = File(self, '/'.join(path), resp, fid, mode, cleanup)
+                file = File(self, origpath or '/'.join(path), resp, fid, mode, cleanup)
                 self.files[fid] = file
                 self.respond(callback, file)
             self.dorpc(open(fid), next, callback)
@@ -83,7 +83,8 @@ class Client(client.Client):
             def callback(resp, exc, tb):
                 if resp:
                     resp.close()
-        return self._aopen(path, mode, open, async)
+        return self._aopen(path, mode, open, async,
+                           origpath='/'.join(path + [name]))
 
     def aremove(self, path, callback=True):
         path = self.splitpath(path)
@@ -177,7 +178,7 @@ class File(client.File):
                 callback(None)
         self.aread(next)
 
-    def awrite(self, data, callback, offset=None):
+    def awrite(self, data, callback=True, offset=None):
         ctxt = dict(offset=self.offset, off=0)
         if offset is not None:
             ctxt['offset'] = offset

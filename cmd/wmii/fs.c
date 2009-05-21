@@ -545,6 +545,7 @@ fs_write(Ixp9Req *r) {
 		i = strlen(f->p.bar->buf);
 		p = f->p.bar->buf;
 		ixp_srv_writebuf(r, &p, &i, 279);
+		bar_load(f->p.bar);
 		r->ofcall.io.count = i - r->ifcall.io.offset;
 		respond(r, nil);
 		return;
@@ -664,8 +665,6 @@ fs_remove(Ixp9Req *r) {
 void
 fs_clunk(Ixp9Req *r) {
 	IxpFileId *f;
-	char *p, *q;
-	IxpMsg m;
 	
 	f = r->fid->aux;
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
@@ -696,25 +695,6 @@ fs_clunk(Ixp9Req *r) {
 		break;
 	case FsFKeys:
 		update_keys();
-		break;
-	case FsFBar:
-		p = f->p.bar->buf;
-		m = ixp_message(p, strlen(p), 0);
-		msg_parsecolors(&m, &f->p.bar->col);
-
-		q = (char*)m.end-1;
-		while(q >= (char*)m.pos && *q == '\n')
-			*q-- = '\0';
-
-		q = f->p.bar->text;
-		utflcpy(q, (char*)m.pos, sizeof ((Bar*)0)->text);
-
-		p[0] = '\0';
-		strlcat(p, f->p.bar->col.colstr, sizeof(f->p.bar->buf));
-		strlcat(p, " ", sizeof(f->p.bar->buf));
-		strlcat(p, f->p.bar->text, sizeof(f->p.bar->buf));
-
-		bar_draw(f->p.bar->screen);
 		break;
 	}
 	respond(r, nil);

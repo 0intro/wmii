@@ -61,6 +61,7 @@ void	bar_destroy(Bar**, Bar*);
 void	bar_draw(WMScreen*);
 Bar*	bar_find(Bar*, const char*);
 void	bar_init(WMScreen*);
+void	bar_load(Bar*);
 void	bar_resize(WMScreen*);
 void	bar_sety(WMScreen*, int);
 void	bar_setbounds(WMScreen*, int, int);

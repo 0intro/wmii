@@ -164,7 +164,7 @@ class Client(object):
                     self.clunk(fid)
         return Res
 
-    def _open(self, path, mode, open):
+    def _open(self, path, mode, open, origpath=None):
         resp = None
 
         with self.walk(path) as nfid:
@@ -173,7 +173,7 @@ class Client(object):
 
         def cleanup():
             self.aclunk(fid)
-        file = File(self, '/'.join(path), resp, fid, mode, cleanup)
+        file = File(self, origpath or '/'.join(path), resp, fid, mode, cleanup)
         self.files[fid] = file
 
         return file
@@ -191,7 +191,7 @@ class Client(object):
 
         def open(fid):
             return fcall.Tcreate(fid=fid, mode=mode, name=name, perm=perm)
-        return self._open(path, mode, open)
+        return self._open(path, mode, open, origpath='/'.join(path + [name]))
 
     def remove(self, path):
         path = self.splitpath(path)
@@ -245,6 +245,9 @@ class File(object):
         self.closed = False
 
         self.offset = 0
+    def __del__(self):
+        if not self.closed:
+            self.cleanup()
 
     def dorpc(self, fcall, async=None, error=None):
         if hasattr(fcall, 'fid'):
@@ -277,9 +280,7 @@ class File(object):
                     break
             if offset is None:
                 self.offset = offs
-        res = ''.join(res)
-        if len(res) > 0:
-            return res
+        return ''.join(res)
     def readlines(self):
         last = None
         while True:

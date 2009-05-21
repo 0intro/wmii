@@ -184,6 +184,30 @@ bar_draw(WMScreen *s) {
 	copyimage(s->barwin, r, disp.ibuf, ZP);
 }
 
+void
+bar_load(Bar *b) {
+	 IxpMsg m;
+	 char *p, *q;
+
+	 p = b->buf;
+	 m = ixp_message(p, strlen(p), 0);
+	 msg_parsecolors(&m, &b->col);
+
+	 q = (char*)m.end-1;
+	 while(q >= (char*)m.pos && *q == '\n')
+		 *q-- = '\0';
+
+	 q = b->text;
+	 utflcpy(q, (char*)m.pos, sizeof b->text);
+
+	 p[0] = '\0';
+	 strlcat(p, b->col.colstr, sizeof b->buf);
+	 strlcat(p, " ", sizeof b->buf);
+	 strlcat(p, b->text, sizeof b->buf);
+
+	 bar_draw(b->screen);
+}
+
 Bar*
 bar_find(Bar *bp, const char *name) {
 	Bar *b;

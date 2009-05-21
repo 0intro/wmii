@@ -337,28 +337,41 @@ class Button(object):
         self.name = name
         self.base_path = self.sides[side]
         self.path = '%s/%s' % (self.base_path, self.name)
-        self.create(colors, label)
+        self.file = None
+        if colors or label:
+            self.create(colors, label)
 
     def create(self, colors=None, label=None):
-        with client.create(self.path, OWRITE) as f:
-            f.write(self.getval(colors, label))
+        if not self.file:
+            self.file = client.create(self.path, ORDWR)
+        if colors:
+            self.file.awrite(self.getval(colors, label), offset=0)
+        elif label:
+            self.file.awrite(label, offset=24)
     def remove(self):
-        client.aremove(self.path)
+        if self.file:
+            self.file.aremove()
+            self.file = None
 
     def getval(self, colors=None, label=None):
-        if colors is None:
-            colors = self.colors
         if label is None:
             label = self.label
+        if colors is None and re.match(
+            r'#[0-9a-f]{6} #[0-9a-f]{6} #[0-9a-f]{6}', label, re.I):
+            colors = self.colors
+        if not colors:
+            return str(label)
         return ' '.join([Color(c).hex for c in colors] + [str(label)])
 
     colors = property(
-        lambda self: tuple(map(Color, client.read(self.path).split(' ')[:3])),
-        lambda self, val: client.awrite(self.path, self.getval(colors=val)))
+        lambda self: self.file and
+                     tuple(map(Color, self.file.read(offset=0).split(' ')[:3]))
+                     or (),
+        lambda self, val: self.create(colors=val))
 
     label = property(
-        lambda self: client.read(self.path).split(' ', 3)[3],
-        lambda self, val: client.write(self.path, self.getval(label=val)))
+        lambda self: self.file and self.file.read(offset=0).split(' ', 3)[3] or '',
+        lambda self, val: self.create(label=val))
 
     @classmethod
     def all(cls, side):
@@ -516,7 +529,7 @@ class Tags(object):
             self.add(t.id)
         for b in wmii.lbuttons:
             if b.name not in self.tags:
-                b.aremove()
+                b.remove()
         self.focus(Tag('sel').id)
 
         self.mru = [self.sel.id]
