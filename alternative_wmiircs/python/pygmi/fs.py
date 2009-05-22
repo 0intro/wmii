@@ -15,8 +15,8 @@ class Ctl(object):
     def __init__(self):
         pass
 
-    def ctl(self, msg):
-        client.awrite(self.ctl_path, msg)
+    def ctl(self, *args):
+        client.awrite(self.ctl_path, ' '.join(args))
 
     def __getitem__(self, key):
         for line in self.ctl_lines():
@@ -32,7 +32,7 @@ class Ctl(object):
         assert '\n' not in key
         if key in self.ctl_types:
             val = self.ctl_types[key][1](val)
-        self.ctl('%s %s\n' % (key, val))
+        self.ctl(key, val)
 
     def get(self, key, default=sentinel):
         try:

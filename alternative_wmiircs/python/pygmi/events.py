@@ -6,8 +6,7 @@ import traceback
 import pygmi
 from pygmi import monitor, client, curry, call, program_list, _
 
-__all__ = ('bind_keys', 'bind_events', 'toggle_keys', 'event_loop',
-           'event', 'Match')
+__all__ = ('keys', 'bind_events', 'event_loop', 'event', 'Match')
 
 keydefs = {}
 keys = {}
@@ -39,18 +38,19 @@ class Match(object):
             return ary
 
 def flatten(items):
-    for k, v in items.iteritems():
+    for k, v in items:
         if not isinstance(k, (list, tuple)):
             k = k,
         for key in k:
             yield key, v
 
-def bind_keys(items):
-    for k, v in flatten(items):
+def bind_keys(mode='main', keys={}, import_={}):
+    for k, v in flatten(keys.iteritems()):
         keys[k % keydefs] = v
 
-def bind_events(items):
-    for k, v in flatten(items):
+def bind_events(items={}, **kwargs):
+    kwargs.update(items)
+    for k, v in flatten(kwargs.iteritems()):
         if isinstance(k, Match):
             eventmatchers[k] = v
         else:
@@ -59,21 +59,42 @@ def bind_events(items):
 def event(fn):
     bind_events({fn.__name__: fn})
 
-@event
-def Key(args):
-    if args in keys:
-        keys[args](args)
+class Keys(object):
+    def __init__(self):
+        self.modes = {}
+        self.mode = 'main'
+        bind_events(Key=self.dispatch)
 
-keys_enabled = False
-keys_restore = None
-def toggle_keys(on=None, restore=None):
-    if on is None:
-        on = not keys_enabled
-    keys_restore = restore
-    if on:
-        client.write('/keys', '\n'.join(keys.keys()))
-    else:
-        client.write('/keys', restore or ' ')
+    def _add_mode(self, mode):
+        if mode not in self.modes:
+            self.modes[mode] = { 'name': mode, 'keys': {}, 'import': {} }
+
+    def _set_mode(self, mode):
+        self._add_mode(mode)
+        self._mode = mode
+        client.write('/keys', '\n'.join(self.modes[mode]['keys'].keys() +
+                                        self.modes[mode]['import'].keys() +
+                                        ['']))
+    mode = property(lambda self: self._mode, _set_mode)
+
+    def bind(self, mode='main', keys={}, import_={}):
+        self._add_mode(mode)
+        mode = self.modes[mode]
+        for k, v in flatten(keys.iteritems()):
+            mode['keys'][k % keydefs] = v
+        for k, v in flatten((v, k) for k, v in import_.iteritems()):
+            mode['import'][k % keydefs] = v
+
+    def dispatch(self, key):
+        mode = self.modes[self.mode]
+        seen = set()
+        while mode and mode['name'] not in seen:
+            seen.add(mode['name'])
+            if key in mode['keys']:
+                return mode['keys'][key](key)
+            elif key in mode['import']:
+                mode = modes.get(mode['import'][key], None)
+keys = Keys()
 
 def dispatch(event, args=''):
     try:
@@ -88,7 +109,7 @@ def dispatch(event, args=''):
 
 def event_loop():
     from pygmi import events
-    toggle_keys(on=True)
+    keys.mode = 'main'
     for line in client.readlines('/event'):
         if not events.alive:
             break

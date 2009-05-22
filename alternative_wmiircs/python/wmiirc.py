@@ -151,9 +151,7 @@ class Notice(Button):
         self.timer.start()
 notice = Notice()
 
-bind_keys({
-    '%(mod)s-Control-t': lambda k: events.toggle_keys(restore='%(mod)s-Control-t'),
-
+keys.bind('main', {
     '%(mod)s-%(left)s':  lambda k: Tag('sel').select('left'),
     '%(mod)s-%(right)s': lambda k: Tag('sel').select('right'),
     '%(mod)s-%(up)s':    lambda k: Tag('sel').select('up'),
@@ -192,11 +190,36 @@ bind_keys({
     '%(mod)s-o': lambda k: tags.select(tags.PREV),
 })
 def bind_num(i):
-    bind_keys({
+    keys.bind('main', {
         '%%(mod)s-%d' % i:       lambda k: tags.select(str(i)),
         '%%(mod)s-Shift-%d' % i: lambda k: setattr(Client('sel'), 'tags', i),
     })
 map(bind_num, range(0, 10))
+
+keys.bind('main', {
+    '%(mod)s-Control-r': lambda k: setattr(keys, 'mode', 'resize'),
+    '%(mod)s-Control-t': lambda k: setattr(keys, 'mode', 'passthrough'),
+});
+keys.bind('passthrough', {
+    '%(mod)s-Control-t': lambda k: setattr(keys, 'mode', 'main'),
+});
+
+keys.bind('resize', {
+    'Escape':            lambda k: setattr(keys, 'mode', 'main'),
+}, import_={'main': ('%(mod)s-%(left)s', '%(mod)s-%(right)s',
+                     '%(mod)s-%(up)s', '%(mod)s-%(down)s',
+                     '%(mod)s-Space')})
+
+def addresize(mod, cmd, *args):
+    keys.bind('resize', {
+        mod + '%(left)s':  lambda k: Tag('sel').ctl(cmd, 'sel sel', 'left',  *args),
+        mod + '%(right)s': lambda k: Tag('sel').ctl(cmd, 'sel sel', 'right', *args),
+        mod + '%(up)s':    lambda k: Tag('sel').ctl(cmd, 'sel sel', 'up',    *args),
+        mod + '%(down)s':  lambda k: Tag('sel').ctl(cmd, 'sel sel', 'down',  *args),
+    });
+addresize('',         'grow')
+addresize('Control-', 'grow', '-1')
+addresize('Shift-',   'nudge')
 
 Actions.rehash()
 
