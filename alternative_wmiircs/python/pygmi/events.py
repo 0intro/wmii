@@ -4,16 +4,39 @@ import sys
 import traceback
 
 import pygmi
-from pygmi import monitor, client, call, program_list
+from pygmi import monitor, client, curry, call, program_list, _
 
 __all__ = ('bind_keys', 'bind_events', 'toggle_keys', 'event_loop',
-           'event')
+           'event', 'Match')
 
 keydefs = {}
 keys = {}
 events = {}
+eventmatchers = {}
 
 alive = True
+
+class Match(object):
+    def __init__(self, *args):
+        self.args = args
+        self.matchers = []
+        for a in args:
+            if a is _:
+                a = lambda k: True
+            elif isinstance(a, basestring):
+                a = a.__eq__
+            elif isinstance(a, (list, tuple)):
+                a = curry(lambda ary, k: k in ary, a)
+            elif hasattr(a, 'search'):
+                a = a.search
+            else:
+                a = str(a).__eq__
+            self.matchers.append(a)
+
+    def match(self, string):
+        ary = string.split(' ', len(self.matchers))
+        if all(m(a) for m, a in zip(self.matchers, ary)):
+            return ary
 
 def flatten(items):
     for k, v in items.iteritems():
@@ -28,7 +51,10 @@ def bind_keys(items):
 
 def bind_events(items):
     for k, v in flatten(items):
-        events[k] = v
+        if isinstance(k, Match):
+            eventmatchers[k] = v
+        else:
+            events[k] = v
 
 def event(fn):
     bind_events({fn.__name__: fn})
@@ -50,11 +76,15 @@ def toggle_keys(on=None, restore=None):
         client.write('/keys', restore or ' ')
 
 def dispatch(event, args=''):
-    if event in events:
-        try:
+    try:
+        if event in events:
             events[event](args)
-        except Exception, e:
-            traceback.print_exc(sys.stderr)
+        for matcher, action in eventmatchers.iteritems():
+            ary = matcher.match(' '.join((event, args)))
+            if ary is not None:
+                action(*ary)
+    except Exception, e:
+        traceback.print_exc(sys.stderr)
 
 def event_loop():
     from pygmi import events

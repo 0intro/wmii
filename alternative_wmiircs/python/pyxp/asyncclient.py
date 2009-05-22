@@ -10,72 +10,55 @@ def awithfile(*oargs, **okwargs):
         return next
     return wrapper
 def wrap_callback(fn, file):
-    file.called = 0
     def callback(data, exc, tb):
-        file.called += 1
         file.close()
-        if callable(fn):
-            fn(data, exc, tb)
+        Client.respond(fn, data, exc, tb)
     return callback
 
 class Client(client.Client):
     ROOT_FID = 0
 
-    def awalk(self, path, async, fail=None):
-        ctxt = dict(path=path, fid=self.getfid(), ofid=ROOT_FID)
+    def _awalk(self, path, callback, fail=None):
+        ctxt = dict(path=path, fid=self._getfid(), ofid=ROOT_FID)
         def next(resp=None, exc=None, tb=None):
             if exc and ctxt['ofid'] != ROOT_FID:
-                self.aclunk(ctxt['fid'])
+                self._aclunk(ctxt['fid'])
             if not ctxt['path'] and resp or exc:
                 if exc and fail:
                     return self.respond(fail, None, exc, tb)
-                return self.respond(async, ctxt['fid'], exc, tb)
+                return self.respond(callback, ctxt['fid'], exc, tb)
             wname = ctxt['path'][:fcall.MAX_WELEM]
             ofid = ctxt['ofid']
             ctxt['path'] = ctxt['path'][fcall.MAX_WELEM:]
             if resp:
                 ctxt['ofid'] = ctxt['fid']
-            self.dorpc(fcall.Twalk(fid=ofid,
+            self._dorpc(fcall.Twalk(fid=ofid,
                                    newfid=ctxt['fid'],
                                    wname=wname),
                        next)
         next()
 
-    def _open(self, path, mode, open, origpath=None):
-        resp = None
-
-        with self.walk(path) as nfid:
-            fid = nfid
-            resp = self.dorpc(open(fid))
-
-        def cleanup():
-            self.aclunk(fid)
-        file = File(self, origpath or '/'.join(path), resp, fid, mode, cleanup)
-        self.files[fid] = file
-
-        return file
-
-    def _aopen(self, path, mode, open, callback, origpath=None):
+    _file = property(lambda self: File)
+    def _aopen(self, path, mode, open, callback, fail=None, origpath=None):
         resp = None
         def next(fid, exc, tb):
             def next(resp, exc, tb):
                 def cleanup():
-                    self.clunk(fid)
-                file = File(self, origpath or '/'.join(path), resp, fid, mode, cleanup)
-                self.files[fid] = file
+                    self._clunk(fid)
+                file = self._file(self, origpath or '/'.join(path), resp, fid, mode, cleanup)
                 self.respond(callback, file)
-            self.dorpc(open(fid), next, callback)
-        self.awalk(path, next, callback)
+            self._dorpc(open(fid), next, fail or callback)
+        self._awalk(path, next, fail or callback)
 
-    def aopen(self, path, callback=True, mode=OREAD):
+    def aopen(self, path, callback=True, fail=None, mode=OREAD):
         assert callable(callback)
-        path = self.splitpath(path)
+        path = self._splitpath(path)
         def open(fid):
             return fcall.Topen(fid=fid, mode=mode)
-        return self._aopen(path, mode, open, callback)
+        return self._aopen(path, mode, open, fail or callback)
 
-    def acreate(self, path, callback=True, mode=OREAD, perm=0):
-        path = self.splitpath(path)
+    def acreate(self, path, callback=True, fail=None, mode=OREAD, perm=0):
+        path = self._splitpath(path)
         name = path.pop()
         def open(fid):
             return fcall.Tcreate(fid=fid, mode=mode, name=name, perm=perm)
@@ -83,21 +66,21 @@ class Client(client.Client):
             def callback(resp, exc, tb):
                 if resp:
                     resp.close()
-        return self._aopen(path, mode, open, async,
+        return self._aopen(path, mode, open, callback, fail,
                            origpath='/'.join(path + [name]))
 
-    def aremove(self, path, callback=True):
-        path = self.splitpath(path)
+    def aremove(self, path, callback=True, fail=None):
+        path = self._splitpath(path)
         def next(fid, exc, tb):
-            self.dorpc(fcall.Tremove(fid=fid), callback)
-        self.awalk(path, next, callback)
+            self._dorpc(fcall.Tremove(fid=fid), callback, fail)
+        self._awalk(path, next, callback, fail)
 
-    def astat(self, path, callback):
-        path = self.splitpath(path)
+    def astat(self, path, callback, fail = None):
+        path = self._splitpath(path)
         def next(fid, exc, tb):
             def next(resp, exc, tb):
                 callback(resp.stat, exc, tb)
-            self.dorpc(fcall.Tstat(fid=fid), next, callback)
+            self._dorpc(fcall.Tstat(fid=fid), next, callback)
 
     @awithfile()
     def aread(self, (file, exc, tb), callback, *args, **kwargs):
@@ -133,9 +116,9 @@ class File(client.File):
     def stat(self, callback):
         def next(resp, exc, tb):
             callback(resp.stat, exc, tb)
-        resp = self.dorpc(fcall.Tstat(), next, callback)
+        resp = self._dorpc(fcall.Tstat(), next, callback)
 
-    def aread(self, callback, count=None, offset=None, buf=''):
+    def aread(self, callback, fail=None, count=None, offset=None, buf=''):
         ctxt = dict(res=[], count=self.iounit, offset=self.offset)
         if count is not None:
             ctxt['count'] = count
@@ -153,8 +136,8 @@ class File(client.File):
             n = min(ctxt['count'], self.iounit)
             ctxt['count'] -= n
 
-            self.dorpc(fcall.Tread(offset=ctxt['offset'], count=n),
-                       next, callback)
+            self._dorpc(fcall.Tread(offset=ctxt['offset'], count=n),
+                       next, fail or callback)
         next()
 
     def areadlines(self, callback):
@@ -178,7 +161,7 @@ class File(client.File):
                 callback(None)
         self.aread(next)
 
-    def awrite(self, data, callback=True, offset=None):
+    def awrite(self, data, callback=True, fail=None, offset=None):
         ctxt = dict(offset=self.offset, off=0)
         if offset is not None:
             ctxt['offset'] = offset
@@ -186,22 +169,25 @@ class File(client.File):
             if resp:
                 ctxt['off'] += resp.count
                 ctxt['offset'] += resp.count
-            if ctxt['off'] < len(data):
+            if ctxt['off'] < len(data) or not (exc or resp):
                 n = min(len(data), self.iounit)
 
-                self.dorpc(fcall.Twrite(offset=ctxt['offset'],
+                self._dorpc(fcall.Twrite(offset=ctxt['offset'],
                                         data=data[ctxt['off']:ctxt['off']+n]),
-                           next, callback)
+                           next, fail or callback)
             else:
                 if offset is None:
                     self.offset = ctxt['offset']
                 self.respond(callback, ctxt['off'], exc, tb)
         next()
 
-    def aremove(self, callback=True):
+    def aremove(self, callback=True, fail=None):
         def next(resp, exc, tb):
             self.close()
-            self.respond(resp and True, exc, tb)
-        self.dorpc(fcall.Tremove(), next)
+            if exc and fail:
+                self.respond(fail, resp and True, exc, tb)
+            else:
+                self.respond(callback, resp and True, exc, tb)
+        self._dorpc(fcall.Tremove(), next)
 
 # vim:se sts=4 sw=4 et:

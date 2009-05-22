@@ -1,4 +1,4 @@
-from pygmi import call
+from pygmi.util import call
 
 __all__ = 'Menu', 'ClickMenu'
 

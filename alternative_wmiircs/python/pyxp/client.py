@@ -52,32 +52,31 @@ class Client(object):
     def __enter__(self):
         return self
     def __exit__(self, *args):
-        self.cleanup()
+        self._cleanup()
 
     def __init__(self, conn=None, namespace=None, root=None):
         if not conn and namespace:
             conn = 'unix!%s/%s' % (NAMESPACE, namespace)
         try:
             self.lastfid = ROOT_FID
-            self.fids = []
-            self.files = {}
+            self.fids = set()
             self.lock = RLock()
 
             def process(data):
                 return fcall.Fcall.unmarshall(data)[1]
             self.mux = Mux(conn, process, maxtag=256)
 
-            resp = self.dorpc(fcall.Tversion(version=pyxp.VERSION, msize=65535))
+            resp = self._dorpc(fcall.Tversion(version=pyxp.VERSION, msize=65535))
             if resp.version != pyxp.VERSION:
                 raise ProtocolException, "Can't speak 9P version '%s'" % resp.version
             self.msize = resp.msize
 
-            self.dorpc(fcall.Tattach(fid=ROOT_FID, afid=fcall.NO_FID,
+            self._dorpc(fcall.Tattach(fid=ROOT_FID, afid=fcall.NO_FID,
                        uname=os.environ['USER'], aname=''))
 
             if root:
-                path = self.splitpath(root)
-                resp = self.dorpc(fcall.Twalk(fid=ROOT_FID,
+                path = self._splitpath(root)
+                resp = self._dorpc(fcall.Twalk(fid=ROOT_FID,
                                               newfid=ROOT_FID,
                                               wname=path))
         except Exception, e:
@@ -86,7 +85,7 @@ class Client(object):
                 self.mux.fd.close()
             raise e
 
-    def cleanup(self):
+    def _cleanup(self):
         try:
             for f in self.files:
                 f.close()
@@ -94,7 +93,7 @@ class Client(object):
             self.mux.fd.close()
             self.mux = None
 
-    def dorpc(self, req, callback=None, error=None):
+    def _dorpc(self, req, callback=None, error=None):
         def doresp(resp):
             if isinstance(resp, fcall.Rerror):
                 raise RPCError, "%s[%d] RPC returned error: %s" % (
@@ -117,38 +116,37 @@ class Client(object):
             return doresp(self.mux.rpc(req))
         self.mux.rpc(req, next)
 
-    def splitpath(self, path):
+    def _splitpath(self, path):
         return [v for v in path.split('/') if v != '']
 
-    def getfid(self):
+    def _getfid(self):
         with self.lock:
             if self.fids:
                 return self.fids.pop()
             self.lastfid += 1
             return self.lastfid
-    def putfid(self, fid):
+    def _putfid(self, fid):
         with self.lock:
-            self.files.pop(fid)
-            self.fids.append(fid)
+            self.fids.add(fid)
 
-    def aclunk(self, fid, callback=None):
+    def _aclunk(self, fid, callback=None):
         def next(resp, exc, tb):
             if resp:
-                self.putfid(fid)
+                self._putfid(fid)
             self.respond(callback, resp, exc, tb)
-        self.dorpc(fcall.Tclunk(fid=fid), next)
+        self._dorpc(fcall.Tclunk(fid=fid), next)
 
-    def clunk(self, fid):
+    def _clunk(self, fid):
         try:
-            self.dorpc(fcall.Tclunk(fid=fid))
+            self._dorpc(fcall.Tclunk(fid=fid))
         finally:
-            self.putfid(fid)
+            self._putfid(fid)
 
-    def walk(self, path):
-        fid = self.getfid()
+    def _walk(self, path):
+        fid = self._getfid()
         ofid = ROOT_FID
         while True:
-            self.dorpc(fcall.Twalk(fid=ofid, newfid=fid,
+            self._dorpc(fcall.Twalk(fid=ofid, newfid=fid,
                                    wname=path[0:fcall.MAX_WELEM]))
             path = path[fcall.MAX_WELEM:]
             ofid = fid
@@ -161,32 +159,31 @@ class Client(object):
                 return fid
             def __exit__(res, exc_type, exc_value, traceback):
                 if exc_type:
-                    self.clunk(fid)
+                    self._clunk(fid)
         return Res
 
+    _file = property(lambda self: File)
     def _open(self, path, mode, open, origpath=None):
         resp = None
 
-        with self.walk(path) as nfid:
+        with self._walk(path) as nfid:
             fid = nfid
-            resp = self.dorpc(open(fid))
+            resp = self._dorpc(open(fid))
 
         def cleanup():
-            self.aclunk(fid)
-        file = File(self, origpath or '/'.join(path), resp, fid, mode, cleanup)
-        self.files[fid] = file
-
+            self._aclunk(fid)
+        file = self._file(self, origpath or '/'.join(path), resp, fid, mode, cleanup)
         return file
 
     def open(self, path, mode=OREAD):
-        path = self.splitpath(path)
+        path = self._splitpath(path)
 
         def open(fid):
             return fcall.Topen(fid=fid, mode=mode)
         return self._open(path, mode, open)
 
     def create(self, path, mode=OREAD, perm=0):
-        path = self.splitpath(path)
+        path = self._splitpath(path)
         name = path.pop()
 
         def open(fid):
@@ -194,19 +191,19 @@ class Client(object):
         return self._open(path, mode, open, origpath='/'.join(path + [name]))
 
     def remove(self, path):
-        path = self.splitpath(path)
+        path = self._splitpath(path)
 
-        with self.walk(path) as fid:
-            self.dorpc(fcall.Tremove(fid=fid))
+        with self._walk(path) as fid:
+            self._dorpc(fcall.Tremove(fid=fid))
 
     def stat(self, path):
-        path = self.splitpath(path)
+        path = self._splitpath(path)
 
         try:
-            with self.walk(path) as fid:
-                resp = self.dorpc(fcall.Tstat(fid= fid))
+            with self._walk(path) as fid:
+                resp = self._dorpc(fcall.Tstat(fid= fid))
                 st = resp.stat()
-                self.clunk(fid)
+                self._clunk(fid)
             return st
         except RPCError:
             return None
@@ -238,7 +235,7 @@ class File(object):
         self.client = client
         self.path = path
         self.fid = fid
-        self.cleanup = cleanup
+        self._cleanup = cleanup
         self.mode = mode
         self.iounit = fcall.iounit
         self.qid = fcall.qid
@@ -247,15 +244,15 @@ class File(object):
         self.offset = 0
     def __del__(self):
         if not self.closed:
-            self.cleanup()
+            self._cleanup()
 
-    def dorpc(self, fcall, async=None, error=None):
+    def _dorpc(self, fcall, async=None, error=None):
         if hasattr(fcall, 'fid'):
             fcall.fid = self.fid
-        return self.client.dorpc(fcall, async, error)
+        return self.client._dorpc(fcall, async, error)
 
     def stat(self):
-        resp = self.dorpc(fcall.Tstat())
+        resp = self._dorpc(fcall.Tstat())
         return resp.stat
 
     def read(self, count=None, offset=None, buf=''):
@@ -270,7 +267,7 @@ class File(object):
                 n = min(count, self.iounit)
                 count -= n
 
-                resp = self.dorpc(fcall.Tread(offset=offs, count=n))
+                resp = self._dorpc(fcall.Tread(offset=offs, count=n))
                 data = resp.data
 
                 offs += len(data)
@@ -307,7 +304,7 @@ class File(object):
             while off < len(data):
                 n = min(len(data), self.iounit)
 
-                resp = self.dorpc(fcall.Twrite(offset=offs,
+                resp = self._dorpc(fcall.Twrite(offset=offs,
                                                data=data[off:off+n]))
                 off += resp.count
                 offs += resp.count
@@ -331,7 +328,7 @@ class File(object):
     def close(self):
         assert not self.closed
         self.closed = True
-        self.cleanup()
+        self._cleanup()
         self.tg = None
         self.fid = None
         self.client = None
@@ -339,7 +336,7 @@ class File(object):
 
     def remove(self):
         try:
-            self.dorpc(fcall.Tremove())
+            self._dorpc(fcall.Tremove())
         finally:
             try:
                 self.close()

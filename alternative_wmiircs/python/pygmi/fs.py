@@ -342,12 +342,15 @@ class Button(object):
             self.create(colors, label)
 
     def create(self, colors=None, label=None):
+        def fail(resp, exc, tb):
+            self.file = None
         if not self.file:
             self.file = client.create(self.path, ORDWR)
         if colors:
-            self.file.awrite(self.getval(colors, label), offset=0)
+            self.file.awrite(self.getval(colors, label), offset=0, fail=fail)
         elif label:
-            self.file.awrite(label, offset=24)
+            self.file.awrite(label, offset=24, fail=fail)
+
     def remove(self):
         if self.file:
             self.file.aremove()
@@ -578,30 +581,5 @@ class Tags(object):
 
         self.idx = min(-1, max(-len(self.mru), self.idx))
         wmii['view'] = self.mru[self.idx]
-
-if __name__ == '__main__':
-    c = Client('sel')
-    #print c.id
-    #print c.items()
-    #print c.urgent
-
-    #print list(wmii.clients)
-    #print list(wmii.tags)
-
-    #print [a.frames for a in Tag('sel').index]
-    #print Tag('sel').selclient
-    #print Tag('sel').selclient.label
-    #print Tag('sel').selclient.tags
-    #print Tag('sel').selclient.props
-    #a = Area(Tag('sel'), 1)
-    #print a.width
-    #print a.frames
-
-    #print [[c.hex for c in b.colors] for b in wmii.lbuttons]
-    #print [[c.hex for c in b.colors] for b in wmii.rbuttons]
-    Button('left', '1').colors = ((0., 0., 0.), (1., 1., 1.), (0., 0., 0.))
-    Button('left', '1').label = 'foo'
-    Button('left', '5', label='baz')
-    print repr(wmii['normcolors'])
 
 # vim:se sts=4 sw=4 et:

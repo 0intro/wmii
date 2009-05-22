@@ -70,8 +70,7 @@ client.awrite('/event', 'Start wmiirc')
 
 tags = Tags()
 bind_events({
-    'Quit':         lambda args: sys.exit(),
-    'Start':        lambda args: args == 'wmiirc' and sys.exit(),
+    ('Quit', Match('Start', 'wmiirc')): lambda *a: sys.exit(),
     'CreateTag':    tags.add,
     'DestroyTag':   tags.delete,
     'FocusTag':     tags.focus,
@@ -88,11 +87,21 @@ bind_events({
 
     'Notice':       lambda args: notice.show(args),
 
-    ('LeftBarClick', 'LeftBarDND'):
-        lambda args: args.split()[0] == '1' and tags.select(args.split(' ', 1)[1]),
+    Match(('LeftBarClick', 'LeftBarDND'), '1'): lambda e, b, tag: tags.select(tag),
+    Match('LeftBarClick', '4'): lambda *a: tags.select(tags.next(True)),
+    Match('LeftBarClick', '5'): lambda *a: tags.select(tags.next()),
 
-    'ClientMouseDown':  lambda args: menu(*args.split(), type='client'),
-    'LeftBarMouseDown': lambda args: menu(*reversed(args.split()), type='lbar'),
+    Match('LeftBarMouseDown', 3):   lambda e, n, tag: clickmenu((
+            ('Delete',     lambda t: Tag(t).delete()),
+        ), (tag,)),
+    Match('ClientMouseDown', _, 3): lambda e, client, n: clickmenu((
+            ('Delete',     lambda c: Client(c).kill()),
+            ('Kill',       lambda c: Client(c).slay()),
+            ('Fullscreen', lambda c: Client(c).set('Fullscreen', 'on')),
+        ), (client,)),
+
+    Match('ClientClick', _, 4): lambda e, c, n: Tag('sel').select('up'),
+    Match('ClientClick', _, 5): lambda e, c, n: Tag('sel').select('down'),
 })
 
 @apply
@@ -117,20 +126,10 @@ action_menu = Menu(histfile='%s/history.action' % confpath[0], nhist=500,
 tag_menu = Menu(histfile='%s/history.tags' % confpath[0], nhist=100,
                 choices=lambda: sorted(tags.tags.keys()))
 
-def menu(target, button, type):
-    MENUS = {
-        ('client', '3'): (
-            ('Delete',     lambda c: Client(c).kill()),
-            ('Kill',       lambda c: Client(c).slay()),
-            ('Fullscreen', lambda c: Client(c).set('Fullscreen', 'on'))),
-        ('lbar', '3'): (
-            ('Delete',     lambda t: Tag(t).delete())),
-    }
-    choices = MENUS.get((type, button), None)
-    if choices:
-        ClickMenu(choices=(k for k, v in choices),
-                  action=lambda k: dict(choices).get(k, identity)(target)
-                 ).call()
+def clickmenu(choices, args):
+    ClickMenu(choices=(k for k, v in choices),
+              action=lambda choice: dict(choices).get(choice, identity)(*args)) \
+            .call()
 
 class Notice(Button):
     def __init__(self):
@@ -138,7 +137,7 @@ class Notice(Button):
         self.timer = None
 
     def tick(self):
-        self.label = ''
+        self.label = ' '
 
     def write(self, notice):
         client.awrite('/event', 'Notice %s' % notice.replace('\n', ' '))
@@ -201,7 +200,8 @@ map(bind_num, range(0, 10))
 
 Actions.rehash()
 
-dirs = ('%s/plugins' % dir for dir in confpath if os.access('%s/plugins' % dir, os.R_OK))
+dirs = filter(curry(os.access, _, os.R_OK),
+              ('%s/plugins' % dir for dir in confpath))
 files = filter(re.compile(r'\.py$').match,
                reduce(operator.add, map(os.listdir, dirs), []))
 for f in ['wmiirc_local'] + ['plugins.%s' % file[:-3] for file in files]:

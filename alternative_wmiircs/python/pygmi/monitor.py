@@ -1,3 +1,5 @@
+from threading import Timer
+
 from pygmi import client
 from pygmi.fs import *
 
@@ -33,7 +35,6 @@ class MonitorBase(type):
         return new_cls
 
 class Monitor(object):
-
     side = 'right'
     interval = 1.0
 
@@ -57,7 +58,6 @@ class Monitor(object):
         if self.timer and mon is not self:
             return
         if self.active:
-            from threading import Timer
             label = self.getlabel()
             if isinstance(label, basestring):
                 label = None, label
