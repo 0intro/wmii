@@ -74,11 +74,9 @@ next:
 	switch(op) {
 	case ACCEPT:
 		srv.running = false;
-		if(matchidx->retstring && !motion)
-			print("%s", matchidx->retstring);
-		else
-			print("%s", input.string);
-
+		if(!matchidx && matchfirst->retstring && !motion)
+			menu_cmd(CMPL_FIRST, 0);
+		print("%s", input.string);
 		break;
 	case REJECT:
 		srv.running = false;
@@ -89,14 +87,16 @@ next:
 		caret_move(op, motion);
 		break;
 	case CMPL_NEXT:
-		matchidx = matchidx->next;
+		matchidx = matchidx ? matchidx->next : matchfirst;
 		break;
 	case CMPL_PREV:
+		if(!matchidx)
+			matchidx = matchfirst;
 		matchidx = matchidx->prev;
 		break;
 	case CMPL_FIRST:
 		matchstart = matchfirst;
-		matchidx = nil;
+		matchidx = matchstart;
 		matchend = nil;
 		break;
 	case CMPL_LAST:
@@ -109,6 +109,10 @@ next:
 		matchend = matchstart->prev;
 		matchidx = nil;
 		break;
+	}
+	if(matchidx) {
+		caret_set(input.filter_start, input.pos - input.string);
+		caret_insert(matchidx->retstring, 0);
 	}
 	menu_draw();
 }
@@ -160,9 +164,6 @@ menu_draw(void) {
 		}
 	}
 
-	if(matchidx == nil)
-		matchidx = matchstart;
-
 	r2 = rd;
 	for(i=matchstart; i->string; i=i->next) {
 		r2.min.x = promptw + itemoff;
@@ -185,6 +186,7 @@ menu_draw(void) {
 		drawstring(ibuf, font, r2, West, "<", cnorm.fg);
 	if(matchend->next != matchfirst)
 		drawstring(ibuf, font, r2, East, ">", cnorm.fg);
+
 	r2 = rd;
 	r2.max.x = promptw + inputw;
 	drawstring(ibuf, font, r2, West, input.string, cnorm.fg);

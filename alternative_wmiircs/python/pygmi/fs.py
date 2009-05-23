@@ -111,7 +111,8 @@ class Dir(Ctl):
         def __set__(self, dir, val):
             if not self.writable:
                 raise NotImplementedError('File %s is not writable' % self.name)
-            return client.awrite('%s/%s' % (dir.path, self.name), val)
+            return client.awrite('%s/%s' % (dir.path, self.name),
+                                 str(val))
 
     @property
     def ctl_path(self):
@@ -524,6 +525,7 @@ class Tags(object):
     NEXT = []
 
     def __init__(self, normcol=None, focuscol=None):
+        self.ignore = set()
         self.tags = {}
         self.sel = None
         self.normcol = normcol or wmii['normcolors']
@@ -555,7 +557,7 @@ class Tags(object):
         self.tags[tag].button.label = urgent and '*' + tag or tag
 
     def next(self, reverse=False):
-        tags = list(wmii.tags)
+        tags = [t for t in wmii.tags if t.id not in self.ignore]
         tags.append(tags[0])
         if reverse:
             tags.reverse()
@@ -566,7 +568,8 @@ class Tags(object):
 
     def select(self, tag):
         if tag is self.PREV:
-            self.idx -= 1
+            if self.sel.id not in self.ignore:
+                self.idx -= 1
         elif tag is self.NEXT:
             self.idx += 1
         else:
@@ -574,7 +577,7 @@ class Tags(object):
                 tag = tag.id
             wmii['view'] = tag
 
-            if tag != self.mru[-1]:
+            if tag != self.mru[-1] and tag not in self.ignore:
                 self.mru.append(tag)
                 self.mru = self.mru[-10:]
             return

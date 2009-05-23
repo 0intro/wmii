@@ -33,6 +33,20 @@ next_rune(char *p, Rune *r) {
 	return p + i;
 }
 
+void
+caret_set(int start, int end) {
+	int len;
+
+	len = input.end - input.string;
+	start = max(0, min(len, start));
+
+	input.pos = input.string + start;
+	if(end < 0)
+		input.pos_end = nil;
+	else
+		input.pos_end = input.string + max(start, end);
+}
+
 char*
 caret_find(int dir, int type) {
 	char *end;
@@ -79,12 +93,14 @@ caret_find(int dir, int type) {
 			return end;
 		}
 	}
+	input.pos_end = nil;
 	return input.pos;
 }
 
 void
 caret_move(int dir, int type) {
 	input.pos = caret_find(dir, type);
+	input.pos_end = nil;
 }
 
 void
@@ -92,7 +108,10 @@ caret_delete(int dir, int type) {
 	char *pos, *p;
 	int n;
 
-	p = caret_find(dir, type);
+	if(input.pos_end)
+		p = input.pos_end;
+	else
+		p = caret_find(dir, type);
 	pos = input.pos;
 	if(p == input.end)
 		input.end = pos;
@@ -107,6 +126,7 @@ caret_delete(int dir, int type) {
 		input.end = pos + n;
 	}
 	*input.end = '\0';
+	input.pos_end = nil;
 }
 
 void
@@ -118,7 +138,9 @@ caret_insert(char *s, bool clear) {
 	if(clear) {
 		input.pos = input.string;
 		input.end = input.string;
-	}
+	}else if(input.pos_end)
+		caret_delete(0, 0);
+
 	len = strlen(s);
 	pos = input.pos - input.string;
 	end = input.end - input.string;
@@ -137,5 +159,6 @@ caret_insert(char *s, bool clear) {
 	memmove(input.pos + len, input.pos, end - pos);
 	memmove(input.pos, s, len);
 	input.pos += len;
+	input.pos_end = nil;
 }
 

@@ -151,13 +151,25 @@ erealloc(void *ptr, uint size) {
 	return ret;
 }
 
-char *
+char*
 estrdup(const char *str) {
 	void *ret = strdup(str);
 	if(!ret)
 		mfatal("strdup", strlen(str));
 	return ret;
 }
+
+char*
+estrndup(const char *str, uint len) {
+	char *ret;
+	
+	len = min(len, strlen(str));
+	ret = emalloc(len + 1);
+	memcpy(ret, str, len);
+	ret[len] = '\0';
+	return ret;
+}
+
 
 uint
 tokenize(char *res[], uint reslen, char *str, char delim) {

@@ -122,10 +122,14 @@ filter_list(Item *i, char *filter) {
 
 void
 update_filter(void) {
-	/* TODO: Perhaps filter only previous matches unless filter
-	 * has been truncated.
-	 */
-	matchfirst = matchstart = matchidx = filter_list(items, input.string);
+	char *filter;
+
+	filter = input.string + min(input.filter_start, input.pos - input.string);
+	if(input.pos < input.end)
+		filter = freelater(estrndup(filter, input.pos - filter));
+
+	matchidx = nil;
+	matchfirst = matchstart = filter_list(items, filter);
 	if(alwaysprint) {
 		write(1, input.string, input.pos - input.string);
 		write(1, "", 1);

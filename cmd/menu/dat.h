@@ -62,8 +62,11 @@ EXTERN struct {
 	char*	string;
 	char*	end;
 	char*	pos;
-	int	len;
+	char*	pos_end;
 	int	size;
+
+	char*	filter;
+	int	filter_start;
 } input;
 
 extern char	binding_spec[];

@@ -39,6 +39,7 @@ void*	emalloc(uint);
 void*	emallocz(uint);
 void*	erealloc(void*, uint);
 char*	estrdup(const char*);
+char*	estrndup(const char*, uint);
 void	fatal(const char*, ...);
 void*	freelater(void*);
 int	max(int, int);
