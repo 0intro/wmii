@@ -23,6 +23,7 @@ void	init_screens(int);
 void	update_filter(void);
 
 /* menu.c */
+void	menu_draw(void);
 void	menu_init(void);
 void	menu_show(void);
 

@@ -15,6 +15,7 @@
 #define link _link
 
 static const char version[] = "wimenu-"VERSION", ©2009 Kris Maglione\n";
+static Biobuf*	cmplbuf;
 static Biobuf*	inbuf;
 static bool	alwaysprint;
 
@@ -65,9 +66,13 @@ populate_list(Biobuf *buf, bool hist) {
 	Item ret;
 	Item *i;
 	char *p;
+	bool stop;
 
+	stop = !hist && !isatty(buf->fid);
 	i = &ret;
 	while((p = Brdstr(buf, '\n', true))) {
+		if(stop && p[0] == '\0')
+			break;
 		link(i, emallocz(sizeof *i));
 		i->next_link = i->next;
 		i = i->next;
@@ -84,6 +89,21 @@ populate_list(Biobuf *buf, bool hist) {
 	link(i, &ret);
 	splice(&ret);
 	return ret.next != &ret ? ret.next : nil;
+}
+
+static void
+check_competions(IxpConn *c) {
+	char *s;
+
+	s = Brdstr(cmplbuf, '\n', true);
+	if(!s) {
+		ixp_hangup(c);
+		return;
+	}
+	input.filter_start = strtol(s, nil, 10);
+	items = populate_list(cmplbuf, false);
+	update_filter();
+	menu_draw();
 }
 
 Item*
@@ -271,8 +291,11 @@ main(int argc, char *argv[]) {
 	if(!font)
 		fatal("Can't load font %q", readctl("font "));
 
-	inbuf = Bfdopen(0, OREAD);
-	items = populate_list(inbuf, false);
+	cmplbuf = Bfdopen(0, OREAD);
+	items = populate_list(cmplbuf, false);
+	if(!isatty(cmplbuf->fid))
+		ixp_listen(&srv, cmplbuf->fid, inbuf, check_competions, nil);
+
 	caret_insert("", true);
 	update_filter();
 
@@ -284,7 +307,6 @@ main(int argc, char *argv[]) {
 			parse_keys(buffer);
 	}
 
-	Bterm(inbuf);
 	histidx = &hist;
 	link(&hist, &hist);
 	if(histfile) {

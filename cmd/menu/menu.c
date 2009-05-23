@@ -8,8 +8,6 @@ static Handlers handlers;
 
 static int	ltwidth;
 
-static void	menu_draw(void);
-
 enum {
 	ACCEPT = CARET_LAST,
 	REJECT,
@@ -117,7 +115,7 @@ next:
 	menu_draw();
 }
 
-static void
+void
 menu_draw(void) {
 	Rectangle r, rd, rp, r2;
 	CTuple *c;
