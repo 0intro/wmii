@@ -579,7 +579,7 @@ readctl_root(void) {
 	bufprint("focuscolors %s\n", def.focuscolor.colstr);
 	bufprint("font %s\n", def.font->name);
 	bufprint("grabmod %s\n", def.grabmod);
-	bufprint("incmode %s\n", incmodetab[screen->barpos]);
+	bufprint("incmode %s\n", incmodetab[def.incmode]);
 	bufprint("normcolors %s\n", def.normcolor.colstr);
 	bufprint("view %s\n", selview->name);
 	return buffer;

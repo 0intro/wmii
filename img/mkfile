@@ -21,6 +21,9 @@ iconheight = `{*=$epsbox; $calc '('$4 - $2') *' $iconscale}
 		quit
 	!
 
+%.pdf: %.eps
+	sh epstopdf $stem.eps
+
 %-small.png: %.eps
 	iconwidth = 16
 	iconscale = `{*=$epsbox; hoc -e $iconwidth/'('$3-' '$1')'}
