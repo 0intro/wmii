@@ -73,6 +73,7 @@ next:
 	case ACCEPT:
 		srv.running = false;
 		if(!matchidx && matchfirst->retstring && !motion)
+		if(input.filter_start == 0 && input.pos == input.end)
 			menu_cmd(CMPL_FIRST, 0);
 		print("%s", input.string);
 		break;

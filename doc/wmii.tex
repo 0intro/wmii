@@ -9,11 +9,15 @@
 \usepackage{fancyvrb}
 \usepackage[top=1in,bottom=1in]{geometry}
 \usepackage{graphicx}
-\usepackage[xetex,breaklinks,colorlinks,linkcolor=black]{hyperref}
 \usepackage{makeidx}
 \usepackage{xcolor}
+\usepackage[xetex,breaklinks,colorlinks,linkcolor=black]{hyperref}
+
+\makeindex
 
 \setmainfont[Mapping=tex-text, Numbers=OldStyle]{Palatino LT Std}
+
+\let\primary=\textbf
 
 % Key specs
 \def\key#1{{\small$\langle$\addfontfeature{Numbers=Lining}#1\/$\rangle$}}
@@ -609,6 +613,10 @@ Let's define our basic theme information now:
 With a basic understanding of bar items in mind, we can write
 our view event handlers:
 
+\index{events!CreateTag}
+\index{events!DestroyTag}
+\index{events!FocusTag}
+\index{events!UnfocusTag}
 \begin{code}
   «View Button Events» ::=
   CreateTag)  # CreateTag ‹Tag Name›
@@ -623,6 +631,8 @@ our view event handlers:
 
 \subsection{Urgency}
 
+\index{events!UrgentTag|(}
+\index{events!NotUrgentTag|(}
 Windows can specify that they require attention, and in X11
 parlance, this is called urgency. When a window requests
 attention as such, or declares that it's been satisfied, \wmii\
@@ -642,6 +652,8 @@ asterisk:
   NotUrgentTag) # NotUrgentTag ‹‘Client’ or ‘Manager’› ‹Tag Name›
       wmiir xwrite /lbar/$2 $2;;
 \end{code}
+\index{events!UrgentTag|)}
+\index{events!NotUrgentTag|)}
 
 \subsection{Notices}
 
@@ -668,7 +680,7 @@ Key names are specified as a series of modifiers followed by a
 key name, all separated by hyphens. Valid modifier names are
 |Control|, |Shift|, |Mod1| (usually Alt), |Mod2|, |Mod3|, |Mod4|
 (usually the Windows® key), and |Mod5|. Modifier keys can be
-changed via |xmodmap(1)|, which is beyond the scope of this
+changed via |xmodmap(1|), which is beyond the scope of this
 discussion. Key names can be detected by running |xev| from a
 terminal, pressing the desired key, and looking at the output
 (it's in the parentheses, after the keysym). A \wmii-specific
@@ -832,6 +844,7 @@ And to manage their tags, we'll need:
 
 \subsection{Click Menus}
 
+\index{events!ClientMouseDown}
 \begin{code}
   «Client Menu Events» ::=
   ClientMouseDown) # ClientMouseDown ‹Client ID› ‹Button›
@@ -843,6 +856,7 @@ And to manage their tags, we'll need:
 
 \subsection{Unresponsive Clients}
 
+\index{events!UnresponsiveClient|(}
 When \wmii\ tries to close a window, it waits 8 seconds for the
 client to respond, and then lets its scripts decide what to do
 with it. The stock scripts prompt the user for input:
@@ -862,6 +876,7 @@ with it. The stock scripts prompt the user for input:
       [ $resp = Kill ] && wmiir xwrite /client/$1/ctl slay
   } &;;
 \end{code}
+\index{events!UnresponsiveClient|)}
 
 \section{Views}
 
@@ -958,6 +973,7 @@ We'll use the following key bindings to interact with views:
 
 \subsection{Click Menus}
 
+\index{events!LeftBarMouseDown}
 \begin{code}
   «Tag Menu Events» ::=
   LeftBarMouseDown) # LeftBarMouseDown ‹Button› ‹Bar Name›
@@ -1104,5 +1120,9 @@ And we need a few more key bindings to select our views:
   «Bind Keys»
   «Event Loop»
 \end{code}
+
+\backmatter
+
+\printindex
 
 \end{document}
