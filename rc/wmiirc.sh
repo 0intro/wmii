@@ -25,7 +25,7 @@ set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
 WMII_TERM="xterm"
 
 # Menu history
-hist="$(wmiir namespace)/history"
+hist="${WMII_CONFPATH%%:*}/history"
 histnum=5000
 
 # Column Rules
@@ -153,7 +153,7 @@ events() {
 	Key $MODKEY-p
 		eval wmiir setsid "$(wimenu -h "${hist}.progs" -n $histnum <$progsfile)" &
 	Key $MODKEY-t
-		wmiir xwrite /ctl view $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
+		(tag=$(wi_tags | wimenu -h "${hist}.tags" -n 50) && wmiir xwrite /ctl view $tag) &
 	Key $MODKEY-Return
 		eval wmiir setsid $WMII_TERM &
 	Key $MODKEY-Shift-space
@@ -163,7 +163,8 @@ events() {
 	Key $MODKEY-Shift-c
 		wmiir xwrite /client/sel/ctl kill
 	Key $MODKEY-Shift-t
-		wmiir xwrite "/client/$(wi_selclient)/tags" $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
+		c=$(wi_selclient)
+		(tag=$(wi_tags | wimenu -h "${hist}.tags" -n 50) && wmiir xwrite /client/$c/tags $tag) &
 	Key $MODKEY-$LEFT
 		wmiir xwrite /tag/sel/ctl select left
 	Key $MODKEY-$RIGHT
@@ -186,7 +187,7 @@ events() {
 		wmiir xwrite /tag/sel/ctl send sel up
 !
 	for i in 0 1 2 3 4 5 6 7 8 9; do
-		cat <<'!'
+		cat <<!
 	Key $MODKEY-$i
 		wmiir xwrite /ctl view "$i"
 	Key $MODKEY-Shift-$i
