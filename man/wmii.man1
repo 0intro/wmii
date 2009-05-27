@@ -297,9 +297,9 @@ represents the currently selected client.
                 likely kill the X client in the future
                 (including its other windows), while the close
                 command will replace it.
-        : [Not]Urgent
+        : Urgent <on | off | toggle>
                 Set or unset the client's urgent hint.
-        : [Not]Fullscreen
+        : Fullscreen <on | off | toggle>
         <<
                 
 : label
