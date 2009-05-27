@@ -8,6 +8,8 @@ static Handlers handlers;
 
 static int	ltwidth;
 
+static void	_menu_draw(bool);
+
 enum {
 	ACCEPT = CARET_LAST,
 	REJECT,
@@ -52,6 +54,15 @@ menu_unmap(long id, void *p) {
 }
 
 static void
+selectitem(Item *i) {
+	if(i != matchidx) {
+		caret_set(input.filter_start, input.pos - input.string);
+		caret_insert(i->retstring, 0);
+		matchidx = i;
+	}
+}
+
+static void
 menu_cmd(int op, int motion) {
 	int n;
 
@@ -86,38 +97,35 @@ next:
 		caret_move(op, motion);
 		break;
 	case CMPL_NEXT:
-		matchidx = matchidx ? matchidx->next : matchfirst;
+		selectitem(matchidx ? matchidx->next : matchfirst);
 		break;
 	case CMPL_PREV:
-		if(!matchidx)
-			matchidx = matchfirst;
-		matchidx = matchidx->prev;
+		selectitem((matchidx ? matchidx : matchstart)->prev);
 		break;
 	case CMPL_FIRST:
 		matchstart = matchfirst;
-		matchidx = matchstart;
 		matchend = nil;
+		selectitem(matchstart);
 		break;
 	case CMPL_LAST:
-		matchidx = matchfirst->prev;
+		selectitem(matchfirst->prev);
 		break;
 	case CMPL_NEXT_PAGE:
-		matchidx = matchend->next;
+		if(matchend)
+			selectitem(matchend->next);
 		break;
 	case CMPL_PREV_PAGE:
 		matchend = matchstart->prev;
 		matchidx = nil;
+		_menu_draw(false);
+		selectitem(matchstart);
 		break;
-	}
-	if(matchidx) {
-		caret_set(input.filter_start, input.pos - input.string);
-		caret_insert(matchidx->retstring, 0);
 	}
 	menu_draw();
 }
 
-void
-menu_draw(void) {
+static void
+_menu_draw(bool draw) {
 	Rectangle r, rd, rp, r2;
 	CTuple *c;
 	Item *i;
@@ -163,6 +171,9 @@ menu_draw(void) {
 		}
 	}
 
+	if(!draw)
+		return;
+
 	r2 = rd;
 	for(i=matchstart; i->string; i=i->next) {
 		r2.min.x = promptw + itemoff;
@@ -201,6 +212,11 @@ menu_draw(void) {
 
 	border(ibuf, rd, 1, cnorm.border);
 	copyimage(barwin, r, ibuf, ZP);
+}
+
+void
+menu_draw(void) {
+	_menu_draw(true);
 }
 
 void

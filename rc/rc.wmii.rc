@@ -227,10 +227,10 @@ key $MODKEY-Return || fn $key {
 	wi_runcmd $WMII_TERM &}
 
 key $MODKEY-t || fn $key {
-	wmiir xwrite /ctl view `{wi_tags | wimenu -h $hist.tag -n 50} &}
+	tag=`{wi_tags | wimenu -h $hist.tag -n 50} && wmiir xwrite /ctl view $tag &}
 key $MODKEY-Shift-t || fn $key {
-	sel = `{wi_selclient} \
-	wmiir xwrite /client/$sel/tags `{wi_tags | wimenu -h $hist.tag -n 50} &}
+	sel=`{wi_selclient} {
+	tag=`{wi_tags | wimenu -h $hist.tag -n 50} && wmiir xwrite /client/$sel/tags $tag } &}
 
 key $MODKEY-^`{seq 0 9} || fn $key {
 	wmiir xwrite /ctl view `{echo $1 | sed 's/.*-//'}}
