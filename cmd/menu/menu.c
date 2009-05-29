@@ -157,6 +157,8 @@ _menu_draw(bool draw) {
 		matchstart = matchidx;
 	else if(matchidx == matchstart->prev)
 		matchend = matchidx;
+	if (matchend == nil)
+		matchend = matchstart;
 
 	if(matchend == matchstart->prev && matchstart != matchidx) {
 		n = itemoff;
