@@ -102,7 +102,7 @@ check_competions(IxpConn *c) {
 	}
 	input.filter_start = strtol(s, nil, 10);
 	items = populate_list(cmplbuf, false);
-	update_filter();
+	update_filter(false);
 	menu_draw();
 }
 
@@ -141,7 +141,7 @@ filter_list(Item *i, char *filter) {
 }
 
 void
-update_filter(void) {
+update_filter(bool print) {
 	char *filter;
 
 	filter = input.string + min(input.filter_start, input.pos - input.string);
@@ -150,7 +150,7 @@ update_filter(void) {
 
 	matchidx = nil;
 	matchfirst = matchstart = filter_list(items, filter);
-	if(alwaysprint) {
+	if(alwaysprint && print) {
 		write(1, input.string, input.pos - input.string);
 		write(1, "", 1);
 		write(1, input.pos, input.end - input.pos + 1);
@@ -297,7 +297,7 @@ main(int argc, char *argv[]) {
 		ixp_listen(&srv, cmplbuf->fid, inbuf, check_competions, nil);
 
 	caret_insert("", true);
-	update_filter();
+	update_filter(false);
 
 	if(!nokeys)
 		parse_keys(binding_spec);

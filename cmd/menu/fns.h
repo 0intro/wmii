@@ -20,7 +20,7 @@ char*	history_search(int, char*, int);
 void	debug(int, const char*, ...);
 Item*	filter_list(Item*, char*);
 void	init_screens(int);
-void	update_filter(void);
+void	update_filter(bool);
 
 /* menu.c */
 void	menu_draw(void);

@@ -78,7 +78,7 @@ menu_cmd(int op, int motion) {
 	default:
 		goto next;
 	}
-	update_filter();
+	update_filter(true);
 next:
 	switch(op) {
 	case ACCEPT:
@@ -276,7 +276,7 @@ kdown_event(Window *w, XKeyEvent *e) {
 	if(action == nil || action[0] == nil) {
 		if(num && !iscntrl(buf[0])) {
 			caret_insert(buf, false);
-			update_filter();
+			update_filter(true);
 			menu_draw();
 		}
 	}
