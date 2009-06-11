@@ -1,4 +1,5 @@
 import collections
+from datetime import datetime, timedelta
 
 from pyxp import *
 from pyxp.client import *
@@ -6,6 +7,13 @@ from pygmi import *
 
 __all__ = ('wmii', 'Tags', 'Tag', 'Area', 'Frame', 'Client',
            'Button', 'Colors', 'Color')
+
+def constrain(min, max, val):
+    if val < min:
+        return min
+    if val > max:
+        return max
+    return val
 
 class Ctl(object):
     sentinel = {}
@@ -530,6 +538,7 @@ class Tags(object):
         self.sel = None
         self.normcol = normcol or wmii['normcolors']
         self.focuscol = focuscol or wmii['focuscolors']
+        self.lastselect = datetime.now()
         for t in wmii.tags:
             self.add(t.id)
         for b in wmii.lbuttons:
@@ -577,12 +586,19 @@ class Tags(object):
                 tag = tag.id
             wmii['view'] = tag
 
-            if tag != self.mru[-1] and tag not in self.ignore:
-                self.mru.append(tag)
-                self.mru = self.mru[-10:]
+            if tag not in self.ignore:
+                if self.idx < -1:
+                    self.mru = self.mru[:self.idx + 1]
+                    self.idx = -1
+                if self.mru and datetime.now() - self.lastselect < timedelta(seconds=.5):
+                    self.mru[self.idx] = tag
+                elif tag != self.mru[-1]:
+                    self.mru.append(tag)
+                    self.mru = self.mru[-10:]
+                self.lastselect = datetime.now()
             return
 
-        self.idx = min(-1, max(-len(self.mru), self.idx))
+        self.idx = constrain(-len(self.mru), -1, self.idx)
         wmii['view'] = self.mru[self.idx]
 
 # vim:se sts=4 sw=4 et:

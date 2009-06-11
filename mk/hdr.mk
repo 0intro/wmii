@@ -6,6 +6,8 @@ LINK= LD="$(LD)" LDFLAGS="$(LDFLAGS) $$(pkg-config --libs $(PACKAGES))" $(ROOT)/
 LINKSO= LD="$(LD)" LDFLAGS="$(SOLDFLAGS) $(SHARED) $$(pkg-config --libs $(PACKAGES))" $(ROOT)/util/link
 CLEANNAME=$(ROOT)/util/cleanname
 SOEXT=so
+TAGFILES=
+CTAGS=ctags
 
 PACKAGES = 2>/dev/null
 

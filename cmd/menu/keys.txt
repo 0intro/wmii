@@ -5,8 +5,8 @@ Control-Shift-j Accept literal
 Control-Shift-m Accept literal
 Shift-Return    Accept literal
 
-Escape    Reject
-Control-[ Reject
+Escape		    Reject
+Control-Bracketleft Reject
 
 Left      Backward char
 Control-b Backward char

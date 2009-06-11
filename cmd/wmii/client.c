@@ -634,6 +634,7 @@ client_seturgent(Client *c, int urgent, int from) {
 	char *cfrom, *cnot;
 	Frame *f, *ff;
 	Area *a;
+	int s;
 
 	if(urgent == Toggle)
 		urgent = c->urgent ^ On;
@@ -651,9 +652,8 @@ client_seturgent(Client *c, int urgent, int from) {
 			for(f=c->frame; f; f=f->cnext) {
 				SET(ff);
 				if(!urgent)
-					for(a=f->view->floating; a; a=a->next)
-						for(ff=a->frame; ff; ff=ff->anext)
-							if(ff->client->urgent) break;
+					foreach_frame(f->view, s, a, ff)
+						if(ff->client->urgent) break;
 				if(urgent || ff == nil)
 					event("%sUrgentTag %s %s\n",
 					      cnot, cfrom, f->view->name);

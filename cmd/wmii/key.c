@@ -211,7 +211,6 @@ kpress(XWindow w, ulong mod, KeyCode keycode) {
 		flushevents(FocusChangeMask, true);
 		kpress_seq(w, found);
 		XUngrabKeyboard(display, CurrentTime);
-		sync();
 	}
 }
 
@@ -241,6 +240,5 @@ update_keys(void) {
 		if((k = getkey(l)))
 			grabkey(k);
 	}
-	sync();
 }
 
