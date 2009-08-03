@@ -2,8 +2,8 @@
 # start wmiirc
 
 export home="$HOME"
-lconf="$home/.wmii-CONFVERSION" 
-gconf="CONFPREFIX/wmii-CONFVERSION" 
+lconf="$home/.wmiiCONFVERSION" 
+gconf="CONFPREFIX/wmiiCONFVERSION" 
 
 export WMII_CONFPATH="$lconf:$gconf"
 #export POSIXLY_CORRECT=gnu_hippies

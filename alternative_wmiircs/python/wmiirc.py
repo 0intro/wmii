@@ -60,7 +60,7 @@ def unresponsive_client(client):
     msg = 'The following client is not responding. What would you like to do?'
     resp = call('wihack', '-transient', client.id,
                 'xmessage', '-nearmouse', '-buttons', 'Kill,Wait', '-print',
-                '%s\n  %s' % (client, client.label))
+                '%s\n  %s' % (msg, client.label))
     if resp == 'Kill':
         client.slay()
 

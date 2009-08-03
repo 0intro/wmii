@@ -3,5 +3,5 @@ VERS = hg$$(hg log -r $$(hg id 2>/dev/null | awk -F'[+ ]' '{print $$1}') --templ
 VERSION = $(VERS)
 VERSION := $(shell echo $(VERS))
 VERSION != echo $(VERS)
-CONFVERSION = hg
+CONFVERSION = -hg
 

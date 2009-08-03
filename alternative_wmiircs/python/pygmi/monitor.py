@@ -72,7 +72,10 @@ class Monitor(object):
 
     def getlabel(self):
         if self.action:
-            return self.action(self)
+            try:
+                return self.action(self)
+            except Exception:
+                pass
         return None
 
     _active = True

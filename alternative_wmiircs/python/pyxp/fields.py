@@ -83,6 +83,8 @@ class Data(Int):
         assert offset + n <= len(data), "String too long to unpack"
         return self.size + n, data[offset:offset + n]
     def marshall(self, val):
+        if isinstance(val, unicode):
+            val = val.encode('UTF-8')
         return [self.encode(len(val)), val]
 
 # Note: Py3K strings are Unicode by default. They can't store binary
@@ -93,6 +95,7 @@ class String(Data):
         return off, val.decode('UTF-8')
     def marshall(self, val):
         if isinstance(val, str):
+            # Check for valid UTF-8
             str.decode('UTF-8')
         else:
             val = val.encode('UTF-8')
