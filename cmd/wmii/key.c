@@ -48,21 +48,21 @@ _grab(XWindow w, int keycode, uint mod) {
 
 static void
 grabkey(Key *k) {
-	_grab(scr.root.w, k->key, k->mod);
-	_grab(scr.root.w, k->key, k->mod | LockMask);
+	_grab(scr.root.xid, k->key, k->mod);
+	_grab(scr.root.xid, k->key, k->mod | LockMask);
 	if(numlock_mask) {
-		_grab(scr.root.w, k->key, k->mod | numlock_mask);
-		_grab(scr.root.w, k->key, k->mod | numlock_mask | LockMask);
+		_grab(scr.root.xid, k->key, k->mod | numlock_mask);
+		_grab(scr.root.xid, k->key, k->mod | numlock_mask | LockMask);
 	}
 }
 
 static void
 ungrabkey(Key *k) {
-	XUngrabKey(display, k->key, k->mod, scr.root.w);
-	XUngrabKey(display, k->key, k->mod | LockMask, scr.root.w);
+	XUngrabKey(display, k->key, k->mod, scr.root.xid);
+	XUngrabKey(display, k->key, k->mod | LockMask, scr.root.xid);
 	if(numlock_mask) {
-		XUngrabKey(display, k->key, k->mod | numlock_mask, scr.root.w);
-		XUngrabKey(display, k->key, k->mod | numlock_mask | LockMask, scr.root.w);
+		XUngrabKey(display, k->key, k->mod | numlock_mask, scr.root.xid);
+		XUngrabKey(display, k->key, k->mod | numlock_mask | LockMask, scr.root.xid);
 	}
 }
 
@@ -140,11 +140,11 @@ fake_keypress(ulong mod, KeyCode key) {
 	Client *c;
 
 	c = disp.focus;
-	if(c == nil || c->w.w == 0)
+	if(c == nil || c->w.xid == 0)
 		return;
 
 	e.time = CurrentTime;
-	e.window = c->w.w;
+	e.window = c->w.xid;
 	e.display = display;
 	e.state = mod;
 	e.keycode = key;

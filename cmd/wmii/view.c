@@ -437,25 +437,25 @@ view_restack(View *v) {
 	/* *sigh */
 	for(f=v->floating->stack; f; f=f->snext)
 		if(f->client->w.ewmh.type & TypeDock)
-			vector_lpush(&wins, f->client->framewin->w);
+			vector_lpush(&wins, f->client->framewin->xid);
 		else
 			break;
 
 	for(; f; f=f->snext)
-		vector_lpush(&wins, f->client->framewin->w);
+		vector_lpush(&wins, f->client->framewin->xid);
 
 	for(int s=0; s < nscreens; s++)
-		vector_lpush(&wins, screens[s]->barwin->w);
+		vector_lpush(&wins, screens[s]->barwin->xid);
 
 	for(d = divs; d && d->w->mapped; d = d->next)
-		vector_lpush(&wins, d->w->w);
+		vector_lpush(&wins, d->w->xid);
 
 	foreach_column(v, s, a)
 		if(a->frame) {
-			vector_lpush(&wins, a->sel->client->framewin->w);
+			vector_lpush(&wins, a->sel->client->framewin->xid);
 			for(f=a->frame; f; f=f->anext)
 				if(f != a->sel)
-					vector_lpush(&wins, f->client->framewin->w);
+					vector_lpush(&wins, f->client->framewin->xid);
 		}
 
 	ewmh_updatestacking();

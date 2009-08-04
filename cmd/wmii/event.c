@@ -25,7 +25,7 @@ findtime(Display *d, XEvent *e, XPointer v) {
 	Window *w;
 
 	w = (Window*)v;
-	if(e->type == PropertyNotify && e->xproperty.window == w->w) {
+	if(e->type == PropertyNotify && e->xproperty.window == w->xid) {
 		xtime = e->xproperty.time;
 		return true;
 	}
@@ -214,7 +214,7 @@ focusin(XFocusChangeEvent *ev) {
 	if((ev->mode == NotifyWhileGrabbed) && (disp.hasgrab != &c_root))
 		return;
 
-	if(ev->window == screen->barwin->w) {
+	if(ev->window == screen->barwin->xid) {
 		print_focus("focusin", nil, "<nil>");
 		disp.focus = nil;
 	}
@@ -318,7 +318,7 @@ unmapnotify(XUnmapEvent *ev) {
 	Window *w;
 
 	ignoreenter = ev->serial;
-	if((w = findwin(ev->window)) && (ev->event == w->parent->w)) {
+	if((w = findwin(ev->window)) && (ev->event == w->parent->xid)) {
 		w->mapped = false;
 		if(ev->send_event || w->unmapped-- == 0)
 			handle(w, unmap, ev);

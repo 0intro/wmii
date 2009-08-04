@@ -105,7 +105,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 			 Pt(wa->width, wa->height));
 
 	c->w.type = WWindow;
-	c->w.w = w;
+	c->w.xid = w;
 	c->w.r = c->r;
 
 	depth = scr.depth;
@@ -132,7 +132,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	fwa.background_pixmap = None;
 	fwa.bit_gravity = NorthWestGravity;
 	fwa.border_pixel = 0;
-	fwa.colormap = XCreateColormap(display, scr.root.w, vis, AllocNone);
+	fwa.colormap = XCreateColormap(display, scr.root.xid, vis, AllocNone);
 	fwa.event_mask = SubstructureRedirectMask
 		       | SubstructureNotifyMask
 		       | StructureNotifyMask
@@ -165,7 +165,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 
 	group_init(c);
 
-	grab_button(c->framewin->w, AnyButton, AnyModifier);
+	grab_button(c->framewin->xid, AnyButton, AnyModifier);
 
 	for(t=&client ;; t=&t[0]->next)
 		if(!*t) {
@@ -324,7 +324,7 @@ Client*
 win2client(XWindow w) {
 	Client *c;
 	for(c=client; c; c=c->next)
-		if(c->w.w == w) break;
+		if(c->w.xid == w) break;
 	return c;
 }
 
@@ -561,8 +561,8 @@ client_configure(Client *c) {
 	r = rectsubpt(c->r, Pt(c->border, c->border));
 
 	e.type = ConfigureNotify;
-	e.event = c->w.w;
-	e.window = c->w.w;
+	e.event = c->w.xid;
+	e.window = c->w.xid;
 	e.above = None;
 	e.override_redirect = false;
 
@@ -586,7 +586,7 @@ client_kill(Client *c, bool nice) {
 		client_message(c, "WM_DELETE_WINDOW", 0);
 		ewmh_pingclient(c);
 	}else
-		XKillClient(display, c->w.w);
+		XKillClient(display, c->w.xid);
 }
 
 void
@@ -662,14 +662,14 @@ client_seturgent(Client *c, int urgent, int from) {
 	}
 
 	if(from == UrgManager) {
-		wmh = XGetWMHints(display, c->w.w);
+		wmh = XGetWMHints(display, c->w.xid);
 		if(wmh == nil)
 			wmh = emallocz(sizeof *wmh);
 
 		wmh->flags &= ~XUrgencyHint;
 		if(urgent)
 			wmh->flags |= XUrgencyHint;
-		XSetWMHints(display, c->w.w, wmh);
+		XSetWMHints(display, c->w.xid, wmh);
 		XFree(wmh);
 	}
 }
@@ -778,7 +778,7 @@ client_prop(Client *c, Atom a) {
 		ewmh_prop(c, a);
 		break;
 	case XA_WM_TRANSIENT_FOR:
-		XGetTransientForHint(display, c->w.w, &c->trans);
+		XGetTransientForHint(display, c->w.xid, &c->trans);
 		break;
 	case XA_WM_NORMAL_HINTS:
 		memset(&h, 0, sizeof h);
@@ -792,7 +792,7 @@ client_prop(Client *c, Atom a) {
 			view_update(c->sel->view);
 		break;
 	case XA_WM_HINTS:
-		wmh = XGetWMHints(display, c->w.w);
+		wmh = XGetWMHints(display, c->w.xid);
 		if(wmh) {
 			c->noinput = (wmh->flags&InputFocus) && !wmh->input;
 			client_seturgent(c, (wmh->flags & XUrgencyHint) != 0, UrgClient);

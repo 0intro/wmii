@@ -15,7 +15,7 @@
 const Point	ZP = {0, 0};
 const Rectangle	ZR = {{0, 0}, {0, 0}};
 
-const Window	_pointerwin = { .w = PointerRoot };
+const Window	_pointerwin = { .xid = PointerRoot };
 Window*		const pointerwin = (Window*)&_pointerwin;
 
 static Map	windowmap;
@@ -153,7 +153,7 @@ Wfmt(Fmt *f) {
 	Window *w;
 
 	w = va_arg(f->args, Window*);
-	return fmtprint(f, "0x%ulx", w->w);
+	return fmtprint(f, "0x%ulx", w->xid);
 }
 
 /* Init */
@@ -171,7 +171,7 @@ initdisplay(void) {
 	scr.white = WhitePixel(display, scr.screen);
 	scr.black = BlackPixel(display, scr.screen);
 	
-	scr.root.w = RootWindow(display, scr.screen);
+	scr.root.xid = RootWindow(display, scr.screen);
 	scr.root.r = Rect(0, 0,
 			  DisplayWidth(display, scr.screen),
 			  DisplayHeight(display, scr.screen));
@@ -237,8 +237,12 @@ allocimage(int w, int h, int depth) {
 
 	img = emallocz(sizeof *img);
 	img->type = WImage;
-	img->w = XCreatePixmap(display, scr.root.w, w, h, depth);
-	img->gc = XCreateGC(display, img->w, 0, nil);
+	img->xid = XCreatePixmap(display, scr.root.xid, w, h, depth);
+	img->gc = XCreateGC(display, img->xid, 0, nil);
+	img->colormap = scr.colormap;
+	img->visual = scr.visual;
+	if(depth == 32)
+		img->visual = render_visual;
 	img->depth = depth;
 	img->r = Rect(0, 0, w, h);
 	return img;
@@ -253,7 +257,7 @@ freeimage(Image *img) {
 
 	if(img->xft)
 		XftDrawDestroy(img->xft);
-	XFreePixmap(display, img->w);
+	XFreePixmap(display, img->xid);
 	XFreeGC(display, img->gc);
 	free(img);
 }
@@ -261,7 +265,7 @@ freeimage(Image *img) {
 static XftDraw*
 xftdrawable(Image *img) {
 	if(img->xft == nil)
-		img->xft = XftDrawCreate(display, img->w, scr.visual, scr.colormap);
+		img->xft = XftDrawCreate(display, img->xid, img->visual, img->colormap);
 	return img->xft;
 }
 
@@ -275,17 +279,20 @@ createwindow_visual(Window *parent, Rectangle r,
 	assert(parent->type == WWindow);
 
 	w = emallocz(sizeof *w);
+	w->visual = vis;
 	w->type = WWindow;
 	w->parent = parent;
+	if(valmask & CWColormap)
+		w->colormap = wa->colormap;
 
-	w->w = XCreateWindow(display, parent->w, r.min.x, r.min.y, Dx(r), Dy(r),
+	w->xid = XCreateWindow(display, parent->xid, r.min.x, r.min.y, Dx(r), Dy(r),
 				0 /* border */, depth, class, vis, valmask, wa);
 #if 0
 	print("createwindow_visual(%W, %R, %d, %p, %ud, %p, %x) = %W\n",
 			parent, r, depth, vis, class, wa, valmask, w);
 #endif
 	if(class != InputOnly)
-		w->gc = XCreateGC(display, w->w, 0, nil);
+		w->gc = XCreateGC(display, w->xid, 0, nil);
 
 	w->r = r;
 	w->depth = depth;
@@ -303,14 +310,14 @@ window(XWindow xw) {
 
 	w = malloc(sizeof *w);
 	w->type = WWindow;
-	w->w = xw;
+	w->xid = xw;
 	return freelater(w);
 }
 
 void
 reparentwindow(Window *w, Window *par, Point p) {
 	assert(w->type == WWindow);
-	XReparentWindow(display, w->w, par->w, p.x, p.y);
+	XReparentWindow(display, w->xid, par->xid, p.x, p.y);
 	w->parent = par;
 	w->r = rectsubpt(w->r, w->r.min);
 	w->r = rectaddpt(w->r, p);
@@ -324,19 +331,19 @@ destroywindow(Window *w) {
 		XftDrawDestroy(w->xft);
 	if(w->gc)
 		XFreeGC(display, w->gc);
-	XDestroyWindow(display, w->w);
+	XDestroyWindow(display, w->xid);
 	free(w);
 }
 
 void
 setwinattr(Window *w, WinAttr *wa, int valmask) {
 	assert(w->type == WWindow);
-	XChangeWindowAttributes(display, w->w, valmask, wa);
+	XChangeWindowAttributes(display, w->xid, valmask, wa);
 }
 
 void
 selectinput(Window *w, long mask) {
-	XSelectInput(display, w->w, mask);
+	XSelectInput(display, w->xid, mask);
 }
 
 static void
@@ -351,7 +358,7 @@ configwin(Window *w, Rectangle r, int border) {
 	wc.width = Dx(r);
 	wc.height = Dy(r);
 	wc.border_width = border;
-	XConfigureWindow(display, w->w, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
+	XConfigureWindow(display, w->xid, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 
 	w->r = r;
 	w->border = border;
@@ -362,7 +369,7 @@ setborder(Window *w, int width, long pixel) {
 
 	assert(w->type == WWindow);
 	if(width)
-		XSetWindowBorder(display, w->w, pixel);
+		XSetWindowBorder(display, w->xid, pixel);
 	if(width != w->border)
 		configwin(w, w->r, width);
 }
@@ -388,7 +395,7 @@ int
 mapwin(Window *w) {
 	assert(w->type == WWindow);
 	if(!w->mapped) {
-		XMapWindow(display, w->w);
+		XMapWindow(display, w->xid);
 		w->mapped = 1;
 		return 1;
 	}
@@ -399,7 +406,7 @@ int
 unmapwin(Window *w) {
 	assert(w->type == WWindow);
 	if(w->mapped) {
-		XUnmapWindow(display, w->w);
+		XUnmapWindow(display, w->xid);
 		w->mapped = 0;
 		w->unmapped++;
 		return 1;
@@ -410,13 +417,13 @@ unmapwin(Window *w) {
 void
 raisewin(Window *w) {
 	assert(w->type == WWindow);
-	XRaiseWindow(display, w->w);
+	XRaiseWindow(display, w->xid);
 }
 
 void
 lowerwin(Window *w) {
 	assert(w->type == WWindow);
-	XLowerWindow(display, w->w);
+	XLowerWindow(display, w->xid);
 }
 
 Handlers*
@@ -428,9 +435,9 @@ sethandler(Window *w, Handlers *new) {
 	assert((w->prev != nil && w->next != nil) || w->next == w->prev);
 
 	if(new == nil)
-		map_rm(&windowmap, (ulong)w->w);
+		map_rm(&windowmap, (ulong)w->xid);
 	else {
-		e = map_get(&windowmap, (ulong)w->w, true);
+		e = map_get(&windowmap, (ulong)w->xid, true);
 		*e = w;
 	}
 	old = w->handler;
@@ -452,8 +459,8 @@ findwin(XWindow w) {
 void
 setshapemask(Window *dst, Image *src, Point pt) {
 	/* Assumes that we have the shape extension... */
-	XShapeCombineMask (display, dst->w,
-		ShapeBounding, pt.x, pt.y, src->w, ShapeSet);
+	XShapeCombineMask (display, dst->xid,
+		ShapeBounding, pt.x, pt.y, src->xid, ShapeSet);
 }
 
 static void
@@ -473,14 +480,14 @@ border(Image *dst, Rectangle r, int w, ulong col) {
 
 	XSetLineAttributes(display, dst->gc, w, LineSolid, CapButt, JoinMiter);
 	setgccol(dst, col);
-	XDrawRectangle(display, dst->w, dst->gc,
+	XDrawRectangle(display, dst->xid, dst->gc,
 			r.min.x, r.min.y, Dx(r), Dy(r));
 }
 
 void
 fill(Image *dst, Rectangle r, ulong col) {
 	setgccol(dst, col);
-	XFillRectangle(display, dst->w, dst->gc,
+	XFillRectangle(display, dst->xid, dst->gc,
 		r.min.x, r.min.y, Dx(r), Dy(r));
 }
 
@@ -504,7 +511,7 @@ drawpoly(Image *dst, Point *pt, int np, int cap, int w, ulong col) {
 	xp = convpts(pt, np);
 	XSetLineAttributes(display, dst->gc, w, LineSolid, cap, JoinMiter);
 	setgccol(dst, col);
-	XDrawLines(display, dst->w, dst->gc, xp, np, CoordModeOrigin);
+	XDrawLines(display, dst->xid, dst->gc, xp, np, CoordModeOrigin);
 	free(xp);
 }
 
@@ -514,7 +521,7 @@ fillpoly(Image *dst, Point *pt, int np, ulong col) {
 
 	xp = convpts(pt, np);
 	setgccol(dst, col);
-	XFillPolygon(display, dst->w, dst->gc, xp, np, Complex, CoordModeOrigin);
+	XFillPolygon(display, dst->xid, dst->gc, xp, np, Complex, CoordModeOrigin);
 	free(xp);
 }
 
@@ -522,7 +529,7 @@ void
 drawline(Image *dst, Point p1, Point p2, int cap, int w, ulong col) {
 	XSetLineAttributes(display, dst->gc, w, LineSolid, cap, JoinMiter);
 	setgccol(dst, col);
-	XDrawLine(display, dst->w, dst->gc, p1.x, p1.y, p2.x, p2.y);
+	XDrawLine(display, dst->xid, dst->gc, p1.x, p1.y, p2.x, p2.y);
 }
 
 uint
@@ -576,7 +583,7 @@ drawstring(Image *dst, Font *font,
 	setgccol(dst, col);
 	switch(font->type) {
 	case FFontSet:
-		Xutf8DrawString(display, dst->w,
+		Xutf8DrawString(display, dst->xid,
 				font->font.set, dst->gc,
 				x, y,
 				buf, len);
@@ -588,7 +595,7 @@ drawstring(Image *dst, Font *font,
 		break;
 	case FX11:
 		XSetFont(display, dst->gc, font->font.x11->fid);
-		XDrawString(display, dst->w, dst->gc,
+		XDrawString(display, dst->xid, dst->gc,
 			    x, y, buf, len);
 		break;
 	default:
@@ -603,7 +610,7 @@ done:
 void
 copyimage(Image *dst, Rectangle r, Image *src, Point p) {
 	XCopyArea(display,
-		  src->w, dst->w,
+		  src->xid, dst->xid,
 		  dst->gc,
 		  r.min.x, r.min.y, Dx(r), Dy(r),
 		  p.x, p.y);
@@ -781,7 +788,7 @@ sendmessage(Window *w, char *name, long l0, long l1, long l2, long l3, long l4) 
 	XClientMessageEvent e;
 
 	e.type = ClientMessage;
-	e.window = w->w;
+	e.window = w->xid;
 	e.message_type = xatom(name);
 	e.format = 32;
 	e.data.l[0] = l0;
@@ -794,7 +801,7 @@ sendmessage(Window *w, char *name, long l0, long l1, long l2, long l3, long l4) 
 
 void
 sendevent(Window *w, bool propegate, long mask, XEvent *e) {
-	XSendEvent(display, w->w, propegate, mask, e);
+	XSendEvent(display, w->xid, propegate, mask, e);
 }
 
 KeyCode
@@ -852,13 +859,13 @@ sync(void) {
 /* Properties */
 void
 delproperty(Window *w, char *prop) {
-	XDeleteProperty(display, w->w, xatom(prop));
+	XDeleteProperty(display, w->xid, xatom(prop));
 }
 
 void
 changeproperty(Window *w, char *prop, char *type,
 	       int width, uchar data[], int n) {
-	XChangeProperty(display, w->w, xatom(prop), xatom(type), width,
+	XChangeProperty(display, w->xid, xatom(prop), xatom(type), width,
 			PropModeReplace, data, n);
 }
 
@@ -920,7 +927,7 @@ getprop(Window *w, char *prop, char *type, Atom *actual, int *format,
 
 	typea = (type ? xatom(type) : 0L);
 
-	status = XGetWindowProperty(display, w->w,
+	status = XGetWindowProperty(display, w->xid,
 		xatom(prop), offset, length, false /* delete */,
 		typea, actual, format, &n, &extra, ret);
 
@@ -997,7 +1004,7 @@ getprop_textlist(Window *w, char *name, char **ret[]) {
 	*ret = nil;
 	n = 0;
 
-	XGetTextProperty(display, w->w, &prop, xatom(name));
+	XGetTextProperty(display, w->xid, &prop, xatom(name));
 	if(prop.nitems > 0) {
 		if(Xutf8TextPropertyToTextList(display, &prop, &list, &n) == Success)
 			*ret = list;
@@ -1026,7 +1033,7 @@ getwinrect(Window *w) {
 	XWindowAttributes wa;
 	Point p;
 
-	if(!XGetWindowAttributes(display, w->w, &wa))
+	if(!XGetWindowAttributes(display, w->xid, &wa))
 		return ZR;
 	p = translate(w, &scr.root, ZP);
 	return rectaddpt(Rect(0, 0, wa.width, wa.height), p);
@@ -1034,7 +1041,7 @@ getwinrect(Window *w) {
 
 void
 setfocus(Window *w, int mode) {
-	XSetInputFocus(display, w->w, mode, CurrentTime);
+	XSetInputFocus(display, w->xid, mode, CurrentTime);
 }
 
 XWindow
@@ -1053,7 +1060,7 @@ querypointer(Window *w) {
 	uint ui;
 	int i;
 	
-	XQueryPointer(display, w->w, &win, &win, &i, &i, &pt.x, &pt.y, &ui);
+	XQueryPointer(display, w->xid, &win, &win, &i, &i, &pt.x, &pt.y, &ui);
 	return pt;
 }
 
@@ -1064,7 +1071,7 @@ pointerscreen(void) {
 	uint ui;
 	int i;
 	
-	return XQueryPointer(display, scr.root.w, &win, &win, &i, &i,
+	return XQueryPointer(display, scr.root.xid, &win, &win, &i, &i,
 			     &pt.x, &pt.y, &ui);
 }
 
@@ -1082,7 +1089,7 @@ warppointer(Point pt) {
 		system(sxprint("DISPLAY=%s wiwarp %d %d", real, pt.x, pt.y));
 
 	XWarpPointer(display,
-		/* src, dest w */ None, scr.root.w,
+		/* src, dest w */ None, scr.root.xid,
 		/* src_rect */	0, 0, 0, 0,
 		/* target */	pt.x, pt.y);
 }
@@ -1092,7 +1099,7 @@ translate(Window *src, Window *dst, Point sp) {
 	Point pt;
 	XWindow w;
 
-	XTranslateCoordinates(display, src->w, dst->w, sp.x, sp.y,
+	XTranslateCoordinates(display, src->xid, dst->xid, sp.x, sp.y,
 			      &pt.x, &pt.y, &w);
 	return pt;
 }
@@ -1103,8 +1110,8 @@ grabpointer(Window *w, Window *confine, Cursor cur, int mask) {
 	
 	cw = None;
 	if(confine)
-		cw = confine->w;
-	return XGrabPointer(display, w->w, false /* owner events */, mask,
+		cw = confine->xid;
+	return XGrabPointer(display, w->xid, false /* owner events */, mask,
 		GrabModeAsync, GrabModeAsync, cw, cur, CurrentTime
 		) == GrabSuccess;
 }
@@ -1117,7 +1124,7 @@ ungrabpointer(void) {
 int
 grabkeyboard(Window *w) {
 
-	return XGrabKeyboard(display, w->w, true /* owner events */,
+	return XGrabKeyboard(display, w->xid, true /* owner events */,
 		GrabModeAsync, GrabModeAsync, CurrentTime
 		) == GrabSuccess;
 }
@@ -1145,14 +1152,14 @@ sethints(Window *w) {
 	h->max = Pt(INT_MAX, INT_MAX);
 	h->inc = Pt(1,1);
 
-	wmh = XGetWMHints(display, w->w);
+	wmh = XGetWMHints(display, w->xid);
 	if(wmh) {
 		if(wmh->flags & WindowGroupHint)
 			h->group = wmh->window_group;
 		free(wmh);
 	}
 
-	if(!XGetWMNormalHints(display, w->w, &xs, &size))
+	if(!XGetWMNormalHints(display, w->xid, &xs, &size))
 		return;
 
 	if(xs.flags & PMinSize) {

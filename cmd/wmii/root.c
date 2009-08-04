@@ -75,7 +75,7 @@ static void
 kdown_event(Window *w, XKeyEvent *e) {
 
 	e->state &= valid_mask;
-	kpress(w->w, e->state, (KeyCode)e->keycode);
+	kpress(w->xid, e->state, (KeyCode)e->keycode);
 }
 
 static Handlers handlers = {

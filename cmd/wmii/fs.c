@@ -249,8 +249,8 @@ lookup_file(IxpFileId *parent, char *name)
 						push_file("sel");
 						file->volatil = true;
 						file->p.client = c;
-						file->id = c->w.w;
-						file->index = c->w.w;
+						file->id = c->w.xid;
+						file->index = c->w.xid;
 					}
 					if(name)
 						goto LastItem;
@@ -262,12 +262,12 @@ lookup_file(IxpFileId *parent, char *name)
 						goto NextItem;
 				}
 				for(c=client; c; c=c->next) {
-					if(!name || c->w.w == id) {
+					if(!name || c->w.xid == id) {
 						push_file(sxprint("%C", c));
 						file->volatil = true;
 						file->p.client = c;
-						file->id = c->w.w;
-						file->index = c->w.w;
+						file->id = c->w.xid;
+						file->index = c->w.xid;
 						assert(file->tab.name);
 						if(name)
 							goto LastItem;

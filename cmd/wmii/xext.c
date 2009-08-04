@@ -55,7 +55,7 @@ randr_init(void) {
 		if(XRRQueryVersion(display, &major, &minor) && major < 1)
 			have_RandR = false;
 	if(have_RandR)
-		XRRSelectInput(display, scr.root.w, RRScreenChangeNotifyMask);
+		XRRSelectInput(display, scr.root.xid, RRScreenChangeNotifyMask);
 }
 
 static bool

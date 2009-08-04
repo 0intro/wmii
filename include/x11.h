@@ -133,8 +133,10 @@ struct WinHints {
 
 struct Window {
 	int		type;
-	XID		w;
+	XID		xid;
 	GC		gc;
+	Visual*		visual;
+	Colormap	colormap;
 	XftDraw*	xft;
 	Rectangle	r;
 	int		border;

@@ -29,7 +29,7 @@ ewmh_init(void) {
 		Rect(0, 0, 1, 1), 0 /*depth*/,
 		InputOnly, &wa, 0);
 
-	win = ewmhwin->w;
+	win = ewmhwin->xid;
 	changeprop_long(&scr.root, Net("SUPPORTING_WM_CHECK"), "WINDOW", &win, 1);
 	changeprop_long(ewmhwin, Net("SUPPORTING_WM_CHECK"), "WINDOW", &win, 1);
 	changeprop_string(ewmhwin, Net("WM_NAME"), myname);
@@ -80,7 +80,7 @@ ewmh_updateclientlist(void) {
 
 	vector_linit(&vec);
 	for(c=client; c; c=c->next)
-		vector_lpush(&vec, c->w.w);
+		vector_lpush(&vec, c->w.xid);
 	changeprop_long(&scr.root, Net("CLIENT_LIST"), "WINDOW", vec.ary, vec.n);
 	free(vec.ary);
 }
@@ -99,14 +99,14 @@ ewmh_updatestacking(void) {
 		foreach_column(v, s, a)
 			for(f=a->frame; f; f=f->anext)
 				if(f->client->sel == f)
-					vector_lpush(&vec, f->client->w.w);
+					vector_lpush(&vec, f->client->w.xid);
 	}
 	for(v=view; v; v=v->next) {
 		for(f=v->floating->stack; f; f=f->snext)
 			if(!f->snext) break;
 		for(; f; f=f->sprev)
 			if(f->client->sel == f)
-				vector_lpush(&vec, f->client->w.w);
+				vector_lpush(&vec, f->client->w.xid);
 	}
 
 	changeprop_long(&scr.root, Net("CLIENT_LIST_STACKING"), "WINDOW", vec.ary, vec.n);
@@ -162,7 +162,7 @@ ewmh_pingclient(Client *c) {
 	if(e->ping)
 		return;
 
-	client_message(c, Net("WM_PING"), c->w.w);
+	client_message(c, Net("WM_PING"), c->w.xid);
 	e->ping = xtime++;
 	e->timer = ixp_settimer(&srv, PingTime, pingtimeout, c);
 }
@@ -393,7 +393,7 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 			return 0;
 		Dprint(DEwmh, "\t%A\n", l[0]);
 		if(l[0] == NET("WM_PING")) {
-			if(e->window != scr.root.w)
+			if(e->window != scr.root.xid)
 				return -1;
 			c = win2client(l[2]);
 			if(c == nil)

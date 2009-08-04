@@ -528,7 +528,7 @@ frame_draw(Frame *f) {
 	 * What's more, the designers of X11 felt that it would be unfair to
 	 * implementers to make it possible to detect, or forbid, such changes.
 	 */
-	XSetWindowBackgroundPixmap(display, c->framewin->w, None);
+	XSetWindowBackgroundPixmap(display, c->framewin->xid, None);
 
 	copyimage(c->framewin, fr, img, ZP);
 }

@@ -45,7 +45,7 @@ scan_wins(void) {
 	XWindowAttributes wa;
 	XWindow d1, d2;
 
-	if(XQueryTree(display, scr.root.w, &d1, &d2, &wins, &num)) {
+	if(XQueryTree(display, scr.root.xid, &d1, &d2, &wins, &num)) {
 		for(i = 0; i < num; i++) {
 			if(!XGetWindowAttributes(display, wins[i], &wa))
 				continue;
@@ -124,7 +124,7 @@ init_cursors(void) {
 	XAllocNamedColor(display, scr.colormap,
 			"black", &black, &dummy);
 	pix = XCreateBitmapFromData(
-			display, scr.root.w,
+			display, scr.root.xid,
 			zchar, 1, 1);
 
 	cursor[CurNone] = XCreatePixmapCursor(display,
