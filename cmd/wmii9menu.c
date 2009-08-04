@@ -239,7 +239,7 @@ create_window(void)
 	XMaskEvent(display, StructureNotifyMask, &e);
 	if(!grabpointer(menuwin, nil, 0, MouseMask))
 		fatal("Failed to grab the mouse\n");
-	XSetCommand(display, menuwin->w, g_argv, g_argc);
+	XSetCommand(display, menuwin->xid, g_argv, g_argc);
 }
 
 void
@@ -267,7 +267,7 @@ size_window(int wide, int high)
 
 	reshapewin(menuwin, rectaddpt(r, p));
 
-	//XSetWindowBackground(display, menuwin->w, cnorm.bg);
+	//XSetWindowBackground(display, menuwin->xid, cnorm.bg);
 	setborder(menuwin, 1, cnorm.border);
 }
 

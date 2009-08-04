@@ -165,6 +165,7 @@ initdisplay(void) {
 	scr.screen = DefaultScreen(display);
 	scr.colormap = DefaultColormap(display, scr.screen);
 	scr.visual = DefaultVisual(display, scr.screen);
+	scr.visual32 = DefaultVisual(display, scr.screen);
 	scr.gc = DefaultGC(display, scr.screen);
 	scr.depth = DefaultDepth(display, scr.screen);
 	
@@ -242,7 +243,7 @@ allocimage(int w, int h, int depth) {
 	img->colormap = scr.colormap;
 	img->visual = scr.visual;
 	if(depth == 32)
-		img->visual = render_visual;
+		img->visual = scr.visual32;
 	img->depth = depth;
 	img->r = Rect(0, 0, w, h);
 	return img;

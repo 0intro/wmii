@@ -24,7 +24,7 @@ findtime(Display *d, XEvent *e, XPointer v) {
         Window *w;
 
         w = (Window*)v;
-        if(e->type == PropertyNotify && e->xproperty.window == w->w) {
+        if(e->type == PropertyNotify && e->xproperty.window == w->xid) {
                 xtime = e->xproperty.time;
                 return true;
         }
@@ -164,7 +164,7 @@ enternotify(XCrossingEvent *ev) {
 
 	if((w = findwin(ev->window))) 
 		handle(w, enter, ev);
-	else if(ev->window == scr.root.w)
+	else if(ev->window == scr.root.xid)
 		sel_screen = true;
 }
 
@@ -173,7 +173,7 @@ leavenotify(XCrossingEvent *ev) {
 
 	xtime = ev->time;
 #if 0
-	if((ev->window == scr.root.w) && !ev->same_screen)
+	if((ev->window == scr.root.xid) && !ev->same_screen)
 		sel_screen = true;
 #endif
 }
@@ -201,7 +201,7 @@ focusin(XFocusChangeEvent *ev) {
 		handle(w, focusin, ev);
 #if 0
 	else if(ev->mode == NotifyGrab) {
-		if(ev->window == scr.root.w)
+		if(ev->window == scr.root.xid)
 			screen->hasgrab = &c_root;
 		/* Some unmanaged window has grabbed focus */
 		else if((c = screen->focus)) {
@@ -295,7 +295,7 @@ static void
 unmapnotify(XUnmapEvent *ev) {
 	Window *w;
 
-	if((w = findwin(ev->window)) && (ev->event == w->parent->w)) {
+	if((w = findwin(ev->window)) && (ev->event == w->parent->xid)) {
 		w->mapped = false;
 		if(ev->send_event || w->unmapped-- == 0)
 			handle(w, unmap, ev);

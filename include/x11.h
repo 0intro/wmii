@@ -159,6 +159,7 @@ struct Screen {
 	GC		gc;
 	Colormap	colormap;
 	Visual*		visual;
+	Visual*		visual32;
 	Rectangle	rect;
 	int		depth;
 	int		fd;

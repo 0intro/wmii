@@ -102,6 +102,7 @@ render_init(void) {
 	for(i=0; i < n; i++)
 		if(render_argb_p(vip[i].visual)) {
 			render_visual = vip[i].visual;
+			scr.visual32 = render_visual;
 			break;
 		}
 	XFree(vip);
