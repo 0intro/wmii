@@ -180,7 +180,7 @@ contains files describing the client's properties (its title,
 its views\footnote{Views in \wmii\ are akin to workspaces or
 virtual desktops in other window managers, but with some subtle
 differences.}, its state). Most files can be written to update
-the the state they describe. For instance,
+the state they describe. For instance,
 |/client/sel/ctl| describes the state of the selected
 client. If a client is fullscreen, it contains the line:
 
@@ -230,7 +230,7 @@ and those to the right display status information.
 \subsection{The Menus}
 
 \wmii\ includes two simple, external menu programs. The first,
-\wimenu, is keyboard-based, and is used launch programs and
+\wimenu, is keyboard-based, and is used to launch programs and
 generally prompt the user for input. It provides a list of
 completions which are automatically filtered as you type. The
 second, \wiIXmenu, is mouse-based, and is generally used to
@@ -244,7 +244,7 @@ as well as from more complex scripting languages.
 can be performed without touching the mouse, including
 launching, closing, moving, resizing, and selecting programs.
 New keybindings of any complexity can easily be added to handle
-any missing functionality, or to simplify any repetative tasks.
+any missing functionality, or to simplify any repetitive tasks.
 
 \subsection{The Mouse}
 
@@ -285,7 +285,7 @@ Then setup your |~/.xinitrc| as follows:
 Before you run |xinit|, make sure you know how to switch
 between terminals. Depending on your system, your current X
 session is probably on terminal 5 or 7. You should be able to
-switched between your terminals by pressing
+switch between your terminals by pressing
 Ctrl-Alt-F$\langle n\rangle$. Assuming that your current X
 session is on terminal 7, you should be able to switch between
 it and your new session by pressing Ctrl-Alt-F7 and Ctrl-Alt-F8.
@@ -310,14 +310,14 @@ and Meta\footnote{The Windows© key on most keyboards. The
 Penguin key, on the more tongue in cheek varieties.}, which
 we'll specify as C-, A-, S-, and M-, respectively. So, <C-S-a>
 means pressing ‘|a|’ while holding |Control| and |Shift|.  We'll
-also express mouse clicks this way, which <M-Mouse1> signifying
+also express mouse clicks this way, with <M-Mouse1> signifying
 a press of the right mouse button, with the Meta key depressed.
 Buttons 4 and 5 are the up and down scroll wheel directions,
 respectively.
 
 \subsection{Floating Mode}
 
-Begining with what's familiar to most years, we'll first explore
+Begining with what's familiar to most users, we'll first explore
 floating mode. First, we need to select the floating layer.
 Press <M-Space>. You should see the titlebar of this window
 change color. Now, press <M-Return> to launch a terminal.
@@ -326,9 +326,9 @@ The easiest way to drag the terminal around is to press and hold
 around. You should be able to drag the window anywhere onscreen
 without ever releasing the mouse button. As you drag near the
 screen edges, you should notice a snap. If you try to drag the
-window fully off-screen, you'll find it constrined so that a
+window fully off-screen, you'll find it constrained so that a
 portion always remains visible. Now, release the window and move
-the mose toward one of its corners. Press and hold
+the mouse toward one of its corners. Press and hold
 <M-Mouse3>\footnote{The right button.}. As you drag the
 mouse around, you should see the window resized accordingly.
 
@@ -391,7 +391,7 @@ the screen to the other, and from the top to the bottom. Now,
 return to the write column, switch to stack mode, and select
 each of the three terminals again. Do the same in max mode,
 paying careful attention to the indicator to the right of the
-tilebar.
+titlebar.
 
 Now that you can select windows, you'll want to move them
 around. To move a window, just add the Shift key to the
@@ -411,7 +411,7 @@ in order of their most recent use.
 
 \subsection{Mouse Navigation}
 
-\wmii uses the “sloppy focus” model, which is to say, it focuses
+\wmii\ uses the “sloppy focus” model, which is to say, it focuses
 windows when the mouse enters them and when you click them. It
 focuses windows only when you select them with the keyboard,
 click their titlebars, or press click them with <M-Mouse2>.
@@ -447,7 +447,7 @@ much richer functionality.
 
 \section{Running Programs}
 
-You've already seen the convenience key binding to launch a
+You've already seen the convenient key binding to launch a
 terminal, but what about other programs? To get a menu of all of
 the executables in your path, type <M-p>. This should replace
 the bar at the bottom of the screen with a prompt, followed by a
@@ -482,7 +482,7 @@ and press <M-S-2>. You should see a new button on the bar at the
 bottom of the screen. When you click it, you should see your
 original terminal. Press <M-1> to come back here. Now, press
 <M-3>, and <M-1> again to return here once more. Notice that the
-views were created when needed, and destoryed when no longer
+views were created when needed, and destroyed when no longer
 necessary. If you want to select a view with a proper name, use
 <M-t> and enter the name. Other than the dynamic creation of
 views, this is still similar to the familiar X11 workspace
@@ -505,7 +505,7 @@ to check the |50| view. Clients tagged with regular expressions
 are attached to any matching views when they're created. So,
 when you switch to an empty view, or tag a client with a new
 tag, any clients with matching regular expressions are
-automatically added to it. When all explicitely tagged clients
+automatically added to it. When all explicitly tagged clients
 disappear from the view, and it's no longer visible, clients
 held there by regular expressions are automatically removed.
 
@@ -531,7 +531,7 @@ higher level constructs in the stock configuration scripts.
 The \wmii\ control interface is largely event driven. Each event
 is represented by a single, plain-text line written to the
 |/event| file. You can think of this file as a named pipe. When
-reading it, you won't recieve an EOF\footnote{End of File} until
+reading it, you won't receive an EOF\footnote{End of File} until
 \wmii\ exits. Moreover, any lines written to the file will be
 transmitted to all of its readers. Notable events include key
 presses, the creation and destruction of windows, and changes of
@@ -580,8 +580,8 @@ handle:
 
 \section{Bar Items}
 
-The bar described by the files in the two directories |/lbar/| and
-|/rbar/| for buttons of the left and right side of the bar,
+The bar is described by the files in the two directories |/lbar/| and
+|/rbar/| for buttons on the left and right side of the bar,
 respectively. The format of the files is:
 
 \begin{code}
@@ -638,7 +638,7 @@ parlance, this is called urgency. When a window requests
 attention as such, or declares that it's been satisfied, \wmii\
 broadcasts an event for the client and an event for each view
 that it belongs to, and fills in the client's layout box. It's
-the job of a script to decide how handle it above and beyond
+the job of a script to decide how to handle it above and beyond
 that. The standard scripts simply mark urgent views with an
 asterisk:
 
@@ -686,7 +686,7 @@ terminal, pressing the desired key, and looking at the output
 (it's in the parentheses, after the keysym). A \wmii-specific
 utility is forthcoming.
 
-Examples key bindings:
+Examples of key bindings:
 
 \begin{description}
   \item[Windows® key + Capital A] |Mod4-Shift-A|
@@ -761,7 +761,7 @@ it for client and tag menus.
 
 Most filesystem objects, including the root directory, have
 control files, named |ctl|. The first line of most control files
-is the cannonical name of the directory they reside in, which
+is the canonical name of the directory they reside in, which
 comes in handy for the special |sel/| directories, which are
 aliases for the currently selected object of a group. The
 following lines represent properties of the object. Control
@@ -791,7 +791,7 @@ client. The files in these directories are:
 \begin{description}
   \item[ctl] The control file. The properties are:
     \begin{description}
-      \item[Fullscreen] The client's fullscreen state. Then
+      \item[Fullscreen] The client's fullscreen state. When
         |on|, the client is displayed fullscreen on all of its
         views. Possible values are |on|, |off|, and |toggle|.
       \item[Urgent] The client's urgency state. When |on|, the
@@ -807,10 +807,10 @@ client. The files in these directories are:
   \item[label] The client's window title. May be written to
     change the client's title.
   \item[tags] The client's tags. Tag names are separated by |+|
-    signs. Tags begining and ending with |/| are treated as
+    signs. Tags beginning and ending with |/| are treated as
     regular expressions. If the written value begins with a |+|
     or a |-|, the tags are updated rather than overwritten. Tag
-    names which directly fillow a |-| sign are removed rather
+    names which directly follow a |-| sign are removed rather
     than added. Regular expression tags which directly follow a
     minus sign are treated as exclusion expressions. For
     example, the tag string |+/foo/-/food/| will match the tag
@@ -897,7 +897,7 @@ in these directories are:
   \item[select ‹Direction›]
     Select the client in ‹Direction› where ‹Direction› may be
     one of ‹up $\wedge$ down $\wedge$ left $\wedge$ right›.
-  \item[send client ‹Client ID› ‹Area›] Send ‹Cleint ID› to
+  \item[send client ‹Client ID› ‹Area›] Send ‹Client ID› to
     ‹Area›. ‹Area› may be |sel| for the selected area, and
     |client ‹Client ID›| may be |sel| for the currently selected
     client.
@@ -984,7 +984,7 @@ We'll use the following key bindings to interact with views:
 \section{Command and Program Execution}
 
 Perhaps the most important function we need to provide for is
-the execution of programs. Since \wmii\ users tend to use a lot
+the execution of programs. Since \wmii\ users tend to use
 terminals often, we'll add a direct shortcut to launch one.
 Aside from that, we'll add a menu to launch arbitrary programs
 (with completions) and a separate menu to launch wmii specific
@@ -1064,10 +1064,10 @@ The root filesystem contains the following:
   \item[label] The client's window title. May be written to
     change the client's title.
   \item[tags] The client's tags. Tag names are separated by |+|
-    signs. Tags begining and ending with |/| are treated as
+    signs. Tags beginning and ending with |/| are treated as
     regular expressions. If the written value begins with a |+|
     or a |-|, the tags are updated rather than overwritten. Tag
-    names which directly fillow a |-| sign are removed rather
+    names which directly follow a |-| sign are removed rather
     than added. Regular expression tags which directly follow a
     minus sign are treated as exclusion expressions. For
     example, the tag string |+/foo/-/food/| will match the tag
@@ -1108,7 +1108,7 @@ And we need a few more key bindings to select our views:
     wmiir xwrite /ctl view ${2＃＃*-};;
 \end{code}
 
-\section{Tieing it All Together}
+\section{Tying it All Together}
 
 \begin{code}
   #!/bin/sh
