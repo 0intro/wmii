@@ -10,6 +10,13 @@ from pygmi import events
 
 identity = lambda k: k
 
+# Begin Configuration
+#
+# Note: This file loads ~/.wmii/wmiirc_local.py if it exists.
+# Configuration should be placed in that file, and this file
+# left unmodified, if possible. wmiirc_local should import
+# wmiirc or any other modules it needs.
+
 # Keys
 events.keydefs = dict(
     mod='Mod4',
