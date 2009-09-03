@@ -1,4 +1,4 @@
-PROGS = ${TARG:=.O}
+PROGS = ${TARG:=.out}
 
 all: $(OFILES) $(PROGS)
 
@@ -12,7 +12,7 @@ printinstall:
 	echo '	Bin: $(BIN)'
 
 manyclean:
-	for i in ${TARG:=.o} ${TARG:=.O} $(OFILES); do \
+	for i in ${TARG:=.o} ${TARG:=.out} $(OFILES); do \
 		[ -e $$i ] && \
 		echo CLEAN $$($(CLEANNAME) $(BASE)$$i); \
 		rm -f $$i; \

@@ -1,4 +1,4 @@
-PROG = $(TARG).O
+PROG = $(TARG).out
 OFILES = ${OBJ:=.o}
 
 all: $(PROG)

@@ -28,7 +28,7 @@ BINSH := $(shell \
 BINSH != echo /bin/sh
 
 .SILENT:
-.SUFFIXES: .O .o .o_pic .c .sh .rc .$(SOEXT) .awk .1 .man1 .depend .install .uninstall .clean
+.SUFFIXES: .out .o .o_pic .c .sh .rc .$(SOEXT) .awk .1 .man1 .depend .install .uninstall .clean
 all:
 
 .c.depend:
@@ -43,18 +43,18 @@ all:
 .c.o_pic:
 	$(COMPILEPIC) $@ $<
 
-.o.O:
+.o.out:
 	$(LINK) $@ $<
-.c.O:
+.c.out:
 	$(COMPILE) ${<:.c=.o} $<
 	$(LINK) $@ ${<:.c=.o}
 
-.sh.O:
+.sh.out:
 	echo FILTER $(BASE)$<
 	$(FILTER) $< >$@
 	sh -n $@
 	chmod 0755 $@
-.rc.O .awk.O:
+.rc.out .awk.out:
 	echo FILTER $(BASE)$<
 	$(FILTER) $< >$@
 	chmod 0755 $@
@@ -62,11 +62,11 @@ all:
 	echo TXT2TAGS $(BASE)$<
 	txt2tags -o- $< | $(FILTER) >$@
 
-.O.install:
+.out.install:
 	echo INSTALL $$($(CLEANNAME) $(BASE)$*)
 	cp -f $< $(DESTDIR)$(BIN)/$*
 	chmod 0755 $(DESTDIR)$(BIN)/$* 
-.O.uninstall:
+.out.uninstall:
 	echo UNINSTALL $$($(CLEANNAME) $(BASE)$*)
 	rm -f $(DESTDIR)$(BIN)/$* 
 
@@ -97,7 +97,7 @@ all:
 	echo UNINSTALL man $$($(CLEANNAME) $*'(1)')
 	rm -f $(DESTDIR)$(MAN)/man1/$<
 
-.O.clean:
+.out.clean:
 	echo CLEAN $$($(CLEANNAME) $(BASE)$<)
 	rm -f $< || true 2>/dev/null
 	rm -f $*.o || true 2>/dev/null
