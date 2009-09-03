@@ -1,0 +1,13 @@
+Alternative wmiirc scripts
+==========================
+
+This folder contains alternative implementations of wmii's rc
+scripts. Each folder contains a different implementation,
+described below, including its own README, wmiirc script, and
+possibly other suppporting files and libraries. It usually
+suffices to copy the entire contents of the directory to
+~/.wmii, but see the accompanying README file for more
+details.
+
+  python/	A pure Python wmiirc implementation. 
+

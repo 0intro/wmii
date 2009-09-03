@@ -50,12 +50,12 @@ void dprint(long mask, char *fmt, ...) {
 	va_end(ap);
 }
 
-static void
+static inline void
 splice(Item *i) {
 	i->next->prev = i->prev;
 	i->prev->next = i->next;
 }
-static void
+static inline void
 link(Item *i, Item *j) {
 	i->next = j;
 	j->prev = i;

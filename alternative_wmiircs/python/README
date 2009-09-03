@@ -1,0 +1,16 @@
+Python wmiirc
+=============
+
+This directory contains a pure Python implementation of
+wmiirc. The two included libraries, pyxp and pygmi, are a 9P
+client and wmii filesystem utility module, respectively. To
+use this library, simply copy the contents of this direcctory
+to ~/.wmii/. To customize it, either modify wmiirc.py
+directly, or create wmii_local.py and store your modifications
+there. The latter approach is preferable in that future
+modifications to wmiirc.py can usually be painlessly
+integrated.
+
+The documentation is sparse, but wmiirc.py should serve as a
+fairly comprehensive example.
+
