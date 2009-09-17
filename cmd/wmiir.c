@@ -384,7 +384,7 @@ main(int argc, char *argv[]) {
 
 	ARGBEGIN{
 	case 'v':
-		print("%s-" VERSION ", ©2009 Kris Maglione\n", argv0);
+		print("%s-" VERSION ", " COPYRIGHT "\n", argv0);
 		exit(0);
 	case 'a':
 		address = EARGF(usage());

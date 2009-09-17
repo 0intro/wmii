@@ -9,7 +9,7 @@ xtmp=/tmp/cc.$$.$USER.out
 
 echo CC $($bin/cleanname ${BASE}$outfile)
 [ -n "$noisycc" ] && echo $CC -o $outfile $CFLAGS $@
-$CC -o $outfile $CFLAGS $@ >$xtmp 2>&1
+eval '$CC -o $outfile '"$CFLAGS"' $@ >$xtmp 2>&1'
 status=$?
 [ $? -eq 0 ] || echo $CC -o $outfile $CFLAGS $@ >&2
 

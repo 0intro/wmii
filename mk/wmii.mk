@@ -4,4 +4,6 @@ VERSION = $(VERS)
 VERSION := $(shell echo $(VERS))
 VERSION != echo $(VERS)
 CONFVERSION = -hg
+COPYRIGHT = ©2009 Kris Maglione
+CFLAGS += '-DVERSION=\"$(VERSION)\"' '-DCOPYRIGHT=\"$(COPYRIGHT)\"'
 

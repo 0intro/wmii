@@ -140,7 +140,7 @@ def clickmenu(choices, args):
 
 class Notice(Button):
     def __init__(self):
-        super(Notice, self).__init__(*noticebar)
+        super(Notice, self).__init__(*noticebar, colors=wmii['normcolors'])
         self.timer = None
 
     def tick(self):

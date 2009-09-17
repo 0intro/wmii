@@ -16,7 +16,7 @@
 #include "fns.h"
 
 static const char
-	version[] = "wmii-"VERSION", ©2009 Kris Maglione\n";
+	version[] = "wmii-"VERSION", "COPYRIGHT"\n";
 
 static char*	address;
 static char*	ns_path;

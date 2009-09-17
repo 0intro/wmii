@@ -14,7 +14,7 @@
 #include "fns.h"
 #define link _link
 
-static const char version[] = "wimenu-"VERSION", ©2009 Kris Maglione\n";
+static const char version[] = "wimenu-"VERSION", "COPYRIGHT"\n";
 static Biobuf*	cmplbuf;
 static Biobuf*	inbuf;
 static bool	alwaysprint;
@@ -141,6 +141,15 @@ filter_list(Item *i, char *filter) {
 }
 
 void
+update_input(void) {
+	if(alwaysprint) {
+		write(1, input.string, input.pos - input.string);
+		write(1, "", 1);
+		write(1, input.pos, input.end - input.pos + 1);
+	}
+}
+
+void
 update_filter(bool print) {
 	char *filter;
 
@@ -150,11 +159,8 @@ update_filter(bool print) {
 
 	matchidx = nil;
 	matchfirst = matchstart = filter_list(items, filter);
-	if(alwaysprint && print) {
-		write(1, input.string, input.pos - input.string);
-		write(1, "", 1);
-		write(1, input.pos, input.end - input.pos + 1);
-	}
+	if(print)
+		update_input();
 }
 
 /*
@@ -264,6 +270,9 @@ main(int argc, char *argv[]) {
 	case 's':
 		screen = strtol(EARGF(usage()), nil, 10);
 		break;
+	case 'v':
+		print("%s", version);
+		return 0;
 	default:
 		usage();
 	}ARGEND;

@@ -23,7 +23,7 @@ FILTER = sed "s|CONFPREFIX|$(ETC)|g; \
 	      s|AWKPATH|$(AWKPATH)|g"
 
 LDFLAGS += -lfmt -lutf
-CFLAGS += $(INCX11) -DVERSION=\"$(VERSION)\"
+CFLAGS += $(INCX11)
 
 include $(ROOT)/mk/many.mk
 include $(ROOT)/mk/dir.mk

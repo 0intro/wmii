@@ -95,6 +95,7 @@ next:
 	case BACKWARD:
 	case FORWARD:
 		caret_move(op, motion);
+		update_input();
 		break;
 	case CMPL_NEXT:
 		selectitem(matchidx ? matchidx->next : matchfirst);
@@ -298,19 +299,14 @@ kdown_event(Window *w, XKeyEvent *e) {
 			menu_cmd(BACKWARD, amount);
 			break;
 		case LCOMPLETE:
-			amount = CMPL_NEXT;
-			if(have(LNEXT))
-				amount = CMPL_NEXT;
-			else if(have(LPREV))
-				amount = CMPL_PREV;
-			else if(have(LNEXTPAGE))
-				amount = CMPL_NEXT_PAGE;
-			else if(have(LPREVPAGE))
-				amount = CMPL_PREV_PAGE;
-			else if(have(LFIRST))
-				amount = CMPL_FIRST;
-			else if(have(LLAST))
-				amount = CMPL_LAST;
+			amount = (
+				have(LNEXT)     ? CMPL_NEXT  :
+				have(LPREV)     ? CMPL_PREV  :
+				have(LNEXTPAGE) ? CMPL_NEXT_PAGE :
+				have(LPREVPAGE) ? CMPL_PREV_PAGE :
+				have(LFIRST)    ? CMPL_FIRST :
+				have(LLAST)     ? CMPL_LAST  :
+				CMPL_NEXT);
 			menu_cmd(amount, 0);
 			break;
 		case LFORWARD:

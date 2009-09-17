@@ -21,6 +21,7 @@ void	debug(int, const char*, ...);
 Item*	filter_list(Item*, char*);
 void	init_screens(int);
 void	update_filter(bool);
+void	update_input(void);
 
 /* menu.c */
 void	menu_draw(void);

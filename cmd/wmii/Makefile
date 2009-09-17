@@ -12,8 +12,7 @@ PACKAGES += $(X11PACKAGES) xext xrandr xrender xinerama
 LIB =	$(LIBIXP)
 LDFLAGS += -lm $(LIBICONV) -lregexp9 -lbio -lfmt -lutf
 
-CFLAGS += $(INCICONV) -DVERSION=\"$(VERSION)\" \
-	  -DIXP_NEEDAPI=97
+CFLAGS += $(INCICONV) -DIXP_NEEDAPI=97
 OBJ =	area	\
 	bar	\
 	client	\
