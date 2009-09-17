@@ -75,7 +75,6 @@ column_setmode(Area *a, const char *mode) {
 
 char*
 column_getmode(Area *a) {
-
 	return sxprint("%s%cmax", a->mode == Colstack ? "stack" : "default",
 				  a->max ? '+' : '-');
 }
@@ -298,9 +297,10 @@ column_attachrect(Area *a, Frame *f, Rectangle r) {
 	}
 	if(Dy(a->r) > Dy(r)) {
 		/* Kludge. */
+		before = a->r.max.y;
 		a->r.max.y -= Dy(r);
 		column_scale(a);
-		a->r.max.y += Dy(r);
+		a->r.max.y = before;
 	}
 	column_insert(a, f, pos);
 	column_scale(a);
@@ -375,7 +375,7 @@ column_fit(Area *a, uint *ncolp, uint *nuncolp) {
 		(a->sel ? a->sel : a->frame)->collapsed = false;
 	}
 
-	/* FIXME: Kludge. */
+	/* FIXME: Kludge. See frame_attachrect. */
 	dy = Dy(a->view->r[a->screen]) - Dy(a->r);
 	minh = colh * (ncol + nuncol - 1) + uncolh;
 	if(dy && Dy(a->r) < minh)
@@ -471,6 +471,9 @@ column_settle(Area *a) {
 	}
 }
 
+/*
+ * Returns how much a frame "wants" to grow.
+ */
 static int
 foo(Frame *f) {
 	WinHints h;
@@ -532,6 +535,10 @@ column_squeeze(Area *a) {
 	}
 }
 
+/*
+ * Frobs a column. Which is to say, *temporary* kludge.
+ * Essentially seddles the column and resizes its clients.
+ */
 void
 column_frob(Area *a) {
 	Frame *f;
