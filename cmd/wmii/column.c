@@ -20,7 +20,8 @@ column_setmode(Area *a, const char *mode) {
 	char *s, *t, *orig;
 	char add, old;
 
-	/* The mapping between the current internal
+	/*
+	 * The mapping between the current internal
 	 * representation and the external interface
 	 * is currently a bit complex. That will probably
 	 * change.
@@ -343,69 +344,69 @@ column_surplus(Area *a) {
 }
 
 static void
-column_fit(Area *a, uint *ncolp, uint *nuncolp) {
+column_fit(Area *a, uint *n_colp, uint *n_uncolp) {
 	Frame *f, **fp;
 	uint minh, dy;
-	uint ncol, nuncol;
-	uint colh, uncolh;
+	uint n_col, n_uncol;
+	uint col_h, uncol_h;
 	int surplus, i, j;
 
 	/* The minimum heights of collapsed and uncollpsed frames.
 	 */
 	minh = labelh(def.font);
-	colh = labelh(def.font);
-	uncolh = minh + colh + 1;
+	col_h = labelh(def.font);
+	uncol_h = minh + col_h + 1;
 	if(a->max && !resizing)
-		colh = 0;
+		col_h = 0;
 
 	/* Count collapsed and uncollapsed frames. */
-	ncol = 0;
-	nuncol = 0;
+	n_col = 0;
+	n_uncol = 0;
 	for(f=a->frame; f; f=f->anext) {
 		frame_resize(f, f->colr);
 		if(f->collapsed)
-			ncol++;
+			n_col++;
 		else
-			nuncol++;
+			n_uncol++;
 	}
 
-	if(nuncol == 0) {
-		nuncol++;
-		ncol--;
+	if(n_uncol == 0) {
+		n_uncol++;
+		n_col--;
 		(a->sel ? a->sel : a->frame)->collapsed = false;
 	}
 
 	/* FIXME: Kludge. See frame_attachrect. */
 	dy = Dy(a->view->r[a->screen]) - Dy(a->r);
-	minh = colh * (ncol + nuncol - 1) + uncolh;
+	minh = col_h * (n_col + n_uncol - 1) + uncol_h;
 	if(dy && Dy(a->r) < minh)
 		a->r.max.y += min(dy, minh - Dy(a->r));
 
 	surplus = Dy(a->r)
-		- (ncol * colh)
-		- (nuncol * uncolh);
+		- (n_col * col_h)
+		- (n_uncol * uncol_h);
 
 	/* Collapse until there is room */
 	if(surplus < 0) {
-		i = ceil(-1.F * surplus / (uncolh - colh));
-		if(i >= nuncol)
-			i = nuncol - 1;
-		nuncol -= i;
-		ncol += i;
-		surplus += i * (uncolh - colh);
+		i = ceil(-1.F * surplus / (uncol_h - col_h));
+		if(i >= n_uncol)
+			i = n_uncol - 1;
+		n_uncol -= i;
+		n_col += i;
+		surplus += i * (uncol_h - col_h);
 	}
 	/* Push to the floating layer until there is room */
 	if(surplus < 0) {
-		i = ceil(-1.F * surplus / colh);
-		if(i > ncol)
-			i = ncol;
-		ncol -= i;
-		surplus += i * colh;
+		i = ceil(-1.F * surplus / col_h);
+		if(i > n_col)
+			i = n_col;
+		n_col -= i;
+		surplus += i * col_h;
 	}
 
 	/* Decide which to collapse and which to float. */
-	j = nuncol - 1;
-	i = ncol - 1;
+	j = n_uncol - 1;
+	i = n_col - 1;
 	for(fp=&a->frame; *fp;) {
 		f = *fp;
 		if(f != a->sel) {
@@ -427,22 +428,22 @@ column_fit(Area *a, uint *ncolp, uint *nuncolp) {
 		fp = &f->anext;
 	}
 
-	if(ncolp) *ncolp = ncol;
-	if(nuncolp) *nuncolp = nuncol;
+	if(n_colp) *n_colp = n_col;
+	if(n_uncolp) *n_uncolp = n_uncol;
 }
 
 void
 column_settle(Area *a) {
 	Frame *f;
 	uint yoff, yoffcr;
-	int surplus, nuncol, n;
+	int surplus, n_uncol, n;
 
-	nuncol = 0;
+	n_uncol = 0;
 	surplus = column_surplus(a);
 	for(f=a->frame; f; f=f->anext)
-		if(!f->collapsed) nuncol++;
+		if(!f->collapsed) n_uncol++;
 
-	if(nuncol == 0) {
+	if(n_uncol == 0) {
 		fprint(2, "%s: Badness: No uncollapsed frames, column %d, view %q\n",
 				argv0, area_idx(a), a->view->name);
 		return;
@@ -453,8 +454,8 @@ column_settle(Area *a) {
 
 	yoff = a->r.min.y;
 	yoffcr = yoff;
-	n = surplus % nuncol;
-	surplus /= nuncol;
+	n = surplus % n_uncol;
+	surplus /= n_uncol;
 	for(f=a->frame; f; f=f->anext) {
 		f->r = rectsetorigin(f->r, Pt(a->r.min.x, yoff));
 		f->colr = rectsetorigin(f->colr, Pt(a->r.min.x, yoffcr));
@@ -729,7 +730,6 @@ column_resizeframe(Frame *f, Rectangle r) {
 
 	column_resizeframe_h(f, r);
 
-	/* view_arrange(v); */
 	view_update(v);
 }
 
