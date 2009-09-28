@@ -375,8 +375,7 @@ view_attach(View *v, Frame *f) {
 					     c->sel->view);
 
 	if(!(c->w.ewmh.type & (TypeSplash|TypeDock))) {
-		if(newgroup
-		&& !(c->tagre.regex && regexec(c->tagre.regc, v->name, nil, 0)))
+		if(!(c->tagre.regex && regexec(c->tagre.regc, v->name, nil, 0)))
 			frame_focus(f);
 		else if(c->group && f->area->sel->client->group == c->group)
 			/* XXX: Stack. */
