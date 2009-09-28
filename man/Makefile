@@ -9,7 +9,7 @@ TARG =	wmii.1	   \
 wmiir.1:
 	true
 
-$(TARG): Makefile $(ROOT)/mk/wmii.mk
+$(TARG): Makefile $(ROOT)/mk/wmii.mk header.t2t
 
 FILTER = sed "s|CONFPREFIX|$(ETC)|g; \
 	      s|CONFVERSION|$(CONFVERSION)|g; \

@@ -45,6 +45,49 @@ of the core window manager.
 the bar, which are described in detail in the
 \fBTerminology\fR section.
 
+.SS Command Line Arguments
+.TP
+\-a \fI<address>\fR
+
+.RS
+Specifies the address on which \fBwmii\fR should listen for
+connections. The address takes the form
+\fB\fI<protocol>\fR!\fI<address>\fR\fR. The default is of the form:
+.RE
+
+.RS
+.RS
+unix!/tmp/ns.\fB$USER\fR.\fB${DISPLAY\fR%.0\fB}\fR/wmii
+.RE
+.RE
+
+.RS
+which opens a unix socket per Plan 9 Port conventions. To
+open a TCP socket, listening at port 4332 on the loopback
+interface, use:
+.RE
+
+.RS
+.RS
+tcp!localhost!4332
+.RE
+.RE
+
+.RS
+\fB$WMII_NAMESPACE\fR is automatically set to this value.
+.RE
+
+.TP
+\-r \fI<wmiirc>\fR
+
+.RS
+Specifies which rc script to run. If \fI<wmiirc>\fR consists of a
+single argument, \fB$WMII_CONFPATH\fR is searched before \fB$PATH\fR.
+Otherwise, it is passed to the shell for evaluation. The
+environment variables \fB$WMII_ADDRESS\fR and \fB$WMII_CONFPATH\fR are
+preset for the script.
+.RE
+
 .SS Terminology
 .TP
 Display
@@ -131,7 +174,7 @@ An action is a shell script in the default setup, but it can
 actually be any executable file.  It is executed usually by
 selecting it from the actions menu.  You can customize an action
 by copying it from the global action directory
-\&'/home/kris/wmiiinst/etc/wmii\-3.5' to '$HOME/.wmii\-3.5' and then
+\&'/home/kris/wmiiinst/etc/wmii\-3.5' to '\fB$HOME\fR/.wmii\-3.5' and then
 editing the copy to fit your needs.  Of course you can also
 create your own actions there; make sure that they are
 executable.
@@ -479,13 +522,13 @@ them.
 
 .SH FILES
 .TP
-/tmp/ns.$USER.${DISPLAY%.0}/wmii
+/tmp/ns.\fB$USER\fR.\fB${DISPLAY\fR%.0\fB}\fR/wmii
 The wmii socket file which provides a 9P service.
 .TP
 /home/kris/wmiiinst/etc/wmii\-3.5
 Global action directory.
 .TP
-$HOME/.wmii\-3.5
+\fB$HOME\fR/.wmii\-3.5
 User\-specific action directory. Actions are first searched here.
 
 

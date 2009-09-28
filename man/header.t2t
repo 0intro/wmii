@@ -5,16 +5,18 @@
 % have to be post-processed. The _italic_ hack is necessary for
 % italicising things like /_foo_/, which txt2tags will ignore.
 % The others need to work in ``` lines.
-%!postproc(man): (<.*?>)    \\fI\1\\fR
-%!postproc(man): _(.*?)_    \\fI\1\\fR
-%!postproc(man): `(.*?)`    \\fB\1\\fR
-%!postproc(man): (\[.*?\])  \\fI\1\\fR
-%!postproc(man): \+$        \n.P
+%!postproc(man): (<.*?>)         \\fI\1\\fR
+%!postproc(man): \b_(.*?)_       \\fI\1\\fR
+%!postproc(man): `(.*?)`         \\fB\1\\fR
+%!postproc(man): (\[.*?\])       \\fI\1\\fR
+%!postproc(man): \+$             \n.P
+%!postproc(man): (\$[a-zA-Z_]+)  \\fB\1\\fR
+%!postproc(man): (\${[a-zA-Z_]+)(.*?)} \\fB\1\\fR\2\\fB}\\fR
 
-%!postproc(html): (<.*?>)  (:arg \1:)
-%!postproc(html): _(.*?)_  (:emph \1:)
-%!postproc(html): `(.*?)`  (:code \1:)
-%!postproc(html): \+$      <br/>
+%!postproc(html): (<.*?>)   (:arg \1:)
+%!postproc(html): \b_(.*?)_ (:emph \1:)
+%!postproc(html): `(.*?)`   (:code \1:)
+%!postproc(html): \+$       <br/>
 
 %!postproc(html) \(:(\w+)\s*(.*):\) <span class="\1">\2</span>
 
