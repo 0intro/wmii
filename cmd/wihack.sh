@@ -36,7 +36,7 @@ eval $checkarg
 if [ ! -u "`which $1`" -a ! -g "`which $1`" ]
 then
 	export LD_PRELOAD=libwmii_hack.so
-	export LD_LIBRARY_PATH="LIBDIR${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+	export LD_LIBRARY_PATH="@LIBDIR@${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
 else
 	unset WMII_HACK_TRANSIENT WMII_HACK_TYPE WMII_HACK_TAGS
 fi

@@ -5,5 +5,13 @@ VERSION := $(shell echo $(VERS))
 VERSION != echo $(VERS)
 CONFVERSION = -hg
 COPYRIGHT = ©2009 Kris Maglione
-CFLAGS += '-DVERSION=\"$(VERSION)\"' '-DCOPYRIGHT=\"$(COPYRIGHT)\"'
+
+CFLAGS += '-DVERSION=\"$(VERSION)\"' '-DCOPYRIGHT=\"$(COPYRIGHT)\"' \
+	  '-DCONFVERSION=\"$(CONFVERSION)\"' '-DCONFPREFIX=\"$(ETC)\"'
+FILTER = sed "s|@CONFPREFIX@|$(ETC)|g; \
+	      s|@CONFVERSION@|$(CONFVERSION)|g; \
+	      s|@P9PATHS@|$(P9PATHS)|g; \
+	      s|@LIBDIR@|$(LIBDIR)|g; \
+	      s|@BINSH@|$(BINSH)|g; \
+	      s|@AWKPATH@|$(AWKPATH)|g"
 

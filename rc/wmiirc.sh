@@ -1,4 +1,4 @@
-#!BINSH -f
+#!@BINSH@ -f
 # Configure wmii
 wmiiscript=wmiirc # For wmii.sh
 . wmii.sh
