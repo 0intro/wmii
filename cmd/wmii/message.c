@@ -50,6 +50,7 @@ enum {
 	LSELECT,
 	LSEND,
 	LSLAY,
+	LSPAWN,
 	LSWAP,
 	LTOGGLE,
 	LUP,
@@ -83,6 +84,7 @@ char *symtab[] = {
 	"select",
 	"send",
 	"slay",
+	"spawn",
 	"swap",
 	"toggle",
 	"up",
@@ -501,6 +503,9 @@ message_root(void *p, IxpMsg *m) {
 	case LEXEC:
 		execstr = strdup(m->pos);
 		srv.running = 0;
+		break;
+	case LSPAWN:
+		spawn_command(m->pos);
 		break;
 	case LFOCUSCOLORS:
 		ret = msg_parsecolors(m, &def.focuscolor);

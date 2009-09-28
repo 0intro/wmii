@@ -317,6 +317,31 @@ strlcatprint(char *buf, int len, const char *fmt, ...) {
 	return ret;
 }
 
+char*
+pathsearch(const char *path, const char *file, bool slashok) {
+	char *orig, *p, *s;
+
+	if(!slashok && strchr(file, '/') > file)
+		file = sxprint("%s/%s", getcwd(buffer, sizeof buffer), file);
+	else if(!strncmp(file, "./",  2))
+		file = sxprint("%s/%s", getcwd(buffer, sizeof buffer), file+2);
+	if(file[0] == '/') {
+		if(access(file, X_OK))
+			return strdup(file);
+		return nil;
+	}
+
+	orig = estrdup(path ? path : getenv("PATH"));
+	for(p=orig; (s=strtok(p, ":")); p=nil) {
+		s = smprint("%s/%s", s, file);
+		if(!access(s, X_OK))
+			break;
+		free(s);
+	}
+	free(orig);
+	return s;
+}
+
 int
 unquote(char *buf, char *toks[], int ntoks) {
 	char *s, *t;

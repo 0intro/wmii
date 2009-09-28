@@ -206,6 +206,7 @@ void	update_keys(void);
 
 /* main.c */
 void	init_screens(void);
+void	spawn_command(const char*);
 
 /* map.c */
 void**	hash_get(Map*, const char*, bool create);
@@ -291,6 +292,7 @@ char**	comm(int, char**, char**);
 int	doublefork(void);
 void	grep(char**, Reprog*, int);
 char*	join(char**, char*);
+char*	pathsearch(const char*, const char*, bool);
 void	refree(Regex*);
 void	reinit(Regex*, char*);
 int	strlcatprint(char*, int, const char*, ...);

@@ -95,6 +95,9 @@ init_environment(void) {
 		setenv("WMII_ADDRESS", address, true);
 	else
 		address = smprint("unix!%s/wmii", ns_path);
+	setenv("WMII_CONFPATH", sxprint("%s/.wmii%s:%s/wmii%s",
+					getenv("HOME"), CONFVERSION,
+					CONFPREFIX, CONFVERSION), true);
 }
 
 static void
@@ -281,18 +284,21 @@ init_traps(void) {
 	sigaction(SIGUSR2, &sa, nil);
 }
 
-static void
+void
 spawn_command(const char *cmd) {
 	char *shell, *p;
+
+	if((p = pathsearch(getenv("WMII_CONFPATH"), cmd, true)))
+		cmd = p;
 
 	if(doublefork() == 0) {
 		if(setsid() == -1)
 			fatal("Can't setsid: %r");
 
+		/* Run through the user's shell as a login shell */
 		shell = passwd->pw_shell;
 		if(shell[0] != '/')
 			fatal("Shell is not an absolute path: %s", shell);
-		/* Run through the user's shell as a login shell */
 		p = smprint("-%s", strrchr(shell, '/') + 1);
 
 		close(0);
@@ -300,7 +306,7 @@ spawn_command(const char *cmd) {
 
 		execl(shell, p, "-c", cmd, nil);
 		fatal("Can't exec '%s': %r", cmd);
-		/* Not reached */
+		/* NOTREACHED */
 	}
 }
 
@@ -332,7 +338,7 @@ main(int argc, char *argv[]) {
 extern int fmtevent(Fmt*);
 	fmtinstall('E', fmtevent);
 
-	wmiirc = "wmiistartrc";
+	wmiirc = "wmiirc";
 
 	oargv = argv;
 	ARGBEGIN{
@@ -380,7 +386,7 @@ extern int fmtevent(Fmt*);
 	closeexec(ConnectionNumber(display));
 	closeexec(sock);
 
-	if(wmiirc)
+	if(wmiirc[0])
 		spawn_command(wmiirc);
 
 	init_traps();

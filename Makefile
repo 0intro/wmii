@@ -5,6 +5,7 @@ PDIRS = \
 	cmd	     \
 	libwmii_hack \
 	rc	     \
+	alternative_wmiircs \
 	man
 
 DIRS =	\

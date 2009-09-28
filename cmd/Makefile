@@ -11,8 +11,7 @@ TARG =	wihack    \
 	wmii.sh   \
 	wmii9menu \
 	wmii9rc	  \
-	wmiir	  \
-	wmiistartrc
+	wmiir
 
 OFILES = util.o
 
