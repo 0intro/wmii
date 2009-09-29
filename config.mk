@@ -4,6 +4,7 @@
 PREFIX = /usr/local
   BIN = $(PREFIX)/bin
   MAN = $(PREFIX)/share/man
+  DOC = $(PREFIX)/share/doc/wmii
   ETC = $(PREFIX)/etc
   LIBDIR = $(PREFIX)/lib
   INCLUDE = $(PREFIX)/include

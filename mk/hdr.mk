@@ -29,7 +29,7 @@ BINSH := $(shell \
 BINSH != echo /bin/sh
 
 .SILENT:
-.SUFFIXES: .out .o .o_pic .c .sh .rc .$(SOEXT) .awk .1 .man1 .depend .install .uninstall .clean
+.SUFFIXES: .out .o .o_pic .c .pdf .sh .rc .$(SOEXT) .awk .1 .man1 .depend .install .uninstall .clean
 all:
 
 .c.depend:
@@ -86,6 +86,14 @@ all:
 .h.uninstall:
 	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
 	rm -f $(DESTDIR)$(INCLUDE)/$<
+
+.pdf.install:
+	echo INSTALL $$($(CLEANNAME) $(BASE)$<)
+	cp -f $< $(DESTDIR)$(DOC)/$<
+	chmod 0644 $(DESTDIR)$(DOC)/$<
+.pdf.uninstall:
+	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
+	rm -f $(DESTDIR)$(DOC)/$<
 
 .1.install:
 	set -e; \

@@ -359,6 +359,15 @@ Quit \fBwmii\fR
 exec \fI<prog>\fR
 Replace \fBwmii\fR with \fI<prog>\fR
 
+.RS
+: spawn \fI<prog>\fR
+.RS
+Spawn a new program, as if by the \fI\-r\fR flag.
+.RE
+.RE
+.P
+        :
+:
 
 .SS The /client/ Hierarchy
 .P
@@ -525,10 +534,10 @@ them.
 /tmp/ns.\fB$USER\fR.\fB${DISPLAY\fR%.0\fB}\fR/wmii
 The wmii socket file which provides a 9P service.
 .TP
-/home/kris/wmiiinst/etc/wmii\-3.5
+/home/kris/wmiiinst/etc/wmii-hg
 Global action directory.
 .TP
-\fB$HOME\fR/.wmii\-3.5
+\fB$HOME\fR/.wmii-hg
 User\-specific action directory. Actions are first searched here.
 
 
@@ -548,6 +557,9 @@ Socket file of Used by wmiir(1).
 .SH SEE ALSO
 .P
 dmenu(1), wmiir(1)
+
+.P
+/home/kris/wmiiinst/share/doc/wmii/wmii.pdf
 
 .P
 \fI[1]\fR http://www.suckless.org/wiki/wmii/tips/9p_tips

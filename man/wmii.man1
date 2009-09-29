@@ -10,7 +10,7 @@ wmii - Window Manager Improved Improved
 
 = SYNOPSIS =
 
-wmii [-a <address>] [-c <wmiirc>] +
+wmii [-a <address>] [-r <wmiirc>] +
 wmii -v
 
 = DESCRIPTION =
@@ -300,6 +300,8 @@ follows.
                 Quit `wmii`
         : exec <prog>
                 Replace `wmii` with <prog>
+	: spawn <prog>
+		Spawn a new program, as if by the _-r_ flag.
         :
 :
 
@@ -450,6 +452,8 @@ thus can be used in actions:
 :
 = SEE ALSO =
 dmenu(1), wmiir(1)
+
+@DOCDIR@/wmii.pdf
 
 [1] http://www.suckless.org/wiki/wmii/tips/9p_tips
 

@@ -1057,6 +1057,11 @@ The root filesystem contains the following:
         ‹Command›. ‹Command› is split according to rc quoting
         rules, and no expansion occurs. If the command fails to
         execute, \wmii\ will respawn.
+      \item[spawn ‹Command›] Spawns ‹Command› as it would spawn
+        |wmiirc| at startup. If ‹Command› is a single argument
+        and doesn't begin with |/| or |./|,\hskip 1ex|$WMII_CONFPATH| is
+        searched for the executable. Otherwise, the whole
+        argument is passed to the shell for evaluation.
     \end{description}
   \item[props] The client's window class (the X11 |WM_CLASS|
     property) and title string, separated by colons. This file
@@ -1108,7 +1113,7 @@ And we need a few more key bindings to select our views:
     wmiir xwrite /ctl view ${2＃＃*-};;
 \end{code}
 
-\section{Tying it All Together}
+\section{Tieing it All Together}
 
 \begin{code}
   #!/bin/sh
@@ -1119,6 +1124,203 @@ And we need a few more key bindings to select our views:
 
   «Bind Keys»
   «Event Loop»
+\end{code}
+
+\section{The End Result}
+
+For clarity, here is the end result:
+
+\begin{code}
+  #!/bin/sh
+  # «Click Menu Initialization»
+  clickmenu() {
+      if res=$(wmii9menu -- “$@”); then eval “$res”; fi
+  }
+  # «Command Execution Initialization»
+  terminal() { wmiir setsid xterm “$@” }
+  proglist() {
+      IFS=: set -- $1
+      find -L $@ -maxdepth 1 -perm /111 | sed ‘s,.*/,,’ | sort | uniq
+      unset IFS
+  }
+
+  # «Configuration»
+  # «Theme Definitions»
+  normcolors=‘＃000000 ＃c1c48b ＃81654f’
+  focuscolors=‘＃000000 ＃81654f ＃000000’
+  background=‘＃333333’
+  font=‘drift,-*-fixed-*-*-*-*-9-*-*-*-*-*-*-*’
+
+  xsetroot -solid $background
+  wmiir write /ctl <<!
+  border 2
+  focuscolors $focuscolors
+  normcolors $normcolors
+  font $font
+  grabmod Mod4
+  !
+
+  # «Bind Keys»
+  {
+  cat <<!
+  Mod4-space
+  Mod4-d
+  Mod4-s
+  Mod4-m
+  Mod4-a
+  Mod4-p
+  Mod4-t
+  Mod4-Return
+  Mod4-Shift-space
+  Mod4-f
+  Mod4-Shift-c
+  Mod4-Shift-t
+  Mod4-h
+  Mod4-j
+  Mod4-k
+  Mod4-l
+  Mod4-Shift-h
+  Mod4-Shift-j
+  Mod4-Shift-k
+  Mod4-Shift-l
+  !
+  for i in 1 2 3 4 5 6 7 8 9 0; do
+      echo Mod4-$i
+      echo Mod4-Shift-$i
+  done
+  } | wmiir write /keys
+
+  # «Event Loop»
+  # Broadcast a custom event
+  wmiir xwrite /event Start wmiirc
+
+  # Turn off globbing
+  set -f
+  # Open /event for reading
+  wmiir read /event |
+  # Read the events line by line
+  while read line; do
+      # Split the line into words, store in $@
+      set -- $line
+      event=$1; shift
+      line = "$(echo $line | sed ‘s/^[^ ]* //’ | tr -d ‘\n’)"
+
+      # Process the event
+      case $event in
+      Start) # Quit when a new instance starts
+          [ $1 = wmiirc ] && exit;;
+
+      # «Event Handlers»
+      # «View Button Events»
+      CreateTag)  # CreateTag ‹Tag Name›
+          echo $normcolors $1 | wmiir create /lbar/$1;;
+      DestroyTag) # DestroyTag ‹Tag Name›
+          wmiir rm /lbar/$1;;
+      FocusTag)   # FocusTag ‹Tag Name›
+          wmiir xwrite /lbar/$1 $focuscolors $1;;
+      UnfocusTag) # UnfocusTag ‹Tag Name›
+          wmiir xwrite /lbar/$* $normcolors $1;;
+
+      # «Urgency Events»
+      # The urgency events are ‘Client’ events when the program
+      # owning the window sets its urgency state. They're ‘Manager’
+      # events when wmii or the wmii user sets the state.
+      UrgentTag)    # UrgentTag ‹‘Client’ or ‘Manager’› ‹Tag Name›
+          wmiir xwrite /lbar/$2 *$2;;
+      NotUrgentTag) # NotUrgentTag ‹‘Client’ or ‘Manager’› ‹Tag Name›
+          wmiir xwrite /lbar/$2 $2;;
+
+      # «Unresponsive Clients»
+      UnresponsiveClient) # UnresponsiveClient ‹Client ID›
+      {
+          # Use wihack to make the xmessage a transient window of
+          # the problem client. This will force it to open in the
+          # floaing layer of whatever views the client is attached to
+          resp=$(wihack -transient $1 \
+                 xmessage -nearmouse -buttons Kill,Wait -print \
+                 “The following client is not responding.” \
+                 “What would you like to do?$(echo)” \
+                 $(wmiir read /client/$1/label))
+          [ $resp = Kill ] && wmiir xwrite /client/$1/ctl slay
+      } &;;
+
+      # «Notice Events»
+      Notice)
+          wmiir xwrite /rbar/!notice $line
+          kill $xpid 2>/dev/null # Let's hope this isn't reused...
+          { sleep 5; wmiir xwrite /rbar/!notice ‘ ’; } &
+          xpid = $!;;
+
+      # «Key Events»
+      Key) # Key ‹Key Name›
+          case $1 in
+          # «Motion Keys»
+          Mod4-h) wmiir xwrite /tag/sel/ctl select left;;
+          Mod4-l) wmiir xwrite /tag/sel/ctl select right;;
+          Mod4-k) wmiir xwrite /tag/sel/ctl select up;;
+          Mod4-j) wmiir xwrite /tag/sel/ctl select down;;
+          Mod4-space) wmiir xwrite /tag/sel/ctl select toggle;;
+
+          # «Client Movement Keys»
+          Mod4-Shift-h) wmiir xwrite /tag/sel/ctl send sel left;;
+          Mod4-Shift-l) wmiir xwrite /tag/sel/ctl send sel right;;
+          Mod4-Shift-k) wmiir xwrite /tag/sel/ctl send sel up;;
+          Mod4-Shift-j) wmiir xwrite /tag/sel/ctl send sel down;;
+          Mod4-Shift-space) wmiir xwrite /tag/sel/ctl send sel toggle;;
+
+          # «Column Mode Keys»
+          Mod4-d) wmiir xwrite /tag/sel/ctl colmode sel -stack-max;;
+          Mod4-s) wmiir xwrite /tag/sel/ctl colmode sel stack-max;;
+          Mod4-m) wmiir xwrite /tag/sel/ctl colmode sel stack+max;;
+
+          # «Client Command Keys»
+          Mod4-Shift-c) wmiir xwrite /client/sel/ctl kill;;
+          Mod4-f) wmiir xwrite /client/sel/ctl Fullscreen toggle;;
+
+          # «Command Execution Keys»
+          Mod4-Return) terminal & ;;
+          Mod4-p) eval exec wmiir setsid "$(proglist $PATH | wimenu)" &;;
+          Mod4-a) {
+              set -- $(proglist $WMII_CONFPATH | wimenu)
+              prog = $( (PATH=$WMII_CONFPATH which $1) ); shift
+              eval exec $prog “$@”
+          } &;;
+
+          # «Tag Selection Keys»
+          Mod4-Shift-t)
+            # Prompt the user for a tag
+            tags=$(wmiir ls /tag | sed ‘s,/,,; /sel/d’ | wimenu)
+            # Write it to the filesystem.
+            wmiir xwrite /ctl view $tag;;
+          Mod4-[0-9])
+            wmiir xwrite /ctl view ${2＃＃*-};;
+
+          # «Tagging Keys»
+          Mod4-Shift-t)
+            # Get the selected client's id
+            c=$(wmiir read /client/sel/tag | sed 1q)
+            # Prompt the user for new tags
+            tags=$(wmiir ls /tag | sed ‘s,/,,; /sel/d’ | wimenu)
+            # Write them to the client
+            wmiir xwrite /client/$c/tags $tag;;
+          Mod4-Shift-[0-9])
+            wmiir xwrite /client/sel/tags ${2＃＃*-};;
+
+          esac;;
+
+      # «Client Menu Events»
+      ClientMouseDown) # ClientMouseDown ‹Client ID› ‹Button›
+        [ $2 = 3 ] && clickmenu \
+          “Delete:xwrite /client/$1/ctl kill” \
+          “Kill:xwrite /client/$1/ctl slay” \
+          “Fullscreen:/client/$1/ctl Fullscreen on”
+
+      # «Tag Menu Events»
+      LeftBarMouseDown) # LeftBarMouseDown ‹Button› ‹Bar Name›
+        [ $1 = 3 ] && clickmenu \
+          “Delete:delete_view $2”
+      esac
+  done
 \end{code}
 
 \backmatter
