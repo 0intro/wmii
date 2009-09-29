@@ -3,8 +3,7 @@ include $(ROOT)/mk/hdr.mk
 include $(ROOT)/mk/wmii.mk
 
 BIN = $(ETC)/wmii$(CONFVERSION)
-TARG =	rc.wmii   \
-	wmiirc    \
+TARG =  wmiirc    \
 	welcome
 
 include $(ROOT)/mk/many.mk
