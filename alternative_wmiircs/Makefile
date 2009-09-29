@@ -4,7 +4,8 @@ include $(ROOT)/mk/wmii.mk
 
 BIN = $(ETC)/wmii$(CONFVERSION)
 TARG =	python	\
-	plan9port
+	plan9port \
+	ruby
 
 $(TARG:%=%.install):
 	echo INSTALL $$($(CLEANNAME) $(BASE)${@:.install=})

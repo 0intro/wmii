@@ -4,10 +4,20 @@ Alternative wmiirc scripts
 This folder contains alternative implementations of wmii's rc
 scripts. Each folder contains a different implementation,
 described below, including its own README, wmiirc script, and
-possibly other suppporting files and libraries. It usually
-suffices to copy the entire contents of the directory to
-~/.wmii, but see the accompanying README file for more
-details.
+possibly other suppporting files and libraries. These scripts
+are installed along with wmii to $(ETC) as defined in config.mk.
 
+It usually suffices to start the included `wmiirc` script at
+wmii startup. Invoking wmii with the flag '-r python/wmiirc',
+for instance, will start the python implementation.
+Alternatively, if you use a session manager, you can add this
+line to ~/.wmii/wmiirc (which must be executable):
+
+    wmiir xwrite /ctl spawn python/wmiirc
+
+  Index
+  ------------- ----------------------------------------------------
   python/	A pure Python wmiirc implementation. 
+  plan9port/	A Plan 9 Port/rc shell based wmiirc implementation
+  ruby/		A pure-ruby wmiirc implementation, by Suraj Kurapati
 
