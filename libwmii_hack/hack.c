@@ -20,7 +20,6 @@ enum {
 
 static void*	xlib;
 
-static long	lastwin;
 static long	transient;
 static Atom	types[32];
 static long	ntypes;
@@ -87,12 +86,6 @@ init(Display *d) { /* Hrm... assumes one display... */
 
 	pid = getpid();
 	gethostname(hostname, sizeof hostname);
-}
-
-static int /* Temporary Xlib error handler */
-ignoreerrors(Display *d, XErrorEvent *e) {
-	//USED(d, e);
-	return 0;
 }
 
 static void

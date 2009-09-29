@@ -373,6 +373,7 @@ view_attach(View *v, Frame *f) {
 		     || group_leader(c->group)
 		        && !client_viewframe(group_leader(c->group),
 					     c->sel->view);
+	USED(newgroup);
 
 	if(!(c->w.ewmh.type & (TypeSplash|TypeDock))) {
 		if(!(c->tagre.regex && regexec(c->tagre.regc, v->name, nil, 0)))

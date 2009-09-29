@@ -1047,7 +1047,8 @@ setfocus(Window *w, int mode) {
 
 XWindow
 getfocus(void) {
-	XWindow ret, revert;
+	XWindow ret;
+	int revert;
 
 	XGetInputFocus(display, &ret, &revert);
 	return ret;
