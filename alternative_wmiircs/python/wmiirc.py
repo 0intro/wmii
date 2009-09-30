@@ -124,10 +124,10 @@ class Actions(events.Actions):
     def exit(self, args=''):
         client.awrite('/event', 'Quit')
 
-program_menu = Menu(histfile='%s/history.prog' % confpath[0], nhist=5000,
+program_menu = Menu(histfile='%s/history.progs' % confpath[0], nhist=5000,
                     action=curry(call, 'wmiir', 'setsid',
                                  pygmi.shell, '-c', background=True))
-action_menu = Menu(histfile='%s/history.action' % confpath[0], nhist=500,
+action_menu = Menu(histfile='%s/history.actions' % confpath[0], nhist=500,
                    choices=lambda: Actions._choices,
                    action=Actions._call)
 tag_menu = Menu(histfile='%s/history.tags' % confpath[0], nhist=100,
