@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import os, sys
+path = []
 for p in os.environ.get("WMII_CONFPATH", "").split(':'):
-    sys.path += [p, p + '/python']
+    path += [p, p + '/python']
+sys.path = path + sys.path
 
 import pygmi
 import wmiirc
