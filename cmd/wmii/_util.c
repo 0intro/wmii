@@ -141,11 +141,11 @@ _backtrace(int pid, char *btarg) {
 	int fd[3], p[2];
 	int status, cmdfd;
 
+	gdbcmd = estrdup("/tmp/gdbcmd.XXXXXX");
 	if(pipe(p) < 0)
 		goto done;
 	closeexec(p[0]);
 
-	gdbcmd = estrdup("/tmp/gdbcmd.XXXXXX");
 	cmdfd = mkstemp(gdbcmd);
 	if(cmdfd < 0)
 		goto done;

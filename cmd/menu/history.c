@@ -51,6 +51,7 @@ history_dump(const char *path, int max) {
 	Item *h, *first;
 	int i, n, fd;
 
+	SET(first);
 	if(fork() != 0)
 		return;
 

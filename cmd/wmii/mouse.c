@@ -219,6 +219,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 
 	v = selview;
 	d = divs;
+	SET(a);
 	foreach_column(v, s, a) {
 		if(a == f->area)
 			break;

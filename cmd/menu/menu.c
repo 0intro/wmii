@@ -138,6 +138,7 @@ _menu_draw(bool draw) {
 	pad = (font->height & ~1);
 
 	rd = r;
+	rp = ZR; // SET(rp)
 	if (prompt) {
 		if (!promptw)
 			promptw = textwidth(font, prompt) + 2 * ltwidth;

@@ -260,6 +260,7 @@ xls(int argc, char *argv[]) {
 		usage();
 	}ARGEND;
 
+	count = 0;
 	file = EARGF(usage());
 	do {
 		stat = ixp_stat(client, file);

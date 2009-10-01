@@ -90,6 +90,7 @@ bar_create(Bar **bp, const char *name) {
 	strlcat(b->buf, " ", sizeof(b->buf));
 	strlcat(b->buf, b->text, sizeof(b->buf));
 	
+	SET(i);
 	for(sp=screens; (s = *sp); sp++) {
 		i = bp - s->bar;
 		if(i < nelem(s->bar))

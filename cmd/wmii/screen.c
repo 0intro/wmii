@@ -87,6 +87,7 @@ leastthing(Rectangle rect, int direction, Vector_ptr *vec, Rectangle (*key)(void
 	int i, best, d;
 
 	SET(d);
+	SET(best);
 	for(i=0; i < vec->n; i++) {
 		p = vec->ary[i];
 		r = key(p);
@@ -112,7 +113,7 @@ leastthing(Rectangle rect, int direction, Vector_ptr *vec, Rectangle (*key)(void
 void*
 findthing(Rectangle rect, int direction, Vector_ptr *vec, Rectangle (*key)(void*), bool wrap) {
 	Rectangle isect;
-	Rectangle r, bestisect, bestr;
+	Rectangle r, bestisect = {0,}, bestr = {0,};
 	void *best, *p;
 	int i, n;
 
