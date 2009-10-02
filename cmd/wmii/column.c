@@ -295,23 +295,14 @@ column_attachrect(Area *a, Frame *f, Rectangle r) {
 
 	pos = nil;
 	for(fp=a->frame; fp; pos=fp, fp=fp->anext) {
-		if(r.max.y < fp->r.min.y)
+		if(r.max.y < fp->r.min.y || r.min.y > fp->r.max.y)
 			continue;
 		before = fp->r.min.y - r.min.y;
-		after = r.max.y - fp->r.max.y;
-		if(abs(before) <= abs(after))
-			break;
-	}
-	if(Dy(a->r) > Dy(r)) {
-		/* Kludge. */
-		before = a->r.max.y;
-		a->r.max.y -= Dy(r);
-		column_scale(a);
-		a->r.max.y = before;
+		after = -fp->r.max.y + r.max.y;
 	}
 	column_insert(a, f, pos);
-	column_scale(a);
 	column_resizeframe_h(f, r);
+	column_scale(a);
 }
 
 void
@@ -674,7 +665,7 @@ column_resizeframe_h(Frame *f, Rectangle r) {
 
 	if(fp)
 		r.min.y = max(r.min.y, fp->colr.min.y + minh);
-	else /* XXX. */
+	else
 		r.min.y = max(r.min.y, a->r.min.y);
 
 	if(fn)
@@ -686,10 +677,15 @@ column_resizeframe_h(Frame *f, Rectangle r) {
 		fp->colr.max.y = r.min.y;
 		frame_resize(fp, fp->colr);
 	}
+	else
+		r.min.y = min(r.min.y, r.max.y - minh);
+
 	if(fn) {
 		fn->colr.min.y = r.max.y;
 		frame_resize(fn, fn->colr);
 	}
+	else
+		r.max.y = max(r.max.y, r.min.y + minh);
 
 	f->colr = r;
 	frame_resize(f, r);
