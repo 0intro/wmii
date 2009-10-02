@@ -345,8 +345,6 @@ mouse_resizecol(Divide *d) {
 		d->right->r.min.x = pt.x;
 	else
 		v->pad[scrn].max.x = pt.x - v->r[scrn].max.x;
-	print("%R\n", v->pad[scrn]);
-	print("%d %d\n", pt.x - v->r[scrn].min.x, pt.x - v->r[scrn].max.x);
 
 	view_arrange(v);
 
