@@ -179,7 +179,7 @@ Here is a list of the default actions:
 |  Mod-Shift-k         | Move the current window above the window above it.
 |  Mod-Shift-space     | Toggle the current window between the managed and floating layer
 |  Mod-Shift-t <tag>   | Move the current window to the view of the given <tag>
-|  Mod-Shift-//[0-9]// | Move to the current window to the view with the given number
+|  Mod-Shift-//[0-9]// | Move the current window to the view with the given number
 
 === Miscellaneous ===
 
