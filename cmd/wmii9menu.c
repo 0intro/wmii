@@ -81,6 +81,10 @@ void warpmouse(int, int);
 void memory(void);
 int args(void);
 
+ErrorCode ignored_xerrors[] = {
+	{ 0, }
+};
+
 /* main --- crack arguments, set up X stuff, run the main menu loop */
 
 int

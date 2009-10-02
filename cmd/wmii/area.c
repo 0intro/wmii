@@ -80,7 +80,7 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 	Area *a;
 
 	assert(!pos || pos->screen == scrn);
-	SET(i);
+	SET(index);
 	if(v->areas) { /* Creating a column. */
 		minwidth = column_minwidth();
 		index = pos ? area_idx(pos) : 1;

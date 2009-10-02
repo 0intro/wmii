@@ -195,7 +195,7 @@ initdisplay(void) {
 
 /* Error handling */
 
-ErrorCode ignored_xerrors[];
+extern ErrorCode ignored_xerrors[];
 static bool	_trap_errors;
 static long	nerrors;
 

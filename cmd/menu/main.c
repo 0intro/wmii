@@ -163,21 +163,8 @@ update_filter(bool print) {
 		update_input();
 }
 
-/*
- * There's no way to check accesses to destroyed windows, thus
- * those cases are ignored (especially on UnmapNotifies).
- * Other types of errors call Xlib's default error handler, which
- * calls exit().
- */
 ErrorCode ignored_xerrors[] = {
-	{ 0, BadWindow },
-	{ X_SetInputFocus, BadMatch },
-	{ X_PolyText8, BadDrawable },
-	{ X_PolyFillRectangle, BadDrawable },
-	{ X_PolySegment, BadDrawable },
-	{ X_ConfigureWindow, BadMatch },
-	{ X_GrabKey, BadAccess },
-	{ X_GetAtomName, BadAtom },
+	{ 0, }
 };
 
 static void
