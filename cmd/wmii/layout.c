@@ -455,8 +455,7 @@ thcol(Frame *f) {
 			}
 
 
-			/* XXX: Multihead. */
- 			if(!a->frame && !a->floating && f->view->firstarea->next)
+ 			if(!a->frame && !a->floating && a->view->areas[a->screen]->next)
  				area_destroy(a);
 
 			frame_focus(f);
