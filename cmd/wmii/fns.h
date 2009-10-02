@@ -109,6 +109,7 @@ void	column_attachrect(Area*, Frame*, Rectangle);
 void	column_detach(Frame*);
 void	column_frob(Area*);
 void	column_insert(Area*, Frame*, Frame*);
+int	column_minwidth(void);
 Area*	column_new(View*, Area*, int, uint);
 void	column_remove(Frame*);
 void	column_resize(Area*, int);

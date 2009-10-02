@@ -203,7 +203,7 @@ hplace(Framewin *fw, Point pt) {
 		return; /* XXX: Multihead. */
 
 	fw->ra = nil;
-	minw = Dx(v->r[a->screen])/NCOL;
+	minw = column_minwidth();
 	if(abs(pt.x - a->r.min.x) < minw/2) {
 		pt.x = a->r.min.x;
 		fw->ra = a->prev;

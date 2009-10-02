@@ -279,6 +279,7 @@ struct View {
 	int	selcol;
 	bool	dead;
 	Rectangle *r;
+	Rectangle *pad;
 };
 
 /* Yuck. */

@@ -80,6 +80,12 @@ column_getmode(Area *a) {
 				  a->max ? '+' : '-');
 }
 
+int
+column_minwidth(void)
+{
+	return 4 * labelh(def.font);
+}
+
 Area*
 column_new(View *v, Area *pos, int scrn, uint w) {
 	Area *a;
@@ -698,7 +704,7 @@ column_resizeframe(Frame *f, Rectangle r) {
 	a = f->area;
 	v = a->view;
 
-	minw = Dx(v->r[a->screen]) / NCOL;
+	minw = column_minwidth();
 
 	al = a->prev;
 	ar = a->next;

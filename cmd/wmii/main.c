@@ -178,6 +178,7 @@ init_screens(void) {
 	for(v=view; v; v=v->next) {
 		v->areas = erealloc(v->areas, m * sizeof *v->areas);
 		v->r = erealloc(v->r, m * sizeof *v->r);
+		v->pad = erealloc(v->pad, m * sizeof *v->pad);
 	}
 
 	for(i=nscreens; i < m; i++) {

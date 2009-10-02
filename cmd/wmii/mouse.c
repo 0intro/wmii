@@ -229,7 +229,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 	if(align&East)
 		d = d->next;
 
-	min.x = Dx(v->r[a->screen])/NCOL;
+	min.x = column_minwidth();
 	min.y = /*frame_delta_h() +*/ labelh(def.font);
 	/* Set the limits of where this box may be dragged. */
 #define frob(pred, f, aprev, rmin, rmax, plus, minus, xy) BLOCK(     \
@@ -312,23 +312,19 @@ void
 mouse_resizecol(Divide *d) {
 	Window *cwin;
 	View *v;
-	Area *a;
 	Rectangle r;
 	Point pt;
-	int minw;
+	int minw, scrn;
 
 	v = selview;
 
-	a = d->left;
-	/* Fix later */
-	if(a == nil || a->next == nil)
-		return;
+	scrn = (d->left ? d->left : d->right)->screen;
 
 	pt = querypointer(&scr.root);
 
-	minw = Dx(v->r[a->screen])/NCOL;
-	r.min.x = a->r.min.x + minw;
-	r.max.x = a->next->r.max.x - minw;
+	minw = column_minwidth();
+	r.min.x = d->left  ? d->left->r.min.x + minw  : v->r[scrn].min.x;
+	r.max.x = d->right ? d->right->r.max.x - minw : v->r[scrn].max.x;
 	r.min.y = pt.y;
 	r.max.y = pt.y+1;
 
@@ -340,7 +336,19 @@ mouse_resizecol(Divide *d) {
 	while(readmotion(&pt))
 		div_set(d, pt.x);
 
-	column_resize(a, pt.x - a->r.min.x);
+	if(d->left)
+		d->left->r.max.x = pt.x;
+	else
+		v->pad[scrn].min.x = pt.x - v->r[scrn].min.x;
+
+	if(d->right)
+		d->right->r.min.x = pt.x;
+	else
+		v->pad[scrn].max.x = pt.x - v->r[scrn].max.x;
+	print("%R\n", v->pad[scrn]);
+	print("%d %d\n", pt.x - v->r[scrn].min.x, pt.x - v->r[scrn].max.x);
+
+	view_arrange(v);
 
 done:
 	ungrabpointer();
