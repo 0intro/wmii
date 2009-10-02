@@ -35,7 +35,8 @@ bar_init(WMScreen *s) {
 	s->barwin->aux = s;
 	xdnd_initwindow(s->barwin);
 	sethandler(s->barwin, &handlers);
-	mapwin(s->barwin);
+	if(s == screens[0])
+		mapwin(s->barwin);
 }
 
 void
@@ -43,7 +44,10 @@ bar_resize(WMScreen *s) {
 
 	s->brect = s->r;
 	s->brect.min.y = s->r.max.y - labelh(def.font);
-	reshapewin(s->barwin, s->brect);
+	if(s == screens[0])
+		reshapewin(s->barwin, s->brect);
+	else
+		s->brect.min.y = s->r.max.y;
 	/* FIXME: view_arrange. */
 }
 
@@ -51,10 +55,14 @@ void
 bar_setbounds(WMScreen *s, int left, int right) {
 	Rectangle *r;
 
+	if(s != screens[0])
+		return;
+
 	r = &s->brect;
 	r->min.x = left;
 	r->max.x = right;
-	reshapewin(s->barwin, *r);
+	if(Dy(*r))
+		reshapewin(s->barwin, *r);
 }
 
 void
@@ -67,7 +75,8 @@ bar_sety(WMScreen *s, int y) {
 	dy = Dy(*r);
 	r->min.y = y;
 	r->max.y = y + dy;
-	reshapewin(s->barwin, *r);
+	if(Dy(*r))
+		reshapewin(s->barwin, *r);
 }
 
 Bar*
