@@ -14,10 +14,9 @@ getdiv(Divide ***dp) {
 	WinAttr wa;
 	Divide *d;
 
-	if(**dp) {
+	if(**dp)
 		d = **dp;
-		d->side = 0;
-	}else {
+	else {
 		d = emallocz(sizeof *d);
 
 		wa.override_redirect = true;
@@ -67,33 +66,36 @@ div_set(Divide *d, int x) {
 }
 
 static void
-drawimg(Image *img, ulong cbg, ulong cborder, int side) {
-	Point pt[6];
+drawimg(Image *img, ulong cbg, ulong cborder, Divide *d) {
+	Point pt[8];
+	int n, start, w;
 
-	pt[0] = Pt(0, 0);
-	pt[1] = Pt(Dx(img->r)/2 - 1, Dx(img->r)/2 - 1);
+	w = Dx(img->r)/2;
+	n = 0;
+	pt[n++] = Pt(w    ,	0);
+	pt[n++] = Pt(0,		0);
+	pt[n++] = Pt(w - 1,	w - 1);
 
-	pt[2] = Pt(pt[1].x, Dy(img->r));
-	pt[3] = Pt(Dx(img->r)/2, pt[2].y);
+	pt[n++] = Pt(w - 1,	Dy(img->r));
+	pt[n++] = Pt(w,		pt[n-1].y);
 
-	pt[4] = Pt(pt[3].x, Dx(img->r)/2 - 1);
-	pt[5] = Pt(Dx(img->r) - 1, 0);
+	pt[n++] = Pt(w,		w - 1);
+	pt[n++] = Pt(2*w - 1,	0);
+	pt[n++] = Pt(w,		0);
 
-	if (side & 1)
-		pt[0].x = pt[1].x = pt[2].x + 1;
-	if (side & 2)
-		pt[5].x = pt[4].x = pt[3].x - 1;
+	start = d->left		? 0 : n/2;
+	n = d->right && d->left ? n : n/2;
 
-	fillpoly(img, pt, nelem(pt), cbg);
-	drawpoly(img, pt, nelem(pt), CapNotLast, 1, cborder);
+	fillpoly(img, pt + start, n, cbg);
+	drawpoly(img, pt + start, n, CapNotLast, 1, cborder);
 }
 
 static void
 drawdiv(Divide *d) {
 
 	fill(divmask, divmask->r, 0);
-	drawimg(divmask, 1, 1, d->side);
-	drawimg(divimg, divcolor.bg, divcolor.border, d->side);
+	drawimg(divmask, 1, 1, d);
+	drawimg(divimg, divcolor.bg, divcolor.border, d);
 
 	copyimage(d->w, divimg->r, divimg, ZP);
 	setshapemask(d->w, divmask, ZP);
@@ -107,7 +109,7 @@ update_imgs(void) {
 	w = 2 * (labelh(def.font) / 3);
 	w = max(w, 10);
 	/* XXX: Multihead. */
-	h = Dy(selview->screenr);
+	h = Dy(scr.rect);
 
 	if(divimg) {
 		if(w == Dx(divimg->r) && h == Dy(divimg->r)
@@ -145,16 +147,15 @@ div_update_all(void) {
 		d->left = ap;
 		d->right = a;
 		div_set(d, a->r.min.x);
+		drawdiv(d);
 		ap = a;
-		if (!ap)
-			d->side |= 1;
 
 		if(!a->next) {
 			d = getdiv(&dp);
 			d->left = a;
 			d->right = nil;
 			div_set(d, a->r.max.x);
-			d->side |= 2;
+			drawdiv(d);
 		}
 	}
 	for(d = *dp; d; d = d->next)

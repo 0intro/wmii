@@ -196,7 +196,6 @@ struct Divide {
 	Area*	left;
 	Area*	right;
 	bool	mapped;
-	int	side;
 	int	x;
 };
 
