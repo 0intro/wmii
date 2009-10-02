@@ -47,27 +47,15 @@ xext_event(XEvent *e) {
 }
 
 static void
-randr_applyrotation(int rotation, int width, int height) {
-	if(rotation+90 % 180)
-		scr.rect = Rect(0, 0, width, height);
-	else
-		scr.rect = Rect(0, 0, height, width);
-}
-
-static void
 randr_init(void) {
 	int errorbase, major, minor;
-	Rotation rotation;
 
 	have_RandR = XRRQueryExtension(display, &randr_eventbase, &errorbase);
 	if(have_RandR)
 		if(XRRQueryVersion(display, &major, &minor) && major < 1)
 			have_RandR = false;
-	if(have_RandR) {
+	if(have_RandR)
 		XRRSelectInput(display, scr.root.xid, RRScreenChangeNotifyMask);
-		XRRRotations(display, scr.screen, &rotation);
-		randr_applyrotation(rotation, Dx(scr.rect), Dy(scr.rect));
-	}
 }
 
 static bool
@@ -80,7 +68,10 @@ static void
 randr_screenchange(XRRScreenChangeNotifyEvent *ev) {
 
 	XRRUpdateConfiguration((XEvent*)ev);
-	randr_applyrotation(ev->rotation, ev->width, ev->height);
+	if(ev->rotation*90 % 180)
+		scr.rect = Rect(0, 0, ev->width, ev->height);
+	else
+		scr.rect = Rect(0, 0, ev->height, ev->width);
 	init_screens();
 }
 
