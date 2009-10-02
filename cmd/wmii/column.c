@@ -238,7 +238,7 @@ find(Area **ap, Frame **fp, int dir, bool wrap, bool stack) {
 		if(!*ap)
 			return false;
 		*fp = stack_find(*ap, *fp, dir, stack);
-		return *fp;
+		return true;
 	}
 	if(dir != East && dir != West)
 		die("not reached");
