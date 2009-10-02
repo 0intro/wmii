@@ -1003,7 +1003,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	Frame *f, *ff;
 	Client *c;
 	char *s;
-	ulong i;
+	ulong i, scrn;
 	int sym;
 
 	s = msg_getword(m);
@@ -1041,9 +1041,9 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 		if(!a->floating)
 			to = v->floating;
 		else if(f->column)
-			to = view_findarea(v, f->column, true);
+			to = view_findarea(v, f->screen, f->column, true);
 		else
-			to = view_findarea(v, v->selcol, true);
+			to = view_findarea(v, v->selscreen, v->selcol, true);
 		break;
 	case LTILDE:
 		if(a->floating)
@@ -1051,9 +1051,13 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 		to = v->floating;
 		break;
 	default:
-		if(!getulong(s, &i) || i == 0)
+		scrn = 0;
+		if(!getulong(s, &i))
+			if(2 != sscanf(s, "%lu:%lu", &scrn, &i))
+				return Ebadvalue;
+		if(i == 0 || scrn > nscreens)
 			return Ebadvalue;
-		to = view_findarea(v, i, true);
+		to = view_findarea(v, scrn, i, true);
 		break;
 	}
 

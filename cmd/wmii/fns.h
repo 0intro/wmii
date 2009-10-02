@@ -270,7 +270,7 @@ void	view_attach(View*, Frame*);
 View*	view_create(const char*);
 void	view_destroy(View*);
 void	view_detach(Frame*);
-Area*	view_findarea(View*, int, bool);
+Area*	view_findarea(View*, int, int, bool);
 void	view_focus(WMScreen*, View*);
 bool	view_fullscreen_p(View*, int);
 char*	view_index(View*);

@@ -107,6 +107,7 @@ column_insert(Area *a, Frame *f, Frame *pos) {
 
 	f->area = a;
 	f->client->floating = false;
+	f->screen = a->screen;
 	f->column = area_idx(a);
 	frame_insert(f, pos);
 	if(a->sel == nil)

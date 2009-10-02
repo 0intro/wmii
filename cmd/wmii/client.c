@@ -613,7 +613,7 @@ fullscreen(Client *c, int fullscreen, long screen) {
 			}
 			else if(f->oldarea > 0) {
 				wassel = (f == f->area->sel);
-				area_moveto(view_findarea(f->view, f->oldarea, true),
+				area_moveto(view_findarea(f->view, f->oldscreen, f->oldarea, true),
 					    f);
 				if(wassel)
 					frame_focus(f);

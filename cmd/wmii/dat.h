@@ -209,7 +209,9 @@ struct Frame {
 	Client*	client;
 	View*	view;
 	Area*	area;
+	int	oldscreen;
 	int	oldarea;
+	int	screen;
 	int	column;
 	ushort	id;
 	bool	collapsed;
@@ -277,6 +279,7 @@ struct View {
 	Area*	oldsel;
 	Area*	revert;
 	int	selcol;
+	int	selscreen;
 	bool	dead;
 	Rectangle *r;
 	Rectangle *pad;

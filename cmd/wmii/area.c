@@ -291,9 +291,10 @@ area_focus(Area *a) {
 		return;
 
 	v->sel = a;
-	/* XXX: Multihead. */
-	if(!a->floating)
+	if(!a->floating) {
 		v->selcol = area_idx(a);
+		v->selscreen = a->screen;
+	}
 	if(a != old_a)
 		v->oldsel = nil;
 

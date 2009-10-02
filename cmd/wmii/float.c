@@ -29,7 +29,7 @@ float_detach(Frame *f) {
 
 	v = f->view;
 	a = f->area;
-	sel = view_findarea(v, v->selcol, false);
+	sel = view_findarea(v, v->selscreen, v->selcol, false);
 	oldsel = v->oldsel;
 	pr = f->aprev;
 
@@ -203,7 +203,7 @@ float_placeframe(Frame *f) {
 	else if (selclient())
 		s = ownerscreen(selclient()->sel->r);
 	else {
-		sel = view_findarea(a->view, a->view->selcol, false);
+		sel = view_findarea(a->view, a->view->selscreen, a->view->selcol, false);
 		if (sel)
 			s = sel->screen;
 	}

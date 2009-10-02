@@ -154,12 +154,14 @@ view_destroy(View *v) {
 }
 
 Area*
-view_findarea(View *v, int idx, bool create) {
+view_findarea(View *v, int screen, int idx, bool create) {
 	Area *a;
 
-	for(a=v->firstarea; a && --idx > 0; a=a->next)
+	assert(screen >= 0 && screen < nscreens);
+
+	for(a=v->areas[screen]; a && --idx > 0; a=a->next)
 		if(create && a->next == nil)
-			return area_create(v, a, screen->idx, 0);
+			return area_create(v, a, screen, 0);
 	return a;
 }
 
@@ -282,6 +284,7 @@ view_update(View *v) {
 			f->collapsed = false;
 			if(!f->area->floating) {
 				f->oldarea = area_idx(f->area);
+				f->oldscreen = f->area->screen;
 				area_moveto(v->floating, f);
 				area_setsel(v->floating, f);
 			}else if(f->oldarea == -1)
