@@ -601,28 +601,26 @@ view_index(View *v) {
 	Rectangle *r;
 	Frame *f;
 	Area *a;
-	int i, s;
+	int s;
 
 	bufclear();
-	i = 0;
 	foreach_area(v, s, a) {
-		i++;
 		if(a->floating)
-			bufprint("# ~ %d %d\n", Dx(a->r), Dy(a->r));
+			bufprint("# %a %d %d\n", a, Dx(a->r), Dy(a->r));
 		else
-			bufprint("# %d %d %d\n", i, a->r.min.x, Dx(a->r));
+			bufprint("# %a %d %d\n", a, a->r.min.x, Dx(a->r));
 
 		for(f=a->frame; f; f=f->anext) {
 			r = &f->r;
 			if(a->floating)
-				bufprint("~ %C %d %d %d %d %s\n",
-						f->client,
+				bufprint("%a %C %d %d %d %d %s\n",
+						a, f->client,
 						r->min.x, r->min.y,
 						Dx(*r), Dy(*r),
 						f->client->props);
 			else
-				bufprint("%d %C %d %d %s\n",
-						i, f->client,
+				bufprint("%a %C %d %d %s\n",
+						a, f->client,
 						r->min.y, Dy(*r),
 						f->client->props);
 		}

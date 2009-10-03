@@ -58,6 +58,8 @@ afmt(Fmt *f) {
 		return fmtstrcpy(f, "<nil>");
 	if(a->floating)
 		return fmtstrcpy(f, "~");
+	if(a->screen > 0 || (f->flags & FmtSharp))
+		return fmtprint(f, "%d:%d", a->screen, area_idx(a));
 	return fmtprint(f, "%d", area_idx(a));
 }
 
