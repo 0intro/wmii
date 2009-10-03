@@ -6,10 +6,10 @@ import traceback
 import pygmi
 from pygmi import monitor, client, curry, call, program_list, _
 
-__all__ = ('keys', 'bind_events', 'event_loop', 'event', 'Match')
+__all__ = ('keys', 'bind_events', 'event_loop', 'event', 'Match',
+           'Desc')
 
 keydefs = {}
-keys = {}
 events = {}
 eventmatchers = {}
 
@@ -44,10 +44,6 @@ def flatten(items):
         for key in k:
             yield key, v
 
-def bind_keys(mode='main', keys={}, import_={}):
-    for k, v in flatten(keys.iteritems()):
-        keys[k % keydefs] = v
-
 def bind_events(items={}, **kwargs):
     kwargs.update(items)
     for k, v in flatten(kwargs.iteritems()):
@@ -59,41 +55,79 @@ def bind_events(items={}, **kwargs):
 def event(fn):
     bind_events({fn.__name__: fn})
 
+class Desc(object):
+    def __init__(self, doc):
+        self.doc = doc
+    def __unicode__(self):
+        return self.doc
+    def __str__(self):
+        return str(self.doc)
+
 class Keys(object):
     def __init__(self):
         self.modes = {}
+        self.modelist = []
         self.mode = 'main'
         bind_events(Key=self.dispatch)
 
     def _add_mode(self, mode):
         if mode not in self.modes:
-            self.modes[mode] = { 'name': mode, 'keys': {}, 'import': {} }
+            self.modes[mode] = { 'name': mode, 'desc': {}, 'groups': [],
+                                 'keys': {}, 'import': {} }
+            self.modelist.append(mode)
 
     def _set_mode(self, mode):
         self._add_mode(mode)
         self._mode = mode
-        client.write('/keys', '\n'.join(self.modes[mode]['keys'].keys() +
-                                        self.modes[mode]['import'].keys() +
-                                        ['']))
+        self._keys = dict((k % keydefs, v) for k, v in
+                          self.modes[mode]['keys'].items() +
+                          self.modes[mode]['keys'].items());
+        client.write('/keys', '\n'.join(self._keys.keys()) + '\n')
     mode = property(lambda self: self._mode, _set_mode)
 
-    def bind(self, mode='main', keys={}, import_={}):
+    @property
+    def help(self):
+        return '\n\n'.join(
+            ('Mode %s\n' % mode['name']) +
+            '\n\n'.join(('  %s\n' % str(group or '')) +
+                        '\n'.join('    %- 20s %s' % (key % keydefs,
+                                                     mode['desc'][key])
+                                  for key in mode['desc'][group])
+                        for group in mode['groups'])
+            for mode in (self.modes[name]
+                         for name in self.modelist))
+
+    def bind(self, mode='main', keys=(), import_={}):
         self._add_mode(mode)
         mode = self.modes[mode]
-        for k, v in flatten(keys.iteritems()):
-            mode['keys'][k % keydefs] = v
+        group = None
+        key = None
+        def add_desc(key, desc):
+            mode['desc'][key] = desc
+            if group not in mode['desc']:
+                mode['desc'][group] = []
+                mode['groups'].append(group)
+            if key not in mode['desc'][group]:
+                mode['desc'][group].append(key);
+
+        for k in keys:
+            if key and isinstance(k, Desc):
+                add_desc(key, k)
+            elif isinstance(k, Desc):
+                group = str(k)
+            elif key:
+                mode['keys'][key] = k
+                key = None
+            else:
+                key = k
+
         for k, v in flatten((v, k) for k, v in import_.iteritems()):
             mode['import'][k % keydefs] = v
 
     def dispatch(self, key):
         mode = self.modes[self.mode]
-        seen = set()
-        while mode and mode['name'] not in seen:
-            seen.add(mode['name'])
-            if key in mode['keys']:
-                return mode['keys'][key](key)
-            elif key in mode['import']:
-                mode = modes.get(mode['import'][key], None)
+        if key in self._keys:
+            return self._keys[key](key)
 keys = Keys()
 
 def dispatch(event, args=''):

@@ -3,7 +3,7 @@ import subprocess
 
 import pygmi
 
-__all__ = 'call', 'program_list', 'curry', 'find_script', '_'
+__all__ = 'call', 'message', 'program_list', 'curry', 'find_script', '_'
 
 def _():
     pass
@@ -16,6 +16,13 @@ def call(*args, **kwargs):
                          **kwargs)
     if not background:
         return p.communicate(input)[0].rstrip('\n')
+
+def message(message):
+    args = ['xmessage', '-file', '-'];
+    font = pygmi.wmii['font']
+    if not font.startswith('xft:'):
+        args += ['-fn', font.split(',')[0]]
+    call(*args, input=message)
 
 def program_list(path):
     names = []

@@ -115,6 +115,8 @@ bind_events({
 class Actions(events.Actions):
     def rehash(self, args=''):
         program_menu.choices = program_list(os.environ['PATH'].split(':'))
+    def showkeys(self, args=''):
+        message(keys.help)
     def quit(self, args=''):
         wmii.ctl('quit')
     def eval_(self, args=''):
@@ -158,75 +160,122 @@ class Notice(Button):
         self.timer.start()
 notice = Notice()
 
-keys.bind('main', {
-    '%(mod)s-%(left)s':  lambda k: Tag('sel').select('left'),
-    '%(mod)s-%(right)s': lambda k: Tag('sel').select('right'),
-    '%(mod)s-%(up)s':    lambda k: Tag('sel').select('up'),
-    '%(mod)s-%(down)s':  lambda k: Tag('sel').select('down'),
+keys.bind('main', (
+    Desc("Moving around"),
+    '%(mod)s-%(left)s',  Desc("Select the client to the left"),
+        lambda k: Tag('sel').select('left'),
+    '%(mod)s-%(right)s', Desc("Select the client to the right"),
+        lambda k: Tag('sel').select('right'),
+    '%(mod)s-%(up)s',    Desc("Select the client above"),
+        lambda k: Tag('sel').select('up'),
+    '%(mod)s-%(down)s',  Desc("Select the client below"),
+        lambda k: Tag('sel').select('down'),
 
-    '%(mod)s-Control-%(up)s':   lambda k: Tag('sel').select('up', stack=True),
-    '%(mod)s-Control-%(down)s': lambda k: Tag('sel').select('down', stack=True),
+    '%(mod)s-space',     Desc("Toggle between floating and managed layers"),
+        lambda k: Tag('sel').select('toggle'),
 
-    '%(mod)s-space': lambda k: Tag('sel').select('toggle'),
+    Desc("Moving through stacks"),
+    '%(mod)s-Control-%(up)s',   Desc("Select the stack above"),
+        lambda k: Tag('sel').select('up', stack=True),
+    '%(mod)s-Control-%(down)s', Desc("Select the stack below"),
+        lambda k: Tag('sel').select('down', stack=True),
 
-    '%(mod)s-Shift-%(left)s':  lambda k: Tag('sel').send(Client('sel'), 'left'),
-    '%(mod)s-Shift-%(right)s': lambda k: Tag('sel').send(Client('sel'), 'right'),
-    '%(mod)s-Shift-%(up)s':    lambda k: Tag('sel').send(Client('sel'), 'up'),
-    '%(mod)s-Shift-%(down)s':  lambda k: Tag('sel').send(Client('sel'), 'down'),
 
-    '%(mod)s-Shift-space':  lambda k: Tag('sel').send(Client('sel'), 'toggle'),
+    Desc("Moving clients around"),
+    '%(mod)s-Shift-%(left)s',  Desc("Move selected client to the left"),
+        lambda k: Tag('sel').send(Client('sel'), 'left'),
+    '%(mod)s-Shift-%(right)s', Desc("Move selected client to the right"),
+        lambda k: Tag('sel').send(Client('sel'), 'right'),
+    '%(mod)s-Shift-%(up)s',    Desc("Move selected client up"),
+        lambda k: Tag('sel').send(Client('sel'), 'up'),
+    '%(mod)s-Shift-%(down)s',  Desc("Move selected client down"),
+        lambda k: Tag('sel').send(Client('sel'), 'down'),
 
-    '%(mod)s-d': lambda k: setattr(Tag('sel').selcol, 'mode', 'default-max'),
-    '%(mod)s-s': lambda k: setattr(Tag('sel').selcol, 'mode', 'stack-max'),
-    '%(mod)s-m': lambda k: setattr(Tag('sel').selcol, 'mode', 'stack+max'),
+    '%(mod)s-Shift-space',     Desc("Toggle selected client between floating and managed layers"),
+        lambda k: Tag('sel').send(Client('sel'), 'toggle'),
 
-    '%(mod)s-f':       lambda k: Client('sel').set('Fullscreen', 'toggle'),
-    '%(mod)s-Shift-c': lambda k: Client('sel').kill(),
+    Desc("Client actions"),
+    '%(mod)s-f',       Desc("Toggle selected client's fullsceen state"),
+        lambda k: Client('sel').set('Fullscreen', 'toggle'),
+    '%(mod)s-Shift-c', Desc("Close client"),
+        lambda k: Client('sel').kill(),
 
-    '%(mod)s-a': lambda k: action_menu.call(),
-    '%(mod)s-p': lambda k: program_menu.call(),
+    Desc("Changing column modes"),
+    '%(mod)s-d', Desc("Set column to default mode"),
+        lambda k: setattr(Tag('sel').selcol, 'mode', 'default-max'),
+    '%(mod)s-s', Desc("Set column to stack mode"),
+        lambda k: setattr(Tag('sel').selcol, 'mode', 'stack-max'),
+    '%(mod)s-m', Desc("Set column to max mode"),
+        lambda k: setattr(Tag('sel').selcol, 'mode', 'stack+max'),
 
-    '%(mod)s-Return': lambda k: call(*terminal, background=True),
+    Desc("Running programs"),
+    '%(mod)s-a',      Desc("Open wmii actions menu"),
+        lambda k: action_menu.call(),
+    '%(mod)s-p',      Desc("Open program menu"),
+        lambda k: program_menu.call(),
 
-    '%(mod)s-t':       lambda k: tags.select(tag_menu.call()),
-    '%(mod)s-Shift-t': lambda k: setattr(Client('sel'), 'tags', tag_menu.call()),
+    '%(mod)s-Return', Desc("Launch a terminal"),
+        lambda k: call(*terminal, background=True),
 
-    '%(mod)s-n': lambda k: tags.select(tags.next()),
-    '%(mod)s-b': lambda k: tags.select(tags.next(True)),
-    '%(mod)s-i': lambda k: tags.select(tags.NEXT),
-    '%(mod)s-o': lambda k: tags.select(tags.PREV),
-})
+    Desc("Tag actions"),
+    '%(mod)s-t',       Desc("Change to another tag"),
+        lambda k: tags.select(tag_menu.call()),
+    '%(mod)s-Shift-t', Desc("Retag the selected client"),
+        lambda k: setattr(Client('sel'), 'tags', tag_menu.call()),
+
+    '%(mod)s-n', Desc("Move to the view to the left"),
+        lambda k: tags.select(tags.next()),
+    '%(mod)s-b', Desc("Move to the view to the right"),
+        lambda k: tags.select(tags.next(True)),
+    '%(mod)s-i', Desc("Move to the newer tag in the tag stack"),
+        lambda k: tags.select(tags.NEXT),
+    '%(mod)s-o', Desc("Move to the older tag in the tag stack"),
+        lambda k: tags.select(tags.PREV),
+))
 def bind_num(i):
-    keys.bind('main', {
-        '%%(mod)s-%d' % i:       lambda k: tags.select(str(i)),
-        '%%(mod)s-Shift-%d' % i: lambda k: setattr(Client('sel'), 'tags', i),
-    })
+    keys.bind('main', (
+        Desc("Tag actions"),
+        '%%(mod)s-%d' % i,       Desc("Move to view '%d'" % i),
+            lambda k: tags.select(str(i)),
+        '%%(mod)s-Shift-%d' % i, Desc("Retag selected client with tag '%d'" % i),
+            lambda k: setattr(Client('sel'), 'tags', i),
+    ))
 map(bind_num, range(0, 10))
 
-keys.bind('main', {
-    '%(mod)s-Control-r': lambda k: setattr(keys, 'mode', 'resize'),
-    '%(mod)s-Control-t': lambda k: setattr(keys, 'mode', 'passthrough'),
-});
-keys.bind('passthrough', {
-    '%(mod)s-Control-t': lambda k: setattr(keys, 'mode', 'main'),
-});
+keys.bind('main', (
+    Desc("Changing modes"),
+    '%(mod)s-Control-r', Desc("Enter resize mode"),
+        lambda k: setattr(keys, 'mode', 'resize'),
+    '%(mod)s-Control-t', Desc("Enter passthrough mode"),
+        lambda k: setattr(keys, 'mode', 'passthrough'),
+));
+keys.bind('passthrough', (
+    Desc("Changing modes"),
+    '%(mod)s-Control-t', Desc("Leave passthrough mode"),
+        lambda k: setattr(keys, 'mode', 'main'),
+));
 
-keys.bind('resize', {
-    'Escape':            lambda k: setattr(keys, 'mode', 'main'),
-}, import_={'main': ('%(mod)s-%(left)s', '%(mod)s-%(right)s',
+keys.bind('resize', (
+    'Escape', Desc("Leave resize mode"),
+        lambda k: setattr(keys, 'mode', 'main'),
+), import_={'main': ('%(mod)s-%(left)s', '%(mod)s-%(right)s',
                      '%(mod)s-%(up)s', '%(mod)s-%(down)s',
                      '%(mod)s-Space')})
 
-def addresize(mod, cmd, *args):
-    keys.bind('resize', {
-        mod + '%(left)s':  lambda k: Tag('sel').ctl(cmd, 'sel sel', 'left',  *args),
-        mod + '%(right)s': lambda k: Tag('sel').ctl(cmd, 'sel sel', 'right', *args),
-        mod + '%(up)s':    lambda k: Tag('sel').ctl(cmd, 'sel sel', 'up',    *args),
-        mod + '%(down)s':  lambda k: Tag('sel').ctl(cmd, 'sel sel', 'down',  *args),
-    });
-addresize('',         'grow')
-addresize('Control-', 'grow', '-1')
-addresize('Shift-',   'nudge')
+def addresize(mod, desc, cmd, *args):
+    keys.bind('resize', (
+        mod + '%(left)s',  Desc("%s selected client to the left" % desc),
+            lambda k: Tag('sel').ctl(cmd, 'sel sel', 'left',  *args),
+        mod + '%(right)s', Desc("%s selected client to the right" % desc),
+            lambda k: Tag('sel').ctl(cmd, 'sel sel', 'right', *args),
+        mod + '%(up)s',    Desc("%s selected client up" % desc),
+            lambda k: Tag('sel').ctl(cmd, 'sel sel', 'up',    *args),
+        mod + '%(down)s',  Desc("%s selected client down" % desc),
+            lambda k: Tag('sel').ctl(cmd, 'sel sel', 'down',  *args),
+    ));
+addresize('',         'Grow', 'grow')
+addresize('Control-', 'Shrink', 'grow', '-1')
+addresize('Shift-',   'Nudge', 'nudge')
 
 Actions.rehash()
 
