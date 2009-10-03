@@ -115,6 +115,10 @@ events() {
 	Event LeftBarMouseDown
 		wi_fnmenu LBar "$@" &
 	# Actions
+	Action showkeys
+		xmessage -file - -fn ${WMII_FONT%%,*} <<EOF
+		$KeysHelp
+		EOF
 	Action quit
 		wmiir xwrite /ctl quit
 	Action exec
@@ -131,7 +135,63 @@ events() {
 			sleep 1
 		done
 	# Key Bindings
-	Key $MODKEY-Control-t
+	KeyGroup Moving around
+	Key $MODKEY-$LEFT   # Select the client to the left
+		wmiir xwrite /tag/sel/ctl select left
+	Key $MODKEY-$RIGHT  # Select the client to the right
+		wmiir xwrite /tag/sel/ctl select right
+	Key $MODKEY-$UP     # Select the client above
+		wmiir xwrite /tag/sel/ctl select up
+	Key $MODKEY-$DOWN   # Select the client below
+		wmiir xwrite /tag/sel/ctl select down
+
+	Key $MODKEY-space   # Toggle between floating and managed layers
+		wmiir xwrite /tag/sel/ctl select toggle
+
+	KeyGroup Moving through stacks
+	Key $MODKEY-Control-$UP    # Select the stack above
+		wmiir xwrite /taglsel/ctl select up stack
+	Key $MODKEY-Control-$DOWN  # Select the stack below
+		wmiir xwrite /taglsel/ctl select down stack
+
+	KeyGroup Moving clients around
+	Key $MODKEY-Shift-$LEFT   # Move selected client to the left
+		wmiir xwrite /tag/sel/ctl send sel left
+	Key $MODKEY-Shift-$RIGHT  # Move selected client to the right
+		wmiir xwrite /tag/sel/ctl send sel right
+	Key $MODKEY-Shift-$UP     # Move selected client up
+		wmiir xwrite /tag/sel/ctl send sel up
+	Key $MODKEY-Shift-$DOWN   # Move selected client down
+		wmiir xwrite /tag/sel/ctl send sel down
+
+	Key $MODKEY-Shift-space   # Toggle selected client between floating and managed layers
+		wmiir xwrite /tag/sel/ctl send sel toggle
+
+	KeyGroup Client actions
+	Key $MODKEY-f # Toggle selected client's fullsceen state
+		wmiir xwrite /client/sel/ctl Fullscreen toggle
+	Key $MODKEY-Shift-c # Close client
+		wmiir xwrite /client/sel/ctl kill
+
+	KeyGroup Changing column modes
+	Key $MODKEY-d # Set column to default mode
+		wmiir xwrite /tag/sel/ctl colmode sel default-max
+	Key $MODKEY-s # Set column to stack mode
+		wmiir xwrite /tag/sel/ctl colmode sel stack-max
+	Key $MODKEY-m # Set column to max mode
+		wmiir xwrite /tag/sel/ctl colmode sel stack+max
+
+	KeyGroup Running programs
+	Key $MODKEY-a      # Open wmii actions menu
+		action $(wi_actions | wimenu -h "${hist}.actions" -n $histnum) &
+	Key $MODKEY-p      # Open program menu
+		eval wmiir setsid "$(wimenu -h "${hist}.progs" -n $histnum <$progsfile)" &
+
+	Key $MODKEY-Return # Launch a terminal
+		eval wmiir setsid $WMII_TERM &
+
+	KeyGroup Other
+	Key $MODKEY-Control-t # Toggle all other key bindings
 		case $(wmiir read /keys | wc -l | tr -d ' \t\n') in
 		0|1)
 			echo -n "$Keys" | wmiir write /keys
@@ -140,57 +200,19 @@ events() {
 			wmiir xwrite /keys $MODKEY-Control-t
 			wmiir xwrite /ctl grabmod Mod3;;
 		esac
-	Key $MODKEY-space
-		wmiir xwrite /tag/sel/ctl select toggle
-	Key $MODKEY-d
-		wmiir xwrite /tag/sel/ctl colmode sel default-max
-	Key $MODKEY-s
-		wmiir xwrite /tag/sel/ctl colmode sel stack-max
-	Key $MODKEY-m
-		wmiir xwrite /tag/sel/ctl colmode sel stack+max
-	Key $MODKEY-a
-		action $(wi_actions | wimenu -h "${hist}.actions" -n $histnum) &
-	Key $MODKEY-p
-		eval wmiir setsid "$(wimenu -h "${hist}.progs" -n $histnum <$progsfile)" &
-	Key $MODKEY-t
+
+	KeyGroup Tag actions
+	Key $MODKEY-t       # Change to another tag
 		(tag=$(wi_tags | wimenu -h "${hist}.tags" -n 50) && wmiir xwrite /ctl view $tag) &
-	Key $MODKEY-Return
-		eval wmiir setsid $WMII_TERM &
-	Key $MODKEY-Shift-space
-		wmiir xwrite /tag/sel/ctl send sel toggle
-	Key $MODKEY-f
-		wmiir xwrite /client/sel/ctl Fullscreen toggle
-	Key $MODKEY-Shift-c
-		wmiir xwrite /client/sel/ctl kill
-	Key $MODKEY-Shift-t
+	Key $MODKEY-Shift-t # Retag the selected client
 		c=$(wi_selclient)
 		(tag=$(wi_tags | wimenu -h "${hist}.tags" -n 50) && wmiir xwrite /client/$c/tags $tag) &
-	Key $MODKEY-$LEFT
-		wmiir xwrite /tag/sel/ctl select left
-	Key $MODKEY-$RIGHT
-		wmiir xwrite /tag/sel/ctl select right
-	Key $MODKEY-$DOWN
-		wmiir xwrite /tag/sel/ctl select down
-	Key $MODKEY-$UP
-		wmiir xwrite /tag/sel/ctl select up
-	Key $MODKEY-Control-$DOWN
-		wmiir xwrite /tag/sel/ctl select down stack
-	Key $MODKEY-Control-$UP
-		wmiir xwrite /tag/sel/ctl select up stack
-	Key $MODKEY-Shift-$LEFT
-		wmiir xwrite /tag/sel/ctl send sel left
-	Key $MODKEY-Shift-$RIGHT
-		wmiir xwrite /tag/sel/ctl send sel right
-	Key $MODKEY-Shift-$DOWN
-		wmiir xwrite /tag/sel/ctl send sel down
-	Key $MODKEY-Shift-$UP
-		wmiir xwrite /tag/sel/ctl send sel up
 !
 	for i in 0 1 2 3 4 5 6 7 8 9; do
 		cat <<!
-	Key $MODKEY-$i
+	Key $MODKEY-$i		 # Move to the numbered view
 		wmiir xwrite /ctl view "$i"
-	Key $MODKEY-Shift-$i
+	Key $MODKEY-Shift-$i     # Retag selected client with the numbered tag
 		wmiir xwrite /client/sel/tags "$i"
 !
 	done

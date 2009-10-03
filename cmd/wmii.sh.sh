@@ -13,9 +13,10 @@ _wi_script() {
 		arg[1] = "Nop"
 		narg = 1;
 		body = "";
+		keyhelp = ""
 	}
 	function quote(s) {
-		gsub(/"'"/, "'\\''", s)
+		gsub(/'/, "'\\''", s)
 		return "'" s "'"
 	}
 	function addevent() {
@@ -32,13 +33,22 @@ _wi_script() {
 			}
 		}
 	}
+	/^(Key)Group[ \t]/ {
+		sub(/^[^ \t]+[ \t]+/, "")
+		keyhelp = keyhelp "\n  " $0 "\n"
+	}
 	/^(Event|Key|Action|Menu)[ \t]/ {
 		addevent()
-		split($0, arg)
-		narg = NF
+		split($0, tmp, /[ \t]+#[ \t]*/)
+		narg = split(tmp[1], arg)
+		if(arg[1] == "Key" && tmp[2])
+			for (i=2; i <= narg; i++)
+				keyhelp = keyhelp sprintf("    %-20s %s\n",
+					        arg[i], tmp[2])
 		body = ""
 	}
 	/^[ \t]/ {
+		sub(/^(        |\t)/, "")
 		body = body"\n"$0
 	}
 
@@ -48,7 +58,7 @@ _wi_script() {
 			split(k, b, SUBSEP)
 			c[b[1]] = c[b[1]] b[2] "\n"
 			if(body != "")
-				d[b[1]] = d[b[1]] quote(b[2]) ")" a[k] ";;\n"
+				d[b[1]] = d[b[1]] quote(b[2]) ")" a[k] "\n;;\n"
 		}
 		for(k in c)
 			printf "%ss=%s\n", k, quote(c[k])
@@ -58,6 +68,7 @@ _wi_script() {
 			printf "case $%s in\n%s\n*) return 1\nesac\n", tolower(k), d[k]
 			printf "}\n"
 		}
+		print "KeysHelp=" quote(keyhelp)
 	}
 !
 }
