@@ -946,7 +946,7 @@ msg_selectframe(Area *a, IxpMsg *m, int sym) {
 		c = win2client(i);
 		if(c == nil)
 			return "unknown client";
-		f = client_viewframe(c, f->view);
+		f = client_viewframe(c, a->view);
 		if(!f)
 			return Ebadvalue;
 	}
