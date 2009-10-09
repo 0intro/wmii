@@ -3,11 +3,7 @@ include ${ROOT}/mk/hdr.mk
 include ${ROOT}/mk/wmii.mk
 
 TARG =	wmii.1	   \
-	wmiir.1    \
 	wimenu.1
-
-wmiir.1:
-	true
 
 $(TARG): Makefile $(ROOT)/mk/wmii.mk header.t2t
 

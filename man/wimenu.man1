@@ -1,6 +1,6 @@
-WMII
-
-May, 2009
+WIMENU
+wmii-@VERSION@
+Oct, 2009
 
 %!includeconf: header.t2t
 

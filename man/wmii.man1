@@ -1,12 +1,12 @@
 WMII
-
-Dec, 2008
+wmii-@VERSION@
+Oct, 2009
 
 %!includeconf: header.t2t
 
 = NAME =
 
-wmii - Window Manager Improved Improved
+wmii - Window Manager Improved²
 
 = SYNOPSIS =
 
