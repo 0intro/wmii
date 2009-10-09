@@ -22,7 +22,7 @@ WMII_BACKGROUND='#333333'
 WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
-WMII_TERM="xterm"
+WMII_TERM="@TERMINAL@"
 
 # Menu history
 hist="${WMII_CONFPATH%%:*}/history"

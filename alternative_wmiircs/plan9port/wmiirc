@@ -1,4 +1,4 @@
-#!/usr/bin/env wmii9rc
+#!/usr/bin/env rc
 cd
 scriptname=$0
 oldpath=$path; path=($PLAN9/bin $path)

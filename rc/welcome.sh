@@ -13,7 +13,7 @@ configuration variable which contains the Alt key by default.
 
 Let's go!
 
-- Start two xterms by pressing M-Return twice.
+- Start two @TERMINAL@s by pressing M-Return twice.
 - Switch between the three windows: M-j, M-k,
   M-h, M-l
   If you prefer to use the mouse, then just move the pointer to

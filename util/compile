@@ -1,5 +1,8 @@
 #!/bin/sh -f
 
+CC=$1
+CFLAGS=$2; shift 2
+
 outfile="$1"; shift
 bin="$(echo $0 | sed 's,/[^/]*$,,')"
 

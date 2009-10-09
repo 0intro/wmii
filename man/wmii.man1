@@ -190,7 +190,7 @@ Here is a list of the default actions:
 |  Mod-Shift-c       | `Kill` the selected client
 |  Mod-p <program>   | `Execute` <program>
 |  Mod-a <action>    | `Execute` the named <action
-|  Mod-Enter         | `Execute` an `xterm`
+|  Mod-Enter         | `Execute` an `@TERMINAL@`
 
 = Configuration =
 

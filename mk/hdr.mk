@@ -1,12 +1,18 @@
 FILTER = cat
-EXCFLAGS = -I$$(echo $(INCPATH)|sed 's/:/ -I/g') -D_XOPEN_SOURCE=600
-COMPILE= CC="$(CC)" CFLAGS="$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES))" $(ROOT)/util/compile
-COMPILEPIC= CC="$(CC)" CFLAGS="$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $(SOCFLAGS)" $(ROOT)/util/compile
-LINK= LD="$(LD)" LDFLAGS="$(LDFLAGS) $$(pkg-config --libs $(PACKAGES))" $(ROOT)/util/link
-LINKSO= LD="$(LD)" LDFLAGS="$(SOLDFLAGS) $(SHARED) $$(pkg-config --libs $(PACKAGES))" $(ROOT)/util/link
+
+EXCFLAGS = $(INCLUDES) -D_XOPEN_SOURCE=600
+
+COMPILE      = $(ROOT)/util/compile "$(CC)" "$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES))"
+COMPILEPIC   = $(ROOT)/util/compile "$(CC)" "$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $(SOCFLAGS)"
+
+LINK      = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(LDFLAGS)"
+LINKSO    = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(SOLDFLAGS) $(SHARED)"
+
 CLEANNAME=$(ROOT)/util/cleanname
+
 SOEXT=so
 TAGFILES=
+
 CTAGS=ctags
 
 PACKAGES = 2>/dev/null
@@ -61,7 +67,7 @@ all:
 	chmod 0755 $@
 .man1.1:
 	echo TXT2TAGS $(BASE)$<
-	txt2tags -o- $< | $(FILTER) >$@
+	txt2tags -o- $< >$@
 
 .out.install:
 	echo INSTALL $$($(CLEANNAME) $(BASE)$*)
@@ -100,7 +106,7 @@ all:
 	man=1; \
 	path="$(MAN)/man$$man/$*.$$man"; \
 	echo INSTALL man $$($(CLEANNAME) "$(BASE)/$*($$man)"); \
-	cp "$<" $(DESTDIR)"$$path"; \
+	$(FILTER) <"$<" >$(DESTDIR)"$$path"; \
 	chmod 0644 $(DESTDIR)"$$path"
 .1.uninstall:
 	echo UNINSTALL man $$($(CLEANNAME) $*'(1)')
