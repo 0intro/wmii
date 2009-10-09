@@ -46,8 +46,8 @@ Configuration
 -------------
 The configuration of wmii is done by customizing the rc script rc.wmii.local,
 which remotely controls the window manager and handles various events.
-The main rc.wmii script lives in PREFIX/etc/wmii-3.5/, while rc.wmii.local
-goes in $HOME/.wmii-3.5/.
+The main rc.wmii script lives in PREFIX/etc/wmii@CONFPREFIX@/, while rc.wmii.local
+goes in $HOME/.wmii@CONFPREFIX@/.
 
 If you wish to unbind keys bound by rc.wmii in rc.wmii.local, you
 must do so inside the function Action-overridekeys. You may,

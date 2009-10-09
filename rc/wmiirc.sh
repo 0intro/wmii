@@ -15,14 +15,14 @@ noticetimeout=5
 noticebar=/rbar/!notice
 
 # Colors tuples: "<text> <background> <border>"
-WMII_NORMCOLORS='#000000 #c1c48b #81654f'
-WMII_FOCUSCOLORS='#000000 #81654f #000000'
+export WMII_NORMCOLORS='#000000 #c1c48b #81654f'
+export WMII_FOCUSCOLORS='#000000 #81654f #000000'
 
-WMII_BACKGROUND='#333333'
-WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
+export WMII_BACKGROUND='#333333'
+export WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
-WMII_TERM="@TERMINAL@"
+export WMII_TERM="@TERMINAL@"
 
 # Menu history
 hist="${WMII_CONFPATH%%:*}/history"
@@ -52,176 +52,175 @@ echo $WMII_NORMCOLORS | wmiir create $noticebar
 # Event processing
 events() {
 	cat <<'!'
-	# Events
-	Event CreateTag
-		echo "$WMII_NORMCOLORS" "$@" | wmiir create "/lbar/$@"
-	Event DestroyTag
-		wmiir remove "/lbar/$@"
-	Event FocusTag
-		wmiir xwrite "/lbar/$@" "$WMII_FOCUSCOLORS" "$@"
-	Event UnfocusTag
-		wmiir xwrite "/lbar/$@" "$WMII_NORMCOLORS" "$@"
-	Event UrgentTag
-		shift
-		wmiir xwrite "/lbar/$@" "*$@"
-	Event NotUrgentTag
-		shift
-		wmiir xwrite "/lbar/$@" "$@"
-	Event LeftBarClick LeftBarDND
-		shift
-		wmiir xwrite /ctl view "$@"
-	Event Unresponsive
-		{
-			client=$1; shift
-			msg="The following client is not responding. What would you like to do?$wi_nl"
-			resp=$(wihack -transient $client \
-				      xmessage -nearmouse -buttons Kill,Wait -print \
-				               "$msg $(wmiir read /client/sel/label)")
-			if [ "$resp" = Kill ]; then
-				wmiir xwrite /client/$client/ctl slay &
-			fi
-		}&
-	Event Notice
-		wmiir xwrite $noticebar $wi_arg
-
-		kill $xpid 2>/dev/null # Let's hope this isn't reused...
-		{ sleep $noticetimeout; wmiir xwrite $noticebar ' '; }&
-		xpid = $!
-	Menu Client-3-Delete
-		wmiir xwrite /client/$1/ctl kill
-	Menu Client-3-Kill
-		wmiir xwrite /client/$1/ctl slay
-	Menu Client-3-Fullscreen
-		wmiir xwrite /client/$1/ctl Fullscreen on
-	Event ClientMouseDown
-		wi_fnmenu Client $2 $1 &
-	Menu LBar-3-Delete
-		tag=$1; clients=$(wmiir read "/tag/$tag/index" | awk '/[^#]/{print $2}')
-		for c in $clients; do
-			if [ "$tag" = "$(wmiir read /client/$c/tags)" ]; then
-				wmiir xwrite /client/$c/ctl kill
-			else
-				wmiir xwrite /client/$c/tags -$tag
-			fi
-			if [ "$tag" = "$(wi_seltag)" ]; then
-				newtag=$(wi_tags | awk -v't='$tag '
-					$1 == t { if(!l) getline l
-						  print l
-						  exit }
-					{ l = $0 }')
-				wmiir xwrite /ctl view $newtag
-			fi
-		done
-	Event LeftBarMouseDown
-		wi_fnmenu LBar "$@" &
-	# Actions
-	Action showkeys
-		xmessage -file - -fn ${WMII_FONT%%,*} <<EOF
-		$KeysHelp
-		EOF
-	Action quit
-		wmiir xwrite /ctl quit
-	Action exec
-		wmiir xwrite /ctl exec "$@"
-	Action rehash
-		proglist $PATH >$progsfile
-	Action status
-		set +xv
-		if wmiir remove /rbar/status 2>/dev/null; then
-			sleep 2
+# Events
+Event CreateTag
+	echo "$WMII_NORMCOLORS" "$@" | wmiir create "/lbar/$@"
+Event DestroyTag
+	wmiir remove "/lbar/$@"
+Event FocusTag
+	wmiir xwrite "/lbar/$@" "$WMII_FOCUSCOLORS" "$@"
+Event UnfocusTag
+	wmiir xwrite "/lbar/$@" "$WMII_NORMCOLORS" "$@"
+Event UrgentTag
+	shift
+	wmiir xwrite "/lbar/$@" "*$@"
+Event NotUrgentTag
+	shift
+	wmiir xwrite "/lbar/$@" "$@"
+Event LeftBarClick LeftBarDND
+	shift
+	wmiir xwrite /ctl view "$@"
+Event Unresponsive
+	{
+		client=$1; shift
+		msg="The following client is not responding. What would you like to do?$wi_newline"
+		resp=$(wihack -transient $client \
+			      xmessage -nearmouse -buttons Kill,Wait -print
+			      -fn "${WMII_FONT%%,*}" "$msg $(wmiir read /client/sel/label)")
+		if [ "$resp" = Kill ]; then
+			wmiir xwrite /client/$client/ctl slay &
 		fi
-		echo "$WMII_NORMCOLORS" | wmiir create /rbar/status
-		while status | wmiir write /rbar/status; do
-			sleep 1
-		done
-	# Key Bindings
-	KeyGroup Moving around
-	Key $MODKEY-$LEFT   # Select the client to the left
-		wmiir xwrite /tag/sel/ctl select left
-	Key $MODKEY-$RIGHT  # Select the client to the right
-		wmiir xwrite /tag/sel/ctl select right
-	Key $MODKEY-$UP     # Select the client above
-		wmiir xwrite /tag/sel/ctl select up
-	Key $MODKEY-$DOWN   # Select the client below
-		wmiir xwrite /tag/sel/ctl select down
+	}&
+Event Notice
+	wmiir xwrite $noticebar $wi_arg
 
-	Key $MODKEY-space   # Toggle between floating and managed layers
-		wmiir xwrite /tag/sel/ctl select toggle
+	kill $xpid 2>/dev/null # Let's hope this isn't reused...
+	{ sleep $noticetimeout; wmiir xwrite $noticebar ' '; }&
+	xpid = $!
 
-	KeyGroup Moving through stacks
-	Key $MODKEY-Control-$UP    # Select the stack above
-		wmiir xwrite /taglsel/ctl select up stack
-	Key $MODKEY-Control-$DOWN  # Select the stack below
-		wmiir xwrite /taglsel/ctl select down stack
+# Menus
+Menu Client-3-Delete
+	wmiir xwrite /client/$1/ctl kill
+Menu Client-3-Kill
+	wmiir xwrite /client/$1/ctl slay
+Menu Client-3-Fullscreen
+	wmiir xwrite /client/$1/ctl Fullscreen on
+Event ClientMouseDown
+	wi_fnmenu Client $2 $1 &
 
-	KeyGroup Moving clients around
-	Key $MODKEY-Shift-$LEFT   # Move selected client to the left
-		wmiir xwrite /tag/sel/ctl send sel left
-	Key $MODKEY-Shift-$RIGHT  # Move selected client to the right
-		wmiir xwrite /tag/sel/ctl send sel right
-	Key $MODKEY-Shift-$UP     # Move selected client up
-		wmiir xwrite /tag/sel/ctl send sel up
-	Key $MODKEY-Shift-$DOWN   # Move selected client down
-		wmiir xwrite /tag/sel/ctl send sel down
+Menu LBar-3-Delete
+	tag=$1; clients=$(wmiir read "/tag/$tag/index" | awk '/[^#]/{print $2}')
+	for c in $clients; do
+		if [ "$tag" = "$(wmiir read /client/$c/tags)" ]; then
+			wmiir xwrite /client/$c/ctl kill
+		else
+			wmiir xwrite /client/$c/tags -$tag
+		fi
+		if [ "$tag" = "$(wi_seltag)" ]; then
+			newtag=$(wi_tags | awk -v't='$tag '
+				$1 == t { if(!l) getline l
+					  print l
+					  exit }
+				{ l = $0 }')
+			wmiir xwrite /ctl view $newtag
+		fi
+	done
+Event LeftBarMouseDown
+	wi_fnmenu LBar "$@" &
 
-	Key $MODKEY-Shift-space   # Toggle selected client between floating and managed layers
-		wmiir xwrite /tag/sel/ctl send sel toggle
+# Actions
+Action showkeys
+	echo "$KeysHelp" | xmessage -file - -fn ${WMII_FONT%%,*}
+Action quit
+	wmiir xwrite /ctl quit
+Action exec
+	wmiir xwrite /ctl exec "$@"
+Action rehash
+	proglist $PATH >$progsfile
+Action status
+	set +xv
+	if wmiir remove /rbar/status 2>/dev/null; then
+		sleep 2
+	fi
+	echo "$WMII_NORMCOLORS" | wmiir create /rbar/status
+	while status | wmiir write /rbar/status; do
+		sleep 1
+	done
 
-	KeyGroup Client actions
-	Key $MODKEY-f # Toggle selected client's fullsceen state
-		wmiir xwrite /client/sel/ctl Fullscreen toggle
-	Key $MODKEY-Shift-c # Close client
-		wmiir xwrite /client/sel/ctl kill
+# Key Bindings
+KeyGroup Moving around
+Key $MODKEY-$LEFT   # Select the client to the left
+	wmiir xwrite /tag/sel/ctl select left
+Key $MODKEY-$RIGHT  # Select the client to the right
+	wmiir xwrite /tag/sel/ctl select right
+Key $MODKEY-$UP     # Select the client above
+	wmiir xwrite /tag/sel/ctl select up
+Key $MODKEY-$DOWN   # Select the client below
+	wmiir xwrite /tag/sel/ctl select down
 
-	KeyGroup Changing column modes
-	Key $MODKEY-d # Set column to default mode
-		wmiir xwrite /tag/sel/ctl colmode sel default-max
-	Key $MODKEY-s # Set column to stack mode
-		wmiir xwrite /tag/sel/ctl colmode sel stack-max
-	Key $MODKEY-m # Set column to max mode
-		wmiir xwrite /tag/sel/ctl colmode sel stack+max
+Key $MODKEY-space   # Toggle between floating and managed layers
+	wmiir xwrite /tag/sel/ctl select toggle
 
-	KeyGroup Running programs
-	Key $MODKEY-a      # Open wmii actions menu
-		action $(wi_actions | wimenu -h "${hist}.actions" -n $histnum) &
-	Key $MODKEY-p      # Open program menu
-		eval wmiir setsid "$(wimenu -h "${hist}.progs" -n $histnum <$progsfile)" &
+KeyGroup Moving through stacks
+Key $MODKEY-Control-$UP    # Select the stack above
+	wmiir xwrite /taglsel/ctl select up stack
+Key $MODKEY-Control-$DOWN  # Select the stack below
+	wmiir xwrite /taglsel/ctl select down stack
 
-	Key $MODKEY-Return # Launch a terminal
-		eval wmiir setsid $WMII_TERM &
+KeyGroup Moving clients around
+Key $MODKEY-Shift-$LEFT   # Move selected client to the left
+	wmiir xwrite /tag/sel/ctl send sel left
+Key $MODKEY-Shift-$RIGHT  # Move selected client to the right
+	wmiir xwrite /tag/sel/ctl send sel right
+Key $MODKEY-Shift-$UP     # Move selected client up
+	wmiir xwrite /tag/sel/ctl send sel up
+Key $MODKEY-Shift-$DOWN   # Move selected client down
+	wmiir xwrite /tag/sel/ctl send sel down
 
-	KeyGroup Other
-	Key $MODKEY-Control-t # Toggle all other key bindings
-		case $(wmiir read /keys | wc -l | tr -d ' \t\n') in
-		0|1)
-			echo -n "$Keys" | wmiir write /keys
-			wmiir xwrite /ctl grabmod $MODKEY;;
-		*)
-			wmiir xwrite /keys $MODKEY-Control-t
-			wmiir xwrite /ctl grabmod Mod3;;
-		esac
+Key $MODKEY-Shift-space   # Toggle selected client between floating and managed layers
+	wmiir xwrite /tag/sel/ctl send sel toggle
 
-	KeyGroup Tag actions
-	Key $MODKEY-t       # Change to another tag
-		(tag=$(wi_tags | wimenu -h "${hist}.tags" -n 50) && wmiir xwrite /ctl view $tag) &
-	Key $MODKEY-Shift-t # Retag the selected client
-		c=$(wi_selclient)
-		(tag=$(wi_tags | wimenu -h "${hist}.tags" -n 50) && wmiir xwrite /client/$c/tags $tag) &
+KeyGroup Client actions
+Key $MODKEY-f # Toggle selected client's fullsceen state
+	wmiir xwrite /client/sel/ctl Fullscreen toggle
+Key $MODKEY-Shift-c # Close client
+	wmiir xwrite /client/sel/ctl kill
+
+KeyGroup Changing column modes
+Key $MODKEY-d # Set column to default mode
+	wmiir xwrite /tag/sel/ctl colmode sel default-max
+Key $MODKEY-s # Set column to stack mode
+	wmiir xwrite /tag/sel/ctl colmode sel stack-max
+Key $MODKEY-m # Set column to max mode
+	wmiir xwrite /tag/sel/ctl colmode sel stack+max
+
+KeyGroup Running programs
+Key $MODKEY-a      # Open wmii actions menu
+	action $(wi_actions | wimenu -h "${hist}.actions" -n $histnum) &
+Key $MODKEY-p      # Open program menu
+	eval wmiir setsid "$(wimenu -h "${hist}.progs" -n $histnum <$progsfile)" &
+
+Key $MODKEY-Return # Launch a terminal
+	eval wmiir setsid $WMII_TERM &
+
+KeyGroup Other
+Key $MODKEY-Control-t # Toggle all other key bindings
+	case $(wmiir read /keys | wc -l | tr -d ' \t\n') in
+	0|1)
+		echo -n "$Keys" | wmiir write /keys
+		wmiir xwrite /ctl grabmod $MODKEY;;
+	*)
+		wmiir xwrite /keys $MODKEY-Control-t
+		wmiir xwrite /ctl grabmod Mod3;;
+	esac
+
+KeyGroup Tag actions
+Key $MODKEY-t       # Change to another tag
+	(tag=$(wi_tags | wimenu -h "${hist}.tags" -n 50) && wmiir xwrite /ctl view $tag) &
+Key $MODKEY-Shift-t # Retag the selected client
+	c=$(wi_selclient)
+	(tag=$(wi_tags | wimenu -h "${hist}.tags" -n 50) && wmiir xwrite /client/$c/tags $tag) &
 !
 	for i in 0 1 2 3 4 5 6 7 8 9; do
 		cat <<!
-	Key $MODKEY-$i		 # Move to the numbered view
-		wmiir xwrite /ctl view "$i"
-	Key $MODKEY-Shift-$i     # Retag selected client with the numbered tag
-		wmiir xwrite /client/sel/tags "$i"
+Key $MODKEY-$i		 # Move to the numbered view
+	wmiir xwrite /ctl view "$i"
+Key $MODKEY-Shift-$i     # Retag selected client with the numbered tag
+	wmiir xwrite /client/sel/tags "$i"
 !
 	done
 }
-wi_events <<!
-$(events | sed 's/^	\|^        //')
-$(local_events)
-!
-unset events local_events
+wi_events events local_events
 
 # WM Configuration
 wmiir write /ctl <<!
@@ -233,16 +232,13 @@ wmiir write /ctl <<!
 !
 xsetroot -solid "$WMII_BACKGROUND" &
 
-export WMII_FONT WMII_TERM
-export WMII_FOCUSCOLORS WMII_SELCOLORS WMII_NORMCOLORS
-
 # Misc
 progsfile="$(wmiir namespace)/.proglist"
 action status &
 wi_proglist $PATH >$progsfile &
 
 # Setup Tag Bar
-IFS="$wi_nl"
+IFS="$wi_newline"
 wmiir rm $(wmiir ls /lbar | sed 's,^,/lbar/,') >/dev/null
 seltag=$(wmiir read /tag/sel/ctl | sed 1q)
 unset IFS

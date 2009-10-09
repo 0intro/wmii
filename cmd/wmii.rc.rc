@@ -10,7 +10,7 @@
 wmiiscript=$1
 wmiikeys=()
 
-wi_nl='
+wi_newline='
 '
 
 echo Start $wmiiscript | wmiir write /event >[2]/dev/null \
@@ -145,8 +145,8 @@ fn wi_eventloop {
 	wi_initkeys
 
 	wi_readevent |
-	while(ifs=$wi_nl{wi_event=`{read}}) {
-		ifs=$wi_nl{
+	while(ifs=$wi_ewlinel{wi_event=`{read}}) {
+		ifs=$wi_newline{
 			wi_arg=`{echo $wi_event | sed 's/^[^ ]+ //'}}
 		* = `{echo $wi_event}
 		event = $1; shift

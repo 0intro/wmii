@@ -6,8 +6,7 @@ import traceback
 import pygmi
 from pygmi import monitor, client, curry, call, program_list, _
 
-__all__ = ('keys', 'bind_events', 'event_loop', 'event', 'Match',
-           'Desc')
+__all__ = ('keys', 'bind_events', 'event_loop', 'event', 'Match')
 
 keydefs = {}
 events = {}
@@ -55,14 +54,6 @@ def bind_events(items={}, **kwargs):
 def event(fn):
     bind_events({fn.__name__: fn})
 
-class Desc(object):
-    def __init__(self, doc):
-        self.doc = doc
-    def __unicode__(self):
-        return self.doc
-    def __str__(self):
-        return str(self.doc)
-
 class Keys(object):
     def __init__(self):
         self.modes = {}
@@ -72,8 +63,13 @@ class Keys(object):
 
     def _add_mode(self, mode):
         if mode not in self.modes:
-            self.modes[mode] = { 'name': mode, 'desc': {}, 'groups': [],
-                                 'keys': {}, 'import': {} }
+            self.modes[mode] = {
+                'name': mode,
+                'desc': {},
+                'groups': [],
+                'keys': {},
+                'import': {},
+            }
             self.modelist.append(mode)
 
     def _set_mode(self, mode):
@@ -81,7 +77,8 @@ class Keys(object):
         self._mode = mode
         self._keys = dict((k % keydefs, v) for k, v in
                           self.modes[mode]['keys'].items() +
-                          self.modes[mode]['keys'].items());
+                          self.modes[mode]['import'].items());
+
         client.write('/keys', '\n'.join(self._keys.keys()) + '\n')
     mode = property(lambda self: self._mode, _set_mode)
 
@@ -91,7 +88,7 @@ class Keys(object):
             ('Mode %s\n' % mode['name']) +
             '\n\n'.join(('  %s\n' % str(group or '')) +
                         '\n'.join('    %- 20s %s' % (key % keydefs,
-                                                     mode['desc'][key])
+                                                     mode['keys'][key].__doc__)
                                   for key in mode['desc'][group])
                         for group in mode['groups'])
             for mode in (self.modes[name]
@@ -101,28 +98,32 @@ class Keys(object):
         self._add_mode(mode)
         mode = self.modes[mode]
         group = None
-        key = None
         def add_desc(key, desc):
-            mode['desc'][key] = desc
             if group not in mode['desc']:
                 mode['desc'][group] = []
                 mode['groups'].append(group)
             if key not in mode['desc'][group]:
                 mode['desc'][group].append(key);
 
-        for k in keys:
-            if key and isinstance(k, Desc):
-                add_desc(key, k)
-            elif isinstance(k, Desc):
-                group = str(k)
-            elif key:
-                mode['keys'][key] = k
-                key = None
+        if isinstance(keys, dict):
+            keys = keys.iteritems()
+        for obj in keys:
+            if isinstance(obj, tuple) and len(obj) in (2, 3):
+                if len(obj) == 2:
+                    key, val = obj
+                    desc = ''
+                elif len(obj) == 3:
+                    key, desc, val = obj
+                mode['keys'][key] = val
+                add_desc(key, desc)
+                val.__doc__ = str(desc)
             else:
-                key = k
+                group = obj
 
+        def wrap_import(mode, key):
+            return lambda k: self.modes[mode]['keys'][key](k)
         for k, v in flatten((v, k) for k, v in import_.iteritems()):
-            mode['import'][k % keydefs] = v
+            mode['import'][k % keydefs] = wrap_import(v, k)
 
     def dispatch(self, key):
         mode = self.modes[self.mode]
