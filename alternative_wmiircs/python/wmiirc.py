@@ -227,10 +227,20 @@ keys.bind('main', (
         lambda k: tags.select(tags.next())),
     ('%(mod)s-b', "Move to the view to the right",
         lambda k: tags.select(tags.next(True))),
+    ('%(mod)s-Shift-n', "Move to the view to the left, take along current client",
+        lambda k: tags.select(tags.next(), take_client=Client('sel'))),
+    ('%(mod)s-Shift-b', "Move to the view to the right, take along current client",
+        lambda k: tags.select(tags.next(True), take_client=Client('sel'))),
+
     ('%(mod)s-i', "Move to the newer tag in the tag stack",
         lambda k: tags.select(tags.NEXT)),
     ('%(mod)s-o', "Move to the older tag in the tag stack",
         lambda k: tags.select(tags.PREV)),
+    ('%(mod)s-Shift-i', "Move to the newer tag in the tag stack, take along current client",
+        lambda k: tags.select(tags.NEXT, take_client=Client('sel'))),
+    ('%(mod)s-Shift-o', "Move to the older tag in the tag stack, take along current client",
+        lambda k: tags.select(tags.PREV, take_client=Client('sel'))),
+
 ))
 def bind_num(i):
     keys.bind('main', (

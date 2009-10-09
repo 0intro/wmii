@@ -575,7 +575,17 @@ class Tags(object):
                 return tags[i+1]
         return self.sel
 
-    def select(self, tag):
+    def select(self, tag, take_client=None):
+        def goto(tag):
+            if take_client:
+                sel = Tag('sel').id
+                take_client.tags = '+%s' % tag
+                wmii['view'] = tag
+                if tag != sel:
+                    take_client.tags = '-%s' % sel
+            else:
+                wmii['view'] = tag
+
         if tag is self.PREV:
             if self.sel.id not in self.ignore:
                 self.idx -= 1
@@ -584,7 +594,7 @@ class Tags(object):
         else:
             if isinstance(tag, Tag):
                 tag = tag.id
-            wmii['view'] = tag
+            goto(tag)
 
             if tag not in self.ignore:
                 if self.idx < -1:
@@ -599,6 +609,6 @@ class Tags(object):
             return
 
         self.idx = constrain(-len(self.mru), -1, self.idx)
-        wmii['view'] = self.mru[self.idx]
+        goto(self.mru[self.idx])
 
 # vim:se sts=4 sw=4 et:
