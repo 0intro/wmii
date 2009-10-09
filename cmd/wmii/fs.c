@@ -535,8 +535,6 @@ fs_write(Ixp9Req *r) {
 		return;
 	case FsFCtags:
 		ixp_srv_data2cstring(r);
-		print("%d\n", r->ifcall.io.count);
-		print("%s\n", r->ifcall.io.data);
 		apply_tags(f->p.client, r->ifcall.io.data);
 		r->ofcall.io.count = r->ifcall.io.count;
 		respond(r, nil);
