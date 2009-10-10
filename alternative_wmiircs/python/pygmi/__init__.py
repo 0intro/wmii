@@ -14,13 +14,13 @@ shell = os.environ['SHELL']
 sys.path += confpath
 
 from pygmi.util import *
-from pygmi.events import *
+from pygmi.event import *
 from pygmi.fs import *
 from pygmi.menu import *
 from pygmi.monitor import *
-from pygmi import util, events, fs, menu, monitor
+from pygmi import util, event, fs, menu, monitor
 
-__all__ = (fs.__all__ + monitor.__all__ + events.__all__ +
+__all__ = (fs.__all__ + monitor.__all__ + event.__all__ +
            menu.__all__ + util.__all__ +
            ('client', 'confpath', 'shell'))
 

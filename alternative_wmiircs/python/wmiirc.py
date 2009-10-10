@@ -6,7 +6,7 @@ import traceback
 
 import pygmi
 from pygmi import *
-from pygmi import events
+from pygmi import event
 
 identity = lambda k: k
 
@@ -18,7 +18,7 @@ identity = lambda k: k
 # wmiirc or any other modules it needs.
 
 # Keys
-events.keydefs = dict(
+keys.defs = dict(
     mod='Mod4',
     left='h',
     down='j',
@@ -36,7 +36,7 @@ floatbackground='#222222'
 wmii['font'] = 'drift,-*-fixed-*-*-*-*-9-*-*-*-*-*-*-*'
 wmii['normcolors'] = '#000000', '#c1c48b', '#81654f'
 wmii['focuscolors'] = '#000000', '#81654f', '#000000'
-wmii['grabmod'] = events.keydefs['mod']
+wmii['grabmod'] = keys.defs['mod']
 wmii['border'] = 2
 
 def setbackground(color):
@@ -76,7 +76,7 @@ def unresponsive_client(client):
 client.awrite('/event', 'Start wmiirc')
 
 tags = Tags()
-bind_events({
+events.bind({
     ('Quit', Match('Start', 'wmiirc')): lambda *a: sys.exit(),
     'CreateTag':    tags.add,
     'DestroyTag':   tags.delete,
@@ -112,7 +112,7 @@ bind_events({
 })
 
 @apply
-class Actions(events.Actions):
+class Actions(event.Actions):
     def rehash(self, args=''):
         program_menu.choices = program_list(os.environ['PATH'].split(':'))
     def showkeys(self, args=''):
@@ -303,6 +303,6 @@ for f in ['wmiirc_local'] + ['plugins.%s' % file[:-3] for file in files]:
     except Exception, e:
         traceback.print_exc(sys.stdout)
 
-event_loop()
+events.loop()
 
 # vim:se sts=4 sw=4 et:

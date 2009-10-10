@@ -6,13 +6,7 @@ import traceback
 import pygmi
 from pygmi import monitor, client, curry, call, program_list, _
 
-__all__ = ('keys', 'bind_events', 'event_loop', 'event', 'Match')
-
-keydefs = {}
-events = {}
-eventmatchers = {}
-
-alive = True
+__all__ = ('keys', 'events', 'Match')
 
 class Match(object):
     def __init__(self, *args):
@@ -23,7 +17,7 @@ class Match(object):
                 a = lambda k: True
             elif isinstance(a, basestring):
                 a = a.__eq__
-            elif isinstance(a, (list, tuple)):
+            elif isinstance(a, (list, tuple, set)):
                 a = curry(lambda ary, k: k in ary, a)
             elif hasattr(a, 'search'):
                 a = a.search
@@ -43,23 +37,50 @@ def flatten(items):
         for key in k:
             yield key, v
 
-def bind_events(items={}, **kwargs):
-    kwargs.update(items)
-    for k, v in flatten(kwargs.iteritems()):
-        if isinstance(k, Match):
-            eventmatchers[k] = v
-        else:
-            events[k] = v
+class Events():
+    def __init__(self):
+        self.events = {}
+        self.eventmatchers = {}
+        self.alive = True
 
-def event(fn):
-    bind_events({fn.__name__: fn})
+    def dispatch(self, event, args=''):
+        try:
+            if event in self.events:
+                self.events[event](args)
+            for matcher, action in self.eventmatchers.iteritems():
+                ary = matcher.match(' '.join((event, args)))
+                if ary is not None:
+                    action(*ary)
+        except Exception, e:
+            traceback.print_exc(sys.stderr)
+
+    def loop(self):
+        keys.mode = 'main'
+        for line in client.readlines('/event'):
+            if not self.alive:
+                break
+            self.dispatch(*line.split(' ', 1))
+        self.alive = False
+
+    def bind(self, items={}, **kwargs):
+        kwargs.update(items)
+        for k, v in flatten(kwargs.iteritems()):
+            if hasattr(k, 'match'):
+                self.eventmatchers[k] = v
+            else:
+                self.events[k] = v
+
+    def event(self, fn):
+        self.bind({fn.__name__: fn})
+events = Events()
 
 class Keys(object):
     def __init__(self):
         self.modes = {}
         self.modelist = []
         self.mode = 'main'
-        bind_events(Key=self.dispatch)
+        self.defs = {}
+        events.bind(Key=self.dispatch)
 
     def _add_mode(self, mode):
         if mode not in self.modes:
@@ -75,7 +96,7 @@ class Keys(object):
     def _set_mode(self, mode):
         self._add_mode(mode)
         self._mode = mode
-        self._keys = dict((k % keydefs, v) for k, v in
+        self._keys = dict((k % self.defs, v) for k, v in
                           self.modes[mode]['keys'].items() +
                           self.modes[mode]['import'].items());
 
@@ -87,7 +108,7 @@ class Keys(object):
         return '\n\n'.join(
             ('Mode %s\n' % mode['name']) +
             '\n\n'.join(('  %s\n' % str(group or '')) +
-                        '\n'.join('    %- 20s %s' % (key % keydefs,
+                        '\n'.join('    %- 20s %s' % (key % self.defs,
                                                      mode['keys'][key].__doc__)
                                   for key in mode['desc'][group])
                         for group in mode['groups'])
@@ -123,33 +144,13 @@ class Keys(object):
         def wrap_import(mode, key):
             return lambda k: self.modes[mode]['keys'][key](k)
         for k, v in flatten((v, k) for k, v in import_.iteritems()):
-            mode['import'][k % keydefs] = wrap_import(v, k)
+            mode['import'][k % self.defs] = wrap_import(v, k)
 
     def dispatch(self, key):
         mode = self.modes[self.mode]
         if key in self._keys:
             return self._keys[key](key)
 keys = Keys()
-
-def dispatch(event, args=''):
-    try:
-        if event in events:
-            events[event](args)
-        for matcher, action in eventmatchers.iteritems():
-            ary = matcher.match(' '.join((event, args)))
-            if ary is not None:
-                action(*ary)
-    except Exception, e:
-        traceback.print_exc(sys.stderr)
-
-def event_loop():
-    from pygmi import events
-    keys.mode = 'main'
-    for line in client.readlines('/event'):
-        if not events.alive:
-            break
-        dispatch(*line.split(' ', 1))
-    events.alive = False
 
 class Actions(object):
     def __getattr__(self, name):
