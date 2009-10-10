@@ -44,7 +44,7 @@ ACTIONS = Handler.new
 KEYS    = Handler.new
 
 ##
-# When a block is given, registers a handler
+# If a block is given, registers a handler
 # for the given event and returns the handler.
 #
 # Otherwise, executes all handlers for the given event.
@@ -106,7 +106,10 @@ end
 #   Instruction on what the user should enter or choose.
 #
 def key_menu choices, prompt = nil
-  words = %w[dmenu -b -fn].push(CONFIG['display']['font'])
+  words = ['dmenu', '-fn', CONFIG['display']['font']]
+
+  # show menu at the same location as the status bar
+  words << '-b' if CONFIG['display']['bar'] == 'bottom'
 
   words.concat %w[-nf -nb -sf -sb].zip(
     [
@@ -145,11 +148,11 @@ end
 #   The choice that should be initially selected.
 #
 #   If this choice is not included in the list
-#   of cohices, then this item will be made
+#   of choices, then this item will be made
 #   into a makeshift title-bar for the menu.
 #
 def click_menu choices, initial = nil
-  words = %w[wmii9menu]
+  words = ['wmii9menu']
 
   if initial
     words << '-i'
@@ -167,6 +170,36 @@ def click_menu choices, initial = nil
 
   choice = `#{command}`.chomp
   choice unless choice.empty?
+end
+
+##
+# Shows a key_menu() containing the given
+# clients and returns the chosen client.
+#
+# If nothing was chosen, then nil is returned.
+#
+# ==== Parameters
+#
+# [prompt]
+#   Instruction on what the user should enter or choose.
+#
+# [clients]
+#   List of clients to present as choices to the user.
+#
+#   If this parameter is not specified,
+#   its default value will be a list of
+#   all currently available clients.
+#
+def client_menu prompt = nil, clients = Rumai.clients
+  choices = []
+
+  clients.each_with_index do |c, i|
+    choices << "%d. [%s] %s" % [i, c[:tags].read, c[:label].read.downcase]
+  end
+
+  if target = key_menu(choices, prompt)
+    clients[target.scan(/\d+/).first.to_i]
+  end
 end
 
 ##
@@ -269,7 +302,7 @@ def load_config config_file
       # applied.  but a "bad command" error is raised nevertheless!
       #
       warn e.inspect
-      warn e.backtrace
+      warn e.backtrace.join("\n")
     end
 
     launch 'xsetroot', '-solid', CONFIG['display']['background']
@@ -343,7 +376,7 @@ def load_config config_file
 
         @status_button_by_name.each_value {|b| b.refresh }
 
-      end.call
+      end
 
       ##
       # Returns the status button associated with the given name.
@@ -400,14 +433,106 @@ def load_config config_file
       end
 
   # control
+    action 'reload' do
+      # reload this wmii configuration
+      reload_config
+    end
+
+    action 'rehash' do
+      # scan for available programs and actions
+      @programs = find_programs(ENV['PATH'].squeeze(':').split(':'))
+    end
+
+    # kill all currently open clients
+    action 'clear' do
+      # firefox's restore session feature does not
+      # work unless the whole process is killed.
+      system 'killall firefox firefox-bin thunderbird thunderbird-bin'
+
+      # gnome-panel refuses to die by any other means
+      system 'killall -s TERM gnome-panel'
+
+      Thread.pass until clients.each do |c|
+        begin
+          c.focus # XXX: client must be on current view in order to be killed
+          c.kill
+        rescue
+          # ignore
+        end
+      end.empty?
+    end
+
+    # kill the window manager only; do not touch the clients!
+    action 'kill' do
+      fs.ctl.write 'quit'
+    end
+
+    # kill both clients and window manager
+    action 'quit' do
+      action 'clear'
+      action 'kill'
+    end
+
+    event 'Unresponsive' do |client_id|
+      client = Client.new(client_id)
+
+      IO.popen('xmessage -nearmouse -file - -buttons Kill,Wait -print', 'w+') do |f|
+        f.puts 'The following client is not responding.', ''
+        f.puts client.inspect
+        f.puts client.label.read
+
+        f.puts '', 'What would you like to do?'
+        f.close_write
+
+        if f.read.chomp == 'Kill'
+          client.slay
+        end
+      end
+    end
+
+    event 'Notice' do |*argv|
+      unless defined? @notice_mutex
+        require 'thread'
+        @notice_mutex = Mutex.new
+      end
+
+      Thread.new do
+        # prevent notices from overwriting each other
+        @notice_mutex.synchronize do
+          button = fs.rbar['!notice']
+          button.create unless button.exist?
+
+          # display the notice
+          message = argv.join(' ')
+
+          LOG.info message # also log it in case the user is AFK
+          button.write "#{CONFIG['display']['color']['notice']} #{message}"
+
+          # clear the notice
+          sleep [1, CONFIG['display']['notice'].to_i].max
+          button.remove
+        end
+      end
+    end
+
     %w[key action event].each do |param|
-      CONFIG['control'][param].each do |name, code|
-        eval "#{param}(#{name.inspect}) {|*argv| #{code} }",
-             TOPLEVEL_BINDING, "#{config_file}:control:#{param}:#{name}"
+      if settings = CONFIG['control'][param]
+        settings.each do |name, code|
+          if param == 'key'
+            # expand ${...} expressions in shortcut key sequences
+            name = name.gsub(/\$\{(.+?)\}/) { CONFIG['control'][$1] }
+          end
+
+          eval "#{param}(#{name.inspect}) {|*argv| #{code} }",
+               TOPLEVEL_BINDING, "#{config_file}:control:#{param}:#{name}"
+        end
       end
     end
 
   # script
+    action 'status'
+    action 'rehash'
+
     eval CONFIG['script']['after'].to_s, TOPLEVEL_BINDING,
          "#{config_file}:script:after"
 
@@ -418,5 +543,5 @@ end
 #
 def reload_config
   LOG.info 'reload'
-  launch $0
+  exec $0
 end

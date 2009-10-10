@@ -54,13 +54,26 @@ Installation:
     mv ~/.wmii-hg ~/.wmii-hg.backup
     git clone git://github.com/sunaku/wmiirc.git ~/.wmii-hg
 
+    # choose
+    cd ~/.wmii-hg
+    git checkout --track -b CHOICE origin/CHOICE # choices are:
+
+    +--------+------------------------------------------------+
+    | CHOICE | DESCRIPTION                                    |
+    +--------+------------------------------------------------+
+    | dvorak | sunaku's personal configuration; DSK friendly! |
+    | qwerty | QWERTY port of sunaku's personal configuration |
+    | strict | port of the default wmiirc shipped with wmii   |
+    | master | barebones template for starting from scratch   |
+    +--------+------------------------------------------------+
+
     # run
     ~/.wmii-hg/wmiirc
 
 Documentation:
 
     # see list of all key bindings
-    grep 'Mod.*#' ~/.wmii-hg/config.yaml
+    egrep '^ +\$\{\w+\}' ~/.wmii-hg/config.yaml
 
     # read the configuration file
     less ~/.wmii-hg/config.yaml
@@ -71,7 +84,11 @@ Configuration:
 
     Run ~/.wmii-hg/wmiirc to apply your changes.
 
+Contribution:
+
+    Fork this project on GitHub and send pull requests.
+
 Questions:
 
-    Send me an e-mail; see LICENSE for my address.
+    Send me an e-mail (see LICENSE for my address).
 
