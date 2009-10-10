@@ -3,7 +3,7 @@ import subprocess
 
 import pygmi
 
-__all__ = 'call', 'message', 'program_list', 'curry', 'find_script', '_'
+__all__ = 'call', 'message', 'program_list', 'curry', 'find_script', '_', 'prop'
 
 def _():
     pass
@@ -55,5 +55,11 @@ def find_script(name):
     for path in pygmi.confpath:
         if os.access('%s/%s' % (path, name), os.X_OK):
             return '%s/%s' % (path, name)
+
+def prop(**kwargs):
+    def prop_(wrapped):
+        kwargs['fget'] = wrapped
+        return property(**kwargs)
+    return prop_
 
 # vim:se sts=4 sw=4 et:
