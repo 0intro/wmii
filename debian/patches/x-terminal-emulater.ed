@@ -1,3 +1,0 @@
-/^[	]*WMII_TERM[	]*=/s/=.*/=x-terminal-emulator/
-w
-

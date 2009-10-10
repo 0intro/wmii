@@ -20,7 +20,8 @@ config:
 	ROOT="${ROOT}" ${ROOT}/util/genconfig
 
 deb-dep:
-	apt-get -qq install build-essential debhelper libxext-dev x11proto-xext-dev libx11-dev libxrandr-dev
+	IFS=', '; \
+	apt-get -qq install build-essential $$(sed -n 's/([^)]*)//; s/^Build-Depends: \(.*\)/\1/p' debian/control)
 
 deb:
 	dpkg-buildpackage -rfakeroot
