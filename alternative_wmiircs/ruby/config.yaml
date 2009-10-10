@@ -137,12 +137,12 @@ control:
   ##
   # The wmii "grabmod" setting.
   #
-  grab: Mod1
+  grab: Mod4
 
   ##
   # Prefix for all shortcuts.
   #
-  mod: Mod1
+  mod: Mod4
 
   ##
   # Direction keys.

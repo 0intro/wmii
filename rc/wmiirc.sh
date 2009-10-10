@@ -3,8 +3,9 @@
 wmiiscript=wmiirc # For wmii.sh
 . wmii.sh
 
+
 # Configuration Variables
-MODKEY=Mod1
+MODKEY=Mod4
 UP=k
 DOWN=j
 LEFT=h
@@ -23,6 +24,19 @@ export WMII_FONT='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
 
 set -- $(echo $WMII_NORMCOLORS $WMII_FOCUSCOLORS)
 export WMII_TERM="@TERMINAL@"
+
+if ! test -d "${WMII_CONFPATH%%:*}"; then
+    mkdir "${WMII_CONFPATH%%:*}"
+    res=$(wihack -type DIALOG xmessage -nearmouse -buttons Windows,Alt -print -fn $WMII_FONT \
+          "Welcome to wmii,$wi_newline$wi_newline" \
+          "Most of wmii's default key bindings make use of the$wi_newline" \
+          "Windows key, or equivalent. For keyboards lacking such$wi_newline" \
+          "a key, many users change this to the Alt key.$wi_newline$wi_newline" \
+          "Which would you prefer?")
+    [ "$res" = "Alt" ] && MODKEY=Mod1
+    echo "MODKEY=$MODKEY" >"${WMII_CONFPATH%%:*}/wmiirc_local"
+    chmod +x "${WMII_CONFPATH%%:*}/wmiirc_local"
+fi
 
 # Menu history
 hist="${WMII_CONFPATH%%:*}/history"

@@ -7,7 +7,7 @@ oldpath=$path; path=($PLAN9/bin $path)
 # WMII Configuration
 
 # Keys
-MODKEY=Mod1
+MODKEY=Mod4
 UP=k
 DOWN=j
 LEFT=h
