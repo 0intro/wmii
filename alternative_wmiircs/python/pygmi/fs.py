@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from pyxp import *
 from pyxp.client import *
 from pygmi import *
+from pygmi.util import prop
 
 __all__ = ('wmii', 'Tags', 'Tag', 'Area', 'Frame', 'Client',
            'Button', 'Colors', 'Color')
@@ -16,6 +17,20 @@ def constrain(min, max, val):
     return val
 
 class Ctl(object):
+    """
+    An abstract class to represent the 'ctl' files of the wmii filesystem.
+    Instances act as live, writable dictionaries of the settings represented
+    in the file.
+
+    Abstract roperty ctl_path: The path to the file represented by this
+            control.
+    Property ctl_hasid: When true, the first line of the represented
+            file is treated as an id, rather than a key-value pair. In this
+            case, the value is available via the 'id' property.
+    Property ctl_types: A dict mapping named dictionary keys to two valued
+            tuples, each containing a decoder and encoder function for the
+            property's plain text value.
+    """
     sentinel = {}
     ctl_types = {}
     ctl_hasid = False
@@ -24,6 +39,9 @@ class Ctl(object):
         pass
 
     def ctl(self, *args):
+        """
+        Arguments are joined by ascii spaces and written to the ctl file.
+        """
         client.awrite(self.ctl_path, ' '.join(args))
 
     def __getitem__(self, key):
@@ -43,6 +61,11 @@ class Ctl(object):
         self.ctl(key, val)
 
     def get(self, key, default=sentinel):
+        """
+        Gets the instance's dictionary value for 'key'. If the key doesn't
+        exist, 'default' is returned. If 'default' isn't provided and the key
+        doesn't exist, a KeyError is raised.
+        """
         try:
             val = self[key]
         except KeyError, e:
@@ -50,6 +73,9 @@ class Ctl(object):
                 return default
             raise e
     def set(self, key, val):
+        """
+        Sets the dictionary value for 'key' to 'val', as self[key] = val
+        """
         self[key] = val
 
     def keys(self):
@@ -63,22 +89,41 @@ class Ctl(object):
                 for line in self.ctl_lines()]
 
     def ctl_lines(self):
+        """
+        Returns the lines of the ctl file as a tuple, with the first line
+        stripped if #ctl_hasid is set.
+        """
         lines = tuple(client.readlines(self.ctl_path))
         if self.ctl_hasid:
             lines = lines[1:]
         return lines
 
     _id = None
-    @property
+    @prop(doc="If #ctl_hasid is set, returns the id of this ctl file.")
     def id(self):
         if self._id is None and self.ctl_hasid:
             return client.read(self.ctl_path).split('\n', 1)[0]
         return self._id
 
 class Dir(Ctl):
+    """
+    An abstract class representing a directory in the wmii filesystem with a
+    ctl file and sub-objects.
+
+    Abstract property base_path: The path directly under which all objects
+            represented by this class reside. e.g., /client, /tag
+    """
     ctl_hasid = True
 
     def __init__(self, id):
+        """
+        Initializes the directory object.
+
+        Param id: The id of the object in question. If 'sel', the object
+                dynamically represents the selected object, even as it
+                changes. In this case, #id will return the actual ID of the
+                object.
+        """
         if id != 'sel':
             self._id = id
 
@@ -87,13 +132,22 @@ class Dir(Ctl):
                 self.id == other.id)
 
     class ctl_property(object):
+        """
+        A class which maps instance properties to ctl file properties.
+        """
         def __init__(self, key):
             self.key = key
         def __get__(self, dir, cls):
             return dir[self.key]
         def __set__(self, dir, val):
             dir[self.key] = val
+
     class toggle_property(ctl_property):
+        """
+        A class which maps instance properties to ctl file properties. The
+        values True and False map to the strings "on" and "off" in the
+        filesystem.
+        """
         props = {
             'on': True,
             'off': False,
@@ -111,6 +165,10 @@ class Dir(Ctl):
             dir[self.key] = val
 
     class file_property(object):
+        """
+        A class which maps instance properties to files in the directory
+        represented by this object.
+        """
         def __init__(self, name, writable=False):
             self.name = name
             self.writable = writable
@@ -122,16 +180,19 @@ class Dir(Ctl):
             return client.awrite('%s/%s' % (dir.path, self.name),
                                  str(val))
 
-    @property
+    @prop(doc="The path to this directory's ctl file")
     def ctl_path(self):
         return '%s/ctl' % self.path
 
-    @property
+    @prop(doc="The path to this directory")
     def path(self):
         return '%s/%s' % (self.base_path, self._id or 'sel')
 
     @classmethod
     def all(cls):
+        """
+        Returns all of the objects that exist for this type of directory.
+        """
         return (cls(s.name)
                 for s in client.readdir(cls.base_path)
                 if s.name != 'sel')
@@ -141,6 +202,10 @@ class Dir(Ctl):
                            repr(self._id or 'sel'))
 
 class Client(Dir):
+    """
+    A class which represents wmii clients. Maps to the directories directly
+    below /client.
+    """
     base_path = '/client'
 
     fullscreen = Dir.toggle_property('Fullscreen')
@@ -151,8 +216,10 @@ class Client(Dir):
     props = Dir.file_property('props')
 
     def kill(self):
+        """Politely asks a client to quit."""
         self.ctl('kill')
     def slay(self):
+        """Forcibly severs a client's connection to the X server."""
         self.ctl('slay')
 
 class liveprop(object):

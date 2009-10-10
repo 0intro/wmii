@@ -11,7 +11,9 @@ def inthread(fn, action):
     if not action:
         return run()
     from threading import Thread
-    Thread(target=run).start()
+    t = Thread(target=run)
+    t.daemon = True
+    t.start()
 
 class Menu(object):
     def __init__(self, choices=(), action=None,
