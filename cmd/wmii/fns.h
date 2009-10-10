@@ -229,7 +229,7 @@ char*	msg_sendclient(View*, IxpMsg*, bool swap);
 char*	readctl_client(Client*);
 char*	readctl_root(void);
 char*	readctl_view(View*);
-Area*	strarea(View*, int, const char*);
+Area*	strarea(View*, ulong, const char*);
 void	warning(const char*, ...);
 /* debug */
 void	debug(int, const char*, ...);

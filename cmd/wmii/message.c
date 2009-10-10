@@ -329,8 +329,9 @@ strclient(View *v, char *s) {
 }
 
 Area*
-strarea(View *v, int scrn, const char *s) {
+strarea(View *v, ulong scrn, const char *s) {
 	Area *a;
+	char *p;
 	long i;
 
 	/*
@@ -341,14 +342,26 @@ strarea(View *v, int scrn, const char *s) {
 
 	if(s == nil)
 		return nil;
-	if(!strcmp(s, "sel"))
+
+	if((p = strchr(s, ':'))) {
+		*p++ = '\0';
+		if(!strcmp(s, "sel"))
+			scrn = v->selscreen;
+		else if(!getulong(s, &scrn))
+			return nil;
+		s = p;
+	}
+
+	if(!strcmp(s, "sel")) {
+		if(scrn != v->selscreen)
+			return nil;
 		return v->sel;
+	}
 	if(!strcmp(s, "~"))
 		return v->floating;
 	if(!getlong(s, &i) || i == 0)
 		return nil;
 
-	/* FIXME: Very broken! */
 	if(i > 0) {
 		for(a = v->areas[scrn]; a; a = a->next)
 			if(i-- == 1) break;
@@ -643,7 +656,6 @@ message_view(View *v, IxpMsg *m) {
 	switch(getsym(s)) {
 	case LCOLMODE:
 		s = msg_getword(m);
-		/* XXX: Multihead */
 		a = strarea(v, screen->idx, s);
 		if(a == nil) /* || a->floating) */
 			return Ebadvalue;
@@ -1003,7 +1015,6 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	Frame *f, *ff;
 	Client *c;
 	char *s;
-	ulong i, scrn;
 	int sym;
 
 	s = msg_getword(m);
@@ -1051,13 +1062,8 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 		to = v->floating;
 		break;
 	default:
-		scrn = 0;
-		if(!getulong(s, &i))
-			if(2 != sscanf(s, "%lu:%lu", &scrn, &i))
-				return Ebadvalue;
-		if(i == 0 || scrn > nscreens)
-			return Ebadvalue;
-		to = view_findarea(v, scrn, i, true);
+		to = strarea(v, v->selscreen, s);
+		// to = view_findarea(v, scrn, i, true);
 		break;
 	}
 

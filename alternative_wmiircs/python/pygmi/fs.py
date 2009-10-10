@@ -234,9 +234,10 @@ class liveprop(object):
         setattr(area, self.attr, val)
 
 class Area(object):
-    def __init__(self, tag, ord, offset=None, width=None, height=None, frames=None):
+    def __init__(self, tag, ord, screen='sel', offset=None, width=None, height=None, frames=None):
         self.tag = tag
         self.ord = str(ord)
+        self.screen = str(screen)
         self.offset = offset
         self.width = width
         self.height = height
@@ -254,6 +255,10 @@ class Area(object):
     height = prop('height')
     frames = prop('frames')
 
+    @property
+    def spec(self):
+        return '%s:%s' % (self.screen, self.ord)
+
     def _get_mode(self):
         for k, v in self.tag.iteritems():
             if k == 'colmode':
@@ -262,7 +267,7 @@ class Area(object):
                     return v[1]
     mode = property(
         _get_mode,
-        lambda self, val: self.tag.set('colmode %s' % self.ord, val))
+        lambda self, val: self.tag.set('colmode %s' % self.spec, val))
 
     def grow(self, dir, amount=None):
         self.tag.grow(self, dir, amount)
@@ -353,7 +358,9 @@ class Tag(Dir):
                     area = Area(tag=self, ord=l[1], width=l[2], height=l[3],
                                 frames=[])
                 else:
-                    area = Area(tag=self, ord=l[1], offset=l[2], width=l[3],
+                    m = re.match(l[1], '(?:(\d+):)?(\d+)')
+                    area = Area(tag=self, screen=m.group(1) or 0,
+                                ord=m.group(2), offset=l[2], width=l[3],
                                 frames=[])
                 areas.append(area)
                 i = 0
