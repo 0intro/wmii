@@ -19,7 +19,7 @@ wimenu -v
 extensively by `wmii` and related programs to prompt the user
 for input. The standard configuration uses it to launch
 programs, select views, and perform standard actions. It
-supports basic item completion and history support.
+supports basic item completion and history searching.
 
 = ARGUMENTS =
 
@@ -40,7 +40,7 @@ supports basic item completion and history support.
 : -K
 	Prevents `wimenu` from initializing its default key
 	bindings. WARNING: If you do this, be sure to bind a key
-	with the Accept or Reject action, of you won't be able
+	with the Accept or Reject action, or you will have no way
 	to exit `wimenu`.
 : -k <key file>
 	Key bindings will be read from <key file>. Bindings
@@ -52,8 +52,8 @@ supports basic item completion and history support.
 	wmii. For action and args, please refer to the default
 	bindings, provided in the source distribution under
 	cmd/menu/keys.txt, or use strings(1) on the `wimenu`
-	executable (this level of customization is discouraged,
-	and reserved for the determined).
+	executable (this level of customization is reserved for the
+	determined).
 : -n <count>
 	Write at most <count> items back to the history file.
 	The file is never modified unless this option is
@@ -63,7 +63,7 @@ supports basic item completion and history support.
 	The string <prompt> will be show before the input field
 	when the menu is opened.
 : -s <screen>
-	Suggests that the menu open on Xinerama screen <screen>
+	Suggests that the menu open on Xinerama screen <screen>.
 
 = ENVIRONMENT =
 

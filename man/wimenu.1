@@ -16,7 +16,7 @@ wimenu \-v
 extensively by \fBwmii\fR and related programs to prompt the user
 for input. The standard configuration uses it to launch
 programs, select views, and perform standard actions. It
-supports basic item completion and history support.
+supports basic item completion and history searching.
 
 .SH ARGUMENTS
 .TP
@@ -59,7 +59,7 @@ case insensitive manner.
 .RS
 Prevents \fBwimenu\fR from initializing its default key
 bindings. WARNING: If you do this, be sure to bind a key
-with the Accept or Reject action, of you won't be able
+with the Accept or Reject action, or you will have no way
 to exit \fBwimenu\fR.
 .RE
 .TP
@@ -81,8 +81,8 @@ where \fI<key>\fR is a key name, similar to the format used by
 wmii. For action and args, please refer to the default
 bindings, provided in the source distribution under
 cmd/menu/keys.txt, or use strings(1) on the \fBwimenu\fR
-executable (this level of customization is discouraged,
-and reserved for the determined).
+executable (this level of customization is reserved for the
+determined).
 .RE
 .TP
 \-n \fI<count>\fR
@@ -104,7 +104,7 @@ when the menu is opened.
 \-s \fI<screen>\fR
 
 .RS
-Suggests that the menu open on Xinerama screen \fI<screen>\fR
+Suggests that the menu open on Xinerama screen \fI<screen>\fR.
 .RE
 
 .SH ENVIRONMENT
