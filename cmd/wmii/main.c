@@ -290,10 +290,11 @@ void
 spawn_command(const char *cmd) {
 	char *shell, *p;
 
-	if((p = pathsearch(getenv("WMII_CONFPATH"), cmd, true)))
-		cmd = p;
 
 	if(doublefork() == 0) {
+		if((p = pathsearch(getenv("WMII_CONFPATH"), cmd, true)))
+			cmd = p;
+
 		if(setsid() == -1)
 			fatal("Can't setsid: %r");
 
