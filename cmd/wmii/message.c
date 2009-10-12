@@ -351,6 +351,8 @@ strarea(View *v, ulong scrn, const char *s) {
 			return nil;
 		s = p;
 	}
+	else if(!strcmp(s, "sel"))
+		return v->sel;
 
 	if(!strcmp(s, "sel")) {
 		if(scrn != v->selscreen)
@@ -688,7 +690,7 @@ message_view(View *v, IxpMsg *m) {
 char*
 readctl_view(View *v) {
 	Area *a;
-	uint i;
+	int s;
 
 	bufclear();
 	bufprint("%s\n", v->name);
@@ -703,8 +705,8 @@ readctl_view(View *v) {
 	if(v->sel->sel)
 		bufprint("select client %C\n", v->sel->sel->client);
 
-	for(a = v->firstarea, i = 1; a; a = a->next, i++)
-		bufprint("colmode %d %s\n", i, column_getmode(a));
+	foreach_area(v, s, a)
+		bufprint("colmode %a %s\n", a, column_getmode(a));
 	return buffer;
 }
 
