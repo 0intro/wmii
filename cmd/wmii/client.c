@@ -37,6 +37,7 @@ group_init(Client *c) {
 		if(n == 0)
 			return;
 		w = *ret;
+		free(ret);
 	}
 
 	for(g=group; g; g=g->next)

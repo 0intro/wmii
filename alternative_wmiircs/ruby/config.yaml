@@ -140,9 +140,13 @@ control:
   grab: Mod4
 
   ##
-  # Prefix for all shortcuts.
+  # Key sequence prefixes.
   #
-  mod: Mod4
+  mod:    Mod4
+  move:   Mod4-Shift
+  swap:   Mod4-w
+  view:   Mod4-v
+  group:  Mod4-g
 
   ##
   # Direction keys.
@@ -151,6 +155,12 @@ control:
   down:  j
   left:  h
   right: l
+
+  ##
+  # Sequence keys.
+  #
+  prev: b
+  next: n
 
   ##
   # Key bindings.
@@ -197,6 +207,12 @@ control:
     ${mod}-space: | # focus floating area (toggle)
       curr_view.select(:toggle)
 
+    ${mod}-${prev}: | # focus previous view
+      prev_view.focus
+
+    ${mod}-${next}: | # focus next view
+      next_view.focus
+
     # focus the view whose index or name equals the pressed number
     ${mod}-1: focus_view tags[0] || 1
     ${mod}-2: focus_view tags[1] || 2
@@ -209,36 +225,147 @@ control:
     ${mod}-9: focus_view tags[8] || 9
     ${mod}-0: focus_view tags[9] || 10
 
+    # focus the view whose name begins with the pressed alphabet
+    ${view},a: t = tags.grep(/^a/i).first and focus_view(t)
+    ${view},b: t = tags.grep(/^b/i).first and focus_view(t)
+    ${view},c: t = tags.grep(/^c/i).first and focus_view(t)
+    ${view},d: t = tags.grep(/^d/i).first and focus_view(t)
+    ${view},e: t = tags.grep(/^e/i).first and focus_view(t)
+    ${view},f: t = tags.grep(/^f/i).first and focus_view(t)
+    ${view},g: t = tags.grep(/^g/i).first and focus_view(t)
+    ${view},h: t = tags.grep(/^h/i).first and focus_view(t)
+    ${view},i: t = tags.grep(/^i/i).first and focus_view(t)
+    ${view},j: t = tags.grep(/^j/i).first and focus_view(t)
+    ${view},k: t = tags.grep(/^k/i).first and focus_view(t)
+    ${view},l: t = tags.grep(/^l/i).first and focus_view(t)
+    ${view},m: t = tags.grep(/^m/i).first and focus_view(t)
+    ${view},n: t = tags.grep(/^n/i).first and focus_view(t)
+    ${view},o: t = tags.grep(/^o/i).first and focus_view(t)
+    ${view},p: t = tags.grep(/^p/i).first and focus_view(t)
+    ${view},q: t = tags.grep(/^q/i).first and focus_view(t)
+    ${view},r: t = tags.grep(/^r/i).first and focus_view(t)
+    ${view},s: t = tags.grep(/^s/i).first and focus_view(t)
+    ${view},t: t = tags.grep(/^t/i).first and focus_view(t)
+    ${view},u: t = tags.grep(/^u/i).first and focus_view(t)
+    ${view},v: t = tags.grep(/^v/i).first and focus_view(t)
+    ${view},w: t = tags.grep(/^w/i).first and focus_view(t)
+    ${view},x: t = tags.grep(/^x/i).first and focus_view(t)
+    ${view},y: t = tags.grep(/^y/i).first and focus_view(t)
+    ${view},z: t = tags.grep(/^z/i).first and focus_view(t)
+
     #---------------------------------------------------------------------------
     # move
     #---------------------------------------------------------------------------
 
-    ${mod}-Shift-${up}: | # move grouping toward the top
+    ${move}-${up}: | # move grouping toward the top
       grouping.each {|c| c.send(:up) rescue nil }
 
-    ${mod}-Shift-${down}: | # move grouping toward the bottom
+    ${move}-${down}: | # move grouping toward the bottom
       grouping.each {|c| c.send(:down) rescue nil }
 
-    ${mod}-Shift-${left}: | # move grouping toward the left
+    ${move}-${left}: | # move grouping toward the left
       grouping.each {|c| c.send(:left) rescue nil }
 
-    ${mod}-Shift-${right}: | # move grouping toward the right
+    ${move}-${right}: | # move grouping toward the right
       grouping.each {|c| c.send(:right) rescue nil }
 
-    ${mod}-Shift-space: | # move grouping to floating area (toggle)
+    ${move}-space: | # move grouping to floating area (toggle)
       grouping.each {|c| c.send(:toggle) rescue nil }
 
+    ${move}-t: | # move grouping to chosen view
+      #
+      # Changes the tag (according to a menu choice) of
+      # each grouped client and returns the chosen tag.
+      #
+      # The +tag -tag idea is from Jonas Pfenniger:
+      #
+      #   http://zimbatm.oree.ch/articles/2006/06/15/wmii-3-and-ruby
+      #
+      choices = tags.map {|t| [t, "+#{t}", "-#{t}"] }.flatten
+
+      if target = key_menu(choices, 'tag as:')
+        grouping.each {|c| c.tags = target }
+      end
+
     # move grouping to the view whose index or name equals the pressed number
-    ${mod}-Shift-1: grouping.each {|c| c.tags = tags[0] || 1  }
-    ${mod}-Shift-2: grouping.each {|c| c.tags = tags[1] || 2  }
-    ${mod}-Shift-3: grouping.each {|c| c.tags = tags[2] || 3  }
-    ${mod}-Shift-4: grouping.each {|c| c.tags = tags[3] || 4  }
-    ${mod}-Shift-5: grouping.each {|c| c.tags = tags[4] || 5  }
-    ${mod}-Shift-6: grouping.each {|c| c.tags = tags[5] || 6  }
-    ${mod}-Shift-7: grouping.each {|c| c.tags = tags[6] || 7  }
-    ${mod}-Shift-8: grouping.each {|c| c.tags = tags[7] || 8  }
-    ${mod}-Shift-9: grouping.each {|c| c.tags = tags[8] || 9  }
-    ${mod}-Shift-0: grouping.each {|c| c.tags = tags[9] || 10 }
+    ${move}-1: grouping.each {|c| c.tags = tags[0] || 1  }
+    ${move}-2: grouping.each {|c| c.tags = tags[1] || 2  }
+    ${move}-3: grouping.each {|c| c.tags = tags[2] || 3  }
+    ${move}-4: grouping.each {|c| c.tags = tags[3] || 4  }
+    ${move}-5: grouping.each {|c| c.tags = tags[4] || 5  }
+    ${move}-6: grouping.each {|c| c.tags = tags[5] || 6  }
+    ${move}-7: grouping.each {|c| c.tags = tags[6] || 7  }
+    ${move}-8: grouping.each {|c| c.tags = tags[7] || 8  }
+    ${move}-9: grouping.each {|c| c.tags = tags[8] || 9  }
+    ${move}-0: grouping.each {|c| c.tags = tags[9] || 10 }
+
+    #---------------------------------------------------------------------------
+    # group
+    #---------------------------------------------------------------------------
+
+    ${group},g: | # toggle current client from grouping
+      curr_client.group!
+
+    ${group},c: | # add clients in current area to grouping
+      curr_area.group
+
+    ${group},Shift-c: | # remove clients in current area from grouping
+      curr_area.ungroup
+
+    ${group},f: | # add clients in floating area to grouping
+      Area.floating.group
+
+    ${group},Shift-f: | # remove clients in floating area from grouping
+      Area.floating.ungroup
+
+    ${group},m: | # add clients in managed areas to grouping
+      curr_view.managed_areas.each {|a| a.group }
+
+    ${group},Shift-m: | # remove clients in managed areas from grouping
+      curr_view.managed_areas.each {|a| a.ungroup }
+
+    ${group},v: | # add clients in current view to grouping
+      curr_view.group
+
+    ${group},Shift-v: | # remove clients in current view from grouping
+      curr_view.ungroup
+
+    ${group},i: | # invert the grouping in the current view
+      curr_view.group!
+
+    ${group},Shift-i: | # invert the grouping in all views
+      Rumai.group!
+
+    ${group},n: | # remove all clients everywhere from grouping
+      Rumai.ungroup
+
+    #---------------------------------------------------------------------------
+    # swap
+    #---------------------------------------------------------------------------
+
+    ${swap},${up}: | # swap with above client
+      curr_client.swap(:up) rescue nil
+
+    ${swap},${down}: | # swap with below client
+      curr_client.swap(:down) rescue nil
+
+    ${swap},${left}: | # swap with left client
+      curr_client.swap(:left) rescue nil
+
+    ${swap},${right}: | # swap with right client
+      curr_client.swap(:right) rescue nil
+
+    # swap current client with the column whose index equals the pressed number
+    ${swap},1: curr_client.swap 1
+    ${swap},2: curr_client.swap 2
+    ${swap},3: curr_client.swap 3
+    ${swap},4: curr_client.swap 4
+    ${swap},5: curr_client.swap 5
+    ${swap},6: curr_client.swap 6
+    ${swap},7: curr_client.swap 7
+    ${swap},8: curr_client.swap 8
+    ${swap},9: curr_client.swap 9
+    ${swap},0: curr_client.swap 10
 
     #---------------------------------------------------------------------------
     # client
@@ -257,7 +384,7 @@ control:
     ${mod}-d: | # apply equal-spacing layout to current column
       curr_area.layout = 'default-max'
 
-    ${mod}-v: | # apply stacked layout to current column
+    ${mod}-s: | # apply stacked layout to current column
       curr_area.layout = 'stack-max'
 
     ${mod}-m: | # apply maximized layout to current column
