@@ -70,7 +70,7 @@ all:
 INSTALL= _install() { set -e; \
 		 dashb=$$1; [ $$1 = -b ] && shift; \
 		 d=$$(dirname $$3); \
-		 if [ ! -d $$d ]; then echo MKDIR $$d; mkdir -p $(DESTDIR)$$d; fi; \
+		 if [ ! -d $(DESTDIR)$$d ]; then echo MKDIR $$d; mkdir -p $(DESTDIR)$$d; fi; \
 		 echo INSTALL $$($(CLEANNAME) $(BASE)$$2); \
 		 if [ "$$dashb" = -b ]; \
 		 then cp -f $$2 $(DESTDIR)$$3; \
