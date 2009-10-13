@@ -1,8 +1,12 @@
 syntax: regexp
 (^|/)\.((.*\.)?sw.|depend|hgignore)$
 (^|/)(tags|mkfile)$
-\.([oa]|out|o_pic|so|orig|bak|pyc|pyo|rej)$
-^cmd/(stfo|osd|wiwarp)(/|$)
-syntax: glob
+\.([oa]|out|o_pic|so|pyc|pyo)$
+\.(diff|orig|rej|bak)$
+\.(aux|idx|ilg|ind|log|toc)$
+^cmd/(stfo|osd|wiwarp|setfocus)(/|$)
+.*/bak/
+.*_dummy\.h$
+syntax: path
 config.local.mk
 cmd/menu/bindings.c
