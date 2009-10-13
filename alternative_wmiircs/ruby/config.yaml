@@ -15,7 +15,7 @@
 # Program preferences.
 #
 program:
-  terminal: urxvt
+  terminal: @TERMINAL@
   browser: firefox
   editor: mousepad
   filer: thunar

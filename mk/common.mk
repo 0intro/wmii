@@ -1,12 +1,21 @@
 all:
 
-install: all
+install: all simpleinstall
+uninstall: simpleuninstall
 
-MANDIRS=$(MAN)/man1
-mkdirs:
-	for i in $(BIN) $(ETC) $(DOC) $(LIBDIR) $(MANDIRS) $(INCLUDE); do \
-		test -d $(DESTDIR)$$i || echo MKDIR $$i; \
-		mkdir -pm 0755 $(DESTDIR)$$i; \
+DOCDIR = $(DOC)
+simpleinstall:
+	for f in $(DOCS); do \
+		$(INSTALL) 0644 $$f $(DOCDIR)/$$f; \
+	done
+	for f in $(TEXT); do \
+		$(INSTALL) 0644 $$f $(DIR)/$$f; \
+	done
+	for f in $(BINARY); do \
+		$(INSTALL) -b 0644 $$f $(DIR)/$$f; \
+	done
+	for f in $(EXECS); do \
+		$(INSTALL) -b 0755 $$f $(DIR)/$$f; \
 	done
 
 cleandep:
@@ -26,3 +35,4 @@ DEP!=echo /dev/null
 include $(DEP)
 
 .PHONY: all options clean dist install uninstall depend cleandep tags
+.PHONY: simpleuninstall simpleinstall

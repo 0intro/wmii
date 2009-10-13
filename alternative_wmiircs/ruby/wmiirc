@@ -72,7 +72,7 @@ rescue Exception => e
   LOG.error e
 
   # allow the user to rescue themselves
-  system 'xterm &'
+  system '@TERMINAL@ &'
 
   IO.popen('xmessage -nearmouse -file - -buttons Recover,Ignore -print', 'w+') do |f|
     f.puts e.inspect, e.backtrace

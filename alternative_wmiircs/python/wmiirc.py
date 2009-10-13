@@ -44,7 +44,7 @@ def setbackground(color):
     call('xsetroot', '-solid', color)
 setbackground(background)
 
-terminal = 'wmiir', 'setsid', 'xterm'
+terminal = 'wmiir', 'setsid', '@TERMINAL@'
 pygmi.shell = os.environ.get('SHELL', 'sh')
 
 @defmonitor

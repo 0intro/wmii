@@ -174,6 +174,11 @@ tab(^); ll.
 .TE
 
 .SS Default Key Bindings
+.P
+All of the provided \fBwmiirc\fR scripts accept at least the following key
+bindings. They should also provide a \fBshowkeys\fR action to open a
+key binding quick\-reference.
+
 .SS Moving Around
 .TS
 tab(^); ll.
@@ -452,6 +457,15 @@ area
 Selects a column or the floating area.
 
 .nf
+     area        ::= \fI<area_spec>\fR | \fI<screen_spec>\fR:\fI<area_spec>\fR
+.fi
+
+
+When \fI<screen_spec>\fR is omitted and \fI<area_spec>\fR is not "sel",
+0 is assumed. "sel" by itself represents the selected client no
+matter which screen it is on.
+
+.nf
      area_spec   ::= "~" | \fI<number>\fR | "sel"
 .fi
 
@@ -465,15 +479,6 @@ index, starting at one.
 
 
 Where \fI<number>\fR representes the 0\-based Xinerama screen number.
-
-.nf
-     area        ::= \fI<area_spec>\fR | \fI<screen_spec>\fR:\fI<area_spec>\fR
-.fi
-
-
-When \fI<screen_spec>\fR is omitted and \fI<area_spec>\fR is not "sel",
-0 is assumed. "sel" by itself represents the selected client no
-matter which screen it is on.
 
 .TP
 frame

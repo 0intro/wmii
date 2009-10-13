@@ -2,11 +2,11 @@ FILTER = cat
 
 EXCFLAGS = $(INCLUDES) -D_XOPEN_SOURCE=600
 
-COMPILE      = $(ROOT)/util/compile "$(CC)" "$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES))"
-COMPILEPIC   = $(ROOT)/util/compile "$(CC)" "$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $(SOCFLAGS)"
+COMPILE    = $(ROOT)/util/compile "$(CC)" "$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES))"
+COMPILEPIC = $(ROOT)/util/compile "$(CC)" "$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $(SOCFLAGS)"
 
-LINK      = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(LDFLAGS)"
-LINKSO    = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(SOLDFLAGS) $(SHARED)"
+LINK   = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(LDFLAGS)"
+LINKSO = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(SOLDFLAGS) $(SHARED)"
 
 CLEANNAME=$(ROOT)/util/cleanname
 
@@ -40,7 +40,8 @@ all:
 
 .c.depend:
 	echo MKDEP $<
-	$(MKDEP) $(EXCFLAGS) $(CFLAGS) $< >>.depend
+	[ "$$noisycc" = 1 ] && echo $(MKDEP) $(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $< || true
+	$(MKDEP) $(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $< >>.depend
 
 .sh.depend .rc.depend .1.depend .awk.depend:
 	:
@@ -56,61 +57,59 @@ all:
 	$(COMPILE) ${<:.c=.o} $<
 	$(LINK) $@ ${<:.c=.o}
 
-.sh.out:
+.rc.out .awk.out .sh.out:
 	echo FILTER $(BASE)$<
-	$(FILTER) $< >$@
-	sh -n $@
-	chmod 0755 $@
-.rc.out .awk.out:
-	echo FILTER $(BASE)$<
+	[ -n "${<:%.sh=}" ] || sh -n $<
 	$(FILTER) $< >$@
 	chmod 0755 $@
+
 .man1.1:
 	echo TXT2TAGS $(BASE)$<
 	txt2tags -o- $< >$@
 
+INSTALL= _install() { set -e; \
+		 dashb=$$1; [ $$1 = -b ] && shift; \
+		 d=$$(dirname $$3); \
+		 if [ ! -d $$d ]; then echo MKDIR $$d; mkdir -p $(DESTDIR)$$d; fi; \
+		 echo INSTALL $$($(CLEANNAME) $(BASE)$$2); \
+		 if [ "$$dashb" = -b ]; \
+		 then cp -f $$2 $(DESTDIR)$$3; \
+		 else $(FILTER) <$$2 >$(DESTDIR)$$3; \
+		 fi; \
+		 chmod $$1 $(DESTDIR)$$3; \
+	 }; _install
+UNINSTALL= _uninstall() { set -e; \
+	           echo UNINSTALL $$($(CLEANNAME) $(BASE)$$2); \
+		   rm -f $(DESTDIR)$$3; \
+	   }; _uninstall
+
 .out.install:
-	echo INSTALL $$($(CLEANNAME) $(BASE)$*)
-	cp -f $< $(DESTDIR)$(BIN)/$*
-	chmod 0755 $(DESTDIR)$(BIN)/$* 
+	$(INSTALL) -b 0755 $< $(BIN)/$*
 .out.uninstall:
-	echo UNINSTALL $$($(CLEANNAME) $(BASE)$*)
-	rm -f $(DESTDIR)$(BIN)/$* 
+	$(UNINSTALL) $< $(BIN)/$*
 
 .a.install .$(SOEXT).install:
-	echo INSTALL $$($(CLEANNAME) $(BASE)$<)
-	cp -f $< $(DESTDIR)$(LIBDIR)/$<
-	chmod 0644 $(DESTDIR)$(LIBDIR)/$<
+	$(INSTALL) -b 0644 $< $(LIBDIR)/$<
 .a.uninstall .$(SOEXT).uninstall:
-	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
-	rm -f $(DESTDIR)$(LIBDIR)/$<
+	$(UNINSTALL) $< $(LIBDIR)/$<
 
 .h.install:
-	echo INSTALL $$($(CLEANNAME) $(BASE)$<)
-	cp -f $< $(DESTDIR)$(INCLUDE)/$<
-	chmod 0644 $(DESTDIR)$(INCLUDE)/$<
+	$(INSTALL) 0644 $< $(INCLUDE)/$<
 .h.uninstall:
-	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
-	rm -f $(DESTDIR)$(INCLUDE)/$<
+	$(UNINSTALL) $< $(INCLUDE)/$<
 
 .pdf.install:
-	echo INSTALL $$($(CLEANNAME) $(BASE)$<)
-	cp -f $< $(DESTDIR)$(DOC)/$<
-	chmod 0644 $(DESTDIR)$(DOC)/$<
+	$(INSTALL) -b 0644 $< $(DOC)/$<
 .pdf.uninstall:
-	echo UNINSTALL $$($(CLEANNAME) $(BASE)$<)
-	rm -f $(DESTDIR)$(DOC)/$<
+	$(UNINSTALL) $< $(DOC)/$<
 
-.1.install:
-	set -e; \
-	man=1; \
-	path="$(MAN)/man$$man/$*.$$man"; \
-	echo INSTALL man $$($(CLEANNAME) "$(BASE)/$*($$man)"); \
-	$(FILTER) <"$<" >$(DESTDIR)"$$path"; \
-	chmod 0644 $(DESTDIR)"$$path"
-.1.uninstall:
-	echo UNINSTALL man $$($(CLEANNAME) $*'(1)')
-	rm -f $(DESTDIR)$(MAN)/man1/$<
+INSTALMAN=   _installman()   { man=$${1\#\#*.}; $(INSTALL) 0644 $$1 $(MAN)/man$$man/$$1; }; _installman
+UNINSTALLMAN=_uninstallman() { man=$${1\#\#*.}; $(UNINSTALL) $$1 $(MAN)/man$$man/$$1; }; _uninstallman
+MANSECTIONS=1 2 3 4 5 6 7 8 9
+${MANSECTIONS:%=.%.install}:
+	$(INSTALMAN) $<
+${MANSECTIONS:%=.%.uninstall}:
+	$(UNINSTALL) $<
 
 .out.clean:
 	echo CLEAN $$($(CLEANNAME) $(BASE)$<)
@@ -121,9 +120,8 @@ all:
 	rm -f $< || true 2>/dev/null
 
 printinstall:
-mkdirs:
 clean:
-install: printinstall mkdirs
+install: printinstall
 depend: cleandep
 
 include $(ROOT)/mk/common.mk
