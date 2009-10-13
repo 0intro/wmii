@@ -5,8 +5,8 @@ syntax: regexp
 \.(diff|orig|rej|bak)$
 \.(aux|idx|ilg|ind|log|toc)$
 ^cmd/(stfo|osd|wiwarp|setfocus)(/|$)
-.*/bak/
-.*_dummy\.h$
-syntax: path
+/bak/
+_dummy\.h$
+syntax: glob
 config.local.mk
 cmd/menu/bindings.c

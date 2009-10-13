@@ -1,4 +1,14 @@
-#!/usr/bin/env rc
+#!/bin/sh
+p="$PATH"
+which rc >/dev/null || PATH="$PLAN9:$p"
+which rc >/dev/null || PATH="/usr/local/plan9/bin:$p"
+which rc >/dev/null || PATH="/usr/local/9/bin:$p"
+which rc >/dev/null || PATH="/opt/plan9/bin:$p"
+which rc >/dev/null || PATH="/opt/9/bin:$p"
+which rc >/dev/null || PATH="/usr/plan9/bin:$p"
+which rc >/dev/null || PATH="/usr/9/bin:$p"
+test $#* '=' 0 || exec rc $0
+
 cd
 scriptname=$0
 oldpath=$path; path=($PLAN9/bin $path)
@@ -152,10 +162,10 @@ fn Action-status {
 }
 
 # Source Variables, &c
-if(~ $0 ('' */)rc.wmii.local)
-	wi_notice This file should not be named rc.wmii.local
+if(~ $0 ('' */)wmiirc_local.rc)
+	wi_notice This file should not be named wmiirc_local.rc
 if not
-	. `{wi_script -f rc.wmii.local}
+	. `{wi_script -f wmiirc_local.rc}
 echo $wmiinormcol | wmiir create $noticebar
 
 # Key Bindings
