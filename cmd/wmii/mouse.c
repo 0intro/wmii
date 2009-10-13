@@ -601,6 +601,8 @@ mouse_checkresize(Frame *f, Point p, bool exec) {
 			cur = quad_cursor(q);
 			if(exec) mouse_resize(f->client, q, false);
 		}
+		else if(exec && rect_haspoint_p(p, f->titlebar))
+			mouse_movegrabbox(f->client, true);
 	}else {
 		if(f->aprev && p.y <= 2
 		|| f->anext && r.max.y - p.y <= 2) {

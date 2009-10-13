@@ -254,12 +254,13 @@ static int (*tramp[])(Frame*) = {
  * like the idea.
  */
 static void
-trampoline(int fn, Frame *f) {
+trampoline(int fn, Frame *f, bool grabbox) {
 
 	while(fn > 0) {
 		resizing = fn != TFloat;
 		view_update(f->view);
-		warppointer(grabboxcenter(f));
+		if(grabbox)
+			warppointer(grabboxcenter(f));
 		//f->collapsed = false;
 		fn = tramp[fn](f);
 	}
@@ -285,9 +286,9 @@ mouse_movegrabbox(Client *c, bool grabmod) {
 	}
 
 	if(f->area->floating)
-		trampoline(TFloat, f);
+		trampoline(TFloat, f, !grabmod);
 	else
-		trampoline(THCol, f);
+		trampoline(THCol, f, true);
 
 	if(grabmod)
 		warppointer(addpt(f->r.min, Pt(x * Dx(f->r),
@@ -562,7 +563,8 @@ tfloat(Frame *f) {
 	frect = f->r;
 
 	pt = querypointer(&scr.root);
-	pt1 = grabboxcenter(f);
+	/* pt1 = grabboxcenter(f); */
+	pt1 = pt;
 	goto case_motion;
 
 shut_up_ken:
