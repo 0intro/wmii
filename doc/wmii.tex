@@ -19,6 +19,9 @@
 
 \let\primary=\textbf
 
+\def\titlebar#1{%
+  \begin{center}\includegraphics[width=5.5in]{#1.png}\end{center}}
+
 % Key specs
 \def\key#1{{\small$\langle$\addfontfeature{Numbers=Lining}#1\/$\rangle$}}
 \let\<=<
@@ -141,6 +144,9 @@ As noted, \wmii\ provides two management styles:
     switching from an active to a collapsed window, the active
     window collapses, and the collapsed one effectively takes
     its place.
+
+    Managed windows have an unadorned titlebar:
+    \titlebar{managed}
   \item[Floating] Since some programs aren't designed in ways
     conducive to the managed work flow, \wmii\ also provides the
     classic “floating” window management model. In this model,
@@ -148,6 +154,9 @@ As noted, \wmii\ provides two management styles:
     freely about. Other than automatic placement of new windows
     and snapping of edges, \wmii\ doesn't manage floating
     windows at all.
+
+    Floating windows are indicated by a decorated titlebar:
+    \titlebar{floating}
   \item[Fullscreen] Fullscreen mode is actually a subset of the
     floating style. Windows may be toggled to and from
     fullscreen mode at will. When fullscreen, windows reside in
@@ -444,6 +453,43 @@ triangle at the top of the division between the two columns that
 you can click and drag as well. If that's still too hard a
 target, try using <M-Mouse3>, which works anywhere and provides
 much richer functionality.
+
+\subsection{Window Focus and Selection}
+
+For the purposes of keyboard navigation, \wmii\ keeps track of
+which window is currently selected, and confers its titlebar a
+different color scheme from the other windows. This window is
+the basis of relative motion commands, such as “select the
+window to the left”, and the target of commands such as “close
+this window”. Normally, the selected window is the same as the
+focused window, i.e., the window that recieves keyboard events.
+Some applications, however, present strange corner cases.
+
+\begin{description}
+  \item[Focused, selected window] This is the normal case of a
+    window which is both selected and has the keyboard focus.
+    \titlebar{selected}
+  \item[Unfocused, unselected window] This is the normal case for an
+    unselected window which does not have the keyboard focus.
+    \titlebar{unselected}
+  \item[Unfocused, selected window] This is the first unusual
+    case. This is the selected window, for the purposes of
+    keyboard navigation, but it does not recieve keyboard events.
+    A good example is an onscreen keyboard, which will recieve
+    mouse clicks and translate them to keyboard events, but
+    won't absorb those keyboard events itself. Other examples
+    include any window whilst another (such as \wimenu) has
+    grabbed the keyboard.
+    \titlebar{unfocused}
+  \item[Focused, unselected window] This is the second unusual
+    focus case. The window has the keyboard focus, but for the
+    purposes of keyboard navigation, it is not considered
+    selected. In the case of an onscreen keyboard, this is the
+    window which will receive the generated events. In the case
+    of a keyboard grab, the will likely be the window holding
+    the grab.
+    \titlebar{focused}
+\end{description}
 
 \section{Running Programs}
 
