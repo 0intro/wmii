@@ -1,9 +1,67 @@
 
+3.9b1:
+    * Install READMES to $(PREFIX)/share/doc/wmii/.
+    * Documentation updates. Add wmiir.1.
+    * Allow dragging floating clients from anywhere in their titlebars.
+    * Allow specifying screen in area specs.
+    * Change default $MODKEY to Mod4.
+    * Minor changes to pygmi.events API.
+    * Allow client to follow tag change in python wmiirc.
+    * Update /tag/*/index to be more useful on Xinerama.
+    * Add showkeys action to shell and python wmiirc.
+    * Restore windows from floating layer to their original Xinerama screen.
+    * Hide bar on non-primary Xinerama screens.
+    * Allow resizing of rightmost and leftmost column dividers.
+
+3.9a2:
+    * Add Suraj's Rumai-based wmiirc.
+    * Move rc.wmii to alternative_wmiircs/plan9port/wmiirc.
+    * Install wmii.pdf to $(PREFIX)/share/doc/.
+    * Focus windows regardless of whether they form a new group.
+    * Update selection and execution of wmiirc: no more magic.
+    * Update wmii.1
+    * Add alternative_wmiircs READMEs.
+
+3.9a1:
+    * Add new wmii guide. See doc/wmii.pdf
+    * Allow for programmable completion in wimenu.
+    * Use pkg-config globally.
+    * Add Xft (antialiased font) support.
+    * Add python wmiirc/9P client library
+    * Allow bindings to work regardless of caps lock.
+    * Add M-f fullscreen toggle key binding.
+    * Augment /client/*/ctl Fullscreen command.
+    * Allow setting of increment display from /ctl.
+    * Show a client's extra tags in its titlebar.
+    * Darken background when floating area selected.
+    * Allow bar on top or bottom.
+    * Allow for wmiirc_local.
+    * Add grow and nudge commands to /tag/*/ctl.
+    * Cascade windows when the floating layer fills.
+    * Support alpha-transparant windows.
+    * Add regex tag support.
+    * It is now possible to float/unfloat windows with the mouse.
+    * Make the bar Xdnd aware; DND between views is now possible. Fixed some window raising/moving bugs.
+    * Add a notification bar.
+    * Improved floating mouse resizing.
+    * Improved mouse move/resize support for managed mode.
+    * Better return from floating/fullscreen to managed mode.
+    * Allow comments (#.*\n) in rules and ctl files.
+    * Add /client/*/ctl ‘slay’ command.
+    * Detect unresponsive clients on ‘kill’.
+    * Draw titlebars of floating clients differently.
+    * Add wihack: LD_PRELOAD hack to set window properties of programs:
+    * Respect window groups
     * Add ‘Kill’ to client right-click menu
     * wmii9menu now takes similar args to wimenu
     * Document grow/nudge commands.
     * Add wimenu with history and caret support
-    * Xinerama support
+    * Add wistrut. Undocumented, not built by default.
+    * EWMH strut support.
+    * Basic EWMH support.
+    * Better fullscreen support.
+    * XRandR support.
+    * Xinerama support.
 
 2008-08-25:
     * libixp version 97 now required
@@ -13,3 +71,4 @@
         - stack: All clients but selected are collapsed.
     * Adobe's Flash plugin's fullscreen mode now works.
     * Some annoying focus bugs are fixed.
+
