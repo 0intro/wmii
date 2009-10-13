@@ -1,41 +1,42 @@
 Abstract
 --------
-window manager improved-improved is a dynamic window manager for X11.
-It supports classic and tiled window management with extended
-keyboard, mouse, and 9P-based [1] remote control.
-It consists of the wmii(1) window manager and the wmiir(1)
-the remote access utility.
+wmii is a dynamic window manager for X11.  It supports classic and
+tiled window management with extended keyboard, mouse, and 9P-based[1]
+remote control.  It consists of the wmii(1) window manager and the
+wmiir(1) the remote access utility.
 
 
 Requirements
 ------------
-In order to build wmii you need the Xlib header files and libixp. xmessage
-and dmenu are used by the default scripts. libixp and dmenu can be obtained
-from http://suckless.org/. Either plan9port[2] or 9base is recommended.
-If you have the wmii+ixp distribution, libixp is already provided.
+In order to build wmii you need the Xlib header files and libixp.
+xmessage is used by the default scripts.  Libixp, if not provided, can
+be obtained from http://libs.suckless.org/.  On debian, you should be
+able to obtain all dependencies by running `make deb-dep`.  Python is
+recommended for more advanced configurations.
 
 
 Installation
 ------------
-First, edit config.mk to match your local setup, or to let us guess it, run:
-	make config
+First, edit config.mk to match your local setup.
 
 To build, simply run:
 	make
 
-To install, run the following, as root, if necessary:
+To install, run the following, as root if necessary:
 	make install
+
+On debian, you should only have to run `make deb` to create a debian
+package.  No further configuration should be necessary.
+
 
 Running wmii
 ------------
 Add the following line to your .xinitrc to start wmii using startx:
 
-    until wmii; do
-	true
-    done
+    until wmii; do :; done
 
-In order to connect wmii to a specific display, make sure that
-the DISPLAY environment variable is set correctly. For example:
+In order to connect wmii to a specific display, make sure that the
+DISPLAY environment variable is set correctly.  For example:
 
     DISPLAY=:1 wmii
 
@@ -44,18 +45,18 @@ This will start wmii on display :1.
 
 Configuration
 -------------
-The configuration of wmii is done by customizing the rc script rc.wmii.local,
+The configuration of wmii is done by customizing the rc script wmiirc,
 which remotely controls the window manager and handles various events.
-The main rc.wmii script lives in PREFIX/etc/wmii@CONFPREFIX@/, while rc.wmii.local
-goes in $HOME/.wmii@CONFPREFIX@/.
+The main wmiirc script lives in @CONFPREFIX@/wmii@CONFVERSION@/, while
+wmiirc_local goes in $HOME/.wmii@CONFVERSION@/.
 
-If you wish to unbind keys bound by rc.wmii in rc.wmii.local, you
-must do so inside the function Action-overridekeys. You may,
-however, define new keys or redefine keys anywhere.
+More advanced versions of wmiirc are provided in python and ruby.
+For more information on them, see alternative_wmiircs/README.
 
 Credits
 -------
-The following people have contributed especially to wmii in various ways:
+The following people have contributed especially to wmii in various
+ways:
 
 - Christoph Wegscheider <christoph dot wegscheider at wegi dot net>
 - Georg Neis <gn at suckless dot org>

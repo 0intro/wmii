@@ -24,56 +24,58 @@ supports basic item completion and history searching.
 = ARGUMENTS =
 
 : -a
-	The address at which to connect to `wmii`.
+        The address at which to connect to `wmii`.
 : -c
-	Prints the contents of the input buffer each time the
-	user inputs a character, as such:
+        Prints the contents of the input buffer each time the
+        user inputs a character, as such:
 
-		<text before caret>\0<text after caret>\0
+                <text before caret>\0<text after caret>\0
 : -h <history file>
-	Causes `wimenu` to read its command history from
-	<history file> and to append its result to that file if
-	_-n_ is given.
+        Causes `wimenu` to read its command history from
+        <history file> and to append its result to that file if
+        _-n_ is given.
 : -i
-	Causes matching of completion items to be performed in a
-	case insensitive manner.
+        Causes matching of completion items to be performed in a
+        case insensitive manner.
 : -K
-	Prevents `wimenu` from initializing its default key
-	bindings. WARNING: If you do this, be sure to bind a key
-	with the Accept or Reject action, or you will have no way
-	to exit `wimenu`.
+        Prevents `wimenu` from initializing its default key
+        bindings. WARNING: If you do this, be sure to bind a key
+        with the Accept or Reject action, or you will have no way
+        to exit `wimenu`.
 : -k <key file>
-	Key bindings will be read from <key file>. Bindings
-	appear as:
+        Key bindings will be read from <key file>. Bindings
+        appear as:
 
-		<key> [action] [args]
+                <key> [action] [args]
 
-	where <key> is a key name, similar to the format used by
-	wmii. For action and args, please refer to the default
-	bindings, provided in the source distribution under
-	cmd/menu/keys.txt, or use strings(1) on the `wimenu`
-	executable (this level of customization is reserved for the
-	determined).
+        where <key> is a key name, similar to the format used by
+        wmii. For action and args, please refer to the default
+        bindings, provided in the source distribution under
+        cmd/menu/keys.txt, or use strings(1) on the `wimenu`
+        executable (this level of customization is reserved for the
+        determined).
 : -n <count>
-	Write at most <count> items back to the history file.
-	The file is never modified unless this option is
-	provided. Duplicates are filtered out within a 20 item
-	sliding window before this limit is imposed.
+        Write at most <count> items back to the history file.
+        The file is never modified unless this option is
+        provided. Duplicates are filtered out within a 20 item
+        sliding window before this limit is imposed.
 : -p <prompt>
-	The string <prompt> will be show before the input field
-	when the menu is opened.
+        The string <prompt> will be show before the input field
+        when the menu is opened.
 : -s <screen>
-	Suggests that the menu open on Xinerama screen <screen>.
+        Suggests that the menu open on Xinerama screen <screen>.
+:
 
 = ENVIRONMENT =
 
-: WMII_ADDRESS
-        Socket file of Used by wmiir(1).
-: NAMESPACE
-	The namespace directory to use if no address is
-	provided.
+: $WMII_ADDRESS
+        The address at which to connect to wmii.
+: $NAMESPACE
+        The namespace directory to use if no address is
+        provided.
+:
 = SEE ALSO =
-dmenu(1), wmiir(1)
+wmii(1), wmiir(1), dmenu(1)
 
 [1] http://www.suckless.org/wiki/wmii/tips/9p_tips
 

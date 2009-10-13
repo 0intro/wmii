@@ -17,9 +17,9 @@ static IxpClient *client;
 static void
 usage(void) {
 	fprint(1,
-		   "usage: %s [-a <address>] {create | read | ls [-ld] | remove | rm | write} <file>\n"
-		   "       %s [-a <address>] xwrite <file> <data>\n"
-		   "       %s -v\n", argv0, argv0, argv0);
+	       "usage: %s [-a <address>] {create | ls [-dlp] | read | remove | write} <file>\n"
+	       "       %s [-a <address>] xwrite <file> <data>\n"
+	       "       %s -v\n", argv0, argv0, argv0);
 	exit(1);
 }
 
@@ -79,12 +79,11 @@ modestr(uint mode) {
 	return buf;
 }
 
-static char *
-timestr(uint val) {
+static char*
+timestr(time_t val) {
 	static char buf[32];
 
-	ctime_r((time_t*)&val, buf);
-	buf[strlen(buf) - 1] = '\0';
+	strftime(buf, sizeof buf, "%Y-%m-%d %H:%M", localtime(&val));
 	return buf;
 }
 

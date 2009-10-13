@@ -48,47 +48,30 @@ the bar, which are described in detail in the
 .SS Command Line Arguments
 .TP
 \-a \fI<address>\fR
-
-.RS
 Specifies the address on which \fBwmii\fR should listen for
 connections. The address takes the form
 \fB\fI<protocol>\fR!\fI<address>\fR\fR. The default is of the form:
-.RE
 
-.RS
-.RS
 unix!/tmp/ns.\fB$USER\fR.\fB${DISPLAY\fR%.0\fB}\fR/wmii
-.RE
-.RE
 
-.RS
 which opens a unix socket per Plan 9 Port conventions. To
 open a TCP socket, listening at port 4332 on the loopback
 interface, use:
-.RE
 
-.RS
-.RS
 tcp!localhost!4332
-.RE
-.RE
 
-.RS
 \fB$WMII_NAMESPACE\fR is automatically set to this value.
-.RE
 
 .TP
 \-r \fI<wmiirc>\fR
-
-.RS
 Specifies which rc script to run. If \fI<wmiirc>\fR consists of a
 single argument, \fB$WMII_CONFPATH\fR is searched before \fB$PATH\fR.
 Otherwise, it is passed to the shell for evaluation. The
 environment variables \fB$WMII_ADDRESS\fR and \fB$WMII_CONFPATH\fR are
 preset for the script.
-.RE
 
-.SS Terminology
+== Terminology ==
+
 .TP
 Display
 A running X server instance consisting of input
@@ -358,16 +341,11 @@ Quit \fBwmii\fR
 .TP
 exec \fI<prog>\fR
 Replace \fBwmii\fR with \fI<prog>\fR
-
-.RS
-: spawn \fI<prog>\fR
-.RS
+.TP
+spawn \fI<prog>\fR
 Spawn a new program, as if by the \fI\-r\fR flag.
-.RE
-.RE
-.P
-        :
-:
+.RS -8
+
 
 .SS The /client/ Hierarchy
 .P
@@ -474,12 +452,28 @@ area
 Selects a column or the floating area.
 
 .nf
-     area ::= "~" | \fI<number>\fR | "sel"
+     area_spec   ::= "~" | \fI<number>\fR | "sel"
 .fi
 
 
-Where represents the floating area and \fI<number>\fR represents a column
+Where "~" represents the floating area and \fI<number>\fR represents a column
 index, starting at one.
+
+.nf
+     screen_spec ::= \fI<number>\fR
+.fi
+
+
+Where \fI<number>\fR representes the 0\-based Xinerama screen number.
+
+.nf
+     area        ::= \fI<area_spec>\fR | \fI<screen_spec>\fR:\fI<area_spec>\fR
+.fi
+
+
+When \fI<screen_spec>\fR is omitted and \fI<area_spec>\fR is not "sel",
+0 is assumed. "sel" by itself represents the selected client no
+matter which screen it is on.
 
 .TP
 frame
@@ -543,7 +537,7 @@ User\-specific action directory. Actions are first searched here.
 
 .SH ENVIRONMENT
 .TP
-HOME, DISPLAY
+\fB$HOME\fR, \fB$DISPLAY\fR
 See the section \fBFILES\fR above.
 
 .P
@@ -551,8 +545,11 @@ The following variables are set and exported within \fBwmii\fR and
 thus can be used in actions:
 
 .TP
-WMII_ADDRESS
-Socket file of Used by wmiir(1).
+\fB$WMII_ADDRESS\fR
+The address on which \fBwmii\fR is listening.
+.TP
+\fB$NAMESPACE\fR
+The namespace directory to use if no address is provided.
 
 .SH SEE ALSO
 .P

@@ -1,0 +1,77 @@
+wmiir
+wmii-@VERSION@
+Oct, 2009
+
+%!includeconf: header.t2t
+
+= NAME =
+
+wmiir - The wmii 9P filesystem client
+
+= SYNOPSIS =
+
+wmiir [-a <address>] {create | ls [-dlp] | read | remove | write} <file> +
+wmiir [-a <address>] xwrite <file> <data> ... +
+wmiir -v
+
+= DESCRIPTION =
+
+`wmiir` is a simple 9P filesystem client which ships with `wmii`, and connects
+to its virtual filesystem by default. `wmiir` is most often used to query and
+issue commands to `wmii`, both from the command line and from its `sh`-based
+configuration scripts.
+
+= ARGUMENTS =
+
+: -a
+        The address at which to connect to `wmii`.
+:
+= COMMANDS =
+
+: create <file>
+        Creates a new file or directory in the filesystem. Permissions and
+        file type are inferred by `wmii`. The contents of the standard input
+        are written to the new file.
+: ls [-dlp] <path>
+        Lists the contents of <path>.
+
+        Flags:
+        >>
+        : -d
+                Don't list the contents of directories.
+        : -l
+                Long output. For each file, list its permissions, owner,
+                group, size (bytes), mtime, and name.
+        : -p
+                Print the full path to each file.
+        <<
+: read <file>
+        Reads the entire contents of a file from the filesystem. Blocks until
+        interrupted or EOF is received.
+
+        Synonyms: `cat`
+: remove <path>
+        Removes <path> from the filesystem.
+
+        Synonyms: rm
+: write <file>
+        Writes the contents of the standard input to <file>.
+: xwrite <file> <data> ...
+        Writes each argument after <file> to the latter.
+:
+
+= ENVIRONMENT =
+
+: $WMII_ADDRESS
+        The address at which to connect to wmii.
+: $NAMESPACE
+        The namespace directory to use if no address is
+        provided.
+:
+
+= SEE ALSO =
+wmii(1), libixp[2]
+
+[1] http://www.suckless.org/wiki/wmii/tips/9p_tips +
+[2] http://libs.suckless.org/libixp
+

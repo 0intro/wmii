@@ -49,26 +49,26 @@ the bar, which are described in detail in the
 == Command Line Arguments ==
 
 : -a <address>
-	Specifies the address on which `wmii` should listen for
-	connections. The address takes the form
-	`<protocol>!<address>`. The default is of the form:
+        Specifies the address on which `wmii` should listen for
+        connections. The address takes the form
+        `<protocol>!<address>`. The default is of the form:
 
-		unix!/tmp/ns.$USER.${DISPLAY%.0}/wmii
+                unix!/tmp/ns.$USER.${DISPLAY%.0}/wmii
 
-	which opens a unix socket per Plan 9 Port conventions. To
-	open a TCP socket, listening at port 4332 on the loopback
-	interface, use:
+        which opens a unix socket per Plan 9 Port conventions. To
+        open a TCP socket, listening at port 4332 on the loopback
+        interface, use:
 
-		tcp!localhost!4332
+                tcp!localhost!4332
 
-	$WMII_NAMESPACE is automatically set to this value.
+        $WMII_NAMESPACE is automatically set to this value.
 
 : -r <wmiirc>
-	Specifies which rc script to run. If <wmiirc> consists of a
-	single argument, $WMII_CONFPATH is searched before $PATH.
-	Otherwise, it is passed to the shell for evaluation. The
-	environment variables $WMII_ADDRESS and $WMII_CONFPATH are
-	preset for the script.
+        Specifies which rc script to run. If <wmiirc> consists of a
+        single argument, $WMII_CONFPATH is searched before $PATH.
+        Otherwise, it is passed to the shell for evaluation. The
+        environment variables $WMII_ADDRESS and $WMII_CONFPATH are
+        preset for the script.
 
 == Terminology ==
 
@@ -158,6 +158,10 @@ Here is a list of the default actions:
 | wmiirc   | configure wmii
 
 == Default Key Bindings ==
+
+All of the provided `wmiirc` scripts accept at least the following key
+bindings. They should also provide a `showkeys` action to open a
+key binding quick-reference.
 
 === Moving Around ===
 
@@ -300,9 +304,10 @@ follows.
                 Quit `wmii`
         : exec <prog>
                 Replace `wmii` with <prog>
-	: spawn <prog>
-		Spawn a new program, as if by the _-r_ flag.
+        : spawn <prog>
+                Spawn a new program, as if by the _-r_ flag.
         :
+        <<
 :
 
 == The /client/ Hierarchy ==
@@ -385,10 +390,20 @@ all of the clients with the given tag applied. The special
         : area
             Selects a column or the floating area.
 
-```    area ::= "~" | <number> | "sel"
+```    area        ::= <area_spec> | <screen_spec>:<area_spec>
 
-            Where represents the floating area and <number> represents a column
+            When <screen_spec> is omitted and <area_spec> is not "sel",
+            0 is assumed. "sel" by itself represents the selected client no
+            matter which screen it is on.
+
+```    area_spec   ::= "~" | <number> | "sel"
+
+            Where "~" represents the floating area and <number> represents a column
             index, starting at one.
+
+```    screen_spec ::= <number>
+
+            Where <number> representes the 0-based Xinerama screen number.
 
         : frame
             Selects a client window.
@@ -441,14 +456,16 @@ them.
 
 = ENVIRONMENT =
 
-: HOME, DISPLAY
+: $HOME, $DISPLAY
         See the section **FILES** above.
 :
 The following variables are set and exported within `wmii` and
 thus can be used in actions:
 
-: WMII_ADDRESS
-        Socket file of Used by wmiir(1).
+: $WMII_ADDRESS
+        The address on which `wmii` is listening.
+: $NAMESPACE
+        The namespace directory to use if no address is provided.
 :
 = SEE ALSO =
 dmenu(1), wmiir(1)
