@@ -1,42 +1,88 @@
-The following conditions apply to any distribution which
-uses the name wmii.  These conditions apply only to wmii
-name, and not to its source code or any other materials.
+Distributers
+============
 
-When in doubt about any of these conditions or other matters
-of packaging or distribution, please contact the wmii
-mailing lists <wmii-hackers@suckless.org> or
-<wmii@suckless.org>, or Kris Maglione <fbsdaemon@gmail.com>.
+This file only applies to those who wish to distribute wmii in any
+form. The conditions herein do not apply to end users in any manner
+whatsoever.
 
-Any binary distribution of wmii MUST have a properly set
-version string. This string may normally be set in
-'mk/wmii.mk', and is set automatically to the Mercurial
-revision number for builds from a Mercurial tree, so long as
-the 'hg' command is present and properly functioning.
+License Terms
+=============
 
-Any version which is not an official release or snapshot
-MUST be contain the hg revision number in its version
-string.  This SHOULD be formatted as hgXXXX, where XXXX is
-the decimal revision number.
+wmii is licensed under the liberal MIT License. This license allows
+for free modification and distribution of the source code, so long
+as credit is given to the author. To this end, the LICENSE file, or
+an equivalent statement of its contents, MUST be distributed with
+any significant binary or source portions of this software. The file
+SHOULD be included with the software's documentation. The default
+installation sequence provides for this.
 
-The version string of any snapshot release MUST contain the
-date of the snapshot in the form YYYYMMDD, and SHOULD
-contain the word snap or snapshot.  The version string of a
-snapshot MAY contain the version name of a full release that
-the snapshot is expected to lead to, but it MUST be either
-directly preceded, or directly followed by, the word 'pre',
-optionally separated by a non-alphanumeric character,
+Note that this condition only applies to distribution, and that the
+end use is under no obligation to keep or install a copy of the
+LICENSE file. Note also that this software may be sublicensed under
+more restrictive terms, though the original LICENSE text MUST remain.
+
+The wmii Name
+=============
+
+The following conditions apply to any distribution which uses the
+name wmii. These conditions apply only to wmii name, and not to its
+source code or any other included materials.
+
+When in doubt about any of these conditions or other matters of
+packaging or distribution, please contact the wmii mailing lists at
+<dev@suckless.org> or Kris Maglione <maglione.k@gmail.com>. The
+conditions herein MAY be contravened by any more lenient
+distribution terms agreed upon by the latter, which SHOULD replace
+this file in the form of a PGP signed permissions notice.
+
+Version Strings
+---------------
+
+Any binary distribution of wmii MUST have a properly set VERSION
+string. This is the string printed by the 'wmii' binary when
+invoked with the '-v' flag.
+
+This string may normally be set in 'mk/wmii.mk'. Unmodified builds
+from the Mercurial tree automatically set this string based on the
+Mercurial local revision number, so long as the 'hg' command is
+present and properly functioning.
+
+Any version which is an official release, alpha, or beta, MUST
+contain the release version. Alpha and beta releases MUST be
+proceeded directly by "a" or "b" followed by the alpha or beta
+number respectively. wmii 4.0, Alpha 3, for instance, MUST be
+formatted as 4.0a3
+
+Any version which is not an official release or snapshot MUST be
+contain the Mercurial local revision number or changeset hash in its
+version string. The local revion number MUST be within 5 revisions
+of the equivalent changeset in the official canonical repositories
+at http://hg.suckless.org/ and http://wmii.googlecode.com/. This
+SHOULD be formatted as hgXXXX, where XXXX is the decimal revision
+number.
+
+The version string of any official snapshot release MUST, if it does
+not contain Mercurial revision information as above, contain the
+date of the snapshot in the form YYYYMMDD, and SHOULD contain the
+word snap or snapshot.
+
+The version string of a snapshot MAY contain the version name of a
+full release that the snapshot is expected to precede, but it MUST
+be either directly preceded, or directly followed by, the word
+'pre', optionally separated by a non-alphanumeric character,
 including -~_,./.
 
-Any binary distribution which is modified in any non-trivial
-way MUST signify the modifications in its name or version
-string.  This includes patches to use Xft for font display,
-but does NOT include minor patches to improve consistency
-with the rest of the system, including changing the default
-terminal emulator or changing any build flags as set in
-config.mk.
+Modifications
+-------------
 
-Source form distribution MAY include non-trivial patches
-without such modifications, provided that the user is made
-clearly aware of them at build time and/or prompted in some
-way to enable or disable them.
+Any binary distribution which is modified in any non-trivial way
+MUST signify the modifications in its name or version string. This
+DOES NOT include minor patches to improve consistency with the rest
+of the system, including changing the default terminal emulator,
+POSIX-compliant shell, or installation prefix.
+
+Source form distribution MAY include non-trivial patches without
+such modifications, provided that the user is made clearly aware of
+them at build or install time and/or prompted in some way to enable
+or disable them.
 

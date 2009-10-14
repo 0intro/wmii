@@ -17,7 +17,8 @@ DIRS =	\
 	libutf	  \
 	$(PDIRS)
 
-DOCS = README
+DOCS = README \
+       LICENSE
 
 deb-dep:
 	apt-get -qq install build-essential debhelper libxext-dev x11proto-xext-dev libx11-dev libxrandr-dev
