@@ -73,11 +73,12 @@
 
 % Convenience defs for the various wmii commands, and a few
 % others.
-\def\wmii{{\tt wmii}}
-\def\wiIXmenu{{\tt wi9menu}}
-\def\wimenu{{\tt wimenu}}
-\def\wmiir{{\tt wmiir}}
+\def\wmii{\texttt{wmii}}
+\def\wiIXmenu{\texttt{wi9menu}}
+\def\wimenu{\texttt{wimenu}}
+\def\wmiir{\texttt{wmiir}}
 \def\ninep{{\addfontfeature{Numbers=Lining}9P}}
+\def\POSIX{\textsc{POSIX}}
 
 \begin{document}
 \thispagestyle{empty}
@@ -97,7 +98,7 @@
   \Large
   Kris Maglione \\[1em]
   \addfontfeature{Numbers=Lining}
-  23 May 2009
+  13 October 2009
 
 \end{center}
 
@@ -108,6 +109,38 @@
 \frontmatter
 
 \tableofcontents
+
+\newpage
+\chapter*{License}
+
+This file is distributed under the same terms as wmii:
+
+\begingroup
+\ttfamily
+\parindent=0pt
+\parskip=1em
+
+\catcode`\:=12
+Copyright © 2009 Kris Maglione <\href{mailto:maglione.k@gmail.com}{maglione.k@gmail.com}>
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+\endgroup
 
 \mainmatter
 
@@ -146,17 +179,21 @@ As noted, \wmii\ provides two management styles:
     its place.
 
     Managed windows have an unadorned titlebar:
+
     \titlebar{managed}
+
   \item[Floating] Since some programs aren't designed in ways
     conducive to the managed work flow, \wmii\ also provides the
-    classic “floating” window management model. In this model,
-    windows float above the managed windows, and may be moved
+    classic “floating” window management model. Windows managed
+    in this model float above the managed windows and may be moved
     freely about. Other than automatic placement of new windows
     and snapping of edges, \wmii\ doesn't manage floating
     windows at all.
 
     Floating windows are indicated by a decorated titlebar:
+
     \titlebar{floating}
+
   \item[Fullscreen] Fullscreen mode is actually a subset of the
     floating style. Windows may be toggled to and from
     fullscreen mode at will. When fullscreen, windows reside in
@@ -198,7 +235,8 @@ client. If a client is fullscreen, it contains the line:
 \end{code}
 
 \noindent To change this, you'd update the file with the line
-|Fullscreen off| or even |Fullscreen toggle| to toggle
+% XXX: Broken /ctl cmd.
+|Fullscreen off| or even |Fullscreen| |toggle| to toggle
 the client's fullscreen state.
 
 The concept of controlling a program via a filesystem derives
@@ -212,7 +250,7 @@ even from the command line, is well worth the shock.
 \subsection{Views and Tags}
 
 Like most X11 window managers, \wmii\ provides virtual
-workspaces. Unlike other window managers, though, \wmii's
+workspaces. Unlike other window managers though, \wmii's
 workspaces are created and destroyed on demand. Instead of being
 sent to a workspace, windows in \wmii\ are tagged with any
 number of names. Views are created dynamically from these tags,
@@ -232,7 +270,7 @@ added to it.
 bottom of the screen. The bar is divided into a left and a right
 section. Each section is made up of buttons, with a single
 button spanning the gap between the two sides. Buttons can be
-individually styled, and can hold any text content the user
+individually styled and can hold any text content the user
 wishes. By convention, the buttons to the left show view names,
 and those to the right display status information.
 
@@ -299,15 +337,15 @@ Ctrl-Alt-F$\langle n\rangle$. Assuming that your current X
 session is on terminal 7, you should be able to switch between
 it and your new session by pressing Ctrl-Alt-F7 and Ctrl-Alt-F8.
 Now you should be ready to start \wmii. When you run the
-following command, from a terminal, you should be presented with
-a new X session, running wmii, with this document open in a PDF
-viewer occupying most of the screen. When you're there, come
-back to this page and continue. Now, open a terminal and
-execute:
+following command, you should be presented with a new X session
+running wmii and a PDF viewer showing this document.
 
 \begin{code}
   xinit
 \end{code}
+
+When you're there, find this page in the new PDF viewer and
+continue.
 
 \section{Your First Steps}
 
@@ -567,10 +605,11 @@ There are several configuration schemes available for \wmii. If
 you're only looking to add basic key bindings, status monitors,
 {\it et cetera}, you should have no trouble modifying the stock
 configuration for your language of choice. If you're looking for
-deeper knowledge of \wmii's control interface, though, this
+deeper knowledge of \wmii's control interface though, this
 section is for you. We'll proceed by building a configuration
-script in POSIX |sh| syntax, and move on to a discussion of the
-higher level constructs in the stock configuration scripts.
+script in \POSIX\ |sh| syntax and then move on to a discussion
+of the higher level constructs in the stock configuration
+scripts.
 
 \section{Events}
 
@@ -579,9 +618,9 @@ is represented by a single, plain-text line written to the
 |/event| file. You can think of this file as a named pipe. When
 reading it, you won't receive an EOF\footnote{End of File} until
 \wmii\ exits. Moreover, any lines written to the file will be
-transmitted to all of its readers. Notable events include key
-presses, the creation and destruction of windows, and changes of
-focus and views.
+transmitted to everyone currently reading from it. Notable
+events include key presses, the creation and destruction of
+windows, and changes of focus and views.
 
 We'll start building our configuration with an event processing
 framework:
@@ -722,12 +761,15 @@ Now to the part you've no doubt been waiting for: binding keys.
 When binding keys, you need to be aware of two files, |/keys|
 and |/event|. The former defines which keys \wmii\ needs to
 grab, and the latter broadcasts the events when they're pressed.
+
 Key names are specified as a series of modifiers followed by a
 key name, all separated by hyphens. Valid modifier names are
 |Control|, |Shift|, |Mod1| (usually Alt), |Mod2|, |Mod3|, |Mod4|
 (usually the Windows® key), and |Mod5|. Modifier keys can be
-changed via |xmodmap(1|), which is beyond the scope of this
-discussion. Key names can be detected by running |xev| from a
+changed via |xmodmap(1)|, the details of which are beyond the
+scope of this document.
+
+Key names can be detected by running |xev| from a
 terminal, pressing the desired key, and looking at the output
 (it's in the parentheses, after the keysym). A \wmii-specific
 utility is forthcoming.
@@ -935,7 +977,9 @@ in these directories are:
   \item[ctl] The view's control file. The properties are:
   \item[select ‹Area›] Select the column ‹Area›, where
     ‹Area› is a 1-based column index, or |~| for the floating
-    area.
+    area. It may be optionally preceded by ‹Screen›|:|, where
+    ‹Screen› is a 0-based Xinerama screen index, or “sel”. When
+    omitted, ‹Screen› defaults to 0, the primary screen.
   \item[select ‹Area› ‹Client Index›] Select the column ‹Area›, and
     the ‹Client Index›th client.
   \item[select client ‹Client ID›] Select the client with the
@@ -987,7 +1031,7 @@ in these directories are:
       \item client ‹Client ID›
       \item ‹Area› ‹Client Index›
     \end{itemize}
-  \item[nudge ‹Frame› ‹Direction› {[‹Amount›]}] The same as
+  \item[nudge ‹Frame› ‹Direction› {[‹Amount›]}] Like
     |grow|, but move the client in ‹Direction› instead of
     resizing it.
 \end{description}
@@ -1105,7 +1149,8 @@ The root filesystem contains the following:
         execute, \wmii\ will respawn.
       \item[spawn ‹Command›] Spawns ‹Command› as it would spawn
         |wmiirc| at startup. If ‹Command› is a single argument
-        and doesn't begin with |/| or |./|,\hskip 1ex|$WMII_CONFPATH| is
+        and doesn't begin with |/| or |./|,%
+        \hskip 1ex|$WMII_CONF|\-|PATH| is
         searched for the executable. Otherwise, the whole
         argument is passed to the shell for evaluation.
     \end{description}
@@ -1127,8 +1172,8 @@ The root filesystem contains the following:
 
 \subsection{Configuration}
 
-We'll need to write our previously defined theme information to
-\wmii:
+We'll need to let \wmii\ know about our previously defined theme
+information:
 
 \begin{code}
   «Configuration» ::=

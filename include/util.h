@@ -62,7 +62,7 @@ char *argv0;
 #undef EARGF
 #define ARGBEGIN \
 		int _argtmp=0, _inargv; char *_argv=nil; \
-		if(!argv0) argv0=*argv; argv++, argc--; \
+		if(!argv0) {argv0=*argv; argv++, argc--;} \
 		_inargv=1; USED(_inargv); \
 		while(argc && argv[0][0] == '-') { \
 			_argv=&argv[0][1]; argv++; argc--; \
