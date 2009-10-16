@@ -1,6 +1,5 @@
-wmii (3.6pre~20070516) unstable; urgency=low
+wmii-hg (hg2548) unstable; urgency=low
 
-  * First commit of debian directory.
+  * Sync with Daniel Bauman's upstream package.
 
- -- Kris Maglione <jg@suckless.org>  Tue,  8 May 2007 18:18:00 -0400
-
+ -- Kris Maglione <jg@suckless.org>  Wed,  14 Oct 2009 18:54:05 -0500

@@ -1,97 +1,17 @@
 #!/usr/bin/make -f
+include /usr/share/quilt/quilt.make
 
-#export DH_VERBOSE=1
-export DH_COMPAT=4
-
-PREFIX=/usr
-ETC=/etc/X11
-FAKE=$(CURDIR)/debian/wmii
-
-PATCHES=debian/patches
-UNPATCH=debian/unpatch.ed
-
-CFLAGS = -g -O0
-ifeq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	# wmii is IO, not CPU, bound. Please do not use -O2 here.
-	CFLAGS += -O
-endif
-ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
-	DH_STRIP = dh_strip
-endif
-
-export CFLAGS
+%:
+	dh $@
 
 clean: unpatch
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp
+build: patch
 
-	# Cleaning package
-	-$(MAKE) clean
+override_dh_compress:
+	dh_compress -X.pdf
 
-	dh_clean
+override_dh_auto_install:
+	$(MAKE) install
 
-build: build-stamp
-build-stamp: patch
-	dh_testdir
+	install -D img/icon.png debian/wmii/usr/share/icons/wmii.png
 
-	$(MAKE) PREFIX=$(PREFIX) ETC=$(ETC)
-
-	touch build-stamp
-
-install: build
-	dh_testdir
-	dh_testroot
-	dh_clean -k 
-	dh_installdirs
-	
-	$(MAKE) install PREFIX=$(FAKE)$(PREFIX) ETC=$(FAKE)$(ETC)
-	
-	install -D -m 0644 debian/file/wmii.desktop $(FAKE)$(PREFIX)/share/xsessions/wmii.desktop
-	install -D -m 0644 img/icon.png $(FAKE)$(PREFIX)/share/icons/wmii.png
-
-patch:
-	set -e; \
-	if ! [ -e ${UNPATCH} ]; then \
-		patches=${PATCHES}/*.list; \
-		for i in $$patches; do \
-			files=$$(cat "$$i"); \
-			base=$${i%.list}; \
-			base=$${base##*/}; \
-			awk -f "${PATCHES}/un$$base.awk" $$files >>debian/unpatch.ed; \
-			for f in $$files; do \
-				cat <"${PATCHES}/$$base.ed"; \
-				ed -s $$f <"${PATCHES}/$$base.ed"; \
-			done; \
-		done; \
-	fi
-
-unpatch:
-	set -e; \
-	if [ -e ${UNPATCH} ]; then \
-		ed -s <${UNPATCH}; \
-		rm ${UNPATCH}; \
-	fi
-
-binary-indep: build install
-
-binary-arch: build install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs
-	dh_installdocs
-	dh_install
-	dh_installmenu
-	dh_installwm --priority=30
-	dh_link
-	$(DH_STRIP)
-	dh_compress
-	dh_fixperms
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install

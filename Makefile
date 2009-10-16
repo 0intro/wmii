@@ -21,10 +21,17 @@ DOCS = README \
        LICENSE
 
 deb-dep:
-	apt-get -qq install build-essential debhelper libxext-dev x11proto-xext-dev libx11-dev libxrandr-dev
+	IFS=', '; \
+	apt-get -qq install build-essential $$(sed -n 's/([^)]*)//; s/^Build-Depends: \(.*\)/\1/p' debian/control)
 
+DISTRO = unstable
 deb:
+	if [ -d .hg ]; \
+	then hg tip --template 'wmii-hg ($(VERSION)) $(DISTRO); urgency=low\n\n  * {desc}\n\n -- {author}  {date|rfc822date}\n'; \
+	else awk 'BEGIN{"date"|getline; print "wmii-hg ($(VERSION)) $(DISTRO); urgency=low\n\n  * Upstream build\n\n -- Kris Maglione <jg@suckless.org>  "$$0"\n"}'; \
+	fi >debian/changelog
 	dpkg-buildpackage -rfakeroot
+	[ -d .hg ] && hg revert debian/changelog
 
 include ${ROOT}/mk/dir.mk
 INSTDIRS = $(PDIRS)

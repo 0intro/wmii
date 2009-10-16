@@ -1,0 +1,15 @@
+Author: Kris Maglione <jg@suckless.org>
+Description: Use x-terminal-emulator as the default terminal.
+
+diff --git a/config.mk b/config.mk
+--- a/config.mk
++++ b/config.mk
+@@ -13,7 +13,7 @@
+ INCLUDES = -I. -I$(ROOT)/include -I$(INCLUDE) -I/usr/include
+ LIBS = -L$(ROOT)/lib -L/usr/lib
+ 
+-TERMINAL = xterm
++TERMINAL = x-terminal-emulator
+ 
+ # Flags
+ include $(ROOT)/mk/gcc.mk
