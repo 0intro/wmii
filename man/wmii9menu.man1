@@ -1,0 +1,58 @@
+WMII9MENU
+wmii-@VERSION@
+Oct, 2009
+
+%!includeconf: header.t2t
+
+= NAME =
+
+wmii9menu - The wmii menu program
+
+= SYNOPSIS =
+
+wmii9menu [-a <address>] [-i <initial>] <item>[:<command>]...
+wmii9menu -v
+
+= DESCRIPTION =
+
+`wmii9menu` is `wmii`'s standard clickable menu program. It's used
+extensively by `wmii` and related programs to display clickable
+menus, namely for window titlebars and bar items. The name, along
+with the code, derives from the 9menu program, which in turn derives
+its name from Plan 9's style of clickable menus.
+
+= ARGUMENTS =
+
+: -a
+        The address at which to connect to `wmii`.
+: -i <initial>
+	If <initial> is listed among the other items on the command
+	line, it is selected at startup, and the menu is positioned
+	so that the mouse pointer is centered on said item.
+:
+
+= USAGE =
+
+`wmii9menu` is invoked with a list of arguments, each of which is
+displayed as a menu item. The first _:_ in the item name, and any
+text following it, is stripped. The menu is opened such that the
+mouse pointer is centered on the selected item. If a mouse button is
+depressed when the menu opens, then releasing it will confirm the
+selection. Otherwise, a mouse press will do the same. When a
+selection is made, `wmii9menu` prints the result. If the selected
+item initially contained a _:_, the text following it is printed.
+Otherwise, the item text itself is printed.
+
+= ENVIRONMENT =
+
+: $WMII_ADDRESS
+        The address at which to connect to wmii.
+: $NAMESPACE
+        The namespace directory to use if no address is
+        provided.
+:
+= SEE ALSO =
+wmii(1), wmiir(1), wimenu(1)
+
+[1] http://www.suckless.org/wiki/wmii/tips/9p_tips
+
