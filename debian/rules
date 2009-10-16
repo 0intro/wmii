@@ -7,6 +7,9 @@ include /usr/share/quilt/quilt.make
 clean: unpatch
 build: patch
 
+override_dh_installwm:
+	dh_installwm --priority=60
+
 override_dh_compress:
 	dh_compress -X.pdf
 
