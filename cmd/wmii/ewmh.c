@@ -41,14 +41,17 @@ ewmh_init(void) {
 	long supported[] = {
 		/* Misc */
 		NET("SUPPORTED"),
-		/* Root Properties */
+		/* Root Properties/Messages */
 		NET("ACTIVE_WINDOW"),
+		NET("CLOSE_WINDOW"),
 		NET("CURRENT_DESKTOP"),
 		/* Client Properties */
-		NET("WM_NAME"),
-		NET("WM_STRUT_PARTIAL"),
-		NET("WM_DESKTOP"),
 		NET("FRAME_EXTENTS"),
+		NET("WM_DESKTOP"),
+		NET("WM_FULLSCREEN_MONITORS"),
+		NET("WM_NAME"),
+		NET("WM_STRUT"),
+		NET("WM_STRUT_PARTIAL"),
 		/* States */
 		NET("WM_STATE"),
 		STATE("DEMANDS_ATTENTION"),
@@ -377,6 +380,17 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 		focus(c, true);
 		return 1;
 	}else
+	if(msg == NET("CLOSE_WINDOW")) {
+		if(e->format != 32)
+			return -1;
+		Dprint(DEwmh, "\tsource: %ld\n", l[0]);
+		Dprint(DEwmh, "\twindow: 0x%lx\n", e->window);
+		c = win2client(e->window);
+		if(c == nil)
+			return 1;
+		client_kill(c, true);
+		return 1;
+	}else
 	if(msg == NET("CURRENT_DESKTOP")) {
 		if(e->format != 32)
 			return -1;
@@ -453,6 +467,14 @@ ewmh_updatestate(Client *c) {
 		changeprop_long(&c->w, Net("WM_STATE"), "ATOM", state, i);
 	else
 		delproperty(&c->w, Net("WM_STATE"));
+
+	if(c->fullscreen >= 0)
+		changeprop_long(&c->w, Net("WM_FULLSCREEN_MONITORS"), "CARDINAL",
+				(long[]) { c->fullscreen, c->fullscreen,
+					   c->fullscreen, c->fullscreen }, 
+				4);
+	else
+		delproperty(&c->w, Net("WM_FULLSCREEN_MONITORS"));
 }
 
 /* Views */
