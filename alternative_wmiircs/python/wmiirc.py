@@ -138,8 +138,8 @@ tag_menu = Menu(histfile='%s/history.tags' % confpath[0], nhist=100,
 
 def clickmenu(choices, args):
     ClickMenu(choices=(k for k, v in choices),
-              action=lambda choice: dict(choices).get(choice, identity)(*args)) \
-            .call()
+              action=lambda choice: dict(choices).get(choice, identity)(*args)
+             ).call()
 
 class Notice(Button):
     def __init__(self):
@@ -211,18 +211,18 @@ keys.bind('main', (
 
     "Running programs",
     ('%(mod)s-a',      "Open wmii actions menu",
-        lambda k: action_menu.call()),
+        lambda k: action_menu()),
     ('%(mod)s-p',      "Open program menu",
-        lambda k: program_menu.call()),
+        lambda k: program_menu()),
 
     ('%(mod)s-Return', "Launch a terminal",
         lambda k: call(*terminal, background=True)),
 
     "Tag actions",
     ('%(mod)s-t',       "Change to another tag",
-        lambda k: tags.select(tag_menu.call())),
+        lambda k: tags.select(tag_menu())),
     ('%(mod)s-Shift-t', "Retag the selected client",
-        lambda k: setattr(Client('sel'), 'tags', tag_menu.call())),
+        lambda k: setattr(Client('sel'), 'tags', tag_menu())),
 
     ('%(mod)s-n', "Move to the view to the left",
         lambda k: tags.select(tags.next())),

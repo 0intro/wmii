@@ -1,4 +1,5 @@
 from pygmi.util import call
+from threading import Thread
 
 __all__ = 'Menu', 'ClickMenu'
 
@@ -10,7 +11,6 @@ def inthread(fn, action):
         return res
     if not action:
         return run()
-    from threading import Thread
     t = Thread(target=run)
     t.daemon = True
     t.start()
@@ -23,7 +23,7 @@ class Menu(object):
         self.histfile = histfile
         self.nhist = nhist
 
-    def call(self, choices=None):
+    def __call__(self, choices=None):
         if choices is None:
             choices = self.choices
         if callable(choices):
@@ -36,6 +36,7 @@ class Menu(object):
                 args += ['-n', self.nhist]
             return call(*map(str, args), input='\n'.join(choices))
         return inthread(act, self.action)
+    call = __call__
 
 class ClickMenu(object):
     def __init__(self, choices=(), action=None,
@@ -44,7 +45,7 @@ class ClickMenu(object):
         self.action = action
         self.prev = None
 
-    def call(self, choices=None):
+    def __call__(self, choices=None):
         if choices is None:
             choices = self.choices
         if callable(choices):
@@ -56,5 +57,6 @@ class ClickMenu(object):
             args += ['--'] + list(choices)
             return call(*map(str, args)).replace('\n', '')
         return inthread(act, self.action)
+    call = __call__
 
 # vim:se sts=4 sw=4 et:

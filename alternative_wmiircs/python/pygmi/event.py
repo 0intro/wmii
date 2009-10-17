@@ -163,7 +163,7 @@ class Keys(object):
         """
         self.modes = {}
         self.modelist = []
-        self.mode = 'main'
+        self._set_mode('main', False)
         self.defs = {}
         events.bind(Key=self.dispatch)
 
@@ -178,14 +178,14 @@ class Keys(object):
             }
             self.modelist.append(mode)
 
-    def _set_mode(self, mode):
+    def _set_mode(self, mode, execute=True):
         self._add_mode(mode)
         self._mode = mode
         self._keys = dict((k % self.defs, v) for k, v in
                           self.modes[mode]['keys'].items() +
                           self.modes[mode]['import'].items());
-
-        client.write('/keys', '\n'.join(self._keys.keys()) + '\n')
+        if execute:
+            client.write('/keys', '\n'.join(self._keys.keys()) + '\n')
 
     mode = property(lambda self: self._mode, _set_mode,
                    doc="The current mode for which to dispatch keys")
