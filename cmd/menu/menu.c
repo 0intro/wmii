@@ -57,7 +57,7 @@ static void
 selectitem(Item *i) {
 	if(i != matchidx) {
 		caret_set(input.filter_start, input.pos - input.string);
-		caret_insert(i->retstring, 0);
+		caret_insert(i->string, 0);
 		matchidx = i;
 	}
 }
@@ -86,7 +86,10 @@ next:
 		if(!matchidx && matchfirst->retstring && !motion)
 		if(input.filter_start == 0 && input.pos == input.end)
 			menu_cmd(CMPL_FIRST, 0);
-		print("%s", input.string);
+		if(!motion && matchidx && !strcmp(input.string, matchidx->string))
+			print("%s", matchidx->retstring);
+		else
+			print("%s", input.string);
 		break;
 	case REJECT:
 		srv.running = false;

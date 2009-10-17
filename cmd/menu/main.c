@@ -18,6 +18,7 @@ static const char version[] = "wimenu-"VERSION", "COPYRIGHT"\n";
 static Biobuf*	cmplbuf;
 static Biobuf*	inbuf;
 static bool	alwaysprint;
+static char*	cmdsep;
 
 static void
 usage(void) {
@@ -78,9 +79,13 @@ populate_list(Biobuf *buf, bool hist) {
 		i = i->next;
 		i->string = p;
 		i->retstring = p;
+		if(cmdsep && (p = strstr(p, cmdsep))) {
+			*p = '\0';
+			i->retstring = p + strlen(cmdsep);
+		}
 		if(!hist) {
-			i->len = strlen(p);
-			i->width = textwidth_l(font, p, i->len);
+			i->len = strlen(i->string);
+			i->width = textwidth_l(font, i->string, i->len);
 			if(i->width > maxwidth)
 				maxwidth = i->width;
 		}
@@ -256,6 +261,9 @@ main(int argc, char *argv[]) {
 		break;
 	case 's':
 		screen = strtol(EARGF(usage()), nil, 10);
+		break;
+	case 'S':
+		cmdsep = EARGF(usage());
 		break;
 	case 'v':
 		print("%s", version);
