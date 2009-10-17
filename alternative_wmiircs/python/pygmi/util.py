@@ -13,7 +13,7 @@ def call(*args, **kwargs):
     input = kwargs.pop('input', None)
     p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, cwd=os.environ['HOME'],
-                         **kwargs)
+                         close_fds=True, **kwargs)
     if not background:
         return p.communicate(input)[0].rstrip('\n')
 

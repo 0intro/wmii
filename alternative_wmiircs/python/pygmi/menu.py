@@ -1,5 +1,4 @@
 from pygmi.util import call
-from threading import Thread
 
 __all__ = 'Menu', 'ClickMenu'
 
@@ -9,8 +8,8 @@ def inthread(fn, action):
         if action:
             return action(res)
         return res
-    if not action:
-        return run()
+    return run()
+    # Bug.
     t = Thread(target=run)
     t.daemon = True
     t.start()

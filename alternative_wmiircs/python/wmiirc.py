@@ -1,3 +1,4 @@
+import datetime
 import operator
 import os
 import re
@@ -52,8 +53,7 @@ def load(self):
     return re.sub(r'^.*: ', '', call('uptime')).replace(', ', ' ')
 @defmonitor
 def time(self):
-    from datetime import datetime
-    return datetime.now().strftime('%c')
+    return datetime.datetime.now().strftime('%c')
 
 wmii.colrules = (
     ('gimp', '17+83+41'),
