@@ -68,7 +68,7 @@ findtime(Display *d, XEvent *e, XPointer v) {
 	Window *w;
 
 	w = (Window*)v;
-	if(e->type == PropertyNotify && e->xproperty.window == w->w) {
+	if(e->type == PropertyNotify && e->xproperty.window == w->xid) {
 		xtime = e->xproperty.time;
 		return true;
 	}
@@ -84,7 +84,7 @@ xtime_kludge(void) {
 
 	w = createwindow(&scr.root, Rect(0, 0, 1, 1), 0, InputOnly, &wa, 0);
 
-	XSelectInput(display, w->w, PropertyChangeMask);
+	XSelectInput(display, w->xid, PropertyChangeMask);
 	changeprop_long(w, "ATOM", "ATOM", &l, 0);
 	XIfEvent(display, &e, findtime, (void*)w);
 
@@ -272,7 +272,7 @@ unmapnotify(XEvent *e) {
 	Window *w;
 
 	ev = &e->xunmap;
-	if((w = findwin(ev->window)) && w->parent && (ev->event == w->parent->w)) {
+	if((w = findwin(ev->window)) && w->parent && (ev->event == w->parent->xid)) {
 		if(ev->send_event || w->unmapped-- == 0)
 			handle(w, unmap, ev);
 	}

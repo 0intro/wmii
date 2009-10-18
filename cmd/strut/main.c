@@ -10,8 +10,6 @@
 
 static const char version[] = "witray-"VERSION", ©2007 Kris Maglione\n";
 
-static int (*xlib_errorhandler) (Display*, XErrorEvent*);
-
 static void
 usage(void) {
 	fatal("usage: %s <window>\n", argv0);
@@ -32,47 +30,7 @@ debug(int flag, const char *fmt, ...) {
 	va_end(ap);
 }
 
-/*
- * There's no way to check accesses to destroyed windows, thus
- * those cases are ignored (especially on UnmapNotifies).
- * Other types of errors call Xlib's default error handler, which
- * calls exit().
- */
-struct {
-	uchar rcode;
-	uchar ecode;
-} itab[] = {
-	{ 0, BadWindow },
-	{ X_SetInputFocus, BadMatch },
-	{ X_PolyText8, BadDrawable },
-	{ X_PolyFillRectangle, BadDrawable },
-	{ X_PolySegment, BadDrawable },
-	{ X_ConfigureWindow, BadMatch },
-	{ X_GrabKey, BadAccess },
-	{ X_GetAtomName, BadAtom },
-};
-
-static int
-errorhandler(Display *dpy, XErrorEvent *error) {
-	int i;
-
-	USED(dpy);
-
-	if(error->request_code == X_QueryTree
-	&& error->error_code == BadWindow
-	&& error->resourceid == win.w)
-		fatal("%W: window does not exist", &win);
-
-	for(i = 0; i < nelem(itab); i++)
-		if((itab[i].rcode == 0 || itab[i].rcode == error->request_code)
-		&& (itab[i].ecode == 0 || itab[i].ecode == error->error_code))
-			return 0;
-
-	fprint(2, "%s: fatal error: Xrequest code=%d, Xerror code=%d\n",
-			argv0, error->request_code, error->error_code);
-
-	return xlib_errorhandler(display, error); /* calls exit() */
-}
+ErrorCode ignored_xerrors[] = { {0,} };
 
 static Window
 findframe(Window *w) {
@@ -81,12 +39,12 @@ findframe(Window *w) {
 	Window ret = {0, };
 	uint n;
 
-	for(par=w->w; par != scr.root.w; ) {
+	for(par=w->xid; par != scr.root.xid; ) {
 		xw = par;
 		XQueryTree(display, xw, &root, &par, &children, &n);
 		XFree(children);
 	}
-	ret.w = xw;
+	ret.xid = xw;
 	ret.parent = &scr.root;
 	return ret;
 }
@@ -98,7 +56,7 @@ getwinsize(Window *win) {
 	XWindow root;
 	uint border, depth;
 
-	XGetGeometry(display, win->w, &root,
+	XGetGeometry(display, win->xid, &root,
 		     &x, &y, &w, &h,
 		     &border, &depth);
 	win->r = rectaddpt(Rect(0, 0, w, h),
@@ -119,7 +77,7 @@ extern int fmtevent(Fmt*);
 	}ARGEND;
 
 	s = EARGF(usage());
-	if(!getulong(s, &win.w))
+	if(!getulong(s, &win.xid))
 		usage();
 
 	if(argc)
@@ -128,7 +86,6 @@ extern int fmtevent(Fmt*);
 	setlocale(LC_CTYPE, "");
 
 	initdisplay();
-	xlib_errorhandler = XSetErrorHandler(errorhandler);
 
 	frame = findframe(&win);
 	getwinsize(&frame);

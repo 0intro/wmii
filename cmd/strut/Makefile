@@ -11,7 +11,7 @@ PACKAGES += $(X11PACKAGES) xext xrandr xinerama
 
 LIB =	$(LIBIXP)
 LDFLAGS += -lm -lregexp9 -lbio -lfmt -lutf
-CFLAGS += -DVERSION=\"$(VERSION)\" -DIXP_NEEDAPI=86
+CFLAGS += -DIXP_NEEDAPI=86
 OBJ =	main	\
 	event	\
 	ewmh	\
