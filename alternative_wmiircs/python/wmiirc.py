@@ -304,6 +304,4 @@ for f in ['wmiirc_local'] + ['plugins.%s' % file[:-3] for file in files]:
     except Exception, e:
         traceback.print_exc(sys.stdout)
 
-events.loop()
-
 # vim:se sts=4 sw=4 et:

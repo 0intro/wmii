@@ -108,7 +108,7 @@ class Events():
 
     def loop(self):
         """
-        Enters teh event loop, reading lines from wmii's '/event'
+        Enters the event loop, reading lines from wmii's '/event'
         and dispatching them, via #dispatch, to event handlers.
         Continues so long as #alive is True.
         """
