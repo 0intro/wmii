@@ -125,6 +125,7 @@ class Dir(Ctl):
                 changes. In this case, #id will return the actual ID of the
                 object.
         """
+        super(Dir, self).__init__()
         if id != 'sel':
             self._id = id
 
