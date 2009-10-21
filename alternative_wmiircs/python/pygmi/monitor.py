@@ -57,8 +57,8 @@ class Monitor(object):
         Initializes the new monitor. For parameter values, see the
         corresponding property values in the class's docstring.
 
-        Param color: The initial colors for the monitor.
-        Param label: The initial label for the monitor.
+        Param colors: The initial colors for the monitor.
+        Param label:  The initial label for the monitor.
         """
         if side:
             self.side = side

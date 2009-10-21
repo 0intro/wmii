@@ -4,7 +4,7 @@ import os
 import re
 import sys
 import traceback
-from threading import Thread
+from threading import Thread, Timer
 
 import pygmi
 from pygmi import *
@@ -50,10 +50,10 @@ pygmi.shell = os.environ.get('SHELL', 'sh')
 
 @defmonitor
 def load(self):
-    return re.sub(r'^.*: ', '', call('uptime')).replace(', ', ' ')
+    return wmii.cache['normcolors'], re.sub(r'^.*: ', '', call('uptime')).replace(', ', ' ')
 @defmonitor
 def time(self):
-    return datetime.datetime.now().strftime('%c')
+    return wmii.cache['focuscolors'], datetime.datetime.now().strftime('%c')
 
 wmii.colrules = (
     ('gimp', '17+83+41'),
@@ -143,11 +143,12 @@ def clickmenu(choices, args):
 
 class Notice(Button):
     def __init__(self):
-        super(Notice, self).__init__(*noticebar, colors=wmii['normcolors'])
+        super(Notice, self).__init__(*noticebar, colors=wmii.cache['normcolors'])
         self.timer = None
+        self.show(' ')
 
     def tick(self):
-        self.label = ' '
+        self.create(wmii.cache['normcolors'], ' ')
 
     def write(self, notice):
         client.awrite('/event', 'Notice %s' % notice.replace('\n', ' '))
@@ -155,8 +156,7 @@ class Notice(Button):
     def show(self, notice):
         if self.timer:
             self.timer.cancel()
-        self.label = notice
-        from threading import Timer
+        self.create(wmii.cache['normcolors'], notice)
         self.timer = Timer(noticetimeout, self.tick)
         self.timer.start()
 notice = Notice()
@@ -294,14 +294,15 @@ addresize('Shift-',   'Nudge', 'nudge')
 
 Actions.rehash()
 
-dirs = filter(curry(os.access, _, os.R_OK),
-              ('%s/plugins' % dir for dir in confpath))
-files = filter(re.compile(r'\.py$').match,
-               reduce(operator.add, map(os.listdir, dirs), []))
-for f in ['wmiirc_local'] + ['plugins.%s' % file[:-3] for file in files]:
-    try:
-        exec 'import %s' % f
-    except Exception, e:
-        traceback.print_exc(sys.stdout)
+if not os.environ.get('WMII_NOPLUGINS', ''):
+    dirs = filter(curry(os.access, _, os.R_OK),
+                  ('%s/plugins' % dir for dir in confpath))
+    files = filter(re.compile(r'\.py$').match,
+                   reduce(operator.add, map(os.listdir, dirs), []))
+    for f in ['wmiirc_local'] + ['plugins.%s' % file[:-3] for file in files]:
+        try:
+            exec 'import %s' % f
+        except Exception, e:
+            traceback.print_exc(sys.stdout)
 
 # vim:se sts=4 sw=4 et:

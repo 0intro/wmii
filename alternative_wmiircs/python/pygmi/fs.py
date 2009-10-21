@@ -36,7 +36,7 @@ class Ctl(object):
     ctl_hasid = False
 
     def __init__(self):
-        pass
+        self.cache = {}
 
     def ctl(self, *args):
         """
@@ -56,6 +56,7 @@ class Ctl(object):
         return key in self.keys()
     def __setitem__(self, key, val):
         assert '\n' not in key
+        self.cache[key] = val
         if key in self.ctl_types:
             val = self.ctl_types[key][1](val)
         self.ctl(key, val)
@@ -610,8 +611,8 @@ class Tags(object):
         self.ignore = set()
         self.tags = {}
         self.sel = None
-        self.normcol = normcol or wmii['normcolors']
-        self.focuscol = focuscol or wmii['focuscolors']
+        self.normcol = normcol
+        self.focuscol = focuscol
         self.lastselect = datetime.now()
         for t in wmii.tags:
             self.add(t.id)
@@ -626,15 +627,15 @@ class Tags(object):
 
     def add(self, tag):
         self.tags[tag] = Tag(tag)
-        self.tags[tag].button = Button('left', tag, self.normcol, tag)
+        self.tags[tag].button = Button('left', tag, self.normcol or wmii.cache['normcolors'], tag)
     def delete(self, tag):
         self.tags.pop(tag).button.remove()
 
     def focus(self, tag):
         self.sel = self.tags[tag]
-        self.sel.button.colors = self.focuscol
+        self.sel.button.colors = self.focuscol or wmii.cache['focuscolors']
     def unfocus(self, tag):
-        self.tags[tag].button.colors = self.normcol
+        self.tags[tag].button.colors = self.normcol or wmii.cache['normcolors']
 
     def set_urgent(self, tag, urgent=True):
         self.tags[tag].button.label = urgent and '*' + tag or tag
