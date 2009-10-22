@@ -85,6 +85,33 @@ ErrorCode ignored_xerrors[] = {
 	{ 0, }
 };
 
+/* xext.c */
+void	xext_init(void);
+Rectangle*	xinerama_screens(int*);
+/* geom.c */
+bool	rect_haspoint_p(Point, Rectangle);
+
+Cursor cursor[1];
+Visual* render_visual;
+
+void init_screens(void);
+void
+init_screens(void) {
+	Rectangle *rects;
+	Point p;
+	int i, n;
+
+	rects = xinerama_screens(&n);
+	p = querypointer(&scr.root);
+	for(i=0; i < n; i++) {
+		if(rect_haspoint_p(p, rects[i]))
+			break;
+	}
+	if(i == n)
+		i = 0;
+	scr.rect = rects[i];
+}
+
 /* main --- crack arguments, set up X stuff, run the main menu loop */
 
 int
@@ -115,6 +142,8 @@ main(int argc, char **argv)
 		usage();
 
 	initdisplay();
+	xext_init();
+	init_screens();
 	create_window();
 
 	numitems = argc;
@@ -258,16 +287,12 @@ size_window(int wide, int high)
 
 	p = querypointer(&scr.root);
 	p.x -= wide / 2;
-	if(p.x < 0)
-		p.x = 0;
-	else if(p.x + wide > Dx(scr.rect))
-		p.x = Dx(scr.rect) - wide;
+	p.x = max(p.x, scr.rect.min.x);
+	p.x = min(p.x, scr.rect.max.x - wide);
 
 	p.y -= cur * high + high / 2;
-	if(p.y < 0)
-		p.y = 0;
-	else if(p.y + h > Dy(scr.rect))
-		p.y = Dy(scr.rect) - h;
+	p.y = max(p.y, scr.rect.min.y);
+	p.y = min(p.y, scr.rect.max.y - h);
 
 	reshapewin(menuwin, rectaddpt(r, p));
 

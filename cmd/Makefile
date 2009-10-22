@@ -24,10 +24,10 @@ OWMIIR=wmiir.o $(OFILES) $(LIBIXP)
 wmiir.out: $(OWMIIR)
 	$(LINK) $@ $(STATIC) $(OWMIIR)
 
-wmii/x11.o wmii/map.o: dall
+wmii/x11.o wmii/xext.o wmii/geom.o wmii/map.o: dall
 	true
 
-O9MENU=wmii9menu.o clientutil.o wmii/x11.o wmii/map.o $(OFILES) $(LIBIXP)
+O9MENU=wmii9menu.o clientutil.o wmii/x11.o wmii/xext.o wmii/geom.o wmii/map.o $(OFILES) $(LIBIXP)
 wmii9menu.out: $(O9MENU)
-	$(LINK) $@ $(O9MENU) $$(pkg-config --libs $(X11PACKAGES)) -lXext -lbio
+	$(LINK) $@ $(O9MENU) $$(pkg-config --libs $(X11PACKAGES) xrandr xinerama) -lXext -lbio
 
