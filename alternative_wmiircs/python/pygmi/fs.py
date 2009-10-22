@@ -238,6 +238,8 @@ class liveprop(object):
 class Area(object):
     def __init__(self, tag, ord, screen='sel', offset=None, width=None, height=None, frames=None):
         self.tag = tag
+        if ':' in str(ord):
+            screen, ord = ord.split(':', 2)
         self.ord = str(ord)
         self.screen = str(screen)
         self.offset = offset
