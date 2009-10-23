@@ -1,7 +1,7 @@
 
 3.9b1:
     * wmii9menu is now Xinerama aware.
-    * Install READMES to $(PREFIX)/share/doc/wmii/.
+    * Install READMEs to $(PREFIX)/share/doc/wmii/.
     * Documentation updates. Add wmiir.1, wmii9menu.1.
     * Allow dragging floating clients from anywhere in their titlebars.
     * Allow specifying screen in area specs.
