@@ -530,6 +530,7 @@ client_resize(Client *c, Rectangle r) {
 			unmap_frame(c);
 		else {
 			reshapewin(c->framewin, f->r);
+			reshapewin(&c->w, f->crect);
 			map_frame(c);
 		}
 		client_unmap(c, IconicState);
