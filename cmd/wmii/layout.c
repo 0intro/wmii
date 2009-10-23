@@ -34,6 +34,7 @@ static Rectangle
 framerect(Framewin *f) {
 	Rectangle r;
 	Point p;
+	int scrn;
 
 	r.min = ZP;
 	if(f->orientation == OHoriz) {
@@ -46,11 +47,15 @@ framerect(Framewin *f) {
 	}
 	r = rectaddpt(r, f->pt);
 
+	scrn = f->screen;
+	if (scrn == -1)
+		scrn = max(ownerscreen(f->f->r), 0);
+
 	/* Keep onscreen */
 	p = ZP;
 	p.x -= min(0, r.min.x);
-	p.x -= max(0, r.max.x - screens[f->screen]->r.max.x);
-	p.y -= max(0, r.max.y - screens[f->screen]->brect.min.y - Dy(r)/2);
+	p.x -= max(0, r.max.x - screens[scrn]->r.max.x);
+	p.y -= max(0, r.max.y - screens[scrn]->brect.min.y - Dy(r)/2);
 	return rectaddpt(r, p);
 }
 
