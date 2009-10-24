@@ -210,9 +210,7 @@ float_placeframe(Frame *f) {
 			s = sel->screen;
 	}
 
-	r = a->r;
-	if (s > -1)
-		r = screens[s]->r;
+	r = s == -1 ? a->r : screens[s]->r;
 	vp = unique_rects(&vec, r);
 
 	area = LONG_MAX;
@@ -233,12 +231,13 @@ float_placeframe(Frame *f) {
 
 	if(area == LONG_MAX) {
 		/* Cascade. */
+		s = max(s, 0);
 		ff = a->sel;
 		if(ff)
 			p = addpt(ff->r.min, Pt(Dy(ff->titlebar), Dy(ff->titlebar)));
-		if(p.x + Dx(f->r) > Dx(screen->r) ||
-		   p.y + Dy(f->r) > screen->brect.min.y)
-			p = ZP;
+		if(p.x + Dx(f->r) > screens[s]->r.max.x ||
+		   p.y + Dy(f->r) > screens[s]->r.max.y)
+			p = screens[s]->r.min;
 	}
 
 	f->floatr = rectsetorigin(f->r, p);

@@ -35,6 +35,7 @@ frame_create(Client *c, View *v) {
 		c->sel = f;
 	}
 	f->collapsed = false;
+	f->screen = -1;
 	f->oldarea = -1;
 	f->oldscreen = -1;
 
