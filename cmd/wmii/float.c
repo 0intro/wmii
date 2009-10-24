@@ -198,7 +198,9 @@ float_placeframe(Frame *f) {
 	 */
 	s = -1;
 	ff = client_groupframe(c, f->view);
-	if (ff)
+	if (f->screen >= 0)
+		s = f->screen;
+	else if (ff)
 		s = ownerscreen(ff->r);
 	else if (selclient())
 		s = ownerscreen(selclient()->sel->r);
