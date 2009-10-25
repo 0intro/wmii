@@ -40,7 +40,7 @@ all:
 
 .c.depend:
 	echo MKDEP $<
-	[ "$$noisycc" = 1 ] && echo $(MKDEP) $(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $< || true
+	[ -n "${noisycc}" ] && echo $(MKDEP) $(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $< || true
 	$(MKDEP) $(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $< >>.depend
 
 .sh.depend .rc.depend .1.depend .awk.depend:
@@ -60,11 +60,14 @@ all:
 .rc.out .awk.out .sh.out:
 	echo FILTER $(BASE)$<
 	[ -n "${<:%.sh=}" ] || sh -n $<
-	$(FILTER) $< >$@
+	set -e; \
+	[ -n "${noisycc}" ] && set -x; \
+	$(FILTER) $< >$@; \
 	chmod 0755 $@
 
 .man1.1:
 	echo TXT2TAGS $(BASE)$<
+	[ -n "${noisycc}" ] && set -x; \
 	txt2tags -o- $< >$@
 
 INSTALL= _install() { set -e; \
@@ -72,6 +75,7 @@ INSTALL= _install() { set -e; \
 		 d=$$(dirname $$3); \
 		 if [ ! -d $(DESTDIR)$$d ]; then echo MKDIR $$d; mkdir -p $(DESTDIR)$$d; fi; \
 		 echo INSTALL $$($(CLEANNAME) $(BASE)$$2); \
+		 [ -n "${noisycc}" ] && set -x; \
 		 if [ "$$dashb" = -b ]; \
 		 then cp -f $$2 $(DESTDIR)$$3; \
 		 else $(FILTER) <$$2 >$(DESTDIR)$$3; \
@@ -80,6 +84,7 @@ INSTALL= _install() { set -e; \
 	 }; _install
 UNINSTALL= _uninstall() { set -e; \
 	           echo UNINSTALL $$($(CLEANNAME) $(BASE)$$2); \
+		   [ -n "${noisycc}" ] && set -x; \
 		   rm -f $(DESTDIR)$$3; \
 	   }; _uninstall
 
