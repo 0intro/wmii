@@ -373,7 +373,7 @@ struct exectab {
 
 int
 main(int argc, char *argv[]) {
-	char *address, *cmd;
+	char *address;
 	exectab *tab;
 	int ret;
 
