@@ -6,6 +6,8 @@ VERSION != echo $(VERS)
 CONFVERSION = -hg
 COPYRIGHT = ©2009 Kris Maglione
 
+LIBS9 = $(ROOT)/lib/libregexp9.a $(ROOT)/lib/libbio.a $(ROOT)/lib/libfmt.a $(ROOT)/lib/libutf.a
+
 CFLAGS += '-DVERSION=\"$(VERSION)\"' '-DCOPYRIGHT=\"$(COPYRIGHT)\"' \
 	  '-DCONFVERSION=\"$(CONFVERSION)\"' '-DCONFPREFIX=\"$(ETC)\"'
 FILTER = sed "s|@CONFPREFIX@|$(ETC)|g; \

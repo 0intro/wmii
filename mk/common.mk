@@ -30,9 +30,5 @@ tags:
 	echo CTAGS $$files $(TAGFILES) || \
 	ctags $$files $(TAGFILES)
 
-DEP:=${shell if test -f .depend;then echo .depend;else echo /dev/null; fi}
-DEP!=echo /dev/null
-include $(DEP)
-
 .PHONY: all options clean dist install uninstall depend cleandep tags
 .PHONY: simpleuninstall simpleinstall

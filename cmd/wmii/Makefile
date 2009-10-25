@@ -10,7 +10,7 @@ HFILES=	dat.h fns.h
 PACKAGES += $(X11PACKAGES) xext xrandr xrender xinerama
 
 LIB =	$(LIBIXP)
-LDFLAGS += -lm $(LIBICONV) -lregexp9 -lbio -lfmt -lutf
+LDFLAGS += -lm $(LIBS9)
 
 CFLAGS += $(INCICONV) -DIXP_NEEDAPI=97
 OBJ =	area	\

@@ -10,7 +10,7 @@ HFILES=	dat.h fns.h
 PACKAGES += $(X11PACKAGES) xext xrandr xrender xinerama
 
 LIB =	$(LIBIXP)
-LDFLAGS += -lm -lXtst -lregexp9 -lbio -lfmt -lutf
+LDFLAGS += -lm -lXtst $(LIBS9)
 CFLAGS += -DVERSION=\"$(VERSION)\" -DIXP_NEEDAPI=86
 OBJ =	main	\
 	_util	\

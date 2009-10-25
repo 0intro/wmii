@@ -38,6 +38,7 @@ BINSH != echo /bin/sh
 .SUFFIXES: .out .o .o_pic .c .pdf .sh .rc .$(SOEXT) .awk .1 .man1 .depend .install .uninstall .clean
 all:
 
+MAKEFILES=.depend
 .c.depend:
 	echo MKDEP $<
 	[ -n "${noisycc}" ] && echo $(MKDEP) $(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $< || true
@@ -81,6 +82,7 @@ INSTALL= _install() { set -e; \
 		 else $(FILTER) <$$2 >$(DESTDIR)$$3; \
 		 fi; \
 		 chmod $$1 $(DESTDIR)$$3; \
+		 set +x; \
 	 }; _install
 UNINSTALL= _uninstall() { set -e; \
 	           echo UNINSTALL $$($(CLEANNAME) $(BASE)$$2); \

@@ -14,7 +14,7 @@ TARG =	wihack    \
 
 OFILES = util.o
 
-LDFLAGS += -lfmt -lutf
+LDFLAGS += $(LIBS9)
 CFLAGS += $(INCX11)
 
 include $(ROOT)/mk/many.mk
@@ -29,5 +29,5 @@ wmii/x11.o wmii/xext.o wmii/geom.o wmii/map.o: dall
 
 O9MENU=wmii9menu.o clientutil.o wmii/x11.o wmii/xext.o wmii/geom.o wmii/map.o $(OFILES) $(LIBIXP)
 wmii9menu.out: $(O9MENU)
-	$(LINK) $@ $(O9MENU) $$(pkg-config --libs $(X11PACKAGES) xrandr xinerama) -lXext -lbio
+	$(LINK) $@ $(O9MENU) $$(pkg-config --libs $(X11PACKAGES) xrandr xinerama) -lXext
 
