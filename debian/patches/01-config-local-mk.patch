@@ -5,8 +5,9 @@ diff --git a/config.local.mk b/config.local.mk
 new file mode 100644
 --- /dev/null
 +++ b/config.local.mk
-@@ -0,0 +1,4 @@
+@@ -0,0 +1,5 @@
 +DESTDIR=./debian/wmii/
 +PREFIX=/usr
 +ETC=/etc/X11
 +STATIC=
++TERMINAL = x-terminal-emulator
