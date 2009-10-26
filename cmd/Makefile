@@ -14,7 +14,7 @@ TARG =	wihack    \
 
 OFILES = util.o
 
-LDFLAGS += $(LIBS9)
+LIBS += $(LIBS9)
 CFLAGS += $(INCX11)
 
 include $(ROOT)/mk/many.mk

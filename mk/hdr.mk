@@ -5,8 +5,8 @@ EXCFLAGS = $(INCLUDES) -D_XOPEN_SOURCE=600
 COMPILE    = $(ROOT)/util/compile "$(CC)" "$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES))"
 COMPILEPIC = $(ROOT)/util/compile "$(CC)" "$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $(SOCFLAGS)"
 
-LINK   = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(LDFLAGS)"
-LINKSO = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(SOLDFLAGS) $(SHARED)"
+LINK   = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(LDFLAGS) $(LIBS)"
+LINKSO = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(SOLDFLAGS) $(LIBS) $(SHARED)"
 
 CLEANNAME=$(ROOT)/util/cleanname
 

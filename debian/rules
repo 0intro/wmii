@@ -18,6 +18,3 @@ override_dh_auto_install:
 
 	install -D img/icon.png debian/wmii/usr/share/icons/wmii.png
 
-unexport CFLAGS
-unexport LDFLAGS
-
