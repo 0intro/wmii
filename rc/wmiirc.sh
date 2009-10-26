@@ -140,7 +140,7 @@ Action quit
 Action exec
 	wmiir xwrite /ctl exec "$@"
 Action rehash
-	proglist $PATH >$progsfile
+	wi_proglist $PATH >$progsfile
 Action status
 	set +xv
 	if wmiir remove /rbar/status 2>/dev/null; then
@@ -167,9 +167,9 @@ Key $MODKEY-space   # Toggle between floating and managed layers
 
 KeyGroup Moving through stacks
 Key $MODKEY-Control-$UP    # Select the stack above
-	wmiir xwrite /taglsel/ctl select up stack
+	wmiir xwrite /tag/sel/ctl select up stack
 Key $MODKEY-Control-$DOWN  # Select the stack below
-	wmiir xwrite /taglsel/ctl select down stack
+	wmiir xwrite /tag/sel/ctl select down stack
 
 KeyGroup Moving clients around
 Key $MODKEY-Shift-$LEFT   # Move selected client to the left
