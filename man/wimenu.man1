@@ -136,8 +136,8 @@ wimenu -c <fifo | awk '
 
 	# Push out a new set of completions
 	function update(str, opts) {
-		print length str >fifo # Print the length of the preceding string
-		print opts >fifo       # and the options themself
+		print length(str) >fifo # Print the length of the preceding string
+		print opts >fifo        # and the options themself
 		fflush(fifo)
 	}
 
