@@ -149,8 +149,9 @@ void
 update_input(void) {
 	if(alwaysprint) {
 		write(1, input.string, input.pos - input.string);
-		write(1, "", 1);
-		write(1, input.pos, input.end - input.pos + 1);
+		write(1, "\n", 1);
+		write(1, input.pos, input.end - input.pos);
+		write(1, "\n", 1);
 	}
 }
 

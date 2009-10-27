@@ -1,7 +1,7 @@
 
 VERS = hg$$(hg identify -n)
 VERS = $$(test -n "$$WMII_HGVERSION" && echo $$WMII_HGVERSION || \
-          echo hg$$(hg log -r $$(hg id 2>/dev/null | awk -F'[+ ]' '{print $$1}') --template '{rev}' 2>/dev/null))
+          hg log -r $$(hg id 2>/dev/null | awk -F'[+ ]' '{print $$1}') --template 'hg{rev}' 2>/dev/null)
 
 WMII_HGVERSION = $(VERS)
 WMII_HGVERSION := $(shell echo $(VERS))

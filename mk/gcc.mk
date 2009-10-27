@@ -19,6 +19,7 @@ CFLAGS += \
 	-Wno-parentheses \
 	-Wno-sign-compare \
 	-Wno-switch \
+	-Wno-unused-result \
 	-Wpointer-arith \
 	-Wreturn-type \
 	-Wstrict-prototypes \

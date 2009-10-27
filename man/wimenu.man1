@@ -10,7 +10,7 @@ wimenu - The wmii menu program
 
 = SYNOPSIS =
 
-wimenu [-a <address>] [-c] [-h <history file>] [-i] [-K] [-k <keys file>] [-n <history count>] [-p <prompt>] [-s <screen>] +
+wimenu [-i] [-h <history file>] [-n <history count>] [-p <prompt>] +
 wimenu -v
 
 = DESCRIPTION =
@@ -21,15 +21,11 @@ for input. The standard configuration uses it to launch
 programs, select views, and perform standard actions. It
 supports basic item completion and history searching.
 
-= ARGUMENTS =
+= BASIC ARGUMENTS =
 
-: -a
-        The address at which to connect to `wmii`.
-: -c
-        Prints the contents of the input buffer each time the
-        user inputs a character, as such:
+Normal use of `wimenu` shouldn't require any arguments other than the
+following. More advanced options are documented below.
 
-                <text before caret>\0<text after caret>\0
 : -h <history file>
         Causes `wimenu` to read its command history from
         <history file> and to append its result to that file if
@@ -37,6 +33,20 @@ supports basic item completion and history searching.
 : -i
         Causes matching of completion items to be performed in a
         case insensitive manner.
+: -n <count>
+        Write at most <count> items back to the history file.
+        The file is never modified unless this option is
+        provided. Duplicates are filtered out within a 20 item
+        sliding window before this limit is imposed.
+: -p <prompt>
+        The string <prompt> will be show before the input field
+        when the menu is opened.
+:
+
+= ADVANCED ARGUMENTS =
+
+: -a
+        The address at which to connect to `wmii`.
 : -K
         Prevents `wimenu` from initializing its default key
         bindings. WARNING: If you do this, be sure to bind a key
@@ -54,17 +64,100 @@ supports basic item completion and history searching.
         cmd/menu/keys.txt, or use strings(1) on the `wimenu`
         executable (this level of customization is reserved for the
         determined).
-: -n <count>
-        Write at most <count> items back to the history file.
-        The file is never modified unless this option is
-        provided. Duplicates are filtered out within a 20 item
-        sliding window before this limit is imposed.
-: -p <prompt>
-        The string <prompt> will be show before the input field
-        when the menu is opened.
 : -s <screen>
         Suggests that the menu open on Xinerama screen <screen>.
+: -S <command separator>
+	Causes each input item to be split at the first occurance of
+	<command sep>. The text to the left of the separator is displayed
+	as a menu option, and the text to the right is displayed when a
+	selection is made.
+
+= CUSTOM COMPLETION =
+
+Custom, multipart completion data may be proveded by an
+external application. When the standard input is not a TTY,
+processing of a set of completions stops at every blank line.
+After the first new line or EOF, `wimenu` displays the first
+set of menu items, and waits for further input. The completion
+items may be replaced by writing out a new set, again followed
+by a new line. Every set following the first must begin with a
+line containing a single decimal number specifying where the
+new completion results are to be spliced into the input. When
+an item is selected, text from this position to the position
+of the caret is replaced.
+
+== ARGUMENTS ==
+
+: -c
+        Prints the contents of the input buffer each time the
+        user inputs a character, as such:
+
+                <text before caret>\n<text after caret>\n
 :
+
+== EXAMPLE ==
+
+Let's assume that a script would like to provide a menu with
+completions first for a command name, then for arguments
+to that command. Given three commands and argument sets,
+
+: foo
+	1, 2, 3
+: bar
+	4, 5, 6
+: baz
+	7, 8, 9
+
+the following script provides the appropriate completions:
+
+```
+#!/bin/sh -f
+
+rm fifo
+mkfifo fifo
+
+# Open wimenu with a fifo as its stdin
+wimenu -c <fifo | awk '
+	BEGIN {
+		# Define the completion results
+		cmds = "foo\nbar\nbaz\n"
+		cmd["foo"] = "1\n2\n3\n"
+		cmd["bar"] = "4\n5\n6\n"
+		cmd["baz"] = "7\n8\n9\n"
+
+		# Print the first set of completions to wimenu’s fifo
+		fifo = "fifo"
+		print cmds >fifo; fflush(fifo)
+	}
+
+	# Store the last line we get and print it when done
+	{ last = $0 }
+	END { print last }
+
+	# Push out a new set of completions
+	function update(str, opts) {
+		print length str >fifo # Print the length of the preceding string
+		print opts >fifo       # and the options themself
+		fflush(fifo)
+	}
+
+	# Ensure correct argument count with trailing spaces
+	/ $/ { $0 = $0 "#"; }
+
+	{ # Process the input and provide the completions
+		if (NF == 1)
+			update("", cmds)        # The first arg, command choices
+		else
+			update($1 " ", cmd[$1]) # The second arg, command arguments
+		# Skip the trailing part of the command
+		getline rest
+	}
+'
+```
+
+In theory, this facility can be used for myriad purposes,
+including hijacking the programmable completion facilities of
+most shells.
 
 = ENVIRONMENT =
 
