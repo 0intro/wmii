@@ -35,6 +35,11 @@ class Ctl(object):
     ctl_types = {}
     ctl_hasid = False
 
+    def __eq__(self, other):
+        if self.ctl_hasid and isinstance(other, Ctl) and other.ctl_hasid:
+            return self.id == other.id
+        return False
+
     def __init__(self):
         self.cache = {}
 
@@ -126,6 +131,8 @@ class Dir(Ctl):
                 object.
         """
         super(Dir, self).__init__()
+        if isinstance(id, Dir):
+            id = id.id
         if id != 'sel':
             self._id = id
 
@@ -358,11 +365,11 @@ class Tag(Dir):
                   for l in client.readlines('%s/index' % self.path)
                   if l]:
             if l[0] == '#':
-                if l[1] == '~':
-                    area = Area(tag=self, ord=l[1], width=l[2], height=l[3],
-                                frames=[])
+                m = re.match(r'(?:(\d+):)?(\d+|~)', l[1])
+                if m.group(2) == '~':
+                    area = Area(tag=self, screen=m.group(1), ord=l[1], width=l[2],
+                                height=l[3], frames=[])
                 else:
-                    m = re.match(l[1], '(?:(\d+):)?(\d+)')
                     area = Area(tag=self, screen=m.group(1) or 0,
                                 ord=m.group(2), offset=l[2], width=l[3],
                                 frames=[])

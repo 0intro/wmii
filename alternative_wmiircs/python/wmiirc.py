@@ -297,7 +297,7 @@ Actions.rehash()
 if not os.environ.get('WMII_NOPLUGINS', ''):
     dirs = filter(curry(os.access, _, os.R_OK),
                   ('%s/plugins' % dir for dir in confpath))
-    files = filter(re.compile(r'\.py$').match,
+    files = filter(re.compile(r'\.py$').search,
                    reduce(operator.add, map(os.listdir, dirs), []))
     for f in ['wmiirc_local'] + ['plugins.%s' % file[:-3] for file in files]:
         try:
