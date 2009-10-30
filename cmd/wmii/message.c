@@ -35,6 +35,7 @@ enum {
 	LEXEC,
 	LFOCUSCOLORS,
 	LFONT,
+	LFONTPAD,
 	LGRABMOD,
 	LGROW,
 	LINCMODE,
@@ -69,6 +70,7 @@ char *symtab[] = {
 	"exec",
 	"focuscolors",
 	"font",
+	"fontpad",
 	"grabmod",
 	"grow",
 	"incmode",
@@ -263,6 +265,16 @@ getbase(const char **s, long *sign) {
 	if(ret != 10 && (**s == '-' || **s == '+'))
 		*sign = 0;
 	return ret;
+}
+
+static bool
+getint(const char *s, int *ret) {
+	long l;
+	bool res;
+
+	res = getlong(s, &l);
+	*ret = l;
+	return res;
 }
 
 bool
@@ -537,6 +549,18 @@ message_root(void *p, IxpMsg *m) {
 			ret = "can't load font";
 		view_update(selview);
 		break;
+	case LFONTPAD:
+		if(!getint(msg_getword(m), &def.font->pad.min.x) ||
+		   !getint(msg_getword(m), &def.font->pad.max.x) ||
+		   !getint(msg_getword(m), &def.font->pad.max.y) ||
+		   !getint(msg_getword(m), &def.font->pad.min.y))
+			ret = "invalid rectangle";
+		else {
+			for(n=0; n < nscreens; n++)
+				bar_resize(screens[n]);
+			view_update(selview);
+		}
+		break;
 	case LGRABMOD:
 		s = msg_getword(m);
 		if(!parsekey(s, &i, nil) || i == 0)
@@ -598,6 +622,8 @@ readctl_root(void) {
 	}
 	bufprint("focuscolors %s\n", def.focuscolor.colstr);
 	bufprint("font %s\n", def.font->name);
+	bufprint("fontpad %d %d %d %d\n", def.font->pad.min.x, def.font->pad.max.x,
+		 def.font->pad.max.y, def.font->pad.min.y);
 	bufprint("grabmod %s\n", def.grabmod);
 	bufprint("incmode %s\n", incmodetab[def.incmode]);
 	bufprint("normcolors %s\n", def.normcolor.colstr);

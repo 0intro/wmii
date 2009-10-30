@@ -91,6 +91,7 @@ struct Font {
 		XFontSet	set;
 		XftFont*	xft;
 	} font;
+	Rectangle pad;
 	int	ascent;
 	int	descent;
 	uint	height;
@@ -261,6 +262,7 @@ Point	subpt(Point, Point);
 void	sync(void);
 uint	textwidth(Font*, char*);
 uint	textwidth_l(Font*, char*, uint len);
+Rectangle	textextents_l(Font*, char*, uint, int*);
 int	traperrors(bool);
 Point	translate(Window*, Window*, Point);
 void	ungrabkeyboard(void);

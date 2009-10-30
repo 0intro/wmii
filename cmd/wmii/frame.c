@@ -466,8 +466,8 @@ frame_draw(Frame *f) {
 
 	/* grabbox */
 	r.min = Pt(2, 2);
-	r.max.x = r.min.x + def.font->height - 3;
 	r.max.y -= 2;
+	r.max.x = r.min.x + Dy(r);
 	f->grabbox = r;
 
 	if(c->urgent)

@@ -367,6 +367,7 @@ struct exectab {
 	{0, }
 }, utiltab[] = {
 	{"namespace", xnamespace},
+	{"ns", xnamespace},
 	{"setsid", xsetsid},
 	{0, }
 };

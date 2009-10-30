@@ -140,7 +140,7 @@ bar_draw(WMScreen *s) {
 	foreach_bar(s, b) {
 		b->r.min = ZP;
 		b->r.max.y = Dy(s->brect);
-		b->r.max.x = def.font->height & ~1;
+		b->r.max.x = (def.font->height & ~1) + def.font->pad.min.x + def.font->pad.max.x;
 		if(b->text && strlen(b->text))
 			b->r.max.x += textwidth(def.font, b->text);
 		width += Dx(b->r);

@@ -537,8 +537,9 @@ uint
 drawstring(Image *dst, Font *font,
 	   Rectangle r, Align align,
 	   char *text, ulong col) {
+	Rectangle tr;
 	char *buf;
-	uint x, y, w, h, len;
+	uint x, y, width, height, len;
 	int shortened;
 
 	shortened = 0;
@@ -547,14 +548,22 @@ drawstring(Image *dst, Font *font,
 	buf = emalloc(len+1);
 	memcpy(buf, text, len+1);
 
-	h = font->ascent + font->descent;
-	y = r.min.y + Dy(r) / 2 - h / 2 + font->ascent;
+	r.max.y -= font->pad.min.y;
+	r.min.y += font->pad.max.y;
+
+	height = font->ascent + font->descent;
+	y = r.min.y + Dy(r) / 2 - height / 2 + font->ascent;
+
+	width = Dx(r) - font->pad.min.x - font->pad.max.x - (font->height & ~1);
+
+	r.min.x += font->pad.min.x;
+	r.max.x -= font->pad.max.x;
 
 	/* shorten text if necessary */
-	w = 0;
+	tr = ZR;
 	while(len > 0) {
-		w = textwidth_l(font, buf, len + min(shortened, 3));
-		if(w <= Dx(r) - (font->height & ~1))
+		tr = textextents_l(font, buf, len + min(shortened, 3), nil);
+		if(Dx(tr) <= width)
 			break;
 		while(len > 0 && (buf[--len]&0xC0) == 0x80)
 			buf[len] = '.';
@@ -562,7 +571,7 @@ drawstring(Image *dst, Font *font,
 		shortened++;
 	}
 
-	if(len == 0 || w > Dx(r))
+	if(len == 0 || Dx(tr) > width)
 		goto done;
 
 	/* mark shortened info in the string */
@@ -571,13 +580,13 @@ drawstring(Image *dst, Font *font,
 
 	switch (align) {
 	case East:
-		x = r.max.x - (w + (font->height / 2));
+		x = r.max.x - (tr.max.x + (font->height / 2));
 		break;
 	case Center:
-		x = r.min.x + (Dx(r) - w) / 2;
+		x = r.min.x + (Dx(r) - Dx(tr)) / 2 - tr.min.x;
 		break;
 	default:
-		x = r.min.x + (font->height / 2);
+		x = r.min.x + (font->height / 2) - tr.min.x;
 		break;
 	}
 
@@ -605,7 +614,7 @@ drawstring(Image *dst, Font *font,
 
 done:
 	free(buf);
-	return w;
+	return Dx(tr);
 }
 
 void
@@ -745,24 +754,42 @@ freefont(Font *f) {
 	free(f);
 }
 
-uint
-textwidth_l(Font *font, char *text, uint len) {
+Rectangle
+textextents_l(Font *font, char *text, uint len, int *offset) {
+	Rectangle rect;
 	XRectangle r;
 	XGlyphInfo i;
+	int unused;
+
+	if(!offset)
+		offset = &unused;
 
 	switch(font->type) {
 	case FFontSet:
-		Xutf8TextExtents(font->font.set, text, len, nil, &r);
-		return r.width;
+		*offset = Xutf8TextExtents(font->font.set, text, len, &r, nil);
+		return Rect(r.x, -r.y - r.height, r.x + r.width, -r.y);
 	case FXft:
 		XftTextExtentsUtf8(display, font->font.xft, (uchar*)text, len, &i);
-		return i.width;
+		*offset = i.xOff;
+		return Rect(-i.x, i.y - i.height, -i.x + i.width, i.y);
 	case FX11:
-		return XTextWidth(font->font.x11, text, len);
+		rect = ZR;
+		rect.max.x = XTextWidth(font->font.x11, text, len);
+		rect.max.y = font->ascent;
+		*offset = rect.max.x;
+		return rect;
 	default:
 		die("Invalid font type");
-		return 0; /* shut up ken */
+		return ZR; /* shut up ken */
 	}
+}
+
+uint
+textwidth_l(Font *font, char *text, uint len) {
+	Rectangle r;
+
+	r = textextents_l(font, text, len, nil);
+	return Dx(r);
 }
 
 uint
@@ -772,7 +799,7 @@ textwidth(Font *font, char *text) {
 
 uint
 labelh(Font *font) {
-	return font->height + 2;
+	return font->height + font->descent + font->pad.min.y + font->pad.max.y;
 }
 
 /* Misc */

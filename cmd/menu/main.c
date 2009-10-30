@@ -293,6 +293,8 @@ main(int argc, char *argv[]) {
 	loadcolor(&cnorm, readctl("normcolors "));
 	loadcolor(&csel, readctl("focuscolors "));
 	font = loadfont(readctl("font "));
+	sscanf(readctl("fontpad "), "%d %d %d %d", &font->pad.min.x, &font->pad.max.x,
+	       &font->pad.min.x, &font->pad.max.y);
 	if(!font)
 		fatal("Can't load font %q", readctl("font "));
 

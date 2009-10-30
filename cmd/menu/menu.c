@@ -130,15 +130,15 @@ next:
 
 static void
 _menu_draw(bool draw) {
-	Rectangle r, rd, rp, r2;
+	Rectangle r, rd, rp, r2, extent;
 	CTuple *c;
 	Item *i;
-	int inputw, itemoff, end, pad, n;
+	int inputw, itemoff, end, pad, n, offset;
 
 	r = barwin->r;
 	r = rectsetorigin(r, ZP);
 
-	pad = (font->height & ~1);
+	pad = (font->height & ~1) + font->pad.min.x + font->pad.max.x;
 
 	rd = r;
 	rp = ZR; // SET(rp)
@@ -208,7 +208,8 @@ _menu_draw(bool draw) {
 	r2.max.x = promptw + inputw;
 	drawstring(ibuf, font, r2, West, input.string, cnorm.fg);
 
-	r2.min.x = promptw + textwidth_l(font, input.string, input.pos - input.string) + pad/2 - 1;
+	extent = textextents_l(font, input.string, input.pos - input.string, &offset);
+	r2.min.x = promptw + offset + font->pad.min.x - extent.min.x + pad/2 - 1;
 	r2.max.x = r2.min.x + 2;
 	r2.min.y++;
 	r2.max.y--;
@@ -236,7 +237,7 @@ menu_show(void) {
 	ltwidth = textwidth(font, "<");
 
 	pad = (font->height & ~1)/2;
-	height = font->height + 2;
+	height = labelh(font);
 
 	r = scr.rect;
 	if(ontop)
