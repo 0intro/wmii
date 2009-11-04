@@ -95,6 +95,7 @@ char *symtab[] = {
 };
 
 char* debugtab[] = {
+	"9p",
 	"dnd",
 	"event",
 	"ewmh",

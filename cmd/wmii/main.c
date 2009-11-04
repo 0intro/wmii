@@ -327,6 +327,11 @@ closedisplay(IxpConn *c) {
 	XCloseDisplay(display);
 }
 
+static void
+printfcall(IxpFcall *f) {
+	Dprint(D9p, "%F\n", f);
+}
+
 int
 main(int argc, char *argv[]) {
 	IxpMsg m;
@@ -382,6 +387,9 @@ extern int fmtevent(Fmt*);
 	user = estrdup(passwd->pw_name);
 
 	init_environment();
+
+	fmtinstall('F', Ffmt);
+	ixp_printfcall = printfcall;
 
 	sock = ixp_announce(address);
 	if(sock < 0)

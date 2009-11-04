@@ -99,13 +99,14 @@ enum Protocols {
 };
 
 enum DebugOpt {
-	DDnd	= 1<<0,
-	DEvent	= 1<<1,
-	DEwmh	= 1<<2,
-	DFocus	= 1<<3,
-	DGeneric= 1<<4,
-	DStack  = 1<<5,
-	NDebugOpt = 6,
+	D9p	= 1<<0,
+	DDnd	= 1<<1,
+	DEvent	= 1<<2,
+	DEwmh	= 1<<3,
+	DFocus	= 1<<4,
+	DGeneric= 1<<5,
+	DStack  = 1<<6,
+	NDebugOpt = 7,
 };
 
 /* Data Structures */

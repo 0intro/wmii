@@ -250,6 +250,9 @@ bool	readmotion(Point*);
 int	readmouse(Point*, uint*);
 Align	snap_rect(const Rectangle *rects, int num, Rectangle *current, Align *mask, int snapw);
 
+/* print.c */
+int	Ffmt(Fmt*);
+
 /* printevent.c */
 void	printevent(XEvent*);
 
