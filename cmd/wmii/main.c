@@ -157,6 +157,11 @@ ErrorCode ignored_xerrors[] = {
 };
 
 void
+regerror(char *err) {
+	fprint(2, "%s: %s\n", argv0, err);
+}
+
+void
 init_screens(void) {
 	Rectangle *rects;
 	View *v;
