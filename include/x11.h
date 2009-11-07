@@ -7,6 +7,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xft/Xft.h>
+#include <X11/extensions/Xrender.h>
 #ifdef _X11_VISIBLE
 #  include <X11/Xatom.h>
 #  include <X11/extensions/shape.h>
@@ -56,6 +57,7 @@ struct Rectangle {
 	Point min, max;
 };
 
+typedef struct Color Color;
 typedef struct CTuple CTuple;
 typedef struct ErrorCode ErrorCode;
 typedef struct Ewmh Ewmh;
@@ -66,10 +68,15 @@ typedef struct WinHints WinHints;
 typedef struct Window Image;
 typedef struct Window Window;
 
+struct Color {
+	ulong		pixel;
+	XRenderColor	render;
+};
+
 struct CTuple {
-	ulong bg;
-	ulong fg;
-	ulong border;
+	Color bg;
+	Color fg;
+	Color border;
 	char colstr[24]; /* #RRGGBB #RRGGBB #RRGGBB */
 };
 
@@ -201,7 +208,7 @@ XRectangle XRect(Rectangle r);
 /* x11.c */
 Point	addpt(Point, Point);
 Image*	allocimage(int w, int h, int depth);
-void	border(Image *dst, Rectangle, int w, ulong col);
+void	border(Image *dst, Rectangle, int w, Color);
 void	changeprop_char(Window*, char*, char*, char[], int);
 void	changeprop_long(Window*, char*, char*, long[], int);
 void	changeprop_short(Window*, char*, char*, short[], int);
@@ -215,13 +222,13 @@ Window* createwindow_visual(Window*, Rectangle, int depth, Visual*, uint class, 
 void	delproperty(Window*, char*);
 void	destroywindow(Window*);
 Point	divpt(Point, Point);
-void	drawline(Image*, Point, Point, int cap, int w, ulong col);
-void	drawpoly(Image*, Point*, int, int cap, int w, ulong col);
-uint	drawstring(Image*, Font*, Rectangle, Align, char*, ulong col);
+void	drawline(Image*, Point, Point, int cap, int w, Color);
+void	drawpoly(Image*, Point*, int, int cap, int w, Color);
+uint	drawstring(Image*, Font*, Rectangle, Align, char*, Color);
 int	eqpt(Point, Point);
 int	eqrect(Rectangle, Rectangle);
-void	fill(Image*, Rectangle, ulong col);
-void	fillpoly(Image*, Point*, int, ulong col);
+void	fill(Image*, Rectangle, Color);
+void	fillpoly(Image*, Point*, int, Color);
 Window*	findwin(XWindow);
 void	freefont(Font*);
 void	freeimage(Image *);
@@ -243,7 +250,7 @@ void	lowerwin(Window*);
 int	mapwin(Window*);
 void	movewin(Window*, Point);
 Point	mulpt(Point p, Point q);
-bool	namedcolor(char *name, ulong*);
+bool	namedcolor(char *name, Color*);
 bool	parsekey(char*, int*, char**);
 int	pointerscreen(void);
 Point	querypointer(Window*);
@@ -252,7 +259,7 @@ void	reparentwindow(Window*, Window*, Point);
 void	reshapewin(Window*, Rectangle);
 void	selectinput(Window*, long);
 void	sendevent(Window*, bool propegate, long mask, XEvent*);
-void	setborder(Window*, int, long);
+void	setborder(Window*, int, Color);
 void	setfocus(Window*, int mode);
 void	sethints(Window*);
 void	setshapemask(Window *dst, Image *src, Point);

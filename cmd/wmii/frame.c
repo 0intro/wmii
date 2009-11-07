@@ -483,7 +483,7 @@ frame_draw(Frame *f) {
 	if(f->area->floating && c->borderless && c->titleless && !c->fullscreen && c == selclient())
 		setborder(c->framewin, def.border, def.focuscolor.border);
 	else
-		setborder(c->framewin, 0, 0);
+		setborder(c->framewin, 0, def.focuscolor.border);
 
 	/* Label */
 	r.min.x = r.max.x;
