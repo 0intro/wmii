@@ -153,7 +153,7 @@ the job of managing your windows, so you don't have to. It also
 provides programability by means of a simple file-like
 interface, which allows the user to program in virtually any
 language he chooses. These basic features have become
-indispensible to the many users of \wmii\ and other similar
+indispensable to the many users of \wmii\ and other similar
 window managers, but they come at a cost. Though our penchant
 for simplicity makes \wmii's learning curve significantly
 shorter than most of its competitors, there's still a lot to
@@ -364,7 +364,7 @@ and down scroll wheel directions, respectively.
 
 \subsection{Floating Mode}
 
-Begining with what's familiar to most users, we'll first explore
+Beginning with what's familiar to most users, we'll first explore
 floating mode. First, we need to select the floating layer.
 Press <M-Space>. You should see the titlebar of this window
 change color. Now, press <M-Return> to launch a terminal.
@@ -500,7 +500,7 @@ different color scheme from the other windows. This window is
 the basis of relative motion commands, such as “select the
 window to the left”, and the target of commands such as “close
 this window”. Normally, the selected window is the same as the
-focused window, i.e., the window that recieves keyboard events.
+focused window, i.e., the window that receives keyboard events.
 Some applications, however, present strange corner cases.
 
 \begin{description}
@@ -512,8 +512,8 @@ Some applications, however, present strange corner cases.
     \titlebar{unselected}
   \item[Unfocused, selected window] This is the first unusual
     case. This is the selected window, for the purposes of
-    keyboard navigation, but it does not recieve keyboard events.
-    A good example is an onscreen keyboard, which will recieve
+    keyboard navigation, but it does not receive keyboard events.
+    A good example is an onscreen keyboard, which will receive
     mouse clicks and translate them to keyboard events, but
     won't absorb those keyboard events itself. Other examples
     include any window whilst another (such as \wimenu) has
@@ -570,7 +570,7 @@ views were created when needed, and destroyed when no longer
 necessary. If you want to select a view with a proper name, use
 <M-t> and enter the name. Other than the dynamic creation of
 views, this is still similar to the familiar X11 workspace
-model. But that's just the begining of \wmii's model. Open a new
+model. But that's just the beginning of \wmii's model. Open a new
 terminal, and type:
 
 \begin{code}
@@ -711,7 +711,7 @@ our view event handlers:
   FocusTag)   # FocusTag ‹Tag Name›
       wmiir xwrite /lbar/$1 $focuscolors $1;;
   UnfocusTag) # UnfocusTag ‹Tag Name›
-      wmiir xwrite /lbar/$* $normcolors $1;;
+      wmiir xwrite /lbar/$1 $normcolors $1;;
 \end{code}
 
 \subsection{Urgency}
@@ -733,7 +733,7 @@ asterisk:
   # owning the window sets its urgency state. They're ‘Manager’
   # events when wmii or the wmii user sets the state.
   UrgentTag)    # UrgentTag ‹‘Client’ or ‘Manager’› ‹Tag Name›
-      wmiir xwrite /lbar/$2 *$2;;
+      wmiir xwrite /lbar/$2 $2;;
   NotUrgentTag) # NotUrgentTag ‹‘Client’ or ‘Manager’› ‹Tag Name›
       wmiir xwrite /lbar/$2 $2;;
 \end{code}
@@ -921,13 +921,13 @@ And to manage their tags, we'll need:
   «Tagging Keys» ::=
   Mod4-Shift-t)
     # Get the selected client's id
-    c=$(wmiir read /client/sel/tag | sed 1q)
+    c=$(wmiir read /client/sel/ctl | sed 1q)
     # Prompt the user for new tags
-    tags=$(wmiir ls /tag | sed ‘s,/,,; /sel/d’ | wimenu)
+    tags=$(wmiir ls /tag | sed ‘s,/,,; /^sel$/d’ | wimenu)
     # Write them to the client
     wmiir xwrite /client/$c/tags $tag;;
   Mod4-Shift-[0-9])
-    wmiir xwrite /client/sel/tags ${2＃＃*-};;
+    wmiir xwrite /client/sel/tags ${1＃＃*-};;
 \end{code}
 
 \subsection{Click Menus}
@@ -1088,7 +1088,7 @@ IDs to prevent untoward effects when this script dies.
   terminal() { wmiir setsid xterm “$@” }
   proglist() {
       IFS=: set -- $1
-      find -L $@ -maxdepth 1 -perm /111 | sed ‘s,.*/,,’ | sort | uniq
+      find -L $@ -maxdepth 1 -perm /111 | sed ‘1d; s,.*/,,’ | sort | uniq
       unset IFS
   }
 \end{code}
@@ -1100,7 +1100,8 @@ IDs to prevent untoward effects when this script dies.
   Mod4-p) eval exec wmiir setsid "$(proglist $PATH | wimenu)" &;;
   Mod4-a) {
       set -- $(proglist $WMII_CONFPATH | wimenu)
-      prog = $( (PATH=$WMII_CONFPATH which $1) ); shift
+      which=$(which which)
+      prog=$(PATH=$WMII_CONFPATH $which $1); shift
       eval exec $prog “$@”
   } &;;
 \end{code}
@@ -1142,7 +1143,7 @@ The root filesystem contains the following:
             around clients, \wmii\ will try to adjust the sizes
             of the clients in the column to minimize lost space.
         \end{description}
-      \item[view ‹Tag›] The currently visible view.
+      \item[view ‹Tag›] Change the currently visible view.
       \item[exec ‹Command›] Replaces this \wmii\ instance with
         ‹Command›. ‹Command› is split according to rc quoting
         rules, and no expansion occurs. If the command fails to
@@ -1154,20 +1155,6 @@ The root filesystem contains the following:
         searched for the executable. Otherwise, the whole
         argument is passed to the shell for evaluation.
     \end{description}
-  \item[props] The client's window class (the X11 |WM_CLASS|
-    property) and title string, separated by colons. This file
-    is not writable.
-  \item[label] The client's window title. May be written to
-    change the client's title.
-  \item[tags] The client's tags. Tag names are separated by |+|
-    signs. Tags beginning and ending with |/| are treated as
-    regular expressions. If the written value begins with a |+|
-    or a |-|, the tags are updated rather than overwritten. Tag
-    names which directly follow a |-| sign are removed rather
-    than added. Regular expression tags which directly follow a
-    minus sign are treated as exclusion expressions. For
-    example, the tag string |+/foo/-/food/| will match the tag
-    |foobar|, but not the tag |foodstand|.
 \end{description}
 
 \subsection{Configuration}
@@ -1195,13 +1182,13 @@ And we need a few more key bindings to select our views:
 
 \begin{code}
   «Tag Selection Keys» ::=
-  Mod4-Shift-t)
+  Mod4-t)
     # Prompt the user for a tag
-    tags=$(wmiir ls /tag | sed ‘s,/,,; /sel/d’ | wimenu)
+    tags=$(wmiir ls /tag | sed ‘s,/,,; /^sel$/d’ | wimenu)
     # Write it to the filesystem.
-    wmiir xwrite /ctl view $tag;;
+    wmiir xwrite /ctl view $tags;;
   Mod4-[0-9])
-    wmiir xwrite /ctl view ${2＃＃*-};;
+    wmiir xwrite /ctl view ${1＃＃*-};;
 \end{code}
 
 \section{Tieing it All Together}
@@ -1231,7 +1218,7 @@ For clarity, here is the end result:
   terminal() { wmiir setsid xterm “$@” }
   proglist() {
       IFS=: set -- $1
-      find -L $@ -maxdepth 1 -perm /111 | sed ‘s,.*/,,’ | sort | uniq
+      find -L $@ -maxdepth 1 -perm /111 | sed ‘1d; s,.*/,,’ | sort | uniq
       unset IFS
   }
 
@@ -1310,14 +1297,14 @@ For clarity, here is the end result:
       FocusTag)   # FocusTag ‹Tag Name›
           wmiir xwrite /lbar/$1 $focuscolors $1;;
       UnfocusTag) # UnfocusTag ‹Tag Name›
-          wmiir xwrite /lbar/$* $normcolors $1;;
+          wmiir xwrite /lbar/$1 $normcolors $1;;
 
       # «Urgency Events»
       # The urgency events are ‘Client’ events when the program
       # owning the window sets its urgency state. They're ‘Manager’
       # events when wmii or the wmii user sets the state.
       UrgentTag)    # UrgentTag ‹‘Client’ or ‘Manager’› ‹Tag Name›
-          wmiir xwrite /lbar/$2 *$2;;
+          wmiir xwrite /lbar/$2 $2;;
       NotUrgentTag) # NotUrgentTag ‹‘Client’ or ‘Manager’› ‹Tag Name›
           wmiir xwrite /lbar/$2 $2;;
 
@@ -1373,29 +1360,29 @@ For clarity, here is the end result:
           Mod4-p) eval exec wmiir setsid "$(proglist $PATH | wimenu)" &;;
           Mod4-a) {
               set -- $(proglist $WMII_CONFPATH | wimenu)
-              prog = $( (PATH=$WMII_CONFPATH which $1) ); shift
+              prog=$(PATH=$WMII_CONFPATH which $1); shift
               eval exec $prog “$@”
           } &;;
 
           # «Tag Selection Keys»
-          Mod4-Shift-t)
+          Mod4-t)
             # Prompt the user for a tag
-            tags=$(wmiir ls /tag | sed ‘s,/,,; /sel/d’ | wimenu)
+            tags=$(wmiir ls /tag | sed ‘s,/,,; /^sel$/d’ | wimenu)
             # Write it to the filesystem.
             wmiir xwrite /ctl view $tag;;
           Mod4-[0-9])
-            wmiir xwrite /ctl view ${2＃＃*-};;
+            wmiir xwrite /ctl view ${1＃＃*-};;
 
           # «Tagging Keys»
           Mod4-Shift-t)
             # Get the selected client's id
-            c=$(wmiir read /client/sel/tag | sed 1q)
+            c=$(wmiir read /client/sel/ctl | sed 1q)
             # Prompt the user for new tags
-            tags=$(wmiir ls /tag | sed ‘s,/,,; /sel/d’ | wimenu)
+            tags=$(wmiir ls /tag | sed ‘s,/,,; /^sel$/d’ | wimenu)
             # Write them to the client
             wmiir xwrite /client/$c/tags $tag;;
           Mod4-Shift-[0-9])
-            wmiir xwrite /client/sel/tags ${2＃＃*-};;
+            wmiir xwrite /client/sel/tags ${1＃＃*-};;
 
           esac;;
 
