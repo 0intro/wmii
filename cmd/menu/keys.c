@@ -82,7 +82,7 @@ find_key(char *key, long mask) {
 	if(!strcmp(key, "ISO_Left_Tab"))
 		key = "Tab";
 
-	mask &= ~(numlock | LockMask);
+	mask &= ~(numlock | LockMask) & ((1<<8) - 1);
 	for(k=bindings; k; k=k->next)
 		if(!strcasecmp(k->key, key) && k->mask == mask)
 			return k->action;
