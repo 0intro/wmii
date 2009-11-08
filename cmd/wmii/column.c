@@ -17,7 +17,7 @@ char *modes[] = {
 
 bool
 column_setmode(Area *a, const char *mode) {
-	char *s, *t, *orig;
+	char *str, *tok, *orig;
 	char add, old;
 
 	/*
@@ -28,15 +28,16 @@ column_setmode(Area *a, const char *mode) {
 	 */
 
 	orig = strdup(mode);
-	t = orig;
+	str = orig;
 	old = '\0';
-	for(s=t; *s; s=t) {
+	while(*(tok = str)) {
 		add = old;
-		while((old=*s) && !strchr("+-^", old))
-			s++;
-		*s = '\0';
-		if(s > t) {
-			if(!strcmp(t, "max")) {
+		while((old=*str) && !strchr("+-^", old))
+			str++;
+		*str = '\0';
+		if(str > tok) {
+			print("'%s' %c\n", tok, add);
+			if(!strcmp(tok, "max")) {
 				if(add == '\0' || add == '+')
 					a->max = true;
 				else if(add == '-')
@@ -44,7 +45,7 @@ column_setmode(Area *a, const char *mode) {
 				else
 					a->max = !a->max;
 			}else
-			if(!strcmp(t, "stack")) {
+			if(!strcmp(tok, "stack")) {
 				if(add == '\0' || add == '+')
 					a->mode = Colstack;
 				else if(add == '-')
@@ -52,7 +53,7 @@ column_setmode(Area *a, const char *mode) {
 				else
 					a->mode = a->mode == Colstack ? Coldefault : Colstack;
 			}else
-			if(!strcmp(t, "default")) {
+			if(!strcmp(tok, "default")) {
 				if(add == '\0' || add == '+') {
 					a->mode = Coldefault;
 					column_arrange(a, true);
@@ -65,9 +66,8 @@ column_setmode(Area *a, const char *mode) {
 				return false;
 			}
 		}
-		t = s;
 		if(old)
-			t++;
+			str++;
 		
 	}
 	free(orig);

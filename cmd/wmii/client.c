@@ -178,9 +178,9 @@ client_create(XWindow w, XWindowAttributes *wa) {
 
 	/* 
 	 * It's actually possible for a window to be destroyed
-	 * before we get a chance to reparant it. Check for that
-	 * now, because otherwise we'll wind up mapping an empty
-	 * frame.
+	 * before we get a chance to reparent it. Check for that
+	 * now, because otherwise we'll wind up mapping a
+	 * perceptibly empty frame before it's destroyed.
 	 */
 	traperrors(true);
 	reparentwindow(&c->w, c->framewin, p);

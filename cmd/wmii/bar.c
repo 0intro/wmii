@@ -135,6 +135,8 @@ bar_draw(WMScreen *s) {
 	uint width, tw;
 	float shrink;
 
+	/* To do: Generalize this. */
+
 	largest = nil;
 	width = 0;
 	foreach_bar(s, b) {
