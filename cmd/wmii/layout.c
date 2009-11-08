@@ -488,7 +488,7 @@ tvcol(Frame *f) {
 	Rectangle r;
 	Point pt, pt2;
 	uint button;
-	int ret;
+	int ret, scrn;
 
 	focus(f->client, false);
 
@@ -496,7 +496,8 @@ tvcol(Frame *f) {
 	pt2.x = pt.x;
 	pt2.y = f->area->r.min.y;
 
-	r = f->view->r[f->area->screen];
+	scrn = f->area->screen > -1 ? f->area->screen : find_area(pt) ? find_area(pt)->screen : 0;
+	r = f->view->r[scrn];
 	fw = framewin(f, pt2, OVert, Dy(r));
 
 	r.min.y += fw->grabbox.min.y + Dy(fw->grabbox)/2;
