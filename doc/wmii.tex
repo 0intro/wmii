@@ -13,7 +13,9 @@
 \usepackage{xcolor}
 \usepackage[xetex,breaklinks,colorlinks,linkcolor=black]{hyperref}
 
+% Indexes
 \makeindex
+\let\primary=\textbf
 
 \setmainfont[Mapping=tex-text, Numbers=OldStyle]{Palatino LT Std}
 
@@ -21,6 +23,8 @@
 
 \def\titlebar#1{%
   \begin{center}\includegraphics[width=5.5in]{#1.png}\end{center}}
+
+\def\man#1#2{#2\textbf{(#1)}}
 
 % Key specs
 \def\key#1{{\small$\langle$\addfontfeature{Numbers=Lining}#1\/$\rangle$}}
@@ -52,7 +56,7 @@
 % the grabbed characters, since we can't escape them in the
 % verbatim environment.
 \colorlet{comment}{gray}
-\colorlet{string}{yellow!80!black!100}
+\colorlet{string}{red!100!black!90}
 \let\‘=‘
 \let\“=“
 \catcode`¶=6
@@ -603,7 +607,7 @@ should refer to \wmii's |man| pages.
 
 There are several configuration schemes available for \wmii. If
 you're only looking to add basic key bindings, status monitors,
-{\it et cetera}, you should have no trouble modifying the stock
+\emph{et cetera}, you should have no trouble modifying the stock
 configuration for your language of choice. If you're looking for
 deeper knowledge of \wmii's control interface though, this
 section is for you. We'll proceed by building a configuration
@@ -757,6 +761,10 @@ between the left and right sides for five seconds.
 
 \section{Keys}
 
+\label{keybindings}
+\index{key bindings}
+\index{filesystem!/!keys}
+\index{filesystem!/!event}
 Now to the part you've no doubt been waiting for: binding keys.
 When binding keys, you need to be aware of two files, |/keys|
 and |/event|. The former defines which keys \wmii\ needs to
@@ -847,30 +855,44 @@ it for client and tag menus.
 
 \section{Control Files}
 
-Most filesystem objects, including the root directory, have
-control files, named |ctl|. The first line of most control files
-is the canonical name of the directory they reside in, which
-comes in handy for the special |sel/| directories, which are
-aliases for the currently selected object of a group. The
-following lines represent properties of the object. Control
-files may be written to, in similar syntax to the values that
-can be read, to update those properties. For instance, if a file
-contains:
+Several directories including the root, have control files,
+named |ctl|. These files are used to control the object (e.g., a
+client or tag) represented by the directory. Each line of the
+file, with the possible section of the first, represents a
+control variable and its value. In the case of all but the root
+|/ctl| file, the first line represents the id of the directory.
+In the case of |/tag/foo/ctl|, for instance, the first line
+should read |foo|. This is useful when dealing with the special
+|sel/| directories. For instance, when |foo| is the selected
+tag, the special |/tag/sel| directory is a link to |/tag/foo|,
+and the first line of |/tag/sel/ctl| will read |foo|, just as
+if you'd accessed |/tag/foo/ctl| directly.
+
+The rest of the lines, the control variables, can be modified by
+writing new values to the control file. For instance, if a
+client is fullscreen, its control file will contain the line:
 
 \begin{code}
   Fullscreen on
 \end{code}
 
-\noindent either of the following, when written to the file,
-will disable the |Fullscreen| state:
+\noindent To restore the client from fullscreen, either of the
+following lines may be written to its control file:
 
 \begin{code}
   Fullscreen off
   Fullscreen toggle
 \end{code}
 
+When next read, the |Fullscreen on| line will have been replaced
+with |Fullscreen off|.  No care need be taken to preserve the
+other contents of the file. They're generated anew each time
+it's read.
+
 \section{Clients}
 
+\def\clientlabel{/client/$\langle\mathit{client}\rangle$/}
+\index{filesystem!/client/*/@\clientlabel|(}
 Clients are represented by directories under the |/client/|
 tree. Subdirectory names represent the client's X11 window ID.
 The special |sel/| directory represents the currently selected
@@ -878,6 +900,7 @@ client. The files in these directories are:
 
 \begin{description}
   \item[ctl] The control file. The properties are:
+    \index{filesystem!/client/*/@\clientlabel!ctl}
     \begin{description}
       \item[Fullscreen] The client's fullscreen state. When
         |on|, the client is displayed fullscreen on all of its
@@ -892,9 +915,13 @@ client. The files in these directories are:
   \item[props] The client's window class (the X11 |WM_CLASS|
     property) and title string, separated by colons. This file
     is not writable.
+    \index{filesystem!/client/*/@\clientlabel!props}
   \item[label] The client's window title. May be written to
     change the client's title.
-  \item[tags] The client's tags. Tag names are separated by |+|
+    \index{filesystem!/client/*/@\clientlabel!label}
+  \item[tags] 
+    \index{filesystem!/client/*/@\clientlabel!tags}
+    The client's tags. Tag names are separated by |+|
     signs. Tags beginning and ending with |/| are treated as
     regular expressions. If the written value begins with a |+|
     or a |-|, the tags are updated rather than overwritten. Tag
@@ -904,6 +931,8 @@ client. The files in these directories are:
     example, the tag string |+/foo/-/food/| will match the tag
     |foobar|, but not the tag |foodstand|.
 \end{description}
+
+\index{filesystem!/client/*/@\clientlabel|)}
 
 \subsection{Key Bindings}
 
@@ -968,75 +997,84 @@ with it. The stock scripts prompt the user for input:
 
 \section{Views}
 
+\def\taglabel{/tag/$\langle\mathit{tag}\rangle$/}
+\index{filesystem!/tag/*/@\taglabel|(}
 Views are represented by directories under the |/tag/| tree. The
 special |sel/| directory represents the currently selected
 client. The |sel| tag is treated similarly elsewhere. The files
 in these directories are:
 
 \begin{description}
-  \item[ctl] The view's control file. The properties are:
-  \item[select ‹Area›] Select the column ‹Area›, where
-    ‹Area› is a 1-based column index, or |~| for the floating
-    area. It may be optionally preceded by ‹Screen›|:|, where
-    ‹Screen› is a 0-based Xinerama screen index, or “sel”. When
-    omitted, ‹Screen› defaults to 0, the primary screen.
-  \item[select ‹Area› ‹Client Index›] Select the column ‹Area›, and
-    the ‹Client Index›th client.
-  \item[select client ‹Client ID›] Select the client with the
-    X11 window ID ‹Client ID›.
-  \item[select ‹Direction›]
-    Select the client in ‹Direction› where ‹Direction› may be
-    one of ‹up $\wedge$ down $\wedge$ left $\wedge$ right›.
-  \item[send client ‹Client ID› ‹Area›] Send ‹Client ID› to
-    ‹Area›. ‹Area› may be |sel| for the selected area, and
-    |client ‹Client ID›| may be |sel| for the currently selected
-    client.
-  \item[send client ‹Client ID› ‹Direction›]
-    Send ‹Client ID› to a column or position in its column in
-    the given direction.
-  \item[send client ‹Client ID› toggle] If ‹Client ID› is
-    floating, send it to the managed layer. If it's managed,
-    send it to the floating layer.
-  \item[swap client ‹Client ID› \ldots] The same as the |send|
-    commands, but swap ‹Client ID› with the client at the given
-    location.
-  \item[colmode ‹Area› ‹Mode›] Set ‹Area›'s mode to ‹Mode›,
-    where ‹Mode› is a string of values similar to tag
-    specifications. Values which may be added and removed are as
-    follows for managed areas:
-
+  \item[ctl] 
+    The view's control file. The properties are:
+    \index{filesystem!/tag/*/@\taglabel!ctl|(}
     \begin{description}
-      \item[stack] One and only one client in the area is
-        uncollapsed at any given time. When a new client is
-        selected, it is uncollapsed and the previously selected
-        client is collapsed.
-      \item[max] Collapsed clients are hidden from view
-        entirely. Uncollapsed clients display an indicator
-        {\it‹n›/‹m›}, where ‹m› is the number of collapsed
-        clients directly above and below the client, plus one,
-        and ‹n› is the client's index in the stack.
-      \item[default] Like subtracting the stack mode, but all
-        clients in the column are given equal height.
-    \end{description}
+      \item[select ‹Area›] Select the column ‹Area›, where
+        ‹Area› is a 1-based column index, or |~| for the floating
+        area. It may be optionally preceded by ‹Screen›|:|, where
+        ‹Screen› is a 0-based Xinerama screen index, or “sel”. When
+        omitted, ‹Screen› defaults to 0, the primary screen.
+      \item[select ‹Area› ‹Client Index›] Select the column ‹Area›, and
+        the ‹Client Index›th client.
+      \item[select client ‹Client ID›] Select the client with the
+        X11 window ID ‹Client ID›.
+      \item[select ‹Direction›]
+        Select the client in ‹Direction› where ‹Direction› may be
+        one of ‹up $\wedge$ down $\wedge$ left $\wedge$ right›.
+      \item[send client ‹Client ID› ‹Area›] Send ‹Client ID› to
+        ‹Area›. ‹Area› may be |sel| for the selected area, and
+        |client ‹Client ID›| may be |sel| for the currently selected
+        client.
+      \item[send client ‹Client ID› ‹Direction›]
+        Send ‹Client ID› to a column or position in its column in
+        the given direction.
+      \item[send client ‹Client ID› toggle] If ‹Client ID› is
+        floating, send it to the managed layer. If it's managed,
+        send it to the floating layer.
+      \item[swap client ‹Client ID› \ldots] The same as the |send|
+        commands, but swap ‹Client ID› with the client at the given
+        location.
+      \item[colmode ‹Area› ‹Mode›] Set ‹Area›'s mode to ‹Mode›,
+        where ‹Mode› is a string of values similar to tag
+        specifications. Values which may be added and removed are as
+        follows for managed areas:
 
-    For the floating area, the values are the same, except that
-    in |max| mode, floating clients are hidden when the managed
-    layer is selected.
-  \item[grow ‹Frame› ‹Direction› {[‹Amount›]}] Grow ‹Frame› in
-    the given direction, by ‹Amount›. ‹Amount› may be any
-    integer, positive or negative. If suffixed with |px|,
-    it specifies an exact pixel amount, otherwise it specifies a
-    “reasonable increment”. Defaults to 1.
+        \begin{description}
+          \item[stack] One and only one client in the area is
+            uncollapsed at any given time. When a new client is
+            selected, it is uncollapsed and the previously selected
+            client is collapsed.
+          \item[max] Collapsed clients are hidden from view
+            entirely. Uncollapsed clients display an indicator
+            {\it‹n›/‹m›}, where ‹m› is the number of collapsed
+            clients directly above and below the client, plus one,
+            and ‹n› is the client's index in the stack.
+          \item[default] Like subtracting the stack mode, but all
+            clients in the column are given equal height.
+        \end{description}
 
-    ‹Frame› may be one of:
-    \begin{itemize}
-      \item client ‹Client ID›
-      \item ‹Area› ‹Client Index›
-    \end{itemize}
-  \item[nudge ‹Frame› ‹Direction› {[‹Amount›]}] Like
-    |grow|, but move the client in ‹Direction› instead of
-    resizing it.
+        For the floating area, the values are the same, except that
+        in |max| mode, floating clients are hidden when the managed
+        layer is selected.
+      \item[grow ‹Frame› ‹Direction› {[‹Amount›]}] Grow ‹Frame› in
+        the given direction, by ‹Amount›. ‹Amount› may be any
+        integer, positive or negative. If suffixed with |px|,
+        it specifies an exact pixel amount, otherwise it specifies a
+        “reasonable increment”. Defaults to 1.
+
+        ‹Frame› may be one of:
+        \begin{itemize}
+          \item client ‹Client ID›
+          \item ‹Area› ‹Client Index›
+        \end{itemize}
+      \item[nudge ‹Frame› ‹Direction› {[‹Amount›]}] Like
+        |grow|, but move the client in ‹Direction› instead of
+        resizing it.
+  \end{description}
+  \index{filesystem!/tag/*/@\taglabel!ctl|)}
 \end{description}
+
+\index{filesystem!/tag/*/@\taglabel|)}
 
 \subsection{Key Bindings}
 
@@ -1112,8 +1150,10 @@ IDs to prevent untoward effects when this script dies.
 
 The root filesystem contains the following:
 
+\index{!filesystem!/|(}
 \begin{description}
   \item[ctl] The control file. The properties are:
+    \index{filesystem!/!ctl}
     \begin{description}
       \item[bar on ‹top $\wedge$ bottom›] Controls where the bar
         is shown.
@@ -1128,7 +1168,16 @@ The root filesystem contains the following:
         clients and the default color of bar buttons.
       \item[font ‹Font›] The font used throughout \wmii. If
         prefixed with |xft:|, the Xft font renderer is used, and
-        fonts may be antialiased.
+        fonts may be antialiased. Xft font names follow the
+        fontconfig formula. For instance, 10pt, italic Lucida
+        Sans would be specified as
+
+        \begin{code}
+          xft:Lucida Sans-10:italic
+        \end{code}
+
+        See \man 1 {fc-match}.
+
       \item[grabmod ‹Modifier Keys›] The key which must be
         pressed to move and resize windows with the mouse
         without clicking hot spots.
@@ -1157,7 +1206,45 @@ The root filesystem contains the following:
         searched for the executable. Otherwise, the whole
         argument is passed to the shell for evaluation.
     \end{description}
+  \item[keys]  The global keybindings. See section \ref{keybindings}.
+               \index{filesystem!/!keys|primary}
+  \item[event] The global event feed. See section \ref{keybindings}.
+               \index{filesystem!/!event|primary}
+  \item[colrules]
+    \index{filesystem!/!colrules}
+        The |/colrules| file contains a list of
+        rules which affect the width of newly created columns.
+        Rules have the form:
+
+        \begin{quote}\texttt{
+          /‹regex›/ -> ‹width›{\color{gray}[}+‹width›{\color{gray}]*}}
+        \end{quote}
+
+        When a new column, ‹n›, is created on a view whose
+        name matches ‹regex›, the ‹n›th given
+        ‹width› percentage of the screen is given to it. If
+        there is no ‹n›th width, $1/\mbox{‹ncol›th}$ of the
+        screen is given to it.
+
+  \item[tagrules]
+    \index{filesystem!/!tagrules}
+        The |/tagrules| file contains a list of
+        rules similar to the colrules. These rules specify
+        the tags a client is to be given when it is created.
+        Rules are specified:
+
+        \begin{quote}\texttt{
+          /‹regex›/ -> ‹tag›{\color{gray}[}+‹tag›{\color{gray}]*}}
+        \end{quote}
+
+        When a client's ‹name›:‹class›:‹title› matches
+        ‹regex›, it is given the tagstring ‹tag›. There are
+        two special tags. |!|, which is deprecated, and identical
+        to |sel|, represents the current tag. |~|
+        represents the floating layer.
 \end{description}
+
+\index{!filesystem!/|)}
 
 \subsection{Configuration}
 

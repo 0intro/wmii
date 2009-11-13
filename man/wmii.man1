@@ -250,7 +250,7 @@ follows.
         screen is given to it.
 
 : tagrules
-        The //tagrules// file contains a list of
+        The _tagrules_ file contains a list of
         rules similar to the colrules. These rules specify
         the tags a client is to be given when it is created.
         Rules are specified:
@@ -289,10 +289,10 @@ follows.
         : [Left|Right]Bar[Click|MouseDown] <button> <bar>
                 A left or right bar has been clicked or has a
                 button pressed over it.
-        : ...
-                To be continued...
-        :
+        :  
         <<
+        For a more comprehensive list of available events, see
+        _wmii.pdf_[2]
 
 : ctl
         The _ctl_ file takes a number of messages to
@@ -473,4 +473,5 @@ dmenu(1), wmiir(1)
 @DOCDIR@/wmii.pdf
 
 [1] http://www.suckless.org/wiki/wmii/tips/9p_tips
+[2] @DOCDIR@/wmii.pdf
 
