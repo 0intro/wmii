@@ -368,8 +368,10 @@ mouse_resize(Client *c, Align align, bool grabmod) {
 	Frame *f;
 
 	f = c->sel;
-	if(f->client->fullscreen >= 0)
+	if(f->client->fullscreen >= 0) {
+		ungrabpointer();
 		return;
+	}
 	if(!f->area->floating) {
 		if(align==Center)
 			mouse_movegrabbox(c, grabmod);
