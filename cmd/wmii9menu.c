@@ -48,7 +48,7 @@
 #include <util.h>
 #include <x11.h>
 
-char version[] = "@(#) wmii9menu version 1.8";
+char version[] = "wmii9menu-" VERSION " ©2009 Kris Maglione, ©1994 David Hogan, Arnold Robbins";
 
 static Window*	menuwin;
 
@@ -319,7 +319,6 @@ redraw(int high, int wide)
 		fill(menuwin, r, c->bg);
 		drawstring(menuwin, font, r, Center, labels[i], c->fg);
 	}
-	drawstring(menuwin, font, Rect(0, 0, 15, 15), West, "foo", cnorm.fg);
 }
 
 /* warpmouse --- bring the mouse to the menu */
