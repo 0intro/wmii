@@ -86,7 +86,7 @@ update_rules(Rule **rule, const char *data) {
 		case VALUE:
 			if(c == '\n' || c == '#' || c == 0) {
 				*v = 0;
-				trim(value, " \t/");
+				trim(value, " \t");
 				*rule = emallocz(sizeof **rule);
 				(*rule)->regex = regcomp(regex);
 				if((*rule)->regex) {
