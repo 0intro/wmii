@@ -293,12 +293,16 @@ client_destroy(Client *c) {
 	else
 		reparentwindow(&c->w, &scr.root, r.min);
 
+	if(starting > -1)
+		XRemoveFromSaveSet(display, c->w.xid);
+
 	traperrors(false);
 	XUngrabServer(display);
 
 	none = nil;
 	client_setviews(c, &none);
-	client_unmap(c, WithdrawnState);
+	if(starting > -1)
+		client_unmap(c, WithdrawnState);
 	refree(&c->tagre);
 	refree(&c->tagvre);
 	free(c->retags);
@@ -307,7 +311,8 @@ client_destroy(Client *c) {
 
 	ewmh_destroyclient(c);
 	group_remove(c);
-	event("DestroyClient %C\n", c);
+	if(starting > -1)
+		event("DestroyClient %C\n", c);
 
 	flushevents(FocusChangeMask, true);
 	free(c->w.hints);

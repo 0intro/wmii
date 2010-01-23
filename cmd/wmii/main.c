@@ -225,6 +225,7 @@ init_screens(void) {
 
 static void
 cleanup(void) {
+	starting = -1;
 	while(client)
 		client_destroy(client);
 	ixp_server_close(&srv);

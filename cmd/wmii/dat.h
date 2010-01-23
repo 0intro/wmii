@@ -385,7 +385,7 @@ typedef void (*XHandler)(XEvent*);
 EXTERN XHandler handler[LASTEvent];
 
 /* Misc */
-EXTERN bool	starting;
+EXTERN int	starting;
 EXTERN bool	resizing;
 EXTERN long	ignoreenter;
 EXTERN char*	user;
