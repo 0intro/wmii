@@ -750,8 +750,8 @@ updatemwm(Client *c) {
 	}
 	free(ret);
 
-	if(c->sel) {
-		c->sel->floatr = c->r;
+	if(c->sel && false) {
+		c->sel->floatr = client_grav(c, r);
 		if(c->sel->area->floating) {
 			client_resize(c, c->sel->floatr);
 			frame_draw(c->sel);

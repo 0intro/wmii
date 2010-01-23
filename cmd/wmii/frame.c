@@ -283,10 +283,8 @@ frame_gethints(Frame *f) {
 	h.min.x += d.x;
 	h.min.y += d.y;
 	/* Guard against overflow. */
-	if(h.max.x + d.x > h.max.x)
-		h.max.x += d.x;
-	if(h.max.y + d.y > h.max.y)
-		h.max.y += d.y;
+	h.max.x = max(h.max.x + d.x, h.max.x);
+	h.max.y = max(h.max.y + d.y, h.max.y);
 
 	h.base.x += d.x;
 	h.base.y += d.y;

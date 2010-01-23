@@ -19,6 +19,7 @@ TERMINAL = xterm
 include $(ROOT)/mk/gcc.mk
 CFLAGS += $(DEBUGCFLAGS) -O0
 LDFLAGS += -g
+
 SOLDFLAGS += $(LDFLAGS)
 SHARED = -shared -Wl,-soname=$(SONAME)
 STATIC = -static
@@ -29,17 +30,17 @@ LD = cc
 # Archiver
 AR = ar crs
 
-# Your make shell. By default, the first found of /bin/dash, /bin/ksh,
-# /bin/sh. Except with bsdmake, which assumes /bin/sh is sane. bash and zsh
-# are painfully slow, and should be avoided.
-#BINSH = /bin/ash
-
 X11PACKAGES = xft
 INCX11 = $$(pkg-config --cflags $(X11PACKAGES))
 LIBICONV = # Leave blank if your libc includes iconv (glibc does)
 LIBIXP = $(LIBDIR)/libixp.a
 
-# Operating System Configurations
+# Your make shell. By default, the first found of /bin/dash, /bin/ksh,
+# /bin/sh. Except with bsdmake, which assumes /bin/sh is sane. bash and zsh
+# are painfully slow, and should be avoided.
+#BINSH = /bin/ash
+
+## Operating System Configurations
 
 # KenCC
 # Note: wmii *must* always compile under KenCC. It's vital for

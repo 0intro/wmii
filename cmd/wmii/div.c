@@ -72,7 +72,7 @@ drawimg(Image *img, Color cbg, Color cborder, Divide *d) {
 
 	w = Dx(img->r)/2;
 	n = 0;
-	pt[n++] = Pt(w    ,	0);
+	pt[n++] = Pt(w,		0);
 	pt[n++] = Pt(0,		0);
 	pt[n++] = Pt(w - 1,	w - 1);
 
