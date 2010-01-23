@@ -68,8 +68,7 @@ void	bar_setbounds(WMScreen*, int, int);
 
 /* client.c */
 int	Cfmt(Fmt *f);
-void	apply_rules(Client*);
-void	apply_tags(Client*, const char*);
+bool	client_applytags(Client*, const char*);
 void	client_configure(Client*);
 Client*	client_create(XWindow, XWindowAttributes*);
 void	client_destroy(Client*);

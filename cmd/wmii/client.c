@@ -196,11 +196,23 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	return c;
 }
 
+static bool
+apply_rules(Client *c) {
+	Rule *r;
+
+	if(def.tagrules.string)
+		for(r=def.tagrules.rule; r; r=r->next)
+			if(regexec(r->regex, c->props, nil, 0))
+				return client_applytags(c, r->value);
+	return false;
+}
+
 void
 client_manage(Client *c) {
 	Client *leader;
 	Frame *f;
 	char *tags;
+	bool rules;
 
 	if(Dx(c->r) == Dx(screen->r))
 	if(Dy(c->r) == Dy(screen->r))
@@ -208,23 +220,22 @@ client_manage(Client *c) {
 		fullscreen(c, true, -1);
 
 	tags = getprop_string(&c->w, "_WMII_TAGS");
+	rules = apply_rules(c);
 
 	leader = win2client(c->trans);
 	if(leader == nil && c->group)
 		leader = group_leader(c->group);
 
-	if(tags && (!leader || leader == c || starting))
+	if(tags) // && (!leader || leader == c || starting))
 		utflcpy(c->tags, tags, sizeof c->tags);
-	else if(leader)
+	else if(leader && !rules)
 		utflcpy(c->tags, leader->tags, sizeof c->tags);
 	free(tags);
 
-	if(!c->tags[0])
-		apply_rules(c);
 	if(c->tags[0])
-		apply_tags(c, c->tags);
+		client_applytags(c, c->tags);
 	else
-		apply_tags(c, "sel");
+		client_applytags(c, "sel");
 
 	if(!starting)
 		view_update_all();
@@ -1052,10 +1063,10 @@ client_extratags(Client *c) {
 	return s;
 }
 
-void
-apply_tags(Client *c, const char *tags) {
+bool
+client_applytags(Client *c, const char *tags) {
 	uint i, j, k, n;
-	bool add;
+	bool add, found;
 	char buf[512], last;
 	char *toks[32];
 	char **p;
@@ -1084,6 +1095,8 @@ apply_tags(Client *c, const char *tags) {
 		add = false;
 	}
 
+	found = false;
+
 	j = 0;
 	while(buf[n] && n < sizeof(buf) && j < 32) {
 		/* Check for regex. */
@@ -1103,6 +1116,7 @@ apply_tags(Client *c, const char *tags) {
 					last = buf[i];
 					buf[i] = '\0';
 
+					found = true;
 					goto next;
 				}
 			}
@@ -1129,9 +1143,10 @@ apply_tags(Client *c, const char *tags) {
 			cur = buf+n;
 
 		if(cur && j < nelem(toks)-1) {
-			if(add)
+			if(add) {
+				found = true;
 				toks[j++] = cur;
-			else {
+			}else {
 				for(i = 0, k = 0; i < j; i++)
 					if(strcmp(toks[i], cur))
 						toks[k++] = toks[i];
@@ -1177,17 +1192,6 @@ apply_tags(Client *c, const char *tags) {
 	p = comm(~0, c->retags, toks);
 	client_setviews(c, p);
 	free(p);
-}
-
-void
-apply_rules(Client *c) {
-	Rule *r;
-
-	if(def.tagrules.string) 	
-		for(r=def.tagrules.rule; r; r=r->next)
-			if(regexec(r->regex, c->props, nil, 0)) {
-				apply_tags(c, r->value);
-				break;
-			}
+	return found;
 }
 

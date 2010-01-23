@@ -96,7 +96,7 @@ view_create(const char *name) {
 	/* FIXME: Can do better. */
 	for(c=client; c; c=c->next)
 		if(c != kludge)
-			apply_tags(c, c->tags);
+			client_applytags(c, c->tags);
 
 	view_arrange(v);
 	if(!selview)
@@ -132,7 +132,7 @@ view_destroy(View *v) {
 	/* Detach frames held here by regex tags. */
 	/* FIXME: Can do better. */
 	foreach_frame(v, s, a, f)
-		apply_tags(f->client, f->client->tags);
+		client_applytags(f->client, f->client->tags);
 
 	foreach_area(v, s, a)
 		area_destroy(a);
