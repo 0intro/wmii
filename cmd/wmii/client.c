@@ -609,9 +609,10 @@ client_kill(Client *c, bool nice) {
 
 void
 fullscreen(Client *c, int fullscreen, long screen) {
+	Client *leader;
 	Frame *f;
 	bool wassel;
-	
+
 	if(fullscreen == Toggle)
 		fullscreen = (c->fullscreen >= 0) ^ On;
 	if(fullscreen == (c->fullscreen >= 0))
@@ -638,7 +639,16 @@ fullscreen(Client *c, int fullscreen, long screen) {
 			}
 		}
 	else {
-		c->fullscreen = screen >= 0 ? screen : ownerscreen(c->r);
+		c->fullscreen = 0;
+		if(screen >= 0)
+			c->fullscreen = screen;
+		else if(c->sel)
+			c->fullscreen = ownerscreen(c->r);
+		else if(c->group && (leader = group_leader(c->group)) && leader->sel)
+			c->fullscreen = ownerscreen(leader->r);
+		else if(selclient())
+			c->fullscreen = ownerscreen(selclient()->r);
+
 		for(f=c->frame; f; f=f->cnext)
 			f->oldarea = -1;
 		if((f = c->sel))
@@ -758,11 +768,11 @@ updatemwm(Client *c) {
 
 	c->borderless = 0;
 	c->titleless = 0;
-	if(n >= 3 && (ret[Flags]&FlagDecor)) {
-		if(ret[Decor]&All)
+	if(n >= 3 && (ret[Flags] & FlagDecor)) {
+		if(ret[Decor] & All)
 			ret[Decor] ^= ~0;
-		c->borderless = !(ret[Decor]&Border);
-		c->titleless = !(ret[Decor]&Title);
+		c->borderless = !(ret[Decor] & Border);
+		c->titleless = !(ret[Decor] & Title);
 	}
 	free(ret);
 
@@ -826,7 +836,7 @@ client_prop(Client *c, Atom a) {
 		update_class(c);
 		break;
 	case XA_WM_NAME:
-wmname:
+	wmname:
 		client_updatename(c);
 		break;
 	}

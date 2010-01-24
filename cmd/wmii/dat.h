@@ -183,12 +183,12 @@ struct Client {
 	uint	border;
 	int	fullscreen;
 	int	unmapped;
-	char	floating;
-	char	fixedsize;
-	char	urgent;
-	char	borderless;
-	char	titleless;
-	char	noinput;
+	bool	floating;
+	bool	fixedsize;
+	bool	urgent;
+	bool	borderless;
+	bool	titleless;
+	bool	noinput;
 };
 
 struct Divide {
