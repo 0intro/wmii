@@ -488,7 +488,7 @@ ewmh_updateviews(void) {
 		return;
 
 	vector_pinit(&tags);
-	for(v=view, i=0; v; v=v->next)
+	for(v=view, i=0; v; v=v->next, i++)
 		vector_ppush(&tags, v->name);
 	vector_ppush(&tags, nil);
 	changeprop_textlist(&scr.root, Net("DESKTOP_NAMES"), "UTF8_STRING", (char**)tags.ary);
