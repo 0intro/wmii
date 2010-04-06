@@ -29,8 +29,9 @@ def program_list(path):
     for d in path:
         try:
             for f in os.listdir(d):
-                if f not in names and os.access('%s/%s' % (d, f),
-                                                os.X_OK):
+                p = '%s/%s' % (d, f)
+                if f not in names and os.access(p, os.X_OK) and (
+                    os.path.isfile(p) or os.path.islink(p)):
                     names.append(f)
         except Exception:
             pass

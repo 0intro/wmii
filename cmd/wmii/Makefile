@@ -18,6 +18,7 @@ OBJ =	area	\
 	client	\
 	column	\
 	div	\
+	error	\
 	event	\
 	ewmh	\
 	float	\

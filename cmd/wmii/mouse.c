@@ -179,6 +179,7 @@ readmouse(Point *p, uint *button) {
 		case PropertyNotify:
 			dispatch_event(&ev);
 		default:
+			Dprint(DEvent, "readmouse(): ignored: %E\n", &ev);
 			continue;
 		case ButtonPress:
 		case ButtonRelease:
@@ -597,14 +598,17 @@ mouse_checkresize(Frame *f, Point p, bool exec) {
 	q = quadrant(r, p);
 	if(rect_haspoint_p(p, f->grabbox)) {
 		cur = cursor[CurTCross];
-		if(exec) mouse_movegrabbox(f->client, false);
+		if(exec)
+			mouse_movegrabbox(f->client, false);
 	}
 	else if(f->area->floating) {
-		if(p.x <= 2 || p.y <= 2
+		if(p.x <= 2
+		|| p.y <= 2
 		|| r.max.x - p.x <= 2
 		|| r.max.y - p.y <= 2) {
 			cur = quad_cursor(q);
-			if(exec) mouse_resize(f->client, q, false);
+			if(exec)
+				mouse_resize(f->client, q, false);
 		}
 		else if(exec && rect_haspoint_p(p, f->titlebar))
 			mouse_movegrabbox(f->client, true);

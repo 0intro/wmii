@@ -144,7 +144,7 @@ _menu_draw(bool draw) {
 	rp = ZR; // SET(rp)
 	if (prompt) {
 		if (!promptw)
-			promptw = textwidth(font, prompt) + 2 * ltwidth;
+			promptw = textwidth(font, prompt) + 2 * ltwidth + pad;
 		rd.min.x += promptw;
 
 		rp = r;

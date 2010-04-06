@@ -121,6 +121,13 @@ bool	find(Area**, Frame**, int, bool, bool);
 int	stack_count(Frame*, int*);
 Frame*	stack_find(Area*, Frame*, int, bool);
 
+/* error.c */
+#define waserror() setjmp(pusherror())
+void	error(char*, ...);
+void	nexterror(void);
+void	poperror(void);
+jmp_buf*	pusherror(void);
+
 /* event.c */
 void	check_x_event(IxpConn*);
 void	dispatch_event(XEvent*);
