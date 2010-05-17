@@ -374,7 +374,7 @@ strarea(View *v, ulong scrn, const char *s) {
 	}
 	if(!strcmp(s, "~"))
 		return v->floating;
-	if(!getlong(s, &i) || i == 0)
+	if(scrn < 0 || !getlong(s, &i) || i == 0)
 		return nil;
 
 	if(i > 0) {
