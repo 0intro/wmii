@@ -171,9 +171,8 @@ readmouse(Point *p, uint *button) {
 	XEvent ev;
 
 	for(;;) {
-		XMaskEvent(display, MouseMask|ExposureMask|StructureNotifyMask|PropertyChangeMask, &ev);
+		XMaskEvent(display, MouseMask|ExposureMask|PropertyChangeMask, &ev);
 		switch(ev.type) {
-		case ConfigureNotify:
 		case Expose:
 		case NoExpose:
 		case PropertyNotify:
