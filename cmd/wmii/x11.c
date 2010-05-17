@@ -800,7 +800,7 @@ textwidth(Font *font, char *text) {
 
 uint
 labelh(Font *font) {
-	return font->height + font->descent + font->pad.min.y + font->pad.max.y;
+	return max(font->height + font->descent + font->pad.min.y + font->pad.max.y, 1);
 }
 
 /* Misc */
