@@ -1,11 +1,5 @@
-wmii-hg (hg2550) unstable; urgency=low
+wmii-hg (hg2608) unstable; urgency=low
 
-  * Bump window manager alternative priority from 20 to 60 per policy manual.
+  * Closes issue #175.
 
- -- Kris Maglione <jg@suckless.org>  Fri,  16 Oct 2009 10:13:22 -0500
-
-wmii-hg (hg2548) unstable; urgency=low
-
-  * Sync with Daniel Bauman's upstream package.
-
- -- Kris Maglione <jg@suckless.org>  Wed,  14 Oct 2009 18:54:05 -0500
+ -- Kris Maglione <jg@suckless.org>  Mon, 17 May 2010 12:35:12 -0400

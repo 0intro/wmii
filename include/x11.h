@@ -1,4 +1,4 @@
-/* Copyright ©2007-2009 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2007-2010 Kris Maglione <fbsdaemon@gmail.com>
  * See LICENSE file for license details.
  */
 #define Window XWindow

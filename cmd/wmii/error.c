@@ -1,4 +1,4 @@
-/* Copyright ©2007-2009 Kris Maglione <jg@suckless.org>
+/* Copyright ©2007-2010 Kris Maglione <jg@suckless.org>
  * See LICENSE file for license details.
  */
 
