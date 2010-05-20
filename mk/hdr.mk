@@ -37,12 +37,10 @@ CTAGS=ctags
 
 PACKAGES = 2>/dev/null
 
-include $(ROOT)/config.mk
-
 # I hate this.
 MKCFGSH=if test -f $(ROOT)/config.local.mk; then echo $(ROOT)/config.local.mk; else echo /dev/null; fi
-MKCFG:=${shell $(MKCFGSH)}
-MKCFG!=${MKCFGSH}
+MKCFG:=$(shell $(MKCFGSH))
+MKCFG!=$(MKCFGSH)
 include $(MKCFG)
 
 # and this:
@@ -53,6 +51,8 @@ BINSH := $(shell \
 	   elif [ -x /bin/ksh ]; then echo /bin/ksh; \
 	   else echo /bin/sh; fi)
 BINSH != echo /bin/sh
+
+include $(ROOT)/config.mk
 
 .SILENT:
 .SUFFIXES: .out .o .o_pic .c .pdf .sh .rc .$(SOEXT) .awk .1 .man1 .depend .install .uninstall .clean
