@@ -201,32 +201,38 @@ fix_rect(Rectangle old, Rectangle new) {
 
 void
 view_update_rect(View *v) {
-	static Vector_rect vec;
-	static Vector_rect *vp;
-	Rectangle r, sr, rr, brect, scrnr;
+	Rectangle r, sr, brect, scrnr;
 	WMScreen *scrn;
 	Strut *strut;
 	Frame *f;
-	int s, i;
-	/* These short variable names are hell, eh? */
+	int left, right, top, bottom;
+	int s;
 
 	/* XXX:
 	if(v != selview)
 		return false;
 	*/
-	vec.n = 0;
+
+
+	top = 0;
+	left = 0;
+	right = 0;
+	bottom = 0;
 	for(f=v->floating->frame; f; f=f->anext) {
 		strut = f->client->strut;
 		if(!strut)
 			continue;
-		vector_rpush(&vec, strut->top);
-		vector_rpush(&vec, strut->left);
-		vector_rpush(&vec, rectaddpt(strut->right, Pt(scr.rect.max.x, 0)));
-		vector_rpush(&vec, rectaddpt(strut->bottom, Pt(0, scr.rect.max.y)));
+		/* Can do better in the future. */
+		top = max(top, strut->top.max.y);
+		left = max(left, strut->left.max.x);
+		right = min(right, strut->right.min.x);
+		bottom = min(bottom, strut->bottom.min.y);
 	}
-	/* Find the largest screen space not occupied by struts. */
-	vp = unique_rects(&vec, scr.rect);
-	scrnr = max_rect(vp);
+	scrnr = scr.rect;
+	scrnr.min.y += top;
+	scrnr.min.x += left;
+	scrnr.max.x += right;
+	scrnr.max.y += bottom;
 
 	/* FIXME: Multihead. */
 	v->floating->r = scr.rect;
@@ -243,25 +249,33 @@ view_update_rect(View *v) {
 		 * without taking up too much extra screen real
 		 * estate.
 		 */
-		rr = r;
-		brect = scrn->brect;
-		for(i=0; i < vp->n; i++) {
-			sr = rect_intersection(vp->ary[i], scrn->r);
-			if(Dx(sr) < Dx(r)/2 || Dy(sr) < Dy(brect))
-				continue;
-			if(scrn->barpos == BTop && sr.min.y < rr.min.y
-			|| scrn->barpos != BTop && sr.max.y > rr.max.y)
-				rr = sr;
-		}
 		if(scrn->barpos == BTop) {
-			bar_sety(scrn, rr.min.y);
-			r.min.y = max(r.min.y, scrn->brect.max.y);
+			bar_sety(scrn, r.min.y);
+			r.min.y += Dy(scrn->brect);
 		}else {
-			bar_sety(scrn, rr.max.y - Dy(brect));
-			r.max.y = min(r.max.y, scrn->brect.min.y);
+			r.max.y -= Dy(scrn->brect);
+			bar_sety(scrn, r.max.y);
 		}
-		bar_setbounds(scrn, rr.min.x, rr.max.x);
+
 		v->r[s] = r;
+
+		brect = scrn->brect;
+		brect.min.x = r.min.x;
+		brect.max.x = r.max.x;
+		for(f=v->floating->frame; f; f=f->anext) {
+			/* This is not pretty. :( */
+			strut = f->client->strut;
+			if(!strut)
+				continue;
+			sr = strut->left;
+			if(rect_intersect_p(brect, sr))
+				brect.min.x = sr.max.x;
+			sr = rectaddpt(strut->right, Pt(scr.rect.max.x, 0));
+			if(rect_intersect_p(brect, sr))
+				brect.max.x = sr.min.x;
+		}
+
+		bar_setbounds(scrn, brect.min.x, brect.max.x);
 	}
 }
 
