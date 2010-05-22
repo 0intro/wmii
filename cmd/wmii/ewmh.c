@@ -62,7 +62,9 @@ ewmh_init(void) {
 		TYPE("DIALOG"),
 		TYPE("DOCK"),
 		TYPE("NORMAL"),
+		TYPE("MENU"),
 		TYPE("SPLASH"),
+		TYPE("TOOLBAR"),
 		/* Actions */
 		NET("WM_ALLOWED_ACTIONS"),
 		ACTION("FULLSCREEN"),
@@ -240,7 +242,7 @@ ewmh_getwintype(Client *c) {
 	mask = getprop_mask(&c->w, Net("WM_WINDOW_TYPE"), props);
 
 	c->w.ewmh.type = mask;
-	if(mask & TypeDock) {
+	if(mask & (TypeDock|TypeMenu|TypeToolbar)) {
 		c->borderless = 1;
 		c->titleless = 1;
 	}

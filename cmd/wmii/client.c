@@ -352,9 +352,9 @@ Cfmt(Fmt *f) {
 	c = va_arg(f->args, Client*);
 	if(c)
 		if(f->flags & FmtSharp)
-			return fmtprint(f, "%s", c->name);
-		else
 			return fmtprint(f, "%W", &c->w);
+		else
+			return fmtprint(f, "%s", c->name);
 	return fmtprint(f, "<nil>");
 }
 
@@ -398,7 +398,7 @@ client_floats_p(Client *c) {
 	    || c->titleless
 	    || c->borderless
 	    || c->fullscreen >= 0
-	    || (c->w.ewmh.type & (TypeDialog|TypeSplash|TypeDock));
+	    || (c->w.ewmh.type & (TypeDialog|TypeSplash|TypeDock|TypeMenu|TypeToolbar));
 }
 
 Frame*
