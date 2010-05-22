@@ -519,7 +519,6 @@ client_focus(Client *c) {
 			}
 		}else
 			setfocus(screen->barwin, RevertToParent);
-		event("ClientFocus %C\n", c);
 
 		sync();
 		flushevents(FocusChangeMask, true);
@@ -914,6 +913,7 @@ focusin_event(Window *w, XFocusChangeEvent *e) {
 	old = disp.focus;
 	disp.focus = c;
 	if(c != old) {
+		event("ClientFocus %C\n", c);
 		if(c->sel)
 			frame_draw(c->sel);
 	}
