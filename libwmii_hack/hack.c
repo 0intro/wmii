@@ -1,4 +1,4 @@
-/* Copyright ©2008 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2008 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "hack.h"

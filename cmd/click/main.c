@@ -1,4 +1,4 @@
-/* Copyright ©2006-2010 Kris Maglione <fbsdaemon@gmail.com>
+/* Copyright ©2006-2010 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #define EXTERN
