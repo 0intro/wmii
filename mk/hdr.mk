@@ -81,7 +81,7 @@ MAKEFILES=.depend
 
 .rc.out .awk.out .sh.out:
 	echo FILTER $(BASE)$<
-	[ -n "${<:%.sh=}" ] || sh -n $<
+	[ -n "${<:%.sh=}" ] || $(BINSH) -n $<
 	set -e; \
 	[ -n "${noisycc}" ] && set -x; \
 	$(FILTER) $< >$@; \
