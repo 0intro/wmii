@@ -1,6 +1,7 @@
 /* Copyright ©2007-2010 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
+#include <string.h>
 #include "../x11.h"
 
 uint
@@ -69,9 +70,9 @@ drawstring(Image *dst, Font *font,
 				buf, len);
 		break;
 	case FXft:
-		XftDrawStringUtf8(xftdrawable(dst), xftcolor(col),
-				  font->font.xft,
-				  x, y, (uchar*)buf, len);
+		xft->drawstring(xftdrawable(dst), xftcolor(col),
+				font->font.xft,
+				x, y, buf, len);
 		break;
 	case FX11:
 		XSetFont(display, dst->gc, font->font.x11->fid);

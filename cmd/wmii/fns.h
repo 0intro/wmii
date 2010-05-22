@@ -2,6 +2,8 @@
  * See LICENSE file for license details.
  */
 
+#include <setjmp.h>
+
 #ifdef VARARGCK
 # pragma varargck	argpos	debug	2
 # pragma varargck	argpos	dprint	1

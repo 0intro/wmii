@@ -2,6 +2,8 @@
 #define _XOPEN_SOURCE 600
 
 #include <stdbool.h>
+#include <stdlib.h>
+#include <stdint.h>
 
 #ifndef nil
 #define nil	((void*)0)

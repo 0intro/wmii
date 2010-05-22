@@ -7,6 +7,7 @@
 #include "dat.h"
 #include <X11/Xproto.h>
 #include <locale.h>
+#include <stdio.h>
 #include <strings.h>
 #include <unistd.h>
 #include <bio.h>

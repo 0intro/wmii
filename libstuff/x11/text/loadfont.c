@@ -1,6 +1,7 @@
 /* Copyright ©2007-2010 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
+#include <string.h>
 #include "../x11.h"
 
 Font*
@@ -17,9 +18,12 @@ loadfont(char *name) {
 	if(!strncmp(f->name, "xft:", 4)) {
 		f->type = FXft;
 
-		f->font.xft = XftFontOpenXlfd(display, scr.screen, f->name + 4);
+		if(!havexft())
+			goto error;
+
+		f->font.xft = xft->fontopen(display, scr.screen, f->name + 4);
 		if(!f->font.xft)
-			f->font.xft = XftFontOpenName(display, scr.screen, f->name + 4);
+			f->font.xft = xft->fontopenname(display, scr.screen, f->name + 4);
 		if(!f->font.xft)
 			goto error;
 

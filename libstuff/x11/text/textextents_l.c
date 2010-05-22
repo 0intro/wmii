@@ -18,7 +18,7 @@ textextents_l(Font *font, char *text, uint len, int *offset) {
 		*offset = Xutf8TextExtents(font->font.set, text, len, &r, nil);
 		return Rect(r.x, -r.y - r.height, r.x + r.width, -r.y);
 	case FXft:
-		XftTextExtentsUtf8(display, font->font.xft, (uchar*)text, len, &i);
+		xft->textextents(display, font->font.xft, text, len, &i);
 		*offset = i.xOff;
 		return Rect(-i.x, i.y - i.height, -i.x + i.width, i.y);
 	case FX11:

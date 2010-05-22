@@ -4,7 +4,6 @@
 #define IXP_NO_P9_
 #define IXP_P9_STRUCTS
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>

@@ -6,6 +6,6 @@
 XftDraw*
 xftdrawable(Image *img) {
 	if(img->xft == nil)
-		img->xft = XftDrawCreate(display, img->xid, img->visual, img->colormap);
+		img->xft = xft->drawcreate(display, img->xid, img->visual, img->colormap);
 	return img->xft;
 }

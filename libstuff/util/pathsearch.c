@@ -1,7 +1,6 @@
 /* Copyright ©2008-2010 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fmt.h>

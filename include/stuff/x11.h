@@ -7,7 +7,6 @@
 #include <stuff/geom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xft/Xft.h>
 #include <X11/extensions/Xrender.h>
 #ifdef _X11_VISIBLE
 #  include <X11/Xatom.h>
@@ -44,6 +43,10 @@ typedef struct Screen Screen;
 typedef struct WinHints WinHints;
 typedef struct Window Image;
 typedef struct Window Window;
+typedef struct Xft Xft;
+typedef struct XftColor XftColor;
+typedef void XftDraw;
+typedef struct XftFont XftFont;
 
 struct Color {
 	ulong		pixel;
@@ -138,6 +141,30 @@ struct Window {
 	int		depth;
 };
 
+struct Xft {
+	XftDraw*	(*drawcreate)(Display*, Drawable, Visual*, Colormap);
+	void		(*drawdestroy)(XftDraw*);
+	XftFont*	(*fontopen)(Display*, int, const char*);
+	XftFont*	(*fontopenname)(Display*, int, const char*);
+	XftFont*	(*fontclose)(Display*, XftFont*);
+	void		(*textextents)(Display*, XftFont*, char*, int len, XGlyphInfo*);
+	void		(*drawstring)(Display*, XftColor*, XftFont*, int x, int y, char*, int len);
+};
+
+struct XftColor {
+    ulong		pixel;
+    XRenderColor	color;
+};
+
+struct XftFont {
+    int		ascent;
+    int		descent;
+    int		height;
+    int		max_advance_width;
+    void*	charset;
+    void*	pattern;
+};
+
 struct Screen {
 	int		screen;
 	Window		root;
@@ -165,6 +192,7 @@ Screen scr;
 extern const Point ZP;
 extern const Rectangle ZR;
 extern Window* pointerwin;
+extern Xft* xft;
 
 XRectangle XRect(Rectangle r);
 
@@ -205,6 +233,7 @@ ulong	getprop_ulong(Window*, char*, char*, ulong, ulong**, ulong);
 ulong	getproperty(Window*, char *prop, char *type, Atom *actual, ulong offset, uchar **ret, ulong length);
 int	grabkeyboard(Window*);
 int	grabpointer(Window*, Window *confine, Cursor, int mask);
+bool	havexft(void);
 void	initdisplay(void);
 KeyCode	keycode(char*);
 uint	labelh(Font*);

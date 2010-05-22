@@ -10,7 +10,7 @@ freefont(Font *f) {
 		XFreeFontSet(display, f->font.set);
 		break;
 	case FXft:
-		XftFontClose(display, f->font.xft);
+		xft->fontclose(display, f->font.xft);
 		break;
 	case FX11:
 		XFreeFont(display, f->font.x11);

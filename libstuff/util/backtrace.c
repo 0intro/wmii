@@ -6,7 +6,6 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <stdlib.h>
 
 #include <bio.h>
 #include <plan9.h>

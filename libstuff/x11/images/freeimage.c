@@ -11,7 +11,7 @@ freeimage(Image *img) {
 	assert(img->type == WImage);
 
 	if(img->xft)
-		XftDrawDestroy(img->xft);
+		xft->drawdestroy(img->xft);
 	XFreePixmap(display, img->xid);
 	XFreeGC(display, img->gc);
 	free(img);

@@ -2,7 +2,6 @@
  * See LICENSE file for license details.
  */
 #include <errno.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include "util.h"
 

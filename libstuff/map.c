@@ -1,6 +1,5 @@
 /* Written by Kris Maglione */
 /* Public domain */
-#include <stdlib.h>
 #include <string.h>
 #include <stuff/util.h>
 

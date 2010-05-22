@@ -6,11 +6,12 @@ pkgdesc="The latest hg pull of wmii, a lightweight, dynamic window manager for X
 url="http://wmii.suckless.org"
 license=("MIT")
 arch=("i686" "x86_64")
-depends=("libx11" "libxinerama" "libxrandr" "libxft")
+depends=("libx11" "libxinerama" "libxrandr")
 makedepends=("mercurial")
 optdepends=("plan9port: for use of the alternative plan9port wmiirc" \
 	"python: for use of the alternative Python wmiirc" \
-	"ruby-rumai: for use of the alternative Ruby wmiirc")
+	"ruby-rumai: for use of the alternative Ruby wmiirc" \
+	"libxft: for anti-aliased font support")
 provides=("wmii")
 conflicts=("wmii")
 source=()

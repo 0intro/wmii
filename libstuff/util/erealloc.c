@@ -1,6 +1,5 @@
 /* Written by Kris Maglione <maglione.k at Gmail> */
 /* Public domain */
-#include <stdlib.h>
 #include "util.h"
 
 void *

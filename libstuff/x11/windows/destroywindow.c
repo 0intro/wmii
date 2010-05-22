@@ -8,7 +8,7 @@ destroywindow(Window *w) {
 	assert(w->type == WWindow);
 	sethandler(w, nil);
 	if(w->xft)
-		XftDrawDestroy(w->xft);
+		xft->drawdestroy(w->xft);
 	if(w->gc)
 		XFreeGC(display, w->gc);
 	XDestroyWindow(display, w->xid);

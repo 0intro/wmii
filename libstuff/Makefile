@@ -86,6 +86,7 @@ OBJ=\
 	x11/sync	\
 	x11/x11		\
 	x11/xatom	\
+	x11/xft		\
 	x11/colors/loadcolor	\
 	x11/colors/namedcolor	\
 	x11/colors/xftcolor	\

@@ -20,20 +20,23 @@ include $(ROOT)/mk/gcc.mk
 CFLAGS += $(DEBUGCFLAGS) -O0
 LDFLAGS += -g
 
-SOLDFLAGS += $(LDFLAGS)
-SHARED = -shared -Wl,-soname=$(SONAME)
-STATIC = -static
-
 # Compiler, Linker. Linker should usually *not* be ld.
 CC = cc -c
 LD = cc
 # Archiver
 AR = ar crs
 
-X11PACKAGES = xft
+X11PACKAGES = x11 xinerama xrender
 INCX11 = $$(pkg-config --cflags $(X11PACKAGES))
-LIBICONV = # Leave blank if your libc includes iconv (glibc does)
 LIBIXP = $(LIBDIR)/libixp.a
+
+# Enable RTLD. Only necessary for Xft support.
+CFLAGS += -DHAVE_RTLD
+LDFLAGS += -ldl # Comment this out on BSD systems.
+
+SOLDFLAGS += $(LDFLAGS)
+SHARED = -shared -Wl,-soname=$(SONAME)
+STATIC = -static
 
 # Your make shell. By default, the first found of /bin/dash, /bin/ksh,
 # /bin/sh. Except with bsdmake, which assumes /bin/sh is sane. bash and zsh
@@ -50,9 +53,7 @@ LIBIXP = $(LIBDIR)/libixp.a
 #CC=pcc -c
 #LD=pcc
 
-# *BSD
-#LIBICONV = -L/usr/local/lib -liconv
-# +Darwin
+# Darwin
 #STATIC = # Darwin doesn't like static linking
 #SHARED = -dynamiclib
 #SOEXT = dylib
