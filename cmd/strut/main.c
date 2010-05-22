@@ -30,8 +30,6 @@ debug(int flag, const char *fmt, ...) {
 	va_end(ap);
 }
 
-ErrorCode ignored_xerrors[] = { {0,} };
-
 static Window
 findframe(Window *w) {
 	XWindow *children;
@@ -39,6 +37,7 @@ findframe(Window *w) {
 	Window ret = {0, };
 	uint n;
 
+	xw = w->xid;
 	for(par=w->xid; par != scr.root.xid; ) {
 		xw = par;
 		XQueryTree(display, xw, &root, &par, &children, &n);
@@ -93,8 +92,8 @@ extern int fmtevent(Fmt*);
 	sethandler(&frame, &handlers);
 	selectinput(&frame, StructureNotifyMask);
 
-	running = true;
-	xevent_loop();
+	event_looprunning = true;
+	event_loop();
 
 	XCloseDisplay(display);
 	return 0;

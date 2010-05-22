@@ -46,10 +46,10 @@ main(int argc, char *argv[]) {
 	initdisplay();
 
 	s = ARGF();
-	if(s && !getulong(s, &win.w))
+	if(s && !getulong(s, &win.xid))
 		usage();
 	if (!s)
-		win.w = getfocus();
+		win.xid = getfocus();
 
 	if(argc)
 		usage();

@@ -21,8 +21,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <util.h>
-#include <x11.h>
+#include <stuff/util.h>
+#include <stuff/x11.h>
 
 char buffer[8196];
 void debug() {}

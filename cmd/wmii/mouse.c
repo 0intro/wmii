@@ -13,6 +13,21 @@ enum {
 		ButtonMask | PointerMotionMask
 };
 
+static Cursor
+quad_cursor(Align align) {
+	switch(align) {
+	case NEast: return cursor[CurNECorner];
+	case NWest: return cursor[CurNWCorner];
+	case SEast: return cursor[CurSECorner];
+	case SWest: return cursor[CurSWCorner];
+	case South:
+	case North: return cursor[CurDVArrow];
+	case East:
+	case West:  return cursor[CurDHArrow];
+	default:    return cursor[CurMove];
+	}
+}
+
 static void
 cwin_expose(Window *w, XExposeEvent *e) {
 
@@ -176,7 +191,7 @@ readmouse(Point *p, uint *button) {
 		case Expose:
 		case NoExpose:
 		case PropertyNotify:
-			dispatch_event(&ev);
+			event_dispatch(&ev);
 		default:
 			Dprint(DEvent, "readmouse(): ignored: %E\n", &ev);
 			continue;
@@ -428,7 +443,7 @@ mouse_resize(Client *c, Align align, bool grabmod) {
 		warppointer(d);
 	}
 	sync();
-	flushevents(PointerMotionMask, false);
+	event_flush(PointerMotionMask, false);
 
 	while(readmotion(&d)) {
 		if(align == Center) {

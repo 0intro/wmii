@@ -2,6 +2,7 @@
  * See LICENSE file for license details.
  */
 #include <assert.h>
+#include "x11.h"
 
 /* Misc */
 static Atom

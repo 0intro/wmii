@@ -11,6 +11,7 @@ PDIRS = \
 	alternative_wmiircs
 
 DIRS =	\
+	libstuff  \
 	libbio    \
 	libfmt	  \
 	libregexp \

@@ -8,9 +8,6 @@ void	xtime_kludge(void);
 
 void	restrut(void);
 
-bool	getlong(const char*, long*);
-bool	getulong(const char*, ulong*);
-
 void	ewmh_getstrut(Window*, Rectangle[4]);
 void	ewmh_setstrut(Window*, Rectangle[4]);
 

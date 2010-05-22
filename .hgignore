@@ -1,7 +1,7 @@
 syntax: regexp
 (^|/)\.((.*\.)?sw.|depend|hgignore)$
-(^|/)(tags|mkfile)$
-\.([oa]|out|o_pic|so|pyc|pyo)$
+(^|/)(tags|mkfile|diff)$
+\.([oa]|out|o_pic|so|pyc|pyo|diff)$
 \.(diff|orig|rej|bak)$
 \.(aux|idx|ilg|ind|log|toc)$
 ^cmd/(stfo|osd|wiwarp|setfocus)(/|$)

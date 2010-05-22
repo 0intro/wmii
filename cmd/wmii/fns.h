@@ -129,12 +129,8 @@ void	poperror(void);
 jmp_buf*	pusherror(void);
 
 /* event.c */
-void	check_x_event(IxpConn*);
-void	dispatch_event(XEvent*);
-uint	flushenterevents(void);
-uint	flushevents(long, bool dispatch);
+void	debug_event(XEvent*);
 void	print_focus(const char*, Client*, const char*);
-void	xtime_kludge(void);
 
 /* ewmh.c */
 int	ewmh_clientmessage(XClientMessageEvent*);
@@ -197,15 +193,6 @@ void	fs_walk(Ixp9Req*);
 void	fs_write(Ixp9Req*);
 void	event(const char*, ...);
 
-/* geom.c */
-Align	get_sticky(Rectangle src, Rectangle dst);
-Cursor	quad_cursor(Align);
-Align	quadrant(Rectangle, Point);
-bool	rect_contains_p(Rectangle, Rectangle);
-bool	rect_haspoint_p(Point, Rectangle);
-bool	rect_intersect_p(Rectangle, Rectangle);
-Rectangle	rect_intersection(Rectangle, Rectangle);
-
 /* key.c */
 void	init_lock_keys(void);
 void	kpress(XWindow, ulong mod, KeyCode);
@@ -215,15 +202,7 @@ void	update_keys(void);
 void	init_screens(void);
 void	spawn_command(const char*);
 
-/* map.c */
-void**	hash_get(Map*, const char*, bool create);
-void*	hash_rm(Map*, const char*);
-void**	map_get(Map*, ulong, bool create);
-void*	map_rm(Map*, ulong);
-
 /* message.c */
-bool	getlong(const char*, long*);
-bool	getulong(const char*, ulong*);
 char*	message_client(Client*, IxpMsg*);
 char*	message_root(void*, IxpMsg*);
 char*	message_view(View*, IxpMsg*);
@@ -237,6 +216,7 @@ char*	readctl_root(void);
 char*	readctl_view(View*);
 Area*	strarea(View*, ulong, const char*);
 void	warning(const char*, ...);
+
 /* debug */
 void	debug(int, const char*, ...);
 void	dprint(const char*, ...);
@@ -258,9 +238,6 @@ Align	snap_rect(const Rectangle *rects, int num, Rectangle *current, Align *mask
 
 /* print.c */
 int	Ffmt(Fmt*);
-
-/* printevent.c */
-void	printevent(XEvent*);
 
 /* root.c */
 void	root_init(void);
@@ -295,22 +272,6 @@ void	view_update_all(void);
 void	view_update_rect(View*);
 Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 
-/* _util.c */
-void	backtrace(char*);
-void	closeexec(int);
-char**	comm(int, char**, char**);
-int	doublefork(void);
-void	grep(char**, Reprog*, int);
-char*	join(char**, char*);
-char*	pathsearch(const char*, const char*, bool);
-void	refree(Regex*);
-void	reinit(Regex*, char*);
-int	strlcatprint(char*, int, const char*, ...);
-int	spawn3(int[3], const char*, char*[]);
-int	spawn3l(int[3], const char*, ...);
-void	uniq(char**);
-int	unquote(char*, char*[], int);
-
 /* utf.c */
 char*	toutf8(const char*);
 char*	toutf8n(const char*, size_t);
@@ -318,11 +279,4 @@ char*	toutf8n(const char*, size_t);
 /* xdnd.c */
 int	xdnd_clientmessage(XClientMessageEvent*);
 void	xdnd_initwindow(Window*);
-
-/* xext.c */
-void	randr_event(XEvent*);
-bool	render_argb_p(Visual*);
-void	xext_event(XEvent*);
-void	xext_init(void);
-Rectangle*	xinerama_screens(int*);
 

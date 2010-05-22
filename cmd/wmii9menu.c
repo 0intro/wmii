@@ -44,9 +44,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <clientutil.h>
-#include <util.h>
-#include <x11.h>
+
+#include <stuff/clientutil.h>
+#include <stuff/util.h>
+#include <stuff/x11.h>
 
 char version[] = "wmii9menu-" VERSION " ©2010 Kris Maglione, ©1994 David Hogan, Arnold Robbins";
 
@@ -80,10 +81,6 @@ void redraw(int, int);
 void warpmouse(int, int);
 void memory(void);
 int args(void);
-
-ErrorCode ignored_xerrors[] = {
-	{ 0, }
-};
 
 /* xext.c */
 void	xext_init(void);

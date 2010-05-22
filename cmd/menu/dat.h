@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
+#include <stuff/x.h>
+#include <stuff/util.h>
 #include <ixp.h>
-#include <x11.h>
 
 #define BLOCK(x) do { x; }while(0)
 
@@ -103,14 +103,4 @@ EXTERN  int	(*compare)(const char*, const char*, size_t);
 
 EXTERN char*	prompt;
 EXTERN int	promptw;
-
-EXTERN char	buffer[8092];
-EXTERN char*	_buffer;
-
-static char*	const _buf_end = buffer + sizeof buffer;
-
-#define bufclear() \
-	BLOCK( _buffer = buffer; _buffer[0] = '\0' )
-#define bufprint(...) \
-	_buffer = seprint(_buffer, _buf_end, __VA_ARGS__)
 

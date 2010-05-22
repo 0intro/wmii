@@ -11,11 +11,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ixp.h>
-#include <util.h>
 #include <utf.h>
-#include <fmt.h>
-#include <x11.h>
+#include <stuff/x.h>
+#include <stuff/util.h>
+#include <debug.h>
+#include <ixp.h>
 
 #define FONT		"-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*"
 #define FOCUSCOLORS	"#ffffff #335577 #447799"
@@ -25,20 +25,10 @@ enum {
 	PingTime = 10000,
 };
 
-enum {
-	CLeft = 1<<0,
-	CCenter = 1<<1,
-	CRight = 1<<2,
-};
-
 enum IncMode {
 	IIgnore,
 	IShow,
 	ISqueeze,
-};
-
-enum {
-	GInvert = 1<<0,
 };
 
 enum {
@@ -80,15 +70,6 @@ enum Barpos {
 };
 
 enum {
-	CurNormal,
-	CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
-	CurDHArrow, CurDVArrow, CurMove, CurInput, CurSizing,
-	CurTCross, CurIcon,
-	CurNone,
-	CurLast,
-};
-
-enum {
 	NCOL = 16,
 };
 
@@ -98,16 +79,16 @@ enum Protocols {
 	ProtoPing	= 1<<2,
 };
 
-enum DebugOpt {
-	D9p	= 1<<0,
-	DDnd	= 1<<1,
-	DEvent	= 1<<2,
-	DEwmh	= 1<<3,
-	DFocus	= 1<<4,
-	DGeneric= 1<<5,
-	DStack  = 1<<6,
-	NDebugOpt = 7,
+enum {
+	CurNormal,
+	CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
+	CurDHArrow, CurDVArrow, CurMove, CurInput, CurSizing,
+	CurTCross, CurIcon,
+	CurNone,
+	CurLast,
 };
+Cursor	cursor[CurLast];
+
 
 /* Data Structures */
 typedef struct Area Area;
@@ -117,9 +98,6 @@ typedef struct Divide Divide;
 typedef struct Frame Frame;
 typedef struct Group Group;
 typedef struct Key Key;
-typedef struct Map Map;
-typedef struct MapEnt MapEnt;
-typedef struct Regex Regex;
 typedef struct Rule Rule;
 typedef struct Ruleset Ruleset;
 typedef struct Strut Strut;
@@ -154,11 +132,6 @@ struct Bar {
 	CTuple	col;
 	Rectangle	r;
 	WMScreen*	screen;
-};
-
-struct Regex {
-	char*	regex;
-	Reprog*	regc;
 };
 
 struct Client {
@@ -243,11 +216,6 @@ struct Key {
 	KeyCode	key;
 };
 
-struct Map {
-	MapEnt**bucket;
-	uint	nhash;
-};
-
 struct Rule {
 	Rule*	next;
 	Reprog*	regex;
@@ -286,23 +254,6 @@ struct View {
 	Rectangle *pad;
 };
 
-/* Yuck. */
-#define VECTOR(type, nam, c) \
-typedef struct Vector_##nam Vector_##nam;      \
-struct Vector_##nam {                          \
-	type*	ary;                           \
-	long	n;                             \
-	long	size;                          \
-};                                             \
-void	vector_##c##free(Vector_##nam*);       \
-void	vector_##c##init(Vector_##nam*);       \
-void	vector_##c##push(Vector_##nam*, type); \
-
-VECTOR(long, long, l)
-VECTOR(Rectangle, rect, r)
-VECTOR(void*, ptr, p)
-#undef  VECTOR
-
 #ifndef EXTERN
 #  define EXTERN extern
 #endif
@@ -327,8 +278,6 @@ EXTERN struct {
 enum {
 	BLeft, BRight
 };
-
-#define BLOCK(x) do { x; }while(0)
 
 EXTERN struct WMScreen {
 	Bar*	bar[2];
@@ -360,15 +309,6 @@ EXTERN Client	c_root;
 
 EXTERN Handlers	framehandler;
 
-EXTERN char	buffer[8092];
-EXTERN char*	_buffer;
-static char*	const _buf_end = buffer + sizeof buffer;
-
-#define bufclear() \
-	BLOCK( _buffer = buffer; _buffer[0] = '\0' )
-#define bufprint(...) \
-	_buffer = seprint(_buffer, _buf_end, __VA_ARGS__)
-
 /* IXP */
 EXTERN IxpServer srv;
 EXTERN Ixp9Srv	p9srv;
@@ -379,26 +319,15 @@ EXTERN uint	numlock_mask;
 EXTERN Image*	ibuf;
 EXTERN Image*	ibuf32;
 
-EXTERN Cursor	cursor[CurLast];
-
-typedef void (*XHandler)(XEvent*);
-EXTERN XHandler handler[LASTEvent];
-
 /* Misc */
 EXTERN int	starting;
 EXTERN bool	resizing;
 EXTERN long	ignoreenter;
 EXTERN char*	user;
 EXTERN char*	execstr;
-EXTERN int	debugflag;
-EXTERN int	debugfile;
 EXTERN long	xtime;
-EXTERN Visual*	render_visual;
 
 EXTERN Client*	kludge;
 
 extern char*	debugtab[];
-
-#define Debug(x) if(((debugflag|debugfile)&(x)) && setdebug(x))
-#define Dprint(x, ...) BLOCK( if((debugflag|debugfile)&(x)) debug(x, __VA_ARGS__) )
 

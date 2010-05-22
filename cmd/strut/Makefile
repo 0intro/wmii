@@ -13,15 +13,8 @@ LIB =	$(LIBIXP)
 LIBS += -lm $(LIBS9)
 CFLAGS += -DIXP_NEEDAPI=86
 OBJ =	main	\
-	event	\
 	ewmh	\
-	win	\
-	_util	\
-	../wmii/map	\
-	../wmii/printevent \
-	printevent_kludge \
-	../wmii/x11	\
-	../util
+	win
 
 include ${ROOT}/mk/one.mk
 

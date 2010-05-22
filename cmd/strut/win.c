@@ -92,7 +92,7 @@ config(Window *w, XConfigureEvent *ev) {
 static void
 destroy(Window *w, XDestroyWindowEvent *ev) {
 	USED(w, ev);
-	running = false;
+	event_looprunning = false;
 }
 
 Handlers handlers = {

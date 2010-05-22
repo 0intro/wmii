@@ -8,7 +8,7 @@ DEBUGCFLAGS = \
 	-fno-unroll-loops
 CFLAGS += \
 	-std=c99 \
-	-pedantic \
+	-pedantic-errors \
 	-pipe \
 	-fno-strict-aliasing \
 	-Wall \

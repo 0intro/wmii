@@ -22,8 +22,9 @@ FILTER = cat
 
 EXCFLAGS = $(INCLUDES) -D_XOPEN_SOURCE=600
 
-COMPILE    = $(ROOT)/util/compile "$(CC)" "$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES))"
-COMPILEPIC = $(ROOT)/util/compile "$(CC)" "$(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $(SOCFLAGS)"
+COMPILE_FLAGS = $(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES))
+COMPILE    = $(ROOT)/util/compile "$(CC)" "$(COMPILE_FLAGS)"
+COMPILEPIC = $(ROOT)/util/compile "$(CC)" "$(COMPILE_FLAGS) $(SOCFLAGS)"
 
 LINK   = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(LDFLAGS) $(LIBS)"
 LINKSO = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(SOLDFLAGS) $(LIBS) $(SHARED)"
@@ -61,8 +62,8 @@ all:
 MAKEFILES=.depend
 .c.depend:
 	echo MKDEP $<
-	[ -n "${noisycc}" ] && echo $(MKDEP) $(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $< || true
-	$(MKDEP) $(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES)) $< >>.depend
+	[ -n "${noisycc}" ] && echo $(MKDEP) $(COMPILE_FLAGS) $< || true
+	eval "$(MKDEP) $(COMPILE_FLAGS)" $< >>.depend
 
 .sh.depend .rc.depend .1.depend .awk.depend:
 	:

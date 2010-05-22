@@ -14,23 +14,14 @@ HFILES=	dat.h fns.h
 
 PACKAGES += $(X11PACKAGES) xext xrandr xrender xinerama
 
-LIB =	$(LIBIXP)
-LIBS += -lm $(LIBS9)
+LIBS += -lm $(LIBS9) $(LIBIXP)
 CFLAGS += -DIXP_NEEDAPI=86
 OBJ =	main	\
 	caret	\
 	history	\
-	event	\
 	menu	\
 	keys	\
-	bindings \
-	../wmii/geom	\
-	../wmii/map	\
-	../wmii/printevent	\
-	../wmii/x11	\
-	../wmii/xext	\
-	../clientutil	\
-	../util
+	bindings
 
 include $(ROOT)/mk/one.mk
 

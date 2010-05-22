@@ -11,12 +11,8 @@ PACKAGES += $(X11PACKAGES) xext xrandr xrender xinerama
 
 LIB =	$(LIBIXP)
 LIBS += -lm -lXtst $(LIBS9)
-CFLAGS += -DVERSION=\"$(VERSION)\" -DIXP_NEEDAPI=86
-OBJ =	main	\
-	_util	\
-	../wmii/map	\
-	../wmii/x11	\
-	../util
+CFLAGS += -DIXP_NEEDAPI=86
+OBJ =	main
 
 include ${ROOT}/mk/one.mk
 

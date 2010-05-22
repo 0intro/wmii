@@ -314,7 +314,7 @@ client_destroy(Client *c) {
 	if(starting > -1)
 		event("DestroyClient %C\n", c);
 
-	flushevents(FocusChangeMask, true);
+	event_flush(FocusChangeMask, true);
 	free(c->w.hints);
 	free(c);
 }
@@ -503,7 +503,7 @@ client_focus(Client *c) {
 		c->group->client = c;
 
 	sync();
-	flushevents(FocusChangeMask, true);
+	event_flush(FocusChangeMask, true);
 
 	Dprint(DFocus, "client_focus([%C]%s)\n", c, clientname(c));
 	Dprint(DFocus, "\t[%C]%s\n\t=> [%C]%s\n",
@@ -514,14 +514,14 @@ client_focus(Client *c) {
 			if(!c->noinput)
 				setfocus(&c->w, RevertToParent);
 			else if(c->proto & ProtoTakeFocus) {
-				xtime_kludge();
+				event_updatextime();
 				client_message(c, "WM_TAKE_FOCUS", 0);
 			}
 		}else
 			setfocus(screen->barwin, RevertToParent);
 
 		sync();
-		flushevents(FocusChangeMask, true);
+		event_flush(FocusChangeMask, true);
 	}
 }
 

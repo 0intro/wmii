@@ -24,25 +24,18 @@ OBJ =	area	\
 	float	\
 	frame	\
 	fs	\
-	geom	\
 	key	\
 	layout	\
 	main	\
-	map	\
 	message	\
 	mouse	\
 	print   \
 	root	\
 	rule	\
-	printevent\
 	screen	\
 	utf	\
-	_util	\
 	view	\
-	xdnd	\
-	x11	\
-	xext	\
-	../util
+	xdnd
 
 include $(ROOT)/mk/one.mk
 

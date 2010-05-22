@@ -10,7 +10,7 @@
 #include <strings.h>
 #include <unistd.h>
 #include <bio.h>
-#include <clientutil.h>
+#include <stuff/clientutil.h>
 #include "fns.h"
 #define link _link
 
@@ -19,6 +19,7 @@ static Biobuf*	cmplbuf;
 static Biobuf*	inbuf;
 static bool	alwaysprint;
 static char*	cmdsep;
+static int	screen_hint;
 
 static void
 usage(void) {
@@ -169,10 +170,6 @@ update_filter(bool print) {
 		update_input();
 }
 
-ErrorCode ignored_xerrors[] = {
-	{ 0, }
-};
-
 static void
 end(IxpConn *c) {
 
@@ -184,13 +181,13 @@ static void
 preselect(IxpServer *s) {
 	
 	USED(s);
-	check_x_event(nil);
+	event_check();
 }
 
 enum { PointerScreen = -1 };
 
 void
-init_screens(int screen_hint) {
+init_screens(void) {
 	Rectangle *rects;
 	Point p;
 	int i, n;
@@ -223,12 +220,11 @@ main(int argc, char *argv[]) {
 	static bool nokeys;
 	int i;
 	long ndump;
-	int screen;
 
 	quotefmtinstall();
 	fmtinstall('r', errfmt);
 	address = getenv("WMII_ADDRESS");
-	screen = PointerScreen;
+	screen_hint = PointerScreen;
 
 	find = strstr;
 	compare = strncmp;
@@ -261,7 +257,7 @@ main(int argc, char *argv[]) {
 		prompt = EARGF(usage());
 		break;
 	case 's':
-		screen = strtol(EARGF(usage()), nil, 10);
+		screen_hint = strtol(EARGF(usage()), nil, 10);
 		break;
 	case 'S':
 		cmdsep = EARGF(usage());
@@ -287,7 +283,7 @@ main(int argc, char *argv[]) {
 	client_init(address);
 
 	srv.preselect = preselect;
-	ixp_listen(&srv, ConnectionNumber(display), nil, check_x_event, end);
+	ixp_listen(&srv, ConnectionNumber(display), nil, (void (*)(IxpConn*))preselect, end);
 
 	ontop = !strcmp(readctl("bar on "), "top");
 	loadcolor(&cnorm, readctl("normcolors "));
@@ -331,7 +327,7 @@ main(int argc, char *argv[]) {
 	if(barwin == nil)
 		menu_init();
 
-	init_screens(screen);
+	init_screens();
 
 	i = ixp_serverloop(&srv);
 	if(i)

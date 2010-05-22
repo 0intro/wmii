@@ -12,13 +12,13 @@ typedef unsigned char	uchar;
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <x11.h>
+#include <stuff/util.h>
 #include <X11/Xlib.h>
 
 #define strdup my_strdup
+#define smprint my_smprint
+#define vsmprint my_vsmprint
 
-static int	getlong(const char*, long*);
-static uint	tokenize(char*[], uint, char*, char);
 static char*	smprint(const char*, ...);
 static char*	vsmprint(const char*, va_list);
 static char*	strdup(const char*);

@@ -13,7 +13,7 @@ COPYRIGHT = ©2010 Kris Maglione
 .MAKE.EXPORTED += WMII_HGVERSION
 SUBMAKE_EXPORT = WMII_HGVERSION=$(WMII_HGVERSION)
 
-LIBS9 = $(ROOT)/lib/libregexp9.a $(ROOT)/lib/libbio.a $(ROOT)/lib/libfmt.a $(ROOT)/lib/libutf.a
+LIBS9 = $(ROOT)/lib/libstuff.a $(ROOT)/lib/libregexp9.a $(ROOT)/lib/libbio.a $(ROOT)/lib/libfmt.a $(ROOT)/lib/libutf.a
 
 CFLAGS += '-DVERSION=\"$(VERSION)\"' '-DCOPYRIGHT=\"$(COPYRIGHT)\"' \
 	  '-DCONFVERSION=\"$(CONFVERSION)\"' '-DCONFPREFIX=\"$(ETC)\"'

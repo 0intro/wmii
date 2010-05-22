@@ -208,7 +208,7 @@ kpress(XWindow w, ulong mod, KeyCode keycode) {
 		event("Key %s\n", found->name);
 	else {
 		XGrabKeyboard(display, w, true, GrabModeAsync, GrabModeAsync, CurrentTime);
-		flushevents(FocusChangeMask, true);
+		event_flush(FocusChangeMask, true);
 		kpress_seq(w, found);
 		XUngrabKeyboard(display, CurrentTime);
 	}

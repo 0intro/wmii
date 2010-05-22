@@ -9,7 +9,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <ixp.h>
-#include <util.h>
+#include <stuff/util.h>
 #include <fmt.h>
 
 static IxpClient *client;

@@ -323,7 +323,7 @@ static void
 check_preselect(IxpServer *s) {
 	USED(s);
 
-	check_x_event(nil);
+	event_check();
 }
 
 static void
@@ -412,9 +412,11 @@ extern int fmtevent(Fmt*);
 	ewmh_init();
 	xext_init();
 
+	event_debug = debug_event;
+
 	srv.preselect = check_preselect;
 	ixp_listen(&srv, sock, &p9srv, serve_9pcon, nil);
-	ixp_listen(&srv, ConnectionNumber(display), nil, check_x_event, closedisplay);
+	ixp_listen(&srv, ConnectionNumber(display), nil, (void (*)(IxpConn*))check_preselect, closedisplay);
 
 	def.border = 1;
 	def.colmode = Colstack;
