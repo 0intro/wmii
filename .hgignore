@@ -11,3 +11,4 @@ _dummy\.h$
 syntax: glob
 config.local.mk
 cmd/menu/bindings.c
+*.pkg.tar.?z
