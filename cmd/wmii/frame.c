@@ -145,7 +145,7 @@ bup_event(Window *w, XButtonEvent *e) {
 		XAllowEvents(display, ReplayPointer, e->time);
 	else
 		XUngrabPointer(display, e->time);
-	event("ClientClick %C %d\n", w->aux, e->button);
+	event("ClientClick %#C %d\n", w->aux, e->button);
 }
 
 static void
@@ -194,7 +194,7 @@ bdown_event(Window *w, XButtonEvent *e) {
 			XUngrabPointer(display, e->time);
 			sync();
 
-			event("ClientMouseDown %C %d\n", f->client, e->button);
+			event("ClientMouseDown %#C %d\n", f->client, e->button);
 		}
 	}
 }
@@ -213,7 +213,7 @@ enter_event(Window *w, XCrossingEvent *e) {
 	c = w->aux;
 	f = c->sel;
 	if(disp.focus != c || selclient() != c) {
-		Dprint(DFocus, "enter_notify(f) => [%C]%s%s\n",
+		Dprint(DFocus, "enter_notify(f) => [%#C]%s%s\n",
 		       f->client, f->client->name,
 		       ignoreenter == e->serial ? " (ignored)" : "");
 		if(e->detail != NotifyInferior)
@@ -234,7 +234,7 @@ expose_event(Window *w, XExposeEvent *e) {
 	if(c->sel)
 		frame_draw(c->sel);
 	else
-		fprint(2, "Badness: Expose event on a client frame which shouldn't be visible: %C\n",
+		fprint(2, "Badness: Expose event on a client frame which shouldn't be visible: %#C\n",
 			c);
 }
 

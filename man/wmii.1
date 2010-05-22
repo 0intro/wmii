@@ -272,11 +272,17 @@ Rules have the form:
 .fi
 
 
-When a new column, \fIn\fR, is created on a view whose
-name matches \fI<regex>\fR, the \fIn\fRth given
-\fI<width>\fR percentage of the screen is given to it. If
-there is no \fIn\fRth width, 1/\fIncol\fRth of the
-screen is given to it.
+Where,
+
+.nf
+      \fI<width>\fR := \fI<percent of screen>\fR | \fI<pixels>\fRpx
+.fi
+
+
+When a new column, \fI<n>\fR, is created on a view whose name
+matches \fI<regex>\fR, it is given the \fI<n>\fRth supplied \fI<width>\fR.
+If there is no \fI<n>\fRth width, it is given 1/\fI<ncol>\fRth of the
+screen.
 
 .TP
 tagrules

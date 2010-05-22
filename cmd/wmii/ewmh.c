@@ -139,7 +139,7 @@ ewmh_destroyclient(Client *c) {
 	e = &c->w.ewmh;
 	if(e->timer)
 		if(!ixp_unsettimer(&srv, e->timer))
-			fprint(2, "Badness: %C: Can't unset timer\n", c);
+			fprint(2, "Badness: %#C: Can't unset timer\n", c);
 	free(c->strut);
 }
 
@@ -149,7 +149,7 @@ pingtimeout(long id, void *v) {
 
 	USED(id);
 	c = v;
-	event("Unresponsive %C\n", c);
+	event("Unresponsive %#C\n", c);
 	c->w.ewmh.ping = 0;
 	c->w.ewmh.timer = 0;
 }
@@ -297,7 +297,7 @@ ewmh_getstrut(Client *c) {
 			free(strut);
 			return;
 		}
-		Dprint(DEwmh, "ewmh_getstrut(%C[%s]) Using WM_STRUT\n", c, clientname(c));
+		Dprint(DEwmh, "ewmh_getstrut(%#C[%C]) Using WM_STRUT\n", c, c);
 		strut = erealloc(strut, Last * sizeof *strut);
 		strut[LeftMin] = strut[RightMin] = 0;
 		strut[LeftMax] = strut[RightMax] = INT_MAX;
@@ -309,7 +309,7 @@ ewmh_getstrut(Client *c) {
 	c->strut->right =  Rect(-strut[Right],    strut[RightMin], 0,                strut[RightMax]);
 	c->strut->top =    Rect(strut[TopMin],    0,               strut[TopMax],    strut[Top]);
 	c->strut->bottom = Rect(strut[BottomMin], -strut[Bottom],  strut[BottomMax], 0);
-	Dprint(DEwmh, "ewmh_getstrut(%C[%s])\n", c, clientname(c));
+	Dprint(DEwmh, "ewmh_getstrut(%#C[%C])\n", c, c);
 	Dprint(DEwmh, "\ttop: %R\n", c->strut->top);
 	Dprint(DEwmh, "\tleft: %R\n", c->strut->left);
 	Dprint(DEwmh, "\tright: %R\n", c->strut->right);
@@ -374,7 +374,7 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 		c = win2client(e->window);
 		if(c == nil)
 			return 1;
-		Dprint(DEwmh, "\tclient: %s\n", clientname(c));
+		Dprint(DEwmh, "\tclient: %C\n", c);
 		if(l[0] != 2)
 			return 1;
 		focus(c, true);
@@ -412,7 +412,7 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 			c = win2client(l[2]);
 			if(c == nil)
 				return 1;
-			Dprint(DEwmh, "\tclient = [%C]\"%s\"\n", c, clientname(c));
+			Dprint(DEwmh, "\tclient = [%#C]\"%C\"\n", c, c);
 			Dprint(DEwmh, "\ttimer = %ld, ping = %ld\n",
 					c->w.ewmh.timer, c->w.ewmh.ping);
 			if(c->w.ewmh.timer)

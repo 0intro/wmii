@@ -263,7 +263,7 @@ lookup_file(IxpFileId *parent, char *name)
 				}
 				for(c=client; c; c=c->next) {
 					if(!name || c->w.xid == id) {
-						push_file(sxprint("%C", c));
+						push_file(sxprint("%#C", c));
 						file->volatil = true;
 						file->p.client = c;
 						file->id = c->w.xid;

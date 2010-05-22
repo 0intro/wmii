@@ -1221,11 +1221,16 @@ The root filesystem contains the following:
           /‹regex›/ -> ‹width›{\color{gray}[}+‹width›{\color{gray}]*}}
         \end{quote}
 
-        When a new column, ‹n›, is created on a view whose
-        name matches ‹regex›, the ‹n›th given
-        ‹width› percentage of the screen is given to it. If
-        there is no ‹n›th width, $1/\mbox{‹ncol›th}$ of the
-        screen is given to it.
+        Where,
+
+        \begin{code}
+    ‹width› := ‹percent of screen› | ‹pixels›px
+        \end{code}
+
+        When a new column, ‹n›, is created on a view whose name
+        matches ‹regex›, it is given the ‹n›th supplied ‹width›.
+        If there is no ‹n›th width, it is given
+        $1/\mbox{‹ncol›th}$ of the screen.
 
   \item[tagrules]
     \index{filesystem!/!tagrules}

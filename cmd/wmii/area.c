@@ -85,16 +85,15 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 	SET(index);
 	if(v->areas) { /* Creating a column. */
 		minwidth = column_minwidth();
-		index = pos ? area_idx(pos) : 1;
+		index = pos ? area_idx(pos) : 0;
 		numcols = 0;
 		for(a=v->areas[scrn]; a; a=a->next)
 			numcols++;
 
-		/* TODO: Need a better sizing/placing algorithm.
-		 */
+		/* TODO: Need a better sizing/placing algorithm. */
 		if(width == 0) {
 			if(numcols >= 0) {
-				width = view_newcolwidth(v, index);
+				width = view_newcolwidth(v, scrn, index);
 				if (width == 0)
 					width = Dx(v->r[scrn]) / (numcols + 1);
 			}

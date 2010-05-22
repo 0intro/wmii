@@ -592,19 +592,26 @@ view_update_all(void) {
 }
 
 uint
-view_newcolwidth(View *v, int num) {
+view_newcolwidth(View *v, int scrn, int num) {
 	Rule *r;
 	char *toks[16];
 	char buf[sizeof r->value];
 	ulong n;
 
+	/* XXX: Multihead. */
 	for(r=def.colrules.rule; r; r=r->next)
 		if(regexec(r->regex, v->name, nil, 0)) {
 			utflcpy(buf, r->value, sizeof buf);
 			n = tokenize(toks, 16, buf, '+');
+
 			if(num < n)
 				if(getulong(toks[num], &n))
-					return Dx(v->screenr) * (n / 100.0); /* XXX: Multihead. */
+					return Dx(v->r[scrn]) * (n / 100.0);
+				else if(!strcmp("px", strend(toks[num], 2))) {
+					toks[num][strlen(toks[num]) - 2] = '\0';
+					if(getulong(toks[num], &n))
+						return n;
+				}
 			break;
 		}
 	return 0;
@@ -627,13 +634,13 @@ view_index(View *v) {
 		for(f=a->frame; f; f=f->anext) {
 			r = &f->r;
 			if(a->floating)
-				bufprint("%a %C %d %d %d %d %s\n",
+				bufprint("%a %#C %d %d %d %d %s\n",
 						a, f->client,
 						r->min.x, r->min.y,
 						Dx(*r), Dy(*r),
 						f->client->props);
 			else
-				bufprint("%a %C %d %d %s\n",
+				bufprint("%a %#C %d %d %s\n",
 						a, f->client,
 						r->min.y, Dy(*r),
 						f->client->props);

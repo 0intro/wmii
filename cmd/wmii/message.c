@@ -338,7 +338,7 @@ getframe(View *v, int scrn, IxpMsg *m) {
 char*
 readctl_client(Client *c) {
 	bufclear();
-	bufprint("%C\n", c);
+	bufprint("%#C\n", c);
 	if(c->fullscreen >= 0)
 		bufprint("Fullscreen %d\n", c->fullscreen);
 	else
@@ -639,7 +639,7 @@ readctl_view(View *v) {
 
 	/* select client <client> */
 	if(v->sel->sel)
-		bufprint("select client %C\n", v->sel->sel->client);
+		bufprint("select client %#C\n", v->sel->sel->client);
 
 	foreach_area(v, s, a)
 		bufprint("colmode %a %s\n", a, column_getmode(a));

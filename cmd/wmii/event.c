@@ -56,8 +56,8 @@ event_destroynotify(XDestroyWindowEvent *ev) {
 void
 print_focus(const char *fn, Client *c, const char *to) {
 	Dprint(DFocus, "%s() disp.focus:\n", fn);
-	Dprint(DFocus, "\t%C => %C\n", disp.focus, c);
-	Dprint(DFocus, "\t%s => %s\n", clientname(disp.focus), to);
+	Dprint(DFocus, "\t%#C => %#C\n", disp.focus, c);
+	Dprint(DFocus, "\t%C => %s\n", disp.focus, to);
 }
 
 void

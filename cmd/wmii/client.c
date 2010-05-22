@@ -191,7 +191,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 
 	ewmh_initclient(c);
 
-	event("CreateClient %C\n", c);
+	event("CreateClient %#C\n", c);
 	client_manage(c);
 	return c;
 }
@@ -312,7 +312,7 @@ client_destroy(Client *c) {
 	ewmh_destroyclient(c);
 	group_remove(c);
 	if(starting > -1)
-		event("DestroyClient %C\n", c);
+		event("DestroyClient %#C\n", c);
 
 	event_flush(FocusChangeMask, true);
 	free(c->w.hints);
@@ -351,15 +351,11 @@ Cfmt(Fmt *f) {
 
 	c = va_arg(f->args, Client*);
 	if(c)
-		return fmtprint(f, "%W", &c->w);
+		if(f->flags & FmtSharp)
+			return fmtprint(f, "%s", c->name);
+		else
+			return fmtprint(f, "%W", &c->w);
 	return fmtprint(f, "<nil>");
-}
-
-char*
-clientname(Client *c) {
-	if(c)
-		return c->name;
-	return "<nil>";
 }
 
 Rectangle
@@ -505,10 +501,10 @@ client_focus(Client *c) {
 	sync();
 	event_flush(FocusChangeMask, true);
 
-	Dprint(DFocus, "client_focus([%C]%s)\n", c, clientname(c));
-	Dprint(DFocus, "\t[%C]%s\n\t=> [%C]%s\n",
-			disp.focus, clientname(disp.focus),
-			c, clientname(c));
+	Dprint(DFocus, "client_focus([%#C]%C)\n", c, c);
+	Dprint(DFocus, "\t[%#C]%C\n\t=> [%#C]%C\n",
+			disp.focus, disp.focus,
+			c, c);
 	if(disp.focus != c) {
 		if(c) {
 			if(!c->noinput)
@@ -617,7 +613,7 @@ fullscreen(Client *c, int fullscreen, long screen) {
 	if(fullscreen == (c->fullscreen >= 0))
 		return;
 
-	event("Fullscreen %C %s\n", c, (fullscreen ? "on" : "off"));
+	event("Fullscreen %#C %s\n", c, (fullscreen ? "on" : "off"));
 	ewmh_updatestate(c);
 
 	c->fullscreen = -1;
@@ -670,7 +666,7 @@ client_seturgent(Client *c, int urgent, int from) {
 	cnot = (urgent ? "" : "Not");
 
 	if(urgent != c->urgent) {
-		event("%sUrgent %C %s\n", cnot, c, cfrom);
+		event("%sUrgent %#C %s\n", cnot, c, cfrom);
 		c->urgent = urgent;
 		ewmh_updatestate(c);
 		if(c->sel) {
@@ -891,12 +887,12 @@ enter_event(Window *w, XCrossingEvent *e) {
 	if(e->detail != NotifyInferior) {
 		if(e->detail != NotifyVirtual)
 		if(e->serial != ignoreenter && disp.focus != c) {
-			Dprint(DFocus, "enter_notify([%C]%s)\n", c, c->name);
+			Dprint(DFocus, "enter_notify([%#C]%s)\n", c, c->name);
 			focus(c, false);
 		}
 		client_setcursor(c, cursor[CurNormal]);
 	}else
-		Dprint(DFocus, "enter_notify(%C[NotifyInferior]%s)\n", c, c->name);
+		Dprint(DFocus, "enter_notify(%#C[NotifyInferior]%s)\n", c, c->name);
 }
 
 static void
@@ -913,7 +909,7 @@ focusin_event(Window *w, XFocusChangeEvent *e) {
 	old = disp.focus;
 	disp.focus = c;
 	if(c != old) {
-		event("ClientFocus %C\n", c);
+		event("ClientFocus %#C\n", c);
 		if(c->sel)
 			frame_draw(c->sel);
 	}
