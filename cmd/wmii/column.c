@@ -36,7 +36,6 @@ column_setmode(Area *a, const char *mode) {
 			str++;
 		*str = '\0';
 		if(str > tok) {
-			print("'%s' %c\n", tok, add);
 			if(!strcmp(tok, "max")) {
 				if(add == '\0' || add == '+')
 					a->max = true;
