@@ -9,7 +9,7 @@
 #include <string.h>
 #include "fns.h"
 
-static const char version[] = "click-"VERSION", ©2010 Kris Maglione\n";
+static const char version[] = "click-"VERSION", "COPYRIGHT"\n";
 
 static void
 usage(void) {

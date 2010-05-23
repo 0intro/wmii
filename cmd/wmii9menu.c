@@ -48,7 +48,7 @@
 #include <stuff/util.h>
 #include <stuff/x11.h>
 
-char version[] = "wmii9menu-" VERSION " ©2010 Kris Maglione, ©1994 David Hogan, Arnold Robbins";
+char version[] = "wmii9menu-"VERSION" "COPYRIGHT", ©1994 David Hogan, Arnold Robbins";
 
 static Window*	menuwin;
 

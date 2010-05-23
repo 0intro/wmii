@@ -8,7 +8,7 @@
 #include <string.h>
 #include "fns.h"
 
-static const char version[] = "witray-"VERSION", ©2007 Kris Maglione\n";
+static const char version[] = "witray-"VERSION", "COPYRIGHT"\n";
 
 static void
 usage(void) {
