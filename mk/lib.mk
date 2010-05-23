@@ -1,13 +1,13 @@
 PTARG = $(ROOT)/lib/$(TARG)
 LIB = $(PTARG).a
-OFILES = ${OBJ:=.o}
+OFILES = $(OBJ:=.o)
 
 all: $(HFILES) $(LIB) 
 
 install: $(PTARG).install
 uninstall: $(PTARG).uninstall
 clean: libclean
-depend: ${OBJ:=.depend}
+depend: $(OBJ:=.depend)
 
 libclean:
 	for i in $(LIB) $(OFILES); do \
@@ -26,7 +26,7 @@ $(LIB): $(OFILES)
 	$(AR) $@ $(OFILES)
 
 SOMKSH=case "$(MAKESO)" in 1|[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]) echo $(ROOT)/mk/so.mk;; *) echo /dev/null;; esac
-SOMK:=${shell $(SOMKSH)}
+SOMK:=$(shell $(SOMKSH))
 SOMK!=$(SOMKSH)
 include $(SOMK)
 

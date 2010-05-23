@@ -1,5 +1,5 @@
-ROOT= ..
-include ${ROOT}/mk/hdr.mk
+ROOT= ../..
+include $(ROOT)/mk/hdr.mk
 
 hack.o hack.o_pic: util.c hack.h x11.h
 
@@ -13,5 +13,5 @@ OBJ =	hack	\
 	../libstuff/util/getlong		\
 	../libstuff/util/tokenize
 
-include ${ROOT}/mk/so.mk
+include $(ROOT)/mk/so.mk
 

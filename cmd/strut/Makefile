@@ -1,8 +1,8 @@
 ROOT= ../..
-include ${ROOT}/mk/hdr.mk
-include ${ROOT}/mk/wmii.mk
+include $(ROOT)/mk/hdr.mk
+include $(ROOT)/mk/wmii.mk
 
-main.c: ${ROOT}/mk/wmii.mk
+main.c: $(ROOT)/mk/wmii.mk
 
 TARG =	wistrut
 HFILES=	dat.h fns.h
@@ -16,5 +16,5 @@ OBJ =	main	\
 	ewmh	\
 	win
 
-include ${ROOT}/mk/one.mk
+include $(ROOT)/mk/one.mk
 

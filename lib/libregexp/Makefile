@@ -1,5 +1,5 @@
-ROOT= ..
-include ${ROOT}/mk/hdr.mk
+ROOT= ../..
+include $(ROOT)/mk/hdr.mk
 
 VERSION=2.0
 TARG=libregexp9
@@ -13,5 +13,5 @@ OBJ=\
 	rregexec\
 	rregsub
 
-include ${ROOT}/mk/lib.mk
+include $(ROOT)/mk/lib.mk
 

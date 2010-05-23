@@ -1,5 +1,5 @@
-ROOT= ..
-include ${ROOT}/mk/hdr.mk
+ROOT= ../..
+include $(ROOT)/mk/hdr.mk
 
 VERSION=2.0
 TARG=libutf
@@ -26,5 +26,5 @@ OBJ=\
 	utfrune\
 	utfutf
 
-include ${ROOT}/mk/lib.mk
+include $(ROOT)/mk/lib.mk
 

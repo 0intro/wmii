@@ -62,7 +62,7 @@ all:
 MAKEFILES=.depend
 .c.depend:
 	echo MKDEP $<
-	[ -n "${noisycc}" ] && echo $(MKDEP) $(COMPILE_FLAGS) $< || true
+	[ -n "$(noisycc)" ] && echo $(MKDEP) $(COMPILE_FLAGS) $< || true
 	eval "$(MKDEP) $(COMPILE_FLAGS)" $< >>.depend
 
 .sh.depend .rc.depend .1.depend .awk.depend:
@@ -76,20 +76,20 @@ MAKEFILES=.depend
 .o.out:
 	$(LINK) $@ $<
 .c.out:
-	$(COMPILE) ${<:.c=.o} $<
-	$(LINK) $@ ${<:.c=.o}
+	$(COMPILE) $(<:.c=.o) $<
+	$(LINK) $@ $(<:.c=.o)
 
 .rc.out .awk.out .sh.out:
 	echo FILTER $(BASE)$<
-	[ -n "${<:%.sh=}" ] || $(BINSH) -n $<
+	[ -n "$(<:%.sh=)" ] || $(BINSH) -n $<
 	set -e; \
-	[ -n "${noisycc}" ] && set -x; \
+	[ -n "$(noisycc)" ] && set -x; \
 	$(FILTER) $< >$@; \
 	chmod 0755 $@
 
 .man1.1:
 	echo TXT2TAGS $(BASE)$<
-	[ -n "${noisycc}" ] && set -x; \
+	[ -n "$(noisycc)" ] && set -x; \
 	txt2tags -o- $< >$@
 
 INSTALL= _install() { set -e; \
@@ -97,7 +97,7 @@ INSTALL= _install() { set -e; \
 		 d=$$(dirname $$3); \
 		 if [ ! -d $(DESTDIR)$$d ]; then echo MKDIR $$d; mkdir -p $(DESTDIR)$$d; fi; \
 		 echo INSTALL $$($(CLEANNAME) $(BASE)$$2); \
-		 [ -n "${noisycc}" ] && set -x; \
+		 [ -n "$(noisycc)" ] && set -x; \
 		 if [ "$$dashb" = -b ]; \
 		 then cp -f $$2 $(DESTDIR)$$3; \
 		 else $(FILTER) <$$2 >$(DESTDIR)$$3; \
@@ -107,7 +107,7 @@ INSTALL= _install() { set -e; \
 	 }; _install
 UNINSTALL= _uninstall() { set -e; \
 	           echo UNINSTALL $$($(CLEANNAME) $(BASE)$$2); \
-		   [ -n "${noisycc}" ] && set -x; \
+		   [ -n "$(noisycc)" ] && set -x; \
 		   rm -f $(DESTDIR)$$3; \
 	   }; _uninstall
 
@@ -131,12 +131,12 @@ UNINSTALL= _uninstall() { set -e; \
 .pdf.uninstall:
 	$(UNINSTALL) $< $(DOC)/$<
 
-INSTALMAN=   _installman()   { man=$${1\#\#*.}; $(INSTALL) 0644 $$1 $(MAN)/man$$man/$$1; }; _installman
-UNINSTALLMAN=_uninstallman() { man=$${1\#\#*.}; $(UNINSTALL) $$1 $(MAN)/man$$man/$$1; }; _uninstallman
+INSTALMAN=   _installman()   { man=$$(1\#\#*.); $(INSTALL) 0644 $$1 $(MAN)/man$$man/$$1; }; _installman
+UNINSTALLMAN=_uninstallman() { man=$$(1\#\#*.); $(UNINSTALL) $$1 $(MAN)/man$$man/$$1; }; _uninstallman
 MANSECTIONS=1 2 3 4 5 6 7 8 9
-${MANSECTIONS:%=.%.install}:
+$(MANSECTIONS:%=.%.install):
 	$(INSTALMAN) $<
-${MANSECTIONS:%=.%.uninstall}:
+$(MANSECTIONS:%=.%.uninstall):
 	$(UNINSTALL) $<
 
 .out.clean:

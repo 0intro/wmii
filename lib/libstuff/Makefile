@@ -1,5 +1,5 @@
-ROOT= ..
-include ${ROOT}/mk/hdr.mk
+ROOT= ../..
+include $(ROOT)/mk/hdr.mk
 
 TARG=libstuff
 
@@ -168,5 +168,5 @@ OBJ=\
 	x11/windows/window	\
 	xext
 
-include ${ROOT}/mk/lib.mk
+include $(ROOT)/mk/lib.mk
 

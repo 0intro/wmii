@@ -1,22 +1,14 @@
 ROOT=.
-include ${ROOT}/mk/hdr.mk
-include ${ROOT}/mk/wmii.mk
+include $(ROOT)/mk/hdr.mk
+include $(ROOT)/mk/wmii.mk
 
-PDIRS = \
+DIRS = \
 	doc	     \
 	man	     \
+	lib	     \
 	cmd	     \
-	libwmii_hack \
 	rc	     \
 	alternative_wmiircs
-
-DIRS =	\
-	libstuff  \
-	libbio    \
-	libfmt	  \
-	libregexp \
-	libutf	  \
-	$(PDIRS)
 
 DOCS = README \
        LICENSE
@@ -34,6 +26,5 @@ deb:
 	dpkg-buildpackage -rfakeroot -b -nc
 	[ -d .hg ] && hg revert debian/changelog
 
-include ${ROOT}/mk/dir.mk
-INSTDIRS = $(PDIRS)
+include $(ROOT)/mk/dir.mk
 

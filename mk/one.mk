@@ -1,12 +1,12 @@
 PROG = $(TARG).out
-OFILES = ${OBJ:=.o}
+OFILES = $(OBJ:=.o)
 
 all: $(PROG)
 
 install: $(TARG).install
 uninstall: $(TARG).uninstall
 clean: oneclean
-depend: ${OBJ:=.depend}
+depend: $(OBJ:=.depend)
 
 printinstall:
 	echo 'Install directories:'

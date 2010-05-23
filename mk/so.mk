@@ -1,14 +1,14 @@
 SOPTARG = $(ROOT)/lib/$(TARG)
 SO = $(SOPTARG).$(SOEXT)
 SONAME = $(TARG).$(SOEXT)
-OFILES_PIC = ${OBJ:=.o_pic}
+OFILES_PIC = $(OBJ:=.o_pic)
 
 all: $(HFILES) $(SO) 
 
 install: $(SOPTARG).install
 uninstall: $(SOPTARG).uninstall
 clean: soclean
-depend: ${OBJ:=.depend}
+depend: $(OBJ:=.depend)
 
 soclean:
 	for i in $(SO) $(OFILES_PIC); do \

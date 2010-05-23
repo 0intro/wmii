@@ -1,3 +1,6 @@
+3.1b1:
+    * Xft is now loaded on demand
+    * colrules widths may now be specified in pixels
 
 3.9b1:
     * wmii9menu is now Xinerama aware.
