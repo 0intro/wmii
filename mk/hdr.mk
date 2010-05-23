@@ -131,8 +131,8 @@ UNINSTALL= _uninstall() { set -e; \
 .pdf.uninstall:
 	$(UNINSTALL) $< $(DOC)/$<
 
-INSTALMAN=   _installman()   { man=$$(1\#\#*.); $(INSTALL) 0644 $$1 $(MAN)/man$$man/$$1; }; _installman
-UNINSTALLMAN=_uninstallman() { man=$$(1\#\#*.); $(UNINSTALL) $$1 $(MAN)/man$$man/$$1; }; _uninstallman
+INSTALMAN=   _installman()   { man=$${1\#\#*.}; $(INSTALL) 0644 $$1 $(MAN)/man$$man/$$1; }; _installman
+UNINSTALLMAN=_uninstallman() { man=$${1\#\#*.}; $(UNINSTALL) $$1 $(MAN)/man$$man/$$1; }; _uninstallman
 MANSECTIONS=1 2 3 4 5 6 7 8 9
 $(MANSECTIONS:%=.%.install):
 	$(INSTALMAN) $<
