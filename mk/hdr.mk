@@ -94,45 +94,45 @@ MAKEFILES=.depend
 
 INSTALL= _install() { set -e; \
 		 dashb=$$1; [ $$1 = -b ] && shift; \
-		 d=$$(dirname $$3); \
-		 if [ ! -d $(DESTDIR)$$d ]; then echo MKDIR $$d; mkdir -p $(DESTDIR)$$d; fi; \
+		 d=$(DESTDIR)$$3; f=$$3/$$(basename $$4); \
+		 if [ ! -d $$d ]; then echo MKDIR $$3; mkdir -p $$d; fi; \
 		 echo INSTALL $$($(CLEANNAME) $(BASE)$$2); \
 		 [ -n "$(noisycc)" ] && set -x; \
 		 if [ "$$dashb" = -b ]; \
-		 then cp -f $$2 $(DESTDIR)$$3; \
-		 else $(FILTER) <$$2 >$(DESTDIR)$$3; \
+		 then cp -f $$2 $$f; \
+		 else $(FILTER) <$$2 >$$f; \
 		 fi; \
-		 chmod $$1 $(DESTDIR)$$3; \
+		 chmod $$1 $$f; \
 		 set +x; \
 	 }; _install
 UNINSTALL= _uninstall() { set -e; \
 	           echo UNINSTALL $$($(CLEANNAME) $(BASE)$$2); \
 		   [ -n "$(noisycc)" ] && set -x; \
-		   rm -f $(DESTDIR)$$3; \
+		   rm -f $(DESTDIR)$$3/$$(basename $$4); \
 	   }; _uninstall
 
 .out.install:
-	$(INSTALL) -b 0755 $< $(BIN)/$*
+	$(INSTALL) -b 0755 $< $(BIN) $*
 .out.uninstall:
-	$(UNINSTALL) $< $(BIN)/$*
+	$(UNINSTALL) $< $(BIN) $*
 
 .a.install .$(SOEXT).install:
-	$(INSTALL) -b 0644 $< $(LIBDIR)/$<
+	$(INSTALL) -b 0644 $< $(LIBDIR) $<
 .a.uninstall .$(SOEXT).uninstall:
-	$(UNINSTALL) $< $(LIBDIR)/$<
+	$(UNINSTALL) $< $(LIBDIR) $<
 
 .h.install:
-	$(INSTALL) 0644 $< $(INCLUDE)/$<
+	$(INSTALL) 0644 $< $(INCLUDE) $<
 .h.uninstall:
-	$(UNINSTALL) $< $(INCLUDE)/$<
+	$(UNINSTALL) $< $(INCLUDE) $<
 
 .pdf.install:
-	$(INSTALL) -b 0644 $< $(DOC)/$<
+	$(INSTALL) -b 0644 $< $(DOC) $<
 .pdf.uninstall:
-	$(UNINSTALL) $< $(DOC)/$<
+	$(UNINSTALL) $< $(DOC) $<
 
-INSTALMAN=   _installman()   { man=$${1\#\#*.}; $(INSTALL) 0644 $$1 $(MAN)/man$$man/$$1; }; _installman
-UNINSTALLMAN=_uninstallman() { man=$${1\#\#*.}; $(UNINSTALL) $$1 $(MAN)/man$$man/$$1; }; _uninstallman
+INSTALMAN=   _installman()   { man=$${1\#\#*.}; $(INSTALL) 0644 $$1 $(MAN)/man$$man $$1; }; _installman
+UNINSTALLMAN=_uninstallman() { man=$${1\#\#*.}; $(UNINSTALL) $$1 $(MAN)/man$$man $$1; }; _uninstallman
 MANSECTIONS=1 2 3 4 5 6 7 8 9
 $(MANSECTIONS:%=.%.install):
 	$(INSTALMAN) $<
