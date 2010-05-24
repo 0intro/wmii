@@ -94,7 +94,7 @@ MAKEFILES=.depend
 
 INSTALL= _install() { set -e; \
 		 dashb=$$1; [ $$1 = -b ] && shift; \
-		 d=$(DESTDIR)$$3; f=$$3/$$(basename $$4); \
+		 d=$(DESTDIR)$$3; f=$$d/$$(basename $$4); \
 		 if [ ! -d $$d ]; then echo MKDIR $$3; mkdir -p $$d; fi; \
 		 echo INSTALL $$($(CLEANNAME) $(BASE)$$2); \
 		 [ -n "$(noisycc)" ] && set -x; \
