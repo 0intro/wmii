@@ -42,13 +42,12 @@ static Handlers chandler = {
 Window*
 constraintwin(Rectangle r) {
 	Window *w;
-	WinAttr wa;
 
-	w = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
+	w = createwindow(&scr.root, r, 0, InputOnly, nil, 0);
 	if(0) {
 		Window *w2;
 
-		w2 = createwindow(&scr.root, r, 0, InputOutput, &wa, 0);
+		w2 = createwindow(&scr.root, r, 0, InputOutput, nil, 0);
 		selectinput(w2, ExposureMask);
 		w->aux = w2;
 

@@ -189,6 +189,8 @@ struct Screen {
 Display *display;
 Screen scr;
 
+extern struct Map	windowmap;
+extern struct Map	atommap;
 extern const Point ZP;
 extern const Rectangle ZR;
 extern Window* pointerwin;
@@ -268,6 +270,7 @@ void	ungrabpointer(void);
 int	unmapwin(Window*);
 void	warppointer(Point);
 Window*	window(XWindow);
+char*	windowname(Window*);
 long	winprotocols(Window*);
 Atom	xatom(char*);
 void	sendmessage(Window*, char*, long, long, long, long, long);

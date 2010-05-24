@@ -11,8 +11,8 @@
 # define EXTERN extern
 #endif
 
-EXTERN Handlers	handlers;
+enum { DAuto, DHorizontal, DVertical };
 
-EXTERN Window	win;
-EXTERN Window	frame;
+EXTERN Handlers	handlers;
+EXTERN int	direction;
 

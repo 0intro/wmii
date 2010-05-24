@@ -484,7 +484,6 @@ static int
 tvcol(Frame *f) {
 	Framewin *fw;
 	Window *cwin;
-	WinAttr wa;
 	Rectangle r;
 	Point pt, pt2;
 	uint button;
@@ -502,7 +501,7 @@ tvcol(Frame *f) {
 
 	r.min.y += fw->grabbox.min.y + Dy(fw->grabbox)/2;
 	r.max.y = r.min.y + 1;
-	cwin = createwindow(&scr.root, r, 0, InputOnly, &wa, 0);
+	cwin = createwindow(&scr.root, r, 0, InputOnly, nil, 0);
 	mapwin(cwin);
 
 	ret = TDone;

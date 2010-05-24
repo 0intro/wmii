@@ -141,6 +141,7 @@ OBJ=\
 	x11/properties/getprop_ulong	\
 	x11/properties/getproperty	\
 	x11/properties/strlistdup	\
+	x11/properties/windowname	\
 	x11/shape/setshapemask	\
 	x11/text/freefont	\
 	x11/text/labelh	\

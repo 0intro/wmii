@@ -6,14 +6,14 @@
 #include "fns.h"
 
 void
-restrut(void) {
+restrut(Window *frame) {
 	enum { Left, Right, Top, Bottom };
 	Rectangle strut[4];
 	Rectangle r;
 
-	r = frame.r;
+	r = frame->r;
 	memset(strut, 0, sizeof strut);
-	if(Dx(r) < Dx(scr.rect)/2) {
+	if(Dx(r) < Dx(scr.rect)/2 && direction != DVertical) {
 		if(r.min.x <= scr.rect.min.x) {
 			strut[Left] = r;
 			strut[Left].min.x = 0;
@@ -25,7 +25,7 @@ restrut(void) {
 			strut[Right].max.x = 0;
 		}
 	}
-	if(Dy(r) < Dy(scr.rect)/2) {
+	if(Dy(r) < Dy(scr.rect)/2 && direction != DHorizontal) {
 		if(r.min.y <= scr.rect.min.y) {
 			strut[Top] = r;
 			strut[Top].min.y = 0;
@@ -38,9 +38,6 @@ restrut(void) {
 		}
 	}
 
-#define pstrut(name) \
-	if(!eqrect(strut[name], ZR)) \
-		fprint(2, "strut["#name"] = %R\n", strut[name])
 	/* Choose the struts which take up the least space.
 	 * Not ideal.
 	 */
@@ -70,29 +67,31 @@ restrut(void) {
 	}
 
 #if 0
+#define pstrut(name) \
+	if(!eqrect(strut[name], ZR)) \
+		fprint(2, "strut["#name"] = %R\n", strut[name])
 	pstrut(Left);
 	pstrut(Right);
 	pstrut(Top);
 	pstrut(Bottom);
 #endif
 
-	ewmh_setstrut(&win, strut);
+	ewmh_setstrut(frame->aux, strut);
 }
 
 static void
-config(Window *w, XConfigureEvent *ev) {
+config(Window *frame, XConfigureEvent *ev) {
 
-	USED(w);
-
-	frame.r = rectaddpt(Rect(0, 0, ev->width, ev->height),
-			    Pt(ev->x+ev->border_width, ev->y+ev->border_width));
-	restrut();
+	frame->r = rectaddpt(Rect(0, 0, ev->width, ev->height),
+			     Pt(ev->x+ev->border_width, ev->y+ev->border_width));
+	restrut(frame);
 }
 
 static void
 destroy(Window *w, XDestroyWindowEvent *ev) {
 	USED(w, ev);
-	event_looprunning = false;
+	sethandler(w, nil);
+	event_looprunning = windowmap.nmemb > 0;
 }
 
 Handlers handlers = {

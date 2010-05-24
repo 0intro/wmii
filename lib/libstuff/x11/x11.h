@@ -14,8 +14,6 @@
 #include <stuff/util.h>
 #undef  pointerwin
 
-extern Map	windowmap;
-extern Map	atommap;
 extern MapEnt*	wbucket[137];
 extern MapEnt*	abucket[137];
 

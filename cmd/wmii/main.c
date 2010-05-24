@@ -43,24 +43,22 @@ scan_wins(void) {
 	uint num;
 	XWindow *wins;
 	XWindowAttributes wa;
-	XWindow d1, d2;
+	XWindow root, parent;
 
-	if(XQueryTree(display, scr.root.xid, &d1, &d2, &wins, &num)) {
+	if(XQueryTree(display, scr.root.xid, &root, &parent, &wins, &num)) {
 		for(i = 0; i < num; i++) {
-			if(!XGetWindowAttributes(display, wins[i], &wa))
+			if(!XGetWindowAttributes(display, wins[i], &wa) || wa.override_redirect)
 				continue;
-			/* Skip transients. */
-			if(wa.override_redirect || XGetTransientForHint(display, wins[i], &d1))
-				continue;
+			if(!XGetTransientForHint(display, wins[i], &parent))
 			if(wa.map_state == IsViewable)
 				client_create(wins[i], &wa);
 		}
 		/* Manage transients. */
 		for(i = 0; i < num; i++) {
-			if(!XGetWindowAttributes(display, wins[i], &wa))
+			if(!XGetWindowAttributes(display, wins[i], &wa) || wa.override_redirect)
 				continue;
-			if((XGetTransientForHint(display, wins[i], &d1))
-			&& (wa.map_state == IsViewable))
+			if(XGetTransientForHint(display, wins[i], &parent))
+			if(wa.map_state == IsViewable)
 				client_create(wins[i], &wa);
 		}
 	}

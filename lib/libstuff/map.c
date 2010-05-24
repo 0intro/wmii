@@ -1,5 +1,6 @@
 /* Written by Kris Maglione */
 /* Public domain */
+#include <assert.h>
 #include <string.h>
 #include <stuff/util.h>
 
@@ -28,9 +29,10 @@ hash(const char *str) {
 }
 
 static void
-insert(MapEnt **e, ulong val, const char *key) {
+insert(Map *m, MapEnt **e, ulong val, const char *key) {
 	MapEnt *te;
 	
+	m->nmemb++;
 	te = emallocz(sizeof *te);
 	te->hash = val;
 	te->key = key;
@@ -47,7 +49,7 @@ map_getp(Map *map, ulong val, int create) {
 		if((*e)->hash >= val) break;
 	if(*e == nil || (*e)->hash != val) {
 		if(create)
-			insert(e, val, nil);
+			insert(map, e, val, nil);
 		else
 			e = &NM;
 	}
@@ -71,7 +73,7 @@ hash_getp(Map *map, const char *str, int create) {
 				break;
 		if(*e == nil || (*e)->hash > h || cmp > 0)
 			if(create)
-				insert(e, h, str);
+				insert(map, e, h, str);
 	}
 	return e;
 }
@@ -103,6 +105,7 @@ map_rm(Map *map, ulong val) {
 		te = *e;
 		ret = te->val;
 		*e = te->next;
+		assert(map->nmemb-- > 0);
 		free(te);
 	}
 	return ret;
@@ -119,6 +122,7 @@ hash_rm(Map *map, const char *str) {
 		te = *e;
 		ret = te->val;
 		*e = te->next;
+		assert(map->nmemb-- > 0);
 		free(te);
 	}
 	return ret;

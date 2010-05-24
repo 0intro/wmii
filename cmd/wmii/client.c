@@ -718,9 +718,7 @@ client_updatename(Client *c) {
 
 	c->name[0] = '\0';
 
-	str = getprop_string(&c->w, "_NET_WM_NAME");
-	if(str == nil)
-		str = getprop_string(&c->w, "WM_NAME");
+	str = windowname(&c->w);
 	if(str)
 		utflcpy(c->name, str, sizeof c->name);
 	free(str);

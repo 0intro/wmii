@@ -5,7 +5,9 @@ include $(ROOT)/mk/wmii.mk
 TARG =	wmii.1	   \
 	wmiir.1	   \
 	wmii9menu.1\
-	wimenu.1
+	wihack.1   \
+	wimenu.1   \
+	wistrut.1
 
 $(TARG): Makefile $(ROOT)/mk/wmii.mk header.t2t
 

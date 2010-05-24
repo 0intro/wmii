@@ -1,0 +1,58 @@
+WIMENU
+wmii-@VERSION@
+May, 2010
+
+%!includeconf: header.t2t
+
+= NAME =
+
+wihack - The wmii window hack
+
+= SYNOPSIS =
+
+wihack [-transient <window>] [-type <ewmh window type>] [-tags <tags>] <program>
+
+= DESCRIPTION =
+
+`wihack` is a program which alters the windows created by an
+arbitrary program. It has the name `wihack` because it is just that:
+a hack. It uses LD_PRELOAD to override certain Xlib calls and add
+properties to newly created windows.
+
+= ARGUMENTS =
+
+: -transient <window>
+        Marks created windows as transient for a given <window>.
+        This causes the new window to open in the floating layer of
+        the same tags as <window>.
+: -type <ewmh window type>
+        Sets the EWMH window type of the created window to the type
+        given. `wmii` understands the following types:
+
+        >>
+        : dialog
+                Opens in the floating layer.
+        : dock
+        : menu
+        : toolbar
+                Automatically opens in the floating layer. Does not
+                have a window border or titlebar.
+        : splash
+                Automatically floats and does not automatically
+                receive focus.
+        <<
+: -tags <tags>
+        The created window opens on the given tags.
+:
+= BUGS =
+
+It is a hack.
+
+It doesn't work for setuid programs.
+
+It doesn't work for non-Xlib programs.
+
+= SEE ALSO =
+
+wmii(1)
+

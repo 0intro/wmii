@@ -1,0 +1,55 @@
+WIMENU
+wmii-@VERSION@
+May, 2010
+
+%!includeconf: header.t2t
+
+= NAME =
+
+wistrut - The wmii EWMH strut manager
+
+= SYNOPSIS =
+
+wistrut [-HV] <window|class>... +
+wistrut -v
+
+= DESCRIPTION =
+
+`wistrut` automatically sets EWMH struts on windows for programs
+which don't provide such functionality. This allows you to leave
+utility windows onscreen without obscuring managed clients. Instead,
+whatever part of the screen is occupied by the window will be left
+free by wmii, provided it is less than half of the screen width or
+height. Struts are automatically updated when the managed windows
+are moved or resized, and are only applied if the window is touching
+an edge of the screen.
+
+`wistrut` may be used with any EWMH compatible window manager.
+
+= ARGUMENTS =
+
+All non-option arguments constitute window IDs or regular
+expressions. In the latter case, the any window whose
+<name>:<class>:<title> (as used in wmii's colrules and tagrules)
+will be managed.
+
+: -H
+	Only set horizontal struts. Normally, `wistrut` locates
+	struts in the direction of the narrowest dimension of the
+	window, provided it is touching a screen edge. With this
+	option set, they will always be allocated on either the left
+	or right of the screen. Never the top or bottom.
+: -V
+	Only set vertical struts. See -H.
+: -v
+	Display version information.
+
+= BUGS =
+
+There is no way to remove struts from a window other than to move it
+away from the edge of the screen and kill `wistrut`.
+
+= SEE ALSO =
+
+wmii(1)
+

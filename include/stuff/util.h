@@ -124,6 +124,7 @@ typedef struct MapEnt MapEnt;
 struct Map {
 	MapEnt**bucket;
 	uint	nhash;
+	uint	nmemb;
 };
 
 void**	hash_get(Map*, const char*, bool create);

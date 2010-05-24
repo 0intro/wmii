@@ -5,7 +5,8 @@ include $(ROOT)/mk/wmii.mk
 wmiir.c: $(ROOT)/mk/wmii.mk
 
 DIRS =	wmii \
-	menu
+	menu \
+	strut
 TARG =	wihack    \
 	wmii.rc   \
 	wmii.sh   \

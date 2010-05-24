@@ -21,13 +21,12 @@ static void	ewmh_setstate(Client*, Atom, int);
 
 void
 ewmh_init(void) {
-	WinAttr wa;
 	char myname[] = "wmii";
 	long win;
 
 	ewmhwin = createwindow(&scr.root,
 		Rect(0, 0, 1, 1), 0 /*depth*/,
-		InputOnly, &wa, 0);
+		InputOnly, nil, 0);
 
 	win = ewmhwin->xid;
 	changeprop_long(&scr.root, Net("SUPPORTING_WM_CHECK"), "WINDOW", &win, 1);
