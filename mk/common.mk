@@ -6,16 +6,16 @@ uninstall: simpleuninstall
 DOCDIR = $(DOC)
 simpleinstall:
 	for f in $(DOCS); do \
-		$(INSTALL) 0644 $$f $(DOCDIR)/$$f; \
+		$(INSTALL) 0644 $$f $(DOCDIR) $$f; \
 	done
 	for f in $(TEXT); do \
-		$(INSTALL) 0644 $$f $(DIR)/$$f; \
+		$(INSTALL) 0644 $$f $(DIR) $$f; \
 	done
 	for f in $(BINARY); do \
-		$(INSTALL) -b 0644 $$f $(DIR)/$$f; \
+		$(INSTALL) -b 0644 $$f $(DIR) $$f; \
 	done
 	for f in $(EXECS); do \
-		$(INSTALL) -b 0755 $$f $(DIR)/$$f; \
+		$(INSTALL) -b 0755 $$f $(DIR) $$f; \
 	done
 
 cleandep:
