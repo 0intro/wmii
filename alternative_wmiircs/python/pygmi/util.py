@@ -1,4 +1,5 @@
 import os
+import signal
 import subprocess
 
 import pygmi
@@ -10,10 +11,11 @@ def _():
 
 def call(*args, **kwargs):
     background = kwargs.pop('background', False)
+    pipe  = subprocess.PIPE if not background else None
     input = kwargs.pop('input', None)
-    p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, cwd=os.environ['HOME'],
-                         close_fds=True, **kwargs)
+    p = subprocess.Popen(args, stdin=pipe, stdout=pipe, stderr=pipe,
+                         preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL),
+                         cwd=os.environ['HOME'], close_fds=True, **kwargs)
     if not background:
         return p.communicate(input)[0].rstrip('\n')
 
