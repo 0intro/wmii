@@ -20,6 +20,7 @@ iconheight = `{*=$epsbox; $calc '('$4 - $2') *' $iconscale}
 		showpage
 		quit
 	!
+	optipng -fix $target
 
 %.pdf: %.eps
 	sh epstopdf $stem.eps
@@ -38,4 +39,5 @@ iconheight = `{*=$epsbox; $calc '('$4 - $2') *' $iconscale}
 		showpage
 		quit
 	!
+	optipng -fix $target
 

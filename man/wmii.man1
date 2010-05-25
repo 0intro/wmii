@@ -145,7 +145,7 @@ An action is a shell script in the default setup, but it can
 actually be any executable file.  It is executed usually by
 selecting it from the actions menu.  You can customize an action
 by copying it from the global action directory
-'@CONFPREFIX@/wmii-3.5' to '$HOME/.wmii-3.5' and then
+'@CONFPREFIX@/wmii@CONFVERSION@' to '$HOME/.wmii@CONFVERSION@' and then
 editing the copy to fit your needs.  Of course you can also
 create your own actions there; make sure that they are
 executable.
