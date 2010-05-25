@@ -1,6 +1,6 @@
 
 pkgname="wmii-hg"
-pkgver=2636
+pkgver=2637
 pkgrel=1
 pkgdesc="The latest hg pull of wmii, a lightweight, dynamic window manager for X11"
 url="http://wmii.suckless.org"
@@ -15,7 +15,6 @@ optdepends=("plan9port: for use of the alternative plan9port wmiirc" \
 provides=("wmii")
 conflicts=("wmii")
 source=()
-options=(!makeflags)
 
 test -d src || mkdir src
 ln -snf .. src/wmii

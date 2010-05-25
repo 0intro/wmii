@@ -523,6 +523,7 @@ client_focus(Client *c) {
 
 void
 client_resize(Client *c, Rectangle r) {
+	bool client_resized, frame_resized;
 	Frame *f;
 
 	f = c->sel;
@@ -547,10 +548,13 @@ client_resize(Client *c, Rectangle r) {
 		client_unmap(c, IconicState);
 	}else {
 		client_map(c);
-		reshapewin(c->framewin, f->r);
-		reshapewin(&c->w, f->crect);
+		if((frame_resized = !eqrect(c->framewin->r, f->r)))
+			reshapewin(c->framewin, f->r);
+		if((client_resized = !eqrect(c->w.r, f->crect)))
+			reshapewin(&c->w, f->crect);
 		map_frame(c);
-		client_configure(c);
+		if(client_resized || frame_resized)
+			client_configure(c);
 		ewmh_framesize(c);
 	}
 }

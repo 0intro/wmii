@@ -215,11 +215,11 @@ view_update_rect(View *v) {
 		return false;
 	*/
 
-
 	top = 0;
 	left = 0;
 	right = 0;
 	bottom = 0;
+	vec.n = 0;
 	for(f=v->floating->frame; f; f=f->anext) {
 		strut = f->client->strut;
 		if(!strut)
