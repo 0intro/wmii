@@ -59,6 +59,7 @@ STATIC = -static
 #SOEXT = dylib
 
 # Solaris
+#SHELL = /bin/bash
 #CFLAGS = -fast $(INCS)
 #LDFLAGS = $(LIBS) -R$(PREFIX)/lib -lsocket -lnsl
 #CFLAGS += -xtarget=ultra
