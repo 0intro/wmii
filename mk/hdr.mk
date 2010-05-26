@@ -23,13 +23,13 @@ FILTER = cat
 EXCFLAGS = $(INCLUDES) -D_XOPEN_SOURCE=600
 
 COMPILE_FLAGS = $(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES))
-COMPILE    = $(ROOT)/util/compile "$(CC)" "$(COMPILE_FLAGS)"
-COMPILEPIC = $(ROOT)/util/compile "$(CC)" "$(COMPILE_FLAGS) $(SOCFLAGS)"
+COMPILE    = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(COMPILE_FLAGS)"
+COMPILEPIC = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(COMPILE_FLAGS) $(SOCFLAGS)"
 
-LINK   = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(LDFLAGS) $(LIBS)"
-LINKSO = $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(SOLDFLAGS) $(LIBS) $(SHARED)"
+LINK   = $(SHELL) $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(LDFLAGS) $(LIBS)"
+LINKSO = $(SHELL) $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(SOLDFLAGS) $(LIBS) $(SHARED)"
 
-CLEANNAME=$(ROOT)/util/cleanname
+CLEANNAME=$(SHELL) $(ROOT)/util/cleanname
 
 SOEXT=so
 TAGFILES=
