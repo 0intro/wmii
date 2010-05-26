@@ -17,4 +17,5 @@ override_dh_auto_install:
 	$(MAKE) install
 
 	install -D img/icon.png debian/wmii/usr/share/icons/wmii.png
+	install -D debian/file/wmii.desktop debian/wmii/usr/share/xsessions/wmii.desktop
 
