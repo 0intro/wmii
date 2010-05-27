@@ -30,15 +30,6 @@ event_configurenotify(XConfigureEvent *ev) {
 }
 
 void
-event_clientmessage(XClientMessageEvent *ev) {
-
-	if(ewmh_clientmessage(ev))
-		return;
-	if(xdnd_clientmessage(ev))
-		return;
-}
-
-void
 event_destroynotify(XDestroyWindowEvent *ev) {
 	Window *w;
 	Client *c;

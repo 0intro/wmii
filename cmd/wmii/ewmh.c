@@ -10,6 +10,9 @@ Window *ewmhwin;
 static void	ewmh_getwinstate(Client*);
 static void	ewmh_setstate(Client*, Atom, int);
 
+static Handlers	client_handlers;
+static Handlers	root_handlers;
+
 #define Net(x) ("_NET_" x)
 #define	Action(x) Net("WM_ACTION_" x)
 #define	State(x) Net("WM_STATE_" x)
@@ -36,6 +39,8 @@ ewmh_init(void) {
 	long zz[] = {0, 0};
 	changeprop_long(&scr.root, Net("DESKTOP_VIEWPORT"), "CARDINAL",
 		zz, 2);
+
+	pushhandler(&scr.root, &root_handlers, nil);
 
 	long supported[] = {
 		/* Misc */
@@ -129,6 +134,7 @@ ewmh_initclient(Client *c) {
 	ewmh_getwinstate(c);
 	ewmh_getstrut(c);
 	ewmh_updateclientlist();
+	pushhandler(&c->w, &client_handlers, c);
 }
 
 void
@@ -143,6 +149,74 @@ ewmh_destroyclient(Client *c) {
 			fprint(2, "Badness: %#C: Can't unset timer\n", c);
 	free(c->strut);
 }
+
+static bool
+event_client_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
+	Client *c;
+	ulong *l;
+	ulong msg;
+	int action;
+
+	c = aux;
+	l = (ulong*)e->data.l;
+	msg = e->message_type;
+	Dprint(DEwmh, "ClientMessage: %A\n", msg);
+
+	if(msg == NET("WM_STATE")) {
+		enum {
+			StateUnset,
+			StateSet,
+			StateToggle,
+		};
+		if(e->format != 32)
+			return false;
+
+		switch(l[0]) {
+		case StateUnset:  action = Off;    break;
+		case StateSet:    action = On;     break;
+		case StateToggle: action = Toggle; break;
+		default: return false;
+		}
+
+		Dprint(DEwmh, "\tAction: %s\n", TOGGLE(action));
+		ewmh_setstate(c, l[1], action);
+		ewmh_setstate(c, l[2], action);
+		return false;
+	}else
+	if(msg == NET("ACTIVE_WINDOW")) {
+		if(e->format != 32)
+			return false;
+
+		Dprint(DEwmh, "\tsource: %ld\n", l[0]);
+		Dprint(DEwmh, "\twindow: 0x%lx\n", e->window);
+		Dprint(DEwmh, "\tclient: %C\n", c);
+		if(l[0] == SourceClient && abs(event_xtime - l[1]) > 5000)
+			return false;
+		if(l[0] == SourceClient || l[0] == SourcePager)
+			focus(c, true);
+		return false;
+	}else
+	if(msg == NET("CLOSE_WINDOW")) {
+		if(e->format != 32)
+			return false;
+		Dprint(DEwmh, "\tsource: %ld\n", l[0]);
+		Dprint(DEwmh, "\twindow: 0x%lx\n", e->window);
+		client_kill(c, true);
+		return false;
+	}
+
+	return false;
+}
+
+static bool
+event_client_property(Window *w, void *aux, XPropertyEvent *e) {
+	return ewmh_prop(aux, e->atom);
+}
+
+static Handlers client_handlers = {
+	.message = event_client_clientmessage,
+	.property = event_client_property,
+};
 
 static void
 pingtimeout(long id, void *v) {
@@ -171,7 +245,7 @@ ewmh_pingclient(Client *c) {
 	e->timer = ixp_settimer(&srv, PingTime, pingtimeout, c);
 }
 
-int
+bool
 ewmh_prop(Client *c, Atom a) {
 	if(a == NET("WM_WINDOW_TYPE"))
 		ewmh_getwintype(c);
@@ -179,8 +253,8 @@ ewmh_prop(Client *c, Atom a) {
 	if(a == NET("WM_STRUT_PARTIAL"))
 		ewmh_getstrut(c);
 	else
-		return 0;
-	return 1;
+		return true;
+	return false;
 }
 
 typedef struct Prop Prop;
@@ -335,70 +409,21 @@ ewmh_setstate(Client *c, Atom state, int action) {
 		client_seturgent(c, action, UrgClient);
 }
 
-int
-ewmh_clientmessage(XClientMessageEvent *e) {
+static bool
+event_root_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
 	Client *c;
 	View *v;
 	ulong *l;
 	ulong msg;
-	int action, i;
+	int i;
 
 	l = (ulong*)e->data.l;
 	msg = e->message_type;
 	Dprint(DEwmh, "ClientMessage: %A\n", msg);
 
-	if(msg == NET("WM_STATE")) {
-		enum {
-			StateUnset,
-			StateSet,
-			StateToggle,
-		};
-		if(e->format != 32)
-			return -1;
-		c = win2client(e->window);
-		if(c == nil)
-			return 0;
-		switch(l[0]) {
-		case StateUnset:  action = Off;    break;
-		case StateSet:    action = On;     break;
-		case StateToggle: action = Toggle; break;
-		default: return -1;
-		}
-		Dprint(DEwmh, "\tAction: %s\n", TOGGLE(action));
-		ewmh_setstate(c, l[1], action);
-		ewmh_setstate(c, l[2], action);
-		return 1;
-	}else
-	if(msg == NET("ACTIVE_WINDOW")) {
-		if(e->format != 32)
-			return -1;
-		Dprint(DEwmh, "\tsource: %ld\n", l[0]);
-		Dprint(DEwmh, "\twindow: 0x%lx\n", e->window);
-		c = win2client(e->window);
-		if(c == nil)
-			return 1;
-		Dprint(DEwmh, "\tclient: %C\n", c);
-		if(l[0] == SourceClient && abs(event_xtime - l[1]) > 5000)
-			return 1;
-		if(l[0] != SourceClient && l[0] != SourcePager)
-			return 1;
-		focus(c, true);
-		return 1;
-	}else
-	if(msg == NET("CLOSE_WINDOW")) {
-		if(e->format != 32)
-			return -1;
-		Dprint(DEwmh, "\tsource: %ld\n", l[0]);
-		Dprint(DEwmh, "\twindow: 0x%lx\n", e->window);
-		c = win2client(e->window);
-		if(c == nil)
-			return 1;
-		client_kill(c, true);
-		return 1;
-	}else
 	if(msg == NET("CURRENT_DESKTOP")) {
 		if(e->format != 32)
-			return -1;
+			return false;
 		for(v=view, i=l[0]; v; v=v->next, i--)
 			if(i == 0)
 				break;
@@ -406,14 +431,14 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 		if(i == 0)
 			view_select(v->name);
 		return 1;
-	}else
+	}
 	if(msg == xatom("WM_PROTOCOLS")) {
 		if(e->format != 32)
-			return 0;
+			return false;
 		Dprint(DEwmh, "\t%A\n", l[0]);
 		if(l[0] == NET("WM_PING")) {
 			if(e->window != scr.root.xid)
-				return -1;
+				return false;
 			c = win2client(l[2]);
 			if(c == nil)
 				return 1;
@@ -424,12 +449,18 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 				ixp_unsettimer(&srv, c->w.ewmh.timer);
 			c->w.ewmh.timer = 0;
 			c->w.ewmh.ping = 0;
-			return 1;
+			return false;
 		}
+		return false;
 	}
 
-	return 0;
+	return false;
 }
+
+static Handlers root_handlers = {
+	.message = event_root_clientmessage,
+};
+
 
 void
 ewmh_framesize(Client *c) {

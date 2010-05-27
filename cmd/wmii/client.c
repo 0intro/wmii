@@ -783,7 +783,7 @@ updatemwm(Client *c) {
 	}
 }
 
-void
+bool
 client_prop(Client *c, Atom a) {
 	WinHints h;
 	XWMHints *wmh;
@@ -801,8 +801,7 @@ client_prop(Client *c, Atom a) {
 	else
 	switch (a) {
 	default:
-		ewmh_prop(c, a);
-		break;
+		return true;
 	case XA_WM_TRANSIENT_FOR:
 		XGetTransientForHint(display, c->w.xid, &c->trans);
 		break;
@@ -838,10 +837,11 @@ client_prop(Client *c, Atom a) {
 		client_updatename(c);
 		break;
 	}
+	return false;
 }
 
 /* Handlers */
-static void
+static bool
 configreq_event(Window *w, void *aux, XConfigureRequestEvent *e) {
 	Rectangle r, cr;
 	Client *c;
@@ -873,16 +873,18 @@ configreq_event(Window *w, void *aux, XConfigureRequestEvent *e) {
 		c->sel->floatr = r;
 		client_configure(c);
 	}
+	return false;
 }
 
-static void
+static bool
 destroy_event(Window *w, void *aux, XDestroyWindowEvent *e) {
 	USED(w, e);
 
 	client_destroy(aux);
+	return false;
 }
 
-static void
+static bool
 enter_event(Window *w, void *aux, XCrossingEvent *e) {
 	Client *c;
 	
@@ -896,9 +898,10 @@ enter_event(Window *w, void *aux, XCrossingEvent *e) {
 		client_setcursor(c, cursor[CurNormal]);
 	}else
 		Dprint(DFocus, "enter_notify(%#C[NotifyInferior]%s)\n", c, c->name);
+	return false;
 }
 
-static void
+static bool
 focusin_event(Window *w, void *aux, XFocusChangeEvent *e) {
 	Client *c, *old;
 
@@ -916,9 +919,10 @@ focusin_event(Window *w, void *aux, XFocusChangeEvent *e) {
 		if(c->sel)
 			frame_draw(c->sel);
 	}
+	return false;
 }
 
-static void
+static bool
 focusout_event(Window *w, void *aux, XFocusChangeEvent *e) {
 	Client *c;
 
@@ -932,9 +936,10 @@ focusout_event(Window *w, void *aux, XFocusChangeEvent *e) {
 		if(c->sel)
 			frame_draw(c->sel);
 	}
+	return false;
 }
 
-static void
+static bool
 unmap_event(Window *w, void *aux, XUnmapEvent *e) {
 	Client *c;
 	
@@ -942,9 +947,10 @@ unmap_event(Window *w, void *aux, XUnmapEvent *e) {
 	if(!e->send_event)
 		c->unmapped--;
 	client_destroy(c);
+	return false;
 }
 
-static void
+static bool
 map_event(Window *w, void *aux, XMapEvent *e) {
 	Client *c;
 
@@ -953,17 +959,15 @@ map_event(Window *w, void *aux, XMapEvent *e) {
 	c = aux;
 	if(c == selclient())
 		client_focus(c);
+	return false;
 }
 
-static void
+static bool
 property_event(Window *w, void *aux, XPropertyEvent *e) {
-	Client *c;
 
 	if(e->state == PropertyDelete) /* FIXME */
-		return;
-
-	c = aux;
-	client_prop(c, e->atom);
+		return true;
+	return client_prop(aux, e->atom);
 }
 
 static Handlers handlers = {

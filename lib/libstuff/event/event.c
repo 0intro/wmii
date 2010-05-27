@@ -3,7 +3,7 @@
  */
 #include "event.h"
 
-typedef void (*Handler)(Window*, void*, XEvent*);
+typedef bool (*Handler)(Window*, void*, XEvent*);
 void	(*event_debug)(XEvent*);
 long	event_xtime;
 bool	event_looprunning;
@@ -37,16 +37,14 @@ _event_handle(Window *w, ulong offset, XEvent *event) {
 	Handler f;
 	HandlersLink *l;
 
-	if(w->handler && (f = structmember(w->handler, Handler, offset))) {
-		f(w, w->aux, event);
-		return;
-	}
-	for(l=w->handler_link; l; l=l->next) {
-		if(f = structmember(l->handler, Handler, offset)) {
-			f(w, l->aux, event);
+	if(w->handler && (f = structmember(w->handler, Handler, offset)))
+		if(!f(w, w->aux, event))
 			return;
-		}
-	}
+
+	for(l=w->handler_link; l; l=l->next)
+		if((f = structmember(l->handler, Handler, offset)))
+			if(!f(w, l->aux, event))
+				return;
 }
 
 void

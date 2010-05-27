@@ -142,16 +142,17 @@ frame_restack(Frame *f, Frame *above) {
 }
 
 /* Handlers */
-static void
+static bool
 bup_event(Window *w, void *aux, XButtonEvent *e) {
 	if((e->state & def.mod) != def.mod)
 		XAllowEvents(display, ReplayPointer, e->time);
 	else
 		XUngrabPointer(display, e->time);
 	event("ClientClick %#C %d\n", aux, e->button);
+	return false;
 }
 
-static void
+static bool
 bdown_event(Window *w, void *aux, XButtonEvent *e) {
 	Frame *f;
 	Client *c;
@@ -200,15 +201,17 @@ bdown_event(Window *w, void *aux, XButtonEvent *e) {
 			event("ClientMouseDown %#C %d\n", f->client, e->button);
 		}
 	}
+	return false;
 }
 
-static void
+static bool
 config_event(Window *w, void *aux, XConfigureEvent *e) {
 
 	USED(w, e);
+	return false;
 }
 
-static void
+static bool
 enter_event(Window *w, void *aux, XCrossingEvent *e) {
 	Client *c;
 	Frame *f;
@@ -224,9 +227,10 @@ enter_event(Window *w, void *aux, XCrossingEvent *e) {
 			focus(f->client, false);
 	}
 	mouse_checkresize(f, Pt(e->x, e->y), false);
+	return false;
 }
 
-static void
+static bool
 expose_event(Window *w, void *aux, XExposeEvent *e) {
 	Client *c;
 
@@ -238,14 +242,16 @@ expose_event(Window *w, void *aux, XExposeEvent *e) {
 	else
 		fprint(2, "Badness: Expose event on a client frame which shouldn't be visible: %#C\n",
 			c);
+	return false;
 }
 
-static void
+static bool
 motion_event(Window *w, void *aux, XMotionEvent *e) {
 	Client *c;
 	
 	c = aux;
 	mouse_checkresize(c->sel, Pt(e->x, e->y), false);
+	return false;
 }
 
 Handlers framehandler = {

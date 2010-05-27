@@ -245,7 +245,7 @@ findbar(WMScreen *s, Point p) {
 	return nil;
 }
 
-static void
+static bool
 bdown_event(Window *w, void *aux, XButtonPressedEvent *e) {
 	WMScreen *s;
 	Bar *b;
@@ -258,9 +258,10 @@ bdown_event(Window *w, void *aux, XButtonPressedEvent *e) {
 	b = findbar(s, Pt(e->x, e->y));
 	if(b)
 		event("%sBarMouseDown %d %s\n", barside[b->bar], e->button, b->name);
+	return false;
 }
 
-static void
+static bool
 bup_event(Window *w, void *aux, XButtonPressedEvent *e) {
 	WMScreen *s;
 	Bar *b;
@@ -269,6 +270,7 @@ bup_event(Window *w, void *aux, XButtonPressedEvent *e) {
 	b = findbar(s, Pt(e->x, e->y));
 	if(b)
 		event("%sBarClick %d %s\n", barside[b->bar], e->button, b->name);
+	return false;
 }
 
 static Rectangle
@@ -285,10 +287,11 @@ dndmotion_event(Window *w, void *aux, Point p) {
 	return ZR;
 }
 
-static void
+static bool
 expose_event(Window *w, void *aux, XExposeEvent *e) {
 	USED(w, e);
 	bar_draw(aux);
+	return false;
 }
 
 static Handlers handlers = {

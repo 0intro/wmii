@@ -163,7 +163,7 @@ div_update_all(void) {
 }
 
 /* Div Handlers */
-static void
+static bool
 bdown_event(Window *w, void *aux, XButtonEvent *e) {
 	Divide *d;
 
@@ -171,9 +171,10 @@ bdown_event(Window *w, void *aux, XButtonEvent *e) {
 	
 	d = aux;
 	mouse_resizecol(d);
+	return false;
 }
 
-static void
+static bool
 expose_event(Window *w, void *aux, XExposeEvent *e) {
 	Divide *d;
 	
@@ -181,6 +182,7 @@ expose_event(Window *w, void *aux, XExposeEvent *e) {
 	
 	d = aux;
 	drawdiv(d);
+	return false;
 }
 
 static Handlers handlers = {

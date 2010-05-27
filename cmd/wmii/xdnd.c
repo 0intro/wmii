@@ -4,12 +4,15 @@
 #include "dat.h"
 #include "fns.h"
 
+static Handlers	handlers;
+
 void
 xdnd_initwindow(Window *w) {
 	long l;
 
 	l = 3; /* They are insane. Why is this an ATOM?! */
 	changeprop_long(w, "XdndAware", "ATOM", &l, 1);
+	pushhandler(w, &handlers, nil);
 }
 
 typedef struct Dnd Dnd;
@@ -18,9 +21,8 @@ struct Dnd {
 	Rectangle	r;
 };
 
-int
-xdnd_clientmessage(XClientMessageEvent *e) {
-	Window *w;
+static bool
+clientmessage_event(Window *w, void *aux, XClientMessageEvent *e) {
 	Dnd *dnd;
 	long *l;
 	Rectangle r;
@@ -35,34 +37,28 @@ xdnd_clientmessage(XClientMessageEvent *e) {
 
 	if(msg == xatom("XdndEnter")) {
 		if(e->format != 32)
-			return -1;
-		w = findwin(e->window);
-		if(w) {
-			if(w->dnd == nil)
-				w->dnd = emallocz(sizeof *dnd);
-			dnd = w->dnd;
-			dnd->source = l[0];
-			dnd->r = ZR;
-		}
-		return 1;
+			return false;
+		if(w->dnd == nil)
+			w->dnd = emallocz(sizeof *dnd);
+		dnd = w->dnd;
+		dnd->source = l[0];
+		dnd->r = ZR;
+		return false;
 	}else
 	if(msg == xatom("XdndLeave")) {
 		if(e->format != 32)
-			return -1;
-		w = findwin(e->window);
-		if(w && w->dnd) {
+			return false;
+		if(w->dnd) {
 			free(w->dnd);
 			w->dnd = nil;
 		}
-		return 1;
+		return false;
 	}else
 	if(msg == xatom("XdndPosition")) {
 		if(e->format != 32)
-			return -1;
+			return false;
 		r = ZR;
-		w = findwin(e->window);
-		if(w)
-			dnd = w->dnd;
+		dnd = w->dnd;
 		if(dnd) {
 			p.x = (ulong)l[2] >> 16;
 			p.y = (ulong)l[2] & 0xffff;
@@ -80,9 +76,13 @@ xdnd_clientmessage(XClientMessageEvent *e) {
 		pos = (r.min.x<<16) | r.min.y;
 		siz = (Dx(r)<<16) | Dy(r);
 		sendmessage(window(l[0]), "XdndStatus", e->window, 0, pos, siz, 0);
-		return 1;
+		return false;
 	}
 
-	return 0;
+	return true;
 }
+
+static Handlers handlers = {
+	.message = clientmessage_event
+};
 

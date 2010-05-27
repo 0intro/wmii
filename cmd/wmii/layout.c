@@ -98,7 +98,7 @@ framedestroy(Framewin *f) {
 	free(f);
 }
 
-static void
+static bool
 expose_event(Window *w, void *aux, XExposeEvent *e) {
 	Rectangle r;
 	Framewin *f;
@@ -118,6 +118,7 @@ expose_event(Window *w, void *aux, XExposeEvent *e) {
 	border(buf, insetrect(f->grabbox, -f->grabbox.min.x), 1, c->border);
 
 	copyimage(w, r, buf, ZP);	
+	return false;
 }
 
 static Handlers handlers = {

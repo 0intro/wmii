@@ -79,20 +79,22 @@ restrut(Window *frame) {
 	ewmh_setstrut(frame->aux, strut);
 }
 
-static void
+static bool
 config_event(Window *frame, void *aux, XConfigureEvent *ev) {
 
 	frame->r = rectaddpt(Rect(ev->x, ev->y, ev->width, ev->height),
 			     Pt(ev->border_width, ev->border_width));
 	restrut(frame);
+	return false;
 }
 
-static void
+static bool
 destroy_event(Window *w, void *aux, XDestroyWindowEvent *ev) {
 
 	USED(ev);
 	sethandler(w, nil);
 	event_looprunning = windowmap.nmemb > 0;
+	return false;
 }
 
 Handlers handlers = {

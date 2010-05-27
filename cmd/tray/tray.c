@@ -221,7 +221,7 @@ tray_update(void) {
 	tray_draw(tray.win->r);
 }
 
-static void
+static bool
 config_event(Window *w, void *aux, XConfigureEvent *ev) {
 
 	USED(aux);
@@ -239,19 +239,22 @@ config_event(Window *w, void *aux, XConfigureEvent *ev) {
 				 Pt(ev->border_width, ev->border_width));
 		restrut(w, tray.orientation);
 	}
+	return false;
 }
 
-static void
+static bool
 expose_event(Window *w, void *aux, XExposeEvent *ev) {
 
 	USED(w, aux, ev);
 	tray_draw(tray.win->r);
+	return false;
 }
 
-static void
+static bool
 message_event(Window *w, void *aux, XClientMessageEvent *ev) {
 
 	Dprint("tray_message: %s\n", XGetAtomName(display, ev->message_type));
+	return false;
 }
 
 static Handlers handlers = {
@@ -260,12 +263,13 @@ static Handlers handlers = {
 	.expose = expose_event,
 };
 
-static void
+static bool
 property_event(Window *w, void *aux, XPropertyEvent *ev) {
 	if(ev->atom == NET("CURRENT_DESKTOP"))
 		tray_resize(tray.r);
 	Debug if(ev->atom == NET("CURRENT_DESKTOP"))
 		print("property_event(_NET_CURRENT_DESKTOP)\n");
+	return false;
 }
 
 static Handlers root_handlers = {

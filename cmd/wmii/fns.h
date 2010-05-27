@@ -82,7 +82,7 @@ void	client_kill(Client*, bool);
 void	client_manage(Client*);
 void	client_map(Client*);
 void	client_message(Client*, char*, long);
-void	client_prop(Client*, Atom);
+bool	client_prop(Client*, Atom);
 void	client_reparent(Client*, Window*, Point);
 void	client_resize(Client*, Rectangle);
 void	client_setcursor(Client*, Cursor);
@@ -142,7 +142,7 @@ void	ewmh_getwintype(Client*);
 void	ewmh_init(void);
 void	ewmh_initclient(Client*);
 void	ewmh_pingclient(Client*);
-int	ewmh_prop(Client*, Atom);
+bool	ewmh_prop(Client*, Atom);
 long	ewmh_protocols(Window*);
 void	ewmh_updateclient(Client*);
 void	ewmh_updateclientlist(void);
@@ -278,6 +278,5 @@ char*	toutf8(const char*);
 char*	toutf8n(const char*, size_t);
 
 /* xdnd.c */
-int	xdnd_clientmessage(XClientMessageEvent*);
 void	xdnd_initwindow(Window*);
 

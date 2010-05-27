@@ -152,42 +152,47 @@ client_message(Client *c, long type, int format, ClientMessageData* data) {
 	}
 }
 
-static void
+static bool
 config_event(Window *w, void *aux, XConfigureEvent *e) {
 	Client *c;
 
 	c = aux;
 	if(false)
 		movewin(c->indicator, addpt(w->r.min, Pt(1, 1)));
+	return false;
 }
 
-static void
+static bool
 configreq_event(Window *w, void *aux, XConfigureRequestEvent *e) {
 
 	Dprint("configreq_event(%W)\n", w);
 	/* This seems, sadly, to be necessary. */
 	tray_update();
+	return false;
 }
 
-static void
+static bool
 map_event(Window *w, void *aux, XMapEvent *e) {
 
 	Dprint("client map_event(%W)\n", w);
 	w->mapped = true;
 	tray_update();
+	return false;
 }
 
-static void
+static bool
 unmap_event(Window *w, void *aux, XUnmapEvent *e) {
 
 	Dprint("client map_event(%W)\n", w);
 	tray_update();
+	return false;
 }
 
-static void
+static bool
 reparent_event(Window *w, void *aux, XReparentEvent *e) {
 
 	Dprint("client reparent_event(%W)\n", w);
+	return false;
 }
 
 static Handlers handlers = {

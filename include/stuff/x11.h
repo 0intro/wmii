@@ -95,28 +95,28 @@ struct Font {
 
 struct Handlers {
 	Rectangle (*dndmotion)(Window*, void*, Point);
-	void (*bdown)(Window*, void*, XButtonEvent*);
-	void (*bup)(Window*, void*, XButtonEvent*);
-	void (*config)(Window*, void*, XConfigureEvent*);
-	void (*configreq)(Window*, void*, XConfigureRequestEvent*);
-	void (*destroy)(Window*, void*, XDestroyWindowEvent*);
-	void (*enter)(Window*, void*, XCrossingEvent*);
-	void (*expose)(Window*, void*, XExposeEvent*);
-	void (*focusin)(Window*, void*, XFocusChangeEvent*);
-	void (*focusout)(Window*, void*, XFocusChangeEvent*);
-	void (*kdown)(Window*, void*, XKeyEvent*);
-	void (*kup)(Window*, void*, XKeyEvent*);
-	void (*leave)(Window*, void*, XCrossingEvent*);
-	void (*map)(Window*, void*, XMapEvent*);
-	void (*mapreq)(Window*, void*, XMapRequestEvent*);
-	void (*message)(Window*, void*, XClientMessageEvent*);
-	void (*motion)(Window*, void*, XMotionEvent*);
-	void (*property)(Window*, void*, XPropertyEvent*);
-	void (*reparent)(Window*, void*, XReparentEvent*);
-	void (*selection)(Window*, void*, XSelectionEvent*);
-	void (*selectionclear)(Window*, void*, XSelectionClearEvent*);
-	void (*selectionrequest)(Window*, void*, XSelectionRequestEvent*);
-	void (*unmap)(Window*, void*, XUnmapEvent*);
+	bool (*bdown)(Window*, void*, XButtonEvent*);
+	bool (*bup)(Window*, void*, XButtonEvent*);
+	bool (*config)(Window*, void*, XConfigureEvent*);
+	bool (*configreq)(Window*, void*, XConfigureRequestEvent*);
+	bool (*destroy)(Window*, void*, XDestroyWindowEvent*);
+	bool (*enter)(Window*, void*, XCrossingEvent*);
+	bool (*expose)(Window*, void*, XExposeEvent*);
+	bool (*focusin)(Window*, void*, XFocusChangeEvent*);
+	bool (*focusout)(Window*, void*, XFocusChangeEvent*);
+	bool (*kdown)(Window*, void*, XKeyEvent*);
+	bool (*kup)(Window*, void*, XKeyEvent*);
+	bool (*leave)(Window*, void*, XCrossingEvent*);
+	bool (*map)(Window*, void*, XMapEvent*);
+	bool (*mapreq)(Window*, void*, XMapRequestEvent*);
+	bool (*message)(Window*, void*, XClientMessageEvent*);
+	bool (*motion)(Window*, void*, XMotionEvent*);
+	bool (*property)(Window*, void*, XPropertyEvent*);
+	bool (*reparent)(Window*, void*, XReparentEvent*);
+	bool (*selection)(Window*, void*, XSelectionEvent*);
+	bool (*selectionclear)(Window*, void*, XSelectionClearEvent*);
+	bool (*selectionrequest)(Window*, void*, XSelectionRequestEvent*);
+	bool (*unmap)(Window*, void*, XUnmapEvent*);
 };
 
 struct HandlersLink {

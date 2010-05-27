@@ -28,11 +28,12 @@ quad_cursor(Align align) {
 	}
 }
 
-static void
+static bool
 cwin_expose(Window *w, void *aux, XExposeEvent *e) {
 
 	fill(w, rectsubpt(w->r, w->r.min), def.focuscolor.bg);
 	fill(w, w->r, def.focuscolor.bg);
+	return false;
 }
 
 static Handlers chandler = {

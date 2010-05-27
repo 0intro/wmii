@@ -254,7 +254,7 @@ menu_show(void) {
 	menu_draw();
 }
 
-static void
+static bool
 kdown_event(Window *w, void *aux, XKeyEvent *e) {
 	char **action, **p;
 	char *key;
@@ -276,7 +276,7 @@ kdown_event(Window *w, void *aux, XKeyEvent *e) {
 	|| IsKeypadKey(ksym)
 	|| IsPrivateKeypadKey(ksym)
 	|| IsPFKey(ksym))
-		return;
+		return false;
 
 	action = find_key(key, e->state);
 	if(action == nil || action[0] == nil) {
@@ -328,13 +328,15 @@ kdown_event(Window *w, void *aux, XKeyEvent *e) {
 			break;
 		}
 	}
+	return false;
 }
 
-static void
+static bool
 expose_event(Window *w, void *aux, XExposeEvent *e) {
 
 	USED(w);
 	menu_draw();
+	return false;
 }
 
 static Handlers handlers = {

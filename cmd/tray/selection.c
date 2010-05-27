@@ -94,16 +94,17 @@ selection_notify(Selection *s, XSelectionRequestEvent *ev, bool success) {
 	sendevent(window(ev->requestor), false, 0L, &notify);
 }
 
-static void
+static bool
 message_event(Window *w, void *aux, XClientMessageEvent *ev) {
 	Selection *s;
 
 	s = aux;
 	if(s->message)
 		s->message(s, ev);
+	return false;
 }
 
-static void
+static bool
 selectionclear_event(Window *w, void *aux, XSelectionClearEvent *ev) {
 	Selection *s;
 
@@ -111,9 +112,10 @@ selectionclear_event(Window *w, void *aux, XSelectionClearEvent *ev) {
 	s = aux;
 	s->time_end = ev->time;
 	selection_release(s);
+	return false;
 }
 
-static void
+static bool
 selectionrequest_event(Window *w, void *aux, XSelectionRequestEvent *ev) {
 	Selection *s;
 
@@ -127,13 +129,14 @@ selectionrequest_event(Window *w, void *aux, XSelectionRequestEvent *ev) {
 				 XGetAtomName(display, ev->property), "TIMESTAMP",
 				 &s->time_start, 1);
 		selection_notify(s, ev, true);
-		return;
+		return false;
 	}
 
 	if(s->request)
 		s->request(s, ev);
 	else
 		selection_notify(s, ev, false);
+	return false;
 }
 
 static Handlers selection_handlers = {

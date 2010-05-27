@@ -92,16 +92,17 @@ xembed_sendmessage(XEmbed *xembed, long message, long detail, long data1, long d
 	traperrors(false);
 }
 
-static void
+static bool
 destroy_event(Window *w, void *aux, XDestroyWindowEvent *ev) {
 	XEmbed *xembed;
 
 	xembed = aux;
 	xembed->flags = DEAD;
 	xembed_disown(xembed);
+	return false;
 }
 
-static void
+static bool
 property_event(Window *w, void *aux, XPropertyEvent *ev) {
 	XEmbed *xembed;
 
@@ -110,9 +111,10 @@ property_event(Window *w, void *aux, XPropertyEvent *ev) {
 	xembed = aux;
 	if(ev->atom == xatom("_XEMBED_INFO"))
 		xembed_updateinfo(xembed);
+	return false;
 }
 
-static void
+static bool
 reparent_event(Window *w, void *aux, XReparentEvent *ev) {
 	XEmbed *xembed;
 
@@ -121,6 +123,7 @@ reparent_event(Window *w, void *aux, XReparentEvent *ev) {
 		xembed->flags = DEAD;
 		xembed_disown(xembed);
 	}
+	return false;
 }
 
 static Handlers handlers = {
