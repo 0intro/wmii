@@ -6,6 +6,7 @@
 #include "fns.h"
 
 static Handlers handlers;
+static Handlers root_handlers;
 
 void
 restrut(Window *w, int orientation) {
@@ -83,7 +84,10 @@ tray_init(void) {
 						  | CWEventMask);
 		XFreeColormap(display, wa.colormap);
 	}
+
 	sethandler(tray.win, &handlers);
+	pushhandler(&scr.root, &root_handlers, nil);
+	selectinput(&scr.root, scr.root.eventmask | PropertyChangeMask);
 
 	changeprop_string(tray.win, "_WMII_TAGS", tray.tags);
 
@@ -150,9 +154,9 @@ tray_resize(Rectangle r) {
 		freeimage(oldimage);
 	}
 
+	tray.r = r;
 	reshapewin(tray.win, r);
 	restrut(tray.win, tray.orientation);
-
 }
 
 void
@@ -253,5 +257,17 @@ static Handlers handlers = {
 	.message = message_event,
 	.config = config_event,
 	.expose = expose_event,
+};
+
+static void
+property_event(Window *w, void *aux, XPropertyEvent *ev) {
+	if(ev->atom == NET("CURRENT_DESKTOP"))
+		tray_resize(tray.r);
+	Debug if(ev->atom == NET("CURRENT_DESKTOP"))
+		print("property_event(_NET_CURRENT_DESKTOP)\n");
+}
+
+static Handlers root_handlers = {
+	.property = property_event,
 };
 
