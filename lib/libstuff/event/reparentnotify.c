@@ -7,6 +7,6 @@ void
 event_reparentnotify(XReparentEvent *ev) {
 	Window *w;
 
-	if((w = findwin(ev->window))) 
+	if((w = findwin(ev->event)))
 		event_handle(w, reparent, ev);
 }

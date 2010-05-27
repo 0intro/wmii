@@ -7,6 +7,6 @@ void
 event_maprequest(XMapRequestEvent *ev) {
 	Window *w;
 
-	if((w = findwin(ev->parent))) 
+	if((w = findwin(ev->parent)))
 		event_handle(w, mapreq, ev);
 }

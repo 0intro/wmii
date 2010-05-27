@@ -56,8 +56,10 @@ void
 xembed_disown(XEmbed *xembed) {
 
 	pophandler(xembed->w, &handlers);
-	if(xembed->flags != DEAD)
+	if(xembed->flags != DEAD) {
 		reparentwindow(xembed->w, &scr.root, ZP);
+		unmapwin(xembed->w);
+	}
 	if(xembed->cleanup)
 		xembed->cleanup(xembed);
 	free(xembed);

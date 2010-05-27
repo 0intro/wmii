@@ -172,13 +172,22 @@ configreq_event(Window *w, void *aux, XConfigureRequestEvent *e) {
 static void
 map_event(Window *w, void *aux, XMapEvent *e) {
 
+	Dprint("client map_event(%W)\n", w);
+	w->mapped = true;
 	tray_update();
 }
 
 static void
 unmap_event(Window *w, void *aux, XUnmapEvent *e) {
 
+	Dprint("client map_event(%W)\n", w);
 	tray_update();
+}
+
+static void
+reparent_event(Window *w, void *aux, XReparentEvent *e) {
+
+	Dprint("client reparent_event(%W)\n", w);
 }
 
 static Handlers handlers = {
@@ -186,5 +195,6 @@ static Handlers handlers = {
 	.configreq = configreq_event,
 	.map = map_event,
 	.unmap = unmap_event,
+	.reparent = reparent_event,
 };
 
