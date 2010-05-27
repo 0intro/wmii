@@ -71,6 +71,7 @@ EXTERN struct {
 	Client*		clients;
 	Selection*	selection;
 	char*		tags;
+	Rectangle	r;
 	ulong		iconsize;
 	ulong		padding;
 	long		edge;

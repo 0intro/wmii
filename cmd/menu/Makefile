@@ -14,7 +14,8 @@ HFILES=	dat.h fns.h
 
 PACKAGES += $(X11PACKAGES)
 
-LIBS += -lm $(LIBS9) $(LIBIXP)
+LIB = $(LIBS9) $(LIBIXP)
+LIBS += -lm
 CFLAGS += -DIXP_NEEDAPI=86
 OBJ =	main	\
 	caret	\

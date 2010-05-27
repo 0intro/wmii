@@ -9,7 +9,8 @@ HFILES=	dat.h fns.h
 
 PACKAGES += $(X11PACKAGES)
 
-LIBS += -lm $(LIBS9)
+LIB = $(LIBS9)
+LIBS += -lm
 CFLAGS += -DIXP_NEEDAPI=86
 OBJ =	main	\
 	ewmh	\
