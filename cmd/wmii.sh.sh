@@ -190,14 +190,13 @@ wi_selclient() {
 	wmiir read /client/sel/ctl | sed 1q | tr -d '\012'
 }
 
-wi_readevent() {
-	wmiir read /event
-}
-
 wi_eventloop() {
 	echo "$Keys" | wmiir write /keys
 
-	wi_readevent | while read wi_event
+	if [ "$1" = -i ]
+	then cat
+	else wmiir read /event
+	fi | while read wi_event
 	do
 		IFS="$wi_newline"
 		wi_arg=$(echo "$wi_event" | sed 's/^[^ ]* //')
