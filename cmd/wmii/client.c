@@ -475,7 +475,9 @@ focus(Client *c, bool user) {
 	View *v;
 	Frame *f;
 
-	USED(user);
+	if(!user && c->nofocus)
+		return;
+
 	f = c->sel;
 	if(!f)
 		return;

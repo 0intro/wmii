@@ -161,6 +161,7 @@ struct Client {
 	bool	urgent;
 	bool	borderless;
 	bool	titleless;
+	bool	nofocus;
 	bool	noinput;
 };
 

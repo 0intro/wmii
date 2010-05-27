@@ -90,7 +90,7 @@ void	client_seturgent(Client*, int, int);
 void	client_setviews(Client*, char**);
 void	client_unmap(Client*, int state);
 Frame*	client_viewframe(Client *c, View *v);
-void	focus(Client*, bool restack);
+void	focus(Client*, bool user);
 void	fullscreen(Client*, int, long);
 Client*	group_leader(Group*);
 int	map_frame(Client*);

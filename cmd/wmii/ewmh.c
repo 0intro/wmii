@@ -242,9 +242,11 @@ ewmh_getwintype(Client *c) {
 
 	c->w.ewmh.type = mask;
 	if(mask & (TypeDock|TypeMenu|TypeToolbar)) {
-		c->borderless = 1;
-		c->titleless = 1;
+		c->borderless = true;
+		c->titleless = true;
 	}
+	if(mask & (TypeSplash|TypeDock))
+		c->nofocus = true;
 }
 
 static void

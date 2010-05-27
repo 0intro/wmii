@@ -221,7 +221,6 @@ enter_event(Window *w, void *aux, XCrossingEvent *e) {
 		       ignoreenter == e->serial ? " (ignored)" : "");
 		if(e->detail != NotifyInferior)
 		if(e->serial != ignoreenter && (f->area->floating || !f->collapsed))
-		if(!(c->w.ewmh.type & TypeSplash))
 			focus(f->client, false);
 	}
 	mouse_checkresize(f, Pt(e->x, e->y), false);
