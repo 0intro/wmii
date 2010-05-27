@@ -155,6 +155,7 @@ tray_resize(Rectangle r) {
 	}
 
 	tray.r = r;
+	tray.win->r = ZR; /* Force the configure event. */
 	reshapewin(tray.win, r);
 	restrut(tray.win, tray.orientation);
 }
