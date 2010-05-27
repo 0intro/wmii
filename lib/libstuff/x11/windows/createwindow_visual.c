@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 static char hostname[HOST_NAME_MAX + 1];
+static long pid;
 
 Window*
 createwindow_visual(Window *parent, Rectangle r,
@@ -37,7 +38,10 @@ createwindow_visual(Window *parent, Rectangle r,
 	if(class != InputOnly)
 		w->gc = XCreateGC(display, w->xid, 0, nil);
 
-	changeprop_ulong(w, "_NET_WM_PID", "CARDINAL", (ulong[1]){ getpid() }, 1);
+	if(pid == 0)
+		pid = getpid();
+	changeprop_long(w, "_NET_WM_PID", "CARDINAL", &pid, 1);
+
 	if(!hostname[0])
 		gethostname(hostname, sizeof(hostname) - 1);
 	if(hostname[0])
