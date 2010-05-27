@@ -10,8 +10,8 @@
 #include <bio.h>
 #include <plan9.h>
 #undef nelem
-#include <debug.h>
-#include "util.h"
+#include <stuff/util.h>
+#include "debug.h"
 
 #ifdef __linux__
 # define PROGTXT "exe"

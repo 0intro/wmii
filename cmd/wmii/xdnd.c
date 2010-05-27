@@ -71,7 +71,7 @@ xdnd_clientmessage(XClientMessageEvent *e) {
 			Dprint(DDnd, "\tp: %P\n", p);
 			if(eqrect(dnd->r, ZR) || !rect_haspoint_p(p, dnd->r))
 				if(w->handler->dndmotion)
-					dnd->r = w->handler->dndmotion(w, p);
+					dnd->r = w->handler->dndmotion(w, w->aux, p);
 			r = dnd->r;
 			if(!eqrect(r, ZR))
 				r = rectaddpt(r, w->r.min);

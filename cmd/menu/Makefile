@@ -12,7 +12,7 @@ bindings.c: keys.txt Makefile
 TARG =	wimenu
 HFILES=	dat.h fns.h
 
-PACKAGES += $(X11PACKAGES) xext xrandr xrender xinerama
+PACKAGES += $(X11PACKAGES)
 
 LIBS += -lm $(LIBS9) $(LIBIXP)
 CFLAGS += -DIXP_NEEDAPI=86

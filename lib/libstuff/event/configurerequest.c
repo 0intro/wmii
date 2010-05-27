@@ -9,7 +9,7 @@ event_configurerequest(XConfigureRequestEvent *ev) {
 	Window *w;
 
 	if((w = findwin(ev->window)))
-		handle(w, configreq, ev);
+		event_handle(w, configreq, ev);
 	else{
 		wc.x = ev->x;
 		wc.y = ev->y;

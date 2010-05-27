@@ -10,15 +10,12 @@ debug_event(XEvent *e) {
 	Dprint(DEvent, "%E\n", e);
 }
 
-#define handle(w, fn, ev) \
-	BLOCK(if((w)->handler->fn) (w)->handler->fn((w), ev))
-
 void
 event_buttonpress(XButtonPressedEvent *ev) {
 	Window *w;
 
 	if((w = findwin(ev->window)))
-		handle(w, bdown, ev);
+		event_handle(w, bdown, ev);
 	else
 		XAllowEvents(display, ReplayPointer, ev->time);
 }
@@ -29,7 +26,7 @@ event_configurenotify(XConfigureEvent *ev) {
 
 	ignoreenter = ev->serial;
 	if((w = findwin(ev->window)))
-		handle(w, config, ev);
+		event_handle(w, config, ev);
 }
 
 void
@@ -47,7 +44,7 @@ event_destroynotify(XDestroyWindowEvent *ev) {
 	Client *c;
 
 	if((w = findwin(ev->window)))
-		handle(w, destroy, ev);
+		event_handle(w, destroy, ev);
 	else if((c = win2client(ev->window)))
 		fprint(2, "Badness: Unhandled DestroyNotify: Client: %p, Window: %W, Name: %s\n",
 		       c, &c->w, c->name);
@@ -87,7 +84,7 @@ event_focusin(XFocusChangeEvent *ev) {
 		disp.focus = nil;
 	}
 	else if((w = findwin(ev->window)))
-		handle(w, focusin, ev);
+		event_handle(w, focusin, ev);
 	else if(ev->mode == NotifyGrab) {
 		/* Some unmanaged window has grabbed focus */
 		if((c = disp.focus)) {
@@ -117,7 +114,7 @@ event_focusout(XFocusChangeEvent *ev) {
 	&& XCheckMaskEvent(display, KeyPressMask, &me))
 		event_dispatch(&me);
 	else if((w = findwin(ev->window)))
-		handle(w, focusout, ev);
+		event_handle(w, focusout, ev);
 }
 
 void
@@ -126,7 +123,7 @@ event_mapnotify(XMapEvent *ev) {
 
        ignoreenter = ev->serial;
        if((w = findwin(ev->window)))
-               handle(w, map, ev);
+               event_handle(w, map, ev);
 }
 
 void
@@ -137,7 +134,7 @@ event_unmapnotify(XUnmapEvent *ev) {
 	if((w = findwin(ev->window)) && (ev->event == w->parent->xid)) {
 		w->mapped = false;
 		if(ev->send_event || w->unmapped-- == 0)
-			handle(w, unmap, ev);
+			event_handle(w, unmap, ev);
 	}
 }
 

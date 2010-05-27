@@ -44,6 +44,8 @@ Wfmt(Fmt *f) {
 	Window *w;
 
 	w = va_arg(f->args, Window*);
+	if(w == nil)
+		return fmtstrcpy(f, "<nil>");
 	return fmtprint(f, "0x%ulx", w->xid);
 }
 

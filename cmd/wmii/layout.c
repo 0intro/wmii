@@ -99,7 +99,7 @@ framedestroy(Framewin *f) {
 }
 
 static void
-expose_event(Window *w, XExposeEvent *e) {
+expose_event(Window *w, void *aux, XExposeEvent *e) {
 	Rectangle r;
 	Framewin *f;
 	Image *buf;
@@ -107,7 +107,7 @@ expose_event(Window *w, XExposeEvent *e) {
 	
 	USED(e);
 
-	f = w->aux;
+	f = aux;
 	c = &def.focuscolor;
 	buf = disp.ibuf;
 	

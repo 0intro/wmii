@@ -7,9 +7,8 @@ main.c: $(ROOT)/mk/wmii.mk
 TARG =	wistrut
 HFILES=	dat.h fns.h
 
-PACKAGES += $(X11PACKAGES) xext xrandr xinerama
+PACKAGES += $(X11PACKAGES)
 
-LIB =	$(LIBIXP)
 LIBS += -lm $(LIBS9)
 CFLAGS += -DIXP_NEEDAPI=86
 OBJ =	main	\

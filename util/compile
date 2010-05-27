@@ -14,7 +14,7 @@ echo CC $($bin/cleanname ${BASE}$outfile)
 [ -n "$noisycc" ] && echo $CC -o $outfile $CFLAGS $@
 eval '$CC -o $outfile '"$CFLAGS"' $@ >$xtmp 2>&1'
 status=$?
-[ $? -eq 0 ] || echo $CC -o $outfile $CFLAGS $@ >&2
+[ $status -eq 0 ] || echo $CC -o $outfile $CFLAGS $@ >&2
 
 base=$(echo $BASE | sed 's/,/\\,/g')
 re='\([^[:space:]/][^[:space:]]*\..:[0-9]\)'

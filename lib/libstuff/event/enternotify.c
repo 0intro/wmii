@@ -7,10 +7,11 @@ void
 event_enternotify(XCrossingEvent *ev) {
 	Window *w;
 
-	event_xtime = ev->time;
+	if(!ev->send_event)
+		event_xtime = ev->time;
 	if(ev->mode != NotifyNormal)
 		return;
 
 	if((w = findwin(ev->window))) 
-		handle(w, enter, ev);
+		event_handle(w, enter, ev);
 }

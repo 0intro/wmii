@@ -80,22 +80,23 @@ restrut(Window *frame) {
 }
 
 static void
-config(Window *frame, XConfigureEvent *ev) {
+config_event(Window *frame, void *aux, XConfigureEvent *ev) {
 
-	frame->r = rectaddpt(Rect(0, 0, ev->width, ev->height),
-			     Pt(ev->x+ev->border_width, ev->y+ev->border_width));
+	frame->r = rectaddpt(Rect(ev->x, ev->y, ev->width, ev->height),
+			     Pt(ev->border_width, ev->border_width));
 	restrut(frame);
 }
 
 static void
-destroy(Window *w, XDestroyWindowEvent *ev) {
-	USED(w, ev);
+destroy_event(Window *w, void *aux, XDestroyWindowEvent *ev) {
+
+	USED(ev);
 	sethandler(w, nil);
 	event_looprunning = windowmap.nmemb > 0;
 }
 
 Handlers handlers = {
-	.config = config,
-	.destroy = destroy,
+	.config = config_event,
+	.destroy = destroy_event,
 };
 

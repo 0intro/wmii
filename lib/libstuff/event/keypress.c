@@ -7,7 +7,8 @@ void
 event_keypress(XKeyEvent *ev) {
 	Window *w;
 
-	event_xtime = ev->time;
+	if(!ev->send_event)
+		event_xtime = ev->time;
 	if((w = findwin(ev->window)))
-		handle(w, kdown, ev);
+		event_handle(w, kdown, ev);
 }

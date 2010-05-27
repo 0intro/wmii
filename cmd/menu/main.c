@@ -171,20 +171,6 @@ update_filter(bool print) {
 		update_input();
 }
 
-static void
-end(IxpConn *c) {
-
-	USED(c);
-	srv.running = 0;
-}
-
-static void
-preselect(IxpServer *s) {
-	
-	USED(s);
-	event_check();
-}
-
 enum { PointerScreen = -1 };
 
 void
@@ -224,7 +210,6 @@ main(int argc, char *argv[]) {
 
 	quotefmtinstall();
 	fmtinstall('r', errfmt);
-	address = getenv("WMII_ADDRESS");
 	screen_hint = PointerScreen;
 
 	find = strstr;
@@ -283,17 +268,18 @@ main(int argc, char *argv[]) {
 
 	client_init(address);
 
-	srv.preselect = preselect;
-	ixp_listen(&srv, ConnectionNumber(display), nil, (void (*)(IxpConn*))preselect, end);
+	srv.preselect = event_preselect;
+	ixp_listen(&srv, ConnectionNumber(display), nil, event_fdready, event_fdclosed);
 
 	ontop = !strcmp(readctl("bar on "), "top");
 	loadcolor(&cnorm, readctl("normcolors "));
 	loadcolor(&csel, readctl("focuscolors "));
 	font = loadfont(readctl("font "));
-	sscanf(readctl("fontpad "), "%d %d %d %d", &font->pad.min.x, &font->pad.max.x,
-	       &font->pad.min.x, &font->pad.max.y);
 	if(!font)
 		fatal("Can't load font %q", readctl("font "));
+	sscanf(readctl("fontpad "), "%d %d %d %d",
+	       &font->pad.min.x, &font->pad.max.x,
+	       &font->pad.min.x, &font->pad.max.y);
 
 	cmplbuf = Bfdopen(0, OREAD);
 	items = populate_list(cmplbuf, false);

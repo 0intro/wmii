@@ -318,13 +318,6 @@ spawn_command(const char *cmd) {
 }
 
 static void
-check_preselect(IxpServer *s) {
-	USED(s);
-
-	event_check();
-}
-
-static void
 closedisplay(IxpConn *c) {
 	USED(c);
 
@@ -412,9 +405,9 @@ extern int fmtevent(Fmt*);
 
 	event_debug = debug_event;
 
-	srv.preselect = check_preselect;
+	srv.preselect = event_preselect;
 	ixp_listen(&srv, sock, &p9srv, serve_9pcon, nil);
-	ixp_listen(&srv, ConnectionNumber(display), nil, (void (*)(IxpConn*))check_preselect, closedisplay);
+	ixp_listen(&srv, ConnectionNumber(display), nil, event_fdready, closedisplay);
 
 	def.border = 1;
 	def.colmode = Colstack;

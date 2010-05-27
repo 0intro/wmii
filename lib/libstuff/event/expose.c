@@ -8,5 +8,5 @@ event_expose(XExposeEvent *ev) {
 	Window *w;
 
 	if(ev->count == 0 && (w = findwin(ev->window))) 
-		handle(w, expose, ev);
+		event_handle(w, expose, ev);
 }

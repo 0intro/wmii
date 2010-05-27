@@ -246,7 +246,7 @@ findbar(WMScreen *s, Point p) {
 }
 
 static void
-bdown_event(Window *w, XButtonPressedEvent *e) {
+bdown_event(Window *w, void *aux, XButtonPressedEvent *e) {
 	WMScreen *s;
 	Bar *b;
 
@@ -254,29 +254,29 @@ bdown_event(Window *w, XButtonPressedEvent *e) {
 	XUngrabPointer(display, e->time);
 	sync();
 
-	s = w->aux;
+	s = aux;
 	b = findbar(s, Pt(e->x, e->y));
 	if(b)
 		event("%sBarMouseDown %d %s\n", barside[b->bar], e->button, b->name);
 }
 
 static void
-bup_event(Window *w, XButtonPressedEvent *e) {
+bup_event(Window *w, void *aux, XButtonPressedEvent *e) {
 	WMScreen *s;
 	Bar *b;
 	
-	s = w->aux;
+	s = aux;
 	b = findbar(s, Pt(e->x, e->y));
 	if(b)
 		event("%sBarClick %d %s\n", barside[b->bar], e->button, b->name);
 }
 
 static Rectangle
-dndmotion_event(Window *w, Point p) {
+dndmotion_event(Window *w, void *aux, Point p) {
 	WMScreen *s;
 	Bar *b;
 
-	s = w->aux;
+	s = aux;
 	b = findbar(s, p);
 	if(b) {
 		event("%sBarDND 1 %s\n", barside[b->bar], b->name);
@@ -286,9 +286,9 @@ dndmotion_event(Window *w, Point p) {
 }
 
 static void
-expose_event(Window *w, XExposeEvent *e) {
+expose_event(Window *w, void *aux, XExposeEvent *e) {
 	USED(w, e);
-	bar_draw(w->aux);
+	bar_draw(aux);
 }
 
 static Handlers handlers = {

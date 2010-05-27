@@ -1,0 +1,60 @@
+WITRAY
+wmii-@VERSION@
+May, 2010
+
+%!includeconf: header.t2t
+
+= NAME =
+
+witray - The wmii system tray
+
+= SYNOPSIS =
+
+witray [-a <address>] [-NESW] [-HV] [-p <padding>] [-s <iconsize>] [-t tags] +
+witray -v
+
+= DESCRIPTION =
+
+`witray` is a simple system tray program meant to be used with wmii.
+It supports the Freedesktop System Tray Protocol Specification
+common among all newer applications and desktop environments. The
+tray is only visible when applications require it.  While there are
+many standalone system tray applications, this one is explicitly
+tailored to wmii. It's simple, stays out of the user's way, is easy
+to configure, and generally Just Works.
+
+= ARGUMENTS =
+
+: -a
+        The address at which to connect to `wmii`.
+: -N -E -S -W
+	Sets the screen edge where `witray` is to appear to the
+	_North_, _South_, _East_, or _West_ edge, respectively.
+	Options may be combined, for instance *-NE* gives the _North
+	East_ corner of the screen. If no options are given,
+	`witray` opens to the West of whichever part of the screen
+	the wmii bar occupies.
+: -H -V
+	Specifies whether icons are to be aligned horizontally or
+	vertically, respectively. Also determines from which edge of
+	the screen windows are shunted to make room for the tray.
+: -p <padding>
+	Sets the padding between icons and around the edge of the
+	tray. In pixels.
+: -s <iconsize>
+	Sets the size of the icons, in pixels. If not provided,
+	icons are sized so that the tray is the same height as the
+	`wmii` bar.
+: -t <tags>
+	The tags on which to open. Default: _/./_
+: -v
+	Display version information.
+
+= CAVEATS =
+
+`witray` is not XRandR aware.
+
+= SEE ALSO =
+
+wmii(1), wimenu(1)
+

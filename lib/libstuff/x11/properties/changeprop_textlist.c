@@ -19,6 +19,6 @@ changeprop_textlist(Window *w, char *prop, char *type, char *data[]) {
 		memcpy(t, *p, n);
 		t += n;
 	}
-	changeprop_char(w, prop, type, s, len);
+	changeprop_char(w, prop, type, s, len - 1);
 	free(s);
 }

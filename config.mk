@@ -26,7 +26,7 @@ LD = cc
 # Archiver
 AR = ar crs
 
-X11PACKAGES = x11 xinerama xrender
+X11PACKAGES = x11 xinerama xrender xrandr
 INCX11 = $$(pkg-config --cflags $(X11PACKAGES))
 LIBIXP = $(LIBDIR)/libixp.a
 

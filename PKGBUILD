@@ -1,6 +1,6 @@
 
 pkgname="wmii-hg"
-pkgver=2637
+pkgver=2647
 pkgrel=1
 pkgdesc="The latest hg pull of wmii, a lightweight, dynamic window manager for X11"
 url="http://wmii.suckless.org"
@@ -16,8 +16,6 @@ provides=("wmii")
 conflicts=("wmii")
 source=()
 
-test -d src || mkdir src
-ln -snf .. src/wmii
 FORCE_VER=$(hg tip --template {rev})
 #_hgroot="http://hg.suckless.org/"
 #_hgrepo="wmii"
@@ -32,7 +30,7 @@ build()
     make "${flags[@]}" || return 1
     make "${flags[@]}" install || return 1
 
-    mkdir -p $startdir/pkg/etc/X11/sessions
+    install -m644 -D ./debian/file/wmii.desktop $startdir/pkg/etc/X11/sessions/wmii.desktop
     install -m644 -D ./LICENSE $startdir/pkg/usr/share/licenses/wmii/LICENSE
 }
 

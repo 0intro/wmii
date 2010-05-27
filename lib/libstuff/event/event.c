@@ -3,6 +3,7 @@
  */
 #include "event.h"
 
+typedef void (*Handler)(Window*, void*, XEvent*);
 void	(*event_debug)(XEvent*);
 long	event_xtime;
 bool	event_looprunning;
@@ -25,8 +26,28 @@ EventHandler event_handler[LASTEvent] = {
 	[MappingNotify] =	(EventHandler)event_mappingnotify,
 	[MotionNotify] =	(EventHandler)event_motionnotify,
 	[PropertyNotify] =	(EventHandler)event_propertynotify,
+	[ReparentNotify] =	(EventHandler)event_reparentnotify,
+	[SelectionClear] =	(EventHandler)event_selectionclear,
+	[SelectionNotify] =	(EventHandler)event_selection,
 	[UnmapNotify] =		(EventHandler)event_unmapnotify,
 };
+
+void
+_event_handle(Window *w, ulong offset, XEvent *event) {
+	Handler f;
+	HandlersLink *l;
+
+	if(w->handler && (f = structmember(w->handler, Handler, offset))) {
+		f(w, w->aux, event);
+		return;
+	}
+	for(l=w->handler_link; l; l=l->next) {
+		if(f = structmember(l->handler, Handler, offset)) {
+			f(w, l->aux, event);
+			return;
+		}
+	}
+}
 
 void
 event_dispatch(XEvent *e) {

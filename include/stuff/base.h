@@ -1,17 +1,24 @@
 #pragma once
 #define _XOPEN_SOURCE 600
 
+#include <sys/types.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
 
 #ifndef nil
-#define nil	((void*)0)
+#  define nil	((void*)0)
 #endif
 
 #ifndef nelem
-#define nelem(ary) (sizeof(ary) / sizeof(*ary))
+#  define nelem(ary) (sizeof(ary) / sizeof(*ary))
 #endif
+
+#ifndef offsetof
+#  define offsetof(type, member) ((size_t)&((type*)0)->member)
+#endif
+#define structmember(ptr, type, offset) \
+	(*(type*)((char*)(ptr) + (offset)))
 
 #undef uchar
 #undef ushort

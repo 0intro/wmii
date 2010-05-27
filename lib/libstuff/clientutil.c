@@ -1,6 +1,7 @@
 #define IXP_NO_P9_
 #define IXP_P9_STRUCTS
 #define CLIENTEXTERN
+#include <stdlib.h>
 #include <string.h>
 #include <ixp.h>
 #include <stuff/clientutil.h>
@@ -40,11 +41,13 @@ readctl(char *key) {
 
 void
 client_init(char* address) {
+	if(address == nil)
+		address = getenv("WMII_ADDRESS");
 	if(address && *address)
 		client = ixp_mount(address);
 	else
 		client = ixp_nsmount("wmii");
 	if(client == nil)
-		fatal("can't mount: %r\n");
+		fatal("can't mount wmii filesystem: %r\n");
 }
 

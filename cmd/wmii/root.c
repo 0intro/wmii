@@ -24,13 +24,13 @@ root_init(void) {
 }
 
 static void
-enter_event(Window *w, XCrossingEvent *e) {
+enter_event(Window *w, void *aux, XCrossingEvent *e) {
 	disp.sel = true;
 	frame_draw_all();
 }
 
 static void
-leave_event(Window *w, XCrossingEvent *e) {
+leave_event(Window *w, void *aux, XCrossingEvent *e) {
 	if(!e->same_screen) {
 		disp.sel = false;
 		frame_draw_all();
@@ -38,13 +38,13 @@ leave_event(Window *w, XCrossingEvent *e) {
 }
 
 static void
-focusin_event(Window *w, XFocusChangeEvent *e) {
+focusin_event(Window *w, void *aux, XFocusChangeEvent *e) {
 	if(e->mode == NotifyGrab)
 		disp.hasgrab = &c_root;
 }
 
 static void
-mapreq_event(Window *w, XMapRequestEvent *e) {
+mapreq_event(Window *w, void *aux, XMapRequestEvent *e) {
 	XWindowAttributes wa;
 
 	if(!XGetWindowAttributes(display, e->window, &wa))
@@ -62,7 +62,7 @@ mapreq_event(Window *w, XMapRequestEvent *e) {
 }
 
 static void
-motion_event(Window *w, XMotionEvent *e) {
+motion_event(Window *w, void *aux, XMotionEvent *e) {
 	Rectangle r, r2;
 
 	r = rectsetorigin(Rect(0, 0, 1, 1), Pt(e->x_root, e->y_root));
@@ -72,7 +72,7 @@ motion_event(Window *w, XMotionEvent *e) {
 }
 
 static void
-kdown_event(Window *w, XKeyEvent *e) {
+kdown_event(Window *w, void *aux, XKeyEvent *e) {
 
 	e->state &= valid_mask;
 	kpress(w->xid, e->state, (KeyCode)e->keycode);

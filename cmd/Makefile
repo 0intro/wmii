@@ -6,7 +6,8 @@ wmiir.c: $(ROOT)/mk/wmii.mk
 
 DIRS =	wmii \
 	menu \
-	strut
+	strut \
+	tray
 TARG =	wihack    \
 	wmii.rc   \
 	wmii.sh   \

@@ -5,5 +5,6 @@
 
 void
 selectinput(Window *w, long mask) {
+	w->eventmask = mask;
 	XSelectInput(display, w->xid, mask);
 }

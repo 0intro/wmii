@@ -12,10 +12,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <utf.h>
+#include <ixp.h>
 #include <stuff/x.h>
 #include <stuff/util.h>
-#include <debug.h>
-#include <ixp.h>
+#include "debug.h"
 
 #define FONT		"-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*"
 #define FOCUSCOLORS	"#ffffff #335577 #447799"

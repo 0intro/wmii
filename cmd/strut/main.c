@@ -21,11 +21,6 @@ usage(void) {
 	fatal("usage: %s [-HV] <window|class>...\n", argv0);
 }
 
-static int
-errfmt(Fmt *f) {
-	return fmtstrcpy(f, ixp_errbuf());
-}
-
 static void
 search_wins(char *pattern) {
 	ulong *wins;
@@ -135,7 +130,6 @@ main(int argc, char *argv[]) {
 	ulong win;
 	char *s;
 
-	fmtinstall('r', errfmt);
 	fmtinstall('E', fmtevent);
 
 	ARGBEGIN{

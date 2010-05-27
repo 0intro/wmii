@@ -8,5 +8,5 @@ event_destroynotify(XDestroyWindowEvent *ev) {
 	Window *w;
 
 	if((w = findwin(ev->window))) 
-		handle(w, destroy, ev);
+		event_handle(w, destroy, ev);
 }

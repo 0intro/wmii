@@ -4,6 +4,7 @@
 #include "x11.h"
 
 void
-sendevent(Window *w, bool propegate, long mask, XEvent *e) {
+sendevent(Window *w, bool propegate, long mask, void *e) {
 	XSendEvent(display, w->xid, propegate, mask, e);
 }
+

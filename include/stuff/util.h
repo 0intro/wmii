@@ -22,16 +22,7 @@ enum {
 	CCenter = 1<<1,
 	CRight = 1<<2,
 };
-enum DebugOpt {
-	D9p	= 1<<0,
-	DDnd	= 1<<1,
-	DEvent	= 1<<2,
-	DEwmh	= 1<<3,
-	DFocus	= 1<<4,
-	DGeneric= 1<<5,
-	DStack  = 1<<6,
-	NDebugOpt = 7,
-};
+
 enum {
 	GInvert = 1<<0,
 };

@@ -255,7 +255,7 @@ menu_show(void) {
 }
 
 static void
-kdown_event(Window *w, XKeyEvent *e) {
+kdown_event(Window *w, void *aux, XKeyEvent *e) {
 	char **action, **p;
 	char *key;
 	char buf[32];
@@ -331,7 +331,7 @@ kdown_event(Window *w, XKeyEvent *e) {
 }
 
 static void
-expose_event(Window *w, XExposeEvent *e) {
+expose_event(Window *w, void *aux, XExposeEvent *e) {
 
 	USED(w);
 	menu_draw();

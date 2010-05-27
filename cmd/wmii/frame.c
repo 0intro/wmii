@@ -29,6 +29,9 @@ frame_create(Client *c, View *v) {
 	if(c->sel) {
 		f->floatr = c->sel->floatr;
 		f->r = c->sel->r;
+	}else if(c->sel) {
+		f->floatr = c->frame->floatr;
+		f->r = c->frame->r;
 	}else {
 		f->r = client_grav(c, c->r);
 		f->floatr = f->r;
@@ -140,20 +143,20 @@ frame_restack(Frame *f, Frame *above) {
 
 /* Handlers */
 static void
-bup_event(Window *w, XButtonEvent *e) {
+bup_event(Window *w, void *aux, XButtonEvent *e) {
 	if((e->state & def.mod) != def.mod)
 		XAllowEvents(display, ReplayPointer, e->time);
 	else
 		XUngrabPointer(display, e->time);
-	event("ClientClick %#C %d\n", w->aux, e->button);
+	event("ClientClick %#C %d\n", aux, e->button);
 }
 
 static void
-bdown_event(Window *w, XButtonEvent *e) {
+bdown_event(Window *w, void *aux, XButtonEvent *e) {
 	Frame *f;
 	Client *c;
 
-	c = w->aux;
+	c = aux;
 	f = c->sel;
 
 	if((e->state & def.mod) == def.mod) {
@@ -200,17 +203,17 @@ bdown_event(Window *w, XButtonEvent *e) {
 }
 
 static void
-config_event(Window *w, XConfigureEvent *e) {
+config_event(Window *w, void *aux, XConfigureEvent *e) {
 
 	USED(w, e);
 }
 
 static void
-enter_event(Window *w, XCrossingEvent *e) {
+enter_event(Window *w, void *aux, XCrossingEvent *e) {
 	Client *c;
 	Frame *f;
 
-	c = w->aux;
+	c = aux;
 	f = c->sel;
 	if(disp.focus != c || selclient() != c) {
 		Dprint(DFocus, "enter_notify(f) => [%#C]%s%s\n",
@@ -225,12 +228,12 @@ enter_event(Window *w, XCrossingEvent *e) {
 }
 
 static void
-expose_event(Window *w, XExposeEvent *e) {
+expose_event(Window *w, void *aux, XExposeEvent *e) {
 	Client *c;
 
 	USED(e);
 
-	c = w->aux;
+	c = aux;
 	if(c->sel)
 		frame_draw(c->sel);
 	else
@@ -239,10 +242,10 @@ expose_event(Window *w, XExposeEvent *e) {
 }
 
 static void
-motion_event(Window *w, XMotionEvent *e) {
+motion_event(Window *w, void *aux, XMotionEvent *e) {
 	Client *c;
 	
-	c = w->aux;
+	c = aux;
 	mouse_checkresize(c->sel, Pt(e->x, e->y), false);
 }
 

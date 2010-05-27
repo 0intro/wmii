@@ -5,6 +5,8 @@
 
 void
 event_clientmessage(XClientMessageEvent *ev) {
+	Window *w;
 
-	USED(ev);
+	if((w = findwin(ev->window))) 
+		event_handle(w, message, ev);
 }

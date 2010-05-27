@@ -29,7 +29,7 @@ quad_cursor(Align align) {
 }
 
 static void
-cwin_expose(Window *w, XExposeEvent *e) {
+cwin_expose(Window *w, void *aux, XExposeEvent *e) {
 
 	fill(w, rectsubpt(w->r, w->r.min), def.focuscolor.bg);
 	fill(w, w->r, def.focuscolor.bg);

@@ -33,12 +33,14 @@ typedef enum WindowType WindowType;
 
 typedef XSetWindowAttributes WinAttr;
 
+typedef union ClientMessageData ClientMessageData;
 typedef struct Color Color;
 typedef struct CTuple CTuple;
 typedef struct ErrorCode ErrorCode;
 typedef struct Ewmh Ewmh;
 typedef struct Font Font;
 typedef struct Handlers Handlers;
+typedef struct HandlersLink HandlersLink;
 typedef struct Screen Screen;
 typedef struct WinHints WinHints;
 typedef struct Window Image;
@@ -47,6 +49,12 @@ typedef struct Xft Xft;
 typedef struct XftColor XftColor;
 typedef void XftDraw;
 typedef struct XftFont XftFont;
+
+union ClientMessageData {
+	char b[20];
+	short s[10];
+	long l[5];
+};
 
 struct Color {
 	ulong		pixel;
@@ -86,24 +94,35 @@ struct Font {
 };
 
 struct Handlers {
-	Rectangle (*dndmotion)(Window*, Point);
-	void (*bdown)(Window*, XButtonEvent*);
-	void (*bup)(Window*, XButtonEvent*);
-	void (*config)(Window*, XConfigureEvent*);
-	void (*configreq)(Window*, XConfigureRequestEvent*);
-	void (*destroy)(Window*, XDestroyWindowEvent*);
-	void (*enter)(Window*, XCrossingEvent*);
-	void (*expose)(Window*, XExposeEvent*);
-	void (*focusin)(Window*, XFocusChangeEvent*);
-	void (*focusout)(Window*, XFocusChangeEvent*);
-	void (*kdown)(Window*, XKeyEvent*);
-	void (*kup)(Window*, XKeyEvent*);
-	void (*leave)(Window*, XCrossingEvent*);
-	void (*map)(Window*, XMapEvent*);
-	void (*mapreq)(Window*, XMapRequestEvent*);
-	void (*motion)(Window*, XMotionEvent*);
-	void (*property)(Window*, XPropertyEvent*);
-	void (*unmap)(Window*, XUnmapEvent*);
+	Rectangle (*dndmotion)(Window*, void*, Point);
+	void (*bdown)(Window*, void*, XButtonEvent*);
+	void (*bup)(Window*, void*, XButtonEvent*);
+	void (*config)(Window*, void*, XConfigureEvent*);
+	void (*configreq)(Window*, void*, XConfigureRequestEvent*);
+	void (*destroy)(Window*, void*, XDestroyWindowEvent*);
+	void (*enter)(Window*, void*, XCrossingEvent*);
+	void (*expose)(Window*, void*, XExposeEvent*);
+	void (*focusin)(Window*, void*, XFocusChangeEvent*);
+	void (*focusout)(Window*, void*, XFocusChangeEvent*);
+	void (*kdown)(Window*, void*, XKeyEvent*);
+	void (*kup)(Window*, void*, XKeyEvent*);
+	void (*leave)(Window*, void*, XCrossingEvent*);
+	void (*map)(Window*, void*, XMapEvent*);
+	void (*mapreq)(Window*, void*, XMapRequestEvent*);
+	void (*message)(Window*, void*, XClientMessageEvent*);
+	void (*motion)(Window*, void*, XMotionEvent*);
+	void (*property)(Window*, void*, XPropertyEvent*);
+	void (*reparent)(Window*, void*, XReparentEvent*);
+	void (*selection)(Window*, void*, XSelectionEvent*);
+	void (*selectionclear)(Window*, void*, XSelectionClearEvent*);
+	void (*selectionrequest)(Window*, void*, XSelectionRequestEvent*);
+	void (*unmap)(Window*, void*, XUnmapEvent*);
+};
+
+struct HandlersLink {
+	HandlersLink*	next;
+	void*		aux;
+	Handlers*	handler;
 };
 
 struct WinHints {
@@ -132,8 +151,10 @@ struct Window {
 	Window*		next;
 	Window*		prev;
 	Handlers*	handler;
+	HandlersLink*	handler_link;
 	WinHints*	hints;
 	Ewmh		ewmh;
+	long		eventmask;
 	void*		dnd;
 	void*		aux;
 	bool		mapped;
@@ -193,6 +214,7 @@ extern struct Map	windowmap;
 extern struct Map	atommap;
 extern const Point ZP;
 extern const Rectangle ZR;
+extern const WinHints ZWinHints;
 extern Window* pointerwin;
 extern Xft* xft;
 
@@ -204,6 +226,7 @@ XRectangle XRect(Rectangle r);
 		(uchar*)(data), n)
 
 /* x11.c */
+XRectangle	XRect(Rectangle);
 Image*	allocimage(int w, int h, int depth);
 void	border(Image *dst, Rectangle, int w, Color);
 void	changeprop_char(Window*, char*, char*, char[], int);
@@ -213,9 +236,10 @@ void	changeprop_string(Window*, char*, char*);
 void	changeprop_textlist(Window*, char*, char*, char*[]);
 void	changeprop_ulong(Window*, char*, char*, ulong[], int);
 void	changeproperty(Window*, char*, char*, int width, uchar*, int);
+void	clientmessage(Window*, char*, long, int, ClientMessageData);
 void	copyimage(Image*, Rectangle, Image*, Point);
 Window*	createwindow(Window*, Rectangle, int depth, uint class, WinAttr*, int valuemask);
-Window* createwindow_visual(Window*, Rectangle, int depth, Visual*, uint class, WinAttr*, int);
+Window*	createwindow_visual(Window*, Rectangle, int depth, Visual*, uint class, WinAttr*, int);
 void	delproperty(Window*, char*);
 void	destroywindow(Window*);
 void	drawline(Image*, Point, Point, int cap, int w, Color);
@@ -228,11 +252,13 @@ void	freefont(Font*);
 void	freeimage(Image *);
 void	freestringlist(char**);
 XWindow	getfocus(void);
+void	gethints(Window*);
 ulong	getprop_long(Window*, char*, char*, ulong, long**, ulong);
 char*	getprop_string(Window*, char*);
 int	getprop_textlist(Window *w, char *name, char **ret[]);
 ulong	getprop_ulong(Window*, char*, char*, ulong, ulong**, ulong);
 ulong	getproperty(Window*, char *prop, char *type, Atom *actual, ulong offset, uchar **ret, ulong length);
+Rectangle	getwinrect(Window*);
 int	grabkeyboard(Window*);
 int	grabpointer(Window*, Window *confine, Cursor, int mask);
 bool	havexft(void);
@@ -247,24 +273,29 @@ void	movewin(Window*, Point);
 bool	namedcolor(char *name, Color*);
 bool	parsekey(char*, int*, char**);
 int	pointerscreen(void);
+bool	pophandler(Window*, Handlers*);
+void	pushhandler(Window*, Handlers*, void*);
 Point	querypointer(Window*);
 void	raisewin(Window*);
 void	reparentwindow(Window*, Window*, Point);
 void	reshapewin(Window*, Rectangle);
 void	selectinput(Window*, long);
-void	sendevent(Window*, bool propagate, long mask, XEvent*);
+void	sendevent(Window*, bool propagate, long mask, void*);
+void	sendmessage(Window*, char*, long, long, long, long, long);
 void	setborder(Window*, int, Color);
 void	setfocus(Window*, int mode);
-void	sethints(Window*);
+Handlers*	sethandler(Window*, Handlers*);
+void	sethints(Window*, WinHints*);
 void	setshapemask(Window *dst, Image *src, Point);
 void	setwinattr(Window*, WinAttr*, int valmask);
+Rectangle	sizehint(WinHints*, Rectangle);
 char**	strlistdup(char**);
 void	sync(void);
+Rectangle	textextents_l(Font*, char*, uint, int*);
 uint	textwidth(Font*, char*);
 uint	textwidth_l(Font*, char*, uint len);
-Rectangle	textextents_l(Font*, char*, uint, int*);
-int	traperrors(bool);
 Point	translate(Window*, Window*, Point);
+int	traperrors(bool);
 void	ungrabkeyboard(void);
 void	ungrabpointer(void);
 int	unmapwin(Window*);
@@ -273,9 +304,4 @@ Window*	window(XWindow);
 char*	windowname(Window*);
 long	winprotocols(Window*);
 Atom	xatom(char*);
-void	sendmessage(Window*, char*, long, long, long, long, long);
-XRectangle	XRect(Rectangle);
-Rectangle	getwinrect(Window*);
-Handlers*	sethandler(Window*, Handlers*);
-Rectangle	sizehint(WinHints*, Rectangle);
 

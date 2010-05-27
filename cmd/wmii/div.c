@@ -164,22 +164,22 @@ div_update_all(void) {
 
 /* Div Handlers */
 static void
-bdown_event(Window *w, XButtonEvent *e) {
+bdown_event(Window *w, void *aux, XButtonEvent *e) {
 	Divide *d;
 
 	USED(e);
 	
-	d = w->aux;
+	d = aux;
 	mouse_resizecol(d);
 }
 
 static void
-expose_event(Window *w, XExposeEvent *e) {
+expose_event(Window *w, void *aux, XExposeEvent *e) {
 	Divide *d;
 	
 	USED(e);
 	
-	d = w->aux;
+	d = aux;
 	drawdiv(d);
 }
 

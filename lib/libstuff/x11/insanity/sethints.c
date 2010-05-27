@@ -1,100 +1,97 @@
 /* Copyright ©2007-2010 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
-#include <string.h>
 #include "../x11.h"
+#include <string.h>
+
+const WinHints ZWinHints = {
+	.inc = {1, 1},
+	.max = {INT_MAX, INT_MAX},
+};
+
+typedef struct GravityMap	GravityMap;
+
+struct GravityMap {
+	Point	point;
+	int	gravity;
+};
+
+static GravityMap gravity_map[] = {
+	{ {0, 0}, NorthWestGravity },
+	{ {0, 1}, WestGravity },
+	{ {0, 2}, SouthWestGravity },
+
+	{ {1, 0}, NorthGravity },
+	{ {1, 1}, CenterGravity },
+	{ {1, 2}, SouthGravity },
+
+	{ {2, 0}, NorthEastGravity },
+	{ {2, 1}, EastGravity },
+	{ {2, 2}, SouthEastGravity },
+};
 
 void
-sethints(Window *w) {
-	XSizeHints xs;
-	XWMHints *wmh;
-	WinHints *h;
-	Point p;
-	long size;
+sethints(Window *w, WinHints *h) {
+	XSizeHints xhints = { 0, };
+	int i;
+
+	/* TODO: Group hint */
 
 	if(w->hints == nil)
 		w->hints = emalloc(sizeof *h);
 
-	h = w->hints;
-	memset(h, 0, sizeof *h);
+	*w->hints = *h;
 
-	h->max = Pt(INT_MAX, INT_MAX);
-	h->inc = Pt(1,1);
-
-	wmh = XGetWMHints(display, w->xid);
-	if(wmh) {
-		if(wmh->flags & WindowGroupHint)
-			h->group = wmh->window_group;
-		free(wmh);
+	if(!eqpt(h->min, ZP)) {
+		xhints.flags |= PMinSize;
+		xhints.min_width = h->min.x;
+		xhints.min_height = h->min.y;
+	}
+	if(!eqpt(h->max, Pt(INT_MAX, INT_MAX))) {
+		xhints.flags |= PMaxSize;
+		xhints.max_width = h->max.x;
+		xhints.max_height = h->max.y;
 	}
 
-	if(!XGetWMNormalHints(display, w->xid, &xs, &size))
-		return;
-
-	if(xs.flags & PMinSize) {
-		h->min.x = xs.min_width;
-		h->min.y = xs.min_height;
-	}
-	if(xs.flags & PMaxSize) {
-		h->max.x = xs.max_width;
-		h->max.y = xs.max_height;
+	if(!eqpt(h->base, ZP)) {
+		xhints.flags |= PBaseSize;
+		xhints.base_width  = h->baspect.x;
+		xhints.base_height = h->baspect.y;
 	}
 
-	/* Goddamn buggy clients. */
-	if(h->max.x < h->min.x)
-		h->max.x = h->min.x;
-	if(h->max.y < h->min.y)
-		h->max.y = h->min.y;
+	if(!eqrect(h->aspect, ZR)) {
+		xhints.flags |= PAspect;
 
-	h->base = h->min;
-	if(xs.flags & PBaseSize) {
-		p.x = xs.base_width;
-		p.y = xs.base_height;
-		h->base = p;
-		h->baspect = p;
+		xhints.base_width  = h->baspect.x;
+		xhints.base_height = h->baspect.y;
+
+		xhints.min_aspect.x = h->aspect.min.x;
+		xhints.min_aspect.y = h->aspect.min.y;
+
+		xhints.max_aspect.x = h->aspect.max.x;
+		xhints.max_aspect.y = h->aspect.max.y;
 	}
 
-	if(xs.flags & PResizeInc) {
-		h->inc.x = max(xs.width_inc, 1);
-		h->inc.y = max(xs.height_inc, 1);
+	if(!eqpt(h->inc, Pt(1, 1))) {
+		xhints.flags |= PResizeInc;
+		xhints.width_inc  = h->inc.x;
+		xhints.height_inc = h->inc.y;
 	}
 
-	if(xs.flags & PAspect) {
-		h->aspect.min.x = xs.min_aspect.x;
-		h->aspect.min.y = xs.min_aspect.y;
-		h->aspect.max.x = xs.max_aspect.x;
-		h->aspect.max.y = xs.max_aspect.y;
-	}
+	/* USPosition is probably an evil assumption, but it holds in our use cases. */
+	if(h->position)
+		xhints.flags |= USPosition | PPosition;
 
-	h->position = (xs.flags & (USPosition|PPosition)) != 0;
+	xhints.flags |= PWinGravity;
+	if(h->gravstatic)
+		xhints.win_gravity = StaticGravity;
+	else
+		for(i=0; i < nelem(gravity_map); i++)
+			if(h->grav.x == gravity_map[i].point.x &&
+			   h->grav.y == gravity_map[i].point.y) {
+				xhints.win_gravity = gravity_map[i].gravity;
+				break;
+			}
 
-	if(!(xs.flags & PWinGravity))
-		xs.win_gravity = NorthWestGravity;
-	p = ZP;
-	switch (xs.win_gravity) {
-	case EastGravity:
-	case CenterGravity:
-	case WestGravity:
-		p.y = 1;
-		break;
-	case SouthEastGravity:
-	case SouthGravity:
-	case SouthWestGravity:
-		p.y = 2;
-		break;
-	}
-	switch (xs.win_gravity) {
-	case NorthGravity:
-	case CenterGravity:
-	case SouthGravity:
-		p.x = 1;
-		break;
-	case NorthEastGravity:
-	case EastGravity:
-	case SouthEastGravity:
-		p.x = 2;
-		break;
-	}
-	h->grav = p;
-	h->gravstatic = (xs.win_gravity == StaticGravity);
+	XSetWMNormalHints(display, w->xid, &xhints);
 }

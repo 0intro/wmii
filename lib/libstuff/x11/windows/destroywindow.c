@@ -7,6 +7,8 @@ void
 destroywindow(Window *w) {
 	assert(w->type == WWindow);
 	sethandler(w, nil);
+	while(w->handler_link)
+		pophandler(w, w->handler_link->handler);
 	if(w->xft)
 		xft->drawdestroy(w->xft);
 	if(w->gc)

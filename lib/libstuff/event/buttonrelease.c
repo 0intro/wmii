@@ -8,5 +8,5 @@ event_buttonrelease(XButtonPressedEvent *ev) {
 	Window *w;
 
 	if((w = findwin(ev->window)))
-		handle(w, bup, ev);
+		event_handle(w, bup, ev);
 }

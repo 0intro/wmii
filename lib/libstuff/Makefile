@@ -19,6 +19,7 @@ OBJ=\
 	event/expose		\
 	event/focusin		\
 	event/focusout		\
+	event/ixp		\
 	event/keypress		\
 	event/leavenotify	\
 	event/mapnotify		\
@@ -26,6 +27,10 @@ OBJ=\
 	event/mappingnotify	\
 	event/motionnotify	\
 	event/propertynotify	\
+	event/reparentnotify	\
+	event/selection		\
+	event/selectionclear	\
+	event/selectionrequest	\
 	event/unmapnotify	\
 	event/xtime		\
 	geom/get_sticky		\
@@ -38,7 +43,6 @@ OBJ=\
 	map		\
 	printevent	\
 	util/_die	\
-	util/backtrace	\
 	util/closeexec	\
 	util/comm	\
 	util/doublefork	\
@@ -114,6 +118,7 @@ OBJ=\
 	x11/images/freeimage	\
 	x11/images/xftdrawable	\
 	x11/insanity/gravitate	\
+	x11/insanity/gethints	\
 	x11/insanity/sethints	\
 	x11/insanity/sizehint	\
 	x11/keyboard/grabkeyboard	\

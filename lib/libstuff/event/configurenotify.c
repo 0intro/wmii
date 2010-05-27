@@ -8,5 +8,5 @@ event_configurenotify(XConfigureEvent *ev) {
 	Window *w;
 
 	if((w = findwin(ev->window)))
-		handle(w, config, ev);
+		event_handle(w, config, ev);
 }

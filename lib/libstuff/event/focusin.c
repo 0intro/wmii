@@ -23,5 +23,5 @@ event_focusin(XFocusChangeEvent *ev) {
 		return;
 
 	if((w = findwin(ev->window))) 
-		handle(w, focusin, ev);
+		event_handle(w, focusin, ev);
 }

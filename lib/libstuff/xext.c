@@ -4,6 +4,7 @@
 #define _X11_VISIBLE
 #include <stuff/x.h>
 #include <stuff/util.h>
+#include <X11/extensions/Xrandr.h>
 #include <X11/extensions/Xrender.h>
 #include <X11/extensions/Xinerama.h>
 

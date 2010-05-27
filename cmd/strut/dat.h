@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <stuff/x.h>
 #include <stuff/util.h>
-#include <ixp.h>
 
 #ifndef EXTERN
 # define EXTERN extern

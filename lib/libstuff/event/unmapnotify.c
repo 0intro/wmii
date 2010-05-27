@@ -10,6 +10,6 @@ event_unmapnotify(XUnmapEvent *ev) {
 	if((w = findwin(ev->window)) && (ev->event == w->parent->xid)) {
 		w->mapped = false;
 		if(w->parent && (ev->send_event || w->unmapped-- == 0))
-			handle(w, unmap, ev);
+			event_handle(w, unmap, ev);
 	}
 }

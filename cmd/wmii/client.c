@@ -101,9 +101,8 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	c->fullscreen = -1;
 	c->border = wa->border_width;
 
-	c->r.min = Pt(wa->x, wa->y);
-	c->r.max = addpt(c->r.min,
-			 Pt(wa->width, wa->height));
+	c->r = rectsetorigin(Rect(0, 0, wa->width, wa->height),
+			     Pt(wa->x, wa->y));
 
 	c->w.type = WWindow;
 	c->w.xid = w;
@@ -115,7 +114,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	c->ibuf = &ibuf;
 	if(render_argb_p(wa->visual)) {
 		depth = 32;
-		vis = render_visual;
+		vis = scr.visual32;
 		c->ibuf = &ibuf32;
 	}
 
@@ -589,7 +588,7 @@ client_configure(Client *c) {
 	e.height = Dy(r);
 	e.border_width = c->border;
 
-	sendevent(&c->w, false, StructureNotifyMask, (XEvent*)&e);
+	sendevent(&c->w, false, StructureNotifyMask, &e);
 }
 
 void
@@ -809,7 +808,7 @@ client_prop(Client *c, Atom a) {
 		memset(&h, 0, sizeof h);
 		if(c->w.hints)
 			bcopy(c->w.hints, &h, sizeof h);
-		sethints(&c->w);
+		gethints(&c->w);
 		if(c->w.hints)
 			c->fixedsize = eqpt(c->w.hints->min, c->w.hints->max);
 		if(memcmp(&h, c->w.hints, sizeof h))
@@ -841,11 +840,11 @@ client_prop(Client *c, Atom a) {
 
 /* Handlers */
 static void
-configreq_event(Window *w, XConfigureRequestEvent *e) {
+configreq_event(Window *w, void *aux, XConfigureRequestEvent *e) {
 	Rectangle r, cr;
 	Client *c;
 
-	c = w->aux;
+	c = aux;
 
 	r = client_grav(c, ZR);
 	r.max = subpt(r.max, r.min);
@@ -875,17 +874,17 @@ configreq_event(Window *w, XConfigureRequestEvent *e) {
 }
 
 static void
-destroy_event(Window *w, XDestroyWindowEvent *e) {
+destroy_event(Window *w, void *aux, XDestroyWindowEvent *e) {
 	USED(w, e);
 
-	client_destroy(w->aux);
+	client_destroy(aux);
 }
 
 static void
-enter_event(Window *w, XCrossingEvent *e) {
+enter_event(Window *w, void *aux, XCrossingEvent *e) {
 	Client *c;
 	
-	c = w->aux;
+	c = aux;
 	if(e->detail != NotifyInferior) {
 		if(e->detail != NotifyVirtual)
 		if(e->serial != ignoreenter && disp.focus != c) {
@@ -898,10 +897,10 @@ enter_event(Window *w, XCrossingEvent *e) {
 }
 
 static void
-focusin_event(Window *w, XFocusChangeEvent *e) {
+focusin_event(Window *w, void *aux, XFocusChangeEvent *e) {
 	Client *c, *old;
 
-	c = w->aux;
+	c = aux;
 
 	print_focus("focusin_event", c, c->name);
 
@@ -918,10 +917,10 @@ focusin_event(Window *w, XFocusChangeEvent *e) {
 }
 
 static void
-focusout_event(Window *w, XFocusChangeEvent *e) {
+focusout_event(Window *w, void *aux, XFocusChangeEvent *e) {
 	Client *c;
 
-	c = w->aux;
+	c = aux;
 	if((e->mode == NotifyWhileGrabbed) && (disp.hasgrab != &c_root)) {
 		if(disp.focus)
 			disp.hasgrab = disp.focus;
@@ -934,34 +933,34 @@ focusout_event(Window *w, XFocusChangeEvent *e) {
 }
 
 static void
-unmap_event(Window *w, XUnmapEvent *e) {
+unmap_event(Window *w, void *aux, XUnmapEvent *e) {
 	Client *c;
 	
-	c = w->aux;
+	c = aux;
 	if(!e->send_event)
 		c->unmapped--;
 	client_destroy(c);
 }
 
 static void
-map_event(Window *w, XMapEvent *e) {
+map_event(Window *w, void *aux, XMapEvent *e) {
 	Client *c;
 
 	USED(e);
 	
-	c = w->aux;
+	c = aux;
 	if(c == selclient())
 		client_focus(c);
 }
 
 static void
-property_event(Window *w, XPropertyEvent *e) {
+property_event(Window *w, void *aux, XPropertyEvent *e) {
 	Client *c;
 
 	if(e->state == PropertyDelete) /* FIXME */
 		return;
 
-	c = w->aux;
+	c = aux;
 	client_prop(c, e->atom);
 }
 
@@ -1002,6 +1001,7 @@ client_setviews(Client *c, char **tags) {
 		if(*tags) {
 			if(!*fp || cmp > 0) {
 				f = frame_create(c, view_create(*tags));
+				Dprint(DGeneric, "%#C %p %R %R %R %C\n", c, c->sel, c->r, f->floatr, c->sel ? c->sel->floatr : ZR, c);
 				if(f->view == selview || !c->sel)
 					c->sel = f;
 				kludge = c; /* FIXME */

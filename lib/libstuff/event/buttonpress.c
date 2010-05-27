@@ -8,7 +8,7 @@ event_buttonpress(XButtonPressedEvent *ev) {
 	Window *w;
 
 	if((w = findwin(ev->window)))
-		handle(w, bdown, ev);
+		event_handle(w, bdown, ev);
 	else
 		XAllowEvents(display, ReplayPointer, ev->time);
 }

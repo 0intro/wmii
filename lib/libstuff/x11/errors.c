@@ -13,8 +13,10 @@ errorhandler(Display *dpy, XErrorEvent *error) {
 
 	USED(dpy);
 
-	if(_trap_errors)
+	if(_trap_errors) {
 		nerrors++;
+		return 0;
+	}
 
 	e = ignored_xerrors;
 	if(e)

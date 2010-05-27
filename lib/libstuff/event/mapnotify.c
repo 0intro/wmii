@@ -8,5 +8,5 @@ event_mapnotify(XMapEvent *ev) {
 	Window *w;
 
 	if((w = findwin(ev->window))) 
-		handle(w, map, ev);
+		event_handle(w, map, ev);
 }

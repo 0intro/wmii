@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ixp.h>
 #include <stuff/x.h>
 #include <stuff/util.h>
-#include <ixp.h>
 
 #define BLOCK(x) do { x; }while(0)
 
