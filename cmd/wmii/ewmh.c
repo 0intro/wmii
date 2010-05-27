@@ -378,7 +378,9 @@ ewmh_clientmessage(XClientMessageEvent *e) {
 		if(c == nil)
 			return 1;
 		Dprint(DEwmh, "\tclient: %C\n", c);
-		if(l[0] != 2)
+		if(l[0] == SourceClient && abs(event_xtime - l[1]) > 5000)
+			return 1;
+		if(l[0] != SourceClient && l[0] != SourcePager)
 			return 1;
 		focus(c, true);
 		return 1;

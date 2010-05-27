@@ -36,6 +36,12 @@ enum {
 	UrgClient,
 };
 
+enum {
+	SourceUnknown,
+	SourceClient,
+	SourcePager
+};
+
 enum EWMHType {
 	TypeDesktop	= 1<<0,
 	TypeDock	= 1<<1,
