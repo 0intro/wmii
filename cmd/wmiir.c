@@ -5,6 +5,7 @@
 #define IXP_P9_STRUCTS
 #include <stdio.h>
 #include <string.h>
+#include <sys/signal.h>
 #include <time.h>
 #include <unistd.h>
 #include <ixp.h>
@@ -406,6 +407,8 @@ main(int argc, char *argv[]) {
 		client = ixp_nsmount("wmii");
 	if(client == nil)
 		fatal("can't mount: %r\n");
+
+	signal(SIGPIPE, SIG_DFL);
 
 	for(tab=fstab; tab->cmd; tab++)
 		if(strcmp(*argv, tab->cmd) == 0) break;
