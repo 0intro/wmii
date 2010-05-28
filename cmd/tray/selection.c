@@ -47,9 +47,6 @@ selection_create(char *selection, ulong time,
 	return s;
 }
 
-#include <X11/Xlib-xcb.h>
-#include <xcb/xproto.h>
-
 Selection*
 selection_manage(char *selection, ulong time,
 		 void (*message)(Selection*, XClientMessageEvent*),

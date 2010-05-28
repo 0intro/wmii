@@ -58,8 +58,12 @@ status() {
 	echo -n $(uptime | sed 's/.*://; s/,//g') '|' $(date)
 }
 
+# Generic overridable startup details
+startup() { witray & }
+
 local_events() { true;}
 wi_runconf -s wmiirc_local
+startup
 
 echo $WMII_NORMCOLORS | wmiir create $noticebar
 

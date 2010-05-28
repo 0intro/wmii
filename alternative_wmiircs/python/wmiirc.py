@@ -47,6 +47,7 @@ setbackground(background)
 
 terminal = 'wmiir', 'setsid', '@TERMINAL@'
 pygmi.shell = os.environ.get('SHELL', 'sh')
+tray = 'witray',
 
 @defmonitor
 def load(self):
@@ -304,5 +305,7 @@ if not os.environ.get('WMII_NOPLUGINS', ''):
             exec 'import %s' % f
         except Exception, e:
             traceback.print_exc(sys.stdout)
+
+call(*tray)
 
 # vim:se sts=4 sw=4 et:

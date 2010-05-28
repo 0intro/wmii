@@ -52,9 +52,11 @@ wmiir write /tagrules <<!
 
 # Status Bar Info
 fn status {
-	echo -n `{uptime | sed 's/.*://; s/,//g'} \
-		'|' `{date}
-}
+	echo -n `{uptime | sed 's/.*://; s/,//g'} '|' \
+		`{date} }
+
+# Generic overridable startup details
+startup() { witray & }
 
 # End Configuration
 
@@ -72,8 +74,7 @@ confpath=`{echo $WMII_CONFPATH | sed 'y/:/ /'}
 # Events
 fn sigexit {
 	rm -f $progs_file
-	wi_cleankeys
-}
+	wi_cleankeys}
 
 fn Event-CreateTag {
 	echo $wmiinormcol $* | wmiir create /lbar/$"*}
@@ -167,6 +168,7 @@ if(~ $0 ('' */)wmiirc_local.rc)
 if not
 	. `{wi_script -f wmiirc_local.rc}
 echo $wmiinormcol | wmiir create $noticebar
+startup
 
 # Key Bindings
 _keys = `{wi_getfuns Key}
