@@ -97,7 +97,6 @@ frame_insert(Frame *f, Frame *pos) {
 bool
 frame_restack(Frame *f, Frame *above) {
 	Client *c;
-	Frame *fp;
 	Area *a;
 
 	c = f->client;
@@ -106,13 +105,6 @@ frame_restack(Frame *f, Frame *above) {
 		return false;
 	if(f == above)
 		return false;
-
-	if(above == nil && !(c->w.ewmh.type & TypeDock))
-		for(fp=a->stack; fp; fp=fp->snext)
-			if(fp->client->w.ewmh.type & TypeDock)
-				above = fp;
-			else
-				break;
 
 	if(f->sprev || f == a->stack)
 	if(f->sprev == above)
