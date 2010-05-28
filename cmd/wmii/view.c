@@ -149,6 +149,7 @@ view_destroy(View *v) {
 	}
 	free(v->areas);
 	free(v->r);
+	free(v->pad);
 	free(v);
 	ewmh_updateviews();
 }

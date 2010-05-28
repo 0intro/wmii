@@ -360,7 +360,7 @@ ewmh_getstrut(Client *c) {
 	long *strut;
 	ulong n;
 
-	if(c->strut == nil)
+	if(c->strut != nil)
 		free(c->strut);
 	c->strut = nil;
 
