@@ -7,9 +7,14 @@ void
 event_unmapnotify(XUnmapEvent *ev) {
 	Window *w;
 
-	if((w = findwin(ev->window)) && (ev->event == w->parent->xid)) {
-		w->mapped = false;
-		if(w->parent && (ev->send_event || w->unmapped-- == 0))
+	if((w = findwin(ev->window))) {
+		if(!ev->send_event)
+			w->mapped = false;
+		if(!ev->send_event && ev->event == ev->window)
+			w->unmapped--;
+		if(ev->send_event && ev->event != ev->window)
 			event_handle(w, unmap, ev);
 	}
+	if((w = findwin(ev->event)))
+		event_handle(w, unmap, ev);
 }

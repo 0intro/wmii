@@ -9,4 +9,6 @@ event_reparentnotify(XReparentEvent *ev) {
 
 	if((w = findwin(ev->event)))
 		event_handle(w, reparent, ev);
+	if(ev->send_event && (w = findwin(ev->window)))
+		event_handle(w, reparent, ev);
 }

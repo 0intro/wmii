@@ -9,4 +9,6 @@ event_mapnotify(XMapEvent *ev) {
 
 	if((w = findwin(ev->event)))
 		event_handle(w, map, ev);
+	if(ev->send_event && (w = findwin(ev->event)))
+		event_handle(w, map, ev);
 }

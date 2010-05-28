@@ -944,9 +944,8 @@ unmap_event(Window *w, void *aux, XUnmapEvent *e) {
 	Client *c;
 	
 	c = aux;
-	if(!e->send_event)
-		c->unmapped--;
-	client_destroy(c);
+	if(e->send_event || c->w.unmapped < 0)
+		client_destroy(c);
 	return false;
 }
 

@@ -11,16 +11,6 @@ debug_event(XEvent *e) {
 }
 
 void
-event_buttonpress(XButtonPressedEvent *ev) {
-	Window *w;
-
-	if((w = findwin(ev->window)))
-		event_handle(w, bdown, ev);
-	else
-		XAllowEvents(display, ReplayPointer, ev->time);
-}
-
-void
 event_configurenotify(XConfigureEvent *ev) {
 	Window *w;
 
@@ -110,11 +100,13 @@ event_focusout(XFocusChangeEvent *ev) {
 
 void
 event_mapnotify(XMapEvent *ev) {
-       Window *w;
+	Window *w;
 
-       ignoreenter = ev->serial;
-       if((w = findwin(ev->window)))
-               event_handle(w, map, ev);
+	ignoreenter = ev->serial;
+	if((w = findwin(ev->event)))
+		event_handle(w, map, ev);
+	if(ev->send_event && (w = findwin(ev->event)))
+		event_handle(w, map, ev);
 }
 
 void
@@ -122,10 +114,15 @@ event_unmapnotify(XUnmapEvent *ev) {
 	Window *w;
 
 	ignoreenter = ev->serial;
-	if((w = findwin(ev->window)) && (ev->event == w->parent->xid)) {
-		w->mapped = false;
-		if(ev->send_event || w->unmapped-- == 0)
+	if((w = findwin(ev->window))) {
+		if(!ev->send_event)
+			w->mapped = false;
+		if(!ev->send_event && ev->event == ev->window)
+			w->unmapped--;
+		if(ev->send_event && ev->event != ev->window)
 			event_handle(w, unmap, ev);
 	}
+	if((w = findwin(ev->event)))
+		event_handle(w, unmap, ev);
 }
 

@@ -7,6 +7,7 @@ void
 reparentwindow(Window *w, Window *par, Point p) {
 	assert(w->type == WWindow);
 	XReparentWindow(display, w->xid, par->xid, p.x, p.y);
+	w->unmapped++;
 	w->parent = par;
 	w->r = rectsubpt(w->r, w->r.min);
 	w->r = rectaddpt(w->r, p);

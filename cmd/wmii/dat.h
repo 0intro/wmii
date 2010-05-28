@@ -161,7 +161,6 @@ struct Client {
 	long	proto;
 	uint	border;
 	int	fullscreen;
-	int	unmapped;
 	bool	floating;
 	bool	fixedsize;
 	bool	urgent;
