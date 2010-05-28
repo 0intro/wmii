@@ -314,7 +314,7 @@ client_destroy(Client *c) {
 		event("DestroyClient %#C\n", c);
 
 	event_flush(FocusChangeMask, true);
-	free(c->w.hints);
+	cleanupwindow(&c->w);
 	free(c);
 }
 

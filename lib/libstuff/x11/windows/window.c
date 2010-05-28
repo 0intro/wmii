@@ -7,7 +7,7 @@ Window*
 window(XWindow xw) {
 	Window *w;
 
-	w = malloc(sizeof *w);
+	w = emallocz(sizeof *w);
 	w->type = WWindow;
 	w->xid = xw;
 	return freelater(w);

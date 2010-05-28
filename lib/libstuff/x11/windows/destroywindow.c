@@ -4,15 +4,21 @@
 #include "../x11.h"
 
 void
-destroywindow(Window *w) {
+cleanupwindow(Window *w) {
 	assert(w->type == WWindow);
 	sethandler(w, nil);
 	while(w->handler_link)
 		pophandler(w, w->handler_link->handler);
+	free(w->hints);
 	if(w->xft)
 		xft->drawdestroy(w->xft);
 	if(w->gc)
 		XFreeGC(display, w->gc);
+}
+
+void
+destroywindow(Window *w) {
+	cleanupwindow(w);
 	XDestroyWindow(display, w->xid);
 	free(w);
 }

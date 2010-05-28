@@ -239,6 +239,7 @@ void	changeproperty(Window*, char*, char*, int width, uchar*, int);
 void	clientmessage(Window*, char*, long, int, ClientMessageData);
 void	copyimage(Image*, Rectangle, Image*, Point);
 Window*	createwindow(Window*, Rectangle, int depth, uint class, WinAttr*, int valuemask);
+void	cleanupwindow(Window*);
 Window*	createwindow_visual(Window*, Rectangle, int depth, Visual*, uint class, WinAttr*, int);
 void	delproperty(Window*, char*);
 void	destroywindow(Window*);
