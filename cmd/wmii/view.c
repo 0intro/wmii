@@ -455,7 +455,7 @@ view_restack(View *v) {
 
 	wins.n = 0;
 
-	for(; f; f=f->snext)
+	for(f=v->floating->stack; f; f=f->snext)
 		vector_lpush(&wins, f->client->framewin->xid);
 
 	for(int s=0; s < nscreens; s++)
