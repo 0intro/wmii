@@ -455,13 +455,6 @@ view_restack(View *v) {
 
 	wins.n = 0;
 
-	/* *sigh */
-	for(f=v->floating->stack; f; f=f->snext)
-		if(f->client->w.ewmh.type & TypeDock)
-			vector_lpush(&wins, f->client->framewin->xid);
-		else
-			break;
-
 	for(; f; f=f->snext)
 		vector_lpush(&wins, f->client->framewin->xid);
 
