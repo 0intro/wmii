@@ -23,6 +23,6 @@ CFLAGS += \
 	-Wreturn-type \
 	-Wstrict-prototypes \
 	-Wtrigraphs
-MKDEP = cpp -MM
+MKDEP = cpp -M
 SOCFLAGS += -fPIC
 

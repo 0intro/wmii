@@ -140,7 +140,8 @@ bup_event(Window *w, void *aux, XButtonEvent *e) {
 		XAllowEvents(display, ReplayPointer, e->time);
 	else
 		XUngrabPointer(display, e->time);
-	event("ClientClick %#C %d\n", aux, e->button);
+	if(!e->subwindow)
+		event("ClientClick %#C %d\n", aux, e->button);
 	return false;
 }
 
