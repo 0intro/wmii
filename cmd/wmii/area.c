@@ -273,6 +273,7 @@ area_detach(Frame *f) {
 		column_detach(f);
 
 	if(v->sel->sel == nil && v->floating->sel)
+	if(v->floating->sel->client->nofocus)
 		v->sel = v->floating;
 
 	view_arrange(v);

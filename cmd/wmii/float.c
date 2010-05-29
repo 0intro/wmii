@@ -36,8 +36,11 @@ float_detach(Frame *f) {
 	frame_remove(f);
 
 	if(a->sel == f) {
+		while(pr && pr->client->nofocus)
+			pr = pr->aprev;
 		if(!pr)
-			pr = a->frame;
+			for(pr=a->frame; pr && pr->anext; pr=pr->anext)
+				if(!pr->client->nofocus) break;
 		a->sel = nil;
 		area_setsel(a, pr);
 	}
@@ -45,7 +48,7 @@ float_detach(Frame *f) {
 
 	if(oldsel)
 		area_focus(oldsel);
-	else if(!a->frame)
+	else if(!a->frame || pr && pr->client->nofocus)
 		if(sel && sel->frame)
 			area_focus(sel);
 }
