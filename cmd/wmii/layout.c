@@ -377,10 +377,13 @@ column_openstack(Area *a, Frame *f, int h) {
 static void
 column_drop(Area *a, Frame *f, int y) {
 	Frame *ff;
-	int dy;
+	int dy, extra_y;
 
-	for(ff=a->frame; ff; ff=ff->anext)
+	extra_y = Dy(a->r);
+	for(ff=a->frame; ff; ff=ff->anext) {
 		assert(ff != f);
+		extra_y -= Dy(ff->colr);
+	}
 
 	if(a->frame == nil || y <= a->frame->r.min.y) {
 		f->collapsed = true;
@@ -403,7 +406,7 @@ column_drop(Area *a, Frame *f, int y) {
 		column_openstack(a, ff, labelh(def.font) - dy);
 	}else {
 		f->colr.min.y = y;
-		f->colr.max.y = ff->colr.max.y;
+		f->colr.max.y = ff->colr.max.y + extra_y;
 		ff->colr.max.y = y;
 	}
 	column_insert(a, f, ff);

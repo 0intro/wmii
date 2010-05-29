@@ -620,7 +620,7 @@ frame_focus(Frame *f) {
 	if(old_a != v->oldsel && f != old_f)
 		v->oldsel = nil;
 
-	if(v != selview || a != v->sel)
+	if(v != selview || a != v->sel || resizing)
 		return;
 
 	move_focus(old_f, f);
