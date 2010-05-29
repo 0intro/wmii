@@ -98,7 +98,7 @@ bar_create(Bar **bp, const char *name) {
 	strlcat(b->buf, b->col.colstr, sizeof(b->buf));
 	strlcat(b->buf, " ", sizeof(b->buf));
 	strlcat(b->buf, b->text, sizeof(b->buf));
-	
+
 	SET(i);
 	for(sp=screens; (s = *sp); sp++) {
 		i = bp - s->bar;
@@ -265,7 +265,7 @@ static bool
 bup_event(Window *w, void *aux, XButtonPressedEvent *e) {
 	WMScreen *s;
 	Bar *b;
-	
+
 	s = aux;
 	b = findbar(s, Pt(e->x, e->y));
 	if(b)

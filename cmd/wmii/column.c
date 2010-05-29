@@ -67,7 +67,7 @@ column_setmode(Area *a, const char *mode) {
 		}
 		if(old)
 			str++;
-		
+
 	}
 	free(orig);
 	return true;
@@ -233,7 +233,7 @@ find(Area **ap, Frame **fp, int dir, bool wrap, bool stack) {
 		*fp = stack_find(a, f, dir, stack);
 		if(*fp)
 			return true;
-		if (!a->floating)
+		if(!a->floating)
 			*ap = area_find(a->view, r, dir, wrap);
 		if(!*ap)
 			return false;
@@ -496,7 +496,7 @@ comp_frame(const void *a, const void *b) {
 
 	ia = foo(*(Frame**)a);
 	ib = foo(*(Frame**)b);
-	/* 
+	/*
 	 * I'd like to favor the selected client, but
 	 * it causes windows to jump as focus changes.
 	 */

@@ -550,7 +550,7 @@ message_view(View *v, IxpMsg *m) {
 	if(s == nil)
 		return nil;
 
-	/* 
+	/*
 	 * area ::= ~
 	 *        | <column number>
 	 *        | sel
@@ -578,7 +578,7 @@ message_view(View *v, IxpMsg *m) {
 	 *         | ~
 	 *         | <column> <frame number>
 	 *         | <column>
-	 * amount ::= 
+	 * amount ::=
 	 *	    | <number>
 	 *          | <number>px
 	 *

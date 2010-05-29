@@ -41,7 +41,7 @@ update_rules(Rule **rule, const char *data) {
 	char *r, *v;
 	const char *p;
 	char c;
-	
+
 	SET(r);
 	SET(v);
 

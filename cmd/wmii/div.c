@@ -140,7 +140,7 @@ div_update_all(void) {
 	dp = &divs;
 	ap = nil;
 	foreach_column(v, s, a) {
-		if (ap && ap->screen != s)
+		if(ap && ap->screen != s)
 			ap = nil;
 
 		d = getdiv(&dp);
@@ -168,7 +168,7 @@ bdown_event(Window *w, void *aux, XButtonEvent *e) {
 	Divide *d;
 
 	USED(e);
-	
+
 	d = aux;
 	mouse_resizecol(d);
 	return false;
@@ -177,9 +177,9 @@ bdown_event(Window *w, void *aux, XButtonEvent *e) {
 static bool
 expose_event(Window *w, void *aux, XExposeEvent *e) {
 	Divide *d;
-	
+
 	USED(e);
-	
+
 	d = aux;
 	drawdiv(d);
 	return false;

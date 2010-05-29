@@ -175,7 +175,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 		}
 
 
-	/* 
+	/*
 	 * It's actually possible for a window to be destroyed
 	 * before we get a chance to reparent it. Check for that
 	 * now, because otherwise we'll wind up mapping a
@@ -277,7 +277,7 @@ client_destroy(Client *c) {
 
 	r = client_grav(c, ZR);
 
-	hide = false;	
+	hide = false;
 	if(!c->sel || c->sel->view != selview)
 		hide = true;
 
@@ -887,7 +887,7 @@ destroy_event(Window *w, void *aux, XDestroyWindowEvent *e) {
 static bool
 enter_event(Window *w, void *aux, XCrossingEvent *e) {
 	Client *c;
-	
+
 	c = aux;
 	if(e->detail != NotifyInferior) {
 		if(e->detail != NotifyVirtual)
@@ -942,7 +942,7 @@ focusout_event(Window *w, void *aux, XFocusChangeEvent *e) {
 static bool
 unmap_event(Window *w, void *aux, XUnmapEvent *e) {
 	Client *c;
-	
+
 	c = aux;
 	if(e->send_event || c->w.unmapped < 0)
 		client_destroy(c);
@@ -954,7 +954,7 @@ map_event(Window *w, void *aux, XMapEvent *e) {
 	Client *c;
 
 	USED(e);
-	
+
 	c = aux;
 	if(c == selclient())
 		client_focus(c);
@@ -1033,7 +1033,7 @@ bsstrcmp(const void *a, const void *b) {
 static int
 strpcmp(const void *ap, const void *bp) {
 	char **a, **b;
-	
+
 	a = (char**)ap;
 	b = (char**)bp;
 	return strcmp(*a, *b);

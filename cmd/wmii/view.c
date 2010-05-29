@@ -86,7 +86,6 @@ view_create(const char *name) {
 	for(i=0; i < nscreens; i++)
 		view_init(v, i);
 
-	
 	area_focus(v->firstarea);
 
 	v->next = *vp;
@@ -332,7 +331,7 @@ view_update(View *v) {
 
 void
 view_focus(WMScreen *s, View *v) {
-	
+
 	USED(s);
 
 	_view_select(v);
@@ -360,7 +359,7 @@ view_attach(View *v, Frame *f) {
 	Client *c;
 	Frame *ff;
 	Area *a, *oldsel;
-	
+
 	c = f->client;
 
 	oldsel = v->oldsel;
@@ -450,7 +449,7 @@ view_restack(View *v) {
 	Frame *f;
 	Area *a;
 	int s;
-	
+
 	if(v != selview)
 		return;
 

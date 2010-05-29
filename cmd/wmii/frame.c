@@ -216,7 +216,7 @@ enter_event(Window *w, void *aux, XCrossingEvent *e) {
 		       f->client, f->client->name,
 		       ignoreenter == e->serial ? " (ignored)" : "");
 		if(e->detail != NotifyInferior)
-		if(e->serial != ignoreenter && (f->area->floating || !f->collapsed))
+		if(e->serial != ignoreenter && !f->collapsed)
 			focus(f->client, false);
 	}
 	mouse_checkresize(f, Pt(e->x, e->y), false);
@@ -241,7 +241,7 @@ expose_event(Window *w, void *aux, XExposeEvent *e) {
 static bool
 motion_event(Window *w, void *aux, XMotionEvent *e) {
 	Client *c;
-	
+
 	c = aux;
 	mouse_checkresize(c->sel, Pt(e->x, e->y), false);
 	return false;
@@ -269,9 +269,8 @@ frame_gethints(Frame *f) {
 	c = f->client;
 	h = *c->w.hints;
 
-	r = frame_rect2client(c, f->r, f->area->floating);
-	d.x = Dx(f->r) - Dx(r);
-	d.y = Dy(f->r) - Dy(r);
+	r = frame_client2rect(c, ZR, f->area->floating);
+	d = subpt(r.max, r.min);
 
 	if(!f->area->floating && def.incmode == IIgnore)
 		h.inc = Pt(1, 1);
@@ -605,7 +604,9 @@ frame_focus(Frame *f) {
 		/* XXX */
 		f->colr.max.y = f->colr.min.y + Dy(ff->colr);
 		ff->colr.max.y = ff->colr.min.y + labelh(def.font);
-	}else if(f->area->mode == Coldefault) {
+	}
+	else if(f->area->mode == Coldefault) {
+		/* XXX */
 		for(; f->collapsed && f->anext; f=f->anext)
 			;
 		for(; f->collapsed && f->aprev; f=f->aprev)
@@ -619,6 +620,9 @@ frame_focus(Frame *f) {
 		area_focus(f->area);
 	if(old_a != v->oldsel && f != old_f)
 		v->oldsel = nil;
+
+	if(f->area->floating)
+		f->collapsed = false;
 
 	if(v != selview || a != v->sel || resizing)
 		return;
@@ -649,7 +653,7 @@ constrain(Rectangle r, int inset) {
 
 	if(inset < 0)
 		inset = Dy(screen->brect);
-	/* 
+	/*
 	 * FIXME: This will cause problems for windows with
 	 * D(r) < 2 * inset
 	 */
@@ -657,7 +661,7 @@ constrain(Rectangle r, int inset) {
 	SET(best);
 	sbest = nil;
 	for(sp=screens; (s = *sp); sp++) {
-		if (!screen->showing)
+		if(!screen->showing)
 			continue;
 		isect = rect_intersection(r, insetrect(s->r, inset));
 		if(Dx(isect) >= 0 && Dy(isect) >= 0)

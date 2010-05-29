@@ -94,7 +94,7 @@ area_create(View *v, Area *pos, int scrn, uint width) {
 		if(width == 0) {
 			if(numcols >= 0) {
 				width = view_newcolwidth(v, scrn, index);
-				if (width == 0)
+				if(width == 0)
 					width = Dx(v->r[scrn]) / (numcols + 1);
 			}
 			else
@@ -213,7 +213,7 @@ area_moveto(Area *to, Frame *f) {
 		return;
 
 	from = f->area;
-	if (from == to)
+	if(from == to)
 		return;
 
 	area_detach(f);

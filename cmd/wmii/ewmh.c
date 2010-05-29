@@ -507,7 +507,7 @@ ewmh_updatestate(Client *c) {
 	if(c->fullscreen >= 0)
 		changeprop_long(&c->w, Net("WM_FULLSCREEN_MONITORS"), "CARDINAL",
 				(long[]) { c->fullscreen, c->fullscreen,
-					   c->fullscreen, c->fullscreen }, 
+					   c->fullscreen, c->fullscreen },
 				4);
 	else
 		delproperty(&c->w, Net("WM_FULLSCREEN_MONITORS"));

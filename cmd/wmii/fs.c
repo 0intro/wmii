@@ -212,7 +212,7 @@ dostat(Stat *s, IxpFileId *f) {
 	s->muid = user;
 }
 
-/* 
+/*
  * All lookups and directory organization should be performed through
  * lookup_file, mostly through the dirtab[] tree.
  */
@@ -399,7 +399,7 @@ fs_stat(Ixp9Req *r) {
 	int size;
 	char *buf;
 	IxpFileId *f;
-	
+
 	f = r->fid->aux;
 
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
@@ -578,7 +578,7 @@ fs_write(Ixp9Req *r) {
 void
 fs_open(Ixp9Req *r) {
 	IxpFileId *f;
-	
+
 	f = r->fid->aux;
 
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
@@ -608,7 +608,7 @@ fs_open(Ixp9Req *r) {
 void
 fs_create(Ixp9Req *r) {
 	IxpFileId *f;
-	
+
 	f = r->fid->aux;
 
 	switch(f->tab.type) {
@@ -639,7 +639,7 @@ void
 fs_remove(Ixp9Req *r) {
 	IxpFileId *f;
 	WMScreen *s;
-	
+
 	f = r->fid->aux;
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
 		respond(r, Enofile);
@@ -663,7 +663,7 @@ fs_remove(Ixp9Req *r) {
 void
 fs_clunk(Ixp9Req *r) {
 	IxpFileId *f;
-	
+
 	f = r->fid->aux;
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
 		respond(r, nil);

@@ -77,7 +77,7 @@ static Window*
 gethsep(Rectangle r) {
 	Window *w;
 	WinAttr wa;
-	
+
 	wa.background_pixel = def.normcolor.border.pixel;
 	w = createwindow(&scr.root, r, scr.depth, InputOutput, &wa, CWBackPixel);
 	mapwin(w);
@@ -152,7 +152,7 @@ Align
 snap_rect(const Rectangle *rects, int num, Rectangle *r, Align *mask, int snap) {
 	Align ret;
 	Point d;
-	
+
 	d.x = snap+1;
 	d.y = snap+1;
 

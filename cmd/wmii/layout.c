@@ -48,7 +48,7 @@ framerect(Framewin *f) {
 	r = rectaddpt(r, f->pt);
 
 	scrn = f->screen;
-	if (scrn == -1)
+	if(scrn == -1)
 		scrn = max(ownerscreen(f->f->r), 0);
 
 	/* Keep onscreen */
@@ -72,7 +72,7 @@ framewin(Frame *f, Point pt, int orientation, int n) {
 	Framewin *fw;
 
 	fw = emallocz(sizeof *fw);
-	wa.override_redirect = true;	
+	wa.override_redirect = true;
 	wa.event_mask = ExposureMask;
 	fw->w = createwindow(&scr.root, Rect(0, 0, 1, 1),
 			scr.depth, InputOutput,
@@ -88,7 +88,7 @@ framewin(Frame *f, Point pt, int orientation, int n) {
 
 	raisewin(fw->w);
 
-	return fw;	
+	return fw;
 }
 
 static void
@@ -103,20 +103,20 @@ expose_event(Window *w, void *aux, XExposeEvent *e) {
 	Framewin *f;
 	Image *buf;
 	CTuple *c;
-	
+
 	USED(e);
 
 	f = aux;
 	c = &def.focuscolor;
 	buf = disp.ibuf;
-	
+
 	r = rectsubpt(w->r, w->r.min);
 	fill(buf, r, c->bg);
 	border(buf, r, 1, c->border);
 	border(buf, f->grabbox, 1, c->border);
 	border(buf, insetrect(f->grabbox, -f->grabbox.min.x), 1, c->border);
 
-	copyimage(w, r, buf, ZP);	
+	copyimage(w, r, buf, ZP);
 	return false;
 }
 
@@ -202,7 +202,7 @@ hplace(Framewin *fw, Point pt) {
 	Area *a;
 	View *v;
 	int minw;
-	
+
 	v = selview;
 
 	a = find_area(pt);
@@ -223,7 +223,7 @@ hplace(Framewin *fw, Point pt) {
 
 	pt.y = a->r.min.y;
 	frameadjust(fw, pt, OVert, Dy(a->r));
-	reshapewin(fw->w, framerect(fw));	
+	reshapewin(fw->w, framerect(fw));
 }
 
 static Point
@@ -449,6 +449,7 @@ thcol(Frame *f, bool moved) {
 		case ButtonRelease:
 			if(!moved)
 				goto done;
+
 			if(button != 1)
 				continue;
 			SET(collapsed);
@@ -586,7 +587,8 @@ tfloat(Frame *f, bool moved) {
 		warppointer(grabboxcenter(f));
 	}
 	map_frame(f->client);
-	focus(f->client, false);
+	if(!f->collapsed)
+		focus(f->client, false);
 
 	ret = TDone;
 	if(!grabpointer(c->framewin, nil, cursor[CurMove], MouseMask))
@@ -596,7 +598,10 @@ tfloat(Frame *f, bool moved) {
 	origin = f->r;
 	frect = f->r;
 
-	pt = querypointer(&scr.root);
+	if(!readmotion(&pt)) {
+		focus(f->client, false);
+		goto done;
+	}
 	/* pt1 = grabboxcenter(f); */
 	pt1 = pt;
 	goto case_motion;
@@ -622,6 +627,10 @@ shut_up_ken:
 		case ButtonRelease:
 			if(button != 1)
 				continue;
+			if(!moved) {
+				f->collapsed = !f->collapsed;
+				client_resize(f->client, f->floatr);
+			}
 			goto done;
 		case ButtonPress:
 			if(button != 3)
