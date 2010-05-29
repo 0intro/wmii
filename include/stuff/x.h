@@ -16,6 +16,8 @@ void	xext_event(XEvent*);
 void	xext_init(void);
 Rectangle*	xinerama_screens(int*);
 
+void	client_readconfig(CTuple*, CTuple*, Font**);
+
 #define event_handle(w, fn, ev) \
 	_event_handle(w, offsetof(Handlers, fn), (XEvent*)ev)
 

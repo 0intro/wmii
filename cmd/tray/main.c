@@ -190,14 +190,7 @@ main(int argc, char *argv[]) {
 	if(tray.edge == 0)
 		tray.edge = West | (!strcmp(readctl("bar on "), "top") ? North : South);
 
-	loadcolor(&tray.normcolors, readctl("normcolors "));
-	loadcolor(&tray.selcolors,  readctl("focuscolors "));
-	tray.font = loadfont(readctl("font "));
-	if(!tray.font)
-		fatal("Can't load font %q", readctl("font "));
-	sscanf(readctl("fontpad "), "%d %d %d %d",
-	       &tray.font->pad.min.x, &tray.font->pad.max.x,
-	       &tray.font->pad.min.x, &tray.font->pad.max.y);
+	client_readconfig(&tray.normcolors, &tray.selcolors, &tray.font);
 
 	if(tray.iconsize == 0) /* Default to wmii's bar size. */
 		tray.iconsize = labelh(tray.font) - 2 * tray.padding;

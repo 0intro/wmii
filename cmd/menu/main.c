@@ -7,7 +7,6 @@
 #include "dat.h"
 #include <X11/Xproto.h>
 #include <locale.h>
-#include <stdio.h>
 #include <strings.h>
 #include <unistd.h>
 #include <bio.h>
@@ -30,27 +29,6 @@ usage(void) {
 static int
 errfmt(Fmt *f) {
 	return fmtstrcpy(f, ixp_errbuf());
-}
-
-/* Stubs. */
-void
-debug(int flag, const char *fmt, ...) {
-	va_list ap;
-
-	USED(flag);
-	va_start(ap, fmt);
-	vfprint(2, fmt, ap);
-	va_end(ap);
-}
-
-void dprint(long, char*, ...);
-void dprint(long mask, char *fmt, ...) {
-	va_list ap;
-
-	USED(mask);
-	va_start(ap, fmt);
-	vfprint(2, fmt, ap);
-	va_end(ap);
 }
 
 static inline void
@@ -272,14 +250,7 @@ main(int argc, char *argv[]) {
 	ixp_listen(&srv, ConnectionNumber(display), nil, event_fdready, event_fdclosed);
 
 	ontop = !strcmp(readctl("bar on "), "top");
-	loadcolor(&cnorm, readctl("normcolors "));
-	loadcolor(&csel, readctl("focuscolors "));
-	font = loadfont(readctl("font "));
-	if(!font)
-		fatal("Can't load font %q", readctl("font "));
-	sscanf(readctl("fontpad "), "%d %d %d %d",
-	       &font->pad.min.x, &font->pad.max.x,
-	       &font->pad.min.x, &font->pad.max.y);
+	client_readconfig(&cnorm, &csel, &font);
 
 	cmplbuf = Bfdopen(0, OREAD);
 	items = populate_list(cmplbuf, false);

@@ -1,3 +1,6 @@
+/* Copyright ©2009-2010 Kris Maglione <maglione.k at Gmail>
+ * See LICENSE file for license details.
+ */
 #define IXP_NO_P9_
 #define IXP_P9_STRUCTS
 #define CLIENTEXTERN
@@ -50,4 +53,3 @@ client_init(char* address) {
 	if(client == nil)
 		fatal("can't mount wmii filesystem: %r\n");
 }
-

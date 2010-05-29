@@ -8,6 +8,7 @@ PACKAGES += $(X11PACKAGES) xext xrandr xrender xinerama
 OBJ=\
     	buffer		\
 	clientutil	\
+	client_readconfig	\
 	event/buttonpress	\
 	event/buttonrelease	\
 	event/clientmessage	\
