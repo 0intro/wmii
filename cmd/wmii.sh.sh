@@ -135,9 +135,7 @@ wi_fnmenu() {
 }
 
 wi_proglist() {
-        ls -lL $(echo $* | sed 'y/:/ /') 2>/dev/null \
-		| awk '$1 ~ /^[^d].*x/ { print $NF }' \
-		| sort | uniq
+        wmiir proglist -- $(echo $* | sed 'y/:/ /') | sort | uniq
 }
 
 wi_actions() {

@@ -28,6 +28,8 @@ configuration scripts.
 :
 = COMMANDS =
 
+The following commands deal with 9P filesystems.
+
 : create <file>
         Creates a new file or directory in the filesystem. Permissions and
         file type are inferred by `wmii`. The contents of the standard input
@@ -53,12 +55,34 @@ configuration scripts.
 : remove <path>
         Removes <path> from the filesystem.
 
-        Synonyms: rm
+        Synonyms: `rm`
 : write <file>
         Writes the contents of the standard input to <file>.
 : xwrite <file> <data> ...
         Writes each argument after <file> to the latter.
 :
+
+Additionally, wmiir provides the following utility commands relevant
+to scripting wmii:
+
+: namespace
+	Prints the current wmii namespace directory, usually
+	equivalent to /tmp/ns.$USER.${DISPLAY%.0}, but possibly
+	different depending on the value of $NAMESPACE and
+	$WMII_NAMESPACE.
+
+	Synonyms: `ns`
+: setsid [-0 <argv0>] [-f] <command>
+	Executes the given command after setting the session id (see
+	setsid(2)). If _-0_ is given, the command is run with the
+	given value as argv[0]. For instance, to run sh as a login
+	shell, one might run
+
+```        wmiir setsid -0 -sh sh
+	If _-f_ is given, wmiir will fork into the background before
+	executing the command.
+: proglist [--] <directory> ...
+	Lists all executable commands in the given directories.
 
 = ENVIRONMENT =
 

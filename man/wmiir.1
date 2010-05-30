@@ -25,6 +25,9 @@ configuration scripts.
 The address at which to connect to \fBwmii\fR.
 
 .SH COMMANDS
+.P
+The following commands deal with 9P filesystems.
+
 .TP
 create \fI<file>\fR
 Creates a new file or directory in the filesystem. Permissions and
@@ -57,7 +60,7 @@ Synonyms: \fBcat\fR
 remove \fI<path>\fR
 Removes \fI<path>\fR from the filesystem.
 
-Synonyms: rm
+Synonyms: \fBrm\fR
 .TP
 write \fI<file>\fR
 Writes the contents of the standard input to \fI<file>\fR.
@@ -65,6 +68,48 @@ Writes the contents of the standard input to \fI<file>\fR.
 xwrite \fI<file>\fR \fI<data>\fR ...
 Writes each argument after \fI<file>\fR to the latter.
 
+
+.P
+Additionally, wmiir provides the following utility commands relevant
+to scripting wmii:
+
+.TP
+namespace
+
+.RS
+Prints the current wmii namespace directory, usually
+equivalent to /tmp/ns.\fB$USER\fR.\fB${DISPLAY\fR%.0\fB}\fR, but possibly
+different depending on the value of \fB$NAMESPACE\fR and
+\fB$WMII_NAMESPACE\fR.
+.RE
+
+.RS
+Synonyms: \fBns\fR
+.RE
+.TP
+setsid \fI[\-0 \fI<argv0>\fR]\fR \fI[\-f]\fR \fI<command>\fR
+
+.RS
+Executes the given command after setting the session id (see
+setsid(2)). If \fI\-0\fR is given, the command is run with the
+given value as argv\fI[0]\fR. For instance, to run sh as a login
+shell, one might run
+.RE
+
+.nf
+         wmiir setsid -0 -sh sh
+.fi
+
+.RS
+If \fI\-f\fR is given, wmiir will fork into the background before
+executing the command.
+.RE
+.TP
+proglist \fI[\-\-]\fR \fI<directory>\fR ...
+
+.RS
+Lists all executable commands in the given directories.
+.RE
 
 .SH ENVIRONMENT
 .TP

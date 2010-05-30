@@ -3,6 +3,7 @@
  */
 #define IXP_NO_P9_
 #define IXP_P9_STRUCTS
+#include <dirent.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/signal.h>
@@ -329,13 +330,42 @@ xnamespace(int argc, char *argv[]) {
 }
 
 static int
+xproglist(int argc, char *argv[]) {
+	DIR *d;
+	struct dirent *de;
+	char *dir;
+
+	quotefmtinstall();
+
+	ARGBEGIN{
+	default:
+		usage();
+	}ARGEND;
+
+	while((dir = ARGF()))
+		if((d = opendir(dir))) {
+			while((de = readdir(d)))
+				if(access(de->d_name, X_OK))
+					print("%q\n", de->d_name);
+			closedir(d);
+		}
+
+	return 0; /* NOTREACHED */
+}
+
+static int
 xsetsid(int argc, char *argv[]) {
 	char *av0;
+	bool dofork;
 
 	av0 = nil;
+	dofork = false;
 	ARGBEGIN{
 	case '0':
 		av0 = EARGF(usage());
+		break;
+	case 'f':
+		dofork = true;
 		break;
 	default:
 		usage();
@@ -346,6 +376,13 @@ xsetsid(int argc, char *argv[]) {
 		return 1;
 
 	setsid();
+	if(dofork)
+		switch(fork()) {
+		case 0:  break;
+		case -1: fatal("can't fork: %r\n");
+		default: return 0;
+		}
+
 	execvp(av0, argv);
 	fatal("setsid: can't exec: %r");
 	return 1; /* NOTREACHED */
@@ -368,6 +405,7 @@ struct exectab {
 }, utiltab[] = {
 	{"namespace", xnamespace},
 	{"ns", xnamespace},
+	{"proglist", xproglist},
 	{"setsid", xsetsid},
 	{0, }
 };
