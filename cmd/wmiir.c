@@ -11,9 +11,11 @@
 #include <unistd.h>
 #include <ixp.h>
 #include <stuff/util.h>
+#include <bio.h>
 #include <fmt.h>
 
 static IxpClient *client;
+static Biobuf *outbuf;
 
 static void
 usage(void) {
@@ -99,14 +101,14 @@ print_stat(Stat *s, int lflag, char *file, int pflag) {
 		file = "";
 
 	if(lflag)
-		print("%s %s %s %5llud %s %s%s%s\n",
+		Bprint(outbuf, "%s %s %s %5llud %s %s%s%s\n",
 				modestr(s->mode), s->uid, s->gid, s->length,
 				timestr(s->mtime), file, slash, s->name);
 	else {
 		if((s->mode&P9_DMDIR) && strcmp(s->name, "/"))
-			print("%s%s%s/\n", file, slash, s->name);
+			Bprint(outbuf, "%s%s%s/\n", file, slash, s->name);
 		else
-			print("%s%s%s\n", file, slash, s->name);
+			Bprint(outbuf, "%s%s%s\n", file, slash, s->name);
 	}
 }
 
@@ -325,7 +327,7 @@ xnamespace(int argc, char *argv[]) {
 	path = ixp_namespace();
 	if(path == nil)
 		fatal("can't find namespace: %r\n");
-	print("%s\n", path);
+	Bprint(outbuf, "%s\n", path);
 	return 0;
 }
 
@@ -346,7 +348,7 @@ xproglist(int argc, char *argv[]) {
 		if((d = opendir(dir))) {
 			while((de = readdir(d)))
 				if(access(de->d_name, X_OK))
-					print("%q\n", de->d_name);
+					Bprint(outbuf, "%q\n", de->d_name);
 			closedir(d);
 		}
 
@@ -435,9 +437,13 @@ main(int argc, char *argv[]) {
 	if(argc < 1)
 		usage();
 
+	outbuf = Bfdopen(1, OWRITE);
+
 	for(tab=utiltab; tab->cmd; tab++)
-		if(!strcmp(*argv, tab->cmd))
-			return tab->fn(argc, argv);
+		if(!strcmp(*argv, tab->cmd)) {
+			ret = tab->fn(argc, argv);
+			goto done;
+		}
 
 	if(address && *address)
 		client = ixp_mount(address);
@@ -456,6 +462,8 @@ main(int argc, char *argv[]) {
 	ret = tab->fn(argc, argv);
 
 	ixp_unmount(client);
+done:
+	Bterm(outbuf);
 	return ret;
 }
 
