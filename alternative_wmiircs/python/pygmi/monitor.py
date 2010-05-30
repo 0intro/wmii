@@ -1,4 +1,4 @@
-from threading import Timer
+from threading import Lock, Timer
 
 from pygmi import client
 from pygmi.fs import *
@@ -69,6 +69,7 @@ class Monitor(object):
         if action:
             self.action = action
 
+        self.lock = Lock()
         self.timer = None
         self.button = Button(self.side, self.name, colors, label)
         self.tick()
@@ -78,21 +79,22 @@ class Monitor(object):
         Called internally at the interval defined by #interval.
         Calls #action and updates the monitor based on the result.
         """
-        mon = monitors.get(self.name, None)
-        if self.timer and mon is not self:
+        if self.timer and monitors.get(self.name, None) is not self:
             return
         if self.active:
             label = self.getlabel()
             if isinstance(label, basestring):
                 label = None, label
-            if label is None:
-                self.button.remove()
-            else:
-                self.button.create(*label)
+            with self.lock:
+                if self.active:
+                    if label is None:
+                        self.button.remove()
+                    else:
+                        self.button.create(*label)
 
-            self.timer = Timer(self.interval, self.tick)
-            self.timer.daemon = True
-            self.timer.start()
+                    self.timer = Timer(self.interval, self.tick)
+                    self.timer.daemon = True
+                    self.timer.start()
 
     def getlabel(self):
         """
@@ -106,9 +108,11 @@ class Monitor(object):
 
     _active = True
     def _set_active(self, val):
-        self._active = bool(val)
-        self.tick()
-        if not val:
+        with self.lock:
+            self._active = bool(val)
+        if val:
+            self.tick()
+        else:
             self.button.remove()
 
     active = property(
