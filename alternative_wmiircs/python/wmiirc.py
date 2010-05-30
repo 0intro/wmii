@@ -306,6 +306,6 @@ if not os.environ.get('WMII_NOPLUGINS', ''):
         except Exception, e:
             traceback.print_exc(sys.stdout)
 
-call(*tray)
+call(*tray, background=True)
 
 # vim:se sts=4 sw=4 et:
