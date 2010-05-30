@@ -69,6 +69,7 @@ client_cleanup(XEmbed *e) {
 			*cp = c->next;
 			break;
 		}
+	cleanupwindow(&c->w);
 	free(c);
 	tray_update();
 }
