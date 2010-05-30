@@ -22,33 +22,59 @@ trim(char *str, const char *chars) {
 	*q = '\0';
 }
 
+void
+update_rules(Rule **rule, const char *data) {
+#define putc(m, c) BLOCK(if(m.pos < m.end) *m.pos++ = c)
+#define getc(m) (m.pos < m.end ? *m.pos++ : 0)
+#define ungetc(m) BLOCK(if(m.pos > m.data) --m.pos)
+	IxpMsg buf, outbuf, rebuf;
+	char regex[256];
+	char c;
+
+	buf = ixp_message(data, strlen(data), MsgUnpack);
+}
+
 /* XXX: I hate this. --KM */
 void
 update_rules(Rule **rule, const char *data) {
-	/* basic rule matching language /regex/ -> value
-	 * regex might contain POSIX regex syntax defined in regex(3) */
 	enum {
+		COMMENT,
 		IGNORE,
 		REGEX,
 		VALUE,
-		COMMENT,
+		WAIT,
 	};
-	int state;
+	int state, old_state;
+	IxpMsg m;
+	Ruleval **rvp;
+	Ruleval *rv;
 	Rule *rul;
-	char regex[256], value[256];
+	char regex[256];
 	char *regex_end = regex + sizeof(regex) - 1;
-	char *value_end = value + sizeof(value) - 1;
+	char *value_end = buffer + sizeof(buffer) - 1;
 	char *r, *v;
 	const char *p;
 	char c;
+	int len;
+
+#define NEXT(next) BLOCK(		\
+		old_state = state	\
+		state = next;		\
+		continue;		\
+	)
 
 	SET(r);
 	SET(v);
+	SET(old_state);
 
 	if(!data || !strlen(data))
 		return;
 	while((rul = *rule)) {
 		*rule = rul->next;
+		while((rv = rul->values)) {
+			rul->values = rv->next;
+			free(rv);
+		}
 		free(rul->regex);
 		free(rul);
 	}
@@ -57,11 +83,11 @@ update_rules(Rule **rule, const char *data) {
 		switch(state) {
 		case COMMENT:
 			if(c == '\n')
-				state = IGNORE;
+				state = old_state;
 			break;
 		case IGNORE:
 			if(c == '#')
-				state = COMMENT;
+				goto comment;
 			else if(c == '/') {
 				r = regex;
 				state = REGEX;
@@ -75,6 +101,10 @@ update_rules(Rule **rule, const char *data) {
 		case REGEX:
 			if(c == '\\' && p[1] == '/')
 				p++;
+			else if(c == '\\' && p[1] == '\\' && p[2] == '/')
+				p++;
+			else if(c == '\\' && r < regex_end)
+				*r++ = *p++;
 			else if(c == '/') {
 				*r = 0;
 				state = IGNORE;
@@ -84,24 +114,49 @@ update_rules(Rule **rule, const char *data) {
 				*r++ = c;
 			break;
 		case VALUE:
-			if(c == '\n' || c == '#' || c == 0) {
-				*v = 0;
-				trim(value, " \t");
-				*rule = emallocz(sizeof **rule);
-				(*rule)->regex = regcomp(regex);
-				if((*rule)->regex) {
-					utflcpy((*rule)->value, value, sizeof rul->value);
-					rule = &(*rule)->next;
-				}else
-					free(*rule);
-				state = IGNORE;
-				if(c == '#')
-					state = COMMENT;
-			}
-			else if(v < value_end)
+			if(c == '#')
+				NEXT(COMMENT);
+			if(c == '\n')
+				NEXT(WAIT);
+			if(v < value_end)
 				*v++ = c;
+			break;
+		case WAIT:
+			if(c == '#')
+				NEXT(COMMENT);
+			if(c == '/') {
+				state = 
 			break;
 		default: /* can't happen */
 			die("invalid state");
+		accept:
+
+			*v = 0;
+			*rule = emallocz(sizeof **rule);
+			(*rule)->regex = regcomp(regex);
+			if((*rule)->regex) {
+				(*rule)->value = strdup(buffer);
+				trim((*rule)->value, " \t");
+
+				rvp = &(*rule)->values;
+				m = ixp_message(buffer, v - buffer, MsgUnpack);
+				while((r = msg_getword(&m)))
+					if((v = strchr(r, '='))) {
+						len = strlen(r) + 1;
+						*rvp = rv = emalloc(sizeof *rv + len);
+						rvp = &rv->next;
+
+						memcpy(&rv[1], r, len);
+						tokenize(&rv->key, 2, (char*)&rv[1], '=');
+					}
+
+
+				rule = &(*rule)->next;
+			}else
+				free(*rule);
+
+			r = regex;
+
+			break;
 		}
 }

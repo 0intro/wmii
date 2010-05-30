@@ -106,6 +106,7 @@ typedef struct Group Group;
 typedef struct Key Key;
 typedef struct Rule Rule;
 typedef struct Ruleset Ruleset;
+typedef struct Ruleval Ruleval;
 typedef struct Strut Strut;
 typedef struct View View;
 typedef struct WMScreen WMScreen;
@@ -223,10 +224,10 @@ struct Key {
 };
 
 struct Rule {
-	Rule*	next;
-	Reprog*	regex;
-	char	value[256];
-
+	Rule*		next;
+	Reprog*		regex;
+	char*		value;
+	Ruleval*	values;
 };
 
 struct Ruleset {
@@ -234,6 +235,12 @@ struct Ruleset {
 	char*	string;
 	uint	size;
 };
+
+struct Ruleval {
+	Ruleval*	next;
+	char*		key;
+	char*		value;
+}
 
 struct Strut {
 	Rectangle	left;
@@ -271,8 +278,9 @@ EXTERN struct {
 	Font*	font;
 	char*	keys;
 	uint	keyssz;
-	Ruleset	tagrules;
 	Ruleset	colrules;
+	Ruleset	tagrules;
+	Ruleset	rules;
 	char	grabmod[5];
 	ulong	mod;
 	uint	border;

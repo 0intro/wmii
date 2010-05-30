@@ -558,7 +558,7 @@ VerbButton(Fmt *fmt, XEvent *e) {
 		TInt, _(x), TInt, _(y),
 		TInt, _(x_root), TInt, _(y_root),
 		TModState, _(state),
-		TModState, _(button),
+		TInt, _(button),
 		TBool, _(same_screen),
 		TEnd
 	);
