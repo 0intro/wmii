@@ -56,7 +56,7 @@ fn status {
 		`{date} }
 
 # Generic overridable startup details
-startup() { witray & }
+fn startup { witray & }
 
 # End Configuration
 
