@@ -123,7 +123,7 @@ int	stack_count(Frame*, int*);
 Frame*	stack_find(Area*, Frame*, int, bool);
 
 /* error.c */
-#define waserror() setjmp(pusherror())
+#define waserror() setjmp(*pusherror())
 void	error(char*, ...);
 void	nexterror(void);
 void	poperror(void);
@@ -210,7 +210,7 @@ char*	message_view(View*, IxpMsg*);
 char*	msg_debug(IxpMsg*);
 void	msg_eatrunes(IxpMsg*, int (*)(Rune), int);
 char*	msg_getword(IxpMsg*);
-char*	msg_parsecolors(IxpMsg*, CTuple*);
+void	msg_parsecolors(IxpMsg*, CTuple*);
 char*	msg_selectarea(Area*, IxpMsg*);
 char*	msg_sendclient(View*, IxpMsg*, bool swap);
 char*	readctl_client(Client*);

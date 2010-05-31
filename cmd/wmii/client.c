@@ -208,7 +208,10 @@ apply_rules(Client *c) {
 					bufclear();
 					bufprint("%s %s", rv->key, rv->value);
 					m = ixp_message(buffer, sizeof buffer, MsgPack);
-					message_client(c, &m);
+					if(!waserror()) {
+						message_client(c, &m);
+						poperror();
+					}
 				}
 				return true;
 			}

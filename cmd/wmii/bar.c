@@ -203,7 +203,11 @@ bar_load(Bar *b) {
 
 	 p = b->buf;
 	 m = ixp_message(p, strlen(p), 0);
-	 msg_parsecolors(&m, &b->col);
+
+	 if(!waserror()) { /* Ignore errors. */
+		 msg_parsecolors(&m, &b->col);
+		 poperror();
+	 }
 
 	 q = (char*)m.end-1;
 	 while(q >= (char*)m.pos && *q == '\n')

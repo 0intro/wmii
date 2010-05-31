@@ -520,17 +520,22 @@ fs_write(Ixp9Req *r) {
 		return;
 	}
 
+	if(waserror()) {
+		respond(r, ixp_errbuf());
+		return;
+	}
+
 	switch(f->tab.type) {
 	case FsFColRules:
 	case FsFRules:
 	case FsFTagRules:
 		ixp_srv_writebuf(r, &f->p.rule->string, &f->p.rule->size, 0);
 		respond(r, nil);
-		return;
+		break;
 	case FsFKeys:
 		ixp_srv_writebuf(r, &def.keys, &def.keyssz, 0);
 		respond(r, nil);
-		return;
+		break;
 	case FsFClabel:
 		ixp_srv_data2cstring(r);
 		utfecpy(f->p.client->name,
@@ -540,13 +545,13 @@ fs_write(Ixp9Req *r) {
 		update_class(f->p.client);
 		r->ofcall.io.count = r->ifcall.io.count;
 		respond(r, nil);
-		return;
+		break;
 	case FsFCtags:
 		ixp_srv_data2cstring(r);
 		client_applytags(f->p.client, r->ifcall.io.data);
 		r->ofcall.io.count = r->ifcall.io.count;
 		respond(r, nil);
-		return;
+		break;
 	case FsFBar:
 		i = strlen(f->p.bar->buf);
 		p = f->p.bar->buf;
@@ -554,7 +559,7 @@ fs_write(Ixp9Req *r) {
 		bar_load(f->p.bar);
 		r->ofcall.io.count = i - r->ifcall.io.offset;
 		respond(r, nil);
-		return;
+		break;
 	case FsFCctl:
 		mf = (MsgFunc)message_client;
 		goto msg;
@@ -568,7 +573,7 @@ fs_write(Ixp9Req *r) {
 		errstr = ixp_srv_writectl(r, mf);
 		r->ofcall.io.count = r->ifcall.io.count;
 		respond(r, errstr);
-		return;
+		break;
 	case FsFEvent:
 		if(r->ifcall.io.data[r->ifcall.io.count-1] == '\n')
 			event("%.*s", (int)r->ifcall.io.count, r->ifcall.io.data);
@@ -576,11 +581,13 @@ fs_write(Ixp9Req *r) {
 			event("%.*s\n", (int)r->ifcall.io.count, r->ifcall.io.data);
 		r->ofcall.io.count = r->ifcall.io.count;
 		respond(r, nil);
-		return;
+		break;
+	default:
+		/* This should not be called if the file is not open for writing. */
+		die("Write called on an unwritable file");
 	}
-	/*
-	/* This should not be called if the file is not open for writing. */
-	die("Write called on an unwritable file");
+	poperror();
+	return;
 }
 
 void
