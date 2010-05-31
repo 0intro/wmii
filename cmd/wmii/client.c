@@ -197,7 +197,21 @@ client_create(XWindow w, XWindowAttributes *wa) {
 
 static bool
 apply_rules(Client *c) {
+	IxpMsg m;
 	Rule *r;
+	Ruleval *rv;
+
+	if(def.rules.string)
+		for(r=def.rules.rule; r; r=r->next)
+			if(regexec(r->regex, c->props, nil, 0)) {
+				for(rv=r->values; rv; rv=rv->next) {
+					bufclear();
+					bufprint("%s %s", rv->key, rv->value);
+					m = ixp_message(buffer, sizeof buffer, MsgPack);
+					message_client(c, &m);
+				}
+				return true;
+			}
 
 	if(def.tagrules.string)
 		for(r=def.tagrules.rule; r; r=r->next)
@@ -1116,10 +1130,10 @@ client_applytags(Client *c, const char *tags) {
 	found = false;
 
 	j = 0;
-	while(buf[n] && n < sizeof(buf) && j < 32) {
+	while(buf[n] && n < sizeof buf && j < 32) {
 		/* Check for regex. */
 		if(buf[n] == '/') {
-			for(i=n+1; i < sizeof(buf) - 1; i++)
+			for(i=n+1; i < sizeof buf - 1; i++)
 				if(buf[i] == '/') break;
 			if(buf[i] == '/') {
 				i++;
@@ -1140,7 +1154,7 @@ client_applytags(Client *c, const char *tags) {
 			}
 		}
 
-		for(i = n; i < sizeof(buf) - 1; i++)
+		for(i = n; i < sizeof buf - 1; i++)
 			if(buf[i] == '+'
 			|| buf[i] == '-'
 			|| buf[i] == '\0')

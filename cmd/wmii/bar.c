@@ -95,9 +95,9 @@ bar_create(Bar **bp, const char *name) {
 	utflcpy(b->name, name, sizeof b->name);
 	b->col = def.normcolor;
 
-	strlcat(b->buf, b->col.colstr, sizeof(b->buf));
-	strlcat(b->buf, " ", sizeof(b->buf));
-	strlcat(b->buf, b->text, sizeof(b->buf));
+	strlcat(b->buf, b->col.colstr, sizeof b->buf);
+	strlcat(b->buf, " ", sizeof b->buf);
+	strlcat(b->buf, b->text, sizeof b->buf);
 
 	SET(i);
 	for(sp=screens; (s = *sp); sp++) {

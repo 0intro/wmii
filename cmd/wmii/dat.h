@@ -59,11 +59,14 @@ enum {
 
 extern char*	modes[];
 
+#define toggle(val, x) \
+	((x) == On     ? true   : \
+	 (x) == Off    ? false  : \
+	 (x) == Toggle ? !(val) : (val))
 #define TOGGLE(x) \
-	(x == On ? "on" : \
-	 x == Off ? "off" : \
-	 x == Toggle ? "toggle" : \
-	 "<toggle>")
+	((x) == On     ? "on"     : \
+	 (x) == Off    ? "off"    : \
+	 (x) == Toggle ? "toggle" : "<toggle>")
 enum {
 	Off,
 	On,
@@ -240,7 +243,7 @@ struct Ruleval {
 	Ruleval*	next;
 	char*		key;
 	char*		value;
-}
+};
 
 struct Strut {
 	Rectangle	left;

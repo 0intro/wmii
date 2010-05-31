@@ -339,7 +339,7 @@ lookup_file(IxpFileId *parent, char *name)
 				file->p.rule = &def.colrules;
 				break;
 			case FsFRules:
-				file->p.rule = &def.tagrules;
+				file->p.rule = &def.rules;
 				break;
 			case FsFTagRules:
 				file->p.rule = &def.tagrules;
@@ -534,7 +534,7 @@ fs_write(Ixp9Req *r) {
 	case FsFClabel:
 		ixp_srv_data2cstring(r);
 		utfecpy(f->p.client->name,
-			f->p.client->name+sizeof(client->name),
+			f->p.client->name + sizeof client->name,
 			r->ifcall.io.data);
 		frame_draw(f->p.client->sel);
 		update_class(f->p.client);

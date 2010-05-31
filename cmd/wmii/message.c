@@ -24,8 +24,6 @@ static char
 
 /* Edit |sort Edit |sed 's/"([^"]+)"/L\1/g' | tr 'a-z' 'A-Z' */
 enum {
-	LFULLSCREEN,
-	LURGENT,
 	LBAR,
 	LBORDER,
 	LCLIENT,
@@ -33,9 +31,11 @@ enum {
 	LDEBUG,
 	LDOWN,
 	LEXEC,
+	LFLOATING,
 	LFOCUSCOLORS,
 	LFONT,
 	LFONTPAD,
+	LFULLSCREEN,
 	LGRABMOD,
 	LGROW,
 	LINCMODE,
@@ -53,14 +53,14 @@ enum {
 	LSLAY,
 	LSPAWN,
 	LSWAP,
+	LTAGS,
 	LTOGGLE,
 	LUP,
+	LURGENT,
 	LVIEW,
 	LTILDE,
 };
 char *symtab[] = {
-	"Fullscreen",
-	"Urgent",
 	"bar",
 	"border",
 	"client",
@@ -68,9 +68,11 @@ char *symtab[] = {
 	"debug",
 	"down",
 	"exec",
+	"floating",
 	"focuscolors",
 	"font",
 	"fontpad",
+	"fullscreen",
 	"grabmod",
 	"grow",
 	"incmode",
@@ -88,8 +90,10 @@ char *symtab[] = {
 	"slay",
 	"spawn",
 	"swap",
+	"tags",
 	"toggle",
 	"up",
+	"urgent",
 	"view",
 	"~",
 };
@@ -113,11 +117,13 @@ static char* incmodetab[] = {
 	"show",
 	"squeeze",
 };
+#ifdef notdef
 static char* toggletab[] = {
 	"off",
 	"on",
 	"toggle",
 };
+#endif
 
 /* Edit ,y/^[a-zA-Z].*\n.* {\n/d
  * Edit s/^([a-zA-Z].*)\n(.*) {\n/\1 \2;\n/
@@ -125,17 +131,30 @@ static char* toggletab[] = {
  */
 
 static int
-_bsearch(char *s, char **tab, int ntab) {
+_bsearch(char *from, char **tab, int ntab) {
 	int i, n, m, cmp;
+	char *to, *end;
+	Rune r;
 
-	if(s == nil)
+	if(from == nil)
 		return -1;
+
+	end = buffer + sizeof buffer - UTFmax - 1;
+	for(to=buffer; *from && to < end;) {
+		from += chartorune(&r, from);
+		if(r != 0x80) {
+			r = tolowerrune(r);
+			to += runetochar(to, &r);
+		}
+	}
+	*to = '\0';
+	to = buffer;
 
 	n = ntab;
 	i = 0;
 	while(n) {
 		m = n/2;
-		cmp = strcmp(s, tab[i+m]);
+		cmp = strcmp(to, tab[i+m]);
 		if(cmp == 0)
 			return i+m;
 		if(cmp < 0 || m == 0)
@@ -189,8 +208,8 @@ getdirection(IxpMsg *m) {
 	}
 }
 
-static void
-eatrunes(IxpMsg *m, int (*p)(Rune), int val) {
+void
+msg_eatrunes(IxpMsg *m, int (*p)(Rune), int val) {
 	Rune r;
 	int n;
 
@@ -210,13 +229,13 @@ msg_getword(IxpMsg *m) {
 	Rune r;
 	int n;
 
-	eatrunes(m, isspacerune, true);
+	msg_eatrunes(m, isspacerune, true);
 	ret = m->pos;
-	eatrunes(m, isspacerune, false);
+	msg_eatrunes(m, isspacerune, false);
 	n = chartorune(&r, m->pos);
 	*m->pos = '\0';
 	m->pos += n;
-	eatrunes(m, isspacerune, true);
+	msg_eatrunes(m, isspacerune, true);
 
 	/* Filter out comments. */
 	if(*ret == '#') {
@@ -339,11 +358,13 @@ char*
 readctl_client(Client *c) {
 	bufclear();
 	bufprint("%#C\n", c);
+	bufprint("floating %s\n", TOGGLE(c->floating));
 	if(c->fullscreen >= 0)
-		bufprint("Fullscreen %d\n", c->fullscreen);
+		bufprint("fullscreen %d\n", c->fullscreen);
 	else
-		bufprint("Fullscreen off\n");
-	bufprint("Urgent %s\n", toggletab[(int)c->urgent]);
+		bufprint("fullscreen off\n");
+	bufprint("tags %s\n", c->tags);
+	bufprint("urgent %s\n", TOGGLE(c->urgent));
 	return buffer;
 }
 
@@ -360,13 +381,18 @@ message_client(Client *c, IxpMsg *m) {
 	 *	    | off
 	 *	    | toggle
 	 *	    | <screen>
-	 * Fullscreen <toggle>
-	 * Urgent <toggle>
+	 * floating <toggle>
+	 * fullscreen <toggle>
 	 * kill
 	 * slay
+	 * tags <tags>
+	 * urgent <toggle>
 	 */
 
 	switch(getsym(s)) {
+	case LFLOATING:
+		c->floating = toggle(c->floating, gettoggle(m->pos));
+		break;
 	case LFULLSCREEN:
 		s = msg_getword(m);
 		if(getlong(s, &l))
@@ -383,6 +409,9 @@ message_client(Client *c, IxpMsg *m) {
 		break;
 	case LSLAY:
 		client_kill(c, false);
+		break;
+	case LTAGS:
+		client_applytags(c, m->pos);
 		break;
 	case LURGENT:
 		i = gettoggle(msg_getword(m));
@@ -812,7 +841,7 @@ msg_parsecolors(IxpMsg *m, CTuple *col) {
 	*p = c;
 
 	m->pos = p;
-	eatrunes(m, isspacerune, true);
+	msg_eatrunes(m, isspacerune, true);
 	return nil;
 }
 

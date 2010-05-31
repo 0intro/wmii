@@ -208,6 +208,7 @@ char*	message_client(Client*, IxpMsg*);
 char*	message_root(void*, IxpMsg*);
 char*	message_view(View*, IxpMsg*);
 char*	msg_debug(IxpMsg*);
+void	msg_eatrunes(IxpMsg*, int (*)(Rune), int);
 char*	msg_getword(IxpMsg*);
 char*	msg_parsecolors(IxpMsg*, CTuple*);
 char*	msg_selectarea(Area*, IxpMsg*);
@@ -249,7 +250,7 @@ int	ownerscreen(Rectangle);
 
 /* rule.c */
 void	trim(char *str, const char *chars);
-void	update_rules(Rule**, const char*);
+void	update_rules(Rule**, char*);
 
 /* view.c */
 void	view_arrange(View*);
