@@ -13,15 +13,6 @@ static void	ewmh_setstate(Client*, Atom, int);
 static Handlers	client_handlers;
 static Handlers	root_handlers;
 
-#define Net(x) ("_NET_" x)
-#define	Action(x) Net("WM_ACTION_" x)
-#define	State(x) Net("WM_STATE_" x)
-#define	Type(x) Net("WM_WINDOW_TYPE_" x)
-#define NET(x) xatom(Net(x))
-#define	ACTION(x) xatom(Action(x))
-#define	STATE(x) xatom(State(x))
-#define	TYPE(x) xatom(Type(x))
-
 void
 ewmh_init(void) {
 	char myname[] = "wmii";

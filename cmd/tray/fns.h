@@ -1,13 +1,4 @@
 
-#define Net(x) ("_NET_" x)
-#define	Action(x) ("_NET_WM_ACTION_" x)
-#define	State(x) ("_NET_WM_STATE_" x)
-#define	Type(x) ("_NET_WM_WINDOW_TYPE_" x)
-#define NET(x) xatom(Net(x))
-#define	ACTION(x) xatom(Action(x))
-#define	STATE(x) xatom(State(x))
-#define	TYPE(x) xatom(Type(x))
-
 void	cleanup(Selection*);
 Client*	client_find(Window*);
 bool	client_hasmessage(Client*);

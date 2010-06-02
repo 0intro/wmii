@@ -6,6 +6,15 @@ extern Visual*	render_visual;
 
 extern void	init_screens(void);
 
+#define Net(x) ("_NET_" x)
+#define	Action(x) ("_NET_WM_ACTION_" x)
+#define	State(x) ("_NET_WM_STATE_" x)
+#define	Type(x) ("_NET_WM_WINDOW_TYPE_" x)
+#define NET(x) xatom(Net(x))
+#define	ACTION(x) xatom(Action(x))
+#define	STATE(x) xatom(State(x))
+#define	TYPE(x) xatom(Type(x))
+
 /* printevent.c */
 int	fmtevent(Fmt*);
 

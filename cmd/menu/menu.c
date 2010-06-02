@@ -27,13 +27,13 @@ void
 menu_init(void) {
 	WinAttr wa;
 
-	wa.override_redirect = 1;
-	wa.background_pixmap = ParentRelative;
 	wa.event_mask = ExposureMask | KeyPressMask;
 	barwin = createwindow(&scr.root, Rect(-1, -1, 1, 1), scr.depth, InputOutput,
-			&wa, CWOverrideRedirect
-			   | CWBackPixmap
-			   | CWEventMask);
+			&wa, CWEventMask);
+
+	changeprop_long(barwin, Net("WM_WINDOW_TYPE"), "ATOM",
+			(long[]){ TYPE("MENU") }, 1);
+
 	sethandler(barwin, &handlers);
 	mapwin(barwin);
 
