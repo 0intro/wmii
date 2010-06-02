@@ -25,6 +25,8 @@
 
 enum {
 	PingTime = 10000,
+	PingPeriod = 2000,
+	PingPartition = 20,
 };
 
 enum IncMode {
@@ -166,6 +168,7 @@ struct Client {
 	char	props[512];
 	long	proto;
 	uint	border;
+	int	dead;
 	int	fullscreen;
 	bool	floating;
 	bool	fixedsize;
@@ -345,7 +348,6 @@ EXTERN long	ignoreenter;
 EXTERN bool	resizing;
 EXTERN int	starting;
 EXTERN char*	user;
-EXTERN long	xtime;
 
 EXTERN Client*	kludge;
 

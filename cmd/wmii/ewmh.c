@@ -9,6 +9,7 @@ Window *ewmhwin;
 
 static void	ewmh_getwinstate(Client*);
 static void	ewmh_setstate(Client*, Atom, int);
+static void	tick(long, void*);
 
 static Handlers	client_handlers;
 static Handlers	root_handlers;
@@ -27,11 +28,12 @@ ewmh_init(void) {
 	changeprop_long(ewmhwin, Net("SUPPORTING_WM_CHECK"), "WINDOW", &win, 1);
 	changeprop_string(ewmhwin, Net("WM_NAME"), myname);
 
-	long zz[] = {0, 0};
 	changeprop_long(&scr.root, Net("DESKTOP_VIEWPORT"), "CARDINAL",
-		zz, 2);
+			(long[2]){0, 0}, 2);
 
 	pushhandler(&scr.root, &root_handlers, nil);
+
+	tick(0L, nil);
 
 	long supported[] = {
 		/* Misc */
@@ -45,6 +47,7 @@ ewmh_init(void) {
 		NET("WM_DESKTOP"),
 		NET("WM_FULLSCREEN_MONITORS"),
 		NET("WM_NAME"),
+		NET("WM_PID"),
 		NET("WM_STRUT"),
 		NET("WM_STRUT_PARTIAL"),
 		/* States */
@@ -71,6 +74,31 @@ ewmh_init(void) {
 		NET("CLIENT_LIST_STACKING"),
 	};
 	changeprop_long(&scr.root, Net("SUPPORTED"), "ATOM", supported, nelem(supported));
+}
+
+static void
+tick(long id, void *v) {
+	static int count;
+	Client *c;
+	ulong time;
+	int mod, i;
+
+	time = nsec() / 1000000;
+	count++;
+	mod = count % PingPartition;
+	for(i=0, c=client; c; c=c->next, i++)
+		if(c->proto & ProtoPing) {
+			if(c->dead == 1 && time - c->w.ewmh.ping > PingTime) {
+				event("Unresponsive %#C\n", c);
+				c->dead++;
+			}
+			if(i % PingPartition == mod)
+				sendmessage(&c->w, "WM_PROTOCOLS", NET("WM_PING"), time, c->w.xid, 0, 0);
+			if(i % PingPartition == mod)
+				Dprint(DEwmh, "_NET_WM_PING %#C %,uld\n", c, time);
+		}
+
+	ixp_settimer(&srv, PingPeriod / PingPartition, tick, nil);
 }
 
 void
@@ -135,9 +163,6 @@ ewmh_destroyclient(Client *c) {
 	ewmh_updateclientlist();
 
 	e = &c->w.ewmh;
-	if(e->timer)
-		if(!ixp_unsettimer(&srv, e->timer))
-			fprint(2, "Badness: %#C: Can't unset timer\n", c);
 	free(c->strut);
 }
 
@@ -208,33 +233,6 @@ static Handlers client_handlers = {
 	.message = event_client_clientmessage,
 	.property = event_client_property,
 };
-
-static void
-pingtimeout(long id, void *v) {
-	Client *c;
-
-	USED(id);
-	c = v;
-	event("Unresponsive %#C\n", c);
-	c->w.ewmh.ping = 0;
-	c->w.ewmh.timer = 0;
-}
-
-void
-ewmh_pingclient(Client *c) {
-	Ewmh *e;
-
-	if(!(c->proto & ProtoPing))
-		return;
-
-	e = &c->w.ewmh;
-	if(e->ping)
-		return;
-
-	client_message(c, Net("WM_PING"), c->w.xid);
-	e->ping = xtime++;
-	e->timer = ixp_settimer(&srv, PingTime, pingtimeout, c);
-}
 
 bool
 ewmh_prop(Client *c, Atom a) {
@@ -402,7 +400,6 @@ ewmh_setstate(Client *c, Atom state, int action) {
 
 static bool
 event_root_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
-	Client *c;
 	View *v;
 	ulong *l;
 	ulong msg;
@@ -426,20 +423,14 @@ event_root_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
 	if(msg == xatom("WM_PROTOCOLS")) {
 		if(e->format != 32)
 			return false;
-		Dprint(DEwmh, "\t%A\n", l[0]);
 		if(l[0] == NET("WM_PING")) {
 			if(e->window != scr.root.xid)
 				return false;
-			c = win2client(l[2]);
-			if(c == nil)
-				return 1;
-			Dprint(DEwmh, "\tclient = [%#C]\"%C\"\n", c, c);
-			Dprint(DEwmh, "\ttimer = %ld, ping = %ld\n",
-					c->w.ewmh.timer, c->w.ewmh.ping);
-			if(c->w.ewmh.timer)
-				ixp_unsettimer(&srv, c->w.ewmh.timer);
-			c->w.ewmh.timer = 0;
-			c->w.ewmh.ping = 0;
+			if(!(w = findwin(l[2])))
+				return false;
+			w->ewmh.ping = nsec() / 1000000;
+			w->ewmh.lag = (w->ewmh.ping & 0xffffffff) - (l[1] & 0xffffffff);
+			Dprint(DEwmh, "\twindow=%W lag=%,uld\n", w, w->ewmh.lag);
 			return false;
 		}
 		return false;

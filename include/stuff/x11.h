@@ -75,8 +75,8 @@ struct ErrorCode {
 
 struct Ewmh {
 	long	type;
-	long	ping;
-	long	timer;
+	ulong	ping;
+	ulong	lag;
 };
 
 struct Font {

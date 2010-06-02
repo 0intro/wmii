@@ -624,7 +624,7 @@ client_configure(Client *c) {
 
 void
 client_message(Client *c, char *msg, long l2) {
-	sendmessage(&c->w, "WM_PROTOCOLS", xatom(msg), xtime, l2, 0, 0);
+	sendmessage(&c->w, "WM_PROTOCOLS", xatom(msg), event_xtime, l2, 0, 0);
 }
 
 void
@@ -633,6 +633,7 @@ client_kill(Client *c, bool nice) {
 	ulong *pid;
 	long n;
 
+	c->dead = 1;
 	if(!nice) {
 		getprop_textlist(&c->w, "WM_CLIENT_MACHINE", &host);
 		n = getprop_ulong(&c->w, Net("WM_PID"), "CARDINAL", 0, &pid, 1);
@@ -643,10 +644,8 @@ client_kill(Client *c, bool nice) {
 
 		XKillClient(display, c->w.xid);
 	}
-	else if(c->proto & ProtoDelete) {
+	else if(c->proto & ProtoDelete)
 		client_message(c, "WM_DELETE_WINDOW", 0);
-		ewmh_pingclient(c);
-	}
 	else
 		XKillClient(display, c->w.xid);
 }

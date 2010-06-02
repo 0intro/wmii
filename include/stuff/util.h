@@ -55,6 +55,7 @@ void	grep(char**, Reprog*, int);
 char*	join(char**, char*, Fmt*);
 int	max(int, int);
 int	min(int, int);
+uvlong	nsec(void);
 char*	pathsearch(const char*, const char*, bool);
 void	refree(Regex*);
 void	reinit(Regex*, char*);

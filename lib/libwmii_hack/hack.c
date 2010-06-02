@@ -26,7 +26,7 @@ static char**	tags;
 static long	pid;
 static long	stime;
 static char	hostname[256];
-static long	nsec;
+static long	starttime;
 
 typedef Window (*mapfn)(Display*, Window);
 
@@ -84,7 +84,7 @@ init(Display *d) { /* Hrm... assumes one display... */
 	}
 
 	pid = getpid();
-	gethostname(hostname, sizeof hostname);
+	gethostname(hostname, sizeof hostname - 1);
 }
 
 static void
@@ -102,9 +102,9 @@ setprops(Display *d, Window w) {
 	}
 
 	/* Kludge. */
-	if(nsec == 0)
-		nsec = time(0);
-	else if(time(0) > nsec + Timeout)
+	if(starttime == 0)
+		starttime = time(0);
+	else if(time(0) > starttime + Timeout)
 		return;
 
 	if(transient)

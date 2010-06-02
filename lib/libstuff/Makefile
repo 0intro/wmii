@@ -63,6 +63,7 @@ OBJ=\
 	util/max	\
 	util/mfatal	\
 	util/min	\
+	util/nsec	\
 	util/pathsearch	\
 	util/refree	\
 	util/reinit	\
