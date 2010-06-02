@@ -3,9 +3,8 @@
  */
 
 #include <stuff/geom.h>
-
 #include <stdarg.h>
-
+#include <fmt.h>
 #include <regexp9.h>
 
 /* Types */
@@ -53,7 +52,7 @@ bool	getint(const	char*,	int*);
 bool	getlong(const	char*,	long*);
 bool	getulong(const	char*,	ulong*);
 void	grep(char**, Reprog*, int);
-char*	join(char**, char*);
+char*	join(char**, char*, Fmt*);
 int	max(int, int);
 int	min(int, int);
 char*	pathsearch(const char*, const char*, bool);

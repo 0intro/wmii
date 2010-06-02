@@ -1,6 +1,6 @@
 WMII
 wmii-@VERSION@
-Oct, 2009
+2010 June
 
 %!includeconf: header.t2t
 
@@ -252,11 +252,37 @@ follows.
         If there is no <n>th width, it is given 1/<ncol>th of the
         screen.
 
+: rules
+        PROVISIONAL
+
+        The _rules_ file contains a list of rules that may be used
+        to automatically set properties of new clients. Rules are
+        specified as:
+
+```     /<regex>/ <key>=<value> ...
+
+        where each <key> represents a command in the clients _ctl_
+        file, and each <value> represents the value to assign to it.
+        The rules are applied when the client is first started and
+        the contents of the _props_ file match the regular
+        expression <regex>.
+
+        Additionally, the following keys are accepted and have
+        special meaning:
+
+        >>
+        : default-tags <tags>
+                Like _tags_, but only sets the tags if they can't be
+                obtained from the client's group or from the
+                \_WMII_TAGS window property. This key should be
+                preferred to the _tags_ key in most cases.
+        <<
+
 : tagrules
         The _tagrules_ file contains a list of
         rules similar to the colrules. These rules specify
         the tags a client is to be given when it is created.
-        Rules are specified:
+        Rules are specified as:
 
 ```     /<regex>/ -> <tag>[+<tag>]*
 
@@ -326,21 +352,34 @@ represents the currently selected client.
         of the client. The following commands may be written to
         it:
         >>
+        : floating <on | off | toggle>
+                Defines whether this client is likely to float when
+                attached to a new view.
+        : fullscreen <on | off | toggle>
+                Sets the client's fullscreen state.
+        : group <group id>
+                The client's group ID, or 0 if not part of a group.
+                Clients tend to open with the same tags and in the
+                same columns as the last active member of their
+                group. Setting this property is only useful when
+                done via the rules file.
         : kill
-                Close the client's window. This command will
-                likely kill the X client in the future
-                (including its other windows), while the close
-                command will replace it.
-        : Urgent <on | off | toggle>
+                Close the client's window.
+        : slay
+                Forcibly kill the client's connection to the X
+                server, closing all of its windows. Kill the parent
+                process if the client provides its PID.
+        : tags <tags>
+                The client's tags. The same as the tags file.
+        : urgent <on | off | toggle>
                 Set or unset the client's urgent hint.
-        : Fullscreen <on | off | toggle>
         <<
                 
 : label
         Set or read a client's label (title).
 : props
         Returns a clients class and label as:
-        <name>:<class>:<label>
+        <instance>:<class>:<label>.
 : tags
         Set or read a client's tags. Tags are separated by
         **+** or **-**. Tags beginning with **+** are

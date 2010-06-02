@@ -1,4 +1,4 @@
-.TH "WMII" 1 "Oct, 2009" "wmii-@VERSION@"
+.TH "WMII" 1 "2010 June" "wmii-@VERSION@"
 
 .SH NAME
 .P
@@ -285,11 +285,42 @@ If there is no \fI<n>\fRth width, it is given 1/\fI<ncol>\fRth of the
 screen.
 
 .TP
+rules
+\fBPROVISIONAL\fR
+
+The \fIrules\fR file contains a list of rules that may be used
+to automatically set properties of new clients. Rules are
+specified as:
+
+.nf
+      /\fI<regex>\fR/ \fI<key>\fR=\fI<value>\fR ...
+.fi
+
+
+where each \fI<key>\fR represents a command in the clients \fIctl\fR
+file, and each \fI<value>\fR represents the value to assign to it.
+The rules are applied when the client is first started and
+the contents of the \fIprops\fR file match the regular
+expression \fI<regex>\fR.
+
+Additionally, the following keys are accepted and have
+special meaning:
+
+.RS 8
+.TP
+default\-tags \fI<tags>\fR
+Like \fItags\fR, but only sets the tags if they can't be
+obtained from the client's group or from the
+_WMII_TAGS window property. This key should be
+preferred to the \fItags\fR key in most cases.
+.RS -8
+
+.TP
 tagrules
 The \fItagrules\fR file contains a list of
 rules similar to the colrules. These rules specify
 the tags a client is to be given when it is created.
-Rules are specified:
+Rules are specified as:
 
 .nf
       /\fI<regex>\fR/ -> \fI<tag>\fR\fI[+\fI<tag>\fR]\fR*
@@ -374,16 +405,33 @@ of the client. The following commands may be written to
 it:
 .RS 8
 .TP
+floating \fI<on | off | toggle>\fR
+Defines whether this client is likely to float when
+attached to a new view.
+.TP
+fullscreen \fI<on | off | toggle>\fR
+Sets the client's fullscreen state.
+.TP
+group \fI<group id>\fR
+The client's group ID, or 0 if not part of a group.
+Clients tend to open with the same tags and in the
+same columns as the last active member of their
+group. Setting this property is only useful when
+done via the rules file.
+.TP
 kill
-Close the client's window. This command will
-likely kill the X client in the future
-(including its other windows), while the close
-command will replace it.
+Close the client's window.
 .TP
-Urgent \fI<on | off | toggle>\fR
+slay
+Forcibly kill the client's connection to the X
+server, closing all of its windows. Kill the parent
+process if the client provides its PID.
+.TP
+tags \fI<tags>\fR
+The client's tags. The same as the tags file.
+.TP
+urgent \fI<on | off | toggle>\fR
 Set or unset the client's urgent hint.
-.TP
-Fullscreen \fI<on | off | toggle>\fR
 .RS -8
 
 .TP
@@ -392,7 +440,7 @@ Set or read a client's label (title).
 .TP
 props
 Returns a clients class and label as:
-\fI<name>\fR:\fI<class>\fR:\fI<label>\fR
+\fI<instance>\fR:\fI<class>\fR:\fI<label>\fR.
 .TP
 tags
 Set or read a client's tags. Tags are separated by

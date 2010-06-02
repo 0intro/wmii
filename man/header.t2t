@@ -5,8 +5,10 @@
 % have to be post-processed. The _italic_ hack is necessary for
 % italicising things like /_foo_/, which txt2tags will ignore.
 % The others need to work in ``` lines.
+%!preproc(man): \bPROVISIONAL\b  **PROVISIONAL**
 %!postproc(man): (<.*?>)         \\fI\1\\fR
 %!postproc(man): \b_(.*?)_       \\fI\1\\fR
+%!postproc(man): \\e_            _
 %!postproc(man): `(.*?)`         \\fB\1\\fR
 %!postproc(man): (\[.*?\])       \\fI\1\\fR
 %!postproc(man): \+$             \n.P

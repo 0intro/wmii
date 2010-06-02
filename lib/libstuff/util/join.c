@@ -5,18 +5,23 @@
 #include "util.h"
 
 char*
-join(char **list, char *sep) {
-	Fmt f;
+join(char **list, char *sep, Fmt *f) {
+	Fmt fmt;
 	char **p;
 
-	if(fmtstrinit(&f) < 0)
-		abort();
+	if(f == nil) {
+		f = &fmt;
+		if(fmtstrinit(f) < 0)
+			abort();
+	}
 
 	for(p=list; *p; p++) {
 		if(p != list)
-			fmtstrcpy(&f, sep);
-		fmtstrcpy(&f, *p);
+			fmtstrcpy(f, sep);
+		fmtstrcpy(f, *p);
 	}
 
-	return fmtstrflush(&f);
+	if(f != &fmt)
+		return nil;
+	return fmtstrflush(f);
 }

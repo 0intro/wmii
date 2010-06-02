@@ -37,6 +37,7 @@ enum {
 	LFONTPAD,
 	LFULLSCREEN,
 	LGRABMOD,
+	LGROUP,
 	LGROW,
 	LINCMODE,
 	LKILL,
@@ -74,6 +75,7 @@ char *symtab[] = {
 	"fontpad",
 	"fullscreen",
 	"grabmod",
+	"group",
 	"grow",
 	"incmode",
 	"kill",
@@ -387,6 +389,7 @@ readctl_client(Client *c) {
 		bufprint("fullscreen %d\n", c->fullscreen);
 	else
 		bufprint("fullscreen off\n");
+	bufprint("group 0x%ulx\n", c->group ? c->group->leader : 0);
 	bufprint("tags %s\n", c->tags);
 	bufprint("urgent %s\n", TOGGLE(c->urgent));
 	return buffer;
@@ -422,6 +425,12 @@ message_client(Client *c, IxpMsg *m) {
 			fullscreen(c, On, l);
 		else
 			fullscreen(c, gettoggle(s), -1);
+		break;
+	case LGROUP:
+		group_remove(c);
+		c->w.hints->group = msg_getulong(msg_getword(m));
+		if(c->w.hints->group)
+			group_init(c);
 		break;
 	case LKILL:
 		client_kill(c, true);

@@ -320,6 +320,7 @@ message_event(Window *w, void *aux, XClientMessageEvent *e) {
 		if(e->format != 32)
 			return false;
 		dnd = (Dnd){0};
+		dnd.dest = ~0UL;
 		dnd.source = l[0];
 		bcopy(&l[1], dnd.data, sizeof dnd.data);
 
@@ -372,7 +373,6 @@ message_event(Window *w, void *aux, XClientMessageEvent *e) {
 					    Long(r.min), (Dx(r)<<16) | Dy(r), l[4]);
 				break;
 			}
-
 		return false;
 	}else
 	if(msg == xatom("XdndDrop") || msg == xatom("XdndFinished")) {

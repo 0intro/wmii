@@ -23,7 +23,7 @@ enum {
 
 static Group*	group;
 
-static void
+void
 group_init(Client *c) {
 	Group *g;
 	long *ret;
@@ -53,12 +53,13 @@ group_init(Client *c) {
 	g->ref++;
 }
 
-static void
+void
 group_remove(Client *c) {
 	Group **gp;
 	Group *g;
 
 	g = c->group;
+	c->group = nil;
 	if(g == nil)
 		return;
 	if(g->client == c)
@@ -200,17 +201,25 @@ apply_rules(Client *c) {
 	IxpMsg m;
 	Rule *r;
 	Ruleval *rv;
+	bool ret;
 
+	ret = false;
 	if(def.rules.string)
 		for(r=def.rules.rule; r; r=r->next)
 			if(regexec(r->regex, c->props, nil, 0)) {
 				for(rv=r->values; rv; rv=rv->next) {
-					bufclear();
-					bufprint("%s %s", rv->key, rv->value);
-					m = ixp_message(buffer, sizeof buffer, MsgPack);
-					if(!waserror()) {
-						message_client(c, &m);
-						poperror();
+					if(!strcmp(rv->key, "default-tags")) {
+						utflcpy(c->tags, rv->value, sizeof c->tags);
+						ret = true;
+					}
+					else {
+						bufclear();
+						bufprint("%s %s", rv->key, rv->value);
+						m = ixp_message(buffer, sizeof buffer, MsgPack);
+						if(!waserror()) {
+							message_client(c, &m);
+							poperror();
+						}
 					}
 				}
 				return true;
@@ -228,25 +237,27 @@ client_manage(Client *c) {
 	Client *leader;
 	Frame *f;
 	char *tags;
-	bool rules;
+	bool dotags;
 
 	if(Dx(c->r) == Dx(screen->r))
 	if(Dy(c->r) == Dy(screen->r))
 	if(c->w.ewmh.type == 0)
 		fullscreen(c, true, -1);
 
-	tags = getprop_string(&c->w, "_WMII_TAGS");
-	rules = apply_rules(c);
+	dotags = apply_rules(c);
 
-	leader = win2client(c->trans);
-	if(leader == nil && c->group)
-		leader = group_leader(c->group);
+	if(!c->tags[0] || dotags) {
+		leader = win2client(c->trans);
+		if(leader == nil && c->group)
+			leader = group_leader(c->group);
 
-	if(tags) // && (!leader || leader == c || starting))
-		utflcpy(c->tags, tags, sizeof c->tags);
-	else if(leader && !rules)
-		utflcpy(c->tags, leader->tags, sizeof c->tags);
-	free(tags);
+		tags = getprop_string(&c->w, "_WMII_TAGS");
+		if(tags)
+			utflcpy(c->tags, tags, sizeof c->tags);
+		else if(leader)
+			utflcpy(c->tags, leader->tags, sizeof c->tags);
+		free(tags);
+	}
 
 	if(c->tags[0])
 		client_applytags(c, c->tags);
@@ -1064,10 +1075,10 @@ static char *badtags[] = {
 
 char*
 client_extratags(Client *c) {
+	Fmt fmt;
 	Frame *f;
 	char *toks[32];
 	char **tags;
-	char *s, *s2;
 	int i;
 
 	i = 0;
@@ -1078,28 +1089,21 @@ client_extratags(Client *c) {
 	toks[i] = nil;
 	tags = comm(CLeft, toks, c->retags);
 
-	s = nil;
+	fmtstrinit(&fmt);
 	if(i > 1)
-		s = join(tags, "+");
+		join(tags, "+", &fmt);
 	free(tags);
-	if(!c->tagre.regex && !c->tagvre.regex)
-		return s;
 
-	if(c->tagre.regex) {
-		s2 = s;
-		s = smprint("%s+/%s/", s ? s : "", c->tagre.regex);
-		free(s2);
-	}
-	if(c->tagvre.regex) {
-		s2 = s;
-		s = smprint("%s-/%s/", s ? s : "", c->tagvre.regex);
-		free(s2);
-	}
-	return s;
+	if(c->tagre.regex)
+		fmtprint(&fmt, "+/%s/", c->tagre.regex);
+	if(c->tagvre.regex)
+		fmtprint(&fmt, "-/%s/", c->tagvre.regex);
+	return fmtstrflush(&fmt);
 }
 
 bool
 client_applytags(Client *c, const char *tags) {
+	Fmt fmt;
 	uint i, j, k, n;
 	bool add, found;
 	char buf[512], last;
@@ -1203,12 +1207,15 @@ client_applytags(Client *c, const char *tags) {
 	qsort(toks, j, sizeof *toks, strpcmp);
 	uniq(toks);
 
-	s = join(toks, "+");
-	utflcpy(c->tags, s, sizeof c->tags);
+	fmtstrinit(&fmt);
+	join(toks, "+", &fmt);
 	if(c->tagre.regex)
-		strlcatprint(c->tags, sizeof c->tags, "+/%s/", c->tagre.regex);
+		fmtprint(&fmt, "+/%s/", c->tagre.regex);
 	if(c->tagvre.regex)
-		strlcatprint(c->tags, sizeof c->tags, "-/%s/", c->tagvre.regex);
+		fmtprint(&fmt, "-/%s/", c->tagvre.regex);
+
+	s = fmtstrflush(&fmt);
+	utflcpy(c->tags, s, sizeof c->tags);
 	changeprop_string(&c->w, "_WMII_TAGS", c->tags);
 	free(s);
 
