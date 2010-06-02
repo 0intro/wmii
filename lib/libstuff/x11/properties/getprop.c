@@ -4,7 +4,7 @@
 #include "../x11.h"
 
 ulong
-getprop(Window *w, char *prop, char *type, Atom *actual, int *format,
+getprop(Window *w, const char *prop, const char *type, Atom *actual, int *format,
 	ulong offset, uchar **ret, ulong length) {
 	Atom typea;
 	ulong n, extra;

@@ -3,6 +3,7 @@
  */
 #include "dat.h"
 #include <string.h>
+#include <strings.h>
 #include "fns.h"
 
 static Handlers handlers;
@@ -69,27 +70,19 @@ tray_init(void) {
 		      | SubstructureNotifyMask
 		      /* Disallow clients reconfiguring themselves. */
 		      | SubstructureRedirectMask;
-	if(true)
-		tray.win = createwindow(&scr.root, Rect(0, 0, 1, 1), scr.depth, InputOutput,
-					       &wa, CWBackPixmap
-						  | CWBitGravity
-						  | CWEventMask);
-	else {
-		wa.colormap = XCreateColormap(display, scr.root.xid, scr.visual32, AllocNone);
-		tray.win = createwindow_visual(&scr.root, Rect(0, 0, 1, 1), 32, scr.visual32, InputOutput,
-					       &wa, CWBackPixmap
-						  | CWBorderPixel
-						  | CWColormap
-						  | CWBitGravity
-						  | CWEventMask);
-		XFreeColormap(display, wa.colormap);
-	}
+	tray.win = createwindow(&scr.root, Rect(0, 0, 1, 1), scr.depth, InputOutput,
+				       &wa, CWBackPixmap
+					  | CWBitGravity
+					  | CWEventMask);
 
 	sethandler(tray.win, &handlers);
 	pushhandler(&scr.root, &root_handlers, nil);
 	selectinput(&scr.root, scr.root.eventmask | PropertyChangeMask);
 
+
 	changeprop_string(tray.win, "_WMII_TAGS", tray.tags);
+
+	changeprop_ulong(tray.win, "XdndAware", "ATOM", (ulong[1]){ 5 }, 1);
 
 	changeprop_ulong(tray.selection->owner, Net("SYSTEM_TRAY_VISUAL"), "VISUALID",
 			 &scr.visual->visualid, 1);
@@ -250,11 +243,152 @@ expose_event(Window *w, void *aux, XExposeEvent *ev) {
 	return false;
 }
 
-static bool
-message_event(Window *w, void *aux, XClientMessageEvent *ev) {
+typedef struct Dnd Dnd;
 
-	Dprint("tray_message: %s\n", XGetAtomName(display, ev->message_type));
-	return false;
+struct Dnd {
+	ulong	source;
+	ulong	dest;
+	long	data[4];
+	Point	p;
+	bool	have_actions;
+};
+
+static Dnd dnd;
+
+#define Point(l) Pt((ulong)(l) >> 16, (ulong)(l) & 0xffff)
+#define Long(p) ((long)(((ulong)(p).x << 16) | (ulong)(p).y))
+#define sendmessage(...) BLOCK( \
+		Dprint("(%W) %s 0x%ulx, 0x%ulx, 0x%ulx, 0x%ulx, 0x%ulx\n", __VA_ARGS__); \
+		sendmessage(__VA_ARGS__); \
+       )
+
+static void
+dnd_updatestatus(ulong dest) {
+	if(dest == dnd.dest)
+		return;
+
+	if(dnd.dest && dnd.dest != ~0UL)
+		sendmessage(window(dnd.dest), "XdndLeave", tray.win->xid, 0, 0, 0, 0);
+	dnd.dest = dest;
+	if(dest)
+		sendmessage(window(dest), "XdndEnter", tray.win->xid,
+			    dnd.data[0], dnd.data[1], dnd.data[2], dnd.data[3]);
+	else
+		sendmessage(window(dnd.source), "XdndStatus", tray.win->xid, (1<<1),
+			    Long(tray.win->r.min), (Dx(tray.win->r)<<16) | Dy(tray.win->r), 0UL);
+}
+
+static void
+copyprop_long(Window *src, Window *dst, char *atom, char *type, long max) {
+	long *data;
+	long n;
+
+	/* Round trip. Really need to switch to XCB. */
+	if((n = getprop_long(src, atom, type, 0, &data, max)))
+		changeprop_long(dst, atom, type, data, n);
+	free(data);
+}
+
+static void
+copyprop_char(Window *src, Window *dst, char *atom, char *type, long max) {
+	uchar *data;
+	ulong actual, n;
+	int format;
+
+	n = getprop(src, atom, type, &actual, &format, 0, &data, max);
+	if(n > 0 && format == 8 && xatom(type) == actual)
+		changeprop_char(dst, atom, type, (char*)data, n);
+	free(data);
+}
+
+static bool
+message_event(Window *w, void *aux, XClientMessageEvent *e) {
+	Client *c;
+	long *l;
+	Rectangle r;
+	Point p;
+	ulong msg;
+
+	msg = e->message_type;
+	l = e->data.l;
+	Dprint("ClientMessage: %A\n", msg);
+	if(e->format == 32)
+		Dprint("\t0x%ulx, 0x%ulx, 0x%ulx, 0x%ulx, 0x%ulx\n",
+		       l[0], l[1], l[2], l[3], l[4]);
+
+	if(msg == xatom("XdndEnter")) {
+		if(e->format != 32)
+			return false;
+		dnd = (Dnd){0};
+		dnd.source = l[0];
+		bcopy(&l[1], dnd.data, sizeof dnd.data);
+
+		copyprop_long(window(dnd.source), tray.win, "XdndSelection", "ATOM", 128);
+		if(l[1] & 0x01)
+			copyprop_long(window(dnd.source), tray.win, "XdndTypeList", "ATOM", 128);
+		return false;
+	}else
+	if(msg == xatom("XdndLeave")) {
+		if(e->format != 32)
+			return false;
+		dnd.source = 0UL;
+		if(dnd.dest)
+			sendmessage(window(dnd.dest), "XdndLeave", tray.win->xid, l[1], 0, 0, 0);
+		return false;
+	}else
+	if(msg == xatom("XdndPosition")) {
+		if(e->format != 32)
+			return false;
+
+		if(!dnd.have_actions && l[4] == xatom("XdndActionAsk")) {
+			dnd.have_actions = true;
+			copyprop_long(window(dnd.source), tray.win, "XdndActionList", "ATOM", 16);
+			copyprop_char(window(dnd.source), tray.win, "XdndActionDescription", "ATOM", 16 * 32);
+		}
+
+		dnd.p = subpt(Point(l[2]), tray.win->r.min);
+		for(c=tray.clients; c; c=c->next)
+			if(rect_haspoint_p(c->w.r, dnd.p)) {
+				dnd_updatestatus(c->w.xid);
+				sendmessage(&c->w, "XdndPosition", tray.win->xid, l[1], l[2], l[3], l[4]);
+				return false;
+			}
+		dnd_updatestatus(0UL);
+		return false;
+	}else
+	if(msg == xatom("XdndStatus")) {
+		if(e->format != 32)
+			return false;
+		if(l[0] != dnd.dest)
+			return false;
+
+		for(c=tray.clients; c; c=c->next)
+			if(c->w.xid == dnd.dest) {
+				p = Point(l[2]);
+				r = Rpt(p, addpt(p, Point(l[3])));
+				r = rect_intersection(r, rectaddpt(c->w.r, tray.win->r.min));
+
+				sendmessage(window(dnd.source), "XdndStatus", tray.win->xid, l[1],
+					    Long(r.min), (Dx(r)<<16) | Dy(r), l[4]);
+				break;
+			}
+
+		return false;
+	}else
+	if(msg == xatom("XdndDrop") || msg == xatom("XdndFinished")) {
+		if(e->format != 32)
+			return false;
+
+		for(c=tray.clients; c; c=c->next)
+			if(c->w.xid == dnd.dest) {
+				sendmessage(&c->w, atomname(msg),
+					    tray.win->xid, l[1], l[2], 0L, 0L);
+				break;
+			}
+		return false;
+	}
+
+	return true;
 }
 
 static Handlers handlers = {

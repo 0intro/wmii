@@ -4,6 +4,6 @@
 #include "../x11.h"
 
 KeyCode
-keycode(char *name) {
+keycode(const char *name) {
 	return XKeysymToKeycode(display, XStringToKeysym(name));
 }

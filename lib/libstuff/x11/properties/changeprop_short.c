@@ -4,6 +4,6 @@
 #include "../x11.h"
 
 void
-changeprop_short(Window *w, char *prop, char *type, short data[], int len) {
+changeprop_short(Window *w, const char *prop, const char *type, short data[], int len) {
 	changeproperty(w, prop, type, 16, (uchar*)data, len);
 }

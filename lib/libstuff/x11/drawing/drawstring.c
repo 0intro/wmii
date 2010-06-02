@@ -7,7 +7,7 @@
 uint
 drawstring(Image *dst, Font *font,
 	   Rectangle r, Align align,
-	   char *text, Color col) {
+	   const char *text, Color col) {
 	Rectangle tr;
 	char *buf;
 	uint x, y, width, height, len;

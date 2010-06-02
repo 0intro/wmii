@@ -5,7 +5,7 @@
 #include "../x11.h"
 
 bool
-loadcolor(CTuple *c, char *str) {
+loadcolor(CTuple *c, const char *str) {
 	char buf[24];
 
 	utflcpy(buf, str, sizeof buf);

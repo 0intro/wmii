@@ -46,7 +46,7 @@
 
 #include <stuff/clientutil.h>
 #include <stuff/util.h>
-#include <stuff/x11.h>
+#include <stuff/x.h>
 
 char version[] = "wmii9menu-"VERSION" "COPYRIGHT", ©1994 David Hogan, Arnold Robbins";
 
@@ -81,12 +81,6 @@ void warpmouse(int, int);
 void memory(void);
 int args(void);
 
-/* xext.c */
-void	xext_init(void);
-Rectangle*	xinerama_screens(int*);
-/* geom.c */
-bool	rect_haspoint_p(Point, Rectangle);
-
 Cursor cursor[1];
 Visual* render_visual;
 
@@ -100,7 +94,7 @@ init_screens(void) {
 	rects = xinerama_screens(&n);
 	p = querypointer(&scr.root);
 	for(i=0; i < n; i++) {
-		if(rect_haspoint_p(p, rects[i]))
+		if(rect_haspoint_p(rects[i], p))
 			break;
 	}
 	if(i == n)

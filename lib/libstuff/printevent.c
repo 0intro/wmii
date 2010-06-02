@@ -480,13 +480,8 @@ TKeycode(Fmt *b, va_list *ap) {
 /* Returns the string equivalent of an atom or "None" */
 static void
 TAtom(Fmt *b, va_list *ap) {
-	char *atom_name;
-	Atom atom;
 
-	atom = va_arg(*ap, Atom);
-	atom_name = XGetAtomName(display, atom);
-	fmtprint(b, "%s", atom_name);
-	XFree(atom_name);
+	fmtstrcpy(b, atomname(va_arg(*ap, Atom)));
 }
 
 #define _(m) #m, ev->m

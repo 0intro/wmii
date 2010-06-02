@@ -132,7 +132,7 @@ find_area(Point pt) {
 
 	v = selview;
 	for(s=0; s < nscreens; s++) {
-		if(!rect_haspoint_p(pt, screens[s]->r))
+		if(!rect_haspoint_p(screens[s]->r, pt))
 			continue;
 		for(a=v->areas[s]; a; a=a->next)
 			if(pt.x < a->r.max.x)

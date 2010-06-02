@@ -10,6 +10,7 @@ cleanupwindow(Window *w) {
 	while(w->handler_link)
 		pophandler(w, w->handler_link->handler);
 	free(w->hints);
+	free(w->dnd);
 	if(w->xft)
 		xft->drawdestroy(w->xft);
 	if(w->gc)

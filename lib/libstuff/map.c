@@ -65,7 +65,7 @@ hash_getp(Map *map, const char *str, int create) {
 	h = hash(str);
 	e = map_getp(map, h, create);
 	if(*e && (*e)->key == nil)
-		(*e)->key = str;
+		(*e)->key = estrdup(str);
 	else {
 		SET(cmp);
 		for(; *e; e = &(*e)->next)
@@ -73,7 +73,7 @@ hash_getp(Map *map, const char *str, int create) {
 				break;
 		if(*e == nil || (*e)->hash > h || cmp > 0)
 			if(create)
-				insert(map, e, h, str);
+				insert(map, e, h, estrdup(str));
 	}
 	return e;
 }
@@ -123,6 +123,7 @@ hash_rm(Map *map, const char *str) {
 		ret = te->val;
 		*e = te->next;
 		assert(map->nmemb-- > 0);
+		free((void*)(uintptr_t)te->key);
 		free(te);
 	}
 	return ret;

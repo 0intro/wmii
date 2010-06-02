@@ -4,6 +4,6 @@
 #include "../x11.h"
 
 void
-changeprop_ulong(Window *w, char *prop, char *type, ulong data[], int len) {
+changeprop_ulong(Window *w, const char *prop, const char *type, ulong data[], int len) {
 	changeproperty(w, prop, type, 32, (uchar*)data, len);
 }

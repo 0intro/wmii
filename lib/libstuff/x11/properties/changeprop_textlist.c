@@ -5,7 +5,7 @@
 #include "../x11.h"
 
 void
-changeprop_textlist(Window *w, char *prop, char *type, char *data[]) {
+changeprop_textlist(Window *w, const char *prop, const char *type, char *data[]) {
 	char **p, *s, *t;
 	int len, n;
 

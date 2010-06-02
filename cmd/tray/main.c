@@ -78,7 +78,7 @@ message(Selection *s, XClientMessageEvent *ev) {
 
 	USED(s);
 
-	Dprint("message(%s) 0x%lx\n", XGetAtomName(display, ev->message_type), ev->window);
+	Dprint("message(%A) 0x%lx\n", ev->message_type, ev->window);
 	Dprint("\t0x%lx, 0x%lx, 0x%lx, 0x%lx, 0x%lx\n",
 	       ev->data.l[0], ev->data.l[1], ev->data.l[2], ev->data.l[3], ev->data.l[4]);
 

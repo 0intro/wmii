@@ -7,20 +7,15 @@ int	(*xlib_errorhandler) (Display*, XErrorEvent*);
 
 Map	windowmap;
 Map	atommap;
-MapEnt*	wbucket[137];
-MapEnt*	abucket[137];
+Map	atomnamemap;
+static MapEnt*	wbucket[137];
+static MapEnt*	abucket[137];
+static MapEnt*	anamebucket[137];
 
 static int
 Afmt(Fmt *f) {
-	Atom a;
-	char *s;
-	int i;
 
-	a = va_arg(f->args, Atom);
-	s = XGetAtomName(display, a);
-	i = fmtprint(f, "%s", s);
-	free(s);
-	return i;
+	return fmtstrcpy(f, atomname(va_arg(f->args, Atom)));
 }
 
 static int
@@ -76,6 +71,8 @@ initdisplay(void) {
 	windowmap.nhash = nelem(wbucket);
 	atommap.bucket = abucket;
 	atommap.nhash = nelem(abucket);
+	atomnamemap.bucket = anamebucket;
+	atomnamemap.nhash = nelem(anamebucket);
 
 	fmtinstall('A', Afmt);
 	fmtinstall('R', Rfmt);

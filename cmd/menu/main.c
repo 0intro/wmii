@@ -167,7 +167,7 @@ init_screens(void) {
 		 */
 		p = querypointer(&scr.root);
 		for(i=0; i < n; i++)
-			if(rect_haspoint_p(p, rects[i]))
+			if(rect_haspoint_p(rects[i], p))
 				break;
 		if(i == n)
 			i = 0;

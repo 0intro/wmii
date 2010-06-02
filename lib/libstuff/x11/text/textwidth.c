@@ -5,6 +5,6 @@
 #include "../x11.h"
 
 uint
-textwidth(Font *font, char *text) {
+textwidth(Font *font, const char *text) {
 	return textwidth_l(font, text, strlen(text));
 }

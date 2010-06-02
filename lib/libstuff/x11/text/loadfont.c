@@ -5,7 +5,7 @@
 #include "../x11.h"
 
 Font*
-loadfont(char *name) {
+loadfont(const char *name) {
 	XFontStruct **xfonts;
 	char **missing, **font_names;
 	Biobuf *b;

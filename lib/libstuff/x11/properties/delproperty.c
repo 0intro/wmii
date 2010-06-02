@@ -4,6 +4,6 @@
 #include "../x11.h"
 
 void
-delproperty(Window *w, char *prop) {
+delproperty(Window *w, const char *prop) {
 	XDeleteProperty(display, w->xid, xatom(prop));
 }

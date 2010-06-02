@@ -4,7 +4,7 @@
 #include "../x11.h"
 
 ulong
-getprop_long(Window *w, char *prop, char *type,
+getprop_long(Window *w, const char *prop, const char *type,
 	     ulong offset, long **ret, ulong length) {
 	Atom actual;
 	ulong n;
@@ -17,3 +17,10 @@ getprop_long(Window *w, char *prop, char *type,
 	*ret = 0;
 	return 0;
 }
+
+ulong
+getprop_ulong(Window *w, const char *prop, const char *type,
+	      ulong offset, ulong **ret, ulong length) {
+	return getprop_long(w, prop, type, offset, (long**)ret, length);
+}
+

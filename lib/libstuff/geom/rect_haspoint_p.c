@@ -4,7 +4,7 @@
 #include <stuff/geom.h>
 
 bool
-rect_haspoint_p(Point pt, Rectangle r) {
+rect_haspoint_p(Rectangle r, Point pt) {
 	return (pt.x >= r.min.x) && (pt.x < r.max.x)
 	    && (pt.y >= r.min.y) && (pt.y < r.max.y);
 }

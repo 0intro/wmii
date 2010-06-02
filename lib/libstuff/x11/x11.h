@@ -14,15 +14,11 @@
 #include <stuff/util.h>
 #undef  pointerwin
 
-extern MapEnt*	wbucket[137];
-extern MapEnt*	abucket[137];
-
 extern int	(*xlib_errorhandler) (Display*, XErrorEvent*);
 
 void	configwin(Window*, Rectangle, int);
 XPoint*	convpts(Point*, int);
 int	errorhandler(Display*, XErrorEvent*);
-ulong	getprop(Window*, char*, char*, Atom*, int*, ulong, uchar**, ulong);
 void	setgccol(Image*, Color);
 XftColor*	xftcolor(Color);
 XftDraw*	xftdrawable(Image*);

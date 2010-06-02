@@ -5,13 +5,13 @@
 #include <string.h>
 
 void
-sendmessage(Window *w, char *name, long l0, long l1, long l2, long l3, long l4) {
+sendmessage(Window *w, const char *name, long l0, long l1, long l2, long l3, long l4) {
 
 	clientmessage(w, name, NoEventMask, 32, (ClientMessageData){ .l = { l0, l1, l2, l3, l4 } });
 }
 
 void
-clientmessage(Window *w, char *name, long mask, int format, ClientMessageData data) {
+clientmessage(Window *w, const char *name, long mask, int format, ClientMessageData data) {
 	XClientMessageEvent e;
 
 	e.type = ClientMessage;

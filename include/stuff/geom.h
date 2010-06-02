@@ -48,7 +48,7 @@ Point		subpt(Point, Point);
 Align		get_sticky(Rectangle src, Rectangle dst);
 Align		quadrant(Rectangle, Point);
 bool		rect_contains_p(Rectangle, Rectangle);
-bool		rect_haspoint_p(Point, Rectangle);
+bool		rect_haspoint_p(Rectangle, Point);
 bool		rect_intersect_p(Rectangle, Rectangle);
 Rectangle	rect_intersection(Rectangle, Rectangle);
 

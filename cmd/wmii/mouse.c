@@ -603,14 +603,14 @@ mouse_checkresize(Frame *f, Point p, bool exec) {
 	int q;
 
 	cur = cursor[CurNormal];
-	if(rect_haspoint_p(p, f->crect)) {
+	if(rect_haspoint_p(f->crect, p)) {
 		client_setcursor(f->client, cur);
 		return;
 	}
 
 	r = rectsubpt(f->r, f->r.min);
 	q = quadrant(r, p);
-	if(rect_haspoint_p(p, f->grabbox)) {
+	if(rect_haspoint_p(f->grabbox, p)) {
 		cur = cursor[CurTCross];
 		if(exec)
 			mouse_movegrabbox(f->client, false);
@@ -624,7 +624,7 @@ mouse_checkresize(Frame *f, Point p, bool exec) {
 			if(exec)
 				mouse_resize(f->client, q, false);
 		}
-		else if(exec && rect_haspoint_p(p, f->titlebar))
+		else if(exec && rect_haspoint_p(f->titlebar, p))
 			mouse_movegrabbox(f->client, true);
 	}else {
 		if(f->aprev && p.y <= 2

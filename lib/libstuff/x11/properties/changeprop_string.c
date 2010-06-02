@@ -5,6 +5,6 @@
 #include "../x11.h"
 
 void
-changeprop_string(Window *w, char *prop, char *string) {
+changeprop_string(Window *w, const char *prop, const char *string) {
 	changeprop_char(w, prop, "UTF8_STRING", string, strlen(string));
 }

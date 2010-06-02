@@ -123,7 +123,7 @@ selectionrequest_event(Window *w, void *aux, XSelectionRequestEvent *ev) {
 	if(ev->target == xatom("TIMESTAMP")) {
 		/* Per ICCCM §2.6.2. */
 		changeprop_ulong(window(ev->requestor),
-				 XGetAtomName(display, ev->property), "TIMESTAMP",
+				 atomname(ev->property), "TIMESTAMP",
 				 &s->time_start, 1);
 		selection_notify(s, ev, true);
 		return false;

@@ -106,8 +106,8 @@ static bool
 property_event(Window *w, void *aux, XPropertyEvent *ev) {
 	XEmbed *xembed;
 
-	Dprint("property_event(%W, %p, %s)\n",
-	       w, aux, XGetAtomName(display, ev->atom));
+	Dprint("property_event(%W, %p, %A)\n",
+	       w, aux, ev->atom);
 	xembed = aux;
 	if(ev->atom == xatom("_XEMBED_INFO"))
 		xembed_updateinfo(xembed);

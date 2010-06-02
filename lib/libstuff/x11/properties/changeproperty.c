@@ -4,8 +4,8 @@
 #include "../x11.h"
 
 void
-changeproperty(Window *w, char *prop, char *type,
-	       int width, uchar data[], int n) {
+changeproperty(Window *w, const char *prop, const char *type,
+	       int width, const uchar data[], int n) {
 	XChangeProperty(display, w->xid, xatom(prop), xatom(type), width,
 			PropModeReplace, data, n);
 }

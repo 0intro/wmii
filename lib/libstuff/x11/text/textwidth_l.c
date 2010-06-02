@@ -4,7 +4,7 @@
 #include "../x11.h"
 
 uint
-textwidth_l(Font *font, char *text, uint len) {
+textwidth_l(Font *font, const char *text, uint len) {
 	Rectangle r;
 
 	r = textextents_l(font, text, len, nil);

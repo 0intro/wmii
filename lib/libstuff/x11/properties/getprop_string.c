@@ -4,7 +4,7 @@
 #include "../x11.h"
 
 char*
-getprop_string(Window *w, char *name) {
+getprop_string(Window *w, const char *name) {
 	char **list, *str;
 	int n;
 

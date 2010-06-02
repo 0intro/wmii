@@ -144,7 +144,6 @@ OBJ=\
 	x11/properties/getprop_long	\
 	x11/properties/getprop_string	\
 	x11/properties/getprop_textlist	\
-	x11/properties/getprop_ulong	\
 	x11/properties/getproperty	\
 	x11/properties/strlistdup	\
 	x11/properties/windowname	\

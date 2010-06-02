@@ -244,7 +244,7 @@ findbar(WMScreen *s, Point p) {
 	Bar *b;
 
 	foreach_bar(s, b)
-		if(rect_haspoint_p(p, b->r))
+		if(rect_haspoint_p(b->r, p))
 			return b;
 	return nil;
 }

@@ -4,7 +4,7 @@
 #include "../x11.h"
 
 Rectangle
-textextents_l(Font *font, char *text, uint len, int *offset) {
+textextents_l(Font *font, const char *text, uint len, int *offset) {
 	Rectangle rect;
 	XRectangle r;
 	XGlyphInfo i;

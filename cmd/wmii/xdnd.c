@@ -65,7 +65,7 @@ clientmessage_event(Window *w, void *aux, XClientMessageEvent *e) {
 			p = subpt(p, w->r.min);
 			Dprint(DDnd, "\tw: %W\n", w);
 			Dprint(DDnd, "\tp: %P\n", p);
-			if(eqrect(dnd->r, ZR) || !rect_haspoint_p(p, dnd->r))
+			if(eqrect(dnd->r, ZR) || !rect_haspoint_p(dnd->r, p))
 				if(w->handler->dndmotion)
 					dnd->r = w->handler->dndmotion(w, w->aux, p);
 			r = dnd->r;
