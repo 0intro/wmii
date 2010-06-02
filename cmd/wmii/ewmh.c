@@ -76,6 +76,15 @@ ewmh_init(void) {
 	changeprop_long(&scr.root, Net("SUPPORTED"), "ATOM", supported, nelem(supported));
 }
 
+void
+ewmh_checkresponsive(Client *c) {
+
+	if(nsec() / 1000000 - c->w.ewmh.ping > PingTime) {
+		event("Unresponsive %#C\n", c);
+		c->dead++;
+	}
+}
+
 static void
 tick(long id, void *v) {
 	static int count;
@@ -88,10 +97,8 @@ tick(long id, void *v) {
 	mod = count % PingPartition;
 	for(i=0, c=client; c; c=c->next, i++)
 		if(c->proto & ProtoPing) {
-			if(c->dead == 1 && time - c->w.ewmh.ping > PingTime) {
-				event("Unresponsive %#C\n", c);
-				c->dead++;
-			}
+			if(c->dead == 1)
+				ewmh_checkresponsive(c);
 			if(i % PingPartition == mod)
 				sendmessage(&c->w, "WM_PROTOCOLS", NET("WM_PING"), time, c->w.xid, 0, 0);
 			if(i % PingPartition == mod)

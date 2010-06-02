@@ -136,14 +136,13 @@ void	debug_event(XEvent*);
 void	print_focus(const char*, Client*, const char*);
 
 /* ewmh.c */
-int	ewmh_clientmessage(XClientMessageEvent*);
+void	ewmh_checkresponsive(Client*);
 void	ewmh_destroyclient(Client*);
 void	ewmh_framesize(Client*);
 void	ewmh_getstrut(Client*);
 void	ewmh_getwintype(Client*);
 void	ewmh_init(void);
 void	ewmh_initclient(Client*);
-void	ewmh_pingclient(Client*);
 bool	ewmh_prop(Client*, Atom);
 long	ewmh_protocols(Window*);
 void	ewmh_updateclient(Client*);

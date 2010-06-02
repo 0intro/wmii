@@ -293,7 +293,7 @@ addresize('',         'Grow', 'grow')
 addresize('Control-', 'Shrink', 'grow', '-1')
 addresize('Shift-',   'Nudge', 'nudge')
 
-Actions.rehash()
+Thread(target=lambda: Actions.rehash()).start()
 
 if not os.environ.get('WMII_NOPLUGINS', ''):
     dirs = filter(curry(os.access, _, os.R_OK),

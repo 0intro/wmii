@@ -23,14 +23,12 @@ bar_init(WMScreen *s) {
 	s->brect.min.y = s->brect.max.y - labelh(def.font);
 
 	wa.override_redirect = 1;
-	wa.background_pixmap = ParentRelative;
 	wa.event_mask = ExposureMask
 		      | ButtonPressMask
 		      | ButtonReleaseMask
 		      | FocusChangeMask;
 	s->barwin = createwindow(&scr.root, s->brect, scr.depth, InputOutput,
 			&wa, CWOverrideRedirect
-			   | CWBackPixmap
 			   | CWEventMask);
 	s->barwin->aux = s;
 	xdnd_initwindow(s->barwin);

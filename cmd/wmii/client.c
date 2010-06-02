@@ -644,8 +644,10 @@ client_kill(Client *c, bool nice) {
 
 		XKillClient(display, c->w.xid);
 	}
-	else if(c->proto & ProtoDelete)
+	else if(c->proto & ProtoDelete) {
 		client_message(c, "WM_DELETE_WINDOW", 0);
+		ewmh_checkresponsive(c);
+	}
 	else
 		XKillClient(display, c->w.xid);
 }
