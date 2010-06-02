@@ -5,7 +5,6 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <time.h>
-#include <unistd.h>
 #include "fns.h"
 
 typedef union IxpFileIdU IxpFileIdU;

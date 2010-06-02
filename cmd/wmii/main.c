@@ -12,7 +12,6 @@
 #include <pwd.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include "fns.h"
 
 static const char
@@ -382,6 +381,7 @@ extern int fmtevent(Fmt*);
 
 	passwd = getpwuid(getuid());
 	user = estrdup(passwd->pw_name);
+	gethostname(hostname, sizeof(hostname) - 1);
 
 	init_environment();
 

@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <limits.h>
 #include <utf.h>
 #include <ixp.h>
 #include <stuff/x.h>
@@ -316,13 +318,13 @@ EXTERN struct {
 	bool	sel;
 } disp;
 
-EXTERN Client*	client;
-EXTERN View*	view;
-EXTERN View*	selview;
-EXTERN Key*	key;
-EXTERN Divide*	divs;
 EXTERN Client	c_magic;
 EXTERN Client	c_root;
+EXTERN Client*	client;
+EXTERN Divide*	divs;
+EXTERN Key*	key;
+EXTERN View*	selview;
+EXTERN View*	view;
 
 EXTERN Handlers	framehandler;
 
@@ -331,17 +333,18 @@ EXTERN IxpServer srv;
 EXTERN Ixp9Srv	p9srv;
 
 /* X11 */
-EXTERN uint	valid_mask;
-EXTERN uint	numlock_mask;
-EXTERN Image*	ibuf;
 EXTERN Image*	ibuf32;
+EXTERN Image*	ibuf;
+EXTERN uint	numlock_mask;
+EXTERN uint	valid_mask;
 
 /* Misc */
-EXTERN int	starting;
-EXTERN bool	resizing;
-EXTERN long	ignoreenter;
-EXTERN char*	user;
 EXTERN char*	execstr;
+EXTERN char	hostname[HOST_NAME_MAX + 1];
+EXTERN long	ignoreenter;
+EXTERN bool	resizing;
+EXTERN int	starting;
+EXTERN char*	user;
 EXTERN long	xtime;
 
 EXTERN Client*	kludge;

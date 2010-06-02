@@ -5,6 +5,7 @@
 #include "dat.h"
 #include <ctype.h>
 #include <strings.h>
+#include <signal.h>
 #include <X11/Xatom.h>
 #include "fns.h"
 
@@ -628,10 +629,25 @@ client_message(Client *c, char *msg, long l2) {
 
 void
 client_kill(Client *c, bool nice) {
-	if(nice && (c->proto & ProtoDelete)) {
+	char **host;
+	ulong *pid;
+	long n;
+
+	if(!nice) {
+		getprop_textlist(&c->w, "WM_CLIENT_MACHINE", &host);
+		n = getprop_ulong(&c->w, Net("WM_PID"), "CARDINAL", 0, &pid, 1);
+		if(n && *host && !strcmp(hostname, *host))
+			kill((uint)*pid, SIGKILL);
+		freestringlist(host);
+		free(pid);
+
+		XKillClient(display, c->w.xid);
+	}
+	else if(c->proto & ProtoDelete) {
 		client_message(c, "WM_DELETE_WINDOW", 0);
 		ewmh_pingclient(c);
-	}else
+	}
+	else
 		XKillClient(display, c->w.xid);
 }
 
