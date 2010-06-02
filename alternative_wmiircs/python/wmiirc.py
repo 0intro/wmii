@@ -18,6 +18,9 @@ identity = lambda k: k
 # Configuration should be placed in that file, and this file
 # left unmodified, if possible. wmiirc_local should import
 # wmiirc or any other modules it needs.
+#
+# Do *not* copy this file to wmiirc_local.py lest you want it
+# executed twice.
 
 # Keys
 keys.defs = dict(
@@ -96,9 +99,9 @@ events.bind({
 
     'Notice':       lambda args: notice.show(args),
 
-    Match(('LeftBarClick', 'LeftBarDND'), '1'): lambda e, b, tag: tags.select(tag),
-    Match('LeftBarClick', '4'): lambda *a: tags.select(tags.next(True)),
-    Match('LeftBarClick', '5'): lambda *a: tags.select(tags.next()),
+    Match(('LeftBarClick', 'LeftBarDND'), 1): lambda e, b, tag: tags.select(tag),
+    Match('LeftBarClick', 4): lambda *a: tags.select(tags.next(True)),
+    Match('LeftBarClick', 5): lambda *a: tags.select(tags.next()),
 
     Match('LeftBarMouseDown', 3):   lambda e, n, tag: clickmenu((
             ('Delete',     lambda t: Tag(t).delete()),

@@ -106,7 +106,6 @@ class Mux(object):
         if async:
             self.muxer = async
             t = Thread(target=self.mux, args=(async,))
-            t.daemon = True
             t.start()
 
     def dispatch(self, dat):
