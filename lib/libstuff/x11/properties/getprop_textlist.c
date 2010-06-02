@@ -4,7 +4,7 @@
 #include "../x11.h"
 
 int
-getprop_textlist(Window *w, char *name, char **ret[]) {
+getprop_textlist(Window *w, const char *name, char **ret[]) {
 	XTextProperty prop;
 	char **list;
 	int n;

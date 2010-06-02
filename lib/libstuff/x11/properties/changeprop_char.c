@@ -4,6 +4,6 @@
 #include "../x11.h"
 
 void
-changeprop_char(Window *w, const char *prop, const char *type, char data[], int len) {
-	changeproperty(w, prop, type, 8, (uchar*)data, len);
+changeprop_char(Window *w, const char *prop, const char *type, const char data[], int len) {
+	changeproperty(w, prop, type, 8, (const uchar*)data, len);
 }
