@@ -192,29 +192,31 @@ Frame*
 stack_find(Area *a, Frame *f, int dir, bool stack) {
 	Frame *fp;
 
+#define predicate(f) !((f)->collapsed && stack || (f)->client->nofocus)
 	switch (dir) {
 	default:
 		die("not reached");
 	case North:
 		if(f)
-			for(f=f->aprev; f && f->collapsed && stack; f=f->aprev)
+			for(f=f->aprev; f && !predicate(f); f=f->aprev)
 				;
 		else {
 			f = nil;
 			for(fp=a->frame; fp; fp=fp->anext)
-				if(!fp->collapsed || !stack)
+				if(predicate(fp))
 					f = fp;
 		}
 		break;
 	case South:
 		if(f)
-			for(f=f->anext; f && f->collapsed && stack; f=f->anext)
+			for(f=f->anext; f && !predicate(f); f=f->anext)
 				;
 		else
-			for(f=a->frame; f && f->collapsed && stack; f=f->anext)
+			for(f=a->frame; f && !predicate(f); f=f->anext)
 				;
 		break;
 	}
+#undef predicate
 	return f;
 }
 
