@@ -79,7 +79,7 @@ ewmh_init(void) {
 void
 ewmh_checkresponsive(Client *c) {
 
-	if(nsec() / 1000000 - c->w.ewmh.ping > PingTime) {
+	if(c->w.ewmh.ping > 0 && nsec() / 1000000 - c->w.ewmh.ping > PingTime) {
 		event("Unresponsive %#C\n", c);
 		c->dead++;
 	}
