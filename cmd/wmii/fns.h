@@ -145,6 +145,7 @@ void	ewmh_init(void);
 void	ewmh_initclient(Client*);
 bool	ewmh_prop(Client*, Atom);
 long	ewmh_protocols(Window*);
+bool	ewmh_responsive_p(Client*);
 void	ewmh_updateclient(Client*);
 void	ewmh_updateclientlist(void);
 void	ewmh_updateclients(void);

@@ -76,13 +76,19 @@ ewmh_init(void) {
 	changeprop_long(&scr.root, Net("SUPPORTED"), "ATOM", supported, nelem(supported));
 }
 
+inline bool
+ewmh_responsive_p(Client *c) {
+	return c->w.ewmh.ping == 0 || nsec() / 1000000 - c->w.ewmh.ping < PingTime;
+}
+
 void
 ewmh_checkresponsive(Client *c) {
 
-	if(c->w.ewmh.ping > 0 && nsec() / 1000000 - c->w.ewmh.ping > PingTime) {
-		event("Unresponsive %#C\n", c);
-		c->dead++;
-	}
+	if(!ewmh_responsive_p(c))
+		if(!c->dead)
+			frame_draw(c->sel);
+		else if(c->dead++ == 1)
+			event("Unresponsive %#C\n", c);
 }
 
 static void
@@ -97,7 +103,7 @@ tick(long id, void *v) {
 	mod = count % PingPartition;
 	for(i=0, c=client; c; c=c->next, i++)
 		if(c->proto & ProtoPing) {
-			if(c->dead == 1)
+			if(!ewmh_responsive_p(c))
 				ewmh_checkresponsive(c);
 			if(i % PingPartition == mod)
 				sendmessage(&c->w, "WM_PROTOCOLS", NET("WM_PING"), time, c->w.xid, 0, 0);
@@ -407,6 +413,7 @@ ewmh_setstate(Client *c, Atom state, int action) {
 
 static bool
 event_root_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
+	Client *c;
 	View *v;
 	ulong *l;
 	ulong msg;
@@ -433,11 +440,14 @@ event_root_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
 		if(l[0] == NET("WM_PING")) {
 			if(e->window != scr.root.xid)
 				return false;
-			if(!(w = findwin(l[2])))
+			if(!(c = win2client(l[2])))
 				return false;
-			w->ewmh.ping = nsec() / 1000000;
-			w->ewmh.lag = (w->ewmh.ping & 0xffffffff) - (l[1] & 0xffffffff);
-			Dprint(DEwmh, "\twindow=%W lag=%,uld\n", w, w->ewmh.lag);
+			i = ewmh_responsive_p(c);
+			c->w.ewmh.ping = nsec() / 1000000;
+			c->w.ewmh.lag = (c->w.ewmh.ping & 0xffffffff) - (l[1] & 0xffffffff);
+			if(i == false)
+				frame_draw(c->sel);
+			Dprint(DEwmh, "\twindow=%W lag=%,uld\n", &c->w, c->w.ewmh.lag);
 			return false;
 		}
 		return false;

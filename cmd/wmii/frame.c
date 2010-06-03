@@ -428,9 +428,7 @@ frame_draw(Frame *f) {
 	uint w;
 	int n, m;
 
-	if(f->view != selview)
-		return;
-	if(f->area == nil) /* Blech. */
+	if(f == nil || f->view != selview || f->area == nil)
 		return;
 
 	c = f->client;
@@ -503,8 +501,9 @@ frame_draw(Frame *f) {
 	}else /* Make sure floating clients have room for their indicators. */
 	if(c->floating)
 		r.max.x -= Dx(f->grabbox);
-	w = drawstring(img, def.font, r, West,
-			c->name, col->fg);
+	if(!ewmh_responsive_p(c))
+		r.min.x += drawstring(img, def.font, r, West, "(wedged) ", col->fg);
+	w = drawstring(img, def.font, r, West, c->name, col->fg);
 
 	/* Draw inner border on floating clients. */
 	if(f->area->floating) {
