@@ -59,13 +59,12 @@ def load(self):
 def time(self):
     return wmii.cache['focuscolors'], datetime.datetime.now().strftime('%c')
 
-wmii.colrules = (
-    ('gimp', '17+83+41'),
-    ('.*', '62+38 # Golden Ratio'),
-)
-
-wmii.tagrules = (
-    ('MPlayer|VLC', '~'),
+wmii.rules = (
+    # MPlayer and VLC don't float by default, but should.
+    (ur'MPlayer|VLC', dict(floating=True)),
+    # ROX puts all of its windows in the same group, so they open
+    # with the same tags.  Disable grouping for ROX Filer.
+    (ur'^ROX-Filer:', dict(group=0)),
 )
 
 def unresponsive_client(client):

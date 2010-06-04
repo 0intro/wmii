@@ -1,5 +1,6 @@
 import collections
 from datetime import datetime, timedelta
+import re
 
 from pyxp import *
 from pyxp.client import *
@@ -7,7 +8,20 @@ from pygmi import *
 from pygmi.util import prop
 
 __all__ = ('wmii', 'Tags', 'Tag', 'Area', 'Frame', 'Client',
-           'Button', 'Colors', 'Color')
+           'Button', 'Colors', 'Color', 'Toggle')
+
+spacere = re.compile(r'\s')
+
+class utf8(object):
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+@apply
+class Toggle(utf8):
+    def __unicode__(self):
+        return u'Toggle'
+    def __repr__(self):
+        return 'Toggle'
 
 def constrain(min, max, val):
     if val < min:
@@ -217,8 +231,8 @@ class Client(Dir):
     """
     base_path = '/client'
 
-    fullscreen = Dir.toggle_property('Fullscreen')
-    urgent = Dir.toggle_property('Urgent')
+    fullscreen = Dir.toggle_property('fullscreen')
+    urgent = Dir.toggle_property('urgent')
 
     label = Dir.file_property('label', writable=True)
     tags  = Dir.file_property('tags', writable=True)
@@ -227,6 +241,7 @@ class Client(Dir):
     def kill(self):
         """Politely asks a client to quit."""
         self.ctl('kill')
+
     def slay(self):
         """Forcibly severs a client's connection to the X server."""
         self.ctl('slay')
@@ -476,7 +491,7 @@ class Button(object):
                 for s in client.readdir(cls.sides[side])
                 if s.name != 'sel')
 
-class Colors(object):
+class Colors(utf8):
     def __init__(self, foreground=None, background=None, border=None):
         vals = foreground, background, border
         self.vals = tuple(map(Color, vals))
@@ -497,14 +512,12 @@ class Colors(object):
             key = {'foreground': 0, 'background': 1, 'border': 2}[key]
         return self.vals[key]
 
-    def __str__(self):
-        return str(unicode(self))
     def __unicode__(self):
         return ' '.join(c.hex for c in self.vals)
     def __repr__(self):
         return 'Colors(%s, %s, %s)' % tuple(repr(c.rgb) for c in self.vals)
 
-class Color(object):
+class Color(utf8):
     def __init__(self, colors):
         if isinstance(colors, Color):
             colors = colors.rgb
@@ -527,25 +540,27 @@ class Color(object):
     def hex(self):
         return '#%02x%02x%02x' % self.rgb
 
-    def __str__(self):
-        return str(unicode(self))
     def __unicode__(self):
         return 'rgb(%d, %d, %d)' % self.rgb
     def __repr__(self):
         return 'Color(%s)' % repr(self.rgb)
 
-class Rules(collections.MutableMapping):
-    regex = re.compile(r'^\s*/(.*?)/\s*(?:->)?\s*(.*)$')
+class Rules(collections.MutableMapping, utf8):
 
-    def __get__(self, obj, cls):
-        return self
-    def __set__(self, obj, val):
-        self.setitems(val)
-
+    _items = ()
     def __init__(self, path, rules=None):
         self.path = path
         if rules:
             self.setitems(rules)
+
+    _quotere = re.compile(ur'(\\(.)|/)')
+    @classmethod
+    def quoteslash(cls, str):
+        return cls._quotere.sub(lambda m: m.group(0) if m.group(2) else r'\/', str)
+
+    __get__ = lambda self, obj, cls: self
+    def __set__(self, obj, val):
+        self.setitems(val)
 
     def __getitem__(self, key):
         for k, v in self.iteritems():
@@ -553,14 +568,8 @@ class Rules(collections.MutableMapping):
                 return v
         raise KeyError()
     def __setitem__(self, key, val):
-        items = []
-        for k, v in self.iteritems():
-            if key == k:
-                v = val
-                key = None
-            items.append((k, v))
-        if key is not None:
-            items.append((key, val))
+        items = [(k, v) for k, v in self.iteritems() if k != key]
+        items.append((key, val))
         self.setitems(items)
     def __delitem__(self, key):
         self.setitems((k, v) for k, v in self.iteritems() if k != key)
@@ -580,21 +589,97 @@ class Rules(collections.MutableMapping):
     def __add__(self, items):
         return tuple(self.iteritems()) + tuple(items)
 
+    def rewrite(self):
+        client.awrite(self.path, unicode(self))
     def setitems(self, items):
-        lines = []
-        for k, v in items:
-            assert '/' not in k and '\n' not in v
-            lines.append('/%s/ -> %s' % (k, v))
-        lines.append('')
-        client.awrite(self.path, '\n'.join(lines))
+        self._items = [(k, v if isinstance(v, Rule) else Rule(self, k, v))
+                       for (k, v) in items]
+        self.rewrite();
+
+    def __unicode__(self):
+        return u''.join(unicode(value) for (key, value) in self.iteritems()) or u'\n'
 
     def iteritems(self):
-        for line in client.readlines(self.path):
-            match = self.regex.match(line)
-            if match:
-                yield match.groups()
+        for item in self._items:
+            yield item
     def items(self):
-        return list(self.iteritems())
+        return list(self._items())
+
+class Rule(collections.MutableMapping, utf8):
+    _items = ()
+    parent = None
+
+    @classmethod
+    def quotekey(cls, key):
+        return key.replace('_', '-')
+    @classmethod
+    def quotevalue(cls, val):
+        if val is True:   return "on"
+        if val is False:  return "off"
+        if val is Toggle: return "toggle"
+        return unicode(val)
+
+    def __get__(self, obj, cls):
+        return self
+    def __set__(self, obj, val):
+        self.setitems(val)
+
+    def __init__(self, parent, key, items={}):
+        self.key = key
+        self._items = []
+        self.setitems(items.iteritems() if isinstance(items, dict) else items)
+        self.parent = parent
+
+    def __getitem__(self, key):
+        for k, v in reversed(self._items):
+            if k == key:
+                return v
+        raise KeyError()
+
+    def __setitem__(self, key, val):
+        items = [(k, v) for k, v in self.iteritems() if k != key]
+        items.append((key, val))
+        self.setitems(items)
+
+    def __delitem__(self, key):
+        self.setitems([(k, v) for k, v in self.iteritems() if k != key])
+
+    def __len__(self):
+        return len(self._items)
+    def __iter__(self):
+        for k in iter(self._items):
+            yield k
+    def __list__(self):
+        return list(iter(self))
+    def __tuple__(self):
+        return tuple(iter(self))
+
+    def append(self, item):
+        self.setitems(self + (item,))
+    def __add__(self, items):
+        return tuple(self.iteritems()) + tuple(items)
+
+    def setitems(self, items):
+        items = list(items)
+        assert not any('=' in key or
+                       spacere.search(self.quotekey(key)) or
+                       spacere.search(self.quotevalue(val)) for (key, val) in items)
+        self._items = items
+        if self.parent:
+            self.parent.rewrite()
+
+    def __unicode__(self):
+        return u'/%s/ %s\n' % (
+            Rules.quoteslash(self.key),
+            u' '.join(u'%s=%s' % (self.quotekey(k), self.quotevalue(v))
+                      for (k, v) in self.iteritems()))
+
+    def iteritems(self):
+        for i in self._items:
+            yield i
+    def items(self):
+        return list(self._items)
+
 
 @apply
 class wmii(Ctl):
@@ -610,8 +695,7 @@ class wmii(Ctl):
     lbuttons = property(lambda self: Button.all('left'))
     rbuttons = property(lambda self: Button.all('right'))
 
-    tagrules = Rules('/tagrules')
-    colrules = Rules('/colrules')
+    rules    = Rules('/rules')
 
 class Tags(object):
     PREV = []
