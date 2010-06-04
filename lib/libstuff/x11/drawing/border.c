@@ -15,5 +15,5 @@ border(Image *dst, Rectangle r, int w, Color col) {
 	XSetLineAttributes(display, dst->gc, w, LineSolid, CapButt, JoinMiter);
 	setgccol(dst, col);
 	XDrawRectangle(display, dst->xid, dst->gc,
-			r.min.x, r.min.y, Dx(r), Dy(r));
+		       r.min.x, r.min.y, Dx(r), Dy(r));
 }

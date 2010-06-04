@@ -33,7 +33,7 @@ client_manage(XWindow w) {
 		return;
 	}
 
-	wa.background_pixel = tray.selcolors.bg.pixel;
+	wa.background_pixel = pixelvalue(tray.selcolors.bg);
 	size = max(tray.iconsize / 4, 4);
 
 	c->indicator = createwindow(tray.win, Rect(0, 0, size, size), scr.depth,

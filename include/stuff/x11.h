@@ -34,7 +34,7 @@ typedef enum WindowType WindowType;
 typedef XSetWindowAttributes WinAttr;
 
 typedef union ClientMessageData ClientMessageData;
-typedef struct Color Color;
+typedef XRenderColor Color;
 typedef struct CTuple CTuple;
 typedef struct ErrorCode ErrorCode;
 typedef struct Ewmh Ewmh;
@@ -54,11 +54,6 @@ union ClientMessageData {
 	char b[20];
 	short s[10];
 	long l[5];
-};
-
-struct Color {
-	ulong		pixel;
-	XRenderColor	render;
 };
 
 struct CTuple {
@@ -274,8 +269,9 @@ Font*	loadfont(const char*);
 void	lowerwin(Window*);
 int	mapwin(Window*);
 void	movewin(Window*, Point);
-bool	namedcolor(char *name, Color*);
+bool	parsecolor(const char *name, Color*);
 bool	parsekey(char*, int*, char**);
+ulong	pixelvalue(Color);
 int	pointerscreen(void);
 bool	pophandler(Window*, Handlers*);
 void	pushhandler(Window*, Handlers*, void*);

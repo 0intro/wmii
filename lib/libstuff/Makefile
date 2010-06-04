@@ -89,13 +89,12 @@ OBJ=\
 	x11/initdisplay	\
 	x11/sendevent	\
 	x11/sendmessage	\
-	x11/setgccol	\
 	x11/sync	\
 	x11/x11		\
 	x11/xatom	\
 	x11/xft		\
 	x11/colors/loadcolor	\
-	x11/colors/namedcolor	\
+	x11/colors/parsecolor	\
 	x11/colors/xftcolor	\
 	x11/drawing/border	\
 	x11/drawing/drawline	\
@@ -103,6 +102,7 @@ OBJ=\
 	x11/drawing/drawstring	\
 	x11/drawing/fill	\
 	x11/drawing/fillpoly	\
+	x11/drawing/setgccol	\
 	x11/focus/getfocus	\
 	x11/focus/setfocus	\
 	x11/geometry/XRect	\

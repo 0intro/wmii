@@ -12,7 +12,7 @@ loadcolor(CTuple *c, const char *str) {
 	memcpy(c->colstr, str, sizeof c->colstr);
 
 	buf[7] = buf[15] = buf[23] = '\0';
-	return namedcolor(buf, &c->fg)
-	    && namedcolor(buf+8, &c->bg)
-	    && namedcolor(buf+16, &c->border);
+	return parsecolor(buf, &c->fg)
+	    && parsecolor(buf+8, &c->bg)
+	    && parsecolor(buf+16, &c->border);
 }

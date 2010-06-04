@@ -6,6 +6,7 @@ syntax: regexp
 \.(aux|idx|ilg|ind|log|toc)$
 ^cmd/(stfo|osd|wiwarp|setfocus)(/|$)
 ^(pkg|src)/
+^doxy
 /bak/
 _dummy\.h$
 syntax: glob

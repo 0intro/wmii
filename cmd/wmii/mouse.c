@@ -78,7 +78,7 @@ gethsep(Rectangle r) {
 	Window *w;
 	WinAttr wa;
 
-	wa.background_pixel = def.normcolor.border.pixel;
+	wa.background_pixel = pixelvalue(def.normcolor.border);
 	w = createwindow(&scr.root, r, scr.depth, InputOutput, &wa, CWBackPixel);
 	mapwin(w);
 	raisewin(w);

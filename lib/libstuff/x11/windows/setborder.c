@@ -8,7 +8,7 @@ setborder(Window *w, int width, Color col) {
 
 	assert(w->type == WWindow);
 	if(width)
-		XSetWindowBorder(display, w->xid, col.pixel);
+		XSetWindowBorder(display, w->xid, pixelvalue(col));
 	if(width != w->border)
 		configwin(w, w->r, width);
 }
