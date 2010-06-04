@@ -271,7 +271,12 @@ follows.
         special meaning:
 
         >>
-        : default-tags <tags>
+	: continue
+		Normally, when a matching rule is encountered, rule
+		matching stops. When the continue key is provided
+		(with any value), matching continues at the next
+		rule.
+        : default-tags=<tags>
                 Like _tags_, but only sets the tags if they can't be
                 obtained from the client's group or from the
                 \_WMII_TAGS window property. This key should be

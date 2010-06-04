@@ -202,13 +202,18 @@ apply_rules(Client *c) {
 	IxpMsg m;
 	Rule *r;
 	Ruleval *rv;
-	bool ret;
+	bool ret, more;
 
 	ret = false;
 	for(r=def.rules.rule; r; r=r->next)
 		if(regexec(r->regex, c->props, nil, 0)) {
+			more = false;
 			for(rv=r->values; rv; rv=rv->next) {
-				if(!strcmp(rv->key, "default-tags")) {
+				if(!strcmp(rv->key, "continue"))
+					more = true;
+				else if(!strcmp(rv->key, "tags"))
+					utflcpy(c->tags, rv->value, sizeof c->tags);
+				else if(!strcmp(rv->key, "default-tags")) {
 					utflcpy(c->tags, rv->value, sizeof c->tags);
 					ret = true;
 				}else {
@@ -221,7 +226,8 @@ apply_rules(Client *c) {
 					}
 				}
 			}
-			return ret;
+			if(!more)
+				return ret;
 		}
 	return ret;
 }

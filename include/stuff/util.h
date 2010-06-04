@@ -35,6 +35,7 @@ enum {
 #define strlcat stuff_strlcat
 #define strcasestr stuff_strcasestr
 
+
 void	_die(char*, int, char*, ...);
 void	backtrace(char*);
 void	closeexec(int);
@@ -68,11 +69,11 @@ uint	strlcat(char*, const char*, uint);
 int	strlcatprint(char*, int, const char*, ...);
 char*	sxprint(const char*, ...);
 uint	tokenize(char**, uint, char*, char);
+void	trim(char *str, const char *chars);
 void	uniq(char**);
 int	unquote(char*, char*[], int);
 int	utflcpy(char*, const char*, int);
 char*	vsxprint(const char*, va_list);
-
 extern char	buffer[8092];
 extern char*	_buffer;
 extern char*	const _buf_end;

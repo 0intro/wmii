@@ -76,6 +76,7 @@ OBJ=\
 	util/strlcatprint	\
 	util/sxprint	\
 	util/tokenize	\
+	util/trim	\
 	util/uniq	\
 	util/unquote	\
 	util/utflcpy	\

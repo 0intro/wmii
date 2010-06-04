@@ -251,7 +251,6 @@ void*	findthing(Rectangle, int, Vector_ptr*, Rectangle(*)(void*), bool);
 int	ownerscreen(Rectangle);
 
 /* rule.c */
-void	trim(char *str, const char *chars);
 void	update_rules(Rule**, char*);
 
 /* view.c */

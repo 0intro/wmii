@@ -1,26 +1,9 @@
-/* Copyright ©2006 Anselm R. Garbe <garbeam at gmail dot com>
+/* Copyright ©2010 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 
 #include "dat.h"
 #include "fns.h"
-
-void
-trim(char *str, const char *chars) {
-	const char *cp;
-	char *p, *q;
-	char c;
-
-	q = str;
-	for(p=str; *p; p++) {
-		for(cp=chars; (c = *cp); cp++)
-			if(*p == c)
-				break;
-		if(c == '\0')
-			*q++ = *p;
-	}
-	*q = '\0';
-}
 
 void
 update_rules(Rule **rule, char *data) {
