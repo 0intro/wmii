@@ -78,7 +78,7 @@ ewmh_init(void) {
 
 inline bool
 ewmh_responsive_p(Client *c) {
-	return c->w.ewmh.ping == 0 || nsec() / 1000000 - c->w.ewmh.ping < PingTime;
+	return c->w.ewmh.ping == 0 || (ulong)(nsec() / 1000000) - c->w.ewmh.ping < PingTime;
 }
 
 void
