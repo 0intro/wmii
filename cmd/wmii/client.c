@@ -205,32 +205,25 @@ apply_rules(Client *c) {
 	bool ret;
 
 	ret = false;
-	if(def.rules.string)
-		for(r=def.rules.rule; r; r=r->next)
-			if(regexec(r->regex, c->props, nil, 0)) {
-				for(rv=r->values; rv; rv=rv->next) {
-					if(!strcmp(rv->key, "default-tags")) {
-						utflcpy(c->tags, rv->value, sizeof c->tags);
-						ret = true;
-					}
-					else {
-						bufclear();
-						bufprint("%s %s", rv->key, rv->value);
-						m = ixp_message(buffer, sizeof buffer, MsgPack);
-						if(!waserror()) {
-							message_client(c, &m);
-							poperror();
-						}
+	for(r=def.rules.rule; r; r=r->next)
+		if(regexec(r->regex, c->props, nil, 0)) {
+			for(rv=r->values; rv; rv=rv->next) {
+				if(!strcmp(rv->key, "default-tags")) {
+					utflcpy(c->tags, rv->value, sizeof c->tags);
+					ret = true;
+				}else {
+					bufclear();
+					bufprint("%s %s", rv->key, rv->value);
+					m = ixp_message(buffer, sizeof buffer, MsgPack);
+					if(!waserror()) {
+						message_client(c, &m);
+						poperror();
 					}
 				}
-				return true;
 			}
-
-	if(def.tagrules.string)
-		for(r=def.tagrules.rule; r; r=r->next)
-			if(regexec(r->regex, c->props, nil, 0))
-				return client_applytags(c, r->value);
-	return false;
+			return ret;
+		}
+	return ret;
 }
 
 void

@@ -1,6 +1,11 @@
-3.1b1:
+3.10b1:
     * Xft is now loaded on demand
-    * colrules widths may now be specified in pixels
+    * /colrules widths may now be specified in pixels
+    * /tagrules has been replaced with the more general /rules
+    * Add witray system tray program
+    * Floating clients can be collapsed by clicking their layout boxes
+    * Dock windows act more like dock windows
+    * Fixed some managed move bugs
 
 3.9b1:
     * wmii9menu is now Xinerama aware.

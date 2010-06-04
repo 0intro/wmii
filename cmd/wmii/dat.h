@@ -287,7 +287,6 @@ EXTERN struct {
 	char*	keys;
 	uint	keyssz;
 	Ruleset	colrules;
-	Ruleset	tagrules;
 	Ruleset	rules;
 	char	grabmod[5];
 	ulong	mod;

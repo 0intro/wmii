@@ -277,21 +277,6 @@ follows.
                 \_WMII_TAGS window property. This key should be
                 preferred to the _tags_ key in most cases.
         <<
-
-: tagrules
-        The _tagrules_ file contains a list of
-        rules similar to the colrules. These rules specify
-        the tags a client is to be given when it is created.
-        Rules are specified as:
-
-```     /<regex>/ -> <tag>[+<tag>]*
-
-        When a client's <name>:<class>:<title> matches
-        <regex>, it is given the tagstring <tag>. There are
-        two special tags. **!**, which is deprecated, and identical
-        to _sel_, represents the current tag. **~**
-        represents the floating layer.
-
 : keys
         The _keys_ file contains a list of keys which
         `wmii` will grab. Whenever these key combinations

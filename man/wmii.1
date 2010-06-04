@@ -314,25 +314,6 @@ obtained from the client's group or from the
 _WMII_TAGS window property. This key should be
 preferred to the \fItags\fR key in most cases.
 .RS -8
-
-.TP
-tagrules
-The \fItagrules\fR file contains a list of
-rules similar to the colrules. These rules specify
-the tags a client is to be given when it is created.
-Rules are specified as:
-
-.nf
-      /\fI<regex>\fR/ -> \fI<tag>\fR\fI[+\fI<tag>\fR]\fR*
-.fi
-
-
-When a client's \fI<name>\fR:\fI<class>\fR:\fI<title>\fR matches
-\fI<regex>\fR, it is given the tagstring \fI<tag>\fR. There are
-two special tags. \fB!\fR, which is deprecated, and identical
-to \fIsel\fR, represents the current tag. \fB~\fR
-represents the floating layer.
-
 .TP
 keys
 The \fIkeys\fR file contains a list of keys which

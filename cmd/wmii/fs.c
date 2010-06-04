@@ -44,7 +44,6 @@ enum {	/* Dirs */
 	FsFKeys,
 	FsFRctl,
 	FsFRules,
-	FsFTagRules,
 	FsFTctl,
 	FsFTindex,
 	FsFprops,
@@ -91,7 +90,6 @@ dirtab_root[]=	 {{".",		QTDIR,		FsRoot,		0500|DMDIR },
 		  {"event",	QTFILE,		FsFEvent,	0600 },
 		  {"keys",	QTFILE,		FsFKeys,	0600 },
 		  {"rules",	QTFILE,		FsFRules,	0600 },
-		  {"tagrules",	QTFILE,		FsFTagRules,	0600 },
 		  {nil}},
 dirtab_clients[]={{".",		QTDIR,		FsDClients,	0500|DMDIR },
 		  {"",		QTDIR,		FsDClient,	0500|DMDIR },
@@ -340,9 +338,6 @@ lookup_file(IxpFileId *parent, char *name)
 			case FsFRules:
 				file->p.rule = &def.rules;
 				break;
-			case FsFTagRules:
-				file->p.rule = &def.tagrules;
-				break;
 			}
 			if(name)
 				goto LastItem;
@@ -384,7 +379,6 @@ fs_size(IxpFileId *f) {
 		return 0;
 	case FsFColRules:
 	case FsFRules:
-	case FsFTagRules:
 		return f->p.rule->size;
 	case FsFKeys:
 		return def.keyssz;
@@ -453,7 +447,6 @@ fs_read(Ixp9Req *r) {
 			return;
 		case FsFColRules:
 		case FsFRules:
-		case FsFTagRules:
 			ixp_srv_readbuf(r, f->p.rule->string, f->p.rule->size);
 			respond(r, nil);
 			return;
@@ -527,7 +520,6 @@ fs_write(Ixp9Req *r) {
 	switch(f->tab.type) {
 	case FsFColRules:
 	case FsFRules:
-	case FsFTagRules:
 		ixp_srv_writebuf(r, &f->p.rule->string, &f->p.rule->size, 0);
 		respond(r, nil);
 		break;
@@ -696,17 +688,8 @@ fs_clunk(Ixp9Req *r) {
 	switch(f->tab.type) {
 	case FsFColRules:
 	case FsFRules:
-	case FsFTagRules:
 		update_rules(&f->p.rule->rule, f->p.rule->string);
 		break;
-		/*
-	case FsFTagRules:
-		update_rules(&f->p.rule->rule, f->p.rule->string);
-		for(c=client; c; c=c->next)
-			apply_rules(c);
-		view_update_all();
-		break;
-		*/
 	case FsFKeys:
 		update_keys();
 		break;
