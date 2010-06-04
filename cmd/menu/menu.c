@@ -33,6 +33,9 @@ menu_init(void) {
 
 	changeprop_long(barwin, Net("WM_WINDOW_TYPE"), "ATOM",
 			(long[]){ TYPE("MENU") }, 1);
+	changeprop_string(barwin, "_WMII_TAGS", "sel");
+	changeprop_textlist(barwin, "WM_CLASS", "STRING",
+			    (char*[3]){ "wimenu", "wimenu", nil });
 
 	sethandler(barwin, &handlers);
 	mapwin(barwin);
