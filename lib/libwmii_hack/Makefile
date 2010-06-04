@@ -9,8 +9,8 @@ SOLDFLAGS += $(LIBX11)
 TARG =	libwmii_hack
 # Can't just link libstuff here. We need PIC objects.
 OBJ =	hack	\
-	../libstuff/util/getbase		\
-	../libstuff/util/getlong		\
+	../libstuff/util/getbase	\
+	../libstuff/util/getlong	\
 	../libstuff/util/tokenize
 
 include $(ROOT)/mk/so.mk
