@@ -5,6 +5,7 @@
 #include "fns.h"
 
 static Handlers selection_handlers;
+static Handlers steal_handlers;
 
 Selection*
 selection_create(char *selection, ulong time,
@@ -47,20 +48,51 @@ selection_create(char *selection, ulong time,
 	return s;
 }
 
+static void
+_selection_manage(Selection *s) {
+
+	Dprint("[selection] Notifying.\n");
+	clientmessage(&scr.root, "MANAGER", SubstructureNotifyMask|StructureNotifyMask, 32,
+		      (ClientMessageData){ .l = {s->time_start, xatom(s->selection), s->owner->xid} });
+}
+
+static void
+timeout(long timer, void *v) {
+	Selection *s;
+
+	s = v;
+	Dprint("[selection] Done waiting. Killing 0x%ulx.\n", s->oldowner);
+	s->timer = 0;
+	XKillClient(display, s->oldowner);
+	sync();
+}
+
 Selection*
 selection_manage(char *selection, ulong time,
 		 void (*message)(Selection*, XClientMessageEvent*),
 		 void (*cleanup)(Selection*)) {
 	Selection *s;
+	Window *w;
+	XWindow old;
 
-	if(XGetSelectionOwner(display, xatom(selection)) != None)
-		return nil;
+	if((old = XGetSelectionOwner(display, xatom(selection)))) {
+		w = emallocz(sizeof *w);
+		w->type = WWindow;
+		w->xid = old;
+		selectinput(w, StructureNotifyMask);
+	}
 
 	s = selection_create(selection, time, nil, cleanup);
 	if(s) {
 		s->message = message;
-		clientmessage(&scr.root, "MANAGER", SubstructureNotifyMask|StructureNotifyMask, 32,
-			      (ClientMessageData){ .l = {time, xatom(selection), s->owner->xid} });
+		s->oldowner = old;
+		if(!old)
+			_selection_manage(s);
+		else {
+			Dprint("[selection] Waiting for old owner %W to die...\n", w);
+			pushhandler(w, &steal_handlers, s);
+			s->timer = ixp_settimer(&srv, 2000, timeout, s);
+		}
 	}
 
 	return s;
@@ -70,9 +102,9 @@ void
 selection_release(Selection *s) {
 	if(!s->time_end)
 		XSetSelectionOwner(display, xatom(s->selection), None, s->time_start);
-	destroywindow(s->owner);
 	if(s->cleanup)
 		s->cleanup(s);
+	destroywindow(s->owner);
 	free(s->selection);
 	free(s);
 }
@@ -106,6 +138,7 @@ selectionclear_event(Window *w, void *aux, XSelectionClearEvent *ev) {
 	Selection *s;
 
 	USED(w, ev);
+	Dprint("[selection] Lost selection\n");
 	s = aux;
 	s->time_end = ev->time;
 	selection_release(s);
@@ -120,6 +153,7 @@ selectionrequest_event(Window *w, void *aux, XSelectionRequestEvent *ev) {
 	if(ev->property == None)
 		ev->property = ev->target; /* Per ICCCM §2.2. */
 
+	Dprint("[selection] Request: %A\n", ev->target);
 	if(ev->target == xatom("TIMESTAMP")) {
 		/* Per ICCCM §2.6.2. */
 		changeprop_ulong(window(ev->requestor),
@@ -140,5 +174,23 @@ static Handlers selection_handlers = {
 	.message = message_event,
 	.selectionclear = selectionclear_event,
 	.selectionrequest = selectionrequest_event,
+};
+
+static bool
+destroy_event(Window *w, void *aux, XDestroyWindowEvent *e) {
+	Selection *s;
+
+	Dprint("[selection] Old owner is dead.\n");
+	s = aux;
+	if(s->timer)
+		ixp_unsettimer(&srv, s->timer);
+	s->timer = 0;
+	s->oldowner = 0;
+	_selection_manage(s);
+	return false;
+}
+
+static Handlers steal_handlers = {
+	.destroy = destroy_event,
 };
 

@@ -69,6 +69,8 @@ cleanup(Selection *s) {
 
 	while(tray.clients)
 		client_disown(tray.clients);
+	tray.selection = nil;
+	srv.running = false;
 }
 
 void
@@ -181,6 +183,8 @@ main(int argc, char *argv[]) {
 					  event_xtime, message, cleanup);
 	if(tray.selection == nil)
 		fatal("Another system tray is already running.");
+	if(tray.selection->oldowner)
+		print("Replacing currently running system tray.\n");
 
 	xext_init();
 	tray_init();
@@ -198,7 +202,8 @@ main(int argc, char *argv[]) {
 	srv.running = true;
 	ixp_serverloop(&srv);
 
-	selection_release(tray.selection);
+	if(tray.selection)
+		selection_release(tray.selection);
 
 	XCloseDisplay(display);
 

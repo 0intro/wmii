@@ -129,7 +129,7 @@ next_keystroke(ulong *mod, KeyCode *code) {
 	do {
 		XMaskEvent(display, KeyPressMask, &e);
 		*mod |= e.xkey.state & valid_mask;
-		*code = (KeyCode) e.xkey.keycode;
+		*code = (KeyCode)e.xkey.keycode;
 		sym = XKeycodeToKeysym(display, e.xkey.keycode, 0);
 	} while(IsModifierKey(sym));
 }
@@ -143,7 +143,7 @@ fake_keypress(ulong mod, KeyCode key) {
 	if(c == nil || c->w.xid == 0)
 		return;
 
-	e.time = CurrentTime;
+	e.time = event_xtime;
 	e.window = c->w.xid;
 	e.state = mod;
 	e.keycode = key;

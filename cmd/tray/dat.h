@@ -51,6 +51,8 @@ struct Selection {
 	void	(*cleanup)(Selection*);
 	void	(*message)(Selection*, XClientMessageEvent*);
 	void	(*request)(Selection*, XSelectionRequestEvent*);
+	long	timer;
+	ulong	oldowner;
 };
 
 struct XEmbed {

@@ -348,8 +348,8 @@ frame_resize(Frame *f, Rectangle r) {
 		           || Dy(r) == 0 && (!f->area->max || resizing)
 			      && !f->collapsed)) {
 		fprint(2, "Frame rect: %R\n", r);
-		r.max.x = min(r.min.x+1, r.max.x);
-		r.max.y = min(r.min.y+1, r.max.y);
+		r.max.x = max(r.min.x+1, r.max.x);
+		r.max.y = max(r.min.y+1, r.max.y);
 	}
 
 	c = f->client;
