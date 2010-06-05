@@ -307,13 +307,24 @@ Additionally, the following keys are accepted and have
 special meaning:
 
 .RS 8
+
+.RS
+: continue
+.RS
+Normally, when a matching rule is encountered, rule
+matching stops. When the continue key is provided
+(with any value), matching continues at the next
+rule.
+.RE
+.RE
 .TP
-default\-tags \fI<tags>\fR
+default\-tags=\fI<tags>\fR
 Like \fItags\fR, but only sets the tags if they can't be
 obtained from the client's group or from the
 _WMII_TAGS window property. This key should be
 preferred to the \fItags\fR key in most cases.
 .RS -8
+
 .TP
 keys
 The \fIkeys\fR file contains a list of keys which

@@ -94,7 +94,7 @@ static void
 drawdiv(Divide *d) {
 
 	fill(divmask, divmask->r, (Color){0});
-	drawimg(divmask, (Color){1}, (Color){1}, d);
+	drawimg(divmask, (Color){~0,~0,~0}, (Color){~0,~0,~0}, d);
 	drawimg(divimg, divcolor.bg, divcolor.border, d);
 
 	copyimage(d->w, divimg->r, divimg, ZP);
