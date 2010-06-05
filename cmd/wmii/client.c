@@ -601,24 +601,22 @@ client_setcursor(Client *c, Cursor cur) {
 
 void
 client_configure(Client *c) {
-	XConfigureEvent e;
 	Rectangle r;
 
 	r = rectsubpt(c->r, Pt(c->border, c->border));
 
-	e.type = ConfigureNotify;
-	e.event = c->w.xid;
-	e.window = c->w.xid;
-	e.above = None;
-	e.override_redirect = false;
+	sendevent(&c->w, false, StructureNotifyMask,
+		  &(XConfigureEvent) {
+			  .type = ConfigureNotify,
+			  .event = c->w.xid,
+			  .window = c->w.xid,
 
-	e.x = r.min.x;
-	e.y = r.min.y;
-	e.width = Dx(r);
-	e.height = Dy(r);
-	e.border_width = c->border;
-
-	sendevent(&c->w, false, StructureNotifyMask, &e);
+			  .x = r.min.x,
+			  .y = r.min.y,
+			  .width = Dx(r),
+			  .height = Dy(r),
+			  .border_width = c->border,
+		  });
 }
 
 void
@@ -988,6 +986,8 @@ unmap_event(Window *w, void *aux, XUnmapEvent *e) {
 	Client *c;
 
 	c = aux;
+	if(!e->send_event && w->parent != c->framewin)
+		c->w.unmapped++;
 	if(e->send_event || c->w.unmapped < 0)
 		client_destroy(c);
 	return false;

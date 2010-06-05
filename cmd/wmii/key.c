@@ -145,7 +145,6 @@ fake_keypress(ulong mod, KeyCode key) {
 
 	e.time = CurrentTime;
 	e.window = c->w.xid;
-	e.display = display;
 	e.state = mod;
 	e.keycode = key;
 

@@ -103,6 +103,17 @@ tray_init(void) {
 }
 
 static void
+tray_unmap(void) {
+	unmapwin(tray.win);
+	sendevent(&scr.root, false, SubstructureNotifyMask,
+		  &(XUnmapEvent){
+			.type = UnmapNotify,
+			.event = scr.root.xid,
+			.window = tray.win->xid
+		  });
+}
+
+static void
 tray_draw(Rectangle r) {
 	int borderwidth;
 
@@ -194,7 +205,7 @@ tray_update(void) {
 	}
 
 	if(eqpt(offset, padding))
-		unmapwin(tray.win);
+		tray_unmap();
 	else {
 		if(tray.orientation == OHorizontal)
 			offset.y += tray.iconsize + tray.padding;
