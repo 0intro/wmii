@@ -10,8 +10,8 @@ wmiir - The wmii 9P filesystem client
 
 = SYNOPSIS =
 
-wmiir [-a <address>] {create | ls [-dlp] | read | remove | write} <file> +
-wmiir [-a <address>] xwrite <file> <data> ... +
+wmiir [-a <address>] [-b] {create | ls [-dlp] | read | remove | write} <file> +
+wmiir [-a <address>] [-b] xwrite <file> <data> ... +
 wmiir -v
 
 = DESCRIPTION =
@@ -21,10 +21,20 @@ to its virtual filesystem by default. `wmiir` is most often used to query and
 issue commands to `wmii`, both from the command line and from its `sh`-based
 configuration scripts.
 
+Since the default encoding of 9P filesystems is UTF-8, `wmiir`
+assumes that all data read and written is text data and
+translates to or from your locale character encoding as
+necessary. When working with non-text data in a non-UTF-8
+locale, the _-b_ flag should be specified to disable this
+behavior.
+
 = ARGUMENTS =
 
 : -a
         The address at which to connect to `wmii`.
+: -b
+	With the _-b_ flag, data that you intend to read or
+	write is treated as binary data.
 :
 = COMMANDS =
 

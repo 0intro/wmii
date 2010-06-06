@@ -130,6 +130,7 @@ main(int argc, char *argv[]) {
 	ulong win;
 	char *s;
 
+	setlocale(LC_CTYPE, "");
 	fmtinstall('E', fmtevent);
 
 	ARGBEGIN{
@@ -140,13 +141,11 @@ main(int argc, char *argv[]) {
 		direction = DVertical;
 		break;
 	case 'v':
-		print("%s", version);
+		lprint(1, "%s", version);
 		return 0;
 	default:
 		usage();
 	}ARGEND;
-
-	setlocale(LC_CTYPE, "");
 
 	initdisplay();
 

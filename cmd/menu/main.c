@@ -186,8 +186,10 @@ main(int argc, char *argv[]) {
 	int i;
 	long ndump;
 
-	quotefmtinstall();
+	setlocale(LC_CTYPE, "");
 	fmtinstall('r', errfmt);
+	quotefmtinstall();
+
 	screen_hint = PointerScreen;
 
 	find = strstr;
@@ -227,7 +229,7 @@ main(int argc, char *argv[]) {
 		cmdsep = EARGF(usage());
 		break;
 	case 'v':
-		print("%s", version);
+		lprint(1, "%s", version);
 		return 0;
 	default:
 		usage();
@@ -235,8 +237,6 @@ main(int argc, char *argv[]) {
 
 	if(argc)
 		usage();
-
-	setlocale(LC_CTYPE, "");
 
 	initdisplay();
 

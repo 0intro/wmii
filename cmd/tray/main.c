@@ -116,7 +116,6 @@ main(int argc, char *argv[]) {
 	program_args = argv;
 
 	setlocale(LC_CTYPE, "");
-
 	fmtinstall('r', errfmt);
 	fmtinstall('E', fmtevent);
 
@@ -163,7 +162,7 @@ main(int argc, char *argv[]) {
 		debug++;
 		break;
 	case 'v':
-		print("%s", version);
+		lprint(1, "%s", version);
 		return 0;
 	default:
 		usage();
@@ -184,7 +183,7 @@ main(int argc, char *argv[]) {
 	if(tray.selection == nil)
 		fatal("Another system tray is already running.");
 	if(tray.selection->oldowner)
-		print("Replacing currently running system tray.\n");
+		lprint(1, "Replacing currently running system tray.\n");
 
 	xext_init();
 	tray_init();

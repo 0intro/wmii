@@ -116,7 +116,7 @@ main(int argc, char **argv)
 
 	ARGBEGIN{
 	case 'v':
-		print("%s\n", version);
+		lprint(1, "%s\n", version);
 		return 0;
 	case 'a':
 		address = EARGF(usage());
@@ -172,8 +172,8 @@ main(int argc, char **argv)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s -v\n", argv0);
-	fprintf(stderr, "       %s [-a <address>] [-i <arg>] menitem[:command] ...\n", argv0);
+	lprint(2, "usage: %s -v\n", argv0);
+	lprint(2, "       %s [-a <address>] [-i <arg>] menitem[:command] ...\n", argv0);
 	exit(0);
 }
 
@@ -210,8 +210,7 @@ run_menu(void)
 		XNextEvent(display, &ev);
 		switch (ev.type) {
 		default:
-			fprintf(stderr, "%s: unknown ev.type %d\n",
-				argv0, ev.type);
+			lprint(2, "%s: unknown ev.type %d\n", argv0, ev.type);
 			break;
 		case ButtonRelease:
 			i = ev.xbutton.y / high;
@@ -220,7 +219,7 @@ run_menu(void)
 			else if(i < 0 || i >= numitems)
 				return;
 
-			printf("%s\n", commands[i]);
+			lprint(1, "%s\n", commands[i]);
 			return;
 		case ButtonPress:
 		case MotionNotify:

@@ -335,12 +335,12 @@ main(int argc, char *argv[]) {
 	char *wmiirc, *s;
 	int i;
 
-	quotefmtinstall();
+	setlocale(LC_CTYPE, "");
 	fmtinstall('r', errfmt);
 	fmtinstall('a', afmt);
 	fmtinstall('C', Cfmt);
-extern int fmtevent(Fmt*);
 	fmtinstall('E', fmtevent);
+	quotefmtinstall();
 
 	wmiirc = "wmiirc";
 
@@ -353,7 +353,7 @@ extern int fmtevent(Fmt*);
 		wmiirc = EARGF(usage());
 		break;
 	case 'v':
-		print("%s", version);
+		lprint(1, "%s", version);
 		exit(0);
 	case 'D':
 		s = EARGF(usage());
@@ -368,7 +368,6 @@ extern int fmtevent(Fmt*);
 	if(argc)
 		usage();
 
-	setlocale(LC_CTYPE, "");
 	starting = true;
 
 	initdisplay();

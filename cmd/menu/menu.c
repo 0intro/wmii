@@ -90,9 +90,9 @@ next:
 		if(input.filter_start == 0 && input.pos == input.end)
 			menu_cmd(CMPL_FIRST, 0);
 		if(!motion && matchidx && !strcmp(input.string, matchidx->string))
-			print("%s", matchidx->retstring);
+			lprint(1, "%s", matchidx->retstring);
 		else
-			print("%s", input.string);
+			lprint(1, "%s", input.string);
 		break;
 	case REJECT:
 		srv.running = false;

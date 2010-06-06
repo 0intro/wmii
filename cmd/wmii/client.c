@@ -630,7 +630,6 @@ client_kill(Client *c, bool nice) {
 	ulong *pid;
 	long n;
 
-	c->dead = 1;
 	if(!nice) {
 		getprop_textlist(&c->w, "WM_CLIENT_MACHINE", &host);
 		n = getprop_ulong(&c->w, Net("WM_PID"), "CARDINAL", 0, &pid, 1);
@@ -642,6 +641,7 @@ client_kill(Client *c, bool nice) {
 		XKillClient(display, c->w.xid);
 	}
 	else if(c->proto & ProtoDelete) {
+		c->dead = 1;
 		client_message(c, "WM_DELETE_WINDOW", 0);
 		ewmh_checkresponsive(c);
 	}

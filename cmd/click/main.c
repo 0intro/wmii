@@ -41,8 +41,6 @@ main(int argc, char *argv[]) {
 		usage();
 	}ARGEND;
 
-	setlocale(LC_CTYPE, "");
-
 	initdisplay();
 
 	s = ARGF();

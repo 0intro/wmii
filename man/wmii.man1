@@ -210,17 +210,19 @@ Most aspects of `wmii` are controlled via the filesystem.
 It is usually accessed via the wmiir(1) command, but it
 can be accessed by any ``9P``, including plan9port's
 9P[1], and can be mounted natively on Linux via v9fs[1],
-and on Inferno (which man run on top of Linux).
+and on Inferno (which man run on top of Linux). All data in the
+filesystem, including filenames, is UTF-8 encoded. However, when
+accessed via wmiir(1), text is automatically translated to and
+from your locale encoding.
 
 The filesystem is, as are many other 9P filesystems, entirely
 synthetic. The files exist only in memory, and are not written
 to disk. They are generally initiated on wmii startup via a
-script such as rc.wmii or wmiirc. Several files read commands,
-others simply act as if they were ordinary files (their contents
-are updated and returned exactly as written), though writing
-them has side-effects (such as changing key bindings). A
-description of the filesystem layout and control commands
-follows.
+script such as wmiirc. Several files read commands, others
+simply act as if they were ordinary files (their contents are
+updated and returned exactly as written), though writing them
+has side-effects (such as changing key bindings). A description
+of the filesystem layout and control commands follows.
 
 == Hierarchy ==
 

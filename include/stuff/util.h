@@ -3,7 +3,9 @@
  */
 
 #include <stuff/geom.h>
+#include <langinfo.h>
 #include <stdarg.h>
+#include <bio.h>
 #include <fmt.h>
 #include <regexp9.h>
 
@@ -26,6 +28,12 @@ enum {
 	GInvert = 1<<0,
 };
 
+enum {
+	Runemax = (1 << (sizeof(Rune) * 8)) - 1,
+};
+
+#define utf8locale() (!strcmp(nl_langinfo(CODESET), "UTF-8"))
+
 #ifdef VARARGCK
 # pragma varargck	argpos	_die	3
 # pragma varargck	argpos	fatal	1
@@ -35,7 +43,8 @@ enum {
 #define strlcat stuff_strlcat
 #define strcasestr stuff_strcasestr
 
-
+int	Blprint(Biobuf*, const char*, ...);
+int	Bvlprint(Biobuf*, const char*, va_list);
 void	_die(char*, int, char*, ...);
 void	backtrace(char*);
 void	closeexec(int);
@@ -48,12 +57,16 @@ char*	estrdup(const char*);
 char*	estrndup(const char*, uint);
 void	fatal(const char*, ...);
 void*	freelater(void*);
-int	getbase(const	char**,	long*);
-bool	getint(const	char*,	int*);
-bool	getlong(const	char*,	long*);
-bool	getulong(const	char*,	ulong*);
+int	getbase(const char**, long*);
+bool	getint(const char*, int*);
+bool	getlong(const char*, long*);
+bool	getulong(const char*, ulong*);
 void	grep(char**, Reprog*, int);
 char*	join(char**, char*, Fmt*);
+int	localefmt(Fmt*);
+void	localefmtinstall(void);
+int	localelen(char*, char*);
+int	lprint(int, const char*, ...);
 int	max(int, int);
 int	min(int, int);
 uvlong	nsec(void);
@@ -64,7 +77,7 @@ int	spawn3(int[3], const char*, char*[]);
 int	spawn3l(int[3], const char*, ...);
 uint	stokenize(char**, uint, char*, char*);
 char*	strcasestr(const char*, const char*);
-char*	strend(char*,	int);
+char*	strend(char*, int);
 uint	strlcat(char*, const char*, uint);
 int	strlcatprint(char*, int, const char*, ...);
 char*	sxprint(const char*, ...);
@@ -73,6 +86,7 @@ void	trim(char *str, const char *chars);
 void	uniq(char**);
 int	unquote(char*, char*[], int);
 int	utflcpy(char*, const char*, int);
+int	vlprint(int, const char*, va_list);
 char*	vsxprint(const char*, va_list);
 extern char	buffer[8092];
 extern char*	_buffer;

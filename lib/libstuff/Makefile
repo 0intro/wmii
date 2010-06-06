@@ -34,6 +34,12 @@ OBJ=\
 	event/selectionrequest	\
 	event/unmapnotify	\
 	event/xtime		\
+	fmt/blprint		\
+	fmt/bvlprint		\
+	fmt/localefmt		\
+	fmt/localelen		\
+	fmt/lprint		\
+	fmt/vlprint		\
 	geom/get_sticky		\
 	geom/quadrant		\
 	geom/rect_contains_p	\
