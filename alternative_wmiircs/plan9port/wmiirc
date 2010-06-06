@@ -41,13 +41,17 @@ WMII_TERM=(xterm)
 
 # Column Rules
 wmiir write /colrules <<!
-/gimp/ -> 17+83+41
-/.*/ -> 62+38 # Golden Ratio
+    /gimp/ -> 17+83+41
+    /.*/ -> 62+38 # Golden Ratio
 !
 
 # Tagging Rules
-wmiir write /tagrules <<!
-/MPlayer|VLC/ -> ~
+wmiir write /rules <<!
+    # MPlayer and VLC don't float by default, but should.
+    /MPlayer|VLC/ floating=True
+    # ROX puts all of its windows in the same group, so they open
+    # with the same tags.  Disable grouping for ROX Filer.
+    /^ROX-Filer:/ group=0
 !
 
 # Status Bar Info
