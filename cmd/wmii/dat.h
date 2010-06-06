@@ -25,8 +25,8 @@
 
 enum {
 	PingTime = 10000,
-	PingPeriod = 2000,
-	PingPartition = 20,
+	PingPeriod = 4000,
+	PingPartition = 10,
 };
 
 enum IncMode {
@@ -162,6 +162,7 @@ struct Client {
 	Strut*	strut;
 	Cursor	cursor;
 	Rectangle r;
+	Rectangle configr;
 	char**	retags;
 	char	name[256];
 	char	tags[256];

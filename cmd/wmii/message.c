@@ -389,7 +389,7 @@ readctl_client(Client *c) {
 		bufprint("fullscreen %d\n", c->fullscreen);
 	else
 		bufprint("fullscreen off\n");
-	bufprint("group 0x%ulx\n", c->group ? c->group->leader : 0);
+	bufprint("group %#ulx\n", c->group ? c->group->leader : 0);
 	bufprint("tags %s\n", c->tags);
 	bufprint("urgent %s\n", TOGGLE(c->urgent));
 	return buffer;

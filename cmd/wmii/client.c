@@ -518,6 +518,7 @@ focus(Client *c, bool user) {
 	if(v != selview)
 		view_focus(screen, v);
 	frame_focus(c->sel);
+	view_restack(c->sel->view);
 }
 
 void
@@ -552,7 +553,6 @@ client_focus(Client *c) {
 
 void
 client_resize(Client *c, Rectangle r) {
-	bool client_resized, frame_resized;
 	Frame *f;
 
 	f = c->sel;
@@ -577,12 +577,10 @@ client_resize(Client *c, Rectangle r) {
 		client_unmap(c, IconicState);
 	}else {
 		client_map(c);
-		if((frame_resized = !eqrect(c->framewin->r, f->r)))
-			reshapewin(c->framewin, f->r);
-		if((client_resized = !eqrect(c->w.r, f->crect)))
-			reshapewin(&c->w, f->crect);
+		reshapewin(c->framewin, f->r);
+		reshapewin(&c->w, f->crect);
 		map_frame(c);
-		if(client_resized || frame_resized)
+		if(!eqrect(c->r, c->configr))
 			client_configure(c);
 		ewmh_framesize(c);
 	}
@@ -603,6 +601,7 @@ void
 client_configure(Client *c) {
 	Rectangle r;
 
+	c->configr = c->r;
 	r = rectsubpt(c->r, Pt(c->border, c->border));
 
 	sendevent(&c->w, false, StructureNotifyMask,

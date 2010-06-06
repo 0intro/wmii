@@ -217,7 +217,7 @@ event_client_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
 			return false;
 
 		Dprint(DEwmh, "\tsource: %ld\n", l[0]);
-		Dprint(DEwmh, "\twindow: 0x%lx\n", e->window);
+		Dprint(DEwmh, "\twindow: %#ulx\n", e->window);
 		Dprint(DEwmh, "\tclient: %C\n", c);
 		if(l[0] == SourceClient && abs(event_xtime - l[1]) > 5000)
 			return false;
@@ -229,7 +229,7 @@ event_client_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
 		if(e->format != 32)
 			return false;
 		Dprint(DEwmh, "\tsource: %ld\n", l[0]);
-		Dprint(DEwmh, "\twindow: 0x%lx\n", e->window);
+		Dprint(DEwmh, "\twindow: %#ulx\n", e->window);
 		client_kill(c, true);
 		return false;
 	}
