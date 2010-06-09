@@ -198,13 +198,6 @@ bdown_event(Window *w, void *aux, XButtonEvent *e) {
 }
 
 static bool
-config_event(Window *w, void *aux, XConfigureEvent *e) {
-
-	USED(w, e);
-	return false;
-}
-
-static bool
 enter_event(Window *w, void *aux, XCrossingEvent *e) {
 	Client *c;
 	Frame *f;
@@ -250,7 +243,6 @@ motion_event(Window *w, void *aux, XMotionEvent *e) {
 Handlers framehandler = {
 	.bup = bup_event,
 	.bdown = bdown_event,
-	.config = config_event,
 	.enter = enter_event,
 	.expose = expose_event,
 	.motion = motion_event,
@@ -498,9 +490,9 @@ frame_draw(Frame *f) {
 	if((s = client_extratags(c))) {
 		pushlabel(img, &r, s, col);
 		free(s);
-	}else /* Make sure floating clients have room for their indicators. */
-	if(c->floating)
+	}else if(f->area->floating)  /* Make sure floating clients have room for their indicators. */
 		r.max.x -= Dx(f->grabbox);
+
 	if(!ewmh_responsive_p(c))
 		r.min.x += drawstring(img, def.font, r, West, "(wedged) ", col->fg);
 	w = drawstring(img, def.font, r, West, c->name, col->fg);
@@ -508,7 +500,7 @@ frame_draw(Frame *f) {
 	/* Draw inner border on floating clients. */
 	if(f->area->floating) {
 		r.min.x = r.min.x + w + 10;
-		r.max.x += Dx(f->grabbox) - 2;
+		r.max.x += Dx(f->grabbox);
 		r.min.y = f->grabbox.min.y;
 		r.max.y = f->grabbox.max.y;
 		border(img, r, 1, col->border);
@@ -623,18 +615,16 @@ frame_focus(Frame *f) {
 	if(f->area->floating)
 		f->collapsed = false;
 
-	if(v != selview || a != v->sel || resizing)
-		return;
+	if(v == selview && a == v->sel && !resizing) {
+		move_focus(old_f, f);
+		if(a->floating)
+			float_arrange(a);
+		client_focus(f->client);
 
-	move_focus(old_f, f);
-	if(a->floating)
-		float_arrange(a);
-	client_focus(f->client);
-
-	/*
-	if(!a->floating && ((a->mode == Colstack) || (a->mode == Colmax)))
-	*/
-		column_arrange(a, false);
+		// if(!a->floating && ((a->mode == Colstack) || (a->mode == Colmax)))
+		if(true)
+			column_arrange(a, false);
+	}
 }
 
 int

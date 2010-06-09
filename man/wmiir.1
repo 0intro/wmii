@@ -6,9 +6,9 @@ wmiir \- The wmii 9P filesystem client
 
 .SH SYNOPSIS
 .P
-wmiir \fI[\-a \fI<address>\fR]\fR {create | ls \fI[\-dlp]\fR | read | remove | write} \fI<file>\fR 
+wmiir \fI[\-a \fI<address>\fR]\fR \fI[\-b]\fR {create | ls \fI[\-dlp]\fR | read | remove | write} \fI<file>\fR 
 .P
-wmiir \fI[\-a \fI<address>\fR]\fR xwrite \fI<file>\fR \fI<data>\fR ... 
+wmiir \fI[\-a \fI<address>\fR]\fR \fI[\-b]\fR xwrite \fI<file>\fR \fI<data>\fR ... 
 .P
 wmiir \-v
 
@@ -19,10 +19,27 @@ to its virtual filesystem by default. \fBwmiir\fR is most often used to query an
 issue commands to \fBwmii\fR, both from the command line and from its \fBsh\fR\-based
 configuration scripts.
 
+.P
+Since the default encoding of 9P filesystems is UTF\-8, \fBwmiir\fR
+assumes that all data read and written is text data and
+translates to or from your locale character encoding as
+necessary. When working with non\-text data in a non\-UTF\-8
+locale, the \fI\-b\fR flag should be specified to disable this
+behavior.
+
 .SH ARGUMENTS
 .TP
 \-a
 The address at which to connect to \fBwmii\fR.
+.TP
+\-b
+
+.RS
+With the \fI\-b\fR flag, data that you intend to read or
+write is treated as binary data.
+.RE
+.P
+:
 
 .SH COMMANDS
 .P

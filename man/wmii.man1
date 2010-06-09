@@ -26,13 +26,13 @@ user, rather than forcing him to use a preset, fixed layout and
 trying to shoehorn all windows and applications into it.
 
 `wmii` supports classic and tiled window management with
-extended keyboard and mouse control. The classic window
-management arranges windows in a floating layer in which windows
-can be moved and resized freely. The tiled window management is
-based on columns which split up the screen horizontally. Each
-column handles arbitrary windows and arranges them vertically in
-a non-overlapping way. They can then be moved and resized
-between and within columns at will.
+extended keyboard and mouse control. Classic window management
+arranges windows in a floating layer in which tyen can be moved
+and resized freely. Tiled window management arranges windows in
+vertical columns.  Each column holds an arbitrary number
+arbitrary windows and arranges them vertically in a
+non-overlapping manner. They can then be moved and resized,
+among and within columns, at will.
 
 `wmii` provides a virtual filesystem which represents the
 internal state similar to the procfs of Unix operating systems.
@@ -42,10 +42,6 @@ accessed through 9P-capable client programs, like
 wmiir(1).  This allows simple and powerful remote control
 of the core window manager.
 
-`wmii` basically consists of clients, columns, views, and
-the bar, which are described in detail in the
-**Terminology** section.
-
 == Command Line Arguments ==
 
 : -a <address>
@@ -53,13 +49,13 @@ the bar, which are described in detail in the
         connections. The address takes the form
         `<protocol>!<address>`. The default is of the form:
 
-                unix!/tmp/ns.$USER.${DISPLAY%.0}/wmii
+```     unix!/tmp/ns.$USER.${DISPLAY%.0}/wmii
 
         which opens a unix socket per Plan 9 Port conventions. To
         open a TCP socket, listening at port 4332 on the loopback
         interface, use:
 
-                tcp!localhost!4332
+```     tcp!localhost!4332
 
         $WMII_NAMESPACE is automatically set to this value.
 
@@ -69,7 +65,7 @@ the bar, which are described in detail in the
         Otherwise, it is passed to the shell for evaluation. The
         environment variables $WMII_ADDRESS and $WMII_CONFPATH are
         preset for the script.
-
+:
 == Terminology ==
 
 : Display
@@ -77,26 +73,23 @@ the bar, which are described in detail in the
         devices and screens.
 : Screen
         A physical or virtual (Xinerama or Xnest(1))
-        screen of an X display. A screen displays a bar window
-        and a view at a time.
+        screen of an X display.
 : Window
         A (rectangular) drawable X object which is
         displayed on a screen, usually an application window.
 : Client
         An application window surrounded by a frame window
         containing a border and a titlebar.
-
 : Floating layer
-        A screen layer of `wmii` on top of
-        all other layers, where clients are arranged in a
-        classic (floating) way.  They can be resized or moved
-        freely.
+        A screen layer of `wmii` on top of all other layers,
+        where clients are arranged in a classic (floating)
+        manner.  They can be resized or moved freely.
 : Managed layer
-        A screen layer of `wmii` behind the
-        floating layer, where clients are arranged in a
-        non-overlapping (managed) way.  Here, the window
-        manager dynamically assigns each client a size and
-        position.  The managed layer consists of columns.
+        A screen layer of `wmii` underneath the floating layer,
+        where clients are arranged in a non-overlapping
+        (managed) manner.  Here, the window manager dynamically
+        assigns each client a size and position.  The managed
+        layer consists of columns.
 : Tag
         Alphanumeric strings which can be assigned to a
         client. This provides a mechanism to group clients with
@@ -105,14 +98,12 @@ the bar, which are described in detail in the
         Tags are separated with the _+_ character.
 : View
         A set of clients containing a specific tag, quite
-        similar to a workspace in other window managers.  It
+        similar to a workspace in other window managers. It
         consists of the floating and managed layers.
 : Column
         A column is a screen area which arranges clients
-        vertically in a non-overlapping way. Columns provide
-        three different modes, which arrange clients with equal
-        size, stacked, or maximized respectively.  Clients can
-        be moved and resized between and within columns freely.
+        vertically in a non-overlapping way. Clients can be
+        moved and resized between and within columns freely.
 : Bar
         The bar at the bottom of the screen displays a label
         for each view and allows the creation of arbitrary
@@ -126,36 +117,32 @@ the bar, which are described in detail in the
 
 == Basic window management ==
 
-Running a raw `wmii` process without a wmiirc(1)
-script provides basic window management capabilities already.
-However, to use it effectively, remote control through its
-filesystem interface is necessary.  By default it is only usable
-with the mouse in conjunction with the //Mod1 (Alt)//
-modifier key. Other interactions, such as customizing the style,
-killing or retagging clients, and grabbing keys, cannot be
-achieved without accessing the filesystem.
+Running a raw `wmii` process without a wmiirc(1) script provides
+basic window management capabilities.  However, to use it
+effectively, remote control through its filesystem interface is
+necessary.  Without such a script, it is only possible to move
+and resize clients with the mouse, but not to change their tags
+or to switch views.  Other interactions, such as customizing the
+style, killing or retagging clients, and grabbing keys, cannot
+be achieved without accessing the filesystem.
 
-The filesystem can be accessed by connecting to the
-//address// of `wmii` with any 9P-capable client, such
-as wmiir(1)
+The filesystem can be accessed by connecting to the //address//
+of `wmii` with any 9P-capable client, such as wmiir(1)
 
 == Actions ==
 
-An action is a shell script in the default setup, but it can
-actually be any executable file.  It is executed usually by
-selecting it from the actions menu.  You can customize an action
-by copying it from the global action directory
-'@CONFPREFIX@/wmii@CONFVERSION@' to '$HOME/.wmii@CONFVERSION@' and then
-editing the copy to fit your needs.  Of course you can also
-create your own actions there; make sure that they are
-executable.
+The default configuration provides for a special menu of
+actions. These consist of either shell scripts in $WMII_CONFPATH
+or action definitions included in wmiirc.
 
 Here is a list of the default actions:
 
-| quit     | leave the window manager nicely
-| status   | periodically print date and load average to the bar
-| welcome  | display a welcome message that contains the wmii tutorial
-| wmiirc   | configure wmii
+| exec     | Replace the window manager with another program
+| quit     | Leave the window manager nicely
+| rehash   | Refresh the program list
+| showkeys | Display a list of key bindings recognized by wmii
+| status   | Periodically print date and load average to the bar
+| welcome  | Display a welcome message that contains the wmii tutorial
 
 == Default Key Bindings ==
 
@@ -206,23 +193,24 @@ the bar labels, etc.
 
 == Filesystem ==
 
-Most aspects of `wmii` are controlled via the filesystem.
-It is usually accessed via the wmiir(1) command, but it
-can be accessed by any ``9P``, including plan9port's
-9P[1], and can be mounted natively on Linux via v9fs[1],
-and on Inferno (which man run on top of Linux). All data in the
-filesystem, including filenames, is UTF-8 encoded. However, when
-accessed via wmiir(1), text is automatically translated to and
-from your locale encoding.
+Most aspects of `wmii` are controlled via the filesystem.  It is
+usually accessed via the wmiir(1) command, but it can be
+accessed by any ``9P``, including plan9port's 9P[1], and can be
+mounted natively on Linux via v9fs[1], and on Inferno (which man
+run on top of Linux). All data in the filesystem, including
+filenames, is UTF-8 encoded. However, when accessed via
+wmiir(1), text is automatically translated to and from your
+locale encoding.
 
 The filesystem is, as are many other 9P filesystems, entirely
 synthetic. The files exist only in memory, and are not written
 to disk. They are generally initiated on wmii startup via a
-script such as wmiirc. Several files read commands, others
-simply act as if they were ordinary files (their contents are
-updated and returned exactly as written), though writing them
-has side-effects (such as changing key bindings). A description
-of the filesystem layout and control commands follows.
+script such as wmiirc. Several files are used to issue commands,
+others simply act as if they were ordinary files (their contents
+are updated and returned exactly as written), though writing
+them has side-effects (such as changing key bindings). A
+description of the filesystem layout and control commands
+follows.
 
 == Hierarchy ==
 
@@ -273,16 +261,15 @@ of the filesystem layout and control commands follows.
         special meaning:
 
         >>
-	: continue
-		Normally, when a matching rule is encountered, rule
-		matching stops. When the continue key is provided
-		(with any value), matching continues at the next
-		rule.
-        : default-tags=<tags>
-                Like _tags_, but only sets the tags if they can't be
+        : continue
+                Normally, when a matching rule is encountered, rule
+                matching stops. When the continue key is provided
+                (with any value), matching continues at the next
+                rule.
+        : force-tags=<tags>
+                Like _tags_, but overrides any settings obtained
                 obtained from the client's group or from the
-                \_WMII_TAGS window property. This key should be
-                preferred to the _tags_ key in most cases.
+                **\_WMII_TAGS** window property.
         <<
 : keys
         The _keys_ file contains a list of keys which
@@ -310,8 +297,9 @@ of the filesystem layout and control commands follows.
         : [Left|Right]Bar[Click|MouseDown] <button> <bar>
                 A left or right bar has been clicked or has a
                 button pressed over it.
-        :  
+        :
         <<
+
         For a more comprehensive list of available events, see
         _wmii.pdf_[2]
 
@@ -357,10 +345,14 @@ represents the currently selected client.
                 done via the rules file.
         : kill
                 Close the client's window.
+        : pid
+                Read-only value of the PID of the program that
+                owns the window, if the value is available and
+                the process is on the same machine as wmii.
         : slay
                 Forcibly kill the client's connection to the X
                 server, closing all of its windows. Kill the parent
-                process if the client provides its PID.
+                process if the client's PID is available.
         : tags <tags>
                 The client's tags. The same as the tags file.
         : urgent <on | off | toggle>
@@ -498,14 +490,16 @@ thus can be used in actions:
 
 : $WMII_ADDRESS
         The address on which `wmii` is listening.
+: $WMII_CONFPATH
+        The path that wmii searches for its configuration
+        scripts and actions.
 : $NAMESPACE
         The namespace directory to use if no address is provided.
 :
 = SEE ALSO =
-dmenu(1), wmiir(1)
-
+wimenu(1), wmii9menu(1), witray(1), wmiir(1), wihack(1) +
 @DOCDIR@/wmii.pdf
 
-[1] http://www.suckless.org/wiki/wmii/tips/9p_tips
+[1] http://www.suckless.org/wiki/wmii/tips/9p_tips +
 [2] @DOCDIR@/wmii.pdf
 

@@ -314,7 +314,7 @@ view_update(View *v) {
 			if(f->area)
 				client_resize(c, f->r);
 		}else {
-			unmap_frame(c);
+			client_unmapframe(c);
 			client_unmap(c, IconicState);
 		}
 		ewmh_updatestate(c);

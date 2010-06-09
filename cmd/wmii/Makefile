@@ -4,8 +4,9 @@ include $(ROOT)/mk/wmii.mk
 
 main.c: $(ROOT)/mk/wmii.mk
 
-TARG =	wmii
-HFILES=	dat.h fns.h
+TARG     = wmii
+HFILES   = dat.h fns.h
+TAGFILES = dat.h
 
 PACKAGES += $(X11PACKAGES) xext xrandr xrender xinerama
 
@@ -34,6 +35,7 @@ OBJ =	area	\
 	root	\
 	rule	\
 	screen	\
+	stack	\
 	utf	\
 	view	\
 	xdnd

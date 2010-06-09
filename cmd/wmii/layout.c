@@ -586,7 +586,7 @@ tfloat(Frame *f, bool moved) {
 		view_update(f->view);
 		warppointer(grabboxcenter(f));
 	}
-	map_frame(f->client);
+	client_mapframe(f->client);
 	if(!f->collapsed)
 		focus(f->client, false);
 
@@ -635,7 +635,7 @@ shut_up_ken:
 		case ButtonPress:
 			if(button != 3)
 				continue;
-			unmap_frame(f->client);
+			client_unmapframe(f->client);
 			ret = THCol;
 			goto done;
 		}

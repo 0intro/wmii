@@ -12,6 +12,7 @@
 #define Mbsearch(k, l, cmp) bsearch(k, l, nelem(l), sizeof(*l), cmp)
 
 static Handlers handlers;
+static Handlers ignorehandlers;
 
 enum {
 	ClientMask = StructureNotifyMask
@@ -95,8 +96,9 @@ Client*
 client_create(XWindow w, XWindowAttributes *wa) {
 	Client **t, *c;
 	WinAttr fwa;
-	Point p;
 	Visual *vis;
+	char **host = nil;
+	ulong *pid = nil;
 	int depth;
 
 	c = emallocz(sizeof *c);
@@ -110,15 +112,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	c->w.xid = w;
 	c->w.r = c->r;
 
-	depth = scr.depth;
-	vis = scr.visual;
-	/* XXX: Multihead. */
-	c->ibuf = &ibuf;
-	if(render_argb_p(wa->visual)) {
-		depth = 32;
-		vis = scr.visual32;
-		c->ibuf = &ibuf32;
-	}
+	setborder(&c->w, 0, (Color){0});
 
 	client_prop(c, xatom("WM_PROTOCOLS"));
 	client_prop(c, xatom("WM_TRANSIENT_FOR"));
@@ -128,21 +122,35 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	client_prop(c, xatom("WM_NAME"));
 	client_prop(c, xatom("_MOTIF_WM_HINTS"));
 
-	XSetWindowBorderWidth(display, w, 0);
-	XAddToSaveSet(display, w);
+	if(getprop_textlist(&c->w, "WM_CLIENT_MACHINE", &host) &&
+	   getprop_ulong(&c->w, Net("WM_PID"), "CARDINAL", 0, &pid, 1) &&
+	   !strcmp(hostname, *host))
+		c->pid = (int)*pid;
+	freestringlist(host);
+	free(pid);
+
+	if(render_argb_p(wa->visual)) {
+		depth = 32;
+		vis = scr.visual32;
+		c->ibuf = &ibuf32;
+	}else {
+		depth = scr.depth;
+		vis = scr.visual;
+		c->ibuf = &ibuf;
+	}
 
 	fwa.background_pixmap = None;
 	fwa.bit_gravity = NorthWestGravity;
-	fwa.border_pixel = 0;
+	fwa.border_pixel = 0; /* Required for ARGB windows. */
 	fwa.colormap = XCreateColormap(display, scr.root.xid, vis, AllocNone);
-	fwa.event_mask = SubstructureRedirectMask
-		       | SubstructureNotifyMask
-		       | StructureNotifyMask
-		       | ExposureMask
+	fwa.event_mask = ButtonPressMask
+		       | ButtonReleaseMask
 		       | EnterWindowMask
+		       | ExposureMask
 		       | PointerMotionMask
-		       | ButtonPressMask
-		       | ButtonReleaseMask;
+		       | StructureNotifyMask
+		       | SubstructureNotifyMask
+		       | SubstructureRedirectMask;
 	fwa.override_redirect = true;
 	c->framewin = createwindow_visual(&scr.root, c->r,
 			depth, vis, InputOutput,
@@ -158,12 +166,11 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	c->framewin->aux = c;
 	c->w.aux = c;
 	sethandler(c->framewin, &framehandler);
+	pushhandler(c->framewin, &ignorehandlers, nil);
 	sethandler(&c->w, &handlers);
+	pushhandler(&c->w, &ignorehandlers, nil);
 
 	selectinput(&c->w, ClientMask);
-
-	p.x = def.border;
-	p.y = labelh(def.font);
 
 	group_init(c);
 
@@ -184,7 +191,8 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	 * perceptibly empty frame before it's destroyed.
 	 */
 	traperrors(true);
-	reparentwindow(&c->w, c->framewin, p);
+	XAddToSaveSet(display, w);
+	reparentwindow(&c->w, c->framewin, ZP);
 	if(traperrors(false)) {
 		client_destroy(c);
 		return nil;
@@ -204,7 +212,7 @@ apply_rules(Client *c) {
 	Ruleval *rv;
 	bool ret, more;
 
-	ret = false;
+	ret = true;
 	for(r=def.rules.rule; r; r=r->next)
 		if(regexec(r->regex, c->props, nil, 0)) {
 			more = false;
@@ -213,9 +221,9 @@ apply_rules(Client *c) {
 					more = true;
 				else if(!strcmp(rv->key, "tags"))
 					utflcpy(c->tags, rv->value, sizeof c->tags);
-				else if(!strcmp(rv->key, "default-tags")) {
+				else if(!strcmp(rv->key, "force-tags")) {
 					utflcpy(c->tags, rv->value, sizeof c->tags);
-					ret = true;
+					ret = false;
 				}else {
 					bufclear();
 					bufprint("%s %s", rv->key, rv->value);
@@ -489,12 +497,12 @@ client_unmap(Client *c, int state) {
 }
 
 int
-map_frame(Client *c) {
+client_mapframe(Client *c) {
 	return mapwin(c->framewin);
 }
 
 int
-unmap_frame(Client *c) {
+client_unmapframe(Client *c) {
 	return unmapwin(c->framewin);
 }
 
@@ -503,22 +511,14 @@ focus(Client *c, bool user) {
 	View *v;
 	Frame *f;
 
-	if(!user && c->nofocus)
-		return;
-
-	f = c->sel;
-	if(!f)
-		return;
-	/*
-	if(!user && c->noinput)
-		return;
-	 */
-
-	v = f->view;
-	if(v != selview)
-		view_focus(screen, v);
-	frame_focus(c->sel);
-	view_restack(c->sel->view);
+	if(!c->nofocus || user)
+	if((f = c->sel)) {
+		v = f->view;
+		if(v != selview)
+			view_focus(screen, v);
+		frame_focus(c->sel);
+		view_restack(c->sel->view);
+	}
 }
 
 void
@@ -535,8 +535,9 @@ client_focus(Client *c) {
 	Dprint(DFocus, "\t[%#C]%C\n\t=> [%#C]%C\n",
 			disp.focus, disp.focus,
 			c, c);
+
 	if(disp.focus != c) {
-		if(c) {
+		if(c && !c->sel->collapsed) {
 			if(!c->noinput)
 				setfocus(&c->w, RevertToParent);
 			else if(c->proto & ProtoTakeFocus) {
@@ -560,7 +561,7 @@ client_resize(Client *c, Rectangle r) {
 
 	if(f->view != selview) {
 		client_unmap(c, IconicState);
-		unmap_frame(c);
+		client_unmapframe(c);
 		return;
 	}
 
@@ -568,18 +569,18 @@ client_resize(Client *c, Rectangle r) {
 
 	if(f->collapsed) {
 		if(f->area->max && !resizing)
-			unmap_frame(c);
+			client_unmapframe(c);
 		else {
 			reshapewin(c->framewin, f->r);
 			movewin(&c->w, f->crect.min);
-			map_frame(c);
+			client_mapframe(c);
 		}
 		client_unmap(c, IconicState);
 	}else {
 		client_map(c);
 		reshapewin(c->framewin, f->r);
 		reshapewin(&c->w, f->crect);
-		map_frame(c);
+		client_mapframe(c);
 		if(!eqrect(c->r, c->configr))
 			client_configure(c);
 		ewmh_framesize(c);
@@ -625,18 +626,10 @@ client_message(Client *c, char *msg, long l2) {
 
 void
 client_kill(Client *c, bool nice) {
-	char **host;
-	ulong *pid;
-	long n;
 
 	if(!nice) {
-		getprop_textlist(&c->w, "WM_CLIENT_MACHINE", &host);
-		n = getprop_ulong(&c->w, Net("WM_PID"), "CARDINAL", 0, &pid, 1);
-		if(n && *host && !strcmp(hostname, *host))
-			kill((uint)*pid, SIGKILL);
-		freestringlist(host);
-		free(pid);
-
+		if(c->pid)
+			kill(c->pid, SIGKILL);
 		XKillClient(display, c->w.xid);
 	}
 	else if(c->proto & ProtoDelete) {
@@ -746,16 +739,8 @@ client_seturgent(Client *c, int urgent, int from) {
 /* X11 stuff */
 void
 update_class(Client *c) {
-	char *str;
 
-	str = utfrune(c->props, L':');
-	if(str)
-		str = utfrune(str+1, L':');
-	if(str == nil) {
-		strcpy(c->props, "::");
-		str = c->props + 1;
-	}
-	utflcpy(str+1, c->name, sizeof c->props);
+	snprint(c->props, sizeof c->props, "%s:%s", c->class, c->name);
 }
 
 static void
@@ -764,10 +749,10 @@ client_updatename(Client *c) {
 
 	c->name[0] = '\0';
 
-	str = windowname(&c->w);
-	if(str)
+	if((str = windowname(&c->w))) {
 		utflcpy(c->name, str, sizeof c->name);
-	free(str);
+		free(str);
+	}
 
 	update_class(c);
 	if(c->sel)
@@ -815,7 +800,7 @@ updatemwm(Client *c) {
 	}
 	free(ret);
 
-	if(c->sel && false) {
+	if(false && c->sel) {
 		c->sel->floatr = client_grav(c, r);
 		if(c->sel->area->floating) {
 			client_resize(c, c->sel->floatr);
@@ -854,8 +839,8 @@ client_prop(Client *c, Atom a) {
 		if(c->w.hints)
 			c->fixedsize = eqpt(c->w.hints->min, c->w.hints->max);
 		if(memcmp(&h, c->w.hints, sizeof h))
-		if(c->sel)
-			view_update(c->sel->view);
+			if(c->sel)
+				view_update(c->sel->view);
 		break;
 	case XA_WM_HINTS:
 		wmh = XGetWMHints(display, c->w.xid);
@@ -867,9 +852,9 @@ client_prop(Client *c, Atom a) {
 		break;
 	case XA_WM_CLASS:
 		n = getprop_textlist(&c->w, "WM_CLASS", &class);
-		snprint(c->props, sizeof c->props, "%s:%s:",
-				(n > 0 ? class[0] : "<nil>"),
-				(n > 1 ? class[1] : "<nil>"));
+		snprint(c->class, sizeof c->class, "%s:%s",
+			(n > 0 ? class[0] : "<nil>"),
+			(n > 1 ? class[1] : "<nil>"));
 		freestringlist(class);
 		update_class(c);
 		break;
@@ -908,9 +893,9 @@ configreq_event(Window *w, void *aux, XConfigureRequestEvent *e) {
 	cr = r;
 	r = client_grav(c, r);
 
-	if(c->sel->area->floating) {
+	if(c->sel->area->floating)
 		client_resize(c, r);
-	}else {
+	else {
 		c->sel->floatr = r;
 		client_configure(c);
 	}
@@ -989,7 +974,7 @@ unmap_event(Window *w, void *aux, XUnmapEvent *e) {
 		c->w.unmapped++;
 	if(e->send_event || c->w.unmapped < 0)
 		client_destroy(c);
-	return false;
+	return true;
 }
 
 static bool
@@ -1001,7 +986,7 @@ map_event(Window *w, void *aux, XMapEvent *e) {
 	c = aux;
 	if(c == selclient())
 		client_focus(c);
-	return false;
+	return true;
 }
 
 static bool
@@ -1021,6 +1006,18 @@ static Handlers handlers = {
 	.map = map_event,
 	.unmap = unmap_event,
 	.property = property_event,
+};
+
+static bool
+ignoreenter_event(Window *w, void *aux, XAnyEvent *e) {
+	ignoreenter = e->serial;
+	return true;
+}
+
+static Handlers ignorehandlers = {
+	.map = (bool(*)(Window*, void*, XMapEvent*))ignoreenter_event,
+	.unmap = (bool(*)(Window*, void*, XUnmapEvent*))ignoreenter_event,
+	.config = (bool(*)(Window*, void*, XConfigureEvent*))ignoreenter_event,
 };
 
 /* Other */

@@ -300,29 +300,18 @@ area_focus(Area *a) {
 	if(a != old_a)
 		v->oldsel = nil;
 
-	if((old_a) && (a->floating != old_a->floating)) {
+	if(old_a && a->floating != old_a->floating) {
 		v->revert = old_a;
 		if(v->floating->max)
 			view_update(v);
 	}
 
-	if(v != selview)
-		return;
+	if(v == selview) {
+		move_focus(old_a->sel, f);
+		client_focus(f ? f->client : nil);
 
-	move_focus(old_a->sel, f);
-
-	if(f)
-		client_focus(f->client);
-	else
-		client_focus(nil);
-
-	if(a != old_a) {
-		event("AreaFocus %a\n", a);
-		/* Deprecated */
-		if(a->floating)
-			event("FocusFloating\n");
-		else
-			event("ColumnFocus %d\n", area_idx(a));
+		if(a != old_a)
+			event("AreaFocus %a\n", a);
 	}
 }
 

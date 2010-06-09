@@ -63,10 +63,10 @@ enum {
 
 extern char*	modes[];
 
-#define toggle(val, x) \
-	((x) == On     ? true   : \
-	 (x) == Off    ? false  : \
-	 (x) == Toggle ? !(val) : (val))
+#define toggle(val, x)	\
+	((val) = ((x) == On     ? true   : \
+		  (x) == Off    ? false  : \
+		  (x) == Toggle ? !(val) : (val)))
 #define TOGGLE(x) \
 	((x) == On     ? "on"     : \
 	 (x) == Off    ? "off"    : \
@@ -165,10 +165,12 @@ struct Client {
 	Rectangle configr;
 	char**	retags;
 	char	name[256];
+	char	class[256];
 	char	tags[256];
 	char	props[512];
 	long	proto;
 	uint	border;
+	int	pid;
 	int	dead;
 	int	fullscreen;
 	bool	floating;

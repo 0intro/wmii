@@ -95,9 +95,9 @@ void	fullscreen(Client*, int, long);
 void	group_init(Client*);
 Client*	group_leader(Group*);
 void	group_remove(Client*);
-int	map_frame(Client*);
+int	client_mapframe(Client*);
 Client*	selclient(void);
-int	unmap_frame(Client*);
+int	client_unmapframe(Client*);
 void	update_class(Client*);
 Client*	win2client(XWindow);
 Rectangle	client_grav(Client*, Rectangle);
@@ -120,9 +120,6 @@ void	column_settle(Area*);
 void	div_draw(Divide*);
 void	div_set(Divide*, int x);
 void	div_update_all(void);
-bool	find(Area**, Frame**, int, bool, bool);
-int	stack_count(Frame*, int*);
-Frame*	stack_find(Area*, Frame*, int, bool);
 
 /* error.c */
 #define waserror() setjmp(*pusherror())
@@ -252,6 +249,14 @@ int	ownerscreen(Rectangle);
 
 /* rule.c */
 void	update_rules(Rule**, char*);
+
+/* stack.c */
+bool	find(Area* *, Frame**, int, bool, bool);
+int	stack_count(Frame*, int*);
+Frame*	stack_find(Area*, Frame*, int, bool);
+void	stack_info(Frame*, Frame**, Frame**, int*, int*);
+void	stack_scale(Frame*, int);
+
 
 /* view.c */
 void	view_arrange(View*);

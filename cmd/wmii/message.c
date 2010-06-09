@@ -15,7 +15,7 @@ static char* msg_sendframe(Frame*, int, bool);
 	s == LDOWN	? South : \
 	s == LLEFT	? West  : \
 	s == LRIGHT	? East  : \
-			  (abort(), 0))
+	(error(Ebadvalue), 0))
 
 static char
 	Ebadcmd[] = "bad command",
@@ -390,6 +390,8 @@ readctl_client(Client *c) {
 	else
 		bufprint("fullscreen off\n");
 	bufprint("group %#ulx\n", c->group ? c->group->leader : 0);
+	if(c->pid)
+		bufprint("pid %d\n", c->pid);
 	bufprint("tags %s\n", c->tags);
 	bufprint("urgent %s\n", TOGGLE(c->urgent));
 	return buffer;
@@ -417,7 +419,7 @@ message_client(Client *c, IxpMsg *m) {
 
 	switch(getsym(s)) {
 	case LFLOATING:
-		c->floating = toggle(c->floating, gettoggle(m->pos));
+		toggle(c->floating, gettoggle(m->pos));
 		break;
 	case LFULLSCREEN:
 		s = msg_getword(m);
@@ -909,48 +911,43 @@ msg_selectframe(Area *a, IxpMsg *m, int sym) {
 	fp = f;
 
 	stack = false;
-	if(sym == LUP || sym == LDOWN) {
-		s = msg_getword(m);
-		if(s)
+	if(sym == LUP || sym == LDOWN)
+		if((s = msg_getword(m)))
 			if(!strcmp(s, "stack"))
 				stack = true;
 			else
 				return Ebadvalue;
-	}
 
 	if(sym == LCLIENT) {
 		s = msg_getword(m);
 		i = msg_getulong(s);
 		c = win2client(i);
 		if(c == nil)
-			return "unknown client";
+			return Ebadvalue;
 		f = client_viewframe(c, a->view);
 		if(!f)
 			return Ebadvalue;
 	}
-	else {
-		if(!find(&a, &f, DIR(sym), true, stack))
-			return Ebadvalue;
-	}
+	else if(!find(&a, &f, DIR(sym), true, stack))
+		return Ebadvalue;
 
 	area_focus(a);
 
-	if(!f)
-		return nil;
+	if(f != nil) {
+		/* XXX */
+		if(fp && fp->area == a)
+		if(f->collapsed && !f->area->floating && f->area->mode == Coldefault) {
+			dy = Dy(f->colr);
+			f->colr.max.y = f->colr.min.y + Dy(fp->colr);
+			fp->colr.max.y = fp->colr.min.y + dy;
+			column_arrange(a, false);
+		}
 
-	/* XXX */
-	if(fp && fp->area == a)
-	if(f->collapsed && !f->area->floating && f->area->mode == Coldefault) {
-		dy = Dy(f->colr);
-		f->colr.max.y = f->colr.min.y + Dy(fp->colr);
-		fp->colr.max.y = fp->colr.min.y + dy;
-		column_arrange(a, false);
+		frame_focus(f);
+		frame_restack(f, nil);
+		if(f->view == selview)
+			view_restack(a->view);
 	}
-
-	frame_focus(f);
-	frame_restack(f, nil);
-	if(f->view == selview)
-		view_restack(a->view);
 	return nil;
 }
 
@@ -984,9 +981,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	int sym;
 
 	s = msg_getword(m);
-
 	c = strclient(v, s);
-
 	f = client_viewframe(c, v);
 	if(f == nil)
 		return Ebadvalue;

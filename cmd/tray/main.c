@@ -183,7 +183,7 @@ main(int argc, char *argv[]) {
 	if(tray.selection == nil)
 		fatal("Another system tray is already running.");
 	if(tray.selection->oldowner)
-		lprint(1, "Replacing currently running system tray.\n");
+		lprint(1, "%s: Replacing currently running system tray.\n", argv0);
 
 	xext_init();
 	tray_init();
