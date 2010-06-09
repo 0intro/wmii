@@ -19,9 +19,9 @@
 #include <stuff/util.h>
 #include "debug.h"
 
-#define FONT		"-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*"
-#define FOCUSCOLORS	"#ffffff #335577 #447799"
-#define NORMCOLORS	"#222222 #eeeeee #666666"
+#define FONT		"fixed"
+#define FOCUSCOLORS	"#000000 #81654f #000000"
+#define NORMCOLORS	"#000000 #c1c48b #81654f"
 
 enum {
 	PingTime = 10000,
