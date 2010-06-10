@@ -48,7 +48,7 @@ wmiir write /colrules <<!
 # Tagging Rules
 wmiir write /rules <<!
     # MPlayer and VLC don't float by default, but should.
-    /MPlayer|VLC/ floating=True
+    /MPlayer|VLC/ floating=on
     # ROX puts all of its windows in the same group, so they open
     # with the same tags.  Disable grouping for ROX Filer.
     /^ROX-Filer:/ group=0

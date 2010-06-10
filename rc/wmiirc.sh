@@ -51,7 +51,7 @@ wmiir write /colrules <<!
 # Tagging Rules
 wmiir write /rules <<!
     # MPlayer and VLC don't float by default, but should.
-    /MPlayer|VLC/ floating=True
+    /MPlayer|VLC/ floating=on
     # ROX puts all of its windows in the same group, so they open
     # with the same tags.  Disable grouping for ROX Filer.
     /^ROX-Filer:/ group=0
@@ -228,10 +228,10 @@ Key $MODKEY-Control-t # Toggle all other key bindings
 
 KeyGroup Tag actions
 Key $MODKEY-t       # Change to another tag
-	(tag=$(wi_tags | wimenu -h "${hist}.tags" -n 50) && wmiir xwrite /ctl view $tag) &
+	wmiir xwrite /ctl view $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
 Key $MODKEY-Shift-t # Retag the selected client
-	c=$(wi_selclient)
-	(tag=$(wi_tags | wimenu -h "${hist}.tags" -n 50) && wmiir xwrite /client/$c/tags $tag) &
+	# Assumes left-to-right order of evaluation
+	wmiir xwrite /client/$(wi_selclient)/tags $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
 !
 	for i in 0 1 2 3 4 5 6 7 8 9; do
 		cat <<!
@@ -261,7 +261,7 @@ wi_proglist $PATH >$progsfile &
 
 # Setup Tag Bar
 IFS="$wi_newline"
-wmiir rm $(wmiir ls /lbar | sed 's,^,/lbar/,') >/dev/null
+wmiir rm $(wmiir ls -p /lbar) >/dev/null
 seltag=$(wmiir read /tag/sel/ctl | sed 1q)
 unset IFS
 wi_tags | while read tag

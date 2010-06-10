@@ -1124,7 +1124,7 @@ client_applytags(Client *c, const char *tags) {
 		if(!isspace(tags[n]))
 			break;
 
-	if(tags[n] == '+' || tags[n] == '-')
+	if(tags[n] == '+' || tags[n] == '-' || tags[n] == '\0')
 		utflcpy(buf, c->tags, sizeof c->tags);
 	else {
 		refree(&c->tagre);
