@@ -194,19 +194,14 @@ wi_eventloop() {
 	if [ "$1" = -i ]
 	then cat
 	else wmiir read /event
-	fi | awk '/./ { print; fflush() } END { print "" }' |
-	while :; do
-		# Work around a dash bug.
-		# Only quit on successful read of a blank line.
-		read wi_event || continue
-		test -n "$wi_event" || break
-
+	fi |
+	while read wi_event; do
 		IFS="$wi_newline"
 		wi_arg=$(echo "$wi_event" | sed 's/^[^ ]* //')
 		unset IFS
 		set -- $wi_event
 		event=$1; shift
-		Event $event "$@"
+		( Event $event "$@" )
 	done
 	true
 }
