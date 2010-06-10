@@ -332,9 +332,13 @@ represents the currently selected client.
         of the client. The following commands may be written to
         it:
         >>
-        : floating <on | off | toggle>
+        : floating <on | off | always | never>
                 Defines whether this client is likely to float when
-                attached to a new view.
+                attached to a new view. Ordinarilly, the value
+                changes automatically whenever the window is
+                moved between the floating and managed layers.
+                However, setting a value of _always_ or _never_
+                overrides this behavior.
         : fullscreen <on | off | toggle>
                 Sets the client's fullscreen state.
         : group <group id>

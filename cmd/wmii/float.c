@@ -10,7 +10,8 @@ static void float_placeframe(Frame*);
 void
 float_attach(Area *a, Frame *f) {
 
-	f->client->floating = true;
+	if(f->client->floating == Off)
+		f->client->floating = On;
 
 	f->r = f->floatr;
 	float_placeframe(f);

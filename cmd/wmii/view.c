@@ -364,13 +364,18 @@ view_attach(View *v, Frame *f) {
 
 	oldsel = v->oldsel;
 	a = v->sel;
-	if(client_floats_p(c)) {
+	if(c->floating == Never)
+		a = view_findarea(v, v->selscreen, v->selcol, false);
+	else if(client_floats_p(c)) {
 		if(v->sel != v->floating && c->fullscreen < 0)
 			oldsel = v->sel;
 		a = v->floating;
 	}
-	else if((ff = client_groupframe(c, v)))
+	else if((ff = client_groupframe(c, v))) {
 		a = ff->area;
+		if(v->oldsel && ff->client == view_selclient(v))
+			a = v->oldsel;
+	}
 	else if(v->sel->floating) {
 		if(v->oldsel)
 			a = v->oldsel;
@@ -382,7 +387,7 @@ view_attach(View *v, Frame *f) {
 		     || c->sel && c->sel->area && !c->sel->area->floating)
 			a = v->firstarea;
 	}
-	if(!a->floating && view_fullscreen_p(v, a->screen))
+	if(!a->floating && c->floating != Never && view_fullscreen_p(v, a->screen))
 		a = v->floating;
 
 	area_attach(a, f);

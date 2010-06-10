@@ -313,11 +313,7 @@ client_destroy(Client *c) {
 
 	r = client_grav(c, ZR);
 
-	hide = false;
-	if(!c->sel || c->sel->view != selview)
-		hide = true;
-
-	XGrabServer(display);
+	hide = (!c->sel || c->sel->view != selview);
 
 	/* In case the client is already destroyed. */
 	traperrors(true);
@@ -328,25 +324,24 @@ client_destroy(Client *c) {
 	else
 		reparentwindow(&c->w, &scr.root, r.min);
 
-	if(starting > -1)
+	if(starting >= 0)
 		XRemoveFromSaveSet(display, c->w.xid);
-
-	traperrors(false);
-	XUngrabServer(display);
 
 	none = nil;
 	client_setviews(c, &none);
-	if(starting > -1)
+	if(starting >= 0)
 		client_unmap(c, WithdrawnState);
 	refree(&c->tagre);
 	refree(&c->tagvre);
 	free(c->retags);
 
+	traperrors(false);
+
 	destroywindow(c->framewin);
 
 	ewmh_destroyclient(c);
 	group_remove(c);
-	if(starting > -1)
+	if(starting >= 0)
 		event("DestroyClient %#C\n", c);
 
 	event_flush(FocusChangeMask, true);
@@ -427,6 +422,8 @@ client_grav(Client *c, Rectangle rd) {
 
 bool
 client_floats_p(Client *c) {
+	if(c->floating == Never)
+		return false;
 	return c->trans
 	    || c->floating
 	    || c->fixedsize
@@ -533,8 +530,7 @@ client_focus(Client *c) {
 
 	Dprint(DFocus, "client_focus([%#C]%C)\n", c, c);
 	Dprint(DFocus, "\t[%#C]%C\n\t=> [%#C]%C\n",
-			disp.focus, disp.focus,
-			c, c);
+	       disp.focus, disp.focus, c, c);
 
 	if(disp.focus != c) {
 		if(c && !c->sel->collapsed) {
@@ -748,7 +744,6 @@ client_updatename(Client *c) {
 	char *str;
 
 	c->name[0] = '\0';
-
 	if((str = windowname(&c->w))) {
 		utflcpy(c->name, str, sizeof c->name);
 		free(str);
@@ -1185,7 +1180,7 @@ client_applytags(Client *c, const char *tags) {
 
 		cur = nil;
 		if(!strcmp(buf+n, "~"))
-			c->floating = add;
+			c->floating = add ? On : Never;
 		else
 		if(!strcmp(buf+n, "!") || !strcmp(buf+n, "sel"))
 			cur = selview->name;

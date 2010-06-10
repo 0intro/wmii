@@ -23,6 +23,9 @@
 #define FOCUSCOLORS	"#000000 #81654f #000000"
 #define NORMCOLORS	"#000000 #c1c48b #81654f"
 
+/* From CGO */
+#define assert_equal(x, y) typedef char _##x##_does_not_equal_##y[((x)-(y))*((x)-(y))*-2+1]
+
 enum {
 	PingTime = 10000,
 	PingPeriod = 4000,
@@ -72,10 +75,15 @@ extern char*	modes[];
 	 (x) == Off    ? "off"    : \
 	 (x) == Toggle ? "toggle" : "<toggle>")
 enum {
+	Never = -1,
 	Off,
 	On,
+	/* Xlib defines this. :( */
+	// Always,
 	Toggle,
 };
+
+assert_equal(Always, 2);
 
 enum Barpos {
 	BBottom,
@@ -173,7 +181,7 @@ struct Client {
 	int	pid;
 	int	dead;
 	int	fullscreen;
-	bool	floating;
+	int	floating;
 	bool	fixedsize;
 	bool	urgent;
 	bool	borderless;

@@ -8,7 +8,7 @@ from pygmi import *
 from pygmi.util import prop
 
 __all__ = ('wmii', 'Tags', 'Tag', 'Area', 'Frame', 'Client',
-           'Button', 'Colors', 'Color', 'Toggle')
+           'Button', 'Colors', 'Color', 'Toggle', 'Always', 'Never')
 
 spacere = re.compile(r'\s')
 
@@ -19,9 +19,13 @@ class utf8(object):
 @apply
 class Toggle(utf8):
     def __unicode__(self):
-        return u'Toggle'
-    def __repr__(self):
-        return 'Toggle'
+        return unicode(self.__class__.__name__)
+@apply
+class Always(Toggle.__class__):
+    pass
+@apply
+class Never(Toggle.__class__):
+    pass
 
 def constrain(min, max, val):
     if val < min:
@@ -616,7 +620,8 @@ class Rule(collections.MutableMapping, utf8):
     def quotevalue(cls, val):
         if val is True:   return "on"
         if val is False:  return "off"
-        if val is Toggle: return "toggle"
+        if val in (Toggle, Always, Never):
+            return unicode(val).lower()
         return unicode(val)
 
     def __get__(self, obj, cls):

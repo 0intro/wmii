@@ -119,13 +119,12 @@ static char* incmodetab[] = {
 	"show",
 	"squeeze",
 };
-#ifdef notdef
-static char* toggletab[] = {
-	"off",
-	"on",
-	"toggle",
+static char* floatingtab[] = {
+	"never", "off", "on", "always"
 };
-#endif
+static char* toggletab[] = {
+	"off", "on", "toggle",
+};
 
 /* Edit ,y/^[a-zA-Z].*\n.* {\n/d
  * Edit s/^([a-zA-Z].*)\n(.*) {\n/\1 \2;\n/
@@ -170,6 +169,18 @@ _bsearch(char *from, char **tab, int ntab) {
 }
 
 static int
+_lsearch(char *from, char **tab, int ntab) {
+	int i;
+
+	if(from != nil)
+		for(i=0; i < ntab; i++)
+			if(!strcmp(from, tab[i]))
+				return i;
+	error(Ebadvalue);
+	return 0;
+}
+
+static int
 getsym(char *s) {
 	return _bsearch(s, symtab, nelem(symtab));
 }
@@ -186,13 +197,7 @@ setdef(int *ptr, char *s, char *tab[], int ntab) {
 
 static int
 gettoggle(char *s) {
-	switch(getsym(s)) {
-	case LON:	return On;
-	case LOFF:	return Off;
-	case LTOGGLE:	return Toggle;
-	default:	error(Ebadusage);
-	}
-	return -1;
+	return _lsearch(s, toggletab, nelem(toggletab));
 }
 
 static int
@@ -384,7 +389,7 @@ char*
 readctl_client(Client *c) {
 	bufclear();
 	bufprint("%#C\n", c);
-	bufprint("floating %s\n", TOGGLE(c->floating));
+	bufprint("floating %s\n", floatingtab[c->floating + 1]);
 	if(c->fullscreen >= 0)
 		bufprint("fullscreen %d\n", c->fullscreen);
 	else
@@ -419,7 +424,7 @@ message_client(Client *c, IxpMsg *m) {
 
 	switch(getsym(s)) {
 	case LFLOATING:
-		toggle(c->floating, gettoggle(m->pos));
+		c->floating = -1 + _lsearch(msg_getword(m), floatingtab, nelem(floatingtab));
 		break;
 	case LFULLSCREEN:
 		s = msg_getword(m);

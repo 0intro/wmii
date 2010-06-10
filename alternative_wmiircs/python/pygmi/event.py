@@ -40,7 +40,7 @@ class Match(object):
             elif isinstance(a, basestring):
                 a = a.__eq__
             elif isinstance(a, (list, tuple, set)):
-                a = curry(lambda ary, k: k in ary, a)
+                a = (lambda ary: (lambda k: k in ary))(a)
             elif hasattr(a, 'search'):
                 a = a.search
             else:
@@ -67,10 +67,11 @@ def flatten(items):
         (1, 'foo'), (2: 'foo'), (3: 'foo'), (4: 'bar')
     """
     for k, v in items:
-        if not isinstance(k, (list, tuple)):
-            k = k,
-        for key in k:
-            yield key, v
+        if isinstance(k, (list, tuple)):
+            for key in k:
+                yield key, v
+        else:
+            yield k, v
 
 class Events():
     """
@@ -276,12 +277,11 @@ class Actions(object):
             raise AttributeError()
         if hasattr(self, name + '_'):
             return getattr(self, name + '_')
-        def action(args=''):
-            cmd = pygmi.find_script(name)
-            if cmd:
-                call(pygmi.shell, '-c', '$* %s' % args, '--', cmd,
-                     background=True)
-        return action
+        cmd = pygmi.find_script(name)
+        if not cmd:
+            raise AttributeError()
+        return lambda args='': call(pygmi.shell, '-c', '$* %s' % args, '--', cmd,
+                                    background=True)
 
     def _call(self, args):
         """
