@@ -24,6 +24,7 @@ static char
 
 /* Edit |sort Edit |sed 's/"([^"]+)"/L\1/g' | tr 'a-z' 'A-Z' */
 enum {
+	LALLOW,
 	LBAR,
 	LBORDER,
 	LCLIENT,
@@ -62,6 +63,7 @@ enum {
 	LTILDE,
 };
 char *symtab[] = {
+	"allow",
 	"bar",
 	"border",
 	"client",
@@ -100,6 +102,9 @@ char *symtab[] = {
 	"~",
 };
 
+static char* barpostab[] = {
+	"bottom", "top",
+};
 char* debugtab[] = {
 	"9p",
 	"dnd",
@@ -108,16 +113,13 @@ char* debugtab[] = {
 	"focus",
 	"generic",
 	"stack",
+	nil
 };
-
-static char* barpostab[] = {
-	"bottom",
-	"top",
+static char* permtab[] = {
+	"activate", nil
 };
 static char* incmodetab[] = {
-	"ignore",
-	"show",
-	"squeeze",
+	"ignore", "show", "squeeze",
 };
 static char* floatingtab[] = {
 	"never", "off", "on", "always"
@@ -204,7 +206,7 @@ static int
 getdirection(IxpMsg *m) {
 	int i;
 
-	switch(i = getsym(msg_getword(m))) {
+	switch(i = getsym(msg_getword(m, 0))) {
 	case LLEFT:
 	case LRIGHT:
 	case LUP:
@@ -249,7 +251,7 @@ msg_eatrunes(IxpMsg *m, int (*p)(Rune), int val) {
 }
 
 char*
-msg_getword(IxpMsg *m) {
+msg_getword(IxpMsg *m, char *errmsg) {
 	char *ret;
 	Rune r;
 	int n;
@@ -271,8 +273,100 @@ msg_getword(IxpMsg *m) {
 		if(ret[1] == '\\' || ret[1] == '#')
 			ret++;
 	if(*ret == '\0')
-		return nil;
+		ret = nil;
+	if(ret == nil && errmsg)
+		error(errmsg);
 	return ret;
+}
+
+typedef struct Mask Mask;
+struct Mask {
+	long*	mask;
+	char**	table;
+};
+
+static int
+Mfmt(Fmt *f) {
+	Mask m;
+	int i;
+
+	m = va_arg(f->args, Mask);
+	for(i=0; m.table[i]; i++)
+		if(*m.mask & (1<<i)) {
+			if(*m.mask & ((1<<i)-1))
+				fmtstrcpy(f, "+");
+			if(fmtstrcpy(f, m.table[i]))
+				return -1;
+		}
+	return 0;
+}
+
+char*
+mask(char **s, int *add, int *old) {
+	static char seps[] = "+-^";
+	char *p, *q;
+
+again:
+	p = *s;
+	if(*old == '\0')
+		return nil;
+	*add = *old;
+
+	if(*p == '/') {
+		/* Check for regex. */
+		if(!(q = strchr(p+1, '/')))
+			goto fail;
+		if(*q++ != '/' || !memchr(seps, (*old=*q), sizeof seps))
+			goto fail;
+	}
+	else {
+		for(q=p; (*old=*q) && !strchr(seps, *q);)
+			q++;
+		if(memchr(p, '/', q-p))
+			goto fail;
+	}
+
+	*q++ = '\0';
+	*s = q;
+	if(p + 1 == q)
+		goto again;
+	return p;
+fail:
+	while((*old=*q) && !strchr(seps, *q))
+		q++;
+	goto again;
+}
+
+static void
+unmask(Mask m, char *s) {
+	char *opt;
+	int add, old, i, n;
+	long newmask;
+
+	if(s == nil)
+		s = "";
+	for(n=0; m.table[n]; n++)
+		;
+	newmask = memchr("+-^", s[0], 3) ? *m.mask : 0L;
+
+	old = '+';
+	while((opt = mask(&s, &add, &old))) {
+		i = _bsearch(opt, m.table, n);
+		if(i == -1)
+			error(Ebadvalue);
+		else if(add = '^')
+			newmask ^= 1<<i;
+		else if(add == '+')
+			newmask |= 1<<i;
+		else if(add == '-')
+			newmask &= ~(1<<i);
+	}
+	*m.mask = newmask;
+}
+
+void
+msg_debug(char *s) {
+	unmask((Mask){&debugflag, debugtab}, s);
 }
 
 static Client*
@@ -362,17 +456,17 @@ getframe(View *v, int scrn, IxpMsg *m) {
 	char *s;
 	ulong l;
 
-	s = msg_getword(m);
-	if(!s || !strcmp(s, "client"))
-		f = client_viewframe(strclient(v, msg_getword(m)),
+	s = msg_getword(m, Ebadvalue);
+	if(!strcmp(s, "client"))
+		f = client_viewframe(strclient(v, msg_getword(m, Ebadvalue)),
 				     v);
 	else {
 		/* XXX: Multihead */
 		a = strarea(v, scrn, s);
 
-		s = msg_getword(m);
+		s = msg_getword(m, Ebadvalue);
 		f = nil;
-		if(s && !strcmp(s, "sel"))
+		if(!strcmp(s, "sel"))
 			f = a->sel;
 		else {
 			l = msg_getulong(s);
@@ -389,6 +483,7 @@ char*
 readctl_client(Client *c) {
 	bufclear();
 	bufprint("%#C\n", c);
+	bufprint("allow %M\n", (Mask){&c->permission, permtab});
 	bufprint("floating %s\n", floatingtab[c->floating + 1]);
 	if(c->fullscreen >= 0)
 		bufprint("fullscreen %d\n", c->fullscreen);
@@ -407,7 +502,7 @@ message_client(Client *c, IxpMsg *m) {
 	char *s;
 	long l;
 
-	s = msg_getword(m);
+	s = msg_getword(m, Ebadcmd);
 
 	/*
 	 * Toggle ::= on
@@ -423,11 +518,14 @@ message_client(Client *c, IxpMsg *m) {
 	 */
 
 	switch(getsym(s)) {
+	case LALLOW:
+		unmask((Mask){&c->permission, permtab}, msg_getword(m, 0));
+		break;
 	case LFLOATING:
-		c->floating = -1 + _lsearch(msg_getword(m), floatingtab, nelem(floatingtab));
+		c->floating = -1 + _lsearch(msg_getword(m, Ebadvalue), floatingtab, nelem(floatingtab));
 		break;
 	case LFULLSCREEN:
-		s = msg_getword(m);
+		s = msg_getword(m, Ebadvalue);
 		if(getlong(s, &l))
 			fullscreen(c, On, l);
 		else
@@ -435,7 +533,7 @@ message_client(Client *c, IxpMsg *m) {
 		break;
 	case LGROUP:
 		group_remove(c);
-		c->w.hints->group = msg_getulong(msg_getword(m));
+		c->w.hints->group = msg_getulong(msg_getword(m, Ebadvalue));
 		if(c->w.hints->group)
 			group_init(c);
 		break;
@@ -449,7 +547,7 @@ message_client(Client *c, IxpMsg *m) {
 		client_applytags(c, m->pos);
 		break;
 	case LURGENT:
-		client_seturgent(c, gettoggle(msg_getword(m)), UrgManager);
+		client_seturgent(c, gettoggle(msg_getword(m, Ebadvalue)), UrgManager);
 		break;
 	default:
 		error(Ebadcmd);
@@ -466,7 +564,7 @@ message_root(void *p, IxpMsg *m) {
 
 	USED(p);
 	ret = nil;
-	s = msg_getword(m);
+	s = msg_getword(m, 0);
 	if(s == nil)
 		return nil;
 
@@ -477,21 +575,21 @@ message_root(void *p, IxpMsg *m) {
 
 	switch(getsym(s)) {
 	case LBAR: /* bar on? <"top" | "bottom"> */
-		s = msg_getword(m);
+		s = msg_getword(m, Ebadvalue);
 		if(!strcmp(s, "on"))
-			s = msg_getword(m);
+			s = msg_getword(m, Ebadvalue);
 		setdef(&screen->barpos, s, barpostab, nelem(barpostab));
 		view_update(selview);
 		break;
 	case LBORDER:
-		def.border = msg_getulong(msg_getword(m));;
+		def.border = msg_getulong(msg_getword(m, 0));;
 		view_update(selview);
 		break;
 	case LCOLMODE:
-		setdef(&def.colmode, msg_getword(m), modes, Collast);
+		setdef(&def.colmode, msg_getword(m, 0), modes, Collast);
 		break;
 	case LDEBUG:
-		ret = msg_debug(m);
+		msg_debug(msg_getword(m, 0));
 		break;
 	case LEXEC:
 		execstr = strdup(m->pos);
@@ -516,10 +614,10 @@ message_root(void *p, IxpMsg *m) {
 		view_update(selview);
 		break;
 	case LFONTPAD:
-		if(!getint(msg_getword(m), &def.font->pad.min.x) ||
-		   !getint(msg_getword(m), &def.font->pad.max.x) ||
-		   !getint(msg_getword(m), &def.font->pad.max.y) ||
-		   !getint(msg_getword(m), &def.font->pad.min.y))
+		if(!getint(msg_getword(m, 0), &def.font->pad.min.x) ||
+		   !getint(msg_getword(m, 0), &def.font->pad.max.x) ||
+		   !getint(msg_getword(m, 0), &def.font->pad.max.y) ||
+		   !getint(msg_getword(m, 0), &def.font->pad.min.y))
 			ret = "invalid rectangle";
 		else {
 			for(n=0; n < nscreens; n++)
@@ -528,7 +626,7 @@ message_root(void *p, IxpMsg *m) {
 		}
 		break;
 	case LGRABMOD:
-		s = msg_getword(m);
+		s = msg_getword(m, Ebadvalue);
 		if(!parsekey(s, &i, nil) || i == 0)
 			return Ebadvalue;
 
@@ -536,7 +634,7 @@ message_root(void *p, IxpMsg *m) {
 		def.mod = i;
 		break;
 	case LINCMODE:
-		setdef(&def.incmode, msg_getword(m), incmodetab, nelem(incmodetab));
+		setdef(&def.incmode, msg_getword(m, 0), incmodetab, nelem(incmodetab));
 		view_update(selview);
 		break;
 	case LNORMCOLORS:
@@ -558,33 +656,17 @@ message_root(void *p, IxpMsg *m) {
 	return ret;
 }
 
-static void
-printdebug(int mask) {
-	int i, j;
-
-	for(i=0, j=0; i < nelem(debugtab); i++)
-		if(mask & (1<<i)) {
-			if(j++ > 0) bufprint(" ");
-			bufprint("%s", debugtab[i]);
-		}
-}
-
 char*
 readctl_root(void) {
+	fmtinstall('M', Mfmt);
 	bufclear();
 	bufprint("bar on %s\n", barpostab[screen->barpos]);
 	bufprint("border %d\n", def.border);
 	bufprint("colmode %s\n", modes[def.colmode]);
-	if(debugflag) {
-		bufprint("debug ");
-		printdebug(debugflag);
-		bufprint("\n");
-	}
-	if(debugfile) {
-		bufprint("debugfile ");
-		printdebug(debugfile);
-		bufprint("\n");
-	}
+	if(debugflag)
+		bufprint("debug %M\n", (Mask){&debugflag, debugtab});
+	if(debugfile)
+		bufprint("debugfile %M", (Mask){&debugfile, debugtab});
 	bufprint("focuscolors %s\n", def.focuscolor.colstr);
 	bufprint("font %s\n", def.font->name);
 	bufprint("fontpad %d %d %d %d\n", def.font->pad.min.x, def.font->pad.max.x,
@@ -601,7 +683,7 @@ message_view(View *v, IxpMsg *m) {
 	Area *a;
 	char *s;
 
-	s = msg_getword(m);
+	s = msg_getword(m, 0);
 	if(s == nil)
 		return nil;
 
@@ -648,11 +730,11 @@ message_view(View *v, IxpMsg *m) {
 
 	switch(getsym(s)) {
 	case LCOLMODE:
-		s = msg_getword(m);
+		s = msg_getword(m, Ebadvalue);
 		a = strarea(v, screen->idx, s);
 
-		s = msg_getword(m);
-		if(s == nil || !column_setmode(a, s))
+		s = msg_getword(m, Ebadvalue);
+		if(!column_setmode(a, s))
 			return Ebadvalue;
 
 		column_arrange(a, false);
@@ -699,38 +781,12 @@ readctl_view(View *v) {
 	return buffer;
 }
 
-char*
-msg_debug(IxpMsg *m) {
-	char *opt;
-	int d;
-	char add;
-
-	bufclear();
-	while((opt = msg_getword(m))) {
-		add = '+';
-		if(opt[0] == '+' || opt[0] == '-')
-			add = *opt++;
-		d = _bsearch(opt, debugtab, nelem(debugtab));
-		if(d == -1) {
-			bufprint(", %s", opt);
-			continue;
-		}
-		if(add == '+')
-			debugflag |= 1<<d;
-		else
-			debugflag &= ~(1<<d);
-	}
-	if(buffer[0] != '\0')
-		return sxprint("Bad debug options: %s", buffer+2);
-	return nil;
-}
-
 static void
 getamt(IxpMsg *m, Point *amt) {
 	char *s, *p;
 	long l;
 
-	s = msg_getword(m);
+	s = msg_getword(m, 0);
 	if(s) {
 		p = strend(s, 2);
 		if(!strcmp(p, "px")) {
@@ -863,7 +919,7 @@ msg_selectarea(Area *a, IxpMsg *m) {
 	int sym;
 
 	v = a->view;
-	s = msg_getword(m);
+	s = msg_getword(m, Ebadvalue);
 	sym = getsym(s);
 
 	switch(sym) {
@@ -889,7 +945,8 @@ msg_selectarea(Area *a, IxpMsg *m) {
 		ap = strarea(v, a->screen, s);
 		if(ap->floating)
 			return Ebadvalue;
-		if((s = msg_getword(m))) {
+
+		if((s = msg_getword(m, 0))) {
 			i = msg_getulong(s);
 			for(f = ap->frame; f; f = f->anext)
 				if(--i == 0) break;
@@ -917,14 +974,14 @@ msg_selectframe(Area *a, IxpMsg *m, int sym) {
 
 	stack = false;
 	if(sym == LUP || sym == LDOWN)
-		if((s = msg_getword(m)))
+		if((s = msg_getword(m, 0)))
 			if(!strcmp(s, "stack"))
 				stack = true;
 			else
 				return Ebadvalue;
 
 	if(sym == LCLIENT) {
-		s = msg_getword(m);
+		s = msg_getword(m, Ebadvalue);
 		i = msg_getulong(s);
 		c = win2client(i);
 		if(c == nil)
@@ -985,8 +1042,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	char *s;
 	int sym;
 
-	s = msg_getword(m);
-	c = strclient(v, s);
+	c = strclient(v, msg_getword(m, 0));
 	f = client_viewframe(c, v);
 	if(f == nil)
 		return Ebadvalue;
@@ -994,7 +1050,7 @@ msg_sendclient(View *v, IxpMsg *m, bool swap) {
 	a = f->area;
 	to = nil;
 
-	s = msg_getword(m);
+	s = msg_getword(m, Ebadvalue);
 	sym = getsym(s);
 
 	/* FIXME: Should use a helper function. */

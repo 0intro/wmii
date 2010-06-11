@@ -56,6 +56,7 @@ void*	erealloc(void*, uint);
 char*	estrdup(const char*);
 char*	estrndup(const char*, uint);
 void	fatal(const char*, ...);
+Fmt	fmtbuf(char*, int);
 void*	freelater(void*);
 int	getbase(const char**, long*);
 bool	getint(const char*, int*);

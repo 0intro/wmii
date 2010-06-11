@@ -36,6 +36,7 @@ OBJ=\
 	event/xtime		\
 	fmt/blprint		\
 	fmt/bvlprint		\
+	fmt/fmtbuf		\
 	fmt/localefmt		\
 	fmt/localelen		\
 	fmt/lprint		\

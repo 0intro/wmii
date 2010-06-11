@@ -203,12 +203,13 @@ void	init_screens(void);
 void	spawn_command(const char*);
 
 /* message.c */
+char*	mask(char**, int*, int*);
 char*	message_client(Client*, IxpMsg*);
 char*	message_root(void*, IxpMsg*);
 char*	message_view(View*, IxpMsg*);
-char*	msg_debug(IxpMsg*);
+void	msg_debug(char*);
 void	msg_eatrunes(IxpMsg*, int (*)(Rune), int);
-char*	msg_getword(IxpMsg*);
+char*	msg_getword(IxpMsg*, char*);
 void	msg_parsecolors(IxpMsg*, CTuple*);
 char*	msg_selectarea(Area*, IxpMsg*);
 char*	msg_sendclient(View*, IxpMsg*, bool swap);

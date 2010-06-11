@@ -384,9 +384,28 @@ of the client. The following commands may be written to
 it:
 .RS 8
 .TP
-floating \fI<on | off | toggle>\fR
+allow \fI<flags>\fR
+The set of unusual actions the client is allowed to
+perform, in the same format as the tag set.
+.RS 8
+.TP
+activate
+The client is allowed to activate
+itself – that is, focus its window and,
+as the case may require, uncollapse it
+and select a tag it resides on. This
+flag must be set on a client if you wish
+it able to activate itself from the
+system tray.
+.RS -8
+.TP
+floating \fI<on | off | always | never>\fR
 Defines whether this client is likely to float when
-attached to a new view.
+attached to a new view. Ordinarilly, the value
+changes automatically whenever the window is
+moved between the floating and managed layers.
+However, setting a value of \fIalways\fR or \fInever\fR
+overrides this behavior.
 .TP
 fullscreen \fI<on | off | toggle>\fR
 Sets the client's fullscreen state.
@@ -428,11 +447,12 @@ Returns a clients class and label as:
 .TP
 tags
 Set or read a client's tags. Tags are separated by
-\fB+\fR or \fB\-\fR. Tags beginning with \fB+\fR are
-added, while those beginning with \fB\-\fR are removed.
-If the tag string written begins with \fB+\fR or
-\fB\-\fR, the written tags are added to or removed from
-the client's set, otherwise, the set is overwritten.
+\fB+\fR, \fB\-\fR, or \fB^\fR. Tags beginning with \fB+\fR are
+added, while those beginning with \fB\-\fR are removed and
+those beginning with \fB^\fR are toggled.  If the tag
+string written begins with \fB+\fR, \fB^\fR, or \fB\-\fR, the
+written tags are added to or removed from the client's
+set, otherwise the set is overwritten.
 
 
 .SS The /tag/ Hierarchy

@@ -1111,103 +1111,58 @@ client_extratags(Client *c) {
 bool
 client_applytags(Client *c, const char *tags) {
 	Fmt fmt;
-	uint i, j, k, n;
-	bool add, found;
-	char buf[512], last;
+	uint i, j, k;
+	char buf[512];
 	char *toks[32];
 	char **p;
 	char *cur, *s;
+	int add, old;
 
 	buf[0] = 0;
-
-	for(n = 0; tags[n]; n++)
-		if(!isspace(tags[n]))
-			break;
-
-	if(tags[n] == '+' || tags[n] == '-' || tags[n] == '\0')
+	if(memchr("+-^", tags[0], 4))
 		utflcpy(buf, c->tags, sizeof c->tags);
 	else {
 		refree(&c->tagre);
 		refree(&c->tagvre);
 	}
-	strlcat(buf, &tags[n], sizeof buf);
-
-	n = 0;
-	add = true;
-	if(buf[0] == '+')
-		n++;
-	else if(buf[0] == '-') {
-		n++;
-		add = false;
-	}
-
-	found = false;
+	strlcat(buf, tags, sizeof buf);
 
 	j = 0;
-	while(buf[n] && n < sizeof buf && j < 32) {
+	s = buf;
+	old = '+';
+	while((cur = mask(&s, &add, &old))) {
 		/* Check for regex. */
-		if(buf[n] == '/') {
-			for(i=n+1; i < sizeof buf - 1; i++)
-				if(buf[i] == '/') break;
-			if(buf[i] == '/') {
-				i++;
-				if(buf[i] == '+'
-				|| buf[i] == '-'
-				|| buf[i] == '\0') { /* Don't be lenient */
-					buf[i-1] = '\0';
-					if(add)
-						reinit(&c->tagre, buf+n+1);
-					else
-						reinit(&c->tagvre, buf+n+1);
-					last = buf[i];
-					buf[i] = '\0';
+		if(cur[0] == '/') {
+			cur++;
+			*strchr(cur, '/') = '\0';
+			if(add == '+')
+				reinit(&c->tagre, cur);
+			else if(add == '-')
+				reinit(&c->tagvre, cur);
+		}
 
-					found = true;
-					goto next;
+		trim(cur, " \t\r\n");
+		if(!strcmp(cur, "~"))
+			c->floating = add ? On : Never;
+		else {
+			if(!strcmp(cur, "!") || !strcmp(cur, "sel"))
+				cur = selview->name;
+			else if(Mbsearch(cur, badtags, bsstrcmp))
+				continue;
+
+			if(j < nelem(toks)-1) {
+				if(add == '^')
+					add = bsearch(cur, toks, j, sizeof *toks, bsstrcmp) ? '-' : '+';
+				if(add == '+')
+					toks[j++] = cur;
+				else {
+					for(i = 0, k = 0; i < j; i++)
+						if(strcmp(toks[i], cur))
+							toks[k++] = toks[i];
+					j = k;
 				}
 			}
 		}
-
-		for(i = n; i < sizeof buf - 1; i++)
-			if(buf[i] == '+'
-			|| buf[i] == '-'
-			|| buf[i] == '\0')
-				break;
-		last = buf[i];
-		buf[i] = '\0';
-
-		trim(buf+n, " \t/");
-
-		cur = nil;
-		if(!strcmp(buf+n, "~"))
-			c->floating = add ? On : Never;
-		else
-		if(!strcmp(buf+n, "!") || !strcmp(buf+n, "sel"))
-			cur = selview->name;
-		else
-		if(!Mbsearch(buf+n, badtags, bsstrcmp))
-			cur = buf+n;
-
-		if(cur && j < nelem(toks)-1) {
-			if(add) {
-				found = true;
-				toks[j++] = cur;
-			}else {
-				for(i = 0, k = 0; i < j; i++)
-					if(strcmp(toks[i], cur))
-						toks[k++] = toks[i];
-				j = k;
-			}
-		}
-
-	next:
-		n = i + 1;
-		if(last == '+')
-			add = true;
-		if(last == '-')
-			add = false;
-		if(last == '\0')
-			break;
 	}
 
 	toks[j] = nil;
@@ -1241,6 +1196,6 @@ client_applytags(Client *c, const char *tags) {
 	p = comm(~0, c->retags, toks);
 	client_setviews(c, p);
 	free(p);
-	return found;
+	return true;
 }
 

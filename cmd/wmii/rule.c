@@ -88,7 +88,7 @@ value:
 	valuebuf.end = valuebuf.pos;
 	valuebuf.pos = valuebuf.data;
 	rvp = &r->values;
-	while((w = msg_getword(&valuebuf))) {
+	while((w = msg_getword(&valuebuf, 0))) {
 		free(r->value);
 		r->value = estrdup(w);
 		if(strchr(w, '=')) {

@@ -4,6 +4,7 @@
 #define Window XWindow
 #define Font XFont
 #define Screen XScreen
+#define Mask XMask
 #include <stuff/geom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -16,6 +17,7 @@
 #undef Window
 #undef Font
 #undef Screen
+#undef Mask
 
 enum FontType {
 	FX11 = 1,

@@ -20,5 +20,5 @@ void	dwrite(int, void*, int, bool);
 bool	setdebug(int);
 void	vdebug(int, const char*, va_list);
 
-int	debugflag;
-int	debugfile;
+long	debugflag;
+long	debugfile;

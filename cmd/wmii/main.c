@@ -330,9 +330,8 @@ printfcall(IxpFcall *f) {
 
 int
 main(int argc, char *argv[]) {
-	IxpMsg m;
 	char **oargv;
-	char *wmiirc, *s;
+	char *wmiirc;
 	int i;
 
 	setlocale(LC_CTYPE, "");
@@ -356,9 +355,10 @@ main(int argc, char *argv[]) {
 		lprint(1, "%s", version);
 		exit(0);
 	case 'D':
-		s = EARGF(usage());
-		m = ixp_message(s, strlen(s), 0);
-		msg_debug(&m);
+		if(waserror())
+			fatal("parsing debug flags: %r");
+		msg_debug(EARGF(usage()));
+		poperror();
 		break;
 	default:
 		usage();

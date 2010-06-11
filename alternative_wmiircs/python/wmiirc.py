@@ -60,11 +60,16 @@ def time(self):
     return wmii.cache['focuscolors'], datetime.datetime.now().strftime('%c')
 
 wmii.rules = (
+    # Apps with system tray icons like to their main windows
+    # Give them permission.
+    (ur'^Pidgin:'       dict(allow='+activate')),
+
     # MPlayer and VLC don't float by default, but should.
-    (ur'MPlayer|VLC', dict(floating=True)),
+    (ur'MPlayer|VLC',   dict(floating=True)),
+
     # ROX puts all of its windows in the same group, so they open
     # with the same tags.  Disable grouping for ROX Filer.
-    (ur'^ROX-Filer:', dict(group=0)),
+    (ur'^ROX-Filer:',   dict(group=0)),
 )
 
 def unresponsive_client(client):

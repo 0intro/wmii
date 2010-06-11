@@ -50,6 +50,8 @@ ewmh_init(void) {
 		NET("WM_PID"),
 		NET("WM_STRUT"),
 		NET("WM_STRUT_PARTIAL"),
+		/* Set this so clients don't update Net("USER_TIME") */
+		NET("USER_TIME_WINDOW"),
 		/* States */
 		NET("WM_STATE"),
 		STATE("DEMANDS_ATTENTION"),
@@ -179,6 +181,25 @@ ewmh_destroyclient(Client *c) {
 	free(c->strut);
 }
 
+#ifdef notdef
+static ulong
+usertime(Window *w) {
+	long *l;
+	long ret;
+
+	ret = 0;
+	if(getprop_long(w, Net("WM_USER_TIME_WINDOW"), "CARDINAL", 0, &l, 1)) {
+		w = window(*l);
+		free(l);
+	}
+	if(getprop_long(w, Net("WM_USER_TIME"), "CARDINAL", 0, &l, 1)) {
+		ret = *l;
+		free(l);
+	}
+	return ret;
+}
+#endif
+
 static bool
 event_client_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
 	Client *c;
@@ -215,11 +236,13 @@ event_client_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
 	if(msg == NET("ACTIVE_WINDOW")) {
 		if(e->format != 32)
 			return false;
+		Dprint(DEwmh, "\tsource:    %uld\n", l[0]);
+		Dprint(DEwmh, "\ttimestamp: %,uld\n", l[1]);
+		Dprint(DEwmh, "\tactive:    %#ulx\n", l[2]);
+		Dprint(DEwmh, "\twindow:    %#ulx\n", e->window);
+		Dprint(DEwmh, "\tclient:    %C\n", c);
 
-		Dprint(DEwmh, "\tsource: %ld\n", l[0]);
-		Dprint(DEwmh, "\twindow: %#ulx\n", e->window);
-		Dprint(DEwmh, "\tclient: %C\n", c);
-		if(l[0] == SourceClient && abs(event_xtime - l[1]) > 5000)
+		if(l[0] == SourceClient && !(c->permission & PermActivate))
 			return false;
 		if(l[0] == SourceClient || l[0] == SourcePager)
 			focus(c, true);
@@ -421,7 +444,9 @@ event_root_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
 
 	l = (ulong*)e->data.l;
 	msg = e->message_type;
-	Dprint(DEwmh, "ClientMessage: %A\n", msg);
+	Debug(DEwmh)
+		if(msg != xatom("WM_PROTOCOLS") && l[0] != NET("WM_PING"))
+			Dprint(DEwmh, "ClientMessage: %A\n", msg);
 
 	if(msg == NET("CURRENT_DESKTOP")) {
 		if(e->format != 32)
@@ -447,7 +472,6 @@ event_root_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
 			c->w.ewmh.lag = (c->w.ewmh.ping & 0xffffffff) - (l[1] & 0xffffffff);
 			if(i == false)
 				frame_draw(c->sel);
-			Dprint(DEwmh, "\twindow=%W lag=%,uld\n", &c->w, c->w.ewmh.lag);
 			return false;
 		}
 		return false;

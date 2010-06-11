@@ -332,6 +332,19 @@ represents the currently selected client.
         of the client. The following commands may be written to
         it:
         >>
+        : allow <flags>
+                The set of unusual actions the client is allowed to
+                perform, in the same format as the tag set.
+                >>
+                : activate
+                        The client is allowed to activate
+                        itself – that is, focus its window and,
+                        as the case may require, uncollapse it
+                        and select a tag it resides on. This
+                        flag must be set on a client if you wish
+                        it able to activate itself from the
+                        system tray.
+                <<
         : floating <on | off | always | never>
                 Defines whether this client is likely to float when
                 attached to a new view. Ordinarilly, the value
@@ -370,11 +383,12 @@ represents the currently selected client.
         <instance>:<class>:<label>.
 : tags
         Set or read a client's tags. Tags are separated by
-        **+** or **-**. Tags beginning with **+** are
-        added, while those beginning with **-** are removed.
-        If the tag string written begins with **+** or
-        **-**, the written tags are added to or removed from
-        the client's set, otherwise, the set is overwritten.
+        **+**, **-**, or **^**. Tags beginning with **+** are
+        added, while those beginning with **-** are removed and
+        those beginning with **^** are toggled.  If the tag
+        string written begins with **+**, **^**, or **-**, the
+        written tags are added to or removed from the client's
+        set, otherwise the set is overwritten.
 :
 
 == The /tag/ Hierarchy ==

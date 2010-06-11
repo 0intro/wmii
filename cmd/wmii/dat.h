@@ -43,6 +43,10 @@ enum {
 	UrgClient,
 };
 
+enum ClientPermission {
+	PermActivate	= 1<<0,
+};
+
 enum {
 	SourceUnknown,
 	SourceClient,
@@ -169,25 +173,26 @@ struct Client {
 	Group*	group;
 	Strut*	strut;
 	Cursor	cursor;
-	Rectangle r;
 	Rectangle configr;
+	Rectangle r;
 	char**	retags;
-	char	name[256];
 	char	class[256];
-	char	tags[256];
+	char	name[256];
 	char	props[512];
+	char	tags[256];
+	long	permission;
 	long	proto;
-	uint	border;
-	int	pid;
+	int	border;
 	int	dead;
-	int	fullscreen;
 	int	floating;
-	bool	fixedsize;
-	bool	urgent;
+	int	fullscreen;
+	int	pid;
 	bool	borderless;
-	bool	titleless;
+	bool	fixedsize;
 	bool	nofocus;
 	bool	noinput;
+	bool	titleless;
+	bool	urgent;
 };
 
 struct Divide {
