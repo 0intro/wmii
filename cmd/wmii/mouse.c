@@ -187,6 +187,7 @@ readmouse(Point *p, uint *button) {
 
 	for(;;) {
 		XMaskEvent(display, MouseMask|ExposureMask|PropertyChangeMask, &ev);
+		debug_event(&ev);
 		switch(ev.type) {
 		case Expose:
 		case NoExpose:
@@ -201,6 +202,10 @@ readmouse(Point *p, uint *button) {
 		case MotionNotify:
 			p->x = ev.xmotion.x_root;
 			p->y = ev.xmotion.y_root;
+			if(p->x == scr.rect.max.x - 1)
+				p->x = scr.rect.max.x;
+			if(p->y == scr.rect.max.x - 1)
+				p->y = scr.rect.max.x;
 			break;
 		}
 		return ev.type;
