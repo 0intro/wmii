@@ -10,8 +10,9 @@ DIRS = \
 	rc	     \
 	alternative_wmiircs
 
-DOCS = README \
-       LICENSE
+DOCS = FAQ \
+       LICENSE \
+       README
 
 deb-dep:
 	IFS=', '; \

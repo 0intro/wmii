@@ -55,6 +55,7 @@ void	event_expose(XExposeEvent*);
 void	event_focusin(XFocusChangeEvent*);
 void	event_focusout(XFocusChangeEvent*);
 void	event_keypress(XKeyEvent*);
+void	event_keyrelease(XKeyEvent*);
 void	event_leavenotify(XCrossingEvent*);
 void	event_mapnotify(XMapEvent*);
 void	event_mappingnotify(XMappingEvent*);

@@ -5,6 +5,7 @@ include $(ROOT)/mk/wmii.mk
 wmiir.c: $(ROOT)/mk/wmii.mk
 
 DIRS =	wmii \
+	keyname \
 	menu \
 	strut \
 	tray

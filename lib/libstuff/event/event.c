@@ -20,6 +20,7 @@ EventHandler event_handler[LASTEvent] = {
 	[FocusIn] =		(EventHandler)event_focusin,
 	[FocusOut] =		(EventHandler)event_focusout,
 	[KeyPress] =		(EventHandler)event_keypress,
+	[KeyRelease] =		(EventHandler)event_keyrelease,
 	[LeaveNotify] =		(EventHandler)event_leavenotify,
 	[MapNotify] =		(EventHandler)event_mapnotify,
 	[MapRequest] =		(EventHandler)event_maprequest,
@@ -73,6 +74,7 @@ void
 event_loop(void) {
 	XEvent ev;
 
+	event_looprunning = true;
 	while(event_looprunning) {
 		XNextEvent(display, &ev);
 		event_dispatch(&ev);

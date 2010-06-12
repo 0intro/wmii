@@ -164,8 +164,8 @@ main(int argc, char *argv[]) {
 
 	changeprop_ulong(testwin, "_WMII_STRUT", "WINDOW", testtime, nelem(testtime));
 
-	event_looprunning = windowmap.nmemb > 0;
-	event_loop();
+	if(windowmap.nmemb > 0)
+		event_loop();
 
 	XCloseDisplay(display);
 	return 0;

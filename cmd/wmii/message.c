@@ -288,17 +288,9 @@ struct Mask {
 static int
 Mfmt(Fmt *f) {
 	Mask m;
-	int i;
 
 	m = va_arg(f->args, Mask);
-	for(i=0; m.table[i]; i++)
-		if(*m.mask & (1<<i)) {
-			if(*m.mask & ((1<<i)-1))
-				fmtstrcpy(f, "+");
-			if(fmtstrcpy(f, m.table[i]))
-				return -1;
-		}
-	return 0;
+	return unmask(f, *m.mask, m.table, '+');
 }
 
 char*
@@ -338,7 +330,7 @@ fail:
 }
 
 static void
-unmask(Mask m, char *s) {
+setmask(Mask m, char *s) {
 	char *opt;
 	int add, old, i, n;
 	long newmask;
@@ -366,7 +358,7 @@ unmask(Mask m, char *s) {
 
 void
 msg_debug(char *s) {
-	unmask((Mask){&debugflag, debugtab}, s);
+	setmask((Mask){&debugflag, debugtab}, s);
 }
 
 static Client*
@@ -519,7 +511,7 @@ message_client(Client *c, IxpMsg *m) {
 
 	switch(getsym(s)) {
 	case LALLOW:
-		unmask((Mask){&c->permission, permtab}, msg_getword(m, 0));
+		setmask((Mask){&c->permission, permtab}, msg_getword(m, 0));
 		break;
 	case LFLOATING:
 		c->floating = -1 + _lsearch(msg_getword(m, Ebadvalue), floatingtab, nelem(floatingtab));

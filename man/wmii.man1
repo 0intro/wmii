@@ -492,9 +492,9 @@ them.
 
 : /tmp/ns.$USER.${DISPLAY%.0}/wmii
         The wmii socket file which provides a 9P service.
-: @CONFPREFIX@/wmii@CONFVERSION@
+: @GLOBALCONF@
         Global action directory.
-: $HOME/.wmii@CONFVERSION@
+: @LOCALCONF@
         User-specific action directory. Actions are first searched here.
 :
 

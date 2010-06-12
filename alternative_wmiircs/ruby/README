@@ -8,10 +8,9 @@ string interpolation in key bindings, as should be apparent in
 the included config.yaml.
 
 In particular, not that there is no need to copy any files to
-~/.wmii-hg or ~/.wmii other than config.yaml. The script will
-happily load the requisite files from their default install
-location. They can be loaded either by involing wmii as
-follows:
+@LOCALCONF@ other than config.yaml. The script will happily load
+the requisite files from their default install location. They
+can be loaded either by involing wmii as follows:
 
     wmiir -r ruby/wmiirc
 
@@ -51,11 +50,11 @@ Installation:
     gem install librmpd   # optional
 
     # install
-    mv ~/.wmii-hg ~/.wmii-hg.backup
-    git clone git://github.com/sunaku/wmiirc.git ~/.wmii-hg
+    mv @LOCALCONF@ @LOCALCONF@.backup
+    git clone git://github.com/sunaku/wmiirc.git @LOCALCONF@
 
     # choose
-    cd ~/.wmii-hg
+    cd @LOCALCONF@
     git checkout --track -b CHOICE origin/CHOICE # choices are:
 
     +--------+------------------------------------------------+
@@ -68,21 +67,21 @@ Installation:
     +--------+------------------------------------------------+
 
     # run
-    ~/.wmii-hg/wmiirc
+    @LOCALCONF@/wmiirc
 
 Documentation:
 
     # see list of all key bindings
-    egrep '^ +\$\{\w+\}' ~/.wmii-hg/config.yaml
+    egrep '^ +\$\{\w+\}' @LOCALCONF@/config.yaml
 
     # read the configuration file
-    less ~/.wmii-hg/config.yaml
+    less @LOCALCONF@/config.yaml
 
 Configuration:
 
-    Edit ~/.wmii-hg/config.yaml to your liking.
+    Edit @LOCALCONF@/config.yaml to your liking.
 
-    Run ~/.wmii-hg/wmiirc to apply your changes.
+    Run @LOCALCONF@/wmiirc to apply your changes.
 
 Contribution:
 

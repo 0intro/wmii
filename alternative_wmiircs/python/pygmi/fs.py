@@ -81,6 +81,8 @@ class Ctl(object):
         assert '\n' not in key
         self.cache[key] = val
         if key in self.ctl_types:
+            if self.ctl_types[key][1] is None:
+                raise NotImplementedError('%s: %s is not writable' % (self.ctl_path, key))
             val = self.ctl_types[key][1](val)
         self.ctl(key, val)
 
@@ -91,7 +93,7 @@ class Ctl(object):
         doesn't exist, a KeyError is raised.
         """
         try:
-            val = self[key]
+            return self[key]
         except KeyError, e:
             if default is not self.sentinel:
                 return default
@@ -165,7 +167,7 @@ class Dir(Ctl):
         def __init__(self, key):
             self.key = key
         def __get__(self, dir, cls):
-            return dir[self.key]
+            return dir.get(self.key, None)
         def __set__(self, dir, val):
             dir[self.key] = val
 
@@ -178,6 +180,9 @@ class Dir(Ctl):
         props = {
             'on': True,
             'off': False,
+            'toggle': Toggle,
+            'always': Always,
+            'never': Never
         }
         def __get__(self, dir, cls):
             val = dir[self.key]
@@ -234,12 +239,19 @@ class Client(Dir):
     below /client.
     """
     base_path = '/client'
+    ctl_types = {
+        'group': (lambda s: int(s, 16), str),
+        'pid': (int, None),
+    }
 
+    allow  = Dir.ctl_property('allow')
     fullscreen = Dir.toggle_property('fullscreen')
+    group  = Dir.ctl_property('group')
+    pid    = Dir.ctl_property('pid')
+    tags   = Dir.ctl_property('tags')
     urgent = Dir.toggle_property('urgent')
 
     label = Dir.file_property('label', writable=True)
-    tags  = Dir.file_property('tags', writable=True)
     props = Dir.file_property('props')
 
     def kill(self):
@@ -615,6 +627,8 @@ class Rule(collections.MutableMapping, utf8):
 
     @classmethod
     def quotekey(cls, key):
+        if key.endswith('_'):
+            key = key[:-1]
         return key.replace('_', '-')
     @classmethod
     def quotevalue(cls, val):
@@ -752,11 +766,16 @@ class Tags(object):
     def select(self, tag, take_client=None):
         def goto(tag):
             if take_client:
+                # Make a new instance in case this is Client('sel'),
+                # which would cause problems given 'sel' changes in the
+                # process.
+                client = Client(take_client.id)
+
                 sel = Tag('sel').id
-                take_client.tags = '+%s' % tag
+                client.tags = '+%s' % tag
                 wmii['view'] = tag
                 if tag != sel:
-                    take_client.tags = '-%s' % sel
+                    client.tags = '-%s' % sel
             else:
                 wmii['view'] = tag
 

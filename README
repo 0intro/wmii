@@ -47,8 +47,8 @@ Configuration
 -------------
 The configuration of wmii is done by customizing the rc script wmiirc,
 which remotely controls the window manager and handles various events.
-The main wmiirc script lives in @CONFPREFIX@/wmii@CONFVERSION@/, while
-wmiirc_local goes in $HOME/.wmii@CONFVERSION@/.
+The main wmiirc script lives in @GLOBALCONF@ while wmiirc_local goes
+in @LOCALCONF@.
 
 More advanced versions of wmiirc are provided in python and ruby.
 For more information on them, see alternative_wmiircs/README.

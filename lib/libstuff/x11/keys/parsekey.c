@@ -5,32 +5,29 @@
 
 typedef struct KMask KMask;
 
-static struct KMask {
-	int		mask;
-	const char*	name;
-} masks[] = {
-	{ShiftMask,   "Shift"},
-	{ControlMask, "Control"},
-	{Mod1Mask,    "Mod1"},
-	{Mod2Mask,    "Mod2"},
-	{Mod3Mask,    "Mod3"},
-	{Mod4Mask,    "Mod4"},
-	{Mod5Mask,    "Mod5"},
-	{0,}
+char *modkey_names[] = {
+	"Shift",
+	"",
+	"Control",
+	"Mod1",
+	"Mod2",
+	"Mod3",
+	"Mod4",
+	"Mod5",
+	nil
 };
 
 bool
 parsekey(char *str, int *mask, char **key) {
 	static char *keys[16];
-	KMask *m;
-	int i, nkeys;
+	int i, j, nkeys;
 
 	*mask = 0;
 	nkeys = tokenize(keys, nelem(keys), str, '-');
 	for(i=0; i < nkeys; i++) {
-		for(m=masks; m->mask; m++)
-			if(!strcasecmp(m->name, keys[i])) {
-				*mask |= m->mask;
+		for(j=0; modkey_names[j]; j++)
+			if(!strcasecmp(modkey_names[j], keys[i])) {
+				*mask |= 1 << j;
 				goto next;
 			}
 		break;

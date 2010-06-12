@@ -1,0 +1,113 @@
+			     wmii 3.10
+
+@@ If you're reading this file before it's been installed,
+@@ substitute the following directories for their placeholders.
+@@   @DOCDIR@		doc/
+@@   @EXAMPLES@		examples/
+@@   @LOCALCONF@	~/.wmii or ~/.wmii-hg (if this is a snapshot)
+@@   @ALTDOC@		alternative_wmiircs/
+@@
+Frequently Asked Questions
+==========================
+
+1. I've just upgraded and something doesn't work.
+-------------------------------------------------
+If you compiled wmii yourself, please try again from a clean source
+tree. If wmii still fails, try deleting or renaming your old
+configuration files. If this fails, see questions #2.
+
+2. I've read all of the docs, but I still need help.
+----------------------------------------------------
+You can get support[1] in the #suckless irc channel on irc.oftc.net, or
+you can subscribe to the mailing list by sending an email to
+dev+subscribe@suckless.org. You can also browse or search the
+mailing list archives[2] at Gmane.
+
+3. I think I've found a bug.
+----------------------------
+You can report bugs at the issue tracker at the Google Code
+project[3]. Please be sure to search for your problem before you
+open a new issue.
+
+4. How do I get a list of keyboard shortcuts?
+---------------------------------------------
+The default keyboard shortcuts are listed in both the wmii(1)
+manpage and in the user guide[4]. You can also get a list of all
+current keyboard shortcuts at any time by selecting 'showkeys' from
+the actions menu (M-a).
+
+5. How do I customize wmii? How do I change my keyboard shortcuts?
+------------------------------------------------------------------
+You can customize wmii by editing its configuration script. If
+you're using the stock wmiirc configuration script, you can add key
+bindings and change your theme by editing @LOCALCONF@/wmiirc_local.
+See @EXAMPLES@/wmiirc_local for more information. You should also be
+sure to read wmii(1) and the user guide[4].
+
+6. I've heard I can do my configuration in any language?
+--------------------------------------------------------
+While wmii is driven by a sh(1) script by default, it ships with
+configuration scripts in several other languages, and more still are
+available elsewhere on the web. See @ALTDOC@/README for more
+information.
+
+7. I've made some changes to my configuration. How do I reload it?
+------------------------------------------------------------------
+You can rerun your wmiirc script from the actions menu at any time.
+If you're running the stock wmiirc, just select wmiirc. If you're
+running the python wmiirc (and haven't moved it to
+@LOCALCONF@/wmiirc), type python/wmiirc, and so on.
+
+8. How do I restart wmii without killing X?
+-------------------------------------------
+You can either run 'exec wmii' from the actions menu or write 
+'exec wmii' to the /ctl virtual file.
+
+9. Why is there space around my terminal windows?
+-------------------------------------------------
+Your terminal has asked to only be resized in certain increments,
+and there's not enough space for another row. `wmii` is forced to
+compromise and leave blank space around it. If you'd rather wmii to
+ignore the terminal's request, write 'incmode ignore'[5] to the /ctl
+virtual file.
+
+10. On FreeBSD, using p9p[6], I get an error about not being able to open /dev/fd/7.
+------------------------------------------------------------------------------------
+You need to mount fdescfs on /dev/fd. See the BUGS section of rc(1)
+for details.
+
+11. How do I set a background image?
+------------------------------------
+This isn't the job of a window manager. You can set the background
+with a third party tool, such as wmsetbg, Esetbg, feh, qiv,
+xsetroot, etc.
+
+12. How do I enable sequential shortcuts (like in ratpoison)?
+ or How do I use wmii with emacs? The shortcuts collide!
+-------------------------------------------------------------
+
+Some applications make extensive use of the Alt key. The preferred
+solution is to use the Windows, Apple, or Penguin key in its place.
+It's assigned the identifier Mod4 on most systems. Set the
+following in wmiirc_local:
+
+    MODKEY=Mod4
+
+Alternatively, you can use key chains, so you're required to press a
+certain key combination before wmii accepts its shortcuts:
+
+    MODKEY=Control-i,
+
+13. How do I find out the names of keys to define keyboard shorcuts?
+--------------------------------------------------------------------
+The easiest way is to run wikeyname(1) and type the key you want to
+bind.
+
+
+[1] http://suckless.org/community
+[2] http://dir.gmane.org/gmane.comp.misc.suckless
+[3] http://wmii.googlecode.com/
+[4] @DOCDIR@/wmii.pdf
+[5] For more information, see wmii(1).
+[6] http://plan9.us
+

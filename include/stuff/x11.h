@@ -207,6 +207,7 @@ struct Screen {
 Display *display;
 Screen scr;
 
+extern char*		modkey_names[];
 extern struct Map	windowmap;
 extern struct Map	atommap;
 extern struct Map	atomnamemap;

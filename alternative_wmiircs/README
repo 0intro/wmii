@@ -11,7 +11,7 @@ It usually suffices to start the included `wmiirc` script at
 wmii startup. Invoking wmii with the flag '-r python/wmiirc',
 for instance, will start the python implementation.
 Alternatively, if you use a session manager, you can add this
-line to ~/.wmii/wmiirc (which must be executable):
+line to @LOCALCONF@/wmiirc (which must be executable):
 
     wmiir xwrite /ctl spawn python/wmiirc
 

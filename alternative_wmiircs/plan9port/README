@@ -5,6 +5,6 @@ This directory contains a Plan 9 based wmiirc script.  This script was
 traditionally the default wmiirc for wmii, but has been moved for
 portability reasons.  To run this script, either Plan 9 from User
 Space[1] (plan9port for short) or 9base[2] is required. Modifications
-can be placed in $home/.wmii@CONFVERSION@/wmiirc_local.rc, which must
+can be placed in @LOCALCONF@/wmiirc_local.rc, which must
 be executable.
 

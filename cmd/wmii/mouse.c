@@ -204,8 +204,8 @@ readmouse(Point *p, uint *button) {
 			p->y = ev.xmotion.y_root;
 			if(p->x == scr.rect.max.x - 1)
 				p->x = scr.rect.max.x;
-			if(p->y == scr.rect.max.x - 1)
-				p->y = scr.rect.max.x;
+			if(p->y == scr.rect.max.y - 1)
+				p->y = scr.rect.max.y;
 			break;
 		}
 		return ev.type;

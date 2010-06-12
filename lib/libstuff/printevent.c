@@ -45,6 +45,7 @@
 #include <stuff/util.h>
 #include "printevent.h"
 #define Window XWindow
+#define unmask _unmask
 
 #define nil ((void*)0)
 

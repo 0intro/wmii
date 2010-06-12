@@ -62,7 +62,7 @@ def time(self):
 wmii.rules = (
     # Apps with system tray icons like to their main windows
     # Give them permission.
-    (ur'^Pidgin:'       dict(allow='+activate')),
+    (ur'^Pidgin:',       dict(allow='+activate')),
 
     # MPlayer and VLC don't float by default, but should.
     (ur'MPlayer|VLC',   dict(floating=True)),

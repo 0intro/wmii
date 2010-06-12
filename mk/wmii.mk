@@ -18,10 +18,15 @@ LIBS9 = $(ROOT)/lib/libstuff.a $(ROOT)/lib/libregexp9.a $(ROOT)/lib/libbio.a $(R
 CFLAGS += '-DVERSION=\"$(VERSION)\"' '-DCOPYRIGHT=\"$(COPYRIGHT)\"' \
 	  '-DCONFVERSION=\"$(CONFVERSION)\"' '-DCONFPREFIX=\"$(ETC)\"'
 FILTER = sed "s|@CONFPREFIX@|$(ETC)|g; \
+	      s|@GLOBALCONF@|$(ETC)/wmii$(CONFVERSION)|g; \
+	      s|@LOCALCONF@|~/.wmii$(CONFVERSION)|g; \
 	      s|@CONFVERSION@|$(CONFVERSION)|g; \
 	      s|@DOCDIR@|$(DOC)|g; \
+	      s|@ALTDOC@|$(DOC)/alternative_wmiircs|g; \
+	      s|@EXAMPLES@|$(DOC)/examples|g; \
 	      s|@VERSION@|$(VERSION)|g; \
 	      s|@LIBDIR@|$(LIBDIR)|g; \
 	      s|@BINSH@|$(BINSH)|g; \
-	      s|@TERMINAL@|$(TERMINAL)|g;"
+	      s|@TERMINAL@|$(TERMINAL)|g; \
+	      /^@@/d;"
 

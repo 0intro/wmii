@@ -22,6 +22,7 @@ OBJ=\
 	event/focusout		\
 	event/ixp		\
 	event/keypress		\
+	event/keyrelease	\
 	event/leavenotify	\
 	event/mapnotify		\
 	event/maprequest	\
@@ -85,6 +86,7 @@ OBJ=\
 	util/tokenize	\
 	util/trim	\
 	util/uniq	\
+	util/unmask	\
 	util/unquote	\
 	util/utflcpy	\
 	util/vector	\
