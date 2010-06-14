@@ -8,6 +8,7 @@ void
 event_preselect(IxpServer *s) {
 	USED(s);
 	event_check();
+	XFlush(display);
 }
 
 void
