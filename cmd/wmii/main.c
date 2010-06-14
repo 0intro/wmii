@@ -92,9 +92,9 @@ init_environment(void) {
 		setenv("WMII_ADDRESS", address, true);
 	else
 		address = smprint("unix!%s/wmii", ns_path);
-	setenv("WMII_CONFPATH", sxprint("%s/.wmii%s:%s/wmii%s",
-					getenv("HOME"), CONFVERSION,
-					CONFPREFIX, CONFVERSION), true);
+	setenv("WMII_CONFPATH",
+	       sxprint("%s/.%s:%s", getenv("HOME"), CONFDIR, GLOBALCONF),
+	       true);
 }
 
 static void
@@ -398,7 +398,7 @@ main(int argc, char *argv[]) {
 
 	init_traps();
 	init_cursors();
-	init_lock_keys();
+	update_keys();
 	ewmh_init();
 	xext_init();
 

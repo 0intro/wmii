@@ -6,7 +6,7 @@
 char*
 estrndup(const char *str, uint len) {
 	char *ret;
-	
+
 	len = min(len, strlen(str));
 	ret = emalloc(len + 1);
 	memcpy(ret, str, len);

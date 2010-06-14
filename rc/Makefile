@@ -2,7 +2,7 @@ ROOT=..
 include $(ROOT)/mk/hdr.mk
 include $(ROOT)/mk/wmii.mk
 
-BIN = $(ETC)/wmii$(CONFVERSION)
+BIN = $(GLOBALCONF)
 TARG =  wmiirc    \
 	welcome
 

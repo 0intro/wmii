@@ -3,7 +3,7 @@ SO = $(SOPTARG).$(SOEXT)
 SONAME = $(TARG).$(SOEXT)
 OFILES_PIC = $(OBJ:=.o_pic)
 
-all: $(HFILES) $(SO) 
+all: $(HFILES) $(SO)
 
 install: $(SOPTARG).install
 uninstall: $(SOPTARG).uninstall

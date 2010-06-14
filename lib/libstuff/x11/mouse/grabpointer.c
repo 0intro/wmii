@@ -6,7 +6,7 @@
 int
 grabpointer(Window *w, Window *confine, Cursor cur, int mask) {
 	XWindow cw;
-	
+
 	cw = None;
 	if(confine)
 		cw = confine->xid;

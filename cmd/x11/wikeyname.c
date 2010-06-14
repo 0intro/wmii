@@ -30,6 +30,7 @@ main(int argc, char *argv[]) {
 	if(argc)
 		usage();
 
+	fmtinstall('K', fmtkey);
 	initdisplay();
 
 	selectinput(&scr.root, KeyPressMask|KeyReleaseMask);
@@ -46,25 +47,11 @@ main(int argc, char *argv[]) {
 
 static bool
 kdown_event(Window *w, void *aux, XKeyEvent *ev) {
-	Fmt f;
-	char buf[32];
-	char *key;
-	KeySym ksym;
-	int num;
 
-	USED(aux);
+	USED(w, aux);
 	nkeys++;
-	num = XLookupString(ev, buf, sizeof buf, &ksym, 0);
-	key = XKeysymToString(ksym);
-
-	fmtstrinit(&f);
-	unmask(&f, ev->state, modkey_names, '-');
-	if(f.nfmt)
-		fmtrune(&f, '-');
-	fmtstrcpy(&f, key);
-
 	free(keyname);
-	keyname = fmtstrflush(&f);
+	keyname = smprint("%K", ev);
 	return false;
 }
 

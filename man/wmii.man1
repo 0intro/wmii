@@ -50,13 +50,11 @@ of the core window manager.
         `<protocol>!<address>`. The default is of the form:
 
 ```     unix!/tmp/ns.$USER.${DISPLAY%.0}/wmii
-
         which opens a unix socket per Plan 9 Port conventions. To
         open a TCP socket, listening at port 4332 on the loopback
         interface, use:
 
 ```     tcp!localhost!4332
-
         $WMII_NAMESPACE is automatically set to this value.
 
 : -r <wmiirc>
@@ -232,11 +230,9 @@ follows.
         Rules have the form:
 
 ```     /<regex>/ -> <width>[+<width>]*
-
         Where,
 
 ```     <width> := <percent of screen> | <pixels>px
-
         When a new column, <n>, is created on a view whose name
         matches <regex>, it is given the <n>th supplied <width>.
         If there is no <n>th width, it is given 1/<ncol>th of the
@@ -250,7 +246,6 @@ follows.
         specified as:
 
 ```     /<regex>/ <key>=<value> ...
-
         where each <key> represents a command in the clients _ctl_
         file, and each <value> represents the value to assign to it.
         The rules are applied when the client is first started and
@@ -351,7 +346,9 @@ represents the currently selected client.
                 changes automatically whenever the window is
                 moved between the floating and managed layers.
                 However, setting a value of _always_ or _never_
-                overrides this behavior.
+                overrides this behavior. Additionally, dialogs,
+                menus, docks, and splash screens will always
+                float unless this value is set to _never_.
         : fullscreen <on | off | toggle>
                 Sets the client's fullscreen state.
         : group <group id>
@@ -375,7 +372,7 @@ represents the currently selected client.
         : urgent <on | off | toggle>
                 Set or unset the client's urgent hint.
         <<
-                
+
 : label
         Set or read a client's label (title).
 : props
@@ -435,25 +432,21 @@ all of the clients with the given tag applied. The special
             Selects a column or the floating area.
 
 ```    area        ::= <area_spec> | <screen_spec>:<area_spec>
-
             When <screen_spec> is omitted and <area_spec> is not "sel",
             0 is assumed. "sel" by itself represents the selected client no
             matter which screen it is on.
 
 ```    area_spec   ::= "~" | <number> | "sel"
-
             Where "~" represents the floating area and <number> represents a column
             index, starting at one.
 
 ```    screen_spec ::= <number>
-
             Where <number> representes the 0-based Xinerama screen number.
 
         : frame
             Selects a client window.
 
 ```    frame ::= <area> <index> | <area> sel | client <window-id>
-
             Where <index> represents the nth frame of <area> or <window-id> is
             the X11 window id of the given client.
 
@@ -461,7 +454,6 @@ all of the clients with the given tag applied. The special
             The amount to grow or nudge something.
 
 ```    amount ::= <number> | <number>px
-        
             If "px" is given, <number> is interperated as an exact pixel count.
             Otherwise, it's interperated as a "reasonable" amount, which is
             usually either the height of a window's title bar, or its sizing
@@ -517,6 +509,7 @@ thus can be used in actions:
 = SEE ALSO =
 wimenu(1), wmii9menu(1), witray(1), wmiir(1), wihack(1) +
 @DOCDIR@/wmii.pdf
+@DOCDIR@/FAQ
 
 [1] http://www.suckless.org/wiki/wmii/tips/9p_tips +
 [2] @DOCDIR@/wmii.pdf

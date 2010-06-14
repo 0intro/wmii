@@ -32,11 +32,10 @@ errorhandler(Display *dpy, XErrorEvent *error) {
 
 int
 traperrors(bool enable) {
-	
+
 	sync();
 	_trap_errors = enable;
 	if (enable)
 		nerrors = 0;
 	return nerrors;
-	
 }

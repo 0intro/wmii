@@ -66,7 +66,7 @@ readfile(file: string): (string, int)
 	fd := open(file, OREAD);
 	if(fd == nil)
 		return ("", 0);
-	
+
 	ret := "";
 	buf := array[512] of byte;
 	while((n := read(fd, buf, len buf)) > 0)
@@ -115,7 +115,7 @@ init(draw: ref Draw->Context, argv: list of string)
 	}
 
 	relist = reverse(relist);
-	
+
 line:	for(;;) {
 		lin := <-line;
 		if(lin == nil)

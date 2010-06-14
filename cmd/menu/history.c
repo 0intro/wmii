@@ -8,7 +8,7 @@
 
 static void
 splice(Item *i) {
-	if(i->next != nil) 
+	if(i->next != nil)
 		i->next->prev = i->prev;
 	if(i->prev != nil)
 		i->prev->next = i->next;

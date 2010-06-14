@@ -9,7 +9,7 @@ querypointer(Window *w) {
 	Point pt;
 	uint ui;
 	int i;
-	
+
 	XQueryPointer(display, w->xid, &win, &win, &i, &i, &pt.x, &pt.y, &ui);
 	return pt;
 }

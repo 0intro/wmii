@@ -15,8 +15,8 @@
 #include <plan9.h>
 
 Rune*
-runestrdup(const Rune *s) 
-{  
+runestrdup(const Rune *s)
+{
 	Rune *ns;
 
 	ns = malloc(sizeof(Rune)*(runestrlen(s) + 1));

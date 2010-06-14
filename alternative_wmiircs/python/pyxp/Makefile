@@ -12,4 +12,4 @@ BINARY = __init__.py    \
 	 mux.py         \
 	 types.py
 
-DIR    = $(ETC)/wmii$(CONFVERSION)/python/pyxp
+DIR    = $(GLOBALCONF)/python/pyxp

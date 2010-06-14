@@ -22,6 +22,6 @@ event_focusin(XFocusChangeEvent *ev) {
 	if((ev->mode == NotifyWhileGrabbed))
 		return;
 
-	if((w = findwin(ev->window))) 
+	if((w = findwin(ev->window)))
 		event_handle(w, focusin, ev);
 }

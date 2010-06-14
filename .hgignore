@@ -4,7 +4,8 @@ syntax: regexp
 \.([oa]|out|o_pic|so|pyc|pyo|diff)$
 \.(diff|orig|rej|bak)$
 \.(aux|idx|ilg|ind|log|toc)$
-^cmd/(stfo|osd|wiwarp|setfocus)(/|$)
+^cmd/osd(/|$)
+^cmd/x11/(stfo|wiclick)\.
 ^(pkg|src)/
 ^doxy
 /bak/

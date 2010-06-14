@@ -9,7 +9,7 @@ static Atom
 xatom(Display *display, char *name) {
 	/* Blech. I don't trust Xlib's cacheing.
 	MapEnt *e;
-	
+
 	e = hash_get(&amap, name, 1);
 	if(e->val == nil)
 		e->val = (void*)XInternAtom(display, name, False);

@@ -51,7 +51,6 @@ connections. The address takes the form
       unix!/tmp/ns.\fB$USER\fR.\fB${DISPLAY\fR%.0\fB}\fR/wmii
 .fi
 
-
 which opens a unix socket per Plan 9 Port conventions. To
 open a TCP socket, listening at port 4332 on the loopback
 interface, use:
@@ -59,7 +58,6 @@ interface, use:
 .nf
       tcp!localhost!4332
 .fi
-
 
 \fB$WMII_NAMESPACE\fR is automatically set to this value.
 
@@ -265,13 +263,11 @@ Rules have the form:
       /\fI<regex>\fR/ -> \fI<width>\fR\fI[+\fI<width>\fR]\fR*
 .fi
 
-
 Where,
 
 .nf
       \fI<width>\fR := \fI<percent of screen>\fR | \fI<pixels>\fRpx
 .fi
-
 
 When a new column, \fI<n>\fR, is created on a view whose name
 matches \fI<regex>\fR, it is given the \fI<n>\fRth supplied \fI<width>\fR.
@@ -289,7 +285,6 @@ specified as:
 .nf
       /\fI<regex>\fR/ \fI<key>\fR=\fI<value>\fR ...
 .fi
-
 
 where each \fI<key>\fR represents a command in the clients \fIctl\fR
 file, and each \fI<value>\fR represents the value to assign to it.
@@ -405,7 +400,9 @@ attached to a new view. Ordinarilly, the value
 changes automatically whenever the window is
 moved between the floating and managed layers.
 However, setting a value of \fIalways\fR or \fInever\fR
-overrides this behavior.
+overrides this behavior. Additionally, dialogs,
+menus, docks, and splash screens will always
+float unless this value is set to \fInever\fR.
 .TP
 fullscreen \fI<on | off | toggle>\fR
 Sets the client's fullscreen state.
@@ -519,7 +516,6 @@ Selects a column or the floating area.
      area        ::= \fI<area_spec>\fR | \fI<screen_spec>\fR:\fI<area_spec>\fR
 .fi
 
-
 When \fI<screen_spec>\fR is omitted and \fI<area_spec>\fR is not "sel",
 0 is assumed. "sel" by itself represents the selected client no
 matter which screen it is on.
@@ -528,14 +524,12 @@ matter which screen it is on.
      area_spec   ::= "~" | \fI<number>\fR | "sel"
 .fi
 
-
 Where "~" represents the floating area and \fI<number>\fR represents a column
 index, starting at one.
 
 .nf
      screen_spec ::= \fI<number>\fR
 .fi
-
 
 Where \fI<number>\fR representes the 0\-based Xinerama screen number.
 
@@ -547,7 +541,6 @@ Selects a client window.
      frame ::= \fI<area>\fR \fI<index>\fR | \fI<area>\fR sel | client \fI<window-id>\fR
 .fi
 
-
 Where \fI<index>\fR represents the nth frame of \fI<area>\fR or \fI<window\-id>\fR is
 the X11 window id of the given client.
 
@@ -558,7 +551,6 @@ The amount to grow or nudge something.
 .nf
      amount ::= \fI<number>\fR | \fI<number>\fRpx
 .fi
-
 
 If "px" is given, \fI<number>\fR is interperated as an exact pixel count.
 Otherwise, it's interperated as a "reasonable" amount, which is
@@ -624,6 +616,7 @@ The namespace directory to use if no address is provided.
 wimenu(1), wmii9menu(1), witray(1), wmiir(1), wihack(1) 
 .P
 @DOCDIR@/wmii.pdf
+@DOCDIR@/FAQ
 
 .P
 \fI[1]\fR http://www.suckless.org/wiki/wmii/tips/9p_tips 

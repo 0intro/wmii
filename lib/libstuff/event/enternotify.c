@@ -12,6 +12,6 @@ event_enternotify(XCrossingEvent *ev) {
 	if(ev->mode != NotifyNormal)
 		return;
 
-	if((w = findwin(ev->window))) 
+	if((w = findwin(ev->window)))
 		event_handle(w, enter, ev);
 }

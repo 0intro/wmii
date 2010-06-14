@@ -10,8 +10,8 @@
 # pragma varargck	argpos	event	1
 # pragma varargck	argpos	warning	1
 #
-# pragma varargck	type	"a"	Area*	
-# pragma varargck	type	"C"	Client*	
+# pragma varargck	type	"a"	Area*
+# pragma varargck	type	"C"	Client*
 # pragma varargck	type	"r"	void
 #endif
 

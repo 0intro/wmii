@@ -6,7 +6,7 @@
 void
 drawpoly(Image *dst, Point *pt, int np, int cap, int w, Color col) {
 	XPoint *xp;
-	
+
 	xp = convpts(pt, np);
 	XSetLineAttributes(display, dst->gc, w, LineSolid, cap, JoinMiter);
 	setgccol(dst, col);

@@ -18,6 +18,8 @@ extern void	init_screens(void);
 /* printevent.c */
 int	fmtevent(Fmt*);
 
+int	fmtkey(Fmt*);
+
 /* xext.c */
 void	randr_event(XEvent*);
 bool	render_argb_p(Visual*);

@@ -22,4 +22,4 @@ strcasestr(const char *dst, const char *src) {
 		}
 	}
 	return nil;
-} 
+}

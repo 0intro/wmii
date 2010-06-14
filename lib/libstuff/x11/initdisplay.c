@@ -55,16 +55,16 @@ initdisplay(void) {
 	scr.visual32 = DefaultVisual(display, scr.screen);
 	scr.gc = DefaultGC(display, scr.screen);
 	scr.depth = DefaultDepth(display, scr.screen);
-	
+
 	scr.white = WhitePixel(display, scr.screen);
 	scr.black = BlackPixel(display, scr.screen);
-	
+
 	scr.root.xid = RootWindow(display, scr.screen);
 	scr.root.r = Rect(0, 0,
 			  DisplayWidth(display, scr.screen),
 			  DisplayHeight(display, scr.screen));
 	scr.rect = scr.root.r;
-	
+
 	scr.root.parent = &scr.root;
 
 	windowmap.bucket = wbucket;

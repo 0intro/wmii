@@ -8,7 +8,7 @@ TEXT   = wmiirc.py
 DIRS   = pygmi \
 	 pyxp
 
-DIR    = $(ETC)/wmii$(CONFVERSION)/python
+DIR    = $(GLOBALCONF)/python
 DOCDIR = $(DOC)/alternative_wmiircs/python
 
 include $(ROOT)/mk/dir.mk

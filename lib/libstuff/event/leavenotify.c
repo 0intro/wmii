@@ -9,6 +9,6 @@ event_leavenotify(XCrossingEvent *ev) {
 
 	if(!ev->send_event)
 		event_xtime = ev->time;
-	if((w = findwin(ev->window))) 
+	if((w = findwin(ev->window)))
 		event_handle(w, leave, ev);
 }

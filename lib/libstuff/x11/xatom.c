@@ -6,7 +6,7 @@
 Atom
 xatom(const char *name) {
 	void **e, **f;
-	
+
 	e = hash_get(&atommap, name, true);
 	if(*e == nil) {
 		*e = (void*)XInternAtom(display, name, false);

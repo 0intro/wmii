@@ -9,4 +9,4 @@ BINARY = __init__.py \
 	 monitor.py  \
 	 util.py
 
-DIR    = $(ETC)/wmii$(CONFVERSION)/python/pygmi
+DIR    = $(GLOBALCONF)/python/pygmi

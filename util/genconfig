@@ -96,7 +96,7 @@ prompt() {
 	unset val
 	if [ -z "$def" -o -n "$force" ]; then
 		echo "$@"
-		echo -n "$var[$def]$(equals) " 
+		echo -n "$var[$def]$(equals) "
 		read val
 		echo
 	fi
@@ -158,7 +158,7 @@ if $1 -v 2>&1 | grep 'gcc version' >/dev/null; then
 	echo
 fi
 
-prompt INCPATH Search path for include files 
+prompt INCPATH Search path for include files
 prompt LIBS Libraries to be linked with every executable
 
 prompt CFLAGS Flags for the C compiler

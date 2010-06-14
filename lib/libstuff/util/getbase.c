@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stuff/util.h>
 
-#define strbcmp(str, const) (strncmp((str), (const), sizeof(const)-1))	
+#define strbcmp(str, const) (strncmp((str), (const), sizeof(const)-1))
 int
 getbase(const char **s, long *sign) {
 	const char *p;

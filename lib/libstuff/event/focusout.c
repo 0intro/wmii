@@ -14,6 +14,6 @@ event_focusout(XFocusChangeEvent *ev) {
 	   ||(ev->detail == NotifyAncestor)))
 		return;
 
-	if((w = findwin(ev->window))) 
+	if((w = findwin(ev->window)))
 		event_handle(w, focusout, ev);
 }

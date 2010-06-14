@@ -6,30 +6,6 @@
 #include <X11/keysym.h>
 #include "fns.h"
 
-void
-init_lock_keys(void) {
-	static int masks[] = {
-		ShiftMask, LockMask, ControlMask, Mod1Mask, Mod2Mask,
-		Mod3Mask, Mod4Mask, Mod5Mask
-	};
-	XModifierKeymap *modmap;
-	KeyCode numlock;
-	int i, max;
-
-	numlock_mask = 0;
-	modmap = XGetModifierMapping(display);
-	numlock = keycode("Num_Lock");
-	if(numlock)
-	if(modmap && modmap->max_keypermod > 0) {
-		max = nelem(masks) * modmap->max_keypermod;
-		for(i = 0; i < max; i++)
-			if(modmap->modifiermap[i] == numlock)
-				numlock_mask = masks[i / modmap->max_keypermod];
-	}
-	XFreeModifiermap(modmap);
-	valid_mask = 255 & ~(numlock_mask | LockMask);
-}
-
 static void
 freekey(Key *k) {
 	Key *n;
@@ -43,7 +19,7 @@ freekey(Key *k) {
 static void
 _grab(XWindow w, int keycode, uint mod) {
 	XGrabKey(display, keycode, mod, w,
-			true, GrabModeAsync, GrabModeAsync);
+		 true, GrabModeAsync, GrabModeAsync);
 }
 
 static void
@@ -66,12 +42,12 @@ ungrabkey(Key *k) {
 	}
 }
 
-static Key *
+static Key*
 name2key(const char *name) {
 	Key *k;
 
 	for(k=key; k; k=k->lnext)
-		if(!strncmp(k->name, name, sizeof k->name))
+		if(!strcmp(k->name, name))
 			return k;
 	return nil;
 }
@@ -218,22 +194,21 @@ update_keys(void) {
 	Key *k;
 	char *l, *p;
 
-	init_lock_keys();
+	numlock_mask = numlockmask();
+	valid_mask = 0xff & ~(numlock_mask | LockMask);
 	while((k = key)) {
 		key = key->lnext;
 		ungrabkey(k);
 		freekey(k);
 	}
-	for(l = p = def.keys; p && *p;) {
+	for(l = p = def.keys; p && *p; p++) {
 		if(*p == '\n') {
 			*p = 0;
 			if((k = getkey(l)))
 				grabkey(k);
 			*p = '\n';
-			l = ++p;
+			l = p + 1;
 		}
-		else
-			p++;
 	}
 	if(l < p && strlen(l)) {
 		if((k = getkey(l)))

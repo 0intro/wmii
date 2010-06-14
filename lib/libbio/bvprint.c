@@ -1,7 +1,7 @@
 #include "plan9.h"
 #include <bio.h>
 
-static int 
+static int
 fmtBflush(Fmt *f)
 {
 	Biobuf *bp;

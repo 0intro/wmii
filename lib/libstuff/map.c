@@ -19,7 +19,7 @@ MapEnt *NM;
 static ulong
 hash(const char *str) {
 	ulong h;
-	
+
 	h = 5381;
 	while (*str != '\0') {
 		h += h << 5; /* h *= 33 */
@@ -31,7 +31,7 @@ hash(const char *str) {
 static void
 insert(Map *m, MapEnt **e, ulong val, const char *key) {
 	MapEnt *te;
-	
+
 	m->nmemb++;
 	te = emallocz(sizeof *te);
 	te->hash = val;
@@ -61,7 +61,7 @@ hash_getp(Map *map, const char *str, int create) {
 	MapEnt **e;
 	ulong h;
 	int cmp;
-	
+
 	h = hash(str);
 	e = map_getp(map, h, create);
 	if(*e && (*e)->key == nil)
@@ -81,7 +81,7 @@ hash_getp(Map *map, const char *str, int create) {
 void**
 map_get(Map *map, ulong val, bool create) {
 	MapEnt *e;
-	
+
 	e = *map_getp(map, val, create);
 	return e ? &e->val : nil;
 }
@@ -89,7 +89,7 @@ map_get(Map *map, ulong val, bool create) {
 void**
 hash_get(Map *map, const char *str, bool create) {
 	MapEnt *e;
-	
+
 	e = *hash_getp(map, str, create);
 	return e ? &e->val : nil;
 }
@@ -98,7 +98,7 @@ void*
 map_rm(Map *map, ulong val) {
 	MapEnt **e, *te;
 	void *ret;
-	
+
 	ret = nil;
 	e = map_getp(map, val, 0);
 	if(*e) {
@@ -115,7 +115,7 @@ void*
 hash_rm(Map *map, const char *str) {
 	MapEnt **e, *te;
 	void *ret;
-	
+
 	ret = nil;
 	e = hash_getp(map, str, 0);
 	if(*e) {

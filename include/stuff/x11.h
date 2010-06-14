@@ -201,7 +201,7 @@ struct Screen {
 # pragma varargck	type	"A"	Atom
 # pragma varargck	type	"P"	Point
 # pragma varargck	type	"R"	Rectangle
-# pragma varargck	type	"W"	Window*	
+# pragma varargck	type	"W"	Window*
 #endif
 
 Display *display;
@@ -236,10 +236,10 @@ void	changeprop_string(Window*, const char*, const char*);
 void	changeprop_textlist(Window*, const char*, const char*, char*[]);
 void	changeprop_ulong(Window*, const char*, const char*, ulong[], int);
 void	changeproperty(Window*, const char*, const char*, int width, const uchar*, int);
+void	cleanupwindow(Window*);
 void	clientmessage(Window*, const char*, long, int, ClientMessageData);
 void	copyimage(Image*, Rectangle, Image*, Point);
 Window*	createwindow(Window*, Rectangle, int depth, uint class, WinAttr*, int valuemask);
-void	cleanupwindow(Window*);
 Window*	createwindow_visual(Window*, Rectangle, int depth, Visual*, uint class, WinAttr*, int);
 void	delproperty(Window*, const char*);
 void	destroywindow(Window*);
@@ -272,6 +272,7 @@ Font*	loadfont(const char*);
 void	lowerwin(Window*);
 int	mapwin(Window*);
 void	movewin(Window*, Point);
+int	numlockmask(void);
 bool	parsecolor(const char *name, Color*);
 bool	parsekey(char*, int*, char**);
 ulong	pixelvalue(Color);

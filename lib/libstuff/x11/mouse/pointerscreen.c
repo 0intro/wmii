@@ -9,7 +9,7 @@ pointerscreen(void) {
 	Point pt;
 	uint ui;
 	int i;
-	
+
 	return XQueryPointer(display, scr.root.xid, &win, &win, &i, &i,
 			     &pt.x, &pt.y, &ui);
 }

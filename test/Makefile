@@ -5,7 +5,7 @@ TARG =	grav
 
 OFILES = ../cmd/util.o     \
 	 ../cmd/wmii/map.o \
-	 ../cmd/wmii/x11.o 
+	 ../cmd/wmii/x11.o
 
 LDFLAGS += $(OFILES) -lfmt -lutf -lbio $(LIBX11) -lXext
 CFLAGS += $(INCX11)

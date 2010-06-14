@@ -12,9 +12,9 @@
  * OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
  */
 /*
- * Plan 9 port version must include libc.h in order to 
+ * Plan 9 port version must include libc.h in order to
  * get Plan 9 debugging malloc, which sometimes returns
- * different pointers than the standard malloc. 
+ * different pointers than the standard malloc.
  */
 #include <stdlib.h>
 #include <string.h>

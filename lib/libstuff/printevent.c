@@ -10,11 +10,11 @@
  * readable form, Part01/01 Message-ID: <1935@wyse.wyse.com> Date: 22 Dec 88
  * 19:28:25 GMT Organization: Wyse Technology, San Jose Lines: 1093 Approved:
  * mikew@wyse.com
- * 
+ *
  * Submitted-by: richsun!darkstar!ken Posting-number: Volume 2, Issue 56
  * Archive-name: showevent/part01
- * 
- * 
+ *
+ *
  * There are times during debugging when it would be real useful to be able to
  * print the fields of an event in a human readable form.  Too many times I
  * found myself scrounging around in section 8 of the Xlib manual looking for
@@ -29,13 +29,13 @@
  * functions are not complicated, in fact, they are mind-numbingly boring -
  * but that's just the point nobody wants to spend the time writing functions
  * like this, they just want to have them when they need them.
- * 
+ *
  * A simple, sample program is included which does little else but to
  * demonstrate the use of these two functions.  These functions have saved me
  * many an hour during debugging and I hope you find some benefit to these.
  * If you have any comments, suggestions, improvements, or if you find any
  * blithering errors you can get it touch with me at the following location:
- * 
+ *
  * ken@richsun.UUCP
  */
 
@@ -931,7 +931,7 @@ struct Handler {
 	int (*fn)(Fmt*, XEvent*);
 };
 
-int 
+int
 fmtevent(Fmt *fmt) {
 	XEvent *e;
 	XAnyEvent *ev;

@@ -9,5 +9,5 @@ EXECS  = wmiirc
 TEXT   = config.rb \
 	 config.yaml
 
-DIR    = $(ETC)/wmii$(CONFVERSION)/ruby
+DIR    = $(GLOBALCONF)/ruby
 DOCDIR = $(DOC)/alternative_wmiircs/ruby

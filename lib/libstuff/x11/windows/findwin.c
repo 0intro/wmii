@@ -8,7 +8,7 @@ Window*
 findwin(XWindow xw) {
 	Window *w;
 	void **e;
-	
+
 	e = map_get(&windowmap, (ulong)xw, false);
 	if(e) {
 		w = *e;

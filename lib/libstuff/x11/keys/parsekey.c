@@ -3,8 +3,6 @@
  */
 #include "../x11.h"
 
-typedef struct KMask KMask;
-
 char *modkey_names[] = {
 	"Shift",
 	"",
@@ -41,3 +39,43 @@ parsekey(char *str, int *mask, char **key) {
 	else
 		return i == nkeys;
 }
+
+int
+numlockmask(void) {
+	static int masks[] = {
+		ShiftMask, LockMask, ControlMask, Mod1Mask,
+		Mod2Mask, Mod3Mask, Mod4Mask, Mod5Mask
+	};
+	XModifierKeymap *modmap;
+	KeyCode kcode;
+	int i, max, numlock;
+
+	numlock = 0;
+	modmap = XGetModifierMapping(display);
+	kcode = keycode("Num_Lock");
+	if(kcode && modmap && modmap->max_keypermod > 0) {
+		max = nelem(masks) * modmap->max_keypermod;
+		for(i = 0; i < max && !numlock; i++)
+			if(modmap->modifiermap[i] == kcode)
+				numlock = masks[i / modmap->max_keypermod];
+	}
+	XFreeModifiermap(modmap);
+	return numlock;
+}
+
+int
+fmtkey(Fmt *f) {
+	XKeyEvent *ev;
+	char *key;
+	int nfmt;
+
+	ev = va_arg(f->args, XKeyEvent*);
+	key = XKeysymToString(XKeycodeToKeysym(display, ev->keycode, 0));
+
+	nfmt = f->nfmt;
+	unmask(f, ev->state, modkey_names, '-');
+	if(f->nfmt > nfmt)
+		fmtrune(f, '-');
+	return fmtstrcpy(f, key);
+}
+

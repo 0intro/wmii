@@ -2,7 +2,7 @@ PTARG = $(ROOT)/lib/$(TARG)
 LIB = $(PTARG).a
 OFILES = $(OBJ:=.o)
 
-all: $(HFILES) $(LIB) 
+all: $(HFILES) $(LIB)
 
 install: $(PTARG).install
 uninstall: $(PTARG).uninstall

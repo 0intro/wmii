@@ -9,7 +9,7 @@ event_selectionrequest(XSelectionRequestEvent *ev) {
 
 	if(!ev->send_event)
 		event_xtime = ev->time;
-	if((w = findwin(ev->owner))) 
+	if((w = findwin(ev->owner)))
 		event_handle(w, selectionrequest, ev);
 }
 
