@@ -65,7 +65,7 @@ class Ctl(object):
         """
         Arguments are joined by ascii spaces and written to the ctl file.
         """
-        client.awrite(self.ctl_path, ' '.join(args))
+        client.awrite(self.ctl_path, u' '.join(map(unicode, args)))
 
     def __getitem__(self, key):
         for line in self.ctl_lines():
