@@ -1,11 +1,13 @@
 3.10b1:
-    * Xft is now loaded on demand
-    * /colrules widths may now be specified in pixels
+    * Xft is now loaded on demand.
+    * /colrules widths may now be specified in pixels.
     * /tagrules has been replaced with the more general /rules
-    * Add witray system tray program
-    * Floating clients can be collapsed by clicking their layout boxes
-    * Dock windows act more like dock windows
-    * Fixed some managed move bugs
+    * Add witray system tray program.
+    * Floating clients can be collapsed by clicking their layout boxes.
+    * Dock windows act more like dock windows.
+    * Fixed some managed move bugs.
+    * The FocusFloating and FocusColumn events have been removed.
+    * The tag '!' is no longer special.
 
 3.9.2:             
     * Work around mawk bug that broke wmiirc.

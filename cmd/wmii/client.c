@@ -1145,7 +1145,7 @@ client_applytags(Client *c, const char *tags) {
 		if(!strcmp(cur, "~"))
 			c->floating = add ? On : Never;
 		else {
-			if(!strcmp(cur, "!") || !strcmp(cur, "sel"))
+			if(!strcmp(cur, "sel"))
 				cur = selview->name;
 			else if(Mbsearch(cur, badtags, bsstrcmp))
 				continue;
