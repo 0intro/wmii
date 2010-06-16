@@ -405,7 +405,7 @@ main(int argc, char *argv[]) {
 	event_debug = debug_event;
 
 	srv.preselect = event_preselect;
-	ixp_listen(&srv, sock, &p9srv, serve_9pcon, nil);
+	ixp_listen(&srv, sock, &p9srv, ixp_serve9conn, nil);
 	ixp_listen(&srv, ConnectionNumber(display), nil, event_fdready, closedisplay);
 
 	def.border = 1;

@@ -13,7 +13,6 @@ PACKAGES += $(X11PACKAGES) xext xrandr xrender xinerama
 LIB = $(LIBIXP) $(LIBS9)
 LIBS += -lm
 
-CFLAGS += $(INCICONV) -DIXP_NEEDAPI=97
 OBJ =	area	\
 	bar	\
 	backtrace \

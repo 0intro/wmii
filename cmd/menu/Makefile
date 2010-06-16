@@ -16,7 +16,6 @@ PACKAGES += $(X11PACKAGES)
 
 LIB = $(LIBS9) $(LIBIXP)
 LIBS += -lm
-CFLAGS += -DIXP_NEEDAPI=86
 OBJ =	main	\
 	caret	\
 	history	\

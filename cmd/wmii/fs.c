@@ -195,7 +195,7 @@ dwrite(int flag, void *buf, int n, bool always) {
 static uint	fs_size(IxpFileId*);
 
 static void
-dostat(Stat *s, IxpFileId *f) {
+dostat(IxpStat *s, IxpFileId *f) {
 	s->type = 0;
 	s->dev = 0;
 	s->qid.path = QID(f->tab.type, f->id);
@@ -363,7 +363,7 @@ fs_attach(Ixp9Req *r) {
 	r->fid->qid.type = f->tab.qtype;
 	r->fid->qid.path = QID(f->tab.type, 0);
 	r->ofcall.rattach.qid = r->fid->qid;
-	respond(r, nil);
+	ixp_respond(r, nil);
 }
 
 void
@@ -394,7 +394,7 @@ fs_size(IxpFileId *f) {
 void
 fs_stat(Ixp9Req *r) {
 	IxpMsg m;
-	Stat s;
+	IxpStat s;
 	int size;
 	char *buf;
 	IxpFileId *f;
@@ -402,7 +402,7 @@ fs_stat(Ixp9Req *r) {
 	f = r->fid->aux;
 
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
-		respond(r, Enofile);
+		ixp_respond(r, Enofile);
 		return;
 	}
 
@@ -415,7 +415,7 @@ fs_stat(Ixp9Req *r) {
 	ixp_pstat(&m, &s);
 
 	r->ofcall.rstat.stat = (uchar*)m.data;
-	respond(r, nil);
+	ixp_respond(r, nil);
 }
 
 void
@@ -427,7 +427,7 @@ fs_read(Ixp9Req *r) {
 	f = r->fid->aux;
 
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
-		respond(r, Enofile);
+		ixp_respond(r, Enofile);
 		return;
 	}
 
@@ -443,49 +443,49 @@ fs_read(Ixp9Req *r) {
 		switch(f->tab.type) {
 		case FsFprops:
 			ixp_srv_readbuf(r, f->p.client->props, strlen(f->p.client->props));
-			respond(r, nil);
+			ixp_respond(r, nil);
 			return;
 		case FsFColRules:
 		case FsFRules:
 			ixp_srv_readbuf(r, f->p.rule->string, f->p.rule->size);
-			respond(r, nil);
+			ixp_respond(r, nil);
 			return;
 		case FsFKeys:
 			ixp_srv_readbuf(r, def.keys, def.keyssz);
-			respond(r, nil);
+			ixp_respond(r, nil);
 			return;
 		case FsFCtags:
 			ixp_srv_readbuf(r, f->p.client->tags, strlen(f->p.client->tags));
-			respond(r, nil);
+			ixp_respond(r, nil);
 			return;
 		case FsFClabel:
 			ixp_srv_readbuf(r, f->p.client->name, strlen(f->p.client->name));
-			respond(r, nil);
+			ixp_respond(r, nil);
 			return;
 		case FsFBar:
 			ixp_srv_readbuf(r, f->p.bar->buf, strlen(f->p.bar->buf));
-			respond(r, nil);
+			ixp_respond(r, nil);
 			return;
 		case FsFRctl:
 			buf = readctl_root();
 			ixp_srv_readbuf(r, buf, strlen(buf));
-			respond(r, nil);
+			ixp_respond(r, nil);
 			return;
 		case FsFCctl:
 			buf = readctl_client(f->p.client);
 			ixp_srv_readbuf(r, buf, strlen(buf));
-			respond(r, nil);
+			ixp_respond(r, nil);
 			return;
 		case FsFTindex:
 			buf = view_index(f->p.view);
 			ixp_srv_readbuf(r, buf, strlen(buf));
-			respond(r, nil);
+			ixp_respond(r, nil);
 			return;
 		case FsFTctl:
 			buf = readctl_view(f->p.view);
 			n = strlen(buf);
 			ixp_srv_readbuf(r, buf, n);
-			respond(r, nil);
+			ixp_respond(r, nil);
 			return;
 		}
 	}
@@ -502,18 +502,18 @@ fs_write(Ixp9Req *r) {
 	uint i;
 
 	if(r->ifcall.io.count == 0) {
-		respond(r, nil);
+		ixp_respond(r, nil);
 		return;
 	}
 	f = r->fid->aux;
 
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
-		respond(r, Enofile);
+		ixp_respond(r, Enofile);
 		return;
 	}
 
 	if(waserror()) {
-		respond(r, ixp_errbuf());
+		ixp_respond(r, ixp_errbuf());
 		return;
 	}
 
@@ -521,11 +521,11 @@ fs_write(Ixp9Req *r) {
 	case FsFColRules:
 	case FsFRules:
 		ixp_srv_writebuf(r, &f->p.rule->string, &f->p.rule->size, 0);
-		respond(r, nil);
+		ixp_respond(r, nil);
 		break;
 	case FsFKeys:
 		ixp_srv_writebuf(r, &def.keys, &def.keyssz, 0);
-		respond(r, nil);
+		ixp_respond(r, nil);
 		break;
 	case FsFClabel:
 		ixp_srv_data2cstring(r);
@@ -535,13 +535,13 @@ fs_write(Ixp9Req *r) {
 		frame_draw(f->p.client->sel);
 		update_class(f->p.client);
 		r->ofcall.io.count = r->ifcall.io.count;
-		respond(r, nil);
+		ixp_respond(r, nil);
 		break;
 	case FsFCtags:
 		ixp_srv_data2cstring(r);
 		client_applytags(f->p.client, r->ifcall.io.data);
 		r->ofcall.io.count = r->ifcall.io.count;
-		respond(r, nil);
+		ixp_respond(r, nil);
 		break;
 	case FsFBar:
 		i = strlen(f->p.bar->buf);
@@ -549,7 +549,7 @@ fs_write(Ixp9Req *r) {
 		ixp_srv_writebuf(r, &p, &i, 279);
 		bar_load(f->p.bar);
 		r->ofcall.io.count = i - r->ifcall.io.offset;
-		respond(r, nil);
+		ixp_respond(r, nil);
 		break;
 	case FsFCctl:
 		mf = (MsgFunc)message_client;
@@ -563,7 +563,7 @@ fs_write(Ixp9Req *r) {
 	msg:
 		errstr = ixp_srv_writectl(r, mf);
 		r->ofcall.io.count = r->ifcall.io.count;
-		respond(r, errstr);
+		ixp_respond(r, errstr);
 		break;
 	case FsFEvent:
 		if(r->ifcall.io.data[r->ifcall.io.count-1] == '\n')
@@ -571,7 +571,7 @@ fs_write(Ixp9Req *r) {
 		else
 			event("%.*s\n", (int)r->ifcall.io.count, r->ifcall.io.data);
 		r->ofcall.io.count = r->ifcall.io.count;
-		respond(r, nil);
+		ixp_respond(r, nil);
 		break;
 	default:
 		/* This should not be called if the file is not open for writing. */
@@ -588,7 +588,7 @@ fs_open(Ixp9Req *r) {
 	f = r->fid->aux;
 
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
-		respond(r, Enofile);
+		ixp_respond(r, Enofile);
 		return;
 	}
 
@@ -606,9 +606,9 @@ fs_open(Ixp9Req *r) {
 	|| (r->ifcall.topen.mode&3) != OREAD && !(f->tab.perm & 0200)
 	|| (r->ifcall.topen.mode&3) != OWRITE && !(f->tab.perm & 0400)
 	|| (r->ifcall.topen.mode & ~(3|OAPPEND|OTRUNC)))
-		respond(r, Enoperm);
+		ixp_respond(r, Enoperm);
 	else
-		respond(r, nil);
+		ixp_respond(r, nil);
 }
 
 void
@@ -619,24 +619,24 @@ fs_create(Ixp9Req *r) {
 
 	switch(f->tab.type) {
 	default:
-		respond(r, Enoperm);
+		ixp_respond(r, Enoperm);
 		return;
 	case FsDBars:
 		if(!strlen(r->ifcall.tcreate.name)) {
-			respond(r, Ebadvalue);
+			ixp_respond(r, Ebadvalue);
 			return;
 		}
 		bar_create(f->p.bar_p, r->ifcall.tcreate.name);
 		f = lookup_file(f, r->ifcall.tcreate.name);
 		if(!f) {
-			respond(r, Enofile);
+			ixp_respond(r, Enofile);
 			return;
 		}
 		r->ofcall.ropen.qid.type = f->tab.qtype;
 		r->ofcall.ropen.qid.path = QID(f->tab.type, f->id);
 		f->next = r->fid->aux;
 		r->fid->aux = f;
-		respond(r, nil);
+		ixp_respond(r, nil);
 		break;
 	}
 }
@@ -648,20 +648,20 @@ fs_remove(Ixp9Req *r) {
 
 	f = r->fid->aux;
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
-		respond(r, Enofile);
+		ixp_respond(r, Enofile);
 		return;
 	}
 
 
 	switch(f->tab.type) {
 	default:
-		respond(r, Enoperm);
+		ixp_respond(r, Enoperm);
 		return;
 	case FsFBar:
 		s = f->p.bar->screen;
 		bar_destroy(f->next->p.bar_p, f->p.bar);
 		bar_draw(s);
-		respond(r, nil);
+		ixp_respond(r, nil);
 		break;
 	}
 }
@@ -672,7 +672,7 @@ fs_clunk(Ixp9Req *r) {
 
 	f = r->fid->aux;
 	if(!ixp_srv_verifyfile(f, lookup_file)) {
-		respond(r, nil);
+		ixp_respond(r, nil);
 		return;
 	}
 
@@ -694,7 +694,7 @@ fs_clunk(Ixp9Req *r) {
 		update_keys();
 		break;
 	}
-	respond(r, nil);
+	ixp_respond(r, nil);
 }
 
 void
@@ -707,12 +707,12 @@ fs_flush(Ixp9Req *r) {
 	if(f->pending)
 		ixp_pending_flush(r);
 	/* else die() ? */
-	respond(r->oldreq, Einterrupted);
-	respond(r, nil);
+	ixp_respond(r->oldreq, Einterrupted);
+	ixp_respond(r, nil);
 }
 
 void
-fs_freefid(Fid *f) {
+fs_freefid(IxpFid *f) {
 	IxpFileId *id, *tid;
 
 	tid = f->aux;

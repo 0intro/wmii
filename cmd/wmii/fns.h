@@ -184,7 +184,7 @@ void	fs_attach(Ixp9Req*);
 void	fs_clunk(Ixp9Req*);
 void	fs_create(Ixp9Req*);
 void	fs_flush(Ixp9Req*);
-void	fs_freefid(Fid*);
+void	fs_freefid(IxpFid*);
 void	fs_open(Ixp9Req*);
 void	fs_read(Ixp9Req*);
 void	fs_remove(Ixp9Req*);

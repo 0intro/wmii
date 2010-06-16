@@ -20,7 +20,8 @@ LIBS9 = $(ROOT)/lib/libstuff.a $(ROOT)/lib/libregexp9.a $(ROOT)/lib/libbio.a $(R
 
 CFLAGS += '-DVERSION=\"$(VERSION)\"' '-DCOPYRIGHT=\"$(COPYRIGHT)\"' \
 	  '-DCONFDIR=\"$(CONFDIR)\"' '-DCONFPREFIX=\"$(ETC)\"' \
-	  '-DLOCALCONF=\"$(LOCALCONF)\"' '-DGLOBALCONF=\"$(GLOBALCONF)\"'
+	  '-DLOCALCONF=\"$(LOCALCONF)\"' '-DGLOBALCONF=\"$(GLOBALCONF)\"' \
+	  -DIXP_NEEDAPI=127
 
 FILTER = sed "s|@CONFPREFIX@|$(ETC)|g; \
 	      s|@GLOBALCONF@|$(GLOBALCONF)|g; \

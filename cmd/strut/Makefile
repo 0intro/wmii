@@ -11,7 +11,6 @@ PACKAGES += $(X11PACKAGES)
 
 LIB = $(LIBS9)
 LIBS += -lm
-CFLAGS += -DIXP_NEEDAPI=86
 OBJ =	main	\
 	ewmh	\
 	win

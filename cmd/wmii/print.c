@@ -34,15 +34,15 @@ static char* fcnames[] = {
 };
 
 static int
-qid(Fmt *f, Qid *q) {
+qid(Fmt *f, IxpQid *q) {
 	return fmtprint(f, "(%uhd,%uld,%ullx)", q->type, q->version, q->path);
 }
 
 int
 Ffmt(Fmt *f) {
-	Fcall *fcall;
+	IxpFcall *fcall;
 
-	fcall = va_arg(f->args, Fcall*);
+	fcall = va_arg(f->args, IxpFcall*);
 	fmtprint(f, "% 2d %s\t", fcall->hdr.tag, fcnames[fcall->hdr.type - TVersion]);
 	switch(fcall->hdr.type) {
 	case TVersion:

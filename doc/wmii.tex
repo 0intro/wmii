@@ -236,19 +236,24 @@ the state they describe. For instance,
 client. If a client is fullscreen, it contains the line:
 
 \begin{code}
-  Fullscreen on
+  fullscreen on
 \end{code}
 
 \noindent To change this, you'd update the file with the line
-% XXX: Broken /ctl cmd.
-|Fullscreen off| or even |Fullscreen| |toggle| to toggle
+% XXX: Line broken at /ctl cmd.
+|fullscreen off| or even |fullscreen| |toggle| to toggle
 the client's fullscreen state.
 
 The concept of controlling a program via a filesystem derives
 from Plan 9, where such interfaces are extensive and well
-proven. The metaphor has shown itself to be quite intuitive to
-Unix users, once the shock of a “virtual” filesystem wears off.
-The flexibility of being able to control \wmii\ from myriad
+proven\footnote{The concept has also taken hold on most Unixes
+in the form of \texttt{/proc} and \texttt{/sys} virtual
+filesystems, but tends to be very kernel-centric. On Plan 9,
+where the model is more pervasive, there are more virtual
+filesystems for user-level applications than for the kernel.}.
+The metaphor has shown itself to be quite intuitive to Unix
+users, once the shock of a “virtual” filesystem wears off.  The
+flexibility of being able to control \wmii\ from myriad
 programming languages, including the standard Unix shell and
 even from the command line, is well worth the shock.
 
@@ -780,8 +785,9 @@ scope of this document.
 
 Key names can be detected by running |xev| from a
 terminal, pressing the desired key, and looking at the output
-(it's in the parentheses, after the keysym). A \wmii-specific
-utility is forthcoming.
+(it's in the parentheses, after the keysym). Or, more simply,
+you can run the \man 1 {wikeyname} utility bundled with \wmii\
+and press the key you wish to bind.
 
 Examples of key bindings:
 
@@ -874,19 +880,19 @@ writing new values to the control file. For instance, if a
 client is fullscreen, its control file will contain the line:
 
 \begin{code}
-  Fullscreen on
+  fullscreen on
 \end{code}
 
 \noindent To restore the client from fullscreen, either of the
 following lines may be written to its control file:
 
 \begin{code}
-  Fullscreen off
-  Fullscreen toggle
+  fullscreen off
+  fullscreen toggle
 \end{code}
 
-When next read, the |Fullscreen on| line will have been replaced
-with |Fullscreen off|.  No care need be taken to preserve the
+When next read, the |fullscreen on| line will have been replaced
+with |fullscreen off|.  No care need be taken to preserve the
 other contents of the file. They're generated anew each time
 it's read.
 
@@ -903,15 +909,39 @@ client. The files in these directories are:
   \item[ctl] The control file. The properties are:
     \index{filesystem!/client/*/@\clientlabel!ctl}
     \begin{description}
-      \item[Fullscreen] The client's fullscreen state. When
+      \item[allow] The set of unusual actions the client is
+        allowed to perform, in the same format as the tag set.
+        \begin{description}
+     \item[activate] The client is allowed to activate
+       itself—that is, focus its window and, as the case may
+       require, uncollapse it and select a tag it resides on.
+       This flag must be set on a client if you wish it able to
+       activate itself from the system tray.
+        \end{description}
+      \item[floating] Defines whether this client is likely to
+        float when attached to a new view. May be |on|, |off|,
+        |always|, or |never|.  Ordinarilly, the value changes
+        automatically whenever the window is moved between the
+        floating and managed layers. However, setting a value of
+        |always| or |never| overrides this behavior.
+      \item[fullscreen] The client's fullscreen state. When
         |on|, the client is displayed fullscreen on all of its
         views. Possible values are |on|, |off|, and |toggle|.
-      \item[Urgent] The client's urgency state. When |on|, the
-        client's layout box will be highlighted. Possible values
-        are |on|, |off|, and |toggle|.
+      \item[group] The client's group ID, or 0 if not part of a
+        group. Clients tend to open with the same tags and in
+        the same columns as the last active member of their
+        group. Setting this property is only useful when done
+        via the rules file.
       \item[kill] When written, the window is closed politely,
         if possible.
+      \item[pid] Read-only value of the PID of the program that
+        owns the window, if the value is available and the
+        process is on the same machine as wmii.
       \item[slay] When written, the client is killed peremptorily.
+      \item[tags] The client's tags. The same as the tags file.
+      \item[urgent] The client's urgency state. When |on|, the
+        client's layout box will be highlighted. Possible values
+        are |on|, |off|, and |toggle|.
     \end{description}
   \item[props] The client's window class (the X11 |WM_CLASS|
     property) and title string, separated by colons. This file
@@ -922,14 +952,20 @@ client. The files in these directories are:
     \index{filesystem!/client/*/@\clientlabel!label}
   \item[tags]
     \index{filesystem!/client/*/@\clientlabel!tags}
-    The client's tags. Tag names are separated by |+|
-    signs. Tags beginning and ending with |/| are treated as
-    regular expressions. If the written value begins with a |+|
-    or a |-|, the tags are updated rather than overwritten. Tag
-    names which directly follow a |-| sign are removed rather
-    than added. Regular expression tags which directly follow a
-    minus sign are treated as exclusion expressions. For
-    example, the tag string |+/foo/-/food/| will match the tag
+    The client's tags. Tag names are separated by |+|, |-|, or
+    |^| signs. Tags beginning and ending with |/| are treated as
+    regular expressions, which place the client on any extant
+    matching tag\footnote{While a client with a regex tag will
+    always appear in all matching views, it will not keep those
+    views in existence. When the last client explicitly tagged
+    with a view is removed, the view is deleted as soon as it
+    becomes inactive.}. If the written value begins with a |+|,
+    |-|, or |^|, the tags are updated rather than overwritten.
+    Tag names which directly follow a |-| sign are removed
+    rather than added, while those following a |^| are toggled.
+    Regular expression tags which directly follow a minus sign
+    are treated as exclusion expressions. For example, the tag
+    string |+/foo/-/food/| will match the tag
     |foobar|, but not the tag |foodstand|.
 \end{description}
 
@@ -967,9 +1003,9 @@ And to manage their tags, we'll need:
   «Client Menu Events» ::=
   ClientMouseDown) # ClientMouseDown ‹Client ID› ‹Button›
     [ $2 = 3 ] && clickmenu \
-      “Delete:xwrite /client/$1/ctl kill” \
-      “Kill:xwrite /client/$1/ctl slay” \
-      “Fullscreen:/client/$1/ctl Fullscreen on”
+      “Delete:wmiir xwrite /client/$1/ctl kill” \
+      “Kill: wmiirxwrite /client/$1/ctl slay” \
+      “Fullscreen:wmiir xwrite /client/$1/ctl fullscreen on”
 \end{code}
 
 \subsection{Unresponsive Clients}
@@ -1128,8 +1164,8 @@ IDs to prevent untoward effects when this script dies.
   «Command Execution Initialization» ::=
   terminal() { wmiir setsid xterm “$@” }
   proglist() {
-      IFS=: set -- $1
-      find -L $@ -maxdepth 1 -perm /111 | sed ‘1d; s,.*/,,’ | sort | uniq
+      IFS=:
+      wmiir proglist $1 | sort | uniq
       unset IFS
   }
 \end{code}
@@ -1232,22 +1268,35 @@ The root filesystem contains the following:
         If there is no ‹n›th width, it is given
         $1/\mbox{‹ncol›th}$ of the screen.
 
-  \item[tagrules]
-    \index{filesystem!/!tagrules}
-        The |/tagrules| file contains a list of
-        rules similar to the colrules. These rules specify
-        the tags a client is to be given when it is created.
-        Rules are specified:
+  \item[rules]
+    \index{filesystem!/!rules}
+    The |/rules| file contains a list of
+    rules similar to the colrules. These rules set
+    properties for a client when it is created.
+    Rules are specified:
 
-        \begin{quote}\texttt{
-          /‹regex›/ -> ‹tag›{\color{gray}[}+‹tag›{\color{gray}]*}}
-        \end{quote}
+    \begin{quote}\texttt{
+      /‹regex›/ -> ‹key›{\color{gray}=}‹value› {\color{gray}\ldots}}
+    \end{quote}
 
-        When a client's ‹name›:‹class›:‹title› matches
-        ‹regex›, it is given the tagstring ‹tag›. There are
-        two special tags. |!|, which is deprecated, and identical
-        to |sel|, represents the current tag. |~|
-        represents the floating layer.
+    When a client's ‹name›:‹class›:‹title› matches
+    ‹regex›, the matching rules are applied. For each
+    ‹key›=‹value› pair, the |ctl| file property matching
+    ‹key› is set to ‹value›.  Additionally,  the  following
+    keys are accepted and have special meaning:
+
+    \begin{description}
+      \item[continue]
+        Normally, when a matching rule  is  encountered,
+        rule  matching  stops.  When the continue key is
+        provided (with any value), matching continues at
+        the next rule.
+      \item[force-tags]
+        Like  tags,  but overrides any settings obtained
+        obtained from the client's  group  or  from  the
+        |_WMII_TAGS| window property.
+    \end{description}
+
 \end{description}
 
 \index{!filesystem!/|)}
@@ -1312,8 +1361,8 @@ For clarity, here is the end result:
   # «Command Execution Initialization»
   terminal() { wmiir setsid xterm “$@” }
   proglist() {
-      IFS=: set -- $1
-      find -L $@ -maxdepth 1 -perm /111 | sed ‘1d; s,.*/,,’ | sort | uniq
+      IFS=:
+      wmiir proglist $1 | sort | uniq
       unset IFS
   }
 
@@ -1448,7 +1497,7 @@ For clarity, here is the end result:
 
           # «Client Command Keys»
           Mod4-Shift-c) wmiir xwrite /client/sel/ctl kill;;
-          Mod4-f) wmiir xwrite /client/sel/ctl Fullscreen toggle;;
+          Mod4-f) wmiir xwrite /client/sel/ctl fullscreen toggle;;
 
           # «Command Execution Keys»
           Mod4-Return) terminal & ;;
@@ -1484,9 +1533,9 @@ For clarity, here is the end result:
       # «Client Menu Events»
       ClientMouseDown) # ClientMouseDown ‹Client ID› ‹Button›
         [ $2 = 3 ] && clickmenu \
-          “Delete:xwrite /client/$1/ctl kill” \
-          “Kill:xwrite /client/$1/ctl slay” \
-          “Fullscreen:/client/$1/ctl Fullscreen on”
+          “Delete:wmiir xwrite /client/$1/ctl kill” \
+          “Kill:wmiir xwrite /client/$1/ctl slay” \
+          “Fullscreen:wmiir xwrite /client/$1/ctl fullscreen on”
 
       # «Tag Menu Events»
       LeftBarMouseDown) # LeftBarMouseDown ‹Button› ‹Bar Name›
