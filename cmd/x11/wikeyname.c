@@ -5,6 +5,7 @@
 #include <stuff/x.h>
 #include <fmt.h>
 #include <locale.h>
+#include <unistd.h>
 
 static const char version[] = "wikeyname-"VERSION", "COPYRIGHT"\n";
 
@@ -38,8 +39,10 @@ main(int argc, char *argv[]) {
 	if(!grabkeyboard(&scr.root))
 		fatal("can't grab keyboard\n");
 
+	if(isatty(1))
+		lprint(2, "Please press a key...\n");
 	event_loop();
-	print("%s\n", keyname);
+	lprint(1, "%s\n", keyname);
 
 	XCloseDisplay(display);
 	return 0;
