@@ -44,6 +44,8 @@ readctl(char *key) {
 
 void
 client_init(char* address) {
+	IXP_ASSERT_VERSION;
+
 	if(address == nil)
 		address = getenv("WMII_ADDRESS");
 	if(address && *address)

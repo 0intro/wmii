@@ -15,7 +15,7 @@ static int	nkeys;
 
 static void
 usage(void) {
-	fprint(2, "usage: wikeyname\n");
+	lprint(2, "usage: wikeyname\n");
 	exit(1);
 }
 
@@ -25,6 +25,9 @@ main(int argc, char *argv[]) {
 	setlocale(LC_CTYPE, "");
 
 	ARGBEGIN{
+	case 'v':
+		lprint(2, version);
+		return 0;
 	default: usage();
 	}ARGEND;
 

@@ -515,6 +515,8 @@ main(int argc, char *argv[]) {
 	exectab *tab;
 	int ret;
 
+	IXP_ASSERT_VERSION;
+
 	setlocale(LC_ALL, "");
 	binary = utf8locale();
 

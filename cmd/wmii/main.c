@@ -334,6 +334,8 @@ main(int argc, char *argv[]) {
 	char *wmiirc;
 	int i;
 
+	IXP_ASSERT_VERSION;
+
 	setlocale(LC_CTYPE, "");
 	fmtinstall('r', errfmt);
 	fmtinstall('a', afmt);

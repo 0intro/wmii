@@ -69,7 +69,10 @@ Your terminal has asked to only be resized in certain increments,
 and there's not enough space for another row. `wmii` is forced to
 compromise and leave blank space around it. If you'd rather wmii to
 ignore the terminal's request, write 'incmode ignore'[5] to the /ctl
-virtual file.
+virtual file. Note, though, that this will prevent `wmii`'s normal
+behavior of trying to keep these increment gaps as small as
+possible, and will therefore result in more wasted space than
+otherwise.
 
 10. On FreeBSD, using p9p[6], I get an error about not being able to open /dev/fd/7.
 ------------------------------------------------------------------------------------
