@@ -969,7 +969,7 @@ unmap_event(Window *w, void *aux, XUnmapEvent *e) {
 		c->w.unmapped++;
 	if(e->send_event || c->w.unmapped < 0)
 		client_destroy(c);
-	return true;
+	return false;
 }
 
 static bool
