@@ -25,11 +25,24 @@
 /* From CGO */
 #define assert_equal(x, y) typedef char _##x##_does_not_equal_##y[((x)-(y))*((x)-(y))*-2+1]
 
-enum {
-	PingTime = 10000,
-	PingPeriod = 4000,
-	PingPartition = 10,
+enum Barpos {
+	BBottom,
+	BTop,
 };
+
+enum {
+	Coldefault, Colstack, Colmax, Collast
+};
+
+enum {
+	CurNormal,
+	CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
+	CurDHArrow, CurDVArrow, CurMove, CurInput, CurSizing,
+	CurTCross, CurIcon,
+	CurNone,
+	CurLast,
+};
+Cursor	cursor[CurLast];
 
 enum IncMode {
 	IIgnore,
@@ -37,13 +50,20 @@ enum IncMode {
 	ISqueeze,
 };
 
-enum {
-	UrgManager,
-	UrgClient,
-};
-
 enum ClientPermission {
 	PermActivate	= 1<<0,
+};
+
+enum {
+	PingTime = 10000,
+	PingPeriod = 4000,
+	PingPartition = 10,
+};
+
+enum Protocols {
+	ProtoDelete	= 1<<0,
+	ProtoTakeFocus	= 1<<1,
+	ProtoPing	= 1<<2,
 };
 
 enum {
@@ -64,7 +84,8 @@ enum EWMHType {
 };
 
 enum {
-	Coldefault, Colstack, Colmax, Collast
+	UrgManager,
+	UrgClient,
 };
 
 extern char*	modes[];
@@ -88,31 +109,9 @@ enum {
 
 assert_equal(Always, 2);
 
-enum Barpos {
-	BBottom,
-	BTop,
-};
-
 enum {
 	NCOL = 16,
 };
-
-enum Protocols {
-	ProtoDelete	= 1<<0,
-	ProtoTakeFocus	= 1<<1,
-	ProtoPing	= 1<<2,
-};
-
-enum {
-	CurNormal,
-	CurNECorner, CurNWCorner, CurSECorner, CurSWCorner,
-	CurDHArrow, CurDVArrow, CurMove, CurInput, CurSizing,
-	CurTCross, CurIcon,
-	CurNone,
-	CurLast,
-};
-Cursor	cursor[CurLast];
-
 
 /* Data Structures */
 typedef struct Area Area;
@@ -232,7 +231,7 @@ struct Frame {
 struct Group {
 	Group*	next;
 	XWindow	leader;
-	Client	*client;
+	Client*	client;
 	int	ref;
 };
 

@@ -107,6 +107,7 @@ view_create(const char *name) {
 void
 view_init(View *v, int iscreen) {
 	v->r[iscreen] = screens[iscreen]->r;
+	v->pad[iscreen] = ZR;
 	v->areas[iscreen] = nil;
 	column_new(v, nil, iscreen, 0);
 }

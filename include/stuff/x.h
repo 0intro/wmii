@@ -2,8 +2,6 @@
 #include <stuff/x11.h>
 #include <fmt.h>
 
-extern Visual*	render_visual;
-
 extern void	init_screens(void);
 
 #define Net(x) ("_NET_" x)
@@ -73,4 +71,9 @@ void	event_unmapnotify(XUnmapEvent*);
 extern long	event_xtime;
 extern bool	event_looprunning;
 extern void	(*event_debug)(XEvent*);
+
+extern Visual*	render_visual;
+extern bool	have_RandR;
+extern bool	have_render;
+extern bool	have_xinerama;
 

@@ -565,6 +565,12 @@ message_root(void *p, IxpMsg *m) {
 		return nil;
 	}
 
+	if(!strcmp(s, "xinerama")) {
+		setenv("XINERAMA_SCREENS", m->pos, 1);
+		init_screens();
+		return nil;
+	}
+
 	switch(getsym(s)) {
 	case LBAR: /* bar on? <"top" | "bottom"> */
 		s = msg_getword(m, Ebadvalue);

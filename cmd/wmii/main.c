@@ -175,22 +175,15 @@ init_screens(void) {
 
 	/* Reallocate screens, zero any new ones. */
 	rects = xinerama_screens(&n);
-	m = max(n, nscreens);
-	screens = erealloc(screens, (m + 1) * sizeof *screens);
-	screens[m] = nil;
+	m = nscreens;
+	nscreens = max(n, nscreens);
+	screens = erealloc(screens, (nscreens + 1) * sizeof *screens);
+	screens[nscreens] = nil;
 	for(v=view; v; v=v->next) {
-		v->areas = erealloc(v->areas, m * sizeof *v->areas);
-		v->r = erealloc(v->r, m * sizeof *v->r);
-		v->pad = erealloc(v->pad, m * sizeof *v->pad);
+		v->areas = erealloc(v->areas, nscreens * sizeof *v->areas);
+		v->r = erealloc(v->r, nscreens * sizeof *v->r);
+		v->pad = erealloc(v->pad, nscreens * sizeof *v->pad);
 	}
-
-	for(i=nscreens; i < m; i++) {
-		screens[i] = emallocz(sizeof *screens[i]);
-		for(v=view; v; v=v->next)
-			view_init(v, i);
-	}
-
-	nscreens = m;
 
 	/* Reallocate buffers. */
 	freeimage(ibuf);
@@ -204,6 +197,9 @@ init_screens(void) {
 
 	/* Resize and initialize screens. */
 	for(i=0; i < nscreens; i++) {
+		if(i >= m)
+			screens[i] = emallocz(sizeof *screens[i]);
+
 		screen = screens[i];
 		screen->idx = i;
 
@@ -212,6 +208,9 @@ init_screens(void) {
 			screen->r = rects[i];
 		else
 			screen->r = rectsetorigin(screen->r, scr.rect.max);
+		if(i >= m)
+			for(v=view; v; v=v->next)
+				view_init(v, i);
 		def.snap = Dy(screen->r) / 63;
 		bar_init(screens[i]);
 	}
