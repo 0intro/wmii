@@ -129,7 +129,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	freestringlist(host);
 	free(pid);
 
-	if(render_argb_p(wa->visual)) {
+	if(have_render) { /* render_argb_p(wa->visual) */
 		depth = 32;
 		vis = scr.visual32;
 		c->ibuf = &ibuf32;

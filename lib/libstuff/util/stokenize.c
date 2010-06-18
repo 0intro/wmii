@@ -11,7 +11,7 @@ stokenize(char *res[], uint reslen, char *str, char *delim) {
 	i = 0;
 	s = str;
 	while(i < reslen && *s) {
-		while(strchr(delim, *s))
+		while(*s && strchr(delim, *s))
 			*(s++) = '\0';
 		if(*s)
 			res[i++] = s;

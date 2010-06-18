@@ -876,34 +876,13 @@ msg_nudge(View *v, IxpMsg *m) {
 void
 msg_parsecolors(IxpMsg *m, CTuple *col) {
 	static char Ebad[] = "bad color string";
-	Rune r;
-	char c, *p;
-	int i, j;
+	char n;
 
-	/* '#%6x #%6x #%6x' */
-	p = m->pos;
-	for(i = 0; i < 3 && p < m->end; i++) {
-		if(*p++ != '#')
-			error(Ebad);
-		for(j = 0; j < 6; j++)
-			if(p >= m->end || !isxdigit(*p++))
-				error(Ebad);
+	n = loadcolor(col, m->pos, m->end);
+	if(n == 0)
+		error(Ebad);
 
-		chartorune(&r, p);
-		if(i < 2) {
-			if(r != ' ')
-				error(Ebad);
-			p++;
-		}else if(*p != '\0' && !isspacerune(r))
-			error(Ebad);
-	}
-
-	c = *p;
-	*p = '\0';
-	loadcolor(col, m->pos);
-	*p = c;
-
-	m->pos = p;
+	m->pos += n;
 	msg_eatrunes(m, isspacerune, true);
 }
 

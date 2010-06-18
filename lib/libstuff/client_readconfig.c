@@ -11,9 +11,9 @@ void
 client_readconfig(CTuple *norm, CTuple *focus, Font **font) {
 
 	if(norm)
-		loadcolor(norm, readctl("normcolors "));
+		loadcolor(norm, readctl("normcolors "), nil);
 	if(focus)
-		loadcolor(focus, readctl("focuscolors "));
+		loadcolor(focus, readctl("focuscolors "), nil);
 	*font = loadfont(readctl("font "));
 	if(!*font)
 		fatal("Can't load font %q", readctl("font "));

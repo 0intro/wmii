@@ -417,8 +417,8 @@ main(int argc, char *argv[]) {
 	def.mod = Mod1Mask;
 	strcpy(def.grabmod, "Mod1");
 
-	loadcolor(&def.focuscolor, FOCUSCOLORS);
-	loadcolor(&def.normcolor, NORMCOLORS);
+	loadcolor(&def.focuscolor, FOCUSCOLORS, nil);
+	loadcolor(&def.normcolor, NORMCOLORS, nil);
 
 	disp.sel = pointerscreen();
 

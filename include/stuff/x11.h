@@ -62,7 +62,7 @@ struct CTuple {
 	Color bg;
 	Color fg;
 	Color border;
-	char colstr[24]; /* #RRGGBB #RRGGBB #RRGGBB */
+	char colstr[64];
 };
 
 struct ErrorCode {
@@ -267,7 +267,7 @@ bool	havexft(void);
 void	initdisplay(void);
 KeyCode	keycode(const char*);
 uint	labelh(Font*);
-bool	loadcolor(CTuple*, const char*);
+int	loadcolor(CTuple*, const char*, const char*);
 Font*	loadfont(const char*);
 void	lowerwin(Window*);
 int	mapwin(Window*);

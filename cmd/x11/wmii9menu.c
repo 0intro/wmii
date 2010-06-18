@@ -155,8 +155,8 @@ main(int argc, char **argv)
 	client_init(address);
 
 	wborder = strtol(readctl("border "), nil, 10);
-	loadcolor(&cnorm, readctl("normcolors "));
-	loadcolor(&csel, readctl("focuscolors "));
+	loadcolor(&cnorm, readctl("normcolors "), nil);
+	loadcolor(&csel, readctl("focuscolors "), nil);
 	font = loadfont(readctl("font "));
 	if(!font)
 		fatal("Can't load font");
