@@ -167,6 +167,7 @@ OBJ=\
 	x11/text/textwidth_l	\
 	x11/windows/configwin	\
 	x11/windows/createwindow	\
+	x11/windows/createwindow_rgba	\
 	x11/windows/createwindow_visual	\
 	x11/windows/destroywindow	\
 	x11/windows/findwin	\

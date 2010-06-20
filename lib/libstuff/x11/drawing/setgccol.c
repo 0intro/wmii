@@ -4,6 +4,6 @@
 #include "../x11.h"
 
 void
-setgccol(Image *dst, Color c) {
-	XSetForeground(display, dst->gc, pixelvalue(c));
+setgccol(Image *dst, Color *c) {
+	XSetForeground(display, dst->gc, pixelvalue(dst, c));
 }

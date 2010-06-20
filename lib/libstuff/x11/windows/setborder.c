@@ -4,11 +4,11 @@
 #include "../x11.h"
 
 void
-setborder(Window *w, int width, Color col) {
+setborder(Window *w, int width, Color *col) {
 
 	assert(w->type == WWindow);
 	if(width)
-		XSetWindowBorder(display, w->xid, pixelvalue(col));
+		XSetWindowBorder(display, w->xid, pixelvalue(w, col));
 	if(width != w->border)
 		configwin(w, w->r, width);
 }

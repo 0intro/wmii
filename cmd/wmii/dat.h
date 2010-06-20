@@ -164,7 +164,6 @@ struct Client {
 	Frame*	sel;
 	Window	w;
 	Window*	framewin;
-	Image**	ibuf;
 	XWindow	trans;
 	Regex	tagre;
 	Regex	tagvre;
@@ -349,8 +348,6 @@ EXTERN IxpServer srv;
 EXTERN Ixp9Srv	p9srv;
 
 /* X11 */
-EXTERN Image*	ibuf32;
-EXTERN Image*	ibuf;
 EXTERN uint	numlock_mask;
 EXTERN uint	valid_mask;
 

@@ -286,7 +286,7 @@ size_window(int wide, int high)
 	reshapewin(menuwin, rectaddpt(r, p));
 
 	//XSetWindowBackground(display, menuwin->xid, cnorm.bg);
-	setborder(menuwin, 1, cnorm.border);
+	setborder(menuwin, 1, &cnorm.border);
 }
 
 /* redraw --- actually redraw the menu */
@@ -305,8 +305,8 @@ redraw(int high, int wide)
 		else
 			c = &cnorm;
 		r = rectsetorigin(r, Pt(0, i * high));
-		fill(menuwin, r, c->bg);
-		drawstring(menuwin, font, r, Center, labels[i], c->fg);
+		fill(menuwin, r, &c->bg);
+		drawstring(menuwin, font, r, Center, labels[i], &c->fg);
 	}
 }
 

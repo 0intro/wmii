@@ -18,6 +18,6 @@ loadcolor(CTuple *c, const char *str, const char *end) {
 	   && parsecolor(toks[2], &c->border)))
 		return 0;
 
-	snprint(c->colstr, sizeof c->colstr, "%s %s %s", toks[0], toks[1], toks[2]);
+	snprint(c->colstr, sizeof c->colstr, "%L %L %L", c->fg, c->bg, c->border);
 	return toks[2] + strlen(toks[2]) - buf;
 }

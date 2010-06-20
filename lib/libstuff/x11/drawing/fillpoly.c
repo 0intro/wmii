@@ -4,7 +4,7 @@
 #include "../x11.h"
 
 void
-fillpoly(Image *dst, Point *pt, int np, Color col) {
+fillpoly(Image *dst, Point *pt, int np, Color *col) {
 	XPoint *xp;
 
 	xp = convpts(pt, np);

@@ -73,6 +73,7 @@ extern bool	event_looprunning;
 extern void	(*event_debug)(XEvent*);
 
 extern Visual*	render_visual;
+extern Colormap	render_colormap;
 extern bool	have_RandR;
 extern bool	have_render;
 extern bool	have_xinerama;

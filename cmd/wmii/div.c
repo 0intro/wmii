@@ -86,14 +86,14 @@ drawimg(Image *img, Color cbg, Color cborder, Divide *d) {
 	start = d->left		? 0 : n/2;
 	n = d->right && d->left ? n : n/2;
 
-	fillpoly(img, pt + start, n, cbg);
-	drawpoly(img, pt + start, n, CapNotLast, 1, cborder);
+	fillpoly(img, pt + start, n, &cbg);
+	drawpoly(img, pt + start, n, CapNotLast, 1, &cborder);
 }
 
 static void
 drawdiv(Divide *d) {
 
-	fill(divmask, divmask->r, (Color){0});
+	fill(divmask, divmask->r, &(Color){0});
 	drawimg(divmask, (Color){~0,~0,~0}, (Color){~0,~0,~0}, d);
 	drawimg(divimg, divcolor.bg, divcolor.border, d);
 

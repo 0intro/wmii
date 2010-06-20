@@ -18,7 +18,7 @@ static void	randr_init(void);
 static void	render_init(void);
 static void	xinerama_init(void);
 
-typedef void (*EvHandler)(XEvent*);
+typedef void		(*EvHandler)(XEvent*);
 static EvHandler	randr_handlers[RRNumberEvents];
 
 bool	have_RandR;
@@ -108,6 +108,8 @@ render_init(void) {
 			break;
 		}
 	XFree(vip);
+	if(render_visual)
+		scr.colormap32 = XCreateColormap(display, scr.root.xid, render_visual, AllocNone);
 }
 
 bool

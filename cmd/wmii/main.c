@@ -186,14 +186,12 @@ init_screens(void) {
 	}
 
 	/* Reallocate buffers. */
-	freeimage(ibuf);
-	freeimage(ibuf32);
-	ibuf = allocimage(Dx(scr.rect), Dy(scr.rect), scr.depth);
-	ibuf32 = nil; /* Probably shouldn't do this until it's needed. */
+	freeimage(disp.ibuf);
+	freeimage(disp.ibuf32);
+	disp.ibuf = allocimage(Dx(scr.rect), Dy(scr.rect), scr.depth);
+	disp.ibuf32 = nil; /* Probably shouldn't do this until it's needed. */
 	if(render_visual)
-		ibuf32 = allocimage(Dx(scr.rect), Dy(scr.rect), 32);
-	disp.ibuf = ibuf;
-	disp.ibuf32 = ibuf32;
+		disp.ibuf32 = allocimage(Dx(scr.rect), Dy(scr.rect), 32);
 
 	/* Resize and initialize screens. */
 	for(i=0; i < nscreens; i++) {

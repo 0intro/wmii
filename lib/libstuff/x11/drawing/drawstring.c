@@ -7,7 +7,7 @@
 uint
 drawstring(Image *dst, Font *font,
 	   Rectangle r, Align align,
-	   const char *text, Color col) {
+	   const char *text, Color *col) {
 	Rectangle tr;
 	char *buf;
 	uint x, y, width, height, len;
@@ -70,7 +70,7 @@ drawstring(Image *dst, Font *font,
 				buf, len);
 		break;
 	case FXft:
-		xft->drawstring(xftdrawable(dst), xftcolor(col),
+		xft->drawstring(xftdrawable(dst), xftcolor(dst, col),
 				font->font.xft,
 				x, y, buf, len);
 		break;

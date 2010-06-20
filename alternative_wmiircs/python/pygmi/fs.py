@@ -463,6 +463,8 @@ class Button(object):
         self.base_path = self.sides[side]
         self.path = '%s/%s' % (self.base_path, self.name)
         self.file = None
+        self._colors = wmii.cache['normcolors']
+        self._label = ''
         if colors or label:
             self.create(colors, label)
 
@@ -471,10 +473,8 @@ class Button(object):
             self.file = None
         if not self.file:
             self.file = client.create(self.path, ORDWR)
-        if colors:
+        if colors or label:
             self.file.awrite(self.getval(colors, label), offset=0, fail=fail)
-        elif label:
-            self.file.awrite(label, offset=24, fail=fail)
 
     def remove(self):
         if self.file:
@@ -482,19 +482,18 @@ class Button(object):
             self.file = None
 
     def getval(self, colors=None, label=None):
-        if label is None:
-            label = self.label
-        if colors is None and re.match(
-            r'#[0-9a-f]{6} #[0-9a-f]{6} #[0-9a-f]{6}', label, re.I):
-            colors = self.colors
-        if not colors:
-            return str(label)
-        return ' '.join([Color(c).hex for c in colors] + [str(label)])
+        if label is not None:
+            self._label = label
+        if colors is not None:
+            self._colors = colors
+        try:
+            unicode(self._label)
+        except:
+            print repr(self._label)
+        return ' '.join([Color(c).hex for c in self._colors or self.colors] + [unicode(self._label or '')])
 
     colors = property(
-        lambda self: self.file and
-                     tuple(map(Color, self.file.read(offset=0).split(' ')[:3]))
-                     or (),
+        lambda self: self.file and Colors(self.file.read(offset=0).split(' ')[:3]) or (),
         lambda self, val: self.create(colors=val))
 
     label = property(
@@ -538,8 +537,11 @@ class Color(utf8):
         if isinstance(colors, Color):
             colors = colors.rgb
         elif isinstance(colors, basestring):
-            match = re.match(r'^#(..)(..)(..)$', colors)
+            match = (re.match(r'^#(..)(..)(..)((?:..)?)$', colors) or
+                     re.match(r'^rgba:(..)/(..)/(..)/(..)$', colors))
             colors = tuple(int(match.group(group), 16) for group in range(1, 4))
+            if match.group(4):
+                colors += int(match.group(4), 16),
         def toint(val):
             if isinstance(val, float):
                 val = int(255 * val)
@@ -554,9 +556,13 @@ class Color(utf8):
 
     @property
     def hex(self):
+        if len(self.rgb) > 3:
+            return 'rgba:%02x/%02x/%02x/%02x' % self.rgb
         return '#%02x%02x%02x' % self.rgb
 
     def __unicode__(self):
+        if len(self.rgb) > 3:
+            return 'rgba(%d, %d, %d, %d)' % self.rgb
         return 'rgb(%d, %d, %d)' % self.rgb
     def __repr__(self):
         return 'Color(%s)' % repr(self.rgb)

@@ -4,7 +4,7 @@
 #include "../x11.h"
 
 void
-border(Image *dst, Rectangle r, int w, Color col) {
+border(Image *dst, Rectangle r, int w, Color *col) {
 	if(w == 0)
 		return;
 

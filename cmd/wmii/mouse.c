@@ -31,8 +31,8 @@ quad_cursor(Align align) {
 static bool
 cwin_expose(Window *w, void *aux, XExposeEvent *e) {
 
-	fill(w, rectsubpt(w->r, w->r.min), def.focuscolor.bg);
-	fill(w, w->r, def.focuscolor.bg);
+	fill(w, rectsubpt(w->r, w->r.min), &def.focuscolor.bg);
+	fill(w, w->r, &def.focuscolor.bg);
 	return false;
 }
 
@@ -52,7 +52,7 @@ constraintwin(Rectangle r) {
 		selectinput(w2, ExposureMask);
 		w->aux = w2;
 
-		setborder(w2, 1, def.focuscolor.border);
+		setborder(w2, 1, &def.focuscolor.border);
 		sethandler(w2, &chandler);
 		mapwin(w2);
 		raisewin(w2);
@@ -78,7 +78,7 @@ gethsep(Rectangle r) {
 	Window *w;
 	WinAttr wa;
 
-	wa.background_pixel = pixelvalue(def.normcolor.border);
+	wa.background_pixel = pixelvalue(&scr.root, &def.normcolor.border);
 	w = createwindow(&scr.root, r, scr.depth, InputOutput, &wa, CWBackPixel);
 	mapwin(w);
 	raisewin(w);

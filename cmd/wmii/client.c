@@ -96,10 +96,8 @@ Client*
 client_create(XWindow w, XWindowAttributes *wa) {
 	Client **t, *c;
 	WinAttr fwa;
-	Visual *vis;
 	char **host = nil;
 	ulong *pid = nil;
-	int depth;
 
 	c = emallocz(sizeof *c);
 	c->fullscreen = -1;
@@ -112,7 +110,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	c->w.xid = w;
 	c->w.r = c->r;
 
-	setborder(&c->w, 0, (Color){0});
+	setborder(&c->w, 0, &(Color){0});
 
 	client_prop(c, xatom("WM_PROTOCOLS"));
 	client_prop(c, xatom("WM_TRANSIENT_FOR"));
@@ -129,20 +127,8 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	freestringlist(host);
 	free(pid);
 
-	if(have_render) { /* render_argb_p(wa->visual) */
-		depth = 32;
-		vis = scr.visual32;
-		c->ibuf = &ibuf32;
-	}else {
-		depth = scr.depth;
-		vis = scr.visual;
-		c->ibuf = &ibuf;
-	}
-
 	fwa.background_pixmap = None;
 	fwa.bit_gravity = NorthWestGravity;
-	fwa.border_pixel = 0; /* Required for ARGB windows. */
-	fwa.colormap = XCreateColormap(display, scr.root.xid, vis, AllocNone);
 	fwa.event_mask = ButtonPressMask
 		       | ButtonReleaseMask
 		       | EnterWindowMask
@@ -152,16 +138,11 @@ client_create(XWindow w, XWindowAttributes *wa) {
 		       | SubstructureNotifyMask
 		       | SubstructureRedirectMask;
 	fwa.override_redirect = true;
-	c->framewin = createwindow_visual(&scr.root, c->r,
-			depth, vis, InputOutput,
+	c->framewin = createwindow_rgba(&scr.root, c->r,
 			&fwa, CWBackPixmap
 			    | CWBitGravity
-			    /* These next two matter for ARGB windows. Donno why. */
-			    | CWBorderPixel
-			    | CWColormap
 			    | CWEventMask
 			    | CWOverrideRedirect);
-	XFreeColormap(display, fwa.colormap);
 
 	c->framewin->aux = c;
 	c->w.aux = c;

@@ -63,7 +63,7 @@ MAKEFILES=.depend
 .c.depend:
 	echo MKDEP $<
 	[ -n "$(noisycc)" ] && echo $(MKDEP) $(COMPILE_FLAGS) $< || true
-	eval "$(MKDEP) $(COMPILE_FLAGS)" $< >>.depend
+	eval "$(MKDEP) $(COMPILE_FLAGS)" $< | sed '1s|.*:|$(<:%.c=%.o):|' >>.depend
 
 .sh.depend .rc.depend .1.depend .awk.depend:
 	:

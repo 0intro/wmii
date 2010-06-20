@@ -159,7 +159,7 @@ _menu_draw(bool draw) {
 	itemoff = inputw + 2 * ltwidth;
 	end = Dx(rd) - ltwidth;
 
-	fill(ibuf, r, cnorm.bg);
+	fill(ibuf, r, &cnorm.bg);
 
 	if(matchend && matchidx == matchend->next)
 		matchstart = matchidx;
@@ -193,8 +193,8 @@ _menu_draw(bool draw) {
 			break;
 
 		c = (i == matchidx) ? &csel : &cnorm;
-		fill(ibuf, r2, c->bg);
-		drawstring(ibuf, font, r2, Center, i->string, c->fg);
+		fill(ibuf, r2, &c->bg);
+		drawstring(ibuf, font, r2, Center, i->string, &c->fg);
 		matchend = i;
 		if(i->next == matchfirst)
 			break;
@@ -203,25 +203,25 @@ _menu_draw(bool draw) {
 	r2 = rd;
 	r2.min.x = promptw + inputw;
 	if(matchstart != matchfirst)
-		drawstring(ibuf, font, r2, West, "<", cnorm.fg);
+		drawstring(ibuf, font, r2, West, "<", &cnorm.fg);
 	if(matchend->next != matchfirst)
-		drawstring(ibuf, font, r2, East, ">", cnorm.fg);
+		drawstring(ibuf, font, r2, East, ">", &cnorm.fg);
 
 	r2 = rd;
 	r2.max.x = promptw + inputw;
-	drawstring(ibuf, font, r2, West, input.string, cnorm.fg);
+	drawstring(ibuf, font, r2, West, input.string, &cnorm.fg);
 
 	extent = textextents_l(font, input.string, input.pos - input.string, &offset);
 	r2.min.x = promptw + offset + font->pad.min.x - extent.min.x + pad/2 - 1;
 	r2.max.x = r2.min.x + 2;
 	r2.min.y++;
 	r2.max.y--;
-	border(ibuf, r2, 1, cnorm.border);
+	border(ibuf, r2, 1, &cnorm.border);
 
 	if (prompt)
-		drawstring(ibuf, font, rp, West, prompt, cnorm.fg);
+		drawstring(ibuf, font, rp, West, prompt, &cnorm.fg);
 
-	border(ibuf, rd, 1, cnorm.border);
+	border(ibuf, rd, 1, &cnorm.border);
 	copyimage(barwin, r, ibuf, ZP);
 }
 

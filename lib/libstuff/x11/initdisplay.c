@@ -19,6 +19,16 @@ Afmt(Fmt *f) {
 }
 
 static int
+Lfmt(Fmt *f) {
+	Color c;
+
+	c = va_arg(f->args, Color);
+	return fmtprint(f, c.alpha < 0xff00 ? "rgba:%02uhx/%02uhx/%02uhx/%02uhx"
+					    : "#%02uhx%02uhx%02uhx",
+			c.red >> 8, c.green >> 8, c.blue >> 8, c.alpha >> 8);
+}
+
+static int
 Pfmt(Fmt *f) {
 	Point p;
 
@@ -52,12 +62,8 @@ initdisplay(void) {
 	scr.screen = DefaultScreen(display);
 	scr.colormap = DefaultColormap(display, scr.screen);
 	scr.visual = DefaultVisual(display, scr.screen);
-	scr.visual32 = DefaultVisual(display, scr.screen);
 	scr.gc = DefaultGC(display, scr.screen);
 	scr.depth = DefaultDepth(display, scr.screen);
-
-	scr.white = WhitePixel(display, scr.screen);
-	scr.black = BlackPixel(display, scr.screen);
 
 	scr.root.xid = RootWindow(display, scr.screen);
 	scr.root.r = Rect(0, 0,
@@ -75,6 +81,7 @@ initdisplay(void) {
 	atomnamemap.nhash = nelem(anamebucket);
 
 	fmtinstall('A', Afmt);
+	fmtinstall('L', Lfmt);
 	fmtinstall('R', Rfmt);
 	fmtinstall('P', Pfmt);
 	fmtinstall('W', Wfmt);

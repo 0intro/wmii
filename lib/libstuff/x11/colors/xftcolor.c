@@ -4,10 +4,10 @@
 #include "../x11.h"
 
 XftColor*
-xftcolor(Color col) {
-	XftColor *c;
+xftcolor(Image *i, Color *c) {
+	XftColor *xc;
 
-	c = emallocz(sizeof *c);
-	*c = (XftColor){ pixelvalue(col), col };
-	return freelater(c);
+	xc = emallocz(sizeof *c);
+	*xc = (XftColor){ pixelvalue(i, c), c->red, c->green, c->blue, c->alpha };
+	return freelater(xc);
 }

@@ -33,12 +33,12 @@ client_manage(XWindow w) {
 		return;
 	}
 
-	wa.background_pixel = pixelvalue(tray.selcolors.bg);
+	wa.background_pixel = pixelvalue(&scr.root, &tray.selcolors.bg);
 	size = max(tray.iconsize / 4, 4);
 
 	c->indicator = createwindow(tray.win, Rect(0, 0, size, size), scr.depth,
 				    InputOutput, &wa, CWBackPixel);
-	setborder(c->indicator, 1, tray.selcolors.border);
+	setborder(c->indicator, 1, &tray.selcolors.border);
 
 	sethandler(&c->w, &handlers);
 

@@ -123,9 +123,9 @@ tray_draw(Rectangle r) {
 	borderwidth = 1;
 
 	r = rectsetorigin(r, ZP);
-	border(tray.pixmap, r, borderwidth, tray.selcolors.border);
+	border(tray.pixmap, r, borderwidth, &tray.selcolors.border);
 	r = insetrect(r, borderwidth);
-	fill(tray.pixmap, r, tray.selcolors.bg);
+	fill(tray.pixmap, r, &tray.selcolors.bg);
 	XClearWindow(display, tray.win->xid);
 }
 

@@ -19,7 +19,7 @@ extern int	(*xlib_errorhandler) (Display*, XErrorEvent*);
 void	configwin(Window*, Rectangle, int);
 XPoint*	convpts(Point*, int);
 int	errorhandler(Display*, XErrorEvent*);
-void	setgccol(Image*, Color);
-XftColor*	xftcolor(Color);
+void	setgccol(Image*, Color*);
+XftColor*	xftcolor(Image*, Color*);
 XftDraw*	xftdrawable(Image*);
 

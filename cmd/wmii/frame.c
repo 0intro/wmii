@@ -404,9 +404,9 @@ pushlabel(Image *img, Rectangle *rp, char *s, CTuple *col) {
 		if(0)
 		drawline(img, Pt(rp->max.x, r.min.y+2),
 			      Pt(rp->max.x, r.max.y-2),
-			      CapButt, 1, col->border);
+			      CapButt, 1, &col->border);
 		drawstring(img, def.font, r, East,
-			   s, col->fg);
+			   s, &col->fg);
 	}
 }
 
@@ -424,7 +424,7 @@ frame_draw(Frame *f) {
 		return;
 
 	c = f->client;
-	img = *c->ibuf;
+	img = c->framewin->depth == 32 ? disp.ibuf32 : disp.ibuf;
 	fr = rectsetorigin(c->framewin->r, ZP);
 
 	/* Pick colors. */
@@ -435,12 +435,12 @@ frame_draw(Frame *f) {
 
 	/* Background/border */
 	r = fr;
-	fill(img, r, col->bg);
-	border(img, r, 1, col->border);
+	fill(img, r, &col->bg);
+	border(img, r, 1, &col->border);
 
 	/* Title border */
 	r.max.y = r.min.y + labelh(def.font);
-	border(img, r, 1, col->border);
+	border(img, r, 1, &col->border);
 
 	f->titlebar = insetrect(r, 3);
 	f->titlebar.max.y += 3;
@@ -448,8 +448,8 @@ frame_draw(Frame *f) {
 	/* Odd focus. Unselected, with keyboard focus. */
 	/* Draw a border just inside the titlebar. */
 	if(c != selclient() && c == disp.focus) {
-		border(img, insetrect(r, 1), 1, def.normcolor.bg);
-		border(img, insetrect(r, 2), 1, def.focuscolor.border);
+		border(img, insetrect(r, 1), 1, &def.normcolor.bg);
+		border(img, insetrect(r, 2), 1, &def.focuscolor.border);
 	}
 
 	/* grabbox */
@@ -459,19 +459,19 @@ frame_draw(Frame *f) {
 	f->grabbox = r;
 
 	if(c->urgent)
-		fill(img, r, col->fg);
-	border(img, r, 1, col->border);
+		fill(img, r, &col->fg);
+	border(img, r, 1, &col->border);
 
 	/* Odd focus. Selected, without keyboard focus. */
 	/* Draw a border around the grabbox. */
 	if(c != disp.focus && col == &def.focuscolor)
-		border(img, insetrect(r, -1), 1, def.normcolor.bg);
+		border(img, insetrect(r, -1), 1, &def.normcolor.bg);
 
 	/* Draw a border on borderless+titleless selected apps. */
 	if(f->area->floating && c->borderless && c->titleless && !c->fullscreen && c == selclient())
-		setborder(c->framewin, def.border, def.focuscolor.border);
+		setborder(c->framewin, def.border, &def.focuscolor.border);
 	else
-		setborder(c->framewin, 0, def.focuscolor.border);
+		setborder(c->framewin, 0, &def.focuscolor.border);
 
 	/* Label */
 	r.min.x = r.max.x;
@@ -494,8 +494,8 @@ frame_draw(Frame *f) {
 		r.max.x -= Dx(f->grabbox);
 
 	if(!ewmh_responsive_p(c))
-		r.min.x += drawstring(img, def.font, r, West, "(wedged) ", col->fg);
-	w = drawstring(img, def.font, r, West, c->name, col->fg);
+		r.min.x += drawstring(img, def.font, r, West, "(wedged) ", &col->fg);
+	w = drawstring(img, def.font, r, West, c->name, &col->fg);
 
 	/* Draw inner border on floating clients. */
 	if(f->area->floating) {
@@ -503,7 +503,7 @@ frame_draw(Frame *f) {
 		r.max.x += Dx(f->grabbox);
 		r.min.y = f->grabbox.min.y;
 		r.max.y = f->grabbox.max.y;
-		border(img, r, 1, col->border);
+		border(img, r, 1, &col->border);
 	}
 
 	/* Border increment gaps... */
@@ -511,7 +511,7 @@ frame_draw(Frame *f) {
 	r.min.x = max(1, f->crect.min.x - 1);
 	r.max.x = min(fr.max.x - 1, f->crect.max.x + 1);
 	r.max.y = min(fr.max.y - 1, f->crect.max.y + 1);
-	border(img, r, 1, col->border);
+	border(img, r, 1, &col->border);
 
 	/* Why? Because some non-ICCCM-compliant apps feel the need to
 	 * change the background properties of all of their ancestor windows

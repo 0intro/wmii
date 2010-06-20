@@ -111,10 +111,10 @@ expose_event(Window *w, void *aux, XExposeEvent *e) {
 	buf = disp.ibuf;
 
 	r = rectsubpt(w->r, w->r.min);
-	fill(buf, r, c->bg);
-	border(buf, r, 1, c->border);
-	border(buf, f->grabbox, 1, c->border);
-	border(buf, insetrect(f->grabbox, -f->grabbox.min.x), 1, c->border);
+	fill(buf, r, &c->bg);
+	border(buf, r, 1, &c->border);
+	border(buf, f->grabbox, 1, &c->border);
+	border(buf, insetrect(f->grabbox, -f->grabbox.min.x), 1, &c->border);
 
 	copyimage(w, r, buf, ZP);
 	return false;

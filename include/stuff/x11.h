@@ -36,7 +36,7 @@ typedef enum WindowType WindowType;
 typedef XSetWindowAttributes WinAttr;
 
 typedef union ClientMessageData ClientMessageData;
-typedef XRenderColor Color;
+typedef struct Color Color;
 typedef struct CTuple CTuple;
 typedef struct ErrorCode ErrorCode;
 typedef struct Ewmh Ewmh;
@@ -56,6 +56,14 @@ union ClientMessageData {
 	char b[20];
 	short s[10];
 	long l[5];
+};
+
+struct Color {
+	ushort	red;
+	ushort	green;
+	ushort	blue;
+	ushort	alpha;
+	ulong	pixel;
 };
 
 struct CTuple {
@@ -188,13 +196,12 @@ struct Screen {
 	Window		root;
 	GC		gc;
 	Colormap	colormap;
+	Colormap	colormap32;
 	Visual*		visual;
 	Visual*		visual32;
 	Rectangle	rect;
 	int		depth;
 	int		fd;
-	ulong		black;
-	ulong		white;
 };
 
 #ifdef VARARGCK
@@ -228,7 +235,7 @@ XRectangle XRect(Rectangle r);
 XRectangle	XRect(Rectangle);
 Image*	allocimage(int w, int h, int depth);
 char*	atomname(ulong);
-void	border(Image *dst, Rectangle, int w, Color);
+void	border(Image *dst, Rectangle, int w, Color*);
 void	changeprop_char(Window*, const char*, const char*, const char*, int);
 void	changeprop_long(Window*, const char*, const char*, long[], int);
 void	changeprop_short(Window*, const char*, const char*, short[], int);
@@ -240,14 +247,15 @@ void	cleanupwindow(Window*);
 void	clientmessage(Window*, const char*, long, int, ClientMessageData);
 void	copyimage(Image*, Rectangle, Image*, Point);
 Window*	createwindow(Window*, Rectangle, int depth, uint class, WinAttr*, int valuemask);
+Window*	createwindow_rgba(Window*, Rectangle, WinAttr*, int valuemask);
 Window*	createwindow_visual(Window*, Rectangle, int depth, Visual*, uint class, WinAttr*, int);
 void	delproperty(Window*, const char*);
 void	destroywindow(Window*);
-void	drawline(Image*, Point, Point, int cap, int w, Color);
-void	drawpoly(Image*, Point*, int, int cap, int w, Color);
-uint	drawstring(Image*, Font*, Rectangle, Align, const char*, Color);
-void	fill(Image*, Rectangle, Color);
-void	fillpoly(Image*, Point*, int, Color);
+void	drawline(Image*, Point, Point, int cap, int w, Color*);
+void	drawpoly(Image*, Point*, int, int cap, int w, Color*);
+uint	drawstring(Image*, Font*, Rectangle, Align, const char*, Color*);
+void	fill(Image*, Rectangle, Color*);
+void	fillpoly(Image*, Point*, int, Color*);
 Window*	findwin(XWindow);
 void	freefont(Font*);
 void	freeimage(Image *);
@@ -275,7 +283,7 @@ void	movewin(Window*, Point);
 int	numlockmask(void);
 bool	parsecolor(const char *name, Color*);
 bool	parsekey(char*, int*, char**);
-ulong	pixelvalue(Color);
+ulong	pixelvalue(Image*, Color*);
 int	pointerscreen(void);
 bool	pophandler(Window*, Handlers*);
 void	pushhandler(Window*, Handlers*, void*);
@@ -286,7 +294,7 @@ void	reshapewin(Window*, Rectangle);
 void	selectinput(Window*, long);
 void	sendevent(Window*, bool propagate, long mask, void*);
 void	sendmessage(Window*, const char*, long, long, long, long, long);
-void	setborder(Window*, int, Color);
+void	setborder(Window*, int, Color*);
 void	setfocus(Window*, int mode);
 Handlers*	sethandler(Window*, Handlers*);
 void	sethints(Window*, WinHints*);
