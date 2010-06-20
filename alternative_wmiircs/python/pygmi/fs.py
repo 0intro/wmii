@@ -486,10 +486,6 @@ class Button(object):
             self._label = label
         if colors is not None:
             self._colors = colors
-        try:
-            unicode(self._label)
-        except:
-            print repr(self._label)
         return ' '.join([Color(c).hex for c in self._colors or self.colors] + [unicode(self._label or '')])
 
     colors = property(
