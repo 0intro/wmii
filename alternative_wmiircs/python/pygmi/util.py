@@ -11,9 +11,10 @@ def _():
 
 def call(*args, **kwargs):
     background = kwargs.pop('background', False)
+    stdin = subprocess.PIPE if not background else open('/dev/null', 'r')
     pipe  = subprocess.PIPE if not background else None
     input = kwargs.pop('input', None)
-    p = subprocess.Popen(args, stdin=pipe, stdout=pipe, stderr=pipe,
+    p = subprocess.Popen(args, stdin=stdin, stdout=pipe, stderr=pipe,
                          preexec_fn=lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL),
                          cwd=os.environ['HOME'], close_fds=True, **kwargs)
     if not background:
