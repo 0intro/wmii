@@ -68,6 +68,7 @@ initdisplay(void) {
 	scr.depth = DefaultDepth(display, scr.screen);
 
 	scr.root.xid = RootWindow(display, scr.screen);
+	scr.root.visual = scr.visual;
 	scr.root.r = Rect(0, 0,
 			  DisplayWidth(display, scr.screen),
 			  DisplayHeight(display, scr.screen));

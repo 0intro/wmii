@@ -7,7 +7,7 @@ ulong
 pixelvalue(Window *w, Color *c) {
 	XColor xc;
 
-	if(w->visual->class != TrueColor) {
+	if(w->visual == nil || w->visual->class != TrueColor) {
 		if(c->pixel != ~0UL)
 			return c->pixel;
 		xc.red = c->red;
