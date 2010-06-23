@@ -18,6 +18,20 @@ simpleinstall:
 		$(INSTALL) -b 0755 $$f $(DIR) $$f; \
 	done
 
+simpleuninstall:
+	for f in $(DOCS); do \
+		$(UNINSTALL) $$f $(DOCDIR) $$f; \
+	done
+	for f in $(TEXT); do \
+		$(UNINSTALL) $$f $(DIR) $$f; \
+	done
+	for f in $(BINARY); do \
+		$(UNINSTALL) -b $$f $(DIR) $$f; \
+	done
+	for f in $(EXECS); do \
+		$(UNINSTALL) -b $$f $(DIR) $$f; \
+	done
+
 cleandep:
 	echo CLEANDEP
 	rm .depend 2>/dev/null || true

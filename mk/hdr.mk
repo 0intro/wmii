@@ -56,7 +56,7 @@ MKCFG!=$(MKCFGSH)
 include $(MKCFG)
 
 .SILENT:
-.SUFFIXES: .out .o .o_pic .c .pdf .sh .rc .$(SOEXT) .awk .1 .man1 .depend .install .uninstall .clean
+.SUFFIXES: .out .o .o_pic .c .pdf .sh .rc .$(SOEXT) .awk .1 .3 .man1 .man3 .depend .install .uninstall .clean
 all:
 
 MAKEFILES=.depend
@@ -65,7 +65,7 @@ MAKEFILES=.depend
 	[ -n "$(noisycc)" ] && echo $(MKDEP) $(COMPILE_FLAGS) $< || true
 	eval "$(MKDEP) $(COMPILE_FLAGS)" $< | sed '1s|.*:|$(<:%.c=%.o):|' >>.depend
 
-.sh.depend .rc.depend .1.depend .awk.depend:
+.sh.depend .rc.depend .1.depend .3.depend .awk.depend:
 	:
 
 .c.o:
@@ -87,7 +87,7 @@ MAKEFILES=.depend
 	$(FILTER) $< >$@; \
 	chmod 0755 $@
 
-.man1.1:
+.man1.1 .man3.3:
 	echo TXT2TAGS $(BASE)$<
 	[ -n "$(noisycc)" ] && set -x; \
 	txt2tags -o- $< >$@
@@ -98,6 +98,7 @@ INSTALL= _install() { set -e; \
 		 if [ ! -d $$d ]; then echo MKDIR $$3; mkdir -p $$d; fi; \
 		 echo INSTALL $$($(CLEANNAME) $(BASE)$$2); \
 		 [ -n "$(noisycc)" ] && set -x; \
+		 rm -f $$f; \
 		 if [ "$$dashb" = -b ]; \
 		 then cp -f $$2 $$f; \
 		 else $(FILTER) <$$2 >$$f; \
@@ -106,9 +107,9 @@ INSTALL= _install() { set -e; \
 		 set +x; \
 	 }; _install
 UNINSTALL= _uninstall() { set -e; \
-	           echo UNINSTALL $$($(CLEANNAME) $(BASE)$$2); \
+	           echo UNINSTALL $$($(CLEANNAME) $(BASE)$$1); \
 		   [ -n "$(noisycc)" ] && set -x; \
-		   rm -f $(DESTDIR)$$3/$$(basename $$4); \
+		   rm -f $(DESTDIR)$$2/$$(basename $$3); \
 	   }; _uninstall
 
 .out.install:
@@ -137,7 +138,7 @@ MANSECTIONS=1 2 3 4 5 6 7 8 9
 $(MANSECTIONS:%=.%.install):
 	$(INSTALMAN) $<
 $(MANSECTIONS:%=.%.uninstall):
-	$(UNINSTALL) $<
+	$(UNINSTALLMAN) $<
 
 .out.clean:
 	echo CLEAN $$($(CLEANNAME) $(BASE)$<)

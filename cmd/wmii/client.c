@@ -686,8 +686,7 @@ client_seturgent(Client *c, int urgent, int from) {
 		c->urgent = urgent;
 		ewmh_updatestate(c);
 		if(c->sel) {
-			if(c->sel->view == selview)
-				frame_draw(c->sel);
+			frame_draw(c->sel);
 			for(f=c->frame; f; f=f->cnext) {
 				SET(ff);
 				if(!urgent)
