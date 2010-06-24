@@ -631,7 +631,6 @@ fullscreen(Client *c, int fullscreen, long screen) {
 		return;
 
 	event("Fullscreen %#C %s\n", c, (fullscreen ? "on" : "off"));
-	ewmh_updatestate(c);
 
 	c->fullscreen = -1;
 	if(!fullscreen)
@@ -666,6 +665,7 @@ fullscreen(Client *c, int fullscreen, long screen) {
 		if((f = c->sel))
 			view_update(f->view);
 	}
+	ewmh_updatestate(c);
 }
 
 void

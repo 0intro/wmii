@@ -50,6 +50,14 @@ enum IncMode {
 	ISqueeze,
 };
 
+enum {
+	PDesktop,
+	PExtents,
+	PMonitors = PExtents + 4,
+	PState = PMonitors + 4,
+	PLast = PState + 3
+};
+
 enum ClientPermission {
 	PermActivate	= 1<<0,
 };
@@ -177,6 +185,8 @@ struct Client {
 	char	name[256];
 	char	props[512];
 	char	tags[256];
+	char	proplen[PLast];
+	long	propcache[PLast];
 	long	permission;
 	long	proto;
 	int	border;

@@ -14,6 +14,20 @@ static void	tick(long, void*);
 static Handlers	client_handlers;
 static Handlers	root_handlers;
 
+static void
+clientprop_long(Client *c, int cache, char *prop, char *type, long *data, int l) {
+	if(l != c->proplen[cache] || memcmp(&c->propcache[cache], data, l * sizeof *data)) {
+		c->proplen[cache] = l;
+		memcpy(&c->propcache[cache], data, l * sizeof *data);
+		changeprop_long(&c->w, prop, type, data, l);
+	}
+}
+static void
+clientprop_del(Client *c, int cache, char *prop) {
+	c->proplen[cache] = 0;
+	delproperty(&c->w, prop);
+}
+
 void
 ewmh_init(void) {
 	char myname[] = "wmii";
@@ -500,7 +514,7 @@ ewmh_framesize(Client *c) {
 		r.min.x, r.max.x,
 		r.min.y, r.max.y,
 	};
-	changeprop_long(&c->w, Net("FRAME_EXTENTS"), "CARDINAL",
+	clientprop_long(c, PExtents, Net("FRAME_EXTENTS"), "CARDINAL",
 			extents, nelem(extents));
 }
 
@@ -523,17 +537,17 @@ ewmh_updatestate(Client *c) {
 		state[i++] = STATE("DEMANDS_ATTENTION");
 
 	if(i > 0)
-		changeprop_long(&c->w, Net("WM_STATE"), "ATOM", state, i);
+		clientprop_long(c, PState, Net("WM_STATE"), "ATOM", state, i);
 	else
-		delproperty(&c->w, Net("WM_STATE"));
+		clientprop_del(c, PState, Net("WM_STATE"));
 
 	if(c->fullscreen >= 0)
-		changeprop_long(&c->w, Net("WM_FULLSCREEN_MONITORS"), "CARDINAL",
+		clientprop_long(c, PMonitors, Net("WM_FULLSCREEN_MONITORS"), "CARDINAL",
 				(long[]) { c->fullscreen, c->fullscreen,
 					   c->fullscreen, c->fullscreen },
 				4);
 	else
-		delproperty(&c->w, Net("WM_FULLSCREEN_MONITORS"));
+		clientprop_del(c, PMonitors, Net("WM_FULLSCREEN_MONITORS"));
 }
 
 /* Views */
@@ -587,7 +601,7 @@ ewmh_updateclient(Client *c) {
 	i = -1;
 	if(c->sel)
 		i = viewidx(c->sel->view);
-	changeprop_long(&c->w, Net("WM_DESKTOP"), "CARDINAL", &i, 1);
+	clientprop_long(c, PDesktop, Net("WM_DESKTOP"), "CARDINAL", &i, 1);
 }
 
 void
