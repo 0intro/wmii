@@ -294,12 +294,12 @@ column_settle(Area *a) {
 
 	if(n_uncol == 0) {
 		fprint(2, "%s: Badness: No uncollapsed frames, column %d, view %q\n",
-				argv0, area_idx(a), a->view->name);
+		       argv0, area_idx(a), a->view->name);
 		return;
 	}
 	if(surplus < 0)
 		fprint(2, "%s: Badness: surplus = %d in column_settle, column %d, view %q\n",
-				argv0, surplus, area_idx(a), a->view->name);
+		       argv0, surplus, area_idx(a), a->view->name);
 
 	yoff = a->r.min.y;
 	yoffcr = yoff;

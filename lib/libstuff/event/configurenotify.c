@@ -7,6 +7,8 @@ void
 event_configurenotify(XConfigureEvent *ev) {
 	Window *w;
 
+	if(!ev->send_event)
+		event_lastconfigure = ev->serial;
 	if((w = findwin(ev->window)))
 		event_handle(w, config, ev);
 }

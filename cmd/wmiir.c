@@ -121,6 +121,7 @@ unflush(int fd, char *in, int len, bool binary) {
 		else
 			out += res;
 	} while(n > 0);
+
 	if(in < start + len) {
 		nextra = min(sizeof extra, len - (in - start));
 		memcpy(extra, in, nextra);

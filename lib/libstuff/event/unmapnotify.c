@@ -7,6 +7,8 @@ void
 event_unmapnotify(XUnmapEvent *ev) {
 	Window *w;
 
+	if(!ev->send_event)
+		event_lastconfigure = ev->serial;
 	if((w = findwin(ev->window))) {
 		if(!ev->send_event)
 			w->mapped = false;

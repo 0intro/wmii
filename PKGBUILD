@@ -1,13 +1,13 @@
 
 pkgname=wmii-hg
-pkgver=2739
+pkgver=2740
 pkgrel=1
 pkgdesc="The latest hg pull of wmii, a lightweight, dynamic window manager for X11"
 url="http://wmii.suckless.org"
 license=(MIT)
 arch=(i686 x86_64)
 depends=(libx11 libxinerama libxrandr)
-makedepends=(mercurial libixp-hg)
+makedepends=(mercurial "libixp-hg>="$(sed -rn <mk/wmii.mk 's/.*IXP_NEEDAPI=([0-9]+).*/\1/p'))
 optdepends=("plan9port: for use of the alternative plan9port wmiirc" \
 	"python: for use of the alternative Python wmiirc" \
 	"ruby-rumai: for use of the alternative Ruby wmiirc" \

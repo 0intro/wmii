@@ -489,6 +489,7 @@ focus(Client *c, bool user) {
 	View *v;
 	Frame *f;
 
+	Dprint(DFocus, "focus(%#C, %d)\n", c, user);
 	if(!c->nofocus || user)
 	if((f = c->sel)) {
 		v = f->view;
@@ -892,7 +893,7 @@ enter_event(Window *w, void *aux, XCrossingEvent *e) {
 	c = aux;
 	if(e->detail != NotifyInferior) {
 		if(e->detail != NotifyVirtual)
-		if(e->serial != ignoreenter && disp.focus != c) {
+		if(e->serial > event_lastconfigure && disp.focus != c) {
 			Dprint(DFocus, "enter_notify([%#C]%s)\n", c, c->name);
 			focus(c, false);
 		}
@@ -981,18 +982,6 @@ static Handlers handlers = {
 	.map = map_event,
 	.unmap = unmap_event,
 	.property = property_event,
-};
-
-static bool
-ignoreenter_event(Window *w, void *aux, XAnyEvent *e) {
-	ignoreenter = e->serial;
-	return true;
-}
-
-static Handlers ignorehandlers = {
-	.map = (bool(*)(Window*, void*, XMapEvent*))ignoreenter_event,
-	.unmap = (bool(*)(Window*, void*, XUnmapEvent*))ignoreenter_event,
-	.config = (bool(*)(Window*, void*, XConfigureEvent*))ignoreenter_event,
 };
 
 /* Other */

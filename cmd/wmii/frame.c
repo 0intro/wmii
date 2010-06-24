@@ -205,11 +205,12 @@ enter_event(Window *w, void *aux, XCrossingEvent *e) {
 	c = aux;
 	f = c->sel;
 	if(disp.focus != c || selclient() != c) {
+		Dprint(DFocus, "%E\n", e);
 		Dprint(DFocus, "enter_notify(f) => [%#C]%s%s\n",
 		       f->client, f->client->name,
-		       ignoreenter == e->serial ? " (ignored)" : "");
+		       e->serial <= event_lastconfigure ? " (ignored)" : "");
 		if(e->detail != NotifyInferior)
-		if(e->serial != ignoreenter && !f->collapsed)
+		if(e->serial > event_lastconfigure && !f->collapsed)
 			focus(f->client, false);
 	}
 	mouse_checkresize(f, Pt(e->x, e->y), false);
@@ -225,9 +226,6 @@ expose_event(Window *w, void *aux, XExposeEvent *e) {
 	c = aux;
 	if(c->sel)
 		frame_draw(c->sel);
-	else
-		fprint(2, "Badness: Expose event on a client frame which shouldn't be visible: %#C\n",
-			c);
 	return false;
 }
 

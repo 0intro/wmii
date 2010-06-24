@@ -42,7 +42,7 @@ void	event_fdclosed(IxpConn*);
 void	event_fdready(IxpConn*);
 void	event_preselect(IxpServer*);
 #endif
-void	event_updatextime(void);
+long	event_updatextime(void);
 
 void	event_buttonpress(XButtonPressedEvent*);
 void	event_buttonrelease(XButtonPressedEvent*);
@@ -68,6 +68,7 @@ void	event_selectionclear(XSelectionClearEvent*);
 void	event_selectionrequest(XSelectionRequestEvent*);
 void	event_unmapnotify(XUnmapEvent*);
 
+extern long	event_lastconfigure;
 extern long	event_xtime;
 extern bool	event_looprunning;
 extern void	(*event_debug)(XEvent*);

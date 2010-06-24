@@ -5,6 +5,7 @@
 
 typedef bool (*Handler)(Window*, void*, XEvent*);
 void	(*event_debug)(XEvent*);
+long	event_lastconfigure;
 long	event_xtime;
 bool	event_looprunning;
 

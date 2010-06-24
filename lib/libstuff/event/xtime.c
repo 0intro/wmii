@@ -15,7 +15,7 @@ findtime(Display *d, XEvent *e, XPointer v) {
 	return false;
 }
 
-void
+long
 event_updatextime(void) {
 	Window *w;
 	WinAttr wa;
@@ -29,5 +29,6 @@ event_updatextime(void) {
 	XIfEvent(display, &e, findtime, (void*)w);
 
 	destroywindow(w);
+	return event_xtime;
 }
 
