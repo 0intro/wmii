@@ -9,6 +9,7 @@
 
 wmiiscript=$1
 wmiikeys=()
+wmiikeyhelp=''
 
 wi_newline='
 '
@@ -134,15 +135,21 @@ fn wi_selclient {
 	wmiir read /client/sel/ctl | sed 1q
 }
 
-fn wi_readevent {
-	wmiir read /event
+fn wi_nexttag {
+	awk -v 'curtag='^`{wi_seltag} '
+		NR==1 {first = $0}
+		$0==curtag { if(getline) print $0; else print first; exit }'
 }
 
 fn wi_eventloop {
 	wi_initkeys
 
-	wi_readevent |
-	while(ifs=$wi_ewlinel{wi_event=`{read}}) {
+	{
+		if(~ $1 -i)
+			cat
+		if not
+			wmiir read /event
+	} | while(ifs=$wi_newline{wi_event=`{read}}) {
 		ifs=$wi_newline{
 			wi_arg=`{echo $wi_event | sed 's/^[^ ]+ //'}}
 		* = `{echo $wi_event}

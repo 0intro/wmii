@@ -17,8 +17,10 @@
 #ifndef offsetof
 #  define offsetof(type, member) ((size_t)&((type*)0)->member)
 #endif
+#define structptr(ptr, type, offset) \
+	((type*)((char*)(ptr) + (offset)))
 #define structmember(ptr, type, offset) \
-	(*(type*)((char*)(ptr) + (offset)))
+	(*structptr(ptr, type, offset))
 
 #undef uchar
 #undef ushort

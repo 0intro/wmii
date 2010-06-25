@@ -13,7 +13,12 @@
 \usepackage{xcolor}
 \usepackage[xetex,breaklinks,colorlinks,linkcolor=black]{hyperref}
 
-% Indexes
+\let\EA=\expandafter
+
+\newif\ifexpandfragments
+\newif\ifdefinefragments
+
+%% Indexes
 \makeindex
 \let\primary=\textbf
 
@@ -26,36 +31,63 @@
 
 \def\man#1#2{#2\textbf{(#1)}}
 
-% Key specs
+\makeatletter
+
+%% Key specs
 \def\key#1{{\small$\langle$\addfontfeature{Numbers=Lining}#1\/$\rangle$}}
 \let\<=<
 \catcode`\<=\active
 \def<#1>{\key{#1}}
 
-% Display ‹...› and «...» as text in left and right pointing
-% angle brackets. I use «» and ‹› because my terminal doesn't
-% display left and right pointing angle brackets properly, and
-% Xorg's compose maps don't provide them, anyway.
+%% Display ‹...› and «...» as text in left and right pointing
+%% angle brackets. I use «» and ‹› because my terminal doesn't
+%% display left and right pointing angle brackets properly, and
+%% Xorg's compose maps don't provide them, anyway.
+\def\«{«}\def\‹{‹}
 \catcode`\«=\active
 \catcode`\‹=\active
 \def‹#1›{$\langle${\itshape#1}$\rangle$}
 \def«#1»{$\langle\langle${\itshape#1}$\rangle\rangle$}
 
+\catcode`\∅=\active
+\def∅{\box0}
+\def«{%
+  \let\dofragment@target=\hyperlink%
+  \@ifnextchar*\dofragment@@\dofragment@}
+\def\dofragment@@*{%
+  \let\dofragment@target=\hypertarget%
+  \dofragment@}
+\def\dofragment@#1»{%
+  \setbox0=\hbox{$\langle\langle${\itshape#1}$\rangle\rangle$}%
+  \ifexpandfragments%
+    \def\a{\sp\sp\comment \boxzero^^J}%
+    \begingroup%
+      \def\ { }\xdef\@frag@name{#1}%
+    \endgroup%
+    \UseFragment{∅}\@frag@name%
+  \else%
+    \dofragment@target{frag:#1}{\box0}%
+  \fi}
+
 % Display |...| as verbatim, teletype text.
 \DefineShortVerb{\|}
 
-\makeatletter
 \let\idx@@heading\chapter
-\let\:=:
-\catcode`\:=\active
-\def:{\@ifnextchar:{\coloncoloneq}{\:}}
-\def\coloncoloneq#1{\@ifnextchar={$\Coloneqq$\coloncoloneqq}{\:\:}}
-\def\coloncoloneqq#1{}
+\def\:{:}
+\iffalse
+  \catcode`\:=\active
+  \gdef:{\@ifnextchar:{\coloncoloneq}{\:}}
+  \gdef\coloncoloneq#1{\@ifnextchar={$\Coloneqq$\coloncoloneqq}{\:\:}}
+  \gdef\coloncoloneqq#1{}
+\fi
+\def\≔{≔}
+\catcode`\≔=\active
+\def≔{\ensuremath{\Coloneqq}}
 
-% Create a verbatim {code} environment which highlights strings
-% and comments. Several unicode characters are hacked to replace
-% the grabbed characters, since we can't escape them in the
-% verbatim environment.
+%% Create a verbatim {code} environment which highlights strings
+%% and comments. Several unicode characters are hacked to replace
+%% the grabbed characters, since we can't escape them in the
+%% verbatim environment.
 \colorlet{comment}{gray}
 \colorlet{string}{red!100!black!90}
 \let\‘=‘
@@ -67,17 +99,66 @@
 \catcode`‘=\active
 \def“¶1”{{\color{string}\“¶1”}}%
 \def‘¶1’{{\color{string}\‘¶1’}}%
+\def\comment{\itshape\color{comment}\let“=\“\let‘=\‘\#}
+\def\docodes{\catcode`\#=\active\catcode`“=\active\catcode`‘=\active\catcode`\☺=0}
+\def\dodefineactive{
+  \let#=\comment
+  }
 \DefineVerbatimEnvironment{code}{Verbatim}{xleftmargin=2em,gobble=2,%
-  codes={\catcode`\#=\active\catcode`\:=\active\catcode`“=\active\catcode`‘=\active},%
-  defineactive={%
-    \def#{\itshape\color{comment}\let“=\“\let‘=\‘\#}%
-    }}
+  codes={\docodes},%
+  defineactive={\dodefineactive}}
 \catcode`\#=6
 \catcode`“=12
 \catcode`‘=12
 
-% Convenience defs for the various wmii commands, and a few
-% others.
+%% Save code fragments for piecing together later
+\begingroup
+  \catcode`\@=0
+  @catcode`\\=12
+  @gdef@bcode{@detokenize{\begin{code}^^J}}
+  @gdef@ecode{@detokenize{\end{code}^^J}}
+  @catcode`@ =12@gdef@sp{ }
+@endgroup
+
+% Ripped from fancyverb
+% I'm currently rather unfond of it.
+\def\Fragment{\FV@Environment{}{Fragment}}
+\def\FVB@Fragment#1{%
+  \@bsphack
+  \begingroup
+    \FV@UseKeyValues
+    \gdef\Fragment@Name{#1}%
+    \xdef\Fragment@Prefix{\«*#1» \≔^^J}
+    \xdef\TheFragment{}
+    \def\FV@ProcessLine##1{%
+      \edef\frag{\detokenize{##1^^J}}%
+      \xdef\TheFragment{\TheFragment\frag}}%
+    \FV@Scan}
+\def\FVE@Fragment{%
+  \EA\global\EA\let
+  \csname SV@\Fragment@Name\endcsname\TheFragment%
+  \endgroup%
+  \EA\UseFragment\EA{\Fragment@Prefix}\Fragment@Name}
+\DefineVerbatimEnvironment{Fragment}{Fragment}{}
+
+\def\UseFragment#1#2{
+  \begingroup
+    % \message{UseFragment #2^^J}
+    \EA\let\EA\a\csname SV@#2\endcsname
+    \ifx\a\undefined\def\a{\ldots}\fi
+    \ifx\FV@EnvironName\relax%
+      \edef\a{\bcode\detokenize{++#1}\a\ecode}\else%
+      \edef\a{\detokenize{#1}\a}\fi%
+    \newtoks\tokens
+    \EA\tokens\EA{\a}
+    \everyeof{\noexpand}%
+    % \EA\message\EA{\the\tokens}
+    \scantokens\EA{\the\tokens}
+  \endgroup
+}
+
+%% Convenience defs for the various wmii commands, and a few
+%% others.
 \def\wmii{\texttt{wmii}}
 \def\wiIXmenu{\texttt{wi9menu}}
 \def\wimenu{\texttt{wimenu}}
@@ -125,7 +206,6 @@ This file is distributed under the same terms as wmii:
 \parindent=0pt
 \parskip=1em
 
-\catcode`\:=12
 Copyright © 2009 Kris Maglione <\href{mailto:maglione.k@gmail.com}{maglione.k@gmail.com}>
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -635,8 +715,7 @@ windows, and changes of focus and views.
 We'll start building our configuration with an event processing
 framework:
 
-\begin{code}
-  «Event Loop» ::=
+\begin{Fragment}{Event Loop}
   # Broadcast a custom event
   wmiir xwrite /event Start wmiirc
 
@@ -657,13 +736,12 @@ framework:
       «Event Handlers»
       esac
   done
-\end{code}
+\end{Fragment}
 
 Now, we need to consider which types of events we'll need to
 handle:
 
-\begin{code}
-  «Event Handlers» ::=
+\begin{Fragment}{Event Handlers}
   «View Button Events»
   «Urgency Events»
   «Unresponsive Clients»
@@ -671,37 +749,45 @@ handle:
   «Key Events»
   «Client Menu Events»
   «Tag Menu Events»
-\end{code}
+\end{Fragment}
 
 \section{Bar Items}
 
 The bar is described by the files in the two directories |/lbar/| and
 |/rbar/| for buttons on the left and right side of the bar,
-respectively. The format of the files is:
+respectively. The files act as control files (section
+\ref{sec:controlfiles}) with the contents:
 
 \begin{code}
-  ‹Color Tuple› ‹Label›
+  color ‹Color Tuple›
+  label ‹Label›
 \end{code}
-
-although the color tuple may be elided in cases where the label
-doesn't match its format.
 
 A ‹Color Tuple› is defined as:
 
 \begin{code}
-  ‹tuple› ::= ‹foreground color› ‹background color› ‹border color›
-  ‹color› ::= ＃‹6 character RGB hex color code›
+  ‹Color Tuple› ≔ ‹foreground color› ‹background color› ‹border color›
+  ‹* Color›     ≔ ‹RGB color› | ‹RGBA color›
+  ‹RGB color›   ≔ ＃‹6 character RGB hex color code›
+  ‹RGBA color›  ≔ rgba:‹red›/‹green›/‹blue›/‹alpha›
 \end{code}
+
+\noindent
+where all of the colors are represented as lowercase,
+hexidecimal values. In the case of RGBA colors, they may be 1--4
+characters long, though they will be standardized internally to
+2 characters.
+
+\medskip
 
 Let's define our basic theme information now:
 
-\begin{code}
-  «Theme Definitions» ::=
+\begin{Fragment}{Theme Definitions}
   normcolors=‘＃000000 ＃c1c48b ＃81654f’
   focuscolors=‘＃000000 ＃81654f ＃000000’
   background=‘＃333333’
   font=‘drift,-*-fixed-*-*-*-*-9-*-*-*-*-*-*-*’
-\end{code}
+\end{Fragment}
 
 \subsection{View Buttons}
 
@@ -712,8 +798,7 @@ our view event handlers:
 \index{events!DestroyTag}
 \index{events!FocusTag}
 \index{events!UnfocusTag}
-\begin{code}
-  «View Button Events» ::=
+\begin{Fragment}{View Button Events}
   CreateTag)  # CreateTag ‹Tag Name›
       echo $normcolors $1 | wmiir create /lbar/$1;;
   DestroyTag) # DestroyTag ‹Tag Name›
@@ -722,7 +807,7 @@ our view event handlers:
       wmiir xwrite /lbar/$1 $focuscolors $1;;
   UnfocusTag) # UnfocusTag ‹Tag Name›
       wmiir xwrite /lbar/$1 $normcolors $1;;
-\end{code}
+\end{Fragment}
 
 \subsection{Urgency}
 
@@ -732,13 +817,12 @@ Windows can specify that they require attention, and in X11
 parlance, this is called urgency. When a window requests
 attention as such, or declares that it's been satisfied, \wmii\
 broadcasts an event for the client and an event for each view
-that it belongs to, and fills in the client's layout box. It's
-the job of a script to decide how to handle it above and beyond
-that. The standard scripts simply mark urgent views with an
-asterisk:
+that it belongs to. It also fills in the layout box of any
+client deemed urgent. It's the job of a script to decide how to
+handle urgency events above and beyond that basic measure. The
+standard scripts simply mark urgent views with an asterisk:
 
-\begin{code}
-  «Urgency Events» ::=
+\begin{Fragment}{Urgency Events}
   # The urgency events are ‘Client’ events when the program
   # owning the window sets its urgency state. They're ‘Manager’
   # events when wmii or the wmii user sets the state.
@@ -746,7 +830,7 @@ asterisk:
       wmiir xwrite /lbar/$2 $2;;
   NotUrgentTag) # NotUrgentTag ‹‘Client’ or ‘Manager’› ‹Tag Name›
       wmiir xwrite /lbar/$2 $2;;
-\end{code}
+\end{Fragment}
 \index{events!UrgentTag|)}
 \index{events!NotUrgentTag|)}
 
@@ -756,18 +840,17 @@ The standard scripts provide a custom Notice event for
 displaying status information. The events appear in the long bar
 between the left and right sides for five seconds.
 
-\begin{code}
-  «Notice Events» ::=
+\begin{Fragment}{Notice Events}
   Notice)
       wmiir xwrite /rbar/!notice $line
       kill $xpid 2>/dev/null # Let's hope this isn't reused...
       { sleep 5; wmiir xwrite /rbar/!notice ‘ ’; } &
       xpid = $!;;
-\end{code}
+\end{Fragment}
 
 \section{Keys}
 
-\label{keybindings}
+\label{sec:keybindings}
 \index{key bindings}
 \index{filesystem!/!keys}
 \index{filesystem!/!event}
@@ -798,8 +881,7 @@ Examples of key bindings:
 
 Now, let's bind the keys we plan on using:
 
-\begin{code}
-  «Bind Keys» ::=
+\begin{Fragment}{Bind Keys}
   {
   cat <<!
   Mod4-space
@@ -828,12 +910,11 @@ Now, let's bind the keys we plan on using:
       echo Mod4-Shift-$i
   done
   } | wmiir write /keys
-\end{code}
+\end{Fragment}
 
 and lay a framework for processing their events:
 
-\begin{code}
-  «Key Events» ::=
+\begin{Fragment}{Key Events}
   Key) # Key ‹Key Name›
       case $1 in
       «Motion Keys»
@@ -844,7 +925,7 @@ and lay a framework for processing their events:
       «Tag Selection Keys»
       «Tagging Keys»
       esac;;
-\end{code}
+\end{Fragment}
 
 \section{Click Menus}
 
@@ -853,14 +934,15 @@ reach for the keyboard. To help cope, \wmii\ provides a
 mouse-driven, single-click menu. The default configuration uses
 it for client and tag menus.
 
-\begin{code}
-  «Click Menu Initialization» ::=
+\begin{Fragment}{Click Menu Initialization}
   clickmenu() {
       if res=$(wmii9menu -- “$@”); then eval “$res”; fi
   }
-\end{code}
+\end{Fragment}
 
 \section{Control Files}
+
+\label{sec:controlfiles}
 
 Several directories including the root, have control files,
 named |ctl|. These files are used to control the object (e.g., a
@@ -937,7 +1019,10 @@ client. The files in these directories are:
       \item[pid] Read-only value of the PID of the program that
         owns the window, if the value is available and the
         process is on the same machine as wmii.
-      \item[slay] When written, the client is killed peremptorily.
+      \item[slay] When written, the client is disconnected
+        peremptorily. If the client's PID is available and the
+        process is the same machine as wmii, its parent process
+        is killed
       \item[tags] The client's tags. The same as the tags file.
       \item[urgent] The client's urgency state. When |on|, the
         client's layout box will be highlighted. Possible values
@@ -953,19 +1038,21 @@ client. The files in these directories are:
   \item[tags]
     \index{filesystem!/client/*/@\clientlabel!tags}
     The client's tags. Tag names are separated by |+|, |-|, or
-    |^| signs. Tags beginning and ending with |/| are treated as
-    regular expressions, which place the client on any extant
-    matching tag\footnote{While a client with a regex tag will
-    always appear in all matching views, it will not keep those
-    views in existence. When the last client explicitly tagged
-    with a view is removed, the view is deleted as soon as it
-    becomes inactive.}. If the written value begins with a |+|,
-    |-|, or |^|, the tags are updated rather than overwritten.
-    Tag names which directly follow a |-| sign are removed
-    rather than added, while those following a |^| are toggled.
-    Regular expression tags which directly follow a minus sign
-    are treated as exclusion expressions. For example, the tag
-    string |+/foo/-/food/| will match the tag
+    |^| signs. Tag names which directly follow a |+| sign are
+    added, while whose following a |-| sign are removed and
+    those following a |^| are toggled.  If the value written
+    begins with one of these characters, the value is appended
+    to the clients tags rather than replacing them. 
+    
+    Tags formatted as |/‹regex›/| are treated as regular
+    expressions, which place the client on any extant matching
+    tag\footnote{While a client with a regex tag will always
+    appear in all matching views, it will not keep those views
+    in existence. When the last client explicitly tagged with a
+    view is removed, the view is deleted as soon as it becomes
+    inactive.}.  Regular expression tags which directly follow a
+    minus sign are treated as exclusion expressions. For
+    example, the tag string |+/foo/-/food/| will match the tag
     |foobar|, but not the tag |foodstand|.
 \end{description}
 
@@ -975,16 +1062,14 @@ client. The files in these directories are:
 
 To control clients, we'll add the following key bindings:
 
-\begin{code}
-  «Client Command Keys» ::=
+\begin{Fragment}{Client Command Keys}
   Mod4-Shift-c) wmiir xwrite /client/sel/ctl kill;;
   Mod4-f) wmiir xwrite /client/sel/ctl Fullscreen toggle;;
-\end{code}
+\end{Fragment}
 
 And to manage their tags, we'll need:
 
-\begin{code}
-  «Tagging Keys» ::=
+\begin{Fragment}{Tagging Keys}
   Mod4-Shift-t)
     # Get the selected client's id
     c=$(wmiir read /client/sel/ctl | sed 1q)
@@ -994,19 +1079,18 @@ And to manage their tags, we'll need:
     wmiir xwrite /client/$c/tags $tag;;
   Mod4-Shift-[0-9])
     wmiir xwrite /client/sel/tags ${1＃＃*-};;
-\end{code}
+\end{Fragment}
 
 \subsection{Click Menus}
 
 \index{events!ClientMouseDown}
-\begin{code}
-  «Client Menu Events» ::=
+\begin{Fragment}{Client Menu Events}
   ClientMouseDown) # ClientMouseDown ‹Client ID› ‹Button›
     [ $2 = 3 ] && clickmenu \
       “Delete:wmiir xwrite /client/$1/ctl kill” \
       “Kill: wmiirxwrite /client/$1/ctl slay” \
       “Fullscreen:wmiir xwrite /client/$1/ctl fullscreen on”
-\end{code}
+\end{Fragment}
 
 \subsection{Unresponsive Clients}
 
@@ -1015,8 +1099,7 @@ When \wmii\ tries to close a window, it waits 8 seconds for the
 client to respond, and then lets its scripts decide what to do
 with it. The stock scripts prompt the user for input:
 
-\begin{code}
-  «Unresponsive Clients» ::=
+\begin{Fragment}{Unresponsive Clients}
   UnresponsiveClient) # UnresponsiveClient ‹Client ID›
   {
       # Use wihack to make the xmessage a transient window of
@@ -1029,7 +1112,7 @@ with it. The stock scripts prompt the user for input:
              $(wmiir read /client/$1/label))
       [ $resp = Kill ] && wmiir xwrite /client/$1/ctl slay
   } &;;
-\end{code}
+\end{Fragment}
 \index{events!UnresponsiveClient|)}
 
 \section{Views}
@@ -1117,36 +1200,36 @@ in these directories are:
 
 We'll use the following key bindings to interact with views:
 
-\begin{code}
-  «Motion Keys» ::=
+\begin{Fragment}{Motion Keys}
   Mod4-h) wmiir xwrite /tag/sel/ctl select left;;
   Mod4-l) wmiir xwrite /tag/sel/ctl select right;;
   Mod4-k) wmiir xwrite /tag/sel/ctl select up;;
   Mod4-j) wmiir xwrite /tag/sel/ctl select down;;
   Mod4-space) wmiir xwrite /tag/sel/ctl select toggle;;
+\end{Fragment}
 
-  «Client Movement Keys» ::=
+\begin{Fragment}{Client Movement Keys}
   Mod4-Shift-h) wmiir xwrite /tag/sel/ctl send sel left;;
   Mod4-Shift-l) wmiir xwrite /tag/sel/ctl send sel right;;
   Mod4-Shift-k) wmiir xwrite /tag/sel/ctl send sel up;;
   Mod4-Shift-j) wmiir xwrite /tag/sel/ctl send sel down;;
   Mod4-Shift-space) wmiir xwrite /tag/sel/ctl send sel toggle;;
+\end{Fragment}
 
-  «Column Mode Keys» ::=
+\begin{Fragment}{Column Mode Keys}
   Mod4-d) wmiir xwrite /tag/sel/ctl colmode sel -stack-max;;
   Mod4-s) wmiir xwrite /tag/sel/ctl colmode sel stack-max;;
   Mod4-m) wmiir xwrite /tag/sel/ctl colmode sel stack+max;;
-\end{code}
+\end{Fragment}
 
 \subsection{Click Menus}
 
 \index{events!LeftBarMouseDown}
-\begin{code}
-  «Tag Menu Events» ::=
+\begin{Fragment}{Tag Menu Events}
   LeftBarMouseDown) # LeftBarMouseDown ‹Button› ‹Bar Name›
     [ $1 = 3 ] && clickmenu \
       “Delete:delete_view $2”
-\end{code}
+\end{Fragment}
 
 \section{Command and Program Execution}
 
@@ -1160,28 +1243,26 @@ commands.
 We use |wmiir setsid| to launch programs with their own session
 IDs to prevent untoward effects when this script dies.
 
-\begin{code}
-  «Command Execution Initialization» ::=
+\begin{Fragment}{Command Execution Initialization}
   terminal() { wmiir setsid xterm “$@” }
   proglist() {
       IFS=:
       wmiir proglist $1 | sort | uniq
       unset IFS
   }
-\end{code}
+\end{Fragment}
 
 \subsection{Key Bindings}
-\begin{code}
-  «Command Execution Keys» ::=
+\begin{Fragment}{Command Execution Keys}
   Mod4-Return) terminal & ;;
-  Mod4-p) eval exec wmiir setsid "$(proglist $PATH | wimenu)" &;;
+  Mod4-p) eval exec wmiir setsid “$(proglist $PATH | wimenu)” &;;
   Mod4-a) {
       set -- $(proglist $WMII_CONFPATH | wimenu)
       which=$(which which)
       prog=$(PATH=$WMII_CONFPATH $which $1); shift
       eval exec $prog “$@”
   } &;;
-\end{code}
+\end{Fragment}
 
 \section{The Root}
 
@@ -1243,9 +1324,9 @@ The root filesystem contains the following:
         searched for the executable. Otherwise, the whole
         argument is passed to the shell for evaluation.
     \end{description}
-  \item[keys]  The global keybindings. See section \ref{keybindings}.
+  \item[keys]  The global keybindings. See section \ref{sec:keybindings}.
                \index{filesystem!/!keys|primary}
-  \item[event] The global event feed. See section \ref{keybindings}.
+  \item[event] The global event feed. See section \ref{sec:keybindings}.
                \index{filesystem!/!event|primary}
   \item[colrules]
     \index{filesystem!/!colrules}
@@ -1260,7 +1341,7 @@ The root filesystem contains the following:
         Where,
 
         \begin{code}
-    ‹width› := ‹percent of screen› | ‹pixels›px
+    ‹width› ≔ ‹percent of screen› | ‹pixels›px
         \end{code}
 
         When a new column, ‹n›, is created on a view whose name
@@ -1306,8 +1387,7 @@ The root filesystem contains the following:
 We'll need to let \wmii\ know about our previously defined theme
 information:
 
-\begin{code}
-  «Configuration» ::=
+\begin{Fragment}{Configuration}
   «Theme Definitions»
 
   xsetroot -solid $background
@@ -1318,14 +1398,13 @@ information:
   font $font
   grabmod Mod4
   !
-\end{code}
+\end{Fragment}
 
 \subsection{Key Bindings}
 
 And we need a few more key bindings to select our views:
 
-\begin{code}
-  «Tag Selection Keys» ::=
+\begin{Fragment}{Tag Selection Keys}
   Mod4-t)
     # Prompt the user for a tag
     tags=$(wmiir ls /tag | sed ‘s,/,,; /^sel$/d’ | wimenu)
@@ -1333,7 +1412,7 @@ And we need a few more key bindings to select our views:
     wmiir xwrite /ctl view $tags;;
   Mod4-[0-9])
     wmiir xwrite /ctl view ${1＃＃*-};;
-\end{code}
+\end{Fragment}
 
 \section{Tieing it All Together}
 
@@ -1501,7 +1580,7 @@ For clarity, here is the end result:
 
           # «Command Execution Keys»
           Mod4-Return) terminal & ;;
-          Mod4-p) eval exec wmiir setsid "$(proglist $PATH | wimenu)" &;;
+          Mod4-p) eval exec wmiir setsid “$(proglist $PATH | wimenu)” &;;
           Mod4-a) {
               set -- $(proglist $WMII_CONFPATH | wimenu)
               prog=$(PATH=$WMII_CONFPATH which $1); shift

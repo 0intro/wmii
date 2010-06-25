@@ -86,10 +86,6 @@ _wi_script() {
 
 _wi_text() {
 	cat <<'!'
-Event Start
-	if [ "$1" = "$wmiiscript" ]; then
-		exit
-	fi
 Event Key
 	Key "$@"
 !
@@ -188,6 +184,12 @@ wi_selclient() {
 	wmiir read /client/sel/ctl | sed 1q | tr -d '\012'
 }
 
+wi_nexttag() {
+	awk -v curtag=$(wi_seltag) '
+		NR==1 {first = $0}
+		$0==curtag { if(getline) print $0; else print first; exit }'
+}
+
 wi_eventloop() {
 	echo "$Keys" | wmiir write /keys
 
@@ -201,6 +203,8 @@ wi_eventloop() {
 		unset IFS
 		set -- $wi_event
 		event=$1; shift
+		[ "$event" = Start -a "$1" = "$wmiiscript" ] &&
+			exit
 		( Event $event "$@" )
 	done
 	true

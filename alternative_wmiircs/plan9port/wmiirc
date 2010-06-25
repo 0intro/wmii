@@ -61,8 +61,8 @@ wmiir write /rules <<!
 
 # Status Bar Info
 fn status {
-	echo -n `{uptime | sed 's/.*://; s/,//g'} '|' \
-		`{date} }
+	echo -n label `{uptime | sed 's/.*://; s/,//g'} '|' \
+		      `{date} }
 
 # Generic overridable startup details
 fn startup { witray & }
@@ -86,19 +86,19 @@ fn sigexit {
 	wi_cleankeys}
 
 fn Event-CreateTag {
-	echo $wmiinormcol $* | wmiir create /lbar/$"*}
+	echo colors $wmiinormcol $wi_newline label $* | wmiir create /lbar/$"*}
 fn Event-DestroyTag {
 	wmiir remove /lbar/$"*}
 fn Event-FocusTag {
-	wmiir xwrite /lbar/$"* $wmiifocuscol $*}
+	wmiir xwrite /lbar/$"* colors $wmiifocuscol}
 fn Event-UnfocusTag {
-	wmiir xwrite /lbar/$"* $wmiinormcol $*}
+	wmiir xwrite /lbar/$"* colors $wmiinormcol}
 fn Event-UrgentTag {
 	shift
-	wmiir xwrite /lbar/$"* '*'$"*}
+	wmiir xwrite /lbar/$"* label '*'$"*}
 fn Event-NotUrgentTag {
 	shift
-	wmiir xwrite /lbar/$"* $"*}
+	wmiir xwrite /lbar/$"* label $"*}
 fn Event-AreaFocus {
 	if(~ $1 '~')
 		setbackground $wmiifloatbackground
@@ -116,7 +116,7 @@ fn Event-Unresponsive {
 			wmiir xwrite /client/$client/ctl slay
 	}&}
 fn Event-Notice {
-	wmiir xwrite $noticebar $wi_arg
+	wmiir xwrite $noticebar label $wi_arg
 
 	/bin/kill $xpid >[2]/dev/null # Let's hope this isn't reused...
 	{ sleep $noticetimeout; wmiir xwrite $noticebar ' ' }& # Bug...
@@ -152,21 +152,24 @@ fn Event-LeftBarMouseDown {
 	wi_fnmenu LBar $* &}
 
 # Actions
+fn Action-exec {
+	wmiir xwrite /ctl exec $*}
+fn Action-quit {
+	wmiir xwrite /ctl quit}
 fn Action-rehash {
 	comm -23 <{ls `{namespace}^/proglist.* >[2]/dev/null | awk -F'.' '{print $NF}'} \
 		 <{ps | awk '{print $2}'} |
 	while(id=`{read})
 		rm `{namespace}^/proglist.$id
 	wi_proglist $PATH >$progs_file}
-fn Action-quit {
-	wmiir xwrite /ctl quit}
-fn Action-exec {
-	wmiir xwrite /ctl exec $*}
+fn Action-showkeys {
+	echo $wmiikeyhelp | xmessage -file -
+}
 fn Action-status {
 	flag x -; flag r -
 	if(wmiir remove /rbar/status >[2]/dev/null)
 		sleep 2
-	echo $wmiinormcol | wmiir create /rbar/status
+	echo colors $wmiinormcol | wmiir create /rbar/status
 	while(status | wmiir write /rbar/status)
 		sleep 1
 }
@@ -181,14 +184,77 @@ startup
 
 # Key Bindings
 _keys = `{wi_getfuns Key}
+fn keygroup {
+	wmiikeyhelp = $wmiikeyhelp ^ $wi_newline ^ '  ' ^ $"* ^ $wi_newline}
 fn key {
+	help=$1; shift
 	key=()
-	for(k) if(! ~ $k $_keys) key = ($key Key-$k)
+	for(k) {
+		if(! ~ $k $_keys) {
+			ifs=() { wmiikeyhelp = `{awk 'BEGIN {
+				printf "%s    %- 20s %s\n", ENVIRON["wmiikeyhelp"], ENVIRON["k"], ENVIRON["help"]
+				exit }'} }
+			key = ($key Key-$k)}}
 	~ $#key 0}
 
-# This is... ugly.
+keygroup Moving around
+key 'Select the client to the left' $MODKEY-$LEFT || fn $key {
+	wmiir xwrite /tag/sel/ctl select left}
+key 'Select the client to the right' $MODKEY-$RIGHT || fn $key {
+	wmiir xwrite /tag/sel/ctl select right}
+key 'Select the client below' $MODKEY-$DOWN || fn $key {
+	wmiir xwrite /tag/sel/ctl select down}
+key 'Select the client above' $MODKEY-$UP || fn $key {
+	wmiir xwrite /tag/sel/ctl select up}
 
-key $MODKEY-Control-t || fn $key {
+key 'Toggle between floating and managed layers' $MODKEY-space || fn $key {
+	wmiir xwrite /tag/sel/ctl select toggle}
+
+keygroup Moving through stacks
+key 'Select the stack below' $MODKEY-Control-$DOWN || fn $key {
+	wmiir xwrite /tag/sel/ctl select down stack}
+key 'Select the stack above' $MODKEY-Control-$UP || fn $key {
+	wmiir xwrite /tag/sel/ctl select up stack}
+
+keygroup Moving clients around
+key 'Move selected client to the left' $MODKEY-Shift-$LEFT || fn $key {
+	wmiir xwrite /tag/sel/ctl send sel left}
+key 'Move selected client to the right' $MODKEY-Shift-$RIGHT || fn $key {
+	wmiir xwrite /tag/sel/ctl send sel right}
+key 'Move selected client down' $MODKEY-Shift-$DOWN || fn $key {
+	wmiir xwrite /tag/sel/ctl send sel down}
+key 'Move selected client up' $MODKEY-Shift-$UP || fn $key {
+	wmiir xwrite /tag/sel/ctl send sel up}
+
+key 'Toggle selected client between floating and managed layers' $MODKEY-Shift-space || fn $key {
+	wmiir xwrite /tag/sel/ctl send sel toggle}
+
+keygroup Client actions
+key 'Toggle selected client''s fullsceen state' $MODKEY-f || fn $key {
+	wmiir xwrite /client/sel/ctl Fullscreen toggle}
+key 'Close client' $MODKEY-Shift-c || fn $key {
+	wmiir xwrite /client/sel/ctl kill}
+
+keygroup Changing column modes
+key 'Set column to default mode' $MODKEY-d || fn $key {
+	wmiir xwrite /tag/sel/ctl colmode sel default-max}
+key 'Toggle between floating and managed layers' $MODKEY-s || fn $key {
+	wmiir xwrite /tag/sel/ctl colmode sel stack-max}
+key 'Set column to max mode' $MODKEY-m || fn $key {
+	wmiir xwrite /tag/sel/ctl colmode sel stack+max}
+
+keygroup Running programs
+key 'Open wmii actions menu' $MODKEY-a || fn $key {
+	Action `{wi_actions | wimenu -h $hist.action -n $histlen} &}
+key 'Open program menu' $MODKEY-p || fn $key {
+	ifs=() { cmd = `{wimenu -h $hist.prog -n $histlen <$progs_file} }
+	wi_runcmd $cmd & }
+
+key 'Launch a terminal' $MODKEY-Return || fn $key {
+	wi_runcmd $WMII_TERM &}
+
+keygroup Other
+key 'Toggle all other key bindings' $MODKEY-Control-t || fn $key {
 	switch(`{wmiir read /keys | wc -l}) {
 	case 0 1
 		wmiir xwrite /keys $keys
@@ -199,66 +265,22 @@ key $MODKEY-Control-t || fn $key {
 		wmiir xwrite /ctl grabmod Mod3
 	}}
 
-key $MODKEY-$LEFT || fn $key {
-	wmiir xwrite /tag/sel/ctl select left}
-key $MODKEY-$RIGHT || fn $key {
-	wmiir xwrite /tag/sel/ctl select right}
-key $MODKEY-$DOWN || fn $key {
-	wmiir xwrite /tag/sel/ctl select down}
-key $MODKEY-$UP || fn $key {
-	wmiir xwrite /tag/sel/ctl select up}
-key $MODKEY-Control-$DOWN || fn $key {
-	wmiir xwrite /tag/sel/ctl select down stack}
-key $MODKEY-Control-$UP || fn $key {
-	wmiir xwrite /tag/sel/ctl select up stack}
-
-key $MODKEY-Shift-$LEFT || fn $key {
-	wmiir xwrite /tag/sel/ctl send sel left}
-key $MODKEY-Shift-$RIGHT || fn $key {
-	wmiir xwrite /tag/sel/ctl send sel right}
-key $MODKEY-Shift-$DOWN || fn $key {
-	wmiir xwrite /tag/sel/ctl send sel down}
-key $MODKEY-Shift-$UP || fn $key {
-	wmiir xwrite /tag/sel/ctl send sel up}
-
-key $MODKEY-f || fn $key {
-	wmiir xwrite /client/sel/ctl Fullscreen toggle}
-
-key $MODKEY-space || fn $key {
-	wmiir xwrite /tag/sel/ctl select toggle}
-key $MODKEY-Shift-space || fn $key {
-	wmiir xwrite /tag/sel/ctl send sel toggle}
-key $MODKEY-d || fn $key {
-	wmiir xwrite /tag/sel/ctl colmode sel default-max}
-key $MODKEY-s || fn $key {
-	wmiir xwrite /tag/sel/ctl colmode sel stack-max}
-key $MODKEY-m || fn $key {
-	wmiir xwrite /tag/sel/ctl colmode sel stack+max}
-
-key $MODKEY-Shift-c || fn $key {
-	wmiir xwrite /client/sel/ctl kill}
-
-key $MODKEY-a || fn $key {
-	Action `{wi_actions | wimenu -h $hist.action -n $histlen} &}
-key $MODKEY-p || fn $key {
-	ifs=() { cmd = `{wimenu -h $hist.prog -n $histlen <$progs_file} }
-	wi_runcmd $cmd & }
-
-key $MODKEY-Return || fn $key {
-	wi_runcmd $WMII_TERM &}
-
-key $MODKEY-t || fn $key {
+keygroup Tag actions
+key 'Change to another tag' $MODKEY-t || fn $key {
 	tag=`{wi_tags | wimenu -h $hist.tag -n 50} && wmiir xwrite /ctl view $tag &}
-key $MODKEY-Shift-t || fn $key {
+key 'Retag the selected client' $MODKEY-Shift-t || fn $key {
 	sel=`{wi_selclient} {
 	tag=`{wi_tags | wimenu -h $hist.tag -n 50} && wmiir xwrite /client/$sel/tags $tag } &}
+key 'Move to the next tag' $MODKEY-n || fn $key {
+	wmiir xwrite /ctl view `{wi_tags | wi_nexttag}}
+key 'Move to the previous tag' $MODKEY-b || fn $key {
+	wmiir xwrite /ctl view `{wi_tags | sort -r | wi_nexttag}}
 
-key $MODKEY-^`{seq 0 9} || fn $key {
+key 'Move to the numbered view' $MODKEY-^`{seq 0 9} || fn $key {
 	wmiir xwrite /ctl view `{echo $1 | sed 's/.*-//'}}
-key Shift-$MODKEY-^`{seq 0 9} || fn $key {
+key 'Retag selected client with the numbered tag' Shift-$MODKEY-^`{seq 0 9} || fn $key {
 	wmiir xwrite /client/sel/tags `{echo $1 | sed 's/.*-//'}}
-
-#` WM Configuration
+# WM Configuration
 wmiir write /ctl <<!
 	grabmod $MODKEY
 	border 2
@@ -286,10 +308,8 @@ ifs=$wi_newline {
 	seltag=`{wi_seltag}
 	for(tag in `{wi_tags}) {{
 		if(~ $tag $seltag)
-			echo $wmiifocuscol $tag
+			echo colors $wmiifocuscol $wi_newline label $tag
 		if not
-			echo $wmiinormcol $tag
+			echo colors $wmiinormcol $wi_newline label $tag
 		} | wmiir create /lbar/$tag}}
-
 wi_eventloop
-

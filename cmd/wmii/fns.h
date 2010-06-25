@@ -69,7 +69,6 @@ void	bar_destroy(Bar**, Bar*);
 void	bar_draw(WMScreen*);
 Bar*	bar_find(Bar*, const char*);
 void	bar_init(WMScreen*);
-void	bar_load(Bar*);
 void	bar_resize(WMScreen*);
 void	bar_sety(WMScreen*, int);
 void	bar_setbounds(WMScreen*, int, int);
@@ -210,6 +209,7 @@ void	spawn_command(const char*);
 
 /* message.c */
 char*	mask(char**, int*, int*);
+char*	message_bar(Bar*, IxpMsg*);
 char*	message_client(Client*, IxpMsg*);
 char*	message_root(void*, IxpMsg*);
 char*	message_view(View*, IxpMsg*);
@@ -219,6 +219,7 @@ char*	msg_getword(IxpMsg*, char*);
 void	msg_parsecolors(IxpMsg*, CTuple*);
 char*	msg_selectarea(Area*, IxpMsg*);
 char*	msg_sendclient(View*, IxpMsg*, bool swap);
+char*	readctl_bar(Bar*);
 char*	readctl_client(Client*);
 char*	readctl_root(void);
 char*	readctl_view(View*);

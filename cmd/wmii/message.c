@@ -29,6 +29,7 @@ enum {
 	LBORDER,
 	LCLIENT,
 	LCOLMODE,
+	LCOLORS,
 	LDEBUG,
 	LDOWN,
 	LEXEC,
@@ -42,6 +43,7 @@ enum {
 	LGROW,
 	LINCMODE,
 	LKILL,
+	LLABEL,
 	LLEFT,
 	LNORMCOLORS,
 	LNUDGE,
@@ -68,6 +70,7 @@ char *symtab[] = {
 	"border",
 	"client",
 	"colmode",
+	"colors",
 	"debug",
 	"down",
 	"exec",
@@ -81,6 +84,7 @@ char *symtab[] = {
 	"grow",
 	"incmode",
 	"kill",
+	"label",
 	"left",
 	"normcolors",
 	"nudge",
@@ -469,6 +473,31 @@ getframe(View *v, int scrn, IxpMsg *m) {
 	if(f == nil)
 		error(Ebadvalue);
 	return f;
+}
+
+char*
+readctl_bar(Bar *b) {
+	bufclear();
+	bufprint("colors %s\n", b->col.colstr);
+	bufprint("label %s\n", b->text);
+	return buffer;
+}
+
+char*
+message_bar(Bar *b, IxpMsg *m) {
+
+	switch(getsym(msg_getword(m, nil))) {
+	case LCOLORS:
+		msg_parsecolors(m, &b->col);
+		break;
+	case LLABEL:
+		utflcpy(b->text, (char*)m->pos, sizeof b->text);
+		break;
+	default:
+		error(Ebadvalue);
+	}
+	bar_draw(b->screen);
+	return nil;
 }
 
 char*

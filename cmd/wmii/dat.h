@@ -303,7 +303,8 @@ struct View {
 #endif
 
 /* global variables */
-EXTERN struct {
+typedef struct Defs Defs;
+EXTERN struct Defs {
 	CTuple	focuscolor;
 	CTuple	normcolor;
 	Font*	font;

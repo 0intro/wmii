@@ -157,6 +157,8 @@ key binding quick-reference.
 | Mod-k         | Move to a window _above_ the one currently focused
 | Mod-space     | Toggle between the managed and floating layers
 | Mod-t <tag>   | Move to the view of the given <tag>
+| Mod-n         | Move to the next view
+| Mod-b         | Move to the previous view
 | Mod-//[0-9]// | Move to the view with the given number
 
 === Moving Things Around ===
@@ -473,12 +475,9 @@ under '/rbar/' appear on the right, with the leftmost item
 occupying all extra available space. The items are sorted
 lexicographically.
 
-The files may be read to obtain the colors and text of the bars.
-The colors are at the beginning of the string, represented as a
-tuple of 3 hex color codes for the foreground, background, and
-border, respectively. When writing the bar files, the colors may
-be omitted if the text would not otherwise appear to contain
-them.
+The files may be read or written to obtain or alter the colors
+and text of the bars. The format is similar to the various _ctl_
+files and should be self explanitory.
 
 = FILES =
 

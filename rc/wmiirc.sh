@@ -65,7 +65,7 @@ wmiir write /rules <<!
 
 # Status Bar Info
 status() {
-	echo -n $(uptime | sed 's/.*://; s/,//g') '|' $(date)
+	echo -n label $(uptime | sed 's/.*://; s/,//g') '|' $(date)
 }
 
 # Generic overridable startup details
@@ -75,26 +75,26 @@ local_events() { true;}
 wi_runconf -s wmiirc_local
 startup
 
-echo $WMII_NORMCOLORS | wmiir create $noticebar
+echo colors $WMII_NORMCOLORS | wmiir create $noticebar
 
 # Event processing
 events() {
 	cat <<'!'
 # Events
 Event CreateTag
-	echo "$WMII_NORMCOLORS" "$@" | wmiir create "/lbar/$@"
+	echo colors "$WMII_NORMCOLORS$wi_newline" label "$@" | wmiir create "/lbar/$@"
 Event DestroyTag
 	wmiir remove "/lbar/$@"
 Event FocusTag
-	wmiir xwrite "/lbar/$@" "$WMII_FOCUSCOLORS" "$@"
+	wmiir xwrite "/lbar/$@" colors "$WMII_FOCUSCOLORS"
 Event UnfocusTag
-	wmiir xwrite "/lbar/$@" "$WMII_NORMCOLORS" "$@"
+	wmiir xwrite "/lbar/$@" colors "$WMII_NORMCOLORS"
 Event UrgentTag
 	shift
-	wmiir xwrite "/lbar/$@" "*$@"
+	wmiir xwrite "/lbar/$@" label "*$@"
 Event NotUrgentTag
 	shift
-	wmiir xwrite "/lbar/$@" "$@"
+	wmiir xwrite "/lbar/$@" label "$@"
 Event LeftBarClick LeftBarDND
 	shift
 	wmiir xwrite /ctl view "$@"
@@ -129,19 +129,12 @@ Event ClientMouseDown
 Menu LBar-3-Delete
 	tag=$1; clients=$(wmiir read "/tag/$tag/index" | awk '/[^#]/{print $2}')
 	for c in $clients; do
-		if [ "$tag" = "$(wmiir read /client/$c/tags)" ]; then
-			wmiir xwrite /client/$c/ctl kill
-		else
-			wmiir xwrite /client/$c/tags -$tag
+		if [ "$tag" = "$(wmiir read /client/$c/tags)" ]
+		then wmiir xwrite /client/$c/ctl kill
+		else wmiir xwrite /client/$c/tags -$tag
 		fi
-		if [ "$tag" = "$(wi_seltag)" ]; then
-			newtag=$(wi_tags | awk -v't='$tag '
-				$1 == t { if(!l) getline l
-					  print l
-					  exit }
-				{ l = $0 }')
-			wmiir xwrite /ctl view $newtag
-		fi
+		[ "$tag" = "$(wi_seltag)" ] &&
+			wmiir xwrite /ctl view $(wi_tags | wi_nexttag)
 	done
 Event LeftBarMouseDown
 	wi_fnmenu LBar "$@" &
@@ -160,7 +153,7 @@ Action status
 	if wmiir remove /rbar/status 2>/dev/null; then
 		sleep 2
 	fi
-	echo "$WMII_NORMCOLORS" | wmiir create /rbar/status
+	echo colors "$WMII_NORMCOLORS" | wmiir create /rbar/status
 	while status | wmiir write /rbar/status; do
 		sleep 1
 	done
@@ -238,6 +231,10 @@ Key $MODKEY-t       # Change to another tag
 Key $MODKEY-Shift-t # Retag the selected client
 	# Assumes left-to-right order of evaluation
 	wmiir xwrite /client/$(wi_selclient)/tags $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
+Key $MODKEY-n	    # Move to the next tag
+	wmiir xwrite /ctl view $(wi_tags | wi_nexttag)
+Key $MODKEY-b	    # Move to the previous tag
+	wmiir xwrite /ctl view $(wi_tags | sort -r | wi_nexttag)
 !
 	for i in 0 1 2 3 4 5 6 7 8 9; do
 		cat <<!
@@ -273,9 +270,11 @@ unset IFS
 wi_tags | while read tag
 do
 	if [ "$tag" = "$seltag" ]; then
-		echo "$WMII_FOCUSCOLORS" "$tag"
+		echo colors "$WMII_FOCUSCOLORS"
+		echo label $tag
 	else
-		echo "$WMII_NORMCOLORS" "$tag"
+		echo colors "$WMII_NORMCOLORS"
+		echo label $tag
 	fi | wmiir create "/lbar/$tag"
 done
 

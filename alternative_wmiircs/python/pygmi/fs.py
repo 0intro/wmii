@@ -452,82 +452,6 @@ class Tag(Dir):
         frame = self.framespec(frame)
         self['grow'] = '%s %s %s' % (frame, dir, str(amount or ''))
 
-class Button(object):
-    sides = {
-        'left': 'lbar',
-        'right': 'rbar',
-    }
-    def __init__(self, side, name, colors=None, label=None):
-        self.side = side
-        self.name = name
-        self.base_path = self.sides[side]
-        self.path = '%s/%s' % (self.base_path, self.name)
-        self.file = None
-        self._colors = wmii.cache['normcolors']
-        self._label = ''
-        if colors or label:
-            self.create(colors, label)
-
-    def create(self, colors=None, label=None):
-        def fail(resp, exc, tb):
-            self.file = None
-        if not self.file:
-            self.file = client.create(self.path, ORDWR)
-        if colors or label:
-            self.file.awrite(self.getval(colors, label), offset=0, fail=fail)
-
-    def remove(self):
-        if self.file:
-            self.file.aremove()
-            self.file = None
-
-    def getval(self, colors=None, label=None):
-        if label is not None:
-            self._label = label
-        if colors is not None:
-            self._colors = colors
-        return ' '.join([Color(c).hex for c in self._colors or self.colors] + [unicode(self._label or '')])
-
-    colors = property(
-        lambda self: self.file and Colors(self.file.read(offset=0).split(' ')[:3]) or (),
-        lambda self, val: self.create(colors=val))
-
-    label = property(
-        lambda self: self.file and self.file.read(offset=0).split(' ', 3)[3] or '',
-        lambda self, val: self.create(label=val))
-
-    @classmethod
-    def all(cls, side):
-        return (Button(side, s.name)
-                for s in client.readdir(cls.sides[side])
-                if s.name != 'sel')
-
-class Colors(utf8):
-    def __init__(self, foreground=None, background=None, border=None):
-        vals = foreground, background, border
-        self.vals = tuple(map(Color, vals))
-
-    def __iter__(self):
-        return iter(self.vals)
-    def __list__(self):
-        return list(self.vals)
-    def __tuple__(self):
-        return self.vals
-
-    @classmethod
-    def from_string(cls, val):
-        return cls(*val.split(' '))
-
-    def __getitem__(self, key):
-        if isinstance(key, basestring):
-            key = {'foreground': 0, 'background': 1, 'border': 2}[key]
-        return self.vals[key]
-
-    def __unicode__(self):
-        return ' '.join(c.hex for c in self.vals)
-    def __repr__(self):
-        return 'Colors(%s, %s, %s)' % tuple(repr(c.rgb) for c in self.vals)
-
 class Color(utf8):
     def __init__(self, colors):
         if isinstance(colors, Color):
@@ -562,6 +486,73 @@ class Color(utf8):
         return 'rgb(%d, %d, %d)' % self.rgb
     def __repr__(self):
         return 'Color(%s)' % repr(self.rgb)
+
+class Colors(utf8):
+    def __init__(self, foreground=None, background=None, border=None):
+        vals = foreground, background, border
+        self.vals = tuple(map(Color, vals))
+
+    def __iter__(self):
+        return iter(self.vals)
+    def __list__(self):
+        return list(self.vals)
+    def __tuple__(self):
+        return self.vals
+
+    @classmethod
+    def from_string(cls, val):
+        return cls(*val.split(' '))
+
+    def __getitem__(self, key):
+        if isinstance(key, basestring):
+            key = {'foreground': 0, 'background': 1, 'border': 2}[key]
+        return self.vals[key]
+
+    def __unicode__(self):
+        return ' '.join(c.hex for c in self.vals)
+    def __repr__(self):
+        return 'Colors(%s, %s, %s)' % tuple(repr(c.rgb) for c in self.vals)
+
+class Button(Ctl):
+    sides = {
+        'left': 'lbar',
+        'right': 'rbar',
+    }
+    ctl_types = {
+        'colors': (Colors.from_string, lambda c: str(Colors(*c))),
+    }
+    colors = Dir.ctl_property('colors')
+    label  = Dir.ctl_property('label')
+
+    def __init__(self, side, name, colors=None, label=None):
+        super(Button, self).__init__()
+        self.side = side
+        self.name = name
+        self.base_path = self.sides[side]
+        self.ctl_path = '%s/%s' % (self.base_path, self.name)
+        self.file = None
+        self.create(colors, label)
+
+    def create(self, colors=None, label=None):
+        def fail(resp, exc, tb):
+            self.file = None
+        if not self.file:
+            self.file = client.create(self.ctl_path, ORDWR)
+        if colors:
+            self.colors = colors
+        if label:
+            self.label = label
+
+    def remove(self):
+        if self.file:
+            self.file.aremove()
+            self.file = None
+
+    @classmethod
+    def all(cls, side):
+        return (Button(side, s.name)
+                for s in client.readdir(cls.sides[side])
+                if s.name != 'sel')
 
 class Rules(collections.MutableMapping, utf8):
 
