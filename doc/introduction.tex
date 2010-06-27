@@ -1,0 +1,166 @@
+\chapter{Introduction}
+
+\wmii\ is a simple but powerful window manager for the X Window
+System. It provides both the classic (“floating”) and tiling
+(“managed”) window management paradigms, which is to say, it does
+the job of managing your windows, so you don't have to. It also
+provides programability by means of a simple file-like
+interface, which allows the user to program in virtually any
+language he chooses. These basic features have become
+indispensable to the many users of \wmii\ and other similar
+window managers, but they come at a cost. Though our penchant
+for simplicity makes \wmii's learning curve significantly
+shorter than most of its competitors, there's still a lot to
+learn. The rest of this guide will be devoted to familiarizing
+new users with \wmii's novel features and eccentricities, as
+well as provide advanced users with an in-depth look at our
+customization facilities.
+
+\section{Concepts}
+
+As noted, \wmii\ provides two management styles:
+
+\begin{description}
+  \item[Managed] This is the primary style of window management
+    in \wmii. Windows managed in this style are automatically
+    arranged by \wmii\ into columns. Columns are created and
+    destroyed on demand. Individual windows in the column may be
+    moved or resized, and are often collapsed or hidden
+    entirely. Ad-hoc stacks of collapsed and uncollapsed windows
+    allow the user to efficiently manage their tasks. When
+    switching from an active to a collapsed window, the active
+    window collapses and the collapsed one effectively takes
+    its place.
+
+    Managed windows have an unadorned titlebar:
+
+    \titlebar{managed}
+
+  \item[Floating] Since some programs aren't designed in ways
+    conducive to the managed work flow, \wmii\ also provides the
+    classic “floating” window management model. Windows managed
+    in this model float above the managed windows and may be moved
+    freely about. Other than automatic placement of new windows
+    and snapping of edges, \wmii\ doesn't manage floating
+    windows at all.
+
+    Floating windows are indicated by a decorated titlebar:
+
+    \titlebar{floating}
+
+  \item[Fullscreen] Fullscreen mode is actually a subset of the
+    floating style. Windows may be toggled to and from
+    fullscreen mode at will. When fullscreen, windows reside in
+    the floating layer, above the managed windows. They have no
+    borders or titlebars, and occupy the full area of the
+    screen. Other than that, however, they're not special in any
+    way. Other floating windows may appear above them and the
+    user can still select, open, and close other windows at
+    will.
+\end{description}
+
+\subsection{The Filesystem}
+
+All of \wmii's customization is done via a virtual filesystem.
+Since the filesystem is implemented in the standardized \ninep\
+protocol, it can be accessed in many ways. \wmii\ provides a
+simple command-line client, \wmiir, but many alternatives exist,
+including libraries for Python, Perl, Ruby, PHP, and C. It can
+even be mounted, either by Linux's 9p.ko kernel module or
+indirectly via FUSE.
+
+The filesystem that \wmii\ provides is “virtual”, which is to
+say that it doesn't reside on disk anywhere. In a sense, it's a
+figment of \wmii's imagination. Files, when read, represent
+\wmii's current configuration or state. When written, they
+perform actions, update the UI, etc. For instance, the directory
+|/client/| contains a directory for each window that \wmii\
+is currently managing. Each of those directories, in turn,
+contains files describing the client's properties (its title,
+its views\footnote{Views in \wmii\ are akin to workspaces or
+virtual desktops in other window managers, but with some subtle
+differences.}, its state). Most files can be written to update
+the state they describe. For instance,
+|/client/sel/ctl| describes the state of the selected
+client. If a client is fullscreen, it contains the line:
+
+\begin{code}
+  fullscreen on
+\end{code}
+
+\noindent To change this, you'd update the file with the line
+% XXX: Line broken at /ctl cmd.
+|fullscreen off| or even |fullscreen| |toggle| to toggle
+the client's fullscreen state.
+
+The concept of controlling a program via a filesystem derives
+from \plannine, where such interfaces are extensive and well
+proven\footnote{The concept has also taken hold on most Unixes
+in the form of \texttt{/proc} and \texttt{/sys} virtual
+filesystems, but tends to be very kernel-centric. On \plannine,
+where the model is more pervasive, there are more virtual
+filesystems for user-level applications than for the kernel.}.
+The metaphor has shown itself to be quite intuitive to Unix
+users, once the shock of a “virtual” filesystem wears off.  The
+flexibility of being able to control \wmii\ from myriad
+programming languages, including the standard Unix shell and
+even from the command line, is well worth the shock.
+
+\subsection{Views and Tags}
+
+Like most X11 window managers, \wmii\ provides virtual
+workspaces. Unlike other window managers though, \wmii's
+workspaces are created and destroyed on demand. Instead of being
+sent to a workspace, windows in \wmii\ are tagged with any
+number of names. Views are created dynamically from these tags,
+and automatically if the user tries to access them.  For
+instance, if a window is given the tags ‘foo’ and ‘bar’, the two
+views ‘foo’ and ‘bar’ are created, if they don't already exist.
+The window is now visible on both of them. Moreover, tags can be
+specified as regular expressions. So, a client tagged with {\tt
+\verb+/^foo/+} will appear on any view named ‘foo’, ‘foo:bar’,
+and so forth. Any time a client is tagged with a matching tag,
+or the user opens a matching view, the window is automatically
+added to it.
+
+\subsection{The Bar}
+
+\wmii\ provides a general purpose information bar at the top or
+bottom of the screen. The bar is divided into a left and a right
+section. Each section is made up of buttons, with a single
+button spanning the gap between the two sides. Buttons can be
+individually styled and can hold any text content the user
+wishes. By convention, the buttons to the left show view names,
+and those to the right display status information.
+
+\subsection{The Menus}
+
+\wmii\ includes two simple, external menu programs. The first,
+\wimenu, is keyboard-based, and is used to launch programs and
+generally prompt the user for input. It provides a list of
+completions which are automatically filtered as you type. The
+second, \wiIXmenu, is mouse-based, and is generally used to
+provide context menus for titlebars and view buttons. Both menus
+can be easily launched from shell scripts or the command line,
+as well as from more complex scripting languages.
+
+\subsection{The Keyboard}
+
+\wmii\ is a very keyboard friendly window manager. Most actions
+can be performed without touching the mouse, including
+launching, closing, moving, resizing, and selecting programs.
+New keybindings of any complexity can easily be added to handle
+any missing functionality, or to simplify any repetitive tasks.
+
+\subsection{The Mouse}
+
+Despite being highly keyboard-accessible, \wmii\ strives to be
+highly mouse accessible as well. Windows can be moved or resized
+by dragging their window borders. When combined with a key
+press, they can be moved, resized, or raised by dragging any
+visible portion of the window. Mouse menus are accessed with a
+single click and drag. View buttons in the bar and client
+titlebars respond to the mouse wheel; view buttons can be
+activated by dragging any draggable object (e.g., a file from a
+file manager) over them.
+

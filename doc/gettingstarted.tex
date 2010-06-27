@@ -1,0 +1,294 @@
+\chapter{Getting Started}
+
+This section will walk you through your first \wmii\ startup.
+For your first experience, we recommend running \wmii\ in its
+own X session, so you can easily switch back to a more
+comfortable environment if you get lost. Though you may start
+\wmii\ from a session manager in your day to day use, these
+instructions will use |xinit|. To begin with, copy this file
+to your home directory, so we can open it in your new X session.
+Then setup your |~/.xinitrc| as follows:
+
+\begin{code}
+  cd
+
+  # Start a PDF viewer with this guide. Use any viewer
+  # you're comfortable with.
+  xpdf wmii.pdf &
+
+  # Launch wmii
+  exec wmii
+
+  # That was easy.
+\end{code}
+
+Before you run |xinit|, make sure you know how to switch
+between terminals. Depending on your system, your current X
+session is probably on terminal 5 or 7. You should be able to
+switch between your terminals by pressing
+Ctrl-Alt-F$\langle n\rangle$. Assuming that your current X
+session is on terminal 7, you should be able to switch between
+it and your new session by pressing Ctrl-Alt-F7 and Ctrl-Alt-F8.
+Now you should be ready to start \wmii. When you run the
+following command, you should be presented with a new X session
+running wmii and a PDF viewer showing this document.
+
+\begin{code}
+  xinit
+\end{code}
+
+When you're there, find this page in the new PDF viewer and
+continue.
+
+\section{Your First Steps}
+
+If everything went according to plan, you should be viewing this
+from a nearly empty \wmii\ session. We're going to be using the
+keyboard a lot, so let's start with a convention for key
+notation. We'll be using the key modifiers Control, Alt, Shift,
+and Meta\footnote{The Windows$^{\mbox{\tiny®}}$ key on most
+keyboards. The Penguin key on the more tongue in cheek
+varieties.}, which we'll specify as C-, A-, S-, and M-,
+respectively. So, <C-S-a> means pressing ‘|a|’ while holding
+|Control| and |Shift|.  We'll also express mouse clicks this
+way, with <M-Mouse1> signifying a press of the right mouse
+button, with the Meta key depressed.  Buttons 4 and 5 are the up
+and down scroll wheel directions, respectively.
+
+\subsection{Floating Mode}
+
+Beginning with what's familiar to most users, we'll first explore
+floating mode. First, we need to select the floating layer.
+Press <M-Space>. You should see the titlebar of this window
+change color. Now, press <M-Return> to launch a terminal.
+The easiest way to drag the terminal around is to press and hold
+<M-Mouse1> over the window and simply drag the window
+around. You should be able to drag the window anywhere onscreen
+without ever releasing the mouse button. As you drag near the
+screen edges, you should notice a snap. If you try to drag the
+window fully off-screen, you'll find it constrained so that a
+portion always remains visible. Now, release the window and move
+the mouse toward one of its corners. Press and hold
+<M-Mouse3>\footnote{The right button.}. As you drag the
+mouse around, you should see the window resized accordingly.
+
+To move the window without the modifier key, move the pointer
+over the layout box to the left of its titlebar. You should see
+the cursor change. Now, simply click and drag. To resize it,
+move the pointer toward the window's edge until you see the
+cursor change, and again, click and drag. Now, to close the
+window, move the mouse over the windows titlebar, press and hold
+<Mouse3>, select |Delete|, and release it. You should
+see this window's titlebar return to its original color,
+indicating that it's regained focus.
+
+\subsection{Managed Mode}
+
+Now, for the fun part. We'll start exploring managed mode by
+looking at the basics of columns. In the default configuration,
+columns have three modes:
+
+\begin{description}
+  \item[Stack] <M-s> The default mode for new columns. Only one window
+    is fully visible per column at once. The others only display
+    their title bars. When new windows are added to the column,
+    the active window collapses, and the new one takes its
+    place. Whenever a collapsed client is selected, the active
+    window is collapsed to take its place.
+  \item[Max] <M-m> Like stack mode, but the titlebars of collapsed
+    clients are hidden.
+  \item[Default] <M-d> Multiple uncollapsed windows may be visible at
+    once. New windows split the space with the other uncollapsed
+    windows in their vicinity. Windows may still be collapsed by
+    shrinking them to the size of their titlebars. At this
+    point, the behavior of a stack of collapsed and uncollapsed
+    clients is similar to that of stack mode.
+\end{description}
+
+Before we open any new windows in managed mode, we need to
+explore the column modes a bit. Column modes are activated with
+the key bindings listed above. This column should be in stack
+mode now. Watch the right side of the titlebar as you press
+<M-m> to enter max mode. You should see an indicator appear.
+This tells you the number of hidden windows directly above and
+below the current window, and its position in that stack. Press
+<M-d> to enter default mode. Now we're ready to open another
+client. Press <M-Return> to launch another terminal. Now,
+press <M-S-l> to move the terminal to a new column to the
+right of this one. Once it's there, press <M-Return> two
+more times to launch two more terminals. Now that you have more
+than one window in a column, cycle through the three column
+modes again until they seem familiar.
+
+\subsection{Keyboard Navigation}
+
+To begin, switch back to default mode. The basic keyboard
+navigation keys, <M-h>, <M-j>, <M-k>, and <M-l>,
+derive from vi, and represent moving left, down, up, and right
+respectively. Try selecting each of the four windows currently
+visible on screen. Notice that navigation wraps from one side of
+the screen to the other, and from the top to the bottom. Now,
+return to the write column, switch to stack mode, and select
+each of the three terminals again. Do the same in max mode,
+paying careful attention to the indicator to the right of the
+titlebar.
+
+Now that you can select windows, you'll want to move them
+around. To move a window, just add the Shift key to the
+direction keys. So, to move a window left, instead of <M-h>,
+type <M-S-h>. Now, experiment with moving windows, just as
+you did with navigating them, in each of the three column modes.
+Once you're comfortable with that, move a window to the floating
+layer. Since we toggled between the floating and managed layers
+with <M-Space>, we'll move windows between them with
+<M-S-Space>. Try moving some windows back and forth until it
+becomes familiar. Now, move several windows to the floating
+layer and try switching between them with the keyboard. You'll
+notice that <M-h> and <M-l> don't function in the
+floating layer. This is for both historical and logistical
+reasons. <M-j> and <M-k> cycle through floating windows
+in order of their most recent use.
+
+\subsection{Mouse Navigation}
+
+\wmii\ uses the “sloppy focus” model, which is to say, it focuses
+windows when the mouse enters them and when you click them. It
+focuses windows only when you select them with the keyboard,
+click their titlebars, or press click them with <M-Mouse2>.
+Collapsed windows may be opened with the mouse by clicking their
+titlebars. Moving and resizing floating windows should be
+largely familiar, and has already been covered. The same can't
+be said for managed windows.
+
+Let's begin working with the mouse in the managed layer. Return
+to a layout with this document in a column on the left, and
+three terminals in a column to the right. Switch the right
+column to default mode. Now, bring the mouse to the top of the
+third terminal's titlebar until you see a resize cursor. Click
+and drag the titlebar to the very top of the screen. Now, move
+the cursor to the top of the second terminal's titlebar and drag
+it to the very bottom of the screen. Press <M-d> to restore the
+terminals to their original sizes. Now, click and hold the
+layout box of the second terminal. Drag it to the middle of the
+terminal's window and release. Click and hold the layout box of
+the third terminal and drag it to the middle of the first
+terminal's window. Finally, drag the first terminal's layout box
+to halfway down this window. <M-Mouse1> works to the same
+effect as dragging the layout box, but allows you to click
+anywhere in the window.
+
+Now that you've seen the basics of moving and dragging windows,
+let's move on to columns. Click and drag the border between the
+two columns. If that's a difficult target to click, there's a
+triangle at the top of the division between the two columns that
+you can click and drag as well. If that's still too hard a
+target, try using <M-Mouse3>, which works anywhere and provides
+much richer functionality.
+
+\subsection{Window Focus and Selection}
+
+For the purposes of keyboard navigation, \wmii\ keeps track of
+which window is currently selected, and confers its titlebar a
+different color scheme from the other windows. This window is
+the basis of relative motion commands, such as “select the
+window to the left”, and the target of commands such as “close
+this window”. Normally, the selected window is the same as the
+focused window, i.e., the window that receives keyboard events.
+Some applications, however, present strange corner cases.
+
+\begin{description}
+  \item[Focused, selected window] This is the normal case of a
+    window which is both selected and has the keyboard focus.
+    \titlebar{selected}
+  \item[Unfocused, unselected window] This is the normal case for an
+    unselected window which does not have the keyboard focus.
+    \titlebar{unselected}
+  \item[Unfocused, selected window] This is the first unusual
+    case. This is the selected window, for the purposes of
+    keyboard navigation, but it does not receive keyboard events.
+    A good example is an onscreen keyboard, which will receive
+    mouse clicks and translate them to keyboard events, but
+    won't absorb those keyboard events itself. Other examples
+    include any window whilst another (such as \wimenu) has
+    grabbed the keyboard.
+    \titlebar{unfocused}
+  \item[Focused, unselected window] This is the second unusual
+    focus case. The window has the keyboard focus, but for the
+    purposes of keyboard navigation, it is not considered
+    selected. In the case of an onscreen keyboard, this is the
+    window which will receive the generated events. In the case
+    of a keyboard grab, the will likely be the window holding
+    the grab.
+    \titlebar{focused}
+\end{description}
+
+\section{Running Programs}
+
+You've already seen the convenient key binding to launch a
+terminal, but what about other programs? To get a menu of all of
+the executables in your path, type <M-p>. This should replace
+the bar at the bottom of the screen with a prompt, followed by a
+string of completions. Start typing the name of a program that
+you want to open. You can press <Tab> and <S-Tab> to cycle
+through the completions, or you can just press <Return> to
+select the first one. If you want to execute a more complex
+command, just type it out and press <Return>. If you want to
+recall that command later, use \wimenu's history. Start typing
+the command you want and then press <C-p> until you come to it.
+
+When you're done with a program, you'll probably want an easy
+way to close it. The first way is to ask the program to close
+itself. Since that can be tedious (and sometimes impossible),
+\wmii\ provides other ways. As mentioned, you can right click
+the titlebar and select |Delete|. If you're at the keyboard,
+you can type <M-S-c>. These two actions cause \wmii\ to ask
+nicely that the program exit. In those sticky cases where the
+program doesn't respond, \wmii\ will wait 10 seconds before
+prompting you to kill the program. If you don't feel like
+waiting, you can select |Kill| from the window's titlebar
+menu, in which case \wmii\ will forcefully and immediately kill
+it. Beware, killing clients is a last resort. In cases where the
+same program opens multiple windows, killing one will kill them
+all—without warning.
+
+\section{Using Views}
+
+As already noticed, \wmii's concept of virtual workspaces is
+somewhat unique, so let's begin exploring it. Open up a terminal
+and press <M-S-2>. You should see a new button on the bar at the
+bottom of the screen. When you click it, you should see your
+original terminal. Press <M-1> to come back here. Now, press
+<M-3>, and <M-1> again to return here once more. Notice that the
+views were created when needed, and destroyed when no longer
+necessary. If you want to select a view with a proper name, use
+<M-t> and enter the name. Other than the dynamic creation of
+views, this is still similar to the familiar X11 workspace
+model. But that's just the beginning of \wmii's model. Open a new
+terminal, and type:
+
+\begin{code}
+  echo ‘Hello world!’
+\end{code}
+
+\noindent Now, type <M-S-t>. In the menu that appears, enter
+|1+2+3|. Now, visit the views |1|, |2|, and |3|, and you'll see
+the client on each. To remove a tag, type <M-S-t> again, and
+this time enter |-2|. You'll notice that the client is no longer
+on the |2| view. Finally, tag names needn't be discrete,
+ordinary strings. They can also be regular expressions. Select
+the terminal again, and enter |+/^5/|. Now, switch to the |5|
+view.  Now try the |6| view. Finally, type <M-t> and enter |50|
+to check the |50| view. Clients tagged with regular expressions
+are attached to any matching views when they're created. So,
+when you switch to an empty view, or tag a client with a new
+tag, any clients with matching regular expressions are
+automatically added to it. When all explicitly tagged clients
+disappear from the view, and it's no longer visible, clients
+held there by regular expressions are automatically removed.
+
+\section{Learning More}
+
+For full tables of the standard key bindings, and descriptions
+of the precise semantics of the topics discussed above, you
+should refer to \wmii's |man| pages.
+
