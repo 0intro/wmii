@@ -190,15 +190,6 @@ debug(int flag, const char *fmt, ...) {
 }
 
 void
-dprint(const char *fmt, ...) {
-	va_list ap;
-
-	va_start(ap, fmt);
-	vdebug(0, fmt, ap);
-	va_end(ap);
-}
-
-void
 dwrite(int flag, void *buf, int n, bool always) {
 	int i;
 
@@ -255,8 +246,10 @@ lookup_file(IxpFileId *parent, char *name)
 	last = &ret;
 	ret = nil;
 	for(; dir->name; dir++) {
-#		define push_file(nam)             \
+#               define push_file(nam, id_, vol)   \
 			file = ixp_srv_getfile(); \
+			file->id = id_;           \
+			file->volatil = vol;      \
 			*last = file;             \
 			last = &file->next;       \
 			file->tab = *dir;         \
@@ -267,10 +260,8 @@ lookup_file(IxpFileId *parent, char *name)
 			case FsDClients:
 				if(!name || !strcmp(name, "sel")) {
 					if((c = selclient())) {
-						push_file("sel");
-						file->volatil = true;
+						push_file("sel", c->w.xid, true);
 						file->p.client = c;
-						file->id = c->w.xid;
 						file->index = c->w.xid;
 					}
 					if(name)
@@ -284,10 +275,8 @@ lookup_file(IxpFileId *parent, char *name)
 				}
 				for(c=client; c; c=c->next) {
 					if(!name || c->w.xid == id) {
-						push_file(sxprint("%#C", c));
-						file->volatil = true;
+						push_file(sxprint("%#C", c), c->w.xid, true);
 						file->p.client = c;
-						file->id = c->w.xid;
 						file->index = c->w.xid;
 						assert(file->tab.name);
 						if(name)
@@ -298,8 +287,7 @@ lookup_file(IxpFileId *parent, char *name)
 			case FsDDebug:
 				for(i=0; i < nelem(pdebug); i++)
 					if(!name || !strcmp(name, debugtab[i])) {
-						push_file(debugtab[i]);
-						file->id = i;
+						push_file(debugtab[i], i, false);
 						if(name)
 							goto LastItem;
 					}
@@ -307,20 +295,16 @@ lookup_file(IxpFileId *parent, char *name)
 			case FsDTags:
 				if(!name || !strcmp(name, "sel")) {
 					if(selview) {
-						push_file("sel");
-						file->volatil = true;
+						push_file("sel", selview->id, true);
 						file->p.view = selview;
-						file->id = selview->id;
 					}
 					if(name)
 						goto LastItem;
 				}
 				for(v=view; v; v=v->next) {
 					if(!name || !strcmp(name, v->name)) {
-						push_file(v->name);
-						file->volatil = true;
+						push_file(v->name, v->id, true);
 						file->p.view = v;
-						file->id = v->id;
 						if(name)
 							goto LastItem;
 					}
@@ -329,10 +313,8 @@ lookup_file(IxpFileId *parent, char *name)
 			case FsDBars:
 				for(b=*parent->p.bar_p; b; b=b->next) {
 					if(!name || !strcmp(name, b->name)) {
-						push_file(b->name);
-						file->volatil = true;
+						push_file(b->name, b->id, true);
 						file->p.bar = b;
-						file->id = b->id;
 						if(name)
 							goto LastItem;
 					}
@@ -341,8 +323,7 @@ lookup_file(IxpFileId *parent, char *name)
 			}
 		}else /* Static dirs */
 		if(!name && !(dir->flags & FLHide) || name && !strcmp(name, dir->name)) {
-			push_file(file->tab.name);
-			file->id = 0;
+			push_file(file->tab.name, 0, false);
 			file->p.ref = parent->p.ref;
 			file->index = parent->index;
 			/* Special considerations: */

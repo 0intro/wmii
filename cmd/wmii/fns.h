@@ -226,13 +226,6 @@ char*	readctl_view(View*);
 Area*	strarea(View*, ulong, const char*);
 void	warning(const char*, ...);
 
-/* debug */
-void	debug(int, const char*, ...);
-void	dprint(const char*, ...);
-void	dwrite(int, void*, int, bool);
-bool	setdebug(int);
-void	vdebug(int, const char*, va_list);
-
 /* mouse.c */
 Window*	constraintwin(Rectangle);
 void	destroyconstraintwin(Window*);
