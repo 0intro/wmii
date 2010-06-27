@@ -1,9 +1,4 @@
 #!/usr/bin/env python
-import os, sys
-path = []
-for p in os.environ.get("WMII_CONFPATH", "").split(':'):
-    path += [p, p + '/python']
-sys.path = path + sys.path
 
 from pygmi import events
 import wmiirc

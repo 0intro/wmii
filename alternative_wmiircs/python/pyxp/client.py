@@ -202,7 +202,7 @@ class Client(object):
         try:
             with self._walk(path) as fid:
                 resp = self._dorpc(fcall.Tstat(fid= fid))
-                st = resp.stat()
+                st = resp.stat
                 self._clunk(fid)
             return st
         except RPCError:
@@ -328,7 +328,10 @@ class File(object):
     def close(self):
         assert not self.closed
         self.closed = True
-        self._cleanup()
+        try:
+            self._cleanup()
+        except:
+            pass
         self.tg = None
         self.fid = None
         self.client = None
@@ -338,9 +341,6 @@ class File(object):
         try:
             self._dorpc(fcall.Tremove())
         finally:
-            try:
-                self.close()
-            except Exception:
-                pass
+            self.close()
 
 # vim:se sts=4 sw=4 et:

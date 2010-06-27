@@ -22,12 +22,12 @@ FILTER = cat
 
 EXCFLAGS = $(INCLUDES) -D_XOPEN_SOURCE=600
 
-COMPILE_FLAGS = $(EXCFLAGS) $(CFLAGS) $$(pkg-config --cflags $(PACKAGES))
-COMPILE    = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(COMPILE_FLAGS)"
-COMPILEPIC = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(COMPILE_FLAGS) $(SOCFLAGS)"
+COMPILE_FLAGS = $(EXCFLAGS) $(CFLAGS)
+COMPILE    = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(PACKAGES)" "$(COMPILE_FLAGS)"
+COMPILEPIC = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(PACKAGES)" "$(COMPILE_FLAGS) $(SOCFLAGS)"
 
-LINK   = $(SHELL) $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(LDFLAGS) $(LIBS)"
-LINKSO = $(SHELL) $(ROOT)/util/link "$(LD)" "$$(pkg-config --libs $(PACKAGES)) $(SOLDFLAGS) $(LIBS) $(SHARED)"
+LINK   = $(SHELL) $(ROOT)/util/link "$(LD)" "$(PACKAGES)" "$(LDFLAGS) $(LIBS)"
+LINKSO = $(SHELL) $(ROOT)/util/link "$(LD)" "$(PACKAGES)" "$(SOLDFLAGS) $(LIBS) $(SHARED)"
 
 CLEANNAME=$(SHELL) $(ROOT)/util/cleanname
 
@@ -36,7 +36,7 @@ TAGFILES=
 
 CTAGS=ctags
 
-PACKAGES = 2>/dev/null
+PACKAGES = 
 
 # and this:
 # Try to find a sane shell. /bin/sh is a last resort, because it's
@@ -56,14 +56,13 @@ MKCFG!=$(MKCFGSH)
 include $(MKCFG)
 
 .SILENT:
-.SUFFIXES: .out .o .o_pic .c .pdf .sh .rc .$(SOEXT) .awk .1 .3 .man1 .man3 .depend .install .uninstall .clean
+.SUFFIXES: .$(SOEXT) .1 .3 .awk .build .c .clean .depend .install .man1 .man3 .o .o_pic .out .pdf .py .rc .sh .uninstall
 all:
 
 MAKEFILES=.depend
 .c.depend:
 	echo MKDEP $<
-	[ -n "$(noisycc)" ] && echo $(MKDEP) $(COMPILE_FLAGS) $< || true
-	eval "$(MKDEP) $(COMPILE_FLAGS)" $< | sed '1s|.*:|$(<:%.c=%.o):|' >>.depend
+	$(DEBUG) eval "$(MKDEP) $(COMPILE_FLAGS)" $< | sed '1s|.*:|$(<:%.c=%.o):|' >>.depend
 
 .sh.depend .rc.depend .1.depend .3.depend .awk.depend:
 	:
@@ -83,33 +82,30 @@ MAKEFILES=.depend
 	echo FILTER $(BASE)$<
 	[ -n "$(<:%.sh=)" ] || $(BINSH) -n $<
 	set -e; \
-	[ -n "$(noisycc)" ] && set -x; \
-	$(FILTER) $< >$@; \
-	chmod 0755 $@
+	$(DEBUG) $(FILTER) $< >$@; \
+	$(DEBUG) chmod 0755 $@
 
 .man1.1 .man3.3:
 	echo TXT2TAGS $(BASE)$<
-	[ -n "$(noisycc)" ] && set -x; \
-	txt2tags -o- $< >$@
+	$(DEBUG) txt2tags -o- $< >$@
+
+DEBUG = _debug() { [ -n "$$noisycc" ] && echo >&2 $$@ || true; "$$@"; }; _debug
 
 INSTALL= _install() { set -e; \
 		 dashb=$$1; [ $$1 = -b ] && shift; \
 		 d=$(DESTDIR)$$3; f=$$d/$$(basename $$4); \
 		 if [ ! -d $$d ]; then echo MKDIR $$3; mkdir -p $$d; fi; \
 		 echo INSTALL $$($(CLEANNAME) $(BASE)$$2); \
-		 [ -n "$(noisycc)" ] && set -x; \
-		 rm -f $$f; \
+		 $(DEBUG) rm -f $$f; \
 		 if [ "$$dashb" = -b ]; \
-		 then cp -f $$2 $$f; \
-		 else $(FILTER) <$$2 >$$f; \
+		 then $(DEBUG) cp -f $$2 $$f; \
+		 else $(DEBUG) $(FILTER) <$$2 >$$f; \
 		 fi; \
-		 chmod $$1 $$f; \
-		 set +x; \
+		 $(DEBUG) chmod $$1 $$f; \
 	 }; _install
 UNINSTALL= _uninstall() { set -e; \
 	           echo UNINSTALL $$($(CLEANNAME) $(BASE)$$1); \
-		   [ -n "$(noisycc)" ] && set -x; \
-		   rm -f $(DESTDIR)$$2/$$(basename $$3); \
+		   $(DEBUG) rm -f $(DESTDIR)$$2/$$(basename $$3); \
 	   }; _uninstall
 
 .out.install:

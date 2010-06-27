@@ -14,3 +14,5 @@ syntax: glob
 config.local.mk
 cmd/menu/bindings.c
 *.pkg.tar.?z
+alternative_wmiircs/python/build/
+alternative_wmiircs/python/dist/

@@ -1,7 +1,10 @@
 #!/bin/sh -f
 
 LD=$1
-LDFLAGS=$2; shift 2
+PACKAGES=$2
+LDFLAGS=$3; shift 3
+
+[ -n "$PACKAGES" ] && LDFLAGS="$(pkg-config --libs $PACKAGES) $LDFLAGS"
 
 outfile="$1"; shift
 bin="$(echo $0 | sed 's,/[^/]*$,,')"

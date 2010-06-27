@@ -1,13 +1,15 @@
 #!/bin/sh -f
-p="$PATH"
-which rc >/dev/null || PATH="$PLAN9:$p"
-which rc >/dev/null || PATH="/usr/local/plan9/bin:$p"
-which rc >/dev/null || PATH="/usr/local/9/bin:$p"
-which rc >/dev/null || PATH="/opt/plan9/bin:$p"
-which rc >/dev/null || PATH="/opt/9/bin:$p"
-which rc >/dev/null || PATH="/usr/plan9/bin:$p"
-which rc >/dev/null || PATH="/usr/9/bin:$p"
-test $#* '=' 0 || exec rc $0
+test $#* '=' 0 || {
+	p="$PATH"
+	which rc >/dev/null || PATH="$PLAN9:$p"
+	which rc >/dev/null || PATH="/usr/local/plan9/bin:$p"
+	which rc >/dev/null || PATH="/usr/local/9/bin:$p"
+	which rc >/dev/null || PATH="/opt/plan9/bin:$p"
+	which rc >/dev/null || PATH="/opt/9/bin:$p"
+	which rc >/dev/null || PATH="/usr/plan9/bin:$p"
+	which rc >/dev/null || PATH="/usr/9/bin:$p"
+	exec rc $0
+}
 
 cd
 scriptname=$0
@@ -30,8 +32,8 @@ noticebar=/rbar/!notice
 # Theme
 wmiifont='drift,-*-fixed-*-*-*-*-9-*-*-*-*-*-*-*'
 wmiifont='-*-fixed-medium-r-*-*-13-*-*-*-*-*-*-*'
-wmiinormcol=`{echo '#000000 #c1c48b #81654f'}
-wmiifocuscol=`{echo '#000000 #81654f #000000'}
+wmiinormcol=('#000000' '#c1c48b' '#81654f')
+wmiifocuscol=('#000000' '#81654f' '#000000')
 wmiibackground='#333333'
 wmiifloatbackground='#222222'
 fn setbackground { xsetroot -solid $* }
@@ -191,9 +193,8 @@ fn key {
 	key=()
 	for(k) {
 		if(! ~ $k $_keys) {
-			ifs=() { wmiikeyhelp = `{awk 'BEGIN {
-				printf "%s    %- 20s %s\n", ENVIRON["wmiikeyhelp"], ENVIRON["k"], ENVIRON["help"]
-				exit }'} }
+			ifs=() { wmiikeyhelp = `{
+				printf "%s    %- 20s %s\n" $wmiikeyhelp $k $help}}
 			key = ($key Key-$k)}}
 	~ $#key 0}
 

@@ -1,7 +1,10 @@
 #!/bin/sh -f
 
 CC=$1
-CFLAGS=$2; shift 2
+PACKAGES=$2
+CFLAGS=$3; shift 3
+
+[ -n "$PACKAGES" ] && CFLAGS="$CFLAGS $(pkg-config --cflags $PACKAGES)"
 
 outfile="$1"; shift
 bin="$(echo $0 | sed 's,/[^/]*$,,')"

@@ -8,6 +8,7 @@ PREFIX = /usr/local
   ETC = $(PREFIX)/etc
   LIBDIR = $(PREFIX)/lib
   INCLUDE = $(PREFIX)/include
+  PYPREFIX = --prefix=$(PREFIX)
 
 # Includes and libs
 INCLUDES = -I. -I$(ROOT)/include -I$(INCLUDE) -I/usr/include
@@ -25,6 +26,8 @@ CC = cc -c
 LD = cc
 # Archiver
 AR = ar crs
+
+PYTHON = python
 
 X11PACKAGES = x11 xinerama xrender xrandr
 INCX11 = $$(pkg-config --cflags $(X11PACKAGES))

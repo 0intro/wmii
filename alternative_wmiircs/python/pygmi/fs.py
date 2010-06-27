@@ -28,11 +28,27 @@ class Never(Toggle.__class__):
     pass
 
 def constrain(min, max, val):
-    if val < min:
-        return min
-    if val > max:
-        return max
-    return val
+    return min if val < min else max if val > max else val
+
+class Map(collections.Mapping):
+    def __init__(self, cls, *args):
+        self.cls = cls
+        self.args = args
+    def __repr__(self):
+        return 'Map(%s%s)' % (self.cls.__name__, (', %s' % ', '.join(map(repr, self.args)) if self.args else ''))
+    def __getitem__(self, item):
+        ret = self.cls(*(self.args + (item,)))
+        if not ret.exists:
+            raise KeyError('no such %s %s' % (self.cls.__name__.lower(), repr(item)))
+        return ret
+    def __len__(self):
+        return len(iter(self))
+    def __keys__(self):
+        return [v for v in self.cls.all(*self.args)]
+    def __iter__(self):
+        return (v for v in self.cls.all(*self.args))
+    def iteritems(self):
+        return ((v, self.cls(*(self.args + (v,)))) for v in self.cls.all(*self.args))
 
 class Ctl(object):
     """
@@ -65,7 +81,13 @@ class Ctl(object):
         """
         Arguments are joined by ascii spaces and written to the ctl file.
         """
-        client.awrite(self.ctl_path, u' '.join(map(unicode, args)))
+        def next(file, exc=None, tb=None):
+            if file:
+                self.file = file
+                file.awrite(u' '.join(map(unicode, args)))
+        if self.file:
+            return next(file)
+        client.acreate(self.ctl_path, callback=next, mode=OWRITE)
 
     def __getitem__(self, key):
         for line in self.ctl_lines():
@@ -128,7 +150,7 @@ class Ctl(object):
     @prop(doc="If #ctl_hasid is set, returns the id of this ctl file.")
     def id(self):
         if self._id is None and self.ctl_hasid:
-            return client.read(self.ctl_path).split('\n', 1)[0]
+            return self.name_read(client.read(self.ctl_path).split('\n', 1)[0])
         return self._id
 
 class Dir(Ctl):
@@ -140,6 +162,8 @@ class Dir(Ctl):
             represented by this class reside. e.g., /client, /tag
     """
     ctl_hasid = True
+    name_read = unicode
+    name_write = unicode
 
     def __init__(self, id):
         """
@@ -154,7 +178,7 @@ class Dir(Ctl):
         if isinstance(id, Dir):
             id = id.id
         if id != 'sel':
-            self._id = id
+            self._id = self.name_read(id)
 
     def __eq__(self, other):
         return (self.__class__ == other.__class__ and
@@ -218,16 +242,22 @@ class Dir(Ctl):
 
     @prop(doc="The path to this directory")
     def path(self):
-        return '%s/%s' % (self.base_path, self._id or 'sel')
+        return '%s/%s' % (self.base_path, self.name_write(self._id or 'sel'))
+    @prop(doc="True if the given object exists in the wmii filesystem")
+    def exists(self):
+        return bool(client.stat(self.path))
 
     @classmethod
     def all(cls):
         """
         Returns all of the objects that exist for this type of directory.
         """
-        return (cls(s.name)
+        return (cls.name_read(s.name)
                 for s in client.readdir(cls.base_path)
                 if s.name != 'sel')
+    @classmethod
+    def map(cls, *args):
+        return Map(cls, *args)
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__,
@@ -243,6 +273,15 @@ class Client(Dir):
         'group': (lambda s: int(s, 16), str),
         'pid': (int, None),
     }
+    @staticmethod
+    def name_read(name):
+        if isinstance(name, int):
+            return name
+        try:
+            return int(name, 16)
+        except:
+            return unicode(name)
+    name_write = lambda self, name: name if isinstance(name, basestring) else '%#x' % name
 
     allow  = Dir.ctl_property('allow')
     fullscreen = Dir.toggle_property('fullscreen')
@@ -531,7 +570,8 @@ class Button(Ctl):
         self.base_path = self.sides[side]
         self.ctl_path = '%s/%s' % (self.base_path, self.name)
         self.file = None
-        self.create(colors, label)
+        if colors or label:
+            self.create(colors, label)
 
     def create(self, colors=None, label=None):
         def fail(resp, exc, tb):
@@ -548,11 +588,18 @@ class Button(Ctl):
             self.file.aremove()
             self.file = None
 
+    @property
+    def exists(self):
+        return bool(self.file and File.stat(self.file))
+
     @classmethod
     def all(cls, side):
-        return (Button(side, s.name)
+        return (s.name
                 for s in client.readdir(cls.sides[side])
                 if s.name != 'sel')
+    @classmethod
+    def map(cls, *args):
+        return Map(cls, *args)
 
 class Rules(collections.MutableMapping, utf8):
 
@@ -586,8 +633,7 @@ class Rules(collections.MutableMapping, utf8):
     def __len__(self):
         return len(tuple(self.iteritems()))
     def __iter__(self):
-        for k, v in self.iteritems():
-            yield k
+        return (k for k, v in self.iteritems())
     def __list__(self):
         return list(iter(self))
     def __tuple__(self):
@@ -609,8 +655,7 @@ class Rules(collections.MutableMapping, utf8):
         return u''.join(unicode(value) for (key, value) in self.iteritems()) or u'\n'
 
     def iteritems(self):
-        for item in self._items:
-            yield item
+        return iter(self._items)
     def items(self):
         return list(self._items())
 
@@ -659,8 +704,7 @@ class Rule(collections.MutableMapping, utf8):
     def __len__(self):
         return len(self._items)
     def __iter__(self):
-        for k in iter(self._items):
-            yield k
+        return iter(self._items)
     def __list__(self):
         return list(iter(self))
     def __tuple__(self):
@@ -687,8 +731,7 @@ class Rule(collections.MutableMapping, utf8):
                       for (k, v) in self.iteritems()))
 
     def iteritems(self):
-        for i in self._items:
-            yield i
+        return iter(self._items)
     def items(self):
         return list(self._items)
 
@@ -702,10 +745,10 @@ class wmii(Ctl):
         'border': (int, str),
     }
 
-    clients = property(lambda self: Client.all())
-    tags = property(lambda self: Tag.all())
-    lbuttons = property(lambda self: Button.all('left'))
-    rbuttons = property(lambda self: Button.all('right'))
+    clients = Client.map()
+    tags = Tag.map()
+    lbuttons = Button.map('left')
+    rbuttons = Button.map('right')
 
     rules    = Rules('/rules')
 
