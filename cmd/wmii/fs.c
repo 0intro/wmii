@@ -505,7 +505,8 @@ fs_write(Ixp9Req *r) {
 		}
 		else if(t->buffer && t->max)
 			ixp_srv_writebuf(r, (char*[]){ structptr(f->p.ref, char, t->buffer) },
-					 t->size ? structptr(f->p.ref, uint, t->size) : nil,
+					 t->size ? structptr(f->p.ref, uint, t->size)
+					         : (uint[]){ strlen(structptr(f->p.ref, char, t->buffer)) },
 					 t->max);
 		else if(t->buffer)
 			ixp_srv_writebuf(r, structptr(f->p.ref, char*, t->buffer),
@@ -523,10 +524,7 @@ done:
 		update_class(f->p.client);
 		break;
 	case FsFCtags:
-		ixp_srv_data2cstring(r);
-		client_applytags(f->p.client, r->ifcall.io.data);
-		r->ofcall.io.count = r->ifcall.io.count;
-		ixp_respond(r, nil);
+		client_applytags(f->p.client, f->p.client->tags);
 		break;
 	case FsFEvent:
 		if(r->ifcall.io.data[r->ifcall.io.count-1] == '\n')
