@@ -1,5 +1,5 @@
 
-pkgname=(wmii-hg pyxp-hg pygmi-hg)
+pkgname=(wmii-hg python-pyxp-hg python-pygmi-hg)
 pkgver=2746
 pkgrel=1
 pkgdesc="The latest hg pull of wmii, a lightweight, dynamic window manager for X11"
@@ -39,15 +39,15 @@ package_wmii-hg() {
     install -m644 -D ./LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
-package_pyxp-hg() {
+package_python-pyxp-hg() {
     arch=(any)
     depends=(python)
     _make -C alternative_wmiircs/python pyclean pyxp.install
 }
 
-package_pygmi-hg() {
+package_python-pygmi-hg() {
     arch=(any)
-    depends=(pyxp-hg)
+    depends=(python-pyxp-hg)
     _make -C alternative_wmiircs/python pyclean pygmi.install
 }
 
