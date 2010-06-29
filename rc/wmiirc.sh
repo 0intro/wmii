@@ -131,7 +131,7 @@ Menu LBar-3-Delete
 	for c in $clients; do
 		if [ "$tag" = "$(wmiir read /client/$c/tags)" ]
 		then wmiir xwrite /client/$c/ctl kill
-		else wmiir xwrite /client/$c/tags -$tag
+		else wmiir xwrite /client/$c/ctl tags -$tag
 		fi
 		[ "$tag" = "$(wi_seltag)" ] &&
 			wmiir xwrite /ctl view $(wi_tags | wi_nexttag)
@@ -230,7 +230,7 @@ Key $MODKEY-t       # Change to another tag
 	wmiir xwrite /ctl view $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
 Key $MODKEY-Shift-t # Retag the selected client
 	# Assumes left-to-right order of evaluation
-	wmiir xwrite /client/$(wi_selclient)/tags $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
+	wmiir xwrite /client/$(wi_selclient)/ctl tags $(wi_tags | wimenu -h "${hist}.tags" -n 50) &
 Key $MODKEY-n	    # Move to the next tag
 	wmiir xwrite /ctl view $(wi_tags | wi_nexttag)
 Key $MODKEY-b	    # Move to the previous tag
@@ -241,7 +241,7 @@ Key $MODKEY-b	    # Move to the previous tag
 Key $MODKEY-$i		 # Move to the numbered view
 	wmiir xwrite /ctl view "$i"
 Key $MODKEY-Shift-$i     # Retag selected client with the numbered tag
-	wmiir xwrite /client/sel/tags "$i"
+	wmiir xwrite /client/sel/ctl tags "$i"
 !
 	done
 }

@@ -497,6 +497,15 @@ fs_write(Ixp9Req *r) {
 		return;
 	}
 
+	switch(f->tab.type) {
+        case FsFCtags:
+		r->ofcall.io.count = r->ifcall.io.count;
+		ixp_srv_data2cstring(r);
+		client_applytags(f->p.client, r->ifcall.io.data);
+		ixp_respond(r, nil);
+		return;
+	}
+
 	t = &actiontab[f->tab.type];
 	if(f->tab.type < nelem(actiontab)) {
 		if(t->msg) {
