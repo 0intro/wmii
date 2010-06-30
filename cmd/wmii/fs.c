@@ -492,17 +492,17 @@ fs_write(Ixp9Req *r) {
 		return;
 	}
 
-	if(waserror()) {
-		ixp_respond(r, ixp_errbuf());
-		return;
-	}
-
 	switch(f->tab.type) {
-        case FsFCtags:
+	case FsFCtags:
 		r->ofcall.io.count = r->ifcall.io.count;
 		ixp_srv_data2cstring(r);
 		client_applytags(f->p.client, r->ifcall.io.data);
 		ixp_respond(r, nil);
+		return;
+	}
+
+	if(waserror()) {
+		ixp_respond(r, ixp_errbuf());
 		return;
 	}
 
