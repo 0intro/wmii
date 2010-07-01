@@ -49,6 +49,8 @@ class Map(collections.Mapping):
         return (v for v in self.cls.all(*self.args))
     def iteritems(self):
         return ((v, self.cls(*(self.args + (v,)))) for v in self.cls.all(*self.args))
+    def itervalues(self):
+        return (self.cls(*(self.args + (v,))) for v in self.cls.all(*self.args))
 
 class Ctl(object):
     """
@@ -68,6 +70,8 @@ class Ctl(object):
     sentinel = {}
     ctl_types = {}
     ctl_hasid = False
+    ctl_open = 'aopen'
+    ctl_file = None
 
     def __eq__(self, other):
         if self.ctl_hasid and isinstance(other, Ctl) and other.ctl_hasid:
@@ -82,12 +86,14 @@ class Ctl(object):
         Arguments are joined by ascii spaces and written to the ctl file.
         """
         def next(file, exc=None, tb=None):
+            if exc:
+                print exc
             if file:
-                self.file = file
+                self.ctl_file = file
                 file.awrite(u' '.join(map(unicode, args)))
-        if self.file:
-            return next(file)
-        client.acreate(self.ctl_path, callback=next, mode=OWRITE)
+        if self.ctl_file:
+            return next(self.ctl_file)
+        getattr(client, self.ctl_open)(self.ctl_path, callback=next, mode=OWRITE)
 
     def __getitem__(self, key):
         for line in self.ctl_lines():
@@ -560,6 +566,7 @@ class Button(Ctl):
     ctl_types = {
         'colors': (Colors.from_string, lambda c: str(Colors(*c))),
     }
+    ctl_open = 'acreate'
     colors = Dir.ctl_property('colors')
     label  = Dir.ctl_property('label')
 
@@ -590,7 +597,7 @@ class Button(Ctl):
 
     @property
     def exists(self):
-        return bool(self.file and File.stat(self.file))
+        return bool(self.file.stat() if self.file else client.stat(self.ctl_path))
 
     @classmethod
     def all(cls, side):
@@ -764,8 +771,8 @@ class Tags(object):
         self.focuscol = focuscol
         self.lastselect = datetime.now()
         for t in wmii.tags:
-            self.add(t.id)
-        for b in wmii.lbuttons:
+            self.add(t)
+        for b in wmii.lbuttons.itervalues():
             if b.name not in self.tags:
                 b.remove()
         self.focus(Tag('sel').id)
