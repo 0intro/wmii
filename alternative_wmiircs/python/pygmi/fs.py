@@ -11,6 +11,7 @@ __all__ = ('wmii', 'Tags', 'Tag', 'Area', 'Frame', 'Client',
            'Button', 'Colors', 'Color', 'Toggle', 'Always', 'Never')
 
 spacere = re.compile(r'\s')
+sentinel = {}
 
 class utf8(object):
     def __str__(self):
@@ -67,7 +68,6 @@ class Ctl(object):
             tuples, each containing a decoder and encoder function for the
             property's plain text value.
     """
-    sentinel = {}
     ctl_types = {}
     ctl_hasid = False
     ctl_open = 'aopen'
@@ -312,14 +312,14 @@ class liveprop(object):
         self.get = get
         self.attr = str(self)
     def __get__(self, area, cls):
-        if getattr(area, self.attr, None) is not None:
+        if getattr(area, self.attr, sentinel) is not sentinel:
             return getattr(area, self.attr)
         return self.get(area)
     def __set__(self, area, val):
         setattr(area, self.attr, val)
 
 class Area(object):
-    def __init__(self, tag, ord, screen='sel', offset=None, width=None, height=None, frames=None):
+    def __init__(self, tag, ord, screen='sel', offset=sentinel, width=sentinel, height=sentinel, frames=sentinel):
         self.tag = tag
         if ':' in str(ord):
             screen, ord = ord.split(':', 2)
@@ -344,17 +344,20 @@ class Area(object):
 
     @property
     def spec(self):
-        return '%s:%s' % (self.screen, self.ord)
+        if self.screen is not None:
+            return '%s:%s' % (self.screen, self.ord)
+        return self.ord
 
-    def _get_mode(self):
+    @property
+    def mode(self):
         for k, v in self.tag.iteritems():
             if k == 'colmode':
                 v = v.split(' ')
                 if v[0] == self.ord:
                     return v[1]
-    mode = property(
-        _get_mode,
-        lambda self, val: self.tag.set('colmode %s' % self.spec, val))
+    @mode.setter
+    def mode(self, val):
+        self.tag['colmode %s' % self.spec] = val
 
     def grow(self, dir, amount=None):
         self.tag.grow(self, dir, amount)
@@ -364,7 +367,7 @@ class Area(object):
 class Frame(object):
     live = False
 
-    def __init__(self, client, area=None, ord=None, offset=None, height=None):
+    def __init__(self, client, area=sentinel, ord=sentinel, offset=sentinel, height=sentinel):
         self.client = client
         self.ord = ord
         self.offset = offset
@@ -414,21 +417,24 @@ class Tag(Dir):
             dir = ' '.join(dir)
         return dir
 
-    def _set_selected(self, frame):
+    @property
+    def selected(self):
+        return tuple(self['select'].split(' '))
+    @selected.setter
+    def selected(self, frame):
         if not isinstance(frame, basestring) or ' ' not in frame:
             frame = self.framespec(frame)
         self['select'] = frame
-    selected = property(lambda self: tuple(self['select'].split(' ')),
-                        _set_selected)
 
-    def _get_selclient(self):
+    @property
+    def selclient(self):
         for k, v in self.iteritems():
             if k == 'select' and 'client' in v:
                 return Client(v.split(' ')[1])
         return None
-    selclient = property(_get_selclient,
-                         lambda self, val: self.set('select',
-                                                    self.framespec(val)))
+    @selclient.setter
+    def selclient(self, val):
+        self['select'] = self.framespec(val)
 
     @property
     def selcol(self):
@@ -437,9 +443,9 @@ class Tag(Dir):
     @property
     def index(self):
         areas = []
-        for l in [l.split(' ')
+        for l in (l.split(' ')
                   for l in client.readlines('%s/index' % self.path)
-                  if l]:
+                  if l):
             if l[0] == '#':
                 m = re.match(r'(?:(\d+):)?(\d+|~)', l[1])
                 if m.group(2) == '~':
@@ -447,7 +453,7 @@ class Tag(Dir):
                                 height=l[3], frames=[])
                 else:
                     area = Area(tag=self, screen=m.group(1) or 0,
-                                ord=m.group(2), offset=l[2], width=l[3],
+                                height=None, ord=m.group(2), offset=l[2], width=l[3],
                                 frames=[])
                 areas.append(area)
                 i = 0
@@ -797,12 +803,12 @@ class Tags(object):
         self.tags[tag].button.label = urgent and '*' + tag or tag
 
     def next(self, reverse=False):
-        tags = [t for t in wmii.tags if t.id not in self.ignore]
+        tags = [t for t in wmii.tags if t not in self.ignore]
         tags.append(tags[0])
         if reverse:
             tags.reverse()
         for i in range(0, len(tags)):
-            if tags[i] == self.sel:
+            if tags[i] == self.sel.id:
                 return tags[i+1]
         return self.sel
 

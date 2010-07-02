@@ -39,6 +39,9 @@ class Mux(object):
         self.maxtag = maxtag
         self.muxer = None
 
+        self.async_mux = Queue(self.mux)
+        self.async_dispatch = Queue(self.async_dispatch)
+
         if isinstance(con, basestring):
             con = dial(con)
         self.fd = con
@@ -48,8 +51,8 @@ class Mux(object):
 
     def mux(self, rpc):
         try:
-            rpc.waiting = True
             self.lock.acquire()
+            rpc.waiting = True
             while self.muxer and self.muxer != rpc and rpc.data is None:
                 rpc.wait()
 
@@ -69,7 +72,7 @@ class Mux(object):
                     self.lock.acquire()
                     self.electmuxer()
         except Exception, e:
-            traceback.print_exc(sys.stdout)
+            traceback.print_exc(sys.stderr)
             if self.flush:
                 self.flush(self, rpc.data)
             raise e
@@ -77,36 +80,26 @@ class Mux(object):
             if self.lock._is_owned():
                 self.lock.release()
 
-        if rpc.async:
-            if callable(rpc.async):
-                rpc.async(self, rpc.data)
-        else:
-            return rpc.data
+        return rpc.data
 
     def rpc(self, dat, async=None):
         rpc = self.newrpc(dat, async)
         if async:
-            with self.lock:
-                if self.muxer is None:
-                    self.electmuxer()
+            self.async_mux.push(rpc)
         else:
             return self.mux(rpc)
 
+    def async_dispatch(self, rpc):
+        self.async_mux.pop(rpc)
+        rpc.async(self, rpc.data)
+
     def electmuxer(self):
-        async = None
         for rpc in self.queue:
-            if self.muxer != rpc:
-                if rpc.async:
-                    async = rpc
-                else:
-                    self.muxer = rpc
-                    rpc.notify()
-                    return
+            if self.muxer != rpc and rpc.waiting:
+                self.muxer = rpc
+                rpc.notify()
+                return
         self.muxer = None
-        if async:
-            self.muxer = async
-            t = Thread(target=self.mux, args=(async,))
-            t.start()
 
     def dispatch(self, dat):
         tag = dat.tag
@@ -156,8 +149,7 @@ class Mux(object):
                     data += self.fd.recv(len - 4)
                     return self.process(data)
         except Exception, e:
-            traceback.print_exc(sys.stdout)
-            print repr(data)
+            traceback.print_exc(sys.stderr)
             return None
 
     def newrpc(self, dat, async=None):
@@ -181,14 +173,50 @@ class Rpc(Condition):
         self.mux = mux
         self.orig = data
         self.data = None
-        self.waiting = False
         self.async = async
+        self.waiting = False
 
     def dispatch(self, data=None):
         self.data = data
-        if not self.async or self.waiting:
-            self.notify()
-        elif callable(self.async):
-            Thread(target=self.async, args=(self.mux, data)).start()
+        self.notify()
+        if callable(self.async):
+            self.mux.async_dispatch(self)
+
+class Queue(Thread):
+    def __init__(self, op):
+        super(Queue, self).__init__()
+        self.cond = Condition()
+        self.op = op
+        self.queue = []
+        self.daemon = True
+
+    def __call__(self, item):
+        return self.push(item)
+
+    def push(self, item):
+        with self.cond:
+            self.queue.append(item)
+            if not self.is_alive():
+                self.start()
+            self.cond.notify()
+    def pop(self, item):
+        with self.cond:
+            if item in self.queue:
+                self.queue.remove(item)
+                return True
+            return False
+
+    def run(self):
+        self.cond.acquire()
+        while True:
+            while self.queue:
+                item = self.queue.pop(0)
+                self.cond.release()
+                try:
+                    self.op(item)
+                except Exception, e:
+                    traceback.print_exc(sys.stderr)
+                self.cond.acquire()
+            self.cond.wait()
 
 # vim:se sts=4 sw=4 et:

@@ -107,16 +107,17 @@ class Monitor(object):
             return None
 
     _active = True
-    def _set_active(self, val):
+    @property
+    def active(self):
+        return self._active
+
+    @active.setter
+    def active(self, val):
         with self.lock:
             self._active = bool(val)
         if val:
             self.tick()
         else:
             self.button.remove()
-
-    active = property(
-        lambda self: self._active,
-        _set_active)
 
 # vim:se sts=4 sw=4 et:
