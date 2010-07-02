@@ -181,7 +181,7 @@ if(~ $0 ('' */)wmiirc_local.rc)
 	wi_notice This file should not be named wmiirc_local.rc
 if not
 	. `{wi_script -f wmiirc_local.rc}
-echo $wmiinormcol | wmiir create $noticebar
+echo colors $wmiinormcol | wmiir create $noticebar
 startup
 
 # Key Bindings
