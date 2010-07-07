@@ -40,12 +40,14 @@ package_wmii-hg() {
 }
 
 package_python-pyxp-hg() {
+    pkgdesc="Python 9P client library"
     arch=(any)
     depends=(python)
     _make -C alternative_wmiircs/python pyclean pyxp.install
 }
 
 package_python-pygmi-hg() {
+    pkgdesc="Python wmii interaction library"
     arch=(any)
     depends=(python-pyxp-hg)
     _make -C alternative_wmiircs/python pyclean pygmi.install
