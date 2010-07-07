@@ -1,11 +1,15 @@
 #!/usr/bin/make -f
-include /usr/share/quilt/quilt.make
+
+PACKAGE=$(shell awk 'NR == 1 { print $$2 }' debian/control)
+
+FLAGS = DESTDIR=$(CURDIR)/debian/$(PACKAGE)/ \
+ 	PREFIX=/usr 	\
+ 	ETC=/etc/X11	\
+ 	STATIC= 	\
+ 	TERMINAL=x-terminal-emulator
 
 %:
 	dh $@
-
-clean: unpatch
-build: patch
 
 override_dh_installwm:
 	dh_installwm --priority=60
@@ -13,9 +17,16 @@ override_dh_installwm:
 override_dh_compress:
 	dh_compress -X.pdf
 
-override_dh_auto_install:
-	$(MAKE) install
+override_dh_auto_build:
+	$(MAKE) $(FLAGS) all
 
-	install -D img/icon.png debian/wmii/usr/share/icons/wmii.png
-	install -D debian/file/wmii.desktop debian/wmii/usr/share/xsessions/wmii.desktop
+override_dh_auto_install:
+	$(MAKE) $(FLAGS) install
+
+	rm debian/$(PACKAGE)/usr/share/doc/wmii/LICENSE
+	install -D -m0644 img/icon.png debian/$(PACKAGE)/usr/share/icons/wmii.png
+	install -D -m0644 debian/file/wmii.desktop debian/$(PACKAGE)/usr/share/xsessions/wmii.desktop
+
+.depend:
+	true
 

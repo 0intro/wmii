@@ -2,12 +2,13 @@ Source: wmii-hg
 Section: x11
 Priority: optional
 Maintainer: Kris Maglione <jg@suckless.org>
-Build-Depends: libixp, python, libx11-dev, libxft-dev, libxext-dev, libxinerama-dev, libxrandr-dev, x11proto-xext-dev, quilt, debhelper (>= 4.0)
-Standards-Version: 3.7.2
+Build-Depends: libixp-hg, dash, python, libx11-dev, libxft-dev, libxext-dev, libxinerama-dev, libxrandr-dev, x11proto-xext-dev, quilt, debhelper (>= 4.0)
+Standards-Version: 3.8.4
+Homepage: http://wmii.suckless.org/
 
 Package: wmii-hg
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, dash (>= 0.1)
 Conflicts: wmii, wmii2
 Replaces: wmii, wmii2
 Provides: x-window-manager
@@ -17,5 +18,3 @@ Description: lightweight tabbed and tiled X11 window manager
  window management with low memory usage. It is highly modularized and uses an
  inter-process communication interface which is oriented on the 9p protocol of
  plan9.
- .
-  Homepage: <http://wmii.suckless.org/>
