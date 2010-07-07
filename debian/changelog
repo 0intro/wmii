@@ -1,4 +1,4 @@
-wmii-hg (hg2728) unstable; urgency=low
+wmii-hg (2728) unstable; urgency=low
 
   * Remove long deprecated special treatment of the '!' tag.
 

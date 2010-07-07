@@ -1,0 +1,30 @@
+#!/bin/sh
+set -ef
+
+ifs="$(echo)"
+name=$1
+vers=$2
+dist=$3
+desc="Upstream build"
+auth="Kris Maglione <kris@suckless.org>"
+date=$(date +'%a, %d %b %Y %T %z')
+if hg root >/dev/null 2>&1; then
+	t() { hg log -r . --template "{$@}"; }
+	vers=$(t rev)
+	desc=$(t desc)
+	auth=$(t author)
+	date=$(t 'date|rfc822date')
+fi
+
+cat >debian/changelog.new  <<!
+$name ($vers) $dist; urgency=low
+
+  * $desc
+
+ -- $auth  $date
+
+$(cat debian/changelog)
+!
+
+mv debian/changelog.new debian/changelog
+
