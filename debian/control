@@ -2,7 +2,7 @@ Source: wmii-hg
 Section: x11
 Priority: optional
 Maintainer: Kris Maglione <jg@suckless.org>
-Build-Depends: libixp, libx11-dev, libxft-dev, libxext-dev, libxinerama-dev, libxrandr-dev, x11proto-xext-dev, quilt, debhelper (>= 4.0)
+Build-Depends: libixp, python, libx11-dev, libxft-dev, libxext-dev, libxinerama-dev, libxrandr-dev, x11proto-xext-dev, quilt, debhelper (>= 4.0)
 Standards-Version: 3.7.2
 
 Package: wmii-hg

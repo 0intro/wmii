@@ -1,6 +1,6 @@
 
 pkgname=(wmii-hg python-pyxp-hg python-pygmi-hg)
-pkgver=2746
+pkgver=2755
 pkgrel=1
 pkgdesc="The latest hg pull of wmii, a lightweight, dynamic window manager for X11"
 url="http://wmii.suckless.org"
@@ -28,7 +28,7 @@ build() {
 package_wmii-hg() {
     depends=(libx11 libxinerama libxrandr)
     optdepends=("plan9port: for use of the alternative plan9port wmiirc" \
-            "pygmi: for use of the alternative Python wmiirc" \
+            "${pkgname[2]}: for use of the alternative Python wmiirc" \
             "ruby-rumai: for use of the alternative Ruby wmiirc" \
             "libxft: for anti-aliased font support")
     provides=(wmii)
