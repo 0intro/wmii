@@ -181,6 +181,7 @@ ewmh_initclient(Client *c) {
 	ewmh_getwintype(c);
 	ewmh_getwinstate(c);
 	ewmh_getstrut(c);
+	ewmh_framesize(c);
 	ewmh_updateclientlist();
 	pushhandler(&c->w, &client_handlers, c);
 }
@@ -501,18 +502,21 @@ static Handlers root_handlers = {
 
 void
 ewmh_framesize(Client *c) {
-	Rectangle r;
+	Rectangle rc, rf;
 	Frame *f;
 
-	f = c->sel;
-	r.min.x = f->crect.min.x;
-	r.min.y = f->crect.min.y;
-	r.max.x = Dx(f->r) - f->crect.max.x;
-	r.max.y = Dy(f->r) - f->crect.max.y;
+	if((f = c->sel)) {
+		rc = f->crect;
+		rf = f->r;
+	}
+	else {
+		rf = frame_client2rect(c, ZR, c->floating);
+		rc = rectsubpt(ZR, rf.min);
+	}
 
 	long extents[] = {
-		r.min.x, r.max.x,
-		r.min.y, r.max.y,
+		rc.min.x, Dx(rf) - rc.max.x,
+		rc.min.y, Dy(rf) - rc.max.y,
 	};
 	clientprop_long(c, PExtents, Net("FRAME_EXTENTS"), "CARDINAL",
 			extents, nelem(extents));
