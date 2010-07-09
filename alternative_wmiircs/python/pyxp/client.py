@@ -45,8 +45,10 @@ class Client(object):
 
     @staticmethod
     def respond(callback, data, exc=None, tb=None):
-        if callable(callback):
+        if hasattr(callback, 'func_code'):
             callback(*(data, exc, tb)[0:callback.func_code.co_argcount])
+        elif callable(callback):
+            callback(data)
 
     def __enter__(self):
         return self

@@ -23,18 +23,20 @@ class Int(Field):
     def encoder(cls, n):
         if n not in cls.encoders:
             exec ('def enc(n):\n' +
-                  '    assert n == n & 0x%s, "Arithmetic overflow"\n' % ('ff' * n) +
-                  '    return "".join((' + ','.join(
-                      'chr((n >> %d) & 0xff)' % (i * 8)
-                      for i in range(0, n)) + ',))\n')
+                  '    assert n == n & 0x%s, "Arithmetic overflow"\n' +
+                  '    return ''.join((%s,))'
+                 ) % ('ff' * n,
+                      ','.join('chr((n >> %d) & 0xff)' % (i * 8)
+                               for i in range(0, n)))
+
             cls.encoders[n] = enc
         return cls.encoders[n]
     @classmethod
     def decoder(cls, n):
         if n not in cls.decoders:
-            cls.decoders[n] = eval('lambda data, offset: ' + '|'.join(
-                'ord(data[offset + %d]) << %d' % (i, i * 8)
-                for i in range(0, n)))
+            cls.decoders[n] = eval('lambda data, offset: ' +
+                                   '|'.join('ord(data[offset + %d]) << %d' % (i, i * 8)
+                                            for i in range(0, n)))
         return cls.decoders[n]
 
     def __init__(self, size):

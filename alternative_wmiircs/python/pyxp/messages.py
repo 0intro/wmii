@@ -51,9 +51,8 @@ class Message(object):
         vals = {}
         start = offset
         for field in cls.fields:
-            size, val = field.unmarshall(data, offset)
+            size, vals[field.name] = field.unmarshall(data, offset)
             offset += size
-            vals[field.name] = val
         return offset - start, cls(**vals)
     def marshall(self):
         res = []
