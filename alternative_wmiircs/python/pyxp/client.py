@@ -46,8 +46,7 @@ class Client(object):
     @staticmethod
     def respond(callback, data, exc=None, tb=None):
         if callable(callback):
-            callback(data, exc, tb)
-
+            callback(*(data, exc, tb)[0:callback.func_code.co_argcount])
 
     def __enter__(self):
         return self
@@ -77,13 +76,13 @@ class Client(object):
             if root:
                 path = self._splitpath(root)
                 resp = self._dorpc(fcall.Twalk(fid=ROOT_FID,
-                                              newfid=ROOT_FID,
-                                              wname=path))
-        except Exception, e:
+                                               newfid=ROOT_FID,
+                                               wname=path))
+        except Exception:
             traceback.print_exc(sys.stdout)
             if getattr(self, 'mux', None):
                 self.mux.fd.close()
-            raise e
+            raise
 
     def _cleanup(self):
         try:
@@ -102,21 +101,22 @@ class Client(object):
                 raise ProtocolException, "Missmatched RPC message types: %s => %s" % (
                     req.__class__.__name__, resp.__class__.__name__)
             return resp
+
         def next(mux, resp):
             try:
                 res = doresp(resp)
             except Exception, e:
-                if error:
-                    self.respond(error, None, e, None)
-                else:
-                    self.respond(callback, None, e, None)
+                self.respond(error or callback, None, e, None)
             else:
                 self.respond(callback, res)
+
         if not callback:
             return doresp(self.mux.rpc(req))
         self.mux.rpc(req, next)
 
     def _splitpath(self, path):
+        if isinstance(path, list):
+            return path
         return [v for v in path.split('/') if v != '']
 
     def _getfid(self):
@@ -163,12 +163,13 @@ class Client(object):
         return Res
 
     _file = property(lambda self: File)
-    def _open(self, path, mode, open, origpath=None):
+    def _open(self, path, mode, fcall, origpath=None):
         resp = None
 
         with self._walk(path) as nfid:
             fid = nfid
-            resp = self._dorpc(open(fid))
+            fcall.fid = fid
+            resp = self._dorpc(fcall)
 
         def cleanup():
             self._aclunk(fid)
@@ -178,17 +179,14 @@ class Client(object):
     def open(self, path, mode=OREAD):
         path = self._splitpath(path)
 
-        def open(fid):
-            return fcall.Topen(fid=fid, mode=mode)
-        return self._open(path, mode, open)
+        return self._open(path, mode, fcall.Topen(mode=mode))
 
     def create(self, path, mode=OREAD, perm=0):
         path = self._splitpath(path)
         name = path.pop()
 
-        def open(fid):
-            return fcall.Tcreate(fid=fid, mode=mode, name=name, perm=perm)
-        return self._open(path, mode, open, origpath='/'.join(path + [name]))
+        return self._open(path, mode, fcall.Tcreate(mode=mode, name=name, perm=perm),
+                          origpath='/'.join(path + [name]))
 
     def remove(self, path):
         path = self._splitpath(path)

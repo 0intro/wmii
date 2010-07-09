@@ -14,6 +14,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+import os
 import sys
 import traceback
 
@@ -26,9 +27,8 @@ __all__ = 'Mux',
 
 class Mux(object):
     def __init__(self, con, process, flush=None, mintag=0, maxtag=1<<16 - 1):
-        self.queue = set()
         self.lock = RLock()
-        self.rendez = Condition(self.lock)
+        self.tagcond = Condition(self.lock)
         self.outlock = RLock()
         self.inlock = RLock()
         self.process = process
@@ -50,35 +50,32 @@ class Mux(object):
             raise Exception("No connection")
 
     def mux(self, rpc):
-        try:
-            self.lock.acquire()
-            rpc.waiting = True
-            while self.muxer and self.muxer != rpc and rpc.data is None:
-                rpc.wait()
+        with self.lock:
+            try:
+                rpc.waiting = True
+                while self.muxer and self.muxer != rpc and rpc.data is None:
+                    rpc.wait()
 
-            if rpc.data is None:
-                assert not self.muxer or self.muxer is rpc
-                self.muxer = rpc
-                self.lock.release()
-                try:
-                    while rpc.data is None:
-                        data = self.recv()
-                        if data is None:
-                            self.lock.acquire()
-                            self.queue.remove(rpc)
-                            raise Exception("unexpected eof")
-                        self.dispatch(data)
-                finally:
-                    self.lock.acquire()
-                    self.electmuxer()
-        except Exception, e:
-            traceback.print_exc(sys.stderr)
-            if self.flush:
-                self.flush(self, rpc.data)
-            raise e
-        finally:
-            if self.lock._is_owned():
-                self.lock.release()
+                if rpc.data is None:
+                    assert self.muxer in (rpc, None)
+                    self.muxer = rpc
+                    try:
+                        self.lock.release()
+                        while rpc.data is None:
+                            data = self.recv()
+                            if data is None:
+                                raise Exception("unexpected eof")
+                            self.dispatch(data)
+                    finally:
+                        self.lock.acquire()
+                        self.electmuxer()
+            except Exception:
+                traceback.print_exc(sys.stderr)
+                if rpc.tag in self.wait:
+                    self.wait.pop(rpc.tag)
+                if self.flush:
+                    self.flush(self, rpc.data)
+                raise
 
         return rpc.data
 
@@ -90,11 +87,10 @@ class Mux(object):
             return self.mux(rpc)
 
     def async_dispatch(self, rpc):
-        self.async_mux.pop(rpc)
         rpc.async(self, rpc.data)
 
     def electmuxer(self):
-        for rpc in self.queue:
+        for rpc in self.wait.itervalues():
             if self.muxer != rpc and rpc.waiting:
                 self.muxer = rpc
                 rpc.notify()
@@ -102,22 +98,19 @@ class Mux(object):
         self.muxer = None
 
     def dispatch(self, dat):
-        tag = dat.tag
-        rpc = None
         with self.lock:
-            rpc = self.wait.get(tag, None)
-            if rpc is None or rpc not in self.queue:
-                #print "bad rpc tag: %u (no one waiting on it)" % dat.tag
-                return
-            self.puttag(rpc)
-            self.queue.remove(rpc)
-            rpc.dispatch(dat)
+            rpc = self.wait.get(dat.tag, None)
+            if rpc:
+                self.puttag(rpc)
+                rpc.dispatch(dat)
+            elif False:
+                print "bad rpc tag: %u (no one waiting on it)" % dat.tag
 
     def gettag(self, r):
         tag = 0
 
         while not self.free:
-            self.rendez.wait()
+            self.tagcond.wait()
 
         tag = self.free.pop()
 
@@ -134,21 +127,36 @@ class Mux(object):
         if rpc.tag in self.wait:
             del self.wait[rpc.tag]
         self.free.add(rpc.tag)
-        self.rendez.notify()
+        self.tagcond.notify()
 
     def send(self, dat):
         data = ''.join(dat.marshall())
         n = self.fd.send(data)
         return n == len(data)
     def recv(self):
+        def readn(fd, n):
+            data = ''
+            while len(data) < n:
+                try:
+                    s = fd.recv(n - len(data))
+                    if len(s) == 0:
+                        raise Exception('unexpected end of file')
+                    data += s
+                except os.error, e:
+                    if e.errno != os.errno.EINTR:
+                        raise e
+            return data
+
         try:
             with self.inlock:
-                data = self.fd.recv(4)
+                data = readn(self.fd, 4)
                 if data:
-                    len = fields.Int.decoders[4](data, 0)
-                    data += self.fd.recv(len - 4)
+                    nmsg = fields.Int.decoders[4](data, 0)
+                    data += readn(self.fd, nmsg - 4)
                     return self.process(data)
         except Exception, e:
+            print e.__class__.__name__
+            print repr(e)
             traceback.print_exc(sys.stderr)
             return None
 
@@ -158,13 +166,11 @@ class Mux(object):
 
         with self.lock:
             self.gettag(rpc)
-            self.queue.add(rpc)
 
         if rpc.tag >= 0 and self.send(dat):
             return rpc
 
         with self.lock:
-            self.queue.remove(rpc)
             self.puttag(rpc)
 
 class Rpc(Condition):
@@ -176,6 +182,9 @@ class Rpc(Condition):
         self.async = async
         self.waiting = False
 
+    def __repr__(self):
+        return '<Rpc tag=%s orig=%s data=%s async=%s waiting=%s>' % tuple(map(repr, (self.tag, self.orig, self.data, self.async, self.waiting)))
+
     def dispatch(self, data=None):
         self.data = data
         self.notify()
@@ -183,8 +192,11 @@ class Rpc(Condition):
             self.mux.async_dispatch(self)
 
 class Queue(Thread):
+    _id = 1
+
     def __init__(self, op):
-        super(Queue, self).__init__()
+        super(Queue, self).__init__(name='Queue-%d-%s' % (Queue._id, repr(op)))
+        Queue._id += 1
         self.cond = Condition()
         self.op = op
         self.queue = []

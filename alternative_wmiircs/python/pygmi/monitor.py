@@ -51,6 +51,8 @@ class Monitor(object):
     side = 'right'
     interval = 1.0
 
+    define = classmethod(defmonitor)
+
     def __init__(self, name=None, interval=None, side=None,
                  action=None, colors=None, label=None):
         """
@@ -93,6 +95,7 @@ class Monitor(object):
                         self.button.create(*label)
 
                     self.timer = Timer(self.interval, self.tick)
+                    self.timer.name = 'Monitor-Timer-%s' % self.name
                     self.timer.daemon = True
                     self.timer.start()
 

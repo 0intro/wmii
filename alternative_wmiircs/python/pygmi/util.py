@@ -1,3 +1,4 @@
+from functools import partial, update_wrapper, wraps
 import os
 import signal
 import subprocess
@@ -43,6 +44,7 @@ def program_list(path):
 def curry(func, *args, **kwargs):
     if _ in args:
         blank = [i for i in range(0, len(args)) if args[i] is _]
+        @wraps(func)
         def curried(*newargs, **newkwargs):
             ary = list(args)
             for k, v in zip(blank, newargs):
@@ -50,9 +52,8 @@ def curry(func, *args, **kwargs):
             ary = tuple(ary) + newargs[len(blank):]
             return func(*ary, **dict(kwargs, **newkwargs))
     else:
-        def curried(*newargs, **newkwargs):
-            return func(*(args + newargs), **dict(kwargs, **newkwargs))
-    curried.__name__ = func.__name__ + '__curried__'
+        curried = update_wrapper(partial(func, *args, **kwargs), func)
+    curried.__name__ += '__curried__'
     return curried
 
 def find_script(name):

@@ -13,6 +13,11 @@ __all__ = ('wmii', 'Tags', 'Tag', 'Area', 'Frame', 'Client',
 spacere = re.compile(r'\s')
 sentinel = {}
 
+def tounicode(obj):
+    if isinstance(obj, str):
+        return obj.decode('UTF-8')
+    return unicode(obj)
+
 class utf8(object):
     def __str__(self):
         return unicode(self).encode('utf-8')
@@ -85,12 +90,10 @@ class Ctl(object):
         """
         Arguments are joined by ascii spaces and written to the ctl file.
         """
-        def next(file, exc=None, tb=None):
-            if exc:
-                print exc
+        def next(file):
             if file:
                 self.ctl_file = file
-                file.awrite(u' '.join(map(unicode, args)))
+                file.awrite(u' '.join(map(tounicode, args)))
         if self.ctl_file:
             return next(self.ctl_file)
         getattr(client, self.ctl_open)(self.ctl_path, callback=next, mode=OWRITE)
@@ -687,7 +690,7 @@ class Rule(collections.MutableMapping, utf8):
         if val is False:  return "off"
         if val in (Toggle, Always, Never):
             return unicode(val).lower()
-        return unicode(val)
+        return tounicode(val)
 
     def __get__(self, obj, cls):
         return self
