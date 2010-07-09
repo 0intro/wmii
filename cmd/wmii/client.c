@@ -95,7 +95,6 @@ group_leader(Group *g) {
 Client*
 client_create(XWindow w, XWindowAttributes *wa) {
 	Client **t, *c;
-	WinAttr fwa;
 	char **host = nil;
 	ulong *pid = nil;
 
@@ -109,6 +108,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	c->w.type = WWindow;
 	c->w.xid = w;
 	c->w.r = c->r;
+	c->w.aux = c;
 
 	setborder(&c->w, 0, &(Color){0});
 
@@ -127,27 +127,9 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	freestringlist(host);
 	free(pid);
 
-	fwa.background_pixmap = None;
-	fwa.bit_gravity = NorthWestGravity;
-	fwa.event_mask = ButtonPressMask
-		       | ButtonReleaseMask
-		       | EnterWindowMask
-		       | ExposureMask
-		       | PointerMotionMask
-		       | StructureNotifyMask
-		       | SubstructureNotifyMask
-		       | SubstructureRedirectMask;
-	fwa.override_redirect = true;
-	c->framewin = createwindow_rgba(&scr.root, c->r,
-			&fwa, CWBackPixmap
-			    | CWBitGravity
-			    | CWEventMask
-			    | CWOverrideRedirect);
+	c->rgba = render_argb_p(c->w.visual);
+	client_reparent(c);
 
-	c->framewin->aux = c;
-	c->w.aux = c;
-	sethandler(c->framewin, &framehandler);
-	pushhandler(c->framewin, &ignorehandlers, nil);
 	sethandler(&c->w, &handlers);
 	pushhandler(&c->w, &ignorehandlers, nil);
 
@@ -173,7 +155,6 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	 */
 	traperrors(true);
 	XAddToSaveSet(display, w);
-	reparentwindow(&c->w, c->framewin, ZP);
 	if(traperrors(false)) {
 		client_destroy(c);
 		return nil;
@@ -184,6 +165,50 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	event("CreateClient %#C\n", c);
 	client_manage(c);
 	return c;
+}
+
+void
+client_reparent(Client *c) {
+	Window *fw;
+	WinAttr wa;
+	bool rgba;
+
+	rgba = c->rgba | RGBA_P(def.normcolor) | RGBA_P(def.focuscolor);
+
+	fw = c->framewin;
+	if(fw && (fw->depth == 32) == rgba)
+		return;
+
+	wa.background_pixmap = None;
+	wa.bit_gravity = NorthWestGravity;
+	wa.event_mask = ButtonPressMask
+		       | ButtonReleaseMask
+		       | EnterWindowMask
+		       | ExposureMask
+		       | PointerMotionMask
+		       | StructureNotifyMask
+		       | SubstructureNotifyMask
+		       | SubstructureRedirectMask;
+	wa.override_redirect = true;
+	if(rgba)
+		c->framewin = createwindow_rgba(&scr.root, c->r,
+				&wa, CWBackPixmap
+				   | CWBitGravity
+				   | CWEventMask
+				   | CWOverrideRedirect);
+	else
+		c->framewin = createwindow(&scr.root, c->r, scr.depth, InputOutput,
+				&wa, CWBackPixmap
+				   | CWBitGravity
+				   | CWEventMask
+				   | CWOverrideRedirect);
+
+	c->framewin->aux = c;
+	sethandler(c->framewin, &framehandler);
+	pushhandler(c->framewin, &ignorehandlers, nil);
+	reparentwindow(&c->w, c->framewin, ZP);
+	if(fw)
+		destroywindow(fw);
 }
 
 static bool

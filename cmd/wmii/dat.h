@@ -161,7 +161,7 @@ struct Bar {
 	char	name[256];
 	int	bar;
 	ushort	id;
-	CTuple	col;
+	CTuple	colors;
 	Rectangle	r;
 	WMScreen*	screen;
 };
@@ -198,6 +198,7 @@ struct Client {
 	bool	fixedsize;
 	bool	nofocus;
 	bool	noinput;
+	bool	rgba;
 	bool	titleless;
 	bool	urgent;
 };
@@ -327,6 +328,7 @@ enum {
 EXTERN struct WMScreen {
 	Bar*	bar[2];
 	Window*	barwin;
+	bool	barwin_rgba;
 	bool	showing;
 	int	barpos;
 	int	idx;

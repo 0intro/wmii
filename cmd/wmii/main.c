@@ -210,7 +210,7 @@ init_screens(void) {
 			for(v=view; v; v=v->next)
 				view_init(v, i);
 		def.snap = Dy(screen->r) / 63;
-		bar_init(screens[i]);
+		bar_init(screens[i], false);
 	}
 	screen = screens[0];
 	if(selview)

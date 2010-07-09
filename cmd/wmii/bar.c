@@ -11,13 +11,16 @@ static Handlers handlers;
 		for((b)=(s)->bar[__bar_n]; (b); (b)=(b)->next)
 
 void
-bar_init(WMScreen *s) {
+bar_init(WMScreen *s, bool force) {
 	WinAttr wa;
 
-	if(s->barwin) {
-		bar_resize(s);
-		return;
-	}
+	if(s->barwin)
+		if(force)
+			destroywindow(s->barwin);
+		else {
+			bar_resize(s);
+			return;
+		}
 
 	s->brect = s->r;
 	s->brect.min.y = s->brect.max.y - labelh(def.font);
@@ -27,9 +30,14 @@ bar_init(WMScreen *s) {
 		      | ButtonPressMask
 		      | ButtonReleaseMask
 		      | FocusChangeMask;
-	s->barwin = createwindow(&scr.root, s->brect, scr.depth, InputOutput,
-			&wa, CWOverrideRedirect
-			   | CWEventMask);
+	if(s->barwin_rgba)
+		s->barwin = createwindow_rgba(&scr.root, s->brect,
+				&wa, CWOverrideRedirect
+				   | CWEventMask);
+	else
+		s->barwin = createwindow(&scr.root, s->brect, scr.depth, InputOutput,
+				&wa, CWOverrideRedirect
+				   | CWEventMask);
 	s->barwin->aux = s;
 	xdnd_initwindow(s->barwin);
 	sethandler(s->barwin, &handlers);
@@ -91,9 +99,9 @@ bar_create(Bar **bp, const char *name) {
 	b = emallocz(sizeof *b);
 	b->id = id++;
 	utflcpy(b->name, name, sizeof b->name);
-	b->col = def.normcolor;
+	b->colors = def.normcolor;
 
-	strlcat(b->buf, b->col.colstr, sizeof b->buf);
+	strlcat(b->buf, b->colors.colstr, sizeof b->buf);
 	strlcat(b->buf, " ", sizeof b->buf);
 	strlcat(b->buf, b->text, sizeof b->buf);
 
@@ -128,6 +136,7 @@ bar_destroy(Bar **bp, Bar *b) {
 void
 bar_draw(WMScreen *s) {
 	Bar *b, *tb, *largest, **pb;
+	Image *ibuf;
 	Rectangle r;
 	Align align;
 	uint width, tw;
@@ -137,6 +146,7 @@ bar_draw(WMScreen *s) {
 
 	largest = nil;
 	width = 0;
+	s->barwin_rgba = false;
 	foreach_bar(s, b) {
 		b->r.min = ZP;
 		b->r.max.y = Dy(s->brect);
@@ -144,6 +154,7 @@ bar_draw(WMScreen *s) {
 		if(b->text && strlen(b->text))
 			b->r.max.x += textwidth(def.font, b->text);
 		width += Dx(b->r);
+		s->barwin_rgba += RGBA_P(b->colors);
 	}
 
 	if(width > Dx(s->brect)) { /* Not enough room. Shrink bars until they all fit. */
@@ -180,18 +191,23 @@ bar_draw(WMScreen *s) {
 		tb = b;
 	}
 
+	ibuf = s->barwin_rgba ? disp.ibuf32 : disp.ibuf;
+
 	r = rectsubpt(s->brect, s->brect.min);
-	fill(disp.ibuf, r, &def.normcolor.bg);
-	border(disp.ibuf, r, 1, &def.normcolor.border);
+	fill(ibuf, r, &def.normcolor.bg);
+	border(ibuf, r, 1, &def.normcolor.border);
 	foreach_bar(s, b) {
 		align = Center;
 		if(b == s->bar[BRight])
 			align = East;
-		fill(disp.ibuf, b->r, &b->col.bg);
-		drawstring(disp.ibuf, def.font, b->r, align, b->text, &b->col.fg);
-		border(disp.ibuf, b->r, 1, &b->col.border);
+		fill(ibuf, b->r, &b->colors.bg);
+		drawstring(ibuf, def.font, b->r, align, b->text, &b->colors.fg);
+		border(ibuf, b->r, 1, &b->colors.border);
 	}
-	copyimage(s->barwin, r, disp.ibuf, ZP);
+
+	if(s->barwin_rgba != (s->barwin->depth == 32))
+		bar_init(s, true);
+	copyimage(s->barwin, r, ibuf, ZP);
 }
 
 Bar*

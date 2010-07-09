@@ -478,7 +478,7 @@ getframe(View *v, int scrn, IxpMsg *m) {
 char*
 readctl_bar(Bar *b) {
 	bufclear();
-	bufprint("colors %s\n", b->col.colstr);
+	bufprint("colors %s\n", b->colors.colstr);
 	bufprint("label %s\n", b->text);
 	return buffer;
 }
@@ -488,7 +488,7 @@ message_bar(Bar *b, IxpMsg *m) {
 
 	switch(getsym(msg_getword(m, nil))) {
 	case LCOLORS:
-		msg_parsecolors(m, &b->col);
+		msg_parsecolors(m, &b->colors);
 		break;
 	case LLABEL:
 		utflcpy(b->text, (char*)m->pos, sizeof b->text);
@@ -627,8 +627,7 @@ message_root(void *p, IxpMsg *m) {
 		break;
 	case LFOCUSCOLORS:
 		msg_parsecolors(m, &def.focuscolor);
-		view_update(selview);
-		break;
+		goto updatecolors;
 	case LFONT:
 		fn = loadfont(m->pos);
 		if(fn) {
@@ -666,6 +665,9 @@ message_root(void *p, IxpMsg *m) {
 		break;
 	case LNORMCOLORS:
 		msg_parsecolors(m, &def.normcolor);
+	updatecolors:
+		for(Client *c=client; c; c=c->next)
+			client_reparent(c);
 		view_update(selview);
 		break;
 	case LSELCOLORS:

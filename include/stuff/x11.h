@@ -226,6 +226,9 @@ extern Xft* xft;
 
 XRectangle XRect(Rectangle r);
 
+#define RGBA_P(tuple) (\
+	((long)(tuple).fg.alpha + (long)(tuple).bg.alpha + (long)(tuple).border.alpha) < 3 * 0xff00)
+
 #define changeprop(w, prop, type, data, n) \
 	changeproperty(w, prop, type, \
 		((sizeof(*(data)) == 8 ? 4 : sizeof(*(data))) * 8), \
