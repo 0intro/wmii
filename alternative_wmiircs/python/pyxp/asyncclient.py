@@ -75,7 +75,7 @@ class Client(client.Client):
         fcall.fid = yield path, callback, fail
         resp = yield fcall
         yield self._file(self, origpath or '/'.join(path), resp, fcall.fid, mode,
-                         cleanup=lambda: self._clunk(fcall.fid))
+                         cleanup=lambda: self._aclunk(fcall.fid))
 
     def aopen(self, path, callback=True, fail=None, mode=OREAD):
         assert callable(callback)
