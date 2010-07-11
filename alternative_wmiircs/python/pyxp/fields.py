@@ -24,7 +24,7 @@ class Int(Field):
         if n not in cls.encoders:
             exec ('def enc(n):\n' +
                   '    assert n == n & 0x%s, "Arithmetic overflow"\n' +
-                  '    return ''.join((%s,))'
+                  '    return "".join((%s,))'
                  ) % ('ff' * n,
                       ','.join('chr((n >> %d) & 0xff)' % (i * 8)
                                for i in range(0, n)))
