@@ -63,7 +63,7 @@ wmiir write /rules <<!
 
 # Status Bar Info
 fn status {
-	echo -n label `{uptime | sed 's/.*://; s/,//g'} '|' \
+	echo -n label `{uptime | sed 's/.*://; s/, / /g'} '|' \
 		      `{date} }
 
 # Generic overridable startup details
