@@ -40,6 +40,7 @@ static Convfmt knownfmt[] = {
 	' ',	__flagfmt,
 	'#',	__flagfmt,
 	'%',	__percentfmt,
+	'\'',	__flagfmt,
 	'+',	__flagfmt,
 	',',	__flagfmt,
 	'-',	__flagfmt,

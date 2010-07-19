@@ -23,5 +23,6 @@ runefmtstrflush(Fmt *f)
 	if(f->start == nil)
 		return nil;
 	*(Rune*)f->to = '\0';
+	f->to = f->start;
 	return f->start;
 }

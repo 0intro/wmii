@@ -123,13 +123,13 @@ Bopen(const char *name, int mode)
 		return 0;
 
 	case OREAD:
-		f = open(name, OREAD);
+		f = open(name, mode);
 		if(f < 0)
 			return 0;
 		break;
 
 	case OWRITE:
-		f = creat(name, 0666);
+		f = creat(name, mode);
 		if(f < 0)
 			return 0;
 	}

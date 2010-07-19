@@ -28,10 +28,6 @@ enum {
 	GInvert = 1<<0,
 };
 
-enum {
-	Runemax = (1 << (sizeof(Rune) * 8)) - 1,
-};
-
 #define utf8locale() (!strcmp(nl_langinfo(CODESET), "UTF-8"))
 
 #ifdef VARARGCK

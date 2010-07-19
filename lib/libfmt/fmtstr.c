@@ -23,5 +23,6 @@ fmtstrflush(Fmt *f)
 	if(f->start == nil)
 		return nil;
 	*(char*)f->to = '\0';
+	f->to = f->start;
 	return (char*)f->start;
 }

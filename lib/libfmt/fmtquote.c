@@ -120,8 +120,10 @@ qstrfmt(char *sin, Rune *rin, Quoteinfo *q, Fmt *f)
 	rm = rin;
 	rme = rm + q->nrunesin;
 
-	w = f->width;
 	fl = f->flags;
+	w = 0;
+	if(fl & FmtWidth)
+		w = f->width;
 	if(f->runes){
 		if(!(fl & FmtLeft) && __rfmtpad(f, w - q->nrunesout) < 0)
 			return -1;
@@ -209,7 +211,7 @@ __quotestrfmt(int runesin, Fmt *f)
 		outlen = (char*)f->stop - (char*)f->to;
 
 	__quotesetup(s, r, nin, outlen, &q, f->flags&FmtSharp, f->runes);
-//print("bytes in %d bytes out %d runes in %d runesout %d\n", q.nbytesin, q.nbytesout, q.nrunesin, q.nrunesout);
+/*print("bytes in %d bytes out %d runes in %d runesout %d\n", q.nbytesin, q.nbytesout, q.nrunesin, q.nrunesout); */
 
 	if(runesin){
 		if(!q.quoted)

@@ -67,7 +67,7 @@ enum
 	S4,			/* _+#.#	#S4	eS5 */
 	S5,			/* _+#.#e	+S6	#S7 */
 	S6,			/* _+#.#e+	#S7 */
-	S7,			/* _+#.#e+#	#S7 */
+	S7			/* _+#.#e+#	#S7 */
 };
 
 static	int	xcmp(char*, char*);
@@ -239,7 +239,7 @@ fmtstrtod(const char *as, char **aas)
 	/* close approx by naive conversion */
 	mid[0] = 0;
 	mid[1] = 1;
-	for(i=0; c=a[i]; i++) {
+	for(i=0; (c=a[i]) != '\0'; i++) {
 		mid[0] = mid[0]*10 + (c-'0');
 		mid[1] = mid[1]*10;
 		if(i >= 8)
@@ -521,7 +521,7 @@ xcmp(char *a, char *b)
 {
 	int c1, c2;
 
-	while(c1 = *b++) {
+	while((c1 = *b++) != '\0') {
 		c2 = *a++;
 		if(isupper(c2))
 			c2 = tolower(c2);

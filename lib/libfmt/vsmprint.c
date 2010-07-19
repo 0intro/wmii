@@ -63,6 +63,7 @@ fmtstrinit(Fmt *f)
 	f->flush = fmtStrFlush;
 	f->farg = (void*)(uintptr_t)n;
 	f->nfmt = 0;
+	fmtlocaleinit(f, nil, nil, nil);
 	return 0;
 }
 

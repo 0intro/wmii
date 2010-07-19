@@ -139,8 +139,10 @@ __fmtcpy(Fmt *f, const void *vm, int n, int sz)
 
 	m = (char*)vm;
 	me = m + sz;
-	w = f->width;
 	fl = f->flags;
+	w = 0;
+	if(fl & FmtWidth)
+		w = f->width;
 	if((fl & FmtPrec) && n > f->prec)
 		n = f->prec;
 	if(f->runes){
@@ -194,8 +196,10 @@ __fmtrcpy(Fmt *f, const void *vm, int n)
 	int w;
 
 	m = (Rune*)vm;
-	w = f->width;
 	fl = f->flags;
+	w = 0;
+	if(fl & FmtWidth)
+		w = f->width;
 	if((fl & FmtPrec) && n > f->prec)
 		n = f->prec;
 	if(f->runes){
@@ -324,10 +328,14 @@ __percentfmt(Fmt *f)
 int
 __ifmt(Fmt *f)
 {
-	char buf[70], *p, *conv;
+	char buf[140], *p, *conv;
+	/* 140: for 64 bits of binary + 3-byte sep every 4 digits */
 	uvlong vu;
 	ulong u;
 	int neg, base, i, n, fl, w, isv;
+	int ndig, len, excess, bytelen;
+	char *grouping;
+	char *thousands;
 
 	neg = 0;
 	fl = f->flags;
@@ -366,21 +374,25 @@ __ifmt(Fmt *f)
 			u = va_arg(f->args, int);
 	}
 	conv = "0123456789abcdef";
+	grouping = "\4";	/* for hex, octal etc. (undefined by spec but nice) */
+	thousands = f->thousands;
 	switch(f->r){
 	case 'd':
 	case 'i':
 	case 'u':
 		base = 10;
-		break;
-	case 'x':
-		base = 16;
+		grouping = f->grouping;
 		break;
 	case 'X':
-		base = 16;
 		conv = "0123456789ABCDEF";
+		/* fall through */
+	case 'x':
+		base = 16;
+		thousands = ":";
 		break;
 	case 'b':
 		base = 2;
+		thousands = ":";
 		break;
 	case 'o':
 		base = 8;
@@ -398,7 +410,11 @@ __ifmt(Fmt *f)
 		}
 	}
 	p = buf + sizeof buf - 1;
-	n = 0;
+	n = 0;	/* in runes */
+	excess = 0;	/* number of bytes > number runes */
+	ndig = 0;
+	len = utflen(thousands);
+	bytelen = strlen(thousands);
 	if(isv){
 		while(vu){
 			i = vu % base;
@@ -406,6 +422,12 @@ __ifmt(Fmt *f)
 			if((fl & FmtComma) && n % 4 == 3){
 				*p-- = ',';
 				n++;
+			}
+			if((fl & FmtApost) && __needsep(&ndig, &grouping)){
+				n += len;
+				excess += bytelen - len;
+				p -= bytelen;
+				memmove(p+1, thousands, bytelen);
 			}
 			*p-- = conv[i];
 			n++;
@@ -418,16 +440,47 @@ __ifmt(Fmt *f)
 				*p-- = ',';
 				n++;
 			}
+			if((fl & FmtApost) && __needsep(&ndig, &grouping)){
+				n += len;
+				excess += bytelen - len;
+				p -= bytelen;
+				memmove(p+1, thousands, bytelen);
+			}
 			*p-- = conv[i];
 			n++;
 		}
 	}
 	if(n == 0){
-		*p-- = '0';
-		n = 1;
+		/*
+		 * "The result of converting a zero value with
+		 * a precision of zero is no characters."  - ANSI
+		 *
+		 * "For o conversion, # increases the precision, if and only if
+		 * necessary, to force the first digit of the result to be a zero
+		 * (if the value and precision are both 0, a single 0 is printed)." - ANSI
+		 */
+		if(!(fl & FmtPrec) || f->prec != 0 || (f->r == 'o' && (fl & FmtSharp))){
+			*p-- = '0';
+			n = 1;
+			if(fl & FmtApost)
+				__needsep(&ndig, &grouping);
+		}
+		
+		/*
+		 * Zero values don't get 0x.
+		 */
+		if(f->r == 'x' || f->r == 'X')
+			fl &= ~FmtSharp;
 	}
-	for(w = f->prec; n < w && p > buf+3; n++)
+	for(w = f->prec; n < w && p > buf+3; n++){
+		if((fl & FmtApost) && __needsep(&ndig, &grouping)){
+			n += len;
+			excess += bytelen - len;
+			p -= bytelen;
+			memmove(p+1, thousands, bytelen);
+		}
 		*p-- = '0';
+	}
 	if(neg || (fl & (FmtSign|FmtSpace)))
 		n++;
 	if(fl & FmtSharp){
@@ -441,9 +494,19 @@ __ifmt(Fmt *f)
 		}
 	}
 	if((fl & FmtZero) && !(fl & (FmtLeft|FmtPrec))){
-		for(w = f->width; n < w && p > buf+3; n++)
+		w = 0;
+		if(fl & FmtWidth)
+			w = f->width;
+		for(; n < w && p > buf+3; n++){
+			if((fl & FmtApost) && __needsep(&ndig, &grouping)){
+				n += len;
+				excess += bytelen - len;
+				p -= bytelen;
+				memmove(p+1, thousands, bytelen);
+			}
 			*p-- = '0';
-		f->width = 0;
+		}
+		f->flags &= ~FmtWidth;
 	}
 	if(fl & FmtSharp){
 		if(base == 16)
@@ -458,7 +521,7 @@ __ifmt(Fmt *f)
 	else if(fl & FmtSpace)
 		*p-- = ' ';
 	f->flags &= ~FmtPrec;
-	return __fmtcpy(f, p + 1, n, n);
+	return __fmtcpy(f, p + 1, n, n + excess);
 }
 
 int
@@ -499,6 +562,9 @@ __flagfmt(Fmt *f)
 	case '#':
 		f->flags |= FmtSharp;
 		break;
+	case '\'':
+		f->flags |= FmtApost;
+		break;
 	case ' ':
 		f->flags |= FmtSpace;
 		break;
@@ -526,12 +592,13 @@ __flagfmt(Fmt *f)
 int
 __badfmt(Fmt *f)
 {
-	char x[3];
+	char x[2+UTFmax];
+	int n;
 
 	x[0] = '%';
-	x[1] = f->r;
-	x[2] = '%';
-	f->prec = 3;
-	__fmtcpy(f, (const void*)x, 3, 3);
+	n = 1 + runetochar(x+1, &f->r);
+	x[n++] = '%';
+	f->prec = n;
+	__fmtcpy(f, (const void*)x, n, n);
 	return 0;
 }

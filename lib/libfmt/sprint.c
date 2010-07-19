@@ -26,8 +26,11 @@ sprint(char *buf, const char *fmt, ...)
 	/*
 	 * on PowerPC, the stack is near the top of memory, so
 	 * we must be sure not to overflow a 32-bit pointer.
+	 *
+	 * careful!  gcc-4.2 assumes buf+len < buf can never be true and
+	 * optimizes the test away.  casting to uintptr works around this bug.
 	 */
-	if(buf+len < buf)
+	if((uintptr_t)buf+len < (uintptr_t)buf)
 		len = -(uintptr_t)buf-1;
 
 	va_start(args, fmt);

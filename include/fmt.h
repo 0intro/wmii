@@ -27,10 +27,22 @@ struct Fmt{
 	void	*farg;			/* to make flush a closure */
 	int	nfmt;			/* num chars formatted so far */
 	va_list	args;			/* args passed to dofmt */
-	int	r;			/* % format Rune */
+	Rune	r;			/* % format Rune */
 	int	width;
 	int	prec;
 	unsigned long	flags;
+	char	*decimal;	/* decimal point; cannot be "" */
+
+	/* For %'d */
+	char *thousands;	/* separator for thousands */
+	
+	/* 
+	 * Each char is an integer indicating #digits before next separator. Values:
+	 *	\xFF: no more grouping (or \x7F; defined to be CHAR_MAX in POSIX)
+	 *	\x00: repeat previous indefinitely
+	 *	\x**: count that many
+	 */
+	char	*grouping;		/* descriptor of separator placement */
 };
 
 enum{
@@ -40,7 +52,8 @@ enum{
 	FmtSharp	= FmtPrec << 1,
 	FmtSpace	= FmtSharp << 1,
 	FmtSign		= FmtSpace << 1,
-	FmtZero		= FmtSign << 1,
+	FmtApost		= FmtSign << 1,
+	FmtZero		= FmtApost << 1,
 	FmtUnsigned	= FmtZero << 1,
 	FmtShort	= FmtUnsigned << 1,
 	FmtLong		= FmtShort << 1,
@@ -121,6 +134,7 @@ double		fmtcharstod(int(*f)(void*), void*);
 int		fmtfdflush(Fmt*);
 int		fmtfdinit(Fmt*, int fd, char *buf, int size);
 int		fmtinstall(int, int (*f)(Fmt*));
+void		fmtlocaleinit(Fmt*, char *decimal, char *thousands, char *grouping);
 int		fmtprint(Fmt*, const char*, ...);
 int		fmtrune(Fmt*, int);
 int		fmtrunestrcpy(Fmt*, Rune*);

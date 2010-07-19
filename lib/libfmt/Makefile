@@ -17,6 +17,7 @@ OBJ=\
 	fmt\
 	fmtfd\
 	fmtfdflush\
+	fmtlocale\
 	fmtlock\
 	fmtprint\
 	fmtquote\

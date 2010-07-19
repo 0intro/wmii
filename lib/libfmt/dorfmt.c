@@ -19,6 +19,7 @@
 
 /* format the output into f->to and return the number of characters fmted  */
 
+/* BUG: THIS FILE IS NOT UPDATED TO THE  NEW SPEC */
 int
 dorfmt(Fmt *f, const Rune *fmt)
 {
@@ -30,8 +31,8 @@ dorfmt(Fmt *f, const Rune *fmt)
 	nfmt = f->nfmt;
 	for(;;){
 		if(f->runes){
-			rt = f->to;
-			rs = f->stop;
+			rt = (Rune*)f->to;
+			rs = (Rune*)f->stop;
 			while((r = *fmt++) && r != '%'){
 				FMTRCHAR(f, rt, rs, r);
 			}
@@ -41,8 +42,8 @@ dorfmt(Fmt *f, const Rune *fmt)
 				return f->nfmt - nfmt;
 			f->stop = rs;
 		}else{
-			t = f->to;
-			s = f->stop;
+			t = (char*)f->to;
+			s = (char*)f->stop;
 			while((r = *fmt++) && r != '%'){
 				FMTRUNE(f, t, f->stop, r);
 			}
@@ -53,8 +54,9 @@ dorfmt(Fmt *f, const Rune *fmt)
 			f->stop = s;
 		}
 
-		fmt = __fmtdispatch(f, (Rune*)fmt, 1);
+		fmt = (Rune*)__fmtdispatch(f, (Rune*)fmt, 1);
 		if(fmt == nil)
 			return -1;
 	}
+	return 0;		/* not reached */
 }

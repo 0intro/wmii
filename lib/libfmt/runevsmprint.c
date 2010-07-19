@@ -63,6 +63,7 @@ runefmtstrinit(Fmt *f)
 	f->flush = runeFmtStrFlush;
 	f->farg = (void*)(uintptr_t)n;
 	f->nfmt = 0;
+	fmtlocaleinit(f, nil, nil, nil);
 	return 0;
 }
 
