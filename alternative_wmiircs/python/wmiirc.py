@@ -74,7 +74,7 @@ wmii.rules = (
 
 def unresponsive_client(client):
     msg = 'The following client is not responding. What would you like to do?'
-    resp = call('wihack', '-transient', client.id,
+    resp = call('wihack', '-transient', str(client.id),
                 'xmessage', '-nearmouse', '-buttons', 'Kill,Wait', '-print',
                 '%s\n  %s' % (msg, client.label))
     if resp == 'Kill':

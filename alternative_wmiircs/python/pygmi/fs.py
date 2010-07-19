@@ -585,24 +585,22 @@ class Button(Ctl):
         self.name = name
         self.base_path = self.sides[side]
         self.ctl_path = '%s/%s' % (self.base_path, self.name)
-        self.file = None
+        self.ctl_file = None
         if colors or label:
             self.create(colors, label)
 
     def create(self, colors=None, label=None):
-        def fail(resp, exc, tb):
-            self.file = None
-        if not self.file:
-            self.file = client.create(self.ctl_path, ORDWR)
+        if not self.ctl_file:
+            self.ctl_file = client.create(self.ctl_path, ORDWR)
         if colors:
             self.colors = colors
         if label:
             self.label = label
 
     def remove(self):
-        if self.file:
-            self.file.aremove()
-            self.file = None
+        if self.ctl_file:
+            self.ctl_file.aremove()
+            self.ctl_file = None
 
     @property
     def exists(self):
@@ -665,7 +663,7 @@ class Rules(collections.MutableMapping, utf8):
     def setitems(self, items):
         self._items = [(k, v if isinstance(v, Rule) else Rule(self, k, v))
                        for (k, v) in items]
-        self.rewrite();
+        self.rewrite()
 
     def __unicode__(self):
         return u''.join(unicode(value) for (key, value) in self.iteritems()) or u'\n'
