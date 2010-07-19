@@ -10,16 +10,15 @@ void
 root_init(void) {
 	WinAttr wa;
 
+	wa.cursor = cursor[CurNormal];
 	wa.event_mask = EnterWindowMask
 		      | FocusChangeMask
 		      | LeaveWindowMask
 		      | PointerMotionMask
 		      | SubstructureNotifyMask
 		      | SubstructureRedirectMask;
-	wa.cursor = cursor[CurNormal];
-	setwinattr(&scr.root, &wa,
-			  CWEventMask
-			| CWCursor);
+	setwinattr(&scr.root, &wa, CWCursor
+			         | CWEventMask);
 	sethandler(&scr.root, &handlers);
 }
 
@@ -50,16 +49,8 @@ static bool
 mapreq_event(Window *w, void *aux, XMapRequestEvent *e) {
 	XWindowAttributes wa;
 
-	if(!XGetWindowAttributes(display, e->window, &wa))
+	if(!XGetWindowAttributes(display, e->window, &wa) || wa.override_redirect)
 		return false;
-	if(wa.override_redirect) {
-		/* Do I really want these? */
-		/* Probably not.
-		XSelectInput(display, e->window,
-			 PropertyChangeMask | StructureNotifyMask);
-		*/
-		return false;
-	}
 	if(!win2client(e->window))
 		client_create(e->window, &wa);
 	return false;

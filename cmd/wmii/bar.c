@@ -11,16 +11,11 @@ static Handlers handlers;
 		for((b)=(s)->bar[__bar_n]; (b); (b)=(b)->next)
 
 void
-bar_init(WMScreen *s, bool force) {
+bar_init(WMScreen *s) {
 	WinAttr wa;
 
-	if(s->barwin)
-		if(force)
-			destroywindow(s->barwin);
-		else {
-			bar_resize(s);
-			return;
-		}
+	if(s->barwin && (s->barwin->depth == 32) == s->barwin_rgba)
+		return;
 
 	s->brect = s->r;
 	s->brect.min.y = s->brect.max.y - labelh(def.font);
@@ -182,12 +177,12 @@ bar_draw(WMScreen *s) {
 		width += tw * shrink;
 	}
 
+	if(s->bar[BRight])
+		s->bar[BRight]->r.max.x += Dx(s->brect) - width;
 	tb = nil;
 	foreach_bar(s, b) {
 		if(tb)
 			b->r = rectaddpt(b->r, Pt(tb->r.max.x, 0));
-		if(b == s->bar[BRight])
-			b->r.max.x += Dx(s->brect) - width;
 		tb = b;
 	}
 
@@ -206,7 +201,7 @@ bar_draw(WMScreen *s) {
 	}
 
 	if(s->barwin_rgba != (s->barwin->depth == 32))
-		bar_init(s, true);
+		bar_init(s);
 	copyimage(s->barwin, r, ibuf, ZP);
 }
 

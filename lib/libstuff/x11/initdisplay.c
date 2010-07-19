@@ -22,7 +22,7 @@ static int
 Lfmt(Fmt *f) {
 	Color c;
 
-#define fix(c, m) (ushort)((c.alpha ? ((ulong)c.m * 0xffff) / c.alpha : 0) >> 8)
+#define fix(c, m) (ushort)((c.alpha ? (ulong)c.m * 0xffff / c.alpha : 0) >> 8)
 	c = va_arg(f->args, Color);
 	return fmtprint(f, c.alpha < 0xff00 ? "rgba:%02uhx/%02uhx/%02uhx/%02uhx"
 					    : "#%02uhx%02uhx%02uhx",
