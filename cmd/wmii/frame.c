@@ -426,7 +426,7 @@ frame_draw(Frame *f) {
 	fr = rectsetorigin(c->framewin->r, ZP);
 
 	/* Pick colors. */
-	if(c == selclient() || c == disp.focus)
+	if((c == selclient() || c == disp.focus) && disp.sel)
 		col = &def.focuscolor;
 	else
 		col = &def.normcolor;
