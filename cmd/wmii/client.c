@@ -335,8 +335,10 @@ client_destroy(Client *c) {
 
 	none = nil;
 	client_setviews(c, &none);
-	if(starting >= 0)
+	if(starting >= 0) {
 		client_unmap(c, WithdrawnState);
+		delproperty(&c->w, "_WMII_TAGS");
+	}
 	refree(&c->tagre);
 	refree(&c->tagvre);
 	free(c->retags);
