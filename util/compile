@@ -8,10 +8,9 @@ CFLAGS=$3; shift 3
 
 outfile="$1"; shift
 bin="$(echo $0 | sed 's,/[^/]*$,,')"
+xtmp=/tmp/cc.$$.$USER.out
 
 # Derived from Russ Cox's 9c in plan9port.
-
-xtmp=/tmp/cc.$$.$USER.out
 
 echo CC $($bin/cleanname ${BASE}$outfile)
 [ -n "$noisycc" ] && echo $CC -o $outfile $CFLAGS $@
@@ -50,7 +49,16 @@ undup() { # GCC is crap.
 		nl=0
 		maxl=6
 	}
+	/: (error|note): .?Each undeclared identifier|: error: for each function it appears|is dangerous, better use|is almost always misused|: In function |: At top level:|support .long long.|use of C99 long long|ISO C forbids conversion|warning:.*warn_unused_result/ {
+		next
+	}
+	$1 == "warning:" {
+		t = $2 " " $1
+		sub(/^[^ ]+ [^ ]+ /, "")
+		$0 = t " " $0
+	}
 	{
+		sub(/\[/, ": [", $1)
 		if(nl == maxl)
 			shift()
 		l[++nl] = $0
@@ -62,12 +70,8 @@ undup() { # GCC is crap.
 }
 
 cat $xtmp | sed "s,^$re,$base&,g; s,\([[:space:]]\)$re,\1$base\2,g" |
-	egrep -iv ': (error|note): .?Each undeclared identifier|: error: for each function it appears|is dangerous, better use|is almost always misused|: In function |: At top level:|support .long long.|use of C99 long long|ISO C forbids conversion|warning:.*warn_unused_result' |
 	sed 's/ .first use in this function.$//; s/\"\([^\"][^\"]*\)\", line \([0-9][0-9]*\)/\1:\2/g' |
-	awk '$1 == "warning:"{t=$2" "$1; sub(/^[^ ]+ [^ ]+ /, ""); $0 = t" "$0}; //' |
-	awk '{sub(/\[/, ": [", $1); print}' |
-	undup 1>&2
-
+	undup >&2
 rm -f $xtmp
 exit $status
 

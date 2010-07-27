@@ -63,13 +63,9 @@ constraintwin(Rectangle r) {
 
 void
 destroyconstraintwin(Window *w) {
-	Window *w2;
 
-	if(w->aux) {
-		w2 = w->aux;
-		sethandler(w2, nil);
-		destroywindow(w2);
-	}
+	if(w->aux)
+		destroywindow(w->aux);
 	destroywindow(w);
 }
 

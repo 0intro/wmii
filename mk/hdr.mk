@@ -22,6 +22,11 @@ FILTER = cat
 
 EXCFLAGS = $(INCLUDES) -D_XOPEN_SOURCE=600
 
+# Try to avoid bash if possible. It slows the build considerably.
+SHELL := $(shell which /bin/dash 2>/dev/null || echo /bin/sh)
+SHELL != which /bin/dash 2>/dev/null || echo /bin/sh
+.SHELL: name=sh path=$(SHELL)
+
 COMPILE_FLAGS = $(EXCFLAGS) $(CFLAGS)
 COMPILE    = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(PACKAGES)" "$(COMPILE_FLAGS)"
 COMPILEPIC = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(PACKAGES)" "$(COMPILE_FLAGS) $(SOCFLAGS)"
