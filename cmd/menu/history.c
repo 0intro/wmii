@@ -82,7 +82,10 @@ history_dump(const char *path, int max) {
 	Binit(&b, fd, OWRITE);
 	hist.next = nil;
 	for(h=first; h; h=h->next)
-		Bprint(&b, "%s\n", h->string);
+		if(Bprint(&b, "%s\n", h->string) < 0) {
+			unlink(tmp);
+			exit(1);
+		}
 	Bterm(&b);
 	rename(tmp, path);
 	exit(0);

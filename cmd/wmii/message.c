@@ -907,13 +907,12 @@ msg_nudge(View *v, IxpMsg *m) {
 void
 msg_parsecolors(IxpMsg *m, CTuple *col) {
 	CTuple tpl;
-	static char Ebad[] = "bad color string";
 	char n;
 
 	n = loadcolor(&tpl, m->pos, m->end);
 	m->pos += n;
 	if(n == 0 || msg_getword(m, nil))
-		error(Ebad);
+		error("bad color string");
 	*col = tpl;
 }
 

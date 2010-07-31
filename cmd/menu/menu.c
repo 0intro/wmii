@@ -265,8 +265,9 @@ kdown_event(Window *w, void *aux, XKeyEvent *e) {
 	int num;
 	KeySym ksym;
 
-	buf[0] = 0;
+	buf[0] = '\0';
 	num = XLookupString(e, buf, sizeof buf, &ksym, 0);
+	buf[num] = '\0';
 	key = XKeysymToString(ksym);
 	if(IsKeypadKey(ksym))
 		if(ksym == XK_KP_Enter)
