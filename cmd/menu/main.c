@@ -186,7 +186,7 @@ main(int argc, char *argv[]) {
 	int i;
 	long ndump;
 
-	setlocale(LC_CTYPE, "");
+	setlocale(LC_ALL, "");
 	fmtinstall('r', errfmt);
 	quotefmtinstall();
 

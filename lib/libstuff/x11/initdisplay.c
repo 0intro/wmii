@@ -76,6 +76,8 @@ initdisplay(void) {
 
 	scr.root.parent = &scr.root;
 
+	scr.xim = XOpenIM(display, nil, nil, nil);
+
 	windowmap.bucket = wbucket;
 	windowmap.nhash = nelem(wbucket);
 	atommap.bucket = abucket;

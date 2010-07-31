@@ -89,7 +89,7 @@ caret_find(int dir, int type) {
 			return p;
 		case CHAR:
 			if(p > end)
-				return p-1;
+				return prev_rune(end, p, &r);
 			return end;
 		}
 	}

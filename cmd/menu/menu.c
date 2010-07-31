@@ -29,7 +29,13 @@ menu_init(void) {
 
 	wa.event_mask = ExposureMask | KeyPressMask;
 	barwin = createwindow(&scr.root, Rect(-1, -1, 1, 1), scr.depth, InputOutput,
-			&wa, CWEventMask);
+			      &wa, CWEventMask);
+	if(scr.xim)
+		barwin->xic = XCreateIC(scr.xim,
+					XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+					XNClientWindow, barwin->xid,
+					XNFocusWindow, barwin->xid,
+					nil);
 
 	changeprop_long(barwin, Net("WM_WINDOW_TYPE"), "ATOM",
 			(long[]){ TYPE("MENU") }, 1);
@@ -262,29 +268,42 @@ kdown_event(Window *w, void *aux, XKeyEvent *e) {
 	char **action, **p;
 	char *key;
 	char buf[32];
-	int num;
+	int num, status;
 	KeySym ksym;
 
-	buf[0] = '\0';
-	num = XLookupString(e, buf, sizeof buf, &ksym, 0);
-	buf[num] = '\0';
-	key = XKeysymToString(ksym);
-	if(IsKeypadKey(ksym))
-		if(ksym == XK_KP_Enter)
-			ksym = XK_Return;
-		else if(ksym >= XK_KP_0 && ksym <= XK_KP_9)
-			ksym = (ksym - XK_KP_0) + XK_0;
-
-	if(IsFunctionKey(ksym)
-	|| IsMiscFunctionKey(ksym)
-	|| IsKeypadKey(ksym)
-	|| IsPrivateKeypadKey(ksym)
-	|| IsPFKey(ksym))
+	if(XFilterEvent((XEvent*)e, w->xid))
 		return false;
 
-	action = find_key(key, e->state);
-	if(action == nil || action[0] == nil) {
+	status = XLookupBoth;
+	if(w->xic)
+		num = Xutf8LookupString(w->xic, e, buf, sizeof buf - 1, &ksym,
+					&status);
+	else
+		num = XLookupString(e, buf, sizeof buf - 1, &ksym, nil);
+
+	if(status != XLookupChars && status != XLookupKeySym && status != XLookupBoth)
+		return false;
+
+	if(status == XLookupKeySym || status == XLookupBoth) {
+		key = XKeysymToString(ksym);
+		if(IsKeypadKey(ksym))
+			if(ksym == XK_KP_Enter)
+				ksym = XK_Return;
+			else if(ksym >= XK_KP_0 && ksym <= XK_KP_9)
+				ksym = (ksym - XK_KP_0) + XK_0;
+
+		if(IsFunctionKey(ksym)
+		|| IsMiscFunctionKey(ksym)
+		|| IsKeypadKey(ksym)
+		|| IsPrivateKeypadKey(ksym)
+		|| IsPFKey(ksym))
+			return false;
+		action = find_key(key, e->state);
+	}
+
+	if(status == XLookupChars || action == nil || action[0] == nil) {
 		if(num && !iscntrl(buf[0])) {
+			buf[num] = '\0';
 			caret_insert(buf, false);
 			update_filter(true);
 			menu_draw();

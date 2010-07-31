@@ -146,6 +146,7 @@ struct WinHints {
 struct Window {
 	int		type;
 	XID		xid;
+	XIC		xic;
 	GC		gc;
 	Visual*		visual;
 	Colormap	colormap;
@@ -202,6 +203,7 @@ struct Screen {
 	Rectangle	rect;
 	int		depth;
 	int		fd;
+	XIM		xim;
 };
 
 #ifdef VARARGCK
