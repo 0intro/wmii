@@ -9,17 +9,17 @@
 /* TODO: Make this UTF-8 compliant. */
 char*
 strcasestr(const char *dst, const char *src) {
-	int dc, sc;
-        int len;
+	int len, dc, sc;
+
+	if(src[0] == '\0')
+		return (char*)(uintptr_t)dst;
 
 	len = strlen(src) - 1;
-	for(; (sc = *src) && *dst; src++) {
-		sc = tolower(dc);
-		for(; (dc = *dst); dst++) {
-			dc = tolower(dc);
-			if(sc == dc && !strncasecmp(dst+1, src+1, len))
-				return (char*)(uintptr_t)dst;
-		}
+	sc  = tolower(src[0]);
+	for(; (dc = *dst); dst++) {
+		dc = tolower(dc);
+		if(sc == dc && (len == 0 || !strncasecmp(dst+1, src+1, len)))
+			return (char*)(uintptr_t)dst;
 	}
 	return nil;
 }

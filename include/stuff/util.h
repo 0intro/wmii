@@ -151,5 +151,5 @@ void	vector_##c##push(Vector_##nam*, type); \
 VECTOR(long, long, l)
 VECTOR(Rectangle, rect, r)
 VECTOR(void*, ptr, p)
-#undef  VECTOR
+#undef VECTOR
 
