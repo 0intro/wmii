@@ -59,7 +59,7 @@ history_dump(const char *path, int max) {
 	fd = mkstemp(tmp);
 	if(fd < 0) {
 		fprint(2, "%s: Can't create temporary history file %q: %r\n", argv0, path);
-		return;
+		_exit(1);
 	}
 
 	hist.string = input.string;
@@ -84,10 +84,11 @@ history_dump(const char *path, int max) {
 	for(h=first; h; h=h->next)
 		if(Bprint(&b, "%s\n", h->string) < 0) {
 			unlink(tmp);
-			exit(1);
+			fprint(2, "%s: Can't write temporary history file %q: %r\n", argv0, path);
+			_exit(1);
 		}
 	Bterm(&b);
 	rename(tmp, path);
-	exit(0);
+	_exit(0);
 }
 

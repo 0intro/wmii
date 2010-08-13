@@ -4,10 +4,12 @@
 #define IXP_NO_P9_
 #define IXP_P9_STRUCTS
 #include <dirent.h>
+#include <errno.h>
 #include <limits.h>
 #include <locale.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/signal.h>
 #include <time.h>
 #include <unistd.h>
@@ -432,7 +434,9 @@ static int
 xproglist(int argc, char *argv[]) {
 	DIR *d;
 	struct dirent *de;
-	char *dir;
+	struct stat stat;
+	char *dir, *cwd;
+	int i;
 
 	quotefmtinstall();
 
@@ -441,12 +445,19 @@ xproglist(int argc, char *argv[]) {
 		usage();
 	}ARGEND;
 
+	i = 7, cwd = nil;
+	do
+		cwd = erealloc(cwd, 1<<i);
+	while(!getcwd(cwd, 1<<i) && errno == ERANGE);
+
 	while((dir = ARGF()))
 		/* Don't use Blprint. wimenu expects UTF-8. */
-		if((d = opendir(dir))) {
-			while((de = readdir(d)))
-				if(access(de->d_name, X_OK))
+		if(!chdir(cwd) && !chdir(dir) && (d = opendir(dir))) {
+			while((de = readdir(d))) {
+				lstat(de->d_name, &stat);
+				if(S_ISREG(stat.st_mode) && !access(de->d_name, X_OK))
 					Bprint(outbuf, "%q\n", de->d_name);
+			}
 			closedir(d);
 		}
 

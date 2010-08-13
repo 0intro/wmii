@@ -643,7 +643,7 @@ mouse_checkresize(Frame *f, Point p, bool exec) {
 static void
 _grab(XWindow w, uint button, ulong mod) {
 	XGrabButton(display, button, mod, w, false, ButtonMask,
-			GrabModeSync, GrabModeAsync, None, None);
+			GrabModeSync, GrabModeSync, None, None);
 }
 
 /* Doesn't belong here */
