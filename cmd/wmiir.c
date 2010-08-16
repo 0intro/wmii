@@ -434,7 +434,7 @@ static int
 xproglist(int argc, char *argv[]) {
 	DIR *d;
 	struct dirent *de;
-	struct stat stat;
+	struct stat st;
 	char *dir, *cwd;
 	int i;
 
@@ -454,8 +454,8 @@ xproglist(int argc, char *argv[]) {
 		/* Don't use Blprint. wimenu expects UTF-8. */
 		if(!chdir(cwd) && !chdir(dir) && (d = opendir(dir))) {
 			while((de = readdir(d))) {
-				lstat(de->d_name, &stat);
-				if(S_ISREG(stat.st_mode) && !access(de->d_name, X_OK))
+				stat(de->d_name, &st);
+				if(S_ISREG(st.st_mode) && !access(de->d_name, X_OK))
 					Bprint(outbuf, "%q\n", de->d_name);
 			}
 			closedir(d);
