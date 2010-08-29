@@ -1,7 +1,7 @@
 
 targ = for k in $(MANPAGES); do echo $$k | sed 's/ .*//'; done
-TARG := $(shell $(targ))
-TARG != $(targ)
+TARG:= $(shell $(targ))
+TARG!= $(targ)
 
 all: $(TARG)
 install: $(TARG:.1=.install) $(TARG:.3=.install) maninstall

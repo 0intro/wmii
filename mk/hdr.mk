@@ -22,11 +22,6 @@ FILTER = cat
 
 EXCFLAGS = $(INCLUDES) -D_XOPEN_SOURCE=600
 
-# Try to avoid bash if possible. It slows the build considerably.
-SHELL := $(shell which /bin/dash 2>/dev/null || echo /bin/sh)
-SHELL != which /bin/dash 2>/dev/null || echo /bin/sh
-.SHELL: name=sh path=$(SHELL)
-
 COMPILE_FLAGS = $(EXCFLAGS) $(CFLAGS)
 COMPILE    = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(PACKAGES)" "$(COMPILE_FLAGS)"
 COMPILEPIC = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(PACKAGES)" "$(COMPILE_FLAGS) $(SOCFLAGS)"
@@ -43,28 +38,24 @@ CTAGS=ctags
 
 PACKAGES = 
 
-# and this:
 # Try to find a sane shell. /bin/sh is a last resort, because it's
 # usually bash on Linux, which means it's painfully slow.
-BINSH := $(shell \
-	   if [ -x /bin/dash ]; then echo /bin/dash; \
-	   elif [ -x /bin/ksh ]; then echo /bin/ksh; \
-	   else echo /bin/sh; fi)
-BINSH != echo /bin/sh
+SHELLSEARCH = for sh in /bin/dash /bin/ksh /bin/sh; do \
+	      if test -x $$sh; then echo $$sh; exit; fi; done
+
+BINSH:= $(shell $(SHELLSEARCH))
+BINSH!= $(SHELLSEARCH)
+SHELL := $(BINSH)
+.SHELL: name=sh path=$(SHELL)
 
 include $(ROOT)/config.mk
-
-# I hate this.
-MKCFGSH=if test -f $(ROOT)/config.local.mk; then echo $(ROOT)/config.local.mk; else echo /dev/null; fi
-MKCFG:=$(shell $(MKCFGSH))
-MKCFG!=$(MKCFGSH)
-include $(MKCFG)
+sinclude $(ROOT)/config.local.mk
+sinclude $(shell echo .)depend
 
 .SILENT:
 .SUFFIXES: .$(SOEXT) .1 .3 .awk .build .c .clean .depend .install .man1 .man3 .o .o_pic .out .pdf .py .rc .sh .uninstall
 all:
 
-MAKEFILES=.depend
 .c.depend:
 	echo MKDEP $<
 	$(DEBUG) eval "$(MKDEP) $(COMPILE_FLAGS)" $< | sed '1s|.*:|$(<:%.c=%.o):|' >>.depend
