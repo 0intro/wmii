@@ -4,6 +4,7 @@ include $(ROOT)/mk/wmii.mk
 
 DIRS = \
 	doc	     \
+	examples     \
 	man	     \
 	lib	     \
 	cmd	     \

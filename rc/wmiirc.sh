@@ -78,8 +78,8 @@ startup
 echo colors $WMII_NORMCOLORS | wmiir create $noticebar
 
 # Event processing
-events() {
-	cat <<'!'
+local_events | wi_events
+wi_events <<'!'
 # Events
 Event CreateTag
 	echo colors "$WMII_NORMCOLORS$wi_newline" label "$@" | wmiir create "/lbar/$@"
@@ -237,15 +237,14 @@ Key $MODKEY-b	    # Move to the previous tag
 	wmiir xwrite /ctl view $(wi_tags | sort -r | wi_nexttag)
 !
 	for i in 0 1 2 3 4 5 6 7 8 9; do
-		cat <<!
+		wi_events <<!
 Key $MODKEY-$i		 # Move to the numbered view
 	wmiir xwrite /ctl view "$i"
 Key $MODKEY-Shift-$i     # Retag selected client with the numbered tag
 	wmiir xwrite /client/sel/ctl tags "$i"
 !
-	done
-}
-wi_events events local_events
+done
+wi_events -e
 
 # WM Configuration
 wmiir write /ctl <<!

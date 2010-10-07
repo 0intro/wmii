@@ -41,6 +41,10 @@ following. More advanced options are documented below.
 : -p <prompt>
         The string <prompt> will be show before the input field
         when the menu is opened.
+: -r <rows>
+        Display completion items as a vertical list, one per
+        row, rather than a horizontal list, side-by-side. A
+        maximum of <rows> rows will be displayed.
 :
 
 = ADVANCED ARGUMENTS =
@@ -130,9 +134,7 @@ wimenu -c <fifo | awk '
 		print cmds >fifo; fflush(fifo)
 	}
 
-	# Store the last line we get and print it when done
-	{ last = $0 }
-	END { print last }
+        { print; fflush() }
 
 	# Push out a new set of completions
 	function update(str, opts) {
@@ -152,12 +154,12 @@ wimenu -c <fifo | awk '
 		# Skip the trailing part of the command
 		getline rest
 	}
-'
+' | tail -1
 ```
 
 In theory, this facility can be used for myriad purposes,
 including hijacking the programmable completion facilities of
-most shells.
+most shells. See also the provided examples[1].
 
 = ENVIRONMENT =
 
@@ -170,5 +172,5 @@ most shells.
 = SEE ALSO =
 wmii(1), wmiir(1), wistrug(1), wmii9menu(1), dmenu(1)
 
-[1] http://www.suckless.org/wiki/wmii/tips/9p_tips
-
+[1] http://www.suckless.org/wiki/wmii/tips/9p_tips +
+[2] @EXAMPLES@
