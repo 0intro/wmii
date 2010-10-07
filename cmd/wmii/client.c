@@ -120,6 +120,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	client_prop(c, xatom("WM_NAME"));
 	client_prop(c, xatom("_MOTIF_WM_HINTS"));
 
+	gethostname(hostname, sizeof(hostname) - 1);
 	if(getprop_textlist(&c->w, "WM_CLIENT_MACHINE", &host) &&
 	   getprop_ulong(&c->w, Net("WM_PID"), "CARDINAL", 0, &pid, 1) &&
 	   !strcmp(hostname, *host))
