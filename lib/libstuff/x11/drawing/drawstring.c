@@ -5,6 +5,17 @@
 #include "../x11.h"
 
 uint
+fillstring(Image *dst, Font *font,
+	   Rectangle r, Align align,
+	   const char *text, CTuple *col, int borderw) {
+
+	fill(dst, r, &col->bg);
+	if(borderw)
+		border(dst, r, borderw, &col->border);
+	return drawstring(dst, font, r, align, text, &col->fg);
+}
+
+uint
 drawstring(Image *dst, Font *font,
 	   Rectangle r, Align align,
 	   const char *text, Color *col) {

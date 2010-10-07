@@ -69,9 +69,7 @@ caret_find(int dir, int type) {
 				p = next;
 			return p;
 		case CHAR:
-			if(p < end)
-				return p+1;
-			return p;
+			return next_rune(p, &r);
 		}
 	}
 	else if(dir == BACKWARD) {
@@ -88,9 +86,7 @@ caret_find(int dir, int type) {
 				p = next;
 			return p;
 		case CHAR:
-			if(p > end)
-				return prev_rune(end, p, &r);
-			return end;
+			return prev_rune(end, p, &r);
 		}
 	}
 	input.pos_end = nil;

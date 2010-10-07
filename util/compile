@@ -49,7 +49,7 @@ undup() { # GCC is crap.
 		nl=0
 		maxl=6
 	}
-	/: (error|note): .?Each undeclared identifier|: error: for each function it appears|is dangerous, better use|is almost always misused|: In function |: At top level:|support .long long.|use of C99 long long|ISO C forbids conversion|warning:.*warn_unused_result/ {
+	tolower($0) ~ /: (error|note): .?each undeclared identifier|: error: for each function it appears|is dangerous, better use|is almost always misused|: in function |: at top level:|support .long long.|use of c99 long long|iso c forbids conversion|warning:.*warn_unused_result/ {
 		next
 	}
 	$1 == "warning:" {

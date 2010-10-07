@@ -13,7 +13,8 @@ struct Key {
 	char**	action;
 };
 
-static Key* bindings;
+static Key*	bindings;
+static int	numlock;
 
 /*
  * To do: Find my red black tree implementation.

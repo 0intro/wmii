@@ -1,8 +1,6 @@
 /* Copyright ©2006-2010 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
-#define IXP_NO_P9_
-#define IXP_P9_STRUCTS
 #define EXTERN
 #include "dat.h"
 #include <X11/Xproto.h>
@@ -23,7 +21,9 @@ static int	screen_hint;
 
 static void
 usage(void) {
-	fatal("usage: wimenu -i [-h <history>] [-a <address>] [-p <prompt>] [-s <screen>]\n");
+	fprint(2, "usage: %s -i [-a <address>] [-h <history>] [-p <prompt>] [-r <rows>] [-s <screen>]\n", argv0);
+	fprint(2, "       See manual page for full usage details.\n");
+	exit(1);
 }
 
 static int
@@ -50,13 +50,13 @@ populate_list(Biobuf *buf, bool hist) {
 	bool stop;
 
 	stop = !hist && !isatty(buf->fid);
+	ret.next_link = nil;
 	i = &ret;
 	while((p = Brdstr(buf, '\n', true))) {
 		if(stop && p[0] == '\0')
 			break;
-		link(i, emallocz(sizeof *i));
-		i->next_link = i->next;
-		i = i->next;
+		i->next_link = emallocz(sizeof *i);
+		i = i->next_link;
 		i->string = p;
 		i->retstring = p;
 		if(cmdsep && (p = strstr(p, cmdsep))) {
@@ -65,15 +65,12 @@ populate_list(Biobuf *buf, bool hist) {
 		}
 		if(!hist) {
 			i->len = strlen(i->string);
-			i->width = textwidth_l(font, i->string, i->len);
-			if(i->width > maxwidth)
-				maxwidth = i->width;
+			i->width = textwidth_l(font, i->string, i->len) + itempad;
+			match.maxwidth = max(i->width, match.maxwidth);
 		}
 	}
 
-	link(i, &ret);
-	splice(&ret);
-	return ret.next != &ret ? ret.next : nil;
+	return ret.next_link;
 }
 
 static void
@@ -86,7 +83,7 @@ check_competions(IxpConn *c) {
 		return;
 	}
 	input.filter_start = strtol(s, nil, 10);
-	items = populate_list(cmplbuf, false);
+	match.all = populate_list(cmplbuf, false);
 	update_filter(false);
 	menu_draw();
 }
@@ -143,8 +140,8 @@ update_filter(bool print) {
 	if(input.pos < input.end)
 		filter = freelater(estrndup(filter, input.pos - filter));
 
-	matchidx = nil;
-	matchfirst = matchstart = filter_list(items, filter);
+	match.sel = nil;
+	match.first = match.start = filter_list(match.all, filter);
 	if(print)
 		update_input();
 }
@@ -158,8 +155,7 @@ init_screens(void) {
 	int i, n;
 
 	rects = xinerama_screens(&n);
-	if (screen_hint >= 0 && screen_hint < n)
-		/* We were given a valid screen index, use that. */
+	if(screen_hint >= 0 && screen_hint < n)
 		i = screen_hint;
 	else {
 		/* Pick the screen with the pointer, for now. Later,
@@ -178,11 +174,11 @@ init_screens(void) {
 
 int
 main(int argc, char *argv[]) {
-	Item *item;
 	static char *address;
 	static char *histfile;
 	static char *keyfile;
 	static bool nokeys;
+	Item *item;
 	int i;
 	long ndump;
 
@@ -220,7 +216,10 @@ main(int argc, char *argv[]) {
 		ndump = strtol(EARGF(usage()), nil, 10);
 		break;
 	case 'p':
-		prompt = EARGF(usage());
+		menu.prompt = EARGF(usage());
+		break;
+	case 'r':
+		menu.rows = strtol(EARGF(usage()), nil, 10);
 		break;
 	case 's':
 		screen_hint = strtol(EARGF(usage()), nil, 10);
@@ -249,11 +248,13 @@ main(int argc, char *argv[]) {
 	srv.preselect = event_preselect;
 	ixp_listen(&srv, ConnectionNumber(display), nil, event_fdready, event_fdclosed);
 
-	ontop = !strcmp(readctl("bar on "), "top");
+	menu.ontop = !strcmp(readctl("/ctl", "bar "), "on top");
 	client_readconfig(&cnorm, &csel, &font);
 
+	itempad = (font->height & ~1) + font->pad.min.x + font->pad.max.x;
+
 	cmplbuf = Bfdopen(0, OREAD);
-	items = populate_list(cmplbuf, false);
+	match.all = populate_list(cmplbuf, false);
 	if(!isatty(cmplbuf->fid))
 		ixp_listen(&srv, cmplbuf->fid, inbuf, check_competions, nil);
 
@@ -268,21 +269,18 @@ main(int argc, char *argv[]) {
 			parse_keys(buffer);
 	}
 
-	histidx = &hist;
+	histsel = &hist;
 	link(&hist, &hist);
-	if(histfile) {
-		inbuf = Bopen(histfile, OREAD);
-		if(inbuf) {
-			item = populate_list(inbuf, true);
-			if(item) {
-				link(item->prev, &hist);
-				link(&hist, item);
-			}
-			Bterm(inbuf);
+	if(histfile && (inbuf = Bopen(histfile, OREAD))) {
+		item = filter_list(populate_list(inbuf, true), "");
+		if(item->string) {
+			link(item->prev, &hist);
+			link(&hist, item);
 		}
+		Bterm(inbuf);
 	}
 
-	if(barwin == nil)
+	if(menu.win == nil)
 		menu_init();
 
 	init_screens();

@@ -261,6 +261,7 @@ void	drawpoly(Image*, Point*, int, int cap, int w, Color*);
 uint	drawstring(Image*, Font*, Rectangle, Align, const char*, Color*);
 void	fill(Image*, Rectangle, Color*);
 void	fillpoly(Image*, Point*, int, Color*);
+uint	fillstring(Image*, Font*, Rectangle, Align, const char*, CTuple*, int border);
 Window*	findwin(XWindow);
 void	freefont(Font*);
 void	freeimage(Image *);

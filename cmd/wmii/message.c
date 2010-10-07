@@ -656,7 +656,6 @@ message_root(void *p, IxpMsg *m) {
 		if(!parsekey(s, &i, nil) || i == 0)
 			return Ebadvalue;
 
-		utflcpy(def.grabmod, s, sizeof def.grabmod);
 		def.mod = i;
 		break;
 	case LINCMODE:
@@ -700,7 +699,7 @@ readctl_root(void) {
 	bufprint("font %s\n", def.font->name);
 	bufprint("fontpad %d %d %d %d\n", def.font->pad.min.x, def.font->pad.max.x,
 		 def.font->pad.max.y, def.font->pad.min.y);
-	bufprint("grabmod %s\n", def.grabmod);
+	bufprint("grabmod %s\n", (Mask){&def.mod, modkey_names});
 	bufprint("incmode %s\n", incmodetab[def.incmode]);
 	bufprint("normcolors %s\n", def.normcolor.colstr);
 	bufprint("view %s\n", selview->name);

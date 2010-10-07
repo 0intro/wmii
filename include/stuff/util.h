@@ -42,13 +42,10 @@ enum {
 
 int	Blprint(Biobuf*, const char*, ...);
 int	Bvlprint(Biobuf*, const char*, va_list);
-extern char*	_buffer;
 void	_die(char*, int, char*, ...);
 void	backtrace(char*);
-extern char	buffer[8092];
 void	closeexec(int);
 char**	comm(int, char**, char**);
-extern char*	const _buf_end;
 int	doublefork(void);
 void*	emalloc(uint);
 void*	emallocz(uint);
@@ -90,6 +87,10 @@ int	unquote(char*, char*[], int);
 int	utflcpy(char*, const char*, int);
 int	vlprint(int, const char*, va_list);
 char*	vsxprint(const char*, va_list);
+
+extern char*	_buffer;
+extern char	buffer[8092];
+extern char*	const _buf_end;
 #define bufclear() \
 	BLOCK( _buffer = buffer; _buffer[0] = '\0' )
 #define bufprint(...) \

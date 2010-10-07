@@ -426,7 +426,7 @@ xnamespace(int argc, char *argv[]) {
 	path = ixp_namespace();
 	if(path == nil)
 		fatal("can't find namespace: %r\n");
-	Blprint(outbuf, "%s\n", path);
+	Blprint(outbuf, "%s", path);
 	return 0;
 }
 

@@ -220,7 +220,8 @@ apply_rules(Client *c) {
 	bool ret, more;
 
 	ret = true;
-	for(r=def.rules.rule; r; r=r->next)
+	more = true;
+	for(r=def.rules.rule; r && more; r=r->next)
 		if(regexec(r->regex, c->props, nil, 0)) {
 			more = false;
 			for(rv=r->values; rv; rv=rv->next) {
@@ -234,15 +235,15 @@ apply_rules(Client *c) {
 				}else {
 					bufclear();
 					bufprint("%s %s", rv->key, rv->value);
-					m = ixp_message(buffer, sizeof buffer, MsgPack);
-					if(!waserror()) {
+					m = ixp_message(buffer, _buf_end - buffer, MsgPack);
+					if(waserror())
+						warning("processing rule %q=%q: %r", rv->key, rv->value);
+					else {
 						message_client(c, &m);
 						poperror();
 					}
 				}
 			}
-			if(!more)
-				return ret;
 		}
 	return ret;
 }
@@ -1093,6 +1094,11 @@ client_extratags(Client *c) {
 	toks[i] = nil;
 	tags = comm(CLeft, toks, c->retags);
 
+	if(i == 1 && !c->tagre.regex && !c->tagvre.regex) {
+		free(tags);
+		return nil;
+	}
+
 	fmtstrinit(&fmt);
 	if(i > 1)
 		join(tags, "+", &fmt);
@@ -1131,17 +1137,16 @@ client_applytags(Client *c, const char *tags) {
 		/* Check for regex. */
 		if(cur[0] == '/') {
 			cur++;
-			*strchr(cur, '/') = '\0';
+			*strrchr(cur, '/') = '\0';
 			if(add == '+')
 				reinit(&c->tagre, cur);
 			else if(add == '-')
 				reinit(&c->tagvre, cur);
 		}
-
-		trim(cur, " \t\r\n");
-		if(!strcmp(cur, "~"))
+		else if(!strcmp(cur, "~"))
 			c->floating = add ? On : Never;
 		else {
+			trim(cur, " \t\r\n");
 			if(!strcmp(cur, "sel"))
 				cur = selview->name;
 			else if(Mbsearch(cur, badtags, bsstrcmp))

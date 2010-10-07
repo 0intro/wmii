@@ -11,8 +11,6 @@
 #include <stuff/x.h>
 #include <stuff/util.h>
 
-#define BLOCK(x) do { x; }while(0)
-
 #ifndef EXTERN
 # define EXTERN extern
 #endif
@@ -69,38 +67,40 @@ EXTERN struct {
 	int	filter_start;
 } input;
 
+EXTERN struct {
+	Window*		win;
+	Image*		buf;
+	char*		prompt;
+	int		height;
+	int		rows;
+	bool		ontop;
+	Rectangle	itemr;
+	Point		arrow;
+} menu;
+
 extern char	binding_spec[];
-
-EXTERN int	numlock;
-
-EXTERN long	xtime;
-EXTERN Image*	ibuf;
-EXTERN Font*	font;
-EXTERN CTuple	cnorm, csel;
-EXTERN bool	ontop;
-
-EXTERN Cursor	cursor[1];
-EXTERN Visual*	render_visual;
 
 EXTERN IxpServer	srv;
 
-EXTERN Window*	barwin;
+EXTERN struct {
+	Item*	all;
+	Item*	first;
+	Item*	start;
+	Item*	end;
+	Item*	sel;
+	int	maxwidth;
+} match;
 
-EXTERN Item*	items;
-EXTERN Item*	matchfirst;
-EXTERN Item*	matchstart;
-EXTERN Item*	matchend;
-EXTERN Item*	matchidx;
+Font*		font;
+CTuple		cnorm;
+CTuple		csel;
 
 EXTERN Item	hist;
-EXTERN Item*	histidx;
+EXTERN Item*	histsel;
 
-EXTERN int	maxwidth;
+EXTERN int	itempad;
 EXTERN int	result;
 
-EXTERN  char*	(*find)(const char*, const char*);
-EXTERN  int	(*compare)(const char*, const char*, size_t);
-
-EXTERN char*	prompt;
-EXTERN int	promptw;
+EXTERN char*	(*find)(const char*, const char*);
+EXTERN int	(*compare)(const char*, const char*, size_t);
 

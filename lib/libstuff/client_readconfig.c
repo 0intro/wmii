@@ -11,13 +11,13 @@ void
 client_readconfig(CTuple *norm, CTuple *focus, Font **font) {
 
 	if(norm)
-		loadcolor(norm, readctl("normcolors "), nil);
+		loadcolor(norm, readctl("/ctl", "normcolors "), nil);
 	if(focus)
-		loadcolor(focus, readctl("focuscolors "), nil);
-	*font = loadfont(readctl("font "));
+		loadcolor(focus, readctl("/ctl", "focuscolors "), nil);
+	*font = loadfont(readctl("/ctl", "font "));
 	if(!*font)
-		fatal("Can't load font %q", readctl("font "));
-	sscanf(readctl("fontpad "), "%d %d %d %d",
+		fatal("Can't load font %q", readctl("/ctl", "font "));
+	sscanf(readctl("/ctl", "fontpad "), "%d %d %d %d",
 	       &(*font)->pad.min.x, &(*font)->pad.max.x,
 	       &(*font)->pad.min.x, &(*font)->pad.max.y);
 }

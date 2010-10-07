@@ -313,8 +313,7 @@ EXTERN struct Defs {
 	uint	keyssz;
 	Ruleset	colrules;
 	Ruleset	rules;
-	char	grabmod[5];
-	ulong	mod;
+	long	mod;
 	uint	border;
 	uint	snap;
 	int	colmode;

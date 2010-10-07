@@ -398,6 +398,7 @@ pushlabel(Image *img, Rectangle *rp, char *s, CTuple *col) {
 	w = min(w, Dx(*rp) - 30); /* Magic number. */
 	if(w > 0) {
 		r = *rp;
+		r.min.x = r.max.x - w;
 		rp->max.x -= w;
 		if(0)
 		drawline(img, Pt(rp->max.x, r.min.y+2),
@@ -406,6 +407,7 @@ pushlabel(Image *img, Rectangle *rp, char *s, CTuple *col) {
 		drawstring(img, def.font, r, East,
 			   s, &col->fg);
 	}
+	free(s);
 }
 
 void
@@ -415,7 +417,6 @@ frame_draw(Frame *f) {
 	CTuple *col;
 	Image *img;
 	char *s;
-	uint w;
 	int n, m;
 
 	if(f == nil || f->view != selview || f->area == nil)
@@ -443,6 +444,9 @@ frame_draw(Frame *f) {
 	f->titlebar = insetrect(r, 3);
 	f->titlebar.max.y += 3;
 
+	f->grabbox = insetrect(r, 2);
+	f->grabbox.max.x = f->grabbox.min.x + Dy(f->grabbox);
+
 	/* Odd focus. Unselected, with keyboard focus. */
 	/* Draw a border just inside the titlebar. */
 	if(c != selclient() && c == disp.focus) {
@@ -450,15 +454,9 @@ frame_draw(Frame *f) {
 		border(img, insetrect(r, 2), 1, &def.focuscolor.border);
 	}
 
-	/* grabbox */
-	r.min = Pt(2, 2);
-	r.max.y -= 2;
-	r.max.x = r.min.x + Dy(r);
-	f->grabbox = r;
-
 	if(c->urgent)
-		fill(img, r, &col->fg);
-	border(img, r, 1, &col->border);
+		fill(img, f->grabbox, &col->fg);
+	border(img, f->grabbox, 1, &col->border);
 
 	/* Odd focus. Selected, without keyboard focus. */
 	/* Draw a border around the grabbox. */
@@ -466,38 +464,34 @@ frame_draw(Frame *f) {
 		border(img, insetrect(r, -1), 1, &def.normcolor.bg);
 
 	/* Draw a border on borderless+titleless selected apps. */
-	if(f->area->floating && c->borderless && c->titleless && !c->fullscreen && c == selclient())
+	if(c->borderless && c->titleless && f->area->floating && !c->fullscreen && c == selclient())
 		setborder(c->framewin, def.border, &def.focuscolor.border);
 	else
 		setborder(c->framewin, 0, &def.focuscolor.border);
 
 	/* Label */
-	r.min.x = r.max.x;
-	r.max.x = fr.max.x;
-	r.min.y = 0;
-	r.max.y = labelh(def.font);
+	r = Rect(f->grabbox.max.x, 0, fr.max.x, labelh(def.font));
+
 	/* Draw count on frames in 'max' columns. */
 	if(f->area->max && !resizing) {
-		/* XXX */
 		n = stack_count(f, &m);
-		s = smprint("%d/%d", m, n);
-		pushlabel(img, &r, s, col);
-		free(s);
+		pushlabel(img, &r, smprint("%d/%d", m, n), col);
 	}
+
 	/* Label clients with extra tags. */
-	if((s = client_extratags(c))) {
+	if((s = client_extratags(c)))
 		pushlabel(img, &r, s, col);
-		free(s);
-	}else if(f->area->floating)  /* Make sure floating clients have room for their indicators. */
-		r.max.x -= Dx(f->grabbox);
+
+	if(f->area->floating)  /* Make sure floating clients have room for their indicators. */
+		r.max.x -= f->grabbox.max.x;
 
 	if(!ewmh_responsive_p(c))
 		r.min.x += drawstring(img, def.font, r, West, "(wedged) ", &col->fg);
-	w = drawstring(img, def.font, r, West, c->name, &col->fg);
+	r.min.x += drawstring(img, def.font, r, West, c->name, &col->fg);
 
 	/* Draw inner border on floating clients. */
 	if(f->area->floating) {
-		r.min.x = r.min.x + w + 10;
+		r.min.x += 10;
 		r.max.x += Dx(f->grabbox);
 		r.min.y = f->grabbox.min.y;
 		r.max.y = f->grabbox.max.y;

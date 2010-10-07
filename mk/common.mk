@@ -41,8 +41,8 @@ tags:
 	for f in $(OBJ); do \
 		[ -f "$$f.c" ] && files="$$files $$f.c"; \
 	done; \
-	echo CTAGS $$files $(TAGFILES) || \
-	ctags $$files $(TAGFILES)
+	echo CTAGS $$files $(TAGFILES); \
+	$(DEBUG) $(CTAGS) $$files $(TAGFILES)
 
 .PHONY: all options clean dist install uninstall depend cleandep tags
 .PHONY: simpleuninstall simpleinstall

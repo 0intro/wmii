@@ -195,9 +195,7 @@ bar_draw(WMScreen *s) {
 		align = Center;
 		if(b == s->bar[BRight])
 			align = East;
-		fill(ibuf, b->r, &b->colors.bg);
-		drawstring(ibuf, def.font, b->r, align, b->text, &b->colors.fg);
-		border(ibuf, b->r, 1, &b->colors.border);
+		fillstring(ibuf, def.font, b->r, align, b->text, &b->colors, 1);
 	}
 
 	if(s->barwin_rgba != (s->barwin->depth == 32))

@@ -10,20 +10,21 @@
 #include <stuff/clientutil.h>
 #include <stuff/util.h>
 
-static IxpCFid*	ctlfid;
-static char 	ctl[1024];
-static char*	ectl;
-
 char*
-readctl(char *key) {
+readctl(char *ctlname, char *key) {
+	static char	ctlfile[128];
+	static char 	ctl[1024];
+	static char*	ectl;
+	IxpCFid *fid;
 	char *s, *p;
 	int nkey, n;
 
-	if(ctlfid == nil) {
-		ctlfid = ixp_open(client, "ctl", OREAD);
-		n = ixp_read(ctlfid, ctl, 1023);
+	if(strcmp(ctlname, ctlfile)) {
+		strncpy(ctlfile, ctlname, sizeof ctlfile);
+		fid = ixp_open(client, ctlfile, OREAD);
+		n = ixp_read(fid, ctl, sizeof ctl - 1);
 		ectl = ctl + n;
-		ixp_close(ctlfid);
+		ixp_close(fid);
 	}
 
 	nkey = strlen(key);
@@ -36,7 +37,7 @@ readctl(char *key) {
 			n = (s ? s : ectl) - p;
 			s = freelater(emalloc(n + 1));
 			s[n] = '\0';
-			return strncpy(s, p, n);
+			return memcpy(s, p, n);
 		}
 	} while((p = strchr(p, '\n')));
 	return "";

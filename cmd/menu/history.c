@@ -19,25 +19,25 @@ history_search(int dir, char *string, int n) {
 	Item *i;
 
 	if(dir == FORWARD) {
-		if(histidx == &hist)
+		if(histsel == &hist)
 			return hist.string;
-		for(i=histidx->next; i != hist.next; i=i->next)
+		for(i=histsel->next; i != hist.next; i=i->next)
 			if(!i->string || !compare(i->string, string, n)) {
-				histidx = i;
+				histsel = i;
 				return i->string;
 			}
 		return string;
 	}
 	assert(dir == BACKWARD);
 
-	if(histidx == &hist) {
+	if(histsel == &hist) {
 		free(hist.string);
 		hist.string = estrdup(input.string);
 	}
 
-	for(i=histidx->prev; i != &hist; i=i->prev)
+	for(i=histsel->prev; i != &hist; i=i->prev)
 		if(!compare(i->string, string, n)) {
-			histidx = i;
+			histsel = i;
 			return i->string;
 		}
 	return string;

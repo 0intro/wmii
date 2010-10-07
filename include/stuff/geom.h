@@ -30,8 +30,8 @@ typedef enum Align Align;
 #define Dx(r) ((r).max.x - (r).min.x)
 #define Dy(r) ((r).max.y - (r).min.y)
 #define Pt(x, y) ((Point){(x), (y)})
-#define Rpt(p, q) ((Rectangle){p, q})
-#define Rect(x0, y0, x1, y1) ((Rectangle){Pt(x0, y0), Pt(x1, y1)})
+#define Rpt(p, q) ((Rectangle){(p), (q)})
+#define Rect(x0, y0, x1, y1) Rpt(Pt(x0, y0), Pt(x1, y1))
 
 Point		addpt(Point, Point);
 Point		divpt(Point, Point);

@@ -5,12 +5,13 @@ include $(ROOT)/mk/wmii.mk
 main.c: $(ROOT)/mk/wmii.mk
 
 bindings.c: keys.txt Makefile
-	( echo "char binding_spec[] = "; \
+	( echo "char binding_spec[] ="; \
 	  sed 's/.*/	"&\\n"/' keys.txt; \
-	  echo "	;" ) >bindings.c
+	  echo "	;" ) >$@
 
 TARG =	wimenu
 HFILES=	dat.h fns.h
+TAGFILES= dat.h
 
 PACKAGES += $(X11PACKAGES)
 

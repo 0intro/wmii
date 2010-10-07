@@ -4,270 +4,220 @@
 #include <unistd.h>
 #include "fns.h"
 
-static Handlers handlers;
-
-static int	ltwidth;
-
-static void	_menu_draw(bool);
-
-enum {
-	ACCEPT = CARET_LAST,
-	REJECT,
-	HIST,
-	KILL,
-	CMPL_NEXT,
-	CMPL_PREV,
-	CMPL_FIRST,
-	CMPL_LAST,
-	CMPL_NEXT_PAGE,
-	CMPL_PREV_PAGE,
-};
+static Handlers	handlers;
+static int	promptw;
 
 void
 menu_init(void) {
 	WinAttr wa;
 
 	wa.event_mask = ExposureMask | KeyPressMask;
-	barwin = createwindow(&scr.root, Rect(-1, -1, 1, 1), scr.depth, InputOutput,
-			      &wa, CWEventMask);
+	menu.win = createwindow(&scr.root, Rect(-1, -1, 1, 1), scr.depth, InputOutput,
+				&wa, CWEventMask);
 	if(scr.xim)
-		barwin->xic = XCreateIC(scr.xim,
-					XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-					XNClientWindow, barwin->xid,
-					XNFocusWindow, barwin->xid,
-					nil);
+		menu.win->xic = XCreateIC(scr.xim,
+					  XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+					  XNClientWindow, menu.win->xid,
+					  XNFocusWindow, menu.win->xid,
+					  nil);
 
-	changeprop_long(barwin, Net("WM_WINDOW_TYPE"), "ATOM",
-			(long[]){ TYPE("MENU") }, 1);
-	changeprop_string(barwin, "_WMII_TAGS", "sel");
-	changeprop_textlist(barwin, "WM_CLASS", "STRING",
-			    (char*[3]){ "wimenu", "wimenu", nil });
+	changeprop_long(menu.win, Net("WM_WINDOW_TYPE"), "ATOM", (long[]){ TYPE("MENU") }, 1);
+	changeprop_string(menu.win, "_WMII_TAGS", "sel");
+	changeprop_textlist(menu.win, "WM_CLASS", "STRING", (char*[3]){ "wimenu", "wimenu" });
 
-	sethandler(barwin, &handlers);
-	mapwin(barwin);
+	sethandler(menu.win, &handlers);
+	mapwin(menu.win);
 
 	int i = 0;
-	while(!grabkeyboard(barwin)) {
+	while(!grabkeyboard(menu.win)) {
 		if(i++ > 1000)
 			fatal("can't grab keyboard");
 		usleep(1000);
 	}
 }
 
-static void
-menu_unmap(long id, void *p) {
+void
+menu_show(void) {
+	Rectangle r;
 
-	USED(id, p);
-	unmapwin(barwin);
-	XFlush(display);
-}
+	if(menu.prompt)
+		promptw = textwidth(font, menu.prompt) + itempad;
 
-static void
-selectitem(Item *i) {
-	if(i != matchidx) {
-		caret_set(input.filter_start, input.pos - input.string);
-		caret_insert(i->string, 0);
-		matchidx = i;
-	}
-}
+	r = textextents_l(font, "<", 1, nil);
+	menu.arrow = Pt(Dy(r) + itempad/2, Dx(r) + itempad/2);
 
-static void
-menu_cmd(int op, int motion) {
-	int n;
+	menu.height = labelh(font);
 
-	switch(op) {
-	case HIST:
-		n = input.pos - input.string;
-		caret_insert(history_search(motion, input.string, n), true);
-		input.pos = input.string + n;
-		break;
-	case KILL:
-		caret_delete(BACKWARD, motion);
-		break;
-	default:
-		goto next;
-	}
-	update_filter(true);
-next:
-	switch(op) {
-	case ACCEPT:
-		srv.running = false;
-		if(!matchidx && matchfirst->retstring && !motion)
-		if(input.filter_start == 0 && input.pos == input.end)
-			menu_cmd(CMPL_FIRST, 0);
-		if(!motion && matchidx && !strcmp(input.string, matchidx->string))
-			lprint(1, "%s", matchidx->retstring);
-		else
-			lprint(1, "%s", input.string);
-		break;
-	case REJECT:
-		srv.running = false;
-		result = 1;
-		break;
-	case BACKWARD:
-	case FORWARD:
-		caret_move(op, motion);
-		update_input();
-		break;
-	case CMPL_NEXT:
-		selectitem(matchidx ? matchidx->next : matchfirst);
-		break;
-	case CMPL_PREV:
-		selectitem((matchidx ? matchidx : matchstart)->prev);
-		break;
-	case CMPL_FIRST:
-		matchstart = matchfirst;
-		matchend = nil;
-		selectitem(matchstart);
-		break;
-	case CMPL_LAST:
-		selectitem(matchfirst->prev);
-		break;
-	case CMPL_NEXT_PAGE:
-		if(matchend)
-			selectitem(matchend->next);
-		break;
-	case CMPL_PREV_PAGE:
-		matchend = matchstart->prev;
-		matchidx = nil;
-		_menu_draw(false);
-		selectitem(matchstart);
-		break;
-	}
+	freeimage(menu.buf);
+	menu.buf = allocimage(Dx(scr.rect),
+			      !!menu.rows * 2 * menu.arrow.y + (menu.rows + 1) * menu.height,
+			      menu.win->depth);
+
+	mapwin(menu.win);
+	raisewin(menu.win);
 	menu_draw();
 }
 
+/* I'd prefer to use ⌃ and ⌄, but few fonts support them. */
 static void
-_menu_draw(bool draw) {
-	Rectangle r, rd, rp, r2, extent;
-	CTuple *c;
-	Item *i;
-	int inputw, itemoff, end, pad, n, offset;
+drawarrow(Image *img, Rectangle r, int up, Color *col) {
+	Point p[3], pt;
 
-	r = barwin->r;
-	r = rectsetorigin(r, ZP);
+	pt = Pt(menu.arrow.x - itempad/2, menu.arrow.y - itempad/2 & ~1);
 
-	pad = (font->height & ~1) + font->pad.min.x + font->pad.max.x;
+	p[1] = Pt(r.min.x + Dx(r)/2,	up ? r.min.y + itempad/4 : r.max.y - itempad/4);
+	p[0] = Pt(p[1].x - pt.x/2,	up ? p[1].y + pt.y	 : p[1].y - pt.y);
+	p[2] = Pt(p[1].x + pt.x/2,	p[0].y);
+	drawpoly(img, p, nelem(p), CapProjecting, 1, col);
+}
 
-	rd = r;
-	rp = ZR; // SET(rp)
-	if (prompt) {
-		if (!promptw)
-			promptw = textwidth(font, prompt) + 2 * ltwidth + pad;
-		rd.min.x += promptw;
+static Rectangle
+slice(Rectangle *rp, int x, int y) {
+	Rectangle r;
 
-		rp = r;
-		rp.max.x = promptw;
-	}
+	r = *rp;
+	if(x)
+		rp->min.x += x, r.max.x = min(rp->min.x, rp->max.x);
+	if(y)
+		rp->min.y += y, r.max.y = min(rp->min.y, rp->max.y);
+	return r;
+}
 
-	inputw = min(Dx(rd) / 3, maxwidth);
-	inputw = max(inputw, textwidth(font, input.string)) + pad;
-	itemoff = inputw + 2 * ltwidth;
-	end = Dx(rd) - ltwidth;
+static bool
+nextrect(Item *i, Rectangle *rp, Rectangle *src) {
+	Rectangle r;
 
-	fill(ibuf, r, &cnorm.bg);
-
-	if(matchend && matchidx == matchend->next)
-		matchstart = matchidx;
-	else if(matchidx == matchstart->prev)
-		matchend = matchidx;
-	if (matchend == nil)
-		matchend = matchstart;
-
-	if(matchend == matchstart->prev && matchstart != matchidx) {
-		n = itemoff;
-		matchstart = matchend;
-		for(i=matchend; ; i=i->prev) {
-			n += i->width + pad;
-			if(n > end)
-				break;
-			matchstart = i;
-			if(i == matchfirst)
-				break;
-		}
-	}
-
-	if(!draw)
-		return;
-
-	r2 = rd;
-	for(i=matchstart; i->string; i=i->next) {
-		r2.min.x = promptw + itemoff;
-		itemoff  = itemoff + i->width + pad;
-		r2.max.x = promptw + min(itemoff, end);
-		if(i != matchstart && itemoff > end)
-			break;
-
-		c = (i == matchidx) ? &csel : &cnorm;
-		fill(ibuf, r2, &c->bg);
-		drawstring(ibuf, font, r2, Center, i->string, &c->fg);
-		matchend = i;
-		if(i->next == matchfirst)
-			break;
-	}
-
-	r2 = rd;
-	r2.min.x = promptw + inputw;
-	if(matchstart != matchfirst)
-		drawstring(ibuf, font, r2, West, "<", &cnorm.fg);
-	if(matchend->next != matchfirst)
-		drawstring(ibuf, font, r2, East, ">", &cnorm.fg);
-
-	r2 = rd;
-	r2.max.x = promptw + inputw;
-	drawstring(ibuf, font, r2, West, input.string, &cnorm.fg);
-
-	extent = textextents_l(font, input.string, input.pos - input.string, &offset);
-	r2.min.x = promptw + offset + font->pad.min.x - extent.min.x + pad/2 - 1;
-	r2.max.x = r2.min.x + 2;
-	r2.min.y++;
-	r2.max.y--;
-	border(ibuf, r2, 1, &cnorm.border);
-
-	if (prompt)
-		drawstring(ibuf, font, rp, West, prompt, &cnorm.fg);
-
-	border(ibuf, rd, 1, &cnorm.border);
-	copyimage(barwin, r, ibuf, ZP);
+	if(menu.rows)
+		r = slice(src, 0, menu.height);
+	else
+		r = slice(src, i->width, 0);
+	return (Dx(*src) >= 0 && Dy(*src) >= 0) && (*rp = r, 1);
 }
 
 void
 menu_draw(void) {
-	_menu_draw(true);
+	Rectangle barr, extent, itemr, inputr, r, r2;
+	Item *item;
+	int inputw, offset;
+
+	barr = r2 = Rect(0, 0, Dx(menu.win->r), menu.height);
+
+	inputw = max(match.maxwidth + textwidth_l(font, input.string, min(input.filter_start, strlen(input.string))),
+		     max(itempad    + textwidth(font, input.string),
+			 Dx(barr) / 3));
+
+	/* Calculate items box, w/ and w/o arrows */
+	if(menu.rows) {
+		menu.itemr = barr;
+		menu.itemr.max.y += Dy(barr) * (menu.rows - 1);
+		if(menu.ontop)
+			menu.itemr = rectaddpt(menu.itemr, Pt(0, Dy(barr)));
+		itemr = menu.itemr;
+		if(match.start != match.first)
+			menu.itemr = rectaddpt(menu.itemr, Pt(0, menu.arrow.y));
+	}
+	else {
+		itemr = r2;
+		slice(&itemr, inputw + promptw, 0);
+		menu.itemr = Rect(itemr.min.x + menu.arrow.x, itemr.min.y,
+				  itemr.max.x - menu.arrow.x, itemr.max.y);
+	}
+
+	fill(menu.buf, menu.buf->r, &cnorm.bg);
+
+	/* Draw items */
+	item = match.start, r2 = menu.itemr;
+	nextrect(item, &r, &r2);
+	do {
+		match.end = item;
+		if(item->string)
+			fillstring(menu.buf, font, r, West, item->string,
+				   (item == match.sel ? &csel : &cnorm), 0);
+		item = item->next;
+	} while(item != match.first && nextrect(item, &r, &r2));
+
+	/* Adjust dimensions for arrows/number of items */
+	if(menu.rows)
+		itemr.max.y = r.max.y + (match.end->next != match.first ? menu.arrow.y : 0);
+	else
+		itemr.max.x = r.max.x + menu.arrow.x;
+	if(menu.rows && !menu.ontop)
+		barr = rectaddpt(barr, Pt(0, itemr.max.y));
+
+	/* Draw indicators */
+	if(!menu.rows && match.start != match.first)
+		drawstring(menu.buf, font, itemr, West, "<", &cnorm.fg);
+	if(!menu.rows && match.end->next != match.first)
+		drawstring(menu.buf, font, itemr, East, ">", &cnorm.fg);
+
+	if(menu.rows && match.start != match.first)
+		drawarrow(menu.buf, itemr, 1, &cnorm.fg);
+	if(menu.rows && match.end->next != match.first)
+		drawarrow(menu.buf, itemr, 0, &cnorm.fg);
+
+	/* Draw prompt */
+	r2 = barr;
+	if(menu.prompt)
+		drawstring(menu.buf, font, slice(&r2, promptw, 0),
+			   West, menu.prompt, &cnorm.fg);
+
+	/* Border input/horizontal items */
+	border(menu.buf, r2, 1, &cnorm.border);
+
+	/* Draw input */
+	inputr = slice(&r2, inputw, 0);
+	drawstring(menu.buf, font, inputr, West, input.string, &cnorm.fg);
+
+	/* Draw cursor */
+	extent = textextents_l(font, input.string, input.pos - input.string, &offset);
+	r2 = insetrect(inputr, 2);
+	r2.min.x = inputr.min.x - extent.min.x + offset + font->pad.min.x + itempad/2 - 1;
+	r2.max.x = r2.min.x + 1;
+	fill(menu.buf, r2, &cnorm.border);
+
+	/* Reshape window */
+	r = scr.rect;
+	if(menu.ontop)
+		r.max.y = r.min.y + itemr.max.y;
+	else
+		r.min.y = r.max.y - barr.max.y;
+	reshapewin(menu.win, r);
+
+	/* Border window */
+	r = rectsubpt(r, r.min);
+	border(menu.buf, r, 1, &cnorm.border);
+	copyimage(menu.win, r, menu.buf, ZP);
 }
 
-void
-menu_show(void) {
-	Rectangle r;
-	int height, pad;
+static Item*
+pagestart(Item *i) {
+	Rectangle r, r2;
 
-	USED(menu_unmap);
+	r = menu.itemr;
+	nextrect(i, &r2, &r);
+	while(i->prev != match.first->prev && nextrect(i->prev, &r2, &r))
+		i = i->prev;
+	return i;
+}
 
-	ltwidth = textwidth(font, "<");
-
-	pad = (font->height & ~1)/2;
-	height = labelh(font);
-
-	r = scr.rect;
-	if(ontop)
-		r.max.y = r.min.y + height;
-	else
-		r.min.y = r.max.y - height;
-	reshapewin(barwin, r);
-
-	freeimage(ibuf);
-	ibuf = allocimage(Dx(r), Dy(r), scr.depth);
-
-	mapwin(barwin);
-	raisewin(barwin);
-	menu_draw();
+static void
+selectitem(Item *i) {
+	if(i != match.sel) {
+		caret_set(input.filter_start, input.pos - input.string);
+		caret_insert(i->string, 0);
+		match.sel = i;
+		if(i == match.start->prev)
+			match.start = pagestart(i);
+		if(i == match.end->next)
+			match.start = i;
+	}
 }
 
 static bool
 kdown_event(Window *w, void *aux, XKeyEvent *e) {
 	char **action, **p;
 	char *key;
-	char buf[32];
+	char buf[128];
 	int num, status;
 	KeySym ksym;
 
@@ -276,8 +226,7 @@ kdown_event(Window *w, void *aux, XKeyEvent *e) {
 
 	status = XLookupBoth;
 	if(w->xic)
-		num = Xutf8LookupString(w->xic, e, buf, sizeof buf - 1, &ksym,
-					&status);
+		num = Xutf8LookupString(w->xic, e, buf, sizeof buf - 1, &ksym, &status);
 	else
 		num = XLookupString(e, buf, sizeof buf - 1, &ksym, nil);
 
@@ -319,37 +268,65 @@ kdown_event(Window *w, void *aux, XKeyEvent *e) {
 			have(LWORD) ? WORD :
 			have(LLINE) ? LINE :
 			-1);
+
 		switch(getsym(action[0])) {
-		case LACCEPT:
-			menu_cmd(ACCEPT, have(LLITERAL));
-			break;
-		case LBACKWARD:
-			menu_cmd(BACKWARD, amount);
-			break;
-		case LCOMPLETE:
-			amount = (
-				have(LNEXT)     ? CMPL_NEXT  :
-				have(LPREV)     ? CMPL_PREV  :
-				have(LNEXTPAGE) ? CMPL_NEXT_PAGE :
-				have(LPREVPAGE) ? CMPL_PREV_PAGE :
-				have(LFIRST)    ? CMPL_FIRST :
-				have(LLAST)     ? CMPL_LAST  :
-				CMPL_NEXT);
-			menu_cmd(amount, 0);
-			break;
-		case LFORWARD:
-			menu_cmd(FORWARD, amount);
-			break;
+		default:
+			return false;
 		case LHISTORY:
-			menu_cmd(HIST, have(LBACKWARD) ? BACKWARD : FORWARD);
+			num = input.pos - input.string;
+			amount = have(LBACKWARD) ? BACKWARD : FORWARD;
+			caret_insert(history_search(amount, input.string, num), true);
+			input.pos = input.string + num;
+			update_filter(true);
 			break;
 		case LKILL:
-			menu_cmd(KILL, amount);
+			caret_delete(BACKWARD, amount);
+			update_filter(true);
+			break;
+
+		case LACCEPT:
+			srv.running = false;
+			if(!have(LLITERAL) && !match.sel && match.start->retstring)
+				if(input.filter_start == 0 && input.pos == input.end)
+					selectitem(match.start);
+
+			if(!have(LLITERAL) && match.sel && !strcmp(input.string, match.sel->string))
+				lprint(1, "%s", match.sel->retstring);
+			else
+				lprint(1, "%s", input.string);
+			break;
+		case LBACKWARD:
+			caret_move(BACKWARD, amount);
+			update_input();
+			break;
+		case LCOMPLETE:
+			if(have(LNEXT))
+				selectitem(match.sel ? match.sel->next : match.first);
+			else if(have(LPREV))
+				selectitem((match.sel ? match.sel : match.start)->prev);
+			else if(have(LFIRST)) {
+				match.start = match.first;
+				selectitem(match.start);
+			}
+			else if(have(LLAST))
+				selectitem(match.first->prev);
+			else if(have(LNEXTPAGE))
+				selectitem(match.end->next);
+			else if(have(LPREVPAGE)) {
+				match.start = pagestart(match.start->prev);
+				selectitem(match.start);
+			}
+			break;
+		case LFORWARD:
+			caret_move(FORWARD, amount);
+			update_input();
 			break;
 		case LREJECT:
-			menu_cmd(REJECT, 0);
+			srv.running = false;
+			result = 1;
 			break;
 		}
+		menu_draw();
 	}
 	return false;
 }

@@ -29,14 +29,14 @@ def message(message):
     call(*args, input=message)
 
 def program_list(path):
-    names = []
+    names = set()
     for d in path:
         try:
             for f in os.listdir(d):
                 p = '%s/%s' % (d, f)
-                if f not in names and os.access(p, os.X_OK) and (
-                    os.path.isfile(p) or os.path.islink(p)):
-                    names.append(f)
+                if (f not in names and os.access(p, os.X_OK) and
+                    os.path.isfile(p)):
+                    names.add(f)
         except Exception:
             pass
     return sorted(names)

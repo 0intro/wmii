@@ -58,15 +58,8 @@ static Font*	font;
 
 static int	wborder;
 
-char	buffer[8092];
-char*	_buffer;
-
-/* for XSetWMProperties to use */
-int g_argc;
-char **g_argv;
-
-char *initial = "";
-int cur;
+static char*	initial = "";
+static int	cur;
 
 static char**	labels;		/* list of labels and commands */
 static char**	commands;
@@ -78,13 +71,7 @@ void create_window(void);
 void size_window(int, int);
 void redraw(int, int);
 void warpmouse(int, int);
-void memory(void);
-int args(void);
 
-Cursor cursor[1];
-Visual* render_visual;
-
-void init_screens(void);
 void
 init_screens(void) {
 	Rectangle *rects;
@@ -111,9 +98,6 @@ main(int argc, char **argv)
 	char *cp;
 	int i;
 
-	g_argc = argc;
-	g_argv = argv;
-
 	ARGBEGIN{
 	case 'v':
 		lprint(1, "%s\n", version);
@@ -137,29 +121,24 @@ main(int argc, char **argv)
 	create_window();
 
 	numitems = argc;
-
 	labels = emalloc(numitems * sizeof *labels);
 	commands = emalloc(numitems * sizeof *labels);
 
 	for(i = 0; i < numitems; i++) {
 		labels[i] = argv[i];
+		commands[i] = argv[i];
 		if((cp = strchr(labels[i], ':')) != nil) {
 			*cp++ = '\0';
 			commands[i] = cp;
-		} else
-			commands[i] = labels[i];
+		}
 		if(strcmp(labels[i], initial) == 0)
 			cur = i;
 	}
 
 	client_init(address);
 
-	wborder = strtol(readctl("border "), nil, 10);
-	loadcolor(&cnorm, readctl("normcolors "), nil);
-	loadcolor(&csel, readctl("focuscolors "), nil);
-	font = loadfont(readctl("font "));
-	if(!font)
-		fatal("Can't load font");
+	wborder = strtol(readctl("/ctl", "border "), nil, 10);
+	client_readconfig(&cnorm, &csel, &font);
 
 	run_menu();
 
@@ -167,28 +146,22 @@ main(int argc, char **argv)
 	return 0;
 }
 
-/* usage --- print a usage message and die */
-
 void
 usage(void)
 {
-	lprint(2, "usage: %s -v\n", argv0);
-	lprint(2, "       %s [-a <address>] [-i <arg>] menitem[:command] ...\n", argv0);
+	lprint(2, "usage: %s [-a <address>] [-i <arg>] <menitem>[:<command>] ...\n", argv0);
+	lprint(2, "       %s -v\n", argv0);
 	exit(0);
 }
 
-/* run_menu --- put up the window, execute selected commands */
-
 enum {
-	MouseMask = 
-		  ButtonPressMask
-		| ButtonReleaseMask
-		| ButtonMotionMask
-		| PointerMotionMask,
-	MenuMask =
-		  MouseMask
-		| StructureNotifyMask
-		| ExposureMask
+	MouseMask = ButtonPressMask
+		  | ButtonReleaseMask
+		  | ButtonMotionMask
+		  | PointerMotionMask,
+	MenuMask = MouseMask
+		 | StructureNotifyMask
+		 | ExposureMask
 };
 
 void
@@ -197,8 +170,8 @@ run_menu(void)
 	XEvent ev;
 	int i, old, wide, high;
 
-	wide = 0;
 	high = labelh(font);
+	wide = 0;
 	for(i = 0; i < numitems; i++)
 		wide = max(wide, textwidth(font, labels[i]));
 	wide += font->height & ~1;
@@ -231,12 +204,10 @@ run_menu(void)
 				break;
 			redraw(high, wide);
 			break;
-		case MapNotify:
-			redraw(high, wide);
-			break;
 		case Expose:
 			redraw(high, wide);
 			break;
+		case MapNotify:
 		case ConfigureNotify:
 		case MappingNotify:
 			break;
@@ -244,13 +215,10 @@ run_menu(void)
 	}
 }
 
-/* set_wm_hints --- set all the window manager hints */
-
 void
 create_window(void)
 {
 	WinAttr wa = { 0 };
-	XEvent e;
 
 	wa.override_redirect = true;
 	menuwin = createwindow(&scr.root, Rect(-1, -1, 0, 0),
@@ -258,10 +226,8 @@ create_window(void)
 			       &wa, CWOverrideRedirect);
 	selectinput(menuwin, MenuMask);
 	mapwin(menuwin);
-	XMaskEvent(display, StructureNotifyMask, &e);
 	if(!grabpointer(menuwin, nil, 0, MouseMask))
 		fatal("Failed to grab the mouse\n");
-	XSetCommand(display, menuwin->xid, g_argv, g_argc);
 }
 
 void
@@ -284,33 +250,21 @@ size_window(int wide, int high)
 	p.y = min(p.y, scr.rect.max.y - h);
 
 	reshapewin(menuwin, rectaddpt(r, p));
-
-	//XSetWindowBackground(display, menuwin->xid, cnorm.bg);
 	setborder(menuwin, 1, &cnorm.border);
 }
-
-/* redraw --- actually redraw the menu */
 
 void
 redraw(int high, int wide)
 {
 	Rectangle r;
-	CTuple *c;
 	int i;
 
 	r = Rect(0, 0, wide, high);
 	for(i = 0; i < numitems; i++) {
-		if(cur == i)
-			c = &csel;
-		else
-			c = &cnorm;
 		r = rectsetorigin(r, Pt(0, i * high));
-		fill(menuwin, r, &c->bg);
-		drawstring(menuwin, font, r, Center, labels[i], &c->fg);
+		fillstring(menuwin, font, r, Center, labels[i], (cur == i ? &csel : &cnorm), 0);
 	}
 }
-
-/* warpmouse --- bring the mouse to the menu */
 
 void
 warpmouse(int wide, int high)

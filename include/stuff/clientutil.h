@@ -6,7 +6,7 @@
 #  define CLIENTEXTERN extern
 #endif
 
-char*	readctl(char*);
+char*	readctl(char*, char*);
 void	client_init(char*);
 
 CLIENTEXTERN IxpClient*	client;

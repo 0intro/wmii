@@ -372,8 +372,7 @@ main(int argc, char *argv[]) {
 	initdisplay();
 
 	traperrors(true);
-	selectinput(&scr.root, EnterWindowMask
-			     | SubstructureRedirectMask);
+	selectinput(&scr.root, SubstructureRedirectMask);
 	if(traperrors(false))
 		fatal("another window manager is already running");
 
@@ -388,7 +387,7 @@ main(int argc, char *argv[]) {
 
 	sock = ixp_announce(address);
 	if(sock < 0)
-		fatal("Can't create socket '%s': %r", address);
+		fatal("Can't create socket %q: %r", address);
 	closeexec(ConnectionNumber(display));
 	closeexec(sock);
 
@@ -413,7 +412,6 @@ main(int argc, char *argv[]) {
 	def.incmode = ISqueeze;
 
 	def.mod = Mod1Mask;
-	strcpy(def.grabmod, "Mod1");
 
 	loadcolor(&def.focuscolor, FOCUSCOLORS, nil);
 	loadcolor(&def.normcolor, NORMCOLORS, nil);

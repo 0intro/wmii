@@ -191,7 +191,7 @@ main(int argc, char *argv[]) {
 	client_init(nil);
 
 	if(tray.edge == 0)
-		tray.edge = West | (!strcmp(readctl("bar on "), "top") ? North : South);
+		tray.edge = West | (!strcmp(readctl("/ctl", "bar on "), "top") ? North : South);
 
 	client_readconfig(&tray.normcolors, &tray.selcolors, &tray.font);
 
