@@ -277,6 +277,7 @@ ulong	getproperty(Window*, char *prop, char *type, Atom *actual, ulong offset, u
 Rectangle	getwinrect(Window*);
 int	grabkeyboard(Window*);
 int	grabpointer(Window*, Window *confine, Cursor, int mask);
+void	getselection(char*, void (*)(void*, char*), void*);
 bool	havexft(void);
 void	initdisplay(void);
 KeyCode	keycode(const char*);

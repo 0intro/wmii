@@ -76,6 +76,63 @@ following. More advanced options are documented below.
 	as a menu option, and the text to the right is displayed when a
 	selection is made.
 
+= KEY BINDINGS =
+
+`wimenu`'s default key bindings are based largely on the
+movement keys of vi and the standard UNIX shell input bindings.
+
+: Return, C-j, C-m
+        Accept the input, and select the first matching
+        completion if the cursor is at the end of the input.
+: S-Return, C-S-j, C-S-m
+        Accept the input literally.
+: Esc, C-[
+        Quit without returning any output, and exit with
+        non-zero status.
+
+: A-p
+        Paste the PRIMARY selection.
+
+: Left, C-b
+        Move backward one character.
+: Right, C-f
+        Move forward one character.
+
+: A-b
+        Move backward one word.
+: A-f
+        Move forward one word.
+
+: C-a
+        Move to the begining of the line.
+: C-e
+        Move to the end of the line.
+
+: C-p, Up
+        Move backward through the input history.
+: C-n, Down
+        Move forward through the input history.
+
+: Backspace, C-h
+        Delete the previous character.
+: C-Backspace, C-w
+        Delete the previous word.
+: C-u
+        Delete the previous portion of the line.
+
+: Tab, C-i¸ A-l
+        Select the next completion.
+: S-Tab, C-S-i, A-h
+        Select the previous completion.
+: PageUp, A-k
+        Select the previous completion page.
+: PageDown, A-j
+        Select the next completion page.
+: Home, A-g
+        Select the first completion page.
+: End, A-S-g
+        Select the last completion page.
+:
 = CUSTOM COMPLETION =
 
 Custom, multipart completion data may be proveded by an

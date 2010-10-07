@@ -21,12 +21,15 @@ duninstall:
 	+dirs="$(INSTDIRS)"; $(MKSUBDIR)
 ddepend:
 	+dirs="$(DIRS)"; $(MKSUBDIR)
+dtags:
+	+dirs="$(DIRS)"; $(MKSUBDIR)
 
 all: dall
 clean: dclean
 install: dinstall
 uninstall: duninstall
 depend: ddepend
+tags: dtags
 
 INSTDIRS = $(DIRS)
 

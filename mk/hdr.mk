@@ -34,7 +34,7 @@ CLEANNAME=$(SHELL) $(ROOT)/util/cleanname
 SOEXT=so
 TAGFILES=
 
-CTAGS=ctags
+CTAGS=ctags --fields=+S --c-kinds=+px
 
 PACKAGES = 
 

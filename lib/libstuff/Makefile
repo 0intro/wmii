@@ -96,6 +96,7 @@ OBJ=\
 	x11/ignored_xerrors	\
 	x11/freestringlist	\
 	x11/initdisplay	\
+	x11/selection	\
 	x11/sendevent	\
 	x11/sendmessage	\
 	x11/sync	\

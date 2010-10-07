@@ -85,6 +85,84 @@ as a menu option, and the text to the right is displayed when a
 selection is made.
 .RE
 
+.SH KEY BINDINGS
+.P
+\fBwimenu\fR's default key bindings are based largely on the
+movement keys of vi and the standard UNIX shell input bindings.
+
+.TP
+Return, C\-j, C\-m
+Accept the input, and select the first matching
+completion if the cursor is at the end of the input.
+.TP
+S\-Return, C\-S\-j, C\-S\-m
+Accept the input literally.
+.TP
+Esc, C\-[
+Quit without returning any output, and exit with
+non\-zero status.
+
+.TP
+A\-p
+Paste the PRIMARY selection.
+
+.TP
+Left, C\-b
+Move backward one character.
+.TP
+Right, C\-f
+Move forward one character.
+
+.TP
+A\-b
+Move backward one word.
+.TP
+A\-f
+Move forward one word.
+
+.TP
+C\-a
+Move to the begining of the line.
+.TP
+C\-e
+Move to the end of the line.
+
+.TP
+C\-p, up
+Move backward through the input history.
+.TP
+C\-n, up
+Move forward through the input history.
+
+.TP
+Backspace, C\-h
+Delete the previous character.
+.TP
+C\-Backspace, C\-w
+Delete the previous word.
+.TP
+C\-u
+Delete the previous portion of the line.
+
+.TP
+Tab, C\-i¸ A\-l
+Select the next completion.
+.TP
+S\-Tab, C\-S\-i, A\-h
+Select the previous completion.
+.TP
+PageUp, A\-k
+Select the previous completion page.
+.TP
+PageDown, A\-j
+Select the next completion page.
+.TP
+Home, A\-g
+Select the first completion page.
+.TP
+End, A\-S\-g
+Select the last completion page.
+
 .SH CUSTOM COMPLETION
 .P
 Custom, multipart completion data may be proveded by an

@@ -24,7 +24,7 @@ atomname(ulong atom) {
 	e = map_get(&atomnamemap, atom, true);
 	if(*e == nil) {
 		*e = XGetAtomName(display, atom);
-		if(&e == nil) {
+		if(*e == nil) {
 			map_rm(&atomnamemap, atom);
 			return nil;
 		}

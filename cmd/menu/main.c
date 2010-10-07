@@ -172,6 +172,11 @@ init_screens(void) {
 	menu_show();
 }
 
+ErrorCode ignored_xerrors[] = {
+	{ 0, BadWindow },
+	{ X_GetAtomName, BadAtom },
+};
+
 int
 main(int argc, char *argv[]) {
 	static char *address;

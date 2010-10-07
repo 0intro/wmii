@@ -42,7 +42,7 @@ tags:
 		[ -f "$$f.c" ] && files="$$files $$f.c"; \
 	done; \
 	echo CTAGS $$files $(TAGFILES); \
-	$(DEBUG) $(CTAGS) $$files $(TAGFILES)
+	if [ -n "$$files" ]; then $(DEBUG) $(CTAGS) $$files $(TAGFILES); fi
 
 .PHONY: all options clean dist install uninstall depend cleandep tags
 .PHONY: simpleuninstall simpleinstall

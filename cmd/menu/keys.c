@@ -84,6 +84,7 @@ char *symtab[] = {
 	"literal",
 	"next",
 	"nextpage",
+	"paste",
 	"prev",
 	"prevpage",
 	"reject",

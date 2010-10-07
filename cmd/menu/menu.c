@@ -213,6 +213,13 @@ selectitem(Item *i) {
 	}
 }
 
+static void
+paste(void *aux, char *str) {
+	if(str)
+		caret_insert(str, false);
+	menu_draw();
+}
+
 static bool
 kdown_event(Window *w, void *aux, XKeyEvent *e) {
 	char **action, **p;
@@ -320,6 +327,9 @@ kdown_event(Window *w, void *aux, XKeyEvent *e) {
 		case LFORWARD:
 			caret_move(FORWARD, amount);
 			update_input();
+			break;
+		case LPASTE:
+			getselection(action[1] ? action[1] : "PRIMARY", paste, nil);
 			break;
 		case LREJECT:
 			srv.running = false;

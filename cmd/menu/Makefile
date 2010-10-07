@@ -11,7 +11,7 @@ bindings.c: keys.txt Makefile
 
 TARG =	wimenu
 HFILES=	dat.h fns.h
-TAGFILES= dat.h
+TAGFILES= dat.h $(ROOT)/include/*.h $(ROOT)/include/stuff/*.h
 
 PACKAGES += $(X11PACKAGES)
 
