@@ -15,7 +15,7 @@ simpleinstall:
 		$(INSTALL) -b 0644 $$f $(DIR) $$f; \
 	done
 	for f in $(EXECS); do \
-		$(INSTALL) -b 0755 $$f $(DIR) $$f; \
+		$(INSTALL) 0755 $$f $(DIR) $$f; \
 	done
 
 simpleuninstall:

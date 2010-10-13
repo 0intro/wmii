@@ -24,16 +24,17 @@ CFLAGS += '-DVERSION=\"$(VERSION)\"' '-DCOPYRIGHT=\"$(COPYRIGHT)\"' \
 	  '-DLOCALCONF=\"$(LOCALCONF)\"' '-DGLOBALCONF=\"$(GLOBALCONF)\"' \
 	  -DIXP_NEEDAPI=129
 
-FILTER = sed "s|@CONFPREFIX@|$(ETC)|g; \
-	      s|@GLOBALCONF@|$(GLOBALCONF)|g; \
-	      s|@LOCALCONF@|$(LOCALCONF)|g; \
-	      s|@CONFDIR@|$(CONFDIR)|g; \
-	      s|@DOCDIR@|$(DOC)|g; \
-	      s|@ALTDOC@|$(DOC)/alternative_wmiircs|g; \
-	      s|@EXAMPLES@|$(DOC)/examples|g; \
-	      s|@VERSION@|$(VERSION)|g; \
-	      s|@LIBDIR@|$(LIBDIR)|g; \
+FILTER = sed "s|@ALTDOC@|$(DOC)/alternative_wmiircs|g; \
 	      s|@BINSH@|$(BINSH)|g; \
+	      s|@CONFDIR@|$(CONFDIR)|g; \
+	      s|@CONFPREFIX@|$(ETC)|g; \
+	      s|@DOCDIR@|$(DOC)|g; \
+	      s|@EXAMPLES@|$(DOC)/examples|g; \
+	      s|@GLOBALCONF@|$(GLOBALCONF)|g; \
+	      s|@LIBDIR@|$(LIBDIR)|g; \
+	      s|@LOCALCONF@|$(LOCALCONF)|g; \
+	      s|@PYTHON@|$(PYTHON)|g; \
 	      s|@TERMINAL@|$(TERMINAL)|g; \
+	      s|@VERSION@|$(VERSION)|g; \
 	      /^@@/d;"
 

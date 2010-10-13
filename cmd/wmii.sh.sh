@@ -96,8 +96,8 @@ wi_events() {
 	eval=""; [ "$1" = -e ] && eval=1 && shift
 	_wi_events="$(_wi_text "$@")
 $_wi_events"
-	# -n "$eval" ] && echo "$_wi_events" | awk "$(_wi_script)" >&2
-	[ -n "$eval" ] && eval "$(echo "$_wi_events" | awk "$(_wi_script)")"
+	# -n "$eval" ] && printf %s "$_wi_events" | awk "$(_wi_script)" >&2
+	[ -n "$eval" ] && eval "$(printf %s "$_wi_events" | awk "$(_wi_script)")"
 }
 
 wi_events <<'!'
