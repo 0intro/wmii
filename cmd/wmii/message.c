@@ -833,12 +833,13 @@ static char*
 msg_grow(View *v, IxpMsg *m) {
 	Client *c;
 	Frame *f;
-	Rectangle r;
+	Rectangle h, r;
 	Point amount;
 	int dir;
 
 	f = getframe(v, screen->idx, m);
 	c = f->client;
+	h = c->w.hints->aspect;
 
 	dir = getdirection(m);
 
@@ -850,17 +851,20 @@ msg_grow(View *v, IxpMsg *m) {
 		amount.y = c->w.hints->inc.y;
 	getamt(m, &amount);
 
+	if (dir == LLEFT || dir == LRIGHT)
+		amount.y = h.min.x ? amount.x * h.min.y / h.min.x : 0;
+	else
+		amount.x = h.min.y ? amount.y * h.min.x / h.min.y : 0;
+
 	if(f->area->floating)
 		r = f->r;
 	else
 		r = f->colr;
-	switch(dir) {
-	case LLEFT:	r.min.x -= amount.x; break;
-	case LRIGHT:	r.max.x += amount.x; break;
-	case LUP:	r.min.y -= amount.y; break;
-	case LDOWN:	r.max.y += amount.y; break;
-	default:	abort();
-	}
+
+	if (dir == LLEFT || dir == LUP)
+		r.min = subpt(r.min, amount);
+	else if (dir == LRIGHT || dir == LDOWN)
+		r.max = addpt(r.max, amount);
 
 	if(f->area->floating)
 		float_resizeframe(f, r);
