@@ -391,6 +391,7 @@ view_attach(View *v, Frame *f) {
 	if(!a->floating && c->floating != Never && view_fullscreen_p(v, a->screen))
 		a = v->floating;
 
+	event("ViewAttach %s %#C\n", v->name, c);
 	area_attach(a, f);
 	/* TODO: Decide whether to focus this frame */
 	bool newgroup = !c->group
@@ -430,6 +431,7 @@ view_detach(Frame *f) {
 	if(c->sel == f)
 		c->sel = f->cnext;
 
+	event("ViewDetach %s %#C\n", v->name, c);
 	if(v == selview)
 		view_update(v);
 	else if(empty_p(v))

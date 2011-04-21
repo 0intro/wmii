@@ -254,6 +254,7 @@ area_attach(Area *a, Frame *f) {
 		column_attach(a, f);
 
 	view_arrange(a->view);
+	event("AreaAttach %s %a %#C\n", a->view->name, a, f->client);
 
 	if(btassert("4 full", a->frame && a->sel == nil))
 		a->sel = a->frame;
@@ -267,6 +268,7 @@ area_detach(Frame *f) {
 	a = f->area;
 	v = a->view;
 
+	event("AreaDetach %s %a %#C\n", v->name, a, f->client);
 	if(a->floating)
 		float_detach(f);
 	else

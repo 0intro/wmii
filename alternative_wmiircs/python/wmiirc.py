@@ -309,7 +309,7 @@ if not os.environ.get('WMII_NOPLUGINS', ''):
                    reduce(operator.add, map(os.listdir, dirs), []))
     for f in ['wmiirc_local'] + ['plugins.%s' % file[:-3] for file in files]:
         try:
-            exec 'import %s' % f
+            __import__(f)
         except Exception, e:
             traceback.print_exc(sys.stdout)
 

@@ -76,10 +76,8 @@ slice(Rectangle *rp, int x, int y) {
 	Rectangle r;
 
 	r = *rp;
-	if(x)
-		rp->min.x += x, r.max.x = min(rp->min.x, rp->max.x);
-	if(y)
-		rp->min.y += y, r.max.y = min(rp->min.y, rp->max.y);
+	if(x) rp->min.x += x, r.max.x = min(rp->min.x, rp->max.x);
+	if(y) rp->min.y += y, r.max.y = min(rp->min.y, rp->max.y);
 	return r;
 }
 
