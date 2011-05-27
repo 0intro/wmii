@@ -1,4 +1,4 @@
-Distributers
+Distributors
 ============
 
 This file only applies to those who wish to distribute wmii in any
@@ -17,8 +17,8 @@ SHOULD be included with the software's documentation. The default
 installation sequence provides for this.
 
 Note that this condition only applies to distribution, and that the
-end use is under no obligation to keep or install a copy of the
-LICENSE file. Note also that this software may be sublicensed under
+end user is under no obligation to keep or install a copy of the
+LICENSE file. Note also that this software may be sub-licensed under
 more restrictive terms, though the original LICENSE text MUST remain.
 
 The wmii Name
@@ -53,9 +53,9 @@ proceeded directly by "a" or "b" followed by the alpha or beta
 number respectively. wmii 4.0, Alpha 3, for instance, MUST be
 formatted as 4.0a3
 
-Any version which is not an official release or snapshot MUST be
+Any version which is not an official release or snapshot MUST
 contain the Mercurial local revision number or changeset hash in its
-version string. The local revion number MUST be within 5 revisions
+version string. The local revision number MUST be within 5 revisions
 of the equivalent changeset in the official canonical repositories
 at http://hg.suckless.org/ and http://wmii.googlecode.com/. This
 SHOULD be formatted as hgXXXX, where XXXX is the decimal revision
