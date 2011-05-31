@@ -27,7 +27,7 @@
 	with(int, __alive)				\
 	with(Area*, __anext)				\
 	for(s=0; _cond(s <= nscreens, 0); _cont(s++))	\
-		for((a)=(s < nscreens ? (v)->areas[s] : v->floating), __anext=(a)->next; \
+		for((a)=(s < nscreens ? (v)->areas[s] : v->floating), __anext=((a)?(a)->next:NULL); \
 		    _cond(a, 1);			\
 		    _cont(((a)=__anext) && (__anext=(a)->next)))
 
@@ -35,14 +35,14 @@
 	with(int, __alive)				\
 	with(Area*, __anext)				\
 	for(s=0; _cond(s < nscreens, 0); _cont(s++))	\
-		for((a)=(v)->areas[s], __anext=(a)->next;	\
+		for((a)=(v)->areas[s], __anext=((a)?(a)->next:NULL);	\
 		    _cond(a, 1);				\
 		    _cont(((a)=__anext) && (__anext=(a)->next)))
 
 #define foreach_frame(v, s, a, f) \
 	with(Frame*, __fnext)     \
 	foreach_area(v, s, a)     \
-		for((void)(((f)=(a)->frame) && (__fnext=(f)->anext));	\
+		for((void)(((f)=(a)->frame) && (__fnext=(f)?((f)->anext):NULL));	\
 		    _cond(f, 2);					\
 		    _cont(((f)=__fnext) && (__fnext=(f)->anext)))
 
