@@ -10,7 +10,7 @@
 %!postproc(man): \b_(.*?)_       \\fI\1\\fR
 %!postproc(man): \\e_            _
 %!postproc(man): `(.*?)`         \\fB\1\\fR
-%!postproc(man): (\[.*?\])       \\fI\1\\fR
+%!postproc(man): \[(.*?)\]       [\\fI\1\\fR]
 %!postproc(man): \+$             \n.P
 %!postproc(man): (\$[a-zA-Z_]+)  \\fB\1\\fR
 %!postproc(man): (\${[a-zA-Z_]+)(.*?)} \\fB\1\\fR\2\\fB}\\fR
