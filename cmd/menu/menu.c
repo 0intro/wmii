@@ -288,6 +288,10 @@ kdown_event(Window *w, void *aux, XKeyEvent *e) {
 			caret_delete(BACKWARD, amount);
 			update_filter(true);
 			break;
+		case LDELETE:
+			caret_delete(FORWARD, amount);
+			update_filter(true);
+			break;
 
 		case LACCEPT:
 			srv.running = false;

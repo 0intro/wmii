@@ -75,6 +75,7 @@ char *symtab[] = {
 	"backward",
 	"char",
 	"complete",
+	"delete",
 	"first",
 	"forward",
 	"history",

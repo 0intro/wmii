@@ -29,6 +29,7 @@ Control-h           Kill char
 Control-Backspace   Kill word
 Control-w           Kill word
 Control-u           Kill line
+Control-k           Delete line
 
 Tab                 Complete next
 Control-i           Complete next
