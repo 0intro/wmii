@@ -295,6 +295,7 @@ struct View {
 	int	selcol;
 	int	selscreen;
 	bool	dead;
+	bool	urgent;
 	Rectangle *r;
 	Rectangle *pad;
 };

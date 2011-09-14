@@ -279,6 +279,7 @@ void	view_select(const char*);
 void	view_update(View*);
 void	view_update_all(void);
 void	view_update_rect(View*);
+void	view_update_urgency(View*, char*);
 Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 
 /* utf.c */

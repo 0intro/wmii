@@ -714,18 +714,11 @@ client_seturgent(Client *c, int urgent, int from) {
 		event("%sUrgent %#C %s\n", cnot, c, cfrom);
 		c->urgent = urgent;
 		ewmh_updatestate(c);
-		if(c->sel) {
+		if(c->sel)
 			frame_draw(c->sel);
-			for(f=c->frame; f; f=f->cnext) {
-				SET(ff);
-				if(!urgent)
-					foreach_frame(f->view, s, a, ff)
-						if(ff->client->urgent) break;
-				if(urgent || ff == nil)
-					event("%sUrgentTag %s %s\n",
-					      cnot, cfrom, f->view->name);
-			}
-		}
+
+		for(f=c->frame; f; f=f->cnext)
+			view_update_urgency(f->view, cfrom);
 	}
 
 	if(from == UrgManager) {

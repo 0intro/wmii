@@ -287,47 +287,67 @@ view_update(View *v) {
 	Area *a;
 	int s;
 
-	if(v != selview)
-		return;
-	if(starting)
-		return;
+	if(v == selview && !starting) {
+		frames_update_sel(v);
 
-	frames_update_sel(v);
+		foreach_frame(v, s, a, f)
+			if(f->client->fullscreen >= 0) {
+				f->collapsed = false;
+				if(!f->area->floating) {
+					f->oldarea = area_idx(f->area);
+					f->oldscreen = f->area->screen;
+					area_moveto(v->floating, f);
+					area_setsel(v->floating, f);
+				}else if(f->oldarea == -1)
+					f->oldarea = 0;
+			}
 
-	foreach_frame(v, s, a, f)
-		if(f->client->fullscreen >= 0) {
-			f->collapsed = false;
-			if(!f->area->floating) {
-				f->oldarea = area_idx(f->area);
-				f->oldscreen = f->area->screen;
-				area_moveto(v->floating, f);
-				area_setsel(v->floating, f);
-			}else if(f->oldarea == -1)
-				f->oldarea = 0;
+		view_arrange(v);
+
+		for(c=client; c; c=c->next) {
+			f = c->sel;
+			if((f && f->view == v)
+			&& (f->area == v->sel || !(f->area && f->area->max && f->area->floating))) {
+				if(f->area)
+					client_resize(c, f->r);
+			}else {
+				client_unmapframe(c);
+				client_unmap(c, IconicState);
+			}
+			ewmh_updatestate(c);
+			ewmh_updateclient(c);
 		}
 
-	view_arrange(v);
-
-	for(c=client; c; c=c->next) {
-		f = c->sel;
-		if((f && f->view == v)
-		&& (f->area == v->sel || !(f->area && f->area->max && f->area->floating))) {
-			if(f->area)
-				client_resize(c, f->r);
-		}else {
-			client_unmapframe(c);
-			client_unmap(c, IconicState);
-		}
-		ewmh_updatestate(c);
-		ewmh_updateclient(c);
+		view_restack(v);
+		if(!v->sel->floating && view_fullscreen_p(v, v->sel->screen))
+			area_focus(v->floating);
+		else
+			area_focus(v->sel);
+		frame_draw_all();
 	}
+	view_update_urgency(v, nil);
+}
 
-	view_restack(v);
-	if(!v->sel->floating && view_fullscreen_p(v, v->sel->screen))
-		area_focus(v->floating);
-	else
-		area_focus(v->sel);
-	frame_draw_all();
+void
+view_update_urgency(View *v, char *from) {
+	Area *a;
+	Frame *f;
+	int s, urgent;
+
+	urgent = 0;
+	foreach_frame(v, s, a, f)
+		if (f->client->urgent) {
+			urgent++;
+			break;
+		}
+
+	if (urgent != v->urgent)
+		event("%sUrgentTag %s %s\n",
+		      urgent ? "" : "Not",
+		      from ? from : "Unknown",
+		      v->name);
+
+	v->urgent = urgent;
 }
 
 void
@@ -432,9 +452,8 @@ view_detach(Frame *f) {
 		c->sel = f->cnext;
 
 	event("ViewDetach %s %#C\n", v->name, c);
-	if(v == selview)
-		view_update(v);
-	else if(empty_p(v))
+	view_update(v);
+	if(view != selview && empty_p(v))
 		view_destroy(v);
 }
 

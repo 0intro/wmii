@@ -794,6 +794,8 @@ readctl_view(View *v) {
 	bufclear();
 	bufprint("%s\n", v->name);
 
+	bufprint("urgent %s\n", TOGGLE(v->urgent));
+
 	/* select <area>[ <frame>] */
 	bufprint("select %a", v->sel);
 	if(v->sel->sel)
