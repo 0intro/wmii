@@ -96,10 +96,8 @@ frame_insert(Frame *f, Frame *pos) {
 
 bool
 frame_restack(Frame *f, Frame *above) {
-	Client *c;
 	Area *a;
 
-	c = f->client;
 	a = f->area;
 	if(!a->floating)
 		return false;

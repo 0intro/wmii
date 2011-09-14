@@ -143,14 +143,15 @@ static void column_scale(Area*);
 void
 column_attachrect(Area *a, Frame *f, Rectangle r) {
 	Frame *fp, *pos;
-	int before, after;
 
 	pos = nil;
 	for(fp=a->frame; fp; pos=fp, fp=fp->anext) {
 		if(r.max.y < fp->r.min.y || r.min.y > fp->r.max.y)
 			continue;
+		/*
 		before = fp->r.min.y - r.min.y;
 		after = -fp->r.max.y + r.max.y;
+		*/
 	}
 	column_insert(a, f, pos);
 	column_resizeframe_h(f, r);

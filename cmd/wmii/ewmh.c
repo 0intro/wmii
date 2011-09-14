@@ -188,11 +188,9 @@ ewmh_initclient(Client *c) {
 
 void
 ewmh_destroyclient(Client *c) {
-	Ewmh *e;
 
 	ewmh_updateclientlist();
 
-	e = &c->w.ewmh;
 	free(c->strut);
 }
 

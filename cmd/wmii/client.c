@@ -251,7 +251,6 @@ apply_rules(Client *c) {
 void
 client_manage(Client *c) {
 	Client *leader;
-	Frame *f;
 	char *tags;
 	bool dotags;
 
@@ -290,17 +289,17 @@ client_manage(Client *c) {
 		        && !client_viewframe(group_leader(c->group),
 					     c->sel->view);
 
-	f = c->sel;
+	/* f = c->sel; */
 	if(!(c->w.ewmh.type & TypeSplash))
-	if(newgroup) {
-		/* XXX: Look over this.
-		if(f->area != f->view->sel)
-			f->view->oldsel = f->view->sel;
-		*/
-	}else {
-		frame_restack(c->sel, c->sel->area->sel);
-		view_restack(c->sel->view);
-	}
+		if(newgroup) {
+			/* XXX: Look over this.
+			if(f->area != f->view->sel)
+				f->view->oldsel = f->view->sel;
+			*/
+		}else {
+			frame_restack(c->sel, c->sel->area->sel);
+			view_restack(c->sel->view);
+		}
 }
 
 void
@@ -874,7 +873,7 @@ client_prop(Client *c, Atom a) {
 /* Handlers */
 static bool
 configreq_event(Window *w, void *aux, XConfigureRequestEvent *e) {
-	Rectangle r, cr;
+	Rectangle r;
 	Client *c;
 
 	c = aux;
@@ -895,7 +894,6 @@ configreq_event(Window *w, void *aux, XConfigureRequestEvent *e) {
 		c->border = e->border_width;
 
 	r.max = addpt(r.min, r.max);
-	cr = r;
 	r = client_grav(c, r);
 
 	if(c->sel->area->floating)

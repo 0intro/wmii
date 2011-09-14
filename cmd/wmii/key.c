@@ -135,7 +135,7 @@ fake_keypress(ulong mod, KeyCode key) {
 static Key *
 match_keys(Key *k, ulong mod, KeyCode keycode, bool seq) {
 	Key *ret, *next;
-	volatile int i; /* shut up ken */
+	int i; /* shut up ken */
 
 	ret = nil;
 	for(next = k->tnext; k; i = (k=next) && (next=k->tnext)) {
@@ -146,6 +146,7 @@ match_keys(Key *k, ulong mod, KeyCode keycode, bool seq) {
 			ret = k;
 		}
 	}
+	USED(i);
 	return ret;
 }
 

@@ -147,11 +147,8 @@ vplace(Framewin *fw, Point pt) {
 	Rectangle r;
 	Frame *f;
 	Area *a;
-	View *v;
 	long l;
 	int hr;
-
-	v = selview;
 
 	a = find_area(pt);
 	if(a == nil)
@@ -200,10 +197,7 @@ done:
 static void
 hplace(Framewin *fw, Point pt) {
 	Area *a;
-	View *v;
 	int minw;
-
-	v = selview;
 
 	a = find_area(pt);
 	if(a == nil)

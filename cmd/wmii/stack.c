@@ -7,14 +7,12 @@
 void
 stack_scale(Frame *first, int height) {
 	Frame *f;
-	Area *a;
 	uint dy;
 	int surplus;
 
-	a = first->area;
-
 	/*
 	 * Will need something like this.
+	a = first->area;
 	column_fit(a, &ncol, &nuncol);
 	*/
 

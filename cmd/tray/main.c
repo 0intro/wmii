@@ -188,7 +188,7 @@ main(int argc, char *argv[]) {
 	xext_init();
 	tray_init();
 
-	client_init(nil);
+	client_init(address);
 
 	if(tray.edge == 0)
 		tray.edge = West | (!strcmp(readctl("/ctl", "bar on "), "top") ? North : South);

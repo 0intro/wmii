@@ -523,7 +523,7 @@ fs_write(Ixp9Req *r) {
 					 t->max);
 		else
 			goto done;
-		ixp_respond(r, nil);
+		ixp_respond(r, errstr);
 		found++;
 	}
 done:
