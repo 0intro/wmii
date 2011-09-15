@@ -609,11 +609,12 @@ frame_focus(Frame *f) {
 		move_focus(old_f, f);
 		if(a->floating)
 			float_arrange(a);
-		client_focus(f->client);
 
 		// if(!a->floating && ((a->mode == Colstack) || (a->mode == Colmax)))
 		if(true)
 			column_arrange(a, false);
+
+		client_focus(f->client);
 	}
 }
 

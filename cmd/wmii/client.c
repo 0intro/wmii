@@ -538,7 +538,8 @@ client_focus(Client *c) {
 	sync();
 	event_flush(FocusChangeMask, true);
 
-	Dprint(DFocus, "client_focus([%#C]%C)\n", c, c);
+	Dprint(DFocus, "client_focus([%#C]%C) collapsed=%s\n",
+	       c, c, c && c->sel->collapsed ? "true" : "false");
 	Dprint(DFocus, "\t[%#C]%C\n\t=> [%#C]%C\n",
 	       disp.focus, disp.focus, c, c);
 
@@ -700,9 +701,7 @@ void
 client_seturgent(Client *c, int urgent, int from) {
 	XWMHints *wmh;
 	char *cfrom, *cnot;
-	Frame *f, *ff;
-	Area *a;
-	int s;
+	Frame *f;
 
 	if(urgent == Toggle)
 		urgent = c->urgent ^ On;
