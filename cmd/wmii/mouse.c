@@ -251,22 +251,26 @@ mouse_resizecolframe(Frame *f, Align align) {
 	min.x = column_minwidth();
 	min.y = /*frame_delta_h() +*/ labelh(def.font);
 	/* Set the limits of where this box may be dragged. */
-#define frob(pred, f, aprev, rmin, rmax, plus, minus, xy) BLOCK(     \
+#define frob(pred, f, aprev, rmin, rmax, plus, minus, xy, use_screen) BLOCK( \
 		if(pred) {                                           \
 			r.rmin.xy = f->aprev->r.rmin.xy plus min.xy; \
 			r.rmax.xy = f->r.rmax.xy minus min.xy;       \
+		}else if(use_screen) {                               \
+			r.rmin.xy = v->r[f->screen].rmin.xy plus 1;  \
+			r.rmax.xy = a->r.rmax.xy minus min.xy;       \
 		}else {                                              \
 			r.rmin.xy = a->r.rmin.xy;                    \
 			r.rmax.xy = r.rmin.xy plus 1;                \
 		})
-	if(align&North)
-		frob(f->aprev, f, aprev, min, max, +, -, y);
+
+	if(align & North)
+		frob(f->aprev, f, aprev, min, max, +, -, y, false);
 	else
-		frob(f->anext, f, anext, max, min, -, +, y);
-	if(align&West)
-		frob(a->prev,  a, prev,  min, max, +, -, x);
+		frob(f->anext, f, anext, max, min, -, +, y, false);
+	if(align & West)
+		frob(a->prev,  a, prev,  min, max, +, -, x, true);
 	else
-		frob(a->next,  a, next,  max, min, -, +, x);
+		frob(a->next,  a, next,  max, min, -, +, x, true);
 #undef frob
 
 	cwin = constraintwin(r);
@@ -415,6 +419,7 @@ mouse_resize(Client *c, Align align, bool grabmod) {
 
 	SET(hrx);
 	SET(hry);
+
 	if(align != Center) {
 		hr = subpt(frect.max, frect.min);
 		hr = divpt(hr, Pt(2, 2));

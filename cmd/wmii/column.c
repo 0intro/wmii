@@ -577,10 +577,14 @@ column_resizeframe(Frame *f, Rectangle r) {
 	if(al) {
 		al->r.max.x = a->r.min.x;
 		column_arrange(al, false);
+	}else {
+		v->pad[a->screen].min.x = r.min.x - v->r[a->screen].min.x;
 	}
 	if(ar) {
 		ar->r.min.x = a->r.max.x;
 		column_arrange(ar, false);
+	}else {
+		v->pad[a->screen].max.x = r.max.x - v->r[a->screen].max.x;
 	}
 
 	column_resizeframe_h(f, r);

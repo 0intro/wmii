@@ -643,13 +643,16 @@ constrain(Rectangle r, int inset) {
 	for(sp=screens; (s = *sp); sp++) {
 		if(!screen->showing)
 			continue;
+
 		isect = rect_intersection(r, insetrect(s->r, inset));
 		if(Dx(isect) >= 0 && Dy(isect) >= 0)
 			return r;
+
 		if(Dx(isect) <= 0 && Dy(isect) <= 0)
 			n = max(Dx(isect), Dy(isect));
 		else
 			n = min(Dx(isect), Dy(isect));
+
 		if(!sbest || n > best) {
 			sbest = s;
 			best = n;
