@@ -74,7 +74,8 @@ float_arrange(Area *a) {
 		break;
 	case Colstack:
 		for(f=a->frame; f; f=f->anext)
-			f->collapsed = (f != a->sel);
+			f->collapsed = !(f->client->w.ewmh.type & (TypeDock|TypeMenu|TypeToolbar))
+				    && (f != a->sel);
 		break;
 	default:
 		die("not reached");
