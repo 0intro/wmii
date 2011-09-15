@@ -223,7 +223,7 @@ readmotion(Point *p) {
 
 static void
 mouse_resizecolframe(Frame *f, Align align) {
-	Window *cwin, *hwin;
+	Window *cwin, *hwin = nil;
 	Divide *d;
 	View *v;
 	Area *a;
@@ -245,7 +245,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 		d = d->next;
 	}
 
-	if(align&East)
+	if(align & East)
 		d = d->next;
 
 	min.x = column_minwidth();
@@ -263,72 +263,82 @@ mouse_resizecolframe(Frame *f, Align align) {
 			r.rmax.xy = r.rmin.xy plus 1;                \
 		})
 
+	r = f->r;
 	if(align & North)
 		frob(f->aprev, f, aprev, min, max, +, -, y, false);
-	else
+	else if(align & South)
 		frob(f->anext, f, anext, max, min, -, +, y, false);
 	if(align & West)
 		frob(a->prev,  a, prev,  min, max, +, -, x, true);
-	else
+	else if(align & East)
 		frob(a->next,  a, next,  max, min, -, +, x, true);
 #undef frob
 
 	cwin = constraintwin(r);
 
 	r = f->r;
-	if(align&North)
+	if(align & North)
 		r.min.y--;
-	else
+	else if(align & South)
 		r.min.y = r.max.y - 1;
 	r.max.y = r.min.y + 2;
 
-	hwin = gethsep(r);
+	if(align & (North|South))
+		hwin = gethsep(r);
 
 	if(!grabpointer(&scr.root, cwin, cursor[CurSizing], MouseMask))
 		goto done;
 
-	pt.x = ((align&West) ? f->r.min.x : f->r.max.x);
-	pt.y = ((align&North) ? f->r.min.y : f->r.max.y);
+	pt.x = (align & West ? f->r.min.x : f->r.max.x);
+	pt.y = (align & North ? f->r.min.y : f->r.max.y);
 	warppointer(pt);
 
 	while(readmotion(&pt)) {
-		if(align&West)
+		if(align & West)
 			r.min.x = pt.x;
-		else
+		else if(align & East)
 			r.max.x = pt.x;
-		r.min.y = ((align&South) ? pt.y : pt.y-1);
+
+		if(align & South)
+			r.min.y = pt.y;
+		else if(align & North)
+			r.min.y = pt.y - 1;
 		r.max.y = r.min.y+2;
 
-		div_set(d, pt.x);
-		reshapewin(hwin, r);
+		if(align & (East|West))
+			div_set(d, pt.x);
+		if(hwin)
+			reshapewin(hwin, r);
 	}
 
 	r = f->r;
-	if(align&West)
+	if(align & West)
 		r.min.x = pt.x;
-	else
+	else if(align & East)
 		r.max.x = pt.x;
-	if(align&North)
+	if(align & North)
 		r.min.y = pt.y;
-	else
+	else if(align & South)
 		r.max.y = pt.y;
 	column_resizeframe(f, r);
 
 	/* XXX: Magic number... */
-	if(align&West)
+	if(align & West)
 		pt.x = f->r.min.x + 4;
-	else
+	else if(align & East)
 		pt.x = f->r.max.x - 4;
-	if(align&North)
+
+	if(align & North)
 		pt.y = f->r.min.y + 4;
-	else
+	else if(align & South)
 		pt.y = f->r.max.y - 4;
 	warppointer(pt);
 
 done:
 	ungrabpointer();
 	destroyconstraintwin(cwin);
-	destroywindow(hwin);
+	if (hwin)
+		destroywindow(hwin);
 }
 
 void
