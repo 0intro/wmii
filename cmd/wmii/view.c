@@ -453,7 +453,7 @@ view_detach(Frame *f) {
 
 	event("ViewDetach %s %#C\n", v->name, c);
 	view_update(v);
-	if(view != selview && empty_p(v))
+	if(v != selview && empty_p(v))
 		view_destroy(v);
 }
 
