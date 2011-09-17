@@ -74,7 +74,8 @@ float_arrange(Area *a) {
 		break;
 	case Colstack:
 		for(f=a->frame; f; f=f->anext)
-			f->collapsed = (f != a->sel);
+			f->collapsed = !(f->client->w.ewmh.type & (TypeDock|TypeMenu|TypeToolbar))
+				    && (f != a->sel);
 		break;
 	default:
 		die("not reached");
@@ -162,12 +163,14 @@ float_placeframe(Frame *f) {
 	Vector_rect *vp;
 	Rectangle r;
 	Point dim, p;
+	Area *a, *sel;
 	Client *c;
 	Frame *ff;
-	Area *a, *sel;
+	View *v;
 	long area, l;
 	int i, s;
 
+	v = f->view;
 	a = f->area;
 	c = f->client;
 
@@ -212,7 +215,11 @@ float_placeframe(Frame *f) {
 			s = sel->screen;
 	}
 
-	r = s == -1 ? a->r : screens[s]->r;
+	if (s == -1)
+		r = a->r;
+	else
+		r = v->r[s];
+
 	vp = unique_rects(&vec, r);
 
 	area = LONG_MAX;
