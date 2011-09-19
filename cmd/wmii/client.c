@@ -12,7 +12,6 @@
 #define Mbsearch(k, l, cmp) bsearch(k, l, nelem(l), sizeof(*l), cmp)
 
 static Handlers handlers;
-static Handlers ignorehandlers;
 
 enum {
 	ClientMask = StructureNotifyMask
@@ -133,7 +132,6 @@ client_create(XWindow w, XWindowAttributes *wa) {
 	client_reparent(c);
 
 	sethandler(&c->w, &handlers);
-	pushhandler(&c->w, &ignorehandlers, nil);
 
 	selectinput(&c->w, ClientMask);
 
@@ -207,7 +205,6 @@ client_reparent(Client *c) {
 
 	c->framewin->aux = c;
 	sethandler(c->framewin, &framehandler);
-	pushhandler(c->framewin, &ignorehandlers, nil);
 	reparentwindow(&c->w, c->framewin, ZP);
 	if(fw)
 		destroywindow(fw);
