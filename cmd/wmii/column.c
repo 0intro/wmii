@@ -72,6 +72,18 @@ column_minwidth(void)
 	return 4 * labelh(def.font);
 }
 
+static void
+columns_update(View *v) {
+	Area *a;
+	Frame *f;
+	int s;
+
+	foreach_frame(v, s, a, f) {
+		f->screen = s;
+		f->column = area_idx(a);
+	}
+}
+
 Area*
 column_new(View *v, Area *pos, int scrn, uint w) {
 	Area *a;
@@ -84,6 +96,7 @@ column_new(View *v, Area *pos, int scrn, uint w) {
 		return nil;
 
 	view_arrange(v);
+	columns_update(v);
 	view_update(v);
 #endif
 }
@@ -99,6 +112,15 @@ column_insert(Area *a, Frame *f, Frame *pos) {
 	frame_insert(f, pos);
 	if(a->sel == nil)
 		area_setsel(a, f);
+}
+
+void
+column_destroy(Area *a) {
+	View *v;
+
+	v = a->view;
+	area_destroy(a);
+	columns_update(v);
 }
 
 void
@@ -135,7 +157,7 @@ column_detach(Frame *f) {
 			stack_scale(first, dy);
 		column_arrange(a, false);
 	}else if(a->view->areas[a->screen]->next)
-		area_destroy(a);
+		column_destroy(a);
 }
 
 static void column_scale(Area*);

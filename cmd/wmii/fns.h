@@ -113,6 +113,7 @@ char*	column_getmode(Area*);
 void	column_arrange(Area*, bool dirty);
 void	column_attach(Area*, Frame*);
 void	column_attachrect(Area*, Frame*, Rectangle);
+void	column_destroy(Area*);
 void	column_detach(Frame*);
 void	column_frob(Area*);
 void	column_insert(Area*, Frame*, Frame*);
