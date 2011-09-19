@@ -71,14 +71,12 @@ status() {
 # Generic overridable startup details
 startup() { witray & }
 
-local_events() { true;}
 wi_runconf -s wmiirc_local
 startup
 
 echo colors $WMII_NORMCOLORS | wmiir create $noticebar
 
 # Event processing
-local_events | wi_events
 wi_events <<'!'
 # Events
 Event CreateTag
