@@ -106,6 +106,7 @@ client_create(XWindow w, XWindowAttributes *wa) {
 			     Pt(wa->x, wa->y));
 
 	c->w.type = WWindow;
+	c->w.visual = wa->visual;
 	c->w.xid = w;
 	c->w.r = c->r;
 	c->w.aux = c;
