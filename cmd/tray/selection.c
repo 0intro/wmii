@@ -7,10 +7,11 @@
 static Handlers selection_handlers;
 static Handlers steal_handlers;
 
-Selection*
-selection_create(char *selection, ulong time,
+static Selection*
+_selection_create(char *selection, ulong time,
 		 void (*request)(Selection*, XSelectionRequestEvent*),
-		 void (*cleanup)(Selection*)) {
+		 void (*cleanup)(Selection*),
+		 bool lazy) {
 	Selection *s;
 
 	if(time == 0)
@@ -26,30 +27,48 @@ selection_create(char *selection, ulong time,
 
 	sethandler(s->owner, &selection_handlers);
 
-	XSetSelectionOwner(display, xatom(selection), s->owner->xid, time);
+	if (!lazy) {
+		XSetSelectionOwner(display, xatom(selection), s->owner->xid, time);
 
-	/*
-	 * There is a race here that ICCCM doesn't mention. It's
-	 * possible that we've gained and lost the selection in this
-	 * time, and a client's sent us a selection request. We're
-	 * required to reply to it, but since we're destroying the
-	 * window, we'll never hear about it. Since ICCCM doesn't
-	 * mention it, we assume that other clients behave likewise,
-	 * and therefore clients must be prepared to deal with such
-	 * behavior regardless.
-	 */
-	if(XGetSelectionOwner(display, xatom(selection)) != s->owner->xid) {
-		destroywindow(s->owner);
-		free(s);
-		return nil;
+		/*
+		 * There is a race here that ICCCM doesn't mention. It's
+		 * possible that we've gained and lost the selection in this
+		 * time, and a client's sent us a selection request. We're
+		 * required to reply to it, but since we're destroying the
+		 * window, we'll never hear about it. Since ICCCM doesn't
+		 * mention it, we assume that other clients behave likewise,
+		 * and therefore clients must be prepared to deal with such
+		 * behavior regardless.
+		 */
+		if(XGetSelectionOwner(display, xatom(selection)) != s->owner->xid) {
+			destroywindow(s->owner);
+			free(s);
+			return nil;
+		}
 	}
 
 	s->selection = estrdup(selection);
 	return s;
 }
 
+Selection*
+selection_create(char *selection, ulong time,
+		 void (*request)(Selection*, XSelectionRequestEvent*),
+		 void (*cleanup)(Selection*)) {
+	return _selection_create(selection, time, request, cleanup, false);
+}
+
 static void
 _selection_manage(Selection *s) {
+
+	if (s->oldowner) {
+		Dprint("[selection] Grabbing.\n");
+		XSetSelectionOwner(display, xatom(s->selection), s->owner->xid, s->time_start);
+		if(XGetSelectionOwner(display, xatom(s->selection)) != s->owner->xid) {
+			selection_release(s);
+			return;
+		}
+	}
 
 	Dprint("[selection] Notifying.\n");
 	clientmessage(&scr.root, "MANAGER", SubstructureNotifyMask|StructureNotifyMask, 32,
@@ -84,9 +103,18 @@ selection_manage(char *selection, ulong time,
 		w->type = WWindow;
 		w->xid = old;
 		selectinput(w, StructureNotifyMask);
+
+		/* Hack for broken Qt systray implementation. If it
+		 * finds a new system tray running when the old one
+		 * dies, it never selects the StructureNotify mask
+		 * on it, and therefore never disassociates from it,
+		 * and completely ignores any future MANAGER
+		 * messages it receives.
+		 */
+		XSetSelectionOwner(display, xatom(selection), 0, time);
 	}
 
-	s = selection_create(selection, time, nil, cleanup);
+	s = _selection_create(selection, time, nil, cleanup, old);
 	if(s) {
 		s->message = message;
 		s->oldowner = old;
@@ -189,8 +217,9 @@ destroy_event(Window *w, void *aux, XDestroyWindowEvent *e) {
 	if(s->timer)
 		ixp_unsettimer(&srv, s->timer);
 	s->timer = 0;
-	s->oldowner = 0;
+
 	_selection_manage(s);
+	s->oldowner = 0;
 	return false;
 }
 
