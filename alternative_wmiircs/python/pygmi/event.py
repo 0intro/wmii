@@ -105,7 +105,10 @@ class Events():
                 if ary is not None:
                     action(*ary)
         except Exception, e:
-            traceback.print_exc(sys.stderr)
+            try:
+                traceback.print_exc(sys.stderr)
+            except:
+                pass
 
     def loop(self):
         """

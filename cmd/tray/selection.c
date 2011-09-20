@@ -70,12 +70,16 @@ timeout(long timer, void *v) {
 Selection*
 selection_manage(char *selection, ulong time,
 		 void (*message)(Selection*, XClientMessageEvent*),
-		 void (*cleanup)(Selection*)) {
+		 void (*cleanup)(Selection*),
+		 bool steal) {
 	Selection *s;
 	Window *w;
 	XWindow old;
 
 	if((old = XGetSelectionOwner(display, xatom(selection)))) {
+		if (!steal)
+			return nil;
+
 		w = emallocz(sizeof *w);
 		w->type = WWindow;
 		w->xid = old;

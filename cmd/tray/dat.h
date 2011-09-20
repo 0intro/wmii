@@ -6,6 +6,7 @@
 #include <ixp.h>
 #include <stuff/x.h>
 #include <stuff/util.h>
+#include "selection.h"
 
 #ifndef EXTERN
 # define EXTERN extern
@@ -25,7 +26,6 @@ enum TrayOpcodes {
 
 typedef struct Client		Client;
 typedef struct Message		Message;
-typedef struct Selection	Selection;
 typedef struct XEmbed		XEmbed;
 
 struct Client {
@@ -41,18 +41,6 @@ struct Message {
 	long		id;
 	ulong		timeout;
 	IxpMsg		msg;
-};
-
-struct Selection {
-	Window*	owner;
-	char*	selection;
-	ulong	time_start;
-	ulong	time_end;
-	void	(*cleanup)(Selection*);
-	void	(*message)(Selection*, XClientMessageEvent*);
-	void	(*request)(Selection*, XSelectionRequestEvent*);
-	long	timer;
-	ulong	oldowner;
 };
 
 struct XEmbed {

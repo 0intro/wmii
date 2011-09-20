@@ -278,6 +278,7 @@ class File(object):
             if offset is None:
                 self.offset = offs
         return ''.join(res)
+
     def readlines(self):
         last = None
         while True:
@@ -293,6 +294,7 @@ class File(object):
             last = lines[-1]
         if last:
             yield last
+
     def write(self, data, offset=None):
         if offset is None:
             offset = self.offset

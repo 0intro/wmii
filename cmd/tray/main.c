@@ -18,7 +18,7 @@ static struct sigaction	sa;
 
 static void
 usage(void) {
-	fprint(2, "usage: %s [-a <address>] [-NESW] [-HV] [-p <padding>] [-s <iconsize>] [-t tags]\n"
+	fprint(2, "usage: %s [-a <address>] [-NESW] [-HVn] [-p <padding>] [-s <iconsize>] [-t tags]\n"
 	          "       %s -v\n", argv0, argv0);
 	exit(1);
 }
@@ -112,6 +112,7 @@ ErrorCode ignored_xerrors[] = {
 int
 main(int argc, char *argv[]) {
 	static char* address;
+	bool steal;
 
 	program_args = argv;
 
@@ -119,6 +120,7 @@ main(int argc, char *argv[]) {
 	fmtinstall('r', errfmt);
 	fmtinstall('E', fmtevent);
 
+	steal = true;
 	tray.orientation = OHorizontal;
 	tray.tags = "/./";
 	tray.padding = 1;
@@ -141,6 +143,9 @@ main(int argc, char *argv[]) {
 		break;
 	case 'V':
 		tray.orientation = OVertical;
+		break;
+	case 'n':
+		steal = false;
 		break;
 	case 'p':
 		if(!getulong(EARGF(usage()), &tray.padding))
@@ -179,7 +184,7 @@ main(int argc, char *argv[]) {
 
 	event_updatextime();
 	tray.selection = selection_manage(sxprint(Net("SYSTEM_TRAY_S%d"), scr.screen),
-					  event_xtime, message, cleanup);
+					  event_xtime, message, cleanup, steal);
 	if(tray.selection == nil)
 		fatal("Another system tray is already running.");
 	if(tray.selection->oldowner)
