@@ -27,7 +27,7 @@ client_manage(XWindow w) {
 	XAddToSaveSet(display, w);
 	c->xembed = xembed_swallow(tray.win, &c->w, client_cleanup);
 	if(traperrors(false)) {
-		fprint(1, "client_manage(0x%ulx): Caught error.\n", w);
+		fprint(2, "client_manage(0x%ulx): Caught error.\n", w);
 		if(c->xembed)
 			xembed_disown(c->xembed);
 		return;
@@ -112,7 +112,7 @@ void
 client_opcode(Client *c, long message, long l1, long l2, long l3) {
 	Message *m, **mp;
 
-	Dprint("client_opcode(%p, %s, %lx, %lx, %lx)\n",
+	Dprint("client_opcode(%p, %s, %ulx, %ulx, %ulx)\n",
 	       c,
 	       message == TrayRequestDock   ? "TrayRequestDock" :
 	       message == TrayBeginMessage  ? "TrayBeginMessage" :

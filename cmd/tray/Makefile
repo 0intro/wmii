@@ -5,7 +5,7 @@ include $(ROOT)/mk/wmii.mk
 main.c: $(ROOT)/mk/wmii.mk
 
 TARG =	witray
-HFILES=	dat.h fns.h
+HFILES=	dat.h fns.h selection.h
 
 PACKAGES += $(X11PACKAGES)
 

@@ -76,7 +76,15 @@ xembed_updateinfo(XEmbed *xembed) {
 		xembed->version = res[0];
 		xembed->flags = res[1];
 	}
+	else {
+		/* Deal with a Qt system tray replacement bug. */
+		xembed->flags = XEmbedMapped;
+	}
 	free(res);
+
+	Dprint("xembed_updateinfo(0x%ulx) XEmbedMapped=%s\n",
+	       xembed->w,
+	       xembed->flags & XEmbedMapped ? "true" : "false");
 
 	if(xembed->flags & XEmbedMapped)
 		mapwin(xembed->w);

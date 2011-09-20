@@ -39,8 +39,7 @@ to configure, and generally Just Works.
 	vertically, respectively. Also determines from which edge of
 	the screen windows are shunted to make room for the tray.
 : -n
-        Only create a new tray if a previous tray manager is not
-        already running.
+        Do not replace an already running system tray.
 : -p <padding>
 	Sets the padding between icons and around the edge of the
 	tray. In pixels.

@@ -33,9 +33,11 @@ cleanup_handler(int signal) {
 	sa.sa_handler = SIG_DFL;
 	sigaction(signal, &sa, nil);
 
+	selection_release(tray.selection);
 	srv.running = false;
 
 	switch(signal) {
+	case SIGINT:
 	case SIGTERM:
 		sa.sa_handler = cleanup_handler;
 		sigaction(SIGALRM, &sa, nil);
@@ -45,8 +47,6 @@ cleanup_handler(int signal) {
 		break;
 	case SIGALRM:
 		raise(SIGTERM);
-	case SIGINT:
-		break;
 	}
 }
 
@@ -81,7 +81,7 @@ message(Selection *s, XClientMessageEvent *ev) {
 	USED(s);
 
 	Dprint("message(%A) 0x%lx\n", ev->message_type, ev->window);
-	Dprint("\t0x%lx, 0x%lx, 0x%lx, 0x%lx, 0x%lx\n",
+	Dprint("\t0x%lx, 0x%lx, 0x%ulx, 0x%ulx, 0x%ulx\n",
 	       ev->data.l[0], ev->data.l[1], ev->data.l[2], ev->data.l[3], ev->data.l[4]);
 
 	w = findwin(ev->window);

@@ -104,10 +104,10 @@ selection_manage(char *selection, ulong time,
 
 void
 selection_release(Selection *s) {
-	if(!s->time_end)
-		XSetSelectionOwner(display, xatom(s->selection), None, s->time_start);
 	if(s->cleanup)
 		s->cleanup(s);
+	if(!s->time_end)
+		XSetSelectionOwner(display, xatom(s->selection), None, s->time_start);
 	destroywindow(s->owner);
 	free(s->selection);
 	free(s);
