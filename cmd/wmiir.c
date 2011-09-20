@@ -322,8 +322,11 @@ xread(int argc, char *argv[]) {
 			fatal("Can't open file '%s': %r\n", file);
 
 		buf = emalloc(fid->iounit);
-		while((count = ixp_read(fid, buf, fid->iounit)) > 0)
+		while((count = ixp_read(fid, buf, fid->iounit)) > 0) {
 			unflush(1, buf, count, binary);
+			if (!binary && count < fid->iounit)
+				unflush(1, 0, 0, binary);
+		}
 		if(!binary)
 			unflush(1, 0, 0, binary);
 		ixp_close(fid);
