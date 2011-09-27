@@ -1,0 +1,33 @@
+MKSHELL=rc
+
+TARG = wmii.pdf
+SRC = ${TARG:%.pdf=%.tex}
+TEX = xelatex
+
+default:V: all
+all:V: $TARG
+
+# mk doesn't recognize nested `{}
+deps = `{ ash -c 'dep() { echo $1; for f in $(9 sed -n "s/.*\\include{([^}]+)}.*/\1.tex/p; s/.*\\input (.*)/\1.tex/p" $1); do dep $f; done; }; dep $SRC' }
+# `
+$TARG: $deps
+
+junk = aux idx ilg ind log toc out
+CLEAN = ${TARG:%.pdf=%}
+CLEAN = ${junk:%=$CLEAN.%} ${deps:%.tex=%.aux}
+clean:V:
+	rm -f $CLEAN
+
+%.pdf: %.tex mkfile
+	flag x +
+	if (~ $MAINFONT '')
+		fn tex { builtin $TEX $stem.tex }
+	if not
+		fn tex { builtin $TEX '\def\mainfont{'$"MAINFONT'}\input{'$stem.tex'}' }
+	
+	tex
+	makeindex $stem
+	tex
+	rm -f $stem.out 2>/dev/null
+
+# vim:se ft=make:

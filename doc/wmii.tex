@@ -22,7 +22,11 @@
 \makeindex
 \let\primary=\textbf
 
-\setmainfont[Mapping=tex-text, Numbers=OldStyle]{Palatino LT Std}
+\ifx\mainfont\undefined
+  \def\mainfont{Palatino LT Std}
+\fi
+
+\setmainfont[Mapping=tex-text, Numbers=OldStyle]\mainfont
 \def\lining{\addfontfeature{Numbers=Lining}}
 
 \let\primary=\textbf

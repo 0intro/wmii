@@ -45,7 +45,7 @@ wmii['grabmod'] = keys.defs['mod']
 wmii['border'] = 2
 
 def setbackground(color):
-    call('xsetroot', '-solid', color)
+    call('xsetroot', '-solid', color, background=True)
 setbackground(background)
 
 terminal = 'wmiir', 'setsid', '@TERMINAL@'
