@@ -28,8 +28,7 @@ client_manage(XWindow w) {
 	c->xembed = xembed_swallow(tray.win, &c->w, client_cleanup);
 	if(traperrors(false)) {
 		fprint(2, "client_manage(0x%ulx): Caught error.\n", w);
-		if(c->xembed)
-			xembed_disown(c->xembed);
+		xembed_disown(c->xembed);
 		return;
 	}
 
@@ -62,7 +61,8 @@ client_cleanup(XEmbed *e) {
 	Client *c;
 
 	c = e->w->aux;
-	destroywindow(c->indicator);
+	if (c->indicator)
+		destroywindow(c->indicator);
 
 	for(cp=&tray.clients; *cp; cp=&(*cp)->next)
 		if(*cp == c) {
