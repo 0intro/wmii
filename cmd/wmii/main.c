@@ -215,6 +215,8 @@ init_screens(void) {
 	screen = screens[0];
 	if(selview)
 		view_update(selview);
+
+	event("ScreenChange %d %d\n", n, nscreens);
 }
 
 static void

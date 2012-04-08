@@ -210,7 +210,7 @@ wi_eventloop() {
 		event=$1; shift
 		[ "$event" = Start -a "$1" = "$wmiiscript" ] &&
 			exit
-		( Event $event "$@" )
+		Event $event "$@"
 	done
 	true
 }
