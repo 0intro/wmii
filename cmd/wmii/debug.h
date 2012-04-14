@@ -4,11 +4,12 @@ enum DebugOpt {
 	D9p	= 1<<0,
 	DDnd	= 1<<1,
 	DEvent	= 1<<2,
-	DEwmh	= 1<<3,
-	DFocus	= 1<<4,
-	DGeneric= 1<<5,
-	DStack  = 1<<6,
-	NDebugOpt = 7,
+	DEvents	= 1<<3,
+	DEwmh	= 1<<4,
+	DFocus	= 1<<5,
+	DGeneric= 1<<6,
+	DStack  = 1<<7,
+	NDebugOpt = 8,
 };
 
 #define Debug(x) if(((debugflag|debugfile)&(x)) && setdebug(x))

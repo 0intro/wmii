@@ -155,6 +155,7 @@ event(const char *format, ...) {
 	va_end(ap);
 
 	ixp_pending_write(&events, buffer, strlen(buffer));
+	Dprint(DEvents, "%s", buffer);
 }
 
 static int dflags;

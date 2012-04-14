@@ -160,6 +160,7 @@ regerror(char *err) {
 
 void
 init_screens(void) {
+	static int old_n, old_nscreens;
 	Rectangle *rects;
 	View *v;
 	int i, n, m;
@@ -216,7 +217,10 @@ init_screens(void) {
 	if(selview)
 		view_update(selview);
 
-	event("ScreenChange %d %d\n", n, nscreens);
+	if (old_n != n || old_nscreens != nscreens)
+		event("ScreenChange %d %d\n", n, nscreens);
+	old_n = n;
+	old_nscreens = nscreens;
 }
 
 static void

@@ -113,6 +113,7 @@ char* debugtab[] = {
 	"9p",
 	"dnd",
 	"event",
+	"events",
 	"ewmh",
 	"focus",
 	"generic",
