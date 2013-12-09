@@ -108,10 +108,10 @@ Event Unresponsive
 		fi
 	}&
 Event Notice
-	wmiir xwrite $noticebar $wi_arg
+	wmiir xwrite $noticebar label $wi_arg
 
 	kill $xpid 2>/dev/null # Let's hope this isn't reused...
-	{ sleep $noticetimeout; wmiir xwrite $noticebar ' '; }&
+	{ sleep $noticetimeout; wmiir xwrite $noticebar label; }&
 	xpid = $!
 
 # Menus
