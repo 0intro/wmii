@@ -417,6 +417,7 @@ view_attach(View *v, Frame *f) {
 
 	oldsel = v->oldsel;
 	a = v->sel;
+
 	if(c->floating == Never)
 		a = view_findarea(v, v->selscreen, v->selcol, false);
 	else if(client_floats_p(c)) {
@@ -424,6 +425,9 @@ view_attach(View *v, Frame *f) {
 			oldsel = v->sel;
 		a = v->floating;
 	}
+	else if(c->sel && c->sel->screen >= 0 && c->sel->screen < nscreens_new &&
+		c->sel->screen != v->sel->screen)
+		a = view_findarea(v, c->sel->screen, 0, false);
 	else if((ff = client_groupframe(c, v))) {
 		if (ff->client != c && ff->area->screen < nscreens_new)
 			a = ff->area;
