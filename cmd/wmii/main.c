@@ -1,5 +1,5 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2010 Kris Maglione <maglione.k at Gmail>
+ * Copyright ©2006-2014 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #define EXTERN
@@ -158,6 +158,8 @@ regerror(char *err) {
 	fprint(2, "%s: %s\n", argv0, err);
 }
 
+static bool keep_screens = true;
+
 void
 init_screens(void) {
 	static int old_n, old_nscreens;
@@ -177,14 +179,14 @@ init_screens(void) {
 	/* Reallocate screens, zero any new ones. */
 	rects = xinerama_screens(&n);
 	m = nscreens;
-	nscreens = max(n, nscreens);
+	nscreens_new = keep_screens ? max(n, nscreens) : n;
+
+	for(v=view; v; v=v->next)
+		view_update_screens(v);
+
+	nscreens = nscreens_new;
 	screens = erealloc(screens, (nscreens + 1) * sizeof *screens);
 	screens[nscreens] = nil;
-	for(v=view; v; v=v->next) {
-		v->areas = erealloc(v->areas, nscreens * sizeof *v->areas);
-		v->r = erealloc(v->r, nscreens * sizeof *v->r);
-		v->pad = erealloc(v->pad, nscreens * sizeof *v->pad);
-	}
 
 	/* Reallocate buffers. */
 	freeimage(disp.ibuf);
@@ -207,9 +209,11 @@ init_screens(void) {
 			screen->r = rects[i];
 		else
 			screen->r = rectsetorigin(screen->r, scr.rect.max);
+
 		if(i >= m)
 			for(v=view; v; v=v->next)
 				view_init(v, i);
+
 		def.snap = Dy(screen->r) / 63;
 		bar_init(screens[i]);
 	}
@@ -219,8 +223,16 @@ init_screens(void) {
 
 	if (old_n != n || old_nscreens != nscreens)
 		event("ScreenChange %d %d\n", n, nscreens);
+
 	old_n = n;
 	old_nscreens = nscreens;
+}
+
+void
+wipe_screens(void) {
+	keep_screens = false;
+	init_screens();
+	keep_screens = true;
 }
 
 static void

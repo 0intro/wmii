@@ -1,4 +1,4 @@
-/* Copyright ©2006-2010 Kris Maglione <maglione.k at Gmail>
+/* Copyright ©2006-2014 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -559,6 +559,7 @@ move_focus(Frame *old_f, Frame *f) {
 	noinput = (old_f && old_f->client->noinput) ||
 		  (f && f->client->noinput) ||
 		  disp.hasgrab != &c_root;
+
 	if(noinput || true) {
 		if(old_f)
 			frame_draw(old_f);

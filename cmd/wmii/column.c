@@ -1,5 +1,5 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2010 Kris Maglione <maglione.k at Gmail>
+ * Copyright ©2006-2014 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -156,7 +156,7 @@ column_detach(Frame *f) {
 		if(first)
 			stack_scale(first, dy);
 		column_arrange(a, false);
-	}else if(a->view->areas[a->screen]->next)
+	}else if(a->view->areas[a->screen]->next && !a->permanent)
 		column_destroy(a);
 }
 

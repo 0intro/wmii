@@ -62,6 +62,7 @@ enum {
 	LUP,
 	LURGENT,
 	LVIEW,
+	LWIPESCREENS,
 	LTILDE,
 };
 char *symtab[] = {
@@ -103,6 +104,7 @@ char *symtab[] = {
 	"up",
 	"urgent",
 	"view",
+	"wipescreens",
 	"~",
 };
 
@@ -688,6 +690,10 @@ message_root(void *p, IxpMsg *m) {
 
 	case LVIEW:
 		view_select(m->pos);
+		break;
+
+	case LWIPESCREENS:
+		wipe_screens();
 		break;
 
 	case LQUIT:

@@ -1,4 +1,4 @@
-/* Copyright ©2007-2010 Kris Maglione <jg@suckless.org>
+/* Copyright ©2007-2014 Kris Maglione <jg@suckless.org>
  * See LICENSE file for license details.
  */
 
@@ -207,6 +207,7 @@ void	update_keys(void);
 /* main.c */
 void	init_screens(void);
 void	spawn_command(const char*);
+void	wipe_screens(void);
 
 /* message.c */
 char*	mask(char**, int*, int*);
@@ -280,6 +281,7 @@ void	view_select(const char*);
 void	view_update(View*);
 void	view_update_all(void);
 void	view_update_rect(View*);
+void	view_update_screens(View*);
 void	view_update_urgency(View*, char*);
 Rectangle*	view_rects(View*, uint *num, Frame *ignore);
 

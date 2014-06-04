@@ -1,5 +1,5 @@
 /* Copyright ©2004-2006 Anselm R. Garbe <garbeam at gmail dot com>
- * Copyright ©2006-2010 Kris Maglione <maglione.k at Gmail>
+ * Copyright ©2006-2014 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -110,6 +110,38 @@ view_init(View *v, int iscreen) {
 	v->pad[iscreen] = ZR;
 	v->areas[iscreen] = nil;
 	column_new(v, nil, iscreen, 0);
+}
+
+void
+view_update_screens(View *v) {
+	Area *a;
+	Frame *f;
+	int s;
+
+	if (v->sel->screen > (long)nscreens)
+		v->sel = v->floating->next;
+
+	v->selscreen = min(v->selscreen, nscreens);
+
+	if (nscreens_new < nscreens) {
+		foreach_frame(v, s, a, f) {
+			f->oldscreen = min(f->oldscreen, nscreens_new);
+			if (a->screen >= nscreens_new) {
+				a->permanent = true;
+				area_detach(f);
+				view_attach(v, f);
+			}
+		}
+
+		foreach_area(v, s, a) {
+			if (a->screen >= nscreens_new)
+				area_destroy(a);
+		}
+	}
+
+	v->areas = erealloc(v->areas, nscreens_new * sizeof *v->areas);
+	v->r = erealloc(v->r, nscreens_new * sizeof *v->r);
+	v->pad = erealloc(v->pad, nscreens_new * sizeof *v->pad);
 }
 
 void
@@ -393,7 +425,8 @@ view_attach(View *v, Frame *f) {
 		a = v->floating;
 	}
 	else if((ff = client_groupframe(c, v))) {
-		a = ff->area;
+		if (ff->client != c && ff->area->screen < nscreens_new)
+			a = ff->area;
 		if(v->oldsel && ff->client == view_selclient(v))
 			a = v->oldsel;
 	}

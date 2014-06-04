@@ -1,4 +1,4 @@
-/* Copyright ©2007-2010 Kris Maglione <jg@suckless.org>
+/* Copyright ©2007-2014 Kris Maglione <jg@suckless.org>
  * See LICENSE file for license details.
  */
 
@@ -149,6 +149,7 @@ struct Area {
 	int	mode;
 	int	screen;
 	bool	max;
+	bool	permanent;
 	Rectangle	r;
 	Rectangle	r_old;
 };
@@ -371,6 +372,7 @@ EXTERN long	ignoreenter;
 EXTERN bool	resizing;
 EXTERN int	starting;
 EXTERN char*	user;
+EXTERN long	nscreens_new;
 
 EXTERN Client*	kludge;
 
