@@ -103,6 +103,8 @@ events.bind({
 
     'Notice':       lambda args: notice.show(args),
 
+    'ScreenChange': lambda args: wmii.ctl('wipescreens'),
+
     Match(('LeftBarClick', 'LeftBarDND'), 1): lambda e, b, tag: tags.select(tag),
     Match('LeftBarClick', 4): lambda *a: tags.select(tags.next(True)),
     Match('LeftBarClick', 5): lambda *a: tags.select(tags.next()),
