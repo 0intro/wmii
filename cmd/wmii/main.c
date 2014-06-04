@@ -163,9 +163,9 @@ static bool keep_screens = true;
 void
 init_screens(void) {
 	static int old_n, old_nscreens;
-	Rectangle *rects;
+	Rectangle *rects, *r;
 	View *v;
-	int i, n, m;
+	int i, j, n, m;
 
 #ifdef notdef
 	d.x = Dx(scr.rect) - Dx(screen->r);
@@ -178,6 +178,24 @@ init_screens(void) {
 
 	/* Reallocate screens, zero any new ones. */
 	rects = xinerama_screens(&n);
+	r = malloc(n * sizeof *r);
+
+	/* Weed out subsumed/cloned screens */
+	for(m=-1; m < n; n=m) {
+		for(i=n-1, m=0; i >= 0; i--) {
+			for(j=0; j < n; j++)
+				if (i != j &&
+				    eqrect(rects[i],
+					   rect_intersection(rects[i], rects[j])))
+					break;
+			if (j == n)
+				r[m++] = rects[i];
+		}
+		for(i=m-1, j=0; i >= 0; i--)
+			rects[j++] = r[i];
+	}
+	free(r);
+
 	m = nscreens;
 	nscreens_new = keep_screens ? max(n, nscreens) : n;
 
