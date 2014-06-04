@@ -1,4 +1,4 @@
-/* Copyright ©2006-2010 Kris Maglione <maglione.k at Gmail>
+/* Copyright ©2006-2014 Kris Maglione <maglione.k at Gmail>
  * See LICENSE file for license details.
  */
 #include "dat.h"
@@ -609,26 +609,33 @@ message_root(void *p, IxpMsg *m) {
 		setdef(&screen->barpos, s, barpostab, nelem(barpostab));
 		view_update(selview);
 		break;
+
 	case LBORDER:
 		def.border = msg_getulong(msg_getword(m, 0));;
 		view_update(selview);
 		break;
+
 	case LCOLMODE:
 		setdef(&def.colmode, msg_getword(m, 0), modes, Collast);
 		break;
+
 	case LDEBUG:
 		msg_debug(msg_getword(m, 0));
 		break;
+
 	case LEXEC:
 		execstr = strdup(m->pos);
 		srv.running = 0;
 		break;
+
 	case LSPAWN:
 		spawn_command(m->pos);
 		break;
+
 	case LFOCUSCOLORS:
 		msg_parsecolors(m, &def.focuscolor);
 		goto updatecolors;
+
 	case LFONT:
 		fn = loadfont(m->pos);
 		if(fn) {
@@ -640,6 +647,7 @@ message_root(void *p, IxpMsg *m) {
 			ret = "can't load font";
 		view_update(selview);
 		break;
+
 	case LFONTPAD:
 		if(!getint(msg_getword(m, 0), &def.font->pad.min.x) ||
 		   !getint(msg_getword(m, 0), &def.font->pad.max.x) ||
@@ -652,6 +660,7 @@ message_root(void *p, IxpMsg *m) {
 			view_update(selview);
 		}
 		break;
+
 	case LGRABMOD:
 		s = msg_getword(m, Ebadvalue);
 		if(!parsekey(s, &i, nil) || i == 0)
@@ -659,10 +668,12 @@ message_root(void *p, IxpMsg *m) {
 
 		def.mod = i;
 		break;
+
 	case LINCMODE:
 		setdef(&def.incmode, msg_getword(m, 0), incmodetab, nelem(incmodetab));
 		view_update(selview);
 		break;
+
 	case LNORMCOLORS:
 		msg_parsecolors(m, &def.normcolor);
 	updatecolors:
@@ -670,12 +681,15 @@ message_root(void *p, IxpMsg *m) {
 			client_reparent(c);
 		view_update(selview);
 		break;
+
 	case LSELCOLORS:
 		warning("selcolors have been removed");
 		return Ebadcmd;
+
 	case LVIEW:
 		view_select(m->pos);
 		break;
+
 	case LQUIT:
 		srv.running = 0;
 		break;

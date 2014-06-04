@@ -559,7 +559,7 @@ move_focus(Frame *old_f, Frame *f) {
 	noinput = (old_f && old_f->client->noinput) ||
 		  (f && f->client->noinput) ||
 		  disp.hasgrab != &c_root;
-	if(noinput) {
+	if(noinput || true) {
 		if(old_f)
 			frame_draw(old_f);
 		if(f)
