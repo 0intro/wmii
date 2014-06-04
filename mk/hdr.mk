@@ -48,13 +48,14 @@ BINSH!= $(SHELLSEARCH)
 SHELL := $(BINSH)
 .SHELL: name=sh path=$(SHELL)
 
+all:
+
 include $(ROOT)/config.mk
 sinclude $(ROOT)/config.local.mk
 sinclude $(shell echo .)depend
 
 .SILENT:
 .SUFFIXES: .$(SOEXT) .1 .3 .awk .build .c .clean .depend .install .man1 .man3 .o .o_pic .out .pdf .py .rc .sh .uninstall
-all:
 
 .c.depend:
 	echo MKDEP $<
