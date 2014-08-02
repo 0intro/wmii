@@ -1,16 +1,20 @@
 .TH "WIMENU" 1 "Oct, 2009" "wmii-@VERSION@"
 
+
 .SH NAME
+
 .P
 wimenu \- The wmii menu program
 
 .SH SYNOPSIS
+
 .P
-wimenu \fI[\-i]\fR \fI[\-h \fI<history file>\fR]\fR \fI[\-n \fI<history count>\fR]\fR \fI[\-p \fI<prompt>\fR]\fR 
+wimenu [\fI\-i\fR] [\fI\-h \fI<history file>\fR\fR] [\fI\-n \fI<history count>\fR\fR] [\fI\-p \fI<prompt>\fR\fR] 
 .P
 wimenu \-v
 
 .SH DESCRIPTION
+
 .P
 \fBwimenu\fR is \fBwmii\fR's standard menu program. It's used
 extensively by \fBwmii\fR and related programs to prompt the user
@@ -19,6 +23,7 @@ programs, select views, and perform standard actions. It
 supports basic item completion and history searching.
 
 .SH BASIC ARGUMENTS
+
 .P
 Normal use of \fBwimenu\fR shouldn't require any arguments other than the
 following. More advanced options are documented below.
@@ -48,8 +53,8 @@ Display completion items as a vertical list, one per
 row, rather than a horizontal list, side\-by\-side. A
 maximum of \fI<rows>\fR rows will be displayed.
 
-
 .SH ADVANCED ARGUMENTS
+
 .TP
 \-a
 The address at which to connect to \fBwmii\fR.
@@ -64,7 +69,7 @@ to exit \fBwimenu\fR.
 Key bindings will be read from \fI<key file>\fR. Bindings
 appear as:
 
-\fI<key>\fR \fI[action]\fR \fI[args]\fR
+\fI<key>\fR [\fIaction\fR] [\fIargs\fR]
 
 where \fI<key>\fR is a key name, similar to the format used by
 wmii. For action and args, please refer to the default
@@ -86,6 +91,7 @@ selection is made.
 .RE
 
 .SH KEY BINDINGS
+
 .P
 \fBwimenu\fR's default key bindings are based largely on the
 movement keys of vi and the standard UNIX shell input bindings.
@@ -122,16 +128,16 @@ Move forward one word.
 
 .TP
 C\-a
-Move to the begining of the line.
+Move to the beginning of the line.
 .TP
 C\-e
 Move to the end of the line.
 
 .TP
-C\-p, up
+C\-p, Up
 Move backward through the input history.
 .TP
-C\-n, up
+C\-n, Down
 Move forward through the input history.
 
 .TP
@@ -164,6 +170,7 @@ End, A\-S\-g
 Select the last completion page.
 
 .SH CUSTOM COMPLETION
+
 .P
 Custom, multipart completion data may be proveded by an
 external application. When the standard input is not a TTY,
@@ -178,6 +185,7 @@ an item is selected, text from this position to the position
 of the caret is replaced.
 
 .SS ARGUMENTS
+
 .TP
 \-c
 Prints the contents of the input buffer each time the
@@ -185,8 +193,8 @@ user inputs a character, as such:
 
 \fI<text before caret>\fR\en\fI<text after caret>\fR\en
 
-
 .SS EXAMPLE
+
 .P
 Let's assume that a script would like to provide a menu with
 completions first for a command name, then for arguments
@@ -198,12 +206,14 @@ foo
 .RS
 1, 2, 3
 .RE
+
 .TP
 bar
 
 .RS
 4, 5, 6
 .RE
+
 .TP
 baz
 
@@ -215,55 +225,56 @@ baz
 the following script provides the appropriate completions:
 
 .nf
-  #!/bin/sh -f
-  
-  rm fifo
-  mkfifo fifo
-  
-  # Open wimenu with a fifo as its stdin
-  wimenu -c <fifo | awk '
-  	BEGIN {
-  		# Define the completion results
-  		cmds = "foo\enbar\enbaz\en"
-  		cmd\fI["foo"]\fR = "1\en2\en3\en"
-  		cmd\fI["bar"]\fR = "4\en5\en6\en"
-  		cmd\fI["baz"]\fR = "7\en8\en9\en"
-  
-  		# Print the first set of completions to wimenu’s fifo
-  		fifo = "fifo"
-  		print cmds >fifo; fflush(fifo)
-  	}
-  
-          { print; fflush() }
-  
-  	# Push out a new set of completions
-  	function update(str, opts) {
-  		print length(str) >fifo # Print the length of the preceding string
-  		print opts >fifo        # and the options themself
-  		fflush(fifo)
-  	}
-  
-  	# Ensure correct argument count with trailing spaces
-  	/ $/ { $0 = $0 "#"; }
-  
-  	{ # Process the input and provide the completions
-  		if (NF == 1)
-  			update("", cmds)        # The first arg, command choices
-  		else
-  			update($1 " ", cmd\fI[$1]\fR) # The second arg, command arguments
-  		# Skip the trailing part of the command
-  		getline rest
-  	}
-  \&' | tail -1
+#!/bin/sh -f
+
+rm fifo
+mkfifo fifo
+
+# Open wimenu with a fifo as its stdin
+wimenu -c <fifo | awk '
+	BEGIN {
+		# Define the completion results
+		cmds = "foo\enbar\enbaz\en"
+		cmd[\fI"foo"\fR] = "1\en2\en3\en"
+		cmd[\fI"bar"\fR] = "4\en5\en6\en"
+		cmd[\fI"baz"\fR] = "7\en8\en9\en"
+
+		# Print the first set of completions to wimenu’s fifo
+		fifo = "fifo"
+		print cmds >fifo; fflush(fifo)
+	}
+
+        { print; fflush() }
+
+	# Push out a new set of completions
+	function update(str, opts) {
+		print length(str) >fifo # Print the length of the preceding string
+		print opts >fifo        # and the options themself
+		fflush(fifo)
+	}
+
+	# Ensure correct argument count with trailing spaces
+	/ $/ { $0 = $0 "#"; }
+
+	{ # Process the input and provide the completions
+		if (NF == 1)
+			update("", cmds)        # The first arg, command choices
+		else
+			update($1 " ", cmd[\fI$1\fR]) # The second arg, command arguments
+		# Skip the trailing part of the command
+		getline rest
+	}
+\&' | tail -1
 .fi
 
 
 .P
 In theory, this facility can be used for myriad purposes,
 including hijacking the programmable completion facilities of
-most shells. See also the provided examples\fI[1]\fR.
+most shells. See also the provided examples[\fI1\fR].
 
 .SH ENVIRONMENT
+
 .TP
 \fB$WMII_ADDRESS\fR
 The address at which to connect to wmii.
@@ -273,15 +284,14 @@ The namespace directory to use if no address is
 provided.
 
 .SH SEE ALSO
+
 .P
 wmii(1), wmiir(1), wistrug(1), wmii9menu(1), dmenu(1)
 
 .P
-\fI[1]\fR http://www.suckless.org/wiki/wmii/tips/9p_tips 
+[\fI1\fR] http://www.suckless.org/wiki/wmii/tips/9p_tips 
 .P
-\fI[2]\fR @EXAMPLES@
+[\fI2\fR] @EXAMPLES@
 
-
-.\" man code generated by txt2tags 2.5 (http://txt2tags.sf.net)
+.\" man code generated by txt2tags 2.6 (http://txt2tags.org)
 .\" cmdline: txt2tags -o- wimenu.man1
-
