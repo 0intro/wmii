@@ -1,6 +1,8 @@
 language: c
 sudo: required
 before_script:
+  - sudo apt-get update
+  - sudo apt-get install txt2tags
   - git clone https://github.com/0intro/libixp
   - cd libixp && make && sudo make install && cd ..
 script: make
