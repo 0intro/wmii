@@ -1,6 +1,3 @@
-[![Build Status](https://travis-ci.org/0intro/wmii.svg?branch=master)](https://travis-ci.org/0intro/wmii)
-[![Coverity Scan Build Status](https://scan.coverity.com/projects/0intro-wmii/badge.svg)](https://scan.coverity.com/projects/0intro-wmii)
-
 Abstract
 --------
 wmii is a dynamic window manager for X11.  It supports classic and
