@@ -1,0 +1,6 @@
+language: c
+sudo: required
+before_script:
+  - git clone https://github.com/0intro/libixp
+  - cd libixp && make && sudo make install && cd ..
+script: make
