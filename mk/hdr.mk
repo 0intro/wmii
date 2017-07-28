@@ -26,7 +26,7 @@ COMPILE_FLAGS = $(EXCFLAGS) $(CFLAGS)
 COMPILE    = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(PACKAGES)" "$(COMPILE_FLAGS)"
 COMPILEPIC = $(SHELL) $(ROOT)/util/compile "$(CC)" "$(PACKAGES)" "$(COMPILE_FLAGS) $(SOCFLAGS)"
 
-LINK   = $(SHELL) $(ROOT)/util/link "$(LD)" "$(PACKAGES)" "$(LDFLAGS) $(LIBS)"
+LINK   = $(SHELL) $(ROOT)/util/link "$(LD)" "$(PACKAGES)" "$(LIBS) $(LDFLAGS)"
 LINKSO = $(SHELL) $(ROOT)/util/link "$(LD)" "$(PACKAGES)" "$(SOLDFLAGS) $(LIBS) $(SHARED)"
 
 CLEANNAME=$(SHELL) $(ROOT)/util/cleanname
