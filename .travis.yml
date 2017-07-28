@@ -1,8 +1,31 @@
 language: c
-sudo: required
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "nJd2Zlm34sbNfH+pz/pVMr6+N5IaChlGKs+qR+b2an3hZLxbMYRpeIl75VJWuGNxfrLbNXwnzyo6PcnDp+jlNl92XQSjv9KI2hDbUX6Akek/IrV+Fob7L+yvmHqHHH4b/wBg56IyLJ/KbO651Ay3AF6asM3IaQWrfTnoGMr63k777c1jylm4LsrKGswmHGMSrpH/awUH+SEfQ7Lfkk34PL3TD+fP4bFO53EtfguCDnmw8HBGFjcRBVyY9M2yByYebRjWCmzN2vDgeU7nkxgDGi3MzMgAnl0SB2UAphIPojAGyGyAs2Nn27FprrAWTD0rP0VVfpREgAhog2gM3145LfFCJlDAL9Zystb/L7nQe3nz1tlDiUK0IDy8Z/wKAl0YWLA2bJ/KTIG3Tdy37efBpABCTRvwnBnIhvl3eDNRVt/QTZD2Jr+DbTAxV13bk3duevlKD5M8Oa8RoM6yAJNuA4uECzyb+1okYS2o9FaJMawPs0ly++Qv0OJMHW8MdNgH2sgyKt5/+o5HlA0zzbhS1nv6I9Vj//8DzFfCHJ/2b7PW8fl2Xkk3qgpJ44OMHOaYBVisHFJda5aT42Xng2l5De5VeS/3LuRtp72qeMGex8DN3TyxMgc/wHKlnCVhWEuUvLeC8d10S0OH/KKfroGE1QtbvfFINqGItKsJW8r5D8s="
+
+before_install:
+  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+
+addons:
+  apt:
+    packages:
+    - txt2tags
+  coverity_scan:
+    project:
+      name: "0intro/wmii"
+      description: "Build submitted via Travis CI"
+    notification_email: 0intro@gmail.com
+    build_command_prepend: "make clean"
+    build_command: "make"
+    branch_pattern: master
+
 before_script:
-  - sudo apt-get update
-  - sudo apt-get install txt2tags
   - git clone https://github.com/0intro/libixp
   - cd libixp && make && sudo make install && cd ..
-script: make
+
+script:
+  - make clean
+  - make
