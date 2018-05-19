@@ -13,7 +13,7 @@ DIRS = \
 
 DOCS = FAQ \
        LICENSE \
-       README
+       README.md
 
 deb-dep:
 	IFS=', '; \
