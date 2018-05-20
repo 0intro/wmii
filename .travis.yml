@@ -12,7 +12,7 @@ before_install:
 addons:
   apt:
     packages:
-    - txt2tags
+    - txt2tags libxinerama-dev libxrandr-dev
   coverity_scan:
     project:
       name: "0intro/wmii"
