@@ -201,7 +201,7 @@ struct Client {
 	bool	noinput;
 	bool	rgba;
 	bool	titleless;
-	bool	urgent;
+	int	urgent;
 };
 
 struct Divide {
@@ -296,7 +296,7 @@ struct View {
 	int	selcol;
 	int	selscreen;
 	bool	dead;
-	bool	urgent;
+	int	urgent;
 	Rectangle *r;
 	Rectangle *pad;
 };

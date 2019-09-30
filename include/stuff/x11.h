@@ -7,6 +7,7 @@
 #define Mask XMask
 #include <stuff/geom.h>
 #include <X11/Xlib.h>
+#include <X11/XKBlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/Xrender.h>
 #ifdef _X11_VISIBLE

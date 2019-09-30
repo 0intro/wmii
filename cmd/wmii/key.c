@@ -106,7 +106,7 @@ next_keystroke(ulong *mod, KeyCode *code) {
 		XMaskEvent(display, KeyPressMask, &e);
 		*mod |= e.xkey.state & valid_mask;
 		*code = (KeyCode)e.xkey.keycode;
-		sym = XKeycodeToKeysym(display, e.xkey.keycode, 0);
+		sym = XkbKeycodeToKeysym(display, e.xkey.keycode, 0, 0);
 	} while(IsModifierKey(sym));
 }
 

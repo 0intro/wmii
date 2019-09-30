@@ -70,7 +70,7 @@ fmtkey(Fmt *f) {
 	int nfmt;
 
 	ev = va_arg(f->args, XKeyEvent*);
-	key = XKeysymToString(XKeycodeToKeysym(display, ev->keycode, 0));
+	key = XKeysymToString(XkbKeycodeToKeysym(display, ev->keycode, 0, 0));
 
 	nfmt = f->nfmt;
 	unmask(f, ev->state, modkey_names, '-');

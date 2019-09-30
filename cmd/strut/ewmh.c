@@ -20,7 +20,7 @@ ewmh_getstrut(Window *w, Rectangle struts[4]) {
 	long *strut;
 	ulong n;
 
-	memset(struts, 0, sizeof struts);
+	memset(struts, 0, sizeof *struts);
 
 	n = getprop_long(w, Net("WM_STRUT_PARTIAL"), "CARDINAL",
 		0L, &strut, Last);
