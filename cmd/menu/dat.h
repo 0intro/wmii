@@ -93,9 +93,9 @@ EXTERN struct {
 	int	maxwidth;
 } match;
 
-Font*		font;
-CTuple		cnorm;
-CTuple		csel;
+extern Font*		font;
+extern CTuple		cnorm;
+extern CTuple		csel;
 
 EXTERN Item	hist;
 EXTERN Item*	histsel;

@@ -42,7 +42,7 @@ enum {
 	CurNone,
 	CurLast,
 };
-Cursor	cursor[CurLast];
+extern Cursor	cursor[CurLast];
 
 enum IncMode {
 	IIgnore,
@@ -355,11 +355,11 @@ EXTERN Key*	key;
 EXTERN View*	selview;
 EXTERN View*	view;
 
-EXTERN Handlers	framehandler;
+extern Handlers	framehandler;
 
 /* IXP */
 EXTERN IxpServer srv;
-EXTERN Ixp9Srv	p9srv;
+extern Ixp9Srv	p9srv;
 
 /* X11 */
 EXTERN uint	numlock_mask;

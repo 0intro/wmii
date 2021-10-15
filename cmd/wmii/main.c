@@ -14,6 +14,13 @@
 #include <sys/stat.h>
 #include "fns.h"
 
+char *argv0;
+Display *display;
+Screen scr;
+Cursor cursor[CurLast];
+long debugflag;
+long debugfile;
+
 static const char
 	version[] = "wmii-"VERSION", "COPYRIGHT"\n";
 

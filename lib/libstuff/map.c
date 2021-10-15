@@ -13,7 +13,7 @@ struct MapEnt {
 	MapEnt*		next;
 };
 
-MapEnt *NM;
+static MapEnt *NM;
 
 /* By Dan Bernstein. Public domain. */
 static ulong

@@ -214,8 +214,8 @@ struct Screen {
 # pragma varargck	type	"W"	Window*
 #endif
 
-Display *display;
-Screen scr;
+extern Display *display;
+extern Screen scr;
 
 extern char*		modkey_names[];
 extern struct Map	windowmap;

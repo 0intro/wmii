@@ -12,6 +12,6 @@
 
 enum { DAuto, DHorizontal, DVertical };
 
-EXTERN Handlers	handlers;
+extern Handlers	handlers;
 EXTERN int	direction;
 

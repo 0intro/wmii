@@ -7,6 +7,10 @@
 #include <locale.h>
 #include <unistd.h>
 
+char *argv0;
+Display *display;
+Screen scr;
+
 static const char version[] = "wikeyname-"VERSION", "COPYRIGHT"\n";
 
 static Handlers handlers;

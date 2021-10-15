@@ -20,6 +20,8 @@
 #include <bio.h>
 #include <fmt.h>
 
+char *argv0;
+
 static IxpClient* client;
 static Biobuf*	outbuf;
 static bool	binary;

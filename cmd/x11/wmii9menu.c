@@ -48,6 +48,10 @@
 #include <stuff/util.h>
 #include <stuff/x.h>
 
+char *argv0;
+Display *display;
+Screen scr;
+
 char version[] = "wmii9menu-"VERSION" "COPYRIGHT", ©1994 David Hogan, Arnold Robbins";
 
 static Window*	menuwin;

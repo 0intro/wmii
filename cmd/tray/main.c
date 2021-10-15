@@ -11,6 +11,10 @@
 #include <sys/signal.h>
 #include "fns.h"
 
+char *argv0;
+Display *display;
+Screen scr;
+
 static const char version[] = "witray-"VERSION", "COPYRIGHT"\n";
 
 static int	exitsignal;

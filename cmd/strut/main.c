@@ -9,6 +9,10 @@
 #include <time.h>
 #include "fns.h"
 
+char *argv0;
+Display *display;
+Screen scr;
+
 static Window*	testwin;
 static ulong	testtime[2];
 
