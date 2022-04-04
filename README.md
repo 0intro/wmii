@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/0intro/wmii.svg?branch=master)](https://travis-ci.org/0intro/wmii)
+[![Build Status](https://github.com/0intro/wmii/workflows/C/badge.svg)](https://github.com/0intro/wmii/actions/workflows/c.yml)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/0intro-wmii/badge.svg)](https://scan.coverity.com/projects/0intro-wmii)
 
 Abstract

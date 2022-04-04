@@ -1,0 +1,34 @@
+name: C
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Checkout libixp
+      uses: actions/checkout@v3
+      with:
+        repository: 0intro/libixp
+        path: libixp
+
+    - name: Build libixp
+      working-directory: ./libixp
+      run: sudo make install
+
+    - name: Dependencies
+      run: sudo apt-get -y install libxinerama-dev libxrandr-dev txt2tags
+
+    - name: make clean
+      run: make clean
+
+    - name: make
+      run: make

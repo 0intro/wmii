@@ -1,0 +1,29 @@
+name: Coverity Scan
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  coverity:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Checkout libixp
+      uses: actions/checkout@v3
+      with:
+        repository: 0intro/libixp
+        path: libixp
+
+    - name: Build libixp
+      working-directory: ./libixp
+      run: sudo make install
+
+    - name: Dependencies
+      run: sudo apt-get -y install libxinerama-dev libxrandr-dev txt2tags
+
+    - uses: vapier/coverity-scan-action@v1
+      with:
+        email: ${{ secrets.COVERITY_SCAN_EMAIL }}
+        token: ${{ secrets.COVERITY_SCAN_TOKEN }}
