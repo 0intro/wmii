@@ -146,7 +146,7 @@ bar_draw(WMScreen *s) {
 		b->r.min = ZP;
 		b->r.max.y = Dy(s->brect);
 		b->r.max.x = (def.font->height & ~1) + def.font->pad.min.x + def.font->pad.max.x;
-		if(b->text && strlen(b->text))
+		if(strlen(b->text))
 			b->r.max.x += textwidth(def.font, b->text);
 		width += Dx(b->r);
 		s->barwin_rgba += RGBA_P(b->colors);
