@@ -20,12 +20,12 @@ jobs:
         repository: 0intro/libixp
         path: libixp
 
+    - name: Dependencies
+      run: sudo apt-get -y install libxinerama-dev libxrandr-dev txt2tags
+
     - name: Build libixp
       working-directory: ./libixp
       run: sudo make install
-
-    - name: Dependencies
-      run: sudo apt-get -y install libxinerama-dev libxrandr-dev txt2tags
 
     - name: make clean
       run: make clean
