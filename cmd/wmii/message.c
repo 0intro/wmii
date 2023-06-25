@@ -228,6 +228,7 @@ static ulong
 msg_getulong(const char *s) {
 	ulong l;
 
+	l = 0;
 	if(!(s && getulong(s, &l)))
 		error(Ebadvalue);
 	return l;
@@ -237,6 +238,7 @@ static long
 msg_getlong(const char *s) {
 	long l;
 
+	l = 0;
 	if(!(s && getlong(s, &l)))
 		error(Ebadvalue);
 	return l;

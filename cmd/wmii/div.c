@@ -77,7 +77,8 @@ drawimg(Image *img, Color cbg, Color cborder, Divide *d) {
 	pt[n++] = Pt(w - 1,	w - 1);
 
 	pt[n++] = Pt(w - 1,	Dy(img->r));
-	pt[n++] = Pt(w,		pt[n-1].y);
+	pt[n] = Pt(w,		pt[n-1].y);
+	n++;
 
 	pt[n++] = Pt(w,		w - 1);
 	pt[n++] = Pt(2*w - 1,	0);
