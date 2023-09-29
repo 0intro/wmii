@@ -72,7 +72,7 @@ Installation:
 Documentation:
 
     # see list of all key bindings
-    egrep '^ +\$\{\w+\}' @LOCALCONF@/config.yaml
+    grep -E '^ +\$\{\w+\}' @LOCALCONF@/config.yaml
 
     # read the configuration file
     less @LOCALCONF@/config.yaml
