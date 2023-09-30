@@ -3,13 +3,11 @@
 .SH NAME
 .P
 wmii \- Window Manager Improved²
-
 .SH SYNOPSIS
 .P
-wmii \fI[\-a \fI<address>\fR]\fR \fI[\-r \fI<wmiirc>\fR]\fR 
+wmii [\fI\-a \fI<address>\fR\fR] [\fI\-r \fI<wmiirc>\fR\fR] 
 .P
 wmii \-v
-
 .SH DESCRIPTION
 .SS Overview
 .P
@@ -20,7 +18,6 @@ applications are used at the same time.  The window manager
 adapts to the current environment and fits to the needs of the
 user, rather than forcing him to use a preset, fixed layout and
 trying to shoehorn all windows and applications into it.
-
 .P
 \fBwmii\fR supports classic and tiled window management with
 extended keyboard and mouse control. Classic window management
@@ -30,7 +27,6 @@ vertical columns.  Each column holds an arbitrary number
 arbitrary windows and arranges them vertically in a
 non\-overlapping manner. They can then be moved and resized,
 among and within columns, at will.
-
 .P
 \fBwmii\fR provides a virtual filesystem which represents the
 internal state similar to the procfs of Unix operating systems.
@@ -39,25 +35,29 @@ of the window manager. The virtual filesystem service can be
 accessed through 9P\-capable client programs, like
 wmiir(1).  This allows simple and powerful remote control
 of the core window manager.
-
 .SS Command Line Arguments
+
 .TP
 \-a \fI<address>\fR
 Specifies the address on which \fBwmii\fR should listen for
 connections. The address takes the form
 \fB\fI<protocol>\fR!\fI<address>\fR\fR. The default is of the form:
 
+
 .nf
-      unix!/tmp/ns.\fB$USER\fR.\fB${DISPLAY\fR%.0\fB}\fR/wmii
+    unix!/tmp/ns.\fB$USER\fR.\fB${DISPLAY\fR%.0\fB}\fR/wmii
 .fi
+
 
 which opens a unix socket per Plan 9 Port conventions. To
 open a TCP socket, listening at port 4332 on the loopback
 interface, use:
 
+
 .nf
-      tcp!localhost!4332
+    tcp!localhost!4332
 .fi
+
 
 \fB$WMII_NAMESPACE\fR is automatically set to this value.
 
@@ -70,6 +70,7 @@ environment variables \fB$WMII_ADDRESS\fR and \fB$WMII_CONFPATH\fR are
 preset for the script.
 
 .SS Terminology
+
 .TP
 Display
 A running X server instance consisting of input
@@ -127,7 +128,6 @@ special file in the filesystem of \fBwmii\fR, such as a
 mouse button press, a key press, or a message written by
 a different 9P\-client.
 
-
 .SS Basic window management
 .P
 Running a raw \fBwmii\fR process without a wmiirc(1) script provides
@@ -138,17 +138,14 @@ and resize clients with the mouse, but not to change their tags
 or to switch views.  Other interactions, such as customizing the
 style, killing or retagging clients, and grabbing keys, cannot
 be achieved without accessing the filesystem.
-
 .P
 The filesystem can be accessed by connecting to the \fIaddress\fR
 of \fBwmii\fR with any 9P\-capable client, such as wmiir(1)
-
 .SS Actions
 .P
 The default configuration provides for a special menu of
 actions. These consist of either shell scripts in \fB$WMII_CONFPATH\fR
 or action definitions included in wmiirc.
-
 .P
 Here is a list of the default actions:
 
@@ -167,8 +164,8 @@ tab(^); ll.
 All of the provided \fBwmiirc\fR scripts accept at least the following key
 bindings. They should also provide a \fBshowkeys\fR action to open a
 key binding quick\-reference.
-
 .SS Moving Around
+
 .TS
 tab(^); ll.
  \fBKey\fR^\fBAction\fR
@@ -180,10 +177,11 @@ tab(^); ll.
  Mod\-t \fI<tag>\fR^Move to the view of the given \fI<tag>\fR
  Mod\-n^Move to the next view
  Mod\-b^Move to the previous view
- Mod\-\fI\fI[0\-9]\fR\fR^Move to the view with the given number
+ Mod\-\fI[\fI0\-9\fR]\fR^Move to the view with the given number
 .TE
 
 .SS Moving Things Around
+
 .TS
 tab(^); ll.
  \fBKey\fR^\fBAction\fR
@@ -193,10 +191,11 @@ tab(^); ll.
  Mod\-Shift\-k^Move the current window above the window above it.
  Mod\-Shift\-space^Toggle the current window between the managed and floating layer
  Mod\-Shift\-t \fI<tag>\fR^Move the current window to the view of the given \fI<tag>\fR
- Mod\-Shift\-\fI\fI[0\-9]\fR\fR^Move the current window to the view with the given number
+ Mod\-Shift\-\fI[\fI0\-9\fR]\fR^Move the current window to the view with the given number
 .TE
 
 .SS Miscellaneous
+
 .TS
 tab(^); ll.
  \fBKey\fR^\fBAction\fR
@@ -216,18 +215,16 @@ customize (as described above) the \fBwmiirc\fR action.  This
 action is executed at the end of the \fBwmii\fR script and does
 all the work of setting up the window manager, the key bindings,
 the bar labels, etc.
-
 .SS Filesystem
 .P
 Most aspects of \fBwmii\fR are controlled via the filesystem.  It is
 usually accessed via the wmiir(1) command, but it can be
-accessed by any 9P, including plan9port's 9P\fI[1]\fR, and can be
-mounted natively on Linux via v9fs\fI[1]\fR, and on Inferno (which man
+accessed by any 9P, including plan9port's 9P[\fI1\fR], and can be
+mounted natively on Linux via v9fs[\fI1\fR], and on Inferno (which man
 run on top of Linux). All data in the filesystem, including
 filenames, is UTF\-8 encoded. However, when accessed via
 wmiir(1), text is automatically translated to and from your
 locale encoding.
-
 .P
 The filesystem is, as are many other 9P filesystems, entirely
 synthetic. The files exist only in memory, and are not written
@@ -238,8 +235,8 @@ are updated and returned exactly as written), though writing
 them has side\-effects (such as changing key bindings). A
 description of the filesystem layout and control commands
 follows.
-
 .SS Hierarchy
+
 .TP
 /
 Global control files
@@ -253,23 +250,27 @@ View control files
 /lbar/, /rbar/
 Files representing the contents of the bottom bar
 
-
 .SS The / Hierarchy
+
 .TP
 colrules
 The \fIcolrules\fR file contains a list of
 rules which affect the width of newly created columns.
 Rules have the form:
 
+
 .nf
-      /\fI<regex>\fR/ -> \fI<width>\fR\fI[+\fI<width>\fR]\fR*
+    /\fI<regex>\fR/ -> \fI<width>\fR[\fI+\fI<width>\fR\fR]*
 .fi
+
 
 Where,
 
+
 .nf
-      \fI<width>\fR := \fI<percent of screen>\fR | \fI<pixels>\fRpx
+    \fI<width>\fR := \fI<percent of screen>\fR | \fI<pixels>\fRpx
 .fi
+
 
 When a new column, \fI<n>\fR, is created on a view whose name
 matches \fI<regex>\fR, it is given the \fI<n>\fRth supplied \fI<width>\fR.
@@ -284,9 +285,11 @@ The \fIrules\fR file contains a list of rules that may be used
 to automatically set properties of new clients. Rules are
 specified as:
 
+
 .nf
-      /\fI<regex>\fR/ \fI<key>\fR=\fI<value>\fR ...
+    /\fI<regex>\fR/ \fI<key>\fR=\fI<value>\fR ...
 .fi
+
 
 where each \fI<key>\fR represents a command in the clients \fIctl\fR
 file, and each \fI<value>\fR represents the value to assign to it.
@@ -323,14 +326,14 @@ The \fIevent\fR file never returns EOF while
 as they occur. Included among them are:
 .RS 8
 .TP
-\fI[Not]\fRUrgent \fI<client>\fR \fI[Manager|Client]\fR
+[\fINot\fR]Urgent \fI<client>\fR [\fIManager|Client\fR]
 \fI<client>\fR's urgent hint has been set or
-unset. The second arg is \fI[Client]\fR if it's
-been set by the client, and \fI[Manager]\fR if
+unset. The second arg is [\fIClient\fR] if it's
+been set by the client, and [\fIManager\fR] if
 it's been set by \fBwmii\fR via a control
 message.
 .TP
-\fI[Not]\fRUrgentTag \fI<tag>\fR \fI[Manager|Client]\fR
+[\fINot\fR]UrgentTag \fI<tag>\fR [\fIManager|Client\fR]
 A client on \fI<tag>\fR has had its urgent hint
 set, or the last urgent client has had its
 urgent hint unset.
@@ -339,13 +342,13 @@ Client\fI<Click|MouseDown>\fR \fI<client>\fR \fI<button>\fR
 A client's titlebar has either been clicked or
 has a button pressed over it.
 .TP
-\fI[Left|Right]\fRBar\fI[Click|MouseDown]\fR \fI<button>\fR \fI<bar>\fR
+[\fILeft|Right\fR]Bar[\fIClick|MouseDown\fR] \fI<button>\fR \fI<bar>\fR
 A left or right bar has been clicked or has a
 button pressed over it.
 .RS -8
 
 For a more comprehensive list of available events, see
-\fIwmii.pdf\fR\fI[2]\fR
+\fIwmii.pdf\fR[\fI2\fR]
 
 .TP
 ctl
@@ -364,7 +367,6 @@ Replace \fBwmii\fR with \fI<prog>\fR
 spawn \fI<prog>\fR
 Spawn a new program, as if by the \fI\-r\fR flag.
 .RS -8
-
 
 .SS The /client/ Hierarchy
 .P
@@ -453,7 +455,6 @@ string written begins with \fB+\fR, \fB^\fR, or \fB\-\fR, the
 written tags are added to or removed from the client's
 set, otherwise the set is overwritten.
 
-
 .SS The /tag/ Hierarchy
 .P
 Each directory under '/tag/' represents a view, containing
@@ -469,9 +470,9 @@ following commands:
 .TP
 select
 Select a client:
-select \fI[left|right|up|down]\fR 
+select [\fIleft|right|up|down\fR] 
 .P
-select \fI[\fI<row number>\fR|sel]\fR \fI[\fI<frame number>\fR]\fR 
+select [\fI\fI<row number>\fR|sel\fR] [\fI\fI<frame number>\fR\fR] 
 .P
 select client \fI<client>\fR
 .TP
@@ -479,12 +480,12 @@ send
 Send a client somewhere:
 .RS 8
 .TP
-send \fI[\fI<client>\fR|sel]\fR \fI[up|down|left|right]\fR
+send [\fI\fI<client>\fR|sel\fR] [\fIup|down|left|right\fR]
 .TP
-send \fI[\fI<client>\fR|sel]\fR \fI<area>\fR
+send [\fI\fI<client>\fR|sel\fR] \fI<area>\fR
 Send \fI<client>\fR to the \fIn\fRth \fI<area>\fR
 .TP
-send \fI[\fI<client>\fR|sel]\fR toggle
+send [\fI\fI<client>\fR|sel\fR] toggle
 Toggle \fI<client>\fR between the floating and managed layer.
 .RS -8
 .TP
@@ -495,17 +496,21 @@ Swap a client with another. Same syntax as send.
 grow
 Grow or shrink a client.
 
+
 .nf
-     grow \fI<frame>\fR \fI<direction>\fR \fI[\fI<amount>\fR]\fR
+   grow \fI<frame>\fR \fI<direction>\fR [\fI\fI<amount>\fR\fR]
 .fi
+
 
 .TP
 nudge
 Nudge a client in a given direction.
 
+
 .nf
-     grow \fI<frame>\fR \fI<direction>\fR \fI[\fI<amount>\fR]\fR
+   grow \fI<frame>\fR \fI<direction>\fR [\fI\fI<amount>\fR\fR]
 .fi
+
 
 .RS -8
 Where the arguments are defined as follows:
@@ -514,24 +519,30 @@ Where the arguments are defined as follows:
 area
 Selects a column or the floating area.
 
+
 .nf
-     area        ::= \fI<area_spec>\fR | \fI<screen_spec>\fR:\fI<area_spec>\fR
+   area        ::= \fI<area_spec>\fR | \fI<screen_spec>\fR:\fI<area_spec>\fR
 .fi
+
 
 When \fI<screen_spec>\fR is omitted and \fI<area_spec>\fR is not "sel",
 0 is assumed. "sel" by itself represents the selected client no
 matter which screen it is on.
 
+
 .nf
-     area_spec   ::= "~" | \fI<number>\fR | "sel"
+   area_spec   ::= "~" | \fI<number>\fR | "sel"
 .fi
+
 
 Where "~" represents the floating area and \fI<number>\fR represents a column
 index, starting at one.
 
+
 .nf
-     screen_spec ::= \fI<number>\fR
+   screen_spec ::= \fI<number>\fR
 .fi
+
 
 Where \fI<number>\fR representes the 0\-based Xinerama screen number.
 
@@ -539,9 +550,11 @@ Where \fI<number>\fR representes the 0\-based Xinerama screen number.
 frame
 Selects a client window.
 
+
 .nf
-     frame ::= \fI<area>\fR \fI<index>\fR | \fI<area>\fR sel | client \fI<window-id>\fR
+   frame ::= \fI<area>\fR \fI<index>\fR | \fI<area>\fR sel | client \fI<window-id>\fR
 .fi
+
 
 Where \fI<index>\fR represents the nth frame of \fI<area>\fR or \fI<window\-id>\fR is
 the X11 window id of the given client.
@@ -550,9 +563,11 @@ the X11 window id of the given client.
 amount
 The amount to grow or nudge something.
 
+
 .nf
-     amount ::= \fI<number>\fR | \fI<number>\fRpx
+   amount ::= \fI<number>\fR | \fI<number>\fRpx
 .fi
+
 
 If "px" is given, \fI<number>\fR is interperated as an exact pixel count.
 Otherwise, it's interperated as a "reasonable" amount, which is
@@ -563,7 +578,6 @@ increment (as defined by X11) in a given direction.
 index
 Read for a description of the contents of a tag.
 
-
 .SS The /rbar/, /lbar/ Hierarchy
 .P
 The files under '/rbar/' and '/lbar/' represent the
@@ -572,13 +586,12 @@ items of the bar at the bottom of the screen. Files under
 under '/rbar/' appear on the right, with the leftmost item
 occupying all extra available space. The items are sorted
 lexicographically.
-
 .P
 The files may be read or written to obtain or alter the colors
 and text of the bars. The format is similar to the various \fIctl\fR
 files and should be self explanitory.
-
 .SH FILES
+
 .TP
 /tmp/ns.\fB$USER\fR.\fB${DISPLAY\fR%.0\fB}\fR/wmii
 The wmii socket file which provides a 9P service.
@@ -589,8 +602,8 @@ Global action directory.
 @LOCALCONF@
 User\-specific action directory. Actions are first searched here.
 
-
 .SH ENVIRONMENT
+
 .TP
 \fB$HOME\fR, \fB$DISPLAY\fR
 See the section \fBFILES\fR above.
@@ -616,13 +629,10 @@ wimenu(1), wmii9menu(1), witray(1), wmiir(1), wihack(1)
 .P
 @DOCDIR@/wmii.pdf
 @DOCDIR@/FAQ
-
 .P
-\fI[1]\fR http://www.suckless.org/wiki/wmii/tips/9p_tips 
+[\fI1\fR] http://www.suckless.org/wiki/wmii/tips/9p_tips 
 .P
-\fI[2]\fR @DOCDIR@/wmii.pdf
+[\fI2\fR] @DOCDIR@/wmii.pdf
 
-
-.\" man code generated by txt2tags 2.5 (http://txt2tags.sf.net)
+.\" man code generated by txt2tags 3.3 (http://txt2tags.org)
 .\" cmdline: txt2tags -o- wmii.man1
-
