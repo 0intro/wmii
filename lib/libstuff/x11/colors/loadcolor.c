@@ -9,6 +9,8 @@ loadcolor(CTuple *c, const char *str, const char *end) {
 	char buf[128];
 	char *toks[4];
 
+	memset(c, 0, sizeof(*c));
+
 	utflcpy(buf, str, end ? min(end - str + 1, sizeof buf) : sizeof buf);
 	if(3 > stokenize(toks, nelem(toks), buf, " \t\r\n"))
 		return 0;
