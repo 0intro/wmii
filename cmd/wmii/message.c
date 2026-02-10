@@ -355,7 +355,7 @@ setmask(Mask m, char *s) {
 		i = _bsearch(opt, m.table, n);
 		if(i == -1)
 			error(Ebadvalue);
-		else if(add = '^')
+		else if(add == '^')
 			newmask ^= 1<<i;
 		else if(add == '+')
 			newmask |= 1<<i;
