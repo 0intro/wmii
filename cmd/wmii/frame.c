@@ -29,7 +29,7 @@ frame_create(Client *c, View *v) {
 	if(c->sel) {
 		f->floatr = c->sel->floatr;
 		f->r = c->sel->r;
-	}else if(c->sel) {
+	}else if(c->frame) {
 		f->floatr = c->frame->floatr;
 		f->r = c->frame->r;
 	}else {
