@@ -23,7 +23,7 @@ toutf8n(const char *str, size_t nstr) {
 	if(!haveiconv) {
 		buf = emalloc(nstr+1);
 		memcpy(buf, str, nstr);
-		buf[nstr+1] = '\0';
+		buf[nstr] = '\0';
 		return buf;
 	}
 
