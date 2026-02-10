@@ -118,7 +118,7 @@ view_update_screens(View *v) {
 	Frame *f;
 	int s;
 
-	if (v->sel->screen > (long)nscreens)
+	if (v->sel->screen >= nscreens_new)
 		v->sel = v->floating->next;
 
 	v->selscreen = min(v->selscreen, nscreens);
