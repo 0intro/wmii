@@ -562,6 +562,9 @@ view_scale(View *v, int scrn, int width) {
 		dx += Dx(a->r);
 	}
 
+	if(dx == 0)
+		return;
+
 	scale = (float)width / dx;
 	xoff = minx;
 	for(a=v->areas[scrn]; a; a=a->next) {

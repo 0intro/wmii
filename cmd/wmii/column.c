@@ -268,7 +268,7 @@ column_fit(Area *a, uint *n_colp, uint *n_uncolp) {
 		surplus += i * (uncol_h - col_h);
 	}
 	/* Push to the floating layer until there is room */
-	if(surplus < 0) {
+	if(surplus < 0 && col_h > 0) {
 		i = ceil(-1.F * surplus / col_h);
 		if(i > n_col)
 			i = n_col;

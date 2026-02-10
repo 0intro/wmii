@@ -23,6 +23,7 @@ stack_scale(Frame *first, int height) {
 	/* Distribute the surplus.
 	 */
 	surplus = height - dy;
+	if(dy > 0)
 	for(f=first; f && !f->collapsed; f=f->anext)
 		f->colr.max.y += ((float)Dy(f->r) / dy) * surplus;
 }
