@@ -125,7 +125,8 @@ selection_manage(char *selection, ulong time,
 			pushhandler(w, &steal_handlers, s);
 			s->timer = ixp_settimer(&srv, 2000, timeout, s);
 		}
-	}
+	}else if(old)
+		free(w);
 
 	return s;
 }
