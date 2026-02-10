@@ -717,12 +717,12 @@ readctl_root(void) {
 	if(debugflag)
 		bufprint("debug %M\n", (Mask){&debugflag, debugtab});
 	if(debugfile)
-		bufprint("debugfile %M", (Mask){&debugfile, debugtab});
+		bufprint("debugfile %M\n", (Mask){&debugfile, debugtab});
 	bufprint("focuscolors %s\n", def.focuscolor.colstr);
 	bufprint("font %s\n", def.font->name);
 	bufprint("fontpad %d %d %d %d\n", def.font->pad.min.x, def.font->pad.max.x,
 		 def.font->pad.max.y, def.font->pad.min.y);
-	bufprint("grabmod %s\n", (Mask){&def.mod, modkey_names});
+	bufprint("grabmod %M\n", (Mask){&def.mod, modkey_names});
 	bufprint("incmode %s\n", incmodetab[def.incmode]);
 	bufprint("normcolors %s\n", def.normcolor.colstr);
 	bufprint("view %s\n", selview->name);
