@@ -93,7 +93,7 @@ managable(ulong xid) {
 	bool retval;
 
 	n = getprop_ulong(window(xid), "_WMII_STRUT", "WINDOW", 0L, &ret, 1L);
-	if(n < 0)
+	if(n == 0)
 		retval = true;
 	else {
 		if(ret[0] == xid)
