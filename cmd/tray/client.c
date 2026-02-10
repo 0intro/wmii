@@ -120,7 +120,7 @@ client_opcode(Client *c, long message, long l1, long l2, long l3) {
 	       sxprint("%lx", message),
 	       l1, l2, l3);
 
-	if(message == TrayBeginMessage)
+	if(message == TrayCancelMessage)
 		message_cancel(c, l1);
 	else if(message == TrayBeginMessage) {
 		if(l2 > 5 * 1024) /* Don't bother with absurdly large messages. */
