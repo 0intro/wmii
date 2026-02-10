@@ -144,7 +144,7 @@ client_message(Client *c, long type, int format, ClientMessageData* data) {
 
 	if(format == 8 && type == NET("SYSTEM_TRAY_MESSAGE_DATA")) {
 		/* Append the data to the last incomplete message. */
-		for(m = c->message; m && m->msg.pos >= m->msg.end; m++)
+		for(m = c->message; m && m->msg.pos >= m->msg.end; m = m->next)
 			;
 		if(m) {
 			memcpy(m->msg.pos, data, min(20, m->msg.end - m->msg.pos));
