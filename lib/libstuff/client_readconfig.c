@@ -19,6 +19,6 @@ client_readconfig(CTuple *norm, CTuple *focus, Font **font) {
 		fatal("Can't load font %q", readctl("/ctl", "font "));
 	sscanf(readctl("/ctl", "fontpad "), "%d %d %d %d",
 	       &(*font)->pad.min.x, &(*font)->pad.max.x,
-	       &(*font)->pad.min.x, &(*font)->pad.max.y);
+	       &(*font)->pad.max.y, &(*font)->pad.min.y);
 }
 
