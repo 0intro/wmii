@@ -51,8 +51,9 @@ selection_event(Window *w, void *aux, XSelectionEvent *ev) {
 		getprop_textlist(w, atomname(ev->property), &ret);
 		delproperty(w, atomname(ev->property));
 		d->callback(d->aux, ret ? *ret : nil);
-		free(ret);
+		freestringlist(ret);
 	}
+	free(d);
 	destroywindow(w);
 	return false;
 }
