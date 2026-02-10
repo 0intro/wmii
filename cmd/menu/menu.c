@@ -200,6 +200,8 @@ pagestart(Item *i) {
 
 static void
 selectitem(Item *i) {
+	if(!i->string)
+		return;
 	if(i != match.sel) {
 		caret_set(input.filter_start, input.pos - input.string);
 		caret_insert(i->string, 0);
