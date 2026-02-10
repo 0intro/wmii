@@ -63,7 +63,7 @@ static void
 drawarrow(Image *img, Rectangle r, int up, Color *col) {
 	Point p[3], pt;
 
-	pt = Pt(menu.arrow.x - itempad/2, menu.arrow.y - itempad/2 & ~1);
+	pt = Pt(menu.arrow.x - itempad/2, (menu.arrow.y - itempad/2) & ~1);
 
 	p[1] = Pt(r.min.x + Dx(r)/2,	up ? r.min.y + itempad/4 : r.max.y - itempad/4);
 	p[0] = Pt(p[1].x - pt.x/2,	up ? p[1].y + pt.y	 : p[1].y - pt.y);
@@ -268,8 +268,11 @@ kdown_event(Window *w, void *aux, XKeyEvent *e) {
 	else {
 		long mask = 0;
 #		define have(val) !!(mask & (1 << val))
-		for(p=action+1; *p; p++)
-			mask |= 1 << getsym(*p);
+		for(p=action+1; *p; p++) {
+			int sym = getsym(*p);
+			if(sym >= 0)
+				mask |= 1 << sym;
+		}
 		int amount = (
 			have(LCHAR) ? CHAR :
 			have(LWORD) ? WORD :
