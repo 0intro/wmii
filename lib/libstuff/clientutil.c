@@ -20,11 +20,17 @@ readctl(char *ctlname, char *key) {
 	int nkey, n;
 
 	if(strcmp(ctlname, ctlfile)) {
-		strncpy(ctlfile, ctlname, sizeof ctlfile);
+		utflcpy(ctlfile, ctlname, sizeof ctlfile);
 		fid = ixp_open(client, ctlfile, OREAD);
-		n = ixp_read(fid, ctl, sizeof ctl - 1);
-		ectl = ctl + n;
-		ixp_close(fid);
+		if(fid) {
+			n = ixp_read(fid, ctl, sizeof ctl - 1);
+			if(n < 0) n = 0;
+			ectl = ctl + n;
+			ixp_close(fid);
+		}else {
+			ectl = ctl;
+			ctlfile[0] = '\0';
+		}
 	}
 
 	nkey = strlen(key);
