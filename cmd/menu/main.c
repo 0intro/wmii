@@ -83,6 +83,18 @@ populate_list(Biobuf *buf, bool hist) {
 }
 
 static void
+free_items(Item *i) {
+	Item *next;
+
+	while(i) {
+		next = i->next_link;
+		free(i->string);
+		free(i);
+		i = next;
+	}
+}
+
+static void
 check_competions(IxpConn *c) {
 	char *s;
 
@@ -93,6 +105,7 @@ check_competions(IxpConn *c) {
 	}
 	input.filter_start = strtol(s, nil, 10);
 	free(s);
+	free_items(match.all);
 	match.all = populate_list(cmplbuf, false);
 	update_filter(false);
 	menu_draw();
