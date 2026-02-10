@@ -13,9 +13,12 @@ static Handlers handlers;
 void
 bar_init(WMScreen *s) {
 	WinAttr wa;
+	Window *old;
 
 	if(s->barwin && (s->barwin->depth == 32) == s->barwin_rgba)
 		return;
+
+	old = s->barwin;
 
 	s->brect = s->r;
 	s->brect.min.y = s->brect.max.y - labelh(def.font);
@@ -36,6 +39,8 @@ bar_init(WMScreen *s) {
 	s->barwin->aux = s;
 	xdnd_initwindow(s->barwin);
 	sethandler(s->barwin, &handlers);
+	if(old)
+		destroywindow(old);
 	if(s == screens[0])
 		mapwin(s->barwin);
 }
