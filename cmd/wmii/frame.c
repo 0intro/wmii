@@ -172,19 +172,24 @@ bdown_event(Window *w, void *aux, XButtonEvent *e) {
 			break;
 		}
 	}else {
-		if(e->button == Button1) {
-			if(!e->subwindow) {
+		if(e->subwindow) {
+			/* Replay the event to the client immediately,
+			 * so that pointer-sensitive actions like CSS
+			 * :hover menus aren't disrupted by the grab. */
+			XAllowEvents(display, ReplayPointer, e->time);
+
+			if(e->button == Button1)
+				if(f->client != selclient())
+					focus(c, false);
+		}else {
+			if(e->button == Button1) {
 				frame_restack(f, nil);
 				view_restack(f->view);
 				mouse_checkresize(f, Pt(e->x, e->y), true);
-			}
 
-			if(f->client != selclient())
-				focus(c, false);
-		}
-		if(e->subwindow)
-			XAllowEvents(display, ReplayPointer, e->time);
-		else {
+				if(f->client != selclient())
+					focus(c, false);
+			}
 			/* Ungrab so a menu can receive events before the button is released */
 			XUngrabPointer(display, e->time);
 			sync();
