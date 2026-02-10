@@ -20,7 +20,11 @@ pathsearch(const char *path, const char *file, bool slashok) {
 		return nil;
 	}
 
-	orig = estrdup(path ? path : getenv("PATH"));
+	if(path == nil)
+		path = getenv("PATH");
+	if(path == nil)
+		return nil;
+	orig = estrdup(path);
 	for(p=orig; (s=strtok(p, ":")); p=nil) {
 		s = smprint("%s/%s", s, file);
 		if(!access(s, X_OK))
