@@ -647,7 +647,7 @@ constrain(Rectangle r, int inset) {
 	SET(best);
 	sbest = nil;
 	for(sp=screens; (s = *sp); sp++) {
-		if(!screen->showing)
+		if(!s->showing)
 			continue;
 
 		isect = rect_intersection(r, insetrect(s->r, inset));
