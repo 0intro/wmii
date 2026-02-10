@@ -13,7 +13,7 @@ getprop_long(Window *w, const char *prop, const char *type,
 	n = getprop(w, prop, type, &actual, &format, offset, (uchar**)ret, length);
 	if(n == 0 || format == 32 && xatom(type) == actual)
 		return n;
-	free(*ret);
+	XFree(*ret);
 	*ret = 0;
 	return 0;
 }

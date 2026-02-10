@@ -21,7 +21,7 @@ getprop(Window *w, const char *prop, const char *type, Atom *actual, int *format
 		return 0;
 	}
 	if(n == 0) {
-		free(*ret);
+		XFree(*ret);
 		*ret = nil;
 	}
 	return n;
