@@ -467,9 +467,10 @@ event_root_clientmessage(Window *w, void *aux, XClientMessageEvent *e) {
 		for(v=view, i=l[0]; v; v=v->next, i--)
 			if(i == 0)
 				break;
-		Dprint(DEwmh, "\t%s\n", v->name);
-		if(i == 0)
+		if(i == 0) {
+			Dprint(DEwmh, "\t%s\n", v->name);
 			view_select(v->name);
+		}
 		return 1;
 	}
 	if(msg == xatom("WM_PROTOCOLS")) {
