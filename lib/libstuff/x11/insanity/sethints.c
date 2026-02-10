@@ -55,8 +55,8 @@ sethints(Window *w, WinHints *h) {
 
 	if(!eqpt(h->base, ZP)) {
 		xhints.flags |= PBaseSize;
-		xhints.base_width  = h->baspect.x;
-		xhints.base_height = h->baspect.y;
+		xhints.base_width  = h->base.x;
+		xhints.base_height = h->base.y;
 	}
 
 	if(!eqrect(h->aspect, ZR)) {
