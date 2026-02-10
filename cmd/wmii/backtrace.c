@@ -31,8 +31,11 @@ _backtrace(int pid, char *btarg) {
 	closeexec(p[0]);
 
 	cmdfd = mkstemp(gdbcmd);
-	if(cmdfd < 0)
+	if(cmdfd < 0) {
+		close(p[0]);
+		close(p[1]);
 		goto done;
+	}
 
 	fprint(cmdfd, "bt %s\n", btarg);
 	fprint(cmdfd, "detach\n");
@@ -45,6 +48,7 @@ _backtrace(int pid, char *btarg) {
 	proc = sxprint("/proc/%d/" PROGTXT, pid);
 	spid = sxprint("%d", pid);
 	if(spawn3l(fd, "gdb", "gdb", "-batch", "-x", gdbcmd, proc, spid, nil) < 0) {
+		close(p[0]);
 		unlink(gdbcmd);
 		goto done;
 	}
@@ -57,6 +61,7 @@ _backtrace(int pid, char *btarg) {
 		Dprint(DStack, "%s\n", s);
 		free(s);
 	}
+	close(p[0]);
 	unlink(gdbcmd);
 
 done:
