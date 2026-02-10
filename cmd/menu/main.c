@@ -60,8 +60,10 @@ populate_list(Biobuf *buf, bool hist) {
 	ret.next_link = nil;
 	i = &ret;
 	while((p = Brdstr(buf, '\n', true))) {
-		if(stop && p[0] == '\0')
+		if(stop && p[0] == '\0') {
+			free(p);
 			break;
+		}
 		i->next_link = emallocz(sizeof *i);
 		i = i->next_link;
 		i->string = p;
@@ -90,6 +92,7 @@ check_competions(IxpConn *c) {
 		return;
 	}
 	input.filter_start = strtol(s, nil, 10);
+	free(s);
 	match.all = populate_list(cmplbuf, false);
 	update_filter(false);
 	menu_draw();
