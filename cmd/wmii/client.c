@@ -137,8 +137,6 @@ client_create(XWindow w, XWindowAttributes *wa) {
 
 	group_init(c);
 
-	grab_button(c->framewin->xid, AnyButton, AnyModifier);
-
 	for(t=&client ;; t=&t[0]->next)
 		if(!*t) {
 			c->next = *t;
@@ -206,6 +204,17 @@ client_reparent(Client *c) {
 	c->framewin->aux = c;
 	sethandler(c->framewin, &framehandler);
 	reparentwindow(&c->w, c->framewin, ZP);
+
+	/* Focused windows only need modifier grabs so that
+	 * unmodified clicks pass through to the client without
+	 * a pointer grab that would disrupt hover-sensitive UI
+	 * elements like CSS :hover menus in web browsers.
+	 */
+	if(c == disp.focus)
+		grab_button(c->framewin->xid, AnyButton, def.mod);
+	else
+		grab_button(c->framewin->xid, AnyButton, AnyModifier);
+
 	if(fw)
 		destroywindow(fw);
 }
@@ -934,6 +943,10 @@ focusin_event(Window *w, void *aux, XFocusChangeEvent *e) {
 	old = disp.focus;
 	disp.focus = c;
 	if(c != old) {
+		if(c->framewin) {
+			XUngrabButton(display, AnyButton, AnyModifier, c->framewin->xid);
+			grab_button(c->framewin->xid, AnyButton, def.mod);
+		}
 		event("ClientFocus %#C\n", c);
 		if(c->sel)
 			frame_draw(c->sel);
@@ -952,6 +965,10 @@ focusout_event(Window *w, void *aux, XFocusChangeEvent *e) {
 	}else if(disp.focus == c) {
 		print_focus("focusout_event", &c_magic, "<magic>");
 		disp.focus = &c_magic;
+		if(c->framewin) {
+			XUngrabButton(display, AnyButton, AnyModifier, c->framewin->xid);
+			grab_button(c->framewin->xid, AnyButton, AnyModifier);
+		}
 		if(c->sel)
 			frame_draw(c->sel);
 	}
