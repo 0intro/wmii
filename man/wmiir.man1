@@ -107,5 +107,5 @@ to scripting wmii:
 wmii(1), libixp[2]
 
 [1] http://www.suckless.org/wiki/wmii/tips/9p_tips +
-[2] http://libs.suckless.org/libixp
+[2] https://github.com/0intro/libixp
 

@@ -13,7 +13,7 @@ Requirements
 ------------
 In order to build wmii you need the Xlib header files and libixp.
 xmessage is used by the default scripts.  Libixp, if not provided, can
-be obtained from http://libs.suckless.org/.  On debian, you should be
+be obtained from https://github.com/0intro/libixp.  On debian, you should be
 able to obtain all dependencies by running `make deb-dep`.  Python is
 recommended for more advanced configurations.
 
