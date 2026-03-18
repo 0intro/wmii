@@ -121,7 +121,7 @@ fn Event-Notice {
 	wmiir xwrite $noticebar label $wi_arg
 
 	/bin/kill $xpid >[2]/dev/null # Let's hope this isn't reused...
-	{ sleep $noticetimeout; wmiir xwrite $noticebar ' ' }& # Bug...
+	{ sleep $noticetimeout; wmiir xwrite $noticebar label }&
 	xpid = $apid}
 
 fn Event-LeftBar^(Click DND) {
