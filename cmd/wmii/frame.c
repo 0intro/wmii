@@ -513,8 +513,11 @@ frame_draw(Frame *f) {
 	 * in order to implement pseudo-transparency.
 	 * What's more, the designers of X11 felt that it would be unfair to
 	 * implementers to make it possible to detect, or forbid, such changes.
+	 *
+	 * Use a solid background color instead of None so that areas exposed
+	 * during resize show the frame color rather than undefined content.
 	 */
-	XSetWindowBackgroundPixmap(display, c->framewin->xid, None);
+	XSetWindowBackground(display, c->framewin->xid, col->bg.pixel);
 
 	copyimage(c->framewin, fr, img, ZP);
 }
