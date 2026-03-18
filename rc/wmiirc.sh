@@ -112,7 +112,7 @@ Event Notice
 
 	kill $xpid 2>/dev/null # Let's hope this isn't reused...
 	{ sleep $noticetimeout; wmiir xwrite $noticebar label; }&
-	xpid = $!
+	xpid=$!
 
 # Menus
 Menu Client-3-Delete
