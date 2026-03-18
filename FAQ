@@ -4,7 +4,7 @@
 @@ substitute the following directories for their placeholders.
 @@   @DOCDIR@		doc/
 @@   @EXAMPLES@		examples/
-@@   @LOCALCONF@	~/.wmii or ~/.wmii-hg (if this is a snapshot)
+@@   @LOCALCONF@	~/.wmii
 @@   @ALTDOC@		alternative_wmiircs/
 @@
 Frequently Asked Questions
@@ -109,7 +109,7 @@ bind.
 
 [1] http://suckless.org/community
 [2] http://dir.gmane.org/gmane.comp.misc.suckless
-[3] http://wmii.googlecode.com/
+[3] https://github.com/0intro/wmii
 [4] @DOCDIR@/wmii.pdf
 [5] For more information, see wmii(1).
 [6] http://plan9.us

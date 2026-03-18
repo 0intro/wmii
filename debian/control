@@ -1,16 +1,16 @@
-Source: wmii-hg
+Source: wmii
 Section: x11
 Priority: optional
 Maintainer: Kris Maglione <jg@suckless.org>
-Build-Depends: libixp-hg, dash, python, libx11-dev, libxft-dev, libxext-dev, libxinerama-dev, libxrandr-dev, x11proto-xext-dev, quilt, debhelper (>= 4.0)
+Build-Depends: libixp, dash, python, libx11-dev, libxft-dev, libxext-dev, libxinerama-dev, libxrandr-dev, x11proto-xext-dev, quilt, debhelper (>= 4.0)
 Standards-Version: 3.8.4
-Homepage: http://wmii.suckless.org/
+Homepage: https://github.com/0intro/wmii
 
-Package: wmii-hg
+Package: wmii
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, dash (>= 0.1)
-Conflicts: wmii, wmii2
-Replaces: wmii, wmii2
+Conflicts: wmii2
+Replaces: wmii2
 Provides: x-window-manager
 Description: lightweight tabbed and tiled X11 window manager
  wmii is a dynamic window manager for X11, which is highly customizable and

@@ -1,16 +1,16 @@
 
-pkgname=(wmii-hg python-pyxp-hg python-pygmi-hg)
+pkgname=(wmii python-pyxp python-pygmi)
 pkgver=2755
 pkgrel=1
-pkgdesc="The latest hg pull of wmii, a lightweight, dynamic window manager for X11"
-url="http://wmii.suckless.org"
+pkgdesc="A lightweight, dynamic window manager for X11"
+url="https://github.com/0intro/wmii"
 license=(MIT)
 arch=(i686 x86_64)
-makedepends=(mercurial python "libixp-hg>="$(sed -rn <mk/wmii.mk 's/.*IXP_NEEDAPI=([0-9]+).*/\1/p'))
+makedepends=(git python "libixp>="$(sed -rn <mk/wmii.mk 's/.*IXP_NEEDAPI=([0-9]+).*/\1/p'))
 options=(!strip)
 source=()
 
-FORCE_VER=$(hg log -r . --template {rev})
+FORCE_VER=$(git rev-parse --short HEAD)
 
 _make() {
     cd $startdir
@@ -25,7 +25,7 @@ build() {
     _make "${flags[@]}" || return 1
 }
 
-package_wmii-hg() {
+package_wmii() {
     depends=(libx11 libxinerama libxrandr)
     optdepends=("plan9port: for use of the alternative plan9port wmiirc" \
             "${pkgname[2]}: for use of the alternative Python wmiirc" \
@@ -39,17 +39,16 @@ package_wmii-hg() {
     install -m644 -D ./LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
-package_python-pyxp-hg() {
+package_python-pyxp() {
     pkgdesc="Python 9P client library"
     arch=(any)
     depends=(python)
     _make -C alternative_wmiircs/python pyclean pyxp.install
 }
 
-package_python-pygmi-hg() {
+package_python-pygmi() {
     pkgdesc="Python wmii interaction library"
     arch=(any)
-    depends=(python-pyxp-hg)
+    depends=(python-pyxp)
     _make -C alternative_wmiircs/python pyclean pygmi.install
 }
-

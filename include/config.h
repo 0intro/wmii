@@ -1,0 +1,6 @@
+#define VERSION "git49240c7f"
+#define COPYRIGHT "©2010 Kris Maglione"
+#define CONFDIR "wmii"
+#define CONFPREFIX "/usr/local/etc"
+#define LOCALCONF "~/.wmii"
+#define GLOBALCONF "/usr/local/etc/wmii"

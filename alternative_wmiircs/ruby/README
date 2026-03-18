@@ -37,7 +37,7 @@ This is my wmii configuration, described in these articles:
 
 Dependencies:
 
-    wmii 3.6 or newer (preferably wmii-hg)
+    wmii 3.6 or newer
 
     Ruby 1.8.6 or newer
 

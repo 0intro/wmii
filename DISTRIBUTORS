@@ -43,9 +43,9 @@ string. This is the string printed by the 'wmii' binary when
 invoked with the '-v' flag.
 
 This string may normally be set in 'mk/wmii.mk'. Unmodified builds
-from the Mercurial tree automatically set this string based on the
-Mercurial local revision number, so long as the 'hg' command is
-present and properly functioning.
+from the Git tree automatically set this string based on the
+Git commit hash, so long as the 'git' command is present and
+properly functioning.
 
 Any version which is an official release, alpha, or beta, MUST
 contain the release version. Alpha and beta releases MUST be
@@ -54,17 +54,14 @@ number respectively. wmii 4.0, Alpha 3, for instance, MUST be
 formatted as 4.0a3
 
 Any version which is not an official release or snapshot MUST
-contain the Mercurial local revision number or changeset hash in its
-version string. The local revision number MUST be within 5 revisions
-of the equivalent changeset in the official canonical repositories
-at http://hg.suckless.org/ and http://wmii.googlecode.com/. This
-SHOULD be formatted as hgXXXX, where XXXX is the decimal revision
-number.
+contain the Git commit hash in its version string. The commit MUST
+be reachable from the official canonical repository at
+https://github.com/0intro/wmii.
 
 The version string of any official snapshot release MUST, if it does
-not contain Mercurial revision information as above, contain the
-date of the snapshot in the form YYYYMMDD, and SHOULD contain the
-word snap or snapshot.
+not contain Git revision information as above, contain the date of
+the snapshot in the form YYYYMMDD, and SHOULD contain the word snap
+or snapshot.
 
 The version string of a snapshot MAY contain the version name of a
 full release that the snapshot is expected to precede, but it MUST
