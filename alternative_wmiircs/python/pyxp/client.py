@@ -69,7 +69,7 @@ class Client(object):
 
             resp = self._dorpc(fcall.Tversion(version=pyxp.VERSION, msize=65535))
             if resp.version != pyxp.VERSION:
-                raise ProtocolException, "Can't speak 9P version '%s'" % resp.version
+                raise ProtocolException("Can't speak 9P version '%s'" % resp.version)
             self.msize = resp.msize
 
             self._dorpc(fcall.Tattach(fid=ROOT_FID, afid=fcall.NO_FID,
@@ -97,11 +97,11 @@ class Client(object):
     def _dorpc(self, req, callback=None, error=None):
         def doresp(resp):
             if isinstance(resp, fcall.Rerror):
-                raise RPCError, "%s[%d] RPC returned error: %s" % (
-                    req.__class__.__name__, resp.tag, resp.ename)
+                raise RPCError("%s[%d] RPC returned error: %s" % (
+                    req.__class__.__name__, resp.tag, resp.ename))
             if req.type != resp.type ^ 1:
-                raise ProtocolException, "Missmatched RPC message types: %s => %s" % (
-                    req.__class__.__name__, resp.__class__.__name__)
+                raise ProtocolException("Missmatched RPC message types: %s => %s" % (
+                    req.__class__.__name__, resp.__class__.__name__))
             return resp
 
         def next(mux, resp):
@@ -246,10 +246,10 @@ class File(object):
         if not self.closed:
             self._cleanup()
 
-    def _dorpc(self, fcall, async=None, error=None):
+    def _dorpc(self, fcall, async_cb=None, error=None):
         if hasattr(fcall, 'fid'):
             fcall.fid = self.fid
-        return self.client._dorpc(fcall, async, error)
+        return self.client._dorpc(fcall, async_cb, error)
 
     def stat(self):
         resp = self._dorpc(fcall.Tstat())
@@ -317,7 +317,7 @@ class File(object):
         return off
     def readdir(self):
         if not self.qid.type & Qid.QTDIR:
-            raise Exception, "Can only call readdir on a directory"
+            raise Exception("Can only call readdir on a directory")
         off = 0
         while True:
             data = self.read(self.iounit, off)

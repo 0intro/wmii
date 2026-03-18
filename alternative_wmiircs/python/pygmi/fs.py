@@ -623,7 +623,7 @@ class Rules(collections.MutableMapping, utf8):
         if rules:
             self.setitems(rules)
 
-    _quotere = re.compile(ur'(\\(.)|/)')
+    _quotere = re.compile(r'(\\(.)|/)')
     @classmethod
     def quoteslash(cls, str):
         return cls._quotere.sub(lambda m: m.group(0) if m.group(2) else r'\/', str)

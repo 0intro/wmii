@@ -79,15 +79,15 @@ class Mux(object):
 
         return rpc.data
 
-    def rpc(self, dat, async=None):
-        rpc = self.newrpc(dat, async)
-        if async:
+    def rpc(self, dat, async_cb=None):
+        rpc = self.newrpc(dat, async_cb)
+        if async_cb:
             self.async_mux.push(rpc)
         else:
             return self.mux(rpc)
 
     def async_dispatch(self, rpc):
-        rpc.async(self, rpc.data)
+        rpc.async_cb(self, rpc.data)
 
     def electmuxer(self):
         for rpc in self.wait.itervalues():
@@ -104,7 +104,7 @@ class Mux(object):
                 self.puttag(rpc)
                 rpc.dispatch(dat)
             elif False:
-                print "bad rpc tag: %u (no one waiting on it)" % dat.tag
+                print("bad rpc tag: %u (no one waiting on it)" % dat.tag)
 
     def gettag(self, r):
         tag = 0
@@ -155,13 +155,13 @@ class Mux(object):
                     data += readn(self.fd, nmsg - 4)
                     return self.process(data)
         except Exception, e:
-            print e.__class__.__name__
-            print repr(e)
+            print(e.__class__.__name__)
+            print(repr(e))
             traceback.print_exc(sys.stderr)
             return None
 
-    def newrpc(self, dat, async=None):
-        rpc = Rpc(self, dat, async)
+    def newrpc(self, dat, async_cb=None):
+        rpc = Rpc(self, dat, async_cb)
         tag = None
 
         with self.lock:
@@ -174,21 +174,21 @@ class Mux(object):
             self.puttag(rpc)
 
 class Rpc(Condition):
-    def __init__(self, mux, data, async=None):
+    def __init__(self, mux, data, async_cb=None):
         super(Rpc, self).__init__(mux.lock)
         self.mux = mux
         self.orig = data
         self.data = None
-        self.async = async
+        self.async_cb = async_cb
         self.waiting = False
 
     def __repr__(self):
-        return '<Rpc tag=%s orig=%s data=%s async=%s waiting=%s>' % tuple(map(repr, (self.tag, self.orig, self.data, self.async, self.waiting)))
+        return '<Rpc tag=%s orig=%s data=%s async_cb=%s waiting=%s>' % tuple(map(repr, (self.tag, self.orig, self.data, self.async_cb, self.waiting)))
 
     def dispatch(self, data=None):
         self.data = data
         self.notify()
-        if callable(self.async):
+        if callable(self.async_cb):
             self.mux.async_dispatch(self)
 
 class Queue(Thread):
