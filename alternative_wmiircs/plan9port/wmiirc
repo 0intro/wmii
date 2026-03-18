@@ -103,9 +103,12 @@ fn Event-NotUrgentTag {
 	wmiir xwrite /lbar/$"* label $"*}
 fn Event-AreaFocus {
 	if(~ $1 '~')
-		setbackground $wmiifloatbackground
+		bg=$wmiifloatbackground
 	if not
-		setbackground $wmiibackground }
+		bg=$wmiibackground
+	if(! ~ $bg $currentbackground) {
+		setbackground $bg
+		currentbackground=$bg }}
 
 fn Event-Unresponsive {
 	client = $1; shift
