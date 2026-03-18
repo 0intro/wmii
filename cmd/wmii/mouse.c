@@ -478,6 +478,7 @@ mouse_resize(Client *c, Align align, bool grabmod) {
 		frect = constrain(frect, -1);
 
 		client_resize(c, frect);
+		event_flush(PointerMotionMask, false);
 	}
 
 	pt = addpt(c->framewin->r.min,
