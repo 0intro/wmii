@@ -153,10 +153,9 @@ fn wi_eventloop {
 		if not
 			wmiir read /event
 	} | while(ifs=$wi_newline{wi_event=`{read}}) {
-		ifs=$wi_newline{
-			wi_arg=`{echo $wi_event | sed 's/^[^ ]+ //'}}
 		* = `{echo $wi_event}
 		event = $1; shift
+		wi_arg = $"*
 		Event-$"event $*
 	} >[2]/dev/null </dev/null
 	true

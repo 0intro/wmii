@@ -203,11 +203,9 @@ wi_eventloop() {
 	else wmiir read /event
 	fi |
 	while read wi_event; do
-		IFS="$wi_newline"
-		wi_arg=$(echo "$wi_event" | sed 's/^[^ ]* //')
-		unset IFS
 		set -- $wi_event
 		event=$1; shift
+		wi_arg="$*"
 		[ "$event" = Start -a "$1" = "$wmiiscript" ] &&
 			exit
 		Event $event "$@"
