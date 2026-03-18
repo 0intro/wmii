@@ -157,6 +157,7 @@ ErrorCode ignored_xerrors[] = {
 	{ X_ConfigureWindow, BadMatch },
 	{ X_GrabKey, BadAccess },
 	{ X_GetAtomName, BadAtom },
+	{ X_KillClient, BadValue },
 	{ 0, }
 };
 
