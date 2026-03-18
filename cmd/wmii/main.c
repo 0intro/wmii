@@ -14,6 +14,8 @@
 #include <sys/stat.h>
 #include "fns.h"
 
+extern void ixp_srv_freefilepool(void);
+
 char *argv0;
 Display *display;
 Screen scr;
@@ -267,6 +269,7 @@ cleanup(void) {
 	while(client)
 		client_destroy(client);
 	ixp_server_close(&srv);
+	ixp_srv_freefilepool();
 	close(sleeperfd);
 }
 
