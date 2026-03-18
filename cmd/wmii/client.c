@@ -592,8 +592,11 @@ client_resize(Client *c, Rectangle r) {
 		client_unmap(c, IconicState);
 	}else {
 		client_map(c);
+		XGrabServer(display);
 		reshapewin(c->framewin, f->r);
 		reshapewin(&c->w, f->crect);
+		frame_draw(f);
+		XUngrabServer(display);
 		client_mapframe(c);
 		if(!eqrect(c->r, c->configr))
 			client_configure(c);
