@@ -102,7 +102,7 @@ Event Unresponsive
 		msg="The following client is not responding. What would you like to do?$wi_newline"
 		resp=$(wihack -transient $client \
 			      xmessage -nearmouse -buttons Kill,Wait -print \
-			      -fn "${WMII_FONT%%,*}" "$msg $(wmiir read /client/sel/label)")
+			      -fn "${WMII_FONT%%,*}" "$msg $(wmiir read /client/$client/label)")
 		if [ "$resp" = Kill ]; then
 			wmiir xwrite /client/$client/ctl slay &
 		fi
