@@ -136,7 +136,10 @@ fn wi_selclient {
 }
 
 fn wi_nexttag {
-	awk -v 'curtag='^`{wi_seltag} '
+	curtag=$1
+	if(~ $#curtag 0)
+		curtag=`{wi_seltag}
+	awk -v 'curtag='^$curtag '
 		NR==1 {first = $0}
 		$0==curtag { if(getline) print $0; else print first; exit }'
 }

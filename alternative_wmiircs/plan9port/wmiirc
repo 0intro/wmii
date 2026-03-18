@@ -146,13 +146,8 @@ fn LBarMenu-3-Delete {
 			wmiir xwrite /client/$c/ctl kill
 		if not
 			wmiir xwrite /client/$c/tags -$tag}
-	if(~ $tag `{wi_seltag}) {
-		newtag = `{wi_tags | awk -v't='$tag '
-			$1 == t { if(!l) getline l
-				  print l
-				  exit }
-			{ l = $0 }'}
-		wmiir xwrite /ctl view $newtag}}
+	if(~ $tag `{wi_seltag})
+		wmiir xwrite /ctl view `{wi_tags | wi_nexttag $tag}}
 fn Event-LeftBarMouseDown {
 	wi_fnmenu LBar $* &}
 
