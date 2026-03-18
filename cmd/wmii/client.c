@@ -276,7 +276,7 @@ client_manage(Client *c) {
 		tags = getprop_string(&c->w, "_WMII_TAGS");
 		if(tags)
 			utflcpy(c->tags, tags, sizeof c->tags);
-		else if(leader)
+		else if(leader && leader != c)
 			utflcpy(c->tags, leader->tags, sizeof c->tags);
 		free(tags);
 	}
