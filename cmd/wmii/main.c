@@ -188,9 +188,26 @@ init_screens(void) {
 
 	/* Reallocate screens, zero any new ones. */
 	rects = xinerama_screens(&n);
-	r = malloc(n * sizeof *r);
+	/* Fall back to the root window if Xinerama reports no screens */
+	if(n < 1) {
+		rects = &scr.rect;
+		n = 1;
+	}
+	r = emalloc(n * sizeof *r);
 
-	/* Weed out subsumed/cloned screens */
+	/* Clones subsume each other, so keep only the first of each */
+	for(i=0, m=0; i < n; i++) {
+		for(j=0; j < m; j++)
+			if(eqrect(rects[i], r[j]))
+				break;
+		if(j == m)
+			r[m++] = rects[i];
+	}
+	for(i=0; i < m; i++)
+		rects[i] = r[i];
+	n = m;
+
+	/* Weed out subsumed screens */
 	for(m=-1; m < n; n=m) {
 		for(i=n-1, m=0; i >= 0; i--) {
 			for(j=0; j < n; j++)
