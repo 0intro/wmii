@@ -405,7 +405,7 @@ And to manage their tags, we'll need:
   ClientMouseDown) # ClientMouseDown ‹Client ID› ‹Button›
     [ $2 = 3 ] && clickmenu \
       “Delete:wmiir xwrite /client/$1/ctl kill” \
-      “Kill: wmiirxwrite /client/$1/ctl slay” \
+      “Kill: wmiir xwrite /client/$1/ctl slay” \
       “Fullscreen:wmiir xwrite /client/$1/ctl fullscreen on”
 \end{Fragment}
 
