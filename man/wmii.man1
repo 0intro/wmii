@@ -55,7 +55,7 @@ of the core window manager.
         interface, use:
 
 ```     tcp!localhost!4332
-        $WMII_NAMESPACE is automatically set to this value.
+        $WMII_ADDRESS is automatically set to this value.
 
 : -r <wmiirc>
         Specifies which rc script to run. If <wmiirc> consists of a
@@ -425,7 +425,7 @@ all of the clients with the given tag applied. The special
         : nudge
                 Nudge a client in a given direction.
 
-```    grow <frame> <direction> [<amount>]
+```    nudge <frame> <direction> [<amount>]
         :
         <<
         Where the arguments are defined as follows:

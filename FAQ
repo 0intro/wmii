@@ -25,9 +25,8 @@ mailing list archives[2] at Gmane.
 
 3. I think I've found a bug.
 ----------------------------
-You can report bugs at the issue tracker at the Google Code
-project[3]. Please be sure to search for your problem before you
-open a new issue.
+You can report bugs at the issue tracker on GitHub[3]. Please be
+sure to search for your problem before you open a new issue.
 
 4. How do I get a list of keyboard shortcuts?
 ---------------------------------------------
@@ -41,8 +40,7 @@ the actions menu (M-a).
 You can customize wmii by editing its configuration script. If
 you're using the stock wmiirc configuration script, you can add key
 bindings and change your theme by editing @LOCALCONF@/wmiirc_local.
-See @EXAMPLES@/wmiirc_local for more information. You should also be
-sure to read wmii(1) and the user guide[4].
+You should also be sure to read wmii(1) and the user guide[4].
 
 6. I've heard I can do my configuration in any language?
 --------------------------------------------------------
