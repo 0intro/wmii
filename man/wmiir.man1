@@ -78,8 +78,7 @@ to scripting wmii:
 : namespace
 	Prints the current wmii namespace directory, usually
 	equivalent to /tmp/ns.$USER.${DISPLAY%.0}, but possibly
-	different depending on the value of $NAMESPACE and
-	$WMII_NAMESPACE.
+	different depending on the value of $NAMESPACE.
 
 	Synonyms: `ns`
 : setsid [-0 <argv0>] [-f] <command>
